@@ -1,0 +1,10 @@
+{
+  "playfulness": 0.7,
+  "curiosity": 0.6,
+  "sleepiness": 0.25,
+  "attention_after_seconds": 300,
+  "walking_energy_per_second": 0.5,
+  "playing_energy_per_second": 1.5,
+  "sleep_energy_per_second": 5,
+  "rest_energy_per_second": 0.15
+}

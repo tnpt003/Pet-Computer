@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="../../src/DesktopPet/Assets/Sounds/*.wav" LogicalName="DesktopPet.Sounds.%(Filename)%(Extension)" />
+    <Compile Include="../../src/DesktopPet/PersonalityTuning.cs" Link="PersonalityTuning.cs" />
+    <Compile Include="../../src/DesktopPet/PetMotion.cs" Link="PetMotion.cs" />
+    <Compile Include="../../src/DesktopPet/PetModel.cs" Link="PetModel.cs" />
+    <Compile Include="../../src/DesktopPet/PetPreferences.cs" Link="PetPreferences.cs" />
+    <Compile Include="../../src/DesktopPet/PetSounds.cs" Link="PetSounds.cs" />
+    <Compile Include="../../src/DesktopPet/ToyBall.cs" Link="ToyBall.cs" />
+    <Compile Include="../../src/DesktopPet/PetEmotions.cs" Link="PetEmotions.cs" />
+    <Compile Include="../../src/DesktopPet/PickupAnimation.cs" Link="PickupAnimation.cs" />
+    <Compile Include="../../src/DesktopPet/ThrowTracker.cs" Link="ThrowTracker.cs" />
+    <Compile Include="../../src/DesktopPet/PetBehavior.cs" Link="PetBehavior.cs" />
+    <Compile Include="../../src/DesktopPet/AI/*.cs" Link="AI/%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>

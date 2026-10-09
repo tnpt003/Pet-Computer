@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets/Pet.ico</ApplicationIcon>
+    <!-- Forms supplies only the tray icon; WPF owns startup and manifest DPI policy. -->
+    <NoWarn>$(NoWarn);WFO0003</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Resource Include="Assets/Pet.ico" />
+    <EmbeddedResource Include="Assets/Sounds/*.wav" LogicalName="DesktopPet.Sounds.%(Filename)%(Extension)" />
+    <Content Include="Assets/Sounds/CREDITS.md;Assets/Sounds/sources.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="../../ai/service.py;../../ai/personality.json">
+      <Link>ai/%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    </Content>
+  </ItemGroup>
+  <ItemGroup Condition="'$(BundlePython)' == 'true'">
+    <Content Include="$(PythonRuntimeDir)/**/*" Exclude="$(PythonRuntimeDir)/**/__pycache__/**;$(PythonRuntimeDir)/**/*.pyc">
+      <Link>python/%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    </Content>
+  </ItemGroup>
+  <Target Name="ValidateBundledPython" BeforeTargets="PrepareForPublish" Condition="'$(BundlePython)' == 'true'">
+    <Error Condition="!Exists('$(PythonRuntimeDir)/python.exe') Or !Exists('$(PythonRuntimeDir)/python313.zip') Or !Exists('$(PythonRuntimeDir)/python313.dll') Or !Exists('$(PythonRuntimeDir)/LICENSE.txt')"
+           Text="A complete Python 3.13 embedded runtime is required. Run scripts/publish.ps1 to prepare it, or set PythonRuntimeDir to its folder." />
+  </Target>
+</Project>

@@ -1,0 +1,58 @@
+using System;
+using System.IO;
+using System.Text.Json;
+
+namespace DesktopPet;
+
+public sealed class PetPreferences
+{
+    public string Name { get; set; } = "Mochi";
+    public string Personality { get; set; } = "Balanced";
+    public PersonalityTuning? Tuning { get; set; }
+    public bool Quiet { get; set; }
+    public bool Sounds { get; set; }
+    public double Volume { get; set; } = 0.7;
+    public bool InteractionSounds { get; set; } = true;
+    public bool EmotionSounds { get; set; } = true;
+    public bool SleepSounds { get; set; } = true;
+    public string? PositionMonitor { get; set; }
+    public double PositionX { get; set; } = 0.5;
+    public double PositionY { get; set; } = 1;
+    public string? RestMonitor { get; set; }
+    public double RestFractionX { get; set; } = 0.5;
+    public double? RestX { get; set; }
+    public double? RestY { get; set; }
+    public static string DataDirectory => Environment.GetEnvironmentVariable("PET_DATA_DIRECTORY") is string path && Path.IsPathFullyQualified(path)
+        ? path : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DesktopPet");
+    private static string FilePath => Path.Combine(DataDirectory, "preferences.json");
+    public static PetPreferences Load(string? path = null)
+    {
+        try
+        {
+            var p = JsonSerializer.Deserialize<PetPreferences>(File.ReadAllText(path ?? FilePath)) ?? new();
+            p.Name = string.IsNullOrWhiteSpace(p.Name) ? "Mochi" : p.Name.Trim()[..Math.Min(p.Name.Trim().Length, 24)];
+            if (p.Personality is not ("Balanced" or "Playful" or "Curious" or "Calm")) p.Personality = "Balanced";
+            p.Tuning = p.Tuning?.Normalized();
+            p.Volume = double.IsFinite(p.Volume) ? Math.Clamp(p.Volume, 0, 1) : 0.7;
+            p.PositionX = double.IsFinite(p.PositionX) ? Math.Clamp(p.PositionX, 0, 1) : 0.5;
+            p.PositionY = double.IsFinite(p.PositionY) ? Math.Clamp(p.PositionY, 0, 1) : 1;
+            p.RestFractionX = double.IsFinite(p.RestFractionX) ? Math.Clamp(p.RestFractionX, 0, 1) : 0.5;
+            if (!p.RestX.HasValue || !p.RestY.HasValue || !double.IsFinite(p.RestX.Value) || !double.IsFinite(p.RestY.Value)) p.RestX = p.RestY = null;
+            return p;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException) { return new(); }
+    }
+    public bool Save(string? path = null)
+    {
+        path ??= FilePath;
+        string temp = path + ".tmp";
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            File.WriteAllText(temp, JsonSerializer.Serialize(this));
+            File.Move(temp, path, true);
+            return true;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return false; }
+    }
+}

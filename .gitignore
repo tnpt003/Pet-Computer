@@ -1,0 +1,11 @@
+.tools/
+**/bin/
+**/obj/
+artifacts/
+.vs/
+*.user
+**/__pycache__/
+*.pyc
+
+# Generated test logs
+*.log

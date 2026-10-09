@@ -1,0 +1,23 @@
+<DrawingImage xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+  <DrawingImage.Drawing>
+    <DrawingGroup>
+      <!-- Hand-authored scalable artwork; 256-unit master, no bitmap enlargement. -->
+      <GeometryDrawing Brush="#244F59" Geometry="M 56,4 L 200,4 Q 252,4 252,56 L 252,200 Q 252,252 200,252 L 56,252 Q 4,252 4,200 L 4,56 Q 4,4 56,4 Z" />
+      <GeometryDrawing Brush="#E9AE65" Geometry="M 49,106 L 43,39 Q 43,30 52,35 L 95,65 Q 128,52 161,65 L 204,35 Q 213,30 213,39 L 207,106 Q 226,133 217,168 Q 206,214 128,223 Q 50,214 39,168 Q 30,133 49,106 Z">
+        <GeometryDrawing.Pen><Pen Brush="#49372E" Thickness="9" LineJoin="Round" /></GeometryDrawing.Pen>
+      </GeometryDrawing>
+      <GeometryDrawing Brush="#E98990" Geometry="M 58,51 L 64,88 L 85,75 Z M 198,51 L 192,88 L 171,75 Z" />
+      <GeometryDrawing Brush="#FFE4B5" Geometry="M 76,161 C 76,134 105,140 128,150 C 151,140 180,134 180,161 C 185,202 71,202 76,161 Z" />
+      <GeometryDrawing Brush="#49372E">
+        <GeometryDrawing.Geometry><GeometryGroup><EllipseGeometry Center="88,123" RadiusX="10" RadiusY="15" /><EllipseGeometry Center="168,123" RadiusX="10" RadiusY="15" /></GeometryGroup></GeometryDrawing.Geometry>
+      </GeometryDrawing>
+      <GeometryDrawing Brush="#FFFFFF">
+        <GeometryDrawing.Geometry><GeometryGroup><EllipseGeometry Center="91,119" RadiusX="3" RadiusY="4" /><EllipseGeometry Center="171,119" RadiusX="3" RadiusY="4" /></GeometryGroup></GeometryDrawing.Geometry>
+      </GeometryDrawing>
+      <GeometryDrawing Brush="#49372E" Geometry="M 117,152 Q 128,147 139,152 L 128,163 Z" />
+      <GeometryDrawing Geometry="M 128,162 L 128,172 Q 117,183 108,174 M 128,172 Q 139,183 148,174 M 68,152 L 36,146 M 68,165 L 36,168 M 188,152 L 220,146 M 188,165 L 220,168">
+        <GeometryDrawing.Pen><Pen Brush="#49372E" Thickness="6" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" /></GeometryDrawing.Pen>
+      </GeometryDrawing>
+    </DrawingGroup>
+  </DrawingImage.Drawing>
+</DrawingImage>

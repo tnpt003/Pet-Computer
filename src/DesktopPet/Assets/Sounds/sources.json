@@ -1,0 +1,82 @@
+[
+  {
+    "file": "mew-soft.wav",
+    "source": "https://opengameart.org/sites/default/files/cat_softmew.wav",
+    "author": "Kerzoven",
+    "license": "CC0-1.0",
+    "source_sha256": "7de9fed4401b677ccbf072781182857d875093a8e9b5727fc21b38028cfd5a90",
+    "start_seconds": 0,
+    "duration_seconds": 2.4782,
+    "output_sha256": "4e9305bb1c4a6610db981ae7ec90dcd2f7056c6230e1aa8cd3cedb4286838de4"
+  },
+  {
+    "file": "mew-food.wav",
+    "source": "https://opengameart.org/sites/default/files/cat_mewfood.wav",
+    "author": "Kerzoven",
+    "license": "CC0-1.0",
+    "source_sha256": "3550f080882b52e236c8810a353756b2e0395fb7dadf0aeface0a06893cd181f",
+    "start_seconds": 0,
+    "duration_seconds": 1.1271,
+    "output_sha256": "36b59d5045d805bf7866ccd48cfdc80d278569b1f8a72af5bacb84eae35c9e2d"
+  },
+  {
+    "file": "mew-purr.wav",
+    "source": "https://opengameart.org/sites/default/files/cat_mewpurr.wav",
+    "author": "Kerzoven",
+    "license": "CC0-1.0",
+    "source_sha256": "a58487959ee00c812f9f02ca822a668173bcf04a98c6dd98a902514a1d3994ea",
+    "start_seconds": 0,
+    "duration_seconds": 1.4107,
+    "output_sha256": "687754a7a2fc70939e098818ca77ea799c5d4ce507a7fbd347eccf0a5eb293d4"
+  },
+  {
+    "file": "mew-purr2.wav",
+    "source": "https://opengameart.org/sites/default/files/cat_mewpurr2.wav",
+    "author": "Kerzoven",
+    "license": "CC0-1.0",
+    "source_sha256": "918a896111936f3f6316d1cc7fd64aa1ef0a31a4162dfcbe02c058758b0f2458",
+    "start_seconds": 0,
+    "duration_seconds": 2.4195,
+    "output_sha256": "feb31b35895ee4809f90e3b2ab7dcd86a06fd550050a797c07b7117d132c6bfa"
+  },
+  {
+    "file": "purr-active-a.wav",
+    "source": "https://opengameart.org/sites/default/files/cat_purractive_loop.wav",
+    "author": "Kerzoven",
+    "license": "CC0-1.0",
+    "source_sha256": "5b41fbabf4a43e526face6922a74a1fa2d1930d0901e0df590989bf7d68cc97a",
+    "start_seconds": 0.3,
+    "duration_seconds": 1.8,
+    "output_sha256": "e3522cef6fec705b3c2d092372c03b38c63cecf8c515dd9c034ac546b1384859"
+  },
+  {
+    "file": "purr-active-b.wav",
+    "source": "https://opengameart.org/sites/default/files/cat_purractive_loop.wav",
+    "author": "Kerzoven",
+    "license": "CC0-1.0",
+    "source_sha256": "5b41fbabf4a43e526face6922a74a1fa2d1930d0901e0df590989bf7d68cc97a",
+    "start_seconds": 3.0,
+    "duration_seconds": 1.8,
+    "output_sha256": "94e622b454ec55eec957eda27080c8835eba3404829a18754bf253f400ce72e8"
+  },
+  {
+    "file": "purr-sleep-a.wav",
+    "source": "https://opengameart.org/sites/default/files/cat_purrsleepy_loop.wav",
+    "author": "Kerzoven",
+    "license": "CC0-1.0",
+    "source_sha256": "7f06368e25e6a7aec9b106c3e2915f236b3fa10b41781733ecc8a1866fc749b9",
+    "start_seconds": 0.3,
+    "duration_seconds": 1.8,
+    "output_sha256": "88290ed51e38eef43ca9c439b7fc4f70e948330e63857b0f7f961e05bee1b317"
+  },
+  {
+    "file": "purr-sleep-b.wav",
+    "source": "https://opengameart.org/sites/default/files/cat_purrsleepy_loop.wav",
+    "author": "Kerzoven",
+    "license": "CC0-1.0",
+    "source_sha256": "7f06368e25e6a7aec9b106c3e2915f236b3fa10b41781733ecc8a1866fc749b9",
+    "start_seconds": 2.9,
+    "duration_seconds": 1.8,
+    "output_sha256": "1ceea2657256bf5ad4a8d284d54f848e2eab4aa0c81cd71100cc636c0ab8100e"
+  }
+]

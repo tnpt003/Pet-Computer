@@ -36,6 +36,7 @@ public sealed partial class PetWindow : Window
     private Window? debugWindow;
     private TextBlock? debugText;
     private double? aiEnergy;
+    private PetNeeds? aiNeeds;
     private double nextDebugUpdate;
     private readonly bool persistPreferences;
     private IPetDecisionSource? ai;
@@ -242,7 +243,7 @@ public sealed partial class PetWindow : Window
         (pet.VX, pet.VY) = throwPet && !paused ? tracker.Velocity(settings.MaxThrowSpeed) : (0.0, 0.0);
         if (throwPet && !paused)
         {
-            if (Math.Sqrt(pet.VX * pet.VX + pet.VY * pet.VY) >= 1600) pet.Emotions.AggressiveInteraction();
+            if (Math.Sqrt(pet.VX * pet.VX + pet.VY * pet.VY) >= 1600) { pet.Emotions.AggressiveInteraction(); pet.Interactions.RoughThrow(); }
             else pet.Emotions.Attention();
         }
         pet.Action = PetAction.Thrown;
@@ -305,7 +306,7 @@ public sealed partial class PetWindow : Window
                 }
             }
         }
-        if (!paused) { pet.AnimationTime += dt; pet.ActionTime += dt; pet.Motion.Step(pet, dt, settings.WalkSpeed); }
+        if (!paused) { pet.AnimationTime += dt; pet.ActionTime += dt; pet.Motion.Step(pet, dt, settings.WalkSpeed); pet.Thought.Step(pet, dt); }
         Present(interpolate: !dragging && !paused && !pressPending);
         double interval = FramePeriod() * 1000 / 2;
         if (timer.Interval.TotalMilliseconds != interval) timer.Interval = TimeSpan.FromMilliseconds(interval);
@@ -348,6 +349,8 @@ public sealed partial class PetWindow : Window
                 $"Sleep: {pet.Emotions.SleepElapsed:F1} / {settings.SleepDurationSeconds:F1} s\n" +
                 $"Wake cooldown: {pet.Emotions.WakeCooldownRemaining:F1} s\n" +
                 $"Input: {(dragging ? "dragging" : pressPending ? "pressed" : "free")}\nPaused: {paused}\n" +
+                $"Needs: {(aiNeeds == null ? "unavailable" : $"hunger {aiNeeds.Hunger:F0}, boredom {aiNeeds.Boredom:F0}, affection {aiNeeds.Affection:F0}, bond {aiNeeds.Bond:F0}")}\n" +
+                $"Thought: {(pet.Thought.Visible ? pet.Thought.Kind.ToString() : "none")}\n" +
                 $"Frame: {measuredFps:F0} fps (max gap {measuredMaxGap * 1000:F0} ms)\n{AiStatus}";
         }
     }
@@ -371,7 +374,7 @@ public sealed partial class PetWindow : Window
         if (debugWindow != null) { debugWindow.Close(); return; }
         debugText = new TextBlock { Margin = new Thickness(16), FontSize = 14 };
         debugWindow = new Window { Title = "Pet behavior", Icon = AppIcon.WindowImage(),
-            Width = 370, Height = 280, Content = debugText, WindowStyle = WindowStyle.ToolWindow,
+            Width = 420, Height = 330, Content = debugText, WindowStyle = WindowStyle.ToolWindow,
             ShowInTaskbar = false, Topmost = true };
         debugWindow.Closed += (_, _) => { debugWindow = null; debugText = null; };
         nextDebugUpdate = 0;
@@ -384,6 +387,7 @@ public sealed partial class PetWindow : Window
         revision++;
         interactionCount++;
         lastEvent = kind;
+        pet.Interactions.Record(kind);
         if (kind is "left_clicked" or "right_clicked") PlayPetSound("meow");
         if (kind == "petted") PlayPetSound("purr");
     }
@@ -401,6 +405,7 @@ public sealed partial class PetWindow : Window
         ai?.Dispose();
         ai = null;
         aiEnergy = null;
+        aiNeeds = null;
     }
 
     private async void RequestDecision()
@@ -413,7 +418,7 @@ public sealed partial class PetWindow : Window
         var observation = new PetObservation(pet.Action.ToString(), pet.Grounded,
             pet.Emotions.SecondsWithoutAttention, interactionCount, lastEvent, behavior.LastAppliedCommand,
             pet.Emotions.Current.ToString(), pet.Activity.Snapshot(), preferences.Personality, sessionId, preferences.Tuning?.Normalized(),
-            DateTime.Now.Hour + DateTime.Now.Minute / 60.0);
+            DateTime.Now.Hour + DateTime.Now.Minute / 60.0, pet.Interactions.Snapshot());
         try
         {
             // Even a future cached source that completes synchronously must wait until
@@ -426,6 +431,8 @@ public sealed partial class PetWindow : Window
             {
                 aiEnergy = decision.Energy;
                 pet.Emotions.ApplyAiHint(decision.Emotion);
+                if (decision.Needs != null) aiNeeds = decision.Needs;
+                pet.Thought.TryShow(PetThought.Parse(decision.Thought), pet);
                 if (!FeatureOwnsMovement()) behavior.TryApply(pet, decision);
             }
         }

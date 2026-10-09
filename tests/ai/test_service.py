@@ -63,6 +63,105 @@ class BrainTests(unittest.TestCase):
         self.assertEqual(day_rhythm(True), (1.0, 1.0, 1.0))
         self.assertEqual(day_rhythm(25), (1.0, 1.0, 1.0))
 
+    def interacting(self, idle=10, **counts):
+        base = {key: 0 for key in ("petted", "clicked", "treats", "toy", "ball_clicks", "ball_hits", "rough_throws")}
+        return {**self.observation(idle), "session_id": "s1", "interactions": {**base, **counts}}
+
+    def test_needs_grow_over_time_and_report(self):
+        first = self.brain.decide(self.observation())
+        self.assertEqual(set(first["needs"]), {"hunger", "boredom", "affection", "bond"})
+        hunger, boredom = first["needs"]["hunger"], first["needs"]["boredom"]
+        for _ in range(120):  # One hour of decisions, 30 s apart.
+            self.now += 30
+            decision = self.brain.decide(self.observation())
+        self.assertAlmostEqual(decision["needs"]["hunger"], min(100, hunger + 25), delta=0.5)
+        self.assertEqual(decision["needs"]["boredom"], 100)
+        self.now += 100000  # A long suspend/pause is capped, not counted as starving time.
+        self.assertLessEqual(self.brain.decide(self.observation())["needs"]["hunger"], hunger + 26)
+
+    def test_interactions_feed_needs_once_per_session_count(self):
+        self.brain.needs.update(hunger=80, boredom=60)
+        self.brain.decide(self.interacting())  # Baseline.
+        after = self.brain.decide(self.interacting(treats=1, petted=2, toy=1))["needs"]
+        self.assertAlmostEqual(after["hunger"], 45, delta=0.1)
+        self.assertLess(after["boredom"], 60 - 30)
+        repeat = self.brain.decide(self.interacting(treats=1, petted=2, toy=1))["needs"]
+        self.assertAlmostEqual(repeat["hunger"], after["hunger"], delta=0.1)  # Same totals: no double credit.
+        restarted = self.brain.decide({**self.interacting(treats=5), "session_id": "s2"})["needs"]
+        self.assertAlmostEqual(restarted["hunger"], after["hunger"], delta=0.1)  # New session sets a baseline.
+
+    def test_bond_changes_are_capped_per_day_and_recoverable(self):
+        start = self.brain.needs["bond"]
+        self.brain.decide(self.interacting())
+        self.brain.decide(self.interacting(petted=100))
+        self.assertAlmostEqual(self.brain.needs["bond"], start + 3, delta=0.01)
+        self.brain.decide(self.interacting(petted=100, rough_throws=100))
+        self.assertAlmostEqual(self.brain.needs["bond"], start + 1, delta=0.01)  # Loss capped at 2 per day.
+        self.assertGreater(self.brain.needs["bond"], 0)
+
+    def test_hunger_and_boredom_ask_with_thought_bubbles(self):
+        self.brain.needs.update(hunger=90)
+        decision = self.brain.decide(self.observation(idle=50))
+        self.assertEqual((decision["command"], decision.get("thought")), ("SEEK_ATTENTION", "hungry"))
+        self.now += 5
+        self.assertNotIn("thought", self.brain.decide(self.observation(idle=55)))  # Bubble cooldown.
+        self.brain.needs.update(hunger=10, boredom=90)
+        self.now += 61
+        decision = self.brain.decide(self.observation(idle=70))
+        self.assertEqual((decision["command"], decision.get("thought")), ("SEEK_ATTENTION", "bored"))
+
+    def test_ambient_bubbles_are_rare(self):
+        self.brain.needs.update(boredom=70, hunger=0)
+        thoughts = []
+        for _ in range(60):  # Ten minutes of decisions with a recently touched pet.
+            self.now += 10
+            self.brain.needs.update(boredom=70)
+            thoughts.append(self.brain.decide(self.observation(idle=5)).get("thought"))
+        self.assertLessEqual(sum(t == "bored" for t in thoughts), 7)
+        self.assertGreaterEqual(sum(t == "bored" for t in thoughts), 5)
+
+    def test_no_thought_or_need_action_while_busy(self):
+        self.brain.needs.update(hunger=95, boredom=95)
+        for state in ("Sleeping", "Dragging", "Thrown"):
+            decision = self.brain.decide({**self.observation(idle=100), "state": state, "grounded": state != "Thrown"})
+            self.assertEqual(decision["command"], "IDLE")
+            self.assertNotIn("thought", decision)
+
+    def test_petting_earns_a_heart_when_affectionate(self):
+        self.brain.needs.update(affection=70, hunger=0, boredom=0)
+        self.brain.decide(self.interacting())
+        self.assertEqual(self.brain.decide(self.interacting(petted=1)).get("thought"), "love")
+
+    def test_boredom_shifts_choices_toward_play(self):
+        def jumps(boredom):
+            brain = Brain(Path(self.temporary.name) / f"b{boredom}.json", ROOT / "ai/personality.json", random.Random(3), lambda: self.now)
+            picks = []
+            for _ in range(400):
+                brain.needs.update(boredom=boredom, hunger=0)
+                picks.append(brain.decide(self.observation())["command"])
+            return picks.count("JUMP") + picks.count("FOLLOW_MOUSE")
+        self.assertGreater(jumps(100), jumps(0) * 1.3)
+
+    def test_greets_after_long_absence_with_bond(self):
+        wall = [1_000_000.0]
+        self.brain.wall_clock = lambda: wall[0]
+        self.brain.needs.update(bond=60)
+        self.brain.decide(self.observation())
+        self.brain.save()
+        wall[0] += 7200
+        other = Brain(self.memory, ROOT / "ai/personality.json", random.Random(1), lambda: self.now, lambda: wall[0])
+        greeting = other.decide(self.observation())
+        self.assertEqual((greeting["command"], greeting.get("thought")), ("FOLLOW_MOUSE", "love"))
+        self.assertNotEqual(other.decide(self.observation()).get("thought"), "love")  # Only once.
+        self.assertEqual(other.needs["bond"], 60)  # Needs persist across restarts.
+
+    def test_favorite_hour_needs_history(self):
+        self.assertFalse(self.brain.favorite_hour(20))
+        self.brain.decide(self.interacting())
+        self.brain.decide({**self.interacting(petted=20), "local_hour": 20.5})
+        self.assertTrue(self.brain.favorite_hour(20))
+        self.assertFalse(self.brain.favorite_hour(9))
+
     def test_memory_survives_restart(self):
         self.brain.decide(self.observation(count=1))
         self.brain.decide(self.observation(count=4))

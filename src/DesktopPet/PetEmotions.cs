@@ -11,6 +11,11 @@ public sealed class PetEmotions
 {
     public const double SleepyAfter = 120;
     public const double SadAfter = 300;
+    // Short "missing you" episode after this long without the user touching the pet.
+    // Its clock survives autonomous sleep/wake, which otherwise reset attention.
+    public const double SadEpisodeAfter = 180;
+    public const double SadEpisodeDuration = 6;
+    public double SecondsWithoutUser => now - lastUserAttention;
     public PetEmotion Current { get; private set; }
     public PetEmotion Target { get; private set; }
     public bool SleepLocked { get; private set; }
@@ -46,6 +51,14 @@ public sealed class PetEmotions
     public double WalkScale => Current == PetEmotion.Sad ? 1 - 0.35 * Strength : 1;
     private readonly Queue<double> clicks = new();
     private double now, lastAttention, transientUntil, happyAfter, angryAfter, surpriseAfter, pettingAfter;
+    private double lastUserAttention, sadEpisodeUntil, sadEpisodeDue = SadEpisodeAfter;
+
+    private void UserTouched()
+    {
+        lastUserAttention = now;
+        sadEpisodeUntil = now; // Being noticed ends the sad episode at once.
+        sadEpisodeDue = now + SadEpisodeAfter;
+    }
     private double lastX, lastY, pettingTime;
     private bool cursorKnown;
     private PetEmotion transient, aiHint;
@@ -54,6 +67,7 @@ public sealed class PetEmotions
     {
         if (SleepLocked) return;
         lastAttention = now;
+        UserTouched();
         aiHint = PetEmotion.Neutral;
         if (click)
         {
@@ -73,6 +87,7 @@ public sealed class PetEmotions
     {
         if (SleepLocked) return;
         lastAttention = now;
+        UserTouched();
         aiHint = PetEmotion.Neutral;
         if (now < angryAfter) return;
         SetTransient(PetEmotion.Angry, 4);
@@ -160,12 +175,20 @@ public sealed class PetEmotions
             }
         }
 
+        // Wait for a free moment (not busy, no other reaction) rather than interrupting.
+        if (!busy && pet.Grounded && pet.Action != PetAction.Sleeping && now >= transientUntil && now >= sadEpisodeDue)
+        {
+            sadEpisodeUntil = now + SadEpisodeDuration;
+            sadEpisodeDue = now + SadEpisodeAfter;
+        }
+
         PetEmotion desired;
         if (pet.Action == PetAction.Dragging)
             desired = pet.Pickup.Dizziness > 0.02 ? PetEmotion.Dizzy : PetEmotion.Neutral;
         else if (busy) desired = PetEmotion.Neutral;
         else if (now < transientUntil) desired = transient;
         else if (pet.Action == PetAction.Sleeping) desired = PetEmotion.Sleepy;
+        else if (now < sadEpisodeUntil) desired = PetEmotion.Sad;
         else if (SecondsWithoutAttention >= SadAfter) desired = PetEmotion.Sad;
         else if (SecondsWithoutAttention >= SleepyAfter && WakeCooldownRemaining <= 0) desired = PetEmotion.Sleepy;
         else desired = aiHint;

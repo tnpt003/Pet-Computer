@@ -270,6 +270,7 @@ internal static class Program
         VisualReviewChecks.Run(Check);
         EmotionVisualChecks.Run(Check);
         MotionVisualChecks.Run(Check);
+        ThoughtVisualChecks.Run(Check);
         window.SetPaused(false);
         window.Reset();
         void AttentionClick() => window.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Right)

@@ -8,9 +8,12 @@ public sealed record PetObservation(
     string State, bool Grounded, double SecondsSinceInteraction,
     long InteractionCount, string LastEvent, string LastAppliedCommand, string Emotion = "Neutral",
     PetActivity? Activity = null, string Personality = "Balanced", string SessionId = "", PersonalityTuning? Tuning = null,
-    double? LocalHour = null);
+    double? LocalHour = null, PetInteractions? Interactions = null);
 
-public sealed record AiDecision(string Command, double DurationSeconds, string Mood, string? Emotion = null, double? Energy = null);
+public sealed record PetNeeds(double Hunger, double Boredom, double Affection, double Bond);
+
+public sealed record AiDecision(string Command, double DurationSeconds, string Mood, string? Emotion = null, double? Energy = null,
+    string? Thought = null, PetNeeds? Needs = null);
 
 public interface IPetDecisionSource : IDisposable
 {
@@ -45,6 +48,19 @@ public static class AiProtocol
         if (emotion is not (null or "neutral" or "sad" or "sleepy")) throw new JsonException("Invalid long-term emotion hint.");
         double? energy = root.TryGetProperty("energy", out var value) && value.TryGetDouble(out double parsed)
             && double.IsFinite(parsed) && parsed >= 0 && parsed <= 100 ? parsed : null;
-        return new AiDecision(command!, duration, mood!, emotion, energy);
+        // Optional extras: an invalid value is dropped instead of rejecting the decision.
+        string? thought = root.TryGetProperty("thought", out var idea) && idea.ValueKind == JsonValueKind.String &&
+            PetThought.Parse(idea.GetString()) != ThoughtKind.None ? idea.GetString() : null;
+        return new AiDecision(command!, duration, mood!, emotion, energy, thought, ParseNeeds(root));
+    }
+
+    private static PetNeeds? ParseNeeds(JsonElement root)
+    {
+        if (!root.TryGetProperty("needs", out var needs) || needs.ValueKind != JsonValueKind.Object) return null;
+        double? Read(string name) => needs.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.Number &&
+            value.TryGetDouble(out double parsed) && double.IsFinite(parsed) && parsed >= 0 && parsed <= 100 ? parsed : null;
+        var (hunger, boredom, affection, bond) = (Read("hunger"), Read("boredom"), Read("affection"), Read("bond"));
+        return hunger.HasValue && boredom.HasValue && affection.HasValue && bond.HasValue
+            ? new PetNeeds(hunger.Value, boredom.Value, affection.Value, bond.Value) : null;
     }
 }

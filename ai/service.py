@@ -20,6 +20,21 @@ MAX_MESSAGE = 8192
 COMMANDS = {"LOOK", "IDLE", "WALK_LEFT", "WALK_RIGHT", "SIT", "JUMP", "SLEEP", "FOLLOW_MOUSE", "SEEK_ATTENTION"}
 # C# actions that own their duration; mirrors PetActionRules.RejectsDecisions.
 BUSY_STATES = frozenset({"Dragging", "Thrown", "Jumping", "PreparingJump", "Sleeping", "Waking", "Grooming", "Stretching", "SeekingAttention"})
+THOUGHTS = ("hungry", "bored", "sleepy", "love")  # Priority order for thought bubbles.
+NEED_KEYS = ("hunger", "boredom", "affection", "bond")
+INTERACTION_KEYS = ("petted", "clicked", "treats", "toy", "ball_clicks", "ball_hits", "rough_throws")
+# Effect of one interaction on (hunger, boredom, affection, bond).
+INTERACTION_EFFECTS = {
+    "petted": (0, -8, 6, 0.4),
+    "clicked": (0, -3, 1.5, 0.1),
+    "treats": (-35, 0, 5, 0.5),
+    "toy": (0, -15, 0, 0),
+    "ball_clicks": (0, -4, 1, 0.1),
+    "ball_hits": (0, -3, 0, 0),
+    "rough_throws": (0, 0, -4, -0.6),
+}
+BOND_DAILY_GAIN, BOND_DAILY_LOSS = 3.0, 2.0  # Bond changes slowly and recoverably.
+THOUGHT_COOLDOWN = 90  # Ambient bubbles; requests are paced by the attention cooldown.
 
 
 def read_object(path: Path) -> dict:
@@ -61,10 +76,11 @@ def number(value, default, low, high):
 class Brain:
     """Replace decide() with a future policy/LLM adapter; preserve its command contract."""
 
-    def __init__(self, memory_path: Path, personality_path: Path, rng=None, clock=time.monotonic):
+    def __init__(self, memory_path: Path, personality_path: Path, rng=None, clock=time.monotonic, wall_clock=time.time):
         self.memory_path = memory_path
         self.rng = rng or random.Random()
         self.clock = clock
+        self.wall_clock = wall_clock
         config = read_object(personality_path)
         self.config = config
         self.configure({})
@@ -90,6 +106,21 @@ class Brain:
         self.recent = [cmd for cmd in history[-4:] if isinstance(cmd, str) and cmd in COMMANDS] if isinstance(history, list) else []
         self.activity = None
         self.sleep_cooldown_until = self.clock()
+        # Needs and relationship persist; missing keys start from gentle defaults.
+        defaults = {"hunger": 30, "boredom": 20, "affection": 50, "bond": 30}
+        self.needs = {key: number(memory.get(key), defaults[key], 0, 100) for key in NEED_KEYS}
+        habits = memory.get("habits")
+        self.habits = [number(v, 0, 0, 1000) for v in habits] if isinstance(habits, list) and len(habits) == 24 else [0.0] * 24
+        day = memory.get("bond_day")
+        self.bond_day = day if isinstance(day, str) and len(day) <= 10 else ""
+        self.bond_gain_today = number(memory.get("bond_gain_today"), 0, 0, BOND_DAILY_GAIN)
+        self.bond_loss_today = number(memory.get("bond_loss_today"), 0, 0, BOND_DAILY_LOSS)
+        self.last_seen = number(memory.get("last_seen"), 0, 0, 1e11)
+        self.greeted = False
+        self.interaction_session = ""
+        self.interactions = None
+        self.last_need_update = None
+        self.last_thought = self.clock() - THOUGHT_COOLDOWN
 
     def configure(self, overrides):
         if not isinstance(overrides, dict):
@@ -102,6 +133,63 @@ class Brain:
         self.play_cost = number(overrides.get("playing_energy_per_second"), number(self.config.get("playing_energy_per_second"), 1.5, 0, 10), 0, 10)
         self.sleep_gain = number(overrides.get("sleep_energy_per_second"), number(self.config.get("sleep_energy_per_second"), 5, 0, 20), 0, 20)
         self.rest_gain = number(overrides.get("rest_energy_per_second"), number(self.config.get("rest_energy_per_second"), 0.15, 0, 5), 0, 5)
+        self.hunger_rate = number(self.config.get("hunger_per_hour"), 25, 0, 100) / 3600
+        self.boredom_rate = number(self.config.get("boredom_per_minute"), 2, 0, 50) / 60
+        self.affection_decay = number(self.config.get("affection_decay_per_hour"), 10, 0, 100) / 3600
+
+    def change_bond(self, amount):
+        """Apply a bond change limited per local calendar day in each direction."""
+        today = time.strftime("%Y-%m-%d", time.localtime(self.wall_clock()))
+        if today != self.bond_day:
+            self.bond_day, self.bond_gain_today, self.bond_loss_today = today, 0.0, 0.0
+        if amount > 0:
+            amount = min(amount, BOND_DAILY_GAIN - self.bond_gain_today)
+            self.bond_gain_today += amount
+        else:
+            amount = -min(-amount, BOND_DAILY_LOSS - self.bond_loss_today)
+            self.bond_loss_today -= amount
+        self.needs["bond"] = max(0, min(100, self.needs["bond"] + amount))
+
+    def observe_needs(self, observation, now, profile) -> dict:
+        """Advance needs over time and apply new interactions; returns interaction deltas."""
+        elapsed = 0 if self.last_need_update is None else max(0, min(30, now - self.last_need_update))
+        self.last_need_update = now  # Capped: pauses and suspends do not starve the pet.
+        pace = 1.4 if profile == "Playful" else 0.6 if profile == "Calm" else 1
+        self.needs["hunger"] += self.hunger_rate * elapsed
+        self.needs["boredom"] += self.boredom_rate * pace * elapsed
+        self.needs["affection"] -= self.affection_decay * elapsed
+        deltas = {key: 0 for key in INTERACTION_KEYS}
+        counts = observation.get("interactions")
+        session = observation.get("session_id")
+        if isinstance(counts, dict) and isinstance(session, str) and 0 < len(session) <= 64:
+            current = {key: number(counts.get(key), 0, 0, 1e12) for key in INTERACTION_KEYS}
+            if self.interactions is not None and session == self.interaction_session:
+                deltas = {key: max(0, current[key] - self.interactions[key]) for key in INTERACTION_KEYS}
+            self.interaction_session, self.interactions = session, current
+        for key, count in deltas.items():
+            if count:
+                hunger, boredom, affection, bond = INTERACTION_EFFECTS[key]
+                self.needs["hunger"] += hunger * count
+                self.needs["boredom"] += boredom * count
+                self.needs["affection"] += affection * count
+                self.change_bond(bond * count)
+        if self.activity is not None and isinstance(observation.get("activity"), dict):
+            played = number(observation["activity"].get("playing"), 0, 0, 1e12) - self.activity.get("playing", 0)
+            self.needs["boredom"] -= max(0, played)  # Jumping around is fun too.
+        for key in ("hunger", "boredom", "affection"):
+            self.needs[key] = max(0, min(100, self.needs[key]))
+        hour = observation.get("local_hour")
+        user_events = sum(deltas[k] for k in INTERACTION_KEYS if k != "ball_hits")
+        if user_events and not isinstance(hour, bool) and isinstance(hour, (int, float)) and 0 <= hour < 24:
+            self.habits = [round(v * 0.98 ** user_events, 3) for v in self.habits]
+            self.habits[int(hour)] += user_events
+        return deltas
+
+    def favorite_hour(self, hour) -> bool:
+        """True when the user usually plays at this hour (enough history required)."""
+        if isinstance(hour, bool) or not isinstance(hour, (int, float)) or not 0 <= hour < 24 or sum(self.habits) < 10:
+            return False
+        return self.habits[int(hour)] >= 0.6 * max(self.habits)
 
     @staticmethod
     def family(command):
@@ -149,12 +237,33 @@ class Brain:
             self.memory["interactions"] += max(0, count - self.last_interaction_count)
         self.last_interaction_count = count
         now = self.clock()
+        deltas = self.observe_needs(observation, now, profile)  # Before activity updates its baseline.
         self.observe_activity(observation, now)
-        if not observation["grounded"] or observation["state"] in BUSY_STATES or observation.get("emotion") == "Sleepy":
+        hunger, boredom = self.needs["hunger"], self.needs["boredom"]
+        busy = not observation["grounded"] or observation["state"] in BUSY_STATES or observation.get("emotion") == "Sleepy"
+        upset = observation.get("emotion") in ("Angry", "Surprised")
+        attention_ready = now - self.last_attention >= (100 if profile == "Calm" else 60)
+        thought = None
+        wall = self.wall_clock()
+        if not self.greeted and not busy and not upset:
+            self.greeted = True
+            # Welcome back after a long break, only once a real bond exists.
+            if self.last_seen and wall - self.last_seen >= 3600 and self.needs["bond"] >= 50:
+                thought = "love"
+        self.last_seen = wall
+        if busy:
             command, mood = "IDLE", "content"
-        elif observation.get("emotion") in ("Angry", "Surprised"):
+        elif upset:
             command, mood = "SIT", "content"  # Give an upset/startled pet a calm action.
-        elif idle >= self.attention_after * (1.8 if profile == "Calm" else 0.8 if profile == "Playful" else 1) and now - self.last_attention >= (100 if profile == "Calm" else 60) and self.energy >= 30:
+        elif thought == "love":
+            command, mood = "FOLLOW_MOUSE", "playful"
+        elif attention_ready and hunger >= 70 and idle >= 45:
+            command, mood, thought = "SEEK_ATTENTION", "bored", "hungry"  # Asks for a treat.
+            self.last_attention = now
+        elif attention_ready and boredom >= 75 and idle >= 60 and self.energy >= 30:
+            command, mood, thought = "SEEK_ATTENTION", "bored", "bored"
+            self.last_attention = now
+        elif idle >= self.attention_after * (1.8 if profile == "Calm" else 0.8 if profile == "Playful" else 1) and attention_ready and self.energy >= 30:
             command, mood = "SEEK_ATTENTION", "bored"
             self.last_attention = now
         else:
@@ -171,6 +280,15 @@ class Brain:
             scale = {"WALK_LEFT": active, "WALK_RIGHT": active, "JUMP": active, "FOLLOW_MOUSE": active,
                      "IDLE": calm, "SIT": calm, "SLEEP": sleepy}
             weights = [weight * scale.get(cmd, 1.0) for cmd, weight in zip(commands, weights)]
+            # Needs reshape intent: boredom seeks play, warmth seeks the user.
+            b = boredom / 100
+            warmth = max(self.needs["affection"], self.needs["bond"]) / 100
+            habit = 1.15 if self.favorite_hour(observation.get("local_hour")) else 1.0
+            needs_scale = {"JUMP": (1 + 1.2 * b) * habit, "FOLLOW_MOUSE": (0.6 + 0.8 * warmth + b) * habit,
+                           "IDLE": 1 - 0.4 * b, "SIT": 1 - 0.4 * b,
+                           "WALK_LEFT": habit, "WALK_RIGHT": habit,
+                           "LOOK": 1.2 if self.needs["bond"] < 20 else 1.0}
+            weights = [weight * needs_scale.get(cmd, 1.0) for cmd, weight in zip(commands, weights)]
             # Penalize recent action families, not just alternating walk direction.
             families = [self.family(cmd) for cmd in self.recent]
             weights = [weight * 0.35 ** families.count(self.family(cmd))
@@ -182,7 +300,19 @@ class Brain:
                 weights[commands.index("SLEEP")] = 0
             command = self.rng.choices(commands, weights=weights, k=1)[0]
             mood = "sleepy" if command == "SLEEP" else "playful" if command in {"JUMP", "FOLLOW_MOUSE"} else "content"
+        if thought is None and not busy and not upset:
+            # A bubble shows the strongest current need; fresh affection earns a heart.
+            fresh_love = deltas["petted"] + deltas["treats"] > 0 and self.needs["affection"] >= 60
+            wanted = {"hungry": hunger >= 70, "bored": boredom >= 65,
+                      "sleepy": self.energy <= 25 and command != "SLEEP", "love": fresh_love}
+            thought = next((name for name in THOUGHTS if wanted[name]), None)
+        ambient = thought is not None and thought != "love" and command != "SEEK_ATTENTION"
+        if ambient and now - self.last_thought < THOUGHT_COOLDOWN:
+            thought = None
+        if thought is not None:
+            self.last_thought = now
         duration = self.rng.uniform(7, 12) if command == "SLEEP" else self.rng.uniform(2, 6)
+        if thought == "love" and command == "FOLLOW_MOUSE": duration = 4.0
         # Personality changes the pace and intent of an activity, not physics.
         if profile == "Curious" and command in {"IDLE", "LOOK", "FOLLOW_MOUSE"}: duration = min(8, duration * 1.4)
         if profile == "Calm" and command in {"IDLE", "SIT"}: duration = min(9, duration * 1.5)
@@ -190,15 +320,21 @@ class Brain:
         self.memory.update(last_command=command, mood=mood, decisions=self.memory["decisions"] + 1)
         if observation["grounded"] and observation["state"] not in BUSY_STATES and observation.get("emotion") not in {"Sleepy", "Angry", "Surprised"}:
             self.recent = (self.recent + [command])[-4:]
-        self.memory.update(energy=round(self.energy, 3), recent_actions=self.recent)
+        self.memory.update(energy=round(self.energy, 3), recent_actions=self.recent,
+                           habits=self.habits, bond_day=self.bond_day, bond_gain_today=round(self.bond_gain_today, 3),
+                           bond_loss_today=round(self.bond_loss_today, 3), last_seen=round(self.last_seen),
+                           **{key: round(self.needs[key], 3) for key in NEED_KEYS})
         self.dirty = True
         if now - self.last_save >= 30:
             self.save()
             self.last_save = now
         # Emotion hints are grounded in attention history, not the random action.
         emotion = "sad" if idle >= 300 else "sleepy" if idle >= 120 else "neutral"
-        return {"command": command, "duration_seconds": round(duration, 2), "mood": mood, "emotion": emotion,
-                "energy": round(self.energy, 1)}
+        decision = {"command": command, "duration_seconds": round(duration, 2), "mood": mood, "emotion": emotion,
+                    "energy": round(self.energy, 1), "needs": {key: round(self.needs[key], 1) for key in NEED_KEYS}}
+        if thought is not None:
+            decision["thought"] = thought
+        return decision
 
     def save(self):
         if not self.dirty:

@@ -33,6 +33,15 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
     private static readonly Geometry HeartGeometry = CachedGeometry("M 83,9 C 70,0 69,-7 76,-8 C 80,-9 83,-5 83,-5 C 83,-5 87,-10 91,-8 C 98,-5 95,1 83,9 Z");
     private static readonly Geometry AngerGeometry = CachedGeometry("M 77,-6 L 77,0 L 83,0 M 93,-6 L 93,0 L 87,0 M 77,12 L 77,6 L 83,6 M 93,12 L 93,6 L 87,6");
     private static readonly Geometry SurpriseGeometry = CachedGeometry("M 87,-9 L 87,1 M 87,5 L 87,7");
+    // Thought bubble sits above the left of the head, clear of emotion symbols on the right.
+    private static readonly Point BubbleCenter = new(30, -12);
+    private static readonly Geometry BubbleGeometry = Frozen(new EllipseGeometry(BubbleCenter, 17, 14));
+    private static readonly Geometry BubbleDotLarge = Frozen(new EllipseGeometry(new Point(44, 5), 3.5, 3.5));
+    private static readonly Geometry BubbleDotSmall = Frozen(new EllipseGeometry(new Point(49, 11), 2, 2));
+    private static readonly Geometry MoonGeometry = Frozen(new CombinedGeometry(GeometryCombineMode.Exclude,
+        new EllipseGeometry(BubbleCenter, 8, 8), new EllipseGeometry(new Point(34, -15), 7, 7)));
+    private static readonly Pen BallStripePen = FrozenPen(Brushes.DarkSlateBlue, 1.6);
+    private static Geometry Frozen(Geometry geometry) { geometry.Freeze(); return geometry; }
     private static Geometry CachedGeometry(string path)
     {
         var geometry = Geometry.Parse(path); geometry.Freeze(); return geometry;
@@ -365,6 +374,41 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
             dc.Pop();
         }
         if (p.Eating) DrawTreat(dc, p);
+        if (pet.Thought.Visible && !p.PickedUp && !p.Sleeping && !p.Airborne) DrawThoughtBubble(dc);
+    }
+
+    // Unflipped so icons read the same whichever way the cat faces.
+    private void DrawThoughtBubble(DrawingContext dc)
+    {
+        dc.PushOpacity(pet.Thought.Opacity);
+        dc.PushTransform(new TranslateTransform(0, pet.Thought.Rise));
+        DrawOutlinedEffect(dc, BubbleDotSmall, Brushes.White);
+        DrawOutlinedEffect(dc, BubbleDotLarge, Brushes.White);
+        DrawOutlinedEffect(dc, BubbleGeometry, Brushes.White);
+        switch (pet.Thought.Kind)
+        {
+            case ThoughtKind.Hungry:
+                dc.PushTransform(new TranslateTransform(BubbleCenter.X - 1, BubbleCenter.Y));
+                dc.PushTransform(new ScaleTransform(0.85, 0.85));
+                dc.DrawGeometry(Brushes.Salmon, Outline, FishGeometry);
+                dc.DrawEllipse(Ink, null, new Point(-6, -1), 1.4, 1.4);
+                dc.Pop(); dc.Pop();
+                break;
+            case ThoughtKind.Love:
+                dc.PushTransform(new TranslateTransform(BubbleCenter.X - 83, BubbleCenter.Y + 0.5));
+                dc.PushTransform(new ScaleTransform(0.7, 0.7, 83, -0.5));
+                dc.DrawGeometry(Brushes.HotPink, Outline, HeartGeometry);
+                dc.Pop(); dc.Pop();
+                break;
+            case ThoughtKind.Bored:
+                dc.DrawEllipse(Brushes.Coral, Outline, BubbleCenter, 8, 8);
+                dc.DrawEllipse(null, BallStripePen, BubbleCenter, 2.5, 7);
+                break;
+            case ThoughtKind.Sleepy:
+                dc.DrawGeometry(Brushes.Gold, Outline, MoonGeometry);
+                break;
+        }
+        dc.Pop(); dc.Pop();
     }
 
     private void DrawTreat(DrawingContext dc, in Pose p)

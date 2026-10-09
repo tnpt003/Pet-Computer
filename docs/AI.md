@@ -327,6 +327,49 @@ not retried later. Cached sound variants explicitly alternate source excerpts an
 use bounded RMS gain before soft limiting, retaining cartoon pitch and envelopes.
 No new audio dependency or downloaded asset was introduced.
 
+## Needs, bond and thought bubbles (2026-10-09)
+
+Python keeps four 0–100 values in `ai-memory.json`. Existing memory files gain
+these keys with defaults. Energy and history are preserved.
+
+| Need | Rises | Falls | Effect |
+|---|---|---|---|
+| hunger (start 30) | `hunger_per_hour` (25) while the app runs | treat −35 | ≥70 and idle ≥45 s: SEEK_ATTENTION + `hungry` |
+| boredom (start 20) | `boredom_per_minute` (2; Playful ×1.4, Calm ×0.6) | petting −8, click −3, ball −15/−4/−3, jumping | more JUMP/FOLLOW_MOUSE, fewer IDLE/SIT; ≥75: asks with `bored` |
+| affection (start 50) | petting +6, treat +5, click +1.5 | `affection_decay_per_hour` (10), rough throw −4 | more FOLLOW_MOUSE; fresh petting at ≥60: `love` |
+| bond (start 30) | petting/treats/ball, slowly | rough throw −0.6 | more FOLLOW_MOUSE; ≥50 greets after ≥1 h away |
+
+Bond changes are capped each local day: +3 at most and −2 at most, so it always
+recovers. Time is counted at no more than 30 s per observation. Pauses, suspends
+and closed-app time therefore never starve the pet. The three rates are optional
+keys in `ai/personality.json`. They are not exposed in the tuning editor.
+
+The optional observation field `interactions` carries cumulative per-session counts:
+`petted`, `clicked`, `treats`, `toy`, `ball_clicks`, `ball_hits`, `rough_throws`.
+A rough throw uses the existing ≥1600 DIPs/s release. Python credits only increases
+within the same `session_id`, so repeats and restarts are never double counted.
+Python also keeps a decayed 24-hour histogram of interactions. At the user's usual
+play hour (enough history required), active choices get ×1.15.
+
+Decisions may add `needs` (for the debug view) and `thought`
+(`hungry`, `bored`, `sleepy`, `love`). C# drops an invalid thought or needs
+object; it does not reject the whole decision. Ambient bubbles are at least 90 s
+apart in Python. Bubbles attached to SEEK_ATTENTION follow the attention cooldown.
+C# shows a bubble for 2.5 s with a 20 s per-kind cooldown and an 8 s gap between
+bubbles. It only shows one when the pet is grounded and not asleep, waking,
+dragged, airborne, preparing to jump, eating or Angry/Surprised/Dizzy/Sleepy.
+Bubbles are drawing only. With Python off there are no needs or bubbles, and
+local behavior is unchanged.
+
+## Short sad episodes (C#, works offline)
+
+`PetEmotions` keeps a user clock that the pet's own sleep/wake reset does not
+clear. After 180 s without a touch (click, petting, treat, ball, throw), the pet
+looks sad for about 6 s and then returns to normal. Episodes are at least 180 s
+apart. An episode waits for a free moment: never during sleep, drag, flight or
+eating, and never over another reaction. Any touch ends it at once. The 2-minute
+inactivity sleep is unchanged.
+
 ## Personality editor and pacing
 
 The observation accepts optional `tuning` with the eight snake_case keys supported

@@ -63,6 +63,35 @@ public sealed class PetModel
     public PetMotion Motion { get; } = new();
     public PetEmotions Emotions { get; } = new();
     public PetActivity Activity { get; } = new();
+    public PetInteractions Interactions { get; } = new();
+    public PetThought Thought { get; } = new();
+}
+
+// Cumulative per-session counts of how the user treated the pet. Python turns the
+// differences into needs and bond; counting never changes behavior here.
+public sealed class PetInteractions
+{
+    public long Petted { get; private set; }
+    public long Clicked { get; private set; }
+    public long Treats { get; private set; }
+    public long Toy { get; private set; }
+    public long BallClicks { get; private set; }
+    public long BallHits { get; private set; }
+    public long RoughThrows { get; private set; }
+    public void Record(string kind)
+    {
+        switch (kind)
+        {
+            case "petted": Petted++; break;
+            case "left_clicked": Clicked++; break;
+            case "treat_consumed": Treats++; break;
+            case "toy_started": Toy++; break;
+            case "ball_clicked": BallClicks++; break;
+        }
+    }
+    public void BallHit() => BallHits++;
+    public void RoughThrow() => RoughThrows++;
+    public PetInteractions Snapshot() => (PetInteractions)MemberwiseClone();
 }
 
 // Observation only: Python owns energy and policy. Totals survive UI resets so

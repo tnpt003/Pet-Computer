@@ -91,5 +91,40 @@ internal static class EmotionTests
         pet.Emotions.Reset();
         check(pet.Emotions.Current == PetEmotion.Neutral && pet.Emotions.SecondsWithoutAttention == 0,
             "Reset clears emotion, cooldown history, and neglect timer");
+
+        // Short sad episodes: user clock survives the pet's own sleep/wake cycle.
+        pet = Pet();
+        var sleeper = new PetBehavior(new PetSettings()) { Quiet = true }; // Sleep/wake only, no random actions.
+        bool slept = false, sadBeforeDue = false;
+        for (int i = 0; i < 179 * 60; i++)
+        {
+            sleeper.Step(pet, 1.0 / 60);
+            pet.Emotions.Step(pet, 1.0 / 60);
+            slept |= pet.Action == PetAction.Sleeping;
+            sadBeforeDue |= pet.Emotions.Target == PetEmotion.Sad;
+        }
+        check(slept && !sadBeforeDue && pet.Emotions.SecondsWithoutAttention < pet.Emotions.SecondsWithoutUser,
+            "Autonomous sleep/wake resets inactivity but not the user's absence clock");
+        Advance(pet, 1.5);
+        check(pet.Emotions.Target == PetEmotion.Sad && pet.Emotions.Current == PetEmotion.Sad,
+            "Three minutes without the user starts a short sad episode");
+        Advance(pet, PetEmotions.SadEpisodeDuration);
+        check(pet.Emotions.Target != PetEmotion.Sad, "The sad episode ends by itself after a few seconds");
+        Advance(pet, 60);
+        check(pet.Emotions.Target != PetEmotion.Sad, "Sad episodes are spaced at least three minutes apart");
+        pet = Pet();
+        Advance(pet, 181);
+        pet.Emotions.Reset(); // Wake-up style reset must not cancel the episode logic.
+        Advance(pet, 0.5);
+        check(pet.Emotions.Target == PetEmotion.Sad, "A sad episode still triggers after the pet's own wake-up reset");
+        pet.Emotions.Attention();
+        Advance(pet, 0.2);
+        check(pet.Emotions.Target == PetEmotion.Happy && pet.Emotions.SecondsWithoutUser < 1,
+            "Touching the pet ends sadness at once");
+        pet = Pet();
+        pet.Action = PetAction.Sleeping;
+        pet.Emotions.EnterSleep();
+        Advance(pet, 200);
+        check(pet.Emotions.Current == PetEmotion.Sleepy, "A sad episode never interrupts locked sleep");
     }
 }

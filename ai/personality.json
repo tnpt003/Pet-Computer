@@ -6,5 +6,8 @@
   "walking_energy_per_second": 0.5,
   "playing_energy_per_second": 1.5,
   "sleep_energy_per_second": 5,
-  "rest_energy_per_second": 0.15
+  "rest_energy_per_second": 0.15,
+  "hunger_per_hour": 25,
+  "boredom_per_minute": 2,
+  "affection_decay_per_hour": 10
 }

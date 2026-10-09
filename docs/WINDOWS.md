@@ -317,6 +317,12 @@ the running executable. Use it from the published `win-x64` copy, not a dev buil
 The menu reads the registry each time, so removing the entry from Task Manager's
 Startup page is respected.
 
+**Thought bubbles and needs.** With Python AI on, the cat occasionally shows a small
+bubble above its head: fish (hungry, give a treat), ball (bored, play), moon (low
+energy) or heart (affection). The behavior debug view lists hunger, boredom,
+affection, bond and the current bubble. See [docs/AI.md](AI.md) for the rules.
+After three minutes without attention the cat also looks briefly sad.
+
 **Version.** The version lives in `DesktopPet.csproj` (`<Version>`). **About Desktop
 Pet** in the cat's menu shows the version, data folder and AI status.
 `scripts/publish.ps1` also writes `artifacts\DesktopPet-<version>-win-x64.zip`

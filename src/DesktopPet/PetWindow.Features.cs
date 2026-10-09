@@ -217,7 +217,7 @@ public sealed partial class PetWindow
             if (toyPlay.Step(dt, Math.Abs(delta) < 49 && ball.Height < 24 && ball.BatCooldown <= 0, preferences.Personality))
             {
                 pet.Facing = delta < 0 ? -1 : 1;
-                ball.Bat(pet.Facing, 0.9 + featureRandom.NextDouble() * 0.2);
+                ball.Bat(pet.Facing, 0.9 + featureRandom.NextDouble() * 0.2); pet.Interactions.BallHit();
                 pet.BatRemaining = 0.3; PlayPetSound("ball_tap");
             }
             pet.PlayCrouch = toyPlay.CrouchBlend;

@@ -23,6 +23,10 @@ public partial class App : Application
         catch (System.Threading.AbandonedMutexException) { ownsInstance = true; }
         showControls = new System.Threading.EventWaitHandle(false, System.Threading.EventResetMode.AutoReset, key + "-controls");
         if (!ownsInstance) { showControls.Set(); Shutdown(); return; }
+        PetLog.Install();
+        // Log only; existing crash behavior is unchanged.
+        DispatcherUnhandledException += (_, args) => System.Diagnostics.Trace.WriteLine($"Unhandled UI exception: {args.Exception}");
+        AppDomain.CurrentDomain.UnhandledException += (_, args) => System.Diagnostics.Trace.WriteLine($"Unhandled exception: {args.ExceptionObject}");
         pet = new PetWindow();
         MainWindow = pet;
         var menu = new Forms.ContextMenuStrip();

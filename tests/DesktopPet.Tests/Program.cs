@@ -4,9 +4,16 @@ var settings = new PetSettings();
 var physics = new PetPhysics(settings);
 var bounds = new Area(-1920, 0, 0, 1040);
 int checks = 0;
+var failures = new List<string>();
+// Record failures and keep going so one regression does not hide the others.
 void Check(bool condition, string message)
 {
-    if (!condition) throw new Exception(message);
+    if (!condition)
+    {
+        failures.Add(message);
+        Console.WriteLine($"FAIL: {message}");
+        return;
+    }
     checks++;
     Console.WriteLine($"PASS: {message}");
 }
@@ -48,7 +55,7 @@ tracker.Add(0.01, 10000, 10000);
 velocity = tracker.Velocity(2200);
 Check(Math.Abs(Math.Sqrt(velocity.X * velocity.X + velocity.Y * velocity.Y) - 2200) < 0.01,
     "Extreme throws are capped by total speed");
-Console.WriteLine($"All {checks} checks passed.");
+Console.WriteLine($"Physics checks done ({checks} passed so far).");
 await AiTests.Run(Check);
 SleepTests.Run(Check);
 PickupTests.Run(Check);
@@ -58,6 +65,7 @@ PolishTests.Run(Check);
 InteractionPolishTests.Run(Check);
 FeatureExpansionTests.Run(Check);
 MotionTests.Run(Check);
+ToolingTests.Run(Check);
 var activity = new PetActivity();
 activity.Step(PetAction.Walking, 2);
 activity.Step(PetAction.Jumping, 1);
@@ -71,4 +79,11 @@ Check(activity.Walking == 2 && activity.Playing == 1 && activity.Sleeping == 10 
 var snapshot = activity.Snapshot();
 activity.Step(PetAction.Walking, 1);
 Check(snapshot.Walking == 2, "AI activity snapshot stays stable while real-time activity continues");
+if (failures.Count > 0)
+{
+    Console.WriteLine($"{failures.Count} C# check(s) FAILED ({checks} passed):");
+    foreach (string failure in failures) Console.WriteLine($"  - {failure}");
+    return 1;
+}
 Console.WriteLine($"Total C# checks passed: {checks}");
+return 0;

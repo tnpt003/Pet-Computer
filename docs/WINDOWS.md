@@ -137,7 +137,7 @@ Walking accelerates gently and brakes near screen edges before turning inward.
 This applies only to grounded walking; thrown and jumping physics are unchanged.
 Neutral idle occasionally includes small ear twitches and glances; sleep and
 emotional reactions suppress this idle detail.
-Ear twitches now reach 8Ã¢â‚¬â€œ9 degrees, with uneven gaps between gestures. Glances
+Ear twitches now reach 8–9 degrees, with uneven gaps between gestures. Glances
 move the eyes about 4 DIPs sideways and slightly up/down, accompanied by a small
 head shift/tilt. Each glance eases in, holds about 1.4 seconds, and eases back.
 

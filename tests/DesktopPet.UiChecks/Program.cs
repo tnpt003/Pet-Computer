@@ -22,8 +22,15 @@ internal static class Program
             try
             {
                 await Run(window);
-                Console.WriteLine($"All {checks} WPF checks passed.");
                 window.Close();
+                if (failures.Count > 0)
+                {
+                    Console.WriteLine($"{failures.Count} WPF check(s) FAILED ({checks} passed):");
+                    foreach (string failure in failures) Console.WriteLine($"  - {failure}");
+                    app.Shutdown(1);
+                    return;
+                }
+                Console.WriteLine($"All {checks} WPF checks passed.");
                 app.Shutdown(0);
             }
             catch (Exception ex)
@@ -39,9 +46,17 @@ internal static class Program
     private static T Field<T>(PetWindow window, string name) =>
         (T)typeof(PetWindow).GetField(name, BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(window)!;
 
+    private static readonly List<string> failures = new();
+
+    // Record failures and keep going so one regression does not hide the others.
     private static void Check(bool condition, string description)
     {
-        if (!condition) throw new Exception(description);
+        if (!condition)
+        {
+            failures.Add(description);
+            Console.WriteLine($"FAIL: {description}");
+            return;
+        }
         checks++;
         Console.WriteLine($"PASS: {description}");
     }

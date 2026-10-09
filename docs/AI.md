@@ -193,7 +193,7 @@ activity. The first observation establishes a counter baseline after each Python
 restart; memory counts subsequent observed interactions rather than a perfect
 historical total.
 
-A `decision` response contains `command`, `duration_seconds` (0.5Ã¢â‚¬â€œ12), and `mood`
+A `decision` response contains `command`, `duration_seconds` (0.5–12), and `mood`
 (`content`, `playful`, `bored`, or `sleepy`). C# validates all of them before use.
 An optional `emotion` hint (`neutral`, `sleepy`, `sad`) is based on attention history.
 Replies without it remain valid. Immediate input reactions and their cooldowns live

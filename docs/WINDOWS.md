@@ -289,3 +289,35 @@ impact speed to a 0.22-second visual squash without changing collision physics.
 
 To export regression frames for inspection, set PET_RENDER_REVIEW to an absolute
 folder before running scripts/test.ps1 -Ui. This run's samples are in artifacts/motion-review.
+
+## Smooth motion, logs, startup and version (2026-10-09)
+
+**Frame pacing.** A `DispatcherTimer` set to 16 ms measured only ~37 FPS on the
+development PC, alternating 16 ms and 31 ms gaps, because the default Windows
+timer granularity is 15.6 ms. That unevenness showed as a stutter while the
+window followed a thrown cat. The timer now runs at half the target period and
+skips ticks that arrive early (measured ~58 FPS, p90 gap ~20 ms). Targets are
+unchanged: ~60 FPS active, ~30 sleeping, ~10 paused.
+
+**Presentation only.** The window position blends between the last two fixed
+1/120 s physics states, so frames with one or two physics steps no longer jump
+unevenly. Reset, drag, DPI changes and monitor recovery snap without blending.
+The window moves with one `SetWindowPos` call per frame instead of separate Left
+and Top updates. Physics, throw speed, gravity and bounce are unchanged. The debug
+view shows the measured FPS and the largest frame gap in the last second.
+
+**Logs.** Diagnostics (AI fallback reasons, Python stderr, sound errors and
+unhandled exceptions) are written to `%LOCALAPPDATA%\DesktopPet\logs\desktoppet.log`.
+The file is capped at about 1 MB plus one `desktoppet.old.log`. With
+`PET_DATA_DIRECTORY` set, logs go into that folder instead.
+
+**Start with Windows.** Off by default. The cat's right-click menu toggles a per-user
+`HKCU\Software\Microsoft\Windows\CurrentVersion\Run` entry named `DesktopPet` for
+the running executable. Use it from the published `win-x64` copy, not a dev build.
+The menu reads the registry each time, so removing the entry from Task Manager's
+Startup page is respected.
+
+**Version.** The version lives in `DesktopPet.csproj` (`<Version>`). **About Desktop
+Pet** in the cat's menu shows the version, data folder and AI status.
+`scripts/publish.ps1` also writes `artifacts\DesktopPet-<version>-win-x64.zip`
+containing the whole folder.

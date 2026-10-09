@@ -10,7 +10,7 @@ from contextlib import redirect_stderr
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "ai"))
-from service import Brain, COMMANDS, handle
+from service import Brain, COMMANDS, day_rhythm, handle
 
 
 class BrainTests(unittest.TestCase):
@@ -49,6 +49,19 @@ class BrainTests(unittest.TestCase):
             self.assertTrue(0.5 <= decision["duration_seconds"] <= 12)
             commands.add(decision["command"])
         self.assertEqual(commands, COMMANDS - {"SEEK_ATTENTION"})
+
+    def test_local_hour_biases_sleep_without_breaking_variety(self):
+        def sleep_share(hour):
+            brain = Brain(Path(self.temporary.name) / f"m{hour}.json", ROOT / "ai/personality.json", random.Random(9), lambda: self.now)
+            picks = [brain.decide({**self.observation(), "local_hour": hour})["command"] for _ in range(400)]
+            return picks.count("SLEEP") / len(picks), set(picks)
+        night, night_commands = sleep_share(23)
+        morning, _ = sleep_share(8)
+        self.assertGreater(night, morning)
+        self.assertIn("WALK_LEFT", night_commands)  # Night only biases, never forbids activity.
+        self.assertEqual(day_rhythm(None), (1.0, 1.0, 1.0))
+        self.assertEqual(day_rhythm(True), (1.0, 1.0, 1.0))
+        self.assertEqual(day_rhythm(25), (1.0, 1.0, 1.0))
 
     def test_memory_survives_restart(self):
         self.brain.decide(self.observation(count=1))

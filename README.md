@@ -186,6 +186,8 @@ procedural, so there are no missing asset paths or sprite-sheet setup steps.
 - **Right-click the tray icon:** pause/resume, enable/disable Python AI, view AI status, reset, or exit.
 - **Double-click the tray icon:** reset to the primary screen.
 
+The cat's own menu also has **Start with Windows** (off by default) and **About**.
+Diagnostics are logged to `%LOCALAPPDATA%\DesktopPet\logs`.
 The tray icon may be under the Windows notification area's hidden-icons arrow.
 Pause freezes animation, physics, and random actions. You can still reposition the
 pet while paused; physics resumes when you unpause. Reset returns it to the floor
@@ -194,7 +196,7 @@ at the center of the primary screen. Exit disposes the tray icon and closes the 
 `Topmost` keeps the pet above ordinary windows. Windows secure desktops (such as
 UAC), exclusive-fullscreen applications, and competing topmost windows can cover
 it. This app does not override those operating-system behaviors. It does not add
-itself to Windows startup automatically.
+itself to Windows startup automatically; that only happens if you enable it.
 
 ## 8. Verify
 

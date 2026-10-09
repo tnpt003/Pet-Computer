@@ -185,6 +185,15 @@ An `observe` request contains:
 | `last_event` | Latest pet event: reset, drag_started, released, drag_cancelled, paused, resumed |
 | `last_applied_command` | Last accepted AI command, or `LOCAL` |
 | `emotion` | Current visible/reaction emotion, such as `Happy`, `Angry`, or `Neutral` |
+| `local_hour` | Optional computer-local time as fractional hours (0–24), e.g. `23.5` |
+
+`local_hour` gives Python a gentle day rhythm: at night (22:00–06:00) active
+commands are weighted ×0.6, IDLE/SIT ×1.2 and SLEEP ×1.8; in the morning
+(07:00–10:00) active commands ×1.2 and SLEEP ×0.7. It only biases choices;
+activity is never forbidden, and C# still owns sleep length, the sleep lock and
+the wake cooldown. A missing or invalid value leaves the weights unchanged.
+Python's `BUSY_STATES` must match `PetActionRules.RejectsDecisions` in C#; a C#
+check fails if the two lists drift apart.
 
 These are periodic snapshots with an event summary, not a lossless event queue.
 Interactions occurring between requests are reflected in the counter. The idle

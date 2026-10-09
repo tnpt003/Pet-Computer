@@ -58,8 +58,20 @@ public sealed partial class PetWindow
         customize.Click += (_, _) => ShowPetSettings();
         menu.Items.Insert(0, customize); menu.Items.Insert(1, treat); menu.Items.Insert(2, toy);
         menu.Items.Insert(3, home); menu.Items.Insert(4, quiet); menu.Items.Insert(5, sounds);
+        // Off unless the user enables it; the registry value is read fresh each time.
+        var autostart = new MenuItem { Header = "Start with Windows", IsCheckable = true };
+        autostart.Click += (_, _) =>
+        {
+            if (Environment.ProcessPath is not string exe || !startup.SetEnabled(autostart.IsChecked, exe))
+                MessageBox.Show("Windows startup could not be changed.", "Desktop Pet");
+        };
+        var about = new MenuItem { Header = "About Desktop Pet" };
+        about.Click += (_, _) => ShowAbout();
+        menu.Items.Insert(6, autostart);
+        menu.Items.Insert(menu.Items.Count - 1, about); // Just above Exit.
         menu.Opened += (_, _) =>
         {
+            autostart.IsChecked = Environment.ProcessPath is string exe && startup.IsEnabled(exe);
             customize.Header = preferences.Name + " — name and personality…";
             sounds.IsChecked = preferences.Sounds;
             toy.Header = toyWindow == null ? "Play with ball" : "Put ball away";
@@ -70,6 +82,16 @@ public sealed partial class PetWindow
             forget.IsEnabled = preferences.RestX.HasValue;
         };
     }
+
+    private readonly StartupRegistration startup = new();
+
+    public static string VersionText =>
+        (System.Reflection.CustomAttributeExtensions.GetCustomAttribute<System.Reflection.AssemblyInformationalVersionAttribute>(typeof(PetWindow).Assembly)
+            ?.InformationalVersion ?? "unknown").Split('+')[0];
+
+    private void ShowAbout() => MessageBox.Show(
+        $"Desktop Pet {VersionText}\n\nData and logs: {PetPreferences.DataDirectory}\n{AiStatus}",
+        "About Desktop Pet");
 
     private void SavePreferences()
     {

@@ -37,6 +37,21 @@ def read_object(path: Path) -> dict:
         return {}
 
 
+def day_rhythm(hour) -> tuple[float, float, float]:
+    """(active, rest, sleep) weight multipliers for the computer's local hour.
+
+    Only biases Python's suggestions; C# still owns sleep length, the sleep lock
+    and the wake cooldown. Missing or invalid hours leave weights unchanged.
+    """
+    if isinstance(hour, bool) or not isinstance(hour, (int, float)) or not 0 <= hour < 24:
+        return 1.0, 1.0, 1.0
+    if hour >= 22 or hour < 6:
+        return 0.6, 1.2, 1.8  # Night: drowsier, fewer bursts of activity.
+    if 7 <= hour < 10:
+        return 1.2, 1.0, 0.7  # Morning: livelier, less napping.
+    return 1.0, 1.0, 1.0
+
+
 def number(value, default, low, high):
     if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
         return default
@@ -152,6 +167,10 @@ class Brain:
             if profile == "Calm": rest *= 1.6
             weights = [rest, 2 * vigor, 2 * vigor, rest, play * 3 * vigor,
                        self.sleepiness * 2 * rest, curiosity * 2 * vigor, 0.3 + curiosity * 2]
+            active, calm, sleepy = day_rhythm(observation.get("local_hour"))
+            scale = {"WALK_LEFT": active, "WALK_RIGHT": active, "JUMP": active, "FOLLOW_MOUSE": active,
+                     "IDLE": calm, "SIT": calm, "SLEEP": sleepy}
+            weights = [weight * scale.get(cmd, 1.0) for cmd, weight in zip(commands, weights)]
             # Penalize recent action families, not just alternating walk direction.
             families = [self.family(cmd) for cmd in self.recent]
             weights = [weight * 0.35 ** families.count(self.family(cmd))

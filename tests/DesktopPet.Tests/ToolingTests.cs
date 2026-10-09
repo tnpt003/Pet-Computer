@@ -29,6 +29,26 @@ static class ToolingTests
         var python = match.Groups[1].Value.Split(',').Select(s => s.Trim().Trim('"')).Where(s => s.Length > 0).OrderBy(s => s);
         var csharp = Enum.GetValues<PetAction>().Where(PetActionRules.RejectsDecisions).Select(a => a.ToString()).OrderBy(s => s);
         check(match.Success && python.SequenceEqual(csharp), "Python BUSY_STATES matches C# actions that reject AI decisions");
+        string json = System.Text.Json.JsonSerializer.Serialize(
+            new DesktopPet.AI.PetObservation("Idle", true, 3, 1, "test", "LOCAL", LocalHour: 23.5), DesktopPet.AI.AiProtocol.Json);
+        check(json.Contains("\"local_hour\":23.5"), "Observation sends the local hour for Python's day rhythm");
+
+        // Uses a throwaway HKCU key, never the real Windows Run key.
+        string testKey = @"Software\DesktopPetTest-" + Guid.NewGuid().ToString("N");
+        try
+        {
+            var startup = new StartupRegistration(testKey);
+            string exe = Path.Combine(Path.GetTempPath(), "Pet Folder", "DesktopPet.exe");
+            check(!startup.IsEnabled(exe), "Windows startup is off by default");
+            check(startup.SetEnabled(true, exe) && startup.IsEnabled(exe) &&
+                  StartupRegistration.Command(exe) == "\"" + exe + "\"", "Enabling startup stores the quoted executable path");
+            check(!startup.IsEnabled(Path.Combine(Path.GetTempPath(), "Other", "DesktopPet.exe")),
+                "A startup entry for a different copy is not reported as this one");
+            check(startup.SetEnabled(false, exe) && !startup.IsEnabled(exe) && startup.SetEnabled(false, exe),
+                "Disabling startup removes the entry and is idempotent");
+        }
+        finally { Microsoft.Win32.Registry.CurrentUser.DeleteSubKeyTree(testKey, false); }
+
         check(Enum.GetValues<PetAction>().Where(PetActionRules.IsCancellableLocal)
                 .SequenceEqual(new[] { PetAction.Grooming, PetAction.Stretching, PetAction.PreparingJump }),
             "Only local self-care and jump preparation are cancelled straight to Idle");

@@ -7,7 +7,8 @@ namespace DesktopPet.AI;
 public sealed record PetObservation(
     string State, bool Grounded, double SecondsSinceInteraction,
     long InteractionCount, string LastEvent, string LastAppliedCommand, string Emotion = "Neutral",
-    PetActivity? Activity = null, string Personality = "Balanced", string SessionId = "", PersonalityTuning? Tuning = null);
+    PetActivity? Activity = null, string Personality = "Balanced", string SessionId = "", PersonalityTuning? Tuning = null,
+    double? LocalHour = null);
 
 public sealed record AiDecision(string Command, double DurationSeconds, string Mood, string? Emotion = null, double? Energy = null);
 

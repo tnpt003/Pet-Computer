@@ -136,6 +136,10 @@ internal static class Program
         window.RaiseEvent(MouseEvent(UIElement.MouseLeftButtonUpEvent));
         Check(!window.IsMouseCaptured && pet.Action != PetAction.Thrown && pet.Action != PetAction.Dragging,
             "Quick click releases capture without creating a throw");
+        var headers = window.ContextMenu!.Items.OfType<System.Windows.Controls.MenuItem>().Select(item => item.Header as string).ToList();
+        Check(headers.Contains("Start with Windows") && headers.IndexOf("About Desktop Pet") == headers.Count - 2 &&
+              headers[^1] == "Exit pet" && !string.IsNullOrEmpty(PetWindow.VersionText) && PetWindow.VersionText != "unknown",
+            "Context menu offers Windows startup and About (above Exit) with a version");
         window.ToggleDebug();
         var debugWindow = Field<Window>(window, "debugWindow");
         Check(debugWindow.IsVisible && Field<System.Windows.Controls.TextBlock>(window, "debugText").Text.Contains("Energy:") &&

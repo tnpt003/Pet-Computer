@@ -412,7 +412,8 @@ public sealed partial class PetWindow : Window
         double requestedAt = clock.Elapsed.TotalSeconds;
         var observation = new PetObservation(pet.Action.ToString(), pet.Grounded,
             pet.Emotions.SecondsWithoutAttention, interactionCount, lastEvent, behavior.LastAppliedCommand,
-            pet.Emotions.Current.ToString(), pet.Activity.Snapshot(), preferences.Personality, sessionId, preferences.Tuning?.Normalized());
+            pet.Emotions.Current.ToString(), pet.Activity.Snapshot(), preferences.Personality, sessionId, preferences.Tuning?.Normalized(),
+            DateTime.Now.Hour + DateTime.Now.Minute / 60.0);
         try
         {
             // Even a future cached source that completes synchronously must wait until

@@ -1,17 +1,22 @@
 # Tiến độ Desktop Pet
 
-Cập nhật: 2026-10-08 (Asia/Saigon).
-Project: C:\Project VS\Pet Computer.
+Cập nhật: 2026-10-09 (Asia/Saigon).
+Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 
-## Kết quả test gần nhất
-- scripts/test.ps1 -Ui: 201 C# checks, 107 WPF checks, 20 Python tests đạt. Log: test-motion.log. Đợt tính năng trước đạt 181 C#/101 WPF/20 Python (test-features.log).
-- Publish Release self-contained thành công: artifacts/win-x64/DesktopPet.exe.
-- scripts/check-publish.ps1 đạt: khởi động từ thư mục khác, bundled .NET/Python, mở lần hai, đóng ứng dụng và Python sạch.
-- Smoke test dùng PET_DATA_DIRECTORY riêng dưới artifacts/smoke-data/<run-id>, không ghi preferences hoặc memory của người dùng.
-- Đã xem ảnh render Grooming và Stretching trong artifacts/review; không thấy cắt hình ở các khung đã xem. Chưa xác nhận độ mượt bằng thao tác thực tế.
-- Lịch sử: bản bàn giao trước đạt 143 C#/87 WPF/16 Python; đợt ưu tiên tiếp theo đạt 156 C#/90 WPF/16 Python. Không dùng số liệu cũ thay kết quả hiện tại.
+## Kết quả test gần nhất (2026-10-09)
+- scripts/test.ps1 -Ui: 211 C# checks, 110 WPF checks, 21 Python tests đạt. Test giờ chạy hết rồi báo danh sách FAIL ở cuối (không dừng ở lỗi đầu).
+- Publish thành công (version 1.0.0) + zip artifacts/DesktopPet-1.0.0-win-x64.zip. check-publish.ps1 đạt (bundled runtime, mở lần hai, đóng sạch). Log của bản publish được ghi vào smoke-data/<run>/logs, không đụng %LOCALAPPDATA%.
+- Refactor renderer: so 1569 frame render (mọi action × hướng × emotion × thời điểm, pickup, treat, play) giống hệt từng pixel với commit trước (công cụ tạm ở scratchpad, không nằm trong repo).
+- Đo nhịp timer trên máy dev: DispatcherTimer 16 ms chỉ đạt ~37 FPS (khoảng 16/31 ms xen kẽ); cách mới đo được ~58 FPS, p90 ~20 ms (đo bằng script probe, không phải trong app thật).
+- Lịch sử: 201 C#/107 WPF/20 Python (motion, 2026-10-08); 181/101/20 (features). Không dùng số liệu cũ thay kết quả hiện tại.
 
 ## Đã làm gần đây
+- 2026-10-09: Glitch khi ném/đi: timer chạy nửa chu kỳ + bỏ tick sớm (nhịp đều ~60 FPS), nội suy vị trí hiển thị giữa 2 bước physics 1/120 s, dời cửa sổ bằng 1 lệnh SetWindowPos thay vì Left rồi Top. Reset/drag/DPI/khôi phục màn hình thì snap, không nội suy. Không đổi physics, lực ném, gravity, bounce, FPS mục tiêu (60/30/10). Debug view hiện FPS và max gap.
+- 2026-10-09: Log file %LOCALAPPDATA%\DesktopPet\logs\desktoppet.log (≈1 MB + .old.log), ghi cả unhandled exception (chỉ log, không đổi hành vi). Sửa lỗi ký tự trong docs.
+- 2026-10-09: PetActionRules (PetModel.cs) gom danh sách action từ chối lệnh AI (DecisionGuard + TryApply) và action hủy về Idle; Python dùng BUSY_STATES, có test so khớp hai bên. PetEmotions/CanPlay dùng tập khác nên giữ nguyên. Hằng số GroomingDuration/StretchingDuration/SelfCareCooldown/AttentionGestureDuration/AttentionCooldown trong PetSettings. Pen trong renderer được cache + freeze.
+- 2026-10-09: PetRenderer.OnRender tách thành ComputePose/DrawCat/DrawBody/DrawHead/DrawFace/DrawDizzyOrbit/DrawOverlays/DrawTreat, giữ nguyên biểu thức và thứ tự vẽ.
+- 2026-10-09: Menu mèo thêm "Start with Windows" (mặc định tắt, HKCU Run, đọc registry mỗi lần mở menu) và "About Desktop Pet" (version, thư mục data, trạng thái AI). Version 1.0.0 trong csproj; publish.ps1 tạo zip.
+- 2026-10-09: Python nhận local_hour: đêm (22–6h) ít hoạt động, nhiều ngủ hơn; sáng (7–10h) năng động hơn. Chỉ là trọng số, C# vẫn giữ sleep lock/thời lượng/wake cooldown.
 - 2026-10-08: hoàn tất năm cải tiến motion. PetMotion.cs chỉ giữ lịch sử trình diễn, không điều khiển vị trí hoặc lực.
 - Chân/độ nhún theo vận tốc thực, giảm biên độ khi chậm lại. Yêu cầu đổi hướng được giữ khi đang giảm tốc, rồi tăng tốc ngược lại; hướng vẽ theo chiều di chuyển trước khi quay ngắn.
 - Chuyển đứng/ngồi/ngủ/thức dùng RestBlend, giữ mốc chạm đất. Đầu/đuôi có độ trễ giới hạn và tự ổn định khi dừng; Pause đóng băng, pickup ưu tiên.
@@ -32,11 +37,16 @@ Project: C:\Project VS\Pet Computer.
 - Lịch sử chuyển project: 2026-10-05 tạo AGENTS.md/PROGRESS.md tại ổ D khi thư mục đó trống; source hiện nằm tại ổ C, không cần khôi phục về D.
 
 ## Đang dở và việc tiếp theo
-- Không còn hạng mục triển khai nào trong năm mục đã duyệt.
+- Đẩy repo lên GitHub: chờ người dùng tạo repo rỗng (Private) và gửi URL; máy chưa có gh CLI và git chưa lưu đăng nhập GitHub (lần push đầu sẽ bật cửa sổ đăng nhập).
+- Cửa sổ quả bóng (ToyBall) vẫn dời bằng Left rồi Top, chưa nội suy; nếu bóng còn giật thì áp dụng cách tương tự.
+- Nếu vẫn thấy giật khi ném sau bản này: cân nhắc chuyển vòng lặp active sang CompositionTarget.Rendering (đồng bộ vsync); probe PowerShell cho kết quả không ổn định nên chưa dùng.
+- Không còn hạng mục nào khác trong 11 đề xuất đã duyệt.
 - Chờ người dùng nghe và thao tác thử để tinh chỉnh nhịp chơi/âm thanh nếu cần.
 - Không tích hợp LLM, voice hay computer vision; không thay framework hoặc hệ thống rendering/physics.
 
 ## Cần test thủ công
+- Ném mèo mạnh/nhẹ, nhìn khi bay và nảy: còn giật không? Mở Behavior debug view xem dòng Frame (kỳ vọng ~60 fps, max gap < ~35 ms). Kiểm tra drag, pickup, thả, sleep/wake không đổi cảm giác.
+- Bật/tắt "Start with Windows" từ bản publish, đăng xuất/đăng nhập lại; xem About; mở thư mục logs.
 - Motion mới: xem trực tiếp đi/chậm lại/quay đầu, chuẩn bị nhảy/tiếp đất, ngồi/ngủ/thức và kéo khi đang chuyển tư thế. Ảnh render không thay thế kiểm tra độ mượt theo thời gian.
 - Nghe chín preview, tiếng chạm bóng/ăn xong/thức dậy; đánh giá độ dễ chịu, tương phản âm lượng và tần suất. Test PCM không xác nhận chất lượng nghe.
 - Chơi bóng với Balanced/Playful/Curious/Calm; kiểm tra độ tự nhiên của quan sát/hạ người/đánh/nghỉ.

@@ -30,5 +30,11 @@ foreach ($file in @('DesktopPet.exe', 'coreclr.dll', 'hostfxr.dll', 'Presentatio
     if (-not (Test-Path (Join-Path $output $file))) { throw "Missing published dependency: $file" }
 }
 Write-Host "Published application: $output\DesktopPet.exe"
+# Shareable archive of the whole folder, named by the assembly version.
+$version = (Get-Item (Join-Path $output 'DesktopPet.exe')).VersionInfo.ProductVersion -replace '\+.*$', ''
+$zip = Join-Path $projectRoot "artifacts\DesktopPet-$version-win-x64.zip"
+if (Test-Path $zip) { Remove-Item -LiteralPath $zip -Force }
+Compress-Archive -Path (Join-Path $output '*') -DestinationPath $zip
+Write-Host "Shareable archive: $zip"
 Write-Host 'Open this folder in File Explorer and double-click DesktopPet.exe.'
 Write-Host 'Copy the entire win-x64 folder when sharing it. Exit from the cat or tray context menu.'

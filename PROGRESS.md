@@ -2,6 +2,7 @@
 
 Cập nhật: 2026-10-09 (Asia/Saigon).
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
+GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
 ## Kết quả test gần nhất (2026-10-09)
 - scripts/test.ps1 -Ui: 211 C# checks, 110 WPF checks, 21 Python tests đạt. Test giờ chạy hết rồi báo danh sách FAIL ở cuối (không dừng ở lỗi đầu).
@@ -37,7 +38,6 @@ Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt 
 - Lịch sử chuyển project: 2026-10-05 tạo AGENTS.md/PROGRESS.md tại ổ D khi thư mục đó trống; source hiện nằm tại ổ C, không cần khôi phục về D.
 
 ## Đang dở và việc tiếp theo
-- Đẩy repo lên GitHub: chờ người dùng tạo repo rỗng (Private) và gửi URL; máy chưa có gh CLI và git chưa lưu đăng nhập GitHub (lần push đầu sẽ bật cửa sổ đăng nhập).
 - Cửa sổ quả bóng (ToyBall) vẫn dời bằng Left rồi Top, chưa nội suy; nếu bóng còn giật thì áp dụng cách tương tự.
 - Nếu vẫn thấy giật khi ném sau bản này: cân nhắc chuyển vòng lặp active sang CompositionTarget.Rendering (đồng bộ vsync); probe PowerShell cho kết quả không ổn định nên chưa dùng.
 - Không còn hạng mục nào khác trong 11 đề xuất đã duyệt.

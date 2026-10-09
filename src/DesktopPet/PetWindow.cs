@@ -24,6 +24,11 @@ public sealed partial class PetWindow : Window
     private readonly DispatcherTimer timer = new() { Interval = TimeSpan.FromMilliseconds(16) };
     private Area bounds;
     private double scale = 1, previous, accumulator, boundsTimer;
+    private const double PhysicsStep = 1.0 / 120;
+    // Last physics state before the newest step; drawing blends toward the current one.
+    private double previousX, previousY;
+    private double frameStatsStart, frameMaxGap, measuredFps, measuredMaxGap;
+    private int frameCount;
     private Point dragOffset;
     private bool dragging, paused;
     private bool pressPending;
@@ -249,11 +254,19 @@ public sealed partial class PetWindow : Window
         Present();
     }
 
+    // Target frame period: active ~60, sleeping ~30, paused ~10 FPS.
+    private double FramePeriod() => dragging || pressPending ? 1.0 / 60 : paused ? 0.1 : pet.Action == PetAction.Sleeping ? 1.0 / 30 : 1.0 / 60;
+
     private void Tick(object? sender, EventArgs e)
     {
         double now = clock.Elapsed.TotalSeconds;
+        // The timer runs at half the period because Windows' default 15.6 ms timer
+        // granularity turns a 16 ms interval into uneven 16/31 ms gaps (~37 FPS).
+        // Gating here keeps frames evenly spaced at the intended rate.
+        if (now - previous < FramePeriod() * 0.85) return;
         double dt = Math.Clamp(now - previous, 0, 0.1);
         previous = now;
+        RecordFrame(now, dt);
         boundsTimer += dt;
         CheckDragThreshold();
         if (!paused)
@@ -277,31 +290,55 @@ public sealed partial class PetWindow : Window
                 SelectMonitor();
                 physics.Clamp(pet, bounds);
                 if (pet.Grounded) pet.Y = bounds.Bottom - settings.Height;
+                SnapPresentation();
             }
             if (!paused && !pressPending)
             {
                 double cursorX = CursorPosition().X;
                 accumulator += dt;
-                const double step = 1.0 / 120;
-                while (accumulator >= step)
+                while (accumulator >= PhysicsStep)
                 {
-                    if (!FeatureOwnsMovement()) behavior.Step(pet, step, cursorX);
-                    physics.Step(pet, bounds, step);
-                    accumulator -= step;
+                    previousX = pet.X; previousY = pet.Y;
+                    if (!FeatureOwnsMovement()) behavior.Step(pet, PhysicsStep, cursorX);
+                    physics.Step(pet, bounds, PhysicsStep);
+                    accumulator -= PhysicsStep;
                 }
             }
         }
         if (!paused) { pet.AnimationTime += dt; pet.ActionTime += dt; pet.Motion.Step(pet, dt, settings.WalkSpeed); }
-        Present();
-        double interval = dragging || pressPending ? 16 : paused ? 100 : pet.Action == PetAction.Sleeping ? 33 : 16;
+        Present(interpolate: !dragging && !paused && !pressPending);
+        double interval = FramePeriod() * 1000 / 2;
         if (timer.Interval.TotalMilliseconds != interval) timer.Interval = TimeSpan.FromMilliseconds(interval);
     }
 
-    private void Present()
+    private void RecordFrame(double now, double dt)
+    {
+        frameCount++;
+        frameMaxGap = Math.Max(frameMaxGap, dt);
+        if (now - frameStatsStart < 1) return;
+        measuredFps = frameCount / (now - frameStatsStart);
+        measuredMaxGap = frameMaxGap;
+        frameStatsStart = now; frameCount = 0; frameMaxGap = 0;
+    }
+
+    // Direct position changes (reset, drag, DPI) must not be blended from the old spot.
+    private void SnapPresentation() { previousX = pet.X; previousY = pet.Y; }
+
+    private void Present(bool interpolate = false)
     {
         double padding = PickupAnimation.Padding;
-        Left = pet.X - padding;
-        Top = pet.Y - padding;
+        double x = pet.X, y = pet.Y;
+        // Presentation only: physics advances in fixed 1/120 s steps, so a frame can
+        // contain one or two steps. Blending removes that uneven on-screen stride.
+        // A legitimate step moves at most ~18 DIPs; anything larger is a teleport.
+        if (interpolate && Math.Abs(pet.X - previousX) < 40 && Math.Abs(pet.Y - previousY) < 40)
+        {
+            double alpha = Math.Clamp(accumulator / PhysicsStep, 0, 1);
+            x = previousX + (pet.X - previousX) * alpha;
+            y = previousY + (pet.Y - previousY) * alpha;
+        }
+        else SnapPresentation();
+        MoveWindow(x - padding, y - padding);
         renderer.InvalidateVisual();
         if (debugText != null && clock.Elapsed.TotalSeconds >= nextDebugUpdate)
         {
@@ -310,8 +347,23 @@ public sealed partial class PetWindow : Window
                 $"Energy: {(aiEnergy.HasValue ? aiEnergy.Value.ToString("F1") + " / 100 (last AI report)" : "unavailable")}\n" +
                 $"Sleep: {pet.Emotions.SleepElapsed:F1} / {settings.SleepDurationSeconds:F1} s\n" +
                 $"Wake cooldown: {pet.Emotions.WakeCooldownRemaining:F1} s\n" +
-                $"Input: {(dragging ? "dragging" : pressPending ? "pressed" : "free")}\nPaused: {paused}\n{AiStatus}";
+                $"Input: {(dragging ? "dragging" : pressPending ? "pressed" : "free")}\nPaused: {paused}\n" +
+                $"Frame: {measuredFps:F0} fps (max gap {measuredMaxGap * 1000:F0} ms)\n{AiStatus}";
         }
+    }
+
+    // One SetWindowPos per frame. Setting WPF Left and then Top issues two separate
+    // moves, which can briefly show the window offset on only one axis while flying.
+    private void MoveWindow(double left, double top)
+    {
+        var handle = new WindowInteropHelper(this).Handle;
+        if (handle == IntPtr.Zero) { Left = left; Top = top; return; }
+        int x = (int)Math.Round(left * scale), y = (int)Math.Round(top * scale);
+        // WPF keeps Left/Top in sync from WM_MOVE, so an unchanged pixel needs no call.
+        if (Math.Abs(Left * scale - x) < 0.5 && Math.Abs(Top * scale - y) < 0.5) return;
+        const uint NoSize = 0x0001, NoZOrder = 0x0004, NoActivate = 0x0010, NoOwnerZOrder = 0x0200;
+        if (!SetWindowPos(handle, IntPtr.Zero, x, y, 0, 0, NoSize | NoZOrder | NoActivate | NoOwnerZOrder))
+        { Left = left; Top = top; }
     }
 
     public void ToggleDebug()
@@ -389,4 +441,7 @@ public sealed partial class PetWindow : Window
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool GetCursorPos(out NativePoint point);
+    [DllImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool SetWindowPos(IntPtr hwnd, IntPtr insertAfter, int x, int y, int cx, int cy, uint flags);
 }

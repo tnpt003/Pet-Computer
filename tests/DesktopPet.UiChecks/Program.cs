@@ -123,7 +123,8 @@ internal static class Program
             "Quick click releases capture without creating a throw");
         window.ToggleDebug();
         var debugWindow = Field<Window>(window, "debugWindow");
-        Check(debugWindow.IsVisible && Field<System.Windows.Controls.TextBlock>(window, "debugText").Text.Contains("Energy:"),
+        Check(debugWindow.IsVisible && Field<System.Windows.Controls.TextBlock>(window, "debugText").Text.Contains("Energy:") &&
+              Field<System.Windows.Controls.TextBlock>(window, "debugText").Text.Contains("Frame:"),
             "Optional debug view shows live behavior and energy status");
         window.ToggleDebug();
         Check(!debugWindow.IsVisible && window.IsVisible, "Closing debug view leaves the pet running");
@@ -142,6 +143,18 @@ internal static class Program
         window.SetPaused(false);
         await Task.Delay(80);
         Check(pet.X > oldX && pet.AnimationTime > oldTime, "Resume restores the update loop");
+        window.Reset();
+        var resetDpi = VisualTreeHelper.GetDpi(window);
+        Check(Math.Abs(window.Left - (pet.X - PickupAnimation.Padding)) <= 1 / resetDpi.DpiScaleX &&
+              Math.Abs(window.Top - (pet.Y - PickupAnimation.Padding)) <= 1 / resetDpi.DpiScaleY,
+            "Reset snaps the window to the pet without blending from the old position");
+        pet.Action = PetAction.Thrown; pet.Grounded = false; pet.VX = 900; pet.VY = -600;
+        double flightStart = pet.X;
+        await Task.Delay(120);
+        double presentedX = window.Left + PickupAnimation.Padding;
+        Check(pet.X > flightStart && presentedX >= flightStart - 1 && presentedX <= pet.X + 1,
+            "Thrown flight presents an interpolated position between physics states");
+        window.Reset();
         window.Reset();
         pet.Emotions.Step(pet, 31); // Initial randomized sleep may have started a wake cooldown earlier.
         behavior.TryApply(pet, new AiDecision("SLEEP", 8, "sleepy"));

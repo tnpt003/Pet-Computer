@@ -31,6 +31,7 @@ public sealed partial class PetWindow
         CancelFeatureActivity();
         SelectMonitor(); physics.Clamp(pet, bounds);
         if (pet.Grounded) pet.Y = bounds.Bottom - settings.Height;
+        SnapPresentation();
     }
 
     private void RestorePosition()

@@ -136,7 +136,7 @@ public sealed class PetBehavior(PetSettings settings, Random? randomSource = nul
         pet.Facing = random.Next(2) == 0 ? -1 : 1;
         pet.Action = ChooseLocal(pet);
         if (pet.Action is PetAction.Grooming or PetAction.Stretching)
-        { remaining = pet.Action == PetAction.Grooming ? 3.6 : 2.4; selfCareCooldown = 45; }
+        { remaining = pet.Action == PetAction.Grooming ? PetSettings.GroomingDuration : PetSettings.StretchingDuration; selfCareCooldown = PetSettings.SelfCareCooldown; }
         if (pet.Action == PetAction.Looking && Personality == "Curious") remaining = 5 + random.NextDouble() * 2;
         if (pet.Action == PetAction.Walking) pet.VX = settings.WalkSpeed * pet.Facing * pet.Emotions.WalkScale;
         if (pet.Action == PetAction.Jumping)
@@ -152,12 +152,12 @@ public sealed class PetBehavior(PetSettings settings, Random? randomSource = nul
         if (decision.Command == "SEEK_ATTENTION" && attentionCooldown > 0) return false;
         if (Quiet && decision.Command is "WALK_LEFT" or "WALK_RIGHT" or "FOLLOW_MOUSE" or "JUMP" or "SEEK_ATTENTION") return false;
         if (decision.Command == "SLEEP" && pet.Emotions.WakeCooldownRemaining > 0) return false;
-        if (!pet.Grounded || pet.Emotions.BlocksAutonomy || pet.Action is PetAction.Dragging or PetAction.Thrown or PetAction.Jumping or PetAction.Sleeping or PetAction.Waking or PetAction.PreparingJump or PetAction.SeekingAttention or PetAction.Grooming or PetAction.Stretching ||
+        if (!pet.Grounded || pet.Emotions.BlocksAutonomy || PetActionRules.RejectsDecisions(pet.Action) ||
             !AiProtocol.IsCommand(decision.Command) || !double.IsFinite(decision.DurationSeconds) ||
             decision.DurationSeconds < 0.5 || decision.DurationSeconds > 12) return false;
         followingMouse = decision.Command == "FOLLOW_MOUSE";
-        remaining = decision.Command == "SEEK_ATTENTION" ? 2.4 : decision.DurationSeconds;
-        if (decision.Command == "SEEK_ATTENTION") attentionCooldown = 45;
+        remaining = decision.Command == "SEEK_ATTENTION" ? PetSettings.AttentionGestureDuration : decision.DurationSeconds;
+        if (decision.Command == "SEEK_ATTENTION") attentionCooldown = PetSettings.AttentionCooldown;
         LastAppliedCommand = decision.Command;
         pet.VX = pet.VY = 0;
         pet.Action = decision.Command switch

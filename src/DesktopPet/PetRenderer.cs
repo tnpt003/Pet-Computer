@@ -12,10 +12,22 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
     private static readonly Brush Cream = Frozen("#FFE4B5");
     private static readonly Brush Ink = Frozen("#49372E");
     private static readonly Brush Pink = Frozen("#E98990");
-    private static readonly Pen Outline = new(Ink, 2.5);
+    private static readonly Pen Outline = FrozenPen(Ink, 2.5);
     private static readonly Brush EffectInk = Frozen("#302B48");
-    private static readonly Pen EffectBorder = new(EffectInk, 3) { LineJoin = PenLineJoin.Round };
-    private static readonly Pen EffectHalo = new(Brushes.White, 5.5) { LineJoin = PenLineJoin.Round };
+    private static readonly Pen EffectBorder = FrozenPen(EffectInk, 3, PenLineJoin.Round);
+    private static readonly Pen EffectHalo = FrozenPen(Brushes.White, 5.5, PenLineJoin.Round);
+    // Frozen, shared pens avoid allocating new pens for every frame at 60 FPS.
+    private static readonly Pen TailOutline = FrozenPen(Ink, 13, round: true);
+    private static readonly Pen TailFill = FrozenPen(Fur, 8, round: true);
+    private static readonly Pen OrbitPen = FrozenPen(Brushes.Gold, 1.2);
+    private static readonly Pen AngerPen = FrozenPen(Brushes.Tomato, 1.5);
+    private static readonly Pen SurprisePen = FrozenPen(Brushes.Gold, 1.5);
+    private static Pen FrozenPen(Brush brush, double thickness, PenLineJoin join = PenLineJoin.Miter, bool round = false)
+    {
+        var pen = new Pen(brush, thickness) { LineJoin = join };
+        if (round) { pen.StartLineCap = PenLineCap.Round; pen.EndLineCap = PenLineCap.Round; }
+        pen.Freeze(); return pen;
+    }
 
     private static readonly Geometry FishGeometry = CachedGeometry("M -11,0 C -7,-7 1,-7 5,-3 L 13,-7 L 13,7 L 5,3 C 1,7 -7,7 -11,0 Z");
     private static readonly Geometry HeartGeometry = CachedGeometry("M 83,9 C 70,0 69,-7 76,-8 C 80,-9 83,-5 83,-5 C 83,-5 87,-10 91,-8 C 98,-5 95,1 83,9 Z");
@@ -82,8 +94,8 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         bool eating = pet.TreatRemaining > 0 && !pickedUp && !sleeping && !waking && !airborne;
         bool selfCare = !pickedUp && !sleeping && !waking && !airborne && !eating && !pet.Emotions.BlocksAutonomy;
         bool grooming = selfCare && pet.Action == PetAction.Grooming;
-        double groomingBlend = grooming ? Math.Sin(Math.PI * Math.Clamp(pet.ActionTime / 3.6, 0, 1)) : 0;
-        double selfStretch = selfCare && pet.Action == PetAction.Stretching ? Math.Sin(Math.PI * Math.Clamp(pet.ActionTime / 2.4, 0, 1)) : 0;
+        double groomingBlend = grooming ? Math.Sin(Math.PI * Math.Clamp(pet.ActionTime / PetSettings.GroomingDuration, 0, 1)) : 0;
+        double selfStretch = selfCare && pet.Action == PetAction.Stretching ? Math.Sin(Math.PI * Math.Clamp(pet.ActionTime / PetSettings.StretchingDuration, 0, 1)) : 0;
         double playCrouch = selfCare ? pet.PlayCrouch : 0;
         double eatTime = PetModel.TreatDuration - pet.TreatRemaining;
         if (eating) emotionStrength = 0;
@@ -122,8 +134,8 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
             context.BezierTo(new Point(108, 88), new Point(104, 59),
                 new Point(92, 62 + (pet.Motion.Ready ? pet.Motion.TailLag * influence * pet.Motion.Facing : 0) + Math.Sin(time * (3 - 2 * (sleeping ? 1 : sleepyBlend))) * (5 - 4 * (sleeping ? 1 : sleepyBlend))), true, false);
         }
-        dc.DrawGeometry(null, new Pen(Ink, 13) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round }, tail);
-        dc.DrawGeometry(null, new Pen(Fur, 8) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round }, tail);
+        dc.DrawGeometry(null, TailOutline, tail);
+        dc.DrawGeometry(null, TailFill, tail);
         Oval(dc, Fur, 55, 80 + 8 * restBlend, 26, 23 - 7 * restBlend);
         Oval(dc, Cream, 55, 86, 15, 16 - 5 * restBlend);
         if (pickedUp && pickupBlend > 0)
@@ -161,7 +173,7 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         }
         if (seeking)
         {
-            double envelope = Math.Sin(Math.PI * Math.Clamp(pet.ActionTime / 2.4, 0, 1));
+            double envelope = Math.Sin(Math.PI * Math.Clamp(pet.ActionTime / PetSettings.AttentionGestureDuration, 0, 1));
             glanceX = 3 * envelope; glanceY = -2 * envelope;
             if (pet.ActionTime > 0.65)
                 Oval(dc, Fur, 79 + 2 * Math.Sin(pet.ActionTime * 9), 78 - 15 * envelope, 6, 9);
@@ -175,7 +187,7 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         double headY = 49 + 10 * restBlend + (emotion == PetEmotion.Sad ? 2 * emotionStrength : 0);
         dc.PushTransform(new TranslateTransform(glanceX * (eating ? 1.4 : 0.45), headY - 49 + glanceY * 0.6 +
             (eating && eatTime > 1.3 ? Math.Sin(eatTime * 16) * 1.2 : 0)));
-        dc.PushTransform(new RotateTransform(pickedUp ? Math.Sin(pet.Pickup.Time * 10) * dizzy * 3 + (pet.Motion.Ready ? pet.Motion.HeadTilt * influence * pet.Motion.Facing : 0) : glanceDirection * glanceBlend * 2.5 + (pet.Motion.Ready ? pet.Motion.HeadTilt * influence * pet.Motion.Facing : 0) + pettingLean * 7 + (seeking ? Math.Sin(Math.PI * Math.Clamp(pet.ActionTime / 2.4, 0, 1)) * 6 : 0), 55, 49));
+        dc.PushTransform(new RotateTransform(pickedUp ? Math.Sin(pet.Pickup.Time * 10) * dizzy * 3 + (pet.Motion.Ready ? pet.Motion.HeadTilt * influence * pet.Motion.Facing : 0) : glanceDirection * glanceBlend * 2.5 + (pet.Motion.Ready ? pet.Motion.HeadTilt * influence * pet.Motion.Facing : 0) + pettingLean * 7 + (seeking ? Math.Sin(Math.PI * Math.Clamp(pet.ActionTime / PetSettings.AttentionGestureDuration, 0, 1)) * 6 : 0), 55, 49));
         dc.PushTransform(new RotateTransform(twitch, 37, 33));
         Triangle(dc, new Point(27, 38), new Point(27, 13), new Point(47, 31), Fur);
         Triangle(dc, new Point(31, 30), new Point(31, 21), new Point(40, 30), Pink);
@@ -250,7 +262,7 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
                 var orbit = new EllipseGeometry(new Point(55, 6), 37, 9);
                 dc.DrawGeometry(null, EffectHalo, orbit);
                 dc.DrawGeometry(null, EffectBorder, orbit);
-                dc.DrawGeometry(null, new Pen(Brushes.Gold, 1.2), orbit);
+                dc.DrawGeometry(null, OrbitPen, orbit);
                 for (int i = 0; i < 3; i++)
                 {
                     double phase = pet.Pickup.Time * (2 + dizzy * 2) + i * Math.PI * 2 / 3;
@@ -414,14 +426,14 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
             var symbol = AngerGeometry;
             dc.DrawGeometry(null, EffectHalo, symbol);
             dc.DrawGeometry(null, EffectBorder, symbol);
-            dc.DrawGeometry(null, new Pen(Brushes.Tomato, 1.5), symbol);
+            dc.DrawGeometry(null, AngerPen, symbol);
         }
         else
         {
             var line = SurpriseGeometry;
             dc.DrawGeometry(null, EffectHalo, line);
             dc.DrawGeometry(null, EffectBorder, line);
-            dc.DrawGeometry(null, new Pen(Brushes.Gold, 1.5), line);
+            dc.DrawGeometry(null, SurprisePen, line);
         }
     }
 }

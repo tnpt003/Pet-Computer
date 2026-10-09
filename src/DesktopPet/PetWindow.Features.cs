@@ -132,7 +132,7 @@ public sealed partial class PetWindow
         treatSatisfiedRemaining = 0;
         pet.BatRemaining = pet.PlayCrouch = 0;
         toyPlay.Reset();
-        if (pet.Action is PetAction.Grooming or PetAction.Stretching or PetAction.PreparingJump) pet.Action = PetAction.Idle;
+        if (PetActionRules.IsCancellableLocal(pet.Action)) pet.Action = PetAction.Idle;
         behavior.Reset();
     }
 

@@ -4,6 +4,18 @@ namespace DesktopPet;
 
 public enum PetAction { Idle, Walking, Jumping, Sitting, Sleeping, Looking, Dragging, Thrown, Waking, SeekingAttention, Grooming, Stretching, PreparingJump }
 
+public static class PetActionRules
+{
+    // Actions that own their whole duration: AI commands/hints cannot replace them.
+    // Keep in sync with BUSY_STATES in ai/service.py.
+    public static bool RejectsDecisions(PetAction action) => action is PetAction.Dragging or PetAction.Thrown or
+        PetAction.Jumping or PetAction.PreparingJump or PetAction.Sleeping or PetAction.Waking or
+        PetAction.Grooming or PetAction.Stretching or PetAction.SeekingAttention;
+
+    // Local poses that direct input or feature changes cancel straight back to Idle.
+    public static bool IsCancellableLocal(PetAction action) => action is PetAction.Grooming or PetAction.Stretching or PetAction.PreparingJump;
+}
+
 public readonly record struct Area(double Left, double Top, double Right, double Bottom);
 
 public sealed class PetSettings
@@ -15,6 +27,11 @@ public sealed class PetSettings
     public double DragThreshold { get; init; } = 6;
     public const double WakingDuration = 1.2;
     public const double JumpPreparationDuration = 0.16;
+    public const double GroomingDuration = 3.6;
+    public const double StretchingDuration = 2.4;
+    public const double SelfCareCooldown = 45;
+    public const double AttentionGestureDuration = 2.4;
+    public const double AttentionCooldown = 45;
     public double Width { get; init; } = 112;
     public double Height { get; init; } = 112;
     public double Gravity { get; init; } = 1500;

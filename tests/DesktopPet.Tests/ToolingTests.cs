@@ -22,5 +22,15 @@ static class ToolingTests
         {
             try { Directory.Delete(folder, true); } catch (IOException) { }
         }
+
+        string root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../../"));
+        string service = File.ReadAllText(Path.Combine(root, "ai", "service.py"));
+        var match = System.Text.RegularExpressions.Regex.Match(service, @"BUSY_STATES = frozenset\(\{([^}]*)\}\)");
+        var python = match.Groups[1].Value.Split(',').Select(s => s.Trim().Trim('"')).Where(s => s.Length > 0).OrderBy(s => s);
+        var csharp = Enum.GetValues<PetAction>().Where(PetActionRules.RejectsDecisions).Select(a => a.ToString()).OrderBy(s => s);
+        check(match.Success && python.SequenceEqual(csharp), "Python BUSY_STATES matches C# actions that reject AI decisions");
+        check(Enum.GetValues<PetAction>().Where(PetActionRules.IsCancellableLocal)
+                .SequenceEqual(new[] { PetAction.Grooming, PetAction.Stretching, PetAction.PreparingJump }),
+            "Only local self-care and jump preparation are cancelled straight to Idle");
     }
 }

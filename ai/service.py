@@ -18,6 +18,8 @@ import uuid
 VERSION = 1
 MAX_MESSAGE = 8192
 COMMANDS = {"LOOK", "IDLE", "WALK_LEFT", "WALK_RIGHT", "SIT", "JUMP", "SLEEP", "FOLLOW_MOUSE", "SEEK_ATTENTION"}
+# C# actions that own their duration; mirrors PetActionRules.RejectsDecisions.
+BUSY_STATES = frozenset({"Dragging", "Thrown", "Jumping", "PreparingJump", "Sleeping", "Waking", "Grooming", "Stretching", "SeekingAttention"})
 
 
 def read_object(path: Path) -> dict:
@@ -133,7 +135,7 @@ class Brain:
         self.last_interaction_count = count
         now = self.clock()
         self.observe_activity(observation, now)
-        if not observation["grounded"] or observation["state"] in {"Dragging", "Thrown", "Jumping", "PreparingJump", "Sleeping", "Waking", "Grooming", "Stretching", "SeekingAttention"} or observation.get("emotion") == "Sleepy":
+        if not observation["grounded"] or observation["state"] in BUSY_STATES or observation.get("emotion") == "Sleepy":
             command, mood = "IDLE", "content"
         elif observation.get("emotion") in ("Angry", "Surprised"):
             command, mood = "SIT", "content"  # Give an upset/startled pet a calm action.
@@ -167,7 +169,7 @@ class Brain:
         if profile == "Calm" and command in {"IDLE", "SIT"}: duration = min(9, duration * 1.5)
         if profile == "Playful" and command in {"WALK_LEFT", "WALK_RIGHT"}: duration = max(1.5, duration * 0.8)
         self.memory.update(last_command=command, mood=mood, decisions=self.memory["decisions"] + 1)
-        if observation["grounded"] and observation["state"] not in {"Dragging", "Thrown", "Jumping", "PreparingJump", "Sleeping", "Waking", "Grooming", "Stretching", "SeekingAttention"} and observation.get("emotion") not in {"Sleepy", "Angry", "Surprised"}:
+        if observation["grounded"] and observation["state"] not in BUSY_STATES and observation.get("emotion") not in {"Sleepy", "Angry", "Surprised"}:
             self.recent = (self.recent + [command])[-4:]
         self.memory.update(energy=round(self.energy, 3), recent_actions=self.recent)
         self.dirty = True

@@ -65,6 +65,7 @@ public sealed class PetModel
     public PetActivity Activity { get; } = new();
     public PetInteractions Interactions { get; } = new();
     public PetThought Thought { get; } = new();
+    public PetSpeech Speech { get; } = new();
 }
 
 // Cumulative per-session counts of how the user treated the pet. Python turns the

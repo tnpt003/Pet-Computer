@@ -1,0 +1,273 @@
+{
+  "_comment": "Speech lines by situation and language. {name} is the pet's name; the user is 'sen' (vi) / 'human' (en). A line may be a string or {\"text\": ..., \"personality\": [\"Playful\", \"Calm\", \"Curious\", \"Balanced\"]} to limit it to those profiles. Keep lines short (under 60 characters). Restart the AI after editing; publish again to update the standalone copy.",
+  "hello": {
+    "vi": [
+      "Chào sen! {name} có mặt rồi đây~",
+      "Meo! Hôm nay sen có nhớ {name} không?",
+      "{name} sẵn sàng rồi, chơi với {name} nha!",
+      "Sen ơi, {name} ở đây nè!",
+      "Một ngày mới cùng {name} nào!",
+      "Meo meo, sen đến rồi!"
+    ],
+    "en": [
+      "Hi human! {name} is here~",
+      "Meow! Did you miss {name} today?",
+      "{name} is ready to play!",
+      "Hey human, over here!",
+      "A brand new day with {name}!",
+      "Meow meow, you're here!"
+    ]
+  },
+  "welcome_back": {
+    "vi": [
+      "Sen đi đâu lâu thế, {name} nhớ sen lắm!",
+      "A, sen về rồi! {name} chờ mãi đó~",
+      "Cuối cùng sen cũng quay lại!",
+      "{name} nhớ sen quá trời luôn!",
+      "Sen về rồi! Vuốt {name} một cái đi~"
+    ],
+    "en": [
+      "Where were you? {name} missed you so much!",
+      "You're back! {name} waited forever~",
+      "Finally, my human returns!",
+      "{name} missed you sooo much!",
+      "Welcome back! Pet {name} once, please~"
+    ]
+  },
+  "petted": {
+    "vi": [
+      "Purr~ chỗ đó đó sen!",
+      "Sướng quá, vuốt nữa đi~",
+      "{name} thích sen nhất!",
+      "Grừ grừ… dễ chịu ghê",
+      "Thêm chút nữa thôi mà~",
+      {"text": "Sen vuốt giỏi ghê! Nữa nữa!", "personality": ["Playful"]},
+      {"text": "Ừm… cũng được đó.", "personality": ["Calm"]},
+      {"text": "Sao tay sen ấm vậy ta?", "personality": ["Curious"]}
+    ],
+    "en": [
+      "Purr~ right there, human!",
+      "So nice, keep going~",
+      "{name} likes you best!",
+      "Purrrr… so comfy",
+      "Just a little more~",
+      {"text": "You're so good at this! More!", "personality": ["Playful"]},
+      {"text": "Mm… that's acceptable.", "personality": ["Calm"]},
+      {"text": "Why are your hands so warm?", "personality": ["Curious"]}
+    ]
+  },
+  "treat_thanks": {
+    "vi": [
+      "Ngon quá! Cảm ơn sen~",
+      "Cá! Cá! {name} yêu cá!",
+      "No căng bụng rồi, hehe",
+      "Sen là nhất! Thêm miếng nữa nha?",
+      "Măm măm… tuyệt vời!",
+      "{name} sẽ nhớ ơn sen mãi!"
+    ],
+    "en": [
+      "Yummy! Thank you, human~",
+      "Fish! Fish! {name} loves fish!",
+      "So full now, hehe",
+      "You're the best! One more bite?",
+      "Nom nom… perfect!",
+      "{name} will remember this forever!"
+    ]
+  },
+  "play": {
+    "vi": [
+      "Bóng! Bóng! {name} bắt được rồi!",
+      "Chơi nữa đi sen!",
+      "Xem {name} vồ nè!",
+      "Trò này vui quá!",
+      "Lần này {name} thắng chắc!",
+      {"text": "Quả bóng này lăn kiểu gì ta?", "personality": ["Curious"]}
+    ],
+    "en": [
+      "Ball! Ball! {name} got it!",
+      "Play more, human!",
+      "Watch {name} pounce!",
+      "This game is so fun!",
+      "{name} will win this time!",
+      {"text": "How does this ball even roll?", "personality": ["Curious"]}
+    ]
+  },
+  "thrown_rough": {
+    "vi": [
+      "Á! Nhẹ tay thôi sen!",
+      "Chóng mặt quá… sao quay quay thế này",
+      "{name} đâu phải quả bóng!",
+      "Hự! Sen ác quá à",
+      "Ui da… lần sau nhẹ thôi nha",
+      "Thế giới đang xoay vòng vòng…"
+    ],
+    "en": [
+      "Ah! Gently, human!",
+      "So dizzy… everything's spinning",
+      "{name} is not a ball!",
+      "Oof! That was mean",
+      "Ouch… softer next time, okay?",
+      "The world is going round and round…"
+    ]
+  },
+  "thrown_fun": {
+    "vi": [
+      "Wheee~ bay vui ghê!",
+      "Hạ cánh an toàn!",
+      "Lần nữa! Lần nữa!",
+      "{name} biết bay nè!",
+      "Tiếp đất đẹp chưa sen?",
+      {"text": "Bay một chút cũng hay.", "personality": ["Calm"]}
+    ],
+    "en": [
+      "Wheee~ flying is fun!",
+      "Safe landing!",
+      "Again! Again!",
+      "{name} can fly!",
+      "Nice landing, right?",
+      {"text": "A little flight is nice.", "personality": ["Calm"]}
+    ]
+  },
+  "wake_up": {
+    "vi": [
+      "Ngáp~ {name} ngủ ngon ghê",
+      "Ơ, {name} ngủ quên mất…",
+      "Dậy rồi đây! Có gì ăn không sen?",
+      "Mơ thấy cá to lắm luôn…",
+      "Duỗi người cái đã~"
+    ],
+    "en": [
+      "Yawn~ {name} slept so well",
+      "Oops, {name} dozed off…",
+      "I'm up! Anything to eat, human?",
+      "I dreamed of a giant fish…",
+      "Time for a big stretch~"
+    ]
+  },
+  "sleepy": {
+    "vi": [
+      "Buồn ngủ quá…",
+      "{name} mệt rồi, cho nghỉ xíu nha",
+      "Mắt díp lại rồi nè…",
+      "Ngáp… chợp mắt chút thôi",
+      "Pin của {name} sắp hết…"
+    ],
+    "en": [
+      "So sleepy…",
+      "{name} is tired, let me rest a bit",
+      "My eyes keep closing…",
+      "Yawn… just a quick nap",
+      "{name}'s battery is almost empty…"
+    ]
+  },
+  "lonely": {
+    "vi": [
+      "Không ai chơi với {name} hết…",
+      "Sen ơi… sen có đó không?",
+      "{name} buồn quá à…",
+      "Sen bận quá ha…",
+      "Nhìn {name} một chút thôi mà…",
+      "Hic… cô đơn ghê"
+    ],
+    "en": [
+      "Nobody plays with {name}…",
+      "Human… are you there?",
+      "{name} feels so sad…",
+      "You're so busy, huh…",
+      "Just look at {name} for a second…",
+      "Sniff… so lonely"
+    ]
+  },
+  "hungry": {
+    "vi": [
+      "Bụng {name} kêu ọt ọt rồi…",
+      "Sen ơi, cho {name} ăn đi!",
+      "Có cá không sen? Một con thôi…",
+      "Đói quá, đói quá…",
+      "{name} ngửi thấy mùi cá đâu đây…",
+      "Tới giờ ăn của {name} rồi!"
+    ],
+    "en": [
+      "{name}'s tummy is rumbling…",
+      "Human, feed {name} please!",
+      "Got any fish? Just one…",
+      "So hungry, so hungry…",
+      "{name} smells fish somewhere…",
+      "It's {name}'s dinner time!"
+    ]
+  },
+  "bored": {
+    "vi": [
+      "Chán quá… chơi gì đi sen",
+      "Lấy bóng ra chơi đi mà!",
+      "{name} chán sắp mọc rêu rồi",
+      "Có ai muốn chơi với {name} không?",
+      "Sen làm việc hoài vậy…",
+      {"text": "Hôm nay có gì mới không ta?", "personality": ["Curious"]}
+    ],
+    "en": [
+      "So bored… let's play, human",
+      "Bring out the ball, please!",
+      "{name} is bored to the bone",
+      "Anyone want to play with {name}?",
+      "You work all the time…",
+      {"text": "Anything new happening today?", "personality": ["Curious"]}
+    ]
+  },
+  "morning": {
+    "vi": [
+      "Chào buổi sáng sen!",
+      "Sáng rồi, dậy chơi thôi!",
+      "Nắng sáng dễ chịu ghê~",
+      "Bữa sáng của {name} đâu rồi?",
+      "Hôm nay {name} sẽ siêu năng động!"
+    ],
+    "en": [
+      "Good morning, human!",
+      "It's morning, let's play!",
+      "The morning sun feels nice~",
+      "Where's {name}'s breakfast?",
+      "{name} will be super active today!"
+    ]
+  },
+  "night": {
+    "vi": [
+      "Khuya rồi, sen đi ngủ đi…",
+      "Đêm rồi mà sen còn thức à?",
+      "{name} buồn ngủ theo sen luôn…",
+      "Trăng đẹp ghê, sen thấy không?",
+      "Sen nghỉ ngơi chút đi nha"
+    ],
+    "en": [
+      "It's late, go to bed, human…",
+      "Still awake this late?",
+      "{name} is getting sleepy with you…",
+      "Pretty moon tonight, see it?",
+      "Take a little rest, okay?"
+    ]
+  },
+  "idle": {
+    "vi": [
+      "Meo~",
+      "Hôm nay trời đẹp ghê",
+      "{name} đang canh màn hình cho sen nè",
+      "Tung tăng~",
+      "Sen đang làm gì đó?",
+      "{name} ngoan nhất nhà luôn",
+      {"text": "Cái chuột kia là con gì vậy ta?", "personality": ["Curious"]},
+      {"text": "Đuổi bắt không sen?", "personality": ["Playful"]},
+      {"text": "Yên bình quá…", "personality": ["Calm"]}
+    ],
+    "en": [
+      "Meow~",
+      "What a nice day",
+      "{name} is guarding your screen",
+      "La la la~",
+      "What are you doing, human?",
+      "{name} is the best cat ever",
+      {"text": "What kind of animal is that cursor?", "personality": ["Curious"]},
+      {"text": "Wanna play tag, human?", "personality": ["Playful"]},
+      {"text": "So peaceful…", "personality": ["Calm"]}
+    ]
+  }
+}

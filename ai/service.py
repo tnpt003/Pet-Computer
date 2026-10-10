@@ -15,6 +15,11 @@ import sys
 import time
 import uuid
 
+# Embedded Python's ._pth file does not add the script folder to sys.path.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from learning import CREDIT_WINDOW, Learner, context as learning_context  # noqa: E402
+from speech import Speech  # noqa: E402
+
 VERSION = 1
 MAX_MESSAGE = 8192
 COMMANDS = {"LOOK", "IDLE", "WALK_LEFT", "WALK_RIGHT", "SIT", "JUMP", "SLEEP", "FOLLOW_MOUSE", "SEEK_ATTENTION"}
@@ -35,6 +40,13 @@ INTERACTION_EFFECTS = {
 }
 BOND_DAILY_GAIN, BOND_DAILY_LOSS = 3.0, 2.0  # Bond changes slowly and recoverably.
 THOUGHT_COOLDOWN = 90  # Ambient bubbles; requests are paced by the attention cooldown.
+# Reaction value of one interaction when crediting what the pet just did or said.
+REWARDS = {"petted": 1.0, "treats": 1.0, "ball_clicks": 0.5, "toy": 0.5, "clicked": 0.3, "rough_throws": -1.0}
+# States in which the pet can say something (C# applies its own display rules too).
+SILENT_STATES = frozenset({"Dragging", "Thrown", "Jumping", "PreparingJump", "Sleeping", "Waking"})
+EVENT_LINE_GAP, LONELY_LINE_GAP = 6, 60
+NEED_LINE_GAP = {0: 300, 1: 120, 2: 60}  # By chattiness: repeated "I am hungry" must not nag.
+CHATTER = {1: (90, 0.25), 2: (35, 0.5)}  # chattiness: (min seconds since last line, chance)
 
 
 def read_object(path: Path) -> dict:
@@ -76,7 +88,8 @@ def number(value, default, low, high):
 class Brain:
     """Replace decide() with a future policy/LLM adapter; preserve its command contract."""
 
-    def __init__(self, memory_path: Path, personality_path: Path, rng=None, clock=time.monotonic, wall_clock=time.time):
+    def __init__(self, memory_path: Path, personality_path: Path, rng=None, clock=time.monotonic, wall_clock=time.time,
+                 lines_path: Path | None = None):
         self.memory_path = memory_path
         self.rng = rng or random.Random()
         self.clock = clock
@@ -121,6 +134,15 @@ class Brain:
         self.interactions = None
         self.last_need_update = None
         self.last_thought = self.clock() - THOUGHT_COOLDOWN
+        self.speech = Speech(lines_path or Path(__file__).with_name("lines.json"))
+        self.learner = Learner(memory.get("learned"), self.wall_clock)
+        reset = memory.get("learning_reset")
+        self.learning_reset = reset if isinstance(reset, str) and len(reset) <= 64 else ""
+        self.sent = None  # (command, learning key, time) of the last suggested action.
+        self.last_spoke = self.clock() - 60
+        self.pending_event = None  # (category, time) waiting for a moment the pet can speak.
+        self.just_woke = False
+        self.previous_emotion = "Neutral"
 
     def configure(self, overrides):
         if not isinstance(overrides, dict):
@@ -222,7 +244,77 @@ class Brain:
                 + delta["resting"] * self.rest_gain))
             if delta["sleeping"] > 0:
                 self.sleep_cooldown_until = now + 30
+                self.just_woke = observation.get("state") != "Sleeping"
         self.activity = current
+
+    @staticmethod
+    def action_key(ctx, command):
+        return f"act:{ctx}:{'WALK' if command in {'WALK_LEFT', 'WALK_RIGHT'} else command}"
+
+    def describe_learned(self, key):
+        if key.startswith("say:"):
+            return self.speech.describe(key[4:])
+        _, ctx, action = key.split(":", 2) if key.count(":") >= 2 else ("", "", key)
+        return f"{action} @{ctx}"
+
+    def learn_from_reactions(self, observation, deltas, now):
+        """Credit the user's reaction to the action and line the pet just showed."""
+        reset = observation.get("learning_reset")
+        if isinstance(reset, str) and 0 < len(reset) <= 64 and reset != self.learning_reset:
+            self.learner.clear()
+            self.learning_reset = reset
+        reward = sum(REWARDS.get(key, 0) * count for key, count in deltas.items())
+        emotion = observation.get("emotion")
+        if emotion == "Angry" and self.previous_emotion != "Angry" and not deltas["rough_throws"]:
+            reward -= 0.5  # Rapid clicking upset the pet.
+        self.previous_emotion = emotion if isinstance(emotion, str) else "Neutral"
+        reward = max(-1.0, min(1.0, reward))
+        if reward == 0:
+            return
+        if self.sent and observation.get("last_applied_command") == self.sent[0] and now - self.sent[2] <= CREDIT_WINDOW:
+            self.learner.reward(self.sent[1], reward)
+        spoken = observation.get("last_speech")
+        if isinstance(spoken, dict) and isinstance(spoken.get("id"), str) and len(spoken["id"]) <= 80:
+            age = number(spoken.get("age"), -1, -1, 1e9)
+            if 0 <= age <= CREDIT_WINDOW:
+                self.learner.reward("say:" + spoken["id"], reward)
+
+    def choose_speech(self, observation, deltas, thought, greeting, now):
+        """Pick at most one line: events first, then needs, loneliness, then chatter."""
+        if observation.get("speech_enabled") is not True:
+            self.pending_event = None
+            return None
+        event = ("thrown_rough" if deltas["rough_throws"] else "treat_thanks" if deltas["treats"] else
+                 "petted" if deltas["petted"] else "play" if deltas["ball_clicks"] or deltas["toy"] else
+                 "thrown_fun" if observation.get("last_event") == "released" and self.interaction_delta else
+                 "wake_up" if self.just_woke else greeting)
+        self.just_woke = False
+        if event:
+            self.pending_event = (event, now)
+        if observation["state"] in SILENT_STATES or not observation["grounded"] or observation.get("emotion") == "Sleepy":
+            return None  # Keep a fresh event for the next moment the pet can talk.
+        category = None
+        if self.pending_event and now - self.pending_event[1] <= 12 and now - self.last_spoke >= EVENT_LINE_GAP:
+            category = self.pending_event[0]
+        elif thought in ("hungry", "bored", "sleepy") and now - self.last_spoke >= NEED_LINE_GAP.get(observation.get("chattiness"), 120):
+            category = thought
+        elif observation.get("emotion") == "Sad" and now - self.last_spoke >= LONELY_LINE_GAP:
+            category = "lonely"
+        else:
+            chattiness = observation.get("chattiness")
+            gap, chance = CHATTER.get(chattiness if type(chattiness) is int else 1, (None, 0))
+            if gap is not None and observation.get("quiet") is not True and now - self.last_spoke >= gap and self.rng.random() < chance:
+                part = learning_context(observation.get("local_hour"), self.needs, self.energy).split("/")[0]
+                category = part if part in ("morning", "night") and self.rng.random() < 0.5 else "idle"
+        if self.pending_event and (category == self.pending_event[0] or now - self.pending_event[1] > 12):
+            self.pending_event = None  # Spoken, or too old to still make sense.
+        if category is None:
+            return None
+        line = self.speech.pick(category, observation.get("language"), observation.get("personality", "Balanced"),
+                                observation.get("pet_name"), lambda line_id: self.learner.weight("say:" + line_id), self.rng)
+        if line is not None:
+            self.last_spoke = now
+        return line
 
     def decide(self, observation: dict) -> dict:
         self.configure(observation.get("tuning"))
@@ -233,12 +325,17 @@ class Brain:
             raise ValueError("interaction_count must be a nonnegative integer")
         if type(observation.get("grounded")) is not bool or not isinstance(observation.get("state"), str):
             raise ValueError("state and grounded are required")
+        self.interaction_delta = 0
         if self.last_interaction_count is not None:
-            self.memory["interactions"] += max(0, count - self.last_interaction_count)
+            self.interaction_delta = max(0, count - self.last_interaction_count)
+            self.memory["interactions"] += self.interaction_delta
         self.last_interaction_count = count
         now = self.clock()
         deltas = self.observe_needs(observation, now, profile)  # Before activity updates its baseline.
         self.observe_activity(observation, now)
+        self.learn_from_reactions(observation, deltas, now)
+        ctx = learning_context(observation.get("local_hour"), self.needs, self.energy)
+        greeting = None
         hunger, boredom = self.needs["hunger"], self.needs["boredom"]
         busy = not observation["grounded"] or observation["state"] in BUSY_STATES or observation.get("emotion") == "Sleepy"
         upset = observation.get("emotion") in ("Angry", "Surprised")
@@ -250,6 +347,7 @@ class Brain:
             # Welcome back after a long break, only once a real bond exists.
             if self.last_seen and wall - self.last_seen >= 3600 and self.needs["bond"] >= 50:
                 thought = "love"
+            greeting = "welcome_back" if thought == "love" else "hello"
         self.last_seen = wall
         if busy:
             command, mood = "IDLE", "content"
@@ -289,6 +387,8 @@ class Brain:
                            "WALK_LEFT": habit, "WALK_RIGHT": habit,
                            "LOOK": 1.2 if self.needs["bond"] < 20 else 1.0}
             weights = [weight * needs_scale.get(cmd, 1.0) for cmd, weight in zip(commands, weights)]
+            # What the user rewarded in this situation before (x0.5..x2).
+            weights = [weight * self.learner.weight(self.action_key(ctx, cmd)) for cmd, weight in zip(commands, weights)]
             # Penalize recent action families, not just alternating walk direction.
             families = [self.family(cmd) for cmd in self.recent]
             weights = [weight * 0.35 ** families.count(self.family(cmd))
@@ -311,7 +411,10 @@ class Brain:
             thought = None
         if thought is not None:
             self.last_thought = now
-        duration = self.rng.uniform(7, 12) if command == "SLEEP" else self.rng.uniform(2, 6)
+        if not busy and not upset:
+            self.sent = (command, self.action_key(ctx, command), now)
+        speech = self.choose_speech(observation, deltas, thought, greeting, now)
+        duration =self.rng.uniform(7, 12) if command == "SLEEP" else self.rng.uniform(2, 6)
         if thought == "love" and command == "FOLLOW_MOUSE": duration = 4.0
         # Personality changes the pace and intent of an activity, not physics.
         if profile == "Curious" and command in {"IDLE", "LOOK", "FOLLOW_MOUSE"}: duration = min(8, duration * 1.4)
@@ -323,6 +426,7 @@ class Brain:
         self.memory.update(energy=round(self.energy, 3), recent_actions=self.recent,
                            habits=self.habits, bond_day=self.bond_day, bond_gain_today=round(self.bond_gain_today, 3),
                            bond_loss_today=round(self.bond_loss_today, 3), last_seen=round(self.last_seen),
+                           learned=self.learner.export(), learning_reset=self.learning_reset,
                            **{key: round(self.needs[key], 3) for key in NEED_KEYS})
         self.dirty = True
         if now - self.last_save >= 30:
@@ -334,6 +438,9 @@ class Brain:
                     "energy": round(self.energy, 1), "needs": {key: round(self.needs[key], 1) for key in NEED_KEYS}}
         if thought is not None:
             decision["thought"] = thought
+        if speech is not None:
+            decision["speech"] = speech
+        decision["learned"] = self.learner.summary(self.describe_learned)
         return decision
 
     def save(self):

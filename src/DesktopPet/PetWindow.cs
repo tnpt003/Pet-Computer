@@ -306,7 +306,7 @@ public sealed partial class PetWindow : Window
                 }
             }
         }
-        if (!paused) { pet.AnimationTime += dt; pet.ActionTime += dt; pet.Motion.Step(pet, dt, settings.WalkSpeed); pet.Thought.Step(pet, dt); }
+        if (!paused) { pet.AnimationTime += dt; pet.ActionTime += dt; pet.Motion.Step(pet, dt, settings.WalkSpeed); pet.Thought.Step(pet, dt); pet.Speech.Step(pet, dt); }
         Present(interpolate: !dragging && !paused && !pressPending);
         double interval = FramePeriod() * 1000 / 2;
         if (timer.Interval.TotalMilliseconds != interval) timer.Interval = TimeSpan.FromMilliseconds(interval);
@@ -340,6 +340,7 @@ public sealed partial class PetWindow : Window
         }
         else SnapPresentation();
         MoveWindow(x - padding, y - padding);
+        UpdateSpeechWindow(x, y);
         renderer.InvalidateVisual();
         if (debugText != null && clock.Elapsed.TotalSeconds >= nextDebugUpdate)
         {
@@ -351,22 +352,27 @@ public sealed partial class PetWindow : Window
                 $"Input: {(dragging ? "dragging" : pressPending ? "pressed" : "free")}\nPaused: {paused}\n" +
                 $"Needs: {(aiNeeds == null ? "unavailable" : $"hunger {aiNeeds.Hunger:F0}, boredom {aiNeeds.Boredom:F0}, affection {aiNeeds.Affection:F0}, bond {aiNeeds.Bond:F0}")}\n" +
                 $"Thought: {(pet.Thought.Visible ? pet.Thought.Kind.ToString() : "none")}\n" +
+                $"Speech: {(pet.Speech.Visible ? pet.Speech.Text : "none")}\n" +
+                $"Learned likes: {(aiLearned is { Likes.Length: > 0 } ? string.Join("; ", aiLearned.Likes) : "nothing yet")}\n" +
+                $"Learned dislikes: {(aiLearned is { Dislikes.Length: > 0 } ? string.Join("; ", aiLearned.Dislikes) : "nothing yet")}\n" +
                 $"Frame: {measuredFps:F0} fps (max gap {measuredMaxGap * 1000:F0} ms)\n{AiStatus}";
         }
     }
 
     // One SetWindowPos per frame. Setting WPF Left and then Top issues two separate
     // moves, which can briefly show the window offset on only one axis while flying.
-    private void MoveWindow(double left, double top)
+    private void MoveWindow(double left, double top) => MoveWindow(this, left, top);
+
+    private void MoveWindow(Window target, double left, double top)
     {
-        var handle = new WindowInteropHelper(this).Handle;
-        if (handle == IntPtr.Zero) { Left = left; Top = top; return; }
+        var handle = new WindowInteropHelper(target).Handle;
+        if (handle == IntPtr.Zero) { target.Left = left; target.Top = top; return; }
         int x = (int)Math.Round(left * scale), y = (int)Math.Round(top * scale);
         // WPF keeps Left/Top in sync from WM_MOVE, so an unchanged pixel needs no call.
-        if (Math.Abs(Left * scale - x) < 0.5 && Math.Abs(Top * scale - y) < 0.5) return;
+        if (Math.Abs(target.Left * scale - x) < 0.5 && Math.Abs(target.Top * scale - y) < 0.5) return;
         const uint NoSize = 0x0001, NoZOrder = 0x0004, NoActivate = 0x0010, NoOwnerZOrder = 0x0200;
         if (!SetWindowPos(handle, IntPtr.Zero, x, y, 0, 0, NoSize | NoZOrder | NoActivate | NoOwnerZOrder))
-        { Left = left; Top = top; }
+        { target.Left = left; target.Top = top; }
     }
 
     public void ToggleDebug()
@@ -374,7 +380,8 @@ public sealed partial class PetWindow : Window
         if (debugWindow != null) { debugWindow.Close(); return; }
         debugText = new TextBlock { Margin = new Thickness(16), FontSize = 14 };
         debugWindow = new Window { Title = "Pet behavior", Icon = AppIcon.WindowImage(),
-            Width = 420, Height = 330, Content = debugText, WindowStyle = WindowStyle.ToolWindow,
+            Width = 520, Height = 400, Content = new ScrollViewer { Content = debugText, VerticalScrollBarVisibility = ScrollBarVisibility.Auto },
+            WindowStyle = WindowStyle.ToolWindow,
             ShowInTaskbar = false, Topmost = true };
         debugWindow.Closed += (_, _) => { debugWindow = null; debugText = null; };
         nextDebugUpdate = 0;
@@ -406,6 +413,7 @@ public sealed partial class PetWindow : Window
         ai = null;
         aiEnergy = null;
         aiNeeds = null;
+        aiLearned = null;
     }
 
     private async void RequestDecision()
@@ -418,7 +426,9 @@ public sealed partial class PetWindow : Window
         var observation = new PetObservation(pet.Action.ToString(), pet.Grounded,
             pet.Emotions.SecondsWithoutAttention, interactionCount, lastEvent, behavior.LastAppliedCommand,
             pet.Emotions.Current.ToString(), pet.Activity.Snapshot(), preferences.Personality, sessionId, preferences.Tuning?.Normalized(),
-            DateTime.Now.Hour + DateTime.Now.Minute / 60.0, pet.Interactions.Snapshot());
+            DateTime.Now.Hour + DateTime.Now.Minute / 60.0, pet.Interactions.Snapshot(),
+            preferences.Speech, preferences.Language, preferences.Chattiness, preferences.Name, preferences.Quiet,
+            pet.Speech.LastShown is { } shown ? new SpeechReport(shown.Id, Math.Round(shown.Age, 2)) : null, preferences.LearningReset);
         try
         {
             // Even a future cached source that completes synchronously must wait until
@@ -426,13 +436,17 @@ public sealed partial class PetWindow : Window
             await System.Threading.Tasks.Task.Yield();
             var decision = await source.DecideAsync(observation);
             // The await resumes on WPF's dispatcher. No background task touches the pet.
-            if (decision != null && !closed && !pressPending && ReferenceEquals(source, ai) &&
-                DecisionGuard.CanApply(requestedRevision, revision, clock.Elapsed.TotalSeconds - requestedAt, paused, pet))
+            if (decision == null || closed || !ReferenceEquals(source, ai)) return;
+            if (decision.Needs != null) aiNeeds = decision.Needs;
+            if (decision.Learned != null) aiLearned = decision.Learned;
+            // Words are presentation only, so a reply discarded for revision (e.g. the
+            // user petted the cat meanwhile) may still speak; PetSpeech enforces safety.
+            if (decision.Speech != null && !paused && clock.Elapsed.TotalSeconds - requestedAt < 2.5) ShowSpeech(decision.Speech);
+            if (!pressPending && DecisionGuard.CanApply(requestedRevision, revision, clock.Elapsed.TotalSeconds - requestedAt, paused, pet))
             {
                 aiEnergy = decision.Energy;
                 pet.Emotions.ApplyAiHint(decision.Emotion);
-                if (decision.Needs != null) aiNeeds = decision.Needs;
-                pet.Thought.TryShow(PetThought.Parse(decision.Thought), pet);
+                if (!pet.Speech.Visible) pet.Thought.TryShow(PetThought.Parse(decision.Thought), pet);
                 if (!FeatureOwnsMovement()) behavior.TryApply(pet, decision);
             }
         }

@@ -10,6 +10,7 @@
     <Compile Include="../../src/DesktopPet/PersonalityTuning.cs" Link="PersonalityTuning.cs" />
     <Compile Include="../../src/DesktopPet/PetMotion.cs" Link="PetMotion.cs" />
     <Compile Include="../../src/DesktopPet/PetThought.cs" Link="PetThought.cs" />
+    <Compile Include="../../src/DesktopPet/PetSpeech.cs" Link="PetSpeech.cs" />
     <Compile Include="../../src/DesktopPet/PetModel.cs" Link="PetModel.cs" />
     <Compile Include="../../src/DesktopPet/PetPreferences.cs" Link="PetPreferences.cs" />
     <Compile Include="../../src/DesktopPet/PetLog.cs" Link="PetLog.cs" />

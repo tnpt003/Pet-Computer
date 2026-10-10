@@ -20,7 +20,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
-    <Content Include="../../ai/service.py;../../ai/personality.json">
+    <Content Include="../../ai/service.py;../../ai/speech.py;../../ai/learning.py;../../ai/personality.json;../../ai/lines.json">
       <Link>ai/%(Filename)%(Extension)</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>

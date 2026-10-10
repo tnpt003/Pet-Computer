@@ -323,6 +323,19 @@ energy) or heart (affection). The behavior debug view lists hunger, boredom,
 affection, bond and the current bubble. See [docs/AI.md](AI.md) for the rules.
 After three minutes without attention the cat also looks briefly sad.
 
+**Speech.** The cat says short lines in a bubble above its head: greetings,
+reactions to petting, treats, ball play or throws, needs and occasional chatter.
+In the cat's menu, choose **name and personality…** and use the **Speech** box:
+- turn talking on or off
+- choose Tiếng Việt or English
+- choose how often: Rarely (events only), Sometimes or Often
+- **Forget what the pet learned…**
+
+Defaults are on, Vietnamese and Sometimes. Over days, the cat favors actions and
+lines you react to warmly (petting, treats, play) and uses fewer of those followed
+by rough throws. The debug view lists what it has learned. Wording lives in
+`ai/lines.json`.
+
 **Version.** The version lives in `DesktopPet.csproj` (`<Version>`). **About Desktop
 Pet** in the cat's menu shows the version, data folder and AI status.
 `scripts/publish.ps1` also writes `artifacts\DesktopPet-<version>-win-x64.zip`

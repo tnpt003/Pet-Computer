@@ -361,6 +361,72 @@ dragged, airborne, preparing to jump, eating or Angry/Surprised/Dizzy/Sleepy.
 Bubbles are drawing only. With Python off there are no needs or bubbles, and
 local behavior is unchanged.
 
+## Speech bubbles and learning from reactions (2026-10-10)
+
+**Lines.** `ai/lines.json` holds short lines per situation in Vietnamese (`vi`) and
+English (`en`). The pet refers to itself by `{name}` and calls the user "sen"
+("human" in English). Situations: hello, welcome_back, petted, treat_thanks, play,
+thrown_rough, thrown_fun, wake_up, sleepy, lonely, hungry, bored, morning, night
+and idle. A line can be limited to personalities with `{"text": ..., "personality": [...]}`.
+Edit the file to change wording; restart the AI, or publish again for the standalone copy.
+`ai/speech.py` picks lines without repeating the last 20. Line IDs come from the
+text, so reordering keeps learned scores.
+
+**When it talks.** Order of priority:
+1. Events: rough or fun throw, treat, petting, ball, waking or greeting. An event
+   that happens while the pet is airborne is kept for up to 12 s until the pet can talk.
+2. Needs, alongside the thought: at least 300, 120 or 60 s apart for chattiness 0, 1 or 2.
+3. Loneliness during the short Sad episode, at least 60 s apart.
+4. Chatter: none at chattiness 0, ≥90 s with a 25% chance at 1, and ≥35 s with a
+   50% chance at 2. There is no chatter in Quiet mode.
+
+Python stays silent unless the observation says `speech_enabled: true`.
+
+**Protocol.** These are optional, additive observation fields:
+
+| Field | Meaning |
+|---|---|
+| `speech_enabled` | Whether the pet may talk |
+| `language` | `vi` or `en` |
+| `chattiness` | 0, 1 or 2 |
+| `pet_name` | The pet's name, inserted for `{name}` |
+| `quiet` | Quiet mode is on |
+| `last_speech` | `{id, age}` of the last line C# actually displayed |
+| `learning_reset` | A new token asks Python to forget learned scores |
+
+A decision may add `speech` (`{id, text}`) and `learned` (likes/dislikes summaries).
+C# strips control characters and ignores invalid values without rejecting the
+decision. Speech is presentation only, so C# may show it even when it drops the
+command because the user interacted meanwhile. The line must arrive within 2.5 s.
+
+**Learning (`ai/learning.py`).** The context combines part of day with the main
+need, such as `evening/bored`. In the 15 s after an action the AI suggested and
+C# applied, or after a displayed line, each reaction scores as follows:
+
+| Reaction | Score |
+|---|---|
+| Petting or treat | +1 |
+| Ball | +0.5 |
+| Click | +0.3 |
+| Rough throw | −1 |
+| Clicking until the pet is Angry | −0.5 |
+
+Points are clamped to ±1 per observation, and no reaction teaches nothing. Each
+score moves toward the reward (learning rate 0.25) and decays with a 7-day half-life.
+It becomes a weight multiplier from ×0.5 to ×2. Variety rules still apply, so the
+pet never repeats one choice endlessly. At most 500 scores are kept, stored as
+`learned` in `ai-memory.json`. **Forget what the pet learned…** in the settings
+sends a new `learning_reset` token. Python clears its scores once; needs and bond stay.
+
+**Display (C#).** `PetSpeech` decides timing: 2.5–6 s depending on length, at least
+12 s between lines. It shows nothing while asleep, waking, dragged, airborne,
+preparing to jump or eating; a reaction may appear while the pet is upset. A
+speech line replaces the icon thought. The bubble is a separate small topmost window
+(`PetWindow.Speech.cs`). It is click-through and never takes focus. It sits over
+the head and moves with the interpolated pet position. It stays inside the work
+area, and the pet window keeps its fixed size. A meow cue plays if sounds are on,
+under the existing cooldowns. With Python off, the pet does not talk.
+
 ## Short sad episodes (C#, works offline)
 
 `PetEmotions` keeps a user clock that the pet's own sleep/wake reset does not

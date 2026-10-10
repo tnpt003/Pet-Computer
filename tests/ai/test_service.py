@@ -11,6 +11,8 @@ from contextlib import redirect_stderr
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "ai"))
 from service import Brain, COMMANDS, day_rhythm, handle
+from learning import Learner, context as learning_context
+from speech import Speech
 
 
 class BrainTests(unittest.TestCase):
@@ -319,6 +321,167 @@ class BrainTests(unittest.TestCase):
         self.assertEqual(json.loads(lines[0])["type"], "error")
         self.assertEqual(json.loads(lines[1])["type"], "decision")
         self.assertTrue(self.memory.exists())
+
+
+class SpeechAndLearningTests(unittest.TestCase):
+    KEYS = ("petted", "clicked", "treats", "toy", "ball_clicks", "ball_hits", "rough_throws")
+
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.memory = Path(self.temporary.name) / "memory.json"
+        self.now = 1000.0
+        self.wall = [1_700_000_000.0]
+        self.brain = self.make()
+        self.counts = {key: 0 for key in self.KEYS}
+
+    def make(self, seed=5):
+        return Brain(self.memory, ROOT / "ai/personality.json", random.Random(seed), lambda: self.now, lambda: self.wall[0])
+
+    def obs(self, state="Idle", language="vi", chattiness=1, **extra):
+        return {"state": state, "grounded": state not in ("Thrown", "Jumping", "Dragging"), "seconds_since_interaction": 5,
+                "interaction_count": sum(self.counts.values()), "last_event": "started", "last_applied_command": "LOCAL",
+                "session_id": "s", "interactions": dict(self.counts), "speech_enabled": True, "language": language,
+                "chattiness": chattiness, "pet_name": "Mochi", "personality": "Balanced", **extra}
+
+    def step(self, seconds=3, **extra):
+        self.now += seconds
+        return self.brain.decide(self.obs(**extra))
+
+    def test_lines_file_is_complete_for_both_languages(self):
+        speech = Speech(ROOT / "ai/lines.json")
+        ids = []
+        for category, languages in speech.lines.items():
+            for language in ("vi", "en"):
+                options = languages.get(language, [])
+                self.assertGreaterEqual(len(options), 5, f"{category}/{language}")
+                ids += [line_id for line_id, text, _ in options]
+                self.assertTrue(all(len(text) <= 70 for _, text, _ in options))
+        self.assertEqual(len(ids), len(set(ids)))
+        self.assertGreaterEqual(len(speech.lines), 15)
+        self.assertTrue(any("sen" in text for _, text, _ in speech.lines["hungry"]["vi"]))
+        self.assertTrue(any("human" in text.lower() for _, text, _ in speech.lines["hungry"]["en"]))
+
+    def test_pick_avoids_repeats_filters_personality_and_names_pet(self):
+        speech = Speech(ROOT / "ai/lines.json")
+        rng = random.Random(1)
+        picks = [speech.pick("hungry", "vi", "Balanced", "Bơ\n", lambda _: 1, rng) for _ in range(6)]
+        self.assertEqual(len({p["id"] for p in picks}), 6)
+        self.assertTrue(all("{name}" not in p["text"] and "\n" not in p["text"] for p in picks))
+        self.assertTrue(any("Bơ" in p["text"] for p in picks))
+        calm = {speech.pick("petted", "en", "Calm", "Mochi", lambda _: 1, rng)["text"] for _ in range(40)}
+        self.assertNotIn("You're so good at this! More!", calm)
+        self.assertIsNone(speech.pick("nonexistent", "vi", "Balanced", "Mochi", lambda _: 1, rng))
+
+    def test_silent_without_opt_in_and_hello_once(self):
+        self.now += 3
+        self.assertNotIn("speech", self.brain.decide({**self.obs(), "speech_enabled": False}))
+        brain = self.make()
+        self.brain = brain
+        first = self.step()
+        self.assertTrue(first["speech"]["id"].startswith("hello:vi:"))
+        self.assertTrue(all(not d.get("speech", {}).get("id", "").startswith("hello") for d in [self.step(10) for _ in range(5)]))
+
+    def test_event_lines_follow_reactions_in_chosen_language(self):
+        self.step(chattiness=0)  # hello
+        self.counts["petted"] += 1
+        petted = self.step(10, language="en", chattiness=0)
+        self.assertTrue(petted["speech"]["id"].startswith("petted:en:"))
+        self.counts["treats"] += 1
+        self.assertTrue(self.step(10, chattiness=0)["speech"]["id"].startswith("treat_thanks:vi:"))
+
+    def test_event_waits_until_the_pet_can_talk(self):
+        self.step(chattiness=0)
+        self.counts["rough_throws"] += 1
+        self.assertNotIn("speech", self.step(8, state="Thrown", chattiness=0))
+        landed = self.step(2, emotion="Angry", chattiness=0)
+        self.assertTrue(landed["speech"]["id"].startswith("thrown_rough:vi:"))
+        self.counts["rough_throws"] += 1
+        self.step(1, state="Thrown", chattiness=0)
+        self.assertNotIn("speech", self.step(20, chattiness=0))  # Too late to still react.
+
+    def test_chattiness_controls_ambient_lines(self):
+        def ambient(chattiness, quiet=False):
+            self.brain = self.make(seed=chattiness + 10)
+            self.step(chattiness=chattiness, quiet=quiet)  # hello
+            chatter = ("idle:", "morning:", "night:")
+            total = 0
+            for _ in range(120):
+                self.brain.needs.update(hunger=0, boredom=0)
+                total += self.step(15, chattiness=chattiness, quiet=quiet).get("speech", {}).get("id", "").startswith(chatter)
+            return total
+        self.assertEqual(ambient(0), 0)
+        self.assertEqual(ambient(2, quiet=True), 0)
+        rarely, often = ambient(1), ambient(2)
+        self.assertGreater(rarely, 0)
+        self.assertGreater(often, rarely)
+
+    def test_need_lines_are_paced_by_chattiness(self):
+        def need_lines(chattiness):
+            self.brain = self.make(seed=3)
+            self.step(chattiness=chattiness)
+            total = 0
+            for _ in range(80):  # 20 minutes while staying bored.
+                self.brain.needs.update(boredom=90, hunger=0)
+                total += self.step(15, chattiness=chattiness).get("speech", {}).get("id", "").startswith("bored:")
+            return total
+        rarely, often = need_lines(0), need_lines(2)
+        self.assertLessEqual(rarely, 4)
+        self.assertGreater(often, rarely)
+
+    def test_learner_is_bounded_decays_and_clears(self):
+        learner = Learner({}, lambda: self.wall[0])
+        for _ in range(50):
+            learner.reward("k", 1)
+        self.assertAlmostEqual(learner.weight("k"), 2, delta=0.01)
+        for _ in range(50):
+            learner.reward("bad", -1)
+        self.assertAlmostEqual(learner.weight("bad"), 0.5, delta=0.01)
+        learner.reward("k", 0)
+        self.wall[0] += 7 * 86400
+        self.assertAlmostEqual(learner.score("k"), 0.5, delta=0.01)  # Half-life of a week.
+        learner.clear()
+        self.assertEqual(learner.weight("k"), 1)
+
+    def test_reactions_credit_the_shown_action_and_line(self):
+        decision = self.step(chattiness=0)
+        command, line = decision["command"], decision["speech"]["id"]
+        self.counts["petted"] += 1
+        self.step(4, chattiness=0, last_applied_command=command, last_speech={"id": line, "age": 3.5})
+        ctx = learning_context(None, self.brain.needs, self.brain.energy)
+        self.assertGreater(self.brain.learner.score("say:" + line), 0)
+        self.assertGreater(max(self.brain.learner.score(k) for k in self.brain.learner.values if k.startswith("act:")), 0)
+        self.counts["rough_throws"] += 1
+        self.step(30, chattiness=0, last_speech={"id": line, "age": 40})  # Stale line gets no blame.
+        self.assertGreater(self.brain.learner.score("say:" + line), 0)
+        self.assertTrue(ctx)
+
+    def test_learning_shapes_choices_persists_and_resets(self):
+        ctx = learning_context(None, self.brain.needs, self.brain.energy)
+        for _ in range(30):
+            self.brain.learner.reward(self.brain.action_key(ctx, "JUMP"), 1)
+        summary = self.step(chattiness=0)["learned"]
+        self.assertTrue(summary["likes"] and summary["likes"][0].startswith("JUMP @"))
+        self.brain.save()
+        restored = self.make()
+        self.assertGreater(restored.learner.score(restored.action_key(ctx, "JUMP")), 0.9)
+        def jumps(brain):
+            self.brain = brain
+            total = 0
+            for _ in range(300):
+                brain.needs.update(hunger=0, boredom=0)  # Keep the learned situation fixed.
+                total += self.step(5, chattiness=0)["command"] == "JUMP"
+            return total
+        learned = jumps(restored)
+        fresh = Brain(Path(self.temporary.name) / "other.json", ROOT / "ai/personality.json", random.Random(5),
+                      lambda: self.now, lambda: self.wall[0])
+        self.assertGreater(learned, jumps(fresh) * 1.15)  # Variety rules still cap repeats.
+        self.brain = restored
+        self.step(chattiness=0, learning_reset="r1")
+        self.assertEqual(restored.learner.values, {})
+        restored.learner.reward("x", 1)
+        self.step(chattiness=0, learning_reset="r1")  # Same reset token is applied only once.
+        self.assertIn("x", restored.learner.values)
 
 
 if __name__ == "__main__":

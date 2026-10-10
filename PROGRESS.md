@@ -4,7 +4,13 @@ Cập nhật: 2026-10-09 (Asia/Saigon).
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
-## Kết quả test gần nhất (2026-10-09, đợt AI nhu cầu)
+## Kết quả test gần nhất (2026-10-10, đợt mèo biết nói + tự học)
+- scripts/test.ps1 -Ui: 259 C# checks, 119 WPF checks, 41 Python tests đạt. Publish + check-publish đạt.
+- Đã xem ảnh bong bóng chữ (artifacts/speech-review/speech-vi.png, speech-en-long.png): dấu tiếng Việt đúng, xuống dòng, đuôi chỉ về mèo.
+- Chạy thật bản publish với PET_DATA_DIRECTORY riêng: Python thật chọn câu, C# hiện bong bóng trên đầu mèo (ảnh live-hello.png: "Ngáp~ Mochi ngủ ngon ghê"). Lần đó câu chào bị lỡ vì mèo tình cờ đi ngủ ngay lúc mở (đúng quy tắc không nói khi ngủ).
+- Đã đóng mèo của người dùng (WM_CLOSE) để publish rồi mở lại bản mới với dữ liệu bình thường.
+
+## Kết quả test đợt AI nhu cầu (2026-10-09)
 - scripts/test.ps1 -Ui: 238 C# checks, 114 WPF checks, 31 Python tests đạt. Publish + check-publish đạt.
 - Đã xem ảnh render 4 bong bóng (artifacts/thought-review): rõ, không bị cắt. Chưa quan sát nhịp bong bóng/nhu cầu khi chạy lâu thật.
 - Chạy service mới trên BẢN SAO ai-memory.json thật: giữ energy/decisions, thêm key needs mặc định. File gốc không bị đụng.
@@ -18,6 +24,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Lịch sử: 201 C#/107 WPF/20 Python (motion, 2026-10-08); 181/101/20 (features). Không dùng số liệu cũ thay kết quả hiện tại.
 
 ## Đã làm gần đây
+- 2026-10-10 (mèo biết nói + tự học, cách 1): ai/lines.json (~16 tình huống × vi/en, mèo xưng tên {name}, gọi "sen"/"human"), ai/speech.py chọn câu chống lặp 20 câu, ai/learning.py học từ phản ứng (ngữ cảnh buổi × nhu cầu; vuốt/ăn +1, bóng +0.5, click +0.3, ném mạnh −1, giận −0.5; trọng số ×0.5–×2; phai nửa sau 7 ngày; tối đa 500 khóa). Service: sự kiện chờ tối đa 12s nếu mèo đang bay; câu nhu cầu cách 300/120/60s theo tần suất; nói vu vơ theo tần suất, không nói vu vơ ở Quiet. C#: PetSpeech (2.5–6s, cách ≥12s, không nói khi ngủ/kéo/bay/ăn, được nói khi giận), cửa sổ bong bóng riêng PetWindow.Speech.cs (click xuyên, không lấy focus, bám mèo, trong work area), lời nói được nhận cả khi lệnh bị bỏ do revision. Cài đặt: Speech group (bật/tắt, Tiếng Việt/English, Ít/Vừa/Nhiều, Quên những gì đã học). Debug view: Speech, Learned likes/dislikes. Preferences mới: Speech, Language, Chattiness, LearningReset. Đóng gói thêm speech.py, learning.py, lines.json.
 - 2026-10-09 (AI giai đoạn 1 + bong bóng): Python có hunger/boredom/affection/bond (lưu trong ai-memory.json), thói quen theo giờ, chào khi quay lại (vắng ≥1h, bond ≥50). Bond giới hạn +3/−2 mỗi ngày. Đói ≥70 → đòi chú ý + bong bóng cá; chán ≥75 → đòi chơi + bong bóng bóng; chán ảnh hưởng trọng số JUMP/FOLLOW_MOUSE. C# đếm tương tác theo loại (PetInteractions) gửi qua observation.interactions; nhận thought/needs (sai thì bỏ qua, không loại quyết định). PetThought.cs quản lý bong bóng (2.5s, cooldown 20s/loại, 8s chung, không hiện khi ngủ/kéo/bay/ăn/giận/giật mình). Renderer vẽ bong bóng bên trái trên đầu. Debug view hiện needs + thought.
 - 2026-10-09: Buồn ngắn: 3 phút người dùng không đụng → Sad ~6s rồi tự hết, cách nhau ≥3 phút; đồng hồ người dùng không bị reset khi mèo tự ngủ/dậy (trước đây Sad gần như không bao giờ hiện vì Sleepy 2 phút + reset khi thức). Chạm là hết buồn. Không đổi ngủ 2 phút.
 - 2026-10-09: Glitch khi ném/đi: timer chạy nửa chu kỳ + bỏ tick sớm (nhịp đều ~60 FPS), nội suy vị trí hiển thị giữa 2 bước physics 1/120 s, dời cửa sổ bằng 1 lệnh SetWindowPos thay vì Left rồi Top. Reset/drag/DPI/khôi phục màn hình thì snap, không nội suy. Không đổi physics, lực ném, gravity, bounce, FPS mục tiêu (60/30/10). Debug view hiện FPS và max gap.
@@ -46,6 +53,9 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Lịch sử chuyển project: 2026-10-05 tạo AGENTS.md/PROGRESS.md tại ổ D khi thư mục đó trống; source hiện nằm tại ổ C, không cần khôi phục về D.
 
 ## Đang dở và việc tiếp theo
+- Cách 2 (dạy mèo nói: người dùng gõ câu theo tình huống, mèo học câu nào được thích) và cách 3 (LLM trò chuyện có trí nhớ) chưa làm.
+- Câu do Python chọn nhưng C# không hiện (ví dụ mèo vừa đi ngủ) thì bị bỏ; có thể cho C# giữ chờ vài giây nếu thấy mất câu chào quá thường.
+- Người dùng nên đọc lại ai/lines.json để chỉnh giọng văn.
 - Tinh chỉnh nhịp nhu cầu/bong bóng sau khi người dùng dùng thật (tốc độ đói 25/giờ, chán 2/phút, khoảng cách bong bóng 90s).
 - Ý tưởng chưa làm: giai đoạn 3 (ngữ cảnh máy: idle toàn hệ thống, app fullscreen → yên lặng); LLM bong bóng thoại (cần đổi quy tắc AGENTS.md). Có thể thêm 3 tốc độ nhu cầu vào Behavior tuning.
 - Cửa sổ quả bóng (ToyBall) vẫn dời bằng Left rồi Top, chưa nội suy; nếu bóng còn giật thì áp dụng cách tương tự.
@@ -55,6 +65,8 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Không tích hợp LLM, voice hay computer vision; không thay framework hoặc hệ thống rendering/physics.
 
 ## Cần test thủ công
+- Mèo nói: tần suất có dễ chịu không (thử Ít/Vừa/Nhiều), đổi English, câu phản ứng sau vuốt/cho ăn/ném mạnh, bong bóng khi mèo ở sát mép màn hình và trên màn hình phụ/DPI khác.
+- Tự học: sau vài ngày xem debug view "Learned likes/dislikes"; thử nút Quên.
 - Để mèo chạy, mở Behavior debug view xem Needs/Thought thay đổi; vuốt ve (tim), cho ăn khi đói, chơi bóng khi chán. Đánh giá bong bóng có quá dày/thưa không.
 - Không đụng mèo 3 phút: mèo buồn vài giây rồi bình thường; click giữa lúc buồn thì hết ngay.
 - Ném mèo mạnh/nhẹ, nhìn khi bay và nảy: còn giật không? Mở Behavior debug view xem dòng Frame (kỳ vọng ~60 fps, max gap < ~35 ms). Kiểm tra drag, pickup, thả, sleep/wake không đổi cảm giác.

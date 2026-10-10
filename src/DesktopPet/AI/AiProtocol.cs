@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -8,12 +9,21 @@ public sealed record PetObservation(
     string State, bool Grounded, double SecondsSinceInteraction,
     long InteractionCount, string LastEvent, string LastAppliedCommand, string Emotion = "Neutral",
     PetActivity? Activity = null, string Personality = "Balanced", string SessionId = "", PersonalityTuning? Tuning = null,
-    double? LocalHour = null, PetInteractions? Interactions = null);
+    double? LocalHour = null, PetInteractions? Interactions = null,
+    bool SpeechEnabled = false, string Language = "vi", int Chattiness = 1, string PetName = "", bool Quiet = false,
+    SpeechReport? LastSpeech = null, string LearningReset = "");
+
+// The line actually displayed and how long ago, so Python can credit reactions to it.
+public sealed record SpeechReport(string Id, double Age);
 
 public sealed record PetNeeds(double Hunger, double Boredom, double Affection, double Bond);
 
+public sealed record PetLine(string Id, string Text);
+
+public sealed record PetLearned(string[] Likes, string[] Dislikes);
+
 public sealed record AiDecision(string Command, double DurationSeconds, string Mood, string? Emotion = null, double? Energy = null,
-    string? Thought = null, PetNeeds? Needs = null);
+    string? Thought = null, PetNeeds? Needs = null, PetLine? Speech = null, PetLearned? Learned = null);
 
 public interface IPetDecisionSource : IDisposable
 {
@@ -51,7 +61,35 @@ public static class AiProtocol
         // Optional extras: an invalid value is dropped instead of rejecting the decision.
         string? thought = root.TryGetProperty("thought", out var idea) && idea.ValueKind == JsonValueKind.String &&
             PetThought.Parse(idea.GetString()) != ThoughtKind.None ? idea.GetString() : null;
-        return new AiDecision(command!, duration, mood!, emotion, energy, thought, ParseNeeds(root));
+        return new AiDecision(command!, duration, mood!, emotion, energy, thought, ParseNeeds(root), ParseLine(root), ParseLearned(root));
+    }
+
+    private static string? Text(JsonElement element, int maxLength)
+    {
+        if (element.ValueKind != JsonValueKind.String) return null;
+        string? text = element.GetString();
+        if (string.IsNullOrWhiteSpace(text) || text.Length > maxLength) return null;
+        // Display text only: drop control characters such as newlines or escapes.
+        var clean = new System.Text.StringBuilder(text.Length);
+        foreach (char c in text) if (!char.IsControl(c)) clean.Append(c);
+        return clean.Length == 0 ? null : clean.ToString().Trim();
+    }
+
+    private static PetLine? ParseLine(JsonElement root)
+    {
+        if (!root.TryGetProperty("speech", out var speech) || speech.ValueKind != JsonValueKind.Object) return null;
+        string? id = speech.TryGetProperty("id", out var idValue) ? Text(idValue, 80) : null;
+        string? text = speech.TryGetProperty("text", out var textValue) ? Text(textValue, 160) : null;
+        return id != null && text != null ? new PetLine(id, text) : null;
+    }
+
+    private static PetLearned? ParseLearned(JsonElement root)
+    {
+        if (!root.TryGetProperty("learned", out var learned) || learned.ValueKind != JsonValueKind.Object) return null;
+        string[] List(string name) => learned.TryGetProperty(name, out var items) && items.ValueKind == JsonValueKind.Array
+            ? items.EnumerateArray().Select(item => Text(item, 60)).OfType<string>().Take(5).ToArray()
+            : Array.Empty<string>();
+        return new PetLearned(List("likes"), List("dislikes"));
     }
 
     private static PetNeeds? ParseNeeds(JsonElement root)

@@ -270,6 +270,22 @@ public sealed partial class PetWindow
         panel.Children.Add(new TextBlock { Text = "Personality (Python AI)" }); panel.Children.Add(personality);
         var tuning = new Button { Content = "Behavior tuning...", Margin = new Thickness(0, 6, 0, 0) };
         tuning.Click += (_, _) => ShowBehaviorSettings(); panel.Children.Add(tuning);
+        // Speech bubbles (needs Python AI): language, chattiness and forgetting learned habits.
+        var talks = new CheckBox { Content = "Pet talks (speech bubbles)", IsChecked = preferences.Speech, Margin = new Thickness(0, 4, 0, 4) };
+        var language = new ComboBox { ItemsSource = new[] { "Tiếng Việt", "English" }, SelectedIndex = preferences.Language == "en" ? 1 : 0, Margin = new Thickness(0, 2, 0, 4) };
+        var chattiness = new ComboBox { ItemsSource = new[] { "Rarely — events only", "Sometimes", "Often" }, SelectedIndex = preferences.Chattiness };
+        var forget = new Button { Content = "Forget what the pet learned…", Margin = new Thickness(0, 8, 0, 2) };
+        forget.Click += (_, _) =>
+        {
+            if (MessageBox.Show("The pet will forget which actions and lines you liked. Needs and bond are kept.",
+                    "Forget learned habits", MessageBoxButton.OKCancel) != MessageBoxResult.OK) return;
+            preferences.LearningReset = Guid.NewGuid().ToString("N"); // Python applies it on its next decision.
+            SavePreferences();
+        };
+        var speechPanel = new StackPanel { Margin = new Thickness(6) };
+        speechPanel.Children.Add(talks); speechPanel.Children.Add(new TextBlock { Text = "Language" }); speechPanel.Children.Add(language);
+        speechPanel.Children.Add(new TextBlock { Text = "How often" }); speechPanel.Children.Add(chattiness); speechPanel.Children.Add(forget);
+        panel.Children.Add(new GroupBox { Header = "Speech (Python AI)", Content = speechPanel, Margin = new Thickness(0, 10, 0, 0) });
         var master = new CheckBox { Content = "Enable sounds", IsChecked = preferences.Sounds, Margin = new Thickness(0, 12, 0, 4) };
         var interaction = new CheckBox { Content = "Interaction sounds", IsChecked = preferences.InteractionSounds };
         var emotion = new CheckBox { Content = "Emotion sounds", IsChecked = preferences.EmotionSounds };
@@ -285,13 +301,16 @@ public sealed partial class PetWindow
             button.Click += (_, _) => PlayPetSound(cue, true, volume.Value); previews.Children.Add(button);
         }
         panel.Children.Add(previews); panel.Children.Add(save);
-        settingsWindow = new Window { Title = "Customize pet", Icon = AppIcon.WindowImage(), Width = 380, Height = 560,
+        settingsWindow = new Window { Title = "Customize pet", Icon = AppIcon.WindowImage(), Width = 380, Height = 760,
             Content = panel, ResizeMode = ResizeMode.NoResize, Topmost = true, ShowInTaskbar = false };
         save.Click += (_, _) => { preferences.Name = string.IsNullOrWhiteSpace(name.Text) ? "Mochi" : name.Text.Trim();
             preferences.Personality = personality.SelectedItem as string ?? "Balanced"; Title = preferences.Name + " — Desktop Pet";
             behavior.Personality = preferences.Personality;
             preferences.Volume = volume.Value; preferences.Sounds = master.IsChecked == true;
             preferences.InteractionSounds = interaction.IsChecked == true; preferences.EmotionSounds = emotion.IsChecked == true; preferences.SleepSounds = sleep.IsChecked == true;
+            preferences.Speech = talks.IsChecked == true; preferences.Language = language.SelectedIndex == 1 ? "en" : "vi";
+            preferences.Chattiness = Math.Clamp(chattiness.SelectedIndex, 0, 2);
+            if (!preferences.Speech) pet.Speech.Hide();
             sound?.Stop(); Interact("preferences_changed"); SavePreferences(); settingsWindow?.Close(); };
         settingsWindow.Closed += (_, _) => settingsWindow = null;
         settingsWindow.Show();
@@ -325,5 +344,5 @@ public sealed partial class PetWindow
         catch (Exception ex) when (ex is IOException or InvalidOperationException or System.TimeoutException) { soundAfter = now + 10; return false; }
     }
 
-    private void CloseFeatures() { behaviorSettingsWindow?.Close(); toyWindow?.Close(); settingsWindow?.Close(); sound?.Stop(); sound?.Dispose(); soundStream?.Dispose(); }
+    private void CloseFeatures() { behaviorSettingsWindow?.Close(); toyWindow?.Close(); settingsWindow?.Close(); speechWindow?.Close(); sound?.Stop(); sound?.Dispose(); soundStream?.Dispose(); }
 }

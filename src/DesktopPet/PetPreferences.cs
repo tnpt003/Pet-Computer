@@ -15,6 +15,12 @@ public sealed class PetPreferences
     public bool InteractionSounds { get; set; } = true;
     public bool EmotionSounds { get; set; } = true;
     public bool SleepSounds { get; set; } = true;
+    // Speech bubbles (lines chosen by Python AI). Chattiness: 0 rarely, 1 sometimes, 2 often.
+    public bool Speech { get; set; } = true;
+    public string Language { get; set; } = "vi";
+    public int Chattiness { get; set; } = 1;
+    // A new value asks Python to forget what it learned; Python applies each value once.
+    public string LearningReset { get; set; } = "";
     public string? PositionMonitor { get; set; }
     public double PositionX { get; set; } = 0.5;
     public double PositionY { get; set; } = 1;
@@ -34,6 +40,9 @@ public sealed class PetPreferences
             if (p.Personality is not ("Balanced" or "Playful" or "Curious" or "Calm")) p.Personality = "Balanced";
             p.Tuning = p.Tuning?.Normalized();
             p.Volume = double.IsFinite(p.Volume) ? Math.Clamp(p.Volume, 0, 1) : 0.7;
+            if (p.Language is not ("vi" or "en")) p.Language = "vi";
+            p.Chattiness = Math.Clamp(p.Chattiness, 0, 2);
+            if (p.LearningReset == null || p.LearningReset.Length > 64) p.LearningReset = "";
             p.PositionX = double.IsFinite(p.PositionX) ? Math.Clamp(p.PositionX, 0, 1) : 0.5;
             p.PositionY = double.IsFinite(p.PositionY) ? Math.Clamp(p.PositionY, 0, 1) : 1;
             p.RestFractionX = double.IsFinite(p.RestFractionX) ? Math.Clamp(p.RestFractionX, 0, 1) : 0.5;

@@ -61,6 +61,9 @@ internal static class Program
         Console.WriteLine($"PASS: {description}");
     }
 
+    [System.Runtime.InteropServices.DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")]
+    private static extern IntPtr GetWindowLongPtr(IntPtr hwnd, int index);
+
     private static MouseButtonEventArgs MouseEvent(RoutedEvent routedEvent) =>
         new(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Left) { RoutedEvent = routedEvent };
 
@@ -173,6 +176,45 @@ internal static class Program
         double presentedX = window.Left + PickupAnimation.Padding;
         Check(pet.X > flightStart && presentedX >= flightStart - 1 && presentedX <= pet.X + 1,
             "Thrown flight presents an interpolated position between physics states");
+        window.Reset();
+        await Task.Delay(50);
+        typeof(PetWindow).GetMethod("ShowSpeech", BindingFlags.NonPublic | BindingFlags.Instance)!
+            .Invoke(window, new object[] { new PetLine("hello:vi:test", "Chào sen! Mochi có mặt rồi đây~") });
+        await Task.Delay(150);
+        var speechWindow = Field<Window>(window, "speechWindow");
+        var speechArea = Field<Area>(window, "bounds");
+        Check(pet.Speech.Visible && speechWindow.IsVisible &&
+              speechWindow.Top + speechWindow.ActualHeight <= pet.Y + 20 && speechWindow.Top >= speechArea.Top - 0.5 &&
+              speechWindow.Left >= speechArea.Left - 0.5 && speechWindow.Left + speechWindow.ActualWidth <= speechArea.Right + 0.5 &&
+              speechWindow.Left < pet.X + 56 && speechWindow.Left + speechWindow.ActualWidth > pet.X + 56,
+            "Speech bubble window appears above the cat's head inside the work area");
+        long exStyle = GetWindowLongPtr(new System.Windows.Interop.WindowInteropHelper(speechWindow).Handle, -20).ToInt64();
+        Check((exStyle & 0x20) != 0 && (exStyle & 0x08000000) != 0 && !speechWindow.ShowInTaskbar && speechWindow.Topmost &&
+              !speechWindow.IsActive, "Speech bubble is click-through, topmost and never takes focus");
+        Check(window.Width == 192 && window.Height == 192, "Speaking does not resize the pet window");
+        if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string speechReview)
+        {
+            void SaveBubble(string label)
+            {
+                var root = (FrameworkElement)speechWindow.Content;
+                var image = new RenderTargetBitmap((int)Math.Ceiling(root.ActualWidth + 12), (int)Math.Ceiling(root.ActualHeight + 12), 96, 96, PixelFormats.Pbgra32);
+                image.Render(root);
+                var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(image));
+                System.IO.Directory.CreateDirectory(speechReview);
+                using var stream = System.IO.File.Create(System.IO.Path.Combine(speechReview, label + ".png")); encoder.Save(stream);
+            }
+            SaveBubble("speech-vi");
+            pet.Speech.Hide(); await Task.Delay(50);
+            pet.Speech.Step(pet, 20);
+            typeof(PetWindow).GetMethod("ShowSpeech", BindingFlags.NonPublic | BindingFlags.Instance)!
+                .Invoke(window, new object[] { new PetLine("x:en:test", "What kind of animal is that cursor? Mochi wants to know!") });
+            await Task.Delay(150);
+            SaveBubble("speech-en-long");
+        }
+        pet.Action = PetAction.Dragging; pet.Grounded = false;
+        await Task.Delay(80);
+        Check(!pet.Speech.Visible && !speechWindow.IsVisible, "Speech bubble hides as soon as the pet is picked up");
+        window.Reset();
         window.Reset();
         window.Reset();
         pet.Emotions.Step(pet, 31); // Initial randomized sleep may have started a wake cooldown earlier.
@@ -335,6 +377,14 @@ internal static class Program
             && controls.OfType<System.Windows.Controls.Slider>().Single().Value == preferences.Volume
             && controls.OfType<System.Windows.Controls.WrapPanel>().Single().Children.Count == 9,
             "Sound settings expose master/category switches, volume and all nine previews");
+        var speechGroup = controls.OfType<System.Windows.Controls.GroupBox>().Single(g => (g.Header as string)?.StartsWith("Speech") == true);
+        var speechControls = ((System.Windows.Controls.StackPanel)speechGroup.Content).Children;
+        var languageBox = speechControls.OfType<System.Windows.Controls.ComboBox>().First();
+        Check(speechControls.OfType<System.Windows.Controls.CheckBox>().Single().IsChecked == true &&
+              languageBox.SelectedIndex == 0 && languageBox.Items.Count == 2 &&
+              speechControls.OfType<System.Windows.Controls.ComboBox>().Last().SelectedIndex == 1 &&
+              speechControls.OfType<System.Windows.Controls.Button>().Count() == 1,
+            "Speech settings default to talking in Vietnamese, sometimes, with a forget button");
         var playSound = typeof(PetWindow).GetMethod("PlayPetSound", BindingFlags.NonPublic | BindingFlags.Instance)!;
         Check(!(bool)playSound.Invoke(window, new object?[] { "meow", true, 0.0 })!, "Zero-volume preview stays silent");
         typeof(PetWindow).GetMethod("ShowBehaviorSettings", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(window, null);

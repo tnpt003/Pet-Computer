@@ -67,6 +67,7 @@ FeatureExpansionTests.Run(Check);
 MotionTests.Run(Check);
 ToolingTests.Run(Check);
 NeedsTests.Run(Check);
+SpeechTests.Run(Check);
 var activity = new PetActivity();
 activity.Step(PetAction.Walking, 2);
 activity.Step(PetAction.Jumping, 1);

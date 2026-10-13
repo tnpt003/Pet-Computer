@@ -372,7 +372,13 @@ internal static class Program
         typeof(PetWindow).GetMethod("ShowPetSettings", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(window, null);
         var customize = Field<Window>(window, "settingsWindow");
         Check(customize.IsVisible, "Name and personality editor opens on demand");
-        var controls = ((System.Windows.Controls.StackPanel)customize.Content).Children;
+        var settingsScroll = (System.Windows.Controls.ScrollViewer)customize.Content;
+        var controls = ((System.Windows.Controls.StackPanel)settingsScroll.Content).Children;
+        var settingsArea = Field<Area>(window, "bounds");
+        Check(customize.Height <= settingsArea.Bottom - settingsArea.Top && customize.Top >= settingsArea.Top &&
+              customize.Top + customize.Height <= settingsArea.Bottom + 0.5 &&
+              settingsScroll.VerticalScrollBarVisibility == System.Windows.Controls.ScrollBarVisibility.Auto,
+            "Settings window fits the pet's monitor and scrolls, so Save stays reachable");
         Check(controls.OfType<System.Windows.Controls.CheckBox>().Count() == 4
             && controls.OfType<System.Windows.Controls.Slider>().Single().Value == preferences.Volume
             && controls.OfType<System.Windows.Controls.WrapPanel>().Single().Children.Count == 9,

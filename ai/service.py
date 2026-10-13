@@ -51,7 +51,9 @@ CHATTER = {1: (90, 0.25), 2: (35, 0.5)}  # chattiness: (min seconds since last l
 
 def read_object(path: Path) -> dict:
     try:
-        if path.stat().st_size > 65536:
+        # Generous cap: a rejected memory file would silently reset needs, bond and
+        # learning, while the worst-case learned table is only ~40 KB.
+        if path.stat().st_size > 524288:
             raise ValueError("file too large")
         value = json.loads(path.read_text(encoding="utf-8"))
         if not isinstance(value, dict):

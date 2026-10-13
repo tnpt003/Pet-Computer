@@ -12,12 +12,16 @@ public static class PetPublishWindow {
     [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr hwnd, out uint pid);
     [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr hwnd);
     [DllImport("user32.dll")] public static extern bool PostMessage(IntPtr hwnd, uint message, IntPtr wParam, IntPtr lParam);
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)] public static extern int GetWindowText(IntPtr hwnd, System.Text.StringBuilder text, int max);
+    // The pet window's title ends with "Desktop Pet"; speech bubbles and menus are skipped.
     public static IntPtr Find(int processId) {
         IntPtr result = IntPtr.Zero;
         EnumWindows((hwnd, unused) => {
             uint pid;
             GetWindowThreadProcessId(hwnd, out pid);
-            if (pid == processId && IsWindowVisible(hwnd)) { result = hwnd; return false; }
+            var title = new System.Text.StringBuilder(256);
+            GetWindowText(hwnd, title, 256);
+            if (pid == processId && IsWindowVisible(hwnd) && title.ToString().EndsWith("Desktop Pet")) { result = hwnd; return false; }
             return true;
         }, IntPtr.Zero);
         return result;

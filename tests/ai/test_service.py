@@ -429,6 +429,17 @@ class SpeechAndLearningTests(unittest.TestCase):
         self.assertLessEqual(rarely, 4)
         self.assertGreater(often, rarely)
 
+    def test_large_learned_memory_still_loads(self):
+        for i in range(500):
+            self.brain.learner.reward(f"say:treat_thanks:vi:{i:08x}-" + "x" * 80, 1)
+        self.brain.needs.update(bond=77)
+        self.step(chattiness=0)
+        self.brain.save()
+        self.assertGreater(self.memory.stat().st_size, 65536)  # Larger than the old limit.
+        restored = self.make()
+        self.assertEqual(len(restored.learner.values), 500)
+        self.assertEqual(restored.needs["bond"], 77)
+
     def test_learner_is_bounded_decays_and_clears(self):
         learner = Learner({}, lambda: self.wall[0])
         for _ in range(50):

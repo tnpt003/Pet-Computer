@@ -301,8 +301,16 @@ public sealed partial class PetWindow
             button.Click += (_, _) => PlayPetSound(cue, true, volume.Value); previews.Children.Add(button);
         }
         panel.Children.Add(previews); panel.Children.Add(save);
-        settingsWindow = new Window { Title = "Customize pet", Icon = AppIcon.WindowImage(), Width = 380, Height = 760,
-            Content = panel, ResizeMode = ResizeMode.NoResize, Topmost = true, ShowInTaskbar = false };
+        // Fit the pet's monitor (small laptop screens included) and scroll if needed,
+        // so Save is always reachable.
+        double areaHeight = Math.Max(300, bounds.Bottom - bounds.Top);
+        double height = Math.Min(760, areaHeight - 24);
+        settingsWindow = new Window { Title = "Customize pet", Icon = AppIcon.WindowImage(), Width = 400, Height = height,
+            Content = new ScrollViewer { Content = panel, VerticalScrollBarVisibility = ScrollBarVisibility.Auto },
+            ResizeMode = ResizeMode.NoResize, Topmost = true, ShowInTaskbar = false,
+            WindowStartupLocation = WindowStartupLocation.Manual,
+            Left = Math.Clamp(pet.X + settings.Width / 2 - 200, bounds.Left, Math.Max(bounds.Left, bounds.Right - 400)),
+            Top = bounds.Top + Math.Max(8, (areaHeight - height) / 2) };
         save.Click += (_, _) => { preferences.Name = string.IsNullOrWhiteSpace(name.Text) ? "Mochi" : name.Text.Trim();
             preferences.Personality = personality.SelectedItem as string ?? "Balanced"; Title = preferences.Name + " — Desktop Pet";
             behavior.Personality = preferences.Personality;

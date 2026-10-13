@@ -470,6 +470,10 @@ listed in `BUSY_STATES` and in `PetActionRules`, and a test keeps the two lists 
 **Pending lines.** A line that arrives while the pet cannot talk (eating, airborne, inside
 the 12 s gap) waits up to 10 s and appears as soon as the pet is free. A newer line
 replaces it. Sleep, a fullscreen app or turning speech off drops it.
+Exception: the once-per-session greeting (`hello`, `welcome_back`) survives sleep and
+waits up to 30 s. It stays hidden while the pet sleeps or wakes, so it never wakes the
+pet, and it is said once the pet is awake. A `wake_up` line does not replace it; newer
+reaction lines still do. A longer nap (for example an away nap) lets it expire.
 `last_speech` reports only lines that were actually shown.
 
 **Diary.** Python keeps `first_seen`, lifetime `totals` per interaction kind, and

@@ -4,7 +4,11 @@ Cập nhật: 2026-10-13 (Asia/Saigon).
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
-## Kết quả test gần nhất (2026-10-13, đợt 4+5+7: câu chờ, động tác mới, nhật ký)
+## Kết quả test gần nhất (2026-10-13, đợt nhỏ: quả bóng + câu chào qua giấc ngủ)
+- scripts/test.ps1 -Ui: 48 Python tests, 324 C# checks, 148 WPF checks đạt. Publish + check-publish đạt. Đã đóng (WM_CLOSE đúng process artifacts\win-x64) và mở lại mèo của người dùng.
+- Chưa xem trực tiếp: quả bóng còn giật không; câu chào sau khi mèo ngủ ngay lúc mở (khó tái hiện, test bằng check tự động).
+
+## Kết quả test đợt 4+5+7: câu chờ, động tác mới, nhật ký (2026-10-13)
 - scripts/test.ps1 -Ui: 48 Python tests, 317 C# checks, 146 WPF checks đạt (exit 0). Publish + check-publish đạt. Python mới chạy trên BẢN SAO ai-memory.json thật: giữ needs/habits, thêm first_seen/totals/bond_history, có diary. Đã đóng (WM_CLOSE) và mở lại mèo của người dùng.
 - So pixel với lần render trước đợt: 41 ảnh trạng thái cũ + 151 ảnh bộ lông/phụ kiện giống hệt (trừ 2 ảnh bong bóng chữ vốn không cố định). Mọi tư thế cũ không đổi; chỉ biểu cảm Giận đổi có chủ đích (tai cụp, đuôi quất).
 - Đã xem ảnh 5 động tác × 13 khung × 2 hướng × có/không mũ (Calico): không bị cắt (có check mép tự động); khung đầu của mỗi động tác giống hệt tư thế đứng (vào mượt). Sửa trong lúc làm: đuổi đuôi/lăn ngửa ban đầu ghi đè độ nhún gây giật khung đầu (test bắt được); cào móng chuyển sang phía không có đuôi cho dễ nhìn.
@@ -38,6 +42,9 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Lịch sử: 201 C#/107 WPF/20 Python (motion, 2026-10-08); 181/101/20 (features). Không dùng số liệu cũ thay kết quả hiện tại.
 
 ## Đã làm gần đây
+- 2026-10-13 (đợt nhỏ): đã push commit 2631fec lên GitHub.
+  - Quả bóng: cửa sổ bóng dời bằng MoveWindow (1 lệnh SetWindowPos) thay vì Left rồi Top; không nội suy vì bóng cập nhật theo dt từng khung. Không đổi physics bóng/nhịp chơi.
+  - Câu chào qua giấc ngủ: câu hello/welcome_back đang chờ không bị hủy khi mèo ngủ, chờ tối đa 30s (PetSpeech.GreetingPendingFor), hiện sau khi mèo thức (không hiện khi Sleeping/Waking nên không đánh thức mèo). Câu wake_up không thay câu chào; câu phản ứng mới vẫn thay. Câu khác vẫn bị hủy khi ngủ như cũ. Away nap dài hơn 30s thì câu chào hết hạn (đã có câu "back").
 - 2026-10-13 (đợt 4+5+7):
   - Câu chờ (4): PetSpeech.Offer/TryShowPending/DropPending giữ 1 câu tối đa 10s khi mèo chưa nói được (ăn, bay, khoảng nghỉ 12s); câu mới thay câu cũ; ngủ/fullscreen/tắt Speech/hết hạn nhắc nghỉ thì bỏ. PetWindow.Speech: SpeechAllowed, TickPendingSpeech (mỗi khung), SpeechShown (meo, xóa bong bóng ý nghĩ, nhắc nghỉ).
   - Động tác (5): PetAction thêm Kneading, RollingOver, ChasingTail, Scratching, Sneezing (PetActionRules.IsGesture, thời lượng cố định 3.2/3.5/3/2.4/1s trong PetSettings). Nhồi bột: C#, vuốt 2 lần trong 10s (cooldown 20s), chạy cả Quiet/không Python. Python: ROLL_OVER (vừa được vuốt, bond ≥60, affection ≥60, cách ≥120s), CHASE_TAIL (tăng theo chán, nhóm riêng không chung với JUMP), SCRATCH (trọng số nhỏ). Local chọn thêm đuổi đuôi/cào móng/hắt xì (chung cooldown 45s với tự chăm sóc). Quiet/fullscreen chặn động tác tự làm. Renderer: tư thế mới + Giận cụp tai/quất đuôi; vào động tác theo envelope nên khung đầu giống tư thế cũ.
@@ -82,22 +89,23 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 ## Đang dở và việc tiếp theo
 - Đề xuất còn lại từ danh sách 2026-10-13: 6 (chơi với con trỏ kiểu laser), 8 (mèo đi trên cửa sổ, đợt riêng), 9 (dạy mèo nói). Đã làm 1–5, 7.
 - Nhật ký: người dùng cũ có first_seen = lần đầu chạy bản này (không có dữ liệu trước đó), nên "số ngày ở cùng" bắt đầu từ 2026-10-13.
-- Câu chờ bị bỏ khi mèo ngủ (theo kế hoạch đã duyệt); nếu vẫn thấy mất câu chào vì mèo ngủ ngay lúc mở, có thể giữ câu qua giấc ngủ ngắn.
 - Away nap: nếu xem video không fullscreen mà không chạm chuột 5 phút thì mèo cũng ngủ (chấp nhận được); có thể thêm tùy chọn thời gian 5/10/15 phút nếu thấy sớm.
 - Fullscreen: chỉ xét màn hình đang có mèo; app "borderless fullscreen" không caption sẽ được tính (đúng ý). Nếu có app bị nhận nhầm, xem log "Fullscreen app detected" và cân nhắc danh sách class bỏ qua.
 - Câu nhắc nghỉ dự phòng trong C# (PetBreaks) trùng nội dung 3 câu đầu của lines.json; sửa giọng văn ở lines.json thì nên sửa cả đó.
 - Cách 2 (dạy mèo nói: người dùng gõ câu theo tình huống, mèo học câu nào được thích) và cách 3 (LLM trò chuyện có trí nhớ) chưa làm.
-- Câu do Python chọn nhưng C# không hiện (ví dụ mèo vừa đi ngủ) thì bị bỏ; có thể cho C# giữ chờ vài giây nếu thấy mất câu chào quá thường.
+- Câu khác (không phải câu chào) do Python chọn đúng lúc mèo vừa ngủ vẫn bị bỏ; chỉ câu chào được giữ qua giấc ngủ.
 - Người dùng nên đọc lại ai/lines.json để chỉnh giọng văn.
 - Tinh chỉnh nhịp nhu cầu/bong bóng sau khi người dùng dùng thật (tốc độ đói 25/giờ, chán 2/phút, khoảng cách bong bóng 90s).
 - Ý tưởng chưa làm: giai đoạn 3 (ngữ cảnh máy: idle toàn hệ thống, app fullscreen → yên lặng); LLM bong bóng thoại (cần đổi quy tắc AGENTS.md). Có thể thêm 3 tốc độ nhu cầu vào Behavior tuning.
-- Cửa sổ quả bóng (ToyBall) vẫn dời bằng Left rồi Top, chưa nội suy; nếu bóng còn giật thì áp dụng cách tương tự.
+- Quả bóng đã dời bằng 1 lệnh SetWindowPos; nếu vẫn giật thì xem tới CompositionTarget.Rendering (mục dưới).
 - Nếu vẫn thấy giật khi ném sau bản này: cân nhắc chuyển vòng lặp active sang CompositionTarget.Rendering (đồng bộ vsync); probe PowerShell cho kết quả không ổn định nên chưa dùng.
 - Không còn hạng mục nào khác trong 11 đề xuất đã duyệt.
 - Chờ người dùng nghe và thao tác thử để tinh chỉnh nhịp chơi/âm thanh nếu cần.
 - Không tích hợp LLM, voice hay computer vision; không thay framework hoặc hệ thống rendering/physics.
 
 ## Cần test thủ công
+- Quả bóng (menu chơi bóng): nhìn bóng nảy/lăn và khi click bóng: còn giật/lệch không.
+- Câu chào: mở lại mèo vài lần (Speech + AI bật); câu "Chào sen" xuất hiện. Nếu mèo ngủ ngay lúc mở, câu chào phải hiện sau khi mèo thức (không đánh thức mèo sớm).
 - Vuốt mèo liên tục vài giây: mèo ngồi nhồi bột (mắt lim dim) rồi về bình thường; trái tim/Happy vẫn như cũ. Khi bond ≥ 60 (xem debug view), vuốt xong có thể lăn ngửa. Click/kéo giữa lúc làm động tác thì ngắt ngay.
 - Để mèo chạy lâu: thỉnh thoảng đuổi đuôi, cào móng, hắt xì; không quá dày. Clicking đến khi Giận: tai cụp, đuôi quất.
 - Cho ăn rồi để Python trả câu trong lúc ăn: câu cảm ơn hiện ngay sau khi ăn xong.

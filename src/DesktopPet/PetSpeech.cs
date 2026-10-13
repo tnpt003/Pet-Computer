@@ -11,6 +11,8 @@ public sealed class PetSpeech
     public const double MaxDuration = 6;
     // A line that arrives while the pet cannot talk waits this long (newest wins).
     public const double PendingFor = 10;
+    // The once-per-session greeting may wait through a short nap (~10 s sleep + 1.2 s waking).
+    public const double GreetingPendingFor = 30;
     public string? Id { get; private set; }
     public string Text { get; private set; } = "";
     public double Time { get; private set; }
@@ -20,6 +22,8 @@ public sealed class PetSpeech
     private string? lastId;
     private (string Id, string Text, double Until)? pending;
     public string? PendingId => pending?.Id;
+
+    public static bool IsGreeting(string id) => id.StartsWith("hello:", StringComparison.Ordinal) || id.StartsWith("welcome_back:", StringComparison.Ordinal);
 
     // Unlike thought icons, a short reaction may appear while the pet is upset.
     public static bool CanShow(PetModel pet) =>
@@ -46,7 +50,9 @@ public sealed class PetSpeech
     {
         if (string.IsNullOrWhiteSpace(id) || string.IsNullOrWhiteSpace(text)) return false;
         if (TryShow(id, text, pet)) { pending = null; return true; }
-        pending = (id, text, now + PendingFor);
+        // A wake-up yawn must not push out a greeting that waited through the nap.
+        if (pending is { } held && IsGreeting(held.Id) && id.StartsWith("wake_up:", StringComparison.Ordinal) && now <= held.Until) return false;
+        pending = (id, text, now + (IsGreeting(id) ? GreetingPendingFor : PendingFor));
         return false;
     }
 

@@ -240,7 +240,7 @@ public sealed partial class PetWindow
                 if (Math.Abs(target - pet.X) < 12) { pet.Action = PetAction.Idle; pet.VX = 0; }
                 else WalkToward(target);
             }
-            toyWindow.Left = ball.X - 28; toyWindow.Top = bounds.Bottom - 40 - ball.Height;
+            MoveWindow(toyWindow, ball.X - 28, bounds.Bottom - 40 - ball.Height); // One move, not Left then Top.
             if (ballArt != null) ballArt.RenderTransform = new RotateTransform(ball.Rotation);
             if (ballHalo != null) ballHalo.Opacity = Math.Max(ball.Feedback / 0.35, toyWindow.IsMouseOver ? 0.45 : 0);
             return;

@@ -36,7 +36,9 @@ public sealed partial class PetWindow
     {
         if (pet.Speech.PendingId is not string id) return;
         // Sleep, a fullscreen app or a disabled setting drops it instead of saying it late.
-        if (!SpeechAllowed(id) || pet.Action == PetAction.Sleeping || pet.Emotions.SleepLocked) { pet.Speech.DropPending(); return; }
+        // The greeting is the exception for sleep: it waits (silently) until the pet is awake.
+        bool asleep = pet.Action == PetAction.Sleeping || pet.Emotions.SleepLocked;
+        if (!SpeechAllowed(id) || (asleep && !PetSpeech.IsGreeting(id))) { pet.Speech.DropPending(); return; }
         if (pet.Speech.TryShowPending(pet)) SpeechShown(id);
     }
 

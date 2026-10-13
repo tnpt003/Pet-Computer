@@ -24,6 +24,28 @@ internal static class GestureTests
         speech.DropPending();
         check(speech.PendingId == null, "The window can drop a pending line (sleep, fullscreen, setting off)");
 
+        // The greeting survives a short nap; other lines do not get this longer wait.
+        var napper = new PetModel { Action = PetAction.Sleeping, Grounded = true };
+        var greet = napper.Speech;
+        check(!greet.Offer("hello:vi:1", "Chào sen!", napper) && greet.PendingId == "hello:vi:1", "A greeting that arrives as the pet falls asleep waits");
+        greet.Step(napper, 11.2);
+        check(!greet.TryShowPending(napper) && greet.PendingId == "hello:vi:1", "The greeting stays hidden (and pending) while the pet sleeps");
+        greet.Offer("wake_up:vi:2", "Ngáp~", napper);
+        check(greet.PendingId == "hello:vi:1", "A wake-up line does not replace the waiting greeting");
+        napper.Action = PetAction.Idle;
+        greet.Step(napper, 0.5);
+        check(greet.TryShowPending(napper) && greet.Id == "hello:vi:1", "The greeting appears once the pet is awake");
+        var late = new PetModel { Action = PetAction.Sleeping, Grounded = true };
+        late.Speech.Offer("welcome_back:en:1", "Missed you!", late);
+        late.Speech.Step(late, PetSpeech.GreetingPendingFor + 0.5);
+        late.Action = PetAction.Idle;
+        check(!late.Speech.TryShowPending(late) && late.Speech.PendingId == null, "A greeting still expires after 30 seconds (long or away nap)");
+        late.Speech.Offer("hello:en:2", "Hi!", new PetModel { Action = PetAction.Thrown });
+        late.Speech.Offer("petted:en:3", "Purr", new PetModel { Action = PetAction.Thrown });
+        check(late.Speech.PendingId == "petted:en:3", "A newer reaction line still replaces a pending greeting");
+        check(PetSpeech.IsGreeting("hello:vi:1") && PetSpeech.IsGreeting("welcome_back:en:2") && !PetSpeech.IsGreeting("wake_up:vi:1") && !PetSpeech.IsGreeting("back:vi:1"),
+            "Only hello/welcome_back count as the greeting");
+
         // Gesture rules.
         var gestures = new[] { PetAction.Kneading, PetAction.RollingOver, PetAction.ChasingTail, PetAction.Scratching, PetAction.Sneezing };
         check(gestures.All(g => PetActionRules.IsGesture(g) && PetActionRules.RejectsDecisions(g) && PetActionRules.IsCancellableLocal(g) &&

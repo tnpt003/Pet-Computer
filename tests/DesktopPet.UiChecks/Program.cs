@@ -364,6 +364,13 @@ internal static class Program
         Check(pet.Action == PetAction.Looking && pet.VX == 0, "Toy mode observes before chasing");
         for (int i = 0; i < 15; i++) FeatureStep(0.1);
         Check(pet.Action == PetAction.Walking && pet.VX != 0, "Toy mode chases after preparation through C# movement");
+        {
+            var toy = Field<Window?>(window, "toyWindow")!;
+            var toyBall = Field<ToyBall>(window, "ball");
+            double expectedTop = Field<Area>(window, "bounds").Bottom - 40 - toyBall.Height;
+            Check(Math.Abs(toy.Left - (toyBall.X - 28)) < 1.5 && Math.Abs(toy.Top - expectedTop) < 1.5,
+                "The ball window follows the ball with a single move per frame");
+        }
         window.RaiseEvent(MouseEvent(UIElement.MouseLeftButtonDownEvent));
         Check(Field<Window?>(window, "toyWindow") == null, "Direct pickup interaction stops toy play");
         window.RaiseEvent(MouseEvent(UIElement.MouseLeftButtonUpEvent));
@@ -526,9 +533,16 @@ internal static class Program
         pet.Action = PetAction.Sleeping; pet.Emotions.EnterSleep();
         Call("TickPendingSpeech");
         Check(!pet.Speech.Visible && pet.Speech.PendingId == null, "Falling asleep drops a pending line instead of saying it late");
+        Call("ShowSpeech", new DesktopPet.AI.PetLine("hello:vi:test", "Chào sen!"));
+        Call("TickPendingSpeech");
+        bool heldAsleep = !pet.Speech.Visible && pet.Speech.PendingId == "hello:vi:test";
         window.Reset();
         typeof(PetBehavior).GetMethod("WakeByClick")!.Invoke(Field<PetBehavior>(window, "behavior"), new object[] { pet });
         pet.Emotions.FinishSleep(0); pet.Action = PetAction.Idle;
+        Call("TickPendingSpeech");
+        Check(heldAsleep && pet.Speech.Visible && pet.Speech.Id == "hello:vi:test",
+            "The greeting waits silently through a nap and is said after waking");
+        pet.Speech.Hide(); pet.Speech.Step(pet, 20);
 
         // Two strokes within 10 s start kneading.
         Call("Interact", "petted");

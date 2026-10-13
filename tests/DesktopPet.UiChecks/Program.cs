@@ -446,6 +446,34 @@ internal static class Program
         preferences.Quiet = true; behavior.Quiet = true;
         window.ToggleToy();
         Check(Field<Window?>(window, "toyWindow") == null, "Quiet mode blocks toy movement");
+
+        // "Do now" menu: immediate actions (even in Quiet), queued after waking, manual emotions.
+        var doNow = window.ContextMenu.Items.OfType<System.Windows.Controls.MenuItem>().FirstOrDefault(item => item.Header is "Làm ngay" or "Do now");
+        Check(doNow != null && doNow.Items.OfType<System.Windows.Controls.MenuItem>().Count() == 18,
+            "Context menu offers Do now with 12 actions, the manual-emotion switch and 5 emotions");
+        window.Reset();
+        Check(window.DoNow(PetAction.ChasingTail) && pet.Action == PetAction.ChasingTail, "Do now starts a gesture at once, even in Quiet mode");
+        behavior.Step(pet, 0.5);
+        Check(pet.Action == PetAction.ChasingTail, "Quiet mode does not cancel the requested gesture");
+        pet.Action = PetAction.Sleeping; pet.Emotions.EnterSleep();
+        window.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Right)
+            { RoutedEvent = UIElement.MouseRightButtonDownEvent });
+        bool queuedWhileWaking = pet.Action == PetAction.Waking && !window.DoNow(PetAction.Grooming) &&
+                                 Field<PetAction?>(window, "queuedCommand") == PetAction.Grooming;
+        var tickCommands = typeof(PetWindow).GetMethod("TickCommands", BindingFlags.NonPublic | BindingFlags.Instance)!;
+        tickCommands.Invoke(window, null);
+        bool waitedForWaking = pet.Action == PetAction.Waking;
+        for (int i = 0; i < 80 && pet.Action == PetAction.Waking; i++) behavior.Step(pet, 1.0 / 60);
+        tickCommands.Invoke(window, null);
+        Check(queuedWhileWaking && waitedForWaking && pet.Action == PetAction.Grooming && Field<PetAction?>(window, "queuedCommand") == null,
+            "A request right after the right-click wake waits for waking to finish, then runs");
+        window.Reset();
+        Check(!window.PerformEmotion(PetEmotion.Angry), "Emotions need the manual-control switch first");
+        window.SetManualEmotions(true);
+        Check(window.PerformEmotion(PetEmotion.Sad) && pet.Emotions.ManualEmotion == PetEmotion.Sad && pet.Emotions.Reported == PetEmotion.Neutral,
+            "With the switch on the chosen emotion is held and Python sees Neutral");
+        window.SetManualEmotions(false);
+        Check(!pet.Emotions.ManualMode && pet.Emotions.ManualEmotion == PetEmotion.Neutral, "Turning the switch off returns to automatic emotions");
         preferences.Quiet = originalQuiet; behavior.Quiet = originalQuiet;
         window.Close();
         Check(ai.Disposed && !window.IsVisible, "Window/AI shutdown releases the decision source and hides the pet");

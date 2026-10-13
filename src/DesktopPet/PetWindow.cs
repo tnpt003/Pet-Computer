@@ -273,6 +273,7 @@ public sealed partial class PetWindow : Window
         if (!paused)
         {
             TickFeatures(dt);
+            TickCommands();
             TickContext(dt);
             pet.Activity.Step(pet.Action, dt);
             var cursor = CursorPosition();
@@ -346,7 +347,7 @@ public sealed partial class PetWindow : Window
         if (debugText != null && clock.Elapsed.TotalSeconds >= nextDebugUpdate)
         {
             nextDebugUpdate = clock.Elapsed.TotalSeconds + 0.25;
-            debugText.Text = $"Action: {pet.Action}\nEmotion: {pet.Emotions.Current}\n" +
+            debugText.Text = $"Action: {pet.Action}\nEmotion: {pet.Emotions.Current}{(pet.Emotions.ManualMode ? " (manual control)" : "")}\n" +
                 $"Energy: {(aiEnergy.HasValue ? aiEnergy.Value.ToString("F1") + " / 100 (last AI report)" : "unavailable")}\n" +
                 $"Sleep: {pet.Emotions.SleepElapsed:F1} / {settings.SleepDurationSeconds:F1} s\n" +
                 $"Wake cooldown: {pet.Emotions.WakeCooldownRemaining:F1} s\n" +
@@ -430,7 +431,7 @@ public sealed partial class PetWindow : Window
         double requestedAt = clock.Elapsed.TotalSeconds;
         var observation = new PetObservation(pet.Action.ToString(), pet.Grounded,
             pet.Emotions.SecondsWithoutAttention, interactionCount, lastEvent, behavior.LastAppliedCommand,
-            pet.Emotions.Current.ToString(), pet.Activity.Snapshot(), preferences.Personality, sessionId, preferences.Tuning?.Normalized(),
+            pet.Emotions.Reported.ToString(), pet.Activity.Snapshot(), preferences.Personality, sessionId, preferences.Tuning?.Normalized(),
             DateTime.Now.Hour + DateTime.Now.Minute / 60.0, pet.Interactions.Snapshot(),
             preferences.Speech, preferences.Language, preferences.Chattiness, preferences.Name, EffectiveQuiet,
             pet.Speech.LastShown is { } shown ? new SpeechReport(shown.Id, Math.Round(shown.Age, 2)) : null, preferences.LearningReset,

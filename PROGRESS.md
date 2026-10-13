@@ -4,7 +4,12 @@ Cập nhật: 2026-10-13 (Asia/Saigon).
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
-## Kết quả test gần nhất (2026-10-13, đợt nhỏ: quả bóng + câu chào qua giấc ngủ)
+## Kết quả test gần nhất (2026-10-13, menu Làm ngay + tự điều khiển cảm xúc)
+- scripts/test.ps1 -Ui: 48 Python tests, 347 C# checks, 155 WPF checks đạt. Publish + check-publish đạt. Đã đóng (WM_CLOSE đúng process artifacts\win-x64) và mở lại mèo của người dùng.
+- Test WPF bắt được lỗi thật trong lúc làm: bấm Làm ngay khi mèo đang thức dậy làm behavior.Reset() kéo dài waking 1.2s → 2s; đã sửa (chỉ hủy hoạt động khi lệnh thực sự bắt đầu).
+- Chưa xem trực tiếp: menu thật, cảm giác các động tác/cảm xúc bấm tay.
+
+## Kết quả test đợt nhỏ: quả bóng + câu chào qua giấc ngủ (2026-10-13)
 - scripts/test.ps1 -Ui: 48 Python tests, 324 C# checks, 148 WPF checks đạt. Publish + check-publish đạt. Đã đóng (WM_CLOSE đúng process artifacts\win-x64) và mở lại mèo của người dùng.
 - Chưa xem trực tiếp: quả bóng còn giật không; câu chào sau khi mèo ngủ ngay lúc mở (khó tái hiện, test bằng check tự động).
 
@@ -42,6 +47,10 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Lịch sử: 201 C#/107 WPF/20 Python (motion, 2026-10-08); 181/101/20 (features). Không dùng số liệu cũ thay kết quả hiện tại.
 
 ## Đã làm gần đây
+- 2026-10-13 (menu Làm ngay, người dùng chọn: công tắc chỉ tắt cảm xúc, không đứng yên; không có Chóng mặt bấm tay):
+  - Menu chuột phải "Làm ngay"/"Do now" (theo ngôn ngữ): 12 động tác (Ngồi, Nhìn quanh, Nhảy, Ngủ, Vẫy chân, Liếm lông, Duỗi người, Nhồi bột, Lăn ngửa, Đuổi đuôi, Cào móng, Hắt xì). PetBehavior.StartManual/CanStartManual: bỏ qua cooldown, bond, xác suất, Quiet; thời lượng như cũ (Ngồi/Nhìn 4s); lệnh mới thay lệnh cũ; Ngủ bỏ qua wake cooldown rồi theo luật ngủ cũ. Không cắt drag/bay/sleep lock/waking: PetWindow.Commands.cs xếp hàng tối đa 3s (ví dụ chuột phải đánh thức → chờ 1.2s waking rồi làm). Không phải interaction (chỉ tăng revision), không ảnh hưởng needs/học.
+  - Công tắc "Tự điều khiển cảm xúc" (chỉ trong phiên): PetEmotions.ManualMode tắt Happy khi vuốt, Angry khi click dồn, Surprised khi rê nhanh, đợt buồn, Sleepy tự ngủ, gợi ý AI; Perform giữ Bình thường/Vui/Giận/Buồn/Giật mình đến khi đổi; không chặn hành vi tự động (BlocksAutonomy = false); drag/ăn/bay/ngủ vẫn ưu tiên, Dizzy khi kéo mạnh vẫn có. Python nhận emotion Neutral (PetEmotions.Reported), trừ Sleepy khi ngủ. Tắt công tắc: xóa cảm xúc, đặt lại đồng hồ "lâu không được chú ý".
+  - AGENTS.md thêm dòng ngoại lệ đã duyệt; docs/WINDOWS.md, docs/AI.md cập nhật. Test: ManualControlTests.cs (C#), 6 check WPF.
 - 2026-10-13 (đợt nhỏ): đã push commit 2631fec lên GitHub.
   - Quả bóng: cửa sổ bóng dời bằng MoveWindow (1 lệnh SetWindowPos) thay vì Left rồi Top; không nội suy vì bóng cập nhật theo dt từng khung. Không đổi physics bóng/nhịp chơi.
   - Câu chào qua giấc ngủ: câu hello/welcome_back đang chờ không bị hủy khi mèo ngủ, chờ tối đa 30s (PetSpeech.GreetingPendingFor), hiện sau khi mèo thức (không hiện khi Sleeping/Waking nên không đánh thức mèo). Câu wake_up không thay câu chào; câu phản ứng mới vẫn thay. Câu khác vẫn bị hủy khi ngủ như cũ. Away nap dài hơn 30s thì câu chào hết hạn (đã có câu "back"); người dùng đã duyệt cách này (2026-10-13).
@@ -104,6 +113,8 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Không tích hợp LLM, voice hay computer vision; không thay framework hoặc hệ thống rendering/physics.
 
 ## Cần test thủ công
+- Làm ngay: thử từng động tác (cả khi bật Quiet); chuột phải lúc mèo đang ngủ rồi chọn động tác (mèo thức 1.2s rồi làm); chọn Ngủ ngay sau khi mèo vừa thức; click/kéo giữa lúc làm thì ngắt ngay; Pause thì menu mờ.
+- Tự điều khiển cảm xúc: bật, chọn từng cảm xúc; vuốt/click dồn không đổi cảm xúc; để yên vài phút không buồn/ngủ tự động; kéo mạnh vẫn chóng mặt; tắt công tắc thì về bình thường ngay, không buồn/ngủ liền; mở lại app thì công tắc tắt.
 - Quả bóng (menu chơi bóng): nhìn bóng nảy/lăn và khi click bóng: còn giật/lệch không.
 - Câu chào: mở lại mèo vài lần (Speech + AI bật); câu "Chào sen" xuất hiện. Nếu mèo ngủ ngay lúc mở, câu chào phải hiện sau khi mèo thức (không đánh thức mèo sớm).
 - Vuốt mèo liên tục vài giây: mèo ngồi nhồi bột (mắt lim dim) rồi về bình thường; trái tim/Happy vẫn như cũ. Khi bond ≥ 60 (xem debug view), vuốt xong có thể lăn ngửa. Click/kéo giữa lúc làm động tác thì ngắt ngay.

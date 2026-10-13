@@ -489,6 +489,16 @@ load with defaults. Each decision may carry:
 `bond_history` sends the last 14 days. An invalid diary is ignored without rejecting the
 decision. The C# diary window (`PetWindow.Diary.cs`) only displays this summary.
 
+## Do now menu and manual emotions (2026-10-13)
+
+C# only; the protocol is unchanged. Menu actions start through `PetBehavior.StartManual`
+(no cooldown, bond or chance; Quiet keeps them) and only bump the revision so stale AI
+replies are dropped. They are not interactions, so needs, bond and learning ignore them.
+With "Control emotions myself" on, `PetEmotions` holds the chosen emotion and the
+observation reports `emotion: "Neutral"` (`PetEmotions.Reported`), except `Sleepy` during
+sleep. Python therefore does not apply the anger penalty, lonely lines or the upset
+SIT reply to a performed emotion.
+
 ## Short sad episodes (C#, works offline)
 
 `PetEmotions` keeps a user clock that the pet's own sleep/wake reset does not

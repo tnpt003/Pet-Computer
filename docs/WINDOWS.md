@@ -401,3 +401,29 @@ following the speech language). It shows days together, totals (petting, treats,
 games, clicks, rough throws), the bond with a 14-day line chart, the hours you usually
 play as a 24-bar chart (hover for values), and what the cat has learned. With the AI off,
 it shows only this session's numbers.
+
+## Do now menu (2026-10-13)
+
+Right-click the cat → **Làm ngay** / **Do now** (label follows the speech language).
+
+**Actions:** Sit, Look around, Jump, Sleep, Wave a paw, Groom, Stretch, Knead, Roll over,
+Chase tail, Scratch, Sneeze. They start at once and skip cooldowns, the bond condition,
+chance and Quiet mode, then run their normal length and return to Idle. A newer request
+replaces the running one. Ball play, a treat or a walk to the resting spot is cancelled.
+- Never interrupts drag, flight, the sleep lock or waking. The right-click already wakes a
+  sleeping cat, so a request made from that menu waits for the 1.2 s waking and then runs
+  (a waiting request is dropped after 3 s). Click or drag still stops an action at once.
+- **Sleep** skips the 30 s wake cooldown; after that the normal sleep rules apply
+  (locked, wakes by itself after ~10 s, a click wakes it at once).
+- Pause disables the menu. Python is not involved and these requests are not counted as
+  interactions or used for learning.
+
+**Control emotions myself** (session only, off at every start): turns off automatic
+emotions and their cooldowns (petting → Happy, click bursts → Angry, fast cursor →
+Surprised, sad episodes, Sleepy → automatic sleep, AI mood hints). Then choose Normal,
+Happy, Angry, Sad or Surprised; the cat holds it until you choose another. Drag, eating,
+flight and sleep still take priority, Dizzy on a hard drag still works, and the chosen
+emotion does not stop the cat from walking. Python sees Neutral (so it does not learn from
+or comment on a performed emotion). Turning the switch off clears the emotion and restarts
+the "alone" clocks, so the cat is not instantly sad or sleepy. Dizzy and Sleepy are not in
+the menu (Dizzy stays a drag-only reaction; Sleepy is the Sleep action).

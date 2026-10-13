@@ -11,6 +11,12 @@ public sealed class PetBehavior(PetSettings settings, Random? randomSource = nul
     private double attentionCooldown, selfCareCooldown = 25;
     public string Personality { get; set; } = "Balanced";
     private PetAction? lastLocalAction;
+    // The action the user asked for from the menu; it runs its full length even in Quiet mode.
+    private PetAction? manualAction;
+    public static readonly PetAction[] ManualActions = { PetAction.Sitting, PetAction.Looking, PetAction.PreparingJump,
+        PetAction.Sleeping, PetAction.SeekingAttention, PetAction.Grooming, PetAction.Stretching, PetAction.Kneading,
+        PetAction.RollingOver, PetAction.ChasingTail, PetAction.Scratching, PetAction.Sneezing };
+    public const double ManualPoseDuration = 4;
     private readonly System.Collections.Generic.Queue<PetAction> recentLocal = new();
 
     private PetAction ChooseLocal(PetModel pet)
@@ -58,7 +64,37 @@ public sealed class PetBehavior(PetSettings settings, Random? randomSource = nul
     {
         remaining = 2;
         followingMouse = false;
+        manualAction = null;
         LastAppliedCommand = "LOCAL";
+    }
+
+    // "Do now" menu: skips cooldowns, bond, chance and Quiet, but never input, flight,
+    // sleep or waking (the window queues the request until the pet is free).
+    public static bool CanStartManual(PetModel pet, PetAction action) =>
+        Array.IndexOf(ManualActions, action) >= 0 && pet.Grounded && !pet.Emotions.SleepLocked && !pet.Emotions.BlocksAutonomy &&
+        pet.Action is not (PetAction.Sleeping or PetAction.Waking or PetAction.Dragging or PetAction.Thrown or PetAction.Jumping or PetAction.PreparingJump);
+
+    public bool StartManual(PetModel pet, PetAction action)
+    {
+        if (!CanStartManual(pet, action)) return false;
+        followingMouse = false;
+        pet.VX = pet.VY = pet.SmoothedWalkVelocity = 0;
+        LastAppliedCommand = "LOCAL";
+        pet.Action = action;
+        manualAction = action == PetAction.Sleeping ? null : action;
+        if (action == PetAction.Sleeping) { pet.Emotions.EnterSleep(); return true; } // Wake cooldown skipped; the sleep rules stay.
+        remaining = action switch
+        {
+            PetAction.PreparingJump => PetSettings.JumpPreparationDuration,
+            PetAction.SeekingAttention => PetSettings.AttentionGestureDuration,
+            PetAction.Grooming => PetSettings.GroomingDuration,
+            PetAction.Stretching => PetSettings.StretchingDuration,
+            _ when PetActionRules.IsGesture(action) => PetSettings.GestureDuration(action),
+            _ => ManualPoseDuration
+        };
+        // Keeps the automatic ones occasional; the menu itself ignores this cooldown.
+        if (action is PetAction.Grooming or PetAction.Stretching || PetActionRules.IsGesture(action)) selfCareCooldown = PetSettings.SelfCareCooldown;
+        return true;
     }
 
     public void Step(PetModel pet, double dt, double? cursorX = null)
@@ -99,6 +135,12 @@ public sealed class PetBehavior(PetSettings settings, Random? randomSource = nul
             }
             return;
         }
+        if (manualAction == pet.Action && pet.Action != PetAction.PreparingJump)
+        {
+            pet.VX = pet.VY = 0; remaining -= dt;
+            if (remaining <= 0) { pet.Action = PetAction.Idle; Reset(); }
+            return;
+        }
         // Kneading answers the user's petting, so Quiet mode keeps it; other poses are autonomous.
         if ((pet.Action is PetAction.Grooming or PetAction.Stretching || PetActionRules.IsGesture(pet.Action)) &&
             (!Quiet || pet.Action == PetAction.Kneading))
@@ -107,7 +149,7 @@ public sealed class PetBehavior(PetSettings settings, Random? randomSource = nul
             if (remaining <= 0) { pet.Action = PetAction.Idle; Reset(); }
             return;
         }
-        if (Quiet)
+        if (Quiet && !(manualAction == PetAction.PreparingJump && pet.Action == PetAction.PreparingJump))
         {
             followingMouse = false;
             pet.Action = PetAction.Idle;
@@ -119,7 +161,7 @@ public sealed class PetBehavior(PetSettings settings, Random? randomSource = nul
             pet.VX = pet.VY = 0; remaining -= dt;
             if (remaining <= 0)
             {
-                pet.Action = PetAction.Jumping; pet.Grounded = false;
+                pet.Action = PetAction.Jumping; pet.Grounded = false; manualAction = null;
                 pet.VY = -settings.JumpSpeed; pet.VX = pet.Facing * settings.WalkSpeed; remaining = 2;
             }
             return;
@@ -144,6 +186,7 @@ public sealed class PetBehavior(PetSettings settings, Random? randomSource = nul
         // Always choose a local action immediately. An async AI reply may replace it.
         DecisionRequested?.Invoke();
         followingMouse = false;
+        manualAction = null;
         LastAppliedCommand = "LOCAL";
         remaining = 2 + random.NextDouble() * 4;
         pet.VX = 0;
@@ -171,6 +214,7 @@ public sealed class PetBehavior(PetSettings settings, Random? randomSource = nul
             !AiProtocol.IsCommand(decision.Command) || !double.IsFinite(decision.DurationSeconds) ||
             decision.DurationSeconds < 0.5 || decision.DurationSeconds > 12) return false;
         followingMouse = decision.Command == "FOLLOW_MOUSE";
+        manualAction = null;
         remaining = decision.Command == "SEEK_ATTENTION" ? PetSettings.AttentionGestureDuration : decision.DurationSeconds;
         if (decision.Command == "SEEK_ATTENTION") attentionCooldown = PetSettings.AttentionCooldown;
         LastAppliedCommand = decision.Command;

@@ -61,6 +61,7 @@ public sealed partial class PetWindow
         customize.Click += (_, _) => ShowPetSettings();
         menu.Items.Insert(0, customize); menu.Items.Insert(1, treat); menu.Items.Insert(2, toy);
         menu.Items.Insert(3, home); menu.Items.Insert(4, quiet); menu.Items.Insert(5, sounds);
+        InitializeCommands(menu, 3); // "Do now", right after the ball.
         // Off unless the user enables it; the registry value is read fresh each time.
         var autostart = new MenuItem { Header = "Start with Windows", IsCheckable = true };
         autostart.Click += (_, _) =>
@@ -70,7 +71,7 @@ public sealed partial class PetWindow
         };
         var about = new MenuItem { Header = "About Desktop Pet" };
         about.Click += (_, _) => ShowAbout();
-        menu.Items.Insert(6, autostart);
+        menu.Items.Insert(7, autostart);
         menu.Items.Insert(menu.Items.Count - 1, about); // Just above Exit.
         var diary = new MenuItem { Header = "Diary" };
         diary.Click += (_, _) => ShowDiary();

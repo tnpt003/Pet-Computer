@@ -21,6 +21,15 @@ public sealed class PetEmotions
     public bool SleepLocked { get; private set; }
     public double SleepElapsed { get; private set; }
     public double WakeCooldownRemaining { get; private set; }
+    // Manual emotion control (menu "Do now"): automatic emotions and their cooldowns are
+    // off and the chosen emotion is held until changed. Session only, never saved.
+    public bool ManualMode { get; private set; }
+    public PetEmotion ManualEmotion { get; private set; }
+    public static bool CanPerform(PetEmotion emotion) =>
+        emotion is PetEmotion.Neutral or PetEmotion.Happy or PetEmotion.Angry or PetEmotion.Sad or PetEmotion.Surprised;
+    // What Python sees: a performed emotion is not a real reaction, so it must not teach
+    // the AI (anger penalty, lonely lines). Sleep is still reported as Sleepy.
+    public PetEmotion Reported => ManualMode && !SleepLocked ? PetEmotion.Neutral : Current;
     public void AdvanceSleep(double dt)
     {
         if (SleepLocked && double.IsFinite(dt) && dt > 0) SleepElapsed += dt;
@@ -42,8 +51,29 @@ public sealed class PetEmotions
         Reset();
         WakeCooldownRemaining = double.IsFinite(cooldown) ? Math.Max(0, cooldown) : 30;
     }
-    public bool BlocksAutonomy => Current is PetEmotion.Sleepy or PetEmotion.Surprised or PetEmotion.Angry ||
-        Target is PetEmotion.Sleepy or PetEmotion.Surprised or PetEmotion.Angry;
+    // A held, performed emotion does not freeze the pet; only real reactions do.
+    public bool BlocksAutonomy => !ManualMode && (Current is PetEmotion.Sleepy or PetEmotion.Surprised or PetEmotion.Angry ||
+        Target is PetEmotion.Sleepy or PetEmotion.Surprised or PetEmotion.Angry);
+
+    public void SetManualMode(bool on)
+    {
+        if (on == ManualMode) return;
+        ManualMode = on;
+        ManualEmotion = PetEmotion.Neutral;
+        transient = aiHint = PetEmotion.Neutral;
+        transientUntil = happyAfter = angryAfter = surpriseAfter = now;
+        sadEpisodeUntil = now;
+        clicks.Clear();
+        // Leaving: restart the attention clocks so the pet is not instantly sad or sleepy.
+        if (!on) { lastAttention = now; UserTouched(); }
+    }
+
+    public bool Perform(PetEmotion emotion)
+    {
+        if (!ManualMode || !CanPerform(emotion)) return false;
+        ManualEmotion = emotion;
+        return true;
+    }
     public double Strength { get; private set; }
     public double Time { get; private set; }
     public double SecondsWithoutAttention => now - lastAttention;
@@ -73,6 +103,7 @@ public sealed class PetEmotions
         lastAttention = now;
         UserTouched();
         aiHint = PetEmotion.Neutral;
+        if (ManualMode) return;
         if (click)
         {
             while (clicks.Count > 0 && now - clicks.Peek() > 2) clicks.Dequeue();
@@ -93,7 +124,7 @@ public sealed class PetEmotions
         lastAttention = now;
         UserTouched();
         aiHint = PetEmotion.Neutral;
-        if (now < angryAfter) return;
+        if (ManualMode || now < angryAfter) return;
         SetTransient(PetEmotion.Angry, 4);
         angryAfter = now + 6;
     }
@@ -115,6 +146,7 @@ public sealed class PetEmotions
     public void ApplyAiHint(string? emotion)
     {
         if (SleepLocked) return;
+        if (ManualMode) { aiHint = PetEmotion.Neutral; return; }
         // Delayed hints cannot override fresh attention, and random action moods
         // such as "playful" do not generate unearned positive reactions.
         aiHint = emotion switch
@@ -170,7 +202,7 @@ public sealed class PetEmotions
             }
             else pettingTime = 0;
             double nearX = x - (pet.X + 56), nearY = y - (pet.Y + 50);
-            if (!busy && speed >= 1600 &&
+            if (!ManualMode && !busy && speed >= 1600 &&
                 nearX * nearX + nearY * nearY <= 140 * 140 && now >= surpriseAfter &&
                 !(now < transientUntil && transient is PetEmotion.Angry or PetEmotion.Happy))
             {
@@ -180,7 +212,7 @@ public sealed class PetEmotions
         }
 
         // Wait for a free moment (not busy, no other reaction) rather than interrupting.
-        if (!busy && pet.Grounded && pet.Action != PetAction.Sleeping && now >= transientUntil && now >= sadEpisodeDue)
+        if (!ManualMode && !busy && pet.Grounded && pet.Action != PetAction.Sleeping && now >= transientUntil && now >= sadEpisodeDue)
         {
             sadEpisodeUntil = now + SadEpisodeDuration;
             sadEpisodeDue = now + SadEpisodeAfter;
@@ -190,6 +222,8 @@ public sealed class PetEmotions
         if (pet.Action == PetAction.Dragging)
             desired = pet.Pickup.Dizziness > 0.02 ? PetEmotion.Dizzy : PetEmotion.Neutral;
         else if (busy) desired = PetEmotion.Neutral;
+        else if (pet.Action == PetAction.Sleeping && ManualMode) desired = PetEmotion.Sleepy;
+        else if (ManualMode) desired = ManualEmotion; // Never Sleepy, so it cannot start a sleep.
         else if (now < transientUntil) desired = transient;
         else if (pet.Action == PetAction.Sleeping) desired = PetEmotion.Sleepy;
         else if (now < sadEpisodeUntil) desired = PetEmotion.Sad;

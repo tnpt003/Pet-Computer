@@ -72,10 +72,14 @@ public sealed partial class PetWindow
         about.Click += (_, _) => ShowAbout();
         menu.Items.Insert(6, autostart);
         menu.Items.Insert(menu.Items.Count - 1, about); // Just above Exit.
+        var diary = new MenuItem { Header = "Diary" };
+        diary.Click += (_, _) => ShowDiary();
+        menu.Items.Insert(menu.Items.IndexOf(about), diary);
         menu.Opened += (_, _) =>
         {
             autostart.IsChecked = Environment.ProcessPath is string exe && startup.IsEnabled(exe);
             customize.Header = preferences.Name + " — name and personality…";
+            diary.Header = preferences.Language == "en" ? preferences.Name + "'s diary" : "Nhật ký của " + preferences.Name;
             sounds.IsChecked = preferences.Sounds;
             toy.Header = toyWindow == null ? "Play with ball" : "Put ball away";
             treat.IsEnabled = CanPlay && treatCooldown <= 0;
@@ -255,6 +259,21 @@ public sealed partial class PetWindow
         }
     }
 
+    private readonly System.Collections.Generic.Queue<double> recentPetting = new();
+    private double kneadReady;
+
+    // Two strokes within 10 s mean sustained petting: the pet sits down and kneads.
+    private void MaybeKnead()
+    {
+        double now = clock.Elapsed.TotalSeconds;
+        recentPetting.Enqueue(now);
+        while (recentPetting.Count > 0 && now - recentPetting.Peek() > 10) recentPetting.Dequeue();
+        if (recentPetting.Count < 2 || now < kneadReady || !CanPlay || FeatureOwnsMovement()) return;
+        if (!behavior.StartKneading(pet)) return;
+        kneadReady = now + 20;
+        recentPetting.Clear();
+    }
+
     private void WalkToward(double target)
     {
         pet.Facing = target < pet.X ? -1 : 1;
@@ -379,5 +398,5 @@ public sealed partial class PetWindow
         catch (Exception ex) when (ex is IOException or InvalidOperationException or System.TimeoutException) { soundAfter = now + 10; return false; }
     }
 
-    private void CloseFeatures() { behaviorSettingsWindow?.Close(); toyWindow?.Close(); settingsWindow?.Close(); speechWindow?.Close(); sound?.Stop(); sound?.Dispose(); soundStream?.Dispose(); }
+    private void CloseFeatures() { diaryWindow?.Close(); behaviorSettingsWindow?.Close(); toyWindow?.Close(); settingsWindow?.Close(); speechWindow?.Close(); sound?.Stop(); sound?.Dispose(); soundStream?.Dispose(); }
 }

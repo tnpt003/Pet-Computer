@@ -20,15 +20,31 @@ public sealed partial class PetWindow
     private string? speechShownText;
     private PetLearned? aiLearned;
 
+    // Break reminders were enabled on their own, so they speak even with chatter off.
+    private bool SpeechAllowed(string id) => !closed && !context.Fullscreen &&
+        (PetBreaks.IsBreakLine(id) ? breaks.Due : preferences.Speech);
+
     private void ShowSpeech(PetLine line)
     {
-        // Break reminders were enabled on their own, so they speak even with chatter off.
-        bool reminder = PetBreaks.IsBreakLine(line.Id);
-        if ((!preferences.Speech && !reminder) || (reminder && !breaks.Due) || closed || context.Fullscreen ||
-            !pet.Speech.TryShow(line.Id, line.Text, pet)) return;
+        if (!SpeechAllowed(line.Id)) return;
+        // A line the pet cannot say right now (eating, flying, just spoke) waits briefly.
+        if (pet.Speech.Offer(line.Id, line.Text, pet)) SpeechShown(line.Id);
+    }
+
+    // Every frame while not paused: a pending line appears as soon as the pet is free.
+    private void TickPendingSpeech()
+    {
+        if (pet.Speech.PendingId is not string id) return;
+        // Sleep, a fullscreen app or a disabled setting drops it instead of saying it late.
+        if (!SpeechAllowed(id) || pet.Action == PetAction.Sleeping || pet.Emotions.SleepLocked) { pet.Speech.DropPending(); return; }
+        if (pet.Speech.TryShowPending(pet)) SpeechShown(id);
+    }
+
+    private void SpeechShown(string id)
+    {
         pet.Thought.Clear(); // Words replace the icon bubble.
         PlayPetSound("meow");
-        if (reminder)
+        if (PetBreaks.IsBreakLine(id))
         {
             breaks.Delivered();
             if (CanPlay && !FeatureOwnsMovement()) behavior.StartStretch(pet); // Stretch along with the user.

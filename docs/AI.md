@@ -223,6 +223,9 @@ through Waking to Idle. Clicking clears the lock before normal Waking or pickup.
 | `SLEEP` | Existing sleep animation |
 | `FOLLOW_MOUSE` | Walk toward the cursor horizontally, stop within 18 DIPs; screen bounds still apply |
 | `SEEK_ATTENTION` | Look and raise a paw for 2.4 seconds; 45-second C# cooldown |
+| `ROLL_OVER` | Roll onto the back for 3.5 s (C# duration); refused in Quiet mode |
+| `CHASE_TAIL` | Spin in place after the tail for 3 s; refused in Quiet mode |
+| `SCRATCH` | Stretch up and scratch for 2.4 s; refused in Quiet mode |
 
 Duration is a grounded behavior timer, as in the original engine; time in the air
 does not forcibly terminate a jump. Python never sends position, velocity, gravity,
@@ -448,6 +451,39 @@ After showing it, C# resets the break clock and starts a stretch if the pet is f
 If Python is off, or no line arrives within 15 s, C# shows a built-in line (`break:local:…`).
 The away nap (`PetBehavior.StartAwayNap`/`EndAwayNap`) is decided entirely in C#.
 Python sees only `Sleeping` and makes no requests while the pet sleeps.
+
+## Gestures, pending lines and the diary (2026-10-13)
+
+**Gestures.** Five short, stationary poses: Kneading, RollingOver, ChasingTail, Scratching
+and Sneezing. Each owns a fixed C# duration (3.2 / 3.5 / 3 / 2.4 / 1 s). They reject AI
+commands, click or drag cancels them at once, and they never run during sleep. They are
+listed in `BUSY_STATES` and in `PetActionRules`, and a test keeps the two lists in sync.
+- Kneading is a C# reaction: two strokes within 10 s start it (20 s cooldown). It also
+  works in Quiet mode and without Python.
+- Python sends `ROLL_OVER` right after petting when bond ≥ 60 and affection ≥ 60, at most
+  every 120 s. `CHASE_TAIL` is a weighted choice that grows with boredom and energy;
+  `SCRATCH` is a small constant weight. Learning applies to both like any other action.
+- The local fallback can also choose tail chasing, scratching and sneezing. These share
+  the 45 s cooldown with grooming and stretching.
+- Angry now also flattens the ears and lashes the tail. This changes the drawing only.
+
+**Pending lines.** A line that arrives while the pet cannot talk (eating, airborne, inside
+the 12 s gap) waits up to 10 s and appears as soon as the pet is free. A newer line
+replaces it. Sleep, a fullscreen app or turning speech off drops it.
+`last_speech` reports only lines that were actually shown.
+
+**Diary.** Python keeps `first_seen`, lifetime `totals` per interaction kind, and
+`bond_history` (one value per local day, last 30 days) in `ai-memory.json`. Older files
+load with defaults. Each decision may carry:
+
+```json
+"diary": {"days": 12, "since": "2026-10-01", "petted": 40, "treats": 9, "play": 7,
+          "rough_throws": 1, "clicks": 30, "bond": 61.5, "bond_history": [50, 55.5, 61.5],
+          "habits": [24 numbers]}
+```
+
+`bond_history` sends the last 14 days. An invalid diary is ignored without rejecting the
+decision. The C# diary window (`PetWindow.Diary.cs`) only displays this summary.
 
 ## Short sad episodes (C#, works offline)
 

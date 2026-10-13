@@ -4,7 +4,14 @@ Cập nhật: 2026-10-13 (Asia/Saigon).
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
-## Kết quả test gần nhất (2026-10-13, đợt bộ lông/phụ kiện + nhắc nghỉ + ngữ cảnh máy)
+## Kết quả test gần nhất (2026-10-13, đợt 4+5+7: câu chờ, động tác mới, nhật ký)
+- scripts/test.ps1 -Ui: 48 Python tests, 317 C# checks, 146 WPF checks đạt (exit 0). Publish + check-publish đạt. Python mới chạy trên BẢN SAO ai-memory.json thật: giữ needs/habits, thêm first_seen/totals/bond_history, có diary. Đã đóng (WM_CLOSE) và mở lại mèo của người dùng.
+- So pixel với lần render trước đợt: 41 ảnh trạng thái cũ + 151 ảnh bộ lông/phụ kiện giống hệt (trừ 2 ảnh bong bóng chữ vốn không cố định). Mọi tư thế cũ không đổi; chỉ biểu cảm Giận đổi có chủ đích (tai cụp, đuôi quất).
+- Đã xem ảnh 5 động tác × 13 khung × 2 hướng × có/không mũ (Calico): không bị cắt (có check mép tự động); khung đầu của mỗi động tác giống hệt tư thế đứng (vào mượt). Sửa trong lúc làm: đuổi đuôi/lăn ngửa ban đầu ghi đè độ nhún gây giật khung đầu (test bắt được); cào móng chuyển sang phía không có đuôi cho dễ nhìn.
+- Đã xem ảnh cửa sổ nhật ký (bản English, dữ liệu mẫu): chữ, biểu đồ bond 14 ngày, biểu đồ 24 giờ hiển thị đúng.
+- Chưa xem trực tiếp chuyển động thật (nhồi bột khi vuốt, lăn ngửa khi bond ≥ 60) và chưa xem nhật ký với dữ liệu thật.
+
+## Kết quả test đợt bộ lông/phụ kiện + nhắc nghỉ + ngữ cảnh máy (2026-10-13)
 - scripts/test.ps1 -Ui: 45 Python tests, 291 C# checks (test.ps1 có thêm check tích hợp Python), 132 WPF checks đạt. Publish + check-publish đạt.
 - So pixel: chạy UiChecks của commit trước (worktree tạm) và bản mới với PET_RENDER_REVIEW: 39/41 ảnh giống hệt; 2 ảnh khác là ảnh bong bóng chữ, và chạy bản cũ 2 lần cũng khác nhau (opacity/đuôi phụ thuộc thời gian thật), nên không phải lỗi renderer. Mèo cam mặc định giống pixel.
 - Đã xem ảnh render 6 bộ lông × 4 phụ kiện ở các tư thế đứng, ngủ, vui, bay, kéo (pickup có xoay), quay trái: không bị cắt, mũ/nơ theo đầu. Có check tự động cho mép trong suốt.
@@ -31,6 +38,11 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Lịch sử: 201 C#/107 WPF/20 Python (motion, 2026-10-08); 181/101/20 (features). Không dùng số liệu cũ thay kết quả hiện tại.
 
 ## Đã làm gần đây
+- 2026-10-13 (đợt 4+5+7):
+  - Câu chờ (4): PetSpeech.Offer/TryShowPending/DropPending giữ 1 câu tối đa 10s khi mèo chưa nói được (ăn, bay, khoảng nghỉ 12s); câu mới thay câu cũ; ngủ/fullscreen/tắt Speech/hết hạn nhắc nghỉ thì bỏ. PetWindow.Speech: SpeechAllowed, TickPendingSpeech (mỗi khung), SpeechShown (meo, xóa bong bóng ý nghĩ, nhắc nghỉ).
+  - Động tác (5): PetAction thêm Kneading, RollingOver, ChasingTail, Scratching, Sneezing (PetActionRules.IsGesture, thời lượng cố định 3.2/3.5/3/2.4/1s trong PetSettings). Nhồi bột: C#, vuốt 2 lần trong 10s (cooldown 20s), chạy cả Quiet/không Python. Python: ROLL_OVER (vừa được vuốt, bond ≥60, affection ≥60, cách ≥120s), CHASE_TAIL (tăng theo chán, nhóm riêng không chung với JUMP), SCRATCH (trọng số nhỏ). Local chọn thêm đuổi đuôi/cào móng/hắt xì (chung cooldown 45s với tự chăm sóc). Quiet/fullscreen chặn động tác tự làm. Renderer: tư thế mới + Giận cụp tai/quất đuôi; vào động tác theo envelope nên khung đầu giống tư thế cũ.
+  - Nhật ký (7): Python lưu first_seen, totals, bond_history (30 ngày) và gửi decision.diary (days, since, totals, bond, 14 ngày bond, habits 24 giờ). C# PetWindow.Diary.cs: menu "Nhật ký của {tên}"/"{name}'s diary" theo ngôn ngữ, biểu đồ bond + biểu đồ giờ (tooltip), học được gì; AI tắt thì chỉ số liệu phiên.
+  - Test mới: GestureTests.cs (C#), GestureVisualChecks.cs + LifeChecks (WPF), 3 test Python; ToolingTests cập nhật danh sách action bị hủy bởi input.
 - 2026-10-13 (đợt 1+2+3: bộ lông/phụ kiện, nhắc nghỉ, ngữ cảnh máy; người dùng chọn 1a + 2a):
   - Bộ lông: Orange (mặc định, giống pixel bản cũ), Gray, Black (than chì, mắt hổ phách, viền đậm), White (mắt xanh), Calico (mảng cam/đen), Tabby (sọc "M" trán + lưng). Phụ kiện: None, Bell (vòng cổ chuông), Bow, Hat (mũ tiệc). PetAppearance.cs (CoatPalette, brush/pen frozen); PetRenderer lấy màu theo palette, vân/mảng clip trong viền; phụ kiện vẽ trong transform đầu. Cài đặt: nhóm Appearance. Preferences: Coat, Accessory (giá trị lạ → mặc định).
   - Nhắc nghỉ (mặc định tắt; 30/45/60 phút): PetBreaks.cs chỉ đếm khi có input hệ thống (GetLastInputInfo); vắng ≥5 phút = đã nghỉ, reset. Đến hạn và mèo nói được → observation break_due → Python chọn câu nhóm "break" (ưu tiên nhất, chạy cả khi tắt Speech); C# hiện rồi mèo duỗi người (nếu rảnh, không Quiet). Python tắt/không trả câu trong 15s → câu dự phòng trong C# (break:local:…). Không nhắc khi ngủ/kéo/bay/fullscreen (chờ). Preferences: BreakReminders, BreakMinutes. Cài đặt: nhóm Break reminders.
@@ -68,7 +80,9 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Lịch sử chuyển project: 2026-10-05 tạo AGENTS.md/PROGRESS.md tại ổ D khi thư mục đó trống; source hiện nằm tại ổ C, không cần khôi phục về D.
 
 ## Đang dở và việc tiếp theo
-- Đề xuất còn lại từ danh sách 2026-10-13: 4 (giữ câu bị chặn, không lỡ câu chào), 5 (thêm động tác vector: nhồi bột, lăn ngửa, đuổi đuôi…), 6 (chơi với con trỏ kiểu laser), 7 (Nhật ký Mochi), 8 (mèo đi trên cửa sổ, đợt riêng), 9 (dạy mèo nói). Gợi ý tiếp: 5 + 7.
+- Đề xuất còn lại từ danh sách 2026-10-13: 6 (chơi với con trỏ kiểu laser), 8 (mèo đi trên cửa sổ, đợt riêng), 9 (dạy mèo nói). Đã làm 1–5, 7.
+- Nhật ký: người dùng cũ có first_seen = lần đầu chạy bản này (không có dữ liệu trước đó), nên "số ngày ở cùng" bắt đầu từ 2026-10-13.
+- Câu chờ bị bỏ khi mèo ngủ (theo kế hoạch đã duyệt); nếu vẫn thấy mất câu chào vì mèo ngủ ngay lúc mở, có thể giữ câu qua giấc ngủ ngắn.
 - Away nap: nếu xem video không fullscreen mà không chạm chuột 5 phút thì mèo cũng ngủ (chấp nhận được); có thể thêm tùy chọn thời gian 5/10/15 phút nếu thấy sớm.
 - Fullscreen: chỉ xét màn hình đang có mèo; app "borderless fullscreen" không caption sẽ được tính (đúng ý). Nếu có app bị nhận nhầm, xem log "Fullscreen app detected" và cân nhắc danh sách class bỏ qua.
 - Câu nhắc nghỉ dự phòng trong C# (PetBreaks) trùng nội dung 3 câu đầu của lines.json; sửa giọng văn ở lines.json thì nên sửa cả đó.
@@ -84,6 +98,10 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Không tích hợp LLM, voice hay computer vision; không thay framework hoặc hệ thống rendering/physics.
 
 ## Cần test thủ công
+- Vuốt mèo liên tục vài giây: mèo ngồi nhồi bột (mắt lim dim) rồi về bình thường; trái tim/Happy vẫn như cũ. Khi bond ≥ 60 (xem debug view), vuốt xong có thể lăn ngửa. Click/kéo giữa lúc làm động tác thì ngắt ngay.
+- Để mèo chạy lâu: thỉnh thoảng đuổi đuôi, cào móng, hắt xì; không quá dày. Clicking đến khi Giận: tai cụp, đuôi quất.
+- Cho ăn rồi để Python trả câu trong lúc ăn: câu cảm ơn hiện ngay sau khi ăn xong.
+- Mở nhật ký (menu chuột phải) với AI bật và tắt; đổi ngôn ngữ; rê chuột lên biểu đồ xem tooltip; sau vài ngày xem biểu đồ bond/giờ chơi.
 - Bộ lông/phụ kiện: đổi trong Appearance, Save, xem trực tiếp khi đi, ngủ, kéo, ném, ăn treat, vuốt ve; đặc biệt mèo đen (mắt/miệng có rõ không) và mũ khi kéo sát mép trên màn hình.
 - Nhắc nghỉ: bật 30 phút, dùng máy bình thường; xem debug view dòng Break reminder; khi nhắc mèo nói + duỗi người; tắt Speech vẫn nhắc; rời máy ≥5 phút thì đồng hồ reset.
 - Fullscreen: mở video YouTube fullscreen (F11/nút fullscreen), game, PowerPoint trình chiếu trên màn hình có mèo: mèo đứng yên, im lặng, không bong bóng; thoát fullscreen thì bình thường. Cửa sổ maximize thường KHÔNG được tính. Thử fullscreen ở màn hình phụ khi mèo ở màn hình chính (không được tính).

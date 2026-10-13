@@ -22,9 +22,11 @@ from speech import Speech  # noqa: E402
 
 VERSION = 1
 MAX_MESSAGE = 8192
-COMMANDS = {"LOOK", "IDLE", "WALK_LEFT", "WALK_RIGHT", "SIT", "JUMP", "SLEEP", "FOLLOW_MOUSE", "SEEK_ATTENTION"}
+COMMANDS = {"LOOK", "IDLE", "WALK_LEFT", "WALK_RIGHT", "SIT", "JUMP", "SLEEP", "FOLLOW_MOUSE", "SEEK_ATTENTION",
+            "ROLL_OVER", "CHASE_TAIL", "SCRATCH"}
 # C# actions that own their duration; mirrors PetActionRules.RejectsDecisions.
-BUSY_STATES = frozenset({"Dragging", "Thrown", "Jumping", "PreparingJump", "Sleeping", "Waking", "Grooming", "Stretching", "SeekingAttention"})
+BUSY_STATES = frozenset({"Dragging", "Thrown", "Jumping", "PreparingJump", "Sleeping", "Waking", "Grooming", "Stretching", "SeekingAttention",
+                         "Kneading", "RollingOver", "ChasingTail", "Scratching", "Sneezing"})
 THOUGHTS = ("hungry", "bored", "sleepy", "love")  # Priority order for thought bubbles.
 NEED_KEYS = ("hunger", "boredom", "affection", "bond")
 INTERACTION_KEYS = ("petted", "clicked", "treats", "toy", "ball_clicks", "ball_hits", "rough_throws")
@@ -47,6 +49,8 @@ SILENT_STATES = frozenset({"Dragging", "Thrown", "Jumping", "PreparingJump", "Sl
 EVENT_LINE_GAP, LONELY_LINE_GAP = 6, 60
 NEED_LINE_GAP = {0: 300, 1: 120, 2: 60}  # By chattiness: repeated "I am hungry" must not nag.
 CHATTER = {1: (90, 0.25), 2: (35, 0.5)}  # chattiness: (min seconds since last line, chance)
+ROLL_OVER_GAP = 120  # Showing the belly is special; at most every two minutes.
+BOND_HISTORY_DAYS = 30
 
 
 def read_object(path: Path) -> dict:
@@ -145,6 +149,14 @@ class Brain:
         self.pending_event = None  # (category, time) waiting for a moment the pet can speak.
         self.just_woke = False
         self.previous_emotion = "Neutral"
+        self.roll_ready = self.clock()
+        # Diary: lifetime totals, first day together and bond per local day.
+        self.first_seen = number(memory.get("first_seen"), 0, 0, 1e11) or self.wall_clock()
+        totals = memory.get("totals") if isinstance(memory.get("totals"), dict) else {}
+        self.totals = {key: number(totals.get(key), 0, 0, 1e12) for key in INTERACTION_KEYS}
+        history = memory.get("bond_history") if isinstance(memory.get("bond_history"), dict) else {}
+        self.bond_history = {day: number(value, 0, 0, 100) for day, value in sorted(history.items())[-BOND_HISTORY_DAYS:]
+                             if isinstance(day, str) and len(day) == 10}
 
     def configure(self, overrides):
         if not isinstance(overrides, dict):
@@ -192,6 +204,7 @@ class Brain:
             self.interaction_session, self.interactions = session, current
         for key, count in deltas.items():
             if count:
+                self.totals[key] += count
                 hunger, boredom, affection, bond = INTERACTION_EFFECTS[key]
                 self.needs["hunger"] += hunger * count
                 self.needs["boredom"] += boredom * count
@@ -367,6 +380,9 @@ class Brain:
             command, mood = "SIT", "content"  # Give an upset/startled pet a calm action.
         elif thought == "love":
             command, mood = "FOLLOW_MOUSE", "playful"
+        elif deltas["petted"] and self.needs["bond"] >= 60 and self.needs["affection"] >= 60 and now >= self.roll_ready:
+            command, mood = "ROLL_OVER", "playful"  # Trusting enough to show the belly.
+            self.roll_ready = now + ROLL_OVER_GAP
         elif attention_ready and hunger >= 70 and idle >= 45:
             command, mood, thought = "SEEK_ATTENTION", "bored", "hungry"  # Asks for a treat.
             self.last_attention = now
@@ -377,7 +393,7 @@ class Brain:
             command, mood = "SEEK_ATTENTION", "bored"
             self.last_attention = now
         else:
-            commands = ["IDLE", "WALK_LEFT", "WALK_RIGHT", "SIT", "JUMP", "SLEEP", "FOLLOW_MOUSE", "LOOK"]
+            commands = ["IDLE", "WALK_LEFT", "WALK_RIGHT", "SIT", "JUMP", "SLEEP", "FOLLOW_MOUSE", "LOOK", "CHASE_TAIL", "SCRATCH"]
             vigor = 0.25 + self.energy / 100
             rest = 1 + (100 - self.energy) / 35
             profile = observation.get("personality", "Balanced")
@@ -385,9 +401,10 @@ class Brain:
             curiosity = self.curiosity * (1.7 if profile == "Curious" else 0.4 if profile == "Calm" else 1)
             if profile == "Calm": rest *= 1.6
             weights = [rest, 2 * vigor, 2 * vigor, rest, play * 3 * vigor,
-                       self.sleepiness * 2 * rest, curiosity * 2 * vigor, 0.3 + curiosity * 2]
+                       self.sleepiness * 2 * rest, curiosity * 2 * vigor, 0.3 + curiosity * 2,
+                       play * 0.8 * vigor, 0.4]
             active, calm, sleepy = day_rhythm(observation.get("local_hour"))
-            scale = {"WALK_LEFT": active, "WALK_RIGHT": active, "JUMP": active, "FOLLOW_MOUSE": active,
+            scale = {"WALK_LEFT": active, "WALK_RIGHT": active, "JUMP": active, "FOLLOW_MOUSE": active, "CHASE_TAIL": active,
                      "IDLE": calm, "SIT": calm, "SLEEP": sleepy}
             weights = [weight * scale.get(cmd, 1.0) for cmd, weight in zip(commands, weights)]
             # Needs reshape intent: boredom seeks play, warmth seeks the user.
@@ -395,6 +412,7 @@ class Brain:
             warmth = max(self.needs["affection"], self.needs["bond"]) / 100
             habit = 1.15 if self.favorite_hour(observation.get("local_hour")) else 1.0
             needs_scale = {"JUMP": (1 + 1.2 * b) * habit, "FOLLOW_MOUSE": (0.6 + 0.8 * warmth + b) * habit,
+                           "CHASE_TAIL": 1 + 1.5 * b,
                            "IDLE": 1 - 0.4 * b, "SIT": 1 - 0.4 * b,
                            "WALK_LEFT": habit, "WALK_RIGHT": habit,
                            "LOOK": 1.2 if self.needs["bond"] < 20 else 1.0}
@@ -411,7 +429,7 @@ class Brain:
             if now < self.sleep_cooldown_until:
                 weights[commands.index("SLEEP")] = 0
             command = self.rng.choices(commands, weights=weights, k=1)[0]
-            mood = "sleepy" if command == "SLEEP" else "playful" if command in {"JUMP", "FOLLOW_MOUSE"} else "content"
+            mood = "sleepy" if command == "SLEEP" else "playful" if command in {"JUMP", "FOLLOW_MOUSE", "CHASE_TAIL"} else "content"
         if thought is None and not busy and not upset:
             # A bubble shows the strongest current need; fresh affection earns a heart.
             fresh_love = deltas["petted"] + deltas["treats"] > 0 and self.needs["affection"] >= 60
@@ -435,6 +453,10 @@ class Brain:
         self.memory.update(last_command=command, mood=mood, decisions=self.memory["decisions"] + 1)
         if observation["grounded"] and observation["state"] not in BUSY_STATES and observation.get("emotion") not in {"Sleepy", "Angry", "Surprised"}:
             self.recent = (self.recent + [command])[-4:]
+        self.bond_history[time.strftime("%Y-%m-%d", time.localtime(wall))] = round(self.needs["bond"], 1)
+        self.bond_history = dict(sorted(self.bond_history.items())[-BOND_HISTORY_DAYS:])
+        self.memory.update(first_seen=round(self.first_seen), totals={k: int(v) for k, v in self.totals.items()},
+                           bond_history=self.bond_history)
         self.memory.update(energy=round(self.energy, 3), recent_actions=self.recent,
                            habits=self.habits, bond_day=self.bond_day, bond_gain_today=round(self.bond_gain_today, 3),
                            bond_loss_today=round(self.bond_loss_today, 3), last_seen=round(self.last_seen),
@@ -453,7 +475,18 @@ class Brain:
         if speech is not None:
             decision["speech"] = speech
         decision["learned"] = self.learner.summary(self.describe_learned)
+        decision["diary"] = self.diary(wall)
         return decision
+
+    def diary(self, wall) -> dict:
+        """Small summary for the C# diary window; C# only displays it."""
+        t = self.totals
+        return {"days": int(max(0, wall - self.first_seen) // 86400) + 1,
+                "since": time.strftime("%Y-%m-%d", time.localtime(self.first_seen)),
+                "petted": int(t["petted"]), "treats": int(t["treats"]), "play": int(t["toy"] + t["ball_clicks"]),
+                "rough_throws": int(t["rough_throws"]), "clicks": int(t["clicked"]), "bond": round(self.needs["bond"], 1),
+                "bond_history": [value for _, value in sorted(self.bond_history.items())[-14:]],
+                "habits": [round(value, 1) for value in self.habits]}
 
     def save(self):
         if not self.dirty:

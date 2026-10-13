@@ -2,7 +2,8 @@ using System;
 
 namespace DesktopPet;
 
-public enum PetAction { Idle, Walking, Jumping, Sitting, Sleeping, Looking, Dragging, Thrown, Waking, SeekingAttention, Grooming, Stretching, PreparingJump }
+public enum PetAction { Idle, Walking, Jumping, Sitting, Sleeping, Looking, Dragging, Thrown, Waking, SeekingAttention, Grooming, Stretching, PreparingJump,
+    Kneading, RollingOver, ChasingTail, Scratching, Sneezing }
 
 public static class PetActionRules
 {
@@ -10,10 +11,14 @@ public static class PetActionRules
     // Keep in sync with BUSY_STATES in ai/service.py.
     public static bool RejectsDecisions(PetAction action) => action is PetAction.Dragging or PetAction.Thrown or
         PetAction.Jumping or PetAction.PreparingJump or PetAction.Sleeping or PetAction.Waking or
-        PetAction.Grooming or PetAction.Stretching or PetAction.SeekingAttention;
+        PetAction.Grooming or PetAction.Stretching or PetAction.SeekingAttention || IsGesture(action);
 
     // Local poses that direct input or feature changes cancel straight back to Idle.
-    public static bool IsCancellableLocal(PetAction action) => action is PetAction.Grooming or PetAction.Stretching or PetAction.PreparingJump;
+    public static bool IsCancellableLocal(PetAction action) => action is PetAction.Grooming or PetAction.Stretching or PetAction.PreparingJump || IsGesture(action);
+
+    // Short stationary poses that own a fixed duration (PetSettings.GestureDuration).
+    public static bool IsGesture(PetAction action) => action is PetAction.Kneading or PetAction.RollingOver or
+        PetAction.ChasingTail or PetAction.Scratching or PetAction.Sneezing;
 }
 
 public readonly record struct Area(double Left, double Top, double Right, double Bottom);
@@ -32,6 +37,20 @@ public sealed class PetSettings
     public const double SelfCareCooldown = 45;
     public const double AttentionGestureDuration = 2.4;
     public const double AttentionCooldown = 45;
+    public const double KneadingDuration = 3.2;
+    public const double RollOverDuration = 3.5;
+    public const double TailChaseDuration = 3;
+    public const double ScratchingDuration = 2.4;
+    public const double SneezeDuration = 1;
+    public static double GestureDuration(PetAction action) => action switch
+    {
+        PetAction.Kneading => KneadingDuration,
+        PetAction.RollingOver => RollOverDuration,
+        PetAction.ChasingTail => TailChaseDuration,
+        PetAction.Scratching => ScratchingDuration,
+        PetAction.Sneezing => SneezeDuration,
+        _ => 0
+    };
     public double Width { get; init; } = 112;
     public double Height { get; init; } = 112;
     public double Gravity { get; init; } = 1500;
@@ -112,7 +131,9 @@ public sealed class PetActivity
         switch (action)
         {
             case PetAction.Walking: Walking += dt; break;
-            case PetAction.Jumping: Playing += dt; break;
+            case PetAction.Jumping:
+            case PetAction.ChasingTail:
+            case PetAction.Scratching: Playing += dt; break;
             case PetAction.Sleeping: Sleeping += dt; break;
             case PetAction.Idle:
             case PetAction.Sitting:
@@ -121,6 +142,9 @@ public sealed class PetActivity
             case PetAction.Stretching:
             case PetAction.SeekingAttention:
             case PetAction.Looking:
+            case PetAction.Kneading:
+            case PetAction.RollingOver:
+            case PetAction.Sneezing:
             case PetAction.Waking: Resting += dt; break;
             // User dragging/throwing never counts as autonomous exertion.
         }

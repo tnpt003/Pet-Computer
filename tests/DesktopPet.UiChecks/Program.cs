@@ -324,6 +324,7 @@ internal static class Program
         MotionVisualChecks.Run(Check);
         ThoughtVisualChecks.Run(Check);
         AppearanceVisualChecks.Run(Check);
+        GestureVisualChecks.Run(Check);
         window.SetPaused(false);
         window.Reset();
         void AttentionClick() => window.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Right)
@@ -431,6 +432,7 @@ internal static class Program
             && preferences.RestX >= restoredBounds.Left && preferences.RestX <= restoredBounds.Right - 112,
             "Unavailable saved monitor restores pet and favorite spot inside the primary work area");
         ContextChecks(window, pet, behavior, preferences);
+        LifeChecks(window, pet, preferences);
         window.ShowControls();
         Check(window.ContextMenu!.IsOpen, "Existing pet controls can be opened by a second launch notification");
         window.ContextMenu.IsOpen = false;
@@ -502,6 +504,68 @@ internal static class Program
         pet.Speech.Hide();
         breaks.Configure(false, 45);
         preferences.BreakReminders = false; preferences.BreakMinutes = 45;
+    }
+
+    private static void LifeChecks(PetWindow window, PetModel pet, PetPreferences preferences)
+    {
+        var flags = BindingFlags.NonPublic | BindingFlags.Instance;
+        void Call(string name, params object[] args) => typeof(PetWindow).GetMethod(name, flags)!.Invoke(window, args);
+        // Pending speech: a line during eating appears right after the meal.
+        window.Reset();
+        pet.Speech.Hide(); pet.Speech.Step(pet, 20);
+        pet.TreatRemaining = 2;
+        Call("ShowSpeech", new DesktopPet.AI.PetLine("treat_thanks:vi:test", "Ngon quá sen ơi!"));
+        bool waited = !pet.Speech.Visible && pet.Speech.PendingId == "treat_thanks:vi:test";
+        pet.TreatRemaining = 0;
+        Call("TickPendingSpeech");
+        Check(waited && pet.Speech.Visible && pet.Speech.Id == "treat_thanks:vi:test", "A line that arrives while eating is spoken right after");
+        pet.Speech.Hide(); pet.Speech.Step(pet, 20);
+        pet.TreatRemaining = 2;
+        Call("ShowSpeech", new DesktopPet.AI.PetLine("petted:vi:test", "Purr~"));
+        pet.TreatRemaining = 0;
+        pet.Action = PetAction.Sleeping; pet.Emotions.EnterSleep();
+        Call("TickPendingSpeech");
+        Check(!pet.Speech.Visible && pet.Speech.PendingId == null, "Falling asleep drops a pending line instead of saying it late");
+        window.Reset();
+        typeof(PetBehavior).GetMethod("WakeByClick")!.Invoke(Field<PetBehavior>(window, "behavior"), new object[] { pet });
+        pet.Emotions.FinishSleep(0); pet.Action = PetAction.Idle;
+
+        // Two strokes within 10 s start kneading.
+        Call("Interact", "petted");
+        bool afterOne = pet.Action != PetAction.Kneading;
+        Call("Interact", "petted");
+        Check(afterOne && pet.Action == PetAction.Kneading, "Sustained petting makes the pet sit and knead");
+        pet.Action = PetAction.Idle;
+
+        // Diary window: session numbers with the AI off, full diary from Python's summary.
+        string language = preferences.Language;
+        window.ShowDiary();
+        var diaryWindow = Field<Window>(window, "diaryWindow");
+        var diaryPanel = Field<System.Windows.Controls.StackPanel>(window, "diaryPanel");
+        string Texts() => string.Join("\n", diaryPanel.Children.OfType<System.Windows.Controls.TextBlock>().Select(t => t.Text));
+        Check(diaryWindow.IsVisible && Texts().Contains("AI đang tắt") && Texts().Contains("Được vuốt"), "Diary opens and explains it only has this session's numbers when the AI is off");
+        var habits = Enumerable.Range(0, 24).Select(h => h is 20 or 21 ? 8.0 : h == 9 ? 3 : 0).ToArray();
+        typeof(PetWindow).GetField("aiDiary", flags)!.SetValue(window,
+            new DesktopPet.AI.PetDiary(12, "2026-10-01", 40, 9, 7, 1, 30, 61.5, new[] { 50, 55.5, 61.5 }, habits));
+        preferences.Language = "en";
+        Call("RefreshDiary");
+        var charts = diaryPanel.Children.OfType<System.Windows.Controls.Canvas>().ToArray();
+        Check(Texts().Contains("Together for 12 days (since 2026-10-01)") && Texts().Contains("Most often: 20h, 21h, 9h") &&
+              Texts().Contains("Bond: 62/100") && charts.Length == 2 &&
+              charts[1].Children.OfType<System.Windows.Controls.Border>().Count(b => b.IsHitTestVisible == false) == 3,
+            "Diary shows days together, totals, a bond chart and the hours the user plays (in the chosen language)");
+        if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string review)
+        {
+            diaryWindow.UpdateLayout();
+            var root = (FrameworkElement)diaryWindow.Content;
+            var image = new RenderTargetBitmap((int)root.ActualWidth, (int)root.ActualHeight, 96, 96, PixelFormats.Pbgra32);
+            image.Render(root);
+            var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(image));
+            using var stream = System.IO.File.Create(System.IO.Path.Combine(review, "diary-window.png")); encoder.Save(stream);
+        }
+        diaryWindow.Close();
+        preferences.Language = language;
+        typeof(PetWindow).GetField("aiDiary", flags)!.SetValue(window, null);
     }
 
     private static void CrossDragThreshold(PetWindow window)

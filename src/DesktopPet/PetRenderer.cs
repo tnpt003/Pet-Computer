@@ -95,6 +95,9 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         public double Time, PickupBlend, Dizzy, WakeProgress, EmotionStrength, EmotionTime, PettingLean;
         public double GroomingBlend, EatTime, SleepyBlend, Influence, RestBlend, Stride, FacingScale;
         public double Shake, Bob, ScaleX, ScaleY;
+        // Gestures: the active one, its time and a 0..1 envelope; Roll is the eased roll-over amount.
+        public PetAction Gesture;
+        public double GestureTime, GestureBlend, Roll, AngryBlend, SneezeTilt, SneezeLift;
         public bool Walking, Sleeping, Waking, PickedUp, Airborne, Seeking, Eating, Grooming;
         public PetEmotion Emotion;
     }
@@ -143,6 +146,23 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         p.GroomingBlend = p.Grooming ? Math.Sin(Math.PI * Math.Clamp(pet.ActionTime / PetSettings.GroomingDuration, 0, 1)) : 0;
         double selfStretch = selfCare && pet.Action == PetAction.Stretching ? Math.Sin(Math.PI * Math.Clamp(pet.ActionTime / PetSettings.StretchingDuration, 0, 1)) : 0;
         double playCrouch = selfCare ? pet.PlayCrouch : 0;
+        p.Gesture = selfCare && PetActionRules.IsGesture(pet.Action) ? pet.Action : PetAction.Idle;
+        if (p.Gesture != PetAction.Idle)
+        {
+            double duration = PetSettings.GestureDuration(p.Gesture);
+            p.GestureTime = Math.Clamp(pet.ActionTime, 0, duration);
+            double ramp = Math.Clamp(Math.Min(p.GestureTime / 0.35, (duration - p.GestureTime) / 0.35), 0, 1);
+            p.GestureBlend = ramp * ramp * (3 - 2 * ramp);
+            if (p.Gesture == PetAction.Scratching) selfStretch = 0.6 * p.GestureBlend; // Reach up to scratch.
+            if (p.Gesture == PetAction.RollingOver) p.Roll = p.GestureBlend;
+            if (p.Gesture == PetAction.Sneezing)
+            {
+                // Wind up (head back), sneeze (snap forward and down), recover.
+                double t = p.GestureTime;
+                p.SneezeTilt = t < 0.35 ? -7 * Math.Sin(t / 0.35 * Math.PI / 2) : t < 0.5 ? -7 + 17 * (t - 0.35) / 0.15 : 10 * Math.Max(0, 1 - (t - 0.5) / 0.5);
+                p.SneezeLift = t < 0.35 ? -2 * t / 0.35 : t < 0.5 ? -2 + 6 * (t - 0.35) / 0.15 : 4 * Math.Max(0, 1 - (t - 0.5) / 0.5);
+            }
+        }
         p.EatTime = PetModel.TreatDuration - pet.TreatRemaining;
         if (p.Eating) p.EmotionStrength = 0;
         // Inactivity Sleepy is an emotion over Idle, not the timed Sleeping action.
@@ -160,6 +180,15 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         if (p.Emotion == PetEmotion.Happy) p.Bob -= Math.Abs(Math.Sin(p.EmotionTime * 5)) * 3 * p.EmotionStrength;
         p.Shake = p.Emotion == PetEmotion.Angry ? Math.Sin(p.EmotionTime * 24) * 1.4 * p.EmotionStrength : 0;
         p.FacingScale = pet.Motion.Ready ? pet.Motion.FacingScale : pet.Facing;
+        p.AngryBlend = p.Emotion == PetEmotion.Angry ? p.EmotionStrength : 0;
+        if (p.Gesture == PetAction.ChasingTail)
+        {
+            // Four full turns in place: the horizontal flip passes through edge-on, which
+            // reads as spinning; whole turns end facing the original way.
+            p.FacingScale *= Math.Cos(2 * Math.PI * p.GestureTime / (PetSettings.TailChaseDuration / 4));
+            p.Bob = p.Bob * (1 - p.GestureBlend) - Math.Abs(Math.Sin(p.GestureTime * 8.4)) * 3 * p.GestureBlend;
+        }
+        if (p.Gesture == PetAction.RollingOver) { p.Stride = Math.Sin(p.GestureTime * 9) * 4 * p.Roll; p.Bob *= 1 - p.Roll; }
         // Scale around planted feet: breathing/stretching never changes world position.
         double stretch = p.Sleeping || p.SleepyBlend > 0 ? Math.Sin(pet.ActionTime * 2) * 0.025 * (p.Sleeping ? 1 : p.SleepyBlend) :
             p.Waking ? Math.Sin(p.WakeProgress * Math.PI) * 0.08 : 0;
@@ -176,12 +205,20 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
     private void DrawCat(DrawingContext dc, in Pose p)
     {
         dc.PushTransform(new ScaleTransform(p.FacingScale, 1, 56, 56));
+        // Roll onto the back: lie down sideways, lifted and shifted so the cat stays above
+        // its floor line and inside the window margin.
+        if (p.Roll > 0)
+        {
+            dc.PushTransform(new TranslateTransform(22 * p.Roll, -14 * p.Roll));
+            dc.PushTransform(new RotateTransform(-80 * p.Roll, 56, 104));
+        }
         dc.PushTransform(new TranslateTransform(p.Shake, p.Bob));
         dc.PushTransform(new ScaleTransform(p.ScaleX, p.ScaleY, 56, 107));
         DrawBody(dc, p);
         DrawHead(dc, p);
         dc.Pop();
         dc.Pop();
+        if (p.Roll > 0) { dc.Pop(); dc.Pop(); }
         dc.Pop();
     }
 
@@ -193,7 +230,7 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         {
             context.BeginFigure(new Point(77, 84), false, false);
             context.BezierTo(new Point(108, 88), new Point(104, 59),
-                new Point(92, 62 + (pet.Motion.Ready ? pet.Motion.TailLag * p.Influence * pet.Motion.Facing : 0) + Math.Sin(p.Time * (3 - 2 * (p.Sleeping ? 1 : p.SleepyBlend))) * (5 - 4 * (p.Sleeping ? 1 : p.SleepyBlend))), true, false);
+                new Point(92, 62 + (pet.Motion.Ready ? pet.Motion.TailLag * p.Influence * pet.Motion.Facing : 0) + Math.Sin(p.Time * (3 - 2 * (p.Sleeping ? 1 : p.SleepyBlend))) * (5 - 4 * (p.Sleeping ? 1 : p.SleepyBlend)) + TailSwish(p)), true, false);
         }
         dc.DrawGeometry(null, TailOutline, tail);
         dc.DrawGeometry(null, TailFill, tail);
@@ -209,6 +246,36 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         }
         Oval(dc, Fur, 40 + p.Stride, p.PickedUp ? 104 + p.PickupBlend * 2 : p.Airborne ? 95 : 104 - Math.Max(0, p.Stride), 11, 5);
         Oval(dc, Fur, 70 - p.Stride, p.PickedUp ? 104 + p.PickupBlend * 2 : p.Airborne ? 95 : 104 + Math.Min(0, p.Stride), 11, 5);
+        if (p.Gesture is PetAction.Kneading or PetAction.Scratching) DrawGesturePaws(dc, p);
+    }
+
+    // Fast swish while chasing the tail, an irritated lash while angry; zero otherwise.
+    private static double TailSwish(in Pose p) =>
+        p.Gesture == PetAction.ChasingTail ? Math.Sin(p.GestureTime * 14) * 9 * p.GestureBlend :
+        p.AngryBlend > 0 ? Math.Sin(p.Time * 9) * 8 * p.AngryBlend : 0;
+
+    // Front paws for kneading (pressing in turn) and scratching (raking down in front).
+    private void DrawGesturePaws(DrawingContext dc, in Pose p)
+    {
+        double t = p.GestureTime;
+        dc.PushOpacity(p.GestureBlend);
+        if (p.Gesture == PetAction.Kneading)
+        {
+            Oval(dc, Fur, 46, 97 - 4 * Math.Max(0, Math.Sin(t * 6)), 6, 7);
+            Oval(dc, Fur, 64, 97 - 4 * Math.Max(0, Math.Sin(t * 6 + Math.PI)), 6, 7);
+        }
+        else
+        {
+            // On the side away from the tail, so marks and paws stay readable.
+            for (int i = 0; i < 3; i++)
+            {
+                double x = 16 - i * 5;
+                dc.DrawLine(Outline, new Point(x, 70 + i * 2), new Point(x + 3, 90 + i * 2));
+            }
+            Oval(dc, Fur, 31, 76 + 10 * Math.Abs(Math.Sin(t * 7)), 6, 8);
+            Oval(dc, Fur, 23, 76 + 10 * Math.Abs(Math.Sin(t * 7 + Math.PI / 2)), 6, 8);
+        }
+        dc.Pop();
     }
 
     private void DrawHead(DrawingContext dc, in Pose p)
@@ -246,16 +313,17 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         }
         if (p.Grooming) glanceY = 3 * p.GroomingBlend;
         glanceX += p.PettingLean * 3;
-        double headY = 49 + 10 * p.RestBlend + (p.Emotion == PetEmotion.Sad ? 2 * p.EmotionStrength : 0);
+        if (p.Gesture == PetAction.ChasingTail) { glanceX -= 4 * p.GestureBlend; glanceY += 2 * p.GestureBlend; } // Eyes on the tail.
+        double headY = 49 + 10 * p.RestBlend + (p.Emotion == PetEmotion.Sad ? 2 * p.EmotionStrength : 0) + p.SneezeLift;
         dc.PushTransform(new TranslateTransform(glanceX * (p.Eating ? 1.4 : 0.45), headY - 49 + glanceY * 0.6 +
             (p.Eating && p.EatTime > 1.3 ? Math.Sin(p.EatTime * 16) * 1.2 : 0)));
-        dc.PushTransform(new RotateTransform(p.PickedUp ? Math.Sin(pet.Pickup.Time * 10) * p.Dizzy * 3 + (pet.Motion.Ready ? pet.Motion.HeadTilt * p.Influence * pet.Motion.Facing : 0) : glanceDirection * glanceBlend * 2.5 + (pet.Motion.Ready ? pet.Motion.HeadTilt * p.Influence * pet.Motion.Facing : 0) + p.PettingLean * 7 + (p.Seeking ? Math.Sin(Math.PI * Math.Clamp(pet.ActionTime / PetSettings.AttentionGestureDuration, 0, 1)) * 6 : 0), 55, 49));
+        dc.PushTransform(new RotateTransform(p.PickedUp ? Math.Sin(pet.Pickup.Time * 10) * p.Dizzy * 3 + (pet.Motion.Ready ? pet.Motion.HeadTilt * p.Influence * pet.Motion.Facing : 0) : glanceDirection * glanceBlend * 2.5 + (pet.Motion.Ready ? pet.Motion.HeadTilt * p.Influence * pet.Motion.Facing : 0) + p.PettingLean * 7 + (p.Seeking ? Math.Sin(Math.PI * Math.Clamp(pet.ActionTime / PetSettings.AttentionGestureDuration, 0, 1)) * 6 : 0) + p.SneezeTilt, 55, 49));
         if (accessory == "Bell") DrawCollar(dc);
-        dc.PushTransform(new RotateTransform(twitch, 37, 33));
+        dc.PushTransform(new RotateTransform(twitch - 28 * p.AngryBlend, 37, 33)); // Angry: ears flatten.
         Triangle(dc, new Point(27, 38), new Point(27, 13), new Point(47, 31), Fur);
         Triangle(dc, new Point(31, 30), new Point(31, 21), new Point(40, 30), Pink);
         dc.Pop();
-        dc.PushTransform(new RotateTransform(-twitch * 0.6, 75, 33));
+        dc.PushTransform(new RotateTransform(-twitch * 0.6 + 28 * p.AngryBlend, 75, 33));
         Triangle(dc, new Point(64, 30), new Point(83, 13), new Point(84, 41), Fur);
         Triangle(dc, new Point(72, 30), new Point(79, 21), new Point(80, 33), Pink);
         dc.Pop();
@@ -280,6 +348,9 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         dc.Pop();
     }
 
+    // Blissful closed eyes while kneading or rolling over.
+    private static bool Content(in Pose p) => p.GestureBlend > 0.3 && p.Gesture is PetAction.Kneading or PetAction.RollingOver;
+
     // Neutral eyes/mouth fade out while an emotion's expression fades in.
     private void DrawFace(DrawingContext dc, in Pose p, double glanceX, double glanceY)
     {
@@ -295,7 +366,10 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
                 dc.DrawLine(Outline, new Point(eyeX - eyeSize, 46 - eyeSize), new Point(eyeX + eyeSize, 46 + eyeSize));
                 dc.DrawLine(Outline, new Point(eyeX + eyeSize, 46 - eyeSize), new Point(eyeX - eyeSize, 46 + eyeSize));
             }
-            else if (p.Sleeping || (p.Waking && p.WakeProgress < 0.3) || (!p.Waking && blink))
+            else if (Content(p))
+                Curve(dc, new Point(eyeX - 4, 48), new Point(eyeX, 42), new Point(eyeX + 4, 48));
+            else if (p.Sleeping || (p.Waking && p.WakeProgress < 0.3) || (!p.Waking && blink) ||
+                (p.Gesture == PetAction.Sneezing && p.GestureTime > 0.25 && p.GestureTime < 0.65))
                 dc.DrawLine(Outline, new Point(eyeX - 4, 47), new Point(eyeX + 4, 47));
             else
             {
@@ -470,7 +544,21 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
             dc.Pop();
         }
         if (p.Eating) DrawTreat(dc, p);
+        if (p.Gesture == PetAction.Sneezing && p.GestureTime > 0.38 && p.GestureTime < 0.95) DrawSneezePuff(dc, p);
         if (pet.Thought.Visible && !p.PickedUp && !p.Sleeping && !p.Airborne) DrawThoughtBubble(dc);
+    }
+
+    private void DrawSneezePuff(DrawingContext dc, in Pose p)
+    {
+        double k = (p.GestureTime - 0.38) / 0.57;
+        dc.PushTransform(new ScaleTransform(p.FacingScale, 1, 56, 56));
+        dc.PushOpacity(1 - k);
+        for (int i = 0; i < 3; i++)
+        {
+            var puff = new EllipseGeometry(new Point(90 + i * 6 + k * 10, 60 + (i - 1) * 5 + p.SneezeLift), 2.5 + k * 3, 2.5 + k * 3);
+            DrawOutlinedEffect(dc, puff, Brushes.White);
+        }
+        dc.Pop(); dc.Pop();
     }
 
     // Unflipped so icons read the same whichever way the cat faces.

@@ -17,7 +17,7 @@ public sealed class PetMotion
     private double turnTime = TurnDuration, lagVelocity, landingTime = 1, landingStrength;
     private int targetFacing = 1;
     private static double Ease(double current, double target, double rate, double dt) => current + (target - current) * (1 - Math.Exp(-rate * dt));
-    private static double RestTarget(PetModel pet) => pet.Action is PetAction.Sitting or PetAction.Sleeping or PetAction.Grooming || pet.Emotions.SleepLocked ? 1 : 0;
+    private static double RestTarget(PetModel pet) => pet.Action is PetAction.Sitting or PetAction.Sleeping or PetAction.Grooming or PetAction.Kneading || pet.Emotions.SleepLocked ? 1 : 0;
     public void Reset(PetModel pet)
     {
         Ready = true; WalkPhase = WalkBlend = HeadTilt = TailLag = LandingSquash = lagVelocity = 0;

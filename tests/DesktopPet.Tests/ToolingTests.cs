@@ -50,7 +50,8 @@ static class ToolingTests
         finally { Microsoft.Win32.Registry.CurrentUser.DeleteSubKeyTree(testKey, false); }
 
         check(Enum.GetValues<PetAction>().Where(PetActionRules.IsCancellableLocal)
-                .SequenceEqual(new[] { PetAction.Grooming, PetAction.Stretching, PetAction.PreparingJump }),
-            "Only local self-care and jump preparation are cancelled straight to Idle");
+                .SequenceEqual(new[] { PetAction.Grooming, PetAction.Stretching, PetAction.PreparingJump,
+                    PetAction.Kneading, PetAction.RollingOver, PetAction.ChasingTail, PetAction.Scratching, PetAction.Sneezing }),
+            "Only local self-care, gestures and jump preparation are cancelled straight to Idle");
     }
 }

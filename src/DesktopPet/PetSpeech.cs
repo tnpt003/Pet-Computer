@@ -9,6 +9,8 @@ public sealed class PetSpeech
     public const double MinGap = 12;
     public const double MinDuration = 2.5;
     public const double MaxDuration = 6;
+    // A line that arrives while the pet cannot talk waits this long (newest wins).
+    public const double PendingFor = 10;
     public string? Id { get; private set; }
     public string Text { get; private set; } = "";
     public double Time { get; private set; }
@@ -16,6 +18,8 @@ public sealed class PetSpeech
     public bool Visible { get; private set; }
     private double now, ready, shownAt = double.NegativeInfinity;
     private string? lastId;
+    private (string Id, string Text, double Until)? pending;
+    public string? PendingId => pending?.Id;
 
     // Unlike thought icons, a short reaction may appear while the pet is upset.
     public static bool CanShow(PetModel pet) =>
@@ -36,6 +40,27 @@ public sealed class PetSpeech
         ready = now + Math.Max(MinGap, Duration + 2);
         return true;
     }
+
+    // Shows the line now if possible; otherwise keeps it as the single pending line.
+    public bool Offer(string id, string text, PetModel pet)
+    {
+        if (string.IsNullOrWhiteSpace(id) || string.IsNullOrWhiteSpace(text)) return false;
+        if (TryShow(id, text, pet)) { pending = null; return true; }
+        pending = (id, text, now + PendingFor);
+        return false;
+    }
+
+    // Called every frame by the window after its own checks; true when the pending line appeared.
+    public bool TryShowPending(PetModel pet)
+    {
+        if (pending is not { } line) return false;
+        if (now > line.Until) { pending = null; return false; }
+        if (!TryShow(line.Id, line.Text, pet)) return false;
+        pending = null;
+        return true;
+    }
+
+    public void DropPending() => pending = null;
 
     public void Step(PetModel pet, double dt)
     {

@@ -379,3 +379,25 @@ never screen content.
 
 Pause freezes all of this, like the sleep clock. Preferences: `Coat`, `Accessory`,
 `BreakReminders`, `BreakMinutes`.
+
+## Gestures, pending lines and diary (2026-10-13)
+
+**New gestures** (vector, stationary, a few seconds each):
+- **Kneading** after sustained petting: sits, paws press in turn, eyes closed.
+- **Rolling over** to show the belly: only with a strong bond, right after petting.
+- **Chasing the tail**: spins in place.
+- **Scratching**: stretches up and rakes the air, leaving short marks.
+- **Sneezing**: a small puff.
+
+Angry also flattens the ears and lashes the tail. Click or drag stops any gesture at once,
+and sleep, Quiet mode and fullscreen apps behave as before (kneading still answers
+petting in Quiet mode). All existing poses render pixel for pixel as before.
+
+**No lost lines.** If a line arrives while the cat is eating, flying or just spoke, it
+waits up to 10 s and then appears. Sleep drops it.
+
+**Diary.** Right-click the cat and choose **Mochi's diary** (or **Nhật ký của Mochi**,
+following the speech language). It shows days together, totals (petting, treats, ball
+games, clicks, rough throws), the bond with a 14-day line chart, the hours you usually
+play as a 24-bar chart (hover for values), and what the cat has learned. With the AI off,
+it shows only this session's numbers.

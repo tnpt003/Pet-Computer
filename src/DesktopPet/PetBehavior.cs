@@ -16,14 +16,23 @@ public sealed class PetBehavior(PetSettings settings, Random? randomSource = nul
     private PetAction ChooseLocal(PetModel pet)
     {
         PetAction[] choices = { PetAction.Idle, PetAction.Walking, PetAction.Jumping,
-            PetAction.Sitting, PetAction.Sleeping, PetAction.Looking, PetAction.Grooming, PetAction.Stretching };
+            PetAction.Sitting, PetAction.Sleeping, PetAction.Looking, PetAction.Grooming, PetAction.Stretching,
+            PetAction.ChasingTail, PetAction.Scratching, PetAction.Sneezing };
         double total = 0;
         var weights = new double[choices.Length];
         for (int i = 0; i < choices.Length; i++)
         {
-            if ((choices[i] is PetAction.Grooming or PetAction.Stretching) && selfCareCooldown > 0) continue;
+            // Self-care and small gestures share one cooldown so they stay occasional.
+            if ((choices[i] is PetAction.Grooming or PetAction.Stretching || PetActionRules.IsGesture(choices[i])) && selfCareCooldown > 0) continue;
             if (choices[i] == lastLocalAction || (choices[i] == PetAction.Sleeping && pet.Emotions.WakeCooldownRemaining > 0)) continue;
-            double weight = choices[i] == PetAction.Walking ? 3 : 1;
+            double weight = choices[i] switch
+            {
+                PetAction.Walking => 3,
+                PetAction.ChasingTail => Personality == "Playful" ? 1.1 : Personality == "Calm" ? 0.2 : 0.6,
+                PetAction.Scratching => 0.5,
+                PetAction.Sneezing => 0.2,
+                _ => 1
+            };
             if (Personality == "Calm" && choices[i] is PetAction.Walking or PetAction.Jumping) weight *= 0.4;
             if (Personality == "Curious" && choices[i] == PetAction.Looking) weight *= 2;
             if (Personality == "Playful" && choices[i] == PetAction.Jumping) weight *= 1.8;
@@ -90,6 +99,14 @@ public sealed class PetBehavior(PetSettings settings, Random? randomSource = nul
             }
             return;
         }
+        // Kneading answers the user's petting, so Quiet mode keeps it; other poses are autonomous.
+        if ((pet.Action is PetAction.Grooming or PetAction.Stretching || PetActionRules.IsGesture(pet.Action)) &&
+            (!Quiet || pet.Action == PetAction.Kneading))
+        {
+            pet.VX = pet.VY = 0; remaining -= dt;
+            if (remaining <= 0) { pet.Action = PetAction.Idle; Reset(); }
+            return;
+        }
         if (Quiet)
         {
             followingMouse = false;
@@ -105,12 +122,6 @@ public sealed class PetBehavior(PetSettings settings, Random? randomSource = nul
                 pet.Action = PetAction.Jumping; pet.Grounded = false;
                 pet.VY = -settings.JumpSpeed; pet.VX = pet.Facing * settings.WalkSpeed; remaining = 2;
             }
-            return;
-        }
-        if (pet.Action is PetAction.Grooming or PetAction.Stretching)
-        {
-            pet.VX = pet.VY = 0; remaining -= dt;
-            if (remaining <= 0) { pet.Action = PetAction.Idle; Reset(); }
             return;
         }
         if (followingMouse && cursorX.HasValue)
@@ -140,6 +151,7 @@ public sealed class PetBehavior(PetSettings settings, Random? randomSource = nul
         pet.Action = ChooseLocal(pet);
         if (pet.Action is PetAction.Grooming or PetAction.Stretching)
         { remaining = pet.Action == PetAction.Grooming ? PetSettings.GroomingDuration : PetSettings.StretchingDuration; selfCareCooldown = PetSettings.SelfCareCooldown; }
+        if (PetActionRules.IsGesture(pet.Action)) { remaining = PetSettings.GestureDuration(pet.Action); selfCareCooldown = PetSettings.SelfCareCooldown; }
         if (pet.Action == PetAction.Looking && Personality == "Curious") remaining = 5 + random.NextDouble() * 2;
         if (pet.Action == PetAction.Walking) pet.VX = settings.WalkSpeed * pet.Facing * pet.Emotions.WalkScale;
         if (pet.Action == PetAction.Jumping)
@@ -153,7 +165,7 @@ public sealed class PetBehavior(PetSettings settings, Random? randomSource = nul
     public bool TryApply(PetModel pet, AiDecision decision)
     {
         if (decision.Command == "SEEK_ATTENTION" && attentionCooldown > 0) return false;
-        if (Quiet && decision.Command is "WALK_LEFT" or "WALK_RIGHT" or "FOLLOW_MOUSE" or "JUMP" or "SEEK_ATTENTION") return false;
+        if (Quiet && decision.Command is "WALK_LEFT" or "WALK_RIGHT" or "FOLLOW_MOUSE" or "JUMP" or "SEEK_ATTENTION" or "ROLL_OVER" or "CHASE_TAIL" or "SCRATCH") return false;
         if (decision.Command == "SLEEP" && pet.Emotions.WakeCooldownRemaining > 0) return false;
         if (!pet.Grounded || pet.Emotions.BlocksAutonomy || PetActionRules.RejectsDecisions(pet.Action) ||
             !AiProtocol.IsCommand(decision.Command) || !double.IsFinite(decision.DurationSeconds) ||
@@ -171,8 +183,13 @@ public sealed class PetBehavior(PetSettings settings, Random? randomSource = nul
             "SLEEP" => PetAction.Sleeping,
             "JUMP" => PetAction.Jumping,
             "SEEK_ATTENTION" => PetAction.SeekingAttention,
+            "ROLL_OVER" => PetAction.RollingOver,
+            "CHASE_TAIL" => PetAction.ChasingTail,
+            "SCRATCH" => PetAction.Scratching,
             _ => PetAction.Idle
         };
+        // Gestures own a fixed C# duration; Python's duration only paces ordinary actions.
+        if (PetActionRules.IsGesture(pet.Action)) remaining = PetSettings.GestureDuration(pet.Action);
         if (decision.Command is "WALK_LEFT" or "WALK_RIGHT")
         {
             pet.Facing = decision.Command == "WALK_LEFT" ? -1 : 1;
@@ -209,6 +226,18 @@ public sealed class PetBehavior(PetSettings settings, Random? randomSource = nul
         if (!HoldSleep) return;
         HoldSleep = false;
         Wake(pet);
+    }
+
+    // Sustained petting: the pet sits and kneads. Works with Quiet mode and without Python.
+    public bool StartKneading(PetModel pet)
+    {
+        if (!pet.Grounded || pet.Emotions.BlocksAutonomy || PetActionRules.RejectsDecisions(pet.Action)) return false;
+        followingMouse = false;
+        pet.VX = pet.VY = pet.SmoothedWalkVelocity = 0;
+        pet.Action = PetAction.Kneading;
+        remaining = PetSettings.KneadingDuration;
+        LastAppliedCommand = "LOCAL";
+        return true;
     }
 
     // A short stretch (break reminder); only from a free, awake pose.

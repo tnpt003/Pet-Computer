@@ -307,7 +307,7 @@ public sealed partial class PetWindow : Window
                 }
             }
         }
-        if (!paused) { pet.AnimationTime += dt; pet.ActionTime += dt; pet.Motion.Step(pet, dt, settings.WalkSpeed); pet.Thought.Step(pet, dt); pet.Speech.Step(pet, dt); }
+        if (!paused) { pet.AnimationTime += dt; pet.ActionTime += dt; pet.Motion.Step(pet, dt, settings.WalkSpeed); pet.Thought.Step(pet, dt); pet.Speech.Step(pet, dt); TickPendingSpeech(); }
         Present(interpolate: !dragging && !paused && !pressPending);
         double interval = FramePeriod() * 1000 / 2;
         if (timer.Interval.TotalMilliseconds != interval) timer.Interval = TimeSpan.FromMilliseconds(interval);
@@ -399,7 +399,7 @@ public sealed partial class PetWindow : Window
         lastEvent = kind;
         pet.Interactions.Record(kind);
         if (kind is "left_clicked" or "right_clicked") PlayPetSound("meow");
-        if (kind == "petted") PlayPetSound("purr");
+        if (kind == "petted") { PlayPetSound("purr"); MaybeKnead(); }
     }
 
     public void SetAiEnabled(bool enabled)
@@ -417,6 +417,8 @@ public sealed partial class PetWindow : Window
         aiEnergy = null;
         aiNeeds = null;
         aiLearned = null;
+        aiDiary = null;
+        RefreshDiary();
     }
 
     private async void RequestDecision()
@@ -443,6 +445,7 @@ public sealed partial class PetWindow : Window
             if (decision == null || closed || !ReferenceEquals(source, ai)) return;
             if (decision.Needs != null) aiNeeds = decision.Needs;
             if (decision.Learned != null) aiLearned = decision.Learned;
+            if (decision.Diary != null) { aiDiary = decision.Diary; RefreshDiary(); }
             // Words are presentation only, so a reply discarded for revision (e.g. the
             // user petted the cat meanwhile) may still speak; PetSpeech enforces safety.
             if (decision.Speech != null && !paused && clock.Elapsed.TotalSeconds - requestedAt < 2.5) ShowSpeech(decision.Speech);

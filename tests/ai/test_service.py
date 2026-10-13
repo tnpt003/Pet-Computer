@@ -50,7 +50,52 @@ class BrainTests(unittest.TestCase):
             self.assertIn(decision["command"], COMMANDS)
             self.assertTrue(0.5 <= decision["duration_seconds"] <= 12)
             commands.add(decision["command"])
-        self.assertEqual(commands, COMMANDS - {"SEEK_ATTENTION"})
+        self.assertEqual(commands, COMMANDS - {"SEEK_ATTENTION", "ROLL_OVER"})  # Those need idle time / petting.
+
+    def test_roll_over_needs_petting_trust_and_a_gap(self):
+        def petted(count, bond, affection=80):
+            self.brain.needs.update(bond=bond, affection=affection, hunger=0, boredom=0)
+            return self.brain.decide({**self.observation(count=count), "session_id": "s",
+                                      "interactions": {"petted": count}})["command"]
+        petted(0, 70)  # Baseline for the session counts.
+        self.assertNotEqual(petted(1, 40), "ROLL_OVER")  # Not trusting enough yet.
+        self.assertEqual(petted(2, 70), "ROLL_OVER")
+        self.assertNotEqual(petted(3, 70), "ROLL_OVER")  # At most every two minutes.
+        self.now += 121
+        self.assertEqual(petted(4, 70), "ROLL_OVER")
+        self.assertNotEqual(petted(4, 70), "ROLL_OVER")  # No new petting, no roll.
+
+    def test_boredom_brings_tail_chasing(self):
+        def chases(boredom):
+            brain = Brain(Path(self.temporary.name) / f"c{boredom}.json", ROOT / "ai/personality.json", random.Random(8), lambda: self.now)
+            total = 0
+            for _ in range(400):
+                brain.needs.update(boredom=boredom, hunger=0)
+                total += brain.decide(self.observation())["command"] == "CHASE_TAIL"
+            return total
+        self.assertGreater(chases(100), chases(0) * 1.4)
+
+    def test_diary_counts_persist_and_old_memory_loads(self):
+        wall = [1_700_000_000.0]
+        self.memory.write_text(json.dumps({"bond": 42, "decisions": 3}), encoding="utf-8")  # Older file.
+        brain = Brain(self.memory, ROOT / "ai/personality.json", random.Random(1), lambda: self.now, lambda: wall[0])
+        def observe(**counts):
+            return brain.decide({**self.observation(), "session_id": "s", "interactions": counts})
+        first = observe()["diary"]
+        self.assertEqual((first["days"], first["petted"], first["bond_history"]), (1, 0, [42.0]))
+        observe(petted=3, treats=1, toy=1, ball_clicks=2, rough_throws=1)
+        wall[0] += 86400 * 2
+        brain.save()
+        again = Brain(self.memory, ROOT / "ai/personality.json", random.Random(1), lambda: self.now, lambda: wall[0])
+        diary = again.decide({**self.observation(), "session_id": "t", "interactions": {"petted": 5}})["diary"]
+        self.assertEqual((diary["days"], diary["petted"], diary["treats"], diary["play"], diary["rough_throws"]), (3, 3, 1, 3, 1))
+        self.assertEqual(len(diary["bond_history"]), 2)  # One value per local day.
+        self.assertEqual(len(diary["habits"]), 24)
+        self.assertLess(len(json.dumps(diary)), 1500)
+        for bad in ({"totals": "x", "bond_history": [1], "first_seen": -5}, {"totals": {"petted": "many"}, "bond_history": {"bad": 1}}):
+            self.memory.write_text(json.dumps(bad), encoding="utf-8")
+            broken = Brain(self.memory, ROOT / "ai/personality.json", random.Random(1), lambda: self.now, lambda: wall[0])
+            self.assertEqual(broken.decide(self.observation())["diary"]["petted"], 0)
 
     def test_local_hour_biases_sleep_without_breaking_variety(self):
         def sleep_share(hour):

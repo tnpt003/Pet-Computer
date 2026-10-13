@@ -28,7 +28,11 @@ public sealed record PetLine(string Id, string Text);
 public sealed record PetLearned(string[] Likes, string[] Dislikes);
 
 public sealed record AiDecision(string Command, double DurationSeconds, string Mood, string? Emotion = null, double? Energy = null,
-    string? Thought = null, PetNeeds? Needs = null, PetLine? Speech = null, PetLearned? Learned = null);
+    string? Thought = null, PetNeeds? Needs = null, PetLine? Speech = null, PetLearned? Learned = null, PetDiary? Diary = null);
+
+// Lifetime summary kept by Python for the diary window (display only).
+public sealed record PetDiary(int Days, string Since, long Petted, long Treats, long Play, long RoughThrows, long Clicks,
+    double Bond, double[] BondHistory, double[] Habits);
 
 public interface IPetDecisionSource : IDisposable
 {
@@ -43,7 +47,8 @@ public static class AiProtocol
     public static readonly JsonSerializerOptions Json = new() { PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower };
 
     public static bool IsCommand(string? command) => command is
-        "LOOK" or "IDLE" or "WALK_LEFT" or "WALK_RIGHT" or "SIT" or "JUMP" or "SLEEP" or "FOLLOW_MOUSE" or "SEEK_ATTENTION";
+        "LOOK" or "IDLE" or "WALK_LEFT" or "WALK_RIGHT" or "SIT" or "JUMP" or "SLEEP" or "FOLLOW_MOUSE" or "SEEK_ATTENTION" or
+        "ROLL_OVER" or "CHASE_TAIL" or "SCRATCH";
 
     public static AiDecision Parse(string line, long requestId)
     {
@@ -66,7 +71,7 @@ public static class AiProtocol
         // Optional extras: an invalid value is dropped instead of rejecting the decision.
         string? thought = root.TryGetProperty("thought", out var idea) && idea.ValueKind == JsonValueKind.String &&
             PetThought.Parse(idea.GetString()) != ThoughtKind.None ? idea.GetString() : null;
-        return new AiDecision(command!, duration, mood!, emotion, energy, thought, ParseNeeds(root), ParseLine(root), ParseLearned(root));
+        return new AiDecision(command!, duration, mood!, emotion, energy, thought, ParseNeeds(root), ParseLine(root), ParseLearned(root), ParseDiary(root));
     }
 
     private static string? Text(JsonElement element, int maxLength)
@@ -95,6 +100,34 @@ public static class AiProtocol
             ? items.EnumerateArray().Select(item => Text(item, 60)).OfType<string>().Take(5).ToArray()
             : Array.Empty<string>();
         return new PetLearned(List("likes"), List("dislikes"));
+    }
+
+    private static PetDiary? ParseDiary(JsonElement root)
+    {
+        if (!root.TryGetProperty("diary", out var diary) || diary.ValueKind != JsonValueKind.Object) return null;
+        double? Number(string name, double max) => diary.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.Number &&
+            value.TryGetDouble(out double parsed) && double.IsFinite(parsed) && parsed >= 0 && parsed <= max ? parsed : null;
+        double[]? Series(string name, int maxCount, double max)
+        {
+            if (!diary.TryGetProperty(name, out var items) || items.ValueKind != JsonValueKind.Array || items.GetArrayLength() > maxCount) return null;
+            var values = new double[items.GetArrayLength()];
+            int i = 0;
+            foreach (var item in items.EnumerateArray())
+            {
+                if (item.ValueKind != JsonValueKind.Number || !item.TryGetDouble(out double value) || !double.IsFinite(value) || value < 0 || value > max) return null;
+                values[i++] = value;
+            }
+            return values;
+        }
+        var (days, petted, treats, play, rough, clicks, bond) = (Number("days", 1e6), Number("petted", 1e12), Number("treats", 1e12),
+            Number("play", 1e12), Number("rough_throws", 1e12), Number("clicks", 1e12), Number("bond", 100));
+        string? since = diary.TryGetProperty("since", out var date) ? Text(date, 10) : null;
+        var history = Series("bond_history", 31, 100);
+        var habits = Series("habits", 24, 1e6);
+        if (days is not >= 1 || petted == null || treats == null || play == null || rough == null || clicks == null || bond == null ||
+            since == null || history == null || habits is not { Length: 24 }) return null;
+        return new PetDiary((int)days.Value, since, (long)petted.Value, (long)treats.Value, (long)play.Value, (long)rough.Value,
+            (long)clicks.Value, bond.Value, history, habits);
     }
 
     private static PetNeeds? ParseNeeds(JsonElement root)

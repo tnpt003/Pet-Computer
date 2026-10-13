@@ -41,6 +41,9 @@ public sealed class PetBehavior(PetSettings settings, Random? randomSource = nul
     public event Action? DecisionRequested;
     public string LastAppliedCommand { get; private set; } = "LOCAL";
     public bool Quiet { get; set; }
+    // Away nap: the user left the computer. The sleep clock is held (like Pause) until
+    // the user returns or clicks; ordinary sleep is unaffected.
+    public bool HoldSleep { get; private set; }
 
     public void Reset()
     {
@@ -61,7 +64,7 @@ public sealed class PetBehavior(PetSettings settings, Random? randomSource = nul
             followingMouse = false;
             pet.Action = PetAction.Sleeping;
             pet.VX = pet.VY = 0;
-            pet.Emotions.AdvanceSleep(dt);
+            if (!HoldSleep) pet.Emotions.AdvanceSleep(dt);
             double duration = double.IsFinite(settings.SleepDurationSeconds) && settings.SleepDurationSeconds > 0
                 ? settings.SleepDurationSeconds : 10;
             if (pet.Emotions.SleepElapsed >= duration) Wake(pet);
@@ -187,8 +190,42 @@ public sealed class PetBehavior(PetSettings settings, Random? randomSource = nul
     public void WakeByClick(PetModel pet)
         => Wake(pet);
 
+    // Only for a grounded pet that input does not own; ignores the wake cooldown
+    // because nobody is there to be disturbed.
+    public bool StartAwayNap(PetModel pet)
+    {
+        if (!pet.Grounded || pet.Action is PetAction.Dragging or PetAction.Thrown or PetAction.Jumping or PetAction.PreparingJump) return false;
+        followingMouse = false;
+        pet.VX = pet.VY = pet.SmoothedWalkVelocity = 0;
+        pet.Action = PetAction.Sleeping;
+        pet.Emotions.EnterSleep();
+        HoldSleep = true;
+        return true;
+    }
+
+    // The user is back: a held nap ends with the normal waking animation.
+    public void EndAwayNap(PetModel pet)
+    {
+        if (!HoldSleep) return;
+        HoldSleep = false;
+        Wake(pet);
+    }
+
+    // A short stretch (break reminder); only from a free, awake pose.
+    public bool StartStretch(PetModel pet)
+    {
+        if (Quiet || !pet.Grounded || pet.Emotions.BlocksAutonomy || PetActionRules.RejectsDecisions(pet.Action)) return false;
+        followingMouse = false;
+        pet.VX = pet.VY = pet.SmoothedWalkVelocity = 0;
+        pet.Action = PetAction.Stretching;
+        remaining = PetSettings.StretchingDuration;
+        LastAppliedCommand = "LOCAL";
+        return true;
+    }
+
     private void Wake(PetModel pet)
     {
+        HoldSleep = false;
         if (pet.Action != PetAction.Sleeping && !pet.Emotions.SleepLocked) return;
         pet.Emotions.FinishSleep(settings.WakeCooldownSeconds);
         followingMouse = false;

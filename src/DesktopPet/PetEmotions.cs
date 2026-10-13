@@ -59,6 +59,10 @@ public sealed class PetEmotions
         sadEpisodeUntil = now; // Being noticed ends the sad episode at once.
         sadEpisodeDue = now + SadEpisodeAfter;
     }
+    // The user came back to the computer after an away nap: a "missing you" episode
+    // right away would clash with the welcome back, so it is postponed.
+    public void UserReturned() => sadEpisodeDue = Math.Max(sadEpisodeDue, now + SadEpisodeAfter);
+
     private double lastX, lastY, pettingTime;
     private bool cursorKnown;
     private PetEmotion transient, aiHint;

@@ -11,7 +11,12 @@ public sealed record PetObservation(
     PetActivity? Activity = null, string Personality = "Balanced", string SessionId = "", PersonalityTuning? Tuning = null,
     double? LocalHour = null, PetInteractions? Interactions = null,
     bool SpeechEnabled = false, string Language = "vi", int Chattiness = 1, string PetName = "", bool Quiet = false,
-    SpeechReport? LastSpeech = null, string LearningReset = "");
+    SpeechReport? LastSpeech = null, string LearningReset = "",
+    bool BreakDue = false, ContextReport? Context = null);
+
+// Computer context (window geometry and input timing only). Returned is true once,
+// on the first observation after the user came back from being away.
+public sealed record ContextReport(bool Fullscreen, bool Away, bool Returned);
 
 // The line actually displayed and how long ago, so Python can credit reactions to it.
 public sealed record SpeechReport(string Id, double Age);

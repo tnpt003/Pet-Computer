@@ -282,21 +282,31 @@ class Brain:
                 self.learner.reward("say:" + spoken["id"], reward)
 
     def choose_speech(self, observation, deltas, thought, greeting, now):
-        """Pick at most one line: events first, then needs, loneliness, then chatter."""
-        if observation.get("speech_enabled") is not True:
-            self.pending_event = None
+        """Pick at most one line: a due break reminder, events, needs, loneliness, then chatter."""
+        context = observation.get("context") if isinstance(observation.get("context"), dict) else {}
+        enabled = observation.get("speech_enabled") is True
+        # Break reminders are a separate opt-in, so they speak even with chatter off.
+        break_due = observation.get("break_due") is True
+        if context.get("fullscreen") is True or not (enabled or break_due):
+            self.pending_event = None  # Never talk over a fullscreen game, video or slides.
             return None
-        event = ("thrown_rough" if deltas["rough_throws"] else "treat_thanks" if deltas["treats"] else
-                 "petted" if deltas["petted"] else "play" if deltas["ball_clicks"] or deltas["toy"] else
-                 "thrown_fun" if observation.get("last_event") == "released" and self.interaction_delta else
-                 "wake_up" if self.just_woke else greeting)
-        self.just_woke = False
-        if event:
-            self.pending_event = (event, now)
+        if enabled:
+            event = ("thrown_rough" if deltas["rough_throws"] else "treat_thanks" if deltas["treats"] else
+                     "petted" if deltas["petted"] else "play" if deltas["ball_clicks"] or deltas["toy"] else
+                     "thrown_fun" if observation.get("last_event") == "released" and self.interaction_delta else
+                     "back" if context.get("returned") is True else
+                     "wake_up" if self.just_woke else greeting)
+            self.just_woke = False
+            if event:
+                self.pending_event = (event, now)
         if observation["state"] in SILENT_STATES or not observation["grounded"] or observation.get("emotion") == "Sleepy":
             return None  # Keep a fresh event for the next moment the pet can talk.
         category = None
-        if self.pending_event and now - self.pending_event[1] <= 12 and now - self.last_spoke >= EVENT_LINE_GAP:
+        if break_due and now - self.last_spoke >= EVENT_LINE_GAP:
+            category = "break"
+        elif not enabled:
+            return None
+        elif self.pending_event and now - self.pending_event[1] <= 12 and now - self.last_spoke >= EVENT_LINE_GAP:
             category = self.pending_event[0]
         elif thought in ("hungry", "bored", "sleepy") and now - self.last_spoke >= NEED_LINE_GAP.get(observation.get("chattiness"), 120):
             category = thought

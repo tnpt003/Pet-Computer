@@ -273,6 +273,7 @@ public sealed partial class PetWindow : Window
         if (!paused)
         {
             TickFeatures(dt);
+            TickContext(dt);
             pet.Activity.Step(pet.Action, dt);
             var cursor = CursorPosition();
             if (pet.Emotions.Step(pet, dt, cursor.X, cursor.Y, renderer.IsMouseOver)) Interact("petted");
@@ -355,6 +356,8 @@ public sealed partial class PetWindow : Window
                 $"Speech: {(pet.Speech.Visible ? pet.Speech.Text : "none")}\n" +
                 $"Learned likes: {(aiLearned is { Likes.Length: > 0 } ? string.Join("; ", aiLearned.Likes) : "nothing yet")}\n" +
                 $"Learned dislikes: {(aiLearned is { Dislikes.Length: > 0 } ? string.Join("; ", aiLearned.Dislikes) : "nothing yet")}\n" +
+                $"Context: {(context.Fullscreen ? "fullscreen app (quiet)" : "normal")}, {(context.Away ? "user away" : "user here")}, idle {context.IdleSeconds:F0} s{(behavior.HoldSleep ? ", away nap" : "")}\n" +
+                $"Break reminder: {(breaks.Enabled ? $"{breaks.ActiveSeconds / 60:F1} / {breaks.IntervalSeconds / 60:F0} min active{(breaks.Due ? " (due)" : "")}" : "off")}\n" +
                 $"Frame: {measuredFps:F0} fps (max gap {measuredMaxGap * 1000:F0} ms)\n{AiStatus}";
         }
     }
@@ -427,8 +430,9 @@ public sealed partial class PetWindow : Window
             pet.Emotions.SecondsWithoutAttention, interactionCount, lastEvent, behavior.LastAppliedCommand,
             pet.Emotions.Current.ToString(), pet.Activity.Snapshot(), preferences.Personality, sessionId, preferences.Tuning?.Normalized(),
             DateTime.Now.Hour + DateTime.Now.Minute / 60.0, pet.Interactions.Snapshot(),
-            preferences.Speech, preferences.Language, preferences.Chattiness, preferences.Name, preferences.Quiet,
-            pet.Speech.LastShown is { } shown ? new SpeechReport(shown.Id, Math.Round(shown.Age, 2)) : null, preferences.LearningReset);
+            preferences.Speech, preferences.Language, preferences.Chattiness, preferences.Name, EffectiveQuiet,
+            pet.Speech.LastShown is { } shown ? new SpeechReport(shown.Id, Math.Round(shown.Age, 2)) : null, preferences.LearningReset,
+            breaks.Due && CanDeliverBreak, ContextSnapshot());
         try
         {
             // Even a future cached source that completes synchronously must wait until
@@ -446,7 +450,7 @@ public sealed partial class PetWindow : Window
             {
                 aiEnergy = decision.Energy;
                 pet.Emotions.ApplyAiHint(decision.Emotion);
-                if (!pet.Speech.Visible) pet.Thought.TryShow(PetThought.Parse(decision.Thought), pet);
+                if (!pet.Speech.Visible && !context.Fullscreen) pet.Thought.TryShow(PetThought.Parse(decision.Thought), pet);
                 if (!FeatureOwnsMovement()) behavior.TryApply(pet, decision);
             }
         }

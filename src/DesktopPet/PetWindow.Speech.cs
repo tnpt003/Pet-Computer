@@ -22,9 +22,17 @@ public sealed partial class PetWindow
 
     private void ShowSpeech(PetLine line)
     {
-        if (!preferences.Speech || closed || !pet.Speech.TryShow(line.Id, line.Text, pet)) return;
+        // Break reminders were enabled on their own, so they speak even with chatter off.
+        bool reminder = PetBreaks.IsBreakLine(line.Id);
+        if ((!preferences.Speech && !reminder) || (reminder && !breaks.Due) || closed || context.Fullscreen ||
+            !pet.Speech.TryShow(line.Id, line.Text, pet)) return;
         pet.Thought.Clear(); // Words replace the icon bubble.
         PlayPetSound("meow");
+        if (reminder)
+        {
+            breaks.Delivered();
+            if (CanPlay && !FeatureOwnsMovement()) behavior.StartStretch(pet); // Stretch along with the user.
+        }
     }
 
     private void EnsureSpeechWindow()

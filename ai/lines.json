@@ -128,6 +128,44 @@
       {"text": "A little flight is nice.", "personality": ["Calm"]}
     ]
   },
+  "back": {
+    "vi": [
+      "Sen về rồi! {name} chợp mắt chút thôi~",
+      "A, sen đây rồi! Đi đâu nãy giờ vậy?",
+      "Meo! {name} đang mơ thì sen về~",
+      "Sen nghỉ ngơi xong chưa? {name} thì xong rồi!",
+      "Chào mừng sen quay lại nha!",
+      {"text": "Sen về là vui rồi, chơi tiếp nào!", "personality": ["Playful"]},
+      {"text": "Ngủ một giấc thật yên… sen về rồi à.", "personality": ["Calm"]}
+    ],
+    "en": [
+      "You're back! {name} just had a little nap~",
+      "Oh, there you are! Where did you go?",
+      "Meow! {name} was dreaming till you came back~",
+      "Done with your break? {name} is!",
+      "Welcome back, human!",
+      {"text": "You're back, let's play again!", "personality": ["Playful"]},
+      {"text": "Such a calm nap… oh, you're back.", "personality": ["Calm"]}
+    ]
+  },
+  "break": {
+    "vi": [
+      "Sen ơi, uống ngụm nước đi nào!",
+      "Ngồi lâu rồi đó, đứng dậy vươn vai với {name} nha~",
+      "Nghỉ mắt chút đi sen, nhìn ra xa nè!",
+      "Sen làm chăm quá, nghỉ năm phút đi!",
+      "{name} duỗi người rồi, tới lượt sen đó!",
+      "Thả lỏng vai nào sen ơi~"
+    ],
+    "en": [
+      "Human, time for a sip of water!",
+      "You've been sitting a while, stretch with {name}~",
+      "Rest your eyes, look far away for a bit!",
+      "You're working so hard, take five!",
+      "{name} just stretched, your turn!",
+      "Relax those shoulders, human~"
+    ]
+  },
   "wake_up": {
     "vi": [
       "Ngáp~ {name} ngủ ngon ghê",

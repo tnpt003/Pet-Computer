@@ -8,17 +8,30 @@ namespace DesktopPet;
 // All art is local vector drawing. Replace this element with a sprite renderer later.
 public sealed class PetRenderer(PetModel pet) : FrameworkElement
 {
-    private static readonly Brush Fur = Frozen("#E9AE65");
-    private static readonly Brush Cream = Frozen("#FFE4B5");
-    private static readonly Brush Ink = Frozen("#49372E");
-    private static readonly Brush Pink = Frozen("#E98990");
-    private static readonly Pen Outline = FrozenPen(Ink, 2.5);
+    // Coat colours come from the chosen palette (default Orange = original artwork).
+    private CoatPalette palette = CoatPalette.Orange;
+    private string coat = "Orange", accessory = "None";
+    public string Coat
+    {
+        get => coat;
+        set { coat = PetPreferences.NormalizeCoat(value); palette = CoatPalette.For(coat); InvalidateVisual(); }
+    }
+    public string Accessory
+    {
+        get => accessory;
+        set { accessory = PetPreferences.NormalizeAccessory(value); InvalidateVisual(); }
+    }
+    private Brush Fur => palette.Fur;
+    private Brush Cream => palette.Cream;
+    private Brush Ink => palette.Ink;
+    private Brush Pink => palette.Pink;
+    private Pen Outline => palette.Outline;
     private static readonly Brush EffectInk = Frozen("#302B48");
     private static readonly Pen EffectBorder = FrozenPen(EffectInk, 3, PenLineJoin.Round);
     private static readonly Pen EffectHalo = FrozenPen(Brushes.White, 5.5, PenLineJoin.Round);
     // Frozen, shared pens avoid allocating new pens for every frame at 60 FPS.
-    private static readonly Pen TailOutline = FrozenPen(Ink, 13, round: true);
-    private static readonly Pen TailFill = FrozenPen(Fur, 8, round: true);
+    private Pen TailOutline => palette.TailOutline;
+    private Pen TailFill => palette.TailFill;
     private static readonly Pen OrbitPen = FrozenPen(Brushes.Gold, 1.2);
     private static readonly Pen AngerPen = FrozenPen(Brushes.Tomato, 1.5);
     private static readonly Pen SurprisePen = FrozenPen(Brushes.Gold, 1.5);
@@ -61,10 +74,10 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         return brush;
     }
 
-    private static void Oval(DrawingContext dc, Brush fill, double x, double y, double rx, double ry)
+    private void Oval(DrawingContext dc, Brush fill, double x, double y, double rx, double ry)
         => dc.DrawEllipse(fill, Outline, new Point(x, y), rx, ry);
 
-    private static void Triangle(DrawingContext dc, Point a, Point b, Point c, Brush fill)
+    private void Triangle(DrawingContext dc, Point a, Point b, Point c, Brush fill)
     {
         var geometry = new StreamGeometry();
         using (var context = geometry.Open())
@@ -185,6 +198,7 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         dc.DrawGeometry(null, TailOutline, tail);
         dc.DrawGeometry(null, TailFill, tail);
         Oval(dc, Fur, 55, 80 + 8 * p.RestBlend, 26, 23 - 7 * p.RestBlend);
+        if (palette.Markings != CoatMarkings.None) DrawBodyMarkings(dc, 80 + 8 * p.RestBlend, 23 - 7 * p.RestBlend);
         Oval(dc, Cream, 55, 86, 15, 16 - 5 * p.RestBlend);
         if (p.PickedUp && p.PickupBlend > 0)
         {
@@ -236,6 +250,7 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         dc.PushTransform(new TranslateTransform(glanceX * (p.Eating ? 1.4 : 0.45), headY - 49 + glanceY * 0.6 +
             (p.Eating && p.EatTime > 1.3 ? Math.Sin(p.EatTime * 16) * 1.2 : 0)));
         dc.PushTransform(new RotateTransform(p.PickedUp ? Math.Sin(pet.Pickup.Time * 10) * p.Dizzy * 3 + (pet.Motion.Ready ? pet.Motion.HeadTilt * p.Influence * pet.Motion.Facing : 0) : glanceDirection * glanceBlend * 2.5 + (pet.Motion.Ready ? pet.Motion.HeadTilt * p.Influence * pet.Motion.Facing : 0) + p.PettingLean * 7 + (p.Seeking ? Math.Sin(Math.PI * Math.Clamp(pet.ActionTime / PetSettings.AttentionGestureDuration, 0, 1)) * 6 : 0), 55, 49));
+        if (accessory == "Bell") DrawCollar(dc);
         dc.PushTransform(new RotateTransform(twitch, 37, 33));
         Triangle(dc, new Point(27, 38), new Point(27, 13), new Point(47, 31), Fur);
         Triangle(dc, new Point(31, 30), new Point(31, 21), new Point(40, 30), Pink);
@@ -245,12 +260,15 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         Triangle(dc, new Point(72, 30), new Point(79, 21), new Point(80, 33), Pink);
         dc.Pop();
         Oval(dc, Fur, 55, 48, 31, 25);
+        if (palette.Markings != CoatMarkings.None) DrawHeadMarkings(dc);
         Oval(dc, Cream, 55, 58, 19, 12);
         DrawFace(dc, p, glanceX, glanceY);
         dc.DrawLine(Outline, new Point(32, 56), new Point(17, 53));
         dc.DrawLine(Outline, new Point(32, 61), new Point(17, 63));
         dc.DrawLine(Outline, new Point(78, 56), new Point(93, 53));
         dc.DrawLine(Outline, new Point(78, 61), new Point(93, 63));
+        if (accessory == "Bow") DrawBow(dc);
+        else if (accessory == "Hat") DrawHat(dc);
         if (p.Grooming)
         {
             double pawY = pet.ActionTime < 1.6 ? 65 : 48 + Math.Sin(pet.ActionTime * 8) * 5;
@@ -281,8 +299,14 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
                 dc.DrawLine(Outline, new Point(eyeX - 4, 47), new Point(eyeX + 4, 47));
             else
             {
-                dc.DrawEllipse(Ink, null, new Point(eyeX + look, 46 + glanceY), 3.5,
-                    p.Waking ? 1 + p.WakeProgress * 3.5 : p.Airborne ? 6 : 4.5 + p.PickupBlend * 1.5);
+                double eyeHeight = p.Waking ? 1 + p.WakeProgress * 3.5 : p.Airborne ? 6 : 4.5 + p.PickupBlend * 1.5;
+                if (palette.Iris != null)
+                {
+                    // Coloured iris around a narrower pupil keeps dark coats' eyes readable.
+                    dc.DrawEllipse(palette.Iris, null, new Point(eyeX + look, 46 + glanceY), 4.6, eyeHeight + 1.1);
+                    dc.DrawEllipse(Ink, null, new Point(eyeX + look, 46 + glanceY), 2, eyeHeight);
+                }
+                else dc.DrawEllipse(Ink, null, new Point(eyeX + look, 46 + glanceY), 3.5, eyeHeight);
                 dc.DrawEllipse(Brushes.White, null, new Point(eyeX + look + 1, 44 + glanceY), 1, 1.5);
             }
         }
@@ -304,6 +328,78 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
             DrawEmotionFace(dc, p.Emotion, p.EmotionTime);
             dc.Pop();
         }
+    }
+
+    // Patches and stripes are clipped just inside the outline so they never spill out.
+    private void DrawBodyMarkings(DrawingContext dc, double centerY, double radiusY)
+    {
+        dc.PushClip(new EllipseGeometry(new Point(55, centerY), 24.8, radiusY - 1.2));
+        if (palette.Markings == CoatMarkings.Calico)
+        {
+            dc.DrawEllipse(palette.PatchA, null, new Point(68, centerY - 9), 13, 11);
+            dc.DrawEllipse(palette.PatchB, null, new Point(40, centerY + 2), 10, 10);
+        }
+        else
+        {
+            double top = centerY - radiusY;
+            foreach (double x in new[] { 44.0, 55.0, 66.0 })
+                dc.DrawLine(MarkingPen, new Point(x, top), new Point(x + 1.5, top + 9));
+        }
+        dc.Pop();
+    }
+
+    private void DrawHeadMarkings(DrawingContext dc)
+    {
+        dc.PushClip(HeadClip);
+        if (palette.Markings == CoatMarkings.Calico)
+        {
+            dc.DrawEllipse(palette.PatchA, null, new Point(33, 35), 15, 13);
+            dc.DrawEllipse(palette.PatchB, null, new Point(78, 33), 11, 10);
+        }
+        else
+        {
+            // Classic tabby "M" on the forehead plus a stripe over each eye.
+            dc.DrawLine(MarkingPen, new Point(49, 24), new Point(50, 32));
+            dc.DrawLine(MarkingPen, new Point(55, 23), new Point(55, 33));
+            dc.DrawLine(MarkingPen, new Point(61, 24), new Point(60, 32));
+            dc.DrawLine(MarkingPen, new Point(36, 30), new Point(40, 36));
+            dc.DrawLine(MarkingPen, new Point(74, 30), new Point(70, 36));
+        }
+        dc.Pop();
+    }
+
+    private static readonly Geometry HeadClip = Frozen(new EllipseGeometry(new Point(55, 48), 29.8, 23.8));
+    private Pen MarkingPen => palette.MarkingPen!;
+    private static readonly Brush CollarRed = Frozen("#D9485F");
+    private static readonly Pen CollarPen = FrozenPen(CollarRed, 5, round: true);
+    private static readonly Brush BowPink = Frozen("#EC5F86");
+    private static readonly Brush HatBlue = Frozen("#5E86F0");
+    private static readonly Brush HatPompom = Frozen("#FFD45C");
+    private static readonly Geometry CollarGeometry = CachedGeometry("M 36,70 Q 55,80 74,70");
+    private static readonly Geometry HatGeometry = CachedGeometry("M 43,27 L 57,1 L 67,26 Z");
+
+    // Under the chin, inside the head transform so it follows tilts and rest poses.
+    private void DrawCollar(DrawingContext dc)
+    {
+        dc.DrawGeometry(null, palette.AccentOutline, CollarGeometry);
+        dc.DrawGeometry(null, CollarPen, CollarGeometry);
+        dc.DrawEllipse(Brushes.Gold, Outline, new Point(55, 80), 4.2, 4.2);
+        dc.DrawLine(Outline, new Point(55, 80.5), new Point(55, 84));
+    }
+
+    private void DrawBow(DrawingContext dc)
+    {
+        Triangle(dc, new Point(68, 25), new Point(59, 19), new Point(59, 31), BowPink);
+        Triangle(dc, new Point(68, 25), new Point(77, 19), new Point(77, 31), BowPink);
+        dc.DrawEllipse(BowPink, Outline, new Point(68, 25), 3.2, 3.2);
+    }
+
+    private void DrawHat(DrawingContext dc)
+    {
+        dc.DrawGeometry(HatBlue, Outline, HatGeometry);
+        dc.DrawEllipse(Brushes.White, null, new Point(53, 19), 1.8, 1.8);
+        dc.DrawEllipse(Brushes.White, null, new Point(60, 13), 1.6, 1.6);
+        dc.DrawEllipse(HatPompom, Outline, new Point(57, 1), 3.6, 3.6);
     }
 
     // Drawn inside the pickup rotation, above the head.
@@ -443,7 +539,7 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         dc.Pop();
     }
 
-    private static void Curve(DrawingContext dc, Point start, Point control, Point end)
+    private void Curve(DrawingContext dc, Point start, Point control, Point end)
     {
         var geometry = new StreamGeometry();
         using (var context = geometry.Open())
@@ -461,7 +557,7 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         dc.DrawGeometry(fill, null, shape);
     }
 
-    private static void DrawEmotionFace(DrawingContext dc, PetEmotion emotion, double time)
+    private void DrawEmotionFace(DrawingContext dc, PetEmotion emotion, double time)
     {
         foreach (double x in new[] { 42.0, 68.0 })
         {

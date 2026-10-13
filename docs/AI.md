@@ -366,8 +366,8 @@ local behavior is unchanged.
 **Lines.** `ai/lines.json` holds short lines per situation in Vietnamese (`vi`) and
 English (`en`). The pet refers to itself by `{name}` and calls the user "sen"
 ("human" in English). Situations: hello, welcome_back, petted, treat_thanks, play,
-thrown_rough, thrown_fun, wake_up, sleepy, lonely, hungry, bored, morning, night
-and idle. A line can be limited to personalities with `{"text": ..., "personality": [...]}`.
+thrown_rough, thrown_fun, back, break, wake_up, sleepy, lonely, hungry, bored,
+morning, night and idle. A line can be limited to personalities with `{"text": ..., "personality": [...]}`.
 Edit the file to change wording; restart the AI, or publish again for the standalone copy.
 `ai/speech.py` picks lines without repeating the last 20. Line IDs come from the
 text, so reordering keeps learned scores.
@@ -426,6 +426,28 @@ speech line replaces the icon thought. The bubble is a separate small topmost wi
 the head and moves with the interpolated pet position. It stays inside the work
 area, and the pet window keeps its fixed size. A meow cue plays if sounds are on,
 under the existing cooldowns. With Python off, the pet does not talk.
+
+## Break reminders and computer context (2026-10-13)
+
+C# owns the clocks and window checks. Python only picks the words.
+
+| Observation field | Meaning |
+|---|---|
+| `break_due` | A break reminder is due and the pet can show it now |
+| `context` | `{fullscreen, away, returned}`. `returned` is true once, on the first observation after the user came back |
+
+- `break_due: true` → a `break` line comes first, even if `speech_enabled` is false (the
+  user enabled reminders separately), at least 6 s after the previous line.
+- `context.fullscreen: true` → no line at all, and a pending event is dropped. C# also
+  sends `quiet: true`, and the pet shows no bubbles while fullscreen.
+- `context.returned: true` → a `back` event, after direct reactions (throw, treat,
+  petting, ball) and before `wake_up` or the greeting.
+
+C# accepts a line whose ID starts with `break:` only while the reminder is due.
+After showing it, C# resets the break clock and starts a stretch if the pet is free.
+If Python is off, or no line arrives within 15 s, C# shows a built-in line (`break:local:…`).
+The away nap (`PetBehavior.StartAwayNap`/`EndAwayNap`) is decided entirely in C#.
+Python sees only `Sleeping` and makes no requests while the pet sleeps.
 
 ## Short sad episodes (C#, works offline)
 

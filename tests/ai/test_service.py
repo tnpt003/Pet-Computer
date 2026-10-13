@@ -494,6 +494,39 @@ class SpeechAndLearningTests(unittest.TestCase):
         self.step(chattiness=0, learning_reset="r1")  # Same reset token is applied only once.
         self.assertIn("x", restored.learner.values)
 
+    def test_break_reminder_speaks_first_and_even_with_chatter_off(self):
+        self.step(chattiness=0)  # hello
+        self.counts["petted"] += 1
+        reminder = self.step(10, chattiness=0, break_due=True)
+        self.assertTrue(reminder["speech"]["id"].startswith("break:vi:"))
+        self.assertNotIn("{name}", reminder["speech"]["text"])
+        self.assertNotIn("speech", self.step(1, chattiness=0, break_due=True))  # Still paced.
+        self.now += 10
+        quiet = self.brain.decide({**self.obs(chattiness=0, language="en"), "speech_enabled": False, "break_due": True})
+        self.assertTrue(quiet["speech"]["id"].startswith("break:en:"))
+        self.now += 10
+        self.assertNotIn("speech", self.brain.decide({**self.obs(chattiness=2), "speech_enabled": False}))
+        self.assertNotIn("speech", self.step(10, state="Sleeping", chattiness=0, break_due=True))
+
+    def test_fullscreen_silences_everything(self):
+        self.brain = self.make(seed=12)
+        self.assertNotIn("speech", self.step(chattiness=2, context={"fullscreen": True, "away": False, "returned": False}))
+        self.counts["petted"] += 1
+        for _ in range(40):
+            self.assertNotIn("speech", self.step(15, chattiness=2, break_due=True,
+                                                 context={"fullscreen": True, "away": False, "returned": False}))
+        self.assertTrue(self.step(15, chattiness=2, break_due=True)["speech"]["id"].startswith("break:"))  # Talks again afterwards.
+
+    def test_returning_user_is_welcomed_back(self):
+        self.step(chattiness=0)  # hello
+        self.now += 400
+        back = self.step(3, chattiness=0, context={"fullscreen": False, "away": False, "returned": True})
+        self.assertTrue(back["speech"]["id"].startswith("back:vi:"))
+        self.assertNotIn("speech", self.step(10, chattiness=0, context={"fullscreen": False, "away": False, "returned": False}))
+        for bad in ("yes", 1, None, [], {"returned": "true"}):
+            self.now += 30
+            self.assertFalse(self.brain.decide(self.obs(chattiness=0, context=bad)).get("speech", {}).get("id", "").startswith("back:"))
+
 
 if __name__ == "__main__":
     unittest.main()

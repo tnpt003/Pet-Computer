@@ -121,6 +121,12 @@ Waking resets inactivity and stale emotions. Right-click wakes immediately and
 opens the menu; left-click wakes before pickup and dragging. Pause freezes the
 sleep clock, and AI toggles cannot restart it or wake the pet.
 
+**Away nap (the one exception).** When nobody has touched the mouse or keyboard
+for 5 minutes, the pet goes to sleep and its sleep clock is held, so it keeps
+sleeping while you are gone. Your next input anywhere on the computer wakes it
+with the normal 1.2 s waking animation and the 30 s wake cooldown. A click still
+wakes it at once. Ordinary sleep is unchanged: 10 s, and the cursor cannot wake it.
+
 The vector-drawing approach is retained. `PetAction` includes Idle, Walking, Sitting,
 Jumping, Sleeping, Thrown, and Waking, plus Looking and Dragging. `ActionTime` resets
 on state changes for state-specific animation; the original global `AnimationTime`
@@ -340,3 +346,36 @@ by rough throws. The debug view lists what it has learned. Wording lives in
 Pet** in the cat's menu shows the version, data folder and AI status.
 `scripts/publish.ps1` also writes `artifacts\DesktopPet-<version>-win-x64.zip`
 containing the whole folder.
+
+## Appearance, break reminders and computer context (2026-10-13)
+
+**Appearance.** In **name and personality…**, the **Appearance** box offers six coats
+(Orange, the original, plus Gray, Black, White, Calico and Tabby) and four accessories
+(none, collar with bell, bow, party hat). Save applies them at once. Everything is
+vector drawing (`PetAppearance.cs` palettes, `PetRenderer.cs`). Patches and stripes are
+clipped inside the outline. The bow, hat and collar move with the head. The window
+size is unchanged, and the default orange cat renders pixel for pixel as before.
+
+**Break reminders.** Off by default. In the **Break reminders** box, choose every 30, 45
+or 60 minutes. Only time you actually use the computer counts: being away 5 minutes
+counts as a break and restarts the clock. When a reminder is due, the cat says a line
+such as "Sen ơi, uống ngụm nước đi nào!" and stretches. Python words the line (category
+`break` in `ai/lines.json`). With Python off, or if no line arrives within 15 s, C#
+uses a built-in line. Reminders show even if chatter is off. They wait while the cat
+sleeps, is dragged or airborne, and while a fullscreen app is open. The debug view shows
+the active minutes.
+
+**Computer context** (`PetWindow.Context.cs`, checked once per second). It reads only
+the foreground window's rectangle, style and class and the time of the last input,
+never screen content.
+- **Fullscreen app on the cat's monitor** (game, video, slides: a captionless window
+  covering the whole monitor): the cat behaves as in Quiet mode, with no speech or
+  thought bubbles and no sounds (previews still play). It stays visible. The saved
+  Quiet setting is not changed. The desktop, taskbar and maximized captioned windows
+  do not count.
+- **Away** (no input for 5 minutes): away nap, see *Sleeping and waking*.
+- **Back:** the cat wakes up, and Python greets you with a `back` line. The short
+  "missing you" sad episode is postponed so it does not clash with the welcome.
+
+Pause freezes all of this, like the sleep clock. Preferences: `Coat`, `Accessory`,
+`BreakReminders`, `BreakMinutes`.

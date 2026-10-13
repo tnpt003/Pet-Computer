@@ -33,7 +33,10 @@ public sealed partial class PetWindow
     private void InitializeFeatures(ContextMenu menu)
     {
         Title = preferences.Name + " — Desktop Pet";
-        behavior.Quiet = preferences.Quiet;
+        InitializeContext();
+        ApplyQuiet();
+        renderer.Coat = preferences.Coat;
+        renderer.Accessory = preferences.Accessory;
         behavior.Personality = preferences.Personality;
         var treat = new MenuItem { Header = "Give treat" };
         treat.Click += (_, _) => GiveTreat();
@@ -46,12 +49,12 @@ public sealed partial class PetWindow
             preferences.RestFractionX = Math.Clamp((pet.X - bounds.Left) / Math.Max(1, bounds.Right - bounds.Left - settings.Width), 0, 1);
             SavePreferences(); };
         var visit = new MenuItem { Header = "Go to resting spot" };
-        visit.Click += (_, _) => { if (CanPlay && !preferences.Quiet && preferences.RestX.HasValue) { CancelFeatureActivity(); returningHome = true; Interact("rest_requested"); } };
+        visit.Click += (_, _) => { if (CanPlay && !EffectiveQuiet && preferences.RestX.HasValue) { CancelFeatureActivity(); returningHome = true; Interact("rest_requested"); } };
         var forget = new MenuItem { Header = "Forget resting spot" };
         forget.Click += (_, _) => { preferences.RestX = preferences.RestY = null; preferences.RestMonitor = null; returningHome = false; SavePreferences(); };
         home.Items.Add(remember); home.Items.Add(visit); home.Items.Add(forget);
         var quiet = new MenuItem { Header = "Quiet mode", IsCheckable = true, IsChecked = preferences.Quiet };
-        quiet.Click += (_, _) => { preferences.Quiet = quiet.IsChecked; behavior.Quiet = preferences.Quiet; CancelFeatureActivity(); Interact("quiet_changed"); SavePreferences(); };
+        quiet.Click += (_, _) => { preferences.Quiet = quiet.IsChecked; ApplyQuiet(); CancelFeatureActivity(); Interact("quiet_changed"); SavePreferences(); };
         var sounds = new MenuItem { Header = "Pet sounds", IsCheckable = true, IsChecked = preferences.Sounds };
         sounds.Click += (_, _) => { preferences.Sounds = sounds.IsChecked; if (!preferences.Sounds) sound?.Stop(); SavePreferences(); };
         var customize = new MenuItem { Header = "Name and personality…" };
@@ -76,9 +79,9 @@ public sealed partial class PetWindow
             sounds.IsChecked = preferences.Sounds;
             toy.Header = toyWindow == null ? "Play with ball" : "Put ball away";
             treat.IsEnabled = CanPlay && treatCooldown <= 0;
-            toy.IsEnabled = toyWindow != null || (CanPlay && !preferences.Quiet);
+            toy.IsEnabled = toyWindow != null || (CanPlay && !EffectiveQuiet);
             remember.IsEnabled = pet.Grounded;
-            visit.IsEnabled = CanPlay && !preferences.Quiet && preferences.RestX.HasValue;
+            visit.IsEnabled = CanPlay && !EffectiveQuiet && preferences.RestX.HasValue;
             forget.IsEnabled = preferences.RestX.HasValue;
         };
     }
@@ -114,7 +117,7 @@ public sealed partial class PetWindow
     public void ToggleToy()
     {
         if (toyWindow != null) { CancelFeatureActivity(); return; }
-        if (!CanPlay || preferences.Quiet) return;
+        if (!CanPlay || EffectiveQuiet) return;
         CancelFeatureActivity();
         Interact("toy_started");
         toyPlay.Reset();
@@ -207,7 +210,7 @@ public sealed partial class PetWindow
             pet.Action = PetAction.Sitting; pet.VX = 0;
             return;
         }
-        if (preferences.Quiet) return;
+        if (EffectiveQuiet) return;
         if (toyWindow != null)
         {
             ballTime -= dt;
@@ -286,6 +289,23 @@ public sealed partial class PetWindow
         speechPanel.Children.Add(talks); speechPanel.Children.Add(new TextBlock { Text = "Language" }); speechPanel.Children.Add(language);
         speechPanel.Children.Add(new TextBlock { Text = "How often" }); speechPanel.Children.Add(chattiness); speechPanel.Children.Add(forget);
         panel.Children.Add(new GroupBox { Header = "Speech (Python AI)", Content = speechPanel, Margin = new Thickness(0, 10, 0, 0) });
+        var coat = new ComboBox { ItemsSource = new[] { "Orange", "Gray", "Black", "White", "Calico", "Tabby (striped)" },
+            SelectedIndex = Math.Max(0, Array.IndexOf(PetPreferences.Coats, preferences.Coat)), Margin = new Thickness(0, 2, 0, 4) };
+        var accessory = new ComboBox { ItemsSource = new[] { "None", "Collar with bell", "Bow", "Party hat" },
+            SelectedIndex = Math.Max(0, Array.IndexOf(PetPreferences.Accessories, preferences.Accessory)) };
+        var looks = new StackPanel { Margin = new Thickness(6) };
+        looks.Children.Add(new TextBlock { Text = "Coat" }); looks.Children.Add(coat);
+        looks.Children.Add(new TextBlock { Text = "Accessory" }); looks.Children.Add(accessory);
+        panel.Children.Add(new GroupBox { Header = "Appearance", Content = looks, Margin = new Thickness(0, 10, 0, 0) });
+        // Counts only time spent at the computer; being away 5 minutes counts as a break.
+        var reminders = new CheckBox { Content = "Remind me to take a break", IsChecked = preferences.BreakReminders, Margin = new Thickness(0, 2, 0, 4) };
+        var interval = new ComboBox { ItemsSource = new[] { "Every 30 minutes", "Every 45 minutes", "Every 60 minutes" },
+            SelectedIndex = Math.Max(0, Array.IndexOf(PetPreferences.BreakChoices, preferences.BreakMinutes)) };
+        var breakPanel = new StackPanel { Margin = new Thickness(6) };
+        breakPanel.Children.Add(reminders); breakPanel.Children.Add(interval);
+        breakPanel.Children.Add(new TextBlock { Text = "Counts only time you use the computer. Not shown during fullscreen apps.",
+            TextWrapping = TextWrapping.Wrap, Foreground = Brushes.DimGray, Margin = new Thickness(0, 4, 0, 0) });
+        panel.Children.Add(new GroupBox { Header = "Break reminders", Content = breakPanel, Margin = new Thickness(0, 10, 0, 0) });
         var master = new CheckBox { Content = "Enable sounds", IsChecked = preferences.Sounds, Margin = new Thickness(0, 12, 0, 4) };
         var interaction = new CheckBox { Content = "Interaction sounds", IsChecked = preferences.InteractionSounds };
         var emotion = new CheckBox { Content = "Emotion sounds", IsChecked = preferences.EmotionSounds };
@@ -319,6 +339,12 @@ public sealed partial class PetWindow
             preferences.Speech = talks.IsChecked == true; preferences.Language = language.SelectedIndex == 1 ? "en" : "vi";
             preferences.Chattiness = Math.Clamp(chattiness.SelectedIndex, 0, 2);
             if (!preferences.Speech) pet.Speech.Hide();
+            preferences.Coat = PetPreferences.Coats[Math.Max(0, coat.SelectedIndex)];
+            preferences.Accessory = PetPreferences.Accessories[Math.Max(0, accessory.SelectedIndex)];
+            renderer.Coat = preferences.Coat; renderer.Accessory = preferences.Accessory;
+            preferences.BreakReminders = reminders.IsChecked == true;
+            preferences.BreakMinutes = PetPreferences.BreakChoices[Math.Max(0, interval.SelectedIndex)];
+            breaks.Configure(preferences.BreakReminders, preferences.BreakMinutes);
             sound?.Stop(); Interact("preferences_changed"); SavePreferences(); settingsWindow?.Close(); };
         settingsWindow.Closed += (_, _) => settingsWindow = null;
         settingsWindow.Show();
@@ -327,7 +353,8 @@ public sealed partial class PetWindow
     private bool PlayPetSound(string kind, bool preview = false, double? previewVolume = null)
     {
         bool category = kind is "sleep" or "wake" ? preferences.SleepSounds : kind is "annoyed" or "surprised" ? preferences.EmotionSounds : preferences.InteractionSounds;
-        if (!preview && (!preferences.Sounds || !category || paused || clock.Elapsed.TotalSeconds < soundAfter)) return false;
+        // A fullscreen app (game, video, slides) gets no pet sounds; previews still play.
+        if (!preview && (context.Fullscreen || !preferences.Sounds || !category || paused || clock.Elapsed.TotalSeconds < soundAfter)) return false;
         double volume = Math.Clamp(previewVolume ?? preferences.Volume, 0, 1);
         if (volume <= 0) { if (preview) sound?.Stop(); return false; }
         double now = clock.Elapsed.TotalSeconds;

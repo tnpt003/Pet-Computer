@@ -21,6 +21,17 @@ public sealed class PetPreferences
     public int Chattiness { get; set; } = 1;
     // A new value asks Python to forget what it learned; Python applies each value once.
     public string LearningReset { get; set; } = "";
+    // Appearance; drawn by CoatPalette and PetRenderer.
+    public static readonly string[] Coats = { "Orange", "Gray", "Black", "White", "Calico", "Tabby" };
+    public static readonly string[] Accessories = { "None", "Bell", "Bow", "Hat" };
+    public static string NormalizeCoat(string? coat) => Array.IndexOf(Coats, coat) >= 0 ? coat! : "Orange";
+    public static string NormalizeAccessory(string? accessory) => Array.IndexOf(Accessories, accessory) >= 0 ? accessory! : "None";
+    public string Coat { get; set; } = "Orange";
+    public string Accessory { get; set; } = "None";
+    // Off by default: the pet reminds the user to take a break after this many active minutes.
+    public bool BreakReminders { get; set; }
+    public int BreakMinutes { get; set; } = 45;
+    public static readonly int[] BreakChoices = { 30, 45, 60 };
     public string? PositionMonitor { get; set; }
     public double PositionX { get; set; } = 0.5;
     public double PositionY { get; set; } = 1;
@@ -42,6 +53,9 @@ public sealed class PetPreferences
             p.Volume = double.IsFinite(p.Volume) ? Math.Clamp(p.Volume, 0, 1) : 0.7;
             if (p.Language is not ("vi" or "en")) p.Language = "vi";
             p.Chattiness = Math.Clamp(p.Chattiness, 0, 2);
+            p.Coat = NormalizeCoat(p.Coat);
+            p.Accessory = NormalizeAccessory(p.Accessory);
+            if (Array.IndexOf(BreakChoices, p.BreakMinutes) < 0) p.BreakMinutes = 45;
             if (p.LearningReset == null || p.LearningReset.Length > 64) p.LearningReset = "";
             p.PositionX = double.IsFinite(p.PositionX) ? Math.Clamp(p.PositionX, 0, 1) : 0.5;
             p.PositionY = double.IsFinite(p.PositionY) ? Math.Clamp(p.PositionY, 0, 1) : 1;

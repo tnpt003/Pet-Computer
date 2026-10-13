@@ -17,6 +17,9 @@ internal static class Program
         Environment.SetEnvironmentVariable("PET_AI_DISABLED", "1");
         var app = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
         var window = new PetWindow(new PetPreferences());
+        // Unattended runs must not depend on the real foreground window or on how long
+        // nobody touched the machine (that would trigger the away nap mid-test).
+        SetContext(window, false, 0);
         window.Loaded += async (_, _) =>
         {
             try
@@ -42,6 +45,13 @@ internal static class Program
         };
         return app.Run(window);
     }
+
+    private static void SetContext(PetWindow window, bool fullscreen, double idle) =>
+        typeof(PetWindow).GetField("contextProbe", BindingFlags.NonPublic | BindingFlags.Instance)!
+            .SetValue(window, new Func<(bool, double)>(() => (fullscreen, idle)));
+
+    private static void TickContext(PetWindow window, double dt) =>
+        typeof(PetWindow).GetMethod("TickContext", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(window, new object[] { dt });
 
     private static T Field<T>(PetWindow window, string name) =>
         (T)typeof(PetWindow).GetField(name, BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(window)!;
@@ -313,6 +323,7 @@ internal static class Program
         EmotionVisualChecks.Run(Check);
         MotionVisualChecks.Run(Check);
         ThoughtVisualChecks.Run(Check);
+        AppearanceVisualChecks.Run(Check);
         window.SetPaused(false);
         window.Reset();
         void AttentionClick() => window.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Right)
@@ -419,6 +430,7 @@ internal static class Program
         Check(pet.Grounded && pet.X >= restoredBounds.Left && pet.X <= restoredBounds.Right - 112
             && preferences.RestX >= restoredBounds.Left && preferences.RestX <= restoredBounds.Right - 112,
             "Unavailable saved monitor restores pet and favorite spot inside the primary work area");
+        ContextChecks(window, pet, behavior, preferences);
         window.ShowControls();
         Check(window.ContextMenu!.IsOpen, "Existing pet controls can be opened by a second launch notification");
         window.ContextMenu.IsOpen = false;
@@ -428,6 +440,68 @@ internal static class Program
         preferences.Quiet = originalQuiet; behavior.Quiet = originalQuiet;
         window.Close();
         Check(ai.Disposed && !window.IsVisible, "Window/AI shutdown releases the decision source and hides the pet");
+    }
+
+    private static void ContextChecks(PetWindow window, PetModel pet, PetBehavior behavior, PetPreferences preferences)
+    {
+        var renderer = (PetRenderer)window.Content;
+        typeof(PetWindow).GetMethod("ShowPetSettings", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(window, null);
+        var settingsWindow = Field<Window>(window, "settingsWindow");
+        var panel = (System.Windows.Controls.StackPanel)((System.Windows.Controls.ScrollViewer)settingsWindow.Content).Content;
+        System.Windows.Controls.UIElementCollection Group(string header) =>
+            ((System.Windows.Controls.StackPanel)panel.Children.OfType<System.Windows.Controls.GroupBox>().Single(g => (string)g.Header == header).Content).Children;
+        var looks = Group("Appearance").OfType<System.Windows.Controls.ComboBox>().ToArray();
+        var breakControls = Group("Break reminders");
+        var reminder = breakControls.OfType<System.Windows.Controls.CheckBox>().Single();
+        var interval = breakControls.OfType<System.Windows.Controls.ComboBox>().Single();
+        Check(looks.Length == 2 && looks[0].Items.Count == 6 && looks[1].Items.Count == 4 && looks[0].SelectedIndex == 0 && looks[1].SelectedIndex == 0 &&
+              reminder.IsChecked == false && interval.SelectedIndex == 1,
+            "Settings offer six coats, four accessories and break reminders (off, 45 minutes)");
+        looks[0].SelectedIndex = 2; looks[1].SelectedIndex = 3; reminder.IsChecked = true; interval.SelectedIndex = 0;
+        var save = panel.Children.OfType<System.Windows.Controls.Button>().Last();
+        save.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+        var breaks = Field<PetBreaks>(window, "breaks");
+        Check(preferences.Coat == "Black" && preferences.Accessory == "Hat" && renderer.Coat == "Black" && renderer.Accessory == "Hat" &&
+              preferences.BreakReminders && preferences.BreakMinutes == 30 && breaks.Enabled && breaks.IntervalSeconds == 1800,
+            "Saving applies the coat, accessory and break interval at once");
+        renderer.Coat = preferences.Coat = "Orange"; renderer.Accessory = preferences.Accessory = "None";
+
+        bool quiet = preferences.Quiet, sounds = preferences.Sounds;
+        preferences.Sounds = true;
+        SetContext(window, true, 0);
+        TickContext(window, 1.1);
+        var playSound = typeof(PetWindow).GetMethod("PlayPetSound", BindingFlags.NonPublic | BindingFlags.Instance)!;
+        var showSpeech = typeof(PetWindow).GetMethod("ShowSpeech", BindingFlags.NonPublic | BindingFlags.Instance)!;
+        showSpeech.Invoke(window, new object[] { new DesktopPet.AI.PetLine("hello:vi:test", "Chào sen!") });
+        Check(behavior.Quiet && preferences.Quiet == quiet && !(bool)playSound.Invoke(window, new object?[] { "meow", false, null })! && !pet.Speech.Visible,
+            "A fullscreen app makes the pet quiet and silent without changing the saved Quiet setting");
+        SetContext(window, false, 0);
+        TickContext(window, 1.1);
+        Check(behavior.Quiet == quiet, "Leaving fullscreen restores the user's Quiet setting");
+        preferences.Sounds = sounds;
+
+        SetContext(window, false, 400);
+        TickContext(window, 1.1);
+        Check(pet.Action == PetAction.Sleeping && behavior.HoldSleep && pet.Emotions.SleepLocked, "Five minutes without input starts the away nap");
+        // The window timer is stopped in this phase of the checks, so step the behavior directly.
+        for (int i = 0; i < 20 * 120; i++) { pet.Emotions.Step(pet, 1.0 / 120); behavior.Step(pet, 1.0 / 120); }
+        Check(pet.Action == PetAction.Sleeping && pet.Emotions.SleepElapsed == 0, "The away nap outlasts the normal 10 s sleep");
+        SetContext(window, false, 0.5);
+        TickContext(window, 1.1);
+        var context = Field<PetContext>(window, "context");
+        Check(pet.Action == PetAction.Waking && !behavior.HoldSleep && context.Returned, "Input after being away wakes the pet and flags the return for the AI");
+        context.TakeReturned();
+        for (int i = 0; i < 2 * 120; i++) { pet.Emotions.Step(pet, 1.0 / 120); behavior.Step(pet, 1.0 / 120); } // Waking finishes.
+        pet.Action = PetAction.Idle; // Keep the free pose (a random local jump cannot speak).
+
+        breaks.Configure(true, 1);
+        pet.Speech.Hide(); pet.Speech.Step(pet, 20); // Clear the gap left by earlier speech checks.
+        TickContext(window, 61);
+        Check(pet.Speech.Visible && PetBreaks.IsBreakLine(pet.Speech.Id) && !breaks.Due,
+            "With the AI off a due break reminder uses a built-in line");
+        pet.Speech.Hide();
+        breaks.Configure(false, 45);
+        preferences.BreakReminders = false; preferences.BreakMinutes = 45;
     }
 
     private static void CrossDragThreshold(PetWindow window)

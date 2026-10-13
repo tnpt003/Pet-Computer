@@ -1,10 +1,17 @@
 # Tiến độ Desktop Pet
 
-Cập nhật: 2026-10-09 (Asia/Saigon).
+Cập nhật: 2026-10-13 (Asia/Saigon).
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
-## Kết quả test gần nhất (2026-10-10, đợt mèo biết nói + tự học)
+## Kết quả test gần nhất (2026-10-13, đợt bộ lông/phụ kiện + nhắc nghỉ + ngữ cảnh máy)
+- scripts/test.ps1 -Ui: 45 Python tests, 291 C# checks (test.ps1 có thêm check tích hợp Python), 132 WPF checks đạt. Publish + check-publish đạt.
+- So pixel: chạy UiChecks của commit trước (worktree tạm) và bản mới với PET_RENDER_REVIEW: 39/41 ảnh giống hệt; 2 ảnh khác là ảnh bong bóng chữ, và chạy bản cũ 2 lần cũng khác nhau (opacity/đuôi phụ thuộc thời gian thật), nên không phải lỗi renderer. Mèo cam mặc định giống pixel.
+- Đã xem ảnh render 6 bộ lông × 4 phụ kiện ở các tư thế đứng, ngủ, vui, bay, kéo (pickup có xoay), quay trái: không bị cắt, mũ/nơ theo đầu. Có check tự động cho mép trong suốt.
+- Chưa test thật: phát hiện fullscreen với game/video thật, away nap khi rời máy thật 5 phút, nhắc nghỉ sau 30–60 phút thật. Logic đã test bằng probe giả trong UiChecks.
+- Đã đóng mèo của người dùng (WM_CLOSE đúng process artifacts\win-x64) để publish rồi mở lại bản mới với dữ liệu bình thường.
+
+## Kết quả test đợt mèo biết nói + tự học (2026-10-10)
 - scripts/test.ps1 -Ui: 259 C# checks, 119 WPF checks, 41 Python tests đạt. Publish + check-publish đạt.
 - Đã xem ảnh bong bóng chữ (artifacts/speech-review/speech-vi.png, speech-en-long.png): dấu tiếng Việt đúng, xuống dòng, đuôi chỉ về mèo.
 - Chạy thật bản publish với PET_DATA_DIRECTORY riêng: Python thật chọn câu, C# hiện bong bóng trên đầu mèo (ảnh live-hello.png: "Ngáp~ Mochi ngủ ngon ghê"). Lần đó câu chào bị lỡ vì mèo tình cờ đi ngủ ngay lúc mở (đúng quy tắc không nói khi ngủ).
@@ -24,6 +31,12 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Lịch sử: 201 C#/107 WPF/20 Python (motion, 2026-10-08); 181/101/20 (features). Không dùng số liệu cũ thay kết quả hiện tại.
 
 ## Đã làm gần đây
+- 2026-10-13 (đợt 1+2+3: bộ lông/phụ kiện, nhắc nghỉ, ngữ cảnh máy; người dùng chọn 1a + 2a):
+  - Bộ lông: Orange (mặc định, giống pixel bản cũ), Gray, Black (than chì, mắt hổ phách, viền đậm), White (mắt xanh), Calico (mảng cam/đen), Tabby (sọc "M" trán + lưng). Phụ kiện: None, Bell (vòng cổ chuông), Bow, Hat (mũ tiệc). PetAppearance.cs (CoatPalette, brush/pen frozen); PetRenderer lấy màu theo palette, vân/mảng clip trong viền; phụ kiện vẽ trong transform đầu. Cài đặt: nhóm Appearance. Preferences: Coat, Accessory (giá trị lạ → mặc định).
+  - Nhắc nghỉ (mặc định tắt; 30/45/60 phút): PetBreaks.cs chỉ đếm khi có input hệ thống (GetLastInputInfo); vắng ≥5 phút = đã nghỉ, reset. Đến hạn và mèo nói được → observation break_due → Python chọn câu nhóm "break" (ưu tiên nhất, chạy cả khi tắt Speech); C# hiện rồi mèo duỗi người (nếu rảnh, không Quiet). Python tắt/không trả câu trong 15s → câu dự phòng trong C# (break:local:…). Không nhắc khi ngủ/kéo/bay/fullscreen (chờ). Preferences: BreakReminders, BreakMinutes. Cài đặt: nhóm Break reminders.
+  - Ngữ cảnh máy (PetWindow.Context.cs, mỗi giây, Pause đóng băng): chỉ đọc hình chữ nhật/style/class cửa sổ foreground và thời điểm input cuối. Fullscreen (cửa sổ không caption phủ cả màn hình đang có mèo; bỏ qua desktop/taskbar/cửa sổ của app): như Quiet (không đổi Quiet đã lưu), không bong bóng chữ/ý nghĩ, không âm thanh (preview vẫn chạy), mèo vẫn hiện (lựa chọn 1a). Vắng ≥5 phút: away nap (2a), ngủ giữ timer (HoldSleep), thức khi có input lại (waking 1.2s + cooldown 30s), click vẫn thức ngay; Python được context.returned → câu nhóm "back"; đợt buồn ngắn bị hoãn khi quay lại (PetEmotions.UserReturned). AGENTS.md thêm dòng ngoại lệ away nap.
+  - Protocol thêm (additive): break_due, context {fullscreen, away, returned}. Debug view thêm dòng Context và Break reminder. lines.json thêm nhóm back, break (vi/en, ≥5 câu).
+  - Test mới: ContextTests.cs (31 check C#), AppearanceVisualChecks.cs + ContextChecks trong UiChecks (12 check WPF), 3 test Python. UiChecks thay probe ngữ cảnh bằng giá trị giả để chạy không người dùng không bị away nap.
 - 2026-10-13 (rà soát tối ưu): đo thật mèo đang chạy: CPU ~6% một nhân (0.4% máy 16 nhân), RAM 200 MB ổn định 2 phút (không rò rỉ), Python ~0% CPU/12 MB. Sửa: cửa sổ cài đặt cao tối đa theo màn hình của mèo + cuộn được (trước 760px có thể tràn laptop 768p, khuất nút Save); nâng giới hạn đọc ai-memory.json 64 KB → 512 KB (vượt giới hạn sẽ âm thầm reset nhu cầu/bond/học). check-publish.ps1 tìm cửa sổ mèo theo tiêu đề "…Desktop Pet" (trước đây gửi WM_CLOSE nhầm vào bong bóng chữ khi mèo chào ngay lúc mở). Đã xóa ảnh chụp màn hình live-hello.png. Chưa làm (tùy chọn): 30 FPS khi đứng yên, chỉnh GC giảm RAM.
 - Test 2026-10-13: 259 C#, 120 WPF, 42 Python đạt; publish + check-publish đạt.
 - 2026-10-10 (mèo biết nói + tự học, cách 1): ai/lines.json (~16 tình huống × vi/en, mèo xưng tên {name}, gọi "sen"/"human"), ai/speech.py chọn câu chống lặp 20 câu, ai/learning.py học từ phản ứng (ngữ cảnh buổi × nhu cầu; vuốt/ăn +1, bóng +0.5, click +0.3, ném mạnh −1, giận −0.5; trọng số ×0.5–×2; phai nửa sau 7 ngày; tối đa 500 khóa). Service: sự kiện chờ tối đa 12s nếu mèo đang bay; câu nhu cầu cách 300/120/60s theo tần suất; nói vu vơ theo tần suất, không nói vu vơ ở Quiet. C#: PetSpeech (2.5–6s, cách ≥12s, không nói khi ngủ/kéo/bay/ăn, được nói khi giận), cửa sổ bong bóng riêng PetWindow.Speech.cs (click xuyên, không lấy focus, bám mèo, trong work area), lời nói được nhận cả khi lệnh bị bỏ do revision. Cài đặt: Speech group (bật/tắt, Tiếng Việt/English, Ít/Vừa/Nhiều, Quên những gì đã học). Debug view: Speech, Learned likes/dislikes. Preferences mới: Speech, Language, Chattiness, LearningReset. Đóng gói thêm speech.py, learning.py, lines.json.
@@ -55,6 +68,10 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Lịch sử chuyển project: 2026-10-05 tạo AGENTS.md/PROGRESS.md tại ổ D khi thư mục đó trống; source hiện nằm tại ổ C, không cần khôi phục về D.
 
 ## Đang dở và việc tiếp theo
+- Đề xuất còn lại từ danh sách 2026-10-13: 4 (giữ câu bị chặn, không lỡ câu chào), 5 (thêm động tác vector: nhồi bột, lăn ngửa, đuổi đuôi…), 6 (chơi với con trỏ kiểu laser), 7 (Nhật ký Mochi), 8 (mèo đi trên cửa sổ, đợt riêng), 9 (dạy mèo nói). Gợi ý tiếp: 5 + 7.
+- Away nap: nếu xem video không fullscreen mà không chạm chuột 5 phút thì mèo cũng ngủ (chấp nhận được); có thể thêm tùy chọn thời gian 5/10/15 phút nếu thấy sớm.
+- Fullscreen: chỉ xét màn hình đang có mèo; app "borderless fullscreen" không caption sẽ được tính (đúng ý). Nếu có app bị nhận nhầm, xem log "Fullscreen app detected" và cân nhắc danh sách class bỏ qua.
+- Câu nhắc nghỉ dự phòng trong C# (PetBreaks) trùng nội dung 3 câu đầu của lines.json; sửa giọng văn ở lines.json thì nên sửa cả đó.
 - Cách 2 (dạy mèo nói: người dùng gõ câu theo tình huống, mèo học câu nào được thích) và cách 3 (LLM trò chuyện có trí nhớ) chưa làm.
 - Câu do Python chọn nhưng C# không hiện (ví dụ mèo vừa đi ngủ) thì bị bỏ; có thể cho C# giữ chờ vài giây nếu thấy mất câu chào quá thường.
 - Người dùng nên đọc lại ai/lines.json để chỉnh giọng văn.
@@ -67,6 +84,10 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Không tích hợp LLM, voice hay computer vision; không thay framework hoặc hệ thống rendering/physics.
 
 ## Cần test thủ công
+- Bộ lông/phụ kiện: đổi trong Appearance, Save, xem trực tiếp khi đi, ngủ, kéo, ném, ăn treat, vuốt ve; đặc biệt mèo đen (mắt/miệng có rõ không) và mũ khi kéo sát mép trên màn hình.
+- Nhắc nghỉ: bật 30 phút, dùng máy bình thường; xem debug view dòng Break reminder; khi nhắc mèo nói + duỗi người; tắt Speech vẫn nhắc; rời máy ≥5 phút thì đồng hồ reset.
+- Fullscreen: mở video YouTube fullscreen (F11/nút fullscreen), game, PowerPoint trình chiếu trên màn hình có mèo: mèo đứng yên, im lặng, không bong bóng; thoát fullscreen thì bình thường. Cửa sổ maximize thường KHÔNG được tính. Thử fullscreen ở màn hình phụ khi mèo ở màn hình chính (không được tính).
+- Away nap: không chạm máy 5 phút → mèo ngủ và ngủ mãi; chạm chuột → mèo thức (1.2s) và chào "Sen về rồi!…" (nếu bật Speech + AI). Click mèo đang away nap vẫn thức và kéo được. Pause trong lúc away nap.
 - Mèo nói: tần suất có dễ chịu không (thử Ít/Vừa/Nhiều), đổi English, câu phản ứng sau vuốt/cho ăn/ném mạnh, bong bóng khi mèo ở sát mép màn hình và trên màn hình phụ/DPI khác.
 - Tự học: sau vài ngày xem debug view "Learned likes/dislikes"; thử nút Quên.
 - Để mèo chạy, mở Behavior debug view xem Needs/Thought thay đổi; vuốt ve (tim), cho ăn khi đói, chơi bóng khi chán. Đánh giá bong bóng có quá dày/thưa không.

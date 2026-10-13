@@ -25,6 +25,17 @@ MAX_MESSAGE = 8192
 COMMANDS = {"LOOK", "IDLE", "WALK_LEFT", "WALK_RIGHT", "SIT", "JUMP", "SLEEP", "FOLLOW_MOUSE", "SEEK_ATTENTION",
             "ROLL_OVER", "CHASE_TAIL", "SCRATCH"}
 # C# actions that own their duration; mirrors PetActionRules.RejectsDecisions.
+# Learned actions and situations, named in the UI language (vi or en).
+LEARNED_NAMES = {
+    "vi": {"WALK": "Đi dạo", "IDLE": "Đứng chơi", "SIT": "Ngồi", "SLEEP": "Ngủ", "JUMP": "Nhảy", "LOOK": "Nhìn quanh",
+           "FOLLOW_MOUSE": "Theo chuột", "SEEK_ATTENTION": "Đòi chú ý", "ROLL_OVER": "Lăn ngửa", "CHASE_TAIL": "Đuổi đuôi",
+           "SCRATCH": "Cào móng", "morning": "buổi sáng", "day": "ban ngày", "evening": "buổi tối", "night": "ban đêm",
+           "hungry": "đói", "bored": "chán", "tired": "mệt"},
+    "en": {"WALK": "Walking", "IDLE": "Hanging around", "SIT": "Sitting", "SLEEP": "Sleeping", "JUMP": "Jumping",
+           "LOOK": "Looking around", "FOLLOW_MOUSE": "Following the mouse", "SEEK_ATTENTION": "Asking for attention",
+           "ROLL_OVER": "Rolling over", "CHASE_TAIL": "Chasing its tail", "SCRATCH": "Scratching", "morning": "morning",
+           "day": "daytime", "evening": "evening", "night": "night", "hungry": "hungry", "bored": "bored", "tired": "tired"},
+}
 BUSY_STATES = frozenset({"Dragging", "Thrown", "Jumping", "PreparingJump", "Sleeping", "Waking", "Grooming", "Stretching", "SeekingAttention",
                          "Kneading", "RollingOver", "ChasingTail", "Scratching", "Sneezing"})
 THOUGHTS = ("hungry", "bored", "sleepy", "love")  # Priority order for thought bubbles.
@@ -266,11 +277,17 @@ class Brain:
     def action_key(ctx, command):
         return f"act:{ctx}:{'WALK' if command in {'WALK_LEFT', 'WALK_RIGHT'} else command}"
 
-    def describe_learned(self, key):
+    def describe_learned(self, key, language="en"):
+        """Human-readable learned item in the user's single UI language."""
+        language = language if language in ("vi", "en") else "en"
         if key.startswith("say:"):
-            return self.speech.describe(key[4:])
+            return self.speech.describe(key[4:], language)
         _, ctx, action = key.split(":", 2) if key.count(":") >= 2 else ("", "", key)
-        return f"{action} @{ctx}"
+        part, _, need = ctx.partition("/")
+        names = LEARNED_NAMES[language]
+        situation = ", ".join(names.get(word, word) for word in (part, need) if word and word != "ok")
+        label = names.get(action, action)
+        return f"{label} · {situation}" if situation else label
 
     def learn_from_reactions(self, observation, deltas, now):
         """Credit the user's reaction to the action and line the pet just showed."""
@@ -474,7 +491,8 @@ class Brain:
             decision["thought"] = thought
         if speech is not None:
             decision["speech"] = speech
-        decision["learned"] = self.learner.summary(self.describe_learned)
+        language = observation.get("language")
+        decision["learned"] = self.learner.summary(lambda key: self.describe_learned(key, language))
         decision["diary"] = self.diary(wall)
         return decision
 

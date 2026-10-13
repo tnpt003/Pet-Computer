@@ -8,6 +8,26 @@ from pathlib import Path
 import sys
 
 LANGUAGES = ("vi", "en")
+# How a learned line from the other language is named (the UI shows one language only).
+CATEGORY_NAMES = {
+    "hello": {"vi": "câu chào", "en": "a greeting"},
+    "welcome_back": {"vi": "câu chào khi gặp lại", "en": "a welcome back"},
+    "petted": {"vi": "câu khi được vuốt", "en": "a petting line"},
+    "treat_thanks": {"vi": "câu cảm ơn đồ ăn", "en": "a treat thank-you"},
+    "play": {"vi": "câu khi chơi", "en": "a play line"},
+    "thrown_rough": {"vi": "câu khi bị ném mạnh", "en": "a rough-throw line"},
+    "thrown_fun": {"vi": "câu khi được tung", "en": "a fun-throw line"},
+    "back": {"vi": "câu khi sen quay lại", "en": "a you're-back line"},
+    "break": {"vi": "câu nhắc nghỉ", "en": "a break reminder"},
+    "wake_up": {"vi": "câu khi thức dậy", "en": "a wake-up line"},
+    "sleepy": {"vi": "câu buồn ngủ", "en": "a sleepy line"},
+    "lonely": {"vi": "câu nhớ sen", "en": "a lonely line"},
+    "hungry": {"vi": "câu đòi ăn", "en": "a hungry line"},
+    "bored": {"vi": "câu chán", "en": "a bored line"},
+    "morning": {"vi": "câu buổi sáng", "en": "a morning line"},
+    "night": {"vi": "câu buổi tối", "en": "a night line"},
+    "idle": {"vi": "câu nói vu vơ", "en": "a chatter line"},
+}
 MAX_TEXT = 120
 RECENT_LINES = 20
 
@@ -64,6 +84,12 @@ class Speech:
         self.recent.append(line_id)
         return {"id": line_id, "text": text.replace("{name}", clean_name(name))[:MAX_TEXT]}
 
-    def describe(self, line_id: str) -> str:
+    def describe(self, line_id: str, language: str | None = None) -> str:
+        """Quote a learned line; a line in the other language is named by its situation instead."""
+        category, _, rest = line_id.partition(":")
+        line_language = rest.partition(":")[0]
+        if language in LANGUAGES and line_language in LANGUAGES and line_language != language:
+            return CATEGORY_NAMES.get(category, {}).get(language) or (
+                "một câu nói" if language == "vi" else "a line")
         text = self.texts.get(line_id, line_id)
         return "“" + (text if len(text) <= 28 else text[:27] + "…") + "”"

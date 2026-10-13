@@ -404,7 +404,7 @@ it shows only this session's numbers.
 
 ## Do now menu (2026-10-13)
 
-Right-click the cat → **Làm ngay** / **Do now** (label follows the speech language).
+Right-click the cat → **Do now** / **Làm ngay** (label follows the app language).
 
 **Actions:** Sit, Look around, Jump, Sleep, Wave a paw, Groom, Stretch, Knead, Roll over,
 Chase tail, Scratch, Sneeze. They start at once and skip cooldowns, the bond condition,
@@ -427,3 +427,14 @@ emotion does not stop the cat from walking. Python sees Neutral (so it does not 
 or comment on a performed emotion). Turning the switch off clears the emotion and restarts
 the "alone" clocks, so the cat is not instantly sad or sleepy. Dizzy and Sleepy are not in
 the menu (Dizzy stays a drag-only reaction; Sleepy is the Sleep action).
+
+## One app language (2026-10-13)
+
+**Language / Ngôn ngữ** is the first setting in the customize window. English (default)
+or Tiếng Việt applies to the whole app: the cat's and tray's right-click menus, the
+customize and behavior-tuning windows, dialogs, About, the AI status, the diary, the Do now
+menu, the learned likes/dislikes and what the cat says. Menus switch as soon as you Save;
+an already open diary or tuning window switches when reopened. The behavior debug view
+stays English (state names match code and logs). Stored values (personality, coat...)
+did not change, so older preference files keep working; a file without a language, or with
+an unknown one, now means English.

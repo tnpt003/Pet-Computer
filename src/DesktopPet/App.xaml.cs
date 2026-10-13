@@ -30,27 +30,41 @@ public partial class App : Application
         pet = new PetWindow();
         MainWindow = pet;
         var menu = new Forms.ContextMenuStrip();
-        var pause = new Forms.ToolStripMenuItem("Pause") { CheckOnClick = true };
+        var pause = new Forms.ToolStripMenuItem { CheckOnClick = true };
         pause.CheckedChanged += (_, _) => pet.SetPaused(pause.Checked);
         menu.Items.Add(pause);
         var aiStatus = new Forms.ToolStripMenuItem { Enabled = false };
-        var enableAi = new Forms.ToolStripMenuItem("Enable Python AI") { CheckOnClick = true, Checked = pet.AiEnabled };
+        var enableAi = new Forms.ToolStripMenuItem { CheckOnClick = true, Checked = pet.AiEnabled };
         enableAi.CheckedChanged += (_, _) => pet.SetAiEnabled(enableAi.Checked);
-        menu.Opening += (_, _) => aiStatus.Text = pet.AiStatus;
         menu.Items.Add(enableAi);
         menu.Items.Add(aiStatus);
-        menu.Items.Add("Reset to primary screen", null, (_, _) => pet.Reset());
+        var reset = new Forms.ToolStripMenuItem(null, null, (_, _) => pet.Reset());
+        menu.Items.Add(reset);
         menu.Items.Add(new Forms.ToolStripSeparator());
-        menu.Items.Add("Exit", null, (_, _) => Shutdown());
+        var exit = new Forms.ToolStripMenuItem(null, null, (_, _) => Shutdown());
+        menu.Items.Add(exit);
+        // Tray labels follow the pet's single UI language.
+        void Localize()
+        {
+            pause.Text = pet.L("Tạm dừng", "Pause");
+            enableAi.Text = pet.L("Bật Python AI", "Enable Python AI");
+            aiStatus.Text = pet.AiStatusText;
+            reset.Text = pet.L("Về màn hình chính", "Reset to primary screen");
+            exit.Text = pet.L("Thoát", "Exit");
+            if (tray != null) tray.Text = pet.L("Desktop Pet — chuột phải để điều khiển", "Desktop Pet — right-click for controls");
+        }
+        Localize();
+        menu.Opening += (_, _) => Localize();
         trayIcon = AppIcon.TrayImage();
         tray = new Forms.NotifyIcon
         {
             Icon = trayIcon,
-            Text = "Desktop Pet — right-click for controls",
+            Text = pet.L("Desktop Pet — chuột phải để điều khiển", "Desktop Pet — right-click for controls"),
             ContextMenuStrip = menu,
             Visible = true
         };
         tray.DoubleClick += (_, _) => pet.Reset();
+        pet.LanguageChanged += Localize;
         pet.Show();
         controlsWait = System.Threading.ThreadPool.RegisterWaitForSingleObject(showControls,
             (_, _) => Dispatcher.BeginInvoke(new Action(() => { if (pet.IsVisible) pet.ShowControls(); })),

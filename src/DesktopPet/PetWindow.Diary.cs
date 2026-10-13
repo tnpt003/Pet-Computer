@@ -25,8 +25,6 @@ public sealed partial class PetWindow
 
     private static Brush Frozen(Color color) { var brush = new SolidColorBrush(color); brush.Freeze(); return brush; }
 
-    private string L(string vietnamese, string english) => preferences.Language == "en" ? english : vietnamese;
-
     public void ShowDiary()
     {
         if (diaryWindow != null) { diaryWindow.Activate(); return; }

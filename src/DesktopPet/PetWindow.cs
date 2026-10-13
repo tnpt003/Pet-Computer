@@ -44,7 +44,34 @@ public sealed partial class PetWindow : Window
     private long revision, interactionCount;
     private string lastEvent = "started";
     private readonly string sessionId = Guid.NewGuid().ToString("N");
+    // English status for the debug view and logs; AiStatusText follows the UI language.
     public string AiStatus => ai?.Status ?? "Python AI: off (local behavior)";
+    public string AiStatusText => LocalizeAiStatus(AiStatus, preferences.Language == "en");
+    // The whole UI uses one language (preferences.Language). The debug view stays English.
+    public string L(string vietnamese, string english) => preferences.Language == "en" ? english : vietnamese;
+    public event Action? LanguageChanged;
+    private void RaiseLanguageChanged() => LanguageChanged?.Invoke();
+
+    public static string LocalizeAiStatus(string status, bool english)
+    {
+        if (english) return status;
+        const string connected = "Python AI: connected (", local = "Local behavior: ";
+        if (status.StartsWith(connected, StringComparison.Ordinal) && status.EndsWith(')'))
+        {
+            string mood = status[connected.Length..^1];
+            mood = mood switch { "content" => "thoải mái", "playful" => "ham chơi", "bored" => "chán", "sleepy" => "buồn ngủ", "hungry" => "đói", _ => mood };
+            return $"Python AI: đã kết nối ({mood})";
+        }
+        if (status.StartsWith(local, StringComparison.Ordinal))
+            return "Hành vi local: " + status[local.Length..].Replace("timeout", "hết thời gian chờ").Replace("retry after", "thử lại sau");
+        return status switch
+        {
+            "Python AI: off (local behavior)" => "Python AI: tắt (hành vi local)",
+            "Python AI: starting on next decision" => "Python AI: khởi động ở lần quyết định tới",
+            "Python AI: stopped" => "Python AI: đã dừng",
+            _ => status
+        };
+    }
     public bool AiEnabled => ai != null;
 
     public PetWindow(PetPreferences? options = null)
@@ -73,12 +100,21 @@ public sealed partial class PetWindow : Window
         renderer = new PetRenderer(pet);
         Content = renderer;
         var menu = new ContextMenu();
-        var reset = new MenuItem { Header = "Reset to primary screen" };
+        var reset = new MenuItem();
         reset.Click += (_, _) => Reset();
-        var exit = new MenuItem { Header = "Exit pet" };
+        var exit = new MenuItem();
         exit.Click += (_, _) => Application.Current.Shutdown();
         menu.Items.Add(reset);
-        var debug = new MenuItem { Header = "Behavior debug view" };
+        var debug = new MenuItem();
+        // Headers follow the UI language and refresh each time the menu opens.
+        void Localize()
+        {
+            reset.Header = L("Về màn hình chính", "Reset to primary screen");
+            debug.Header = L("Xem debug hành vi", "Behavior debug view");
+            exit.Header = L("Thoát mèo", "Exit pet");
+        }
+        Localize();
+        menu.Opened += (_, _) => Localize();
         debug.Click += (_, _) => ToggleDebug();
         menu.Items.Add(debug);
         menu.Items.Add(exit);

@@ -153,6 +153,38 @@ internal static class Program
         Check(headers.Contains("Start with Windows") && headers.IndexOf("About Desktop Pet") == headers.Count - 2 &&
               headers[^1] == "Exit pet" && !string.IsNullOrEmpty(PetWindow.VersionText) && PetWindow.VersionText != "unknown",
             "Context menu offers Windows startup and About (above Exit) with a version");
+        {
+            // One UI language: every menu label (submenus included) follows preferences.Language.
+            var options = Field<PetPreferences>(window, "preferences");
+            static bool HasVietnamese(string text) => text.Any(c => "ăâđêôơưĂÂĐÊÔƠƯ".Contains(c) || (c >= 'à' && c <= 'ỹ' && c != '×' && c != '÷' && !"çñüöäßé".Contains(c)));
+            List<string> Labels()
+            {
+                window.ContextMenu!.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.ContextMenu.OpenedEvent));
+                var all = new List<string>();
+                void Walk(System.Windows.Controls.ItemCollection items)
+                {
+                    foreach (var item in items.OfType<System.Windows.Controls.MenuItem>()) { all.Add(item.Header as string ?? ""); Walk(item.Items); }
+                }
+                Walk(window.ContextMenu.Items);
+                return all;
+            }
+            string original = options.Language;
+            options.Language = "en";
+            var english = Labels();
+            options.Language = "vi";
+            var vietnamese = Labels();
+            options.Language = original;
+            Labels();
+            Check(english.All(t => t.Length > 0 && !HasVietnamese(t)) && english.Contains("Do now") && english.Contains("Exit pet"),
+                "English UI: every context-menu label (submenus included) is English");
+            Check(vietnamese.Contains("Làm ngay") && vietnamese.Contains("Thoát mèo") && vietnamese.Contains("Khởi động cùng Windows") &&
+                  !vietnamese.Intersect(new[] { "Do now", "Exit pet", "Give treat", "Quiet mode", "Pet sounds", "Start with Windows", "About Desktop Pet", "Behavior debug view" }).Any(),
+                "Vietnamese UI: no English menu label is left behind");
+            Check(PetWindow.LocalizeAiStatus("Python AI: connected (playful)", false) == "Python AI: đã kết nối (ham chơi)" &&
+                  PetWindow.LocalizeAiStatus("Local behavior: timeout (retry after 4s)", false) == "Hành vi local: hết thời gian chờ (thử lại sau 4s)" &&
+                  PetWindow.LocalizeAiStatus("Python AI: stopped", true) == "Python AI: stopped",
+                "AI status follows the UI language (debug view keeps English)");
+        }
         window.ToggleDebug();
         var debugWindow = Field<Window>(window, "debugWindow");
         Check(debugWindow.IsVisible && Field<System.Windows.Controls.TextBlock>(window, "debugText").Text.Contains("Energy:") &&
@@ -404,12 +436,12 @@ internal static class Program
             "Sound settings expose master/category switches, volume and all nine previews");
         var speechGroup = controls.OfType<System.Windows.Controls.GroupBox>().Single(g => (g.Header as string)?.StartsWith("Speech") == true);
         var speechControls = ((System.Windows.Controls.StackPanel)speechGroup.Content).Children;
-        var languageBox = speechControls.OfType<System.Windows.Controls.ComboBox>().First();
+        var languageBox = controls.OfType<System.Windows.Controls.ComboBox>().First();
         Check(speechControls.OfType<System.Windows.Controls.CheckBox>().Single().IsChecked == true &&
-              languageBox.SelectedIndex == 0 && languageBox.Items.Count == 2 &&
-              speechControls.OfType<System.Windows.Controls.ComboBox>().Last().SelectedIndex == 1 &&
+              languageBox.SelectedIndex == 0 && languageBox.Items.Count == 2 && (string)languageBox.Items[0] == "English" &&
+              speechControls.OfType<System.Windows.Controls.ComboBox>().Single().SelectedIndex == 1 &&
               speechControls.OfType<System.Windows.Controls.Button>().Count() == 1,
-            "Speech settings default to talking in Vietnamese, sometimes, with a forget button");
+            "Settings start with the app language (English by default); speech defaults to talking, sometimes, with a forget button");
         var playSound = typeof(PetWindow).GetMethod("PlayPetSound", BindingFlags.NonPublic | BindingFlags.Instance)!;
         Check(!(bool)playSound.Invoke(window, new object?[] { "meow", true, 0.0 })!, "Zero-volume preview stays silent");
         typeof(PetWindow).GetMethod("ShowBehaviorSettings", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(window, null);
@@ -581,6 +613,7 @@ internal static class Program
 
         // Diary window: session numbers with the AI off, full diary from Python's summary.
         string language = preferences.Language;
+        preferences.Language = "vi";
         window.ShowDiary();
         var diaryWindow = Field<Window>(window, "diaryWindow");
         var diaryPanel = Field<System.Windows.Controls.StackPanel>(window, "diaryPanel");

@@ -38,51 +38,65 @@ public sealed partial class PetWindow
         renderer.Coat = preferences.Coat;
         renderer.Accessory = preferences.Accessory;
         behavior.Personality = preferences.Personality;
-        var treat = new MenuItem { Header = "Give treat" };
+        var treat = new MenuItem();
         treat.Click += (_, _) => GiveTreat();
-        var toy = new MenuItem { Header = "Play with ball / put away" };
+        var toy = new MenuItem();
         toy.Click += (_, _) => ToggleToy();
-        var home = new MenuItem { Header = "Favorite resting spot" };
-        var remember = new MenuItem { Header = "Remember this spot" };
+        var home = new MenuItem();
+        var remember = new MenuItem();
         remember.Click += (_, _) => { preferences.RestX = pet.X; preferences.RestY = pet.Y;
             preferences.RestMonitor = CurrentMonitor().DeviceName;
             preferences.RestFractionX = Math.Clamp((pet.X - bounds.Left) / Math.Max(1, bounds.Right - bounds.Left - settings.Width), 0, 1);
             SavePreferences(); };
-        var visit = new MenuItem { Header = "Go to resting spot" };
+        var visit = new MenuItem();
         visit.Click += (_, _) => { if (CanPlay && !EffectiveQuiet && preferences.RestX.HasValue) { CancelFeatureActivity(); returningHome = true; Interact("rest_requested"); } };
-        var forget = new MenuItem { Header = "Forget resting spot" };
+        var forget = new MenuItem();
         forget.Click += (_, _) => { preferences.RestX = preferences.RestY = null; preferences.RestMonitor = null; returningHome = false; SavePreferences(); };
         home.Items.Add(remember); home.Items.Add(visit); home.Items.Add(forget);
-        var quiet = new MenuItem { Header = "Quiet mode", IsCheckable = true, IsChecked = preferences.Quiet };
+        var quiet = new MenuItem { IsCheckable = true, IsChecked = preferences.Quiet };
         quiet.Click += (_, _) => { preferences.Quiet = quiet.IsChecked; ApplyQuiet(); CancelFeatureActivity(); Interact("quiet_changed"); SavePreferences(); };
-        var sounds = new MenuItem { Header = "Pet sounds", IsCheckable = true, IsChecked = preferences.Sounds };
+        var sounds = new MenuItem { IsCheckable = true, IsChecked = preferences.Sounds };
         sounds.Click += (_, _) => { preferences.Sounds = sounds.IsChecked; if (!preferences.Sounds) sound?.Stop(); SavePreferences(); };
-        var customize = new MenuItem { Header = "Name and personality…" };
+        var customize = new MenuItem();
         customize.Click += (_, _) => ShowPetSettings();
         menu.Items.Insert(0, customize); menu.Items.Insert(1, treat); menu.Items.Insert(2, toy);
         menu.Items.Insert(3, home); menu.Items.Insert(4, quiet); menu.Items.Insert(5, sounds);
         InitializeCommands(menu, 3); // "Do now", right after the ball.
         // Off unless the user enables it; the registry value is read fresh each time.
-        var autostart = new MenuItem { Header = "Start with Windows", IsCheckable = true };
+        var autostart = new MenuItem { IsCheckable = true };
         autostart.Click += (_, _) =>
         {
             if (Environment.ProcessPath is not string exe || !startup.SetEnabled(autostart.IsChecked, exe))
-                MessageBox.Show("Windows startup could not be changed.", "Desktop Pet");
+                MessageBox.Show(L("Không đổi được cài đặt khởi động cùng Windows.", "Windows startup could not be changed."), "Desktop Pet");
         };
-        var about = new MenuItem { Header = "About Desktop Pet" };
+        var about = new MenuItem();
         about.Click += (_, _) => ShowAbout();
         menu.Items.Insert(7, autostart);
         menu.Items.Insert(menu.Items.Count - 1, about); // Just above Exit.
-        var diary = new MenuItem { Header = "Diary" };
+        var diary = new MenuItem();
         diary.Click += (_, _) => ShowDiary();
         menu.Items.Insert(menu.Items.IndexOf(about), diary);
+        void Localize()
+        {
+            customize.Header = L(preferences.Name + " — tên và tính cách…", preferences.Name + " — name and personality…");
+            diary.Header = L("Nhật ký của " + preferences.Name, preferences.Name + "'s diary");
+            treat.Header = L("Cho ăn", "Give treat");
+            toy.Header = toyWindow == null ? L("Chơi bóng", "Play with ball") : L("Cất bóng", "Put ball away");
+            home.Header = L("Chỗ nghỉ yêu thích", "Favorite resting spot");
+            remember.Header = L("Nhớ chỗ này", "Remember this spot");
+            visit.Header = L("Đến chỗ nghỉ", "Go to resting spot");
+            forget.Header = L("Quên chỗ nghỉ", "Forget resting spot");
+            quiet.Header = L("Chế độ yên lặng", "Quiet mode");
+            sounds.Header = L("Âm thanh của mèo", "Pet sounds");
+            autostart.Header = L("Khởi động cùng Windows", "Start with Windows");
+            about.Header = L("Giới thiệu Desktop Pet", "About Desktop Pet");
+        }
+        Localize();
         menu.Opened += (_, _) =>
         {
             autostart.IsChecked = Environment.ProcessPath is string exe && startup.IsEnabled(exe);
-            customize.Header = preferences.Name + " — name and personality…";
-            diary.Header = preferences.Language == "en" ? preferences.Name + "'s diary" : "Nhật ký của " + preferences.Name;
+            Localize();
             sounds.IsChecked = preferences.Sounds;
-            toy.Header = toyWindow == null ? "Play with ball" : "Put ball away";
             treat.IsEnabled = CanPlay && treatCooldown <= 0;
             toy.IsEnabled = toyWindow != null || (CanPlay && !EffectiveQuiet);
             remember.IsEnabled = pet.Grounded;
@@ -98,12 +112,12 @@ public sealed partial class PetWindow
             ?.InformationalVersion ?? "unknown").Split('+')[0];
 
     private void ShowAbout() => MessageBox.Show(
-        $"Desktop Pet {VersionText}\n\nData and logs: {PetPreferences.DataDirectory}\n{AiStatus}",
-        "About Desktop Pet");
+        $"Desktop Pet {VersionText}\n\n{L("Dữ liệu và log", "Data and logs")}: {PetPreferences.DataDirectory}\n{AiStatusText}",
+        L("Giới thiệu Desktop Pet", "About Desktop Pet"));
 
     private void SavePreferences()
     {
-        if (persistPreferences && !preferences.Save()) MessageBox.Show("The setting works for this session, but could not be saved.", "Desktop Pet");
+        if (persistPreferences && !preferences.Save()) MessageBox.Show(L("Cài đặt có hiệu lực trong phiên này nhưng không lưu được.", "The setting works for this session, but could not be saved."), "Desktop Pet");
     }
 
     public bool GiveTreat()
@@ -287,57 +301,66 @@ public sealed partial class PetWindow
         if (settingsWindow != null) { settingsWindow.Activate(); return; }
         var panel = new StackPanel { Margin = new Thickness(16) };
         var name = new TextBox { Text = preferences.Name, MaxLength = 24, Margin = new Thickness(0, 4, 0, 12) };
-        var personality = new ComboBox { ItemsSource = new[] { "Balanced", "Playful", "Curious", "Calm" }, SelectedItem = preferences.Personality };
-        var save = new Button { Content = "Save", Margin = new Thickness(0, 16, 0, 0) };
-        panel.Children.Add(new TextBlock { Text = "Pet name" }); panel.Children.Add(name);
-        panel.Children.Add(new TextBlock { Text = "Personality (Python AI)" }); panel.Children.Add(personality);
-        var tuning = new Button { Content = "Behavior tuning...", Margin = new Thickness(0, 6, 0, 0) };
+        // Stored values stay English ("Balanced", "Orange"...); only the labels follow the language.
+        string[] personalities = { "Balanced", "Playful", "Curious", "Calm" };
+        var personality = new ComboBox { ItemsSource = new[] { L("Cân bằng", "Balanced"), L("Ham chơi", "Playful"), L("Tò mò", "Curious"), L("Điềm tĩnh", "Calm") },
+            SelectedIndex = Math.Max(0, Array.IndexOf(personalities, preferences.Personality)) };
+        var save = new Button { Content = L("Lưu", "Save"), Margin = new Thickness(0, 16, 0, 0) };
+        // The language picker comes first and is labelled in both languages so it is always findable.
+        var language = new ComboBox { ItemsSource = new[] { "English", "Tiếng Việt" }, SelectedIndex = preferences.Language == "en" ? 0 : 1, Margin = new Thickness(0, 4, 0, 12) };
+        panel.Children.Add(new TextBlock { Text = "Language / Ngôn ngữ" }); panel.Children.Add(language);
+        panel.Children.Add(new TextBlock { Text = L("Tên mèo", "Pet name") }); panel.Children.Add(name);
+        panel.Children.Add(new TextBlock { Text = L("Tính cách (Python AI)", "Personality (Python AI)") }); panel.Children.Add(personality);
+        var tuning = new Button { Content = L("Tinh chỉnh hành vi…", "Behavior tuning…"), Margin = new Thickness(0, 6, 0, 0) };
         tuning.Click += (_, _) => ShowBehaviorSettings(); panel.Children.Add(tuning);
         // Speech bubbles (needs Python AI): language, chattiness and forgetting learned habits.
-        var talks = new CheckBox { Content = "Pet talks (speech bubbles)", IsChecked = preferences.Speech, Margin = new Thickness(0, 4, 0, 4) };
-        var language = new ComboBox { ItemsSource = new[] { "Tiếng Việt", "English" }, SelectedIndex = preferences.Language == "en" ? 1 : 0, Margin = new Thickness(0, 2, 0, 4) };
-        var chattiness = new ComboBox { ItemsSource = new[] { "Rarely — events only", "Sometimes", "Often" }, SelectedIndex = preferences.Chattiness };
-        var forget = new Button { Content = "Forget what the pet learned…", Margin = new Thickness(0, 8, 0, 2) };
+        var talks = new CheckBox { Content = L("Mèo biết nói (bong bóng chữ)", "Pet talks (speech bubbles)"), IsChecked = preferences.Speech, Margin = new Thickness(0, 4, 0, 4) };
+        var chattiness = new ComboBox { ItemsSource = new[] { L("Ít — chỉ khi có chuyện", "Rarely — events only"), L("Vừa", "Sometimes"), L("Nhiều", "Often") }, SelectedIndex = preferences.Chattiness };
+        var forget = new Button { Content = L("Quên những gì mèo đã học…", "Forget what the pet learned…"), Margin = new Thickness(0, 8, 0, 2) };
         forget.Click += (_, _) =>
         {
-            if (MessageBox.Show("The pet will forget which actions and lines you liked. Needs and bond are kept.",
-                    "Forget learned habits", MessageBoxButton.OKCancel) != MessageBoxResult.OK) return;
+            if (MessageBox.Show(L("Mèo sẽ quên những hành động và câu nói bạn thích. Nhu cầu và độ thân thiết được giữ.",
+                                  "The pet will forget which actions and lines you liked. Needs and bond are kept."),
+                    L("Quên thói quen đã học", "Forget learned habits"), MessageBoxButton.OKCancel) != MessageBoxResult.OK) return;
             preferences.LearningReset = Guid.NewGuid().ToString("N"); // Python applies it on its next decision.
             SavePreferences();
         };
         var speechPanel = new StackPanel { Margin = new Thickness(6) };
-        speechPanel.Children.Add(talks); speechPanel.Children.Add(new TextBlock { Text = "Language" }); speechPanel.Children.Add(language);
-        speechPanel.Children.Add(new TextBlock { Text = "How often" }); speechPanel.Children.Add(chattiness); speechPanel.Children.Add(forget);
-        panel.Children.Add(new GroupBox { Header = "Speech (Python AI)", Content = speechPanel, Margin = new Thickness(0, 10, 0, 0) });
-        var coat = new ComboBox { ItemsSource = new[] { "Orange", "Gray", "Black", "White", "Calico", "Tabby (striped)" },
+        speechPanel.Children.Add(talks);
+        speechPanel.Children.Add(new TextBlock { Text = L("Mức độ", "How often") }); speechPanel.Children.Add(chattiness); speechPanel.Children.Add(forget);
+        panel.Children.Add(new GroupBox { Header = L("Lời nói (Python AI)", "Speech (Python AI)"), Content = speechPanel, Margin = new Thickness(0, 10, 0, 0) });
+        var coat = new ComboBox { ItemsSource = new[] { L("Cam", "Orange"), L("Xám", "Gray"), L("Đen", "Black"), L("Trắng", "White"), L("Tam thể", "Calico"), L("Mướp (có sọc)", "Tabby (striped)") },
             SelectedIndex = Math.Max(0, Array.IndexOf(PetPreferences.Coats, preferences.Coat)), Margin = new Thickness(0, 2, 0, 4) };
-        var accessory = new ComboBox { ItemsSource = new[] { "None", "Collar with bell", "Bow", "Party hat" },
+        var accessory = new ComboBox { ItemsSource = new[] { L("Không", "None"), L("Vòng cổ chuông", "Collar with bell"), L("Nơ", "Bow"), L("Mũ tiệc", "Party hat") },
             SelectedIndex = Math.Max(0, Array.IndexOf(PetPreferences.Accessories, preferences.Accessory)) };
         var looks = new StackPanel { Margin = new Thickness(6) };
-        looks.Children.Add(new TextBlock { Text = "Coat" }); looks.Children.Add(coat);
-        looks.Children.Add(new TextBlock { Text = "Accessory" }); looks.Children.Add(accessory);
-        panel.Children.Add(new GroupBox { Header = "Appearance", Content = looks, Margin = new Thickness(0, 10, 0, 0) });
+        looks.Children.Add(new TextBlock { Text = L("Bộ lông", "Coat") }); looks.Children.Add(coat);
+        looks.Children.Add(new TextBlock { Text = L("Phụ kiện", "Accessory") }); looks.Children.Add(accessory);
+        panel.Children.Add(new GroupBox { Header = L("Ngoại hình", "Appearance"), Content = looks, Margin = new Thickness(0, 10, 0, 0) });
         // Counts only time spent at the computer; being away 5 minutes counts as a break.
-        var reminders = new CheckBox { Content = "Remind me to take a break", IsChecked = preferences.BreakReminders, Margin = new Thickness(0, 2, 0, 4) };
-        var interval = new ComboBox { ItemsSource = new[] { "Every 30 minutes", "Every 45 minutes", "Every 60 minutes" },
+        var reminders = new CheckBox { Content = L("Nhắc tôi nghỉ giải lao", "Remind me to take a break"), IsChecked = preferences.BreakReminders, Margin = new Thickness(0, 2, 0, 4) };
+        var interval = new ComboBox { ItemsSource = new[] { L("Mỗi 30 phút", "Every 30 minutes"), L("Mỗi 45 phút", "Every 45 minutes"), L("Mỗi 60 phút", "Every 60 minutes") },
             SelectedIndex = Math.Max(0, Array.IndexOf(PetPreferences.BreakChoices, preferences.BreakMinutes)) };
         var breakPanel = new StackPanel { Margin = new Thickness(6) };
         breakPanel.Children.Add(reminders); breakPanel.Children.Add(interval);
-        breakPanel.Children.Add(new TextBlock { Text = "Counts only time you use the computer. Not shown during fullscreen apps.",
+        breakPanel.Children.Add(new TextBlock { Text = L("Chỉ tính thời gian bạn dùng máy. Không nhắc khi đang mở app toàn màn hình.",
+                "Counts only time you use the computer. Not shown during fullscreen apps."),
             TextWrapping = TextWrapping.Wrap, Foreground = Brushes.DimGray, Margin = new Thickness(0, 4, 0, 0) });
-        panel.Children.Add(new GroupBox { Header = "Break reminders", Content = breakPanel, Margin = new Thickness(0, 10, 0, 0) });
-        var master = new CheckBox { Content = "Enable sounds", IsChecked = preferences.Sounds, Margin = new Thickness(0, 12, 0, 4) };
-        var interaction = new CheckBox { Content = "Interaction sounds", IsChecked = preferences.InteractionSounds };
-        var emotion = new CheckBox { Content = "Emotion sounds", IsChecked = preferences.EmotionSounds };
-        var sleep = new CheckBox { Content = "Sleep sounds", IsChecked = preferences.SleepSounds };
+        panel.Children.Add(new GroupBox { Header = L("Nhắc nghỉ", "Break reminders"), Content = breakPanel, Margin = new Thickness(0, 10, 0, 0) });
+        var master = new CheckBox { Content = L("Bật âm thanh", "Enable sounds"), IsChecked = preferences.Sounds, Margin = new Thickness(0, 12, 0, 4) };
+        var interaction = new CheckBox { Content = L("Âm thanh tương tác", "Interaction sounds"), IsChecked = preferences.InteractionSounds };
+        var emotion = new CheckBox { Content = L("Âm thanh cảm xúc", "Emotion sounds"), IsChecked = preferences.EmotionSounds };
+        var sleep = new CheckBox { Content = L("Âm thanh khi ngủ", "Sleep sounds"), IsChecked = preferences.SleepSounds };
         var volume = new Slider { Minimum = 0, Maximum = 1, Value = preferences.Volume, TickFrequency = 0.1, Margin = new Thickness(0, 6, 0, 10) };
         panel.Children.Add(master); panel.Children.Add(interaction); panel.Children.Add(emotion); panel.Children.Add(sleep);
-        panel.Children.Add(new TextBlock { Text = "Volume" }); panel.Children.Add(volume);
-        panel.Children.Add(new TextBlock { Text = "Preview (also works while muted)" });
+        panel.Children.Add(new TextBlock { Text = L("Âm lượng", "Volume") }); panel.Children.Add(volume);
+        panel.Children.Add(new TextBlock { Text = L("Nghe thử (chạy cả khi tắt tiếng)", "Preview (also works while muted)") });
         var previews = new WrapPanel();
-        foreach (string cue in new[] { "meow", "purr", "excited", "surprised", "annoyed", "sleep", "ball_tap", "satisfied", "wake" })
+        foreach (var (cue, vi, en) in new[] { ("meow", "Meo", "Meow"), ("purr", "Gừ gừ", "Purr"), ("excited", "Phấn khích", "Excited"),
+            ("surprised", "Giật mình", "Surprised"), ("annoyed", "Khó chịu", "Annoyed"), ("sleep", "Ngủ", "Sleep"),
+            ("ball_tap", "Chạm bóng", "Ball tap"), ("satisfied", "No nê", "Satisfied"), ("wake", "Thức dậy", "Wake") })
         {
-            var button = new Button { Content = cue, Margin = new Thickness(2), Padding = new Thickness(6, 3, 6, 3) };
+            var button = new Button { Content = L(vi, en), Tag = cue, Margin = new Thickness(2), Padding = new Thickness(6, 3, 6, 3) };
             button.Click += (_, _) => PlayPetSound(cue, true, volume.Value); previews.Children.Add(button);
         }
         panel.Children.Add(previews); panel.Children.Add(save);
@@ -345,18 +368,20 @@ public sealed partial class PetWindow
         // so Save is always reachable.
         double areaHeight = Math.Max(300, bounds.Bottom - bounds.Top);
         double height = Math.Min(760, areaHeight - 24);
-        settingsWindow = new Window { Title = "Customize pet", Icon = AppIcon.WindowImage(), Width = 400, Height = height,
+        settingsWindow = new Window { Title = L("Tùy chỉnh mèo", "Customize pet"), Icon = AppIcon.WindowImage(), Width = 400, Height = height,
             Content = new ScrollViewer { Content = panel, VerticalScrollBarVisibility = ScrollBarVisibility.Auto },
             ResizeMode = ResizeMode.NoResize, Topmost = true, ShowInTaskbar = false,
             WindowStartupLocation = WindowStartupLocation.Manual,
             Left = Math.Clamp(pet.X + settings.Width / 2 - 200, bounds.Left, Math.Max(bounds.Left, bounds.Right - 400)),
             Top = bounds.Top + Math.Max(8, (areaHeight - height) / 2) };
         save.Click += (_, _) => { preferences.Name = string.IsNullOrWhiteSpace(name.Text) ? "Mochi" : name.Text.Trim();
-            preferences.Personality = personality.SelectedItem as string ?? "Balanced"; Title = preferences.Name + " — Desktop Pet";
+            preferences.Personality = personalities[Math.Max(0, personality.SelectedIndex)]; Title = preferences.Name + " — Desktop Pet";
             behavior.Personality = preferences.Personality;
             preferences.Volume = volume.Value; preferences.Sounds = master.IsChecked == true;
             preferences.InteractionSounds = interaction.IsChecked == true; preferences.EmotionSounds = emotion.IsChecked == true; preferences.SleepSounds = sleep.IsChecked == true;
-            preferences.Speech = talks.IsChecked == true; preferences.Language = language.SelectedIndex == 1 ? "en" : "vi";
+            bool languageChanged = preferences.Language != (language.SelectedIndex == 0 ? "en" : "vi");
+            preferences.Speech = talks.IsChecked == true; preferences.Language = language.SelectedIndex == 0 ? "en" : "vi";
+            if (languageChanged) { pet.Speech.Hide(); pet.Speech.DropPending(); RaiseLanguageChanged(); } // No line in the old language.
             preferences.Chattiness = Math.Clamp(chattiness.SelectedIndex, 0, 2);
             if (!preferences.Speech) pet.Speech.Hide();
             preferences.Coat = PetPreferences.Coats[Math.Max(0, coat.SelectedIndex)];

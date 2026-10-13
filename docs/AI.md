@@ -489,6 +489,14 @@ load with defaults. Each decision may carry:
 `bond_history` sends the last 14 days. An invalid diary is ignored without rejecting the
 decision. The C# diary window (`PetWindow.Diary.cs`) only displays this summary.
 
+## Learned items in the UI language (2026-10-13)
+
+`decision.learned` likes/dislikes are written in `observation.language` (one app-wide
+language, English by default): actions and situations are named (for example "Chasing its
+tail · night, hungry" or "Đuổi đuôi · ban đêm, đói"). A learned line from the other
+language is named by its situation ("a greeting", "câu chào") instead of being quoted, so no
+text from the other language appears. The protocol is unchanged.
+
 ## Do now menu and manual emotions (2026-10-13)
 
 C# only; the protocol is unchanged. Menu actions start through `PetBehavior.StartManual`

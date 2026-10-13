@@ -57,10 +57,10 @@ internal static class SpeechTests
         {
             File.WriteAllText(file, "{\"Language\":\"fr\",\"Chattiness\":9}");
             var loaded = PetPreferences.Load(file);
-            check(loaded.Language == "vi" && loaded.Chattiness == 2 && loaded.Speech, "Preferences normalize language/chattiness and default to talking");
+            check(loaded.Language == "en" && loaded.Chattiness == 2 && loaded.Speech, "Preferences normalize language (unknown -> English) and chattiness, and default to talking");
             File.WriteAllText(file, "{\"Sounds\":true}");
             loaded = PetPreferences.Load(file);
-            check(loaded.Speech && loaded.Language == "vi" && loaded.Chattiness == 1 && loaded.LearningReset == "",
+            check(loaded.Speech && loaded.Language == "en" && loaded.Chattiness == 1 && loaded.LearningReset == "",
                 "Older preference files get the speech defaults");
         }
         finally { File.Delete(file); }

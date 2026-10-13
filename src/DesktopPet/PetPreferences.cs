@@ -17,7 +17,8 @@ public sealed class PetPreferences
     public bool SleepSounds { get; set; } = true;
     // Speech bubbles (lines chosen by Python AI). Chattiness: 0 rarely, 1 sometimes, 2 often.
     public bool Speech { get; set; } = true;
-    public string Language { get; set; } = "vi";
+    // One language for the whole app (menus, windows, diary, speech): "en" or "vi".
+    public string Language { get; set; } = "en";
     public int Chattiness { get; set; } = 1;
     // A new value asks Python to forget what it learned; Python applies each value once.
     public string LearningReset { get; set; } = "";
@@ -51,7 +52,7 @@ public sealed class PetPreferences
             if (p.Personality is not ("Balanced" or "Playful" or "Curious" or "Calm")) p.Personality = "Balanced";
             p.Tuning = p.Tuning?.Normalized();
             p.Volume = double.IsFinite(p.Volume) ? Math.Clamp(p.Volume, 0, 1) : 0.7;
-            if (p.Language is not ("vi" or "en")) p.Language = "vi";
+            if (p.Language is not ("vi" or "en")) p.Language = "en";
             p.Chattiness = Math.Clamp(p.Chattiness, 0, 2);
             p.Coat = NormalizeCoat(p.Coat);
             p.Accessory = NormalizeAccessory(p.Accessory);

@@ -393,6 +393,14 @@ class SpeechAndLearningTests(unittest.TestCase):
         self.now += seconds
         return self.brain.decide(self.obs(**extra))
 
+    def test_learned_lines_follow_the_ui_language(self):
+        speech = Speech(ROOT / "ai/lines.json")
+        vi_id = speech.lines["hello"]["vi"][0][0]
+        self.assertTrue(speech.describe(vi_id, "vi").startswith("“"))
+        self.assertEqual(speech.describe(vi_id, "en"), "a greeting")  # No Vietnamese text in the English UI.
+        self.assertEqual(self.brain.describe_learned("act:night/hungry:CHASE_TAIL", "en"), "Chasing its tail · night, hungry")
+        self.assertEqual(self.brain.describe_learned("act:day/ok:SIT", "vi"), "Ngồi · ban ngày")
+
     def test_lines_file_is_complete_for_both_languages(self):
         speech = Speech(ROOT / "ai/lines.json")
         ids = []
@@ -517,7 +525,9 @@ class SpeechAndLearningTests(unittest.TestCase):
         for _ in range(30):
             self.brain.learner.reward(self.brain.action_key(ctx, "JUMP"), 1)
         summary = self.step(chattiness=0)["learned"]
-        self.assertTrue(summary["likes"] and summary["likes"][0].startswith("JUMP @"))
+        self.assertTrue(summary["likes"] and summary["likes"][0].startswith("Nhảy"))
+        english = self.step(chattiness=0, language="en")["learned"]
+        self.assertTrue(english["likes"][0].startswith("Jumping") and "JUMP" not in english["likes"][0])
         self.brain.save()
         restored = self.make()
         self.assertGreater(restored.learner.score(restored.action_key(ctx, "JUMP")), 0.9)

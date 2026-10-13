@@ -4,7 +4,12 @@ Cập nhật: 2026-10-13 (Asia/Saigon).
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
-## Kết quả test gần nhất (2026-10-13, menu Làm ngay + tự điều khiển cảm xúc)
+## Kết quả test gần nhất (2026-10-13, một ngôn ngữ chung cho cả app)
+- scripts/test.ps1 -Ui: 49 Python tests, 347 C# checks, 158 WPF checks đạt (exit 0). Lần chạy đầu có 3 check kéo thả FAIL (dùng con trỏ thật, có thể do chuột bị di chuyển lúc test); chạy lại 2 lần đều đạt.
+- Publish đạt. check-publish FAIL 2 lần vì người dùng đang xem YouTube fullscreen trên màn hình chính: mèo vào chế độ yên lặng nên chưa xin quyết định AI, Python chưa khởi động trong 15s (log "Fullscreen app detected"). Đúng hành vi, không phải lỗi đợt này. Đã kiểm tra Python đóng gói (3.13) import được speech/service mới. CẦN chạy lại check-publish khi không có app fullscreen.
+- Đã đóng (WM_CLOSE đúng process artifacts\win-x64) và mở lại mèo của người dùng. Preferences của người dùng đang lưu Language = "vi" nên app hiện toàn tiếng Việt; chọn English trong cài đặt để chuyển (không tự ghi đè preferences).
+
+## Kết quả test đợt menu Làm ngay + tự điều khiển cảm xúc (2026-10-13)
 - scripts/test.ps1 -Ui: 48 Python tests, 347 C# checks, 155 WPF checks đạt. Publish + check-publish đạt. Đã đóng (WM_CLOSE đúng process artifacts\win-x64) và mở lại mèo của người dùng.
 - Test WPF bắt được lỗi thật trong lúc làm: bấm Làm ngay khi mèo đang thức dậy làm behavior.Reset() kéo dài waking 1.2s → 2s; đã sửa (chỉ hủy hoạt động khi lệnh thực sự bắt đầu).
 - Chưa xem trực tiếp: menu thật, cảm giác các động tác/cảm xúc bấm tay.
@@ -47,6 +52,12 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Lịch sử: 201 C#/107 WPF/20 Python (motion, 2026-10-08); 181/101/20 (features). Không dùng số liệu cũ thay kết quả hiện tại.
 
 ## Đã làm gần đây
+- 2026-10-13 (một ngôn ngữ chung, người dùng chọn: giữ vi/en, mặc định English, debug view tiếng Anh):
+  - Ô "Language / Ngôn ngữ" lên đầu cửa sổ cài đặt (English trước). Mọi chữ giao diện qua PetWindow.L(vi, en): menu chuột phải (đổi mỗi lần mở), menu tray + tooltip (App.xaml.cs, cập nhật khi mở menu và khi Save đổi ngôn ngữ qua LanguageChanged), cửa sổ cài đặt, Behavior tuning, hộp thoại, About, trạng thái AI (PetWindow.LocalizeAiStatus; debug view vẫn tiếng Anh), nút nghe thử âm thanh, tên tính cách/bộ lông/phụ kiện/tần suất (giá trị lưu không đổi).
+  - PetPreferences: mặc định "en" (cả khi thiếu hoặc giá trị lạ). Đổi ngôn ngữ thì ẩn câu đang nói và bỏ câu chờ (không nói ngôn ngữ cũ).
+  - Python: describe_learned theo observation.language (tên hành động + buổi/nhu cầu); câu đã học thuộc ngôn ngữ kia thì ghi tên tình huống ("a greeting"/"câu chào"). Protocol không đổi.
+  - Giữ nguyên: tiêu đề cửa sổ mèo "{tên} — Desktop Pet" (smoke test dùng), tên "Desktop Pet".
+  - Test: UiChecks quét mọi nhãn menu (cả menu con) ở cả 2 ngôn ngữ, không lẫn chữ ngôn ngữ kia; check trạng thái AI; cập nhật check cài đặt/nhật ký; SpeechTests mặc định en; 1 test Python mới + test learned cũ.
 - 2026-10-13 (menu Làm ngay, người dùng chọn: công tắc chỉ tắt cảm xúc, không đứng yên; không có Chóng mặt bấm tay):
   - Menu chuột phải "Làm ngay"/"Do now" (theo ngôn ngữ): 12 động tác (Ngồi, Nhìn quanh, Nhảy, Ngủ, Vẫy chân, Liếm lông, Duỗi người, Nhồi bột, Lăn ngửa, Đuổi đuôi, Cào móng, Hắt xì). PetBehavior.StartManual/CanStartManual: bỏ qua cooldown, bond, xác suất, Quiet; thời lượng như cũ (Ngồi/Nhìn 4s); lệnh mới thay lệnh cũ; Ngủ bỏ qua wake cooldown rồi theo luật ngủ cũ. Không cắt drag/bay/sleep lock/waking: PetWindow.Commands.cs xếp hàng tối đa 3s (ví dụ chuột phải đánh thức → chờ 1.2s waking rồi làm). Không phải interaction (chỉ tăng revision), không ảnh hưởng needs/học.
   - Công tắc "Tự điều khiển cảm xúc" (chỉ trong phiên): PetEmotions.ManualMode tắt Happy khi vuốt, Angry khi click dồn, Surprised khi rê nhanh, đợt buồn, Sleepy tự ngủ, gợi ý AI; Perform giữ Bình thường/Vui/Giận/Buồn/Giật mình đến khi đổi; không chặn hành vi tự động (BlocksAutonomy = false); drag/ăn/bay/ngủ vẫn ưu tiên, Dizzy khi kéo mạnh vẫn có. Python nhận emotion Neutral (PetEmotions.Reported), trừ Sleepy khi ngủ. Tắt công tắc: xóa cảm xúc, đặt lại đồng hồ "lâu không được chú ý".
@@ -96,6 +107,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Lịch sử chuyển project: 2026-10-05 tạo AGENTS.md/PROGRESS.md tại ổ D khi thư mục đó trống; source hiện nằm tại ổ C, không cần khôi phục về D.
 
 ## Đang dở và việc tiếp theo
+- check-publish.ps1 fail khi người dùng đang mở app fullscreen trên màn hình chính (mèo yên lặng, Python chưa khởi động). Có thể cho smoke test tắt probe ngữ cảnh bằng biến môi trường nếu muốn chạy được lúc đó.
 - Đề xuất còn lại từ danh sách 2026-10-13: 6 (chơi với con trỏ kiểu laser), 8 (mèo đi trên cửa sổ, đợt riêng), 9 (dạy mèo nói). Đã làm 1–5, 7.
 - Nhật ký: người dùng cũ có first_seen = lần đầu chạy bản này (không có dữ liệu trước đó), nên "số ngày ở cùng" bắt đầu từ 2026-10-13.
 - Away nap: nếu xem video không fullscreen mà không chạm chuột 5 phút thì mèo cũng ngủ (chấp nhận được); có thể thêm tùy chọn thời gian 5/10/15 phút nếu thấy sớm.
@@ -113,6 +125,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Không tích hợp LLM, voice hay computer vision; không thay framework hoặc hệ thống rendering/physics.
 
 ## Cần test thủ công
+- Ngôn ngữ: mở cài đặt, chọn English → Save; kiểm tra menu chuột phải (cả Làm ngay, Chỗ nghỉ), menu tray, tooltip khay, About, Nhật ký, Behavior tuning, hộp thoại Quên: toàn tiếng Anh; mèo nói tiếng Anh. Đổi lại Tiếng Việt: toàn tiếng Việt. Debug view luôn tiếng Anh.
 - Làm ngay: thử từng động tác (cả khi bật Quiet); chuột phải lúc mèo đang ngủ rồi chọn động tác (mèo thức 1.2s rồi làm); chọn Ngủ ngay sau khi mèo vừa thức; click/kéo giữa lúc làm thì ngắt ngay; Pause thì menu mờ.
 - Tự điều khiển cảm xúc: bật, chọn từng cảm xúc; vuốt/click dồn không đổi cảm xúc; để yên vài phút không buồn/ngủ tự động; kéo mạnh vẫn chóng mặt; tắt công tắc thì về bình thường ngay, không buồn/ngủ liền; mở lại app thì công tắc tắt.
 - Quả bóng (menu chơi bóng): nhìn bóng nảy/lăn và khi click bóng: còn giật/lệch không.

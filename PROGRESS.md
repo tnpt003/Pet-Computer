@@ -6,7 +6,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 
 ## Kết quả test gần nhất (2026-10-13, một ngôn ngữ chung cho cả app)
 - scripts/test.ps1 -Ui: 49 Python tests, 347 C# checks, 158 WPF checks đạt (exit 0). Lần chạy đầu có 3 check kéo thả FAIL (dùng con trỏ thật, có thể do chuột bị di chuyển lúc test); chạy lại 2 lần đều đạt.
-- Publish đạt. check-publish FAIL 2 lần vì người dùng đang xem YouTube fullscreen trên màn hình chính: mèo vào chế độ yên lặng nên chưa xin quyết định AI, Python chưa khởi động trong 15s (log "Fullscreen app detected"). Đúng hành vi, không phải lỗi đợt này. Đã kiểm tra Python đóng gói (3.13) import được speech/service mới. CẦN chạy lại check-publish khi không có app fullscreen.
+- Publish đạt. check-publish FAIL 2 lần vì người dùng đang xem YouTube fullscreen trên màn hình chính: mèo vào chế độ yên lặng nên chưa xin quyết định AI, Python chưa khởi động trong 15s (log "Fullscreen app detected"). Đúng hành vi, không phải lỗi đợt này. Đã kiểm tra Python đóng gói (3.13) import được speech/service mới. 2026-10-15: chạy lại check-publish khi không có app fullscreen: đạt cả 3 bước (bundled .NET + Python, mở lần hai, đóng sạch). Đã push 1e7255d, dacf458, 6fa93d5.
 - Đã đóng (WM_CLOSE đúng process artifacts\win-x64) và mở lại mèo của người dùng. Preferences của người dùng đang lưu Language = "vi" nên app hiện toàn tiếng Việt; chọn English trong cài đặt để chuyển (không tự ghi đè preferences).
 
 ## Kết quả test đợt menu Làm ngay + tự điều khiển cảm xúc (2026-10-13)
@@ -117,7 +117,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Câu khác (không phải câu chào) do Python chọn đúng lúc mèo vừa ngủ vẫn bị bỏ; chỉ câu chào được giữ qua giấc ngủ.
 - Người dùng nên đọc lại ai/lines.json để chỉnh giọng văn.
 - Tinh chỉnh nhịp nhu cầu/bong bóng sau khi người dùng dùng thật (tốc độ đói 25/giờ, chán 2/phút, khoảng cách bong bóng 90s).
-- Ý tưởng chưa làm: giai đoạn 3 (ngữ cảnh máy: idle toàn hệ thống, app fullscreen → yên lặng); LLM bong bóng thoại (cần đổi quy tắc AGENTS.md). Có thể thêm 3 tốc độ nhu cầu vào Behavior tuning.
+- Ý tưởng chưa làm: LLM bong bóng thoại (cần đổi quy tắc AGENTS.md); phím tắt toàn cục cho Làm ngay; có thể thêm 3 tốc độ nhu cầu vào Behavior tuning. (Ngữ cảnh máy/fullscreen/away nap đã làm.)
 - Quả bóng đã dời bằng 1 lệnh SetWindowPos; nếu vẫn giật thì xem tới CompositionTarget.Rendering (mục dưới).
 - Nếu vẫn thấy giật khi ném sau bản này: cân nhắc chuyển vòng lặp active sang CompositionTarget.Rendering (đồng bộ vsync); probe PowerShell cho kết quả không ổn định nên chưa dùng.
 - Không còn hạng mục nào khác trong 11 đề xuất đã duyệt.

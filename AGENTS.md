@@ -32,6 +32,7 @@ Nếu hội thoại quá dài và bạn bắt đầu quên hoặc lặp lỗi, h
 - Sleep: dùng tư thế ngủ; khóa mọi hành vi/emotion tự động; cursor, AI, background không được đánh thức; tự thức sau SleepDurationSeconds (~10s); waking ~1.2s rồi Idle; left-click thức ngay và vẫn drag được; right-click thức ngay và mở menu; Pause đóng băng cả sleep timer; wake cooldown ~30s.
 - Ngoại lệ đã duyệt (2026-10-13): "away nap" khi người dùng không chạm máy ≥5 phút: giữ sleep timer, thức khi có input hệ thống trở lại (waking 1.2s + cooldown 30s). Ngủ thường giữ nguyên quy tắc trên.
 - Ngoại lệ đã duyệt (2026-10-13): menu "Làm ngay" cho động tác chạy ngay (bỏ qua cooldown/bond/xác suất/Quiet, không cắt drag/bay/sleep lock/waking); công tắc "Tự điều khiển cảm xúc" (chỉ trong phiên) tắt cảm xúc tự động + cooldown, giữ cảm xúc người dùng chọn, báo Python là Neutral. Không có Chóng mặt/Buồn ngủ bấm tay.
+- Ngoại lệ đã duyệt (2026-10-15): Quiet không chặn chơi bóng/đèn laser do người dùng bật (Quiet chỉ chặn hành vi tự động); bật Quiet giữa chừng vẫn dừng trò chơi; app fullscreen vẫn chặn. Cooldown cho ăn 20s và cách mờ menu khi mèo chưa rảnh giữ nguyên.
 - Âm thanh: giữ cue phong cách hoạt hình (assets CC0 đã xử lý, không thay bằng beep hay tiếng mèo thật); auto sound có cooldown, không overlap; preview chạy dù auto bị mute, volume 0 thì im; không sửa trực tiếp buffer dùng chung.
 - DPI/monitor: PerMonitorV2; đổi DPI phải đồng bộ position/velocity/drag offset và bỏ throw samples cũ; vị trí lưu theo monitor-relative, fallback primary screen.
 - FPS: active ~60, sleeping ~30, paused ~10.

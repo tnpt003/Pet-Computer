@@ -25,7 +25,7 @@ public sealed partial class PetWindow
 
     public bool StartLaser()
     {
-        if (laserWindow != null || !CanPlay || EffectiveQuiet) return false;
+        if (laserWindow != null || !CanPlay || context.Fullscreen) return false; // Allowed in Quiet mode.
         CancelFeatureActivity();
         Interact("toy_started"); // Counts as play for Python (boredom, play lines).
         laserChase.Reset();
@@ -73,7 +73,7 @@ public sealed partial class PetWindow
     private bool TickLaser(double dt)
     {
         if (laserWindow == null) return false;
-        bool interrupted = dragging || pressPending || EffectiveQuiet || pet.Emotions.SleepLocked ||
+        bool interrupted = dragging || pressPending || context.Fullscreen || pet.Emotions.SleepLocked ||
             pet.Action is PetAction.Sleeping or PetAction.Waking or PetAction.Dragging or PetAction.Thrown;
         laserTime -= dt;
         if (interrupted || laserTime <= 0) { StopLaser(); return false; }

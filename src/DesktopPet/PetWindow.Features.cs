@@ -102,8 +102,10 @@ public sealed partial class PetWindow
             Localize();
             sounds.IsChecked = preferences.Sounds;
             treat.IsEnabled = CanPlay && treatCooldown <= 0;
-            toy.IsEnabled = toyWindow != null || (CanPlay && !EffectiveQuiet);
-            laser.IsEnabled = CanPlay && !EffectiveQuiet; // Right-clicking the cat already ended a running game.
+            // Quiet only stops what the cat does on its own; games the user starts still run.
+            // A fullscreen app (game, video, slides) still keeps the cat still.
+            toy.IsEnabled = toyWindow != null || (CanPlay && !context.Fullscreen);
+            laser.IsEnabled = CanPlay && !context.Fullscreen; // Right-clicking the cat already ended a running game.
             remember.IsEnabled = pet.Grounded;
             visit.IsEnabled = CanPlay && !EffectiveQuiet && preferences.RestX.HasValue;
             forget.IsEnabled = preferences.RestX.HasValue;
@@ -141,7 +143,7 @@ public sealed partial class PetWindow
     public void ToggleToy()
     {
         if (toyWindow != null) { CancelFeatureActivity(); return; }
-        if (!CanPlay || EffectiveQuiet) return;
+        if (!CanPlay || context.Fullscreen) return; // Allowed in Quiet mode: the user asked for it.
         CancelFeatureActivity();
         Interact("toy_started");
         toyPlay.Reset();
@@ -236,7 +238,7 @@ public sealed partial class PetWindow
             pet.Action = PetAction.Sitting; pet.VX = 0;
             return;
         }
-        if (EffectiveQuiet) return;
+        if (context.Fullscreen) return;
         if (toyWindow != null)
         {
             ballTime -= dt;
@@ -267,6 +269,7 @@ public sealed partial class PetWindow
             if (ballHalo != null) ballHalo.Opacity = Math.Max(ball.Feedback / 0.35, toyWindow.IsMouseOver ? 0.45 : 0);
             return;
         }
+        if (EffectiveQuiet) return; // Walking to the resting spot on its own is autonomous.
         restVisit -= dt;
         if (restVisit <= 0 && preferences.RestX.HasValue && pet.Action is PetAction.Idle or PetAction.Sitting)
         { returningHome = true; restVisit = 45; }

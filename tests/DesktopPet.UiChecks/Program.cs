@@ -449,7 +449,10 @@ internal static class Program
         pet.Emotions.FinishSleep(0); pet.Action = PetAction.Idle;
         bool quietBefore = preferences.Quiet;
         preferences.Quiet = true; behavior.Quiet = true;
-        Check(!window.StartLaser() && !window.LaserActive, "Quiet mode blocks the laser game");
+        Check(window.StartLaser() && window.LaserActive, "Quiet mode still lets the user start the laser game");
+        FeatureStep(0.1);
+        Check(window.LaserActive, "Quiet mode does not stop a laser game the user started");
+        typeof(PetWindow).GetMethod("StopLaser", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(window, null);
         preferences.Quiet = quietBefore; behavior.Quiet = quietBefore;
         double? oldRestX = preferences.RestX, oldRestY = preferences.RestY;
         preferences.RestX = pet.X - 100; preferences.RestY = pet.Y;
@@ -514,8 +517,11 @@ internal static class Program
         Check(window.ContextMenu!.IsOpen, "Existing pet controls can be opened by a second launch notification");
         window.ContextMenu.IsOpen = false;
         preferences.Quiet = true; behavior.Quiet = true;
+        window.Reset();
         window.ToggleToy();
-        Check(Field<Window?>(window, "toyWindow") == null, "Quiet mode blocks toy movement");
+        FeatureStep(0.1);
+        Check(Field<Window?>(window, "toyWindow")?.IsVisible == true, "Quiet mode still lets the user play with the ball");
+        window.ToggleToy();
 
         // "Do now" menu: immediate actions (even in Quiet), queued after waking, manual emotions.
         var doNow = window.ContextMenu.Items.OfType<System.Windows.Controls.MenuItem>().FirstOrDefault(item => item.Header is "Làm ngay" or "Do now");
@@ -582,6 +588,10 @@ internal static class Program
         showSpeech.Invoke(window, new object[] { new DesktopPet.AI.PetLine("hello:vi:test", "Chào sen!") });
         Check(behavior.Quiet && preferences.Quiet == quiet && !(bool)playSound.Invoke(window, new object?[] { "meow", false, null })! && !pet.Speech.Visible,
             "A fullscreen app makes the pet quiet and silent without changing the saved Quiet setting");
+        window.ToggleToy();
+        bool ballBlocked = Field<Window?>(window, "toyWindow") == null;
+        if (!ballBlocked) window.ToggleToy();
+        Check(ballBlocked && !window.StartLaser() && !window.LaserActive, "A fullscreen app still blocks the ball and the laser game");
         SetContext(window, false, 0);
         TickContext(window, 1.1);
         Check(behavior.Quiet == quiet, "Leaving fullscreen restores the user's Quiet setting");

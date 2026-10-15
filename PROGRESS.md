@@ -4,7 +4,11 @@ Cập nhật: 2026-10-13 (Asia/Saigon).
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
-## Kết quả test gần nhất (2026-10-15, chơi đèn laser)
+## Kết quả test gần nhất (2026-10-15, Quiet không chặn bóng/laser)
+- scripts/test.ps1 -Ui: 49 Python tests, 359 C# checks, 169 WPF checks đạt (exit 0). Publish + check-publish đạt (3/3). Đã đóng (WM_CLOSE đúng process) và mở lại mèo của người dùng.
+- Chưa xem trực tiếp: bật Quiet rồi chơi bóng/laser thật.
+
+## Kết quả test đợt chơi đèn laser (2026-10-15)
 - scripts/test.ps1 -Ui: 49 Python tests, 359 C# checks, 167 WPF checks đạt (exit 0). Publish + check-publish đạt (3/3). Đã đóng (WM_CLOSE đúng process artifacts\win-x64) và mở lại mèo của người dùng.
 - Test không di chuyển con trỏ thật: logic đuổi/rình/vồ test bằng LaserChase (C#); WPF test vòng đời (chấm click xuyên, vồ giữ trò chơi khi đang bay, click/ném/ngủ/hết 60s/Quiet).
 - Chưa xem trực tiếp: chuyển động đuổi/vồ thật, chấm đỏ đi theo con trỏ, không tính vuốt khi rê qua mèo lúc chơi.
@@ -57,6 +61,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Lịch sử: 201 C#/107 WPF/20 Python (motion, 2026-10-08); 181/101/20 (features). Không dùng số liệu cũ thay kết quả hiện tại.
 
 ## Đã làm gần đây
+- 2026-10-15 (Quiet, người dùng chọn phương án 2: chỉ phần Quiet): bóng và đèn laser bấm được và chạy trong Quiet (menu, ToggleToy, StartLaser, TickFeatures/TickLaser chỉ chặn khi context.Fullscreen). Quiet vẫn chặn tự đi về chỗ nghỉ và hành vi tự động; bật/tắt Quiet giữa chừng vẫn dừng trò chơi (CancelFeatureActivity như cũ). AGENTS.md thêm dòng ngoại lệ. Test: 2 check Quiet cũ đổi thành "vẫn chơi được", thêm check fullscreen vẫn chặn bóng/laser.
 - 2026-10-15 (mục 6, chơi đèn laser): menu "Chơi đèn laser"/"Laser pointer" dưới Chơi bóng. PetWindow.Laser.cs: chấm đỏ (cửa sổ 24px click xuyên, không focus, bám đầu con trỏ, ẩn khi con trỏ ở màn hình khác); LaserChase (ToyBall.cs) Watch → Chase → Stalk (dừng ≥0.3s, cách < 70px) → Pounce (nhảy bằng JumpSpeed/WalkSpeed cũ) → Recover, nhịp theo tính cách; vồ trúng (cách < 45px) phát ball_tap. Chấm ở cao hơn đầu mèo >120px hoặc màn hình khác: chỉ nhìn. Hết sau 60s; hủy khi click/chuột phải/kéo/ném/ngủ/Pause/Quiet/fullscreen/Làm ngay/bóng/cho ăn. Trong lúc chơi không gửi con trỏ cho PetEmotions (không tính vuốt/giật mình), tắt thì ForgetCursor. Python nhận toy_started như bóng, không sửa Python.
 - 2026-10-13 (một ngôn ngữ chung, người dùng chọn: giữ vi/en, mặc định English, debug view tiếng Anh):
   - Ô "Language / Ngôn ngữ" lên đầu cửa sổ cài đặt (English trước). Mọi chữ giao diện qua PetWindow.L(vi, en): menu chuột phải (đổi mỗi lần mở), menu tray + tooltip (App.xaml.cs, cập nhật khi mở menu và khi Save đổi ngôn ngữ qua LanguageChanged), cửa sổ cài đặt, Behavior tuning, hộp thoại, About, trạng thái AI (PetWindow.LocalizeAiStatus; debug view vẫn tiếng Anh), nút nghe thử âm thanh, tên tính cách/bộ lông/phụ kiện/tần suất (giá trị lưu không đổi).
@@ -113,6 +118,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Lịch sử chuyển project: 2026-10-05 tạo AGENTS.md/PROGRESS.md tại ổ D khi thư mục đó trống; source hiện nằm tại ổ C, không cần khôi phục về D.
 
 ## Đang dở và việc tiếp theo
+- Phương án 1 chưa làm (người dùng chọn 2): bỏ cooldown cho ăn 20s; menu cho ăn/bóng/laser luôn bấm được và xếp hàng ≤3s khi mèo đang thức dậy/giận/giật mình (như Làm ngay). Ý tưởng khác: mèo no (đói < 10) thì từ chối ăn thay vì cooldown cố định.
 - check-publish.ps1 fail khi người dùng đang mở app fullscreen trên màn hình chính (mèo yên lặng, Python chưa khởi động). Có thể cho smoke test tắt probe ngữ cảnh bằng biến môi trường nếu muốn chạy được lúc đó.
 - Đề xuất còn lại từ danh sách 2026-10-13: 8 (mèo đi trên cửa sổ, đợt riêng), 9 (dạy mèo nói). Đã làm 1–7.
 - Nhật ký: người dùng cũ có first_seen = lần đầu chạy bản này (không có dữ liệu trước đó), nên "số ngày ở cùng" bắt đầu từ 2026-10-13.
@@ -131,6 +137,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Không tích hợp LLM, voice hay computer vision; không thay framework hoặc hệ thống rendering/physics.
 
 ## Cần test thủ công
+- Quiet + trò chơi: bật Quiet, chọn Chơi bóng và Chơi đèn laser: chạy bình thường, hết trò thì mèo đứng yên (không tự đi). Bật Quiet giữa lúc đang chơi: trò dừng. Mở video fullscreen: không bắt đầu được.
 - Đèn laser: bật từ menu, rê chuột trên màn hình có mèo: mèo nhìn, đuổi, dừng chuột gần mèo thì rình rồi vồ; rê lên cao thì mèo chỉ nhìn; rê qua người mèo không bị tính vuốt; sang màn hình khác thì chấm ẩn; click mèo/chuột phải thì tắt; tự tắt sau 60s. Click vào app khác trong lúc chơi vẫn được (chấm không chặn click).
 - Ngôn ngữ: mở cài đặt, chọn English → Save; kiểm tra menu chuột phải (cả Làm ngay, Chỗ nghỉ), menu tray, tooltip khay, About, Nhật ký, Behavior tuning, hộp thoại Quên: toàn tiếng Anh; mèo nói tiếng Anh. Đổi lại Tiếng Việt: toàn tiếng Việt. Debug view luôn tiếng Anh.
 - Làm ngay: thử từng động tác (cả khi bật Quiet); chuột phải lúc mèo đang ngủ rồi chọn động tác (mèo thức 1.2s rồi làm); chọn Ngủ ngay sau khi mèo vừa thức; click/kéo giữa lúc làm thì ngắt ngay; Pause thì menu mờ.

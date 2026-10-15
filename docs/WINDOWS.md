@@ -211,8 +211,10 @@ Right-click the cat to access the new optional controls:
   Save persists user overrides in preferences; Python applies them on its next observation.
   **Restore defaults from personality.json** followed by Save clears overrides and
   restarts enabled Python AI without resetting the current sleep/wake action.
-- **Quiet mode:** disables autonomous walking, jumping, ball play, and travel to
-  the resting spot. Idle/sleep animations, clicking, dragging, and throws still work.
+- **Quiet mode:** disables autonomous walking, jumping and travel to the resting spot.
+  Idle/sleep animations, clicking, dragging, and throws still work. Since 2026-10-15
+  games you start yourself (ball, laser pointer, Do now) still run in Quiet mode;
+  turning Quiet on stops a game in progress. A fullscreen app still blocks them.
 - **Pet sounds:** off by default. All nine cues use a consistent cartoon-cat
   treatment of the embedded recordings: short voiced excerpts, expressive pitch
   glides, rounded dynamics, soft fades, and small voice/volume variations. Meows
@@ -448,6 +450,7 @@ the normal jump; a pounce that lands on the dot plays the ball-tap cue. A dot hi
 cat or on another monitor is only watched (the dot is hidden on other monitors). Pacing
 follows the personality like ball play.
 - Ends after 60 s, or when you click/right-click/drag the cat, throw it, it falls asleep,
-  Pause, Quiet mode, a fullscreen app, Do now, ball play or a treat.
+  Pause, turning Quiet mode on, a fullscreen app, Do now, ball play or a treat. It can be
+  started while Quiet mode is on.
 - While it runs, the cursor is the toy: passing over the cat is not petting and fast moves
   near it do not startle it. Python only hears that play started (like the ball).

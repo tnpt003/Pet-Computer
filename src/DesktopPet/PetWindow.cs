@@ -445,7 +445,7 @@ public sealed partial class PetWindow : Window
     {
         StopAi();
         if (enabled && !closed) ai = new PythonDecisionSource();
-        behavior.Reset();
+        behavior.Reset(pet);
     }
 
     public void StopAi()
@@ -467,6 +467,7 @@ public sealed partial class PetWindow : Window
         var source = ai;
         long requestedRevision = revision;
         double requestedAt = clock.Elapsed.TotalSeconds;
+        string requestedLanguage = preferences.Language;
         var observation = new PetObservation(pet.Action.ToString(), pet.Grounded,
             pet.Emotions.SecondsWithoutAttention, interactionCount, lastEvent, behavior.LastAppliedCommand,
             pet.Emotions.Reported.ToString(), pet.Activity.Snapshot(), preferences.Personality, sessionId, preferences.Tuning?.Normalized(),
@@ -487,7 +488,9 @@ public sealed partial class PetWindow : Window
             if (decision.Diary != null) { aiDiary = decision.Diary; RefreshDiary(); }
             // Words are presentation only, so a reply discarded for revision (e.g. the
             // user petted the cat meanwhile) may still speak; PetSpeech enforces safety.
-            if (decision.Speech != null && !paused && clock.Elapsed.TotalSeconds - requestedAt < 2.5) ShowSpeech(decision.Speech);
+            // A line chosen before a language change is dropped (the data above is still kept).
+            if (decision.Speech != null && !paused && clock.Elapsed.TotalSeconds - requestedAt < 2.5 &&
+                requestedLanguage == preferences.Language) ShowSpeech(decision.Speech);
             if (!pressPending && DecisionGuard.CanApply(requestedRevision, revision, clock.Elapsed.TotalSeconds - requestedAt, paused, pet))
             {
                 aiEnergy = decision.Energy;

@@ -540,3 +540,15 @@ PreparingJump is a protected C# action: Python treats it as busy, and delayed AI
 commands/hints cannot replace it. Time spent preparing counts as resting, while
 actual airborne Jumping keeps its previous activity accounting. Input, sleep and
 Quiet mode may cancel preparation. PetMotion.cs contains no AI policy or physics.
+
+## Quiet, waking and language fixes (2026-10-15)
+
+- **Quiet keeps Python informed.** In Quiet mode (or during a fullscreen app) C# still
+  sends observations on the usual 2-6 s schedule, so needs, the diary, learned items and
+  reaction lines stay current. `PetBehavior.TryApply` refuses every AI command while Quiet,
+  so the cat still does nothing on its own. Python already skips idle chatter in Quiet; a
+  fullscreen app still hides speech and thought bubbles in C#.
+- **Waking is never stretched.** `PetBehavior.Reset(pet)` keeps the 1.2 s waking clock;
+  AI toggles, clicks and Quiet/fullscreen changes during waking used to reset it to 2 s.
+- **No stale-language lines.** The language is recorded with each request; a reply whose
+  language no longer matches the setting has its line dropped (needs/diary are kept).

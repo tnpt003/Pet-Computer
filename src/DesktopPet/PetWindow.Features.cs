@@ -185,7 +185,7 @@ public sealed partial class PetWindow
         pet.BatRemaining = pet.PlayCrouch = 0;
         toyPlay.Reset();
         if (PetActionRules.IsCancellableLocal(pet.Action)) pet.Action = PetAction.Idle;
-        behavior.Reset();
+        behavior.Reset(pet);
     }
 
     private bool FeatureOwnsMovement() => CanPlay && (pet.TreatRemaining > 0 || treatSatisfiedRemaining > 0 || toyWindow != null || returningHome || laserWindow != null);

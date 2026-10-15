@@ -511,6 +511,50 @@ internal static class Program
         Check(pet.Grounded && pet.X >= restoredBounds.Left && pet.X <= restoredBounds.Right - 112
             && preferences.RestX >= restoredBounds.Left && preferences.RestX <= restoredBounds.Right - 112,
             "Unavailable saved monitor restores pet and favorite spot inside the primary work area");
+        // Combinations from review feedback (2026-10-15).
+        {
+            // Clicks, a Quiet toggle path and an AI toggle during waking keep it at ~1.2 s.
+            window.Reset();
+            pet.Action = PetAction.Sleeping; pet.Emotions.EnterSleep();
+            var rightClick = new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Right) { RoutedEvent = UIElement.MouseRightButtonDownEvent };
+            window.RaiseEvent(rightClick);
+            double waking = 0;
+            for (; waking < 0.6; waking += 1.0 / 60) behavior.Step(pet, 1.0 / 60);
+            window.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Right) { RoutedEvent = UIElement.MouseRightButtonDownEvent });
+            window.SetAiEnabled(false);
+            typeof(PetWindow).GetMethod("CancelFeatureActivity", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(window, null); // Quiet menu path.
+            while (pet.Action == PetAction.Waking && waking < 5) { behavior.Step(pet, 1.0 / 60); waking += 1.0 / 60; }
+            Check(Math.Abs(waking - PetSettings.WakingDuration) < 0.05,
+                $"Right-click, AI toggle and Quiet toggle during waking do not stretch it ({waking:F2} s)");
+
+            // A reply chosen before a language change does not speak in the old language.
+            window.Reset();
+            pet.Speech.Hide(); pet.Speech.Step(pet, 20);
+            string languageBefore = preferences.Language;
+            bool speechBefore = preferences.Speech;
+            preferences.Speech = true; preferences.Language = "en";
+            var requestDecision = typeof(PetWindow).GetMethod("RequestDecision", BindingFlags.NonPublic | BindingFlags.Instance)!;
+            var aiField = typeof(PetWindow).GetField("ai", BindingFlags.NonPublic | BindingFlags.Instance)!;
+            var staleSource = new DelayedSource();
+            aiField.SetValue(window, staleSource);
+            requestDecision.Invoke(window, null);
+            await Task.Delay(20);
+            preferences.Language = "vi"; // The user saved another language meanwhile.
+            staleSource.Completion.SetResult(new AiDecision("IDLE", 3, "content", Needs: new PetNeeds(11, 22, 33, 44), Speech: new PetLine("hello:en:test", "Hi human!")));
+            await Task.Delay(30);
+            Check(!pet.Speech.Visible && pet.Speech.PendingId == null && Field<PetNeeds?>(window, "aiNeeds")?.Hunger == 11,
+                "A line chosen before a language change is dropped, while the needs from that reply are kept");
+            var freshSource = new DelayedSource();
+            aiField.SetValue(window, freshSource);
+            requestDecision.Invoke(window, null);
+            await Task.Delay(20);
+            freshSource.Completion.SetResult(new AiDecision("IDLE", 3, "content", Speech: new PetLine("hello:vi:test", "Chào sen!")));
+            await Task.Delay(30);
+            Check(pet.Speech.Visible && pet.Speech.Id == "hello:vi:test", "A line in the current language is still spoken");
+            pet.Speech.Hide(); pet.Speech.Step(pet, 20);
+            aiField.SetValue(window, null);
+            preferences.Language = languageBefore; preferences.Speech = speechBefore;
+        }
         ContextChecks(window, pet, behavior, preferences);
         LifeChecks(window, pet, preferences);
         window.ShowControls();

@@ -4,7 +4,12 @@ Cập nhật: 2026-10-13 (Asia/Saigon).
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
-## Kết quả test gần nhất (2026-10-15, Quiet không chặn bóng/laser)
+## Kết quả test gần nhất (2026-10-15, sửa 3 lỗi từ review của Codex)
+- scripts/test.ps1 -Ui: 49 Python tests, 364 C# checks, 172 WPF checks đạt (exit 0). Publish + check-publish đạt (3/3). Đã đóng (WM_CLOSE đúng process) và mở lại mèo của người dùng.
+- Đã kiểm tra test mới bắt được lỗi: chạy UiChecks trên src cũ (git stash) → 3 FAIL (thức dậy kéo dài 2.62s; câu ngôn ngữ cũ vẫn hiện); src mới đạt hết.
+- Chưa xem trực tiếp: lời phản ứng/bong bóng trong Quiet khi dùng thật.
+
+## Kết quả test đợt Quiet không chặn bóng/laser (2026-10-15)
 - scripts/test.ps1 -Ui: 49 Python tests, 359 C# checks, 169 WPF checks đạt (exit 0). Publish + check-publish đạt (3/3). Đã đóng (WM_CLOSE đúng process) và mở lại mèo của người dùng.
 - Chưa xem trực tiếp: bật Quiet rồi chơi bóng/laser thật.
 
@@ -61,6 +66,11 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Lịch sử: 201 C#/107 WPF/20 Python (motion, 2026-10-08); 181/101/20 (features). Không dùng số liệu cũ thay kết quả hiện tại.
 
 ## Đã làm gần đây
+- 2026-10-15 (review của Codex, cả 3 điểm đã xác nhận đúng trong code):
+  - Quiet: nhánh Quiet trong PetBehavior.Step vẫn đếm giờ và gọi DecisionRequested (2–6s); TryApply từ chối mọi lệnh khi Quiet (trước đây Quiet không gửi observation nào nên nhật ký/nhu cầu/câu phản ứng bị cũ). Hành vi đổi: trong Quiet mèo có câu phản ứng và bong bóng ý nghĩ (fullscreen vẫn chặn hiển thị).
+  - Thức dậy: PetBehavior.Reset(pet) giữ bộ đếm khi đang Waking; CancelFeatureActivity và SetAiEnabled truyền pet. Sửa cả các đường Codex chưa nêu: click/chuột phải khi đang thức dậy, bấm Quiet, vào/thoát fullscreen.
+  - Ngôn ngữ: RequestDecision ghi ngôn ngữ lúc gửi; phản hồi về khi ngôn ngữ đã đổi thì bỏ câu nói, vẫn nhận needs/diary.
+  - Test: CombinationTests.cs (Quiet 60s vẫn gửi observation nhưng không di chuyển, TryApply từ chối, reset khi đang thức dậy), 3 check WPF (chuột phải + tắt AI + đường Quiet khi đang thức dậy; phản hồi ngôn ngữ cũ bị bỏ; câu đúng ngôn ngữ vẫn hiện).
 - 2026-10-15 (Quiet, người dùng chọn phương án 2: chỉ phần Quiet): bóng và đèn laser bấm được và chạy trong Quiet (menu, ToggleToy, StartLaser, TickFeatures/TickLaser chỉ chặn khi context.Fullscreen). Quiet vẫn chặn tự đi về chỗ nghỉ và hành vi tự động; bật/tắt Quiet giữa chừng vẫn dừng trò chơi (CancelFeatureActivity như cũ). AGENTS.md thêm dòng ngoại lệ. Test: 2 check Quiet cũ đổi thành "vẫn chơi được", thêm check fullscreen vẫn chặn bóng/laser.
 - 2026-10-15 (mục 6, chơi đèn laser): menu "Chơi đèn laser"/"Laser pointer" dưới Chơi bóng. PetWindow.Laser.cs: chấm đỏ (cửa sổ 24px click xuyên, không focus, bám đầu con trỏ, ẩn khi con trỏ ở màn hình khác); LaserChase (ToyBall.cs) Watch → Chase → Stalk (dừng ≥0.3s, cách < 70px) → Pounce (nhảy bằng JumpSpeed/WalkSpeed cũ) → Recover, nhịp theo tính cách; vồ trúng (cách < 45px) phát ball_tap. Chấm ở cao hơn đầu mèo >120px hoặc màn hình khác: chỉ nhìn. Hết sau 60s; hủy khi click/chuột phải/kéo/ném/ngủ/Pause/Quiet/fullscreen/Làm ngay/bóng/cho ăn. Trong lúc chơi không gửi con trỏ cho PetEmotions (không tính vuốt/giật mình), tắt thì ForgetCursor. Python nhận toy_started như bóng, không sửa Python.
 - 2026-10-13 (một ngôn ngữ chung, người dùng chọn: giữ vi/en, mặc định English, debug view tiếng Anh):
@@ -118,6 +128,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Lịch sử chuyển project: 2026-10-05 tạo AGENTS.md/PROGRESS.md tại ổ D khi thư mục đó trống; source hiện nằm tại ổ C, không cần khôi phục về D.
 
 ## Đang dở và việc tiếp theo
+- Từ review của Codex, chưa làm: gom điều kiện bắt đầu hoạt động vào PetActionRules (refactor từng bước, sau khi có thêm test kết hợp); đợt đo hiệu năng (CPU/RAM/thời gian render khi idle, ngủ, kéo nhanh, chơi laser; chạy dài nhiều giờ; fullscreen; nhiều màn hình/DPI).
 - Phương án 1 chưa làm (người dùng chọn 2): bỏ cooldown cho ăn 20s; menu cho ăn/bóng/laser luôn bấm được và xếp hàng ≤3s khi mèo đang thức dậy/giận/giật mình (như Làm ngay). Ý tưởng khác: mèo no (đói < 10) thì từ chối ăn thay vì cooldown cố định.
 - check-publish.ps1 fail khi người dùng đang mở app fullscreen trên màn hình chính (mèo yên lặng, Python chưa khởi động). Có thể cho smoke test tắt probe ngữ cảnh bằng biến môi trường nếu muốn chạy được lúc đó.
 - Đề xuất còn lại từ danh sách 2026-10-13: 8 (mèo đi trên cửa sổ, đợt riêng), 9 (dạy mèo nói). Đã làm 1–7.
@@ -137,6 +148,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Không tích hợp LLM, voice hay computer vision; không thay framework hoặc hệ thống rendering/physics.
 
 ## Cần test thủ công
+- Quiet + AI: bật Quiet, vuốt/cho ăn mèo: có câu phản ứng (nếu bật Speech) nhưng mèo không tự đi; mở Nhật ký sau vài phút Quiet: số liệu mới. Click để đánh thức rồi chuột phải ngay: mèo vẫn thức trong ~1.2s như thường.
 - Quiet + trò chơi: bật Quiet, chọn Chơi bóng và Chơi đèn laser: chạy bình thường, hết trò thì mèo đứng yên (không tự đi). Bật Quiet giữa lúc đang chơi: trò dừng. Mở video fullscreen: không bắt đầu được.
 - Đèn laser: bật từ menu, rê chuột trên màn hình có mèo: mèo nhìn, đuổi, dừng chuột gần mèo thì rình rồi vồ; rê lên cao thì mèo chỉ nhìn; rê qua người mèo không bị tính vuốt; sang màn hình khác thì chấm ẩn; click mèo/chuột phải thì tắt; tự tắt sau 60s. Click vào app khác trong lúc chơi vẫn được (chấm không chặn click).
 - Ngôn ngữ: mở cài đặt, chọn English → Save; kiểm tra menu chuột phải (cả Làm ngay, Chỗ nghỉ), menu tray, tooltip khay, About, Nhật ký, Behavior tuning, hộp thoại Quên: toàn tiếng Anh; mèo nói tiếng Anh. Đổi lại Tiếng Việt: toàn tiếng Việt. Debug view luôn tiếng Anh.

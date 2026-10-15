@@ -60,9 +60,11 @@ public sealed class PetBehavior(PetSettings settings, Random? randomSource = nul
     // the user returns or clicks; ordinary sleep is unaffected.
     public bool HoldSleep { get; private set; }
 
-    public void Reset()
+    // With the pet given, an ongoing waking keeps its own 1.2 s clock (AI toggles, clicks
+    // and Quiet changes must not stretch it).
+    public void Reset(PetModel? pet = null)
     {
-        remaining = 2;
+        if (pet?.Action != PetAction.Waking) remaining = 2;
         followingMouse = false;
         manualAction = null;
         LastAppliedCommand = "LOCAL";
@@ -154,6 +156,10 @@ public sealed class PetBehavior(PetSettings settings, Random? randomSource = nul
             followingMouse = false;
             pet.Action = PetAction.Idle;
             pet.VX = pet.VY = pet.SmoothedWalkVelocity = 0;
+            // Python still hears about the pet on the usual schedule (needs, diary, reaction
+            // lines); TryApply refuses its commands while Quiet, so the cat stays still.
+            remaining -= dt;
+            if (remaining <= 0) { remaining = 2 + random.NextDouble() * 4; LastAppliedCommand = "LOCAL"; DecisionRequested?.Invoke(); }
             return;
         }
         if (pet.Action == PetAction.PreparingJump)
@@ -208,7 +214,7 @@ public sealed class PetBehavior(PetSettings settings, Random? randomSource = nul
     public bool TryApply(PetModel pet, AiDecision decision)
     {
         if (decision.Command == "SEEK_ATTENTION" && attentionCooldown > 0) return false;
-        if (Quiet && decision.Command is "WALK_LEFT" or "WALK_RIGHT" or "FOLLOW_MOUSE" or "JUMP" or "SEEK_ATTENTION" or "ROLL_OVER" or "CHASE_TAIL" or "SCRATCH") return false;
+        if (Quiet) return false; // Quiet (or a fullscreen app): no AI-driven action of any kind.
         if (decision.Command == "SLEEP" && pet.Emotions.WakeCooldownRemaining > 0) return false;
         if (!pet.Grounded || pet.Emotions.BlocksAutonomy || PetActionRules.RejectsDecisions(pet.Action) ||
             !AiProtocol.IsCommand(decision.Command) || !double.IsFinite(decision.DurationSeconds) ||

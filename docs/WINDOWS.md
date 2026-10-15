@@ -215,6 +215,8 @@ Right-click the cat to access the new optional controls:
   Idle/sleep animations, clicking, dragging, and throws still work. Since 2026-10-15
   games you start yourself (ball, laser pointer, Do now) still run in Quiet mode;
   turning Quiet on stops a game in progress. A fullscreen app still blocks them.
+  The cat still reacts with short lines and thought bubbles in Quiet mode (no idle
+  chatter), and the diary stays up to date.
 - **Pet sounds:** off by default. All nine cues use a consistent cartoon-cat
   treatment of the embedded recordings: short voiced excerpts, expressive pitch
   glides, rounded dynamics, soft fades, and small voice/volume variations. Meows

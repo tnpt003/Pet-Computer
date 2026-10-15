@@ -62,3 +62,42 @@ public sealed class ToyPlaySequence
         return bat;
     }
 }
+
+public enum LaserPhase { Watch, Chase, Stalk, Pounce, Recover }
+
+// Laser-pointer game rhythm (presentation and pacing only; the window moves the pet).
+// Watch the dot, chase it along the floor, stalk when it rests nearby, then pounce.
+public sealed class LaserChase
+{
+    public const double StillSpeed = 60, StillBeforeStalk = 0.3, StalkReach = 70, EscapeReach = 110;
+    public LaserPhase Phase { get; private set; }
+    public double Elapsed { get; private set; }
+    private double still;
+    public void Reset() { Phase = LaserPhase.Watch; Elapsed = 0; still = 0; }
+    public double CrouchBlend => Phase == LaserPhase.Stalk ? Math.Clamp(Elapsed / 0.25, 0, 1) : 0;
+
+    // dx: dot X minus the cat's center; reachable: the dot is on this monitor and low enough
+    // to pounce at. Returns true on the frame the cat should pounce.
+    public bool Step(double dt, double dx, bool reachable, double dotSpeed, string personality)
+    {
+        if (!double.IsFinite(dt) || dt <= 0 || Phase == LaserPhase.Pounce) return false;
+        Elapsed += dt;
+        still = double.IsFinite(dotSpeed) && dotSpeed < StillSpeed ? still + dt : 0;
+        double observe = personality == "Curious" ? 1.2 : personality == "Playful" ? 0.3 : 0.6;
+        double prepare = personality == "Playful" ? 0.35 : 0.55;
+        double recover = personality == "Calm" ? 1.6 : personality == "Playful" ? 0.6 : 1.0;
+        var next = Phase;
+        bool pounce = false;
+        if (!reachable) next = LaserPhase.Watch;
+        else if (Phase == LaserPhase.Watch && Elapsed >= observe) next = LaserPhase.Chase;
+        else if (Phase == LaserPhase.Chase && Math.Abs(dx) < StalkReach && still >= StillBeforeStalk) next = LaserPhase.Stalk;
+        else if (Phase == LaserPhase.Stalk && (Math.Abs(dx) > EscapeReach || still == 0)) next = LaserPhase.Chase;
+        else if (Phase == LaserPhase.Stalk && Elapsed >= prepare) { next = LaserPhase.Pounce; pounce = true; }
+        else if (Phase == LaserPhase.Recover && Elapsed >= recover) next = LaserPhase.Chase;
+        if (next != Phase) { Phase = next; Elapsed = 0; }
+        return pounce;
+    }
+
+    // The window calls this once the pounce has landed.
+    public void Landed() { if (Phase == LaserPhase.Pounce) { Phase = LaserPhase.Recover; Elapsed = 0; } }
+}

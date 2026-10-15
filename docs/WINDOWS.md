@@ -438,3 +438,16 @@ an already open diary or tuning window switches when reopened. The behavior debu
 stays English (state names match code and logs). Stored values (personality, coat...)
 did not change, so older preference files keep working; a file without a language, or with
 an unknown one, now means English.
+
+## Laser pointer (2026-10-15)
+
+Right-click the cat → **Laser pointer** / **Chơi đèn laser**. A small red dot follows the
+mouse cursor (click-through, never takes focus, so you keep working normally). The cat
+watches it, chases it along the floor, crouches when the dot rests nearby and pounces with
+the normal jump; a pounce that lands on the dot plays the ball-tap cue. A dot high above the
+cat or on another monitor is only watched (the dot is hidden on other monitors). Pacing
+follows the personality like ball play.
+- Ends after 60 s, or when you click/right-click/drag the cat, throw it, it falls asleep,
+  Pause, Quiet mode, a fullscreen app, Do now, ball play or a treat.
+- While it runs, the cursor is the toy: passing over the cat is not petting and fast moves
+  near it do not startle it. Python only hears that play started (like the ball).

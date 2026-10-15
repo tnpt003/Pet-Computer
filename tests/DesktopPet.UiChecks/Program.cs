@@ -413,6 +413,44 @@ internal static class Program
             "Sleep stops toy play without being interrupted");
         Check(!window.GiveTreat(), "Treat command cannot interrupt a sleep lock");
         behavior.WakeByClick(pet); pet.Action = PetAction.Idle; pet.Emotions.Reset();
+
+        // Laser pointer game (the real cursor is never moved by these checks).
+        window.Reset();
+        Check(window.StartLaser() && window.LaserActive && Field<Window?>(window, "laserWindow") is { IsVisible: true, ShowActivated: false, Focusable: false, IsHitTestVisible: false },
+            "Laser pointer shows a click-through red dot that never takes focus");
+        Check((bool)typeof(PetWindow).GetMethod("FeatureOwnsMovement", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(window, null)!,
+            "The laser game owns movement (no random actions or AI moves meanwhile)");
+        var laserChase = Field<LaserChase>(window, "laserChase");
+        laserChase.Reset();
+        for (int i = 0; i < 300 && laserChase.Phase != LaserPhase.Chase; i++) laserChase.Step(1.0 / 60, 300, true, 500, "Balanced");
+        for (int i = 0; i < 300 && laserChase.Phase != LaserPhase.Pounce; i++) laserChase.Step(1.0 / 60, 30, true, 0, "Balanced");
+        pet.Action = PetAction.Jumping; pet.Grounded = false;
+        FeatureStep(0.05);
+        Check(window.LaserActive && laserChase.Phase == LaserPhase.Pounce, "The game's own pounce keeps the game running while airborne");
+        pet.Grounded = true; pet.Action = PetAction.Idle;
+        FeatureStep(0.05);
+        Check(window.LaserActive && laserChase.Phase == LaserPhase.Recover, "Landing ends the pounce and the game goes on");
+        window.RaiseEvent(MouseEvent(UIElement.MouseLeftButtonDownEvent));
+        Check(!window.LaserActive && Field<Window?>(window, "laserWindow") == null, "Clicking the cat ends the laser game and removes the dot");
+        window.RaiseEvent(MouseEvent(UIElement.MouseLeftButtonUpEvent));
+        window.Reset(); window.StartLaser();
+        pet.Action = PetAction.Thrown; pet.Grounded = false;
+        FeatureStep(0.05);
+        Check(!window.LaserActive, "A throw ends the laser game");
+        window.Reset(); window.StartLaser();
+        FeatureStep(PetWindow.LaserDuration + 0.1);
+        Check(!window.LaserActive, "The laser game ends by itself after 60 s");
+        window.Reset(); window.StartLaser();
+        pet.Action = PetAction.Sleeping; pet.Emotions.EnterSleep();
+        FeatureStep(0.1);
+        Check(!window.LaserActive && pet.Emotions.SleepLocked, "Sleep ends the laser game without being interrupted");
+        window.Reset();
+        typeof(PetBehavior).GetMethod("WakeByClick")!.Invoke(Field<PetBehavior>(window, "behavior"), new object[] { pet });
+        pet.Emotions.FinishSleep(0); pet.Action = PetAction.Idle;
+        bool quietBefore = preferences.Quiet;
+        preferences.Quiet = true; behavior.Quiet = true;
+        Check(!window.StartLaser() && !window.LaserActive, "Quiet mode blocks the laser game");
+        preferences.Quiet = quietBefore; behavior.Quiet = quietBefore;
         double? oldRestX = preferences.RestX, oldRestY = preferences.RestY;
         preferences.RestX = pet.X - 100; preferences.RestY = pet.Y;
         typeof(PetWindow).GetField("returningHome", BindingFlags.NonPublic | BindingFlags.Instance)!.SetValue(window, true);

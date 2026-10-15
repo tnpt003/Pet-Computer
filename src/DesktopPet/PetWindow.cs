@@ -313,7 +313,9 @@ public sealed partial class PetWindow : Window
             TickContext(dt);
             pet.Activity.Step(pet.Action, dt);
             var cursor = CursorPosition();
-            if (pet.Emotions.Step(pet, dt, cursor.X, cursor.Y, renderer.IsMouseOver)) Interact("petted");
+            // During the laser game the cursor is the toy: no petting strokes or startles from it.
+            bool cursorIsToy = LaserActive;
+            if (pet.Emotions.Step(pet, dt, cursorIsToy ? null : cursor.X, cursorIsToy ? null : cursor.Y, !cursorIsToy && renderer.IsMouseOver)) Interact("petted");
         }
         if (dragging)
         {

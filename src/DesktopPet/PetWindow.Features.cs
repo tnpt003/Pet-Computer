@@ -42,6 +42,8 @@ public sealed partial class PetWindow
         treat.Click += (_, _) => GiveTreat();
         var toy = new MenuItem();
         toy.Click += (_, _) => ToggleToy();
+        var laser = new MenuItem();
+        laser.Click += (_, _) => StartLaser();
         var home = new MenuItem();
         var remember = new MenuItem();
         remember.Click += (_, _) => { preferences.RestX = pet.X; preferences.RestY = pet.Y;
@@ -61,7 +63,8 @@ public sealed partial class PetWindow
         customize.Click += (_, _) => ShowPetSettings();
         menu.Items.Insert(0, customize); menu.Items.Insert(1, treat); menu.Items.Insert(2, toy);
         menu.Items.Insert(3, home); menu.Items.Insert(4, quiet); menu.Items.Insert(5, sounds);
-        InitializeCommands(menu, 3); // "Do now", right after the ball.
+        menu.Items.Insert(3, laser);
+        InitializeCommands(menu, 4); // "Do now", right after the ball and the laser.
         // Off unless the user enables it; the registry value is read fresh each time.
         var autostart = new MenuItem { IsCheckable = true };
         autostart.Click += (_, _) =>
@@ -71,7 +74,7 @@ public sealed partial class PetWindow
         };
         var about = new MenuItem();
         about.Click += (_, _) => ShowAbout();
-        menu.Items.Insert(7, autostart);
+        menu.Items.Insert(8, autostart);
         menu.Items.Insert(menu.Items.Count - 1, about); // Just above Exit.
         var diary = new MenuItem();
         diary.Click += (_, _) => ShowDiary();
@@ -82,6 +85,7 @@ public sealed partial class PetWindow
             diary.Header = L("Nhật ký của " + preferences.Name, preferences.Name + "'s diary");
             treat.Header = L("Cho ăn", "Give treat");
             toy.Header = toyWindow == null ? L("Chơi bóng", "Play with ball") : L("Cất bóng", "Put ball away");
+            laser.Header = L("Chơi đèn laser", "Laser pointer");
             home.Header = L("Chỗ nghỉ yêu thích", "Favorite resting spot");
             remember.Header = L("Nhớ chỗ này", "Remember this spot");
             visit.Header = L("Đến chỗ nghỉ", "Go to resting spot");
@@ -99,6 +103,7 @@ public sealed partial class PetWindow
             sounds.IsChecked = preferences.Sounds;
             treat.IsEnabled = CanPlay && treatCooldown <= 0;
             toy.IsEnabled = toyWindow != null || (CanPlay && !EffectiveQuiet);
+            laser.IsEnabled = CanPlay && !EffectiveQuiet; // Right-clicking the cat already ended a running game.
             remember.IsEnabled = pet.Grounded;
             visit.IsEnabled = CanPlay && !EffectiveQuiet && preferences.RestX.HasValue;
             forget.IsEnabled = preferences.RestX.HasValue;
@@ -170,6 +175,7 @@ public sealed partial class PetWindow
 
     private void CancelFeatureActivity()
     {
+        StopLaser();
         toyWindow?.Close();
         returningHome = false;
         pet.TreatRemaining = 0;
@@ -180,7 +186,7 @@ public sealed partial class PetWindow
         behavior.Reset();
     }
 
-    private bool FeatureOwnsMovement() => CanPlay && (pet.TreatRemaining > 0 || treatSatisfiedRemaining > 0 || toyWindow != null || returningHome);
+    private bool FeatureOwnsMovement() => CanPlay && (pet.TreatRemaining > 0 || treatSatisfiedRemaining > 0 || toyWindow != null || returningHome || laserWindow != null);
 
     private void TickFeatures(double dt)
     {
@@ -204,6 +210,7 @@ public sealed partial class PetWindow
             if (pet.Action == PetAction.SeekingAttention) PlayPetSound("meow");
             lastSoundAction = pet.Action;
         }
+        if (TickLaser(dt)) return;
         if (!CanPlay)
         {
             if (toyWindow != null || returningHome || pet.TreatRemaining > 0 || treatSatisfiedRemaining > 0) CancelFeatureActivity();
@@ -424,5 +431,5 @@ public sealed partial class PetWindow
         catch (Exception ex) when (ex is IOException or InvalidOperationException or System.TimeoutException) { soundAfter = now + 10; return false; }
     }
 
-    private void CloseFeatures() { diaryWindow?.Close(); behaviorSettingsWindow?.Close(); toyWindow?.Close(); settingsWindow?.Close(); speechWindow?.Close(); sound?.Stop(); sound?.Dispose(); soundStream?.Dispose(); }
+    private void CloseFeatures() { laserWindow?.Close(); diaryWindow?.Close(); behaviorSettingsWindow?.Close(); toyWindow?.Close(); settingsWindow?.Close(); speechWindow?.Close(); sound?.Stop(); sound?.Dispose(); soundStream?.Dispose(); }
 }

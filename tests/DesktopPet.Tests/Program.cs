@@ -71,6 +71,7 @@ SpeechTests.Run(Check);
 ContextTests.Run(Check);
 GestureTests.Run(Check);
 ManualControlTests.Run(Check);
+LaserTests.Run(Check);
 var activity = new PetActivity();
 activity.Step(PetAction.Walking, 2);
 activity.Step(PetAction.Jumping, 1);

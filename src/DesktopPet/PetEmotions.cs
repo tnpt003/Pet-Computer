@@ -68,6 +68,10 @@ public sealed class PetEmotions
         if (!on) { lastAttention = now; UserTouched(); }
     }
 
+    // After a stretch without cursor input (laser game) the next sample must not read as a
+    // huge jump in cursor speed (a false Surprised or petting stroke).
+    public void ForgetCursor() { cursorKnown = false; pettingTime = 0; }
+
     public bool Perform(PetEmotion emotion)
     {
         if (!ManualMode || !CanPerform(emotion)) return false;

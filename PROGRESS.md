@@ -4,7 +4,12 @@ Cập nhật: 2026-10-13 (Asia/Saigon).
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
-## Kết quả test gần nhất (2026-10-13, một ngôn ngữ chung cho cả app)
+## Kết quả test gần nhất (2026-10-15, chơi đèn laser)
+- scripts/test.ps1 -Ui: 49 Python tests, 359 C# checks, 167 WPF checks đạt (exit 0). Publish + check-publish đạt (3/3). Đã đóng (WM_CLOSE đúng process artifacts\win-x64) và mở lại mèo của người dùng.
+- Test không di chuyển con trỏ thật: logic đuổi/rình/vồ test bằng LaserChase (C#); WPF test vòng đời (chấm click xuyên, vồ giữ trò chơi khi đang bay, click/ném/ngủ/hết 60s/Quiet).
+- Chưa xem trực tiếp: chuyển động đuổi/vồ thật, chấm đỏ đi theo con trỏ, không tính vuốt khi rê qua mèo lúc chơi.
+
+## Kết quả test đợt một ngôn ngữ chung cho cả app (2026-10-13)
 - scripts/test.ps1 -Ui: 49 Python tests, 347 C# checks, 158 WPF checks đạt (exit 0). Lần chạy đầu có 3 check kéo thả FAIL (dùng con trỏ thật, có thể do chuột bị di chuyển lúc test); chạy lại 2 lần đều đạt.
 - Publish đạt. check-publish FAIL 2 lần vì người dùng đang xem YouTube fullscreen trên màn hình chính: mèo vào chế độ yên lặng nên chưa xin quyết định AI, Python chưa khởi động trong 15s (log "Fullscreen app detected"). Đúng hành vi, không phải lỗi đợt này. Đã kiểm tra Python đóng gói (3.13) import được speech/service mới. 2026-10-15: chạy lại check-publish khi không có app fullscreen: đạt cả 3 bước (bundled .NET + Python, mở lần hai, đóng sạch). Đã push 1e7255d, dacf458, 6fa93d5.
 - Đã đóng (WM_CLOSE đúng process artifacts\win-x64) và mở lại mèo của người dùng. Preferences của người dùng đang lưu Language = "vi" nên app hiện toàn tiếng Việt; chọn English trong cài đặt để chuyển (không tự ghi đè preferences).
@@ -52,6 +57,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Lịch sử: 201 C#/107 WPF/20 Python (motion, 2026-10-08); 181/101/20 (features). Không dùng số liệu cũ thay kết quả hiện tại.
 
 ## Đã làm gần đây
+- 2026-10-15 (mục 6, chơi đèn laser): menu "Chơi đèn laser"/"Laser pointer" dưới Chơi bóng. PetWindow.Laser.cs: chấm đỏ (cửa sổ 24px click xuyên, không focus, bám đầu con trỏ, ẩn khi con trỏ ở màn hình khác); LaserChase (ToyBall.cs) Watch → Chase → Stalk (dừng ≥0.3s, cách < 70px) → Pounce (nhảy bằng JumpSpeed/WalkSpeed cũ) → Recover, nhịp theo tính cách; vồ trúng (cách < 45px) phát ball_tap. Chấm ở cao hơn đầu mèo >120px hoặc màn hình khác: chỉ nhìn. Hết sau 60s; hủy khi click/chuột phải/kéo/ném/ngủ/Pause/Quiet/fullscreen/Làm ngay/bóng/cho ăn. Trong lúc chơi không gửi con trỏ cho PetEmotions (không tính vuốt/giật mình), tắt thì ForgetCursor. Python nhận toy_started như bóng, không sửa Python.
 - 2026-10-13 (một ngôn ngữ chung, người dùng chọn: giữ vi/en, mặc định English, debug view tiếng Anh):
   - Ô "Language / Ngôn ngữ" lên đầu cửa sổ cài đặt (English trước). Mọi chữ giao diện qua PetWindow.L(vi, en): menu chuột phải (đổi mỗi lần mở), menu tray + tooltip (App.xaml.cs, cập nhật khi mở menu và khi Save đổi ngôn ngữ qua LanguageChanged), cửa sổ cài đặt, Behavior tuning, hộp thoại, About, trạng thái AI (PetWindow.LocalizeAiStatus; debug view vẫn tiếng Anh), nút nghe thử âm thanh, tên tính cách/bộ lông/phụ kiện/tần suất (giá trị lưu không đổi).
   - PetPreferences: mặc định "en" (cả khi thiếu hoặc giá trị lạ). Đổi ngôn ngữ thì ẩn câu đang nói và bỏ câu chờ (không nói ngôn ngữ cũ).
@@ -108,7 +114,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 
 ## Đang dở và việc tiếp theo
 - check-publish.ps1 fail khi người dùng đang mở app fullscreen trên màn hình chính (mèo yên lặng, Python chưa khởi động). Có thể cho smoke test tắt probe ngữ cảnh bằng biến môi trường nếu muốn chạy được lúc đó.
-- Đề xuất còn lại từ danh sách 2026-10-13: 6 (chơi với con trỏ kiểu laser), 8 (mèo đi trên cửa sổ, đợt riêng), 9 (dạy mèo nói). Đã làm 1–5, 7.
+- Đề xuất còn lại từ danh sách 2026-10-13: 8 (mèo đi trên cửa sổ, đợt riêng), 9 (dạy mèo nói). Đã làm 1–7.
 - Nhật ký: người dùng cũ có first_seen = lần đầu chạy bản này (không có dữ liệu trước đó), nên "số ngày ở cùng" bắt đầu từ 2026-10-13.
 - Away nap: nếu xem video không fullscreen mà không chạm chuột 5 phút thì mèo cũng ngủ (chấp nhận được); có thể thêm tùy chọn thời gian 5/10/15 phút nếu thấy sớm.
 - Fullscreen: chỉ xét màn hình đang có mèo; app "borderless fullscreen" không caption sẽ được tính (đúng ý). Nếu có app bị nhận nhầm, xem log "Fullscreen app detected" và cân nhắc danh sách class bỏ qua.
@@ -125,6 +131,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Không tích hợp LLM, voice hay computer vision; không thay framework hoặc hệ thống rendering/physics.
 
 ## Cần test thủ công
+- Đèn laser: bật từ menu, rê chuột trên màn hình có mèo: mèo nhìn, đuổi, dừng chuột gần mèo thì rình rồi vồ; rê lên cao thì mèo chỉ nhìn; rê qua người mèo không bị tính vuốt; sang màn hình khác thì chấm ẩn; click mèo/chuột phải thì tắt; tự tắt sau 60s. Click vào app khác trong lúc chơi vẫn được (chấm không chặn click).
 - Ngôn ngữ: mở cài đặt, chọn English → Save; kiểm tra menu chuột phải (cả Làm ngay, Chỗ nghỉ), menu tray, tooltip khay, About, Nhật ký, Behavior tuning, hộp thoại Quên: toàn tiếng Anh; mèo nói tiếng Anh. Đổi lại Tiếng Việt: toàn tiếng Việt. Debug view luôn tiếng Anh.
 - Làm ngay: thử từng động tác (cả khi bật Quiet); chuột phải lúc mèo đang ngủ rồi chọn động tác (mèo thức 1.2s rồi làm); chọn Ngủ ngay sau khi mèo vừa thức; click/kéo giữa lúc làm thì ngắt ngay; Pause thì menu mờ.
 - Tự điều khiển cảm xúc: bật, chọn từng cảm xúc; vuốt/click dồn không đổi cảm xúc; để yên vài phút không buồn/ngủ tự động; kéo mạnh vẫn chóng mặt; tắt công tắc thì về bình thường ngay, không buồn/ngủ liền; mở lại app thì công tắc tắt.

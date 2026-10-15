@@ -354,9 +354,13 @@ containing the whole folder.
 
 ## Appearance, break reminders and computer context (2026-10-13)
 
-**Appearance.** In **Settings… → Pet**, the coat and accessory pickers offer six coats
-(Orange, the original, plus Gray, Black, White, Calico and Tabby) and four accessories
-(none, collar with bell, bow, party hat). Save applies them at once. Everything is
+**Appearance.** In **Settings… → Pet**, the coat and accessory pickers offer ten coats
+(Orange, the original, plus Gray, Black, White, Calico, Tabby, Ginger tabby, Tuxedo with
+white chest and mittens, Russian blue, and Siamese with dark ears, mask, tail and paws)
+and eight accessories (none, collar with bell, bow, party hat, scarf, round glasses,
+flower, crown). Each coat in the list has a colour dot. A preview next to the pickers
+shows the choice at once with a gentle idle animation (only while the Pet tab is open);
+the pet on screen changes on Save. Everything is
 vector drawing (`PetAppearance.cs` palettes, `PetRenderer.cs`). Patches and stripes are
 clipped inside the outline. The bow, hat and collar move with the head. The window
 size is unchanged, and the default orange cat renders pixel for pixel as before.
@@ -469,7 +473,7 @@ The cat's right-click menu is grouped, with Windows' own icon font (no new asset
 4. **Exit pet**.
 
 **Settings…** (also in the tray menu) opens one window with four tabs:
-- **Pet:** name, personality, coat, accessory, link to Advanced behavior tuning…
+- **Pet:** name, personality, coat and accessory with a live preview, link to Advanced behavior tuning…
 - **Speech:** talking on/off, how often (greyed out while off), link to forget what was learned.
 - **Sounds:** master switch, three kinds, volume, preview picker + Play.
 - **General:** Language / Ngôn ngữ, Start with Windows, break reminders.

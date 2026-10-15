@@ -666,15 +666,27 @@ internal static class Program
         var looks = new[] { form.Coat, form.Accessory };
         var reminder = form.BreakReminders;
         var interval = form.BreakInterval;
-        Check(looks.Length == 2 && looks[0].Items.Count == 6 && looks[1].Items.Count == 4 && looks[0].SelectedIndex == 0 && looks[1].SelectedIndex == 0 &&
+        Check(looks.Length == 2 && looks[0].Items.Count == 10 && looks[1].Items.Count == 8 && looks[0].SelectedIndex == 0 && looks[1].SelectedIndex == 0 &&
               reminder.IsChecked == false && interval.SelectedIndex == 1,
-            "Settings offer six coats, four accessories and break reminders (off, 45 minutes)");
+            "Settings offer ten coats, eight accessories and break reminders (off, 45 minutes)");
+        // The preview follows the pickers and moves gently; the real pet waits for Save.
+        looks[0].SelectedIndex = 9; looks[1].SelectedIndex = 7;
+        double previewTime = form.PreviewPet.AnimationTime;
+        var frame = new System.Windows.Threading.DispatcherFrame();
+        var wait = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(200) };
+        wait.Tick += (_, _) => { wait.Stop(); frame.Continue = false; };
+        wait.Start();
+        System.Windows.Threading.Dispatcher.PushFrame(frame); // Let the preview timer tick a few times.
+        Check(form.PetPreview.Coat == "Siamese" && form.PetPreview.Accessory == "Crown" && renderer.Coat == "Orange" && renderer.Accessory == "None" &&
+              form.PreviewPet.AnimationTime > previewTime && form.PreviewTimer.IsEnabled,
+            "The settings preview shows the chosen coat and accessory at once and animates, without changing the real pet");
         looks[0].SelectedIndex = 2; looks[1].SelectedIndex = 3; reminder.IsChecked = true; interval.SelectedIndex = 0;
         form.Save.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
         var breaks = Field<PetBreaks>(window, "breaks");
         Check(preferences.Coat == "Black" && preferences.Accessory == "Hat" && renderer.Coat == "Black" && renderer.Accessory == "Hat" &&
               preferences.BreakReminders && preferences.BreakMinutes == 30 && breaks.Enabled && breaks.IntervalSeconds == 1800,
             "Saving applies the coat, accessory and break interval at once");
+        Check(!form.PreviewTimer.IsEnabled, "Closing settings stops the preview animation");
         renderer.Coat = preferences.Coat = "Orange"; renderer.Accessory = preferences.Accessory = "None";
 
         bool quiet = preferences.Quiet, sounds = preferences.Sounds;

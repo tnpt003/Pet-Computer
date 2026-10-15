@@ -10,7 +10,7 @@ internal static class ContextTests
         try
         {
             string file = Path.Combine(folder, "preferences.json");
-            File.WriteAllText(file, "{\"Coat\":\"Purple\",\"Accessory\":\"Crown\",\"BreakMinutes\":7,\"BreakReminders\":true}");
+            File.WriteAllText(file, "{\"Coat\":\"Purple\",\"Accessory\":\"Cape\",\"BreakMinutes\":7,\"BreakReminders\":true}");
             var loaded = PetPreferences.Load(file);
             check(loaded.Coat == "Orange" && loaded.Accessory == "None" && loaded.BreakMinutes == 45 && loaded.BreakReminders,
                 "Unknown coat, accessory and break interval fall back to defaults");

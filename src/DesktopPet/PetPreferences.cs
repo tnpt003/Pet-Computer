@@ -23,8 +23,8 @@ public sealed class PetPreferences
     // A new value asks Python to forget what it learned; Python applies each value once.
     public string LearningReset { get; set; } = "";
     // Appearance; drawn by CoatPalette and PetRenderer.
-    public static readonly string[] Coats = { "Orange", "Gray", "Black", "White", "Calico", "Tabby" };
-    public static readonly string[] Accessories = { "None", "Bell", "Bow", "Hat" };
+    public static readonly string[] Coats = { "Orange", "Gray", "Black", "White", "Calico", "Tabby", "GingerTabby", "Tuxedo", "RussianBlue", "Siamese" };
+    public static readonly string[] Accessories = { "None", "Bell", "Bow", "Hat", "Scarf", "Glasses", "Flower", "Crown" };
     public static string NormalizeCoat(string? coat) => Array.IndexOf(Coats, coat) >= 0 ? coat! : "Orange";
     public static string NormalizeAccessory(string? accessory) => Array.IndexOf(Accessories, accessory) >= 0 ? accessory! : "None";
     public string Coat { get; set; } = "Orange";

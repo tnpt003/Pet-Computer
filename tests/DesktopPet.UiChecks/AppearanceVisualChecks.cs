@@ -48,7 +48,7 @@ internal static class AppearanceVisualChecks
         }
 
         string original = Render(Pose("idle"), "Orange", "None", "coat-default");
-        check(Render(Pose("idle"), "Unknown", "Crown", "coat-unknown") == original &&
+        check(Render(Pose("idle"), "Unknown", "Cape", "coat-unknown") == original &&
               Render(Pose("idle"), "Orange", "None", "coat-orange") == new Func<string>(() =>
               {
                   var plain = new PetRenderer(Pose("idle"));

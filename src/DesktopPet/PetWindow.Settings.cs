@@ -1,7 +1,9 @@
 using System;
 using System.Windows;
 using System.Windows.Controls;
+using System.Linq;
 using System.Windows.Data;
+using System.Windows.Media;
 
 namespace DesktopPet;
 
@@ -14,6 +16,18 @@ public sealed class PetSettingsForm
     public CheckBox Talks = null!, Autostart = null!, BreakReminders = null!, Sounds = null!, InteractionSounds = null!, EmotionSounds = null!, SleepSounds = null!;
     public Slider Volume = null!;
     public Button Save = null!, Cancel = null!, Tuning = null!, Forget = null!, Preview = null!;
+    public PetRenderer PetPreview = null!;
+    public PetModel PreviewPet = null!;
+    public System.Windows.Threading.DispatcherTimer PreviewTimer = null!;
+}
+
+// One row of the coat list: a colour dot (with the marking/point colour) and the name.
+public sealed record CoatChoice(string Label, CoatPalette Palette)
+{
+    public Brush Fur => Palette.Fur;
+    public Brush Ink => Palette.Ink;
+    public Brush Accent => Palette.Swatch ?? Brushes.Transparent;
+    public override string ToString() => Label;
 }
 
 // Settings in four tabs (Pet, Speech, Sounds, General). Nothing changes until Save;
@@ -39,18 +53,53 @@ public sealed partial class PetWindow
         form.Name = new TextBox { Text = preferences.Name, MaxLength = 24, Padding = new Thickness(2, 3, 2, 3) };
         form.Personality = new ComboBox { ItemsSource = new[] { L("Cân bằng", "Balanced"), L("Ham chơi", "Playful"), L("Tò mò", "Curious"), L("Điềm tĩnh", "Calm") },
             SelectedIndex = Math.Max(0, Array.IndexOf(personalities, preferences.Personality)) };
-        form.Coat = new ComboBox { ItemsSource = new[] { L("Cam", "Orange"), L("Xám", "Gray"), L("Đen", "Black"), L("Trắng", "White"), L("Tam thể", "Calico"), L("Mướp (có sọc)", "Tabby (striped)") },
+        // Same order as PetPreferences.Coats / Accessories.
+        string[] coatLabels = { L("Cam", "Orange"), L("Xám", "Gray"), L("Đen", "Black"), L("Trắng", "White"), L("Tam thể", "Calico"),
+            L("Mướp (có sọc)", "Tabby (striped)"), L("Mướp cam", "Ginger tabby"), L("Mun cổ trắng (tuxedo)", "Tuxedo"),
+            L("Xám xanh (mèo Nga)", "Russian blue"), L("Xiêm", "Siamese") };
+        form.Coat = new ComboBox { ItemTemplate = CoatTemplate,
+            ItemsSource = PetPreferences.Coats.Select((coat, i) => new CoatChoice(coatLabels[i], CoatPalette.For(coat))).ToArray(),
             SelectedIndex = Math.Max(0, Array.IndexOf(PetPreferences.Coats, preferences.Coat)) };
-        form.Accessory = new ComboBox { ItemsSource = new[] { L("Không", "None"), L("Vòng cổ chuông", "Collar with bell"), L("Nơ", "Bow"), L("Mũ tiệc", "Party hat") },
+        form.Accessory = new ComboBox { ItemsSource = new[] { L("Không", "None"), L("Vòng cổ chuông", "Collar with bell"), L("Nơ", "Bow"), L("Mũ tiệc", "Party hat"),
+                L("Khăn quàng cổ", "Scarf"), L("Kính tròn", "Round glasses"), L("Bông hoa", "Flower"), L("Vương miện", "Crown") },
             SelectedIndex = Math.Max(0, Array.IndexOf(PetPreferences.Accessories, preferences.Accessory)) };
         form.Tuning = PetUi.LinkButton(L("Tinh chỉnh hành vi nâng cao…", "Advanced behavior tuning…"));
         form.Tuning.Click += (_, _) => ShowBehaviorSettings();
+        // Live preview: its own model and renderer; the real pet changes only on Save.
+        var previewPet = new PetModel { Action = PetAction.Idle, Grounded = true, Facing = 1, AnimationTime = 1, ActionTime = 1 };
+        form.PreviewPet = previewPet;
+        form.PetPreview = new PetRenderer(previewPet) { Coat = preferences.Coat, Accessory = preferences.Accessory, Width = 192, Height = 192, Margin = new Thickness(-30) };
+        form.Coat.SelectionChanged += (_, _) => form.PetPreview.Coat = PetPreferences.Coats[Math.Max(0, form.Coat.SelectedIndex)];
+        form.Accessory.SelectionChanged += (_, _) => form.PetPreview.Accessory = PetPreferences.Accessories[Math.Max(0, form.Accessory.SelectedIndex)];
+        var stage = new Grid { Width = 132, Height = 132, ClipToBounds = true }; // Crops the window's transparent margin.
+        stage.Children.Add(form.PetPreview);
+        var previewCard = new Border { Child = stage, Background = PreviewBackground, CornerRadius = new CornerRadius(8), Padding = new Thickness(4),
+            BorderBrush = PetUi.Line, BorderThickness = new Thickness(1), VerticalAlignment = VerticalAlignment.Top };
+        var looks = new StackPanel { Margin = new Thickness(16, 0, 0, 0) };
+        looks.Children.Add(new TextBlock { Text = L("Bộ lông", "Coat"), Margin = new Thickness(0, 4, 0, 4) }); looks.Children.Add(form.Coat);
+        looks.Children.Add(new TextBlock { Text = L("Phụ kiện", "Accessory"), Margin = new Thickness(0, 14, 0, 4) }); looks.Children.Add(form.Accessory);
+        var appearance = new DockPanel();
+        DockPanel.SetDock(previewCard, Dock.Left);
+        appearance.Children.Add(previewCard); appearance.Children.Add(looks);
         var petTab = Page(
             Row(L("Tên", "Name"), form.Name),
             Row(L("Tính cách", "Personality"), form.Personality),
-            Row(L("Bộ lông", "Coat"), form.Coat),
-            Row(L("Phụ kiện", "Accessory"), form.Accessory),
+            appearance,
             form.Tuning);
+        // Gentle idle motion (breathing, tail, blinks) while the Pet tab is showing.
+        var previewClock = System.Diagnostics.Stopwatch.StartNew();
+        double previewLast = 0;
+        var previewTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(33) };
+        previewTimer.Tick += (_, _) =>
+        {
+            double now = previewClock.Elapsed.TotalSeconds, dt = Math.Min(0.1, now - previewLast);
+            previewLast = now;
+            if (form.Tabs.SelectedIndex != 0) return;
+            previewPet.AnimationTime += dt; previewPet.ActionTime += dt;
+            form.PetPreview.InvalidateVisual();
+        };
+        previewTimer.Start();
+        form.PreviewTimer = previewTimer;
 
         // Speech bubbles (lines come from the AI): how often, and forgetting learned habits.
         form.Talks = new CheckBox { Content = L("Mèo biết nói (bong bóng chữ)", "Pet talks (speech bubbles)"), IsChecked = preferences.Speech };
@@ -143,7 +192,7 @@ public sealed partial class PetWindow
         root.Children.Add(buttons); root.Children.Add(form.Tabs);
 
         double areaHeight = Math.Max(300, bounds.Bottom - bounds.Top);
-        double height = Math.Min(390, areaHeight - 24);
+        double height = Math.Min(460, areaHeight - 24);
         settingsWindow = new Window { Title = L("Cài đặt", "Settings") + " — " + preferences.Name, Icon = AppIcon.WindowImage(), Width = 460, Height = height,
             Content = root, Background = PetUi.Surface, ResizeMode = ResizeMode.NoResize, Topmost = true, ShowInTaskbar = false,
             WindowStartupLocation = WindowStartupLocation.Manual,
@@ -176,7 +225,7 @@ public sealed partial class PetWindow
                 MessageBox.Show(L("Không đổi được cài đặt khởi động cùng Windows.", "Windows startup could not be changed."), "Desktop Pet");
             sound?.Stop(); Interact("preferences_changed"); SavePreferences(); settingsWindow?.Close();
         };
-        settingsWindow.Closed += (_, _) => { settingsWindow = null; settingsForm = null; };
+        settingsWindow.Closed += (_, _) => { form.PreviewTimer.Stop(); settingsWindow = null; settingsForm = null; };
         settingsForm = form;
         settingsWindow.Show();
     }
@@ -202,6 +251,38 @@ public sealed partial class PetWindow
         Grid.SetColumn(control, 1);
         grid.Children.Add(text); grid.Children.Add(control);
         return grid;
+    }
+
+    private static readonly Brush PreviewBackground = PetUi.Frozen(Color.FromRgb(0xEE, 0xF2, 0xF7));
+    private static readonly DataTemplate CoatTemplate = CreateCoatTemplate();
+    private static DataTemplate CreateCoatTemplate()
+    {
+        var row = new FrameworkElementFactory(typeof(StackPanel));
+        row.SetValue(StackPanel.OrientationProperty, Orientation.Horizontal);
+        var dot = new FrameworkElementFactory(typeof(Grid));
+        dot.SetValue(FrameworkElement.WidthProperty, 16.0);
+        dot.SetValue(FrameworkElement.HeightProperty, 16.0);
+        dot.SetValue(FrameworkElement.VerticalAlignmentProperty, VerticalAlignment.Center);
+        var fur = new FrameworkElementFactory(typeof(System.Windows.Shapes.Ellipse));
+        fur.SetBinding(System.Windows.Shapes.Shape.FillProperty, new Binding(nameof(CoatChoice.Fur)));
+        fur.SetBinding(System.Windows.Shapes.Shape.StrokeProperty, new Binding(nameof(CoatChoice.Ink)));
+        fur.SetValue(System.Windows.Shapes.Shape.StrokeThicknessProperty, 1.0);
+        var accent = new FrameworkElementFactory(typeof(System.Windows.Shapes.Ellipse));
+        accent.SetBinding(System.Windows.Shapes.Shape.FillProperty, new Binding(nameof(CoatChoice.Accent)));
+        accent.SetValue(FrameworkElement.WidthProperty, 7.0);
+        accent.SetValue(FrameworkElement.HeightProperty, 7.0);
+        accent.SetValue(FrameworkElement.HorizontalAlignmentProperty, HorizontalAlignment.Right);
+        accent.SetValue(FrameworkElement.VerticalAlignmentProperty, VerticalAlignment.Bottom);
+        accent.SetValue(FrameworkElement.MarginProperty, new Thickness(0, 0, 2, 2));
+        dot.AppendChild(fur); dot.AppendChild(accent);
+        var text = new FrameworkElementFactory(typeof(TextBlock));
+        text.SetBinding(TextBlock.TextProperty, new Binding(nameof(CoatChoice.Label)));
+        text.SetValue(FrameworkElement.MarginProperty, new Thickness(8, 0, 0, 0));
+        text.SetValue(FrameworkElement.VerticalAlignmentProperty, VerticalAlignment.Center);
+        row.AppendChild(dot); row.AppendChild(text);
+        var template = new DataTemplate(typeof(CoatChoice)) { VisualTree = row };
+        template.Seal();
+        return template;
     }
 
     // A dependent setting is greyed out while its switch is off.

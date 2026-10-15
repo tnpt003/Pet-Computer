@@ -22,20 +22,33 @@ public sealed class CoatPalette
     public Brush? PatchB { get; }
     public Pen? MarkingPen { get; }
     public Pen AccentOutline { get; }
+    // Point colours (Siamese) and white mittens (tuxedo); by default the same brushes as
+    // Fur/Cream, so the original coats draw exactly as before.
+    public Brush Ear { get; }
+    public Brush Muzzle { get; }
+    public Brush Paw { get; }
+    // Small second colour for the swatch in the settings list.
+    public Brush? Swatch { get; }
 
     private CoatPalette(string fur, string cream, string pink, string ink = "#49372E", string? iris = null,
-        CoatMarkings markings = CoatMarkings.None, string? patchA = null, string? patchB = null)
+        CoatMarkings markings = CoatMarkings.None, string? patchA = null, string? patchB = null,
+        string? points = null, string? paw = null)
     {
         Fur = Brush(fur); Cream = Brush(cream); Pink = Brush(pink); Ink = Brush(ink);
+        var pointBrush = points == null ? null : Brush(points);
+        Ear = pointBrush ?? Fur;
+        Muzzle = pointBrush ?? Cream;
+        Paw = paw != null ? Brush(paw) : pointBrush ?? Fur;
         Outline = PetRendererPens.Create(Ink, 2.5);
         TailOutline = PetRendererPens.Create(Ink, 13, round: true);
-        TailFill = PetRendererPens.Create(Fur, 8, round: true);
+        TailFill = PetRendererPens.Create(pointBrush ?? Fur, 8, round: true);
         Iris = iris == null ? null : Brush(iris);
         Markings = markings;
         PatchA = patchA == null ? null : Brush(patchA);
         PatchB = patchB == null ? null : Brush(patchB);
         MarkingPen = PatchA == null ? null : PetRendererPens.Create(PatchA, 3.2, round: true);
         AccentOutline = PetRendererPens.Create(Ink, 8, round: true);
+        Swatch = PatchA ?? pointBrush ?? (paw != null ? Paw : null);
     }
 
     public static readonly CoatPalette Orange = new("#E9AE65", "#FFE4B5", "#E98990");
@@ -49,8 +62,22 @@ public sealed class CoatPalette
     public static readonly CoatPalette Tabby = new("#B9A588", "#EFE4D2", "#E39196", markings: CoatMarkings.Tabby,
         patchA: "#7A6650");
 
+    public static readonly CoatPalette GingerTabby = new("#E9AE65", "#FFE4B5", "#E98990", markings: CoatMarkings.Tabby,
+        patchA: "#C26E2E");
+    // Tuxedo: near-black with a white chest, muzzle and mittens; green-gold eyes.
+    public static readonly CoatPalette Tuxedo = new("#3F3E4B", "#FFFFFF", "#E79AA2", ink: "#16151B", iris: "#B9D66A",
+        paw: "#FFFFFF");
+    public static readonly CoatPalette RussianBlue = new("#8E9CB2", "#CBD4E1", "#D98F99", ink: "#323446", iris: "#7CC67F");
+    // Siamese: cream body, dark ears, mask, tail and paws, blue eyes.
+    public static readonly CoatPalette Siamese = new("#F3E6D0", "#FFF8EC", "#E9A0A6", ink: "#3B2B24", iris: "#6FB3F2",
+        points: "#8A6A55");
+
     public static CoatPalette For(string? coat) => coat switch
     {
+        "GingerTabby" => GingerTabby,
+        "Tuxedo" => Tuxedo,
+        "RussianBlue" => RussianBlue,
+        "Siamese" => Siamese,
         "Gray" => Gray,
         "Black" => Black,
         "White" => White,

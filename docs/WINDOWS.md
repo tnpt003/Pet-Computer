@@ -27,8 +27,9 @@ Launching the executable again opens the existing pet's controls instead of crea
 another cat. The last position is saved on normal exit. Saved positions and favorite
 spots follow monitor working areas, with a primary-screen fallback when disconnected.
 
-The pet settings dialog includes a master sound switch, volume, separate interaction,
-emotion and sleep sound switches, and nine preview buttons. Previews play even when
+The **Sounds** tab of the settings window has a master sound switch, separate
+interaction, emotion and sleep sound switches (greyed out while sounds are off), volume
+with a percentage, and a preview picker with nine cues and a Play button. Previews play even when
 automatic sounds are muted; volume zero silences previews too. Automatic sound
 cooldowns and the no-overlap rule remain in effect.
 
@@ -152,7 +153,7 @@ and local random behavior. Pause freezes it; toggling AI does not reset it.
 `WakeCooldownSeconds`, `WalkAcceleration`, and `DragThreshold` are adjustable in
 `PetSettings` in `src/DesktopPet/PetModel.cs`.
 
-Right-click the cat and choose **Behavior debug view** to inspect action, emotion,
+Right-click the cat and choose **More → Behavior debug view** to inspect action, emotion,
 sleep elapsed time, wake cooldown, input state, and Python energy. Energy is the
 last AI report, not a live measurement; it shows unavailable before a report or
 when AI is disabled. Choose the item again or close the debug window to hide it.
@@ -321,11 +322,11 @@ unhandled exceptions) are written to `%LOCALAPPDATA%\DesktopPet\logs\desktoppet.
 The file is capped at about 1 MB plus one `desktoppet.old.log`. With
 `PET_DATA_DIRECTORY` set, logs go into that folder instead.
 
-**Start with Windows.** Off by default. The cat's right-click menu toggles a per-user
+**Start with Windows.** Off by default. **Settings… → General** toggles a per-user
 `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` entry named `DesktopPet` for
-the running executable. Use it from the published `win-x64` copy, not a dev build.
-The menu reads the registry each time, so removing the entry from Task Manager's
-Startup page is respected.
+the running executable (written on Save, only if it changed). Use it from the published
+`win-x64` copy, not a dev build. The settings window reads the registry each time it
+opens, so removing the entry from Task Manager's Startup page is respected.
 
 **Thought bubbles and needs.** With Python AI on, the cat occasionally shows a small
 bubble above its head: fish (hungry, give a treat), ball (bored, play), moon (low
@@ -335,7 +336,7 @@ After three minutes without attention the cat also looks briefly sad.
 
 **Speech.** The cat says short lines in a bubble above its head: greetings,
 reactions to petting, treats, ball play or throws, needs and occasional chatter.
-In the cat's menu, choose **name and personality…** and use the **Speech** box:
+In the cat's menu, choose **Settings…** and use the **Speech** tab:
 - turn talking on or off
 - choose Tiếng Việt or English
 - choose how often: Rarely (events only), Sometimes or Often
@@ -346,21 +347,21 @@ lines you react to warmly (petting, treats, play) and uses fewer of those follow
 by rough throws. The debug view lists what it has learned. Wording lives in
 `ai/lines.json`.
 
-**Version.** The version lives in `DesktopPet.csproj` (`<Version>`). **About Desktop
+**Version.** The version lives in `DesktopPet.csproj` (`<Version>`). **More → About Desktop
 Pet** in the cat's menu shows the version, data folder and AI status.
 `scripts/publish.ps1` also writes `artifacts\DesktopPet-<version>-win-x64.zip`
 containing the whole folder.
 
 ## Appearance, break reminders and computer context (2026-10-13)
 
-**Appearance.** In **name and personality…**, the **Appearance** box offers six coats
+**Appearance.** In **Settings… → Pet**, the coat and accessory pickers offer six coats
 (Orange, the original, plus Gray, Black, White, Calico and Tabby) and four accessories
 (none, collar with bell, bow, party hat). Save applies them at once. Everything is
 vector drawing (`PetAppearance.cs` palettes, `PetRenderer.cs`). Patches and stripes are
 clipped inside the outline. The bow, hat and collar move with the head. The window
 size is unchanged, and the default orange cat renders pixel for pixel as before.
 
-**Break reminders.** Off by default. In the **Break reminders** box, choose every 30, 45
+**Break reminders.** Off by default. In **Settings… → General**, choose every 30, 45
 or 60 minutes. Only time you actually use the computer counts: being away 5 minutes
 counts as a break and restarts the clock. When a reminder is due, the cat says a line
 such as "Sen ơi, uống ngụm nước đi nào!" and stretches. Python words the line (category
@@ -422,7 +423,7 @@ replaces the running one. Ball play, a treat or a walk to the resting spot is ca
 - Pause disables the menu. Python is not involved and these requests are not counted as
   interactions or used for learning.
 
-**Control emotions myself** (session only, off at every start): turns off automatic
+Right-click the cat → **Emotions** / **Cảm xúc** → **Control emotions myself** (session only, off at every start): turns off automatic
 emotions and their cooldowns (petting → Happy, click bursts → Angry, fast cursor →
 Surprised, sad episodes, Sleepy → automatic sleep, AI mood hints). Then choose Normal,
 Happy, Angry, Sad or Surprised; the cat holds it until you choose another. Drag, eating,
@@ -434,7 +435,7 @@ the menu (Dizzy stays a drag-only reaction; Sleepy is the Sleep action).
 
 ## One app language (2026-10-13)
 
-**Language / Ngôn ngữ** is the first setting in the customize window. English (default)
+**Language / Ngôn ngữ** is the first setting in the **General** tab of the settings window. English (default)
 or Tiếng Việt applies to the whole app: the cat's and tray's right-click menus, the
 customize and behavior-tuning windows, dialogs, About, the AI status, the diary, the Do now
 menu, the learned likes/dislikes and what the cat says. Menus switch as soon as you Save;
@@ -456,3 +457,24 @@ follows the personality like ball play.
   started while Quiet mode is on.
 - While it runs, the cursor is the toy: passing over the cat is not petting and fast moves
   near it do not startle it. Python only hears that play started (like the ball).
+
+## Menu and settings layout (2026-10-15)
+
+The cat's right-click menu is grouped, with Windows' own icon font (no new assets):
+
+1. **Give treat, Play with ball, Laser pointer, Do now ›, Emotions ›**: playing with the cat.
+2. **Quiet mode, Sounds, Favorite resting spot ›**: quick switches (Quiet has a tooltip).
+3. **{name}'s diary, Settings…, More ›**: More holds Bring the pet to the main screen,
+   Behavior debug view and About.
+4. **Exit pet**.
+
+**Settings…** (also in the tray menu) opens one window with four tabs:
+- **Pet:** name, personality, coat, accessory, link to Advanced behavior tuning…
+- **Speech:** talking on/off, how often (greyed out while off), link to forget what was learned.
+- **Sounds:** master switch, three kinds, volume, preview picker + Play.
+- **General:** Language / Ngôn ngữ, Start with Windows, break reminders.
+
+Nothing changes until **Save**; **Cancel**, Esc or closing the window keeps the old
+settings. Save and Cancel stay at the bottom; a tab scrolls on its own on a small screen.
+The tray menu calls the AI switch **Smart pet (AI)** / **Mèo thông minh (AI)** and adds
+**Settings…**.

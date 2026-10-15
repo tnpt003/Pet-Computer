@@ -40,6 +40,7 @@ public sealed partial class PetWindow
             Left = Math.Clamp(pet.X + settings.Width / 2 - 190, bounds.Left, Math.Max(bounds.Left, bounds.Right - 380)),
             Top = bounds.Top + Math.Max(8, (areaHeight - height) / 2)
         };
+        PetUi.ApplyWindowFont(diaryWindow);
         diaryWindow.Closed += (_, _) => { diaryWindow = null; diaryPanel = null; };
         RefreshDiary();
         diaryWindow.Show();

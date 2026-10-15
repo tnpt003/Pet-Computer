@@ -30,9 +30,9 @@ public sealed partial class PetWindow
         (PetEmotion.Angry, "Giận", "Angry"), (PetEmotion.Sad, "Buồn", "Sad"), (PetEmotion.Surprised, "Giật mình", "Surprised"),
     };
 
-    private void InitializeCommands(ContextMenu menu, int index)
+    private void InitializeCommands(ContextMenu menu)
     {
-        var root = new MenuItem();
+        var root = PetUi.MenuItem(PetUi.Play);
         var actions = new MenuItem[CommandItems.Length];
         for (int i = 0; i < CommandItems.Length; i++)
         {
@@ -43,24 +43,29 @@ public sealed partial class PetWindow
             // Groups: basic poses, self-care, gestures.
             if (action is PetAction.SeekingAttention or PetAction.Stretching) root.Items.Add(new Separator());
         }
-        root.Items.Add(new Separator());
+        // Emotions have their own submenu: the manual-control switch, then the emotions it unlocks.
+        var feelings = PetUi.MenuItem(PetUi.Emotions);
         var manual = new MenuItem { IsCheckable = true };
         manual.Click += (_, _) => SetManualEmotions(manual.IsChecked);
-        root.Items.Add(manual);
+        feelings.Items.Add(manual);
+        feelings.Items.Add(new Separator());
         var emotions = new MenuItem[EmotionItems.Length];
         for (int i = 0; i < EmotionItems.Length; i++)
         {
             var emotion = EmotionItems[i].Emotion;
             emotions[i] = new MenuItem();
             emotions[i].Click += (_, _) => PerformEmotion(emotion);
-            root.Items.Add(emotions[i]);
+            feelings.Items.Add(emotions[i]);
         }
-        menu.Items.Insert(index, root);
+        menu.Items.Add(root);
+        menu.Items.Add(feelings);
         menu.Opened += (_, _) =>
         {
             bool en = preferences.Language == "en";
             root.Header = en ? "Do now" : "Làm ngay";
             root.IsEnabled = !paused;
+            feelings.Header = en ? "Emotions" : "Cảm xúc";
+            feelings.IsEnabled = !paused;
             for (int i = 0; i < actions.Length; i++) actions[i].Header = en ? CommandItems[i].En : CommandItems[i].Vi;
             manual.Header = en ? "Control emotions myself" : "Tự điều khiển cảm xúc";
             manual.IsChecked = pet.Emotions.ManualMode;

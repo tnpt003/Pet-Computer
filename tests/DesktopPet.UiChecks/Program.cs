@@ -150,9 +150,14 @@ internal static class Program
         Check(!window.IsMouseCaptured && pet.Action != PetAction.Thrown && pet.Action != PetAction.Dragging,
             "Quick click releases capture without creating a throw");
         var headers = window.ContextMenu!.Items.OfType<System.Windows.Controls.MenuItem>().Select(item => item.Header as string).ToList();
-        Check(headers.Contains("Start with Windows") && headers.IndexOf("About Desktop Pet") == headers.Count - 2 &&
-              headers[^1] == "Exit pet" && !string.IsNullOrEmpty(PetWindow.VersionText) && PetWindow.VersionText != "unknown",
-            "Context menu offers Windows startup and About (above Exit) with a version");
+        var more = window.ContextMenu.Items.OfType<System.Windows.Controls.MenuItem>().Single(item => (string)item.Header == "More");
+        var moreHeaders = more.Items.OfType<System.Windows.Controls.MenuItem>().Select(item => item.Header as string).ToList();
+        Check(headers.Take(3).SequenceEqual(new[] { "Give treat", "Play with ball", "Laser pointer" }) && headers.Contains("Settings…") &&
+              !headers.Contains("Start with Windows") && headers[^1] == "Exit pet" && headers[^2] == "More" &&
+              moreHeaders.SequenceEqual(new[] { "Bring the pet to the main screen", "Behavior debug view", "About Desktop Pet" }) &&
+              window.ContextMenu.Items.OfType<System.Windows.Controls.Separator>().Count() == 3 &&
+              !string.IsNullOrEmpty(PetWindow.VersionText) && PetWindow.VersionText != "unknown",
+            "Context menu: play items first, groups split by separators, rarely used items under More, Exit last; About has a version");
         {
             // One UI language: every menu label (submenus included) follows preferences.Language.
             var options = Field<PetPreferences>(window, "preferences");
@@ -177,8 +182,8 @@ internal static class Program
             Labels();
             Check(english.All(t => t.Length > 0 && !HasVietnamese(t)) && english.Contains("Do now") && english.Contains("Exit pet"),
                 "English UI: every context-menu label (submenus included) is English");
-            Check(vietnamese.Contains("Làm ngay") && vietnamese.Contains("Thoát mèo") && vietnamese.Contains("Khởi động cùng Windows") &&
-                  !vietnamese.Intersect(new[] { "Do now", "Exit pet", "Give treat", "Quiet mode", "Pet sounds", "Start with Windows", "About Desktop Pet", "Behavior debug view" }).Any(),
+            Check(vietnamese.Contains("Làm ngay") && vietnamese.Contains("Thoát mèo") && vietnamese.Contains("Cài đặt…") && vietnamese.Contains("Cảm xúc") &&
+                  !vietnamese.Intersect(new[] { "Do now", "Emotions", "Exit pet", "Give treat", "Quiet mode", "Sounds", "Settings…", "More", "About Desktop Pet", "Behavior debug view" }).Any(),
                 "Vietnamese UI: no English menu label is left behind");
             Check(PetWindow.LocalizeAiStatus("Python AI: connected (playful)", false) == "Python AI: đã kết nối (ham chơi)" &&
                   PetWindow.LocalizeAiStatus("Local behavior: timeout (retry after 4s)", false) == "Hành vi local: hết thời gian chờ (thử lại sau 4s)" &&
@@ -461,28 +466,80 @@ internal static class Program
         Check(pet.Action == PetAction.Walking && pet.VX < 0, "Favorite spot is approached by walking, not teleporting");
         preferences.RestX = oldRestX; preferences.RestY = oldRestY;
         window.Reset();
-        typeof(PetWindow).GetMethod("ShowPetSettings", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(window, null);
+        window.ShowPetSettings();
         var customize = Field<Window>(window, "settingsWindow");
-        Check(customize.IsVisible, "Name and personality editor opens on demand");
-        var settingsScroll = (System.Windows.Controls.ScrollViewer)customize.Content;
-        var controls = ((System.Windows.Controls.StackPanel)settingsScroll.Content).Children;
+        var form = Field<PetSettingsForm>(window, "settingsForm");
+        Check(customize.IsVisible, "Settings window opens on demand");
         var settingsArea = Field<Area>(window, "bounds");
         Check(customize.Height <= settingsArea.Bottom - settingsArea.Top && customize.Top >= settingsArea.Top &&
               customize.Top + customize.Height <= settingsArea.Bottom + 0.5 &&
-              settingsScroll.VerticalScrollBarVisibility == System.Windows.Controls.ScrollBarVisibility.Auto,
-            "Settings window fits the pet's monitor and scrolls, so Save stays reachable");
-        Check(controls.OfType<System.Windows.Controls.CheckBox>().Count() == 4
-            && controls.OfType<System.Windows.Controls.Slider>().Single().Value == preferences.Volume
-            && controls.OfType<System.Windows.Controls.WrapPanel>().Single().Children.Count == 9,
+              form.Tabs.Items.OfType<System.Windows.Controls.TabItem>().All(t => t.Content is System.Windows.Controls.ScrollViewer { VerticalScrollBarVisibility: System.Windows.Controls.ScrollBarVisibility.Auto }) &&
+              !form.Save.IsDescendantOf(form.Tabs) && !form.Cancel.IsDescendantOf(form.Tabs) && form.Save.IsVisible,
+            "Settings window fits the pet's monitor; tabs scroll while Save and Cancel stay visible outside them");
+        Check(form.Tabs.Items.OfType<System.Windows.Controls.TabItem>().Select(t => (string)t.Header).SequenceEqual(new[] { "Pet", "Speech", "Sounds", "General" }),
+            "Settings are split into Pet, Speech, Sounds and General tabs");
+        Check(form.Volume.Value == preferences.Volume && form.PreviewCue.Items.Count == 9 && form.Sounds.IsChecked == preferences.Sounds,
             "Sound settings expose master/category switches, volume and all nine previews");
-        var speechGroup = controls.OfType<System.Windows.Controls.GroupBox>().Single(g => (g.Header as string)?.StartsWith("Speech") == true);
-        var speechControls = ((System.Windows.Controls.StackPanel)speechGroup.Content).Children;
-        var languageBox = controls.OfType<System.Windows.Controls.ComboBox>().First();
-        Check(speechControls.OfType<System.Windows.Controls.CheckBox>().Single().IsChecked == true &&
-              languageBox.SelectedIndex == 0 && languageBox.Items.Count == 2 && (string)languageBox.Items[0] == "English" &&
-              speechControls.OfType<System.Windows.Controls.ComboBox>().Single().SelectedIndex == 1 &&
-              speechControls.OfType<System.Windows.Controls.Button>().Count() == 1,
-            "Settings start with the app language (English by default); speech defaults to talking, sometimes, with a forget button");
+        bool soundsBefore = form.Sounds.IsChecked == true;
+        form.Sounds.IsChecked = false;
+        bool kindsOff = !form.InteractionSounds.IsEnabled && !form.EmotionSounds.IsEnabled && !form.SleepSounds.IsEnabled;
+        form.Sounds.IsChecked = true;
+        bool kindsOn = form.InteractionSounds.IsEnabled;
+        form.Sounds.IsChecked = soundsBefore;
+        form.Talks.IsChecked = false;
+        bool chattinessOff = !form.Chattiness.IsEnabled;
+        form.Talks.IsChecked = true;
+        Check(kindsOff && kindsOn && chattinessOff && form.Chattiness.IsEnabled && form.BreakInterval.IsEnabled == (form.BreakReminders.IsChecked == true),
+            "Dependent settings are greyed out while their switch is off");
+        Check(form.Talks.IsChecked == true && form.Language.SelectedIndex == 0 && form.Language.Items.Count == 2 && (string)form.Language.Items[0] == "English" &&
+              form.Chattiness.SelectedIndex == 1 && form.Forget != null && form.Autostart != null,
+            "Settings default to English; speech defaults to talking, sometimes, with a forget link; startup lives in General");
+        if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string settingsReview)
+        {
+            // Every tab in both languages, for a human look at the layout.
+            System.IO.Directory.CreateDirectory(settingsReview);
+            string languageBefore = preferences.Language;
+            foreach (string language in new[] { "en", "vi" })
+            {
+                customize.Close();
+                preferences.Language = language;
+                window.ShowPetSettings();
+                var reviewWindow = Field<Window>(window, "settingsWindow");
+                var reviewForm = Field<PetSettingsForm>(window, "settingsForm");
+                for (int tab = 0; tab < reviewForm.Tabs.Items.Count; tab++)
+                {
+                    reviewForm.Tabs.SelectedIndex = tab;
+                    reviewWindow.UpdateLayout();
+                    var root = (FrameworkElement)reviewWindow.Content;
+                    var image = new RenderTargetBitmap((int)root.ActualWidth, (int)root.ActualHeight, 96, 96, PixelFormats.Pbgra32);
+                    image.Render(root);
+                    var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(image));
+                    using var stream = System.IO.File.Create(System.IO.Path.Combine(settingsReview, $"settings-{language}-{tab}.png")); encoder.Save(stream);
+                }
+                customize = reviewWindow;
+                window.ShowControls();
+                var menu = window.ContextMenu!;
+                menu.UpdateLayout();
+                var menuImage = new RenderTargetBitmap((int)menu.ActualWidth, (int)menu.ActualHeight, 96, 96, PixelFormats.Pbgra32);
+                menuImage.Render(menu);
+                var menuEncoder = new PngBitmapEncoder(); menuEncoder.Frames.Add(BitmapFrame.Create(menuImage));
+                using (var menuStream = System.IO.File.Create(System.IO.Path.Combine(settingsReview, $"menu-{language}.png"))) menuEncoder.Save(menuStream);
+                menu.IsOpen = false;
+            }
+            customize.Close();
+            preferences.Language = languageBefore;
+            window.ShowPetSettings();
+            customize = Field<Window>(window, "settingsWindow");
+            form = Field<PetSettingsForm>(window, "settingsForm");
+        }
+        string nameBefore = preferences.Name;
+        double volumeBefore = preferences.Volume;
+        form.Name.Text = "Changed"; form.Volume.Value = 0.1;
+        form.Cancel.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+        Check(!customize.IsVisible && Field<Window?>(window, "settingsWindow") == null && preferences.Name == nameBefore && preferences.Volume == volumeBefore,
+            "Cancel closes settings without changing anything");
+        window.ShowPetSettings();
+        customize = Field<Window>(window, "settingsWindow");
         var playSound = typeof(PetWindow).GetMethod("PlayPetSound", BindingFlags.NonPublic | BindingFlags.Instance)!;
         Check(!(bool)playSound.Invoke(window, new object?[] { "meow", true, 0.0 })!, "Zero-volume preview stays silent");
         typeof(PetWindow).GetMethod("ShowBehaviorSettings", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(window, null);
@@ -569,8 +626,10 @@ internal static class Program
 
         // "Do now" menu: immediate actions (even in Quiet), queued after waking, manual emotions.
         var doNow = window.ContextMenu.Items.OfType<System.Windows.Controls.MenuItem>().FirstOrDefault(item => item.Header is "Làm ngay" or "Do now");
-        Check(doNow != null && doNow.Items.OfType<System.Windows.Controls.MenuItem>().Count() == 18,
-            "Context menu offers Do now with 12 actions, the manual-emotion switch and 5 emotions");
+        var feelings = window.ContextMenu.Items.OfType<System.Windows.Controls.MenuItem>().FirstOrDefault(item => item.Header is "Cảm xúc" or "Emotions");
+        Check(doNow != null && doNow.Items.OfType<System.Windows.Controls.MenuItem>().Count() == 12 &&
+              feelings != null && feelings.Items.OfType<System.Windows.Controls.MenuItem>().Count() == 6,
+            "Context menu offers Do now with 12 actions and Emotions with the manual switch and 5 emotions");
         window.Reset();
         Check(window.DoNow(PetAction.ChasingTail) && pet.Action == PetAction.ChasingTail, "Do now starts a gesture at once, even in Quiet mode");
         behavior.Step(pet, 0.5);
@@ -602,21 +661,16 @@ internal static class Program
     private static void ContextChecks(PetWindow window, PetModel pet, PetBehavior behavior, PetPreferences preferences)
     {
         var renderer = (PetRenderer)window.Content;
-        typeof(PetWindow).GetMethod("ShowPetSettings", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(window, null);
-        var settingsWindow = Field<Window>(window, "settingsWindow");
-        var panel = (System.Windows.Controls.StackPanel)((System.Windows.Controls.ScrollViewer)settingsWindow.Content).Content;
-        System.Windows.Controls.UIElementCollection Group(string header) =>
-            ((System.Windows.Controls.StackPanel)panel.Children.OfType<System.Windows.Controls.GroupBox>().Single(g => (string)g.Header == header).Content).Children;
-        var looks = Group("Appearance").OfType<System.Windows.Controls.ComboBox>().ToArray();
-        var breakControls = Group("Break reminders");
-        var reminder = breakControls.OfType<System.Windows.Controls.CheckBox>().Single();
-        var interval = breakControls.OfType<System.Windows.Controls.ComboBox>().Single();
+        window.ShowPetSettings();
+        var form = Field<PetSettingsForm>(window, "settingsForm");
+        var looks = new[] { form.Coat, form.Accessory };
+        var reminder = form.BreakReminders;
+        var interval = form.BreakInterval;
         Check(looks.Length == 2 && looks[0].Items.Count == 6 && looks[1].Items.Count == 4 && looks[0].SelectedIndex == 0 && looks[1].SelectedIndex == 0 &&
               reminder.IsChecked == false && interval.SelectedIndex == 1,
             "Settings offer six coats, four accessories and break reminders (off, 45 minutes)");
         looks[0].SelectedIndex = 2; looks[1].SelectedIndex = 3; reminder.IsChecked = true; interval.SelectedIndex = 0;
-        var save = panel.Children.OfType<System.Windows.Controls.Button>().Last();
-        save.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+        form.Save.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
         var breaks = Field<PetBreaks>(window, "breaks");
         Check(preferences.Coat == "Black" && preferences.Accessory == "Hat" && renderer.Coat == "Black" && renderer.Accessory == "Hat" &&
               preferences.BreakReminders && preferences.BreakMinutes == 30 && breaks.Enabled && breaks.IntervalSeconds == 1800,

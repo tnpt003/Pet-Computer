@@ -100,7 +100,7 @@ when the first decision is due (about two seconds after startup).
 
 Right-click the notification-area/tray icon to see `Python AI: connected (...)`
 or a local-fallback reason. The status is refreshed when you open that menu.
-Use **Enable Python AI** to stop/restart the AI independently of the pet.
+Use **Smart pet (AI)** / **Mèo thông minh (AI)** to stop/restart the AI independently of the pet.
 No LLM, microphone, camera, screen capture, or external AI service is used.
 
 To explicitly start with the original local random behavior:

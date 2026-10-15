@@ -182,11 +182,11 @@ procedural, so there are no missing asset paths or sprite-sheet setup steps.
 
 - **Left drag:** pick up and carry the pet, including between monitors.
 - **Release while moving:** throw it. Release after holding still to drop it.
-- **Right-click the pet:** reset or exit.
-- **Right-click the tray icon:** pause/resume, enable/disable Python AI, view AI status, reset, or exit.
+- **Right-click the pet:** feed, play, Do now, emotions, Quiet, sounds, diary, Settings…, More, Exit.
+- **Right-click the tray icon:** pause/resume, Smart pet (AI) on/off, view AI status, Settings…, reset, or exit.
 - **Double-click the tray icon:** reset to the primary screen.
 
-The cat's own menu also has **Start with Windows** (off by default) and **About**.
+**Start with Windows** (off by default) is in **Settings… → General**; **About** is under **More**.
 Diagnostics are logged to `%LOCALAPPDATA%\DesktopPet\logs`.
 The tray icon may be under the Windows notification area's hidden-icons arrow.
 Pause freezes animation, physics, and random actions. You can still reposition the

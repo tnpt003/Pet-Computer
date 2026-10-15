@@ -99,27 +99,9 @@ public sealed partial class PetWindow : Window
         if (Environment.GetEnvironmentVariable("PET_AI_DISABLED") != "1") ai = new PythonDecisionSource();
         renderer = new PetRenderer(pet);
         Content = renderer;
-        var menu = new ContextMenu();
-        var reset = new MenuItem();
-        reset.Click += (_, _) => Reset();
-        var exit = new MenuItem();
-        exit.Click += (_, _) => Application.Current.Shutdown();
-        menu.Items.Add(reset);
-        var debug = new MenuItem();
-        // Headers follow the UI language and refresh each time the menu opens.
-        void Localize()
-        {
-            reset.Header = L("Về màn hình chính", "Reset to primary screen");
-            debug.Header = L("Xem debug hành vi", "Behavior debug view");
-            exit.Header = L("Thoát mèo", "Exit pet");
-        }
-        Localize();
-        menu.Opened += (_, _) => Localize();
-        debug.Click += (_, _) => ToggleDebug();
-        menu.Items.Add(debug);
-        menu.Items.Add(exit);
+        var menu = new ContextMenu { FontFamily = PetUi.TextFont, FontSize = 13 };
         ContextMenu = menu;
-        InitializeFeatures(menu);
+        InitializeFeatures(menu); // Builds the whole menu (PetWindow.Features.cs).
         SourceInitialized += (_, _) =>
         {
             var source = (HwndSource)PresentationSource.FromVisual(this);

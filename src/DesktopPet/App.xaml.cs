@@ -38,6 +38,9 @@ public partial class App : Application
         enableAi.CheckedChanged += (_, _) => pet.SetAiEnabled(enableAi.Checked);
         menu.Items.Add(enableAi);
         menu.Items.Add(aiStatus);
+        menu.Items.Add(new Forms.ToolStripSeparator());
+        var settings = new Forms.ToolStripMenuItem(null, null, (_, _) => pet.ShowPetSettings());
+        menu.Items.Add(settings);
         var reset = new Forms.ToolStripMenuItem(null, null, (_, _) => pet.Reset());
         menu.Items.Add(reset);
         menu.Items.Add(new Forms.ToolStripSeparator());
@@ -47,9 +50,10 @@ public partial class App : Application
         void Localize()
         {
             pause.Text = pet.L("Tạm dừng", "Pause");
-            enableAi.Text = pet.L("Bật Python AI", "Enable Python AI");
+            enableAi.Text = pet.L("Mèo thông minh (AI)", "Smart pet (AI)");
             aiStatus.Text = pet.AiStatusText;
-            reset.Text = pet.L("Về màn hình chính", "Reset to primary screen");
+            settings.Text = pet.L("Cài đặt…", "Settings…");
+            reset.Text = pet.L("Gọi mèo về màn hình chính", "Bring the pet to the main screen");
             exit.Text = pet.L("Thoát", "Exit");
             if (tray != null) tray.Text = pet.L("Desktop Pet — chuột phải để điều khiển", "Desktop Pet — right-click for controls");
         }

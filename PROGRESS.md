@@ -1,10 +1,16 @@
 # Tiến độ Desktop Pet
 
-Cập nhật: 2026-10-13 (Asia/Saigon).
+Cập nhật: 2026-10-15 (Asia/Saigon).
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
-## Kết quả test gần nhất (2026-10-15, sửa 3 lỗi từ review của Codex)
+## Kết quả test gần nhất (2026-10-15, sắp xếp lại menu + cửa sổ cài đặt dạng tab)
+- scripts/test.ps1 -Ui: 49 Python tests, 364 C# checks, 175 WPF checks đạt (exit 0). Một lần chạy UiChecks lẻ trước đó có 3 check kéo thả FAIL (dùng con trỏ thật, như lần 2026-10-13); chạy lại test.ps1 2 lần đều đạt.
+- Publish + check-publish đạt (3/3). Đã đóng (WM_CLOSE đúng process artifacts\win-x64) và mở lại mèo của người dùng.
+- Đã xem ảnh render (PET_RENDER_REVIEW, file settings-{en,vi}-{0..3}.png, menu-{en,vi}.png): 4 tab cả 2 ngôn ngữ không bị cắt chữ; menu có icon, vạch ngăn đúng nhóm.
+- Chưa xem trực tiếp: menu thật trên màn hình (DPI khác, menu con), cửa sổ cài đặt thật, menu khay.
+
+## Kết quả test đợt sửa 3 lỗi từ review của Codex (2026-10-15)
 - scripts/test.ps1 -Ui: 49 Python tests, 364 C# checks, 172 WPF checks đạt (exit 0). Publish + check-publish đạt (3/3). Đã đóng (WM_CLOSE đúng process) và mở lại mèo của người dùng.
 - Đã kiểm tra test mới bắt được lỗi: chạy UiChecks trên src cũ (git stash) → 3 FAIL (thức dậy kéo dài 2.62s; câu ngôn ngữ cũ vẫn hiện); src mới đạt hết.
 - Chưa xem trực tiếp: lời phản ứng/bong bóng trong Quiet khi dùng thật.
@@ -66,6 +72,14 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Lịch sử: 201 C#/107 WPF/20 Python (motion, 2026-10-08); 181/101/20 (features). Không dùng số liệu cũ thay kết quả hiện tại.
 
 ## Đã làm gần đây
+- 2026-10-15 (giao diện gọn cho người dùng thường; người dùng "ok" mặc định: Khởi động cùng Windows vào Cài đặt, Debug vào "Khác", nhãn AI "Mèo thông minh (AI)", chưa làm ảnh xem trước mèo):
+  - Menu chuột phải (PetWindow.Features.cs dựng toàn bộ; PetWindow.cs chỉ tạo ContextMenu): Cho ăn, Chơi bóng, Chơi đèn laser, Làm ngay ›, Cảm xúc › | Chế độ yên lặng (có tooltip), Âm thanh, Chỗ nghỉ yêu thích › | Nhật ký, Cài đặt…, Khác › (Gọi mèo về màn hình chính, Xem debug hành vi, Giới thiệu) | Thoát mèo. Icon từ font Segoe Fluent Icons/MDL2 có sẵn (PetUi.cs), mục có dấu tick không có icon. Handler và điều kiện mờ menu giữ nguyên.
+  - PetWindow.Commands.cs: tách "Cảm xúc" (công tắc tự điều khiển + 5 cảm xúc) khỏi "Làm ngay" (12 động tác).
+  - PetWindow.Settings.cs (mới, chuyển từ Features): cửa sổ "Cài đặt — {tên}" 460px, 4 tab Mèo/Lời nói/Âm thanh/Chung, nhãn trái-ô phải; Lưu (màu nhấn) + Hủy luôn ở đáy; tab tự cuộn khi màn nhỏ. Ô phụ thuộc mờ khi công tắc tắt (3 loại âm thanh, Mức độ nói, khoảng nhắc nghỉ). Nghe thử: 1 ô chọn 9 âm + nút Phát. Âm lượng hiện %. "Tinh chỉnh hành vi nâng cao…" và "Quên những gì mèo đã học…" thành link. Bỏ chữ "(Python AI)" khỏi nhãn. Khởi động cùng Windows trong tab Chung: đọc registry khi mở, chỉ ghi khi Lưu và giá trị đổi; cửa sổ test (không lưu preferences) không ghi registry.
+  - Hành vi đổi: Khởi động cùng Windows không còn trong menu mèo (bấm Lưu mới có hiệu lực). Preferences giữ nguyên định dạng.
+  - Khay: thêm "Cài đặt…", "Bật Python AI" → "Mèo thông minh (AI)"/"Smart pet (AI)", "Về màn hình chính" → "Gọi mèo về màn hình chính".
+  - Nhật ký và Tinh chỉnh hành vi: chỉ đổi font Segoe UI 13 (Tinh chỉnh thêm nền sáng).
+  - Test: UiChecks viết lại check menu (nhóm, 3 vạch ngăn, Khác, Thoát cuối), Làm ngay 12 + Cảm xúc 6, cài đặt qua PetSettingsForm (4 tab, Lưu/Hủy ngoài tab, ô mờ theo công tắc, Hủy không đổi gì); ảnh review menu + 4 tab × 2 ngôn ngữ khi có PET_RENDER_REVIEW. Docs: WINDOWS.md (mục mới "Menu and settings layout"), README, AI.md.
 - 2026-10-15 (review của Codex, cả 3 điểm đã xác nhận đúng trong code):
   - Quiet: nhánh Quiet trong PetBehavior.Step vẫn đếm giờ và gọi DecisionRequested (2–6s); TryApply từ chối mọi lệnh khi Quiet (trước đây Quiet không gửi observation nào nên nhật ký/nhu cầu/câu phản ứng bị cũ). Hành vi đổi: trong Quiet mèo có câu phản ứng và bong bóng ý nghĩ (fullscreen vẫn chặn hiển thị).
   - Thức dậy: PetBehavior.Reset(pet) giữ bộ đếm khi đang Waking; CancelFeatureActivity và SetAiEnabled truyền pet. Sửa cả các đường Codex chưa nêu: click/chuột phải khi đang thức dậy, bấm Quiet, vào/thoát fullscreen.
@@ -128,6 +142,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Lịch sử chuyển project: 2026-10-05 tạo AGENTS.md/PROGRESS.md tại ổ D khi thư mục đó trống; source hiện nằm tại ổ C, không cần khôi phục về D.
 
 ## Đang dở và việc tiếp theo
+- Giao diện: chưa làm ảnh xem trước con mèo trong tab Mèo (đổi bộ lông/phụ kiện thấy ngay); menu vẫn dùng kiểu Windows mặc định (chưa có template bo góc riêng); Nhật ký/Tinh chỉnh hành vi chưa đổi bố cục.
 - Từ review của Codex, chưa làm: gom điều kiện bắt đầu hoạt động vào PetActionRules (refactor từng bước, sau khi có thêm test kết hợp); đợt đo hiệu năng (CPU/RAM/thời gian render khi idle, ngủ, kéo nhanh, chơi laser; chạy dài nhiều giờ; fullscreen; nhiều màn hình/DPI).
 - Phương án 1 chưa làm (người dùng chọn 2): bỏ cooldown cho ăn 20s; menu cho ăn/bóng/laser luôn bấm được và xếp hàng ≤3s khi mèo đang thức dậy/giận/giật mình (như Làm ngay). Ý tưởng khác: mèo no (đói < 10) thì từ chối ăn thay vì cooldown cố định.
 - check-publish.ps1 fail khi người dùng đang mở app fullscreen trên màn hình chính (mèo yên lặng, Python chưa khởi động). Có thể cho smoke test tắt probe ngữ cảnh bằng biến môi trường nếu muốn chạy được lúc đó.
@@ -148,6 +163,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Không tích hợp LLM, voice hay computer vision; không thay framework hoặc hệ thống rendering/physics.
 
 ## Cần test thủ công
+- Giao diện mới: chuột phải mèo xem menu (icon rõ, nhóm hợp lý, menu con Làm ngay/Cảm xúc/Chỗ nghỉ/Khác); mở Cài đặt từ menu mèo và từ khay; đổi từng tab rồi Hủy (không đổi gì) và Lưu; tắt Bật âm thanh/Mèo biết nói/Nhắc nghỉ thì ô phụ mờ; Nghe thử; bật/tắt Khởi động cùng Windows rồi Lưu (kiểm tra Task Manager → Startup); đổi ngôn ngữ; Esc đóng cửa sổ. Xem trên màn hình DPI 125–150%.
 - Quiet + AI: bật Quiet, vuốt/cho ăn mèo: có câu phản ứng (nếu bật Speech) nhưng mèo không tự đi; mở Nhật ký sau vài phút Quiet: số liệu mới. Click để đánh thức rồi chuột phải ngay: mèo vẫn thức trong ~1.2s như thường.
 - Quiet + trò chơi: bật Quiet, chọn Chơi bóng và Chơi đèn laser: chạy bình thường, hết trò thì mèo đứng yên (không tự đi). Bật Quiet giữa lúc đang chơi: trò dừng. Mở video fullscreen: không bắt đầu được.
 - Đèn laser: bật từ menu, rê chuột trên màn hình có mèo: mèo nhìn, đuổi, dừng chuột gần mèo thì rình rồi vồ; rê lên cao thì mèo chỉ nhìn; rê qua người mèo không bị tính vuốt; sang màn hình khác thì chấm ẩn; click mèo/chuột phải thì tắt; tự tắt sau 60s. Click vào app khác trong lúc chơi vẫn được (chấm không chặn click).

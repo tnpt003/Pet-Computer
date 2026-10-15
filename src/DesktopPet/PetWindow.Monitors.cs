@@ -29,6 +29,8 @@ public sealed partial class PetWindow
         scale = newScale;
         pet.Motion.Reset(pet);
         CancelFeatureActivity();
+        // Window edges were measured at the old scale: back to the floor, then rescan.
+        ledges.Clear(); ledgeScan = 0; pet.LedgeId = 0;
         SelectMonitor(); physics.Clamp(pet, bounds);
         if (pet.Grounded) pet.Y = bounds.Bottom - settings.Height;
         SnapPresentation();

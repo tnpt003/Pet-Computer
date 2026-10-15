@@ -4,7 +4,13 @@ Cập nhật: 2026-10-15 (Asia/Saigon).
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
-## Kết quả test gần nhất (2026-10-15, thêm bộ lông/phụ kiện + xem trước)
+## Kết quả test gần nhất (2026-10-15, mèo đi trên cửa sổ)
+- scripts/test.ps1 -Ui: 49 Python tests, 393 C# checks, 186 WPF checks đạt (exit 0). Publish + check-publish đạt (3/3). Đã đóng (WM_CLOSE đúng process artifacts\win-x64) và mở lại mèo của người dùng.
+- So pixel: 156 ảnh render cũ giống hệt; tư thế trèo (2 hướng × 10 bộ lông × 8 phụ kiện) qua check mép; đã xem ảnh tư thế trèo.
+- Chạy thật bản publish với PET_DATA_DIRECTORY riêng ~70 s: không lỗi, CPU ~8.8% một nhân, RAM 168 MB (lần đo trước ~6%, 200 MB; điều kiện khác nhau nên chưa kết luận). Lúc đó người dùng đang mở app phóng to (không phải gờ) nên CHƯA thấy mèo trèo/đứng trên cửa sổ thật. Ảnh chụp màn hình lúc đó đã xóa ngay (dính nội dung riêng).
+- Chưa xem trực tiếp: nhảy/trèo/đứng/đi theo cửa sổ thật; Chrome/VS Code/Electron (thanh tiêu đề tự vẽ) có lệch vài px không; nhiều màn hình/DPI.
+
+## Kết quả test đợt thêm bộ lông/phụ kiện + xem trước (2026-10-15)
 - scripts/test.ps1 -Ui: 49 Python tests, 364 C# checks, 177 WPF checks đạt (exit 0). Publish + check-publish đạt (3/3). Đã đóng (WM_CLOSE đúng process artifacts\win-x64) và mở lại mèo của người dùng.
 - So pixel: 156 ảnh render bộ lông/phụ kiện cũ (6×4 ở 6 tư thế + ảnh đơn) giống hệt bản trước. Check mép tự động đạt cho 10×8 ở mọi tư thế (gồm kéo có xoay).
 - Đã xem ảnh: 4 bộ lông mới, 4 phụ kiện mới, ngủ (Xiêm + kính), kéo (tuxedo + vương miện), vui, quay trái; ô xem trước trong tab Mèo không bị cắt.
@@ -78,6 +84,14 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Lịch sử: 201 C#/107 WPF/20 Python (motion, 2026-10-08); 181/101/20 (features). Không dùng số liệu cũ thay kết quả hiện tại.
 
 ## Đã làm gần đây
+- 2026-10-15 (mèo đi trên cửa sổ; người dùng chọn: trèo + nhảy, đi theo khi kéo cửa sổ, công tắc bật sẵn):
+  - PetModel.cs: Ledge (mép trên nhìn thấy, ClimbLeft/ClimbRight), PetAction.Climbing, PetModel.LedgeId/ClimbId/ClimbSide, PetSettings.ClimbSpeed 110, LedgeMargin 8, LedgeBounceSpeed 400, ClimbOffset 30. PetPhysics.Step thêm ledges + mayLeaveLedge: đáp chỉ khi rơi từ trên, đứng trên gờ, quay đầu ở mép, rơi khi gờ mất/ra khỏi mép; leo (StepClimb) rồi nhảy nhẹ lên đỉnh; LeaveLedge giữ tư thế ngủ/thức; LetGo. Không có ledges thì physics như cũ (floor không nảy khi đang ngủ — trước đây mèo ngủ không bao giờ rơi).
+  - PetLedges.cs (mới, thuần): Build (lọc, cắt phần bị che, cạnh trèo được), Support, Landing, Wall, PlanJump (60–380 DIPs cao, ≤260 ngang, đỉnh cao hơn mép 40), PlanClimb (≤700 DIPs).
+  - PetWindow.Ledges.cs (mới): quét cửa sổ 0.3 s (EnumWindows z-order, DWM frame/cloaked, bỏ app mình, tool window, có chủ, không tiêu đề, phóng to, WS_EX_TRANSPARENT, desktop), mỗi khung đọc cửa sổ đang đứng để đi theo; tự lên (~mỗi 30–60 s × tính cách, nhảy nếu được, không thì đi tới cạnh rồi trèo), tự xuống sau 60–120 s (đi ra mép gần). Quiet/fullscreen/không rảnh thì không tự lên.
+  - PetBehavior: StartLeap (dùng co người 0.16 s, vận tốc tính sẵn; Quiet từ chối; leap bị xóa khi có lệnh khác), Waking vẫn đếm 1.2 s khi đang rơi.
+  - Tích hợp: bước sửa vị trí mỗi giây và DPI không kéo mèo trên gờ xuống (DPI thì về sàn), Reset/drag xóa gờ, CancelFeatureActivity làm mèo đang trèo buông ra, bóng chỉ đánh từ sàn, Nhớ chỗ này mờ khi trên cửa sổ, đi về chỗ nghỉ khi đứng ngay trên chỗ đó thì đi ra mép trước. Renderer: tư thế trèo (nghiêng 8°, 2 chân trước vươn lên luân phiên). PetEmotions busy thêm Climbing. Python BUSY_STATES thêm "Climbing".
+  - Cài đặt → Mèo: "Mèo leo lên cửa sổ" (PetPreferences.ClimbWindows, mặc định true); tắt thì mèo rơi và ngừng đọc cửa sổ. Debug view thêm dòng Windows. AGENTS.md thêm ngoại lệ đã duyệt.
+  - Test: LedgeTests.cs (C#, 29 check), LedgeChecks.cs (WPF với danh sách cửa sổ giả: ném lên, đi theo, bước sửa vị trí, cửa sổ mất, tự trèo, buông khi click, Quiet, tắt công tắc); UiChecks thay probe cửa sổ thật bằng danh sách rỗng; AppearanceVisualChecks thêm tư thế trèo 2 hướng.
 - 2026-10-15 (bộ lông/phụ kiện + xem trước, người dùng duyệt danh sách và "cử động nhẹ"):
   - Bộ lông mới (PetAppearance.cs): GingerTabby (Mướp cam), Tuxedo (Mun cổ trắng: ngực/mõm/bàn chân trắng, mắt xanh vàng), RussianBlue (Xám xanh, mắt xanh lá), Siamese (Xiêm: tai, mặt, đuôi, bàn chân nâu, mắt xanh). CoatPalette thêm Ear/Muzzle/Paw (mặc định chính là brush Fur/Cream cũ nên bộ lông cũ không đổi pixel) và Swatch.
   - Phụ kiện mới (PetRenderer.cs): Scarf (khăn quàng sau đầu như vòng cổ, có vạt buông), Glasses (kính tròn trên mắt, mắt vẫn chớp/ngủ/cảm xúc), Flower (bông hoa chỗ nơ), Crown (vương miện thấp hơn mũ tiệc). PetPreferences.Coats/Accessories thêm tên mới; giá trị cũ giữ nguyên, bản EXE cũ đọc tên lạ thì về mặc định.
@@ -174,6 +188,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Không tích hợp LLM, voice hay computer vision; không thay framework hoặc hệ thống rendering/physics.
 
 ## Cần test thủ công
+- Đi trên cửa sổ: để một cửa sổ (không phóng to) như VS Code/Explorer; ném/thả mèo lên mép trên: đáp đúng mép, đi qua lại, quay đầu ở mép; kéo cửa sổ: mèo đi theo; thu nhỏ/phóng to/đóng: mèo rơi. Cửa sổ thấp gần mèo: mèo tự nhảy lên (chờ 1–2 phút). Cửa sổ cao chạm đáy: mèo đi tới cạnh, trèo lên, nhảy lên đỉnh; click khi đang trèo: buông. Mèo ngủ trên cửa sổ rồi thu nhỏ cửa sổ: rơi mà vẫn ngủ. Chơi bóng/laser khi mèo trên cửa sổ: mèo đi ra mép và nhảy xuống. Tắt "Mèo leo lên cửa sổ": mèo rơi. Xem dòng Windows trong debug view. Thử Chrome/VS Code (thanh tiêu đề tự vẽ) xem có lệch không.
 - Giao diện mới: chuột phải mèo xem menu (icon rõ, nhóm hợp lý, menu con Làm ngay/Cảm xúc/Chỗ nghỉ/Khác); mở Cài đặt từ menu mèo và từ khay; đổi từng tab rồi Hủy (không đổi gì) và Lưu; tắt Bật âm thanh/Mèo biết nói/Nhắc nghỉ thì ô phụ mờ; Nghe thử; bật/tắt Khởi động cùng Windows rồi Lưu (kiểm tra Task Manager → Startup); đổi ngôn ngữ; Esc đóng cửa sổ. Xem trên màn hình DPI 125–150%.
 - Quiet + AI: bật Quiet, vuốt/cho ăn mèo: có câu phản ứng (nếu bật Speech) nhưng mèo không tự đi; mở Nhật ký sau vài phút Quiet: số liệu mới. Click để đánh thức rồi chuột phải ngay: mèo vẫn thức trong ~1.2s như thường.
 - Quiet + trò chơi: bật Quiet, chọn Chơi bóng và Chơi đèn laser: chạy bình thường, hết trò thì mèo đứng yên (không tự đi). Bật Quiet giữa lúc đang chơi: trò dừng. Mở video fullscreen: không bắt đầu được.

@@ -482,3 +482,38 @@ Nothing changes until **Save**; **Cancel**, Esc or closing the window keeps the 
 settings. Save and Cancel stay at the bottom; a tab scrolls on its own on a small screen.
 The tray menu calls the AI switch **Smart pet (AI)** / **Mèo thông minh (AI)** and adds
 **Settings…**.
+
+## Walking on windows (2026-10-15)
+
+**Settings… → Pet → Climb on windows** (on by default). The pet treats the visible top
+edge of ordinary app windows on its monitor as a floor:
+
+- **What counts:** visible, not minimized or maximized, not cloaked (other virtual
+  desktops), titled, unowned windows (as in Alt+Tab), at least 200×80 DIPs, with room for
+  the pet above the edge. The frame comes from DWM (no invisible resize borders). Parts
+  of the edge covered by a window above it are skipped. Only rectangles, styles and
+  z-order are read, never window content; the list is refreshed about 3 times a second,
+  and the window the pet stands on every frame.
+- **Landing:** a falling (thrown, dropped, jumping) pet lands on an edge it comes down
+  onto; rising through an edge never stops it. Landings faster than 400 DIPs/s bounce.
+- **Walking:** wandering turns at a ledge's ends. Games (ball, laser) and the walk to the
+  resting spot carry the pet past the end, where it drops. The ball is batted only from
+  the floor; "Remember this spot" is disabled on a window.
+- **Riding:** moving (dragging) the window moves the pet with it in the same frame.
+  Closing, minimizing or maximizing it, or covering the spot, drops the pet.
+- **Sleep:** a sleeping pet whose window vanishes falls in its sleeping pose, lands
+  without bouncing and keeps sleeping; waking keeps its 1.2 s even while falling.
+- **Going up on its own** (local C#, roughly once a minute, not in Quiet mode or with a
+  fullscreen app): a ledge 60–380 DIPs above the feet and within 260 DIPs sideways is a
+  leap (usual 0.16 s crouch, velocity planned to peak 40 DIPs above the edge). A taller
+  window whose bottom is within 100 DIPs of the floor and whose side is uncovered is
+  climbed: the pet walks to the side, climbs at 110 DIPs/s facing the window (Climbing
+  pose: leaning in, front paws reaching up in turn), then hops onto the top.
+- **Going down:** after about 1–2 minutes on a window the pet walks off the nearer end.
+- **Letting go:** a click, right-click, Quiet mode or the window going away makes a
+  climbing pet drop. Dragging works as usual. AI commands cannot interrupt a climb
+  (`Climbing` is in `BUSY_STATES`).
+- Turning the setting off, or a fullscreen app, removes all ledges: a pet on a window
+  falls and windows are no longer read. Reset and a DPI change put the pet on the floor.
+- The debug view shows a `Windows:` line (off / floor / on a window / climbing, ledge
+  count, plans).

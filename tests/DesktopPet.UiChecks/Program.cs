@@ -20,6 +20,8 @@ internal static class Program
         // Unattended runs must not depend on the real foreground window or on how long
         // nobody touched the machine (that would trigger the away nap mid-test).
         SetContext(window, false, 0);
+        // Nor on the real desktop's windows (the pet would land on them).
+        LedgeChecks.SetWindows(window, () => Array.Empty<WindowSnapshot>());
         window.Loaded += async (_, _) =>
         {
             try
@@ -614,6 +616,7 @@ internal static class Program
         }
         ContextChecks(window, pet, behavior, preferences);
         LifeChecks(window, pet, preferences);
+        LedgeChecks.Run(window, pet, behavior, preferences, Check);
         window.ShowControls();
         Check(window.ContextMenu!.IsOpen, "Existing pet controls can be opened by a second launch notification");
         window.ContextMenu.IsOpen = false;

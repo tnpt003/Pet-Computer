@@ -162,6 +162,7 @@ public sealed partial class PetWindow : Window
         physics.Clamp(pet, bounds);
         pet.VX = pet.VY = 0;
         pet.Grounded = true;
+        pet.LedgeId = pet.ClimbId = 0;
         pet.Action = PetAction.Idle;
         behavior.Reset();
         pet.Emotions.Reset();
@@ -216,6 +217,7 @@ public sealed partial class PetWindow : Window
         dragOffset = new Point(cursor.X - pet.X, cursor.Y - pet.Y);
         pet.VX = pet.VY = 0;
         pet.Grounded = false;
+        pet.LedgeId = pet.ClimbId = 0;
         pet.Action = PetAction.Dragging;
         pet.Pickup.Begin(cursor.X, cursor.Y);
         Present();
@@ -293,6 +295,7 @@ public sealed partial class PetWindow : Window
             TickFeatures(dt);
             TickCommands();
             TickContext(dt);
+            TickLedges(dt);
             pet.Activity.Step(pet.Action, dt);
             var cursor = CursorPosition();
             // During the laser game the cursor is the toy: no petting strokes or startles from it.
@@ -312,7 +315,7 @@ public sealed partial class PetWindow : Window
                 boundsTimer = 0;
                 SelectMonitor();
                 physics.Clamp(pet, bounds);
-                if (pet.Grounded) pet.Y = bounds.Bottom - settings.Height;
+                if (pet.Grounded && pet.LedgeId == 0) pet.Y = bounds.Bottom - settings.Height; // Not when standing on a window.
                 SnapPresentation();
             }
             if (!paused && !pressPending)
@@ -323,7 +326,7 @@ public sealed partial class PetWindow : Window
                 {
                     previousX = pet.X; previousY = pet.Y;
                     if (!FeatureOwnsMovement()) behavior.Step(pet, PhysicsStep, cursorX);
-                    physics.Step(pet, bounds, PhysicsStep);
+                    physics.Step(pet, bounds, PhysicsStep, ledges, FeatureOwnsMovement());
                     accumulator -= PhysicsStep;
                 }
             }
@@ -377,6 +380,7 @@ public sealed partial class PetWindow : Window
                 $"Speech: {(pet.Speech.Visible ? pet.Speech.Text : "none")}\n" +
                 $"Learned likes: {(aiLearned is { Likes.Length: > 0 } ? string.Join("; ", aiLearned.Likes) : "nothing yet")}\n" +
                 $"Learned dislikes: {(aiLearned is { Dislikes.Length: > 0 } ? string.Join("; ", aiLearned.Dislikes) : "nothing yet")}\n" +
+                $"Windows: {(!LedgesEnabled ? "off" : pet.Action == PetAction.Climbing ? "climbing" : OnLedge ? "on a window" : "floor")}, {ledges.Count} ledges{(climbPlan != null ? ", going to climb" : ledgeExit != 0 ? ", leaving" : "")}\n" +
                 $"Context: {(context.Fullscreen ? "fullscreen app (quiet)" : "normal")}, {(context.Away ? "user away" : "user here")}, idle {context.IdleSeconds:F0} s{(behavior.HoldSleep ? ", away nap" : "")}\n" +
                 $"Break reminder: {(breaks.Enabled ? $"{breaks.ActiveSeconds / 60:F1} / {breaks.IntervalSeconds / 60:F0} min active{(breaks.Due ? " (due)" : "")}" : "off")}\n" +
                 $"Frame: {measuredFps:F0} fps (max gap {measuredMaxGap * 1000:F0} ms)\n{AiStatus}";

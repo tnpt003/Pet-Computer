@@ -183,7 +183,7 @@ public sealed class PetEmotions
         }
         bool petted = false;
         PettingLean *= Math.Exp(-dt * 3);
-        bool busy = pet.TreatRemaining > 0 || pet.Action is PetAction.Dragging or PetAction.Thrown or PetAction.Jumping or PetAction.PreparingJump or PetAction.Waking;
+        bool busy = pet.TreatRemaining > 0 || pet.Action is PetAction.Dragging or PetAction.Thrown or PetAction.Jumping or PetAction.PreparingJump or PetAction.Waking or PetAction.Climbing;
         if (busy) PettingLean = 0;
         if (cursorX.HasValue && cursorY.HasValue)
         {

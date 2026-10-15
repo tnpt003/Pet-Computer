@@ -98,7 +98,7 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         // Gestures: the active one, its time and a 0..1 envelope; Roll is the eased roll-over amount.
         public PetAction Gesture;
         public double GestureTime, GestureBlend, Roll, AngryBlend, SneezeTilt, SneezeLift;
-        public bool Walking, Sleeping, Waking, PickedUp, Airborne, Seeking, Eating, Grooming;
+        public bool Walking, Sleeping, Waking, PickedUp, Airborne, Seeking, Eating, Grooming, Climbing;
         public PetEmotion Emotion;
     }
 
@@ -189,6 +189,8 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
             p.Bob = p.Bob * (1 - p.GestureBlend) - Math.Abs(Math.Sin(p.GestureTime * 8.4)) * 3 * p.GestureBlend;
         }
         if (p.Gesture == PetAction.RollingOver) { p.Stride = Math.Sin(p.GestureTime * 9) * 4 * p.Roll; p.Bob *= 1 - p.Roll; }
+        p.Climbing = pet.Action == PetAction.Climbing;
+        if (p.Climbing) { p.Stride = Math.Sin(p.Time * 9) * 4; p.Bob = 0; } // Hind feet push in turn.
         // Scale around planted feet: breathing/stretching never changes world position.
         double stretch = p.Sleeping || p.SleepyBlend > 0 ? Math.Sin(pet.ActionTime * 2) * 0.025 * (p.Sleeping ? 1 : p.SleepyBlend) :
             p.Waking ? Math.Sin(p.WakeProgress * Math.PI) * 0.08 : 0;
@@ -214,8 +216,11 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         }
         dc.PushTransform(new TranslateTransform(p.Shake, p.Bob));
         dc.PushTransform(new ScaleTransform(p.ScaleX, p.ScaleY, 56, 107));
+        // Climbing: lean into the window's side (in front, after the facing flip).
+        if (p.Climbing) dc.PushTransform(new RotateTransform(8, 56, 104));
         DrawBody(dc, p);
         DrawHead(dc, p);
+        if (p.Climbing) { DrawClimbingPaws(dc, p); dc.Pop(); }
         dc.Pop();
         dc.Pop();
         if (p.Roll > 0) { dc.Pop(); dc.Pop(); }
@@ -247,6 +252,13 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         Oval(dc, palette.Paw, 40 + p.Stride, p.PickedUp ? 104 + p.PickupBlend * 2 : p.Airborne ? 95 : 104 - Math.Max(0, p.Stride), 11, 5);
         Oval(dc, palette.Paw, 70 - p.Stride, p.PickedUp ? 104 + p.PickupBlend * 2 : p.Airborne ? 95 : 104 + Math.Min(0, p.Stride), 11, 5);
         if (p.Gesture is PetAction.Kneading or PetAction.Scratching) DrawGesturePaws(dc, p);
+    }
+
+    // Front paws reaching up the window's side in turn, over the body and head.
+    private void DrawClimbingPaws(DrawingContext dc, in Pose p)
+    {
+        Oval(dc, Fur, 92, 30 + 9 * Math.Sin(p.Time * 9), 6, 9);
+        Oval(dc, Fur, 91, 58 - 9 * Math.Sin(p.Time * 9), 6, 9);
     }
 
     // Fast swish while chasing the tail, an irritated lash while angry; zero otherwise.

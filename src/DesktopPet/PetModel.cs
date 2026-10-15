@@ -3,7 +3,7 @@ using System;
 namespace DesktopPet;
 
 public enum PetAction { Idle, Walking, Jumping, Sitting, Sleeping, Looking, Dragging, Thrown, Waking, SeekingAttention, Grooming, Stretching, PreparingJump,
-    Kneading, RollingOver, ChasingTail, Scratching, Sneezing }
+    Kneading, RollingOver, ChasingTail, Scratching, Sneezing, Climbing }
 
 public static class PetActionRules
 {
@@ -11,7 +11,7 @@ public static class PetActionRules
     // Keep in sync with BUSY_STATES in ai/service.py.
     public static bool RejectsDecisions(PetAction action) => action is PetAction.Dragging or PetAction.Thrown or
         PetAction.Jumping or PetAction.PreparingJump or PetAction.Sleeping or PetAction.Waking or
-        PetAction.Grooming or PetAction.Stretching or PetAction.SeekingAttention || IsGesture(action);
+        PetAction.Grooming or PetAction.Stretching or PetAction.SeekingAttention or PetAction.Climbing || IsGesture(action);
 
     // Local poses that direct input or feature changes cancel straight back to Idle.
     public static bool IsCancellableLocal(PetAction action) => action is PetAction.Grooming or PetAction.Stretching or PetAction.PreparingJump || IsGesture(action);
@@ -22,6 +22,19 @@ public static class PetActionRules
 }
 
 public readonly record struct Area(double Left, double Top, double Right, double Bottom);
+
+// The visible part of an app window's top edge (DIPs on the pet's monitor). Other windows
+// can split one edge into several ledges with the same Id. ClimbLeft/ClimbRight: that
+// side of the window reaches the floor and is uncovered, so the pet can climb it.
+public readonly record struct Ledge(long Id, double Top, double Left, double Right,
+    double WindowLeft, double WindowRight, double WindowBottom, bool ClimbLeft = false, bool ClimbRight = false)
+{
+    public Ledge Shifted(double dx, double dy) => this with
+    {
+        Top = Top + dy, Left = Left + dx, Right = Right + dx,
+        WindowLeft = WindowLeft + dx, WindowRight = WindowRight + dx, WindowBottom = WindowBottom + dy
+    };
+}
 
 public sealed class PetSettings
 {
@@ -58,6 +71,13 @@ public sealed class PetSettings
     public double WalkSpeed { get; init; } = 72;
     public double JumpSpeed { get; init; } = 580;
     public double MaxThrowSpeed { get; init; } = 2200;
+    public double ClimbSpeed { get; init; } = 110;
+    // The pet's centre must stay this far inside a ledge to stand on it.
+    public const double LedgeMargin = 8;
+    // Faster landings on a ledge bounce (the floor keeps its own 130 threshold).
+    public const double LedgeBounceSpeed = 400;
+    // While climbing, the pet's centre is this far outside the window's side.
+    public const double ClimbOffset = 30;
 }
 
 public sealed class PetModel
@@ -70,6 +90,10 @@ public sealed class PetModel
     public const double TreatDuration = 4.2;
     public int Facing = 1;
     public bool Grounded;
+    // The window the pet stands on (0: the screen floor) and, while Climbing, the window
+    // and side (+1 right edge, -1 left edge) it climbs.
+    public long LedgeId, ClimbId;
+    public int ClimbSide;
     private PetAction action = PetAction.Idle;
     public PetAction Action
     {
@@ -159,19 +183,35 @@ public sealed class PetPhysics(PetSettings settings)
         pet.Y = Math.Clamp(pet.Y, bounds.Top, Math.Max(bounds.Top, bounds.Bottom - settings.Height));
     }
 
-    public void Step(PetModel pet, Area bounds, double dt)
+    // Ledges are window edges the pet may stand on; mayLeaveLedge lets a walk (ball, laser,
+    // resting spot) carry it past a ledge's end, where it drops. Without ledges this is the
+    // original floor-only physics.
+    public void Step(PetModel pet, Area bounds, double dt, System.Collections.Generic.IReadOnlyList<Ledge>? ledges = null, bool mayLeaveLedge = false)
     {
         if (pet.Action == PetAction.Dragging) return;
+        Ledge? standing = null;
+        if (pet.LedgeId != 0)
+        {
+            standing = pet.Grounded ? PetLedges.Support(ledges, pet.LedgeId, pet.X + settings.Width / 2) : null;
+            if (standing == null) LeaveLedge(pet); // Window closed, moved away, covered, or the pet walked off.
+        }
+        if (pet.Action == PetAction.Climbing) { StepClimb(pet, ledges, dt); return; }
         if (pet.Grounded && pet.Action == PetAction.Walking)
         {
-            double rightEdge = Math.Max(bounds.Left, bounds.Right - settings.Width);
+            double leftEdge = bounds.Left, rightEdge = Math.Max(bounds.Left, bounds.Right - settings.Width);
+            if (standing is Ledge ledge && !mayLeaveLedge)
+            {
+                // Turn at a ledge's ends like at the screen's edges.
+                leftEdge = Math.Max(leftEdge, ledge.Left + PetSettings.LedgeMargin - settings.Width / 2);
+                rightEdge = Math.Max(leftEdge, Math.Min(rightEdge, ledge.Right - PetSettings.LedgeMargin - settings.Width / 2));
+            }
             int direction = pet.Facing < 0 ? -1 : 1;
-            double distance = direction > 0 ? rightEdge - pet.X : pet.X - bounds.Left;
+            double distance = direction > 0 ? rightEdge - pet.X : pet.X - leftEdge;
             if (distance <= 4)
             {
                 direction = -direction;
                 pet.SmoothedWalkVelocity = 0;
-                distance = direction > 0 ? rightEdge - pet.X : pet.X - bounds.Left;
+                distance = direction > 0 ? rightEdge - pet.X : pet.X - leftEdge;
             }
             pet.Facing = direction;
             double target = direction * Math.Min(settings.WalkSpeed * pet.Emotions.WalkScale,
@@ -182,6 +222,7 @@ public sealed class PetPhysics(PetSettings settings)
         }
         else pet.SmoothedWalkVelocity = 0;
         if (!pet.Grounded) pet.VY += settings.Gravity * dt;
+        double previousFeet = pet.Y + settings.Height;
         pet.X += pet.VX * dt;
         pet.Y += pet.VY * dt;
         double right = Math.Max(bounds.Left, bounds.Right - settings.Width);
@@ -197,11 +238,34 @@ public sealed class PetPhysics(PetSettings settings)
             pet.Y = bounds.Top;
             pet.VY = Math.Abs(pet.VY) * settings.Bounce;
         }
-        if (pet.Y >= floor)
+        if (standing is Ledge onLedge)
+        {
+            pet.Y = onLedge.Top - settings.Height;
+            pet.VY = 0;
+        }
+        else if (!pet.Grounded && pet.VY > 0 && PetLedges.Landing(ledges, previousFeet, pet.Y + settings.Height, pet.X + settings.Width / 2) is Ledge landing)
+        {
+            // Only from above: rising through a window's edge never stops the pet.
+            pet.Y = landing.Top - settings.Height;
+            pet.Motion.Contact(pet.VY);
+            if (pet.VY > PetSettings.LedgeBounceSpeed && pet.Action != PetAction.Sleeping)
+            {
+                pet.VY = -pet.VY * settings.Bounce;
+                pet.VX *= 0.82;
+            }
+            else
+            {
+                pet.VY = 0;
+                pet.Grounded = true;
+                pet.LedgeId = landing.Id;
+            }
+        }
+        else if (pet.Y >= floor)
         {
             pet.Y = floor;
             if (!pet.Grounded) pet.Motion.Contact(pet.VY);
-            if (pet.VY > 130)
+            // A sleeping pet (its window vanished) lands softly and keeps sleeping.
+            if (pet.VY > 130 && pet.Action != PetAction.Sleeping)
             {
                 pet.VY = -pet.VY * settings.Bounce;
                 pet.VX *= 0.82;
@@ -223,5 +287,47 @@ public sealed class PetPhysics(PetSettings settings)
         if (pet.Grounded && pet.VX == 0 &&
             (pet.Action == PetAction.Thrown || pet.Action == PetAction.Jumping))
             pet.Action = PetAction.Idle;
+    }
+
+    // The ledge is gone: fall. Sleep and waking keep their pose (nothing in the
+    // background may wake the pet); anything else becomes a plain fall.
+    public static void LeaveLedge(PetModel pet)
+    {
+        pet.LedgeId = 0;
+        if (!pet.Grounded) return;
+        pet.Grounded = false;
+        pet.VY = 0;
+        if (pet.Action is not (PetAction.Sleeping or PetAction.Waking or PetAction.Thrown or PetAction.Jumping))
+            pet.Action = PetAction.Jumping;
+    }
+
+    // Let go of a wall (click, right-click, Quiet...): drop straight down.
+    public static void LetGo(PetModel pet)
+    {
+        if (pet.Action != PetAction.Climbing) return;
+        pet.Action = PetAction.Jumping;
+        pet.ClimbId = 0;
+        pet.Grounded = false;
+        pet.VX = pet.VY = 0;
+    }
+
+    // Up the window's side at a steady pace, then a small hop onto its top edge.
+    private void StepClimb(PetModel pet, System.Collections.Generic.IReadOnlyList<Ledge>? ledges, double dt)
+    {
+        var wall = PetLedges.Wall(ledges, pet.ClimbId, pet.ClimbSide);
+        if (wall is not Ledge ledge) { LetGo(pet); return; }
+        pet.Grounded = false;
+        pet.Facing = -pet.ClimbSide; // Facing the window.
+        pet.X = (pet.ClimbSide > 0 ? ledge.WindowRight + PetSettings.ClimbOffset : ledge.WindowLeft - PetSettings.ClimbOffset) - settings.Width / 2;
+        pet.VX = 0;
+        pet.VY = -settings.ClimbSpeed;
+        pet.Y += pet.VY * dt;
+        if (pet.Y + settings.Height > ledge.Top) return;
+        // Over the top: the hop lands about 40 DIPs inside the edge, softly (no bounce).
+        pet.Y = ledge.Top - settings.Height;
+        pet.Action = PetAction.Jumping;
+        pet.ClimbId = 0;
+        pet.VY = -230;
+        pet.VX = pet.Facing * 230;
     }
 }

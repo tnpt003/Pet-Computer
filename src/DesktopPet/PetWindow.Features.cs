@@ -34,6 +34,7 @@ public sealed partial class PetWindow
     {
         Title = preferences.Name + " — Desktop Pet";
         InitializeContext();
+        InitializeLedges();
         ApplyQuiet();
         renderer.Coat = preferences.Coat;
         renderer.Accessory = preferences.Accessory;
@@ -113,7 +114,7 @@ public sealed partial class PetWindow
             // A fullscreen app (game, video, slides) still keeps the cat still.
             toy.IsEnabled = toyWindow != null || (CanPlay && !context.Fullscreen);
             laser.IsEnabled = CanPlay && !context.Fullscreen; // Right-clicking the cat already ended a running game.
-            remember.IsEnabled = pet.Grounded;
+            remember.IsEnabled = pet.Grounded && pet.LedgeId == 0; // Resting spots are on the floor.
             visit.IsEnabled = CanPlay && !EffectiveQuiet && preferences.RestX.HasValue;
             forget.IsEnabled = preferences.RestX.HasValue;
         };
@@ -187,6 +188,8 @@ public sealed partial class PetWindow
         StopLaser();
         toyWindow?.Close();
         returningHome = false;
+        climbPlan = null; ledgeExit = 0;
+        PetPhysics.LetGo(pet); // A climbing pet lets go and drops.
         pet.TreatRemaining = 0;
         treatSatisfiedRemaining = 0;
         pet.BatRemaining = pet.PlayCrouch = 0;
@@ -195,7 +198,9 @@ public sealed partial class PetWindow
         behavior.Reset(pet);
     }
 
-    private bool FeatureOwnsMovement() => CanPlay && (pet.TreatRemaining > 0 || treatSatisfiedRemaining > 0 || toyWindow != null || returningHome || laserWindow != null);
+    // Also lets a walk carry the pet past a window ledge's end (it drops off).
+    private bool FeatureOwnsMovement() => CanPlay && (pet.TreatRemaining > 0 || treatSatisfiedRemaining > 0 || toyWindow != null || returningHome ||
+        laserWindow != null || climbPlan != null || ledgeExit != 0);
 
     private void TickFeatures(double dt)
     {
@@ -252,7 +257,8 @@ public sealed partial class PetWindow
             if (ballTime <= 0) { CancelFeatureActivity(); return; }
             ball.Step(dt, bounds.Left + 12, Math.Max(bounds.Left + 12, bounds.Right - 12));
             double delta = ball.X - (pet.X + 56);
-            if (toyPlay.Step(dt, Math.Abs(delta) < 49 && ball.Height < 24 && ball.BatCooldown <= 0, preferences.Personality))
+            // Only from the floor: the ball never rolls on a window's edge.
+            if (toyPlay.Step(dt, Math.Abs(delta) < 49 && ball.Height < 24 && ball.BatCooldown <= 0 && pet.LedgeId == 0, preferences.Personality))
             {
                 pet.Facing = delta < 0 ? -1 : 1;
                 ball.Bat(pet.Facing, 0.9 + featureRandom.NextDouble() * 0.2); pet.Interactions.BallHit();
@@ -278,7 +284,7 @@ public sealed partial class PetWindow
         }
         if (EffectiveQuiet) return; // Walking to the resting spot on its own is autonomous.
         restVisit -= dt;
-        if (restVisit <= 0 && preferences.RestX.HasValue && pet.Action is PetAction.Idle or PetAction.Sitting)
+        if (restVisit <= 0 && preferences.RestX.HasValue && pet.Action is PetAction.Idle or PetAction.Sitting && climbPlan == null && ledgeExit == 0)
         { returningHome = true; restVisit = 45; }
         if (returningHome && preferences.RestX.HasValue)
         {
@@ -286,7 +292,14 @@ public sealed partial class PetWindow
             if (preferences.RestY < bounds.Top || preferences.RestY >= bounds.Bottom || preferences.RestX < bounds.Left || preferences.RestX >= bounds.Right)
             { returningHome = false; return; }
             double target = Math.Clamp(preferences.RestX.Value, bounds.Left, Math.Max(bounds.Left, bounds.Right - settings.Width));
-            if (Math.Abs(target - pet.X) < 8) { returningHome = false; pet.Action = PetAction.Sitting; pet.VX = 0; behavior.Reset(); }
+            if (OnLedge && Math.Abs(target - pet.X) < 8)
+            {
+                // Right above the spot on a window: walk off the nearer end first.
+                double center = pet.X + settings.Width / 2;
+                if (PetLedges.Support(ledges, pet.LedgeId, center) is Ledge here)
+                    WalkToward(center - here.Left < here.Right - center ? here.Left - settings.Width : here.Right);
+            }
+            else if (Math.Abs(target - pet.X) < 8) { returningHome = false; pet.Action = PetAction.Sitting; pet.VX = 0; behavior.Reset(); }
             else WalkToward(target);
         }
     }

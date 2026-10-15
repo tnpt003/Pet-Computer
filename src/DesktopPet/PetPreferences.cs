@@ -33,6 +33,8 @@ public sealed class PetPreferences
     public bool BreakReminders { get; set; }
     public int BreakMinutes { get; set; } = 45;
     public static readonly int[] BreakChoices = { 30, 45, 60 };
+    // On by default: the pet may stand on, jump onto and climb other apps' windows.
+    public bool ClimbWindows { get; set; } = true;
     public string? PositionMonitor { get; set; }
     public double PositionX { get; set; } = 0.5;
     public double PositionY { get; set; } = 1;

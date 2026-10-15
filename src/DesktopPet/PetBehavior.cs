@@ -67,6 +67,7 @@ public sealed class PetBehavior(PetSettings settings, Random? randomSource = nul
         if (pet?.Action != PetAction.Waking) remaining = 2;
         followingMouse = false;
         manualAction = null;
+        leap = null;
         LastAppliedCommand = "LOCAL";
     }
 
@@ -80,6 +81,7 @@ public sealed class PetBehavior(PetSettings settings, Random? randomSource = nul
     {
         if (!CanStartManual(pet, action)) return false;
         followingMouse = false;
+        leap = null;
         pet.VX = pet.VY = pet.SmoothedWalkVelocity = 0;
         LastAppliedCommand = "LOCAL";
         pet.Action = action;
@@ -103,6 +105,13 @@ public sealed class PetBehavior(PetSettings settings, Random? randomSource = nul
     {
         attentionCooldown = Math.Max(0, attentionCooldown - dt);
         selfCareCooldown = Math.Max(0, selfCareCooldown - dt);
+        if (!pet.Grounded && pet.Action == PetAction.Waking)
+        {
+            // Waking keeps its 1.2 s even if the window under the pet vanished meanwhile.
+            remaining -= dt;
+            if (remaining <= 0) { pet.Action = PetAction.Idle; Reset(); }
+            return;
+        }
         if (!pet.Grounded || pet.Action is PetAction.Dragging or PetAction.Thrown) return;
         if (pet.Action == PetAction.Sleeping || pet.Emotions.SleepLocked)
         {
@@ -154,6 +163,7 @@ public sealed class PetBehavior(PetSettings settings, Random? randomSource = nul
         if (Quiet && !(manualAction == PetAction.PreparingJump && pet.Action == PetAction.PreparingJump))
         {
             followingMouse = false;
+            leap = null;
             pet.Action = PetAction.Idle;
             pet.VX = pet.VY = pet.SmoothedWalkVelocity = 0;
             // Python still hears about the pet on the usual schedule (needs, diary, reaction
@@ -169,6 +179,7 @@ public sealed class PetBehavior(PetSettings settings, Random? randomSource = nul
             {
                 pet.Action = PetAction.Jumping; pet.Grounded = false; manualAction = null;
                 pet.VY = -settings.JumpSpeed; pet.VX = pet.Facing * settings.WalkSpeed; remaining = 2;
+                if (leap is var (vx, vy)) { pet.VX = vx; pet.VY = vy; leap = null; } // Up onto a window.
             }
             return;
         }
@@ -193,6 +204,7 @@ public sealed class PetBehavior(PetSettings settings, Random? randomSource = nul
         DecisionRequested?.Invoke();
         followingMouse = false;
         manualAction = null;
+        leap = null;
         LastAppliedCommand = "LOCAL";
         remaining = 2 + random.NextDouble() * 4;
         pet.VX = 0;
@@ -221,6 +233,7 @@ public sealed class PetBehavior(PetSettings settings, Random? randomSource = nul
             decision.DurationSeconds < 0.5 || decision.DurationSeconds > 12) return false;
         followingMouse = decision.Command == "FOLLOW_MOUSE";
         manualAction = null;
+        leap = null;
         remaining = decision.Command == "SEEK_ATTENTION" ? PetSettings.AttentionGestureDuration : decision.DurationSeconds;
         if (decision.Command == "SEEK_ATTENTION") attentionCooldown = PetSettings.AttentionCooldown;
         LastAppliedCommand = decision.Command;
@@ -286,6 +299,24 @@ public sealed class PetBehavior(PetSettings settings, Random? randomSource = nul
         pet.VX = pet.VY = pet.SmoothedWalkVelocity = 0;
         pet.Action = PetAction.Kneading;
         remaining = PetSettings.KneadingDuration;
+        LastAppliedCommand = "LOCAL";
+        return true;
+    }
+
+    // Leap onto a window's edge: the usual short crouch, then the planned velocity.
+    // Autonomous, so Quiet mode and real reactions refuse it.
+    private (double VX, double VY)? leap;
+    public bool StartLeap(PetModel pet, double vx, double vy)
+    {
+        if (Quiet || !pet.Grounded || pet.Emotions.BlocksAutonomy || PetActionRules.RejectsDecisions(pet.Action) ||
+            !double.IsFinite(vx) || !double.IsFinite(vy)) return false;
+        followingMouse = false;
+        manualAction = null;
+        pet.VX = pet.VY = pet.SmoothedWalkVelocity = 0;
+        if (Math.Abs(vx) > 1) pet.Facing = vx < 0 ? -1 : 1;
+        pet.Action = PetAction.PreparingJump;
+        remaining = PetSettings.JumpPreparationDuration;
+        leap = (vx, vy);
         LastAppliedCommand = "LOCAL";
         return true;
     }

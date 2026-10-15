@@ -43,6 +43,8 @@ internal static class AppearanceVisualChecks
                     for (int frame = 0; frame < 90; frame++) pet.Pickup.Step(frame < 45 ? frame * 40 : (90 - frame) * 40, 0, 1.0 / 120);
                     break;
                 case "left": pet.Facing = -1; break;
+                case "climbing": pet.Action = PetAction.Climbing; pet.Grounded = false; pet.Facing = -1; pet.AnimationTime = 1.2; break;
+                case "climbing-right": pet.Action = PetAction.Climbing; pet.Grounded = false; pet.Facing = 1; pet.AnimationTime = 0.9; break;
             }
             return pet;
         }
@@ -64,10 +66,10 @@ internal static class AppearanceVisualChecks
         var accessories = PetPreferences.Accessories.Select(item => Render(Pose("idle"), "Orange", item, "accessory-" + item.ToLowerInvariant())).ToArray();
         check(accessories.Distinct().Count() == accessories.Length, "Every accessory renders differently");
 
-        foreach (string pose in new[] { "idle", "sleeping", "happy", "thrown", "dragging", "left" })
+        foreach (string pose in new[] { "idle", "sleeping", "happy", "thrown", "dragging", "left", "climbing", "climbing-right" })
             foreach (string coat in PetPreferences.Coats)
                 foreach (string item in PetPreferences.Accessories)
                     Render(Pose(pose), coat, item, $"look-{pose}-{coat.ToLowerInvariant()}-{item.ToLowerInvariant()}");
-        check(edgesClear, "All coats and accessories stay inside the window in every pose (incl. dragging)");
+        check(edgesClear, "All coats and accessories stay inside the window in every pose (incl. dragging and climbing)");
     }
 }

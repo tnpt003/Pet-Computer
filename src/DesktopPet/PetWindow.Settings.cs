@@ -13,7 +13,7 @@ public sealed class PetSettingsForm
     public TabControl Tabs = null!;
     public TextBox Name = null!;
     public ComboBox Language = null!, Personality = null!, Coat = null!, Accessory = null!, Chattiness = null!, BreakInterval = null!, PreviewCue = null!;
-    public CheckBox Talks = null!, Autostart = null!, BreakReminders = null!, Sounds = null!, InteractionSounds = null!, EmotionSounds = null!, SleepSounds = null!;
+    public CheckBox ClimbWindows = null!, Talks = null!, Autostart = null!, BreakReminders = null!, Sounds = null!, InteractionSounds = null!, EmotionSounds = null!, SleepSounds = null!;
     public Slider Volume = null!;
     public Button Save = null!, Cancel = null!, Tuning = null!, Forget = null!, Preview = null!;
     public PetRenderer PetPreview = null!;
@@ -81,10 +81,13 @@ public sealed partial class PetWindow
         var appearance = new DockPanel();
         DockPanel.SetDock(previewCard, Dock.Left);
         appearance.Children.Add(previewCard); appearance.Children.Add(looks);
+        form.ClimbWindows = new CheckBox { Content = L("Mèo leo lên cửa sổ", "Climb on windows"), IsChecked = preferences.ClimbWindows,
+            ToolTip = L("Mèo nhảy hoặc trèo lên mép trên các cửa sổ app và đi dạo trên đó.", "The pet jumps or climbs onto the top edge of app windows and walks along it.") };
         var petTab = Page(
             Row(L("Tên", "Name"), form.Name),
             Row(L("Tính cách", "Personality"), form.Personality),
             appearance,
+            form.ClimbWindows,
             form.Tuning);
         // Gentle idle motion (breathing, tail, blinks) while the Pet tab is showing.
         var previewClock = System.Diagnostics.Stopwatch.StartNew();
@@ -192,7 +195,7 @@ public sealed partial class PetWindow
         root.Children.Add(buttons); root.Children.Add(form.Tabs);
 
         double areaHeight = Math.Max(300, bounds.Bottom - bounds.Top);
-        double height = Math.Min(460, areaHeight - 24);
+        double height = Math.Min(490, areaHeight - 24);
         settingsWindow = new Window { Title = L("Cài đặt", "Settings") + " — " + preferences.Name, Icon = AppIcon.WindowImage(), Width = 460, Height = height,
             Content = root, Background = PetUi.Surface, ResizeMode = ResizeMode.NoResize, Topmost = true, ShowInTaskbar = false,
             WindowStartupLocation = WindowStartupLocation.Manual,
@@ -219,6 +222,8 @@ public sealed partial class PetWindow
             preferences.BreakReminders = form.BreakReminders.IsChecked == true;
             preferences.BreakMinutes = PetPreferences.BreakChoices[Math.Max(0, form.BreakInterval.SelectedIndex)];
             breaks.Configure(preferences.BreakReminders, preferences.BreakMinutes);
+            preferences.ClimbWindows = form.ClimbWindows.IsChecked == true;
+            if (!preferences.ClimbWindows) DropLedges(); // A pet on a window falls; a climbing one lets go.
             // Test windows never touch the real Windows startup entry.
             if (persistPreferences && form.Autostart.IsChecked == true != autostartOn &&
                 (Environment.ProcessPath is not string path || !startup.SetEnabled(form.Autostart.IsChecked == true, path)))

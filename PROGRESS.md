@@ -4,7 +4,11 @@ Cập nhật: 2026-10-16 (Asia/Saigon).
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
-## Kết quả test gần nhất (2026-10-16, giai đoạn 2a+2b: bộ lông ra JSON, lịch + sinh nhật)
+## Kết quả test gần nhất (2026-10-16, giai đoạn 2c: phụ kiện dạng dữ liệu + đồ ngày lễ)
+- scripts/test.ps1 -Ui: 54 Python tests, 407 C# checks, 196 WPF checks đạt.
+- So pixel với 1014 ảnh mốc (chụp trước 2a): mọi ảnh của 7 phụ kiện cũ × 10 bộ lông × 8 tư thế giống hệt từng byte sau khi chuyển sang accessories.json; khác chỉ settings-*-0 (thêm sinh nhật + ô "Tự đội đồ ngày lễ", đã xem ảnh) và 2 ảnh speech vốn không ổn định. Đã xem ảnh 4 phụ kiện mới (đứng, bị kéo, ngủ); check mép cửa sổ đạt ở mọi tư thế.
+
+## Kết quả test đợt 2a+2b: bộ lông ra JSON, lịch + sinh nhật (2026-10-16)
 - scripts/test.ps1 -Ui: 54 Python tests (thêm 5: lịch, sự kiện, sinh nhật, file lỗi), 401 C# checks, 192 WPF checks đạt. Publish + check-publish đạt (3/3); bản publish có ai/seasons.py và ai/calendar.json. Đã đóng mèo người dùng (WM_CLOSE), publish, mở lại lúc 17:33; log có cặp exited/started.
 - So pixel (PET_RENDER_REVIEW, 1014 ảnh trước/sau): mọi ảnh mèo (10 bộ lông × 8 phụ kiện × 8 tư thế, gesture, motion...) giống hệt từng byte. Khác: settings-vi-0/settings-en-0 (thêm dòng sinh nhật, đã xem ảnh) và speech-vi/speech-en-long (2 ảnh này khác nhau giữa 2 lần chạy ngay cả khi không đổi code).
 - Chưa xem trực tiếp: câu chúc vào đúng ngày lễ/sinh nhật trên mèo thật (chỉ test bằng đồng hồ giả trong Python).
@@ -95,6 +99,10 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Lịch sử: 201 C#/107 WPF/20 Python (motion, 2026-10-08); 181/101/20 (features). Không dùng số liệu cũ thay kết quả hiện tại.
 
 ## Đã làm gần đây
+- 2026-10-16 giai đoạn 2c (người dùng: "làm luôn"):
+  - 7 phụ kiện chuyển ra src/DesktopPet/Assets/accessories.json (nhúng vào exe): mỗi phụ kiện là danh sách hình path/ellipse/line, màu fill (#RRGGBB/#AARRGGBB), nét outline/accent/tùy chỉnh, lớp neck (sau đầu) hoặc head (trên mặt). PetAccessories.cs đọc + kiểm tra (không WPF); file lỗi → không có phụ kiện, ghi log; path WPF không đọc được → bỏ riêng phụ kiện đó. PetRenderer.DrawAccessory vẽ chung, tài nguyên freeze 1 lần. Xóa 7 hàm Draw* cũ. Script tạo JSON (tính tọa độ cánh hoa) chỉ dùng một lần, không lưu trong repo.
+  - 4 phụ kiện ngày lễ: SantaHat (christmas), WitchHat (halloween), Apricot hoa mai (tet), Lantern đèn lồng đeo cổ (mid_autumn); mũ tiệc Hat gắn với birthday. Người dùng cũng chọn tay được.
+  - "Tự đội đồ ngày lễ" (HolidayAccessories, mặc định bật, dưới ô Phụ kiện): Python gửi special_day trong decision; C# đội phụ kiện có event trùng, không đổi preferences.Accessory; hết dịp/tắt AI/tắt ô → về phụ kiện người dùng chọn.
 - 2026-10-16 giai đoạn 2a+2b (người dùng chọn: không mở thư mục packs cho người dùng; thêm ô sinh nhật trong Cài đặt):
   - 2a: 10 bộ lông chuyển ra src/DesktopPet/Assets/coats.json (nhúng vào exe, tên vi/en + màu). PetCoats.cs đọc và kiểm tra (không WPF, dùng được trong test); file lỗi/màu sai/thiếu patch → bỏ cả file, ghi log, chỉ còn mèo cam. CoatPalette chỉ còn đổi CoatSpec → brush. Danh sách và tên bộ lông trong Cài đặt lấy từ JSON.
   - 2b: ai/calendar.json + ai/seasons.py (không đặt tên calendar.py để không che module chuẩn). Nhịp theo giờ ra JSON (giá trị y hệt day_rhythm cũ, có test so 96 mốc giờ). Ngày đặc biệt: tet (30 Tết → mùng 3, bảng 2026–2035), mid_autumn (bảng 2026–2035), halloween 31/10, christmas 24–25/12, anniversary (ngày first_seen từ năm thứ 2), birthday. Ngày đặc biệt: câu chào đầu phiên dùng câu của dịp đó, ~50% câu nói vu vơ là câu dịp đó, hành động năng động ×1.1–1.2. lines.json thêm 6 loại câu (mỗi loại 5 câu vi + 5 câu en).
@@ -204,7 +212,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 
 ## Đang dở và việc tiếp theo
 - Lộ trình dài hạn (đề xuất 2026-10-16): GĐ1 ổn định (RAM, log, gom luật trạng thái, checklist test tay) → GĐ2 nội dung dạng dữ liệu (bộ lông/phụ kiện/câu thoại/sự kiện mùa/lịch sinh hoạt ra JSON, có thể làm gói mod) → GĐ3 chiều sâu dài hạn (quan hệ phát triển, ngữ cảnh máy tôn trọng riêng tư, LLM opt-in nếu người dùng đổi quy tắc, nhiều mèo). Song song nếu muốn chia sẻ: installer/MSIX, tự cập nhật, ký code, GitHub Releases/winget, giảm dung lượng.
-- GĐ2 còn: 2c phụ kiện dạng dữ liệu vector (path + màu + điểm neo đầu/cổ) và phụ kiện theo mùa (mũ Noel, đèn lồng); có thể cho mèo tự đội phụ kiện theo dịp. Bảng ngày Tết/Trung thu chỉ tới 2035, cần nối thêm. Ngày kỷ niệm đầu tiên của người dùng là 2026-10-13 → lần đầu thấy được 2027-10-13. Ý tưởng chưa làm: 8/3, 20/10, Tết dương lịch.
+- GĐ2 đã xong 2a/2b/2c. Còn: Bảng ngày Tết/Trung thu chỉ tới 2035, cần nối thêm. Ngày kỷ niệm đầu tiên của người dùng là 2026-10-13 → lần đầu thấy được 2027-10-13. Ý tưởng chưa làm: 8/3, 20/10, Tết dương lịch.
 - GĐ1 còn: đo lại mèo thật vài giờ với GC mới (perf.ps1 -Minutes 120 -Interval 10) và xem dòng Memory/Frame (max gap) trong debug view; nếu vẫn cao thì làm phương án B (giảm transform/geometry tạo mỗi khung trong PetRenderer, so pixel bằng UiChecks); người dùng đi hết docs/MANUAL-TEST.md mức 1.
 - scripts/perf.ps1 đóng mèo nó tự mở bằng CloseMainWindow, có thể không trúng cửa sổ mèo (MainWindowHandle) nên rơi vào Kill sau 5 s; nên dùng WM_CLOSE theo tiêu đề như check-publish.ps1.
 - Giao diện: menu khay (WinForms) vẫn kiểu Windows mặc định.
@@ -228,4 +236,4 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Không tích hợp LLM, voice hay computer vision; không thay framework hoặc hệ thống rendering/physics.
 
 ## Cần test thủ công
-Xem và tick ở docs/MANUAL-TEST.md (đã gom toàn bộ danh sách cũ, xếp theo ưu tiên). Mới đợt 2a+2b: chọn sinh nhật = hôm nay trong Cài đặt → Lưu → thoát và mở lại mèo (bật Mèo biết nói + AI): câu chào là câu chúc sinh nhật; đổi lại bộ lông xem tên/màu trong danh sách như cũ. Đợt trước: dòng Memory trong debug view sau vài giờ; cặp dòng started/exited trong log sau khi thoát/tắt máy.
+Xem và tick ở docs/MANUAL-TEST.md (đã gom toàn bộ danh sách cũ, xếp theo ưu tiên). Mới đợt 2c: chọn từng phụ kiện mới trong Cài đặt (Mũ Noel, Mũ phù thủy, Hoa mai, Đèn lồng) xem trên mèo thật khi đi/ngủ/kéo/trèo; đặt sinh nhật = hôm nay, mở lại mèo: đội mũ tiệc; tắt "Tự đội đồ ngày lễ" → Lưu: bỏ mũ. Đợt 2a+2b: chọn sinh nhật = hôm nay trong Cài đặt → Lưu → thoát và mở lại mèo (bật Mèo biết nói + AI): câu chào là câu chúc sinh nhật; đổi lại bộ lông xem tên/màu trong danh sách như cũ. Đợt trước: dòng Memory trong debug view sau vài giờ; cặp dòng started/exited trong log sau khi thoát/tắt máy.

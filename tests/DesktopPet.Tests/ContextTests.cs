@@ -46,6 +46,39 @@ internal static class ContextTests
         check(PetCoats.All.All(coat => coat.NameEn.Length > 0 && coat.NameVi.Length > 0 && coat.NameVi != coat.Id),
             "Every coat has Vietnamese and English names for settings");
 
+        // Accessories come from the embedded accessories.json; the original seven keep their ids and order.
+        check(PetPreferences.Accessories.SequenceEqual(new[] { "None", "Bell", "Bow", "Hat", "Scarf", "Glasses", "Flower", "Crown",
+                "SantaHat", "WitchHat", "Apricot", "Lantern" }),
+            "accessories.json lists None, the seven original accessories and four holiday ones in order");
+        check(PetAccessories.ForEvent("christmas")?.Id == "SantaHat" && PetAccessories.ForEvent("halloween")?.Id == "WitchHat" &&
+              PetAccessories.ForEvent("tet")?.Id == "Apricot" && PetAccessories.ForEvent("mid_autumn")?.Id == "Lantern" &&
+              PetAccessories.ForEvent("birthday")?.Id == "Hat" && PetAccessories.ForEvent("anniversary") == null && PetAccessories.ForEvent(null) == null,
+            "Each holiday (and the user's birthday) has its accessory");
+        check(PetAccessories.Find("Bell") is { Layer: AccessoryLayer.Neck, Shapes.Length: 4 } &&
+              PetAccessories.Find("Glasses")!.Shapes[0] is { Kind: ShapeKind.Ellipse, Fill: "#40FFFFFF", Stroke: { Kind: StrokeKind.Custom, Width: 2, Round: true, RoundJoin: true } } &&
+              PetAccessories.All.All(item => item.NameVi.Length > 0 && item.NameEn.Length > 0 && item.NameVi != item.Id),
+            "Accessory layers, shapes, pens and names load from JSON");
+        AccessorySpec[]? Accessories(string json)
+        {
+            try { return PetAccessories.Parse(new MemoryStream(System.Text.Encoding.UTF8.GetBytes(json))); }
+            catch (Exception ex) when (ex is InvalidDataException or System.Text.Json.JsonException) { return null; }
+        }
+        string One(string shape, string layer = "head") => "{\"accessories\":[{\"id\":\"Star\",\"layer\":\"" + layer + "\",\"shapes\":[" + shape + "]}]}";
+        check(Accessories(One("{\"ellipse\":[55,10,3,3],\"fill\":\"#FFD45C\",\"stroke\":\"outline\"}")) is [{ Id: "Star", NameEn: "Star", Event: null }] &&
+              Accessories(One("{\"ellipse\":[55,10,3,3],\"fill\":\"gold\"}")) == null &&
+              Accessories(One("{\"ellipse\":[55,10,3]}")) == null &&
+              Accessories(One("{\"line\":[1,2,3,4]}")) == null &&
+              Accessories(One("{\"path\":\"M 0,0 L 5,5 <script>\",\"stroke\":\"outline\"}")) == null &&
+              Accessories(One("{\"ellipse\":[55,10,3,3],\"fill\":\"#FFFFFF\"}", "tail")) == null &&
+              Accessories(One("{\"ellipse\":[999,10,3,3],\"fill\":\"#FFFFFF\"}")) == null &&
+              Accessories("{\"accessories\":[{\"id\":\"None\",\"layer\":\"head\",\"shapes\":[{\"ellipse\":[1,1,1,1],\"fill\":\"#FFFFFF\"}]}]}") == null,
+            "An accessory file with bad colors, shapes, layers, ranges or ids is rejected as a whole");
+        check(new PetPreferences().HolidayAccessories, "Dressing up for holidays is on by default");
+        const string reply = "{\"version\":1,\"id\":3,\"type\":\"decision\",\"command\":\"IDLE\",\"duration_seconds\":3,\"mood\":\"content\"";
+        check(AiProtocol.Parse(reply + ",\"special_day\":\"christmas\"}", 3).SpecialDay == "christmas" &&
+              AiProtocol.Parse(reply + ",\"special_day\":\"Bad Day!\"}", 3).SpecialDay == null && AiProtocol.Parse(reply + "}", 3).SpecialDay == null,
+            "A reply's special_day is read when well formed and otherwise ignored");
+
         var breaks = new PetBreaks();
         breaks.Step(4000, 0, true);
         check(!breaks.Due && breaks.ActiveSeconds == 0, "Disabled break reminders never count or fire");

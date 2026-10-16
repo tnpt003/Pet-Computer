@@ -13,7 +13,7 @@ public sealed class PetSettingsForm
     public TabControl Tabs = null!;
     public TextBox Name = null!;
     public ComboBox Language = null!, Personality = null!, Coat = null!, Accessory = null!, Chattiness = null!, BreakInterval = null!, PreviewCue = null!, BirthDay = null!, BirthMonth = null!;
-    public CheckBox ClimbWindows = null!, Talks = null!, Autostart = null!, BreakReminders = null!, Sounds = null!, InteractionSounds = null!, EmotionSounds = null!, SleepSounds = null!;
+    public CheckBox HolidayAccessories = null!, ClimbWindows = null!, Talks = null!, Autostart = null!, BreakReminders = null!, Sounds = null!, InteractionSounds = null!, EmotionSounds = null!, SleepSounds = null!;
     public Slider Volume = null!;
     public Button Save = null!, Cancel = null!, Tuning = null!, Forget = null!, Preview = null!;
     public PetRenderer PetPreview = null!;
@@ -57,8 +57,8 @@ public sealed partial class PetWindow
         form.Coat = new ComboBox { ItemTemplate = CoatTemplate,
             ItemsSource = PetCoats.All.Select(coat => new CoatChoice(L(coat.NameVi, coat.NameEn), CoatPalette.For(coat.Id))).ToArray(),
             SelectedIndex = Math.Max(0, Array.IndexOf(PetPreferences.Coats, preferences.Coat)) };
-        form.Accessory = new ComboBox { ItemsSource = new[] { L("Không", "None"), L("Vòng cổ chuông", "Collar with bell"), L("Nơ", "Bow"), L("Mũ tiệc", "Party hat"),
-                L("Khăn quàng cổ", "Scarf"), L("Kính tròn", "Round glasses"), L("Bông hoa", "Flower"), L("Vương miện", "Crown") },
+        // Accessory names come from Assets/accessories.json, in PetPreferences.Accessories order.
+        form.Accessory = new ComboBox { ItemsSource = new[] { L("Không", "None") }.Concat(PetAccessories.All.Select(item => L(item.NameVi, item.NameEn))).ToArray(),
             SelectedIndex = Math.Max(0, Array.IndexOf(PetPreferences.Accessories, preferences.Accessory)) };
         // The user's birthday (day and month only); index 0 means not set.
         int savedMonth = preferences.Birthday.Length == 5 ? int.Parse(preferences.Birthday[..2]) : 0;
@@ -86,6 +86,11 @@ public sealed partial class PetWindow
         var looks = new StackPanel { Margin = new Thickness(16, 0, 0, 0) };
         looks.Children.Add(new TextBlock { Text = L("Bộ lông", "Coat"), Margin = new Thickness(0, 4, 0, 4) }); looks.Children.Add(form.Coat);
         looks.Children.Add(new TextBlock { Text = L("Phụ kiện", "Accessory"), Margin = new Thickness(0, 14, 0, 4) }); looks.Children.Add(form.Accessory);
+        form.HolidayAccessories = new CheckBox { Content = L("Tự đội đồ ngày lễ", "Dress up for holidays"), IsChecked = preferences.HolidayAccessories,
+            Margin = new Thickness(0, 10, 0, 0),
+            ToolTip = L("Noel, Halloween, Tết, Trung thu, sinh nhật bạn: mèo tự đội đồ hợp dịp (cần AI bật).",
+                        "Christmas, Halloween, Lunar New Year, Mid-Autumn, your birthday: the pet dresses up for the day (needs the AI).") };
+        looks.Children.Add(form.HolidayAccessories);
         var appearance = new DockPanel();
         DockPanel.SetDock(previewCard, Dock.Left);
         appearance.Children.Add(previewCard); appearance.Children.Add(looks);
@@ -231,7 +236,8 @@ public sealed partial class PetWindow
             int birthMonth = Math.Max(0, form.BirthMonth.SelectedIndex), birthDay = Math.Max(0, form.BirthDay.SelectedIndex);
             preferences.Birthday = birthMonth > 0 && birthDay > 0
                 ? $"{birthMonth:00}-{Math.Min(birthDay, DateTime.DaysInMonth(2000, birthMonth)):00}" : "";
-            renderer.Coat = preferences.Coat; renderer.Accessory = preferences.Accessory;
+            preferences.HolidayAccessories = form.HolidayAccessories.IsChecked == true;
+            renderer.Coat = preferences.Coat; ApplyAccessory();
             preferences.BreakReminders = form.BreakReminders.IsChecked == true;
             preferences.BreakMinutes = PetPreferences.BreakChoices[Math.Max(0, form.BreakInterval.SelectedIndex)];
             breaks.Configure(preferences.BreakReminders, preferences.BreakMinutes);

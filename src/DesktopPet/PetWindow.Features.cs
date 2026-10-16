@@ -35,7 +35,7 @@ public sealed partial class PetWindow
         InitializeLedges();
         ApplyQuiet();
         renderer.Coat = preferences.Coat;
-        renderer.Accessory = preferences.Accessory;
+        ApplyAccessory();
         behavior.Personality = preferences.Personality;
         // Menu groups: play with the cat · quick switches · the cat's pages · rarely used · exit.
         var treat = PetUi.MenuItem(PetUi.Treat);
@@ -352,6 +352,14 @@ public sealed partial class PetWindow
         }
         catch (Exception ex) when (ex is IOException or InvalidOperationException or System.TimeoutException) { soundAfter = now + 10; return false; }
     }
+
+    // Today's special day from Python (ai/calendar.json), or null.
+    private string? specialDay;
+
+    // The chosen accessory, or on a special day (with "Dress up for holidays" on) the one made for it.
+    // Saved preferences never change; the settings preview shows the user's own choice.
+    private void ApplyAccessory() =>
+        renderer.Accessory = preferences.HolidayAccessories && PetAccessories.ForEvent(specialDay) is { } outfit ? outfit.Id : preferences.Accessory;
 
     private void CloseFeatures() { laserWindow?.Close(); diaryWindow?.Close(); behaviorSettingsWindow?.Close(); toyWindow?.Close(); settingsWindow?.Close(); speechWindow?.Close(); sound?.Stop(); sound?.Dispose(); soundStream?.Dispose(); }
 }

@@ -1,0 +1,117 @@
+{
+  "_comment": "Accessories in settings order (\"None\" is built in and comes first). Coordinates are in the cat's 112x112 head space; layer neck is drawn behind the head (collar, scarf), head over the face. Shapes draw in order: path (SVG/WPF path data), ellipse [cx, cy, rx, ry] or line [x1, y1, x2, y2]. fill is #RRGGBB or #AARRGGBB; stroke is outline (the coat's 2.5 px ink line), accent (8 px ink under a band) or {color, width, round, join}. event (optional) names a special day in ai/calendar.json: with Dress up for holidays on, the pet wears it on that day. Rebuild the app after editing.",
+  "accessories": [
+    {
+      "id": "Bell", "name": {"vi": "Vòng cổ chuông", "en": "Collar with bell"}, "layer": "neck",
+      "shapes": [
+        {"path": "M 36,70 Q 55,80 74,70", "stroke": "accent"},
+        {"path": "M 36,70 Q 55,80 74,70", "stroke": {"color": "#D9485F", "width": 5, "round": true}},
+        {"ellipse": [55, 80, 4.2, 4.2], "fill": "#FFD700", "stroke": "outline"},
+        {"line": [55, 80.5, 55, 84], "stroke": "outline"}
+      ]
+    },
+    {
+      "id": "Bow", "name": {"vi": "Nơ", "en": "Bow"}, "layer": "head",
+      "shapes": [
+        {"path": "M 68,25 L 59,19 L 59,31 Z", "fill": "#EC5F86", "stroke": "outline"},
+        {"path": "M 68,25 L 77,19 L 77,31 Z", "fill": "#EC5F86", "stroke": "outline"},
+        {"ellipse": [68, 25, 3.2, 3.2], "fill": "#EC5F86", "stroke": "outline"}
+      ]
+    },
+    {
+      "id": "Hat", "name": {"vi": "Mũ tiệc", "en": "Party hat"}, "layer": "head", "event": "birthday",
+      "shapes": [
+        {"path": "M 43,27 L 57,1 L 67,26 Z", "fill": "#5E86F0", "stroke": "outline"},
+        {"ellipse": [53, 19, 1.8, 1.8], "fill": "#FFFFFF"},
+        {"ellipse": [60, 13, 1.6, 1.6], "fill": "#FFFFFF"},
+        {"ellipse": [57, 1, 3.6, 3.6], "fill": "#FFD45C", "stroke": "outline"}
+      ]
+    },
+    {
+      "id": "Scarf", "name": {"vi": "Khăn quàng cổ", "en": "Scarf"}, "layer": "neck",
+      "shapes": [
+        {"path": "M 33,67 Q 55,80 77,67 L 78,74 Q 55,88 32,74 Z", "fill": "#2FA39A", "stroke": "outline"},
+        {"path": "M 61,78 L 71,76 L 74,94 L 64,96 Z", "fill": "#2FA39A", "stroke": "outline"},
+        {"line": [64.5, 85, 72, 84], "stroke": {"color": "#F4F1E8", "width": 1.6, "round": true}},
+        {"line": [65.5, 90, 72.8, 89], "stroke": {"color": "#F4F1E8", "width": 1.6, "round": true}}
+      ]
+    },
+    {
+      "id": "Glasses", "name": {"vi": "Kính tròn", "en": "Round glasses"}, "layer": "head",
+      "shapes": [
+        {"ellipse": [42, 46, 7.5, 7.5], "fill": "#40FFFFFF", "stroke": {"color": "#2E2A3A", "width": 2, "round": true, "join": "round"}},
+        {"ellipse": [68, 46, 7.5, 7.5], "fill": "#40FFFFFF", "stroke": {"color": "#2E2A3A", "width": 2, "round": true, "join": "round"}},
+        {"path": "M 49.5,45 Q 55,41.5 60.5,45", "stroke": {"color": "#2E2A3A", "width": 2, "round": true, "join": "round"}},
+        {"line": [34.5, 45, 26, 42], "stroke": {"color": "#2E2A3A", "width": 2, "round": true, "join": "round"}},
+        {"line": [75.5, 45, 84, 42], "stroke": {"color": "#2E2A3A", "width": 2, "round": true, "join": "round"}}
+      ]
+    },
+    {
+      "id": "Flower", "name": {"vi": "Bông hoa", "en": "Flower"}, "layer": "head",
+      "shapes": [
+        {"ellipse": [69.0, 19.4, 3.6, 3.6], "fill": "#FF8FB1", "stroke": "outline"},
+        {"ellipse": [73.3748599749577, 22.578521825875242, 3.6, 3.6], "fill": "#FF8FB1", "stroke": "outline"},
+        {"ellipse": [71.70381216054538, 27.72147817412476, 3.6, 3.6], "fill": "#FF8FB1", "stroke": "outline"},
+        {"ellipse": [66.29618783945462, 27.72147817412476, 3.6, 3.6], "fill": "#FF8FB1", "stroke": "outline"},
+        {"ellipse": [64.6251400250423, 22.578521825875242, 3.6, 3.6], "fill": "#FF8FB1", "stroke": "outline"},
+        {"ellipse": [69, 24, 2.6, 2.6], "fill": "#FFD45C", "stroke": "outline"}
+      ]
+    },
+    {
+      "id": "Crown", "name": {"vi": "Vương miện", "en": "Crown"}, "layer": "head",
+      "shapes": [
+        {"path": "M 43,25 L 44,10 L 50,17 L 55,7 L 60,17 L 66,10 L 67,25 Z", "fill": "#F5C542", "stroke": "outline"},
+        {"ellipse": [55, 20, 2.2, 2.2], "fill": "#E2475B"},
+        {"ellipse": [47.5, 21, 1.3, 1.3], "fill": "#FFFFFF"},
+        {"ellipse": [62.5, 21, 1.3, 1.3], "fill": "#FFFFFF"}
+      ]
+    },
+    {
+      "id": "SantaHat", "name": {"vi": "Mũ Noel", "en": "Santa hat"}, "layer": "head", "event": "christmas",
+      "shapes": [
+        {"path": "M 44,23 C 45,11 54,4 63,5 C 70,6 75,11 77,18 L 72,19 C 70,15 67,13 64,14 L 66,23 Z", "fill": "#D9363E", "stroke": "outline"},
+        {"path": "M 41,22 Q 55,17 69,22 L 69,27 Q 55,22 41,27 Z", "fill": "#FFFFFF", "stroke": "outline"},
+        {"ellipse": [75.5, 19.5, 3.6, 3.6], "fill": "#FFFFFF", "stroke": "outline"}
+      ]
+    },
+    {
+      "id": "WitchHat", "name": {"vi": "Mũ phù thủy", "en": "Witch hat"}, "layer": "head", "event": "halloween",
+      "shapes": [
+        {"path": "M 47,24 L 53,8 Q 55,2 61,1 Q 58,5 58,9 L 64,24 Z", "fill": "#4B3B6E", "stroke": "outline"},
+        {"path": "M 46.5,21 L 64.5,21 L 65.5,24 L 45.5,24 Z", "fill": "#F28C28", "stroke": "outline"},
+        {"path": "M 35,26 Q 55,19 75,26 Q 55,31 35,26 Z", "fill": "#4B3B6E", "stroke": "outline"}
+      ]
+    },
+    {
+      "id": "Apricot", "name": {"vi": "Hoa mai", "en": "Apricot blossom"}, "layer": "head", "event": "tet",
+      "shapes": [
+        {"path": "M 62,30 Q 70,26 80,30", "stroke": {"color": "#7A5230", "width": 2, "round": true}},
+        {"ellipse": [69.0, 19.4, 3.6, 3.6], "fill": "#FFD23F", "stroke": "outline"},
+        {"ellipse": [73.3748599749577, 22.578521825875242, 3.6, 3.6], "fill": "#FFD23F", "stroke": "outline"},
+        {"ellipse": [71.70381216054538, 27.72147817412476, 3.6, 3.6], "fill": "#FFD23F", "stroke": "outline"},
+        {"ellipse": [66.29618783945462, 27.72147817412476, 3.6, 3.6], "fill": "#FFD23F", "stroke": "outline"},
+        {"ellipse": [64.6251400250423, 22.578521825875242, 3.6, 3.6], "fill": "#FFD23F", "stroke": "outline"},
+        {"ellipse": [69, 24, 2.6, 2.6], "fill": "#F28C28", "stroke": "outline"},
+        {"ellipse": [79.0, 26.8, 2.4, 2.4], "fill": "#FFD23F", "stroke": "outline"},
+        {"ellipse": [82.0433808521445, 29.011145618000167, 2.4, 2.4], "fill": "#FFD23F", "stroke": "outline"},
+        {"ellipse": [80.88091280733592, 32.58885438199983, 2.4, 2.4], "fill": "#FFD23F", "stroke": "outline"},
+        {"ellipse": [77.11908719266408, 32.58885438199983, 2.4, 2.4], "fill": "#FFD23F", "stroke": "outline"},
+        {"ellipse": [75.9566191478555, 29.011145618000167, 2.4, 2.4], "fill": "#FFD23F", "stroke": "outline"},
+        {"ellipse": [79, 30, 1.8, 1.8], "fill": "#F28C28", "stroke": "outline"}
+      ]
+    },
+    {
+      "id": "Lantern", "name": {"vi": "Đèn lồng", "en": "Lantern"}, "layer": "neck", "event": "mid_autumn",
+      "shapes": [
+        {"path": "M 36,70 Q 55,80 74,70", "stroke": "accent"},
+        {"path": "M 36,70 Q 55,80 74,70", "stroke": {"color": "#F5C542", "width": 4, "round": true}},
+        {"line": [55, 75, 55, 79], "stroke": "outline"},
+        {"ellipse": [55, 86, 7, 6], "fill": "#E2353B", "stroke": "outline"},
+        {"path": "M 50,80 L 60,80 L 60,81.5 L 50,81.5 Z", "fill": "#F5C542", "stroke": "outline"},
+        {"path": "M 50,90.5 L 60,90.5 L 60,92 L 50,92 Z", "fill": "#F5C542", "stroke": "outline"},
+        {"line": [55, 81, 55, 91], "stroke": {"color": "#F5C542", "width": 1.2, "round": true}},
+        {"line": [55, 92, 55, 97], "stroke": {"color": "#F5C542", "width": 1.6, "round": true}}
+      ]
+    }
+  ]
+}

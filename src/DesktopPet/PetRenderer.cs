@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Windows;
 using System.Windows.Media;
 
@@ -363,8 +365,7 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         dc.PushTransform(new TranslateTransform(glanceX * (p.Eating ? 1.4 : 0.45), headY - 49 + glanceY * 0.6 +
             (p.Eating && p.EatTime > 1.3 ? Math.Sin(p.EatTime * 16) * 1.2 : 0)));
         dc.PushTransform(new RotateTransform(p.PickedUp ? Math.Sin(pet.Pickup.Time * 10) * p.Dizzy * 3 + (pet.Motion.Ready ? pet.Motion.HeadTilt * p.Influence * pet.Motion.Facing : 0) : glanceDirection * glanceBlend * 2.5 + (pet.Motion.Ready ? pet.Motion.HeadTilt * p.Influence * pet.Motion.Facing : 0) + p.PettingLean * 7 + (p.Seeking ? Math.Sin(Math.PI * Math.Clamp(pet.ActionTime / PetSettings.AttentionGestureDuration, 0, 1)) * 6 : 0) + p.SneezeTilt, 55, 49));
-        if (accessory == "Bell") DrawCollar(dc);
-        else if (accessory == "Scarf") DrawScarf(dc);
+        DrawAccessory(dc, AccessoryLayer.Neck);
         dc.PushTransform(new RotateTransform(twitch - 28 * p.AngryBlend, 37, 33)); // Angry: ears flatten.
         Triangle(dc, new Point(27, 38), new Point(27, 13), new Point(47, 31), palette.Ear);
         Triangle(dc, new Point(31, 30), new Point(31, 21), new Point(40, 30), Pink);
@@ -381,11 +382,7 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         dc.DrawLine(Outline, new Point(32, 61), new Point(17, 63));
         dc.DrawLine(Outline, new Point(78, 56), new Point(93, 53));
         dc.DrawLine(Outline, new Point(78, 61), new Point(93, 63));
-        if (accessory == "Bow") DrawBow(dc);
-        else if (accessory == "Hat") DrawHat(dc);
-        else if (accessory == "Glasses") DrawGlasses(dc);
-        else if (accessory == "Flower") DrawFlower(dc);
-        else if (accessory == "Crown") DrawCrown(dc);
+        DrawAccessory(dc, AccessoryLayer.Head);
         if (p.Grooming)
         {
             double pawY = pet.ActionTime < 1.6 ? 65 : 48 + Math.Sin(pet.ActionTime * 8) * 5;
@@ -493,88 +490,58 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
 
     private static readonly Geometry HeadClip = Frozen(new EllipseGeometry(new Point(55, 48), 29.8, 23.8));
     private Pen MarkingPen => palette.MarkingPen!;
-    private static readonly Brush CollarRed = Frozen("#D9485F");
-    private static readonly Pen CollarPen = FrozenPen(CollarRed, 5, round: true);
-    private static readonly Brush BowPink = Frozen("#EC5F86");
-    private static readonly Brush HatBlue = Frozen("#5E86F0");
-    private static readonly Brush HatPompom = Frozen("#FFD45C");
-    private static readonly Geometry CollarGeometry = CachedGeometry("M 36,70 Q 55,80 74,70");
-    private static readonly Geometry HatGeometry = CachedGeometry("M 43,27 L 57,1 L 67,26 Z");
+    // One accessory from accessories.json, compiled once into frozen geometries, brushes and pens.
+    private sealed record DrawnShape(ShapeKind Kind, Geometry? Geometry, Point A, Point B, double RadiusX, double RadiusY,
+        Brush? Fill, StrokeKind Stroke, Pen? Pen);
+    private static readonly Dictionary<string, (AccessoryLayer Layer, DrawnShape[] Shapes)> Accessories = CompileAccessories();
 
-    // Under the chin, inside the head transform so it follows tilts and rest poses.
-    private void DrawCollar(DrawingContext dc)
+    private static Dictionary<string, (AccessoryLayer, DrawnShape[])> CompileAccessories()
     {
-        dc.DrawGeometry(null, palette.AccentOutline, CollarGeometry);
-        dc.DrawGeometry(null, CollarPen, CollarGeometry);
-        dc.DrawEllipse(Brushes.Gold, Outline, new Point(55, 80), 4.2, 4.2);
-        dc.DrawLine(Outline, new Point(55, 80.5), new Point(55, 84));
-    }
-
-    private void DrawBow(DrawingContext dc)
-    {
-        Triangle(dc, new Point(68, 25), new Point(59, 19), new Point(59, 31), BowPink);
-        Triangle(dc, new Point(68, 25), new Point(77, 19), new Point(77, 31), BowPink);
-        dc.DrawEllipse(BowPink, Outline, new Point(68, 25), 3.2, 3.2);
-    }
-
-    private void DrawHat(DrawingContext dc)
-    {
-        dc.DrawGeometry(HatBlue, Outline, HatGeometry);
-        dc.DrawEllipse(Brushes.White, null, new Point(53, 19), 1.8, 1.8);
-        dc.DrawEllipse(Brushes.White, null, new Point(60, 13), 1.6, 1.6);
-        dc.DrawEllipse(HatPompom, Outline, new Point(57, 1), 3.6, 3.6);
-    }
-
-    private static readonly Brush ScarfTeal = Frozen("#2FA39A");
-    private static readonly Pen ScarfStripe = FrozenPen(Frozen("#F4F1E8"), 1.6, round: true);
-    private static readonly Geometry ScarfBand = CachedGeometry("M 33,67 Q 55,80 77,67 L 78,74 Q 55,88 32,74 Z");
-    private static readonly Geometry ScarfEnd = CachedGeometry("M 61,78 L 71,76 L 74,94 L 64,96 Z");
-    private static readonly Brush GlassLens = Frozen("#40FFFFFF");
-    private static readonly Pen GlassFrame = FrozenPen(Frozen("#2E2A3A"), 2, PenLineJoin.Round, round: true);
-    private static readonly Geometry GlassBridge = CachedGeometry("M 49.5,45 Q 55,41.5 60.5,45");
-    private static readonly Brush PetalPink = Frozen("#FF8FB1");
-    private static readonly Brush FlowerCenter = Frozen("#FFD45C");
-    private static readonly Brush CrownGold = Frozen("#F5C542");
-    private static readonly Brush CrownJewel = Frozen("#E2475B");
-    private static readonly Geometry CrownGeometry = CachedGeometry("M 43,25 L 44,10 L 50,17 L 55,7 L 60,17 L 66,10 L 67,25 Z");
-
-    // Like the collar: behind the head, so only the knot and the hanging end show.
-    private void DrawScarf(DrawingContext dc)
-    {
-        dc.DrawGeometry(ScarfTeal, Outline, ScarfBand);
-        dc.DrawGeometry(ScarfTeal, Outline, ScarfEnd);
-        dc.DrawLine(ScarfStripe, new Point(64.5, 85), new Point(72, 84));
-        dc.DrawLine(ScarfStripe, new Point(65.5, 90), new Point(72.8, 89));
-    }
-
-    // Round frames over the eyes; the eyes still blink, close in sleep and show emotions.
-    private void DrawGlasses(DrawingContext dc)
-    {
-        foreach (double eyeX in new[] { 42.0, 68.0 })
-            dc.DrawEllipse(GlassLens, GlassFrame, new Point(eyeX, 46), 7.5, 7.5);
-        dc.DrawGeometry(null, GlassFrame, GlassBridge);
-        dc.DrawLine(GlassFrame, new Point(34.5, 45), new Point(26, 42));
-        dc.DrawLine(GlassFrame, new Point(75.5, 45), new Point(84, 42));
-    }
-
-    // Five petals by the right ear, where the bow sits.
-    private void DrawFlower(DrawingContext dc)
-    {
-        for (int i = 0; i < 5; i++)
+        var compiled = new Dictionary<string, (AccessoryLayer, DrawnShape[])>();
+        foreach (var item in PetAccessories.All)
         {
-            double a = i * Math.PI * 2 / 5 - Math.PI / 2;
-            dc.DrawEllipse(PetalPink, Outline, new Point(69 + Math.Cos(a) * 4.6, 24 + Math.Sin(a) * 4.6), 3.6, 3.6);
+            try
+            {
+                compiled[item.Id] = (item.Layer, item.Shapes.Select(shape =>
+                {
+                    var v = shape.Values;
+                    Pen? pen = shape.Stroke.Kind == StrokeKind.Custom
+                        ? FrozenPen(Frozen(shape.Stroke.Color!), shape.Stroke.Width, shape.Stroke.RoundJoin ? PenLineJoin.Round : PenLineJoin.Miter, shape.Stroke.Round)
+                        : null;
+                    return shape.Kind switch
+                    {
+                        ShapeKind.Path => new DrawnShape(shape.Kind, CachedGeometry(shape.Path!), default, default, 0, 0,
+                            shape.Fill == null ? null : Frozen(shape.Fill), shape.Stroke.Kind, pen),
+                        ShapeKind.Ellipse => new DrawnShape(shape.Kind, null, new Point(v[0], v[1]), default, v[2], v[3],
+                            shape.Fill == null ? null : Frozen(shape.Fill), shape.Stroke.Kind, pen),
+                        _ => new DrawnShape(shape.Kind, null, new Point(v[0], v[1]), new Point(v[2], v[3]), 0, 0, null, shape.Stroke.Kind, pen)
+                    };
+                }).ToArray());
+            }
+            // Bad path data (accessories.json) skips only that accessory.
+            catch (Exception ex) when (ex is FormatException or InvalidOperationException)
+            {
+                System.Diagnostics.Trace.WriteLine($"Accessory {item.Id} could not be drawn: {ex.Message}");
+            }
         }
-        dc.DrawEllipse(FlowerCenter, Outline, new Point(69, 24), 2.6, 2.6);
+        return compiled;
     }
 
-    // Lower than the party hat, so it clears the top of the window in every pose.
-    private void DrawCrown(DrawingContext dc)
+    // Neck items sit inside the head transform before the ears (so they follow tilts and rest
+    // poses and only show below the chin); head items are drawn over the face.
+    private void DrawAccessory(DrawingContext dc, AccessoryLayer layer)
     {
-        dc.DrawGeometry(CrownGold, Outline, CrownGeometry);
-        dc.DrawEllipse(CrownJewel, null, new Point(55, 20), 2.2, 2.2);
-        dc.DrawEllipse(Brushes.White, null, new Point(47.5, 21), 1.3, 1.3);
-        dc.DrawEllipse(Brushes.White, null, new Point(62.5, 21), 1.3, 1.3);
+        if (!Accessories.TryGetValue(accessory, out var item) || item.Layer != layer) return;
+        foreach (var shape in item.Shapes)
+        {
+            var pen = shape.Stroke switch { StrokeKind.Outline => Outline, StrokeKind.Accent => palette.AccentOutline, _ => shape.Pen };
+            switch (shape.Kind)
+            {
+                case ShapeKind.Path: dc.DrawGeometry(shape.Fill, pen, shape.Geometry); break;
+                case ShapeKind.Ellipse: dc.DrawEllipse(shape.Fill, pen, shape.A, shape.RadiusX, shape.RadiusY); break;
+                default: dc.DrawLine(pen, shape.A, shape.B); break;
+            }
+        }
     }
 
     // Drawn inside the pickup rotation, above the head.

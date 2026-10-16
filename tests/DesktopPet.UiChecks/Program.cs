@@ -653,6 +653,31 @@ internal static class Program
             await Task.Delay(30);
             Check(pet.Speech.Visible && pet.Speech.Id == "hello:vi:test", "A line in the current language is still spoken");
             pet.Speech.Hide(); pet.Speech.Step(pet, 20);
+
+            // Holiday outfit: Python names the special day, C# picks its accessory; preferences stay as chosen.
+            var shown = (PetRenderer)window.Content;
+            async Task Reply(string? day)
+            {
+                var source = new DelayedSource();
+                aiField.SetValue(window, source);
+                requestDecision.Invoke(window, null);
+                await Task.Delay(20);
+                source.Completion.SetResult(new AiDecision("IDLE", 3, "content", SpecialDay: day));
+                await Task.Delay(30);
+            }
+            string chosen = preferences.Accessory;
+            await Reply("christmas");
+            Check(shown.Accessory == "SantaHat" && preferences.Accessory == chosen, "On Christmas the pet wears the Santa hat without changing the saved accessory");
+            await Reply(null);
+            Check(shown.Accessory == chosen, "The next ordinary day it wears the user's accessory again");
+            preferences.HolidayAccessories = false;
+            await Reply("halloween");
+            Check(shown.Accessory == chosen, "With Dress up for holidays off, special days change nothing");
+            preferences.HolidayAccessories = true;
+            await Reply("birthday");
+            bool party = shown.Accessory == "Hat";
+            window.StopAi();
+            Check(party && shown.Accessory == chosen, "The user's birthday brings the party hat; turning the AI off takes it off");
             aiField.SetValue(window, null);
             preferences.Language = languageBefore; preferences.Speech = speechBefore;
         }
@@ -711,9 +736,9 @@ internal static class Program
         var looks = new[] { form.Coat, form.Accessory };
         var reminder = form.BreakReminders;
         var interval = form.BreakInterval;
-        Check(looks.Length == 2 && looks[0].Items.Count == 10 && looks[1].Items.Count == 8 && looks[0].SelectedIndex == 0 && looks[1].SelectedIndex == 0 &&
+        Check(looks.Length == 2 && looks[0].Items.Count == 10 && looks[1].Items.Count == 12 && form.HolidayAccessories.IsChecked == true && looks[0].SelectedIndex == 0 && looks[1].SelectedIndex == 0 &&
               reminder.IsChecked == false && interval.SelectedIndex == 1,
-            "Settings offer ten coats, eight accessories and break reminders (off, 45 minutes)");
+            "Settings offer ten coats, twelve accessories and break reminders (off, 45 minutes)");
         // The preview follows the pickers and moves gently; the real pet waits for Save.
         looks[0].SelectedIndex = 9; looks[1].SelectedIndex = 7;
         double previewTime = form.PreviewPet.AnimationTime;

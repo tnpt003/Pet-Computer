@@ -593,9 +593,12 @@ class SpeechAndLearningTests(unittest.TestCase):
         self.assertTrue(self.step()["speech"]["id"].startswith("christmas:vi:"))
         self.brain = self.make()
         self.assertTrue(self.step(birthday="12-25", language="en")["speech"]["id"].startswith("birthday:en:"))  # Birthday wins.
+        self.assertEqual(self.step(birthday="12-25")["special_day"], "birthday")  # C# picks the holiday accessory from it.
         self.wall[0] = self.at(2026, 11, 3)
         self.brain = self.make()
-        self.assertTrue(self.step(birthday="12-25")["speech"]["id"].startswith("hello:vi:"))  # Ordinary day.
+        ordinary = self.step(birthday="12-25")
+        self.assertTrue(ordinary["speech"]["id"].startswith("hello:vi:"))  # Ordinary day.
+        self.assertNotIn("special_day", ordinary)
 
     def test_special_day_chatter_mixes_in(self):
         self.wall[0] = self.at(2026, 10, 31)

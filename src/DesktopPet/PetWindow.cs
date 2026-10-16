@@ -453,6 +453,7 @@ public sealed partial class PetWindow : Window
         aiLearned = null;
         aiDiary = null;
         RefreshDiary();
+        specialDay = null; ApplyAccessory(); // Without Python there is no holiday outfit.
     }
 
     private async void RequestDecision()
@@ -481,6 +482,7 @@ public sealed partial class PetWindow : Window
             if (decision.Needs != null) aiNeeds = decision.Needs;
             if (decision.Learned != null) aiLearned = decision.Learned;
             if (decision.Diary != null) { aiDiary = decision.Diary; RefreshDiary(); }
+            if (decision.SpecialDay != specialDay) { specialDay = decision.SpecialDay; ApplyAccessory(); }
             // Words are presentation only, so a reply discarded for revision (e.g. the
             // user petted the cat meanwhile) may still speak; PetSpeech enforces safety.
             // A line chosen before a language change is dropped (the data above is still kept).

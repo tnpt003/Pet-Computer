@@ -573,3 +573,7 @@ Quiet mode may cancel preparation. PetMotion.cs contains no AI policy or physics
 | New observation field | Meaning |
 |---|---|
 | `birthday` | The user's birthday as `MM-dd` from Settings → Pet, or `""` (no year is stored) |
+
+| New decision field | Meaning |
+|---|---|
+| `special_day` | Today's event id (e.g. `christmas`), only on special days. C# uses it just to pick the accessory whose `event` matches in `Assets/accessories.json` (if Dress up for holidays is on); an invalid value is ignored |

@@ -28,7 +28,8 @@ public sealed record PetLine(string Id, string Text);
 public sealed record PetLearned(string[] Likes, string[] Dislikes);
 
 public sealed record AiDecision(string Command, double DurationSeconds, string Mood, string? Emotion = null, double? Energy = null,
-    string? Thought = null, PetNeeds? Needs = null, PetLine? Speech = null, PetLearned? Learned = null, PetDiary? Diary = null);
+    string? Thought = null, PetNeeds? Needs = null, PetLine? Speech = null, PetLearned? Learned = null, PetDiary? Diary = null,
+    string? SpecialDay = null);
 
 // Lifetime summary kept by Python for the diary window (display only).
 public sealed record PetDiary(int Days, string Since, long Petted, long Treats, long Play, long RoughThrows, long Clicks,
@@ -71,7 +72,11 @@ public static class AiProtocol
         // Optional extras: an invalid value is dropped instead of rejecting the decision.
         string? thought = root.TryGetProperty("thought", out var idea) && idea.ValueKind == JsonValueKind.String &&
             PetThought.Parse(idea.GetString()) != ThoughtKind.None ? idea.GetString() : null;
-        return new AiDecision(command!, duration, mood!, emotion, energy, thought, ParseNeeds(root), ParseLine(root), ParseLearned(root), ParseDiary(root));
+        // Today's special day (ai/calendar.json id), used only to pick a holiday accessory.
+        string? specialDay = root.TryGetProperty("special_day", out var day) && day.ValueKind == JsonValueKind.String &&
+            System.Text.RegularExpressions.Regex.IsMatch(day.GetString()!, "^[a-z][a-z0-9_]{0,31}$") ? day.GetString() : null;
+        return new AiDecision(command!, duration, mood!, emotion, energy, thought, ParseNeeds(root), ParseLine(root), ParseLearned(root), ParseDiary(root),
+            specialDay);
     }
 
     private static string? Text(JsonElement element, int maxLength)

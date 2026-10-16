@@ -496,6 +496,8 @@ class Brain:
             decision["thought"] = thought
         if speech is not None:
             decision["speech"] = speech
+        if self.special_day:
+            decision["special_day"] = self.special_day[0]  # C# may dress the pet up for it.
         language = observation.get("language")
         decision["learned"] = self.learner.summary(lambda key: self.describe_learned(key, language))
         decision["diary"] = self.diary(wall)

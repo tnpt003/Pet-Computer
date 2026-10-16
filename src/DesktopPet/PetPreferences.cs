@@ -26,7 +26,8 @@ public sealed class PetPreferences
     // Appearance; drawn by CoatPalette and PetRenderer.
     // Settings order comes from Assets/coats.json.
     public static readonly string[] Coats = PetCoats.All.Select(coat => coat.Id).ToArray();
-    public static readonly string[] Accessories = { "None", "Bell", "Bow", "Hat", "Scarf", "Glasses", "Flower", "Crown" };
+    // "None" first, then Assets/accessories.json in settings order.
+    public static readonly string[] Accessories = new[] { PetAccessories.None }.Concat(PetAccessories.All.Select(item => item.Id)).ToArray();
     public static string NormalizeCoat(string? coat) => Array.IndexOf(Coats, coat) >= 0 ? coat! : Coats[0];
     public static string NormalizeAccessory(string? accessory) => Array.IndexOf(Accessories, accessory) >= 0 ? accessory! : "None";
     public string Coat { get; set; } = "Orange";
@@ -36,6 +37,8 @@ public sealed class PetPreferences
         value is { Length: 5 } && value[2] == '-' && int.TryParse(value[..2], out int month) && int.TryParse(value[3..], out int day) &&
         month is >= 1 and <= 12 && day >= 1 && day <= DateTime.DaysInMonth(2000, month) ? value : "";
     public string Accessory { get; set; } = "None";
+    // On by default: on a special day the pet wears the accessory made for it (accessories.json "event").
+    public bool HolidayAccessories { get; set; } = true;
     // Off by default: the pet reminds the user to take a break after this many active minutes.
     public bool BreakReminders { get; set; }
     public int BreakMinutes { get; set; } = 45;

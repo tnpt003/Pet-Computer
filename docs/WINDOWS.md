@@ -359,13 +359,18 @@ containing the whole folder.
 **Appearance.** In **Settings… → Pet**, the coat and accessory pickers offer ten coats
 (Orange, the original, plus Gray, Black, White, Calico, Tabby, Ginger tabby, Tuxedo with
 white chest and mittens, Russian blue, and Siamese with dark ears, mask, tail and paws)
-and eight accessories (none, collar with bell, bow, party hat, scarf, round glasses,
-flower, crown). Each coat in the list has a colour dot. A preview next to the pickers
+and twelve accessories (none, collar with bell, bow, party hat, scarf, round glasses,
+flower, crown, and the four holiday ones below). Each coat in the list has a colour dot. A preview next to the pickers
 shows the choice at once with a gentle idle animation (only while the Pet tab is open);
 the pet on screen changes on Save. Everything is
-vector drawing (coat colors and names in `Assets/coats.json`, embedded at build time and read by
-`PetCoats.cs`/`PetAppearance.cs`; shapes in `PetRenderer.cs`). A broken `coats.json` is logged and
-leaves only the orange cat. Patches and stripes are
+vector drawing: coat colors and names in `Assets/coats.json` (read by `PetCoats.cs`/`PetAppearance.cs`),
+accessories as vector shapes in `Assets/accessories.json` (read by `PetAccessories.cs`, drawn by
+`PetRenderer.DrawAccessory`); both are embedded at build time. A broken `coats.json` leaves only the
+orange cat, a broken `accessories.json` leaves no accessories; both are logged. Since 2026-10-16 there
+are four holiday accessories too (Santa hat, witch hat, apricot blossom, lantern). With **Dress up for
+holidays** (on by default, under the accessory picker) the pet wears the matching one on Christmas,
+Halloween, Tết and Mid-Autumn, and the party hat on the user's birthday; the saved accessory is never
+changed, the settings preview shows the user's own choice, and without the AI there is no outfit. Patches and stripes are
 clipped inside the outline. The bow, hat and collar move with the head. The window
 size is unchanged, and the default orange cat renders pixel for pixel as before.
 
@@ -391,7 +396,7 @@ never screen content.
   "missing you" sad episode is postponed so it does not clash with the welcome.
 
 Pause freezes all of this, like the sleep clock. Preferences: `Coat`, `Accessory`,
-`BreakReminders`, `BreakMinutes`, `Birthday` (`MM-dd` or empty).
+`BreakReminders`, `BreakMinutes`, `Birthday` (`MM-dd` or empty), `HolidayAccessories`.
 
 ## Gestures, pending lines and diary (2026-10-13)
 

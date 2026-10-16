@@ -84,6 +84,15 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Lịch sử: 201 C#/107 WPF/20 Python (motion, 2026-10-08); 181/101/20 (features). Không dùng số liệu cũ thay kết quả hiện tại.
 
 ## Đã làm gần đây
+- 2026-10-16 (người dùng chọn: Giao diện, Review Codex, Smoke test; 1b giữ cửa sổ riêng chỉ làm lại bố cục; tạm không làm "tinh chỉnh sau khi dùng thật"):
+  - Smoke test: biến PET_CONTEXT_PROBE=off (PetWindow.Context.cs) làm contextProbe luôn trả (không fullscreen, idle 0); check-publish.ps1 đặt biến này. Chưa thử thật lúc đang mở app fullscreen.
+  - Refactor điều kiện bắt đầu: PetActionRules.IsInFlight / HoldsBody / IsSettled thay danh sách lặp ở CanStartManual, CanPlay, PetSpeech.CanShow, PetThought.CanShow, điều kiện away nap. Hành vi giữ nguyên; CombinationTests thêm check so với điều kiện cũ cho mọi action × grounded × ngủ. Còn 2 chỗ tương tự chưa gom (PetBehavior dòng ~276, PetEmotions busy) vì danh sách khác nhau.
+  - Bố cục: PetUi thêm Card/SectionTitle/ButtonBar/Ink. Tinh chỉnh hành vi: 3 thẻ (Tính cách, Đòi chú ý, Năng lượng mỗi giây), mỗi dòng tên + ô số + slider + gợi ý; thanh dưới: link Khôi phục mặc định, Hủy, Lưu (logic lưu/khôi phục/khởi động lại Python giữ nguyên). Nhật ký: tiêu đề + số ngày, 4 ô số (vuốt, treat, chơi bóng, thân thiết), thẻ biểu đồ thân thiết, giờ hay chơi, điều đã học; rộng 420. UiChecks tìm control qua cây logic (Descendants) và xuất tuning-window.png khi review.
+  - Menu chuột phải: PetMenuStyle.cs (XAML parse lúc chạy, không thêm file build): panel trắng bo 8px, bóng mềm ở lớp riêng (chữ vẫn ClearType), hàng hover bo góc, cột icon cố định, dấu tick khi mục được chọn không có icon, nền xanh nhạt sau icon của mục được chọn, mũi tên menu con, mục bị mờ 45%. Menu khay (WinForms) không đổi. UiChecks: check style + xuất context-menu.png.
+  - scripts/perf.ps1: lấy mẫu CPU/RAM/handle/thread của mèo và Python mỗi giây ra artifacts/perf/*.csv + tóm tắt; gắn chỉ đọc vào mèo đang chạy, nếu không có thì mở bản publish với dữ liệu riêng rồi đóng.
+  - Đo thật (máy dev, 1 màn hình): mèo đang chạy ~7 giờ, 3 phút: CPU TB 0.94% p95 3.98%, private 276–296 MB, handles 675→683. Bản mới mở, 2 phút: CPU TB 0.7% p95 2.46%, private 118→135 MB. Python ~0% CPU, 11 MB. Chênh RAM ~120 MB vs ~290 MB sau nhiều giờ: cần chạy dài (perf.ps1 -Minutes 120+) để biết có rò bộ nhớ thật hay chỉ là GC.
+  - Test thật: test.ps1 -Ui: 49 Python, 394 C#, 188 WPF đạt. Publish + check-publish.ps1 đạt; đã mở lại mèo bằng bản mới.
+  - Cần test tay: menu chuột phải (hover, menu con mở/đóng, phím mũi tên/Esc, tick Yên lặng/Âm thanh/cảm xúc, mục mờ khi mèo chưa rảnh, gần mép màn hình); cửa sổ Tinh chỉnh và Nhật ký với dữ liệu thật; DPI 125/150% và nhiều màn hình chưa kiểm tra.
 - 2026-10-15 (tư thế trèo đẹp hơn, người dùng duyệt sau khi đánh giá ảnh chụp: trước đó nhìn như mèo đứng lơ lửng vẫy tay):
   - PetRenderer.cs (chỉ khi Climbing): thân kéo dài (ScaleX 0.95, ScaleY 1.06), nghiêng 10° và lùi 8 DIPs để đầu chỉ chạm mép cửa sổ; 2 chân trước ở trên đầu, bám qua mép, vươn luân phiên, có 3 vạch móng; chân sau dựng đứng đạp vào cạnh cửa sổ luân phiên (không vẽ bàn chân đứng); đuôi rủ xuống phía ngoài, đung đưa nhẹ; mắt nhìn lên. Không đổi physics/Python.
   - GestureVisualChecks: check tư thế trèo (6 khung × 2 hướng × có/không mũ, nằm trong window, khác idle, có chuyển động); với PET_RENDER_REVIEW thì xuất thêm climbing-scene.png (mèo cạnh mép cửa sổ giả).
@@ -173,10 +182,10 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Lịch sử chuyển project: 2026-10-05 tạo AGENTS.md/PROGRESS.md tại ổ D khi thư mục đó trống; source hiện nằm tại ổ C, không cần khôi phục về D.
 
 ## Đang dở và việc tiếp theo
-- Giao diện: menu vẫn dùng kiểu Windows mặc định (chưa có template bo góc riêng); Nhật ký/Tinh chỉnh hành vi chưa đổi bố cục.
-- Từ review của Codex, chưa làm: gom điều kiện bắt đầu hoạt động vào PetActionRules (refactor từng bước, sau khi có thêm test kết hợp); đợt đo hiệu năng (CPU/RAM/thời gian render khi idle, ngủ, kéo nhanh, chơi laser; chạy dài nhiều giờ; fullscreen; nhiều màn hình/DPI).
+- Giao diện: menu khay (WinForms) vẫn kiểu Windows mặc định.
+- Tạm hoãn theo người dùng (2026-10-16): lựa chọn away nap 5/10/15 phút; thêm tốc độ đói, tốc độ chán, khoảng cách bong bóng vào Behavior tuning (cần đưa THOUGHT_COOLDOWN ra personality.json).
+- Hiệu năng: đã có scripts/perf.ps1; còn đo khi ngủ, kéo nhanh, chơi laser, chạy dài nhiều giờ (kiểm tra RAM ~290 MB sau 7 giờ so với ~130 MB lúc mới mở), nhiều màn hình/DPI.
 - Phương án 1 chưa làm (người dùng chọn 2): bỏ cooldown cho ăn 20s; menu cho ăn/bóng/laser luôn bấm được và xếp hàng ≤3s khi mèo đang thức dậy/giận/giật mình (như Làm ngay). Ý tưởng khác: mèo no (đói < 10) thì từ chối ăn thay vì cooldown cố định.
-- check-publish.ps1 fail khi người dùng đang mở app fullscreen trên màn hình chính (mèo yên lặng, Python chưa khởi động). Có thể cho smoke test tắt probe ngữ cảnh bằng biến môi trường nếu muốn chạy được lúc đó.
 - Đề xuất còn lại từ danh sách 2026-10-13: 8 (mèo đi trên cửa sổ, đợt riêng), 9 (dạy mèo nói). Đã làm 1–7.
 - Nhật ký: người dùng cũ có first_seen = lần đầu chạy bản này (không có dữ liệu trước đó), nên "số ngày ở cùng" bắt đầu từ 2026-10-13.
 - Away nap: nếu xem video không fullscreen mà không chạm chuột 5 phút thì mèo cũng ngủ (chấp nhận được); có thể thêm tùy chọn thời gian 5/10/15 phút nếu thấy sớm.

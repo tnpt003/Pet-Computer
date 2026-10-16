@@ -485,6 +485,15 @@ settings. Save and Cancel stay at the bottom; a tab scrolls on its own on a smal
 The tray menu calls the AI switch **Smart pet (AI)** / **Mèo thông minh (AI)** and adds
 **Settings…**.
 
+The right-click menu (not the tray menu, which is a WinForms menu) has its own look
+(`PetMenuStyle.cs`, 2026-10-16): a rounded white panel with a soft shadow, rounded hover
+rows, a fixed icon column (a check mark when a checked item has no icon, a tinted square
+behind a checked item's icon), submenu arrows and dimmed disabled items. **{name}'s diary**
+opens with days together, four number tiles (petted, treats, ball games, bond) and cards
+for the bond chart, play hours and what was learned. **Behavior tuning** groups its eight
+values into Personality, Attention and Energy cards, each with the exact number, a slider
+and a hint; Restore defaults, Cancel and Save stay at the bottom.
+
 ## Walking on windows (2026-10-15)
 
 **Settings… → Pet → Climb on windows** (on by default). The pet treats the visible top
@@ -521,3 +530,14 @@ edge of ordinary app windows on its monitor as a floor:
   falls and windows are no longer read. Reset and a DPI change put the pet on the floor.
 - The debug view shows a `Windows:` line (off / floor / on a window / climbing, ledge
   count, plans).
+
+## Performance measurement (2026-10-16)
+
+`scripts/perf.ps1 -Minutes 5 -Label idle` samples the pet and its Python service once a
+second: CPU (share of the whole machine), working set and private memory, handles and
+threads. It attaches read-only to the running pet; if none runs it starts the published
+pet with separate data (`artifacts/perf-data`) and closes it at the end. Samples go to
+`artifacts/perf/<time>-<label>.csv`, and a summary (CPU avg/p95/max, memory, handle and
+thread growth) is printed. Do the activity to measure while it runs (idle, sleep, fast
+drags, laser, a long run); a steady rise in private memory or handles over a long run
+points to a leak.

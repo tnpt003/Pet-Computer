@@ -508,7 +508,9 @@ edge of ordinary app windows on its monitor as a floor:
   leap (usual 0.16 s crouch, velocity planned to peak 40 DIPs above the edge). A taller
   window whose bottom is within 100 DIPs of the floor and whose side is uncovered is
   climbed: the pet walks to the side, climbs at 110 DIPs/s facing the window (Climbing
-  pose: leaning in, front paws reaching up in turn), then hops onto the top.
+  pose: body stretched and leaning in, front paws above the head hooked over the edge and
+  reaching up in turn, hind feet braced against the side, tail hanging on the outside,
+  eyes on the top), then hops onto the top.
 - **Going down:** after about 1–2 minutes on a window the pet walks off the nearer end.
 - **Letting go:** a click, right-click, Quiet mode or the window going away makes a
   climbing pet drop. Dragging works as usual. AI commands cannot interrupt a climb

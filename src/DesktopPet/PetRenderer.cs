@@ -190,7 +190,7 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         }
         if (p.Gesture == PetAction.RollingOver) { p.Stride = Math.Sin(p.GestureTime * 9) * 4 * p.Roll; p.Bob *= 1 - p.Roll; }
         p.Climbing = pet.Action == PetAction.Climbing;
-        if (p.Climbing) { p.Stride = Math.Sin(p.Time * 9) * 4; p.Bob = 0; } // Hind feet push in turn.
+        if (p.Climbing) { p.Stride = Math.Sin(p.Time * 9) * 4; p.Bob = 0; } // Paws and hind feet push in turn.
         // Scale around planted feet: breathing/stretching never changes world position.
         double stretch = p.Sleeping || p.SleepyBlend > 0 ? Math.Sin(pet.ActionTime * 2) * 0.025 * (p.Sleeping ? 1 : p.SleepyBlend) :
             p.Waking ? Math.Sin(p.WakeProgress * Math.PI) * 0.08 : 0;
@@ -200,6 +200,7 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         if (p.Sleeping || p.Waking || p.SleepyBlend > 0) { preparation = flight = impact = 0; }
         p.ScaleX = 1 + selfStretch * 0.045 + preparation * 0.04 + impact * 0.045 - flight * 0.3;
         p.ScaleY = 1 + stretch + selfStretch * 0.12 - playCrouch * 0.07 - preparation * 0.09 + flight - impact * 0.09;
+        if (p.Climbing) { p.ScaleX *= 0.95; p.ScaleY *= 1.06; } // Stretched long up the wall.
         return p;
     }
 
@@ -216,8 +217,9 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         }
         dc.PushTransform(new TranslateTransform(p.Shake, p.Bob));
         dc.PushTransform(new ScaleTransform(p.ScaleX, p.ScaleY, 56, 107));
-        // Climbing: lean into the window's side (in front, after the facing flip).
-        if (p.Climbing) dc.PushTransform(new RotateTransform(8, 56, 104));
+        // Climbing: lean into the window's side (in front, after the facing flip), shifted back
+        // so the head just touches the edge while the paws hook over it.
+        if (p.Climbing) dc.PushTransform(ClimbLean);
         DrawBody(dc, p);
         DrawHead(dc, p);
         if (p.Climbing) { DrawClimbingPaws(dc, p); dc.Pop(); }
@@ -227,15 +229,32 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         dc.Pop();
     }
 
+    private static readonly Transform ClimbLean = CreateClimbLean();
+    private static Transform CreateClimbLean()
+    {
+        var lean = new TransformGroup { Children = { new RotateTransform(10, 56, 104), new TranslateTransform(-8, 0) } };
+        lean.Freeze(); return lean;
+    }
+
     private void DrawBody(DrawingContext dc, in Pose p)
     {
         // Tail, body, and feet are drawn back-to-front.
         var tail = new StreamGeometry();
         using (var context = tail.Open())
         {
-            context.BeginFigure(new Point(77, 84), false, false);
-            context.BezierTo(new Point(108, 88), new Point(104, 59),
-                new Point(92, 62 + (pet.Motion.Ready ? pet.Motion.TailLag * p.Influence * pet.Motion.Facing : 0) + Math.Sin(p.Time * (3 - 2 * (p.Sleeping ? 1 : p.SleepyBlend))) * (5 - 4 * (p.Sleeping ? 1 : p.SleepyBlend)) + TailSwish(p)), true, false);
+            if (p.Climbing)
+            {
+                // Hanging away from the wall as a counterweight, swaying gently.
+                double sway = Math.Sin(p.Time * 3) * 4;
+                context.BeginFigure(new Point(38, 92), false, false);
+                context.BezierTo(new Point(22, 98), new Point(14 + sway, 110), new Point(20 + sway, 124), true, false);
+            }
+            else
+            {
+                context.BeginFigure(new Point(77, 84), false, false);
+                context.BezierTo(new Point(108, 88), new Point(104, 59),
+                    new Point(92, 62 + (pet.Motion.Ready ? pet.Motion.TailLag * p.Influence * pet.Motion.Facing : 0) + Math.Sin(p.Time * (3 - 2 * (p.Sleeping ? 1 : p.SleepyBlend))) * (5 - 4 * (p.Sleeping ? 1 : p.SleepyBlend)) + TailSwish(p)), true, false);
+            }
         }
         dc.DrawGeometry(null, TailOutline, tail);
         dc.DrawGeometry(null, TailFill, tail);
@@ -249,16 +268,29 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
             Oval(dc, Fur, 75, 93, 6, 12);
             dc.Pop();
         }
+        if (p.Climbing)
+        {
+            // Hind feet braced against the wall, pushing in turn.
+            Oval(dc, palette.Paw, 82, 100 + p.Stride, 5, 9);
+            Oval(dc, palette.Paw, 88, 88 - p.Stride, 5, 9);
+            return;
+        }
         Oval(dc, palette.Paw, 40 + p.Stride, p.PickedUp ? 104 + p.PickupBlend * 2 : p.Airborne ? 95 : 104 - Math.Max(0, p.Stride), 11, 5);
         Oval(dc, palette.Paw, 70 - p.Stride, p.PickedUp ? 104 + p.PickupBlend * 2 : p.Airborne ? 95 : 104 + Math.Min(0, p.Stride), 11, 5);
         if (p.Gesture is PetAction.Kneading or PetAction.Scratching) DrawGesturePaws(dc, p);
     }
 
-    // Front paws reaching up the window's side in turn, over the body and head.
+    // Front paws gripping the window's side above the head, reaching up in turn, with claws
+    // hooked onto the edge.
     private void DrawClimbingPaws(DrawingContext dc, in Pose p)
     {
-        Oval(dc, Fur, 92, 30 + 9 * Math.Sin(p.Time * 9), 6, 9);
-        Oval(dc, Fur, 91, 58 - 9 * Math.Sin(p.Time * 9), 6, 9);
+        double reach = 7 * Math.Sin(p.Time * 9);
+        foreach (var (x, y) in new[] { (84.0, 14 + reach), (88.0, 32 - reach) })
+        {
+            Oval(dc, Fur, x, y, 6, 9);
+            for (int i = -1; i <= 1; i++)
+                dc.DrawLine(Outline, new Point(x + 4, y - 4 + i * 3), new Point(x + 8, y - 5 + i * 3));
+        }
     }
 
     // Fast swish while chasing the tail, an irritated lash while angry; zero otherwise.
@@ -326,6 +358,7 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         if (p.Grooming) glanceY = 3 * p.GroomingBlend;
         glanceX += p.PettingLean * 3;
         if (p.Gesture == PetAction.ChasingTail) { glanceX -= 4 * p.GestureBlend; glanceY += 2 * p.GestureBlend; } // Eyes on the tail.
+        if (p.Climbing) { glanceX = 2; glanceY = -3; } // Eyes on the top edge.
         double headY = 49 + 10 * p.RestBlend + (p.Emotion == PetEmotion.Sad ? 2 * p.EmotionStrength : 0) + p.SneezeLift;
         dc.PushTransform(new TranslateTransform(glanceX * (p.Eating ? 1.4 : 0.45), headY - 49 + glanceY * 0.6 +
             (p.Eating && p.EatTime > 1.3 ? Math.Sin(p.EatTime * 16) * 1.2 : 0)));

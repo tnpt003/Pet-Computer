@@ -55,6 +55,17 @@ internal static class Program
     private static void TickContext(PetWindow window, double dt) =>
         typeof(PetWindow).GetMethod("TickContext", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(window, new object[] { dt });
 
+    // Every element of type T under root (logical tree), in document order.
+    private static IEnumerable<T> Descendants<T>(object root) where T : DependencyObject
+    {
+        if (root is not DependencyObject node) yield break;
+        foreach (object child in LogicalTreeHelper.GetChildren(node))
+        {
+            if (child is T match) yield return match;
+            foreach (var inner in Descendants<T>(child)) yield return inner;
+        }
+    }
+
     private static T Field<T>(PetWindow window, string name) =>
         (T)typeof(PetWindow).GetField(name, BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(window)!;
 
@@ -546,20 +557,28 @@ internal static class Program
         Check(!(bool)playSound.Invoke(window, new object?[] { "meow", true, 0.0 })!, "Zero-volume preview stays silent");
         typeof(PetWindow).GetMethod("ShowBehaviorSettings", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(window, null);
         var tuningWindow = Field<Window>(window, "behaviorSettingsWindow");
-        var tuningPanel = (System.Windows.Controls.StackPanel)((System.Windows.Controls.ScrollViewer)tuningWindow.Content).Content;
-        var tuningSliders = tuningPanel.Children.OfType<System.Windows.Controls.Slider>().ToArray();
+        var tuningSliders = Descendants<System.Windows.Controls.Slider>(tuningWindow).ToArray();
+        System.Windows.Controls.Button TuningButton(bool save) => Descendants<System.Windows.Controls.Button>(tuningWindow)
+            .Single(b => save ? b.IsDefault : b.Content is System.Windows.Controls.TextBlock);
         Check(tuningWindow.IsVisible && tuningSliders.Length == 8, "Tuning editor exposes all eight supported JSON values");
+        if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string tuningReview)
+        {
+            tuningWindow.UpdateLayout();
+            var root = (FrameworkElement)tuningWindow.Content;
+            var image = new RenderTargetBitmap((int)root.ActualWidth, (int)root.ActualHeight, 96, 96, PixelFormats.Pbgra32);
+            image.Render(root);
+            var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(image));
+            using var stream = System.IO.File.Create(System.IO.Path.Combine(tuningReview, "tuning-window.png")); encoder.Save(stream);
+        }
         tuningSliders[0].Value = 0.23;
-        tuningPanel.Children.OfType<System.Windows.Controls.Button>().Single(b => (string)b.Content == "Save behavior tuning")
-            .RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));
+        TuningButton(true).RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));
         Check(preferences.Tuning?.Playfulness == 0.23, "Tuning save applies draft without writing personal test preferences");
         typeof(PetWindow).GetMethod("ShowBehaviorSettings", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(window, null);
         tuningWindow = Field<Window>(window, "behaviorSettingsWindow");
-        tuningPanel = (System.Windows.Controls.StackPanel)((System.Windows.Controls.ScrollViewer)tuningWindow.Content).Content;
-        tuningPanel.Children.OfType<System.Windows.Controls.TextBox>().First().Text = "NaN";
-        Check(!tuningPanel.Children.OfType<System.Windows.Controls.Button>().Last().IsEnabled, "Tuning editor refuses nonfinite input");
-        tuningPanel.Children.OfType<System.Windows.Controls.Button>().First().RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));
-        tuningPanel.Children.OfType<System.Windows.Controls.Button>().Last().RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));
+        Descendants<System.Windows.Controls.TextBox>(tuningWindow).First().Text = "NaN";
+        Check(!TuningButton(true).IsEnabled, "Tuning editor refuses nonfinite input");
+        TuningButton(false).RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));
+        TuningButton(true).RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));
         Check(preferences.Tuning == null, "Restore defaults clears the user override");
         customize.Close();
         preferences.PositionMonitor = "disconnected-monitor";
@@ -778,14 +797,14 @@ internal static class Program
         window.ShowDiary();
         var diaryWindow = Field<Window>(window, "diaryWindow");
         var diaryPanel = Field<System.Windows.Controls.StackPanel>(window, "diaryPanel");
-        string Texts() => string.Join("\n", diaryPanel.Children.OfType<System.Windows.Controls.TextBlock>().Select(t => t.Text));
+        string Texts() => string.Join("\n", Descendants<System.Windows.Controls.TextBlock>(diaryPanel).Select(t => t.Text));
         Check(diaryWindow.IsVisible && Texts().Contains("AI đang tắt") && Texts().Contains("Được vuốt"), "Diary opens and explains it only has this session's numbers when the AI is off");
         var habits = Enumerable.Range(0, 24).Select(h => h is 20 or 21 ? 8.0 : h == 9 ? 3 : 0).ToArray();
         typeof(PetWindow).GetField("aiDiary", flags)!.SetValue(window,
             new DesktopPet.AI.PetDiary(12, "2026-10-01", 40, 9, 7, 1, 30, 61.5, new[] { 50, 55.5, 61.5 }, habits));
         preferences.Language = "en";
         Call("RefreshDiary");
-        var charts = diaryPanel.Children.OfType<System.Windows.Controls.Canvas>().ToArray();
+        var charts = Descendants<System.Windows.Controls.Canvas>(diaryPanel).ToArray();
         Check(Texts().Contains("Together for 12 days (since 2026-10-01)") && Texts().Contains("Most often: 20h, 21h, 9h") &&
               Texts().Contains("Bond: 62/100") && charts.Length == 2 &&
               charts[1].Children.OfType<System.Windows.Controls.Border>().Count(b => b.IsHitTestVisible == false) == 3,

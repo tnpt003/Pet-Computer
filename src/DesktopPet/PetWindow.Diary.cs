@@ -34,10 +34,10 @@ public sealed partial class PetWindow
         diaryWindow = new Window
         {
             Title = L($"Nhật ký của {preferences.Name}", $"{preferences.Name}'s diary"), Icon = AppIcon.WindowImage(),
-            Width = 380, Height = height, Background = DiarySurface, ResizeMode = ResizeMode.NoResize, Topmost = true, ShowInTaskbar = false,
+            Width = 420, Height = height, Background = DiarySurface, ResizeMode = ResizeMode.NoResize, Topmost = true, ShowInTaskbar = false,
             Content = new ScrollViewer { Content = diaryPanel, VerticalScrollBarVisibility = ScrollBarVisibility.Auto },
             WindowStartupLocation = WindowStartupLocation.Manual,
-            Left = Math.Clamp(pet.X + settings.Width / 2 - 190, bounds.Left, Math.Max(bounds.Left, bounds.Right - 380)),
+            Left = Math.Clamp(pet.X + settings.Width / 2 - 210, bounds.Left, Math.Max(bounds.Left, bounds.Right - 420)),
             Top = bounds.Top + Math.Max(8, (areaHeight - height) / 2)
         };
         PetUi.ApplyWindowFont(diaryWindow);
@@ -56,49 +56,72 @@ public sealed partial class PetWindow
             var session = pet.Interactions;
             AddLine(L("AI đang tắt hoặc chưa sẵn sàng, nên chỉ có số liệu của lần chạy này.",
                    "The AI is off or not ready yet, so only this session's numbers are shown."), DiaryMuted);
-            AddLine(L($"Được vuốt {session.Petted} lần · {session.Treats} treat · chơi bóng {session.Toy + session.BallClicks} lần",
-                   $"Petted {Times(session.Petted)} · {session.Treats} treats · {session.Toy + session.BallClicks} ball games"));
+            AddStats((session.Petted, L("Được vuốt", "Petted")), (session.Treats, L("Treat", "Treats")), (session.Toy + session.BallClicks, L("Chơi bóng", "Ball games")));
             return;
         }
-        AddLine(L($"Đã ở cùng sen {diary.Days} ngày (từ {diary.Since})", $"Together for {diary.Days} days (since {diary.Since})"));
-        AddLine(L($"Được vuốt {diary.Petted} lần · {diary.Treats} treat · chơi bóng {diary.Play} lần",
-               $"Petted {Times(diary.Petted)} · {diary.Treats} treats · {diary.Play} ball games"));
+        AddLine(L($"Đã ở cùng sen {diary.Days} ngày (từ {diary.Since})", $"Together for {diary.Days} days (since {diary.Since})"), DiaryMuted);
+        AddStats((diary.Petted, L("Được vuốt", "Petted")), (diary.Treats, L("Treat", "Treats")), (diary.Play, L("Chơi bóng", "Ball games")), ((long)Math.Round(diary.Bond), L("Thân thiết", "Bond")));
         AddLine(L($"Click {diary.Clicks} lần · bị ném mạnh {diary.RoughThrows} lần", $"Clicked {Times(diary.Clicks)} · thrown roughly {Times(diary.RoughThrows)}"), DiaryMuted);
 
-        AddHeading(L($"Độ thân thiết: {diary.Bond:F0}/100", $"Bond: {diary.Bond:F0}/100"), 14);
-        if (diary.BondHistory.Length >= 2) diaryPanel.Children.Add(BondChart(diary.BondHistory));
-        AddLine(diary.BondHistory.Length >= 2
+        var bond = AddCard(L($"Độ thân thiết: {diary.Bond:F0}/100", $"Bond: {diary.Bond:F0}/100"));
+        if (diary.BondHistory.Length >= 2) bond.Children.Add(BondChart(diary.BondHistory));
+        bond.Children.Add(TextLine(diary.BondHistory.Length >= 2
             ? L($"{diary.BondHistory.Length} ngày gần nhất: {string.Join(", ", diary.BondHistory.Select(v => v.ToString("F0")))}",
                 $"Last {diary.BondHistory.Length} days: {string.Join(", ", diary.BondHistory.Select(v => v.ToString("F0")))}")
-            : L("Biểu đồ sẽ hiện sau ngày thứ hai.", "The chart appears from the second day."), DiaryMuted);
+            : L("Biểu đồ sẽ hiện sau ngày thứ hai.", "The chart appears from the second day."), DiaryMuted));
 
-        AddHeading(L("Giờ sen hay chơi", "When you usually play"), 14);
+        var hours = AddCard(L("Giờ sen hay chơi", "When you usually play"));
         if (diary.Habits.Sum() < 10)
-            AddLine(L("Chưa đủ dữ liệu, chơi với mèo thêm vài hôm nhé.", "Not enough data yet; play a few more days."), DiaryMuted);
+            hours.Children.Add(TextLine(L("Chưa đủ dữ liệu, chơi với mèo thêm vài hôm nhé.", "Not enough data yet; play a few more days."), DiaryMuted));
         else
         {
-            diaryPanel.Children.Add(HourChart(diary.Habits));
+            hours.Children.Add(HourChart(diary.Habits));
             var top = diary.Habits.Select((value, hour) => (value, hour)).Where(h => h.value > 0)
                 .OrderByDescending(h => h.value).Take(3).Select(h => $"{h.hour}h");
-            AddLine(L($"Nhiều nhất: {string.Join(", ", top)}", $"Most often: {string.Join(", ", top)}"));
+            hours.Children.Add(TextLine(L($"Nhiều nhất: {string.Join(", ", top)}", $"Most often: {string.Join(", ", top)}")));
         }
 
-        AddHeading(L("Những gì mèo đã học", "What the cat has learned"), 14);
-        AddLine(L("Thích: ", "Likes: ") + (aiLearned is { Likes.Length: > 0 } ? string.Join("; ", aiLearned.Likes) : L("chưa có", "nothing yet")));
-        AddLine(L("Không thích: ", "Dislikes: ") + (aiLearned is { Dislikes.Length: > 0 } ? string.Join("; ", aiLearned.Dislikes) : L("chưa có", "nothing yet")));
+        var learned = AddCard(L("Những gì mèo đã học", "What the cat has learned"));
+        learned.Children.Add(TextLine(L("Thích: ", "Likes: ") + (aiLearned is { Likes.Length: > 0 } ? string.Join("; ", aiLearned.Likes) : L("chưa có", "nothing yet"))));
+        learned.Children.Add(TextLine(L("Không thích: ", "Dislikes: ") + (aiLearned is { Dislikes.Length: > 0 } ? string.Join("; ", aiLearned.Dislikes) : L("chưa có", "nothing yet"))));
     }
 
     private static string Times(long count) => count == 1 ? "once" : $"{count} times";
 
     private void AddHeading(string text, double size) => diaryPanel!.Children.Add(new TextBlock
     {
-        Text = text, FontSize = size, FontWeight = FontWeights.SemiBold, Foreground = DiaryInk, Margin = new Thickness(0, size > 16 ? 0 : 14, 0, 6)
+        Text = text, FontSize = size, FontWeight = FontWeights.SemiBold, Foreground = DiaryInk, Margin = new Thickness(0, 0, 0, 2)
     });
 
-    private void AddLine(string text, Brush? brush = null) => diaryPanel!.Children.Add(new TextBlock
+    private void AddLine(string text, Brush? brush = null) => diaryPanel!.Children.Add(TextLine(text, brush));
+
+    private static TextBlock TextLine(string text, Brush? brush = null) => new()
     {
         Text = text, TextWrapping = TextWrapping.Wrap, Foreground = brush ?? DiaryInk, Margin = new Thickness(0, 2, 0, 2)
-    });
+    };
+
+    // A titled card; returns the panel its content goes into.
+    private StackPanel AddCard(string title)
+    {
+        var content = new StackPanel();
+        content.Children.Add(PetUi.SectionTitle(title));
+        diaryPanel!.Children.Add(PetUi.Card(content));
+        return content;
+    }
+
+    // Headline numbers as equal tiles: the value large, its label small underneath.
+    private void AddStats(params (long Value, string Label)[] stats)
+    {
+        var row = new System.Windows.Controls.Primitives.UniformGrid { Rows = 1, Margin = new Thickness(-4, 10, -4, 6) };
+        foreach (var (value, label) in stats)
+        {
+            var tile = new StackPanel();
+            tile.Children.Add(new TextBlock { Text = value.ToString("N0", System.Globalization.CultureInfo.InvariantCulture), FontSize = 20, FontWeight = FontWeights.SemiBold, Foreground = DiaryAccent });
+            tile.Children.Add(new TextBlock { Text = label, FontSize = 12, Foreground = DiaryMuted, TextWrapping = TextWrapping.Wrap });
+            row.Children.Add(PetUi.Card(tile, new Thickness(4, 0, 4, 0)));
+        }
+        diaryPanel!.Children.Add(row);
+    }
 
     // Single series sparkline on a fixed 0-100 scale; the newest day is marked.
     private static FrameworkElement BondChart(double[] values)

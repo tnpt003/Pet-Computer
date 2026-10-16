@@ -89,6 +89,32 @@ public static class PetUi
         Content = text, MinWidth = 88, Padding = new Thickness(14, 5, 14, 5), Margin = new Thickness(8, 0, 0, 0)
     };
 
+    public static readonly Brush Ink = Frozen(Color.FromRgb(0x2B, 0x2A, 0x28));
+
+    // A white, softly bordered group of related content inside a Surface window.
+    public static Border Card(UIElement child, Thickness? margin = null) => new()
+    {
+        Child = child, Background = Brushes.White, BorderBrush = Line, BorderThickness = new Thickness(1),
+        CornerRadius = new CornerRadius(8), Padding = new Thickness(14, 12, 14, 12), Margin = margin ?? new Thickness(0, 0, 0, 10)
+    };
+
+    public static TextBlock SectionTitle(string text) => new()
+    {
+        Text = text, FontSize = 14, FontWeight = FontWeights.SemiBold, Foreground = Ink, Margin = new Thickness(0, 0, 0, 6)
+    };
+
+    // A bottom bar: an optional link-style action on the left, buttons on the right.
+    public static DockPanel ButtonBar(Button? left, params Button[] right)
+    {
+        var bar = new DockPanel { Margin = new Thickness(16, 10, 16, 12), LastChildFill = false };
+        var buttons = new StackPanel { Orientation = Orientation.Horizontal };
+        foreach (var button in right) buttons.Children.Add(button);
+        DockPanel.SetDock(buttons, Dock.Right);
+        bar.Children.Add(buttons);
+        if (left != null) { left.Margin = new Thickness(0); left.VerticalAlignment = VerticalAlignment.Center; bar.Children.Add(left); }
+        return bar;
+    }
+
     public static void ApplyWindowFont(Window window)
     {
         window.FontFamily = TextFont;

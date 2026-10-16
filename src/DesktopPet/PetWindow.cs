@@ -100,6 +100,7 @@ public sealed partial class PetWindow : Window
         renderer = new PetRenderer(pet);
         Content = renderer;
         var menu = new ContextMenu { FontFamily = PetUi.TextFont, FontSize = 13 };
+        PetMenuStyle.Apply(menu);
         ContextMenu = menu;
         InitializeFeatures(menu); // Builds the whole menu (PetWindow.Features.cs).
         SourceInitialized += (_, _) =>

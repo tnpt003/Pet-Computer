@@ -171,6 +171,29 @@ internal static class Program
               window.ContextMenu.Items.OfType<System.Windows.Controls.Separator>().Count() == 3 &&
               !string.IsNullOrEmpty(PetWindow.VersionText) && PetWindow.VersionText != "unknown",
             "Context menu: play items first, groups split by separators, rarely used items under More, Exit last; About has a version");
+        // Lay the closed menu out off-screen to check (and, for review, render) the rounded style.
+        var styledMenu = window.ContextMenu;
+        styledMenu.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.ContextMenu.OpenedEvent)); // Fills labels and states.
+        styledMenu.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        styledMenu.Arrange(new Rect(styledMenu.DesiredSize));
+        styledMenu.UpdateLayout();
+        var firstItem = (System.Windows.Controls.MenuItem)styledMenu.Items[0];
+        Check(styledMenu.Style != null && firstItem.Template?.FindName("Chrome", firstItem) is System.Windows.Controls.Border { CornerRadius.TopLeft: > 0 } &&
+              styledMenu.DesiredSize.Width >= 200,
+            "Context menu uses the rounded pet style for the menu and its items");
+        if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string menuReview)
+        {
+            var image = new RenderTargetBitmap((int)Math.Ceiling(styledMenu.ActualWidth), (int)Math.Ceiling(styledMenu.ActualHeight), 96, 96, PixelFormats.Pbgra32);
+            var backdrop = new DrawingVisual();
+            using (var dc = backdrop.RenderOpen())
+            {
+                dc.DrawRectangle(new SolidColorBrush(Color.FromRgb(0x9C, 0xB8, 0xD2)), null, new Rect(0, 0, image.Width, image.Height));
+                dc.DrawRectangle(new VisualBrush(styledMenu), null, new Rect(0, 0, styledMenu.ActualWidth, styledMenu.ActualHeight));
+            }
+            image.Render(backdrop);
+            var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(image));
+            using var stream = System.IO.File.Create(System.IO.Path.Combine(menuReview, "context-menu.png")); encoder.Save(stream);
+        }
         {
             // One UI language: every menu label (submenus included) follows preferences.Language.
             var options = Field<PetPreferences>(window, "preferences");

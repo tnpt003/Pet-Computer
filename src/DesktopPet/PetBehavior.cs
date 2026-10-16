@@ -74,8 +74,7 @@ public sealed class PetBehavior(PetSettings settings, Random? randomSource = nul
     // "Do now" menu: skips cooldowns, bond, chance and Quiet, but never input, flight,
     // sleep or waking (the window queues the request until the pet is free).
     public static bool CanStartManual(PetModel pet, PetAction action) =>
-        Array.IndexOf(ManualActions, action) >= 0 && pet.Grounded && !pet.Emotions.SleepLocked && !pet.Emotions.BlocksAutonomy &&
-        pet.Action is not (PetAction.Sleeping or PetAction.Waking or PetAction.Dragging or PetAction.Thrown or PetAction.Jumping or PetAction.PreparingJump);
+        Array.IndexOf(ManualActions, action) >= 0 && PetActionRules.IsSettled(pet) && !pet.Emotions.BlocksAutonomy;
 
     public bool StartManual(PetModel pet, PetAction action)
     {

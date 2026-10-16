@@ -9,6 +9,23 @@ internal static class CombinationTests
         var settings = new PetSettings();
         AiDecision Decision(string command) => new(command, 4, "content");
 
+        // The shared start condition matches the conditions it replaced in every state.
+        bool sameRules = true;
+        foreach (PetAction action in Enum.GetValues<PetAction>())
+            foreach (bool grounded in new[] { true, false })
+                foreach (bool asleep in new[] { true, false })
+                {
+                    var state = new PetModel { Action = action, Grounded = grounded };
+                    if (asleep) state.Emotions.EnterSleep();
+                    bool old = grounded && !asleep && action is not (PetAction.Sleeping or PetAction.Waking or PetAction.Dragging or
+                        PetAction.Thrown or PetAction.Jumping or PetAction.PreparingJump);
+                    sameRules &= PetActionRules.IsSettled(state) == old &&
+                        PetActionRules.IsInFlight(action) == (action is PetAction.Thrown or PetAction.Jumping or PetAction.PreparingJump) &&
+                        PetBehavior.CanStartManual(state, PetAction.Kneading) == (old && !state.Emotions.BlocksAutonomy) &&
+                        PetSpeech.CanShow(state) == (old && state.TreatRemaining <= 0);
+                }
+        check(sameRules, "Shared start rules (IsSettled/IsInFlight) match the old per-feature conditions for every action");
+
         // Quiet keeps Python informed but never moves the cat.
         var quiet = new PetBehavior(settings, new Random(8)) { Quiet = true };
         int requests = 0;

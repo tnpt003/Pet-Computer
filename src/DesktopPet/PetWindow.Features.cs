@@ -26,9 +26,7 @@ public sealed partial class PetWindow
     private SoundPlayer? sound;
     private MemoryStream? soundStream;
 
-    private bool CanPlay => !paused && !dragging && !pressPending && pet.Grounded &&
-        !pet.Emotions.SleepLocked && !pet.Emotions.BlocksAutonomy &&
-        pet.Action is not (PetAction.Sleeping or PetAction.Waking or PetAction.Thrown or PetAction.Jumping or PetAction.PreparingJump);
+    private bool CanPlay => !paused && !dragging && !pressPending && PetActionRules.IsSettled(pet) && !pet.Emotions.BlocksAutonomy;
 
     private void InitializeFeatures(ContextMenu menu)
     {

@@ -27,8 +27,7 @@ public sealed class PetSpeech
 
     // Unlike thought icons, a short reaction may appear while the pet is upset.
     public static bool CanShow(PetModel pet) =>
-        pet.Grounded && !pet.Emotions.SleepLocked && pet.TreatRemaining <= 0 &&
-        pet.Action is not (PetAction.Sleeping or PetAction.Waking or PetAction.Dragging or PetAction.Thrown or PetAction.Jumping or PetAction.PreparingJump);
+        PetActionRules.IsSettled(pet) && pet.TreatRemaining <= 0;
 
     public static double DurationFor(string text) => Math.Clamp(MinDuration + 0.06 * text.Length, MinDuration, MaxDuration);
 

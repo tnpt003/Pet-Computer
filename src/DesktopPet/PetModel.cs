@@ -19,6 +19,16 @@ public static class PetActionRules
     // Short stationary poses that own a fixed duration (PetSettings.GestureDuration).
     public static bool IsGesture(PetAction action) => action is PetAction.Kneading or PetAction.RollingOver or
         PetAction.ChasingTail or PetAction.Scratching or PetAction.Sneezing;
+
+    // In the air or about to be: a throw, a jump or its crouch.
+    public static bool IsInFlight(PetAction action) => action is PetAction.Thrown or PetAction.Jumping or PetAction.PreparingJump;
+
+    // Sleep, waking, input and flight own the body: nothing new starts over them.
+    public static bool HoldsBody(PetAction action) => action is PetAction.Sleeping or PetAction.Waking or PetAction.Dragging || IsInFlight(action);
+
+    // Standing on the floor or a window, awake and free of input and flight: the shared
+    // precondition for play, "Do now", speech and thought bubbles.
+    public static bool IsSettled(PetModel pet) => pet.Grounded && !pet.Emotions.SleepLocked && !HoldsBody(pet.Action);
 }
 
 public readonly record struct Area(double Left, double Top, double Right, double Bottom);

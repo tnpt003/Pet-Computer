@@ -29,8 +29,7 @@ public sealed class PetThought
 
     // Bubbles stay out of sleep, input, flight, eating and strong reactions.
     public static bool CanShow(PetModel pet) =>
-        pet.Grounded && !pet.Emotions.SleepLocked && pet.TreatRemaining <= 0 &&
-        pet.Action is not (PetAction.Sleeping or PetAction.Waking or PetAction.Dragging or PetAction.Thrown or PetAction.Jumping or PetAction.PreparingJump) &&
+        PetActionRules.IsSettled(pet) && pet.TreatRemaining <= 0 &&
         pet.Emotions.Current is not (PetEmotion.Angry or PetEmotion.Surprised or PetEmotion.Dizzy or PetEmotion.Sleepy) &&
         pet.Emotions.Target is not (PetEmotion.Angry or PetEmotion.Surprised or PetEmotion.Sleepy);
 

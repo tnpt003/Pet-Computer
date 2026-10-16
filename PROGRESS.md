@@ -173,7 +173,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Lịch sử chuyển project: 2026-10-05 tạo AGENTS.md/PROGRESS.md tại ổ D khi thư mục đó trống; source hiện nằm tại ổ C, không cần khôi phục về D.
 
 ## Đang dở và việc tiếp theo
-- Giao diện: chưa làm ảnh xem trước con mèo trong tab Mèo (đổi bộ lông/phụ kiện thấy ngay); menu vẫn dùng kiểu Windows mặc định (chưa có template bo góc riêng); Nhật ký/Tinh chỉnh hành vi chưa đổi bố cục.
+- Giao diện: menu vẫn dùng kiểu Windows mặc định (chưa có template bo góc riêng); Nhật ký/Tinh chỉnh hành vi chưa đổi bố cục.
 - Từ review của Codex, chưa làm: gom điều kiện bắt đầu hoạt động vào PetActionRules (refactor từng bước, sau khi có thêm test kết hợp); đợt đo hiệu năng (CPU/RAM/thời gian render khi idle, ngủ, kéo nhanh, chơi laser; chạy dài nhiều giờ; fullscreen; nhiều màn hình/DPI).
 - Phương án 1 chưa làm (người dùng chọn 2): bỏ cooldown cho ăn 20s; menu cho ăn/bóng/laser luôn bấm được và xếp hàng ≤3s khi mèo đang thức dậy/giận/giật mình (như Làm ngay). Ý tưởng khác: mèo no (đói < 10) thì từ chối ăn thay vì cooldown cố định.
 - check-publish.ps1 fail khi người dùng đang mở app fullscreen trên màn hình chính (mèo yên lặng, Python chưa khởi động). Có thể cho smoke test tắt probe ngữ cảnh bằng biến môi trường nếu muốn chạy được lúc đó.

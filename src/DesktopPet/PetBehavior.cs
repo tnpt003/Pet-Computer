@@ -273,7 +273,7 @@ public sealed class PetBehavior(PetSettings settings, Random? randomSource = nul
     // because nobody is there to be disturbed.
     public bool StartAwayNap(PetModel pet)
     {
-        if (!pet.Grounded || pet.Action is PetAction.Dragging or PetAction.Thrown or PetAction.Jumping or PetAction.PreparingJump) return false;
+        if (!pet.Grounded || pet.Action == PetAction.Dragging || PetActionRules.IsInFlight(pet.Action)) return false;
         followingMouse = false;
         pet.VX = pet.VY = pet.SmoothedWalkVelocity = 0;
         pet.Action = PetAction.Sleeping;

@@ -26,6 +26,16 @@ internal static class CombinationTests
                 }
         check(sameRules, "Shared start rules (IsSettled/IsInFlight) match the old per-feature conditions for every action");
 
+        // Away nap now uses IsInFlight too (the emotion "busy" check relies on the same IsInFlight equality above).
+        bool sameNap = true;
+        foreach (PetAction action in Enum.GetValues<PetAction>())
+            foreach (bool grounded in new[] { true, false })
+            {
+                bool old = grounded && action is not (PetAction.Dragging or PetAction.Thrown or PetAction.Jumping or PetAction.PreparingJump);
+                sameNap &= new PetBehavior(settings, new Random(7)).StartAwayNap(new PetModel { Action = action, Grounded = grounded }) == old;
+            }
+        check(sameNap, "Away nap starts in exactly the states the old condition allowed");
+
         // Quiet keeps Python informed but never moves the cat.
         var quiet = new PetBehavior(settings, new Random(8)) { Quiet = true };
         int requests = 0;

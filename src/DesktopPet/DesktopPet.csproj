@@ -12,6 +12,8 @@
     <Product>Desktop Pet</Product>
     <!-- Forms supplies only the tray icon; WPF owns startup and manifest DPI policy. -->
     <NoWarn>$(NoWarn);WFO0003</NoWarn>
+    <!-- The small heap does not need background GC; turning it off keeps ~25 MB less RAM (scripts/perf.ps1, 2026-10-16). -->
+    <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
   </PropertyGroup>
   <ItemGroup>
     <Resource Include="Assets/Pet.ico" />

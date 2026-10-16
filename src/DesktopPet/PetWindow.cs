@@ -384,8 +384,16 @@ public sealed partial class PetWindow : Window
                 $"Windows: {(!LedgesEnabled ? "off" : pet.Action == PetAction.Climbing ? "climbing" : OnLedge ? "on a window" : "floor")}, {ledges.Count} ledges{(climbPlan != null ? ", going to climb" : ledgeExit != 0 ? ", leaving" : "")}\n" +
                 $"Context: {(context.Fullscreen ? "fullscreen app (quiet)" : "normal")}, {(context.Away ? "user away" : "user here")}, idle {context.IdleSeconds:F0} s{(behavior.HoldSleep ? ", away nap" : "")}\n" +
                 $"Break reminder: {(breaks.Enabled ? $"{breaks.ActiveSeconds / 60:F1} / {breaks.IntervalSeconds / 60:F0} min active{(breaks.Due ? " (due)" : "")}" : "off")}\n" +
-                $"Frame: {measuredFps:F0} fps (max gap {measuredMaxGap * 1000:F0} ms)\n{AiStatus}";
+                $"Frame: {measuredFps:F0} fps (max gap {measuredMaxGap * 1000:F0} ms)\n{MemoryStatus()}\n{AiStatus}";
         }
+    }
+
+    // Live heap vs. memory the GC keeps committed: tells uncollected garbage from a real leak.
+    private static string MemoryStatus()
+    {
+        var info = GC.GetGCMemoryInfo();
+        return $"Memory: heap {GC.GetTotalMemory(false) / 1048576.0:F0} MB (after last GC {info.HeapSizeBytes / 1048576.0:F0} MB), " +
+            $"committed {info.TotalCommittedBytes / 1048576.0:F0} MB, GCs {GC.CollectionCount(0)}/{GC.CollectionCount(1)}/{GC.CollectionCount(2)}";
     }
 
     // One SetWindowPos per frame. Setting WPF Left and then Top issues two separate

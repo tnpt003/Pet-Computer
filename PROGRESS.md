@@ -1,10 +1,16 @@
 # Tiến độ Desktop Pet
 
-Cập nhật: 2026-10-15 (Asia/Saigon).
+Cập nhật: 2026-10-16 (Asia/Saigon).
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
-## Kết quả test gần nhất (2026-10-15, mèo đi trên cửa sổ)
+## Kết quả test gần nhất (2026-10-16, giai đoạn 1: ổn định)
+- scripts/test.ps1 -Ui: 395 C# checks (thêm check away nap), 188 WPF checks, Python tests đạt. Publish + check-publish đạt (3/3). Đã đóng mèo của người dùng bằng WM_CLOSE (đúng process artifacts\win-x64), publish, mở lại bản mới lúc 15:38.
+- Đo RAM: bản mới, 30 phút dùng máy bình thường (perf.ps1 gắn vào, mẫu 10 s): private 137 MB lúc mở → ~210 MB sau 3 phút → dao động 220–275 MB từ phút 8 đến 28 (max 279); CPU TB 0.84%, p95 1.6%; handles 717→776 ổn định; Python 11 MB. So với bản chạy 7 giờ hôm trước (276–296 MB): RAM lên nhanh trong ~20 phút rồi đứng quanh 260–300 MB, không tăng tiếp theo giờ → nhiều khả năng là GC giữ bộ nhớ (renderer tạo ~40 transform/geometry mỗi khung), không phải rò rỉ. Chưa đọc được số GC trong máy (dòng Memory) để khẳng định.
+- So cấu hình GC (perf.ps1 tự mở mèo với dữ liệu riêng, 15 phút mỗi lượt, mẫu 5 s, private MB phút 5–10 / 10–15 / max): mặc định 156 / 174 / 185 (còn tăng); DOTNET_gcConcurrent=0 147 / 152 / 156; GCgen0size=4 MB 161 / 166 / 172; cả hai 156 / 161 / 164. CPU cả 4 ~0.5–0.6%. Chọn ConcurrentGarbageCollection=false trong csproj (runtimeconfig "System.GC.Concurrent": false, đã kiểm tra bản publish). Mèo dữ liệu riêng thấp hơn mèo thật (~260 MB) nên còn cần đo lại mèo thật sau vài giờ. Chưa đo được max gap khung hình (GC chặn có thể khựng ngắn).
+- Log thật 09–16/10: không có exception nào. Mèo thoát lúc ~15:35 trong lúc đo không phải crash (không có lỗi trong log/Event Log).
+
+## Kết quả test đợt mèo đi trên cửa sổ (2026-10-15)
 - scripts/test.ps1 -Ui: 49 Python tests, 393 C# checks, 186 WPF checks đạt (exit 0). Publish + check-publish đạt (3/3). Đã đóng (WM_CLOSE đúng process artifacts\win-x64) và mở lại mèo của người dùng.
 - So pixel: 156 ảnh render cũ giống hệt; tư thế trèo (2 hướng × 10 bộ lông × 8 phụ kiện) qua check mép; đã xem ảnh tư thế trèo.
 - Chạy thật bản publish với PET_DATA_DIRECTORY riêng ~70 s: không lỗi, CPU ~8.8% một nhân, RAM 168 MB (lần đo trước ~6%, 200 MB; điều kiện khác nhau nên chưa kết luận). Lúc đó người dùng đang mở app phóng to (không phải gờ) nên CHƯA thấy mèo trèo/đứng trên cửa sổ thật. Ảnh chụp màn hình lúc đó đã xóa ngay (dính nội dung riêng).
@@ -84,6 +90,12 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Lịch sử: 201 C#/107 WPF/20 Python (motion, 2026-10-08); 181/101/20 (features). Không dùng số liệu cũ thay kết quả hiện tại.
 
 ## Đã làm gần đây
+- 2026-10-16 giai đoạn 1 (ổn định trước khi thêm tính năng; lộ trình 3 giai đoạn ở "Đang dở"):
+  - Behavior debug view thêm dòng Memory: heap hiện tại, heap sau GC gần nhất, committed, số lần GC gen0/1/2 (phân biệt rác chưa dọn với rò rỉ thật).
+  - Log vòng đời (App.xaml.cs): "Desktop Pet exited (code …)", "Windows session ending: …", "Unobserved task exception". Dòng "started" không có "exited" theo sau = crash hoặc bị kill. Cách xử lý crash giữ nguyên.
+  - Gom 2 điều kiện cuối vào PetActionRules.IsInFlight: StartAwayNap (PetBehavior) và busy (PetEmotions). Hành vi giữ nguyên; CombinationTests thêm check away nap so với điều kiện cũ.
+  - Tắt background GC (<ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>): RAM thấp hơn ~25 MB và không còn tăng dần trong 15 phút đo.
+  - docs/MANUAL-TEST.md: checklist test tay có ô tick, 3 mức ưu tiên (bất biến → tính năng mới → cảm nhận/dài hạn), thay danh sách dài trong PROGRESS.
 - 2026-10-16 (người dùng chọn: Giao diện, Review Codex, Smoke test; 1b giữ cửa sổ riêng chỉ làm lại bố cục; tạm không làm "tinh chỉnh sau khi dùng thật"):
   - Smoke test: biến PET_CONTEXT_PROBE=off (PetWindow.Context.cs) làm contextProbe luôn trả (không fullscreen, idle 0); check-publish.ps1 đặt biến này. Chưa thử thật lúc đang mở app fullscreen.
   - Refactor điều kiện bắt đầu: PetActionRules.IsInFlight / HoldsBody / IsSettled thay danh sách lặp ở CanStartManual, CanPlay, PetSpeech.CanShow, PetThought.CanShow, điều kiện away nap. Hành vi giữ nguyên; CombinationTests thêm check so với điều kiện cũ cho mọi action × grounded × ngủ. Còn 2 chỗ tương tự chưa gom (PetBehavior dòng ~276, PetEmotions busy) vì danh sách khác nhau.
@@ -182,6 +194,9 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Lịch sử chuyển project: 2026-10-05 tạo AGENTS.md/PROGRESS.md tại ổ D khi thư mục đó trống; source hiện nằm tại ổ C, không cần khôi phục về D.
 
 ## Đang dở và việc tiếp theo
+- Lộ trình dài hạn (đề xuất 2026-10-16): GĐ1 ổn định (RAM, log, gom luật trạng thái, checklist test tay) → GĐ2 nội dung dạng dữ liệu (bộ lông/phụ kiện/câu thoại/sự kiện mùa/lịch sinh hoạt ra JSON, có thể làm gói mod) → GĐ3 chiều sâu dài hạn (quan hệ phát triển, ngữ cảnh máy tôn trọng riêng tư, LLM opt-in nếu người dùng đổi quy tắc, nhiều mèo). Song song nếu muốn chia sẻ: installer/MSIX, tự cập nhật, ký code, GitHub Releases/winget, giảm dung lượng.
+- GĐ1 còn: đo lại mèo thật vài giờ với GC mới (perf.ps1 -Minutes 120 -Interval 10) và xem dòng Memory/Frame (max gap) trong debug view; nếu vẫn cao thì làm phương án B (giảm transform/geometry tạo mỗi khung trong PetRenderer, so pixel bằng UiChecks); người dùng đi hết docs/MANUAL-TEST.md mức 1.
+- scripts/perf.ps1 đóng mèo nó tự mở bằng CloseMainWindow, có thể không trúng cửa sổ mèo (MainWindowHandle) nên rơi vào Kill sau 5 s; nên dùng WM_CLOSE theo tiêu đề như check-publish.ps1.
 - Giao diện: menu khay (WinForms) vẫn kiểu Windows mặc định.
 - Tạm hoãn theo người dùng (2026-10-16): lựa chọn away nap 5/10/15 phút; thêm tốc độ đói, tốc độ chán, khoảng cách bong bóng vào Behavior tuning (cần đưa THOUGHT_COOLDOWN ra personality.json).
 - Hiệu năng: đã có scripts/perf.ps1; còn đo khi ngủ, kéo nhanh, chơi laser, chạy dài nhiều giờ (kiểm tra RAM ~290 MB sau 7 giờ so với ~130 MB lúc mới mở), nhiều màn hình/DPI.
@@ -203,33 +218,4 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Không tích hợp LLM, voice hay computer vision; không thay framework hoặc hệ thống rendering/physics.
 
 ## Cần test thủ công
-- Đi trên cửa sổ: để một cửa sổ (không phóng to) như VS Code/Explorer; ném/thả mèo lên mép trên: đáp đúng mép, đi qua lại, quay đầu ở mép; kéo cửa sổ: mèo đi theo; thu nhỏ/phóng to/đóng: mèo rơi. Cửa sổ thấp gần mèo: mèo tự nhảy lên (chờ 1–2 phút). Cửa sổ cao chạm đáy: mèo đi tới cạnh, trèo lên, nhảy lên đỉnh; click khi đang trèo: buông. Mèo ngủ trên cửa sổ rồi thu nhỏ cửa sổ: rơi mà vẫn ngủ. Chơi bóng/laser khi mèo trên cửa sổ: mèo đi ra mép và nhảy xuống. Tắt "Mèo leo lên cửa sổ": mèo rơi. Xem dòng Windows trong debug view. Thử Chrome/VS Code (thanh tiêu đề tự vẽ) xem có lệch không.
-- Giao diện mới: chuột phải mèo xem menu (icon rõ, nhóm hợp lý, menu con Làm ngay/Cảm xúc/Chỗ nghỉ/Khác); mở Cài đặt từ menu mèo và từ khay; đổi từng tab rồi Hủy (không đổi gì) và Lưu; tắt Bật âm thanh/Mèo biết nói/Nhắc nghỉ thì ô phụ mờ; Nghe thử; bật/tắt Khởi động cùng Windows rồi Lưu (kiểm tra Task Manager → Startup); đổi ngôn ngữ; Esc đóng cửa sổ. Xem trên màn hình DPI 125–150%.
-- Quiet + AI: bật Quiet, vuốt/cho ăn mèo: có câu phản ứng (nếu bật Speech) nhưng mèo không tự đi; mở Nhật ký sau vài phút Quiet: số liệu mới. Click để đánh thức rồi chuột phải ngay: mèo vẫn thức trong ~1.2s như thường.
-- Quiet + trò chơi: bật Quiet, chọn Chơi bóng và Chơi đèn laser: chạy bình thường, hết trò thì mèo đứng yên (không tự đi). Bật Quiet giữa lúc đang chơi: trò dừng. Mở video fullscreen: không bắt đầu được.
-- Đèn laser: bật từ menu, rê chuột trên màn hình có mèo: mèo nhìn, đuổi, dừng chuột gần mèo thì rình rồi vồ; rê lên cao thì mèo chỉ nhìn; rê qua người mèo không bị tính vuốt; sang màn hình khác thì chấm ẩn; click mèo/chuột phải thì tắt; tự tắt sau 60s. Click vào app khác trong lúc chơi vẫn được (chấm không chặn click).
-- Ngôn ngữ: mở cài đặt, chọn English → Save; kiểm tra menu chuột phải (cả Làm ngay, Chỗ nghỉ), menu tray, tooltip khay, About, Nhật ký, Behavior tuning, hộp thoại Quên: toàn tiếng Anh; mèo nói tiếng Anh. Đổi lại Tiếng Việt: toàn tiếng Việt. Debug view luôn tiếng Anh.
-- Làm ngay: thử từng động tác (cả khi bật Quiet); chuột phải lúc mèo đang ngủ rồi chọn động tác (mèo thức 1.2s rồi làm); chọn Ngủ ngay sau khi mèo vừa thức; click/kéo giữa lúc làm thì ngắt ngay; Pause thì menu mờ.
-- Tự điều khiển cảm xúc: bật, chọn từng cảm xúc; vuốt/click dồn không đổi cảm xúc; để yên vài phút không buồn/ngủ tự động; kéo mạnh vẫn chóng mặt; tắt công tắc thì về bình thường ngay, không buồn/ngủ liền; mở lại app thì công tắc tắt.
-- Quả bóng (menu chơi bóng): nhìn bóng nảy/lăn và khi click bóng: còn giật/lệch không.
-- Câu chào: mở lại mèo vài lần (Speech + AI bật); câu "Chào sen" xuất hiện. Nếu mèo ngủ ngay lúc mở, câu chào phải hiện sau khi mèo thức (không đánh thức mèo sớm).
-- Vuốt mèo liên tục vài giây: mèo ngồi nhồi bột (mắt lim dim) rồi về bình thường; trái tim/Happy vẫn như cũ. Khi bond ≥ 60 (xem debug view), vuốt xong có thể lăn ngửa. Click/kéo giữa lúc làm động tác thì ngắt ngay.
-- Để mèo chạy lâu: thỉnh thoảng đuổi đuôi, cào móng, hắt xì; không quá dày. Clicking đến khi Giận: tai cụp, đuôi quất.
-- Cho ăn rồi để Python trả câu trong lúc ăn: câu cảm ơn hiện ngay sau khi ăn xong.
-- Mở nhật ký (menu chuột phải) với AI bật và tắt; đổi ngôn ngữ; rê chuột lên biểu đồ xem tooltip; sau vài ngày xem biểu đồ bond/giờ chơi.
-- Bộ lông/phụ kiện: đổi trong Appearance, Save, xem trực tiếp khi đi, ngủ, kéo, ném, ăn treat, vuốt ve; đặc biệt mèo đen (mắt/miệng có rõ không) và mũ khi kéo sát mép trên màn hình.
-- Nhắc nghỉ: bật 30 phút, dùng máy bình thường; xem debug view dòng Break reminder; khi nhắc mèo nói + duỗi người; tắt Speech vẫn nhắc; rời máy ≥5 phút thì đồng hồ reset.
-- Fullscreen: mở video YouTube fullscreen (F11/nút fullscreen), game, PowerPoint trình chiếu trên màn hình có mèo: mèo đứng yên, im lặng, không bong bóng; thoát fullscreen thì bình thường. Cửa sổ maximize thường KHÔNG được tính. Thử fullscreen ở màn hình phụ khi mèo ở màn hình chính (không được tính).
-- Away nap: không chạm máy 5 phút → mèo ngủ và ngủ mãi; chạm chuột → mèo thức (1.2s) và chào "Sen về rồi!…" (nếu bật Speech + AI). Click mèo đang away nap vẫn thức và kéo được. Pause trong lúc away nap.
-- Mèo nói: tần suất có dễ chịu không (thử Ít/Vừa/Nhiều), đổi English, câu phản ứng sau vuốt/cho ăn/ném mạnh, bong bóng khi mèo ở sát mép màn hình và trên màn hình phụ/DPI khác.
-- Tự học: sau vài ngày xem debug view "Learned likes/dislikes"; thử nút Quên.
-- Để mèo chạy, mở Behavior debug view xem Needs/Thought thay đổi; vuốt ve (tim), cho ăn khi đói, chơi bóng khi chán. Đánh giá bong bóng có quá dày/thưa không.
-- Không đụng mèo 3 phút: mèo buồn vài giây rồi bình thường; click giữa lúc buồn thì hết ngay.
-- Ném mèo mạnh/nhẹ, nhìn khi bay và nảy: còn giật không? Mở Behavior debug view xem dòng Frame (kỳ vọng ~60 fps, max gap < ~35 ms). Kiểm tra drag, pickup, thả, sleep/wake không đổi cảm giác.
-- Bật/tắt "Start with Windows" từ bản publish, đăng xuất/đăng nhập lại; xem About; mở thư mục logs.
-- Motion mới: xem trực tiếp đi/chậm lại/quay đầu, chuẩn bị nhảy/tiếp đất, ngồi/ngủ/thức và kéo khi đang chuyển tư thế. Ảnh render không thay thế kiểm tra độ mượt theo thời gian.
-- Nghe chín preview, tiếng chạm bóng/ăn xong/thức dậy; đánh giá độ dễ chịu, tương phản âm lượng và tần suất. Test PCM không xác nhận chất lượng nghe.
-- Chơi bóng với Balanced/Playful/Curious/Calm; kiểm tra độ tự nhiên của quan sát/hạ người/đánh/nghỉ.
-- Quan sát liếm chân/rửa mặt/duỗi người; thử ngắt bằng click và drag, Pause/Resume; test tự động đã kiểm tra state lock nhưng cảm nhận chuyển động cần thao tác thật.
-- Dùng Behavior tuning, Save/đóng không Save/Restore defaults; khởi động lại để kiểm tra trải nghiệm thực tế.
-- Mixed-DPI nhiều màn hình vật lý, drag/throw qua màn hình, ngắt/kết nối và khôi phục vị trí/favorite spot: chưa thực hiện trên nhiều màn hình vật lý.
+Xem và tick ở docs/MANUAL-TEST.md (đã gom toàn bộ danh sách cũ, xếp theo ưu tiên). Mới đợt này: dòng Memory trong debug view sau vài giờ; cặp dòng started/exited trong log sau khi thoát/tắt máy.

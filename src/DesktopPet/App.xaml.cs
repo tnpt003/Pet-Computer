@@ -27,6 +27,9 @@ public partial class App : Application
         // Log only; existing crash behavior is unchanged.
         DispatcherUnhandledException += (_, args) => System.Diagnostics.Trace.WriteLine($"Unhandled UI exception: {args.Exception}");
         AppDomain.CurrentDomain.UnhandledException += (_, args) => System.Diagnostics.Trace.WriteLine($"Unhandled exception: {args.ExceptionObject}");
+        System.Threading.Tasks.TaskScheduler.UnobservedTaskException += (_, args) => System.Diagnostics.Trace.WriteLine($"Unobserved task exception: {args.Exception}");
+        // With "exited" below, a "started" line without one marks a crash or a killed process.
+        SessionEnding += (_, args) => System.Diagnostics.Trace.WriteLine($"Windows session ending: {args.ReasonSessionEnding}");
         pet = new PetWindow();
         MainWindow = pet;
         var menu = new Forms.ContextMenuStrip();
@@ -89,6 +92,7 @@ public partial class App : Application
         showControls?.Dispose();
         if (ownsInstance) instanceMutex?.ReleaseMutex();
         instanceMutex?.Dispose();
+        if (ownsInstance) System.Diagnostics.Trace.WriteLine($"Desktop Pet exited (code {e.ApplicationExitCode})");
         base.OnExit(e);
     }
 }

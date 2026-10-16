@@ -726,11 +726,21 @@ internal static class Program
               form.PreviewPet.AnimationTime > previewTime && form.PreviewTimer.IsEnabled,
             "The settings preview shows the chosen coat and accessory at once and animates, without changing the real pet");
         looks[0].SelectedIndex = 2; looks[1].SelectedIndex = 3; reminder.IsChecked = true; interval.SelectedIndex = 0;
+        Check(form.BirthDay.SelectedIndex == 0 && form.BirthMonth.SelectedIndex == 0 && form.BirthDay.Items.Count == 32 && form.BirthMonth.Items.Count == 13,
+            "Settings offer an unset birthday (day 1-31, month 1-12)");
+        form.BirthDay.SelectedIndex = 31; form.BirthMonth.SelectedIndex = 2; // 31 February.
         form.Save.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
         var breaks = Field<PetBreaks>(window, "breaks");
         Check(preferences.Coat == "Black" && preferences.Accessory == "Hat" && renderer.Coat == "Black" && renderer.Accessory == "Hat" &&
               preferences.BreakReminders && preferences.BreakMinutes == 30 && breaks.Enabled && breaks.IntervalSeconds == 1800,
             "Saving applies the coat, accessory and break interval at once");
+        Check(preferences.Birthday == "02-29", "A birthday past the month's end is saved as its last day (31 Feb -> 02-29)");
+        window.ShowPetSettings();
+        form = Field<PetSettingsForm>(window, "settingsForm");
+        Check(form.BirthDay.SelectedIndex == 29 && form.BirthMonth.SelectedIndex == 2, "Settings show the saved birthday again");
+        form.BirthMonth.SelectedIndex = 0;
+        form.Save.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+        Check(preferences.Birthday == "", "Clearing the month removes the birthday");
         Check(!form.PreviewTimer.IsEnabled, "Closing settings stops the preview animation");
         renderer.Coat = preferences.Coat = "Orange"; renderer.Accessory = preferences.Accessory = "None";
 

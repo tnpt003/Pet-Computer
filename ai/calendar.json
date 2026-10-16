@@ -1,0 +1,19 @@
+{
+  "_comment": "Day rhythm and special days for the pet. rhythm: from/to are local hours (to is exclusive, from > to wraps past midnight); active/rest/sleep multiply how often the pet picks lively, calm or sleeping actions. events: date is MM-DD every year, or dates gives the day per year (lunar holidays); from/to are day offsets around it (e.g. from -1 starts the day before). Each event id is also a line category in lines.json; active (optional) makes the pet livelier that day. birthday uses the user's birthday from Settings; anniversary is the yearly day the pet first met the user. Earlier events win when several fall on the same day. Restart the AI after editing; publish again to update the standalone copy.",
+  "rhythm": [
+    { "from": 22, "to": 6, "active": 0.6, "rest": 1.2, "sleep": 1.8 },
+    { "from": 7, "to": 10, "active": 1.2, "rest": 1.0, "sleep": 0.7 }
+  ],
+  "events": [
+    { "id": "birthday", "special": "birthday", "active": 1.2 },
+    { "id": "anniversary", "special": "anniversary", "active": 1.1 },
+    { "id": "tet", "from": -1, "to": 2, "active": 1.2, "dates": {
+      "2026": "02-17", "2027": "02-06", "2028": "01-26", "2029": "02-13", "2030": "02-03",
+      "2031": "01-23", "2032": "02-11", "2033": "01-31", "2034": "02-19", "2035": "02-08" } },
+    { "id": "mid_autumn", "from": 0, "to": 0, "active": 1.1, "dates": {
+      "2026": "09-25", "2027": "09-15", "2028": "10-03", "2029": "09-22", "2030": "09-12",
+      "2031": "10-01", "2032": "09-19", "2033": "09-08", "2034": "09-27", "2035": "09-16" } },
+    { "id": "halloween", "date": "10-31" },
+    { "id": "christmas", "date": "12-24", "from": 0, "to": 1 }
+  ]
+}

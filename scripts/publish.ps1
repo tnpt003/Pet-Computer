@@ -26,7 +26,7 @@ if ($LASTEXITCODE -ne 0) { throw 'The bundled Python runtime must be Python 3.13
 if ($LASTEXITCODE -ne 0) { throw 'Publish failed. Close any running published pet and check the build output.' }
 $output = Join-Path $projectRoot 'artifacts\win-x64'
 foreach ($file in @('DesktopPet.exe', 'coreclr.dll', 'hostfxr.dll', 'PresentationFramework.dll',
-                    'ai\service.py', 'ai\speech.py', 'ai\learning.py', 'ai\lines.json', 'ai\personality.json', 'python\python.exe', 'python\python313.zip', 'python\LICENSE.txt')) {
+                    'ai\service.py', 'ai\speech.py', 'ai\learning.py', 'ai\seasons.py', 'ai\lines.json', 'ai\calendar.json', 'ai\personality.json', 'python\python.exe', 'python\python313.zip', 'python\LICENSE.txt')) {
     if (-not (Test-Path (Join-Path $output $file))) { throw "Missing published dependency: $file" }
 }
 Write-Host "Published application: $output\DesktopPet.exe"

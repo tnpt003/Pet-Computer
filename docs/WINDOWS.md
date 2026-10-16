@@ -363,7 +363,9 @@ and eight accessories (none, collar with bell, bow, party hat, scarf, round glas
 flower, crown). Each coat in the list has a colour dot. A preview next to the pickers
 shows the choice at once with a gentle idle animation (only while the Pet tab is open);
 the pet on screen changes on Save. Everything is
-vector drawing (`PetAppearance.cs` palettes, `PetRenderer.cs`). Patches and stripes are
+vector drawing (coat colors and names in `Assets/coats.json`, embedded at build time and read by
+`PetCoats.cs`/`PetAppearance.cs`; shapes in `PetRenderer.cs`). A broken `coats.json` is logged and
+leaves only the orange cat. Patches and stripes are
 clipped inside the outline. The bow, hat and collar move with the head. The window
 size is unchanged, and the default orange cat renders pixel for pixel as before.
 
@@ -389,7 +391,7 @@ never screen content.
   "missing you" sad episode is postponed so it does not clash with the welcome.
 
 Pause freezes all of this, like the sleep clock. Preferences: `Coat`, `Accessory`,
-`BreakReminders`, `BreakMinutes`.
+`BreakReminders`, `BreakMinutes`, `Birthday` (`MM-dd` or empty).
 
 ## Gestures, pending lines and diary (2026-10-13)
 
@@ -475,7 +477,8 @@ The cat's right-click menu is grouped, with Windows' own icon font (no new asset
 4. **Exit pet**.
 
 **Settings…** (also in the tray menu) opens one window with four tabs:
-- **Pet:** name, personality, coat and accessory with a live preview, link to Advanced behavior tuning…
+- **Pet:** name, personality, the user's birthday (day and month, optional; the pet wishes a happy
+  birthday that day), coat and accessory with a live preview, link to Advanced behavior tuning…
 - **Speech:** talking on/off, how often (greyed out while off), link to forget what was learned.
 - **Sounds:** master switch, three kinds, volume, preview picker + Play.
 - **General:** Language / Ngôn ngữ, Start with Windows, break reminders.

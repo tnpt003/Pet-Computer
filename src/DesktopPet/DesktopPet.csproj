@@ -18,11 +18,12 @@
   <ItemGroup>
     <Resource Include="Assets/Pet.ico" />
     <EmbeddedResource Include="Assets/Sounds/*.wav" LogicalName="DesktopPet.Sounds.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="Assets/coats.json" LogicalName="DesktopPet.coats.json" />
     <Content Include="Assets/Sounds/CREDITS.md;Assets/Sounds/sources.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
-    <Content Include="../../ai/service.py;../../ai/speech.py;../../ai/learning.py;../../ai/personality.json;../../ai/lines.json">
+    <Content Include="../../ai/service.py;../../ai/speech.py;../../ai/learning.py;../../ai/seasons.py;../../ai/personality.json;../../ai/lines.json;../../ai/calendar.json">
       <Link>ai/%(Filename)%(Extension)</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>

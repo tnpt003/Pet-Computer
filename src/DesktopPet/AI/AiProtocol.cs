@@ -12,7 +12,7 @@ public sealed record PetObservation(
     double? LocalHour = null, PetInteractions? Interactions = null,
     bool SpeechEnabled = false, string Language = "vi", int Chattiness = 1, string PetName = "", bool Quiet = false,
     SpeechReport? LastSpeech = null, string LearningReset = "",
-    bool BreakDue = false, ContextReport? Context = null);
+    bool BreakDue = false, ContextReport? Context = null, string Birthday = "");
 
 // Computer context (window geometry and input timing only). Returned is true once,
 // on the first observation after the user came back from being away.

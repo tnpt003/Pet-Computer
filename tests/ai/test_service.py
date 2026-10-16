@@ -1,3 +1,4 @@
+import datetime as dt
 import io
 import json
 from pathlib import Path
@@ -5,6 +6,7 @@ import random
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 from contextlib import redirect_stderr
 
@@ -12,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "ai"))
 from service import Brain, COMMANDS, day_rhythm, handle
 from learning import Learner, context as learning_context
+from seasons import Calendar
 from speech import Speech
 
 
@@ -581,6 +584,79 @@ class SpeechAndLearningTests(unittest.TestCase):
         for bad in ("yes", 1, None, [], {"returned": "true"}):
             self.now += 30
             self.assertFalse(self.brain.decide(self.obs(chattiness=0, context=bad)).get("speech", {}).get("id", "").startswith("back:"))
+
+    def at(self, year, month, day):
+        return time.mktime((year, month, day, 12, 0, 0, 0, 0, -1))
+
+    def test_special_days_change_the_greeting(self):
+        self.wall[0] = self.at(2026, 12, 25)
+        self.assertTrue(self.step()["speech"]["id"].startswith("christmas:vi:"))
+        self.brain = self.make()
+        self.assertTrue(self.step(birthday="12-25", language="en")["speech"]["id"].startswith("birthday:en:"))  # Birthday wins.
+        self.wall[0] = self.at(2026, 11, 3)
+        self.brain = self.make()
+        self.assertTrue(self.step(birthday="12-25")["speech"]["id"].startswith("hello:vi:"))  # Ordinary day.
+
+    def test_special_day_chatter_mixes_in(self):
+        self.wall[0] = self.at(2026, 10, 31)
+        self.step(chattiness=2)
+        ids = [self.step(40, chattiness=2).get("speech", {}).get("id", "") for _ in range(40)]
+        self.assertTrue(any(i.startswith("halloween:") for i in ids))
+        self.assertTrue(any(i.startswith(("idle:", "morning:", "night:")) for i in ids))  # Still ordinary chatter too.
+
+
+class CalendarTests(unittest.TestCase):
+    def setUp(self):
+        self.calendar = Calendar(ROOT / "ai/calendar.json")
+
+    def test_rhythm_matches_the_old_built_in_hours(self):
+        def old(hour):
+            if hour >= 22 or hour < 6:
+                return 0.6, 1.2, 1.8
+            if 7 <= hour < 10:
+                return 1.2, 1.0, 0.7
+            return 1.0, 1.0, 1.0
+        for quarter in range(96):
+            self.assertEqual(self.calendar.rhythm(quarter / 4), old(quarter / 4), quarter / 4)
+        self.assertEqual(day_rhythm(23), (0.6, 1.2, 1.8))
+
+    def test_holidays_birthday_and_anniversary(self):
+        today = lambda *ymd, **kw: (self.calendar.today(dt.date(*ymd), **kw) or (None,))[0]
+        self.assertEqual(today(2027, 2, 5), "tet")  # New Year's Eve.
+        self.assertEqual(today(2027, 2, 8), "tet")  # Third day.
+        self.assertIsNone(today(2027, 2, 9))
+        self.assertIsNone(today(2040, 2, 1))  # Lunar dates beyond the table are simply not known.
+        self.assertEqual(today(2026, 9, 25), "mid_autumn")
+        self.assertEqual(today(2026, 10, 31), "halloween")
+        self.assertEqual((today(2026, 12, 24), today(2026, 12, 25), today(2026, 12, 26)), ("christmas", "christmas", None))
+        self.assertEqual(today(2026, 12, 25, birthday="12-25"), "birthday")
+        self.assertEqual(today(2027, 2, 28, birthday="02-29"), "birthday")  # Leap-day birthdays still come.
+        self.assertIsNone(today(2026, 5, 4, birthday="13-40"))
+        met = dt.date(2026, 10, 13)
+        self.assertIsNone(today(2026, 10, 13, first_seen=met))  # The first day is not an anniversary.
+        self.assertEqual(today(2027, 10, 13, first_seen=met), "anniversary")
+        self.assertGreater(self.calendar.today(dt.date(2027, 2, 6))[1], 1)  # Livelier on Tết.
+
+    def test_broken_or_partial_file_falls_back_safely(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        folder = Path(temporary.name)
+        broken = folder / "broken.json"
+        broken.write_text("{ nope", encoding="utf-8")
+        with redirect_stderr(io.StringIO()):
+            fallback = Calendar(broken)
+        self.assertEqual(fallback.rhythm(23), (0.6, 1.2, 1.8))
+        self.assertIsNone(fallback.today(dt.date(2026, 12, 25)))
+        partial = folder / "partial.json"
+        partial.write_text(json.dumps({"rhythm": [{"from": 30, "to": 2}, {"from": 9, "to": 12, "active": 99}],
+                                       "events": [{"id": "Bad Id", "date": "12-25"}, {"id": "x", "date": "1225"},
+                                                  {"id": "ok", "date": "05-04", "from": 9}, {"id": "fine", "date": "05-04"}]}),
+                           encoding="utf-8")
+        loaded = Calendar(partial)
+        self.assertEqual(loaded.rhythm(10), (1.0, 1.0, 1.0))  # Out-of-range factor is ignored.
+        self.assertEqual(loaded.rhythm(1), (1.0, 1.0, 1.0))
+        self.assertEqual(loaded.today(dt.date(2026, 5, 4)), ("fine", 1.0))
+        self.assertIsNone(loaded.today(dt.date(2026, 12, 25)))
 
 
 if __name__ == "__main__":

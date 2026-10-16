@@ -307,5 +307,101 @@
       {"text": "Wanna play tag, human?", "personality": ["Playful"]},
       {"text": "So peaceful…", "personality": ["Calm"]}
     ]
+  },
+  "birthday": {
+    "vi": [
+      "Chúc mừng sinh nhật sen! {name} thương sen nhất~",
+      "Sinh nhật vui vẻ nha sen! Có bánh cho {name} không?",
+      "Hôm nay là ngày của sen đó! Meo meo~",
+      "{name} tặng sen một cái dụi đầu mừng sinh nhật!",
+      "Thêm một tuổi mà sen vẫn dễ thương ghê~"
+    ],
+    "en": [
+      "Happy birthday, human! {name} loves you most~",
+      "Happy birthday! Is there cake for {name}?",
+      "Today is your day, human! Meow~",
+      "{name} gives you a birthday head bump!",
+      "One year older and still my favorite human~"
+    ]
+  },
+  "anniversary": {
+    "vi": [
+      "Hôm nay tròn một năm nữa {name} ở cùng sen đó!",
+      "Kỷ niệm ngày mình gặp nhau nè sen~",
+      "Cảm ơn sen đã nuôi {name} thêm một năm!",
+      "Nhớ ngày đầu {name} tới không sen?",
+      "{name} vẫn thích ở với sen nhất!"
+    ],
+    "en": [
+      "Another year of {name} and you together!",
+      "Happy us-day, human~",
+      "Thanks for keeping {name} another year!",
+      "Remember the day {name} arrived?",
+      "{name} still likes you best!"
+    ]
+  },
+  "tet": {
+    "vi": [
+      "Chúc mừng năm mới sen ơi! Lì xì cho {name} đi~",
+      "Tết rồi! {name} chúc sen an khang thịnh vượng!",
+      "Năm mới {name} hứa ngoan hơn… chắc vậy",
+      "Bánh chưng có phần {name} không sen?",
+      "Năm mới sen đừng làm việc nhiều quá nha!"
+    ],
+    "en": [
+      "Happy Lunar New Year, human! Lucky money for {name}?",
+      "It's Tết! {name} wishes you a lucky year!",
+      "New year, new {name}… mostly the same",
+      "Is there sticky rice cake for {name}?",
+      "Don't work too hard this new year, human!"
+    ]
+  },
+  "mid_autumn": {
+    "vi": [
+      "Trung thu rồi! Bánh nướng hay bánh dẻo hả sen?",
+      "Trăng tròn quá, {name} muốn rước đèn!",
+      "Tết Trung thu vui vẻ nha sen~",
+      "{name} ngắm trăng với sen nha~",
+      "Đèn ông sao đẹp ghê, sen thấy không?"
+    ],
+    "en": [
+      "Mid-Autumn Festival! Mooncake for {name}?",
+      "The moon is so round, {name} wants a lantern!",
+      "Happy Mid-Autumn, human~",
+      "Let's watch the moon together~",
+      "Look at all the lanterns, human!"
+    ]
+  },
+  "halloween": {
+    "vi": [
+      "Cho kẹo hay bị ghẹo nè sen!",
+      "Boo! {name} là con mèo ma đó~",
+      "Halloween rồi, {name} làm mèo phù thủy!",
+      "Sen hóa trang thành gì đó?",
+      "{name} đi xin kẹo đây, meo!"
+    ],
+    "en": [
+      "Trick or treat, human!",
+      "Boo! {name} is a spooky ghost cat~",
+      "Halloween! {name} is a witch's cat today!",
+      "What's your costume, human?",
+      "{name} is off to get treats, meow!"
+    ]
+  },
+  "christmas": {
+    "vi": [
+      "Giáng sinh an lành nha sen!",
+      "Ông già Noel có quà cho {name} không?",
+      "{name} muốn nằm dưới cây thông~",
+      "{name} là món quà của sen nè!",
+      "Tuyết rơi chưa sen? {name} muốn xem~"
+    ],
+    "en": [
+      "Merry Christmas, human!",
+      "Did Santa bring {name} a present?",
+      "{name} wants to nap under the tree~",
+      "{name} is your present this year!",
+      "Is it snowing yet? {name} wants to see~"
+    ]
   }
 }

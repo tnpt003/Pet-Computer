@@ -18,10 +18,33 @@ internal static class ContextTests
             loaded = PetPreferences.Load(file);
             check(loaded.Coat == "Calico" && loaded.Accessory == "Hat" && loaded.BreakMinutes == 30 && !loaded.BreakReminders,
                 "Saved appearance and break interval load back; reminders stay off unless enabled");
-            check(new PetPreferences() is { Coat: "Orange", Accessory: "None", BreakReminders: false, BreakMinutes: 45 },
+            File.WriteAllText(file, "{\"Birthday\":\"02-30\"}");
+            check(PetPreferences.Load(file).Birthday == "", "An impossible birthday is dropped when preferences load");
+            File.WriteAllText(file, "{\"Birthday\":\"02-29\"}");
+            check(PetPreferences.Load(file).Birthday == "02-29" && PetPreferences.NormalizeBirthday("1-5") == "" &&
+                  PetPreferences.NormalizeBirthday("12-31") == "12-31" && PetPreferences.NormalizeBirthday(null) == "",
+                "Birthdays are kept only as valid MM-dd (29 February allowed)");
+            check(new PetPreferences() is { Coat: "Orange", Accessory: "None", BreakReminders: false, BreakMinutes: 45, Birthday: "" },
                 "Defaults keep the original orange cat and no reminders");
         }
         finally { Directory.Delete(folder, true); }
+
+        // Coats come from the embedded coats.json: same ids, order and colors as the old built-in list.
+        check(PetPreferences.Coats.SequenceEqual(new[] { "Orange", "Gray", "Black", "White", "Calico", "Tabby", "GingerTabby", "Tuxedo", "RussianBlue", "Siamese" }),
+            "coats.json lists the 10 original coats in the original settings order");
+        var siamese = PetCoats.All.Single(coat => coat.Id == "Siamese");
+        check(PetCoats.All[0] == PetCoats.Fallback && siamese is { Points: "#8A6A55", Iris: "#6FB3F2", Ink: "#3B2B24", NameVi: "Xiêm" } &&
+              PetCoats.All.Single(coat => coat.Id == "Calico") is { Markings: CoatMarkings.Calico, PatchB: "#45403F" } &&
+              PetCoats.All.Single(coat => coat.Id == "Tuxedo").Paw == "#FFFFFF",
+            "Coat colors, markings, points and paws load from JSON; Orange keeps the original artwork values");
+        CoatSpec[]? Parse(string json) { try { return PetCoats.Parse(new MemoryStream(System.Text.Encoding.UTF8.GetBytes(json))); } catch (Exception ex) when (ex is InvalidDataException or System.Text.Json.JsonException) { return null; } }
+        check(Parse("{\"coats\":[{\"id\":\"Mint\",\"fur\":\"#AAFFCC\",\"cream\":\"#FFFFFF\",\"pink\":\"#EE9999\"}]}") is [{ Id: "Mint", NameEn: "Mint", Ink: "#49372E" }] &&
+              Parse("{\"coats\":[{\"id\":\"Bad\",\"fur\":\"orange\",\"cream\":\"#FFFFFF\",\"pink\":\"#EE9999\"}]}") == null &&
+              Parse("{\"coats\":[{\"id\":\"Stripe\",\"fur\":\"#AAAAAA\",\"cream\":\"#FFFFFF\",\"pink\":\"#EE9999\",\"markings\":\"Tabby\"}]}") == null &&
+              Parse("{\"coats\":[]}") == null && Parse("{ broken") == null,
+            "A coat file with a bad color, missing patch colors, no coats or broken JSON is rejected as a whole");
+        check(PetCoats.All.All(coat => coat.NameEn.Length > 0 && coat.NameVi.Length > 0 && coat.NameVi != coat.Id),
+            "Every coat has Vietnamese and English names for settings");
 
         var breaks = new PetBreaks();
         breaks.Step(4000, 0, true);
@@ -103,8 +126,9 @@ internal static class ContextTests
         check(!behavior.StartStretch(asleep) && asleep.Action == PetAction.Sleeping, "A reminder never wakes or moves a sleeping pet");
 
         string json = System.Text.Json.JsonSerializer.Serialize(new PetObservation("Idle", true, 1, 1, "x", "LOCAL",
-            BreakDue: true, Context: new ContextReport(true, false, true)), AiProtocol.Json);
-        check(json.Contains("\"break_due\":true") && json.Contains("\"context\":{\"fullscreen\":true,\"away\":false,\"returned\":true}"),
-            "Observation reports break and computer context as additive fields");
+            BreakDue: true, Context: new ContextReport(true, false, true), Birthday: "12-25"), AiProtocol.Json);
+        check(json.Contains("\"break_due\":true") && json.Contains("\"context\":{\"fullscreen\":true,\"away\":false,\"returned\":true}") &&
+              json.Contains("\"birthday\":\"12-25\""),
+            "Observation reports break, computer context and the user's birthday as additive fields");
     }
 }

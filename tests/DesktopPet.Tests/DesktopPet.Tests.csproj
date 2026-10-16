@@ -14,6 +14,8 @@
     <Compile Include="../../src/DesktopPet/PetBreaks.cs" Link="PetBreaks.cs" />
     <Compile Include="../../src/DesktopPet/PetModel.cs" Link="PetModel.cs" />
     <Compile Include="../../src/DesktopPet/PetLedges.cs" Link="PetLedges.cs" />
+    <EmbeddedResource Include="../../src/DesktopPet/Assets/coats.json" LogicalName="DesktopPet.coats.json" />
+    <Compile Include="../../src/DesktopPet/PetCoats.cs" Link="PetCoats.cs" />
     <Compile Include="../../src/DesktopPet/PetPreferences.cs" Link="PetPreferences.cs" />
     <Compile Include="../../src/DesktopPet/PetLog.cs" Link="PetLog.cs" />
     <Compile Include="../../src/DesktopPet/StartupRegistration.cs" Link="StartupRegistration.cs" />

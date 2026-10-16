@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 
 namespace DesktopPet;
@@ -23,11 +24,17 @@ public sealed class PetPreferences
     // A new value asks Python to forget what it learned; Python applies each value once.
     public string LearningReset { get; set; } = "";
     // Appearance; drawn by CoatPalette and PetRenderer.
-    public static readonly string[] Coats = { "Orange", "Gray", "Black", "White", "Calico", "Tabby", "GingerTabby", "Tuxedo", "RussianBlue", "Siamese" };
+    // Settings order comes from Assets/coats.json.
+    public static readonly string[] Coats = PetCoats.All.Select(coat => coat.Id).ToArray();
     public static readonly string[] Accessories = { "None", "Bell", "Bow", "Hat", "Scarf", "Glasses", "Flower", "Crown" };
-    public static string NormalizeCoat(string? coat) => Array.IndexOf(Coats, coat) >= 0 ? coat! : "Orange";
+    public static string NormalizeCoat(string? coat) => Array.IndexOf(Coats, coat) >= 0 ? coat! : Coats[0];
     public static string NormalizeAccessory(string? accessory) => Array.IndexOf(Accessories, accessory) >= 0 ? accessory! : "None";
     public string Coat { get; set; } = "Orange";
+    // The user's birthday as "MM-dd" (no year), or "" when not set; Python greets on that day.
+    public string Birthday { get; set; } = "";
+    public static string NormalizeBirthday(string? value) =>
+        value is { Length: 5 } && value[2] == '-' && int.TryParse(value[..2], out int month) && int.TryParse(value[3..], out int day) &&
+        month is >= 1 and <= 12 && day >= 1 && day <= DateTime.DaysInMonth(2000, month) ? value : "";
     public string Accessory { get; set; } = "None";
     // Off by default: the pet reminds the user to take a break after this many active minutes.
     public bool BreakReminders { get; set; }
@@ -58,6 +65,7 @@ public sealed class PetPreferences
             p.Chattiness = Math.Clamp(p.Chattiness, 0, 2);
             p.Coat = NormalizeCoat(p.Coat);
             p.Accessory = NormalizeAccessory(p.Accessory);
+            p.Birthday = NormalizeBirthday(p.Birthday);
             if (Array.IndexOf(BreakChoices, p.BreakMinutes) < 0) p.BreakMinutes = 45;
             if (p.LearningReset == null || p.LearningReset.Length > 64) p.LearningReset = "";
             p.PositionX = double.IsFinite(p.PositionX) ? Math.Clamp(p.PositionX, 0, 1) : 0.5;

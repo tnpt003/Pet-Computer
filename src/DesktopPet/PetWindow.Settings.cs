@@ -12,7 +12,7 @@ public sealed class PetSettingsForm
 {
     public TabControl Tabs = null!;
     public TextBox Name = null!;
-    public ComboBox Language = null!, Personality = null!, Coat = null!, Accessory = null!, Chattiness = null!, BreakInterval = null!, PreviewCue = null!;
+    public ComboBox Language = null!, Personality = null!, Coat = null!, Accessory = null!, Chattiness = null!, BreakInterval = null!, PreviewCue = null!, BirthDay = null!, BirthMonth = null!;
     public CheckBox ClimbWindows = null!, Talks = null!, Autostart = null!, BreakReminders = null!, Sounds = null!, InteractionSounds = null!, EmotionSounds = null!, SleepSounds = null!;
     public Slider Volume = null!;
     public Button Save = null!, Cancel = null!, Tuning = null!, Forget = null!, Preview = null!;
@@ -53,16 +53,24 @@ public sealed partial class PetWindow
         form.Name = new TextBox { Text = preferences.Name, MaxLength = 24, Padding = new Thickness(2, 3, 2, 3) };
         form.Personality = new ComboBox { ItemsSource = new[] { L("Cân bằng", "Balanced"), L("Ham chơi", "Playful"), L("Tò mò", "Curious"), L("Điềm tĩnh", "Calm") },
             SelectedIndex = Math.Max(0, Array.IndexOf(personalities, preferences.Personality)) };
-        // Same order as PetPreferences.Coats / Accessories.
-        string[] coatLabels = { L("Cam", "Orange"), L("Xám", "Gray"), L("Đen", "Black"), L("Trắng", "White"), L("Tam thể", "Calico"),
-            L("Mướp (có sọc)", "Tabby (striped)"), L("Mướp cam", "Ginger tabby"), L("Mun cổ trắng (tuxedo)", "Tuxedo"),
-            L("Xám xanh (mèo Nga)", "Russian blue"), L("Xiêm", "Siamese") };
+        // Coats and their names come from Assets/coats.json, in PetPreferences.Coats order.
         form.Coat = new ComboBox { ItemTemplate = CoatTemplate,
-            ItemsSource = PetPreferences.Coats.Select((coat, i) => new CoatChoice(coatLabels[i], CoatPalette.For(coat))).ToArray(),
+            ItemsSource = PetCoats.All.Select(coat => new CoatChoice(L(coat.NameVi, coat.NameEn), CoatPalette.For(coat.Id))).ToArray(),
             SelectedIndex = Math.Max(0, Array.IndexOf(PetPreferences.Coats, preferences.Coat)) };
         form.Accessory = new ComboBox { ItemsSource = new[] { L("Không", "None"), L("Vòng cổ chuông", "Collar with bell"), L("Nơ", "Bow"), L("Mũ tiệc", "Party hat"),
                 L("Khăn quàng cổ", "Scarf"), L("Kính tròn", "Round glasses"), L("Bông hoa", "Flower"), L("Vương miện", "Crown") },
             SelectedIndex = Math.Max(0, Array.IndexOf(PetPreferences.Accessories, preferences.Accessory)) };
+        // The user's birthday (day and month only); index 0 means not set.
+        int savedMonth = preferences.Birthday.Length == 5 ? int.Parse(preferences.Birthday[..2]) : 0;
+        int savedDay = preferences.Birthday.Length == 5 ? int.Parse(preferences.Birthday[3..]) : 0;
+        form.BirthDay = new ComboBox { Width = 70, ItemsSource = new[] { L("Ngày", "Day") }.Concat(Enumerable.Range(1, 31).Select(d => d.ToString())).ToArray(),
+            SelectedIndex = savedDay };
+        form.BirthMonth = new ComboBox { Width = 120, Margin = new Thickness(8, 0, 0, 0), SelectedIndex = savedMonth,
+            ItemsSource = new[] { L("Tháng", "Month") }.Concat(Enumerable.Range(1, 12).Select(m =>
+                L("Tháng " + m, System.Globalization.CultureInfo.InvariantCulture.DateTimeFormat.GetMonthName(m)))).ToArray() };
+        var birthday = new StackPanel { Orientation = Orientation.Horizontal,
+            ToolTip = L("Mèo sẽ chúc mừng sinh nhật bạn vào ngày này (không cần năm sinh).", "The pet wishes you a happy birthday on this day (no year needed).") };
+        birthday.Children.Add(form.BirthDay); birthday.Children.Add(form.BirthMonth);
         form.Tuning = PetUi.LinkButton(L("Tinh chỉnh hành vi nâng cao…", "Advanced behavior tuning…"));
         form.Tuning.Click += (_, _) => ShowBehaviorSettings();
         // Live preview: its own model and renderer; the real pet changes only on Save.
@@ -86,6 +94,7 @@ public sealed partial class PetWindow
         var petTab = Page(
             Row(L("Tên", "Name"), form.Name),
             Row(L("Tính cách", "Personality"), form.Personality),
+            Row(L("Sinh nhật của bạn", "Your birthday"), birthday),
             appearance,
             form.ClimbWindows,
             form.Tuning);
@@ -218,6 +227,10 @@ public sealed partial class PetWindow
             if (!preferences.Speech) pet.Speech.Hide();
             preferences.Coat = PetPreferences.Coats[Math.Max(0, form.Coat.SelectedIndex)];
             preferences.Accessory = PetPreferences.Accessories[Math.Max(0, form.Accessory.SelectedIndex)];
+            // A day past the month's end (31 February) becomes its last day; both parts are needed.
+            int birthMonth = Math.Max(0, form.BirthMonth.SelectedIndex), birthDay = Math.Max(0, form.BirthDay.SelectedIndex);
+            preferences.Birthday = birthMonth > 0 && birthDay > 0
+                ? $"{birthMonth:00}-{Math.Min(birthDay, DateTime.DaysInMonth(2000, birthMonth)):00}" : "";
             renderer.Coat = preferences.Coat; renderer.Accessory = preferences.Accessory;
             preferences.BreakReminders = form.BreakReminders.IsChecked == true;
             preferences.BreakMinutes = PetPreferences.BreakChoices[Math.Max(0, form.BreakInterval.SelectedIndex)];

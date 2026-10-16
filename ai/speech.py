@@ -27,6 +27,12 @@ CATEGORY_NAMES = {
     "morning": {"vi": "câu buổi sáng", "en": "a morning line"},
     "night": {"vi": "câu buổi tối", "en": "a night line"},
     "idle": {"vi": "câu nói vu vơ", "en": "a chatter line"},
+    "birthday": {"vi": "câu chúc sinh nhật", "en": "a birthday wish"},
+    "anniversary": {"vi": "câu kỷ niệm ngày gặp nhau", "en": "an anniversary line"},
+    "tet": {"vi": "câu chúc Tết", "en": "a Lunar New Year wish"},
+    "mid_autumn": {"vi": "câu Trung thu", "en": "a Mid-Autumn line"},
+    "halloween": {"vi": "câu Halloween", "en": "a Halloween line"},
+    "christmas": {"vi": "câu Giáng sinh", "en": "a Christmas line"},
 }
 MAX_TEXT = 120
 RECENT_LINES = 20

@@ -1,0 +1,15 @@
+{
+  "_comment": "Coats in settings order; the first is the default. Colors are #RRGGBB. Optional: ink (outline, default #49372E), iris (colored eyes), markings (Calico or Tabby, with patchA and patchB), points (ears, mask, tail and paws), paw (mitten color). Rebuild the app after editing.",
+  "coats": [
+    { "id": "Orange", "name": { "vi": "Cam", "en": "Orange" }, "fur": "#E9AE65", "cream": "#FFE4B5", "pink": "#E98990" },
+    { "id": "Gray", "name": { "vi": "Xám", "en": "Gray" }, "fur": "#A9ACB8", "cream": "#E8E9EE", "pink": "#E9989E" },
+    { "id": "Black", "name": { "vi": "Đen", "en": "Black" }, "fur": "#4E4D5C", "cream": "#6F6D80", "pink": "#D98A94", "ink": "#1C1B22", "iris": "#F2C14E" },
+    { "id": "White", "name": { "vi": "Trắng", "en": "White" }, "fur": "#F5F2EC", "cream": "#FFFFFF", "pink": "#F0A3AA", "iris": "#8CC7EE" },
+    { "id": "Calico", "name": { "vi": "Tam thể", "en": "Calico" }, "fur": "#F7F1E6", "cream": "#FFFFFF", "pink": "#EE9BA2", "markings": "Calico", "patchA": "#E59A52", "patchB": "#45403F" },
+    { "id": "Tabby", "name": { "vi": "Mướp (có sọc)", "en": "Tabby (striped)" }, "fur": "#B9A588", "cream": "#EFE4D2", "pink": "#E39196", "markings": "Tabby", "patchA": "#7A6650" },
+    { "id": "GingerTabby", "name": { "vi": "Mướp cam", "en": "Ginger tabby" }, "fur": "#E9AE65", "cream": "#FFE4B5", "pink": "#E98990", "markings": "Tabby", "patchA": "#C26E2E" },
+    { "id": "Tuxedo", "name": { "vi": "Mun cổ trắng (tuxedo)", "en": "Tuxedo" }, "fur": "#3F3E4B", "cream": "#FFFFFF", "pink": "#E79AA2", "ink": "#16151B", "iris": "#B9D66A", "paw": "#FFFFFF" },
+    { "id": "RussianBlue", "name": { "vi": "Xám xanh (mèo Nga)", "en": "Russian blue" }, "fur": "#8E9CB2", "cream": "#CBD4E1", "pink": "#D98F99", "ink": "#323446", "iris": "#7CC67F" },
+    { "id": "Siamese", "name": { "vi": "Xiêm", "en": "Siamese" }, "fur": "#F3E6D0", "cream": "#FFF8EC", "pink": "#E9A0A6", "ink": "#3B2B24", "iris": "#6FB3F2", "points": "#8A6A55" }
+  ]
+}

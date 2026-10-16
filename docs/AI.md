@@ -78,6 +78,7 @@ This keeps the cat responsive while Python starts, hangs, crashes, or is absent.
 |---|---|
 | `ai/service.py` | Standard-library Python service and replaceable `Brain.decide` policy |
 | `ai/personality.json` | Playfulness, curiosity, sleepiness, attention interval |
+| `ai/calendar.json`, `ai/seasons.py` | Day rhythm by hour and special days (holidays, the user's birthday, anniversary) |
 | `src/DesktopPet/AI/AiProtocol.cs` | Transport interface, observation/decision records, response validation |
 | `src/DesktopPet/AI/PythonDecisionSource.cs` | Python discovery, process ownership, async IPC, timeout/restart |
 | `src/DesktopPet/AI/DecisionGuard.cs` | Reject stale replies and preserve input/physics priority |
@@ -187,7 +188,7 @@ An `observe` request contains:
 | `emotion` | Current visible/reaction emotion, such as `Happy`, `Angry`, or `Neutral` |
 | `local_hour` | Optional computer-local time as fractional hours (0–24), e.g. `23.5` |
 
-`local_hour` gives Python a gentle day rhythm: at night (22:00–06:00) active
+`local_hour` gives Python a gentle day rhythm (hours and factors in `ai/calendar.json`): at night (22:00–06:00) active
 commands are weighted ×0.6, IDLE/SIT ×1.2 and SLEEP ×1.8; in the morning
 (07:00–10:00) active commands ×1.2 and SLEEP ×0.7. It only biases choices;
 activity is never forbidden, and C# still owns sleep length, the sleep lock and
@@ -552,3 +553,23 @@ Quiet mode may cancel preparation. PetMotion.cs contains no AI policy or physics
   AI toggles, clicks and Quiet/fullscreen changes during waking used to reset it to 2 s.
 - **No stale-language lines.** The language is recorded with each request; a reply whose
   language no longer matches the setting has its line dropped (needs/diary are kept).
+
+## Day rhythm and special days (2026-10-16)
+
+- **Data, not code.** `ai/calendar.json` holds the day rhythm (hour ranges with active/rest/sleep
+  multipliers; same values as the old built-in `day_rhythm`) and special days. `ai/seasons.py`
+  reads it (stdlib only; not named `calendar.py` so it never shadows the standard module). A
+  missing or broken file keeps the old rhythm and no special days; invalid entries are skipped.
+- **Special days.** `tet` (New Year's Eve to the 3rd day) and `mid_autumn` use a per-year
+  solar date table (2026–2035; later years are simply not known until the table is extended),
+  `halloween` 31 Oct, `christmas` 24–25 Dec, `anniversary` the yearly day of `first_seen` (from
+  the second year), and `birthday` from the observation. The first matching event wins
+  (birthday first).
+- **Effect.** On a special day the first greeting of the session uses that event's line
+  category in `lines.json` instead of `hello`/`welcome_back`, about half of idle chatter uses
+  it too, and active commands get the event's `active` factor (×1.1–1.2). Nothing else changes;
+  C# still owns sleep, waking and every display rule.
+
+| New observation field | Meaning |
+|---|---|
+| `birthday` | The user's birthday as `MM-dd` from Settings → Pet, or `""` (no year is stored) |

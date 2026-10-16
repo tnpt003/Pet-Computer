@@ -6,6 +6,7 @@ This module deliberately has no window, input, rendering, or physics APIs.
 from __future__ import annotations
 
 import argparse
+import datetime as dt
 import json
 import math
 import os
@@ -18,6 +19,7 @@ import uuid
 # Embedded Python's ._pth file does not add the script folder to sys.path.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from learning import CREDIT_WINDOW, Learner, context as learning_context  # noqa: E402
+from seasons import Calendar  # noqa: E402
 from speech import Speech  # noqa: E402
 
 VERSION = 1
@@ -81,19 +83,12 @@ def read_object(path: Path) -> dict:
         return {}
 
 
-def day_rhythm(hour) -> tuple[float, float, float]:
-    """(active, rest, sleep) weight multipliers for the computer's local hour.
+DEFAULT_CALENDAR = Calendar(Path(__file__).with_name("calendar.json"))
 
-    Only biases Python's suggestions; C# still owns sleep length, the sleep lock
-    and the wake cooldown. Missing or invalid hours leave weights unchanged.
-    """
-    if isinstance(hour, bool) or not isinstance(hour, (int, float)) or not 0 <= hour < 24:
-        return 1.0, 1.0, 1.0
-    if hour >= 22 or hour < 6:
-        return 0.6, 1.2, 1.8  # Night: drowsier, fewer bursts of activity.
-    if 7 <= hour < 10:
-        return 1.2, 1.0, 0.7  # Morning: livelier, less napping.
-    return 1.0, 1.0, 1.0
+
+def day_rhythm(hour) -> tuple[float, float, float]:
+    """(active, rest, sleep) multipliers for the local hour from calendar.json (see seasons.Calendar.rhythm)."""
+    return DEFAULT_CALENDAR.rhythm(hour)
 
 
 def number(value, default, low, high):
@@ -106,7 +101,7 @@ class Brain:
     """Replace decide() with a future policy/LLM adapter; preserve its command contract."""
 
     def __init__(self, memory_path: Path, personality_path: Path, rng=None, clock=time.monotonic, wall_clock=time.time,
-                 lines_path: Path | None = None):
+                 lines_path: Path | None = None, calendar_path: Path | None = None):
         self.memory_path = memory_path
         self.rng = rng or random.Random()
         self.clock = clock
@@ -152,6 +147,8 @@ class Brain:
         self.last_need_update = None
         self.last_thought = self.clock() - THOUGHT_COOLDOWN
         self.speech = Speech(lines_path or Path(__file__).with_name("lines.json"))
+        self.calendar = Calendar(calendar_path) if calendar_path else DEFAULT_CALENDAR
+        self.special_day = None  # (event id, liveliness) for today, from calendar.json.
         self.learner = Learner(memory.get("learned"), self.wall_clock)
         reset = memory.get("learning_reset")
         self.learning_reset = reset if isinstance(reset, str) and len(reset) <= 64 else ""
@@ -348,6 +345,8 @@ class Brain:
             if gap is not None and observation.get("quiet") is not True and now - self.last_spoke >= gap and self.rng.random() < chance:
                 part = learning_context(observation.get("local_hour"), self.needs, self.energy).split("/")[0]
                 category = part if part in ("morning", "night") and self.rng.random() < 0.5 else "idle"
+                if self.special_day and self.speech.has(self.special_day[0]) and self.rng.random() < 0.5:
+                    category = self.special_day[0]  # Holiday chatter.
         if self.pending_event and (category == self.pending_event[0] or now - self.pending_event[1] > 12):
             self.pending_event = None  # Spoken, or too old to still make sense.
         if category is None:
@@ -384,12 +383,16 @@ class Brain:
         attention_ready = now - self.last_attention >= (100 if profile == "Calm" else 60)
         thought = None
         wall = self.wall_clock()
+        self.special_day = self.calendar.today(dt.date.fromtimestamp(wall), dt.date.fromtimestamp(self.first_seen),
+                                               observation.get("birthday"))
         if not self.greeted and not busy and not upset:
             self.greeted = True
             # Welcome back after a long break, only once a real bond exists.
             if self.last_seen and wall - self.last_seen >= 3600 and self.needs["bond"] >= 50:
                 thought = "love"
             greeting = "welcome_back" if thought == "love" else "hello"
+            if self.special_day and self.speech.has(self.special_day[0]):
+                greeting = self.special_day[0]  # "Happy birthday" beats a plain hello.
         self.last_seen = wall
         if busy:
             command, mood = "IDLE", "content"
@@ -420,7 +423,9 @@ class Brain:
             weights = [rest, 2 * vigor, 2 * vigor, rest, play * 3 * vigor,
                        self.sleepiness * 2 * rest, curiosity * 2 * vigor, 0.3 + curiosity * 2,
                        play * 0.8 * vigor, 0.4]
-            active, calm, sleepy = day_rhythm(observation.get("local_hour"))
+            active, calm, sleepy = self.calendar.rhythm(observation.get("local_hour"))
+            if self.special_day:
+                active *= self.special_day[1]  # Livelier on a holiday or birthday.
             scale = {"WALK_LEFT": active, "WALK_RIGHT": active, "JUMP": active, "FOLLOW_MOUSE": active, "CHASE_TAIL": active,
                      "IDLE": calm, "SIT": calm, "SLEEP": sleepy}
             weights = [weight * scale.get(cmd, 1.0) for cmd, weight in zip(commands, weights)]

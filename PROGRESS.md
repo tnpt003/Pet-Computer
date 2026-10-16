@@ -4,7 +4,12 @@ Cập nhật: 2026-10-16 (Asia/Saigon).
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
-## Kết quả test gần nhất (2026-10-16, giai đoạn 1: ổn định)
+## Kết quả test gần nhất (2026-10-16, giai đoạn 2a+2b: bộ lông ra JSON, lịch + sinh nhật)
+- scripts/test.ps1 -Ui: 54 Python tests (thêm 5: lịch, sự kiện, sinh nhật, file lỗi), 401 C# checks, 192 WPF checks đạt. Publish + check-publish đạt (3/3); bản publish có ai/seasons.py và ai/calendar.json. Đã đóng mèo người dùng (WM_CLOSE), publish, mở lại lúc 17:33; log có cặp exited/started.
+- So pixel (PET_RENDER_REVIEW, 1014 ảnh trước/sau): mọi ảnh mèo (10 bộ lông × 8 phụ kiện × 8 tư thế, gesture, motion...) giống hệt từng byte. Khác: settings-vi-0/settings-en-0 (thêm dòng sinh nhật, đã xem ảnh) và speech-vi/speech-en-long (2 ảnh này khác nhau giữa 2 lần chạy ngay cả khi không đổi code).
+- Chưa xem trực tiếp: câu chúc vào đúng ngày lễ/sinh nhật trên mèo thật (chỉ test bằng đồng hồ giả trong Python).
+
+## Kết quả test đợt giai đoạn 1: ổn định (2026-10-16)
 - scripts/test.ps1 -Ui: 395 C# checks (thêm check away nap), 188 WPF checks, Python tests đạt. Publish + check-publish đạt (3/3). Đã đóng mèo của người dùng bằng WM_CLOSE (đúng process artifacts\win-x64), publish, mở lại bản mới lúc 15:38.
 - Đo RAM: bản mới, 30 phút dùng máy bình thường (perf.ps1 gắn vào, mẫu 10 s): private 137 MB lúc mở → ~210 MB sau 3 phút → dao động 220–275 MB từ phút 8 đến 28 (max 279); CPU TB 0.84%, p95 1.6%; handles 717→776 ổn định; Python 11 MB. So với bản chạy 7 giờ hôm trước (276–296 MB): RAM lên nhanh trong ~20 phút rồi đứng quanh 260–300 MB, không tăng tiếp theo giờ → nhiều khả năng là GC giữ bộ nhớ (renderer tạo ~40 transform/geometry mỗi khung), không phải rò rỉ. Chưa đọc được số GC trong máy (dòng Memory) để khẳng định.
 - So cấu hình GC (perf.ps1 tự mở mèo với dữ liệu riêng, 15 phút mỗi lượt, mẫu 5 s, private MB phút 5–10 / 10–15 / max): mặc định 156 / 174 / 185 (còn tăng); DOTNET_gcConcurrent=0 147 / 152 / 156; GCgen0size=4 MB 161 / 166 / 172; cả hai 156 / 161 / 164. CPU cả 4 ~0.5–0.6%. Chọn ConcurrentGarbageCollection=false trong csproj (runtimeconfig "System.GC.Concurrent": false, đã kiểm tra bản publish). Mèo dữ liệu riêng thấp hơn mèo thật (~260 MB) nên còn cần đo lại mèo thật sau vài giờ. Chưa đo được max gap khung hình (GC chặn có thể khựng ngắn).
@@ -90,6 +95,10 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Lịch sử: 201 C#/107 WPF/20 Python (motion, 2026-10-08); 181/101/20 (features). Không dùng số liệu cũ thay kết quả hiện tại.
 
 ## Đã làm gần đây
+- 2026-10-16 giai đoạn 2a+2b (người dùng chọn: không mở thư mục packs cho người dùng; thêm ô sinh nhật trong Cài đặt):
+  - 2a: 10 bộ lông chuyển ra src/DesktopPet/Assets/coats.json (nhúng vào exe, tên vi/en + màu). PetCoats.cs đọc và kiểm tra (không WPF, dùng được trong test); file lỗi/màu sai/thiếu patch → bỏ cả file, ghi log, chỉ còn mèo cam. CoatPalette chỉ còn đổi CoatSpec → brush. Danh sách và tên bộ lông trong Cài đặt lấy từ JSON.
+  - 2b: ai/calendar.json + ai/seasons.py (không đặt tên calendar.py để không che module chuẩn). Nhịp theo giờ ra JSON (giá trị y hệt day_rhythm cũ, có test so 96 mốc giờ). Ngày đặc biệt: tet (30 Tết → mùng 3, bảng 2026–2035), mid_autumn (bảng 2026–2035), halloween 31/10, christmas 24–25/12, anniversary (ngày first_seen từ năm thứ 2), birthday. Ngày đặc biệt: câu chào đầu phiên dùng câu của dịp đó, ~50% câu nói vu vơ là câu dịp đó, hành động năng động ×1.1–1.2. lines.json thêm 6 loại câu (mỗi loại 5 câu vi + 5 câu en).
+  - Sinh nhật: Cài đặt → Mèo → "Sinh nhật của bạn" (ngày + tháng, không năm). Lưu "MM-dd" trong preferences (Birthday), sai thì bỏ; 31/2 lưu thành 29/2; 29/2 năm không nhuận chúc vào 28/2. Gửi sang Python qua trường observation mới birthday.
 - 2026-10-16 giai đoạn 1 (ổn định trước khi thêm tính năng; lộ trình 3 giai đoạn ở "Đang dở"):
   - Behavior debug view thêm dòng Memory: heap hiện tại, heap sau GC gần nhất, committed, số lần GC gen0/1/2 (phân biệt rác chưa dọn với rò rỉ thật).
   - Log vòng đời (App.xaml.cs): "Desktop Pet exited (code …)", "Windows session ending: …", "Unobserved task exception". Dòng "started" không có "exited" theo sau = crash hoặc bị kill. Cách xử lý crash giữ nguyên.
@@ -195,6 +204,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 
 ## Đang dở và việc tiếp theo
 - Lộ trình dài hạn (đề xuất 2026-10-16): GĐ1 ổn định (RAM, log, gom luật trạng thái, checklist test tay) → GĐ2 nội dung dạng dữ liệu (bộ lông/phụ kiện/câu thoại/sự kiện mùa/lịch sinh hoạt ra JSON, có thể làm gói mod) → GĐ3 chiều sâu dài hạn (quan hệ phát triển, ngữ cảnh máy tôn trọng riêng tư, LLM opt-in nếu người dùng đổi quy tắc, nhiều mèo). Song song nếu muốn chia sẻ: installer/MSIX, tự cập nhật, ký code, GitHub Releases/winget, giảm dung lượng.
+- GĐ2 còn: 2c phụ kiện dạng dữ liệu vector (path + màu + điểm neo đầu/cổ) và phụ kiện theo mùa (mũ Noel, đèn lồng); có thể cho mèo tự đội phụ kiện theo dịp. Bảng ngày Tết/Trung thu chỉ tới 2035, cần nối thêm. Ngày kỷ niệm đầu tiên của người dùng là 2026-10-13 → lần đầu thấy được 2027-10-13. Ý tưởng chưa làm: 8/3, 20/10, Tết dương lịch.
 - GĐ1 còn: đo lại mèo thật vài giờ với GC mới (perf.ps1 -Minutes 120 -Interval 10) và xem dòng Memory/Frame (max gap) trong debug view; nếu vẫn cao thì làm phương án B (giảm transform/geometry tạo mỗi khung trong PetRenderer, so pixel bằng UiChecks); người dùng đi hết docs/MANUAL-TEST.md mức 1.
 - scripts/perf.ps1 đóng mèo nó tự mở bằng CloseMainWindow, có thể không trúng cửa sổ mèo (MainWindowHandle) nên rơi vào Kill sau 5 s; nên dùng WM_CLOSE theo tiêu đề như check-publish.ps1.
 - Giao diện: menu khay (WinForms) vẫn kiểu Windows mặc định.
@@ -218,4 +228,4 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Không tích hợp LLM, voice hay computer vision; không thay framework hoặc hệ thống rendering/physics.
 
 ## Cần test thủ công
-Xem và tick ở docs/MANUAL-TEST.md (đã gom toàn bộ danh sách cũ, xếp theo ưu tiên). Mới đợt này: dòng Memory trong debug view sau vài giờ; cặp dòng started/exited trong log sau khi thoát/tắt máy.
+Xem và tick ở docs/MANUAL-TEST.md (đã gom toàn bộ danh sách cũ, xếp theo ưu tiên). Mới đợt 2a+2b: chọn sinh nhật = hôm nay trong Cài đặt → Lưu → thoát và mở lại mèo (bật Mèo biết nói + AI): câu chào là câu chúc sinh nhật; đổi lại bộ lông xem tên/màu trong danh sách như cũ. Đợt trước: dòng Memory trong debug view sau vài giờ; cặp dòng started/exited trong log sau khi thoát/tắt máy.

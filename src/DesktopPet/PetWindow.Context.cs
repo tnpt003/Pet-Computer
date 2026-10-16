@@ -25,7 +25,10 @@ public sealed partial class PetWindow
 
     private void InitializeContext()
     {
-        contextProbe = () => (ForegroundIsFullscreen(), SystemIdleSeconds());
+        // PET_CONTEXT_PROBE=off (smoke tests): never fullscreen or away, so a fullscreen app
+        // or an idle machine during the test does not quiet the pet.
+        contextProbe = Environment.GetEnvironmentVariable("PET_CONTEXT_PROBE") == "off"
+            ? () => (false, 0.0) : () => (ForegroundIsFullscreen(), SystemIdleSeconds());
         breaks.Configure(preferences.BreakReminders, preferences.BreakMinutes);
     }
 
@@ -49,8 +52,7 @@ public sealed partial class PetWindow
             }
         }
         if (change.CameBack) { behavior.EndAwayNap(pet); pet.Emotions.UserReturned(); }
-        if (context.Away && !behavior.HoldSleep && !dragging && !pressPending && pet.Grounded &&
-            pet.Action is not (PetAction.Thrown or PetAction.Jumping or PetAction.PreparingJump))
+        if (context.Away && !behavior.HoldSleep && !dragging && !pressPending && pet.Grounded && !PetActionRules.IsInFlight(pet.Action))
         {
             CancelFeatureActivity();
             behavior.StartAwayNap(pet);

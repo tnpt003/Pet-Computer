@@ -280,6 +280,8 @@ The publish smoke test uses a fresh `artifacts/smoke-data/<run-id>` data directo
 `PET_DATA_DIRECTORY` may specify an absolute path for isolated preferences and AI
 memory; ordinary launches still use `%LOCALAPPDATA%/DesktopPet`. Tests do not replace
 personal preferences or memory. Smoke data is retained for troubleshooting.
+The smoke test also sets `PET_CONTEXT_PROBE=off`, so a fullscreen app or an idle
+machine during the run never quiets the pet or starts an away nap.
 
 ## Motion polish (2026-10-08)
 

@@ -29,7 +29,7 @@ public static class PetPublishWindow {
 }
 '@
 $saved = @{}
-foreach ($name in @('PATH', 'DOTNET_ROOT', 'DOTNET_ROOT_X64', 'PET_PYTHON', 'PET_AI_DISABLED', 'PET_DATA_DIRECTORY')) {
+foreach ($name in @('PATH', 'DOTNET_ROOT', 'DOTNET_ROOT_X64', 'PET_PYTHON', 'PET_AI_DISABLED', 'PET_DATA_DIRECTORY', 'PET_CONTEXT_PROBE')) {
     $saved[$name] = [Environment]::GetEnvironmentVariable($name, 'Process')
 }
 $petProcess = $null
@@ -40,6 +40,8 @@ try {
     $env:DOTNET_ROOT_X64 = $env:DOTNET_ROOT
     $env:PET_PYTHON = $null
     $env:PET_AI_DISABLED = '0'
+    # A fullscreen app or an idle machine must not quiet the smoke-test pet.
+    $env:PET_CONTEXT_PROBE = 'off'
     # Keep smoke-test preferences and AI memory separate from the user's cat.
     $env:PET_DATA_DIRECTORY = Join-Path $projectRoot ('artifacts\smoke-data\' + [Guid]::NewGuid().ToString('N'))
     $petProcess = Start-Process -FilePath $exe -WorkingDirectory $env:TEMP -WindowStyle Hidden -PassThru

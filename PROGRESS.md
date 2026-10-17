@@ -5,7 +5,7 @@ Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt 
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
 ## Kết quả test gần nhất (2026-10-17, Battle Mode đợt 2: âm thanh, hồi máu, bảng kết quả, thông báo)
-- scripts/test.ps1 -Ui: 54 Python tests, 463 C# checks (thêm 8: hồi máu, thời gian trận, 3 hiệu ứng âm thanh), 259 WPF checks (thêm 10: bảng kết quả, Chơi lại/Đóng, fullscreen/gọi mèo về đóng bảng, thông báo click xuyên tự mất) đạt. Chưa publish bản này.
+- scripts/test.ps1 -Ui: 54 Python tests, 463 C# checks (thêm 8: hồi máu, thời gian trận, 3 hiệu ứng âm thanh), 259 WPF checks (thêm 10: bảng kết quả, Chơi lại/Đóng, fullscreen/gọi mèo về đóng bảng, thông báo click xuyên tự mất) đạt. Publish + check-publish đạt (3/3); đã đóng mèo người dùng bằng WM_CLOSE (đúng process artifacts\win-x64), mở lại bản mới lúc 07:43 (2026-10-17), log có cặp exited/started.
 - Đã xem ảnh bảng kết quả (battle-result.png). Chưa nghe thử 3 tiếng mới trên loa thật.
 
 ## Kết quả test đợt Battle Mode MVP (2026-10-16)

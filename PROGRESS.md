@@ -5,7 +5,7 @@ Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt 
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
 ## Kết quả test gần nhất (2026-10-17, Battle Mode đợt 5: quái theo mèo, hướng đẩy, mô tả kỹ năng, dữ liệu battle.json)
-- scripts/test.ps1 -Ui: 54 Python tests, 508 C# checks (thêm 3 bước A + 16 BattleDataTests), 274 WPF checks (thêm 2: hover đổi đúng chữ, đẩy theo phía click) đạt.
+- scripts/test.ps1 -Ui: 54 Python tests, 508 C# checks (thêm 3 bước A + 16 BattleDataTests), 274 WPF checks (thêm 2: hover đổi đúng chữ, đẩy theo phía click) đạt. Publish + check-publish đạt (3/3); mở lại mèo người dùng lúc 08:36; log không có lỗi đọc battle.json.
 - So pixel với bản trước refactor (sau bước A): mọi ảnh chiến trường, HUD, boss, kiếm/khiên giống từng byte (khác 1 ảnh speech không ổn định) → refactor sang dữ liệu không đổi hình.
 - Test mới so từng con số của battle.json với mặc định trong code (cat, kỹ năng, 2 kiểu quái, kế hoạch đợt) và các trường hợp file lỗi.
 

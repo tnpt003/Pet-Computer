@@ -5,7 +5,7 @@ Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt 
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
 ## Kết quả test gần nhất (2026-10-17, Battle Mode đợt 6: mèo chạy, chiến trường cố định, 2 quái mới, tách file)
-- scripts/test.ps1 -Ui: 54 Python tests, 512 C# checks (thêm 4: kế hoạch đợt mới, 2 quái mới, marks lạ bị từ chối), 280 WPF checks (thêm 6: mèo chạy 130 DIP/s và đi bộ vẫn 72, chiến trường chờ khi mèo sang màn hình khác/tự chạy tiếp/giữ Pause của người dùng, MoveScale trả về 1) đạt.
+- scripts/test.ps1 -Ui: 54 Python tests, 512 C# checks (thêm 4: kế hoạch đợt mới, 2 quái mới, marks lạ bị từ chối), 280 WPF checks (thêm 6: mèo chạy 130 DIP/s và đi bộ vẫn 72, chiến trường chờ khi mèo sang màn hình khác/tự chạy tiếp/giữ Pause của người dùng, MoveScale trả về 1) đạt. Publish + check-publish đạt (3/3); mở lại mèo người dùng lúc 19:50; log không có lỗi đọc battle.json.
 - So pixel: ảnh Pet Mode (kể cả ảnh chuyển động sau khi nới nhịp chân lên 2×) giống từng byte. Đã xem ảnh 4 loại quái cạnh nhau trên nền sáng/tối (battle-kinds-*.png); vệt gió đổi sang xanh để thấy trên nền sáng.
 - Chưa kiểm tra trên máy nhiều màn hình thật (máy hiện tại 1 màn hình; logic test bằng probe giả).
 

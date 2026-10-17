@@ -322,7 +322,7 @@ public sealed partial class PetWindow
     private void WalkToward(double target)
     {
         pet.Facing = target < pet.X ? -1 : 1;
-        pet.VX = pet.Facing * settings.WalkSpeed * pet.Emotions.WalkScale;
+        pet.VX = pet.Facing * settings.WalkSpeed * pet.Emotions.WalkScale * pet.MoveScale;
         pet.Action = PetAction.Walking;
     }
 

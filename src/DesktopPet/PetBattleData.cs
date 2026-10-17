@@ -30,6 +30,9 @@ public sealed class EnemyType
     public double Scale { get; init; } = 1;
     public string Color { get; init; } = "#7CD36A";
     public string AngryColor { get; init; } = "#E86A6A";
+    // Drawn marks that tell kinds apart at a glance: "none", "speed" (wind streaks behind it
+    // while moving) or "cracks" (a stony body).
+    public string Marks { get; init; } = "none";
     // A boss: crown, its own HP bar on the HUD, a "BOSS!" banner.
     public bool Boss { get; init; }
     // Area attack: a red zone on the floor while winding up, a shock wave when it lands.
@@ -104,7 +107,8 @@ public static class BattleData
         void Positive(double value, string name) { if (!double.IsFinite(value) || value <= 0) throw new InvalidDataException($"{name} must be a positive number"); }
         void NotNegative(double value, string name) { if (!double.IsFinite(value) || value < 0) throw new InvalidDataException($"{name} must not be negative"); }
         Positive(s.CatMaxHp, "catMaxHp"); NotNegative(s.CatDamage, "catDamage"); Positive(s.CatAttackRange, "catAttackRange");
-        Positive(s.CatAttackCooldown, "catAttackCooldown"); Positive(s.CatSwingDuration, "catSwingDuration");
+        Positive(s.CatAttackCooldown, "catAttackCooldown"); Positive(s.CatRunScale, "catRunScale");
+        if (s.CatRunScale > 3) throw new InvalidDataException("catRunScale must be at most 3"); Positive(s.CatSwingDuration, "catSwingDuration");
         if (!(s.CatHitTime > 0 && s.CatHitTime < s.CatSwingDuration)) throw new InvalidDataException("catHitTime must fall inside the swing");
         Positive(s.SlimeWidth, "slimeWidth"); Positive(s.SlimeHeight, "slimeHeight"); Positive(s.MaxAlive, "maxAlive");
         foreach (var skill in BattleSkills.All) Positive(skill.Cooldown(s), skill.Skill + " cooldown");
@@ -120,6 +124,7 @@ public static class BattleData
             // The battle strip is 170 DIPs tall: bigger enemies would be cut off.
             if (!(e.Scale >= 0.5 && e.Scale <= 2.3)) throw new InvalidDataException(e.Id + ".scale must be 0.5–2.3");
             if (!Hex.IsMatch(e.Color) || !Hex.IsMatch(e.AngryColor)) throw new InvalidDataException(e.Id + " colors must be #RRGGBB");
+            if (e.Marks is not ("none" or "speed" or "cracks")) throw new InvalidDataException(e.Id + ".marks must be none, speed or cracks");
             if (e.SummonAt is < 0 or >= 1 || e.EnrageAt is < 0 or >= 1) throw new InvalidDataException(e.Id + " summonAt/enrageAt must be 0–1");
             if (e.EnrageAt > 0) { Positive(e.EnragedSpeed, e.Id + ".enragedSpeed"); Positive(e.EnragedWindup, e.Id + ".enragedWindup"); }
         }

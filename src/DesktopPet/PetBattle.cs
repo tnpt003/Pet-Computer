@@ -20,6 +20,8 @@ public sealed class BattleSettings
     public double CatSwingDuration { get; init; } = 0.36;
     // The one moment in a swing that can deal damage.
     public double CatHitTime { get; init; } = 0.16;
+    // The cat runs during a battle: its walking speed and acceleration times this.
+    public double CatRunScale { get; init; } = 1.8;
     [JsonIgnore]
     public double SlimeMaxHp { get; init; } = 50;
     [JsonIgnore]

@@ -406,10 +406,12 @@ public sealed partial class PetWindow : Window
     // moves, which can briefly show the window offset on only one axis while flying.
     private void MoveWindow(double left, double top) => MoveWindow(this, left, top);
 
-    private void MoveWindow(Window target, double left, double top)
+    // atScale: the DPI scale of the monitor the window is on, when that is not the pet's.
+    private void MoveWindow(Window target, double left, double top, double? atScale = null)
     {
         var handle = new WindowInteropHelper(target).Handle;
         if (handle == IntPtr.Zero) { target.Left = left; target.Top = top; return; }
+        double scale = atScale ?? this.scale;
         int x = (int)Math.Round(left * scale), y = (int)Math.Round(top * scale);
         // WPF keeps Left/Top in sync from WM_MOVE, so an unchanged pixel needs no call.
         if (Math.Abs(target.Left * scale - x) < 0.5 && Math.Abs(target.Top * scale - y) < 0.5) return;

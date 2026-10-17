@@ -1,12 +1,15 @@
 {
   // Battle Mode data (DIPs and seconds). Embedded in the exe; a broken file is logged and
-  // the built-in battle (the same numbers) is used. Misspelt keys are rejected.
+  // the built-in battle is used (same numbers; only plain slimes before the King).
+  // Misspelt keys are rejected.
   "catMaxHp": 100,
   "catDamage": 25,
   "catAttackRange": 76,
   "catAttackCooldown": 0.75,
   "catSwingDuration": 0.36,
   "catHitTime": 0.16,
+  // The cat runs during a battle (walking speed and acceleration × this).
+  "catRunScale": 1.8,
 
   "slimeWidth": 46,
   "slimeHeight": 34,
@@ -50,6 +53,21 @@
       "scale": 1, "color": "#7CD36A"
     },
     {
+      // Small and quick: reaches the cat first, hits lightly, falls fast.
+      "id": "runner", "nameVi": "Slime nhanh", "nameEn": "Quick slime",
+      "maxHp": 25, "speed": 70, "damage": 6, "range": 54,
+      "windup": 0.6, "attackCooldown": 1.4, "recover": 0.3,
+      "scale": 0.75, "color": "#5CC8FF", "marks": "speed"
+    },
+    {
+      // Big and slow: hard to push, hits hard; a job for Cheer and the yarn bomb.
+      "id": "rock", "nameVi": "Slime đá", "nameEn": "Rock slime",
+      "maxHp": 110, "speed": 20, "damage": 16, "range": 72,
+      "windup": 1.0, "attackCooldown": 2.4, "recover": 0.5,
+      "scale": 1.35, "color": "#A8A095", "marks": "cracks",
+      "pushFactor": 0.5, "stunFactor": 0.6
+    },
+    {
       "id": "king", "nameVi": "Vua Slime", "nameEn": "Slime King",
       "maxHp": 400, "speed": 22, "damage": 25, "range": 110,
       "windup": 1.2, "attackCooldown": 2.6, "recover": 0.7,
@@ -63,8 +81,8 @@
   // Waves in order; each wave's groups spawn in order.
   "waves": [
     { "groups": [ { "enemy": "slime", "count": 2 } ] },
-    { "groups": [ { "enemy": "slime", "count": 3 } ] },
-    { "groups": [ { "enemy": "slime", "count": 4 } ] },
+    { "groups": [ { "enemy": "slime", "count": 2 }, { "enemy": "runner", "count": 2 } ] },
+    { "groups": [ { "enemy": "rock", "count": 1 }, { "enemy": "runner", "count": 2 }, { "enemy": "slime", "count": 2 } ] },
     { "groups": [ { "enemy": "king", "count": 1 } ] }
   ]
 }

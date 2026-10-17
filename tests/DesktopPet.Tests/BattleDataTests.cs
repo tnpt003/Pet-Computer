@@ -25,13 +25,19 @@ internal static class BattleDataTests
         Same(shipped, builtIn, typeof(BattleSettings), differences, "");
         check(differences.Count == 0, "battle.json holds the same battle numbers as the built-in defaults" + (differences.Count > 0 ? ": " + string.Join(", ", differences) : ""));
         differences.Clear();
-        bool kindsMatch = shipped.EnemyTypes.Count == builtIn.EnemyTypes.Count;
-        for (int i = 0; kindsMatch && i < shipped.EnemyTypes.Count; i++)
-            Same(shipped.EnemyTypes[i], builtIn.EnemyTypes[i], typeof(EnemyType), differences, shipped.EnemyTypes[i].Id + ".");
-        check(kindsMatch && differences.Count == 0, "battle.json's slime and Slime King match the built-in ones" + (differences.Count > 0 ? ": " + string.Join(", ", differences) : ""));
+        foreach (var builtInKind in builtIn.EnemyTypes)
+            Same(shipped.Enemy(builtInKind.Id), builtInKind, typeof(EnemyType), differences, builtInKind.Id + ".");
+        check(differences.Count == 0, "battle.json's slime and Slime King match the built-in ones" + (differences.Count > 0 ? ": " + string.Join(", ", differences) : ""));
         string Plan(BattleSettings s) => string.Join(" | ", s.WavePlan.Select(w => string.Join(",", w.Spawns())));
-        check(Plan(shipped) == Plan(builtIn) && Plan(shipped) == "slime,slime | slime,slime,slime | slime,slime,slime,slime | king",
-            $"Waves in battle.json: 2, 3, 4 slimes, then the King ({Plan(shipped)})");
+        check(Plan(builtIn) == "slime,slime | slime,slime,slime | slime,slime,slime,slime | king", "Without the file: 2, 3, 4 slimes, then the King");
+        check(Plan(shipped) == "slime,slime | slime,slime,runner,runner | rock,runner,runner,slime,slime | king",
+            $"battle.json mixes in quick and rock slimes before the King ({Plan(shipped)})");
+        var quick = shipped.Enemy("runner");
+        var rock = shipped.Enemy("rock");
+        check(quick.Id == "runner" && quick.Speed > 2 * shipped.Enemy("slime").Speed && quick.MaxHp < 50 && quick.Scale < 1 && quick.Marks == "speed",
+            "The quick slime is small, fast and frail, with wind streaks");
+        check(rock.Id == "rock" && rock.MaxHp > 2 * 50 && rock.Speed < 34 && rock.Scale > 1 && rock.PushFactor < 1 && rock.Marks == "cracks" && !rock.Boss,
+            "The rock slime is big, slow, tough and hard to push, with cracks");
 
         // A broken file is rejected as a whole (the app then logs it and uses the built-in battle).
         bool Rejected(string json)
@@ -51,6 +57,7 @@ internal static class BattleDataTests
         check(Rejected("{\"enemies\":[{\"id\":\"a\",\"summonAt\":0.5,\"summonCount\":1,\"summonType\":\"a\"}],\"waves\":[{\"groups\":[{\"enemy\":\"a\",\"count\":1}]}]}"),
             "An enemy that summons a summoner (endless helpers) is rejected");
         check(Rejected("{ not json"), "Not JSON at all is rejected");
+        check(Rejected("{\"enemies\":[{\"id\":\"slime\",\"marks\":\"spots\"}],\"waves\":[{\"groups\":[{\"enemy\":\"slime\",\"count\":1}]}]}"), "Unknown marks are rejected");
 
         // New content is data only: a fast little runner, and a boss in the middle of the battle.
         var custom = BattleData.Parse(new MemoryStream(Encoding.UTF8.GetBytes("""

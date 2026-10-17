@@ -151,7 +151,7 @@ public sealed class BattleHud : Border
         bannerUntil = now + seconds;
     }
 
-    public void Update(BattleSim b, bool userPaused, bool fullscreen, bool held)
+    public void Update(BattleSim b, bool userPaused, bool fullscreen, bool held, bool away = false)
     {
         double dt = lastTime < 0 ? 0 : Math.Max(0, b.Time - lastTime);
         lastTime = b.Time;
@@ -170,7 +170,7 @@ public sealed class BattleHud : Border
         banner.Visibility = showBanner ? Visibility.Visible : Visibility.Collapsed;
         if (showBanner) banner.Opacity = Math.Clamp((bannerUntil - b.Time) / 0.4, 0, 1);
         int left = b.Alive + b.ToSpawn;
-        var statusKey = (b.Phase, b.Wave, left, b.Paused, fullscreen, Math.Round(b.LastHeal), b.IsBossWave(b.Wave) ? 1 : 0);
+        var statusKey = (b.Phase, b.Wave, left, b.Paused, fullscreen, Math.Round(b.LastHeal), (b.IsBossWave(b.Wave) ? 1 : 0) + (away ? 2 : 0));
         if (statusKey != shownStatus)
         {
         shownStatus = statusKey;
@@ -183,7 +183,8 @@ public sealed class BattleHud : Border
             _ when b.IsBossWave(b.Wave) => L($"Đánh bại {BossName(b)}!", $"Defeat the {BossName(b)}!"),
             _ => L($"Đợt {b.Wave}/{b.WaveCount} · còn {left} slime", $"Wave {b.Wave}/{b.WaveCount} · {left} slime{(left == 1 ? "" : "s")} left")
         };
-        if (b.Paused && !b.Over) text += fullscreen ? L(" · Tạm dừng (toàn màn hình)", " · Paused (fullscreen)") : L(" · Tạm dừng", " · Paused");
+        if (b.Paused && !b.Over) text += away ? L(" · Chờ mèo về màn hình này", " · Waiting for the cat to come back")
+            : fullscreen ? L(" · Tạm dừng (toàn màn hình)", " · Paused (fullscreen)") : L(" · Tạm dừng", " · Paused");
         SetText(status, text);
         }
         status.Visibility = showBanner ? Visibility.Hidden : Visibility.Visible;

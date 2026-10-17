@@ -4,7 +4,12 @@ Cập nhật: 2026-10-16 (Asia/Saigon).
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
-## Kết quả test gần nhất (2026-10-17, Battle Mode đợt 5: quái theo mèo, hướng đẩy, mô tả kỹ năng, dữ liệu battle.json)
+## Kết quả test gần nhất (2026-10-17, Battle Mode đợt 6: mèo chạy, chiến trường cố định, 2 quái mới, tách file)
+- scripts/test.ps1 -Ui: 54 Python tests, 512 C# checks (thêm 4: kế hoạch đợt mới, 2 quái mới, marks lạ bị từ chối), 280 WPF checks (thêm 6: mèo chạy 130 DIP/s và đi bộ vẫn 72, chiến trường chờ khi mèo sang màn hình khác/tự chạy tiếp/giữ Pause của người dùng, MoveScale trả về 1) đạt.
+- So pixel: ảnh Pet Mode (kể cả ảnh chuyển động sau khi nới nhịp chân lên 2×) giống từng byte. Đã xem ảnh 4 loại quái cạnh nhau trên nền sáng/tối (battle-kinds-*.png); vệt gió đổi sang xanh để thấy trên nền sáng.
+- Chưa kiểm tra trên máy nhiều màn hình thật (máy hiện tại 1 màn hình; logic test bằng probe giả).
+
+## Kết quả test đợt Battle Mode 5: quái theo mèo, hướng đẩy, mô tả kỹ năng, dữ liệu battle.json (2026-10-17)
 - scripts/test.ps1 -Ui: 54 Python tests, 508 C# checks (thêm 3 bước A + 16 BattleDataTests), 274 WPF checks (thêm 2: hover đổi đúng chữ, đẩy theo phía click) đạt. Publish + check-publish đạt (3/3); mở lại mèo người dùng lúc 08:36; log không có lỗi đọc battle.json.
 - So pixel với bản trước refactor (sau bước A): mọi ảnh chiến trường, HUD, boss, kiếm/khiên giống từng byte (khác 1 ảnh speech không ổn định) → refactor sang dữ liệu không đổi hình.
 - Test mới so từng con số của battle.json với mặc định trong code (cat, kỹ năng, 2 kiểu quái, kế hoạch đợt) và các trường hợp file lỗi.
@@ -130,6 +135,11 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Lịch sử: 201 C#/107 WPF/20 Python (motion, 2026-10-08); 181/101/20 (features). Không dùng số liệu cũ thay kết quả hiện tại.
 
 ## Đã làm gần đây
+- 2026-10-17 Battle Mode đợt 6 (người dùng chọn 1 + 2a + 3 + 8):
+  - Mèo chạy trong trận: PetModel.MoveScale (1 ngoài trận) nhân tốc độ + gia tốc đi trong PetPhysics; BattleSettings.CatRunScale = 1.8 (battle.json "catRunScale", 0 < x ≤ 3). PetMotion cho nhịp chân tới 2× (đi bộ thường không vượt 1 nên Pet Mode không đổi).
+  - Chiến trường cố định ở màn hình bắt đầu trận (battleMonitor + battleScale): mèo đáp xuống màn hình khác → trận tạm dừng (battlePausedByAway) + thông báo cạnh mèo; về lại → tự chạy tiếp; người dùng tự Pause/Resume trong lúc đó thì giữ lựa chọn của người dùng. Dải sàn + HUD đặt theo DPI của màn hình trận (MoveWindow nhận atScale). Đổi vùng làm việc/DPI trên chính màn hình trận thì dời chiến trường như cũ.
+  - battle.json: thêm "runner" (Slime nhanh: 25 HP, 70 DIP/s, 6 sát thương, 0.75×, vệt gió) và "rock" (Slime đá: 110 HP, 20 DIP/s, 16 sát thương, 1.35×, vết nứt, đẩy ×0.5); đợt 2 = 2 slime + 2 nhanh, đợt 3 = 1 đá + 2 nhanh + 2 slime. EnemyType.Marks ("none"/"speed"/"cracks") để vẽ dấu nhận biết. Mặc định trong code (khi file lỗi) vẫn chỉ slime thường + Vua.
+  - Tách PetWindow.Battle.cs (548 → 389 dòng): PetWindow.BattleResult.cs (bảng kết quả, thông báo, nút nhỏ), PetWindow.BattleFeedback.cs (bảng sự kiện → âm thanh/xếp hạng, banner). Hành vi không đổi.
 - 2026-10-17 Battle Mode đợt 5 (người dùng: quái vẫn theo mèo khi bị bắt đi; Đẩy chọn trái/phải; chữ mô tả kỹ năng kẹt; cải thiện cho dễ mở rộng. Chọn: hướng theo phía click; làm cả refactor):
   - Bước A (commit 3f78867): mèo bị cầm/bay thì quái vẫn bò theo dọc sàn nhưng không gồng/đánh (trước: đứng chờ). Đẩy: click nửa trái slime → bay phải, nửa phải → bay trái, giữa → ra xa mèo (BattleSim.PushDirection); rê chuột khi đã chọn Đẩy hiện mũi tên xanh. Bỏ ToolTip (WPF giữ tooltip đầu tiên trên cửa sổ không kích hoạt) → mô tả hiện ở dòng gợi ý của HUD khi rê ô kỹ năng/nút; dòng gợi ý rộng cố định theo hàng trên (xuống dòng thay vì làm HUD nhảy). Số sát thương của boss lệch sang bên, không đè dấu "!".
   - Bước B: PetBattleData.cs (mới): EnemyType (chỉ số, kích thước, màu, boss/slam, hệ số đẩy/choáng, gọi quân/nổi giận theo % HP), WaveSpec/WaveGroup (đợt = các nhóm loại quái × số lượng), BattleData đọc Assets/battle.json (nhúng; key sai/số vô lý/quái lạ/to > 2.3/gọi quân lặp → bỏ cả file, log, dùng mặc định), BattleSkills (danh sách kỹ năng: tên, ngắm hay dùng ngay, hồi chiêu, mô tả lấy số từ dữ liệu). BattleSim dùng kiểu quái thay cờ IsBoss; HUD tạo ô từ danh sách kỹ năng, tên boss từ dữ liệu. Thuộc tính Slime*/Boss*/Waves/Boss cũ vẫn là mặc định trong code (cho test và khi file lỗi), không đọc từ JSON.

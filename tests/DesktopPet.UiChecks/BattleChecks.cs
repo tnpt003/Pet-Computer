@@ -247,10 +247,44 @@ internal static class BattleChecks
         check(Sim().Paused && field is { IsVisible: true }, "After fullscreen the battle is shown again, still paused");
         check(window.SetBattlePaused(false), "The user resumes it");
 
+        // The cat runs in a battle (physics' own walking, just faster).
+        check(pet.MoveScale == Sim().Settings.CatRunScale && pet.MoveScale > 1, "During a battle the cat runs (walking speed × CatRunScale)");
+        var physics = Field<PetPhysics>(window, "physics");
+        var runner = new PetModel { X = 100, Y = 0, Grounded = true, Action = PetAction.Walking, Facing = 1, MoveScale = Sim().Settings.CatRunScale };
+        var walker = new PetModel { X = 100, Y = 0, Grounded = true, Action = PetAction.Walking, Facing = 1 };
+        var floorArea = new Area(0, 0, 4000, 112);
+        for (int i = 0; i < 240; i++) { physics.Step(runner, floorArea, 1.0 / 120); physics.Step(walker, floorArea, 1.0 / 120); }
+        check(Math.Abs(runner.VX - 72 * Sim().Settings.CatRunScale) < 1 && Math.Abs(walker.VX - 72) < 1,
+            $"Running reaches {72 * Sim().Settings.CatRunScale:F0} DIPs/s; normal walking stays 72 ({runner.VX:F0} / {walker.VX:F0})");
+
+        // Carried to another monitor: the battle waits there, paused, and resumes when the cat is back.
+        var monitorProbe = typeof(PetWindow).GetField("battleMonitorProbe", Flags)!;
+        var home = (string)typeof(PetWindow).GetField("battleMonitor", Flags)!.GetValue(window)!;
+        monitorProbe.SetValue(window, new Func<string>(() => "\\\\.\\OTHER"));
+        double fieldLeft = field!.Left;
+        Tick(1.0 / 60);
+        var awayNote = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.Title == "Pet notice" && w.IsVisible);
+        check(Sim().Paused && window.BattleCatAway && awayNote != null && Math.Abs(field.Left - fieldLeft) < 1,
+            "On another monitor the battle pauses with a note; the field stays where it was");
+        double awayTime = Sim().Time;
+        Tick(1);
+        check(Sim().Time == awayTime && pet.VX == 0, "While the cat is away nothing in the battle moves");
+        monitorProbe.SetValue(window, new Func<string>(() => home));
+        Tick(1.0 / 60);
+        check(!Sim().Paused && !window.BattleCatAway, "Back on the battle's monitor it goes on by itself");
+        monitorProbe.SetValue(window, new Func<string>(() => "\\\\.\\OTHER"));
+        Tick(1.0 / 60);
+        window.SetBattlePaused(true); // The user pauses while the cat is away...
+        monitorProbe.SetValue(window, new Func<string>(() => home));
+        Tick(1.0 / 60);
+        check(Sim().Paused, "...then a pause the user chose is kept when the cat comes back");
+        window.SetBattlePaused(false);
+        monitorProbe.SetValue(window, null);
+
         // End: everything goes away and the pet lives normally again.
         window.EndBattle();
         await Task.Delay(20);
-        check(!window.BattleActive && OpenBattleWindows() == 0 && Field<Window?>(window, "battleFieldWindow") == null && !pet.SwordOut && !pet.Emotions.Suspended,
+        check(!window.BattleActive && OpenBattleWindows() == 0 && Field<Window?>(window, "battleFieldWindow") == null && !pet.SwordOut && !pet.Emotions.Suspended && pet.MoveScale == 1,
             "End Battle removes the field, HUD, sword and the emotion lock");
         SetField(window, "treatCooldown", 0.0);
         check(pet.Action == PetAction.Idle && pet.VX == 0 && window.GiveTreat(), "The pet is idle and its normal life (treats, games) works again");
@@ -413,6 +447,37 @@ internal static class BattleChecks
             Render(walking, $"battle-walk-{facing}");
         }
         check(edgesClear, "The sword, shield bubble and cheer sparkles stay inside the window in every pose, both ways");
+
+        // Every enemy kind from battle.json side by side, for a person to look at.
+        if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string kindsReview)
+        {
+            var data = BattleData.Settings;
+            var lineup = new BattleSim(data, 0, 600, new Random(1));
+            var spawn = typeof(BattleSim).GetMethod("AddSlime", Flags)!;
+            double at = 60;
+            foreach (var kind in data.EnemyTypes)
+            {
+                var made = (Slime)spawn.Invoke(lineup, new object[] { at + data.SlimeWidth * kind.Scale / 2, kind })!;
+                made.Set(SlimeState.Moving); made.StateTime = 0.4; made.Facing = -1;
+                at += data.SlimeWidth * kind.Scale + 50;
+            }
+            var lineupView = new BattleFieldView(lineup) { OriginX = 0 };
+            lineupView.Measure(new Size(600, BattleFieldView.FieldHeight)); lineupView.Arrange(new Rect(0, 0, 600, BattleFieldView.FieldHeight));
+            foreach (var (name, back) in new[] { ("light", Colors.WhiteSmoke), ("dark", Color.FromRgb(0x1E, 0x1E, 0x24)) })
+            {
+                var visual = new DrawingVisual();
+                using (var dc = visual.RenderOpen())
+                {
+                    dc.DrawRectangle(new SolidColorBrush(back), null, new Rect(0, 0, 600, BattleFieldView.FieldHeight));
+                    dc.DrawRectangle(new VisualBrush(lineupView) { Stretch = Stretch.None, AlignmentX = AlignmentX.Left, AlignmentY = AlignmentY.Top,
+                        ViewboxUnits = BrushMappingMode.Absolute, Viewbox = new Rect(0, 0, 600, BattleFieldView.FieldHeight) },
+                        null, new Rect(0, 0, 600, BattleFieldView.FieldHeight));
+                }
+                var image = new RenderTargetBitmap(600, (int)BattleFieldView.FieldHeight, 96, 96, PixelFormats.Pbgra32); image.Render(visual);
+                var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(image));
+                using var stream = System.IO.File.Create(System.IO.Path.Combine(kindsReview, $"battle-kinds-{name}.png")); encoder.Save(stream);
+            }
+        }
 
         // The Slime King on the field (drawn larger, with a crown and its slam warning).
         window.Reset();

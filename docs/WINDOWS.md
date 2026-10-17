@@ -554,8 +554,11 @@ points to a leak.
 
 Optional mini-game, off by default and never resumed at startup. Right-click the cat →
 **Battle Mode / Chế độ chiến đấu** → **Start battle**. The cat draws a wooden toy sword and
-fights small slimes on the floor of its current monitor (work area) in 3 waves (2, 3, 4 slimes,
-at most 3 at once, a short break between waves), then the **Slime King** alone: twice as big,
+fights slimes on the floor of its current monitor (work area) in 3 waves (2 slimes; 2 slimes +
+2 quick slimes; a rock slime + 2 quick + 2 slimes; at most 3 at once, a short break between
+waves), then the **Slime King** alone. Quick slimes are small, fast and frail (wind streaks);
+rock slimes are big, slow, tough and hard to push (cracks). During a battle the cat runs
+(walking speed and acceleration × 1.8, `catRunScale`). The King: twice as big,
 400 HP, a crown; its ground slam winds up 1.2 s with a red zone on the floor and hits 25 within
 110 DIPs; below half HP it calls two helper slimes (once), below 30% it gets angry (faster,
 0.8 s windup); pushes move it and stun it less. Its HP bar replaces the wave dots on the HUD. The battle is won after the last wave, or lost
@@ -589,7 +592,10 @@ shows no panel. After each wave except the last the cat gets 15 HP back (`WaveHe
 - **Rescue**: pick the cat up as usual (drag, dangle, dizzy and throw unchanged). While pressed,
   carried or in the air the cat takes no damage and slimes call off their attacks; they keep
   following the cat along the floor (without winding up), and no slime spawns or wave progress
-  happens. After landing the cat is protected for 1.5 s.
+  happens. The battle stays on the monitor it started on: if the cat lands on another monitor the
+  battle pauses (a note by the cat says where the battlefield is) and goes on by itself when the
+  cat is back; a pause the user chose meanwhile is kept. A work-area or DPI change on the battle's
+  own monitor moves the field with it. After landing the cat is protected for 1.5 s.
 - **Pause / Resume / End**: HUD buttons or the menu. Opening the pet menu pauses a running battle
   and resumes it on close (a battle the user paused stays paused). A fullscreen app pauses it and
   hides the field/HUD; the user resumes afterwards. Tray Pause freezes it too. "Bring the pet to

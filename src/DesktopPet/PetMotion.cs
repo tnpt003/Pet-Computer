@@ -38,7 +38,8 @@ public sealed class PetMotion
         bool sleeping = pet.Emotions.SleepLocked || pet.Action == PetAction.Sleeping;
         bool walking = pet.Action == PetAction.Walking && !pet.Emotions.BlocksAutonomy && pet.Grounded;
         double speed = walking ? Math.Abs(pet.VX) : 0;
-        double ratio = Math.Clamp(speed / Math.Max(1, walkSpeed), 0, 1.3);
+        // Up to 2x: Battle Mode's run (normal walking never exceeds 1).
+        double ratio = Math.Clamp(speed / Math.Max(1, walkSpeed), 0, 2);
         WalkPhase = (WalkPhase + ratio * 13 * dt) % (Math.PI * 2);
         WalkBlend = Ease(WalkBlend, Math.Min(1, ratio), 15, dt);
         RestBlend = Ease(RestBlend, RestTarget(pet), pet.Action == PetAction.Waking ? 4 : 9, dt);

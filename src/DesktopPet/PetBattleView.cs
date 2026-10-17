@@ -177,6 +177,15 @@ public sealed class BattleFieldView : FrameworkElement
             dc.DrawGeometry(PushBlue, Ink, PushArrow);
             dc.Pop();
         }
+        if (slime.Type.Marks == "speed" && slime.State == SlimeState.Moving && opacity > 0.5)
+        {
+            // Wind streaks trailing a fast slime.
+            for (int i = 0; i < 3; i++)
+            {
+                double y = floor - h * (0.3 + 0.2 * i), back = -slime.Facing * (w / 2 + 4 + 3 * i);
+                dc.DrawLine(Streak, new Point(x + back, y), new Point(x + back - slime.Facing * (10 + 4 * (i % 2)), y));
+            }
+        }
         dc.PushOpacity(opacity);
         dc.PushTransform(new MatrixTransform(sx * size, 0, 0, sy * size, x + jitter, floor));
         double bw = s.SlimeWidth, bh = s.SlimeHeight;
@@ -206,6 +215,11 @@ public sealed class BattleFieldView : FrameworkElement
                 dc.DrawLine(Ink, new Point(-11 + look, -bh * 0.72 + (slime.Enraged ? -1 : 1)), new Point(-4 + look, -bh * 0.66));
                 dc.DrawLine(Ink, new Point(11 + look, -bh * 0.72 + (slime.Enraged ? -1 : 1)), new Point(4 + look, -bh * 0.66));
             }
+        }
+        if (slime.Type.Marks == "cracks")
+        {
+            // A stony body: two dark cracks.
+            dc.DrawGeometry(null, Crack, Cracks);
         }
         if (slime.IsBoss) dc.DrawGeometry(Gold, Outline, Crown);
         dc.Pop();
@@ -248,6 +262,16 @@ public sealed class BattleFieldView : FrameworkElement
     }
 
     private static readonly Geometry Arrow = CreateArrow();
+    // Mid blue: visible on light and dark desktops alike.
+    private static readonly Pen Streak = FrozenPen(Frozen(230, 0x5A, 0x9C, 0xD0), 2.4);
+    private static readonly Pen Crack = FrozenPen(Frozen(255, 0x5A, 0x52, 0x48), 1.6);
+    // Body coordinates of the basic slime (scaled with the enemy).
+    private static readonly Geometry Cracks = CreateCracks();
+    private static Geometry CreateCracks()
+    {
+        var g = Geometry.Parse("M 10,-28 L 6,-21 L 11,-15 L 7,-9 M -14,-12 L -9,-8 L -12,-3");
+        g.Freeze(); return g;
+    }
     // Points right; mirrored for a push to the left.
     private static readonly Geometry PushArrow = CreatePushArrow();
     private static Geometry CreatePushArrow()

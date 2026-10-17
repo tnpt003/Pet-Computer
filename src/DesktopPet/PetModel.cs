@@ -106,6 +106,8 @@ public sealed class PetModel
     public bool BattleDazed, BattleCheer;
     // The user's skills on the cat: a protective bubble (Shield) and a golden glow (Cheer).
     public bool BattleShield, BattleBuff;
+    // Battle Mode runs: walking speed and acceleration multiplier (1 outside a battle).
+    public double MoveScale = 1;
     public const double TreatDuration = 4.2;
     public int Facing = 1;
     public bool Grounded;
@@ -233,10 +235,10 @@ public sealed class PetPhysics(PetSettings settings)
                 distance = direction > 0 ? rightEdge - pet.X : pet.X - leftEdge;
             }
             pet.Facing = direction;
-            double target = direction * Math.Min(settings.WalkSpeed * pet.Emotions.WalkScale,
-                Math.Sqrt(2 * settings.WalkAcceleration * Math.Max(0, distance - 4)));
-            pet.SmoothedWalkVelocity += Math.Clamp(target - pet.SmoothedWalkVelocity,
-                -settings.WalkAcceleration * dt, settings.WalkAcceleration * dt);
+            double acceleration = settings.WalkAcceleration * pet.MoveScale;
+            double target = direction * Math.Min(settings.WalkSpeed * pet.Emotions.WalkScale * pet.MoveScale,
+                Math.Sqrt(2 * acceleration * Math.Max(0, distance - 4)));
+            pet.SmoothedWalkVelocity += Math.Clamp(target - pet.SmoothedWalkVelocity, -acceleration * dt, acceleration * dt);
             pet.VX = pet.SmoothedWalkVelocity;
         }
         else pet.SmoothedWalkVelocity = 0;

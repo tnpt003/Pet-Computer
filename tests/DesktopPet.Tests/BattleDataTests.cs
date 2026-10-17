@@ -57,6 +57,8 @@ internal static class BattleDataTests
         check(Rejected("{\"enemies\":[{\"id\":\"a\",\"summonAt\":0.5,\"summonCount\":1,\"summonType\":\"a\"}],\"waves\":[{\"groups\":[{\"enemy\":\"a\",\"count\":1}]}]}"),
             "An enemy that summons a summoner (endless helpers) is rejected");
         check(Rejected("{ not json"), "Not JSON at all is rejected");
+        check(Rejected("{\"comboHits\":1}") && Rejected("{\"comboHits\":9}") && Rejected("{\"comboWindow\":0}") && Rejected("{\"comboKnock\":-1}") &&
+              !Rejected("{\"comboHits\":4,\"comboDamage\":1.5}"), "Combo numbers out of range are rejected");
         check(Rejected("{\"enemies\":[{\"id\":\"slime\",\"marks\":\"spots\"}],\"waves\":[{\"groups\":[{\"enemy\":\"slime\",\"count\":1}]}]}"), "Unknown marks are rejected");
 
         // New content is data only: a fast little runner, and a boss in the middle of the battle.

@@ -7,6 +7,31 @@
 #   the user's pet must be closed first (one pet per session).
 param([double]$Minutes = 3, [string]$Label = 'run', [double]$Interval = 1, [ValidateSet('', 'run', 'paused')][string]$Battle = '')
 $ErrorActionPreference = 'Stop'
+Add-Type @'
+using System;
+using System.Runtime.InteropServices;
+public static class PetPerfWindow {
+    public delegate bool Callback(IntPtr hwnd, IntPtr parameter);
+    [DllImport("user32.dll")] public static extern bool EnumWindows(Callback callback, IntPtr parameter);
+    [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr hwnd, out uint pid);
+    [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr hwnd);
+    [DllImport("user32.dll")] public static extern bool PostMessage(IntPtr hwnd, uint message, IntPtr wParam, IntPtr lParam);
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)] public static extern int GetWindowText(IntPtr hwnd, System.Text.StringBuilder text, int max);
+    // The pet window's title ends with "Desktop Pet"; bubbles, the HUD and menus are skipped.
+    public static IntPtr Find(int processId) {
+        IntPtr result = IntPtr.Zero;
+        EnumWindows((hwnd, unused) => {
+            uint pid;
+            GetWindowThreadProcessId(hwnd, out pid);
+            var title = new System.Text.StringBuilder(256);
+            GetWindowText(hwnd, title, 256);
+            if (pid == processId && IsWindowVisible(hwnd) && title.ToString().EndsWith("Desktop Pet")) { result = hwnd; return false; }
+            return true;
+        }, IntPtr.Zero);
+        return result;
+    }
+}
+'@
 if ($Battle -and (Get-Process DesktopPet -ErrorAction SilentlyContinue)) {
     throw 'A pet is running: close it first, then measure the battle with a separate pet.'
 }
@@ -80,8 +105,11 @@ try {
 } finally {
     if ($rows.Count -gt 0) { $rows | Export-Csv -NoTypeInformation -Path $csv }
     if ($started) {
-        $pet.CloseMainWindow() | Out-Null
-        if (-not $pet.WaitForExit(5000)) { $pet.Kill() }
+        # WM_CLOSE to the pet window itself (found by title, as check-publish.ps1 does):
+        # MainWindowHandle may be a bubble or the HUD, which would leave only Kill.
+        $window = [PetPerfWindow]::Find($pet.Id)
+        if ($window -ne [IntPtr]::Zero) { [PetPerfWindow]::PostMessage($window, 0x0010, [IntPtr]::Zero, [IntPtr]::Zero) | Out-Null }
+        if (-not $pet.WaitForExit(5000)) { Write-Warning 'The measured pet did not close; stopping it.'; $pet.Kill() }
         $env:PET_DATA_DIRECTORY = $savedData
     }
     $env:PET_BATTLE_AUTOSTART = $savedAutostart

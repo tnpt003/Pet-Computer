@@ -22,6 +22,12 @@ public sealed class BattleSettings
     public double CatHitTime { get; init; } = 0.16;
     // The cat runs during a battle: its walking speed and acceleration times this.
     public double CatRunScale { get; init; } = 1.8;
+    // Combo: ComboHits hits in a row, each within ComboWindow seconds of the last, make the last
+    // one a combo hit (damage × ComboDamage, knocks the slime back). A miss or lifting the cat ends the chain.
+    public int ComboHits { get; init; } = 3;
+    public double ComboWindow { get; init; } = 1.6;
+    public double ComboDamage { get; init; } = 2;
+    public double ComboKnock { get; init; } = 300;
     [JsonIgnore]
     public double SlimeMaxHp { get; init; } = 50;
     [JsonIgnore]
@@ -201,11 +207,11 @@ public enum BattlePhase { WaveBreak, Fighting, Won, Lost }
 public enum BattleEventKind
 {
     WaveStarted, SlimeSpawned, Swing, SlimeHit, SlimeDefeated, CatHurt, Pushed, WaveCleared, Won, Lost,
-    Healed, Cheered, Shielded, Blocked, BombThrown, BombExploded, BossAppeared, BossSummoned, BossEnraged
+    Healed, Cheered, Shielded, Blocked, BombThrown, BombExploded, BossAppeared, BossSummoned, BossEnraged, ComboHit
 }
 public readonly record struct BattleEvent(BattleEventKind Kind, double X, double Value = 0);
 // Number: a floating damage (Value > 0) or heal (Value < 0, shown as +HP above the cat).
-public enum BattleEffectKind { Spark, Poof, Push, Explosion, Slam, Number }
+public enum BattleEffectKind { Spark, Poof, Push, Explosion, Slam, Number, Combo }
 public sealed class BattleEffect
 {
     public BattleEffectKind Kind;
@@ -264,6 +270,11 @@ public sealed class BattleSim
     // Seconds into the current swing; negative when not swinging.
     public double SwingTime { get; private set; } = -1;
     public double SwingProgress => SwingTime < 0 ? -1 : Math.Clamp(SwingTime / Settings.CatSwingDuration, 0, 1);
+    // Hits in the current chain, and whether the swing under way would finish it (a gold slash).
+    public int Combo { get; private set; }
+    public bool ComboSwing { get; private set; }
+    public int CombosLanded { get; private set; }
+    private double comboClock;
     public int? SelectedId { get; private set; }
     // The slime the cat is going for (selected or chosen automatically).
     public int? TargetId { get; private set; }
@@ -325,7 +336,8 @@ public sealed class BattleSim
             StepSlimes(dt, catX, true);
             return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
         }
-        if (catHeld) { lifted |= this.lifted; this.lifted = lifted; CancelSwing(); }
+        comboClock += dt;
+        if (catHeld) { lifted |= this.lifted; this.lifted = lifted; CancelSwing(); Combo = 0; }
         else
         {
             if (this.lifted) Grace = Settings.LandingGraceSeconds;
@@ -342,7 +354,10 @@ public sealed class BattleSim
         return CatTurn(dt, catX);
     }
 
-    private void CancelSwing() { SwingTime = -1; swingHit = false; }
+    private void CancelSwing() { SwingTime = -1; swingHit = false; ComboSwing = false; }
+
+    // The chain only lasts ComboWindow seconds after its last hit.
+    private int LiveCombo => Combo > 0 && comboClock <= Settings.ComboWindow ? Combo : 0;
 
     private CatOrder CatTurn(double dt, double catX)
     {
@@ -364,6 +379,7 @@ public sealed class BattleSim
             if (CatCooldown <= 0)
             {
                 SwingTime = 0; swingHit = false; swingTargetId = target.Id; swingFacing = facing;
+                ComboSwing = LiveCombo == Settings.ComboHits - 1;
                 double cooldown = Settings.CatAttackCooldown / (CheerRemaining > 0 ? Settings.CheerSpeed : 1);
                 CatCooldown = Math.Max(cooldown, Settings.CatSwingDuration);
                 events.Add(new(BattleEventKind.Swing, catX));
@@ -380,10 +396,21 @@ public sealed class BattleSim
     private void ResolveHit(double catX)
     {
         var slime = Find(swingTargetId);
-        if (slime == null || !slime.Targetable || Math.Abs(slime.X - catX) > Reach(slime) + 14) return;
-        events.Add(new(BattleEventKind.SlimeHit, slime.X));
-        AddEffect(BattleEffectKind.Spark, slime.X, slime.Height / 2);
-        Damage(slime, Settings.CatDamage * (CheerRemaining > 0 ? Settings.CheerDamage : 1));
+        if (slime == null || !slime.Targetable || Math.Abs(slime.X - catX) > Reach(slime) + 14) { Combo = 0; return; } // A miss ends the chain.
+        Combo = LiveCombo + 1;
+        comboClock = 0;
+        bool combo = Combo >= Settings.ComboHits;
+        double damage = Settings.CatDamage * (CheerRemaining > 0 ? Settings.CheerDamage : 1) * (combo ? Settings.ComboDamage : 1);
+        events.Add(new(combo ? BattleEventKind.ComboHit : BattleEventKind.SlimeHit, slime.X));
+        AddEffect(combo ? BattleEffectKind.Combo : BattleEffectKind.Spark, slime.X, slime.Height / 2);
+        if (combo)
+        {
+            // Knocked back away from the cat (heavy kinds less), but not stunned.
+            Combo = 0;
+            CombosLanded++;
+            slime.KnockVelocity = (slime.X < catX ? -1 : 1) * Settings.ComboKnock * slime.Type.PushFactor;
+        }
+        Damage(slime, damage);
     }
 
     private void Damage(Slime slime, double amount)
@@ -625,6 +652,7 @@ public sealed class BattleSim
         TargetId = null;
         bombs.Clear();
         CancelSwing();
+        Combo = 0;
         foreach (var s in slimes) if (s.State == SlimeState.Windup) s.Set(SlimeState.Moving);
         events.Add(new(phase == BattlePhase.Won ? BattleEventKind.Won : BattleEventKind.Lost, 0));
     }
@@ -724,7 +752,7 @@ public sealed class BattleSim
         if (effects.Count >= Settings.MaxEffects) effects.RemoveAt(0);
         double life = kind switch
         {
-            BattleEffectKind.Poof => 0.6 * Math.Max(1, value), BattleEffectKind.Number => 0.9,
+            BattleEffectKind.Poof => 0.6 * Math.Max(1, value), BattleEffectKind.Number => 0.9, BattleEffectKind.Combo => 0.7,
             BattleEffectKind.Explosion or BattleEffectKind.Slam => 0.5, _ => 0.35
         };
         effects.Add(new BattleEffect { Kind = kind, X = x, Height = height, Life = life, Value = value });

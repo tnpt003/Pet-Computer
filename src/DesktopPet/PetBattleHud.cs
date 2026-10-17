@@ -20,7 +20,7 @@ public sealed class BattleHud : Border
     private const double HpWidth = 170, BossWidth = 200;
     private readonly Func<string, string, string> L;
     private readonly TextBlock hpText, status, hint, banner, bossName;
-    private readonly Border hpFill, hpTrail, bossFill, bossBar, pauseButton;
+    private readonly Border hpFill, hpTrail, bossFill, bossBar, pauseButton, endButton;
     private readonly HudGlyph pauseGlyph;
     private readonly StackPanel waveDots;
     private readonly SkillSlot[] slots = new SkillSlot[SkillOrder.Length];
@@ -111,7 +111,7 @@ public sealed class BattleHud : Border
         }
         pauseGlyph = new HudGlyph(HudGlyphKind.Pause);
         pauseButton = SmallButton(pauseGlyph, () => PauseClicked?.Invoke());
-        var end = SmallButton(new HudGlyph(HudGlyphKind.End), () => EndClicked?.Invoke());
+        var end = endButton = SmallButton(new HudGlyph(HudGlyphKind.End), () => EndClicked?.Invoke());
         pauseButton.MouseEnter += (_, _) => HoverControl(L("Tạm dừng / tiếp tục trận", "Pause / resume the battle"));
         end.MouseEnter += (_, _) => HoverControl(L("Kết thúc trận (không có bảng kết quả)", "End the battle (no result panel)"));
         pauseButton.MouseLeave += (_, _) => HoverControl(null);
@@ -130,6 +130,22 @@ public sealed class BattleHud : Border
 
     public SkillSlot Slot(BattleSkill skill) => slots[Array.IndexOf(SkillOrder, skill)];
     public Border PauseButton => pauseButton;
+    public Border EndButton => endButton;
+
+    // For the HUD stepping aside (PetWindow.Battle.cs): points in this panel's coordinates.
+    public bool IsInsidePanel(Point point) => point.X >= 0 && point.Y >= 0 && point.X < ActualWidth && point.Y < ActualHeight;
+
+    public bool IsInteractiveAt(Point point)
+    {
+        bool Over(FrameworkElement element)
+        {
+            if (!element.IsVisible) return false;
+            var at = TranslatePoint(point, element);
+            return at.X >= 0 && at.Y >= 0 && at.X < element.ActualWidth && at.Y < element.ActualHeight;
+        }
+        foreach (var slot in slots) if (Over(slot)) return true;
+        return Over(pauseButton) || Over(endButton);
+    }
     public string HintText => hint.Text;
 
     // Hovering a slot (or a control) describes it in the hint line, one fixed place, instead of

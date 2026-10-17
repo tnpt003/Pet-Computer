@@ -187,7 +187,8 @@ public sealed partial class PetWindow
         battleFieldWindow = battleHudWindow = null;
         battleView = null;
         battleHud = null;
-        pet.SwordOut = false; pet.SwordSwing = -1; pet.BattleHurt = 0; pet.MoveScale = 1;
+        pet.SwordOut = false; pet.SwordSwing = -1; pet.SwordCombo = false; pet.BattleHurt = 0; pet.MoveScale = 1;
+        battleHudDodging = false;
         pet.BattleDazed = pet.BattleCheer = pet.BattleShield = pet.BattleBuff = false;
         pet.Emotions.SetSuspended(false);
         revision++; // Nothing requested during the battle may run late.
@@ -277,6 +278,7 @@ public sealed partial class PetWindow
             return;
         }
         pet.SwordSwing = battle.SwingProgress;
+        pet.SwordCombo = battle.ComboSwing;
         pet.BattleHurt = battle.HurtFlash;
         pet.BattleCheer = battle.Phase == BattlePhase.Won;
         pet.BattleDazed = battle.Phase == BattlePhase.Lost;
@@ -405,6 +407,41 @@ public sealed partial class PetWindow
         battleRedraw = false;
         double width = battleHudWindow.ActualWidth;
         MoveWindow(battleHudWindow, (area.Left + area.Right - width) / 2, area.Top + 12, fieldScale);
+        UpdateBattleHudDodge();
+    }
+
+    // The HUD steps aside for the cursor: over its information part (portrait, HP, status, hint)
+    // it fades and lets clicks through to the app below; over a skill slot or Pause/End it is
+    // solid and clickable as usual. While click-through the HUD gets no mouse messages, so the
+    // cursor is read every frame instead.
+    public const double BattleHudDodgeOpacity = 0.25;
+    private bool battleHudDodging;
+    public bool BattleHudDodging => battleHudDodging;
+    // Replaceable for UI checks: the cursor in screen pixels.
+    private Func<Point>? battleCursorProbe;
+
+    private void UpdateBattleHudDodge()
+    {
+        if (battleHudWindow == null || battleHud == null || !battleHudWindow.IsVisible) return;
+        var handle = new WindowInteropHelper(battleHudWindow).Handle;
+        if (handle == IntPtr.Zero) return;
+        Point cursor;
+        if (battleCursorProbe != null) cursor = battleCursorProbe();
+        else if (GetCursorPos(out var raw)) cursor = new Point(raw.X, raw.Y);
+        else return;
+        bool dodge = false;
+        if (GetWindowRect(handle, out var rect) && cursor.X >= rect.Left && cursor.X < rect.Right && cursor.Y >= rect.Top && cursor.Y < rect.Bottom)
+        {
+            var local = battleHud.PointFromScreen(cursor);
+            dodge = battleHud.IsInsidePanel(local) && !battleHud.IsInteractiveAt(local);
+        }
+        if (dodge == battleHudDodging) return;
+        battleHudDodging = dodge;
+        battleHud.Opacity = dodge ? BattleHudDodgeOpacity : 1;
+        const int ExStyle = -20;
+        const long Transparent = 0x20;
+        long style = GetWindowLongPtr(handle, ExStyle).ToInt64();
+        SetWindowLongPtr(handle, ExStyle, new IntPtr(dodge ? style | Transparent : style & ~Transparent));
     }
 
     // The game-style HUD (PetBattleHud.cs) with a still portrait of this cat.

@@ -37,7 +37,8 @@ internal static class BattleSkillTests
         // Cheer: faster and harder swings for a while.
         int Hits(bool cheer, out double perHit)
         {
-            var (sim, slime) = Duel(new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 1 }, SlimeMaxHp = 1000, SlimeDamage = 0 });
+            // No combos here: every hit is a plain one.
+            var (sim, slime) = Duel(new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 1 }, SlimeMaxHp = 1000, SlimeDamage = 0, ComboHits = 1000 });
             if (cheer) sim.Use(BattleSkill.Cheer, 800);
             int hits = 0;
             for (int i = 0; i < 120; i++) { slime.X = 840; sim.Step(dt, 800, false); hits += Count(sim, BattleEventKind.SlimeHit); sim.ClearEvents(); }
@@ -47,6 +48,45 @@ internal static class BattleSkillTests
         int plain = Hits(false, out double plainHit), cheered = Hits(true, out double cheeredHit);
         check(cheered > plain && Math.Abs(cheeredHit - 35) < 0.01 && Math.Abs(plainHit - 25) < 0.01,
             $"Cheer makes the cat swing faster ({plain} → {cheered} hits in 2 s) and hit harder (25 → {cheeredHit})");
+        // Combo: the third hit in a row hits twice as hard and knocks the slime back.
+        var (combo, target) = Duel(new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 1 }, SlimeMaxHp = 1000, SlimeDamage = 0 });
+        var kinds = new List<BattleEventKind>();
+        bool comboSwingSeen = false, plainSwingGold = false;
+        double hpBefore = 0, comboDamage = 0, knock = 0;
+        for (int i = 0; i < 300 && !kinds.Contains(BattleEventKind.ComboHit); i++)
+        {
+            target.X = 840;
+            hpBefore = target.Hp;
+            combo.Step(dt, 800, false);
+            if (combo.SwingTime >= 0) { comboSwingSeen |= combo.ComboSwing; plainSwingGold |= combo.ComboSwing && combo.Combo < 2 && Count(combo, BattleEventKind.ComboHit) == 0; }
+            foreach (var e in combo.Events) if (e.Kind is BattleEventKind.SlimeHit or BattleEventKind.ComboHit) kinds.Add(e.Kind);
+            if (kinds.Contains(BattleEventKind.ComboHit)) { comboDamage = hpBefore - target.Hp; knock = target.KnockVelocity; }
+            combo.ClearEvents();
+        }
+        check(string.Join(",", kinds) == "SlimeHit,SlimeHit,ComboHit" && Math.Abs(comboDamage - 50) < 0.01 && combo.CombosLanded == 1 && combo.Combo == 0,
+            $"Two hits, then a combo hit for double damage ({string.Join(",", kinds)}; {comboDamage})");
+        check(knock > 100 && target.State != SlimeState.Stunned && combo.Effects.Any(e => e.Kind == BattleEffectKind.Combo),
+            $"The combo knocks the slime away from the cat (not stunned) with its own burst ({knock:0})");
+        check(comboSwingSeen && !plainSwingGold, "Only the swing that can finish the chain is the gold one");
+        // Lifting the cat, or a pause in the hits longer than the window, ends the chain.
+        int HitsUntil(BattleSim sim, Slime slime, int count)
+        {
+            int seen = 0;
+            for (int i = 0; i < 300 && seen < count; i++) { slime.X = 840; sim.Step(dt, 800, false); seen += Count(sim, BattleEventKind.SlimeHit); sim.ClearEvents(); }
+            return seen;
+        }
+        var (lift, liftSlime) = Duel(new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 1 }, SlimeMaxHp = 1000, SlimeDamage = 0 });
+        HitsUntil(lift, liftSlime, 2);
+        int chain = lift.Combo;
+        lift.Step(dt, 800, true, true);
+        check(chain == 2 && lift.Combo == 0, "Lifting the cat ends the chain");
+        var (slow, slowSlime) = Duel(new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 1 }, SlimeMaxHp = 1000, SlimeDamage = 0 });
+        HitsUntil(slow, slowSlime, 2);
+        slowSlime.X = 1500;
+        Run(slow, slow.Settings.ComboWindow + 0.3, 800);
+        slow.ClearEvents();
+        HitsUntil(slow, slowSlime, 1);
+        check(slow.CombosLanded == 0 && slow.Combo == 1, "A gap longer than the combo window starts a new chain");
         var (cheer, _) = Duel(new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 1 }, SlimeMaxHp = 1000, SlimeDamage = 0 });
         cheer.Use(BattleSkill.Cheer, 800);
         Run(cheer, 5.1);

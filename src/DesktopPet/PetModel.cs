@@ -102,6 +102,8 @@ public sealed class PetModel
     // flinch after a hit, and the end-of-battle pose.
     public bool SwordOut;
     public double SwordSwing = -1;
+    // The swing under way finishes a combo (a gold slash).
+    public bool SwordCombo;
     public double BattleHurt;
     public bool BattleDazed, BattleCheer;
     // The user's skills on the cat: a protective bubble (Shield) and a golden glow (Cheer).

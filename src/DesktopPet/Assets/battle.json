@@ -10,6 +10,12 @@
   "catHitTime": 0.16,
   // The cat runs during a battle (walking speed and acceleration × this).
   "catRunScale": 1.8,
+  // Combo: this many hits in a row (each within comboWindow s of the last) make the last one
+  // a combo: damage × comboDamage and a knock-back (DIPs/s, × the enemy's pushFactor).
+  "comboHits": 3,
+  "comboWindow": 1.6,
+  "comboDamage": 2,
+  "comboKnock": 300,
 
   "slimeWidth": 46,
   "slimeHeight": 34,

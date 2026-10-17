@@ -112,6 +112,24 @@ internal static class BattleChecks
         gameHud.Hover(null);
         check(healHint.StartsWith(gameHud.Describe(BattleSkill.Heal)) && bombHint.StartsWith(gameHud.Describe(BattleSkill.Bomb)) && gameHud.HintText == idleHint,
             "Hovering one slot then another shows each one's text in the same place; leaving restores the hint");
+        // The HUD steps aside: over its information part it fades and lets clicks through; over a
+        // slot or a button it is solid and clickable; away from it, normal.
+        var cursorProbe = typeof(PetWindow).GetField("battleCursorProbe", Flags)!;
+        var hudHandle = new WindowInteropHelper(Field<Window>(window, "battleHudWindow")).Handle;
+        bool HudClickThrough() => (GetWindowLongPtr(hudHandle, -20).ToInt64() & Transparent) != 0;
+        void CursorAt(Point screen) { cursorProbe.SetValue(window, (Func<Point>)(() => screen)); Call(window, "UpdateBattleHudDodge"); }
+        CursorAt(gameHud.PointToScreen(new Point(20, 20)));
+        check(window.BattleHudDodging && HudClickThrough() && gameHud.Opacity < 0.5, "Over the HUD's portrait the HUD fades and lets clicks through");
+        var slotCentre = gameHud.Slot(BattleSkill.Heal);
+        CursorAt(slotCentre.PointToScreen(new Point(slotCentre.ActualWidth / 2, slotCentre.ActualHeight / 2)));
+        check(!window.BattleHudDodging && !HudClickThrough() && gameHud.Opacity == 1, "Over a skill slot it is solid and clickable again");
+        CursorAt(gameHud.PointToScreen(new Point(20, 20)));
+        CursorAt(gameHud.EndButton.PointToScreen(new Point(5, 5)));
+        check(!window.BattleHudDodging && !HudClickThrough(), "Over Pause/End too");
+        CursorAt(gameHud.PointToScreen(new Point(20, 20)));
+        CursorAt(new Point(-30000, -30000));
+        check(!window.BattleHudDodging && !HudClickThrough() && gameHud.Opacity == 1, "Away from the HUD it looks and works as before");
+        cursorProbe.SetValue(window, (Func<Point>)(() => new Point(-30000, -30000)));
         Tick(1.0 / 60);
         check(!gameHud.Slot(BattleSkill.Push).IsReady && gameHud.Slot(BattleSkill.Push).Remaining > 0 && gameHud.Slot(BattleSkill.Heal).IsReady,
             "A used skill shows its cooldown; the others are ready");
@@ -147,6 +165,9 @@ internal static class BattleChecks
             System.IO.Directory.CreateDirectory(fieldReview);
             Sim().Select(slime.Id);
             foreach (var s in Sim().Slimes.Where(s => s.Targetable && s.Id != slime.Id)) { s.X = slime.X + 90; s.Set(SlimeState.Windup); s.StateTime = 0.6; }
+            // A combo burst on the marked slime, a moment after the hit.
+            typeof(BattleSim).GetMethod("AddEffect", Flags)!.Invoke(Sim(), new object[] { BattleEffectKind.Combo, slime.X, slime.Height / 2, 0.0 });
+            Sim().Effects[^1].Age = 0.15;
             view.InvalidateVisual(); view.UpdateLayout();
             var full = new RenderTargetBitmap(vw, vh, 96, 96, PixelFormats.Pbgra32); full.Render(view);
             var crop = new CroppedBitmap(full, new Int32Rect((int)Math.Clamp(localX - 120, 0, Math.Max(0, vw - 400)), 0, Math.Min(400, vw), vh));
@@ -447,6 +468,11 @@ internal static class BattleChecks
         string plain = Render(Model(), "battle-none");
         var armed = Model(); armed.SwordOut = true;
         check(Render(armed, "battle-sword") != plain, "The sword is drawn when the battle gives it to the cat");
+        var slash = Model(); slash.SwordOut = true; slash.SwordSwing = 0.5;
+        var goldSlash = Model(); goldSlash.SwordOut = true; goldSlash.SwordSwing = 0.5; goldSlash.SwordCombo = true;
+        check(Render(goldSlash, "battle-combo-swing") != Render(slash, "battle-plain-swing"), "The combo swing has its own (gold) slash");
+        var restCombo = Model(); restCombo.SwordOut = true; restCombo.SwordCombo = true;
+        check(Render(restCombo, "battle-combo-rest") == Render(armed, "battle-sword"), "Outside the slash the combo flag changes nothing");
         foreach (int facing in new[] { 1, -1 })
         {
             for (double u = 0; u <= 1.0001; u += 0.1)

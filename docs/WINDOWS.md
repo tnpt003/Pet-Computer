@@ -585,6 +585,11 @@ shows no panel. After each wave except the last the cat gets 15 HP back (`WaveHe
   fullscreen app is open. Nothing is woken or forced.
 - **The cat fights by itself**: picks the nearest slime (or the marked one), walks to it with the
   normal walking physics and swings; each swing can hit once, at a fixed moment of the swing.
+- **Combo**: three hits in a row, each within 1.6 s of the last (`comboHits`, `comboWindow`), make
+  the third a combo: ×2 damage (`comboDamage`, on top of Cheer), the slime is knocked away from
+  the cat (300 DIPs/s × its `pushFactor`, not stunned), a gold slash on the cat, a gold burst with
+  "COMBO!" and the ball-tap cue. A miss, lifting the cat or a longer gap ends the chain; the chain
+  may move from one slime to another.
 - **Click a slime** (left): mark it as the cat's target (yellow arrow + ring). No damage.
 - **Skills** (five slots on the HUD; hover for details; mouse only):
   - **Push** (5 s): choose, then click a slime: knocked back and stunned ~1.4 s. Click its left
@@ -618,6 +623,10 @@ shows no panel. After each wave except the last the cat gets 15 HP back (`WaveHe
   monitor's work-area width) draws every slime and effect, and one HUD at the top centre
   (`PetBattleHud.cs`: portrait, HP bar with a lost-HP trail, wave dots/boss bar, banners, skill
   slots, Pause/End icons).
+  The HUD steps aside for the cursor: over its information part (portrait, HP, status, hint
+  line) it fades to 25% and becomes click-through (WS_EX_TRANSPARENT), so the app under it can
+  be clicked; over a skill slot or Pause/End it is solid and clickable as before. The cursor is
+  read every frame (`GetCursorPos`), since a click-through window gets no mouse messages.
   Both are topmost, never activated (WS_EX_NOACTIVATE + MA_NOACTIVATE) and not in the taskbar.
   Empty strip pixels are fully transparent, so clicks pass through to the apps below; only slimes
   (plus an invisible 1-alpha halo for easier clicking) take clicks. The pet window stays above

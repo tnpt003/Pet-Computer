@@ -142,7 +142,8 @@ internal static class BattleTests
             "Invalid input is ignored");
 
         // Holding (dragging) the cat.
-        sim = New(new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 4 }, SlimeMaxHp = 1000 });
+        // (No combo knock-back here: the slime has to stay next to the cat.)
+        sim = New(new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 4 }, SlimeMaxHp = 1000, ComboHits = 1000 });
         sim.Step(dt, 800, false);
         Run(sim, 0.6, () => 800, held: true);
         slime = sim.Slimes[0]; slime.X = 840;

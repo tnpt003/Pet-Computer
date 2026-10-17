@@ -250,6 +250,7 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
     private static readonly Pen SwordPen = FrozenPen(EffectInk, 1.8, PenLineJoin.Round);
     private static readonly Pen SwordGrainPen = FrozenPen(Frozen("#C79A5B"), 1.2);
     private static readonly Pen SwooshPen = FrozenPen(Frozen("#B0FFFFFF"), 5, PenLineJoin.Round, true);
+    private static readonly Pen ComboSwooshPen = FrozenPen(Frozen("#E0FFD23F"), 8, PenLineJoin.Round, true);
     private static readonly Geometry SwordBlade = CachedGeometry("M -3.2,-8 L 3.2,-8 L 3.2,-33 L 0,-38.5 L -3.2,-33 Z");
     private static readonly Geometry SwordGuard = CachedGeometry("M -8,-9 L 8,-9 L 8,-4.5 L -8,-4.5 Z");
     private static readonly Geometry SwordGrip = CachedGeometry("M -2.2,-4.5 L 2.2,-4.5 L 2.2,6 L -2.2,6 Z");
@@ -306,7 +307,7 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
                 context.ArcTo(new Point(p.GripX + Math.Sin(a1) * 34, p.GripY - Math.Cos(a1) * 34), new Size(34, 34), 0, false, SweepDirection.Clockwise, true, false);
             }
             dc.PushOpacity(Math.Clamp(fade, 0, 1));
-            dc.DrawGeometry(null, SwooshPen, arc);
+            dc.DrawGeometry(null, pet.SwordCombo ? ComboSwooshPen : SwooshPen, arc);
             dc.Pop();
         }
         dc.PushTransform(new TranslateTransform(p.GripX, p.GripY));

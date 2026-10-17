@@ -96,6 +96,7 @@ public sealed class BattleFieldView : FrameworkElement
     private static readonly Brush Yarn = Frozen(255, 0xE8, 0x7A, 0xB8);
     private static readonly Brush HealGreen = Frozen(255, 0x7C, 0xF0, 0x7A);
     private static readonly Brush DamageWhite = Frozen(255, 0xFF, 0xF4, 0xD6);
+    private static readonly Brush ComboGold = Frozen(255, 0xFF, 0xD2, 0x3F);
     private static readonly Pen Outline = FrozenPen(Frozen(255, 0x2E, 0x3A, 0x2B), 2.2);
     private static readonly Pen Halo = FrozenPen(Brushes.White, 5);
     private static readonly Pen TextHalo = FrozenPen(Frozen(255, 0x26, 0x23, 0x38), 3.5);
@@ -400,6 +401,23 @@ public sealed class BattleFieldView : FrameworkElement
                     dc.DrawLine(Halo, new Point(at, floor - 2), new Point(at - side * 12, floor - 16));
                     dc.DrawLine(SlamPen, new Point(at, floor - 2), new Point(at - side * 12, floor - 16));
                 }
+                break;
+            case BattleEffectKind.Combo:
+                // A bigger gold burst than a plain hit, a ring, and "COMBO!" rising above it.
+                for (int i = 0; i < 8; i++)
+                {
+                    double a = i * Math.PI / 4 + 0.2;
+                    var from = new Point(x + Math.Cos(a) * (8 + 14 * k), y + Math.Sin(a) * (8 + 14 * k));
+                    var to = new Point(x + Math.Cos(a) * (20 + 22 * k), y + Math.Sin(a) * (20 + 22 * k));
+                    dc.DrawLine(Halo, from, to);
+                    dc.DrawLine(SparkPen, from, to);
+                }
+                dc.DrawEllipse(null, SparkPen, new Point(x, y), 12 + 26 * k, 12 + 26 * k);
+                var (word, wordWidth, wordHeight) = NumberShape("COMBO!", false);
+                dc.PushTransform(new TranslateTransform(x - wordWidth / 2, y - 40 - 20 * k - wordHeight));
+                dc.DrawGeometry(null, TextHalo, word);
+                dc.DrawGeometry(ComboGold, null, word);
+                dc.Pop();
                 break;
             case BattleEffectKind.Number:
                 // Damage numbers rise from the slime; heals (+HP, green) rise over the cat.

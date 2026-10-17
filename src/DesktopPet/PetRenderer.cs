@@ -124,6 +124,8 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         }
         else if (pet.BattleDazed) DrawDizzyOrbit(dc, p); // Lost the battle: seeing stars, nothing worse.
         DrawOverlays(dc, p);
+        if (pet.BattleBuff) DrawCheerSparkles(dc, p);
+        if (pet.BattleShield) DrawShieldBubble(dc, p);
         dc.Pop(); // Permanent transparent margin, identical for every state.
     }
 
@@ -251,6 +253,42 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
     private static readonly Geometry SwordBlade = CachedGeometry("M -3.2,-8 L 3.2,-8 L 3.2,-33 L 0,-38.5 L -3.2,-33 Z");
     private static readonly Geometry SwordGuard = CachedGeometry("M -8,-9 L 8,-9 L 8,-4.5 L -8,-4.5 Z");
     private static readonly Geometry SwordGrip = CachedGeometry("M -2.2,-4.5 L 2.2,-4.5 L 2.2,6 L -2.2,6 Z");
+
+    // Battle Mode skills on the cat. Shield: a soap bubble around it. Cheer: golden sparkles rising.
+    private static readonly Brush BubbleFill = Frozen("#3062D6FF");
+    private static readonly Pen BubbleRim = FrozenPen(Frozen("#D0FFFFFF"), 2.5);
+    private static readonly Pen BubbleEdge = FrozenPen(Frozen("#9062B8E8"), 1.5);
+    private static readonly Pen BubbleShine = FrozenPen(Frozen("#E0FFFFFF"), 3, PenLineJoin.Round, true);
+    private static readonly Geometry SparkleGeometry = CachedGeometry("M 0,-6 L 1.6,-1.6 L 6,0 L 1.6,1.6 L 0,6 L -1.6,1.6 L -6,0 L -1.6,-1.6 Z");
+
+    private void DrawShieldBubble(DrawingContext dc, in Pose p)
+    {
+        double wobble = Math.Sin(p.Time * 4) * 1.5;
+        var center = new Point(56, 62);
+        dc.DrawEllipse(BubbleFill, BubbleEdge, center, 60 + wobble, 57 - wobble);
+        dc.DrawEllipse(null, BubbleRim, center, 58 + wobble, 55 - wobble);
+        var shine = new StreamGeometry();
+        using (var context = shine.Open())
+        {
+            context.BeginFigure(new Point(20, 40), false, false);
+            context.ArcTo(new Point(42, 14), new Size(44, 44), 0, false, SweepDirection.Clockwise, true, false);
+        }
+        dc.DrawGeometry(null, BubbleShine, shine);
+    }
+
+    private void DrawCheerSparkles(DrawingContext dc, in Pose p)
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            double phase = (p.Time * 0.9 + i / 4.0) % 1;
+            double x = (i % 2 == 0 ? 14 : 98) + Math.Sin(p.Time * 3 + i) * 5, y = 104 - phase * 70;
+            dc.PushOpacity(Math.Sin(phase * Math.PI));
+            dc.PushTransform(new TranslateTransform(x, y));
+            dc.DrawGeometry(Brushes.Gold, EffectBorder, SparkleGeometry);
+            dc.DrawGeometry(Brushes.Gold, null, SparkleGeometry);
+            dc.Pop(); dc.Pop();
+        }
+    }
 
     // A toy wooden sword held in the front paw (inside the facing flip, so it turns with the cat).
     private void DrawSword(DrawingContext dc, in Pose p)

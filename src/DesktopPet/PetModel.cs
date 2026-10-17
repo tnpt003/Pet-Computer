@@ -104,6 +104,8 @@ public sealed class PetModel
     public double SwordSwing = -1;
     public double BattleHurt;
     public bool BattleDazed, BattleCheer;
+    // The user's skills on the cat: a protective bubble (Shield) and a golden glow (Cheer).
+    public bool BattleShield, BattleBuff;
     public const double TreatDuration = 4.2;
     public int Facing = 1;
     public bool Grounded;

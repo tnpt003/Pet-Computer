@@ -24,8 +24,7 @@ public sealed partial class PetWindow
     private bool battlePausedByMenu;
     private Window? battleFieldWindow, battleHudWindow;
     private BattleFieldView? battleView;
-    private TextBlock? hudStatus, hudHp, hudPushText, hudPauseText, hudEndText, hudHint;
-    private Border? hudHpFill, hudPushFill, hudPush, hudPause;
+    private BattleHud? battleHud;
 
     public BattleSim? Battle => battle;
     public bool BattleActive => battle != null;
@@ -114,10 +113,9 @@ public sealed partial class PetWindow
         battleFieldWindow?.Close(); battleHudWindow?.Close();
         battleFieldWindow = battleHudWindow = null;
         battleView = null;
-        hudStatus = hudHp = hudPushText = hudPauseText = hudEndText = hudHint = null;
-        hudHpFill = hudPushFill = hudPush = hudPause = null;
+        battleHud = null;
         pet.SwordOut = false; pet.SwordSwing = -1; pet.BattleHurt = 0;
-        pet.BattleDazed = pet.BattleCheer = false;
+        pet.BattleDazed = pet.BattleCheer = pet.BattleShield = pet.BattleBuff = false;
         pet.Emotions.SetSuspended(false);
         revision++; // Nothing requested during the battle may run late.
         behavior.Reset(pet);
@@ -148,12 +146,23 @@ public sealed partial class PetWindow
         return done;
     }
 
-    // A click on a slime: with the push skill chosen it pushes (the target stays as it was),
-    // otherwise it marks the slime as the cat's target. Neither deals damage.
+    // A skill slot on the HUD: an aimed skill (Push, Bomb) is chosen or un-chosen and waits for
+    // a slime click; the others (Heal, Cheer, Shield) act at once.
+    public bool UseBattleSkill(BattleSkill skill)
+    {
+        if (battle == null || battle.Paused) return false;
+        bool done = BattleSim.IsAimed(skill) ? battle.Arm(battle.Armed == skill ? null : skill) : battle.Use(skill, pet.X + settings.Width / 2);
+        UpdateBattleHud();
+        battleView?.InvalidateVisual();
+        return done;
+    }
+
+    // A click on a slime: with a skill chosen it uses it there (the target stays as it was),
+    // otherwise it marks the slime as the cat's target. Marking deals no damage.
     public bool BattleClickSlime(int id)
     {
         if (battle == null || battle.Paused) return false;
-        bool done = battle.PushArmed ? battle.UsePush(id, pet.X + settings.Width / 2) : battle.Select(id);
+        bool done = battle.Armed is BattleSkill skill ? battle.Use(skill, id, pet.X + settings.Width / 2) : battle.Select(id);
         UpdateBattleHud();
         battleView?.InvalidateVisual();
         return done;
@@ -174,10 +183,11 @@ public sealed partial class PetWindow
         if (!held && bounds != battleArea) { battleArea = bounds; battle.SetArea(bounds.Left, bounds.Right); }
         var order = battle.Step(dt, pet.X + settings.Width / 2, held, lifted);
         PlayBattleSound();
+        ShowBattleBanners();
         battle.ClearEvents();
         if (battle.Finished)
         {
-            var result = new BattleSummary(battle.Phase == BattlePhase.Won, battle.Defeated, battle.FightSeconds, battle.CatHp, battle.Settings.CatMaxHp);
+            var result = new BattleSummary(battle.Phase == BattlePhase.Won, battle.Defeated, battle.FightSeconds, battle.CatHp, battle.Settings.CatMaxHp, battle.BossDefeated);
             EndBattle();
             ShowBattleSummary(result);
             return;
@@ -186,6 +196,8 @@ public sealed partial class PetWindow
         pet.BattleHurt = battle.HurtFlash;
         pet.BattleCheer = battle.Phase == BattlePhase.Won;
         pet.BattleDazed = battle.Phase == BattlePhase.Lost;
+        pet.BattleShield = battle.ShieldRemaining > 0;
+        pet.BattleBuff = battle.CheerRemaining > 0;
         if (!held)
         {
             if (order.Facing != 0) pet.Facing = order.Facing;
@@ -209,19 +221,43 @@ public sealed partial class PetWindow
             if (best == null || SoundRank(e.Kind) > SoundRank(best.Value)) best = e.Kind;
         _ = best switch
         {
-            BattleEventKind.Won or BattleEventKind.WaveCleared => PlayPetSound("excited"),
+            BattleEventKind.Won or BattleEventKind.WaveCleared or BattleEventKind.Cheered => PlayPetSound("excited"),
             BattleEventKind.Lost => PlayPetSound("annoyed"),
-            BattleEventKind.CatHurt => PlayPetSound("surprised"),
-            BattleEventKind.SlimeDefeated => PlayPetSound("pop"),
+            BattleEventKind.CatHurt or BattleEventKind.BossAppeared => PlayPetSound("surprised"),
+            BattleEventKind.Healed => PlayPetSound("satisfied"),
+            BattleEventKind.SlimeDefeated or BattleEventKind.BombExploded => PlayPetSound("pop"),
             BattleEventKind.SlimeHit => PlayPetSound("squish"),
-            BattleEventKind.Pushed or BattleEventKind.Swing => PlayPetSound("swoosh"),
+            BattleEventKind.Blocked => PlayPetSound("ball_tap"),
+            BattleEventKind.Pushed or BattleEventKind.Swing or BattleEventKind.BombThrown or BattleEventKind.Shielded => PlayPetSound("swoosh"),
             _ => false
         };
         static int SoundRank(BattleEventKind kind) => kind switch
         {
-            BattleEventKind.Won or BattleEventKind.Lost => 7, BattleEventKind.CatHurt => 6, BattleEventKind.WaveCleared => 5,
-            BattleEventKind.SlimeDefeated => 4, BattleEventKind.SlimeHit => 3, BattleEventKind.Pushed => 2, BattleEventKind.Swing => 1, _ => 0
+            BattleEventKind.Won or BattleEventKind.Lost => 9, BattleEventKind.BossAppeared => 8, BattleEventKind.CatHurt => 7,
+            BattleEventKind.WaveCleared => 6, BattleEventKind.Healed or BattleEventKind.Cheered => 5, BattleEventKind.Blocked => 5,
+            BattleEventKind.SlimeDefeated or BattleEventKind.BombExploded => 4, BattleEventKind.SlimeHit => 3,
+            BattleEventKind.Pushed or BattleEventKind.BombThrown or BattleEventKind.Shielded => 2, BattleEventKind.Swing => 1, _ => 0
         };
+    }
+
+    // Big moments get a banner across the HUD's centre.
+    private void ShowBattleBanners()
+    {
+        if (battle == null || battleHud == null) return;
+        foreach (var e in battle.Events)
+        {
+            string? text = e.Kind switch
+            {
+                BattleEventKind.WaveStarted when battle.IsBossWave((int)e.Value) => L("BOSS!", "BOSS!"),
+                BattleEventKind.WaveStarted => L($"ĐỢT {(int)e.Value}", $"WAVE {(int)e.Value}"),
+                BattleEventKind.BossSummoned => L("Vua Slime gọi quân!", "The King calls for help!"),
+                BattleEventKind.BossEnraged => L("Vua Slime nổi giận!", "The Slime King is angry!"),
+                BattleEventKind.Won => L("CHIẾN THẮNG!", "VICTORY!"),
+                BattleEventKind.Lost => L("THUA RỒI…", "DEFEATED…"),
+                _ => null
+            };
+            if (text != null) battleHud.ShowBanner(text, battle.Time, e.Kind is BattleEventKind.Won or BattleEventKind.Lost ? 3 : 1.6);
+        }
     }
 
     private Window CreateBattleWindow(UIElement content, string title, bool clickThrough = false)
@@ -249,7 +285,7 @@ public sealed partial class PetWindow
         if (battle == null) return;
         battleView = new BattleFieldView(battle);
         battleView.SlimeClicked += id => BattleClickSlime(id);
-        battleView.RightClicked += () => ArmBattlePush(false); // Right-click on the field cancels the skill.
+        battleView.RightClicked += () => { battle?.Arm(null); UpdateBattleHud(); }; // Right-click on the field cancels the skill.
         battleFieldWindow = CreateBattleWindow(battleView, "Pet battle");
         battleFieldWindow.DpiChanged += (_, _) => battlePlacedScale = 0; // Re-place in pixels next frame.
         battleHudWindow = CreateBattleWindow(BuildBattleHud(), "Pet battle HUD");
@@ -289,32 +325,17 @@ public sealed partial class PetWindow
         MoveWindow(battleHudWindow, (area.Left + area.Right - width) / 2, area.Top + 12);
     }
 
-    // HUD: dark rounded panel with a white edge, readable on light and dark desktops.
+    // The game-style HUD (PetBattleHud.cs) with a still portrait of this cat.
     private UIElement BuildBattleHud()
     {
-        var white = Brushes.White;
-        hudStatus = new TextBlock { Foreground = white, FontWeight = FontWeights.SemiBold, FontSize = 13.5, VerticalAlignment = VerticalAlignment.Center };
-        hudHp = new TextBlock { Foreground = white, FontSize = 12, Margin = new Thickness(8, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
-        hudHpFill = new Border { Background = new SolidColorBrush(Color.FromRgb(0x6F, 0xE0, 0x6A)), CornerRadius = new CornerRadius(3), HorizontalAlignment = HorizontalAlignment.Left, Width = 90 };
-        var hpBar = new Border { Width = 90, Height = 8, CornerRadius = new CornerRadius(4), Background = new SolidColorBrush(Color.FromArgb(120, 255, 255, 255)),
-            Child = hudHpFill, Margin = new Thickness(14, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
-        var top = new StackPanel { Orientation = Orientation.Horizontal, Children = { hudStatus, hpBar, hudHp } };
-        (hudPush, hudPushText, hudPushFill) = HudButton(() => { if (battle != null) ArmBattlePush(!battle.PushArmed); });
-        (hudPause, hudPauseText, _) = HudButton(() => { if (battle != null) SetBattlePaused(!battle.Paused); });
-        (var end, hudEndText, _) = HudButton(EndBattle);
-        var buttons = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 6, 0, 0), Children = { hudPush, hudPause, end } };
-        hudHint = new TextBlock { Foreground = new SolidColorBrush(Color.FromRgb(0xD8, 0xD6, 0xE8)), FontSize = 11.5, Margin = new Thickness(0, 5, 0, 0) };
-        var panel = new Border
-        {
-            Background = new SolidColorBrush(Color.FromArgb(0xE8, 0x26, 0x23, 0x38)), BorderBrush = white, BorderThickness = new Thickness(1.5),
-            CornerRadius = new CornerRadius(10), Padding = new Thickness(12, 8, 12, 8), Margin = new Thickness(6),
-            Child = new StackPanel { Children = { top, buttons, hudHint } },
-            Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 6, ShadowDepth = 1, Opacity = 0.4 }
-        };
-        TextOptions.SetTextFormattingMode(panel, TextFormattingMode.Display);
-        panel.SetValue(TextBlock.FontFamilyProperty, PetUi.TextFont);
+        var portrait = new PetRenderer(new PetModel { Action = PetAction.Idle, Grounded = true, Facing = 1, AnimationTime = 1, ActionTime = 1 })
+            { Coat = renderer.Coat, Accessory = renderer.Accessory };
+        battleHud = new BattleHud(preferences.Name, portrait, L);
+        battleHud.SkillClicked += skill => UseBattleSkill(skill);
+        battleHud.PauseClicked += () => { if (battle != null) SetBattlePaused(!battle.Paused); };
+        battleHud.EndClicked += EndBattle;
         UpdateBattleHud();
-        return panel;
+        return battleHud;
     }
 
     private static readonly Brush HudButtonBack = PetUi.Frozen(Color.FromArgb(0x50, 255, 255, 255));
@@ -335,48 +356,13 @@ public sealed partial class PetWindow
         return (button, text, progress);
     }
 
-    private static void SetText(TextBlock? block, string text) { if (block != null && block.Text != text) block.Text = text; }
-
     private void UpdateBattleHud()
     {
-        if (battle is not BattleSim b || hudStatus == null) return;
-        int left = b.Alive + b.ToSpawn;
-        string status = b.Phase switch
-        {
-            BattlePhase.Won => L("Chiến thắng!", "Victory!"),
-            BattlePhase.Lost => L("Thua rồi… mèo choáng váng", "Defeated… the cat sees stars"),
-            BattlePhase.WaveBreak when b.Wave == 0 => L($"Chuẩn bị! Đợt 1/{b.WaveCount}", $"Get ready! Wave 1/{b.WaveCount}"),
-            BattlePhase.WaveBreak => L($"Xong đợt {b.Wave}!{Heal(b)} Đợt {b.Wave + 1}/{b.WaveCount} sắp tới", $"Wave {b.Wave} cleared!{Heal(b)} Wave {b.Wave + 1}/{b.WaveCount} next"),
-            _ => L($"Đợt {b.Wave}/{b.WaveCount} · còn {left} slime", $"Wave {b.Wave}/{b.WaveCount} · {left} slime{(left == 1 ? "" : "s")} left")
-        };
-        if (b.Paused && !b.Over) status += context.Fullscreen ? L(" · Tạm dừng (toàn màn hình)", " · Paused (fullscreen)") : L(" · Tạm dừng", " · Paused");
-        SetText(hudStatus, status);
-        SetText(hudHp, $"HP {Math.Ceiling(b.CatHp)}/{b.Settings.CatMaxHp}");
-        if (hudHpFill != null) hudHpFill.Width = 90 * Math.Clamp(b.CatHp / Math.Max(1, b.Settings.CatMaxHp), 0, 1);
-        bool pushReady = !b.Over && !b.Paused && b.PushCooldown <= 0;
-        SetText(hudPushText, b.PushArmed ? L("Chọn slime để đẩy… (bấm để hủy)", "Click a slime to push… (click to cancel)")
-            : b.PushCooldown > 0 ? L($"Đẩy quái {b.PushCooldown:F1}s", $"Push {b.PushCooldown:F1}s") : L("Đẩy quái", "Push"));
-        if (hudPush != null)
-        {
-            hudPush.IsEnabled = pushReady || b.PushArmed;
-            if (!hudPush.IsMouseOver) hudPush.Opacity = hudPush.IsEnabled ? 1 : 0.5;
-            hudPush.Background = b.PushArmed ? PetUi.Accent : HudButtonBack;
-        }
-        if (hudPushFill != null) hudPushFill.Width = b.PushCooldown > 0 ? Math.Max(0, (hudPush?.ActualWidth ?? 70) - 20) * (1 - b.PushCooldown / b.Settings.PushCooldown) : 0;
-        SetText(hudPauseText, b.Paused && !battlePausedByMenu ? L("Tiếp tục", "Resume") : L("Tạm dừng", "Pause"));
-        if (hudPause != null)
-        {
-            hudPause.IsEnabled = !b.Over && !(b.Paused && context.Fullscreen);
-            if (!hudPause.IsMouseOver) hudPause.Opacity = hudPause.IsEnabled ? 1 : 0.5;
-        }
-        SetText(hudEndText, L("Kết thúc", "End"));
-        SetText(hudHint, BattleHoldsOff && !b.Over ? L("Mèo đang được bế: quái đứng chờ, không ai bị đánh.", "The cat is lifted: slimes wait, nobody gets hit.")
-            : b.PushArmed ? L("Chuột phải lên chiến trường cũng hủy chọn kỹ năng.", "Right-click the field to cancel the skill too.")
-            : L("Click slime: chọn mục tiêu · Nhấc mèo lên để cứu nguy", "Click a slime: set target · Lift the cat to rescue it"));
-        if (battleView != null) battleView.Cursor = b.PushArmed ? Cursors.Cross : Cursors.Hand;
+        if (battle is not BattleSim b || battleHud == null) return;
+        battleHud.Update(b, b.Paused && !battlePausedByMenu, context.Fullscreen, BattleHoldsOff);
+        if (battleView != null) battleView.Cursor = b.Armed != null ? Cursors.Cross : Cursors.Hand;
     }
 
-    private static string Heal(BattleSim b) => b.LastHeal >= 1 ? $" +{Math.Round(b.LastHeal)} HP ·" : "";
 
     // A short click-through note above the cat (why a battle cannot start); never takes focus.
     private Window? battleNoticeWindow;
@@ -412,7 +398,7 @@ public sealed partial class PetWindow
     }
 
     // The result after a won or lost battle: stats, Play again and Close. It closes by itself.
-    public readonly record struct BattleSummary(bool Won, int Defeated, double Seconds, double Hp, double MaxHp);
+    public readonly record struct BattleSummary(bool Won, int Defeated, double Seconds, double Hp, double MaxHp, bool Boss = false);
     public BattleSummary? LastBattleSummary { get; private set; }
     private Window? battleSummaryWindow;
     private System.Windows.Threading.DispatcherTimer? battleSummaryTimer;
@@ -423,7 +409,8 @@ public sealed partial class PetWindow
         CloseBattleSummary();
         LastBattleSummary = result;
         if (closed || context.Fullscreen) return;
-        var title = new TextBlock { Text = result.Won ? L("Chiến thắng!", "Victory!") : L("Thua rồi… mèo choáng váng", "Defeated… the cat sees stars"),
+        var title = new TextBlock { Text = result.Won ? (result.Boss ? L("Chiến thắng! Đã hạ Vua Slime", "Victory! The Slime King is down") : L("Chiến thắng!", "Victory!"))
+                : L("Thua rồi… mèo choáng váng", "Defeated… the cat sees stars"),
             Foreground = Brushes.White, FontSize = 15, FontWeight = FontWeights.Bold };
         var time = TimeSpan.FromSeconds(Math.Round(result.Seconds));
         string clock = $"{(int)time.TotalMinutes}:{time.Seconds:00}";

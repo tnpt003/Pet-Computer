@@ -4,7 +4,12 @@ Cập nhật: 2026-10-16 (Asia/Saigon).
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
-## Kết quả test gần nhất (2026-10-17, Battle Mode đợt 2: âm thanh, hồi máu, bảng kết quả, thông báo)
+## Kết quả test gần nhất (2026-10-17, Battle Mode đợt 3: HUD kiểu game, 5 kỹ năng, boss)
+- scripts/test.ps1 -Ui: 54 Python tests, 489 C# checks (thêm 26: BattleSkillTests cho 5 kỹ năng + boss), 270 WPF checks (thêm 11: HUD, kỹ năng qua ô HUD, hiệu ứng trên mèo, boss trên chiến trường) đạt.
+- So pixel 1338 ảnh mốc: 1333 giống từng byte (Pet Mode không đổi); khác menu (từ đợt MVP) và 2 ảnh speech không ổn định. Đã xem ảnh: HUD (đợt thường + boss), boss đang gồng trên nền tối, khiên + lấp lánh trên mèo; check mép đạt cho khiên/lấp lánh (cả khi bị kéo).
+- Chưa đo hiệu năng khi có trận (perf.ps1 không tự bật trận được); chưa nghe/chơi thật.
+
+## Kết quả test đợt Battle Mode 2: âm thanh, hồi máu, bảng kết quả, thông báo (2026-10-17)
 - scripts/test.ps1 -Ui: 54 Python tests, 463 C# checks (thêm 8: hồi máu, thời gian trận, 3 hiệu ứng âm thanh), 259 WPF checks (thêm 10: bảng kết quả, Chơi lại/Đóng, fullscreen/gọi mèo về đóng bảng, thông báo click xuyên tự mất) đạt. Publish + check-publish đạt (3/3); đã đóng mèo người dùng bằng WM_CLOSE (đúng process artifacts\win-x64), mở lại bản mới lúc 07:43 (2026-10-17), log có cặp exited/started.
 - Đã xem ảnh bảng kết quả (battle-result.png). Chưa nghe thử 3 tiếng mới trên loa thật.
 
@@ -111,6 +116,10 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Lịch sử: 201 C#/107 WPF/20 Python (motion, 2026-10-08); 181/101/20 (features). Không dùng số liệu cũ thay kết quả hiện tại.
 
 ## Đã làm gần đây
+- 2026-10-17 Battle Mode đợt 3 (người dùng: HUD giống game hơn, thêm kỹ năng, thêm boss; chọn HUD giữa trên, cả 5 kỹ năng, boss ở đợt cuối):
+  - PetBattle.cs: BattleSkill (Push, Heal, Cheer, Bomb, Shield) với cooldown riêng, Arm/Use (kỹ năng ngắm: Push, Bomb); Cheer (5 s, tốc độ ×1.6, sát thương ×1.4), Shield (3 s chặn đòn), Bomb (rơi 0.5 s, 30 sát thương bán kính 70), Heal (+25, đầy máu thì không tốn). Slime có Width/Height/Damage/Range riêng; Vua Slime ở đợt cuối (Settings.Boss, 400 HP, gấp đôi, dậm đất 25 trong 110 DIP, gồng 1.2 s, gọi 2 slime khi < 50%, nổi giận khi < 30%, Đẩy ×0.35, choáng ×0.4). Hiệu ứng số sát thương/hồi máu, nổ, sóng dậm.
+  - PetBattleHud.cs (mới): HUD kiểu game: chân dung mèo (PetRenderer tĩnh), thanh HP 3 màu + vệt mất máu, chấm đợt + vương miện, thanh máu boss, banner, 5 ô kỹ năng với vòng quét hồi chiêu/số giây/tooltip, nút Tạm dừng/Kết thúc dạng icon. Icon vẽ vector, không font/asset.
+  - PetBattleView: dải sàn cao 170 DIP; vẽ boss (tím, vương miện, chân mày), vùng cảnh báo đỏ khi boss gồng (vùng này có alpha nên tạm chặn click trong lúc gồng), cuộn len rơi, số bay lên. PetRenderer: bong bóng khiên, lấp lánh Cổ vũ (chỉ khi đang có trận). Âm thanh: hồi máu "satisfied", Cổ vũ "excited", khiên/bom ném "swoosh", nổ "pop", chặn đòn "ball_tap", boss xuất hiện "surprised".
 - 2026-10-17 Battle Mode đợt 2 (người dùng chọn đề xuất 1+2+3+8, "start đi"; trước đó commit MVP 6fb9a8a):
   - Âm thanh trận: PetSounds tổng hợp 3 hiệu ứng hoạt hình bằng code (không asset): swoosh (vung/đẩy), squish (trúng), pop (slime biến mất); cooldown 0.25 s, khoảng nghỉ 0.02 s; mỗi khung chỉ 1 tiếng theo ưu tiên (thắng/thua > bị đánh > hết đợt > slime biến mất > trúng > đẩy > vung).
   - MessageBox khi từ chối bắt đầu → thông báo nhỏ click xuyên trên đầu mèo, tự mất sau 2.5 s.

@@ -96,6 +96,31 @@ internal static class BattleChecks
             "The next slime click pushes and stuns it; the marked target stays");
         check(!window.ArmBattlePush(true) && Sim().PushCooldown > 0, "The skill cools down before it can be chosen again");
 
+        // The game HUD: five skill slots, used with the mouse.
+        var gameHud = Field<BattleHud>(window, "battleHud");
+        void Press(UIElement element) => element.RaiseEvent(MouseEvent(UIElement.MouseLeftButtonDownEvent));
+        check(BattleHud.SkillOrder.Length == 5 && BattleHud.SkillOrder.All(skill => gameHud.Slot(skill).ToolTip is string tip && tip.Length > 10),
+            "The HUD has five skill slots, each with a tooltip");
+        Tick(1.0 / 60);
+        check(!gameHud.Slot(BattleSkill.Push).IsReady && gameHud.Slot(BattleSkill.Push).Remaining > 0 && gameHud.Slot(BattleSkill.Heal).IsReady,
+            "A used skill shows its cooldown; the others are ready");
+        Press(gameHud.Slot(BattleSkill.Heal));
+        check(Sim().Cooldown(BattleSkill.Heal) == 0, "The fish slot does nothing at full HP");
+        Press(gameHud.Slot(BattleSkill.Shield)); Press(gameHud.Slot(BattleSkill.Cheer));
+        Tick(1.0 / 60);
+        check(Sim().ShieldRemaining > 0 && Sim().CheerRemaining > 0 && pet.BattleShield && pet.BattleBuff, "Shield and Cheer act at once and show on the cat");
+        Press(gameHud.Slot(BattleSkill.Bomb));
+        check(Sim().Armed == BattleSkill.Bomb && gameHud.Slot(BattleSkill.Bomb).IsArmed, "The bomb slot is chosen first");
+        Press(gameHud.Slot(BattleSkill.Bomb));
+        check(Sim().Armed == null, "Clicking it again cancels the choice");
+        Press(gameHud.Slot(BattleSkill.Bomb));
+        int? markedBefore = Sim().SelectedId;
+        var bombTarget = Sim().Slimes.First(s => s.Targetable);
+        check(window.BattleClickSlime(bombTarget.Id) && Sim().Bombs.Count == 1 && Sim().SelectedId == markedBefore, "Clicking a slime drops the yarn bomb there; the target stays");
+        Press(gameHud.Slot(BattleSkill.Bomb));
+        check(Sim().Armed == null, "A cooling skill cannot be chosen");
+        check(hud!.ActualWidth < Field<Area>(window, "bounds").Right - Field<Area>(window, "bounds").Left, $"The HUD fits on the screen (width {hud.ActualWidth:F0})");
+
         // The field: empty pixels are transparent (clicks pass through), slimes are hit-testable.
         var view = Field<BattleFieldView>(window, "battleView");
         Tick(0.6);
@@ -256,7 +281,7 @@ internal static class BattleChecks
             "Losing leaves no lasting mark (no sadness, anger or rough-handling count)");
 
         // Winning, and repeated battles leave nothing behind.
-        window.BattleTuning = new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 1 }, SlimeMaxHp = 1, OutroSeconds = 0.5 };
+        window.BattleTuning = new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 1 }, Boss = false, SlimeMaxHp = 1, OutroSeconds = 0.5 };
         for (int round = 0; round < 3; round++)
         {
             window.Reset();
@@ -356,12 +381,57 @@ internal static class BattleChecks
             Render(flying, $"battle-thrown-{facing}");
             var dazed = Model(facing); dazed.SwordOut = true; dazed.BattleDazed = true; dazed.Action = PetAction.Sitting;
             Render(dazed, $"battle-dazed-{facing}");
+            var shielded = Model(facing); shielded.SwordOut = true; shielded.BattleShield = shielded.BattleBuff = true; shielded.AnimationTime = 2.3;
+            Render(shielded, $"battle-shield-{facing}");
+            var heldShield = Model(facing); heldShield.SwordOut = true; heldShield.BattleShield = heldShield.BattleBuff = true;
+            heldShield.Action = PetAction.Dragging; heldShield.Grounded = false; heldShield.Pickup.Begin(0, 0);
+            for (int frame = 0; frame < 90; frame++) heldShield.Pickup.Step(frame < 45 ? frame * 40 : (90 - frame) * 40, 0, 1.0 / 120);
+            Render(heldShield, $"battle-shield-dragged-{facing}");
             var cheer = Model(facing); cheer.SwordOut = true; cheer.BattleCheer = true; cheer.Action = PetAction.Sitting;
             Render(cheer, $"battle-cheer-{facing}");
             var walking = Model(facing); walking.SwordOut = true; walking.Action = PetAction.Walking; walking.VX = 72 * facing;
             Render(walking, $"battle-walk-{facing}");
         }
-        check(edgesClear, "The sword stays inside the window while swinging, flinching, dragged, thrown, dazed, cheering, both ways");
+        check(edgesClear, "The sword, shield bubble and cheer sparkles stay inside the window in every pose, both ways");
+
+        // The Slime King on the field (drawn larger, with a crown and its slam warning).
+        window.Reset();
+        window.BattleTuning = new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 1 }, SlimeMaxHp = 1, WaveBreakSeconds = 0.2 };
+        window.StartBattle();
+        Tick(0.6);
+        Sim().Slimes[0].X = pet.X + 56 + 50;
+        for (int i = 0; i < 400 && Sim().Boss is not { Targetable: true }; i++) Tick(1.0 / 60);
+        var bossSlime = Sim().Boss;
+        check(bossSlime is { Targetable: true, IsBoss: true } && Field<BattleHud>(window, "battleHud") != null, "The boss wave brings the Slime King");
+        var fieldView = Field<BattleFieldView>(window, "battleView");
+        if (bossSlime != null)
+        {
+            bossSlime.X = pet.X + 56 + 90;
+            Tick(0.9); // Winding up its slam.
+            fieldView.InvalidateVisual(); fieldView.UpdateLayout();
+            double bx = bossSlime.X - fieldView.OriginX;
+            check(fieldView.SlimeAt(new Point(bx + bossSlime.Width / 2 - 4, fieldView.ActualHeight - 30)) == bossSlime.Id,
+                "Clicks reach the whole (wider) boss");
+            if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string bossReview)
+            {
+                int fw = (int)fieldView.ActualWidth, fh = (int)fieldView.ActualHeight;
+                var shot = new RenderTargetBitmap(fw, fh, 96, 96, PixelFormats.Pbgra32); shot.Render(fieldView);
+                var crop = new CroppedBitmap(shot, new Int32Rect((int)Math.Clamp(bx - 200, 0, Math.Max(0, fw - 400)), 0, Math.Min(400, fw), fh));
+                var visual = new DrawingVisual();
+                using (var dc = visual.RenderOpen()) { dc.DrawRectangle(new SolidColorBrush(Color.FromRgb(0x1E, 0x1E, 0x24)), null, new Rect(0, 0, 400, fh)); dc.DrawImage(crop, new Rect(0, 0, crop.PixelWidth, fh)); }
+                var image = new RenderTargetBitmap(400, fh, 96, 96, PixelFormats.Pbgra32); image.Render(visual);
+                var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(image));
+                using (var stream = System.IO.File.Create(System.IO.Path.Combine(bossReview, "battle-boss.png"))) encoder.Save(stream);
+                var hudNow = Field<BattleHud>(window, "battleHud");
+                hudNow.UpdateLayout();
+                var hudShot = new RenderTargetBitmap((int)Math.Ceiling(hudNow.ActualWidth + 16), (int)Math.Ceiling(hudNow.ActualHeight + 16), 96, 96, PixelFormats.Pbgra32);
+                hudShot.Render(hudNow);
+                var hudEncoder = new PngBitmapEncoder(); hudEncoder.Frames.Add(BitmapFrame.Create(hudShot));
+                using (var stream = System.IO.File.Create(System.IO.Path.Combine(bossReview, "battle-hud-boss.png"))) hudEncoder.Save(stream);
+            }
+        }
+        window.Reset();
+        window.BattleTuning = new BattleSettings();
     }
 
     private sealed class DelayedSource : IPetDecisionSource

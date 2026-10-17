@@ -24,7 +24,7 @@ internal static class BattleTests
         narrow.Step(dt, 150, false);
         check(narrow.Slimes.Count == 1 && narrow.Slimes[0].X >= 23 && narrow.Slimes[0].X <= 277, "A narrow floor still spawns inside its edges");
 
-        sim = New(new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 1, 1 }, WaveBreakSeconds = 3 });
+        sim = New(new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 1, 1 }, Boss = false, WaveBreakSeconds = 3 });
         sim.Step(dt, 800, false);
         var first = sim.Slimes[0];
         first.Hp = 1;
@@ -194,7 +194,7 @@ internal static class BattleTests
         check(sim.Effects.Count == 0, "Effects disappear by themselves");
 
         // HP back between waves (not after the last), and the battle's length for the result.
-        var heal = New(new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 1, 1 }, SlimeMaxHp = 60, SlimeDamage = 50, WaveBreakSeconds = 5 });
+        var heal = New(new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 1, 1 }, Boss = false, SlimeMaxHp = 60, SlimeDamage = 50, WaveBreakSeconds = 5 });
         heal.Step(dt, 800, false);
         heal.Slimes[0].X = 840;
         Run(heal, 3, () => 800);

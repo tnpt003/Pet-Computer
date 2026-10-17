@@ -4,7 +4,12 @@ Cập nhật: 2026-10-16 (Asia/Saigon).
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
-## Kết quả test gần nhất (2026-10-17, Battle Mode đợt 4: tối ưu vẽ)
+## Kết quả test gần nhất (2026-10-17, Battle Mode đợt 5: quái theo mèo, hướng đẩy, mô tả kỹ năng, dữ liệu battle.json)
+- scripts/test.ps1 -Ui: 54 Python tests, 508 C# checks (thêm 3 bước A + 16 BattleDataTests), 274 WPF checks (thêm 2: hover đổi đúng chữ, đẩy theo phía click) đạt.
+- So pixel với bản trước refactor (sau bước A): mọi ảnh chiến trường, HUD, boss, kiếm/khiên giống từng byte (khác 1 ảnh speech không ổn định) → refactor sang dữ liệu không đổi hình.
+- Test mới so từng con số của battle.json với mặc định trong code (cat, kỹ năng, 2 kiểu quái, kế hoạch đợt) và các trường hợp file lỗi.
+
+## Kết quả test đợt Battle Mode 4: tối ưu vẽ (2026-10-17)
 - scripts/test.ps1 -Ui: 54 Python tests, 489 C# checks, 272 WPF checks (thêm 2: tạm dừng không vẽ lại; khi đánh vẽ 30 lần/giây) đạt.
 - Đo bằng scripts/perf.ps1 -Battle (mèo riêng, dữ liệu riêng, tự vào trận; CPU tính trên toàn máy, mẫu 2 s), bản publish trước/sau:
   - Đang đánh (2.5 phút): CPU TB 1.27% → 0.75% (−41%), p95 2.48% → 1.40%, max 2.69% → 1.95%.
@@ -125,6 +130,9 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Lịch sử: 201 C#/107 WPF/20 Python (motion, 2026-10-08); 181/101/20 (features). Không dùng số liệu cũ thay kết quả hiện tại.
 
 ## Đã làm gần đây
+- 2026-10-17 Battle Mode đợt 5 (người dùng: quái vẫn theo mèo khi bị bắt đi; Đẩy chọn trái/phải; chữ mô tả kỹ năng kẹt; cải thiện cho dễ mở rộng. Chọn: hướng theo phía click; làm cả refactor):
+  - Bước A (commit 3f78867): mèo bị cầm/bay thì quái vẫn bò theo dọc sàn nhưng không gồng/đánh (trước: đứng chờ). Đẩy: click nửa trái slime → bay phải, nửa phải → bay trái, giữa → ra xa mèo (BattleSim.PushDirection); rê chuột khi đã chọn Đẩy hiện mũi tên xanh. Bỏ ToolTip (WPF giữ tooltip đầu tiên trên cửa sổ không kích hoạt) → mô tả hiện ở dòng gợi ý của HUD khi rê ô kỹ năng/nút; dòng gợi ý rộng cố định theo hàng trên (xuống dòng thay vì làm HUD nhảy). Số sát thương của boss lệch sang bên, không đè dấu "!".
+  - Bước B: PetBattleData.cs (mới): EnemyType (chỉ số, kích thước, màu, boss/slam, hệ số đẩy/choáng, gọi quân/nổi giận theo % HP), WaveSpec/WaveGroup (đợt = các nhóm loại quái × số lượng), BattleData đọc Assets/battle.json (nhúng; key sai/số vô lý/quái lạ/to > 2.3/gọi quân lặp → bỏ cả file, log, dùng mặc định), BattleSkills (danh sách kỹ năng: tên, ngắm hay dùng ngay, hồi chiêu, mô tả lấy số từ dữ liệu). BattleSim dùng kiểu quái thay cờ IsBoss; HUD tạo ô từ danh sách kỹ năng, tên boss từ dữ liệu. Thuộc tính Slime*/Boss*/Waves/Boss cũ vẫn là mặc định trong code (cho test và khi file lỗi), không đọc từ JSON.
 - 2026-10-17 Battle Mode đợt 4, tối ưu (người dùng: "yes làm đi" cho 1→2→3a+3b→4→5→7):
   - Đo được: PET_BATTLE_AUTOSTART=run|paused (chỉ để đo; bình thường không bao giờ tự vào trận) + scripts/perf.ps1 -Battle run|paused (từ chối nếu mèo người dùng đang chạy, tắt context probe để fullscreen/idle không dừng trận).
   - Dải sàn + HUD: vẽ lại tối đa 30 lần/giây và chỉ khi có thứ đang chuyển động (slime, hiệu ứng, bom); trận dừng hoặc sàn trống giữa đợt chỉ vẽ 1 lần; click/pause/đổi vị trí xin vẽ ngay (RequestBattleRedraw). Mèo vẫn 60 FPS. Có bộ đếm BattleFieldDraws cho test.

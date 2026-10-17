@@ -75,9 +75,15 @@ public sealed class BattleFieldView : FrameworkElement
         pen.Freeze(); return pen;
     }
     private static readonly Brush HitHalo = Frozen(1, 0, 0, 0); // Invisible but clickable.
-    private static readonly Brush SlimeGreen = Frozen(255, 0x7C, 0xD3, 0x6A);
-    private static readonly Brush BossPurple = Frozen(255, 0x9B, 0x7B, 0xE0);
-    private static readonly Brush BossAngry = Frozen(255, 0xE8, 0x6A, 0x6A);
+    // Each enemy kind's colours (battle.json), frozen once.
+    private static readonly System.Collections.Generic.Dictionary<string, Brush> KindBrushes = new();
+    private static Brush KindBrush(string hex)
+    {
+        if (KindBrushes.TryGetValue(hex, out var brush)) return brush;
+        var color = (Color)ColorConverter.ConvertFromString(hex);
+        var made = new SolidColorBrush(color); made.Freeze();
+        return KindBrushes[hex] = made;
+    }
     private static readonly Brush SlimeAngry = Frozen(255, 0xF5, 0xA6, 0x3C);
     private static readonly Brush Shine = Frozen(220, 255, 255, 255);
     private static readonly Brush Eye = Frozen(255, 0x2B, 0x2A, 0x33);
@@ -146,7 +152,7 @@ public sealed class BattleFieldView : FrameworkElement
                 sx = 1 + 0.5 * fade; sy = Math.Max(0.05, 1 - fade); opacity = 1 - fade;
                 break;
         }
-        if (slime.IsBoss && slime.State == SlimeState.Windup)
+        if (slime.Type.Slam && slime.State == SlimeState.Windup)
         {
             // The slam's reach on the floor, filling up as it comes: get out (or push, shield, lift).
             // Outlines only: a filled zone would catch clicks meant for the apps below.
@@ -175,7 +181,7 @@ public sealed class BattleFieldView : FrameworkElement
         dc.PushTransform(new MatrixTransform(sx * size, 0, 0, sy * size, x + jitter, floor));
         double bw = s.SlimeWidth, bh = s.SlimeHeight;
         var body = Body(bw, bh);
-        Brush baseFill = slime.IsBoss ? (slime.Enraged ? BossAngry : BossPurple) : SlimeGreen;
+        Brush baseFill = KindBrush(slime.Enraged ? slime.Type.AngryColor : slime.Type.Color);
         Brush fill = slime.HitFlash > 0 ? Brushes.White : slime.State == SlimeState.Windup ? Blend(baseFill, t / windup) : baseFill;
         dc.DrawGeometry(null, Halo, body);
         dc.DrawGeometry(fill, Outline, body);
@@ -228,7 +234,7 @@ public sealed class BattleFieldView : FrameworkElement
         {
             double barY = top - 9, barW = 36 * size, hpWidth = barW * Math.Clamp(slime.Hp / Math.Max(1, slime.MaxHp), 0, 1);
             dc.DrawRoundedRectangle(BarBack, null, new Rect(x - barW / 2 - 1, barY - 1, barW + 2, 7), 3, 3);
-            if (hpWidth > 0) dc.DrawRoundedRectangle(slime.IsBoss ? BossAngry : BarFill, null, new Rect(x - barW / 2, barY, hpWidth, 5), 2.5, 2.5);
+            if (hpWidth > 0) dc.DrawRoundedRectangle(BarFill, null, new Rect(x - barW / 2, barY, hpWidth, 5), 2.5, 2.5);
         }
         if (sim.SelectedId == slime.Id)
         {

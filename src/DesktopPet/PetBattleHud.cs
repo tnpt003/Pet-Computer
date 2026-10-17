@@ -15,7 +15,8 @@ public sealed class BattleHud : Border
 {
     public event Action<BattleSkill>? SkillClicked;
     public event Action? PauseClicked, EndClicked;
-    public static readonly BattleSkill[] SkillOrder = { BattleSkill.Push, BattleSkill.Heal, BattleSkill.Cheer, BattleSkill.Bomb, BattleSkill.Shield };
+    // Slots follow the skill list (PetBattleData.cs): a new skill gets its slot automatically.
+    public static readonly BattleSkill[] SkillOrder = Array.ConvertAll(BattleSkills.All, info => info.Skill);
     private const double HpWidth = 170, BossWidth = 200;
     private readonly Func<string, string, string> L;
     private readonly TextBlock hpText, status, hint, banner, bossName;
@@ -138,16 +139,11 @@ public sealed class BattleHud : Border
     public void Hover(BattleSkill? skill) { hovered = skill; hoveredControl = null; ShowHint(); }
     private void HoverControl(string? text) { hoveredControl = text; hovered = null; ShowHint(); }
 
-    public string Describe(BattleSkill skill) => SkillTip(skill);
-
-    private string SkillTip(BattleSkill skill) => skill switch
-    {
-        BattleSkill.Push => L("Đẩy quái — chọn rồi click một slime (nửa trái: đẩy sang phải, nửa phải: sang trái), làm choáng. Hồi 5 giây.", "Push — choose, then click a slime (left half: push right, right half: push left) and stun it. 5 s cooldown."),
-        BattleSkill.Heal => L("Cá hồi máu — mèo hồi 25 HP. Hồi 20 giây.", "Healing fish — the cat gets 25 HP back. 20 s cooldown."),
-        BattleSkill.Cheer => L("Cổ vũ — 5 giây mèo đánh nhanh và mạnh hơn. Hồi 18 giây.", "Cheer — for 5 s the cat attacks faster and harder. 18 s cooldown."),
-        BattleSkill.Bomb => L("Bom len — chọn rồi click một slime: nổ sau 0.5 giây, trúng mọi quái quanh đó. Hồi 12 giây.", "Yarn bomb — choose, then click a slime: bursts after 0.5 s and hits every slime nearby. 12 s cooldown."),
-        _ => L("Khiên bong bóng — 3 giây mèo không mất máu. Hồi 15 giây.", "Bubble shield — for 3 s the cat takes no damage. 15 s cooldown.")
-    };
+    // The UI language, read through the shared localizer.
+    private bool English => L("vi", "en") == "en";
+    // Descriptions use the battle's own numbers (battle.json), so they always match.
+    public string Describe(BattleSkill skill) => BattleSkills.Get(skill).Describe(last?.Settings ?? BattleData.Settings, English);
+    private string SkillTip(BattleSkill skill) => Describe(skill);
 
     public void ShowBanner(string text, double now, double seconds = 1.6)
     {
@@ -184,7 +180,7 @@ public sealed class BattleHud : Border
             BattlePhase.Lost => L("Thua rồi… mèo choáng váng", "Defeated… the cat sees stars"),
             BattlePhase.WaveBreak when b.Wave == 0 => L("Chuẩn bị!", "Get ready!"),
             BattlePhase.WaveBreak => L($"Xong đợt {b.Wave}!{HealNote(b)}", $"Wave {b.Wave} cleared!{HealNote(b)}"),
-            _ when b.IsBossWave(b.Wave) => L("Đánh bại Vua Slime!", "Defeat the Slime King!"),
+            _ when b.IsBossWave(b.Wave) => L($"Đánh bại {BossName(b)}!", $"Defeat the {BossName(b)}!"),
             _ => L($"Đợt {b.Wave}/{b.WaveCount} · còn {left} slime", $"Wave {b.Wave}/{b.WaveCount} · {left} slime{(left == 1 ? "" : "s")} left")
         };
         if (b.Paused && !b.Over) text += fullscreen ? L(" · Tạm dừng (toàn màn hình)", " · Paused (fullscreen)") : L(" · Tạm dừng", " · Paused");
@@ -204,7 +200,7 @@ public sealed class BattleHud : Border
             if (bossKey != shownBoss)
             {
                 shownBoss = bossKey;
-                bossName.Text = (boss.Enraged ? L("Vua Slime (nổi giận!)", "Slime King (enraged!)") : L("Vua Slime", "Slime King")) + $"  {bossKey.Item1}/{boss.MaxHp}";
+                bossName.Text = boss.Type.Name(English) + (boss.Enraged ? L(" (nổi giận!)", " (enraged!)") : "") + $"  {bossKey.Item1}/{boss.MaxHp}";
             }
         }
 
@@ -246,11 +242,16 @@ public sealed class BattleHud : Border
                 "Click a slime: set target · Hover a skill for details · Lift the cat to rescue it"));
     }
 
-    public string SkillName(BattleSkill skill) => skill switch
+    public string SkillName(BattleSkill skill) => BattleSkills.Get(skill).Name(English);
+
+    // The boss of the current wave (alive or still to come).
+    private string BossName(BattleSim b)
     {
-        BattleSkill.Push => L("Đẩy quái", "Push"), BattleSkill.Heal => L("Cá hồi máu", "Healing fish"),
-        BattleSkill.Cheer => L("Cổ vũ", "Cheer"), BattleSkill.Bomb => L("Bom len", "Yarn bomb"), _ => L("Khiên bong bóng", "Bubble shield")
-    };
+        if (b.Boss is { } boss) return boss.Type.Name(English);
+        foreach (var group in b.Settings.WavePlan[Math.Clamp(b.Wave, 1, b.WaveCount) - 1].Groups)
+            if (b.Settings.Enemy(group.Enemy) is { Boss: true } type) return type.Name(English);
+        return "Boss";
+    }
 
     private string HealNote(BattleSim b) => b.LastHeal >= 1 ? $" +{Math.Round(b.LastHeal)} HP" : "";
 

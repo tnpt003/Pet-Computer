@@ -20,6 +20,7 @@
     <EmbeddedResource Include="Assets/Sounds/*.wav" LogicalName="DesktopPet.Sounds.%(Filename)%(Extension)" />
     <EmbeddedResource Include="Assets/coats.json" LogicalName="DesktopPet.coats.json" />
     <EmbeddedResource Include="Assets/accessories.json" LogicalName="DesktopPet.accessories.json" />
+    <EmbeddedResource Include="Assets/battle.json" LogicalName="DesktopPet.battle.json" />
     <Content Include="Assets/Sounds/CREDITS.md;Assets/Sounds/sources.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>

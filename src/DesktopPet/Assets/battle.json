@@ -1,0 +1,70 @@
+{
+  // Battle Mode data (DIPs and seconds). Embedded in the exe; a broken file is logged and
+  // the built-in battle (the same numbers) is used. Misspelt keys are rejected.
+  "catMaxHp": 100,
+  "catDamage": 25,
+  "catAttackRange": 76,
+  "catAttackCooldown": 0.75,
+  "catSwingDuration": 0.36,
+  "catHitTime": 0.16,
+
+  "slimeWidth": 46,
+  "slimeHeight": 34,
+  "spawnDuration": 0.5,
+  "defeatDuration": 0.6,
+  "maxAlive": 3,
+  "spawnInterval": 1.6,
+  "firstWaveDelay": 1.5,
+  "waveBreakSeconds": 3.5,
+  "waveHeal": 15,
+  "spawnMinDistance": 200,
+  "landingGraceSeconds": 1.5,
+  "outroSeconds": 3,
+  "hurtFlashSeconds": 0.35,
+  "maxEffects": 32,
+
+  // The user's skills.
+  "pushCooldown": 5,
+  "pushSpeed": 520,
+  "pushStunSeconds": 1.4,
+  "healCooldown": 20,
+  "healAmount": 25,
+  "cheerCooldown": 18,
+  "cheerSeconds": 5,
+  "cheerSpeed": 1.6,
+  "cheerDamage": 1.4,
+  "bombCooldown": 12,
+  "bombDelay": 0.5,
+  "bombDamage": 30,
+  "bombRadius": 70,
+  "shieldCooldown": 15,
+  "shieldSeconds": 3,
+
+  // Enemy kinds. scale: size against the basic slime (0.5–2.3). boss: crown + HUD bar.
+  // slam: area hit with a floor warning. summonAt/enrageAt: HP fraction (0 = never).
+  "enemies": [
+    {
+      "id": "slime", "nameVi": "Slime", "nameEn": "Slime",
+      "maxHp": 50, "speed": 34, "damage": 10, "range": 64,
+      "windup": 0.8, "attackCooldown": 1.8, "recover": 0.35,
+      "scale": 1, "color": "#7CD36A"
+    },
+    {
+      "id": "king", "nameVi": "Vua Slime", "nameEn": "Slime King",
+      "maxHp": 400, "speed": 22, "damage": 25, "range": 110,
+      "windup": 1.2, "attackCooldown": 2.6, "recover": 0.7,
+      "scale": 2, "color": "#9B7BE0", "angryColor": "#E86A6A",
+      "boss": true, "slam": true, "pushFactor": 0.35, "stunFactor": 0.4,
+      "summonAt": 0.5, "summonCount": 2, "summonType": "slime",
+      "enrageAt": 0.3, "enragedSpeed": 32, "enragedWindup": 0.8
+    }
+  ],
+
+  // Waves in order; each wave's groups spawn in order.
+  "waves": [
+    { "groups": [ { "enemy": "slime", "count": 2 } ] },
+    { "groups": [ { "enemy": "slime", "count": 3 } ] },
+    { "groups": [ { "enemy": "slime", "count": 4 } ] },
+    { "groups": [ { "enemy": "king", "count": 1 } ] }
+  ]
+}

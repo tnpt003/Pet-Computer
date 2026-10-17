@@ -16,7 +16,8 @@ namespace DesktopPet;
 // behavior, AI commands, games, sleep or automatic emotions.
 public sealed partial class PetWindow
 {
-    public BattleSettings BattleTuning { get; set; } = new();
+    // From Assets/battle.json (built-in numbers if the file is broken); tests may replace it.
+    public BattleSettings BattleTuning { get; set; } = BattleData.Settings;
     private BattleSim? battle;
     private Area battleArea;
     private double battlePlacedScale;
@@ -217,7 +218,7 @@ public sealed partial class PetWindow
         battle.ClearEvents();
         if (battle.Finished)
         {
-            var result = new BattleSummary(battle.Phase == BattlePhase.Won, battle.Defeated, battle.FightSeconds, battle.CatHp, battle.Settings.CatMaxHp, battle.BossDefeated);
+            var result = new BattleSummary(battle.Phase == BattlePhase.Won, battle.Defeated, battle.FightSeconds, battle.CatHp, battle.Settings.CatMaxHp, battle.BossDefeated, battle.DefeatedBoss?.Name(preferences.Language == "en"));
             EndBattle();
             ShowBattleSummary(result);
             return;
@@ -270,6 +271,8 @@ public sealed partial class PetWindow
         };
     }
 
+    private string BossName() => battle?.Boss?.Type.Name(preferences.Language == "en") ?? "Boss";
+
     // Big moments get a banner across the HUD's centre.
     private void ShowBattleBanners()
     {
@@ -280,8 +283,8 @@ public sealed partial class PetWindow
             {
                 BattleEventKind.WaveStarted when battle.IsBossWave((int)e.Value) => L("BOSS!", "BOSS!"),
                 BattleEventKind.WaveStarted => L($"ĐỢT {(int)e.Value}", $"WAVE {(int)e.Value}"),
-                BattleEventKind.BossSummoned => L("Vua Slime gọi quân!", "The King calls for help!"),
-                BattleEventKind.BossEnraged => L("Vua Slime nổi giận!", "The Slime King is angry!"),
+                BattleEventKind.BossSummoned => L($"{BossName()} gọi quân!", $"The {BossName()} calls for help!"),
+                BattleEventKind.BossEnraged => L($"{BossName()} nổi giận!", $"The {BossName()} is angry!"),
                 BattleEventKind.Won => L("CHIẾN THẮNG!", "VICTORY!"),
                 BattleEventKind.Lost => L("THUA RỒI…", "DEFEATED…"),
                 _ => null
@@ -443,7 +446,7 @@ public sealed partial class PetWindow
     }
 
     // The result after a won or lost battle: stats, Play again and Close. It closes by itself.
-    public readonly record struct BattleSummary(bool Won, int Defeated, double Seconds, double Hp, double MaxHp, bool Boss = false);
+    public readonly record struct BattleSummary(bool Won, int Defeated, double Seconds, double Hp, double MaxHp, bool Boss = false, string? BossName = null);
     public BattleSummary? LastBattleSummary { get; private set; }
     private Window? battleSummaryWindow;
     private System.Windows.Threading.DispatcherTimer? battleSummaryTimer;
@@ -454,7 +457,7 @@ public sealed partial class PetWindow
         CloseBattleSummary();
         LastBattleSummary = result;
         if (closed || context.Fullscreen) return;
-        var title = new TextBlock { Text = result.Won ? (result.Boss ? L("Chiến thắng! Đã hạ Vua Slime", "Victory! The Slime King is down") : L("Chiến thắng!", "Victory!"))
+        var title = new TextBlock { Text = result.Won ? (result.Boss ? L($"Chiến thắng! Đã hạ {result.BossName ?? "boss"}", $"Victory! The {result.BossName ?? "boss"} is down") : L("Chiến thắng!", "Victory!"))
                 : L("Thua rồi… mèo choáng váng", "Defeated… the cat sees stars"),
             Foreground = Brushes.White, FontSize = 15, FontWeight = FontWeights.Bold };
         var time = TimeSpan.FromSeconds(Math.Round(result.Seconds));

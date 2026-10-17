@@ -573,18 +573,23 @@ shows no panel. After each wave except the last the cat gets 15 HP back (`WaveHe
   normal walking physics and swings; each swing can hit once, at a fixed moment of the swing.
 - **Click a slime** (left): mark it as the cat's target (yellow arrow + ring). No damage.
 - **Skills** (five slots on the HUD; hover for details; mouse only):
-  - **Push** (5 s): choose, then click a slime: knocked back and stunned ~1.4 s.
+  - **Push** (5 s): choose, then click a slime: knocked back and stunned ~1.4 s. Click its left
+    half to send it right, its right half to send it left (an arrow shows the way on hover); the
+    very centre sends it away from the cat.
   - **Healing fish** (20 s): +25 HP at once (not used at full HP).
   - **Cheer** (18 s): for 5 s the cat swings 1.6× as often and hits 40% harder (gold sparkles).
   - **Yarn bomb** (12 s): choose, then click a slime: a ball of yarn drops there and bursts after
     0.5 s for 30 damage to every slime within 70 DIPs of the spot.
   - **Bubble shield** (15 s): for 3 s slime hits are blocked (a bubble around the cat).
   Aimed skills never change the cat's target; cancel the choice by clicking the slot again or
-  right-clicking the field. A slot shows a clock-wipe and seconds while cooling.
+  right-clicking the field. A slot shows a clock-wipe and seconds while cooling. Hovering a slot
+  (or Pause/End) describes it in the HUD's hint line (no tooltips: they kept the first text in a
+  window that never activates).
 - **Slimes** swell and show a red "!" for 0.8 s before each hit: time to push them or lift the cat.
 - **Rescue**: pick the cat up as usual (drag, dangle, dizzy and throw unchanged). While pressed,
-  carried or in the air the cat takes no damage, slimes call off their attacks and wait, and no
-  slime spawns or wave progress happens. After landing the cat is protected for 1.5 s.
+  carried or in the air the cat takes no damage and slimes call off their attacks; they keep
+  following the cat along the floor (without winding up), and no slime spawns or wave progress
+  happens. After landing the cat is protected for 1.5 s.
 - **Pause / Resume / End**: HUD buttons or the menu. Opening the pet menu pauses a running battle
   and resumes it on close (a battle the user paused stays paused). A fullscreen app pauses it and
   hides the field/HUD; the user resumes afterwards. Tray Pause freezes it too. "Bring the pet to
@@ -609,8 +614,15 @@ shows no panel. After each wave except the last the cat gets 15 HP back (`WaveHe
   The boss's slam zone is drawn as outlines only, so it never blocks clicks to the apps below.
 - **Measuring**: `scripts\perf.ps1 -Battle run` (or `paused`) starts a separate pet that keeps a
   battle going (`PET_BATTLE_AUTOSTART`, measurement only; the user's pet must be closed first).
-- **Tuning**: every number (HP, damage, speeds, reach, cooldowns, windup, waves, max slimes, spawn
-  interval, breaks, protection time, push) is in `BattleSettings` (`src/DesktopPet/PetBattle.cs`).
+- **Data** (`src/DesktopPet/Assets/battle.json`, embedded): every number (cat, skills, spawning,
+  breaks, protection), the enemy kinds (`enemies`: HP, speed, damage, reach, windup, size, colours,
+  boss/slam flags, push/stun factors, summon/enrage thresholds) and the waves (`waves`: groups of
+  `enemy` × `count`, any wave may hold a boss). A new enemy or a different wave plan is data only.
+  Misspelt keys, impossible numbers, unknown enemies, sizes over 2.3× or summon loops reject the
+  whole file: it is logged and the built-in battle (`BattleSettings` defaults, the same numbers)
+  is used. Skills are listed once in `BattleSkills` (`PetBattleData.cs`: name, aimed or instant,
+  cooldown, description built from the numbers); the HUD makes a slot for each. A new skill also
+  needs its effect in `BattleSim.Use` and an icon in `HudGlyph`.
 - **Code**: `PetBattle.cs` (simulation, no WPF: tested in `tests/DesktopPet.Tests/BattleTests.cs`),
   `PetBattleView.cs` (drawing/hit-testing), `PetWindow.Battle.cs` (lifecycle, orders → walking,
   HUD, menu); the sword is drawn by `PetRenderer` from presentation fields on `PetModel`.

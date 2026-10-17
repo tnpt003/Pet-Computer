@@ -1,10 +1,14 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json.Serialization;
 
 namespace DesktopPet;
 
-// Battle Mode tuning: every number the fight uses (DIPs and seconds). Change the defaults
-// here to try a different balance.
+// Battle Mode tuning: every number the fight uses (DIPs and seconds). The app reads them from
+// Assets/battle.json (BattleData); these defaults are the same numbers and are used when the
+// file is broken and by the tests. Enemy kinds and waves come from "enemies"/"waves" in the
+// file; without them, from the Slime*/Boss* numbers, Waves and Boss below.
 public sealed class BattleSettings
 {
     public double CatMaxHp { get; init; } = 100;
@@ -16,20 +20,29 @@ public sealed class BattleSettings
     public double CatSwingDuration { get; init; } = 0.36;
     // The one moment in a swing that can deal damage.
     public double CatHitTime { get; init; } = 0.16;
+    [JsonIgnore]
     public double SlimeMaxHp { get; init; } = 50;
+    [JsonIgnore]
     public double SlimeSpeed { get; init; } = 34;
+    [JsonIgnore]
     public double SlimeDamage { get; init; } = 10;
+    [JsonIgnore]
     public double SlimeAttackRange { get; init; } = 64;
     // The slime swells and shows "!" this long before its hit: time for the user to help.
+    [JsonIgnore]
     public double SlimeWindup { get; init; } = 0.8;
+    [JsonIgnore]
     public double SlimeAttackCooldown { get; init; } = 1.8;
+    [JsonIgnore]
     public double SlimeRecover { get; init; } = 0.35;
     public double SlimeWidth { get; init; } = 46;
     public double SlimeHeight { get; init; } = 34;
     public double SpawnDuration { get; init; } = 0.5;
     public double DefeatDuration { get; init; } = 0.6;
     // Slimes per wave. With Boss on, one more wave follows with the Slime King alone.
+    [JsonIgnore]
     public int[] Waves { get; init; } = { 2, 3, 4 };
+    [JsonIgnore]
     public bool Boss { get; init; } = true;
     public int MaxAlive { get; init; } = 3;
     public double SpawnInterval { get; init; } = 1.6;
@@ -63,29 +76,77 @@ public sealed class BattleSettings
     public double ShieldSeconds { get; init; } = 3;
 
     // The Slime King (last wave).
+    [JsonIgnore]
     public double BossMaxHp { get; init; } = 400;
+    [JsonIgnore]
     public double BossScale { get; init; } = 2;
+    [JsonIgnore]
     public double BossSpeed { get; init; } = 22;
+    [JsonIgnore]
     public double BossDamage { get; init; } = 25;
     // The ground slam reaches this far from the boss's centre.
+    [JsonIgnore]
     public double BossRange { get; init; } = 110;
+    [JsonIgnore]
     public double BossWindup { get; init; } = 1.2;
+    [JsonIgnore]
     public double BossAttackCooldown { get; init; } = 2.6;
     // Below these HP fractions: calls two helpers (once), then gets angry (faster, shorter windup).
+    [JsonIgnore]
     public double BossSummonAt { get; init; } = 0.5;
+    [JsonIgnore]
     public int BossSummonCount { get; init; } = 2;
+    [JsonIgnore]
     public double BossEnrageAt { get; init; } = 0.3;
+    [JsonIgnore]
     public double BossEnragedSpeed { get; init; } = 32;
+    [JsonIgnore]
     public double BossEnragedWindup { get; init; } = 0.8;
     // Heavy: pushes move it and stun it less.
+    [JsonIgnore]
     public double BossPushFactor { get; init; } = 0.35;
+    [JsonIgnore]
     public double BossStunFactor { get; init; } = 0.4;
 
-    public double SkillCooldown(BattleSkill skill) => skill switch
+    public double SkillCooldown(BattleSkill skill) => BattleSkills.Get(skill).Cooldown(this);
+
+    // From battle.json: every enemy kind and the waves (null: the built-in slime and king).
+    [JsonPropertyName("enemies")] public EnemyType[]? Enemies { get; init; }
+    [JsonPropertyName("waves")] public WaveSpec[]? Plan { get; init; }
+
+    private IReadOnlyList<EnemyType>? enemyTypes;
+    private IReadOnlyList<WaveSpec>? wavePlan;
+    [JsonIgnore] public IReadOnlyList<EnemyType> EnemyTypes => enemyTypes ??= Enemies ?? new[] { BuiltInSlime(), BuiltInKing() };
+    [JsonIgnore] public IReadOnlyList<WaveSpec> WavePlan => wavePlan ??= Plan ?? BuiltInPlan();
+    // Unknown ids fall back to the first kind (validation rejects them in battle.json).
+    public EnemyType Enemy(string id)
     {
-        BattleSkill.Push => PushCooldown, BattleSkill.Heal => HealCooldown, BattleSkill.Cheer => CheerCooldown,
-        BattleSkill.Bomb => BombCooldown, _ => ShieldCooldown
+        foreach (var e in EnemyTypes) if (e.Id == id) return e;
+        return EnemyTypes[0];
+    }
+    [JsonIgnore] public double LargestScale => EnemyTypes.Max(e => e.Scale);
+
+    private EnemyType BuiltInSlime() => new()
+    {
+        Id = "slime", NameVi = "Slime", NameEn = "Slime", MaxHp = SlimeMaxHp, Speed = SlimeSpeed, Damage = SlimeDamage,
+        Range = SlimeAttackRange, Windup = SlimeWindup, AttackCooldown = SlimeAttackCooldown, Recover = SlimeRecover, Color = "#7CD36A"
     };
+
+    private EnemyType BuiltInKing() => new()
+    {
+        Id = "king", NameVi = "Vua Slime", NameEn = "Slime King", MaxHp = BossMaxHp, Speed = BossSpeed, Damage = BossDamage,
+        Range = BossRange, Windup = BossWindup, AttackCooldown = BossAttackCooldown, Recover = SlimeRecover * 2, Scale = BossScale,
+        Color = "#9B7BE0", AngryColor = "#E86A6A", Boss = true, Slam = true, PushFactor = BossPushFactor, StunFactor = BossStunFactor,
+        SummonAt = BossSummonAt, SummonCount = BossSummonCount, SummonType = "slime",
+        EnrageAt = BossEnrageAt, EnragedSpeed = BossEnragedSpeed, EnragedWindup = BossEnragedWindup
+    };
+
+    private IReadOnlyList<WaveSpec> BuiltInPlan()
+    {
+        var plan = Waves.Select(count => new WaveSpec { Groups = new[] { new WaveGroup { Enemy = "slime", Count = count } } }).ToList();
+        if (Boss) plan.Add(new WaveSpec { Groups = new[] { new WaveGroup { Enemy = "king", Count = 1 } } });
+        return plan;
+    }
 }
 
 // Push and Bomb are aimed (choose, then click a slime); the others act at once.
@@ -96,7 +157,9 @@ public enum SlimeState { Spawning, Moving, Windup, Recover, Stunned, Defeated }
 public sealed class Slime
 {
     public int Id { get; init; }
-    public bool IsBoss { get; init; }
+    // Its kind (battle.json "enemies"): abilities and the numbers not copied below.
+    public EnemyType Type { get; init; } = new();
+    public bool IsBoss => Type.Boss;
     // Centre of the slime on the battle floor (DIPs, screen coordinates).
     public double X;
     public double Hp, MaxHp;
@@ -161,11 +224,20 @@ public sealed class BattleSim
     public double CatHp { get; private set; }
     // 1-based number of the current (or last started) wave; 0 before the first.
     public int Wave { get; private set; }
-    public int WaveCount => Settings.Waves.Length + (Settings.Boss ? 1 : 0);
-    public bool IsBossWave(int wave) => Settings.Boss && wave == WaveCount;
-    public int ToSpawn { get; private set; }
+    public int WaveCount => Settings.WavePlan.Count;
+    public bool IsBossWave(int wave)
+    {
+        if (wave < 1 || wave > WaveCount) return false;
+        foreach (var group in Settings.WavePlan[wave - 1].Groups) if (Settings.Enemy(group.Enemy).Boss) return true;
+        return false;
+    }
+    // Enemies of the current wave still to come, in spawn order.
+    private readonly List<string> pending = new();
+    private int pendingNext;
+    public int ToSpawn => pending.Count - pendingNext;
     public int Defeated { get; private set; }
     public bool BossDefeated { get; private set; }
+    public EnemyType? DefeatedBoss { get; private set; }
     public double PhaseRemaining { get; private set; }
     public double CatCooldown { get; private set; }
     // Seconds into the current swing; negative when not swinging.
@@ -197,7 +269,7 @@ public sealed class BattleSim
     {
         Settings = settings;
         this.random = random ?? new Random();
-        Left = left; Right = Math.Max(left + settings.SlimeWidth * settings.BossScale, right);
+        Left = left; Right = Math.Max(left + settings.SlimeWidth * settings.LargestScale, right);
         CatHp = settings.CatMaxHp;
         PhaseRemaining = settings.FirstWaveDelay;
     }
@@ -206,7 +278,7 @@ public sealed class BattleSim
     public Slime? Find(int id) { foreach (var s in slimes) if (s.Id == id) return s; return null; }
     public void ClearEvents() => events.Clear();
     public double Cooldown(BattleSkill skill) => cooldowns[(int)skill];
-    public static bool IsAimed(BattleSkill skill) => skill is BattleSkill.Push or BattleSkill.Bomb;
+    public static bool IsAimed(BattleSkill skill) => BattleSkills.Get(skill).Aimed;
     public bool Ready(BattleSkill skill) => !Over && cooldowns[(int)skill] <= 0;
 
     // catHeld: the battle may not move or hurt the cat (pressed, dragged, flying, climbing).
@@ -299,22 +371,23 @@ public sealed class BattleSim
             slime.Set(SlimeState.Defeated);
             slime.KnockVelocity = 0;
             Defeated++;
-            if (slime.IsBoss) BossDefeated = true;
+            if (slime.IsBoss) { BossDefeated = true; DefeatedBoss = slime.Type; }
             if (SelectedId == slime.Id) SelectedId = null;
             AddEffect(BattleEffectKind.Poof, slime.X, slime.Height / 2, slime.IsBoss ? 2 : 1);
             events.Add(new(BattleEventKind.SlimeDefeated, slime.X, slime.IsBoss ? 1 : 0));
             return;
         }
-        if (!slime.IsBoss) return;
+        var type = slime.Type;
         double fraction = slime.Hp / slime.MaxHp;
-        if (!slime.Summoned && fraction <= Settings.BossSummonAt)
+        if (type.SummonAt > 0 && !slime.Summoned && fraction <= type.SummonAt)
         {
             slime.Summoned = true;
-            for (int i = 0; i < Settings.BossSummonCount; i++)
-                AddSlime(slime.X + (i % 2 == 0 ? -1 : 1) * (slime.Width / 2 + 30 + 20 * (i / 2)), false);
+            var helper = Settings.Enemy(type.SummonType);
+            for (int i = 0; i < type.SummonCount; i++)
+                AddSlime(slime.X + (i % 2 == 0 ? -1 : 1) * (slime.Width / 2 + 30 + 20 * (i / 2)), helper);
             events.Add(new(BattleEventKind.BossSummoned, slime.X));
         }
-        if (!slime.Enraged && fraction <= Settings.BossEnrageAt)
+        if (type.EnrageAt > 0 && !slime.Enraged && fraction <= type.EnrageAt)
         {
             slime.Enraged = true;
             events.Add(new(BattleEventKind.BossEnraged, slime.X));
@@ -374,7 +447,7 @@ public sealed class BattleSim
                     if (slime.StunRemaining <= 0) slime.Set(SlimeState.Moving);
                     break;
                 case SlimeState.Recover:
-                    if (slime.StateTime >= s.SlimeRecover * (slime.IsBoss ? 2 : 1)) slime.Set(SlimeState.Moving);
+                    if (slime.StateTime >= slime.Type.Recover) slime.Set(SlimeState.Moving);
                     break;
                 case SlimeState.Windup:
                     // The cat was picked up: the attack aimed at where it stood is called off.
@@ -398,8 +471,8 @@ public sealed class BattleSim
         Separate();
     }
 
-    public double Windup(Slime slime) => !slime.IsBoss ? Settings.SlimeWindup : slime.Enraged ? Settings.BossEnragedWindup : Settings.BossWindup;
-    private double Speed(Slime slime) => !slime.IsBoss ? Settings.SlimeSpeed : slime.Enraged ? Settings.BossEnragedSpeed : Settings.BossSpeed;
+    public double Windup(Slime slime) => slime.Enraged ? slime.Type.EnragedWindup : slime.Type.Windup;
+    private static double Speed(Slime slime) => slime.Enraged ? slime.Type.EnragedSpeed : slime.Type.Speed;
 
     private readonly List<Slime> scratch = new();
     private static readonly Comparison<Slime> ByX = (a, b) => a.X.CompareTo(b.X);
@@ -426,8 +499,8 @@ public sealed class BattleSim
     private void Strike(Slime slime, double catX)
     {
         slime.Set(SlimeState.Recover);
-        slime.Cooldown = slime.IsBoss ? Settings.BossAttackCooldown : Settings.SlimeAttackCooldown;
-        if (slime.IsBoss) AddEffect(BattleEffectKind.Slam, slime.X, 0, slime.Range);
+        slime.Cooldown = slime.Type.AttackCooldown;
+        if (slime.Type.Slam) AddEffect(BattleEffectKind.Slam, slime.X, 0, slime.Range);
         if (Math.Abs(catX - slime.X) > slime.Range + 12 || Grace > 0) return; // Missed: the cat moved away.
         if (ShieldRemaining > 0)
         {
@@ -463,7 +536,8 @@ public sealed class BattleSim
             PhaseRemaining = Math.Max(0, PhaseRemaining - dt);
             if (PhaseRemaining > 0) return;
             Wave++;
-            ToSpawn = IsBossWave(Wave) ? 1 : Settings.Waves[Wave - 1];
+            pending.Clear(); pendingNext = 0;
+            pending.AddRange(Settings.WavePlan[Wave - 1].Spawns());
             Phase = BattlePhase.Fighting;
             spawnTimer = 0;
             events.Add(new(BattleEventKind.WaveStarted, catX, Wave));
@@ -471,8 +545,7 @@ public sealed class BattleSim
         spawnTimer = Math.Max(0, spawnTimer - dt);
         if (ToSpawn > 0 && Alive < Settings.MaxAlive && spawnTimer <= 0)
         {
-            Spawn(catX, IsBossWave(Wave));
-            ToSpawn--;
+            Spawn(catX, Settings.Enemy(pending[pendingNext++]));
             spawnTimer = Settings.SpawnInterval;
         }
         if (ToSpawn > 0 || Alive > 0 || bombs.Count > 0) return;
@@ -485,29 +558,26 @@ public sealed class BattleSim
         events.Add(new(BattleEventKind.WaveCleared, catX));
     }
 
-    private void Spawn(double catX, bool boss)
+    private void Spawn(double catX, EnemyType type)
     {
-        double w = Settings.SlimeWidth * (boss ? Settings.BossScale : 1);
+        double w = Settings.SlimeWidth * type.Scale;
         double minX = Left + w / 2, maxX = Math.Max(minX, Right - w / 2);
         double left = Math.Min(maxX, minX + random.NextDouble() * 60), right = Math.Max(minX, maxX - random.NextDouble() * 60);
         double first = random.Next(2) == 0 ? left : right, second = first == left ? right : left;
         double x = Math.Abs(first - catX) >= Settings.SpawnMinDistance ? first
             : Math.Abs(second - catX) >= Settings.SpawnMinDistance ? second
             : Math.Abs(first - catX) >= Math.Abs(second - catX) ? first : second;
-        var slime = AddSlime(x, boss);
+        var slime = AddSlime(x, type);
         slime.Facing = catX < x ? -1 : 1;
-        events.Add(new(boss ? BattleEventKind.BossAppeared : BattleEventKind.SlimeSpawned, x));
+        events.Add(new(type.Boss ? BattleEventKind.BossAppeared : BattleEventKind.SlimeSpawned, x));
     }
 
-    private Slime AddSlime(double x, bool boss)
+    private Slime AddSlime(double x, EnemyType type)
     {
-        var s = Settings;
-        double scale = boss ? s.BossScale : 1;
         var slime = new Slime
         {
-            Id = nextId++, IsBoss = boss, Width = s.SlimeWidth * scale, Height = s.SlimeHeight * scale,
-            Hp = boss ? s.BossMaxHp : s.SlimeMaxHp, MaxHp = boss ? s.BossMaxHp : s.SlimeMaxHp,
-            Damage = boss ? s.BossDamage : s.SlimeDamage, Range = boss ? s.BossRange : s.SlimeAttackRange
+            Id = nextId++, Type = type, Width = Settings.SlimeWidth * type.Scale, Height = Settings.SlimeHeight * type.Scale,
+            Hp = type.MaxHp, MaxHp = type.MaxHp, Damage = type.Damage, Range = type.Range
         };
         var (minX, maxX) = Bounds(slime);
         slime.X = Math.Clamp(x, minX, maxX);
@@ -584,8 +654,8 @@ public sealed class BattleSim
         {
             // Knock the slime away from the cat and stun it briefly; the boss is heavy.
             int push = direction is int chosen && chosen != 0 ? Math.Sign(chosen) : slime.X < catX ? -1 : 1;
-            slime.KnockVelocity = push * Settings.PushSpeed * (slime.IsBoss ? Settings.BossPushFactor : 1);
-            slime.StunRemaining = Settings.PushStunSeconds * (slime.IsBoss ? Settings.BossStunFactor : 1);
+            slime.KnockVelocity = push * Settings.PushSpeed * slime.Type.PushFactor;
+            slime.StunRemaining = Settings.PushStunSeconds * slime.Type.StunFactor;
             slime.Set(SlimeState.Stunned);
             AddEffect(BattleEffectKind.Push, slime.X, slime.Height / 2);
             events.Add(new(BattleEventKind.Pushed, slime.X));
@@ -611,7 +681,7 @@ public sealed class BattleSim
     // keep every slime at the same relative spot inside the new floor.
     public void SetArea(double left, double right)
     {
-        right = Math.Max(left + Settings.SlimeWidth * Settings.BossScale, right);
+        right = Math.Max(left + Settings.SlimeWidth * Settings.LargestScale, right);
         double oldWidth = Math.Max(1, Right - Left), newWidth = right - left;
         foreach (var s in slimes) s.X = left + (s.X - Left) / oldWidth * newWidth;
         foreach (var e in effects) e.X = left + (e.X - Left) / oldWidth * newWidth;

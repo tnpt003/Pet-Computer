@@ -25,6 +25,11 @@ public sealed class BattleHud : Border
     private readonly SkillSlot[] slots = new SkillSlot[SkillOrder.Length];
     private double trail = 1, lastTime = -1, bannerUntil = -1;
     private int dotsFor = -1, dotsWave = -1;
+    private (double Hp, double Max) shownHp = (-1, -1);
+    private (BattlePhase, int, int, bool, bool, double, int) shownStatus;
+    private (double, bool) shownBoss = (-1, false);
+    private (bool, BattleSkill?, bool) shownHint;
+    private bool hintShown;
 
     private static Brush Frozen(byte a, byte r, byte g, byte b) => PetUi.Frozen(Color.FromArgb(a, r, g, b));
     private static readonly Brush Panel = MakePanel();
@@ -45,7 +50,8 @@ public sealed class BattleHud : Border
         L = localize;
         Background = Panel; BorderBrush = Rim; BorderThickness = new Thickness(1.5);
         CornerRadius = new CornerRadius(12); Padding = new Thickness(10, 8, 10, 6); Margin = new Thickness(8);
-        Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 8, ShadowDepth = 1, Opacity = 0.45 };
+        // No drop shadows here: on a transparent (layered) window every bitmap effect is redrawn in
+        // software whenever anything under it changes, and the HUD changes every frame.
         SetValue(TextBlock.FontFamilyProperty, PetUi.TextFont);
         TextOptions.SetTextFormattingMode(this, TextFormattingMode.Display);
 
@@ -63,7 +69,7 @@ public sealed class BattleHud : Border
         hpTrail = new Border { Background = Trail, CornerRadius = new CornerRadius(5), HorizontalAlignment = HorizontalAlignment.Left, Width = HpWidth };
         hpFill = new Border { Background = Green, CornerRadius = new CornerRadius(5), HorizontalAlignment = HorizontalAlignment.Left, Width = HpWidth };
         hpText = new TextBlock { Foreground = Brushes.White, FontWeight = FontWeights.Bold, FontSize = 11, HorizontalAlignment = HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center, Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 2, ShadowDepth = 0, Opacity = 1 } };
+            VerticalAlignment = VerticalAlignment.Center };
         var hpBar = new Border
         {
             Width = HpWidth + 4, Height = 16, CornerRadius = new CornerRadius(7), Background = BarBack, BorderBrush = Dim, BorderThickness = new Thickness(1),
@@ -74,7 +80,7 @@ public sealed class BattleHud : Border
 
         // Centre: the banner, or the status with wave dots / the boss's HP.
         banner = new TextBlock { Foreground = Gold, FontWeight = FontWeights.Black, FontSize = 22, HorizontalAlignment = HorizontalAlignment.Center,
-            Visibility = Visibility.Collapsed, Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 4, ShadowDepth = 0, Opacity = 1 } };
+            Visibility = Visibility.Collapsed };
         status = new TextBlock { Foreground = Brushes.White, FontWeight = FontWeights.SemiBold, FontSize = 13, HorizontalAlignment = HorizontalAlignment.Center, TextAlignment = TextAlignment.Center };
         waveDots = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 5, 0, 0) };
         bossName = new TextBlock { Foreground = Brushes.White, FontWeight = FontWeights.Bold, FontSize = 11.5, HorizontalAlignment = HorizontalAlignment.Center };
@@ -151,13 +157,18 @@ public sealed class BattleHud : Border
         Set(hpTrail, HpWidth * trail);
         var hpBrush = fraction > 0.5 ? Green : fraction > 0.25 ? Yellow : Red;
         if (hpFill.Background != hpBrush) hpFill.Background = hpBrush;
-        SetText(hpText, $"{Math.Ceiling(b.CatHp)} / {b.Settings.CatMaxHp}");
+        var hp = (Math.Ceiling(b.CatHp), b.Settings.CatMaxHp);
+        if (hp != shownHp) { shownHp = hp; hpText.Text = $"{hp.Item1} / {hp.Item2}"; }
 
         // Banner for a moment, otherwise the status line.
         bool showBanner = b.Time < bannerUntil;
         banner.Visibility = showBanner ? Visibility.Visible : Visibility.Collapsed;
         if (showBanner) banner.Opacity = Math.Clamp((bannerUntil - b.Time) / 0.4, 0, 1);
         int left = b.Alive + b.ToSpawn;
+        var statusKey = (b.Phase, b.Wave, left, b.Paused, fullscreen, Math.Round(b.LastHeal), b.IsBossWave(b.Wave) ? 1 : 0);
+        if (statusKey != shownStatus)
+        {
+        shownStatus = statusKey;
         string text = b.Phase switch
         {
             BattlePhase.Won => L("Chiến thắng!", "Victory!"),
@@ -169,6 +180,7 @@ public sealed class BattleHud : Border
         };
         if (b.Paused && !b.Over) text += fullscreen ? L(" · Tạm dừng (toàn màn hình)", " · Paused (fullscreen)") : L(" · Tạm dừng", " · Paused");
         SetText(status, text);
+        }
         status.Visibility = showBanner ? Visibility.Hidden : Visibility.Visible;
         UpdateDots(b);
         var boss = b.Boss;
@@ -179,7 +191,12 @@ public sealed class BattleHud : Border
             Set(bossFill, BossWidth * Math.Clamp(boss.Hp / boss.MaxHp, 0, 1));
             var bossBrush = boss.Enraged ? BossAngryColor : BossColor;
             if (bossFill.Background != bossBrush) bossFill.Background = bossBrush;
-            SetText(bossName, (boss.Enraged ? L("Vua Slime (nổi giận!)", "Slime King (enraged!)") : L("Vua Slime", "Slime King")) + $"  {Math.Ceiling(boss.Hp)}/{boss.MaxHp}");
+            var bossKey = (Math.Ceiling(boss.Hp), boss.Enraged);
+            if (bossKey != shownBoss)
+            {
+                shownBoss = bossKey;
+                bossName.Text = (boss.Enraged ? L("Vua Slime (nổi giận!)", "Slime King (enraged!)") : L("Vua Slime", "Slime King")) + $"  {bossKey.Item1}/{boss.MaxHp}";
+            }
         }
 
         // Skills.
@@ -193,6 +210,9 @@ public sealed class BattleHud : Border
         pauseGlyph.Kind = userPaused ? HudGlyphKind.Play : HudGlyphKind.Pause;
         pauseButton.IsEnabled = !b.Over && !(b.Paused && fullscreen);
         pauseButton.Opacity = pauseButton.IsEnabled ? 1 : 0.45;
+        var hintKey = (held && !b.Over, b.Armed, b.Over);
+        if (hintShown && hintKey == shownHint) return;
+        hintShown = true; shownHint = hintKey;
         SetText(hint, held && !b.Over ? L("Mèo đang được bế: quái đứng chờ, không ai bị đánh.", "The cat is lifted: slimes wait, nobody gets hit.")
             : b.Armed is BattleSkill armed ? L($"Click một slime để dùng {SkillName(armed)} · bấm lại ô hoặc chuột phải chiến trường để hủy",
                                                $"Click a slime to use {SkillName(armed)} · click the slot again or right-click the field to cancel")
@@ -243,8 +263,8 @@ public sealed class SkillSlot : Border
     public BattleSkill Skill { get; }
     private readonly CooldownWipe wipe = new();
     private readonly TextBlock seconds = new() { Foreground = Brushes.White, FontWeight = FontWeights.Bold, FontSize = 14,
-        HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center,
-        Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 3, ShadowDepth = 0, Opacity = 1 } };
+        HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
+    private int shownSeconds = -1;
     private static readonly Brush Ready = PetUi.Frozen(Color.FromRgb(0xFF, 0xD2, 0x3F)), Waiting = PetUi.Frozen(Color.FromArgb(0x60, 255, 255, 255));
     private static readonly Brush Back = PetUi.Frozen(Color.FromArgb(0x55, 0x0E, 0x0C, 0x18)), ArmedBack = PetUi.Frozen(Color.FromArgb(0xC0, 0x2A, 0x78, 0xD6));
     private static readonly Brush ActiveBack = PetUi.Frozen(Color.FromArgb(0x90, 0xFF, 0xD2, 0x3F));
@@ -265,8 +285,8 @@ public sealed class SkillSlot : Border
     {
         Remaining = remaining; IsArmed = armed; IsReady = usable && remaining <= 0;
         wipe.Fraction = remaining > 0 ? fraction : 0;
-        string text = remaining > 0 ? Math.Ceiling(remaining).ToString(CultureInfo.InvariantCulture) : "";
-        if (seconds.Text != text) seconds.Text = text;
+        int whole = remaining > 0 ? (int)Math.Ceiling(remaining) : 0;
+        if (whole != shownSeconds) { shownSeconds = whole; seconds.Text = whole > 0 ? whole.ToString(CultureInfo.InvariantCulture) : ""; }
         var rim = armed ? Brushes.White : IsReady ? Ready : Waiting;
         if (BorderBrush != rim) BorderBrush = rim;
         var back = armed ? ArmedBack : active ? ActiveBack : Back;

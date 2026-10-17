@@ -25,9 +25,32 @@ public sealed partial class PetWindow
     private Window? battleFieldWindow, battleHudWindow;
     private BattleFieldView? battleView;
     private BattleHud? battleHud;
+    // The field and HUD redraw at most 30 times a second, only while something moves; a
+    // click, pause or placement change asks for one redraw at once.
+    public const double BattleFrameSeconds = 1.0 / 30;
+    private double battleFrameClock;
+    private bool battleRedraw, battleFieldIdle;
+    public int BattleFieldDraws { get; private set; }
+    private void RequestBattleRedraw() => battleRedraw = true;
 
     public BattleSim? Battle => battle;
     public bool BattleActive => battle != null;
+
+    // Measurement only (scripts/perf.ps1 -Battle): PET_BATTLE_AUTOSTART=run keeps a battle going
+    // (a new one after each end), =paused keeps a paused one open. Unset in normal use, where a
+    // battle never starts by itself.
+    private readonly string? battleAutostart = Environment.GetEnvironmentVariable("PET_BATTLE_AUTOSTART") is "run" or "paused"
+        ? Environment.GetEnvironmentVariable("PET_BATTLE_AUTOSTART") : null;
+    private double battleAutostartTimer;
+
+    private void TickBattleAutostart(double dt)
+    {
+        if (battleAutostart == null || battle != null) return;
+        battleAutostartTimer += dt;
+        if (battleAutostartTimer < 1) return;
+        battleAutostartTimer = 0;
+        if (StartBattle() == null && battleAutostart == "paused") SetBattlePaused(true);
+    }
 
     private void InitializeBattle(ContextMenu menu)
     {
@@ -43,7 +66,7 @@ public sealed partial class PetWindow
         menu.Opened += (_, _) =>
         {
             // Opening the menu pauses a running battle; closing resumes only that pause.
-            if (battle is { Paused: false }) { battle.Paused = true; battlePausedByMenu = true; }
+            if (battle is { Paused: false }) { battle.Paused = true; battlePausedByMenu = true; RequestBattleRedraw(); }
             bool userPaused = battle is { Paused: true } && !battlePausedByMenu;
             root.Header = L("Chế độ chiến đấu", "Battle Mode");
             string? refusal = battle == null ? BattleRefusal() : null;
@@ -57,7 +80,7 @@ public sealed partial class PetWindow
         };
         menu.Closed += (_, _) =>
         {
-            if (battle != null && battlePausedByMenu) battle.Paused = false;
+            if (battle != null && battlePausedByMenu) { battle.Paused = false; RequestBattleRedraw(); }
             battlePausedByMenu = false;
         };
     }
@@ -134,6 +157,7 @@ public sealed partial class PetWindow
         if (battle == null || (!value && context.Fullscreen)) return false;
         battle.Paused = value;
         battlePausedByMenu = false;
+        RequestBattleRedraw();
         UpdateBattleHud();
         return true;
     }
@@ -142,6 +166,7 @@ public sealed partial class PetWindow
     {
         if (battle == null || (armed && battle.Paused)) return false;
         bool done = battle.ArmPush(armed);
+        RequestBattleRedraw();
         UpdateBattleHud();
         return done;
     }
@@ -152,6 +177,7 @@ public sealed partial class PetWindow
     {
         if (battle == null || battle.Paused) return false;
         bool done = BattleSim.IsAimed(skill) ? battle.Arm(battle.Armed == skill ? null : skill) : battle.Use(skill, pet.X + settings.Width / 2);
+        RequestBattleRedraw();
         UpdateBattleHud();
         battleView?.InvalidateVisual();
         return done;
@@ -163,6 +189,7 @@ public sealed partial class PetWindow
     {
         if (battle == null || battle.Paused) return false;
         bool done = battle.Armed is BattleSkill skill ? battle.Use(skill, id, pet.X + settings.Width / 2) : battle.Select(id);
+        RequestBattleRedraw();
         UpdateBattleHud();
         battleView?.InvalidateVisual();
         return done;
@@ -176,7 +203,7 @@ public sealed partial class PetWindow
     private void TickBattle(double dt)
     {
         if (battle == null) return;
-        if (context.Fullscreen && !battle.Paused) { battle.Paused = true; battlePausedByMenu = false; }
+        if (context.Fullscreen && !battle.Paused) { battle.Paused = true; battlePausedByMenu = false; RequestBattleRedraw(); }
         bool held = BattleHoldsOff;
         bool lifted = dragging || !pet.Grounded || pet.Action is PetAction.Dragging or PetAction.Thrown;
         // The work area changed, or the cat was carried to another monitor: the field follows.
@@ -209,7 +236,7 @@ public sealed partial class PetWindow
                 pet.VX = pet.SmoothedWalkVelocity = 0;
             }
         }
-        UpdateBattleWindows();
+        UpdateBattleWindows(dt);
     }
 
     // One cue per frame: the most important event wins (a defeat's pop over its hit's squish).
@@ -285,18 +312,20 @@ public sealed partial class PetWindow
         if (battle == null) return;
         battleView = new BattleFieldView(battle);
         battleView.SlimeClicked += id => BattleClickSlime(id);
-        battleView.RightClicked += () => { battle?.Arm(null); UpdateBattleHud(); }; // Right-click on the field cancels the skill.
+        battleView.RightClicked += () => { battle?.Arm(null); RequestBattleRedraw(); UpdateBattleHud(); }; // Right-click on the field cancels the skill.
         battleFieldWindow = CreateBattleWindow(battleView, "Pet battle");
         battleFieldWindow.DpiChanged += (_, _) => battlePlacedScale = 0; // Re-place in pixels next frame.
         battleHudWindow = CreateBattleWindow(BuildBattleHud(), "Pet battle HUD");
         battleHudWindow.SizeToContent = SizeToContent.WidthAndHeight;
         battlePlacedScale = 0;
+        battleFrameClock = 0; battleFieldIdle = false; BattleFieldDraws = 0;
+        RequestBattleRedraw();
         battleFieldWindow.Show();
         battleHudWindow.Show();
         UpdateBattleWindows();
     }
 
-    private void UpdateBattleWindows()
+    private void UpdateBattleWindows(double dt = 0)
     {
         if (battle == null || battleFieldWindow == null || battleHudWindow == null || battleView == null) return;
         // A fullscreen app (game, video) gets a clean screen; the paused battle comes back after.
@@ -305,11 +334,12 @@ public sealed partial class PetWindow
             if (battleFieldWindow.IsVisible) { battleFieldWindow.Hide(); battleHudWindow.Hide(); }
             return;
         }
-        if (!battleFieldWindow.IsVisible) { battleFieldWindow.Show(); battleHudWindow.Show(); battlePlacedScale = 0; }
+        if (!battleFieldWindow.IsVisible) { battleFieldWindow.Show(); battleHudWindow.Show(); battlePlacedScale = 0; RequestBattleRedraw(); }
         var area = battleArea;
         if (battlePlacedScale != scale || battlePlacedArea != area)
         {
             battlePlacedScale = scale; battlePlacedArea = area;
+            RequestBattleRedraw();
             battleView.OriginX = area.Left;
             var handle = new WindowInteropHelper(battleFieldWindow).Handle;
             const uint NoZOrder = 0x0004, NoActivate = 0x0010;
@@ -319,8 +349,20 @@ public sealed partial class PetWindow
             const uint NoMove = 0x0002, NoSize = 0x0001;
             SetWindowPos(new WindowInteropHelper(this).Handle, new IntPtr(-1), 0, 0, 0, 0, NoMove | NoSize | NoActivate);
         }
-        battleView.InvalidateVisual();
-        UpdateBattleHud();
+        // Paused, or nothing on the floor (wave breaks): the strip is drawn once and left alone.
+        var b = battle;
+        bool moving = !b.Paused && (b.Slimes.Count > 0 || b.Effects.Count > 0 || b.Bombs.Count > 0);
+        battleFrameClock += dt;
+        bool due = battleFrameClock >= BattleFrameSeconds;
+        if (due) battleFrameClock = Math.Min(battleFrameClock - BattleFrameSeconds, BattleFrameSeconds);
+        if (battleRedraw || (moving && due) || (!moving && !battleFieldIdle))
+        {
+            battleView.InvalidateVisual();
+            BattleFieldDraws++;
+            battleFieldIdle = !moving;
+        }
+        if (battleRedraw || (due && !b.Paused)) UpdateBattleHud();
+        battleRedraw = false;
         double width = battleHudWindow.ActualWidth;
         MoveWindow(battleHudWindow, (area.Left + area.Right - width) / 2, area.Top + 12);
     }

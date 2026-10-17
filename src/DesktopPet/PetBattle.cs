@@ -391,18 +391,25 @@ public sealed class BattleSim
             }
             if (Over) break;
         }
-        slimes.RemoveAll(x => x.State == SlimeState.Defeated && x.StateTime >= s.DefeatDuration * (x.IsBoss ? 1.5 : 1));
+        // Plain loops here and below: this runs every frame, so no per-call lambdas or lists.
+        for (int i = slimes.Count - 1; i >= 0; i--)
+            if (slimes[i].State == SlimeState.Defeated && slimes[i].StateTime >= s.DefeatDuration * (slimes[i].IsBoss ? 1.5 : 1)) slimes.RemoveAt(i);
         Separate();
     }
 
     public double Windup(Slime slime) => !slime.IsBoss ? Settings.SlimeWindup : slime.Enraged ? Settings.BossEnragedWindup : Settings.BossWindup;
     private double Speed(Slime slime) => !slime.IsBoss ? Settings.SlimeSpeed : slime.Enraged ? Settings.BossEnragedSpeed : Settings.BossSpeed;
 
+    private readonly List<Slime> scratch = new();
+    private static readonly Comparison<Slime> ByX = (a, b) => a.X.CompareTo(b.X);
+
     // Slimes do not stack on one spot.
     private void Separate()
     {
-        var live = slimes.FindAll(x => x.State != SlimeState.Defeated);
-        live.Sort((a, b) => a.X.CompareTo(b.X));
+        var live = scratch;
+        live.Clear();
+        foreach (var slime in slimes) if (slime.State != SlimeState.Defeated) live.Add(slime);
+        live.Sort(ByX);
         for (int i = 1; i < live.Count; i++)
         {
             double gap = (live[i].Width + live[i - 1].Width) / 2 * 0.7;
@@ -621,6 +628,6 @@ public sealed class BattleSim
     private void StepEffects(double dt)
     {
         foreach (var e in effects) e.Age += dt;
-        effects.RemoveAll(e => e.Age >= e.Life);
+        for (int i = effects.Count - 1; i >= 0; i--) if (effects[i].Age >= effects[i].Life) effects.RemoveAt(i);
     }
 }

@@ -299,6 +299,7 @@ public sealed partial class PetWindow : Window
             TickCommands();
             TickContext(dt);
             TickLedges(dt);
+            TickBattleAutostart(dt);
             TickBattle(dt);
             pet.Activity.Step(pet.Action, dt);
             var cursor = CursorPosition();

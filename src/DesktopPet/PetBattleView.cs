@@ -39,8 +39,9 @@ public sealed class BattleFieldView : FrameworkElement
     {
         int? best = null;
         double bestDistance = double.MaxValue;
-        foreach (var slime in sim.Slimes)
+        for (int i = 0; i < sim.Slimes.Count; i++)
         {
+            var slime = sim.Slimes[i];
             if (!slime.Targetable) continue;
             double dx = Math.Abs(point.X - (slime.X - OriginX));
             if (dx > slime.Width / 2 + 10 || point.Y < Floor - slime.Height - 24 || point.Y > Floor + 4) continue;
@@ -68,7 +69,6 @@ public sealed class BattleFieldView : FrameworkElement
     private static readonly Brush BarBack = Frozen(200, 0x26, 0x23, 0x38);
     private static readonly Brush BarFill = Frozen(255, 0x6F, 0xE0, 0x6A);
     private static readonly Brush Warning = Frozen(255, 0xE5, 0x3E, 0x3E);
-    private static readonly Brush WarningZone = Frozen(70, 0xE5, 0x3E, 0x3E);
     private static readonly Brush PushBlue = Frozen(255, 0x5C, 0xC8, 0xFF);
     private static readonly Brush Yarn = Frozen(255, 0xE8, 0x7A, 0xB8);
     private static readonly Brush HealGreen = Frozen(255, 0x7C, 0xF0, 0x7A);
@@ -84,6 +84,7 @@ public sealed class BattleFieldView : FrameworkElement
     private static readonly Pen SparkPen = FrozenPen(Frozen(255, 0xFF, 0xE0, 0x6A), 3);
     private static readonly Pen WarningPen = FrozenPen(Warning, 4);
     private static readonly Pen WarningEdge = FrozenPen(Warning, 2.5, new DashStyle(new double[] { 3, 2 }, 0));
+    private static readonly Pen WarningFill = FrozenPen(Frozen(200, 0xE5, 0x3E, 0x3E), 3.5);
     private static readonly Pen YarnPen = FrozenPen(Frozen(255, 0xB0, 0x4A, 0x88), 1.6);
     private static readonly Pen BlastPen = FrozenPen(Frozen(255, 0xFF, 0x9E, 0x3D), 4);
     private static readonly Pen SlamPen = FrozenPen(Frozen(255, 0xC8, 0xB8, 0xF0), 4);
@@ -92,9 +93,10 @@ public sealed class BattleFieldView : FrameworkElement
     protected override void OnRender(DrawingContext dc)
     {
         double floor = Floor, time = sim.Time;
-        foreach (var bomb in sim.Bombs) DrawBomb(dc, bomb, bomb.X - OriginX, floor);
-        foreach (var slime in sim.Slimes) DrawSlime(dc, slime, slime.X - OriginX, floor, sim.Settings, time);
-        foreach (var effect in sim.Effects) DrawEffect(dc, effect, effect.X - OriginX, floor - effect.Height, floor);
+        // Index loops: foreach over IReadOnlyList boxes an enumerator every frame.
+        for (int i = 0; i < sim.Bombs.Count; i++) DrawBomb(dc, sim.Bombs[i], sim.Bombs[i].X - OriginX, floor);
+        for (int i = 0; i < sim.Slimes.Count; i++) DrawSlime(dc, sim.Slimes[i], sim.Slimes[i].X - OriginX, floor, sim.Settings, time);
+        for (int i = 0; i < sim.Effects.Count; i++) DrawEffect(dc, sim.Effects[i], sim.Effects[i].X - OriginX, floor - sim.Effects[i].Height, floor);
     }
 
     private void DrawSlime(DrawingContext dc, Slime slime, double x, double floor, BattleSettings s, double time)
@@ -130,8 +132,9 @@ public sealed class BattleFieldView : FrameworkElement
         if (slime.IsBoss && slime.State == SlimeState.Windup)
         {
             // The slam's reach on the floor, filling up as it comes: get out (or push, shield, lift).
+            // Outlines only: a filled zone would catch clicks meant for the apps below.
             double k = Math.Clamp(t / windup, 0, 1);
-            dc.DrawEllipse(WarningZone, null, new Point(x, floor - 4), slime.Range * k, 9 * k);
+            dc.DrawEllipse(null, WarningFill, new Point(x, floor - 4), Math.Max(1, slime.Range * k), Math.Max(1, 9 * k));
             dc.DrawEllipse(null, WarningEdge, new Point(x, floor - 4), slime.Range, 9);
         }
         if (targetable) dc.DrawEllipse(HitHalo, null, new Point(x, floor - h / 2), w / 2 + 10, h / 2 + 12);
@@ -144,8 +147,7 @@ public sealed class BattleFieldView : FrameworkElement
         if (sim.Armed is BattleSkill armed && targetable)
             dc.DrawEllipse(null, armed == BattleSkill.Bomb ? BombRing : PushRing, new Point(x, floor - h / 2), w / 2 + 7, h / 2 + 8);
         dc.PushOpacity(opacity);
-        dc.PushTransform(new TranslateTransform(x + jitter, floor));
-        dc.PushTransform(new ScaleTransform(sx * size, sy * size));
+        dc.PushTransform(new MatrixTransform(sx * size, 0, 0, sy * size, x + jitter, floor));
         double bw = s.SlimeWidth, bh = s.SlimeHeight;
         var body = Body(bw, bh);
         Brush baseFill = slime.IsBoss ? (slime.Enraged ? BossAngry : BossPurple) : SlimeGreen;
@@ -175,7 +177,7 @@ public sealed class BattleFieldView : FrameworkElement
             }
         }
         if (slime.IsBoss) dc.DrawGeometry(Gold, Outline, Crown);
-        dc.Pop(); dc.Pop();
+        dc.Pop();
         dc.Pop();
         double top = floor - h * sy - (slime.IsBoss ? 9 * size : 0);
         if (slime.State == SlimeState.Windup)
@@ -207,16 +209,18 @@ public sealed class BattleFieldView : FrameworkElement
         {
             // Bobbing yellow arrow: readable on light and dark desktops (white halo, dark outline).
             double y = top - 30 - (slime.State == SlimeState.Windup ? 14 : 0) + Math.Sin(time * 4) * 3;
-            var arrow = new StreamGeometry();
-            using (var c = arrow.Open())
-            {
-                c.BeginFigure(new Point(x - 8, y - 9), true, true);
-                c.LineTo(new Point(x + 8, y - 9), true, false);
-                c.LineTo(new Point(x, y + 2), true, false);
-            }
-            dc.DrawGeometry(null, Halo, arrow);
-            dc.DrawGeometry(Marker, Ink, arrow);
+            dc.PushTransform(new TranslateTransform(x, y));
+            dc.DrawGeometry(null, Halo, Arrow);
+            dc.DrawGeometry(Marker, Ink, Arrow);
+            dc.Pop();
         }
+    }
+
+    private static readonly Geometry Arrow = CreateArrow();
+    private static Geometry CreateArrow()
+    {
+        var g = Geometry.Parse("M -8,-9 L 8,-9 L 0,2 Z");
+        g.Freeze(); return g;
     }
 
     // A small crown on the boss's head (body coordinates, before the boss's scale).
@@ -239,11 +243,29 @@ public sealed class BattleFieldView : FrameworkElement
         dc.DrawLine(YarnPen, new Point(ball.X - 7, ball.Y + 2), new Point(ball.X + 2, ball.Y - 8));
     }
 
+    // The windup's colour shift toward orange, in 16 frozen steps per base colour.
+    private static readonly System.Collections.Generic.Dictionary<(Brush, int), Brush> BlendSteps = new();
     private static Brush Blend(Brush from, double k)
     {
-        k = Math.Clamp(k, 0, 1);
+        int step = (int)Math.Round(Math.Clamp(k, 0, 1) * 15);
+        if (BlendSteps.TryGetValue((from, step), out var cached)) return cached;
+        double f = step / 15.0;
         Color a = ((SolidColorBrush)from).Color, b = ((SolidColorBrush)SlimeAngry).Color;
-        return new SolidColorBrush(Color.FromRgb((byte)(a.R + (b.R - a.R) * k), (byte)(a.G + (b.G - a.G) * k), (byte)(a.B + (b.B - a.B) * k)));
+        var brush = new SolidColorBrush(Color.FromRgb((byte)(a.R + (b.R - a.R) * f), (byte)(a.G + (b.G - a.G) * f), (byte)(a.B + (b.B - a.B) * f)));
+        brush.Freeze();
+        return BlendSteps[(from, step)] = brush;
+    }
+
+    // Floating numbers are few and repeat ("25", "+25"...): their outlines are built once.
+    private static readonly System.Collections.Generic.Dictionary<string, (Geometry Shape, double Width, double Height)> Numbers = new();
+    private static (Geometry Shape, double Width, double Height) NumberShape(string text, bool heal)
+    {
+        if (Numbers.TryGetValue(text, out var cached)) return cached;
+        var formatted = new FormattedText(text, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, NumberFont, heal ? 18 : 16, Brushes.White, 1);
+        var geometry = formatted.BuildGeometry(new Point(0, 0));
+        geometry.Freeze();
+        if (Numbers.Count > 64) Numbers.Clear();
+        return Numbers[text] = (geometry, formatted.Width, formatted.Height);
     }
 
     private static Geometry? body;
@@ -321,10 +343,11 @@ public sealed class BattleFieldView : FrameworkElement
                 // Damage numbers rise from the slime; heals (+HP, green) rise over the cat.
                 bool heal = effect.Value < 0;
                 string text = heal ? "+" + (-effect.Value).ToString("0", CultureInfo.InvariantCulture) : effect.Value.ToString("0", CultureInfo.InvariantCulture);
-                var formatted = new FormattedText(text, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, NumberFont, heal ? 18 : 16, Brushes.White, 1);
-                var geometry = formatted.BuildGeometry(new Point(x - formatted.Width / 2, y - 26 * k - formatted.Height));
-                dc.DrawGeometry(null, TextHalo, geometry);
-                dc.DrawGeometry(heal ? HealGreen : DamageWhite, null, geometry);
+                var (shape, width, height) = NumberShape(text, heal);
+                dc.PushTransform(new TranslateTransform(x - width / 2, y - 26 * k - height));
+                dc.DrawGeometry(null, TextHalo, shape);
+                dc.DrawGeometry(heal ? HealGreen : DamageWhite, null, shape);
+                dc.Pop();
                 break;
         }
         dc.Pop();

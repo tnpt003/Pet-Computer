@@ -206,6 +206,15 @@ internal static class BattleChecks
         double time = Sim().Time, hp = Sim().CatHp;
         Tick(3);
         check(Sim().Time == time && Sim().CatHp == hp && pet.VX == 0 && pet.Action == PetAction.Idle, "Paused: no time, no damage, the cat stands still");
+        int drawsPaused = window.BattleFieldDraws;
+        Tick(2);
+        check(window.BattleFieldDraws == drawsPaused, $"Paused: the field is not redrawn ({window.BattleFieldDraws - drawsPaused} draws in 2 s)");
+        window.SetBattlePaused(false);
+        int drawsRunning = window.BattleFieldDraws;
+        Tick(2);
+        int perSecond = (window.BattleFieldDraws - drawsRunning) / 2;
+        check(Sim().Slimes.Count > 0 && perSecond >= 25 && perSecond <= 32, $"While slimes move the field redraws ~30 times a second, not 60 ({perSecond}/s)");
+        window.SetBattlePaused(true);
         window.ContextMenu!.IsOpen = true;
         window.ContextMenu.IsOpen = false;
         await Task.Delay(20);

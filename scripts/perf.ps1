@@ -3,8 +3,19 @@
 # separate data and closes it afterwards. Do the activity to measure while it runs
 # (idle, sleep, fast drags, laser...) and pass -Label to name the run.
 #   powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\perf.ps1 -Minutes 5 -Label idle
-param([double]$Minutes = 3, [string]$Label = 'run', [double]$Interval = 1)
+#   -Battle run|paused: start a separate pet that keeps a Battle Mode fight running (or paused);
+#   the user's pet must be closed first (one pet per session).
+param([double]$Minutes = 3, [string]$Label = 'run', [double]$Interval = 1, [ValidateSet('', 'run', 'paused')][string]$Battle = '')
 $ErrorActionPreference = 'Stop'
+if ($Battle -and (Get-Process DesktopPet -ErrorAction SilentlyContinue)) {
+    throw 'A pet is running: close it first, then measure the battle with a separate pet.'
+}
+$savedAutostart = $env:PET_BATTLE_AUTOSTART
+$savedProbe = $env:PET_CONTEXT_PROBE
+if ($Battle) {
+    $env:PET_BATTLE_AUTOSTART = $Battle
+    $env:PET_CONTEXT_PROBE = 'off' # A fullscreen app or an idle machine must not pause the measured fight.
+}
 $projectRoot = Split-Path $PSScriptRoot -Parent
 $output = Join-Path $projectRoot 'artifacts\win-x64'
 $exe = Join-Path $output 'DesktopPet.exe'
@@ -73,6 +84,8 @@ try {
         if (-not $pet.WaitForExit(5000)) { $pet.Kill() }
         $env:PET_DATA_DIRECTORY = $savedData
     }
+    $env:PET_BATTLE_AUTOSTART = $savedAutostart
+    $env:PET_CONTEXT_PROBE = $savedProbe
 }
 
 # CPU is the share of the whole machine (all cores = 100%).

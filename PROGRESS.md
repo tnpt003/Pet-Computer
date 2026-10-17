@@ -4,7 +4,16 @@ Cập nhật: 2026-10-16 (Asia/Saigon).
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
-## Kết quả test gần nhất (2026-10-17, Battle Mode đợt 3: HUD kiểu game, 5 kỹ năng, boss)
+## Kết quả test gần nhất (2026-10-17, Battle Mode đợt 4: tối ưu vẽ)
+- scripts/test.ps1 -Ui: 54 Python tests, 489 C# checks, 272 WPF checks (thêm 2: tạm dừng không vẽ lại; khi đánh vẽ 30 lần/giây) đạt.
+- Đo bằng scripts/perf.ps1 -Battle (mèo riêng, dữ liệu riêng, tự vào trận; CPU tính trên toàn máy, mẫu 2 s), bản publish trước/sau:
+  - Đang đánh (2.5 phút): CPU TB 1.27% → 0.75% (−41%), p95 2.48% → 1.40%, max 2.69% → 1.95%.
+  - Trận tạm dừng (1.5 phút): CPU TB 0.51% → 0.54% (như nhau, trong mức nhiễu), p95 1.12% → 0.88%. Phần lớn chi phí lúc dừng là vòng 60 FPS của chính con mèo, không phải trận.
+  - RAM (private): chưa kết luận được (lúc đánh 132→144 MB trước, 184→196 MB sau nhưng mốc đầu khác nhau; max 216 vs 218). Lần đo "trước" chạy chồng một phần với UiChecks nên có thể hơi lệch.
+- Đã xem ảnh: HUD không còn bóng đổ vẫn đọc rõ; vùng đỏ boss chỉ còn nét viền. Ảnh mèo (Pet Mode) không đổi.
+- Publish + check-publish: xem dòng dưới.
+
+## Kết quả test đợt Battle Mode 3: HUD kiểu game, 5 kỹ năng, boss (2026-10-17)
 - scripts/test.ps1 -Ui: 54 Python tests, 489 C# checks (thêm 26: BattleSkillTests cho 5 kỹ năng + boss), 270 WPF checks (thêm 11: HUD, kỹ năng qua ô HUD, hiệu ứng trên mèo, boss trên chiến trường) đạt. Publish + check-publish đạt (3/3); đóng mèo người dùng bằng WM_CLOSE, mở lại bản mới lúc 08:00.
 - So pixel 1338 ảnh mốc: 1333 giống từng byte (Pet Mode không đổi); khác menu (từ đợt MVP) và 2 ảnh speech không ổn định. Đã xem ảnh: HUD (đợt thường + boss), boss đang gồng trên nền tối, khiên + lấp lánh trên mèo; check mép đạt cho khiên/lấp lánh (cả khi bị kéo).
 - Chưa đo hiệu năng khi có trận (perf.ps1 không tự bật trận được); chưa nghe/chơi thật.
@@ -116,6 +125,12 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Lịch sử: 201 C#/107 WPF/20 Python (motion, 2026-10-08); 181/101/20 (features). Không dùng số liệu cũ thay kết quả hiện tại.
 
 ## Đã làm gần đây
+- 2026-10-17 Battle Mode đợt 4, tối ưu (người dùng: "yes làm đi" cho 1→2→3a+3b→4→5→7):
+  - Đo được: PET_BATTLE_AUTOSTART=run|paused (chỉ để đo; bình thường không bao giờ tự vào trận) + scripts/perf.ps1 -Battle run|paused (từ chối nếu mèo người dùng đang chạy, tắt context probe để fullscreen/idle không dừng trận).
+  - Dải sàn + HUD: vẽ lại tối đa 30 lần/giây và chỉ khi có thứ đang chuyển động (slime, hiệu ứng, bom); trận dừng hoặc sàn trống giữa đợt chỉ vẽ 1 lần; click/pause/đổi vị trí xin vẽ ngay (RequestBattleRedraw). Mèo vẫn 60 FPS. Có bộ đếm BattleFieldDraws cho test.
+  - Bớt cấp phát mỗi khung: vòng for thay foreach qua IReadOnlyList, bỏ lambda/FindAll trong BattleSim, MatrixTransform 1 lần thay 2 transform, cache hình số sát thương, mũi tên marker, màu gồng (16 bậc); HUD chỉ dựng lại chuỗi khi giá trị đổi.
+  - Bỏ DropShadowEffect trên HUD (gốc, số HP, banner, số giây ô kỹ năng).
+  - Vùng cảnh báo của boss chỉ còn nét viền (không tô) nên không chặn click xuống app bên dưới.
 - 2026-10-17 Battle Mode đợt 3 (người dùng: HUD giống game hơn, thêm kỹ năng, thêm boss; chọn HUD giữa trên, cả 5 kỹ năng, boss ở đợt cuối):
   - PetBattle.cs: BattleSkill (Push, Heal, Cheer, Bomb, Shield) với cooldown riêng, Arm/Use (kỹ năng ngắm: Push, Bomb); Cheer (5 s, tốc độ ×1.6, sát thương ×1.4), Shield (3 s chặn đòn), Bomb (rơi 0.5 s, 30 sát thương bán kính 70), Heal (+25, đầy máu thì không tốn). Slime có Width/Height/Damage/Range riêng; Vua Slime ở đợt cuối (Settings.Boss, 400 HP, gấp đôi, dậm đất 25 trong 110 DIP, gồng 1.2 s, gọi 2 slime khi < 50%, nổi giận khi < 30%, Đẩy ×0.35, choáng ×0.4). Hiệu ứng số sát thương/hồi máu, nổ, sóng dậm.
   - PetBattleHud.cs (mới): HUD kiểu game: chân dung mèo (PetRenderer tĩnh), thanh HP 3 màu + vệt mất máu, chấm đợt + vương miện, thanh máu boss, banner, 5 ô kỹ năng với vòng quét hồi chiêu/số giây/tooltip, nút Tạm dừng/Kết thúc dạng icon. Icon vẽ vector, không font/asset.
@@ -243,6 +258,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 
 ## Đang dở và việc tiếp theo
 - Battle Mode: cần người dùng đi mục "Chế độ chiến đấu" trong docs/MANUAL-TEST.md (click xuyên, focus, DPI, cảm giác chơi) rồi chỉnh cân bằng trong BattleSettings. Hạn chế MVP: chỉ một loại slime, một màn hình, chỉ dọc sàn; không boss/phần thưởng/lưu tiến độ; đang trận thì Python không nhận quan sát (needs/nhật ký không cập nhật trong trận); HUD luôn ở giữa phía trên, có thể che app phía trên. Mèo đang trên cửa sổ phải xuống sàn mới bắt đầu được.
+- Battle Mode, tối ưu chưa làm: thu dải sàn chỉ ôm vùng có slime (3c); HUD cập nhật 15 lần/giây (6). Số đo hiện tại chưa cho thấy cần.
 - Battle Mode, đề xuất chưa làm (2026-10-17): giữ chiến trường cố định khi mèo bị ném sang màn hình khác (dừng chờ hoặc chặn chỗ rơi); combo nhát thứ 3; slime loại 2 (nhỏ nhanh/to chậm); kỹ năng thứ 2 (Cổ vũ hoặc Cá hồi máu); chọn độ khó Dễ/Thường/Khó; báo kết quả trận cho Python để ghi nhật ký + câu nói (đổi IPC, cần duyệt); kỷ lục cá nhân trong Nhật ký; giảm vẽ lại dải sàn khi trận dừng (đo perf.ps1 trước); HUD kéo được hoặc né con trỏ.
 - Lộ trình dài hạn (đề xuất 2026-10-16): GĐ1 ổn định (RAM, log, gom luật trạng thái, checklist test tay) → GĐ2 nội dung dạng dữ liệu (bộ lông/phụ kiện/câu thoại/sự kiện mùa/lịch sinh hoạt ra JSON, có thể làm gói mod) → GĐ3 chiều sâu dài hạn (quan hệ phát triển, ngữ cảnh máy tôn trọng riêng tư, LLM opt-in nếu người dùng đổi quy tắc, nhiều mèo). Song song nếu muốn chia sẻ: installer/MSIX, tự cập nhật, ký code, GitHub Releases/winget, giảm dung lượng.
 - GĐ2 đã xong 2a/2b/2c. Còn: Bảng ngày Tết/Trung thu chỉ tới 2035, cần nối thêm. Ngày kỷ niệm đầu tiên của người dùng là 2026-10-13 → lần đầu thấy được 2027-10-13. Ý tưởng chưa làm: 8/3, 20/10, Tết dương lịch.

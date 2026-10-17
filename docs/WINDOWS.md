@@ -601,6 +601,14 @@ shows no panel. After each wave except the last the cat gets 15 HP back (`WaveHe
   (plus an invisible 1-alpha halo for easier clicking) take clicks. The pet window stays above
   the strip. If the work area changes or the cat lands on another monitor, the field moves there
   and slimes keep their relative positions; the strip is placed in device pixels with the pet's DPI.
+- **Drawing cost**: the strip and HUD redraw at most 30 times a second and only while something
+  moves (slimes, effects, a falling bomb); a paused battle or an empty floor between waves is drawn
+  once and left alone, and a click/pause/move asks for one redraw at once. The pet itself keeps its
+  60 FPS. No drop-shadow effects on the HUD (on a layered window they are re-rasterized whenever
+  anything under them changes); floating numbers, the marker arrow and windup colours are cached.
+  The boss's slam zone is drawn as outlines only, so it never blocks clicks to the apps below.
+- **Measuring**: `scripts\perf.ps1 -Battle run` (or `paused`) starts a separate pet that keeps a
+  battle going (`PET_BATTLE_AUTOSTART`, measurement only; the user's pet must be closed first).
 - **Tuning**: every number (HP, damage, speeds, reach, cooldowns, windup, waves, max slimes, spawn
   interval, breaks, protection time, push) is in `BattleSettings` (`src/DesktopPet/PetBattle.cs`).
 - **Code**: `PetBattle.cs` (simulation, no WPF: tested in `tests/DesktopPet.Tests/BattleTests.cs`),

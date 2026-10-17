@@ -25,6 +25,21 @@ public sealed class PetEmotions
     // off and the chosen emotion is held until changed. Session only, never saved.
     public bool ManualMode { get; private set; }
     public PetEmotion ManualEmotion { get; private set; }
+    // Battle Mode: the fight owns the pet, so no automatic emotion (sleepy, sad, angry at
+    // clicks, petting) may start; dizziness while dragged still shows. Session only.
+    public bool Suspended { get; private set; }
+    public void SetSuspended(bool on)
+    {
+        if (on == Suspended) return;
+        Suspended = on;
+        transient = aiHint = PetEmotion.Neutral;
+        transientUntil = now;
+        clicks.Clear();
+        pettingTime = 0;
+        PettingLean = 0;
+        // Leaving: restart the attention clocks so a long battle does not make the pet sad or sleepy at once.
+        if (!on) { lastAttention = now; UserTouched(); }
+    }
     public static bool CanPerform(PetEmotion emotion) =>
         emotion is PetEmotion.Neutral or PetEmotion.Happy or PetEmotion.Angry or PetEmotion.Sad or PetEmotion.Surprised;
     // What Python sees: a performed emotion is not a real reaction, so it must not teach
@@ -107,7 +122,7 @@ public sealed class PetEmotions
         lastAttention = now;
         UserTouched();
         aiHint = PetEmotion.Neutral;
-        if (ManualMode) return;
+        if (ManualMode || Suspended) return;
         if (click)
         {
             while (clicks.Count > 0 && now - clicks.Peek() > 2) clicks.Dequeue();
@@ -128,7 +143,7 @@ public sealed class PetEmotions
         lastAttention = now;
         UserTouched();
         aiHint = PetEmotion.Neutral;
-        if (ManualMode || now < angryAfter) return;
+        if (ManualMode || Suspended || now < angryAfter) return;
         SetTransient(PetEmotion.Angry, 4);
         angryAfter = now + 6;
     }
@@ -183,7 +198,7 @@ public sealed class PetEmotions
         }
         bool petted = false;
         PettingLean *= Math.Exp(-dt * 3);
-        bool busy = pet.TreatRemaining > 0 || pet.Action is PetAction.Dragging or PetAction.Waking or PetAction.Climbing || PetActionRules.IsInFlight(pet.Action);
+        bool busy = Suspended || pet.TreatRemaining > 0 || pet.Action is PetAction.Dragging or PetAction.Waking or PetAction.Climbing || PetActionRules.IsInFlight(pet.Action);
         if (busy) PettingLean = 0;
         if (cursorX.HasValue && cursorY.HasValue)
         {

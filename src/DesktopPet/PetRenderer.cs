@@ -102,6 +102,9 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         public double GestureTime, GestureBlend, Roll, AngryBlend, SneezeTilt, SneezeLift;
         public bool Walking, Sleeping, Waking, PickedUp, Airborne, Seeking, Eating, Grooming, Climbing;
         public PetEmotion Emotion;
+        // Battle Mode: the wooden sword's grip (front paw) and angle (degrees from upright, toward the front).
+        public bool Sword;
+        public double SwordAngle, GripX, GripY;
     }
 
     protected override void OnRender(DrawingContext dc)
@@ -119,6 +122,7 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
             DrawDizzyOrbit(dc, p);
             dc.Pop();
         }
+        else if (pet.BattleDazed) DrawDizzyOrbit(dc, p); // Lost the battle: seeing stars, nothing worse.
         DrawOverlays(dc, p);
         dc.Pop(); // Permanent transparent margin, identical for every state.
     }
@@ -203,7 +207,78 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         p.ScaleX = 1 + selfStretch * 0.045 + preparation * 0.04 + impact * 0.045 - flight * 0.3;
         p.ScaleY = 1 + stretch + selfStretch * 0.12 - playCrouch * 0.07 - preparation * 0.09 + flight - impact * 0.09;
         if (p.Climbing) { p.ScaleX *= 0.95; p.ScaleY *= 1.06; } // Stretched long up the wall.
+        if (pet.SwordOut) PoseSword(ref p);
         return p;
+    }
+
+    // Swing keyframes (progress, angle): wind up over the head, slash down in front, recover.
+    private static readonly (double At, double Angle)[] SwingKeys = { (0, 30), (0.35, -25), (0.5, 125), (0.62, 120), (1, 30) };
+
+    private void PoseSword(ref Pose p)
+    {
+        p.Sword = true;
+        double angle = 30 + p.Stride * 0.7, gripX = 80, gripY = 88 + 6 * p.RestBlend;
+        if (p.Airborne) angle = 10;
+        double swing = pet.SwordSwing;
+        if (swing >= 0)
+        {
+            for (int i = 1; i < SwingKeys.Length; i++)
+            {
+                if (swing > SwingKeys[i].At && i < SwingKeys.Length - 1) continue;
+                double k = Math.Clamp((swing - SwingKeys[i - 1].At) / (SwingKeys[i].At - SwingKeys[i - 1].At), 0, 1);
+                k = k * k * (3 - 2 * k);
+                angle = SwingKeys[i - 1].Angle + (SwingKeys[i].Angle - SwingKeys[i - 1].Angle) * k;
+                break;
+            }
+        }
+        if (pet.BattleCheer) { angle = -5 + Math.Sin(p.Time * 6) * 6; gripX = 84; gripY = 68; p.Bob -= Math.Abs(Math.Sin(p.Time * 6)) * 4; }
+        if (pet.BattleDazed) { angle = 115; gripY = 97; p.Dizzy = 0.7; }
+        if (pet.BattleHurt > 0 && !p.PickedUp) p.Shake += Math.Sin(p.Time * 45) * 2.2 * Math.Min(1, pet.BattleHurt / 0.35);
+        if (p.PickedUp)
+        {
+            // Dangling forward from the paw, inside the window margin at any swing angle.
+            double blend = p.PickupBlend;
+            angle += (100 - angle) * blend; gripX += (72 - gripX) * blend; gripY += (92 - gripY) * blend;
+        }
+        p.SwordAngle = angle; p.GripX = gripX; p.GripY = gripY;
+    }
+
+    private static readonly Brush SwordWood = Frozen("#E8C48A");
+    private static readonly Brush SwordHandle = Frozen("#8A5A3B");
+    private static readonly Pen SwordPen = FrozenPen(EffectInk, 1.8, PenLineJoin.Round);
+    private static readonly Pen SwordGrainPen = FrozenPen(Frozen("#C79A5B"), 1.2);
+    private static readonly Pen SwooshPen = FrozenPen(Frozen("#B0FFFFFF"), 5, PenLineJoin.Round, true);
+    private static readonly Geometry SwordBlade = CachedGeometry("M -3.2,-8 L 3.2,-8 L 3.2,-33 L 0,-38.5 L -3.2,-33 Z");
+    private static readonly Geometry SwordGuard = CachedGeometry("M -8,-9 L 8,-9 L 8,-4.5 L -8,-4.5 Z");
+    private static readonly Geometry SwordGrip = CachedGeometry("M -2.2,-4.5 L 2.2,-4.5 L 2.2,6 L -2.2,6 Z");
+
+    // A toy wooden sword held in the front paw (inside the facing flip, so it turns with the cat).
+    private void DrawSword(DrawingContext dc, in Pose p)
+    {
+        double swing = pet.SwordSwing;
+        if (swing > 0.36 && swing < 0.7 && !p.PickedUp)
+        {
+            // A soft swoosh along the slash.
+            double fade = 1 - Math.Abs(swing - 0.5) / 0.2;
+            var arc = new StreamGeometry();
+            using (var context = arc.Open())
+            {
+                double a0 = -20 * Math.PI / 180, a1 = Math.Min(p.SwordAngle, 125) * Math.PI / 180;
+                context.BeginFigure(new Point(p.GripX + Math.Sin(a0) * 34, p.GripY - Math.Cos(a0) * 34), false, false);
+                context.ArcTo(new Point(p.GripX + Math.Sin(a1) * 34, p.GripY - Math.Cos(a1) * 34), new Size(34, 34), 0, false, SweepDirection.Clockwise, true, false);
+            }
+            dc.PushOpacity(Math.Clamp(fade, 0, 1));
+            dc.DrawGeometry(null, SwooshPen, arc);
+            dc.Pop();
+        }
+        dc.PushTransform(new TranslateTransform(p.GripX, p.GripY));
+        dc.PushTransform(new RotateTransform(p.SwordAngle));
+        dc.DrawGeometry(SwordHandle, SwordPen, SwordGrip);
+        dc.DrawGeometry(SwordWood, SwordPen, SwordBlade);
+        dc.DrawLine(SwordGrainPen, new Point(0, -12), new Point(0, -31));
+        dc.DrawGeometry(SwordHandle, SwordPen, SwordGuard);
+        dc.Pop(); dc.Pop();
+        Oval(dc, Fur, p.GripX, p.GripY, 5.5, 5); // The paw around the grip.
     }
 
     // Body and head share the facing, bob/shake and squash transforms.
@@ -223,7 +298,11 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         // so the head just touches the edge while the paws hook over it.
         if (p.Climbing) dc.PushTransform(ClimbLean);
         DrawBody(dc, p);
+        // Raised high (wind-up, cheering) the sword passes behind the head instead of over the face.
+        bool swordBehind = p.Sword && p.SwordAngle < 15;
+        if (swordBehind) DrawSword(dc, p);
         DrawHead(dc, p);
+        if (p.Sword && !swordBehind) DrawSword(dc, p);
         if (p.Climbing) { DrawClimbingPaws(dc, p); dc.Pop(); }
         dc.Pop();
         dc.Pop();
@@ -556,7 +635,7 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         dc.DrawGeometry(null, OrbitPen, orbit);
         for (int i = 0; i < 3; i++)
         {
-            double phase = pet.Pickup.Time * (2 + dizzy * 2) + i * Math.PI * 2 / 3;
+            double phase = (p.PickedUp ? pet.Pickup.Time : p.Time) * (2 + dizzy * 2) + i * Math.PI * 2 / 3;
             double x = 55 + Math.Cos(phase) * 37;
             double y = 6 + Math.Sin(phase) * 9;
             double radius = 3.5 + dizzy * 2;
@@ -612,6 +691,22 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
             dc.Pop();
         }
         if (p.Eating) DrawTreat(dc, p);
+        if (pet.BattleHurt > 0 && !p.PickedUp)
+        {
+            // Bonk: a short cartoon impact burst beside the head.
+            double k = Math.Min(1, pet.BattleHurt / 0.35);
+            dc.PushOpacity(k);
+            for (int i = 0; i < 5; i++)
+            {
+                double a = (i * 72 + 18) * Math.PI / 180, r0 = 5 + (1 - k) * 4, r1 = 11 + (1 - k) * 6;
+                var from = new Point(92 + Math.Cos(a) * r0, 30 + Math.Sin(a) * r0);
+                var to = new Point(92 + Math.Cos(a) * r1, 30 + Math.Sin(a) * r1);
+                dc.DrawLine(EffectHalo, from, to);
+                dc.DrawLine(EffectBorder, from, to);
+                dc.DrawLine(SurprisePen, from, to);
+            }
+            dc.Pop();
+        }
         if (p.Gesture == PetAction.Sneezing && p.GestureTime > 0.38 && p.GestureTime < 0.95) DrawSneezePuff(dc, p);
         if (pet.Thought.Visible && !p.PickedUp && !p.Sleeping && !p.Airborne) DrawThoughtBubble(dc);
     }

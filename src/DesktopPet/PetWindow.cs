@@ -153,6 +153,7 @@ public sealed partial class PetWindow : Window
 
     public void Reset()
     {
+        EndBattle();
         CancelFeatureActivity();
         bool keepSleeping = pet.Emotions.SleepLocked || pet.Action == PetAction.Sleeping;
         Interact("reset");
@@ -264,7 +265,8 @@ public sealed partial class PetWindow : Window
         (pet.VX, pet.VY) = throwPet && !paused ? tracker.Velocity(settings.MaxThrowSpeed) : (0.0, 0.0);
         if (throwPet && !paused)
         {
-            if (Math.Sqrt(pet.VX * pet.VX + pet.VY * pet.VY) >= 1600) { pet.Emotions.AggressiveInteraction(); pet.Interactions.RoughThrow(); }
+            // A rescue throw in Battle Mode is not rough handling (no anger, no bond penalty).
+            if (Math.Sqrt(pet.VX * pet.VX + pet.VY * pet.VY) >= 1600 && !BattleActive) { pet.Emotions.AggressiveInteraction(); pet.Interactions.RoughThrow(); }
             else pet.Emotions.Attention();
         }
         pet.Action = PetAction.Thrown;
@@ -297,6 +299,7 @@ public sealed partial class PetWindow : Window
             TickCommands();
             TickContext(dt);
             TickLedges(dt);
+            TickBattle(dt);
             pet.Activity.Step(pet.Action, dt);
             var cursor = CursorPosition();
             // During the laser game the cursor is the toy: no petting strokes or startles from it.
@@ -326,7 +329,8 @@ public sealed partial class PetWindow : Window
                 while (accumulator >= PhysicsStep)
                 {
                     previousX = pet.X; previousY = pet.Y;
-                    if (!FeatureOwnsMovement()) behavior.Step(pet, PhysicsStep, cursorX);
+                    // Battle Mode owns the pet: no random actions, sleep or AI moves (PetWindow.Battle.cs).
+                    if (!FeatureOwnsMovement() && !BattleActive) behavior.Step(pet, PhysicsStep, cursorX);
                     physics.Step(pet, bounds, PhysicsStep, ledges, FeatureOwnsMovement());
                     accumulator -= PhysicsStep;
                 }
@@ -383,6 +387,7 @@ public sealed partial class PetWindow : Window
                 $"Learned dislikes: {(aiLearned is { Dislikes.Length: > 0 } ? string.Join("; ", aiLearned.Dislikes) : "nothing yet")}\n" +
                 $"Windows: {(!LedgesEnabled ? "off" : pet.Action == PetAction.Climbing ? "climbing" : OnLedge ? "on a window" : "floor")}, {ledges.Count} ledges{(climbPlan != null ? ", going to climb" : ledgeExit != 0 ? ", leaving" : "")}\n" +
                 $"Context: {(context.Fullscreen ? "fullscreen app (quiet)" : "normal")}, {(context.Away ? "user away" : "user here")}, idle {context.IdleSeconds:F0} s{(behavior.HoldSleep ? ", away nap" : "")}\n" +
+                $"Battle: {(battle == null ? "off" : $"{battle.Phase}, wave {battle.Wave}/{battle.WaveCount}, HP {battle.CatHp:F0}, slimes {battle.Alive}{(battle.Paused ? ", paused" : "")}")}\n" +
                 $"Break reminder: {(breaks.Enabled ? $"{breaks.ActiveSeconds / 60:F1} / {breaks.IntervalSeconds / 60:F0} min active{(breaks.Due ? " (due)" : "")}" : "off")}\n" +
                 $"Frame: {measuredFps:F0} fps (max gap {measuredMaxGap * 1000:F0} ms)\n{MemoryStatus()}\n{AiStatus}";
         }
@@ -458,7 +463,8 @@ public sealed partial class PetWindow : Window
 
     private async void RequestDecision()
     {
-        if (aiBusy || ai == null || closed || paused || dragging || pressPending) return;
+        // No requests during a battle: Python never drives the fight.
+        if (aiBusy || ai == null || closed || paused || dragging || pressPending || BattleActive) return;
         aiBusy = true;
         var source = ai;
         long requestedRevision = revision;
@@ -486,9 +492,9 @@ public sealed partial class PetWindow : Window
             // Words are presentation only, so a reply discarded for revision (e.g. the
             // user petted the cat meanwhile) may still speak; PetSpeech enforces safety.
             // A line chosen before a language change is dropped (the data above is still kept).
-            if (decision.Speech != null && !paused && clock.Elapsed.TotalSeconds - requestedAt < 2.5 &&
+            if (decision.Speech != null && !paused && !BattleActive && clock.Elapsed.TotalSeconds - requestedAt < 2.5 &&
                 requestedLanguage == preferences.Language) ShowSpeech(decision.Speech);
-            if (!pressPending && DecisionGuard.CanApply(requestedRevision, revision, clock.Elapsed.TotalSeconds - requestedAt, paused, pet))
+            if (!pressPending && !BattleActive && DecisionGuard.CanApply(requestedRevision, revision, clock.Elapsed.TotalSeconds - requestedAt, paused, pet))
             {
                 aiEnergy = decision.Energy;
                 pet.Emotions.ApplyAiHint(decision.Emotion);

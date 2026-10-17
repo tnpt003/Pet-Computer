@@ -684,6 +684,7 @@ internal static class Program
         ContextChecks(window, pet, behavior, preferences);
         LifeChecks(window, pet, preferences);
         LedgeChecks.Run(window, pet, behavior, preferences, Check);
+        await BattleChecks.Run(window, pet, behavior, preferences, Check);
         window.ShowControls();
         Check(window.ContextMenu!.IsOpen, "Existing pet controls can be opened by a second launch notification");
         window.ContextMenu.IsOpen = false;
@@ -724,8 +725,12 @@ internal static class Program
         window.SetManualEmotions(false);
         Check(!pet.Emotions.ManualMode && pet.Emotions.ManualEmotion == PetEmotion.Neutral, "Turning the switch off returns to automatic emotions");
         preferences.Quiet = originalQuiet; behavior.Quiet = originalQuiet;
+        window.Reset();
+        bool battleAtExit = window.StartBattle() == null;
         window.Close();
         Check(ai.Disposed && !window.IsVisible, "Window/AI shutdown releases the decision source and hides the pet");
+        Check(battleAtExit && !window.BattleActive && Application.Current.Windows.OfType<Window>().All(w => !w.Title.StartsWith("Pet battle") || !w.IsVisible),
+            "Closing the pet during a battle closes the battle windows too");
     }
 
     private static void ContextChecks(PetWindow window, PetModel pet, PetBehavior behavior, PetPreferences preferences)

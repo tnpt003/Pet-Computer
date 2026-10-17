@@ -74,6 +74,7 @@ ManualControlTests.Run(Check);
 LaserTests.Run(Check);
 LedgeTests.Run(Check);
 CombinationTests.Run(Check);
+BattleTests.Run(Check);
 var activity = new PetActivity();
 activity.Step(PetAction.Walking, 2);
 activity.Step(PetAction.Jumping, 1);

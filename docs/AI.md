@@ -577,3 +577,13 @@ Quiet mode may cancel preparation. PetMotion.cs contains no AI policy or physics
 | New decision field | Meaning |
 |---|---|
 | `special_day` | Today's event id (e.g. `christmas`), only on special days. C# uses it just to pick the accessory whose `event` matches in `Assets/accessories.json` (if Dress up for holidays is on); an invalid value is ignored |
+
+## Battle Mode (2026-10-16)
+
+Battle Mode is C# only (`BattleSim`): enemies, targeting, damage, cooldowns, waves and the
+push skill never go through Python, and it runs the same with Python off or crashed. While a
+battle runs C# sends no observations (so Python never sees battle states and `BUSY_STATES` is
+unchanged), does not apply commands, emotion hints, thoughts or speech, and bumps the decision
+revision when the battle starts and ends so a reply requested before it is dropped by
+`DecisionGuard`. Rescue throws during a battle are not counted as rough handling. Normal
+requests resume on the next behavior tick after the battle.

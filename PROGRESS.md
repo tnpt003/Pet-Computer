@@ -4,7 +4,15 @@ Cập nhật: 2026-10-16 (Asia/Saigon).
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
-## Kết quả test gần nhất (2026-10-16, giai đoạn 2c: phụ kiện dạng dữ liệu + đồ ngày lễ)
+## Kết quả test gần nhất (2026-10-16, Battle Mode MVP)
+- Baseline trước khi sửa: 54 Python tests, 407 C# checks, 196 WPF checks đạt.
+- Sau khi làm: scripts/test.ps1 -Ui: 54 Python tests, 455 C# checks (thêm 48: BattleTests), 249 WPF checks (thêm 53: BattleChecks + 1 check đóng app giữa trận) đạt.
+- So pixel (PET_RENDER_REVIEW, 1338 ảnh trước/sau): 1333 giống hệt từng byte; khác menu-en/menu-vi/context-menu (thêm mục Chế độ chiến đấu, đã xem ảnh) và 2 ảnh speech vốn không ổn định. Mèo không cầm kiếm vẽ y như cũ.
+- Đã xem ảnh render: kiếm khi đứng/vung (10 khung × 2 hướng)/kéo/ném/thua/thắng/đi; chiến trường trên nền sáng và tối (marker, thanh HP, slime choáng); HUD. Check mép trong suốt đạt ở mọi tư thế có kiếm.
+- Publish (người dùng: "publish đi") + check-publish đạt (3/3). Đã đóng mèo người dùng bằng WM_CLOSE (đúng process artifacts\win-x64), publish, mở lại bản mới lúc 18:22; log có cặp exited/started.
+- CHƯA test thủ công trên desktop thật: click xuyên, focus, DPI/nhiều màn hình, cảm giác chơi, âm thanh.
+
+## Kết quả test đợt giai đoạn 2c: phụ kiện dạng dữ liệu + đồ ngày lễ (2026-10-16)
 - scripts/test.ps1 -Ui: 54 Python tests, 407 C# checks, 196 WPF checks đạt.
 - So pixel với 1014 ảnh mốc (chụp trước 2a): mọi ảnh của 7 phụ kiện cũ × 10 bộ lông × 8 tư thế giống hệt từng byte sau khi chuyển sang accessories.json; khác chỉ settings-*-0 (thêm sinh nhật + ô "Tự đội đồ ngày lễ", đã xem ảnh) và 2 ảnh speech vốn không ổn định. Đã xem ảnh 4 phụ kiện mới (đứng, bị kéo, ngủ); check mép cửa sổ đạt ở mọi tư thế.
 
@@ -99,6 +107,11 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Lịch sử: 201 C#/107 WPF/20 Python (motion, 2026-10-08); 181/101/20 (features). Không dùng số liệu cũ thay kết quả hiện tại.
 
 ## Đã làm gần đây
+- 2026-10-16 Battle Mode MVP (người dùng yêu cầu triển khai luôn, không dừng ở đề xuất):
+  - src/DesktopPet/PetBattle.cs: BattleSettings (mọi thông số) + BattleSim (không WPF): slime (Spawning/Moving/Windup/Recover/Stunned/Defeated), 3 đợt 2/3/4, tối đa 3 con, nghỉ 3.5 s giữa đợt, mèo HP 100 / sát thương 25 / tầm 76 / cooldown 0.75 / vung 0.36 s, đòn trúng đúng 1 lần ở giây 0.16 của nhát vung; slime HP 50 / 10 sát thương / windup 0.8 / cooldown 1.8; kỹ năng Đẩy (cooldown 5 s, choáng 1.4 s); bảo vệ 1.5 s sau khi thả mèo; thời gian chạy theo Step (Pause đóng băng, dt tối đa 0.1).
+  - PetBattleView.cs: một dải trong suốt dọc sàn vẽ slime/marker/HP/hiệu ứng, chỉ slime nhận click. PetWindow.Battle.cs: menu, Start/Pause/End, từ chối có lý do, TickBattle biến lệnh của trận thành đi bộ bình thường (WalkToward) hoặc đứng, HUD (trạng thái đợt, HP, Đẩy, Tạm dừng, Kết thúc), mở menu thì tạm dừng, fullscreen thì dừng + ẩn, đổi vùng làm việc/màn hình thì dời chiến trường.
+  - Trong trận: không behavior.Step, không xin/áp dụng quyết định Python (revision++ khi bắt đầu và kết thúc), không bong bóng, Do now, cho ăn, bóng, laser, chỗ nghỉ, nhồi bột, away nap, nhắc nghỉ, gờ cửa sổ; PetEmotions.SetSuspended chặn cảm xúc tự động (vẫn chóng mặt khi kéo); ném cứu không tính RoughThrow.
+  - PetModel thêm SwordOut/SwordSwing/BattleHurt/BattleDazed/BattleCheer (chỉ để vẽ); PetRenderer vẽ kiếm gỗ ở chân trước (sau đầu khi giơ cao), rung khi trúng đòn, sao quay khi thua.
 - 2026-10-16 giai đoạn 2c (người dùng: "làm luôn"):
   - 7 phụ kiện chuyển ra src/DesktopPet/Assets/accessories.json (nhúng vào exe): mỗi phụ kiện là danh sách hình path/ellipse/line, màu fill (#RRGGBB/#AARRGGBB), nét outline/accent/tùy chỉnh, lớp neck (sau đầu) hoặc head (trên mặt). PetAccessories.cs đọc + kiểm tra (không WPF); file lỗi → không có phụ kiện, ghi log; path WPF không đọc được → bỏ riêng phụ kiện đó. PetRenderer.DrawAccessory vẽ chung, tài nguyên freeze 1 lần. Xóa 7 hàm Draw* cũ. Script tạo JSON (tính tọa độ cánh hoa) chỉ dùng một lần, không lưu trong repo.
   - 4 phụ kiện ngày lễ: SantaHat (christmas), WitchHat (halloween), Apricot hoa mai (tet), Lantern đèn lồng đeo cổ (mid_autumn); mũ tiệc Hat gắn với birthday. Người dùng cũng chọn tay được.
@@ -211,6 +224,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Lịch sử chuyển project: 2026-10-05 tạo AGENTS.md/PROGRESS.md tại ổ D khi thư mục đó trống; source hiện nằm tại ổ C, không cần khôi phục về D.
 
 ## Đang dở và việc tiếp theo
+- Battle Mode: cần người dùng đi mục "Chế độ chiến đấu" trong docs/MANUAL-TEST.md (click xuyên, focus, DPI, cảm giác chơi) rồi chỉnh cân bằng trong BattleSettings. Hạn chế MVP: chỉ một loại slime, một màn hình, chỉ dọc sàn; không boss/phần thưởng/lưu tiến độ; âm thanh dùng lại cue mèo có sẵn (chưa có tiếng slime riêng); đang trận thì Python không nhận quan sát (needs/nhật ký không cập nhật trong trận); HUD luôn ở giữa phía trên, có thể che app phía trên. Mèo đang trên cửa sổ phải xuống sàn mới bắt đầu được.
 - Lộ trình dài hạn (đề xuất 2026-10-16): GĐ1 ổn định (RAM, log, gom luật trạng thái, checklist test tay) → GĐ2 nội dung dạng dữ liệu (bộ lông/phụ kiện/câu thoại/sự kiện mùa/lịch sinh hoạt ra JSON, có thể làm gói mod) → GĐ3 chiều sâu dài hạn (quan hệ phát triển, ngữ cảnh máy tôn trọng riêng tư, LLM opt-in nếu người dùng đổi quy tắc, nhiều mèo). Song song nếu muốn chia sẻ: installer/MSIX, tự cập nhật, ký code, GitHub Releases/winget, giảm dung lượng.
 - GĐ2 đã xong 2a/2b/2c. Còn: Bảng ngày Tết/Trung thu chỉ tới 2035, cần nối thêm. Ngày kỷ niệm đầu tiên của người dùng là 2026-10-13 → lần đầu thấy được 2027-10-13. Ý tưởng chưa làm: 8/3, 20/10, Tết dương lịch.
 - GĐ1 còn: đo lại mèo thật vài giờ với GC mới (perf.ps1 -Minutes 120 -Interval 10) và xem dòng Memory/Frame (max gap) trong debug view; nếu vẫn cao thì làm phương án B (giảm transform/geometry tạo mỗi khung trong PetRenderer, so pixel bằng UiChecks); người dùng đi hết docs/MANUAL-TEST.md mức 1.
@@ -236,4 +250,4 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Không tích hợp LLM, voice hay computer vision; không thay framework hoặc hệ thống rendering/physics.
 
 ## Cần test thủ công
-Xem và tick ở docs/MANUAL-TEST.md (đã gom toàn bộ danh sách cũ, xếp theo ưu tiên). Mới đợt 2c: chọn từng phụ kiện mới trong Cài đặt (Mũ Noel, Mũ phù thủy, Hoa mai, Đèn lồng) xem trên mèo thật khi đi/ngủ/kéo/trèo; đặt sinh nhật = hôm nay, mở lại mèo: đội mũ tiệc; tắt "Tự đội đồ ngày lễ" → Lưu: bỏ mũ. Đợt 2a+2b: chọn sinh nhật = hôm nay trong Cài đặt → Lưu → thoát và mở lại mèo (bật Mèo biết nói + AI): câu chào là câu chúc sinh nhật; đổi lại bộ lông xem tên/màu trong danh sách như cũ. Đợt trước: dòng Memory trong debug view sau vài giờ; cặp dòng started/exited trong log sau khi thoát/tắt máy.
+Xem và tick ở docs/MANUAL-TEST.md (đã gom toàn bộ danh sách cũ, xếp theo ưu tiên). Mới đợt Battle Mode: toàn bộ nhóm "Chế độ chiến đấu" (đã có trong bản publish 18:22). Mới đợt 2c: chọn từng phụ kiện mới trong Cài đặt (Mũ Noel, Mũ phù thủy, Hoa mai, Đèn lồng) xem trên mèo thật khi đi/ngủ/kéo/trèo; đặt sinh nhật = hôm nay, mở lại mèo: đội mũ tiệc; tắt "Tự đội đồ ngày lễ" → Lưu: bỏ mũ. Đợt 2a+2b: chọn sinh nhật = hôm nay trong Cài đặt → Lưu → thoát và mở lại mèo (bật Mèo biết nói + AI): câu chào là câu chúc sinh nhật; đổi lại bộ lông xem tên/màu trong danh sách như cũ. Đợt trước: dòng Memory trong debug view sau vài giờ; cặp dòng started/exited trong log sau khi thoát/tắt máy.

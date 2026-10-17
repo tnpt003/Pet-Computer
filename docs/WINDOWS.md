@@ -549,3 +549,46 @@ pet with separate data (`artifacts/perf-data`) and closes it at the end. Samples
 thread growth) is printed. Do the activity to measure while it runs (idle, sleep, fast
 drags, laser, a long run); a steady rise in private memory or handles over a long run
 points to a leak.
+
+## Battle Mode (2026-10-16)
+
+Optional mini-game, off by default and never resumed at startup. Right-click the cat →
+**Battle Mode / Chế độ chiến đấu** → **Start battle**. The cat draws a wooden toy sword and
+fights small slimes on the floor of its current monitor (work area) in 3 waves (2, 3, 4 slimes,
+at most 3 at once, a short break between waves). The battle is won after the last wave, or lost
+when the cat's HP reaches 0 (it sits down seeing stars; nothing lasting: no anger, sadness,
+bond or hunger change). Both endings close the battle by themselves after ~3 s.
+
+- **Start** is refused (with the reason in the menu) while the cat sleeps, wakes, is dragged,
+  flies/climbs, stands on a window, plays/eats, reacts (angry/surprised), the pet is paused or a
+  fullscreen app is open. Nothing is woken or forced.
+- **The cat fights by itself**: picks the nearest slime (or the marked one), walks to it with the
+  normal walking physics and swings; each swing can hit once, at a fixed moment of the swing.
+- **Click a slime** (left): mark it as the cat's target (yellow arrow + ring). No damage.
+- **Push** (HUD button, 5 s cooldown): choose it, then click a slime: knocked back and stunned
+  ~1.4 s; the target does not change. Cancel by clicking the button again or right-clicking the field.
+- **Slimes** swell and show a red "!" for 0.8 s before each hit: time to push them or lift the cat.
+- **Rescue**: pick the cat up as usual (drag, dangle, dizzy and throw unchanged). While pressed,
+  carried or in the air the cat takes no damage, slimes call off their attacks and wait, and no
+  slime spawns or wave progress happens. After landing the cat is protected for 1.5 s.
+- **Pause / Resume / End**: HUD buttons or the menu. Opening the pet menu pauses a running battle
+  and resumes it on close (a battle the user paused stays paused). A fullscreen app pauses it and
+  hides the field/HUD; the user resumes afterwards. Tray Pause freezes it too. "Bring the pet to
+  the main screen" and Exit end it.
+- **While it runs** the battle owns the pet: no random actions, sleep, away nap, AI commands,
+  thought/speech bubbles, Do now, treats, ball, laser, rest-spot visits, kneading or window
+  ledges (the fight is on the floor). Python receives no requests; replies from before are dropped.
+- **Windows**: one transparent strip along the floor (`BattleFieldView`, 120 DIPs tall, the
+  monitor's work-area width) draws every slime and effect, and one small HUD at the top centre.
+  Both are topmost, never activated (WS_EX_NOACTIVATE + MA_NOACTIVATE) and not in the taskbar.
+  Empty strip pixels are fully transparent, so clicks pass through to the apps below; only slimes
+  (plus an invisible 1-alpha halo for easier clicking) take clicks. The pet window stays above
+  the strip. If the work area changes or the cat lands on another monitor, the field moves there
+  and slimes keep their relative positions; the strip is placed in device pixels with the pet's DPI.
+- **Tuning**: every number (HP, damage, speeds, reach, cooldowns, windup, waves, max slimes, spawn
+  interval, breaks, protection time, push) is in `BattleSettings` (`src/DesktopPet/PetBattle.cs`).
+- **Code**: `PetBattle.cs` (simulation, no WPF: tested in `tests/DesktopPet.Tests/BattleTests.cs`),
+  `PetBattleView.cs` (drawing/hit-testing), `PetWindow.Battle.cs` (lifecycle, orders → walking,
+  HUD, menu); the sword is drawn by `PetRenderer` from presentation fields on `PetModel`.
+  Sounds reuse the existing cartoon cues (ball tap on hits/push, surprised when hurt, excited on
+  wave clear/victory, annoyed on defeat) with their usual mute/volume/cooldown rules.

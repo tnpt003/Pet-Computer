@@ -63,9 +63,9 @@ public sealed partial class PetWindow
         {
             bool en = preferences.Language == "en";
             root.Header = en ? "Do now" : "Làm ngay";
-            root.IsEnabled = !paused;
+            root.IsEnabled = !paused && !BattleActive;
             feelings.Header = en ? "Emotions" : "Cảm xúc";
-            feelings.IsEnabled = !paused;
+            feelings.IsEnabled = !paused && !BattleActive;
             for (int i = 0; i < actions.Length; i++) actions[i].Header = en ? CommandItems[i].En : CommandItems[i].Vi;
             manual.Header = en ? "Control emotions myself" : "Tự điều khiển cảm xúc";
             manual.IsChecked = pet.Emotions.ManualMode;
@@ -80,7 +80,7 @@ public sealed partial class PetWindow
 
     public bool DoNow(PetAction action)
     {
-        if (paused || closed || dragging || Array.IndexOf(PetBehavior.ManualActions, action) < 0) return false;
+        if (paused || closed || dragging || BattleActive || Array.IndexOf(PetBehavior.ManualActions, action) < 0) return false;
         revision++; // Drop AI replies that were chosen before this request; not an interaction for needs or learning.
         if (TryStartCommand(action)) { queuedCommand = null; return true; }
         queuedCommand = action; // Newest request wins.
@@ -92,7 +92,7 @@ public sealed partial class PetWindow
     private void TickCommands()
     {
         if (queuedCommand is not PetAction action) return;
-        if (clock.Elapsed.TotalSeconds > queuedCommandUntil || dragging) { queuedCommand = null; return; }
+        if (clock.Elapsed.TotalSeconds > queuedCommandUntil || dragging || BattleActive) { queuedCommand = null; return; }
         if (pressPending) return;
         if (TryStartCommand(action)) { queuedCommand = null; revision++; }
     }

@@ -20,7 +20,7 @@ public sealed partial class PetWindow
 
     private void ApplyQuiet() => behavior.Quiet = EffectiveQuiet;
 
-    private bool CanDeliverBreak => !paused && !dragging && !pressPending && !context.Fullscreen && !context.Away &&
+    private bool CanDeliverBreak => !paused && !dragging && !BattleActive && !pressPending && !context.Fullscreen && !context.Away &&
         !pet.Speech.Visible && PetSpeech.CanShow(pet);
 
     private void InitializeContext()
@@ -52,7 +52,7 @@ public sealed partial class PetWindow
             }
         }
         if (change.CameBack) { behavior.EndAwayNap(pet); pet.Emotions.UserReturned(); }
-        if (context.Away && !behavior.HoldSleep && !dragging && !pressPending && pet.Grounded && !PetActionRules.IsInFlight(pet.Action))
+        if (context.Away && !BattleActive && !behavior.HoldSleep && !dragging && !pressPending && pet.Grounded && !PetActionRules.IsInFlight(pet.Action))
         {
             CancelFeatureActivity();
             behavior.StartAwayNap(pet);

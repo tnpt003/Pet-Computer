@@ -22,7 +22,8 @@ public sealed partial class PetWindow
     private Func<long, WindowSnapshot?> windowRectProbe = null!;
     private const double LedgeScanSeconds = 0.3;
 
-    private bool LedgesEnabled => preferences.ClimbWindows && !context.Fullscreen;
+    // Battle Mode fights on the floor of one monitor, so windows are not ground meanwhile.
+    private bool LedgesEnabled => preferences.ClimbWindows && !context.Fullscreen && !BattleActive;
     private bool OnLedge => pet.LedgeId != 0 && pet.Grounded;
 
     private void InitializeLedges()

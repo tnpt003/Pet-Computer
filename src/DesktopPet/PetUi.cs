@@ -19,6 +19,8 @@ public static class PetUi
     public const string Treat = "", Ball = "", Laser = "", Play = "", Emotions = "",
         Home = "", Diary = "", Settings = "", More = "", Exit = "", Debug = "", About = "";
 
+    public const string Battle = ""; // Game controller.
+
     public static Brush Frozen(Color color) { var brush = new SolidColorBrush(color); brush.Freeze(); return brush; }
 
     public static TextBlock Icon(string glyph, Brush? color = null) => new()

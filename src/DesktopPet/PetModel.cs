@@ -97,6 +97,13 @@ public sealed class PetModel
     public double TreatRemaining;
     public double BatRemaining;
     public double PlayCrouch;
+    // Battle Mode, presentation only (the window copies them from BattleSim each frame):
+    // the wooden sword, the swing's progress (0..1, negative when not swinging), a short
+    // flinch after a hit, and the end-of-battle pose.
+    public bool SwordOut;
+    public double SwordSwing = -1;
+    public double BattleHurt;
+    public bool BattleDazed, BattleCheer;
     public const double TreatDuration = 4.2;
     public int Facing = 1;
     public bool Grounded;

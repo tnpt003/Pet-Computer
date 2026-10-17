@@ -21,7 +21,7 @@ public sealed partial class PetWindow
     private PetLearned? aiLearned;
 
     // Break reminders were enabled on their own, so they speak even with chatter off.
-    private bool SpeechAllowed(string id) => !closed && !context.Fullscreen &&
+    private bool SpeechAllowed(string id) => !closed && !context.Fullscreen && !BattleActive &&
         (PetBreaks.IsBreakLine(id) ? breaks.Due : preferences.Speech);
 
     private void ShowSpeech(PetLine line)

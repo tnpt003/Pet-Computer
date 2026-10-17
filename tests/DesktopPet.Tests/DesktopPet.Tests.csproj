@@ -27,6 +27,7 @@
     <Compile Include="../../src/DesktopPet/PickupAnimation.cs" Link="PickupAnimation.cs" />
     <Compile Include="../../src/DesktopPet/ThrowTracker.cs" Link="ThrowTracker.cs" />
     <Compile Include="../../src/DesktopPet/PetBehavior.cs" Link="PetBehavior.cs" />
+    <Compile Include="../../src/DesktopPet/PetBattle.cs" Link="PetBattle.cs" />
     <Compile Include="../../src/DesktopPet/AI/*.cs" Link="AI/%(Filename)%(Extension)" />
   </ItemGroup>
 </Project>

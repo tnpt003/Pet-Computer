@@ -51,7 +51,7 @@ public sealed partial class PetWindow
             preferences.RestFractionX = Math.Clamp((pet.X - bounds.Left) / Math.Max(1, bounds.Right - bounds.Left - settings.Width), 0, 1);
             SavePreferences(); };
         var visit = new MenuItem();
-        visit.Click += (_, _) => { if (CanPlay && !EffectiveQuiet && preferences.RestX.HasValue) { CancelFeatureActivity(); returningHome = true; Interact("rest_requested"); } };
+        visit.Click += (_, _) => { if (CanPlay && !BattleActive && !EffectiveQuiet && preferences.RestX.HasValue) { CancelFeatureActivity(); returningHome = true; Interact("rest_requested"); } };
         var forget = new MenuItem();
         forget.Click += (_, _) => { preferences.RestX = preferences.RestY = null; preferences.RestMonitor = null; returningHome = false; SavePreferences(); };
         home.Items.Add(remember); home.Items.Add(visit); home.Items.Add(forget);
@@ -75,6 +75,7 @@ public sealed partial class PetWindow
         var exit = PetUi.MenuItem(PetUi.Exit);
         exit.Click += (_, _) => Application.Current.Shutdown();
         menu.Items.Add(treat); menu.Items.Add(toy); menu.Items.Add(laser);
+        InitializeBattle(menu); // "Battle Mode" (PetWindow.Battle.cs).
         InitializeCommands(menu); // "Do now" and "Emotions".
         menu.Items.Add(new Separator());
         menu.Items.Add(quiet); menu.Items.Add(sounds); menu.Items.Add(home);
@@ -107,13 +108,13 @@ public sealed partial class PetWindow
         {
             Localize();
             sounds.IsChecked = preferences.Sounds;
-            treat.IsEnabled = CanPlay && treatCooldown <= 0;
+            treat.IsEnabled = CanPlay && treatCooldown <= 0 && !BattleActive;
             // Quiet only stops what the cat does on its own; games the user starts still run.
             // A fullscreen app (game, video, slides) still keeps the cat still.
-            toy.IsEnabled = toyWindow != null || (CanPlay && !context.Fullscreen);
-            laser.IsEnabled = CanPlay && !context.Fullscreen; // Right-clicking the cat already ended a running game.
+            toy.IsEnabled = toyWindow != null || (CanPlay && !context.Fullscreen && !BattleActive);
+            laser.IsEnabled = CanPlay && !context.Fullscreen && !BattleActive; // Right-clicking the cat already ended a running game.
             remember.IsEnabled = pet.Grounded && pet.LedgeId == 0; // Resting spots are on the floor.
-            visit.IsEnabled = CanPlay && !EffectiveQuiet && preferences.RestX.HasValue;
+            visit.IsEnabled = CanPlay && !EffectiveQuiet && preferences.RestX.HasValue && !BattleActive;
             forget.IsEnabled = preferences.RestX.HasValue;
         };
     }
@@ -135,7 +136,7 @@ public sealed partial class PetWindow
 
     public bool GiveTreat()
     {
-        if (!CanPlay || treatCooldown > 0) return false;
+        if (!CanPlay || treatCooldown > 0 || BattleActive) return false;
         CancelFeatureActivity();
         pet.TreatRemaining = PetModel.TreatDuration;
         treatCooldown = 20;
@@ -149,7 +150,7 @@ public sealed partial class PetWindow
     public void ToggleToy()
     {
         if (toyWindow != null) { CancelFeatureActivity(); return; }
-        if (!CanPlay || context.Fullscreen) return; // Allowed in Quiet mode: the user asked for it.
+        if (!CanPlay || context.Fullscreen || BattleActive) return; // Allowed in Quiet mode: the user asked for it.
         CancelFeatureActivity();
         Interact("toy_started");
         toyPlay.Reset();
@@ -222,6 +223,7 @@ public sealed partial class PetWindow
             if (pet.Action == PetAction.SeekingAttention) PlayPetSound("meow");
             lastSoundAction = pet.Action;
         }
+        if (BattleActive) return; // The battle owns the pet; games, treats and rest visits wait.
         if (TickLaser(dt)) return;
         if (!CanPlay)
         {
@@ -311,7 +313,7 @@ public sealed partial class PetWindow
         double now = clock.Elapsed.TotalSeconds;
         recentPetting.Enqueue(now);
         while (recentPetting.Count > 0 && now - recentPetting.Peek() > 10) recentPetting.Dequeue();
-        if (recentPetting.Count < 2 || now < kneadReady || !CanPlay || FeatureOwnsMovement()) return;
+        if (recentPetting.Count < 2 || now < kneadReady || !CanPlay || FeatureOwnsMovement() || BattleActive) return;
         if (!behavior.StartKneading(pet)) return;
         kneadReady = now + 20;
         recentPetting.Clear();
@@ -361,5 +363,5 @@ public sealed partial class PetWindow
     private void ApplyAccessory() =>
         renderer.Accessory = preferences.HolidayAccessories && PetAccessories.ForEvent(specialDay) is { } outfit ? outfit.Id : preferences.Accessory;
 
-    private void CloseFeatures() { laserWindow?.Close(); diaryWindow?.Close(); behaviorSettingsWindow?.Close(); toyWindow?.Close(); settingsWindow?.Close(); speechWindow?.Close(); sound?.Stop(); sound?.Dispose(); soundStream?.Dispose(); }
+    private void CloseFeatures() { EndBattle(); laserWindow?.Close(); diaryWindow?.Close(); behaviorSettingsWindow?.Close(); toyWindow?.Close(); settingsWindow?.Close(); speechWindow?.Close(); sound?.Stop(); sound?.Dispose(); soundStream?.Dispose(); }
 }

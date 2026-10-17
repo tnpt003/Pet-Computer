@@ -347,6 +347,32 @@ internal static class BattleChecks
         check(!window.BattleActive && OpenBattleWindows() == 0 && !pet.BattleCheer, "Three won battles in a row: each ends by itself and leaves no window");
         check(window.LastBattleSummary is { Won: true, Defeated: 1 } won && won.Seconds > 0 && ResultWindows() == 1,
             "After a victory one result panel shows slimes defeated, time and HP");
+        IEnumerable<System.Windows.Controls.TextBlock> Texts(object node)
+        {
+            if (node is not DependencyObject element) yield break;
+            foreach (object child in LogicalTreeHelper.GetChildren(element))
+            {
+                if (child is System.Windows.Controls.TextBlock text) yield return text;
+                foreach (var inner in Texts(child)) yield return inner;
+            }
+        }
+        string PanelText() => ResultWindow()?.Content is { } panelRoot ? string.Join(" | ", Texts(panelRoot).Select(t => t.Text)) : "";
+        check(window.BattleRecords.Normal is { Wins: 3, MostDefeated: 1, BestSeconds: > 0 } && window.LastBattleSummary?.Difficulty == BattleDifficulty.Normal &&
+              PanelText().Contains("Records (Normal)") && PanelText().Contains("3 wins"),
+            $"Each win counts in the Normal records, shown on the panel ({PanelText()})");
+
+        // Difficulty: the menu choice goes into the next battle, with its own records.
+        window.SetBattleDifficulty(BattleDifficulty.Hard);
+        window.Reset();
+        window.StartBattle();
+        check(window.Battle?.Difficulty == BattleDifficulty.Hard && window.BattleDifficultyChoice == BattleDifficulty.Hard, "The chosen difficulty starts the next battle");
+        Tick(0.6);
+        if (window.Battle is { } hardBattle && hardBattle.Slimes.Count > 0) hardBattle.Slimes[0].X = pet.X + 56 + 50;
+        Tick(1);
+        check(window.LastBattleSummary is { Difficulty: BattleDifficulty.Hard, News.Fastest: true } && window.BattleRecords.Hard.Wins == 1 && window.BattleRecords.Normal.Wins == 3 &&
+              PanelText().Contains("New record") && PanelText().Contains("Hard"),
+            $"A first Hard win is a new Hard record; Normal's stay apart ({PanelText()})");
+        window.SetBattleDifficulty(BattleDifficulty.Normal);
         if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string resultReview && ResultWindow()?.Content is FrameworkElement resultContent)
         {
             resultContent.UpdateLayout();
@@ -358,14 +384,14 @@ internal static class BattleChecks
         long resultStyle = GetWindowLongPtr(new WindowInteropHelper(ResultWindow()!).Handle, -20).ToInt64();
         check((resultStyle & NoActivate) != 0 && ResultWindow()!.ShowActivated == false, "The result panel never takes focus");
         // "Play again" starts the next battle from the panel.
-        var buttons = (System.Windows.Controls.Panel)((System.Windows.Controls.Panel)((System.Windows.Controls.Border)ResultWindow()!.Content).Child).Children[2];
+        var buttons = (System.Windows.Controls.Panel)((System.Windows.Controls.Panel)((System.Windows.Controls.Border)ResultWindow()!.Content).Child).Children[3];
         buttons.Children[0].RaiseEvent(MouseEvent(UIElement.MouseLeftButtonDownEvent));
         await Task.Delay(20);
         check(window.BattleActive && ResultWindows() == 0, "Play again closes the panel and starts a new battle");
         window.EndBattle();
         check(!window.BattleActive && ResultWindows() == 0, "Ending a battle by hand shows no result panel");
         Call(window, "ShowBattleSummary", new PetWindow.BattleSummary(true, 3, 61, 40, 100));
-        buttons = (System.Windows.Controls.Panel)((System.Windows.Controls.Panel)((System.Windows.Controls.Border)ResultWindow()!.Content).Child).Children[2];
+        buttons = (System.Windows.Controls.Panel)((System.Windows.Controls.Panel)((System.Windows.Controls.Border)ResultWindow()!.Content).Child).Children[3];
         buttons.Children[1].RaiseEvent(MouseEvent(UIElement.MouseLeftButtonDownEvent));
         await Task.Delay(20);
         check(ResultWindows() == 0 && !window.BattleActive, "Close just closes the panel");

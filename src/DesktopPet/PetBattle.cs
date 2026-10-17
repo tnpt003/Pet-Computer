@@ -110,6 +110,15 @@ public sealed class BattleSettings
     [JsonIgnore]
     public double BossStunFactor { get; init; } = 0.4;
 
+    // Difficulty: Easy and Hard scale every enemy's HP, damage and speed; Normal is the numbers above.
+    public DifficultySpec Easy { get; init; } = new() { EnemyHp = 0.75, EnemyDamage = 0.6, EnemySpeed = 0.85 };
+    public DifficultySpec Hard { get; init; } = new() { EnemyHp = 1.3, EnemyDamage = 1.4, EnemySpeed = 1.15 };
+    private static readonly DifficultySpec NormalSpec = new();
+    public DifficultySpec Difficulty(BattleDifficulty difficulty) => difficulty switch
+    {
+        BattleDifficulty.Easy => Easy, BattleDifficulty.Hard => Hard, _ => NormalSpec
+    };
+
     public double SkillCooldown(BattleSkill skill) => BattleSkills.Get(skill).Cooldown(this);
 
     // From battle.json: every enemy kind and the waves (null: the built-in slime and king).
@@ -149,6 +158,16 @@ public sealed class BattleSettings
         if (Boss) plan.Add(new WaveSpec { Groups = new[] { new WaveGroup { Enemy = "king", Count = 1 } } });
         return plan;
     }
+}
+
+public enum BattleDifficulty { Easy, Normal, Hard }
+
+// Multipliers on every enemy kind (1 = the kind's own numbers).
+public sealed class DifficultySpec
+{
+    public double EnemyHp { get; init; } = 1;
+    public double EnemyDamage { get; init; } = 1;
+    public double EnemySpeed { get; init; } = 1;
 }
 
 // Push and Bomb are aimed (choose, then click a slime); the others act at once.
@@ -267,9 +286,14 @@ public sealed class BattleSim
     private bool swingHit, lifted;
     private double spawnTimer;
 
-    public BattleSim(BattleSettings settings, double left, double right, Random? random = null)
+    public BattleDifficulty Difficulty { get; }
+    private readonly DifficultySpec level;
+
+    public BattleSim(BattleSettings settings, double left, double right, Random? random = null, BattleDifficulty difficulty = BattleDifficulty.Normal)
     {
         Settings = settings;
+        Difficulty = difficulty;
+        level = settings.Difficulty(difficulty);
         this.random = random ?? new Random();
         Left = left; Right = Math.Max(left + settings.SlimeWidth * settings.LargestScale, right);
         CatHp = settings.CatMaxHp;
@@ -474,7 +498,7 @@ public sealed class BattleSim
     }
 
     public double Windup(Slime slime) => slime.Enraged ? slime.Type.EnragedWindup : slime.Type.Windup;
-    private static double Speed(Slime slime) => slime.Enraged ? slime.Type.EnragedSpeed : slime.Type.Speed;
+    private double Speed(Slime slime) => (slime.Enraged ? slime.Type.EnragedSpeed : slime.Type.Speed) * level.EnemySpeed;
 
     private readonly List<Slime> scratch = new();
     private static readonly Comparison<Slime> ByX = (a, b) => a.X.CompareTo(b.X);
@@ -576,10 +600,13 @@ public sealed class BattleSim
 
     private Slime AddSlime(double x, EnemyType type)
     {
+        // Easy/Hard round to whole numbers so the HUD and damage numbers stay tidy; Normal is untouched.
+        bool scaled = Difficulty != BattleDifficulty.Normal;
+        double hp = scaled ? Math.Max(1, Math.Round(type.MaxHp * level.EnemyHp)) : type.MaxHp;
         var slime = new Slime
         {
             Id = nextId++, Type = type, Width = Settings.SlimeWidth * type.Scale, Height = Settings.SlimeHeight * type.Scale,
-            Hp = type.MaxHp, MaxHp = type.MaxHp, Damage = type.Damage, Range = type.Range
+            Hp = hp, MaxHp = hp, Damage = scaled ? Math.Round(type.Damage * level.EnemyDamage) : type.Damage, Range = type.Range
         };
         var (minX, maxX) = Bounds(slime);
         slime.X = Math.Clamp(x, minX, maxX);

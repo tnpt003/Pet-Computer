@@ -1,10 +1,14 @@
 # Tiến độ Desktop Pet
 
-Cập nhật: 2026-10-16 (Asia/Saigon).
+Cập nhật: 2026-10-17 (Asia/Saigon).
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
-## Kết quả test gần nhất (2026-10-17, Battle Mode đợt 6: mèo chạy, chiến trường cố định, 2 quái mới, tách file)
+## Kết quả test gần nhất (2026-10-17, Battle Mode đợt 7: độ khó, kỷ lục, sửa ghi chú cũ)
+- scripts/test.ps1 -Ui: 54 Python tests, 527 C# checks (thêm 15: Thường giữ nguyên số, Dễ/Khó nhân HP/sát thương/tốc độ, số độ khó sai bị từ chối, luật kỷ lục, lưu/đọc/file hỏng/số âm), 283 WPF checks (thêm 3: kỷ lục Thường hiện trên bảng, độ khó đã chọn vào trận sau, thắng Khó lần đầu là kỷ lục mới và tách riêng Thường) đạt. Publish + check-publish đạt (3/3); mở lại mèo người dùng lúc 20:07; log không có lỗi đọc battle.json.
+- Đã xem ảnh bảng kết quả (battle-result.png qua PET_RENDER_REVIEW): dòng độ khó, dòng vàng "New record", dòng kỷ lục, nút không bị đẩy lệch. Chưa xem trên mèo thật bằng tiếng Việt, chưa chơi thử cảm giác 3 mức.
+
+## Kết quả test đợt Battle Mode 6: mèo chạy, chiến trường cố định, 2 quái mới, tách file (2026-10-17)
 - scripts/test.ps1 -Ui: 54 Python tests, 512 C# checks (thêm 4: kế hoạch đợt mới, 2 quái mới, marks lạ bị từ chối), 280 WPF checks (thêm 6: mèo chạy 130 DIP/s và đi bộ vẫn 72, chiến trường chờ khi mèo sang màn hình khác/tự chạy tiếp/giữ Pause của người dùng, MoveScale trả về 1) đạt. Publish + check-publish đạt (3/3); mở lại mèo người dùng lúc 19:50; log không có lỗi đọc battle.json.
 - So pixel: ảnh Pet Mode (kể cả ảnh chuyển động sau khi nới nhịp chân lên 2×) giống từng byte. Đã xem ảnh 4 loại quái cạnh nhau trên nền sáng/tối (battle-kinds-*.png); vệt gió đổi sang xanh để thấy trên nền sáng.
 - Chưa kiểm tra trên máy nhiều màn hình thật (máy hiện tại 1 màn hình; logic test bằng probe giả).
@@ -135,6 +139,10 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Lịch sử: 201 C#/107 WPF/20 Python (motion, 2026-10-08); 181/101/20 (features). Không dùng số liệu cũ thay kết quả hiện tại.
 
 ## Đã làm gần đây
+- 2026-10-17 Battle Mode đợt 7 (người dùng chọn 1 + 3 + 5):
+  - Độ khó Dễ/Thường/Khó: menu Chế độ chiến đấu → Độ khó (mờ khi đang trận), lưu preferences.BattleDifficulty ("Easy"/"Normal"/"Hard", sai → Normal). battle.json "easy"/"hard" nhân HP/sát thương/tốc độ mọi quái (0.75/0.6/0.85 và 1.3/1.4/1.15, giới hạn 0.25–3); Dễ/Khó làm tròn HP + sát thương, Thường giữ nguyên số (không làm tròn). BattleSim nhận difficulty (mặc định Normal); mèo, kỹ năng, đợt không đổi.
+  - Kỷ lục theo độ khó (PetBattleRecords.cs, %LOCALAPPDATA%\DesktopPet\battle-records.json): số trận thắng, thắng nhanh nhất, nhiều slime nhất một trận (thua cũng tính mục này). Ghi sau mỗi trận thắng/thua (Kết thúc tay không tính); file hỏng → log, bắt đầu lại; số vô lý bị dọn. Mèo tạo với preferences cho sẵn (UI checks) chỉ giữ trong bộ nhớ. Bảng kết quả: mức độ khó, dòng vàng "Kỷ lục mới", dòng kỷ lục của mức đó.
+  - Sửa ghi chú cũ: MANUAL-TEST (mèo sang màn hình khác không còn dời chiến trường; bỏ "tooltip"), WINDOWS.md (đoạn Windows nói chiến trường chuyển theo màn hình), PROGRESS "Đang dở" (hạn chế MVP và đề xuất đã làm).
 - 2026-10-17 Battle Mode đợt 6 (người dùng chọn 1 + 2a + 3 + 8):
   - Mèo chạy trong trận: PetModel.MoveScale (1 ngoài trận) nhân tốc độ + gia tốc đi trong PetPhysics; BattleSettings.CatRunScale = 1.8 (battle.json "catRunScale", 0 < x ≤ 3). PetMotion cho nhịp chân tới 2× (đi bộ thường không vượt 1 nên Pet Mode không đổi).
   - Chiến trường cố định ở màn hình bắt đầu trận (battleMonitor + battleScale): mèo đáp xuống màn hình khác → trận tạm dừng (battlePausedByAway) + thông báo cạnh mèo; về lại → tự chạy tiếp; người dùng tự Pause/Resume trong lúc đó thì giữ lựa chọn của người dùng. Dải sàn + HUD đặt theo DPI của màn hình trận (MoveWindow nhận atScale). Đổi vùng làm việc/DPI trên chính màn hình trận thì dời chiến trường như cũ.
@@ -275,9 +283,9 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Lịch sử chuyển project: 2026-10-05 tạo AGENTS.md/PROGRESS.md tại ổ D khi thư mục đó trống; source hiện nằm tại ổ C, không cần khôi phục về D.
 
 ## Đang dở và việc tiếp theo
-- Battle Mode: cần người dùng đi mục "Chế độ chiến đấu" trong docs/MANUAL-TEST.md (click xuyên, focus, DPI, cảm giác chơi) rồi chỉnh cân bằng trong BattleSettings. Hạn chế MVP: chỉ một loại slime, một màn hình, chỉ dọc sàn; không boss/phần thưởng/lưu tiến độ; đang trận thì Python không nhận quan sát (needs/nhật ký không cập nhật trong trận); HUD luôn ở giữa phía trên, có thể che app phía trên. Mèo đang trên cửa sổ phải xuống sàn mới bắt đầu được.
+- Battle Mode: cần người dùng đi mục "Chế độ chiến đấu" trong docs/MANUAL-TEST.md (click xuyên, focus, DPI, cảm giác chơi 3 độ khó) rồi chỉnh cân bằng trong Assets/battle.json. Hạn chế hiện tại: chỉ đánh dọc sàn của màn hình bắt đầu trận; không phần thưởng; kỷ lục chỉ hiện trên bảng kết quả (chưa có trong Nhật ký vì Nhật ký ở Python); đang trận thì Python không nhận quan sát (needs/nhật ký không cập nhật trong trận); HUD luôn ở giữa phía trên, có thể che app phía trên. Mèo đang trên cửa sổ phải xuống sàn mới bắt đầu được.
 - Battle Mode, tối ưu chưa làm: thu dải sàn chỉ ôm vùng có slime (3c); HUD cập nhật 15 lần/giây (6). Số đo hiện tại chưa cho thấy cần.
-- Battle Mode, đề xuất chưa làm (2026-10-17): giữ chiến trường cố định khi mèo bị ném sang màn hình khác (dừng chờ hoặc chặn chỗ rơi); combo nhát thứ 3; slime loại 2 (nhỏ nhanh/to chậm); kỹ năng thứ 2 (Cổ vũ hoặc Cá hồi máu); chọn độ khó Dễ/Thường/Khó; báo kết quả trận cho Python để ghi nhật ký + câu nói (đổi IPC, cần duyệt); kỷ lục cá nhân trong Nhật ký; giảm vẽ lại dải sàn khi trận dừng (đo perf.ps1 trước); HUD kéo được hoặc né con trỏ.
+- Battle Mode, đề xuất chưa làm (cập nhật 2026-10-17 sau đợt 7): combo nhát thứ 3; báo kết quả trận cho Python để ghi Nhật ký + câu nói, kể cả kỷ lục (đổi IPC, cần duyệt); HUD né con trỏ (mờ + click xuyên khi chuột lại gần) hoặc kéo được.
 - Lộ trình dài hạn (đề xuất 2026-10-16): GĐ1 ổn định (RAM, log, gom luật trạng thái, checklist test tay) → GĐ2 nội dung dạng dữ liệu (bộ lông/phụ kiện/câu thoại/sự kiện mùa/lịch sinh hoạt ra JSON, có thể làm gói mod) → GĐ3 chiều sâu dài hạn (quan hệ phát triển, ngữ cảnh máy tôn trọng riêng tư, LLM opt-in nếu người dùng đổi quy tắc, nhiều mèo). Song song nếu muốn chia sẻ: installer/MSIX, tự cập nhật, ký code, GitHub Releases/winget, giảm dung lượng.
 - GĐ2 đã xong 2a/2b/2c. Còn: Bảng ngày Tết/Trung thu chỉ tới 2035, cần nối thêm. Ngày kỷ niệm đầu tiên của người dùng là 2026-10-13 → lần đầu thấy được 2027-10-13. Ý tưởng chưa làm: 8/3, 20/10, Tết dương lịch.
 - GĐ1 còn: đo lại mèo thật vài giờ với GC mới (perf.ps1 -Minutes 120 -Interval 10) và xem dòng Memory/Frame (max gap) trong debug view; nếu vẫn cao thì làm phương án B (giảm transform/geometry tạo mỗi khung trong PetRenderer, so pixel bằng UiChecks); người dùng đi hết docs/MANUAL-TEST.md mức 1.
@@ -303,4 +311,4 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Không tích hợp LLM, voice hay computer vision; không thay framework hoặc hệ thống rendering/physics.
 
 ## Cần test thủ công
-Xem và tick ở docs/MANUAL-TEST.md (đã gom toàn bộ danh sách cũ, xếp theo ưu tiên). Mới đợt Battle Mode: toàn bộ nhóm "Chế độ chiến đấu" (đã có trong bản publish 18:22). Mới đợt 2c: chọn từng phụ kiện mới trong Cài đặt (Mũ Noel, Mũ phù thủy, Hoa mai, Đèn lồng) xem trên mèo thật khi đi/ngủ/kéo/trèo; đặt sinh nhật = hôm nay, mở lại mèo: đội mũ tiệc; tắt "Tự đội đồ ngày lễ" → Lưu: bỏ mũ. Đợt 2a+2b: chọn sinh nhật = hôm nay trong Cài đặt → Lưu → thoát và mở lại mèo (bật Mèo biết nói + AI): câu chào là câu chúc sinh nhật; đổi lại bộ lông xem tên/màu trong danh sách như cũ. Đợt trước: dòng Memory trong debug view sau vài giờ; cặp dòng started/exited trong log sau khi thoát/tắt máy.
+Xem và tick ở docs/MANUAL-TEST.md (đã gom toàn bộ danh sách cũ, xếp theo ưu tiên). Mới đợt Battle 7: 2 mục Độ khó và Kỷ lục trong nhóm "Chế độ chiến đấu". Mới đợt Battle Mode: toàn bộ nhóm "Chế độ chiến đấu" (đã có trong bản publish 18:22). Mới đợt 2c: chọn từng phụ kiện mới trong Cài đặt (Mũ Noel, Mũ phù thủy, Hoa mai, Đèn lồng) xem trên mèo thật khi đi/ngủ/kéo/trèo; đặt sinh nhật = hôm nay, mở lại mèo: đội mũ tiệc; tắt "Tự đội đồ ngày lễ" → Lưu: bỏ mũ. Đợt 2a+2b: chọn sinh nhật = hôm nay trong Cài đặt → Lưu → thoát và mở lại mèo (bật Mèo biết nói + AI): câu chào là câu chúc sinh nhật; đổi lại bộ lông xem tên/màu trong danh sách như cũ. Đợt trước: dòng Memory trong debug view sau vài giờ; cặp dòng started/exited trong log sau khi thoát/tắt máy.

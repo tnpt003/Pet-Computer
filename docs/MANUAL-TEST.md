@@ -74,9 +74,9 @@ Tick `[x]` khi đạt; ghi lỗi ngay dưới mục kèm ngày. Mục mới chư
 - [ ] Hết đợt 1 và 2: HUD ghi "+15 HP" và thanh HP tăng; đợt cuối không hồi.
 - [ ] Bảng kết quả sau khi thắng/thua: số slime, thời gian, HP; "Chơi lại" bắt đầu trận mới; "Đóng" đóng; để yên 12 s thì tự đóng; bấm "Kết thúc" giữa trận thì không có bảng.
 - [ ] Thông báo từ chối: mở menu khi mèo rảnh, đợi mèo bị kéo/ngủ rồi mới bấm "Bắt đầu trận" (khó tái hiện): thông báo nhỏ trên đầu mèo, click xuyên, tự mất sau 2.5 s, không có hộp thoại.
-- [ ] DPI 125–150% và màn hình tọa độ âm/màn hình phụ (nếu có): dải sàn nằm đúng đáy vùng làm việc, slime đúng sàn, HUD giữa phía trên; kéo mèo sang màn hình khác rồi thả: chiến trường chuyển theo. Đổi vị trí taskbar giữa trận.
+- [ ] DPI 125–150% và màn hình tọa độ âm/màn hình phụ (nếu có): dải sàn nằm đúng đáy vùng làm việc, slime đúng sàn, HUD giữa phía trên. Đổi vị trí taskbar hoặc DPI của màn hình đang đánh giữa trận: chiến trường dời theo. (Mèo sang màn hình khác: xem mục Nhiều màn hình bên dưới.)
 - [ ] Tắt AI ở khay rồi chơi một trận: chạy bình thường.
-- [ ] HUD kiểu game: chân dung mèo đúng bộ lông/phụ kiện; thanh HP đổi màu xanh/vàng/đỏ, vệt cam chạy theo khi mất máu; chấm đợt + vương miện; banner "ĐỢT n"/"BOSS!"/"CHIẾN THẮNG!"; rê chuột lên ô kỹ năng có tooltip; HUD không che việc đang làm quá nhiều.
+- [ ] HUD kiểu game: chân dung mèo đúng bộ lông/phụ kiện; thanh HP đổi màu xanh/vàng/đỏ, vệt cam chạy theo khi mất máu; chấm đợt + vương miện; banner "ĐỢT n"/"BOSS!"/"CHIẾN THẮNG!"; rê chuột lên ô kỹ năng thấy mô tả ở dòng gợi ý dưới HUD; HUD không che việc đang làm quá nhiều.
 - [ ] 5 kỹ năng: Đẩy; Cá hồi máu (+25 xanh bay lên trên mèo, đầy máu thì không tốn); Cổ vũ (lấp lánh vàng, đánh nhanh hơn rõ); Bom len (chọn ô → click slime, cuộn len rơi rồi nổ, trúng cả quái gần đó); Khiên (bong bóng quanh mèo, slime đánh không mất máu). Vòng quét hồi chiêu + số giây; bấm lại ô hoặc chuột phải để hủy chọn.
 - [ ] Mèo chạy nhanh hơn trong trận (bước chân nhanh, không trượt); hết trận đi bộ lại bình thường.
 - [ ] Đợt 2–3 có Slime nhanh (xanh dương, nhỏ, có vệt gió) và Slime đá (xám, to, vết nứt, khó đẩy): nhìn rõ trên nền sáng/tối; độ khó có hợp lý không.
@@ -84,6 +84,8 @@ Tick `[x]` khi đạt; ghi lỗi ngay dưới mục kèm ngày. Mục mới chư
 - [ ] Nhấc mèo khi có quái: quái bò theo mèo dọc sàn nhưng không gồng/đánh; thả xuống có 1.5 s an toàn.
 - [ ] Đẩy theo hướng: chọn Đẩy, rê lên nửa trái/phải slime thấy mũi tên xanh đổi hướng; click nửa trái → bay sang phải, nửa phải → sang trái (kể cả về phía mèo).
 - [ ] Rê chuột lần lượt qua 5 ô kỹ năng và nút Tạm dừng/Kết thúc: dòng chữ dưới HUD đổi đúng theo ô đang rê, rời ra thì trở lại câu gợi ý; HUD không co giãn/nhảy khi đổi chữ.
+- [ ] Độ khó: menu Chế độ chiến đấu → Độ khó: Dễ/Thường/Khó có dấu tick đúng mức đang chọn, bị mờ khi đang trận; thoát và mở lại mèo vẫn nhớ. Dễ: slime ít máu (số HP trên thanh boss ~300), đánh nhẹ, chậm hơn; Khó: ngược lại (boss ~520 HP). Cảm giác 3 mức có khác rõ và hợp lý không.
+- [ ] Kỷ lục: thắng/thua vài trận ở một mức: bảng kết quả ghi mức độ khó, dòng vàng "Kỷ lục mới" khi phá kỷ lục, dòng "Kỷ lục (mức): nhanh nhất … · nhiều nhất … slime · thắng … lần"; đổi mức khác thì kỷ lục riêng. Thoát và mở lại mèo: kỷ lục còn. Bấm "Kết thúc" giữa trận: không tính.
 - [ ] Hiệu năng/mượt: slime và hiệu ứng chạy 30 khung/giây (mèo vẫn 60): nhìn có giật không; khi Tạm dừng, debug view (dòng Frame) và Task Manager thấy CPU gần như không đổi so với lúc không chơi. Lúc boss gồng vẫn click được app bên dưới vùng đỏ.
 - [ ] Boss Vua Slime ở đợt cuối: to, vương miện; vùng đỏ trên sàn khi gồng; dưới nửa máu gọi 2 slime; dưới 30% đổi màu đỏ, nhanh hơn; Đẩy chỉ xê dịch ít; hạ boss thì bụi lớn, bảng kết quả ghi "Đã hạ Vua Slime". Thử trên màn hình hẹp/DPI cao xem boss có bị cắt đầu không.
 

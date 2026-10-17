@@ -43,6 +43,11 @@
   "shieldCooldown": 15,
   "shieldSeconds": 3,
 
+  // Difficulty: multipliers on every enemy's HP, damage and speed (0.25–3). Normal is the
+  // numbers in this file as they are.
+  "easy": { "enemyHp": 0.75, "enemyDamage": 0.6, "enemySpeed": 0.85 },
+  "hard": { "enemyHp": 1.3, "enemyDamage": 1.4, "enemySpeed": 1.15 },
+
   // Enemy kinds. scale: size against the basic slime (0.5–2.3). boss: crown + HUD bar.
   // slam: area hit with a floor warning. summonAt/enrageAt: HP fraction (0 = never).
   "enemies": [

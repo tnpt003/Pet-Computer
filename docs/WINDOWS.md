@@ -568,6 +568,17 @@ small result panel (slimes defeated, time, HP left) with **Play again** and **Cl
 by itself after 12 s, on a fullscreen app or when the pet is brought back. Ending a battle by hand
 shows no panel. After each wave except the last the cat gets 15 HP back (`WaveHeal`).
 
+- **Difficulty** (menu **Battle Mode → Difficulty**: Easy / Normal / Hard, remembered in
+  `preferences.json` as `BattleDifficulty`, greyed out during a battle): Easy and Hard multiply
+  every enemy's HP, damage and speed (battle.json `easy`/`hard`: 0.75/0.6/0.85 and 1.3/1.4/1.15,
+  each 0.25–3; scaled HP and damage are rounded to whole numbers). Normal is the file's numbers
+  untouched. The cat, skills and waves are the same on every level.
+- **Records** (per difficulty, in `%LOCALAPPDATA%\DesktopPet\battle-records.json`, `PetBattleRecords.cs`):
+  wins, fastest win and most slimes defeated in one battle (a loss can set that one). The result
+  panel shows the difficulty, a gold "New record" line when one was beaten and the current records.
+  Battles ended by hand do not count. A broken file is logged and starts over; it never stops a
+  battle. A pet built with given preferences (UI checks) keeps records in memory only.
+
 - **Start** is refused (with the reason in the menu, or a small click-through note above the cat
   that fades after 2.5 s if the state changed since the menu opened) while the cat sleeps, wakes, is dragged,
   flies/climbs, stands on a window, plays/eats, reacts (angry/surprised), the pet is paused or a
@@ -610,8 +621,9 @@ shows no panel. After each wave except the last the cat gets 15 HP back (`WaveHe
   Both are topmost, never activated (WS_EX_NOACTIVATE + MA_NOACTIVATE) and not in the taskbar.
   Empty strip pixels are fully transparent, so clicks pass through to the apps below; only slimes
   (plus an invisible 1-alpha halo for easier clicking) take clicks. The pet window stays above
-  the strip. If the work area changes or the cat lands on another monitor, the field moves there
-  and slimes keep their relative positions; the strip is placed in device pixels with the pet's DPI.
+  the strip. If the work area of the battle's monitor changes, the field moves with it and slimes
+  keep their relative positions; the strip is placed in device pixels with that monitor's DPI.
+  (The cat landing on another monitor pauses the battle instead; see Rescue.)
 - **Drawing cost**: the strip and HUD redraw at most 30 times a second and only while something
   moves (slimes, effects, a falling bomb); a paused battle or an empty floor between waves is drawn
   once and left alone, and a click/pause/move asks for one redraw at once. The pet itself keeps its

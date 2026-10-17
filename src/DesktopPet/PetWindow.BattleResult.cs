@@ -63,7 +63,14 @@ public sealed partial class PetWindow
     }
 
     // The result after a won or lost battle: stats, Play again and Close. It closes by itself.
-    public readonly record struct BattleSummary(bool Won, int Defeated, double Seconds, double Hp, double MaxHp, bool Boss = false, string? BossName = null);
+    public readonly record struct BattleSummary(bool Won, int Defeated, double Seconds, double Hp, double MaxHp, bool Boss = false, string? BossName = null,
+        BattleDifficulty Difficulty = BattleDifficulty.Normal, BattleRecordNews News = default);
+    private static readonly Brush RecordGold = PetUi.Frozen(Color.FromRgb(0xFF, 0xD3, 0x5C));
+    private static string Clock(double seconds)
+    {
+        var time = TimeSpan.FromSeconds(Math.Round(seconds));
+        return $"{(int)time.TotalMinutes}:{time.Seconds:00}";
+    }
     public BattleSummary? LastBattleSummary { get; private set; }
     private Window? battleSummaryWindow;
     private System.Windows.Threading.DispatcherTimer? battleSummaryTimer;
@@ -77,11 +84,25 @@ public sealed partial class PetWindow
         var title = new TextBlock { Text = result.Won ? (result.Boss ? L($"Chiến thắng! Đã hạ {result.BossName ?? "boss"}", $"Victory! The {result.BossName ?? "boss"} is down") : L("Chiến thắng!", "Victory!"))
                 : L("Thua rồi… mèo choáng váng", "Defeated… the cat sees stars"),
             Foreground = Brushes.White, FontSize = 15, FontWeight = FontWeights.Bold };
-        var time = TimeSpan.FromSeconds(Math.Round(result.Seconds));
-        string clock = $"{(int)time.TotalMinutes}:{time.Seconds:00}";
+        string clock = Clock(result.Seconds), level = DifficultyName(result.Difficulty);
         var stats = new TextBlock { Foreground = Brushes.White, FontSize = 12.5, Margin = new Thickness(0, 4, 0, 0),
-            Text = L($"Hạ {result.Defeated} slime · {clock} · HP còn {Math.Ceiling(result.Hp)}/{result.MaxHp}",
-                     $"{result.Defeated} slime{(result.Defeated == 1 ? "" : "s")} defeated · {clock} · HP {Math.Ceiling(result.Hp)}/{result.MaxHp} left") };
+            Text = L($"{level} · Hạ {result.Defeated} slime · {clock} · HP còn {Math.Ceiling(result.Hp)}/{result.MaxHp}",
+                     $"{level} · {result.Defeated} slime{(result.Defeated == 1 ? "" : "s")} defeated · {clock} · HP {Math.Ceiling(result.Hp)}/{result.MaxHp} left") };
+        // Records for this difficulty, and what this battle beat.
+        var best = BattleRecords.For(result.Difficulty);
+        var records = new StackPanel { Margin = new Thickness(0, 4, 0, 0) };
+        if (result.News.Any)
+            records.Children.Add(new TextBlock { Foreground = RecordGold, FontSize = 12.5, FontWeight = FontWeights.Bold,
+                Text = result.News.Fastest && result.News.MostDefeated ? L("Kỷ lục mới: thắng nhanh nhất, hạ nhiều slime nhất!", "New record: fastest win, most slimes!")
+                    : result.News.Fastest ? L("Kỷ lục mới: thắng nhanh nhất!", "New record: fastest win!")
+                    : L("Kỷ lục mới: hạ nhiều slime nhất!", "New record: most slimes!") });
+        if (best.BestSeconds != null || best.MostDefeated > 0)
+        {
+            string fastest = best.BestSeconds is double s ? L($"nhanh nhất {Clock(s)} · ", $"fastest {Clock(s)} · ") : "";
+            records.Children.Add(new TextBlock { Foreground = Brushes.White, Opacity = 0.8, FontSize = 11.5,
+                Text = L($"Kỷ lục ({level}): {fastest}nhiều nhất {best.MostDefeated} slime · thắng {best.Wins} lần",
+                         $"Records ({level}): {fastest}most {best.MostDefeated} slime{(best.MostDefeated == 1 ? "" : "s")} · {best.Wins} win{(best.Wins == 1 ? "" : "s")}") });
+        }
         var (again, againText, _) = HudButton(() =>
         {
             CloseBattleSummary();
@@ -94,7 +115,7 @@ public sealed partial class PetWindow
         {
             Background = HudBack, BorderBrush = Brushes.White, BorderThickness = new Thickness(1.5), CornerRadius = new CornerRadius(10),
             Padding = new Thickness(14, 10, 14, 10), Margin = new Thickness(6),
-            Child = new StackPanel { Children = { title, stats, new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 8, 0, 0), Children = { again, close } } } },
+            Child = new StackPanel { Children = { title, stats, records, new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 8, 0, 0), Children = { again, close } } } },
             Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 6, ShadowDepth = 1, Opacity = 0.4 }
         };
         panel.SetValue(TextBlock.FontFamilyProperty, PetUi.TextFont);

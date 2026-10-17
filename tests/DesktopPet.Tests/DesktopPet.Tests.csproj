@@ -29,6 +29,7 @@
     <Compile Include="../../src/DesktopPet/PetBehavior.cs" Link="PetBehavior.cs" />
     <Compile Include="../../src/DesktopPet/PetBattle.cs" Link="PetBattle.cs" />
     <Compile Include="../../src/DesktopPet/PetBattleData.cs" Link="PetBattleData.cs" />
+    <Compile Include="../../src/DesktopPet/PetBattleRecords.cs" Link="PetBattleRecords.cs" />
     <EmbeddedResource Include="../../src/DesktopPet/Assets/battle.json" LogicalName="DesktopPet.battle.json" />
     <Compile Include="../../src/DesktopPet/AI/*.cs" Link="AI/%(Filename)%(Extension)" />
   </ItemGroup>

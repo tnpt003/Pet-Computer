@@ -45,6 +45,9 @@ public sealed class PetPreferences
     public static readonly int[] BreakChoices = { 30, 45, 60 };
     // On by default: the pet may stand on, jump onto and climb other apps' windows.
     public bool ClimbWindows { get; set; } = true;
+    // Battle Mode difficulty chosen in the menu: "Easy", "Normal" or "Hard".
+    public string BattleDifficulty { get; set; } = "Normal";
+    public static string NormalizeDifficulty(string? value) => value is "Easy" or "Normal" or "Hard" ? value : "Normal";
     public string? PositionMonitor { get; set; }
     public double PositionX { get; set; } = 0.5;
     public double PositionY { get; set; } = 1;
@@ -69,6 +72,7 @@ public sealed class PetPreferences
             p.Coat = NormalizeCoat(p.Coat);
             p.Accessory = NormalizeAccessory(p.Accessory);
             p.Birthday = NormalizeBirthday(p.Birthday);
+            p.BattleDifficulty = NormalizeDifficulty(p.BattleDifficulty);
             if (Array.IndexOf(BreakChoices, p.BreakMinutes) < 0) p.BreakMinutes = 45;
             if (p.LearningReset == null || p.LearningReset.Length > 64) p.LearningReset = "";
             p.PositionX = double.IsFinite(p.PositionX) ? Math.Clamp(p.PositionX, 0, 1) : 0.5;

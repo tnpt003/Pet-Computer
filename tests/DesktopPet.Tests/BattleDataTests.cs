@@ -95,5 +95,73 @@ internal static class BattleDataTests
         for (double t = 0; t < 3 && sim.Boss == null; t += dt) sim.Step(dt, 800, false);
         var chief = sim.Boss;
         check(sim.Wave == 2 && chief != null && chief.Type.Id == "chief" && Math.Abs(chief.Width - custom.SlimeWidth * 1.5) < 0.01, "The boss wave brings the data's boss");
+
+        Difficulty(check, shipped, builtIn, Rejected, Same);
+        Records(check);
+    }
+
+    private static void Difficulty(Action<bool, string> check, BattleSettings shipped, BattleSettings builtIn, Func<string, bool> rejected,
+        Func<object, object, Type, List<string>, string, bool> same)
+    {
+        var differences = new List<string>();
+        same(shipped.Easy, builtIn.Easy, typeof(DifficultySpec), differences, "easy.");
+        same(shipped.Hard, builtIn.Hard, typeof(DifficultySpec), differences, "hard.");
+        check(differences.Count == 0, "battle.json's Easy and Hard match the built-in ones" + (differences.Count > 0 ? ": " + string.Join(", ", differences) : ""));
+        check(shipped.Easy.EnemyHp < 1 && shipped.Easy.EnemyDamage < 1 && shipped.Easy.EnemySpeed < 1 &&
+              shipped.Hard.EnemyHp > 1 && shipped.Hard.EnemyDamage > 1 && shipped.Hard.EnemySpeed > 1, "Easy weakens every enemy, Hard strengthens them");
+        check(rejected("{\"easy\":{\"enemyHp\":0}}") && rejected("{\"hard\":{\"enemySpeed\":5}}") && rejected("{\"hard\":{\"enemyHP\":1,\"hp\":1}}"),
+            "Impossible or misspelt difficulty numbers are rejected");
+
+        // The same fight on each level: one plain slime, the cat far away (no hits either way).
+        var s = new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 1 }, Boss = false, SlimeMaxHp = 50.4, SlimeDamage = 10 };
+        (double Hp, double Damage, double Moved) Fight(BattleDifficulty? level)
+        {
+            var sim = level is BattleDifficulty chosen ? new BattleSim(s, 0, 1600, new Random(3), chosen) : new BattleSim(s, 0, 1600, new Random(3));
+            const double dt = 1.0 / 60;
+            sim.Step(dt, 800, false);
+            var slime = sim.Slimes[0];
+            for (double t = 0; t < 0.6; t += dt) sim.Step(dt, 800, false);
+            double x = slime.X;
+            for (double t = 0; t < 1; t += dt) sim.Step(dt, 800, false);
+            return (slime.MaxHp, slime.Damage, Math.Abs(slime.X - x));
+        }
+        var normal = Fight(BattleDifficulty.Normal);
+        var plain = Fight(null);
+        var easy = Fight(BattleDifficulty.Easy);
+        var hard = Fight(BattleDifficulty.Hard);
+        check(plain == normal && normal.Hp == 50.4 && normal.Damage == 10 && new BattleSim(s, 0, 1600).Difficulty == BattleDifficulty.Normal,
+            "Normal is exactly today's battle (the default, no rounding)");
+        check(easy.Hp == 38 && easy.Damage == 6 && hard.Hp == 66 && hard.Damage == 14, $"Easy and Hard scale HP and damage to whole numbers ({easy.Hp}/{easy.Damage}, {hard.Hp}/{hard.Damage})");
+        check(easy.Moved < normal.Moved * 0.9 && hard.Moved > normal.Moved * 1.1, $"and speed ({easy.Moved:0.#} < {normal.Moved:0.#} < {hard.Moved:0.#} DIPs)");
+    }
+
+    private static void Records(Action<bool, string> check)
+    {
+        var records = new BattleRecords();
+        var first = records.Add(BattleDifficulty.Normal, false, 0, 20);
+        check(!first.Any && records.Normal.Wins == 0 && records.Normal.BestSeconds == null, "A loss with no slime defeated sets no record");
+        var win = records.Add(BattleDifficulty.Normal, true, 12, 95);
+        check(win.Fastest && win.MostDefeated && records.Normal.Wins == 1 && records.Normal.BestSeconds == 95 && records.Normal.MostDefeated == 12,
+            "The first win is the fastest and the most slimes");
+        var slower = records.Add(BattleDifficulty.Normal, true, 12, 120);
+        check(!slower.Any && records.Normal.Wins == 2 && records.Normal.BestSeconds == 95, "A slower win with as many slimes is no record (but counts as a win)");
+        var lostBig = records.Add(BattleDifficulty.Normal, false, 14, 300);
+        check(!lostBig.Fastest && lostBig.MostDefeated && records.Normal.BestSeconds == 95 && records.Normal.Wins == 2,
+            "A loss can set the most-slimes record, never the fastest win");
+        check(records.Hard.Wins == 0 && records.Easy.MostDefeated == 0, "Each difficulty keeps its own records");
+
+        string dir = Path.Combine(Path.GetTempPath(), "pet-records-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            string path = Path.Combine(dir, "battle-records.json");
+            check(BattleRecords.Load(path).Normal.Wins == 0, "No file yet: empty records");
+            check(records.Save(path) && BattleRecords.Load(path) is { Normal: { Wins: 2, BestSeconds: 95, MostDefeated: 14 } }, "Records survive a save and load");
+            File.WriteAllText(path, "{ broken");
+            check(BattleRecords.Load(path).Normal.Wins == 0, "A broken file starts over (no crash)");
+            File.WriteAllText(path, "{\"Normal\":{\"Wins\":-3,\"BestSeconds\":-1,\"MostDefeated\":-2},\"Hard\":null}");
+            var odd = BattleRecords.Load(path);
+            check(odd.Normal is { Wins: 0, BestSeconds: null, MostDefeated: 0 } && odd.Hard != null, "Impossible numbers in the file are cleaned up");
+        }
+        finally { try { Directory.Delete(dir, true); } catch (IOException) { } }
     }
 }

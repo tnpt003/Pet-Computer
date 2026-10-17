@@ -71,7 +71,16 @@ public sealed partial class PetWindow
         pause.Click += (_, _) => { if (battle != null) SetBattlePaused(!(battle.Paused && !battlePausedByMenu)); };
         var end = new MenuItem();
         end.Click += (_, _) => EndBattle();
-        root.Items.Add(start); root.Items.Add(pause); root.Items.Add(end);
+        // Difficulty for the next battle (remembered); a running battle keeps its own.
+        var difficulty = new MenuItem();
+        var levels = new (BattleDifficulty Level, MenuItem Item)[] { (BattleDifficulty.Easy, new()), (BattleDifficulty.Normal, new()), (BattleDifficulty.Hard, new()) };
+        foreach (var (level, item) in levels)
+        {
+            item.IsCheckable = true;
+            item.Click += (_, _) => SetBattleDifficulty(level);
+            difficulty.Items.Add(item);
+        }
+        root.Items.Add(start); root.Items.Add(difficulty); root.Items.Add(pause); root.Items.Add(end);
         menu.Items.Add(root);
         menu.Opened += (_, _) =>
         {
@@ -87,6 +96,13 @@ public sealed partial class PetWindow
             pause.IsEnabled = !(userPaused && context.Fullscreen);
             pause.Visibility = end.Visibility = battle != null ? Visibility.Visible : Visibility.Collapsed;
             end.Header = L("Kết thúc trận", "End battle");
+            difficulty.Header = L("Độ khó: ", "Difficulty: ") + DifficultyName(BattleDifficultyChoice);
+            difficulty.IsEnabled = battle == null;
+            foreach (var (level, item) in levels)
+            {
+                item.Header = DifficultyName(level);
+                item.IsChecked = level == BattleDifficultyChoice;
+            }
         };
         menu.Closed += (_, _) =>
         {
@@ -94,6 +110,26 @@ public sealed partial class PetWindow
             battlePausedByMenu = false;
         };
     }
+
+    public BattleDifficulty BattleDifficultyChoice =>
+        Enum.TryParse<BattleDifficulty>(preferences.BattleDifficulty, out var level) ? level : BattleDifficulty.Normal;
+
+    public void SetBattleDifficulty(BattleDifficulty level)
+    {
+        if (level == BattleDifficultyChoice) return;
+        preferences.BattleDifficulty = level.ToString();
+        SavePreferences();
+    }
+
+    private string DifficultyName(BattleDifficulty level) => level switch
+    {
+        BattleDifficulty.Easy => L("Dễ", "Easy"), BattleDifficulty.Hard => L("Khó", "Hard"), _ => L("Thường", "Normal")
+    };
+
+    // Best battles per difficulty (battle-records.json). Only the real pet reads and writes the
+    // file; a window built with given preferences (tests) keeps them in memory.
+    private BattleRecords? battleRecords;
+    public BattleRecords BattleRecords => battleRecords ??= persistPreferences ? BattleRecords.Load() : new();
 
     // Null when a battle may start now; otherwise the reason, for the user.
     public string? BattleRefusal()
@@ -126,7 +162,7 @@ public sealed partial class PetWindow
         battleMonitor = CatMonitor();
         battleScale = scale;
         battlePausedByAway = false;
-        battle = new BattleSim(BattleTuning, battleArea.Left, battleArea.Right);
+        battle = new BattleSim(BattleTuning, battleArea.Left, battleArea.Right, difficulty: BattleDifficultyChoice);
         battlePausedByMenu = false;
         pet.SwordOut = true;
         pet.MoveScale = battle.Settings.CatRunScale;
@@ -231,7 +267,11 @@ public sealed partial class PetWindow
         battle.ClearEvents();
         if (battle.Finished)
         {
-            var result = new BattleSummary(battle.Phase == BattlePhase.Won, battle.Defeated, battle.FightSeconds, battle.CatHp, battle.Settings.CatMaxHp, battle.BossDefeated, battle.DefeatedBoss?.Name(preferences.Language == "en"));
+            bool won = battle.Phase == BattlePhase.Won;
+            var news = BattleRecords.Add(battle.Difficulty, won, battle.Defeated, battle.FightSeconds);
+            if (persistPreferences) BattleRecords.Save();
+            var result = new BattleSummary(won, battle.Defeated, battle.FightSeconds, battle.CatHp, battle.Settings.CatMaxHp, battle.BossDefeated,
+                battle.DefeatedBoss?.Name(preferences.Language == "en"), battle.Difficulty, news);
             EndBattle();
             ShowBattleSummary(result);
             return;

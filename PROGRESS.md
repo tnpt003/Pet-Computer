@@ -5,7 +5,7 @@ Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt 
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
 ## Kết quả test gần nhất (2026-10-17, Battle Mode đợt 3: HUD kiểu game, 5 kỹ năng, boss)
-- scripts/test.ps1 -Ui: 54 Python tests, 489 C# checks (thêm 26: BattleSkillTests cho 5 kỹ năng + boss), 270 WPF checks (thêm 11: HUD, kỹ năng qua ô HUD, hiệu ứng trên mèo, boss trên chiến trường) đạt.
+- scripts/test.ps1 -Ui: 54 Python tests, 489 C# checks (thêm 26: BattleSkillTests cho 5 kỹ năng + boss), 270 WPF checks (thêm 11: HUD, kỹ năng qua ô HUD, hiệu ứng trên mèo, boss trên chiến trường) đạt. Publish + check-publish đạt (3/3); đóng mèo người dùng bằng WM_CLOSE, mở lại bản mới lúc 08:00.
 - So pixel 1338 ảnh mốc: 1333 giống từng byte (Pet Mode không đổi); khác menu (từ đợt MVP) và 2 ảnh speech không ổn định. Đã xem ảnh: HUD (đợt thường + boss), boss đang gồng trên nền tối, khiên + lấp lánh trên mèo; check mép đạt cho khiên/lấp lánh (cả khi bị kéo).
 - Chưa đo hiệu năng khi có trận (perf.ps1 không tự bật trận được); chưa nghe/chơi thật.
 

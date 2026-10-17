@@ -153,7 +153,7 @@ public sealed partial class PetWindow : Window
 
     public void Reset()
     {
-        EndBattle();
+        EndBattle(); CloseBattleSummary(); CloseBattleNotice();
         CancelFeatureActivity();
         bool keepSleeping = pet.Emotions.SleepLocked || pet.Action == PetAction.Sleeping;
         Interact("reset");

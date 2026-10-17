@@ -336,7 +336,9 @@ public sealed partial class PetWindow
         double now = clock.Elapsed.TotalSeconds;
         if (!preview && soundCooldowns.TryGetValue(kind, out double until) && now < until) return false;
         soundAfter = now + 0.7;
-        soundCooldowns[kind] = now + (kind == "ball_tap" ? 0.7 : kind is "purr" or "sleep" ? 6 : 3.5);
+        // Battle foley is short and frequent (a swing every ~0.75 s): its own short cooldown.
+        bool foley = PetSounds.IsBattleEffect(kind);
+        soundCooldowns[kind] = now + (foley ? 0.25 : kind == "ball_tap" ? 0.7 : kind is "purr" or "sleep" ? 6 : 3.5);
         try
         {
             sound?.Stop(); sound?.Dispose(); soundStream?.Dispose();
@@ -347,7 +349,7 @@ public sealed partial class PetWindow
                 recording[i] = (byte)sample; recording[i + 1] = (byte)(sample >> 8);
             }
             // Let the cartoon cue finish before another cue can replace it.
-            soundAfter = now + (recording.Length - 44) / 44100.0 + 0.15;
+            soundAfter = now + (recording.Length - 44) / 44100.0 + (foley ? 0.02 : 0.15);
             soundStream = new MemoryStream(recording);
             soundStream.Position = 0; sound = new SoundPlayer(soundStream); sound.Play();
             return true;
@@ -363,5 +365,5 @@ public sealed partial class PetWindow
     private void ApplyAccessory() =>
         renderer.Accessory = preferences.HolidayAccessories && PetAccessories.ForEvent(specialDay) is { } outfit ? outfit.Id : preferences.Accessory;
 
-    private void CloseFeatures() { EndBattle(); laserWindow?.Close(); diaryWindow?.Close(); behaviorSettingsWindow?.Close(); toyWindow?.Close(); settingsWindow?.Close(); speechWindow?.Close(); sound?.Stop(); sound?.Dispose(); soundStream?.Dispose(); }
+    private void CloseFeatures() { EndBattle(); CloseBattleSummary(); CloseBattleNotice(); laserWindow?.Close(); diaryWindow?.Close(); behaviorSettingsWindow?.Close(); toyWindow?.Close(); settingsWindow?.Close(); speechWindow?.Close(); sound?.Stop(); sound?.Dispose(); soundStream?.Dispose(); }
 }

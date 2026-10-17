@@ -22,6 +22,9 @@ internal static class BattleChecks
     [System.Runtime.InteropServices.DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")]
     private static extern IntPtr GetWindowLongPtr(IntPtr hwnd, int index);
 
+    private static Window? ResultWindow() => Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.Title == "Pet result" && w.IsVisible);
+    private static int ResultWindows() => Application.Current.Windows.OfType<Window>().Count(w => w.Title == "Pet result" && w.IsVisible);
+    private const long NoActivate = 0x08000000, Transparent = 0x20;
     private static int OpenBattleWindows() => Application.Current.Windows.OfType<Window>().Count(w => w.Title.StartsWith("Pet battle") && w.IsLoaded);
 
     public static async Task Run(PetWindow window, PetModel pet, PetBehavior behavior, PetPreferences preferences, Action<bool, string> check)
@@ -55,7 +58,6 @@ internal static class BattleChecks
         await Task.Delay(30);
         var field = Field<Window?>(window, "battleFieldWindow");
         var hud = Field<Window?>(window, "battleHudWindow");
-        const long NoActivate = 0x08000000, Transparent = 0x20;
         long fieldStyle = field == null ? 0 : GetWindowLongPtr(new WindowInteropHelper(field).Handle, -20).ToInt64();
         long hudStyle = hud == null ? 0 : GetWindowLongPtr(new WindowInteropHelper(hud).Handle, -20).ToInt64();
         check(field is { IsVisible: true, ShowActivated: false, ShowInTaskbar: false } && hud is { IsVisible: true, ShowActivated: false } &&
@@ -247,6 +249,8 @@ internal static class BattleChecks
         check(window.Battle?.Phase == BattlePhase.Lost && pet.BattleDazed && pet.Action == PetAction.Sitting, "At 0 HP the cat sits down seeing stars");
         Tick(1.2);
         check(!window.BattleActive && !pet.BattleDazed && OpenBattleWindows() == 0, "Then the battle ends by itself and cleans up");
+        check(ResultWindow() is { IsVisible: true } && window.LastBattleSummary is { Won: false, Defeated: 0 } lost && lost.Hp == 0,
+            "A result panel shows the defeat and its numbers");
         pet.Emotions.Step(pet, 0.5);
         check(pet.Emotions.Current is PetEmotion.Neutral or PetEmotion.Happy && pet.Interactions.RoughThrows == roughThrows && !pet.Emotions.SleepLocked,
             "Losing leaves no lasting mark (no sadness, anger or rough-handling count)");
@@ -262,6 +266,47 @@ internal static class BattleChecks
             Tick(1);
         }
         check(!window.BattleActive && OpenBattleWindows() == 0 && !pet.BattleCheer, "Three won battles in a row: each ends by itself and leaves no window");
+        check(window.LastBattleSummary is { Won: true, Defeated: 1 } won && won.Seconds > 0 && ResultWindows() == 1,
+            "After a victory one result panel shows slimes defeated, time and HP");
+        if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string resultReview && ResultWindow()?.Content is FrameworkElement resultContent)
+        {
+            resultContent.UpdateLayout();
+            var shot = new RenderTargetBitmap((int)Math.Ceiling(resultContent.ActualWidth + 12), (int)Math.Ceiling(resultContent.ActualHeight + 12), 96, 96, PixelFormats.Pbgra32);
+            shot.Render(resultContent);
+            var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(shot));
+            using var stream = System.IO.File.Create(System.IO.Path.Combine(resultReview, "battle-result.png")); encoder.Save(stream);
+        }
+        long resultStyle = GetWindowLongPtr(new WindowInteropHelper(ResultWindow()!).Handle, -20).ToInt64();
+        check((resultStyle & NoActivate) != 0 && ResultWindow()!.ShowActivated == false, "The result panel never takes focus");
+        // "Play again" starts the next battle from the panel.
+        var buttons = (System.Windows.Controls.Panel)((System.Windows.Controls.Panel)((System.Windows.Controls.Border)ResultWindow()!.Content).Child).Children[2];
+        buttons.Children[0].RaiseEvent(MouseEvent(UIElement.MouseLeftButtonDownEvent));
+        await Task.Delay(20);
+        check(window.BattleActive && ResultWindows() == 0, "Play again closes the panel and starts a new battle");
+        window.EndBattle();
+        check(!window.BattleActive && ResultWindows() == 0, "Ending a battle by hand shows no result panel");
+        Call(window, "ShowBattleSummary", new PetWindow.BattleSummary(true, 3, 61, 40, 100));
+        buttons = (System.Windows.Controls.Panel)((System.Windows.Controls.Panel)((System.Windows.Controls.Border)ResultWindow()!.Content).Child).Children[2];
+        buttons.Children[1].RaiseEvent(MouseEvent(UIElement.MouseLeftButtonDownEvent));
+        await Task.Delay(20);
+        check(ResultWindows() == 0 && !window.BattleActive, "Close just closes the panel");
+        Call(window, "ShowBattleSummary", new PetWindow.BattleSummary(true, 3, 61, 40, 100));
+        SetContext(window, true, 0); Call(window, "TickContext", 1.1);
+        await Task.Delay(20);
+        check(ResultWindows() == 0, "A fullscreen app closes the result panel");
+        SetContext(window, false, 0); Call(window, "TickContext", 1.1);
+        Call(window, "ShowBattleSummary", new PetWindow.BattleSummary(false, 0, 5, 0, 100));
+        window.Reset();
+        await Task.Delay(20);
+        check(ResultWindows() == 0, "Bringing the pet back closes the result panel");
+
+        // Why a battle cannot start: a small click-through note by the cat, gone after a moment.
+        Call(window, "ShowBattleNotice", "The pet is asleep.");
+        var note = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.Title == "Pet notice" && w.IsVisible);
+        long noteStyle = note == null ? 0 : GetWindowLongPtr(new WindowInteropHelper(note).Handle, -20).ToInt64();
+        check(note != null && (noteStyle & NoActivate) != 0 && (noteStyle & Transparent) != 0, "A refusal shows a click-through note that never takes focus");
+        await Task.Delay(TimeSpan.FromSeconds(PetWindow.BattleNoticeSeconds + 0.4));
+        check(!Application.Current.Windows.OfType<Window>().Any(w => w.Title == "Pet notice" && w.IsVisible), "The note disappears by itself");
 
         // Without Python at all the battle still runs (these checks run with PET_AI_DISABLED).
         window.Reset();

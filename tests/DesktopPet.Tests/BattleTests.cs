@@ -192,5 +192,43 @@ internal static class BattleTests
         check(sim.Effects.Count == 3, "Effects are capped");
         Run(sim, 1, () => 800, held: true);
         check(sim.Effects.Count == 0, "Effects disappear by themselves");
+
+        // HP back between waves (not after the last), and the battle's length for the result.
+        var heal = New(new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 1, 1 }, SlimeMaxHp = 60, SlimeDamage = 50, WaveBreakSeconds = 5 });
+        heal.Step(dt, 800, false);
+        heal.Slimes[0].X = 840;
+        Run(heal, 3, () => 800);
+        check(heal.Phase == BattlePhase.WaveBreak && heal.LastHeal == 15 && heal.CatHp == 65, $"Clearing a wave gives back {heal.Settings.WaveHeal} HP (HP {heal.CatHp})");
+        for (int i = 0; i < 600 && !(heal.Phase == BattlePhase.Fighting && heal.Slimes.Count > 0); i++) heal.Step(dt, 800, false);
+        heal.Slimes[0].X = 840;
+        Run(heal, 3, () => 800);
+        check(heal.Phase == BattlePhase.Won && heal.CatHp == 15, $"The last wave gives nothing back (HP {heal.CatHp})");
+        double fight = heal.FightSeconds;
+        Run(heal, 1, () => 800);
+        check(fight > 5 && heal.FightSeconds == fight && heal.Time > fight, "The battle's length stops at the end (the outro is not counted)");
+        var full = New(new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 1, 1 }, SlimeMaxHp = 1, SlimeDamage = 0 });
+        full.Step(dt, 800, false);
+        full.Slimes[0].X = 840;
+        Run(full, 1.5, () => 800);
+        check(full.Phase == BattlePhase.WaveBreak && full.CatHp == full.Settings.CatMaxHp && full.LastHeal == 0, "Healing never goes above full HP");
+
+        // Battle foley: short, quiet, synthesized, distinct and safe to scale.
+        string[] foley = { "swoosh", "squish", "pop" };
+        var waves = foley.Select(kind => PetSounds.CreateWave(kind, 3)).ToArray();
+        bool valid = true;
+        foreach (var w in waves)
+        {
+            int peak = 0;
+            for (int i = 44; i + 1 < w.Length; i += 2) peak = Math.Max(peak, Math.Abs((int)BitConverter.ToInt16(w, i)));
+            double seconds = (w.Length - 44) / 44100.0;
+            valid &= w[0] == 'R' && BitConverter.ToInt32(w, 40) == w.Length - 44 && seconds is > 0.05 and < 0.25 && peak > 2000 && peak < 32767 * 0.5;
+        }
+        check(valid, "Battle effects are valid short WAVs with a soft peak");
+        check(waves.Select(Convert.ToBase64String).Distinct().Count() == 3 && !waves[0].SequenceEqual(PetSounds.CreateWave("meow", 3)),
+            "Swoosh, squish and pop sound different from each other and from the cat");
+        check(PetSounds.CreateWave("pop", 3).SequenceEqual(waves[2]) && !PetSounds.CreateWave("pop", 4).SequenceEqual(waves[2]), "The same seed gives the same effect; another seed varies it");
+        byte[] shared = PetSounds.CreateWave("squish"); Array.Clear(shared);
+        check(PetSounds.CreateWave("squish")[0] == (byte)'R' && foley.All(PetSounds.IsBattleEffect) && !PetSounds.IsBattleEffect("meow"),
+            "Volume scaling never touches the cached effects");
     }
 }

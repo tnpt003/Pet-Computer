@@ -70,7 +70,10 @@ Tick `[x]` khi đạt; ghi lỗi ngay dưới mục kèm ngày. Mục mới chư
 - [ ] Pause/Resume trên HUD và trong menu; mở menu giữa trận thì trận dừng, đóng menu thì chạy tiếp; trận đã Pause thì đóng menu vẫn Pause. Pause ở khay: mọi thứ đứng yên, bỏ Pause chạy tiếp không "giật" sát thương.
 - [ ] Fullscreen (video/game) trên màn hình có mèo: trận dừng, dải sàn + HUD ẩn; thoát fullscreen thì hiện lại ở trạng thái dừng, bấm Tiếp tục mới chạy.
 - [ ] Thắng 3 đợt: "Chiến thắng!" rồi tự đóng; thua: mèo ngồi choáng rồi tự đóng; sau đó mèo vẫn bình thường (không buồn/giận, ăn/chơi được, AI chạy lại). Bắt đầu/kết thúc trận nhiều lần liên tiếp, thoát app giữa trận: không còn dải sàn/HUD sót lại.
-- [ ] Âm thanh: tiếng chạm khi trúng/đẩy, tiếng giật mình khi bị đánh, vui khi hết đợt/thắng, cáu khi thua; không dồn dập; tắt Âm thanh/volume 0 thì im.
+- [ ] Âm thanh: "vút" khi vung kiếm/đẩy, "bộp" khi slime trúng đòn, "bụp" khi slime biến mất; giật mình khi bị đánh, vui khi hết đợt/thắng, cáu khi thua; nghe có dễ chịu, có quá dày/quá to không; tắt Âm thanh/volume 0 thì im.
+- [ ] Hết đợt 1 và 2: HUD ghi "+15 HP" và thanh HP tăng; đợt cuối không hồi.
+- [ ] Bảng kết quả sau khi thắng/thua: số slime, thời gian, HP; "Chơi lại" bắt đầu trận mới; "Đóng" đóng; để yên 12 s thì tự đóng; bấm "Kết thúc" giữa trận thì không có bảng.
+- [ ] Thông báo từ chối: mở menu khi mèo rảnh, đợi mèo bị kéo/ngủ rồi mới bấm "Bắt đầu trận" (khó tái hiện): thông báo nhỏ trên đầu mèo, click xuyên, tự mất sau 2.5 s, không có hộp thoại.
 - [ ] DPI 125–150% và màn hình tọa độ âm/màn hình phụ (nếu có): dải sàn nằm đúng đáy vùng làm việc, slime đúng sàn, HUD giữa phía trên; kéo mèo sang màn hình khác rồi thả: chiến trường chuyển theo. Đổi vị trí taskbar giữa trận.
 - [ ] Tắt AI ở khay rồi chơi một trận: chạy bình thường.
 

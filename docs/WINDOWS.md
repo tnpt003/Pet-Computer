@@ -557,9 +557,13 @@ Optional mini-game, off by default and never resumed at startup. Right-click the
 fights small slimes on the floor of its current monitor (work area) in 3 waves (2, 3, 4 slimes,
 at most 3 at once, a short break between waves). The battle is won after the last wave, or lost
 when the cat's HP reaches 0 (it sits down seeing stars; nothing lasting: no anger, sadness,
-bond or hunger change). Both endings close the battle by themselves after ~3 s.
+bond or hunger change). Both endings close the battle by themselves after ~3 s and show a
+small result panel (slimes defeated, time, HP left) with **Play again** and **Close**; it closes
+by itself after 12 s, on a fullscreen app or when the pet is brought back. Ending a battle by hand
+shows no panel. After each wave except the last the cat gets 15 HP back (`WaveHeal`).
 
-- **Start** is refused (with the reason in the menu) while the cat sleeps, wakes, is dragged,
+- **Start** is refused (with the reason in the menu, or a small click-through note above the cat
+  that fades after 2.5 s if the state changed since the menu opened) while the cat sleeps, wakes, is dragged,
   flies/climbs, stands on a window, plays/eats, reacts (angry/surprised), the pet is paused or a
   fullscreen app is open. Nothing is woken or forced.
 - **The cat fights by itself**: picks the nearest slime (or the marked one), walks to it with the
@@ -590,5 +594,7 @@ bond or hunger change). Both endings close the battle by themselves after ~3 s.
 - **Code**: `PetBattle.cs` (simulation, no WPF: tested in `tests/DesktopPet.Tests/BattleTests.cs`),
   `PetBattleView.cs` (drawing/hit-testing), `PetWindow.Battle.cs` (lifecycle, orders → walking,
   HUD, menu); the sword is drawn by `PetRenderer` from presentation fields on `PetModel`.
-  Sounds reuse the existing cartoon cues (ball tap on hits/push, surprised when hurt, excited on
-  wave clear/victory, annoyed on defeat) with their usual mute/volume/cooldown rules.
+  Sounds: three short cartoon effects synthesized in `PetSounds` (no new assets): swoosh for a
+  swing or push, squish for a hit, pop for a defeated slime; the cat's own cues stay for being hurt
+  (surprised), wave clear/victory (excited) and defeat (annoyed). One cue per frame, the most
+  important event wins; the usual mute/volume/category rules apply, effects have a 0.25 s cooldown.

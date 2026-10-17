@@ -9,8 +9,24 @@ namespace DesktopPet;
 public static class PetSounds
 {
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, Lazy<byte[]>> Prepared = new();
+    // Battle Mode foley (sword swoosh, slime squish, slime pop). Not cat voices, so they are
+    // synthesized here as soft cartoon effects instead of being cut from the recordings.
+    public static bool IsBattleEffect(string kind) => kind is "swoosh" or "squish" or "pop";
+
     public static byte[] CreateWave(string kind, int? seed = null)
     {
+        if (IsBattleEffect(kind))
+        {
+            if (seed.HasValue) return Synthesize(kind, seed.Value);
+            int effectVariant;
+            lock (Gate)
+            {
+                effectVariant = (LastClip.TryGetValue(kind, out int last) ? last + 1 : 0) % 3;
+                LastClip[kind] = effectVariant;
+            }
+            int effectSeed = 200 + effectVariant;
+            return (byte[])Prepared.GetOrAdd(kind + effectVariant, _ => new Lazy<byte[]>(() => Synthesize(kind, effectSeed))).Value.Clone();
+        }
         if (seed.HasValue) return BuildWave(kind, seed);
         kind = kind is "purr" or "sleep" or "excited" or "surprised" or "annoyed" or "ball_tap" or "satisfied" or "wake" ? kind : "meow";
         int variant = Random.Shared.Next(3);
@@ -58,6 +74,67 @@ public static class PetSounds
         if (wave.Length < 44 || BitConverter.ToInt32(wave, 40) != wave.Length - 44)
             throw new InvalidDataException("Invalid recorded pet sound");
         return Cartoonize(wave, kind, random);
+    }
+
+    // Rounded, short and quiet: a filtered-noise swoosh, a wobbly falling "bwop" for a hit and a
+    // rising bubble "bloop" when a slime pops. Pitch varies slightly per seed.
+    private static byte[] Synthesize(string kind, int seed)
+    {
+        const int rate = 22050;
+        var random = new Random(seed);
+        double pitch = 0.94 + random.NextDouble() * 0.12;
+        double duration = kind switch { "swoosh" => 0.11, "squish" => 0.15, _ => 0.2 };
+        int count = (int)(duration * rate);
+        var samples = new short[count];
+        double phase = 0, low = 0, band = 0;
+        for (int i = 0; i < count; i++)
+        {
+            double u = (double)i / (count - 1), t = (double)i / rate, value;
+            switch (kind)
+            {
+                case "swoosh":
+                {
+                    // Noise through a resonant filter whose centre sweeps up then down.
+                    double centre = (900 + 2600 * Math.Sin(Math.PI * u)) * pitch;
+                    double f = 2 * Math.Sin(Math.PI * centre / rate);
+                    double noise = random.NextDouble() * 2 - 1;
+                    low += f * band;
+                    band += f * (noise - low - 0.6 * band);
+                    value = band * 0.55 * Math.Pow(Math.Sin(Math.PI * u), 1.5);
+                    break;
+                }
+                case "squish":
+                {
+                    double frequency = (380 * Math.Exp(-u * 1.6) + 110) * pitch * (1 + 0.08 * Math.Sin(t * 2 * Math.PI * 28));
+                    phase += 2 * Math.PI * frequency / rate;
+                    double body = Math.Sin(phase) + 0.3 * Math.Sin(phase * 2);
+                    double splat = (random.NextDouble() * 2 - 1) * Math.Exp(-u * 18) * 0.5;
+                    value = (body * 0.5 + splat) * Math.Min(1, u * 40) * Math.Exp(-u * 3.2);
+                    break;
+                }
+                default:
+                {
+                    // Two bubbles: the second smaller and higher.
+                    double second = u > 0.45 ? (u - 0.45) / 0.55 : -1;
+                    double local = second >= 0 ? second : u / 0.45;
+                    double frequency = (second >= 0 ? 520 : 300) * pitch * (1 + 1.8 * local * local);
+                    phase += 2 * Math.PI * frequency / rate;
+                    value = Math.Sin(phase) * Math.Min(1, local * 30) * Math.Exp(-local * 5) * (second >= 0 ? 0.45 : 0.6);
+                    break;
+                }
+            }
+            samples[i] = (short)(Math.Tanh(value * 1.4) * 0.42 * 32767);
+        }
+        using var output = new MemoryStream();
+        using var writer = new BinaryWriter(output, System.Text.Encoding.UTF8, true);
+        writer.Write(System.Text.Encoding.ASCII.GetBytes("RIFF")); writer.Write(36 + count * 2);
+        writer.Write(System.Text.Encoding.ASCII.GetBytes("WAVEfmt ")); writer.Write(16);
+        writer.Write((short)1); writer.Write((short)1); writer.Write(rate); writer.Write(rate * 2);
+        writer.Write((short)2); writer.Write((short)16);
+        writer.Write(System.Text.Encoding.ASCII.GetBytes("data")); writer.Write(count * 2);
+        foreach (short sample in samples) writer.Write(sample);
+        writer.Flush();
+        return output.ToArray();
     }
 
     // Keep a feline voice underneath the exaggeration instead of making UI beeps.

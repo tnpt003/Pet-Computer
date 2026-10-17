@@ -34,6 +34,8 @@ public sealed class BattleSettings
     public double SpawnInterval { get; init; } = 1.6;
     public double FirstWaveDelay { get; init; } = 1.5;
     public double WaveBreakSeconds { get; init; } = 3.5;
+    // HP the cat gets back after each wave except the last.
+    public double WaveHeal { get; init; } = 15;
     // New slimes appear at least this far from the cat (centre to centre) when room allows.
     public double SpawnMinDistance { get; init; } = 200;
     public double PushCooldown { get; init; } = 5;
@@ -114,6 +116,9 @@ public sealed class BattleSim
     public double HurtFlash { get; private set; }
     // Simulation clock (stops while paused); animations read it instead of wall time.
     public double Time { get; private set; }
+    // HP given back after the last cleared wave, and the battle's length (for the result panel).
+    public double LastHeal { get; private set; }
+    public double FightSeconds { get; private set; }
     public bool Finished => Phase is BattlePhase.Won or BattlePhase.Lost && PhaseRemaining <= 0;
     public bool Over => Phase is BattlePhase.Won or BattlePhase.Lost;
     private int nextId = 1, autoTargetId, swingTargetId, swingFacing = 1;
@@ -329,6 +334,8 @@ public sealed class BattleSim
         if (Wave >= WaveCount) { Finish(BattlePhase.Won); return; }
         Phase = BattlePhase.WaveBreak;
         PhaseRemaining = Settings.WaveBreakSeconds;
+        LastHeal = Math.Max(0, Math.Min(Settings.WaveHeal, Settings.CatMaxHp - CatHp));
+        CatHp += LastHeal;
         events.Add(new(BattleEventKind.WaveCleared, catX));
     }
 
@@ -351,6 +358,7 @@ public sealed class BattleSim
     {
         Phase = phase;
         PhaseRemaining = Settings.OutroSeconds;
+        FightSeconds = Time;
         PushArmed = false;
         SelectedId = null;
         TargetId = null;

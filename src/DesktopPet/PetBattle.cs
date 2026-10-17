@@ -357,7 +357,8 @@ public sealed class BattleSim
     private void CancelSwing() { SwingTime = -1; swingHit = false; ComboSwing = false; }
 
     // The chain only lasts ComboWindow seconds after its last hit.
-    private int LiveCombo => Combo > 0 && comboClock <= Settings.ComboWindow ? Combo : 0;
+    // Hits in the current chain (0 once it lapsed); the HUD shows it as ×N.
+    public int LiveCombo => Combo > 0 && comboClock <= Settings.ComboWindow ? Combo : 0;
 
     private CatOrder CatTurn(double dt, double catX)
     {

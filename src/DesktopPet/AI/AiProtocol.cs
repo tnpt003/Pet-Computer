@@ -12,7 +12,11 @@ public sealed record PetObservation(
     double? LocalHour = null, PetInteractions? Interactions = null,
     bool SpeechEnabled = false, string Language = "vi", int Chattiness = 1, string PetName = "", bool Quiet = false,
     SpeechReport? LastSpeech = null, string LearningReset = "",
-    bool BreakDue = false, ContextReport? Context = null, string Birthday = "");
+    bool BreakDue = false, ContextReport? Context = null, string Birthday = "", BattleReport? Battles = null);
+
+// Cumulative per-session Battle Mode results (finished battles only; "End" does not count).
+// Python turns the differences into diary totals and a line; the fight itself stays in C#.
+public sealed record BattleReport(long Won, long Lost, long Combos, long Records);
 
 // Computer context (window geometry and input timing only). Returned is true once,
 // on the first observation after the user came back from being away.
@@ -33,7 +37,7 @@ public sealed record AiDecision(string Command, double DurationSeconds, string M
 
 // Lifetime summary kept by Python for the diary window (display only).
 public sealed record PetDiary(int Days, string Since, long Petted, long Treats, long Play, long RoughThrows, long Clicks,
-    double Bond, double[] BondHistory, double[] Habits);
+    double Bond, double[] BondHistory, double[] Habits, long BattlesWon = 0, long BattlesLost = 0, long Combos = 0);
 
 public interface IPetDecisionSource : IDisposable
 {
@@ -131,8 +135,10 @@ public static class AiProtocol
         var habits = Series("habits", 24, 1e6);
         if (days is not >= 1 || petted == null || treats == null || play == null || rough == null || clicks == null || bond == null ||
             since == null || history == null || habits is not { Length: 24 }) return null;
+        // Battle totals are newer and optional: missing or invalid counts read as 0.
         return new PetDiary((int)days.Value, since, (long)petted.Value, (long)treats.Value, (long)play.Value, (long)rough.Value,
-            (long)clicks.Value, bond.Value, history, habits);
+            (long)clicks.Value, bond.Value, history, habits, (long)(Number("battles_won", 1e12) ?? 0), (long)(Number("battles_lost", 1e12) ?? 0),
+            (long)(Number("combos", 1e12) ?? 0));
     }
 
     private static PetNeeds? ParseNeeds(JsonElement root)

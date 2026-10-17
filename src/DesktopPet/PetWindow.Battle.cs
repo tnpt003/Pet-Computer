@@ -131,6 +131,9 @@ public sealed partial class PetWindow
     private BattleRecords? battleRecords;
     public BattleRecords BattleRecords => battleRecords ??= persistPreferences ? BattleRecords.Load() : new();
 
+    // This session's finished battles, sent with each observation once the battle is over.
+    public AI.BattleReport BattleReport { get; private set; } = new(0, 0, 0, 0);
+
     // Null when a battle may start now; otherwise the reason, for the user.
     public string? BattleRefusal()
     {
@@ -271,6 +274,11 @@ public sealed partial class PetWindow
             bool won = battle.Phase == BattlePhase.Won;
             var news = BattleRecords.Add(battle.Difficulty, won, battle.Defeated, battle.FightSeconds);
             if (persistPreferences) BattleRecords.Save();
+            BattleReport = BattleReport with
+            {
+                Won = BattleReport.Won + (won ? 1 : 0), Lost = BattleReport.Lost + (won ? 0 : 1),
+                Combos = BattleReport.Combos + battle.CombosLanded, Records = BattleReport.Records + (news.Any ? 1 : 0)
+            };
             var result = new BattleSummary(won, battle.Defeated, battle.FightSeconds, battle.CatHp, battle.Settings.CatMaxHp, battle.BossDefeated,
                 battle.DefeatedBoss?.Name(preferences.Language == "en"), battle.Difficulty, news);
             EndBattle();

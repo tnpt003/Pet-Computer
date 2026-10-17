@@ -110,6 +110,58 @@
       "The world is going round and round…"
     ]
   },
+  "battle_won": {
+    "vi": [
+      "Thắng rồi! Kiếm gỗ của {name} lợi hại chưa?",
+      "Hết slime rồi nha sen!",
+      "Hehe, {name} là hiệp sĩ mèo đó!",
+      "Trận nữa không sen?",
+      {"text": "Xong. Giờ nghỉ một chút.", "personality": ["Calm"]},
+      {"text": "Lại nữa! Lại nữa! Slime đâu rồi?", "personality": ["Playful"]}
+    ],
+    "en": [
+      "Victory! How's {name}'s wooden sword?",
+      "No more slimes, human!",
+      "Hehe, {name} is a knight cat!",
+      "Another round?",
+      {"text": "Done. Time for a little rest.", "personality": ["Calm"]},
+      {"text": "Again! Again! Where are the slimes?", "personality": ["Playful"]}
+    ]
+  },
+  "battle_lost": {
+    "vi": [
+      "Huhu, slime đông quá…",
+      "Lần sau {name} sẽ thắng!",
+      "Choáng quá, cho {name} nghỉ chút…",
+      "Sen giúp {name} lần sau nha?",
+      "Không sao, tập thêm là được!",
+      {"text": "Thua một trận cũng không sao.", "personality": ["Calm"]}
+    ],
+    "en": [
+      "Boo, too many slimes…",
+      "{name} will win next time!",
+      "So dizzy… let {name} rest a bit…",
+      "Help {name} out next time?",
+      "It's okay, practice makes perfect!",
+      {"text": "Losing once is fine.", "personality": ["Calm"]}
+    ]
+  },
+  "battle_record": {
+    "vi": [
+      "Kỷ lục mới! {name} giỏi ghê chưa!",
+      "Hơn hẳn lần trước luôn đó sen!",
+      "Ghi vào sổ đi sen: kỷ lục mới!",
+      "Slime ơi, sợ {name} chưa?",
+      "Hehe, {name} mạnh lên rồi!"
+    ],
+    "en": [
+      "New record! Isn't {name} amazing?",
+      "Even better than last time!",
+      "Write it down: a new record!",
+      "Slimes, are you scared of {name} yet?",
+      "Hehe, {name} is getting stronger!"
+    ]
+  },
   "thrown_fun": {
     "vi": [
       "Wheee~ bay vui ghê!",

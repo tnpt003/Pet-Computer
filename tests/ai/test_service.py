@@ -446,6 +446,27 @@ class SpeechAndLearningTests(unittest.TestCase):
         self.counts["treats"] += 1
         self.assertTrue(self.step(10, chattiness=0)["speech"]["id"].startswith("treat_thanks:vi:"))
 
+    def test_battle_results_speak_once_and_fill_the_diary(self):
+        battles = {"won": 0, "lost": 0, "combos": 0, "records": 0}
+        first = self.step(chattiness=0, battles=dict(battles))  # hello; the first report is a baseline
+        self.assertEqual((first["diary"]["battles_won"], first["diary"]["combos"]), (0, 0))
+        needs = dict(self.brain.needs)
+        battles.update(won=1, combos=2, records=1)
+        record = self.step(10, chattiness=0, battles=dict(battles))
+        self.assertTrue(record["speech"]["id"].startswith("battle_record:vi:"))  # A record beats a plain win.
+        self.assertEqual(self.brain.needs["bond"], needs["bond"])  # Battles never change bond.
+        self.assertNotIn("speech", self.step(10, chattiness=0, battles=dict(battles)))  # Counted once.
+        battles["lost"] = 1
+        lost = self.step(10, language="en", chattiness=0, battles=dict(battles))
+        self.assertTrue(lost["speech"]["id"].startswith("battle_lost:en:"))
+        self.assertEqual((lost["diary"]["battles_won"], lost["diary"]["battles_lost"], lost["diary"]["combos"]), (1, 1, 2))
+        self.brain.save()
+        again = self.make()  # A restarted AI sees the same session's counts as a baseline only.
+        diary = again.decide(self.obs(battles=dict(battles)))["diary"]
+        self.assertEqual((diary["battles_won"], diary["battles_lost"], diary["combos"]), (1, 1, 2))
+        for bad in ("x", {"won": "many", "lost": -3}, None):
+            self.assertEqual(again.decide(self.obs(battles=bad))["diary"]["battles_won"], 1)
+
     def test_event_waits_until_the_pet_can_talk(self):
         self.step(chattiness=0)
         self.counts["rough_throws"] += 1

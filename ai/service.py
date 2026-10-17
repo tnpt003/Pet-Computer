@@ -43,6 +43,8 @@ BUSY_STATES = frozenset({"Dragging", "Thrown", "Jumping", "PreparingJump", "Slee
 THOUGHTS = ("hungry", "bored", "sleepy", "love")  # Priority order for thought bubbles.
 NEED_KEYS = ("hunger", "boredom", "affection", "bond")
 INTERACTION_KEYS = ("petted", "clicked", "treats", "toy", "ball_clicks", "ball_hits", "rough_throws")
+# Battle Mode results (C# runs the fight): diary totals and a line only, no needs or bond.
+BATTLE_KEYS = ("won", "lost", "combos", "records")
 # Effect of one interaction on (hunger, boredom, affection, bond).
 INTERACTION_EFFECTS = {
     "petted": (0, -8, 6, 0.4),
@@ -162,6 +164,10 @@ class Brain:
         self.first_seen = number(memory.get("first_seen"), 0, 0, 1e11) or self.wall_clock()
         totals = memory.get("totals") if isinstance(memory.get("totals"), dict) else {}
         self.totals = {key: number(totals.get(key), 0, 0, 1e12) for key in INTERACTION_KEYS}
+        battles = memory.get("battle_totals") if isinstance(memory.get("battle_totals"), dict) else {}
+        self.battle_totals = {key: number(battles.get(key), 0, 0, 1e12) for key in BATTLE_KEYS}
+        self.battle_session, self.battles = "", None
+        self.battle_delta = {key: 0 for key in BATTLE_KEYS}
         history = memory.get("bond_history") if isinstance(memory.get("bond_history"), dict) else {}
         self.bond_history = {day: number(value, 0, 0, 100) for day, value in sorted(history.items())[-BOND_HISTORY_DAYS:]
                              if isinstance(day, str) and len(day) == 10}
@@ -235,6 +241,22 @@ class Brain:
         if isinstance(hour, bool) or not isinstance(hour, (int, float)) or not 0 <= hour < 24 or sum(self.habits) < 10:
             return False
         return self.habits[int(hour)] >= 0.6 * max(self.habits)
+
+    def observe_battles(self, observation):
+        """Count battles finished since the last observation of this C# session."""
+        self.battle_delta = {key: 0 for key in BATTLE_KEYS}
+        counts = observation.get("battles")
+        session = observation.get("session_id")
+        if not isinstance(counts, dict) or not isinstance(session, str) or not 0 < len(session) <= 64:
+            return  # Older clients send nothing; no guessed battles.
+        # The first report of a session is only a baseline, like interactions: a restarted AI
+        # must not count battles the previous process already counted.
+        current = {key: number(counts.get(key), 0, 0, 1e12) for key in BATTLE_KEYS}
+        if self.battles is not None and session == self.battle_session:
+            self.battle_delta = {key: max(0, current[key] - self.battles[key]) for key in BATTLE_KEYS}
+        self.battle_session, self.battles = session, current
+        for key, count in self.battle_delta.items():
+            self.battle_totals[key] += count
 
     @staticmethod
     def family(command):
@@ -318,7 +340,10 @@ class Brain:
             self.pending_event = None  # Never talk over a fullscreen game, video or slides.
             return None
         if enabled:
-            event = ("thrown_rough" if deltas["rough_throws"] else "treat_thanks" if deltas["treats"] else
+            battle = self.battle_delta
+            event = ("battle_record" if battle["records"] else "battle_won" if battle["won"] else
+                     "battle_lost" if battle["lost"] else
+                     "thrown_rough" if deltas["rough_throws"] else "treat_thanks" if deltas["treats"] else
                      "petted" if deltas["petted"] else "play" if deltas["ball_clicks"] or deltas["toy"] else
                      "thrown_fun" if observation.get("last_event") == "released" and self.interaction_delta else
                      "back" if context.get("returned") is True else
@@ -374,6 +399,7 @@ class Brain:
         now = self.clock()
         deltas = self.observe_needs(observation, now, profile)  # Before activity updates its baseline.
         self.observe_activity(observation, now)
+        self.observe_battles(observation)
         self.learn_from_reactions(observation, deltas, now)
         ctx = learning_context(observation.get("local_hour"), self.needs, self.energy)
         greeting = None
@@ -478,6 +504,7 @@ class Brain:
         self.bond_history[time.strftime("%Y-%m-%d", time.localtime(wall))] = round(self.needs["bond"], 1)
         self.bond_history = dict(sorted(self.bond_history.items())[-BOND_HISTORY_DAYS:])
         self.memory.update(first_seen=round(self.first_seen), totals={k: int(v) for k, v in self.totals.items()},
+                           battle_totals={k: int(v) for k, v in self.battle_totals.items()},
                            bond_history=self.bond_history)
         self.memory.update(energy=round(self.energy, 3), recent_actions=self.recent,
                            habits=self.habits, bond_day=self.bond_day, bond_gain_today=round(self.bond_gain_today, 3),
@@ -510,6 +537,8 @@ class Brain:
                 "since": time.strftime("%Y-%m-%d", time.localtime(self.first_seen)),
                 "petted": int(t["petted"]), "treats": int(t["treats"]), "play": int(t["toy"] + t["ball_clicks"]),
                 "rough_throws": int(t["rough_throws"]), "clicks": int(t["clicked"]), "bond": round(self.needs["bond"], 1),
+                "battles_won": int(self.battle_totals["won"]), "battles_lost": int(self.battle_totals["lost"]),
+                "combos": int(self.battle_totals["combos"]),
                 "bond_history": [value for _, value in sorted(self.bond_history.items())[-14:]],
                 "habits": [round(value, 1) for value in self.habits]}
 

@@ -116,6 +116,13 @@ internal static class GestureTests
         check(withDiary.Command == "ROLL_OVER" && withDiary.Diary is { Days: 12, Since: "2026-10-01", Petted: 40, Treats: 9, Play: 7, RoughThrows: 1, Clicks: 30, Bond: 61.5 } d &&
               d.BondHistory.SequenceEqual(new[] { 50, 55.5, 61.5 }) && d.Habits.Length == 24 && d.Habits[20] == 12.5,
             "A decision carries the diary summary");
+        check(withDiary.Diary is { BattlesWon: 0, BattlesLost: 0, Combos: 0 }, "A diary from an older service has no battles");
+        string diaryBody = "\"diary\":{\"days\":2,\"since\":\"2026-10-01\",\"petted\":1,\"treats\":1,\"play\":1,\"rough_throws\":1,\"clicks\":1," +
+            "\"bond\":1,\"bond_history\":[1],\"habits\":" + habits;
+        var battles = AiProtocol.Parse(head + diaryBody + ",\"battles_won\":4,\"battles_lost\":2,\"combos\":9}}", 3).Diary;
+        var oddBattles = AiProtocol.Parse(head + diaryBody + ",\"battles_won\":-1,\"battles_lost\":\"x\",\"combos\":3}}", 3).Diary;
+        check(battles is { BattlesWon: 4, BattlesLost: 2, Combos: 9 } && oddBattles is { BattlesWon: 0, BattlesLost: 0, Combos: 3, Petted: 1 },
+            "Diary battle totals are read, and invalid ones read as 0 without dropping the diary");
         foreach (string bad in new[] { "\"diary\":7", "\"diary\":{\"days\":0,\"since\":\"x\"}",
                      "\"diary\":{\"days\":2,\"since\":\"2026-10-01\",\"petted\":1,\"treats\":1,\"play\":1,\"rough_throws\":1,\"clicks\":1,\"bond\":1,\"bond_history\":[1],\"habits\":[1,2]}",
                      "\"diary\":{\"days\":2,\"since\":\"2026-10-01\",\"petted\":-1,\"treats\":1,\"play\":1,\"rough_throws\":1,\"clicks\":1,\"bond\":1,\"bond_history\":[1],\"habits\":" + habits + "}" })

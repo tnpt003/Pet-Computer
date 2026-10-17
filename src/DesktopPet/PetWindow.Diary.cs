@@ -62,6 +62,9 @@ public sealed partial class PetWindow
         AddLine(L($"Đã ở cùng sen {diary.Days} ngày (từ {diary.Since})", $"Together for {diary.Days} days (since {diary.Since})"), DiaryMuted);
         AddStats((diary.Petted, L("Được vuốt", "Petted")), (diary.Treats, L("Treat", "Treats")), (diary.Play, L("Chơi bóng", "Ball games")), ((long)Math.Round(diary.Bond), L("Thân thiết", "Bond")));
         AddLine(L($"Click {diary.Clicks} lần · bị ném mạnh {diary.RoughThrows} lần", $"Clicked {Times(diary.Clicks)} · thrown roughly {Times(diary.RoughThrows)}"), DiaryMuted);
+        if (diary.BattlesWon + diary.BattlesLost > 0)
+            AddLine(L($"Chiến đấu: thắng {diary.BattlesWon} · thua {diary.BattlesLost} · combo {diary.Combos}",
+                   $"Battles: {diary.BattlesWon} won · {diary.BattlesLost} lost · {diary.Combos} combo{(diary.Combos == 1 ? "" : "s")}"), DiaryMuted);
 
         var bond = AddCard(L($"Độ thân thiết: {diary.Bond:F0}/100", $"Bond: {diary.Bond:F0}/100"));
         if (diary.BondHistory.Length >= 2) bond.Children.Add(BondChart(diary.BondHistory));

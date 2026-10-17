@@ -479,7 +479,7 @@ public sealed partial class PetWindow : Window
             DateTime.Now.Hour + DateTime.Now.Minute / 60.0, pet.Interactions.Snapshot(),
             preferences.Speech, preferences.Language, preferences.Chattiness, preferences.Name, EffectiveQuiet,
             pet.Speech.LastShown is { } shown ? new SpeechReport(shown.Id, Math.Round(shown.Age, 2)) : null, preferences.LearningReset,
-            breaks.Due && CanDeliverBreak, ContextSnapshot(), preferences.Birthday);
+            breaks.Due && CanDeliverBreak, ContextSnapshot(), preferences.Birthday, BattleReport);
         try
         {
             // Even a future cached source that completes synchronously must wait until

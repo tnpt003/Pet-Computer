@@ -133,6 +133,33 @@ internal static class BattleChecks
         Tick(1.0 / 60);
         check(!gameHud.Slot(BattleSkill.Push).IsReady && gameHud.Slot(BattleSkill.Push).Remaining > 0 && gameHud.Slot(BattleSkill.Heal).IsReady,
             "A used skill shows its cooldown; the others are ready");
+        // The hit chain on the HUD: ×1, then gold ×2 (the next hit is the combo), hidden once it lapses.
+        var comboProperty = typeof(BattleSim).GetProperty(nameof(BattleSim.Combo))!;
+        var comboClock = typeof(BattleSim).GetField("comboClock", Flags)!;
+        int savedCombo = Sim().Combo; object savedClock = comboClock.GetValue(Sim())!;
+        double hudWidth = gameHud.ActualWidth;
+        string ShowChain(int hits, double since)
+        {
+            comboProperty.SetValue(Sim(), hits); comboClock.SetValue(Sim(), since);
+            gameHud.Update(Sim(), false, false, false);
+            gameHud.UpdateLayout();
+            return gameHud.ComboText.Visibility == Visibility.Visible ? gameHud.ComboText.Text : "";
+        }
+        string none = ShowChain(0, 0), one = ShowChain(1, 0);
+        string two = ShowChain(2, 0.5);
+        var twoBrush = (SolidColorBrush)gameHud.ComboText.Foreground;
+        if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string comboReview)
+        {
+            var comboShot = new RenderTargetBitmap((int)Math.Ceiling(gameHud.ActualWidth + 16), (int)Math.Ceiling(gameHud.ActualHeight + 16), 96, 96, PixelFormats.Pbgra32);
+            comboShot.Render(gameHud);
+            var comboEncoder = new PngBitmapEncoder(); comboEncoder.Frames.Add(BitmapFrame.Create(comboShot));
+            using var comboStream = System.IO.File.Create(System.IO.Path.Combine(comboReview, "battle-hud-combo.png")); comboEncoder.Save(comboStream);
+        }
+        string lapsed = ShowChain(2, 10);
+        check(none == "" && one == "×1" && two == "×2" && twoBrush.Color == Color.FromRgb(0xFF, 0xD2, 0x3F) && lapsed == "" &&
+              Math.Abs(gameHud.ActualWidth - hudWidth) < 0.5,
+            $"The HUD shows the hit chain (×1, gold ×2 before the combo) and hides it once it lapses, without changing width ({none}|{one}|{two}|{lapsed})");
+        comboProperty.SetValue(Sim(), savedCombo); comboClock.SetValue(Sim(), savedClock);
         Press(gameHud.Slot(BattleSkill.Heal));
         check(Sim().Cooldown(BattleSkill.Heal) == 0, "The fish slot does nothing at full HP");
         Press(gameHud.Slot(BattleSkill.Shield)); Press(gameHud.Slot(BattleSkill.Cheer));
@@ -339,6 +366,7 @@ internal static class BattleChecks
         check(pet.Action == PetAction.Thrown, "The throw after it is the normal one");
 
         // Losing: a dizzy, harmless end.
+        var reportBefore = window.BattleReport;
         window.Reset();
         long roughThrows = pet.Interactions.RoughThrows;
         window.BattleTuning = new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 1 }, CatMaxHp = 10, SlimeDamage = 10, CatDamage = 0, OutroSeconds = 1 };
@@ -393,6 +421,9 @@ internal static class BattleChecks
         check(window.LastBattleSummary is { Difficulty: BattleDifficulty.Hard, News.Fastest: true } && window.BattleRecords.Hard.Wins == 1 && window.BattleRecords.Normal.Wins == 3 &&
               PanelText().Contains("New record") && PanelText().Contains("Hard"),
             $"A first Hard win is a new Hard record; Normal's stay apart ({PanelText()})");
+        var report = window.BattleReport;
+        check(report.Won - reportBefore.Won == 4 && report.Lost - reportBefore.Lost == 1 && report.Records - reportBefore.Records >= 1,
+            $"Finished battles are counted for Python (won +{report.Won - reportBefore.Won}, lost +{report.Lost - reportBefore.Lost}, records +{report.Records - reportBefore.Records})");
         window.SetBattleDifficulty(BattleDifficulty.Normal);
         if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string resultReview && ResultWindow()?.Content is FrameworkElement resultContent)
         {

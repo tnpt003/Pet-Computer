@@ -19,7 +19,7 @@ public sealed class BattleHud : Border
     public static readonly BattleSkill[] SkillOrder = Array.ConvertAll(BattleSkills.All, info => info.Skill);
     private const double HpWidth = 170, BossWidth = 200;
     private readonly Func<string, string, string> L;
-    private readonly TextBlock hpText, status, hint, banner, bossName;
+    private readonly TextBlock hpText, status, hint, banner, bossName, comboText;
     private readonly Border hpFill, hpTrail, bossFill, bossBar, pauseButton, endButton;
     private readonly HudGlyph pauseGlyph;
     private readonly StackPanel waveDots;
@@ -30,6 +30,7 @@ public sealed class BattleHud : Border
     private (BattlePhase, int, int, bool, bool, double, int) shownStatus;
     private (double, bool) shownBoss = (-1, false);
     private (bool, BattleSkill?, bool) shownHint;
+    private (int, bool) shownCombo = (-1, false);
     private bool hintShown;
     private BattleSim? last;
     private bool lastHeld;
@@ -69,6 +70,10 @@ public sealed class BattleHud : Border
         };
         face.Clip = new EllipseGeometry(new Point(27, 27), 25, 25);
         var name = new TextBlock { Text = petName, Foreground = Brushes.White, FontWeight = FontWeights.Bold, FontSize = 13.5 };
+        // The current hit chain (×1, ×2…), gold when the next hit is the combo. Its space is always
+        // kept (Hidden, fixed width) so the HUD never changes width and re-centres mid-fight.
+        comboText = new TextBlock { Foreground = Soft, FontWeight = FontWeights.Black, FontSize = 13.5, Width = 30, Margin = new Thickness(6, 0, 0, 0),
+            Visibility = Visibility.Hidden };
         hpTrail = new Border { Background = Trail, CornerRadius = new CornerRadius(5), HorizontalAlignment = HorizontalAlignment.Left, Width = HpWidth };
         hpFill = new Border { Background = Green, CornerRadius = new CornerRadius(5), HorizontalAlignment = HorizontalAlignment.Left, Width = HpWidth };
         hpText = new TextBlock { Foreground = Brushes.White, FontWeight = FontWeights.Bold, FontSize = 11, HorizontalAlignment = HorizontalAlignment.Center,
@@ -79,7 +84,7 @@ public sealed class BattleHud : Border
             Padding = new Thickness(1), Margin = new Thickness(0, 4, 0, 0), Child = new Grid { Children = { hpTrail, hpFill, hpText } }
         };
         var left = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center,
-            Children = { face, new StackPanel { Margin = new Thickness(8, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center, Children = { name, hpBar } } } };
+            Children = { face, new StackPanel { Margin = new Thickness(8, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center, Children = { new StackPanel { Orientation = Orientation.Horizontal, Children = { name, comboText } }, hpBar } } } };
 
         // Centre: the banner, or the status with wave dots / the boss's HP.
         banner = new TextBlock { Foreground = Gold, FontWeight = FontWeights.Black, FontSize = 22, HorizontalAlignment = HorizontalAlignment.Center,
@@ -129,6 +134,7 @@ public sealed class BattleHud : Border
     }
 
     public SkillSlot Slot(BattleSkill skill) => slots[Array.IndexOf(SkillOrder, skill)];
+    public TextBlock ComboText => comboText;
     public Border PauseButton => pauseButton;
     public Border EndButton => endButton;
 
@@ -180,6 +186,17 @@ public sealed class BattleHud : Border
         if (hpFill.Background != hpBrush) hpFill.Background = hpBrush;
         var hp = (Math.Ceiling(b.CatHp), b.Settings.CatMaxHp);
         if (hp != shownHp) { shownHp = hp; hpText.Text = $"{hp.Item1} / {hp.Item2}"; }
+
+        // Hit chain: shown from the first hit until it lapses or the combo lands.
+        int chain = b.Over ? 0 : b.LiveCombo;
+        var comboKey = (chain, chain > 0 && chain == b.Settings.ComboHits - 1);
+        if (comboKey != shownCombo)
+        {
+            shownCombo = comboKey;
+            comboText.Text = chain > 0 ? $"×{chain}" : "";
+            comboText.Foreground = comboKey.Item2 ? Gold : Soft;
+            comboText.Visibility = chain > 0 ? Visibility.Visible : Visibility.Hidden;
+        }
 
         // Banner for a moment, otherwise the status line.
         bool showBanner = b.Time < bannerUntil;

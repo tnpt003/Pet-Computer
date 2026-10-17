@@ -587,3 +587,14 @@ unchanged), does not apply commands, emotion hints, thoughts or speech, and bump
 revision when the battle starts and ends so a reply requested before it is dropped by
 `DecisionGuard`. Rescue throws during a battle are not counted as rough handling. Normal
 requests resume on the next behavior tick after the battle.
+
+Battle results (2026-10-17): after a battle, observations carry an optional `battles` object,
+`{"won", "lost", "combos", "records"}`: cumulative counts for this C# session of battles that
+finished (won or lost; "End" does not count), combos landed in them, and battles that set a new
+record. Like `interactions`, Python counts only increases within one `session_id` (the first
+report is a baseline, so a restarted AI never double-counts), keeps lifetime totals in memory
+(`battle_totals`) and adds `battles_won`, `battles_lost` and `combos` to `diary` (C# reads them
+as optional; missing or invalid means 0). A fresh result queues one event line: `battle_record`
+before `battle_won` before `battle_lost` (`ai/lines.json`), spoken under the usual speech rules.
+Battles never change needs, bond, habits or learning. Records themselves stay in C#
+(`battle-records.json`).

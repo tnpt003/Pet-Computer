@@ -11,7 +11,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
   - Trận tạm dừng (1.5 phút): CPU TB 0.51% → 0.54% (như nhau, trong mức nhiễu), p95 1.12% → 0.88%. Phần lớn chi phí lúc dừng là vòng 60 FPS của chính con mèo, không phải trận.
   - RAM (private): chưa kết luận được (lúc đánh 132→144 MB trước, 184→196 MB sau nhưng mốc đầu khác nhau; max 216 vs 218). Lần đo "trước" chạy chồng một phần với UiChecks nên có thể hơi lệch.
 - Đã xem ảnh: HUD không còn bóng đổ vẫn đọc rõ; vùng đỏ boss chỉ còn nét viền. Ảnh mèo (Pet Mode) không đổi.
-- Publish + check-publish: xem dòng dưới.
+- Publish + check-publish đạt (3/3). Mèo người dùng đóng lúc 08:06 (WM_CLOSE) để đo bằng mèo riêng, mở lại bản mới lúc 08:17.
 
 ## Kết quả test đợt Battle Mode 3: HUD kiểu game, 5 kỹ năng, boss (2026-10-17)
 - scripts/test.ps1 -Ui: 54 Python tests, 489 C# checks (thêm 26: BattleSkillTests cho 5 kỹ năng + boss), 270 WPF checks (thêm 11: HUD, kỹ năng qua ô HUD, hiệu ứng trên mèo, boss trên chiến trường) đạt. Publish + check-publish đạt (3/3); đóng mèo người dùng bằng WM_CLOSE, mở lại bản mới lúc 08:00.

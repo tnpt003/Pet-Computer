@@ -293,7 +293,7 @@ public sealed class BattleSim
         if (!slime.Targetable || amount <= 0) return;
         slime.Hp = Math.Max(0, slime.Hp - amount);
         slime.HitFlash = 0.18;
-        AddEffect(BattleEffectKind.Number, slime.X, slime.Height + 10, Math.Round(amount));
+        AddEffect(BattleEffectKind.Number, slime.X + (slime.IsBoss ? slime.Width * 0.38 : 0), slime.Height + 10, Math.Round(amount));
         if (slime.Hp <= 0)
         {
             slime.Set(SlimeState.Defeated);
@@ -382,9 +382,10 @@ public sealed class BattleSim
                     if (slime.StateTime >= Windup(slime)) Strike(slime, catX);
                     break;
                 case SlimeState.Moving:
-                    if (catHeld) break; // Wait: nothing to chase while the cat is in the user's hand.
+                    // While the user carries the cat the slimes follow it along the floor, but never
+                    // wind up: a lifted cat cannot be hit.
                     if (Math.Abs(dx) > 1) slime.Facing = dx < 0 ? -1 : 1;
-                    if (Math.Abs(dx) <= slime.Range && slime.Cooldown <= 0 && Grace <= 0) slime.Set(SlimeState.Windup);
+                    if (!catHeld && Math.Abs(dx) <= slime.Range && slime.Cooldown <= 0 && Grace <= 0) slime.Set(SlimeState.Windup);
                     else if (Math.Abs(dx) > slime.Range * 0.75)
                         slime.X = Math.Clamp(slime.X + Math.Sign(dx) * Math.Min(Math.Abs(dx), Speed(slime) * dt), minX, maxX);
                     break;
@@ -574,15 +575,16 @@ public sealed class BattleSim
     }
 
     // An aimed skill on a slime. Neither changes the cat's target.
-    public bool Use(BattleSkill skill, int id, double catX)
+    // direction (Push only): +1 to the right, -1 to the left; null pushes it away from the cat.
+    public bool Use(BattleSkill skill, int id, double catX, int? direction = null)
     {
         var slime = Find(id);
         if (!IsAimed(skill) || !Ready(skill) || slime is not { Targetable: true }) return false;
         if (skill == BattleSkill.Push)
         {
             // Knock the slime away from the cat and stun it briefly; the boss is heavy.
-            int direction = slime.X < catX ? -1 : 1;
-            slime.KnockVelocity = direction * Settings.PushSpeed * (slime.IsBoss ? Settings.BossPushFactor : 1);
+            int push = direction is int chosen && chosen != 0 ? Math.Sign(chosen) : slime.X < catX ? -1 : 1;
+            slime.KnockVelocity = push * Settings.PushSpeed * (slime.IsBoss ? Settings.BossPushFactor : 1);
             slime.StunRemaining = Settings.PushStunSeconds * (slime.IsBoss ? Settings.BossStunFactor : 1);
             slime.Set(SlimeState.Stunned);
             AddEffect(BattleEffectKind.Push, slime.X, slime.Height / 2);
@@ -599,7 +601,11 @@ public sealed class BattleSim
         return true;
     }
 
-    public bool UsePush(int id, double catX) => Use(BattleSkill.Push, id, catX);
+    // Push direction from where the slime is clicked (DIPs from its centre): the left half sends it
+    // right, the right half left (poked from that side); the very centre leaves the default.
+    public static int? PushDirection(double offset) => Math.Abs(offset) < 3 ? null : offset < 0 ? 1 : -1;
+
+    public bool UsePush(int id, double catX, int? direction = null) => Use(BattleSkill.Push, id, catX, direction);
 
     // The work area changed (taskbar, resolution) or the cat now fights on another monitor:
     // keep every slime at the same relative spot inside the new floor.

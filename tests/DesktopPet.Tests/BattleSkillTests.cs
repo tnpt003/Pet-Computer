@@ -52,6 +52,19 @@ internal static class BattleSkillTests
         Run(cheer, 5.1);
         check(cheer.CheerRemaining == 0 && cheer.Cooldown(BattleSkill.Cheer) > 0, "Cheer wears off after 5 s; its cooldown runs on");
 
+        // Push direction: the user decides by where the slime is clicked.
+        double Pushed(int? direction)
+        {
+            var (sim, slime) = Duel(new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 1 }, SlimeMaxHp = 1000, SlimeDamage = 0, CatDamage = 0 }, 200);
+            double start = slime.X;
+            sim.UsePush(slime.Id, 800, direction);
+            Run(sim, 0.5, held: true);
+            return slime.X - start;
+        }
+        check(Pushed(1) > 50 && Pushed(-1) < -50 && Pushed(null) > 50, "Push goes right or left as chosen (toward the cat too); without a choice, away from the cat");
+        check(BattleSim.PushDirection(-10) == 1 && BattleSim.PushDirection(10) == -1 && BattleSim.PushDirection(1) == null,
+            "Clicking a slime's left half pushes it right, its right half left, its centre: default");
+
         // Bubble shield.
         var (shield, _) = Duel(new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 1 }, SlimeMaxHp = 1000, SlimeDamage = 20, CatDamage = 0 });
         check(shield.Use(BattleSkill.Shield, 800) && shield.ShieldRemaining > 0, "The shield goes up at once");

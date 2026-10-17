@@ -185,10 +185,13 @@ public sealed partial class PetWindow
 
     // A click on a slime: with a skill chosen it uses it there (the target stays as it was),
     // otherwise it marks the slime as the cat's target. Marking deals no damage.
-    public bool BattleClickSlime(int id)
+    // offset: where on the slime the click landed (DIPs from its centre); it sets Push's direction.
+    public bool BattleClickSlime(int id, double offset = 0)
     {
         if (battle == null || battle.Paused) return false;
-        bool done = battle.Armed is BattleSkill skill ? battle.Use(skill, id, pet.X + settings.Width / 2) : battle.Select(id);
+        bool done = battle.Armed is BattleSkill skill
+            ? battle.Use(skill, id, pet.X + settings.Width / 2, skill == BattleSkill.Push ? BattleSim.PushDirection(offset) : null)
+            : battle.Select(id);
         RequestBattleRedraw();
         UpdateBattleHud();
         battleView?.InvalidateVisual();
@@ -311,7 +314,7 @@ public sealed partial class PetWindow
     {
         if (battle == null) return;
         battleView = new BattleFieldView(battle);
-        battleView.SlimeClicked += id => BattleClickSlime(id);
+        battleView.SlimeClicked += (id, offset) => BattleClickSlime(id, offset);
         battleView.RightClicked += () => { battle?.Arm(null); RequestBattleRedraw(); UpdateBattleHud(); }; // Right-click on the field cancels the skill.
         battleFieldWindow = CreateBattleWindow(battleView, "Pet battle");
         battleFieldWindow.DpiChanged += (_, _) => battlePlacedScale = 0; // Re-place in pixels next frame.

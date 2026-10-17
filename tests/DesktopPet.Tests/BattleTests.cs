@@ -152,9 +152,11 @@ internal static class BattleTests
         double x0 = sim.Slimes.Last().X;
         order = sim.Step(dt, 800, true, true);
         check(order.Command == CatCommand.Hold && slime.State != SlimeState.Windup && sim.SwingTime < 0, "Lifting the cat cancels the attack aimed at it and its own swing");
-        Run(sim, 5, () => 800, held: true, lifted: true);
-        check(sim.CatHp == sim.Settings.CatMaxHp && sim.Slimes.Count == spawned && sim.ToSpawn == toSpawn && sim.Slimes.Last().X == x0,
-            "While held: no damage, no new slimes, no wave progress, slimes wait");
+        bool woundUp = false;
+        for (double t = 0; t < 5; t += dt) { sim.Step(dt, 1200, true, true); woundUp |= slime.State == SlimeState.Windup; }
+        check(sim.CatHp == sim.Settings.CatMaxHp && sim.Slimes.Count == spawned && sim.ToSpawn == toSpawn && !woundUp,
+            "While carried: no damage, no new slimes, no wave progress, no slime winds up");
+        check(slime.X > x0 + 120, $"The slimes follow the carried cat along the floor ({x0:F0} → {slime.X:F0})");
         sim.Step(dt, 800, false);
         check(sim.Grace > 0, "Putting the cat down starts the protection time");
         slime.X = 840;

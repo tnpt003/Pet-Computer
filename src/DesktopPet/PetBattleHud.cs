@@ -30,6 +30,8 @@ public sealed class BattleHud : Border
     private (double, bool) shownBoss = (-1, false);
     private (bool, BattleSkill?, bool) shownHint;
     private bool hintShown;
+    private BattleSim? last;
+    private bool lastHeld;
 
     private static Brush Frozen(byte a, byte r, byte g, byte b) => PetUi.Frozen(Color.FromArgb(a, r, g, b));
     private static readonly Brush Panel = MakePanel();
@@ -102,38 +104,45 @@ public sealed class BattleHud : Border
             var skill = SkillOrder[i];
             slots[i] = new SkillSlot(skill);
             slots[i].MouseLeftButtonDown += (_, e) => { SkillClicked?.Invoke(skill); e.Handled = true; };
+            slots[i].MouseEnter += (_, _) => Hover(skill);
+            slots[i].MouseLeave += (_, _) => { if (hovered == skill) Hover(null); };
             bar.Children.Add(slots[i]);
         }
         pauseGlyph = new HudGlyph(HudGlyphKind.Pause);
         pauseButton = SmallButton(pauseGlyph, () => PauseClicked?.Invoke());
         var end = SmallButton(new HudGlyph(HudGlyphKind.End), () => EndClicked?.Invoke());
+        pauseButton.MouseEnter += (_, _) => HoverControl(L("Tạm dừng / tiếp tục trận", "Pause / resume the battle"));
+        end.MouseEnter += (_, _) => HoverControl(L("Kết thúc trận (không có bảng kết quả)", "End the battle (no result panel)"));
+        pauseButton.MouseLeave += (_, _) => HoverControl(null);
+        end.MouseLeave += (_, _) => HoverControl(null);
         end.Margin = new Thickness(0, 4, 0, 0);
         var controls = new StackPanel { Margin = new Thickness(6, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center, Children = { pauseButton, end } };
 
-        hint = new TextBlock { Foreground = Soft, FontSize = 11.5, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 6, 0, 0) };
-        Child = new StackPanel
-        {
-            Children =
-            {
-                new StackPanel { Orientation = Orientation.Horizontal, Children = { left, centre, bar, controls } },
-                hint
-            }
-        };
-        Localize();
+        var top = new StackPanel { Orientation = Orientation.Horizontal, Children = { left, centre, bar, controls } };
+        // As wide as the row above (never wider): a long description wraps instead of widening the
+        // HUD, which would re-centre it and slide the slots out from under the mouse.
+        hint = new TextBlock { Foreground = Soft, FontSize = 11.5, TextAlignment = TextAlignment.Center, TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(0, 6, 0, 0), MinHeight = 15 };
+        hint.SetBinding(WidthProperty, new System.Windows.Data.Binding(nameof(ActualWidth)) { Source = top });
+        Child = new StackPanel { Children = { top, hint } };
     }
 
     public SkillSlot Slot(BattleSkill skill) => slots[Array.IndexOf(SkillOrder, skill)];
     public Border PauseButton => pauseButton;
+    public string HintText => hint.Text;
 
-    private void Localize()
-    {
-        foreach (var slot in slots) slot.ToolTip = SkillTip(slot.Skill);
-        pauseButton.ToolTip = L("Tạm dừng / tiếp tục trận", "Pause / resume the battle");
-    }
+    // Hovering a slot (or a control) describes it in the hint line, one fixed place, instead of
+    // a tooltip: WPF tooltips on a window that never activates keep showing the first one.
+    private BattleSkill? hovered;
+    private string? hoveredControl;
+    public void Hover(BattleSkill? skill) { hovered = skill; hoveredControl = null; ShowHint(); }
+    private void HoverControl(string? text) { hoveredControl = text; hovered = null; ShowHint(); }
+
+    public string Describe(BattleSkill skill) => SkillTip(skill);
 
     private string SkillTip(BattleSkill skill) => skill switch
     {
-        BattleSkill.Push => L("Đẩy quái — chọn rồi click một slime: đẩy lùi và làm choáng. Hồi 5 giây.", "Push — choose, then click a slime: knock it back and stun it. 5 s cooldown."),
+        BattleSkill.Push => L("Đẩy quái — chọn rồi click một slime (nửa trái: đẩy sang phải, nửa phải: sang trái), làm choáng. Hồi 5 giây.", "Push — choose, then click a slime (left half: push right, right half: push left) and stun it. 5 s cooldown."),
         BattleSkill.Heal => L("Cá hồi máu — mèo hồi 25 HP. Hồi 20 giây.", "Healing fish — the cat gets 25 HP back. 20 s cooldown."),
         BattleSkill.Cheer => L("Cổ vũ — 5 giây mèo đánh nhanh và mạnh hơn. Hồi 18 giây.", "Cheer — for 5 s the cat attacks faster and harder. 18 s cooldown."),
         BattleSkill.Bomb => L("Bom len — chọn rồi click một slime: nổ sau 0.5 giây, trúng mọi quái quanh đó. Hồi 12 giây.", "Yarn bomb — choose, then click a slime: bursts after 0.5 s and hits every slime nearby. 12 s cooldown."),
@@ -210,10 +219,27 @@ public sealed class BattleHud : Border
         pauseGlyph.Kind = userPaused ? HudGlyphKind.Play : HudGlyphKind.Pause;
         pauseButton.IsEnabled = !b.Over && !(b.Paused && fullscreen);
         pauseButton.Opacity = pauseButton.IsEnabled ? 1 : 0.45;
+        last = b; lastHeld = held;
         var hintKey = (held && !b.Over, b.Armed, b.Over);
-        if (hintShown && hintKey == shownHint) return;
-        hintShown = true; shownHint = hintKey;
-        SetText(hint, held && !b.Over ? L("Mèo đang được bế: quái đứng chờ, không ai bị đánh.", "The cat is lifted: slimes wait, nobody gets hit.")
+        if (hovered != null || hoveredControl != null || !hintShown || hintKey != shownHint) ShowHint();
+    }
+
+    private void ShowHint()
+    {
+        if (last is not BattleSim b) return;
+        bool held = lastHeld;
+        hintShown = true; shownHint = (held && !b.Over, b.Armed, b.Over);
+        if (hoveredControl != null) { SetText(hint, hoveredControl); return; }
+        if (hovered is BattleSkill skill)
+        {
+            double cooldown = b.Cooldown(skill);
+            string state = cooldown > 0 ? L($" · còn {Math.Ceiling(cooldown)} giây", $" · ready in {Math.Ceiling(cooldown)} s") : L(" · sẵn sàng", " · ready");
+            SetText(hint, SkillTip(skill) + state);
+            return;
+        }
+        SetText(hint, held && !b.Over ? L("Mèo đang được bế: không ai đánh được mèo, quái bò theo chờ mèo xuống.", "The cat is lifted: nobody can hit it; slimes follow and wait for it to land.")
+            : b.Armed == BattleSkill.Push ? L("Click nửa trái slime để đẩy sang phải, nửa phải để đẩy sang trái · bấm lại ô hoặc chuột phải để hủy",
+                                             "Click a slime's left half to push it right, its right half to push it left · click the slot again or right-click to cancel")
             : b.Armed is BattleSkill armed ? L($"Click một slime để dùng {SkillName(armed)} · bấm lại ô hoặc chuột phải chiến trường để hủy",
                                                $"Click a slime to use {SkillName(armed)} · click the slot again or right-click the field to cancel")
             : L("Click slime: chọn mục tiêu · Rê chuột lên ô kỹ năng để xem · Nhấc mèo lên để cứu nguy",
@@ -278,7 +304,6 @@ public sealed class SkillSlot : Border
         Width = Height = 46; CornerRadius = new CornerRadius(9); BorderThickness = new Thickness(2); Margin = new Thickness(3, 0, 3, 0);
         Cursor = Cursors.Hand; ClipToBounds = true; Background = Back; BorderBrush = Ready;
         Child = new Grid { Children = { new HudGlyph((HudGlyphKind)(int)skill) { Margin = new Thickness(6) }, wipe, seconds } };
-        ToolTipService.SetInitialShowDelay(this, 250);
     }
 
     public void Show(double fraction, double remaining, bool armed, bool usable, bool active)

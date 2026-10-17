@@ -17,8 +17,13 @@ public sealed class BattleFieldView : FrameworkElement
     private readonly BattleSim sim;
     // Screen X of the strip's left edge (DIPs).
     public double OriginX { get; set; }
-    public event Action<int>? SlimeClicked;
+    // The slime clicked and where on it (DIPs from its centre: negative = its left half).
+    public event Action<int, double>? SlimeClicked;
     public event Action? RightClicked;
+    // The slime under the mouse while Push is chosen, and the side the cursor is on: the
+    // arrow shows which way it will fly.
+    private int? hoverId;
+    private double hoverOffset;
 
     public BattleFieldView(BattleSim sim)
     {
@@ -26,10 +31,22 @@ public sealed class BattleFieldView : FrameworkElement
         Cursor = Cursors.Hand;
         MouseLeftButtonDown += (_, e) =>
         {
-            if (SlimeAt(e.GetPosition(this)) is int id) SlimeClicked?.Invoke(id);
+            var point = e.GetPosition(this);
+            if (SlimeAt(point) is int id && sim.Find(id) is { } slime) SlimeClicked?.Invoke(id, point.X - (slime.X - OriginX));
             e.Handled = true;
         };
         MouseRightButtonDown += (_, e) => { RightClicked?.Invoke(); e.Handled = true; };
+        MouseMove += (_, e) => Hover(e.GetPosition(this));
+        MouseLeave += (_, _) => { if (hoverId != null) { hoverId = null; InvalidateVisual(); } };
+    }
+
+    private void Hover(Point point)
+    {
+        int? id = sim.PushArmed ? SlimeAt(point) : null;
+        double offset = id is int found && sim.Find(found) is { } slime ? point.X - (slime.X - OriginX) : 0;
+        if (id == hoverId && Math.Sign(offset) == Math.Sign(hoverOffset)) return;
+        hoverId = id; hoverOffset = offset;
+        InvalidateVisual();
     }
 
     private double Floor => ActualHeight - 2;
@@ -146,6 +163,14 @@ public sealed class BattleFieldView : FrameworkElement
         }
         if (sim.Armed is BattleSkill armed && targetable)
             dc.DrawEllipse(null, armed == BattleSkill.Bomb ? BombRing : PushRing, new Point(x, floor - h / 2), w / 2 + 7, h / 2 + 8);
+        if (sim.PushArmed && targetable && hoverId == slime.Id && BattleSim.PushDirection(hoverOffset) is int way)
+        {
+            // Which way the push will send it.
+            dc.PushTransform(new MatrixTransform(way, 0, 0, 1, x, floor - h / 2));
+            dc.DrawGeometry(null, Halo, PushArrow);
+            dc.DrawGeometry(PushBlue, Ink, PushArrow);
+            dc.Pop();
+        }
         dc.PushOpacity(opacity);
         dc.PushTransform(new MatrixTransform(sx * size, 0, 0, sy * size, x + jitter, floor));
         double bw = s.SlimeWidth, bh = s.SlimeHeight;
@@ -217,6 +242,13 @@ public sealed class BattleFieldView : FrameworkElement
     }
 
     private static readonly Geometry Arrow = CreateArrow();
+    // Points right; mirrored for a push to the left.
+    private static readonly Geometry PushArrow = CreatePushArrow();
+    private static Geometry CreatePushArrow()
+    {
+        var g = Geometry.Parse("M -16,-5 L 8,-5 L 8,-12 L 22,0 L 8,12 L 8,5 L -16,5 Z");
+        g.Freeze(); return g;
+    }
     private static Geometry CreateArrow()
     {
         var g = Geometry.Parse("M -8,-9 L 8,-9 L 0,2 Z");

@@ -92,15 +92,26 @@ internal static class BattleChecks
         check(window.BattleClickSlime(slime.Id) && Sim().SelectedId == slime.Id && slime.Hp == slime.MaxHp, "Clicking a slime marks it, without damage");
         check(window.ArmBattlePush(true) && Sim().PushArmed, "The HUD push skill can be chosen");
         var other = Sim().Slimes.FirstOrDefault(s => s.Id != slime.Id && s.Targetable) ?? slime;
-        check(window.BattleClickSlime(other.Id) && other.State == SlimeState.Stunned && Sim().SelectedId == slime.Id && !Sim().PushArmed,
+        double otherBefore = other.X;
+        check(window.BattleClickSlime(other.Id, 12) && other.State == SlimeState.Stunned && Sim().SelectedId == slime.Id && !Sim().PushArmed,
             "The next slime click pushes and stuns it; the marked target stays");
+        Tick(0.3);
+        check(other.X < otherBefore - 20, $"Clicked on its right half, it flies left ({otherBefore:F0} → {other.X:F0})");
         check(!window.ArmBattlePush(true) && Sim().PushCooldown > 0, "The skill cools down before it can be chosen again");
 
         // The game HUD: five skill slots, used with the mouse.
         var gameHud = Field<BattleHud>(window, "battleHud");
         void Press(UIElement element) => element.RaiseEvent(MouseEvent(UIElement.MouseLeftButtonDownEvent));
-        check(BattleHud.SkillOrder.Length == 5 && BattleHud.SkillOrder.All(skill => gameHud.Slot(skill).ToolTip is string tip && tip.Length > 10),
-            "The HUD has five skill slots, each with a tooltip");
+        check(BattleHud.SkillOrder.Length == 5 && BattleHud.SkillOrder.All(skill => gameHud.Describe(skill).Length > 10 && gameHud.Slot(skill).ToolTip == null),
+            "The HUD has five skill slots, each described in the hint line (no tooltips)");
+        string idleHint = gameHud.HintText;
+        gameHud.Hover(BattleSkill.Heal);
+        string healHint = gameHud.HintText;
+        gameHud.Hover(BattleSkill.Bomb);
+        string bombHint = gameHud.HintText;
+        gameHud.Hover(null);
+        check(healHint.StartsWith(gameHud.Describe(BattleSkill.Heal)) && bombHint.StartsWith(gameHud.Describe(BattleSkill.Bomb)) && gameHud.HintText == idleHint,
+            "Hovering one slot then another shows each one's text in the same place; leaving restores the hint");
         Tick(1.0 / 60);
         check(!gameHud.Slot(BattleSkill.Push).IsReady && gameHud.Slot(BattleSkill.Push).Remaining > 0 && gameHud.Slot(BattleSkill.Heal).IsReady,
             "A used skill shows its cooldown; the others are ready");

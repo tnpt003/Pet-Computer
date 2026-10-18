@@ -9,7 +9,7 @@ Tick `[x]` khi đạt; ghi lỗi ngay dưới mục kèm ngày. Mục mới chư
 ### Kéo, ném, nhấc lên
 - [ ] Bấm giữ rồi di chuột < ~6 px: không vào kéo. Di xa hơn: nhấc lên mượt, không nháy.
 - [ ] Khi kéo mèo đung đưa như con lắc; lắc nhẹ không chóng mặt, lắc mạnh lâu mới chóng mặt, thả ra hết dần.
-- [ ] Ném mạnh/nhẹ: bay, rơi, nảy tự nhiên. Debug view dòng Frame ~60 fps, max gap < ~35 ms.
+- [ ] Ném mạnh/nhẹ: bay, rơi, nảy tự nhiên. Debug view dòng Frame ~60 fps, longest gap < ~35 ms (khoảng cách thật dài nhất giữa 2 khung trong cửa sổ 1 s; từ 2026-10-18 không còn bị chặn ở 100 ms nên khựng dài sẽ hiện đúng).
 - [ ] Kéo khi mèo đang chuyển tư thế (ngồi/ngủ/thức), đang làm động tác: ngắt ngay, không kẹt tư thế.
 
 ### Ngủ và thức

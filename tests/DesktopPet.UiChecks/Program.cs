@@ -684,6 +684,7 @@ internal static class Program
         ContextChecks(window, pet, behavior, preferences);
         LifeChecks(window, pet, preferences);
         LedgeChecks.Run(window, pet, behavior, preferences, Check);
+        FrameChecks.Run(window, pet, Check);
         await BattleChecks.Run(window, pet, behavior, preferences, Check);
         await BattleRulesChecks.Run(window, pet, Check);
         window.ShowControls();

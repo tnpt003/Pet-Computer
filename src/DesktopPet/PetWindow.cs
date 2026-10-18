@@ -292,9 +292,12 @@ public sealed partial class PetWindow : Window
         // granularity turns a 16 ms interval into uneven 16/31 ms gaps (~37 FPS).
         // Gating here keeps frames evenly spaced at the intended rate.
         if (now - previous < FramePeriod() * 0.85) return;
-        double dt = Math.Clamp(now - previous, 0, 0.1);
+        // The real time since the last processed frame is what the frame statistics report;
+        // the simulation gets it capped at 0.1 s, so a stall never makes it catch up.
+        double elapsed = Math.Max(0, now - previous);
+        double dt = Math.Min(elapsed, 0.1);
         previous = now;
-        RecordFrame(now, dt);
+        RecordFrame(now, elapsed);
         boundsTimer += dt;
         CheckDragThreshold();
         if (!paused)
@@ -349,10 +352,12 @@ public sealed partial class PetWindow : Window
         if (timer.Interval.TotalMilliseconds != interval) timer.Interval = TimeSpan.FromMilliseconds(interval);
     }
 
-    private void RecordFrame(double now, double dt)
+    // Frame statistics over windows of at least 1 s: frames per second, and the longest real gap
+    // (seconds) between two processed frames in that window, uncapped (a 300 ms stall reads 300 ms).
+    private void RecordFrame(double now, double elapsed)
     {
         frameCount++;
-        frameMaxGap = Math.Max(frameMaxGap, dt);
+        frameMaxGap = Math.Max(frameMaxGap, elapsed);
         if (now - frameStatsStart < 1) return;
         measuredFps = frameCount / (now - frameStatsStart);
         measuredMaxGap = frameMaxGap;
@@ -396,7 +401,7 @@ public sealed partial class PetWindow : Window
                 $"Context: {(context.Fullscreen ? "fullscreen app (quiet)" : "normal")}, {(context.Away ? "user away" : "user here")}, idle {context.IdleSeconds:F0} s{(behavior.HoldSleep ? ", away nap" : "")}\n" +
                 $"Battle: {(battle == null ? "off" : $"{battle.Phase}, wave {battle.Wave}/{battle.WaveCount}, HP {battle.CatHp:F0}, slimes {battle.Alive}{(battle.Paused ? ", paused" : "")}")}\n" +
                 $"Break reminder: {(breaks.Enabled ? $"{breaks.ActiveSeconds / 60:F1} / {breaks.IntervalSeconds / 60:F0} min active{(breaks.Due ? " (due)" : "")}" : "off")}\n" +
-                $"Frame: {measuredFps:F0} fps (max gap {measuredMaxGap * 1000:F0} ms)\n{MemoryStatus()}\n{AiStatus}";
+                $"Frame: {measuredFps:F0} fps (longest gap {measuredMaxGap * 1000:F0} ms, last 1 s window)\n{MemoryStatus()}\n{AiStatus}";
         }
     }
 

@@ -30,6 +30,8 @@ Lịch sử: review đợt 10 từng đạt 55 Python/559 C#, WPF 322 đạt + 1
 
 ## Ưu tiên 1 — Số đo giật khung hình chính xác
 
+> Trạng thái (đợt 12, 2026-10-18, commit cb89351): đã sửa — RecordFrame nhận elapsed thật, simulation giữ dt chặn 0.1 s; có FrameChecks (gap giả 300 ms). Chưa đo thật khi idle/ngủ/battle/boss/pause trên desktop.
+
 Điểm kiểm tra: src/DesktopPet/PetWindow.cs, Tick và RecordFrame; scripts/perf.ps1 nếu liên quan.
 
 Phát hiện từ code: dt đã bị Math.Clamp(..., 0, 0.1) trước khi truyền vào RecordFrame. Khựng 300 ms có thể chỉ được ghi thành 100 ms. Đây là lỗi đo lường, chưa phải bằng chứng ứng dụng đang khựng.
@@ -42,6 +44,8 @@ Hướng thực hiện:
 - Đo khi idle/ngủ/battle/boss/pause với cùng điều kiện. Chưa kết luận RAM tăng là leak nếu chưa phân biệt heap sống và bộ nhớ GC giữ lại.
 
 ## Ưu tiên 2 — Hoàn thiện trải nghiệm trận đầu
+
+> Trạng thái (đợt 12, commit 18cb227): đã làm hướng dẫn 4 thẻ (tự mở 1 lần, mở lại từ menu, trận dừng khi mở, không lấy focus) và phản hồi giữ đòn/bảo vệ trên sàn + HUD; có TutorialChecks. Chưa xem trực quan trên nền sáng/tối thật, chưa có playtest. Không đổi luật sát thương/cứu nguy.
 
 ### Hướng dẫn ngắn
 
@@ -59,6 +63,8 @@ Hướng thực hiện:
 
 ## Ưu tiên 3 — Playtest và kiểm chứng bản beta
 
+> Trạng thái (đợt 12): CHƯA chơi thử thật. Đã thêm bảng Nhật ký chơi thử + câu hỏi vào docs/MANUAL-TEST.md cho người dùng điền.
+
 Thực hiện 3–5 trận mỗi độ khó nếu có khả năng chơi thật. Ghi: phiên bản, độ khó, thời lượng, thắng/thua, HP cuối, số lần cứu, kỹ năng dùng và vấn đề quan sát. Không bịa dữ liệu nếu chỉ chạy simulation; ghi phần cần người dùng kiểm tra.
 
 Câu hỏi cần trả lời:
@@ -71,6 +77,8 @@ Câu hỏi cần trả lời:
 Kiểm tra thêm: pause giữa throw, menu/fullscreen, tắt Python, start/end nhiều lần, đóng app giữa trận, màn hình mất kết nối và mixed-DPI nếu có phần cứng. Dùng dữ liệu thử riêng, không ghi đè preferences/kỷ lục thật.
 
 ## Ưu tiên 4 — Nhận diện bản phát hành
+
+> Trạng thái (đợt 12, commit facb54d): build ghi commit + ".dirty" khi có thay đổi chưa commit (About, log); ZIP đặt tên theo version + commit (+ thời gian nếu dirty). Chưa đổi số version, chưa changelog/tag, chưa thử máy sạch (cần người dùng quyết/làm).
 
 Hiện csproj để Version=1.0.0, scripts/publish.ps1 đặt tên ZIP theo version và thay ZIP cùng tên. Có nhiều thay đổi chưa commit. Đây là rủi ro truy vết phiên bản, không phải lỗi combat.
 

@@ -92,6 +92,13 @@ internal static class BattleChecks
         check(window.BattleClickSlime(slime.Id) && Sim().SelectedId == slime.Id && slime.Hp == slime.MaxHp, "Clicking a slime marks it, without damage");
         check(window.ArmBattlePush(true) && Sim().PushArmed, "The HUD push skill can be chosen");
         var other = Sim().Slimes.FirstOrDefault(s => s.Id != slime.Id && s.Targetable) ?? slime;
+        // A fixed spot with room on its left (spawns can sit at the floor's edge, where a push is
+        // clamped; that case has its own check in BattleTests): mid-floor, away from the cat, and
+        // every other slime parked well to its right.
+        double mid = (Sim().Left + Sim().Right) / 2, catMid = pet.X + 56;
+        double spot = Math.Abs(mid - catMid) >= 200 ? mid : mid + (mid >= catMid ? 200 : -200);
+        other.X = spot;
+        foreach (var s in Sim().Slimes) if (s != other) s.X = Math.Min(spot + 260 + 60 * (s.Id % 3), Sim().Right - 40);
         double otherBefore = other.X;
         check(window.BattleClickSlime(other.Id, 12) && other.State == SlimeState.Stunned && Sim().SelectedId == slime.Id && !Sim().PushArmed,
             "The next slime click pushes and stuns it; the marked target stays");
@@ -244,7 +251,10 @@ internal static class BattleChecks
         await Task.Delay(20);
         window.RaiseEvent(MouseEvent(UIElement.MouseLeftButtonDownEvent));
         Tick(0.05);
-        check(Sim().CatHp == hpBefore && Sim().Slimes.All(s => s.State != SlimeState.Windup), "A press on the cat (before any drag) already stops slime attacks");
+        var windups = Sim().Slimes.Where(s => s.State == SlimeState.Windup).Select(s => (s, s.StateTime)).ToList();
+        Tick(0.5);
+        check(Sim().CatHp == hpBefore && windups.All(w => w.s.State == SlimeState.Windup && w.s.StateTime == w.StateTime),
+            $"A press on the cat (before any drag) already holds slime attacks ({windups.Count} held)");
         typeof(PetWindow).GetField("pressPosition", Flags)!.SetValue(window, new Point(-100000, -100000));
         Call(window, "CheckDragThreshold");
         check(pet.Action == PetAction.Dragging, "Dragging works as always during the battle");
@@ -518,7 +528,7 @@ internal static class BattleChecks
             Render(flying, $"battle-thrown-{facing}");
             var dazed = Model(facing); dazed.SwordOut = true; dazed.BattleDazed = true; dazed.Action = PetAction.Sitting;
             Render(dazed, $"battle-dazed-{facing}");
-            var shielded = Model(facing); shielded.SwordOut = true; shielded.BattleShield = shielded.BattleBuff = true; shielded.AnimationTime = 2.3;
+            var shielded = Model(facing); shielded.SwordOut = true; shielded.BattleShield = shielded.BattleBuff = true; shielded.BattleTime = 2.3;
             Render(shielded, $"battle-shield-{facing}");
             var heldShield = Model(facing); heldShield.SwordOut = true; heldShield.BattleShield = heldShield.BattleBuff = true;
             heldShield.Action = PetAction.Dragging; heldShield.Grounded = false; heldShield.Pickup.Begin(0, 0);

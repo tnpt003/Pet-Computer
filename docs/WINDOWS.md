@@ -606,16 +606,42 @@ shows no panel. After each wave except the last the cat gets 15 HP back (`WaveHe
   window that never activates).
 - **Slimes** swell and show a red "!" for 0.8 s before each hit: time to push them or lift the cat.
 - **Rescue**: pick the cat up as usual (drag, dangle, dizzy and throw unchanged). While pressed,
-  carried or in the air the cat takes no damage and slimes call off their attacks; they keep
-  following the cat along the floor (without winding up), and no slime spawns or wave progress
-  happens. The battle stays on the monitor it started on: if the cat lands on another monitor the
+  carried or in the air the cat takes no damage. A slime already winding up holds its windup
+  where it is (the "!" stays, it does not move) and finishes it once the cat is down: put down out
+  of reach, or with landing protection, the hit misses (and the slime takes its full attack
+  cooldown); put back on the same spot, it lands. So a well-timed rescue dodges every hit, but
+  lifting and dropping on the spot no longer cancels them (it used to reset each windup). Other
+  slimes keep following the cat along the floor without starting a windup, and no slime spawns or
+  wave progress happens. The battle stays on the monitor it started on: if the cat lands on another monitor the
   battle pauses (a note by the cat says where the battlefield is) and goes on by itself when the
   cat is back; a pause the user chose meanwhile is kept. A work-area or DPI change on the battle's
-  own monitor moves the field with it. After landing the cat is protected for 1.5 s.
-- **Pause / Resume / End**: HUD buttons or the menu. Opening the pet menu pauses a running battle
-  and resumes it on close (a battle the user paused stays paused). A fullscreen app pauses it and
-  hides the field/HUD; the user resumes afterwards. Tray Pause freezes it too. "Bring the pet to
-  the main screen" and Exit end it.
+  own monitor moves the field with it. If the battle's monitor is disconnected (checked once a
+  second), the field and HUD move to the cat's monitor (primary as fallback) in that monitor's own
+  DIPs/DPI; slimes, bombs and effects keep their relative spot inside the new floor; HP, wave and
+  cooldowns stay; the battle stays paused with a note until the user resumes. The cat is never
+  moved and a drag keeps its mouse capture.
+  After a real lift (drag past the threshold, or a throw/fall; a plain click does not count) the
+  landing protects the cat for `landingGraceSeconds` (1.5 s), at most once per
+  `rescueGraceCooldownSeconds` (5 s) counted from when it is given and only while the battle runs
+  with the cat on the ground; landing again sooner neither renews nor extends it. The HUD hint
+  while the cat is lifted says whether this landing will protect it.
+  Skills wait while the cat is held (pressed, carried, flying): `BattleSim.SetCatState` is the one
+  rule for the HUD, the window and the simulation; no skill can be used (checked in BattleSim, not
+  only on the HUD), cooldowns do not recover, and a real lift cancels a chosen aimed skill. A bomb
+  already dropped still bursts; Cheer/Shield already running wear off as usual. A plain press keeps
+  the chosen skill and the HUD unchanged (no flicker).
+- **Pause / Resume / End**: HUD buttons or the menu. Pause reasons stack (User, Menu, Fullscreen,
+  Away, App) and each owner removes only its own: closing the menu never resumes a battle the user, a
+  fullscreen app or an away cat still holds. A fullscreen app pauses it, hides the field/HUD and
+  leaves a User pause, so the user resumes afterwards. Every reason except Away also freezes the
+  cat's physics: a thrown cat hangs with its position and velocity and goes on after Resume with
+  one normal frame (no catch-up, no burst). The cat can still be dragged; a drop during the pause
+  keeps the drop's position and velocity and waits for Resume. Away does not freeze physics (the
+  cat must be able to fall and be carried back). Skill effects on the cat follow the battle's
+  clock and stand still too. Paused time is not in the battle's length (records). Pausing the
+  whole pet (tray/menu Pause) adds the App reason: the field and HUD stay on screen but no skill,
+  bomb or target can be used (BattleSim refuses too); un-pausing removes only App, so the
+  battle's own pause stays; End still works. "Bring the pet to the main screen" and Exit end it.
 - **While it runs** the battle owns the pet: no random actions, sleep, away nap, AI commands,
   thought/speech bubbles, Do now, treats, ball, laser, rest-spot visits, kneading or window
   ledges (the fight is on the floor). Python receives no requests; replies from before are dropped.

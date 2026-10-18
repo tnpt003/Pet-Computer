@@ -108,6 +108,8 @@ public sealed class PetModel
     public bool BattleDazed, BattleCheer;
     // The user's skills on the cat: a protective bubble (Shield) and a golden glow (Cheer).
     public bool BattleShield, BattleBuff;
+    // The battle's clock for those effects (stops while the battle is paused).
+    public double BattleTime;
     // Battle Mode runs: walking speed and acceleration multiplier (1 outside a battle).
     public double MoveScale = 1;
     public const double TreatDuration = 4.2;

@@ -112,6 +112,10 @@ public static class BattleData
         if (s.ComboHits is < 2 or > 6) throw new InvalidDataException("comboHits must be 2–6");
         Positive(s.ComboWindow, "comboWindow"); Positive(s.ComboDamage, "comboDamage"); NotNegative(s.ComboKnock, "comboKnock");
         if (!(s.CatHitTime > 0 && s.CatHitTime < s.CatSwingDuration)) throw new InvalidDataException("catHitTime must fall inside the swing");
+        NotNegative(s.LandingGraceSeconds, "landingGraceSeconds");
+        if (s.LandingGraceSeconds > 5) throw new InvalidDataException("landingGraceSeconds must be at most 5");
+        NotNegative(s.RescueGraceCooldownSeconds, "rescueGraceCooldownSeconds");
+        if (s.RescueGraceCooldownSeconds > 60) throw new InvalidDataException("rescueGraceCooldownSeconds must be at most 60");
         Positive(s.SlimeWidth, "slimeWidth"); Positive(s.SlimeHeight, "slimeHeight"); Positive(s.MaxAlive, "maxAlive");
         foreach (var skill in BattleSkills.All) Positive(skill.Cooldown(s), skill.Skill + " cooldown");
         Positive(s.HealAmount, "healAmount"); Positive(s.CheerSeconds, "cheerSeconds"); Positive(s.CheerSpeed, "cheerSpeed");

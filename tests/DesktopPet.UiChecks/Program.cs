@@ -685,6 +685,7 @@ internal static class Program
         LifeChecks(window, pet, preferences);
         LedgeChecks.Run(window, pet, behavior, preferences, Check);
         await BattleChecks.Run(window, pet, behavior, preferences, Check);
+        await BattleRulesChecks.Run(window, pet, Check);
         window.ShowControls();
         Check(window.ContextMenu!.IsOpen, "Existing pet controls can be opened by a second launch notification");
         window.ContextMenu.IsOpen = false;

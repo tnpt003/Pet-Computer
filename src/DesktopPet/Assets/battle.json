@@ -27,7 +27,10 @@
   "waveBreakSeconds": 3.5,
   "waveHeal": 15,
   "spawnMinDistance": 200,
+  // Putting a lifted cat down protects it this long (0–5 s), at most once per
+  // rescueGraceCooldownSeconds (0–60) of the cat on the ground in a running battle.
   "landingGraceSeconds": 1.5,
+  "rescueGraceCooldownSeconds": 5,
   "outroSeconds": 3,
   "hurtFlashSeconds": 0.35,
   "maxEffects": 32,

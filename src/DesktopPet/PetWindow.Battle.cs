@@ -1,10 +1,12 @@
 using System;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using Forms = System.Windows.Forms;
 
 namespace DesktopPet;
 
@@ -24,14 +26,29 @@ public sealed partial class PetWindow
     // carried or thrown to another monitor the battle waits, paused, until the cat is back.
     private string battleMonitor = "";
     private double battleScale = 1;
-    private bool battlePausedByAway;
-    public bool BattleCatAway => battlePausedByAway;
+    // Why the battle is paused; it runs only when there is no reason left. Each reason is added
+    // and removed by its own owner, so closing the menu never resumes a pause the user (or a
+    // fullscreen app) made. A fullscreen app also leaves a User pause: the user resumes after it.
+    [Flags]
+    // App: the whole pet is paused (tray/menu Pause); only un-pausing the pet removes it.
+    public enum BattlePause { None = 0, User = 1, Menu = 2, Fullscreen = 4, Away = 8, App = 16 }
+    private BattlePause battlePause;
+    public BattlePause BattlePauseReasons => battlePause;
+    public bool BattleCatAway => (battlePause & BattlePause.Away) != 0;
+    private bool BattleUserPaused => (battlePause & BattlePause.User) != 0;
+    // Any pause but Away also freezes the cat's own physics (a throw stops mid-air and goes on
+    // after). Away does not: the cat has to be able to fall and be carried back.
+    private bool BattleFreezesPet => battle != null && (battlePause & ~BattlePause.Away) != 0;
     // Replaceable for UI checks; the default asks Windows which monitor the cat is on.
     private Func<string>? battleMonitorProbe;
     private string CatMonitor() => (battleMonitorProbe ??= () => CurrentMonitor().DeviceName)();
+    // Replaceable for UI checks: a monitor by name (null: the primary one) with its work area in
+    // its own DIPs and its DPI scale, or null when no such monitor is connected.
+    private Func<string?, (string Name, Area Area, double Scale)?>? battleScreenProbe;
+    private (string Name, Area Area, double Scale)? BattleScreen(string? name) => (battleScreenProbe ??= FindScreen)(name);
+    private double battleMonitorClock;
     private double battlePlacedScale;
     private Area battlePlacedArea;
-    private bool battlePausedByMenu;
     private Window? battleFieldWindow, battleHudWindow;
     private BattleFieldView? battleView;
     private BattleHud? battleHud;
@@ -68,7 +85,7 @@ public sealed partial class PetWindow
         var start = new MenuItem();
         start.Click += (_, _) => { if (StartBattle() is string reason) ShowBattleNotice(reason); };
         var pause = new MenuItem();
-        pause.Click += (_, _) => { if (battle != null) SetBattlePaused(!(battle.Paused && !battlePausedByMenu)); };
+        pause.Click += (_, _) => { if (battle != null) SetBattlePaused(!BattleUserPaused); };
         var end = new MenuItem();
         end.Click += (_, _) => EndBattle();
         // Difficulty for the next battle (remembered); a running battle keeps its own.
@@ -84,9 +101,10 @@ public sealed partial class PetWindow
         menu.Items.Add(root);
         menu.Opened += (_, _) =>
         {
-            // Opening the menu pauses a running battle; closing resumes only that pause.
-            if (battle is { Paused: false }) { battle.Paused = true; battlePausedByMenu = true; RequestBattleRedraw(); }
-            bool userPaused = battle is { Paused: true } && !battlePausedByMenu;
+            // Opening the menu pauses the battle; closing removes only that reason. (Opened can
+            // arrive after a quick close, so only a menu that is still open counts.)
+            if (battle != null && menu.IsOpen) SetBattlePause(BattlePause.Menu, true);
+            bool userPaused = battle != null && BattleUserPaused;
             root.Header = L("Chế độ chiến đấu", "Battle Mode");
             string? refusal = battle == null ? BattleRefusal() : null;
             start.Header = L("Bắt đầu trận", "Start battle") + (refusal != null ? $" ({refusal.TrimEnd('.')})" : "");
@@ -104,11 +122,21 @@ public sealed partial class PetWindow
                 item.IsChecked = level == BattleDifficultyChoice;
             }
         };
-        menu.Closed += (_, _) =>
-        {
-            if (battle != null && battlePausedByMenu) { battle.Paused = false; RequestBattleRedraw(); }
-            battlePausedByMenu = false;
-        };
+        menu.Closed += (_, _) => SetBattlePause(BattlePause.Menu, false);
+    }
+
+    // Adds or removes one reason; the battle runs only when none is left.
+    private void SetBattlePause(BattlePause reason, bool on)
+    {
+        var before = battlePause;
+        battlePause = on ? battlePause | reason : battlePause & ~reason;
+        // Closed can arrive a moment after the menu is gone: a closed menu holds nothing.
+        if (ContextMenu?.IsOpen != true) battlePause &= ~BattlePause.Menu;
+        if (battle == null) { battlePause = BattlePause.None; return; }
+        battle.Paused = battlePause != BattlePause.None;
+        if (battlePause == before) return;
+        RequestBattleRedraw();
+        UpdateBattleHud();
     }
 
     public BattleDifficulty BattleDifficultyChoice =>
@@ -164,9 +192,9 @@ public sealed partial class PetWindow
         battleArea = bounds;
         battleMonitor = CatMonitor();
         battleScale = scale;
-        battlePausedByAway = false;
+        battlePause = BattlePause.None;
+        battleMonitorClock = 0;
         battle = new BattleSim(BattleTuning, battleArea.Left, battleArea.Right, difficulty: BattleDifficultyChoice);
-        battlePausedByMenu = false;
         pet.SwordOut = true;
         pet.MoveScale = battle.Settings.CatRunScale;
         pet.Emotions.SetSuspended(true);
@@ -185,7 +213,7 @@ public sealed partial class PetWindow
     {
         if (battle == null) return;
         battle = null;
-        battlePausedByMenu = false;
+        battlePause = BattlePause.None;
         battleFieldWindow?.Close(); battleHudWindow?.Close();
         battleFieldWindow = battleHudWindow = null;
         battleView = null;
@@ -205,21 +233,23 @@ public sealed partial class PetWindow
         if (!closed) Present();
     }
 
-    // The user's pause (menu or HUD). Resuming waits until no fullscreen app is open.
+    // The user's pause (menu or HUD). Resuming waits until no fullscreen app is open, and only
+    // removes the user's reason: an open menu or a cat on another monitor still holds the battle.
     public bool SetBattlePaused(bool value)
     {
         if (battle == null || (!value && context.Fullscreen)) return false;
-        battle.Paused = value;
-        battlePausedByMenu = false;
-        battlePausedByAway = false; // The user's own pause or resume wins.
-        RequestBattleRedraw();
-        UpdateBattleHud();
+        SetBattlePause(BattlePause.User, value);
         return true;
     }
+
+    // Brings the battle's view of the cat up to date before a skill is used, so the HUD and
+    // BattleSim judge "the cat is in the user's hands" by the same rule.
+    private void SyncBattleCatState() => battle?.SetCatState(BattleHoldsOff, BattleLifted);
 
     public bool ArmBattlePush(bool armed)
     {
         if (battle == null || (armed && battle.Paused)) return false;
+        SyncBattleCatState();
         bool done = battle.ArmPush(armed);
         RequestBattleRedraw();
         UpdateBattleHud();
@@ -231,6 +261,7 @@ public sealed partial class PetWindow
     public bool UseBattleSkill(BattleSkill skill)
     {
         if (battle == null || battle.Paused) return false;
+        SyncBattleCatState();
         bool done = BattleSim.IsAimed(skill) ? battle.Arm(battle.Armed == skill ? null : skill) : battle.Use(skill, pet.X + settings.Width / 2);
         RequestBattleRedraw();
         UpdateBattleHud();
@@ -244,6 +275,7 @@ public sealed partial class PetWindow
     public bool BattleClickSlime(int id, double offset = 0)
     {
         if (battle == null || battle.Paused) return false;
+        SyncBattleCatState();
         bool done = battle.Armed is BattleSkill skill
             ? battle.Use(skill, id, pet.X + settings.Width / 2, skill == BattleSkill.Push ? BattleSim.PushDirection(offset) : null)
             : battle.Select(id);
@@ -256,16 +288,31 @@ public sealed partial class PetWindow
     // The battle may not move or hurt the cat: pressed, dragged, in the air or climbing.
     private bool BattleHoldsOff => dragging || pressPending || !pet.Grounded ||
         pet.Action is PetAction.Dragging or PetAction.Climbing || PetActionRules.IsInFlight(pet.Action);
+    // Really off the ground (a drag past the threshold, or a throw/fall): not a plain click.
+    private bool BattleLifted => dragging || !pet.Grounded || pet.Action is PetAction.Dragging or PetAction.Thrown;
+
+    // A real drag just began: a chosen skill is dropped and the HUD shows it at once.
+    private void BattleCatLifted()
+    {
+        if (battle == null) return;
+        SyncBattleCatState();
+        RequestBattleRedraw();
+        UpdateBattleHud();
+    }
 
     // Every unpaused frame, before physics.
     private void TickBattle(double dt)
     {
         if (battle == null) return;
-        if (context.Fullscreen && !battle.Paused) { battle.Paused = true; battlePausedByMenu = false; RequestBattleRedraw(); }
+        // A fullscreen app pauses the battle; when it closes the user's pause stays until Resume.
+        if (context.Fullscreen) SetBattlePause(BattlePause.Fullscreen | BattlePause.User, true);
+        else SetBattlePause(BattlePause.Fullscreen, false);
+        if (ContextMenu?.IsOpen != true) SetBattlePause(BattlePause.Menu, false); // A menu reason never outlives the menu.
+        battleMonitorClock += dt;
+        if (battleMonitorClock >= 1) { battleMonitorClock = 0; RecoverLostBattleMonitor(); }
         bool held = BattleHoldsOff;
-        bool lifted = dragging || !pet.Grounded || pet.Action is PetAction.Dragging or PetAction.Thrown;
         if (!held) KeepBattleOnItsMonitor();
-        var order = battle.Step(dt, pet.X + settings.Width / 2, held, lifted);
+        var order = battle.Step(dt, pet.X + settings.Width / 2, held, BattleLifted);
         PlayBattleSound();
         ShowBattleBanners();
         battle.ClearEvents();
@@ -292,6 +339,7 @@ public sealed partial class PetWindow
         pet.BattleDazed = battle.Phase == BattlePhase.Lost;
         pet.BattleShield = battle.ShieldRemaining > 0;
         pet.BattleBuff = battle.CheerRemaining > 0;
+        pet.BattleTime = battle.Time;
         if (!held)
         {
             if (order.Facing != 0) pet.Facing = order.Facing;
@@ -314,19 +362,15 @@ public sealed partial class PetWindow
         if (battle == null) return;
         if (CatMonitor() != battleMonitor)
         {
-            if (battle.Paused) return;
-            battle.Paused = true;
-            battlePausedByAway = true;
-            RequestBattleRedraw();
+            if (BattleCatAway) return;
+            SetBattlePause(BattlePause.Away, true);
             ShowBattleNotice(L("Chiến trường ở màn hình khác — đưa mèo về đó để đánh tiếp.", "The battlefield is on another screen — bring the cat back to go on."));
             return;
         }
-        if (battlePausedByAway)
+        if (BattleCatAway)
         {
-            battlePausedByAway = false;
-            if (!context.Fullscreen) battle.Paused = false;
+            SetBattlePause(BattlePause.Away, false); // Runs again only if nothing else holds it.
             CloseBattleNotice();
-            RequestBattleRedraw();
         }
         if (bounds != battleArea)
         {
@@ -334,6 +378,37 @@ public sealed partial class PetWindow
             battleScale = scale;
             battle.SetArea(bounds.Left, bounds.Right);
         }
+    }
+
+    // The battle's monitor was disconnected: the cat could never be brought back to it. The
+    // field and HUD move to the cat's monitor (the primary one if that cannot be found), every
+    // slime, bomb and effect keeps its relative spot inside the new floor, and HP, wave and
+    // cooldowns stay. The battle stays paused until the user resumes. The cat itself is not moved
+    // (a drag in progress keeps its capture). Checked once a second, from TickBattle.
+    private void RecoverLostBattleMonitor()
+    {
+        if (battle == null || BattleScreen(battleMonitor) != null) return;
+        if ((BattleScreen(CatMonitor()) ?? BattleScreen(null)) is not { } screen) return;
+        System.Diagnostics.Trace.WriteLine($"Battle monitor {battleMonitor} is gone; the battle moves to {screen.Name}.");
+        battleMonitor = screen.Name;
+        battleArea = screen.Area;
+        battleScale = screen.Scale;
+        battle.SetArea(screen.Area.Left, screen.Area.Right);
+        battlePlacedScale = 0; // Re-place the windows in the new monitor's pixels.
+        SetBattlePause(BattlePause.User, true);
+        SetBattlePause(BattlePause.Away, false); // The notice below replaces the "come back" one.
+        ShowBattleNotice(L("Màn hình chiến trường đã ngắt — trận chuyển sang màn hình này. Bấm Tiếp tục để đánh tiếp.",
+            "The battle's screen was disconnected — the battle moved here. Press Resume to go on."));
+    }
+
+    private (string Name, Area Area, double Scale)? FindScreen(string? name)
+    {
+        var screen = name == null ? Forms.Screen.PrimaryScreen ?? Forms.Screen.AllScreens.FirstOrDefault()
+            : Forms.Screen.AllScreens.FirstOrDefault(s => s.DeviceName == name);
+        if (screen == null) return null;
+        double at = MonitorScale(screen);
+        var work = screen.WorkingArea;
+        return (screen.DeviceName, new Area(work.Left / at, work.Top / at, work.Right / at, work.Bottom / at), at);
     }
 
     private Window CreateBattleWindow(UIElement content, string title, bool clickThrough = false)
@@ -459,7 +534,7 @@ public sealed partial class PetWindow
             { Coat = renderer.Coat, Accessory = renderer.Accessory };
         battleHud = new BattleHud(preferences.Name, portrait, L);
         battleHud.SkillClicked += skill => UseBattleSkill(skill);
-        battleHud.PauseClicked += () => { if (battle != null) SetBattlePaused(!battle.Paused); };
+        battleHud.PauseClicked += () => { if (battle != null) SetBattlePaused(!BattleUserPaused); };
         battleHud.EndClicked += EndBattle;
         UpdateBattleHud();
         return battleHud;
@@ -468,7 +543,7 @@ public sealed partial class PetWindow
     private void UpdateBattleHud()
     {
         if (battle is not BattleSim b || battleHud == null) return;
-        battleHud.Update(b, b.Paused && !battlePausedByMenu && !battlePausedByAway, context.Fullscreen, BattleHoldsOff, battlePausedByAway);
+        battleHud.Update(b, BattleUserPaused, context.Fullscreen, BattleLifted, BattleCatAway);
         if (battleView != null) battleView.Cursor = b.Armed != null ? Cursors.Cross : Cursors.Hand;
     }
 }

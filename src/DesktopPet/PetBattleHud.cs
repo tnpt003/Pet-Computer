@@ -29,7 +29,7 @@ public sealed class BattleHud : Border
     private (double Hp, double Max) shownHp = (-1, -1);
     private (BattlePhase, int, int, bool, bool, double, int) shownStatus;
     private (double, bool) shownBoss = (-1, false);
-    private (bool, BattleSkill?, bool) shownHint;
+    private (bool, BattleSkill?, bool, int) shownHint;
     private (int, bool) shownCombo = (-1, false);
     private bool hintShown;
     private BattleSim? last;
@@ -173,6 +173,8 @@ public sealed class BattleHud : Border
         bannerUntil = now + seconds;
     }
 
+    // held: the cat is really lifted (dragged or in the air), not just pressed, so a click on the
+    // cat never flickers the HUD.
     public void Update(BattleSim b, bool userPaused, bool fullscreen, bool held, bool away = false)
     {
         double dt = lastTime < 0 ? 0 : Math.Max(0, b.Time - lastTime);
@@ -244,13 +246,13 @@ public sealed class BattleHud : Border
             var skill = slot.Skill;
             double cooldown = b.Cooldown(skill), total = b.Settings.SkillCooldown(skill);
             bool active = skill == BattleSkill.Cheer ? b.CheerRemaining > 0 : skill == BattleSkill.Shield && b.ShieldRemaining > 0;
-            slot.Show(cooldown / Math.Max(0.01, total), cooldown, b.Armed == skill, !b.Over && !b.Paused, active);
+            slot.Show(cooldown / Math.Max(0.01, total), cooldown, b.Armed == skill, !b.Over && !b.Paused && !held, active);
         }
         pauseGlyph.Kind = userPaused ? HudGlyphKind.Play : HudGlyphKind.Pause;
         pauseButton.IsEnabled = !b.Over && !(b.Paused && fullscreen);
         pauseButton.Opacity = pauseButton.IsEnabled ? 1 : 0.45;
         last = b; lastHeld = held;
-        var hintKey = (held && !b.Over, b.Armed, b.Over);
+        var hintKey = (held && !b.Over, b.Armed, b.Over, held && !b.Over ? GraceWait(b) : 0);
         if (hovered != null || hoveredControl != null || !hintShown || hintKey != shownHint) ShowHint();
     }
 
@@ -258,7 +260,7 @@ public sealed class BattleHud : Border
     {
         if (last is not BattleSim b) return;
         bool held = lastHeld;
-        hintShown = true; shownHint = (held && !b.Over, b.Armed, b.Over);
+        hintShown = true; shownHint = (held && !b.Over, b.Armed, b.Over, held && !b.Over ? GraceWait(b) : 0);
         if (hoveredControl != null) { SetText(hint, hoveredControl); return; }
         if (hovered is BattleSkill skill)
         {
@@ -267,13 +269,27 @@ public sealed class BattleHud : Border
             SetText(hint, SkillTip(skill) + state);
             return;
         }
-        SetText(hint, held && !b.Over ? L("Mèo đang được bế: không ai đánh được mèo, quái bò theo chờ mèo xuống.", "The cat is lifted: nobody can hit it; slimes follow and wait for it to land.")
+        SetText(hint, held && !b.Over ? LiftedHint(b)
             : b.Armed == BattleSkill.Push ? L("Click nửa trái slime để đẩy sang phải, nửa phải để đẩy sang trái · bấm lại ô hoặc chuột phải để hủy",
                                              "Click a slime's left half to push it right, its right half to push it left · click the slot again or right-click to cancel")
             : b.Armed is BattleSkill armed ? L($"Click một slime để dùng {SkillName(armed)} · bấm lại ô hoặc chuột phải chiến trường để hủy",
                                                $"Click a slime to use {SkillName(armed)} · click the slot again or right-click the field to cancel")
             : L("Click slime: chọn mục tiêu · Rê chuột lên ô kỹ năng để xem · Nhấc mèo lên để cứu nguy",
                 "Click a slime: set target · Hover a skill for details · Lift the cat to rescue it"));
+    }
+
+    // Whole seconds until putting the cat down protects it again (0: ready). Frozen while the cat is
+    // lifted, so the hint does not tick then.
+    private static int GraceWait(BattleSim b) => (int)Math.Ceiling(b.GraceCooldown);
+
+    private string LiftedHint(BattleSim b)
+    {
+        string skills = L("Mèo đang được bế: không ai đánh được mèo, kỹ năng chờ mèo xuống", "The cat is lifted: nobody can hit it, skills wait for it to land");
+        int wait = GraceWait(b);
+        string grace = b.Settings.LandingGraceSeconds.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
+        return skills + (wait > 0
+            ? L($" · thả lúc này không có thêm bảo vệ (còn {wait} giây)", $" · no landing protection this time ({wait} s left)")
+            : L($" · thả xuống được {grace} giây an toàn", $" · landing gives {grace} s of safety"));
     }
 
     public string SkillName(BattleSkill skill) => BattleSkills.Get(skill).Name(English);

@@ -16,6 +16,7 @@ internal static class BattleSkillTests
             var sim = new BattleSim(settings, 0, 1600, new Random(3));
             sim.Step(dt, 800, false);
             Run(sim, 0.6, held: true);
+            sim.SetCatState(false, false); // Let go (a plain press): skills work again, no landing protection.
             var slime = sim.Slimes[0];
             slime.X = 800 + offset;
             return (sim, slime);
@@ -119,6 +120,7 @@ internal static class BattleSkillTests
         var bomb = new BattleSim(bombSettings, 0, 1600, new Random(3));
         for (int i = 0; i < 3; i++) bomb.Step(dt, 800, false);
         Run(bomb, 0.6, held: true);
+        bomb.SetCatState(false, false);
         var near = bomb.Slimes[0]; var side = bomb.Slimes[1]; var far = bomb.Slimes[2];
         near.X = 1100; side.X = 1150; far.X = 1400;
         check(!bomb.Use(BattleSkill.Bomb, 800) && bomb.Arm(BattleSkill.Bomb) && bomb.Armed == BattleSkill.Bomb, "The bomb is chosen first, then aimed");
@@ -157,11 +159,11 @@ internal static class BattleSkillTests
 
         var phases = new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 1 }, SlimeMaxHp = 1, CatDamage = 0, SlimeDamage = 0, BossDamage = 0, WaveBreakSeconds = 0, BombDamage = 150, BombCooldown = 0 };
         var (rage, rageKing) = BossDuel(phases, 300);
-        void Bomb(BattleSim sim, Slime target) { sim.Arm(BattleSkill.Bomb); sim.Use(BattleSkill.Bomb, target.Id, 800); Run(sim, 0.55, held: true); }
+        void Bomb(BattleSim sim, Slime target) { sim.SetCatState(false, false); sim.Arm(BattleSkill.Bomb); sim.Use(BattleSkill.Bomb, target.Id, 800); Run(sim, 0.55, held: true); }
         Bomb(rage, rageKing);
         check(rageKing.Hp == 250 && rage.Alive == 1 && !rageKing.Enraged, "(setup) 250/400 HP: nothing special yet");
         bool summoned = false, enraged = false;
-        rage.Arm(BattleSkill.Bomb); rage.Use(BattleSkill.Bomb, rageKing.Id, 800);
+        rage.SetCatState(false, false); rage.Arm(BattleSkill.Bomb); rage.Use(BattleSkill.Bomb, rageKing.Id, 800);
         for (double t = 0; t < 0.55; t += dt) { rage.Step(dt, 800, true); summoned |= Count(rage, BattleEventKind.BossSummoned) > 0; enraged |= Count(rage, BattleEventKind.BossEnraged) > 0; rage.ClearEvents(); }
         check(summoned && rage.Alive == 3 && rage.Slimes.Count(s => !s.IsBoss) == 2, "Below half HP the King calls two helper slimes, once");
         check(enraged && rageKing.Enraged && rage.Windup(rageKing) == phases.BossEnragedWindup, "Below 30% it gets angry: shorter windup, faster steps");
@@ -181,10 +183,12 @@ internal static class BattleSkillTests
         sim.Step(dt, 800, false);
         for (double t = 0; t < 0.6; t += dt) sim.Step(dt, 800, true);
         // Clear the single normal slime with a bomb, then the boss wave starts.
+        sim.SetCatState(false, false);
         sim.Arm(BattleSkill.Bomb); sim.Use(BattleSkill.Bomb, sim.Slimes[0].Id, 800);
         for (double t = 0; t < 0.55; t += dt) sim.Step(dt, 800, true);
         for (double t = 0; t < 3 && sim.Boss == null; t += dt) sim.Step(dt, 800, false);
         for (double t = 0; t < 1.2; t += dt) sim.Step(dt, 800, true); // Let it rise while nobody moves.
+        sim.SetCatState(false, false);
         var king = sim.Boss!;
         king.X = 800 + offset;
         return (sim, king);

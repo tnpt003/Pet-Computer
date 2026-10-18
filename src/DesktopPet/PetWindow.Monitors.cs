@@ -10,6 +10,20 @@ public sealed partial class PetWindow
     private Forms.Screen CurrentMonitor() => Forms.Screen.FromPoint(new System.Drawing.Point(
         (int)((pet.X + settings.Width / 2) * scale), (int)((pet.Y + settings.Height / 2) * scale)));
 
+    // A monitor's own DPI scale (PerMonitorV2), read without moving any window; the pet's scale
+    // if Windows cannot say.
+    private double MonitorScale(Forms.Screen screen)
+    {
+        var area = screen.Bounds;
+        var handle = MonitorFromPoint(new NativePoint { X = area.Left + area.Width / 2, Y = area.Top + area.Height / 2 }, 2);
+        try { if (handle != IntPtr.Zero && GetDpiForMonitor(handle, 0, out uint dpi, out _) == 0 && dpi > 0) return dpi / 96.0; }
+        catch (DllNotFoundException) { } catch (EntryPointNotFoundException) { }
+        return scale;
+    }
+
+    [System.Runtime.InteropServices.DllImport("shcore.dll")]
+    private static extern int GetDpiForMonitor(IntPtr monitor, int type, out uint dpiX, out uint dpiY);
+
     public void ShowControls()
     {
         if (ContextMenu == null) return;

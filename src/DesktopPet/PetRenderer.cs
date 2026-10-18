@@ -124,8 +124,8 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         }
         else if (pet.BattleDazed) DrawDizzyOrbit(dc, p); // Lost the battle: seeing stars, nothing worse.
         DrawOverlays(dc, p);
-        if (pet.BattleBuff) DrawCheerSparkles(dc, p);
-        if (pet.BattleShield) DrawShieldBubble(dc, p);
+        if (pet.BattleBuff) DrawCheerSparkles(dc, pet.BattleTime);
+        if (pet.BattleShield) DrawShieldBubble(dc, pet.BattleTime);
         dc.Pop(); // Permanent transparent margin, identical for every state.
     }
 
@@ -262,9 +262,10 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
     private static readonly Pen BubbleShine = FrozenPen(Frozen("#E0FFFFFF"), 3, PenLineJoin.Round, true);
     private static readonly Geometry SparkleGeometry = CachedGeometry("M 0,-6 L 1.6,-1.6 L 6,0 L 1.6,1.6 L 0,6 L -1.6,1.6 L -6,0 L -1.6,-1.6 Z");
 
-    private void DrawShieldBubble(DrawingContext dc, in Pose p)
+    // Skill effects follow the battle's clock (time), so they stand still while it is paused.
+    private void DrawShieldBubble(DrawingContext dc, double time)
     {
-        double wobble = Math.Sin(p.Time * 4) * 1.5;
+        double wobble = Math.Sin(time * 4) * 1.5;
         var center = new Point(56, 62);
         dc.DrawEllipse(BubbleFill, BubbleEdge, center, 60 + wobble, 57 - wobble);
         dc.DrawEllipse(null, BubbleRim, center, 58 + wobble, 55 - wobble);
@@ -277,12 +278,12 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         dc.DrawGeometry(null, BubbleShine, shine);
     }
 
-    private void DrawCheerSparkles(DrawingContext dc, in Pose p)
+    private void DrawCheerSparkles(DrawingContext dc, double time)
     {
         for (int i = 0; i < 4; i++)
         {
-            double phase = (p.Time * 0.9 + i / 4.0) % 1;
-            double x = (i % 2 == 0 ? 14 : 98) + Math.Sin(p.Time * 3 + i) * 5, y = 104 - phase * 70;
+            double phase = (time * 0.9 + i / 4.0) % 1;
+            double x = (i % 2 == 0 ? 14 : 98) + Math.Sin(time * 3 + i) * 5, y = 104 - phase * 70;
             dc.PushOpacity(Math.Sin(phase * Math.PI));
             dc.PushTransform(new TranslateTransform(x, y));
             dc.DrawGeometry(Brushes.Gold, EffectBorder, SparkleGeometry);

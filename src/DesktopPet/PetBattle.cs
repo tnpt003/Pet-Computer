@@ -62,6 +62,10 @@ public sealed class BattleSettings
     public double SpawnMinDistance { get; init; } = 200;
     // After the user puts the cat down: no damage and no new slime attacks on it.
     public double LandingGraceSeconds { get; init; } = 1.5;
+    // That protection is given at most once per this many seconds of the cat on the ground in a
+    // running battle (counted from when it is given), so lifting and dropping over and over
+    // cannot keep the cat safe.
+    public double RescueGraceCooldownSeconds { get; init; } = 5;
     public double OutroSeconds { get; init; } = 3;
     public double HurtFlashSeconds { get; init; } = 0.35;
     public int MaxEffects { get; init; } = 32;
@@ -284,6 +288,15 @@ public sealed class BattleSim
     public double CheerRemaining { get; private set; }
     public double ShieldRemaining { get; private set; }
     public double Grace { get; private set; }
+    // Until this reaches 0, putting the cat down gives no new protection.
+    public double GraceCooldown { get; private set; }
+    public bool RescueGraceReady => GraceCooldown <= 0;
+    // How the user is handling the cat (SetCatState): held = pressed, carried, in the air or
+    // climbing (the battle may not move or hurt it); lifted = really off the ground (not a click).
+    public bool CatHeld { get; private set; }
+    public bool CatLifted { get; private set; }
+    // While the cat is safe in the user's hands the skills wait: no use, no cooldown recovery.
+    public bool SkillsLocked => CatHeld;
     public double HurtFlash { get; private set; }
     // Simulation clock (stops while paused); animations read it instead of wall time.
     public double Time { get; private set; }
@@ -294,7 +307,7 @@ public sealed class BattleSim
     public bool Over => Phase is BattlePhase.Won or BattlePhase.Lost;
     public Slime? Boss { get { foreach (var s in slimes) if (s.IsBoss && s.State != SlimeState.Defeated) return s; return null; } }
     private int nextId = 1, autoTargetId, swingTargetId, swingFacing = 1;
-    private bool swingHit, lifted;
+    private bool swingHit, wasLifted;
     private double spawnTimer;
 
     public BattleDifficulty Difficulty { get; }
@@ -316,18 +329,31 @@ public sealed class BattleSim
     public void ClearEvents() => events.Clear();
     public double Cooldown(BattleSkill skill) => cooldowns[(int)skill];
     public static bool IsAimed(BattleSkill skill) => BattleSkills.Get(skill).Aimed;
-    public bool Ready(BattleSkill skill) => !Over && cooldowns[(int)skill] <= 0;
+    public bool Ready(BattleSkill skill) => !Over && !Paused && !SkillsLocked && cooldowns[(int)skill] <= 0;
 
-    // catHeld: the battle may not move or hurt the cat (pressed, dragged, flying, climbing).
-    // lifted: it is really off the ground (not a plain click); putting it down grants grace.
+    // The one description of the user's hold on the cat, shared by Step, the skills and the HUD.
+    // A real lift cancels a chosen skill at once, so a later click cannot use it by mistake;
+    // a plain press does not (it changes nothing visible).
+    public void SetCatState(bool held, bool lifted)
+    {
+        CatHeld = held;
+        CatLifted = held && lifted;
+        if (!CatLifted) return;
+        wasLifted = true;
+        Armed = null;
+    }
+
+    // catHeld / lifted: see SetCatState. Putting a lifted cat down grants grace (if ready).
     public CatOrder Step(double dt, double catX, bool catHeld, bool lifted = false)
     {
+        SetCatState(catHeld, lifted);
         if (Paused || !double.IsFinite(dt) || dt <= 0 || !double.IsFinite(catX)) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
         dt = Math.Min(dt, 0.1);
         Time += dt;
         StepEffects(dt);
         HurtFlash = Math.Max(0, HurtFlash - dt);
-        for (int i = 0; i < cooldowns.Length; i++) cooldowns[i] = Math.Max(0, cooldowns[i] - dt);
+        // Skills recover only while the cat is down and at risk; buffs already running wear off as usual.
+        if (!catHeld) for (int i = 0; i < cooldowns.Length; i++) cooldowns[i] = Math.Max(0, cooldowns[i] - dt);
         CheerRemaining = Math.Max(0, CheerRemaining - dt);
         ShieldRemaining = Math.Max(0, ShieldRemaining - dt);
         if (Over)
@@ -337,12 +363,19 @@ public sealed class BattleSim
             return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
         }
         comboClock += dt;
-        if (catHeld) { lifted |= this.lifted; this.lifted = lifted; CancelSwing(); Combo = 0; }
+        if (catHeld) { CancelSwing(); Combo = 0; }
         else
         {
-            if (this.lifted) Grace = Settings.LandingGraceSeconds;
-            this.lifted = false;
+            // Landing after a real lift: protection, unless it was given too recently (then the
+            // time left, if any, is neither renewed nor extended).
+            if (wasLifted && GraceCooldown <= 0)
+            {
+                Grace = Settings.LandingGraceSeconds;
+                GraceCooldown = Settings.RescueGraceCooldownSeconds;
+            }
+            wasLifted = false;
             Grace = Math.Max(0, Grace - dt);
+            GraceCooldown = Math.Max(0, GraceCooldown - dt);
         }
         CatCooldown = Math.Max(0, CatCooldown - dt);
         StepBombs(dt);
@@ -504,8 +537,11 @@ public sealed class BattleSim
                     if (slime.StateTime >= slime.Type.Recover) slime.Set(SlimeState.Moving);
                     break;
                 case SlimeState.Windup:
-                    // The cat was picked up: the attack aimed at where it stood is called off.
-                    if (catHeld) { slime.Set(SlimeState.Moving); slime.Cooldown = Math.Max(slime.Cooldown, 0.5); break; }
+                    // The cat is in the user's hands: the windup holds where it is (the "!" stays, the
+                    // slime stays put) and goes on once the cat is down. Put down out of reach, or
+                    // with landing protection, the hit misses; put back on the same spot, it lands.
+                    // So lifting dodges a hit but cannot cancel every hit by lifting over and over.
+                    if (catHeld) { slime.StateTime -= dt; break; }
                     if (slime.StateTime >= Windup(slime)) Strike(slime, catX);
                     break;
                 case SlimeState.Moving:
@@ -661,7 +697,7 @@ public sealed class BattleSim
     // Click on a slime: the cat goes for it first. Never deals damage by itself.
     public bool Select(int id)
     {
-        if (Over || Find(id) is not { Targetable: true }) return false;
+        if (Over || Paused || Find(id) is not { Targetable: true }) return false;
         SelectedId = id;
         return true;
     }

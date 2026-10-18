@@ -183,6 +183,9 @@ public sealed partial class PetWindow : Window
         EndDrag(false);
         paused = value;
         accumulator = 0;
+        // A battle's field and HUD stay clickable while the pet is paused: the battle holds too,
+        // so no skill, target or bomb can change it. Un-pausing removes only this reason.
+        SetBattlePause(BattlePause.App, value);
     }
 
     private void BeginDrag(object sender, MouseButtonEventArgs e)
@@ -225,6 +228,7 @@ public sealed partial class PetWindow : Window
         Present();
         tracker.Clear();
         tracker.Add(clock.Elapsed.TotalSeconds, cursor.X, cursor.Y);
+        BattleCatLifted();
     }
 
     private void UpdateDrag(double dt = 0)
@@ -323,7 +327,9 @@ public sealed partial class PetWindow : Window
                 if (pet.Grounded && pet.LedgeId == 0) pet.Y = bounds.Bottom - settings.Height; // Not when standing on a window.
                 SnapPresentation();
             }
-            if (!paused && !pressPending)
+            // A paused battle also holds the cat's physics: a throw waits mid-air with its
+            // position and velocity and goes on after Resume (one normal frame, no catch-up).
+            if (!paused && !pressPending && !BattleFreezesPet)
             {
                 double cursorX = CursorPosition().X;
                 accumulator += dt;

@@ -29,7 +29,7 @@ public sealed class BattleHud : Border
     private (double Hp, double Max) shownHp = (-1, -1);
     private (BattlePhase, int, int, bool, bool, double, int) shownStatus;
     private (double, bool) shownBoss = (-1, false);
-    private (bool, BattleSkill?, bool, int) shownHint;
+    private (bool, BattleSkill?, bool, int, bool, int) shownHint;
     private (int, bool) shownCombo = (-1, false);
     private bool hintShown;
     private BattleSim? last;
@@ -252,7 +252,7 @@ public sealed class BattleHud : Border
         pauseButton.IsEnabled = !b.Over && !(b.Paused && fullscreen);
         pauseButton.Opacity = pauseButton.IsEnabled ? 1 : 0.45;
         last = b; lastHeld = held;
-        var hintKey = (held && !b.Over, b.Armed, b.Over, held && !b.Over ? GraceWait(b) : 0);
+        var hintKey = HintKey(b, held);
         if (hovered != null || hoveredControl != null || !hintShown || hintKey != shownHint) ShowHint();
     }
 
@@ -260,7 +260,7 @@ public sealed class BattleHud : Border
     {
         if (last is not BattleSim b) return;
         bool held = lastHeld;
-        hintShown = true; shownHint = (held && !b.Over, b.Armed, b.Over, held && !b.Over ? GraceWait(b) : 0);
+        hintShown = true; shownHint = HintKey(b, held);
         if (hoveredControl != null) { SetText(hint, hoveredControl); return; }
         if (hovered is BattleSkill skill)
         {
@@ -274,6 +274,7 @@ public sealed class BattleHud : Border
                                              "Click a slime's left half to push it right, its right half to push it left · click the slot again or right-click to cancel")
             : b.Armed is BattleSkill armed ? L($"Click một slime để dùng {SkillName(armed)} · bấm lại ô hoặc chuột phải chiến trường để hủy",
                                                $"Click a slime to use {SkillName(armed)} · click the slot again or right-click the field to cancel")
+            : !b.Over && b.Grace > 0 ? L($"Được bảo vệ sau khi tiếp đất: còn {ProtectedFor(b)} giây", $"Protected after landing: {ProtectedFor(b)} s left")
             : L("Click slime: chọn mục tiêu · Rê chuột lên ô kỹ năng để xem · Nhấc mèo lên để cứu nguy",
                 "Click a slime: set target · Hover a skill for details · Lift the cat to rescue it"));
     }
@@ -282,9 +283,26 @@ public sealed class BattleHud : Border
     // lifted, so the hint does not tick then.
     private static int GraceWait(BattleSim b) => (int)Math.Ceiling(b.GraceCooldown);
 
+    private static int ProtectedFor(BattleSim b) => (int)Math.Ceiling(b.Grace);
+
+    // Slimes holding a windup while the cat is in the user's hands (they hit once it is down nearby).
+    public static int HeldAttacks(BattleSim b)
+    {
+        if (!b.CatHeld) return 0;
+        int n = 0;
+        for (int i = 0; i < b.Slimes.Count; i++) if (b.Slimes[i].State == SlimeState.Windup) n++;
+        return n;
+    }
+
+    // What the hint line shows; it is rebuilt only when this changes.
+    private static (bool, BattleSkill?, bool, int, bool, int) HintKey(BattleSim b, bool held) =>
+        (held && !b.Over, b.Armed, b.Over, held && !b.Over ? GraceWait(b) : 0, held && HeldAttacks(b) > 0, !held && !b.Over ? ProtectedFor(b) : 0);
+
     private string LiftedHint(BattleSim b)
     {
         string skills = L("Mèo đang được bế: không ai đánh được mèo, kỹ năng chờ mèo xuống", "The cat is lifted: nobody can hit it, skills wait for it to land");
+        if (HeldAttacks(b) > 0)
+            skills += L(" · slime đang giữ đòn: thả mèo ra ngoài vòng đỏ", " · a slime holds its attack: put the cat down outside the red ring");
         int wait = GraceWait(b);
         string grace = b.Settings.LandingGraceSeconds.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
         return skills + (wait > 0

@@ -48,6 +48,8 @@ public sealed class PetPreferences
     // Battle Mode difficulty chosen in the menu: "Easy", "Normal" or "Hard".
     public string BattleDifficulty { get; set; } = "Normal";
     public static string NormalizeDifficulty(string? value) => value is "Easy" or "Normal" or "Hard" ? value : "Normal";
+    // The first-battle guide was gone through or skipped (older files: false, so it shows once).
+    public bool BattleTutorialSeen { get; set; }
     public string? PositionMonitor { get; set; }
     public double PositionX { get; set; } = 0.5;
     public double PositionY { get; set; } = 1;

@@ -16,7 +16,8 @@ internal static class Program
     {
         Environment.SetEnvironmentVariable("PET_AI_DISABLED", "1");
         var app = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
-        var window = new PetWindow(new PetPreferences());
+        // The first-battle guide is checked on its own (TutorialChecks); elsewhere it would pause every battle.
+        var window = new PetWindow(new PetPreferences { BattleTutorialSeen = true });
         // Unattended runs must not depend on the real foreground window or on how long
         // nobody touched the machine (that would trigger the away nap mid-test).
         SetContext(window, false, 0);
@@ -687,6 +688,7 @@ internal static class Program
         FrameChecks.Run(window, pet, Check);
         await BattleChecks.Run(window, pet, behavior, preferences, Check);
         await BattleRulesChecks.Run(window, pet, Check);
+        await TutorialChecks.Run(window, pet, Check);
         window.ShowControls();
         Check(window.ContextMenu!.IsOpen, "Existing pet controls can be opened by a second launch notification");
         window.ContextMenu.IsOpen = false;

@@ -610,7 +610,10 @@ shows no panel. After each wave except the last the cat gets 15 HP back (`WaveHe
   where it is (the "!" stays, it does not move) and finishes it once the cat is down: put down out
   of reach, or with landing protection, the hit misses (and the slime takes its full attack
   cooldown); put back on the same spot, it lands. So a well-timed rescue dodges every hit, but
-  lifting and dropping on the spot no longer cancels them (it used to reset each windup). Other
+  lifting and dropping on the spot no longer cancels them (it used to reset each windup). While
+  the cat is carried, a held windup shows a pulsing ring on its "!" and a dashed red ring on the
+  floor (reach + 12 DIPs: put the cat down outside it), and the HUD hint says a slime holds its
+  attack. After a protected landing the hint shows the protection's seconds left. Other
   slimes keep following the cat along the floor without starting a windup, and no slime spawns or
   wave progress happens. The battle stays on the monitor it started on: if the cat lands on another monitor the
   battle pauses (a note by the cat says where the battlefield is) and goes on by itself when the
@@ -630,8 +633,16 @@ shows no panel. After each wave except the last the cat gets 15 HP back (`WaveHe
   only on the HUD), cooldowns do not recover, and a real lift cancels a chosen aimed skill. A bomb
   already dropped still bursts; Cheer/Shield already running wear off as usual. A plain press keeps
   the chosen skill and the HUD unchanged (no flicker).
+- **First-battle guide** (PetWindow.BattleTutorial.cs): four cards (targets, skills, rescue and
+  the held attack, protection and cooldowns, with battle.json's numbers) in a small panel above the
+  floor strip; mouse only (Skip / Next / Done), never takes focus, follows the UI language, no
+  sound. It opens by itself at the start of the first battle until gone through or skipped
+  (preferences `BattleTutorialSeen`, false in older files), and from the menu (Battle Mode → How to
+  play) with or without a battle. While it is open a battle is paused (reason Tutorial). A
+  fullscreen app or bringing the pet back closes it without marking it seen; measuring runs
+  (`PET_BATTLE_AUTOSTART`) never show it.
 - **Pause / Resume / End**: HUD buttons or the menu. Pause reasons stack (User, Menu, Fullscreen,
-  Away, App) and each owner removes only its own: closing the menu never resumes a battle the user, a
+  Away, App, Tutorial) and each owner removes only its own: closing the menu never resumes a battle the user, a
   fullscreen app or an away cat still holds. A fullscreen app pauses it, hides the field/HUD and
   leaves a User pause, so the user resumes afterwards. Every reason except Away also freezes the
   cat's physics: a thrown cat hangs with its position and velocity and goes on after Resume with

@@ -49,7 +49,7 @@ public sealed partial class PetWindow
             {
                 if (toyWindow != null || returningHome) CancelFeatureActivity();
                 pet.Speech.Hide(); pet.Thought.Clear(); sound?.Stop();
-                CloseBattleSummary(); CloseBattleNotice();
+                CloseBattleSummary(); CloseBattleNotice(); CloseBattleTutorial();
             }
         }
         if (change.CameBack) { behavior.EndAwayNap(pet); pet.Emotions.UserReturned(); }

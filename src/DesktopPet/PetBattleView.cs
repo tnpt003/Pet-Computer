@@ -234,6 +234,15 @@ public sealed class BattleFieldView : FrameworkElement
             dc.DrawLine(WarningPen, new Point(x, y - 9), new Point(x, y + 1));
             dc.DrawEllipse(Warning, Halo, new Point(x, y + 7), 2.4, 2.4);
             dc.DrawEllipse(Warning, null, new Point(x, y + 7), 2.4, 2.4);
+            if (sim.CatHeld)
+            {
+                // The cat is in the user's hands: the attack is held, not gone. A pulsing ring on the
+                // "!" says so, and a dashed ring on the floor shows where it still reaches (the hit
+                // misses beyond Range + 12, see BattleSim.Strike): put the cat down outside it.
+                dc.DrawEllipse(null, WarningEdge, new Point(x, y + 1), 9 + 2 * Math.Sin(time * 8), 9 + 2 * Math.Sin(time * 8));
+                dc.DrawEllipse(null, Halo, new Point(x, floor - 4), slime.Range + 12, 10);
+                dc.DrawEllipse(null, WarningEdge, new Point(x, floor - 4), slime.Range + 12, 10);
+            }
         }
         if (slime.State == SlimeState.Stunned)
         {

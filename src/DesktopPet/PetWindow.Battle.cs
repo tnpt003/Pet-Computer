@@ -31,7 +31,8 @@ public sealed partial class PetWindow
     // fullscreen app) made. A fullscreen app also leaves a User pause: the user resumes after it.
     [Flags]
     // App: the whole pet is paused (tray/menu Pause); only un-pausing the pet removes it.
-    public enum BattlePause { None = 0, User = 1, Menu = 2, Fullscreen = 4, Away = 8, App = 16 }
+    // Tutorial: the first-battle guide is open (PetWindow.BattleTutorial.cs).
+    public enum BattlePause { None = 0, User = 1, Menu = 2, Fullscreen = 4, Away = 8, App = 16, Tutorial = 32 }
     private BattlePause battlePause;
     public BattlePause BattlePauseReasons => battlePause;
     public bool BattleCatAway => (battlePause & BattlePause.Away) != 0;
@@ -97,7 +98,10 @@ public sealed partial class PetWindow
             item.Click += (_, _) => SetBattleDifficulty(level);
             difficulty.Items.Add(item);
         }
-        root.Items.Add(start); root.Items.Add(difficulty); root.Items.Add(pause); root.Items.Add(end);
+        // The first-battle guide, again (with or without a battle).
+        var guide = new MenuItem();
+        guide.Click += (_, _) => ShowBattleTutorial();
+        root.Items.Add(start); root.Items.Add(difficulty); root.Items.Add(pause); root.Items.Add(end); root.Items.Add(guide);
         menu.Items.Add(root);
         menu.Opened += (_, _) =>
         {
@@ -114,6 +118,7 @@ public sealed partial class PetWindow
             pause.IsEnabled = !(userPaused && context.Fullscreen);
             pause.Visibility = end.Visibility = battle != null ? Visibility.Visible : Visibility.Collapsed;
             end.Header = L("Kết thúc trận", "End battle");
+            guide.Header = L("Hướng dẫn", "How to play");
             difficulty.Header = L("Độ khó: ", "Difficulty: ") + DifficultyName(BattleDifficultyChoice);
             difficulty.IsEnabled = battle == null;
             foreach (var (level, item) in levels)
@@ -202,6 +207,10 @@ public sealed partial class PetWindow
         pet.VX = pet.SmoothedWalkVelocity = 0;
         behavior.Reset(pet);
         ShowBattleWindows();
+        // The guide opens by itself once, before the first battle gets going (never in measuring runs).
+        // A guide already open (from the menu) holds the new battle too.
+        if (BattleTutorialOpen) SetBattlePause(BattlePause.Tutorial, true);
+        else if (!preferences.BattleTutorialSeen && battleAutostart == null) ShowBattleTutorial();
         System.Diagnostics.Trace.WriteLine("Battle started.");
         PlayPetSound("excited");
         return null;

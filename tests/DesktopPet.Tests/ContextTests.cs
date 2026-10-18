@@ -18,6 +18,9 @@ internal static class ContextTests
             loaded = PetPreferences.Load(file);
             check(loaded.Coat == "Calico" && loaded.Accessory == "Hat" && loaded.BreakMinutes == 30 && !loaded.BreakReminders,
                 "Saved appearance and break interval load back; reminders stay off unless enabled");
+            check(!loaded.BattleTutorialSeen, "Preferences from before the battle guide existed: the guide has not been seen (it shows once)");
+            File.WriteAllText(file, "{\"BattleTutorialSeen\":true}");
+            check(PetPreferences.Load(file).BattleTutorialSeen, "Once seen, the battle guide stays seen after a restart");
             File.WriteAllText(file, "{\"Birthday\":\"02-30\"}");
             check(PetPreferences.Load(file).Birthday == "", "An impossible birthday is dropped when preferences load");
             File.WriteAllText(file, "{\"Birthday\":\"02-29\"}");

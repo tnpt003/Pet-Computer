@@ -1,0 +1,105 @@
+using System.Reflection;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using DesktopPet;
+
+// Battle Mode's weapon choice in the real pet window: the menu choice is remembered, locked during
+// a battle and used by the next one; the HUD and the result panel name it; the hammer is drawn in
+// every pose without leaving the window. In-memory preferences only.
+internal static class WeaponChecks
+{
+    private const BindingFlags Flags = BindingFlags.NonPublic | BindingFlags.Instance;
+    private static T Field<T>(PetWindow window, string name) => (T)typeof(PetWindow).GetField(name, Flags)!.GetValue(window)!;
+    private static object? Call(PetWindow window, string name, params object?[] args) => typeof(PetWindow).GetMethod(name, Flags)!.Invoke(window, args);
+
+    public static async Task Run(PetWindow window, PetModel pet, Action<bool, string> check)
+    {
+        void TickBattle(double seconds) { for (double t = 0; t < seconds; t += 1.0 / 60) Call(window, "TickBattle", 1.0 / 60); }
+        var prefs = Field<PetPreferences>(window, "preferences");
+        string language = prefs.Language, savedWeapon = prefs.BattleWeapon;
+        prefs.Language = "en";
+        window.Reset();
+
+        prefs.BattleWeapon = "Axe";
+        check(window.BattleWeaponChoice == BattleWeapon.Sword, "An unknown weapon in preferences reads as the sword");
+        window.SetBattleWeapon(BattleWeapon.Hammer);
+        check(window.BattleWeaponChoice == BattleWeapon.Hammer && prefs.BattleWeapon == "Hammer", "Choosing the hammer is remembered");
+
+        window.BattleTuning = new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 1 }, Boss = false, SlimeMaxHp = 1, OutroSeconds = 0.5 };
+        check(window.StartBattle() == null && window.Battle?.Weapon == BattleWeapon.Hammer && pet.Hammer && pet.SwordOut,
+            "The next battle uses the hammer, and the cat holds it");
+        var hud = Field<BattleHud>(window, "battleHud");
+        string HudText(DependencyObject node) => node is TextBlock t ? t.Text + "|" : string.Concat(LogicalTreeHelper.GetChildren(node).OfType<DependencyObject>().Select(HudText));
+        check(HudText(hud).Contains("· Hammer"), "The HUD names the weapon next to the cat");
+
+        // The menu: Weapon is greyed out during a battle; a change only affects the next one.
+        window.ContextMenu!.IsOpen = true;
+        await Task.Delay(30);
+        var root = window.ContextMenu.Items.OfType<MenuItem>().First(i => i.Header as string == "Battle Mode");
+        var weaponItem = root.Items.OfType<MenuItem>().First(i => (i.Header as string ?? "").StartsWith("Weapon"));
+        bool lockedInBattle = !weaponItem.IsEnabled && weaponItem.Items.OfType<MenuItem>().Count(i => i.IsChecked) == 1;
+        window.ContextMenu.IsOpen = false;
+        await Task.Delay(30);
+        check(lockedInBattle && (weaponItem.Header as string) == "Weapon: Hammer", $"The menu shows the weapon and locks it during a battle ({weaponItem.Header})");
+        window.SetBattleWeapon(BattleWeapon.Sword);
+        check(window.Battle?.Weapon == BattleWeapon.Hammer && pet.Hammer, "Changing it mid-battle does not change the running battle");
+        window.SetBattleWeapon(BattleWeapon.Hammer);
+
+        // A won battle with the hammer: the result panel names it; records stay per difficulty.
+        int winsBefore = window.BattleRecords.Normal.Wins;
+        TickBattle(0.6);
+        if (window.Battle is { } b && b.Slimes.Count > 0) b.Slimes[0].X = pet.X + 56 + 50;
+        TickBattle(2);
+        string panel = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.Title == "Pet result" && w.IsVisible)?.Content is DependencyObject content ? HudText(content) : "";
+        check(!window.BattleActive && window.LastBattleSummary is { Won: true, Weapon: BattleWeapon.Hammer } && panel.Contains("Normal · Hammer") &&
+              panel.Contains("Records (Normal)") && window.BattleRecords.Normal.Wins == winsBefore + 1,
+            $"The result names the hammer; the win counts in the Normal records shared by both weapons ({panel})");
+        check(!pet.Hammer && !pet.SwordOut, "After the battle the cat puts the hammer away");
+
+        // The hammer drawn in every pose, both ways, inside the window; it looks unlike the sword.
+        bool edgesClear = true;
+        string Render(PetModel model)
+        {
+            const int size = 192;
+            var visual = new PetRenderer(model);
+            visual.Measure(new Size(size, size)); visual.Arrange(new Rect(0, 0, size, size));
+            var bmp = new RenderTargetBitmap(size, size, 96, 96, PixelFormats.Pbgra32); bmp.Render(visual);
+            var px = new byte[size * size * 4]; bmp.CopyPixels(px, size * 4, 0);
+            for (int i = 0; i < size; i++)
+                edgesClear &= px[i * size * 4 + 3] == 0 && px[(i * size + size - 1) * 4 + 3] == 0 && px[i * 4 + 3] == 0 && px[((size - 1) * size + i) * 4 + 3] == 0;
+            if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string review && (Math.Abs(model.SwordSwing - 0.5) < 0.01 || model.SwordSwing < 0) && model.Action == PetAction.Idle)
+            {
+                System.IO.Directory.CreateDirectory(review);
+                var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bmp));
+                using var stream = System.IO.File.Create(System.IO.Path.Combine(review, $"battle-{(model.Hammer ? "hammer" : "sword")}-{model.Facing}-{model.SwordSwing:F1}.png"));
+                encoder.Save(stream);
+            }
+            return Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(px));
+        }
+        PetModel Model(int facing, bool hammer) => new() { Action = PetAction.Idle, Grounded = true, Facing = facing, AnimationTime = 1, ActionTime = 1, SwordOut = true, Hammer = hammer };
+        check(Render(Model(1, true)) != Render(Model(1, false)), "The hammer is drawn differently from the sword");
+        foreach (int facing in new[] { 1, -1 })
+        {
+            for (double u = -1; u <= 1.0001; u += 0.1)
+            {
+                var m = Model(facing, true); m.SwordSwing = u < 0 ? -1 : u; m.SwordCombo = u > 0.4 && u < 0.6;
+                Render(m);
+            }
+            var dragged = Model(facing, true); dragged.Action = PetAction.Dragging; dragged.Grounded = false; dragged.Pickup.Begin(0, 0);
+            for (int frame = 0; frame < 90; frame++) dragged.Pickup.Step(frame < 45 ? frame * 40 : (90 - frame) * 40, 0, 1.0 / 120);
+            Render(dragged);
+            var flying = Model(facing, true); flying.Action = PetAction.Thrown; flying.Grounded = false; flying.VY = -700; Render(flying);
+            var dazed = Model(facing, true); dazed.BattleDazed = true; dazed.Action = PetAction.Sitting; Render(dazed);
+            var cheer = Model(facing, true); cheer.BattleCheer = true; cheer.Action = PetAction.Sitting; Render(cheer);
+            var walking = Model(facing, true); walking.Action = PetAction.Walking; walking.VX = 130 * facing; Render(walking);
+        }
+        check(edgesClear, "The hammer stays inside the window in every pose and swing, both ways");
+
+        prefs.BattleWeapon = savedWeapon;
+        prefs.Language = language;
+        window.Reset();
+        window.BattleTuning = new BattleSettings();
+    }
+}

@@ -98,10 +98,19 @@ public sealed partial class PetWindow
             item.Click += (_, _) => SetBattleDifficulty(level);
             difficulty.Items.Add(item);
         }
+        // Weapon for the next battle (remembered); a running battle keeps its own.
+        var weapon = new MenuItem();
+        var arms = new (BattleWeapon Weapon, MenuItem Item)[] { (BattleWeapon.Sword, new()), (BattleWeapon.Hammer, new()) };
+        foreach (var (choice, item) in arms)
+        {
+            item.IsCheckable = true;
+            item.Click += (_, _) => SetBattleWeapon(choice);
+            weapon.Items.Add(item);
+        }
         // The first-battle guide, again (with or without a battle).
         var guide = new MenuItem();
         guide.Click += (_, _) => ShowBattleTutorial();
-        root.Items.Add(start); root.Items.Add(difficulty); root.Items.Add(pause); root.Items.Add(end); root.Items.Add(guide);
+        root.Items.Add(start); root.Items.Add(difficulty); root.Items.Add(weapon); root.Items.Add(pause); root.Items.Add(end); root.Items.Add(guide);
         menu.Items.Add(root);
         menu.Opened += (_, _) =>
         {
@@ -121,6 +130,13 @@ public sealed partial class PetWindow
             guide.Header = L("Hướng dẫn", "How to play");
             difficulty.Header = L("Độ khó: ", "Difficulty: ") + DifficultyName(BattleDifficultyChoice);
             difficulty.IsEnabled = battle == null;
+            weapon.Header = L("Vũ khí: ", "Weapon: ") + WeaponName(BattleWeaponChoice);
+            weapon.IsEnabled = battle == null;
+            foreach (var (choice, item) in arms)
+            {
+                item.Header = WeaponName(choice) + " — " + WeaponHint(choice);
+                item.IsChecked = choice == BattleWeaponChoice;
+            }
             foreach (var (level, item) in levels)
             {
                 item.Header = DifficultyName(level);
@@ -153,6 +169,20 @@ public sealed partial class PetWindow
         preferences.BattleDifficulty = level.ToString();
         SavePreferences();
     }
+
+    public BattleWeapon BattleWeaponChoice =>
+        Enum.TryParse<BattleWeapon>(preferences.BattleWeapon, out var weapon) && Enum.IsDefined(weapon) ? weapon : BattleWeapon.Sword;
+
+    public void SetBattleWeapon(BattleWeapon weapon)
+    {
+        if (weapon == BattleWeaponChoice) return;
+        preferences.BattleWeapon = weapon.ToString();
+        SavePreferences();
+    }
+
+    private string WeaponName(BattleWeapon weapon) => weapon == BattleWeapon.Hammer ? L("Búa", "Hammer") : L("Kiếm", "Sword");
+    private string WeaponHint(BattleWeapon weapon) => weapon == BattleWeapon.Hammer
+        ? L("chậm, mạnh, đẩy lùi mỗi nhát", "slow, heavy, knocks back every hit") : L("nhanh, dễ nối combo", "fast, easy combos");
 
     private string DifficultyName(BattleDifficulty level) => level switch
     {
@@ -199,8 +229,9 @@ public sealed partial class PetWindow
         battleScale = scale;
         battlePause = BattlePause.None;
         battleMonitorClock = 0;
-        battle = new BattleSim(BattleTuning, battleArea.Left, battleArea.Right, difficulty: BattleDifficultyChoice);
+        battle = new BattleSim(BattleTuning, battleArea.Left, battleArea.Right, difficulty: BattleDifficultyChoice, weapon: BattleWeaponChoice);
         pet.SwordOut = true;
+        pet.Hammer = battle.Weapon == BattleWeapon.Hammer;
         pet.MoveScale = battle.Settings.CatRunScale;
         pet.Emotions.SetSuspended(true);
         pet.Action = PetAction.Idle;
@@ -227,7 +258,7 @@ public sealed partial class PetWindow
         battleFieldWindow = battleHudWindow = null;
         battleView = null;
         battleHud = null;
-        pet.SwordOut = false; pet.SwordSwing = -1; pet.SwordCombo = false; pet.BattleHurt = 0; pet.MoveScale = 1;
+        pet.SwordOut = false; pet.Hammer = false; pet.SwordSwing = -1; pet.SwordCombo = false; pet.BattleHurt = 0; pet.MoveScale = 1;
         battleHudDodging = false;
         pet.BattleDazed = pet.BattleCheer = pet.BattleShield = pet.BattleBuff = false;
         pet.Emotions.SetSuspended(false);
@@ -336,7 +367,7 @@ public sealed partial class PetWindow
                 Combos = BattleReport.Combos + battle.CombosLanded, Records = BattleReport.Records + (news.Any ? 1 : 0)
             };
             var result = new BattleSummary(won, battle.Defeated, battle.FightSeconds, battle.CatHp, battle.Settings.CatMaxHp, battle.BossDefeated,
-                battle.DefeatedBoss?.Name(preferences.Language == "en"), battle.Difficulty, news);
+                battle.DefeatedBoss?.Name(preferences.Language == "en"), battle.Difficulty, news, battle.Weapon);
             EndBattle();
             ShowBattleSummary(result);
             return;
@@ -541,7 +572,8 @@ public sealed partial class PetWindow
     {
         var portrait = new PetRenderer(new PetModel { Action = PetAction.Idle, Grounded = true, Facing = 1, AnimationTime = 1, ActionTime = 1 })
             { Coat = renderer.Coat, Accessory = renderer.Accessory };
-        battleHud = new BattleHud(preferences.Name, portrait, L);
+        // The weapon of this battle next to the cat's name.
+        battleHud = new BattleHud($"{preferences.Name} · {WeaponName(battle?.Weapon ?? BattleWeapon.Sword)}", portrait, L);
         battleHud.SkillClicked += skill => UseBattleSkill(skill);
         battleHud.PauseClicked += () => { if (battle != null) SetBattlePaused(!BattleUserPaused); };
         battleHud.EndClicked += EndBattle;

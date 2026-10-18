@@ -16,6 +16,9 @@
   "comboWindow": 1.6,
   "comboDamage": 2,
   "comboKnock": 300,
+  // The cat's second weapon (menu Battle Mode → Weapon): slow and heavy, every hit knocks the
+  // slime back (DIPs/s × its pushFactor, no stun). The sword is the cat* numbers above.
+  "hammer": { "damage": 45, "range": 72, "attackCooldown": 1.35, "swingDuration": 0.6, "hitTime": 0.34, "knock": 150 },
 
   "slimeWidth": 46,
   "slimeHeight": 34,

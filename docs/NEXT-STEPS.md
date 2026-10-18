@@ -90,6 +90,8 @@ Hiện csproj để Version=1.0.0, scripts/publish.ps1 đặt tên ZIP theo vers
 
 ## Tương lai — chưa nằm trong đợt triển khai này
 
+> Trạng thái (đợt 13, 2026-10-18): đã làm hai vũ khí theo yêu cầu người dùng — Kiếm (giữ số cũ) và Búa (battle.json "hammer"), chọn trong menu, kỷ lục chung theo độ khó; có BattleWeaponTests + WeaponChecks và số đo mô phỏng trong PROGRESS.md. Chưa chơi thử thật.
+
 Sau khi chốt trải nghiệm trận đầu, cân nhắc hai vũ khí: kiếm nhanh và búa chậm có đẩy lùi. Mục đích tạo lựa chọn chiến thuật mà không thêm nhiều nút. Chưa thêm inventory/shop, nhiều quái/kỹ năng, LLM/voice/CV lúc này.
 
 Giữ logic combat độc lập WPF; khi mở rộng, tách theo trách nhiệm thay vì tiếp tục dồn vào PetWindow. Không refactor diện rộng chỉ vì file dài.

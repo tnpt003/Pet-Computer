@@ -689,6 +689,7 @@ internal static class Program
         await BattleChecks.Run(window, pet, behavior, preferences, Check);
         await BattleRulesChecks.Run(window, pet, Check);
         await TutorialChecks.Run(window, pet, Check);
+        await WeaponChecks.Run(window, pet, Check);
         window.ShowControls();
         Check(window.ContextMenu!.IsOpen, "Existing pet controls can be opened by a second launch notification");
         window.ContextMenu.IsOpen = false;

@@ -131,6 +131,13 @@ public sealed class BattleSettings
 
     public double SkillCooldown(BattleSkill skill) => BattleSkills.Get(skill).Cooldown(this);
 
+    // The cat's weapons. The sword is the Cat* numbers above (fast; only a combo knocks back);
+    // the hammer (battle.json "hammer") is slow and heavy and knocks the slime back on every hit.
+    public WeaponSpec Hammer { get; init; } = new();
+    private WeaponSpec? sword;
+    public WeaponSpec Weapon(BattleWeapon weapon) => weapon == BattleWeapon.Hammer ? Hammer
+        : sword ??= new WeaponSpec { Damage = CatDamage, Range = CatAttackRange, AttackCooldown = CatAttackCooldown, SwingDuration = CatSwingDuration, HitTime = CatHitTime, Knock = 0 };
+
     // From battle.json: every enemy kind and the waves (null: the built-in slime and king).
     [JsonPropertyName("enemies")] public EnemyType[]? Enemies { get; init; }
     [JsonPropertyName("waves")] public WaveSpec[]? Plan { get; init; }
@@ -171,6 +178,22 @@ public sealed class BattleSettings
 }
 
 public enum BattleDifficulty { Easy, Normal, Hard }
+
+public enum BattleWeapon { Sword, Hammer }
+
+// One weapon's numbers (DIPs and seconds). Knock: DIPs/s every hit sends the slime away from the
+// cat (× the enemy's pushFactor), not a stun; a combo hit uses ComboKnock instead if larger.
+// The defaults are the hammer's (battle.json "hammer" may leave keys out); the sword is built
+// from BattleSettings' Cat* numbers.
+public sealed class WeaponSpec
+{
+    public double Damage { get; init; } = 45;
+    public double Range { get; init; } = 72;
+    public double AttackCooldown { get; init; } = 1.35;
+    public double SwingDuration { get; init; } = 0.6;
+    public double HitTime { get; init; } = 0.34;
+    public double Knock { get; init; } = 150;
+}
 
 // Multipliers on every enemy kind (1 = the kind's own numbers).
 public sealed class DifficultySpec
@@ -273,7 +296,7 @@ public sealed class BattleSim
     public double CatCooldown { get; private set; }
     // Seconds into the current swing; negative when not swinging.
     public double SwingTime { get; private set; } = -1;
-    public double SwingProgress => SwingTime < 0 ? -1 : Math.Clamp(SwingTime / Settings.CatSwingDuration, 0, 1);
+    public double SwingProgress => SwingTime < 0 ? -1 : Math.Clamp(SwingTime / arms.SwingDuration, 0, 1);
     // Hits in the current chain, and whether the swing under way would finish it (a gold slash).
     public int Combo { get; private set; }
     public bool ComboSwing { get; private set; }
@@ -312,11 +335,16 @@ public sealed class BattleSim
 
     public BattleDifficulty Difficulty { get; }
     private readonly DifficultySpec level;
+    public BattleWeapon Weapon { get; }
+    private readonly WeaponSpec arms;
 
-    public BattleSim(BattleSettings settings, double left, double right, Random? random = null, BattleDifficulty difficulty = BattleDifficulty.Normal)
+    public BattleSim(BattleSettings settings, double left, double right, Random? random = null, BattleDifficulty difficulty = BattleDifficulty.Normal,
+        BattleWeapon weapon = BattleWeapon.Sword)
     {
         Settings = settings;
         Difficulty = difficulty;
+        Weapon = weapon;
+        arms = settings.Weapon(weapon);
         level = settings.Difficulty(difficulty);
         this.random = random ?? new Random();
         Left = left; Right = Math.Max(left + settings.SlimeWidth * settings.LargestScale, right);
@@ -400,8 +428,8 @@ public sealed class BattleSim
         if (SwingTime >= 0)
         {
             SwingTime += dt;
-            if (!swingHit && SwingTime >= Settings.CatHitTime) { swingHit = true; ResolveHit(catX); }
-            if (SwingTime >= Settings.CatSwingDuration) CancelSwing();
+            if (!swingHit && SwingTime >= arms.HitTime) { swingHit = true; ResolveHit(catX); }
+            if (SwingTime >= arms.SwingDuration) CancelSwing();
             return new(CatCommand.Stand, catX, swingFacing);
         }
         if (target == null) return new(CatCommand.Stand, catX);
@@ -414,8 +442,8 @@ public sealed class BattleSim
             {
                 SwingTime = 0; swingHit = false; swingTargetId = target.Id; swingFacing = facing;
                 ComboSwing = LiveCombo == Settings.ComboHits - 1;
-                double cooldown = Settings.CatAttackCooldown / (CheerRemaining > 0 ? Settings.CheerSpeed : 1);
-                CatCooldown = Math.Max(cooldown, Settings.CatSwingDuration);
+                double cooldown = arms.AttackCooldown / (CheerRemaining > 0 ? Settings.CheerSpeed : 1);
+                CatCooldown = Math.Max(cooldown, arms.SwingDuration);
                 events.Add(new(BattleEventKind.Swing, catX));
             }
             return new(CatCommand.Stand, catX, facing);
@@ -424,7 +452,7 @@ public sealed class BattleSim
     }
 
     // A wider slime is reached from further away (the sword hits its near edge).
-    private double Reach(Slime slime) => Settings.CatAttackRange + (slime.Width - Settings.SlimeWidth) / 2;
+    private double Reach(Slime slime) => arms.Range + (slime.Width - Settings.SlimeWidth) / 2;
 
     // The swing's single hit: only its own target, only if still in reach at this moment.
     private void ResolveHit(double catX)
@@ -434,7 +462,7 @@ public sealed class BattleSim
         Combo = LiveCombo + 1;
         comboClock = 0;
         bool combo = Combo >= Settings.ComboHits;
-        double damage = Settings.CatDamage * (CheerRemaining > 0 ? Settings.CheerDamage : 1) * (combo ? Settings.ComboDamage : 1);
+        double damage = arms.Damage * (CheerRemaining > 0 ? Settings.CheerDamage : 1) * (combo ? Settings.ComboDamage : 1);
         events.Add(new(combo ? BattleEventKind.ComboHit : BattleEventKind.SlimeHit, slime.X));
         AddEffect(combo ? BattleEffectKind.Combo : BattleEffectKind.Spark, slime.X, slime.Height / 2);
         if (combo)
@@ -442,8 +470,10 @@ public sealed class BattleSim
             // Knocked back away from the cat (heavy kinds less), but not stunned.
             Combo = 0;
             CombosLanded++;
-            slime.KnockVelocity = (slime.X < catX ? -1 : 1) * Settings.ComboKnock * slime.Type.PushFactor;
+            slime.KnockVelocity = (slime.X < catX ? -1 : 1) * Math.Max(Settings.ComboKnock, arms.Knock) * slime.Type.PushFactor;
         }
+        // A heavy weapon knocks back on every hit (away from the cat; heavy kinds less), no stun.
+        else if (arms.Knock > 0) slime.KnockVelocity = (slime.X < catX ? -1 : 1) * arms.Knock * slime.Type.PushFactor;
         Damage(slime, damage);
     }
 

@@ -27,6 +27,7 @@ internal static class BattleDataTests
         differences.Clear();
         foreach (var builtInKind in builtIn.EnemyTypes)
             Same(shipped.Enemy(builtInKind.Id), builtInKind, typeof(EnemyType), differences, builtInKind.Id + ".");
+        Same(shipped.Hammer, builtIn.Hammer, typeof(WeaponSpec), differences, "hammer.");
         check(differences.Count == 0, "battle.json's slime and Slime King match the built-in ones" + (differences.Count > 0 ? ": " + string.Join(", ", differences) : ""));
         string Plan(BattleSettings s) => string.Join(" | ", s.WavePlan.Select(w => string.Join(",", w.Spawns())));
         check(Plan(builtIn) == "slime,slime | slime,slime,slime | slime,slime,slime,slime | king", "Without the file: 2, 3, 4 slimes, then the King");

@@ -637,6 +637,15 @@ shows no panel. After each wave except the last the cat gets 15 HP back (`WaveHe
   only on the HUD), cooldowns do not recover, and a real lift cancels a chosen aimed skill. A bomb
   already dropped still bursts; Cheer/Shield already running wear off as usual. A plain press keeps
   the chosen skill and the HUD unchanged (no flicker).
+- **Weapons** (2026-10-18): menu Battle Mode → Weapon: Sword (the existing numbers: 25 damage,
+  reach 76, 0.75 s between swings; only a combo knocks back) or Hammer (battle.json `"hammer"`: 45
+  damage, reach 72, 1.35 s, a 0.6 s swing hitting at 0.34 s, and every hit knocks the slime back at
+  150 DIPs/s × its pushFactor, no stun; a combo uses the larger of comboKnock and that). Damage over
+  time is about the same; the hammer can knock a slime that is winding up at the edge of its reach
+  out of it (its hit then misses) but clears a group more slowly. Remembered in preferences
+  `BattleWeapon` ("Sword"/"Hammer", anything else reads as Sword), greyed out during a battle,
+  shown next to the cat's name on the HUD and on the result panel. Records stay per difficulty
+  (both weapons together). The hammer is a vector mallet in the same poses as the sword.
 - **First-battle guide** (PetWindow.BattleTutorial.cs): four cards (targets, skills, rescue and
   the held attack, protection and cooldowns, with battle.json's numbers) in a small panel above the
   floor strip; mouse only (Skip / Next / Done), never takes focus, follows the UI language, no

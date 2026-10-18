@@ -254,6 +254,10 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
     private static readonly Geometry SwordBlade = CachedGeometry("M -3.2,-8 L 3.2,-8 L 3.2,-33 L 0,-38.5 L -3.2,-33 Z");
     private static readonly Geometry SwordGuard = CachedGeometry("M -8,-9 L 8,-9 L 8,-4.5 L -8,-4.5 Z");
     private static readonly Geometry SwordGrip = CachedGeometry("M -2.2,-4.5 L 2.2,-4.5 L 2.2,6 L -2.2,6 Z");
+    // The toy wooden hammer: a long handle and a mallet head (same grip, so the same poses).
+    private static readonly Geometry HammerHandle = CachedGeometry("M -2.2,-29 L 2.2,-29 L 2.2,6 L -2.2,6 Z");
+    private static readonly Geometry HammerHead = CachedGeometry("M -9,-39 L 9,-39 L 9,-27 L -9,-27 Z");
+    private static readonly Pen HammerSwooshPen = FrozenPen(Frozen("#B0FFFFFF"), 7, PenLineJoin.Round, true);
 
     // Battle Mode skills on the cat. Shield: a soap bubble around it. Cheer: golden sparkles rising.
     private static readonly Brush BubbleFill = Frozen("#3062D6FF");
@@ -292,7 +296,7 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         }
     }
 
-    // A toy wooden sword held in the front paw (inside the facing flip, so it turns with the cat).
+    // A toy wooden sword (or hammer) held in the front paw (inside the facing flip, so it turns with the cat).
     private void DrawSword(DrawingContext dc, in Pose p)
     {
         double swing = pet.SwordSwing;
@@ -308,15 +312,25 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
                 context.ArcTo(new Point(p.GripX + Math.Sin(a1) * 34, p.GripY - Math.Cos(a1) * 34), new Size(34, 34), 0, false, SweepDirection.Clockwise, true, false);
             }
             dc.PushOpacity(Math.Clamp(fade, 0, 1));
-            dc.DrawGeometry(null, pet.SwordCombo ? ComboSwooshPen : SwooshPen, arc);
+            dc.DrawGeometry(null, pet.SwordCombo ? ComboSwooshPen : pet.Hammer ? HammerSwooshPen : SwooshPen, arc);
             dc.Pop();
         }
         dc.PushTransform(new TranslateTransform(p.GripX, p.GripY));
         dc.PushTransform(new RotateTransform(p.SwordAngle));
-        dc.DrawGeometry(SwordHandle, SwordPen, SwordGrip);
-        dc.DrawGeometry(SwordWood, SwordPen, SwordBlade);
-        dc.DrawLine(SwordGrainPen, new Point(0, -12), new Point(0, -31));
-        dc.DrawGeometry(SwordHandle, SwordPen, SwordGuard);
+        if (pet.Hammer)
+        {
+            dc.DrawGeometry(SwordHandle, SwordPen, HammerHandle);
+            dc.DrawGeometry(SwordWood, SwordPen, HammerHead);
+            dc.DrawLine(SwordGrainPen, new Point(-5, -37), new Point(-5, -29));
+            dc.DrawLine(SwordGrainPen, new Point(5, -37), new Point(5, -29));
+        }
+        else
+        {
+            dc.DrawGeometry(SwordHandle, SwordPen, SwordGrip);
+            dc.DrawGeometry(SwordWood, SwordPen, SwordBlade);
+            dc.DrawLine(SwordGrainPen, new Point(0, -12), new Point(0, -31));
+            dc.DrawGeometry(SwordHandle, SwordPen, SwordGuard);
+        }
         dc.Pop(); dc.Pop();
         Oval(dc, Fur, p.GripX, p.GripY, 5.5, 5); // The paw around the grip.
     }

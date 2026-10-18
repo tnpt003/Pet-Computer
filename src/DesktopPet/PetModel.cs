@@ -101,6 +101,8 @@ public sealed class PetModel
     // the wooden sword, the swing's progress (0..1, negative when not swinging), a short
     // flinch after a hit, and the end-of-battle pose.
     public bool SwordOut;
+    // The battle's weapon is the hammer (drawn instead of the sword, same poses).
+    public bool Hammer;
     public double SwordSwing = -1;
     // The swing under way finishes a combo (a gold slash).
     public bool SwordCombo;

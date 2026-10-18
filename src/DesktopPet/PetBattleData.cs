@@ -112,6 +112,11 @@ public static class BattleData
         if (s.ComboHits is < 2 or > 6) throw new InvalidDataException("comboHits must be 2–6");
         Positive(s.ComboWindow, "comboWindow"); Positive(s.ComboDamage, "comboDamage"); NotNegative(s.ComboKnock, "comboKnock");
         if (!(s.CatHitTime > 0 && s.CatHitTime < s.CatSwingDuration)) throw new InvalidDataException("catHitTime must fall inside the swing");
+        var h = s.Hammer ?? throw new InvalidDataException("hammer is missing");
+        NotNegative(h.Damage, "hammer.damage"); Positive(h.Range, "hammer.range"); Positive(h.AttackCooldown, "hammer.attackCooldown");
+        Positive(h.SwingDuration, "hammer.swingDuration");
+        if (!(h.HitTime > 0 && h.HitTime < h.SwingDuration)) throw new InvalidDataException("hammer.hitTime must fall inside the swing");
+        if (!double.IsFinite(h.Knock) || h.Knock < 0 || h.Knock > 1000) throw new InvalidDataException("hammer.knock must be 0–1000");
         NotNegative(s.LandingGraceSeconds, "landingGraceSeconds");
         if (s.LandingGraceSeconds > 5) throw new InvalidDataException("landingGraceSeconds must be at most 5");
         NotNegative(s.RescueGraceCooldownSeconds, "rescueGraceCooldownSeconds");

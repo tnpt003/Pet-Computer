@@ -28,8 +28,8 @@ public sealed partial class PetWindow
         return step switch
         {
             0 => (L("Chọn mục tiêu", "Pick a target"),
-                  L("Click một slime: mèo đánh con đó trước. Không chọn thì mèo tự đánh con gần nhất.",
-                    "Click a slime: the cat goes for it first. Otherwise it fights the nearest one by itself.")),
+                  L("Click một slime: mèo đánh con đó trước. Không chọn thì mèo tự đánh con gần nhất. Vũ khí (kiếm nhanh hoặc búa chậm, đẩy lùi) chọn trong menu Chế độ chiến đấu → Vũ khí.",
+                    "Click a slime: the cat goes for it first. Otherwise it fights the nearest one by itself. Pick the weapon (fast sword or slow, knock-back hammer) in Battle Mode → Weapon.")),
             1 => (L("Kỹ năng", "Skills"),
                   L("Bấm một ô kỹ năng trên HUD. Đẩy và Bom len: bấm ô rồi click slime. Vòng quét trên ô là thời gian hồi; rê chuột lên ô để xem mô tả.",
                     "Press a skill slot on the HUD. Push and Yarn bomb: press the slot, then click a slime. The sweep on a slot is its cooldown; hover a slot for details.")),

@@ -350,9 +350,13 @@ by rough throws. The debug view lists what it has learned. Wording lives in
 `ai/lines.json`.
 
 **Version.** The version lives in `DesktopPet.csproj` (`<Version>`). **More → About Desktop
-Pet** in the cat's menu shows the version, data folder and AI status.
-`scripts/publish.ps1` also writes `artifacts\DesktopPet-<version>-win-x64.zip`
-containing the whole folder.
+Pet** in the cat's menu shows the version with the build's commit, data folder and AI status;
+the log's "started" line names it too, e.g. `1.0.0 (18cb227)` or `1.0.0 (18cb227, uncommitted
+changes)`. The SDK puts the commit into the informational version (`1.0.0+<commit>`);
+`scripts/publish.ps1` adds `.dirty` when the working tree has uncommitted changes. It also writes
+`artifacts\DesktopPet-<version>-<commit>-win-x64.zip` (plus `-dirty-<time>` for an uncommitted
+build) containing the whole folder, so packages of different sources never replace each other.
+The version number itself, a changelog and tags are still the user's call when preparing a release.
 
 ## Appearance, break reminders and computer context (2026-10-13)
 

@@ -101,6 +101,15 @@ Tick `[x]` khi đạt; ghi lỗi ngay dưới mục kèm ngày. Mục mới chư
 - [ ] Hiệu năng/mượt: slime và hiệu ứng chạy 30 khung/giây (mèo vẫn 60): nhìn có giật không; khi Tạm dừng, debug view (dòng Frame) và Task Manager thấy CPU gần như không đổi so với lúc không chơi. Lúc boss gồng vẫn click được app bên dưới vùng đỏ.
 - [ ] Boss Vua Slime ở đợt cuối: to, vương miện; vùng đỏ trên sàn khi gồng; dưới nửa máu gọi 2 slime; dưới 30% đổi màu đỏ, nhanh hơn; Đẩy chỉ xê dịch ít; hạ boss thì bụi lớn, bảng kết quả ghi "Đã hạ Vua Slime". Thử trên màn hình hẹp/DPI cao xem boss có bị cắt đầu không.
 
+### Nhật ký chơi thử Battle Mode (beta, thêm 2026-10-18)
+Chơi 3–5 trận mỗi độ khó trên bản publish, ghi 1 dòng/trận. Phiên bản: xem Khác → Giới thiệu (ví dụ `1.0.0 (18cb227)`). Chưa có dòng nào là chưa chơi thử; số mô phỏng trong PROGRESS.md không thay cho bảng này.
+
+| Ngày | Phiên bản | Độ khó | Thời lượng | Thắng/thua | HP cuối | Số lần cứu nguy | Kỹ năng đã dùng | Vấn đề thấy |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| | | | | | | | | |
+
+Sau vài trận, trả lời: đòn quái sau khi thả mèo có dễ hiểu/công bằng không; 5 kỹ năng có vai trò rõ hay chỉ bấm hết khi hồi xong; HUD/click xuyên/focus có làm phiền app bên dưới không; âm thanh khi đánh lâu có dày/to quá không; cảnh báo có rõ khi nhiều quái/boss không; các mức khó khác nhau ở quyết định hay chỉ dài hơn.
+
 ## Ưu tiên 3 — Cảm nhận và dài hạn
 
 ### Động tác và nhịp

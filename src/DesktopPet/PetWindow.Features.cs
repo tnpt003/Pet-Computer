@@ -121,12 +121,11 @@ public sealed partial class PetWindow
 
     private readonly StartupRegistration startup = new();
 
-    public static string VersionText =>
-        (System.Reflection.CustomAttributeExtensions.GetCustomAttribute<System.Reflection.AssemblyInformationalVersionAttribute>(typeof(PetWindow).Assembly)
-            ?.InformationalVersion ?? "unknown").Split('+')[0];
+    public static string VersionText => PetLog.BuildVersion.Split('+')[0];
 
+    // The About box also names the commit the published build came from (scripts/publish.ps1).
     private void ShowAbout() => MessageBox.Show(
-        $"Desktop Pet {VersionText}\n\n{L("Dữ liệu và log", "Data and logs")}: {PetPreferences.DataDirectory}\n{AiStatusText}",
+        $"Desktop Pet {PetLog.VersionLabel(PetLog.BuildVersion, preferences.Language == "en")}\n\n{L("Dữ liệu và log", "Data and logs")}: {PetPreferences.DataDirectory}\n{AiStatusText}",
         L("Giới thiệu Desktop Pet", "About Desktop Pet"));
 
     private void SavePreferences()

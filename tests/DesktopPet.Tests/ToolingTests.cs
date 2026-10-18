@@ -4,6 +4,13 @@ static class ToolingTests
 {
     public static void Run(Action<bool, string> check)
     {
+        // Build identity shown in About and the log (scripts/publish.ps1 adds the commit and ".dirty").
+        const string hash = "18cb2270e9e72c4709c41fafd1f211413b876673";
+        check(PetLog.VersionLabel("1.0.0", true) == "1.0.0" && PetLog.VersionLabel($"1.0.0+{hash}", true) == "1.0.0 (18cb227)" &&
+              PetLog.VersionLabel($"1.0.0+{hash}.dirty", true) == "1.0.0 (18cb227, uncommitted changes)" &&
+              PetLog.VersionLabel($"1.0.0+{hash}.dirty", false) == "1.0.0 (18cb227, có thay đổi chưa commit)" &&
+              PetLog.VersionLabel("1.0.0+", true) == "1.0.0" && PetLog.VersionLabel(null, true) == "unknown",
+            "The build label names the version, the short commit and uncommitted changes");
         string folder = Path.Combine(Path.GetTempPath(), "pet-log-test-" + Guid.NewGuid().ToString("N"));
         try
         {

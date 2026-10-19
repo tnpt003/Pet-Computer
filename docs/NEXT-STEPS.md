@@ -11,7 +11,7 @@ Lần bàn giao này chỉ cập nhật tài liệu. Yêu cầu triển khai hi�
 
 ## Ưu tiên hiện tại — yêu cầu người dùng ngày 2026-10-19
 
-> Trạng thái (đợt 14, 2026-10-19, chưa commit/publish): đã triển khai A, B, C. Bảng chuẩn bị ở PetWindow.BattlePrep.cs. Dữ liệu tùy chỉnh ở %LOCALAPPDATA%\DesktopPet\battle.json (schema và ví dụ: [BATTLE-DATA.md](BATTLE-DATA.md), [examples/battle.json](examples/battle.json)). Test tự động: 55 Python + 614 C# đạt; WPF 379 đạt, 6 check cũ thất bại do chuột thật ở màn hình phụ (bản HEAD cũng thất bại y hệt). Chưa chơi thử trên desktop thật. Chi tiết trong PROGRESS.md.
+> Trạng thái (đợt 14, 2026-10-19, commit 8a29302, đã publish): đã triển khai A, B, C. Bảng chuẩn bị ở PetWindow.BattlePrep.cs. Dữ liệu tùy chỉnh ở %LOCALAPPDATA%\DesktopPet\battle.json (schema và ví dụ: [BATTLE-DATA.md](BATTLE-DATA.md), [examples/battle.json](examples/battle.json)). Test tự động: 55 Python + 614 C# đạt; WPF 379 đạt, 6 check cũ thất bại do chuột thật ở màn hình phụ (bản HEAD cũng thất bại y hệt). Chưa chơi thử trên desktop thật. Chi tiết trong PROGRESS.md.
 
 Người dùng yêu cầu bàn giao để Claude triển khai luồng vào trận và khung dữ liệu mở rộng dưới đây. Phần này thay thế thứ tự ưu tiên cũ của review 18/10; các mục review phía dưới giữ làm backlog/thông tin lịch sử, không phải điều kiện phải hoàn tất trước luồng mới. Đọc code và giải thích kế hoạch trước khi sửa, giữ phạm vi đã yêu cầu. Không tự publish, commit, đóng/restart pet hoặc ghi đè thay đổi chưa commit.
 

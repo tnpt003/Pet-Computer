@@ -9,7 +9,69 @@ Người dùng yêu cầu lưu review và kế hoạch ở đây để AI khác 
 
 Lần bàn giao này chỉ cập nhật tài liệu. Yêu cầu triển khai hiện tại nằm ở mục ngày 2026-10-19 bên dưới và ưu tiên hơn backlog review cũ. Đọc AGENTS.md và giải thích kế hoạch trước khi triển khai; giữ nguyên source đang có và không tự publish/commit/restart.
 
-## Ưu tiên hiện tại — yêu cầu người dùng ngày 2026-10-19
+## Ưu tiên mới nhất — Trang bị và phong cách chiến đấu (2026-10-19)
+
+Trạng thái: **đã triển khai ở đợt 15 (2026-10-19)** — bảng chuẩn bị có preview + thẻ vũ khí + Xem thử, hai phong cách kiếm/búa (hitEffect, hoạt ảnh theo mốc chạm đích, số liệu búa mới), bảng kết quả Chơi lại/Đổi trang bị/Về desktop, kỷ lục v2 theo vũ khí + độ khó với Legacy. Test tự động: 55 Python + 624 C# + 395 WPF đạt. Chưa chơi thử thật; số liệu búa chỉ chốt bằng mô phỏng. Chi tiết trong PROGRESS.md. Ghi chú gốc của yêu cầu: Người dùng cho biết luồng chuẩn bị đã code xong nhưng giao diện còn quá nhiều text/button và kết quả thiếu đường quay lại đổi vũ khí/độ khó. Người dùng muốn gộp cải tiến UI với mở rộng phong cách chiến đấu. Mục này ưu tiên hơn các phạm vi cũ bên dưới, gồm việc cho phép thêm vũ khí thứ hai trong đợt này. Đọc code thật trước khi sửa; không xây lại phần đợt 14 đã làm.
+
+### Mục tiêu và luồng
+
+Chọn cách đánh → xem mèo cầm vũ khí → chơi → xem kết quả → thử lại hoặc đổi trang bị.
+
+- Giữ entry: chuột phải → Battle Mode → Bắt đầu trận → bảng chuẩn bị. Không đưa lựa chọn vũ khí/độ khó trở lại menu chuột phải.
+- Bảng chuẩn bị: preview mèo đúng coat/accessory, vũ khí được chọn; thẻ vũ khí có hình/tên/mô tả ngắn; chọn độ khó rõ ràng; hướng dẫn thu gọn; Đóng và Sẵn sàng.
+- Quái/timer/kỷ lục chỉ chạy sau Sẵn sàng và kiểm tra lại điều kiện an toàn. Chuẩn bị/preview không được tác động simulation mèo thật.
+
+### 1. Thiết kế lại bảng chuẩn bị
+
+- Ưu tiên hình mèo và trang bị, khoảng cách/bố cục rõ, một nút hành động chính. Tránh biến thành form nhiều dòng chữ hoặc quá nhiều nút ngang hàng.
+- Thẻ dùng vector/art style hiện có, không dùng emoji hệ thống làm hình cuối. Có tên, đặc tính và selected state ngoài màu sắc; tương phản tốt nền sáng/tối.
+- Thông số so sánh ngắn; chi tiết/hướng dẫn chỉ mở khi cần. Nếu dùng thanh/chấm chỉ số phải có thang nhất quán, không minh họa sai số liệu thật.
+- Preview cập nhật ngay khi đổi lựa chọn. Nút Xem thử cho mèo preview thực hiện một đòn; model, timer, hiệu ứng tách khỏi mèo thật, không bắt đầu trận/gây damage. Hủy animation và giải phóng tài nguyên khi đóng; âm thanh preview nếu có phải theo chính sách âm thanh hiện tại.
+- Thẻ lấy từ registry dữ liệu, không hard-code một button/handler mỗi weapon ID. Chỉ hiển thị vũ khí engine thực sự hỗ trợ, không có lựa chọn giả.
+- Nhớ weapon ID và độ khó hợp lệ; dữ liệu cũ hoặc ID bị xóa fallback an toàn. Tôn trọng vi/en, DPI và focus/click-through.
+
+### 2. Hai phong cách chiến đấu
+
+Inspect vũ khí hiện có trước: nếu đã có thì hoàn thiện khác biệt, không tạo bản trùng. Mục tiêu tối đa hai phong cách cho đợt này:
+- Kiếm: nhanh, tầm ngắn, ít đẩy, thuận lợi duy trì combo nhưng cần áp sát.
+- Búa: chuẩn bị đòn lâu, đẩy mạnh, tạo khoảng cách nhưng có thể hụt khi quái di chuyển. Animation/vệt đánh thể hiện độ nặng.
+- Không biến búa thành bản kiếm mạnh hơn mọi mặt. Chốt con số sau mô phỏng và playtest; không tự khẳng định đã cân bằng tốt.
+- Tái sử dụng WeaponDefinition/runtime và schema đợt 14. Khả năng mới cần implementation rõ; JSON không tự tạo hành vi. Mẫu dùng chung không chứa cooldown/swing state của instance.
+- Tầm đánh, hit timing, cooldown và hit effect phải áp dụng thật vào combat và khớp thẻ/preview. Snapshot loadout khi bắt đầu trận. Không đổi vũ khí giữa trận trong đợt này.
+
+### 3. Bảng kết quả và điều hướng
+
+- Hiện hình mèo thắng/thua, vũ khí, độ khó, thời gian, số quái hạ và kỷ lục; chỉ số phụ thu gọn.
+- Chơi lại: tạo trận mới cùng loadout/độ khó của trận vừa xong, kiểm tra an toàn; nếu chưa thể bắt đầu thì thông báo hoặc về chuẩn bị, không cưỡng ép ngủ/drag/flight.
+- Đổi trang bị: mở bảng chuẩn bị với lựa chọn vừa dùng, cho đổi cả vũ khí lẫn độ khó.
+- Về desktop: đóng UI kết quả, giữ/trả Pet Mode hợp lệ.
+- Bỏ tự đóng theo thời gian của bảng kết quả để người dùng có thời gian chọn. Vẫn giữ xử lý fullscreen/đóng app hiện có, không để UI bật đè fullscreen.
+- Chuẩn bị/đang đánh/kết quả có lifecycle rõ; chống double-click, mở chồng cửa sổ, hai trận, timer sót, tính kết quả hai lần. Trước khi mở màn mới phải dọn hoặc chuyển màn cũ đúng cách.
+
+### 4. Kỷ lục công bằng và tương thích
+
+- Kiểm tra cấu trúc kỷ lục hiện tại. Đề xuất tách theo weapon ID + độ khó, hiển thị loadout trên kết quả.
+- Dữ liệu cũ không được xóa hoặc tự gán cho một weapon nếu không có cơ sở. Giữ dưới nhãn Legacy/Trước phân loại trang bị hoặc migration có bằng chứng rõ ràng.
+- Dùng ID ổn định, không dùng tên dịch làm khóa; vũ khí bị xóa không làm mất dữ liệu hoặc crash. Ghi phiên bản cấu trúc lưu nếu thay schema; giữ ghi file an toàn.
+- Không cần leaderboard/network trong đợt này. Các bản custom khác stats nhưng cùng ID chưa đảm bảo so sánh công bằng; ghi giới hạn hoặc phân biệt cấu hình nếu triển khai hợp lý, không tuyên bố kỷ lục cạnh tranh tuyệt đối.
+
+### 5. Test và bàn giao
+
+- Test lựa chọn được nhớ, ID mất/không hợp lệ, thẻ sinh từ dữ liệu, snapshot loadout và stats thực sự tác động hit/cooldown/range.
+- Preview không sửa model/HP/position/AI của mèo thật; đóng bảng không còn timer/âm thanh/animation nền.
+- Test Chơi lại/Đổi trang bị/Về desktop, double click, bảng đang mở mà mèo ngủ/drag/flight, fullscreen, đóng app. Không tính win/loss thêm khi chỉ đổi trang bị.
+- Test đọc/migrate kỷ lục cũ, tách weapon+difficulty, dữ liệu lỗi; dùng dữ liệu test riêng.
+- Chạy regression Pet Mode và combat. Xem UI vi/en, text dài, DPI 125–150%, preview kiếm/búa không clipping; chỉ ghi đã test thủ công khi thực sự kiểm tra.
+- Giữ các lỗi test phụ thuộc chuột/màn hình đã ghi ở đợt 14 làm hạn chế cần xác minh, không che bằng chạy lại đến xanh hoặc coi kết quả cũ là test mới.
+- Cập nhật PROGRESS.md, MANUAL-TEST.md và BATTLE-DATA.md nếu schema đổi; báo rõ file thay đổi, kết quả và phần chưa xác minh.
+
+### Không thuộc đợt này
+
+Nâng cấp giữa đợt, shop/inventory lớn, mở khóa trang bị, quái/kỹ năng mới, đổi vũ khí giữa trận, LLM/voice/CV. Hướng sau khi đợt này ổn: chọn một nâng cấp giữa các đợt quái, chỉ hiệu lực trong trận; chưa triển khai ngay.
+
+Lần bàn giao chỉ ghi tài liệu. AI tiếp nhận đọc AGENTS.md, giải thích kế hoạch và làm theo phạm vi người dùng giao; không tự publish/commit/đóng hoặc restart pet. Giữ nguyên thay đổi chưa commit của người dùng/Claude.
+
+## Yêu cầu trước — luồng chuẩn bị và khung dữ liệu (2026-10-19)
 
 > Trạng thái (đợt 14, 2026-10-19, commit 8a29302, đã publish): đã triển khai A, B, C. Bảng chuẩn bị ở PetWindow.BattlePrep.cs. Dữ liệu tùy chỉnh ở %LOCALAPPDATA%\DesktopPet\battle.json (schema và ví dụ: [BATTLE-DATA.md](BATTLE-DATA.md), [examples/battle.json](examples/battle.json)). Test tự động: 55 Python + 614 C# đạt; WPF 379 đạt, 6 check cũ thất bại do chuột thật ở màn hình phụ (bản HEAD cũng thất bại y hệt). Chưa chơi thử trên desktop thật. Chi tiết trong PROGRESS.md.
 

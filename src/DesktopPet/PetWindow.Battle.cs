@@ -23,7 +23,9 @@ public sealed partial class PetWindow
     // started with. Tests may set it: then exactly that is used and no file is read.
     private BattleSettings battleTuning = BattleData.Settings;
     private bool battleTuningFixed;
-    public BattleSettings BattleTuning { get => battleTuning; set { battleTuning = value; battleTuningFixed = true; BattleDataError = null; } }
+    public BattleSettings BattleTuning { get => battleTuning; set { battleTuning = value; battleTuningFixed = true; BattleDataError = null; BattleDataCustom = false; } }
+    // The running battle was started with the user's battle.json (its records are kept apart).
+    private bool battleCustomData;
     // The user's battle.json (null: none is read). Only the real pet reads it; UI checks may set it.
     public string? BattleDataFile { get; set; }
     // Why the user's file was not used (shown on the setup panel), and whether it is in use.
@@ -201,9 +203,11 @@ public sealed partial class PetWindow
         return null;
     }
 
-    // Starts the fight at once with the remembered weapon and difficulty (the setup panel's Ready
-    // remembers its choice first). Null on success, otherwise why it cannot start (nothing changes then).
-    public string? StartBattle()
+    // Starts the fight at once with the given (or remembered) weapon and difficulty: the setup
+    // panel's Ready remembers its choice first, Play again passes the last battle's. The battle
+    // keeps this data and loadout to its end. Null on success, otherwise why it cannot start
+    // (nothing changes then).
+    public string? StartBattle(string? weapon = null, BattleDifficulty? level = null)
     {
         if (BattleRefusal() is string reason) return reason;
         CloseBattlePrep();
@@ -217,9 +221,12 @@ public sealed partial class PetWindow
         battleScale = scale;
         battlePause = BattlePause.None;
         battleMonitorClock = 0;
-        battle = new BattleSim(BattleTuning, battleArea.Left, battleArea.Right, difficulty: BattleDifficultyChoice, weapon: BattleWeaponChoice);
+        battle = new BattleSim(BattleTuning, battleArea.Left, battleArea.Right, difficulty: level is BattleDifficulty chosen && Enum.IsDefined(chosen) ? chosen : BattleDifficultyChoice,
+            weapon: BattleTuning.Weapon(weapon ?? preferences.BattleWeapon).Id);
+        battleCustomData = BattleDataCustom;
         pet.SwordOut = true;
         pet.Hammer = battle.Weapon.Style == "hammer";
+        pet.SwordHitAt = battle.Weapon.HitFraction;
         pet.MoveScale = battle.Settings.CatRunScale;
         pet.Emotions.SetSuspended(true);
         pet.Action = PetAction.Idle;
@@ -345,7 +352,7 @@ public sealed partial class PetWindow
         if (battle.Finished)
         {
             bool won = battle.Phase == BattlePhase.Won;
-            var news = BattleRecords.Add(battle.Difficulty, won, battle.Defeated, battle.FightSeconds);
+            var news = BattleRecords.Add(battle.Weapon.Id, battle.Difficulty, battleCustomData, won, battle.Defeated, battle.FightSeconds);
             if (persistPreferences) BattleRecords.Save();
             BattleReport = BattleReport with
             {
@@ -353,7 +360,7 @@ public sealed partial class PetWindow
                 Combos = BattleReport.Combos + battle.CombosLanded, Records = BattleReport.Records + (news.Any ? 1 : 0)
             };
             var result = new BattleSummary(won, battle.Defeated, battle.FightSeconds, battle.CatHp, battle.Settings.CatMaxHp, battle.BossDefeated,
-                battle.DefeatedBoss?.Name(English), battle.Difficulty, news, battle.Weapon.Id, WeaponName(battle.Weapon));
+                battle.DefeatedBoss?.Name(English), battle.Difficulty, news, battle.Weapon.Id, WeaponName(battle.Weapon), battleCustomData, battle.Weapon.Style);
             EndBattle();
             ShowBattleSummary(result);
             return;

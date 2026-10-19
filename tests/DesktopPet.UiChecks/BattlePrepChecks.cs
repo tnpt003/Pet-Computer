@@ -34,7 +34,8 @@ internal static class BattlePrepChecks
         SetContext(window, false, 0); Call(window, "TickContext", 1.1);
         window.Reset();
         window.BattleTuning = new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 2 }, MaxAlive = 2, SpawnInterval = 0, SlimeMaxHp = 1000, SlimeDamage = 0 };
-        var records = window.BattleRecords.Normal.Wins + window.BattleRecords.Hard.Wins;
+        int Records() => window.BattleRecords.Loadouts.Values.Sum(r => r.Wins + r.MostDefeated) + window.BattleRecords.Normal.Wins + window.BattleRecords.Hard.Wins;
+        var records = Records();
         var report = window.BattleReport;
 
         // Start battle opens the panel only: no battle, slime, timer or record yet; one panel only.
@@ -51,6 +52,50 @@ internal static class BattlePrepChecks
             $"It offers the data's weapons and the difficulties, with the remembered choice ({window.BattlePrepText.Replace('\n', '|')})");
         check(behavior.Quiet && window.BattleOwnsPet, "While it is open the cat's free time belongs to it (no random actions, AI, games or chatter)");
 
+        // Cards come from the data; each shows the weapon's real numbers.
+        var tuning = window.BattleTuning;
+        var hammerStats = PetWindow.WeaponStats(tuning.Weapon(BattleWeapon.Hammer));
+        check(window.BattlePrepCards == tuning.WeaponList.Count && window.BattlePrepText.Contains(hammerStats.Knock.ToString("0")) &&
+              window.BattlePrepText.Contains(hammerStats.Speed.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + "/s") &&
+              window.BattlePrepText.Contains("Close") && window.BattlePrepText.Contains("Get ready"),
+            $"One card per weapon in the data, with its own damage/speed/reach/knock-back ({window.BattlePrepCards} cards)");
+        // The preview is its own model: choosing and trying a weapon never touches the real cat.
+        var preview = window.BattlePrepPreview;
+        double realX = pet.X, realY = pet.Y;
+        var realAction = pet.Action;
+        check(preview != null && preview != pet && preview.SwordOut && !preview.Hammer && !pet.SwordOut, "The preview shows this cat holding the chosen weapon (the real cat holds nothing)");
+        window.BattlePrepChooseWeapon(BattleWeapon.Hammer);
+        check(preview!.Hammer && Math.Abs(preview.SwordHitAt - tuning.Weapon(BattleWeapon.Hammer).HitFraction) < 1e-9, "Choosing the hammer updates the preview at once");
+        check(window.BattlePrepTryWeapon() && window.BattlePrepPreviewPlaying, "Try it swings the preview");
+        var hammerSpec = tuning.Weapon(BattleWeapon.Hammer);
+        window.StepPreviewSwing(hammerSpec.HitTime * 0.5, hammerSpec);
+        double midSwing = preview.SwordSwing;
+        window.StepPreviewSwing(hammerSpec.SwingDuration + 0.3, hammerSpec);
+        check(midSwing > 0 && midSwing < 1 && preview.SwordSwing < 0 && !window.BattlePrepPreviewPlaying && !window.BattleActive &&
+              pet.X == realX && pet.Y == realY && pet.Action == realAction && !pet.Hammer && pet.SwordSwing < 0,
+            "The swing plays at the weapon's pace and stops by itself; no battle starts and the real cat is untouched");
+        if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string review && SetupWindow()?.Content is FrameworkElement setupContent)
+        {
+            foreach (var (shotLanguage, shotFile) in new[] { ("en", "battle-setup-en.png"), ("vi", "battle-setup-vi.png") })
+            {
+                prefs.Language = shotLanguage; Prep(0.3); setupContent.UpdateLayout();
+                var shot = new System.Windows.Media.Imaging.RenderTargetBitmap((int)Math.Ceiling(setupContent.ActualWidth + 12), (int)Math.Ceiling(setupContent.ActualHeight + 12), 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
+                shot.Render(setupContent);
+                var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder(); encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(shot));
+                using var stream = File.Create(Path.Combine(review, shotFile)); encoder.Save(stream);
+            }
+            prefs.Language = "en"; Prep(0.3);
+        }
+        window.BattlePrepTryWeapon();
+        window.CancelBattlePrep();
+        check(!window.BattlePrepPreviewPlaying && window.BattlePrepPreview == null, "Closing the panel stops the preview (no timer left)");
+        window.OpenBattlePrep();
+        prefs.Language = "vi";
+        Prep(0.3);
+        check(window.BattlePrepText.Contains("Chuẩn bị trận") && window.BattlePrepText.Contains("Kiếm") && window.BattlePrepText.Contains("Đóng"), "The panel follows the pet's language");
+        prefs.Language = "en";
+        Prep(0.3);
+
         // Cancel: nothing counted, nothing remembered, the pet's own life comes back.
         window.BattlePrepChooseWeapon(BattleWeapon.Hammer);
         window.BattlePrepChooseDifficulty(BattleDifficulty.Hard);
@@ -58,7 +103,7 @@ internal static class BattlePrepChecks
         await Task.Delay(20);
         check(!window.BattlePreparing && !window.BattleActive && SetupWindows() == 0 && !behavior.Quiet && !window.BattleOwnsPet &&
               prefs.BattleWeapon == BattleWeapon.Sword && prefs.BattleDifficulty == "Normal" &&
-              window.BattleRecords.Normal.Wins + window.BattleRecords.Hard.Wins == records && window.BattleReport == report,
+              Records() == records && window.BattleReport == report,
             "Cancel leaves no window, no win or loss, no saved choice, and gives the pet back");
 
         // A sleeping cat: the panel opens, the cat sleeps on, Ready waits.

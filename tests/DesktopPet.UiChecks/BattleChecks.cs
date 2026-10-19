@@ -416,9 +416,10 @@ internal static class BattleChecks
             }
         }
         string PanelText() => ResultWindow()?.Content is { } panelRoot ? string.Join(" | ", Texts(panelRoot).Select(t => t.Text)) : "";
-        check(window.BattleRecords.Normal is { Wins: 3, MostDefeated: 1, BestSeconds: > 0 } && window.LastBattleSummary?.Difficulty == BattleDifficulty.Normal &&
-              PanelText().Contains("Records (Normal)") && PanelText().Contains("3 wins"),
-            $"Each win counts in the Normal records, shown on the panel ({PanelText()})");
+        check(window.BattleRecords.For(BattleWeapon.Sword, BattleDifficulty.Normal) is { Wins: 3, MostDefeated: 1, BestSeconds: > 0 } && window.BattleRecords.Normal.Empty &&
+              window.LastBattleSummary?.Difficulty == BattleDifficulty.Normal && PanelText().Contains("Sword · Normal") &&
+              PanelText().Contains("Records (Sword · Normal)") && PanelText().Contains("3 wins") && !PanelText().Contains("Before weapons"),
+            $"Each win counts in the sword + Normal records, shown with the loadout on the panel ({PanelText()})");
 
         // Difficulty: the menu choice goes into the next battle, with its own records.
         window.SetBattleDifficulty(BattleDifficulty.Hard);
@@ -428,7 +429,8 @@ internal static class BattleChecks
         Tick(0.6);
         if (window.Battle is { } hardBattle && hardBattle.Slimes.Count > 0) hardBattle.Slimes[0].X = pet.X + 56 + 50;
         Tick(1);
-        check(window.LastBattleSummary is { Difficulty: BattleDifficulty.Hard, News.Fastest: true } && window.BattleRecords.Hard.Wins == 1 && window.BattleRecords.Normal.Wins == 3 &&
+        check(window.LastBattleSummary is { Difficulty: BattleDifficulty.Hard, News.Fastest: true } && window.BattleRecords.For(BattleWeapon.Sword, BattleDifficulty.Hard).Wins == 1 &&
+              window.BattleRecords.For(BattleWeapon.Sword, BattleDifficulty.Normal).Wins == 3 &&
               PanelText().Contains("New record") && PanelText().Contains("Hard"),
             $"A first Hard win is a new Hard record; Normal's stay apart ({PanelText()})");
         var report = window.BattleReport;
@@ -445,20 +447,60 @@ internal static class BattleChecks
         }
         long resultStyle = GetWindowLongPtr(new WindowInteropHelper(ResultWindow()!).Handle, -20).ToInt64();
         check((resultStyle & NoActivate) != 0 && ResultWindow()!.ShowActivated == false, "The result panel never takes focus");
-        // "Play again" goes back to the setup panel with the same choice; Ready starts the next battle.
-        var buttons = (System.Windows.Controls.Panel)((System.Windows.Controls.Panel)((System.Windows.Controls.Border)ResultWindow()!.Content).Child).Children[3];
-        buttons.Children[0].RaiseEvent(MouseEvent(UIElement.MouseLeftButtonDownEvent));
+        // The panel's buttons, found by their text (the layout may change).
+        void PressResult(string text)
+        {
+            var root = ResultWindow()?.Content as DependencyObject;
+            var label = root == null ? null : Texts(root).FirstOrDefault(t => t.Text == text);
+            DependencyObject? node = label;
+            while (node != null && node is not System.Windows.Controls.Border { Cursor: not null }) node = LogicalTreeHelper.GetParent(node);
+            (node as UIElement)?.RaiseEvent(MouseEvent(UIElement.MouseLeftButtonDownEvent));
+        }
+        check(PanelText().Contains("Play again") && PanelText().Contains("Change gear") && PanelText().Contains("Back to desktop"),
+            "The result offers Play again, Change gear and Back to desktop");
+        // Play again: the same loadout at once; a double click starts one battle.
+        var lastLoadout = window.LastBattleSummary!.Value;
+        var reportAtReplay = window.BattleReport;
+        var buttonsWindow = ResultWindow();
+        PressResult("Play again");
+        var replay = window.Battle;
+        if (buttonsWindow?.Content is DependencyObject oldPanel)
+        {
+            var label = Texts(oldPanel).FirstOrDefault(t => t.Text == "Play again");
+            DependencyObject? node = label;
+            while (node != null && node is not System.Windows.Controls.Border { Cursor: not null }) node = LogicalTreeHelper.GetParent(node);
+            (node as UIElement)?.RaiseEvent(MouseEvent(UIElement.MouseLeftButtonDownEvent));
+        }
         await Task.Delay(20);
-        check(!window.BattleActive && window.BattlePreparing && window.BattlePrepDifficulty == BattleDifficulty.Normal && ResultWindows() == 0,
-            "Play again closes the panel and opens the setup panel with the last choice");
-        check(window.BattlePrepReady() == null && window.BattleActive && !window.BattlePreparing, "Ready there starts the new battle");
+        check(replay != null && window.Battle == replay && replay.Difficulty == lastLoadout.Difficulty && replay.Weapon.Id == lastLoadout.Weapon &&
+              !window.BattlePreparing && ResultWindows() == 0 && window.BattleReport == reportAtReplay && OpenBattleWindows() == 2,
+            "Play again starts one battle with the same weapon and difficulty (a second press does nothing, no result counted twice)");
         window.EndBattle();
         check(!window.BattleActive && ResultWindows() == 0, "Ending a battle by hand shows no result panel");
-        Call(window, "ShowBattleSummary", new PetWindow.BattleSummary(true, 3, 61, 40, 100));
-        buttons = (System.Windows.Controls.Panel)((System.Windows.Controls.Panel)((System.Windows.Controls.Border)ResultWindow()!.Content).Child).Children[3];
-        buttons.Children[1].RaiseEvent(MouseEvent(UIElement.MouseLeftButtonDownEvent));
+        // Change gear: back to the setup panel with the battle's loadout, no win or loss counted.
+        Call(window, "ShowBattleSummary", new PetWindow.BattleSummary(true, 3, 61, 40, 100, Difficulty: BattleDifficulty.Hard, Weapon: BattleWeapon.Hammer, WeaponLabel: "Hammer", WeaponStyle: "hammer"));
+        var reportAtGear = window.BattleReport;
+        PressResult("Change gear");
         await Task.Delay(20);
-        check(ResultWindows() == 0 && !window.BattleActive, "Close just closes the panel");
+        check(ResultWindows() == 0 && !window.BattleActive && window.BattlePreparing && window.BattlePrepWeapon == BattleWeapon.Hammer &&
+              window.BattlePrepDifficulty == BattleDifficulty.Hard && window.BattleReport == reportAtGear,
+            "Change gear opens the setup panel with that battle's weapon and difficulty");
+        window.CancelBattlePrep();
+        // Play again when the cat is not free: the setup panel opens with the loadout and the reason; nothing is forced.
+        Call(window, "ShowBattleSummary", new PetWindow.BattleSummary(true, 3, 61, 40, 100));
+        SetField(window, "dragging", true); pet.Action = PetAction.Dragging; pet.Grounded = false;
+        PressResult("Play again");
+        await Task.Delay(20);
+        check(!window.BattleActive && window.BattlePreparing && !window.BattlePrepReadyEnabled && pet.Action == PetAction.Dragging && ResultWindows() == 0,
+            "Play again while the cat is dragged opens the setup panel (Ready waits) and keeps the drag");
+        SetField(window, "dragging", false); pet.Action = PetAction.Idle; pet.Grounded = true; pet.VX = pet.VY = 0;
+        window.CancelBattlePrep();
+        // Back to desktop just closes; the panel no longer closes by itself.
+        Call(window, "ShowBattleSummary", new PetWindow.BattleSummary(true, 3, 61, 40, 100));
+        check(typeof(PetWindow).GetField("battleSummaryTimer", Flags) == null && window.BattleSummaryOpen, "The result waits for the user (no timer closes it)");
+        PressResult("Back to desktop");
+        await Task.Delay(20);
+        check(ResultWindows() == 0 && !window.BattleActive && !window.BattlePreparing, "Back to desktop just closes the panel");
         Call(window, "ShowBattleSummary", new PetWindow.BattleSummary(true, 3, 61, 40, 100));
         SetContext(window, true, 0); Call(window, "TickContext", 1.1);
         await Task.Delay(20);

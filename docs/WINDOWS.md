@@ -568,15 +568,26 @@ rock slimes are big, slow, tough and hard to push (cracks). During a battle the 
 110 DIPs; below half HP it calls two helper slimes (once), below 30% it gets angry (faster,
 0.8 s windup); pushes move it and stun it less. Its HP bar replaces the wave dots on the HUD. The battle is won after the last wave, or lost
 when the cat's HP reaches 0 (it sits down seeing stars; nothing lasting: no anger, sadness,
-bond or hunger change). Both endings close the battle by themselves after ~3 s and show a
-small result panel (slimes defeated, time, HP left) with **Play again** and **Close**; it closes
-by itself after 12 s, on a fullscreen app or when the pet is brought back. Ending a battle by hand
-shows no panel. After each wave except the last the cat gets 15 HP back (`WaveHeal`).
+bond or hunger change). Both endings close the battle by themselves after ~3 s and show the
+result panel (2026-10-19): this cat cheering with its weapon or sitting dazed, the loadout
+(weapon · difficulty), slimes defeated and time, HP left (smaller), a gold "New record" line and
+the loadout's records, plus the legacy records of that difficulty if there are any.
+**Play again** starts the same weapon and difficulty at once if the cat is free (otherwise the
+setup panel opens with that choice and the reason; nothing is forced), **Change gear** opens the
+setup panel with it, **Back to desktop** closes. It no longer closes by itself; a fullscreen app,
+bringing the pet back or Exit still close it. Each button acts once (the panel is gone before the
+next step), so a double click never starts two battles. Ending a battle by hand shows no panel. After each wave except the last the cat gets 15 HP back (`WaveHeal`).
 
-- **Setup panel** (2026-10-19, `PetWindow.BattlePrep.cs`): the right-click menu holds only Start /
-  Pause / End. Start opens a small panel at the top centre of the cat's screen: weapon (one button
-  per weapon in the battle data, with its hint), difficulty (Easy / Normal / Hard), **Ready**,
-  **How to play** and **Cancel**. Nothing fights yet: no battle object, slime, timer, damage or
+- **Setup panel** (2026-10-19, `PetWindow.BattlePrep.cs`; redesigned the same day): the right-click
+  menu holds only Start / Pause / End. Start opens a panel at the top centre of the cat's screen.
+  Left: a preview of this cat (coat, accessory) holding the chosen weapon, on its own `PetModel`
+  (never the real cat); **Try it** swings it once at the weapon's pace and hit moment with its hit
+  mark and the usual swing cue (mute/volume/cooldown apply), on its own timer that stops when the
+  swing ends, the weapon changes, a fullscreen app appears or the panel closes. Right: one card
+  per weapon in the battle data (vector art, name, hint, four bars on fixed scales with the real
+  numbers: damage per hit 0–60, swings per second 0–2, reach 0–120, knock-back 0–300 DIPs/s); the
+  chosen card has a white rim and a tick, not only a colour. Then the difficulty (three buttons,
+  the chosen one ticked), a small **How to play** link, **Close** and the main button **Ready**. Nothing fights yet: no battle object, slime, timer, damage or
   record. It starts from the last choice that went into a battle (`BattleWeapon` as a weapon id,
   `BattleDifficulty`); a choice is saved only by Ready. Opening it again keeps the one panel.
   While it is open it owns the cat's free time like Quiet mode: no random actions, autonomous
@@ -588,19 +599,25 @@ shows no panel. After each wave except the last the cat gets 15 HP back (`WaveHe
   with the reason on the panel until the cat is free (refreshed 5 times a second, also while the
   pet is paused). A second press finds no panel (no second battle). The panel cannot open while
   the pet is paused, a fullscreen app is open or a battle runs; a fullscreen app appearing hides
-  it until it closes. **Cancel** closes it: no win or loss, nothing saved, the pet's life comes
+  it until it closes. **Close** closes it: no win or loss, nothing saved, the pet's life comes
   back. Reset ("bring the pet back") and Exit close it too. The panel never takes focus (mouse
   only, no keys from other apps), follows the UI language and is placed in the monitor's DIPs.
-  The result panel's **Play again** opens the setup panel again with the same choice.
+  The result panel's **Change gear** (or Play again when the cat is not free) opens it with the last battle's choice.
   `PET_BATTLE_AUTOSTART` (measuring) still starts a battle directly.
 - **Difficulty** (on the setup panel: Easy / Normal / Hard, remembered in
   `preferences.json` as `BattleDifficulty`): Easy and Hard multiply
   every enemy's HP, damage and speed (battle.json `easy`/`hard`: 0.75/0.6/0.85 and 1.3/1.4/1.15,
   each 0.25–3; scaled HP and damage are rounded to whole numbers). Normal is the file's numbers
   untouched. The cat, skills and waves are the same on every level.
-- **Records** (per difficulty, in `%LOCALAPPDATA%\DesktopPet\battle-records.json`, `PetBattleRecords.cs`):
-  wins, fastest win and most slimes defeated in one battle (a loss can set that one). The result
-  panel shows the difficulty, a gold "New record" line when one was beaten and the current records.
+- **Records** (in `%LOCALAPPDATA%\DesktopPet\battle-records.json`, `PetBattleRecords.cs`, `Version` 2
+  since 2026-10-19): per loadout, keyed by the weapon's stable id and the difficulty
+  (`"hammer|Normal"`), with `|custom` for battles fought with the user's own battle.json (same ids
+  may mean other numbers, so they are kept apart and not compared). Wins, fastest win and most
+  slimes defeated in one battle (a loss can set that one). Version 1 files (one record per
+  difficulty, both weapons together) are kept as they were under `Easy`/`Normal`/`Hard` and shown
+  as "Before weapons were told apart"; they are never given to a weapon. A weapon removed from the
+  data keeps its records. A file from a newer version is read but never overwritten. The result
+  panel shows the loadout, a gold "New record" line when one was beaten and the loadout's records.
   Battles ended by hand do not count. A broken file is logged and starts over; it never stops a
   battle. A pet built with given preferences (UI checks) keeps records in memory only.
 
@@ -661,15 +678,20 @@ shows no panel. After each wave except the last the cat gets 15 HP back (`WaveHe
   the chosen skill and the HUD unchanged (no flicker).
 - **Weapons** (2026-10-18; data-driven 2026-10-19): chosen on the setup panel from battle.json
   `weapons` (id, names, hint, drawing `style` "sword"/"hammer", numbers). Built in: Sword (the existing numbers: 25 damage,
-  reach 76, 0.75 s between swings; only a combo knocks back) or Hammer (45
-  damage, reach 72, 1.35 s, a 0.6 s swing hitting at 0.34 s, and every hit knocks the slime back at
-  150 DIPs/s × its pushFactor, no stun; a combo uses the larger of comboKnock and that). Damage over
-  time is about the same; the hammer can knock a slime that is winding up at the edge of its reach
-  out of it (its hit then misses) but clears a group more slowly. Remembered in preferences
+  reach 76, 0.75 s between swings, hit at 0.16 s of a 0.36 s swing; only a combo knocks back;
+  hitEffect spark) or Hammer (2026-10-19 numbers: 45 damage, reach 76, 1.35 s, a 0.7 s swing hitting
+  at 0.45 s, and every hit knocks the slime back at 170 DIPs/s × its pushFactor, no stun; a combo
+  uses the larger of comboKnock and that; hitEffect thud: dust and a ring on the floor). The hit is
+  judged when it lands, so a slime that moved out of reach during the long wind-up is missed.
+  The drawing times the slash to the hit (`WeaponSpec.HitFraction` → `PetModel.SwordHitAt`): the
+  hammer is raised, held with the cat crouching and trembling, then slammed with a wider trail.
+  Damage over time is about the same. A hammer reach longer than the sword's was tried in
+  simulation (78–84 DIPs): with the knock-back a plain slime then never reached the cat, so the
+  reach stays equal. Not confirmed by real play. Remembered in preferences
   `BattleWeapon` as the weapon id (older files' "Sword"/"Hammer" still match, ids ignore case; an
   id the data no longer has reads as the first weapon), never changed during a battle,
-  shown next to the cat's name on the HUD and on the result panel. Records stay per difficulty
-  (both weapons together). The hammer is a vector mallet in the same poses as the sword.
+  shown next to the cat's name on the HUD and on the result panel. Records are per weapon and
+  difficulty (see Records). The hammer is a vector mallet in the same poses as the sword.
 - **First-battle guide** (PetWindow.BattleTutorial.cs): four cards (targets, skills, rescue and
   the held attack, protection and cooldowns, with battle.json's numbers) in a small panel above the
   floor strip; mouse only (Skip / Next / Done), never takes focus, follows the UI language, no

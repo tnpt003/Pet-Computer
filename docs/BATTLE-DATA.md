@@ -73,7 +73,8 @@ Thứ tự trong danh sách là thứ tự trên bảng chuẩn bị; vũ khí �
 | `id` | như id quái | Được lưu trong `preferences.json` (`BattleWeapon`) |
 | `nameVi`, `nameEn` | tối đa 32 ký tự (trống thì hiện id) | Tên |
 | `hintVi`, `hintEn` | tối đa 80 ký tự | Dòng gợi ý dưới nút chọn |
-| `style` | `sword` hoặc `hammer` | Hình vẽ cầm tay |
+| `style` | `sword` hoặc `hammer` | Hình vẽ cầm tay và kiểu vung (búa: giơ cao, gồng, đập) |
+| `hitEffect` | `spark` hoặc `thud`, mặc định theo style | Dấu đòn trúng: tia trắng / bụi và vòng trên sàn |
 | `damage` | 0–1000 | Sát thương mỗi nhát |
 | `range` | 10–300 | Tầm đánh |
 | `attackCooldown` | 0.1–10 | Thời gian từ nhát này tới nhát sau |
@@ -145,3 +146,10 @@ Chỉ làm slime thường yếu đi:
 | Nạp, gộp và kiểm tra dữ liệu | `BattleData` (`Load`, `ParseWithOverride`, `Validate`) |
 
 Kỹ năng (`BattleSkills`) chưa chuyển sang dữ liệu trong đợt này.
+
+## Kỷ lục (battle-records.json)
+
+Từ 2026-10-19 (`Version` 2), kỷ lục được tách theo **id vũ khí + độ khó** (ví dụ `hammer|Normal`). Trận chơi khi đang dùng file battle.json tùy chỉnh được ghi riêng dưới khóa có thêm `|custom`, vì cùng một id có thể đang mang số liệu khác. Đây là kỷ lục cá nhân trên máy, không phải bảng xếp hạng.
+
+Kỷ lục của file cũ (trước khi tách theo vũ khí) được giữ nguyên trong `Easy`/`Normal`/`Hard` và hiển thị là "Trước phân loại trang bị"; chúng không bị gán cho vũ khí nào. Xóa một vũ khí khỏi dữ liệu không làm mất kỷ lục của nó.
+

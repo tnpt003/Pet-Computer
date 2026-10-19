@@ -213,8 +213,23 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         return p;
     }
 
-    // Swing keyframes (progress, angle): wind up over the head, slash down in front, recover.
-    private static readonly (double At, double Angle)[] SwingKeys = { (0, 30), (0.35, -25), (0.5, 125), (0.62, 120), (1, 30) };
+    // Swing keyframes (progress, angle), timed so the weapon reaches its target at the hit moment
+    // (pet.SwordHitAt). Sword: a quick wind-up over the head and a slash down in front. Hammer:
+    // raised higher, held there (the heavy wind-up), then a short slam and a slow recovery.
+    private (double At, double Angle)[] SwingKeys()
+    {
+        double h = Math.Clamp(pet.SwordHitAt, 0.2, 0.85);
+        if (swingKeys != null && swingKeysFor == (h, pet.Hammer)) return swingKeys;
+        swingKeysFor = (h, pet.Hammer);
+        if (pet.Hammer)
+        {
+            double raised = Math.Max(0.12, h - 0.3), held = Math.Max(raised + 0.05, h - 0.08);
+            return swingKeys = new[] { (0.0, 30.0), (raised, -40.0), (held, -46.0), (h + 0.02, 132.0), (Math.Min(0.95, h + 0.16), 126.0), (1.0, 30.0) };
+        }
+        return swingKeys = new[] { (0.0, 30.0), (Math.Max(0.1, h - 0.1), -25.0), (h + 0.05, 125.0), (Math.Min(0.95, h + 0.17), 120.0), (1.0, 30.0) };
+    }
+    private (double At, double Angle)[]? swingKeys;
+    private (double, bool) swingKeysFor;
 
     private void PoseSword(ref Pose p)
     {
@@ -224,13 +239,23 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         double swing = pet.SwordSwing;
         if (swing >= 0)
         {
-            for (int i = 1; i < SwingKeys.Length; i++)
+            var keys = SwingKeys();
+            for (int i = 1; i < keys.Length; i++)
             {
-                if (swing > SwingKeys[i].At && i < SwingKeys.Length - 1) continue;
-                double k = Math.Clamp((swing - SwingKeys[i - 1].At) / (SwingKeys[i].At - SwingKeys[i - 1].At), 0, 1);
-                k = k * k * (3 - 2 * k);
-                angle = SwingKeys[i - 1].Angle + (SwingKeys[i].Angle - SwingKeys[i - 1].Angle) * k;
+                if (swing > keys[i].At && i < keys.Length - 1) continue;
+                double k = Math.Clamp((swing - keys[i - 1].At) / (keys[i].At - keys[i - 1].At), 0, 1);
+                // The hammer's slam accelerates into the hit instead of easing out.
+                k = pet.Hammer && keys[i].Angle > keys[i - 1].Angle + 100 ? k * k : k * k * (3 - 2 * k);
+                angle = keys[i - 1].Angle + (keys[i].Angle - keys[i - 1].Angle) * k;
                 break;
+            }
+            // The hammer's held wind-up reads as straining: the cat crouches a little and trembles.
+            if (pet.Hammer && keys.Length > 3 && swing > keys[1].At && swing < keys[3].At)
+            {
+                double strain = Math.Clamp((swing - keys[1].At) / Math.Max(0.01, keys[2].At - keys[1].At), 0, 1);
+                p.Bob += 3 * strain;
+                p.Shake += Math.Sin(p.Time * 55) * 1.3 * strain;
+                angle += Math.Sin(p.Time * 40) * 3 * strain;
             }
         }
         if (pet.BattleCheer) { angle = -5 + Math.Sin(p.Time * 6) * 6; gripX = 84; gripY = 68; p.Bob -= Math.Abs(Math.Sin(p.Time * 6)) * 4; }
@@ -296,28 +321,18 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         }
     }
 
-    // A toy wooden sword (or hammer) held in the front paw (inside the facing flip, so it turns with the cat).
-    private void DrawSword(DrawingContext dc, in Pose p)
+    // The weapon alone, for the battle setup cards: the same wooden art as in the paw, tilted,
+    // about 46 DIPs long with its grip end at (0, 0).
+    public static void DrawWeaponIcon(DrawingContext dc, bool hammer)
     {
-        double swing = pet.SwordSwing;
-        if (swing > 0.36 && swing < 0.7 && !p.PickedUp)
-        {
-            // A soft swoosh along the slash.
-            double fade = 1 - Math.Abs(swing - 0.5) / 0.2;
-            var arc = new StreamGeometry();
-            using (var context = arc.Open())
-            {
-                double a0 = -20 * Math.PI / 180, a1 = Math.Min(p.SwordAngle, 125) * Math.PI / 180;
-                context.BeginFigure(new Point(p.GripX + Math.Sin(a0) * 34, p.GripY - Math.Cos(a0) * 34), false, false);
-                context.ArcTo(new Point(p.GripX + Math.Sin(a1) * 34, p.GripY - Math.Cos(a1) * 34), new Size(34, 34), 0, false, SweepDirection.Clockwise, true, false);
-            }
-            dc.PushOpacity(Math.Clamp(fade, 0, 1));
-            dc.DrawGeometry(null, pet.SwordCombo ? ComboSwooshPen : pet.Hammer ? HammerSwooshPen : SwooshPen, arc);
-            dc.Pop();
-        }
-        dc.PushTransform(new TranslateTransform(p.GripX, p.GripY));
-        dc.PushTransform(new RotateTransform(p.SwordAngle));
-        if (pet.Hammer)
+        dc.PushTransform(new RotateTransform(35));
+        DrawWeaponShape(dc, hammer);
+        dc.Pop();
+    }
+
+    private static void DrawWeaponShape(DrawingContext dc, bool hammer)
+    {
+        if (hammer)
         {
             dc.DrawGeometry(SwordHandle, SwordPen, HammerHandle);
             dc.DrawGeometry(SwordWood, SwordPen, HammerHead);
@@ -331,6 +346,30 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
             dc.DrawLine(SwordGrainPen, new Point(0, -12), new Point(0, -31));
             dc.DrawGeometry(SwordHandle, SwordPen, SwordGuard);
         }
+    }
+
+    // A toy wooden sword (or hammer) held in the front paw (inside the facing flip, so it turns with the cat).
+    private void DrawSword(DrawingContext dc, in Pose p)
+    {
+        double swing = pet.SwordSwing, hitAt = Math.Clamp(pet.SwordHitAt, 0.2, 0.85);
+        if (swing > hitAt - 0.08 && swing < hitAt + 0.26 && !p.PickedUp)
+        {
+            // A soft swoosh along the slash (the hammer's is wider), brightest just after the hit.
+            double fade = 1 - Math.Abs(swing - (hitAt + 0.06)) / 0.2;
+            var arc = new StreamGeometry();
+            using (var context = arc.Open())
+            {
+                double a0 = -20 * Math.PI / 180, a1 = Math.Min(p.SwordAngle, 125) * Math.PI / 180;
+                context.BeginFigure(new Point(p.GripX + Math.Sin(a0) * 34, p.GripY - Math.Cos(a0) * 34), false, false);
+                context.ArcTo(new Point(p.GripX + Math.Sin(a1) * 34, p.GripY - Math.Cos(a1) * 34), new Size(34, 34), 0, false, SweepDirection.Clockwise, true, false);
+            }
+            dc.PushOpacity(Math.Clamp(fade, 0, 1));
+            dc.DrawGeometry(null, pet.SwordCombo ? ComboSwooshPen : pet.Hammer ? HammerSwooshPen : SwooshPen, arc);
+            dc.Pop();
+        }
+        dc.PushTransform(new TranslateTransform(p.GripX, p.GripY));
+        dc.PushTransform(new RotateTransform(p.SwordAngle));
+        DrawWeaponShape(dc, pet.Hammer);
         dc.Pop(); dc.Pop();
         Oval(dc, Fur, p.GripX, p.GripY, 5.5, 5); // The paw around the grip.
     }

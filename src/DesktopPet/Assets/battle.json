@@ -19,14 +19,14 @@
   // knock: every hit sends the slime back (DIPs/s × its pushFactor, no stun); 0 = only combos do.
   "weapons": [
     {
-      "id": "sword", "nameVi": "Kiếm", "nameEn": "Sword", "style": "sword",
+      "id": "sword", "nameVi": "Kiếm", "nameEn": "Sword", "style": "sword", "hitEffect": "spark",
       "hintVi": "nhanh, dễ nối combo", "hintEn": "fast, easy combos",
       "damage": 25, "range": 76, "attackCooldown": 0.75, "swingDuration": 0.36, "hitTime": 0.16, "knock": 0
     },
     {
-      "id": "hammer", "nameVi": "Búa", "nameEn": "Hammer", "style": "hammer",
+      "id": "hammer", "nameVi": "Búa", "nameEn": "Hammer", "style": "hammer", "hitEffect": "thud",
       "hintVi": "chậm, mạnh, đẩy lùi mỗi nhát", "hintEn": "slow, heavy, knocks back every hit",
-      "damage": 45, "range": 72, "attackCooldown": 1.35, "swingDuration": 0.6, "hitTime": 0.34, "knock": 150
+      "damage": 45, "range": 76, "attackCooldown": 1.35, "swingDuration": 0.7, "hitTime": 0.45, "knock": 170
     }
   ],
 

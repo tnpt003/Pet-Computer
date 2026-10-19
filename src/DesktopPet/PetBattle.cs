@@ -142,9 +142,9 @@ public sealed class BattleSettings
     private IReadOnlyList<WeaponSpec>? weaponList;
     [JsonIgnore] public IReadOnlyList<WeaponSpec> WeaponList => weaponList ??= Weapons ?? new[]
     {
-        new WeaponSpec { Id = BattleWeapon.Sword, NameVi = "Kiếm", NameEn = "Sword", HintVi = "nhanh, dễ nối combo", HintEn = "fast, easy combos", Style = "sword",
+        new WeaponSpec { Id = BattleWeapon.Sword, NameVi = "Kiếm", NameEn = "Sword", HintVi = "nhanh, dễ nối combo", HintEn = "fast, easy combos", Style = "sword", HitEffect = "spark",
             Damage = CatDamage, Range = CatAttackRange, AttackCooldown = CatAttackCooldown, SwingDuration = CatSwingDuration, HitTime = CatHitTime, Knock = 0 },
-        Hammer with { Id = BattleWeapon.Hammer, NameVi = "Búa", NameEn = "Hammer", HintVi = "chậm, mạnh, đẩy lùi mỗi nhát", HintEn = "slow, heavy, knocks back every hit", Style = "hammer" }
+        Hammer with { Id = BattleWeapon.Hammer, NameVi = "Búa", NameEn = "Hammer", HintVi = "chậm, mạnh, đẩy lùi mỗi nhát", HintEn = "slow, heavy, knocks back every hit", Style = "hammer", HitEffect = Hammer.HitEffect ?? "thud" }
     };
     // Null when no weapon has this id (ids ignore case, so old preferences' "Hammer" still match).
     public WeaponSpec? FindWeapon(string? id)
@@ -216,14 +216,20 @@ public sealed record WeaponSpec
     public string HintVi { get; init; } = "";
     public string HintEn { get; init; } = "";
     public string Style { get; init; } = "sword";
+    // The mark a plain hit leaves: "spark" (a quick white burst) or "thud" (dust and a ring on
+    // the floor, for heavy weapons). Unset: "thud" for the hammer style, "spark" otherwise.
+    public string? HitEffect { get; init; }
     public string Name(bool english) => (english ? NameEn : NameVi) is { Length: > 0 } name ? name : Id;
+    [JsonIgnore] public string Effect => HitEffect ?? (Style == "hammer" ? "thud" : "spark");
+    // Where in the swing the hit lands (0–1): the drawing times its slash to this moment.
+    [JsonIgnore] public double HitFraction => SwingDuration > 0 ? Math.Clamp(HitTime / SwingDuration, 0.05, 0.95) : 0.45;
     public string Hint(bool english) => english ? HintEn : HintVi;
     public double Damage { get; init; } = 45;
-    public double Range { get; init; } = 72;
+    public double Range { get; init; } = 76;
     public double AttackCooldown { get; init; } = 1.35;
-    public double SwingDuration { get; init; } = 0.6;
-    public double HitTime { get; init; } = 0.34;
-    public double Knock { get; init; } = 150;
+    public double SwingDuration { get; init; } = 0.7;
+    public double HitTime { get; init; } = 0.45;
+    public double Knock { get; init; } = 170;
 }
 
 // Multipliers on every enemy kind (1 = the kind's own numbers).
@@ -271,7 +277,8 @@ public enum BattleEventKind
 }
 public readonly record struct BattleEvent(BattleEventKind Kind, double X, double Value = 0);
 // Number: a floating damage (Value > 0) or heal (Value < 0, shown as +HP above the cat).
-public enum BattleEffectKind { Spark, Poof, Push, Explosion, Slam, Number, Combo }
+// Thud: a heavy weapon's plain hit (dust and a ring on the floor), chosen by the weapon's hitEffect.
+public enum BattleEffectKind { Spark, Poof, Push, Explosion, Slam, Number, Combo, Thud }
 public sealed class BattleEffect
 {
     public BattleEffectKind Kind;
@@ -497,7 +504,7 @@ public sealed class BattleSim
         bool combo = Combo >= Settings.ComboHits;
         double damage = arms.Damage * (CheerRemaining > 0 ? Settings.CheerDamage : 1) * (combo ? Settings.ComboDamage : 1);
         events.Add(new(combo ? BattleEventKind.ComboHit : BattleEventKind.SlimeHit, slime.X));
-        AddEffect(combo ? BattleEffectKind.Combo : BattleEffectKind.Spark, slime.X, slime.Height / 2);
+        AddEffect(combo ? BattleEffectKind.Combo : arms.Effect == "thud" ? BattleEffectKind.Thud : BattleEffectKind.Spark, slime.X, slime.Height / 2);
         if (combo)
         {
             // Knocked back away from the cat (heavy kinds less), but not stunned.

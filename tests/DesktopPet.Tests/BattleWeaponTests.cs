@@ -111,5 +111,34 @@ internal static class BattleWeaponTests
         check(!Rejects(new WeaponSpec()) && Rejects(new WeaponSpec { HitTime = 0.7 }) && Rejects(new WeaponSpec { Range = 0 }) &&
               Rejects(new WeaponSpec { AttackCooldown = double.NaN }) && Rejects(new WeaponSpec { Knock = -1 }) && Rejects(new WeaponSpec { Knock = 5000 }),
             "Impossible hammer numbers in battle.json are rejected");
+
+        // Each weapon's own hit mark goes into the battle: a spark for the sword, a thud for the hammer.
+        BattleEffectKind FirstMark(string weapon)
+        {
+            var (sim, slime) = Duel(weapon, new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 1 }, SlimeMaxHp = 100000, SlimeDamage = 0, ComboHits = 6 }, 40);
+            for (double t = 0; t < 2; t += dt)
+            {
+                slime.X = 840; sim.Step(dt, 800, false);
+                foreach (var e in sim.Effects) if (e.Kind is BattleEffectKind.Spark or BattleEffectKind.Thud) return e.Kind;
+            }
+            return BattleEffectKind.Number;
+        }
+        var shipped = BattleData.Settings;
+        check(FirstMark(BattleWeapon.Sword) == BattleEffectKind.Spark && FirstMark(BattleWeapon.Hammer) == BattleEffectKind.Thud &&
+              shipped.Weapon(BattleWeapon.Hammer).Effect == "thud" && shipped.Weapon(BattleWeapon.Sword).Effect == "spark",
+            "The sword's hits leave a spark, the hammer's a thud on the floor (hitEffect)");
+        check(Rejects(new WeaponSpec { HitEffect = "fire" }) && !Rejects(new WeaponSpec { HitEffect = "spark" }), "An unknown hitEffect is rejected");
+        // The drawing times the slash to the hit: the hammer lands later in its longer swing.
+        var swordSpec = shipped.Weapon(BattleWeapon.Sword);
+        var hammerSpec = shipped.Weapon(BattleWeapon.Hammer);
+        check(Math.Abs(swordSpec.HitFraction - 0.16 / 0.36) < 1e-9 && Math.Abs(hammerSpec.HitFraction - hammerSpec.HitTime / hammerSpec.SwingDuration) < 1e-9 &&
+              hammerSpec.HitTime > 2 * swordSpec.HitTime && hammerSpec.Range >= swordSpec.Range && hammerSpec.Knock > 0 && swordSpec.Knock == 0,
+            $"Hammer: a long wind-up (hit at {hammerSpec.HitTime} s, sword {swordSpec.HitTime} s), reach not shorter, knock-back {hammerSpec.Knock}");
+        // The hammer's hit is judged when it lands: a slime that got away meanwhile is missed.
+        var (missSim, runaway) = Duel(BattleWeapon.Hammer, new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 1 }, SlimeMaxHp = 1000, SlimeDamage = 0 }, 40);
+        bool swung = false;
+        for (double t = 0; t < 0.2 && !swung; t += dt) { runaway.X = 840; missSim.Step(dt, 800, false); swung = missSim.SwingProgress >= 0; }
+        for (double t = 0; t < 1; t += dt) { runaway.X = 800 + 140; missSim.Step(dt, 800, false); }
+        check(swung && runaway.Hp == runaway.MaxHp, "A slime out of reach when the hammer lands takes no damage (the slow hit can miss)");
     }
 }

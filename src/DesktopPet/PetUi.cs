@@ -22,6 +22,13 @@ public static class PetUi
     public const string Battle = ""; // Game controller.
 
     public static Brush Frozen(Color color) { var brush = new SolidColorBrush(color); brush.Freeze(); return brush; }
+    public static Geometry FrozenGeometry(string path) { var geometry = Geometry.Parse(path); geometry.Freeze(); return geometry; }
+    public static Pen FrozenPen(Brush brush, double thickness)
+    {
+        var pen = new Pen(brush, thickness) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round, LineJoin = PenLineJoin.Round };
+        pen.Freeze();
+        return pen;
+    }
 
     public static TextBlock Icon(string glyph, Brush? color = null) => new()
     {

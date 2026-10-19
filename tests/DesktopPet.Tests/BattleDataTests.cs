@@ -143,30 +143,59 @@ internal static class BattleDataTests
 
     private static void Records(Action<bool, string> check)
     {
+        // Records per loadout: weapon id + difficulty (custom data apart).
         var records = new BattleRecords();
-        var first = records.Add(BattleDifficulty.Normal, false, 0, 20);
-        check(!first.Any && records.Normal.Wins == 0 && records.Normal.BestSeconds == null, "A loss with no slime defeated sets no record");
-        var win = records.Add(BattleDifficulty.Normal, true, 12, 95);
-        check(win.Fastest && win.MostDefeated && records.Normal.Wins == 1 && records.Normal.BestSeconds == 95 && records.Normal.MostDefeated == 12,
+        var first = records.Add(BattleWeapon.Hammer, BattleDifficulty.Normal, false, false, 0, 20);
+        var hammer = records.For(BattleWeapon.Hammer, BattleDifficulty.Normal);
+        check(!first.Any && hammer.Wins == 0 && hammer.BestSeconds == null, "A loss with no slime defeated sets no record");
+        var win = records.Add(BattleWeapon.Hammer, BattleDifficulty.Normal, false, true, 12, 95);
+        check(win.Fastest && win.MostDefeated && hammer.Wins == 1 && hammer.BestSeconds == 95 && hammer.MostDefeated == 12,
             "The first win is the fastest and the most slimes");
-        var slower = records.Add(BattleDifficulty.Normal, true, 12, 120);
-        check(!slower.Any && records.Normal.Wins == 2 && records.Normal.BestSeconds == 95, "A slower win with as many slimes is no record (but counts as a win)");
-        var lostBig = records.Add(BattleDifficulty.Normal, false, 14, 300);
-        check(!lostBig.Fastest && lostBig.MostDefeated && records.Normal.BestSeconds == 95 && records.Normal.Wins == 2,
+        var slower = records.Add(BattleWeapon.Hammer, BattleDifficulty.Normal, false, true, 12, 120);
+        check(!slower.Any && hammer.Wins == 2 && hammer.BestSeconds == 95, "A slower win with as many slimes is no record (but counts as a win)");
+        var lostBig = records.Add(BattleWeapon.Hammer, BattleDifficulty.Normal, false, false, 14, 300);
+        check(!lostBig.Fastest && lostBig.MostDefeated && hammer.BestSeconds == 95 && hammer.Wins == 2,
             "A loss can set the most-slimes record, never the fastest win");
-        check(records.Hard.Wins == 0 && records.Easy.MostDefeated == 0, "Each difficulty keeps its own records");
+        var swordWin = records.Add(BattleWeapon.Sword, BattleDifficulty.Normal, false, true, 3, 200);
+        check(swordWin.Fastest && records.For(BattleWeapon.Sword, BattleDifficulty.Normal).Wins == 1 && hammer.Wins == 2 &&
+              records.For(BattleWeapon.Hammer, BattleDifficulty.Hard).Empty && records.Normal.Empty,
+            "Each weapon and difficulty keeps its own records; nothing goes into the legacy ones");
+        var custom = records.Add(BattleWeapon.Hammer, BattleDifficulty.Normal, true, true, 1, 30);
+        check(custom.Fastest && hammer.BestSeconds == 95 && records.For(BattleWeapon.Hammer, BattleDifficulty.Normal, true).BestSeconds == 30 &&
+              BattleRecords.Key("hammer", BattleDifficulty.Normal, true) == "hammer|Normal|custom",
+            "Battles with the user's own data are kept apart (same id, maybe other numbers)");
+        check(records.For("gone", BattleDifficulty.Easy).Empty && !records.Loadouts.ContainsKey(BattleRecords.Key("gone", BattleDifficulty.Easy)),
+            "Reading a loadout with no records stores nothing");
 
         string dir = Path.Combine(Path.GetTempPath(), "pet-records-" + Guid.NewGuid().ToString("N"));
         try
         {
             string path = Path.Combine(dir, "battle-records.json");
-            check(BattleRecords.Load(path).Normal.Wins == 0, "No file yet: empty records");
-            check(records.Save(path) && BattleRecords.Load(path) is { Normal: { Wins: 2, BestSeconds: 95, MostDefeated: 14 } }, "Records survive a save and load");
+            check(BattleRecords.Load(path).Loadouts.Count == 0, "No file yet: empty records");
+            check(records.Save(path) && BattleRecords.Load(path) is { Version: 2 } loaded &&
+                  loaded.For(BattleWeapon.Hammer, BattleDifficulty.Normal) is { Wins: 2, BestSeconds: 95, MostDefeated: 14 } &&
+                  loaded.For(BattleWeapon.Sword, BattleDifficulty.Normal).Wins == 1, "Records survive a save and load (version 2)");
+            // A version 1 file (one record per difficulty, both weapons): kept as legacy, given to no weapon.
+            File.WriteAllText(path, "{\"Easy\":{\"Wins\":1,\"BestSeconds\":80,\"MostDefeated\":9},\"Normal\":{\"Wins\":4,\"BestSeconds\":110,\"MostDefeated\":12},\"Hard\":{\"Wins\":0,\"BestSeconds\":null,\"MostDefeated\":3}}");
+            var old = BattleRecords.Load(path);
+            check(old.Version == 2 && old.Legacy(BattleDifficulty.Normal) is { Wins: 4, BestSeconds: 110, MostDefeated: 12 } && old.Legacy(BattleDifficulty.Easy).Wins == 1 &&
+                  old.Loadouts.Count == 0 && old.For(BattleWeapon.Sword, BattleDifficulty.Normal).Empty && old.For(BattleWeapon.Hammer, BattleDifficulty.Normal).Empty,
+                "An old file's records stay as legacy per difficulty and are not given to a weapon");
+            old.Add(BattleWeapon.Sword, BattleDifficulty.Normal, false, true, 2, 300);
+            check(old.Save(path) && BattleRecords.Load(path) is var again && again.Legacy(BattleDifficulty.Normal).Wins == 4 &&
+                  again.For(BattleWeapon.Sword, BattleDifficulty.Normal).Wins == 1, "After the next battle the legacy records are still there");
+            File.WriteAllText(path, "{\"Version\":2,\"Loadouts\":{\"spear|Hard\":{\"Wins\":2,\"BestSeconds\":70,\"MostDefeated\":5}}}");
+            check(BattleRecords.Load(path).For("spear", BattleDifficulty.Hard).Wins == 2, "A weapon no longer in the data keeps its records (no crash)");
+            File.WriteAllText(path, "{\"Version\":3,\"Loadouts\":{\"sword|Normal\":{\"Wins\":7}},\"Future\":{\"x\":1}}");
+            var newer = BattleRecords.Load(path);
+            check(newer.ReadOnly && newer.For(BattleWeapon.Sword, BattleDifficulty.Normal).Wins == 7 && !newer.Save(path) && File.ReadAllText(path).Contains("Future"),
+                "A file from a newer version is read but never overwritten");
             File.WriteAllText(path, "{ broken");
-            check(BattleRecords.Load(path).Normal.Wins == 0, "A broken file starts over (no crash)");
-            File.WriteAllText(path, "{\"Normal\":{\"Wins\":-3,\"BestSeconds\":-1,\"MostDefeated\":-2},\"Hard\":null}");
+            check(BattleRecords.Load(path).Loadouts.Count == 0, "A broken file starts over (no crash)");
+            File.WriteAllText(path, "{\"Version\":2,\"Normal\":{\"Wins\":-3,\"BestSeconds\":-1,\"MostDefeated\":-2},\"Hard\":null,\"Loadouts\":{\"sword|Easy\":{\"Wins\":-1,\"BestSeconds\":0},\"x\":null}}");
             var odd = BattleRecords.Load(path);
-            check(odd.Normal is { Wins: 0, BestSeconds: null, MostDefeated: 0 } && odd.Hard != null, "Impossible numbers in the file are cleaned up");
+            check(odd.Normal is { Wins: 0, BestSeconds: null, MostDefeated: 0 } && odd.Hard != null && odd.For(BattleWeapon.Sword, BattleDifficulty.Easy) is { Wins: 0, BestSeconds: null } &&
+                  !odd.Loadouts.ContainsKey("x"), "Impossible numbers and empty entries in the file are cleaned up");
         }
         finally { try { Directory.Delete(dir, true); } catch (IOException) { } }
     }

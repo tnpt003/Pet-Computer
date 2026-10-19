@@ -50,14 +50,16 @@ internal static class WeaponChecks
         window.SetBattleWeapon(BattleWeapon.Hammer);
 
         // A won battle with the hammer: the result panel names it; records stay per difficulty.
-        int winsBefore = window.BattleRecords.Normal.Wins;
+        int winsBefore = window.BattleRecords.For(BattleWeapon.Hammer, BattleDifficulty.Normal).Wins;
+        int swordWins = window.BattleRecords.For(BattleWeapon.Sword, BattleDifficulty.Normal).Wins;
         TickBattle(0.6);
         if (window.Battle is { } b && b.Slimes.Count > 0) b.Slimes[0].X = pet.X + 56 + 50;
         TickBattle(2);
         string panel = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.Title == "Pet result" && w.IsVisible)?.Content is DependencyObject content ? HudText(content) : "";
-        check(!window.BattleActive && window.LastBattleSummary is { Won: true, Weapon: BattleWeapon.Hammer } && panel.Contains("Normal · Hammer") &&
-              panel.Contains("Records (Normal)") && window.BattleRecords.Normal.Wins == winsBefore + 1,
-            $"The result names the hammer; the win counts in the Normal records shared by both weapons ({panel})");
+        check(!window.BattleActive && window.LastBattleSummary is { Won: true, Weapon: BattleWeapon.Hammer } && panel.Contains("Hammer · Normal") &&
+              panel.Contains("Records (Hammer · Normal)") && window.BattleRecords.For(BattleWeapon.Hammer, BattleDifficulty.Normal).Wins == winsBefore + 1 &&
+              window.BattleRecords.For(BattleWeapon.Sword, BattleDifficulty.Normal).Wins == swordWins,
+            $"The result names the hammer; the win counts in the hammer + Normal records only ({panel})");
         check(!pet.Hammer && !pet.SwordOut, "After the battle the cat puts the hammer away");
 
         // The hammer drawn in every pose, both ways, inside the window; it looks unlike the sword.
@@ -71,7 +73,7 @@ internal static class WeaponChecks
             var px = new byte[size * size * 4]; bmp.CopyPixels(px, size * 4, 0);
             for (int i = 0; i < size; i++)
                 edgesClear &= px[i * size * 4 + 3] == 0 && px[(i * size + size - 1) * 4 + 3] == 0 && px[i * 4 + 3] == 0 && px[((size - 1) * size + i) * 4 + 3] == 0;
-            if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string review && (Math.Abs(model.SwordSwing - 0.5) < 0.01 || model.SwordSwing < 0) && model.Action == PetAction.Idle)
+            if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string review && (Math.Abs(model.SwordSwing - 0.5) < 0.01 || Math.Abs(model.SwordSwing - 0.4) < 0.01 || Math.Abs(model.SwordSwing - 0.7) < 0.01 || model.SwordSwing < 0) && model.Action == PetAction.Idle)
             {
                 System.IO.Directory.CreateDirectory(review);
                 var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bmp));
@@ -80,7 +82,8 @@ internal static class WeaponChecks
             }
             return Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(px));
         }
-        PetModel Model(int facing, bool hammer) => new() { Action = PetAction.Idle, Grounded = true, Facing = facing, AnimationTime = 1, ActionTime = 1, SwordOut = true, Hammer = hammer };
+        PetModel Model(int facing, bool hammer) => new() { Action = PetAction.Idle, Grounded = true, Facing = facing, AnimationTime = 1, ActionTime = 1, SwordOut = true, Hammer = hammer,
+            SwordHitAt = BattleData.Settings.Weapon(hammer ? BattleWeapon.Hammer : BattleWeapon.Sword).HitFraction };
         check(Render(Model(1, true)) != Render(Model(1, false)), "The hammer is drawn differently from the sword");
         foreach (int facing in new[] { 1, -1 })
         {

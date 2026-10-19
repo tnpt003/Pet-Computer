@@ -402,6 +402,18 @@ public sealed class BattleFieldView : FrameworkElement
                     dc.DrawEllipse(Yarn, Outline, new Point(x + Math.Cos(a) * radius * 0.7, floor - 14 + Math.Sin(a) * radius * 0.3), 6 * (1 - k) + 2, 6 * (1 - k) + 2);
                 }
                 break;
+            case BattleEffectKind.Thud:
+                // A heavy weapon hit: a flat ring on the floor under the slime and dust kicked up both ways.
+                double spread = 14 + 22 * k;
+                dc.DrawEllipse(null, Halo, new Point(x, floor - 3), spread, spread * 0.28);
+                dc.DrawEllipse(null, SparkPen, new Point(x, floor - 3), spread, spread * 0.28);
+                for (int i = 0; i < 4; i++)
+                {
+                    int side = i % 2 == 0 ? -1 : 1;
+                    double reach = (10 + 6 * (i / 2)) + 16 * k;
+                    dc.DrawEllipse(Brushes.White, Outline, new Point(x + side * reach, floor - 6 - 10 * k * (1 + i / 2)), 4.5 * (1 - k) + 2, 4.5 * (1 - k) + 2);
+                }
+                break;
             case BattleEffectKind.Slam:
                 // Shock waves running out along the floor from the boss.
                 foreach (int side in new[] { -1, 1 })

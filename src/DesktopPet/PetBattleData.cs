@@ -191,6 +191,7 @@ public static class BattleData
     private static readonly Regex IdPattern = new("^[a-z0-9_-]{1,32}$");
     // What the code can draw and do; data can only choose among these.
     public static readonly string[] WeaponStyles = { "sword", "hammer" };
+    public static readonly string[] WeaponHitEffects = { "spark", "thud" };
     public static readonly string[] EnemyRenderers = { "slime" };
     public static readonly string[] EnemyMarks = { "none", "speed", "cracks" };
 
@@ -235,6 +236,7 @@ public static class BattleData
             Id(w.Id, at + ".id");
             if (!weaponIds.Add(w.Id)) throw new InvalidDataException($"weapon id \"{w.Id}\" is used twice");
             if (Array.IndexOf(WeaponStyles, w.Style) < 0) throw new InvalidDataException($"{at}.style must be one of: {string.Join(", ", WeaponStyles)}");
+            if (w.HitEffect != null && Array.IndexOf(WeaponHitEffects, w.HitEffect) < 0) throw new InvalidDataException($"{at}.hitEffect must be one of: {string.Join(", ", WeaponHitEffects)}");
             Text(w.NameVi, at + ".nameVi"); Text(w.NameEn, at + ".nameEn");
             if (w.HintVi == null || w.HintEn == null || w.HintVi.Length > 80 || w.HintEn.Length > 80) throw new InvalidDataException($"{at} hints must be at most 80 characters");
             Within(w.Damage, 0, 1000, at + ".damage"); Within(w.Range, 10, 300, at + ".range");

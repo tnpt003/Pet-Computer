@@ -7,17 +7,25 @@ using System.Windows.Media;
 
 namespace DesktopPet;
 
-// Battle Mode, around the fight: the result panel after a won or lost battle (Play again opens
-// the setup panel again / Close) and the short note that says why a battle cannot start. Both never take focus.
+// Battle Mode, around the fight: the result panel after a won or lost battle (Play again /
+// Change gear / Back to desktop) and the short note that says why a battle cannot start. Both never take focus.
 public sealed partial class PetWindow
 {
     private static readonly Brush HudButtonBack = PetUi.Frozen(Color.FromArgb(0x50, 255, 255, 255));
 
-    private static (Border Button, TextBlock Text, Border Progress) HudButton(Action click)
+    // The cat's 192-DIP frame cropped to the cat and its weapon (the frame's margin is for
+    // poses like being carried), for the setup preview and the result picture.
+    private static FrameworkElement CatPicture(UIElement cat) => new Viewbox
+    {
+        Child = new Canvas { Width = 136, Height = 136, ClipToBounds = true, Children = { cat } }
+    }.WithOffset(cat, -30, -26);
+
+    private static (Border Button, TextBlock Text, Border Progress) HudButton(Action click, bool plain = false)
     {
         var text = new TextBlock { Foreground = Brushes.White, FontSize = 12.5, FontWeight = FontWeights.SemiBold, HorizontalAlignment = HorizontalAlignment.Center };
         var progress = new Border { Height = 3, Background = new SolidColorBrush(Color.FromRgb(0x5C, 0xC8, 0xFF)), HorizontalAlignment = HorizontalAlignment.Left,
             Width = 0, CornerRadius = new CornerRadius(1.5), Margin = new Thickness(0, 3, 0, 0) };
+        if (plain) progress.Visibility = Visibility.Collapsed; // No cooldown bar: the text sits in the middle.
         var button = new Border
         {
             Background = HudButtonBack, CornerRadius = new CornerRadius(6), Padding = new Thickness(10, 4, 10, 3),
@@ -62,10 +70,17 @@ public sealed partial class PetWindow
         battleNoticeWindow = null;
     }
 
-    // The result after a won or lost battle: stats, Play again and Close. It closes by itself.
+    // The result after a won or lost battle: this cat cheering or seeing stars, the loadout
+    // (weapon · difficulty), time, slimes defeated and the loadout's records (HP left and the
+    // records from before weapons were told apart are smaller). Play again starts the same
+    // loadout at once (after the usual safety check; otherwise the setup panel opens with the
+    // reason), Change gear opens the setup panel with it, Back to desktop just closes. It stays
+    // until the user chooses (a fullscreen app, the pet being brought back or Exit still close it).
     public readonly record struct BattleSummary(bool Won, int Defeated, double Seconds, double Hp, double MaxHp, bool Boss = false, string? BossName = null,
-        BattleDifficulty Difficulty = BattleDifficulty.Normal, BattleRecordNews News = default, string Weapon = BattleWeapon.Sword, string WeaponLabel = "");
+        BattleDifficulty Difficulty = BattleDifficulty.Normal, BattleRecordNews News = default, string Weapon = BattleWeapon.Sword, string WeaponLabel = "",
+        bool Custom = false, string WeaponStyle = "sword");
     private static readonly Brush RecordGold = PetUi.Frozen(Color.FromRgb(0xFF, 0xD3, 0x5C));
+    private static readonly Brush ResultMain = PetUi.Frozen(Color.FromRgb(0x3E, 0x7B, 0xE0));
     private static string Clock(double seconds)
     {
         var time = TimeSpan.FromSeconds(Math.Round(seconds));
@@ -73,72 +88,125 @@ public sealed partial class PetWindow
     }
     public BattleSummary? LastBattleSummary { get; private set; }
     private Window? battleSummaryWindow;
-    private System.Windows.Threading.DispatcherTimer? battleSummaryTimer;
-    public const double BattleSummarySeconds = 12;
+    public bool BattleSummaryOpen => battleSummaryWindow != null;
+
+    private string RecordLine(BattleRecord best)
+    {
+        string fastest = best.BestSeconds is double s ? L($"nhanh nhất {Clock(s)} · ", $"fastest {Clock(s)} · ") : "";
+        return L($"{fastest}nhiều nhất {best.MostDefeated} slime · thắng {best.Wins} lần",
+                 $"{fastest}most {best.MostDefeated} slime{(best.MostDefeated == 1 ? "" : "s")} · {best.Wins} win{(best.Wins == 1 ? "" : "s")}");
+    }
 
     private void ShowBattleSummary(BattleSummary result)
     {
         CloseBattleSummary();
         LastBattleSummary = result;
         if (closed || context.Fullscreen) return;
-        var title = new TextBlock { Text = result.Won ? (result.Boss ? L($"Chiến thắng! Đã hạ {result.BossName ?? "boss"}", $"Victory! The {result.BossName ?? "boss"} is down") : L("Chiến thắng!", "Victory!"))
-                : L("Thua rồi… mèo choáng váng", "Defeated… the cat sees stars"),
-            Foreground = Brushes.White, FontSize = 15, FontWeight = FontWeights.Bold };
-        // Records stay per difficulty (both weapons together); the line names the weapon used.
-        string clock = Clock(result.Seconds), level = DifficultyName(result.Difficulty), arms = result.WeaponLabel;
-        var stats = new TextBlock { Foreground = Brushes.White, FontSize = 12.5, Margin = new Thickness(0, 4, 0, 0),
-            Text = L($"{level} · {arms} · Hạ {result.Defeated} slime · {clock} · HP còn {Math.Ceiling(result.Hp)}/{result.MaxHp}",
-                     $"{level} · {arms} · {result.Defeated} slime{(result.Defeated == 1 ? "" : "s")} defeated · {clock} · HP {Math.Ceiling(result.Hp)}/{result.MaxHp} left") };
-        // Records for this difficulty, and what this battle beat.
-        var best = BattleRecords.For(result.Difficulty);
-        var records = new StackPanel { Margin = new Thickness(0, 4, 0, 0) };
+        TextBlock Line(double size, Brush? brush = null, bool bold = false, double opacity = 1) => new()
+        {
+            Foreground = brush ?? Brushes.White, FontSize = size, FontWeight = bold ? FontWeights.Bold : FontWeights.Normal, Opacity = opacity,
+            TextWrapping = TextWrapping.Wrap, MaxWidth = 300, Margin = new Thickness(0, 2, 0, 0)
+        };
+        var title = Line(15.5, bold: true);
+        title.Text = result.Won ? (result.Boss ? L($"Chiến thắng! Đã hạ {result.BossName ?? "boss"}", $"Victory! The {result.BossName ?? "boss"} is down") : L("Chiến thắng!", "Victory!"))
+            : L("Thua rồi… mèo choáng váng", "Defeated… the cat sees stars");
+        string level = DifficultyName(result.Difficulty), arms = result.WeaponLabel.Length > 0 ? result.WeaponLabel : result.Weapon;
+        var loadout = Line(13, bold: true); loadout.Text = $"{arms} · {level}";
+        var main = Line(12.5);
+        main.Text = L($"Hạ {result.Defeated} slime · {Clock(result.Seconds)}", $"{result.Defeated} slime{(result.Defeated == 1 ? "" : "s")} defeated · {Clock(result.Seconds)}");
+        var hp = Line(11.5, opacity: 0.75); hp.Text = L($"HP còn {Math.Ceiling(result.Hp)}/{result.MaxHp}", $"HP {Math.Ceiling(result.Hp)}/{result.MaxHp} left");
+        var info = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Children = { title, loadout, main, hp } };
+        // Records of this loadout (weapon id + difficulty; custom data kept apart), and what this battle beat.
         if (result.News.Any)
-            records.Children.Add(new TextBlock { Foreground = RecordGold, FontSize = 12.5, FontWeight = FontWeights.Bold,
-                Text = result.News.Fastest && result.News.MostDefeated ? L("Kỷ lục mới: thắng nhanh nhất, hạ nhiều slime nhất!", "New record: fastest win, most slimes!")
-                    : result.News.Fastest ? L("Kỷ lục mới: thắng nhanh nhất!", "New record: fastest win!")
-                    : L("Kỷ lục mới: hạ nhiều slime nhất!", "New record: most slimes!") });
-        if (best.BestSeconds != null || best.MostDefeated > 0)
         {
-            string fastest = best.BestSeconds is double s ? L($"nhanh nhất {Clock(s)} · ", $"fastest {Clock(s)} · ") : "";
-            records.Children.Add(new TextBlock { Foreground = Brushes.White, Opacity = 0.8, FontSize = 11.5,
-                Text = L($"Kỷ lục ({level}): {fastest}nhiều nhất {best.MostDefeated} slime · thắng {best.Wins} lần",
-                         $"Records ({level}): {fastest}most {best.MostDefeated} slime{(best.MostDefeated == 1 ? "" : "s")} · {best.Wins} win{(best.Wins == 1 ? "" : "s")}") });
+            var news = Line(12.5, RecordGold, true);
+            news.Text = result.News.Fastest && result.News.MostDefeated ? L("Kỷ lục mới: thắng nhanh nhất, hạ nhiều slime nhất!", "New record: fastest win, most slimes!")
+                : result.News.Fastest ? L("Kỷ lục mới: thắng nhanh nhất!", "New record: fastest win!") : L("Kỷ lục mới: hạ nhiều slime nhất!", "New record: most slimes!");
+            info.Children.Add(news);
         }
-        // Play again goes back to the setup panel with the same choice (weapon, difficulty).
-        var (again, againText, _) = HudButton(() =>
+        var best = BattleRecords.For(result.Weapon, result.Difficulty, result.Custom);
+        if (!best.Empty)
         {
-            CloseBattleSummary();
-            if (OpenBattlePrep() is string reason) ShowBattleNotice(reason);
-        });
-        againText.Text = L("Chơi lại", "Play again");
-        var (close, closeText, _) = HudButton(CloseBattleSummary);
-        closeText.Text = L("Đóng", "Close");
+            var records = Line(11.5, opacity: 0.85);
+            records.Text = L($"Kỷ lục ({arms} · {level}{(result.Custom ? ", dữ liệu tùy chỉnh" : "")}): ", $"Records ({arms} · {level}{(result.Custom ? ", custom data" : "")}): ") + RecordLine(best);
+            info.Children.Add(records);
+        }
+        var legacy = BattleRecords.Legacy(result.Difficulty);
+        if (!legacy.Empty)
+        {
+            var old = Line(11, opacity: 0.6);
+            old.Text = L($"Trước phân loại trang bị ({level}): ", $"Before weapons were told apart ({level}): ") + RecordLine(legacy);
+            info.Children.Add(old);
+        }
+        // This cat, as the battle ended: cheering with its weapon, or sitting dazed.
+        var model = new PetModel { Action = PetAction.Sitting, Grounded = true, Facing = 1, AnimationTime = 1, ActionTime = 1, SwordOut = true,
+            Hammer = result.WeaponStyle == "hammer", BattleCheer = result.Won, BattleDazed = !result.Won };
+        var portrait = new PetRenderer(model) { Coat = renderer.Coat, Accessory = renderer.Accessory, Width = 192, Height = 192 };
+        var picture = new Border { Width = 96, Height = 96, Margin = new Thickness(0, 0, 12, 0), CornerRadius = new CornerRadius(48), Background = PrepStage,
+            VerticalAlignment = VerticalAlignment.Top, Child = CatPicture(portrait) };
+
+        Window? window = null;
+        // Each choice acts once: the panel is gone before anything else happens (no double start).
+        void Choose(Action action) { if (window == null || battleSummaryWindow != window) return; CloseBattleSummary(); action(); }
+        var (again, againText, _) = HudButton(() => Choose(() => { if (BattleReplay(result) is string reason) ShowBattleNotice(reason); }), plain: true);
+        again.Background = ResultMain; again.Padding = new Thickness(16, 6, 16, 5); again.Margin = new Thickness(0);
+        againText.FontSize = 13.5; againText.FontWeight = FontWeights.Bold; againText.Text = L("Chơi lại", "Play again");
+        var (gear, gearText, _) = HudButton(() => Choose(() => { if (OpenBattlePrep(result.Weapon, result.Difficulty) is string reason) ShowBattleNotice(reason); }), plain: true);
+        gearText.Text = L("Đổi trang bị", "Change gear");
+        var (home, homeText, _) = HudButton(() => Choose(() => { }), plain: true);
+        homeText.Text = L("Về desktop", "Back to desktop");
+        var actions = new DockPanel { Margin = new Thickness(0, 12, 0, 0), LastChildFill = false };
+        DockPanel.SetDock(home, Dock.Left); DockPanel.SetDock(again, Dock.Right); DockPanel.SetDock(gear, Dock.Right);
+        actions.Children.Add(home); actions.Children.Add(again); actions.Children.Add(gear);
         var panel = new Border
         {
-            Background = HudBack, BorderBrush = Brushes.White, BorderThickness = new Thickness(1.5), CornerRadius = new CornerRadius(10),
-            Padding = new Thickness(14, 10, 14, 10), Margin = new Thickness(6),
-            Child = new StackPanel { Children = { title, stats, records, new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 8, 0, 0), Children = { again, close } } } },
+            Background = HudBack, BorderBrush = Brushes.White, BorderThickness = new Thickness(1.5), CornerRadius = new CornerRadius(12),
+            Padding = new Thickness(14, 12, 14, 12), Margin = new Thickness(6),
+            Child = new StackPanel { Children = { new StackPanel { Orientation = Orientation.Horizontal, Children = { picture, info } }, actions } },
             Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 6, ShadowDepth = 1, Opacity = 0.4 }
         };
         panel.SetValue(TextBlock.FontFamilyProperty, PetUi.TextFont);
-        var window = CreateBattleWindow(panel, "Pet result");
+        window = CreateBattleWindow(panel, "Pet result");
         window.SizeToContent = SizeToContent.WidthAndHeight;
-        window.Closed += (_, _) => { if (battleSummaryWindow == window) battleSummaryWindow = null; };
+        var shown = window;
+        window.Closed += (_, _) => { if (battleSummaryWindow == shown) battleSummaryWindow = null; };
         battleSummaryWindow = window;
         window.Show();
         window.UpdateLayout();
         MoveWindow(window, (bounds.Left + bounds.Right - window.ActualWidth) / 2, bounds.Top + 12);
-        battleSummaryTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(BattleSummarySeconds) };
-        battleSummaryTimer.Tick += (_, _) => CloseBattleSummary();
-        battleSummaryTimer.Start();
+    }
+
+    // Play again: the same weapon and difficulty as the battle that just ended, at once, if the
+    // cat is free; otherwise the setup panel opens with that choice and says why (nothing is forced).
+    public string? BattleReplay(BattleSummary last)
+    {
+        if (battle != null) return L("Trận đang diễn ra.", "A battle is already running.");
+        if (battlePreparing) return null;
+        if (BattleRefusal() is string reason)
+        {
+            // The panel shows the reason itself; paused or fullscreen keep even the panel away.
+            return OpenBattlePrep(last.Weapon, last.Difficulty) is string refused ? refused : null;
+        }
+        ReloadBattleData();
+        return StartBattle(last.Weapon, last.Difficulty);
     }
 
     private void CloseBattleSummary()
     {
-        battleSummaryTimer?.Stop();
         battleSummaryWindow?.Close();
         battleSummaryWindow = null;
     }
 
     private static readonly Brush HudBack = PetUi.Frozen(Color.FromArgb(0xE8, 0x26, 0x23, 0x38));
+}
+
+internal static class PictureExtensions
+{
+    // Places a child of the picture's canvas (a negative offset crops the frame's margin).
+    public static T WithOffset<T>(this T picture, UIElement child, double left, double top) where T : FrameworkElement
+    {
+        Canvas.SetLeft(child, left);
+        Canvas.SetTop(child, top);
+        return picture;
+    }
 }

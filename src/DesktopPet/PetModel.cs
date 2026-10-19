@@ -104,6 +104,9 @@ public sealed class PetModel
     // The battle's weapon is the hammer (drawn instead of the sword, same poses).
     public bool Hammer;
     public double SwordSwing = -1;
+    // Where in the swing the weapon's hit lands (0..1, WeaponSpec.HitFraction): the slash or
+    // slam is drawn reaching its target at that moment. 0.44 is the sword's.
+    public double SwordHitAt = 0.44;
     // The swing under way finishes a combo (a gold slash).
     public bool SwordCombo;
     public double BattleHurt;

@@ -19,7 +19,7 @@ public sealed class BattleHud : Border
     public static readonly BattleSkill[] SkillOrder = Array.ConvertAll(BattleSkills.All, info => info.Skill);
     private const double HpWidth = 170, BossWidth = 200;
     private readonly Func<string, string, string> L;
-    private readonly TextBlock hpText, status, hint, banner, bossName, comboText;
+    private readonly TextBlock hpText, status, hint, banner, bossName, comboText, upgradesText;
     private readonly Border hpFill, hpTrail, bossFill, bossBar, pauseButton, endButton;
     private readonly HudGlyph pauseGlyph;
     private readonly StackPanel waveDots;
@@ -27,7 +27,8 @@ public sealed class BattleHud : Border
     private double trail = 1, lastTime = -1, bannerUntil = -1;
     private int dotsFor = -1, dotsWave = -1;
     private (double Hp, double Max) shownHp = (-1, -1);
-    private (BattlePhase, int, int, bool, bool, double, int) shownStatus;
+    private (BattlePhase, int, int, bool, bool, double, int, int) shownStatus;
+    private int shownUpgrades = -1;
     private (double, bool) shownBoss = (-1, false);
     private (bool, BattleSkill?, bool, int, bool, int) shownHint;
     private (int, bool) shownCombo = (-1, false);
@@ -99,9 +100,12 @@ public sealed class BattleHud : Border
             Padding = new Thickness(1), Margin = new Thickness(0, 2, 0, 0), Child = bossFill
         };
         var bossPanel = new StackPanel { Children = { bossName, bossBar }, Margin = new Thickness(0, 3, 0, 0) };
+        // This run's upgrades (Adventure), one small line; collapsed when there are none.
+        upgradesText = new TextBlock { Foreground = Gold, FontSize = 10.5, FontWeight = FontWeights.SemiBold, HorizontalAlignment = HorizontalAlignment.Center,
+            TextAlignment = TextAlignment.Center, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 3, 0, 0), Visibility = Visibility.Collapsed };
         bossPanel.SetBinding(VisibilityProperty, new System.Windows.Data.Binding(nameof(Visibility)) { Source = bossBar });
         var centre = new Grid { Width = 230, Margin = new Thickness(14, 0, 14, 0), VerticalAlignment = VerticalAlignment.Center,
-            Children = { new StackPanel { Children = { status, waveDots, bossPanel } }, banner } };
+            Children = { new StackPanel { Children = { status, waveDots, bossPanel, upgradesText } }, banner } };
 
         // Right: skills, then Pause / End.
         var bar = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
@@ -135,6 +139,7 @@ public sealed class BattleHud : Border
 
     public SkillSlot Slot(BattleSkill skill) => slots[Array.IndexOf(SkillOrder, skill)];
     public TextBlock ComboText => comboText;
+    public string UpgradesText => upgradesText.Visibility == Visibility.Visible ? upgradesText.Text : "";
     public Border PauseButton => pauseButton;
     public Border EndButton => endButton;
 
@@ -205,7 +210,8 @@ public sealed class BattleHud : Border
         banner.Visibility = showBanner ? Visibility.Visible : Visibility.Collapsed;
         if (showBanner) banner.Opacity = Math.Clamp((bannerUntil - b.Time) / 0.4, 0, 1);
         int left = b.Alive + b.ToSpawn;
-        var statusKey = (b.Phase, b.Wave, left, b.Paused, fullscreen, Math.Round(b.LastHeal), (b.IsBossWave(b.Wave) ? 1 : 0) + (away ? 2 : 0));
+        int clock = b.Survival ? (int)Math.Ceiling(b.SurviveRemaining) : -1;
+        var statusKey = (b.Phase, b.Wave, left, b.Paused, fullscreen, Math.Round(b.LastHeal), (b.IsBossWave(b.Wave) ? 1 : 0) + (away ? 2 : 0) + (b.ChoosingUpgrade ? 4 : 0), clock);
         if (statusKey != shownStatus)
         {
         shownStatus = statusKey;
@@ -218,11 +224,25 @@ public sealed class BattleHud : Border
             _ when b.IsBossWave(b.Wave) => L($"Đánh bại {BossName(b)}!", $"Defeat the {BossName(b)}!"),
             _ => L($"Đợt {b.Wave}/{b.WaveCount} · còn {left} slime", $"Wave {b.Wave}/{b.WaveCount} · {left} slime{(left == 1 ? "" : "s")} left")
         };
-        if (b.Paused && !b.Over) text += away ? L(" · Chờ mèo về màn hình này", " · Waiting for the cat to come back")
+        // A survive stage: the time left is the goal, so it leads.
+        if (b.Survival && !b.Over) text = L($"Sống sót: còn {clock / 60}:{clock % 60:00}", $"Survive: {clock / 60}:{clock % 60:00} left") + (b.Phase == BattlePhase.Fighting ? L($" · {left} slime", $" · {left} slime{(left == 1 ? "" : "s")}") : "");
+        if (b.ChoosingUpgrade && !b.Over) text += L(" · Chọn nâng cấp", " · Pick an upgrade");
+        else if (b.Paused && !b.Over) text += away ? L(" · Chờ mèo về màn hình này", " · Waiting for the cat to come back")
             : fullscreen ? L(" · Tạm dừng (toàn màn hình)", " · Paused (fullscreen)") : L(" · Tạm dừng", " · Paused");
         SetText(status, text);
         }
         status.Visibility = showBanner ? Visibility.Hidden : Visibility.Visible;
+        int upgradeCount = 0;
+        foreach (var n in b.UpgradesTaken.Values) upgradeCount += n;
+        if (upgradeCount != shownUpgrades)
+        {
+            shownUpgrades = upgradeCount;
+            var names = new System.Collections.Generic.List<string>();
+            foreach (var u in b.Settings.UpgradeList)
+                if (b.Stacks(u.Id) is int n && n > 0) names.Add(u.Name(English) + (n > 1 ? $" ×{n}" : ""));
+            upgradesText.Text = string.Join(" · ", names);
+            upgradesText.Visibility = names.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        }
         UpdateDots(b);
         var boss = b.Boss;
         bossBar.Visibility = boss != null && boss.Targetable ? Visibility.Visible : Visibility.Collapsed;

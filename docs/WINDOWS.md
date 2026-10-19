@@ -798,3 +798,28 @@ next step), so a double click never starts two battles. Ending a battle by hand 
   result say so and the run saves no progress or record.
 - **Data:** `"campaign"` in battle.json (docs/BATTLE-DATA.md). `BattleSim(..., stage)` takes a
   `StageSpec`: `WavePlan` and the enemy cap come from it; without one nothing changes.
+
+### Adventure upgrades and the survive objective (2026-10-20, milestone 3)
+
+- **Upgrades** (battle.json `"upgrades"`, a stage with `"upgrades": true`; stages 2–5 of chapter 1):
+  after a cleared wave, when another wave follows, `BattleSim` offers up to three different
+  upgrades the run can still use (not at their `maxStacks`; Grilled fish not at full HP); fewer
+  when fewer fit, none when nothing fits; no reroll. Never in a free battle, after the last wave, a
+  win/loss or End. The built-in six: Sharp edge +20 % damage (×3), Quick feet +15 % running speed
+  (×2), Fast paws −12 % time between swings (×3), Heavy push +80 knock-back per hit (×2), Grilled
+  fish +30 HP now, Thick fur −15 % damage taken (×2). Cuts stop at 30 % of the original.
+- **Choosing:** the panel "Pet upgrade" (clickable, never activated, no taskbar button, mouse only,
+  vi/en) shows each card's picture, name, effect and how often it was taken; click a card, then
+  **Confirm**. While it is open the battle is paused for its own reason (`BattlePause.Upgrade`):
+  nothing moves, the record clock, wave break and skills wait. Confirm removes only that reason (a
+  user, menu, fullscreen or away pause stays) and plays the satisfied cue; a second click does
+  nothing. A fullscreen app hides the panel until it closes; End/Reset/Exit close it.
+- **Run only:** upgrades live in that `BattleSim`; Play again, Next stage or a new battle start
+  without them and the shared definitions never change. The 15 HP heal between waves stays. The
+  HUD lists the run's upgrades in a small gold line; the result panel lists them too.
+- **Survive** (`"objective": "survive"`, `"surviveSeconds"`; stage 3 "Hold on", 75 s): the waves
+  come in order and the last one comes again while time is left (the stage's `maxAlive` still caps
+  the floor). The clock runs only while the battle runs and the cat is on the ground (carrying the
+  cat stops it, like the waves); time up with HP left wins, no HP loses. The HUD leads with
+  "Survive: 0:42 left"; the map says "survive 75 s". A survive stage keeps no fastest win.
+- Stages that changed rules (2–5) have `rulesVersion` 2, so their old records are kept apart.

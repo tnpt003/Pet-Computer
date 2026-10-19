@@ -130,6 +130,14 @@ Nên chép dự phòng %LOCALAPPDATA%\DesktopPet\adventure-progress.json (nếu 
 - [ ] Mở bản đồ khi mèo đang ngủ: mèo vẫn ngủ. Để máy yên 5 phút khi bản đồ mở: mèo không ngủ away nap. Mở app fullscreen: bản đồ ẩn, đóng app thì hiện lại.
 - [ ] Có file %LOCALAPPDATA%\DesktopPet\battle.json tùy chỉnh: bản đồ ghi rõ "không lưu tiến trình và kỷ lục"; thắng màn không mở màn sau.
 
+#### Phiêu lưu — mốc 3: nâng cấp và sinh tồn (2026-10-20)
+- [ ] Màn 2 (Giải vây): dọn xong đợt 1 thì hiện bảng "Chọn một nâng cấp cho lượt này" phía trên sàn, 3 thẻ có hình + tên + tác dụng + "Đã có x/y". Trận đứng yên (slime, đồng hồ, kỹ năng). Gõ phím ở app khác vẫn bình thường. Click một thẻ (viền trắng) rồi Xác nhận: bảng đóng, trận chạy tiếp, HUD có dòng vàng nhỏ ghi nâng cấp. Bấm Xác nhận nhanh 2 lần: chỉ lấy 1.
+- [ ] Hình 6 thẻ (khiên, kiếm, đồng hồ, mũi tên tốc độ, mũi tên đẩy, con cá) nhìn rõ trên nền tối; chữ tiếng Việt không bị cắt ở DPI 125–150%.
+- [ ] Đang chọn thẻ mà bấm Tạm dừng trên HUD rồi Xác nhận: trận vẫn tạm dừng cho tới khi bấm Tiếp tục. Mở app fullscreen lúc đang chọn: bảng ẩn, đóng app thì hiện lại. Bấm Kết thúc lúc đang chọn: bảng đóng.
+- [ ] Nhanh chân: mèo chạy nhanh hơn thấy rõ; Cá nướng không xuất hiện khi HP đầy. Chơi lại màn: không còn nâng cấp cũ. Màn 1 không có thẻ. Trận tự do không có thẻ.
+- [ ] Màn 3 (Cầm cự): HUD ghi "Sống sót: còn 1:15" đếm ngược; bế mèo thì đồng hồ dừng; hết giờ mà còn HP thì thắng; bảng kết quả không có "thắng nhanh nhất". Màn có khó quá/dễ quá không (75 giây, 3 đợt lặp lại)?
+- [ ] Bảng kết quả màn có dòng "Nâng cấp lượt này: …".
+
 ### Nhật ký chơi thử Battle Mode (beta, thêm 2026-10-18)
 Chơi 3–5 trận mỗi độ khó trên bản publish, ghi 1 dòng/trận. Phiên bản: xem Khác → Giới thiệu (ví dụ `1.0.0 (18cb227)`). Chưa có dòng nào là chưa chơi thử; số mô phỏng trong PROGRESS.md không thay cho bảng này.
 

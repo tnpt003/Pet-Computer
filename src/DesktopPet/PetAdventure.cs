@@ -157,7 +157,8 @@ public sealed class Adventure
         if (won)
         {
             record.Wins++;
-            if (double.IsFinite(seconds) && seconds > 0 && (record.BestSeconds is not double best || seconds < best - 0.05)) { record.BestSeconds = seconds; fastest = true; }
+            // A survive stage always lasts its time: no "fastest win" there.
+            if (!stage.Survival && double.IsFinite(seconds) && seconds > 0 && (record.BestSeconds is not double best || seconds < best - 0.05)) { record.BestSeconds = seconds; fastest = true; }
         }
         if (defeated > record.MostDefeated) { record.MostDefeated = defeated; most = true; }
         bool first = false;

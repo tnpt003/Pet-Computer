@@ -247,8 +247,8 @@ public sealed partial class PetWindow
         mapStageName!.Text = StageTitle(chosen);
         Show(mapGoal, chosen.Goal(English));
         var previous = adventure.Locate(chosen.Id) is { Index: > 0 } where ? where.Chapter.Stages[where.Index - 1] : null;
-        Show(mapStatus, adventure.IsCompleted(chosen.Id) ? L("Đã hoàn thành", "Completed")
-            : unlocked ? L($"Đã mở · {chosen.Waves.Length} đợt", $"Open · {chosen.Waves.Length} wave{(chosen.Waves.Length == 1 ? "" : "s")}")
+        Show(mapStatus, adventure.IsCompleted(chosen.Id) ? L("Đã hoàn thành", "Completed") + StageRules(chosen)
+            : unlocked ? L("Đã mở · ", "Open · ") + ObjectiveText(chosen) + StageRules(chosen)
             : L($"Chưa mở — thắng màn {StageNumber(previous!)} ({previous!.Name(false)}) trước", $"Locked — win stage {StageNumber(previous!)} ({previous!.Name(true)}) first"));
         mapStatus!.Foreground = unlocked ? Brushes.White : PrepWarning;
         Show(mapRecord, StageRecordLine(adventure, chosen));
@@ -257,6 +257,12 @@ public sealed partial class PetWindow
         bool can = unlocked && BattlePrepRefusal() == null;
         if (mapEnter.IsEnabled != can) { mapEnter.IsEnabled = can; mapEnter.Opacity = can ? 1 : 0.5; }
     }
+
+    // "survive 75 s" or "3 waves"; " · upgrades between waves" when the stage offers them.
+    private string ObjectiveText(StageSpec stage) => stage.Survival
+        ? L($"sống sót {stage.SurviveSeconds:0} giây", $"survive {stage.SurviveSeconds:0} s")
+        : L($"{stage.Waves.Length} đợt", $"{stage.Waves.Length} wave{(stage.Waves.Length == 1 ? "" : "s")}");
+    private string StageRules(StageSpec stage) => stage.Upgrades ? L(" · có nâng cấp giữa các đợt", " · upgrades between waves") : "";
 
     // Wins and the fastest win of a stage over every loadout (the result panel shows per loadout).
     private string? StageRecordLine(Adventure adventure, StageSpec stage)
@@ -305,6 +311,11 @@ public sealed partial class PetWindow
         {
             var done = Line(12.5, RecordGold, true); done.Text = L("Hoàn thành chương!", "Chapter complete!");
             lines.Children.Add(done);
+        }
+        if (result.Upgrades.Length > 0)
+        {
+            var taken = Line(11.5, opacity: 0.85); taken.Text = L("Nâng cấp lượt này: ", "This run's upgrades: ") + result.Upgrades;
+            lines.Children.Add(taken);
         }
         if (result.News.Any)
         {

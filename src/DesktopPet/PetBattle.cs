@@ -171,6 +171,19 @@ public sealed class BattleSettings
     }
     [JsonIgnore] public double LargestScale => EnemyTypes.Max(e => e.Scale);
 
+    // From battle.json "upgrades": the Adventure's between-wave upgrades (null: the built-in six).
+    [JsonPropertyName("upgrades")] public UpgradeSpec[]? Upgrades { get; init; }
+    private IReadOnlyList<UpgradeSpec>? upgradeList;
+    [JsonIgnore] public IReadOnlyList<UpgradeSpec> UpgradeList => upgradeList ??= Upgrades ?? new[]
+    {
+        new UpgradeSpec { Id = "sharp", NameVi = "Sắc bén", NameEn = "Sharp edge", DescVi = "+20% sát thương", DescEn = "+20% damage", Effect = "damage", Amount = 0.2, MaxStacks = 3 },
+        new UpgradeSpec { Id = "quick_feet", NameVi = "Nhanh chân", NameEn = "Quick feet", DescVi = "+15% tốc độ chạy", DescEn = "+15% running speed", Effect = "moveSpeed", Amount = 0.15, MaxStacks = 2 },
+        new UpgradeSpec { Id = "fast_paws", NameVi = "Ra đòn nhanh", NameEn = "Fast paws", DescVi = "−12% thời gian hồi đòn", DescEn = "−12% time between swings", Effect = "attackSpeed", Amount = 0.12, MaxStacks = 3 },
+        new UpgradeSpec { Id = "heavy_push", NameVi = "Đẩy mạnh", NameEn = "Heavy push", DescVi = "Mỗi nhát đẩy slime lùi thêm", DescEn = "Every hit knocks slimes further", Effect = "knock", Amount = 80, MaxStacks = 2 },
+        new UpgradeSpec { Id = "grilled_fish", NameVi = "Cá nướng", NameEn = "Grilled fish", DescVi = "Hồi ngay 30 HP", DescEn = "Get 30 HP back now", Effect = "heal", Amount = 30 },
+        new UpgradeSpec { Id = "thick_fur", NameVi = "Lông dày", NameEn = "Thick fur", DescVi = "−15% sát thương nhận vào", DescEn = "−15% damage taken", Effect = "armor", Amount = 0.15, MaxStacks = 2 },
+    };
+
     // From battle.json "campaign": the Adventure chapters (null: no Adventure in this data).
     [JsonPropertyName("campaign")] public CampaignSpec? Campaign { get; init; }
 
@@ -276,7 +289,8 @@ public enum BattlePhase { WaveBreak, Fighting, Won, Lost }
 public enum BattleEventKind
 {
     WaveStarted, SlimeSpawned, Swing, SlimeHit, SlimeDefeated, CatHurt, Pushed, WaveCleared, Won, Lost,
-    Healed, Cheered, Shielded, Blocked, BombThrown, BombExploded, BossAppeared, BossSummoned, BossEnraged, ComboHit
+    Healed, Cheered, Shielded, Blocked, BombThrown, BombExploded, BossAppeared, BossSummoned, BossEnraged, ComboHit,
+    UpgradeOffered, UpgradeChosen
 }
 public readonly record struct BattleEvent(BattleEventKind Kind, double X, double Value = 0);
 // Number: a floating damage (Value > 0) or heal (Value < 0, shown as +HP above the cat).
@@ -327,6 +341,26 @@ public sealed class BattleSim
     // The Adventure stage being played (null: a free battle).
     public StageSpec? Stage { get; }
     private readonly int maxAlive;
+    // Survive stages: seconds still to hold out (counts only while the battle runs and the cat is
+    // on the ground, like the waves). NaN for any other battle.
+    public bool Survival => Stage?.Survival == true;
+    public double SurviveRemaining { get; private set; } = double.NaN;
+
+    // This run's upgrades (Adventure stages that allow them): how often each was taken, and the
+    // cards on offer while the user chooses. While choosing, the battle stands still (Step does
+    // nothing, the clock and the record time stop). Nothing here outlives this BattleSim.
+    private readonly Dictionary<string, int> taken = new();
+    public IReadOnlyDictionary<string, int> UpgradesTaken => taken;
+    public IReadOnlyList<UpgradeSpec>? UpgradeOffer { get; private set; }
+    public bool ChoosingUpgrade => UpgradeOffer != null;
+    private double damageBonus, moveBonus, cooldownCut, knockBonus, armorCut;
+    public int Stacks(string upgrade) => taken.TryGetValue(upgrade, out int n) ? n : 0;
+    // Multipliers the upgrades give (1 without any). Cuts never go below 30 % of the original.
+    public double DamageFactor => 1 + damageBonus;
+    public double MoveFactor => 1 + moveBonus;
+    public double CooldownFactor => Math.Max(0.3, 1 - cooldownCut);
+    public double ArmorFactor => Math.Max(0.3, 1 - armorCut);
+    public double KnockBonus => knockBonus;
     public bool IsBossWave(int wave)
     {
         if (wave < 1 || wave > WaveCount) return false;
@@ -394,6 +428,7 @@ public sealed class BattleSim
         Stage = stage;
         WavePlan = stage?.Waves is { Length: > 0 } waves ? waves : settings.WavePlan;
         maxAlive = stage?.MaxAlive ?? settings.MaxAlive;
+        if (stage is { Survival: true, SurviveSeconds: double hold }) SurviveRemaining = hold;
         Difficulty = difficulty;
         Weapon = arms = settings.Weapon(weapon);
         level = settings.Difficulty(difficulty);
@@ -408,7 +443,7 @@ public sealed class BattleSim
     public void ClearEvents() => events.Clear();
     public double Cooldown(BattleSkill skill) => cooldowns[(int)skill];
     public static bool IsAimed(BattleSkill skill) => BattleSkills.Get(skill).Aimed;
-    public bool Ready(BattleSkill skill) => !Over && !Paused && !SkillsLocked && cooldowns[(int)skill] <= 0;
+    public bool Ready(BattleSkill skill) => !Over && !Paused && !ChoosingUpgrade && !SkillsLocked && cooldowns[(int)skill] <= 0;
 
     // The one description of the user's hold on the cat, shared by Step, the skills and the HUD.
     // A real lift cancels a chosen skill at once, so a later click cannot use it by mistake;
@@ -426,7 +461,7 @@ public sealed class BattleSim
     public CatOrder Step(double dt, double catX, bool catHeld, bool lifted = false)
     {
         SetCatState(catHeld, lifted);
-        if (Paused || !double.IsFinite(dt) || dt <= 0 || !double.IsFinite(catX)) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
+        if (Paused || ChoosingUpgrade || !double.IsFinite(dt) || dt <= 0 || !double.IsFinite(catX)) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
         dt = Math.Min(dt, 0.1);
         Time += dt;
         StepEffects(dt);
@@ -460,8 +495,14 @@ public sealed class BattleSim
         StepBombs(dt);
         StepSlimes(dt, catX, catHeld);
         if (Over) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
-        // Holding the cat freezes the waves: no spawning, no progress.
+        // Holding the cat freezes the waves (no spawning, no progress) and a survive stage's clock.
         if (!catHeld) StepWaves(dt, catX);
+        if (!catHeld && Survival && !Over && !ChoosingUpgrade)
+        {
+            SurviveRemaining = Math.Max(0, SurviveRemaining - dt);
+            if (SurviveRemaining <= 0) Finish(BattlePhase.Won);
+        }
+        if (ChoosingUpgrade) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
         if (catHeld) { TargetId = PickTarget(catX)?.Id; return new(CatCommand.Hold); }
         return CatTurn(dt, catX);
     }
@@ -493,7 +534,7 @@ public sealed class BattleSim
             {
                 SwingTime = 0; swingHit = false; swingTargetId = target.Id; swingFacing = facing;
                 ComboSwing = LiveCombo == Settings.ComboHits - 1;
-                double cooldown = arms.AttackCooldown / (CheerRemaining > 0 ? Settings.CheerSpeed : 1);
+                double cooldown = arms.AttackCooldown * CooldownFactor / (CheerRemaining > 0 ? Settings.CheerSpeed : 1);
                 CatCooldown = Math.Max(cooldown, arms.SwingDuration);
                 events.Add(new(BattleEventKind.Swing, catX));
             }
@@ -513,7 +554,8 @@ public sealed class BattleSim
         Combo = LiveCombo + 1;
         comboClock = 0;
         bool combo = Combo >= Settings.ComboHits;
-        double damage = arms.Damage * (CheerRemaining > 0 ? Settings.CheerDamage : 1) * (combo ? Settings.ComboDamage : 1);
+        double damage = arms.Damage * DamageFactor * (CheerRemaining > 0 ? Settings.CheerDamage : 1) * (combo ? Settings.ComboDamage : 1);
+        double knock = arms.Knock + knockBonus;
         events.Add(new(combo ? BattleEventKind.ComboHit : BattleEventKind.SlimeHit, slime.X));
         AddEffect(combo ? BattleEffectKind.Combo : arms.Effect == "thud" ? BattleEffectKind.Thud : BattleEffectKind.Spark, slime.X, slime.Height / 2);
         if (combo)
@@ -521,10 +563,10 @@ public sealed class BattleSim
             // Knocked back away from the cat (heavy kinds less), but not stunned.
             Combo = 0;
             CombosLanded++;
-            slime.KnockVelocity = (slime.X < catX ? -1 : 1) * Math.Max(Settings.ComboKnock, arms.Knock) * slime.Type.PushFactor;
+            slime.KnockVelocity = (slime.X < catX ? -1 : 1) * Math.Max(Settings.ComboKnock, knock) * slime.Type.PushFactor;
         }
         // A heavy weapon knocks back on every hit (away from the cat; heavy kinds less), no stun.
-        else if (arms.Knock > 0) slime.KnockVelocity = (slime.X < catX ? -1 : 1) * arms.Knock * slime.Type.PushFactor;
+        else if (knock > 0) slime.KnockVelocity = (slime.X < catX ? -1 : 1) * knock * slime.Type.PushFactor;
         Damage(slime, damage);
     }
 
@@ -678,9 +720,10 @@ public sealed class BattleSim
             events.Add(new(BattleEventKind.Blocked, catX));
             return;
         }
-        CatHp = Math.Max(0, CatHp - slime.Damage);
+        double hurt = slime.Damage * ArmorFactor;
+        CatHp = Math.Max(0, CatHp - hurt);
         HurtFlash = Settings.HurtFlashSeconds;
-        events.Add(new(BattleEventKind.CatHurt, catX, slime.Damage));
+        events.Add(new(BattleEventKind.CatHurt, catX, hurt));
         if (CatHp <= 0) Finish(BattlePhase.Lost);
     }
 
@@ -708,7 +751,7 @@ public sealed class BattleSim
             if (PhaseRemaining > 0) return;
             Wave++;
             pending.Clear(); pendingNext = 0;
-            pending.AddRange(WavePlan[Wave - 1].Spawns());
+            pending.AddRange(WavePlan[Math.Min(Wave, WaveCount) - 1].Spawns()); // A survive stage repeats its last wave.
             Phase = BattlePhase.Fighting;
             spawnTimer = 0;
             events.Add(new(BattleEventKind.WaveStarted, catX, Wave));
@@ -720,13 +763,58 @@ public sealed class BattleSim
             spawnTimer = Settings.SpawnInterval;
         }
         if (ToSpawn > 0 || Alive > 0 || bombs.Count > 0) return;
-        if (Wave >= WaveCount) { Finish(BattlePhase.Won); return; }
+        if (Wave >= WaveCount && !Survival) { Finish(BattlePhase.Won); return; }
         Phase = BattlePhase.WaveBreak;
         PhaseRemaining = Settings.WaveBreakSeconds;
         LastHeal = Math.Max(0, Math.Min(Settings.WaveHeal, Settings.CatMaxHp - CatHp));
         CatHp += LastHeal;
         if (LastHeal > 0) AddEffect(BattleEffectKind.Number, catX, 115, -Math.Round(LastHeal));
         events.Add(new(BattleEventKind.WaveCleared, catX));
+        if (Stage?.Upgrades == true) OfferUpgrades();
+    }
+
+    // Up to three different upgrades the run can still use: not at their limit, and no healing at
+    // full HP. Fewer when fewer are left; none at all: no choice this time.
+    private void OfferUpgrades()
+    {
+        var eligible = new List<UpgradeSpec>();
+        foreach (var u in Settings.UpgradeList)
+            if ((u.MaxStacks == 0 || Stacks(u.Id) < u.MaxStacks) && !(u.Effect == "heal" && CatHp >= Settings.CatMaxHp)) eligible.Add(u);
+        for (int i = eligible.Count - 1; i > 0; i--)
+        {
+            int j = random.Next(i + 1);
+            (eligible[i], eligible[j]) = (eligible[j], eligible[i]);
+        }
+        if (eligible.Count == 0) return;
+        UpgradeOffer = eligible.Take(3).ToArray();
+        Armed = null;
+        events.Add(new(BattleEventKind.UpgradeOffered, 0, UpgradeOffer.Count));
+    }
+
+    // The user's pick: only a card on offer, only once (a second click finds no offer).
+    public bool ChooseUpgrade(string id, double catX = 0)
+    {
+        if (UpgradeOffer == null || Over) return false;
+        UpgradeSpec? pick = null;
+        foreach (var u in UpgradeOffer) if (u.Id == id) pick = u;
+        if (pick == null) return false;
+        UpgradeOffer = null;
+        taken[pick.Id] = Stacks(pick.Id) + 1;
+        switch (pick.Effect)
+        {
+            case "damage": damageBonus += pick.Amount; break;
+            case "moveSpeed": moveBonus += pick.Amount; break;
+            case "attackSpeed": cooldownCut += pick.Amount; break;
+            case "knock": knockBonus += pick.Amount; break;
+            case "armor": armorCut += pick.Amount; break;
+            case "heal":
+                double healed = Math.Min(pick.Amount, Settings.CatMaxHp - CatHp);
+                CatHp += healed;
+                if (healed > 0) AddEffect(BattleEffectKind.Number, catX, 115, -Math.Round(healed));
+                break;
+        }
+        events.Add(new(BattleEventKind.UpgradeChosen, catX));
+        return true;
     }
 
     private void Spawn(double catX, EnemyType type)
@@ -763,6 +851,7 @@ public sealed class BattleSim
     private void Finish(BattlePhase phase)
     {
         Phase = phase;
+        UpgradeOffer = null;
         PhaseRemaining = Settings.OutroSeconds;
         FightSeconds = Time;
         Armed = null;

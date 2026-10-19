@@ -52,7 +52,8 @@ public sealed partial class PetWindow
     [Flags]
     // App: the whole pet is paused (tray/menu Pause); only un-pausing the pet removes it.
     // Tutorial: the first-battle guide is open (PetWindow.BattleTutorial.cs).
-    public enum BattlePause { None = 0, User = 1, Menu = 2, Fullscreen = 4, Away = 8, App = 16, Tutorial = 32 }
+    // Upgrade: an Adventure stage waits for the user's upgrade pick (PetWindow.BattleUpgrade.cs).
+    public enum BattlePause { None = 0, User = 1, Menu = 2, Fullscreen = 4, Away = 8, App = 16, Tutorial = 32, Upgrade = 64 }
     private BattlePause battlePause;
     public BattlePause BattlePauseReasons => battlePause;
     public bool BattleCatAway => (battlePause & BattlePause.Away) != 0;
@@ -254,6 +255,7 @@ public sealed partial class PetWindow
     {
         if (battle == null) return;
         battle = null;
+        CloseBattleUpgrade();
         battlePause = BattlePause.None;
         battleFieldWindow?.Close(); battleHudWindow?.Close();
         battleFieldWindow = battleHudWindow = null;
@@ -371,11 +373,14 @@ public sealed partial class PetWindow
             };
             var result = new BattleSummary(won, battle.Defeated, battle.FightSeconds, battle.CatHp, battle.Settings.CatMaxHp, battle.BossDefeated,
                 battle.DefeatedBoss?.Name(English), battle.Difficulty, news, battle.Weapon.Id, WeaponName(battle.Weapon), battleCustomData, battle.Weapon.Style,
-                battle.Stage, outcome, !battleCustomData);
+                battle.Stage, outcome, !battleCustomData, UpgradeSummary(battle));
             EndBattle();
             ShowBattleSummary(result);
             return;
         }
+        TickBattleUpgrade();
+        // Quick feet: this run's running speed.
+        pet.MoveScale = battle.Settings.CatRunScale * battle.MoveFactor;
         pet.SwordSwing = battle.SwingProgress;
         pet.SwordCombo = battle.ComboSwing;
         pet.BattleHurt = battle.HurtFlash;

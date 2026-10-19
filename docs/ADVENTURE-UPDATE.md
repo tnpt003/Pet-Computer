@@ -1,7 +1,7 @@
 # Adventure Update — Chương 1: Cuộc xâm nhập của Slime
 
 Ngày thống nhất hướng: 2026-10-20 (Asia/Saigon).
-Trạng thái (cập nhật 2026-10-20): **mốc 1 (inspect/thiết kế) và mốc 2 (lát cắt chơi được) đã làm**, có test tự động; chưa chơi thử thật. Mốc 3–5 chưa làm. Chương 1 hiện có đủ 5 màn nhưng đều là "dọn đợt" với quái sẵn có (Cầm cự chưa có sinh tồn, Cắt viện trợ chưa có quái hồi máu, chưa có thẻ nâng cấp và phần thưởng); chưa phải bản cập nhật hoàn chỉnh.
+Trạng thái (cập nhật 2026-10-20): **mốc 1, 2 và 3 đã làm** (bản đồ/màn/tiến trình; thẻ nâng cấp giữa các đợt + màn Cầm cự sinh tồn 75 s), có test tự động; chưa chơi thử thật. Mốc 4–5 chưa làm: Cắt viện trợ chưa có quái hồi máu, boss chưa thêm pha, chưa có phần thưởng cosmetic; chưa phải bản cập nhật hoàn chỉnh.
 
 ### Ánh xạ thiết kế → code (mốc 1–2)
 | Khái niệm | Code |
@@ -13,6 +13,8 @@ Trạng thái (cập nhật 2026-10-20): **mốc 1 (inspect/thiết kế) và m�
 | BattleSim | `BattleSim(..., stage)`: chỉ lấy đợt + maxAlive của màn; trận tự do không đổi |
 | Map / Preparing / Fighting / Result | `PetWindow.Adventure.cs` (bản đồ), bảng chuẩn bị có `prepStage`, `battle.Stage`, bảng kết quả theo màn |
 | Dữ liệu custom | chơi được, không lưu tiến trình/kỷ lục (ranked = false) |
+| ChoosingUpgrade + modifier runtime (mốc 3) | `BattleSim.UpgradeOffer` / `ChooseUpgrade`, hệ số trong chính BattleSim; `BattlePause.Upgrade`; cửa sổ `PetWindow.BattleUpgrade.cs`; dữ liệu `UpgradeSpec` (battle.json `upgrades`) |
+| Objective sinh tồn (mốc 3) | `StageSpec.Objective = "survive"`, `SurviveSeconds`; `BattleSim.SurviveRemaining` (dừng khi bế mèo) |
 
 ## Mục tiêu bản cập nhật
 

@@ -11,7 +11,7 @@ internal static class AdventureTests
         var campaign = data.Campaign;
         check(campaign is { Chapters.Length: 1 } && campaign.Chapters[0].Stages.Length == 5, "Built-in battle.json has Adventure chapter 1 with 5 stages");
         var stages = campaign!.Chapters[0].Stages;
-        check(stages.Select(s => s.Id).Distinct().Count() == 5 && stages.All(s => s.Objective == "clear" && s.Waves.Length > 0 && s.GoalVi.Length > 0 && s.GoalEn.Length > 0),
+        check(stages.Select(s => s.Id).Distinct().Count() == 5 && stages.All(s => (s.Objective == "clear" || s.Survival) && s.Waves.Length > 0 && s.GoalVi.Length > 0 && s.GoalEn.Length > 0),
             "Every stage has its own id, a goal in both languages and waves");
         check(stages[^1].Waves.Any(w => w.Groups.Any(g => data.Enemy(g.Enemy).Boss)), "The last stage is the Slime King's");
 

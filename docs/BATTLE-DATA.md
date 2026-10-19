@@ -185,3 +185,27 @@ Từ 2026-10-20 battle.json có khóa tùy chọn `campaign`: các chương, m�
 - Chơi Phiêu lưu khi đang dùng battle.json tùy chỉnh vẫn được, nhưng **không lưu tiến trình và kỷ lục**. Như vậy file tùy chỉnh không thể mở màn hay ghi đè thành tích của dữ liệu gốc.
 
 Tiến trình nằm ở `%LOCALAPPDATA%\DesktopPet\adventure-progress.json` (`Version` 1): màn đã thắng, kỷ lục theo `màn|r<rulesVersion>|vũ khí|độ khó`, các lượt đã tính (chống tính hai lần). Mỗi lần lưu, file cũ được giữ thành `.bak`. Kỷ lục Phiêu lưu tách hẳn khỏi battle-records.json của trận tự do.
+
+## Nâng cấp giữa các đợt (`upgrades`) và mục tiêu sinh tồn
+
+Màn có `"upgrades": true` sẽ cho chọn thẻ sau mỗi đợt đã dọn (khi còn đợt sau). Danh sách thẻ nằm ở `upgrades`, gộp theo `id` giống `enemies`/`weapons`:
+
+```jsonc
+"upgrades": [
+  { "id": "sharp", "nameVi": "Sắc bén", "nameEn": "Sharp edge", "descVi": "+20% sát thương", "descEn": "+20% damage",
+    "effect": "damage", "amount": 0.2, "maxStacks": 3 }
+]
+```
+
+| effect | amount | Ý nghĩa |
+| --- | --- | --- |
+| `damage` | 0.01–2 (phần) | sát thương vũ khí × (1 + tổng) |
+| `moveSpeed` | 0.01–1 | tốc độ chạy × (1 + tổng) |
+| `attackSpeed` | 0.01–0.5 | thời gian giữa hai nhát × (1 − tổng), không dưới 30% |
+| `knock` | 1–500 (DIP/s) | cộng thêm vào lực đẩy lùi mỗi nhát |
+| `heal` | 1–1000 (HP) | hồi ngay; không được đưa ra khi HP đầy |
+| `armor` | 0.01–0.5 | sát thương nhận vào × (1 − tổng), không dưới 30% |
+
+`maxStacks` 0–10 (0 là không giới hạn). Tên tối đa 32 ký tự, mô tả tối đa 80. Effect lạ, amount ngoài khoảng, id trùng hoặc danh sách rỗng đều làm cả file bị bỏ. Nâng cấp chỉ có hiệu lực trong lượt đang chơi.
+
+Màn sinh tồn: `"objective": "survive", "surviveSeconds": 10–600`. Các đợt ra theo thứ tự, hết đợt thì đợt cuối lặp lại cho tới hết giờ. Đồng hồ dừng khi mèo đang được cầm. `surviveSeconds` trên màn "clear" là lỗi.

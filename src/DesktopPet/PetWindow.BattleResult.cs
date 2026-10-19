@@ -78,7 +78,7 @@ public sealed partial class PetWindow
     // until the user chooses (a fullscreen app, the pet being brought back or Exit still close it).
     public readonly record struct BattleSummary(bool Won, int Defeated, double Seconds, double Hp, double MaxHp, bool Boss = false, string? BossName = null,
         BattleDifficulty Difficulty = BattleDifficulty.Normal, BattleRecordNews News = default, string Weapon = BattleWeapon.Sword, string WeaponLabel = "",
-        bool Custom = false, string WeaponStyle = "sword", StageSpec? Stage = null, AdventureOutcome Outcome = default, bool Ranked = true);
+        bool Custom = false, string WeaponStyle = "sword", StageSpec? Stage = null, AdventureOutcome Outcome = default, bool Ranked = true, string Upgrades = "");
     private static readonly Brush RecordGold = PetUi.Frozen(Color.FromRgb(0xFF, 0xD3, 0x5C));
     private static readonly Brush ResultMain = PetUi.Frozen(Color.FromRgb(0x3E, 0x7B, 0xE0));
     private static string Clock(double seconds)

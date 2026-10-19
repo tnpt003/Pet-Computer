@@ -114,8 +114,24 @@
     { "groups": [ { "enemy": "king", "count": 1 } ] }
   ],
 
+  // Adventure upgrades: after a cleared wave (when another follows) a stage with "upgrades": true
+  // offers up to 3 of these; the user takes one for the rest of that run only. effect: damage,
+  // moveSpeed, attackSpeed (less time between swings) and armor (less damage taken) take a fraction
+  // (0.2 = 20 %); knock: extra knock-back on every hit (DIPs/s); heal: HP at once (never offered at
+  // full HP). maxStacks: how often one run may take it (0 = no limit).
+  "upgrades": [
+    { "id": "sharp", "nameVi": "Sắc bén", "nameEn": "Sharp edge", "descVi": "+20% sát thương", "descEn": "+20% damage", "effect": "damage", "amount": 0.2, "maxStacks": 3 },
+    { "id": "quick_feet", "nameVi": "Nhanh chân", "nameEn": "Quick feet", "descVi": "+15% tốc độ chạy", "descEn": "+15% running speed", "effect": "moveSpeed", "amount": 0.15, "maxStacks": 2 },
+    { "id": "fast_paws", "nameVi": "Ra đòn nhanh", "nameEn": "Fast paws", "descVi": "−12% thời gian hồi đòn", "descEn": "−12% time between swings", "effect": "attackSpeed", "amount": 0.12, "maxStacks": 3 },
+    { "id": "heavy_push", "nameVi": "Đẩy mạnh", "nameEn": "Heavy push", "descVi": "Mỗi nhát đẩy slime lùi thêm", "descEn": "Every hit knocks slimes further", "effect": "knock", "amount": 80, "maxStacks": 2 },
+    { "id": "grilled_fish", "nameVi": "Cá nướng", "nameEn": "Grilled fish", "descVi": "Hồi ngay 30 HP", "descEn": "Get 30 HP back now", "effect": "heal", "amount": 30, "maxStacks": 0 },
+    { "id": "thick_fur", "nameVi": "Lông dày", "nameEn": "Thick fur", "descVi": "−15% sát thương nhận vào", "descEn": "−15% damage taken", "effect": "armor", "amount": 0.15, "maxStacks": 2 }
+  ],
+
   // Adventure: chapters of stages played in order (winning a stage opens the next one). Stage ids
-  // are stable: saved progress uses them. objective: "clear" (defeat every wave). maxAlive: enemies
+  // are stable: saved progress uses them. objective: "clear" (defeat every wave) or "survive" (stay
+  // alive surviveSeconds; the last wave comes again while time is left). upgrades: offer upgrade
+  // cards between waves. maxAlive: enemies
   // on the floor at once (default: the battle's). rulesVersion: raise it when a stage changes so much
   // that its old records should not be compared. See docs/BATTLE-DATA.md.
   "campaign": {
@@ -134,8 +150,9 @@
           },
           {
             "id": "c1_break_through", "nameVi": "Giải vây", "nameEn": "Break through",
-            "goalVi": "Quái hỗn hợp: dùng kỹ năng và kéo mèo ra khi slime gồng đòn.", "goalEn": "Mixed slimes: use skills and lift the cat when a slime winds up.",
-            "objective": "clear",
+            "goalVi": "Quái hỗn hợp: dùng kỹ năng, kéo mèo ra khi slime gồng đòn, chọn nâng cấp giữa các đợt.",
+            "goalEn": "Mixed slimes: use skills, lift the cat when a slime winds up, pick upgrades between waves.",
+            "objective": "clear", "upgrades": true, "rulesVersion": 2,
             "waves": [
               { "groups": [ { "enemy": "slime", "count": 2 }, { "enemy": "runner", "count": 1 } ] },
               { "groups": [ { "enemy": "runner", "count": 2 }, { "enemy": "slime", "count": 2 } ] },
@@ -144,18 +161,19 @@
           },
           {
             "id": "c1_hold_on", "nameVi": "Cầm cự", "nameEn": "Hold on",
-            "goalVi": "Đợt quái dày: biết lúc đánh và lúc giữ máu.", "goalEn": "Crowded waves: know when to attack and when to save HP.",
-            "objective": "clear",
+            "goalVi": "Sống sót 75 giây: biết lúc đánh và lúc giữ máu. Bế mèo thì đồng hồ dừng.",
+            "goalEn": "Survive 75 seconds: know when to attack and when to save HP. Carrying the cat stops the clock.",
+            "objective": "survive", "surviveSeconds": 75, "upgrades": true, "rulesVersion": 2,
             "waves": [
-              { "groups": [ { "enemy": "slime", "count": 3 }, { "enemy": "runner", "count": 2 } ] },
-              { "groups": [ { "enemy": "rock", "count": 1 }, { "enemy": "runner", "count": 3 } ] },
-              { "groups": [ { "enemy": "slime", "count": 4 }, { "enemy": "rock", "count": 1 } ] }
+              { "groups": [ { "enemy": "slime", "count": 3 }, { "enemy": "runner", "count": 1 } ] },
+              { "groups": [ { "enemy": "rock", "count": 1 }, { "enemy": "runner", "count": 2 } ] },
+              { "groups": [ { "enemy": "slime", "count": 3 }, { "enemy": "runner", "count": 2 } ] }
             ]
           },
           {
             "id": "c1_cut_support", "nameVi": "Cắt viện trợ", "nameEn": "Cut the support",
             "goalVi": "Chọn mục tiêu đáng hạ trước.", "goalEn": "Choose which enemy to take down first.",
-            "objective": "clear",
+            "objective": "clear", "upgrades": true, "rulesVersion": 2,
             "waves": [
               { "groups": [ { "enemy": "rock", "count": 1 }, { "enemy": "slime", "count": 2 } ] },
               { "groups": [ { "enemy": "runner", "count": 3 }, { "enemy": "rock", "count": 1 } ] },
@@ -165,7 +183,7 @@
           {
             "id": "c1_slime_king", "nameVi": "Vua Slime", "nameEn": "The Slime King",
             "goalVi": "Trận cuối chương: hạ Vua Slime.", "goalEn": "The chapter's last battle: defeat the Slime King.",
-            "objective": "clear",
+            "objective": "clear", "upgrades": true, "rulesVersion": 2,
             "waves": [
               { "groups": [ { "enemy": "slime", "count": 2 }, { "enemy": "runner", "count": 2 } ] },
               { "groups": [ { "enemy": "king", "count": 1 } ] }

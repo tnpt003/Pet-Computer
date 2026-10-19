@@ -99,14 +99,37 @@ public sealed class StageSpec
     // One line about what the stage teaches or asks, shown on the map and the setup panel.
     public string GoalVi { get; init; } = "";
     public string GoalEn { get; init; } = "";
-    // "clear": defeat every wave.
+    // "clear": defeat every wave. "survive": stay alive SurviveSeconds (the last wave comes again
+    // while time is left; the clock stops while the cat is in the user's hands).
     public string Objective { get; init; } = "clear";
+    public double? SurviveSeconds { get; init; }
+    [JsonIgnore] public bool Survival => Objective == "survive";
+    // Between waves the user picks one of up to three upgrades (battle.json "upgrades") for this run.
+    public bool Upgrades { get; init; }
     public int RulesVersion { get; init; } = 1;
     // Enemies on the floor at once (unset: the battle's maxAlive).
     public int? MaxAlive { get; init; }
     public WaveSpec[] Waves { get; init; } = Array.Empty<WaveSpec>();
     public string Name(bool english) => english ? NameEn : NameVi;
     public string Goal(bool english) => english ? GoalEn : GoalVi;
+}
+
+// An upgrade offered between the waves of an Adventure stage: it lasts for that run only (a new
+// run, stage or battle starts without it). Effect is one the code knows (UpgradeEffects); Amount
+// is a fraction for damage/moveSpeed/attackSpeed/armor (0.2 = 20 %), DIPs/s for knock, HP for heal.
+// MaxStacks: how often one run may take it (0 = no limit). Definitions are shared and never changed.
+public sealed class UpgradeSpec
+{
+    public string Id { get; init; } = "";
+    public string NameVi { get; init; } = "";
+    public string NameEn { get; init; } = "";
+    public string DescVi { get; init; } = "";
+    public string DescEn { get; init; } = "";
+    public string Effect { get; init; } = "damage";
+    public double Amount { get; init; }
+    public int MaxStacks { get; init; }
+    public string Name(bool english) => english ? NameEn : NameVi;
+    public string Describe(bool english) => english ? DescEn : DescVi;
 }
 
 // Assets/battle.json (embedded) is the built-in battle: its numbers, weapons, enemy kinds and
@@ -192,7 +215,8 @@ public static class BattleData
             string? existing = Key(target, key);
             var current = existing != null ? target[existing] : null;
             if (value is JsonObject part && current is JsonObject whole) { Merge(whole, part, path + key + "."); continue; }
-            bool byId = key.Equals("enemies", StringComparison.OrdinalIgnoreCase) || key.Equals("weapons", StringComparison.OrdinalIgnoreCase);
+            bool byId = key.Equals("enemies", StringComparison.OrdinalIgnoreCase) || key.Equals("weapons", StringComparison.OrdinalIgnoreCase) ||
+                key.Equals("upgrades", StringComparison.OrdinalIgnoreCase);
             if (byId && value is JsonArray entries && current is JsonArray list) { MergeById(list, entries, path + key); continue; }
             if (existing != null) target.Remove(existing);
             target[key] = value?.DeepClone();
@@ -334,10 +358,30 @@ public static class BattleData
             }
         }
         Waves(s.WavePlan, "waves");
+        if (s.Upgrades is { Length: 0 }) throw new InvalidDataException("upgrades must list at least one upgrade");
+        var upgradeIds = new HashSet<string>();
+        foreach (var u in s.UpgradeList)
+        {
+            if (u == null) throw new InvalidDataException("upgrades has an empty entry");
+            string at = $"upgrades[{(string.IsNullOrEmpty(u.Id) ? "?" : u.Id)}]";
+            Id(u.Id, at + ".id");
+            if (!upgradeIds.Add(u.Id)) throw new InvalidDataException($"upgrade id \"{u.Id}\" is used twice");
+            Text(u.NameVi, at + ".nameVi"); Text(u.NameEn, at + ".nameEn");
+            if (u.DescVi == null || u.DescEn == null || u.DescVi.Length > 80 || u.DescEn.Length > 80) throw new InvalidDataException($"{at} descriptions must be at most 80 characters");
+            if (!UpgradeLimits.TryGetValue(u.Effect ?? "", out var limit)) throw new InvalidDataException($"{at}.effect must be one of: {string.Join(", ", UpgradeLimits.Keys)}");
+            Within(u.Amount, limit.Min, limit.Max, at + ".amount");
+            if (u.MaxStacks is < 0 or > 10) throw new InvalidDataException($"{at}.maxStacks must be 0–10 (0: no limit)");
+        }
         if (s.Campaign is CampaignSpec campaign) ValidateCampaign(campaign, Waves, Id, Text);
     }
 
-    public static readonly string[] StageObjectives = { "clear" };
+    public static readonly string[] StageObjectives = { "clear", "survive" };
+    // What an upgrade can do, and its amount's range (fractions, DIPs/s or HP).
+    public static readonly Dictionary<string, (double Min, double Max)> UpgradeLimits = new()
+    {
+        ["damage"] = (0.01, 2), ["moveSpeed"] = (0.01, 1), ["attackSpeed"] = (0.01, 0.5),
+        ["knock"] = (1, 500), ["heal"] = (1, 1000), ["armor"] = (0.01, 0.5)
+    };
 
     private static void ValidateCampaign(CampaignSpec campaign, Action<IReadOnlyList<WaveSpec>?, string> waves, Action<string?, string> id, Action<string?, string> text)
     {
@@ -365,6 +409,8 @@ public static class BattleData
                 if (Array.IndexOf(StageObjectives, stage.Objective) < 0) throw new InvalidDataException($"{where}.objective must be one of: {string.Join(", ", StageObjectives)}");
                 if (stage.RulesVersion is < 1 or > 1000) throw new InvalidDataException($"{where}.rulesVersion must be 1–1000");
                 if (stage.MaxAlive is int alive && alive is < 1 or > 10) throw new InvalidDataException($"{where}.maxAlive must be 1–10");
+                if (stage.Survival && stage.SurviveSeconds is not (>= 10 and <= 600)) throw new InvalidDataException($"{where}.surviveSeconds must be 10–600 for a survive stage");
+                if (!stage.Survival && stage.SurviveSeconds != null) throw new InvalidDataException($"{where}.surviveSeconds is only for a survive stage");
                 waves(stage.Waves, where + ".waves");
             }
         }

@@ -18,8 +18,26 @@ namespace DesktopPet;
 // behavior, AI commands, games, sleep or automatic emotions.
 public sealed partial class PetWindow
 {
-    // From Assets/battle.json (built-in numbers if the file is broken); tests may replace it.
-    public BattleSettings BattleTuning { get; set; } = BattleData.Settings;
+    // The battle data for the next battle: Assets/battle.json with the user's battle.json over it
+    // (BattleData), read again each time the setup panel opens; a running battle keeps the one it
+    // started with. Tests may set it: then exactly that is used and no file is read.
+    private BattleSettings battleTuning = BattleData.Settings;
+    private bool battleTuningFixed;
+    public BattleSettings BattleTuning { get => battleTuning; set { battleTuning = value; battleTuningFixed = true; BattleDataError = null; } }
+    // The user's battle.json (null: none is read). Only the real pet reads it; UI checks may set it.
+    public string? BattleDataFile { get; set; }
+    // Why the user's file was not used (shown on the setup panel), and whether it is in use.
+    public string? BattleDataError { get; private set; }
+    public bool BattleDataCustom { get; private set; }
+
+    private void ReloadBattleData()
+    {
+        if (battleTuningFixed) return;
+        var load = BattleData.Load(BattleDataFile);
+        battleTuning = load.Settings;
+        BattleDataError = load.Error;
+        BattleDataCustom = load.Custom;
+    }
     private BattleSim? battle;
     private Area battleArea;
     // The battle stays on the monitor it started on (its work area and DPI scale). If the cat is
@@ -83,34 +101,14 @@ public sealed partial class PetWindow
     private void InitializeBattle(ContextMenu menu)
     {
         var root = PetUi.MenuItem(PetUi.Battle, Brushes.SeaGreen);
+        // Starting opens the setup panel (weapon, difficulty, guide, Ready); nothing else is chosen here.
         var start = new MenuItem();
-        start.Click += (_, _) => { if (StartBattle() is string reason) ShowBattleNotice(reason); };
+        start.Click += (_, _) => { if (OpenBattlePrep() is string reason) ShowBattleNotice(reason); };
         var pause = new MenuItem();
         pause.Click += (_, _) => { if (battle != null) SetBattlePaused(!BattleUserPaused); };
         var end = new MenuItem();
         end.Click += (_, _) => EndBattle();
-        // Difficulty for the next battle (remembered); a running battle keeps its own.
-        var difficulty = new MenuItem();
-        var levels = new (BattleDifficulty Level, MenuItem Item)[] { (BattleDifficulty.Easy, new()), (BattleDifficulty.Normal, new()), (BattleDifficulty.Hard, new()) };
-        foreach (var (level, item) in levels)
-        {
-            item.IsCheckable = true;
-            item.Click += (_, _) => SetBattleDifficulty(level);
-            difficulty.Items.Add(item);
-        }
-        // Weapon for the next battle (remembered); a running battle keeps its own.
-        var weapon = new MenuItem();
-        var arms = new (BattleWeapon Weapon, MenuItem Item)[] { (BattleWeapon.Sword, new()), (BattleWeapon.Hammer, new()) };
-        foreach (var (choice, item) in arms)
-        {
-            item.IsCheckable = true;
-            item.Click += (_, _) => SetBattleWeapon(choice);
-            weapon.Items.Add(item);
-        }
-        // The first-battle guide, again (with or without a battle).
-        var guide = new MenuItem();
-        guide.Click += (_, _) => ShowBattleTutorial();
-        root.Items.Add(start); root.Items.Add(difficulty); root.Items.Add(weapon); root.Items.Add(pause); root.Items.Add(end); root.Items.Add(guide);
+        root.Items.Add(start); root.Items.Add(pause); root.Items.Add(end);
         menu.Items.Add(root);
         menu.Opened += (_, _) =>
         {
@@ -119,7 +117,7 @@ public sealed partial class PetWindow
             if (battle != null && menu.IsOpen) SetBattlePause(BattlePause.Menu, true);
             bool userPaused = battle != null && BattleUserPaused;
             root.Header = L("Chế độ chiến đấu", "Battle Mode");
-            string? refusal = battle == null ? BattleRefusal() : null;
+            string? refusal = battle == null ? BattlePrepRefusal() : null;
             start.Header = L("Bắt đầu trận", "Start battle") + (refusal != null ? $" ({refusal.TrimEnd('.')})" : "");
             start.IsEnabled = refusal == null;
             start.Visibility = battle == null ? Visibility.Visible : Visibility.Collapsed;
@@ -127,21 +125,6 @@ public sealed partial class PetWindow
             pause.IsEnabled = !(userPaused && context.Fullscreen);
             pause.Visibility = end.Visibility = battle != null ? Visibility.Visible : Visibility.Collapsed;
             end.Header = L("Kết thúc trận", "End battle");
-            guide.Header = L("Hướng dẫn", "How to play");
-            difficulty.Header = L("Độ khó: ", "Difficulty: ") + DifficultyName(BattleDifficultyChoice);
-            difficulty.IsEnabled = battle == null;
-            weapon.Header = L("Vũ khí: ", "Weapon: ") + WeaponName(BattleWeaponChoice);
-            weapon.IsEnabled = battle == null;
-            foreach (var (choice, item) in arms)
-            {
-                item.Header = WeaponName(choice) + " — " + WeaponHint(choice);
-                item.IsChecked = choice == BattleWeaponChoice;
-            }
-            foreach (var (level, item) in levels)
-            {
-                item.Header = DifficultyName(level);
-                item.IsChecked = level == BattleDifficultyChoice;
-            }
         };
         menu.Closed += (_, _) => SetBattlePause(BattlePause.Menu, false);
     }
@@ -170,19 +153,22 @@ public sealed partial class PetWindow
         SavePreferences();
     }
 
-    public BattleWeapon BattleWeaponChoice =>
-        Enum.TryParse<BattleWeapon>(preferences.BattleWeapon, out var weapon) && Enum.IsDefined(weapon) ? weapon : BattleWeapon.Sword;
+    // The remembered weapon's id in the current data. An old or removed id (older preferences
+    // said "Sword"/"Hammer"; ids ignore case) falls back to the data's first weapon.
+    public string BattleWeaponChoice => BattleTuning.Weapon(preferences.BattleWeapon).Id;
 
-    public void SetBattleWeapon(BattleWeapon weapon)
+    // Only a weapon the current data has is remembered.
+    public bool SetBattleWeapon(string weapon)
     {
-        if (weapon == BattleWeaponChoice) return;
-        preferences.BattleWeapon = weapon.ToString();
+        if (BattleTuning.FindWeapon(weapon) is not WeaponSpec found) return false;
+        if (preferences.BattleWeapon == found.Id) return true;
+        preferences.BattleWeapon = found.Id;
         SavePreferences();
+        return true;
     }
 
-    private string WeaponName(BattleWeapon weapon) => weapon == BattleWeapon.Hammer ? L("Búa", "Hammer") : L("Kiếm", "Sword");
-    private string WeaponHint(BattleWeapon weapon) => weapon == BattleWeapon.Hammer
-        ? L("chậm, mạnh, đẩy lùi mỗi nhát", "slow, heavy, knocks back every hit") : L("nhanh, dễ nối combo", "fast, easy combos");
+    private bool English => preferences.Language == "en";
+    private string WeaponName(WeaponSpec weapon) => weapon.Name(English);
 
     private string DifficultyName(BattleDifficulty level) => level switch
     {
@@ -215,10 +201,12 @@ public sealed partial class PetWindow
         return null;
     }
 
-    // Null on success, otherwise why the battle cannot start (nothing changes then).
+    // Starts the fight at once with the remembered weapon and difficulty (the setup panel's Ready
+    // remembers its choice first). Null on success, otherwise why it cannot start (nothing changes then).
     public string? StartBattle()
     {
         if (BattleRefusal() is string reason) return reason;
+        CloseBattlePrep();
         CloseBattleSummary();
         CancelFeatureActivity();
         queuedCommand = null;
@@ -231,17 +219,15 @@ public sealed partial class PetWindow
         battleMonitorClock = 0;
         battle = new BattleSim(BattleTuning, battleArea.Left, battleArea.Right, difficulty: BattleDifficultyChoice, weapon: BattleWeaponChoice);
         pet.SwordOut = true;
-        pet.Hammer = battle.Weapon == BattleWeapon.Hammer;
+        pet.Hammer = battle.Weapon.Style == "hammer";
         pet.MoveScale = battle.Settings.CatRunScale;
         pet.Emotions.SetSuspended(true);
         pet.Action = PetAction.Idle;
         pet.VX = pet.SmoothedWalkVelocity = 0;
         behavior.Reset(pet);
         ShowBattleWindows();
-        // The guide opens by itself once, before the first battle gets going (never in measuring runs).
-        // A guide already open (from the menu) holds the new battle too.
+        // The guide belongs to the setup panel; one still open would hold the battle.
         if (BattleTutorialOpen) SetBattlePause(BattlePause.Tutorial, true);
-        else if (!preferences.BattleTutorialSeen && battleAutostart == null) ShowBattleTutorial();
         System.Diagnostics.Trace.WriteLine("Battle started.");
         PlayPetSound("excited");
         return null;
@@ -367,7 +353,7 @@ public sealed partial class PetWindow
                 Combos = BattleReport.Combos + battle.CombosLanded, Records = BattleReport.Records + (news.Any ? 1 : 0)
             };
             var result = new BattleSummary(won, battle.Defeated, battle.FightSeconds, battle.CatHp, battle.Settings.CatMaxHp, battle.BossDefeated,
-                battle.DefeatedBoss?.Name(preferences.Language == "en"), battle.Difficulty, news, battle.Weapon);
+                battle.DefeatedBoss?.Name(English), battle.Difficulty, news, battle.Weapon.Id, WeaponName(battle.Weapon));
             EndBattle();
             ShowBattleSummary(result);
             return;
@@ -573,7 +559,7 @@ public sealed partial class PetWindow
         var portrait = new PetRenderer(new PetModel { Action = PetAction.Idle, Grounded = true, Facing = 1, AnimationTime = 1, ActionTime = 1 })
             { Coat = renderer.Coat, Accessory = renderer.Accessory };
         // The weapon of this battle next to the cat's name.
-        battleHud = new BattleHud($"{preferences.Name} · {WeaponName(battle?.Weapon ?? BattleWeapon.Sword)}", portrait, L);
+        battleHud = new BattleHud($"{preferences.Name} · {(battle != null ? WeaponName(battle.Weapon) : "")}", portrait, L);
         battleHud.SkillClicked += skill => UseBattleSkill(skill);
         battleHud.PauseClicked += () => { if (battle != null) SetBattlePaused(!BattleUserPaused); };
         battleHud.EndClicked += EndBattle;

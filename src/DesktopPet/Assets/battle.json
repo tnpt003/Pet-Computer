@@ -1,13 +1,10 @@
 {
   // Battle Mode data (DIPs and seconds). Embedded in the exe; a broken file is logged and
   // the built-in battle is used (same numbers; only plain slimes before the King).
-  // Misspelt keys are rejected.
+  // Misspelt keys are rejected. To change it without rebuilding, put a battle.json with only
+  // your changes in %LOCALAPPDATA%\DesktopPet (see docs/BATTLE-DATA.md).
+  "schemaVersion": 1,
   "catMaxHp": 100,
-  "catDamage": 25,
-  "catAttackRange": 76,
-  "catAttackCooldown": 0.75,
-  "catSwingDuration": 0.36,
-  "catHitTime": 0.16,
   // The cat runs during a battle (walking speed and acceleration × this).
   "catRunScale": 1.8,
   // Combo: this many hits in a row (each within comboWindow s of the last) make the last one
@@ -16,9 +13,22 @@
   "comboWindow": 1.6,
   "comboDamage": 2,
   "comboKnock": 300,
-  // The cat's second weapon (menu Battle Mode → Weapon): slow and heavy, every hit knocks the
-  // slime back (DIPs/s × its pushFactor, no stun). The sword is the cat* numbers above.
-  "hammer": { "damage": 45, "range": 72, "attackCooldown": 1.35, "swingDuration": 0.6, "hitTime": 0.34, "knock": 150 },
+  // The cat's weapons, in the order the battle setup panel shows them (the first one is the
+  // default). style: the drawing ("sword" or "hammer"). range: centre-to-centre reach.
+  // attackCooldown: from one swing to the next; hitTime: the one moment in the swing that hits.
+  // knock: every hit sends the slime back (DIPs/s × its pushFactor, no stun); 0 = only combos do.
+  "weapons": [
+    {
+      "id": "sword", "nameVi": "Kiếm", "nameEn": "Sword", "style": "sword",
+      "hintVi": "nhanh, dễ nối combo", "hintEn": "fast, easy combos",
+      "damage": 25, "range": 76, "attackCooldown": 0.75, "swingDuration": 0.36, "hitTime": 0.16, "knock": 0
+    },
+    {
+      "id": "hammer", "nameVi": "Búa", "nameEn": "Hammer", "style": "hammer",
+      "hintVi": "chậm, mạnh, đẩy lùi mỗi nhát", "hintEn": "slow, heavy, knocks back every hit",
+      "damage": 45, "range": 72, "attackCooldown": 1.35, "swingDuration": 0.6, "hitTime": 0.34, "knock": 150
+    }
+  ],
 
   "slimeWidth": 46,
   "slimeHeight": 34,
@@ -60,7 +70,8 @@
   "easy": { "enemyHp": 0.75, "enemyDamage": 0.6, "enemySpeed": 0.85 },
   "hard": { "enemyHp": 1.3, "enemyDamage": 1.4, "enemySpeed": 1.15 },
 
-  // Enemy kinds. scale: size against the basic slime (0.5–2.3). boss: crown + HUD bar.
+  // Enemy kinds (family and renderer default to "slime"). scale: drawn size against the basic
+  // slime (0.5–2.3); hitScale: combat size for reach and bombs (default: scale). boss: crown + HUD bar.
   // slam: area hit with a floor warning. summonAt/enrageAt: HP fraction (0 = never).
   "enemies": [
     {

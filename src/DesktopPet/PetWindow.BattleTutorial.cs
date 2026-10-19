@@ -7,9 +7,9 @@ namespace DesktopPet;
 
 // Battle Mode's short first-battle guide: four cards (targets, skills, rescue, protection and
 // cooldowns) in a small panel that never takes focus and is used with the mouse only. It opens
-// by itself once, at the start of the first battle (preferences.BattleTutorialSeen), and again
-// from the menu (Battle Mode → How to play). While it is open during a battle the battle is
-// paused (BattlePause.Tutorial), so no timer, wave or slime attack runs behind it.
+// by itself once, with the first battle setup panel (preferences.BattleTutorialSeen), and again
+// from the panel's How to play button; Ready closes it. Should it be open during a battle, the
+// battle is paused (BattlePause.Tutorial), so no timer, wave or slime attack runs behind it.
 public sealed partial class PetWindow
 {
     private Window? battleTutorialWindow;
@@ -28,8 +28,8 @@ public sealed partial class PetWindow
         return step switch
         {
             0 => (L("Chọn mục tiêu", "Pick a target"),
-                  L("Click một slime: mèo đánh con đó trước. Không chọn thì mèo tự đánh con gần nhất. Vũ khí (kiếm nhanh hoặc búa chậm, đẩy lùi) chọn trong menu Chế độ chiến đấu → Vũ khí.",
-                    "Click a slime: the cat goes for it first. Otherwise it fights the nearest one by itself. Pick the weapon (fast sword or slow, knock-back hammer) in Battle Mode → Weapon.")),
+                  L("Click một slime: mèo đánh con đó trước. Không chọn thì mèo tự đánh con gần nhất. Vũ khí và độ khó chọn trên bảng chuẩn bị trước khi bấm Sẵn sàng.",
+                    "Click a slime: the cat goes for it first. Otherwise it fights the nearest one by itself. Pick the weapon and difficulty on the setup panel before pressing Ready.")),
             1 => (L("Kỹ năng", "Skills"),
                   L("Bấm một ô kỹ năng trên HUD. Đẩy và Bom len: bấm ô rồi click slime. Vòng quét trên ô là thời gian hồi; rê chuột lên ô để xem mô tả.",
                     "Press a skill slot on the HUD. Push and Yarn bomb: press the slot, then click a slime. The sweep on a slot is its cooldown; hover a slot for details.")),
@@ -37,8 +37,8 @@ public sealed partial class PetWindow
                   L("Slime phồng lên với dấu ! đỏ là sắp đánh: kéo mèo lên. Đang bế thì mèo không bị đánh, nhưng slime giữ đòn — thả mèo ra ngoài vòng đỏ để đòn trượt.",
                     "A slime swelling with a red ! is about to hit: drag the cat up. A carried cat cannot be hit, but the slime holds its attack — put the cat down outside the red ring to make it miss.")),
             _ => (L("Bảo vệ và hồi chiêu", "Protection and cooldowns"),
-                  L($"Thả mèo xuống được {grace} giây an toàn, tối đa 1 lần mỗi {again} giây. Khi đang bế mèo, kỹ năng tạm khóa và không hồi. Mở lại hướng dẫn: menu Chế độ chiến đấu → Hướng dẫn.",
-                    $"Putting the cat down gives {grace} s of safety, at most once every {again} s. While the cat is carried, skills wait and do not cool down. Open this again: menu Battle Mode → How to play."))
+                  L($"Thả mèo xuống được {grace} giây an toàn, tối đa 1 lần mỗi {again} giây. Khi đang bế mèo, kỹ năng tạm khóa và không hồi. Mở lại hướng dẫn: nút Hướng dẫn trên bảng chuẩn bị.",
+                    $"Putting the cat down gives {grace} s of safety, at most once every {again} s. While the cat is carried, skills wait and do not cool down. Open this again: How to play on the setup panel."))
         };
     }
 

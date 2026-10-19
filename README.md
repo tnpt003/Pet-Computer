@@ -183,7 +183,7 @@ procedural, so there are no missing asset paths or sprite-sheet setup steps.
 - **Left drag:** pick up and carry the pet, including between monitors.
 - **Release while moving:** throw it. Release after holding still to drop it.
 - **Right-click the pet:** feed, play, Battle Mode, Do now, emotions, Quiet, sounds, diary, Settings…, More, Exit.
-- **Battle Mode** (optional, off by default): the cat fights slimes with a wooden sword; click a slime to set its target, use **Push** on the small HUD, lift the cat to rescue it. Choose Easy/Normal/Hard in the menu; the result panel keeps your records per difficulty. See `docs/WINDOWS.md`.
+- **Battle Mode** (optional, off by default): Start battle opens a small setup panel (weapon, Easy/Normal/Hard, how to play); press **Ready** and the cat fights slimes; click a slime to set its target, use skills on the small HUD, lift the cat to rescue it. The result panel keeps your records per difficulty. Enemies, weapons and waves can be customized with a `battle.json` in `%LOCALAPPDATA%\DesktopPet` (see `docs/BATTLE-DATA.md`). See `docs/WINDOWS.md`.
 - **Right-click the tray icon:** pause/resume, Smart pet (AI) on/off, view AI status, Settings…, reset, or exit.
 - **Double-click the tray icon:** reset to the primary screen.
 

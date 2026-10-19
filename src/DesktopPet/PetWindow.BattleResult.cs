@@ -7,8 +7,8 @@ using System.Windows.Media;
 
 namespace DesktopPet;
 
-// Battle Mode, around the fight: the result panel after a won or lost battle (Play again /
-// Close) and the short note that says why a battle cannot start. Both never take focus.
+// Battle Mode, around the fight: the result panel after a won or lost battle (Play again opens
+// the setup panel again / Close) and the short note that says why a battle cannot start. Both never take focus.
 public sealed partial class PetWindow
 {
     private static readonly Brush HudButtonBack = PetUi.Frozen(Color.FromArgb(0x50, 255, 255, 255));
@@ -64,7 +64,7 @@ public sealed partial class PetWindow
 
     // The result after a won or lost battle: stats, Play again and Close. It closes by itself.
     public readonly record struct BattleSummary(bool Won, int Defeated, double Seconds, double Hp, double MaxHp, bool Boss = false, string? BossName = null,
-        BattleDifficulty Difficulty = BattleDifficulty.Normal, BattleRecordNews News = default, BattleWeapon Weapon = BattleWeapon.Sword);
+        BattleDifficulty Difficulty = BattleDifficulty.Normal, BattleRecordNews News = default, string Weapon = BattleWeapon.Sword, string WeaponLabel = "");
     private static readonly Brush RecordGold = PetUi.Frozen(Color.FromRgb(0xFF, 0xD3, 0x5C));
     private static string Clock(double seconds)
     {
@@ -85,7 +85,7 @@ public sealed partial class PetWindow
                 : L("Thua rồi… mèo choáng váng", "Defeated… the cat sees stars"),
             Foreground = Brushes.White, FontSize = 15, FontWeight = FontWeights.Bold };
         // Records stay per difficulty (both weapons together); the line names the weapon used.
-        string clock = Clock(result.Seconds), level = DifficultyName(result.Difficulty), arms = WeaponName(result.Weapon);
+        string clock = Clock(result.Seconds), level = DifficultyName(result.Difficulty), arms = result.WeaponLabel;
         var stats = new TextBlock { Foreground = Brushes.White, FontSize = 12.5, Margin = new Thickness(0, 4, 0, 0),
             Text = L($"{level} · {arms} · Hạ {result.Defeated} slime · {clock} · HP còn {Math.Ceiling(result.Hp)}/{result.MaxHp}",
                      $"{level} · {arms} · {result.Defeated} slime{(result.Defeated == 1 ? "" : "s")} defeated · {clock} · HP {Math.Ceiling(result.Hp)}/{result.MaxHp} left") };
@@ -104,10 +104,11 @@ public sealed partial class PetWindow
                 Text = L($"Kỷ lục ({level}): {fastest}nhiều nhất {best.MostDefeated} slime · thắng {best.Wins} lần",
                          $"Records ({level}): {fastest}most {best.MostDefeated} slime{(best.MostDefeated == 1 ? "" : "s")} · {best.Wins} win{(best.Wins == 1 ? "" : "s")}") });
         }
+        // Play again goes back to the setup panel with the same choice (weapon, difficulty).
         var (again, againText, _) = HudButton(() =>
         {
             CloseBattleSummary();
-            if (StartBattle() is string reason) ShowBattleNotice(reason);
+            if (OpenBattlePrep() is string reason) ShowBattleNotice(reason);
         });
         againText.Text = L("Chơi lại", "Play again");
         var (close, closeText, _) = HudButton(CloseBattleSummary);

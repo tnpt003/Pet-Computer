@@ -33,30 +33,35 @@ internal static class TutorialChecks
         window.Reset();
         window.BattleTuning = new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 2 }, MaxAlive = 2, SpawnInterval = 0, SlimeMaxHp = 1000, CatDamage = 0, SlimeDamage = 0 };
 
-        // The first battle opens the guide and waits for it.
+        // The first battle setup opens the guide; no battle exists behind it yet.
         prefs.BattleTutorialSeen = false;
-        check(window.StartBattle() == null && window.BattleTutorialOpen && window.BattleTutorialStep == 0 &&
-              window.BattlePauseReasons == PetWindow.BattlePause.Tutorial && Sim().Paused, "The first battle opens the guide, with the battle paused");
+        check(window.OpenBattlePrep() == null && window.BattleTutorialOpen && window.BattleTutorialStep == 0 && !window.BattleActive,
+            "The first battle setup opens the guide (no battle runs yet)");
         await Task.Delay(20);
         var guide = GuideWindow();
         long style = guide == null ? 0 : GetWindowLongPtr(new WindowInteropHelper(guide).Handle, -20).ToInt64();
         check(guide is { ShowActivated: false, ShowInTaskbar: false } && (style & 0x08000000) != 0, "The guide never takes focus and has no taskbar button");
         TickBattle(2);
-        check(Sim().Time == 0 && Sim().Wave == 0 && Sim().Slimes.Count == 0, "Nothing runs behind the guide (no timer, wave or slime)");
+        check(!window.BattleActive && window.BattlePreparing, "Nothing runs behind the guide (no battle until Ready)");
         var cards = new List<string> { window.BattleTutorialText };
         for (int i = 1; i < PetWindow.BattleTutorialSteps; i++) { window.BattleTutorialNext(); cards.Add(window.BattleTutorialText); }
         check(cards[0].StartsWith("Pick a target") && cards[1].Contains("Push") && cards[2].Contains("red ring") &&
               cards[3].Contains("1.5 s") && cards[3].Contains("every 5 s") && cards.Distinct().Count() == 4,
             $"Four cards: targets, skills, rescue (the held attack), protection and cooldowns with the battle's numbers ({string.Join(" | ", cards.Select(c => c.Split('\n')[0]))})");
         window.BattleTutorialNext();
-        check(!window.BattleTutorialOpen && prefs.BattleTutorialSeen && !Sim().Paused && GuideWindow() == null, $"Done closes it, remembers it and the battle starts ({window.BattleTutorialOpen}, {prefs.BattleTutorialSeen}, {window.BattlePauseReasons}, {GuideWindow() == null})");
+        check(!window.BattleTutorialOpen && prefs.BattleTutorialSeen && window.BattlePreparing && GuideWindow() == null,
+            $"Done closes it and remembers it; the setup panel stays ({window.BattleTutorialOpen}, {prefs.BattleTutorialSeen}, {GuideWindow() == null})");
+        window.ShowBattleTutorial();
+        check(window.BattleTutorialOpen && window.BattlePrepReady() == null && !window.BattleTutorialOpen && !Sim().Paused,
+            "Opened again from the setup panel, Ready closes it and the battle runs at once");
         TickBattle(0.3);
         check(Sim().Time > 0.2, "The battle runs normally after it");
         window.EndBattle();
-        window.StartBattle();
-        check(!window.BattleTutorialOpen && !Sim().Paused, "The next battle starts without the guide");
+        check(window.OpenBattlePrep() == null && !window.BattleTutorialOpen, "The next setup opens without the guide");
+        window.BattlePrepReady();
+        check(!window.BattleTutorialOpen && !Sim().Paused, "and the next battle starts without it");
 
-        // From the menu, mid-battle: it pauses; Skip removes only its own pause.
+        // Should it be open mid-battle, it pauses; Skip removes only its own pause.
         window.ShowBattleTutorial();
         check(window.BattleTutorialOpen && Sim().Paused && (window.BattlePauseReasons & PetWindow.BattlePause.Tutorial) != 0, "Opened again mid-battle it pauses the battle");
         window.CloseBattleTutorial(finished: true);

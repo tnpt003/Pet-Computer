@@ -11,10 +11,10 @@ internal static class BattleWeaponTests
         check(spec.Weapon(BattleWeapon.Sword) is { Damage: 25, Range: 76, AttackCooldown: 0.75, SwingDuration: 0.36, HitTime: 0.16, Knock: 0 },
             "The sword is the existing Cat* numbers (no balance change for it)");
         var sword = new BattleSim(new BattleSettings(), 0, 1600);
-        check(sword.Weapon == BattleWeapon.Sword, "Without a choice a battle uses the sword");
+        check(sword.Weapon.Id == BattleWeapon.Sword, "Without a choice a battle uses the sword");
 
         // One slime parked next to the cat, settled while the cat is held.
-        (BattleSim Sim, Slime Slime) Duel(BattleWeapon weapon, BattleSettings settings, double offset)
+        (BattleSim Sim, Slime Slime) Duel(string weapon, BattleSettings settings, double offset)
         {
             var sim = new BattleSim(settings, 0, 1600, new Random(3), weapon: weapon);
             sim.Step(dt, 800, false);
@@ -25,7 +25,7 @@ internal static class BattleWeaponTests
             return (sim, slime);
         }
         // Hits and damage per hit over 10 s against a slime kept in reach.
-        (int Hits, double PerHit, bool KnockedEveryHit) Swings(BattleWeapon weapon)
+        (int Hits, double PerHit, bool KnockedEveryHit) Swings(string weapon)
         {
             var (sim, slime) = Duel(weapon, new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 1 }, SlimeMaxHp = 100000, SlimeDamage = 0, ComboHits = 1000 }, 40);
             int hits = 0; bool knocked = true;
@@ -47,7 +47,7 @@ internal static class BattleWeaponTests
 
         // A slime winding up at the edge of its reach: the hammer's knock-back makes its hit miss;
         // the sword's hit leaves it there and the hit lands.
-        int HurtsFrom(BattleWeapon weapon)
+        int HurtsFrom(string weapon)
         {
             var (sim, slime) = Duel(weapon, new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 1 }, SlimeMaxHp = 100000, CatDamage = 25 }, 60);
             int hurts = 0;
@@ -59,7 +59,7 @@ internal static class BattleWeaponTests
 
         // Real fights (the cat walks where the battle tells it, as in the window): 30 s against one
         // enemy that never dies, and a wave of three ordinary slimes. Neither weapon is a free win.
-        (double Taken, double Dealt) Fight(BattleWeapon weapon, string enemy, BattleDifficulty level)
+        (double Taken, double Dealt) Fight(string weapon, string enemy, BattleDifficulty level)
         {
             var settings = new BattleSettings
             {
@@ -74,7 +74,7 @@ internal static class BattleWeaponTests
             for (double t = 0; t < 30; t += dt) Walk(sim, ref cat);
             return (settings.CatMaxHp - sim.CatHp, foe.MaxHp - foe.Hp);
         }
-        (double Seconds, double Taken) Wave(BattleWeapon weapon)
+        (double Seconds, double Taken) Wave(string weapon)
         {
             var sim = new BattleSim(new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 3 }, Boss = false, MaxAlive = 3, SpawnInterval = 0 }, 0, 1600, new Random(4), weapon: weapon);
             double cat = 800, t = 0;

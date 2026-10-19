@@ -1,0 +1,24 @@
+{
+  // Example: copy to %LOCALAPPDATA%\DesktopPet\battle.json, then open Battle Mode → Start battle.
+  // Only what you write here changes; everything else stays as the built-in battle.
+  // See docs/BATTLE-DATA.md for every key and its limits.
+  "schemaVersion": 1,
+
+  "enemies": [
+    {
+      // A new slime variant: data only, it uses the slime's existing moves and drawing.
+      "id": "stone_slime", "family": "slime", "renderer": "slime",
+      "nameVi": "Slime đá tảng", "nameEn": "Stone slime",
+      "maxHp": 120, "speed": 22, "damage": 14, "range": 70,
+      "windup": 1.0, "attackCooldown": 2.4, "recover": 0.5,
+      "scale": 1.35, "color": "#8F8A80", "marks": "cracks",
+      "pushFactor": 0.35, "stunFactor": 0.5
+    }
+  ]
+
+  // A new kind is not in any wave by itself. To meet it, add "waves" (this replaces all waves):
+  // "waves": [
+  //   { "groups": [ { "enemy": "slime", "count": 2 }, { "enemy": "stone_slime", "count": 1 } ] },
+  //   { "groups": [ { "enemy": "king", "count": 1 } ] }
+  // ]
+}

@@ -25,7 +25,7 @@ public sealed partial class PetWindow
 
     public bool StartLaser()
     {
-        if (laserWindow != null || !CanPlay || context.Fullscreen || BattleActive) return false; // Allowed in Quiet mode.
+        if (laserWindow != null || !CanPlay || context.Fullscreen || BattleOwnsPet) return false; // Allowed in Quiet mode.
         CancelFeatureActivity();
         Interact("toy_started"); // Counts as play for Python (boredom, play lines).
         laserChase.Reset();

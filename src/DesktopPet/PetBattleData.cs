@@ -4,18 +4,24 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 
 namespace DesktopPet;
 
-// One kind of enemy. The slime and the Slime King are built from BattleSettings' numbers;
-// Assets/battle.json lists every kind with its own numbers, so a new enemy is data only.
-// Abilities are switches: Slam (area hit with a floor warning), summon helpers below an HP
-// fraction, get angry below another. Plain data (no WPF) for the simulation and tests.
+// One kind of enemy (a definition: every slime of the kind shares it and nothing changes it in
+// a battle; each Slime keeps its own HP, place and state). The slime and the Slime King are
+// built from BattleSettings' numbers; Assets/battle.json lists every kind with its own numbers,
+// so a new variant is data only. Abilities are switches the code supports: Slam (area hit with
+// a floor warning), summon helpers below an HP fraction, get angry below another. A new kind
+// of ability (flying, shooting) needs code first. Plain data (no WPF) for the simulation and tests.
 public sealed class EnemyType
 {
     public string Id { get; init; } = "slime";
+    // What it is (all current kinds are slimes) and the drawing that shows it ("slime" only).
+    public string Family { get; init; } = "slime";
+    public string Renderer { get; init; } = "slime";
     public string NameVi { get; init; } = "Slime";
     public string NameEn { get; init; } = "Slime";
     public double MaxHp { get; init; } = 50;
@@ -28,6 +34,9 @@ public sealed class EnemyType
     public double Recover { get; init; } = 0.35;
     // Size against the basic slime (1 = SlimeWidth × SlimeHeight).
     public double Scale { get; init; } = 1;
+    // Combat size (weapon reach, bomb blast) against the basic slime; unset = Scale, as before.
+    public double? HitScale { get; init; }
+    [JsonIgnore] public double Hitbox => HitScale ?? Scale;
     public string Color { get; init; } = "#7CD36A";
     public string AngryColor { get; init; } = "#E86A6A";
     // Drawn marks that tell kinds apart at a glance: "none", "speed" (wind streaks behind it
@@ -64,27 +73,112 @@ public sealed class WaveSpec
     public IEnumerable<string> Spawns() => Groups.SelectMany(g => Enumerable.Repeat(g.Enemy, Math.Max(0, g.Count)));
 }
 
-// Assets/battle.json (embedded): the battle's numbers, enemy kinds and waves. A broken file
-// never stops the pet: it is logged and the built-in defaults (same numbers) are used.
+// Assets/battle.json (embedded) is the built-in battle: its numbers, weapons, enemy kinds and
+// waves. The user may add battle.json to the app's data folder (%LOCALAPPDATA%\DesktopPet,
+// docs/BATTLE-DATA.md) with only what it changes: it is merged over the built-in file
+// ("enemies"/"weapons" entries by id, other objects key by key, anything else replaced) and the
+// result is validated as a whole. A broken file never stops the pet and is never used in part:
+// it is logged, the built-in battle is used and the battle setup panel says why.
+public sealed record BattleDataLoad(BattleSettings Settings, bool Custom, string? Error);
+
 public static class BattleData
 {
-    private static readonly Lazy<BattleSettings> Loaded = new(Load);
+    public const int SchemaVersion = 1;
+    public static string UserFilePath => Path.Combine(PetPreferences.DataDirectory, "battle.json");
+    private static readonly Lazy<BattleSettings> Loaded = new(LoadBuiltIn);
+    // The built-in battle (the code's defaults if even the embedded file is broken).
     public static BattleSettings Settings => Loaded.Value;
 
-    private static BattleSettings Load()
+    private static string EmbeddedText()
     {
-        try
-        {
-            using var stream = typeof(BattleData).Assembly.GetManifestResourceStream("DesktopPet.battle.json")
-                ?? throw new InvalidDataException("Missing embedded battle.json");
-            return Parse(stream);
-        }
-        catch (Exception ex) when (ex is IOException or JsonException or InvalidDataException or NotSupportedException)
+        using var stream = typeof(BattleData).Assembly.GetManifestResourceStream("DesktopPet.battle.json")
+            ?? throw new InvalidDataException("Missing embedded battle.json");
+        using var reader = new StreamReader(stream);
+        return reader.ReadToEnd();
+    }
+
+    private static bool IsDataError(Exception ex) =>
+        ex is IOException or UnauthorizedAccessException or JsonException or InvalidDataException or NotSupportedException or InvalidOperationException or FormatException;
+
+    private static BattleSettings LoadBuiltIn()
+    {
+        try { return Parse(EmbeddedText()); }
+        catch (Exception ex) when (IsDataError(ex))
         {
             Trace.WriteLine($"Battle data could not be loaded, using the built-in battle: {ex.Message}");
             return new BattleSettings();
         }
     }
+
+    // The battle for the next fight: the built-in one with the user's file over it, if there is
+    // one. Read again for each battle setup, so an edit applies to the next battle and never to a
+    // running one (a battle keeps the settings it started with).
+    public static BattleDataLoad Load(string? userFile)
+    {
+        if (string.IsNullOrEmpty(userFile) || !File.Exists(userFile)) return new(Settings, false, null);
+        try
+        {
+            return new(ParseWithOverride(EmbeddedText(), File.ReadAllText(userFile)), true, null);
+        }
+        catch (Exception ex) when (IsDataError(ex))
+        {
+            Trace.WriteLine($"{userFile} was not used, the built-in battle is: {ex.Message}");
+            return new(Settings, false, ex.Message);
+        }
+    }
+
+    private static readonly JsonDocumentOptions NodeOptions = new() { CommentHandling = JsonCommentHandling.Skip, AllowTrailingCommas = true };
+
+    // Throws on any mistake in either file or in the merged result.
+    public static BattleSettings ParseWithOverride(string builtInJson, string userJson)
+    {
+        var root = JsonNode.Parse(builtInJson, null, NodeOptions) as JsonObject ?? throw new InvalidDataException("The built-in battle.json is not a JSON object");
+        var user = JsonNode.Parse(userJson, null, NodeOptions) as JsonObject ?? throw new InvalidDataException("The file must be a JSON object: { ... }");
+        var version = Key(user, "schemaVersion") is string key ? user[key] : null;
+        if (version == null) throw new InvalidDataException($"schemaVersion is missing (write \"schemaVersion\": {SchemaVersion})");
+        if (version is not JsonValue value || !value.TryGetValue<int>(out int number) || number != SchemaVersion)
+            throw new InvalidDataException($"schemaVersion {version.ToJsonString()} is not supported (this version reads {SchemaVersion})");
+        Merge(root, user, "");
+        return Parse(root.ToJsonString());
+    }
+
+    // Keys match without case, as when the file is read.
+    private static string? Key(JsonObject node, string key)
+    {
+        foreach (var pair in node) if (string.Equals(pair.Key, key, StringComparison.OrdinalIgnoreCase)) return pair.Key;
+        return null;
+    }
+
+    private static void Merge(JsonObject target, JsonObject source, string path)
+    {
+        foreach (var (key, value) in source.ToList())
+        {
+            string? existing = Key(target, key);
+            var current = existing != null ? target[existing] : null;
+            if (value is JsonObject part && current is JsonObject whole) { Merge(whole, part, path + key + "."); continue; }
+            bool byId = key.Equals("enemies", StringComparison.OrdinalIgnoreCase) || key.Equals("weapons", StringComparison.OrdinalIgnoreCase);
+            if (byId && value is JsonArray entries && current is JsonArray list) { MergeById(list, entries, path + key); continue; }
+            if (existing != null) target.Remove(existing);
+            target[key] = value?.DeepClone();
+        }
+    }
+
+    // An entry with a known id changes that entry (only the keys it gives); a new id is added.
+    private static void MergeById(JsonArray target, JsonArray source, string path)
+    {
+        var seen = new HashSet<string>();
+        for (int i = 0; i < source.Count; i++)
+        {
+            if (source[i] is not JsonObject entry || IdOf(entry) is not string id) throw new InvalidDataException($"{path}[{i}] needs an \"id\"");
+            if (!seen.Add(id)) throw new InvalidDataException($"{path}: id \"{id}\" is used twice");
+            var match = target.OfType<JsonObject>().FirstOrDefault(e => IdOf(e) == id);
+            if (match != null) Merge(match, entry, $"{path}[{id}].");
+            else target.Add(entry.DeepClone());
+        }
+    }
+
+    private static string? IdOf(JsonObject node) =>
+        Key(node, "id") is string key && node[key] is JsonValue value && value.TryGetValue<string>(out var id) ? id : null;
 
     private static readonly JsonSerializerOptions Options = new()
     {
@@ -93,6 +187,12 @@ public static class BattleData
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow
     };
     private static readonly Regex Hex = new("^#[0-9A-Fa-f]{6}$");
+    // Ids stay stable across versions: lower-case letters, digits, '_' and '-', at most 32.
+    private static readonly Regex IdPattern = new("^[a-z0-9_-]{1,32}$");
+    // What the code can draw and do; data can only choose among these.
+    public static readonly string[] WeaponStyles = { "sword", "hammer" };
+    public static readonly string[] EnemyRenderers = { "slime" };
+    public static readonly string[] EnemyMarks = { "none", "speed", "cracks" };
 
     // Throws on any mistake, so a half-valid file is never used.
     public static BattleSettings Parse(Stream stream)
@@ -102,21 +202,46 @@ public static class BattleData
         return settings;
     }
 
+    public static BattleSettings Parse(string json)
+    {
+        var settings = JsonSerializer.Deserialize<BattleSettings>(json, Options) ?? throw new InvalidDataException("battle.json is empty");
+        Validate(settings);
+        return settings;
+    }
+
+    private static string N(double value) => value.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
+
     public static void Validate(BattleSettings s)
     {
         void Positive(double value, string name) { if (!double.IsFinite(value) || value <= 0) throw new InvalidDataException($"{name} must be a positive number"); }
         void NotNegative(double value, string name) { if (!double.IsFinite(value) || value < 0) throw new InvalidDataException($"{name} must not be negative"); }
+        void Within(double value, double min, double max, string name) { if (!double.IsFinite(value) || value < min || value > max) throw new InvalidDataException($"{name} must be {N(min)}–{N(max)}"); }
+        void Id(string? id, string name) { if (id == null || !IdPattern.IsMatch(id)) throw new InvalidDataException($"{name} must be 1–32 lower-case letters, digits, _ or - (\"{id}\")"); }
+        void Text(string? text, string name) { if (text == null || text.Length > 32) throw new InvalidDataException($"{name} must be at most 32 characters"); }
+        if (s.SchemaVersion != SchemaVersion) throw new InvalidDataException($"schemaVersion {s.SchemaVersion} is not supported (this version reads {SchemaVersion})");
         Positive(s.CatMaxHp, "catMaxHp"); NotNegative(s.CatDamage, "catDamage"); Positive(s.CatAttackRange, "catAttackRange");
         Positive(s.CatAttackCooldown, "catAttackCooldown"); Positive(s.CatRunScale, "catRunScale");
         if (s.CatRunScale > 3) throw new InvalidDataException("catRunScale must be at most 3"); Positive(s.CatSwingDuration, "catSwingDuration");
         if (s.ComboHits is < 2 or > 6) throw new InvalidDataException("comboHits must be 2–6");
         Positive(s.ComboWindow, "comboWindow"); Positive(s.ComboDamage, "comboDamage"); NotNegative(s.ComboKnock, "comboKnock");
         if (!(s.CatHitTime > 0 && s.CatHitTime < s.CatSwingDuration)) throw new InvalidDataException("catHitTime must fall inside the swing");
-        var h = s.Hammer ?? throw new InvalidDataException("hammer is missing");
-        NotNegative(h.Damage, "hammer.damage"); Positive(h.Range, "hammer.range"); Positive(h.AttackCooldown, "hammer.attackCooldown");
-        Positive(h.SwingDuration, "hammer.swingDuration");
-        if (!(h.HitTime > 0 && h.HitTime < h.SwingDuration)) throw new InvalidDataException("hammer.hitTime must fall inside the swing");
-        if (!double.IsFinite(h.Knock) || h.Knock < 0 || h.Knock > 1000) throw new InvalidDataException("hammer.knock must be 0–1000");
+        if (s.Hammer == null) throw new InvalidDataException("hammer is missing");
+        if (s.Weapons is { Length: 0 }) throw new InvalidDataException("weapons must list at least one weapon");
+        var weaponIds = new HashSet<string>();
+        for (int i = 0; i < s.WeaponList.Count; i++)
+        {
+            var w = s.WeaponList[i] ?? throw new InvalidDataException($"weapons[{i}] is empty");
+            string at = $"weapons[{(string.IsNullOrEmpty(w.Id) ? i.ToString() : w.Id)}]";
+            Id(w.Id, at + ".id");
+            if (!weaponIds.Add(w.Id)) throw new InvalidDataException($"weapon id \"{w.Id}\" is used twice");
+            if (Array.IndexOf(WeaponStyles, w.Style) < 0) throw new InvalidDataException($"{at}.style must be one of: {string.Join(", ", WeaponStyles)}");
+            Text(w.NameVi, at + ".nameVi"); Text(w.NameEn, at + ".nameEn");
+            if (w.HintVi == null || w.HintEn == null || w.HintVi.Length > 80 || w.HintEn.Length > 80) throw new InvalidDataException($"{at} hints must be at most 80 characters");
+            Within(w.Damage, 0, 1000, at + ".damage"); Within(w.Range, 10, 300, at + ".range");
+            Within(w.AttackCooldown, 0.1, 10, at + ".attackCooldown"); Within(w.SwingDuration, 0.05, 5, at + ".swingDuration");
+            if (!(w.HitTime > 0 && w.HitTime < w.SwingDuration)) throw new InvalidDataException(at + ".hitTime must fall inside the swing");
+            Within(w.Knock, 0, 1000, at + ".knock");
+        }
         NotNegative(s.LandingGraceSeconds, "landingGraceSeconds");
         if (s.LandingGraceSeconds > 5) throw new InvalidDataException("landingGraceSeconds must be at most 5");
         NotNegative(s.RescueGraceCooldownSeconds, "rescueGraceCooldownSeconds");
@@ -129,27 +254,43 @@ public static class BattleData
             foreach (var (value, key) in new[] { (level.EnemyHp, "enemyHp"), (level.EnemyDamage, "enemyDamage"), (level.EnemySpeed, "enemySpeed") })
                 if (!double.IsFinite(value) || value < 0.25 || value > 3) throw new InvalidDataException($"{name}.{key} must be 0.25–3");
         var ids = new HashSet<string>();
-        foreach (var e in s.EnemyTypes)
+        if (s.Enemies is { Length: 0 }) throw new InvalidDataException("enemies must list at least one enemy");
+        for (int i = 0; i < s.EnemyTypes.Count; i++)
         {
-            if (string.IsNullOrWhiteSpace(e.Id) || !ids.Add(e.Id)) throw new InvalidDataException("Each enemy needs its own id");
-            Positive(e.MaxHp, e.Id + ".maxHp"); NotNegative(e.Speed, e.Id + ".speed"); NotNegative(e.Damage, e.Id + ".damage");
-            Positive(e.Range, e.Id + ".range"); Positive(e.Windup, e.Id + ".windup"); Positive(e.AttackCooldown, e.Id + ".attackCooldown");
-            NotNegative(e.Recover, e.Id + ".recover");
+            var e = s.EnemyTypes[i] ?? throw new InvalidDataException($"enemies[{i}] is empty");
+            string at = $"enemies[{(string.IsNullOrEmpty(e.Id) ? i.ToString() : e.Id)}]";
+            Id(e.Id, at + ".id");
+            if (!ids.Add(e.Id)) throw new InvalidDataException($"enemy id \"{e.Id}\" is used twice");
+            Id(e.Family, at + ".family");
+            if (Array.IndexOf(EnemyRenderers, e.Renderer) < 0) throw new InvalidDataException($"{at}.renderer must be one of: {string.Join(", ", EnemyRenderers)}");
+            Text(e.NameVi, at + ".nameVi"); Text(e.NameEn, at + ".nameEn");
+            Within(e.MaxHp, 1, 100000, at + ".maxHp"); Within(e.Speed, 0, 400, at + ".speed"); Within(e.Damage, 0, 1000, at + ".damage");
+            Within(e.Range, 10, 400, at + ".range"); Within(e.Windup, 0.1, 10, at + ".windup"); Within(e.AttackCooldown, 0.1, 30, at + ".attackCooldown");
+            Within(e.Recover, 0, 10, at + ".recover");
             // The battle strip is 170 DIPs tall: bigger enemies would be cut off.
-            if (!(e.Scale >= 0.5 && e.Scale <= 2.3)) throw new InvalidDataException(e.Id + ".scale must be 0.5–2.3");
-            if (!Hex.IsMatch(e.Color) || !Hex.IsMatch(e.AngryColor)) throw new InvalidDataException(e.Id + " colors must be #RRGGBB");
-            if (e.Marks is not ("none" or "speed" or "cracks")) throw new InvalidDataException(e.Id + ".marks must be none, speed or cracks");
-            if (e.SummonAt is < 0 or >= 1 || e.EnrageAt is < 0 or >= 1) throw new InvalidDataException(e.Id + " summonAt/enrageAt must be 0–1");
-            if (e.EnrageAt > 0) { Positive(e.EnragedSpeed, e.Id + ".enragedSpeed"); Positive(e.EnragedWindup, e.Id + ".enragedWindup"); }
+            Within(e.Scale, 0.5, 2.3, at + ".scale");
+            if (e.HitScale is double hit) Within(hit, 0.3, 2.3, at + ".hitScale");
+            if (e.Color == null || e.AngryColor == null || !Hex.IsMatch(e.Color) || !Hex.IsMatch(e.AngryColor)) throw new InvalidDataException(at + " colors must be #RRGGBB");
+            if (Array.IndexOf(EnemyMarks, e.Marks) < 0) throw new InvalidDataException($"{at}.marks must be one of: {string.Join(", ", EnemyMarks)}");
+            Within(e.PushFactor, 0, 3, at + ".pushFactor"); Within(e.StunFactor, 0, 3, at + ".stunFactor");
+            if (!(e.SummonAt >= 0 && e.SummonAt < 1) || !(e.EnrageAt >= 0 && e.EnrageAt < 1)) throw new InvalidDataException(at + " summonAt/enrageAt must be 0–1");
+            if (e.SummonAt > 0 && e.SummonCount is < 1 or > 6) throw new InvalidDataException(at + ".summonCount must be 1–6");
+            if (e.EnrageAt > 0) { Within(e.EnragedSpeed, 0.1, 400, at + ".enragedSpeed"); Within(e.EnragedWindup, 0.1, 10, at + ".enragedWindup"); }
         }
         foreach (var e in s.EnemyTypes)
-            if (e.SummonAt > 0 && (e.SummonCount <= 0 || !ids.Contains(e.SummonType) || s.Enemy(e.SummonType).SummonAt > 0))
-                throw new InvalidDataException(e.Id + " summons an unknown enemy (or one that summons too)");
+            if (e.SummonAt > 0 && (!ids.Contains(e.SummonType) || s.Enemy(e.SummonType).SummonAt > 0))
+                throw new InvalidDataException($"enemies[{e.Id}] summons \"{e.SummonType}\": an unknown enemy (or one that summons too)");
         if (s.WavePlan.Count == 0) throw new InvalidDataException("battle.json needs at least one wave");
-        foreach (var wave in s.WavePlan)
+        if (s.WavePlan.Count > 30) throw new InvalidDataException("battle.json may have at most 30 waves");
+        for (int i = 0; i < s.WavePlan.Count; i++)
         {
-            if (wave.Groups.Length == 0 || wave.Groups.Any(g => g.Count <= 0 || !ids.Contains(g.Enemy)))
-                throw new InvalidDataException("Each wave needs groups of known enemies with a positive count");
+            var wave = s.WavePlan[i];
+            if (wave?.Groups == null || wave.Groups.Length == 0) throw new InvalidDataException($"waves[{i}] needs at least one group");
+            foreach (var g in wave.Groups)
+            {
+                if (g == null || !ids.Contains(g.Enemy)) throw new InvalidDataException($"waves[{i}] names an unknown enemy \"{g?.Enemy}\"");
+                if (g.Count is < 1 or > 50) throw new InvalidDataException($"waves[{i}] {g.Enemy}: count must be 1–50");
+            }
         }
     }
 }

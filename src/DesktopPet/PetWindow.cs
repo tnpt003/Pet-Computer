@@ -78,6 +78,7 @@ public sealed partial class PetWindow : Window
     {
         preferences = options ?? PetPreferences.Load();
         persistPreferences = options == null;
+        if (persistPreferences) BattleDataFile = BattleData.UserFilePath;
         Title = "Desktop Pet";
         Icon = AppIcon.WindowImage();
         // Keep one backing surface for every pose; resizing layered windows on
@@ -153,7 +154,7 @@ public sealed partial class PetWindow : Window
 
     public void Reset()
     {
-        EndBattle(); CloseBattleSummary(); CloseBattleNotice(); CloseBattleTutorial();
+        EndBattle(); CloseBattlePrep(); CloseBattleSummary(); CloseBattleNotice(); CloseBattleTutorial();
         CancelFeatureActivity();
         bool keepSleeping = pet.Emotions.SleepLocked || pet.Action == PetAction.Sleeping;
         Interact("reset");
@@ -300,6 +301,7 @@ public sealed partial class PetWindow : Window
         RecordFrame(now, elapsed);
         boundsTimer += dt;
         CheckDragThreshold();
+        TickBattlePrep(dt);
         if (!paused)
         {
             TickFeatures(dt);
@@ -478,7 +480,7 @@ public sealed partial class PetWindow : Window
     private async void RequestDecision()
     {
         // No requests during a battle: Python never drives the fight.
-        if (aiBusy || ai == null || closed || paused || dragging || pressPending || BattleActive) return;
+        if (aiBusy || ai == null || closed || paused || dragging || pressPending || BattleOwnsPet) return;
         aiBusy = true;
         var source = ai;
         long requestedRevision = revision;
@@ -506,9 +508,9 @@ public sealed partial class PetWindow : Window
             // Words are presentation only, so a reply discarded for revision (e.g. the
             // user petted the cat meanwhile) may still speak; PetSpeech enforces safety.
             // A line chosen before a language change is dropped (the data above is still kept).
-            if (decision.Speech != null && !paused && !BattleActive && clock.Elapsed.TotalSeconds - requestedAt < 2.5 &&
+            if (decision.Speech != null && !paused && !BattleOwnsPet && clock.Elapsed.TotalSeconds - requestedAt < 2.5 &&
                 requestedLanguage == preferences.Language) ShowSpeech(decision.Speech);
-            if (!pressPending && !BattleActive && DecisionGuard.CanApply(requestedRevision, revision, clock.Elapsed.TotalSeconds - requestedAt, paused, pet))
+            if (!pressPending && !BattleOwnsPet && DecisionGuard.CanApply(requestedRevision, revision, clock.Elapsed.TotalSeconds - requestedAt, paused, pet))
             {
                 aiEnergy = decision.Energy;
                 pet.Emotions.ApplyAiHint(decision.Emotion);

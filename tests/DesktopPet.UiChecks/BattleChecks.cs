@@ -445,11 +445,13 @@ internal static class BattleChecks
         }
         long resultStyle = GetWindowLongPtr(new WindowInteropHelper(ResultWindow()!).Handle, -20).ToInt64();
         check((resultStyle & NoActivate) != 0 && ResultWindow()!.ShowActivated == false, "The result panel never takes focus");
-        // "Play again" starts the next battle from the panel.
+        // "Play again" goes back to the setup panel with the same choice; Ready starts the next battle.
         var buttons = (System.Windows.Controls.Panel)((System.Windows.Controls.Panel)((System.Windows.Controls.Border)ResultWindow()!.Content).Child).Children[3];
         buttons.Children[0].RaiseEvent(MouseEvent(UIElement.MouseLeftButtonDownEvent));
         await Task.Delay(20);
-        check(window.BattleActive && ResultWindows() == 0, "Play again closes the panel and starts a new battle");
+        check(!window.BattleActive && window.BattlePreparing && window.BattlePrepDifficulty == BattleDifficulty.Normal && ResultWindows() == 0,
+            "Play again closes the panel and opens the setup panel with the last choice");
+        check(window.BattlePrepReady() == null && window.BattleActive && !window.BattlePreparing, "Ready there starts the new battle");
         window.EndBattle();
         check(!window.BattleActive && ResultWindows() == 0, "Ending a battle by hand shows no result panel");
         Call(window, "ShowBattleSummary", new PetWindow.BattleSummary(true, 3, 61, 40, 100));

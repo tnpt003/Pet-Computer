@@ -27,8 +27,11 @@ internal static class BattleDataTests
         differences.Clear();
         foreach (var builtInKind in builtIn.EnemyTypes)
             Same(shipped.Enemy(builtInKind.Id), builtInKind, typeof(EnemyType), differences, builtInKind.Id + ".");
-        Same(shipped.Hammer, builtIn.Hammer, typeof(WeaponSpec), differences, "hammer.");
         check(differences.Count == 0, "battle.json's slime and Slime King match the built-in ones" + (differences.Count > 0 ? ": " + string.Join(", ", differences) : ""));
+        // The shipped "weapons" list is the sword (Cat* numbers) and the hammer, as before.
+        check(shipped.WeaponList.Select(w => w.Id).SequenceEqual(builtIn.WeaponList.Select(w => w.Id)) &&
+              shipped.WeaponList.Zip(builtIn.WeaponList).All(pair => pair.First == pair.Second),
+            "battle.json's weapons are exactly the built-in sword and hammer (same numbers, names and drawing)");
         string Plan(BattleSettings s) => string.Join(" | ", s.WavePlan.Select(w => string.Join(",", w.Spawns())));
         check(Plan(builtIn) == "slime,slime | slime,slime,slime | slime,slime,slime,slime | king", "Without the file: 2, 3, 4 slimes, then the King");
         check(Plan(shipped) == "slime,slime | slime,slime,runner,runner | rock,runner,runner,slime,slime | king",

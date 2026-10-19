@@ -18,9 +18,10 @@ public sealed partial class PetWindow
     // A fullscreen app on the pet's monitor behaves like Quiet mode without changing the saved setting.
     private bool EffectiveQuiet => preferences.Quiet || context.Fullscreen;
 
-    private void ApplyQuiet() => behavior.Quiet = EffectiveQuiet;
+    // The battle setup panel also keeps the cat still (its free time belongs to the setup).
+    private void ApplyQuiet() => behavior.Quiet = EffectiveQuiet || battlePreparing;
 
-    private bool CanDeliverBreak => !paused && !dragging && !BattleActive && !pressPending && !context.Fullscreen && !context.Away &&
+    private bool CanDeliverBreak => !paused && !dragging && !BattleOwnsPet && !pressPending && !context.Fullscreen && !context.Away &&
         !pet.Speech.Visible && PetSpeech.CanShow(pet);
 
     private void InitializeContext()
@@ -53,7 +54,7 @@ public sealed partial class PetWindow
             }
         }
         if (change.CameBack) { behavior.EndAwayNap(pet); pet.Emotions.UserReturned(); }
-        if (context.Away && !BattleActive && !behavior.HoldSleep && !dragging && !pressPending && pet.Grounded && !PetActionRules.IsInFlight(pet.Action))
+        if (context.Away && !BattleOwnsPet && !behavior.HoldSleep && !dragging && !pressPending && pet.Grounded && !PetActionRules.IsInFlight(pet.Action))
         {
             CancelFeatureActivity();
             behavior.StartAwayNap(pet);

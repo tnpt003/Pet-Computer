@@ -557,7 +557,8 @@ points to a leak.
 ## Battle Mode (2026-10-16)
 
 Optional mini-game, off by default and never resumed at startup. Right-click the cat →
-**Battle Mode / Chế độ chiến đấu** → **Start battle**. The cat draws a wooden toy sword and
+**Battle Mode / Chế độ chiến đấu** → **Start battle** opens the setup panel (below); **Ready**
+there starts the fight. The cat draws a wooden toy sword and
 fights slimes on the floor of its current monitor (work area) in 3 waves (2 slimes; 2 slimes +
 2 quick slimes; a rock slime + 2 quick + 2 slimes; at most 3 at once, a short break between
 waves), then the **Slime King** alone. Quick slimes are small, fast and frail (wind streaks);
@@ -572,8 +573,28 @@ small result panel (slimes defeated, time, HP left) with **Play again** and **Cl
 by itself after 12 s, on a fullscreen app or when the pet is brought back. Ending a battle by hand
 shows no panel. After each wave except the last the cat gets 15 HP back (`WaveHeal`).
 
-- **Difficulty** (menu **Battle Mode → Difficulty**: Easy / Normal / Hard, remembered in
-  `preferences.json` as `BattleDifficulty`, greyed out during a battle): Easy and Hard multiply
+- **Setup panel** (2026-10-19, `PetWindow.BattlePrep.cs`): the right-click menu holds only Start /
+  Pause / End. Start opens a small panel at the top centre of the cat's screen: weapon (one button
+  per weapon in the battle data, with its hint), difficulty (Easy / Normal / Hard), **Ready**,
+  **How to play** and **Cancel**. Nothing fights yet: no battle object, slime, timer, damage or
+  record. It starts from the last choice that went into a battle (`BattleWeapon` as a weapon id,
+  `BattleDifficulty`); a choice is saved only by Ready. Opening it again keeps the one panel.
+  While it is open it owns the cat's free time like Quiet mode: no random actions, autonomous
+  sleep, away nap, AI requests (replies from before are dropped), Do now, emotions menu, treats,
+  ball, laser, rest visits, speech or break reminders. What is already going on is not cut: a
+  sleeping cat sleeps on (and wakes by its own rules), a drag, throw, game or treat finishes.
+  **Ready** checks the cat again when pressed (same rules as before: asleep, waking, dragged,
+  flying/climbing, on a window, playing/eating, reacting, paused, fullscreen) and is greyed out
+  with the reason on the panel until the cat is free (refreshed 5 times a second, also while the
+  pet is paused). A second press finds no panel (no second battle). The panel cannot open while
+  the pet is paused, a fullscreen app is open or a battle runs; a fullscreen app appearing hides
+  it until it closes. **Cancel** closes it: no win or loss, nothing saved, the pet's life comes
+  back. Reset ("bring the pet back") and Exit close it too. The panel never takes focus (mouse
+  only, no keys from other apps), follows the UI language and is placed in the monitor's DIPs.
+  The result panel's **Play again** opens the setup panel again with the same choice.
+  `PET_BATTLE_AUTOSTART` (measuring) still starts a battle directly.
+- **Difficulty** (on the setup panel: Easy / Normal / Hard, remembered in
+  `preferences.json` as `BattleDifficulty`): Easy and Hard multiply
   every enemy's HP, damage and speed (battle.json `easy`/`hard`: 0.75/0.6/0.85 and 1.3/1.4/1.15,
   each 0.25–3; scaled HP and damage are rounded to whole numbers). Normal is the file's numbers
   untouched. The cat, skills and waves are the same on every level.
@@ -583,10 +604,11 @@ shows no panel. After each wave except the last the cat gets 15 HP back (`WaveHe
   Battles ended by hand do not count. A broken file is logged and starts over; it never stops a
   battle. A pet built with given preferences (UI checks) keeps records in memory only.
 
-- **Start** is refused (with the reason in the menu, or a small click-through note above the cat
-  that fades after 2.5 s if the state changed since the menu opened) while the cat sleeps, wakes, is dragged,
-  flies/climbs, stands on a window, plays/eats, reacts (angry/surprised), the pet is paused or a
-  fullscreen app is open. Nothing is woken or forced.
+- **Start** (opening the setup panel) is refused, with the reason in the menu or a small
+  click-through note above the cat that fades after 2.5 s, only while the pet is paused, a
+  fullscreen app is open or a battle runs. **Ready** waits (greyed out, reason on the panel) while
+  the cat sleeps, wakes, is dragged, flies/climbs, stands on a window, plays/eats or reacts
+  (angry/surprised). Nothing is woken or forced.
 - **The cat fights by itself**: picks the nearest slime (or the marked one), walks to it with the
   normal walking physics and swings; each swing can hit once, at a fixed moment of the swing.
 - **Combo**: three hits in a row, each within 1.6 s of the last (`comboHits`, `comboWindow`), make
@@ -637,23 +659,25 @@ shows no panel. After each wave except the last the cat gets 15 HP back (`WaveHe
   only on the HUD), cooldowns do not recover, and a real lift cancels a chosen aimed skill. A bomb
   already dropped still bursts; Cheer/Shield already running wear off as usual. A plain press keeps
   the chosen skill and the HUD unchanged (no flicker).
-- **Weapons** (2026-10-18): menu Battle Mode → Weapon: Sword (the existing numbers: 25 damage,
-  reach 76, 0.75 s between swings; only a combo knocks back) or Hammer (battle.json `"hammer"`: 45
+- **Weapons** (2026-10-18; data-driven 2026-10-19): chosen on the setup panel from battle.json
+  `weapons` (id, names, hint, drawing `style` "sword"/"hammer", numbers). Built in: Sword (the existing numbers: 25 damage,
+  reach 76, 0.75 s between swings; only a combo knocks back) or Hammer (45
   damage, reach 72, 1.35 s, a 0.6 s swing hitting at 0.34 s, and every hit knocks the slime back at
   150 DIPs/s × its pushFactor, no stun; a combo uses the larger of comboKnock and that). Damage over
   time is about the same; the hammer can knock a slime that is winding up at the edge of its reach
   out of it (its hit then misses) but clears a group more slowly. Remembered in preferences
-  `BattleWeapon` ("Sword"/"Hammer", anything else reads as Sword), greyed out during a battle,
+  `BattleWeapon` as the weapon id (older files' "Sword"/"Hammer" still match, ids ignore case; an
+  id the data no longer has reads as the first weapon), never changed during a battle,
   shown next to the cat's name on the HUD and on the result panel. Records stay per difficulty
   (both weapons together). The hammer is a vector mallet in the same poses as the sword.
 - **First-battle guide** (PetWindow.BattleTutorial.cs): four cards (targets, skills, rescue and
   the held attack, protection and cooldowns, with battle.json's numbers) in a small panel above the
   floor strip; mouse only (Skip / Next / Done), never takes focus, follows the UI language, no
-  sound. It opens by itself at the start of the first battle until gone through or skipped
-  (preferences `BattleTutorialSeen`, false in older files), and from the menu (Battle Mode → How to
-  play) with or without a battle. While it is open a battle is paused (reason Tutorial). A
-  fullscreen app or bringing the pet back closes it without marking it seen; measuring runs
-  (`PET_BATTLE_AUTOSTART`) never show it.
+  sound. It opens by itself with the first setup panel until gone through or skipped
+  (preferences `BattleTutorialSeen`, false in older files), and from the panel's How to play
+  button; no battle exists behind it. Ready closes it (and marks it seen). Should it be open during
+  a battle, the battle is paused (reason Tutorial). A fullscreen app, Cancel or bringing the pet
+  back closes it without marking it seen; measuring runs (`PET_BATTLE_AUTOSTART`) never show it.
 - **Pause / Resume / End**: HUD buttons or the menu. Pause reasons stack (User, Menu, Fullscreen,
   Away, App, Tutorial) and each owner removes only its own: closing the menu never resumes a battle the user, a
   fullscreen app or an away cat still holds. A fullscreen app pauses it, hides the field/HUD and
@@ -691,18 +715,25 @@ shows no panel. After each wave except the last the cat gets 15 HP back (`WaveHe
   The boss's slam zone is drawn as outlines only, so it never blocks clicks to the apps below.
 - **Measuring**: `scripts\perf.ps1 -Battle run` (or `paused`) starts a separate pet that keeps a
   battle going (`PET_BATTLE_AUTOSTART`, measurement only; the user's pet must be closed first).
-- **Data** (`src/DesktopPet/Assets/battle.json`, embedded): every number (cat, skills, spawning,
-  breaks, protection), the enemy kinds (`enemies`: HP, speed, damage, reach, windup, size, colours,
-  boss/slam flags, push/stun factors, summon/enrage thresholds) and the waves (`waves`: groups of
-  `enemy` × `count`, any wave may hold a boss). A new enemy or a different wave plan is data only.
-  Misspelt keys, impossible numbers, unknown enemies, sizes over 2.3× or summon loops reject the
-  whole file: it is logged and the built-in battle (`BattleSettings` defaults, the same numbers)
-  is used. Skills are listed once in `BattleSkills` (`PetBattleData.cs`: name, aimed or instant,
+- **Data** (`src/DesktopPet/Assets/battle.json`, embedded, `schemaVersion` 1): every number (cat,
+  skills, spawning, breaks, protection), the weapons (`weapons`), the enemy kinds (`enemies`: id,
+  family, renderer, HP, speed, damage, reach, windup, drawn size `scale` and combat size
+  `hitScale`, colours, boss/slam flags, push/stun factors, summon/enrage thresholds) and the waves
+  (`waves`: groups of `enemy` × `count`, any wave may hold a boss). A new enemy variant, weapon or
+  wave plan is data only; a new kind of ability or drawing needs code. The user can override it
+  without rebuilding: `%LOCALAPPDATA%\DesktopPet\battle.json` (`PetPreferences.DataDirectory`),
+  merged over the built-in file and validated as a whole, read each time the setup panel opens
+  (a running battle keeps the data it started with). Schema, limits and examples:
+  [BATTLE-DATA.md](BATTLE-DATA.md). Misspelt keys, impossible numbers, unknown ids, unsupported
+  styles/renderers, sizes over 2.3× or summon loops reject the whole file: it is logged, the
+  built-in battle is used and the setup panel says what is wrong (`BattleSettings` defaults, the
+  same numbers, if even the embedded file is broken). Skills are listed once in `BattleSkills` (`PetBattleData.cs`: name, aimed or instant,
   cooldown, description built from the numbers); the HUD makes a slot for each. A new skill also
   needs its effect in `BattleSim.Use` and an icon in `HudGlyph`.
 - **Code**: `PetBattle.cs` (simulation, no WPF: tested in `tests/DesktopPet.Tests/BattleTests.cs`),
   `PetBattleView.cs` (drawing/hit-testing), `PetWindow.Battle.cs` (lifecycle, orders → walking,
-  HUD, menu); the sword is drawn by `PetRenderer` from presentation fields on `PetModel`.
+  HUD, menu), `PetWindow.BattlePrep.cs` (setup panel), `PetBattleData.cs` (data loading, override,
+  validation); the sword is drawn by `PetRenderer` from presentation fields on `PetModel`.
   Sounds: three short cartoon effects synthesized in `PetSounds` (no new assets): swoosh for a
   swing or push, squish for a hit, pop for a defeated slime; the cat's own cues stay for being hurt
   (surprised), wave clear/victory (excited) and defeat (annoyed). One cue per frame, the most

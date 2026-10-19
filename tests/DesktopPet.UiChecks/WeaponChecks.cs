@@ -5,8 +5,8 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using DesktopPet;
 
-// Battle Mode's weapon choice in the real pet window: the menu choice is remembered, locked during
-// a battle and used by the next one; the HUD and the result panel name it; the hammer is drawn in
+// Battle Mode's weapon choice in the real pet window: the choice (by id, from the battle data) is
+// remembered and used by the next battle, never by a running one; the menu has no weapon item; the HUD and the result panel name it; the hammer is drawn in
 // every pose without leaving the window. In-memory preferences only.
 internal static class WeaponChecks
 {
@@ -24,27 +24,29 @@ internal static class WeaponChecks
 
         prefs.BattleWeapon = "Axe";
         check(window.BattleWeaponChoice == BattleWeapon.Sword, "An unknown weapon in preferences reads as the sword");
-        window.SetBattleWeapon(BattleWeapon.Hammer);
-        check(window.BattleWeaponChoice == BattleWeapon.Hammer && prefs.BattleWeapon == "Hammer", "Choosing the hammer is remembered");
+        prefs.BattleWeapon = "Hammer";
+        check(window.BattleWeaponChoice == BattleWeapon.Hammer, "Older preferences (\"Hammer\") still choose the hammer");
+        check(!window.SetBattleWeapon("axe") && window.SetBattleWeapon(BattleWeapon.Hammer) && window.BattleWeaponChoice == BattleWeapon.Hammer && prefs.BattleWeapon == "hammer",
+            "Choosing the hammer is remembered by its id; an id the data does not have is refused");
 
         window.BattleTuning = new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 1 }, Boss = false, SlimeMaxHp = 1, OutroSeconds = 0.5 };
-        check(window.StartBattle() == null && window.Battle?.Weapon == BattleWeapon.Hammer && pet.Hammer && pet.SwordOut,
+        check(window.StartBattle() == null && window.Battle?.Weapon.Id == BattleWeapon.Hammer && pet.Hammer && pet.SwordOut,
             "The next battle uses the hammer, and the cat holds it");
         var hud = Field<BattleHud>(window, "battleHud");
         string HudText(DependencyObject node) => node is TextBlock t ? t.Text + "|" : string.Concat(LogicalTreeHelper.GetChildren(node).OfType<DependencyObject>().Select(HudText));
         check(HudText(hud).Contains("· Hammer"), "The HUD names the weapon next to the cat");
 
-        // The menu: Weapon is greyed out during a battle; a change only affects the next one.
+        // The menu holds only Start / Pause / End: weapon, difficulty and the guide are on the setup panel.
         window.ContextMenu!.IsOpen = true;
         await Task.Delay(30);
         var root = window.ContextMenu.Items.OfType<MenuItem>().First(i => i.Header as string == "Battle Mode");
-        var weaponItem = root.Items.OfType<MenuItem>().First(i => (i.Header as string ?? "").StartsWith("Weapon"));
-        bool lockedInBattle = !weaponItem.IsEnabled && weaponItem.Items.OfType<MenuItem>().Count(i => i.IsChecked) == 1;
+        string[] items = root.Items.OfType<MenuItem>().Select(i => i.Header as string ?? "").ToArray();
         window.ContextMenu.IsOpen = false;
         await Task.Delay(30);
-        check(lockedInBattle && (weaponItem.Header as string) == "Weapon: Hammer", $"The menu shows the weapon and locks it during a battle ({weaponItem.Header})");
+        check(items.Length == 3 && !items.Any(h => h.StartsWith("Weapon") || h.StartsWith("Difficulty") || h.StartsWith("How to play")),
+            $"The right-click menu has no weapon, difficulty or guide item ({string.Join(", ", items)})");
         window.SetBattleWeapon(BattleWeapon.Sword);
-        check(window.Battle?.Weapon == BattleWeapon.Hammer && pet.Hammer, "Changing it mid-battle does not change the running battle");
+        check(window.Battle?.Weapon.Id == BattleWeapon.Hammer && pet.Hammer, "Changing it mid-battle does not change the running battle");
         window.SetBattleWeapon(BattleWeapon.Hammer);
 
         // A won battle with the hammer: the result panel names it; records stay per difficulty.

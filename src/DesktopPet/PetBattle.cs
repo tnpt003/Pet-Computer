@@ -8,9 +8,12 @@ namespace DesktopPet;
 // Battle Mode tuning: every number the fight uses (DIPs and seconds). The app reads them from
 // Assets/battle.json (BattleData); these defaults are the same numbers and are used when the
 // file is broken and by the tests. Enemy kinds and waves come from "enemies"/"waves" in the
-// file; without them, from the Slime*/Boss* numbers, Waves and Boss below.
+// file; without them, from the Slime*/Boss* numbers, Waves and Boss below. Weapons come from
+// "weapons"; without it, from the Cat* numbers (the sword) and "hammer".
 public sealed class BattleSettings
 {
+    // The data layout this build reads (BattleData.SchemaVersion); a file for another layout is rejected.
+    public int SchemaVersion { get; init; } = 1;
     public double CatMaxHp { get; init; } = 100;
     public double CatDamage { get; init; } = 25;
     // Centre-to-centre distance at which the sword reaches a slime.
@@ -131,12 +134,26 @@ public sealed class BattleSettings
 
     public double SkillCooldown(BattleSkill skill) => BattleSkills.Get(skill).Cooldown(this);
 
-    // The cat's weapons. The sword is the Cat* numbers above (fast; only a combo knocks back);
-    // the hammer (battle.json "hammer") is slow and heavy and knocks the slime back on every hit.
+    // The cat's weapons, in the order the battle setup panel shows them. battle.json "weapons"
+    // lists them; without it they are the sword (the Cat* numbers above: fast, only a combo
+    // knocks back) and the hammer ("hammer": slow, heavy, knocks the slime back on every hit).
     public WeaponSpec Hammer { get; init; } = new();
-    private WeaponSpec? sword;
-    public WeaponSpec Weapon(BattleWeapon weapon) => weapon == BattleWeapon.Hammer ? Hammer
-        : sword ??= new WeaponSpec { Damage = CatDamage, Range = CatAttackRange, AttackCooldown = CatAttackCooldown, SwingDuration = CatSwingDuration, HitTime = CatHitTime, Knock = 0 };
+    [JsonPropertyName("weapons")] public WeaponSpec[]? Weapons { get; init; }
+    private IReadOnlyList<WeaponSpec>? weaponList;
+    [JsonIgnore] public IReadOnlyList<WeaponSpec> WeaponList => weaponList ??= Weapons ?? new[]
+    {
+        new WeaponSpec { Id = BattleWeapon.Sword, NameVi = "Kiếm", NameEn = "Sword", HintVi = "nhanh, dễ nối combo", HintEn = "fast, easy combos", Style = "sword",
+            Damage = CatDamage, Range = CatAttackRange, AttackCooldown = CatAttackCooldown, SwingDuration = CatSwingDuration, HitTime = CatHitTime, Knock = 0 },
+        Hammer with { Id = BattleWeapon.Hammer, NameVi = "Búa", NameEn = "Hammer", HintVi = "chậm, mạnh, đẩy lùi mỗi nhát", HintEn = "slow, heavy, knocks back every hit", Style = "hammer" }
+    };
+    // Null when no weapon has this id (ids ignore case, so old preferences' "Hammer" still match).
+    public WeaponSpec? FindWeapon(string? id)
+    {
+        foreach (var w in WeaponList) if (string.Equals(w.Id, id, StringComparison.OrdinalIgnoreCase)) return w;
+        return null;
+    }
+    // Unknown ids (an old choice no longer in the data) fall back to the first weapon.
+    public WeaponSpec Weapon(string? id) => FindWeapon(id) ?? WeaponList[0];
 
     // From battle.json: every enemy kind and the waves (null: the built-in slime and king).
     [JsonPropertyName("enemies")] public EnemyType[]? Enemies { get; init; }
@@ -179,14 +196,28 @@ public sealed class BattleSettings
 
 public enum BattleDifficulty { Easy, Normal, Hard }
 
-public enum BattleWeapon { Sword, Hammer }
-
-// One weapon's numbers (DIPs and seconds). Knock: DIPs/s every hit sends the slime away from the
-// cat (× the enemy's pushFactor), not a stun; a combo hit uses ComboKnock instead if larger.
-// The defaults are the hammer's (battle.json "hammer" may leave keys out); the sword is built
-// from BattleSettings' Cat* numbers.
-public sealed class WeaponSpec
+// The ids of the two built-in weapons. Weapons are data (battle.json "weapons"), chosen by id.
+public static class BattleWeapon
 {
+    public const string Sword = "sword";
+    public const string Hammer = "hammer";
+}
+
+// One weapon (a definition shared by every battle that uses it; the swing and its cooldown live
+// in BattleSim). Numbers in DIPs and seconds. Knock: DIPs/s every hit sends the slime away from
+// the cat (× the enemy's pushFactor), not a stun; a combo hit uses ComboKnock instead if larger.
+// Style picks a drawing the renderer knows ("sword" or "hammer"). The number defaults are the
+// hammer's (battle.json "hammer" may leave keys out); the sword is built from the Cat* numbers.
+public sealed record WeaponSpec
+{
+    public string Id { get; init; } = "";
+    public string NameVi { get; init; } = "";
+    public string NameEn { get; init; } = "";
+    public string HintVi { get; init; } = "";
+    public string HintEn { get; init; } = "";
+    public string Style { get; init; } = "sword";
+    public string Name(bool english) => (english ? NameEn : NameVi) is { Length: > 0 } name ? name : Id;
+    public string Hint(bool english) => english ? HintEn : HintVi;
     public double Damage { get; init; } = 45;
     public double Range { get; init; } = 72;
     public double AttackCooldown { get; init; } = 1.35;
@@ -217,7 +248,9 @@ public sealed class Slime
     // Centre of the slime on the battle floor (DIPs, screen coordinates).
     public double X;
     public double Hp, MaxHp;
+    // Drawn size (DIPs). The combat hitbox (sword reach, bomb blast) is HitWidth.
     public double Width { get; init; }
+    public double HitWidth { get; init; }
     public double Height { get; init; }
     public double Damage { get; init; }
     public double Range { get; init; }
@@ -335,16 +368,16 @@ public sealed class BattleSim
 
     public BattleDifficulty Difficulty { get; }
     private readonly DifficultySpec level;
-    public BattleWeapon Weapon { get; }
+    // This battle's weapon (its definition is shared; the swing and cooldown are below).
+    public WeaponSpec Weapon { get; }
     private readonly WeaponSpec arms;
 
     public BattleSim(BattleSettings settings, double left, double right, Random? random = null, BattleDifficulty difficulty = BattleDifficulty.Normal,
-        BattleWeapon weapon = BattleWeapon.Sword)
+        string weapon = BattleWeapon.Sword)
     {
         Settings = settings;
         Difficulty = difficulty;
-        Weapon = weapon;
-        arms = settings.Weapon(weapon);
+        Weapon = arms = settings.Weapon(weapon);
         level = settings.Difficulty(difficulty);
         this.random = random ?? new Random();
         Left = left; Right = Math.Max(left + settings.SlimeWidth * settings.LargestScale, right);
@@ -452,7 +485,7 @@ public sealed class BattleSim
     }
 
     // A wider slime is reached from further away (the sword hits its near edge).
-    private double Reach(Slime slime) => arms.Range + (slime.Width - Settings.SlimeWidth) / 2;
+    private double Reach(Slime slime) => arms.Range + (slime.HitWidth - Settings.SlimeWidth) / 2;
 
     // The swing's single hit: only its own target, only if still in reach at this moment.
     private void ResolveHit(double catX)
@@ -644,7 +677,7 @@ public sealed class BattleSim
             AddEffect(BattleEffectKind.Explosion, bomb.X, 0, Settings.BombRadius);
             events.Add(new(BattleEventKind.BombExploded, bomb.X));
             foreach (var slime in slimes.ToArray())
-                if (slime.Targetable && Math.Abs(slime.X - bomb.X) <= Settings.BombRadius + slime.Width / 2)
+                if (slime.Targetable && Math.Abs(slime.X - bomb.X) <= Settings.BombRadius + slime.HitWidth / 2)
                     Damage(slime, Settings.BombDamage);
         }
     }
@@ -699,7 +732,7 @@ public sealed class BattleSim
         double hp = scaled ? Math.Max(1, Math.Round(type.MaxHp * level.EnemyHp)) : type.MaxHp;
         var slime = new Slime
         {
-            Id = nextId++, Type = type, Width = Settings.SlimeWidth * type.Scale, Height = Settings.SlimeHeight * type.Scale,
+            Id = nextId++, Type = type, Width = Settings.SlimeWidth * type.Scale, HitWidth = Settings.SlimeWidth * type.Hitbox, Height = Settings.SlimeHeight * type.Scale,
             Hp = hp, MaxHp = hp, Damage = scaled ? Math.Round(type.Damage * level.EnemyDamage) : type.Damage, Range = type.Range
         };
         var (minX, maxX) = Bounds(slime);

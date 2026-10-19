@@ -1,13 +1,64 @@
 # Bàn giao review hiện tại và kế hoạch đợt tiếp theo
 
-Cập nhật: 2026-10-18 (Asia/Saigon), sau Battle Mode đợt 11.
+Cập nhật yêu cầu: 2026-10-19 (Asia/Saigon). Review kỹ thuật bên dưới ghi nhận ngày 18/10, sau Battle Mode đợt 11.
 Workspace lúc review: C:\Project VS\Pet Computer; HEAD e45519d với thay đổi đợt 10–11 chưa commit.
 
 ## Dành cho AI tiếp nhận
 
 Người dùng yêu cầu lưu review và kế hoạch ở đây để AI khác đọc và tiếp tục công việc. Đọc AGENTS.md, PROGRESS.md và code thật trước khi triển khai; không coi các mục đã sửa bên dưới là lỗi còn mở. Giữ nguyên thay đổi chưa commit của người dùng/Claude.
 
-Đợt bàn giao này chỉ cập nhật tài liệu. Khi tiếp nhận, giải thích phạm vi/file/rủi ro và làm theo quy trình xác nhận trong AGENTS.md, trừ khi người dùng đã cho phép triển khai trong phiên của bạn. Không tự publish, commit, đóng hoặc restart pet đang chạy. Không mở rộng sang vũ khí/shop chỉ vì chúng xuất hiện trong phần định hướng tương lai.
+Lần bàn giao này chỉ cập nhật tài liệu. Yêu cầu triển khai hiện tại nằm ở mục ngày 2026-10-19 bên dưới và ưu tiên hơn backlog review cũ. Đọc AGENTS.md và giải thích kế hoạch trước khi triển khai; giữ nguyên source đang có và không tự publish/commit/restart.
+
+## Ưu tiên hiện tại — yêu cầu người dùng ngày 2026-10-19
+
+> Trạng thái (đợt 14, 2026-10-19, chưa commit/publish): đã triển khai A, B, C. Bảng chuẩn bị ở PetWindow.BattlePrep.cs. Dữ liệu tùy chỉnh ở %LOCALAPPDATA%\DesktopPet\battle.json (schema và ví dụ: [BATTLE-DATA.md](BATTLE-DATA.md), [examples/battle.json](examples/battle.json)). Test tự động: 55 Python + 614 C# đạt; WPF 379 đạt, 6 check cũ thất bại do chuột thật ở màn hình phụ (bản HEAD cũng thất bại y hệt). Chưa chơi thử trên desktop thật. Chi tiết trong PROGRESS.md.
+
+Người dùng yêu cầu bàn giao để Claude triển khai luồng vào trận và khung dữ liệu mở rộng dưới đây. Phần này thay thế thứ tự ưu tiên cũ của review 18/10; các mục review phía dưới giữ làm backlog/thông tin lịch sử, không phải điều kiện phải hoàn tất trước luồng mới. Đọc code và giải thích kế hoạch trước khi sửa, giữ phạm vi đã yêu cầu. Không tự publish, commit, đóng/restart pet hoặc ghi đè thay đổi chưa commit.
+
+### A. Luồng vào trận
+
+Chuột phải → Battle Mode → Bắt đầu trận → Bảng chuẩn bị → Sẵn sàng → Chiến đấu → Kết quả.
+
+- Không yêu cầu chọn vũ khí hoặc độ khó trong menu chuột phải trước khi bấm Bắt đầu trận.
+- Bắt đầu trận mở phiên chuẩn bị, chưa spawn quái, chưa gây sát thương/chạy timer trận hoặc tính kỷ lục.
+- Bảng chuẩn bị nhỏ chứa chọn vũ khí, chọn độ khó, hướng dẫn có thể bỏ qua/xem lại, nút Sẵn sàng và Hủy/Đóng. Nhớ lựa chọn hợp lệ trước đó để lần sau vào nhanh.
+- Sẵn sàng mới bắt đầu simulation; kiểm tra lại điều kiện an toàn tại thời điểm bấm, không chỉ khi mở bảng. Chống double-click tạo hai trận/cửa sổ.
+- Trong Preparing, quy định rõ quyền sở hữu hành vi: không để mèo tự ngủ/đi chơi hoặc Python ghi đè chuẩn bị. Không cưỡng ép cắt ngủ/drag/flight khi mở; nếu người dùng kéo mèo hoặc fullscreen/pause xuất hiện, chặn Sẵn sàng đến khi an toàn.
+- Hủy/đóng chuẩn bị không tính thắng/thua, không cấp thưởng và trả Pet Mode đúng trạng thái; không để timer/window/event handler sót lại.
+- Chơi lại từ bảng kết quả quay về chuẩn bị với lựa chọn cũ. Trong trận HUD chỉ tập trung HP/kỹ năng/pause/end; không đổi vũ khí giữa trận trong đợt này.
+- Hướng dẫn phải nằm trong trải nghiệm Battle Mode, không thêm tầng menu chuột phải. Tôn trọng localization, DPI, focus và click-through. Chuẩn bị không nhận phím ngoài ý muốn từ app khác.
+
+### B. Chuẩn hóa nội dung theo mẫu và instance
+
+Mục tiêu: slime nhỏ/slime đá/slime vua đều là quái chung. Thêm biến thể cùng khả năng bằng dữ liệu, không viết lớp riêng cho từng biến thể. Phát triển từ battle.json, EnemyType, Slime/BattleSim và hệ render hiện có; tên dưới đây là trách nhiệm khái niệm, không ép đổi tên toàn bộ project.
+
+- EnemyDefinition: ID, family, tên địa phương hóa, ngoại hình, stats, movement, attack, resistances, abilities.
+- EnemyInstance: tham chiếu mẫu và trạng thái riêng mỗi con (HP, vị trí, cooldown, target, state). Không sửa mẫu dùng chung trong trận.
+- EnemyController: thực thi khả năng được hỗ trợ; EnemyRenderer: vẽ theo renderer/style đã đăng ký. Không đưa UI/physics sang Python.
+- WeaponDefinition: ID/tên, damage, range, cooldown/windup/hit timing, animation và hit effect; trạng thái swing/cooldown nằm ở runtime riêng.
+- WaveDefinition: nhóm enemy ID, số lượng, lịch spawn/thời gian nghỉ.
+- BattleRules: giới hạn quái, độ khó, cứu nguy và điều kiện kết thúc. SkillDefinition có thể theo cùng nguyên tắc nhưng không refactor toàn bộ kỹ năng nếu chưa cần.
+
+Ví dụ khái niệm (không buộc thay nguyên schema đang có): stone_slime có family=slime, renderer=slime, scale=1.35, HP=120, moveSpeed=22, attack=melee, knockbackMultiplier=0.35 và stunDurationMultiplier=0.5. Slime nhỏ thay size/HP/speed; boss dùng khả năng summon/slam đã hỗ trợ. Các con số chỉ minh họa, không tự thay cân bằng hiện tại.
+
+Quy tắc dữ liệu:
+- schemaVersion, ID ổn định, validation ID trùng/tham chiếu thiếu/kiểu không hỗ trợ/NaN và giới hạn số liệu; lỗi có thông tin để sửa.
+- Tách kích thước vẽ khỏi hitbox và attack range; mặc định tương thích để không âm thầm đổi combat cũ.
+- Khả năng mới như bay/bắn đạn vẫn cần code controller/renderer; JSON chỉ chọn khả năng đã hỗ trợ, không chạy code tùy ý.
+- Snapshot cấu hình khi bắt đầu trận; không đổi số liệu giữa trận khi người dùng sửa file.
+- Cấu hình lỗi fallback an toàn, không crash startup hoặc để chạy dữ liệu nửa hợp lệ. Hỗ trợ dữ liệu/preferences cũ và ID lựa chọn cũ không còn tồn tại.
+- Xác định rõ nơi custom: tài liệu schema và ví dụ. Ưu tiên bản built-in làm mặc định + file override JSON ngoài ở thư mục dữ liệu ứng dụng cho người dùng chỉnh, được validate khi tải; không đòi sửa/rebuild exe chỉ để đổi một biến thể. Đường dẫn cụ thể thống nhất với conventions của project và ghi trong docs.
+- Không cần framework plugin hoặc editor đồ họa trong đợt này.
+
+### C. Phạm vi triển khai và tiêu chí nghiệm thu
+
+1. Inspect hệ vũ khí/quái hiện tại; giữ mọi nội dung đang có. Nếu chỉ có một vũ khí, vẫn tạo selection từ registry dữ liệu, không bịa thêm cả hệ trang bị. Thêm vũ khí thứ hai là đợt sau nếu người dùng yêu cầu.
+2. Triển khai lifecycle chuẩn bị trận và UI, rồi nối lựa chọn vào combat hiện có. Giữ pause reasons, sleep lock, drag/throw/dizzy, AI fallback, kỷ lục và end battle.
+3. Chuẩn hóa dữ liệu tăng dần. Chứng minh bằng fixture/ví dụ một biến thể slime mới nạp được mà không sửa controller; không tự chèn biến thể thử vào wave mặc định.
+4. Test: mở/hủy/ready/replay, double click, trạng thái mèo đổi khi đang chuẩn bị, pause/fullscreen, resume/end; mỗi enemy có HP độc lập; dữ liệu lỗi/tham chiếu thiếu/phiên bản sai; override hợp lệ và fallback; lựa chọn vũ khí thực sự áp dụng vào trận và giữ snapshot.
+5. Chạy regression phù hợp, cập nhật MANUAL-TEST.md, hướng dẫn custom và PROGRESS.md. Phân biệt probe/test với chơi desktop thật. Không dùng kết quả test cũ làm kết quả của đợt mới.
+
+Các đề xuất review cũ (frame gap, playtest, nhận diện beta) vẫn có giá trị nhưng không ép người dùng hoàn tất theo thứ tự cũ trước khi làm nhiệm vụ trên. Shop/inventory, đổi vũ khí giữa đợt, pet pack tổng quát, LLM/voice/CV chưa thuộc phạm vi.
 
 ## Đánh giá và bằng chứng hiện tại
 

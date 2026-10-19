@@ -4,7 +4,7 @@ Cập nhật: 2026-10-20 (Asia/Saigon).
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
-## Roadmap lớn đã chọn (2026-10-20) — Adventure Update, đang làm (mốc 1–2 xong, chưa commit/publish)
+## Roadmap lớn đã chọn (2026-10-20) — Adventure Update, đang làm (mốc 1–2 xong, đã commit 8b93d25 + publish)
 - Người dùng chọn gom hướng phát triển thành Chương 1 “Cuộc xâm nhập của Slime”: 5 màn, bản đồ, nâng cấp trong màn, quái hỗ trợ, boss, phần thưởng cosmetic và tiến trình lưu.
 - Roadmap chính: [docs/ADVENTURE-UPDATE.md](docs/ADVENTURE-UPDATE.md); [NEXT-STEPS](docs/NEXT-STEPS.md) đã dẫn tới roadmap và chuyển các ý tưởng lẻ thành tham khảo/backlog.
 - Có phạm vi, kiến trúc Campaign/Chapter/Stage/Wave, mốc triển khai và nghiệm thu end-to-end. Lần này chỉ gom tài liệu, không sửa source/chạy test/publish/restart; chưa tuyên bố code hiện tại đáp ứng Adventure.
@@ -38,7 +38,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 ## Kết quả test gần nhất (2026-10-20, Adventure mốc 2: lát cắt chơi được)
 - Build Release đạt (chỉ còn cảnh báo cũ battleCursorProbe). Chạy riêng tests/DesktopPet.Tests: 638 C# checks đạt (thêm 36 trong AdventureTests: dữ liệu chương 1, BattleSim theo màn + trận tự do giữ 4 đợt, mô phỏng màn 1 thắng với ≤2 slime cùng lúc, validate campaign, luật mở màn/thua/chơi lại/dữ liệu custom/runId trùng/rulesVersion, file tiến trình: lưu atomic, .bak, file hỏng, version mới hơn chỉ đọc, số lạ). Chạy riêng tests/DesktopPet.UiChecks: 427 WPF checks đạt (thêm 32 trong AdventureChecks; WeaponChecks đổi kỳ vọng menu từ 3 lên 4 mục vì có thêm "Phiêu lưu"). Chưa chạy lại Python tests (Python không đổi). Chạy 2 lần (lần 2 có PET_RENDER_REVIEW), đều đạt.
 - Đã xem ảnh render (96 DPI): bản đồ en/vi (dữ liệu thử 3 màn, đều đã thắng), bảng kết quả màn thắng có "Màn tiếp" — bố cục ổn, chữ không bị cắt. Chưa xem bản đồ với 5 màn thật ở trạng thái khóa/mở, chưa thử trên desktop thật, chưa thử DPI 125–150%, chưa chơi thử 5 màn.
-- Không commit, không publish, không restart mèo (theo ADVENTURE-UPDATE.md). Không đụng preferences.json/battle-records.json thật; test dùng thư mục tạm.
+- Người dùng sau đó yêu cầu "publish + commit": commit 8b93d25. Đóng mèo người dùng (PID 22972) bằng WM_CLOSE; publish đạt, build 1.0.0+8b93d25 (sạch), ZIP artifacts\DesktopPet-1.0.0-8b93d25-win-x64.zip; check-publish đạt 3/3. Mở lại lúc 00:31, log ghi "Desktop Pet 1.0.0 (8b93d25) started". Không đụng preferences.json/battle-records.json thật; test dùng thư mục tạm.
 
 ## Kết quả test đợt 15 (2026-10-19, Battle Mode: trang bị và phong cách chiến đấu)
 - scripts/test.ps1 -Ui (chạy thật lần này, chuột ở màn hình chính X≈586): 55 Python tests đạt; 624 C# checks đạt; 395 WPF checks đạt. 6 check phụ thuộc vị trí chuột ghi ở đợt 14 lần này đạt vì chuột ở màn hình chính — hạn chế đó vẫn còn (chuột ở màn hình phụ sẽ làm chúng thất bại), chưa sửa.
@@ -411,7 +411,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Lịch sử chuyển project: 2026-10-05 tạo AGENTS.md/PROGRESS.md tại ổ D khi thư mục đó trống; source hiện nằm tại ổ C, không cần khôi phục về D.
 
 ## Đang dở và việc tiếp theo
-- Hướng chính mới nhất: [Adventure Update — Chương 1](docs/ADVENTURE-UPDATE.md), thay roadmap tính năng lẻ. Mốc 1–2 đã làm (2026-10-20, test tự động đạt, chưa commit/publish). Tiếp theo: mốc 3 — trạng thái ChoosingUpgrade (lý do pause Upgrade, 3 thẻ chọn 1, modifier chỉ sống trong lượt), objective "survive" cho màn Cầm cự; rồi mốc 4 — quái hồi máu cho Cắt viện trợ, boss thêm pha, phụ kiện thưởng có khóa (accessories.json cần khái niệm "reward/khóa", Cài đặt ẩn đồ chưa nhận); mốc 5 — cân bằng/playtest/tài liệu.
+- Hướng chính mới nhất: [Adventure Update — Chương 1](docs/ADVENTURE-UPDATE.md), thay roadmap tính năng lẻ. Mốc 1–2 đã làm (2026-10-20, test tự động đạt, commit 8b93d25, đã publish). Tiếp theo: mốc 3 — trạng thái ChoosingUpgrade (lý do pause Upgrade, 3 thẻ chọn 1, modifier chỉ sống trong lượt), objective "survive" cho màn Cầm cự; rồi mốc 4 — quái hồi máu cho Cắt viện trợ, boss thêm pha, phụ kiện thưởng có khóa (accessories.json cần khái niệm "reward/khóa", Cài đặt ẩn đồ chưa nhận); mốc 5 — cân bằng/playtest/tài liệu.
 - Adventure, việc còn để ý: HUD trong trận màn chưa ghi tên màn (chỉ banner ĐỢT N); kết thúc tay trận màn về desktop chứ không về bản đồ; trường Rewards/Seen trong adventure-progress.json đã có nhưng chưa dùng; số đợt/quái 5 màn chưa cân bằng (mới mô phỏng màn 1).
 - Đề xuất mới 20/10: AI kiểm tra hướng chiều sâu trận đấu ở đầu [NEXT-STEPS](docs/NEXT-STEPS.md); chưa tự triển khai tất cả. Đợt trang bị 15 đã được ghi hoàn thành, đối chiếu code trước khi làm tiếp.
 - Đợt 15 (2026-10-19): trang bị và phong cách chiến đấu đã làm, test tự động đạt. Người dùng cần: đi mục "Trang bị và phong cách chiến đấu (2026-10-19, đợt 15)" trong MANUAL-TEST.md; chơi thử Kiếm và Búa ở 3 độ khó để chốt số liệu búa (mô phỏng không thay chơi thật). Hướng sau (chưa làm): chọn một nâng cấp giữa các đợt quái, chỉ hiệu lực trong trận. Vẫn còn: test UI kéo mèo phụ thuộc chuột thật (thất bại khi chuột ở màn hình phụ).

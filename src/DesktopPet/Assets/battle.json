@@ -178,6 +178,8 @@
             "id": "c1_break_through", "nameVi": "Giải vây", "nameEn": "Break through",
             "goalVi": "Quái hỗn hợp: dùng kỹ năng, kéo mèo ra khi slime gồng đòn, chọn nâng cấp giữa các đợt.",
             "goalEn": "Mixed slimes: use skills, lift the cat when a slime winds up, pick upgrades between waves.",
+            "tipVi": "Dọn xong một đợt, bạn chọn 1 trong 3 thẻ nâng cấp. Thẻ chỉ có tác dụng trong lượt chơi này; chơi lại thì bắt đầu từ đầu.",
+            "tipEn": "After each cleared wave, pick 1 of 3 upgrade cards. They last for this run only; playing again starts fresh.",
             "objective": "clear", "upgrades": true, "rulesVersion": 2,
             "waves": [
               { "groups": [ { "enemy": "slime", "count": 2 }, { "enemy": "runner", "count": 1 } ] },
@@ -189,17 +191,21 @@
             "id": "c1_hold_on", "nameVi": "Cầm cự", "nameEn": "Hold on",
             "goalVi": "Sống sót 75 giây: biết lúc đánh và lúc giữ máu. Bế mèo thì đồng hồ dừng.",
             "goalEn": "Survive 75 seconds: know when to attack and when to save HP. Carrying the cat stops the clock.",
-            "objective": "survive", "surviveSeconds": 75, "upgrades": true, "rulesVersion": 2, "reward": "SlimeHat",
+            "tipVi": "Sống sót tới khi hết giờ. Bế mèo thì đồng hồ dừng, nên hãy giữ HP bằng Khiên và Cá hồi máu thay vì chờ trên tay.",
+            "tipEn": "Stay alive until time is up. Carrying the cat stops the clock, so keep HP up with the Shield and the Healing fish instead.",
+            "objective": "survive", "surviveSeconds": 75, "maxAlive": 4, "upgrades": true, "rulesVersion": 3, "reward": "SlimeHat",
             "waves": [
               { "groups": [ { "enemy": "slime", "count": 3 }, { "enemy": "runner", "count": 1 } ] },
               { "groups": [ { "enemy": "rock", "count": 1 }, { "enemy": "runner", "count": 2 } ] },
-              { "groups": [ { "enemy": "slime", "count": 3 }, { "enemy": "runner", "count": 2 } ] }
+              { "groups": [ { "enemy": "slime", "count": 2 }, { "enemy": "runner", "count": 2 }, { "enemy": "rock", "count": 1 } ] }
             ]
           },
           {
             "id": "c1_cut_support", "nameVi": "Cắt viện trợ", "nameEn": "Cut the support",
             "goalVi": "Slime thảo dược hồi máu cho đồng đội: hạ nó trước, hoặc Đẩy để cắt lúc nó gồng.",
             "goalEn": "Herb slimes heal their friends: take them down first, or Push one to cut its heal.",
+            "tipVi": "Slime thảo dược (dấu +) hồi máu cho đồng đội. Thấy dấu + xanh trên đầu nó là nó đang gồng: Đẩy nó để cắt, hoặc click nó để mèo đánh nó trước.",
+            "tipEn": "Herb slimes (with a +) heal their friends. A green + over one means it is winding up: Push it to cut the heal, or click it so the cat hits it first.",
             "objective": "clear", "upgrades": true, "rulesVersion": 3,
             "waves": [
               { "groups": [ { "enemy": "slime", "count": 2 }, { "enemy": "mender", "count": 1 } ] },
@@ -211,6 +217,8 @@
             "id": "c1_slime_king", "nameVi": "Vua Slime", "nameEn": "The Slime King",
             "goalVi": "Trận cuối chương: Vua Slime gọi quân theo từng pha, có cả slime thảo dược.",
             "goalEn": "The chapter's last battle: the Slime King calls help phase by phase, herb slimes too.",
+            "tipVi": "Vua Slime gọi quân ở khoảng 75%, 50% và 40% máu, nổi giận ở 30%. Thấy vùng đỏ dưới sàn: kéo mèo ra ngoài hoặc bật Khiên.",
+            "tipEn": "The Slime King calls help at about 75%, 50% and 40% HP and gets angry at 30%. A red zone on the floor: lift the cat out or use the Shield.",
             "objective": "clear", "upgrades": true, "rulesVersion": 3, "reward": "SlimeKingCrown",
             "waves": [
               { "groups": [ { "enemy": "slime", "count": 2 }, { "enemy": "runner", "count": 2 } ] },

@@ -29,6 +29,14 @@ public sealed partial class PetWindow
     // The stage the setup panel prepares (null: a free battle) and the running battle's run id.
     private StageSpec? prepStage;
     private string battleRunId = "";
+    // The last save of the progress failed (disk full, no access): the map and the result say so.
+    private bool adventureSaveFailed;
+    public bool AdventureSaveFailed => adventureSaveFailed;
+    // Why progress is not being kept right now (null: it is).
+    private string? ProgressWarning() =>
+        AdventureProgress.ReadOnly ? L("Tiến trình là của bản mới hơn: chỉ đọc, lượt chơi ở bản này không được lưu.", "Your progress comes from a newer version: read only, runs in this version are not saved.")
+        : adventureSaveFailed ? L("Không lưu được tiến trình (xem log); lượt vừa chơi có thể mất khi đóng app.", "Progress could not be saved (see the log); the last run may be lost when the app closes.")
+        : null;
     public StageSpec? BattlePrepStage => prepStage;
 
     private bool adventureMapOpen;
@@ -64,7 +72,7 @@ public sealed partial class PetWindow
         if (battlePreparing) { CloseBattlePrep(); CloseBattleTutorial(); }
         CloseBattleSummary(); CloseBattleNotice();
         // A reward added to a stage won before it existed is given now (only with official data).
-        if (!BattleDataCustom && adventure.GrantRewards().Count > 0 && AdventureProgressFile != null) AdventureProgress.Save(AdventureProgressFile);
+        if (!BattleDataCustom && adventure.GrantRewards().Count > 0 && AdventureProgressFile != null) adventureSaveFailed = !AdventureProgress.Save(AdventureProgressFile);
         mapStageId = adventure.Stage(select) is StageSpec chosen ? chosen.Id
             : (chapter.Stages.FirstOrDefault(s => adventure.IsUnlocked(s.Id) && !adventure.IsCompleted(s.Id)) ?? chapter.Stages.Last(s => adventure.IsUnlocked(s.Id))).Id;
         if (!adventureMapOpen)
@@ -217,9 +225,10 @@ public sealed partial class PetWindow
             text.Visibility = string.IsNullOrEmpty(value) ? Visibility.Collapsed : Visibility.Visible;
         }
         mapTitle.Text = L("Phiêu lưu — ", "Adventure — ") + chapter.Name(English);
-        Show(mapData, BattleDataError != null
+        string? dataNote = BattleDataError != null
             ? L("File battle.json của bạn có lỗi nên dùng dữ liệu gốc: ", "Your battle.json has a mistake, so the built-in battle is used: ") + BattleDataError
-            : BattleDataCustom ? L("Đang dùng battle.json tùy chỉnh: chơi được nhưng không lưu tiến trình và kỷ lục.", "Using your custom battle.json: you can play, but progress and records are not saved.") : null);
+            : BattleDataCustom ? L("Đang dùng battle.json tùy chỉnh: chơi được nhưng không lưu tiến trình và kỷ lục.", "Using your custom battle.json: you can play, but progress and records are not saved.") : null;
+        Show(mapData, string.Join("\n", new[] { dataNote, ProgressWarning() }.Where(t => t != null)));
         foreach (var (id, node, number, mark, label, link) in mapNodes)
         {
             var stage = adventure.Stage(id);
@@ -280,6 +289,13 @@ public sealed partial class PetWindow
         return L($"Đã thắng {wins} lần{fastest}", $"Won {wins} time{(wins == 1 ? "" : "s")}{fastest}");
     }
 
+    // A stage battle just started: its name as a banner, and its tip the first time.
+    private void StageBattleStarted(StageSpec stage)
+    {
+        battleHud?.ShowBanner(StageTitle(stage), 0, 1.4);
+        if (!AdventureProgress.Seen.Contains(stage.Id) && stage.Tip(English) is { Length: > 0 }) ShowStageTip(stage);
+    }
+
     // End (HUD or menu): the battle stops with nothing counted. A stage run goes back to the map
     // (the free battle back to the desktop, as before).
     public void EndBattleByUser()
@@ -298,7 +314,7 @@ public sealed partial class PetWindow
     {
         if (finished.Stage is not StageSpec stage || AdventureOf(finished.Settings) is not Adventure adventure) return default;
         var outcome = adventure.Apply(battleRunId, stage, !battleCustomData, won, finished.Weapon.Id, finished.Difficulty, finished.Defeated, finished.FightSeconds);
-        if (outcome.Counted && AdventureProgressFile != null) AdventureProgress.Save(AdventureProgressFile);
+        if (outcome.Counted && AdventureProgressFile != null) adventureSaveFailed = !AdventureProgress.Save(AdventureProgressFile);
         if (outcome.Counted) System.Diagnostics.Trace.WriteLine($"Adventure stage {stage.Id} {(won ? "won" : "lost")}{(outcome.Unlocked != null ? $", {outcome.Unlocked.Id} opened" : "")}.");
         return outcome;
     }
@@ -315,6 +331,11 @@ public sealed partial class PetWindow
         };
         var lines = new StackPanel();
         var next = adventure?.Next(stage.Id);
+        if (result.Ranked && ProgressWarning() is string warning)
+        {
+            var unsaved = Line(11.5, PrepWarning); unsaved.Text = warning;
+            lines.Children.Add(unsaved);
+        }
         if (!result.Ranked)
         {
             var note = Line(11.5, PrepWarning); note.Text = L("Dữ liệu tùy chỉnh: lượt này không lưu tiến trình và kỷ lục.", "Custom data: this run saves no progress or records.");

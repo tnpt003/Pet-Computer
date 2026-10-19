@@ -244,6 +244,7 @@ public sealed partial class PetWindow
         ShowBattleWindows();
         // The guide belongs to the setup panel; one still open would hold the battle.
         if (BattleTutorialOpen) SetBattlePause(BattlePause.Tutorial, true);
+        if (stage != null) StageBattleStarted(stage);
         System.Diagnostics.Trace.WriteLine(stage != null ? $"Battle started: Adventure stage {stage.Id}." : "Battle started.");
         PlayPetSound("excited");
         return null;
@@ -582,7 +583,8 @@ public sealed partial class PetWindow
         var portrait = new PetRenderer(new PetModel { Action = PetAction.Idle, Grounded = true, Facing = 1, AnimationTime = 1, ActionTime = 1 })
             { Coat = renderer.Coat, Accessory = renderer.Accessory };
         // The weapon of this battle next to the cat's name.
-        battleHud = new BattleHud($"{preferences.Name} · {(battle != null ? WeaponName(battle.Weapon) : "")}", portrait, L);
+        string stagePart = battle?.Stage is StageSpec stage ? L($" · Màn {StageNumber(stage)}", $" · Stage {StageNumber(stage)}") : "";
+        battleHud = new BattleHud($"{preferences.Name} · {(battle != null ? WeaponName(battle.Weapon) : "")}{stagePart}", portrait, L);
         battleHud.SkillClicked += skill => UseBattleSkill(skill);
         battleHud.PauseClicked += () => { if (battle != null) SetBattlePaused(!BattleUserPaused); };
         battleHud.EndClicked += EndBattleByUser;

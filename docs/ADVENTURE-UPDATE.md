@@ -3,7 +3,7 @@
 > **Quy tắc mới 20/10:** luôn commit và publish sau mỗi mốc code hoàn chỉnh, kiểm thử đạt; chạy smoke và báo artifact. Không cần hỏi lại. Mốc tài liệu-only commit, không cần publish binary. Xem AGENTS.md; quy tắc này thay các hạn chế cũ trong ghi chú lịch sử. Không tự push/upload.
 
 Ngày thống nhất hướng: 2026-10-20 (Asia/Saigon).
-Trạng thái (cập nhật 2026-10-20): **mốc 1–4 đã làm** (bản đồ/màn/tiến trình; thẻ nâng cấp + sinh tồn; slime thảo dược hồi máu, Vua Slime chương theo pha, phụ kiện thưởng Mũ slime/Vương miện Vua Slime, Kết thúc về bản đồ), có test tự động; chưa chơi thử thật. Còn mốc 5 (cân bằng, playtest, nghiệm thu, tài liệu phát hành); chưa phải bản phát hành.
+Trạng thái (cập nhật 2026-10-20): **mốc 1–5 đã làm phần tự động được**, phát hành nội bộ **1.1.0-beta**. Còn chờ người dùng: chơi thử thật, DPI 125–150%, máy sạch, nghe âm thanh — chưa được đánh dấu nghiệm thu (xem bảng dưới).
 
 ### Ánh xạ thiết kế → code (mốc 1–2)
 | Khái niệm | Code |
@@ -105,6 +105,19 @@ Không coi từng mốc là đã hoàn thành bản cập nhật lớn. Có th�
 - Regression Pet Mode ngủ/thức/cảm xúc/input/AI fallback vẫn đạt. Dùng dữ liệu thử riêng, không ghi đè preferences/progress người dùng.
 - Playtest ghi version, weapon, difficulty, thời lượng, HP, thắng/thua và quyết định nâng cấp; không coi simulation là chơi desktop thật.
 - Tài liệu schema/custom, hướng dẫn người dùng, MANUAL-TEST, PROGRESS và trạng thái roadmap cập nhật theo bằng chứng. Nếu chưa có phần cứng/khả năng test tay, ghi rõ còn thiếu, không đánh dấu toàn bộ release đã nghiệm thu.
+
+### Trạng thái nghiệm thu (2026-10-20, bản 1.1.0-beta)
+| Tiêu chí | Bằng chứng tự động | Còn chờ |
+| --- | --- | --- |
+| Màn 1 → boss, nhận cosmetic, về desktop; đóng/mở đúng tiến trình, không thưởng trùng | AdventureBalanceTests (cả chương mô phỏng, lưu/đọc lại sau mỗi màn), AdventureChecks/ContentChecks (cửa sổ thật, đọc lại file) | Chơi thật 5 màn |
+| Thắng/thua/hủy/chơi lại/đổi trang bị/chuyển màn xác định, không rò window/timer, không giữ buff | AdventureChecks, UpgradeChecks, AcceptanceChecks | Chơi thật |
+| Upgrades, objective, spawn cap, pause chồng, drag/throw, save lỗi/migration, custom data | AdventureUpgradeTests, AdventureContentTests, AcceptanceChecks (thẻ + mẹo + user pause; file chỉ đọc; file bản mới hơn), các check Battle cũ | — |
+| Regression Pet Mode | toàn bộ test cũ (scripts/test.ps1 -Ui) | Test tay MANUAL-TEST mức 1 |
+| Playtest ghi version/vũ khí/độ khó/thời lượng/HP/thắng thua/nâng cấp | Bảng mô phỏng in trong AdventureBalanceTests (không phải chơi thật) | Người dùng điền "Nhật ký chơi thử" |
+| Tài liệu | README, CHANGELOG, BATTLE-DATA, WINDOWS, MANUAL-TEST, PROGRESS | — |
+| DPI 125–150%, nhiều màn hình, máy sạch, âm thanh | ảnh render 96 DPI | Cần phần cứng/người dùng |
+
+Mô phỏng cân bằng (2026-10-20, 10 seed, người chơi "đơn giản" dùng kỹ năng theo luật, không kéo mèo): Thường thắng 10/10 ở mọi màn với kiếm và búa; Dễ để mèo tự đánh vẫn thắng màn 1–2; màn dài nhất ~75 s; màn 5 Thường nếu không dùng kỹ năng thì thua 10/10 (trận cuối cần kỹ năng). Màn 3 được tăng maxAlive 4 + đợt lặp nặng hơn (rulesVersion 3) để Khó không dùng kỹ năng chỉ còn thắng 2–4/10.
 
 ## Backlog sau Chương 1
 

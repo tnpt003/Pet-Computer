@@ -845,3 +845,19 @@ next step), so a double click never starts two battles. Ending a battle by hand 
   the list back by id. The map lists a stage's reward ("✓ received").
 - **End** (HUD or menu) during a stage goes back to the map at that stage; nothing is counted. The
   free battle's End goes back to the desktop as before.
+
+### Stage tips, saving notices, version (2026-10-20, milestone 5)
+
+- **Stage tips** (battle.json `tipVi`/`tipEn`, stages 2–5): the first time a stage starts, its tip
+  shows in the guide panel (one card, "Tip · Stage N · name", Done/Skip) and the battle waits
+  (`BattlePause.Tutorial`). Closing it with Done/Skip saves it as seen (`Seen` in
+  adventure-progress.json); a fullscreen app or the battle's end just closes it. The stage's setup
+  panel has a **Stage tip** link to see it again.
+- **HUD:** the name line reads "Name · Weapon · Stage N"; a short banner names the stage at start.
+- **Saving notices:** when the progress cannot be saved (no access, disk full) the result panel and
+  the map say "Progress could not be saved"; when adventure-progress.json comes from a newer version
+  the map says it is read only (runs in this version are not saved, the file is left alone).
+- **Balance:** `AdventureBalanceTests` simulates every stage × sword/hammer × Easy/Normal/Hard with an
+  idle and a simple skill-using player (10 seeds) and prints the table; stage 3 now allows 4 enemies
+  at once with a heavier repeating wave (rulesVersion 3). Simulation only, not real play.
+- **Version:** 1.1.0-beta (`DesktopPet.csproj`); see CHANGELOG.md.

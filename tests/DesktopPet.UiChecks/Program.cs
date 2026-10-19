@@ -694,6 +694,7 @@ internal static class Program
         await AdventureChecks.Run(window, pet, behavior, preferences, Check);
         await UpgradeChecks.Run(window, pet, behavior, preferences, Check);
         await ContentChecks.Run(window, pet, behavior, preferences, Check);
+        await AcceptanceChecks.Run(window, pet, behavior, preferences, Check);
         window.ShowControls();
         Check(window.ContextMenu!.IsOpen, "Existing pet controls can be opened by a second launch notification");
         window.ContextMenu.IsOpen = false;

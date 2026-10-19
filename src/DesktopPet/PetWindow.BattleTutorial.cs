@@ -16,12 +16,17 @@ public sealed partial class PetWindow
     private int battleTutorialStep;
     private TextBlock? tutorialTitle, tutorialBody, tutorialCount, tutorialNextText;
     public const int BattleTutorialSteps = 4;
+    // A stage tip (Adventure): the same panel with one card; null for the battle guide.
+    private StageSpec? tipStage;
+    public string? BattleTipStage => tipStage?.Id;
+    private int TutorialSteps => tipStage != null ? 1 : BattleTutorialSteps;
     public bool BattleTutorialOpen => battleTutorialWindow != null;
     public int BattleTutorialStep => battleTutorialStep;
     public string BattleTutorialText => $"{tutorialTitle?.Text}\n{tutorialBody?.Text}";
 
     private (string Title, string Body) TutorialCard(int step)
     {
+        if (tipStage != null) return (L("Mẹo · ", "Tip · ") + StageTitle(tipStage), tipStage.Tip(English) ?? "");
         var s = BattleTuning;
         string grace = s.LandingGraceSeconds.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
         string again = s.RescueGraceCooldownSeconds.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
@@ -43,9 +48,22 @@ public sealed partial class PetWindow
     }
 
     // Opens the guide at its first card (or keeps it open). During a battle it pauses it.
-    public void ShowBattleTutorial()
+    public void ShowBattleTutorial() => ShowGuide(null);
+
+    // A stage's tip: once by itself when the stage first starts, or again from its setup panel.
+    // Closing it (Done or Skip) marks it seen in the Adventure progress.
+    public bool ShowStageTip(StageSpec stage)
+    {
+        if (stage.Tip(English) is not { Length: > 0 }) return false;
+        ShowGuide(stage);
+        return BattleTutorialOpen;
+    }
+
+    private void ShowGuide(StageSpec? tip)
     {
         if (closed || context.Fullscreen) return;
+        if (battleTutorialWindow != null && tipStage?.Id != tip?.Id) { battleTutorialWindow.Close(); battleTutorialWindow = null; }
+        tipStage = tip;
         battleTutorialStep = 0;
         if (battleTutorialWindow == null)
         {
@@ -78,7 +96,7 @@ public sealed partial class PetWindow
     public void BattleTutorialNext()
     {
         if (battleTutorialWindow == null) return;
-        if (battleTutorialStep >= BattleTutorialSteps - 1) { CloseBattleTutorial(finished: true); return; }
+        if (battleTutorialStep >= TutorialSteps - 1) { CloseBattleTutorial(finished: true); return; }
         battleTutorialStep++;
         ShowTutorialCard();
     }
@@ -89,8 +107,8 @@ public sealed partial class PetWindow
         var (title, body) = TutorialCard(battleTutorialStep);
         tutorialTitle.Text = title;
         tutorialBody.Text = body;
-        tutorialCount.Text = $"{battleTutorialStep + 1}/{BattleTutorialSteps}";
-        tutorialNextText.Text = battleTutorialStep >= BattleTutorialSteps - 1 ? L("Xong", "Done") : L("Tiếp", "Next");
+        tutorialCount.Text = TutorialSteps > 1 ? $"{battleTutorialStep + 1}/{TutorialSteps}" : "";
+        tutorialNextText.Text = battleTutorialStep >= TutorialSteps - 1 ? L("Xong", "Done") : L("Tiếp", "Next");
         battleTutorialWindow.UpdateLayout();
         // Above the battle's floor strip (or above the cat without a battle), centred.
         var area = battle != null ? battleArea : bounds;
@@ -105,6 +123,16 @@ public sealed partial class PetWindow
     // Otherwise (the battle ended, a fullscreen app, the pet reset) it just goes away.
     public void CloseBattleTutorial(bool finished = false)
     {
+        if (tipStage != null)
+        {
+            if (finished && !AdventureProgress.Seen.Contains(tipStage.Id))
+            {
+                AdventureProgress.Seen.Add(tipStage.Id);
+                if (AdventureProgressFile != null) adventureSaveFailed = !AdventureProgress.Save(AdventureProgressFile);
+            }
+            tipStage = null;
+            finished = false; // A tip is not the battle guide.
+        }
         if (finished && !preferences.BattleTutorialSeen)
         {
             preferences.BattleTutorialSeen = true;

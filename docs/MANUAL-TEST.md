@@ -145,12 +145,18 @@ Nên chép dự phòng %LOCALAPPDATA%\DesktopPet\adventure-progress.json (nếu 
 - [ ] Bấm Kết thúc (HUD hoặc menu) giữa trận màn: về bản đồ đúng màn đó, không tính gì. Trận tự do: Kết thúc về desktop như cũ.
 - [ ] Đã thắng màn 3 bằng bản trước (8b93d25/9225d77): mở bản đồ là có Mũ slime trong Cài đặt (nhận bù).
 
+#### Phiêu lưu — mốc 5: mẹo theo màn, cảnh báo lưu, bản 1.1.0-beta (2026-10-20)
+- [ ] Lần đầu vào màn 2–5: hiện thẻ "Mẹo · Màn N · …" phía trên sàn, trận đứng yên tới khi bấm Xong/Bỏ qua; lần sau không hiện nữa. Bảng chuẩn bị của màn có link "Mẹo màn" mở lại thẻ.
+- [ ] HUD ghi "Tên mèo · Vũ khí · Màn N"; lúc bắt đầu có banner tên màn.
+- [ ] Giới thiệu (Khác → Giới thiệu) ghi 1.1.0-beta.
+- [ ] (Tùy chọn) Đặt adventure-progress.json chỉ đọc (Properties → Read-only) rồi thắng một màn: bảng kết quả và bản đồ báo không lưu được; app không lỗi. Bỏ chỉ đọc sau khi thử.
+
 ### Nhật ký chơi thử Battle Mode (beta, thêm 2026-10-18)
 Chơi 3–5 trận mỗi độ khó trên bản publish, ghi 1 dòng/trận. Phiên bản: xem Khác → Giới thiệu (ví dụ `1.0.0 (18cb227)`). Chưa có dòng nào là chưa chơi thử; số mô phỏng trong PROGRESS.md không thay cho bảng này.
 
-| Ngày | Phiên bản | Độ khó | Thời lượng | Thắng/thua | HP cuối | Số lần cứu nguy | Kỹ năng đã dùng | Vấn đề thấy |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| | | | | | | | | |
+| Ngày | Phiên bản | Màn (hoặc "tự do") | Vũ khí | Độ khó | Thời lượng | Thắng/thua | HP cuối | Nâng cấp đã chọn | Số lần cứu nguy | Kỹ năng đã dùng | Vấn đề thấy |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| | | | | | | | | | | | |
 
 Sau vài trận, trả lời: đòn quái sau khi thả mèo có dễ hiểu/công bằng không; 5 kỹ năng có vai trò rõ hay chỉ bấm hết khi hồi xong; HUD/click xuyên/focus có làm phiền app bên dưới không; âm thanh khi đánh lâu có dày/to quá không; cảnh báo có rõ khi nhiều quái/boss không; các mức khó khác nhau ở quyết định hay chỉ dài hơn.
 

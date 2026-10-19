@@ -28,7 +28,7 @@ public sealed partial class PetWindow
     private double prepRefresh;
     private readonly List<(string Id, Border Card, Path Check, TextBlock Name, TextBlock Hint, TextBlock[] StatNames, TextBlock[] StatValues)> prepCards = new();
     private readonly List<(BattleDifficulty Level, Border Chip, Path Check, TextBlock Text)> prepLevelChips = new();
-    private TextBlock? prepTitle, prepWeaponLabel, prepLevelLabel, prepData, prepStatus, prepReadyText, prepGuideText, prepCancelText, prepTryText;
+    private TextBlock? prepTitle, prepWeaponLabel, prepLevelLabel, prepData, prepStatus, prepReadyText, prepGuideText, prepCancelText, prepTryText, prepTipText;
     private Border? prepReady;
     // The preview: its own model and renderer, animated by its own timer only while Try it runs.
     private PetModel? prepPreview;
@@ -61,7 +61,7 @@ public sealed partial class PetWindow
     // For checks: the preview's own model, and whether Try it is running.
     public PetModel? BattlePrepPreview => prepPreview;
     public bool BattlePrepPreviewPlaying => prepPreviewTimer != null;
-    public string BattlePrepText => string.Join("\n", new[] { prepTitle, prepData, prepStatus, prepTryText, prepGuideText, prepCancelText, prepReadyText }
+    public string BattlePrepText => string.Join("\n", new[] { prepTitle, prepData, prepStatus, prepTryText, prepGuideText, prepTipText, prepCancelText, prepReadyText }
         .Where(t => t is { Visibility: Visibility.Visible }).Select(t => t!.Text)
         .Concat(prepCards.SelectMany(c => new[] { c.Name.Text, c.Hint.Text }.Concat(c.StatValues.Select(v => v.Text))))
         .Concat(prepLevelChips.Select(c => c.Text.Text)));
@@ -327,14 +327,17 @@ public sealed partial class PetWindow
         prepGuideText = new TextBlock { Foreground = Brushes.White, Opacity = 0.85, FontSize = 12, TextDecorations = TextDecorations.Underline,
             Cursor = System.Windows.Input.Cursors.Hand, VerticalAlignment = VerticalAlignment.Center, Background = Brushes.Transparent };
         prepGuideText.MouseLeftButtonDown += (_, e) => { ShowBattleTutorial(); e.Handled = true; };
+        prepTipText = new TextBlock { Foreground = Brushes.White, Opacity = 0.85, FontSize = 12, TextDecorations = TextDecorations.Underline, Margin = new Thickness(12, 0, 0, 0),
+            Cursor = System.Windows.Input.Cursors.Hand, VerticalAlignment = VerticalAlignment.Center, Background = Brushes.Transparent };
+        prepTipText.MouseLeftButtonDown += (_, e) => { if (prepStage != null) ShowStageTip(prepStage); e.Handled = true; };
         var (cancel, cancelText, _) = HudButton(CancelBattlePrep, plain: true);
         var (ready, readyText, _) = HudButton(() => BattlePrepReady(), plain: true);
         ready.Background = PrepChosen; ready.Padding = new Thickness(18, 6, 18, 5); ready.MinWidth = 110; ready.Margin = new Thickness(0);
         readyText.FontSize = 14; readyText.FontWeight = FontWeights.Bold;
         prepReady = ready; prepReadyText = readyText; prepCancelText = cancelText;
         var actions = new DockPanel { Margin = new Thickness(0, 12, 0, 0), LastChildFill = false };
-        DockPanel.SetDock(prepGuideText, Dock.Left); DockPanel.SetDock(ready, Dock.Right); DockPanel.SetDock(cancel, Dock.Right);
-        actions.Children.Add(prepGuideText); actions.Children.Add(ready); actions.Children.Add(cancel);
+        DockPanel.SetDock(prepGuideText, Dock.Left); DockPanel.SetDock(prepTipText, Dock.Left); DockPanel.SetDock(ready, Dock.Right); DockPanel.SetDock(cancel, Dock.Right);
+        actions.Children.Add(prepGuideText); actions.Children.Add(prepTipText); actions.Children.Add(ready); actions.Children.Add(cancel);
 
         var choices = new StackPanel { Width = 300, Children = { prepWeaponLabel, cards, prepLevelLabel, levels } };
         var panel = new Border
@@ -413,6 +416,7 @@ public sealed partial class PetWindow
         prepGuideText!.Text = L("Cách chơi", "How to play");
         prepCancelText!.Text = prepStage != null ? L("Bản đồ", "Map") : L("Đóng", "Close");
         prepTryText!.Text = L("Xem thử", "Try it");
+        Show(prepTipText, prepStage?.Tip(English) is { Length: > 0 } ? L("Mẹo màn", "Stage tip") : null);
         bool can = waiting == null;
         if (prepReady.IsEnabled != can) { prepReady.IsEnabled = can; prepReady.Opacity = can ? 1 : 0.5; }
     }

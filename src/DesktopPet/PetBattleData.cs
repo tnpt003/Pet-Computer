@@ -132,6 +132,10 @@ public sealed class StageSpec
     public int? MaxAlive { get; init; }
     // An accessory id (Assets/accessories.json) given once, the first time the stage is won.
     public string? Reward { get; init; }
+    // A short tip shown once when the stage first starts (and again from its setup panel).
+    public string? TipVi { get; init; }
+    public string? TipEn { get; init; }
+    public string? Tip(bool english) => english ? TipEn : TipVi;
     public WaveSpec[] Waves { get; init; } = Array.Empty<WaveSpec>();
     public string Name(bool english) => english ? NameEn : NameVi;
     public string Goal(bool english) => english ? GoalEn : GoalVi;
@@ -458,6 +462,8 @@ public static class BattleData
                 if (stage.Survival && stage.SurviveSeconds is not (>= 10 and <= 600)) throw new InvalidDataException($"{where}.surviveSeconds must be 10–600 for a survive stage");
                 if (!stage.Survival && stage.SurviveSeconds != null) throw new InvalidDataException($"{where}.surviveSeconds is only for a survive stage");
                 waves(stage.Waves, where + ".waves");
+                if ((stage.TipVi == null) != (stage.TipEn == null) || stage.TipVi?.Length > 220 || stage.TipEn?.Length > 220)
+                    throw new InvalidDataException($"{where} tips need both languages, at most 220 characters each");
                 if (stage.Reward != null && PetAccessories.Find(stage.Reward) is not { Reward: not null })
                     throw new InvalidDataException($"{where}.reward \"{stage.Reward}\" is not a reward accessory in accessories.json");
             }

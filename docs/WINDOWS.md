@@ -760,3 +760,41 @@ next step), so a double click never starts two battles. Ending a battle by hand 
   swing or push, squish for a hit, pop for a defeated slime; the cat's own cues stay for being hurt
   (surprised), wave clear/victory (excited) and defeat (annoyed). One cue per frame, the most
   important event wins; the usual mute/volume/category rules apply, effects have a 0.25 s cooldown.
+
+## Adventure (2026-10-20, milestone 2 of docs/ADVENTURE-UPDATE.md)
+
+- **Where:** right-click → Battle Mode → **Adventure** (above **Start battle**, which is still the
+  free battle, unchanged). It is refused, with the reason, only while the pet is paused, a
+  fullscreen app is open or a battle runs.
+- **Map** (window "Pet adventure", like the setup panel: clickable, never activated, no taskbar
+  button, mouse only): chapter 1 "The Slime Invasion", five stage nodes joined by a path. Won: gold
+  with a tick; open: blue with its number; locked: grey with a padlock (not only a colour). Click a
+  node for its name, goal, state ("Locked — win stage N first", wave count, "Completed") and its
+  wins/fastest win. **Play stage** (only for an open stage) opens the setup panel for it; **Close**
+  goes back to the desktop. While the map is open it owns the pet's free time like the setup panel
+  (Quiet, no AI commands, games, chatter or away nap; sleep, a drag or a flight are not cut). A
+  fullscreen app hides it until it closes; Reset/Exit close it.
+- **Stage setup:** the usual setup panel (weapon, difficulty, Try it, How to play) titled
+  "Stage N · name" with the goal; its close button says **Map** and goes back to the map. Ready
+  starts the stage with the battle engine as before; only the waves (and the enemy cap) are the
+  stage's own.
+- **Result:** after a win or a loss the result panel names the stage and the loadout. Main button:
+  **Next stage** after a win when there is one (opens the setup panel for it with the same gear),
+  otherwise **Play again**; below it Play again / **Map** / **Back to desktop**. It says what was
+  unlocked, "Chapter complete!" after the last stage, and the stage's records for that gear.
+- **Progress** (`%LOCALAPPDATA%\DesktopPet\adventure-progress.json`, `PetAdventure.cs`, Version 1):
+  stages won, rewards given (later), tips seen (later), records per
+  `stage|r<rulesVersion>|weapon|difficulty` and the last 50 run ids. Each finished run (won or lost)
+  is counted once by its run id; a loss never takes back an open stage; replaying a won stage is
+  allowed. Ending a run by hand, Reset or closing the app counts nothing (a battle in progress is
+  never saved). Saved at once after each run: written to `.tmp` and moved over the file, the old file
+  kept as `.bak`; a broken file is read from `.bak`, else progress starts over (logged); a file from
+  a newer version is read but never overwritten. A pet built with given preferences (UI checks)
+  keeps it in memory unless `AdventureProgressFile` is set.
+- **Records:** stage records live only in the progress file; a stage battle never touches
+  `battle-records.json` (the free battle's), so the two are never compared. They still count in the
+  session's won/lost/combos sent to Python.
+- **Custom data:** with the user's battle.json in use, Adventure can be played but the map and the
+  result say so and the run saves no progress or record.
+- **Data:** `"campaign"` in battle.json (docs/BATTLE-DATA.md). `BattleSim(..., stage)` takes a
+  `StageSpec`: `WavePlan` and the enemy cap come from it; without one nothing changes.

@@ -1,0 +1,344 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
+using System.Windows.Shapes;
+
+namespace DesktopPet;
+
+// Adventure (docs/ADVENTURE-UPDATE.md): menu → Battle Mode → Adventure opens the chapter map; a
+// stage opens the usual setup panel with that stage; Ready plays it with the battle engine; the
+// result panel counts the run in the saved progress (PetAdventure.cs) and offers the next stage,
+// the map or the desktop. One step owns the pet at a time: the map, the setup panel, the battle,
+// or nothing (the result panel only waits for a choice). Like the setup panel the map never takes
+// focus, holds the pet's free time (Quiet, no AI, games or sleep from boredom) and starts nothing.
+public sealed partial class PetWindow
+{
+    // The saved progress file (null: kept in memory only, as for the UI checks' own pets).
+    public string? AdventureProgressFile { get; set; }
+    private AdventureProgress? adventureProgress;
+    public AdventureProgress AdventureProgress => adventureProgress ??= AdventureProgressFile != null ? AdventureProgress.Load(AdventureProgressFile) : new();
+    // For checks: forget the progress in memory so it is read from the file again (like a restart).
+    public void ReloadAdventureProgress() => adventureProgress = null;
+    // The Adventure in the data for the next battle (null when that data has no campaign).
+    public Adventure? Adventure => BattleTuning.Campaign is CampaignSpec campaign ? new Adventure(campaign, AdventureProgress) : null;
+    private Adventure? AdventureOf(BattleSettings settings) => settings.Campaign is CampaignSpec campaign ? new Adventure(campaign, AdventureProgress) : null;
+
+    // The stage the setup panel prepares (null: a free battle) and the running battle's run id.
+    private StageSpec? prepStage;
+    private string battleRunId = "";
+    public StageSpec? BattlePrepStage => prepStage;
+
+    private bool adventureMapOpen;
+    private Window? adventureMapWindow;
+    private string? mapStageId;
+    private double mapRefresh;
+    private readonly List<(string Id, Border Node, TextBlock Number, Path Mark, TextBlock Label, Rectangle? Link)> mapNodes = new();
+    private TextBlock? mapTitle, mapData, mapStageName, mapGoal, mapStatus, mapRecord, mapEnterText, mapCloseText;
+    private Border? mapEnter;
+    private static readonly Brush MapDone = PetUi.Frozen(Color.FromRgb(0xFF, 0xD3, 0x5C));
+    private static readonly Brush MapDoneInk = PetUi.Frozen(Color.FromRgb(0x3A, 0x2C, 0x08));
+    private static readonly Brush MapLocked = PetUi.Frozen(Color.FromArgb(0x38, 255, 255, 255));
+    private static readonly Geometry LockMark = PetUi.FrozenGeometry("M 2,7 L 12,7 L 12,14 L 2,14 Z M 4,7 L 4,5 A 3,3 0 0 1 10,5 L 10,7");
+
+    public bool AdventureMapOpen => adventureMapOpen;
+    public bool AdventureMapVisible => adventureMapWindow?.IsVisible == true;
+    public string? AdventureSelectedStage => mapStageId;
+    public bool AdventureEnterEnabled => mapEnter?.IsEnabled == true;
+    public string AdventureMapText => string.Join("\n", new[] { mapTitle, mapData, mapStageName, mapGoal, mapStatus, mapRecord, mapEnterText, mapCloseText }
+        .Where(t => t is { Visibility: Visibility.Visible }).Select(t => t!.Text).Concat(mapNodes.Select(n => n.Label.Text)));
+
+    private string StageNumber(StageSpec stage) => Adventure?.Locate(stage.Id) is { } at ? (at.Index + 1).ToString() : "";
+    private string StageTitle(StageSpec stage) => L($"Màn {StageNumber(stage)} · ", $"Stage {StageNumber(stage)} · ") + stage.Name(English);
+
+    // Null when the map is open (opening it twice keeps the one map), otherwise why not.
+    // It replaces an open setup panel or result panel; a battle must end first.
+    public string? OpenAdventureMap(string? select = null)
+    {
+        if (BattlePrepRefusal() is string reason) return reason;
+        ReloadBattleData();
+        if (Adventure is not Adventure adventure || adventure.Chapter() is not ChapterSpec chapter)
+            return L("Dữ liệu trận không có chương phiêu lưu.", "The battle data has no Adventure chapter.");
+        if (battlePreparing) { CloseBattlePrep(); CloseBattleTutorial(); }
+        CloseBattleSummary(); CloseBattleNotice();
+        mapStageId = adventure.Stage(select) is StageSpec chosen ? chosen.Id
+            : (chapter.Stages.FirstOrDefault(s => adventure.IsUnlocked(s.Id) && !adventure.IsCompleted(s.Id)) ?? chapter.Stages.Last(s => adventure.IsUnlocked(s.Id))).Id;
+        if (!adventureMapOpen)
+        {
+            adventureMapOpen = true;
+            queuedCommand = null;
+            revision++; // An AI reply chosen before the map must not move the cat now.
+            pet.Speech.Hide(); pet.Thought.Clear();
+            ApplyQuiet();
+            ShowAdventureMapWindow(chapter);
+            System.Diagnostics.Trace.WriteLine("Adventure map opened.");
+        }
+        UpdateAdventureMap();
+        return null;
+    }
+
+    public bool AdventureSelectStage(string id)
+    {
+        if (!adventureMapOpen || Adventure?.Stage(id) == null) return false;
+        mapStageId = id;
+        UpdateAdventureMap();
+        return true;
+    }
+
+    // Enter: the setup panel opens for the chosen stage (nothing fights yet). Null on success.
+    public string? AdventureEnterStage(string? id = null)
+    {
+        if (!adventureMapOpen) return L("Bản đồ chưa mở.", "The map is not open.");
+        var adventure = Adventure;
+        if (adventure?.Stage(id ?? mapStageId) is not StageSpec stage) return L("Không có màn này.", "There is no such stage.");
+        if (!adventure.IsUnlocked(stage.Id)) return L("Màn này chưa mở.", "This stage is still locked.");
+        return OpenBattlePrep(stage: stage);
+    }
+
+    // The map's Close: back to the pet's normal life.
+    public void CancelAdventureMap()
+    {
+        if (!adventureMapOpen) return;
+        CloseAdventureMap();
+        revision++;
+        behavior.Reset(pet);
+        System.Diagnostics.Trace.WriteLine("Adventure map closed.");
+    }
+
+    // Removes the map (entering a stage, reset, closing the pet). Leaves the pet's state alone.
+    private void CloseAdventureMap()
+    {
+        bool was = adventureMapOpen;
+        adventureMapOpen = false;
+        adventureMapWindow?.Close();
+        adventureMapWindow = null;
+        mapEnter = null;
+        mapNodes.Clear();
+        if (was) ApplyQuiet();
+    }
+
+    // Every frame, paused or not: a fullscreen app hides the map (it comes back after).
+    private void TickAdventureMap(double dt)
+    {
+        if (!adventureMapOpen || adventureMapWindow == null) return;
+        if (context.Fullscreen) { if (adventureMapWindow.IsVisible) adventureMapWindow.Hide(); return; }
+        if (!adventureMapWindow.IsVisible) { adventureMapWindow.Show(); PlaceAdventureMap(); }
+        mapRefresh += dt;
+        if (mapRefresh < BattlePrepRefreshSeconds) return;
+        mapRefresh = 0;
+        UpdateAdventureMap();
+    }
+
+    private void ShowAdventureMapWindow(ChapterSpec chapter)
+    {
+        TextBlock Line(double size, bool bold = false, double maxWidth = 420) => new()
+        {
+            Foreground = Brushes.White, FontSize = size, FontWeight = bold ? FontWeights.Bold : FontWeights.Normal,
+            TextWrapping = TextWrapping.Wrap, MaxWidth = maxWidth
+        };
+        mapTitle = Line(16, true);
+        mapData = Line(11.5); mapData.Foreground = PrepWarning; mapData.Margin = new Thickness(0, 6, 0, 0);
+        // The stages in order, joined by a path: gold when won, blue when open, grey with a lock when not yet.
+        var row = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 12, 0, 0), HorizontalAlignment = HorizontalAlignment.Center };
+        mapNodes.Clear();
+        for (int i = 0; i < chapter.Stages.Length; i++)
+        {
+            string id = chapter.Stages[i].Id;
+            Rectangle? link = null;
+            if (i > 0)
+            {
+                link = new Rectangle { Width = 24, Height = 4, RadiusX = 2, RadiusY = 2, VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(0, 19, 0, 0) };
+                row.Children.Add(link);
+            }
+            var number = new TextBlock { FontSize = 15, FontWeight = FontWeights.Bold, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
+            var mark = new Path { StrokeThickness = 2.2, StrokeStartLineCap = PenLineCap.Round, StrokeEndLineCap = PenLineCap.Round, StrokeLineJoin = PenLineJoin.Round,
+                Width = 15, Height = 15, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
+            var node = new Border { Width = 42, Height = 42, CornerRadius = new CornerRadius(21), HorizontalAlignment = HorizontalAlignment.Center,
+                Cursor = System.Windows.Input.Cursors.Hand, Child = new Grid { Children = { number, mark } } };
+            var label = new TextBlock { Foreground = Brushes.White, FontSize = 11, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center,
+                Width = 76, Margin = new Thickness(0, 4, 0, 0) };
+            var column = new StackPanel { Width = 76, Background = Brushes.Transparent, Cursor = System.Windows.Input.Cursors.Hand, Children = { node, label } };
+            column.MouseLeftButtonDown += (_, e) => { AdventureSelectStage(id); e.Handled = true; };
+            row.Children.Add(column);
+            mapNodes.Add((id, node, number, mark, label, link));
+        }
+        mapStageName = Line(14, true); mapStageName.Margin = new Thickness(0, 12, 0, 0);
+        mapGoal = Line(12.5); mapGoal.Margin = new Thickness(0, 3, 0, 0);
+        mapStatus = Line(12, true); mapStatus.Margin = new Thickness(0, 5, 0, 0);
+        mapRecord = Line(11.5); mapRecord.Opacity = 0.8; mapRecord.Margin = new Thickness(0, 2, 0, 0);
+        var details = new Border { Background = PrepCardBack, CornerRadius = new CornerRadius(9), Padding = new Thickness(11, 0, 11, 9), Margin = new Thickness(0, 10, 0, 0),
+            Child = new StackPanel { Children = { mapStageName, mapGoal, mapStatus, mapRecord } } };
+        var (close, closeText, _) = HudButton(CancelAdventureMap, plain: true);
+        var (enter, enterText, _) = HudButton(() => { if (AdventureEnterStage() is string reason) ShowBattleNotice(reason); }, plain: true);
+        enter.Background = PrepChosen; enter.Padding = new Thickness(18, 6, 18, 5); enter.MinWidth = 110; enter.Margin = new Thickness(0);
+        enterText.FontSize = 14; enterText.FontWeight = FontWeights.Bold;
+        mapEnter = enter; mapEnterText = enterText; mapCloseText = closeText;
+        var actions = new DockPanel { Margin = new Thickness(0, 12, 0, 0), LastChildFill = false };
+        DockPanel.SetDock(close, Dock.Left); DockPanel.SetDock(enter, Dock.Right);
+        actions.Children.Add(close); actions.Children.Add(enter);
+        var panel = new Border
+        {
+            Background = HudBack, BorderBrush = Brushes.White, BorderThickness = new Thickness(1.5), CornerRadius = new CornerRadius(12),
+            Padding = new Thickness(16, 12, 16, 12), Margin = new Thickness(6), MinWidth = 440,
+            Child = new StackPanel { Children = { mapTitle, mapData, row, details, actions } },
+            Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 6, ShadowDepth = 1, Opacity = 0.4 }
+        };
+        panel.SetValue(TextBlock.FontFamilyProperty, PetUi.TextFont);
+        var window = CreateBattleWindow(panel, "Pet adventure");
+        window.SizeToContent = SizeToContent.WidthAndHeight;
+        window.Closed += (_, _) => { if (adventureMapWindow == window) adventureMapWindow = null; };
+        adventureMapWindow = window;
+        UpdateAdventureMap();
+        window.Show();
+        PlaceAdventureMap();
+    }
+
+    private void PlaceAdventureMap()
+    {
+        if (adventureMapWindow == null) return;
+        adventureMapWindow.UpdateLayout();
+        double width = adventureMapWindow.ActualWidth;
+        MoveWindow(adventureMapWindow, Math.Clamp((bounds.Left + bounds.Right - width) / 2, bounds.Left, Math.Max(bounds.Left, bounds.Right - width)), bounds.Top + 12);
+    }
+
+    private void UpdateAdventureMap()
+    {
+        if (!adventureMapOpen || mapTitle == null || mapEnter == null) return;
+        var adventure = Adventure;
+        if (adventure?.Chapter() is not ChapterSpec chapter) return;
+        static void Show(TextBlock? text, string? value)
+        {
+            if (text == null) return;
+            if (text.Text != (value ?? "")) text.Text = value ?? "";
+            text.Visibility = string.IsNullOrEmpty(value) ? Visibility.Collapsed : Visibility.Visible;
+        }
+        mapTitle.Text = L("Phiêu lưu — ", "Adventure — ") + chapter.Name(English);
+        Show(mapData, BattleDataError != null
+            ? L("File battle.json của bạn có lỗi nên dùng dữ liệu gốc: ", "Your battle.json has a mistake, so the built-in battle is used: ") + BattleDataError
+            : BattleDataCustom ? L("Đang dùng battle.json tùy chỉnh: chơi được nhưng không lưu tiến trình và kỷ lục.", "Using your custom battle.json: you can play, but progress and records are not saved.") : null);
+        foreach (var (id, node, number, mark, label, link) in mapNodes)
+        {
+            var stage = adventure.Stage(id);
+            if (stage == null) continue;
+            bool done = adventure.IsCompleted(id), open = adventure.IsUnlocked(id), selected = id == mapStageId;
+            node.Background = done ? MapDone : open ? PrepChosen : MapLocked;
+            node.BorderBrush = selected ? Brushes.White : PrepCardRim;
+            node.BorderThickness = new Thickness(selected ? 3 : 1);
+            number.Text = StageNumber(stage);
+            number.Foreground = done ? MapDoneInk : Brushes.White;
+            number.Visibility = open && !done ? Visibility.Visible : Visibility.Collapsed;
+            // Won: a tick; locked: a padlock (not only a colour).
+            mark.Data = done ? CheckMark : LockMark;
+            mark.Stroke = done ? MapDoneInk : Brushes.White;
+            mark.Visibility = done || !open ? Visibility.Visible : Visibility.Collapsed;
+            label.Text = stage.Name(English);
+            label.Opacity = open ? 1 : 0.6;
+            label.FontWeight = selected ? FontWeights.Bold : FontWeights.Normal;
+            if (link != null)
+            {
+                var before = adventure.Locate(id) is { Index: > 0 } at ? at.Chapter.Stages[at.Index - 1] : null;
+                link.Fill = before != null && adventure.IsCompleted(before.Id) ? MapDone : MapLocked;
+            }
+        }
+        if (adventure.Stage(mapStageId) is not StageSpec chosen) return;
+        bool unlocked = adventure.IsUnlocked(chosen.Id);
+        mapStageName!.Text = StageTitle(chosen);
+        Show(mapGoal, chosen.Goal(English));
+        var previous = adventure.Locate(chosen.Id) is { Index: > 0 } where ? where.Chapter.Stages[where.Index - 1] : null;
+        Show(mapStatus, adventure.IsCompleted(chosen.Id) ? L("Đã hoàn thành", "Completed")
+            : unlocked ? L($"Đã mở · {chosen.Waves.Length} đợt", $"Open · {chosen.Waves.Length} wave{(chosen.Waves.Length == 1 ? "" : "s")}")
+            : L($"Chưa mở — thắng màn {StageNumber(previous!)} ({previous!.Name(false)}) trước", $"Locked — win stage {StageNumber(previous!)} ({previous!.Name(true)}) first"));
+        mapStatus!.Foreground = unlocked ? Brushes.White : PrepWarning;
+        Show(mapRecord, StageRecordLine(adventure, chosen));
+        mapEnterText!.Text = L("Vào màn", "Play stage");
+        mapCloseText!.Text = L("Đóng", "Close");
+        bool can = unlocked && BattlePrepRefusal() == null;
+        if (mapEnter.IsEnabled != can) { mapEnter.IsEnabled = can; mapEnter.Opacity = can ? 1 : 0.5; }
+    }
+
+    // Wins and the fastest win of a stage over every loadout (the result panel shows per loadout).
+    private string? StageRecordLine(Adventure adventure, StageSpec stage)
+    {
+        var records = adventure.Progress.Records.Where(pair => pair.Key.StartsWith(stage.Id + "|r" + stage.RulesVersion + "|", StringComparison.Ordinal)).Select(pair => pair.Value).ToList();
+        int wins = records.Sum(r => r.Wins);
+        if (wins == 0) return null;
+        double? best = records.Where(r => r.BestSeconds != null).Select(r => r.BestSeconds).Min();
+        string fastest = best is double s ? L($" · nhanh nhất {Clock(s)}", $" · fastest {Clock(s)}") : "";
+        return L($"Đã thắng {wins} lần{fastest}", $"Won {wins} time{(wins == 1 ? "" : "s")}{fastest}");
+    }
+
+    // A finished stage run: counted once in the progress (saved at once), never with custom data.
+    private AdventureOutcome CountStageRun(BattleSim finished, bool won)
+    {
+        if (finished.Stage is not StageSpec stage || AdventureOf(finished.Settings) is not Adventure adventure) return default;
+        var outcome = adventure.Apply(battleRunId, stage, !battleCustomData, won, finished.Weapon.Id, finished.Difficulty, finished.Defeated, finished.FightSeconds);
+        if (outcome.Counted && AdventureProgressFile != null) AdventureProgress.Save(AdventureProgressFile);
+        if (outcome.Counted) System.Diagnostics.Trace.WriteLine($"Adventure stage {stage.Id} {(won ? "won" : "lost")}{(outcome.Unlocked != null ? $", {outcome.Unlocked.Id} opened" : "")}.");
+        return outcome;
+    }
+
+    // The result panel of a stage: what the run changed, and its choices. The main button is
+    // Next stage after a win (when there is one), otherwise Play again; the rest sit below it.
+    private (UIElement Lines, UIElement Actions) StageResult(BattleSummary result, StageSpec stage, Action<Action> choose)
+    {
+        var adventure = AdventureOf(BattleTuning);
+        TextBlock Line(double size, Brush? brush = null, bool bold = false, double opacity = 1) => new()
+        {
+            Foreground = brush ?? Brushes.White, FontSize = size, FontWeight = bold ? FontWeights.Bold : FontWeights.Normal, Opacity = opacity,
+            TextWrapping = TextWrapping.Wrap, MaxWidth = 300, Margin = new Thickness(0, 2, 0, 0)
+        };
+        var lines = new StackPanel();
+        var next = adventure?.Next(stage.Id);
+        if (!result.Ranked)
+        {
+            var note = Line(11.5, PrepWarning); note.Text = L("Dữ liệu tùy chỉnh: lượt này không lưu tiến trình và kỷ lục.", "Custom data: this run saves no progress or records.");
+            lines.Children.Add(note);
+        }
+        else if (result.Outcome.Unlocked is StageSpec opened)
+        {
+            var open = Line(12.5, RecordGold, true); open.Text = L($"Đã mở: {StageTitle(opened)}", $"Unlocked: {StageTitle(opened)}");
+            lines.Children.Add(open);
+        }
+        else if (result.Won && result.Outcome.FirstClear && next == null)
+        {
+            var done = Line(12.5, RecordGold, true); done.Text = L("Hoàn thành chương!", "Chapter complete!");
+            lines.Children.Add(done);
+        }
+        if (result.News.Any)
+        {
+            var news = Line(12.5, RecordGold, true);
+            news.Text = result.News.Fastest ? L("Kỷ lục mới của màn: thắng nhanh nhất!", "New stage record: fastest win!") : L("Kỷ lục mới của màn: hạ nhiều slime nhất!", "New stage record: most slimes!");
+            lines.Children.Add(news);
+        }
+        if (result.Ranked && adventure?.Record(stage, result.Weapon, result.Difficulty) is { Empty: false } best)
+        {
+            var records = Line(11.5, opacity: 0.85); records.Text = L("Kỷ lục màn (trang bị này): ", "Stage records (this gear): ") + RecordLine(best);
+            lines.Children.Add(records);
+        }
+
+        bool canNext = result.Won && next != null && adventure!.IsUnlocked(next.Id);
+        var (main, mainText, _) = HudButton(() => choose(() =>
+        {
+            string? reason = canNext ? OpenBattlePrep(result.Weapon, result.Difficulty, next) : BattleReplay(result);
+            if (reason != null) ShowBattleNotice(reason);
+        }), plain: true);
+        main.Background = ResultMain; main.Padding = new Thickness(16, 6, 16, 5); main.Margin = new Thickness(0); main.HorizontalAlignment = HorizontalAlignment.Right;
+        mainText.FontSize = 13.5; mainText.FontWeight = FontWeights.Bold; mainText.Text = canNext ? L("Màn tiếp", "Next stage") : L("Chơi lại", "Play again");
+        var others = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 8, 0, 0) };
+        if (canNext)
+        {
+            var (again, againText, _) = HudButton(() => choose(() => { if (BattleReplay(result) is string reason) ShowBattleNotice(reason); }), plain: true);
+            againText.Text = L("Chơi lại", "Play again");
+            others.Children.Add(again);
+        }
+        var (map, mapText, _) = HudButton(() => choose(() => { if (OpenAdventureMap(stage.Id) is string reason) ShowBattleNotice(reason); }), plain: true);
+        mapText.Text = L("Bản đồ", "Map");
+        var (home, homeText, _) = HudButton(() => choose(() => { }), plain: true);
+        homeText.Text = L("Về desktop", "Back to desktop");
+        home.Margin = new Thickness(0);
+        others.Children.Add(map); others.Children.Add(home);
+        return (lines, new StackPanel { Margin = new Thickness(0, 12, 0, 0), Children = { main, others } });
+    }
+}

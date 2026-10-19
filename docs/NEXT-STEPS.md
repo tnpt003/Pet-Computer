@@ -1,15 +1,72 @@
 # Bàn giao review hiện tại và kế hoạch đợt tiếp theo
 
-Cập nhật yêu cầu: 2026-10-19 (Asia/Saigon). Review kỹ thuật bên dưới ghi nhận ngày 18/10, sau Battle Mode đợt 11.
+Cập nhật bàn giao: 2026-10-20 (Asia/Saigon). Review kỹ thuật bên dưới ghi nhận ngày 18/10, sau Battle Mode đợt 11.
 Workspace lúc review: C:\Project VS\Pet Computer; HEAD e45519d với thay đổi đợt 10–11 chưa commit.
 
 ## Dành cho AI tiếp nhận
 
 Người dùng yêu cầu lưu review và kế hoạch ở đây để AI khác đọc và tiếp tục công việc. Đọc AGENTS.md, PROGRESS.md và code thật trước khi triển khai; không coi các mục đã sửa bên dưới là lỗi còn mở. Giữ nguyên thay đổi chưa commit của người dùng/Claude.
 
-Lần bàn giao này chỉ cập nhật tài liệu. Yêu cầu triển khai hiện tại nằm ở mục ngày 2026-10-19 bên dưới và ưu tiên hơn backlog review cũ. Đọc AGENTS.md và giải thích kế hoạch trước khi triển khai; giữ nguyên source đang có và không tự publish/commit/restart.
+Lần bàn giao này chỉ cập nhật tài liệu. Hướng chính được chọn ngày 2026-10-20 là Adventure Update — Chương 1; roadmap ở ADVENTURE-UPDATE.md. Các ý tưởng lẻ và review cũ phía dưới là nguồn tham khảo/lịch sử, không còn là thứ tự triển khai độc lập. Đọc AGENTS.md và giải thích kế hoạch trước khi triển khai; giữ nguyên source đang có và không tự publish/commit/restart.
 
-## Ưu tiên mới nhất — Trang bị và phong cách chiến đấu (2026-10-19)
+## Hướng chính đã chọn — Adventure Update, Chương 1 (2026-10-20)
+
+Người dùng đã chọn gom các tính năng thành một bản cập nhật lớn: **Cuộc phiêu lưu của mèo — Cuộc xâm nhập của Slime**. Xem roadmap triển khai chính tại [ADVENTURE-UPDATE.md](ADVENTURE-UPDATE.md).
+
+- Một chương 5 màn: bản đồ → chuẩn bị → combat/nâng cấp giữa đợt → boss → phần thưởng → tiến trình lưu.
+- Gộp nâng cấp tạm thời, một quái hỗ trợ và cosmetic milestones thành cùng trải nghiệm. Sổ quái đầy đủ/quái khác/shop/căn cứ chuyển backlog.
+- Roadmap có các mốc kỹ thuật và tiêu chí nghiệm thu end-to-end; không phát triển các đề xuất lẻ dưới đây như những yêu cầu độc lập nữa. Nội dung roadmap mới ưu tiên nếu khác phạm vi gợi ý cũ.
+- Trạng thái: đã thống nhất hướng và gom tài liệu, chưa code/review/test trong lần này. Đọc code/AGENTS và giải thích tích hợp trước triển khai; không tự publish/commit/restart. Giữ các kết quả lịch sử, không báo chúng thành kết quả Adventure.
+
+## Ý tưởng nguồn — Chiều sâu trận đấu (đã gom vào Adventure Update)
+
+Trạng thái: **đề xuất, chưa triển khai và chưa review code mới trong lần bàn giao này**. Người dùng nói bản hiện tại có vẻ ổn và yêu cầu ghi các hướng mở rộng để AI khác kiểm tra. Không coi đây là yêu cầu làm tất cả ngay. Đọc AGENTS.md, PROGRESS.md, code và kết quả test hiện tại; báo phần đã có, phần thiếu, kế hoạch nhỏ nhất và các quyết định cần thống nhất trước khi code. Không tự publish/commit/đóng hoặc restart pet.
+
+Tài liệu bên dưới ghi đợt 15 đã triển khai trang bị/UI và test đạt; đó là ghi nhận của đợt trước, không phải kết quả kiểm chứng mới của reviewer. Giữ nguyên các trạng thái đã hoàn thành và mọi thay đổi chưa commit.
+
+### Hướng 1 — Chọn nâng cấp giữa đợt (ưu tiên đề xuất cao nhất)
+
+Mục tiêu: mỗi trận có lựa chọn chiến thuật khác nhau, tận dụng hai kiểu vũ khí; không chỉ tăng số quái/nút.
+
+- Dọn xong một đợt, trước đợt tiếp theo: hiện 3 thẻ nâng cấp hợp lệ, chọn 1 rồi xác nhận tiếp tục. Không mở sau đợt cuối khi đã thắng hoặc sau khi thua/end battle.
+- Bản đầu khoảng 5–6 nâng cấp: Móng sắc (damage), Chân nhanh (move speed), Nhịp đánh (attack cooldown), Sức nặng (knockback), Cá tiếp sức (hồi HP tức thời). Con số phải được thử, không lấy ví dụ làm balance mặc định.
+- Nâng cấp chỉ có hiệu lực trong trận; giới hạn cộng dồn rõ. Thẻ phân biệt hiệu ứng tức thời và modifier kéo dài. Không có reroll/trả phí trong bản đầu.
+- Khi chọn, combat đứng yên: không spawn/di chuyển/đánh/hồi cooldown hoặc tính thời gian chọn vào kỷ lục. Tiếp tục chỉ gỡ lý do chờ lựa chọn, không gỡ pause của người dùng/fullscreen/app.
+- Dùng dữ liệu definition + runtime modifier riêng, không sửa mẫu vũ khí/quái chung hoặc preferences chỉ số gốc. Chơi lại bắt đầu trận sạch, không giữ nâng cấp trận trước.
+- Thẻ không trùng, không vượt stack cap, không chọn upgrade vô tác dụng hoặc không tương thích nếu có lựa chọn hợp lệ khác. Xác định fallback khi còn ít hơn 3 lựa chọn và trường hợp full HP.
+- UI dùng phong cách thẻ/preview đã có, tiếng Việt/Anh, không tạo chuỗi dialog gây phiền.
+- Xem xét kỷ lục: luật nâng cấp thay đổi sức mạnh và thời gian trận; đề xuất phiên bản luật/nhãn Legacy phù hợp, không xóa dữ liệu cũ hoặc âm thầm so sánh các luật không tương đương.
+- Test cần có nếu triển khai: trigger đúng một lần mỗi wave, double click không áp dụng hai lần, timer đóng băng, pause chồng lý do, end/fullscreen/đóng app giữa lựa chọn, modifier reset, selection deterministic bằng seed trong test, không phá combo/hit timing hoặc Pet Mode.
+
+### Hướng 2 — Một loại quái có vai trò chiến thuật mới
+
+Sau khi hướng 1 ổn, chọn MỘT loại để thiết kế/test; chưa triển khai cả ba:
+- Quái hỗ trợ: hồi máu đồng đội, tạo lý do ưu tiên mục tiêu.
+- Quái bắn xa: cảnh báo đường bắn trước, người chơi né/kéo mèo hoặc áp sát.
+- Quái giáp: có điểm yếu hoặc thời điểm dễ bị đánh, tránh chỉ là tăng HP.
+
+Dùng hệ quái chung; capability mới có controller/renderer rõ, JSON chỉ cấu hình khả năng được hỗ trợ. Hình dáng/cảnh báo phải dễ phân biệt với quái hiện có. Kiểm tra hiệu năng, target priority, pause, drag immunity và giới hạn đối tượng; thêm từng loại, không tăng độ phức tạp một lần.
+
+### Hướng 3 — Thành tích mở khóa trang trí
+
+Kết nối Battle Mode với Pet Mode: thắng trận đầu nhận khăn; hạ boss bằng búa nhận huy hiệu; thử thách né đòn nhận phụ kiện. Đây chỉ là ví dụ để chọn phạm vi nhỏ.
+
+- Phần thưởng ngoại hình, không khóa chăm sóc/sinh hoạt bình thường sau yêu cầu đánh quái.
+- Không tự thay phụ kiện đang dùng khi nhận thưởng; thông báo nhẹ và cho người dùng chủ động trang bị.
+- Điều kiện dựa trên sự kiện trận thật, tính một lần, không nhận trùng khi replay result/AI restart; chỉ tính trận hoàn tất theo luật.
+- Lưu tương thích dữ liệu cũ, giữ unlock khi asset tạm thiếu; test bằng dữ liệu riêng. Không thêm shop/currency/inventory lớn trong đợt đầu.
+
+### Hướng 4 — Sổ quái (tùy chọn, chưa chốt thứ tự)
+
+Bảng nhỏ từ registry quái: hình ảnh, đặc tính, cách đối phó, số lần hạ. Có quy tắc rõ khi nào coi là đã gặp; không cộng số liệu trong preview hoặc test. Tận dụng localization/render dữ liệu đã có, không lặp một bản chỉ số riêng dễ lỗi thời.
+
+### Thứ tự và giới hạn
+
+Đề xuất: nâng cấp giữa đợt → một quái vai trò mới → thành tích trang trí; sổ quái là lựa chọn phụ. Đây là thứ tự gợi ý để người dùng quyết định, không yêu cầu tự làm hết. Trước khi chốt hướng 1, AI phải kiểm tra lifecycle/wave/UI/data/records thực tế và chỉ ra tác động tới balance kiếm/búa. Chưa thêm LLM/voice/CV hoặc framework plugin.
+
+Bàn giao sau kiểm tra: tóm tắt hiện trạng, đề xuất phạm vi một đợt, rủi ro và tiêu chí nghiệm thu; phân biệt mô phỏng với playtest thật. Khi có triển khai được yêu cầu, cập nhật trạng thái ở đây cùng PROGRESS.md, MANUAL-TEST.md và BATTLE-DATA.md nếu schema đổi.
+
+## Đợt trước — Trang bị và phong cách chiến đấu (2026-10-19)
 
 Trạng thái: **đã triển khai ở đợt 15 (2026-10-19, commit 5f4d471, đã publish)** — bảng chuẩn bị có preview + thẻ vũ khí + Xem thử, hai phong cách kiếm/búa (hitEffect, hoạt ảnh theo mốc chạm đích, số liệu búa mới), bảng kết quả Chơi lại/Đổi trang bị/Về desktop, kỷ lục v2 theo vũ khí + độ khó với Legacy. Test tự động: 55 Python + 624 C# + 395 WPF đạt. Chưa chơi thử thật; số liệu búa chỉ chốt bằng mô phỏng. Chi tiết trong PROGRESS.md. Ghi chú gốc của yêu cầu: Người dùng cho biết luồng chuẩn bị đã code xong nhưng giao diện còn quá nhiều text/button và kết quả thiếu đường quay lại đổi vũ khí/độ khó. Người dùng muốn gộp cải tiến UI với mở rộng phong cách chiến đấu. Mục này ưu tiên hơn các phạm vi cũ bên dưới, gồm việc cho phép thêm vũ khí thứ hai trong đợt này. Đọc code thật trước khi sửa; không xây lại phần đợt 14 đã làm.
 

@@ -112,5 +112,67 @@
     { "groups": [ { "enemy": "slime", "count": 2 }, { "enemy": "runner", "count": 2 } ] },
     { "groups": [ { "enemy": "rock", "count": 1 }, { "enemy": "runner", "count": 2 }, { "enemy": "slime", "count": 2 } ] },
     { "groups": [ { "enemy": "king", "count": 1 } ] }
-  ]
+  ],
+
+  // Adventure: chapters of stages played in order (winning a stage opens the next one). Stage ids
+  // are stable: saved progress uses them. objective: "clear" (defeat every wave). maxAlive: enemies
+  // on the floor at once (default: the battle's). rulesVersion: raise it when a stage changes so much
+  // that its old records should not be compared. See docs/BATTLE-DATA.md.
+  "campaign": {
+    "chapters": [
+      {
+        "id": "slime_invasion", "nameVi": "Cuộc xâm nhập của Slime", "nameEn": "The Slime Invasion",
+        "stages": [
+          {
+            "id": "c1_first_steps", "nameVi": "Làm quen", "nameEn": "First steps",
+            "goalVi": "Dọn 2 đợt slime dễ: click slime để chọn mục tiêu.", "goalEn": "Clear 2 waves of easy slimes: click a slime to pick the target.",
+            "objective": "clear", "maxAlive": 2,
+            "waves": [
+              { "groups": [ { "enemy": "slime", "count": 2 } ] },
+              { "groups": [ { "enemy": "slime", "count": 3 } ] }
+            ]
+          },
+          {
+            "id": "c1_break_through", "nameVi": "Giải vây", "nameEn": "Break through",
+            "goalVi": "Quái hỗn hợp: dùng kỹ năng và kéo mèo ra khi slime gồng đòn.", "goalEn": "Mixed slimes: use skills and lift the cat when a slime winds up.",
+            "objective": "clear",
+            "waves": [
+              { "groups": [ { "enemy": "slime", "count": 2 }, { "enemy": "runner", "count": 1 } ] },
+              { "groups": [ { "enemy": "runner", "count": 2 }, { "enemy": "slime", "count": 2 } ] },
+              { "groups": [ { "enemy": "rock", "count": 1 }, { "enemy": "slime", "count": 2 } ] }
+            ]
+          },
+          {
+            "id": "c1_hold_on", "nameVi": "Cầm cự", "nameEn": "Hold on",
+            "goalVi": "Đợt quái dày: biết lúc đánh và lúc giữ máu.", "goalEn": "Crowded waves: know when to attack and when to save HP.",
+            "objective": "clear",
+            "waves": [
+              { "groups": [ { "enemy": "slime", "count": 3 }, { "enemy": "runner", "count": 2 } ] },
+              { "groups": [ { "enemy": "rock", "count": 1 }, { "enemy": "runner", "count": 3 } ] },
+              { "groups": [ { "enemy": "slime", "count": 4 }, { "enemy": "rock", "count": 1 } ] }
+            ]
+          },
+          {
+            "id": "c1_cut_support", "nameVi": "Cắt viện trợ", "nameEn": "Cut the support",
+            "goalVi": "Chọn mục tiêu đáng hạ trước.", "goalEn": "Choose which enemy to take down first.",
+            "objective": "clear",
+            "waves": [
+              { "groups": [ { "enemy": "rock", "count": 1 }, { "enemy": "slime", "count": 2 } ] },
+              { "groups": [ { "enemy": "runner", "count": 3 }, { "enemy": "rock", "count": 1 } ] },
+              { "groups": [ { "enemy": "rock", "count": 2 }, { "enemy": "slime", "count": 2 } ] }
+            ]
+          },
+          {
+            "id": "c1_slime_king", "nameVi": "Vua Slime", "nameEn": "The Slime King",
+            "goalVi": "Trận cuối chương: hạ Vua Slime.", "goalEn": "The chapter's last battle: defeat the Slime King.",
+            "objective": "clear",
+            "waves": [
+              { "groups": [ { "enemy": "slime", "count": 2 }, { "enemy": "runner", "count": 2 } ] },
+              { "groups": [ { "enemy": "king", "count": 1 } ] }
+            ]
+          }
+        ]
+      }
+    ]
+  }
 }

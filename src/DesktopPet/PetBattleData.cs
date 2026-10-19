@@ -73,6 +73,42 @@ public sealed class WaveSpec
     public IEnumerable<string> Spawns() => Groups.SelectMany(g => Enumerable.Repeat(g.Enemy, Math.Max(0, g.Count)));
 }
 
+// Adventure (battle.json "campaign"): chapters of stages played in order. A stage is a battle
+// with its own waves (enemy kinds come from "enemies") and goal; winning it opens the next stage
+// of its chapter. Ids are stable: progress (PetAdventure.cs) is saved by them. RulesVersion goes up
+// when a stage changes enough that old records should not be compared with new ones.
+public sealed class CampaignSpec
+{
+    public ChapterSpec[] Chapters { get; init; } = Array.Empty<ChapterSpec>();
+}
+
+public sealed class ChapterSpec
+{
+    public string Id { get; init; } = "";
+    public string NameVi { get; init; } = "";
+    public string NameEn { get; init; } = "";
+    public StageSpec[] Stages { get; init; } = Array.Empty<StageSpec>();
+    public string Name(bool english) => english ? NameEn : NameVi;
+}
+
+public sealed class StageSpec
+{
+    public string Id { get; init; } = "";
+    public string NameVi { get; init; } = "";
+    public string NameEn { get; init; } = "";
+    // One line about what the stage teaches or asks, shown on the map and the setup panel.
+    public string GoalVi { get; init; } = "";
+    public string GoalEn { get; init; } = "";
+    // "clear": defeat every wave.
+    public string Objective { get; init; } = "clear";
+    public int RulesVersion { get; init; } = 1;
+    // Enemies on the floor at once (unset: the battle's maxAlive).
+    public int? MaxAlive { get; init; }
+    public WaveSpec[] Waves { get; init; } = Array.Empty<WaveSpec>();
+    public string Name(bool english) => english ? NameEn : NameVi;
+    public string Goal(bool english) => english ? GoalEn : GoalVi;
+}
+
 // Assets/battle.json (embedded) is the built-in battle: its numbers, weapons, enemy kinds and
 // waves. The user may add battle.json to the app's data folder (%LOCALAPPDATA%\DesktopPet,
 // docs/BATTLE-DATA.md) with only what it changes: it is merged over the built-in file
@@ -282,16 +318,54 @@ public static class BattleData
         foreach (var e in s.EnemyTypes)
             if (e.SummonAt > 0 && (!ids.Contains(e.SummonType) || s.Enemy(e.SummonType).SummonAt > 0))
                 throw new InvalidDataException($"enemies[{e.Id}] summons \"{e.SummonType}\": an unknown enemy (or one that summons too)");
-        if (s.WavePlan.Count == 0) throw new InvalidDataException("battle.json needs at least one wave");
-        if (s.WavePlan.Count > 30) throw new InvalidDataException("battle.json may have at most 30 waves");
-        for (int i = 0; i < s.WavePlan.Count; i++)
+        void Waves(IReadOnlyList<WaveSpec>? waves, string at)
         {
-            var wave = s.WavePlan[i];
-            if (wave?.Groups == null || wave.Groups.Length == 0) throw new InvalidDataException($"waves[{i}] needs at least one group");
-            foreach (var g in wave.Groups)
+            if (waves == null || waves.Count == 0) throw new InvalidDataException($"{at} needs at least one wave");
+            if (waves.Count > 30) throw new InvalidDataException($"{at} may have at most 30 waves");
+            for (int i = 0; i < waves.Count; i++)
             {
-                if (g == null || !ids.Contains(g.Enemy)) throw new InvalidDataException($"waves[{i}] names an unknown enemy \"{g?.Enemy}\"");
-                if (g.Count is < 1 or > 50) throw new InvalidDataException($"waves[{i}] {g.Enemy}: count must be 1–50");
+                var wave = waves[i];
+                if (wave?.Groups == null || wave.Groups.Length == 0) throw new InvalidDataException($"{at}[{i}] needs at least one group");
+                foreach (var g in wave.Groups)
+                {
+                    if (g == null || !ids.Contains(g.Enemy)) throw new InvalidDataException($"{at}[{i}] names an unknown enemy \"{g?.Enemy}\"");
+                    if (g.Count is < 1 or > 50) throw new InvalidDataException($"{at}[{i}] {g.Enemy}: count must be 1–50");
+                }
+            }
+        }
+        Waves(s.WavePlan, "waves");
+        if (s.Campaign is CampaignSpec campaign) ValidateCampaign(campaign, Waves, Id, Text);
+    }
+
+    public static readonly string[] StageObjectives = { "clear" };
+
+    private static void ValidateCampaign(CampaignSpec campaign, Action<IReadOnlyList<WaveSpec>?, string> waves, Action<string?, string> id, Action<string?, string> text)
+    {
+        if (campaign.Chapters == null || campaign.Chapters.Length == 0) throw new InvalidDataException("campaign.chapters must list at least one chapter");
+        var chapterIds = new HashSet<string>();
+        // Stage ids are unique across the whole campaign: progress is saved by them alone.
+        var stageIds = new HashSet<string>();
+        for (int c = 0; c < campaign.Chapters.Length; c++)
+        {
+            var chapter = campaign.Chapters[c] ?? throw new InvalidDataException($"campaign.chapters[{c}] is empty");
+            string at = $"campaign.chapters[{(string.IsNullOrEmpty(chapter.Id) ? c.ToString() : chapter.Id)}]";
+            id(chapter.Id, at + ".id");
+            if (!chapterIds.Add(chapter.Id)) throw new InvalidDataException($"chapter id \"{chapter.Id}\" is used twice");
+            text(chapter.NameVi, at + ".nameVi"); text(chapter.NameEn, at + ".nameEn");
+            if (chapter.Stages == null || chapter.Stages.Length is < 1 or > 12) throw new InvalidDataException($"{at}.stages must list 1–12 stages");
+            for (int i = 0; i < chapter.Stages.Length; i++)
+            {
+                var stage = chapter.Stages[i] ?? throw new InvalidDataException($"{at}.stages[{i}] is empty");
+                string where = $"{at}.stages[{(string.IsNullOrEmpty(stage.Id) ? i.ToString() : stage.Id)}]";
+                id(stage.Id, where + ".id");
+                if (!stageIds.Add(stage.Id)) throw new InvalidDataException($"stage id \"{stage.Id}\" is used twice");
+                text(stage.NameVi, where + ".nameVi"); text(stage.NameEn, where + ".nameEn");
+                if (stage.GoalVi == null || stage.GoalEn == null || stage.GoalVi.Length > 120 || stage.GoalEn.Length > 120)
+                    throw new InvalidDataException($"{where} goals must be at most 120 characters");
+                if (Array.IndexOf(StageObjectives, stage.Objective) < 0) throw new InvalidDataException($"{where}.objective must be one of: {string.Join(", ", StageObjectives)}");
+                if (stage.RulesVersion is < 1 or > 1000) throw new InvalidDataException($"{where}.rulesVersion must be 1–1000");
+                if (stage.MaxAlive is int alive && alive is < 1 or > 10) throw new InvalidDataException($"{where}.maxAlive must be 1–10");
+                waves(stage.Waves, where + ".waves");
             }
         }
     }

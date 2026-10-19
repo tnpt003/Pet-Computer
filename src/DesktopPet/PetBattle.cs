@@ -171,6 +171,9 @@ public sealed class BattleSettings
     }
     [JsonIgnore] public double LargestScale => EnemyTypes.Max(e => e.Scale);
 
+    // From battle.json "campaign": the Adventure chapters (null: no Adventure in this data).
+    [JsonPropertyName("campaign")] public CampaignSpec? Campaign { get; init; }
+
     private EnemyType BuiltInSlime() => new()
     {
         Id = "slime", NameVi = "Slime", NameEn = "Slime", MaxHp = SlimeMaxHp, Speed = SlimeSpeed, Damage = SlimeDamage,
@@ -318,11 +321,16 @@ public sealed class BattleSim
     public double CatHp { get; private set; }
     // 1-based number of the current (or last started) wave; 0 before the first.
     public int Wave { get; private set; }
-    public int WaveCount => Settings.WavePlan.Count;
+    // The waves of this battle: an Adventure stage's own, otherwise the free battle's.
+    public IReadOnlyList<WaveSpec> WavePlan { get; }
+    public int WaveCount => WavePlan.Count;
+    // The Adventure stage being played (null: a free battle).
+    public StageSpec? Stage { get; }
+    private readonly int maxAlive;
     public bool IsBossWave(int wave)
     {
         if (wave < 1 || wave > WaveCount) return false;
-        foreach (var group in Settings.WavePlan[wave - 1].Groups) if (Settings.Enemy(group.Enemy).Boss) return true;
+        foreach (var group in WavePlan[wave - 1].Groups) if (Settings.Enemy(group.Enemy).Boss) return true;
         return false;
     }
     // Enemies of the current wave still to come, in spawn order.
@@ -380,9 +388,12 @@ public sealed class BattleSim
     private readonly WeaponSpec arms;
 
     public BattleSim(BattleSettings settings, double left, double right, Random? random = null, BattleDifficulty difficulty = BattleDifficulty.Normal,
-        string weapon = BattleWeapon.Sword)
+        string weapon = BattleWeapon.Sword, StageSpec? stage = null)
     {
         Settings = settings;
+        Stage = stage;
+        WavePlan = stage?.Waves is { Length: > 0 } waves ? waves : settings.WavePlan;
+        maxAlive = stage?.MaxAlive ?? settings.MaxAlive;
         Difficulty = difficulty;
         Weapon = arms = settings.Weapon(weapon);
         level = settings.Difficulty(difficulty);
@@ -697,13 +708,13 @@ public sealed class BattleSim
             if (PhaseRemaining > 0) return;
             Wave++;
             pending.Clear(); pendingNext = 0;
-            pending.AddRange(Settings.WavePlan[Wave - 1].Spawns());
+            pending.AddRange(WavePlan[Wave - 1].Spawns());
             Phase = BattlePhase.Fighting;
             spawnTimer = 0;
             events.Add(new(BattleEventKind.WaveStarted, catX, Wave));
         }
         spawnTimer = Math.Max(0, spawnTimer - dt);
-        if (ToSpawn > 0 && Alive < Settings.MaxAlive && spawnTimer <= 0)
+        if (ToSpawn > 0 && Alive < maxAlive && spawnTimer <= 0)
         {
             Spawn(catX, Settings.Enemy(pending[pendingNext++]));
             spawnTimer = Settings.SpawnInterval;

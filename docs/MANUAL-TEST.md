@@ -118,6 +118,18 @@ Tick `[x]` khi đạt; ghi lỗi ngay dưới mục kèm ngày. Mục mới chư
 - [ ] Bảng kết quả: hình mèo thắng (giơ vũ khí) / thua (ngồi choáng), "Vũ khí · Độ khó", số slime + thời gian, HP nhỏ, kỷ lục của đúng vũ khí + độ khó. Không tự đóng nữa. "Chơi lại": trận mới cùng vũ khí/độ khó ngay (bấm nhanh 2 lần vẫn 1 trận); "Đổi trang bị": bảng chuẩn bị với lựa chọn vừa dùng; "Về desktop": đóng. Fullscreen/đưa mèo về: bảng đóng.
 - [ ] Kỷ lục cũ: máy đã có battle-records.json từ trước (chép dự phòng file trước khi thử): sau trận đầu bảng kết quả có dòng mờ "Trước phân loại trang bị (mức): …" giữ số cũ; kỷ lục kiếm và búa tính riêng từ 0. Chơi với file battle.json tùy chỉnh: kỷ lục ghi "dữ liệu tùy chỉnh", tách khỏi kỷ lục thường.
 
+#### Phiêu lưu — mốc 2 (2026-10-20)
+Nên chép dự phòng %LOCALAPPDATA%\DesktopPet\adventure-progress.json (nếu đã có) trước khi thử.
+- [ ] Chuột phải → Chế độ chiến đấu: có "Phiêu lưu" ở trên "Bắt đầu trận". Bấm Phiêu lưu: bản đồ ở giữa phía trên màn hình, có 5 nút màn nối bằng đường. Lần đầu chỉ màn 1 xanh, các màn khác xám có ổ khóa. Gõ phím ở app khác vẫn bình thường (bản đồ không lấy focus), không có nút trên taskbar. Chữ không bị cắt ở tiếng Việt/English, DPI 125–150%.
+- [ ] Click màn bị khóa: dòng "Chưa mở — thắng màn … trước", nút Vào màn mờ. Click màn 1 → Vào màn: bảng chuẩn bị có tiêu đề "Màn 1 · Làm quen" + mục tiêu, nút bên trái ghi "Bản đồ". Bấm Bản đồ: quay lại bản đồ.
+- [ ] Màn 1: tối đa 2 slime cùng lúc, 2 đợt. Thắng: bảng kết quả ghi "Màn 1 · Làm quen · Vũ khí · Độ khó", dòng vàng "Đã mở: Màn 2 · Giải vây", nút chính "Màn tiếp", bên dưới là Chơi lại / Bản đồ / Về desktop. Màn tiếp mở bảng chuẩn bị màn 2 với vũ khí vừa dùng.
+- [ ] Thua một màn (có thể bỏ mặc mèo ở độ khó Khó): không mở màn mới, nút chính là "Chơi lại". Thua màn đã thắng trước đó: màn đó vẫn được tính là đã thắng.
+- [ ] Kết thúc trận giữa chừng (HUD → Kết thúc, hoặc thoát app): không có bảng kết quả, không tính gì. Thoát app rồi mở lại → Phiêu lưu: các màn đã thắng vẫn vàng, màn kế vẫn mở, không thắng trùng.
+- [ ] Đi hết 5 màn tới Vua Slime: thắng màn 5 thì có dòng "Hoàn thành chương!" và không có nút Màn tiếp. Bấm Bản đồ: cả 5 màn vàng, có số lần thắng và thời gian nhanh nhất.
+- [ ] Trận tự do (Bắt đầu trận) vẫn như cũ; kỷ lục của trận tự do không đổi sau khi chơi Phiêu lưu.
+- [ ] Mở bản đồ khi mèo đang ngủ: mèo vẫn ngủ. Để máy yên 5 phút khi bản đồ mở: mèo không ngủ away nap. Mở app fullscreen: bản đồ ẩn, đóng app thì hiện lại.
+- [ ] Có file %LOCALAPPDATA%\DesktopPet\battle.json tùy chỉnh: bản đồ ghi rõ "không lưu tiến trình và kỷ lục"; thắng màn không mở màn sau.
+
 ### Nhật ký chơi thử Battle Mode (beta, thêm 2026-10-18)
 Chơi 3–5 trận mỗi độ khó trên bản publish, ghi 1 dòng/trận. Phiên bản: xem Khác → Giới thiệu (ví dụ `1.0.0 (18cb227)`). Chưa có dòng nào là chưa chơi thử; số mô phỏng trong PROGRESS.md không thay cho bảng này.
 

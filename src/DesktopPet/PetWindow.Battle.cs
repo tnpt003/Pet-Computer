@@ -104,13 +104,16 @@ public sealed partial class PetWindow
     {
         var root = PetUi.MenuItem(PetUi.Battle, Brushes.SeaGreen);
         // Starting opens the setup panel (weapon, difficulty, guide, Ready); nothing else is chosen here.
+        // Adventure: the chapter map (PetWindow.Adventure.cs); Start battle is the free battle as before.
+        var adventure = new MenuItem();
+        adventure.Click += (_, _) => { if (OpenAdventureMap() is string reason) ShowBattleNotice(reason); };
         var start = new MenuItem();
         start.Click += (_, _) => { if (OpenBattlePrep() is string reason) ShowBattleNotice(reason); };
         var pause = new MenuItem();
         pause.Click += (_, _) => { if (battle != null) SetBattlePaused(!BattleUserPaused); };
         var end = new MenuItem();
         end.Click += (_, _) => EndBattle();
-        root.Items.Add(start); root.Items.Add(pause); root.Items.Add(end);
+        root.Items.Add(adventure); root.Items.Add(start); root.Items.Add(pause); root.Items.Add(end);
         menu.Items.Add(root);
         menu.Opened += (_, _) =>
         {
@@ -122,7 +125,9 @@ public sealed partial class PetWindow
             string? refusal = battle == null ? BattlePrepRefusal() : null;
             start.Header = L("Bắt đầu trận", "Start battle") + (refusal != null ? $" ({refusal.TrimEnd('.')})" : "");
             start.IsEnabled = refusal == null;
-            start.Visibility = battle == null ? Visibility.Visible : Visibility.Collapsed;
+            start.Visibility = adventure.Visibility = battle == null ? Visibility.Visible : Visibility.Collapsed;
+            adventure.Header = L("Phiêu lưu", "Adventure") + (refusal != null ? $" ({refusal.TrimEnd('.')})" : "");
+            adventure.IsEnabled = refusal == null;
             pause.Header = userPaused ? L("Tiếp tục trận", "Resume battle") : L("Tạm dừng trận", "Pause battle");
             pause.IsEnabled = !(userPaused && context.Fullscreen);
             pause.Visibility = end.Visibility = battle != null ? Visibility.Visible : Visibility.Collapsed;
@@ -207,10 +212,12 @@ public sealed partial class PetWindow
     // panel's Ready remembers its choice first, Play again passes the last battle's. The battle
     // keeps this data and loadout to its end. Null on success, otherwise why it cannot start
     // (nothing changes then).
-    public string? StartBattle(string? weapon = null, BattleDifficulty? level = null)
+    // stage: an Adventure stage (its waves and goal; the run is counted in the progress at its end).
+    public string? StartBattle(string? weapon = null, BattleDifficulty? level = null, StageSpec? stage = null)
     {
         if (BattleRefusal() is string reason) return reason;
         CloseBattlePrep();
+        CloseAdventureMap();
         CloseBattleSummary();
         CancelFeatureActivity();
         queuedCommand = null;
@@ -222,7 +229,8 @@ public sealed partial class PetWindow
         battlePause = BattlePause.None;
         battleMonitorClock = 0;
         battle = new BattleSim(BattleTuning, battleArea.Left, battleArea.Right, difficulty: level is BattleDifficulty chosen && Enum.IsDefined(chosen) ? chosen : BattleDifficultyChoice,
-            weapon: BattleTuning.Weapon(weapon ?? preferences.BattleWeapon).Id);
+            weapon: BattleTuning.Weapon(weapon ?? preferences.BattleWeapon).Id, stage: stage);
+        battleRunId = Guid.NewGuid().ToString("N");
         battleCustomData = BattleDataCustom;
         pet.SwordOut = true;
         pet.Hammer = battle.Weapon.Style == "hammer";
@@ -235,7 +243,7 @@ public sealed partial class PetWindow
         ShowBattleWindows();
         // The guide belongs to the setup panel; one still open would hold the battle.
         if (BattleTutorialOpen) SetBattlePause(BattlePause.Tutorial, true);
-        System.Diagnostics.Trace.WriteLine("Battle started.");
+        System.Diagnostics.Trace.WriteLine(stage != null ? $"Battle started: Adventure stage {stage.Id}." : "Battle started.");
         PlayPetSound("excited");
         return null;
     }
@@ -352,15 +360,18 @@ public sealed partial class PetWindow
         if (battle.Finished)
         {
             bool won = battle.Phase == BattlePhase.Won;
-            var news = BattleRecords.Add(battle.Weapon.Id, battle.Difficulty, battleCustomData, won, battle.Defeated, battle.FightSeconds);
-            if (persistPreferences) BattleRecords.Save();
+            // A free battle goes to the battle records; an Adventure stage to the Adventure progress only.
+            var outcome = CountStageRun(battle, won);
+            var news = battle.Stage != null ? outcome.News : BattleRecords.Add(battle.Weapon.Id, battle.Difficulty, battleCustomData, won, battle.Defeated, battle.FightSeconds);
+            if (battle.Stage == null && persistPreferences) BattleRecords.Save();
             BattleReport = BattleReport with
             {
                 Won = BattleReport.Won + (won ? 1 : 0), Lost = BattleReport.Lost + (won ? 0 : 1),
                 Combos = BattleReport.Combos + battle.CombosLanded, Records = BattleReport.Records + (news.Any ? 1 : 0)
             };
             var result = new BattleSummary(won, battle.Defeated, battle.FightSeconds, battle.CatHp, battle.Settings.CatMaxHp, battle.BossDefeated,
-                battle.DefeatedBoss?.Name(English), battle.Difficulty, news, battle.Weapon.Id, WeaponName(battle.Weapon), battleCustomData, battle.Weapon.Style);
+                battle.DefeatedBoss?.Name(English), battle.Difficulty, news, battle.Weapon.Id, WeaponName(battle.Weapon), battleCustomData, battle.Weapon.Style,
+                battle.Stage, outcome, !battleCustomData);
             EndBattle();
             ShowBattleSummary(result);
             return;

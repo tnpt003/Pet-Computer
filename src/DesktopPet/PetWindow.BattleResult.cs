@@ -78,7 +78,7 @@ public sealed partial class PetWindow
     // until the user chooses (a fullscreen app, the pet being brought back or Exit still close it).
     public readonly record struct BattleSummary(bool Won, int Defeated, double Seconds, double Hp, double MaxHp, bool Boss = false, string? BossName = null,
         BattleDifficulty Difficulty = BattleDifficulty.Normal, BattleRecordNews News = default, string Weapon = BattleWeapon.Sword, string WeaponLabel = "",
-        bool Custom = false, string WeaponStyle = "sword");
+        bool Custom = false, string WeaponStyle = "sword", StageSpec? Stage = null, AdventureOutcome Outcome = default, bool Ranked = true);
     private static readonly Brush RecordGold = PetUi.Frozen(Color.FromRgb(0xFF, 0xD3, 0x5C));
     private static readonly Brush ResultMain = PetUi.Frozen(Color.FromRgb(0x3E, 0x7B, 0xE0));
     private static string Clock(double seconds)
@@ -111,11 +111,54 @@ public sealed partial class PetWindow
         title.Text = result.Won ? (result.Boss ? L($"Chiến thắng! Đã hạ {result.BossName ?? "boss"}", $"Victory! The {result.BossName ?? "boss"} is down") : L("Chiến thắng!", "Victory!"))
             : L("Thua rồi… mèo choáng váng", "Defeated… the cat sees stars");
         string level = DifficultyName(result.Difficulty), arms = result.WeaponLabel.Length > 0 ? result.WeaponLabel : result.Weapon;
-        var loadout = Line(13, bold: true); loadout.Text = $"{arms} · {level}";
+        var loadout = Line(13, bold: true); loadout.Text = (result.Stage is StageSpec played ? StageTitle(played) + " · " : "") + $"{arms} · {level}";
         var main = Line(12.5);
         main.Text = L($"Hạ {result.Defeated} slime · {Clock(result.Seconds)}", $"{result.Defeated} slime{(result.Defeated == 1 ? "" : "s")} defeated · {Clock(result.Seconds)}");
         var hp = Line(11.5, opacity: 0.75); hp.Text = L($"HP còn {Math.Ceiling(result.Hp)}/{result.MaxHp}", $"HP {Math.Ceiling(result.Hp)}/{result.MaxHp} left");
         var info = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Children = { title, loadout, main, hp } };
+        Window? window = null;
+        // Each choice acts once: the panel is gone before anything else happens (no double start).
+        void Choose(Action action) { if (window == null || battleSummaryWindow != window) return; CloseBattleSummary(); action(); }
+        UIElement actions;
+        if (result.Stage is StageSpec stage)
+        {
+            var (lines, stageActions) = StageResult(result, stage, Choose);
+            info.Children.Add(lines);
+            actions = stageActions;
+        }
+        else actions = FreeBattleResult(result, info, arms, level, Choose);
+        // This cat, as the battle ended: cheering with its weapon, or sitting dazed.
+        var model = new PetModel { Action = PetAction.Sitting, Grounded = true, Facing = 1, AnimationTime = 1, ActionTime = 1, SwordOut = true,
+            Hammer = result.WeaponStyle == "hammer", BattleCheer = result.Won, BattleDazed = !result.Won };
+        var portrait = new PetRenderer(model) { Coat = renderer.Coat, Accessory = renderer.Accessory, Width = 192, Height = 192 };
+        var picture = new Border { Width = 96, Height = 96, Margin = new Thickness(0, 0, 12, 0), CornerRadius = new CornerRadius(48), Background = PrepStage,
+            VerticalAlignment = VerticalAlignment.Top, Child = CatPicture(portrait) };
+        var panel = new Border
+        {
+            Background = HudBack, BorderBrush = Brushes.White, BorderThickness = new Thickness(1.5), CornerRadius = new CornerRadius(12),
+            Padding = new Thickness(14, 12, 14, 12), Margin = new Thickness(6),
+            Child = new StackPanel { Children = { new StackPanel { Orientation = Orientation.Horizontal, Children = { picture, info } }, actions } },
+            Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 6, ShadowDepth = 1, Opacity = 0.4 }
+        };
+        panel.SetValue(TextBlock.FontFamilyProperty, PetUi.TextFont);
+        window = CreateBattleWindow(panel, "Pet result");
+        window.SizeToContent = SizeToContent.WidthAndHeight;
+        var shown = window;
+        window.Closed += (_, _) => { if (battleSummaryWindow == shown) battleSummaryWindow = null; };
+        battleSummaryWindow = window;
+        window.Show();
+        window.UpdateLayout();
+        MoveWindow(window, (bounds.Left + bounds.Right - window.ActualWidth) / 2, bounds.Top + 12);
+    }
+
+    // A free battle's records lines and its Play again / Change gear / Back to desktop.
+    private UIElement FreeBattleResult(BattleSummary result, StackPanel info, string arms, string level, Action<Action> Choose)
+    {
+        TextBlock Line(double size, Brush? brush = null, bool bold = false, double opacity = 1) => new()
+        {
+            Foreground = brush ?? Brushes.White, FontSize = size, FontWeight = bold ? FontWeights.Bold : FontWeights.Normal, Opacity = opacity,
+            TextWrapping = TextWrapping.Wrap, MaxWidth = 300, Margin = new Thickness(0, 2, 0, 0)
+        };
         // Records of this loadout (weapon id + difficulty; custom data kept apart), and what this battle beat.
         if (result.News.Any)
         {
@@ -138,16 +181,6 @@ public sealed partial class PetWindow
             old.Text = L($"Trước phân loại trang bị ({level}): ", $"Before weapons were told apart ({level}): ") + RecordLine(legacy);
             info.Children.Add(old);
         }
-        // This cat, as the battle ended: cheering with its weapon, or sitting dazed.
-        var model = new PetModel { Action = PetAction.Sitting, Grounded = true, Facing = 1, AnimationTime = 1, ActionTime = 1, SwordOut = true,
-            Hammer = result.WeaponStyle == "hammer", BattleCheer = result.Won, BattleDazed = !result.Won };
-        var portrait = new PetRenderer(model) { Coat = renderer.Coat, Accessory = renderer.Accessory, Width = 192, Height = 192 };
-        var picture = new Border { Width = 96, Height = 96, Margin = new Thickness(0, 0, 12, 0), CornerRadius = new CornerRadius(48), Background = PrepStage,
-            VerticalAlignment = VerticalAlignment.Top, Child = CatPicture(portrait) };
-
-        Window? window = null;
-        // Each choice acts once: the panel is gone before anything else happens (no double start).
-        void Choose(Action action) { if (window == null || battleSummaryWindow != window) return; CloseBattleSummary(); action(); }
         var (again, againText, _) = HudButton(() => Choose(() => { if (BattleReplay(result) is string reason) ShowBattleNotice(reason); }), plain: true);
         again.Background = ResultMain; again.Padding = new Thickness(16, 6, 16, 5); again.Margin = new Thickness(0);
         againText.FontSize = 13.5; againText.FontWeight = FontWeights.Bold; againText.Text = L("Chơi lại", "Play again");
@@ -158,26 +191,12 @@ public sealed partial class PetWindow
         var actions = new DockPanel { Margin = new Thickness(0, 12, 0, 0), LastChildFill = false };
         DockPanel.SetDock(home, Dock.Left); DockPanel.SetDock(again, Dock.Right); DockPanel.SetDock(gear, Dock.Right);
         actions.Children.Add(home); actions.Children.Add(again); actions.Children.Add(gear);
-        var panel = new Border
-        {
-            Background = HudBack, BorderBrush = Brushes.White, BorderThickness = new Thickness(1.5), CornerRadius = new CornerRadius(12),
-            Padding = new Thickness(14, 12, 14, 12), Margin = new Thickness(6),
-            Child = new StackPanel { Children = { new StackPanel { Orientation = Orientation.Horizontal, Children = { picture, info } }, actions } },
-            Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 6, ShadowDepth = 1, Opacity = 0.4 }
-        };
-        panel.SetValue(TextBlock.FontFamilyProperty, PetUi.TextFont);
-        window = CreateBattleWindow(panel, "Pet result");
-        window.SizeToContent = SizeToContent.WidthAndHeight;
-        var shown = window;
-        window.Closed += (_, _) => { if (battleSummaryWindow == shown) battleSummaryWindow = null; };
-        battleSummaryWindow = window;
-        window.Show();
-        window.UpdateLayout();
-        MoveWindow(window, (bounds.Left + bounds.Right - window.ActualWidth) / 2, bounds.Top + 12);
+        return actions;
     }
 
-    // Play again: the same weapon and difficulty as the battle that just ended, at once, if the
-    // cat is free; otherwise the setup panel opens with that choice and says why (nothing is forced).
+    // Play again: the same weapon and difficulty (and Adventure stage) as the battle that just
+    // ended, at once, if the cat is free; otherwise the setup panel opens with that choice and says
+    // why (nothing is forced). A stage no longer in the data sends the user to the map.
     public string? BattleReplay(BattleSummary last)
     {
         if (battle != null) return L("Trận đang diễn ra.", "A battle is already running.");
@@ -185,10 +204,12 @@ public sealed partial class PetWindow
         if (BattleRefusal() is string reason)
         {
             // The panel shows the reason itself; paused or fullscreen keep even the panel away.
-            return OpenBattlePrep(last.Weapon, last.Difficulty) is string refused ? refused : null;
+            return OpenBattlePrep(last.Weapon, last.Difficulty, last.Stage) is string refused ? refused : null;
         }
         ReloadBattleData();
-        return StartBattle(last.Weapon, last.Difficulty);
+        if (last.Stage == null) return StartBattle(last.Weapon, last.Difficulty);
+        if (Adventure?.Stage(last.Stage.Id) is not StageSpec stage || !Adventure!.IsUnlocked(stage.Id)) return OpenAdventureMap();
+        return StartBattle(last.Weapon, last.Difficulty, stage);
     }
 
     private void CloseBattleSummary()

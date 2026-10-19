@@ -52,7 +52,7 @@ public sealed partial class PetWindow
 
     public bool BattlePreparing => battlePreparing;
     // The battle or its setup owns the pet (PetWindow.Battle.cs has the battle's own rules).
-    public bool BattleOwnsPet => battle != null || battlePreparing;
+    public bool BattleOwnsPet => battle != null || battlePreparing || adventureMapOpen;
     public string BattlePrepWeapon => prepWeapon;
     public BattleDifficulty BattlePrepDifficulty => prepDifficulty;
     public bool BattlePrepVisible => battlePrepWindow?.IsVisible == true;
@@ -82,11 +82,21 @@ public sealed partial class PetWindow
 
     // Null when the panel is open (opening it twice keeps the one panel), otherwise why not.
     // Without a choice given it starts from the remembered one (the last that went into a battle).
-    public string? OpenBattlePrep(string? weapon = null, BattleDifficulty? level = null)
+    // stage: an Adventure stage (looked up again in the fresh data; gone from it or locked: refused).
+    public string? OpenBattlePrep(string? weapon = null, BattleDifficulty? level = null, StageSpec? stage = null)
     {
         if (BattlePrepRefusal() is string reason) return reason;
-        if (battlePreparing) { PlaceBattlePrep(); return null; }
+        if (battlePreparing && prepStage?.Id == stage?.Id) { PlaceBattlePrep(); return null; }
+        if (battlePreparing) { CloseBattlePrep(); CloseBattleTutorial(); }
         ReloadBattleData();
+        if (stage != null)
+        {
+            if (Adventure?.Stage(stage.Id) is not StageSpec fresh || !Adventure!.IsUnlocked(fresh.Id))
+                return L("Màn này không còn trong dữ liệu hoặc chưa mở.", "This stage is no longer in the data or is locked.");
+            stage = fresh;
+        }
+        CloseAdventureMap();
+        prepStage = stage;
         prepWeapon = BattleTuning.Weapon(weapon ?? preferences.BattleWeapon).Id;
         prepDifficulty = level is BattleDifficulty chosen && Enum.IsDefined(chosen) ? chosen : BattleDifficultyChoice;
         battlePreparing = true;
@@ -128,15 +138,18 @@ public sealed partial class PetWindow
         SetBattleWeapon(prepWeapon);
         SetBattleDifficulty(prepDifficulty);
         if (BattleTutorialOpen) CloseBattleTutorial(finished: true);
-        return StartBattle();
+        return StartBattle(stage: prepStage);
     }
 
-    // Close: no battle, no win or loss, no record; the pet goes back to its own life.
+    // Close: no battle, no win or loss, no record; the pet goes back to its own life. For an
+    // Adventure stage the button says Map and goes back to the map instead.
     public void CancelBattlePrep()
     {
         if (!battlePreparing) return;
+        var stage = prepStage;
         CloseBattlePrep();
         CloseBattleTutorial();
+        if (stage != null && OpenAdventureMap(stage.Id) == null) return;
         revision++;
         behavior.Reset(pet);
         System.Diagnostics.Trace.WriteLine("Battle setup cancelled.");
@@ -153,6 +166,7 @@ public sealed partial class PetWindow
         prepReady = null;
         prepPreview = null; prepPreviewView = null; prepHitMark = null;
         prepCards.Clear(); prepLevelChips.Clear();
+        prepStage = null;
         if (was) ApplyQuiet();
     }
 
@@ -360,7 +374,7 @@ public sealed partial class PetWindow
             text.Visibility = string.IsNullOrEmpty(value) ? Visibility.Collapsed : Visibility.Visible;
         }
         var chosen = BattleTuning.Weapon(prepWeapon);
-        prepTitle.Text = L("Chuẩn bị trận", "Get ready to battle");
+        prepTitle.Text = prepStage is StageSpec stage ? StageTitle(stage) + (stage.Goal(English) is { Length: > 0 } goal ? "\n" + goal : "") : L("Chuẩn bị trận", "Get ready to battle");
         prepWeaponLabel!.Text = L("Chọn cách đánh", "Choose how to fight");
         prepLevelLabel!.Text = L("Độ khó", "Difficulty");
         foreach (var (id, card, check, name, hint, statNames, _) in prepCards)
@@ -397,7 +411,7 @@ public sealed partial class PetWindow
         Show(prepStatus, waiting != null ? L("Chưa thể bắt đầu: ", "Not yet: ") + waiting : null);
         prepReadyText!.Text = L("Sẵn sàng", "Ready");
         prepGuideText!.Text = L("Cách chơi", "How to play");
-        prepCancelText!.Text = L("Đóng", "Close");
+        prepCancelText!.Text = prepStage != null ? L("Bản đồ", "Map") : L("Đóng", "Close");
         prepTryText!.Text = L("Xem thử", "Try it");
         bool can = waiting == null;
         if (prepReady.IsEnabled != can) { prepReady.IsEnabled = can; prepReady.Opacity = can ? 1 : 0.5; }

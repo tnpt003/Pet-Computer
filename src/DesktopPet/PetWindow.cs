@@ -78,7 +78,7 @@ public sealed partial class PetWindow : Window
     {
         preferences = options ?? PetPreferences.Load();
         persistPreferences = options == null;
-        if (persistPreferences) BattleDataFile = BattleData.UserFilePath;
+        if (persistPreferences) { BattleDataFile = BattleData.UserFilePath; AdventureProgressFile = AdventureProgress.DefaultPath; }
         Title = "Desktop Pet";
         Icon = AppIcon.WindowImage();
         // Keep one backing surface for every pose; resizing layered windows on
@@ -154,7 +154,7 @@ public sealed partial class PetWindow : Window
 
     public void Reset()
     {
-        EndBattle(); CloseBattlePrep(); CloseBattleSummary(); CloseBattleNotice(); CloseBattleTutorial();
+        EndBattle(); CloseBattlePrep(); CloseAdventureMap(); CloseBattleSummary(); CloseBattleNotice(); CloseBattleTutorial();
         CancelFeatureActivity();
         bool keepSleeping = pet.Emotions.SleepLocked || pet.Action == PetAction.Sleeping;
         Interact("reset");
@@ -302,6 +302,7 @@ public sealed partial class PetWindow : Window
         boundsTimer += dt;
         CheckDragThreshold();
         TickBattlePrep(dt);
+        TickAdventureMap(dt);
         if (!paused)
         {
             TickFeatures(dt);

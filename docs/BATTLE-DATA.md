@@ -153,3 +153,35 @@ Từ 2026-10-19 (`Version` 2), kỷ lục được tách theo **id vũ khí + đ
 
 Kỷ lục của file cũ (trước khi tách theo vũ khí) được giữ nguyên trong `Easy`/`Normal`/`Hard` và hiển thị là "Trước phân loại trang bị"; chúng không bị gán cho vũ khí nào. Xóa một vũ khí khỏi dữ liệu không làm mất kỷ lục của nó.
 
+
+## Phiêu lưu (`campaign`)
+
+Từ 2026-10-20 battle.json có khóa tùy chọn `campaign`: các chương, mỗi chương là danh sách màn chơi theo thứ tự. Thắng một màn thì mở màn kế tiếp trong chương; màn đầu luôn mở.
+
+```jsonc
+"campaign": {
+  "chapters": [
+    {
+      "id": "slime_invasion", "nameVi": "Cuộc xâm nhập của Slime", "nameEn": "The Slime Invasion",
+      "stages": [
+        {
+          "id": "c1_first_steps", "nameVi": "Làm quen", "nameEn": "First steps",
+          "goalVi": "…", "goalEn": "…",       // tối đa 120 ký tự, hiện trên bản đồ và bảng chuẩn bị
+          "objective": "clear",              // hiện chỉ có "clear": dọn hết các đợt
+          "maxAlive": 2,                     // 1–10, số quái cùng lúc (bỏ trống: dùng maxAlive chung)
+          "rulesVersion": 1,                 // tăng khi đổi màn nhiều để kỷ lục cũ không bị so với luật mới
+          "waves": [ { "groups": [ { "enemy": "slime", "count": 2 } ] } ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+- id chương và id màn theo cùng quy tắc với id quái (chữ thường, số, `_`, `-`, tối đa 32). id màn **không được trùng trong toàn bộ campaign**, vì tiến trình lưu theo id màn. Đổi id thì màn đó được coi là màn mới.
+- Mỗi chương có 1–12 màn. Đợt quái của màn được kiểm tra như `waves` chung: quái phải có trong `enemies`, tối đa 30 đợt, mỗi nhóm 1–50 con.
+- Khóa sai chính tả, objective lạ, id trùng hoặc quái không tồn tại đều làm cả file bị bỏ, giống các phần khác.
+- Cách gộp: `campaign` được gộp theo từng khóa, còn mảng `chapters` nếu có trong file của bạn sẽ **thay toàn bộ** danh sách chương gốc (không gộp theo id). File không có `campaign` thì giữ chương gốc.
+- Chơi Phiêu lưu khi đang dùng battle.json tùy chỉnh vẫn được, nhưng **không lưu tiến trình và kỷ lục**. Như vậy file tùy chỉnh không thể mở màn hay ghi đè thành tích của dữ liệu gốc.
+
+Tiến trình nằm ở `%LOCALAPPDATA%\DesktopPet\adventure-progress.json` (`Version` 1): màn đã thắng, kỷ lục theo `màn|r<rulesVersion>|vũ khí|độ khó`, các lượt đã tính (chống tính hai lần). Mỗi lần lưu, file cũ được giữ thành `.bak`. Kỷ lục Phiêu lưu tách hẳn khỏi battle-records.json của trận tự do.

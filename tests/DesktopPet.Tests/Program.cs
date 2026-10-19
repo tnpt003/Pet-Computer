@@ -80,6 +80,7 @@ BattleRulesTests.Run(Check);
 BattleWeaponTests.Run(Check);
 BattleDataTests.Run(Check);
 BattleCustomDataTests.Run(Check);
+AdventureTests.Run(Check);
 var activity = new PetActivity();
 activity.Step(PetAction.Walking, 2);
 activity.Step(PetAction.Jumping, 1);

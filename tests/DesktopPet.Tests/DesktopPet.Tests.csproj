@@ -30,6 +30,7 @@
     <Compile Include="../../src/DesktopPet/PetBattle.cs" Link="PetBattle.cs" />
     <Compile Include="../../src/DesktopPet/PetBattleData.cs" Link="PetBattleData.cs" />
     <Compile Include="../../src/DesktopPet/PetBattleRecords.cs" Link="PetBattleRecords.cs" />
+    <Compile Include="../../src/DesktopPet/PetAdventure.cs" Link="PetAdventure.cs" />
     <EmbeddedResource Include="../../src/DesktopPet/Assets/battle.json" LogicalName="DesktopPet.battle.json" />
     <None Include="../../docs/examples/battle.json" Link="Fixtures/stone-slime.battle.json" CopyToOutputDirectory="PreserveNewest" />
     <Compile Include="../../src/DesktopPet/AI/*.cs" Link="AI/%(Filename)%(Extension)" />

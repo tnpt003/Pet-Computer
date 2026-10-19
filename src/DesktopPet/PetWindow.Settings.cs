@@ -13,6 +13,7 @@ public sealed class PetSettingsForm
     public TabControl Tabs = null!;
     public TextBox Name = null!;
     public ComboBox Language = null!, Personality = null!, Coat = null!, Accessory = null!, Chattiness = null!, BreakInterval = null!, PreviewCue = null!, BirthDay = null!, BirthMonth = null!;
+    public string[] AccessoryIds = Array.Empty<string>();
     public CheckBox HolidayAccessories = null!, ClimbWindows = null!, Talks = null!, Autostart = null!, BreakReminders = null!, Sounds = null!, InteractionSounds = null!, EmotionSounds = null!, SleepSounds = null!;
     public Slider Volume = null!;
     public Button Save = null!, Cancel = null!, Tuning = null!, Forget = null!, Preview = null!;
@@ -57,9 +58,11 @@ public sealed partial class PetWindow
         form.Coat = new ComboBox { ItemTemplate = CoatTemplate,
             ItemsSource = PetCoats.All.Select(coat => new CoatChoice(L(coat.NameVi, coat.NameEn), CoatPalette.For(coat.Id))).ToArray(),
             SelectedIndex = Math.Max(0, Array.IndexOf(PetPreferences.Coats, preferences.Coat)) };
-        // Accessory names come from Assets/accessories.json, in PetPreferences.Accessories order.
-        form.Accessory = new ComboBox { ItemsSource = new[] { L("Không", "None") }.Concat(PetAccessories.All.Select(item => L(item.NameVi, item.NameEn))).ToArray(),
-            SelectedIndex = Math.Max(0, Array.IndexOf(PetPreferences.Accessories, preferences.Accessory)) };
+        // Accessory names come from Assets/accessories.json, in PetPreferences.Accessories order;
+        // Adventure rewards only once received (or already worn). The list maps back by id.
+        form.AccessoryIds = PetPreferences.Accessories.Where(id => id == PetAccessories.None || AccessoryAvailable(id)).ToArray();
+        form.Accessory = new ComboBox { ItemsSource = form.AccessoryIds.Select(id => PetAccessories.Find(id) is { } item ? L(item.NameVi, item.NameEn) : L("Không", "None")).ToArray(),
+            SelectedIndex = Math.Max(0, Array.IndexOf(form.AccessoryIds, preferences.Accessory)) };
         // The user's birthday (day and month only); index 0 means not set.
         int savedMonth = preferences.Birthday.Length == 5 ? int.Parse(preferences.Birthday[..2]) : 0;
         int savedDay = preferences.Birthday.Length == 5 ? int.Parse(preferences.Birthday[3..]) : 0;
@@ -78,7 +81,7 @@ public sealed partial class PetWindow
         form.PreviewPet = previewPet;
         form.PetPreview = new PetRenderer(previewPet) { Coat = preferences.Coat, Accessory = preferences.Accessory, Width = 192, Height = 192, Margin = new Thickness(-30) };
         form.Coat.SelectionChanged += (_, _) => form.PetPreview.Coat = PetPreferences.Coats[Math.Max(0, form.Coat.SelectedIndex)];
-        form.Accessory.SelectionChanged += (_, _) => form.PetPreview.Accessory = PetPreferences.Accessories[Math.Max(0, form.Accessory.SelectedIndex)];
+        form.Accessory.SelectionChanged += (_, _) => form.PetPreview.Accessory = form.AccessoryIds[Math.Max(0, form.Accessory.SelectedIndex)];
         var stage = new Grid { Width = 132, Height = 132, ClipToBounds = true }; // Crops the window's transparent margin.
         stage.Children.Add(form.PetPreview);
         var previewCard = new Border { Child = stage, Background = PreviewBackground, CornerRadius = new CornerRadius(8), Padding = new Thickness(4),
@@ -231,7 +234,7 @@ public sealed partial class PetWindow
             preferences.Chattiness = Math.Clamp(form.Chattiness.SelectedIndex, 0, 2);
             if (!preferences.Speech) pet.Speech.Hide();
             preferences.Coat = PetPreferences.Coats[Math.Max(0, form.Coat.SelectedIndex)];
-            preferences.Accessory = PetPreferences.Accessories[Math.Max(0, form.Accessory.SelectedIndex)];
+            preferences.Accessory = form.AccessoryIds[Math.Max(0, form.Accessory.SelectedIndex)];
             // A day past the month's end (31 February) becomes its last day; both parts are needed.
             int birthMonth = Math.Max(0, form.BirthMonth.SelectedIndex), birthDay = Math.Max(0, form.BirthDay.SelectedIndex);
             preferences.Birthday = birthMonth > 0 && birthDay > 0

@@ -259,7 +259,8 @@ public sealed class DifficultySpec
 // Push and Bomb are aimed (choose, then click a slime); the others act at once.
 public enum BattleSkill { Push, Heal, Cheer, Bomb, Shield }
 
-public enum SlimeState { Spawning, Moving, Windup, Recover, Stunned, Defeated }
+// Casting: a support enemy winds up a heal (a green "+"); a push or stun cancels it.
+public enum SlimeState { Spawning, Moving, Windup, Recover, Stunned, Defeated, Casting }
 
 public sealed class Slime
 {
@@ -281,6 +282,12 @@ public sealed class Slime
     public double Cooldown, StunRemaining, KnockVelocity, HitFlash;
     public int Facing = -1;
     public bool Enraged, Summoned;
+    // Support: its own heal cooldown, what it may still heal, and the ally it is healing.
+    public double HealCooldown, HealLeft;
+    public int HealTargetId;
+    // Boss phases already fired (bit i = Phases[i]); the boss that called this helper (0: none).
+    public int PhasesDone;
+    public int SummonedBy;
     public bool Targetable => State is not (SlimeState.Spawning or SlimeState.Defeated);
     public void Set(SlimeState state) { State = state; StateTime = 0; }
 }
@@ -290,12 +297,13 @@ public enum BattleEventKind
 {
     WaveStarted, SlimeSpawned, Swing, SlimeHit, SlimeDefeated, CatHurt, Pushed, WaveCleared, Won, Lost,
     Healed, Cheered, Shielded, Blocked, BombThrown, BombExploded, BossAppeared, BossSummoned, BossEnraged, ComboHit,
-    UpgradeOffered, UpgradeChosen
+    UpgradeOffered, UpgradeChosen, EnemyHealing, EnemyHealed
 }
 public readonly record struct BattleEvent(BattleEventKind Kind, double X, double Value = 0);
 // Number: a floating damage (Value > 0) or heal (Value < 0, shown as +HP above the cat).
 // Thud: a heavy weapon's plain hit (dust and a ring on the floor), chosen by the weapon's hitEffect.
-public enum BattleEffectKind { Spark, Poof, Push, Explosion, Slam, Number, Combo, Thud }
+// Mend: green pluses rising from an enemy healed by a support enemy.
+public enum BattleEffectKind { Spark, Poof, Push, Explosion, Slam, Number, Combo, Thud, Mend }
 public sealed class BattleEffect
 {
     public BattleEffectKind Kind;
@@ -594,7 +602,7 @@ public sealed class BattleSim
             slime.Summoned = true;
             var helper = Settings.Enemy(type.SummonType);
             for (int i = 0; i < type.SummonCount; i++)
-                AddSlime(slime.X + (i % 2 == 0 ? -1 : 1) * (slime.Width / 2 + 30 + 20 * (i / 2)), helper);
+                AddSlime(slime.X + (i % 2 == 0 ? -1 : 1) * (slime.Width / 2 + 30 + 20 * (i / 2)), helper).SummonedBy = slime.Id;
             events.Add(new(BattleEventKind.BossSummoned, slime.X));
         }
         if (type.EnrageAt > 0 && !slime.Enraged && fraction <= type.EnrageAt)
@@ -602,6 +610,28 @@ public sealed class BattleSim
             slime.Enraged = true;
             events.Add(new(BattleEventKind.BossEnraged, slime.X));
         }
+        if (type.Phases is { } phases)
+            for (int i = 0; i < phases.Length && i < 31; i++)
+            {
+                var phase = phases[i];
+                if ((slime.PhasesDone & (1 << i)) != 0 || fraction > phase.At) continue;
+                slime.PhasesDone |= 1 << i; // Once, even if the call is skipped below.
+                if (phase.Summon != null)
+                {
+                    int alive = 0;
+                    foreach (var s in slimes) if (s.SummonedBy == slime.Id && s.State != SlimeState.Defeated) alive++;
+                    var helper = Settings.Enemy(phase.Summon);
+                    int calls = Math.Min(phase.Count, Math.Max(0, type.SummonCap - alive));
+                    for (int k = 0; k < calls; k++)
+                        AddSlime(slime.X + (k % 2 == 0 ? -1 : 1) * (slime.Width / 2 + 30 + 20 * (k / 2)), helper).SummonedBy = slime.Id;
+                    if (calls > 0) events.Add(new(BattleEventKind.BossSummoned, slime.X));
+                }
+                if (phase.Enrage && !slime.Enraged)
+                {
+                    slime.Enraged = true;
+                    events.Add(new(BattleEventKind.BossEnraged, slime.X));
+                }
+            }
     }
 
     private Slime? PickTarget(double catX)
@@ -638,6 +668,7 @@ public sealed class BattleSim
             slime.StateTime += dt;
             slime.HitFlash = Math.Max(0, slime.HitFlash - dt);
             slime.Cooldown = Math.Max(0, slime.Cooldown - dt);
+            slime.HealCooldown = Math.Max(0, slime.HealCooldown - dt);
             if (slime.KnockVelocity != 0)
             {
                 slime.X += slime.KnockVelocity * dt;
@@ -667,7 +698,19 @@ public sealed class BattleSim
                     if (catHeld) { slime.StateTime -= dt; break; }
                     if (slime.StateTime >= Windup(slime)) Strike(slime, catX);
                     break;
+                case SlimeState.Casting:
+                    if (slime.StateTime >= slime.Type.HealWindup) FinishHeal(slime);
+                    break;
                 case SlimeState.Moving:
+                    // A support enemy heals a hurt ally when it can (before thinking of the cat).
+                    if (slime.Type.HealAmount > 0 && slime.HealCooldown <= 0 && slime.HealLeft > 0 && HealTarget(slime) is Slime ally)
+                    {
+                        slime.HealTargetId = ally.Id;
+                        slime.Facing = ally.X < slime.X ? -1 : 1;
+                        slime.Set(SlimeState.Casting);
+                        events.Add(new(BattleEventKind.EnemyHealing, slime.X));
+                        break;
+                    }
                     // While the user carries the cat the slimes follow it along the floor, but never
                     // wind up: a lifted cat cannot be hit.
                     if (Math.Abs(dx) > 1) slime.Facing = dx < 0 ? -1 : 1;
@@ -685,6 +728,38 @@ public sealed class BattleSim
     }
 
     public double Windup(Slime slime) => slime.Enraged ? slime.Type.EnragedWindup : slime.Type.Windup;
+
+    // The most hurt ally in reach: alive, not this one, below its max HP.
+    private Slime? HealTarget(Slime healer)
+    {
+        Slime? best = null;
+        foreach (var s in slimes)
+        {
+            if (s == healer || !s.Targetable || s.Hp >= s.MaxHp || Math.Abs(s.X - healer.X) > healer.Type.HealRange) continue;
+            if (best == null || s.MaxHp - s.Hp > best.MaxHp - best.Hp) best = s;
+        }
+        return best;
+    }
+
+    // The heal lands if its ally is still there, alive and in reach (a little slack for movement).
+    private void FinishHeal(Slime healer)
+    {
+        healer.Set(SlimeState.Recover);
+        healer.HealCooldown = healer.Type.HealCooldown;
+        var ally = Find(healer.HealTargetId);
+        healer.HealTargetId = 0;
+        if (ally == null || !ally.Targetable || Math.Abs(ally.X - healer.X) > healer.Type.HealRange + 20) return;
+        double amount = Math.Min(Math.Min(healer.Type.HealAmount, ally.MaxHp - ally.Hp), healer.HealLeft);
+        if (amount <= 0) return;
+        ally.Hp += amount;
+        healer.HealLeft -= amount;
+        AddEffect(BattleEffectKind.Mend, ally.X, ally.Height / 2);
+        AddEffect(BattleEffectKind.Number, ally.X + (ally.IsBoss ? ally.Width * 0.38 : 0), ally.Height + 10, -Math.Round(amount));
+        events.Add(new(BattleEventKind.EnemyHealed, ally.X, amount));
+    }
+
+    // The ally a support enemy is healing right now (null when it is not casting).
+    public Slime? Healing(Slime healer) => healer.State == SlimeState.Casting ? Find(healer.HealTargetId) : null;
     private double Speed(Slime slime) => (slime.Enraged ? slime.Type.EnragedSpeed : slime.Type.Speed) * level.EnemySpeed;
 
     private readonly List<Slime> scratch = new();
@@ -841,6 +916,9 @@ public sealed class BattleSim
             Id = nextId++, Type = type, Width = Settings.SlimeWidth * type.Scale, HitWidth = Settings.SlimeWidth * type.Hitbox, Height = Settings.SlimeHeight * type.Scale,
             Hp = hp, MaxHp = hp, Damage = scaled ? Math.Round(type.Damage * level.EnemyDamage) : type.Damage, Range = type.Range
         };
+        // A support enemy starts with half its heal cooldown and its whole budget.
+        slime.HealCooldown = type.HealCooldown / 2;
+        slime.HealLeft = type.HealBudget;
         var (minX, maxX) = Bounds(slime);
         slime.X = Math.Clamp(x, minX, maxX);
         slime.Set(SlimeState.Spawning);
@@ -860,7 +938,7 @@ public sealed class BattleSim
         bombs.Clear();
         CancelSwing();
         Combo = 0;
-        foreach (var s in slimes) if (s.State == SlimeState.Windup) s.Set(SlimeState.Moving);
+        foreach (var s in slimes) if (s.State is SlimeState.Windup or SlimeState.Casting) s.Set(SlimeState.Moving);
         events.Add(new(phase == BattlePhase.Won ? BattleEventKind.Won : BattleEventKind.Lost, 0));
     }
 
@@ -918,6 +996,8 @@ public sealed class BattleSim
         {
             // Knock the slime away from the cat and stun it briefly; the boss is heavy.
             int push = direction is int chosen && chosen != 0 ? Math.Sign(chosen) : slime.X < catX ? -1 : 1;
+            // A heal being wound up is cancelled and costs its full cooldown.
+            if (slime.State == SlimeState.Casting) { slime.HealCooldown = slime.Type.HealCooldown; slime.HealTargetId = 0; }
             slime.KnockVelocity = push * Settings.PushSpeed * slime.Type.PushFactor;
             slime.StunRemaining = Settings.PushStunSeconds * slime.Type.StunFactor;
             slime.Set(SlimeState.Stunned);
@@ -959,7 +1039,7 @@ public sealed class BattleSim
         if (effects.Count >= Settings.MaxEffects) effects.RemoveAt(0);
         double life = kind switch
         {
-            BattleEffectKind.Poof => 0.6 * Math.Max(1, value), BattleEffectKind.Number => 0.9, BattleEffectKind.Combo => 0.7,
+            BattleEffectKind.Poof => 0.6 * Math.Max(1, value), BattleEffectKind.Number => 0.9, BattleEffectKind.Combo => 0.7, BattleEffectKind.Mend => 0.8,
             BattleEffectKind.Explosion or BattleEffectKind.Slam => 0.5, _ => 0.35
         };
         effects.Add(new BattleEffect { Kind = kind, X = x, Height = height, Life = life, Value = value });

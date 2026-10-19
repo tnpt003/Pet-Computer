@@ -1,5 +1,5 @@
 {
-  "_comment": "Accessories in settings order (\"None\" is built in and comes first). Coordinates are in the cat's 112x112 head space; layer neck is drawn behind the head (collar, scarf), head over the face. Shapes draw in order: path (SVG/WPF path data), ellipse [cx, cy, rx, ry] or line [x1, y1, x2, y2]. fill is #RRGGBB or #AARRGGBB; stroke is outline (the coat's 2.5 px ink line), accent (8 px ink under a band) or {color, width, round, join}. event (optional) names a special day in ai/calendar.json: with Dress up for holidays on, the pet wears it on that day. Rebuild the app after editing.",
+  "_comment": "Accessories in settings order (\"None\" is built in and comes first). Coordinates are in the cat's 112x112 head space; layer neck is drawn behind the head (collar, scarf), head over the face. Shapes draw in order: path (SVG/WPF path data), ellipse [cx, cy, rx, ry] or line [x1, y1, x2, y2]. fill is #RRGGBB or #AARRGGBB; stroke is outline (the coat's 2.5 px ink line), accent (8 px ink under a band) or {color, width, round, join}. event (optional) names a special day in ai/calendar.json: with Dress up for holidays on, the pet wears it on that day. reward (optional) names what earns it (an Adventure chapter): Settings offers it only once it was received. Rebuild the app after editing.",
   "accessories": [
     {
       "id": "Bell", "name": {"vi": "Vòng cổ chuông", "en": "Collar with bell"}, "layer": "neck",
@@ -111,6 +111,27 @@
         {"path": "M 50,90.5 L 60,90.5 L 60,92 L 50,92 Z", "fill": "#F5C542", "stroke": "outline"},
         {"line": [55, 81, 55, 91], "stroke": {"color": "#F5C542", "width": 1.2, "round": true}},
         {"line": [55, 92, 55, 97], "stroke": {"color": "#F5C542", "width": 1.6, "round": true}}
+      ]
+    },
+    {
+      "id": "SlimeHat", "name": {"vi": "Mũ slime", "en": "Slime hat"}, "layer": "head", "reward": "slime_invasion",
+      "shapes": [
+        {"path": "M 41,27 Q 40,12 55,10 Q 70,12 69,27 Z", "fill": "#7CD36A", "stroke": "outline"},
+        {"ellipse": [49, 15, 3, 2], "fill": "#B4FFFFFF"},
+        {"ellipse": [51, 20.5, 1.7, 2.4], "fill": "#302B48"},
+        {"ellipse": [59, 20.5, 1.7, 2.4], "fill": "#302B48"}
+      ]
+    },
+    {
+      "id": "SlimeKingCrown", "name": {"vi": "Vương miện Vua Slime", "en": "Slime King's crown"}, "layer": "head", "reward": "slime_invasion",
+      "shapes": [
+        {"path": "M 41,26 L 42,8 L 49,16 L 55,3 L 61,16 L 68,8 L 69,26 Z", "fill": "#F5C542", "stroke": "outline"},
+        {"path": "M 44,26 Q 45,31 47.5,26 Z", "fill": "#9B7BE0", "stroke": "outline"},
+        {"path": "M 62,26 Q 63.5,32 66,26 Z", "fill": "#9B7BE0", "stroke": "outline"},
+        {"ellipse": [55, 19, 2.6, 2.6], "fill": "#9B7BE0", "stroke": "outline"},
+        {"ellipse": [47, 20.5, 1.6, 1.6], "fill": "#9B7BE0"},
+        {"ellipse": [63, 20.5, 1.6, 1.6], "fill": "#9B7BE0"},
+        {"ellipse": [55, 3, 1.8, 1.8], "fill": "#FFFFFF", "stroke": "outline"}
       ]
     }
   ]

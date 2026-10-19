@@ -20,7 +20,7 @@ public sealed partial class PetWindow
         [BattleEventKind.WaveCleared] = ("excited", 6),
         [BattleEventKind.Healed] = ("satisfied", 5), [BattleEventKind.UpgradeChosen] = ("satisfied", 5), [BattleEventKind.Cheered] = ("excited", 5), [BattleEventKind.Blocked] = ("ball_tap", 5),
         [BattleEventKind.SlimeDefeated] = ("pop", 4), [BattleEventKind.BombExploded] = ("pop", 4), [BattleEventKind.ComboHit] = ("ball_tap", 4),
-        [BattleEventKind.SlimeHit] = ("squish", 3),
+        [BattleEventKind.SlimeHit] = ("squish", 3), [BattleEventKind.EnemyHealed] = ("ball_tap", 3),
         [BattleEventKind.Pushed] = ("swoosh", 2), [BattleEventKind.BombThrown] = ("swoosh", 2), [BattleEventKind.Shielded] = ("swoosh", 2),
         [BattleEventKind.Swing] = ("swoosh", 1),
     };
@@ -36,10 +36,13 @@ public sealed partial class PetWindow
 
     private string BossName() => battle?.Boss?.Type.Name(preferences.Language == "en") ?? "Boss";
 
-    // Big moments get a banner across the HUD's centre.
+    // Big moments get a banner across the HUD's centre. The first heal of a battle says what the
+    // support enemy does (once per battle).
+    private bool healerExplained;
     private void ShowBattleBanners()
     {
         if (battle == null || battleHud == null) return;
+        if (battle.Time < 0.05) healerExplained = false;
         for (int i = 0; i < battle.Events.Count; i++)
         {
             var e = battle.Events[i];
@@ -49,10 +52,12 @@ public sealed partial class PetWindow
                 BattleEventKind.WaveStarted => L($"ĐỢT {(int)e.Value}", $"WAVE {(int)e.Value}"),
                 BattleEventKind.BossSummoned => L($"{BossName()} gọi quân!", $"The {BossName()} calls for help!"),
                 BattleEventKind.BossEnraged => L($"{BossName()} nổi giận!", $"The {BossName()} is angry!"),
+                BattleEventKind.EnemyHealing when !healerExplained => L("Quái hồi máu! Hạ nó trước", "A healer! Take it down first"),
                 BattleEventKind.Won => L("CHIẾN THẮNG!", "VICTORY!"),
                 BattleEventKind.Lost => L("THUA RỒI…", "DEFEATED…"),
                 _ => null
             };
+            if (e.Kind == BattleEventKind.EnemyHealing) healerExplained = true;
             if (text != null) battleHud.ShowBanner(text, battle.Time, e.Kind is BattleEventKind.Won or BattleEventKind.Lost ? 3 : 1.6);
         }
     }

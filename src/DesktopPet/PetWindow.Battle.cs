@@ -113,7 +113,7 @@ public sealed partial class PetWindow
         var pause = new MenuItem();
         pause.Click += (_, _) => { if (battle != null) SetBattlePaused(!BattleUserPaused); };
         var end = new MenuItem();
-        end.Click += (_, _) => EndBattle();
+        end.Click += (_, _) => EndBattleByUser();
         root.Items.Add(adventure); root.Items.Add(start); root.Items.Add(pause); root.Items.Add(end);
         menu.Items.Add(root);
         menu.Opened += (_, _) =>
@@ -585,7 +585,7 @@ public sealed partial class PetWindow
         battleHud = new BattleHud($"{preferences.Name} · {(battle != null ? WeaponName(battle.Weapon) : "")}", portrait, L);
         battleHud.SkillClicked += skill => UseBattleSkill(skill);
         battleHud.PauseClicked += () => { if (battle != null) SetBattlePaused(!BattleUserPaused); };
-        battleHud.EndClicked += EndBattle;
+        battleHud.EndClicked += EndBattleByUser;
         UpdateBattleHud();
         return battleHud;
     }

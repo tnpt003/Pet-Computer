@@ -823,3 +823,25 @@ next step), so a double click never starts two battles. Ending a battle by hand 
   cat stops it, like the waves); time up with HP left wins, no HP loses. The HUD leads with
   "Survive: 0:42 left"; the map says "survive 75 s". A survive stage keeps no fastest win.
 - Stages that changed rules (2–5) have `rulesVersion` 2, so their old records are kept apart.
+
+### Herb slime, chapter boss, rewards (2026-10-20, milestone 4)
+
+- **Herb slime** (`mender`, stage 4 every wave, stage 5 wave 2 and as a boss helper): teal with a
+  white "+". Every 4.5 s (first after half that) it winds up 1 s (a pulsing green "+" over it, a
+  dashed green ring under the ally) and then gives the most hurt ally within 170 DIPs up to 15 HP:
+  never itself, never past max HP, never a defeated one, and at most 90 HP in all (`healBudget`),
+  so healing can never outlast the user. A Push (or any stun) during the windup cancels it and costs
+  its full cooldown. The healed ally shows rising green pluses and "+15". The first heal of a battle
+  shows the banner "A healer! Take it down first". Healing goes on while the cat is carried.
+- **Chapter boss** (`king_c1`, stage 5 only; the free battle keeps `king` as before): 450 HP and
+  `phases`, each fired once when its HP fraction is reached: 75 % two slimes, 50 % a herb slime,
+  40 % two quick slimes, 30 % angry. At most 4 of its helpers alive at once (more calls skipped). A
+  killing blow fires no phase. Slam warning, pause, carried cat and stun rules are unchanged.
+- **Rewards:** stage 3 gives the Slime hat, stage 5 the Slime King's crown (accessories.json entries
+  with `"reward"`). Given once, the first time the stage is won with official data, recorded in
+  `Rewards` of adventure-progress.json; stages won before a reward existed give it when the map
+  opens. The result panel says "New reward: … — wear it in Settings → Cat"; the cat never puts it on
+  by itself. Settings → Cat lists a reward accessory only once received (or while worn), and maps
+  the list back by id. The map lists a stage's reward ("✓ received").
+- **End** (HUD or menu) during a stage goes back to the map at that stage; nothing is counted. The
+  free battle's End goes back to the desktop as before.

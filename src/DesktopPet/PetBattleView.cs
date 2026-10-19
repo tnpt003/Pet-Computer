@@ -88,6 +88,9 @@ public sealed class BattleFieldView : FrameworkElement
     private static readonly Brush Shine = Frozen(220, 255, 255, 255);
     private static readonly Brush Eye = Frozen(255, 0x2B, 0x2A, 0x33);
     private static readonly Brush Marker = Frozen(255, 0xFF, 0xD2, 0x3F);
+    // Support enemies: a green "+" while healing, a ring on the ally being healed, rising pluses.
+    private static readonly Pen HealPen = FrozenPen(Frozen(255, 0x3F, 0xC8, 0x6B), 2.4);
+    private static readonly Pen HealDash = FrozenPen(Frozen(220, 0x3F, 0xC8, 0x6B), 2, new DashStyle(new[] { 3.0, 2.0 }, 0));
     private static readonly Brush Gold = Frozen(255, 0xFF, 0xC8, 0x2E);
     private static readonly Brush BarBack = Frozen(200, 0x26, 0x23, 0x38);
     private static readonly Brush BarFill = Frozen(255, 0x6F, 0xE0, 0x6A);
@@ -147,6 +150,10 @@ public sealed class BattleFieldView : FrameworkElement
                 break;
             case SlimeState.Stunned:
                 sx = 1.12; sy = 0.86;
+                break;
+            case SlimeState.Casting:
+                double hum = Math.Sin(t * 14);
+                sx = 1 + 0.05 * hum; sy = 1 + 0.06 * hum;
                 break;
             case SlimeState.Defeated:
                 double fade = Math.Clamp(t / (s.DefeatDuration * (slime.IsBoss ? 1.5 : 1)), 0, 1);
@@ -222,6 +229,8 @@ public sealed class BattleFieldView : FrameworkElement
             // A stony body: two dark cracks.
             dc.DrawGeometry(null, Crack, Cracks);
         }
+        // A support enemy: a white "+" on its body.
+        if (slime.Type.Marks == "cross") dc.DrawGeometry(Brushes.White, Outline, CrossMark);
         if (slime.IsBoss) dc.DrawGeometry(Gold, Outline, Crown);
         dc.Pop();
         dc.Pop();
@@ -242,6 +251,22 @@ public sealed class BattleFieldView : FrameworkElement
                 dc.DrawEllipse(null, WarningEdge, new Point(x, y + 1), 9 + 2 * Math.Sin(time * 8), 9 + 2 * Math.Sin(time * 8));
                 dc.DrawEllipse(null, Halo, new Point(x, floor - 4), slime.Range + 12, 10);
                 dc.DrawEllipse(null, WarningEdge, new Point(x, floor - 4), slime.Range + 12, 10);
+            }
+        }
+        if (slime.State == SlimeState.Casting)
+        {
+            // The heal is coming: a pulsing green "+" over the healer and a dashed green ring under
+            // the ally it heals. Push or stun the healer now to cancel it.
+            double pulse = 1 + 0.15 * Math.Sin(time * 10);
+            dc.PushTransform(new MatrixTransform(pulse, 0, 0, pulse, x, top - 12));
+            dc.DrawGeometry(null, Halo, PlusMark);
+            dc.DrawGeometry(HealGreen, Ink, PlusMark);
+            dc.Pop();
+            if (sim.Healing(slime) is Slime ally)
+            {
+                double ax = ally.X - OriginX;
+                dc.DrawEllipse(null, Halo, new Point(ax, floor - 2), ally.Width / 2 + 8, 7);
+                dc.DrawEllipse(null, HealDash, new Point(ax, floor - 2), ally.Width / 2 + 8, 7);
             }
         }
         if (slime.State == SlimeState.Stunned)
@@ -272,6 +297,10 @@ public sealed class BattleFieldView : FrameworkElement
     }
 
     private static readonly Geometry Arrow = CreateArrow();
+    // Body coordinates of the basic slime: the support mark below the eyes; the floating "+".
+    private static readonly Geometry CrossMark = Parse("M -2,-15 L 2,-15 L 2,-11 L 6,-11 L 6,-7 L 2,-7 L 2,-3 L -2,-3 L -2,-7 L -6,-7 L -6,-11 L -2,-11 Z");
+    private static readonly Geometry PlusMark = Parse("M -3,-9 L 3,-9 L 3,-3 L 9,-3 L 9,3 L 3,3 L 3,9 L -3,9 L -3,3 L -9,3 L -9,-3 L -3,-3 Z");
+    private static Geometry Parse(string data) { var g = Geometry.Parse(data); g.Freeze(); return g; }
     // Mid blue: visible on light and dark desktops alike.
     private static readonly Pen Streak = FrozenPen(Frozen(230, 0x5A, 0x9C, 0xD0), 2.4);
     private static readonly Pen Crack = FrozenPen(Frozen(255, 0x5A, 0x52, 0x48), 1.6);
@@ -400,6 +429,16 @@ public sealed class BattleFieldView : FrameworkElement
                 {
                     double a = i * Math.PI / 3;
                     dc.DrawEllipse(Yarn, Outline, new Point(x + Math.Cos(a) * radius * 0.7, floor - 14 + Math.Sin(a) * radius * 0.3), 6 * (1 - k) + 2, 6 * (1 - k) + 2);
+                }
+                break;
+            case BattleEffectKind.Mend:
+                // Three small green pluses rising from a healed enemy.
+                for (int i = 0; i < 3; i++)
+                {
+                    double px = x + (i - 1) * 12, py = y - 8 - 26 * k - (i % 2) * 6;
+                    dc.PushTransform(new MatrixTransform(0.6, 0, 0, 0.6, px, py));
+                    dc.DrawGeometry(HealGreen, Ink, PlusMark);
+                    dc.Pop();
                 }
                 break;
             case BattleEffectKind.Thud:

@@ -19,11 +19,13 @@ public sealed record StrokeSpec(StrokeKind Kind, string? Color = null, double Wi
 public sealed record AccessoryShape(ShapeKind Kind, string? Path, double[] Values, string? Fill, StrokeSpec Stroke);
 
 // One accessory from Assets/accessories.json. Event names a special day (ai/calendar.json) it is worn on.
-public sealed record AccessorySpec(string Id, string NameVi, string NameEn, AccessoryLayer Layer, string? Event, AccessoryShape[] Shapes);
+// Reward names what earns it (an Adventure chapter): until then it is not offered in Settings.
+public sealed record AccessorySpec(string Id, string NameVi, string NameEn, AccessoryLayer Layer, string? Event, AccessoryShape[] Shapes, string? Reward = null);
 
 // Plain data (no WPF) so preferences and tests can use it; PetRenderer turns it into frozen drawing resources.
 public static class PetAccessories
 {
+    public static string Name(this AccessorySpec item, bool english) => english ? item.NameEn : item.NameVi;
     public const string None = "None";
     private static readonly Lazy<AccessorySpec[]> Loaded = new(Load);
 
@@ -77,6 +79,8 @@ public static class PetAccessories
             };
             string? specialDay = Text(item, "event");
             if (specialDay != null && !Regex.IsMatch(specialDay, "^[a-z][a-z0-9_]{0,31}$")) throw new InvalidDataException(id + " has a bad event");
+            string? reward = Text(item, "reward");
+            if (reward != null && !Regex.IsMatch(reward, "^[a-z0-9_-]{1,32}$")) throw new InvalidDataException(id + " has a bad reward");
             if (!item.TryGetProperty("shapes", out var shapes) || shapes.ValueKind != JsonValueKind.Array || shapes.GetArrayLength() is 0 or > 64)
                 throw new InvalidDataException(id + " needs 1-64 shapes");
             var parsed = shapes.EnumerateArray().Select(shape => ParseShape(id, shape)).ToArray();
@@ -86,7 +90,7 @@ public static class PetAccessories
                 vi = Text(names, "vi") ?? id;
                 en = Text(names, "en") ?? id;
             }
-            list.Add(new AccessorySpec(id, vi, en, layer, specialDay, parsed));
+            list.Add(new AccessorySpec(id, vi, en, layer, specialDay, parsed, reward));
         }
         return list.ToArray();
     }

@@ -138,6 +138,13 @@ Nên chép dự phòng %LOCALAPPDATA%\DesktopPet\adventure-progress.json (nếu 
 - [ ] Màn 3 (Cầm cự): HUD ghi "Sống sót: còn 1:15" đếm ngược; bế mèo thì đồng hồ dừng; hết giờ mà còn HP thì thắng; bảng kết quả không có "thắng nhanh nhất". Màn có khó quá/dễ quá không (75 giây, 3 đợt lặp lại)?
 - [ ] Bảng kết quả màn có dòng "Nâng cấp lượt này: …".
 
+#### Phiêu lưu — mốc 4: quái hồi máu, Vua Slime theo pha, phần thưởng (2026-10-20)
+- [ ] Màn 4: slime thảo dược (xanh ngọc, dấu "+" trắng). Khi nó gồng: dấu "+" xanh nhấp nháy trên đầu nó, vòng xanh đứt nét dưới con được hồi; sau đó con kia hiện dấu cộng bay lên và "+15". Banner "Quái hồi máu! Hạ nó trước" chỉ một lần. Đẩy nó lúc đang gồng: không hồi. Màn có thắng được không, có kéo dài vô tận không.
+- [ ] Màn 5: Vua Slime gọi 2 slime ở ~75% máu, 1 slime thảo dược ở ~50%, slime nhanh ở ~40%, nổi giận ở ~30%; mỗi pha có banner, không gọi lại; không bao giờ quá 4 quân của nó cùng lúc. Trận tự do: Vua Slime vẫn như cũ.
+- [ ] Thắng màn 3: bảng kết quả có dòng vàng "Phần thưởng mới: Mũ slime — đội trong Cài đặt → Mèo"; mèo không tự đội. Cài đặt → Mèo → Phụ kiện: có Mũ slime (trước đó không có), chọn → Lưu: mèo đội, xem khi đi/ngủ/kéo/trèo. Thắng màn 5: Vương miện Vua Slime. Thắng lại: không có dòng phần thưởng nữa. Bản đồ ghi "Phần thưởng: … ✓ đã nhận".
+- [ ] Bấm Kết thúc (HUD hoặc menu) giữa trận màn: về bản đồ đúng màn đó, không tính gì. Trận tự do: Kết thúc về desktop như cũ.
+- [ ] Đã thắng màn 3 bằng bản trước (8b93d25/9225d77): mở bản đồ là có Mũ slime trong Cài đặt (nhận bù).
+
 ### Nhật ký chơi thử Battle Mode (beta, thêm 2026-10-18)
 Chơi 3–5 trận mỗi độ khó trên bản publish, ghi 1 dòng/trận. Phiên bản: xem Khác → Giới thiệu (ví dụ `1.0.0 (18cb227)`). Chưa có dòng nào là chưa chơi thử; số mô phỏng trong PROGRESS.md không thay cho bảng này.
 

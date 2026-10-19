@@ -57,7 +57,28 @@ public sealed class EnemyType
     public double EnrageAt { get; init; }
     public double EnragedSpeed { get; init; }
     public double EnragedWindup { get; init; }
+    // Support: every HealCooldown s it winds up HealWindup s (a green "+" warns), then gives the most
+    // hurt ally within HealRange up to HealAmount HP (never itself, never past max HP, never a
+    // defeated one). HealBudget caps all it can ever heal, so healing can never outlast the user.
+    // A push or stun during the windup cancels the heal. HealAmount 0: no healing.
+    public double HealAmount { get; init; }
+    public double HealRange { get; init; } = 160;
+    public double HealCooldown { get; init; } = 4;
+    public double HealWindup { get; init; } = 1;
+    public double HealBudget { get; init; } = 100;
+    // Boss phases: each fires once when its HP fraction is reached (summon helpers and/or get
+    // angry). At most SummonCap of its helpers are alive at once (more calls are skipped).
+    public BossPhase[]? Phases { get; init; }
+    public int SummonCap { get; init; } = 4;
     public string Name(bool english) => english ? NameEn : NameVi;
+}
+
+public sealed class BossPhase
+{
+    public double At { get; init; }
+    public string? Summon { get; init; }
+    public int Count { get; init; }
+    public bool Enrage { get; init; }
 }
 
 // One wave: groups spawn in order (at most MaxAlive at once).
@@ -109,6 +130,8 @@ public sealed class StageSpec
     public int RulesVersion { get; init; } = 1;
     // Enemies on the floor at once (unset: the battle's maxAlive).
     public int? MaxAlive { get; init; }
+    // An accessory id (Assets/accessories.json) given once, the first time the stage is won.
+    public string? Reward { get; init; }
     public WaveSpec[] Waves { get; init; } = Array.Empty<WaveSpec>();
     public string Name(bool english) => english ? NameEn : NameVi;
     public string Goal(bool english) => english ? GoalEn : GoalVi;
@@ -253,7 +276,7 @@ public static class BattleData
     public static readonly string[] WeaponStyles = { "sword", "hammer" };
     public static readonly string[] WeaponHitEffects = { "spark", "thud" };
     public static readonly string[] EnemyRenderers = { "slime" };
-    public static readonly string[] EnemyMarks = { "none", "speed", "cracks" };
+    public static readonly string[] EnemyMarks = { "none", "speed", "cracks", "cross" };
 
     // Throws on any mistake, so a half-valid file is never used.
     public static BattleSettings Parse(Stream stream)
@@ -337,10 +360,33 @@ public static class BattleData
             Within(e.PushFactor, 0, 3, at + ".pushFactor"); Within(e.StunFactor, 0, 3, at + ".stunFactor");
             if (!(e.SummonAt >= 0 && e.SummonAt < 1) || !(e.EnrageAt >= 0 && e.EnrageAt < 1)) throw new InvalidDataException(at + " summonAt/enrageAt must be 0–1");
             if (e.SummonAt > 0 && e.SummonCount is < 1 or > 6) throw new InvalidDataException(at + ".summonCount must be 1–6");
-            if (e.EnrageAt > 0) { Within(e.EnragedSpeed, 0.1, 400, at + ".enragedSpeed"); Within(e.EnragedWindup, 0.1, 10, at + ".enragedWindup"); }
+            if (e.EnrageAt > 0 || e.Phases?.Any(p => p is { Enrage: true }) == true) { Within(e.EnragedSpeed, 0.1, 400, at + ".enragedSpeed"); Within(e.EnragedWindup, 0.1, 10, at + ".enragedWindup"); }
+            Within(e.HealAmount, 0, 1000, at + ".healAmount");
+            if (e.HealAmount > 0)
+            {
+                Within(e.HealRange, 10, 600, at + ".healRange"); Within(e.HealCooldown, 0.5, 60, at + ".healCooldown");
+                Within(e.HealWindup, 0.2, 5, at + ".healWindup"); Within(e.HealBudget, 1, 100000, at + ".healBudget");
+            }
+            if (e.SummonCap is < 1 or > 10) throw new InvalidDataException(at + ".summonCap must be 1–10");
+            if (e.Phases is { } phases)
+            {
+                if (phases.Length is 0 or > 6) throw new InvalidDataException(at + ".phases must list 1–6 phases");
+                foreach (var p in phases)
+                {
+                    if (p == null || !(p.At > 0 && p.At < 1)) throw new InvalidDataException(at + ".phases: each \"at\" must be between 0 and 1");
+                    if (p.Summon == null && !p.Enrage) throw new InvalidDataException(at + ".phases: a phase must summon or enrage");
+                    if (p.Summon != null && p.Count is < 1 or > 6) throw new InvalidDataException(at + ".phases: count must be 1–6");
+                }
+            }
         }
+        // A summoned helper may not summon in turn (no chains of calls).
+        static bool Summons(EnemyType e) => e.SummonAt > 0 || e.Phases?.Any(p => p.Summon != null) == true;
         foreach (var e in s.EnemyTypes)
-            if (e.SummonAt > 0 && (!ids.Contains(e.SummonType) || s.Enemy(e.SummonType).SummonAt > 0))
+            foreach (var p in e.Phases ?? Array.Empty<BossPhase>())
+                if (p.Summon != null && (!ids.Contains(p.Summon) || Summons(s.Enemy(p.Summon))))
+                    throw new InvalidDataException($"enemies[{e.Id}] phase summons \"{p.Summon}\": an unknown enemy (or one that summons too)");
+        foreach (var e in s.EnemyTypes)
+            if (e.SummonAt > 0 && (!ids.Contains(e.SummonType) || Summons(s.Enemy(e.SummonType))))
                 throw new InvalidDataException($"enemies[{e.Id}] summons \"{e.SummonType}\": an unknown enemy (or one that summons too)");
         void Waves(IReadOnlyList<WaveSpec>? waves, string at)
         {
@@ -412,6 +458,8 @@ public static class BattleData
                 if (stage.Survival && stage.SurviveSeconds is not (>= 10 and <= 600)) throw new InvalidDataException($"{where}.surviveSeconds must be 10–600 for a survive stage");
                 if (!stage.Survival && stage.SurviveSeconds != null) throw new InvalidDataException($"{where}.surviveSeconds is only for a survive stage");
                 waves(stage.Waves, where + ".waves");
+                if (stage.Reward != null && PetAccessories.Find(stage.Reward) is not { Reward: not null })
+                    throw new InvalidDataException($"{where}.reward \"{stage.Reward}\" is not a reward accessory in accessories.json");
             }
         }
     }

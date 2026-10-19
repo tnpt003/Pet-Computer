@@ -12,7 +12,7 @@ internal static class AdventureUpgradeTests
         check(json.Count == 6 && json.Select(u => u.Effect).Distinct().Count() == 6 && json.All(u => u.NameVi.Length > 0 && u.DescEn.Length > 0),
             "battle.json lists 6 upgrades, one per effect, named in both languages");
         var stages = data.Campaign!.Chapters[0].Stages;
-        check(!stages[0].Upgrades && stages.Skip(1).All(s => s.Upgrades && s.RulesVersion == 2), "Stage 1 has no upgrades; stages 2–5 do (rules version 2)");
+        check(!stages[0].Upgrades && stages.Skip(1).All(s => s.Upgrades && s.RulesVersion >= 2), "Stage 1 has no upgrades; stages 2–5 do (rules version 2 or later)");
         check(stages[2] is { Survival: true, SurviveSeconds: 75 } && stages.Count(s => s.Survival) == 1, "Stage 3 (Hold on) is the survive stage: 75 s");
 
         WaveSpec[] Waves(int count) => Enumerable.Range(0, count).Select(_ => new WaveSpec { Groups = new[] { new WaveGroup { Enemy = "slime", Count = 1 } } }).ToArray();

@@ -63,6 +63,8 @@ public sealed partial class PetWindow
             return L("Dữ liệu trận không có chương phiêu lưu.", "The battle data has no Adventure chapter.");
         if (battlePreparing) { CloseBattlePrep(); CloseBattleTutorial(); }
         CloseBattleSummary(); CloseBattleNotice();
+        // A reward added to a stage won before it existed is given now (only with official data).
+        if (!BattleDataCustom && adventure.GrantRewards().Count > 0 && AdventureProgressFile != null) AdventureProgress.Save(AdventureProgressFile);
         mapStageId = adventure.Stage(select) is StageSpec chosen ? chosen.Id
             : (chapter.Stages.FirstOrDefault(s => adventure.IsUnlocked(s.Id) && !adventure.IsCompleted(s.Id)) ?? chapter.Stages.Last(s => adventure.IsUnlocked(s.Id))).Id;
         if (!adventureMapOpen)
@@ -251,7 +253,10 @@ public sealed partial class PetWindow
             : unlocked ? L("Đã mở · ", "Open · ") + ObjectiveText(chosen) + StageRules(chosen)
             : L($"Chưa mở — thắng màn {StageNumber(previous!)} ({previous!.Name(false)}) trước", $"Locked — win stage {StageNumber(previous!)} ({previous!.Name(true)}) first"));
         mapStatus!.Foreground = unlocked ? Brushes.White : PrepWarning;
-        Show(mapRecord, StageRecordLine(adventure, chosen));
+        string? record = StageRecordLine(adventure, chosen);
+        string? prize = chosen.Reward is string reward && PetAccessories.Find(reward) is { } item
+            ? L("Phần thưởng: ", "Reward: ") + item.Name(English) + (adventure.HasReward(reward) ? L(" ✓ đã nhận", " ✓ received") : "") : null;
+        Show(mapRecord, string.Join("\n", new[] { record, prize }.Where(t => t != null)));
         mapEnterText!.Text = L("Vào màn", "Play stage");
         mapCloseText!.Text = L("Đóng", "Close");
         bool can = unlocked && BattlePrepRefusal() == null;
@@ -274,6 +279,19 @@ public sealed partial class PetWindow
         string fastest = best is double s ? L($" · nhanh nhất {Clock(s)}", $" · fastest {Clock(s)}") : "";
         return L($"Đã thắng {wins} lần{fastest}", $"Won {wins} time{(wins == 1 ? "" : "s")}{fastest}");
     }
+
+    // End (HUD or menu): the battle stops with nothing counted. A stage run goes back to the map
+    // (the free battle back to the desktop, as before).
+    public void EndBattleByUser()
+    {
+        var stage = battle?.Stage;
+        EndBattle();
+        if (stage != null && OpenAdventureMap(stage.Id) is string reason) ShowBattleNotice(reason);
+    }
+
+    // Reward accessories offered in Settings: the received ones (and one already worn).
+    public bool AccessoryAvailable(string id) =>
+        PetAccessories.Find(id) is not { Reward: not null } || AdventureProgress.Rewards.Contains(id) || preferences.Accessory == id;
 
     // A finished stage run: counted once in the progress (saved at once), never with custom data.
     private AdventureOutcome CountStageRun(BattleSim finished, bool won)
@@ -312,6 +330,13 @@ public sealed partial class PetWindow
             var done = Line(12.5, RecordGold, true); done.Text = L("Hoàn thành chương!", "Chapter complete!");
             lines.Children.Add(done);
         }
+        foreach (var reward in result.Outcome.Rewards ?? Array.Empty<string>())
+            if (PetAccessories.Find(reward) is { } item)
+            {
+                var prize = Line(12.5, RecordGold, true);
+                prize.Text = L($"Phần thưởng mới: {item.Name(false)} — đội trong Cài đặt → Mèo", $"New reward: {item.Name(true)} — wear it in Settings → Cat");
+                lines.Children.Add(prize);
+            }
         if (result.Upgrades.Length > 0)
         {
             var taken = Line(11.5, opacity: 0.85); taken.Text = L("Nâng cấp lượt này: ", "This run's upgrades: ") + result.Upgrades;

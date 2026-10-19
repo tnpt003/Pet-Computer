@@ -1,7 +1,9 @@
 # Adventure Update — Chương 1: Cuộc xâm nhập của Slime
 
+> **Quy tắc mới 20/10:** luôn commit và publish sau mỗi mốc code hoàn chỉnh, kiểm thử đạt; chạy smoke và báo artifact. Không cần hỏi lại. Mốc tài liệu-only commit, không cần publish binary. Xem AGENTS.md; quy tắc này thay các hạn chế cũ trong ghi chú lịch sử. Không tự push/upload.
+
 Ngày thống nhất hướng: 2026-10-20 (Asia/Saigon).
-Trạng thái (cập nhật 2026-10-20): **mốc 1, 2 và 3 đã làm** (bản đồ/màn/tiến trình; thẻ nâng cấp giữa các đợt + màn Cầm cự sinh tồn 75 s), có test tự động; chưa chơi thử thật. Mốc 4–5 chưa làm: Cắt viện trợ chưa có quái hồi máu, boss chưa thêm pha, chưa có phần thưởng cosmetic; chưa phải bản cập nhật hoàn chỉnh.
+Trạng thái (cập nhật 2026-10-20): **mốc 1–4 đã làm** (bản đồ/màn/tiến trình; thẻ nâng cấp + sinh tồn; slime thảo dược hồi máu, Vua Slime chương theo pha, phụ kiện thưởng Mũ slime/Vương miện Vua Slime, Kết thúc về bản đồ), có test tự động; chưa chơi thử thật. Còn mốc 5 (cân bằng, playtest, nghiệm thu, tài liệu phát hành); chưa phải bản phát hành.
 
 ### Ánh xạ thiết kế → code (mốc 1–2)
 | Khái niệm | Code |
@@ -14,6 +16,9 @@ Trạng thái (cập nhật 2026-10-20): **mốc 1, 2 và 3 đã làm** (bản �
 | Map / Preparing / Fighting / Result | `PetWindow.Adventure.cs` (bản đồ), bảng chuẩn bị có `prepStage`, `battle.Stage`, bảng kết quả theo màn |
 | Dữ liệu custom | chơi được, không lưu tiến trình/kỷ lục (ranked = false) |
 | ChoosingUpgrade + modifier runtime (mốc 3) | `BattleSim.UpgradeOffer` / `ChooseUpgrade`, hệ số trong chính BattleSim; `BattlePause.Upgrade`; cửa sổ `PetWindow.BattleUpgrade.cs`; dữ liệu `UpgradeSpec` (battle.json `upgrades`) |
+| Quái hỗ trợ (mốc 4) | `EnemyType.HealAmount/HealRange/HealCooldown/HealWindup/HealBudget`, `SlimeState.Casting`, quái `mender` |
+| Boss theo pha (mốc 4) | `EnemyType.Phases` (`BossPhase`), `SummonCap`, quái `king_c1` (trận tự do giữ `king`) |
+| Phần thưởng cosmetic (mốc 4) | `StageSpec.Reward` → accessories.json `"reward"`; `Adventure.GrantRewards`, `AdventureProgress.Rewards`; Cài đặt chỉ liệt kê món đã nhận |
 | Objective sinh tồn (mốc 3) | `StageSpec.Objective = "survive"`, `SurviveSeconds`; `BattleSim.SurviveRemaining` (dừng khi bế mèo) |
 
 ## Mục tiêu bản cập nhật
@@ -90,7 +95,7 @@ CampaignDefinition → ChapterDefinition → StageDefinition → WaveDefinition.
 4. **Hoàn thành nội dung chương:** quái hỗ trợ, boss theo pha, 5 màn và cosmetic reward; nối mọi đường điều hướng.
 5. **Ổn định và nghiệm thu:** test tự động, playtest kiếm/búa × độ khó, kiểm tra DPI/focus/audio/máy sạch khi có điều kiện; tài liệu và version release.
 
-Không coi từng mốc là đã hoàn thành bản cập nhật lớn. Có thể review theo mốc; không tự publish/commit/restart pet. Người dùng hiện yêu cầu gom roadmap, không phải chứng nhận đã triển khai hoặc cho phép phát hành.
+Không coi từng mốc là đã hoàn thành bản cập nhật lớn. Có thể review theo mốc; chủ động commit/publish theo quy tắc mới trong AGENTS.md. Roadmap không phải chứng nhận đã triển khai; khi hoàn thành mốc code, commit và publish theo AGENTS.md.
 
 ## Tiêu chí hoàn thành Adventure Update
 

@@ -20,7 +20,7 @@ internal static class AdventureTests
         check(free.Stage == null && free.WaveCount == data.WavePlan.Count && free.WaveCount == 4, "A free battle still uses the battle's own 4 waves");
         var first = new BattleSim(data, 0, 1600, new Random(1), stage: stages[0]);
         check(first.Stage == stages[0] && first.WaveCount == 2 && !first.IsBossWave(2), "A stage battle uses the stage's waves");
-        check(new BattleSim(data, 0, 1600, new Random(1), stage: stages[4]).IsBossWave(2), "The boss stage's last wave is a boss wave");
+        check(new BattleSim(data, 0, 1600, new Random(1), stage: stages[4]) is var last && last.IsBossWave(last.WaveCount), "The boss stage's last wave is a boss wave");
         // Stage 1 allows 2 slimes at once although its second wave has 3.
         int most = 0;
         double cat = 800;

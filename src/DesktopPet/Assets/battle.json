@@ -96,6 +96,31 @@
       "pushFactor": 0.5, "stunFactor": 0.6
     },
     {
+      // Support: winds up a heal (green "+") on the most hurt ally in healRange every healCooldown s;
+      // healBudget caps all it can heal. A push or stun during the windup cancels it.
+      "id": "mender", "nameVi": "Slime thảo dược", "nameEn": "Herb slime",
+      "maxHp": 40, "speed": 28, "damage": 5, "range": 56,
+      "windup": 0.8, "attackCooldown": 2.0, "recover": 0.35,
+      "scale": 0.9, "color": "#4FC9A8", "marks": "cross",
+      "healAmount": 15, "healRange": 170, "healCooldown": 4.5, "healWindup": 1.0, "healBudget": 90
+    },
+    {
+      // The chapter 1 boss (Adventure stage 5): the free battle keeps "king" below. Phases fire once
+      // each at their HP fraction; at most summonCap helpers alive at once.
+      "id": "king_c1", "nameVi": "Vua Slime", "nameEn": "Slime King",
+      "maxHp": 450, "speed": 22, "damage": 25, "range": 110,
+      "windup": 1.2, "attackCooldown": 2.6, "recover": 0.7,
+      "scale": 2, "color": "#9B7BE0", "angryColor": "#E86A6A",
+      "boss": true, "slam": true, "pushFactor": 0.35, "stunFactor": 0.4,
+      "enragedSpeed": 32, "enragedWindup": 0.8, "summonCap": 4,
+      "phases": [
+        { "at": 0.75, "summon": "slime", "count": 2 },
+        { "at": 0.5, "summon": "mender", "count": 1 },
+        { "at": 0.4, "summon": "runner", "count": 2 },
+        { "at": 0.3, "enrage": true }
+      ]
+    },
+    {
       "id": "king", "nameVi": "Vua Slime", "nameEn": "Slime King",
       "maxHp": 400, "speed": 22, "damage": 25, "range": 110,
       "windup": 1.2, "attackCooldown": 2.6, "recover": 0.7,
@@ -131,7 +156,8 @@
   // Adventure: chapters of stages played in order (winning a stage opens the next one). Stage ids
   // are stable: saved progress uses them. objective: "clear" (defeat every wave) or "survive" (stay
   // alive surviveSeconds; the last wave comes again while time is left). upgrades: offer upgrade
-  // cards between waves. maxAlive: enemies
+  // cards between waves. reward: an accessory (accessories.json, with "reward") given the first time
+  // the stage is won. maxAlive: enemies
   // on the floor at once (default: the battle's). rulesVersion: raise it when a stage changes so much
   // that its old records should not be compared. See docs/BATTLE-DATA.md.
   "campaign": {
@@ -163,7 +189,7 @@
             "id": "c1_hold_on", "nameVi": "Cầm cự", "nameEn": "Hold on",
             "goalVi": "Sống sót 75 giây: biết lúc đánh và lúc giữ máu. Bế mèo thì đồng hồ dừng.",
             "goalEn": "Survive 75 seconds: know when to attack and when to save HP. Carrying the cat stops the clock.",
-            "objective": "survive", "surviveSeconds": 75, "upgrades": true, "rulesVersion": 2,
+            "objective": "survive", "surviveSeconds": 75, "upgrades": true, "rulesVersion": 2, "reward": "SlimeHat",
             "waves": [
               { "groups": [ { "enemy": "slime", "count": 3 }, { "enemy": "runner", "count": 1 } ] },
               { "groups": [ { "enemy": "rock", "count": 1 }, { "enemy": "runner", "count": 2 } ] },
@@ -172,21 +198,24 @@
           },
           {
             "id": "c1_cut_support", "nameVi": "Cắt viện trợ", "nameEn": "Cut the support",
-            "goalVi": "Chọn mục tiêu đáng hạ trước.", "goalEn": "Choose which enemy to take down first.",
-            "objective": "clear", "upgrades": true, "rulesVersion": 2,
+            "goalVi": "Slime thảo dược hồi máu cho đồng đội: hạ nó trước, hoặc Đẩy để cắt lúc nó gồng.",
+            "goalEn": "Herb slimes heal their friends: take them down first, or Push one to cut its heal.",
+            "objective": "clear", "upgrades": true, "rulesVersion": 3,
             "waves": [
-              { "groups": [ { "enemy": "rock", "count": 1 }, { "enemy": "slime", "count": 2 } ] },
-              { "groups": [ { "enemy": "runner", "count": 3 }, { "enemy": "rock", "count": 1 } ] },
-              { "groups": [ { "enemy": "rock", "count": 2 }, { "enemy": "slime", "count": 2 } ] }
+              { "groups": [ { "enemy": "slime", "count": 2 }, { "enemy": "mender", "count": 1 } ] },
+              { "groups": [ { "enemy": "rock", "count": 1 }, { "enemy": "mender", "count": 1 }, { "enemy": "runner", "count": 2 } ] },
+              { "groups": [ { "enemy": "rock", "count": 1 }, { "enemy": "mender", "count": 1 }, { "enemy": "slime", "count": 2 } ] }
             ]
           },
           {
             "id": "c1_slime_king", "nameVi": "Vua Slime", "nameEn": "The Slime King",
-            "goalVi": "Trận cuối chương: hạ Vua Slime.", "goalEn": "The chapter's last battle: defeat the Slime King.",
-            "objective": "clear", "upgrades": true, "rulesVersion": 2,
+            "goalVi": "Trận cuối chương: Vua Slime gọi quân theo từng pha, có cả slime thảo dược.",
+            "goalEn": "The chapter's last battle: the Slime King calls help phase by phase, herb slimes too.",
+            "objective": "clear", "upgrades": true, "rulesVersion": 3, "reward": "SlimeKingCrown",
             "waves": [
               { "groups": [ { "enemy": "slime", "count": 2 }, { "enemy": "runner", "count": 2 } ] },
-              { "groups": [ { "enemy": "king", "count": 1 } ] }
+              { "groups": [ { "enemy": "mender", "count": 1 }, { "enemy": "slime", "count": 2 } ] },
+              { "groups": [ { "enemy": "king_c1", "count": 1 } ] }
             ]
           }
         ]

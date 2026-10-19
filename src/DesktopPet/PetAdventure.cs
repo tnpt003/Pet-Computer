@@ -102,7 +102,8 @@ public sealed class AdventureProgress
 
 // What one finished stage run changed. Counted: false when the run was already counted, or was
 // played with the user's own battle data (then nothing is saved).
-public readonly record struct AdventureOutcome(bool Counted, bool FirstClear, StageSpec? Unlocked, BattleRecordNews News);
+// Rewards: accessory ids received with this run (each only ever once).
+public readonly record struct AdventureOutcome(bool Counted, bool FirstClear, StageSpec? Unlocked, BattleRecordNews News, IReadOnlyList<string>? Rewards = null);
 
 // The Adventure's rules over the stage data and the progress: which stages are open, and what a
 // finished run changes. Stages open in order inside a chapter: the first is always open, each
@@ -171,6 +172,23 @@ public sealed class Adventure
             first = true;
             if (next != null && !wasOpen) unlocked = next;
         }
-        return new(true, first, unlocked, new(fastest, most));
+        return new(true, first, unlocked, new(fastest, most), won ? GrantRewards() : null);
     }
+
+    // Gives every reward of a won stage not given yet (also one added to a stage won before it
+    // existed). Returns what was new; a reward already given is never given again.
+    public IReadOnlyList<string> GrantRewards()
+    {
+        var given = new List<string>();
+        foreach (var chapter in Campaign.Chapters)
+            foreach (var stage in chapter.Stages)
+                if (stage.Reward is string reward && IsCompleted(stage.Id) && !Progress.Rewards.Contains(reward))
+                {
+                    Progress.Rewards.Add(reward);
+                    given.Add(reward);
+                }
+        return given;
+    }
+
+    public bool HasReward(string accessory) => Progress.Rewards.Contains(accessory);
 }

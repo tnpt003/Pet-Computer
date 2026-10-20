@@ -4,6 +4,10 @@ Cập nhật: 2026-10-20 (Asia/Saigon).
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
+## Bàn giao Enemy Director & gacha (2026-10-20) — chưa triển khai trong lần này
+- [docs/ENEMY-DIRECTOR.md](docs/ENEMY-DIRECTOR.md) gom đội hình/threat theo màn, King/support/nhanh/đá, support art, chắn đường và gacha có giới hạn. NEXT-STEPS dẫn tới tài liệu mới.
+- Đã đối chiếu quyết định ghi trong COMBAT-DEPTH: giữ build cộng dồn/kháng stun 3s/offer nhóm; posture mở đường và thay luật offer cần chốt, không âm thầm đổi. Chỉ tài liệu, chưa sửa/test source hay publish binary.
+
 ## Combat Depth mốc 3 (2026-10-20) — đá chặn đòn, support đứng sau, King lui-khiên-gọi quân
 - Người dùng chốt (sau khi Claude đối chiếu code): bom không bị đá chặn; King có khiên vẫn dậm khi mèo lại gần; dùng bộ pha mới cho màn 5.
 - Đã làm (chỉ BattleSim C#, Python không đụng): `Damage()` trả `HitResult` (Landed/Blocked/Immune); nhát bị chặn/miễn nhiễm không đẩy lùi.

@@ -9,6 +9,12 @@ Người dùng yêu cầu lưu review và kế hoạch ở đây để AI khác 
 
 Lần bàn giao này chỉ cập nhật tài liệu. Hướng chính được chọn ngày 2026-10-20 là Adventure Update — Chương 1; roadmap ở ADVENTURE-UPDATE.md. Các ý tưởng lẻ và review cũ phía dưới là nguồn tham khảo/lịch sử, không còn là thứ tự triển khai độc lập. Đọc AGENTS.md và giải thích kế hoạch trước khi triển khai; giữ nguyên source đang có và không tự publish/commit/restart.
 
+## Ưu tiên mới nhất — Enemy Director, đội hình và gacha (2026-10-20)
+
+Đọc [ENEMY-DIRECTOR.md](ENEMY-DIRECTOR.md) cùng COMBAT-DEPTH.md trước khi code: King xa mèo/hỗ trợ từ xa, chống double stun, support art mới + teleport/vệ sĩ, đá chắn đường, spawn theo màn/threat và gacha đội hình/tinh anh/thẻ có kiểm soát. Phân biệt yêu cầu với lựa chọn posture/offer policy chưa chốt. Giữ build cộng dồn, kháng stun và ngoại lệ damage đã được chốt trong Combat Depth; không làm lại mốc đã xong.
+
+Người dùng yêu cầu ghi để AI khác code. Lần bàn giao chỉ sửa tài liệu, chưa review/test code mới. Theo AGENTS: giải thích tích hợp trước triển khai; hoàn thành mốc code thì test/commit/publish/smoke.
+
 ## Ưu tiên bàn giao mới — Combat Depth (2026-10-20)
 
 Xem [COMBAT-DEPTH.md](COMBAT-DEPTH.md): phản hồi người dùng màn 1–4 dễ, thẻ thiếu quyết định; hướng combo nhóm thẻ (3 Defense → Giáp gai), vai trò support/nhanh/đá/King và **stun mèo 1,5 giây với biểu cảm choáng**. Đã phân biệt yêu cầu người dùng với thiết kế đề xuất cần kiểm chứng. Chơi lại được người dùng xác nhận trơn tru, giữ luồng đó.

@@ -8,6 +8,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Người dùng gửi ảnh: banner "Expedition · Step 1/6 · Shortcut" (22pt, cột giữa HUD cố định 230 DIPs, không xuống dòng) tràn sang thanh HP và ô kỹ năng.
 - Đã làm: PetBattleHud bọc banner trong Viewbox chỉ thu nhỏ (DownOnly): banner dài hơn cột giữa tự nhỏ lại cho vừa, HUD giữ nguyên kích thước (không nhảy khi banner hiện). Banner viễn chinh ngắn lại thành "Bậc 1/6 · <tên trận>" (dòng tên đã ghi "Viễn chinh 1/6"). Áp dụng cho mọi banner (tên màn, tinh anh, boss…).
 - Test thật: scripts/test.ps1 -Ui: Python 55 OK; C# 1121; WPF 561 (mới: banner bậc vừa cột giữa ở cỡ đầy đủ; banner rất dài thu vào ≤ 230 DIPs, HUD giữ bề rộng). Đã xem ảnh render HUD.
+- Commit c66ba1d. Publish sạch: 1.1.0-beta+c66ba1d, ZIP artifacts\DesktopPet-1.1.0-beta-c66ba1d-win-x64.zip; check-publish 3/3. Đóng mèo (PID 12548) bằng WM_CLOSE, mở lại 02:08, log "Desktop Pet 1.1.0-beta (c66ba1d) started". AGENTS.md/docs/NEXT-STEPS.md của người dùng trả lại đúng hash.
 - Chưa: xem trên máy thật ở DPI 125–150%.
 
 ## Viễn chinh — mốc 2: một chuyến hoàn chỉnh (2026-10-21)

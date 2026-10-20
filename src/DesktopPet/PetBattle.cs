@@ -129,6 +129,9 @@ public sealed class BattleSettings
     public double BossStunFactor { get; init; } = 0.4;
 
     // Difficulty: Easy and Hard scale every enemy's HP, damage and speed; Normal is the numbers above.
+    // Threat (an Adventure stage's and wave's): enemy HP × threat, damage × only this share of the
+    // rise (damage grows slower); worked out once when an enemy appears. Never stun times.
+    public double ThreatDamageShare { get; init; } = 0.5;
     public DifficultySpec Easy { get; init; } = new() { EnemyHp = 0.75, EnemyDamage = 0.6, EnemySpeed = 0.85 };
     public DifficultySpec Hard { get; init; } = new() { EnemyHp = 1.3, EnemyDamage = 1.4, EnemySpeed = 1.15 };
     private static readonly DifficultySpec NormalSpec = new();
@@ -373,7 +376,9 @@ public readonly record struct CatOrder(CatCommand Command, double X = 0, int Fac
 public sealed class BattleSim
 {
     public BattleSettings Settings { get; }
-    private readonly Random random;
+    // This battle's seed (BattleRandom) and its streams: what spawns where, the cards, the rock's blocks.
+    public int Seed { get; }
+    private readonly Random spawnRandom, offerRandom, blockRandom;
     private readonly List<Slime> slimes = new();
     private readonly List<BattleEffect> effects = new();
     private readonly List<BattleEvent> events = new();
@@ -460,13 +465,29 @@ public sealed class BattleSim
     public bool IsBossWave(int wave)
     {
         if (wave < 1 || wave > WaveCount) return false;
-        foreach (var group in WavePlan[wave - 1].Groups) if (Settings.Enemy(group.Enemy).Boss) return true;
+        foreach (var group in WavePlan[wave - 1].Groups) if (group.Fixed && Settings.Enemy(group.Enemy).Boss) return true;
         return false;
     }
-    // Enemies of the current wave still to come, in spawn order.
-    private readonly List<string> pending = new();
+    // Enemies of the current wave still to come, in spawn order: each unit (one enemy or a squad)
+    // comes as one. A stream wave has none queued: it draws as it goes.
+    private readonly List<string[]> pending = new();
     private int pendingNext;
-    public int ToSpawn => pending.Count - pendingNext;
+    private StreamSpec? stream;
+    public bool Streaming => stream != null;
+    public int ToSpawn { get { int n = 0; for (int i = pendingNext; i < pending.Count; i++) n += pending[i].Length; return n; } }
+    // Survive stages: the card offers of UpgradeAt already made.
+    private int timedOffers;
+    // The threat new enemies get now: the stage's × the current wave's, growing with the survive clock.
+    public double Threat
+    {
+        get
+        {
+            if (Stage == null) return 1;
+            double threat = Stage.Threat * (Wave >= 1 ? WavePlan[Math.Min(Wave, WaveCount) - 1].Threat : 1);
+            if (Survival && Stage.SurviveSeconds is double hold) threat *= 1 + Stage.ThreatGrowth * (hold - SurviveRemaining) / 60;
+            return threat;
+        }
+    }
     public int Defeated { get; private set; }
     public bool BossDefeated { get; private set; }
     public EnemyType? DefeatedBoss { get; private set; }
@@ -523,8 +544,13 @@ public sealed class BattleSim
     private readonly WeaponSpec arms;
 
     public BattleSim(BattleSettings settings, double left, double right, Random? random = null, BattleDifficulty difficulty = BattleDifficulty.Normal,
-        string weapon = BattleWeapon.Sword, StageSpec? stage = null, IReadOnlyDictionary<string, int>? build = null)
+        string weapon = BattleWeapon.Sword, StageSpec? stage = null, IReadOnlyDictionary<string, int>? build = null, int? seed = null)
     {
+        // A given seed wins; otherwise one drawn from the given random (tests), else a fresh one.
+        Seed = seed ?? random?.Next() ?? Random.Shared.Next();
+        spawnRandom = BattleRandom.Stream(Seed, BattleRandom.Spawn);
+        offerRandom = BattleRandom.Stream(Seed, BattleRandom.Offer);
+        blockRandom = BattleRandom.Stream(Seed, BattleRandom.Block);
         Settings = settings;
         Stage = stage;
         WavePlan = stage?.Waves is { Length: > 0 } waves ? waves : settings.WavePlan;
@@ -533,7 +559,6 @@ public sealed class BattleSim
         Difficulty = difficulty;
         Weapon = arms = settings.Weapon(weapon);
         level = settings.Difficulty(difficulty);
-        this.random = random ?? new Random();
         Left = left; Right = Math.Max(left + settings.SlimeWidth * settings.LargestScale, right);
         // A carried build (the stage before's): its cards as if taken, within their limits; cards no
         // longer in the data are skipped.
@@ -616,6 +641,12 @@ public sealed class BattleSim
         {
             SurviveRemaining = Math.Max(0, SurviveRemaining - dt);
             if (SurviveRemaining <= 0) Finish(BattlePhase.Won);
+            // Timed card offers (the clock stands still while the user chooses).
+            else if (Stage is { Upgrades: true, UpgradeAt: { } offers, SurviveSeconds: double hold } && timedOffers < offers.Length && hold - SurviveRemaining >= offers[timedOffers])
+            {
+                timedOffers++;
+                OfferUpgrades();
+            }
         }
         if (ChoosingUpgrade) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
         if (catHeld) { TargetId = PickTarget(catX)?.Id; return new(CatCommand.Hold); }
@@ -766,7 +797,7 @@ public sealed class BattleSim
         if (type.BlockChance <= 0 || source is DamageSource.Bomb or DamageSource.Reflect) return false;
         // Armor break: combo hits go straight through.
         if (source == DamageSource.Combo && Active("armorBreak") != null) { slime.BlockStreak = 0; return false; }
-        if (slime.BlockStreak >= type.BlockMaxStreak || random.NextDouble() >= type.BlockChance) { slime.BlockStreak = 0; return false; }
+        if (slime.BlockStreak >= type.BlockMaxStreak || blockRandom.NextDouble() >= type.BlockChance) { slime.BlockStreak = 0; return false; }
         slime.BlockStreak++;
         BlocksMade++;
         AddEffect(BattleEffectKind.Block, slime.X, slime.Height * 0.6);
@@ -1138,15 +1169,31 @@ public sealed class BattleSim
             if (PhaseRemaining > 0) return;
             Wave++;
             pending.Clear(); pendingNext = 0;
-            pending.AddRange(WavePlan[Math.Min(Wave, WaveCount) - 1].Spawns()); // A survive stage repeats its last wave.
+            var wave = WavePlan[Math.Min(Wave, WaveCount) - 1]; // A survive stage repeats its last wave.
+            stream = wave.Stream;
+            if (stream == null) pending.AddRange(SpawnDirector.Units(wave, spawnRandom));
             Phase = BattlePhase.Fighting;
             spawnTimer = 0;
             events.Add(new(BattleEventKind.WaveStarted, catX, Wave));
         }
         spawnTimer = Math.Max(0, spawnTimer - dt);
-        if (ToSpawn > 0 && Alive < maxAlive && spawnTimer <= 0)
+        if (stream != null)
         {
-            Spawn(catX, Settings.Enemy(pending[pendingNext++]));
+            // Never more than maxAlive at once, however long the stream runs.
+            if (Alive < maxAlive && spawnTimer <= 0)
+            {
+                Spawn(catX, Settings.Enemy(SpawnDirector.Pick(stream.Weights, spawnRandom)));
+                double progress = Stage?.SurviveSeconds is double hold && hold > 0 ? Math.Clamp(1 - SurviveRemaining / hold, 0, 1) : 0;
+                spawnTimer = stream.Interval + (stream.IntervalEnd - stream.Interval) * progress;
+            }
+            return; // Only the survive clock ends it.
+        }
+        // A unit waits until the floor has room for all of it (later ones wait behind it).
+        if (pendingNext < pending.Count && Alive + pending[pendingNext].Length <= maxAlive && spawnTimer <= 0)
+        {
+            var unit = pending[pendingNext++];
+            if (unit.Length == 1) Spawn(catX, Settings.Enemy(unit[0]));
+            else SpawnSquad(catX, unit.Select(Settings.Enemy).ToArray());
             spawnTimer = Settings.SpawnInterval;
         }
         if (ToSpawn > 0 || Alive > 0 || bombs.Count > 0) return;
@@ -1157,7 +1204,7 @@ public sealed class BattleSim
         CatHp += LastHeal;
         if (LastHeal > 0) AddEffect(BattleEffectKind.Number, catX, 115, -Math.Round(LastHeal));
         events.Add(new(BattleEventKind.WaveCleared, catX));
-        if (Stage?.Upgrades == true) OfferUpgrades();
+        if (Stage is { Upgrades: true, UpgradeAt: null }) OfferUpgrades();
     }
 
     // Up to three different cards the build can still use, one from each group (Defense, Power,
@@ -1173,19 +1220,19 @@ public sealed class BattleSim
         foreach (var group in BuildGroups.All)
         {
             var options = Settings.UpgradeList.Where(u => u.Group == group && Open(u)).ToList();
-            if (options.Count > 0) cards.Add(options[random.Next(options.Count)]);
+            if (options.Count > 0) cards.Add(options[offerRandom.Next(options.Count)]);
         }
         var rest = Settings.UpgradeList.Where(u => !cards.Contains(u) && u.Effect != "heal" && Open(u)).ToList();
         while (cards.Count < 3 && rest.Count > 0)
         {
-            int i = random.Next(rest.Count);
+            int i = offerRandom.Next(rest.Count);
             cards.Add(rest[i]);
             rest.RemoveAt(i);
         }
         var heals = Settings.UpgradeList.Where(u => u.Effect == "heal" && Open(u)).ToList();
         if (CatHp < CatMaxHp && heals.Count > 0)
         {
-            var heal = heals[random.Next(heals.Count)];
+            var heal = heals[offerRandom.Next(heals.Count)];
             if (cards.Count < 3) cards.Add(heal);
             else
             {
@@ -1193,7 +1240,7 @@ public sealed class BattleSim
                 int Points(UpgradeSpec u) => u.Group == null ? -1 : GroupPoints(u.Group);
                 int fewest = cards.Min(Points);
                 var tied = Enumerable.Range(0, cards.Count).Where(i => Points(cards[i]) == fewest).ToList();
-                cards[tied[random.Next(tied.Count)]] = heal;
+                cards[tied[offerRandom.Next(tied.Count)]] = heal;
             }
         }
         if (cards.Count == 0) return;
@@ -1251,27 +1298,60 @@ public sealed class BattleSim
 
     private void Spawn(double catX, EnemyType type)
     {
-        double w = Settings.SlimeWidth * type.Scale;
-        double minX = Left + w / 2, maxX = Math.Max(minX, Right - w / 2);
-        double left = Math.Min(maxX, minX + random.NextDouble() * 60), right = Math.Max(minX, maxX - random.NextDouble() * 60);
-        double first = random.Next(2) == 0 ? left : right, second = first == left ? right : left;
-        double x = Math.Abs(first - catX) >= Settings.SpawnMinDistance ? first
-            : Math.Abs(second - catX) >= Settings.SpawnMinDistance ? second
-            : Math.Abs(first - catX) >= Math.Abs(second - catX) ? first : second;
+        double x = SpawnPoint(catX, Settings.SlimeWidth * type.Scale);
         var slime = AddSlime(x, type);
         slime.Facing = catX < x ? -1 : 1;
         events.Add(new(type.Boss ? BattleEventKind.BossAppeared : BattleEventKind.SlimeSpawned, x));
     }
 
+    // Near one edge (a random one, at least SpawnMinDistance from the cat when room allows).
+    private double SpawnPoint(double catX, double w)
+    {
+        double minX = Left + w / 2, maxX = Math.Max(minX, Right - w / 2);
+        double left = Math.Min(maxX, minX + spawnRandom.NextDouble() * 60), right = Math.Max(minX, maxX - spawnRandom.NextDouble() * 60);
+        double first = spawnRandom.Next(2) == 0 ? left : right, second = first == left ? right : left;
+        return Math.Abs(first - catX) >= Settings.SpawnMinDistance ? first
+            : Math.Abs(second - catX) >= Settings.SpawnMinDistance ? second
+            : Math.Abs(first - catX) >= Math.Abs(second - catX) ? first : second;
+    }
+
+    // Closest a squad member appears to the cat when the floor allows (centre to centre).
+    public const double SquadCatGap = 90;
+
+    // A squad appears together near one edge, side by side: its supports at the back (the edge),
+    // its fighters in front of them toward the cat, never on top of the cat when there is room.
+    private void SpawnSquad(double catX, EnemyType[] members)
+    {
+        var order = members.Where(m => m.Support).Concat(members.Where(m => !m.Support)).ToArray();
+        double back = SpawnPoint(catX, Settings.SlimeWidth * order.Max(m => m.Scale));
+        int toward = catX >= back ? 1 : -1;
+        // Spacing a little wider than Separate keeps, so they do not shove each other on arrival;
+        // squeezed (down to a third of it) when the cat stands too close to fit them all.
+        var gaps = new double[order.Length];
+        for (int i = 1; i < order.Length; i++) gaps[i] = Settings.SlimeWidth * (order[i].Scale + order[i - 1].Scale) / 2 * 0.8;
+        double span = gaps.Sum(), room = Math.Abs(catX - back) - SquadCatGap;
+        double squeeze = span > 0 && room < span ? Math.Clamp(room / span, 1.0 / 3, 1) : 1;
+        double x = back;
+        for (int i = 0; i < order.Length; i++)
+        {
+            x += toward * gaps[i] * squeeze;
+            var slime = AddSlime(x, order[i]);
+            slime.Facing = catX < slime.X ? -1 : 1;
+        }
+        events.Add(new(BattleEventKind.SlimeSpawned, back));
+    }
+
     private Slime AddSlime(double x, EnemyType type)
     {
-        // Easy/Hard round to whole numbers so the HUD and damage numbers stay tidy; Normal is untouched.
-        bool scaled = Difficulty != BattleDifficulty.Normal;
-        double hp = scaled ? Math.Max(1, Math.Round(type.MaxHp * level.EnemyHp)) : type.MaxHp;
+        // Difficulty × the threat of now, once. Scaled numbers round to whole ones so the HUD and
+        // damage numbers stay tidy; Normal at threat 1 is untouched.
+        var (threatHp, threatDamage) = SpawnDirector.Scale(Threat, Settings.ThreatDamageShare);
+        double hpFactor = level.EnemyHp * threatHp, damageFactor = level.EnemyDamage * threatDamage;
+        double hp = hpFactor != 1 ? Math.Max(1, Math.Round(type.MaxHp * hpFactor)) : type.MaxHp;
         var slime = new Slime
         {
             Id = nextId++, Type = type, Width = Settings.SlimeWidth * type.Scale, HitWidth = Settings.SlimeWidth * type.Hitbox, Height = Settings.SlimeHeight * type.Scale,
-            Hp = hp, MaxHp = hp, Damage = scaled ? Math.Round(type.Damage * level.EnemyDamage) : type.Damage, Range = type.Range
+            Hp = hp, MaxHp = hp, Damage = damageFactor != 1 ? Math.Round(type.Damage * damageFactor) : type.Damage, Range = type.Range
         };
         // A support enemy starts with half its heal cooldown and its whole budget.
         slime.HealCooldown = type.HealCooldown / 2;

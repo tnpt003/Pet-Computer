@@ -246,7 +246,9 @@ public sealed partial class PetWindow
         // The guide belongs to the setup panel; one still open would hold the battle.
         if (BattleTutorialOpen) SetBattlePause(BattlePause.Tutorial, true);
         if (stage != null) StageBattleStarted(stage);
-        System.Diagnostics.Trace.WriteLine(stage != null ? $"Battle started: Adventure stage {stage.Id}." : "Battle started.");
+        // The seed and rules let a run be replayed (BattleSim's seed parameter).
+        System.Diagnostics.Trace.WriteLine((stage != null ? $"Battle started: Adventure stage {stage.Id} r{stage.RulesVersion}" : "Battle started")
+            + $", {battle.Difficulty}, {battle.Weapon.Id}, seed {battle.Seed}.");
         PlayPetSound("excited");
         return null;
     }

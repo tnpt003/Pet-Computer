@@ -80,6 +80,7 @@ BattleRulesTests.Run(Check);
 BattleStunTests.Run(Check);
 BuildSynergyTests.Run(Check);
 BattleRoleTests.Run(Check);
+EnemyDirectorTests.Run(Check);
 BattleWeaponTests.Run(Check);
 BattleDataTests.Run(Check);
 BattleCustomDataTests.Run(Check);

@@ -23,8 +23,9 @@ internal static class BattleStunTests
         return new BattleSim(settings, 0, 1600, new Random(3));
     }
 
-    // Steps until the condition holds (or the time runs out); returns whether it did.
-    private static bool Until(BattleSim sim, Func<bool> done, double seconds = 10, double catX = 800, bool held = false, bool lifted = false)
+    // Steps until the condition holds (or the time runs out); returns whether it did. The slime
+    // walks in from an edge (where depends on the seed's spawn stream), so allow for the walk.
+    private static bool Until(BattleSim sim, Func<bool> done, double seconds = 15, double catX = 800, bool held = false, bool lifted = false)
     {
         for (double t = 0; t < seconds; t += dt) { if (done()) return true; sim.Step(dt, catX, held, lifted); }
         return done();
@@ -95,7 +96,7 @@ internal static class BattleStunTests
 
         // A very fast dash with long frames still meets the cat (the whole path is checked).
         var fast = Dasher(speed: 1500);
-        for (double t = 0; t < 10 && !fast.CatStunned; t += 0.1) fast.Step(0.1, 800, false);
+        for (double t = 0; t < 15 && !fast.CatStunned; t += 0.1) fast.Step(0.1, 800, false);
         check(fast.CatStunned && fast.CatHp == 94, "A 1500 DIPs/s dash at 10 fps does not pass through the cat");
 
         // The lane is fixed: a cat behind the dasher's back is not hit.

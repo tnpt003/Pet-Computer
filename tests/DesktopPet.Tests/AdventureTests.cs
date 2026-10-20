@@ -77,7 +77,7 @@ internal static class AdventureTests
         check(!custom.Counted && !adventure.IsCompleted(stages[1].Id) && adventure.Record(stages[1], "sword", BattleDifficulty.Normal).Empty,
             "A run with custom battle data saves no progress and no record");
         check(adventure.Next(stages[4].Id) == null && adventure.Next(stages[0].Id) == stages[1], "Next stage follows the chapter order and ends after the boss");
-        var rules2 = new StageSpec { Id = stages[0].Id, RulesVersion = 2 };
+        var rules2 = new StageSpec { Id = stages[0].Id, RulesVersion = stages[0].RulesVersion + 1 };
         check(AdventureProgress.RecordKey(rules2, "sword", BattleDifficulty.Normal) != AdventureProgress.RecordKey(stages[0], "sword", BattleDifficulty.Normal),
             "A stage's new rules version keeps its records apart from the old ones");
         // Clearing every stage in order: the last one opens nothing and completes the chapter.

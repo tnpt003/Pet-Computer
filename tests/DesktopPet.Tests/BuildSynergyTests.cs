@@ -136,11 +136,16 @@ internal static class BuildSynergyTests
 
         // Big heart: max HP and HP at once; the wave heal fills to the new maximum.
         cat = 800;
-        var heart = new BattleSim(Quick(BattleData.Settings.UpgradeList.ToArray()), 0, 1600, new Random(1), stage: Stage());
-        Until(heart, () => heart.ChoosingUpgrade);
-        bool hasHeart = heart.UpgradeOffer!.Any(u => u.Id == "big_heart");
-        if (!hasHeart) heart.ChooseUpgrade(heart.UpgradeOffer![0].Id); // Not on offer this time: take the next one.
-        for (int i = 0; i < 2 && !hasHeart; i++) { Until(heart, () => heart.ChoosingUpgrade || heart.Over); hasHeart = heart.UpgradeOffer?.Any(u => u.Id == "big_heart") == true; }
+        // The first seed whose first offer has it (the Defense card is drawn from two).
+        BattleSim heart = null!;
+        bool hasHeart = false;
+        for (int seed = 1; seed <= 20 && !hasHeart; seed++)
+        {
+            cat = 800;
+            heart = new BattleSim(Quick(BattleData.Settings.UpgradeList.ToArray()), 0, 1600, new Random(seed), stage: Stage());
+            Until(heart, () => heart.ChoosingUpgrade);
+            hasHeart = heart.UpgradeOffer?.Any(u => u.Id == "big_heart") == true;
+        }
         double maxBefore = heart.CatMaxHp, hpNow = heart.CatHp;
         if (hasHeart) heart.ChooseUpgrade("big_heart", cat);
         check(hasHeart && heart.CatMaxHp == maxBefore + 20 && heart.CatHp == hpNow + 20, "Big heart: +20 max HP and 20 HP at once");

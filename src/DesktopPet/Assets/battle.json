@@ -142,7 +142,12 @@
     }
   ],
 
-  // Waves in order; each wave's groups spawn in order.
+  // Waves in order; each wave's groups spawn in order. A group is "enemy" × "count", or "pick":
+  // { kind: weight } drawn count times when the wave starts (with "atLeast": { kind: n } guaranteed),
+  // or "squad": [ { enemy, count } ] coming together (supports behind the fighters) once the floor has
+  // room for all of it. "threat" (Adventure only): this wave's enemies are that much stronger.
+  // HP × threat, damage × only threatDamageShare of the rise; worked out once when an enemy appears.
+  "threatDamageShare": 0.5,
   "waves": [
     { "groups": [ { "enemy": "slime", "count": 2 } ] },
     { "groups": [ { "enemy": "slime", "count": 2 }, { "enemy": "runner", "count": 2 } ] },
@@ -187,7 +192,11 @@
   // cards between waves. reward: an accessory (accessories.json, with "reward") given the first time
   // the stage is won. maxAlive: enemies
   // on the floor at once (default: the battle's). rulesVersion: raise it when a stage changes so much
-  // that its old records should not be compared. See docs/BATTLE-DATA.md.
+  // that its old records should not be compared. threat: the stage's enemies are that much stronger
+  // (× the wave's). A survive stage's last wave may be a "stream" (one kind drawn from "weights"
+  // whenever there is room, every "interval" s at the start down to "intervalEnd" at the end), with
+  // "threatGrowth" (threat added per minute held out) and "upgradeAt" (card offers at those seconds
+  // of the clock instead of after waves). See docs/BATTLE-DATA.md.
   "campaign": {
     "chapters": [
       {
@@ -196,36 +205,35 @@
           {
             "id": "c1_first_steps", "nameVi": "Làm quen", "nameEn": "First steps",
             "goalVi": "Dọn 2 đợt slime dễ: click slime để chọn mục tiêu.", "goalEn": "Clear 2 waves of easy slimes: click a slime to pick the target.",
-            "objective": "clear", "maxAlive": 2,
+            "objective": "clear", "maxAlive": 2, "rulesVersion": 2,
             "waves": [
               { "groups": [ { "enemy": "slime", "count": 2 } ] },
-              { "groups": [ { "enemy": "slime", "count": 3 } ] }
+              { "groups": [ { "pick": { "slime": 3, "runner": 1 }, "count": 3, "atLeast": { "runner": 1 } } ] }
             ]
           },
           {
             "id": "c1_break_through", "nameVi": "Giải vây", "nameEn": "Break through",
             "goalVi": "Quái hỗn hợp: dùng kỹ năng, kéo mèo ra khi slime gồng đòn, chọn nâng cấp giữa các đợt.",
             "goalEn": "Mixed slimes: use skills, lift the cat when a slime winds up, pick upgrades between waves.",
-            "tipVi": "Dọn xong một đợt, bạn chọn 1 trong 3 thẻ nâng cấp. Thẻ chỉ có tác dụng trong lượt chơi này; chơi lại thì bắt đầu từ đầu.",
-            "tipEn": "After each cleared wave, pick 1 of 3 upgrade cards. They last for this run only; playing again starts fresh.",
-            "objective": "clear", "upgrades": true, "rulesVersion": 5,
+            "tipVi": "Dọn xong một đợt, bạn chọn 1 trong 3 thẻ nâng cấp. Thắng màn thì build được mang sang màn sau. Slime đá chặn được đòn: đánh tiếp hoặc dùng Bom len.",
+            "tipEn": "After each cleared wave, pick 1 of 3 upgrade cards. Win the stage and the build comes along to the next one. Rock slimes block some hits: keep at it or use the Yarn bomb.",
+            "objective": "clear", "upgrades": true, "rulesVersion": 6,
             "waves": [
-              { "groups": [ { "enemy": "slime", "count": 2 }, { "enemy": "runner", "count": 1 } ] },
-              { "groups": [ { "enemy": "runner", "count": 2 }, { "enemy": "slime", "count": 2 } ] },
-              { "groups": [ { "enemy": "rock", "count": 1 }, { "enemy": "slime", "count": 2 } ] }
+              { "groups": [ { "enemy": "rock", "count": 1 }, { "pick": { "slime": 1, "runner": 1 }, "count": 2 } ] },
+              { "groups": [ { "enemy": "rock", "count": 1 }, { "pick": { "slime": 1, "runner": 1 }, "count": 2 }, { "enemy": "rock", "count": 1 } ] },
+              { "threat": 1.1, "groups": [ { "enemy": "rock", "count": 2 }, { "pick": { "slime": 1, "runner": 1 }, "count": 3 } ] }
             ]
           },
           {
             "id": "c1_hold_on", "nameVi": "Cầm cự", "nameEn": "Hold on",
             "goalVi": "Sống sót 75 giây: biết lúc đánh và lúc giữ máu. Bế mèo thì đồng hồ dừng.",
             "goalEn": "Survive 75 seconds: know when to attack and when to save HP. Carrying the cat stops the clock.",
-            "tipVi": "Sống sót tới khi hết giờ. Bế mèo thì đồng hồ dừng, nên hãy giữ HP bằng Khiên và Cá hồi máu thay vì chờ trên tay.",
-            "tipEn": "Stay alive until time is up. Carrying the cat stops the clock, so keep HP up with the Shield and the Healing fish instead.",
-            "objective": "survive", "surviveSeconds": 75, "maxAlive": 4, "upgrades": true, "maxUpgrades": 3, "rulesVersion": 6, "reward": "SlimeHat",
+            "tipVi": "Quái kéo tới liên tục và mạnh dần tới khi hết giờ. Ở giây 20, 40, 60 bạn chọn thẻ. Bế mèo thì đồng hồ dừng, nên hãy giữ HP bằng Khiên và Cá hồi máu.",
+            "tipEn": "Slimes keep coming, stronger and stronger, until time is up. At 20, 40 and 60 s you pick a card. Carrying the cat stops the clock, so keep HP up with the Shield and the fish.",
+            "objective": "survive", "surviveSeconds": 75, "maxAlive": 4, "upgrades": true, "maxUpgrades": 3, "upgradeAt": [ 20, 40, 60 ],
+            "threatGrowth": 0.3, "rulesVersion": 7, "reward": "SlimeHat",
             "waves": [
-              { "groups": [ { "enemy": "slime", "count": 3 }, { "enemy": "runner", "count": 1 } ] },
-              { "groups": [ { "enemy": "rock", "count": 1 }, { "enemy": "runner", "count": 2 } ] },
-              { "groups": [ { "enemy": "slime", "count": 2 }, { "enemy": "runner", "count": 2 }, { "enemy": "rock", "count": 1 } ] }
+              { "stream": { "weights": { "runner": 2, "slime": 1, "rock": 1 }, "interval": 2.6, "intervalEnd": 1.4 } }
             ]
           },
           {
@@ -234,11 +242,11 @@
             "goalEn": "Herb slimes heal their friends: take them down first, or Push one to cut its heal.",
             "tipVi": "Slime thảo dược (dấu +) hồi máu cho đồng đội. Thấy dấu + xanh trên đầu nó là nó đang gồng: Đẩy nó để cắt, hoặc click nó để mèo đánh nó trước.",
             "tipEn": "Herb slimes (with a +) heal their friends. A green + over one means it is winding up: Push it to cut the heal, or click it so the cat hits it first.",
-            "objective": "clear", "upgrades": true, "rulesVersion": 6,
+            "objective": "clear", "upgrades": true, "maxAlive": 5, "rulesVersion": 7,
             "waves": [
-              { "groups": [ { "enemy": "slime", "count": 2 }, { "enemy": "mender", "count": 1 } ] },
-              { "groups": [ { "enemy": "rock", "count": 1 }, { "enemy": "mender", "count": 1 }, { "enemy": "runner", "count": 2 } ] },
-              { "groups": [ { "enemy": "rock", "count": 1 }, { "enemy": "mender", "count": 1 }, { "enemy": "slime", "count": 2 } ] }
+              { "groups": [ { "pick": { "slime": 1, "runner": 1 }, "count": 3 } ] },
+              { "groups": [ { "squad": [ { "enemy": "mender", "count": 1 }, { "enemy": "rock", "count": 3 } ] } ] },
+              { "groups": [ { "pick": { "slime": 1, "runner": 1 }, "count": 1 }, { "squad": [ { "enemy": "mender", "count": 1 }, { "enemy": "rock", "count": 3 } ] } ] }
             ]
           },
           {
@@ -247,10 +255,10 @@
             "goalEn": "The chapter's last battle: the Slime King backs off behind a shield and calls help, herb slimes too.",
             "tipVi": "Ở 70% và 40% máu, Vua Slime lui về mép xa, bật khiên bất tử và gọi quân: hạ hết quân để phá khiên. Nổi giận ở 30%. Thấy vùng đỏ dưới sàn: kéo mèo ra ngoài hoặc bật Khiên.",
             "tipEn": "At 70% and 40% HP the Slime King backs off to the far edge behind a shield and calls help: defeat them all to break it. Angry at 30%. A red zone on the floor: lift the cat out or use the Shield.",
-            "objective": "clear", "upgrades": true, "rulesVersion": 6, "reward": "SlimeKingCrown",
+            "objective": "clear", "upgrades": true, "rulesVersion": 7, "reward": "SlimeKingCrown",
             "waves": [
               { "groups": [ { "enemy": "slime", "count": 2 }, { "enemy": "runner", "count": 2 } ] },
-              { "groups": [ { "enemy": "mender", "count": 1 }, { "enemy": "slime", "count": 2 } ] },
+              { "groups": [ { "squad": [ { "enemy": "mender", "count": 1 }, { "enemy": "rock", "count": 1 }, { "enemy": "slime", "count": 1 } ] } ] },
               { "groups": [ { "enemy": "king_c1", "count": 1 } ] }
             ]
           }

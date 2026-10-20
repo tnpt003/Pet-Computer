@@ -172,6 +172,13 @@ Nên chép dự phòng %LOCALAPPDATA%\DesktopPet\adventure-progress.json (nếu 
 - [ ] Trong khiên: kéo mèo lại sát boss thì nó vẫn dậm (vùng đỏ). Pause/menu giữa lúc boss chạy về mép: mọi thứ đứng yên. Thua giữa pha khiên: trận kết thúc bình thường, về Pet Mode không còn gì lạ. Chơi trên màn hình phụ/DPI khác: boss chạy đúng mép của màn hình đó.
 - [ ] Âm thanh: bật khiên/khiên vỡ/chặn đòn dùng cue sẵn có, không dày hay chói.
 
+#### Enemy Director — mốc 1: đội hình, threat, sinh tồn liên tục (2026-10-20)
+- [ ] Màn 1: đợt 2 luôn có ít nhất một slime nhanh (vạch lao đỏ). Màn 2: có nhiều slime đá hơn trước.
+- [ ] Màn 3 (Cầm cự): quái ra liên tục tới hết 75 giây, không có "Đợt 2/3"; không bao giờ quá 4 con cùng lúc. Bảng thẻ hiện ở khoảng giây 20, 40 và 60 của đồng hồ, đồng hồ đứng yên khi đang chọn. Quái cuối màn trâu hơn đầu màn.
+- [ ] Màn 4: slime thảo dược và 3 slime đá hiện cùng lúc, sát nhau ở một mép, thảo dược đứng phía sau; nếu sàn còn quái cũ thì cả nhóm chờ, không hiện lẻ. Nhóm không hiện đè lên mèo.
+- [ ] Log (`%LOCALAPPDATA%\DesktopPet\logs\desktoppet.log`) có dòng "Battle started: … seed N." mỗi trận.
+- [ ] Kỷ lục cũ của 5 màn không bị xóa nhưng không so với luật mới (rulesVersion tăng). Build đã lưu vẫn mang được vào màn sau.
+
 ### Nhật ký chơi thử Battle Mode (beta, thêm 2026-10-18)
 Chơi 3–5 trận mỗi độ khó trên bản publish, ghi 1 dòng/trận. Phiên bản: xem Khác → Giới thiệu (ví dụ `1.0.0 (18cb227)`). Chưa có dòng nào là chưa chơi thử; số mô phỏng trong PROGRESS.md không thay cho bảng này.
 

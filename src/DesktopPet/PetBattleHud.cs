@@ -344,7 +344,7 @@ public sealed class BattleHud : Border
     {
         if (b.Boss is { } boss) return boss.Type.Name(English);
         foreach (var group in b.WavePlan[Math.Clamp(b.Wave, 1, b.WaveCount) - 1].Groups)
-            if (b.Settings.Enemy(group.Enemy) is { Boss: true } type) return type.Name(English);
+            if (group.Fixed && b.Settings.Enemy(group.Enemy) is { Boss: true } type) return type.Name(English);
         return "Boss";
     }
 

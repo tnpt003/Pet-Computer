@@ -2,6 +2,12 @@
 
 Ngày 2026-10-20 (Asia/Saigon). Người dùng yêu cầu ghi để AI khác triển khai. Lần này chỉ cập nhật tài liệu, chưa review/sửa/test code mới. Đọc AGENTS.md, PROGRESS.md, COMBAT-DEPTH.md, BATTLE-DATA.md và code thật trước khi lập kế hoạch; giữ phần đã triển khai, không xây lại engine. Kết quả các đợt trước không phải kiểm chứng của yêu cầu này.
 
+## Tiến độ triển khai
+
+- Người dùng chốt 2026-10-20 (sau khi Claude đối chiếu code): không làm posture (giữ chặn ngẫu nhiên + chặn đường, phải giết đá mới qua); đá chỉ chặn đòn phía trước, quay người ~0,6 s; support teleport (dưới 35% HP, gồng 0,6 s, hồi 8 s, không tới support khác, Đẩy hủy); King "Lệnh xung phong" (mỗi 7 s, vương miện sáng 0,8 s, +40% tốc độ chạy 3 s cho một quân, Đẩy King khi đang sáng thì hủy); King choáng 2 s khi khiên vỡ; Cầm cự spawn liên tục, threat tăng, thẻ ở giây 20/40/60; đánh hai phía có mũi tên cảnh báo 1 s (màn 5 đợt 1, Cầm cự sau 45 s); elite bộ nhỏ (nhanh gồng +0,3 s lao +40%, đá một lần chặn chắc chắn đầu tiên, support lần hồi đầu ×2; từ màn 3, không ở Dễ, tối đa 1 elite sống, tính vào ngân sách); thẻ hiếm mỗi nhóm 1 (Mai rùa / Đòn mở màn / Chạy đà; 15% thay thẻ thường cùng nhóm; cộng 1 điểm; tối đa 1).
+- **Mốc ED1 (2026-10-20): xong** — seed + luồng ngẫu nhiên riêng, nhóm bốc theo trọng số có `atLeast`, đội (`squad`) spawn cùng lúc có giữ chỗ, `threat` đợt/màn + `threatDamageShare`, stream sinh tồn với `threatGrowth` và `upgradeAt`, đội hình 5 màn theo bảng dưới. Chi tiết: [BATTLE-DATA.md](BATTLE-DATA.md#đội-hình-threat-và-seed-enemy-director-mốc-1).
+- Mốc ED2: vai trò support/đá/điều phối/King. Mốc ED3: gacha có giới hạn (ngân sách, elite, thẻ hiếm) và cân bằng.
+
 ## Quan hệ với quyết định hiện tại
 
 Tài liệu COMBAT-DEPTH.md ghi mốc 1–3 đã làm: stun 1,5s + kháng 3s; build cộng dồn qua màn lưu phiên bản 2; thẻ một lựa chọn mỗi nhóm và cá thay nhóm ít điểm nhất; đá block; King retreat/summon/shield. Giữ các quyết định đó trừ thay đổi mới được nêu rõ. Không quay lại reset build từng màn hoặc đổi kháng stun thành 1s chỉ vì đề xuất cũ. King có khiên vẫn dậm khi mèo gần là luật đã chốt.

@@ -113,17 +113,41 @@ public sealed class BossPhase
     }
 }
 
-// One wave: groups spawn in order (at most MaxAlive at once).
+// One wave: groups spawn in order (at most MaxAlive at once). A plain group is Count of Enemy.
+// Pick: each of the Count spawns is a kind drawn from these weights when the wave starts (Enemy is
+// then unused); AtLeast: that many of a kind among them whatever the draw. Squad: Count times these
+// members together, side by side (fighters toward the cat, supports behind them), only once there is
+// room on the floor for the whole squad (nothing after it spawns before it).
 public sealed class WaveGroup
 {
     public string Enemy { get; init; } = "slime";
     public int Count { get; init; } = 1;
+    public Dictionary<string, double>? Pick { get; init; }
+    public Dictionary<string, int>? AtLeast { get; init; }
+    public WaveGroup[]? Squad { get; init; }
+    [JsonIgnore] public bool Fixed => Pick == null && Squad == null;
+    [JsonIgnore] public int SquadSize => Squad?.Sum(m => Math.Max(0, m.Count)) ?? 1;
+}
+
+// Stream: a survive stage's last wave that never ends: one kind drawn from Weights whenever there is
+// room, every Interval seconds at the start of the stage down to IntervalEnd at its end.
+public sealed class StreamSpec
+{
+    public Dictionary<string, double> Weights { get; init; } = new();
+    public double Interval { get; init; } = 2;
+    public double IntervalEnd { get; init; } = 2;
 }
 
 public sealed class WaveSpec
 {
     public WaveGroup[] Groups { get; init; } = Array.Empty<WaveGroup>();
-    public IEnumerable<string> Spawns() => Groups.SelectMany(g => Enumerable.Repeat(g.Enemy, Math.Max(0, g.Count)));
+    // Enemies of this wave are this much stronger (× the stage's threat; see BattleSettings.ThreatDamageShare).
+    public double Threat { get; init; } = 1;
+    public StreamSpec? Stream { get; init; }
+    // The fixed kinds in spawn order (drawn kinds are not known before the wave starts).
+    public IEnumerable<string> Spawns() => Groups.Where(g => g.Pick == null).SelectMany(g =>
+        g.Squad == null ? Enumerable.Repeat(g.Enemy, Math.Max(0, g.Count))
+            : Enumerable.Range(0, Math.Max(0, g.Count)).SelectMany(_ => g.Squad.SelectMany(m => Enumerable.Repeat(m.Enemy, Math.Max(0, m.Count)))));
 }
 
 // Adventure (battle.json "campaign"): chapters of stages played in order. A stage is a battle
@@ -162,6 +186,13 @@ public sealed class StageSpec
     // At most this many picks in one run of the stage (unset: one after every cleared wave that has
     // another after it; a survive stage would otherwise offer one per repeated wave).
     public int? MaxUpgrades { get; init; }
+    // Survive stages: a card offer at each of these points of the clock (seconds held out) instead of
+    // after cleared waves.
+    public double[]? UpgradeAt { get; init; }
+    // How strong this stage's enemies are (1: their own numbers; × difficulty and the wave's threat).
+    public double Threat { get; init; } = 1;
+    // Survive stages: the threat grows by this much per minute held out.
+    public double ThreatGrowth { get; init; }
     public int RulesVersion { get; init; } = 1;
     // Enemies on the floor at once (unset: the battle's maxAlive).
     public int? MaxAlive { get; init; }
@@ -461,8 +492,8 @@ public static class BattleData
                     if (p == null || !(p.At > 0 && p.At < 1)) throw new InvalidDataException(at + ".phases: each \"at\" must be between 0 and 1");
                     if (p.Summon == null && p.Summons == null && !p.Enrage) throw new InvalidDataException(at + ".phases: a phase must summon or enrage");
                     if (p.Summon != null && p.Count is < 1 or > 6) throw new InvalidDataException(at + ".phases: count must be 1–6");
-                    if (p.Summons != null && (p.Summons.Length is 0 or > 4 || p.Summons.Any(g => g == null || g.Count is < 1 or > 6)))
-                        throw new InvalidDataException(at + ".phases: summons must list 1–4 groups of 1–6");
+                    if (p.Summons != null && (p.Summons.Length is 0 or > 4 || p.Summons.Any(g => g == null || !g.Fixed || g.Count is < 1 or > 6)))
+                        throw new InvalidDataException(at + ".phases: summons must list 1–4 plain groups of 1–6");
                     if (p.Calls().Count() > 8) throw new InvalidDataException(at + ".phases: a phase calls at most 8 helpers");
                     // A shield only drops when its helpers are gone: it needs some.
                     if (p.Shield && !p.Calls().Any()) throw new InvalidDataException(at + ".phases: a shield phase must summon");
@@ -479,22 +510,64 @@ public static class BattleData
         foreach (var e in s.EnemyTypes)
             if (e.SummonAt > 0 && (!ids.Contains(e.SummonType) || Summons(s.Enemy(e.SummonType))))
                 throw new InvalidDataException($"enemies[{e.Id}] summons \"{e.SummonType}\": an unknown enemy (or one that summons too)");
-        void Waves(IReadOnlyList<WaveSpec>? waves, string at)
+        // Drawn kinds: known, never a boss (a boss only comes where a wave names it), some weight.
+        void Weights(Dictionary<string, double>? weights, string at)
+        {
+            if (weights == null || weights.Count is 0 or > 8) throw new InvalidDataException($"{at} must list 1–8 enemies");
+            foreach (var (kind, weight) in weights)
+            {
+                if (!ids.Contains(kind) || s.Enemy(kind).Boss) throw new InvalidDataException($"{at} names \"{kind}\": an unknown enemy or a boss");
+                Within(weight, 0, 100, $"{at}.{kind}");
+            }
+            if (weights.Values.Sum() <= 0) throw new InvalidDataException($"{at} needs some weight above 0");
+        }
+        // maxAlive: what the battle allows on the floor (a squad must fit); survival: a survive stage.
+        void Waves(IReadOnlyList<WaveSpec>? waves, string at, int maxAlive, bool survival)
         {
             if (waves == null || waves.Count == 0) throw new InvalidDataException($"{at} needs at least one wave");
             if (waves.Count > 30) throw new InvalidDataException($"{at} may have at most 30 waves");
             for (int i = 0; i < waves.Count; i++)
             {
                 var wave = waves[i];
-                if (wave?.Groups == null || wave.Groups.Length == 0) throw new InvalidDataException($"{at}[{i}] needs at least one group");
+                if (wave == null) throw new InvalidDataException($"{at}[{i}] is empty");
+                Within(wave.Threat, 0.5, 3, $"{at}[{i}].threat");
+                if (wave.Stream is StreamSpec stream)
+                {
+                    // It never ends, so only a survive stage's clock can finish it.
+                    if (!survival || i != waves.Count - 1) throw new InvalidDataException($"{at}[{i}].stream is only for the last wave of a survive stage");
+                    Weights(stream.Weights, $"{at}[{i}].stream.weights");
+                    Within(stream.Interval, 0.3, 20, $"{at}[{i}].stream.interval"); Within(stream.IntervalEnd, 0.3, 20, $"{at}[{i}].stream.intervalEnd");
+                    if (wave.Groups is { Length: > 0 }) throw new InvalidDataException($"{at}[{i}]: a stream wave has no groups");
+                    continue;
+                }
+                if (wave.Groups == null || wave.Groups.Length == 0) throw new InvalidDataException($"{at}[{i}] needs at least one group");
                 foreach (var g in wave.Groups)
                 {
-                    if (g == null || !ids.Contains(g.Enemy)) throw new InvalidDataException($"{at}[{i}] names an unknown enemy \"{g?.Enemy}\"");
+                    if (g == null) throw new InvalidDataException($"{at}[{i}] has an empty group");
                     if (g.Count is < 1 or > 50) throw new InvalidDataException($"{at}[{i}] {g.Enemy}: count must be 1–50");
+                    if (g.Pick != null && g.Squad != null) throw new InvalidDataException($"{at}[{i}]: a group is a pick or a squad, not both");
+                    if (g.Pick != null)
+                    {
+                        Weights(g.Pick, $"{at}[{i}].pick");
+                        foreach (var (kind, n) in g.AtLeast ?? new())
+                            if (!ids.Contains(kind) || s.Enemy(kind).Boss || n < 0) throw new InvalidDataException($"{at}[{i}].atLeast names \"{kind}\": an unknown enemy or a boss (or a negative count)");
+                        if ((g.AtLeast?.Values.Sum() ?? 0) > g.Count) throw new InvalidDataException($"{at}[{i}].atLeast asks for more than count");
+                        continue;
+                    }
+                    if (g.AtLeast != null) throw new InvalidDataException($"{at}[{i}].atLeast goes with pick");
+                    if (g.Squad != null)
+                    {
+                        if (g.Squad.Length is 0 or > 4 || g.Squad.Any(m => m == null || !m.Fixed || !ids.Contains(m.Enemy) || s.Enemy(m.Enemy).Boss || m.Count is < 1 or > 6))
+                            throw new InvalidDataException($"{at}[{i}].squad must list 1–4 known, non-boss enemies with counts 1–6");
+                        // A squad that never fits would hold the wave for ever.
+                        if (g.SquadSize is < 2 or > 8 || g.SquadSize > maxAlive) throw new InvalidDataException($"{at}[{i}].squad has {g.SquadSize} enemies: it needs 2–8 and at most maxAlive ({maxAlive})");
+                        continue;
+                    }
+                    if (!ids.Contains(g.Enemy)) throw new InvalidDataException($"{at}[{i}] names an unknown enemy \"{g.Enemy}\"");
                 }
             }
         }
-        Waves(s.WavePlan, "waves");
+        Waves(s.WavePlan, "waves", s.MaxAlive, false);
         if (s.Upgrades is { Length: 0 }) throw new InvalidDataException("upgrades must list at least one upgrade");
         var upgradeIds = new HashSet<string>();
         foreach (var u in s.UpgradeList)
@@ -526,7 +599,8 @@ public static class BattleData
             if (y.At is < 1 or > 10) throw new InvalidDataException($"{at}.at must be 1–10");
             if (y.Effect == "echo" && y.Every is < 2 or > 10) throw new InvalidDataException($"{at}.every must be 2–10");
         }
-        if (s.Campaign is CampaignSpec campaign) ValidateCampaign(campaign, Waves, Id, Text);
+        Within(s.ThreatDamageShare, 0, 1, "threatDamageShare");
+        if (s.Campaign is CampaignSpec campaign) ValidateCampaign(campaign, (waves, at, alive, survival) => Waves(waves, at, alive ?? s.MaxAlive, survival), Id, Text);
     }
 
     public static readonly string[] StageObjectives = { "clear", "survive" };
@@ -541,7 +615,7 @@ public static class BattleData
         ["thorns"] = (0.05, 2), ["armorBreak"] = (0.05, 3), ["echo"] = (0.1, 2)
     };
 
-    private static void ValidateCampaign(CampaignSpec campaign, Action<IReadOnlyList<WaveSpec>?, string> waves, Action<string?, string> id, Action<string?, string> text)
+    private static void ValidateCampaign(CampaignSpec campaign, Action<IReadOnlyList<WaveSpec>?, string, int?, bool> waves, Action<string?, string> id, Action<string?, string> text)
     {
         if (campaign.Chapters == null || campaign.Chapters.Length == 0) throw new InvalidDataException("campaign.chapters must list at least one chapter");
         var chapterIds = new HashSet<string>();
@@ -570,7 +644,18 @@ public static class BattleData
                 if (stage.MaxUpgrades is int picks && picks is < 1 or > 30) throw new InvalidDataException($"{where}.maxUpgrades must be 1–30");
                 if (stage.Survival && stage.SurviveSeconds is not (>= 10 and <= 600)) throw new InvalidDataException($"{where}.surviveSeconds must be 10–600 for a survive stage");
                 if (!stage.Survival && stage.SurviveSeconds != null) throw new InvalidDataException($"{where}.surviveSeconds is only for a survive stage");
-                waves(stage.Waves, where + ".waves");
+                waves(stage.Waves, where + ".waves", stage.MaxAlive, stage.Survival);
+                if (!double.IsFinite(stage.Threat) || stage.Threat is < 0.5 or > 3) throw new InvalidDataException($"{where}.threat must be 0.5–3");
+                if (!double.IsFinite(stage.ThreatGrowth) || stage.ThreatGrowth is < 0 or > 2 || (stage.ThreatGrowth > 0 && !stage.Survival))
+                    throw new InvalidDataException($"{where}.threatGrowth must be 0–2 (per minute), and only for a survive stage");
+                if (stage.UpgradeAt is { } offers)
+                {
+                    if (!stage.Survival || !stage.Upgrades) throw new InvalidDataException($"{where}.upgradeAt is only for a survive stage with upgrades");
+                    if (offers.Length is 0 or > 10) throw new InvalidDataException($"{where}.upgradeAt must list 1–10 times");
+                    for (int k = 0; k < offers.Length; k++)
+                        if (!double.IsFinite(offers[k]) || offers[k] < 1 || offers[k] >= stage.SurviveSeconds || (k > 0 && offers[k] <= offers[k - 1]))
+                            throw new InvalidDataException($"{where}.upgradeAt must rise and stay inside the survive time");
+                }
                 if ((stage.TipVi == null) != (stage.TipEn == null) || stage.TipVi?.Length > 220 || stage.TipEn?.Length > 220)
                     throw new InvalidDataException($"{where} tips need both languages, at most 220 characters each");
                 if (stage.Reward != null && PetAccessories.Find(stage.Reward) is not { Reward: not null })

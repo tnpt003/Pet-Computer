@@ -249,3 +249,21 @@ Màn sinh tồn: `"objective": "survive", "surviveSeconds": 10–600`. Các đ�
   - Trong khiên: boss không mất máu (kiếm, bom đều hiện "BẤT TỬ"/"IMMUNE"), Giáp gai không dội lên nó, slime thảo dược không hồi cho nó. Nó đứng giữ mép, không đi tới mèo nhưng vẫn dậm nếu mèo lại gần. Mèo tự bỏ qua boss để đánh quân; người dùng click boss thì boss vẫn được đánh dấu, mèo đánh nó lại khi khiên tắt. HUD: thanh máu boss màu vàng, ghi "(khiên: hạ hết quân!)".
   - Khiên tắt **đúng một lần** khi quân cuối cùng **của chính pha đó** bị hạ (đòn, bom hay Giáp gai đều được); quân của pha khác không giữ khiên. Không gọi được con nào (đầy `summonCap`) thì khiên tắt ngay sau khi chạy tới mép, không kẹt mãi. Pause/menu/chọn thẻ đóng băng cả pha.
   - Bản gốc Vua Slime chương 1 (`king_c1`): khiên ở 70% (2 slime) và 40% (1 slime thảo dược + 2 slime nhanh), nổi giận ở 30%. Vua Slime của trận tự do (`king`) giữ nguyên.
+
+## Đội hình, threat và seed (Enemy Director mốc 1)
+
+- Nhóm trong `groups` có ba dạng (chỉ chọn một):
+  - Thường: `{ "enemy": "slime", "count": 2 }`.
+  - Bốc theo trọng số: `{ "pick": { "slime": 1, "runner": 1 }, "count": 3, "atLeast": { "runner": 1 } }`. Mỗi con trong `count` được bốc **một lần** lúc đợt bắt đầu (trọng số 0–100, 1–8 loại, không có boss). `atLeast` bảo đảm tối thiểu, đổi chỗ những con không bắt buộc ở vị trí ngẫu nhiên; tổng `atLeast` ≤ `count`.
+  - Đội: `{ "squad": [ { "enemy": "mender", "count": 1 }, { "enemy": "rock", "count": 3 } ], "count": 1 }`. Cả đội (2–8 con, không boss) hiện cùng một khung hình ở một mép, support ở phía mép (sau), quái đánh được ở phía mèo, cách mèo ít nhất 90 DIPs khi đủ chỗ (chật thì khép sát lại, tối đa còn 1/3 khoảng cách). Đội chờ tới khi sàn còn chỗ cho **cả đội** (tính `maxAlive`); các nhóm sau chờ sau nó. Validate: đội lớn hơn `maxAlive` của màn bị từ chối.
+- `threat` trên một đợt (0.5–3) và trên một màn (0.5–3): quái spawn có HP × threat, sát thương × (1 + (threat − 1) × `threatDamageShare`) (mặc định 0.5, sát thương tăng chậm hơn), nhân thêm hệ số độ khó, tính **một lần** khi quái hiện. Không đổi thời gian gồng/choáng. Trận tự do không có threat. Số đã nhân được làm tròn; Thường với threat 1 giữ nguyên số gốc.
+- Màn sinh tồn: đợt cuối có thể là `"stream": { "weights": {...}, "interval": 2.6, "intervalEnd": 1.4 }`: không bao giờ hết đợt, mỗi khi sàn còn chỗ (dưới `maxAlive`) thì bốc một loại theo trọng số, khoảng cách giữa hai lần spawn giảm dần từ `interval` (đầu màn) tới `intervalEnd` (cuối giờ). Chỉ được ở đợt cuối của màn `survive` và không có `groups`.
+  - `threatGrowth` (0–2, chỉ màn sinh tồn): threat cộng thêm mỗi phút đã trụ được.
+  - `upgradeAt` (1–10 mốc tăng dần, nằm trong `surviveSeconds`, chỉ màn sinh tồn có `upgrades`): đưa thẻ ở các giây đó của đồng hồ thay vì sau mỗi đợt; đồng hồ dừng khi chọn; vẫn tôn trọng `maxUpgrades`.
+- Seed: mỗi trận có một seed (log ghi `Battle started: Adventure stage … r<rulesVersion>, <độ khó>, <vũ khí>, seed N.`). Seed tách thành các luồng riêng: spawn (loại bốc + mép xuất hiện), thẻ, chặn đòn của đá; thêm lượt bốc ở luồng này không đổi luồng khác. `BattleSim(..., seed: N)` tái hiện lại trận (cùng thao tác).
+- Chương 1 hiện tại (rulesVersion màn 1–5: 2/6/7/7/7):
+  - Làm quen: đợt 1 chỉ slime; đợt 2 bốc 3 con slime 3 : nhanh 1, luôn có ít nhất 1 slime nhanh.
+  - Giải vây: mỗi đợt 1–2 slime đá, phần còn lại bốc thường/nhanh 1 : 1; đợt 3 threat 1.1.
+  - Cầm cự: một stream nhanh 2 : thường 1 : đá 1, 2.6 s → 1.4 s, `threatGrowth` 0.3, thẻ ở giây 20/40/60.
+  - Cắt viện trợ: `maxAlive` 5; đợt 1 bốc 3 con thường/nhanh; đợt 2 và 3 có đội 1 slime thảo dược + 3 slime đá.
+  - Vua Slime: đợt 2 là đội thảo dược + đá + slime; đợt 3 là Vua một mình (quân của Vua thuộc các pha khiên).

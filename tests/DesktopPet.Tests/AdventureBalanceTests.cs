@@ -1,22 +1,43 @@
 using DesktopPet;
 
 // Adventure milestone 5: the chapter's balance in simulation (NOT real play: a real user also
-// lifts the cat out of danger). Every stage × weapon × difficulty, 10 seeds, two players:
-// "idle" lets the cat fight alone (no skills) and "simple" also uses skills by plain rules. Each
-// seed plays the chapter in order and carries the build of each won stage into the next (Combat
-// Depth); both players build toward one group. Prints a table and checks the agreed targets.
+// lifts the cat out of danger). Every stage × weapon × difficulty, 10 seeds, three players:
+// "idle" lets the cat fight alone (no skills), "simple" also uses skills by plain rules and
+// answers every windup or heal the frame it starts (a best case), "casual" follows the same rules
+// but notices a windup or heal only CasualReaction s (simulation time) after it starts and misses
+// CasualMiss of them (rolled from the seed). Each seed plays the chapter in order and carries the
+// build of each won stage into the next (Combat Depth); all players build toward one group.
+// Prints the tables and checks the agreed targets (on the simple player, as before; the casual
+// player is measured, not yet a target).
 internal static class AdventureBalanceTests
 {
-    public readonly record struct Outcome(bool Won, double Seconds, double Hp, int Stuns, int Synergies, Dictionary<string, int> Build, int Blocks = 0, double ShieldSeconds = 0, double HpShare = 0, int Elites = 0);
+    public enum Player { Idle, Simple, Casual }
+    // The casual player's reaction time and the share of windups/heals it never answers.
+    public const double CasualReaction = 0.6, CasualMiss = 0.3;
+
+    // Also measured (review 2026-10-20, R3): hits lost on heal-guarded enemies (Warded), heals
+    // started/landed by support enemies, the share of fighting time the enemies took no damage for
+    // QuietAfter s or more (QuietShare), the cat's target changes a minute, stuns that come right
+    // after the last one's immunity (StunChains).
+    public readonly record struct Outcome(bool Won, double Seconds, double Hp, int Stuns, int Synergies, Dictionary<string, int> Build, int Blocks = 0, double ShieldSeconds = 0, double HpShare = 0, int Elites = 0,
+        int Warded = 0, int HealsCast = 0, int HealsLanded = 0, double QuietShare = 0, double Switches = 0, int StunChains = 0);
+    private const double QuietAfter = 2;
 
     // Order cards are liked in when the build gives no lead (fish when hurt).
     private static readonly string[] Preference = { "sharp", "fast_paws", "thick_fur", "big_heart", "quick_feet", "heavy_push", "grilled_fish" };
 
-    public static Outcome Play(BattleSettings data, StageSpec stage, string weapon, BattleDifficulty level, int seed, bool skills, IReadOnlyDictionary<string, int>? build = null)
+    public static Outcome Play(BattleSettings data, StageSpec stage, string weapon, BattleDifficulty level, int seed, Player player, IReadOnlyDictionary<string, int>? build = null)
     {
         const double dt = 1.0 / 30;
         var sim = new BattleSim(data, 0, 1600, new Random(seed), level, weapon, stage, build);
+        var reflex = new Reflex(player, seed);
         double cat = 800;
+        // The measures: HP each enemy had last frame, the fighting time and how much of it was quiet.
+        var hpBefore = new Dictionary<int, double>();
+        double fighting = 0, quiet = 0, sinceDamage = 0, lastStun = double.NegativeInfinity;
+        int healsCast = 0, healsLanded = 0, switches = 0, chains = 0;
+        int? lastTarget = null;
+        double chainGap = data.StunDurationSeconds + data.StunImmunitySeconds + 2;
         for (double t = 0; t < 600 && !sim.Over; t += dt)
         {
             if (sim.ChoosingUpgrade)
@@ -29,28 +50,69 @@ internal static class AdventureBalanceTests
                         .ThenBy(u => Array.IndexOf(Preference, u.Id) is int i && i >= 0 ? i : 99).First();
                 sim.ChooseUpgrade(pick.Id, cat);
             }
-            if (skills) UseSkills(sim, cat, data);
+            if (player != Player.Idle) UseSkills(sim, cat, data, reflex, t);
             var order = sim.Step(dt, cat, false);
             double run = 72 * data.CatRunScale * sim.MoveFactor; // Walking speed × CatRunScale × upgrades.
             if (order.Command == CatCommand.Move) cat += Math.Clamp(order.X - cat, -run * dt, run * dt);
+            foreach (var e in sim.Events)
+            {
+                if (e.Kind == BattleEventKind.EnemyHealing) healsCast++;
+                else if (e.Kind == BattleEventKind.EnemyHealed) healsLanded++;
+                else if (e.Kind == BattleEventKind.CatStunned) { if (t - lastStun <= chainGap) chains++; lastStun = t; }
+            }
+            sim.ClearEvents();
+            bool damaged = false;
+            foreach (var s in sim.Slimes)
+            {
+                if (hpBefore.TryGetValue(s.Id, out double was) && s.Hp < was) damaged = true;
+                hpBefore[s.Id] = s.Hp;
+            }
+            if (sim.TargetId is int target) { if (lastTarget is int before && before != target) switches++; lastTarget = target; }
+            if (sim.Phase == BattlePhase.Fighting && !sim.ChoosingUpgrade && sim.Slimes.Any(s => s.Targetable))
+            {
+                fighting += dt;
+                sinceDamage = damaged ? 0 : sinceDamage + dt;
+                if (sinceDamage >= QuietAfter) quiet += dt;
+            }
+            else sinceDamage = 0;
         }
-        return new(sim.Phase == BattlePhase.Won, sim.FightSeconds, sim.CatHp, sim.StunsTaken, sim.Synergies.Count, sim.Build(), sim.BlocksMade, sim.BossShieldSeconds, sim.CatHp / sim.CatMaxHp, sim.ElitesSpawned);
+        return new(sim.Phase == BattlePhase.Won, sim.FightSeconds, sim.CatHp, sim.StunsTaken, sim.Synergies.Count, sim.Build(), sim.BlocksMade, sim.BossShieldSeconds, sim.CatHp / sim.CatMaxHp, sim.ElitesSpawned,
+            sim.WardedHits, healsCast, healsLanded, fighting > 0 ? quiet / fighting : 0, sim.FightSeconds > 0 ? switches * 60 / sim.FightSeconds : 0, chains);
     }
 
-    // Plain rules a careful user could follow without lifting the cat.
-    private static void UseSkills(BattleSim sim, double cat, BattleSettings data)
+    // When the player notices a windup or a heal: the simple player at once, the casual one after
+    // CasualReaction s, and not at all for the CasualMiss share it misses (one roll per windup, from
+    // the seed, so a run plays the same every time).
+    private sealed class Reflex(Player player, int seed)
+    {
+        private readonly Random rolls = new(seed * 7919 + 17);
+        private readonly Dictionary<int, (SlimeState State, double Since, bool Missed)> seen = new();
+
+        public bool Notices(Slime s, double now)
+        {
+            if (player != Player.Casual) return true;
+            double since = now - s.StateTime;
+            if (!seen.TryGetValue(s.Id, out var known) || known.State != s.State || Math.Abs(since - known.Since) > 0.05)
+                seen[s.Id] = known = (s.State, since, rolls.NextDouble() < CasualMiss);
+            return !known.Missed && s.StateTime >= CasualReaction;
+        }
+    }
+
+    // Plain rules a careful user could follow without lifting the cat (windups and heals only once
+    // the player has noticed them).
+    private static void UseSkills(BattleSim sim, double cat, BattleSettings data, Reflex reflex, double now)
     {
         sim.SetCatState(false, false);
         if (sim.CatHp < sim.CatMaxHp * 0.5) sim.Use(BattleSkill.Heal, cat);
         // A windup that will reach the cat: a plain or slam attack in its reach, or a dash whose lane
         // (shown on the floor) runs over the cat.
-        bool Threat(Slime s) => s.State == SlimeState.Windup && (s.Type.Dash
+        bool Threat(Slime s) => s.State == SlimeState.Windup && reflex.Notices(s, now) && (s.Type.Dash
             ? (cat - s.X) * s.DashDirection >= -BattleSim.CatHalfWidth && Math.Abs(cat - s.X) <= s.Type.DashDistance + s.HitWidth / 2 + BattleSim.CatHalfWidth
             : Math.Abs(s.X - cat) <= s.Range + 12);
         // The Shield (long cooldown) is kept for plain and slam hits; a dash is Pushed away instead.
         bool danger = sim.Slimes.Any(s => Threat(s) && !s.Type.Dash && s.StateTime > sim.Windup(s) * 0.5);
         if (danger) sim.Use(BattleSkill.Shield, cat);
-        var healer = sim.Slimes.FirstOrDefault(s => s.State == SlimeState.Casting);
+        var healer = sim.Slimes.FirstOrDefault(s => s.State == SlimeState.Casting && reflex.Notices(s, now));
         var dasher = sim.Slimes.FirstOrDefault(s => Threat(s) && s.Type.Dash);
         if (healer != null) sim.Use(BattleSkill.Push, healer.Id, cat);
         else if (dasher != null) sim.Use(BattleSkill.Push, dasher.Id, cat);
@@ -62,6 +124,9 @@ internal static class AdventureBalanceTests
         if (crowd.Count > 0) sim.Use(BattleSkill.Cheer, cat);
     }
 
+    private static readonly Player[] Players = { Player.Idle, Player.Simple, Player.Casual };
+    private static string Name(Player player) => player.ToString().ToLowerInvariant();
+
     // data: another battle (balance experiments); the built-in one by default.
     public static void Run(Action<bool, string> check, BattleSettings? data = null)
     {
@@ -70,21 +135,21 @@ internal static class AdventureBalanceTests
         var levels = new[] { BattleDifficulty.Easy, BattleDifficulty.Normal, BattleDifficulty.Hard };
         var weapons = new[] { BattleWeapon.Sword, BattleWeapon.Hammer };
         const int seeds = 10;
-        var table = new Dictionary<(int Stage, string Weapon, BattleDifficulty Level, bool Skills), (double Wins, double Seconds, double Hp, double HpShare)>();
+        var table = new Dictionary<(int Stage, string Weapon, BattleDifficulty Level, Player Player), (double Wins, double Seconds, double Hp, double HpShare)>();
         // Each seed plays the chapter in order; a stage starts with the build the stage before was
         // won with (a lost stage passes on the last winning build, as a retry would).
-        var played = new Dictionary<(int Stage, string Weapon, BattleDifficulty Level, bool Skills), List<Outcome>>();
+        var played = new Dictionary<(int Stage, string Weapon, BattleDifficulty Level, Player Player), List<Outcome>>();
         foreach (var weapon in weapons)
             foreach (var level in levels)
-                foreach (bool skills in new[] { false, true })
+                foreach (var player in Players)
                     for (int seed = 1; seed <= seeds; seed++)
                     {
                         var carried = new Dictionary<string, int>();
                         for (int i = 0; i < stages.Length; i++)
                         {
-                            var run = Play(data, stages[i], weapon, level, seed, skills, carried);
+                            var run = Play(data, stages[i], weapon, level, seed, player, carried);
                             if (run.Won) carried = run.Build;
-                            if (!played.TryGetValue((i + 1, weapon, level, skills), out var list)) played[(i + 1, weapon, level, skills)] = list = new();
+                            if (!played.TryGetValue((i + 1, weapon, level, player), out var list)) played[(i + 1, weapon, level, player)] = list = new();
                             list.Add(run);
                         }
                     }
@@ -92,18 +157,43 @@ internal static class AdventureBalanceTests
         for (int i = 0; i < stages.Length; i++)
             foreach (var weapon in weapons)
                 foreach (var level in levels)
-                    foreach (bool skills in new[] { false, true })
+                    foreach (var player in Players)
                     {
-                        var runs = played[(i + 1, weapon, level, skills)];
+                        var runs = played[(i + 1, weapon, level, player)];
                         var wins = runs.Where(r => r.Won).ToList();
                         var row = ((double)wins.Count / seeds, wins.Count > 0 ? wins.Average(r => r.Seconds) : 0, wins.Count > 0 ? wins.Average(r => r.Hp) : 0, wins.Count > 0 ? wins.Average(r => r.HpShare) : 0);
-                        table[(i + 1, weapon, level, skills)] = row;
-                        Console.WriteLine($"  {i + 1} | {weapon,-6} | {level,-6} | {(skills ? "simple" : "idle"),-6} | {wins.Count,2}/10 | {row.Item2,6:0} | {row.Item3,4:0} | {runs.Average(r => r.Stuns),4:0.0} | {runs.Average(r => r.Synergies),3:0.0} | {runs.Average(r => r.Blocks),4:0.0} | {runs.Average(r => r.ShieldSeconds),4:0} | {row.Item4,4:P0} | {runs.Average(r => r.Elites),3:0.0}");
+                        table[(i + 1, weapon, level, player)] = row;
+                        Console.WriteLine($"  {i + 1} | {weapon,-6} | {level,-6} | {Name(player),-6} | {wins.Count,2}/10 | {row.Item2,6:0} | {row.Item3,4:0} | {runs.Average(r => r.Stuns),4:0.0} | {runs.Average(r => r.Synergies),3:0.0} | {runs.Average(r => r.Blocks),4:0.0} | {runs.Average(r => r.ShieldSeconds),4:0} | {row.Item4,4:P0} | {runs.Average(r => r.Elites),3:0.0}");
                     }
+        // What the players meet (R3): per stage, level and player, both weapons together.
+        Console.WriteLine($"Adventure tactics (simulation; casual: notices after {CasualReaction} s, misses {CasualMiss:P0}): stage | level | player | warded hits/run | enemy heals landed/started | quiet time (≥ {QuietAfter} s without damage) | target changes/min | stun chains/run | rock blocks/run");
+        List<Outcome> Runs(int stage, BattleDifficulty level, Player player) =>
+            played.Where(p => p.Key.Stage == stage && p.Key.Level == level && p.Key.Player == player).SelectMany(p => p.Value).ToList();
+        for (int i = 1; i <= stages.Length; i++)
+            foreach (var level in levels)
+                foreach (var player in Players)
+                {
+                    var runs = Runs(i, level, player);
+                    int cast = runs.Sum(r => r.HealsCast), landed = runs.Sum(r => r.HealsLanded);
+                    Console.WriteLine($"  {i} | {level,-6} | {Name(player),-6} | {runs.Average(r => r.Warded),5:0.0} | {landed,3}/{cast,-3} ({(cast > 0 ? (double)landed / cast : 0),4:P0}) | {runs.Average(r => r.QuietShare),4:P0} | {runs.Average(r => r.Switches),4:0.0} | {runs.Average(r => r.StunChains),3:0.0} | {runs.Average(r => r.Blocks),4:0.0}");
+                }
+        // The casual player is measured, not held to a target yet (the user plays before balance is
+        // changed); it must still do worse than the best case, or the delay does nothing. (How many
+        // enemy heals land is about the same for both: the Push cooldown, not the reaction, limits it.)
+        var all = played.Where(p => p.Key.Player != Player.Idle).GroupBy(p => p.Key.Player).ToDictionary(g => g.Key, g => g.SelectMany(p => p.Value).ToList());
+        double Wins(Player player) => all[player].Count(r => r.Won) / (double)all[player].Count;
+        double Left(Player player) => all[player].Where(r => r.Won).Average(r => r.HpShare);
+        check(Wins(Player.Casual) <= Wins(Player.Simple) && Left(Player.Casual) < Left(Player.Simple),
+            $"Balance: the casual player wins no more than the simple one ({Wins(Player.Casual):P0} vs {Wins(Player.Simple):P0}) and ends its wins with less HP ({Left(Player.Casual):P0} vs {Left(Player.Simple):P0})");
+        var again = Play(data, stages[3], BattleWeapon.Sword, BattleDifficulty.Normal, 3, Player.Casual);
+        var once = Play(data, stages[3], BattleWeapon.Sword, BattleDifficulty.Normal, 3, Player.Casual);
+        check(again.Won == once.Won && again.Seconds == once.Seconds && again.Hp == once.Hp && again.Warded == once.Warded,
+            "Balance: the casual player's misses come from the seed (the same run plays the same twice)");
+
         // A build that is followed reaches its synergy within the chapter (stage 3 at the latest).
         // Counted on the simple player's runs that won stage 3: a run lost early never got its picks
         // (since Enemy Director milestone 3 the idle player loses stage 2 on Normal and Hard).
-        var thirdWins = played.Where(p => p.Key.Stage == 3 && p.Key.Skills).SelectMany(p => p.Value).Where(r => r.Won).ToList();
+        var thirdWins = played.Where(p => p.Key.Stage == 3 && p.Key.Player == Player.Simple).SelectMany(p => p.Value).Where(r => r.Won).ToList();
         double reached = thirdWins.Count(r => r.Synergies > 0) / (double)thirdWins.Count;
         check(reached >= 0.9, $"Balance: following one group, a synergy is on by the end of stage 3 in ≥ 90 % of the simple player's runs that win it ({reached:P0})");
 
@@ -111,25 +201,25 @@ internal static class AdventureBalanceTests
         // stages 1–2 even idle; no win takes longer than ~4 minutes; sword and hammer stay close.
         foreach (var weapon in weapons)
             for (int s = 1; s <= stages.Length; s++)
-                check(table[(s, weapon, BattleDifficulty.Normal, true)].Wins >= 0.8,
-                    $"Balance: stage {s}, {weapon}, Normal, simple player wins ≥ 80 % ({table[(s, weapon, BattleDifficulty.Normal, true)].Wins:P0})");
+                check(table[(s, weapon, BattleDifficulty.Normal, Player.Simple)].Wins >= 0.8,
+                    $"Balance: stage {s}, {weapon}, Normal, simple player wins ≥ 80 % ({table[(s, weapon, BattleDifficulty.Normal, Player.Simple)].Wins:P0})");
         foreach (var weapon in weapons)
             for (int s = 1; s <= 2; s++)
-                check(table[(s, weapon, BattleDifficulty.Easy, false)].Wins >= 0.8,
-                    $"Balance: stage {s}, {weapon}, Easy, even an idle player wins ({table[(s, weapon, BattleDifficulty.Easy, false)].Wins:P0})");
+                check(table[(s, weapon, BattleDifficulty.Easy, Player.Idle)].Wins >= 0.8,
+                    $"Balance: stage {s}, {weapon}, Easy, even an idle player wins ({table[(s, weapon, BattleDifficulty.Easy, Player.Idle)].Wins:P0})");
         // Enemy Director milestone 3: the idle player wins at most 30 % of stages 2–5 on Normal, and the
         // simple player ends them with less HP than before (it used to finish near full: 95–119 HP).
         // The agreed ≤ 60 % HP left is not reached by this bot (it answers every windup at once).
         foreach (var weapon in weapons)
             for (int s = 2; s <= stages.Length; s++)
             {
-                check(table[(s, weapon, BattleDifficulty.Normal, false)].Wins <= 0.3,
-                    $"Balance: stage {s}, {weapon}, Normal, the idle player wins ≤ 30 % ({table[(s, weapon, BattleDifficulty.Normal, false)].Wins:P0})");
+                check(table[(s, weapon, BattleDifficulty.Normal, Player.Idle)].Wins <= 0.3,
+                    $"Balance: stage {s}, {weapon}, Normal, the idle player wins ≤ 30 % ({table[(s, weapon, BattleDifficulty.Normal, Player.Idle)].Wins:P0})");
                 // Stage 5 allows more: since the boss leaps to the far edge its shield phases last longer,
                 // and a longer fight gives the bot more Healing fish (one per 20 s).
                 double most = s == 5 ? 0.92 : 0.85;
-                check(table[(s, weapon, BattleDifficulty.Normal, true)].HpShare <= most,
-                    $"Balance: stage {s}, {weapon}, Normal, the simple player ends with ≤ {most:P0} HP ({table[(s, weapon, BattleDifficulty.Normal, true)].HpShare:P0})");
+                check(table[(s, weapon, BattleDifficulty.Normal, Player.Simple)].HpShare <= most,
+                    $"Balance: stage {s}, {weapon}, Normal, the simple player ends with ≤ {most:P0} HP ({table[(s, weapon, BattleDifficulty.Normal, Player.Simple)].HpShare:P0})");
             }
         // Elites: some on Normal from stage 3 on, none on Easy, none before stage 3.
         double Elites(int s, BattleDifficulty level) => played.Where(p => p.Key.Stage == s && p.Key.Level == level).SelectMany(p => p.Value).Average(r => r.Elites);
@@ -141,7 +231,7 @@ internal static class AdventureBalanceTests
         foreach (var level in levels)
             for (int s = 1; s <= stages.Length; s++)
             {
-                double sword = table[(s, BattleWeapon.Sword, level, true)].Wins, hammer = table[(s, BattleWeapon.Hammer, level, true)].Wins;
+                double sword = table[(s, BattleWeapon.Sword, level, Player.Simple)].Wins, hammer = table[(s, BattleWeapon.Hammer, level, Player.Simple)].Wins;
                 check(Math.Abs(sword - hammer) <= 0.3, $"Balance: stage {s}, {level}: sword and hammer within 30 points ({sword:P0} vs {hammer:P0})");
             }
         // The whole chapter in one go, saved and read back after every stage (like closing the app).
@@ -155,7 +245,7 @@ internal static class AdventureBalanceTests
             {
                 var adventure = new Adventure(data.Campaign, AdventureProgress.Load(file));
                 inOrder &= adventure.IsUnlocked(stages[i].Id) && (i + 1 >= stages.Length || !adventure.IsUnlocked(stages[i + 1].Id));
-                var run = Play(data, stages[i], BattleWeapon.Sword, BattleDifficulty.Normal, 1, true, adventure.StartBuild(stages[i]));
+                var run = Play(data, stages[i], BattleWeapon.Sword, BattleDifficulty.Normal, 1, Player.Simple, adventure.StartBuild(stages[i]));
                 adventure.Apply("chapter" + i, stages[i], true, run.Won, BattleWeapon.Sword, BattleDifficulty.Normal, 1, run.Seconds, run.Build);
                 inOrder &= run.Won && adventure.Progress.Save(file);
             }
@@ -177,7 +267,7 @@ internal static class AdventureBalanceTests
             "A stage tip needs both languages and at most 220 characters");
 
         // Harder stages ask more: on Normal the idle player does not do better on stage 5 than on stage 1.
-        check(table[(5, BattleWeapon.Sword, BattleDifficulty.Normal, false)].Wins <= table[(1, BattleWeapon.Sword, BattleDifficulty.Normal, false)].Wins,
+        check(table[(5, BattleWeapon.Sword, BattleDifficulty.Normal, Player.Idle)].Wins <= table[(1, BattleWeapon.Sword, BattleDifficulty.Normal, Player.Idle)].Wins,
             "Balance: the boss stage is not easier than the first stage");
     }
 }

@@ -9,6 +9,18 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Đối chiếu HEAD 282a879: nhánh Windup còn giữ StateTime khi catHeld. Chưa triển khai hay playtest; Claude cần kiểm tra vòng đời đòn và giải thích tích hợp.
 - Chỉ tài liệu, không chạy lại test/build/publish. Giữ nguyên thay đổi có sẵn ngoài phần bàn giao.
 
+## Review Enemy Tactics — mốc B: R3 bot cân bằng thực tế hơn (2026-10-20)
+- Người dùng: "yes làm đi" cho mốc B. Chỉ sửa test (tests/DesktopPet.Tests/AdventureBalanceTests.cs); code game không đổi.
+- Đã làm: thêm người chơi "casual" bên cạnh "idle" và "simple" (simple = bot tối ưu, phản xạ ngay nhịp đầu, giữ nguyên các mục tiêu cũ). Casual dùng cùng luật kỹ năng nhưng chỉ thấy cú gồng/lần hồi sau 0,6 s (thời gian mô phỏng, không sleep) và bỏ lỡ 30% (tung một lần mỗi cú gồng theo seed, chạy lại ra y hệt). Bảng thứ hai theo màn × độ khó × người chơi: đòn trúng quái đang được hồi-miễn, lần hồi của quái thành công/bắt đầu, % thời gian ≥ 2 s quái không mất máu, số lần mèo đổi mục tiêu/phút, choáng nối tiếp (≤ 2 s sau khi hết miễn choáng), số lần đá chặn.
+- Check mới (không phải mục tiêu cân bằng): casual thắng không hơn simple và còn ít HP hơn khi thắng; cùng seed chạy hai lần ra y hệt.
+- Kết quả mô phỏng (không phải chơi thật, 10 seed):
+  - Tổng: casual thắng 82%, simple 94%; HP còn khi thắng 73% vs 79%.
+  - Thường + casual: thắng 10/10 mọi màn cả kiếm/búa; HP còn màn 2–5: kiếm 54/51/58/66%, búa 41/49/65/61% (simple: 77/56/73/84%, 66/59/77/78%). Gần mục tiêu 60–85% thắng / HP ≤ 60% hơn simple ở thắng, nhưng thắng vẫn 100%.
+  - Khó + casual: màn 2–5 kiếm 2/0/4/4 trên 10, búa 3/3/5/6 trên 10. Dễ + casual: 10/10 mọi màn.
+  - Phát hiện: tỷ lệ lần hồi của quái thành công gần như bằng nhau (casual 53%, simple 55%): Đẩy hồi chiêu 5 s, slime thảo dược hồi được khoảng mỗi 4,4 s nên kể cả bot tối ưu cũng chỉ chặn được khoảng một nửa. Giới hạn là hồi chiêu Đẩy, không phải phản xạ. Số đòn trúng quái được miễn: casual 452, simple 409 (cộng mọi lượt); idle màn 4 Dễ cao nhất (8,3/lượt) vì không bao giờ Đẩy.
+- Test thật: scripts/test.ps1 -Ui: 55 Python OK; 1046 C# đạt; 519 WPF đạt.
+- Không publish: binary không đổi so với 3bfc7c2 (chỉ sửa test). Chưa đổi cân bằng; mọi chỉnh số liệu cần người dùng chơi thật và chốt.
+
 ## Review Enemy Tactics — mốc A: R1 + R2 (2026-10-20)
 - Người dùng: kiểm chứng review đầu docs/NEXT-STEPS.md rồi "ok" kế hoạch mốc A; chọn phương án (a): một quả bom trúng cả slime hồi máu lẫn đồng minh đang được miễn thì đồng minh vẫn miễn quả đó, không phụ thuộc thứ tự danh sách.
 - Kiểm chứng: R1 đúng (miễn còn sót tới hết nhịp và qua lượt bom đầu nhịp sau, khi hồi xong hoặc slime hồi máu bị hạ; Đẩy và kết thúc trận vẫn đúng). R2 đúng (seed ngẫu nhiên + thẻ hiếm 15% làm test Big Heart chập chờn; game không sai). R3 đúng (bot Đẩy ngay nhịp đầu gồng) — mốc B, chưa làm. R4 backlog, chưa làm; đã có sẵn một phần test battle.json khớp code mặc định.
@@ -575,7 +587,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Lịch sử chuyển project: 2026-10-05 tạo AGENTS.md/PROGRESS.md tại ổ D khi thư mục đó trống; source hiện nằm tại ổ C, không cần khôi phục về D.
 
 ## Đang dở và việc tiếp theo
-- Review Enemy Tactics (docs/NEXT-STEPS.md): R1+R2 xong (mốc A). Tiếp: mốc B = R3 bot phản xạ trễ/bỏ lỡ (chỉ test, seed cố định, thời gian mô phỏng) + số đo; R4 (tách PetBattle.cs, đo frame time trận đông quái, test vòng start→kết quả→chơi lại) để sau. Người dùng cần thử: Đẩy slime thảo dược/hạ nó ngay lúc hồi xong thấy đòn trúng bình thường.
+- Review Enemy Tactics (docs/NEXT-STEPS.md): R1+R2 xong (mốc A), R3 xong (mốc B: người chơi casual + số đo). Nếu muốn khó hơn ở Thường: cân nhắc theo bảng casual (vd. hồi chiêu Đẩy so với nhịp hồi của slime thảo dược) — đổi luật, cần người dùng chốt. R4 (tách PetBattle.cs, đo frame time trận đông quái, test vòng start→kết quả→chơi lại) để sau. Người dùng cần thử: Đẩy slime thảo dược/hạ nó ngay lúc hồi xong thấy đòn trúng bình thường.
 - Enemy Director: chiến thuật a–d đã làm (2026-10-20), mỗi cái tắt được bằng battle.json; cần chơi thật để quyết giữ/tắt cái nào.
 - Enemy Director (docs/ENEMY-DIRECTOR.md): ED1–ED3 xong (2026-10-20). Người dùng cần: đi các mục "Enemy Director — mốc 1/2/3" trong MANUAL-TEST.md và chơi thật màn 2–5 ở Thường để quyết độ khó (mô phỏng: tự đánh 0/10, người chơi đơn giản 10/10 còn 59–79% HP, chưa tới mục tiêu 60–85% / ≤ 60%). Nếu vẫn dễ: cân nhắc đổi kinh tế hồi máu (waveHeal, Cá nướng) hoặc hồi chiêu Khiên/Đẩy — là đổi luật, cần người dùng chốt. Có thể thêm: chỉ báo Mai rùa sẵn sàng trên mèo; đo frame time khi đông quái.
 - Combat Depth (docs/COMBAT-DEPTH.md): mốc 1–3 xong (chương vẫn dễ ở Thường, chờ mốc 4 cân bằng). Người dùng cần đi các mục "Combat Depth — mốc 1/2/3" trong MANUAL-TEST.md. Tiếp: mốc 4 đội hình + cân bằng theo mục tiêu mới; khi đó sửa luôn tip màn 2 (vẫn ghi "chơi lại thì bắt đầu từ đầu", sai với build cộng dồn). Để ý: choáng cạnh boss làm màn 5 Khó khó hơn hẳn (xem lại ở mốc 3–4 khi King lui ra xa lúc gọi quân).

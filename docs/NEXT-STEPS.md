@@ -3,6 +3,12 @@
 Cập nhật bàn giao: 2026-10-20 (Asia/Saigon). Review kỹ thuật bên dưới ghi nhận ngày 18/10, sau Battle Mode đợt 11.
 Workspace lúc review: C:\Project VS\Pet Computer; HEAD e45519d với thay đổi đợt 10–11 chưa commit.
 
+## Hướng lớn để Claude đánh giá — Viễn chinh + góc chiến lợi phẩm (2026-10-20)
+
+Đọc [EXPEDITION-DIRECTION.md](EXPEDITION-DIRECTION.md). Người dùng đồng ý ghi hướng mở rộng để Claude kiểm tra, chưa yêu cầu code ngay. Mục tiêu: chọn đường, giữ HP/build trong chuyến, di vật có đánh đổi, boss và kỷ vật trưng bày trên desktop; tận dụng Adventure/combat hiện có, giữ Pet Mode độc lập.
+
+Claude đối chiếu code, đề xuất MVP và rủi ro; chốt save/resume, phần thưởng một lần, reset modifier và luật thất bại trước triển khai. Ví dụ di vật, thời lượng 10–15 phút và từng thông số là đề xuất chưa chốt. Không bỏ qua mục cứu mèo/review còn mở phía dưới. Không xây lại engine hoặc đưa combat sang Python.
+
 ## Bàn giao mới — cứu mèo không làm quái đứng động tác (2026-10-20)
 
 Người dùng thấy slime bị freeze khi cứu mèo và đồng ý hướng bên dưới; yêu cầu ghi để Claude kiểm tra. Mốc này chỉ bàn giao tài liệu, chưa triển khai. Đọc AGENTS.md, kiểm chứng code và giải thích kế hoạch tích hợp trước khi sửa. Review R1/R2 phía dưới đã được Claude xử lý ở mốc A theo PROGRESS.md; không làm lại.

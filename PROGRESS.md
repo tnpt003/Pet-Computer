@@ -4,6 +4,11 @@ Cập nhật: 2026-10-20 (Asia/Saigon).
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
+## Bàn giao hướng Viễn chinh (2026-10-20)
+- Theo yêu cầu người dùng, ghi docs/EXPEDITION-DIRECTION.md và dẫn ở đầu NEXT-STEPS.md: hướng lớn Viễn chinh + góc chiến lợi phẩm để Claude đánh giá trước code.
+- Có mục tiêu/vòng chơi, MVP, tích hợp/save/reward, mốc và nghiệm thu; phân biệt hướng đồng ý bàn giao với chi tiết chưa chốt. Giữ Adventure/Pet Mode và các việc sửa hiện hành.
+- Chỉ tài liệu; chưa triển khai, chưa chạy lại build/test/playtest/publish. Giữ thay đổi có sẵn ngoài phần bàn giao.
+
 ## Bàn giao cứu mèo và hoạt động của quái (2026-10-20)
 - Đã thêm mục đầu docs/NEXT-STEPS.md theo yêu cầu: quái tiếp tục hoạt động khi cứu mèo, đòn hoàn tất/đánh hụt thay vì giữ windup, giữ miễn sát thương và luật pause/timer hiện có.
 - Đối chiếu HEAD 282a879: nhánh Windup còn giữ StateTime khi catHeld. Chưa triển khai hay playtest; Claude cần kiểm tra vòng đời đòn và giải thích tích hợp.

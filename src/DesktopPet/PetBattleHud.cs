@@ -18,6 +18,11 @@ public sealed class BattleHud : Border
     // Slots follow the skill list (PetBattleData.cs): a new skill gets its slot automatically.
     public static readonly BattleSkill[] SkillOrder = Array.ConvertAll(BattleSkills.All, info => info.Skill);
     private const double HpWidth = 170, BossWidth = 200;
+    // The centre column (status, wave dots, boss bar, banner).
+    public const double CentreWidth = 230;
+    // For checks: the banner and the width it takes on the HUD now (after any shrinking).
+    public string BannerText => banner.Text;
+    public double BannerShownWidth => banner.IsVisible ? banner.TransformToAncestor(this).TransformBounds(new Rect(banner.RenderSize)).Width : 0;
     private readonly Func<string, string, string> L;
     private readonly TextBlock hpText, status, hint, banner, bossName, comboText, upgradesText;
     private readonly Border hpFill, hpTrail, bossFill, bossBar, pauseButton, endButton;
@@ -104,8 +109,11 @@ public sealed class BattleHud : Border
         upgradesText = new TextBlock { Foreground = Gold, FontSize = 10.5, FontWeight = FontWeights.SemiBold, HorizontalAlignment = HorizontalAlignment.Center,
             TextAlignment = TextAlignment.Center, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 3, 0, 0), Visibility = Visibility.Collapsed };
         bossPanel.SetBinding(VisibilityProperty, new System.Windows.Data.Binding(nameof(Visibility)) { Source = bossBar });
-        var centre = new Grid { Width = 230, Margin = new Thickness(14, 0, 14, 0), VerticalAlignment = VerticalAlignment.Center,
-            Children = { new StackPanel { Children = { status, waveDots, bossPanel, upgradesText } }, banner } };
+        // A banner wider than the centre (a long stage or enemy name) is shrunk to fit it, so it never
+        // spills over the HP bar or the skills and the HUD keeps its size.
+        var bannerFit = new Viewbox { Stretch = Stretch.Uniform, StretchDirection = StretchDirection.DownOnly, VerticalAlignment = VerticalAlignment.Center, Child = banner };
+        var centre = new Grid { Width = CentreWidth, Margin = new Thickness(14, 0, 14, 0), VerticalAlignment = VerticalAlignment.Center,
+            Children = { new StackPanel { Children = { status, waveDots, bossPanel, upgradesText } }, bannerFit } };
 
         // Right: skills, then Pause / End.
         var bar = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };

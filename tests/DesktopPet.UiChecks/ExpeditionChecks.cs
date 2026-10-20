@@ -133,6 +133,19 @@ internal static class ExpeditionChecks
                   && !window.ExpeditionMapOpen && Count("Pet expedition") == 0 && window.Battle.Weapon.Id == BattleWeapon.Hammer && window.Battle.Difficulty == BattleDifficulty.Hard,
                 "Fight starts the node's own battle with the run's gear (the map closes)");
             check(Saved()?.Fighting == 1, "The battle under way is saved before it is fought");
+            // The banner names the step and encounter and always fits the HUD's centre (a long one shrinks; the HUD keeps its width).
+            var hud = (BattleHud)typeof(PetWindow).GetField("battleHud", Flags)!.GetValue(window)!;
+            hud.Update(window.Battle!, false, false, false, false);
+            hud.UpdateLayout();
+            double hudWidth = hud.ActualWidth;
+            check(hud.BannerText == "Step 1/3 · Fort" && hud.BannerShownWidth > 0 && hud.BannerShownWidth <= BattleHud.CentreWidth + 0.5,
+                $"The step banner is short and fits the HUD ({hud.BannerText}, {hud.BannerShownWidth:0} DIPs)");
+            hud.ShowBanner("Expedition · Step 6/6 · The King returns with a much longer name", window.Battle!.Time);
+            hud.Update(window.Battle!, false, false, false, false);
+            hud.UpdateLayout();
+            check(hud.BannerShownWidth > 0 && hud.BannerShownWidth <= BattleHud.CentreWidth + 0.5 && Math.Abs(hud.ActualWidth - hudWidth) < 0.5,
+                $"A long banner shrinks to the HUD's centre and the HUD keeps its width ({hud.BannerShownWidth:0} DIPs, HUD {hudWidth:0} → {hud.ActualWidth:0})");
+            Shot("Pet battle HUD", "expedition-hud-banner.png");
             Finish();
             await Task.Delay(30);
             string panel = ResultText();

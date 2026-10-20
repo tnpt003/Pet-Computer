@@ -292,8 +292,9 @@ public sealed partial class PetWindow
     // A stage battle just started: its name as a banner, and its tip the first time.
     private void StageBattleStarted(StageSpec stage)
     {
-        // An Expedition encounter: its step as the banner (encounters have no tips).
-        if (battleExpedition is ExpeditionBattle x) { battleHud?.ShowBanner(ExpeditionStageTitle(x.Node.Step, x.Expedition.Spec.StepCount, stage), 0, 1.4); return; }
+        // An Expedition encounter: its step and name as the banner (the HUD's name line already says
+        // Expedition; encounters have no tips).
+        if (battleExpedition is ExpeditionBattle x) { battleHud?.ShowBanner(StepTitle(x.Node.Step, x.Expedition.Spec.StepCount) + " · " + stage.Name(English), 0, 1.4); return; }
         battleHud?.ShowBanner(StageTitle(stage), 0, 1.4);
         if (!AdventureProgress.Seen.Contains(stage.Id) && stage.Tip(English) is { Length: > 0 }) ShowStageTip(stage);
     }

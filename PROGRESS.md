@@ -4,6 +4,12 @@ Cập nhật: 2026-10-21 (Asia/Saigon).
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
+## HUD: banner không tràn khung (2026-10-21)
+- Người dùng gửi ảnh: banner "Expedition · Step 1/6 · Shortcut" (22pt, cột giữa HUD cố định 230 DIPs, không xuống dòng) tràn sang thanh HP và ô kỹ năng.
+- Đã làm: PetBattleHud bọc banner trong Viewbox chỉ thu nhỏ (DownOnly): banner dài hơn cột giữa tự nhỏ lại cho vừa, HUD giữ nguyên kích thước (không nhảy khi banner hiện). Banner viễn chinh ngắn lại thành "Bậc 1/6 · <tên trận>" (dòng tên đã ghi "Viễn chinh 1/6"). Áp dụng cho mọi banner (tên màn, tinh anh, boss…).
+- Test thật: scripts/test.ps1 -Ui: Python 55 OK; C# 1121; WPF 561 (mới: banner bậc vừa cột giữa ở cỡ đầy đủ; banner rất dài thu vào ≤ 230 DIPs, HUD giữ bề rộng). Đã xem ảnh render HUD.
+- Chưa: xem trên máy thật ở DPI 125–150%.
+
 ## Viễn chinh — mốc 2: một chuyến hoàn chỉnh (2026-10-21)
 - Người dùng: Claude đánh giá docs/EXPEDITION-DIRECTION.md, đề xuất MVP + 6 quyết định (rời trận trừ 25% HP tối đa, thua là hết chuyến, mở sau Vua Slime, trang bị cố định cả chuyến, thẻ chọn trong trận như cũ, thưởng/lựa chọn theo seed lưu một lần) → "ok theo đề xuất". Quyết định ghi ở đầu EXPEDITION-DIRECTION.md.
 - Đã làm (C# only, Python không đụng):

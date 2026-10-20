@@ -182,7 +182,7 @@ Nên chép dự phòng %LOCALAPPDATA%\DesktopPet\adventure-progress.json (nếu 
 #### Enemy Director — mốc 2: vai trò quái, chiến thuật (2026-10-20)
 - [ ] Slime thảo dược: có mũ lá và túi thảo dược, không còn dấu + trên thân. Lá sáng và có hạt sáng bay tới đồng minh khi gồng hồi; hết lượng hồi thì lá cụp xỉn. Đẹp/đọc rõ trên nền sáng và tối.
 - [ ] Đồng minh của nó tụt dưới ~1/3 máu ở xa: nó co người trong vòng lá, có dấu xanh ở điểm đến, rồi hiện ra sau đồng minh. Đẩy lúc đang co người thì hủy. Không teleport liên tục.
-- [ ] Slime đá: thân rộng/thấp, tấm giáp ở phía mặt, nứt thêm khi yếu. Mèo không tự đi xuyên qua đá; click quái phía sau thì mèo vẫn đánh đá trước (vòng xám dưới chân đá). Bế mèo thả ra sau đá thì đánh thẳng mục tiêu. Thả mèo đè lên đá: mèo bước ra mép gần, không nhảy xa. Đánh từ sau lưng đá không bao giờ "CHẶN"; đá cần một chút thời gian quay lại.
+- [ ] Slime đá: thân rộng/thấp, khiên đá ở phía mặt (khiên mới: xem mục mốc 3), nứt thêm khi yếu. Mèo không tự đi xuyên qua đá; click quái phía sau thì mèo vẫn đánh đá trước (vòng xám dưới chân đá). Bế mèo thả ra sau đá thì đánh thẳng mục tiêu. Thả mèo đè lên đá: mèo bước ra mép gần, không nhảy xa. Đánh từ sau lưng đá không bao giờ "CHẶN"; đá cần một chút thời gian quay lại.
 - [ ] Không thấy quá 2 quái cùng gồng một lúc; các đòn không trúng cùng một khung hình.
 - [ ] Màn 4: một slime đá đứng chắn giữa mèo và slime thảo dược; ném mèo sang phía kia thì đá đổi chỗ sau một nhịp.
 - [ ] Màn 5 đợt 1: mũi tên đỏ + banner "Quái tới từ phía sau!" rồi slime nhanh ra ở mép đó sau ~1 s. Đứng sát mép đó thì quái ra ở mép kia. Cầm cự sau giây 45: quái ra luân phiên hai mép, có mũi tên.
@@ -193,6 +193,7 @@ Nên chép dự phòng %LOCALAPPDATA%\DesktopPet\adventure-progress.json (nếu 
 - [ ] Slime nhanh tinh anh gồng lâu hơn thấy rõ rồi lao nhanh hơn; vẫn né/Đẩy kịp. Slime đá tinh anh chặn chắc đòn đầu phía trước ("CHẶN"); Bom len vẫn trúng. Slime thảo dược tinh anh hồi lần đầu nhiều hơn (+30 thay vì +15).
 - [ ] Thẻ hiếm: chơi vài lượt màn 2–5, đôi khi có thẻ viền vàng "★ Thẻ hiếm · một lần mỗi build" thay thẻ cùng nhóm. Đã lấy rồi thì không hiện lại. HUD và bảng chuẩn bị màn sau ghi "◆ <tên thẻ>".
 - [ ] Mai rùa: đòn đầu trúng mèo không mất máu (mảnh đá xám ở mèo), ~12 s sau lại chặn được một đòn; bế mèo thì không hồi nhanh hơn. Đòn mở màn: nhát đầu vào mỗi quái số sát thương gấp đôi. Chạy đà: mèo chạy một quãng tới quái rồi chém, số to hơn và có vệt vàng combo; đứng yên chém thì bình thường.
+- [ ] Slime đá cầm khiên đá hình huy hiệu (đầu phẳng, đáy nhọn, có bàn tay) ở phía mặt, không còn giống cái loa/vòi. Màn 4: slime thảo dược đứng sau 3 con đá vẫn thấy rõ (vẽ trên cùng, đá đè lên nó hơi mờ); click vào nó chọn đúng nó. Nền sáng và tối.
 - [ ] Cảm nhận độ khó mới: Dễ màn 1–2 vẫn thoải mái; Thường màn 2–5 phải dùng kỹ năng/bế mèo mới thắng; Khó là thử thách thật. Ghi vào "Nhật ký chơi thử" (mô phỏng không thay chơi thật).
 
 ### Nhật ký chơi thử Battle Mode (beta, thêm 2026-10-18)

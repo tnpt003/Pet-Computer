@@ -122,6 +122,15 @@ internal static class EnemyVisualChecks
         int leftAfter = Count(px, armor, 255, 300, floor - 45, floor), rightAfter = Count(px, armor, 300, 345, floor - 45, floor);
         check(right > left + 20 && leftAfter > rightAfter + 20, $"The rock's armour is on the side it faces (right {right}/{left}, left {leftAfter}/{rightAfter})");
 
+        // A herb slime behind three rocks (it came first, so it used to be drawn under them): it is drawn
+        // on top, the rocks over it fade a little, and a click on it picks it.
+        var (gsim, gview) = Field(("mender", 300), ("rock", 270), ("rock", 300), ("rock", 330));
+        foreach (var s in gsim.Slimes) s.Facing = 1;
+        px = Shot(gview, "enemy-guarded-healer");
+        int body = Count(px, Color.FromRgb(0x4F, 0xC9, 0xA8), 285, 315, floor - 22, floor - 4), cap = Count(px, leaf, 290, 325, floor - 46, floor - 24);
+        int? picked = gview.SlimeAt(new Point(300, floor - 12));
+        check(body > 60 && cap > 15 && picked == gsim.Slimes[0].Id, $"A herb slime among three rocks stays in sight and is the one a click picks (body {body}, leaf {cap} pixels)");
+
         // In the way: a grey dashed ring at the rock's feet while the cat goes past it for its target.
         var (wsim, wview) = Field(("rock", 300), ("slime", 480));
         wsim.Paused = false;

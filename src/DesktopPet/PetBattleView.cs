@@ -53,21 +53,28 @@ public sealed class BattleFieldView : FrameworkElement
 
     private double Floor => ActualHeight - 2;
 
-    // The slime under a point in this view, if any (the closest one when they overlap).
+    // The slime under a point in this view, if any. Where they overlap, the one drawn on top whose body
+    // the point is on (a support over the rocks guarding it), otherwise the closest one.
     public int? SlimeAt(Point point)
     {
         int? best = null;
         double bestDistance = double.MaxValue;
+        int bestRank = -1;
         for (int i = 0; i < sim.Slimes.Count; i++)
         {
             var slime = sim.Slimes[i];
             if (!slime.Targetable) continue;
             double dx = Math.Abs(point.X - (slime.X - OriginX));
             if (dx > slime.Width / 2 + 10 || point.Y < Floor - slime.Height - 24 || point.Y > Floor + 4) continue;
-            if (dx < bestDistance) { bestDistance = dx; best = slime.Id; }
+            int rank = dx <= slime.Width / 2 ? Layer(slime) : -1;
+            if (rank > bestRank || (rank == bestRank && dx < bestDistance)) { bestRank = rank; bestDistance = dx; best = slime.Id; }
         }
         return best;
     }
+
+    // Drawing layers, back to front: blockers (rocks), then the others, supports on top, so a healer
+    // standing behind its guards is never hidden by them.
+    public static int Layer(Slime slime) => slime.Type.Blocker ? 0 : slime.Type.Support ? 2 : 1;
 
     private static Brush Frozen(byte a, byte r, byte g, byte b) { var brush = new SolidColorBrush(Color.FromArgb(a, r, g, b)); brush.Freeze(); return brush; }
     private static Pen FrozenPen(Brush brush, double thickness, DashStyle? dash = null)
@@ -130,7 +137,9 @@ public sealed class BattleFieldView : FrameworkElement
         double floor = Floor, time = sim.Time;
         // Index loops: foreach over IReadOnlyList boxes an enumerator every frame.
         for (int i = 0; i < sim.Bombs.Count; i++) DrawBomb(dc, sim.Bombs[i], sim.Bombs[i].X - OriginX, floor);
-        for (int i = 0; i < sim.Slimes.Count; i++) DrawSlime(dc, sim.Slimes[i], sim.Slimes[i].X - OriginX, floor, sim.Settings, time);
+        for (int layer = 0; layer <= 2; layer++)
+            for (int i = 0; i < sim.Slimes.Count; i++)
+                if (Layer(sim.Slimes[i]) == layer) DrawSlime(dc, sim.Slimes[i], sim.Slimes[i].X - OriginX, floor, sim.Settings, time);
         for (int i = 0; i < sim.Effects.Count; i++) DrawEffect(dc, sim.Effects[i], sim.Effects[i].X - OriginX, floor - sim.Effects[i].Height, floor);
         if (sim.Incoming) DrawIncoming(dc, sim.IncomingX - OriginX, floor, time);
     }
@@ -149,6 +158,17 @@ public sealed class BattleFieldView : FrameworkElement
         dc.DrawLine(WarningPen, new Point(x, ey - 9), new Point(x, ey + 1));
         dc.DrawEllipse(Warning, Halo, new Point(x, ey + 7), 2.4, 2.4);
         dc.DrawEllipse(Warning, null, new Point(x, ey + 7), 2.4, 2.4);
+    }
+
+    // A blocker overlapping a support that is still on the field.
+    private bool CoversSupport(Slime blocker)
+    {
+        for (int i = 0; i < sim.Slimes.Count; i++)
+        {
+            var s = sim.Slimes[i];
+            if (s.Type.Support && s.State != SlimeState.Defeated && Math.Abs(s.X - blocker.X) < (s.Width + blocker.Width) / 2 * 0.85) return true;
+        }
+        return false;
     }
 
     private void DrawSlime(DrawingContext dc, Slime slime, double x, double floor, BattleSettings s, double time)
@@ -195,6 +215,8 @@ public sealed class BattleFieldView : FrameworkElement
         }
         // A stony body is wide and low (its hitScale is wider to match).
         if (slime.Type.Marks == "cracks") { sx *= 1.12; sy *= 0.9; }
+        // A blocker in front of a support fades a little, so the support shows through it.
+        if (slime.Type.Blocker && CoversSupport(slime)) opacity *= 0.72;
         if (slime.State == SlimeState.Teleporting) DrawTeleport(dc, slime, x, floor, time);
         if (sim.BlockedById == slime.Id)
         {
@@ -254,6 +276,9 @@ public sealed class BattleFieldView : FrameworkElement
         var body = Body(bw, bh);
         Brush baseFill = KindBrush(slime.Enraged ? slime.Type.AngryColor : slime.Type.Color);
         Brush fill = slime.HitFlash > 0 ? Brushes.White : slime.State == SlimeState.Windup ? Blend(baseFill, t / windup) : baseFill;
+        // A thin dark edge outside the white halo: two slimes overlapping still read as two, on light
+        // desktops as on dark ones.
+        dc.DrawGeometry(null, Edge, body);
         dc.DrawGeometry(null, Halo, body);
         // An elite: a gold rim round the body (and a star, below).
         if (slime.Elite != null) dc.DrawGeometry(null, EliteRim, body);
@@ -282,11 +307,18 @@ public sealed class BattleFieldView : FrameworkElement
         }
         if (slime.Type.Marks == "cracks")
         {
-            // A stony body: dark cracks (more once it is weak) and an armour slab on the side it faces.
+            // A stony body: dark cracks (more once it is weak) and, on the side it faces, a round stone
+            // shield held up by a small paw.
             dc.DrawGeometry(null, Crack, Cracks);
             if (slime.Hp < slime.MaxHp / 2) dc.DrawGeometry(null, Crack, MoreCracks);
             dc.PushTransform(new ScaleTransform(slime.Facing, 1));
-            dc.DrawGeometry(slime.HitFlash > 0 ? Brushes.White : ArmorGrey, Outline, Armor);
+            bool flash = slime.HitFlash > 0;
+            dc.DrawGeometry(null, Halo, Shield);
+            dc.DrawGeometry(flash ? Brushes.White : ArmorGrey, Outline, Shield);
+            dc.DrawGeometry(null, ShieldRim, ShieldInner);
+            dc.DrawGeometry(null, Crack, ShieldCrack);
+            dc.DrawEllipse(flash ? Brushes.White : StoneGrey, Outline, ShieldCentre, 2.4, 2.4);
+            dc.DrawEllipse(flash ? Brushes.White : fill, Outline, new Point(15.5, -12), 4, 3.6);
             dc.Pop();
         }
         if (slime.Type.Marks == "leaf") DrawHerbal(dc, slime, time);
@@ -452,6 +484,14 @@ public sealed class BattleFieldView : FrameworkElement
     private static readonly Brush LeafGlow = Frozen(150, 0xC8, 0xFF, 0xB8);
     private static readonly Brush Pouch = Frozen(255, 0xB5, 0x83, 0x5A);
     private static readonly Brush ArmorGrey = Frozen(255, 0x7E, 0x77, 0x6D);
+    // The rock's shield (body coordinates, facing right): an upright heater shield in front (flat top,
+    // pointed foot), an inner rim, a crack and a stud; the paw holding it at its back edge.
+    private static readonly Geometry Shield = Parse("M 14,-31 L 32,-31 C 32,-17 29,-8 23,-2 C 17,-8 14,-17 14,-31 Z");
+    private static readonly Geometry ShieldInner = Parse("M 17.5,-28 L 28.5,-28 C 28.5,-18 26.5,-11 23,-6.5 C 19.5,-11 17.5,-18 17.5,-28 Z");
+    private static readonly Point ShieldCentre = new(23, -18);
+    private static readonly Pen ShieldRim = FrozenPen(Frozen(255, 0x5E, 0x58, 0x50), 1.6);
+    private static readonly Geometry ShieldCrack = Parse("M 26,-27 L 25,-23 L 27,-21");
+    private static readonly Pen Edge = FrozenPen(Frozen(150, 0x26, 0x23, 0x38), 7.5);
     // Elites: a gold rim (drawn under the dark outline, so it shows just outside it) and a star.
     private static readonly Pen EliteRim = FrozenPen(Frozen(255, 0xF2, 0xB8, 0x1E), 7);
     private static readonly Geometry EliteStar = Parse("M 0,-10 L 2.8,-2.8 L 10,0 L 2.8,2.8 L 0,10 L -2.8,2.8 L -10,0 L -2.8,-2.8 Z");
@@ -467,7 +507,6 @@ public sealed class BattleFieldView : FrameworkElement
     private static readonly Geometry LeafRib = Parse("M 0,-33.5 L 17,-41");
     private static readonly Geometry SmallLeaf = Parse("M -8,0 C -4,-6 4,-6 8,0 C 4,6 -4,6 -8,0 Z");
     // Facing right (mirrored for left): a slab over the front of a stony body.
-    private static readonly Geometry Armor = Parse("M 16,-1 C 26,-6 27,-20 20,-28 L 15,-25 C 20,-19 20,-8 13,-3 Z");
     private static readonly Geometry MoreCracks = Parse("M -4,-30 L -1,-24 L -6,-19 M 2,-14 L 6,-10 L 3,-5");
 
     private static readonly Geometry Arrow = CreateArrow();

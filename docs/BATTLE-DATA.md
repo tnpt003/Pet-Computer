@@ -286,7 +286,7 @@ Màn sinh tồn: `"objective": "survive", "surviveSeconds": 10–600`. Các đ�
   - Boss `shieldBreakStun` (0–5): khiên vỡ thì boss choáng bấy nhiêu giây, vẫn nhận sát thương.
   - Quân boss gọi ra không xuất hiện trong vòng 90 DIPs quanh mèo khi còn chỗ.
   - `marks: "leaf"`: slime thảo dược có mũ lá + túi thảo dược (không còn dấu + trên thân); lá sáng khi gồng hồi, hạt sáng bay tới đồng minh; hết lượng hồi thì lá cụp, xỉn màu. `"cross"` vẫn hợp lệ cho dữ liệu cũ.
-- Bản gốc: slime đá `blocker`, `blockFrontOnly`, `turnSeconds` 0.6, `hitScale` 1.5 (vẽ rộng/thấp, có tấm giáp phía trước, thêm vết nứt dưới 50% HP); slime thảo dược `leaf`, `teleportBelow` 0.35 / 0.6 s / 8 s; Vua Slime chương 1 `rallyEvery` 7, `rallyCharge` 0.8, `rallySeconds` 3, `rallySpeed` 1.4, `shieldBreakStun` 2. Màn 5 đợt 1: đá + slime từ mép xa, 2 slime nhanh từ phía sau. Cầm cự: hai phía từ giây 45. rulesVersion màn 1–5: 3/7/8/8/8 (chia lượt ra đòn áp cho mọi màn).
+- Bản gốc: slime đá `blocker`, `blockFrontOnly`, `turnSeconds` 0.6, `hitScale` 1.5 (vẽ rộng/thấp, cầm khiên đá hình huy hiệu ở phía mặt, thêm vết nứt dưới 50% HP); slime thảo dược `leaf`, `teleportBelow` 0.35 / 0.6 s / 8 s; Vua Slime chương 1 `rallyEvery` 7, `rallyCharge` 0.8, `rallySeconds` 3, `rallySpeed` 1.4, `shieldBreakStun` 2. Màn 5 đợt 1: đá + slime từ mép xa, 2 slime nhanh từ phía sau. Cầm cự: hai phía từ giây 45. rulesVersion màn 1–5: 3/7/8/8/8 (chia lượt ra đòn áp cho mọi màn).
 
 ## Ngẫu nhiên có giới hạn: tinh anh, ngân sách, thẻ hiếm (Enemy Director mốc 3)
 
@@ -303,4 +303,5 @@ Màn sinh tồn: `"objective": "survive", "surviveSeconds": 10–600`. Các đ�
   - `shell` (Mai rùa, Phòng thủ; `amount` 3–60 s): đòn tiếp theo trúng mèo bị chặn trọn (không mất máu, không choáng), rồi mọc lại sau `amount` giây mèo đứng dưới sàn (không hồi khi đang bế). Khiên bong bóng vẫn được tính trước.
   - `opener` (Đòn mở màn, Sức mạnh; `amount` 0.1–3): nhát vũ khí đầu tiên trúng mỗi quái gây thêm `amount` (1 = ×2). Nhát bị chặn không tính là đã mở. Dư ảnh lặp lại nhát chém không kèm thưởng này.
   - `momentum` (Chạy đà, Tốc độ; `amount` 0.1–3): nhát chém sau khi mèo tự chạy ≥ 140 DIPs trên sàn (kể từ nhát trước) gây thêm `amount` (bản gốc +80%). Bế/kéo mèo không tính là chạy.
+- Vẽ (2026-10-20, sau phản hồi người dùng): quái chắn vẽ ở lớp sau cùng, quái hỗ trợ trên cùng (click chỗ chồng nhau chọn con trên cùng); quái chắn đè lên quái hỗ trợ thì mờ đi một chút; mỗi quái có viền tối mảnh ngoài viền trắng để tách khối khi chồng nhau. Khoảng cách giữa các quái không đổi.
 - Cân bằng chương 1 (mô phỏng, không phải chơi thật): Dễ `enemyHp` 0.65, `enemyDamage` 0.5 (trước đây 0.75/0.6); `threat` màn 2–5: 1.6 / 1.7 / 1.8 / 1.6; ngân sách stream màn 3 là 7, các đợt màn 4–5 chừa đúng chỗ cho một tinh anh. rulesVersion màn 1–5: 4/8/9/9/9.

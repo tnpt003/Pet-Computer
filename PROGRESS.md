@@ -4,6 +4,12 @@ Cập nhật: 2026-10-20 (Asia/Saigon).
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
+## Sau ED3 (2026-10-20) — khiên slime đá, slime hỗ trợ không bị che
+- Người dùng: khiên đá trông như cái vòi hú; slime hỗ trợ bị 3 slime đá che mất. Đã duyệt phần vẽ ("yes làm đi"); khoảng cách giữa các con đá (đổi gameplay) giữ nguyên, chưa làm.
+- PetBattleView: khiên đá hình huy hiệu (đầu phẳng, đáy nhọn, viền trong, vết nứt, đinh tán) + bàn tay slime cầm, theo hướng mặt, chớp trắng khi trúng. Vẽ theo lớp: quái chắn sau cùng, quái hỗ trợ trên cùng; click chỗ chồng nhau chọn con trên cùng (nếu điểm click nằm trên thân nó). Quái chắn đè lên quái hỗ trợ mờ còn 72%. Mọi quái có viền tối mảnh ngoài viền trắng.
+- Test thật: WPF 512 đạt (mới: slime thảo dược giữa 3 đá vẫn thấy và được click chọn; check giáp đúng phía vẫn đạt với khiên mới). Đã xem ảnh render nền tối/sáng (lần đầu khiên tròn trông như bánh xe → đổi sang hình huy hiệu).
+- Chưa: chơi thật xem cảm giác lúc đá đang di chuyển/đánh.
+
 ## Enemy Director mốc ED3 (2026-10-20) — tinh anh, ngân sách, thẻ hiếm, cân bằng
 - Người dùng: "mở phiên mới cho ED3, làm đi" — làm theo các lựa chọn đã chốt ở ED1 (elite bộ nhỏ, 3 thẻ hiếm). C# BattleSim + dữ liệu + vẽ; Python không đụng.
   - Ngân sách: `cost` cho mỗi quái (slime/nhanh 1, đá/thảo dược 2); `budget` trên đợt (nhóm cố định luôn ra, con bốc không vừa thì thành loại rẻ nhất, chừa chỗ cho lượt sau; phần dư trả cho tinh anh) và trên stream (tổng cost đang trên sàn, kể cả tinh anh).

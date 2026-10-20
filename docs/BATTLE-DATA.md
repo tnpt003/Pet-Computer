@@ -218,7 +218,7 @@ Màn có `"upgrades": true` sẽ cho chọn thẻ sau mỗi đợt đã dọn (k
 | effect | amount | Ý nghĩa (bản gốc) |
 | --- | --- | --- |
 | `thorns` | 0.05–2 | Giáp gai: phần sát thương mèo **thực nhận** (sau giáp) dội lại quái vừa đánh. Khiên chặn thì không dội. (0.35) |
-| `armorBreak` | 0.05–3 | Phá giáp: đòn combo × (1 + amount). Xuyên khả năng chặn của slime đá sẽ có ở mốc 3. (0.3) |
+| `armorBreak` | 0.05–3 | Phá giáp: đòn combo × (1 + amount) và xuyên khả năng chặn đòn (`blockChance`, Combat Depth mốc 3). (0.3) |
 | `echo` | 0.1–2, `every` 2–10 | Dư ảnh: cứ `every` nhát trúng thì thêm một đòn amount × sát thương nhát đó. (0.5, mỗi 4 nhát) |
 
 Đòn dội lại và đòn dư ảnh không kích hoạt thêm bất kỳ hiệu ứng build nào (không có vòng lặp).
@@ -238,3 +238,14 @@ Màn sinh tồn: `"objective": "survive", "surviveSeconds": 10–600`. Các đ�
 - Quái lao tới: `"dash": true` thay đòn thường của loại đó. Khi mèo trong `dashRange` (20–600) quái gồng `windup` giây, vạch lao màu đỏ hiện trên sàn theo hướng đã chốt lúc bắt đầu gồng; rồi lao `dashDistance` (20–800) DIPs với tốc độ `dashSpeed` (50–1500, × tốc độ độ khó). Va vào mèo trên đường lao: trúng **một lần** mỗi cú lao (`damage`, × giáp) và choáng mèo. Va chạm được kiểm tra trên cả đoạn đường mỗi frame, nên lao rất nhanh cũng không xuyên qua mèo. Mặc định: 170 / 230 / 420. Slime nhanh (`runner`) có sẵn `dash`.
 - Choáng (cấp trên cùng): `stunDurationSeconds` (0–5, mặc định 1.5; 0 = chỉ mất máu, không choáng) và `stunImmunitySeconds` (0–30, mặc định 3: sau khi hết choáng không bị choáng lại trong khoảng này).
 - Luật: mèo choáng đứng yên, không chém (nhát đang chém bị hủy); người dùng vẫn nhấc/kéo/ném được, kéo không xóa choáng và đồng hồ choáng vẫn chạy khi đang cầm. Pause, menu, chọn thẻ đóng băng nó. Khiên chặn cả máu lẫn choáng; mèo đang cầm/bay hoặc đang được bảo vệ sau khi thả thì cú lao trượt. Đẩy quái lúc gồng hoặc lúc lao sẽ hủy cú lao. Hết trận (thắng/thua/kết thúc) không để lại choáng.
+
+## Chặn đòn, quái hỗ trợ đứng sau, pha khiên của boss (Combat Depth mốc 3)
+
+- Chặn đòn: `blockChance` (0–0.9, mặc định 0 = không chặn) và `blockMaxStreak` (1–10, mặc định 2). Mỗi nhát vũ khí (thường, combo, Dư ảnh) trúng quái này được tung xác suất **một lần** (random của trận, test dùng seed được); bị chặn thì 0 sát thương, không đẩy lùi, hiện "CHẶN"/"BLOCK" và mảnh đá xám. Chặn liền `blockMaxStreak` lần thì nhát sau chắc chắn trúng. Không bao giờ bị chặn: bom len, Giáp gai, đòn combo khi có Phá giáp. Nhát bị chặn vẫn tính vào chuỗi combo. Bản gốc: slime đá 150 HP, 0.3 / 2. Trận tự do cũng có slime đá nên cũng bị ảnh hưởng (kỷ lục trận tự do không có rulesVersion).
+- Hỗ trợ đứng sau: `"support": true`, `keepBack` (0–600, mặc định 110). Còn đồng minh biết đánh (quái không phải support, kể cả boss và con đang hiện ra) thì quái này **không bao giờ đánh mèo**: nó đứng phía của mình so với mèo, sau đồng minh gần mèo nhất ở phía đó `keepBack` DIPs (không có đồng minh phía đó thì cách mèo `keepBack`), đi bằng tốc độ của nó (chậm hơn mèo chạy nên mèo đuổi kịp; tới mép sân thì đứng yên). Lúc lùi nó đi xuyên qua quái khác. Vẫn hồi máu như cũ. Hết đồng minh biết đánh (kể cả khi chỉ còn 2 support) thì đánh như slime thường. Bản gốc: slime thảo dược.
+- Pha khiên của boss: thêm `"shield": true` vào một pha; `summons: [ { "enemy", "count" } ]` (1–4 nhóm, mỗi nhóm 1–6) gọi nhiều loại quân trong một pha (cùng với `summon`/`count`, tổng tối đa 8). Pha khiên bắt buộc phải gọi quân. Luật:
+  - Một đòn không bao giờ đưa HP boss xuống dưới mức của pha khiên kế tiếp: HP dừng ở đó, sát thương dư mất. Pha khiên bật ngay, các pha thấp hơn chờ tới khi khiên tắt.
+  - Khiên bật: boss bỏ đòn đang gồng, chạy về mép sân **xa mèo** với `retreatSpeed` (10–600, mặc định 240), tới nơi hoặc sau `retreatSeconds` (0.2–10, mặc định 3) thì gọi quân của pha ở phía còn trống, trong giới hạn `summonCap`.
+  - Trong khiên: boss không mất máu (kiếm, bom đều hiện "BẤT TỬ"/"IMMUNE"), Giáp gai không dội lên nó, slime thảo dược không hồi cho nó. Nó đứng giữ mép, không đi tới mèo nhưng vẫn dậm nếu mèo lại gần. Mèo tự bỏ qua boss để đánh quân; người dùng click boss thì boss vẫn được đánh dấu, mèo đánh nó lại khi khiên tắt. HUD: thanh máu boss màu vàng, ghi "(khiên: hạ hết quân!)".
+  - Khiên tắt **đúng một lần** khi quân cuối cùng **của chính pha đó** bị hạ (đòn, bom hay Giáp gai đều được); quân của pha khác không giữ khiên. Không gọi được con nào (đầy `summonCap`) thì khiên tắt ngay sau khi chạy tới mép, không kẹt mãi. Pause/menu/chọn thẻ đóng băng cả pha.
+  - Bản gốc Vua Slime chương 1 (`king_c1`): khiên ở 70% (2 slime) và 40% (1 slime thảo dược + 2 slime nhanh), nổi giận ở 30%. Vua Slime của trận tự do (`king`) giữ nguyên.

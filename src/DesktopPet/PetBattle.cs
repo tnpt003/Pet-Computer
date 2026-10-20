@@ -287,6 +287,9 @@ public enum SlimeState { Spawning, Moving, Windup, Recover, Stunned, Defeated, C
 // hits never set off another bonus.
 public enum DamageSource { Weapon, Combo, Bomb, Reflect, Echo }
 
+// What a hit on an enemy did: landed, blocked by a stony enemy, or nothing on a shielded boss.
+public enum HitResult { Landed, Blocked, Immune }
+
 public sealed class Slime
 {
     public int Id { get; init; }
@@ -318,6 +321,17 @@ public sealed class Slime
     public int DashDirection;
     public double DashLeft;
     public bool DashHit;
+    // Block: how many hits in a row this one has blocked.
+    public int BlockStreak;
+    // A support falling back behind a fighting ally (it may then pass through other slimes).
+    public bool KeepingBack;
+    // Boss shield phase: the shield is up (no damage), it is still running to the far edge (side:
+    // +1 right, -1 left; RetreatTime since the phase began) with the helpers it will call there.
+    // ShieldTag tells this phase's helpers (their PhaseTag) from any other helper.
+    public bool Shielded, Retreating;
+    public int RetreatSide, ShieldTag, PhaseTag;
+    public double RetreatTime;
+    public List<string>? PendingCalls;
     public bool Targetable => State is not (SlimeState.Spawning or SlimeState.Defeated);
     public void Set(SlimeState state) { State = state; StateTime = 0; }
 }
@@ -327,13 +341,16 @@ public enum BattleEventKind
 {
     WaveStarted, SlimeSpawned, Swing, SlimeHit, SlimeDefeated, CatHurt, Pushed, WaveCleared, Won, Lost,
     Healed, Cheered, Shielded, Blocked, BombThrown, BombExploded, BossAppeared, BossSummoned, BossEnraged, ComboHit,
-    UpgradeOffered, UpgradeChosen, EnemyHealing, EnemyHealed, CatStunned, SynergyUnlocked, Reflected, Echoed
+    UpgradeOffered, UpgradeChosen, EnemyHealing, EnemyHealed, CatStunned, SynergyUnlocked, Reflected, Echoed,
+    HitBlocked, BossShielded, BossShieldDown, BossImmune
 }
 public readonly record struct BattleEvent(BattleEventKind Kind, double X, double Value = 0);
 // Number: a floating damage (Value > 0) or heal (Value < 0, shown as +HP above the cat).
 // Thud: a heavy weapon's plain hit (dust and a ring on the floor), chosen by the weapon's hitEffect.
 // Mend: green pluses rising from an enemy healed by a support enemy.
-public enum BattleEffectKind { Spark, Poof, Push, Explosion, Slam, Number, Combo, Thud, Mend }
+// Block: grey stone chips and a small stone shield over an enemy that blocked a hit. Immune: a
+// gold ring flashing on a shielded boss hit for nothing.
+public enum BattleEffectKind { Spark, Poof, Push, Explosion, Slam, Number, Combo, Thud, Mend, Block, Immune }
 public sealed class BattleEffect
 {
     public BattleEffectKind Kind;
@@ -427,7 +444,13 @@ public sealed class BattleSim
     }
     public int Reflects { get; private set; }
     public int Echoes { get; private set; }
+    // Hits stony enemies blocked; hits a shielded boss shrugged off; seconds a boss shield was up.
+    public int BlocksMade { get; private set; }
+    public int ImmuneHits { get; private set; }
+    public double BossShieldSeconds { get; private set; }
     private int landedSwings;
+    // Where the cat stood at the last Step (a boss shield phase runs away from it).
+    private double lastCatX;
     // Multipliers the upgrades give (1 without any). Cuts never go below 30 % of the original.
     public double DamageFactor => 1 + damageBonus;
     public double MoveFactor => 1 + moveBonus;
@@ -548,6 +571,7 @@ public sealed class BattleSim
         if (Paused || ChoosingUpgrade || !double.IsFinite(dt) || dt <= 0 || !double.IsFinite(catX)) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
         dt = Math.Min(dt, 0.1);
         Time += dt;
+        lastCatX = catX;
         StepEffects(dt);
         HurtFlash = Math.Max(0, HurtFlash - dt);
         // The stun runs on battle time, held or not (lifting neither ends nor stretches it).
@@ -651,16 +675,13 @@ public sealed class BattleSim
         double knock = arms.Knock + knockBonus;
         events.Add(new(combo ? BattleEventKind.ComboHit : BattleEventKind.SlimeHit, slime.X));
         AddEffect(combo ? BattleEffectKind.Combo : arms.Effect == "thud" ? BattleEffectKind.Thud : BattleEffectKind.Spark, slime.X, slime.Height / 2);
-        if (combo)
-        {
-            // Knocked back away from the cat (heavy kinds less), but not stunned.
-            Combo = 0;
-            CombosLanded++;
-            slime.KnockVelocity = (slime.X < catX ? -1 : 1) * Math.Max(Settings.ComboKnock, knock) * slime.Type.PushFactor;
-        }
-        // A heavy weapon knocks back on every hit (away from the cat; heavy kinds less), no stun.
-        else if (knock > 0) slime.KnockVelocity = (slime.X < catX ? -1 : 1) * knock * slime.Type.PushFactor;
-        Damage(slime, damage, combo ? DamageSource.Combo : DamageSource.Weapon);
+        if (combo) { Combo = 0; CombosLanded++; }
+        // A blocked or shrugged-off hit (or the last one) moves nothing.
+        bool landed = Damage(slime, damage, combo ? DamageSource.Combo : DamageSource.Weapon) == HitResult.Landed && slime.State != SlimeState.Defeated;
+        // A combo knocks back away from the cat (heavy kinds less), but does not stun; a heavy
+        // weapon knocks back on every hit.
+        if (landed && (combo || knock > 0))
+            slime.KnockVelocity = (slime.X < catX ? -1 : 1) * (combo ? Math.Max(Settings.ComboKnock, knock) : knock) * slime.Type.PushFactor;
         // Afterimage: every Every-th landed swing hits a second time (an echo counts nothing itself).
         landedSwings++;
         if (Active("echo") is SynergySpec echo && landedSwings % echo.Every == 0 && slime.Targetable)
@@ -672,11 +693,21 @@ public sealed class BattleSim
         }
     }
 
-    // Every hit on an enemy goes through here. Returns the HP it really lost.
-    private double Damage(Slime slime, double amount, DamageSource source)
+    // Every hit on an enemy goes through here: Landed, or why it did nothing.
+    private HitResult Damage(Slime slime, double amount, DamageSource source)
     {
-        if (!slime.Targetable || amount <= 0) return 0;
-        slime.Hp = Math.Max(0, slime.Hp - amount);
+        if (!slime.Targetable || amount <= 0) return HitResult.Landed;
+        if (slime.Shielded)
+        {
+            // A boss in its shield phase: nothing gets through (not even the bomb).
+            ImmuneHits++;
+            AddEffect(BattleEffectKind.Immune, slime.X, slime.Height / 2, slime.Width);
+            events.Add(new(BattleEventKind.BossImmune, slime.X));
+            return HitResult.Immune;
+        }
+        if (Blocks(slime, source)) return HitResult.Blocked;
+        // A hit never takes a boss past its next shield phase: it stops there, the rest is lost.
+        slime.Hp = Math.Max(ShieldFloor(slime), slime.Hp - amount);
         slime.HitFlash = 0.18;
         AddEffect(BattleEffectKind.Number, slime.X + (slime.IsBoss ? slime.Width * 0.38 : 0), slime.Height + 10, Math.Round(amount));
         if (slime.Hp <= 0)
@@ -688,7 +719,7 @@ public sealed class BattleSim
             if (SelectedId == slime.Id) SelectedId = null;
             AddEffect(BattleEffectKind.Poof, slime.X, slime.Height / 2, slime.IsBoss ? 2 : 1);
             events.Add(new(BattleEventKind.SlimeDefeated, slime.X, slime.IsBoss ? 1 : 0));
-            return amount;
+            return HitResult.Landed;
         }
         var type = slime.Type;
         double fraction = slime.Hp / slime.MaxHp;
@@ -709,25 +740,110 @@ public sealed class BattleSim
             for (int i = 0; i < phases.Length && i < 31; i++)
             {
                 var phase = phases[i];
-                if ((slime.PhasesDone & (1 << i)) != 0 || fraction > phase.At) continue;
+                // The same product as ShieldFloor, so a hit stopped on a shield phase's line starts it.
+                if ((slime.PhasesDone & (1 << i)) != 0 || slime.Hp > phase.At * slime.MaxHp) continue;
                 slime.PhasesDone |= 1 << i; // Once, even if the call is skipped below.
-                if (phase.Summon != null)
+                if (phase.Shield)
                 {
-                    int alive = 0;
-                    foreach (var s in slimes) if (s.SummonedBy == slime.Id && s.State != SlimeState.Defeated) alive++;
-                    var helper = Settings.Enemy(phase.Summon);
-                    int calls = Math.Min(phase.Count, Math.Max(0, type.SummonCap - alive));
-                    for (int k = 0; k < calls; k++)
-                        AddSlime(slime.X + (k % 2 == 0 ? -1 : 1) * (slime.Width / 2 + 30 + 20 * (k / 2)), helper).SummonedBy = slime.Id;
-                    if (calls > 0) events.Add(new(BattleEventKind.BossSummoned, slime.X));
+                    StartShield(slime, phase, i + 1);
+                    if (phase.Enrage && !slime.Enraged) { slime.Enraged = true; events.Add(new(BattleEventKind.BossEnraged, slime.X)); }
+                    break; // Later phases wait for the shield to drop.
                 }
+                if (CallHelpers(slime, phase.Calls().ToList(), 0, 0) > 0) events.Add(new(BattleEventKind.BossSummoned, slime.X));
                 if (phase.Enrage && !slime.Enraged)
                 {
                     slime.Enraged = true;
                     events.Add(new(BattleEventKind.BossEnraged, slime.X));
                 }
             }
-        return amount;
+        return HitResult.Landed;
+    }
+
+    // A stony enemy's block roll for one hit (rolled once per hit, never per frame).
+    private bool Blocks(Slime slime, DamageSource source)
+    {
+        var type = slime.Type;
+        if (type.BlockChance <= 0 || source is DamageSource.Bomb or DamageSource.Reflect) return false;
+        // Armor break: combo hits go straight through.
+        if (source == DamageSource.Combo && Active("armorBreak") != null) { slime.BlockStreak = 0; return false; }
+        if (slime.BlockStreak >= type.BlockMaxStreak || random.NextDouble() >= type.BlockChance) { slime.BlockStreak = 0; return false; }
+        slime.BlockStreak++;
+        BlocksMade++;
+        AddEffect(BattleEffectKind.Block, slime.X, slime.Height * 0.6);
+        events.Add(new(BattleEventKind.HitBlocked, slime.X));
+        return true;
+    }
+
+    // The lowest HP a hit may leave: the line of the first shield phase still to come (0: none).
+    private static double ShieldFloor(Slime slime)
+    {
+        double floor = 0;
+        if (slime.Type.Phases is { } phases)
+            for (int i = 0; i < phases.Length && i < 31; i++)
+            {
+                double line = phases[i].At * slime.MaxHp;
+                if (phases[i].Shield && (slime.PhasesDone & (1 << i)) == 0 && line < slime.Hp) floor = Math.Max(floor, line);
+            }
+        return floor;
+    }
+
+    // The shield goes up at once; the boss drops what it was doing and runs to the edge far from the cat.
+    private void StartShield(Slime boss, BossPhase phase, int tag)
+    {
+        boss.Shielded = boss.Retreating = true;
+        boss.ShieldTag = tag;
+        boss.RetreatTime = 0;
+        boss.RetreatSide = lastCatX <= boss.X ? 1 : -1;
+        boss.PendingCalls = phase.Calls().ToList();
+        if (boss.State is SlimeState.Windup or SlimeState.Dashing or SlimeState.Casting) boss.Set(SlimeState.Moving);
+        events.Add(new(BattleEventKind.BossShielded, boss.X));
+    }
+
+    // Calls helpers next to the boss, within its SummonCap of live helpers; returns how many came.
+    // side 0: both sides in turn (as before); otherwise all on the open side, away from that edge.
+    private int CallHelpers(Slime boss, List<string> calls, int tag, int side)
+    {
+        int alive = 0;
+        foreach (var s in slimes) if (s.SummonedBy == boss.Id && s.State != SlimeState.Defeated) alive++;
+        int count = Math.Min(calls.Count, Math.Max(0, boss.Type.SummonCap - alive));
+        for (int k = 0; k < count; k++)
+        {
+            double x = side == 0
+                ? boss.X + (k % 2 == 0 ? -1 : 1) * (boss.Width / 2 + 30 + 20 * (k / 2))
+                : boss.X - side * (boss.Width / 2 + 30 + 34 * k);
+            var helper = AddSlime(x, Settings.Enemy(calls[k]));
+            helper.SummonedBy = boss.Id;
+            helper.PhaseTag = tag;
+        }
+        return count;
+    }
+
+    // The shield phase on the move: the run to the far edge (at most RetreatSeconds), then the call;
+    // the shield drops once every helper of this phase is gone (at once if none could come).
+    private void StepShield(Slime boss, double dt, double minX, double maxX)
+    {
+        BossShieldSeconds += dt;
+        if (boss.Retreating)
+        {
+            boss.RetreatTime += dt;
+            double goal = boss.RetreatSide > 0 ? maxX : minX;
+            if (boss.State == SlimeState.Moving)
+            {
+                double step = boss.Type.RetreatSpeed * level.EnemySpeed * dt;
+                boss.X = Math.Clamp(boss.X + Math.Sign(goal - boss.X) * Math.Min(Math.Abs(goal - boss.X), step), minX, maxX);
+                boss.Facing = goal < boss.X ? -1 : 1;
+            }
+            if (Math.Abs(goal - boss.X) > 2 && boss.RetreatTime < boss.Type.RetreatSeconds) return;
+            boss.Retreating = false;
+            boss.Facing = -boss.RetreatSide;
+            int calls = CallHelpers(boss, boss.PendingCalls ?? new List<string>(), boss.ShieldTag, boss.RetreatSide);
+            boss.PendingCalls = null;
+            if (calls > 0) { events.Add(new(BattleEventKind.BossSummoned, boss.X)); return; }
+        }
+        foreach (var s in slimes) if (s.SummonedBy == boss.Id && s.PhaseTag == boss.ShieldTag && s.State != SlimeState.Defeated) return;
+        boss.Shielded = false;
+        boss.ShieldTag = 0;
+        events.Add(new(BattleEventKind.BossShieldDown, boss.X));
     }
 
     private Slime? PickTarget(double catX)
@@ -735,15 +851,17 @@ public sealed class BattleSim
         if (SelectedId is int selected)
         {
             var chosen = Find(selected);
-            if (chosen != null && chosen.Targetable) return chosen;
-            SelectedId = null;
+            // A shielded boss stays chosen; the cat goes for the others until its shield drops.
+            if (chosen != null && chosen.Targetable && !chosen.Shielded) return chosen;
+            if (chosen == null || !chosen.Targetable) SelectedId = null;
         }
+        // Never a shielded boss: the cat cannot hurt it (with nothing else to hit it waits).
         Slime? nearest = null;
         foreach (var s in slimes)
-            if (s.Targetable && (nearest == null || Math.Abs(s.X - catX) < Math.Abs(nearest.X - catX))) nearest = s;
+            if (s.Targetable && !s.Shielded && (nearest == null || Math.Abs(s.X - catX) < Math.Abs(nearest.X - catX))) nearest = s;
         // Keep the current choice unless another slime is clearly closer (no dithering).
         var current = Find(autoTargetId);
-        if (current != null && current.Targetable && nearest != null &&
+        if (current != null && current.Targetable && !current.Shielded && nearest != null &&
             Math.Abs(current.X - catX) <= Math.Abs(nearest.X - catX) + 40) nearest = current;
         autoTargetId = nearest?.Id ?? 0;
         return nearest;
@@ -777,6 +895,11 @@ public sealed class BattleSim
             }
             slime.X = Math.Clamp(slime.X, minX, maxX);
             if (Over) continue; // The outro: slimes just bounce in place.
+            if (slime.Shielded && slime.State != SlimeState.Defeated)
+            {
+                StepShield(slime, dt, minX, maxX);
+                if (slime.Retreating && slime.State == SlimeState.Moving) continue; // Running for the edge: nothing else.
+            }
             double dx = catX - slime.X;
             switch (slime.State)
             {
@@ -818,6 +941,8 @@ public sealed class BattleSim
                         events.Add(new(BattleEventKind.EnemyHealing, slime.X));
                         break;
                     }
+                    // A support keeps behind its fighting allies and leaves the cat to them.
+                    if (slime.Type.Support && (slime.KeepingBack = KeepBack(slime, dt, catX, minX, maxX))) break;
                     // While the user carries the cat the slimes follow it along the floor, but never
                     // wind up: a lifted cat cannot be hit.
                     if (Math.Abs(dx) > 1) slime.Facing = dx < 0 ? -1 : 1;
@@ -828,8 +953,9 @@ public sealed class BattleSim
                         slime.DashDirection = slime.Facing;
                         slime.Set(SlimeState.Windup);
                     }
-                    else if (Math.Abs(dx) > reach * 0.75)
-                        slime.X = Math.Clamp(slime.X + Math.Sign(dx) * Math.Min(Math.Abs(dx), Speed(slime) * dt), minX, maxX);
+                    // A shielded boss guards its edge: it slams a cat that comes close but never walks up.
+                    else if (Math.Abs(dx) > reach * 0.75 && !slime.Shielded)
+                        slime.X =Math.Clamp(slime.X + Math.Sign(dx) * Math.Min(Math.Abs(dx), Speed(slime) * dt), minX, maxX);
                     break;
             }
             if (Over) break;
@@ -848,10 +974,34 @@ public sealed class BattleSim
         Slime? best = null;
         foreach (var s in slimes)
         {
-            if (s == healer || !s.Targetable || s.Hp >= s.MaxHp || Math.Abs(s.X - healer.X) > healer.Type.HealRange) continue;
+            if (s == healer || !s.Targetable || s.Shielded || s.Hp >= s.MaxHp || Math.Abs(s.X - healer.X) > healer.Type.HealRange) continue;
             if (best == null || s.MaxHp - s.Hp > best.MaxHp - best.Hp) best = s;
         }
         return best;
+    }
+
+    // A support with a fighting ally (any enemy but a support, even one still appearing) on the
+    // field: it stays on its side of the cat, KeepBack DIPs behind the nearest such ally there (or
+    // that far from the cat when none is), walking at its own speed (slower than the cat runs, so
+    // the cat catches it; at the field's edge it stops). False: no fighting ally, so it fights.
+    private bool KeepBack(Slime support, double dt, double catX, double minX, double maxX)
+    {
+        int side = support.X >= catX ? 1 : -1;
+        bool allies = false;
+        double nearest = double.NaN;
+        foreach (var s in slimes)
+        {
+            if (s == support || s.State == SlimeState.Defeated || s.Type.Support) continue;
+            allies = true;
+            double ahead = (s.X - catX) * side;
+            if (ahead >= 0 && (double.IsNaN(nearest) || ahead < nearest)) nearest = ahead;
+        }
+        if (!allies) return false;
+        double want = Math.Clamp(catX + side * ((double.IsNaN(nearest) ? 0 : nearest) + support.Type.KeepBack), minX, maxX);
+        double gap = want - support.X;
+        support.Facing = catX < support.X ? -1 : 1;
+        if (Math.Abs(gap) > 6) support.X = Math.Clamp(support.X + Math.Sign(gap) * Math.Min(Math.Abs(gap), Speed(support) * dt), minX, maxX);
+        return true;
     }
 
     // The heal lands if its ally is still there, alive and in reach (a little slack for movement).
@@ -878,12 +1028,13 @@ public sealed class BattleSim
     private readonly List<Slime> scratch = new();
     private static readonly Comparison<Slime> ByX = (a, b) => a.X.CompareTo(b.X);
 
-    // Slimes do not stack on one spot.
+    // Slimes do not stack on one spot. A support falling back stays out of this: it has to slip past
+    // the ally it gets behind (pushing each other, the two would jam and hold the ally off the cat).
     private void Separate()
     {
         var live = scratch;
         live.Clear();
-        foreach (var slime in slimes) if (slime.State != SlimeState.Defeated) live.Add(slime);
+        foreach (var slime in slimes) if (slime.State != SlimeState.Defeated && !slime.KeepingBack) live.Add(slime);
         live.Sort(ByX);
         for (int i = 1; i < live.Count; i++)
         {
@@ -947,7 +1098,7 @@ public sealed class BattleSim
         events.Add(new(BattleEventKind.CatHurt, catX, hurt));
         if (CatHp <= 0) { Finish(BattlePhase.Lost); return; }
         // Thorns: part of what the cat really took goes back to the attacker.
-        if (Active("thorns") is SynergySpec thorns && hurt > 0 && from.Targetable)
+        if (Active("thorns") is SynergySpec thorns && hurt > 0 && from.Targetable && !from.Shielded)
         {
             Reflects++;
             events.Add(new(BattleEventKind.Reflected, from.X));

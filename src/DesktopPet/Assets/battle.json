@@ -94,35 +94,40 @@
       "dash": true, "dashRange": 170, "dashDistance": 230, "dashSpeed": 420
     },
     {
-      // Big and slow: hard to push, hits hard; a job for Cheer and the yarn bomb.
+      // Big and slow: hard to push, hits hard; a job for Cheer and the yarn bomb. blockChance: each
+      // sword/hammer hit may be blocked (never the bomb, never a combo with Armor break); after
+      // blockMaxStreak blocks in a row the next hit always lands.
       "id": "rock", "nameVi": "Slime đá", "nameEn": "Rock slime",
-      "maxHp": 110, "speed": 20, "damage": 16, "range": 72,
+      "maxHp": 150, "speed": 20, "damage": 16, "range": 72,
       "windup": 1.0, "attackCooldown": 2.4, "recover": 0.5,
       "scale": 1.35, "color": "#A8A095", "marks": "cracks",
-      "pushFactor": 0.5, "stunFactor": 0.6
+      "pushFactor": 0.5, "stunFactor": 0.6, "blockChance": 0.3, "blockMaxStreak": 2
     },
     {
       // Support: winds up a heal (green "+") on the most hurt ally in healRange every healCooldown s;
-      // healBudget caps all it can heal. A push or stun during the windup cancels it.
+      // healBudget caps all it can heal. A push or stun during the windup cancels it. support: while a
+      // fighting ally is on the field it never attacks the cat and keeps keepBack DIPs behind it.
       "id": "mender", "nameVi": "Slime thảo dược", "nameEn": "Herb slime",
       "maxHp": 40, "speed": 28, "damage": 5, "range": 56,
       "windup": 0.8, "attackCooldown": 2.0, "recover": 0.35,
       "scale": 0.9, "color": "#4FC9A8", "marks": "cross",
-      "healAmount": 15, "healRange": 170, "healCooldown": 4.5, "healWindup": 1.0, "healBudget": 90
+      "healAmount": 15, "healRange": 170, "healCooldown": 4.5, "healWindup": 1.0, "healBudget": 90,
+      "support": true, "keepBack": 110
     },
     {
       // The chapter 1 boss (Adventure stage 5): the free battle keeps "king" below. Phases fire once
-      // each at their HP fraction; at most summonCap helpers alive at once.
+      // each at their HP fraction; at most summonCap helpers alive at once. A shield phase stops a
+      // hit at its line, runs to the far edge (retreatSpeed, at most retreatSeconds), calls its
+      // helpers there and takes no damage until they are all defeated.
       "id": "king_c1", "nameVi": "Vua Slime", "nameEn": "Slime King",
       "maxHp": 450, "speed": 22, "damage": 25, "range": 110,
       "windup": 1.2, "attackCooldown": 2.6, "recover": 0.7,
       "scale": 2, "color": "#9B7BE0", "angryColor": "#E86A6A",
       "boss": true, "slam": true, "pushFactor": 0.35, "stunFactor": 0.4,
-      "enragedSpeed": 32, "enragedWindup": 0.8, "summonCap": 4,
+      "enragedSpeed": 32, "enragedWindup": 0.8, "summonCap": 4, "retreatSpeed": 240, "retreatSeconds": 3,
       "phases": [
-        { "at": 0.75, "summon": "slime", "count": 2 },
-        { "at": 0.5, "summon": "mender", "count": 1 },
-        { "at": 0.4, "summon": "runner", "count": 2 },
+        { "at": 0.7, "shield": true, "summon": "slime", "count": 2 },
+        { "at": 0.4, "shield": true, "summons": [ { "enemy": "mender", "count": 1 }, { "enemy": "runner", "count": 2 } ] },
         { "at": 0.3, "enrage": true }
       ]
     },
@@ -203,7 +208,7 @@
             "goalEn": "Mixed slimes: use skills, lift the cat when a slime winds up, pick upgrades between waves.",
             "tipVi": "Dọn xong một đợt, bạn chọn 1 trong 3 thẻ nâng cấp. Thẻ chỉ có tác dụng trong lượt chơi này; chơi lại thì bắt đầu từ đầu.",
             "tipEn": "After each cleared wave, pick 1 of 3 upgrade cards. They last for this run only; playing again starts fresh.",
-            "objective": "clear", "upgrades": true, "rulesVersion": 4,
+            "objective": "clear", "upgrades": true, "rulesVersion": 5,
             "waves": [
               { "groups": [ { "enemy": "slime", "count": 2 }, { "enemy": "runner", "count": 1 } ] },
               { "groups": [ { "enemy": "runner", "count": 2 }, { "enemy": "slime", "count": 2 } ] },
@@ -216,7 +221,7 @@
             "goalEn": "Survive 75 seconds: know when to attack and when to save HP. Carrying the cat stops the clock.",
             "tipVi": "Sống sót tới khi hết giờ. Bế mèo thì đồng hồ dừng, nên hãy giữ HP bằng Khiên và Cá hồi máu thay vì chờ trên tay.",
             "tipEn": "Stay alive until time is up. Carrying the cat stops the clock, so keep HP up with the Shield and the Healing fish instead.",
-            "objective": "survive", "surviveSeconds": 75, "maxAlive": 4, "upgrades": true, "maxUpgrades": 3, "rulesVersion": 5, "reward": "SlimeHat",
+            "objective": "survive", "surviveSeconds": 75, "maxAlive": 4, "upgrades": true, "maxUpgrades": 3, "rulesVersion": 6, "reward": "SlimeHat",
             "waves": [
               { "groups": [ { "enemy": "slime", "count": 3 }, { "enemy": "runner", "count": 1 } ] },
               { "groups": [ { "enemy": "rock", "count": 1 }, { "enemy": "runner", "count": 2 } ] },
@@ -229,7 +234,7 @@
             "goalEn": "Herb slimes heal their friends: take them down first, or Push one to cut its heal.",
             "tipVi": "Slime thảo dược (dấu +) hồi máu cho đồng đội. Thấy dấu + xanh trên đầu nó là nó đang gồng: Đẩy nó để cắt, hoặc click nó để mèo đánh nó trước.",
             "tipEn": "Herb slimes (with a +) heal their friends. A green + over one means it is winding up: Push it to cut the heal, or click it so the cat hits it first.",
-            "objective": "clear", "upgrades": true, "rulesVersion": 5,
+            "objective": "clear", "upgrades": true, "rulesVersion": 6,
             "waves": [
               { "groups": [ { "enemy": "slime", "count": 2 }, { "enemy": "mender", "count": 1 } ] },
               { "groups": [ { "enemy": "rock", "count": 1 }, { "enemy": "mender", "count": 1 }, { "enemy": "runner", "count": 2 } ] },
@@ -238,11 +243,11 @@
           },
           {
             "id": "c1_slime_king", "nameVi": "Vua Slime", "nameEn": "The Slime King",
-            "goalVi": "Trận cuối chương: Vua Slime gọi quân theo từng pha, có cả slime thảo dược.",
-            "goalEn": "The chapter's last battle: the Slime King calls help phase by phase, herb slimes too.",
-            "tipVi": "Vua Slime gọi quân ở khoảng 75%, 50% và 40% máu, nổi giận ở 30%. Thấy vùng đỏ dưới sàn: kéo mèo ra ngoài hoặc bật Khiên.",
-            "tipEn": "The Slime King calls help at about 75%, 50% and 40% HP and gets angry at 30%. A red zone on the floor: lift the cat out or use the Shield.",
-            "objective": "clear", "upgrades": true, "rulesVersion": 5, "reward": "SlimeKingCrown",
+            "goalVi": "Trận cuối chương: Vua Slime lui về bật khiên và gọi quân, có cả slime thảo dược.",
+            "goalEn": "The chapter's last battle: the Slime King backs off behind a shield and calls help, herb slimes too.",
+            "tipVi": "Ở 70% và 40% máu, Vua Slime lui về mép xa, bật khiên bất tử và gọi quân: hạ hết quân để phá khiên. Nổi giận ở 30%. Thấy vùng đỏ dưới sàn: kéo mèo ra ngoài hoặc bật Khiên.",
+            "tipEn": "At 70% and 40% HP the Slime King backs off to the far edge behind a shield and calls help: defeat them all to break it. Angry at 30%. A red zone on the floor: lift the cat out or use the Shield.",
+            "objective": "clear", "upgrades": true, "rulesVersion": 6, "reward": "SlimeKingCrown",
             "waves": [
               { "groups": [ { "enemy": "slime", "count": 2 }, { "enemy": "runner", "count": 2 } ] },
               { "groups": [ { "enemy": "mender", "count": 1 }, { "enemy": "slime", "count": 2 } ] },

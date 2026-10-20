@@ -17,6 +17,8 @@ public sealed class BattleFieldView : FrameworkElement
     private readonly BattleSim sim;
     // Screen X of the strip's left edge (DIPs).
     public double OriginX { get; set; }
+    // The language of the few words drawn on the field ("BLOCK", "IMMUNE").
+    public bool English { get; set; }
     // The slime clicked and where on it (DIPs from its centre: negative = its left half).
     public event Action<int, double>? SlimeClicked;
     public event Action? RightClicked;
@@ -115,6 +117,12 @@ public sealed class BattleFieldView : FrameworkElement
     private static readonly Pen YarnPen = FrozenPen(Frozen(255, 0xB0, 0x4A, 0x88), 1.6);
     private static readonly Pen BlastPen = FrozenPen(Frozen(255, 0xFF, 0x9E, 0x3D), 4);
     private static readonly Pen SlamPen = FrozenPen(Frozen(255, 0xC8, 0xB8, 0xF0), 4);
+    private static readonly Brush StoneGrey = Frozen(255, 0xC9, 0xC2, 0xB6);
+    // A boss's shield: a pale gold bubble (outlines only, so clicks still pass around it).
+    private static readonly Pen BubblePen = FrozenPen(Frozen(230, 0xFF, 0xD8, 0x5A), 3);
+    private static readonly Pen BubbleShine = FrozenPen(Frozen(200, 255, 255, 255), 2.5);
+    private static readonly Pen ImmunePen = FrozenPen(ComboGoldColor(), 4);
+    private static Brush ComboGoldColor() => Frozen(255, 0xFF, 0xD2, 0x3F);
     private static readonly Typeface NumberFont = new(new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.Black, FontStretches.Normal);
 
     protected override void OnRender(DrawingContext dc)
@@ -248,6 +256,23 @@ public sealed class BattleFieldView : FrameworkElement
         if (slime.IsBoss) dc.DrawGeometry(Gold, Outline, Crown);
         dc.Pop();
         dc.Pop();
+        if (slime.Shielded && slime.State != SlimeState.Defeated)
+        {
+            // The shield phase: a gently pulsing bubble around the boss and a shine on it.
+            double pulse = 1 + 0.03 * Math.Sin(time * 4);
+            // From the floor to just over the crown, so nothing of it is cut off below the floor.
+            double rx = (w / 2 + 12) * pulse, ry = (h + (slime.IsBoss ? 9 * size : 0) + 10) / 2;
+            var centre = new Point(x, floor - ry - 1);
+            dc.DrawEllipse(null, Halo, centre, rx, ry);
+            dc.DrawEllipse(null, BubblePen, centre, rx, ry);
+            var shine = new StreamGeometry();
+            using (var c = shine.Open())
+            {
+                c.BeginFigure(new Point(centre.X - rx * 0.75, centre.Y - ry * 0.35), false, false);
+                c.ArcTo(new Point(centre.X - rx * 0.2, centre.Y - ry * 0.85), new Size(rx * 0.8, ry * 0.8), 0, false, SweepDirection.Clockwise, true, false);
+            }
+            dc.DrawGeometry(null, BubbleShine, shine);
+        }
         double top = floor - h * sy - (slime.IsBoss ? 9 * size : 0);
         if (slime.State == SlimeState.Windup)
         {
@@ -398,7 +423,17 @@ public sealed class BattleFieldView : FrameworkElement
         return body = g;
     }
 
-    private static void DrawEffect(DrawingContext dc, BattleEffect effect, double x, double y, double floor)
+    // A word rising from a hit (gold or grey), drawn like the damage numbers.
+    private static void DrawWord(DrawingContext dc, string text, Brush fill, double x, double y)
+    {
+        var (shape, width, height) = NumberShape(text, false);
+        dc.PushTransform(new TranslateTransform(x - width / 2, y - height));
+        dc.DrawGeometry(null, TextHalo, shape);
+        dc.DrawGeometry(fill, null, shape);
+        dc.Pop();
+    }
+
+    private void DrawEffect(DrawingContext dc, BattleEffect effect, double x, double y, double floor)
     {
         double k = Math.Clamp(effect.Age / effect.Life, 0, 1);
         dc.PushOpacity(effect.Kind == BattleEffectKind.Number ? Math.Min(1, (1 - k) * 2.5) : 1 - k);
@@ -495,6 +530,23 @@ public sealed class BattleFieldView : FrameworkElement
                 dc.DrawGeometry(null, TextHalo, word);
                 dc.DrawGeometry(ComboGold, null, word);
                 dc.Pop();
+                break;
+            case BattleEffectKind.Block:
+                // A stony enemy blocked: grey chips fly off and "BLOCK" rises.
+                for (int i = 0; i < 5; i++)
+                {
+                    double a = -Math.PI * (0.15 + 0.7 * i / 4.0);
+                    var chip = new Point(x + Math.Cos(a) * (10 + 18 * k), y + Math.Sin(a) * (8 + 14 * k) + 20 * k * k);
+                    dc.DrawRectangle(StoneGrey, Outline, new Rect(chip.X - 2.5, chip.Y - 2.5, 5, 5));
+                }
+                DrawWord(dc, English ? "BLOCK" : "CHẶN", StoneGrey, x, y - 14 - 22 * k);
+                break;
+            case BattleEffectKind.Immune:
+                // A shielded boss hit for nothing: its bubble flashes gold and "IMMUNE" rises.
+                double rx = effect.Value / 2 + 10 + 6 * k;
+                dc.DrawEllipse(null, Halo, new Point(x, y), rx, rx * 0.8);
+                dc.DrawEllipse(null, ImmunePen, new Point(x, y), rx, rx * 0.8);
+                DrawWord(dc, English ? "IMMUNE" : "BẤT TỬ", ComboGold, x, y - rx * 0.8 - 6 - 18 * k);
                 break;
             case BattleEffectKind.Number:
                 // Damage numbers rise from the slime; heals (+HP, green) rise over the cat.

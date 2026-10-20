@@ -73,10 +73,23 @@ public sealed class EnemyType
     public double DashRange { get; init; } = 170;
     public double DashDistance { get; init; } = 230;
     public double DashSpeed { get; init; } = 420;
+    // Block: each hit from the cat's weapon (plain, combo or Afterimage) is blocked with this chance
+    // (0 = never): no damage, no knock back. The yarn bomb and Thorns are never blocked, nor a combo
+    // with Armor break. After BlockMaxStreak blocks in a row the next hit always lands.
+    public double BlockChance { get; init; }
+    public int BlockMaxStreak { get; init; } = 2;
+    // Support: while any ally that fights (not a support) is on the field it never attacks the cat;
+    // it keeps KeepBack DIPs behind the nearest such ally on its side (or that far from the cat),
+    // backing off at its own speed. With no fighting ally left it fights like any slime.
+    public bool Support { get; init; }
+    public double KeepBack { get; init; } = 110;
     // Boss phases: each fires once when its HP fraction is reached (summon helpers and/or get
     // angry). At most SummonCap of its helpers are alive at once (more calls are skipped).
     public BossPhase[]? Phases { get; init; }
     public int SummonCap { get; init; } = 4;
+    // A shield phase's run to the far edge: its speed, and the longest it may take before calling.
+    public double RetreatSpeed { get; init; } = 240;
+    public double RetreatSeconds { get; init; } = 3;
     public string Name(bool english) => english ? NameEn : NameVi;
 }
 
@@ -85,7 +98,19 @@ public sealed class BossPhase
     public double At { get; init; }
     public string? Summon { get; init; }
     public int Count { get; init; }
+    // More helpers of other kinds in the same phase (after Summon × Count).
+    public WaveGroup[]? Summons { get; init; }
     public bool Enrage { get; init; }
+    // Shield phase: a hit never takes the boss below At (the rest is lost); it puts up a shield
+    // (takes no damage), runs to the edge far from the cat, calls its helpers there and keeps the
+    // shield until every helper of this phase is defeated. Later phases wait for the shield to drop.
+    public bool Shield { get; init; }
+    // Every helper this phase calls, in order.
+    public IEnumerable<string> Calls()
+    {
+        if (Summon != null) for (int i = 0; i < Count; i++) yield return Summon;
+        foreach (var g in Summons ?? Array.Empty<WaveGroup>()) for (int i = 0; i < g.Count; i++) yield return g.Enemy;
+    }
 }
 
 // One wave: groups spawn in order (at most MaxAlive at once).
@@ -419,6 +444,10 @@ public static class BattleData
                 Within(e.HealWindup, 0.2, 5, at + ".healWindup"); Within(e.HealBudget, 1, 100000, at + ".healBudget");
             }
             if (e.SummonCap is < 1 or > 10) throw new InvalidDataException(at + ".summonCap must be 1–10");
+            Within(e.BlockChance, 0, 0.9, at + ".blockChance");
+            if (e.BlockMaxStreak is < 1 or > 10) throw new InvalidDataException(at + ".blockMaxStreak must be 1–10");
+            if (e.Support) Within(e.KeepBack, 0, 600, at + ".keepBack");
+            if (e.Phases?.Any(p => p is { Shield: true }) == true) { Within(e.RetreatSpeed, 10, 600, at + ".retreatSpeed"); Within(e.RetreatSeconds, 0.2, 10, at + ".retreatSeconds"); }
             if (e.Dash)
             {
                 Within(e.DashRange, 20, 600, at + ".dashRange"); Within(e.DashDistance, 20, 800, at + ".dashDistance");
@@ -430,17 +459,23 @@ public static class BattleData
                 foreach (var p in phases)
                 {
                     if (p == null || !(p.At > 0 && p.At < 1)) throw new InvalidDataException(at + ".phases: each \"at\" must be between 0 and 1");
-                    if (p.Summon == null && !p.Enrage) throw new InvalidDataException(at + ".phases: a phase must summon or enrage");
+                    if (p.Summon == null && p.Summons == null && !p.Enrage) throw new InvalidDataException(at + ".phases: a phase must summon or enrage");
                     if (p.Summon != null && p.Count is < 1 or > 6) throw new InvalidDataException(at + ".phases: count must be 1–6");
+                    if (p.Summons != null && (p.Summons.Length is 0 or > 4 || p.Summons.Any(g => g == null || g.Count is < 1 or > 6)))
+                        throw new InvalidDataException(at + ".phases: summons must list 1–4 groups of 1–6");
+                    if (p.Calls().Count() > 8) throw new InvalidDataException(at + ".phases: a phase calls at most 8 helpers");
+                    // A shield only drops when its helpers are gone: it needs some.
+                    if (p.Shield && !p.Calls().Any()) throw new InvalidDataException(at + ".phases: a shield phase must summon");
                 }
             }
         }
         // A summoned helper may not summon in turn (no chains of calls).
-        static bool Summons(EnemyType e) => e.SummonAt > 0 || e.Phases?.Any(p => p.Summon != null) == true;
+        static bool Summons(EnemyType e) => e.SummonAt > 0 || e.Phases?.Any(p => p.Calls().Any()) == true;
         foreach (var e in s.EnemyTypes)
             foreach (var p in e.Phases ?? Array.Empty<BossPhase>())
-                if (p.Summon != null && (!ids.Contains(p.Summon) || Summons(s.Enemy(p.Summon))))
-                    throw new InvalidDataException($"enemies[{e.Id}] phase summons \"{p.Summon}\": an unknown enemy (or one that summons too)");
+                foreach (var call in p.Calls().Distinct())
+                    if (!ids.Contains(call) || Summons(s.Enemy(call)))
+                        throw new InvalidDataException($"enemies[{e.Id}] phase summons \"{call}\": an unknown enemy (or one that summons too)");
         foreach (var e in s.EnemyTypes)
             if (e.SummonAt > 0 && (!ids.Contains(e.SummonType) || Summons(s.Enemy(e.SummonType))))
                 throw new InvalidDataException($"enemies[{e.Id}] summons \"{e.SummonType}\": an unknown enemy (or one that summons too)");

@@ -165,6 +165,13 @@ Nên chép dự phòng %LOCALAPPDATA%\DesktopPet\adventure-progress.json (nếu 
 - [ ] Thắng màn 2 → bảng chuẩn bị màn 3 ghi "Build mang vào màn: …" đúng; vào màn 3 HUD đã có điểm nhóm từ đầu. Thua màn 3 rồi chơi lại: vẫn bắt đầu với build của màn 2 (không cộng thẻ của lượt thua). Màn 3 chỉ cho chọn tối đa 3 lần.
 - [ ] Thắng lại màn 2 với build khác → màn 3 nhận build mới. Đóng app giữa chương rồi mở lại: build vẫn còn. Trận tự do: không có thẻ, không có build.
 
+#### Combat Depth — mốc 3: đá chặn đòn, support đứng sau, King bật khiên (2026-10-20)
+- [ ] Slime đá (màn 2–4 và trận tự do): khoảng 1/3 nhát kiếm/búa hiện "CHẶN" + mảnh đá xám, không mất máu, không bị đẩy; không bao giờ chặn 3 nhát liền. Bom len luôn trúng. Có Phá giáp (3 thẻ Sức mạnh): đòn combo vàng không bao giờ bị chặn. Chữ "CHẶN" đọc rõ trên nền sáng và tối.
+- [ ] Slime thảo dược (màn 4–5): khi còn slime khác thì nó đứng phía sau, không gồng đánh mèo, vẫn hồi máu cho đồng đội; mèo đuổi thì nó lùi chậm và bị dồn ở mép màn hình. Hạ hết đồng đội thì nó tự đánh mèo. Click nó để mèo đánh nó trước vẫn được.
+- [ ] Màn 5: Vua Slime ở 70% máu bật bong bóng khiên vàng, banner "… bật khiên! Hạ hết quân", chạy về mép xa mèo rồi gọi 2 slime. Một đòn lớn (bom) không làm máu tụt qua 70%. Đánh/bom vào nó hiện "BẤT TỬ", thanh máu HUD vàng "(khiên: hạ hết quân!)". Mèo tự đánh quân, không đứng đánh boss. Hạ hết quân → "KHIÊN VỠ!" một lần, boss quay lại đánh. 40%: khiên lần 2, gọi slime thảo dược + 2 slime nhanh. 30%: nổi giận.
+- [ ] Trong khiên: kéo mèo lại sát boss thì nó vẫn dậm (vùng đỏ). Pause/menu giữa lúc boss chạy về mép: mọi thứ đứng yên. Thua giữa pha khiên: trận kết thúc bình thường, về Pet Mode không còn gì lạ. Chơi trên màn hình phụ/DPI khác: boss chạy đúng mép của màn hình đó.
+- [ ] Âm thanh: bật khiên/khiên vỡ/chặn đòn dùng cue sẵn có, không dày hay chói.
+
 ### Nhật ký chơi thử Battle Mode (beta, thêm 2026-10-18)
 Chơi 3–5 trận mỗi độ khó trên bản publish, ghi 1 dòng/trận. Phiên bản: xem Khác → Giới thiệu (ví dụ `1.0.0 (18cb227)`). Chưa có dòng nào là chưa chơi thử; số mô phỏng trong PROGRESS.md không thay cho bảng này.
 

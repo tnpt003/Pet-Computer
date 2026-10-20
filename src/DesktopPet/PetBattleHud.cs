@@ -29,7 +29,7 @@ public sealed class BattleHud : Border
     private (double Hp, double Max) shownHp = (-1, -1);
     private (BattlePhase, int, int, bool, bool, double, int, int) shownStatus;
     private int shownUpgrades = -1;
-    private (double, bool) shownBoss = (-1, false);
+    private (double, bool, bool) shownBoss = (-1, false, false);
     private (bool, BattleSkill?, bool, int, bool, int) shownHint;
     private (int, bool) shownCombo = (-1, false);
     private bool hintShown;
@@ -47,7 +47,7 @@ public sealed class BattleHud : Border
     private static readonly Brush BarBack = Frozen(0x90, 0x0E, 0x0C, 0x18);
     private static readonly Brush Green = Frozen(255, 0x6F, 0xE0, 0x6A), Yellow = Frozen(255, 0xF5, 0xC8, 0x42), Red = Frozen(255, 0xF2, 0x5C, 0x54);
     private static readonly Brush Trail = Frozen(255, 0xF0, 0xA0, 0x4B);
-    private static readonly Brush BossColor = Frozen(255, 0xB4, 0x8C, 0xF5), BossAngryColor = Frozen(255, 0xE8, 0x6A, 0x6A);
+    private static readonly Brush BossColor = Frozen(255, 0xB4, 0x8C, 0xF5), BossAngryColor = Frozen(255, 0xE8, 0x6A, 0x6A), BossShieldColor = Frozen(255, 0xFF, 0xD8, 0x5A);
     private static readonly Brush Soft = Frozen(255, 0xD8, 0xD6, 0xE8), Gold = Frozen(255, 0xFF, 0xD2, 0x3F), Dim = Frozen(0x70, 255, 255, 255);
 
     public BattleHud(string petName, PetRenderer portrait, Func<string, string, string> localize)
@@ -256,13 +256,14 @@ public sealed class BattleHud : Border
         if (boss != null)
         {
             Set(bossFill, BossWidth * Math.Clamp(boss.Hp / boss.MaxHp, 0, 1));
-            var bossBrush = boss.Enraged ? BossAngryColor : BossColor;
+            // Gold while its shield is up (no damage gets through until its helpers are down).
+            var bossBrush = boss.Shielded ? BossShieldColor : boss.Enraged ? BossAngryColor : BossColor;
             if (bossFill.Background != bossBrush) bossFill.Background = bossBrush;
-            var bossKey = (Math.Ceiling(boss.Hp), boss.Enraged);
+            var bossKey = (Math.Ceiling(boss.Hp), boss.Enraged, boss.Shielded);
             if (bossKey != shownBoss)
             {
                 shownBoss = bossKey;
-                bossName.Text = boss.Type.Name(English) + (boss.Enraged ? L(" (nổi giận!)", " (enraged!)") : "") + $"  {bossKey.Item1}/{boss.MaxHp}";
+                bossName.Text = boss.Type.Name(English) + (boss.Shielded ? L(" (khiên: hạ hết quân!)", " (shielded: defeat its helpers!)") : boss.Enraged ? L(" (nổi giận!)", " (enraged!)") : "") + $"  {bossKey.Item1}/{boss.MaxHp}";
             }
         }
 

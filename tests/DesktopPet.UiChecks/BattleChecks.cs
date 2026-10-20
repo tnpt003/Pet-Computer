@@ -694,6 +694,40 @@ internal static class BattleChecks
                 var hudEncoder = new PngBitmapEncoder(); hudEncoder.Frames.Add(BitmapFrame.Create(hudShot));
                 using (var stream = System.IO.File.Create(System.IO.Path.Combine(bossReview, "battle-hud-boss.png"))) hudEncoder.Save(stream);
             }
+            // Combat Depth milestone 3: the shield phase's bubble, the HUD saying so, and the
+            // BLOCK / IMMUNE marks, drawn in the real field (the sim's flags set by hand).
+            string FieldShot(string label)
+            {
+                fieldView.InvalidateVisual(); fieldView.UpdateLayout();
+                int fw = (int)fieldView.ActualWidth, fh = (int)fieldView.ActualHeight;
+                var shot = new RenderTargetBitmap(fw, fh, 96, 96, PixelFormats.Pbgra32); shot.Render(fieldView);
+                var crop = new CroppedBitmap(shot, new Int32Rect((int)Math.Clamp(bossSlime.X - fieldView.OriginX - 200, 0, Math.Max(0, fw - 400)), 0, Math.Min(400, fw), fh));
+                var pixels = new byte[crop.PixelWidth * fh * 4]; crop.CopyPixels(pixels, crop.PixelWidth * 4, 0);
+                if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string review)
+                {
+                    var visual = new DrawingVisual();
+                    using (var dc = visual.RenderOpen()) { dc.DrawRectangle(new SolidColorBrush(Color.FromRgb(0x1E, 0x1E, 0x24)), null, new Rect(0, 0, 400, fh)); dc.DrawImage(crop, new Rect(0, 0, crop.PixelWidth, fh)); }
+                    var image = new RenderTargetBitmap(400, fh, 96, 96, PixelFormats.Pbgra32); image.Render(visual);
+                    var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(image));
+                    using var stream = System.IO.File.Create(System.IO.Path.Combine(review, label + ".png")); encoder.Save(stream);
+                }
+                return Convert.ToBase64String(pixels);
+            }
+            Sim().Paused = true; // Hold everything still while the pictures are taken.
+            string open = FieldShot("battle-boss-open");
+            bossSlime.Shielded = true;
+            string shielded = FieldShot("battle-boss-shielded");
+            check(open != shielded, "A shielded boss is drawn inside a bubble");
+            Call(window, "UpdateBattleHud");
+            var bossLabel = (System.Windows.Controls.TextBlock)typeof(BattleHud).GetField("bossName", Flags)!.GetValue(Field<BattleHud>(window, "battleHud"))!;
+            check(bossLabel.Text.Contains("khiên") || bossLabel.Text.Contains("shield"), $"The HUD's boss bar says the shield is up (\"{bossLabel.Text}\")");
+            var addEffect = typeof(BattleSim).GetMethod("AddEffect", Flags)!;
+            addEffect.Invoke(Sim(), new object[] { BattleEffectKind.Immune, bossSlime.X, bossSlime.Height / 2, bossSlime.Width });
+            addEffect.Invoke(Sim(), new object[] { BattleEffectKind.Block, bossSlime.X + 120, 30.0, 0.0 });
+            string marks = FieldShot("battle-block-immune");
+            check(marks != shielded, "The IMMUNE and BLOCK marks are drawn");
+            bossSlime.Shielded = false;
+            Sim().Paused = false;
         }
         window.Reset();
         window.BattleTuning = new BattleSettings();

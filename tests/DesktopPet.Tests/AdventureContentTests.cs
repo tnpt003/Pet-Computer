@@ -14,22 +14,34 @@ internal static class AdventureContentTests
         var king = data.Enemy("king");
         var chapterKing = data.Enemy("king_c1");
         check(mender is { Id: "mender", HealAmount: 15, HealBudget: 90, Marks: "cross" } && !mender.Boss, "battle.json has the herb slime (heals 15, at most 90 in all)");
-        check(chapterKing is { Boss: true, Phases.Length: 4, SummonCap: 4 } && king.Phases == null && king.SummonAt == 0.5 && king.EnrageAt == 0.3,
-            "The chapter boss has 4 phases; the free battle's Slime King is unchanged");
+        check(chapterKing is { Boss: true, Phases.Length: 3, SummonCap: 4 } && chapterKing.Phases.Count(p => p.Shield) == 2 && king.Phases == null && king.SummonAt == 0.5 && king.EnrageAt == 0.3,
+            "The chapter boss has 3 phases (two shield phases); the free battle's Slime King is unchanged");
         check(data.WavePlan.All(w => w.Groups.All(g => g.Enemy is "slime" or "runner" or "rock" or "king")), "The free battle's waves have no herb slime or chapter boss");
-        check(stages[3].Waves.All(w => w.Groups.Any(g => g.Enemy == "mender")) && stages[3].RulesVersion == 5 &&
-              stages[4].Waves[^1].Groups.Single().Enemy == "king_c1" && stages[4].RulesVersion == 5,
-            "Stage 4 has a herb slime in every wave; stage 5 ends with the chapter boss (rules version 5: dash, then carried builds)");
+        check(stages[3].Waves.All(w => w.Groups.Any(g => g.Enemy == "mender")) && stages[3].RulesVersion == 6 &&
+              stages[4].Waves[^1].Groups.Single().Enemy == "king_c1" && stages[4].RulesVersion == 6,
+            "Stage 4 has a herb slime in every wave; stage 5 ends with the chapter boss (rules version 6: dash, carried builds, then enemy roles)");
         check(stages[2].Reward == "SlimeHat" && stages[4].Reward == "SlimeKingCrown" && stages.Count(s => s.Reward != null) == 2 &&
               PetAccessories.Find("SlimeHat")?.Reward == "slime_invasion" && PetAccessories.Find("SlimeKingCrown")?.Reward == "slime_invasion" &&
               PetAccessories.Find("Bell")?.Reward == null, "Stages 3 and 5 give the Slime hat and the Slime King's crown (reward accessories)");
 
         // Heals: a herb slime and a hurt slime on the floor; the cat stands far off and never fights.
+        // The chapter boss as it was before shield phases (Combat Depth milestone 3): plain phases
+        // still work the same for custom data.
+        var plainKing = new EnemyType
+        {
+            Id = "king_plain", MaxHp = 450, Speed = 22, Damage = 25, Range = 110, Windup = 1.2, AttackCooldown = 2.6, Recover = 0.7, Scale = 2,
+            Boss = true, Slam = true, PushFactor = 0.35, StunFactor = 0.4, EnragedSpeed = 32, EnragedWindup = 0.8, SummonCap = 4,
+            Phases = new[]
+            {
+                new BossPhase { At = 0.75, Summon = "slime", Count = 2 }, new BossPhase { At = 0.5, Summon = "mender", Count = 1 },
+                new BossPhase { At = 0.4, Summon = "runner", Count = 2 }, new BossPhase { At = 0.3, Enrage = true }
+            }
+        };
         BattleSettings Sturdy(double? bombCooldown = null) => new()
         {
             // A tiny blast: the bomb hits only the enemy it is thrown at, never the helpers beside it.
             FirstWaveDelay = 0, SpawnInterval = 0, CatMaxHp = 1_000_000, CatDamage = 0, MaxAlive = 6, BombCooldown = bombCooldown ?? 12, BombRadius = 1,
-            Enemies = data.EnemyTypes.ToArray()
+            Enemies = data.EnemyTypes.Append(plainKing).ToArray()
         };
         StageSpec Stage(params (string Enemy, int Count)[] groups) => new()
         { Id = "t", Waves = new[] { new WaveSpec { Groups = groups.Select(g => new WaveGroup { Enemy = g.Enemy, Count = g.Count }).ToArray() } } };
@@ -114,7 +126,7 @@ internal static class AdventureContentTests
         check(!events.Any(e => e.Kind == BattleEventKind.EnemyHealed) && f3.Hp == 0, "A friend defeated during the windup is not healed");
 
         // Boss phases: each once, helpers capped, enrage at the end. Yarn bombs do the damage.
-        var bossFight = new BattleSim(Sturdy(bombCooldown: 0.1), 0, 1600, new Random(2), stage: Stage(("king_c1", 1)));
+        var bossFight = new BattleSim(Sturdy(bombCooldown: 0.1), 0, 1600, new Random(2), stage: Stage(("king_plain", 1)));
         Run(bossFight, 3, catX: 1500, until: () => bossFight.Boss is { State: not SlimeState.Spawning });
         var boss = bossFight.Boss!;
         int Helpers() => bossFight.Slimes.Count(s => s.SummonedBy == boss.Id && s.State != SlimeState.Defeated);
@@ -136,7 +148,7 @@ internal static class AdventureContentTests
         Bomb();
         check(boss.Enraged, "At 30 % it gets angry");
         // One big hit crossing every threshold fires each phase once.
-        var bigHit = new BattleSim(Sturdy(), 0, 1600, new Random(2), stage: Stage(("king_c1", 1)));
+        var bigHit = new BattleSim(Sturdy(), 0, 1600, new Random(2), stage: Stage(("king_plain", 1)));
         Run(bigHit, 3, catX: 1500, until: () => bigHit.Boss is { State: not SlimeState.Spawning });
         var boss2 = bigHit.Boss!;
         boss2.Hp = boss2.MaxHp * 0.2; // The bomb leaves it alive below every threshold (a killing blow fires no phase).

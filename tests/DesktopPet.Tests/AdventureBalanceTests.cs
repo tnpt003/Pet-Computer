@@ -7,7 +7,7 @@ using DesktopPet;
 // Depth); both players build toward one group. Prints a table and checks the agreed targets.
 internal static class AdventureBalanceTests
 {
-    public readonly record struct Outcome(bool Won, double Seconds, double Hp, int Stuns, int Synergies, Dictionary<string, int> Build);
+    public readonly record struct Outcome(bool Won, double Seconds, double Hp, int Stuns, int Synergies, Dictionary<string, int> Build, int Blocks = 0, double ShieldSeconds = 0);
 
     // Order cards are liked in when the build gives no lead (fish when hurt).
     private static readonly string[] Preference = { "sharp", "fast_paws", "thick_fur", "big_heart", "quick_feet", "heavy_push", "grilled_fish" };
@@ -34,7 +34,7 @@ internal static class AdventureBalanceTests
             double run = 72 * data.CatRunScale * sim.MoveFactor; // Walking speed × CatRunScale × upgrades.
             if (order.Command == CatCommand.Move) cat += Math.Clamp(order.X - cat, -run * dt, run * dt);
         }
-        return new(sim.Phase == BattlePhase.Won, sim.FightSeconds, sim.CatHp, sim.StunsTaken, sim.Synergies.Count, sim.Build());
+        return new(sim.Phase == BattlePhase.Won, sim.FightSeconds, sim.CatHp, sim.StunsTaken, sim.Synergies.Count, sim.Build(), sim.BlocksMade, sim.BossShieldSeconds);
     }
 
     // Plain rules a careful user could follow without lifting the cat.
@@ -55,7 +55,8 @@ internal static class AdventureBalanceTests
         if (healer != null) sim.Use(BattleSkill.Push, healer.Id, cat);
         else if (dasher != null) sim.Use(BattleSkill.Push, dasher.Id, cat);
         else if (sim.Slimes.FirstOrDefault(Threat) is Slime hitter && !danger) sim.Use(BattleSkill.Push, hitter.Id, cat);
-        var crowd = sim.Slimes.Where(s => s.Targetable).ToList();
+        // A shielded boss takes nothing: the bomb goes to its helpers.
+        var crowd = sim.Slimes.Where(s => s.Targetable && !s.Shielded).ToList();
         var centre = crowd.FirstOrDefault(s => crowd.Count(o => Math.Abs(o.X - s.X) <= data.BombRadius) >= 2 || s.IsBoss);
         if (centre != null) sim.Use(BattleSkill.Bomb, centre.Id, cat);
         if (crowd.Count > 0) sim.Use(BattleSkill.Cheer, cat);
@@ -86,7 +87,7 @@ internal static class AdventureBalanceTests
                             list.Add(run);
                         }
                     }
-        Console.WriteLine("Adventure balance (simulation, not real play): stage | weapon | level | player | wins/10 | avg s (wins) | avg HP left (wins) | stuns/run | synergies at end");
+        Console.WriteLine("Adventure balance (simulation, not real play): stage | weapon | level | player | wins/10 | avg s (wins) | avg HP left (wins) | stuns/run | synergies at end | blocks/run | boss shield s/run");
         for (int i = 0; i < stages.Length; i++)
             foreach (var weapon in weapons)
                 foreach (var level in levels)
@@ -96,11 +97,14 @@ internal static class AdventureBalanceTests
                         var wins = runs.Where(r => r.Won).ToList();
                         var row = ((double)wins.Count / seeds, wins.Count > 0 ? wins.Average(r => r.Seconds) : 0, wins.Count > 0 ? wins.Average(r => r.Hp) : 0);
                         table[(i + 1, weapon, level, skills)] = row;
-                        Console.WriteLine($"  {i + 1} | {weapon,-6} | {level,-6} | {(skills ? "simple" : "idle"),-6} | {wins.Count,2}/10 | {row.Item2,6:0} | {row.Item3,4:0} | {runs.Average(r => r.Stuns),4:0.0} | {runs.Average(r => r.Synergies),3:0.0}");
+                        Console.WriteLine($"  {i + 1} | {weapon,-6} | {level,-6} | {(skills ? "simple" : "idle"),-6} | {wins.Count,2}/10 | {row.Item2,6:0} | {row.Item3,4:0} | {runs.Average(r => r.Stuns),4:0.0} | {runs.Average(r => r.Synergies),3:0.0} | {runs.Average(r => r.Blocks),4:0.0} | {runs.Average(r => r.ShieldSeconds),4:0}");
                     }
         // A build that is followed reaches its synergy within the chapter (stage 3 at the latest).
-        double reached = played.Where(p => p.Key.Stage == 3).SelectMany(p => p.Value).Count(r => r.Synergies > 0) / (double)played.Where(p => p.Key.Stage == 3).Sum(p => p.Value.Count);
-        check(reached >= 0.9, $"Balance: following one group, a synergy is on by the end of stage 3 in ≥ 90 % of runs ({reached:P0})");
+        // Counted on the runs that won stage 3: a run lost early never got its picks (milestone 3's
+        // blocking rock makes Hard idle runs lose there).
+        var thirdWins = played.Where(p => p.Key.Stage == 3).SelectMany(p => p.Value).Where(r => r.Won).ToList();
+        double reached = thirdWins.Count(r => r.Synergies > 0) / (double)thirdWins.Count;
+        check(reached >= 0.9, $"Balance: following one group, a synergy is on by the end of stage 3 in ≥ 90 % of the runs that win it ({reached:P0})");
 
         // Targets (2026-10-20): Normal with the simple player wins ≥ 80 % everywhere; Easy wins
         // stages 1–2 even idle; no win takes longer than ~4 minutes; sword and hammer stay close.

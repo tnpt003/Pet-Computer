@@ -9,6 +9,12 @@ Người dùng yêu cầu lưu review và kế hoạch ở đây để AI khác 
 
 Lần bàn giao này chỉ cập nhật tài liệu. Hướng chính được chọn ngày 2026-10-20 là Adventure Update — Chương 1; roadmap ở ADVENTURE-UPDATE.md. Các ý tưởng lẻ và review cũ phía dưới là nguồn tham khảo/lịch sử, không còn là thứ tự triển khai độc lập. Đọc AGENTS.md và giải thích kế hoạch trước khi triển khai; giữ nguyên source đang có và không tự publish/commit/restart.
 
+## Ưu tiên bàn giao mới — Combat Depth (2026-10-20)
+
+Xem [COMBAT-DEPTH.md](COMBAT-DEPTH.md): phản hồi người dùng màn 1–4 dễ, thẻ thiếu quyết định; hướng combo nhóm thẻ (3 Defense → Giáp gai), vai trò support/nhanh/đá/King và **stun mèo 1,5 giây với biểu cảm choáng**. Đã phân biệt yêu cầu người dùng với thiết kế đề xuất cần kiểm chứng. Chơi lại được người dùng xác nhận trơn tru, giữ luồng đó.
+
+Trạng thái: tài liệu để AI khác inspect/lập kế hoạch, chưa code/test trong lần bàn giao này. Đọc AGENTS.md và tài liệu chi tiết trước khi sửa. Đây là ưu tiên combat tiếp theo trên Adventure đã có, không làm lại roadmap cũ. Commit/publish theo quy tắc hiện hành khi hoàn thành mốc code.
+
 ## Hướng chính đã chọn — Adventure Update, Chương 1 (2026-10-20)
 
 Người dùng đã chọn gom các tính năng thành một bản cập nhật lớn: **Cuộc phiêu lưu của mèo — Cuộc xâm nhập của Slime**. Xem roadmap triển khai chính tại [ADVENTURE-UPDATE.md](ADVENTURE-UPDATE.md).

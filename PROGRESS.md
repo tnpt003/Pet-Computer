@@ -4,6 +4,10 @@ Cập nhật: 2026-10-20 (Asia/Saigon).
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
+## Bàn giao Combat Depth (2026-10-20) — chưa triển khai
+- [docs/COMBAT-DEPTH.md](docs/COMBAT-DEPTH.md) ghi phản hồi màn 1–4 quá dễ, combo thẻ và vai trò từng quái; stun mèo biểu cảm choáng 1,5 giây, không khóa drag/physics và tách pickup Dizzy.
+- NEXT-STEPS đã dẫn tới tài liệu, phân biệt yêu cầu và đề xuất, có tiêu chí test/balance. Người dùng xác nhận chơi lại trơn tru. Lần này chỉ sửa tài liệu, không code/test/publish binary.
+
 ## Quy tắc bàn giao mới (2026-10-20)
 - Người dùng yêu cầu luôn commit và publish. Đã cập nhật AGENTS.md, NEXT-STEPS.md và ADVENTURE-UPDATE.md: mốc code hoàn chỉnh phải test → commit → publish → smoke, không hỏi lại; tài liệu-only commit, không rebuild binary. Không tự push/upload.
 - Đây là cập nhật quy tắc; không tự nhận commit/publish các mốc code của agent khác đang làm.

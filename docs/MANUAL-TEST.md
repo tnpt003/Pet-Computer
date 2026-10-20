@@ -140,7 +140,7 @@ Nên chép dự phòng %LOCALAPPDATA%\DesktopPet\adventure-progress.json (nếu 
 
 #### Phiêu lưu — mốc 4: quái hồi máu, Vua Slime theo pha, phần thưởng (2026-10-20)
 - [ ] Màn 4: slime thảo dược (xanh ngọc, dấu "+" trắng). Khi nó gồng: dấu "+" xanh nhấp nháy trên đầu nó, vòng xanh đứt nét dưới con được hồi; sau đó con kia hiện dấu cộng bay lên và "+15". Banner "Quái hồi máu! Hạ nó trước" chỉ một lần. Đẩy nó lúc đang gồng: không hồi. Màn có thắng được không, có kéo dài vô tận không.
-- [ ] Màn 5: Vua Slime gọi 2 slime ở ~75% máu, 1 slime thảo dược ở ~50%, slime nhanh ở ~40%, nổi giận ở ~30%; mỗi pha có banner, không gọi lại; không bao giờ quá 4 quân của nó cùng lúc. Trận tự do: Vua Slime vẫn như cũ.
+- [~] Màn 5: Vua Slime gọi 2 slime ở ~75% máu, 1 slime thảo dược ở ~50%, slime nhanh ở ~40%, nổi giận ở ~30%; mỗi pha có banner, không gọi lại; không bao giờ quá 4 quân của nó cùng lúc. Trận tự do: Vua Slime vẫn như cũ. (Đã thay 2026-10-21: xem mục cuối file.)
 - [ ] Thắng màn 3: bảng kết quả có dòng vàng "Phần thưởng mới: Mũ slime — đội trong Cài đặt → Mèo"; mèo không tự đội. Cài đặt → Mèo → Phụ kiện: có Mũ slime (trước đó không có), chọn → Lưu: mèo đội, xem khi đi/ngủ/kéo/trèo. Thắng màn 5: Vương miện Vua Slime. Thắng lại: không có dòng phần thưởng nữa. Bản đồ ghi "Phần thưởng: … ✓ đã nhận".
 - [ ] Bấm Kết thúc (HUD hoặc menu) giữa trận màn: về bản đồ đúng màn đó, không tính gì. Trận tự do: Kết thúc về desktop như cũ.
 - [ ] Đã thắng màn 3 bằng bản trước (8b93d25/9225d77): mở bản đồ là có Mũ slime trong Cài đặt (nhận bù).
@@ -168,7 +168,7 @@ Nên chép dự phòng %LOCALAPPDATA%\DesktopPet\adventure-progress.json (nếu 
 #### Combat Depth — mốc 3: đá chặn đòn, support đứng sau, King bật khiên (2026-10-20)
 - [ ] Slime đá (màn 2–4 và trận tự do): khoảng 1/3 nhát kiếm/búa hiện "CHẶN" + mảnh đá xám, không mất máu, không bị đẩy; không bao giờ chặn 3 nhát liền. Bom len luôn trúng. Có Phá giáp (3 thẻ Sức mạnh): đòn combo vàng không bao giờ bị chặn. Chữ "CHẶN" đọc rõ trên nền sáng và tối.
 - [ ] Slime thảo dược (màn 4–5): khi còn slime khác thì nó đứng phía sau, không gồng đánh mèo, vẫn hồi máu cho đồng đội; mèo đuổi thì nó lùi chậm và bị dồn ở mép màn hình. Hạ hết đồng đội thì nó tự đánh mèo. Click nó để mèo đánh nó trước vẫn được.
-- [ ] Màn 5: Vua Slime ở 70% máu bật bong bóng khiên vàng, banner "… bật khiên! Hạ hết quân", chạy về mép xa mèo rồi gọi 2 slime. Một đòn lớn (bom) không làm máu tụt qua 70%. Đánh/bom vào nó hiện "BẤT TỬ", thanh máu HUD vàng "(khiên: hạ hết quân!)". Mèo tự đánh quân, không đứng đánh boss. Hạ hết quân → "KHIÊN VỠ!" một lần, boss quay lại đánh. 40%: khiên lần 2, gọi slime thảo dược + 2 slime nhanh. 30%: nổi giận.
+- [~] Màn 5: Vua Slime ở 70% máu bật bong bóng khiên vàng, banner "… bật khiên! Hạ hết quân", chạy về mép xa mèo rồi gọi 2 slime. Một đòn lớn (bom) không làm máu tụt qua 70%. Đánh/bom vào nó hiện "BẤT TỬ", thanh máu HUD vàng "(khiên: hạ hết quân!)". Mèo tự đánh quân, không đứng đánh boss. Hạ hết quân → "KHIÊN VỠ!" một lần, boss quay lại đánh. 40%: khiên lần 2, gọi slime thảo dược + 2 slime nhanh. 30%: nổi giận. (Đã thay 2026-10-21: xem mục cuối file.)
 - [ ] Trong khiên: kéo mèo lại sát boss thì nó vẫn dậm (vùng đỏ). Pause/menu giữa lúc boss chạy về mép: mọi thứ đứng yên. Thua giữa pha khiên: trận kết thúc bình thường, về Pet Mode không còn gì lạ. Chơi trên màn hình phụ/DPI khác: boss chạy đúng mép của màn hình đó.
 - [ ] Âm thanh: bật khiên/khiên vỡ/chặn đòn dùng cue sẵn có, không dày hay chói.
 
@@ -181,12 +181,12 @@ Nên chép dự phòng %LOCALAPPDATA%\DesktopPet\adventure-progress.json (nếu 
 
 #### Enemy Director — mốc 2: vai trò quái, chiến thuật (2026-10-20)
 - [ ] Slime thảo dược: có mũ lá và túi thảo dược, không còn dấu + trên thân. Lá sáng và có hạt sáng bay tới đồng minh khi gồng hồi; hết lượng hồi thì lá cụp xỉn. Đẹp/đọc rõ trên nền sáng và tối.
-- [ ] Đồng minh của nó tụt dưới ~1/3 máu ở xa: nó co người trong vòng lá, có dấu xanh ở điểm đến, rồi hiện ra sau đồng minh. Đẩy lúc đang co người thì hủy. Không teleport liên tục.
+- [~] Đồng minh của nó tụt dưới ~1/3 máu ở xa: nó co người trong vòng lá, có dấu xanh ở điểm đến, rồi hiện ra sau đồng minh. Đẩy lúc đang co người thì hủy. Không teleport liên tục. (Đã thay 2026-10-21: xem mục cuối file.)
 - [ ] Slime đá: thân rộng/thấp, khiên đá ở phía mặt (khiên mới: xem mục mốc 3), nứt thêm khi yếu. Mèo không tự đi xuyên qua đá; click quái phía sau thì mèo vẫn đánh đá trước (vòng xám dưới chân đá). Bế mèo thả ra sau đá thì đánh thẳng mục tiêu. Thả mèo đè lên đá: mèo bước ra mép gần, không nhảy xa. Đánh từ sau lưng đá không bao giờ "CHẶN"; đá cần một chút thời gian quay lại.
 - [ ] Không thấy quá 2 quái cùng gồng một lúc; các đòn không trúng cùng một khung hình.
 - [ ] Màn 4: một slime đá đứng chắn giữa mèo và slime thảo dược; ném mèo sang phía kia thì đá đổi chỗ sau một nhịp.
 - [ ] Màn 5 đợt 1: mũi tên đỏ + banner "Quái tới từ phía sau!" rồi slime nhanh ra ở mép đó sau ~1 s. Đứng sát mép đó thì quái ra ở mép kia. Cầm cự sau giây 45: quái ra luân phiên hai mép, có mũi tên.
-- [ ] Vua Slime khi bật khiên: vương miện có vòng sáng, banner "ra lệnh xung phong", một quân chạy nhanh có vệt vàng. Đẩy Vua lúc vương miện sáng thì hủy. Khiên vỡ: Vua choáng ~2 s (sao quanh đầu), đánh được.
+- [~] Vua Slime khi bật khiên: vương miện có vòng sáng, banner "ra lệnh xung phong", một quân chạy nhanh có vệt vàng. Đẩy Vua lúc vương miện sáng thì hủy. Khiên vỡ: Vua choáng ~2 s (sao quanh đầu), đánh được. (Đã thay 2026-10-21: xem mục cuối file.)
 
 #### Enemy Director — mốc 3: tinh anh, thẻ hiếm, cân bằng (2026-10-20)
 - [ ] Màn 3–5 ở Thường/Khó: thỉnh thoảng có quái viền vàng + ngôi sao vàng ở góc lưng (không quá 1 con cùng lúc); lần đầu mỗi loại có banner "★ … tinh anh: …". Rõ trên nền sáng và tối, không che thanh máu/mũ lá/giáp. Màn 1–2 và mức Dễ không bao giờ có.
@@ -194,7 +194,7 @@ Nên chép dự phòng %LOCALAPPDATA%\DesktopPet\adventure-progress.json (nếu 
 - [ ] Thẻ hiếm: chơi vài lượt màn 2–5, đôi khi có thẻ viền vàng "★ Thẻ hiếm · một lần mỗi build" thay thẻ cùng nhóm. Đã lấy rồi thì không hiện lại. HUD và bảng chuẩn bị màn sau ghi "◆ <tên thẻ>".
 - [ ] Mai rùa: đòn đầu trúng mèo không mất máu (mảnh đá xám ở mèo), ~12 s sau lại chặn được một đòn; bế mèo thì không hồi nhanh hơn. Đòn mở màn: nhát đầu vào mỗi quái số sát thương gấp đôi. Chạy đà: mèo chạy một quãng tới quái rồi chém, số to hơn và có vệt vàng combo; đứng yên chém thì bình thường.
 - [ ] Slime đá cầm khiên đá hình huy hiệu (đầu phẳng, đáy nhọn, có bàn tay) ở phía mặt, không còn giống cái loa/vòi. Màn 4: slime thảo dược đứng sau 3 con đá vẫn thấy rõ (vẽ trên cùng, đá đè lên nó hơi mờ); click vào nó chọn đúng nó. Nền sáng và tối.
-- [ ] Vua Slime (màn 5) ở 70%/40% máu: nhún một nhịp rồi nhảy vòng cung (có bóng dưới sàn) về mép đối diện nửa sân nó đứng; khi mèo ở nửa đó thì về mép kia, không bao giờ đáp cạnh mèo. Thử cả mèo trái và mèo phải. Đáp có bụi, không mất máu.
+- [~] Vua Slime (màn 5) ở 70%/40% máu: nhún một nhịp rồi nhảy vòng cung (có bóng dưới sàn) về mép đối diện nửa sân nó đứng; khi mèo ở nửa đó thì về mép kia, không bao giờ đáp cạnh mèo. Thử cả mèo trái và mèo phải. Đáp có bụi, không mất máu. (Đã thay 2026-10-21: xem mục cuối file.)
 - [ ] Sau khi đáp: vòng tím có "!" ở chỗ quân sắp ra (~0,6 s), quân ra đúng các vòng: thảo dược sát Vua, đá đứng trước nó, slime nhanh ngoài cùng. Vương miện sáng thì có tia vàng nối tới con sắp được tăng tốc.
 - [ ] Slime thảo dược hồi nhiều thấy rõ (màn 4–5 khoảng +60 mỗi lần); không cắt thì quái khó hạ hẳn, nên hạ nó trước hoặc Đẩy lúc lá sáng.
 - [ ] Chiến thuật (màn 2–5): slime thảo dược gồng hồi thì con được hồi có vòng lá xanh, đánh vào hiện "MIỄN"; Đẩy slime thảo dược thì hết miễn ngay; mèo tự chuyển sang con khác. Mèo áp sát slime thảo dược thì nó lùi nhanh hơn nhưng vẫn đuổi kịp; nó đứng sau con đá vệ sĩ. Slime thường yếu (dưới ~1/3 máu) có mũi tên lùi, đi về chỗ slime thảo dược rồi quay lại. Slime nhanh lao xong chạy ra xa rồi mới quay lại. Có đá chắn trước mặt thì một slime thường (cung cam trên đầu) vòng ra sau lưng mèo. Có banner giải thích lần đầu; thấy rõ trên nền sáng/tối; không thấy cảnh bị kẹp không lối thoát.
@@ -238,3 +238,11 @@ Sau vài trận, trả lời: đòn quái sau khi thả mèo có dễ hiểu/cô
 
 ## Chưa làm được (cần phần cứng)
 - [ ] Nhiều màn hình vật lý mixed-DPI: kéo/ném qua màn hình, ngắt/kết nối màn hình, khôi phục vị trí và chỗ nghỉ.
+
+## Chiến thuật quái gọn lại, hồi xa, Vua Slime mạnh hơn (2026-10-21)
+
+- [ ] Màn 2 và 5: slime thường không còn mũi tên xanh xám (lùi về) hay cung cam (vòng ra sau); slime sau đá chỉ đi tới sau đá, không băng qua mèo.
+- [ ] Màn 4: đánh một slime/đá ở xa slime thảo dược xuống dưới ~1/3 máu: slime thảo dược đứng yên, lá sáng lâu hơn thường (~1,2 s), có vệt lá xanh đứt nét nối qua sân tới con đó, banner "Slime thảo dược hồi máu từ xa! Đẩy nó để cắt" (một lần mỗi trận). Đẩy lúc gồng thì hủy, không hồi. Không hồi xa liên tục (cách ~8 s). Vệt nhìn rõ trên nền tối và sáng.
+- [ ] Không có đá: slime thảo dược đứng sau slime gần mèo nhất, không lao lên đánh mèo khi còn đồng minh.
+- [ ] Màn 5: Vua bật khiên ở ~75%, ~50%, ~25% máu (ba lần, lần cuối kèm nổi giận). Vương miện sáng + tia vàng tới một quân → quân đó có viền vàng + sao, thanh máu dài hơn, banner "★ … thành tinh anh!". Đẩy Vua lúc sáng thì hủy. Không phong lại con đã là tinh anh; chỉ còn slime thảo dược thì vương miện không sáng.
+- [ ] Màn 5 Khó: thử xem có quá khó không (mô phỏng: người chơi đơn giản thắng 5–6/10, người chơi "casual" 0–1/10).

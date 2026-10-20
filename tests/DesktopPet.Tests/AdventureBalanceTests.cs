@@ -232,7 +232,8 @@ internal static class AdventureBalanceTests
             for (int s = 1; s <= stages.Length; s++)
             {
                 double sword = table[(s, BattleWeapon.Sword, level, Player.Simple)].Wins, hammer = table[(s, BattleWeapon.Hammer, level, Player.Simple)].Wins;
-                check(Math.Abs(sword - hammer) <= 0.3, $"Balance: stage {s}, {level}: sword and hammer within 30 points ({sword:P0} vs {hammer:P0})");
+                // In whole points: 6/10 against 9/10 is 30 points, not 0.30000000000000004.
+                check(Math.Round(Math.Abs(sword - hammer) * 100) <= 30, $"Balance: stage {s}, {level}: sword and hammer within 30 points ({sword:P0} vs {hammer:P0})");
             }
         // The whole chapter in one go, saved and read back after every stage (like closing the app).
         string dir = Path.Combine(Path.GetTempPath(), "pet-chapter-" + Guid.NewGuid().ToString("N"));

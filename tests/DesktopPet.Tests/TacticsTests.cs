@@ -2,16 +2,16 @@ using DesktopPet;
 
 // Enemy tactics after Enemy Director milestone 3 (user request), each behind its own data switch:
 // a heal guards the ally it is on (healGuard), a support hurries away from a close cat (fleeSpeed)
-// and keeps behind its guard (hideBehindGuard), a hurt slime falls back to its healer
-// (fallBackBelow), a quick slime runs off after its dash (hitAndRun), a slime goes round the
-// rocks to the cat's back (flank).
+// and keeps behind its guard (hideBehindGuard) or else its nearest fighting ally, a quick slime runs
+// off after its dash (hitAndRun). The plain slime's falling back and flanking were taken out
+// (2026-10-21): it just walks up and hits.
 internal static class TacticsTests
 {
     const double dt = 1.0 / 60;
 
-    private static EnemyType Fighter(double hp = 500, double speed = 0, double below = 0, bool flank = false) => new()
+    private static EnemyType Fighter(double hp = 500, double speed = 0) => new()
     {
-        Id = "slime", MaxHp = hp, Speed = speed, Damage = 0, Range = 64, Windup = 0.8, AttackCooldown = 1.8, Recover = 0.35, FallBackBelow = below, Flank = flank, FlankSpeed = 2
+        Id = "slime", MaxHp = hp, Speed = speed, Damage = 0, Range = 64, Windup = 0.8, AttackCooldown = 1.8, Recover = 0.35
     };
 
     private static EnemyType Mender(double heal = 10, double cooldown = 0.5, double flee = 1, bool hide = false, double speed = 0) => new()
@@ -48,9 +48,8 @@ internal static class TacticsTests
     {
         GuardChecks(check);
         FleeChecks(check);
-        FallBackChecks(check);
+        PlainSlimeChecks(check);
         HitAndRunChecks(check);
-        FlankChecks(check);
         DataChecks(check);
     }
 
@@ -166,31 +165,16 @@ internal static class TacticsTests
         var (slime, healer, rock) = (sim.Slimes[0], sim.Slimes[1], sim.Slimes[2]);
         check(rock.GuardOf == healer.Id && Math.Abs(healer.X - rock.X - 110) < 8 && healer.X > rock.X && rock.X > slime.X,
             $"hideBehindGuard: the support keeps 110 DIPs behind its guard rock (rock {rock.X:0}, support {healer.X:0}), not behind the nearer slime");
+
+        // With no rock it keeps behind the nearest fighting ally on its side instead.
+        var bare = Field(new[] { Fighter(), Mender(heal: 0.0001, cooldown: 60, hide: true, speed: 60) }, ("slime", 700), ("mender", 1200));
+        Run(bare, 8, 400);
+        var (front, back) = (bare.Slimes[0], bare.Slimes[1]);
+        check(Math.Abs(back.X - front.X - 110) < 8,
+            $"No rock: the support keeps 110 DIPs behind the nearest slime (slime {front.X:0}, support {back.X:0})");
     }
 
     private static double TacticsMath(Slime support, double distance) => BattleSim.FleeFactor(support, distance);
-
-    private static void FallBackChecks(Action<bool, string> check)
-    {
-        var sim = Field(new[] { Fighter(50, 40, 0.3), Mender(heal: 35, cooldown: 1, speed: 0) }, ("slime", 400), ("mender", 1300));
-        var hurt = sim.Slimes[0];
-        var healer = sim.Slimes[1];
-        hurt.Hp = 10;
-        int announced = 0;
-        bool windup = false;
-        double start = hurt.X;
-        Run(sim, 1, 380, each: () => { announced += sim.Events.Count(e => e.Kind == BattleEventKind.EnemyFallingBack); windup |= hurt.State == SlimeState.Windup; });
-        check(hurt.FallingBack && hurt.X > start + 20 && !windup && announced == 1, "Below 30 % HP a slime falls back toward its healer (no attack on the way, with the cat in reach)");
-        Run(sim, 12, 380, () => !hurt.FallingBack);
-        check(!hurt.FallingBack && hurt.FellBack && hurt.Hp >= 0.6 * hurt.MaxHp, $"…until it is healed well past the line ({hurt.Hp:0} HP)");
-        hurt.Hp = 5;
-        Run(sim, 0.5, hurt.X - 40);
-        check(!hurt.FallingBack, "Only once a battle");
-        var alone = Field(new[] { Fighter(50, 40, 0.3) }, ("slime", 400));
-        alone.Slimes[0].Hp = 5;
-        Run(alone, 0.5, 380);
-        check(!alone.Slimes[0].FallingBack, "No healer that can heal: it does not fall back");
-    }
 
     private static void HitAndRunChecks(Action<bool, string> check)
     {
@@ -207,47 +191,45 @@ internal static class TacticsTests
         check(!double.IsNaN(lunged) && farthest >= 140 && farthest <= 160, $"hitAndRun: after its dash the quick slime runs ~150 DIPs off ({farthest:0}) before coming back");
     }
 
-    private static void FlankChecks(Action<bool, string> check)
+    // The shipped slime: badly hurt with a healer on the field it still winds up on a cat in reach,
+    // and one behind a rock walks up behind the rock, never round to the cat's back.
+    private static void PlainSlimeChecks(Action<bool, string> check)
     {
-        var sim = Field(new[] { Fighter(speed: 34, flank: true), Rock }, ("slime", 1300), ("rock", 1000), ("slime", 1350));
-        var a = sim.Slimes[0];
-        var b = sim.Slimes[2];
-        int announced = 0, most = 0;
-        Run(sim, 8, 800, () => a.Flanked || b.Flanked, () =>
-        {
-            announced += sim.Events.Count(e => e.Kind == BattleEventKind.EnemyFlanking);
-            most = Math.Max(most, sim.Slimes.Count(s => s.Flanking));
-        });
-        var flanker = a.Flanked ? a : b;
-        check(flanker.Flanked && flanker.X < 800 && Math.Abs(flanker.X - (800 - 64 * 0.8)) < 8 && most == 1 && announced >= 1,
-            $"A slime behind a rock goes round to the cat's back ({flanker.X:0}, the cat at 800); one at a time");
-        var open = Field(new[] { Fighter(speed: 34, flank: true) }, ("slime", 1300));
-        Run(open, 2, 800);
-        check(!open.Slimes[0].Flanking && !open.Slimes[0].Flanked, "No rock in the way: no flanking");
-        var edge = Field(new[] { Fighter(speed: 34, flank: true), Rock }, ("slime", 600), ("rock", 300));
-        Run(edge, 1, 40);
-        check(!edge.Slimes[0].Flanking, "No room behind a cat at the floor's edge: no flanking");
+        var slime = BattleData.Settings.Enemy("slime");
+        var sim = Field(new[] { slime, Mender(heal: 35, cooldown: 60, speed: 0) }, ("slime", 400), ("mender", 1300));
+        var hurt = sim.Slimes[0];
+        hurt.Hp = 5;
+        double start = hurt.X;
+        bool windup = false;
+        Run(sim, 1.5, 380, () => windup, () => windup |= hurt.State == SlimeState.Windup);
+        check(windup && hurt.X <= start + 1, $"A badly hurt slime with a healer on the field still attacks a cat in reach (no falling back; {start:0} -> {hurt.X:0})");
+        var walled = Field(new[] { slime, Rock }, ("slime", 1300), ("rock", 1000));
+        double least = double.MaxValue;
+        Run(walled, 8, 800, each: () => least = Math.Min(least, walled.Slimes[0].X));
+        check(least > 800, $"A slime behind a rock never goes round to the cat's back (it gets no nearer than {least:0}, the cat at 800)");
     }
 
     private static void DataChecks(Action<bool, string> check)
     {
         var data = BattleData.Settings;
-        check(data.Enemy("mender") is { HealGuard: true, HealGuardRepeat: 2, FleeSpeed: 2.5, HideBehindGuard: true } &&
-              data.Enemy("slime") is { FallBackBelow: 0.3, Flank: true, FlankSpeed: 2 } && data.Enemy("runner").HitAndRun == 150 && data.MaxFlankers == 1 &&
-              data.Enemy("rock") is { Flank: false, FallBackBelow: 0 },
-            "Shipped tactics: herb slime guards its heal target, hurries and hides behind its rock; slime falls back and flanks; quick slime hits and runs");
+        check(data.Enemy("mender") is { HealGuard: true, HealGuardRepeat: 2, FleeSpeed: 2.5, HideBehindGuard: true } && data.Enemy("runner").HitAndRun == 150,
+            "Shipped tactics: herb slime guards its heal target, hurries and hides behind its rock; quick slime hits and runs");
         string Bad(string json)
         {
             using var stream = typeof(BattleData).Assembly.GetManifestResourceStream("DesktopPet.battle.json")!;
             try { BattleData.ParseWithOverride(new StreamReader(stream).ReadToEnd(), "{ \"schemaVersion\": 1, " + json + " }"); return ""; }
             catch (Exception ex) when (ex is InvalidDataException or System.Text.Json.JsonException) { return ex.Message; }
         }
-        check(Bad("\"enemies\": [ { \"id\": \"rock\", \"flank\": true } ]").Contains("blocker") && Bad("\"enemies\": [ { \"id\": \"slime\", \"hitAndRun\": 100 } ]").Contains("dash") &&
-              Bad("\"enemies\": [ { \"id\": \"slime\", \"healGuard\": true } ]").Contains("heals") && Bad("\"enemies\": [ { \"id\": \"mender\", \"flank\": true } ]").Contains("support") &&
-              Bad("\"maxFlankers\": 9").Contains("maxFlankers"), "Tactic switches on the wrong kind of enemy are rejected");
+        check(Bad("\"enemies\": [ { \"id\": \"slime\", \"hitAndRun\": 100 } ]").Contains("dash") &&
+              Bad("\"enemies\": [ { \"id\": \"slime\", \"healGuard\": true } ]").Contains("heals") && Bad("\"enemies\": [ { \"id\": \"slime\", \"farHealBelow\": 0.3 } ]").Contains("support") &&
+              Bad("\"enemies\": [ { \"id\": \"slime\", \"flankk\": true } ]") != "", "Tactic switches on the wrong kind of enemy (and misspelt keys) are rejected");
         // Each switch can be turned off by a user file without touching the others.
-        var off = BattleData.ParseWithOverride(new StreamReader(typeof(BattleData).Assembly.GetManifestResourceStream("DesktopPet.battle.json")!).ReadToEnd(),
-            "{ \"schemaVersion\": 1, \"enemies\": [ { \"id\": \"slime\", \"flank\": false } ] }");
-        check(!off.Enemy("slime").Flank && off.Enemy("slime").FallBackBelow == 0.3, "A user battle.json can turn one tactic off and keep the rest");
+        string builtIn = new StreamReader(typeof(BattleData).Assembly.GetManifestResourceStream("DesktopPet.battle.json")!).ReadToEnd();
+        var off = BattleData.ParseWithOverride(builtIn, "{ \"schemaVersion\": 1, \"enemies\": [ { \"id\": \"runner\", \"hitAndRun\": 0 } ] }");
+        check(off.Enemy("runner").HitAndRun == 0 && off.Enemy("mender").HideBehindGuard, "A user battle.json can turn one tactic off and keep the rest");
+        // An older user file that still sets the tactics taken out keeps working (they are ignored).
+        var old = BattleData.ParseWithOverride(builtIn, "{ \"schemaVersion\": 1, \"maxFlankers\": 2, \"enemies\": [ { \"id\": \"slime\", \"fallBackBelow\": 0.3, \"flank\": true, \"flankSpeed\": 2, \"maxHp\": 60 }, " +
+            "{ \"id\": \"mender\", \"teleportBelow\": 0.35, \"teleportWindup\": 0.6, \"teleportCooldown\": 8 }, { \"id\": \"king_c1\", \"rallySeconds\": 3, \"rallySpeed\": 1.4 } ] }");
+        check(old.Enemy("slime").MaxHp == 60 && old.Enemy("mender").FarHealBelow == 0.35, "Old keys (flank, fallBackBelow, teleport..., rallySeconds/Speed, maxFlankers) are ignored, the rest of the file applies");
     }
 }

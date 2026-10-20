@@ -193,8 +193,8 @@ public sealed class BattleFieldView : FrameworkElement
         }
     }
 
-    // The rally call's target: a dashed gold line from the glowing crown to the helper it will speed up,
-    // and a gold ring at that helper's feet.
+    // The rally call's target: a dashed gold line from the glowing crown to the helper it will make
+    // elite, and a gold ring at that helper's feet.
     private void DrawRallyLink(DrawingContext dc, Slime boss, Slime helper, double floor, double time)
     {
         var from = new Point(boss.X - OriginX, floor - boss.LeapHeight - boss.Height - 6);
@@ -206,39 +206,7 @@ public sealed class BattleFieldView : FrameworkElement
         dc.DrawEllipse(null, RallyPen, new Point(to.X, floor - 1), (helper.Width / 2 + 7) * ring, 6);
     }
 
-    // Over a slime's head: a grey-blue arrow pointing back while it falls back to its healer, an orange
-    // arc over to the far side while it goes round to the cat's back.
-    private static void DrawTacticMark(DrawingContext dc, Slime slime, double x, double y, double time)
-    {
-        if (slime.FallingBack)
-        {
-            int back = -slime.Facing;
-            var tip = new Point(x + back * 11, y);
-            dc.DrawLine(Halo, new Point(x - back * 9, y), tip);
-            dc.DrawLine(BackPen, new Point(x - back * 9, y), tip);
-            dc.DrawLine(BackPen, tip, new Point(tip.X - back * 6, y - 5));
-            dc.DrawLine(BackPen, tip, new Point(tip.X - back * 6, y + 5));
-            return;
-        }
-        int way = slime.Facing;
-        double bob = 2 * Math.Sin(time * 8);
-        var arc = new StreamGeometry();
-        using (var c = arc.Open())
-        {
-            c.BeginFigure(new Point(x - way * 12, y + 4 + bob), false, false);
-            c.ArcTo(new Point(x + way * 12, y + 4 + bob), new Size(13, 10), 0, false, way > 0 ? SweepDirection.Clockwise : SweepDirection.Counterclockwise, true, false);
-        }
-        arc.Freeze();
-        var end = new Point(x + way * 12, y + 4 + bob);
-        dc.DrawGeometry(null, Halo, arc);
-        dc.DrawGeometry(null, FlankPen, arc);
-        dc.DrawLine(FlankPen, end, new Point(end.X - way * 6, end.Y - 3));
-        dc.DrawLine(FlankPen, end, new Point(end.X + way * 1, end.Y - 7));
-    }
-
     private static readonly Pen WardPen = FrozenPen(Frozen(255, 0x3F, 0xC8, 0x6B), 3);
-    private static readonly Pen BackPen = FrozenPen(Frozen(255, 0x5A, 0x7C, 0xA8), 3);
-    private static readonly Pen FlankPen = FrozenPen(Frozen(255, 0xF2, 0x8C, 0x28), 3);
     private static readonly Brush LeapShadow = Frozen(90, 0x26, 0x23, 0x38);
     private static readonly Pen ShadowRim = FrozenPen(Frozen(150, 255, 255, 255), 1.5);
     private static readonly Brush SummonPurple = Frozen(255, 0x9B, 0x5C, 0xE0);
@@ -294,11 +262,6 @@ public sealed class BattleFieldView : FrameworkElement
                 double fade = Math.Clamp(t / (s.DefeatDuration * (slime.IsBoss ? 1.5 : 1)), 0, 1);
                 sx = 1 + 0.5 * fade; sy = Math.Max(0.05, 1 - fade); opacity = 1 - fade;
                 break;
-            case SlimeState.Teleporting:
-                // Shrinking away inside its ring of leaves.
-                double away = Math.Clamp(t / Math.Max(0.01, slime.Type.TeleportWindup), 0, 1);
-                sx = sy = 1 - 0.65 * away;
-                break;
         }
         // A boss crouching before its leap.
         if (slime.Crouch > 0) { sx *= 1 + 0.18 * slime.Crouch; sy *= 1 - 0.25 * slime.Crouch; }
@@ -306,7 +269,6 @@ public sealed class BattleFieldView : FrameworkElement
         if (slime.Type.Marks == "cracks") { sx *= 1.12; sy *= 0.9; }
         // A blocker in front of a support fades a little, so the support shows through it.
         if (slime.Type.Blocker && CoversSupport(slime)) opacity *= 0.72;
-        if (slime.State == SlimeState.Teleporting) DrawTeleport(dc, slime, x, floor, time);
         if (sim.BlockedById == slime.Id)
         {
             // In the cat's way: a grey dashed ring at its feet (the cat hits it before its target).
@@ -349,14 +311,13 @@ public sealed class BattleFieldView : FrameworkElement
             dc.DrawGeometry(PushBlue, Ink, PushArrow);
             dc.Pop();
         }
-        bool rallied = slime.RallyRemaining > 0;
-        if ((slime.Type.Marks == "speed" || rallied) && slime.State is SlimeState.Moving or SlimeState.Dashing && opacity > 0.5)
+        if (slime.Type.Marks == "speed" && slime.State is SlimeState.Moving or SlimeState.Dashing && opacity > 0.5)
         {
-            // Wind streaks trailing a fast slime (gold while the boss's rally drives it).
+            // Wind streaks trailing a fast slime.
             for (int i = 0; i < 3; i++)
             {
                 double y = floor - h * (0.3 + 0.2 * i), back = -slime.Facing * (w / 2 + 4 + 3 * i);
-                dc.DrawLine(rallied ? RallyStreak : Streak, new Point(x + back, y), new Point(x + back - slime.Facing * (10 + 4 * (i % 2)), y));
+                dc.DrawLine(Streak, new Point(x + back, y), new Point(x + back - slime.Facing * (10 + 4 * (i % 2)), y));
             }
         }
         dc.PushOpacity(opacity);
@@ -466,7 +427,6 @@ public sealed class BattleFieldView : FrameworkElement
                 DrawSmallLeaf(dc, new Point(centre.X + Math.Cos(a) * rx, centre.Y + Math.Sin(a) * ry), a + Math.PI / 2);
             }
         }
-        if (slime.FallingBack || slime.Flanking) DrawTacticMark(dc, slime, x, top - 14, time);
         if (slime.State == SlimeState.Windup)
         {
             // The warning: a red "!" over a swelling slime.
@@ -505,6 +465,12 @@ public sealed class BattleFieldView : FrameworkElement
                 dc.DrawEllipse(null, Halo, new Point(ax, floor - 2), ally.Width / 2 + 8, 7);
                 dc.DrawEllipse(null, HealDash, new Point(ax, floor - 2), ally.Width / 2 + 8, 7);
                 double from = top - 6, to = floor - ally.Height - 4;
+                // A far heal: a dashed green trail across the field to the ally, so it is plain which healer to push.
+                if (slime.FarHeal)
+                {
+                    dc.DrawLine(Halo, new Point(x, from), new Point(ax, to));
+                    dc.DrawLine(HealDash, new Point(x, from), new Point(ax, to));
+                }
                 for (int i = 0; i < 3; i++)
                 {
                     double f = (t * 1.6 + i / 3.0) % 1;
@@ -559,22 +525,6 @@ public sealed class BattleFieldView : FrameworkElement
         if (spent) dc.Pop();
     }
 
-    // The jump to come: a ring of leaves turning round the shrinking support, and a dashed green ring
-    // with a small leaf on the floor where it will appear.
-    private void DrawTeleport(DrawingContext dc, Slime slime, double x, double floor, double time)
-    {
-        double k = Math.Clamp(slime.StateTime / Math.Max(0.01, slime.Type.TeleportWindup), 0, 1);
-        for (int i = 0; i < 5; i++)
-        {
-            double a = time * 6 + i * Math.PI * 2 / 5, r = slime.Width / 2 + 6 - 8 * k;
-            DrawSmallLeaf(dc, new Point(x + Math.Cos(a) * r, floor - slime.Height / 2 + Math.Sin(a) * r * 0.5), a);
-        }
-        double tx = slime.TeleportX - OriginX;
-        dc.DrawEllipse(null, Halo, new Point(tx, floor - 2), slime.Width / 2 + 8, 7);
-        dc.DrawEllipse(null, HealDash, new Point(tx, floor - 2), slime.Width / 2 + 8, 7);
-        DrawSmallLeaf(dc, new Point(tx, floor - 18 - 4 * Math.Sin(time * 8)), Math.PI / 2);
-    }
-
     private static void DrawSmallLeaf(DrawingContext dc, Point at, double angle)
     {
         dc.PushTransform(new MatrixTransform(Math.Cos(angle) * 0.55, Math.Sin(angle) * 0.55, -Math.Sin(angle) * 0.55, Math.Cos(angle) * 0.55, at.X, at.Y));
@@ -604,8 +554,6 @@ public sealed class BattleFieldView : FrameworkElement
     private static readonly Pen RallyPen = FrozenPen(Frozen(255, 0xFF, 0xE6, 0x70), 2.5);
     private static readonly Pen LeafVein = FrozenPen(Frozen(255, 0x24, 0x5E, 0x30), 1.2);
     private static readonly Pen WallRing = FrozenPen(Frozen(255, 0x8C, 0x85, 0x7A), 2.5, new DashStyle(new double[] { 2, 2 }, 0));
-    // Gold: the boss's rally (distinct from a quick slime's blue streaks).
-    private static readonly Pen RallyStreak = FrozenPen(Frozen(240, 0xE0, 0xA8, 0x20), 2.4);
     private static readonly Geometry Leaf = Parse("M -2,-33 C 3,-48 16,-49 22,-41 C 15,-34 5,-31 -2,-33 Z");
     private static readonly Geometry LeafRib = Parse("M 0,-33.5 L 17,-41");
     private static readonly Geometry SmallLeaf = Parse("M -8,0 C -4,-6 4,-6 8,0 C 4,6 -4,6 -8,0 Z");
@@ -765,14 +713,6 @@ public sealed class BattleFieldView : FrameworkElement
                     dc.PushTransform(new MatrixTransform(0.6, 0, 0, 0.6, px, py));
                     dc.DrawGeometry(HealGreen, Ink, PlusMark);
                     dc.Pop();
-                }
-                break;
-            case BattleEffectKind.Leaves:
-                // A support arriving from its jump: leaves bursting outward from its spot.
-                for (int i = 0; i < 6; i++)
-                {
-                    double a = i * Math.PI / 3 + k;
-                    DrawSmallLeaf(dc, new Point(x + Math.Cos(a) * (8 + 24 * k), y + Math.Sin(a) * (6 + 14 * k)), a + k * 3);
                 }
                 break;
             case BattleEffectKind.Thud:

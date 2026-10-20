@@ -861,3 +861,20 @@ next step), so a double click never starts two battles. Ending a battle by hand 
   idle and a simple skill-using player (10 seeds) and prints the table; stage 3 now allows 4 enemies
   at once with a heavier repeating wave (rulesVersion 3). Simulation only, not real play.
 - **Version:** 1.1.0-beta (`DesktopPet.csproj`); see CHANGELOG.md.
+
+### Simpler enemy tactics, far heals, a tougher Slime King (2026-10-21)
+
+- **Plain slime:** no more falling back to a healer or going round a rock to the cat's back; it walks
+  up, winds up and hits. Older user battle.json files that still set `fallBackBelow`, `flank`,
+  `flankSpeed` or `maxFlankers` keep working: those keys are ignored (one log line).
+- **Herb slime:** the jump to a hurt ally is gone (`teleport*` keys are ignored the same way). With no
+  hurt ally in reach, it heals the most hurt fighting ally below 35 % anywhere on the field: a normal
+  heal (same amount, budget and guard) with a longer 1.2 s windup and a dashed green trail across
+  the field to that ally, at most once every 8 s. Push or stun it during the windup to cancel it.
+  The first far heal of a battle shows "A herb slime heals from afar! Push it to cut it". With no
+  rock to hide behind it keeps behind the nearest fighting ally, as before.
+- **Chapter Slime King** (`king_c1`): 600 HP, shields up three times (75 %, 50 %, 25 %; angry with
+  the last). Its glowing crown now makes the helper nearest the cat elite for good (gold rim and
+  star, its kind's own elite affix, half again its HP, hits 25 % harder) every 10 s, instead of a
+  short burst of speed. Push the King while the crown glows to cut it. Rallied elites do not count
+  against `maxElites`. Stage 5's tip says so; rules versions of stages 2–5 went up.

@@ -24,10 +24,9 @@ public sealed partial class PetWindow
         [BattleEventKind.SlimeHit] = ("squish", 3), [BattleEventKind.EnemyHealed] = ("ball_tap", 3), [BattleEventKind.HitBlocked] = ("ball_tap", 3), [BattleEventKind.BossImmune] = ("ball_tap", 3),
         [BattleEventKind.Incoming] = ("surprised", 5), [BattleEventKind.BossRallying] = ("surprised", 4),
         [BattleEventKind.EliteAppeared] = ("surprised", 5), [BattleEventKind.ShellBlocked] = ("ball_tap", 5),
-        [BattleEventKind.HitWarded] = ("ball_tap", 3), [BattleEventKind.EnemyFlanking] = ("surprised", 4),
+        [BattleEventKind.HitWarded] = ("ball_tap", 3), [BattleEventKind.BossRallied] = ("surprised", 5),
         [BattleEventKind.BossLeaping] = ("swoosh", 3), [BattleEventKind.BossLanded] = ("pop", 5), [BattleEventKind.BossSummoning] = ("surprised", 4),
         [BattleEventKind.Pushed] = ("swoosh", 2), [BattleEventKind.BombThrown] = ("swoosh", 2), [BattleEventKind.Shielded] = ("swoosh", 2),
-        [BattleEventKind.EnemyTeleported] = ("swoosh", 2),
         [BattleEventKind.Swing] = ("swoosh", 1),
     };
 
@@ -42,15 +41,15 @@ public sealed partial class PetWindow
 
     private string BossName() => battle?.Boss?.Type.Name(preferences.Language == "en") ?? "Boss";
 
-    // Big moments get a banner across the HUD's centre. The first heal, rally call and attack from
-    // behind of a battle say what is going on (once each per battle), and so does the first elite of
-    // each kind.
-    private bool healerExplained, rallyExplained, behindExplained, wardExplained, flankExplained, fallBackExplained;
+    // Big moments get a banner across the HUD's centre. The first heal, far heal, rally call and attack
+    // from behind of a battle say what is going on (once each per battle), and so does the first elite
+    // of each kind; every helper a rally makes elite is named.
+    private bool healerExplained, farHealExplained, rallyExplained, behindExplained, wardExplained;
     private readonly HashSet<string> elitesExplained = new();
     private void ShowBattleBanners()
     {
         if (battle == null || battleHud == null) return;
-        if (battle.Time < 0.05) { healerExplained = rallyExplained = behindExplained = wardExplained = flankExplained = fallBackExplained = false; elitesExplained.Clear(); }
+        if (battle.Time < 0.05) { healerExplained = farHealExplained = rallyExplained = behindExplained = wardExplained = false; elitesExplained.Clear(); }
         for (int i = 0; i < battle.Events.Count; i++)
         {
             var e = battle.Events[i];
@@ -64,24 +63,23 @@ public sealed partial class PetWindow
                 BattleEventKind.BossEnraged =>L($"{BossName()} nổi giận!", $"The {BossName()} is angry!"),
                 BattleEventKind.SynergyUnlocked when (int)e.Value >= 0 && (int)e.Value < battle.Settings.SynergyList.Count =>
                     "★ " + battle.Settings.SynergyList[(int)e.Value].Name(English).ToUpper(System.Globalization.CultureInfo.CurrentCulture) + "!",
+                BattleEventKind.EnemyHealing when e.Value > 0 && !farHealExplained => L("Slime thảo dược hồi máu từ xa! Đẩy nó để cắt", "A herb slime heals from afar! Push it to cut it"),
                 BattleEventKind.EnemyHealing when !healerExplained => L("Quái hồi máu! Hạ nó trước", "A healer! Take it down first"),
-                BattleEventKind.BossRallying when !rallyExplained => L($"{BossName()} ra lệnh xung phong! Đẩy để cắt", $"The {BossName()} rallies! Push it to cut the call"),
+                BattleEventKind.BossRallying when !rallyExplained => L($"{BossName()} sắp phong tinh anh! Đẩy để cắt", $"The {BossName()} is making an elite! Push it to cut it"),
+                BattleEventKind.BossRallied when battle.Find((int)e.Value) is Slime rallied => L($"★ {rallied.Type.Name(false)} thành tinh anh!", $"★ The {rallied.Type.Name(true)} turns elite!"),
                 BattleEventKind.Incoming when !behindExplained => L("Quái tới từ phía sau!", "Enemies from behind!"),
                 BattleEventKind.EnemyWarded when !wardExplained => L("Đang được hồi thì miễn sát thương! Đẩy slime thảo dược", "Healing makes it immune! Push the herb slime"),
-                BattleEventKind.EnemyFlanking when !flankExplained => L("Slime vòng ra sau lưng mèo!", "A slime is going round behind the cat!"),
-                BattleEventKind.EnemyFallingBack when !fallBackExplained => L("Quái yếu lùi về để được hồi!", "A hurt slime falls back to be healed!"),
                 BattleEventKind.EliteAppeared when battle.Find((int)e.Value) is { Elite: EliteSpec elite } enemy && elitesExplained.Add(enemy.Type.Id) =>
                     L($"★ {enemy.Type.Name(false)} tinh anh: {elite.Describe(false)}", $"★ Elite {enemy.Type.Name(true)}: {elite.Describe(true)}"),
                 BattleEventKind.Won => L("CHIẾN THẮNG!", "VICTORY!"),
                 BattleEventKind.Lost => L("THUA RỒI…", "DEFEATED…"),
                 _ => null
             };
-            if (e.Kind == BattleEventKind.EnemyHealing) healerExplained = true;
+            if (e.Kind == BattleEventKind.EnemyHealing && e.Value > 0) farHealExplained = true;
+            else if (e.Kind == BattleEventKind.EnemyHealing) healerExplained = true;
             if (e.Kind == BattleEventKind.BossRallying) rallyExplained = true;
             if (e.Kind == BattleEventKind.Incoming) behindExplained = true;
             if (e.Kind == BattleEventKind.EnemyWarded) wardExplained = true;
-            if (e.Kind == BattleEventKind.EnemyFlanking) flankExplained = true;
-            if (e.Kind == BattleEventKind.EnemyFallingBack) fallBackExplained = true;
             if (text != null) battleHud.ShowBanner(text, battle.Time, e.Kind is BattleEventKind.Won or BattleEventKind.Lost ? 3 : 1.6);
         }
     }

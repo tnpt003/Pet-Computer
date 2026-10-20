@@ -1,8 +1,19 @@
 # Tiến độ Desktop Pet
 
-Cập nhật: 2026-10-20 (Asia/Saigon).
+Cập nhật: 2026-10-21 (Asia/Saigon).
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
+
+## Gọn lại chiến thuật quái, hồi máu xa, Vua Slime 3 pha khiên (2026-10-21)
+- Người dùng hỏi về dấu mũi tên ngược trên slime, thấy slime lùi về/vòng ra sau đều chết trước khi kịp làm gì. Claude phân tích (mèo ~130 DIPs/s, 33 sát thương/s; ngưỡng lùi 30% luôn còn ≤ 1 nhát kiếm; vòng ra sau phải đi xuyên tầm đánh) và làm trang sơ đồ quái (artifact riêng tư https://claude.ai/artifact/VNEeFrNrMUxLHsdnE4Hpd7). Người dùng chốt: (1) slime thường bỏ lùi về + vòng ra sau, xóa cả code; (2) slime thảo dược bỏ dịch chuyển, thay bằng hồi cho 1 đồng minh toàn bản đồ, logic hồi như cũ; (3) không có đá thì nấp sau slime khác — chọn (a): giữ hành vi có sẵn + thêm test; (4) Vua tăng HP, 3 lần khiên; (5) lệnh vương miện biến quân thành tinh anh. Đồng ý số đề xuất: 600 HP, khiên 75/50/25%, tinh anh +50% HP và ×1.25 sát thương, mỗi 10 s.
+- Đã làm (C# BattleSim + vẽ + dữ liệu; Python không đụng):
+  - Xóa `FallBack`, `Flank`, `maxFlankers`, trạng thái `Teleporting`, hiệu ứng `Leaves`, các sự kiện/banner/dấu vẽ đi kèm; bỏ tăng tốc rally (`RallyRemaining/Factor`, vệt vàng).
+  - `farHealBelow`/`farHealWindup`/`farHealCooldown` (thảo dược 0.35 / 1.2 s / 8 s): khi không có đồng minh bị thương trong tầm, hồi con yếu nhất dưới ngưỡng ở bất cứ đâu; cùng lượng/budget/miễn; vẫn cần hết `healCooldown`; Đẩy hủy và tính trọn hồi chiêu; vệt lá xanh đứt nét nối tới đồng minh; banner "hồi máu từ xa" lần đầu.
+  - Vua: `rallyHp` 0.5, `rallyDamage` 1.25, `rallyEvery` 10. Hết vương miện sáng → quân gần mèo nhất (đánh được, chưa tinh anh) thành tinh anh vĩnh viễn (affix riêng của loại nếu có), không tính vào `maxElites`; banner "★ … thành tinh anh!", cue surprised. king_c1 600 HP, pha khiên 75% (2 slime + nhanh), 50% (thảo dược + đá + nhanh), 25% (thảo dược + đá + 2 slime, nổi giận). Tip màn 5 sửa theo.
+  - battle.json người dùng còn khóa cũ (`fallBackBelow`, `flank`, `flankSpeed`, `maxFlankers`, `teleport*`, `rallySeconds`, `rallySpeed`): bỏ qua + log, không làm hỏng file. rulesVersion màn 1–5: 4/10/11/12/12.
+- Test thật: scripts/test.ps1 -Ui: Python OK; 1051 C# đạt; 519 WPF đạt. Mới/sửa: hồi xa (không hồi khi khỏe/trên ngưỡng, gồng 1.2 s đứng yên, hồi trúng qua sân, hồi chiêu 8 s, Đẩy hủy, đồng minh chết không mất lượng hồi, không hồi xa cho support), tinh anh từ vương miện (75/75 HP, 10 sát thương, con kia giữ nguyên, lần sau tới con chưa tinh anh, hết con thì vương miện không sáng, không tính `ElitesSpawned`), slime yếu vẫn đánh, slime sau đá không vòng ra sau, nấp sau slime khi không có đá, khóa cũ bị bỏ qua, dữ liệu 3 pha. WPF: vệt hồi xa (đã xem ảnh render nền tối/sáng). Sửa test cân bằng "kiếm/búa cách ≤ 30 điểm" so theo điểm làm tròn (6/10 vs 9/10 trước đây trượt vì 0.30000000000000004).
+- Mô phỏng so với HEAD 692f202 (10 seed, không phải chơi thật): màn 4 Khó simple kiếm/búa 7→6 / 8→9; màn 5 Thường simple vẫn 10/10, trận dài hơn (kiếm 94→116 s, búa 104→124 s), HP còn 84→82% / 78→82%; màn 5 Khó khó hơn rõ: simple kiếm 9→6, búa 8→5; casual kiếm 4→0, búa 6→1.
+- Chưa: chơi thật; xem màn 5 Khó có quá khó không (có thể giảm `rallyDamage`/HP Vua); hồi xa có làm màn 4 dài/khó chịu không.
 
 ## Bàn giao hướng Viễn chinh (2026-10-20)
 - Theo yêu cầu người dùng, ghi docs/EXPEDITION-DIRECTION.md và dẫn ở đầu NEXT-STEPS.md: hướng lớn Viễn chinh + góc chiến lợi phẩm để Claude đánh giá trước code.

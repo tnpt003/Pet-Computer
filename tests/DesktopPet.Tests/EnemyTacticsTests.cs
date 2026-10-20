@@ -2,8 +2,9 @@ using DesktopPet;
 
 // Enemy Director milestone 2: enemy roles and tactics. Rocks block the cat's way (and a cat put
 // down inside one steps off it), block only from the front and turn slowly; attacks take turns;
-// a rock guards its support; a support jumps to a badly hurt ally; waves can come from both sides
-// with a warning; the boss rallies a helper during its shield and is dazed when the shield breaks.
+// a rock guards its support; a support heals a badly hurt ally anywhere on the field (a far heal);
+// waves can come from both sides with a warning; the boss makes a helper elite during its shield
+// (its rally call) and is dazed when the shield breaks.
 internal static class EnemyTacticsTests
 {
     const double dt = 1.0 / 60;
@@ -47,7 +48,7 @@ internal static class EnemyTacticsTests
         FrontChecks(check);
         TurnChecks(check);
         GuardChecks(check);
-        TeleportChecks(check);
+        FarHealChecks(check);
         SideChecks(check);
         RallyChecks(check);
         DataChecks(check);
@@ -190,10 +191,10 @@ internal static class EnemyTacticsTests
     private static EnemyType Healer(string id = "mender", double heal = 10) => new()
     {
         Id = id, MaxHp = 40, Speed = 0, Damage = 0, Range = 56, Windup = 0.8, AttackCooldown = 2, Recover = 0.35, Scale = 0.9, Support = true, KeepBack = 110,
-        HealAmount = heal, HealRange = 170, HealCooldown = 200, HealWindup = 1, HealBudget = 90, TeleportBelow = 0.35, TeleportWindup = 0.6, TeleportCooldown = 8
+        HealAmount = heal, HealRange = 170, HealCooldown = 1, HealWindup = 1, HealBudget = 90, FarHealBelow = 0.35, FarHealWindup = 1.2, FarHealCooldown = 8
     };
 
-    private static (BattleSim Sim, Slime Ally, Slime Support) TeleportFight(int seed = 1)
+    private static (BattleSim Sim, Slime Ally, Slime Support) FarFight(int seed = 1)
     {
         var sim = new BattleSim(Settings(new[] { Kind("slime", 100), Healer() }, Plan(G("slime"), G("mender")), 0), 0, 1600, seed: seed);
         Ready(sim, 2, 200);
@@ -203,47 +204,53 @@ internal static class EnemyTacticsTests
         return (sim, ally, support);
     }
 
-    private static void TeleportChecks(Action<bool, string> check)
+    private static void FarHealChecks(Action<bool, string> check)
     {
-        var (sim, ally, support) = TeleportFight();
+        var (sim, ally, support) = FarFight();
+        Walk(sim, 200, 1, move: false);
+        check(support.State != SlimeState.Casting, "A healthy ally out of heal reach gets no heal");
+        ally.Hp = 50;
         Walk(sim, 200, 0.2, move: false);
-        check(support.State != SlimeState.Teleporting, "A healthy ally gets no teleport");
+        check(support.State != SlimeState.Casting, "Out of reach but above 35 %: no far heal");
         ally.Hp = 30;
         Walk(sim, 200, dt, move: false);
-        double spot = support.TeleportX;
-        check(support.State == SlimeState.Teleporting && spot > ally.X && Math.Abs(spot - ally.X) < 60,
-            $"An ally below 35 % out of heal reach: the support winds up a teleport to the spot behind it ({spot:0} for an ally at {ally.X:0})");
-        Walk(sim, 200, 0.7, move: false);
-        check(support.X == spot && ally.Hp == 30, "It appears there after its windup; the jump heals nothing by itself");
-        support.X = 1300;
+        check(support.State == SlimeState.Casting && support.FarHeal && sim.Healing(support) == ally && ally.Mended == false,
+            "An ally below 35 % out of heal reach: the support winds up a far heal on it");
+        Walk(sim, 200, 1.05, move: false);
+        check(support.State == SlimeState.Casting && support.X == 1200 && ally.Hp == 30, "A far heal winds up longer (1.2 s) and the support stays where it is");
+        Walk(sim, 200, 0.2, move: false);
+        check(support.State != SlimeState.Casting && ally.Hp == 40 && support.FarHealCooldown > 7, $"It lands across the field like a heal in reach ({ally.Hp:0} HP)");
+        ally.Hp = 30;
         bool again = false;
-        Walk(sim, 200, 7, _ => again |= support.State == SlimeState.Teleporting, move: false);
-        check(!again, "No second teleport inside its cooldown (8 s)");
-        Walk(sim, 200, 1.5, _ => again |= support.State == SlimeState.Teleporting, move: false);
-        check(again, "After the cooldown it may jump again");
+        Walk(sim, 200, 6.5, _ => again |= support.State == SlimeState.Casting, move: false);
+        check(!again, "No second far heal inside its cooldown (8 s)");
+        Walk(sim, 200, 2, _ => again |= support.State == SlimeState.Casting, move: false);
+        check(again, "After the cooldown it may heal from afar again");
 
-        // A push during the windup cancels it (full cooldown); a gone ally means no jump.
-        var (pushed, a2, s2) = TeleportFight(2);
+        // A push during the windup cancels it (full cooldown, no heal); a gone ally gets none.
+        var (pushed, a2, s2) = FarFight(2);
+        Walk(pushed, 200, 1, move: false);
         a2.Hp = 30;
         Walk(pushed, 200, dt, move: false);
-        check(pushed.UsePush(s2.Id, 200) && s2.State == SlimeState.Stunned, "(setup) push the teleporting support");
-        double at = s2.X;
-        Walk(pushed, 200, 0.7, move: false);
-        check(s2.X > 1000 && Math.Abs(s2.X - s2.TeleportX) > 300 && s2.TeleportCooldown > 7, $"A push cancels the teleport and costs its full cooldown (knocked from {at:0} to {s2.X:0}, no jump)");
-        var (gone, a3, s3) = TeleportFight(3);
+        check(pushed.UsePush(s2.Id, 200) && s2.State == SlimeState.Stunned, "(setup) push the support winding up a far heal");
+        Walk(pushed, 200, 1.5, move: false);
+        check(a2.Hp == 30 && !s2.FarHeal && s2.FarHealCooldown > 6, "A push cancels the far heal and costs its full cooldown");
+        var (gone, a3, s3) = FarFight(3);
+        Walk(gone, 200, 1, move: false);
         a3.Hp = 30;
         Walk(gone, 200, dt, move: false);
+        double budget = s3.HealLeft;
         a3.Hp = 0; a3.Set(SlimeState.Defeated);
-        Walk(gone, 200, 0.7, move: false);
-        check(s3.X == 1200 && s3.TeleportCooldown <= 1, "Its ally gone before the jump: no jump, it looks again soon");
+        Walk(gone, 200, 1.5, move: false);
+        check(s3.HealLeft == budget, "Its ally gone before the heal lands: nothing is spent");
 
         // Never to another support.
         var twin = new BattleSim(Settings(new[] { Healer(), Healer("mender2") }, Plan(G("mender"), G("mender2")), 0), 0, 1600, seed: 1);
         Ready(twin, 2, 200);
         twin.Slimes[0].X = 600; twin.Slimes[1].X = 1200; twin.Slimes[0].Hp = 5;
-        bool jumped = false;
-        Walk(twin, 200, 2, _ => jumped |= twin.Slimes.Any(s => s.State == SlimeState.Teleporting), move: false);
-        check(!jumped, "A support never jumps to another support");
+        bool healed = false;
+        Walk(twin, 200, 2, _ => healed |= twin.Slimes.Any(s => s.FarHeal), move: false);
+        check(!healed, "A support never heals another support from afar");
 
         // A lone support appears next to a fighting ally, on its far side from the cat.
         bool joined = true;
@@ -303,13 +310,13 @@ internal static class EnemyTacticsTests
         Id = "king", MaxHp = 400, Speed = 0, Damage = 0, Range = 110, Windup = 1.2, AttackCooldown = 2.6, Recover = 0.7, Scale = 2, Boss = true, Slam = true,
         PushFactor = 0.35, StunFactor = 0.4, RetreatSpeed = 600, RetreatSeconds = 3, SummonCap = 4,
         Phases = new[] { new BossPhase { At = 0.5, Shield = true, Summon = "slime", Count = 2 } },
-        RallyEvery = rally, RallyCharge = 0.5, RallySeconds = 3, RallySpeed = 2, ShieldBreakStun = 2
+        RallyEvery = rally, RallyCharge = 0.5, RallyHp = 0.5, RallyDamage = 1.25, ShieldBreakStun = 2
     };
 
     // The boss knocked to its shield line (a big bomb) with the cat at catX; steps until it has called.
     private static BattleSim ShieldUp(double catX, int seed = 1)
     {
-        var sim = new BattleSim(Settings(new[] { King(), Kind("slime", 50, 30) }, Plan(G("king")), 0, 6, 1000),
+        var sim = new BattleSim(Settings(new[] { King(), Kind("slime", 50, 30, 8) }, Plan(G("king")), 0, 6, 1000),
             0, 1600, seed: seed);
         Ready(sim, 1, catX);
         var boss = sim.Slimes[0];
@@ -333,13 +340,17 @@ internal static class EnemyTacticsTests
             rallied |= sim.Events.Any(e => e.Kind == BattleEventKind.BossRallied);
             sim.ClearEvents();
         }
-        var fast = helpers.SingleOrDefault(h => h.RallyRemaining > 0);
-        check(rallying && rallied && fast != null, "During the shield the boss's crown glows, then one helper is rallied");
-        var slow = helpers.First(h => h != fast);
-        double fx = fast?.X ?? 0, sx = slow.X;
-        for (int i = 0; i < 20; i++) sim.Step(dt, 400, false);
-        double fastStep = Math.Abs((fast?.X ?? 0) - fx), slowStep = Math.Abs(slow.X - sx);
-        check(fast != null && slowStep > 0 && fastStep > slowStep * 1.7, $"The rallied helper walks faster ({fastStep:0.0} vs {slowStep:0.0} DIPs)");
+        var first = helpers.SingleOrDefault(h => h.Elite != null);
+        check(rallying && rallied && first is { Rallied: true }, "During the shield the boss's crown glows, then one helper turns elite");
+        check(first is { MaxHp: 75, Hp: 75, Damage: 10 } && helpers.Single(h => h != first) is { Elite: null, MaxHp: 50, Damage: 8 },
+            $"The elite gets half again its HP and hits 25 % harder ({first?.Hp:0}/{first?.MaxHp:0} HP, {first?.Damage:0} damage); the other is untouched");
+        check(sim.ElitesSpawned == 0, "A rallied elite is not one of the stage's rolled elites (not counted against maxElites)");
+        bool second = false;
+        for (int i = 0; i < 300 && !second; i++) { sim.Step(dt, 400, false); second = helpers.All(h => h.Elite != null); sim.ClearEvents(); }
+        check(second, "The next call goes to the helper that is not elite yet");
+        bool more = false;
+        for (int i = 0; i < 360; i++) { sim.Step(dt, 400, false); more |= boss.RallyCharge > 0; sim.ClearEvents(); }
+        check(!more, "With every fighting helper elite the crown no longer glows");
 
         // A push on the boss while its crown glows cuts the call.
         var cut = ShieldUp(400, 2);
@@ -377,9 +388,13 @@ internal static class EnemyTacticsTests
             catch (Exception ex) when (ex is InvalidDataException or System.Text.Json.JsonException) { return true; }
         }
         const string king = "{\"id\":\"king\",\"boss\":true}";
-        check(Rejected("{\"enemies\":[{\"id\":\"slime\",\"teleportBelow\":0.3}," + king + "]}") &&
-              !Rejected("{\"enemies\":[{\"id\":\"slime\",\"support\":true,\"healAmount\":5,\"teleportBelow\":0.3}," + king + "]}"),
-            "teleportBelow is only for a support enemy");
+        check(Rejected("{\"enemies\":[{\"id\":\"slime\",\"farHealBelow\":0.3}," + king + "]}") &&
+              Rejected("{\"enemies\":[{\"id\":\"slime\",\"support\":true,\"farHealBelow\":0.3}," + king + "]}") &&
+              !Rejected("{\"enemies\":[{\"id\":\"slime\",\"support\":true,\"healAmount\":5,\"farHealBelow\":0.3}," + king + "]}"),
+            "farHealBelow is only for a support enemy that heals");
+        check(Rejected("{\"enemies\":[{\"id\":\"slime\"},{\"id\":\"king\",\"boss\":true,\"rallyEvery\":5,\"rallyDamage\":0.5,\"phases\":[{\"at\":0.5,\"shield\":true,\"summon\":\"slime\",\"count\":1}]}]}"),
+            "rallyDamage below 1 is rejected");
+        check(Rejected("{\"enemies\":[{\"id\":\"slime\",\"teleportBelow\":0.3}," + king + "]}"), "A built-in file (not a user override) with a retired key is still an error");
         check(Rejected("{\"enemies\":[{\"id\":\"slime\"},{\"id\":\"king\",\"boss\":true,\"rallyEvery\":5}]}"), "rallyEvery needs a shield phase");
         check(Rejected("{\"waves\":[{\"groups\":[{\"enemy\":\"slime\",\"side\":\"c\"}]}]}") && Rejected("{\"maxAttackers\":11}"),
             "A side other than a/b, or maxAttackers above 10, is rejected");
@@ -389,9 +404,13 @@ internal static class EnemyTacticsTests
         var rock = data.Enemy("rock");
         var mender = data.Enemy("mender");
         var chapterKing = data.Enemy("king_c1");
-        check(rock is { Blocker: true, BlockFrontOnly: true, TurnSeconds: 0.6 } && mender is { Marks: "leaf", TeleportBelow: 0.35, TeleportCooldown: 8 } &&
-              chapterKing is { RallyEvery: 7, RallyCharge: 0.8, RallySpeed: 1.4, ShieldBreakStun: 2 } && data.MaxAttackers == 2,
-            "battle.json: rocks block the way and only from the front; the herb slime teleports; the King rallies and is dazed when its shield breaks");
+        check(rock is { Blocker: true, BlockFrontOnly: true, TurnSeconds: 0.6 } && mender is { Marks: "leaf", FarHealBelow: 0.35, FarHealWindup: 1.2, FarHealCooldown: 8 } &&
+              chapterKing is { MaxHp: 600, RallyEvery: 10, RallyCharge: 0.8, RallyHp: 0.5, RallyDamage: 1.25, ShieldBreakStun: 2 } && data.MaxAttackers == 2,
+            "battle.json: rocks block the way and only from the front; the herb slime heals from afar; the King (600 HP) makes elites and is dazed when its shield breaks");
+        var kingPhases = chapterKing.Phases!;
+        check(kingPhases.Length == 3 && kingPhases.All(p => p.Shield) && kingPhases.Select(p => p.At).SequenceEqual(new[] { 0.75, 0.5, 0.25 }) &&
+              kingPhases[2].Enrage && kingPhases.All(p => p.Calls().Count() <= chapterKing.SummonCap),
+            "The chapter King shields up three times (75 %, 50 %, 25 %), angry with the last, each call within its summon cap");
         var stages = data.Campaign!.Chapters[0].Stages;
         check(stages[4].Waves[0].Groups.Any(g => g.Side == "b") && stages[4].Waves[0].Groups.Any(g => g.Side == "a" && g.Enemy == "rock") &&
               stages[2].Waves[0].Stream?.PincerAfter == 45, "Stage 5 opens with a two-sided wave (rock in front, quick slimes behind); Hold on comes from both sides after 45 s");

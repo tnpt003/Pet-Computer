@@ -84,13 +84,12 @@ public sealed class EnemyType
     // backing off at its own speed. With no fighting ally left it fights like any slime.
     public bool Support { get; init; }
     public double KeepBack { get; init; } = 110;
-    // Support: when a fighting ally drops below TeleportBelow of its HP (0 = never) and is out of
-    // heal reach, it shrinks for TeleportWindup s (its leaf ring and the spot it will reach show),
-    // then appears behind that ally (seen from the cat); once per TeleportCooldown s. A push or stun
-    // cancels it. Teleporting heals nothing by itself.
-    public double TeleportBelow { get; init; }
-    public double TeleportWindup { get; init; } = 0.6;
-    public double TeleportCooldown { get; init; } = 8;
+    // Support far heal: with no hurt ally in HealRange, a fighting ally below FarHealBelow of its HP
+    // (0 = never) anywhere on the field gets a heal like any other (same amount, budget, guard; a push
+    // or stun cancels it) after a longer windup of FarHealWindup s, once per FarHealCooldown s.
+    public double FarHealBelow { get; init; }
+    public double FarHealWindup { get; init; } = 1.2;
+    public double FarHealCooldown { get; init; } = 8;
     // Blocker: the cat walking on the floor cannot pass it; a target behind it means hitting it first
     // (lifting the cat over it still works). BlockFrontOnly: it blocks only hits from the side it
     // faces. TurnSeconds: how long it takes to face the other way (0: at once); it only winds up
@@ -99,12 +98,13 @@ public sealed class EnemyType
     public bool BlockFrontOnly { get; init; }
     public double TurnSeconds { get; init; }
     // Boss rally (during a shield phase, after its helpers came): every RallyEvery s (0 = never) its
-    // crown glows RallyCharge s, then one helper of the phase walks RallySpeed × faster for RallySeconds.
-    // Pushing the boss while its crown glows cancels the call.
+    // crown glows RallyCharge s, then one fighting helper of the phase that is not elite becomes elite
+    // for good: its kind's own affix (if any), RallyHp more max HP (and that much HP) and its hits ×
+    // RallyDamage. Pushing the boss while its crown glows cancels the call.
     public double RallyEvery { get; init; }
     public double RallyCharge { get; init; } = 0.8;
-    public double RallySeconds { get; init; } = 3;
-    public double RallySpeed { get; init; } = 1.4;
+    public double RallyHp { get; init; } = 0.5;
+    public double RallyDamage { get; init; } = 1.25;
     // Boss: dazed this long when its shield breaks (0: not), taking damage as usual.
     public double ShieldBreakStun { get; init; }
     // Boss phases: each fires once when its HP fraction is reached (summon helpers and/or get
@@ -130,15 +130,8 @@ public sealed class EnemyType
     public double HealGuardRepeat { get; init; } = 2;
     public double FleeSpeed { get; init; } = 1;
     public bool HideBehindGuard { get; init; }
-    // Fighter tactics. FallBackBelow: once a battle, below this share of its HP it walks back to a
-    // support that can still heal (no attacks meanwhile) until healed, the support is gone or 6 s pass.
     // HitAndRun (dash enemies): after a dash it runs this many DIPs away from the cat before coming back.
-    // Flank: with a blocker between it and the cat, it goes round to the cat's back once, FlankSpeed ×
-    // faster and without attacking on the way (BattleSettings.MaxFlankers at a time).
-    public double FallBackBelow { get; init; }
     public double HitAndRun { get; init; }
-    public bool Flank { get; init; }
-    public double FlankSpeed { get; init; } = 2;
     // What one of this kind weighs against a wave's or a stream's budget (WaveSpec.Budget).
     public double Cost { get; init; } = 1;
     // The one elite affix this kind may roll when it spawns (null: never elite).
@@ -147,7 +140,8 @@ public sealed class EnemyType
 }
 
 // An elite affix (Enemy Director): rolled once when a wave or stream spawns the enemy, never for a
-// boss's helpers, never on Easy, at most BattleSettings.MaxElites alive at once. A gold rim and a
+// boss's helpers (a boss's rally call makes them elite instead), never on Easy, at most
+// BattleSettings.MaxElites alive at once. A gold rim and a
 // star tell it apart. One small change per kind, not a stronger enemy in every way: a longer windup
 // with a faster dash, sure blocks of its first front hits, a stronger first heal. Cost: what being
 // elite adds to the budget.
@@ -418,8 +412,26 @@ public static class BattleData
         if (version == null) throw new InvalidDataException($"schemaVersion is missing (write \"schemaVersion\": {SchemaVersion})");
         if (version is not JsonValue value || !value.TryGetValue<int>(out int number) || number != SchemaVersion)
             throw new InvalidDataException($"schemaVersion {version.ToJsonString()} is not supported (this version reads {SchemaVersion})");
+        DropRetired(user);
         Merge(root, user, "");
         return Parse(root.ToJsonString());
+    }
+
+    // Settings of tactics taken out (2026-10-21): a user file that still sets them keeps working;
+    // they are dropped with a log line instead of failing as misspelt keys.
+    private static readonly string[] RetiredKeys = { "maxFlankers" };
+    private static readonly string[] RetiredEnemyKeys = { "fallBackBelow", "flank", "flankSpeed", "teleportBelow", "teleportWindup", "teleportCooldown", "rallySeconds", "rallySpeed" };
+    private static void DropRetired(JsonObject user)
+    {
+        var dropped = new List<string>();
+        void Drop(JsonObject node, string[] keys, string at)
+        {
+            foreach (var key in keys) if (Key(node, key) is string found) { node.Remove(found); dropped.Add(at + key); }
+        }
+        Drop(user, RetiredKeys, "");
+        if (Key(user, "enemies") is string list && user[list] is JsonArray enemies)
+            foreach (var entry in enemies.OfType<JsonObject>()) Drop(entry, RetiredEnemyKeys, $"enemies[{IdOf(entry)}].");
+        if (dropped.Count > 0) Trace.WriteLine($"battle.json: no longer used, ignored: {string.Join(", ", dropped)}");
     }
 
     // Keys match without case, as when the file is read.
@@ -571,18 +583,18 @@ public static class BattleData
             Within(e.BlockChance, 0, 0.9, at + ".blockChance");
             if (e.BlockMaxStreak is < 1 or > 10) throw new InvalidDataException(at + ".blockMaxStreak must be 1–10");
             if (e.Support) Within(e.KeepBack, 0, 600, at + ".keepBack");
-            Within(e.TeleportBelow, 0, 0.9, at + ".teleportBelow");
-            if (e.TeleportBelow > 0)
+            Within(e.FarHealBelow, 0, 0.9, at + ".farHealBelow");
+            if (e.FarHealBelow > 0)
             {
-                if (!e.Support) throw new InvalidDataException(at + ".teleportBelow is for a support enemy");
-                Within(e.TeleportWindup, 0.2, 5, at + ".teleportWindup"); Within(e.TeleportCooldown, 1, 60, at + ".teleportCooldown");
+                if (!e.Support || e.HealAmount <= 0) throw new InvalidDataException(at + ".farHealBelow is for a support enemy that heals");
+                Within(e.FarHealWindup, 0.2, 5, at + ".farHealWindup"); Within(e.FarHealCooldown, 1, 60, at + ".farHealCooldown");
             }
             Within(e.TurnSeconds, 0, 3, at + ".turnSeconds");
             Within(e.RallyEvery, 0, 60, at + ".rallyEvery");
             if (e.RallyEvery > 0)
             {
                 if (e.Phases?.Any(p => p is { Shield: true }) != true) throw new InvalidDataException(at + ".rallyEvery needs a shield phase");
-                Within(e.RallyCharge, 0.2, 5, at + ".rallyCharge"); Within(e.RallySeconds, 0.5, 10, at + ".rallySeconds"); Within(e.RallySpeed, 1, 3, at + ".rallySpeed");
+                Within(e.RallyCharge, 0.2, 5, at + ".rallyCharge"); Within(e.RallyHp, 0, 3, at + ".rallyHp"); Within(e.RallyDamage, 1, 3, at + ".rallyDamage");
             }
             Within(e.ShieldBreakStun, 0, 5, at + ".shieldBreakStun");
             if (e.Phases?.Any(p => p is { Shield: true }) == true)
@@ -598,11 +610,9 @@ public static class BattleData
             }
             Within(e.Cost, 0, 10, at + ".cost");
             if (e.HealGuard && e.HealAmount <= 0) throw new InvalidDataException(at + ".healGuard is for an enemy that heals");
-            Within(e.HealGuardRepeat, 0, 10, at + ".healGuardRepeat"); Within(e.FleeSpeed, 1, 4, at + ".fleeSpeed"); Within(e.FlankSpeed, 1, 4, at + ".flankSpeed");
+            Within(e.HealGuardRepeat, 0, 10, at + ".healGuardRepeat"); Within(e.FleeSpeed, 1, 4, at + ".fleeSpeed");
             if ((e.FleeSpeed > 1 || e.HideBehindGuard) && !e.Support) throw new InvalidDataException(at + ".fleeSpeed/hideBehindGuard are for a support enemy");
-            Within(e.FallBackBelow, 0, 0.9, at + ".fallBackBelow"); Within(e.HitAndRun, 0, 600, at + ".hitAndRun");
-            if ((e.FallBackBelow > 0 || e.Flank) && (e.Support || e.Boss)) throw new InvalidDataException(at + ".fallBackBelow/flank are for a fighter, not a support or a boss");
-            if (e.Flank && e.Blocker) throw new InvalidDataException(at + ".flank is not for a blocker");
+            Within(e.HitAndRun, 0, 600, at + ".hitAndRun");
             if (e.HitAndRun > 0 && !e.Dash) throw new InvalidDataException(at + ".hitAndRun is for a dash enemy");
             if (e.Elite is EliteSpec elite)
             {
@@ -728,7 +738,6 @@ public static class BattleData
             if (s.UpgradeList.Count(u => u.Rare && u.Group == group) > 1) throw new InvalidDataException($"upgrades: at most one rare card per group ({group})");
         Within(s.RareChance, 0, 1, "rareChance");
         if (s.MaxElites is < 0 or > 5) throw new InvalidDataException("maxElites must be 0–5");
-        if (s.MaxFlankers is < 0 or > 5) throw new InvalidDataException("maxFlankers must be 0–5");
         var synergyIds = new HashSet<string>();
         foreach (var y in s.SynergyList)
         {

@@ -24,7 +24,7 @@ internal static class BossLeapTests
     {
         Id = "king", MaxHp = 400, Speed = 0, Damage = 0, Range = 110, Windup = 1.2, AttackCooldown = 2.6, Recover = 0.7, Scale = 2, Boss = true, Slam = true,
         PushFactor = 0.35, StunFactor = 0.4, SummonCap = 4, RetreatLeap = true, LeapCrouch = 0.35, LeapSeconds = 0.9, SummonWarning = warning,
-        RallyEvery = rally ? 1 : 0, RallyCharge = 0.5, RallySeconds = 3, RallySpeed = 2,
+        RallyEvery = rally ? 1 : 0, RallyCharge = 0.5,
         Phases = new[] { new BossPhase { At = 0.5, Shield = true, Summons = new[] {
             new WaveGroup { Enemy = "runner", Count = 1 }, new WaveGroup { Enemy = "slime", Count = 1 }, new WaveGroup { Enemy = "mender", Count = 1 }, new WaveGroup { Enemy = "rock", Count = 1 } } } }
     };
@@ -145,10 +145,10 @@ internal static class BossLeapTests
         {
             sim.Step(dt, 600, false);
             if (sim.RallyTarget(boss) is Slime target) shown = target;
-            if (shown != null && sim.Events.Any(e => e.Kind == BattleEventKind.BossRallied)) same = shown.RallyRemaining > 0 && !shown.Type.Support;
+            if (shown != null && sim.Events.Any(e => e.Kind == BattleEventKind.BossRallied)) same = shown.Rallied && shown.Elite != null && !shown.Type.Support;
             sim.ClearEvents();
         }
-        check(same, "While the crown glows the battle tells which helper the call is for, and that one is rallied");
+        check(same, "While the crown glows the battle tells which helper the call is for, and that one turns elite");
     }
 
     private static void HealChecks(Action<bool, string> check)

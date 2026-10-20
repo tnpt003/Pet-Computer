@@ -327,13 +327,13 @@ internal static class BattleRoleTests
         check(Error(Enemies("\"maxHp\": 10", "\"phases\": [ { \"at\": 0.5, \"shield\": true, \"summons\": [ { \"enemy\": \"ghost\", \"count\": 1 } ] } ]")).Contains("unknown enemy"),
             "A shield phase calling an unknown enemy is rejected");
 
-        // The shipped data: the rock blocks, the herb slime supports, the chapter boss has two shield phases.
+        // The shipped data: the rock blocks, the herb slime supports, the chapter boss has three shield phases.
         var data = BattleData.Settings;
         var shippedRock = data.Enemy("rock");
         var herb = data.Enemy("mender");
         var chapterKing = data.Enemy("king_c1");
         check(shippedRock is { MaxHp: 150, BlockChance: 0.3, BlockMaxStreak: 2 } && herb is { Support: true, KeepBack: 110 } &&
-              chapterKing.Phases!.Where(p => p.Shield).Select(p => p.At).SequenceEqual(new[] { 0.7, 0.4 }) && data.Enemy("king").Phases == null,
-            "battle.json: rock slime 150 HP with 30 % block, the herb slime keeps back, the chapter boss shields at 70 % and 40 % (the free battle's king unchanged)");
+              chapterKing.Phases!.Where(p => p.Shield).Select(p => p.At).SequenceEqual(new[] { 0.75, 0.5, 0.25 }) && data.Enemy("king").Phases == null,
+            "battle.json: rock slime 150 HP with 30 % block, the herb slime keeps back, the chapter boss shields at 75 %, 50 % and 25 % (the free battle's king unchanged)");
     }
 }

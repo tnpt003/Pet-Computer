@@ -4,7 +4,7 @@ using System.Windows.Media.Imaging;
 using DesktopPet;
 
 // Enemy Director milestone 2, drawn for real: the herb slime's leaf cap (no "+" on its body), its
-// dull leaf once its heals are spent and its teleport warning; the rock's armour on the side it
+// dull leaf once its heals are spent and its far heal's trail; the rock's armour on the side it
 // faces; the "in the way" ring; the boss's glowing crown while it rallies; the arrow before a
 // spawn from behind. Milestone 3: an elite's gold rim and star, the rare cards' icons.
 // PET_RENDER_REVIEW=<folder> also saves the pictures on dark and light floors.
@@ -15,7 +15,7 @@ internal static class EnemyVisualChecks
     private static EnemyType Kind(string id, string marks, double scale, string color, bool support = false, bool boss = false) => new()
     {
         Id = id, MaxHp = 100, Speed = 0, Damage = 0, Range = 60, Windup = 1, AttackCooldown = 2, Recover = 0.4, Scale = scale, Color = color, Marks = marks,
-        Support = support, HealAmount = support ? 10 : 0, HealBudget = 90, TeleportBelow = support ? 0.35 : 0, Boss = boss,
+        Support = support, HealAmount = support ? 10 : 0, HealBudget = 90, FarHealBelow = support ? 0.35 : 0, Boss = boss,
         Blocker = marks == "cracks", HitScale = marks == "cracks" ? scale * 1.12 : null,
         Phases = boss ? new[] { new BossPhase { At = 0.5, Shield = true, Summon = "slime", Count = 1 } } : null, RallyEvery = boss ? 5 : 0
     };
@@ -101,14 +101,20 @@ internal static class EnemyVisualChecks
         check(Count(px, Color.FromRgb(0x93, 0x9A, 0x74), 130, 175, floor - 46, floor - 20) > 15 && Count(px, leaf, 140, 175, floor - 46, floor - 26) < 5,
             "With its heals spent the leaf turns dull and droops");
 
-        // A teleport on its way: the support shrinks inside a ring of leaves; the arrival spot is marked.
-        var (tsim, tview) = Field(("mender", 150), ("slime", 450));
+        // A far heal on its way: a dashed green trail across the field from the healer to its ally (a heal
+        // in reach has none).
+        var heal = Color.FromRgb(0x3F, 0xC8, 0x6B);
+        var (tsim, tview) = Field(("mender", 120), ("slime", 480));
         var support = tsim.Slimes[0];
-        support.TeleportX = 500;
-        support.Set(SlimeState.Teleporting);
+        support.HealTargetId = tsim.Slimes[1].Id;
+        support.Set(SlimeState.Casting);
         support.StateTime = 0.3;
-        px = Shot(tview, "enemy-teleport");
-        check(Count(px, leaf, 480, 520, floor - 30, floor - 8) > 8, "A teleport shows a leaf and a dashed ring where the support will appear");
+        px = Shot(tview);
+        int near = Count(px, heal, 220, 380, floor - 70, floor - 20, 40);
+        support.FarHeal = true;
+        px = Shot(tview, "enemy-far-heal");
+        int far = Count(px, heal, 220, 380, floor - 70, floor - 20, 40);
+        check(far > near + 30, $"A far heal draws a dashed green trail to its ally ({near} -> {far} green pixels mid-field)");
 
         // The rock: an armour slab on the side it faces.
         var (rsim, rview) = Field(("rock", 300));
@@ -169,18 +175,13 @@ internal static class EnemyVisualChecks
         var linked = Shot(lview, "enemy-rally-link");
         check(Count(linked, Color.FromRgb(0xE0, 0xA8, 0x20), 300, 420, floor - 110, floor - 30, 30) > 15, "A gold line joins the glowing crown to the helper it will rally");
 
-        // Tactics: a green bubble with leaves round an enemy guarded by a heal, a grey-blue arrow over one
-        // falling back, an orange arc over one going round to the cat's back.
-        var (tsim2, tview2) = Field(("slime", 120), ("slime", 300), ("slime", 480));
+        // Tactics: a green bubble with leaves round an enemy guarded by a heal.
+        var (tsim2, tview2) = Field(("slime", 120));
         var calmTactics = Shot(tview2);
         tsim2.Slimes[0].Mended = true;
-        tsim2.Slimes[1].FallingBack = true; tsim2.Slimes[1].Facing = 1;
-        tsim2.Slimes[2].Flanking = true; tsim2.Slimes[2].Facing = -1;
         var tactics = Shot(tview2, "enemy-tactics");
         int ward = Count(tactics, Color.FromRgb(0x3F, 0xC8, 0x6B), 80, 160, floor - 50, floor + 2, 20) - Count(calmTactics, Color.FromRgb(0x3F, 0xC8, 0x6B), 80, 160, floor - 50, floor + 2, 20);
-        int back = Count(tactics, Color.FromRgb(0x5A, 0x7C, 0xA8), 280, 320, floor - 70, floor - 40, 20);
-        int arc = Count(tactics, Color.FromRgb(0xF2, 0x8C, 0x28), 460, 500, floor - 75, floor - 40, 20);
-        check(ward > 40 && back > 8 && arc > 8, $"A guarded enemy wears a green bubble; falling back and flanking show their marks (pixels {ward}/{back}/{arc})");
+        check(ward > 40, $"A guarded enemy wears a green bubble ({ward} pixels)");
 
         // A spawn from behind: a red arrow at that edge.
         var incoming = new BattleSim(new BattleSettings

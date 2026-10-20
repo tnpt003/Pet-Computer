@@ -648,17 +648,21 @@ next step), so a double click never starts two battles. Ending a battle by hand 
   (or Pause/End) describes it in the HUD's hint line (no tooltips: they kept the first text in a
   window that never activates).
 - **Slimes** swell and show a red "!" for 0.8 s before each hit: time to push them or lift the cat.
-- **Rescue**: pick the cat up as usual (drag, dangle, dizzy and throw unchanged). While pressed,
-  carried or in the air the cat takes no damage. A slime already winding up holds its windup
-  where it is (the "!" stays, it does not move) and finishes it once the cat is down: put down out
-  of reach, or with landing protection, the hit misses (and the slime takes its full attack
-  cooldown); put back on the same spot, it lands. So a well-timed rescue dodges every hit, but
-  lifting and dropping on the spot no longer cancels them (it used to reset each windup). While
-  the cat is carried, a held windup shows a pulsing ring on its "!" and a dashed red ring on the
-  floor (reach + 12 DIPs: put the cat down outside it), and the HUD hint says a slime holds its
-  attack. After a protected landing the hint shows the protection's seconds left. Other
-  slimes keep following the cat along the floor without starting a windup, and no slime spawns or
-  wave progress happens. The battle stays on the monitor it started on: if the cat lands on another monitor the
+- **Rescue** (field kept alive 2026-10-21): pick the cat up as usual (drag, dangle, dizzy and
+  throw unchanged). While carried or in the air (lifted: a drag past the threshold, a throw/fall,
+  a climb or jump) the cat takes no damage and no stun. A rescue never freezes the slimes: a
+  windup runs on its announced time; its hit misses if it falls while the cat is lifted (the slime
+  then takes its recover and full attack cooldown) and lands as usual if the cat was put back in
+  its reach before (unless the landing protection is on). A dash runs its locked lane to the end
+  and hits only a cat on the floor. A cat only pressed (a click, not lifted) is still on the floor:
+  an attack under way reaches it (no stun), but no new windup starts. So a well-timed rescue
+  dodges every hit, and lifting and dropping on the spot does not cancel them. While the cat is
+  carried, a coming windup shows a pulsing ring on its "!" and a dashed red ring on the floor
+  (reach + 12 DIPs: put the cat down outside it), and the HUD hint says a slime is about to hit.
+  After a protected landing the hint shows the protection's seconds left. Other slimes go by where
+  the cat last stood on the floor (not by the cursor) without starting a windup; supports keep
+  healing/teleporting and the boss its shield phases, summons and rally; no slime spawns or wave
+  progress happens. The battle stays on the monitor it started on: if the cat lands on another monitor the
   battle pauses (a note by the cat says where the battlefield is) and goes on by itself when the
   cat is back; a pause the user chose meanwhile is kept. A work-area or DPI change on the battle's
   own monitor moves the field with it. If the battle's monitor is disconnected (checked once a
@@ -666,8 +670,8 @@ next step), so a double click never starts two battles. Ending a battle by hand 
   DIPs/DPI; slimes, bombs and effects keep their relative spot inside the new floor; HP, wave and
   cooldowns stay; the battle stays paused with a note until the user resumes. The cat is never
   moved and a drag keeps its mouse capture.
-  After a real lift (drag past the threshold, or a throw/fall; a plain click does not count) the
-  landing protects the cat for `landingGraceSeconds` (1.5 s), at most once per
+  After a real lift of at least `rescueGraceMinLiftSeconds` (0.3 s; drag past the threshold, or a
+  throw/fall; a plain click does not count) the landing protects the cat for `landingGraceSeconds` (1.5 s), at most once per
   `rescueGraceCooldownSeconds` (5 s) counted from when it is given and only while the battle runs
   with the cat on the ground; landing again sooner neither renews nor extends it. The HUD hint
   while the cat is lifted says whether this landing will protect it.

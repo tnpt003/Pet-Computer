@@ -41,9 +41,11 @@
   "waveHeal": 15,
   "spawnMinDistance": 200,
   // Putting a lifted cat down protects it this long (0–5 s), at most once per
-  // rescueGraceCooldownSeconds (0–60) of the cat on the ground in a running battle.
+  // rescueGraceCooldownSeconds (0–60) of the cat on the ground in a running battle, and only after
+  // a lift of at least rescueGraceMinLiftSeconds (0–2; a quick lift-and-drop earns none).
   "landingGraceSeconds": 1.5,
   "rescueGraceCooldownSeconds": 5,
+  "rescueGraceMinLiftSeconds": 0.3,
   // A dashing slime that runs into the cat stuns it (stars over its head; it stands still and does
   // not swing, but can still be lifted and thrown). After a stun, no new one for stunImmunitySeconds.
   "stunDurationSeconds": 1.5,

@@ -163,21 +163,25 @@ internal static class BattleTests
         var follower = sim.Slimes.Last(s => s != slime);
         double x0 = follower.X, heldAt = slime.StateTime;
         order = sim.Step(dt, 800, true, true);
-        check(order.Command == CatCommand.Hold && slime.State == SlimeState.Windup && slime.StateTime == heldAt && sim.SwingTime < 0,
-            "Lifting the cat holds the slime's attack where it is (the warning stays) and stops the cat's own swing");
-        bool woundUp = false;
-        for (double t = 0; t < 5; t += dt) { sim.Step(dt, 1200, true, true); woundUp |= sim.Slimes.Any(s => s != slime && s.State == SlimeState.Windup); }
+        check(order.Command == CatCommand.Hold && slime.State == SlimeState.Windup && slime.StateTime > heldAt && sim.SwingTime < 0,
+            "Lifting the cat does not freeze the slime's windup (it runs on its own time) and stops the cat's own swing");
+        bool woundUp = false, missed = false;
+        for (double t = 0; t < 5; t += dt)
+        {
+            sim.Step(dt, 1200, true, true);
+            woundUp |= sim.Slimes.Any(s => s.State == SlimeState.Windup && s.StateTime < dt * 1.5);
+            missed |= slime.State == SlimeState.Recover;
+        }
         check(sim.CatHp == sim.Settings.CatMaxHp && sim.Slimes.Count == spawned && sim.ToSpawn == toSpawn && !woundUp,
-            "While carried: no damage, no new slimes, no wave progress, no other slime winds up");
-        check(slime.State == SlimeState.Windup && slime.StateTime == heldAt && slime.X == 840, "The held attack neither progresses nor moves while the cat is carried");
-        check(Math.Abs(follower.X - 1200) < Math.Abs(x0 - 1200) - 100 || Math.Abs(follower.X - 1200) <= follower.Range,
-            $"The other slimes follow the carried cat along the floor ({x0:F0} → {follower.X:F0})");
+            "While carried: no damage, no new slimes, no wave progress, no new windup");
+        check(missed && slime.State != SlimeState.Windup, "The attack under way plays out and misses while the cat is carried");
+        check(Math.Abs(follower.X - 800) <= Math.Abs(x0 - 800) + 1 && Math.Abs(follower.X - 1200) > 300,
+            $"The other slimes go by where the cat last stood on the floor, not by the cursor carrying it ({x0:F0} → {follower.X:F0})");
         sim.Step(dt, 800, false);
         check(sim.Grace > 0, "Putting the cat down starts the protection time");
         Run(sim, sim.Settings.LandingGraceSeconds - 0.2, () => 800);
-        check(sim.CatHp == sim.Settings.CatMaxHp && slime.State != SlimeState.Windup,
-            "Put back on the same spot with landing protection, the held attack finishes and misses; no new attack starts");
-        // The missed hit costs the slime its full attack cooldown (1.8 s), then a new windup (0.8 s).
+        check(sim.CatHp == sim.Settings.CatMaxHp, "Put back on the same spot with landing protection: no hit");
+        // A new attack needs its whole windup (0.8 s) after the protection.
         Run(sim, 3, () => 800);
         check(sim.CatHp < sim.Settings.CatMaxHp, "After it, slimes attack again");
         var click = New(new BattleSettings { FirstWaveDelay = 0 });

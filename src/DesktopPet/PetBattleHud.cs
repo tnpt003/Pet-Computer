@@ -313,7 +313,8 @@ public sealed class BattleHud : Border
 
     private static int ProtectedFor(BattleSim b) => (int)Math.Ceiling(b.Grace);
 
-    // Slimes holding a windup while the cat is in the user's hands (they hit once it is down nearby).
+    // Slimes winding up while the cat is in the user's hands (their hit falls on its own time: it
+    // misses a lifted cat and lands on one put down in its reach).
     public static int HeldAttacks(BattleSim b)
     {
         if (!b.CatHeld) return 0;
@@ -330,7 +331,7 @@ public sealed class BattleHud : Border
     {
         string skills = L("Mèo đang được bế: không ai đánh được mèo, kỹ năng chờ mèo xuống", "The cat is lifted: nobody can hit it, skills wait for it to land");
         if (HeldAttacks(b) > 0)
-            skills += L(" · slime đang giữ đòn: thả mèo ra ngoài vòng đỏ", " · a slime holds its attack: put the cat down outside the red ring");
+            skills += L(" · slime sắp đánh: thả mèo ra ngoài vòng đỏ", " · a slime is about to hit: put the cat down outside the red ring");
         int wait = GraceWait(b);
         string grace = b.Settings.LandingGraceSeconds.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
         return skills + (wait > 0

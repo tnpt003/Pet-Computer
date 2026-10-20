@@ -87,7 +87,7 @@ Nếu `id` đã lưu trong preferences không còn trong dữ liệu (ví dụ f
 ## Đợt quái (`waves`) và luật trận
 
 - `waves`: tối đa 30 đợt. Mỗi đợt có `groups`, mỗi group gồm `enemy` (id) và `count` (1–50). Các group ra quái theo thứ tự; tối đa `maxAlive` con cùng lúc. Đợt nào cũng có thể có boss.
-- Luật trận ở cấp trên cùng: `catMaxHp`, `maxAlive`, `spawnInterval`, `firstWaveDelay`, `waveBreakSeconds`, `waveHeal`, `landingGraceSeconds` (0–5), `rescueGraceCooldownSeconds` (0–60), kỹ năng (`pushCooldown`, `healAmount`…), combo (`comboHits` 2–6…).
+- Luật trận ở cấp trên cùng: `catMaxHp`, `maxAlive`, `spawnInterval`, `firstWaveDelay`, `waveBreakSeconds`, `waveHeal`, `landingGraceSeconds` (0–5), `rescueGraceCooldownSeconds` (0–60), `rescueGraceMinLiftSeconds` (0–2, mặc định 0.3: nhấc ngắn hơn thì thả xuống không được bảo vệ), kỹ năng (`pushCooldown`, `healAmount`…), combo (`comboHits` 2–6…).
 - Độ khó `easy`/`hard` có `enemyHp`, `enemyDamage`, `enemySpeed`, mỗi số trong khoảng 0.25–3. Mức Thường dùng nguyên số liệu.
 - Xem file gốc để biết đủ các khóa và giá trị mặc định.
 

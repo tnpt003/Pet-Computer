@@ -116,9 +116,10 @@ internal static class TutorialChecks
         TickBattle(0.1);
         Call(window, "UpdateBattleHud");
         byte ringHeld = RingAlpha();
-        check(slime.State == SlimeState.Windup && BattleHud.HeldAttacks(Sim()) == 1 && hud.HintText.Contains("holds its attack") && hud.HintText.Contains("red ring"),
-            $"Carrying the cat: the HUD says a slime holds its attack and where to put the cat ({hud.HintText})");
-        check(ringBefore == 0 && ringHeld > 0, $"The field shows the held attack's reach as a ring on the floor only while the cat is carried ({ringBefore} → {ringHeld})");
+        check(slime.State == SlimeState.Windup && BattleHud.HeldAttacks(Sim()) == 1 && hud.HintText.Contains("about to hit") && hud.HintText.Contains("red ring"),
+            $"Carrying the cat: the HUD says a slime is about to hit and where to put the cat ({hud.HintText})");
+        check(ringBefore == 0 && ringHeld > 0, $"The field shows the coming attack's reach as a ring on the floor only while the cat is carried ({ringBefore} → {ringHeld})");
+        TickBattle(0.3); // A real rescue (at least rescueGraceMinLiftSeconds) earns the landing protection.
         window.RaiseEvent(MouseEvent(UIElement.MouseLeftButtonUpEvent));
         pet.Grounded = true; pet.VX = pet.VY = 0; pet.Action = PetAction.Idle; pet.Y = Field<Area>(window, "bounds").Bottom - 112;
         TickBattle(1.0 / 60);

@@ -13,12 +13,12 @@ internal static class BattleRulesTests
         }
         void Lift(BattleSim sim, double seconds) => Run(sim, seconds, held: true, lifted: true);
         // A harmless slime is on the floor; the cat stands at 800.
-        BattleSim Calm(double graceCooldown = 5)
+        BattleSim Calm(double graceCooldown = 5, double minLift = 0.3)
         {
             var sim = new BattleSim(new BattleSettings
             {
                 FirstWaveDelay = 0, Waves = new[] { 2 }, MaxAlive = 2, SpawnInterval = 0, SlimeMaxHp = 1000, SlimeDamage = 0, CatDamage = 0,
-                RescueGraceCooldownSeconds = graceCooldown
+                RescueGraceCooldownSeconds = graceCooldown, RescueGraceMinLiftSeconds = minLift
             }, 0, 1600, new Random(5));
             sim.Step(dt, 800, false); sim.Step(dt, 800, false);
             Run(sim, 0.6, held: true); // Both slimes finish appearing (a press: no rescue).
@@ -26,10 +26,11 @@ internal static class BattleRulesTests
             return sim;
         }
 
-        // Lifting and dropping over and over: before the cooldown the cat was safe all the time.
-        (double Protected, double Ground) Spam(double graceCooldown)
+        // Lifting and dropping over and over (0.2 s lifts): before the cooldown the cat was safe all
+        // the time (measured without the minimum lift, which alone now gives such lifts nothing).
+        (double Protected, double Ground) Spam(double graceCooldown, double minLift = 0)
         {
-            var sim = Calm(graceCooldown);
+            var sim = Calm(graceCooldown, minLift);
             double safe = 0, ground = 0;
             for (int cycle = 0; cycle < 20; cycle++)
             {
@@ -44,6 +45,9 @@ internal static class BattleRulesTests
         check(old.Protected > old.Ground * 0.95, $"(without the cooldown) lift-and-drop keeps the cat safe nearly all the time ({old.Protected:F1} of {old.Ground:F1} s)");
         check(now.Protected <= spec.LandingGraceSeconds * (1 + now.Ground / spec.RescueGraceCooldownSeconds) + 0.05,
             $"With the {spec.RescueGraceCooldownSeconds} s cooldown it cannot ({now.Protected:F1} of {now.Ground:F1} s on the ground protected)");
+        var quick = Spam(5, spec.RescueGraceMinLiftSeconds);
+        check(spec.RescueGraceMinLiftSeconds == 0.3 && quick.Protected == 0,
+            $"Lifts shorter than {spec.RescueGraceMinLiftSeconds} s earn no landing protection at all ({quick.Protected:F1} s protected)");
 
         var sim = Calm();
         Lift(sim, 0.3);
@@ -66,7 +70,10 @@ internal static class BattleRulesTests
         check(sim.Grace == 0 && sim.RescueGraceReady, "A plain click is no rescue: no protection, nothing used up");
         Lift(sim, 0.2);
         sim.Step(dt, 800, false);
-        check(sim.Grace > spec.LandingGraceSeconds - 0.05, "After the cooldown the next real rescue protects again");
+        bool tooShort = sim.Grace == 0 && sim.RescueGraceReady;
+        Lift(sim, 0.35);
+        sim.Step(dt, 800, false);
+        check(tooShort && sim.Grace > spec.LandingGraceSeconds - 0.05, "After the cooldown a 0.2 s lift earns nothing (nor uses it up); the next real rescue protects again");
 
         // Skills wait while the cat is in the user's hands.
         var skills = Calm();

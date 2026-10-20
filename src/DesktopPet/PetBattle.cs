@@ -69,6 +69,8 @@ public sealed class BattleSettings
     // running battle (counted from when it is given), so lifting and dropping over and over
     // cannot keep the cat safe.
     public double RescueGraceCooldownSeconds { get; init; } = 5;
+    // ...and only after a lift this long (a quick lift-and-drop on the spot earns none).
+    public double RescueGraceMinLiftSeconds { get; init; } = 0.3;
     // A dashing enemy that runs into the cat stuns it this long (it stands still and does not
     // swing; the user may still lift and throw it). Afterwards it cannot be stunned again for
     // StunImmunitySeconds, so stuns never chain into a lock.
@@ -530,7 +532,7 @@ public sealed class BattleSim
     public double BossShieldSeconds { get; private set; }
     private int landedSwings;
     // Where the cat stood at the last Step (a boss shield phase runs away from it).
-    private double lastCatX;
+    private double lastCatX, groundX = double.NaN, liftedFor;
     // Multipliers the upgrades give (1 without any). Cuts never go below 30 % of the original.
     public double DamageFactor => 1 + damageBonus;
     public double MoveFactor => 1 + moveBonus;
@@ -598,7 +600,8 @@ public sealed class BattleSim
     public double GraceCooldown { get; private set; }
     public bool RescueGraceReady => GraceCooldown <= 0;
     // How the user is handling the cat (SetCatState): held = pressed, carried, in the air or
-    // climbing (the battle may not move or hurt it); lifted = really off the ground (not a click).
+    // climbing (the battle may not move it); lifted = really off the ground (not a click). A cat
+    // that is only pressed is still on the floor: an attack already under way reaches it (no stun).
     public bool CatHeld { get; private set; }
     public bool CatLifted { get; private set; }
     // While the cat is safe in the user's hands the skills wait: no use, no cooldown recovery.
@@ -682,7 +685,11 @@ public sealed class BattleSim
         if (Paused || ChoosingUpgrade || !double.IsFinite(dt) || dt <= 0 || !double.IsFinite(catX)) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
         dt = Math.Min(dt, 0.1);
         Time += dt;
-        lastCatX = catX;
+        // While the cat is lifted the slimes go by where it last stood on the floor, not by the
+        // cursor carrying it.
+        if (!CatLifted || !double.IsFinite(groundX)) groundX = catX;
+        double floorX = groundX;
+        lastCatX = floorX;
         StepEffects(dt);
         HurtFlash = Math.Max(0, HurtFlash - dt);
         // The stun runs on battle time, held or not (lifting neither ends nor stretches it).
@@ -707,27 +714,29 @@ public sealed class BattleSim
         if (Over)
         {
             PhaseRemaining = Math.Max(0, PhaseRemaining - dt);
-            StepSlimes(dt, catX, true);
+            StepSlimes(dt, floorX, true);
             return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
         }
         comboClock += dt;
+        if (CatLifted) liftedFor += dt; // How long this rescue has lasted (battle time).
         if (catHeld) { CancelSwing(); Combo = 0; }
         else
         {
             // Landing after a real lift: protection, unless it was given too recently (then the
             // time left, if any, is neither renewed nor extended).
-            if (wasLifted && GraceCooldown <= 0)
+            if (wasLifted && liftedFor >= Settings.RescueGraceMinLiftSeconds && GraceCooldown <= 0)
             {
                 Grace = Settings.LandingGraceSeconds;
                 GraceCooldown = Settings.RescueGraceCooldownSeconds;
             }
             wasLifted = false;
+            liftedFor = 0;
             Grace = Math.Max(0, Grace - dt);
             GraceCooldown = Math.Max(0, GraceCooldown - dt);
         }
         CatCooldown = Math.Max(0, CatCooldown - dt);
         StepBombs(dt);
-        StepSlimes(dt, catX, catHeld);
+        StepSlimes(dt, floorX, catHeld);
         if (Over) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
         // Holding the cat freezes the waves (no spawning, no progress) and a survive stage's clock.
         if (!catHeld) StepWaves(dt, catX);
@@ -743,7 +752,7 @@ public sealed class BattleSim
             }
         }
         if (ChoosingUpgrade) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
-        if (catHeld) { TargetId = PickTarget(catX)?.Id; return new(CatCommand.Hold); }
+        if (catHeld) { TargetId = PickTarget(floorX)?.Id; return new(CatCommand.Hold); }
         return CatTurn(dt, catX);
     }
 
@@ -1289,11 +1298,11 @@ public sealed class BattleSim
                     if (slime.StateTime >= slime.Type.Recover) slime.Set(SlimeState.Moving);
                     break;
                 case SlimeState.Windup:
-                    // The cat is in the user's hands: the windup holds where it is (the "!" stays, the
-                    // slime stays put) and goes on once the cat is down. Put down out of reach, or
-                    // with landing protection, the hit misses; put back on the same spot, it lands.
-                    // So lifting dodges a hit but cannot cancel every hit by lifting over and over.
-                    if (catHeld) { slime.StateTime -= dt; break; }
+                    // A rescue never freezes the field: the windup runs on its announced time, so no
+                    // attack waits to land on the cat's way down. Falling while the cat is lifted it
+                    // misses; once the cat is down again it lands as usual (in reach, no landing
+                    // protection), so lifting and dropping on the spot cannot cancel every hit. A cat
+                    // only pressed (not lifted) is on the floor and is hit too.
                     if (slime.StateTime >= Windup(slime))
                     {
                         if (slime.Type.Dash) { slime.DashLeft = slime.Type.DashDistance; slime.DashHit = false; slime.Set(SlimeState.Dashing); }
@@ -1301,7 +1310,7 @@ public sealed class BattleSim
                     }
                     break;
                 case SlimeState.Dashing:
-                    StepDash(slime, dt, catX, catHeld, minX, maxX);
+                    StepDash(slime, dt, catX, minX, maxX);
                     break;
                 case SlimeState.Casting:
                     if (slime.StateTime >= HealWindup(slime)) FinishHeal(slime);
@@ -1567,7 +1576,8 @@ public sealed class BattleSim
         slime.Set(SlimeState.Recover);
         slime.Cooldown = slime.Type.AttackCooldown;
         if (slime.Type.Slam) AddEffect(BattleEffectKind.Slam, slime.X, 0, slime.Range);
-        if (Math.Abs(catX - slime.X) > slime.Range + 12 || Grace > 0) return; // Missed: the cat moved away.
+        // Missed: the cat moved away, is protected, or is off the floor right now.
+        if (CatLifted || Math.Abs(catX - slime.X) > slime.Range + 12 || Grace > 0) return;
         HurtCat(slime, catX, false);
     }
 
@@ -1575,16 +1585,17 @@ public sealed class BattleSim
     public const double CatHalfWidth = 18;
 
     // The lunge is fast, so the hit is checked along the whole path of this frame (never skipped
-    // between two frames), once per dash. A cat in the user's hands or under landing protection
-    // is not hit; the dash still runs to its end.
-    private void StepDash(Slime slime, double dt, double catX, bool catHeld, double minX, double maxX)
+    // between two frames), once per dash, and only while the cat is on the floor (a pressed cat
+    // too, without the stun) and not under landing protection. The dash runs its locked lane to
+    // the end whatever the cat does, never turning after it.
+    private void StepDash(Slime slime, double dt, double catX, double minX, double maxX)
     {
         double before = slime.X;
         double step = Math.Min(slime.DashLeft, slime.Type.DashSpeed * (slime.Elite?.DashSpeed ?? 1) * level.EnemySpeed * dt);
         slime.X = Math.Clamp(slime.X + slime.DashDirection * step, minX, maxX);
         slime.DashLeft = slime.X == before ? 0 : slime.DashLeft - step; // Stopped by the field's edge.
         double reach = slime.HitWidth / 2 + CatHalfWidth;
-        if (!slime.DashHit && !catHeld && Grace <= 0 && catX >= Math.Min(before, slime.X) - reach && catX <= Math.Max(before, slime.X) + reach)
+        if (!slime.DashHit && !CatLifted && Grace <= 0 && catX >= Math.Min(before, slime.X) - reach && catX <= Math.Max(before, slime.X) + reach)
         {
             slime.DashHit = true;
             HurtCat(slime, catX, true);

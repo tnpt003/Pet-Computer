@@ -543,6 +543,7 @@ public static class BattleData
         NotNegative(s.RescueGraceCooldownSeconds, "rescueGraceCooldownSeconds");
         Within(s.StunDurationSeconds, 0, 5, "stunDurationSeconds"); Within(s.StunImmunitySeconds, 0, 30, "stunImmunitySeconds");
         if (s.RescueGraceCooldownSeconds > 60) throw new InvalidDataException("rescueGraceCooldownSeconds must be at most 60");
+        Within(s.RescueGraceMinLiftSeconds, 0, 2, "rescueGraceMinLiftSeconds");
         Positive(s.SlimeWidth, "slimeWidth"); Positive(s.SlimeHeight, "slimeHeight"); Positive(s.MaxAlive, "maxAlive");
         foreach (var skill in BattleSkills.All) Positive(skill.Cooldown(s), skill.Skill + " cooldown");
         Positive(s.HealAmount, "healAmount"); Positive(s.CheerSeconds, "cheerSeconds"); Positive(s.CheerSpeed, "cheerSpeed");

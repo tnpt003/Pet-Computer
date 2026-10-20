@@ -336,8 +336,9 @@ public sealed partial class PetWindow
     // The battle may not move or hurt the cat: pressed, dragged, in the air or climbing.
     private bool BattleHoldsOff => dragging || pressPending || !pet.Grounded ||
         pet.Action is PetAction.Dragging or PetAction.Climbing || PetActionRules.IsInFlight(pet.Action);
-    // Really off the ground (a drag past the threshold, or a throw/fall): not a plain click.
-    private bool BattleLifted => dragging || !pet.Grounded || pet.Action is PetAction.Dragging or PetAction.Thrown;
+    // Really off the ground (a drag past the threshold, a throw/fall, a climb or jump): everything
+    // BattleHoldsOff covers but a plain click, the one case slimes' hits under way still reach.
+    private bool BattleLifted => dragging || !pet.Grounded || pet.Action is PetAction.Dragging or PetAction.Thrown or PetAction.Climbing || PetActionRules.IsInFlight(pet.Action);
 
     // A real drag just began: a chosen skill is dropped and the HUD shows it at once.
     private void BattleCatLifted()

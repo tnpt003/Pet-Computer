@@ -83,6 +83,8 @@ public sealed class BattleSettings
     // Elites alive at once (StageSpec.EliteChance rolls them), and the chance a rare card takes its
     // group's place in an upgrade offer.
     public int MaxElites { get; init; } = 1;
+    // Enemies going round to the cat's back at once (EnemyType.Flank).
+    public int MaxFlankers { get; init; } = 1;
     public double RareChance { get; init; } = 0.15;
     public double OutroSeconds { get; init; } = 3;
     public double HurtFlashSeconds { get; init; } = 0.35;
@@ -225,7 +227,8 @@ public sealed class BattleSettings
     private EnemyType BuiltInSlime() => new()
     {
         Id = "slime", NameVi = "Slime", NameEn = "Slime", MaxHp = SlimeMaxHp, Speed = SlimeSpeed, Damage = SlimeDamage,
-        Range = SlimeAttackRange, Windup = SlimeWindup, AttackCooldown = SlimeAttackCooldown, Recover = SlimeRecover, Color = "#7CD36A"
+        Range = SlimeAttackRange, Windup = SlimeWindup, AttackCooldown = SlimeAttackCooldown, Recover = SlimeRecover, Color = "#7CD36A",
+        FallBackBelow = 0.3, Flank = true, FlankSpeed = 2
     };
 
     private EnemyType BuiltInKing() => new()
@@ -358,6 +361,16 @@ public sealed class Slime
     public int RallyTargetId;
     // A support's heals scale like the HP of what it heals (difficulty × threat; 1 at Normal, threat 1).
     public double HealPower = 1;
+    // HealGuard: this one is being healed and takes no damage (set by the battle each frame); when it
+    // may be guarded again; the ally a healing support guards.
+    public bool Mended;
+    public double GuardAgainAt;
+    public int MendingId;
+    // Tactics: falling back to a healer (once a battle), running off after a dash (DIPs still to go),
+    // going round to the cat's back (once; FlankSide: the side it started from).
+    public bool FallingBack, FellBack, Flanking, Flanked;
+    public double FallBackTime, RunAwayLeft, FlankTime;
+    public int FlankSide;
     // Support teleport: its own cooldown, the ally it goes to and the spot it will appear on.
     public double TeleportCooldown;
     public int TeleportTargetId;
@@ -389,7 +402,10 @@ public enum BattleEventKind
     // An elite appeared (Value: its id); the Turtle shell card stopped a hit on the cat.
     EliteAppeared, ShellBlocked,
     // A boss leaping to its edge (taking off, landing) and the rings where its helpers will appear.
-    BossLeaping, BossLanded, BossSummoning
+    BossLeaping, BossLanded, BossSummoning,
+    // Tactics: a heal that guards its ally, a hit on that guarded ally, a hurt enemy falling back to its
+    // healer, an enemy going round to the cat's back.
+    EnemyWarded, HitWarded, EnemyFallingBack, EnemyFlanking
 }
 public readonly record struct BattleEvent(BattleEventKind Kind, double X, double Value = 0);
 // Number: a floating damage (Value > 0) or heal (Value < 0, shown as +HP above the cat).
@@ -397,8 +413,8 @@ public readonly record struct BattleEvent(BattleEventKind Kind, double X, double
 // Mend: green pluses rising from an enemy healed by a support enemy.
 // Block: grey stone chips and a small stone shield over an enemy that blocked a hit. Immune: a
 // gold ring flashing on a shielded boss hit for nothing. Leaves: a ring of leaves where a support
-// appears after teleporting.
-public enum BattleEffectKind { Spark, Poof, Push, Explosion, Slam, Number, Combo, Thud, Mend, Block, Immune, Leaves }
+// appears after teleporting. Warded: a green ring and "IMMUNE" on an enemy guarded by a heal.
+public enum BattleEffectKind { Spark, Poof, Push, Explosion, Slam, Number, Combo, Thud, Mend, Block, Immune, Leaves, Warded }
 public sealed class BattleEffect
 {
     public BattleEffectKind Kind;
@@ -516,6 +532,8 @@ public sealed class BattleSim
     // Hits stony enemies blocked; hits a shielded boss shrugged off; seconds a boss shield was up.
     public int BlocksMade { get; private set; }
     public int ImmuneHits { get; private set; }
+    // Hits on an enemy guarded by a heal (HealGuard).
+    public int WardedHits { get; private set; }
     public double BossShieldSeconds { get; private set; }
     private int landedSwings;
     // Where the cat stood at the last Step (a boss shield phase runs away from it).
@@ -876,6 +894,14 @@ public sealed class BattleSim
             events.Add(new(BattleEventKind.BossImmune, slime.X));
             return HitResult.Immune;
         }
+        if (slime.Mended)
+        {
+            // Guarded by a heal winding up on it (push the healer to end it).
+            WardedHits++;
+            AddEffect(BattleEffectKind.Warded, slime.X, slime.Height / 2, slime.Width);
+            events.Add(new(BattleEventKind.HitWarded, slime.X));
+            return HitResult.Immune;
+        }
         if (Blocks(slime, source)) return HitResult.Blocked;
         // A hit never takes a boss past its next shield phase: it stops there, the rest is lost.
         slime.Hp = Math.Max(ShieldFloor(slime), slime.Hp - amount);
@@ -1173,16 +1199,22 @@ public sealed class BattleSim
         {
             var chosen = Find(selected);
             // A shielded boss stays chosen; the cat goes for the others until its shield drops.
-            if (chosen != null && chosen.Targetable && !chosen.Shielded) return chosen;
+            if (chosen != null && chosen.Targetable && !chosen.Shielded && !chosen.Mended) return chosen;
             if (chosen == null || !chosen.Targetable) SelectedId = null;
         }
         // Never a shielded boss: the cat cannot hurt it (with nothing else to hit it waits).
-        Slime? nearest = null;
+        // One guarded by a heal is left alone too while there is another to hit.
+        Slime? nearest = null, guarded = null;
         foreach (var s in slimes)
-            if (s.Targetable && !s.Shielded && (nearest == null || Math.Abs(s.X - catX) < Math.Abs(nearest.X - catX))) nearest = s;
+        {
+            if (!s.Targetable || s.Shielded) continue;
+            if (s.Mended) { if (guarded == null || Math.Abs(s.X - catX) < Math.Abs(guarded.X - catX)) guarded = s; continue; }
+            if (nearest == null || Math.Abs(s.X - catX) < Math.Abs(nearest.X - catX)) nearest = s;
+        }
+        nearest ??= guarded;
         // Keep the current choice unless another slime is clearly closer (no dithering).
         var current = Find(autoTargetId);
-        if (current != null && current.Targetable && !current.Shielded && nearest != null &&
+        if (current != null && current.Targetable && !current.Shielded && (!current.Mended || nearest == current) && nearest != null &&
             Math.Abs(current.X - catX) <= Math.Abs(nearest.X - catX) + 40) nearest = current;
         autoTargetId = nearest?.Id ?? 0;
         return nearest;
@@ -1206,6 +1238,10 @@ public sealed class BattleSim
             decisionCatX = catX;
             AssignGuards();
         }
+        // Who a heal guards: only allies of supports still winding up their heal on them.
+        foreach (var e in slimes) e.Mended = false;
+        foreach (var e in slimes)
+            if (e.State == SlimeState.Casting && e.MendingId != 0 && Find(e.MendingId) is { Targetable: true } guarded) guarded.Mended = true;
         // By index over the slimes there were at the start: a hit on the cat can send damage back
         // (Thorns) and make a boss call helpers, which join the list and move from the next frame.
         int count = slimes.Count;
@@ -1274,12 +1310,25 @@ public sealed class BattleSim
                         slime.Facing = ally.X < slime.X ? -1 : 1;
                         slime.Set(SlimeState.Casting);
                         events.Add(new(BattleEventKind.EnemyHealing, slime.X));
+                        // HealGuard: the ally takes no damage while the heal winds up (never a boss; the
+                        // same ally only again HealGuardRepeat s after this heal would end).
+                        slime.MendingId = 0;
+                        if (slime.Type.HealGuard && !ally.IsBoss && ally.GuardAgainAt <= Time)
+                        {
+                            slime.MendingId = ally.Id;
+                            ally.Mended = true;
+                            ally.GuardAgainAt = Time + slime.Type.HealWindup + slime.Type.HealGuardRepeat;
+                            events.Add(new(BattleEventKind.EnemyWarded, ally.X));
+                        }
                         break;
                     }
                     // A support keeps behind its fighting allies and leaves the cat to them; one far
                     // from a badly hurt ally may jump to it.
                     if (slime.Type.Support && StartTeleport(slime, catX)) break;
                     if (slime.Type.Support && (slime.KeepingBack = KeepBack(slime, dt, catX, minX, maxX))) break;
+                    // Fighter tactics: a hurt one falls back to its healer, a dasher runs off after its
+                    // lunge, a slime goes round the rocks to the cat's back.
+                    if (FallBack(slime, dt, catX, minX, maxX) || RunAway(slime, dt, catX, minX, maxX) || Flank(slime, dt, catX, catHeld, minX, maxX)) break;
                     // While the user carries the cat the slimes follow it along the floor, but never
                     // wind up: a lifted cat cannot be hit. A slow-turning kind faces the cat only after
                     // its turn, and neither walks nor winds up meanwhile.
@@ -1422,25 +1471,112 @@ public sealed class BattleSim
     {
         int side = support.X >= catX ? 1 : -1;
         bool allies = false;
-        double nearest = double.NaN;
+        double nearest = double.NaN, guard = double.NaN;
         foreach (var s in slimes)
         {
             if (s == support || s.State == SlimeState.Defeated || s.Type.Support) continue;
             allies = true;
             double ahead = (s.X - catX) * side;
             if (ahead >= 0 && (double.IsNaN(nearest) || ahead < nearest)) nearest = ahead;
+            if (ahead >= 0 && s.GuardOf == support.Id && s.Targetable) guard = ahead;
         }
         if (!allies) return false;
+        // HideBehindGuard: behind its own guard (the rock between it and the cat), not just any ally.
+        if (support.Type.HideBehindGuard && !double.IsNaN(guard)) nearest = guard;
         double want = Math.Clamp(catX + side * ((double.IsNaN(nearest) ? 0 : nearest) + support.Type.KeepBack), minX, maxX);
         double gap = want - support.X;
         support.Facing = catX < support.X ? -1 : 1;
-        if (Math.Abs(gap) > 6) support.X = Math.Clamp(support.X + Math.Sign(gap) * Math.Min(Math.Abs(gap), Speed(support) * dt), minX, maxX);
+        // FleeSpeed: backing off from a cat that comes close it hurries (still slower than the cat runs).
+        double speed = Speed(support);
+        if (Math.Sign(gap) == side) speed *= FleeFactor(support, Math.Abs(support.X - catX));
+        if (Math.Abs(gap) > 6) support.X = Math.Clamp(support.X + Math.Sign(gap) * Math.Min(Math.Abs(gap), speed * dt), minX, maxX);
+        return true;
+    }
+
+    // How much faster a support backs off with the cat this close: 1 from 200 DIPs, FleeSpeed at 60.
+    public static double FleeFactor(Slime support, double distance) =>
+        1 + (support.Type.FleeSpeed - 1) * Math.Clamp((200 - distance) / 140, 0, 1);
+
+    // FallBackBelow: a hurt fighter walks back to a support that can still heal, once a battle, to
+    // stand KeepBack in front of it (where the support is happy to stay), without attacking; it is
+    // done once healed well past the line, when no healer is left or after 6 s.
+    private bool FallBack(Slime slime, double dt, double catX, double minX, double maxX)
+    {
+        var type = slime.Type;
+        if (type.FallBackBelow <= 0 || type.Support || slime.IsBoss || slime.Flanking) return false;
+        Slime? healer = null;
+        foreach (var s in slimes)
+            if (s != slime && s.Type.Support && s.Type.HealAmount > 0 && s.HealLeft > 0 && s.Targetable &&
+                (healer == null || Math.Abs(s.X - slime.X) < Math.Abs(healer.X - slime.X))) healer = s;
+        if (!slime.FallingBack)
+        {
+            if (slime.FellBack || healer == null || slime.Hp >= slime.MaxHp * type.FallBackBelow) return false;
+            slime.FallingBack = slime.FellBack = true;
+            slime.FallBackTime = 0;
+            events.Add(new(BattleEventKind.EnemyFallingBack, slime.X));
+        }
+        slime.FallBackTime += dt;
+        if (healer == null || slime.Hp >= slime.MaxHp * Math.Min(1, type.FallBackBelow + 0.3) || slime.FallBackTime > 6)
+        {
+            slime.FallingBack = false;
+            return false;
+        }
+        int side = healer.X >= catX ? 1 : -1;
+        double want = Math.Clamp(healer.X - side * Math.Min(healer.Type.KeepBack, healer.Type.HealRange * 0.6), minX, maxX);
+        slime.Facing = catX < slime.X ? -1 : 1; // It keeps an eye on the cat.
+        if (Math.Abs(want - slime.X) > 6) slime.X = Math.Clamp(slime.X + Math.Sign(want - slime.X) * Math.Min(Math.Abs(want - slime.X), Speed(slime) * dt), minX, maxX);
+        return true;
+    }
+
+    // HitAndRun: after its dash a dasher runs straight away from the cat (to the field's edge at most).
+    private bool RunAway(Slime slime, double dt, double catX, double minX, double maxX)
+    {
+        if (slime.RunAwayLeft <= 0) return false;
+        int away = slime.X >= catX ? 1 : -1;
+        double before = slime.X, step = Speed(slime) * dt;
+        slime.X = Math.Clamp(slime.X + away * step, minX, maxX);
+        slime.Facing = away;
+        slime.RunAwayLeft = slime.X == before ? 0 : slime.RunAwayLeft - step;
+        return true;
+    }
+
+    // Flank: with a blocker between it and the cat, it goes round to the cat's back once (at most
+    // MaxFlankers at a time, never started while the user holds the cat, only with room behind the
+    // cat), FlankSpeed × faster and without attacking until it gets there (or 8 s pass).
+    private bool Flank(Slime slime, double dt, double catX, bool catHeld, double minX, double maxX)
+    {
+        var type = slime.Type;
+        if (!type.Flank || slime.Flanked || slime.FallingBack) return false;
+        if (!slime.Flanking)
+        {
+            if (catHeld || slime.Cooldown > 0) return false;
+            int flankers = 0;
+            foreach (var s in slimes) if (s.Flanking) flankers++;
+            if (flankers >= Settings.MaxFlankers) return false;
+            bool walled = false;
+            foreach (var s in slimes)
+                if (s != slime && s.Type.Blocker && s.Targetable && (s.X - slime.X) * (catX - slime.X) > 0 && Math.Abs(s.X - slime.X) < Math.Abs(catX - slime.X)) walled = true;
+            if (!walled) return false;
+            int from = slime.X >= catX ? 1 : -1;
+            double spot = catX - from * slime.Range * 0.8;
+            if (spot < minX + 20 || spot > maxX - 20) return false; // No room behind the cat.
+            slime.Flanking = true;
+            slime.FlankSide = from;
+            slime.FlankTime = 0;
+            events.Add(new(BattleEventKind.EnemyFlanking, slime.X));
+        }
+        slime.FlankTime += dt;
+        double goal = Math.Clamp(catX - slime.FlankSide * slime.Range * 0.8, minX, maxX);
+        slime.Facing = goal < slime.X ? -1 : 1;
+        slime.X = Math.Clamp(slime.X + Math.Sign(goal - slime.X) * Math.Min(Math.Abs(goal - slime.X), Speed(slime) * type.FlankSpeed * dt), minX, maxX);
+        if (Math.Abs(goal - slime.X) < 6 || slime.FlankTime > 8) { slime.Flanking = false; slime.Flanked = true; }
         return true;
     }
 
     // The heal lands if its ally is still there, alive and in reach (a little slack for movement).
     private void FinishHeal(Slime healer)
     {
+        healer.MendingId = 0;
         healer.Set(SlimeState.Recover);
         healer.HealCooldown = healer.Type.HealCooldown;
         var ally = Find(healer.HealTargetId);
@@ -1481,7 +1617,7 @@ public sealed class BattleSim
         var live = scratch;
         live.Clear();
         // A leaping boss flies over the others.
-        foreach (var slime in slimes) if (slime.State != SlimeState.Defeated && !slime.KeepingBack && slime.LeapHeight <= 0 && slime.Type.Blocker == blockers) live.Add(slime);
+        foreach (var slime in slimes) if (slime.State != SlimeState.Defeated && !slime.KeepingBack && !slime.Flanking && slime.LeapHeight <= 0 && slime.Type.Blocker == blockers) live.Add(slime);
         live.Sort(ByX);
         for (int i = 1; i < live.Count; i++)
         {
@@ -1526,6 +1662,7 @@ public sealed class BattleSim
         {
             slime.Set(SlimeState.Recover);
             slime.Cooldown = slime.Type.AttackCooldown;
+            slime.RunAwayLeft = slime.Type.HitAndRun; // Hit and run: off it goes once it recovers.
         }
     }
 
@@ -1936,6 +2073,9 @@ public sealed class BattleSim
             // A leap in the air comes down where it is; announced helpers never come.
             s.Crouch = s.LeapHeight = 0;
             s.CallSpots = null;
+            s.Mended = s.FallingBack = s.Flanking = false;
+            s.MendingId = 0;
+            s.RunAwayLeft = 0;
         }
         events.Add(new(phase == BattlePhase.Won ? BattleEventKind.Won : BattleEventKind.Lost, 0));
     }
@@ -1995,7 +2135,12 @@ public sealed class BattleSim
             // Knock the slime away from the cat and stun it briefly; the boss is heavy.
             int push = direction is int chosen && chosen != 0 ? Math.Sign(chosen) : slime.X < catX ? -1 : 1;
             // A heal being wound up is cancelled and costs its full cooldown.
-            if (slime.State == SlimeState.Casting) { slime.HealCooldown = slime.Type.HealCooldown; slime.HealTargetId = 0; }
+            if (slime.State == SlimeState.Casting)
+            {
+                slime.HealCooldown = slime.Type.HealCooldown; slime.HealTargetId = 0;
+                if (Find(slime.MendingId) is Slime warded) warded.Mended = false; // Its guard ends with it.
+                slime.MendingId = 0;
+            }
             // So is a teleport.
             if (slime.State == SlimeState.Teleporting) { slime.TeleportCooldown = slime.Type.TeleportCooldown; slime.TeleportTargetId = 0; }
             slime.KnockVelocity = push * Settings.PushSpeed * slime.Type.PushFactor;
@@ -2046,7 +2191,7 @@ public sealed class BattleSim
         double life = kind switch
         {
             BattleEffectKind.Poof => 0.6 * Math.Max(1, value), BattleEffectKind.Number => 0.9, BattleEffectKind.Combo => 0.7, BattleEffectKind.Mend => 0.8,
-            BattleEffectKind.Explosion or BattleEffectKind.Slam or BattleEffectKind.Leaves => 0.5, _ => 0.35
+            BattleEffectKind.Explosion or BattleEffectKind.Slam or BattleEffectKind.Leaves => 0.5, BattleEffectKind.Warded => 0.6, _ => 0.35
         };
         effects.Add(new BattleEffect { Kind = kind, X = x, Height = height, Life = life, Value = value });
     }

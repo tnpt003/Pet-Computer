@@ -206,6 +206,39 @@ public sealed class BattleFieldView : FrameworkElement
         dc.DrawEllipse(null, RallyPen, new Point(to.X, floor - 1), (helper.Width / 2 + 7) * ring, 6);
     }
 
+    // Over a slime's head: a grey-blue arrow pointing back while it falls back to its healer, an orange
+    // arc over to the far side while it goes round to the cat's back.
+    private static void DrawTacticMark(DrawingContext dc, Slime slime, double x, double y, double time)
+    {
+        if (slime.FallingBack)
+        {
+            int back = -slime.Facing;
+            var tip = new Point(x + back * 11, y);
+            dc.DrawLine(Halo, new Point(x - back * 9, y), tip);
+            dc.DrawLine(BackPen, new Point(x - back * 9, y), tip);
+            dc.DrawLine(BackPen, tip, new Point(tip.X - back * 6, y - 5));
+            dc.DrawLine(BackPen, tip, new Point(tip.X - back * 6, y + 5));
+            return;
+        }
+        int way = slime.Facing;
+        double bob = 2 * Math.Sin(time * 8);
+        var arc = new StreamGeometry();
+        using (var c = arc.Open())
+        {
+            c.BeginFigure(new Point(x - way * 12, y + 4 + bob), false, false);
+            c.ArcTo(new Point(x + way * 12, y + 4 + bob), new Size(13, 10), 0, false, way > 0 ? SweepDirection.Clockwise : SweepDirection.Counterclockwise, true, false);
+        }
+        arc.Freeze();
+        var end = new Point(x + way * 12, y + 4 + bob);
+        dc.DrawGeometry(null, Halo, arc);
+        dc.DrawGeometry(null, FlankPen, arc);
+        dc.DrawLine(FlankPen, end, new Point(end.X - way * 6, end.Y - 3));
+        dc.DrawLine(FlankPen, end, new Point(end.X + way * 1, end.Y - 7));
+    }
+
+    private static readonly Pen WardPen = FrozenPen(Frozen(255, 0x3F, 0xC8, 0x6B), 3);
+    private static readonly Pen BackPen = FrozenPen(Frozen(255, 0x5A, 0x7C, 0xA8), 3);
+    private static readonly Pen FlankPen = FrozenPen(Frozen(255, 0xF2, 0x8C, 0x28), 3);
     private static readonly Brush LeapShadow = Frozen(90, 0x26, 0x23, 0x38);
     private static readonly Pen ShadowRim = FrozenPen(Frozen(150, 255, 255, 255), 1.5);
     private static readonly Brush SummonPurple = Frozen(255, 0x9B, 0x5C, 0xE0);
@@ -420,6 +453,20 @@ public sealed class BattleFieldView : FrameworkElement
             dc.DrawGeometry(null, BubbleShine, shine);
         }
         double top = floor - h * sy - (slime.IsBoss ? 9 * size : 0);
+        if (slime.Mended && slime.State != SlimeState.Defeated)
+        {
+            // Guarded by a heal: a green bubble with leaves turning round it (push the healer to end it).
+            double rx = w / 2 + 9, ry = h / 2 + 8;
+            var centre = new Point(x, floor - ry + 2);
+            dc.DrawEllipse(null, Halo, centre, rx, ry);
+            dc.DrawEllipse(null, WardPen, centre, rx, ry);
+            for (int i = 0; i < 3; i++)
+            {
+                double a = time * 4 + i * Math.PI * 2 / 3;
+                DrawSmallLeaf(dc, new Point(centre.X + Math.Cos(a) * rx, centre.Y + Math.Sin(a) * ry), a + Math.PI / 2);
+            }
+        }
+        if (slime.FallingBack || slime.Flanking) DrawTacticMark(dc, slime, x, top - 14, time);
         if (slime.State == SlimeState.Windup)
         {
             // The warning: a red "!" over a swelling slime.
@@ -782,6 +829,13 @@ public sealed class BattleFieldView : FrameworkElement
                 dc.DrawEllipse(null, Halo, new Point(x, y), rx, rx * 0.8);
                 dc.DrawEllipse(null, ImmunePen, new Point(x, y), rx, rx * 0.8);
                 DrawWord(dc, English ? "IMMUNE" : "BẤT TỬ", ComboGold, x, y - rx * 0.8 - 6 - 18 * k);
+                break;
+            case BattleEffectKind.Warded:
+                // A hit on an enemy guarded by a heal: a green ring flashes and "IMMUNE" rises.
+                double wx = effect.Value / 2 + 10 + 6 * k;
+                dc.DrawEllipse(null, Halo, new Point(x, y), wx, wx * 0.8);
+                dc.DrawEllipse(null, WardPen, new Point(x, y), wx, wx * 0.8);
+                DrawWord(dc, English ? "IMMUNE" : "MIỄN", HealGreen, x, y - wx * 0.8 - 6 - 18 * k);
                 break;
             case BattleEffectKind.Number:
                 // Damage numbers rise from the slime; heals (+HP, green) rise over the cat.

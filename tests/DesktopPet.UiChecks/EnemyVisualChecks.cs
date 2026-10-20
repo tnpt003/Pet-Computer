@@ -169,6 +169,19 @@ internal static class EnemyVisualChecks
         var linked = Shot(lview, "enemy-rally-link");
         check(Count(linked, Color.FromRgb(0xE0, 0xA8, 0x20), 300, 420, floor - 110, floor - 30, 30) > 15, "A gold line joins the glowing crown to the helper it will rally");
 
+        // Tactics: a green bubble with leaves round an enemy guarded by a heal, a grey-blue arrow over one
+        // falling back, an orange arc over one going round to the cat's back.
+        var (tsim2, tview2) = Field(("slime", 120), ("slime", 300), ("slime", 480));
+        var calmTactics = Shot(tview2);
+        tsim2.Slimes[0].Mended = true;
+        tsim2.Slimes[1].FallingBack = true; tsim2.Slimes[1].Facing = 1;
+        tsim2.Slimes[2].Flanking = true; tsim2.Slimes[2].Facing = -1;
+        var tactics = Shot(tview2, "enemy-tactics");
+        int ward = Count(tactics, Color.FromRgb(0x3F, 0xC8, 0x6B), 80, 160, floor - 50, floor + 2, 20) - Count(calmTactics, Color.FromRgb(0x3F, 0xC8, 0x6B), 80, 160, floor - 50, floor + 2, 20);
+        int back = Count(tactics, Color.FromRgb(0x5A, 0x7C, 0xA8), 280, 320, floor - 70, floor - 40, 20);
+        int arc = Count(tactics, Color.FromRgb(0xF2, 0x8C, 0x28), 460, 500, floor - 75, floor - 40, 20);
+        check(ward > 40 && back > 8 && arc > 8, $"A guarded enemy wears a green bubble; falling back and flanking show their marks (pixels {ward}/{back}/{arc})");
+
         // A spawn from behind: a red arrow at that edge.
         var incoming = new BattleSim(new BattleSettings
         {

@@ -197,6 +197,7 @@ Nên chép dự phòng %LOCALAPPDATA%\DesktopPet\adventure-progress.json (nếu 
 - [ ] Vua Slime (màn 5) ở 70%/40% máu: nhún một nhịp rồi nhảy vòng cung (có bóng dưới sàn) về mép đối diện nửa sân nó đứng; khi mèo ở nửa đó thì về mép kia, không bao giờ đáp cạnh mèo. Thử cả mèo trái và mèo phải. Đáp có bụi, không mất máu.
 - [ ] Sau khi đáp: vòng tím có "!" ở chỗ quân sắp ra (~0,6 s), quân ra đúng các vòng: thảo dược sát Vua, đá đứng trước nó, slime nhanh ngoài cùng. Vương miện sáng thì có tia vàng nối tới con sắp được tăng tốc.
 - [ ] Slime thảo dược hồi nhiều thấy rõ (màn 4–5 khoảng +60 mỗi lần); không cắt thì quái khó hạ hẳn, nên hạ nó trước hoặc Đẩy lúc lá sáng.
+- [ ] Chiến thuật (màn 2–5): slime thảo dược gồng hồi thì con được hồi có vòng lá xanh, đánh vào hiện "MIỄN"; Đẩy slime thảo dược thì hết miễn ngay; mèo tự chuyển sang con khác. Mèo áp sát slime thảo dược thì nó lùi nhanh hơn nhưng vẫn đuổi kịp; nó đứng sau con đá vệ sĩ. Slime thường yếu (dưới ~1/3 máu) có mũi tên lùi, đi về chỗ slime thảo dược rồi quay lại. Slime nhanh lao xong chạy ra xa rồi mới quay lại. Có đá chắn trước mặt thì một slime thường (cung cam trên đầu) vòng ra sau lưng mèo. Có banner giải thích lần đầu; thấy rõ trên nền sáng/tối; không thấy cảnh bị kẹp không lối thoát.
 - [ ] Cảm nhận độ khó mới: Dễ màn 1–2 vẫn thoải mái; Thường màn 2–5 phải dùng kỹ năng/bế mèo mới thắng; Khó là thử thách thật. Ghi vào "Nhật ký chơi thử" (mô phỏng không thay chơi thật).
 
 ### Nhật ký chơi thử Battle Mode (beta, thêm 2026-10-18)

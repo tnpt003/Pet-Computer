@@ -122,6 +122,23 @@ public sealed class EnemyType
     public double LeapSeconds { get; init; } = 0.9;
     // A shield phase's helpers are announced this long by rings on the floor where they will appear (0: at once).
     public double SummonWarning { get; init; }
+    // Support tactics. HealGuard: the ally being healed takes no damage while the heal winds up (a push
+    // or a stun on the healer ends it at once); never a boss, and the same ally only again
+    // HealGuardRepeat s after. FleeSpeed: backing off from a cat nearer than 200 DIPs it walks up to
+    // this × faster (at 60 DIPs). HideBehindGuard: it keeps behind its guard rather than the nearest ally.
+    public bool HealGuard { get; init; }
+    public double HealGuardRepeat { get; init; } = 2;
+    public double FleeSpeed { get; init; } = 1;
+    public bool HideBehindGuard { get; init; }
+    // Fighter tactics. FallBackBelow: once a battle, below this share of its HP it walks back to a
+    // support that can still heal (no attacks meanwhile) until healed, the support is gone or 6 s pass.
+    // HitAndRun (dash enemies): after a dash it runs this many DIPs away from the cat before coming back.
+    // Flank: with a blocker between it and the cat, it goes round to the cat's back once, FlankSpeed ×
+    // faster and without attacking on the way (BattleSettings.MaxFlankers at a time).
+    public double FallBackBelow { get; init; }
+    public double HitAndRun { get; init; }
+    public bool Flank { get; init; }
+    public double FlankSpeed { get; init; } = 2;
     // What one of this kind weighs against a wave's or a stream's budget (WaveSpec.Budget).
     public double Cost { get; init; } = 1;
     // The one elite affix this kind may roll when it spawns (null: never elite).
@@ -580,6 +597,13 @@ public static class BattleData
                 Within(e.DashSpeed, 50, 1500, at + ".dashSpeed");
             }
             Within(e.Cost, 0, 10, at + ".cost");
+            if (e.HealGuard && e.HealAmount <= 0) throw new InvalidDataException(at + ".healGuard is for an enemy that heals");
+            Within(e.HealGuardRepeat, 0, 10, at + ".healGuardRepeat"); Within(e.FleeSpeed, 1, 4, at + ".fleeSpeed"); Within(e.FlankSpeed, 1, 4, at + ".flankSpeed");
+            if ((e.FleeSpeed > 1 || e.HideBehindGuard) && !e.Support) throw new InvalidDataException(at + ".fleeSpeed/hideBehindGuard are for a support enemy");
+            Within(e.FallBackBelow, 0, 0.9, at + ".fallBackBelow"); Within(e.HitAndRun, 0, 600, at + ".hitAndRun");
+            if ((e.FallBackBelow > 0 || e.Flank) && (e.Support || e.Boss)) throw new InvalidDataException(at + ".fallBackBelow/flank are for a fighter, not a support or a boss");
+            if (e.Flank && e.Blocker) throw new InvalidDataException(at + ".flank is not for a blocker");
+            if (e.HitAndRun > 0 && !e.Dash) throw new InvalidDataException(at + ".hitAndRun is for a dash enemy");
             if (e.Elite is EliteSpec elite)
             {
                 if (e.Boss) throw new InvalidDataException(at + ".elite is not for a boss");
@@ -704,6 +728,7 @@ public static class BattleData
             if (s.UpgradeList.Count(u => u.Rare && u.Group == group) > 1) throw new InvalidDataException($"upgrades: at most one rare card per group ({group})");
         Within(s.RareChance, 0, 1, "rareChance");
         if (s.MaxElites is < 0 or > 5) throw new InvalidDataException("maxElites must be 0–5");
+        if (s.MaxFlankers is < 0 or > 5) throw new InvalidDataException("maxFlankers must be 0–5");
         var synergyIds = new HashSet<string>();
         foreach (var y in s.SynergyList)
         {

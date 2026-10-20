@@ -17,9 +17,9 @@ internal static class AdventureContentTests
         check(chapterKing is { Boss: true, Phases.Length: 3, SummonCap: 4 } && chapterKing.Phases.Count(p => p.Shield) == 2 && king.Phases == null && king.SummonAt == 0.5 && king.EnrageAt == 0.3,
             "The chapter boss has 3 phases (two shield phases); the free battle's Slime King is unchanged");
         check(data.WavePlan.All(w => w.Groups.All(g => g.Enemy is "slime" or "runner" or "rock" or "king")), "The free battle's waves have no herb slime or chapter boss");
-        check(stages[3].Waves.Skip(1).All(w => w.Groups.Any(g => g.Squad?.Any(m => m.Enemy == "mender") == true)) && stages[3].RulesVersion == 10 &&
-              stages[4].Waves[^1].Groups.Single().Enemy == "king_c1" && stages[4].RulesVersion == 10,
-            "Stage 4 sends herb slimes inside squads (waves 2–3); stage 5 ends with the chapter boss (rules version 10: formations, roles, elites, then the leap and stronger heals)");
+        check(stages[3].Waves.Skip(1).All(w => w.Groups.Any(g => g.Squad?.Any(m => m.Enemy == "mender") == true)) && stages[3].RulesVersion == 11 &&
+              stages[4].Waves[^1].Groups.Single().Enemy == "king_c1" && stages[4].RulesVersion == 11,
+            "Stage 4 sends herb slimes inside squads (waves 2–3); stage 5 ends with the chapter boss (rules version 11: formations, roles, elites, the leap and stronger heals, then tactics)");
         check(stages[2].Reward == "SlimeHat" && stages[4].Reward == "SlimeKingCrown" && stages.Count(s => s.Reward != null) == 2 &&
               PetAccessories.Find("SlimeHat")?.Reward == "slime_invasion" && PetAccessories.Find("SlimeKingCrown")?.Reward == "slime_invasion" &&
               PetAccessories.Find("Bell")?.Reward == null, "Stages 3 and 5 give the Slime hat and the Slime King's crown (reward accessories)");

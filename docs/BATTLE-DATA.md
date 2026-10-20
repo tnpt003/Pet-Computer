@@ -315,3 +315,14 @@ Màn sinh tồn: `"objective": "survive", "surviveSeconds": 10–600`. Các đ�
 - Lệnh xung phong: con được chọn lúc vương miện bắt đầu sáng (gần mèo nhất, không phải hỗ trợ); trong lúc sáng có tia vàng đứt nét nối vương miện với nó và vòng vàng dưới chân nó. Con đó chết trước khi hết sáng thì lệnh đi tới con gần mèo nhất.
 - Hồi máu của quái hỗ trợ: lượng hồi và `healBudget` nhân cùng hệ số máu quái (độ khó × threat lúc spawn), làm tròn; Thường threat 1 giữ nguyên số.
 - Bản gốc: Vua chương 1 `retreatLeap` (nhún 0.35 s, bay 0.9 s), `summonWarning` 0.6; pha 70%: 2 slime + 1 slime nhanh; pha 40%: thảo dược + đá + 2 slime nhanh. Slime thảo dược hồi 35 mỗi 3.5 s (gồng 0.9 s), tổng 210. Màn 5 `threat` 1.75. rulesVersion màn 4–5: 10. Vua trận tự do giữ nguyên.
+
+## Chiến thuật quái (sau Enemy Director mốc 3, mỗi hành vi một công tắc)
+
+Mỗi khóa tắt được riêng trong battle.json của người dùng (ví dụ `"enemies": [ { "id": "slime", "flank": false } ]`).
+- `healGuard` (quái hồi máu): trong lúc gồng hồi, đồng minh được hồi **miễn mọi sát thương** (kiếm, búa, combo, bom, Giáp gai, Dư ảnh): vòng lá xanh quanh nó, trúng đòn hiện "MIỄN"/"IMMUNE" xanh. Đẩy/choáng quái hồi máu thì hết miễn ngay. Không bao giờ cho boss. `healGuardRepeat` (0–10 s, mặc định 2): cùng một đồng minh chỉ được miễn lại sau bấy nhiêu giây kể từ lúc lần hồi đó lẽ ra xong. Mèo tự bỏ qua quái đang miễn nếu còn quái khác (mục tiêu click vẫn giữ). Banner lần đầu mỗi trận.
+- `fleeSpeed` (1–4, quái hỗ trợ): khi đang lùi xa mèo, tốc độ ×1 nếu mèo cách ≥ 200 DIPs, tăng dần tới ×`fleeSpeed` khi mèo cách ≤ 60 DIPs. Khi đi lại gần mèo không tăng.
+- `hideBehindGuard` (quái hỗ trợ): đứng `keepBack` sau **con đá vệ sĩ của nó** thay vì sau đồng minh gần mèo nhất.
+- `fallBackBelow` (0–0.9, quái đánh được, không phải hỗ trợ/boss): một lần mỗi trận, dưới tỉ lệ HP này mà còn quái hỗ trợ hồi được thì lùi về đứng trước nó (cách `keepBack`, trong tầm hồi), không đánh trên đường; xong khi HP vượt ngưỡng + 30%, khi hết quái hồi được, hoặc sau 6 s. Mũi tên xanh xám chỉ về sau trên đầu nó; banner lần đầu.
+- `hitAndRun` (0–600 DIPs, quái lao): lao xong (hồi xong) thì chạy thẳng ra xa mèo bấy nhiêu DIPs (tới mép thì thôi) rồi mới quay lại.
+- `flank` (quái đánh được, không phải quái chắn/hỗ trợ/boss) + `flankSpeed` (1–4): khi có quái chắn giữa nó và mèo, nó vòng qua ra **sau lưng mèo** (cách mèo `range` × 0.8) một lần mỗi trận, nhanh × `flankSpeed`, không đánh trên đường, tối đa 8 s. Không bắt đầu khi đang bế mèo hay khi sau lưng mèo không còn chỗ (mèo sát mép). `maxFlankers` (0–5, mặc định 1): số con vòng ra sau cùng lúc. Cung cam trên đầu; banner lần đầu.
+- Bản gốc: slime thảo dược `healGuard` (2 s), `fleeSpeed` 2.5 (28 → 70 DIPs/s, mèo chạy ~130), `hideBehindGuard`; slime `fallBackBelow` 0.3, `flank` (×2); slime nhanh `hitAndRun` 150. Các hành vi này cũng có trong trận tự do (slime và slime nhanh dùng chung). rulesVersion màn 1–5: 4/9/10/11/11.

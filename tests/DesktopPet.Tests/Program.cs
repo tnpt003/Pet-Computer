@@ -84,6 +84,7 @@ EnemyDirectorTests.Run(Check);
 EnemyTacticsTests.Run(Check);
 EnemyGachaTests.Run(Check);
 BossLeapTests.Run(Check);
+TacticsTests.Run(Check);
 BattleWeaponTests.Run(Check);
 BattleDataTests.Run(Check);
 BattleCustomDataTests.Run(Check);

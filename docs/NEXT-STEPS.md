@@ -3,6 +3,42 @@
 Cập nhật bàn giao: 2026-10-20 (Asia/Saigon). Review kỹ thuật bên dưới ghi nhận ngày 18/10, sau Battle Mode đợt 11.
 Workspace lúc review: C:\Project VS\Pet Computer; HEAD e45519d với thay đổi đợt 10–11 chưa commit.
 
+## Review mới nhất cho Claude — Enemy Tactics (2026-10-20)
+
+Người dùng yêu cầu lưu review để Claude đọc và kiểm chứng, chưa yêu cầu triển khai mọi đề xuất. Review trên HEAD 7e0d14e (tactics f55a36c). Đọc code thật và AGENTS.md, tái hiện lỗi rồi giải thích kế hoạch trước khi sửa. Các roadmap cũ phía dưới không có nghĩa phải làm lại mốc đã xong.
+
+### Kết quả kiểm tra mới
+- scripts/test.ps1 -Ui: 55 Python và 1040 C# qua; WPF 514 qua, 2 lỗi. Giữ nguyên kết quả lịch sử 516/516 của lần publish trước, không dùng nó thay kết quả lần này.
+- Hai assertion lỗi trong tests/DesktopPet.UiChecks/UpgradeChecks.cs: “The Defense card says it completes Thorns” và “Taking it switches Thorns on with a banner”. HUD thực tế: Defense 3/3 · ★ Thorns · ◆ Turtle shell.
+- Chưa playtest trực tiếp, profile hiệu năng hoặc kiểm tra nhiều màn hình. Review không sửa code/restart/publish pet.
+
+### R1 — Vòng đời miễn sát thương khi hồi máu: cần tái hiện và sửa cục bộ
+- src/DesktopPet/PetBattle.cs: StepSlimes (~1242) tính lại Mended đầu bước; FinishHeal (~1579) xóa MendingId nhưng chưa thu hồi ngay Mended của đồng minh. Nhánh chết trong Damage (~912) cũng chưa thu hồi bảo vệ do healer cấp. StepBombs (~736) chạy trước StepSlimes.
+- Hệ quả suy ra từ code, CHƯA có test tái hiện riêng: đồng minh có thể dư miễn một nhịp sau heal hoàn tất/healer chết, làm một hit/bom bị bỏ qua.
+- Đề xuất gom kết thúc bảo vệ khi heal hoàn tất, bị ngắt, healer chết, trận kết thúc. Nếu nhiều healer, không xóa nhầm nguồn bảo vệ còn hợp lệ. Không đổi sức mạnh/thời lượng ability ngoài phạm vi.
+- Test cần thêm: hit đúng nhịp kết thúc heal; healer chết rồi đồng minh nhận damage cùng lượt; bom bao cả healer/mục tiêu với hai thứ tự danh sách; Push hủy ngay; không miễn boss; cooldown chống miễn lại 2 s giữ đúng.
+
+### R2 — Test UI chưa thích ứng với gacha
+- UpgradeChecks.cs (~135–139) giả định card Defense phải là big_heart và MaxHP tăng lên 120. Lần này Turtle shell được offer, vẫn đạt Defense 3/3 và Thorns. Chưa có bằng chứng UI synergy hỏng; fixture đang giả định quá hẹp.
+- Tách test Big Heart với RNG cố định hoặc RareChance=0 trong fixture, test Turtle shell và test chung card Defense hoàn tất synergy. Không tắt rare trong game thật hoặc bỏ assertion để ép xanh. Chạy lại kiểm tra ổn định.
+- scripts/test.ps1:28 luôn gợi ý chạy interactive desktop khi WPF thất bại, kể cả assertion fail. Phân biệt lỗi môi trường và lỗi assertion, giữ exit code lỗi và nguyên nhân thật.
+
+### R3 — Mô phỏng cân bằng chưa đại diện người chơi
+- tests/DesktopPet.Tests/AdventureBalanceTests.cs (~53–57): bot Push ngay khi phát hiện healer cast/dasher windup, ít chịu áp lực guarded heal.
+- Thêm policy phản ứng chậm/bỏ lỡ, người chơi thường và bot tối ưu; seed cố định, độ trễ theo simulation time, không sleep thật.
+- Đo win rate, HP còn, thời gian không gây damage, đổi mục tiêu, chuỗi stun, heal/guard thành công. Giữ test cơ chế riêng với mục tiêu balance; chưa tự chỉnh balance chỉ từ một bot.
+
+### R4 — Backlog chuẩn hóa/tối ưu, không refactor tất cả ngay
+- Gom cleanup tactical state khi chết/ngắt/kết thúc (heal guard, flank, retreat, target/guard), giữ state có chủ đích tồn tại.
+- PetBattle.cs hơn 2000 dòng: cân nhắc tách tactics, heal/guard, spawn, upgrade theo mốc nhỏ; giữ API/thứ tự update. Không trộn refactor lớn với R1/R2.
+- Thêm kiểm tra thông số quan trọng JSON và fallback C# khớp, không tạo nguồn dữ liệu lặp thứ ba.
+- Đo CPU/allocation/frame time trận đông quái trước tối ưu. Đã có scratch list/nhịp quyết định riêng; không đổi chỉ vì code dài.
+- Không xóa ToArray tùy tiện: damage có thể spawn thêm quái khi đang duyệt danh sách.
+- Test start → win/loss → replay → đổi trang bị/độ khó → desktop; xác nhận state/pause/UI không sót, không dùng save thật.
+- Chưa đề xuất bỏ ability nào. Giữ C#–Python, sleep/wake, drag/throw/dizzy và Pet Mode.
+
+Thứ tự đề xuất: R1 tái hiện/sửa → R2 ổn định test → R3 bot thực tế → profile/chọn R4. Claude ghi xác nhận hoặc bác bỏ từng phát hiện bằng code/test, file đổi, kết quả thật, phần cần test tay. Triển khai khi được giao theo AGENTS.md; tài liệu-only commit, không publish binary.
+
 ## Dành cho AI tiếp nhận
 
 Người dùng yêu cầu lưu review và kế hoạch ở đây để AI khác đọc và tiếp tục công việc. Đọc AGENTS.md, PROGRESS.md và code thật trước khi triển khai; không coi các mục đã sửa bên dưới là lỗi còn mở. Giữ nguyên thay đổi chưa commit của người dùng/Claude.

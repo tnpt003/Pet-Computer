@@ -4,6 +4,11 @@ Cập nhật: 2026-10-20 (Asia/Saigon).
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
+## Bàn giao review cho Claude (2026-10-20)
+- Đã ghi review mới lên đầu docs/NEXT-STEPS.md: vòng đời Mended cần tái hiện, fixture gacha WPF, mô phỏng và backlog tối ưu. Claude kiểm chứng trước khi sửa.
+- Kết quả lần review trên 7e0d14e: 55 Python + 1040 C# qua; WPF 514 qua / 2 lỗi giả định Big Heart khi ra Turtle shell. Không thay kết quả lịch sử lần publish trước.
+- Chỉ sửa tài liệu; chưa sửa code, chưa test riêng ranh giới heal, chưa profile/playtest. Không rebuild/publish. Giữ thay đổi AGENTS.md/NEXT-STEPS.md có sẵn ngoài commit bàn giao.
+
 ## Sau ED3 (2026-10-20) — chiến thuật quái: hồi máu thì miễn, lùi, đánh-rút, vòng ra sau
 - Người dùng: mục tiêu đang được hồi thì miễn sát thương (chốt kèm chống lạm dụng: không miễn lại trong 2 s, không cho boss, mèo tự đổi mục tiêu); slime hỗ trợ lùi nhanh hơn khi mèo gần (tối đa ~70 DIPs/s); làm cả 4 đề xuất (a lùi về chỗ hỗ trợ, b đánh-rút, c vòng ra sau, d trốn sau vệ sĩ) — Claude khuyên chia đợt, người dùng chọn "làm hết"; mỗi hành vi có công tắc dữ liệu riêng.
 - Đã làm (C# BattleSim + vẽ + dữ liệu; Python không đụng): `healGuard`/`healGuardRepeat`, `fleeSpeed`, `hideBehindGuard`, `fallBackBelow`, `hitAndRun`, `flank`/`flankSpeed`, `maxFlankers` + validate; vòng lá xanh + chữ "MIỄN", mũi tên lùi, cung cam vòng ra sau; banner lần đầu cho miễn/lùi/vòng ra sau; cue dùng lại cue có sẵn. Slime dựng sẵn trong code (khi file hỏng) khớp battle.json. rulesVersion màn 2–5: 9/10/11/11.

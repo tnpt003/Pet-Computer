@@ -19,6 +19,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
   - Mới WPF: EnemyVisualChecks (vẽ thật: không dấu + trên slime thảo dược, có mũ lá, lá xỉn khi hết hồi, dấu teleport, giáp đá đúng phía, vòng xám quái chắn, vương miện sáng, mũi tên phía sau). Đã xem ảnh render trên nền tối và sáng; sửa giáp đá che mắt, phóng to lá, chuyển túi ra mép sau.
   - Sửa test cũ: BattleCustomDataTests cho phép `hitScale` của đá khớp hình rộng hơn; AdventureContentTests theo dấu lá/rulesVersion mới.
 - Mô phỏng (không phải chơi thật): Thường tự đánh màn 2–5 thắng 2–9/10 (màn 4–5: 6–9/10), tức chưa đạt mục tiêu ≤ 30% vì mèo phải đánh đá phía trước thay vì xuyên qua rồi bị kẹp. Thường + người chơi đơn giản vẫn 10/10. Khó tự đánh 0–2/10. Cân bằng ở ED3.
+- Commit aa0d1be (chỉ file mốc ED2; AGENTS.md/docs/NEXT-STEPS.md của người dùng tạm stash khi publish rồi chép trả đúng từng byte). Publish sạch: 1.1.0-beta+aa0d1be, ZIP artifacts\DesktopPet-1.1.0-beta-aa0d1be-win-x64.zip; check-publish 3/3. Đóng mèo (PID 23772) bằng WM_CLOSE, mở lại 20:27, log "Desktop Pet 1.1.0-beta (aa0d1be) started".
 - Chưa: chơi thật, DPI/màn hình phụ (mũi tên ở mép màn hình đang đánh), nghe cue, cảm giác quái thường đứng chồng lên đá khi lách qua.
 
 ## Enemy Director mốc ED1 (2026-10-20) — seed, đội hình, threat, sinh tồn liên tục

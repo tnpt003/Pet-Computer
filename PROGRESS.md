@@ -8,6 +8,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Người dùng: khiên đá trông như cái vòi hú; slime hỗ trợ bị 3 slime đá che mất. Đã duyệt phần vẽ ("yes làm đi"); khoảng cách giữa các con đá (đổi gameplay) giữ nguyên, chưa làm.
 - PetBattleView: khiên đá hình huy hiệu (đầu phẳng, đáy nhọn, viền trong, vết nứt, đinh tán) + bàn tay slime cầm, theo hướng mặt, chớp trắng khi trúng. Vẽ theo lớp: quái chắn sau cùng, quái hỗ trợ trên cùng; click chỗ chồng nhau chọn con trên cùng (nếu điểm click nằm trên thân nó). Quái chắn đè lên quái hỗ trợ mờ còn 72%. Mọi quái có viền tối mảnh ngoài viền trắng.
 - Test thật: WPF 512 đạt (mới: slime thảo dược giữa 3 đá vẫn thấy và được click chọn; check giáp đúng phía vẫn đạt với khiên mới). Đã xem ảnh render nền tối/sáng (lần đầu khiên tròn trông như bánh xe → đổi sang hình huy hiệu).
+- Commit fd84037. Publish sạch: 1.1.0-beta+fd84037, ZIP artifacts\DesktopPet-1.1.0-beta-fd84037-win-x64.zip; check-publish 3/3. Đóng mèo (PID 23668) bằng WM_CLOSE, mở lại 22:15, log "Desktop Pet 1.1.0-beta (fd84037) started". AGENTS.md/docs/NEXT-STEPS.md của người dùng trả lại đúng hash.
 - Chưa: chơi thật xem cảm giác lúc đá đang di chuyển/đánh.
 
 ## Enemy Director mốc ED3 (2026-10-20) — tinh anh, ngân sách, thẻ hiếm, cân bằng

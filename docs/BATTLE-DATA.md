@@ -305,3 +305,13 @@ Màn sinh tồn: `"objective": "survive", "surviveSeconds": 10–600`. Các đ�
   - `momentum` (Chạy đà, Tốc độ; `amount` 0.1–3): nhát chém sau khi mèo tự chạy ≥ 140 DIPs trên sàn (kể từ nhát trước) gây thêm `amount` (bản gốc +80%). Bế/kéo mèo không tính là chạy.
 - Vẽ (2026-10-20, sau phản hồi người dùng): quái chắn vẽ ở lớp sau cùng, quái hỗ trợ trên cùng (click chỗ chồng nhau chọn con trên cùng); quái chắn đè lên quái hỗ trợ thì mờ đi một chút; mỗi quái có viền tối mảnh ngoài viền trắng để tách khối khi chồng nhau. Khoảng cách giữa các quái không đổi.
 - Cân bằng chương 1 (mô phỏng, không phải chơi thật): Dễ `enemyHp` 0.65, `enemyDamage` 0.5 (trước đây 0.75/0.6); `threat` màn 2–5: 1.6 / 1.7 / 1.8 / 1.6; ngân sách stream màn 3 là 7, các đợt màn 4–5 chừa đúng chỗ cho một tinh anh. rulesVersion màn 1–5: 4/8/9/9/9.
+
+## Vua nhảy về mép, báo trước quân gọi ra, hồi máu theo threat (sau Enemy Director mốc 3)
+
+- Mép của pha khiên (mọi boss có `shield`): mép **đối diện nửa sân Vua đang đứng** (Vua ở nửa phải → mép trái); nếu mèo cũng đang ở nửa có mép đó thì dùng mép còn lại, để Vua không bao giờ đáp cạnh mèo. Mép khóa suốt pha.
+- `retreatLeap` (cần pha khiên): thay cho đoạn chạy, Vua nhún `leapCrouch` s (0.1–2; Đẩy/choáng lúc nhún chỉ làm nó chờ) rồi bay theo vòng cung `leapSeconds` s (0.3–3) tới mép, cao tới 80 DIPs (thấp hơn khi nhảy ngắn), bóng ở lại dưới sàn; đáp có bụi, không gây sát thương. Suốt cú nhảy vẫn bất tử; Pause/menu/chọn thẻ đóng băng nó; quái khác không bị nó đẩy khi nó đang bay. `retreatSpeed`/`retreatSeconds` chỉ dùng khi không có `retreatLeap`.
+- `summonWarning` (0–3 s, cần pha khiên): quân của pha được báo trước bằng vòng tím đứt nét có dấu "!" ở đúng chỗ chúng sẽ hiện; khiên giữ nguyên trong lúc báo. Hết trận giữa lúc báo thì quân không ra.
+- Quân của pha khiên xếp theo vai trò từ Vua ra phía mèo: quái hỗ trợ sát Vua, quái chắn, quái thường, quái lao ngoài cùng; vẫn không đè mèo (≥ 90 DIPs) và tôn trọng `summonCap`. Đá trong quân gọi ra làm vệ sĩ cho slime thảo dược như ở đợt thường.
+- Lệnh xung phong: con được chọn lúc vương miện bắt đầu sáng (gần mèo nhất, không phải hỗ trợ); trong lúc sáng có tia vàng đứt nét nối vương miện với nó và vòng vàng dưới chân nó. Con đó chết trước khi hết sáng thì lệnh đi tới con gần mèo nhất.
+- Hồi máu của quái hỗ trợ: lượng hồi và `healBudget` nhân cùng hệ số máu quái (độ khó × threat lúc spawn), làm tròn; Thường threat 1 giữ nguyên số.
+- Bản gốc: Vua chương 1 `retreatLeap` (nhún 0.35 s, bay 0.9 s), `summonWarning` 0.6; pha 70%: 2 slime + 1 slime nhanh; pha 40%: thảo dược + đá + 2 slime nhanh. Slime thảo dược hồi 35 mỗi 3.5 s (gồng 0.9 s), tổng 210. Màn 5 `threat` 1.75. rulesVersion màn 4–5: 10. Vua trận tự do giữ nguyên.

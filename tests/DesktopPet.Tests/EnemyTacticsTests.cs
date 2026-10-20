@@ -301,7 +301,7 @@ internal static class EnemyTacticsTests
     private static EnemyType King(double rally = 2) => new()
     {
         Id = "king", MaxHp = 400, Speed = 0, Damage = 0, Range = 110, Windup = 1.2, AttackCooldown = 2.6, Recover = 0.7, Scale = 2, Boss = true, Slam = true,
-        PushFactor = 0.35, StunFactor = 0.4, RetreatSpeed = 600, RetreatSeconds = 0.5, SummonCap = 4,
+        PushFactor = 0.35, StunFactor = 0.4, RetreatSpeed = 600, RetreatSeconds = 3, SummonCap = 4,
         Phases = new[] { new BossPhase { At = 0.5, Shield = true, Summon = "slime", Count = 2 } },
         RallyEvery = rally, RallyCharge = 0.5, RallySeconds = 3, RallySpeed = 2, ShieldBreakStun = 2
     };

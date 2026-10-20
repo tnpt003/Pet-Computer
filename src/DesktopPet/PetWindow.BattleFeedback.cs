@@ -24,6 +24,7 @@ public sealed partial class PetWindow
         [BattleEventKind.SlimeHit] = ("squish", 3), [BattleEventKind.EnemyHealed] = ("ball_tap", 3), [BattleEventKind.HitBlocked] = ("ball_tap", 3), [BattleEventKind.BossImmune] = ("ball_tap", 3),
         [BattleEventKind.Incoming] = ("surprised", 5), [BattleEventKind.BossRallying] = ("surprised", 4),
         [BattleEventKind.EliteAppeared] = ("surprised", 5), [BattleEventKind.ShellBlocked] = ("ball_tap", 5),
+        [BattleEventKind.BossLeaping] = ("swoosh", 3), [BattleEventKind.BossLanded] = ("pop", 5), [BattleEventKind.BossSummoning] = ("surprised", 4),
         [BattleEventKind.Pushed] = ("swoosh", 2), [BattleEventKind.BombThrown] = ("swoosh", 2), [BattleEventKind.Shielded] = ("swoosh", 2),
         [BattleEventKind.EnemyTeleported] = ("swoosh", 2),
         [BattleEventKind.Swing] = ("swoosh", 1),

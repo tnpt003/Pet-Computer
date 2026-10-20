@@ -137,9 +137,23 @@ public sealed class BattleFieldView : FrameworkElement
         double floor = Floor, time = sim.Time;
         // Index loops: foreach over IReadOnlyList boxes an enumerator every frame.
         for (int i = 0; i < sim.Bombs.Count; i++) DrawBomb(dc, sim.Bombs[i], sim.Bombs[i].X - OriginX, floor);
+        for (int i = 0; i < sim.Slimes.Count; i++) if (sim.Slimes[i].CallSpots is { } spots) DrawCallSpots(dc, sim.Slimes[i], spots, floor, time);
         for (int layer = 0; layer <= 2; layer++)
             for (int i = 0; i < sim.Slimes.Count; i++)
-                if (Layer(sim.Slimes[i]) == layer) DrawSlime(dc, sim.Slimes[i], sim.Slimes[i].X - OriginX, floor, sim.Settings, time);
+            {
+                var slime = sim.Slimes[i];
+                if (Layer(slime) != layer) continue;
+                double x = slime.X - OriginX;
+                // A leaping boss: its shadow stays on the floor, shrinking as it rises.
+                if (slime.LeapHeight > 0)
+                {
+                    double k = 1 - Math.Clamp(slime.LeapHeight / 100, 0, 0.6);
+                    dc.DrawEllipse(LeapShadow, ShadowRim, new Point(x, floor - 2), slime.Width / 2 * k, 6 * k); // A pale rim: seen on dark desktops too.
+                }
+                DrawSlime(dc, slime, x, floor - slime.LeapHeight, sim.Settings, time);
+            }
+        for (int i = 0; i < sim.Slimes.Count; i++)
+            if (sim.Slimes[i].IsBoss && sim.RallyTarget(sim.Slimes[i]) is Slime rallied) DrawRallyLink(dc, sim.Slimes[i], rallied, floor, time);
         for (int i = 0; i < sim.Effects.Count; i++) DrawEffect(dc, sim.Effects[i], sim.Effects[i].X - OriginX, floor - sim.Effects[i].Height, floor);
         if (sim.Incoming) DrawIncoming(dc, sim.IncomingX - OriginX, floor, time);
     }
@@ -159,6 +173,46 @@ public sealed class BattleFieldView : FrameworkElement
         dc.DrawEllipse(Warning, Halo, new Point(x, ey + 7), 2.4, 2.4);
         dc.DrawEllipse(Warning, null, new Point(x, ey + 7), 2.4, 2.4);
     }
+
+    // Where a boss's helpers will appear: purple rings on the floor filling up as they come, a "!" over each.
+    private void DrawCallSpots(DrawingContext dc, Slime boss, System.Collections.Generic.List<(string Kind, double X)> spots, double floor, double time)
+    {
+        double k = boss.Type.SummonWarning > 0 ? Math.Clamp(1 - boss.SummonWarn / boss.Type.SummonWarning, 0, 1) : 1;
+        foreach (var (kind, spotX) in spots)
+        {
+            double x = spotX - OriginX, r = sim.Settings.SlimeWidth * sim.Settings.Enemy(kind).Scale / 2 + 6;
+            double pulse = 1 + 0.06 * Math.Sin(time * 14);
+            dc.DrawEllipse(null, Halo, new Point(x, floor - 3), r * pulse, 7 * pulse);
+            dc.DrawEllipse(null, SummonEdge, new Point(x, floor - 3), r * pulse, 7 * pulse);
+            dc.DrawEllipse(null, SummonFill, new Point(x, floor - 3), Math.Max(1, r * k), Math.Max(1, 7 * k));
+            double y = floor - 30;
+            dc.DrawLine(Halo, new Point(x, y - 8), new Point(x, y + 1));
+            dc.DrawLine(SummonPen, new Point(x, y - 8), new Point(x, y + 1));
+            dc.DrawEllipse(SummonPurple, Halo, new Point(x, y + 6), 2.2, 2.2);
+            dc.DrawEllipse(SummonPurple, null, new Point(x, y + 6), 2.2, 2.2);
+        }
+    }
+
+    // The rally call's target: a dashed gold line from the glowing crown to the helper it will speed up,
+    // and a gold ring at that helper's feet.
+    private void DrawRallyLink(DrawingContext dc, Slime boss, Slime helper, double floor, double time)
+    {
+        var from = new Point(boss.X - OriginX, floor - boss.LeapHeight - boss.Height - 6);
+        var to = new Point(helper.X - OriginX, floor - helper.Height - 8);
+        dc.DrawLine(Halo, from, to);
+        dc.DrawLine(RallyLink, from, to);
+        double ring = 1 + 0.1 * Math.Sin(time * 16);
+        dc.DrawEllipse(null, Halo, new Point(to.X, floor - 1), (helper.Width / 2 + 7) * ring, 6);
+        dc.DrawEllipse(null, RallyPen, new Point(to.X, floor - 1), (helper.Width / 2 + 7) * ring, 6);
+    }
+
+    private static readonly Brush LeapShadow = Frozen(90, 0x26, 0x23, 0x38);
+    private static readonly Pen ShadowRim = FrozenPen(Frozen(150, 255, 255, 255), 1.5);
+    private static readonly Brush SummonPurple = Frozen(255, 0x9B, 0x5C, 0xE0);
+    private static readonly Pen SummonPen = FrozenPen(SummonPurple, 3.5);
+    private static readonly Pen SummonEdge = FrozenPen(SummonPurple, 2.5, new DashStyle(new double[] { 3, 2 }, 0));
+    private static readonly Pen SummonFill = FrozenPen(Frozen(200, 0x9B, 0x5C, 0xE0), 3.5);
+    private static readonly Pen RallyLink = FrozenPen(Frozen(255, 0xE0, 0xA8, 0x20), 2.5, new DashStyle(new double[] { 2, 1.5 }, 0));
 
     // A blocker overlapping a support that is still on the field.
     private bool CoversSupport(Slime blocker)
@@ -213,6 +267,8 @@ public sealed class BattleFieldView : FrameworkElement
                 sx = sy = 1 - 0.65 * away;
                 break;
         }
+        // A boss crouching before its leap.
+        if (slime.Crouch > 0) { sx *= 1 + 0.18 * slime.Crouch; sy *= 1 - 0.25 * slime.Crouch; }
         // A stony body is wide and low (its hitScale is wider to match).
         if (slime.Type.Marks == "cracks") { sx *= 1.12; sy *= 0.9; }
         // A blocker in front of a support fades a little, so the support shows through it.

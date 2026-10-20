@@ -349,6 +349,15 @@ public sealed class Slime
     public int RetreatSide, ShieldTag, PhaseTag;
     public double RetreatTime;
     public List<string>? PendingCalls;
+    // A leaping boss (RetreatLeap): how deep it crouches (0–1), how high it flies (DIPs over the floor)
+    // and where it took off. Its helpers still to come and the warning time left (SummonWarning).
+    public double Crouch, LeapHeight, LeapFromX;
+    public List<(string Kind, double X)>? CallSpots;
+    public double SummonWarn;
+    // The helper its rally call is going to (chosen when the crown starts to glow).
+    public int RallyTargetId;
+    // A support's heals scale like the HP of what it heals (difficulty × threat; 1 at Normal, threat 1).
+    public double HealPower = 1;
     // Support teleport: its own cooldown, the ally it goes to and the spot it will appear on.
     public double TeleportCooldown;
     public int TeleportTargetId;
@@ -378,7 +387,9 @@ public enum BattleEventKind
     UpgradeOffered, UpgradeChosen, EnemyHealing, EnemyHealed, CatStunned, SynergyUnlocked, Reflected, Echoed,
     HitBlocked, BossShielded, BossShieldDown, BossImmune, EnemyTeleporting, EnemyTeleported, BossRallying, BossRallied, Incoming,
     // An elite appeared (Value: its id); the Turtle shell card stopped a hit on the cat.
-    EliteAppeared, ShellBlocked
+    EliteAppeared, ShellBlocked,
+    // A boss leaping to its edge (taking off, landing) and the rings where its helpers will appear.
+    BossLeaping, BossLanded, BossSummoning
 }
 public readonly record struct BattleEvent(BattleEventKind Kind, double X, double Value = 0);
 // Number: a floating damage (Value > 0) or heal (Value < 0, shown as +HP above the cat).
@@ -958,7 +969,9 @@ public sealed class BattleSim
         boss.Shielded = boss.Retreating = true;
         boss.ShieldTag = tag;
         boss.RetreatTime = 0;
-        boss.RetreatSide = lastCatX <= boss.X ? 1 : -1;
+        boss.RetreatSide = RetreatEdge(boss.X, lastCatX);
+        boss.Crouch = boss.LeapHeight = 0;
+        boss.LeapFromX = boss.X;
         boss.PendingCalls = phase.Calls().ToList();
         boss.RallyCooldown = boss.Type.RallyEvery / 2;
         boss.RallyCharge = 0;
@@ -966,26 +979,97 @@ public sealed class BattleSim
         events.Add(new(BattleEventKind.BossShielded, boss.X));
     }
 
+    // The edge a shield phase goes to (+1 right, -1 left): the one opposite the boss's half of the
+    // floor, unless the cat is in that half too; then the other one (never next to the cat).
+    private int RetreatEdge(double bossX, double catX)
+    {
+        double middle = (Left + Right) / 2;
+        int edge = bossX >= middle ? -1 : 1;
+        int catHalf = catX >= middle ? 1 : -1;
+        return edge == catHalf ? -edge : edge;
+    }
+
     // Calls helpers next to the boss, within its SummonCap of live helpers; returns how many came.
     // side 0: both sides in turn (as before); otherwise all on the open side, away from that edge.
-    private int CallHelpers(Slime boss, List<string> calls, int tag, int side)
+    private int CallHelpers(Slime boss, List<string> calls, int tag, int side) => SpawnHelpers(boss, HelperSpots(boss, calls, side), tag);
+
+    // Where the helpers will stand (as many as the SummonCap leaves room for). On the open side they
+    // line up by role from the boss outwards: supports next to it, blockers in front of them, plain
+    // fighters, then dashers nearest the cat.
+    private List<(string Kind, double X)> HelperSpots(Slime boss, List<string> calls, int side)
     {
         int alive = 0;
         foreach (var s in slimes) if (s.SummonedBy == boss.Id && s.State != SlimeState.Defeated) alive++;
         int count = Math.Min(calls.Count, Math.Max(0, boss.Type.SummonCap - alive));
+        var spots = new List<(string Kind, double X)>();
+        if (side == 0)
+        {
+            for (int k = 0; k < count; k++) spots.Add((calls[k], boss.X + (k % 2 == 0 ? -1 : 1) * (boss.Width / 2 + 30 + 20 * (k / 2))));
+            return spots;
+        }
+        static int Rank(EnemyType t) => t.Support ? 0 : t.Blocker ? 1 : t.Dash ? 3 : 2;
+        var ordered = calls.Take(count).Select((kind, i) => (Kind: kind, Order: i)).OrderBy(c => Rank(Settings.Enemy(c.Kind))).ThenBy(c => c.Order).Select(c => c.Kind).ToList();
+        double offset = boss.Width / 2 + 10, previous = 0;
+        foreach (var kind in ordered)
+        {
+            double w = Settings.SlimeWidth * Settings.Enemy(kind).Scale;
+            offset += previous == 0 ? w / 2 : (previous + w) / 2 * 0.85;
+            previous = w;
+            spots.Add((kind, boss.X - side * offset));
+        }
+        return spots;
+    }
+
+    // The helpers appear at their spots (still within the SummonCap), never on top of the cat: at
+    // least SquadCatGap away, on the boss's side of it.
+    private int SpawnHelpers(Slime boss, List<(string Kind, double X)> spots, int tag)
+    {
+        int alive = 0;
+        foreach (var s in slimes) if (s.SummonedBy == boss.Id && s.State != SlimeState.Defeated) alive++;
+        int count = Math.Min(spots.Count, Math.Max(0, boss.Type.SummonCap - alive));
         for (int k = 0; k < count; k++)
         {
-            double x = side == 0
-                ? boss.X + (k % 2 == 0 ? -1 : 1) * (boss.Width / 2 + 30 + 20 * (k / 2))
-                : boss.X - side * (boss.Width / 2 + 30 + 34 * k);
-            // Never on top of the cat: at least SquadCatGap away, on the boss's side of it.
+            double x = spots[k].X;
             if (Math.Abs(x - lastCatX) < SquadCatGap) x = lastCatX + (boss.X >= lastCatX ? 1 : -1) * SquadCatGap;
-            var helper = AddSlime(x, Settings.Enemy(calls[k]));
+            var helper = AddSlime(x, Settings.Enemy(spots[k].Kind));
             helper.SummonedBy = boss.Id;
             helper.PhaseTag = tag;
+            helper.Facing = lastCatX < helper.X ? -1 : 1;
         }
         return count;
     }
+
+    // The leap (RetreatLeap): a crouch where it stands (a stun or push makes it wait), then a flight to
+    // the goal nothing can stop; true once it has landed.
+    private bool StepLeap(Slime boss, double dt, double goal)
+    {
+        var type = boss.Type;
+        if (boss.RetreatTime < type.LeapCrouch)
+        {
+            if (boss.State != SlimeState.Moving) return false;
+            boss.RetreatTime += dt;
+            boss.Crouch = Math.Clamp(boss.RetreatTime / type.LeapCrouch, 0, 1);
+            boss.LeapFromX = boss.X;
+            boss.Facing = goal < boss.X ? -1 : 1;
+            if (boss.RetreatTime >= type.LeapCrouch) events.Add(new(BattleEventKind.BossLeaping, boss.X));
+            return false;
+        }
+        boss.RetreatTime += dt;
+        boss.Crouch = 0;
+        boss.KnockVelocity = 0;
+        double k = Math.Clamp((boss.RetreatTime - type.LeapCrouch) / type.LeapSeconds, 0, 1);
+        boss.X = boss.LeapFromX + (goal - boss.LeapFromX) * k;
+        boss.LeapHeight = Math.Sin(Math.PI * k) * LeapPeak(Math.Abs(goal - boss.LeapFromX));
+        if (k < 1) return false;
+        boss.LeapHeight = 0;
+        AddEffect(BattleEffectKind.Thud, boss.X, 0);
+        AddEffect(BattleEffectKind.Poof, boss.X, 4, 2);
+        events.Add(new(BattleEventKind.BossLanded, boss.X));
+        return true;
+    }
+
+    // How high a leap flies: higher for a longer one, never out of the battle strip.
+    public static double LeapPeak(double distance) => Math.Clamp(25 + distance * 0.08, 25, 80);
 
     // The shield phase on the move: the run to the far edge (at most RetreatSeconds), then the call;
     // the shield drops once every helper of this phase is gone (at once if none could come).
@@ -994,20 +1078,40 @@ public sealed class BattleSim
         BossShieldSeconds += dt;
         if (boss.Retreating)
         {
-            boss.RetreatTime += dt;
             double goal = boss.RetreatSide > 0 ? maxX : minX;
-            if (boss.State == SlimeState.Moving)
+            if (boss.Type.RetreatLeap) { if (!StepLeap(boss, dt, goal)) return; }
+            else
             {
-                double step = boss.Type.RetreatSpeed * level.EnemySpeed * dt;
-                boss.X = Math.Clamp(boss.X + Math.Sign(goal - boss.X) * Math.Min(Math.Abs(goal - boss.X), step), minX, maxX);
-                boss.Facing = goal < boss.X ? -1 : 1;
+                boss.RetreatTime += dt;
+                if (boss.State == SlimeState.Moving)
+                {
+                    double step = boss.Type.RetreatSpeed * level.EnemySpeed * dt;
+                    boss.X = Math.Clamp(boss.X + Math.Sign(goal - boss.X) * Math.Min(Math.Abs(goal - boss.X), step), minX, maxX);
+                    boss.Facing = goal < boss.X ? -1 : 1;
+                }
+                if (Math.Abs(goal - boss.X) > 2 && boss.RetreatTime < boss.Type.RetreatSeconds) return;
             }
-            if (Math.Abs(goal - boss.X) > 2 && boss.RetreatTime < boss.Type.RetreatSeconds) return;
             boss.Retreating = false;
             boss.Facing = -boss.RetreatSide;
-            int calls = CallHelpers(boss, boss.PendingCalls ?? new List<string>(), boss.ShieldTag, boss.RetreatSide);
+            var spots = HelperSpots(boss, boss.PendingCalls ?? new List<string>(), boss.RetreatSide);
             boss.PendingCalls = null;
-            if (calls > 0) { events.Add(new(BattleEventKind.BossSummoned, boss.X)); return; }
+            // Announced first: rings on the floor where they will appear (the shield holds meanwhile).
+            if (boss.Type.SummonWarning > 0 && spots.Count > 0)
+            {
+                boss.CallSpots = spots;
+                boss.SummonWarn = boss.Type.SummonWarning;
+                events.Add(new(BattleEventKind.BossSummoning, boss.X));
+                return;
+            }
+            if (SpawnHelpers(boss, spots, boss.ShieldTag) > 0) { events.Add(new(BattleEventKind.BossSummoned, boss.X)); return; }
+        }
+        if (boss.CallSpots != null)
+        {
+            boss.SummonWarn = Math.Max(0, boss.SummonWarn - dt);
+            if (boss.SummonWarn > 0) return;
+            var called = boss.CallSpots;
+            boss.CallSpots = null;
+            if (SpawnHelpers(boss, called, boss.ShieldTag) > 0) { events.Add(new(BattleEventKind.BossSummoned, boss.X)); return; }
         }
         // While this phase's helpers stand, the boss may rally the one nearest the cat.
         bool helpers = false;
@@ -1040,10 +1144,13 @@ public sealed class BattleSim
         if (type.RallyEvery <= 0) return;
         if (boss.RallyCharge > 0)
         {
-            if (boss.State == SlimeState.Stunned) { boss.RallyCharge = 0; boss.RallyCooldown = type.RallyEvery; return; }
+            if (boss.State == SlimeState.Stunned) { boss.RallyCharge = 0; boss.RallyTargetId = 0; boss.RallyCooldown = type.RallyEvery; return; }
             boss.RallyCharge = Math.Max(0, boss.RallyCharge - dt);
             if (boss.RallyCharge > 0) return;
             boss.RallyCooldown = type.RallyEvery;
+            // The helper the glow pointed at, or the nearest one if that one is gone.
+            if (Find(boss.RallyTargetId) is { Targetable: true } chosen) helper = chosen;
+            boss.RallyTargetId = 0;
             if (helper == null) return;
             helper.RallyRemaining = type.RallySeconds;
             helper.RallyFactor = type.RallySpeed;
@@ -1053,8 +1160,12 @@ public sealed class BattleSim
         boss.RallyCooldown -= dt;
         if (boss.RallyCooldown > 0 || helper == null || boss.State == SlimeState.Stunned) return;
         boss.RallyCharge = type.RallyCharge;
+        boss.RallyTargetId = helper.Id;
         events.Add(new(BattleEventKind.BossRallying, boss.X));
     }
+
+    // The helper a glowing crown is about to rally (null when it is not rallying).
+    public Slime? RallyTarget(Slime boss) => boss.RallyCharge > 0 ? Find(boss.RallyTargetId) : null;
 
     private Slime? PickTarget(double catX)
     {
@@ -1335,8 +1446,10 @@ public sealed class BattleSim
         var ally = Find(healer.HealTargetId);
         healer.HealTargetId = 0;
         if (ally == null || !ally.Targetable || Math.Abs(ally.X - healer.X) > healer.Type.HealRange + 20) return;
-        // An elite's first heal that lands is stronger (still within its budget).
-        double amount = Math.Min(Math.Min(healer.Type.HealAmount * healer.HealBoost, ally.MaxHp - ally.Hp), healer.HealLeft);
+        // Its heals scale like enemy HP (HealPower); an elite's first heal that lands is stronger (still within its budget).
+        double heal = healer.Type.HealAmount * healer.HealPower * healer.HealBoost;
+        if (healer.HealPower != 1) heal = Math.Round(heal);
+        double amount = Math.Min(Math.Min(heal, ally.MaxHp - ally.Hp), healer.HealLeft);
         if (amount <= 0) return;
         ally.Hp += amount;
         healer.HealLeft -= amount;
@@ -1367,7 +1480,8 @@ public sealed class BattleSim
     {
         var live = scratch;
         live.Clear();
-        foreach (var slime in slimes) if (slime.State != SlimeState.Defeated && !slime.KeepingBack && slime.Type.Blocker == blockers) live.Add(slime);
+        // A leaping boss flies over the others.
+        foreach (var slime in slimes) if (slime.State != SlimeState.Defeated && !slime.KeepingBack && slime.LeapHeight <= 0 && slime.Type.Blocker == blockers) live.Add(slime);
         live.Sort(ByX);
         for (int i = 1; i < live.Count; i++)
         {
@@ -1787,9 +1901,11 @@ public sealed class BattleSim
             Id = nextId++, Type = type, Width = Settings.SlimeWidth * type.Scale, HitWidth = Settings.SlimeWidth * type.Hitbox, Height = Settings.SlimeHeight * type.Scale,
             Hp = hp, MaxHp = hp, Damage = damageFactor != 1 ? Math.Round(type.Damage * damageFactor) : type.Damage, Range = type.Range
         };
-        // A support enemy starts with half its heal cooldown and its whole budget.
+        // A support enemy starts with half its heal cooldown and its whole budget; its heals (and the
+        // budget) grow with the same factor as enemy HP, so healing keeps up on later stages.
         slime.HealCooldown = type.HealCooldown / 2;
-        slime.HealLeft = type.HealBudget;
+        slime.HealPower = hpFactor;
+        slime.HealLeft = hpFactor != 1 ? Math.Round(type.HealBudget * hpFactor) : type.HealBudget;
         var (minX, maxX) = Bounds(slime);
         slime.X = Math.Clamp(x, minX, maxX);
         slime.Set(SlimeState.Spawning);
@@ -1817,6 +1933,9 @@ public sealed class BattleSim
         {
             if (s.State is SlimeState.Windup or SlimeState.Casting or SlimeState.Dashing or SlimeState.Teleporting) s.Set(SlimeState.Moving);
             s.RallyCharge = s.RallyRemaining = 0;
+            // A leap in the air comes down where it is; announced helpers never come.
+            s.Crouch = s.LeapHeight = 0;
+            s.CallSpots = null;
         }
         events.Add(new(phase == BattlePhase.Won ? BattleEventKind.Won : BattleEventKind.Lost, 0));
     }
@@ -1908,7 +2027,12 @@ public sealed class BattleSim
     {
         right = Math.Max(left + Settings.SlimeWidth * Settings.LargestScale, right);
         double oldWidth = Math.Max(1, Right - Left), newWidth = right - left;
-        foreach (var s in slimes) { s.X = left + (s.X - Left) / oldWidth * newWidth; s.TeleportX = left + (s.TeleportX - Left) / oldWidth * newWidth; }
+        foreach (var s in slimes)
+        {
+            s.X = left + (s.X - Left) / oldWidth * newWidth; s.TeleportX = left + (s.TeleportX - Left) / oldWidth * newWidth;
+            s.LeapFromX = left + (s.LeapFromX - Left) / oldWidth * newWidth;
+            if (s.CallSpots is { } spots) for (int i = 0; i < spots.Count; i++) spots[i] = (spots[i].Kind, left + (spots[i].X - Left) / oldWidth * newWidth);
+        }
         IncomingX = left + (IncomingX - Left) / oldWidth * newWidth;
         foreach (var e in effects) e.X = left + (e.X - Left) / oldWidth * newWidth;
         foreach (var b in bombs) b.X = left + (b.X - Left) / oldWidth * newWidth;

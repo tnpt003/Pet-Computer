@@ -194,6 +194,9 @@ Nên chép dự phòng %LOCALAPPDATA%\DesktopPet\adventure-progress.json (nếu 
 - [ ] Thẻ hiếm: chơi vài lượt màn 2–5, đôi khi có thẻ viền vàng "★ Thẻ hiếm · một lần mỗi build" thay thẻ cùng nhóm. Đã lấy rồi thì không hiện lại. HUD và bảng chuẩn bị màn sau ghi "◆ <tên thẻ>".
 - [ ] Mai rùa: đòn đầu trúng mèo không mất máu (mảnh đá xám ở mèo), ~12 s sau lại chặn được một đòn; bế mèo thì không hồi nhanh hơn. Đòn mở màn: nhát đầu vào mỗi quái số sát thương gấp đôi. Chạy đà: mèo chạy một quãng tới quái rồi chém, số to hơn và có vệt vàng combo; đứng yên chém thì bình thường.
 - [ ] Slime đá cầm khiên đá hình huy hiệu (đầu phẳng, đáy nhọn, có bàn tay) ở phía mặt, không còn giống cái loa/vòi. Màn 4: slime thảo dược đứng sau 3 con đá vẫn thấy rõ (vẽ trên cùng, đá đè lên nó hơi mờ); click vào nó chọn đúng nó. Nền sáng và tối.
+- [ ] Vua Slime (màn 5) ở 70%/40% máu: nhún một nhịp rồi nhảy vòng cung (có bóng dưới sàn) về mép đối diện nửa sân nó đứng; khi mèo ở nửa đó thì về mép kia, không bao giờ đáp cạnh mèo. Thử cả mèo trái và mèo phải. Đáp có bụi, không mất máu.
+- [ ] Sau khi đáp: vòng tím có "!" ở chỗ quân sắp ra (~0,6 s), quân ra đúng các vòng: thảo dược sát Vua, đá đứng trước nó, slime nhanh ngoài cùng. Vương miện sáng thì có tia vàng nối tới con sắp được tăng tốc.
+- [ ] Slime thảo dược hồi nhiều thấy rõ (màn 4–5 khoảng +60 mỗi lần); không cắt thì quái khó hạ hẳn, nên hạ nó trước hoặc Đẩy lúc lá sáng.
 - [ ] Cảm nhận độ khó mới: Dễ màn 1–2 vẫn thoải mái; Thường màn 2–5 phải dùng kỹ năng/bế mèo mới thắng; Khó là thử thách thật. Ghi vào "Nhật ký chơi thử" (mô phỏng không thay chơi thật).
 
 ### Nhật ký chơi thử Battle Mode (beta, thêm 2026-10-18)

@@ -148,6 +148,27 @@ internal static class EnemyVisualChecks
         check(Count(glowing, Color.FromRgb(0xFF, 0xE6, 0x70), 270, 330, floor - 90, floor - 50, 40) > Count(calm, Color.FromRgb(0xFF, 0xE6, 0x70), 270, 330, floor - 90, floor - 50, 40),
             "The boss's crown glows while it rallies");
 
+        // The boss's leap: drawn high over the floor with its shadow left below; rings where its helpers
+        // will appear; a gold line from the glowing crown to the helper it rallies.
+        var kingColor = Color.FromRgb(0x9B, 0x7B, 0xE0);
+        var (lsim, lview) = Field(("king", 200), ("slime", 450));
+        var grounded = Shot(lview);
+        var king = lsim.Slimes[0];
+        king.LeapHeight = 60;
+        var flying = Shot(lview, "enemy-boss-leap");
+        int highBefore = Count(grounded, kingColor, 150, 250, floor - 125, floor - 75, 30), highAfter = Count(flying, kingColor, 150, 250, floor - 125, floor - 75, 30);
+        int lowAfter = Count(flying, kingColor, 150, 250, floor - 20, floor, 30);
+        check(highAfter > highBefore + 200 && lowAfter < 20, $"A leaping boss is drawn high over the floor ({highBefore} → {highAfter} pixels up high, {lowAfter} left low)");
+        king.LeapHeight = 0;
+        king.CallSpots = new() { ("slime", 380) };
+        var ringed = Shot(lview, "enemy-summon-rings");
+        check(Count(ringed, Color.FromRgb(0x9B, 0x5C, 0xE0), 340, 420, floor - 40, floor + 2, 30) > 25, "Purple rings (and a \"!\") mark where the boss's helpers will appear");
+        king.CallSpots = null;
+        king.RallyCharge = 0.5;
+        king.RallyTargetId = lsim.Slimes[1].Id;
+        var linked = Shot(lview, "enemy-rally-link");
+        check(Count(linked, Color.FromRgb(0xE0, 0xA8, 0x20), 300, 420, floor - 110, floor - 30, 30) > 15, "A gold line joins the glowing crown to the helper it will rally");
+
         // A spawn from behind: a red arrow at that edge.
         var incoming = new BattleSim(new BattleSettings
         {

@@ -114,6 +114,14 @@ public sealed class EnemyType
     // A shield phase's run to the far edge: its speed, and the longest it may take before calling.
     public double RetreatSpeed { get; init; } = 240;
     public double RetreatSeconds { get; init; } = 3;
+    // Instead of the run: a leap to that edge (a crouch of LeapCrouch s, then LeapSeconds in the air;
+    // the landing hurts no one). The far edge: the one opposite the boss's half of the floor, unless
+    // the cat is in that half too (then the other one), so it never lands next to the cat.
+    public bool RetreatLeap { get; init; }
+    public double LeapCrouch { get; init; } = 0.35;
+    public double LeapSeconds { get; init; } = 0.9;
+    // A shield phase's helpers are announced this long by rings on the floor where they will appear (0: at once).
+    public double SummonWarning { get; init; }
     // What one of this kind weighs against a wave's or a stream's budget (WaveSpec.Budget).
     public double Cost { get; init; } = 1;
     // The one elite affix this kind may roll when it spawns (null: never elite).
@@ -560,7 +568,12 @@ public static class BattleData
                 Within(e.RallyCharge, 0.2, 5, at + ".rallyCharge"); Within(e.RallySeconds, 0.5, 10, at + ".rallySeconds"); Within(e.RallySpeed, 1, 3, at + ".rallySpeed");
             }
             Within(e.ShieldBreakStun, 0, 5, at + ".shieldBreakStun");
-            if (e.Phases?.Any(p => p is { Shield: true }) == true) { Within(e.RetreatSpeed, 10, 600, at + ".retreatSpeed"); Within(e.RetreatSeconds, 0.2, 10, at + ".retreatSeconds"); }
+            if (e.Phases?.Any(p => p is { Shield: true }) == true)
+            {
+                Within(e.RetreatSpeed, 10, 600, at + ".retreatSpeed"); Within(e.RetreatSeconds, 0.2, 10, at + ".retreatSeconds");
+                Within(e.LeapCrouch, 0.1, 2, at + ".leapCrouch"); Within(e.LeapSeconds, 0.3, 3, at + ".leapSeconds"); Within(e.SummonWarning, 0, 3, at + ".summonWarning");
+            }
+            else if (e.RetreatLeap || e.SummonWarning > 0) throw new InvalidDataException(at + ".retreatLeap/summonWarning need a shield phase");
             if (e.Dash)
             {
                 Within(e.DashRange, 20, 600, at + ".dashRange"); Within(e.DashDistance, 20, 800, at + ".dashDistance");

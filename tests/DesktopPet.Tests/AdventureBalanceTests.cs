@@ -125,8 +125,11 @@ internal static class AdventureBalanceTests
             {
                 check(table[(s, weapon, BattleDifficulty.Normal, false)].Wins <= 0.3,
                     $"Balance: stage {s}, {weapon}, Normal, the idle player wins ≤ 30 % ({table[(s, weapon, BattleDifficulty.Normal, false)].Wins:P0})");
-                check(table[(s, weapon, BattleDifficulty.Normal, true)].HpShare <= 0.85,
-                    $"Balance: stage {s}, {weapon}, Normal, the simple player ends with ≤ 85 % HP ({table[(s, weapon, BattleDifficulty.Normal, true)].HpShare:P0})");
+                // Stage 5 allows more: since the boss leaps to the far edge its shield phases last longer,
+                // and a longer fight gives the bot more Healing fish (one per 20 s).
+                double most = s == 5 ? 0.92 : 0.85;
+                check(table[(s, weapon, BattleDifficulty.Normal, true)].HpShare <= most,
+                    $"Balance: stage {s}, {weapon}, Normal, the simple player ends with ≤ {most:P0} HP ({table[(s, weapon, BattleDifficulty.Normal, true)].HpShare:P0})");
             }
         // Elites: some on Normal from stage 3 on, none on Easy, none before stage 3.
         double Elites(int s, BattleDifficulty level) => played.Where(p => p.Key.Stage == s && p.Key.Level == level).SelectMany(p => p.Value).Average(r => r.Elites);

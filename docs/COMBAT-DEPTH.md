@@ -1,6 +1,6 @@
 # Combat Depth — Build & Enemy Roles
 
-Bàn giao 2026-10-20 (Asia/Saigon). Trạng thái: đang triển khai (mốc 1/4 xong 2026-10-20; xem "Quyết định người dùng đã chốt" và "Tiến độ triển khai"). Ban đầu người dùng yêu cầu AI khác kiểm tra và lập kế hoạch từ code thật. Đọc AGENTS.md/PROGRESS.md trước. Giữ luồng chơi lại hiện có (người dùng xác nhận trơn tru); không xây lại Adventure hoặc engine C#/Python.
+Bàn giao 2026-10-20 (Asia/Saigon). Trạng thái: đang triển khai (mốc 1–2/4 xong 2026-10-20; xem "Quyết định người dùng đã chốt" và "Tiến độ triển khai"). Ban đầu người dùng yêu cầu AI khác kiểm tra và lập kế hoạch từ code thật. Đọc AGENTS.md/PROGRESS.md trước. Giữ luồng chơi lại hiện có (người dùng xác nhận trơn tru); không xây lại Adventure hoặc engine C#/Python.
 
 ## Yêu cầu người dùng
 
@@ -24,7 +24,9 @@ Bàn giao 2026-10-20 (Asia/Saigon). Trạng thái: đang triển khai (mốc 1/4
 ## Tiến độ triển khai
 
 - **Mốc 1 (2026-10-20): xong** — nguồn sát thương (`DamageSource`), hàm gây sát thương lên mèo dùng chung (`HurtCat`), slime nhanh lao tới (`dash`) + mèo choáng 1,5 giây có kháng 3 giây. Dữ liệu ở [BATTLE-DATA.md](BATTLE-DATA.md#lao-tới-và-choáng-combat-depth-mốc-1). Màn 2–5 tăng rulesVersion.
-- Mốc 2: nhóm thẻ/synergy + build cộng dồn. Mốc 3: đá/support/King. Mốc 4: đội hình + cân bằng theo mục tiêu mới.
+- **Mốc 2 (2026-10-20): xong** — `group` cho thẻ, thẻ Defense mới Tim to (`maxHp` +20), `synergies` (Giáp gai 35%, Phá giáp combo +30%, Dư ảnh mỗi 4 nhát +50%), luật đưa thẻ một thẻ mỗi nhóm + cá thay nhóm ít điểm nhất, build cộng dồn lưu `Builds` trong adventure-progress.json (phiên bản 2), màn 3 `maxUpgrades: 3`, HUD/thẻ/bảng chuẩn bị hiện tiến độ build. Màn 2–5 tăng rulesVersion lần nữa (4/5/5/5). Chi tiết: [BATTLE-DATA.md](BATTLE-DATA.md#nhóm-thẻ-synergy-và-build-cộng-dồn-combat-depth-mốc-2).
+- Hệ quả đã đo (mô phỏng): với build cộng dồn mà đội hình chưa đổi, chương **dễ hơn** (màn 5 Thường tự đánh 0/10 → 10/10, mèo vào màn 5 với 2 synergy). Đây là việc của mốc 4; số Phá giáp "xuyên giáp đá" chỉ có tác dụng khi mốc 3 thêm chặn đòn.
+- Mốc 3: đá/support/King. Mốc 4: đội hình + cân bằng theo mục tiêu mới.
 
 ## Stun mèo — chi tiết bàn giao
 

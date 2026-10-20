@@ -185,13 +185,13 @@ public sealed class BattleHud : Border
         double dt = lastTime < 0 ? 0 : Math.Max(0, b.Time - lastTime);
         lastTime = b.Time;
         // HP: colour by amount; the orange trail of lost HP drains after it.
-        double fraction = Math.Clamp(b.CatHp / Math.Max(1, b.Settings.CatMaxHp), 0, 1);
+        double fraction = Math.Clamp(b.CatHp / Math.Max(1, b.CatMaxHp), 0, 1);
         trail = fraction >= trail ? fraction : trail + (fraction - trail) * Math.Min(1, dt * 2.5);
         Set(hpFill, HpWidth * fraction);
         Set(hpTrail, HpWidth * trail);
         var hpBrush = fraction > 0.5 ? Green : fraction > 0.25 ? Yellow : Red;
         if (hpFill.Background != hpBrush) hpFill.Background = hpBrush;
-        var hp = (Math.Ceiling(b.CatHp), b.Settings.CatMaxHp);
+        var hp = (Math.Ceiling(b.CatHp), b.CatMaxHp);
         if (hp != shownHp) { shownHp = hp; hpText.Text = $"{hp.Item1} / {hp.Item2}"; }
 
         // Hit chain: shown from the first hit until it lapses or the combo lands.
@@ -237,11 +237,17 @@ public sealed class BattleHud : Border
         if (upgradeCount != shownUpgrades)
         {
             shownUpgrades = upgradeCount;
-            var names = new System.Collections.Generic.List<string>();
-            foreach (var u in b.Settings.UpgradeList)
-                if (b.Stacks(u.Id) is int n && n > 0) names.Add(u.Name(English) + (n > 1 ? $" ×{n}" : ""));
-            upgradesText.Text = string.Join(" · ", names);
-            upgradesText.Visibility = names.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+            // The build: each group's points toward its synergy, then the synergies switched on.
+            var parts = new System.Collections.Generic.List<string>();
+            foreach (var group in BuildGroups.All)
+            {
+                int points = b.GroupPoints(group), goal = 0;
+                foreach (var y in b.Settings.SynergyList) if (y.Group == group && (goal == 0 || y.At < goal)) goal = y.At;
+                if (points > 0) parts.Add(goal > 0 ? $"{BuildGroups.Name(group, English)} {Math.Min(points, goal)}/{goal}" : $"{BuildGroups.Name(group, English)} {points}");
+            }
+            foreach (var y in b.Synergies) parts.Add("★ " + y.Name(English));
+            upgradesText.Text = string.Join(" · ", parts);
+            upgradesText.Visibility = parts.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
         }
         UpdateDots(b);
         var boss = b.Boss;

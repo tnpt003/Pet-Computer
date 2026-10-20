@@ -230,7 +230,8 @@ public sealed partial class PetWindow
         battlePause = BattlePause.None;
         battleMonitorClock = 0;
         battle = new BattleSim(BattleTuning, battleArea.Left, battleArea.Right, difficulty: level is BattleDifficulty chosen && Enum.IsDefined(chosen) ? chosen : BattleDifficultyChoice,
-            weapon: BattleTuning.Weapon(weapon ?? preferences.BattleWeapon).Id, stage: stage);
+            weapon: BattleTuning.Weapon(weapon ?? preferences.BattleWeapon).Id, stage: stage,
+            build: stage != null ? AdventureOf(BattleTuning)?.StartBuild(stage) : null); // The build the stage before was won with.
         battleRunId = Guid.NewGuid().ToString("N");
         battleCustomData = BattleDataCustom;
         pet.SwordOut = true;
@@ -373,7 +374,7 @@ public sealed partial class PetWindow
                 Won = BattleReport.Won + (won ? 1 : 0), Lost = BattleReport.Lost + (won ? 0 : 1),
                 Combos = BattleReport.Combos + battle.CombosLanded, Records = BattleReport.Records + (news.Any ? 1 : 0)
             };
-            var result = new BattleSummary(won, battle.Defeated, battle.FightSeconds, battle.CatHp, battle.Settings.CatMaxHp, battle.BossDefeated,
+            var result = new BattleSummary(won, battle.Defeated, battle.FightSeconds, battle.CatHp, battle.CatMaxHp, battle.BossDefeated,
                 battle.DefeatedBoss?.Name(English), battle.Difficulty, news, battle.Weapon.Id, WeaponName(battle.Weapon), battleCustomData, battle.Weapon.Style,
                 battle.Stage, outcome, !battleCustomData, UpgradeSummary(battle));
             EndBattle();

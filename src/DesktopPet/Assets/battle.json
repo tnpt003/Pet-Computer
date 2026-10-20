@@ -146,17 +146,34 @@
   ],
 
   // Adventure upgrades: after a cleared wave (when another follows) a stage with "upgrades": true
-  // offers up to 3 of these; the user takes one for the rest of that run only. effect: damage,
-  // moveSpeed, attackSpeed (less time between swings) and armor (less damage taken) take a fraction
-  // (0.2 = 20 %); knock: extra knock-back on every hit (DIPs/s); heal: HP at once (never offered at
-  // full HP). maxStacks: how often one run may take it (0 = no limit).
+  // offers up to 3 of these, one from each group while a group has any left; the user takes one.
+  // The build carries on: winning a stage passes it to the next stage (a free battle starts
+  // without one). effect: damage, moveSpeed, attackSpeed (less time between swings) and armor
+  // (less damage taken) take a fraction (0.2 = 20 %); knock: extra knock-back on every hit
+  // (DIPs/s); maxHp: more max HP (and that much HP at once); heal: HP at once (never offered at
+  // full HP; it takes the place of the group card the build has least of). maxStacks: how often one
+  // build may take it (0 = no limit). group: defense, power or speed (a heal has none).
   "upgrades": [
-    { "id": "sharp", "nameVi": "Sắc bén", "nameEn": "Sharp edge", "descVi": "+20% sát thương", "descEn": "+20% damage", "effect": "damage", "amount": 0.2, "maxStacks": 3 },
-    { "id": "quick_feet", "nameVi": "Nhanh chân", "nameEn": "Quick feet", "descVi": "+15% tốc độ chạy", "descEn": "+15% running speed", "effect": "moveSpeed", "amount": 0.15, "maxStacks": 2 },
-    { "id": "fast_paws", "nameVi": "Ra đòn nhanh", "nameEn": "Fast paws", "descVi": "−12% thời gian hồi đòn", "descEn": "−12% time between swings", "effect": "attackSpeed", "amount": 0.12, "maxStacks": 3 },
-    { "id": "heavy_push", "nameVi": "Đẩy mạnh", "nameEn": "Heavy push", "descVi": "Mỗi nhát đẩy slime lùi thêm", "descEn": "Every hit knocks slimes further", "effect": "knock", "amount": 80, "maxStacks": 2 },
+    { "id": "sharp", "group": "power", "nameVi": "Sắc bén", "nameEn": "Sharp edge", "descVi": "+20% sát thương", "descEn": "+20% damage", "effect": "damage", "amount": 0.2, "maxStacks": 3 },
+    { "id": "quick_feet", "group": "speed", "nameVi": "Nhanh chân", "nameEn": "Quick feet", "descVi": "+15% tốc độ chạy", "descEn": "+15% running speed", "effect": "moveSpeed", "amount": 0.15, "maxStacks": 2 },
+    { "id": "fast_paws", "group": "speed", "nameVi": "Ra đòn nhanh", "nameEn": "Fast paws", "descVi": "−12% thời gian hồi đòn", "descEn": "−12% time between swings", "effect": "attackSpeed", "amount": 0.12, "maxStacks": 3 },
+    { "id": "heavy_push", "group": "power", "nameVi": "Đẩy mạnh", "nameEn": "Heavy push", "descVi": "Mỗi nhát đẩy slime lùi thêm", "descEn": "Every hit knocks slimes further", "effect": "knock", "amount": 80, "maxStacks": 2 },
     { "id": "grilled_fish", "nameVi": "Cá nướng", "nameEn": "Grilled fish", "descVi": "Hồi ngay 30 HP", "descEn": "Get 30 HP back now", "effect": "heal", "amount": 30, "maxStacks": 0 },
-    { "id": "thick_fur", "nameVi": "Lông dày", "nameEn": "Thick fur", "descVi": "−15% sát thương nhận vào", "descEn": "−15% damage taken", "effect": "armor", "amount": 0.15, "maxStacks": 2 }
+    { "id": "thick_fur", "group": "defense", "nameVi": "Lông dày", "nameEn": "Thick fur", "descVi": "−15% sát thương nhận vào", "descEn": "−15% damage taken", "effect": "armor", "amount": 0.15, "maxStacks": 2 },
+    { "id": "big_heart", "group": "defense", "nameVi": "Tim to", "nameEn": "Big heart", "descVi": "+20 HP tối đa (hồi luôn 20)", "descEn": "+20 max HP (and 20 HP now)", "effect": "maxHp", "amount": 20, "maxStacks": 2 }
+  ],
+
+  // Synergies: a build holding "at" cards of a group switches the effect on for good.
+  // thorns: amount of the damage the cat really takes goes back to the attacker. armorBreak: combo
+  // hits deal amount more. echo: every "every"-th landed swing strikes again for amount × its damage.
+  // Reflected and echoed hits never set off another bonus.
+  "synergies": [
+    { "id": "thorns", "group": "defense", "at": 3, "effect": "thorns", "amount": 0.35, "nameVi": "Giáp gai", "nameEn": "Thorns",
+      "descVi": "Quái đánh trúng mèo nhận lại 35% sát thương", "descEn": "Enemies that hit the cat take 35% of it back" },
+    { "id": "armor_break", "group": "power", "at": 3, "effect": "armorBreak", "amount": 0.3, "nameVi": "Phá giáp", "nameEn": "Armor break",
+      "descVi": "Đòn combo +30% sát thương, xuyên giáp đá", "descEn": "Combo hits deal 30% more and pierce stone" },
+    { "id": "afterimage", "group": "speed", "at": 3, "effect": "echo", "amount": 0.5, "every": 4, "nameVi": "Dư ảnh", "nameEn": "Afterimage",
+      "descVi": "Cứ 4 đòn trúng, thêm một đòn 50%", "descEn": "Every 4th hit strikes again for 50%" }
   ],
 
   // Adventure: chapters of stages played in order (winning a stage opens the next one). Stage ids
@@ -186,7 +203,7 @@
             "goalEn": "Mixed slimes: use skills, lift the cat when a slime winds up, pick upgrades between waves.",
             "tipVi": "Dọn xong một đợt, bạn chọn 1 trong 3 thẻ nâng cấp. Thẻ chỉ có tác dụng trong lượt chơi này; chơi lại thì bắt đầu từ đầu.",
             "tipEn": "After each cleared wave, pick 1 of 3 upgrade cards. They last for this run only; playing again starts fresh.",
-            "objective": "clear", "upgrades": true, "rulesVersion": 3,
+            "objective": "clear", "upgrades": true, "rulesVersion": 4,
             "waves": [
               { "groups": [ { "enemy": "slime", "count": 2 }, { "enemy": "runner", "count": 1 } ] },
               { "groups": [ { "enemy": "runner", "count": 2 }, { "enemy": "slime", "count": 2 } ] },
@@ -199,7 +216,7 @@
             "goalEn": "Survive 75 seconds: know when to attack and when to save HP. Carrying the cat stops the clock.",
             "tipVi": "Sống sót tới khi hết giờ. Bế mèo thì đồng hồ dừng, nên hãy giữ HP bằng Khiên và Cá hồi máu thay vì chờ trên tay.",
             "tipEn": "Stay alive until time is up. Carrying the cat stops the clock, so keep HP up with the Shield and the Healing fish instead.",
-            "objective": "survive", "surviveSeconds": 75, "maxAlive": 4, "upgrades": true, "rulesVersion": 4, "reward": "SlimeHat",
+            "objective": "survive", "surviveSeconds": 75, "maxAlive": 4, "upgrades": true, "maxUpgrades": 3, "rulesVersion": 5, "reward": "SlimeHat",
             "waves": [
               { "groups": [ { "enemy": "slime", "count": 3 }, { "enemy": "runner", "count": 1 } ] },
               { "groups": [ { "enemy": "rock", "count": 1 }, { "enemy": "runner", "count": 2 } ] },
@@ -212,7 +229,7 @@
             "goalEn": "Herb slimes heal their friends: take them down first, or Push one to cut its heal.",
             "tipVi": "Slime thảo dược (dấu +) hồi máu cho đồng đội. Thấy dấu + xanh trên đầu nó là nó đang gồng: Đẩy nó để cắt, hoặc click nó để mèo đánh nó trước.",
             "tipEn": "Herb slimes (with a +) heal their friends. A green + over one means it is winding up: Push it to cut the heal, or click it so the cat hits it first.",
-            "objective": "clear", "upgrades": true, "rulesVersion": 4,
+            "objective": "clear", "upgrades": true, "rulesVersion": 5,
             "waves": [
               { "groups": [ { "enemy": "slime", "count": 2 }, { "enemy": "mender", "count": 1 } ] },
               { "groups": [ { "enemy": "rock", "count": 1 }, { "enemy": "mender", "count": 1 }, { "enemy": "runner", "count": 2 } ] },
@@ -225,7 +242,7 @@
             "goalEn": "The chapter's last battle: the Slime King calls help phase by phase, herb slimes too.",
             "tipVi": "Vua Slime gọi quân ở khoảng 75%, 50% và 40% máu, nổi giận ở 30%. Thấy vùng đỏ dưới sàn: kéo mèo ra ngoài hoặc bật Khiên.",
             "tipEn": "The Slime King calls help at about 75%, 50% and 40% HP and gets angry at 30%. A red zone on the floor: lift the cat out or use the Shield.",
-            "objective": "clear", "upgrades": true, "rulesVersion": 4, "reward": "SlimeKingCrown",
+            "objective": "clear", "upgrades": true, "rulesVersion": 5, "reward": "SlimeKingCrown",
             "waves": [
               { "groups": [ { "enemy": "slime", "count": 2 }, { "enemy": "runner", "count": 2 } ] },
               { "groups": [ { "enemy": "mender", "count": 1 }, { "enemy": "slime", "count": 2 } ] },

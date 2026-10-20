@@ -97,7 +97,7 @@ internal static class AdventureTests
             check(AdventureProgress.Load(path).Completed.Count == 0, "No file: empty progress");
             check(progress.Save(path) && !File.Exists(path + ".tmp"), "Progress saves without leaving a .tmp file");
             var read = AdventureProgress.Load(path);
-            check(read.Version == 1 && read.Completed.SequenceEqual(new[] { stages[0].Id }) && read.Runs.Contains("run2") &&
+            check(read.Version == AdventureProgress.CurrentVersion && read.Completed.SequenceEqual(new[] { stages[0].Id }) && read.Runs.Contains("run2") &&
                   read.Records[AdventureProgress.RecordKey(stages[0], "sword", BattleDifficulty.Normal)].Wins == 2,
                 "Saved progress reads back the same (won stages, run ids, records)");
             read.Completed.Add(stages[1].Id);

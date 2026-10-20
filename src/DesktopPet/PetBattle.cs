@@ -176,17 +176,31 @@ public sealed class BattleSettings
     }
     [JsonIgnore] public double LargestScale => EnemyTypes.Max(e => e.Scale);
 
-    // From battle.json "upgrades": the Adventure's between-wave upgrades (null: the built-in six).
+    // From battle.json "upgrades": the Adventure's between-wave upgrades (null: the built-in seven).
     [JsonPropertyName("upgrades")] public UpgradeSpec[]? Upgrades { get; init; }
     private IReadOnlyList<UpgradeSpec>? upgradeList;
     [JsonIgnore] public IReadOnlyList<UpgradeSpec> UpgradeList => upgradeList ??= Upgrades ?? new[]
     {
-        new UpgradeSpec { Id = "sharp", NameVi = "Sắc bén", NameEn = "Sharp edge", DescVi = "+20% sát thương", DescEn = "+20% damage", Effect = "damage", Amount = 0.2, MaxStacks = 3 },
-        new UpgradeSpec { Id = "quick_feet", NameVi = "Nhanh chân", NameEn = "Quick feet", DescVi = "+15% tốc độ chạy", DescEn = "+15% running speed", Effect = "moveSpeed", Amount = 0.15, MaxStacks = 2 },
-        new UpgradeSpec { Id = "fast_paws", NameVi = "Ra đòn nhanh", NameEn = "Fast paws", DescVi = "−12% thời gian hồi đòn", DescEn = "−12% time between swings", Effect = "attackSpeed", Amount = 0.12, MaxStacks = 3 },
-        new UpgradeSpec { Id = "heavy_push", NameVi = "Đẩy mạnh", NameEn = "Heavy push", DescVi = "Mỗi nhát đẩy slime lùi thêm", DescEn = "Every hit knocks slimes further", Effect = "knock", Amount = 80, MaxStacks = 2 },
+        new UpgradeSpec { Id = "sharp", Group = "power", NameVi = "Sắc bén", NameEn = "Sharp edge", DescVi = "+20% sát thương", DescEn = "+20% damage", Effect = "damage", Amount = 0.2, MaxStacks = 3 },
+        new UpgradeSpec { Id = "quick_feet", Group = "speed", NameVi = "Nhanh chân", NameEn = "Quick feet", DescVi = "+15% tốc độ chạy", DescEn = "+15% running speed", Effect = "moveSpeed", Amount = 0.15, MaxStacks = 2 },
+        new UpgradeSpec { Id = "fast_paws", Group = "speed", NameVi = "Ra đòn nhanh", NameEn = "Fast paws", DescVi = "−12% thời gian hồi đòn", DescEn = "−12% time between swings", Effect = "attackSpeed", Amount = 0.12, MaxStacks = 3 },
+        new UpgradeSpec { Id = "heavy_push", Group = "power", NameVi = "Đẩy mạnh", NameEn = "Heavy push", DescVi = "Mỗi nhát đẩy slime lùi thêm", DescEn = "Every hit knocks slimes further", Effect = "knock", Amount = 80, MaxStacks = 2 },
         new UpgradeSpec { Id = "grilled_fish", NameVi = "Cá nướng", NameEn = "Grilled fish", DescVi = "Hồi ngay 30 HP", DescEn = "Get 30 HP back now", Effect = "heal", Amount = 30 },
-        new UpgradeSpec { Id = "thick_fur", NameVi = "Lông dày", NameEn = "Thick fur", DescVi = "−15% sát thương nhận vào", DescEn = "−15% damage taken", Effect = "armor", Amount = 0.15, MaxStacks = 2 },
+        new UpgradeSpec { Id = "thick_fur", Group = "defense", NameVi = "Lông dày", NameEn = "Thick fur", DescVi = "−15% sát thương nhận vào", DescEn = "−15% damage taken", Effect = "armor", Amount = 0.15, MaxStacks = 2 },
+        new UpgradeSpec { Id = "big_heart", Group = "defense", NameVi = "Tim to", NameEn = "Big heart", DescVi = "+20 HP tối đa (hồi luôn 20)", DescEn = "+20 max HP (and 20 HP now)", Effect = "maxHp", Amount = 20, MaxStacks = 2 },
+    };
+
+    // From battle.json "synergies": what 3 points of a group switch on (null: the built-in three).
+    [JsonPropertyName("synergies")] public SynergySpec[]? SynergiesData { get; init; }
+    private IReadOnlyList<SynergySpec>? synergyList;
+    [JsonIgnore] public IReadOnlyList<SynergySpec> SynergyList => synergyList ??= SynergiesData ?? new[]
+    {
+        new SynergySpec { Id = "thorns", Group = "defense", At = 3, Effect = "thorns", Amount = 0.35, NameVi = "Giáp gai", NameEn = "Thorns",
+            DescVi = "Quái đánh trúng mèo nhận lại 35% sát thương", DescEn = "Enemies that hit the cat take 35% of it back" },
+        new SynergySpec { Id = "armor_break", Group = "power", At = 3, Effect = "armorBreak", Amount = 0.3, NameVi = "Phá giáp", NameEn = "Armor break",
+            DescVi = "Đòn combo +30% sát thương, xuyên giáp đá", DescEn = "Combo hits deal 30% more and pierce stone" },
+        new SynergySpec { Id = "afterimage", Group = "speed", At = 3, Effect = "echo", Amount = 0.5, Every = 4, NameVi = "Dư ảnh", NameEn = "Afterimage",
+            DescVi = "Cứ 4 đòn trúng, thêm một đòn 50%", DescEn = "Every 4th hit strikes again for 50%" },
     };
 
     // From battle.json "campaign": the Adventure chapters (null: no Adventure in this data).
@@ -268,8 +282,10 @@ public enum BattleSkill { Push, Heal, Cheer, Bomb, Shield }
 // Dashing: a dash enemy's lunge after its windup (it hits the cat once at most).
 public enum SlimeState { Spawning, Moving, Windup, Recover, Stunned, Defeated, Casting, Dashing }
 
-// Where damage on an enemy comes from: the cat's swings (a plain hit or a combo) or the yarn bomb.
-public enum DamageSource { Weapon, Combo, Bomb }
+// Where damage on an enemy comes from: the cat's swings (a plain hit or a combo), the yarn bomb,
+// or a build bonus (Thorns sends back what the cat took, Afterimage repeats a swing). The bonus
+// hits never set off another bonus.
+public enum DamageSource { Weapon, Combo, Bomb, Reflect, Echo }
 
 public sealed class Slime
 {
@@ -311,7 +327,7 @@ public enum BattleEventKind
 {
     WaveStarted, SlimeSpawned, Swing, SlimeHit, SlimeDefeated, CatHurt, Pushed, WaveCleared, Won, Lost,
     Healed, Cheered, Shielded, Blocked, BombThrown, BombExploded, BossAppeared, BossSummoned, BossEnraged, ComboHit,
-    UpgradeOffered, UpgradeChosen, EnemyHealing, EnemyHealed, CatStunned
+    UpgradeOffered, UpgradeChosen, EnemyHealing, EnemyHealed, CatStunned, SynergyUnlocked, Reflected, Echoed
 }
 public readonly record struct BattleEvent(BattleEventKind Kind, double X, double Value = 0);
 // Number: a floating damage (Value > 0) or heal (Value < 0, shown as +HP above the cat).
@@ -368,15 +384,50 @@ public sealed class BattleSim
     public bool Survival => Stage?.Survival == true;
     public double SurviveRemaining { get; private set; } = double.NaN;
 
-    // This run's upgrades (Adventure stages that allow them): how often each was taken, and the
-    // cards on offer while the user chooses. While choosing, the battle stands still (Step does
-    // nothing, the clock and the record time stop). Nothing here outlives this BattleSim.
+    // This run's build (Adventure stages that allow upgrades): how often each card was taken (the
+    // build carried in from the stage before included), and the cards on offer while the user
+    // chooses. While choosing, the battle stands still (Step does nothing, the clock and the record
+    // time stop). The definitions are never changed; Build() is what a won stage passes on.
     private readonly Dictionary<string, int> taken = new();
     public IReadOnlyDictionary<string, int> UpgradesTaken => taken;
     public IReadOnlyList<UpgradeSpec>? UpgradeOffer { get; private set; }
     public bool ChoosingUpgrade => UpgradeOffer != null;
-    private double damageBonus, moveBonus, cooldownCut, knockBonus, armorCut;
+    private double damageBonus, moveBonus, cooldownCut, knockBonus, armorCut, maxHpBonus;
     public int Stacks(string upgrade) => taken.TryGetValue(upgrade, out int n) ? n : 0;
+    // Cards chosen in this run (not the carried ones): a stage's maxUpgrades counts these.
+    public int Picks { get; private set; }
+    public double CatMaxHp => Settings.CatMaxHp + maxHpBonus;
+    // A group's points: one per card of that group in the build.
+    public int GroupPoints(string group)
+    {
+        int points = 0;
+        foreach (var (id, n) in taken) if (Upgrade(id)?.Group == group) points += n;
+        return points;
+    }
+    private UpgradeSpec? Upgrade(string id) { foreach (var u in Settings.UpgradeList) if (u.Id == id) return u; return null; }
+    // Synergies the build has switched on (they stay on for the rest of the build).
+    private readonly List<SynergySpec> synergies = new();
+    public IReadOnlyList<SynergySpec> Synergies => synergies;
+    private SynergySpec? Active(string effect) { foreach (var y in synergies) if (y.Effect == effect) return y; return null; }
+    // The synergy this card would switch on now (null: none).
+    public SynergySpec? Unlocks(UpgradeSpec card)
+    {
+        if (card.Group == null) return null;
+        int points = GroupPoints(card.Group) + 1;
+        foreach (var y in Settings.SynergyList)
+            if (y.Group == card.Group && !synergies.Contains(y) && points >= y.At) return y;
+        return null;
+    }
+    // The build to carry on: every card but the instant heals.
+    public Dictionary<string, int> Build()
+    {
+        var build = new Dictionary<string, int>();
+        foreach (var (id, n) in taken) if (n > 0 && Upgrade(id) is { Effect: not "heal" }) build[id] = n;
+        return build;
+    }
+    public int Reflects { get; private set; }
+    public int Echoes { get; private set; }
+    private int landedSwings;
     // Multipliers the upgrades give (1 without any). Cuts never go below 30 % of the original.
     public double DamageFactor => 1 + damageBonus;
     public double MoveFactor => 1 + moveBonus;
@@ -449,7 +500,7 @@ public sealed class BattleSim
     private readonly WeaponSpec arms;
 
     public BattleSim(BattleSettings settings, double left, double right, Random? random = null, BattleDifficulty difficulty = BattleDifficulty.Normal,
-        string weapon = BattleWeapon.Sword, StageSpec? stage = null)
+        string weapon = BattleWeapon.Sword, StageSpec? stage = null, IReadOnlyDictionary<string, int>? build = null)
     {
         Settings = settings;
         Stage = stage;
@@ -461,7 +512,13 @@ public sealed class BattleSim
         level = settings.Difficulty(difficulty);
         this.random = random ?? new Random();
         Left = left; Right = Math.Max(left + settings.SlimeWidth * settings.LargestScale, right);
-        CatHp = settings.CatMaxHp;
+        // A carried build (the stage before's): its cards as if taken, within their limits; cards no
+        // longer in the data are skipped.
+        if (build != null)
+            foreach (var (id, count) in build)
+                if (Upgrade(id) is UpgradeSpec card && card.Effect != "heal")
+                    for (int i = 0; i < count && (card.MaxStacks == 0 || Stacks(id) < card.MaxStacks); i++) Take(card, 0, false);
+        CatHp = CatMaxHp;
         PhaseRemaining = settings.FirstWaveDelay;
     }
 
@@ -589,6 +646,8 @@ public sealed class BattleSim
         comboClock = 0;
         bool combo = Combo >= Settings.ComboHits;
         double damage = arms.Damage * DamageFactor * (CheerRemaining > 0 ? Settings.CheerDamage : 1) * (combo ? Settings.ComboDamage : 1);
+        // Armor break: combo hits hit harder.
+        if (combo && Active("armorBreak") is SynergySpec breaker) damage *= 1 + breaker.Amount;
         double knock = arms.Knock + knockBonus;
         events.Add(new(combo ? BattleEventKind.ComboHit : BattleEventKind.SlimeHit, slime.X));
         AddEffect(combo ? BattleEffectKind.Combo : arms.Effect == "thud" ? BattleEffectKind.Thud : BattleEffectKind.Spark, slime.X, slime.Height / 2);
@@ -602,6 +661,15 @@ public sealed class BattleSim
         // A heavy weapon knocks back on every hit (away from the cat; heavy kinds less), no stun.
         else if (knock > 0) slime.KnockVelocity = (slime.X < catX ? -1 : 1) * knock * slime.Type.PushFactor;
         Damage(slime, damage, combo ? DamageSource.Combo : DamageSource.Weapon);
+        // Afterimage: every Every-th landed swing hits a second time (an echo counts nothing itself).
+        landedSwings++;
+        if (Active("echo") is SynergySpec echo && landedSwings % echo.Every == 0 && slime.Targetable)
+        {
+            Echoes++;
+            AddEffect(BattleEffectKind.Spark, slime.X + (slime.X < catX ? -8 : 8), slime.Height * 0.7);
+            events.Add(new(BattleEventKind.Echoed, slime.X));
+            Damage(slime, damage * echo.Amount, DamageSource.Echo);
+        }
     }
 
     // Every hit on an enemy goes through here. Returns the HP it really lost.
@@ -690,8 +758,12 @@ public sealed class BattleSim
     private void StepSlimes(double dt, double catX, bool catHeld)
     {
         var s = Settings;
-        foreach (var slime in slimes)
+        // By index over the slimes there were at the start: a hit on the cat can send damage back
+        // (Thorns) and make a boss call helpers, which join the list and move from the next frame.
+        int count = slimes.Count;
+        for (int index = 0; index < count; index++)
         {
+            var slime = slimes[index];
             var (minX, maxX) = Bounds(slime);
             slime.StateTime += dt;
             slime.HitFlash = Math.Max(0, slime.HitFlash - dt);
@@ -874,6 +946,14 @@ public sealed class BattleSim
         HurtFlash = Settings.HurtFlashSeconds;
         events.Add(new(BattleEventKind.CatHurt, catX, hurt));
         if (CatHp <= 0) { Finish(BattlePhase.Lost); return; }
+        // Thorns: part of what the cat really took goes back to the attacker.
+        if (Active("thorns") is SynergySpec thorns && hurt > 0 && from.Targetable)
+        {
+            Reflects++;
+            events.Add(new(BattleEventKind.Reflected, from.X));
+            Damage(from, hurt * thorns.Amount, DamageSource.Reflect);
+            if (Over) return;
+        }
         if (stun && !CatHeld && !CatStunned && StunImmunity <= 0 && Settings.StunDurationSeconds > 0)
         {
             CatStunRemaining = Settings.StunDurationSeconds;
@@ -922,27 +1002,51 @@ public sealed class BattleSim
         if (Wave >= WaveCount && !Survival) { Finish(BattlePhase.Won); return; }
         Phase = BattlePhase.WaveBreak;
         PhaseRemaining = Settings.WaveBreakSeconds;
-        LastHeal = Math.Max(0, Math.Min(Settings.WaveHeal, Settings.CatMaxHp - CatHp));
+        LastHeal = Math.Max(0, Math.Min(Settings.WaveHeal, CatMaxHp - CatHp));
         CatHp += LastHeal;
         if (LastHeal > 0) AddEffect(BattleEffectKind.Number, catX, 115, -Math.Round(LastHeal));
         events.Add(new(BattleEventKind.WaveCleared, catX));
         if (Stage?.Upgrades == true) OfferUpgrades();
     }
 
-    // Up to three different upgrades the run can still use: not at their limit, and no healing at
-    // full HP. Fewer when fewer are left; none at all: no choice this time.
+    // Up to three different cards the build can still use, one from each group (Defense, Power,
+    // Speed) while a group has any left, so every build can always go on; other cards fill the
+    // gaps. When the cat is hurt an instant heal takes the place of the group card the build has
+    // the fewest points in. Never a card at its limit, never a heal at full HP, and no offer once
+    // the stage's maxUpgrades picks are made; nothing left: no choice this time.
     private void OfferUpgrades()
     {
-        var eligible = new List<UpgradeSpec>();
-        foreach (var u in Settings.UpgradeList)
-            if ((u.MaxStacks == 0 || Stacks(u.Id) < u.MaxStacks) && !(u.Effect == "heal" && CatHp >= Settings.CatMaxHp)) eligible.Add(u);
-        for (int i = eligible.Count - 1; i > 0; i--)
+        if (Stage?.MaxUpgrades is int cap && Picks >= cap) return;
+        bool Open(UpgradeSpec u) => u.MaxStacks == 0 || Stacks(u.Id) < u.MaxStacks;
+        var cards = new List<UpgradeSpec>();
+        foreach (var group in BuildGroups.All)
         {
-            int j = random.Next(i + 1);
-            (eligible[i], eligible[j]) = (eligible[j], eligible[i]);
+            var options = Settings.UpgradeList.Where(u => u.Group == group && Open(u)).ToList();
+            if (options.Count > 0) cards.Add(options[random.Next(options.Count)]);
         }
-        if (eligible.Count == 0) return;
-        UpgradeOffer = eligible.Take(3).ToArray();
+        var rest = Settings.UpgradeList.Where(u => !cards.Contains(u) && u.Effect != "heal" && Open(u)).ToList();
+        while (cards.Count < 3 && rest.Count > 0)
+        {
+            int i = random.Next(rest.Count);
+            cards.Add(rest[i]);
+            rest.RemoveAt(i);
+        }
+        var heals = Settings.UpgradeList.Where(u => u.Effect == "heal" && Open(u)).ToList();
+        if (CatHp < CatMaxHp && heals.Count > 0)
+        {
+            var heal = heals[random.Next(heals.Count)];
+            if (cards.Count < 3) cards.Add(heal);
+            else
+            {
+                // A filler card (no group) goes first, then the group the build has least of.
+                int Points(UpgradeSpec u) => u.Group == null ? -1 : GroupPoints(u.Group);
+                int fewest = cards.Min(Points);
+                var tied = Enumerable.Range(0, cards.Count).Where(i => Points(cards[i]) == fewest).ToList();
+                cards[tied[random.Next(tied.Count)]] = heal;
+            }
+        }
+        if (cards.Count == 0) return;
+        UpgradeOffer = cards.ToArray();
         Armed = null;
         events.Add(new(BattleEventKind.UpgradeOffered, 0, UpgradeOffer.Count));
     }
@@ -955,22 +1059,43 @@ public sealed class BattleSim
         foreach (var u in UpgradeOffer) if (u.Id == id) pick = u;
         if (pick == null) return false;
         UpgradeOffer = null;
-        taken[pick.Id] = Stacks(pick.Id) + 1;
-        switch (pick.Effect)
+        Picks++;
+        Take(pick, catX, true);
+        events.Add(new(BattleEventKind.UpgradeChosen, catX));
+        return true;
+    }
+
+    // A card goes into the build. fresh: chosen now (a heal or more max HP heals at once and a new
+    // synergy is announced); otherwise carried in from the stage before.
+    private void Take(UpgradeSpec card, double catX, bool fresh)
+    {
+        taken[card.Id] = Stacks(card.Id) + 1;
+        switch (card.Effect)
         {
-            case "damage": damageBonus += pick.Amount; break;
-            case "moveSpeed": moveBonus += pick.Amount; break;
-            case "attackSpeed": cooldownCut += pick.Amount; break;
-            case "knock": knockBonus += pick.Amount; break;
-            case "armor": armorCut += pick.Amount; break;
+            case "damage": damageBonus += card.Amount; break;
+            case "moveSpeed": moveBonus += card.Amount; break;
+            case "attackSpeed": cooldownCut += card.Amount; break;
+            case "knock": knockBonus += card.Amount; break;
+            case "armor": armorCut += card.Amount; break;
+            case "maxHp":
+                maxHpBonus += card.Amount;
+                if (fresh) { CatHp += card.Amount; AddEffect(BattleEffectKind.Number, catX, 115, -Math.Round(card.Amount)); }
+                break;
             case "heal":
-                double healed = Math.Min(pick.Amount, Settings.CatMaxHp - CatHp);
+                double healed = Math.Min(card.Amount, CatMaxHp - CatHp);
                 CatHp += healed;
                 if (healed > 0) AddEffect(BattleEffectKind.Number, catX, 115, -Math.Round(healed));
                 break;
         }
-        events.Add(new(BattleEventKind.UpgradeChosen, catX));
-        return true;
+        if (card.Group == null) return;
+        int points = GroupPoints(card.Group);
+        for (int i = 0; i < Settings.SynergyList.Count; i++)
+        {
+            var y = Settings.SynergyList[i];
+            if (y.Group != card.Group || synergies.Contains(y) || points < y.At) continue;
+            synergies.Add(y);
+            if (fresh) events.Add(new(BattleEventKind.SynergyUnlocked, catX, i));
+        }
     }
 
     private void Spawn(double catX, EnemyType type)
@@ -1049,7 +1174,7 @@ public sealed class BattleSim
         switch (skill)
         {
             case BattleSkill.Heal:
-                double healed = Math.Min(Settings.HealAmount, Settings.CatMaxHp - CatHp);
+                double healed = Math.Min(Settings.HealAmount, CatMaxHp - CatHp);
                 if (healed <= 0) return false; // Full HP: keep the fish for later.
                 CatHp += healed;
                 AddEffect(BattleEffectKind.Number, catX, 115, -Math.Round(healed));

@@ -313,7 +313,7 @@ public sealed partial class PetWindow
     private AdventureOutcome CountStageRun(BattleSim finished, bool won)
     {
         if (finished.Stage is not StageSpec stage || AdventureOf(finished.Settings) is not Adventure adventure) return default;
-        var outcome = adventure.Apply(battleRunId, stage, !battleCustomData, won, finished.Weapon.Id, finished.Difficulty, finished.Defeated, finished.FightSeconds);
+        var outcome = adventure.Apply(battleRunId, stage, !battleCustomData, won, finished.Weapon.Id, finished.Difficulty, finished.Defeated, finished.FightSeconds, finished.Build());
         if (outcome.Counted && AdventureProgressFile != null) adventureSaveFailed = !AdventureProgress.Save(AdventureProgressFile);
         if (outcome.Counted) System.Diagnostics.Trace.WriteLine($"Adventure stage {stage.Id} {(won ? "won" : "lost")}{(outcome.Unlocked != null ? $", {outcome.Unlocked.Id} opened" : "")}.");
         return outcome;

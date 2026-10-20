@@ -42,8 +42,9 @@ internal static class UpgradeChecks
         WaveSpec One() => new() { Groups = new[] { new WaveGroup { Enemy = "slime", Count = 1 } } };
         var stage = new StageSpec { Id = "up", NameVi = "Thử", NameEn = "Trial", Upgrades = true, Waves = new[] { One(), One(), One() } };
         var hold = new StageSpec { Id = "hold", NameVi = "Giữ", NameEn = "Hold", Objective = "survive", SurviveSeconds = 30, Waves = new[] { One() } };
+        var later = new StageSpec { Id = "later", NameVi = "Sau", NameEn = "Later", Upgrades = true, Waves = new[] { One(), One(), One() } };
         var tuning = new BattleSettings { FirstWaveDelay = 0, SpawnInterval = 0, SlimeMaxHp = 1, SlimeDamage = 0, WaveBreakSeconds = 0.5, OutroSeconds = 0.5,
-            Campaign = new CampaignSpec { Chapters = new[] { new ChapterSpec { Id = "c", NameVi = "C", NameEn = "C", Stages = new[] { stage, hold } } } } };
+            Campaign = new CampaignSpec { Chapters = new[] { new ChapterSpec { Id = "c", NameVi = "C", NameEn = "C", Stages = new[] { stage, hold, later } } } } };
         window.BattleTuning = tuning;
         window.ReloadAdventureProgress();
         try
@@ -61,6 +62,9 @@ internal static class UpgradeChecks
             var offer = b.UpgradeOffer!;
             check(offer.Count == 3 && offer.All(u => window.BattleUpgradeText.Contains(u.Name(true)) && window.BattleUpgradeText.Contains(u.Describe(true))) &&
                   window.BattleUpgradeText.Contains("Pick an upgrade"), $"Three cards with name and effect ({window.BattleUpgradeText.Replace('\n', '|')})");
+            check(offer.Select(u => u.Group).OrderBy(g => g).SequenceEqual(new[] { "defense", "power", "speed" }) &&
+                  new[] { "Defense 0 → 1/3", "Power 0 → 1/3", "Speed 0 → 1/3" }.All(window.BattleUpgradeText.Contains) && window.BattleUpgradeText.Contains("kept for the next stage"),
+                "One card per group, each showing its progress toward the group's synergy");
             double time = b.Time;
             Fight(1);
             check(b.Time == time && window.BattleUpgradeOpen, "Nothing runs behind the panel");
@@ -81,7 +85,7 @@ internal static class UpgradeChecks
             check(!b.Paused, "Resuming starts the battle again");
             var hud = Field<BattleHud>(window, "battleHud");
             Fight(0.1);
-            check(hud.UpgradesText.Contains(offer[0].Name(true)), $"The HUD lists this run's upgrades ({hud.UpgradesText})");
+            check(hud.UpgradesText.Contains(BuildGroups.Name(offer[0].Group!, true) + " 1/3"), $"The HUD shows the build's group points ({hud.UpgradesText})");
 
             // Quick feet changes the cat's running speed for this run only.
             UntilOffer();
@@ -116,6 +120,26 @@ internal static class UpgradeChecks
             }
             window.Reset();
             check(!window.BattleActive && !window.BattleUpgradeOpen && Find("Pet upgrade") == null, "Bringing the pet back closes the battle and the panel");
+
+            // The carried build: the stage before's winning build shows on the setup panel, the run
+            // starts with it, and the card that completes a group announces its synergy.
+            var progress = window.AdventureProgress;
+            progress.Completed.AddRange(new[] { "up", "hold" });
+            progress.Builds["hold"] = new Dictionary<string, int> { ["thick_fur"] = 2 };
+            check(window.OpenBattlePrep(stage: later) == null && window.BattlePrepText.Contains("Build brought in: Defense 2"), $"The setup panel shows the build brought in ({window.BattlePrepText.Replace('\n', '|')})");
+            check(window.StartBattle(stage: later) == null && window.Battle!.Stacks("thick_fur") == 2 && window.Battle.CatMaxHp == 100, "The stage starts with that build");
+            hud = Field<BattleHud>(window, "battleHud");
+            Fight(0.1);
+            check(hud.UpgradesText.Contains("Defense 2/3"), $"The HUD shows the carried points ({hud.UpgradesText})");
+            UntilOffer();
+            var heart = window.Battle!.UpgradeOffer?.FirstOrDefault(u => u.Group == "defense");
+            check(heart?.Id == "big_heart" && window.BattleUpgradeText.Contains("Defense 2 → 3/3 · Thorns!"), "The Defense card says it completes Thorns (Thick fur is at its limit)");
+            window.PickBattleUpgrade(heart!.Id); window.ConfirmBattleUpgrade();
+            check(window.Battle.Synergies.Any(y => y.Id == "thorns") && Text(hud).Contains("★ THORNS!") && hud.UpgradesText.Contains("★ Thorns") && window.Battle.CatMaxHp == 120,
+                $"Taking it switches Thorns on with a banner; the HUD keeps a star for it ({hud.UpgradesText})");
+            window.Reset();
+            progress.Completed.RemoveAll(id => id is "up" or "hold");
+            progress.Builds.Clear();
 
             // A survive stage: the HUD leads with the time left; carrying the cat stops it.
             check(window.StartBattle(stage: hold) == null && window.Battle!.Survival, "A survive stage starts");

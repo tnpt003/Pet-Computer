@@ -28,7 +28,7 @@ public sealed partial class PetWindow
     private double prepRefresh;
     private readonly List<(string Id, Border Card, Path Check, TextBlock Name, TextBlock Hint, TextBlock[] StatNames, TextBlock[] StatValues)> prepCards = new();
     private readonly List<(BattleDifficulty Level, Border Chip, Path Check, TextBlock Text)> prepLevelChips = new();
-    private TextBlock? prepTitle, prepWeaponLabel, prepLevelLabel, prepData, prepStatus, prepReadyText, prepGuideText, prepCancelText, prepTryText, prepTipText;
+    private TextBlock? prepTitle, prepWeaponLabel, prepLevelLabel, prepData, prepStatus, prepReadyText, prepGuideText, prepCancelText, prepTryText, prepTipText, prepBuild;
     private Border? prepReady;
     // The preview: its own model and renderer, animated by its own timer only while Try it runs.
     private PetModel? prepPreview;
@@ -61,7 +61,7 @@ public sealed partial class PetWindow
     // For checks: the preview's own model, and whether Try it is running.
     public PetModel? BattlePrepPreview => prepPreview;
     public bool BattlePrepPreviewPlaying => prepPreviewTimer != null;
-    public string BattlePrepText => string.Join("\n", new[] { prepTitle, prepData, prepStatus, prepTryText, prepGuideText, prepTipText, prepCancelText, prepReadyText }
+    public string BattlePrepText => string.Join("\n", new[] { prepTitle, prepBuild, prepData, prepStatus, prepTryText, prepGuideText, prepTipText, prepCancelText, prepReadyText }
         .Where(t => t is { Visibility: Visibility.Visible }).Select(t => t!.Text)
         .Concat(prepCards.SelectMany(c => new[] { c.Name.Text, c.Hint.Text }.Concat(c.StatValues.Select(v => v.Text))))
         .Concat(prepLevelChips.Select(c => c.Text.Text)));
@@ -241,6 +241,7 @@ public sealed partial class PetWindow
         prepWeaponLabel = Line(11.5); prepWeaponLabel.Opacity = 0.75; prepWeaponLabel.Margin = new Thickness(0, 0, 0, 4);
         prepLevelLabel = Line(11.5); prepLevelLabel.Opacity = 0.75; prepLevelLabel.Margin = new Thickness(0, 8, 0, 4);
         prepData = Line(11.5, maxWidth: 470); prepData.Foreground = PrepWarning; prepData.Margin = new Thickness(0, 8, 0, 0);
+        prepBuild = Line(11.5, maxWidth: 470); prepBuild.Margin = new Thickness(0, 8, 0, 0);
         prepStatus = Line(12, true, 470); prepStatus.Foreground = PrepWarning; prepStatus.Margin = new Thickness(0, 8, 0, 0);
 
         // The preview: this cat (coat, accessory) holding the chosen weapon, on a soft stage.
@@ -345,7 +346,7 @@ public sealed partial class PetWindow
             Background = HudBack, BorderBrush = Brushes.White, BorderThickness = new Thickness(1.5), CornerRadius = new CornerRadius(12),
             Padding = new Thickness(16, 12, 16, 12), Margin = new Thickness(6),
             Child = new StackPanel { Children = { prepTitle, new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 10, 0, 0), Children = { stage, choices } },
-                prepData, prepStatus, actions } },
+                prepBuild, prepData, prepStatus, actions } },
             Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 6, ShadowDepth = 1, Opacity = 0.4 }
         };
         panel.SetValue(TextBlock.FontFamilyProperty, PetUi.TextFont);
@@ -407,6 +408,7 @@ public sealed partial class PetWindow
             prepPreview.SwordHitAt = chosen.HitFraction;
             prepPreviewView?.InvalidateVisual();
         }
+        Show(prepBuild, prepStage is StageSpec buildStage && (buildStage.Upgrades || Adventure?.StartBuild(buildStage).Count > 0) ? StageBuildText(buildStage) : null);
         Show(prepData, BattleDataError != null
             ? L("File battle.json của bạn có lỗi nên dùng dữ liệu gốc: ", "Your battle.json has a mistake, so the built-in battle is used: ") + BattleDataError
             : BattleDataCustom ? L("Đang dùng dữ liệu trận tùy chỉnh (battle.json).", "Using your custom battle data (battle.json).") : null);
@@ -419,6 +421,22 @@ public sealed partial class PetWindow
         Show(prepTipText, prepStage?.Tip(English) is { Length: > 0 } ? L("Mẹo màn", "Stage tip") : null);
         bool can = waiting == null;
         if (prepReady.IsEnabled != can) { prepReady.IsEnabled = can; prepReady.Opacity = can ? 1 : 0.5; }
+    }
+
+    // The build a stage starts with: "Build brought in: Defense 2 · Power 1 · ★ Thorns".
+    private string StageBuildText(StageSpec stage)
+    {
+        var build = Adventure?.StartBuild(stage) ?? new Dictionary<string, int>();
+        var cards = BattleTuning.UpgradeList;
+        var parts = new List<string>();
+        foreach (var group in BuildGroups.All)
+        {
+            int points = build.Where(card => cards.FirstOrDefault(u => u.Id == card.Key)?.Group == group).Sum(card => card.Value);
+            if (points > 0) parts.Add($"{BuildGroups.Name(group, English)} {points}");
+            foreach (var y in BattleTuning.SynergyList) if (y.Group == group && points >= y.At) parts.Add("★ " + y.Name(English));
+        }
+        return parts.Count == 0 ? L("Build mang vào màn: chưa có thẻ (thắng màn để giữ thẻ đã chọn sang màn sau)", "Build brought in: no cards yet (win a stage to keep its cards for the next)")
+            : L("Build mang vào màn: ", "Build brought in: ") + string.Join(" · ", parts);
     }
 }
 

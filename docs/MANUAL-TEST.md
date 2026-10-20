@@ -158,6 +158,13 @@ Nên chép dự phòng %LOCALAPPDATA%\DesktopPet\adventure-progress.json (nếu 
 - [ ] Pause (HUD/menu) khi đang choáng: sao đứng yên, tiếp tục thì choáng chạy nốt phần còn lại. Bật Khiên trước cú lao: không mất máu, không choáng. Đẩy slime nhanh lúc nó gồng: không lao.
 - [ ] Lắc mèo ngoài trận (Pet Mode): Chóng mặt vẫn như cũ (lắc nhẹ không chóng mặt). Kết thúc trận khi mèo đang choáng: về desktop không còn sao.
 
+#### Combat Depth — mốc 2: nhóm thẻ, synergy, build cộng dồn (2026-10-20)
+- [ ] Màn 2: mỗi lần chọn có 1 thẻ Phòng thủ, 1 Sức mạnh, 1 Tốc độ; dưới mô tả có dòng "Phòng thủ 0 → 1/3". Bị mất máu: Cá nướng thay một thẻ (không phải nhóm bạn đang theo nhiều nhất). Tiêu đề ghi "giữ sang màn sau khi thắng". Thẻ Tim to có hình trái tim, chọn xong HP tối đa +20 và thanh máu HUD đúng.
+- [ ] HUD ghi "Phòng thủ 1/3 · …"; chọn thẻ thứ 3 cùng nhóm: thẻ đó ghi vàng "Mở Giáp gai!" trước khi chọn, chọn xong banner "★ GIÁP GAI!" và HUD có "★ Giáp gai".
+- [ ] Giáp gai: quái đánh trúng mèo hiện số sát thương trên chính nó. Phá giáp: đòn combo (vệt vàng) mạnh hơn. Dư ảnh: cứ 4 nhát có thêm một tia sáng nhỏ và số sát thương phụ.
+- [ ] Thắng màn 2 → bảng chuẩn bị màn 3 ghi "Build mang vào màn: …" đúng; vào màn 3 HUD đã có điểm nhóm từ đầu. Thua màn 3 rồi chơi lại: vẫn bắt đầu với build của màn 2 (không cộng thẻ của lượt thua). Màn 3 chỉ cho chọn tối đa 3 lần.
+- [ ] Thắng lại màn 2 với build khác → màn 3 nhận build mới. Đóng app giữa chương rồi mở lại: build vẫn còn. Trận tự do: không có thẻ, không có build.
+
 ### Nhật ký chơi thử Battle Mode (beta, thêm 2026-10-18)
 Chơi 3–5 trận mỗi độ khó trên bản publish, ghi 1 dòng/trận. Phiên bản: xem Khác → Giới thiệu (ví dụ `1.0.0 (18cb227)`). Chưa có dòng nào là chưa chơi thử; số mô phỏng trong PROGRESS.md không thay cho bảng này.
 

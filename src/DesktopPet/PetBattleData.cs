@@ -134,6 +134,9 @@ public sealed class StageSpec
     [JsonIgnore] public bool Survival => Objective == "survive";
     // Between waves the user picks one of up to three upgrades (battle.json "upgrades") for this run.
     public bool Upgrades { get; init; }
+    // At most this many picks in one run of the stage (unset: one after every cleared wave that has
+    // another after it; a survive stage would otherwise offer one per repeated wave).
+    public int? MaxUpgrades { get; init; }
     public int RulesVersion { get; init; } = 1;
     // Enemies on the floor at once (unset: the battle's maxAlive).
     public int? MaxAlive { get; init; }
@@ -148,12 +151,15 @@ public sealed class StageSpec
     public string Goal(bool english) => english ? GoalEn : GoalVi;
 }
 
-// An upgrade offered between the waves of an Adventure stage: it lasts for that run only (a new
-// run, stage or battle starts without it). Effect is one the code knows (UpgradeEffects); Amount
-// is a fraction for damage/moveSpeed/attackSpeed/armor (0.2 = 20 %), DIPs/s for knock, HP for heal.
-// MaxStacks: how often one run may take it (0 = no limit). Definitions are shared and never changed.
+// An upgrade offered between the waves of an Adventure stage. A run keeps what it took; in the
+// Adventure a won stage passes its build on to the next stage (AdventureProgress.Builds), a free
+// battle starts without any. Effect is one the code knows (UpgradeLimits); Amount is a fraction for
+// damage/moveSpeed/attackSpeed/armor (0.2 = 20 %), DIPs/s for knock, HP for heal and maxHp.
+// MaxStacks: how often one build may take it (0 = no limit). Group (defense, power, speed or none)
+// counts toward that group's synergy. Definitions are shared and never changed.
 public sealed class UpgradeSpec
 {
+    public string? Group { get; init; }
     public string Id { get; init; } = "";
     public string NameVi { get; init; } = "";
     public string NameEn { get; init; } = "";
@@ -164,6 +170,39 @@ public sealed class UpgradeSpec
     public int MaxStacks { get; init; }
     public string Name(bool english) => english ? NameEn : NameVi;
     public string Describe(bool english) => english ? DescEn : DescVi;
+}
+
+// A build bonus: once a build holds At points of a group (one per card taken), the effect is on
+// for the rest of that build. thorns: Amount of the damage the cat really takes from an enemy's
+// hit goes back to that enemy. armorBreak: combo hits deal Amount more (and pierce a rock's block).
+// echo: every Every-th landed swing adds a second hit of Amount × its damage. The bonus hits
+// (reflected, echoed) never set off another bonus.
+public sealed class SynergySpec
+{
+    public string Id { get; init; } = "";
+    public string Group { get; init; } = "defense";
+    public int At { get; init; } = 3;
+    public string Effect { get; init; } = "thorns";
+    public double Amount { get; init; }
+    public int Every { get; init; } = 4;
+    public string NameVi { get; init; } = "";
+    public string NameEn { get; init; } = "";
+    public string DescVi { get; init; } = "";
+    public string DescEn { get; init; } = "";
+    public string Name(bool english) => english ? NameEn : NameVi;
+    public string Describe(bool english) => english ? DescEn : DescVi;
+}
+
+// The upgrade groups, in the order cards, the HUD and the setup panel show them.
+public static class BuildGroups
+{
+    public static readonly string[] All = { "defense", "power", "speed" };
+    public static string Name(string group, bool english) => group switch
+    {
+        "defense" => english ? "Defense" : "Phòng thủ",
+        "power" => english ? "Power" : "Sức mạnh",
+        _ => english ? "Speed" : "Tốc độ"
+    };
 }
 
 // Assets/battle.json (embedded) is the built-in battle: its numbers, weapons, enemy kinds and
@@ -250,7 +289,7 @@ public static class BattleData
             var current = existing != null ? target[existing] : null;
             if (value is JsonObject part && current is JsonObject whole) { Merge(whole, part, path + key + "."); continue; }
             bool byId = key.Equals("enemies", StringComparison.OrdinalIgnoreCase) || key.Equals("weapons", StringComparison.OrdinalIgnoreCase) ||
-                key.Equals("upgrades", StringComparison.OrdinalIgnoreCase);
+                key.Equals("upgrades", StringComparison.OrdinalIgnoreCase) || key.Equals("synergies", StringComparison.OrdinalIgnoreCase);
             if (byId && value is JsonArray entries && current is JsonArray list) { MergeById(list, entries, path + key); continue; }
             if (existing != null) target.Remove(existing);
             target[key] = value?.DeepClone();
@@ -434,6 +473,23 @@ public static class BattleData
             if (!UpgradeLimits.TryGetValue(u.Effect ?? "", out var limit)) throw new InvalidDataException($"{at}.effect must be one of: {string.Join(", ", UpgradeLimits.Keys)}");
             Within(u.Amount, limit.Min, limit.Max, at + ".amount");
             if (u.MaxStacks is < 0 or > 10) throw new InvalidDataException($"{at}.maxStacks must be 0–10 (0: no limit)");
+            if (u.Group != null && Array.IndexOf(BuildGroups.All, u.Group) < 0) throw new InvalidDataException($"{at}.group must be one of: {string.Join(", ", BuildGroups.All)} (or left out)");
+            if (u.Group != null && u.Effect == "heal") throw new InvalidDataException($"{at}: a heal card cannot belong to a group");
+        }
+        var synergyIds = new HashSet<string>();
+        foreach (var y in s.SynergyList)
+        {
+            if (y == null) throw new InvalidDataException("synergies has an empty entry");
+            string at = $"synergies[{(string.IsNullOrEmpty(y.Id) ? "?" : y.Id)}]";
+            Id(y.Id, at + ".id");
+            if (!synergyIds.Add(y.Id)) throw new InvalidDataException($"synergy id \"{y.Id}\" is used twice");
+            Text(y.NameVi, at + ".nameVi"); Text(y.NameEn, at + ".nameEn");
+            if (y.DescVi == null || y.DescEn == null || y.DescVi.Length > 80 || y.DescEn.Length > 80) throw new InvalidDataException($"{at} descriptions must be at most 80 characters");
+            if (Array.IndexOf(BuildGroups.All, y.Group) < 0) throw new InvalidDataException($"{at}.group must be one of: {string.Join(", ", BuildGroups.All)}");
+            if (!SynergyLimits.TryGetValue(y.Effect ?? "", out var limit)) throw new InvalidDataException($"{at}.effect must be one of: {string.Join(", ", SynergyLimits.Keys)}");
+            Within(y.Amount, limit.Min, limit.Max, at + ".amount");
+            if (y.At is < 1 or > 10) throw new InvalidDataException($"{at}.at must be 1–10");
+            if (y.Effect == "echo" && y.Every is < 2 or > 10) throw new InvalidDataException($"{at}.every must be 2–10");
         }
         if (s.Campaign is CampaignSpec campaign) ValidateCampaign(campaign, Waves, Id, Text);
     }
@@ -443,7 +499,11 @@ public static class BattleData
     public static readonly Dictionary<string, (double Min, double Max)> UpgradeLimits = new()
     {
         ["damage"] = (0.01, 2), ["moveSpeed"] = (0.01, 1), ["attackSpeed"] = (0.01, 0.5),
-        ["knock"] = (1, 500), ["heal"] = (1, 1000), ["armor"] = (0.01, 0.5)
+        ["knock"] = (1, 500), ["heal"] = (1, 1000), ["armor"] = (0.01, 0.5), ["maxHp"] = (1, 500)
+    };
+    public static readonly Dictionary<string, (double Min, double Max)> SynergyLimits = new()
+    {
+        ["thorns"] = (0.05, 2), ["armorBreak"] = (0.05, 3), ["echo"] = (0.1, 2)
     };
 
     private static void ValidateCampaign(CampaignSpec campaign, Action<IReadOnlyList<WaveSpec>?, string> waves, Action<string?, string> id, Action<string?, string> text)
@@ -472,6 +532,7 @@ public static class BattleData
                 if (Array.IndexOf(StageObjectives, stage.Objective) < 0) throw new InvalidDataException($"{where}.objective must be one of: {string.Join(", ", StageObjectives)}");
                 if (stage.RulesVersion is < 1 or > 1000) throw new InvalidDataException($"{where}.rulesVersion must be 1–1000");
                 if (stage.MaxAlive is int alive && alive is < 1 or > 10) throw new InvalidDataException($"{where}.maxAlive must be 1–10");
+                if (stage.MaxUpgrades is int picks && picks is < 1 or > 30) throw new InvalidDataException($"{where}.maxUpgrades must be 1–30");
                 if (stage.Survival && stage.SurviveSeconds is not (>= 10 and <= 600)) throw new InvalidDataException($"{where}.surviveSeconds must be 10–600 for a survive stage");
                 if (!stage.Survival && stage.SurviveSeconds != null) throw new InvalidDataException($"{where}.surviveSeconds is only for a survive stage");
                 waves(stage.Waves, where + ".waves");

@@ -9,8 +9,11 @@ internal static class AdventureUpgradeTests
         const double dt = 1.0 / 60;
         var data = BattleData.Settings;
         var json = data.UpgradeList;
-        check(json.Count == 6 && json.Select(u => u.Effect).Distinct().Count() == 6 && json.All(u => u.NameVi.Length > 0 && u.DescEn.Length > 0),
-            "battle.json lists 6 upgrades, one per effect, named in both languages");
+        check(json.Count == 7 && json.Select(u => u.Effect).Distinct().Count() == 7 && json.All(u => u.NameVi.Length > 0 && u.DescEn.Length > 0),
+            "battle.json lists 7 upgrades, one per effect, named in both languages");
+        check(json.Select(u => (u.Id, u.Group, u.Effect, u.Amount, u.MaxStacks)).SequenceEqual(new BattleSettings().UpgradeList.Select(u => (u.Id, u.Group, u.Effect, u.Amount, u.MaxStacks))) &&
+              data.SynergyList.Select(y => (y.Id, y.Group, y.At, y.Effect, y.Amount, y.Every)).SequenceEqual(new BattleSettings().SynergyList.Select(y => (y.Id, y.Group, y.At, y.Effect, y.Amount, y.Every))),
+            "battle.json's upgrades and synergies match the built-in ones");
         var stages = data.Campaign!.Chapters[0].Stages;
         check(!stages[0].Upgrades && stages.Skip(1).All(s => s.Upgrades && s.RulesVersion >= 2), "Stage 1 has no upgrades; stages 2–5 do (rules version 2 or later)");
         check(stages[2] is { Survival: true, SurviveSeconds: 75 } && stages.Count(s => s.Survival) == 1, "Stage 3 (Hold on) is the survive stage: 75 s");

@@ -2,28 +2,31 @@ using DesktopPet;
 
 // Adventure milestone 5: the chapter's balance in simulation (NOT real play: a real user also
 // lifts the cat out of danger). Every stage × weapon × difficulty, 10 seeds, two players:
-// "idle" lets the cat fight alone (no skills; upgrades by a fixed order) and "simple" also uses
-// skills by plain rules. Prints a table and checks the targets agreed on 2026-10-20.
+// "idle" lets the cat fight alone (no skills) and "simple" also uses skills by plain rules. Each
+// seed plays the chapter in order and carries the build of each won stage into the next (Combat
+// Depth); both players build toward one group. Prints a table and checks the agreed targets.
 internal static class AdventureBalanceTests
 {
-    public readonly record struct Outcome(bool Won, double Seconds, double Hp, int Stuns);
+    public readonly record struct Outcome(bool Won, double Seconds, double Hp, int Stuns, int Synergies, Dictionary<string, int> Build);
 
-    // Order the simple player takes upgrades in (the first one offered wins; fish when hurt).
-    private static readonly string[] Preference = { "sharp", "fast_paws", "thick_fur", "quick_feet", "heavy_push", "grilled_fish" };
+    // Order cards are liked in when the build gives no lead (fish when hurt).
+    private static readonly string[] Preference = { "sharp", "fast_paws", "thick_fur", "big_heart", "quick_feet", "heavy_push", "grilled_fish" };
 
-    public static Outcome Play(BattleSettings data, StageSpec stage, string weapon, BattleDifficulty level, int seed, bool skills)
+    public static Outcome Play(BattleSettings data, StageSpec stage, string weapon, BattleDifficulty level, int seed, bool skills, IReadOnlyDictionary<string, int>? build = null)
     {
         const double dt = 1.0 / 30;
-        var sim = new BattleSim(data, 0, 1600, new Random(seed), level, weapon, stage);
+        var sim = new BattleSim(data, 0, 1600, new Random(seed), level, weapon, stage, build);
         double cat = 800;
         for (double t = 0; t < 600 && !sim.Over; t += dt)
         {
             if (sim.ChoosingUpgrade)
             {
+                // Goes on with the group it has most of (a plan), the fish when low.
                 var offer = sim.UpgradeOffer!;
                 var fish = offer.FirstOrDefault(u => u.Effect == "heal");
-                var pick = fish != null && sim.CatHp < data.CatMaxHp * 0.6 ? fish
-                    : offer.OrderBy(u => Array.IndexOf(Preference, u.Id) is int i && i >= 0 ? i : 99).First();
+                var pick = fish != null && sim.CatHp < sim.CatMaxHp * 0.6 ? fish
+                    : offer.OrderByDescending(u => u.Group != null ? sim.GroupPoints(u.Group) : -1)
+                        .ThenBy(u => Array.IndexOf(Preference, u.Id) is int i && i >= 0 ? i : 99).First();
                 sim.ChooseUpgrade(pick.Id, cat);
             }
             if (skills) UseSkills(sim, cat, data);
@@ -31,14 +34,14 @@ internal static class AdventureBalanceTests
             double run = 72 * data.CatRunScale * sim.MoveFactor; // Walking speed × CatRunScale × upgrades.
             if (order.Command == CatCommand.Move) cat += Math.Clamp(order.X - cat, -run * dt, run * dt);
         }
-        return new(sim.Phase == BattlePhase.Won, sim.FightSeconds, sim.CatHp, sim.StunsTaken);
+        return new(sim.Phase == BattlePhase.Won, sim.FightSeconds, sim.CatHp, sim.StunsTaken, sim.Synergies.Count, sim.Build());
     }
 
     // Plain rules a careful user could follow without lifting the cat.
     private static void UseSkills(BattleSim sim, double cat, BattleSettings data)
     {
         sim.SetCatState(false, false);
-        if (sim.CatHp < data.CatMaxHp * 0.5) sim.Use(BattleSkill.Heal, cat);
+        if (sim.CatHp < sim.CatMaxHp * 0.5) sim.Use(BattleSkill.Heal, cat);
         // A windup that will reach the cat: a plain or slam attack in its reach, or a dash whose lane
         // (shown on the floor) runs over the cat.
         bool Threat(Slime s) => s.State == SlimeState.Windup && (s.Type.Dash
@@ -66,18 +69,38 @@ internal static class AdventureBalanceTests
         var weapons = new[] { BattleWeapon.Sword, BattleWeapon.Hammer };
         const int seeds = 10;
         var table = new Dictionary<(int Stage, string Weapon, BattleDifficulty Level, bool Skills), (double Wins, double Seconds, double Hp)>();
-        Console.WriteLine("Adventure balance (simulation, not real play): stage | weapon | level | player | wins/10 | avg s (wins) | avg HP left (wins) | stuns/run");
+        // Each seed plays the chapter in order; a stage starts with the build the stage before was
+        // won with (a lost stage passes on the last winning build, as a retry would).
+        var played = new Dictionary<(int Stage, string Weapon, BattleDifficulty Level, bool Skills), List<Outcome>>();
+        foreach (var weapon in weapons)
+            foreach (var level in levels)
+                foreach (bool skills in new[] { false, true })
+                    for (int seed = 1; seed <= seeds; seed++)
+                    {
+                        var carried = new Dictionary<string, int>();
+                        for (int i = 0; i < stages.Length; i++)
+                        {
+                            var run = Play(data, stages[i], weapon, level, seed, skills, carried);
+                            if (run.Won) carried = run.Build;
+                            if (!played.TryGetValue((i + 1, weapon, level, skills), out var list)) played[(i + 1, weapon, level, skills)] = list = new();
+                            list.Add(run);
+                        }
+                    }
+        Console.WriteLine("Adventure balance (simulation, not real play): stage | weapon | level | player | wins/10 | avg s (wins) | avg HP left (wins) | stuns/run | synergies at end");
         for (int i = 0; i < stages.Length; i++)
             foreach (var weapon in weapons)
                 foreach (var level in levels)
                     foreach (bool skills in new[] { false, true })
                     {
-                        var runs = Enumerable.Range(1, seeds).Select(seed => Play(data, stages[i], weapon, level, seed, skills)).ToList();
+                        var runs = played[(i + 1, weapon, level, skills)];
                         var wins = runs.Where(r => r.Won).ToList();
                         var row = ((double)wins.Count / seeds, wins.Count > 0 ? wins.Average(r => r.Seconds) : 0, wins.Count > 0 ? wins.Average(r => r.Hp) : 0);
                         table[(i + 1, weapon, level, skills)] = row;
-                        Console.WriteLine($"  {i + 1} | {weapon,-6} | {level,-6} | {(skills ? "simple" : "idle"),-6} | {wins.Count,2}/10 | {row.Item2,6:0} | {row.Item3,4:0} | {runs.Average(r => r.Stuns),4:0.0}");
+                        Console.WriteLine($"  {i + 1} | {weapon,-6} | {level,-6} | {(skills ? "simple" : "idle"),-6} | {wins.Count,2}/10 | {row.Item2,6:0} | {row.Item3,4:0} | {runs.Average(r => r.Stuns),4:0.0} | {runs.Average(r => r.Synergies),3:0.0}");
                     }
+        // A build that is followed reaches its synergy within the chapter (stage 3 at the latest).
+        double reached = played.Where(p => p.Key.Stage == 3).SelectMany(p => p.Value).Count(r => r.Synergies > 0) / (double)played.Where(p => p.Key.Stage == 3).Sum(p => p.Value.Count);
+        check(reached >= 0.9, $"Balance: following one group, a synergy is on by the end of stage 3 in ≥ 90 % of runs ({reached:P0})");
 
         // Targets (2026-10-20): Normal with the simple player wins ≥ 80 % everywhere; Easy wins
         // stages 1–2 even idle; no win takes longer than ~4 minutes; sword and hammer stay close.
@@ -108,8 +131,8 @@ internal static class AdventureBalanceTests
             {
                 var adventure = new Adventure(data.Campaign, AdventureProgress.Load(file));
                 inOrder &= adventure.IsUnlocked(stages[i].Id) && (i + 1 >= stages.Length || !adventure.IsUnlocked(stages[i + 1].Id));
-                var run = Play(data, stages[i], BattleWeapon.Sword, BattleDifficulty.Normal, 1, true);
-                adventure.Apply("chapter" + i, stages[i], true, run.Won, BattleWeapon.Sword, BattleDifficulty.Normal, 1, run.Seconds);
+                var run = Play(data, stages[i], BattleWeapon.Sword, BattleDifficulty.Normal, 1, true, adventure.StartBuild(stages[i]));
+                adventure.Apply("chapter" + i, stages[i], true, run.Won, BattleWeapon.Sword, BattleDifficulty.Normal, 1, run.Seconds, run.Build);
                 inOrder &= run.Won && adventure.Progress.Save(file);
             }
             var done = AdventureProgress.Load(file);

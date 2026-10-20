@@ -17,7 +17,9 @@ namespace DesktopPet;
 // stay apart: an Adventure stage is not the free battle and is not compared with it.
 public sealed class AdventureProgress
 {
-    public const int CurrentVersion = 1;
+    // 2 (Combat Depth): Builds. An older pet reads version 2 as newer and never overwrites it, so
+    // it cannot drop the builds; a version 1 file is read as having none.
+    public const int CurrentVersion = 2;
     public int Version { get; set; } = CurrentVersion;
     public List<string> Completed { get; set; } = new();
     // Reward ids already given (Adventure Update milestone 4), so none is given twice.
@@ -26,6 +28,8 @@ public sealed class AdventureProgress
     public List<string> Seen { get; set; } = new();
     // Best results per "stage|r<rulesVersion>|weapon|difficulty".
     public Dictionary<string, BattleRecord> Records { get; set; } = new();
+    // The build (card id → times taken) each stage was last won with; the next stage starts with it.
+    public Dictionary<string, Dictionary<string, int>> Builds { get; set; } = new();
     // The last finished runs already counted, so a result counted twice (double click, a panel
     // shown again) changes nothing.
     public List<string> Runs { get; set; } = new();
@@ -56,6 +60,7 @@ public sealed class AdventureProgress
         {
             progress = JsonSerializer.Deserialize<AdventureProgress>(File.ReadAllText(path)) ?? throw new JsonException("empty file");
             progress.ReadOnly = progress.Version > CurrentVersion;
+            if (!progress.ReadOnly) progress.Version = CurrentVersion; // An older file is saved back in this layout.
             progress.Normalize();
             return true;
         }
@@ -74,6 +79,9 @@ public sealed class AdventureProgress
         if (Runs.Count > RunsKept) Runs = Runs.Skip(Runs.Count - RunsKept).ToList();
         Records = (Records ?? new()).Where(pair => !string.IsNullOrWhiteSpace(pair.Key) && pair.Value != null)
             .ToDictionary(pair => pair.Key, pair => { pair.Value.Normalize(); return pair.Value; });
+        Builds = (Builds ?? new()).Where(pair => !string.IsNullOrWhiteSpace(pair.Key) && pair.Value != null)
+            .ToDictionary(pair => pair.Key, pair => pair.Value.Where(card => !string.IsNullOrWhiteSpace(card.Key) && card.Value is > 0 and <= 100)
+                .ToDictionary(card => card.Key, card => card.Value));
     }
 
     public bool Save(string path)
@@ -145,9 +153,19 @@ public sealed class Adventure
     public BattleRecord Record(StageSpec stage, string weapon, BattleDifficulty difficulty) =>
         Progress.Records.TryGetValue(AdventureProgress.RecordKey(stage, weapon, difficulty), out var record) ? record : new();
 
+    // The build a stage starts with: the one the stage before it in its chapter was last won with
+    // (empty for the first stage, or before that stage is won).
+    public IReadOnlyDictionary<string, int> StartBuild(StageSpec stage)
+    {
+        if (Locate(stage.Id) is not { } at || at.Index == 0) return new Dictionary<string, int>();
+        return Progress.Builds.TryGetValue(at.Chapter.Stages[at.Index - 1].Id, out var build) ? build : new Dictionary<string, int>();
+    }
+
     // A run that ended in a win or a loss (never one the user ended). Each run id counts once;
-    // a loss never takes back what was opened before.
-    public AdventureOutcome Apply(string runId, StageSpec stage, bool ranked, bool won, string weapon, BattleDifficulty difficulty, int defeated, double seconds)
+    // a loss never takes back what was opened before. A win keeps its build for the next stage
+    // (replacing the one this stage was won with before); a loss changes no build.
+    public AdventureOutcome Apply(string runId, StageSpec stage, bool ranked, bool won, string weapon, BattleDifficulty difficulty, int defeated, double seconds,
+        IReadOnlyDictionary<string, int>? build = null)
     {
         if (!ranked || string.IsNullOrEmpty(runId) || Progress.Runs.Contains(runId) || Locate(stage.Id) == null) return default;
         Progress.Runs.Add(runId);
@@ -162,6 +180,7 @@ public sealed class Adventure
             if (!stage.Survival && double.IsFinite(seconds) && seconds > 0 && (record.BestSeconds is not double best || seconds < best - 0.05)) { record.BestSeconds = seconds; fastest = true; }
         }
         if (defeated > record.MostDefeated) { record.MostDefeated = defeated; most = true; }
+        if (won) Progress.Builds[stage.Id] = (build ?? new Dictionary<string, int>()).Where(card => card.Value > 0).ToDictionary(card => card.Key, card => card.Value);
         bool first = false;
         StageSpec? unlocked = null;
         if (won && !IsCompleted(stage.Id))

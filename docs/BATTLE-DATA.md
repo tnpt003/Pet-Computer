@@ -205,8 +205,25 @@ Màn có `"upgrades": true` sẽ cho chọn thẻ sau mỗi đợt đã dọn (k
 | `knock` | 1–500 (DIP/s) | cộng thêm vào lực đẩy lùi mỗi nhát |
 | `heal` | 1–1000 (HP) | hồi ngay; không được đưa ra khi HP đầy |
 | `armor` | 0.01–0.5 | sát thương nhận vào × (1 − tổng), không dưới 30% |
+| `maxHp` | 1–500 (HP) | cộng HP tối đa; lúc chọn hồi luôn đúng lượng đó (Combat Depth mốc 2) |
 
-`maxStacks` 0–10 (0 là không giới hạn). Tên tối đa 32 ký tự, mô tả tối đa 80. Effect lạ, amount ngoài khoảng, id trùng hoặc danh sách rỗng đều làm cả file bị bỏ. Nâng cấp chỉ có hiệu lực trong lượt đang chơi.
+`maxStacks` 0–10 (0 là không giới hạn). Tên tối đa 32 ký tự, mô tả tối đa 80. Effect lạ, amount ngoài khoảng, id trùng hoặc danh sách rỗng đều làm cả file bị bỏ.
+
+### Nhóm thẻ, synergy và build cộng dồn (Combat Depth mốc 2)
+
+- `group`: `defense`, `power` hoặc `speed` (bỏ trống = không thuộc nhóm). Thẻ `heal` không được có nhóm. Mỗi lần lấy một thẻ có nhóm = 1 điểm nhóm đó. Bản gốc: Defense = Lông dày + Tim to (`big_heart`, +20 HP tối đa, tối đa 2), Power = Sắc bén + Đẩy mạnh, Speed = Nhanh chân + Ra đòn nhanh.
+- Luật đưa thẻ: mỗi nhóm còn thẻ chưa chạm `maxStacks` góp 1 thẻ ngẫu nhiên (thứ tự Defense, Power, Speed); nhóm hết thẻ thì thẻ khác lấp chỗ. Mèo mất máu thì thẻ hồi máu thay thẻ không nhóm hoặc thẻ của nhóm build đang ít điểm nhất; HP đầy không bao giờ có thẻ hồi máu.
+- `synergies` (gộp theo `id`): `{ "id", "group", "at": 1–10, "effect", "amount", "every", "nameVi/En" ≤ 32, "descVi/En" ≤ 80 }`. Đạt `at` điểm của nhóm thì bật vĩnh viễn trong build đó, banner "★ TÊN!" một lần.
+
+| effect | amount | Ý nghĩa (bản gốc) |
+| --- | --- | --- |
+| `thorns` | 0.05–2 | Giáp gai: phần sát thương mèo **thực nhận** (sau giáp) dội lại quái vừa đánh. Khiên chặn thì không dội. (0.35) |
+| `armorBreak` | 0.05–3 | Phá giáp: đòn combo × (1 + amount). Xuyên khả năng chặn của slime đá sẽ có ở mốc 3. (0.3) |
+| `echo` | 0.1–2, `every` 2–10 | Dư ảnh: cứ `every` nhát trúng thì thêm một đòn amount × sát thương nhát đó. (0.5, mỗi 4 nhát) |
+
+Đòn dội lại và đòn dư ảnh không kích hoạt thêm bất kỳ hiệu ứng build nào (không có vòng lặp).
+- Build cộng dồn (Phiêu lưu): thắng màn N lưu build lúc kết thúc (không lưu thẻ hồi máu) vào `adventure-progress.json` (`Builds`, file phiên bản 2). Màn N+1, lần đầu hay chơi lại, luôn bắt đầu bằng build đã lưu của màn N; màn đầu chương bắt đầu trống. Thua không đổi build đã lưu; thắng lại màn cũ thì thay build lưu của màn đó. Chơi bằng dữ liệu tùy chỉnh thì không lưu gì. Trận tự do không có build. Thẻ trong build mà dữ liệu không còn thì bị bỏ qua; số lần vượt `maxStacks` bị cắt.
+- `maxUpgrades` (1–30) trên một màn: số lần chọn thẻ tối đa trong một lượt (màn 3 gốc: 3). Không đặt: mỗi đợt dọn xong mà còn đợt sau thì có một lần chọn.
 
 Màn sinh tồn: `"objective": "survive", "surviveSeconds": 10–600`. Các đợt ra theo thứ tự, hết đợt thì đợt cuối lặp lại cho tới hết giờ. Đồng hồ dừng khi mèo đang được cầm. `surviveSeconds` trên màn "clear" là lỗi.
 

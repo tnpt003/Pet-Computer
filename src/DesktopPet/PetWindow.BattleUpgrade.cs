@@ -16,7 +16,7 @@ public sealed partial class PetWindow
 {
     private Window? upgradeWindow;
     private string? upgradePick;
-    private readonly List<(string Id, Border Card, TextBlock Name, TextBlock Desc, TextBlock Count)> upgradeCards = new();
+    private readonly List<(string Id, Border Card, TextBlock Name, TextBlock Desc, TextBlock Count, TextBlock Build)> upgradeCards = new();
     private TextBlock? upgradeTitle, upgradeConfirmText;
     private Border? upgradeConfirm;
 
@@ -25,7 +25,7 @@ public sealed partial class PetWindow
     public string? BattleUpgradePick => upgradePick;
     public bool BattleUpgradeConfirmEnabled => upgradeConfirm?.IsEnabled == true;
     public string BattleUpgradeText => string.Join("\n", new[] { upgradeTitle?.Text, upgradeConfirmText?.Text }
-        .Concat(upgradeCards.SelectMany(c => new[] { c.Name.Text, c.Desc.Text, c.Count.Text })));
+        .Concat(upgradeCards.SelectMany(c => new[] { c.Name.Text, c.Desc.Text, c.Count.Text, c.Build.Text })));
 
     // Each battle frame: show the panel while the battle offers cards, hide it for a fullscreen app.
     private void TickBattleUpgrade()
@@ -56,6 +56,7 @@ public sealed partial class PetWindow
         CloseBattleUpgrade();
         SetBattlePause(BattlePause.Upgrade, false);
         PlayBattleSound();
+        ShowBattleBanners(); // A synergy switched on by this card.
         battle.ClearEvents();
         RequestBattleRedraw();
         UpdateBattleHud();
@@ -84,15 +85,17 @@ public sealed partial class PetWindow
             var name = new TextBlock { Foreground = Brushes.White, FontSize = 13.5, FontWeight = FontWeights.Bold, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center, Margin = new Thickness(0, 6, 0, 0) };
             var desc = new TextBlock { Foreground = Brushes.White, FontSize = 11.5, Opacity = 0.9, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center, Margin = new Thickness(0, 3, 0, 0) };
             var count = new TextBlock { Foreground = Brushes.White, FontSize = 10.5, Opacity = 0.65, TextAlignment = TextAlignment.Center, Margin = new Thickness(0, 4, 0, 0) };
+            // The card's group and its progress toward the group's synergy (gold when it completes it).
+            var build = new TextBlock { Foreground = Brushes.White, FontSize = 10.5, FontWeight = FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center, Margin = new Thickness(0, 4, 0, 0) };
             var card = new Border
             {
                 Width = 132, MinHeight = 150, CornerRadius = new CornerRadius(10), Padding = new Thickness(8, 10, 8, 8), Margin = new Thickness(0, 0, 8, 0),
                 Cursor = System.Windows.Input.Cursors.Hand,
-                Child = new StackPanel { Children = { new UpgradeIcon { Effect = upgrade.Effect, Width = 52, Height = 52, HorizontalAlignment = HorizontalAlignment.Center }, name, desc, count } }
+                Child = new StackPanel { Children = { new UpgradeIcon { Effect = upgrade.Effect, Width = 52, Height = 52, HorizontalAlignment = HorizontalAlignment.Center }, name, desc, build, count } }
             };
             card.MouseLeftButtonDown += (_, e) => { PickBattleUpgrade(id); e.Handled = true; };
             row.Children.Add(card);
-            upgradeCards.Add((id, card, name, desc, count));
+            upgradeCards.Add((id, card, name, desc, count, build));
         }
         var (confirm, confirmText, _) = HudButton(() => ConfirmBattleUpgrade(), plain: true);
         confirm.Background = PrepChosen; confirm.Padding = new Thickness(18, 6, 18, 5); confirm.MinWidth = 110; confirm.Margin = new Thickness(0, 12, 8, 0);
@@ -129,8 +132,10 @@ public sealed partial class PetWindow
     private void UpdateBattleUpgrade()
     {
         if (upgradeTitle == null || upgradeConfirm == null || battle == null) return;
-        upgradeTitle.Text = L("Chọn một nâng cấp cho lượt này", "Pick an upgrade for this run");
-        foreach (var (id, card, name, desc, count) in upgradeCards)
+        upgradeTitle.Text = battle.Stage != null
+            ?L("Chọn một nâng cấp (giữ sang màn sau khi thắng)", "Pick an upgrade (kept for the next stage when you win)")
+            : L("Chọn một nâng cấp cho lượt này", "Pick an upgrade for this run");
+        foreach (var (id, card, name, desc, count, build) in upgradeCards)
         {
             var spec = battle.Settings.UpgradeList.FirstOrDefault(u => u.Id == id);
             if (spec == null) continue;
@@ -139,6 +144,8 @@ public sealed partial class PetWindow
             desc.Text = spec.Describe(English);
             int have = battle.Stacks(id);
             count.Text = spec.MaxStacks > 0 ? L($"Đã có {have}/{spec.MaxStacks}", $"Have {have}/{spec.MaxStacks}") : have > 0 ? L($"Đã lấy {have} lần", $"Taken {have}×") : "";
+            build.Text = CardBuildText(battle, spec);
+            build.Foreground = battle.Unlocks(spec) != null ? PrepWarning : Brushes.White;
             card.Background = chosen ? PrepChosen : PrepCardBack;
             card.BorderBrush = chosen ? Brushes.White : PrepCardRim;
             card.BorderThickness = new Thickness(chosen ? 2.5 : 1);
@@ -146,6 +153,17 @@ public sealed partial class PetWindow
         upgradeConfirmText!.Text = L("Xác nhận", "Confirm");
         bool can = upgradePick != null;
         if (upgradeConfirm.IsEnabled != can) { upgradeConfirm.IsEnabled = can; upgradeConfirm.Opacity = can ? 1 : 0.5; }
+    }
+
+    // "Defense 1 → 2/3", "Defense 2 → 3/3 · Thorns!" or, for a card of no group, that it counts for none.
+    private string CardBuildText(BattleSim b, UpgradeSpec card)
+    {
+        if (card.Group is not string group) return L("Không tính vào nhóm", "Counts for no group");
+        int points = b.GroupPoints(group), goal = 0;
+        foreach (var y in b.Settings.SynergyList) if (y.Group == group && !b.Synergies.Contains(y) && (goal == 0 || y.At < goal)) goal = y.At;
+        string text = BuildGroups.Name(group, English) + $" {points} → {points + 1}" + (goal > 0 ? $"/{goal}" : "");
+        if (b.Unlocks(card) is SynergySpec synergy) text += L($" · Mở {synergy.Name(false)}!", $" · {synergy.Name(true)}!");
+        return text;
     }
 
     // "Sharp edge ×2 · Quick feet" for the HUD and the result panel (empty without upgrades).
@@ -189,6 +207,11 @@ public sealed class UpgradeIcon : FrameworkElement
                 dc.DrawGeometry(Gold, Ink, Shape($"M {cx - 14},{cy - 5} L {cx + 4},{cy - 5} L {cx + 4},{cy - 12} L {cx + 16},{cy} L {cx + 4},{cy + 12} L {cx + 4},{cy + 5} L {cx - 14},{cy + 5} Z"));
                 dc.DrawLine(Line, new Point(cx - 18, cy - 12), new Point(cx - 14, cy - 8));
                 dc.DrawLine(Line, new Point(cx - 18, cy + 12), new Point(cx - 14, cy + 8));
+                break;
+            case "maxHp": // A heart.
+                dc.DrawGeometry(Pink, Ink, Shape($"M {cx},{cy + 13} C {cx - 18},{cy + 1} {cx - 15},{cy - 14} {cx},{cy - 6} C {cx + 15},{cy - 14} {cx + 18},{cy + 1} {cx},{cy + 13} Z"));
+                dc.DrawLine(Line, new Point(cx - 4, cy - 1), new Point(cx + 4, cy - 1));
+                dc.DrawLine(Line, new Point(cx, cy - 5), new Point(cx, cy + 3));
                 break;
             case "heal": // A fish.
                 dc.DrawGeometry(Pink, Ink, Shape($"M {cx + 6},{cy} L {cx + 17},{cy - 8} L {cx + 17},{cy + 8} Z"));

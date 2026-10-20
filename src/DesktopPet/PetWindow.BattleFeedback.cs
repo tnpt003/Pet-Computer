@@ -17,7 +17,7 @@ public sealed partial class PetWindow
     {
         [BattleEventKind.Won] = ("excited", 9), [BattleEventKind.Lost] = ("annoyed", 9),
         [BattleEventKind.BossAppeared] = ("surprised", 8), [BattleEventKind.CatHurt] = ("surprised", 7),
-        [BattleEventKind.WaveCleared] = ("excited", 6),
+        [BattleEventKind.WaveCleared] = ("excited", 6), [BattleEventKind.SynergyUnlocked] = ("excited", 6),
         [BattleEventKind.Healed] = ("satisfied", 5), [BattleEventKind.UpgradeChosen] = ("satisfied", 5), [BattleEventKind.Cheered] = ("excited", 5), [BattleEventKind.Blocked] = ("ball_tap", 5),
         [BattleEventKind.SlimeDefeated] = ("pop", 4), [BattleEventKind.BombExploded] = ("pop", 4), [BattleEventKind.ComboHit] = ("ball_tap", 4),
         [BattleEventKind.SlimeHit] = ("squish", 3), [BattleEventKind.EnemyHealed] = ("ball_tap", 3),
@@ -52,6 +52,8 @@ public sealed partial class PetWindow
                 BattleEventKind.WaveStarted => L($"ĐỢT {(int)e.Value}", $"WAVE {(int)e.Value}"),
                 BattleEventKind.BossSummoned => L($"{BossName()} gọi quân!", $"The {BossName()} calls for help!"),
                 BattleEventKind.BossEnraged => L($"{BossName()} nổi giận!", $"The {BossName()} is angry!"),
+                BattleEventKind.SynergyUnlocked when (int)e.Value >= 0 && (int)e.Value < battle.Settings.SynergyList.Count =>
+                    "★ " + battle.Settings.SynergyList[(int)e.Value].Name(English).ToUpper(System.Globalization.CultureInfo.CurrentCulture) + "!",
                 BattleEventKind.EnemyHealing when !healerExplained => L("Quái hồi máu! Hạ nó trước", "A healer! Take it down first"),
                 BattleEventKind.Won => L("CHIẾN THẮNG!", "VICTORY!"),
                 BattleEventKind.Lost => L("THUA RỒI…", "DEFEATED…"),

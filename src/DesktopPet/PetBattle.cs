@@ -914,6 +914,9 @@ public sealed class BattleSim
             Defeated++;
             if (slime.IsBoss) { BossDefeated = true; DefeatedBoss = slime.Type; }
             if (SelectedId == slime.Id) SelectedId = null;
+            // A defeated healer's guard ends with it (after the whole blast for a bomb, which hits
+            // everything in it at once).
+            if (slime.MendingId != 0) { slime.MendingId = 0; if (!blasting) RefreshGuards(); }
             AddEffect(BattleEffectKind.Poof, slime.X, slime.Height / 2, slime.IsBoss ? 2 : 1);
             events.Add(new(BattleEventKind.SlimeDefeated, slime.X, slime.IsBoss ? 1 : 0));
             return HitResult.Landed;
@@ -1238,10 +1241,7 @@ public sealed class BattleSim
             decisionCatX = catX;
             AssignGuards();
         }
-        // Who a heal guards: only allies of supports still winding up their heal on them.
-        foreach (var e in slimes) e.Mended = false;
-        foreach (var e in slimes)
-            if (e.State == SlimeState.Casting && e.MendingId != 0 && Find(e.MendingId) is { Targetable: true } guarded) guarded.Mended = true;
+        RefreshGuards();
         // By index over the slimes there were at the start: a hit on the cat can send damage back
         // (Thorns) and make a boss call helpers, which join the list and move from the next frame.
         int count = slimes.Count;
@@ -1573,11 +1573,22 @@ public sealed class BattleSim
         return true;
     }
 
+    // Who a heal guards: only allies of supports still winding up their heal on them. Run again the
+    // moment a guard ends (heal done, healer pushed or defeated), so no hit falls in a stale guard;
+    // another healer's guard still standing is kept.
+    private void RefreshGuards()
+    {
+        foreach (var e in slimes) e.Mended = false;
+        foreach (var e in slimes)
+            if (e.State == SlimeState.Casting && e.MendingId != 0 && Find(e.MendingId) is { Targetable: true } guarded) guarded.Mended = true;
+    }
+
     // The heal lands if its ally is still there, alive and in reach (a little slack for movement).
     private void FinishHeal(Slime healer)
     {
         healer.MendingId = 0;
         healer.Set(SlimeState.Recover);
+        RefreshGuards();
         healer.HealCooldown = healer.Type.HealCooldown;
         var ally = Find(healer.HealTargetId);
         healer.HealTargetId = 0;
@@ -1707,6 +1718,9 @@ public sealed class BattleSim
         }
     }
 
+    // True while one bomb's blast is dealt (see StepBombs).
+    private bool blasting;
+
     private void StepBombs(double dt)
     {
         for (int i = bombs.Count - 1; i >= 0; i--)
@@ -1717,9 +1731,14 @@ public sealed class BattleSim
             bombs.RemoveAt(i);
             AddEffect(BattleEffectKind.Explosion, bomb.X, 0, Settings.BombRadius);
             events.Add(new(BattleEventKind.BombExploded, bomb.X));
+            // One blast: a healer and the ally it guards caught together keep the guard for it,
+            // whichever comes first in the list.
+            blasting = true;
             foreach (var slime in slimes.ToArray())
                 if (slime.Targetable && Math.Abs(slime.X - bomb.X) <= Settings.BombRadius + slime.HitWidth / 2)
                     Damage(slime, Settings.BombDamage, DamageSource.Bomb);
+            blasting = false;
+            RefreshGuards();
         }
     }
 
@@ -2138,14 +2157,14 @@ public sealed class BattleSim
             if (slime.State == SlimeState.Casting)
             {
                 slime.HealCooldown = slime.Type.HealCooldown; slime.HealTargetId = 0;
-                if (Find(slime.MendingId) is Slime warded) warded.Mended = false; // Its guard ends with it.
-                slime.MendingId = 0;
+                slime.MendingId = 0; // Its guard ends with it (RefreshGuards below).
             }
             // So is a teleport.
             if (slime.State == SlimeState.Teleporting) { slime.TeleportCooldown = slime.Type.TeleportCooldown; slime.TeleportTargetId = 0; }
             slime.KnockVelocity = push * Settings.PushSpeed * slime.Type.PushFactor;
             slime.StunRemaining = Settings.PushStunSeconds * slime.Type.StunFactor;
             slime.Set(SlimeState.Stunned);
+            RefreshGuards();
             AddEffect(BattleEffectKind.Push, slime.X, slime.Height / 2);
             events.Add(new(BattleEventKind.Pushed, slime.X));
         }

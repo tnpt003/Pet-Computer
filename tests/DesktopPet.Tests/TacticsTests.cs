@@ -24,10 +24,13 @@ internal static class TacticsTests
     private static readonly EnemyType Boss = new() { Id = "boss", MaxHp = 1000, Speed = 0, Damage = 0, Range = 110, Windup = 9, AttackCooldown = 9, Scale = 2, Boss = true };
 
     // The kinds spawned in order (none of them moving unless given a speed), then put at these places.
-    private static BattleSim Field(EnemyType[] kinds, params (string Kind, double X)[] place)
+    private static BattleSim Field(EnemyType[] kinds, params (string Kind, double X)[] place) => Field(0, 1, kinds, place);
+
+    // catDamage: the cat's weapon (0: its hits do nothing); bombRadius: how far a blast reaches.
+    private static BattleSim Field(double catDamage, double bombRadius, EnemyType[] kinds, params (string Kind, double X)[] place)
     {
-        var settings = new BattleSettings { FirstWaveDelay = 0, SpawnInterval = 0, CatDamage = 0, CatMaxHp = 1_000_000, MaxAlive = 8, SpawnMinDistance = 0,
-            BombDamage = 5, BombDelay = 0.01, BombCooldown = 0.1, BombRadius = 1, Enemies = kinds,
+        var settings = new BattleSettings { FirstWaveDelay = 0, SpawnInterval = 0, CatDamage = catDamage, CatMaxHp = 1_000_000, MaxAlive = 8, SpawnMinDistance = 0,
+            BombDamage = 5, BombDelay = 0.01, BombCooldown = 0.1, BombRadius = bombRadius, Enemies = kinds,
             Plan = new[] { new WaveSpec { Groups = place.Select(p => new WaveGroup { Enemy = p.Kind }).ToArray() } } };
         var sim = new BattleSim(settings, 0, 1600, seed: 1);
         for (int i = 0; i < 120 && sim.Slimes.Count(s => s.Targetable) < place.Length; i++) sim.Step(dt, -5000, false);
@@ -96,6 +99,48 @@ internal static class TacticsTests
         Run(pick, 2, 300, () => pick.Slimes[0].Mended);
         pick.Step(dt, 300, false);
         check(pick.Slimes[0].Mended && pick.TargetId == pick.Slimes[2].Id, "The cat goes for another enemy while its nearest one is guarded");
+
+        // The guard ends on the very frame the heal lands, not a frame later: a bomb going off at
+        // the start of the next frame (bombs come before the slimes) hits.
+        var end = Field(new[] { Fighter(), Mender() }, ("slime", 600), ("mender", 900));
+        var healed = end.Slimes[0];
+        var ender = end.Slimes[1];
+        healed.Hp = 300;
+        Run(end, 2, 100, () => ender.State == SlimeState.Casting);
+        Run(end, 2, 100, () => ender.State != SlimeState.Casting);
+        bool endedNow = ender.State == SlimeState.Recover && !healed.Mended && healed.Hp > 300;
+        end.Use(BattleSkill.Bomb, healed.Id, 100);
+        double mendedHp = healed.Hp;
+        end.Step(dt, 100, false);
+        check(endedNow && healed.Hp < mendedHp && end.WardedHits == 0, "The guard ends on the frame the heal lands (the next frame's bomb lands)");
+
+        // A healer defeated by the cat ends its guard at once (the cat's hit comes after the slimes).
+        var fall = Field(1000, 1, new[] { Fighter(), Mender() }, ("slime", 1400), ("mender", 900));
+        var spared = fall.Slimes[0];
+        var victim = fall.Slimes[1];
+        spared.Hp = 300;
+        Run(fall, 2, 100, () => victim.State == SlimeState.Casting);
+        bool wasGuarded = spared.Mended;
+        Run(fall, 1, 880, () => victim.State == SlimeState.Defeated);
+        check(wasGuarded && victim.State == SlimeState.Defeated && !spared.Mended, "A healer the cat defeats ends its guard on that frame");
+
+        // One blast over a healer and the ally it guards: the guard holds for that blast whichever
+        // comes first in the list, and ends right after it.
+        foreach (bool healerFirst in new[] { false, true })
+        {
+            var both = healerFirst
+                ? Field(0, 60, new[] { Fighter(), Mender() }, ("mender", 640), ("slime", 600))
+                : Field(0, 60, new[] { Fighter(), Mender() }, ("slime", 600), ("mender", 640));
+            var guardedOne = both.Slimes.First(x => x.Type.Id == "slime");
+            var support = both.Slimes.First(x => x.Type.Id == "mender");
+            guardedOne.Hp = 300;
+            Run(both, 2, 100, () => support.State == SlimeState.Casting);
+            support.Hp = 1;
+            both.Use(BattleSkill.Bomb, guardedOne.Id, 100);
+            both.Step(dt, 100, false);
+            check(support.State == SlimeState.Defeated && guardedOne.Hp == 300 && both.WardedHits == 1 && !guardedOne.Mended,
+                $"A blast over a healer and its ally: the ally is guarded from it, the guard ends after ({(healerFirst ? "healer" : "ally")} first in the list)");
+        }
     }
 
     private static void FleeChecks(Action<bool, string> check)

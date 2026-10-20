@@ -25,5 +25,7 @@ if ($python) {
 if ($LASTEXITCODE -ne 0) { throw 'Physics/AI checks failed.' }
 if ($Ui) {
     & $dotnet run --project (Join-Path $projectRoot 'tests\DesktopPet.UiChecks') -c Release
-    if ($LASTEXITCODE -ne 0) { throw 'WPF regression checks failed. Run from an interactive Windows desktop.' }
+    # 1: some checks failed (listed above); anything else: the run broke before finishing.
+    if ($LASTEXITCODE -eq 1) { throw 'WPF regression checks failed (see the FAIL lines above).' }
+    if ($LASTEXITCODE -ne 0) { throw "WPF checks could not finish (exit code $LASTEXITCODE). Run from an interactive Windows desktop; see the error above." }
 }

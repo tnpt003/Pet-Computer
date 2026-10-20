@@ -43,8 +43,11 @@ internal static class UpgradeChecks
         var stage = new StageSpec { Id = "up", NameVi = "Thử", NameEn = "Trial", Upgrades = true, Waves = new[] { One(), One(), One() } };
         var hold = new StageSpec { Id = "hold", NameVi = "Giữ", NameEn = "Hold", Objective = "survive", SurviveSeconds = 30, Waves = new[] { One() } };
         var later = new StageSpec { Id = "later", NameVi = "Sau", NameEn = "Later", Upgrades = true, Waves = new[] { One(), One(), One() } };
-        var tuning = new BattleSettings { FirstWaveDelay = 0, SpawnInterval = 0, SlimeMaxHp = 1, SlimeDamage = 0, WaveBreakSeconds = 0.5, OutroSeconds = 0.5,
+        // rareChance: 0 keeps the offers to the common cards these checks expect (a rare card may
+        // otherwise take a group's place); the rare Defense card has its own check below.
+        BattleSettings Tuning(double rare) => new() { FirstWaveDelay = 0, SpawnInterval = 0, SlimeMaxHp = 1, SlimeDamage = 0, WaveBreakSeconds = 0.5, OutroSeconds = 0.5, RareChance = rare,
             Campaign = new CampaignSpec { Chapters = new[] { new ChapterSpec { Id = "c", NameVi = "C", NameEn = "C", Stages = new[] { stage, hold, later } } } } };
+        var tuning = Tuning(0);
         window.BattleTuning = tuning;
         window.ReloadAdventureProgress();
         try
@@ -138,6 +141,19 @@ internal static class UpgradeChecks
             check(window.Battle.Synergies.Any(y => y.Id == "thorns") && Text(hud).Contains("★ THORNS!") && hud.UpgradesText.Contains("★ Thorns") && window.Battle.CatMaxHp == 120,
                 $"Taking it switches Thorns on with a banner; the HUD keeps a star for it ({hud.UpgradesText})");
             window.Reset();
+            // The rare Defense card (Turtle shell) in its place completes the group just the same.
+            window.BattleTuning = Tuning(1);
+            check(window.StartBattle(stage: later) == null && window.Battle!.Stacks("thick_fur") == 2, "With rare cards always offered the stage starts with the same build");
+            hud = Field<BattleHud>(window, "battleHud");
+            Fight(0.1);
+            UntilOffer();
+            var shell = window.Battle!.UpgradeOffer?.FirstOrDefault(u => u.Group == "defense");
+            check(shell?.Id == "turtle_shell" && window.BattleUpgradeText.Contains("Defense 2 → 3/3 · Thorns!"), "The rare Defense card also says it completes Thorns");
+            window.PickBattleUpgrade(shell!.Id); window.ConfirmBattleUpgrade();
+            check(window.Battle.Synergies.Any(y => y.Id == "thorns") && Text(hud).Contains("★ THORNS!") && hud.UpgradesText.Contains("★ Thorns") && hud.UpgradesText.Contains("◆ Turtle shell") && window.Battle.CatMaxHp == 100,
+                $"Taking it switches Thorns on too; the HUD shows the star and the rare card ({hud.UpgradesText})");
+            window.Reset();
+            window.BattleTuning = tuning;
             progress.Completed.RemoveAll(id => id is "up" or "hold");
             progress.Builds.Clear();
 

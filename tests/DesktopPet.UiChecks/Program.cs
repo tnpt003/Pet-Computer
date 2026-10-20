@@ -41,9 +41,10 @@ internal static class Program
             }
             catch (Exception ex)
             {
+                // 2: the run itself broke (often no interactive desktop), not a failed check (1).
                 Console.Error.WriteLine(ex);
                 window.Close();
-                app.Shutdown(1);
+                app.Shutdown(2);
             }
         };
         return app.Run(window);

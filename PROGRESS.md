@@ -4,6 +4,13 @@ Cập nhật: 2026-10-20 (Asia/Saigon).
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
+## Review Enemy Tactics — mốc A: R1 + R2 (2026-10-20)
+- Người dùng: kiểm chứng review đầu docs/NEXT-STEPS.md rồi "ok" kế hoạch mốc A; chọn phương án (a): một quả bom trúng cả slime hồi máu lẫn đồng minh đang được miễn thì đồng minh vẫn miễn quả đó, không phụ thuộc thứ tự danh sách.
+- Kiểm chứng: R1 đúng (miễn còn sót tới hết nhịp và qua lượt bom đầu nhịp sau, khi hồi xong hoặc slime hồi máu bị hạ; Đẩy và kết thúc trận vẫn đúng). R2 đúng (seed ngẫu nhiên + thẻ hiếm 15% làm test Big Heart chập chờn; game không sai). R3 đúng (bot Đẩy ngay nhịp đầu gồng) — mốc B, chưa làm. R4 backlog, chưa làm; đã có sẵn một phần test battle.json khớp code mặc định.
+- Đã làm: PetBattle.cs `RefreshGuards()` tính lại cờ miễn, gọi ở đầu StepSlimes, cuối FinishHeal, khi slime hồi máu bị hạ (sau cả vụ nổ nếu là bom), sau Đẩy. Không đổi lượng hồi/thời gian gồng/hồi chiêu; rulesVersion giữ nguyên (chỉ ngắn đi ~1 nhịp). UpgradeChecks: dữ liệu test `rareChance` 0 cho các check Big Heart, thêm check `rareChance` 1: Mai rùa cũng ghi "Thorns!", bật Giáp gai, HUD có "◆ Turtle shell". UiChecks trả mã 2 khi lỗi ngoại lệ/môi trường, 1 khi có check sai; scripts/test.ps1 báo theo từng mã.
+- Test thật: 4 test mới trong TacticsTests (miễn hết đúng nhịp hồi xong; mèo hạ slime hồi máu thì hết miễn ngay nhịp đó; bom trùm cả hai, hai thứ tự danh sách). Trên code cũ 2 test đầu FAIL (đã tái hiện), bom đạt (giữ hành vi cũ). scripts/test.ps1 -Ui: 55 Python OK; 1044 C# đạt; 519 WPF đạt; chạy UiChecks thêm 2 lần: 519/519 cả hai.
+- Hạn chế: lỗi build của UiChecks (dotnet run trả 1) vẫn hiện thông báo "checks failed".
+
 ## Bàn giao review cho Claude (2026-10-20)
 - Đã ghi review mới lên đầu docs/NEXT-STEPS.md: vòng đời Mended cần tái hiện, fixture gacha WPF, mô phỏng và backlog tối ưu. Claude kiểm chứng trước khi sửa.
 - Kết quả lần review trên 7e0d14e: 55 Python + 1040 C# qua; WPF 514 qua / 2 lỗi giả định Big Heart khi ra Turtle shell. Không thay kết quả lịch sử lần publish trước.
@@ -562,6 +569,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Lịch sử chuyển project: 2026-10-05 tạo AGENTS.md/PROGRESS.md tại ổ D khi thư mục đó trống; source hiện nằm tại ổ C, không cần khôi phục về D.
 
 ## Đang dở và việc tiếp theo
+- Review Enemy Tactics (docs/NEXT-STEPS.md): R1+R2 xong (mốc A). Tiếp: mốc B = R3 bot phản xạ trễ/bỏ lỡ (chỉ test, seed cố định, thời gian mô phỏng) + số đo; R4 (tách PetBattle.cs, đo frame time trận đông quái, test vòng start→kết quả→chơi lại) để sau. Người dùng cần thử: Đẩy slime thảo dược/hạ nó ngay lúc hồi xong thấy đòn trúng bình thường.
 - Enemy Director: chiến thuật a–d đã làm (2026-10-20), mỗi cái tắt được bằng battle.json; cần chơi thật để quyết giữ/tắt cái nào.
 - Enemy Director (docs/ENEMY-DIRECTOR.md): ED1–ED3 xong (2026-10-20). Người dùng cần: đi các mục "Enemy Director — mốc 1/2/3" trong MANUAL-TEST.md và chơi thật màn 2–5 ở Thường để quyết độ khó (mô phỏng: tự đánh 0/10, người chơi đơn giản 10/10 còn 59–79% HP, chưa tới mục tiêu 60–85% / ≤ 60%). Nếu vẫn dễ: cân nhắc đổi kinh tế hồi máu (waveHeal, Cá nướng) hoặc hồi chiêu Khiên/Đẩy — là đổi luật, cần người dùng chốt. Có thể thêm: chỉ báo Mai rùa sẵn sàng trên mèo; đo frame time khi đông quái.
 - Combat Depth (docs/COMBAT-DEPTH.md): mốc 1–3 xong (chương vẫn dễ ở Thường, chờ mốc 4 cân bằng). Người dùng cần đi các mục "Combat Depth — mốc 1/2/3" trong MANUAL-TEST.md. Tiếp: mốc 4 đội hình + cân bằng theo mục tiêu mới; khi đó sửa luôn tip màn 2 (vẫn ghi "chơi lại thì bắt đầu từ đầu", sai với build cộng dồn). Để ý: choáng cạnh boss làm màn 5 Khó khó hơn hẳn (xem lại ở mốc 3–4 khi King lui ra xa lúc gọi quân).

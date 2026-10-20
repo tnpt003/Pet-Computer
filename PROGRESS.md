@@ -10,6 +10,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Đã làm: PetBattle.cs `RefreshGuards()` tính lại cờ miễn, gọi ở đầu StepSlimes, cuối FinishHeal, khi slime hồi máu bị hạ (sau cả vụ nổ nếu là bom), sau Đẩy. Không đổi lượng hồi/thời gian gồng/hồi chiêu; rulesVersion giữ nguyên (chỉ ngắn đi ~1 nhịp). UpgradeChecks: dữ liệu test `rareChance` 0 cho các check Big Heart, thêm check `rareChance` 1: Mai rùa cũng ghi "Thorns!", bật Giáp gai, HUD có "◆ Turtle shell". UiChecks trả mã 2 khi lỗi ngoại lệ/môi trường, 1 khi có check sai; scripts/test.ps1 báo theo từng mã.
 - Test thật: 4 test mới trong TacticsTests (miễn hết đúng nhịp hồi xong; mèo hạ slime hồi máu thì hết miễn ngay nhịp đó; bom trùm cả hai, hai thứ tự danh sách). Trên code cũ 2 test đầu FAIL (đã tái hiện), bom đạt (giữ hành vi cũ). scripts/test.ps1 -Ui: 55 Python OK; 1044 C# đạt; 519 WPF đạt; chạy UiChecks thêm 2 lần: 519/519 cả hai.
 - Hạn chế: lỗi build của UiChecks (dotnet run trả 1) vẫn hiện thông báo "checks failed".
+- Commit 3bfc7c2. Publish sạch: 1.1.0-beta+3bfc7c2, ZIP artifacts\DesktopPet-1.1.0-beta-3bfc7c2-win-x64.zip; check-publish 3/3. Đóng mèo (PID 22300, đang mở bảng kết quả trận) bằng WM_CLOSE, mở lại 23:27, log "Desktop Pet 1.1.0-beta (3bfc7c2) started". AGENTS.md/docs/NEXT-STEPS.md của người dùng trả lại đúng hash.
 
 ## Bàn giao review cho Claude (2026-10-20)
 - Đã ghi review mới lên đầu docs/NEXT-STEPS.md: vòng đời Mended cần tái hiện, fixture gacha WPF, mô phỏng và backlog tối ưu. Claude kiểm chứng trước khi sửa.

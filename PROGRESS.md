@@ -4,6 +4,11 @@ Cập nhật: 2026-10-20 (Asia/Saigon).
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
+## Bàn giao cứu mèo và hoạt động của quái (2026-10-20)
+- Đã thêm mục đầu docs/NEXT-STEPS.md theo yêu cầu: quái tiếp tục hoạt động khi cứu mèo, đòn hoàn tất/đánh hụt thay vì giữ windup, giữ miễn sát thương và luật pause/timer hiện có.
+- Đối chiếu HEAD 282a879: nhánh Windup còn giữ StateTime khi catHeld. Chưa triển khai hay playtest; Claude cần kiểm tra vòng đời đòn và giải thích tích hợp.
+- Chỉ tài liệu, không chạy lại test/build/publish. Giữ nguyên thay đổi có sẵn ngoài phần bàn giao.
+
 ## Review Enemy Tactics — mốc A: R1 + R2 (2026-10-20)
 - Người dùng: kiểm chứng review đầu docs/NEXT-STEPS.md rồi "ok" kế hoạch mốc A; chọn phương án (a): một quả bom trúng cả slime hồi máu lẫn đồng minh đang được miễn thì đồng minh vẫn miễn quả đó, không phụ thuộc thứ tự danh sách.
 - Kiểm chứng: R1 đúng (miễn còn sót tới hết nhịp và qua lượt bom đầu nhịp sau, khi hồi xong hoặc slime hồi máu bị hạ; Đẩy và kết thúc trận vẫn đúng). R2 đúng (seed ngẫu nhiên + thẻ hiếm 15% làm test Big Heart chập chờn; game không sai). R3 đúng (bot Đẩy ngay nhịp đầu gồng) — mốc B, chưa làm. R4 backlog, chưa làm; đã có sẵn một phần test battle.json khớp code mặc định.

@@ -3,6 +3,38 @@
 Cập nhật bàn giao: 2026-10-20 (Asia/Saigon). Review kỹ thuật bên dưới ghi nhận ngày 18/10, sau Battle Mode đợt 11.
 Workspace lúc review: C:\Project VS\Pet Computer; HEAD e45519d với thay đổi đợt 10–11 chưa commit.
 
+## Bàn giao mới — cứu mèo không làm quái đứng động tác (2026-10-20)
+
+Người dùng thấy slime bị freeze khi cứu mèo và đồng ý hướng bên dưới; yêu cầu ghi để Claude kiểm tra. Mốc này chỉ bàn giao tài liệu, chưa triển khai. Đọc AGENTS.md, kiểm chứng code và giải thích kế hoạch tích hợp trước khi sửa. Review R1/R2 phía dưới đã được Claude xử lý ở mốc A theo PROGRESS.md; không làm lại.
+
+### Hiện trạng và mục tiêu
+- Trên HEAD 282a879, PetBattle.cs, nhánh SlimeState.Windup vẫn có `if (catHeld) { slime.StateTime -= dt; break; }`: giữ nguyên tiến độ chuẩn bị đánh khi mèo được cầm. Đây là đầu mối đã thấy trong code, chưa khẳng định mọi hiện tượng đứng hình đều do nhánh này.
+- Mục tiêu: cứu mèo giúp né đòn nhưng chiến trường vẫn sống động. Quái không giữ sẵn một đòn để tung ngay khi mèo được thả. Pause/menu/fullscreen vẫn đóng băng trận đúng cơ chế hiện tại.
+
+### Hướng hành vi đã trao đổi
+- Quái đang đi: tiếp tục di chuyển/giữ đội hình, không tụ hết dưới con trỏ. Tận dụng quyết định đội hình hiện có; Claude đề xuất điểm tham chiếu cụ thể (ví dụ vị trí mèo trên sàn trước khi nhấc) trước khi triển khai, không tự thêm hệ AI mới.
+- Đang chuẩn bị đánh: hoàn tất động tác và đánh hụt tại vị trí/vùng đã báo trước, sau đó Recover/hồi chiêu bình thường. Không bám lại vị trí con trỏ trong lúc ra đòn.
+- Slime nhanh đang lao: lao hết đường đã khóa, không quay hướng đuổi theo con trỏ; không gây damage/stun khi mèo được cầm hoặc đang bay.
+- Slime hỗ trợ: tiếp tục hồi máu, teleport và tìm chỗ trú theo luật hiện có.
+- King: tiếp tục cơ chế đang diễn ra, giữ vị trí đòn đã cảnh báo. Phân biệt helper do cơ chế boss với spawn đợt thường; kiểm tra cap và khả năng lạm dụng, không mở lại tiến độ wave chỉ để boss chạy.
+- Khi thả mèo: giữ bảo vệ tiếp đất/cooldown cấp lại hiện có. Không giải phóng đòn giữ sẵn; lần đánh mới phải có cảnh báo đầy đủ. Nếu thả đúng lúc đòn cũ đang diễn ra, bảo đảm không trúng ngay vì chuyển từ held sang grounded; Claude làm rõ quy tắc hết đòn cũ/đánh hụt trước khi code.
+
+### Giới hạn phải giữ
+- Dừng tiến độ wave/survival và hồi kỹ năng người chơi khi cầm mèo như hiện tại; không dùng việc cầm để farm thời gian hoặc kỹ năng. Đối chiếu cả trạng thái bay/rescue trong cầu nối PetWindow → BattleSim.
+- Quái có thể hồi máu và tái lập đội hình, không thêm hình phạt cứu mèo, không đổi damage/HP/stun hoặc balance ngoài phạm vi.
+- Chỉ tách khóa tương tác cứu mèo khỏi pause trận; KHÔNG cho mọi timer chạy vô điều kiện. Giữ upgrade/tip/pause reasons chồng nhau, kết thúc trận và giới hạn spawn.
+- Giữ bất biến không nhận damage/stun khi held/airborne, drag/throw/dizzy, sleep và Pet Mode; combat ở C#, Python không tham gia.
+
+### Kiểm tra Claude cần bổ sung khi triển khai
+1. Nhấc trước/trong windup: animation hoàn tất, một lần đánh hụt, một lần Recover; không đứng vô hạn, không phát hit/cue lặp.
+2. Nhấc/thả liên tục và thả đúng ranh giới impact: không trúng tức thì từ đòn cũ, không reset cooldown hoặc nhân bảo vệ tiếp đất.
+3. Dash đang chạy vẫn hết đường; không retarget con trỏ, không damage/stun khi cầm/bay; lần đánh mới có cảnh báo.
+4. Support heal/guard/teleport và King retreat/summon/order không kẹt state; giữ các sửa R1/R2 mới và cap quái.
+5. Wave/survival/skill timer vẫn dừng theo luật cứu mèo; Pause/menu/fullscreen/upgrade/tip đóng băng đúng, resume không chạy bù đòn.
+6. Kết thúc/replay khi đang cứu không sót target/attack/pause; regression Pet Mode và playtest trực tiếp hoạt ảnh.
+
+Báo rõ phần xác nhận, thiết kế còn cần chốt, test tự động và test tay. Không chỉ xóa dòng giữ StateTime: cần kiểm tra vòng đời đòn, vị trí cảnh báo và miễn sát thương cùng nhau. Sau mốc code được giao: test/commit/publish/smoke theo AGENTS.md; lần bàn giao tài liệu này không publish.
+
 ## Review mới nhất cho Claude — Enemy Tactics (2026-10-20)
 
 Người dùng yêu cầu lưu review để Claude đọc và kiểm chứng, chưa yêu cầu triển khai mọi đề xuất. Review trên HEAD 7e0d14e (tactics f55a36c). Đọc code thật và AGENTS.md, tái hiện lỗi rồi giải thích kế hoạch trước khi sửa. Các roadmap cũ phía dưới không có nghĩa phải làm lại mốc đã xong.

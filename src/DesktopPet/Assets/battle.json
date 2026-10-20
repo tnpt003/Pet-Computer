@@ -309,5 +309,97 @@
         ]
       }
     ]
+  },
+  // Expedition (docs/EXPEDITION-DIRECTION.md, PetExpedition.cs): one run over "steps" (node kinds
+  // per step, in lane order: "fight" or "elite"; the boss comes after the last). A new run draws an
+  // encounter for each node from "fights"/"elites" (never the same twice in one step) and keeps
+  // that map. The cat's HP and build go on from step to step; "winHeal" (share of max HP) comes back
+  // after a won step. "stepThreat": enemies get that much stronger per step. Leaving a step's battle
+  // (End, closing the app) lets it be fought again for "retreatCost" of the max HP. Encounters are
+  // clear stages (same keys as Adventure stages, no reward or tip); their ids are stable (a saved
+  // run names them) and never an Adventure stage's. "unlockAfter": the Adventure stage to win first.
+  "expedition": {
+    "id": "slime_trail", "nameVi": "Đường mòn Slime", "nameEn": "The Slime Trail",
+    "rulesVersion": 1, "unlockAfter": "c1_slime_king", "retreatCost": 0.25, "winHeal": 0.05, "stepThreat": 0.1,
+    "steps": [ [ "fight", "fight" ], [ "fight", "elite" ], [ "elite", "fight" ], [ "fight", "elite" ], [ "elite", "fight" ] ],
+    "fights": [
+      {
+        "id": "x_meadow", "nameVi": "Đồng cỏ", "nameEn": "Meadow",
+        "goalVi": "Slime thường và slime nhanh.", "goalEn": "Plain and quick slimes.",
+        "upgrades": true, "maxAlive": 4, "threat": 1.4,
+        "waves": [
+          { "groups": [ { "pick": { "slime": 2, "runner": 1 }, "count": 3 } ] },
+          { "groups": [ { "enemy": "rock", "count": 1 }, { "pick": { "slime": 1, "runner": 1 }, "count": 2 } ] }
+        ]
+      },
+      {
+        "id": "x_rock_field", "nameVi": "Bãi đá", "nameEn": "Rock field",
+        "goalVi": "Nhiều slime đá chặn đòn.", "goalEn": "Lots of rock slimes that block hits.",
+        "upgrades": true, "maxAlive": 4, "threat": 1.4,
+        "waves": [
+          { "groups": [ { "enemy": "rock", "count": 2 }, { "enemy": "slime", "count": 1 } ] },
+          { "groups": [ { "enemy": "rock", "count": 1 }, { "pick": { "slime": 1, "runner": 1 }, "count": 3, "atLeast": { "runner": 1 } } ] }
+        ]
+      },
+      {
+        "id": "x_herb_garden", "nameVi": "Vườn thảo dược", "nameEn": "Herb garden",
+        "goalVi": "Một slime thảo dược hồi máu sau slime đá.", "goalEn": "A herb slime heals from behind a rock slime.",
+        "upgrades": true, "maxAlive": 4, "threat": 1.4,
+        "waves": [
+          { "groups": [ { "pick": { "slime": 1, "runner": 1 }, "count": 2 } ] },
+          { "groups": [ { "squad": [ { "enemy": "mender", "count": 1 }, { "enemy": "rock", "count": 2 } ] }, { "enemy": "runner", "count": 1 } ] }
+        ]
+      },
+      {
+        "id": "x_shortcut", "nameVi": "Đường tắt", "nameEn": "Shortcut",
+        "goalVi": "Slime nhanh tới từ cả hai phía.", "goalEn": "Quick slimes from both sides.",
+        "upgrades": true, "maxAlive": 4, "threat": 1.35,
+        "waves": [
+          { "groups": [ { "enemy": "runner", "count": 2, "side": "a" }, { "enemy": "runner", "count": 1, "side": "b" } ] },
+          { "groups": [ { "pick": { "slime": 1, "runner": 1 }, "count": 2, "side": "a" }, { "pick": { "slime": 1, "runner": 1 }, "count": 2, "side": "b" } ] }
+        ]
+      }
+    ],
+    "elites": [
+      {
+        "id": "x_stone_fort", "nameVi": "Pháo đài đá", "nameEn": "Stone fort",
+        "goalVi": "Tinh anh: tường slime đá, slime thảo dược phía sau.", "goalEn": "Elite: a wall of rock slimes, a herb slime behind.",
+        "upgrades": true, "maxAlive": 5, "threat": 1.55, "eliteChance": 0.6,
+        "waves": [
+          { "groups": [ { "enemy": "rock", "count": 2 }, { "pick": { "slime": 1, "runner": 1 }, "count": 2 } ] },
+          { "budget": 9, "groups": [ { "squad": [ { "enemy": "mender", "count": 1 }, { "enemy": "rock", "count": 2 } ] }, { "enemy": "slime", "count": 1 } ] },
+          { "groups": [ { "enemy": "rock", "count": 2 }, { "pick": { "slime": 1, "runner": 2 }, "count": 3 } ] }
+        ]
+      },
+      {
+        "id": "x_ambush", "nameVi": "Phục kích", "nameEn": "Ambush",
+        "goalVi": "Tinh anh: quái ập tới từ hai phía.", "goalEn": "Elite: enemies close in from both sides.",
+        "upgrades": true, "maxAlive": 5, "threat": 1.55, "eliteChance": 0.6,
+        "waves": [
+          { "groups": [ { "enemy": "runner", "count": 2, "side": "a" }, { "enemy": "slime", "count": 2, "side": "b" } ] },
+          { "groups": [ { "enemy": "rock", "count": 1, "side": "a" }, { "pick": { "slime": 1, "runner": 1 }, "count": 3, "side": "b" } ] },
+          { "groups": [ { "pick": { "slime": 1, "runner": 1, "rock": 1 }, "count": 3, "side": "a" }, { "enemy": "runner", "count": 2, "side": "b" } ] }
+        ]
+      },
+      {
+        "id": "x_healing_grove", "nameVi": "Rừng hồi máu", "nameEn": "Healing grove",
+        "goalVi": "Tinh anh: hai slime thảo dược thay nhau hồi máu.", "goalEn": "Elite: two herb slimes take turns healing.",
+        "upgrades": true, "maxAlive": 5, "threat": 1.5, "eliteChance": 0.6,
+        "waves": [
+          { "groups": [ { "pick": { "slime": 1, "runner": 1 }, "count": 3 } ] },
+          { "groups": [ { "squad": [ { "enemy": "mender", "count": 1 }, { "enemy": "rock", "count": 1 }, { "enemy": "slime", "count": 1 } ] } ] },
+          { "groups": [ { "squad": [ { "enemy": "mender", "count": 2 }, { "enemy": "rock", "count": 2 } ] } ] }
+        ]
+      }
+    ],
+    "boss": {
+      "id": "x_king", "nameVi": "Vua Slime trở lại", "nameEn": "The King returns",
+      "goalVi": "Trận cuối chuyến: Vua Slime với khiên và quân tinh anh.", "goalEn": "The run's last battle: the Slime King, his shields and elite helpers.",
+      "upgrades": true, "threat": 1.5, "eliteChance": 0.3,
+      "waves": [
+        { "budget": 6, "groups": [ { "enemy": "rock", "count": 1, "side": "a" }, { "enemy": "slime", "count": 1, "side": "a" }, { "enemy": "runner", "count": 2, "side": "b" } ] },
+        { "groups": [ { "enemy": "king_c1", "count": 1 } ] }
+      ]
+    }
   }
 }

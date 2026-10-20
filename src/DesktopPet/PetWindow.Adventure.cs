@@ -70,7 +70,7 @@ public sealed partial class PetWindow
         if (Adventure is not Adventure adventure || adventure.Chapter() is not ChapterSpec chapter)
             return L("Dữ liệu trận không có chương phiêu lưu.", "The battle data has no Adventure chapter.");
         if (battlePreparing) { CloseBattlePrep(); CloseBattleTutorial(); }
-        CloseBattleSummary(); CloseBattleNotice();
+        CloseExpeditionMap(); CloseBattleSummary(); CloseBattleNotice();
         // A reward added to a stage won before it existed is given now (only with official data).
         if (!BattleDataCustom && adventure.GrantRewards().Count > 0 && AdventureProgressFile != null) adventureSaveFailed = !AdventureProgress.Save(AdventureProgressFile);
         mapStageId = adventure.Stage(select) is StageSpec chosen ? chosen.Id
@@ -292,16 +292,21 @@ public sealed partial class PetWindow
     // A stage battle just started: its name as a banner, and its tip the first time.
     private void StageBattleStarted(StageSpec stage)
     {
+        // An Expedition encounter: its step as the banner (encounters have no tips).
+        if (battleExpedition is ExpeditionBattle x) { battleHud?.ShowBanner(ExpeditionStageTitle(x.Node.Step, x.Expedition.Spec.StepCount, stage), 0, 1.4); return; }
         battleHud?.ShowBanner(StageTitle(stage), 0, 1.4);
         if (!AdventureProgress.Seen.Contains(stage.Id) && stage.Tip(English) is { Length: > 0 }) ShowStageTip(stage);
     }
 
     // End (HUD or menu): the battle stops with nothing counted. A stage run goes back to the map
-    // (the free battle back to the desktop, as before).
+    // (the free battle back to the desktop, as before); an Expedition step is left (RetreatCost)
+    // and goes back to the Expedition map.
     public void EndBattleByUser()
     {
         var stage = battle?.Stage;
+        var expedition = battleExpedition;
         EndBattle();
+        if (expedition != null) { LeaveExpeditionBattle(expedition); return; }
         if (stage != null && OpenAdventureMap(stage.Id) is string reason) ShowBattleNotice(reason);
     }
 

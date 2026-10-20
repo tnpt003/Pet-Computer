@@ -52,7 +52,7 @@ public sealed partial class PetWindow
 
     public bool BattlePreparing => battlePreparing;
     // The battle or its setup owns the pet (PetWindow.Battle.cs has the battle's own rules).
-    public bool BattleOwnsPet => battle != null || battlePreparing || adventureMapOpen;
+    public bool BattleOwnsPet => battle != null || battlePreparing || adventureMapOpen || expeditionMapOpen;
     public string BattlePrepWeapon => prepWeapon;
     public BattleDifficulty BattlePrepDifficulty => prepDifficulty;
     public bool BattlePrepVisible => battlePrepWindow?.IsVisible == true;
@@ -95,7 +95,7 @@ public sealed partial class PetWindow
                 return L("Màn này không còn trong dữ liệu hoặc chưa mở.", "This stage is no longer in the data or is locked.");
             stage = fresh;
         }
-        CloseAdventureMap();
+        CloseAdventureMap(); CloseExpeditionMap();
         prepStage = stage;
         prepWeapon = BattleTuning.Weapon(weapon ?? preferences.BattleWeapon).Id;
         prepDifficulty = level is BattleDifficulty chosen && Enum.IsDefined(chosen) ? chosen : BattleDifficultyChoice;
@@ -426,7 +426,14 @@ public sealed partial class PetWindow
     // The build a stage starts with: "Build brought in: Defense 2 · Power 1 · ★ Thorns".
     private string StageBuildText(StageSpec stage)
     {
-        var build = Adventure?.StartBuild(stage) ?? new Dictionary<string, int>();
+        var parts = BuildParts(Adventure?.StartBuild(stage) ?? new Dictionary<string, int>());
+        return parts.Count == 0 ? L("Build mang vào màn: chưa có thẻ (thắng màn để giữ thẻ đã chọn sang màn sau)", "Build brought in: no cards yet (win a stage to keep its cards for the next)")
+            : L("Build mang vào màn: ", "Build brought in: ") + string.Join(" · ", parts);
+    }
+
+    // "Defense 2", "Power 1", "★ Thorns", "◆ Turtle shell": a build's group points, synergies and rare cards.
+    private List<string> BuildParts(IReadOnlyDictionary<string, int> build)
+    {
         var cards = BattleTuning.UpgradeList;
         var parts = new List<string>();
         foreach (var group in BuildGroups.All)
@@ -436,8 +443,7 @@ public sealed partial class PetWindow
             foreach (var y in BattleTuning.SynergyList) if (y.Group == group && points >= y.At) parts.Add("★ " + y.Name(English));
         }
         foreach (var u in cards) if (u.Rare && build.TryGetValue(u.Id, out int n) && n > 0) parts.Add("◆ " + u.Name(English));
-        return parts.Count == 0 ? L("Build mang vào màn: chưa có thẻ (thắng màn để giữ thẻ đã chọn sang màn sau)", "Build brought in: no cards yet (win a stage to keep its cards for the next)")
-            : L("Build mang vào màn: ", "Build brought in: ") + string.Join(" · ", parts);
+        return parts;
     }
 }
 

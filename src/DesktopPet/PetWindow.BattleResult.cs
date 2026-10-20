@@ -78,7 +78,8 @@ public sealed partial class PetWindow
     // until the user chooses (a fullscreen app, the pet being brought back or Exit still close it).
     public readonly record struct BattleSummary(bool Won, int Defeated, double Seconds, double Hp, double MaxHp, bool Boss = false, string? BossName = null,
         BattleDifficulty Difficulty = BattleDifficulty.Normal, BattleRecordNews News = default, string Weapon = BattleWeapon.Sword, string WeaponLabel = "",
-        bool Custom = false, string WeaponStyle = "sword", StageSpec? Stage = null, AdventureOutcome Outcome = default, bool Ranked = true, string Upgrades = "");
+        bool Custom = false, string WeaponStyle = "sword", StageSpec? Stage = null, AdventureOutcome Outcome = default, bool Ranked = true, string Upgrades = "",
+        ExpeditionStepOutcome? Expedition = null);
     private static readonly Brush RecordGold = PetUi.Frozen(Color.FromRgb(0xFF, 0xD3, 0x5C));
     private static readonly Brush ResultMain = PetUi.Frozen(Color.FromRgb(0x3E, 0x7B, 0xE0));
     private static string Clock(double seconds)
@@ -111,7 +112,9 @@ public sealed partial class PetWindow
         title.Text = result.Won ? (result.Boss ? L($"Chiến thắng! Đã hạ {result.BossName ?? "boss"}", $"Victory! The {result.BossName ?? "boss"} is down") : L("Chiến thắng!", "Victory!"))
             : L("Thua rồi… mèo choáng váng", "Defeated… the cat sees stars");
         string level = DifficultyName(result.Difficulty), arms = result.WeaponLabel.Length > 0 ? result.WeaponLabel : result.Weapon;
-        var loadout = Line(13, bold: true); loadout.Text = (result.Stage is StageSpec played ? StageTitle(played) + " · " : "") + $"{arms} · {level}";
+        string place = result.Stage is not StageSpec played ? ""
+            : result.Expedition is ExpeditionStepOutcome at ? ExpeditionStageTitle(at.Step, Expedition?.Spec.StepCount ?? at.Step + 1, played) + " · " : StageTitle(played) + " · ";
+        var loadout = Line(13, bold: true); loadout.Text = place + $"{arms} · {level}";
         var main = Line(12.5);
         main.Text = L($"Hạ {result.Defeated} slime · {Clock(result.Seconds)}", $"{result.Defeated} slime{(result.Defeated == 1 ? "" : "s")} defeated · {Clock(result.Seconds)}");
         var hp = Line(11.5, opacity: 0.75); hp.Text = L($"HP còn {Math.Ceiling(result.Hp)}/{result.MaxHp}", $"HP {Math.Ceiling(result.Hp)}/{result.MaxHp} left");
@@ -120,7 +123,13 @@ public sealed partial class PetWindow
         // Each choice acts once: the panel is gone before anything else happens (no double start).
         void Choose(Action action) { if (window == null || battleSummaryWindow != window) return; CloseBattleSummary(); action(); }
         UIElement actions;
-        if (result.Stage is StageSpec stage)
+        if (result.Expedition is ExpeditionStepOutcome step)
+        {
+            var (lines, stepActions) = ExpeditionResult(result, step, Choose);
+            info.Children.Add(lines);
+            actions = stepActions;
+        }
+        else if (result.Stage is StageSpec stage)
         {
             var (lines, stageActions) = StageResult(result, stage, Choose);
             info.Children.Add(lines);

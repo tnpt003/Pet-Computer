@@ -332,3 +332,31 @@ Mỗi khóa tắt được riêng trong battle.json của người dùng (ví d�
 - Vua Slime chương 1: 600 HP (trước 450), ba pha khiên 75/50/25% (pha cuối kèm nổi giận), lệnh của vương miện phong quân thành tinh anh (`rallyHp`, `rallyDamage`) thay cho tăng tốc, mỗi 10 s.
 - File battle.json **của người dùng** còn các khóa cũ (`fallBackBelow`, `flank`, `flankSpeed`, `maxFlankers`, `teleportBelow`, `teleportWindup`, `teleportCooldown`, `rallySeconds`, `rallySpeed`) vẫn dùng được: các khóa đó bị bỏ qua và ghi một dòng log, phần còn lại của file vẫn áp dụng. File gốc nhúng trong exe không được có các khóa này.
 - rulesVersion màn 1–5: 4/10/11/12/12.
+
+## Viễn chinh (`expedition`) (2026-10-21)
+
+Một chuyến đi gồm nhiều bậc, mỗi bậc chọn một điểm, bậc cuối là trùm. HP và build của mèo đi tiếp từ bậc này sang bậc sau; chuyến mới bắt đầu lại từ đầu. Code: `src/DesktopPet/PetExpedition.cs` (luật, không WPF), `PetWindow.Expedition.cs` (bản đồ, kết quả).
+
+```json
+"expedition": {
+  "id": "slime_trail", "nameVi": "Đường mòn Slime", "nameEn": "The Slime Trail",
+  "rulesVersion": 1, "unlockAfter": "c1_slime_king", "retreatCost": 0.25, "winHeal": 0.05, "stepThreat": 0.1,
+  "steps": [ [ "fight", "fight" ], [ "fight", "elite" ], ... ],
+  "fights": [ { "id": "x_meadow", ... như một màn Phiêu lưu ... } ],
+  "elites": [ ... ],
+  "boss": { "id": "x_king", ... }
+}
+```
+
+- `steps`: loại điểm của từng bậc (trước trùm), 1–3 điểm mỗi bậc, theo thứ tự làn. Loại hiện có: `fight` (giao tranh), `elite` (tinh anh). Tối đa 10 bậc.
+- `fights`, `elites`, `boss`: các trận (encounter) viết như một màn Phiêu lưu (`waves`, `threat`, `maxAlive`, `eliteChance`, `upgrades`, `maxUpgrades`…) nhưng chỉ là màn `clear`, không có `reward` hay `tipVi/tipEn`. `boss` phải có một đợt có boss. Mỗi bậc cần đủ trận trong kho của loại đó để hai điểm cùng bậc khác nhau.
+- id trận không được trùng nhau và không trùng id màn Phiêu lưu. Chuyến đã lưu ghi id trận, nên đổi id là trận mới.
+- `rulesVersion`: tăng khi đổi luật đủ nhiều để chuyến đang lưu không nên đi tiếp và kỷ lục cũ không nên so. Chuyến đang lưu không khớp (khác `id`/`rulesVersion`, bản đồ khác hình dạng, id trận không còn) sẽ kết thúc khi mở bản đồ, kèm một dòng báo.
+- `unlockAfter`: màn Phiêu lưu phải thắng trước. Nếu dữ liệu không còn màn đó (ví dụ battle.json của bạn thay cả `campaign`), Viễn chinh mở luôn.
+- `retreatCost` (0–1): rời trận của một bậc (Kết thúc trận, đóng app, crash, đặt lại vị trí mèo) thì bậc đó vẫn chờ đánh lại với cùng seed, nhưng mèo mất phần này của HP tối đa. HP về 0 thì chuyến kết thúc (thua). Trận đang đánh khi đóng app được tính lúc mở bản đồ lần sau.
+- `winHeal` (0–1): thắng một bậc thì hồi phần này của HP tối đa (ngoài hồi giữa các đợt như thường).
+- `stepThreat` (0–0,5): quái mỗi bậc mạnh hơn bậc trước chừng này (bậc 1 ×1, bậc 2 ×1,1…), nhân với `threat` của trận.
+- Bản đồ được bốc một lần từ seed của chuyến khi bắt đầu và được lưu lại; mỗi điểm có seed trận riêng suy ra từ seed chuyến, nên đóng/mở bản đồ hay tiếp tục sau khi mở lại app không đổi bản đồ hay trận.
+- Lưu ở `expedition.json` (cạnh preferences.json, tách khỏi `adventure-progress.json`): chuyến đang đi, kỷ lục theo `expedition|r<rulesVersion>|vũ khí|độ khó` (số chuyến, số chuyến thắng, đi xa nhất, nhanh nhất theo thời gian đánh), các chuyến đã tính. Lưu an toàn như Phiêu lưu (.tmp, .bak, file của bản mới hơn chỉ đọc). Chơi với battle.json tùy chỉnh thì chuyến đi chỉ giữ trong bộ nhớ, không ghi file.
+- Cách gộp: như `campaign`, khóa được gộp từng khóa; các mảng (`steps`, `fights`, `elites`) trong file của bạn thay toàn bộ mảng gốc.
+- Log khi bắt đầu trận: `Battle started: Expedition step N <id trận>, threat ×…, <độ khó>, <vũ khí>, seed …`.

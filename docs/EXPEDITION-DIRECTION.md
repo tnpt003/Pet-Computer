@@ -2,6 +2,26 @@
 
 Ngày bàn giao: 2026-10-20. Trạng thái: người dùng đồng ý đưa hướng này cho Claude đánh giá; chưa phải yêu cầu code ngay hoặc phê duyệt toàn bộ chi tiết thiết kế. Đọc AGENTS.md, PROGRESS.md, NEXT-STEPS.md và code thật trước khi đề xuất tích hợp.
 
+## Đánh giá của Claude và quyết định đã chốt (2026-10-21)
+
+Người dùng trả lời "ok theo đề xuất" cho các điểm sau:
+
+1. Rời trận giữa chừng (Kết thúc trận, đóng app, crash, đặt lại mèo): chuyến được lưu ở đầu mỗi điểm; bậc đó đánh lại với cùng seed, HP lúc vào, nhưng trừ 25% HP tối đa (`retreatCost`); HP về 0 thì thua chuyến. Trận bị ngắt do đóng app/crash được tính khi mở bản đồ lần sau.
+2. Thua bất kỳ trận nào (kể cả trùm): chuyến kết thúc, chỉ ghi kỷ lục (đi xa nhất), không có phần thưởng an ủi.
+3. Mở Viễn chinh sau khi thắng `c1_slime_king`.
+4. Vũ khí và độ khó chọn một lần đầu chuyến; kỷ lục theo `expedition|r<rulesVersion>|vũ khí|độ khó`, không so với Phiêu lưu.
+5. Thẻ vẫn chọn trong trận như Phiêu lưu (dùng lại `OfferUpgrades`, không tách hàm để không đổi RNG của Phiêu lưu).
+6. Không cấp trùng: run id + kết quả ghi trong một lần lưu; bản đồ bốc một lần từ seed chuyến và lưu lại; seed trận mỗi điểm suy ra từ seed chuyến; lựa chọn đã chốt lưu kết quả, không lưu trạng thái RNG.
+
+Thiết kế tích hợp: bộ điều phối `Expedition`/`ExpeditionRun`/`ExpeditionProgress` (PetExpedition.cs, không WPF) ngoài BattleSim; mỗi điểm là một `StageSpec` chạy bằng BattleSim như cũ. BattleSim chỉ thêm `startHp` và hệ số `threat` theo bậc (mặc định giữ nguyên Phiêu lưu/trận tự do). Lưu riêng `expedition.json`. PetWindow phân biệt trận viễn chinh (`battleExpedition`) với màn Phiêu lưu ở kết quả, Kết thúc trận, HUD, banner, thẻ nâng cấp.
+
+## Tiến độ mốc
+
+- **Mốc 2 — xong (2026-10-21):** một chuyến hoàn chỉnh 5 bậc (giao tranh/tinh anh) + trùm, HP/build mang theo, hồi `winHeal` sau mỗi bậc thắng, quái mạnh dần `stepThreat`, rời trận/crash/resume, bỏ chuyến, kỷ lục, dữ liệu tùy chỉnh chỉ giữ trong bộ nhớ. Chưa có điểm nghỉ/sự kiện, di vật, kỷ vật. Số liệu (`winHeal` 0,05, `stepThreat` 0,1, `retreatCost` 0,25, threat từng trận) là điểm khởi đầu từ mô phỏng, chưa chốt; xem PROGRESS.md.
+- **Mốc 3 — chưa làm:** điểm nghỉ/sự kiện, 3–4 di vật (hook modifier riêng trong BattleSim), bot cho cả chuyến.
+- **Mốc 4 — chưa làm:** kỷ vật (một lần theo run), góc trưng bày bật/tắt được.
+- **Mốc 5 — chưa làm:** kiểm thử end-to-end, DPI, hiệu năng, phát hành.
+
 ## Mục tiêu sản phẩm
 
 Tạo lý do chơi lại sau Adventure: chọn đường theo tình trạng mèo, xây build khác nhau qua từng chuyến đi, mang kỷ vật về desktop. Viễn chinh là phần chính; góc chiến lợi phẩm là phần nhỏ nối Battle Mode với Pet Mode. Adventure cố định và trận tự do giữ nguyên, Pet Mode dùng độc lập.

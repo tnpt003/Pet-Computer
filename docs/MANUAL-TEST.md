@@ -247,3 +247,22 @@ Sau vài trận, trả lời: đòn quái sau khi thả mèo có dễ hiểu/cô
 - [ ] Không có đá: slime thảo dược đứng sau slime gần mèo nhất, không lao lên đánh mèo khi còn đồng minh.
 - [ ] Màn 5: Vua bật khiên ở ~75%, ~50%, ~25% máu (ba lần, lần cuối kèm nổi giận). Vương miện sáng + tia vàng tới một quân → quân đó có viền vàng + sao, thanh máu dài hơn, banner "★ … thành tinh anh!". Đẩy Vua lúc sáng thì hủy. Không phong lại con đã là tinh anh; chỉ còn slime thảo dược thì vương miện không sáng.
 - [ ] Màn 5 Khó: thử xem có quá khó không (mô phỏng: người chơi đơn giản thắng 5–6/10, người chơi "casual" 0–1/10).
+
+## Viễn chinh — mốc 2: một chuyến hoàn chỉnh (2026-10-21)
+
+Cần đã thắng màn 5 Phiêu lưu (Vua Slime). Không xóa `%LOCALAPPDATA%\DesktopPet\expedition.json` thật nếu muốn giữ kỷ lục; có thể chép ra chỗ khác trước khi thử.
+
+- [ ] Chuột phải → Chế độ chiến đấu: có "Viễn chinh". Chưa thắng Vua Slime thì mục bị mờ, ghi "(thắng Vua Slime để mở)".
+- [ ] Mở Viễn chinh: bản đồ ở đầu màn hình, không chiếm focus (gõ phím vào app khác vẫn được), mèo đứng yên. Chọn Kiếm/Búa và Dễ/Thường/Khó, bấm "Bắt đầu chuyến".
+- [ ] Bản đồ: 5 bậc, mỗi bậc 2 điểm (⚔ giao tranh, ★ tinh anh), cuối là ♛ trùm. Bậc hiện tại màu xanh, điểm đang chọn viền trắng; bậc đã qua: điểm đã thắng màu vàng, điểm bỏ qua mờ. Khung dưới ghi tên trận, mục tiêu, số đợt, "quái mạnh ×1,10…" từ bậc 2.
+- [ ] "Vào trận": HUD ghi "· Viễn chinh 1/6", banner "Viễn chinh · Bậc 1/6 · <tên trận>". Thẻ nâng cấp ghi "giữ suốt chuyến viễn chinh khi thắng bậc này".
+- [ ] Thắng: bảng kết quả ghi "Qua bậc 1/6 · HP mang tiếp …", "Nghỉ chân: +… HP", nút "Tiếp tục" và "Về desktop (chuyến được lưu)". Tiếp tục về bản đồ ở bậc 2; HP và build trên bản đồ đúng như cuối trận.
+- [ ] Trận bậc sau bắt đầu với HP còn lại (không đầy máu), build cũ còn hiệu lực (ví dụ ★ Giáp gai).
+- [ ] Bấm "Kết thúc trận" giữa trận: về bản đồ, dòng vàng "Đã rời trận bậc N: mất 25 HP…" (HP tối đa 100), vẫn ở bậc đó; đánh lại thì quái xuất hiện giống lần trước.
+- [ ] Đóng app (Thoát) giữa trận viễn chinh, mở lại, mở Viễn chinh: bị trừ HP như trên và có dòng báo; không mất chuyến.
+- [ ] "Về desktop" sau một bậc, mở lại Viễn chinh: tiếp tục đúng bậc, cùng bản đồ.
+- [ ] "Bỏ chuyến": lần đầu nút đổi thành "Bấm lần nữa để bỏ", bấm lần nữa thì chuyến kết thúc, bản đồ về màn chọn vũ khí, kỷ lục tính thêm một chuyến.
+- [ ] Thắng trùm: "Hoàn thành viễn chinh!", kỷ lục "nhanh nhất"; nút "Bản đồ viễn chinh". Thua bất kỳ bậc nào: "Chuyến đi kết thúc ở bậc N/6."
+- [ ] Phiêu lưu và trận tự do không đổi: kỷ lục màn Phiêu lưu và kỷ lục trận tự do không tăng vì trận viễn chinh.
+- [ ] Ứng dụng toàn màn hình ẩn bản đồ và hiện lại sau; Tạm dừng mèo thì không mở được; chuột phải giữa trận vẫn đóng băng trận như thường; cứu mèo (nhấc/thả), choáng, chóng mặt khi kéo mạnh hoạt động như trận thường.
+- [ ] Thời lượng thật một chuyến Thường (mô phỏng: ~7–8 phút thời gian đánh, chưa tính chọn thẻ/bản đồ); độ khó có hợp không (mô phỏng Thường: người chơi "casual" thắng 8/10; Khó rất khó).

@@ -758,6 +758,7 @@ public static class BattleData
         if (s.MaxAttackers is < 0 or > 10) throw new InvalidDataException("maxAttackers must be 0–10 (0: no limit)");
         Within(s.AttackStagger, 0, 3, "attackStagger"); Within(s.IncomingWarning, 0, 5, "incomingWarning");
         if (s.Campaign is CampaignSpec campaign) ValidateCampaign(campaign, (waves, at, alive, survival) => Waves(waves, at, alive ?? s.MaxAlive, survival), Id, Text);
+        if (s.Expedition is ExpeditionSpec expedition) ExpeditionSpec.Validate(expedition, s, (waves, at, alive, survival) => Waves(waves, at, alive ?? s.MaxAlive, survival), Id, Text);
     }
 
     public static readonly string[] StageObjectives = { "clear", "survive" };
@@ -794,34 +795,40 @@ public static class BattleData
                 string where = $"{at}.stages[{(string.IsNullOrEmpty(stage.Id) ? i.ToString() : stage.Id)}]";
                 id(stage.Id, where + ".id");
                 if (!stageIds.Add(stage.Id)) throw new InvalidDataException($"stage id \"{stage.Id}\" is used twice");
-                text(stage.NameVi, where + ".nameVi"); text(stage.NameEn, where + ".nameEn");
-                if (stage.GoalVi == null || stage.GoalEn == null || stage.GoalVi.Length > 120 || stage.GoalEn.Length > 120)
-                    throw new InvalidDataException($"{where} goals must be at most 120 characters");
-                if (Array.IndexOf(StageObjectives, stage.Objective) < 0) throw new InvalidDataException($"{where}.objective must be one of: {string.Join(", ", StageObjectives)}");
-                if (stage.RulesVersion is < 1 or > 1000) throw new InvalidDataException($"{where}.rulesVersion must be 1–1000");
-                if (stage.MaxAlive is int alive && alive is < 1 or > 10) throw new InvalidDataException($"{where}.maxAlive must be 1–10");
-                if (stage.MaxUpgrades is int picks && picks is < 1 or > 30) throw new InvalidDataException($"{where}.maxUpgrades must be 1–30");
-                if (!double.IsFinite(stage.EliteChance) || stage.EliteChance is < 0 or > 1) throw new InvalidDataException($"{where}.eliteChance must be 0–1");
-                if (stage.Survival && stage.SurviveSeconds is not (>= 10 and <= 600)) throw new InvalidDataException($"{where}.surviveSeconds must be 10–600 for a survive stage");
-                if (!stage.Survival && stage.SurviveSeconds != null) throw new InvalidDataException($"{where}.surviveSeconds is only for a survive stage");
-                waves(stage.Waves, where + ".waves", stage.MaxAlive, stage.Survival);
-                if (!double.IsFinite(stage.Threat) || stage.Threat is < 0.5 or > 3) throw new InvalidDataException($"{where}.threat must be 0.5–3");
-                if (!double.IsFinite(stage.ThreatGrowth) || stage.ThreatGrowth is < 0 or > 2 || (stage.ThreatGrowth > 0 && !stage.Survival))
-                    throw new InvalidDataException($"{where}.threatGrowth must be 0–2 (per minute), and only for a survive stage");
-                if (stage.UpgradeAt is { } offers)
-                {
-                    if (!stage.Survival || !stage.Upgrades) throw new InvalidDataException($"{where}.upgradeAt is only for a survive stage with upgrades");
-                    if (offers.Length is 0 or > 10) throw new InvalidDataException($"{where}.upgradeAt must list 1–10 times");
-                    for (int k = 0; k < offers.Length; k++)
-                        if (!double.IsFinite(offers[k]) || offers[k] < 1 || offers[k] >= stage.SurviveSeconds || (k > 0 && offers[k] <= offers[k - 1]))
-                            throw new InvalidDataException($"{where}.upgradeAt must rise and stay inside the survive time");
-                }
-                if ((stage.TipVi == null) != (stage.TipEn == null) || stage.TipVi?.Length > 220 || stage.TipEn?.Length > 220)
-                    throw new InvalidDataException($"{where} tips need both languages, at most 220 characters each");
-                if (stage.Reward != null && PetAccessories.Find(stage.Reward) is not { Reward: not null })
-                    throw new InvalidDataException($"{where}.reward \"{stage.Reward}\" is not a reward accessory in accessories.json");
+                ValidateStage(stage, where, waves, text);
             }
         }
+    }
+
+    // One stage's own rules (an Adventure stage or an Expedition encounter); its id is checked by the caller.
+    internal static void ValidateStage(StageSpec stage, string where, Action<IReadOnlyList<WaveSpec>?, string, int?, bool> waves, Action<string?, string> text)
+    {
+        text(stage.NameVi, where + ".nameVi"); text(stage.NameEn, where + ".nameEn");
+        if (stage.GoalVi == null || stage.GoalEn == null || stage.GoalVi.Length > 120 || stage.GoalEn.Length > 120)
+            throw new InvalidDataException($"{where} goals must be at most 120 characters");
+        if (Array.IndexOf(StageObjectives, stage.Objective) < 0) throw new InvalidDataException($"{where}.objective must be one of: {string.Join(", ", StageObjectives)}");
+        if (stage.RulesVersion is < 1 or > 1000) throw new InvalidDataException($"{where}.rulesVersion must be 1–1000");
+        if (stage.MaxAlive is int alive && alive is < 1 or > 10) throw new InvalidDataException($"{where}.maxAlive must be 1–10");
+        if (stage.MaxUpgrades is int picks && picks is < 1 or > 30) throw new InvalidDataException($"{where}.maxUpgrades must be 1–30");
+        if (!double.IsFinite(stage.EliteChance) || stage.EliteChance is < 0 or > 1) throw new InvalidDataException($"{where}.eliteChance must be 0–1");
+        if (stage.Survival && stage.SurviveSeconds is not (>= 10 and <= 600)) throw new InvalidDataException($"{where}.surviveSeconds must be 10–600 for a survive stage");
+        if (!stage.Survival && stage.SurviveSeconds != null) throw new InvalidDataException($"{where}.surviveSeconds is only for a survive stage");
+        waves(stage.Waves, where + ".waves", stage.MaxAlive, stage.Survival);
+        if (!double.IsFinite(stage.Threat) || stage.Threat is < 0.5 or > 3) throw new InvalidDataException($"{where}.threat must be 0.5–3");
+        if (!double.IsFinite(stage.ThreatGrowth) || stage.ThreatGrowth is < 0 or > 2 || (stage.ThreatGrowth > 0 && !stage.Survival))
+            throw new InvalidDataException($"{where}.threatGrowth must be 0–2 (per minute), and only for a survive stage");
+        if (stage.UpgradeAt is { } offers)
+        {
+            if (!stage.Survival || !stage.Upgrades) throw new InvalidDataException($"{where}.upgradeAt is only for a survive stage with upgrades");
+            if (offers.Length is 0 or > 10) throw new InvalidDataException($"{where}.upgradeAt must list 1–10 times");
+            for (int k = 0; k < offers.Length; k++)
+                if (!double.IsFinite(offers[k]) || offers[k] < 1 || offers[k] >= stage.SurviveSeconds || (k > 0 && offers[k] <= offers[k - 1]))
+                    throw new InvalidDataException($"{where}.upgradeAt must rise and stay inside the survive time");
+        }
+        if ((stage.TipVi == null) != (stage.TipEn == null) || stage.TipVi?.Length > 220 || stage.TipEn?.Length > 220)
+            throw new InvalidDataException($"{where} tips need both languages, at most 220 characters each");
+        if (stage.Reward != null && PetAccessories.Find(stage.Reward) is not { Reward: not null })
+            throw new InvalidDataException($"{where}.reward \"{stage.Reward}\" is not a reward accessory in accessories.json");
     }
 }
 

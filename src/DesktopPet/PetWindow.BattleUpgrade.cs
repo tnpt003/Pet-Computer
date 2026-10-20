@@ -132,8 +132,10 @@ public sealed partial class PetWindow
     private void UpdateBattleUpgrade()
     {
         if (upgradeTitle == null || upgradeConfirm == null || battle == null) return;
-        upgradeTitle.Text = battle.Stage != null
-            ?L("Chọn một nâng cấp (giữ sang màn sau khi thắng)", "Pick an upgrade (kept for the next stage when you win)")
+        upgradeTitle.Text = battleExpedition != null
+            ? L("Chọn một nâng cấp (giữ suốt chuyến viễn chinh khi thắng bậc này)", "Pick an upgrade (kept for the rest of the Expedition when you win this step)")
+            : battle.Stage != null
+            ? L("Chọn một nâng cấp (giữ sang màn sau khi thắng)", "Pick an upgrade (kept for the next stage when you win)")
             : L("Chọn một nâng cấp cho lượt này", "Pick an upgrade for this run");
         foreach (var (id, card, name, desc, count, build) in upgradeCards)
         {

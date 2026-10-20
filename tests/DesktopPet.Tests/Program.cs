@@ -93,6 +93,7 @@ AdventureTests.Run(Check);
 AdventureUpgradeTests.Run(Check);
 AdventureContentTests.Run(Check);
 AdventureBalanceTests.Run(Check);
+ExpeditionTests.Run(Check);
 var activity = new PetActivity();
 activity.Step(PetAction.Walking, 2);
 activity.Step(PetAction.Jumping, 1);

@@ -223,6 +223,8 @@ public sealed class BattleSettings
 
     // From battle.json "campaign": the Adventure chapters (null: no Adventure in this data).
     [JsonPropertyName("campaign")] public CampaignSpec? Campaign { get; init; }
+    // From battle.json "expedition": the Expedition run (null: none in this data). PetExpedition.cs.
+    [JsonPropertyName("expedition")] public ExpeditionSpec? Expedition { get; init; }
 
     private EnemyType BuiltInSlime() => new()
     {
@@ -563,13 +565,16 @@ public sealed class BattleSim
     public bool Incoming => incoming != null;
     // Survive stages: the card offers of UpgradeAt already made.
     private int timedOffers;
-    // The threat new enemies get now: the stage's × the current wave's, growing with the survive clock.
+    // An Expedition step makes its stage this much stronger (1 otherwise).
+    private readonly double threatScale = 1;
+    // The threat new enemies get now: the stage's (× an Expedition step's) × the current wave's,
+    // growing with the survive clock.
     public double Threat
     {
         get
         {
             if (Stage == null) return 1;
-            double threat = Stage.Threat * (Wave >= 1 ? WavePlan[Math.Min(Wave, WaveCount) - 1].Threat : 1);
+            double threat = Stage.Threat * threatScale * (Wave >= 1 ? WavePlan[Math.Min(Wave, WaveCount) - 1].Threat : 1);
             if (Survival && Stage.SurviveSeconds is double hold) threat *= 1 + Stage.ThreatGrowth * (hold - SurviveRemaining) / 60;
             return threat;
         }
@@ -631,7 +636,8 @@ public sealed class BattleSim
     private readonly WeaponSpec arms;
 
     public BattleSim(BattleSettings settings, double left, double right, Random? random = null, BattleDifficulty difficulty = BattleDifficulty.Normal,
-        string weapon = BattleWeapon.Sword, StageSpec? stage = null, IReadOnlyDictionary<string, int>? build = null, int? seed = null)
+        string weapon = BattleWeapon.Sword, StageSpec? stage = null, IReadOnlyDictionary<string, int>? build = null, int? seed = null,
+        double? startHp = null, double threat = 1)
     {
         // A given seed wins; otherwise one drawn from the given random (tests), else a fresh one.
         Seed = seed ?? random?.Next() ?? Random.Shared.Next();
@@ -655,7 +661,9 @@ public sealed class BattleSim
             foreach (var (id, count) in build)
                 if (Upgrade(id) is UpgradeSpec card && card.Effect != "heal")
                     for (int i = 0; i < count && (card.MaxStacks == 0 || Stacks(id) < card.MaxStacks); i++) Take(card, 0, false);
-        CatHp = CatMaxHp;
+        // An Expedition step starts with the HP the last one ended with (within the build's max).
+        CatHp = startHp is double hp && double.IsFinite(hp) ? Math.Clamp(hp, 1, CatMaxHp) : CatMaxHp;
+        if (stage != null && double.IsFinite(threat) && threat > 0) threatScale = threat;
         PhaseRemaining = settings.FirstWaveDelay;
     }
 

@@ -19,7 +19,7 @@ public sealed partial class PetWindow
     private bool EffectiveQuiet => preferences.Quiet || context.Fullscreen;
 
     // The battle setup panel also keeps the cat still (its free time belongs to the setup).
-    private void ApplyQuiet() => behavior.Quiet = EffectiveQuiet || battlePreparing || adventureMapOpen;
+    private void ApplyQuiet() => behavior.Quiet = EffectiveQuiet || battlePreparing || adventureMapOpen || expeditionMapOpen;
 
     private bool CanDeliverBreak => !paused && !dragging && !BattleOwnsPet && !pressPending && !context.Fullscreen && !context.Away &&
         !pet.Speech.Visible && PetSpeech.CanShow(pet);

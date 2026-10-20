@@ -26,10 +26,12 @@ internal static class AdventureBalanceTests
     // Order cards are liked in when the build gives no lead (fish when hurt).
     private static readonly string[] Preference = { "sharp", "fast_paws", "thick_fur", "big_heart", "quick_feet", "heavy_push", "grilled_fish" };
 
-    public static Outcome Play(BattleSettings data, StageSpec stage, string weapon, BattleDifficulty level, int seed, Player player, IReadOnlyDictionary<string, int>? build = null)
+    // startHp, threat, battleSeed: an Expedition step's (ExpeditionTests); unset for the Adventure.
+    public static Outcome Play(BattleSettings data, StageSpec stage, string weapon, BattleDifficulty level, int seed, Player player, IReadOnlyDictionary<string, int>? build = null,
+        double? startHp = null, double threat = 1, int? battleSeed = null)
     {
         const double dt = 1.0 / 30;
-        var sim = new BattleSim(data, 0, 1600, new Random(seed), level, weapon, stage, build);
+        var sim = new BattleSim(data, 0, 1600, new Random(seed), level, weapon, stage, build, battleSeed, startHp, threat);
         var reflex = new Reflex(player, seed);
         double cat = 800;
         // The measures: HP each enemy had last frame, the fighting time and how much of it was quiet.

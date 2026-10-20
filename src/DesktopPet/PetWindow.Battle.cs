@@ -108,13 +108,15 @@ public sealed partial class PetWindow
         // Adventure: the chapter map (PetWindow.Adventure.cs); Start battle is the free battle as before.
         var adventure = new MenuItem();
         adventure.Click += (_, _) => { if (OpenAdventureMap() is string reason) ShowBattleNotice(reason); };
+        var expedition = new MenuItem();
+        expedition.Click += (_, _) => { if (OpenExpeditionMap() is string reason) ShowBattleNotice(reason); };
         var start = new MenuItem();
         start.Click += (_, _) => { if (OpenBattlePrep() is string reason) ShowBattleNotice(reason); };
         var pause = new MenuItem();
         pause.Click += (_, _) => { if (battle != null) SetBattlePaused(!BattleUserPaused); };
         var end = new MenuItem();
         end.Click += (_, _) => EndBattleByUser();
-        root.Items.Add(adventure); root.Items.Add(start); root.Items.Add(pause); root.Items.Add(end);
+        root.Items.Add(adventure); root.Items.Add(expedition); root.Items.Add(start); root.Items.Add(pause); root.Items.Add(end);
         menu.Items.Add(root);
         menu.Opened += (_, _) =>
         {
@@ -129,6 +131,12 @@ public sealed partial class PetWindow
             start.Visibility = adventure.Visibility = battle == null ? Visibility.Visible : Visibility.Collapsed;
             adventure.Header = L("Phiêu lưu", "Adventure") + (refusal != null ? $" ({refusal.TrimEnd('.')})" : "");
             adventure.IsEnabled = refusal == null;
+            // The Expedition opens once the Adventure's Slime King is won (the menu says so before).
+            bool locked = battle == null && Expedition is Expedition x && !x.IsUnlocked(AdventureProgress);
+            expedition.Visibility = battle == null && BattleTuning.Expedition != null ? Visibility.Visible : Visibility.Collapsed;
+            expedition.Header = L("Viễn chinh", "Expedition") + (refusal != null ? $" ({refusal.TrimEnd('.')})"
+                : locked ? L(" (thắng Vua Slime để mở)", " (win the Slime King to open)") : Expedition?.Run != null ? L(" (đang có chuyến)", " (run under way)") : "");
+            expedition.IsEnabled = refusal == null && !locked;
             pause.Header = userPaused ? L("Tiếp tục trận", "Resume battle") : L("Tạm dừng trận", "Pause battle");
             pause.IsEnabled = !(userPaused && context.Fullscreen);
             pause.Visibility = end.Visibility = battle != null ? Visibility.Visible : Visibility.Collapsed;
@@ -214,11 +222,16 @@ public sealed partial class PetWindow
     // keeps this data and loadout to its end. Null on success, otherwise why it cannot start
     // (nothing changes then).
     // stage: an Adventure stage (its waves and goal; the run is counted in the progress at its end).
-    public string? StartBattle(string? weapon = null, BattleDifficulty? level = null, StageSpec? stage = null)
+    // expedition: an Expedition step (stage is its encounter): the run's HP, build, the node's seed
+    // and threat; the step is counted in the run at its end (PetWindow.Expedition.cs).
+    public string? StartBattle(string? weapon = null, BattleDifficulty? level = null, StageSpec? stage = null) => StartBattle(weapon, level, stage, null);
+
+    private string? StartBattle(string? weapon, BattleDifficulty? level, StageSpec? stage, ExpeditionBattle? expedition)
     {
         if (BattleRefusal() is string reason) return reason;
         CloseBattlePrep();
         CloseAdventureMap();
+        CloseExpeditionMap();
         CloseBattleSummary();
         CancelFeatureActivity();
         queuedCommand = null;
@@ -231,7 +244,10 @@ public sealed partial class PetWindow
         battleMonitorClock = 0;
         battle = new BattleSim(BattleTuning, battleArea.Left, battleArea.Right, difficulty: level is BattleDifficulty chosen && Enum.IsDefined(chosen) ? chosen : BattleDifficultyChoice,
             weapon: BattleTuning.Weapon(weapon ?? preferences.BattleWeapon).Id, stage: stage,
-            build: stage != null ? AdventureOf(BattleTuning)?.StartBuild(stage) : null); // The build the stage before was won with.
+            // The build the stage before was won with, or the Expedition run's.
+            build: expedition?.Expedition.Run?.Build ?? (stage != null ? AdventureOf(BattleTuning)?.StartBuild(stage) : null),
+            seed: expedition?.Node.Seed, startHp: expedition?.Expedition.Run?.Hp, threat: expedition?.Node.Threat ?? 1);
+        battleExpedition = expedition;
         battleRunId = Guid.NewGuid().ToString("N");
         battleCustomData = BattleDataCustom;
         pet.SwordOut = true;
@@ -247,7 +263,8 @@ public sealed partial class PetWindow
         if (BattleTutorialOpen) SetBattlePause(BattlePause.Tutorial, true);
         if (stage != null) StageBattleStarted(stage);
         // The seed and rules let a run be replayed (BattleSim's seed parameter).
-        System.Diagnostics.Trace.WriteLine((stage != null ? $"Battle started: Adventure stage {stage.Id} r{stage.RulesVersion}" : "Battle started")
+        System.Diagnostics.Trace.WriteLine((expedition != null ? $"Battle started: Expedition step {expedition.Node.Step + 1} {stage!.Id}, threat ×{expedition.Node.Threat:0.00}"
+            : stage != null ? $"Battle started: Adventure stage {stage.Id} r{stage.RulesVersion}" : "Battle started")
             + $", {battle.Difficulty}, {battle.Weapon.Id}, seed {battle.Seed}.");
         PlayPetSound("excited");
         return null;
@@ -259,6 +276,7 @@ public sealed partial class PetWindow
     {
         if (battle == null) return;
         battle = null;
+        battleExpedition = null; // A step still marked as fought is left (RetreatCost) when the map opens again.
         CloseBattleUpgrade();
         battlePause = BattlePause.None;
         battleFieldWindow?.Close(); battleHudWindow?.Close();
@@ -368,8 +386,10 @@ public sealed partial class PetWindow
         if (battle.Finished)
         {
             bool won = battle.Phase == BattlePhase.Won;
-            // A free battle goes to the battle records; an Adventure stage to the Adventure progress only.
-            var outcome = CountStageRun(battle, won);
+            // A free battle goes to the battle records; an Adventure stage to the Adventure progress
+            // only; an Expedition step to its run only.
+            ExpeditionStepOutcome? step = battleExpedition != null ? CountExpeditionStep(battle, won) : null;
+            var outcome = step == null ? CountStageRun(battle, won) : default;
             var news = battle.Stage != null ? outcome.News : BattleRecords.Add(battle.Weapon.Id, battle.Difficulty, battleCustomData, won, battle.Defeated, battle.FightSeconds);
             if (battle.Stage == null && persistPreferences) BattleRecords.Save();
             BattleReport = BattleReport with
@@ -379,7 +399,7 @@ public sealed partial class PetWindow
             };
             var result = new BattleSummary(won, battle.Defeated, battle.FightSeconds, battle.CatHp, battle.CatMaxHp, battle.BossDefeated,
                 battle.DefeatedBoss?.Name(English), battle.Difficulty, news, battle.Weapon.Id, WeaponName(battle.Weapon), battleCustomData, battle.Weapon.Style,
-                battle.Stage, outcome, !battleCustomData, UpgradeSummary(battle));
+                battle.Stage, outcome, !battleCustomData, UpgradeSummary(battle), step);
             EndBattle();
             ShowBattleSummary(result);
             return;
@@ -589,7 +609,8 @@ public sealed partial class PetWindow
         var portrait = new PetRenderer(new PetModel { Action = PetAction.Idle, Grounded = true, Facing = 1, AnimationTime = 1, ActionTime = 1 })
             { Coat = renderer.Coat, Accessory = renderer.Accessory };
         // The weapon of this battle next to the cat's name.
-        string stagePart = battle?.Stage is StageSpec stage ? L($" · Màn {StageNumber(stage)}", $" · Stage {StageNumber(stage)}") : "";
+        string stagePart = battleExpedition is ExpeditionBattle x ? L($" · Viễn chinh {x.Node.Step + 1}/{x.Expedition.Spec.StepCount}", $" · Expedition {x.Node.Step + 1}/{x.Expedition.Spec.StepCount}")
+            : battle?.Stage is StageSpec stage ? L($" · Màn {StageNumber(stage)}", $" · Stage {StageNumber(stage)}") : "";
         battleHud = new BattleHud($"{preferences.Name} · {(battle != null ? WeaponName(battle.Weapon) : "")}{stagePart}", portrait, L);
         battleHud.SkillClicked += skill => UseBattleSkill(skill);
         battleHud.PauseClicked += () => { if (battle != null) SetBattlePaused(!BattleUserPaused); };

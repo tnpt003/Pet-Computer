@@ -19,6 +19,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
   - Sửa test cũ: AdventureContentTests dùng King dựng trong test với 4 pha cũ để vẫn kiểm cơ chế pha thường. Check "synergy bật ở màn 3 ≥ 90%" giờ tính trên các lượt thắng màn 3, vì lượt Khó tự đánh thua sớm ở màn 3 (do đá chặn) chưa kịp chọn thẻ: trước khi đổi đo được 87% trên mọi lượt.
   - Đã xem ảnh render bong bóng khiên + chữ IMMUNE/BLOCK trên nền tối; sửa đáy bong bóng bị cắt dưới sàn. Chưa xem trên nền sáng.
 - Mô phỏng (không phải chơi thật), chơi nối chương: Thường vẫn thắng 9–10/10 mọi màn, kể cả tự đánh, nên chương vẫn dễ (việc của mốc 4). Khó tự đánh: màn 3 1–3/10, màn 5 1–2/10. Đá chặn 1–4 nhát/lượt ở màn 2–4; khiên boss màn 5 bật trung bình 6–9 s/lượt.
+- Commit adea56c (chỉ file mốc 3; AGENTS.md/docs/NEXT-STEPS.md của người dùng tạm stash khi publish rồi chép trả đúng từng byte). Publish sạch: 1.1.0-beta+adea56c, ZIP artifacts\DesktopPet-1.1.0-beta-adea56c-win-x64.zip; check-publish 3/3. Đóng mèo (PID 13708) bằng WM_CLOSE, mở lại 14:47, log "Desktop Pet 1.1.0-beta (adea56c) started".
 - Chưa: chơi thật, nền sáng, DPI/màn hình phụ (boss chạy về mép màn hình đang đánh), nghe cue. Trận tự do có slime đá nên cũng bị chặn đòn; kỷ lục trận tự do không có rulesVersion.
 
 ## Combat Depth mốc 2 (2026-10-20) — nhóm thẻ, synergy, build cộng dồn qua màn

@@ -267,3 +267,23 @@ Màn sinh tồn: `"objective": "survive", "surviveSeconds": 10–600`. Các đ�
   - Cầm cự: một stream nhanh 2 : thường 1 : đá 1, 2.6 s → 1.4 s, `threatGrowth` 0.3, thẻ ở giây 20/40/60.
   - Cắt viện trợ: `maxAlive` 5; đợt 1 bốc 3 con thường/nhanh; đợt 2 và 3 có đội 1 slime thảo dược + 3 slime đá.
   - Vua Slime: đợt 2 là đội thảo dược + đá + slime; đợt 3 là Vua một mình (quân của Vua thuộc các pha khiên).
+
+## Vai trò quái và chiến thuật (Enemy Director mốc 2)
+
+- Luật chung (`battle.json` gốc):
+  - `maxAttackers` (0–10, mặc định 2; 0 = không giới hạn): tối đa bấy nhiêu quái cùng gồng/lao một lúc.
+  - `attackStagger` (0–3 s, mặc định 0.3): lần gồng mới cách lần trước ít nhất bấy nhiêu. Boss không phải chờ lượt (nhưng vẫn tính là đang đánh).
+  - `incomingWarning` (0–5 s, mặc định 1): mũi tên đỏ ở mép trước khi quái phía sau xuất hiện.
+- Nhóm trong đợt có `"side"`: `"a"` = mép xa mèo lúc đợt bắt đầu, `"b"` = mép còn lại, có mũi tên cảnh báo trước. Mèo đang đứng ở mép "b" (gần hơn `spawnMinDistance`) thì quái ra ở mép kia, không cảnh báo, không bao giờ đè mèo. Stream sinh tồn có `pincerAfter` (giây đồng hồ, 0 = không): từ lúc đó mỗi lần spawn đổi mép, có cảnh báo. Trong lúc cảnh báo không có spawn khác; bế mèo/Pause đóng băng cảnh báo.
+- Quái:
+  - `blocker`: mèo tự đi trên sàn không đi xuyên qua; mục tiêu ở sau thì mèo đánh nó trước (marker mục tiêu giữ nguyên, quái chắn có vòng xám đứt nét dưới chân). Bế mèo thả ra sau vẫn được. Mèo bị thả chồng lên quái chắn thì tự bước ra mép gần nhất (không dịch chuyển xa). Quái chắn chỉ giữ khoảng cách với quái chắn khác, quái thường lách qua được nó.
+  - `blockFrontOnly`: chỉ chặn đòn từ phía nó đang quay mặt; đòn từ sau luôn trúng.
+  - `turnSeconds` (0–3): thời gian quay mặt sang hướng mèo; trong lúc đó không đi, không gồng.
+  - `teleportBelow` (0–0.9, chỉ quái support có hồi máu): đồng minh biết đánh dưới tỉ lệ HP này và ngoài tầm hồi → support gồng `teleportWindup` s (co người, vòng lá, dấu điểm đến) rồi xuất hiện sau đồng minh (so với mèo). Hồi chiêu `teleportCooldown`. Đẩy/choáng hủy và tính trọn hồi chiêu. Không teleport tới support khác, không teleport khi hết lượng hồi, teleport không tự hồi máu. Đồng minh chết trước khi tới: không nhảy, thử lại sau 1 s.
+  - Support xuất hiện lẻ (không trong đội, không có `side`): đứng cạnh đồng minh biết đánh xa mèo nhất, phía xa mèo.
+  - Vệ sĩ: mỗi support còn sống được giao quái chắn gần nhất; vệ sĩ đứng giữa mèo và support (cách support `keepBack` của support, gần hơn khi mèo sát), vẫn đánh mèo trong tầm. Vai trò tính lại 8 lần/giây theo vị trí mèo lúc đó (có độ trễ, không đoán trước).
+  - Boss `rallyEvery` (cần pha khiên): khi khiên bật và quân của pha đã ra, cứ `rallyEvery` s vương miện sáng `rallyCharge` s rồi quân gần mèo nhất (không phải support) đi nhanh ×`rallySpeed` trong `rallySeconds` s. Đẩy boss lúc vương miện sáng thì hủy lệnh. Không tăng tốc lao, không tăng choáng.
+  - Boss `shieldBreakStun` (0–5): khiên vỡ thì boss choáng bấy nhiêu giây, vẫn nhận sát thương.
+  - Quân boss gọi ra không xuất hiện trong vòng 90 DIPs quanh mèo khi còn chỗ.
+  - `marks: "leaf"`: slime thảo dược có mũ lá + túi thảo dược (không còn dấu + trên thân); lá sáng khi gồng hồi, hạt sáng bay tới đồng minh; hết lượng hồi thì lá cụp, xỉn màu. `"cross"` vẫn hợp lệ cho dữ liệu cũ.
+- Bản gốc: slime đá `blocker`, `blockFrontOnly`, `turnSeconds` 0.6, `hitScale` 1.5 (vẽ rộng/thấp, có tấm giáp phía trước, thêm vết nứt dưới 50% HP); slime thảo dược `leaf`, `teleportBelow` 0.35 / 0.6 s / 8 s; Vua Slime chương 1 `rallyEvery` 7, `rallyCharge` 0.8, `rallySeconds` 3, `rallySpeed` 1.4, `shieldBreakStun` 2. Màn 5 đợt 1: đá + slime từ mép xa, 2 slime nhanh từ phía sau. Cầm cự: hai phía từ giây 45. rulesVersion màn 1–5: 3/7/8/8/8 (chia lượt ra đòn áp cho mọi màn).

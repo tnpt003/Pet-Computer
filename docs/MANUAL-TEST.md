@@ -179,6 +179,15 @@ Nên chép dự phòng %LOCALAPPDATA%\DesktopPet\adventure-progress.json (nếu 
 - [ ] Log (`%LOCALAPPDATA%\DesktopPet\logs\desktoppet.log`) có dòng "Battle started: … seed N." mỗi trận.
 - [ ] Kỷ lục cũ của 5 màn không bị xóa nhưng không so với luật mới (rulesVersion tăng). Build đã lưu vẫn mang được vào màn sau.
 
+#### Enemy Director — mốc 2: vai trò quái, chiến thuật (2026-10-20)
+- [ ] Slime thảo dược: có mũ lá và túi thảo dược, không còn dấu + trên thân. Lá sáng và có hạt sáng bay tới đồng minh khi gồng hồi; hết lượng hồi thì lá cụp xỉn. Đẹp/đọc rõ trên nền sáng và tối.
+- [ ] Đồng minh của nó tụt dưới ~1/3 máu ở xa: nó co người trong vòng lá, có dấu xanh ở điểm đến, rồi hiện ra sau đồng minh. Đẩy lúc đang co người thì hủy. Không teleport liên tục.
+- [ ] Slime đá: thân rộng/thấp, tấm giáp ở phía mặt, nứt thêm khi yếu. Mèo không tự đi xuyên qua đá; click quái phía sau thì mèo vẫn đánh đá trước (vòng xám dưới chân đá). Bế mèo thả ra sau đá thì đánh thẳng mục tiêu. Thả mèo đè lên đá: mèo bước ra mép gần, không nhảy xa. Đánh từ sau lưng đá không bao giờ "CHẶN"; đá cần một chút thời gian quay lại.
+- [ ] Không thấy quá 2 quái cùng gồng một lúc; các đòn không trúng cùng một khung hình.
+- [ ] Màn 4: một slime đá đứng chắn giữa mèo và slime thảo dược; ném mèo sang phía kia thì đá đổi chỗ sau một nhịp.
+- [ ] Màn 5 đợt 1: mũi tên đỏ + banner "Quái tới từ phía sau!" rồi slime nhanh ra ở mép đó sau ~1 s. Đứng sát mép đó thì quái ra ở mép kia. Cầm cự sau giây 45: quái ra luân phiên hai mép, có mũi tên.
+- [ ] Vua Slime khi bật khiên: vương miện có vòng sáng, banner "ra lệnh xung phong", một quân chạy nhanh có vệt vàng. Đẩy Vua lúc vương miện sáng thì hủy. Khiên vỡ: Vua choáng ~2 s (sao quanh đầu), đánh được.
+
 ### Nhật ký chơi thử Battle Mode (beta, thêm 2026-10-18)
 Chơi 3–5 trận mỗi độ khó trên bản publish, ghi 1 dòng/trận. Phiên bản: xem Khác → Giới thiệu (ví dụ `1.0.0 (18cb227)`). Chưa có dòng nào là chưa chơi thử; số mô phỏng trong PROGRESS.md không thay cho bảng này.
 

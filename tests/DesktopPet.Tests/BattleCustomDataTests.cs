@@ -9,7 +9,9 @@ internal static class BattleCustomDataTests
     {
         const double dt = 1.0 / 60;
         var builtIn = BattleData.Settings;
-        check(builtIn.SchemaVersion == BattleData.SchemaVersion && builtIn.EnemyTypes.All(e => e.Family == "slime" && e.Renderer == "slime" && e.HitScale == null),
+        // The rock slime is drawn 12 % wider than its scale (wide and low), so its hitbox says so.
+        check(builtIn.SchemaVersion == BattleData.SchemaVersion && builtIn.EnemyTypes.All(e => e.Family == "slime" && e.Renderer == "slime" &&
+              (e.Marks == "cracks" ? Math.Abs(e.Hitbox - e.Scale * 1.12) < 0.03 : e.HitScale == null)),
             "The built-in data is schema 1; every enemy is a slime drawn by the slime renderer, hitbox = drawn size");
 
         string dir = Path.Combine(Path.GetTempPath(), "pet-battle-data-" + Guid.NewGuid().ToString("N"));

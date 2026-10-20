@@ -22,6 +22,9 @@ public static class BattleRandom
     }
 }
 
+// One spawn: a single enemy or a whole squad, from the side its group asks for ("a", "b" or either).
+public readonly record struct SpawnUnit(string[] Kinds, string? Side = null);
+
 // What a wave sends and how strong (no WPF, no state of its own: BattleSim keeps the queue).
 public static class SpawnDirector
 {
@@ -40,18 +43,18 @@ public static class SpawnDirector
 
     // The wave's spawns in order, drawn once when it starts. Each unit comes as one: a single enemy
     // or a whole squad.
-    public static List<string[]> Units(WaveSpec wave, Random random)
+    public static List<SpawnUnit> Units(WaveSpec wave, Random random)
     {
-        var units = new List<string[]>();
+        var units = new List<SpawnUnit>();
         foreach (var g in wave.Groups)
         {
             if (g.Squad != null)
             {
                 var members = g.Squad.SelectMany(m => Enumerable.Repeat(m.Enemy, m.Count)).ToArray();
-                for (int i = 0; i < g.Count; i++) units.Add(members);
+                for (int i = 0; i < g.Count; i++) units.Add(new(members, g.Side));
             }
-            else if (g.Pick != null) foreach (var kind in Draw(g, random)) units.Add(new[] { kind });
-            else for (int i = 0; i < g.Count; i++) units.Add(new[] { g.Enemy });
+            else if (g.Pick != null) foreach (var kind in Draw(g, random)) units.Add(new(new[] { kind }, g.Side));
+            else for (int i = 0; i < g.Count; i++) units.Add(new(new[] { g.Enemy }, g.Side));
         }
         return units;
     }

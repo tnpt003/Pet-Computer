@@ -73,11 +73,11 @@ internal static class EnemyDirectorTests
         // AtLeast: whatever the draw, the guaranteed kind is there.
         var group = new WaveGroup { Pick = new() { ["slime"] = 9, ["runner"] = 1 }, Count = 3, AtLeast = new() { ["runner"] = 1 } };
         var wave = Wave(group);
-        var draws = Enumerable.Range(0, 300).Select(i => SpawnDirector.Units(wave, new Random(i)).Select(u => u[0]).ToList()).ToList();
+        var draws = Enumerable.Range(0, 300).Select(i => SpawnDirector.Units(wave, new Random(i)).Select(u => u.Kinds[0]).ToList()).ToList();
         check(draws.All(d => d.Count == 3 && d.Contains("runner")), "atLeast: the guaranteed kind is in every draw");
         check(draws.Select(d => d.IndexOf("runner")).Distinct().Count() == 3, "The guaranteed one is not always in the same place");
         var two = Wave(new WaveGroup { Pick = new() { ["slime"] = 1 }, Count = 2, AtLeast = new() { ["runner"] = 1, ["rock"] = 1 } });
-        check(Enumerable.Range(0, 20).All(i => SpawnDirector.Units(two, new Random(i)).Select(u => u[0]).OrderBy(k => k).SequenceEqual(new[] { "rock", "runner" })),
+        check(Enumerable.Range(0, 20).All(i => SpawnDirector.Units(two, new Random(i)).Select(u => u.Kinds[0]).OrderBy(k => k).SequenceEqual(new[] { "rock", "runner" })),
             "Several guarantees filling the whole count are all met");
     }
 
@@ -213,7 +213,7 @@ internal static class EnemyDirectorTests
     {
         var data = BattleData.Settings;
         var stages = data.Campaign!.Chapters[0].Stages;
-        string Kinds(WaveSpec wave, int seed) => string.Join(",", SpawnDirector.Units(wave, new Random(seed)).SelectMany(u => u));
+        string Kinds(WaveSpec wave, int seed) => string.Join(",", SpawnDirector.Units(wave, new Random(seed)).SelectMany(u => u.Kinds));
         // First steps: plain slimes first; the last wave always brings a quick slime to meet.
         check(stages[0].Waves[0].Groups.All(g => g.Fixed && g.Enemy == "slime") &&
               Enumerable.Range(0, 50).All(i => Kinds(stages[0].Waves[^1], i).Split(',').Contains("runner")), "Stage 1: plain slimes, then a last wave that always introduces a quick slime");

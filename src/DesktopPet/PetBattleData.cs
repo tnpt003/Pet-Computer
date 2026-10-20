@@ -40,7 +40,8 @@ public sealed class EnemyType
     public string Color { get; init; } = "#7CD36A";
     public string AngryColor { get; init; } = "#E86A6A";
     // Drawn marks that tell kinds apart at a glance: "none", "speed" (wind streaks behind it
-    // while moving) or "cracks" (a stony body).
+    // while moving), "cracks" (a stony body: wide and low, armour on its front, more cracks when
+    // weak), "leaf" (a herbal healer: a leaf cap and a herb pouch) or "cross" (an older "+" mark).
     public string Marks { get; init; } = "none";
     // A boss: crown, its own HP bar on the HUD, a "BOSS!" banner.
     public bool Boss { get; init; }
@@ -83,6 +84,29 @@ public sealed class EnemyType
     // backing off at its own speed. With no fighting ally left it fights like any slime.
     public bool Support { get; init; }
     public double KeepBack { get; init; } = 110;
+    // Support: when a fighting ally drops below TeleportBelow of its HP (0 = never) and is out of
+    // heal reach, it shrinks for TeleportWindup s (its leaf ring and the spot it will reach show),
+    // then appears behind that ally (seen from the cat); once per TeleportCooldown s. A push or stun
+    // cancels it. Teleporting heals nothing by itself.
+    public double TeleportBelow { get; init; }
+    public double TeleportWindup { get; init; } = 0.6;
+    public double TeleportCooldown { get; init; } = 8;
+    // Blocker: the cat walking on the floor cannot pass it; a target behind it means hitting it first
+    // (lifting the cat over it still works). BlockFrontOnly: it blocks only hits from the side it
+    // faces. TurnSeconds: how long it takes to face the other way (0: at once); it only winds up
+    // facing the cat, so a cat behind it gets a moment of free hits.
+    public bool Blocker { get; init; }
+    public bool BlockFrontOnly { get; init; }
+    public double TurnSeconds { get; init; }
+    // Boss rally (during a shield phase, after its helpers came): every RallyEvery s (0 = never) its
+    // crown glows RallyCharge s, then one helper of the phase walks RallySpeed × faster for RallySeconds.
+    // Pushing the boss while its crown glows cancels the call.
+    public double RallyEvery { get; init; }
+    public double RallyCharge { get; init; } = 0.8;
+    public double RallySeconds { get; init; } = 3;
+    public double RallySpeed { get; init; } = 1.4;
+    // Boss: dazed this long when its shield breaks (0: not), taking damage as usual.
+    public double ShieldBreakStun { get; init; }
     // Boss phases: each fires once when its HP fraction is reached (summon helpers and/or get
     // angry). At most SummonCap of its helpers are alive at once (more calls are skipped).
     public BossPhase[]? Phases { get; init; }
@@ -125,6 +149,9 @@ public sealed class WaveGroup
     public Dictionary<string, double>? Pick { get; init; }
     public Dictionary<string, int>? AtLeast { get; init; }
     public WaveGroup[]? Squad { get; init; }
+    // Two-sided waves: "a" spawns at the edge far from the cat (as the wave starts), "b" at the
+    // other edge after a warning arrow there (BattleSettings.IncomingWarning); unset: either edge.
+    public string? Side { get; init; }
     [JsonIgnore] public bool Fixed => Pick == null && Squad == null;
     [JsonIgnore] public int SquadSize => Squad?.Sum(m => Math.Max(0, m.Count)) ?? 1;
 }
@@ -136,6 +163,9 @@ public sealed class StreamSpec
     public Dictionary<string, double> Weights { get; init; } = new();
     public double Interval { get; init; } = 2;
     public double IntervalEnd { get; init; } = 2;
+    // From this many seconds of the clock on (0 = never), spawns come from alternate edges, each
+    // after a warning arrow.
+    public double PincerAfter { get; init; }
 }
 
 public sealed class WaveSpec
@@ -382,7 +412,8 @@ public static class BattleData
     public static readonly string[] WeaponStyles = { "sword", "hammer" };
     public static readonly string[] WeaponHitEffects = { "spark", "thud" };
     public static readonly string[] EnemyRenderers = { "slime" };
-    public static readonly string[] EnemyMarks = { "none", "speed", "cracks", "cross" };
+    public static readonly string[] EnemyMarks = { "none", "speed", "cracks", "leaf", "cross" };
+    public static readonly string[] GroupSides = { "a", "b" };
 
     // Throws on any mistake, so a half-valid file is never used.
     public static BattleSettings Parse(Stream stream)
@@ -478,6 +509,20 @@ public static class BattleData
             Within(e.BlockChance, 0, 0.9, at + ".blockChance");
             if (e.BlockMaxStreak is < 1 or > 10) throw new InvalidDataException(at + ".blockMaxStreak must be 1–10");
             if (e.Support) Within(e.KeepBack, 0, 600, at + ".keepBack");
+            Within(e.TeleportBelow, 0, 0.9, at + ".teleportBelow");
+            if (e.TeleportBelow > 0)
+            {
+                if (!e.Support) throw new InvalidDataException(at + ".teleportBelow is for a support enemy");
+                Within(e.TeleportWindup, 0.2, 5, at + ".teleportWindup"); Within(e.TeleportCooldown, 1, 60, at + ".teleportCooldown");
+            }
+            Within(e.TurnSeconds, 0, 3, at + ".turnSeconds");
+            Within(e.RallyEvery, 0, 60, at + ".rallyEvery");
+            if (e.RallyEvery > 0)
+            {
+                if (e.Phases?.Any(p => p is { Shield: true }) != true) throw new InvalidDataException(at + ".rallyEvery needs a shield phase");
+                Within(e.RallyCharge, 0.2, 5, at + ".rallyCharge"); Within(e.RallySeconds, 0.5, 10, at + ".rallySeconds"); Within(e.RallySpeed, 1, 3, at + ".rallySpeed");
+            }
+            Within(e.ShieldBreakStun, 0, 5, at + ".shieldBreakStun");
             if (e.Phases?.Any(p => p is { Shield: true }) == true) { Within(e.RetreatSpeed, 10, 600, at + ".retreatSpeed"); Within(e.RetreatSeconds, 0.2, 10, at + ".retreatSeconds"); }
             if (e.Dash)
             {
@@ -537,6 +582,7 @@ public static class BattleData
                     if (!survival || i != waves.Count - 1) throw new InvalidDataException($"{at}[{i}].stream is only for the last wave of a survive stage");
                     Weights(stream.Weights, $"{at}[{i}].stream.weights");
                     Within(stream.Interval, 0.3, 20, $"{at}[{i}].stream.interval"); Within(stream.IntervalEnd, 0.3, 20, $"{at}[{i}].stream.intervalEnd");
+                    Within(stream.PincerAfter, 0, 600, $"{at}[{i}].stream.pincerAfter");
                     if (wave.Groups is { Length: > 0 }) throw new InvalidDataException($"{at}[{i}]: a stream wave has no groups");
                     continue;
                 }
@@ -545,6 +591,7 @@ public static class BattleData
                 {
                     if (g == null) throw new InvalidDataException($"{at}[{i}] has an empty group");
                     if (g.Count is < 1 or > 50) throw new InvalidDataException($"{at}[{i}] {g.Enemy}: count must be 1–50");
+                    if (g.Side != null && Array.IndexOf(GroupSides, g.Side) < 0) throw new InvalidDataException($"{at}[{i}].side must be \"a\" or \"b\"");
                     if (g.Pick != null && g.Squad != null) throw new InvalidDataException($"{at}[{i}]: a group is a pick or a squad, not both");
                     if (g.Pick != null)
                     {
@@ -600,6 +647,8 @@ public static class BattleData
             if (y.Effect == "echo" && y.Every is < 2 or > 10) throw new InvalidDataException($"{at}.every must be 2–10");
         }
         Within(s.ThreatDamageShare, 0, 1, "threatDamageShare");
+        if (s.MaxAttackers is < 0 or > 10) throw new InvalidDataException("maxAttackers must be 0–10 (0: no limit)");
+        Within(s.AttackStagger, 0, 3, "attackStagger"); Within(s.IncomingWarning, 0, 5, "incomingWarning");
         if (s.Campaign is CampaignSpec campaign) ValidateCampaign(campaign, (waves, at, alive, survival) => Waves(waves, at, alive ?? s.MaxAlive, survival), Id, Text);
     }
 

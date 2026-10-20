@@ -132,6 +132,23 @@ public sealed class BattleFieldView : FrameworkElement
         for (int i = 0; i < sim.Bombs.Count; i++) DrawBomb(dc, sim.Bombs[i], sim.Bombs[i].X - OriginX, floor);
         for (int i = 0; i < sim.Slimes.Count; i++) DrawSlime(dc, sim.Slimes[i], sim.Slimes[i].X - OriginX, floor, sim.Settings, time);
         for (int i = 0; i < sim.Effects.Count; i++) DrawEffect(dc, sim.Effects[i], sim.Effects[i].X - OriginX, floor - sim.Effects[i].Height, floor);
+        if (sim.Incoming) DrawIncoming(dc, sim.IncomingX - OriginX, floor, time);
+    }
+
+    // A spawn from behind is coming at this edge: a pulsing red arrow pointing into the field and a "!".
+    private void DrawIncoming(DrawingContext dc, double x, double floor, double time)
+    {
+        int inward = -sim.IncomingEdge;
+        double y = floor - 34, pulse = 0.9 + 0.12 * Math.Sin(time * 12);
+        dc.PushTransform(new MatrixTransform(inward * pulse, 0, 0, pulse, x + inward * 6, y));
+        dc.DrawGeometry(null, Halo, PushArrow);
+        dc.DrawGeometry(Warning, Ink, PushArrow);
+        dc.Pop();
+        double ey = y - 26;
+        dc.DrawLine(Halo, new Point(x, ey - 9), new Point(x, ey + 1));
+        dc.DrawLine(WarningPen, new Point(x, ey - 9), new Point(x, ey + 1));
+        dc.DrawEllipse(Warning, Halo, new Point(x, ey + 7), 2.4, 2.4);
+        dc.DrawEllipse(Warning, null, new Point(x, ey + 7), 2.4, 2.4);
     }
 
     private void DrawSlime(DrawingContext dc, Slime slime, double x, double floor, BattleSettings s, double time)
@@ -170,6 +187,20 @@ public sealed class BattleFieldView : FrameworkElement
                 double fade = Math.Clamp(t / (s.DefeatDuration * (slime.IsBoss ? 1.5 : 1)), 0, 1);
                 sx = 1 + 0.5 * fade; sy = Math.Max(0.05, 1 - fade); opacity = 1 - fade;
                 break;
+            case SlimeState.Teleporting:
+                // Shrinking away inside its ring of leaves.
+                double away = Math.Clamp(t / Math.Max(0.01, slime.Type.TeleportWindup), 0, 1);
+                sx = sy = 1 - 0.65 * away;
+                break;
+        }
+        // A stony body is wide and low (its hitScale is wider to match).
+        if (slime.Type.Marks == "cracks") { sx *= 1.12; sy *= 0.9; }
+        if (slime.State == SlimeState.Teleporting) DrawTeleport(dc, slime, x, floor, time);
+        if (sim.BlockedById == slime.Id)
+        {
+            // In the cat's way: a grey dashed ring at its feet (the cat hits it before its target).
+            dc.DrawEllipse(null, Halo, new Point(x, floor - 1), w / 2 + 9, 7);
+            dc.DrawEllipse(null, WallRing, new Point(x, floor - 1), w / 2 + 9, 7);
         }
         if (slime.Type.Slam && slime.State == SlimeState.Windup)
         {
@@ -207,13 +238,14 @@ public sealed class BattleFieldView : FrameworkElement
             dc.DrawGeometry(PushBlue, Ink, PushArrow);
             dc.Pop();
         }
-        if (slime.Type.Marks == "speed" && slime.State is SlimeState.Moving or SlimeState.Dashing && opacity > 0.5)
+        bool rallied = slime.RallyRemaining > 0;
+        if ((slime.Type.Marks == "speed" || rallied) && slime.State is SlimeState.Moving or SlimeState.Dashing && opacity > 0.5)
         {
-            // Wind streaks trailing a fast slime.
+            // Wind streaks trailing a fast slime (gold while the boss's rally drives it).
             for (int i = 0; i < 3; i++)
             {
                 double y = floor - h * (0.3 + 0.2 * i), back = -slime.Facing * (w / 2 + 4 + 3 * i);
-                dc.DrawLine(Streak, new Point(x + back, y), new Point(x + back - slime.Facing * (10 + 4 * (i % 2)), y));
+                dc.DrawLine(rallied ? RallyStreak : Streak, new Point(x + back, y), new Point(x + back - slime.Facing * (10 + 4 * (i % 2)), y));
             }
         }
         dc.PushOpacity(opacity);
@@ -248,11 +280,25 @@ public sealed class BattleFieldView : FrameworkElement
         }
         if (slime.Type.Marks == "cracks")
         {
-            // A stony body: two dark cracks.
+            // A stony body: dark cracks (more once it is weak) and an armour slab on the side it faces.
             dc.DrawGeometry(null, Crack, Cracks);
+            if (slime.Hp < slime.MaxHp / 2) dc.DrawGeometry(null, Crack, MoreCracks);
+            dc.PushTransform(new ScaleTransform(slime.Facing, 1));
+            dc.DrawGeometry(slime.HitFlash > 0 ? Brushes.White : ArmorGrey, Outline, Armor);
+            dc.Pop();
         }
-        // A support enemy: a white "+" on its body.
+        if (slime.Type.Marks == "leaf") DrawHerbal(dc, slime, time);
+        // An older support mark: a white "+" on its body.
         if (slime.Type.Marks == "cross") dc.DrawGeometry(Brushes.White, Outline, CrossMark);
+        if (slime.IsBoss && slime.RallyCharge > 0)
+        {
+            // The rally call: the crown glows (push the boss now to cut it).
+            // A soft glow and a crisp pulsing ring, readable on dark and light desktops alike.
+            double ring = 1 + 0.12 * Math.Sin(time * 16);
+            dc.DrawEllipse(RallyGlow, null, new Point(0, -37), 17, 12);
+            dc.DrawEllipse(null, Halo, new Point(0, -37), 15 * ring, 10 * ring);
+            dc.DrawEllipse(null, RallyPen, new Point(0, -37), 15 * ring, 10 * ring);
+        }
         if (slime.IsBoss) dc.DrawGeometry(Gold, Outline, Crown);
         dc.Pop();
         dc.Pop();
@@ -297,18 +343,28 @@ public sealed class BattleFieldView : FrameworkElement
         }
         if (slime.State == SlimeState.Casting)
         {
-            // The heal is coming: a pulsing green "+" over the healer and a dashed green ring under
-            // the ally it heals. Push or stun the healer now to cancel it.
-            double pulse = 1 + 0.15 * Math.Sin(time * 10);
-            dc.PushTransform(new MatrixTransform(pulse, 0, 0, pulse, x, top - 12));
-            dc.DrawGeometry(null, Halo, PlusMark);
-            dc.DrawGeometry(HealGreen, Ink, PlusMark);
+            // The heal is coming: a glowing leaf over the healer, motes of light drifting to the ally
+            // and a dashed green ring under it. Push or stun the healer now to cancel it.
+            double pulse = 1.3 + 0.2 * Math.Sin(time * 10);
+            dc.PushTransform(new MatrixTransform(pulse, 0, 0, pulse, x - 10 * pulse, top - 12 + 41 * pulse)); // Leaf centre (10, -41) over the head.
+            dc.DrawEllipse(LeafGlow, null, new Point(10, -41), 14, 9);
+            dc.DrawGeometry(null, Halo, Leaf);
+            dc.DrawGeometry(LeafGreen, Outline, Leaf);
+            dc.DrawGeometry(null, LeafVein, LeafRib);
             dc.Pop();
             if (sim.Healing(slime) is Slime ally)
             {
                 double ax = ally.X - OriginX;
                 dc.DrawEllipse(null, Halo, new Point(ax, floor - 2), ally.Width / 2 + 8, 7);
                 dc.DrawEllipse(null, HealDash, new Point(ax, floor - 2), ally.Width / 2 + 8, 7);
+                double from = top - 6, to = floor - ally.Height - 4;
+                for (int i = 0; i < 3; i++)
+                {
+                    double f = (t * 1.6 + i / 3.0) % 1;
+                    var mote = new Point(x + (ax - x) * f, from + (to - from) * f - Math.Sin(f * Math.PI) * 18);
+                    dc.DrawEllipse(LeafGlow, null, mote, 5, 5);
+                    dc.DrawEllipse(HealGreen, null, mote, 2.2, 2.2);
+                }
             }
         }
         if (slime.State == SlimeState.Stunned)
@@ -337,6 +393,66 @@ public sealed class BattleFieldView : FrameworkElement
             dc.Pop();
         }
     }
+
+    // A herbal healer (body coordinates): a leaf cap with a short stem and a small herb pouch on
+    // the side it faces. The leaf glows while it heals and droops, dull, once its heals are spent.
+    private static void DrawHerbal(DrawingContext dc, Slime slime, double time)
+    {
+        bool spent = slime.Type.HealAmount > 0 && slime.HealLeft <= 0;
+        // The pouch hangs at the body's back edge on a strap over the body.
+        double back = -slime.Facing;
+        dc.DrawLine(PouchStrap, new Point(back * 4, -33), new Point(back * 19, -9));
+        dc.DrawEllipse(Pouch, Outline, new Point(back * 20, -6), 6, 5.5);
+        dc.DrawLine(LeafVein, new Point(back * 20 - 4, -9.5), new Point(back * 20 + 4, -9.5));
+        dc.DrawLine(Outline, new Point(-3, -33), new Point(-6, -38));
+        if (slime.State == SlimeState.Casting) dc.DrawEllipse(LeafGlow, null, new Point(10, -40), 15 + Math.Sin(time * 10), 10);
+        if (spent) dc.PushTransform(new RotateTransform(40, -2, -33));
+        dc.DrawGeometry(spent ? LeafDull : LeafGreen, Outline, Leaf);
+        dc.DrawGeometry(null, LeafVein, LeafRib);
+        if (spent) dc.Pop();
+    }
+
+    // The jump to come: a ring of leaves turning round the shrinking support, and a dashed green ring
+    // with a small leaf on the floor where it will appear.
+    private void DrawTeleport(DrawingContext dc, Slime slime, double x, double floor, double time)
+    {
+        double k = Math.Clamp(slime.StateTime / Math.Max(0.01, slime.Type.TeleportWindup), 0, 1);
+        for (int i = 0; i < 5; i++)
+        {
+            double a = time * 6 + i * Math.PI * 2 / 5, r = slime.Width / 2 + 6 - 8 * k;
+            DrawSmallLeaf(dc, new Point(x + Math.Cos(a) * r, floor - slime.Height / 2 + Math.Sin(a) * r * 0.5), a);
+        }
+        double tx = slime.TeleportX - OriginX;
+        dc.DrawEllipse(null, Halo, new Point(tx, floor - 2), slime.Width / 2 + 8, 7);
+        dc.DrawEllipse(null, HealDash, new Point(tx, floor - 2), slime.Width / 2 + 8, 7);
+        DrawSmallLeaf(dc, new Point(tx, floor - 18 - 4 * Math.Sin(time * 8)), Math.PI / 2);
+    }
+
+    private static void DrawSmallLeaf(DrawingContext dc, Point at, double angle)
+    {
+        dc.PushTransform(new MatrixTransform(Math.Cos(angle) * 0.55, Math.Sin(angle) * 0.55, -Math.Sin(angle) * 0.55, Math.Cos(angle) * 0.55, at.X, at.Y));
+        dc.DrawGeometry(LeafGreen, Outline, SmallLeaf);
+        dc.Pop();
+    }
+
+    private static readonly Brush LeafGreen = Frozen(255, 0x3E, 0x9B, 0x4F);
+    private static readonly Brush LeafDull = Frozen(255, 0x93, 0x9A, 0x74);
+    private static readonly Brush LeafGlow = Frozen(150, 0xC8, 0xFF, 0xB8);
+    private static readonly Brush Pouch = Frozen(255, 0xB5, 0x83, 0x5A);
+    private static readonly Brush ArmorGrey = Frozen(255, 0x7E, 0x77, 0x6D);
+    private static readonly Brush RallyGlow = Frozen(170, 0xFF, 0xE6, 0x70);
+    private static readonly Pen PouchStrap = FrozenPen(Frozen(255, 0x8A, 0x5E, 0x3B), 1.6);
+    private static readonly Pen RallyPen = FrozenPen(Frozen(255, 0xFF, 0xE6, 0x70), 2.5);
+    private static readonly Pen LeafVein = FrozenPen(Frozen(255, 0x24, 0x5E, 0x30), 1.2);
+    private static readonly Pen WallRing = FrozenPen(Frozen(255, 0x8C, 0x85, 0x7A), 2.5, new DashStyle(new double[] { 2, 2 }, 0));
+    // Gold: the boss's rally (distinct from a quick slime's blue streaks).
+    private static readonly Pen RallyStreak = FrozenPen(Frozen(240, 0xE0, 0xA8, 0x20), 2.4);
+    private static readonly Geometry Leaf = Parse("M -2,-33 C 3,-48 16,-49 22,-41 C 15,-34 5,-31 -2,-33 Z");
+    private static readonly Geometry LeafRib = Parse("M 0,-33.5 L 17,-41");
+    private static readonly Geometry SmallLeaf = Parse("M -8,0 C -4,-6 4,-6 8,0 C 4,6 -4,6 -8,0 Z");
+    // Facing right (mirrored for left): a slab over the front of a stony body.
+    private static readonly Geometry Armor = Parse("M 16,-1 C 26,-6 27,-20 20,-28 L 15,-25 C 20,-19 20,-8 13,-3 Z");
+    private static readonly Geometry MoreCracks = Parse("M -4,-30 L -1,-24 L -6,-19 M 2,-14 L 6,-10 L 3,-5");
 
     private static readonly Geometry Arrow = CreateArrow();
     // Body coordinates of the basic slime: the support mark below the eyes; the floating "+".
@@ -491,6 +607,14 @@ public sealed class BattleFieldView : FrameworkElement
                     dc.PushTransform(new MatrixTransform(0.6, 0, 0, 0.6, px, py));
                     dc.DrawGeometry(HealGreen, Ink, PlusMark);
                     dc.Pop();
+                }
+                break;
+            case BattleEffectKind.Leaves:
+                // A support arriving from its jump: leaves bursting outward from its spot.
+                for (int i = 0; i < 6; i++)
+                {
+                    double a = i * Math.PI / 3 + k;
+                    DrawSmallLeaf(dc, new Point(x + Math.Cos(a) * (8 + 24 * k), y + Math.Sin(a) * (6 + 14 * k)), a + k * 3);
                 }
                 break;
             case BattleEffectKind.Thud:

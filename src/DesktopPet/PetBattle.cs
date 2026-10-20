@@ -74,6 +74,12 @@ public sealed class BattleSettings
     // StunImmunitySeconds, so stuns never chain into a lock.
     public double StunDurationSeconds { get; init; } = 1.5;
     public double StunImmunitySeconds { get; init; } = 3;
+    // Attack turns: at most MaxAttackers enemies wind up or dash at once (0: no limit), and a new
+    // windup starts at least AttackStagger s after the last one, so hits never all land in one frame.
+    public int MaxAttackers { get; init; } = 2;
+    public double AttackStagger { get; init; } = 0.3;
+    // A spawn from the other side of a two-sided wave is announced by an arrow this long before.
+    public double IncomingWarning { get; init; } = 1;
     public double OutroSeconds { get; init; } = 3;
     public double HurtFlashSeconds { get; init; } = 0.35;
     public int MaxEffects { get; init; } = 32;
@@ -283,7 +289,8 @@ public enum BattleSkill { Push, Heal, Cheer, Bomb, Shield }
 
 // Casting: a support enemy winds up a heal (a green "+"); a push or stun cancels it.
 // Dashing: a dash enemy's lunge after its windup (it hits the cat once at most).
-public enum SlimeState { Spawning, Moving, Windup, Recover, Stunned, Defeated, Casting, Dashing }
+// Teleporting: a support shrinking away before it appears behind a hurt ally (a push cancels it).
+public enum SlimeState { Spawning, Moving, Windup, Recover, Stunned, Defeated, Casting, Dashing, Teleporting }
 
 // Where damage on an enemy comes from: the cat's swings (a plain hit or a combo), the yarn bomb,
 // or a build bonus (Thorns sends back what the cat took, Afterimage repeats a swing). The bonus
@@ -335,6 +342,17 @@ public sealed class Slime
     public int RetreatSide, ShieldTag, PhaseTag;
     public double RetreatTime;
     public List<string>? PendingCalls;
+    // Support teleport: its own cooldown, the ally it goes to and the spot it will appear on.
+    public double TeleportCooldown;
+    public int TeleportTargetId;
+    public double TeleportX;
+    // A kind that turns slowly (TurnSeconds): how long it has wanted to face the other way.
+    public double TurnTime;
+    // A blocker standing guard between the cat and this support (0: none; set by the battle).
+    public int GuardOf;
+    // Boss rally: time to its next call and the crown's glow still to run; a helper's faster walk
+    // (time left and how much faster).
+    public double RallyCooldown, RallyCharge, RallyRemaining, RallyFactor = 1;
     public bool Targetable => State is not (SlimeState.Spawning or SlimeState.Defeated);
     public void Set(SlimeState state) { State = state; StateTime = 0; }
 }
@@ -345,15 +363,16 @@ public enum BattleEventKind
     WaveStarted, SlimeSpawned, Swing, SlimeHit, SlimeDefeated, CatHurt, Pushed, WaveCleared, Won, Lost,
     Healed, Cheered, Shielded, Blocked, BombThrown, BombExploded, BossAppeared, BossSummoned, BossEnraged, ComboHit,
     UpgradeOffered, UpgradeChosen, EnemyHealing, EnemyHealed, CatStunned, SynergyUnlocked, Reflected, Echoed,
-    HitBlocked, BossShielded, BossShieldDown, BossImmune
+    HitBlocked, BossShielded, BossShieldDown, BossImmune, EnemyTeleporting, EnemyTeleported, BossRallying, BossRallied, Incoming
 }
 public readonly record struct BattleEvent(BattleEventKind Kind, double X, double Value = 0);
 // Number: a floating damage (Value > 0) or heal (Value < 0, shown as +HP above the cat).
 // Thud: a heavy weapon's plain hit (dust and a ring on the floor), chosen by the weapon's hitEffect.
 // Mend: green pluses rising from an enemy healed by a support enemy.
 // Block: grey stone chips and a small stone shield over an enemy that blocked a hit. Immune: a
-// gold ring flashing on a shielded boss hit for nothing.
-public enum BattleEffectKind { Spark, Poof, Push, Explosion, Slam, Number, Combo, Thud, Mend, Block, Immune }
+// gold ring flashing on a shielded boss hit for nothing. Leaves: a ring of leaves where a support
+// appears after teleporting.
+public enum BattleEffectKind { Spark, Poof, Push, Explosion, Slam, Number, Combo, Thud, Mend, Block, Immune, Leaves }
 public sealed class BattleEffect
 {
     public BattleEffectKind Kind;
@@ -470,11 +489,20 @@ public sealed class BattleSim
     }
     // Enemies of the current wave still to come, in spawn order: each unit (one enemy or a squad)
     // comes as one. A stream wave has none queued: it draws as it goes.
-    private readonly List<string[]> pending = new();
+    private readonly List<SpawnUnit> pending = new();
     private int pendingNext;
     private StreamSpec? stream;
     public bool Streaming => stream != null;
-    public int ToSpawn { get { int n = 0; for (int i = pendingNext; i < pending.Count; i++) n += pending[i].Length; return n; } }
+    public int ToSpawn { get { int n = incoming?.Length ?? 0; for (int i = pendingNext; i < pending.Count; i++) n += pending[i].Kinds.Length; return n; } }
+    // Two-sided waves: the edge far from the cat when the wave began (-1 left, +1 right), the edge a
+    // stream used last, and a spawn announced by an arrow at IncomingX (IncomingEdge) that comes in
+    // IncomingRemaining s.
+    private int farEdge, streamEdge;
+    private string[]? incoming;
+    public double IncomingRemaining { get; private set; }
+    public double IncomingX { get; private set; }
+    public int IncomingEdge { get; private set; }
+    public bool Incoming => incoming != null;
     // Survive stages: the card offers of UpgradeAt already made.
     private int timedOffers;
     // The threat new enemies get now: the stage's × the current wave's, growing with the survive clock.
@@ -670,7 +698,13 @@ public sealed class BattleSim
             if (SwingTime >= arms.SwingDuration) CancelSwing();
             return new(CatCommand.Stand, catX, swingFacing);
         }
-        if (target == null || CatStunned) return new(CatCommand.Stand, catX);
+        BlockedById = 0;
+        if (CatStunned) return new(CatCommand.Stand, catX);
+        // Put down on top of a blocker: a few steps off it to the nearest free side.
+        if (Unstick(catX) is double free) return new(CatCommand.Move, free, free < catX ? -1 : 1);
+        if (target == null) return new(CatCommand.Stand, catX);
+        // A blocker on the floor between the cat and its target is hit first (the target keeps its marker).
+        if (BlockerBetween(catX, target) is Slime wall) { BlockedById = wall.Id; target = wall; }
         double dx = target.X - catX;
         int facing = dx < 0 ? -1 : 1;
         double reach = Reach(target);
@@ -687,6 +721,39 @@ public sealed class BattleSim
             return new(CatCommand.Stand, catX, facing);
         }
         return new(CatCommand.Move, target.X - facing * reach * 0.7, facing);
+    }
+
+    // The blocker standing in the cat's way to its target (null: the way is clear).
+    public int BlockedById { get; private set; }
+
+    private Slime? BlockerBetween(double catX, Slime target)
+    {
+        double dx = target.X - catX;
+        Slime? wall = null;
+        foreach (var s in slimes)
+            if (s != target && s.Type.Blocker && s.Targetable && (s.X - catX) * dx > 0 && Math.Abs(s.X - catX) < Math.Abs(dx) &&
+                (wall == null || Math.Abs(s.X - catX) < Math.Abs(wall.X - catX))) wall = s;
+        return wall;
+    }
+
+    // Where the cat goes when it stands inside a blocker (null: it does not): just past the blocker's
+    // edge on the cat's side, or the other side when that spot is in another blocker or off the floor.
+    private double? Unstick(double catX)
+    {
+        Slime? inside = null;
+        foreach (var s in slimes)
+            if (s.Type.Blocker && s.Targetable && Math.Abs(s.X - catX) < s.HitWidth / 2 + CatHalfWidth - 4) { inside = s; break; }
+        if (inside == null) return null;
+        double clear = inside.HitWidth / 2 + CatHalfWidth + 4; // The window stops walking within 6 DIPs of an order.
+        double near = inside.X + (catX < inside.X ? -clear : clear), far = inside.X + (catX < inside.X ? clear : -clear);
+        bool Free(double x)
+        {
+            if (x < Left + CatHalfWidth || x > Right - CatHalfWidth) return false;
+            foreach (var s in slimes) if (s.Type.Blocker && s.Targetable && Math.Abs(s.X - x) < s.HitWidth / 2 + CatHalfWidth - 4) return false;
+            return true;
+        }
+        // Neither side free (blockers side by side): the near side; the next step frees it from the next one.
+        return Free(near) || !Free(far) ? Math.Clamp(near, Left + CatHalfWidth, Right - CatHalfWidth) : far;
     }
 
     // A wider slime is reached from further away (the sword hits its near edge).
@@ -795,6 +862,8 @@ public sealed class BattleSim
     {
         var type = slime.Type;
         if (type.BlockChance <= 0 || source is DamageSource.Bomb or DamageSource.Reflect) return false;
+        // A front-only blocker: a hit from behind always lands (and ends its streak).
+        if (type.BlockFrontOnly && (lastCatX - slime.X) * slime.Facing <= 0) { slime.BlockStreak = 0; return false; }
         // Armor break: combo hits go straight through.
         if (source == DamageSource.Combo && Active("armorBreak") != null) { slime.BlockStreak = 0; return false; }
         if (slime.BlockStreak >= type.BlockMaxStreak || blockRandom.NextDouble() >= type.BlockChance) { slime.BlockStreak = 0; return false; }
@@ -826,6 +895,8 @@ public sealed class BattleSim
         boss.RetreatTime = 0;
         boss.RetreatSide = lastCatX <= boss.X ? 1 : -1;
         boss.PendingCalls = phase.Calls().ToList();
+        boss.RallyCooldown = boss.Type.RallyEvery / 2;
+        boss.RallyCharge = 0;
         if (boss.State is SlimeState.Windup or SlimeState.Dashing or SlimeState.Casting) boss.Set(SlimeState.Moving);
         events.Add(new(BattleEventKind.BossShielded, boss.X));
     }
@@ -842,6 +913,8 @@ public sealed class BattleSim
             double x = side == 0
                 ? boss.X + (k % 2 == 0 ? -1 : 1) * (boss.Width / 2 + 30 + 20 * (k / 2))
                 : boss.X - side * (boss.Width / 2 + 30 + 34 * k);
+            // Never on top of the cat: at least SquadCatGap away, on the boss's side of it.
+            if (Math.Abs(x - lastCatX) < SquadCatGap) x = lastCatX + (boss.X >= lastCatX ? 1 : -1) * SquadCatGap;
             var helper = AddSlime(x, Settings.Enemy(calls[k]));
             helper.SummonedBy = boss.Id;
             helper.PhaseTag = tag;
@@ -871,10 +944,51 @@ public sealed class BattleSim
             boss.PendingCalls = null;
             if (calls > 0) { events.Add(new(BattleEventKind.BossSummoned, boss.X)); return; }
         }
-        foreach (var s in slimes) if (s.SummonedBy == boss.Id && s.PhaseTag == boss.ShieldTag && s.State != SlimeState.Defeated) return;
+        // While this phase's helpers stand, the boss may rally the one nearest the cat.
+        bool helpers = false;
+        Slime? nearest = null;
+        foreach (var s in slimes)
+        {
+            if (s.SummonedBy != boss.Id || s.PhaseTag != boss.ShieldTag || s.State == SlimeState.Defeated) continue;
+            helpers = true;
+            if (!s.Type.Support && s.Targetable && (nearest == null || Math.Abs(s.X - lastCatX) < Math.Abs(nearest.X - lastCatX))) nearest = s;
+        }
+        if (helpers) { StepRally(boss, dt, nearest); return; }
         boss.Shielded = false;
         boss.ShieldTag = 0;
+        boss.RallyCharge = 0;
         events.Add(new(BattleEventKind.BossShieldDown, boss.X));
+        // An opening: dazed for a moment, taking damage as usual.
+        if (boss.Type.ShieldBreakStun > 0)
+        {
+            boss.KnockVelocity = 0;
+            boss.StunRemaining = boss.Type.ShieldBreakStun;
+            boss.Set(SlimeState.Stunned);
+        }
+    }
+
+    // The rally call: every RallyEvery s the crown glows RallyCharge s (a push now cuts it short),
+    // then the chosen helper walks faster for a while. Never a faster dash or stun.
+    private void StepRally(Slime boss, double dt, Slime? helper)
+    {
+        var type = boss.Type;
+        if (type.RallyEvery <= 0) return;
+        if (boss.RallyCharge > 0)
+        {
+            if (boss.State == SlimeState.Stunned) { boss.RallyCharge = 0; boss.RallyCooldown = type.RallyEvery; return; }
+            boss.RallyCharge = Math.Max(0, boss.RallyCharge - dt);
+            if (boss.RallyCharge > 0) return;
+            boss.RallyCooldown = type.RallyEvery;
+            if (helper == null) return;
+            helper.RallyRemaining = type.RallySeconds;
+            helper.RallyFactor = type.RallySpeed;
+            events.Add(new(BattleEventKind.BossRallied, helper.X));
+            return;
+        }
+        boss.RallyCooldown -= dt;
+        if (boss.RallyCooldown > 0 || helper == null || boss.State == SlimeState.Stunned) return;
+        boss.RallyCharge = type.RallyCharge;
+        events.Add(new(BattleEventKind.BossRallying, boss.X));
     }
 
     private Slime? PickTarget(double catX)
@@ -907,6 +1021,15 @@ public sealed class BattleSim
     private void StepSlimes(double dt, double catX, bool catHeld)
     {
         var s = Settings;
+        // Who guards whom is decided a few times a second, from where the cat was then (a reaction
+        // delay, never where it will be); the slimes still move every frame.
+        decisionClock -= dt;
+        if (decisionClock <= 0 && !Over)
+        {
+            decisionClock = DecisionInterval;
+            decisionCatX = catX;
+            AssignGuards();
+        }
         // By index over the slimes there were at the start: a hit on the cat can send damage back
         // (Thorns) and make a boss call helpers, which join the list and move from the next frame.
         int count = slimes.Count;
@@ -918,6 +1041,8 @@ public sealed class BattleSim
             slime.HitFlash = Math.Max(0, slime.HitFlash - dt);
             slime.Cooldown = Math.Max(0, slime.Cooldown - dt);
             slime.HealCooldown = Math.Max(0, slime.HealCooldown - dt);
+            slime.TeleportCooldown = Math.Max(0, slime.TeleportCooldown - dt);
+            slime.RallyRemaining = Math.Max(0, slime.RallyRemaining - dt);
             if (slime.KnockVelocity != 0)
             {
                 slime.X += slime.KnockVelocity * dt;
@@ -962,6 +1087,9 @@ public sealed class BattleSim
                 case SlimeState.Casting:
                     if (slime.StateTime >= slime.Type.HealWindup) FinishHeal(slime);
                     break;
+                case SlimeState.Teleporting:
+                    if (slime.StateTime >= slime.Type.TeleportWindup) FinishTeleport(slime);
+                    break;
                 case SlimeState.Moving:
                     // A support enemy heals a hurt ally when it can (before thinking of the cat).
                     if (slime.Type.HealAmount > 0 && slime.HealCooldown <= 0 && slime.HealLeft > 0 && HealTarget(slime) is Slime ally)
@@ -972,20 +1100,29 @@ public sealed class BattleSim
                         events.Add(new(BattleEventKind.EnemyHealing, slime.X));
                         break;
                     }
-                    // A support keeps behind its fighting allies and leaves the cat to them.
+                    // A support keeps behind its fighting allies and leaves the cat to them; one far
+                    // from a badly hurt ally may jump to it.
+                    if (slime.Type.Support && StartTeleport(slime, catX)) break;
                     if (slime.Type.Support && (slime.KeepingBack = KeepBack(slime, dt, catX, minX, maxX))) break;
                     // While the user carries the cat the slimes follow it along the floor, but never
-                    // wind up: a lifted cat cannot be hit.
-                    if (Math.Abs(dx) > 1) slime.Facing = dx < 0 ? -1 : 1;
+                    // wind up: a lifted cat cannot be hit. A slow-turning kind faces the cat only after
+                    // its turn, and neither walks nor winds up meanwhile.
+                    bool facingCat = Math.Abs(dx) <= 1 || Turn(slime, dx < 0 ? -1 : 1, dt);
                     // A dash enemy starts its windup from further away; its lane is set now.
                     double reach = slime.Type.Dash ? slime.Type.DashRange : slime.Range;
-                    if (!catHeld && Math.Abs(dx) <= reach && slime.Cooldown <= 0 && Grace <= 0)
+                    if (!catHeld && facingCat && Math.Abs(dx) <= reach && slime.Cooldown <= 0 && Grace <= 0 && MayAttack(slime))
                     {
                         slime.DashDirection = slime.Facing;
                         slime.Set(SlimeState.Windup);
+                        lastWindup = Time;
+                    }
+                    // A guard holds its post between the cat and its support (it still hits a cat in reach).
+                    else if (facingCat && GuardPost(slime) is double post)
+                    {
+                        if (Math.Abs(post - slime.X) > 6) slime.X = Math.Clamp(slime.X + Math.Sign(post - slime.X) * Math.Min(Math.Abs(post - slime.X), Speed(slime) * dt), minX, maxX);
                     }
                     // A shielded boss guards its edge: it slams a cat that comes close but never walks up.
-                    else if (Math.Abs(dx) > reach * 0.75 && !slime.Shielded)
+                    else if (facingCat && Math.Abs(dx) > reach * 0.75 && !slime.Shielded)
                         slime.X =Math.Clamp(slime.X + Math.Sign(dx) * Math.Min(Math.Abs(dx), Speed(slime) * dt), minX, maxX);
                     break;
             }
@@ -998,6 +1135,96 @@ public sealed class BattleSim
     }
 
     public double Windup(Slime slime) => slime.Enraged ? slime.Type.EnragedWindup : slime.Type.Windup;
+
+    // How often guards are chosen (8 times a second) and where the cat stood when they last were.
+    private const double DecisionInterval = 0.125;
+    private double decisionClock, decisionCatX;
+    // When the last windup began (attack turns).
+    private double lastWindup = double.NegativeInfinity;
+
+    // Faces `want` now, or after the kind's TurnSeconds of wanting to; true once it does.
+    private static bool Turn(Slime slime, int want, double dt)
+    {
+        if (slime.Facing == want) { slime.TurnTime = 0; return true; }
+        slime.TurnTime += dt;
+        if (slime.Type.TurnSeconds > 0 && slime.TurnTime < slime.Type.TurnSeconds) return false;
+        slime.Facing = want;
+        slime.TurnTime = 0;
+        return true;
+    }
+
+    // Attack turns: a free turn (fewer than MaxAttackers winding up or dashing) and AttackStagger
+    // since the last windup. The boss never waits for one (its slam is the fight's centre).
+    private bool MayAttack(Slime slime)
+    {
+        if (slime.IsBoss) return true;
+        if (Time - lastWindup < Settings.AttackStagger) return false;
+        if (Settings.MaxAttackers <= 0) return true;
+        int busy = 0;
+        foreach (var s in slimes) if (s != slime && s.State is SlimeState.Windup or SlimeState.Dashing) busy++;
+        return busy < Settings.MaxAttackers;
+    }
+
+    // Each support still standing gets the nearest free blocker as its guard.
+    private void AssignGuards()
+    {
+        foreach (var s in slimes) s.GuardOf = 0;
+        foreach (var support in slimes)
+        {
+            if (!support.Type.Support || support.State == SlimeState.Defeated) continue;
+            Slime? guard = null;
+            foreach (var s in slimes)
+                if (s.Type.Blocker && s.GuardOf == 0 && s.Targetable && !s.Shielded && (guard == null || Math.Abs(s.X - support.X) < Math.Abs(guard.X - support.X))) guard = s;
+            if (guard != null) guard.GuardOf = support.Id;
+        }
+    }
+
+    // A guard's post: between the cat (where it was at the last decision) and its support, the
+    // support's KeepBack in front of it (closer when the cat is nearer). Null: not guarding.
+    private double? GuardPost(Slime guard)
+    {
+        if (guard.GuardOf == 0 || Find(guard.GuardOf) is not { State: not SlimeState.Defeated } support) return null;
+        int side = support.X >= decisionCatX ? 1 : -1;
+        return support.X - side * Math.Min(support.Type.KeepBack, Math.Max(0, Math.Abs(support.X - decisionCatX) - 40));
+    }
+
+    // A support with heals left jumps to the most hurt fighting ally below TeleportBelow that is out of
+    // its heal reach: the spot behind that ally (seen from the cat) is fixed and shown now.
+    private bool StartTeleport(Slime support, double catX)
+    {
+        var type = support.Type;
+        if (type.TeleportBelow <= 0 || support.TeleportCooldown > 0 || type.HealAmount <= 0 || support.HealLeft <= 0) return false;
+        Slime? hurt = null;
+        foreach (var s in slimes)
+            if (s != support && s.Targetable && !s.Type.Support && !s.Shielded && s.Hp < s.MaxHp * type.TeleportBelow && Math.Abs(s.X - support.X) > type.HealRange &&
+                (hurt == null || s.Hp / s.MaxHp < hurt.Hp / hurt.MaxHp)) hurt = s;
+        if (hurt == null) return false;
+        int side = hurt.X >= decisionCatX ? 1 : -1;
+        var (minX, maxX) = Bounds(support);
+        double x = Math.Clamp(hurt.X + side * (hurt.Width / 2 + support.Width / 2 + 10), minX, maxX);
+        // No room behind it (the cat is there): look again soon.
+        if (Math.Abs(x - catX) < SquadCatGap) { support.TeleportCooldown = 1; return false; }
+        support.TeleportTargetId = hurt.Id;
+        support.TeleportX = x;
+        support.Set(SlimeState.Teleporting);
+        events.Add(new(BattleEventKind.EnemyTeleporting, support.X));
+        return true;
+    }
+
+    // The jump lands if its ally is still there (a gone ally: no jump, a new look soon). No heal comes with it.
+    private void FinishTeleport(Slime support)
+    {
+        var ally = Find(support.TeleportTargetId);
+        support.TeleportTargetId = 0;
+        support.Set(SlimeState.Moving);
+        if (ally == null || !ally.Targetable) { support.TeleportCooldown = 1; return; }
+        var (minX, maxX) = Bounds(support);
+        support.X = Math.Clamp(support.TeleportX, minX, maxX);
+        support.KnockVelocity = 0;
+        support.TeleportCooldown = support.Type.TeleportCooldown;
+        AddEffect(BattleEffectKind.Leaves, support.X, support.Height / 2);
+        events.Add(new(BattleEventKind.EnemyTeleported, support.X));
+    }
 
     // The most hurt ally in reach: alive, not this one, below its max HP.
     private Slime? HealTarget(Slime healer)
@@ -1054,18 +1281,26 @@ public sealed class BattleSim
 
     // The ally a support enemy is healing right now (null when it is not casting).
     public Slime? Healing(Slime healer) => healer.State == SlimeState.Casting ? Find(healer.HealTargetId) : null;
-    private double Speed(Slime slime) => (slime.Enraged ? slime.Type.EnragedSpeed : slime.Type.Speed) * level.EnemySpeed;
+    private double Speed(Slime slime) => (slime.Enraged ? slime.Type.EnragedSpeed : slime.Type.Speed) * level.EnemySpeed * (slime.RallyRemaining > 0 ? slime.RallyFactor : 1);
 
     private readonly List<Slime> scratch = new();
     private static readonly Comparison<Slime> ByX = (a, b) => a.X.CompareTo(b.X);
 
     // Slimes do not stack on one spot. A support falling back stays out of this: it has to slip past
     // the ally it gets behind (pushing each other, the two would jam and hold the ally off the cat).
+    // Blockers keep apart only from each other: they bar the cat's way, not their allies' (a rock in
+    // front would otherwise shield the cat from everything behind it).
     private void Separate()
+    {
+        Separate(false);
+        Separate(true);
+    }
+
+    private void Separate(bool blockers)
     {
         var live = scratch;
         live.Clear();
-        foreach (var slime in slimes) if (slime.State != SlimeState.Defeated && !slime.KeepingBack) live.Add(slime);
+        foreach (var slime in slimes) if (slime.State != SlimeState.Defeated && !slime.KeepingBack && slime.Type.Blocker == blockers) live.Add(slime);
         live.Sort(ByX);
         for (int i = 1; i < live.Count; i++)
         {
@@ -1169,6 +1404,7 @@ public sealed class BattleSim
             if (PhaseRemaining > 0) return;
             Wave++;
             pending.Clear(); pendingNext = 0;
+            farEdge = Far(catX); streamEdge = 0;
             var wave = WavePlan[Math.Min(Wave, WaveCount) - 1]; // A survive stage repeats its last wave.
             stream = wave.Stream;
             if (stream == null) pending.AddRange(SpawnDirector.Units(wave, spawnRandom));
@@ -1177,24 +1413,40 @@ public sealed class BattleSim
             events.Add(new(BattleEventKind.WaveStarted, catX, Wave));
         }
         spawnTimer = Math.Max(0, spawnTimer - dt);
+        // An announced spawn comes once its arrow has run out and the floor has room; nothing else
+        // spawns before it.
+        if (incoming != null)
+        {
+            IncomingRemaining = Math.Max(0, IncomingRemaining - dt);
+            if (IncomingRemaining > 0 || Alive + incoming.Length > maxAlive) return;
+            SpawnUnit(catX, incoming, IncomingEdge);
+            incoming = null;
+            spawnTimer = NextSpawnIn();
+            return;
+        }
         if (stream != null)
         {
             // Never more than maxAlive at once, however long the stream runs.
             if (Alive < maxAlive && spawnTimer <= 0)
             {
-                Spawn(catX, Settings.Enemy(SpawnDirector.Pick(stream.Weights, spawnRandom)));
-                double progress = Stage?.SurviveSeconds is double hold && hold > 0 ? Math.Clamp(1 - SurviveRemaining / hold, 0, 1) : 0;
-                spawnTimer = stream.Interval + (stream.IntervalEnd - stream.Interval) * progress;
+                var kind = new[] { SpawnDirector.Pick(stream.Weights, spawnRandom) };
+                // Late in the stage the stream comes from both sides in turn, each spawn announced.
+                if (stream.PincerAfter > 0 && Stage?.SurviveSeconds is double hold && hold - SurviveRemaining >= stream.PincerAfter)
+                {
+                    streamEdge = streamEdge == 0 ? Far(catX) : -streamEdge;
+                    Announce(catX, kind, streamEdge);
+                }
+                else { SpawnUnit(catX, kind, 0); spawnTimer = NextSpawnIn(); }
             }
             return; // Only the survive clock ends it.
         }
-        // A unit waits until the floor has room for all of it (later ones wait behind it).
-        if (pendingNext < pending.Count && Alive + pending[pendingNext].Length <= maxAlive && spawnTimer <= 0)
+        // A unit waits until the floor has room for all of it (later ones wait behind it). Side "a"
+        // comes from the edge far from the cat, "b" from the other one after a warning arrow.
+        if (pendingNext < pending.Count && Alive + pending[pendingNext].Kinds.Length <= maxAlive && spawnTimer <= 0)
         {
             var unit = pending[pendingNext++];
-            if (unit.Length == 1) Spawn(catX, Settings.Enemy(unit[0]));
-            else SpawnSquad(catX, unit.Select(Settings.Enemy).ToArray());
-            spawnTimer = Settings.SpawnInterval;
+            if (unit.Side == "b") Announce(catX, unit.Kinds, -farEdge);
+            else { SpawnUnit(catX, unit.Kinds, unit.Side == "a" ? farEdge : 0); spawnTimer = NextSpawnIn(); }
         }
         if (ToSpawn > 0 || Alive > 0 || bombs.Count > 0) return;
         if (Wave >= WaveCount && !Survival) { Finish(BattlePhase.Won); return; }
@@ -1296,17 +1548,75 @@ public sealed class BattleSim
         }
     }
 
-    private void Spawn(double catX, EnemyType type)
+    // The edge further from the cat: -1 left, +1 right.
+    private int Far(double catX) => catX - Left >= Right - catX ? -1 : 1;
+
+    // The wait before the next spawn: a stream's (shorter as the clock runs), otherwise SpawnInterval.
+    private double NextSpawnIn()
     {
-        double x = SpawnPoint(catX, Settings.SlimeWidth * type.Scale);
+        if (stream == null) return Settings.SpawnInterval;
+        double progress = Stage?.SurviveSeconds is double hold && hold > 0 ? Math.Clamp(1 - SurviveRemaining / hold, 0, 1) : 0;
+        return stream.Interval + (stream.IntervalEnd - stream.Interval) * progress;
+    }
+
+    // A spawn from behind: an arrow at that edge first (IncomingWarning s). A cat standing at that
+    // edge gets it from the other edge instead, unannounced (never on top of the cat).
+    private void Announce(double catX, string[] kinds, int edge)
+    {
+        double x = EdgePoint(edge, Settings.SlimeWidth * kinds.Max(k => Settings.Enemy(k).Scale), 0);
+        if (Math.Abs(x - catX) < Settings.SpawnMinDistance)
+        {
+            SpawnUnit(catX, kinds, -edge);
+            spawnTimer = NextSpawnIn();
+            return;
+        }
+        incoming = kinds;
+        IncomingEdge = edge;
+        IncomingX = x;
+        IncomingRemaining = Settings.IncomingWarning;
+        events.Add(new(BattleEventKind.Incoming, x));
+    }
+
+    private void SpawnUnit(double catX, string[] kinds, int edge)
+    {
+        if (kinds.Length == 1) Spawn(catX, Settings.Enemy(kinds[0]), edge);
+        else SpawnSquad(catX, kinds.Select(Settings.Enemy).ToArray(), edge);
+    }
+
+    // edge: -1 / +1 that edge, 0 either. A lone support (no edge asked) joins the fighting ally
+    // furthest from the cat, on its far side, when there is one.
+    private void Spawn(double catX, EnemyType type, int edge = 0)
+    {
+        double w = Settings.SlimeWidth * type.Scale;
+        double x = SpawnPoint(catX, w, edge);
+        if (type.Support && edge == 0)
+        {
+            Slime? back = null;
+            foreach (var s in slimes)
+                if (s.State != SlimeState.Defeated && !s.Type.Support && !s.Shielded && (back == null || Math.Abs(s.X - catX) > Math.Abs(back.X - catX))) back = s; // Even one still appearing.
+            if (back != null)
+            {
+                int side = back.X >= catX ? 1 : -1;
+                double nearAlly = Math.Clamp(back.X + side * (back.Width / 2 + w / 2 + 10), Left + w / 2, Math.Max(Left + w / 2, Right - w / 2));
+                if (Math.Abs(nearAlly - catX) >= SquadCatGap) x = nearAlly;
+            }
+        }
         var slime = AddSlime(x, type);
         slime.Facing = catX < x ? -1 : 1;
         events.Add(new(type.Boss ? BattleEventKind.BossAppeared : BattleEventKind.SlimeSpawned, x));
     }
 
-    // Near one edge (a random one, at least SpawnMinDistance from the cat when room allows).
-    private double SpawnPoint(double catX, double w)
+    // A point near an edge (-1 left, +1 right), up to `spread` DIPs in.
+    private double EdgePoint(int edge, double w, double spread)
     {
+        double minX = Left + w / 2, maxX = Math.Max(minX, Right - w / 2);
+        return edge < 0 ? Math.Min(maxX, minX + spawnRandom.NextDouble() * spread) : Math.Max(minX, maxX - spawnRandom.NextDouble() * spread);
+    }
+
+    // Near one edge: the asked one, or a random one at least SpawnMinDistance from the cat when room allows.
+    private double SpawnPoint(double catX, double w, int edge = 0)
+    {
+        if (edge != 0) return EdgePoint(edge, w, 30);
         double minX = Left + w / 2, maxX = Math.Max(minX, Right - w / 2);
         double left = Math.Min(maxX, minX + spawnRandom.NextDouble() * 60), right = Math.Max(minX, maxX - spawnRandom.NextDouble() * 60);
         double first = spawnRandom.Next(2) == 0 ? left : right, second = first == left ? right : left;
@@ -1320,10 +1630,10 @@ public sealed class BattleSim
 
     // A squad appears together near one edge, side by side: its supports at the back (the edge),
     // its fighters in front of them toward the cat, never on top of the cat when there is room.
-    private void SpawnSquad(double catX, EnemyType[] members)
+    private void SpawnSquad(double catX, EnemyType[] members, int edge = 0)
     {
         var order = members.Where(m => m.Support).Concat(members.Where(m => !m.Support)).ToArray();
-        double back = SpawnPoint(catX, Settings.SlimeWidth * order.Max(m => m.Scale));
+        double back = SpawnPoint(catX, Settings.SlimeWidth * order.Max(m => m.Scale), edge);
         int toward = catX >= back ? 1 : -1;
         // Spacing a little wider than Separate keeps, so they do not shove each other on arrival;
         // squeezed (down to a third of it) when the cat stands too close to fit them all.
@@ -1372,11 +1682,18 @@ public sealed class BattleSim
         Armed = null;
         SelectedId = null;
         TargetId = null;
+        BlockedById = 0;
         bombs.Clear();
+        incoming = null;
+        IncomingRemaining = 0;
         CancelSwing();
         Combo = 0;
         CatStunRemaining = StunImmunity = 0;
-        foreach (var s in slimes) if (s.State is SlimeState.Windup or SlimeState.Casting or SlimeState.Dashing) s.Set(SlimeState.Moving);
+        foreach (var s in slimes)
+        {
+            if (s.State is SlimeState.Windup or SlimeState.Casting or SlimeState.Dashing or SlimeState.Teleporting) s.Set(SlimeState.Moving);
+            s.RallyCharge = s.RallyRemaining = 0;
+        }
         events.Add(new(phase == BattlePhase.Won ? BattleEventKind.Won : BattleEventKind.Lost, 0));
     }
 
@@ -1436,6 +1753,8 @@ public sealed class BattleSim
             int push = direction is int chosen && chosen != 0 ? Math.Sign(chosen) : slime.X < catX ? -1 : 1;
             // A heal being wound up is cancelled and costs its full cooldown.
             if (slime.State == SlimeState.Casting) { slime.HealCooldown = slime.Type.HealCooldown; slime.HealTargetId = 0; }
+            // So is a teleport.
+            if (slime.State == SlimeState.Teleporting) { slime.TeleportCooldown = slime.Type.TeleportCooldown; slime.TeleportTargetId = 0; }
             slime.KnockVelocity = push * Settings.PushSpeed * slime.Type.PushFactor;
             slime.StunRemaining = Settings.PushStunSeconds * slime.Type.StunFactor;
             slime.Set(SlimeState.Stunned);
@@ -1465,7 +1784,8 @@ public sealed class BattleSim
     {
         right = Math.Max(left + Settings.SlimeWidth * Settings.LargestScale, right);
         double oldWidth = Math.Max(1, Right - Left), newWidth = right - left;
-        foreach (var s in slimes) s.X = left + (s.X - Left) / oldWidth * newWidth;
+        foreach (var s in slimes) { s.X = left + (s.X - Left) / oldWidth * newWidth; s.TeleportX = left + (s.TeleportX - Left) / oldWidth * newWidth; }
+        IncomingX = left + (IncomingX - Left) / oldWidth * newWidth;
         foreach (var e in effects) e.X = left + (e.X - Left) / oldWidth * newWidth;
         foreach (var b in bombs) b.X = left + (b.X - Left) / oldWidth * newWidth;
         Left = left; Right = right;
@@ -1478,7 +1798,7 @@ public sealed class BattleSim
         double life = kind switch
         {
             BattleEffectKind.Poof => 0.6 * Math.Max(1, value), BattleEffectKind.Number => 0.9, BattleEffectKind.Combo => 0.7, BattleEffectKind.Mend => 0.8,
-            BattleEffectKind.Explosion or BattleEffectKind.Slam => 0.5, _ => 0.35
+            BattleEffectKind.Explosion or BattleEffectKind.Slam or BattleEffectKind.Leaves => 0.5, _ => 0.35
         };
         effects.Add(new BattleEffect { Kind = kind, X = x, Height = height, Life = life, Value = value });
     }

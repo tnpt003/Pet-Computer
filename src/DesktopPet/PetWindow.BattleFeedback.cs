@@ -22,7 +22,9 @@ public sealed partial class PetWindow
         [BattleEventKind.SlimeDefeated] = ("pop", 4), [BattleEventKind.BombExploded] = ("pop", 4), [BattleEventKind.ComboHit] = ("ball_tap", 4),
         [BattleEventKind.BossShielded] = ("surprised", 6), [BattleEventKind.BossShieldDown] = ("excited", 6),
         [BattleEventKind.SlimeHit] = ("squish", 3), [BattleEventKind.EnemyHealed] = ("ball_tap", 3), [BattleEventKind.HitBlocked] = ("ball_tap", 3), [BattleEventKind.BossImmune] = ("ball_tap", 3),
+        [BattleEventKind.Incoming] = ("surprised", 5), [BattleEventKind.BossRallying] = ("surprised", 4),
         [BattleEventKind.Pushed] = ("swoosh", 2), [BattleEventKind.BombThrown] = ("swoosh", 2), [BattleEventKind.Shielded] = ("swoosh", 2),
+        [BattleEventKind.EnemyTeleported] = ("swoosh", 2),
         [BattleEventKind.Swing] = ("swoosh", 1),
     };
 
@@ -37,13 +39,13 @@ public sealed partial class PetWindow
 
     private string BossName() => battle?.Boss?.Type.Name(preferences.Language == "en") ?? "Boss";
 
-    // Big moments get a banner across the HUD's centre. The first heal of a battle says what the
-    // support enemy does (once per battle).
-    private bool healerExplained;
+    // Big moments get a banner across the HUD's centre. The first heal, rally call and attack from
+    // behind of a battle say what is going on (once each per battle).
+    private bool healerExplained, rallyExplained, behindExplained;
     private void ShowBattleBanners()
     {
         if (battle == null || battleHud == null) return;
-        if (battle.Time < 0.05) healerExplained = false;
+        if (battle.Time < 0.05) healerExplained = rallyExplained = behindExplained = false;
         for (int i = 0; i < battle.Events.Count; i++)
         {
             var e = battle.Events[i];
@@ -58,11 +60,15 @@ public sealed partial class PetWindow
                 BattleEventKind.SynergyUnlocked when (int)e.Value >= 0 && (int)e.Value < battle.Settings.SynergyList.Count =>
                     "★ " + battle.Settings.SynergyList[(int)e.Value].Name(English).ToUpper(System.Globalization.CultureInfo.CurrentCulture) + "!",
                 BattleEventKind.EnemyHealing when !healerExplained => L("Quái hồi máu! Hạ nó trước", "A healer! Take it down first"),
+                BattleEventKind.BossRallying when !rallyExplained => L($"{BossName()} ra lệnh xung phong! Đẩy để cắt", $"The {BossName()} rallies! Push it to cut the call"),
+                BattleEventKind.Incoming when !behindExplained => L("Quái tới từ phía sau!", "Enemies from behind!"),
                 BattleEventKind.Won => L("CHIẾN THẮNG!", "VICTORY!"),
                 BattleEventKind.Lost => L("THUA RỒI…", "DEFEATED…"),
                 _ => null
             };
             if (e.Kind == BattleEventKind.EnemyHealing) healerExplained = true;
+            if (e.Kind == BattleEventKind.BossRallying) rallyExplained = true;
+            if (e.Kind == BattleEventKind.Incoming) behindExplained = true;
             if (text != null) battleHud.ShowBanner(text, battle.Time, e.Kind is BattleEventKind.Won or BattleEventKind.Lost ? 3 : 1.6);
         }
     }

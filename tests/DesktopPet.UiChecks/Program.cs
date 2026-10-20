@@ -399,6 +399,7 @@ internal static class Program
         ThoughtVisualChecks.Run(Check);
         AppearanceVisualChecks.Run(Check);
         GestureVisualChecks.Run(Check);
+        EnemyVisualChecks.Run(Check);
         window.SetPaused(false);
         window.Reset();
         void AttentionClick() => window.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Right)

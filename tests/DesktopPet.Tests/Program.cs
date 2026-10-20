@@ -77,6 +77,7 @@ CombinationTests.Run(Check);
 BattleTests.Run(Check);
 BattleSkillTests.Run(Check);
 BattleRulesTests.Run(Check);
+BattleStunTests.Run(Check);
 BattleWeaponTests.Run(Check);
 BattleDataTests.Run(Check);
 BattleCustomDataTests.Run(Check);

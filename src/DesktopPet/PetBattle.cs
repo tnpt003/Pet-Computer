@@ -69,6 +69,11 @@ public sealed class BattleSettings
     // running battle (counted from when it is given), so lifting and dropping over and over
     // cannot keep the cat safe.
     public double RescueGraceCooldownSeconds { get; init; } = 5;
+    // A dashing enemy that runs into the cat stuns it this long (it stands still and does not
+    // swing; the user may still lift and throw it). Afterwards it cannot be stunned again for
+    // StunImmunitySeconds, so stuns never chain into a lock.
+    public double StunDurationSeconds { get; init; } = 1.5;
+    public double StunImmunitySeconds { get; init; } = 3;
     public double OutroSeconds { get; init; } = 3;
     public double HurtFlashSeconds { get; init; } = 0.35;
     public int MaxEffects { get; init; } = 32;
@@ -260,7 +265,11 @@ public sealed class DifficultySpec
 public enum BattleSkill { Push, Heal, Cheer, Bomb, Shield }
 
 // Casting: a support enemy winds up a heal (a green "+"); a push or stun cancels it.
-public enum SlimeState { Spawning, Moving, Windup, Recover, Stunned, Defeated, Casting }
+// Dashing: a dash enemy's lunge after its windup (it hits the cat once at most).
+public enum SlimeState { Spawning, Moving, Windup, Recover, Stunned, Defeated, Casting, Dashing }
+
+// Where damage on an enemy comes from: the cat's swings (a plain hit or a combo) or the yarn bomb.
+public enum DamageSource { Weapon, Combo, Bomb }
 
 public sealed class Slime
 {
@@ -288,6 +297,11 @@ public sealed class Slime
     // Boss phases already fired (bit i = Phases[i]); the boss that called this helper (0: none).
     public int PhasesDone;
     public int SummonedBy;
+    // Dash: the way it lunges (fixed when the windup starts, so the warning shows the real lane),
+    // the distance still to go and whether this dash already hit the cat.
+    public int DashDirection;
+    public double DashLeft;
+    public bool DashHit;
     public bool Targetable => State is not (SlimeState.Spawning or SlimeState.Defeated);
     public void Set(SlimeState state) { State = state; StateTime = 0; }
 }
@@ -297,7 +311,7 @@ public enum BattleEventKind
 {
     WaveStarted, SlimeSpawned, Swing, SlimeHit, SlimeDefeated, CatHurt, Pushed, WaveCleared, Won, Lost,
     Healed, Cheered, Shielded, Blocked, BombThrown, BombExploded, BossAppeared, BossSummoned, BossEnraged, ComboHit,
-    UpgradeOffered, UpgradeChosen, EnemyHealing, EnemyHealed
+    UpgradeOffered, UpgradeChosen, EnemyHealing, EnemyHealed, CatStunned
 }
 public readonly record struct BattleEvent(BattleEventKind Kind, double X, double Value = 0);
 // Number: a floating damage (Value > 0) or heal (Value < 0, shown as +HP above the cat).
@@ -411,6 +425,11 @@ public sealed class BattleSim
     // While the cat is safe in the user's hands the skills wait: no use, no cooldown recovery.
     public bool SkillsLocked => CatHeld;
     public double HurtFlash { get; private set; }
+    // The cat is stunned (seconds left; 0: not) and, after a stun, cannot be stunned again yet.
+    public double CatStunRemaining { get; private set; }
+    public double StunImmunity { get; private set; }
+    public bool CatStunned => CatStunRemaining > 0;
+    public int StunsTaken { get; private set; }
     // Simulation clock (stops while paused); animations read it instead of wall time.
     public double Time { get; private set; }
     // HP given back after the last cleared wave, and the battle's length (for the result panel).
@@ -474,6 +493,13 @@ public sealed class BattleSim
         Time += dt;
         StepEffects(dt);
         HurtFlash = Math.Max(0, HurtFlash - dt);
+        // The stun runs on battle time, held or not (lifting neither ends nor stretches it).
+        if (CatStunRemaining > 0)
+        {
+            CatStunRemaining = Math.Max(0, CatStunRemaining - dt);
+            if (CatStunRemaining <= 0) StunImmunity = Settings.StunImmunitySeconds;
+        }
+        else StunImmunity = Math.Max(0, StunImmunity - dt);
         // Skills recover only while the cat is down and at risk; buffs already running wear off as usual.
         if (!catHeld) for (int i = 0; i < cooldowns.Length; i++) cooldowns[i] = Math.Max(0, cooldowns[i] - dt);
         CheerRemaining = Math.Max(0, CheerRemaining - dt);
@@ -532,7 +558,7 @@ public sealed class BattleSim
             if (SwingTime >= arms.SwingDuration) CancelSwing();
             return new(CatCommand.Stand, catX, swingFacing);
         }
-        if (target == null) return new(CatCommand.Stand, catX);
+        if (target == null || CatStunned) return new(CatCommand.Stand, catX);
         double dx = target.X - catX;
         int facing = dx < 0 ? -1 : 1;
         double reach = Reach(target);
@@ -575,12 +601,13 @@ public sealed class BattleSim
         }
         // A heavy weapon knocks back on every hit (away from the cat; heavy kinds less), no stun.
         else if (knock > 0) slime.KnockVelocity = (slime.X < catX ? -1 : 1) * knock * slime.Type.PushFactor;
-        Damage(slime, damage);
+        Damage(slime, damage, combo ? DamageSource.Combo : DamageSource.Weapon);
     }
 
-    private void Damage(Slime slime, double amount)
+    // Every hit on an enemy goes through here. Returns the HP it really lost.
+    private double Damage(Slime slime, double amount, DamageSource source)
     {
-        if (!slime.Targetable || amount <= 0) return;
+        if (!slime.Targetable || amount <= 0) return 0;
         slime.Hp = Math.Max(0, slime.Hp - amount);
         slime.HitFlash = 0.18;
         AddEffect(BattleEffectKind.Number, slime.X + (slime.IsBoss ? slime.Width * 0.38 : 0), slime.Height + 10, Math.Round(amount));
@@ -593,7 +620,7 @@ public sealed class BattleSim
             if (SelectedId == slime.Id) SelectedId = null;
             AddEffect(BattleEffectKind.Poof, slime.X, slime.Height / 2, slime.IsBoss ? 2 : 1);
             events.Add(new(BattleEventKind.SlimeDefeated, slime.X, slime.IsBoss ? 1 : 0));
-            return;
+            return amount;
         }
         var type = slime.Type;
         double fraction = slime.Hp / slime.MaxHp;
@@ -632,6 +659,7 @@ public sealed class BattleSim
                     events.Add(new(BattleEventKind.BossEnraged, slime.X));
                 }
             }
+        return amount;
     }
 
     private Slime? PickTarget(double catX)
@@ -696,7 +724,14 @@ public sealed class BattleSim
                     // with landing protection, the hit misses; put back on the same spot, it lands.
                     // So lifting dodges a hit but cannot cancel every hit by lifting over and over.
                     if (catHeld) { slime.StateTime -= dt; break; }
-                    if (slime.StateTime >= Windup(slime)) Strike(slime, catX);
+                    if (slime.StateTime >= Windup(slime))
+                    {
+                        if (slime.Type.Dash) { slime.DashLeft = slime.Type.DashDistance; slime.DashHit = false; slime.Set(SlimeState.Dashing); }
+                        else Strike(slime, catX);
+                    }
+                    break;
+                case SlimeState.Dashing:
+                    StepDash(slime, dt, catX, catHeld, minX, maxX);
                     break;
                 case SlimeState.Casting:
                     if (slime.StateTime >= slime.Type.HealWindup) FinishHeal(slime);
@@ -714,8 +749,14 @@ public sealed class BattleSim
                     // While the user carries the cat the slimes follow it along the floor, but never
                     // wind up: a lifted cat cannot be hit.
                     if (Math.Abs(dx) > 1) slime.Facing = dx < 0 ? -1 : 1;
-                    if (!catHeld && Math.Abs(dx) <= slime.Range && slime.Cooldown <= 0 && Grace <= 0) slime.Set(SlimeState.Windup);
-                    else if (Math.Abs(dx) > slime.Range * 0.75)
+                    // A dash enemy starts its windup from further away; its lane is set now.
+                    double reach = slime.Type.Dash ? slime.Type.DashRange : slime.Range;
+                    if (!catHeld && Math.Abs(dx) <= reach && slime.Cooldown <= 0 && Grace <= 0)
+                    {
+                        slime.DashDirection = slime.Facing;
+                        slime.Set(SlimeState.Windup);
+                    }
+                    else if (Math.Abs(dx) > reach * 0.75)
                         slime.X = Math.Clamp(slime.X + Math.Sign(dx) * Math.Min(Math.Abs(dx), Speed(slime) * dt), minX, maxX);
                     break;
             }
@@ -790,16 +831,56 @@ public sealed class BattleSim
         slime.Cooldown = slime.Type.AttackCooldown;
         if (slime.Type.Slam) AddEffect(BattleEffectKind.Slam, slime.X, 0, slime.Range);
         if (Math.Abs(catX - slime.X) > slime.Range + 12 || Grace > 0) return; // Missed: the cat moved away.
+        HurtCat(slime, catX, false);
+    }
+
+    // Half the cat's width on the floor: a dash that passes over this hits it.
+    public const double CatHalfWidth = 18;
+
+    // The lunge is fast, so the hit is checked along the whole path of this frame (never skipped
+    // between two frames), once per dash. A cat in the user's hands or under landing protection
+    // is not hit; the dash still runs to its end.
+    private void StepDash(Slime slime, double dt, double catX, bool catHeld, double minX, double maxX)
+    {
+        double before = slime.X;
+        double step = Math.Min(slime.DashLeft, slime.Type.DashSpeed * level.EnemySpeed * dt);
+        slime.X = Math.Clamp(slime.X + slime.DashDirection * step, minX, maxX);
+        slime.DashLeft = slime.X == before ? 0 : slime.DashLeft - step; // Stopped by the field's edge.
+        double reach = slime.HitWidth / 2 + CatHalfWidth;
+        if (!slime.DashHit && !catHeld && Grace <= 0 && catX >= Math.Min(before, slime.X) - reach && catX <= Math.Max(before, slime.X) + reach)
+        {
+            slime.DashHit = true;
+            HurtCat(slime, catX, true);
+        }
+        if (slime.DashLeft <= 0 && !Over)
+        {
+            slime.Set(SlimeState.Recover);
+            slime.Cooldown = slime.Type.AttackCooldown;
+        }
+    }
+
+    // Every hit on the cat: the Shield takes all of it (no damage, no stun), otherwise armor
+    // lessens it. stun: also stun the cat, unless it is in the user's hands, already stunned or
+    // still immune after its last stun.
+    private void HurtCat(Slime from, double catX, bool stun)
+    {
         if (ShieldRemaining > 0)
         {
             events.Add(new(BattleEventKind.Blocked, catX));
             return;
         }
-        double hurt = slime.Damage * ArmorFactor;
+        double hurt = from.Damage * ArmorFactor;
         CatHp = Math.Max(0, CatHp - hurt);
         HurtFlash = Settings.HurtFlashSeconds;
         events.Add(new(BattleEventKind.CatHurt, catX, hurt));
-        if (CatHp <= 0) Finish(BattlePhase.Lost);
+        if (CatHp <= 0) { Finish(BattlePhase.Lost); return; }
+        if (stun && !CatHeld && !CatStunned && StunImmunity <= 0 && Settings.StunDurationSeconds > 0)
+        {
+            CatStunRemaining = Settings.StunDurationSeconds;
+            StunsTaken++;
+            CancelSwing();
+            events.Add(new(BattleEventKind.CatStunned, catX));
+        }
     }
 
     private void StepBombs(double dt)
@@ -814,7 +895,7 @@ public sealed class BattleSim
             events.Add(new(BattleEventKind.BombExploded, bomb.X));
             foreach (var slime in slimes.ToArray())
                 if (slime.Targetable && Math.Abs(slime.X - bomb.X) <= Settings.BombRadius + slime.HitWidth / 2)
-                    Damage(slime, Settings.BombDamage);
+                    Damage(slime, Settings.BombDamage, DamageSource.Bomb);
         }
     }
 
@@ -938,7 +1019,8 @@ public sealed class BattleSim
         bombs.Clear();
         CancelSwing();
         Combo = 0;
-        foreach (var s in slimes) if (s.State is SlimeState.Windup or SlimeState.Casting) s.Set(SlimeState.Moving);
+        CatStunRemaining = StunImmunity = 0;
+        foreach (var s in slimes) if (s.State is SlimeState.Windup or SlimeState.Casting or SlimeState.Dashing) s.Set(SlimeState.Moving);
         events.Add(new(phase == BattlePhase.Won ? BattleEventKind.Won : BattleEventKind.Lost, 0));
     }
 

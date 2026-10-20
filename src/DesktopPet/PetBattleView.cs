@@ -151,6 +151,9 @@ public sealed class BattleFieldView : FrameworkElement
             case SlimeState.Stunned:
                 sx = 1.12; sy = 0.86;
                 break;
+            case SlimeState.Dashing:
+                sx = 1.25; sy = 0.8;
+                break;
             case SlimeState.Casting:
                 double hum = Math.Sin(t * 14);
                 sx = 1 + 0.05 * hum; sy = 1 + 0.06 * hum;
@@ -167,6 +170,17 @@ public sealed class BattleFieldView : FrameworkElement
             double k = Math.Clamp(t / windup, 0, 1);
             dc.DrawEllipse(null, WarningFill, new Point(x, floor - 4), Math.Max(1, slime.Range * k), Math.Max(1, 9 * k));
             dc.DrawEllipse(null, WarningEdge, new Point(x, floor - 4), slime.Range, 9);
+        }
+        if (slime.Type.Dash && slime.State == SlimeState.Windup)
+        {
+            // The dash's lane on the floor, growing as it comes, with an arrowhead at its end.
+            double k = Math.Clamp(t / windup, 0, 1), dir = slime.DashDirection == 0 ? slime.Facing : slime.DashDirection;
+            double end = x + dir * (w / 2 + slime.Type.DashDistance * (0.35 + 0.65 * k));
+            var lane = new Point(end, floor - 4);
+            dc.DrawLine(Halo, new Point(x + dir * w / 2, floor - 4), lane);
+            dc.DrawLine(WarningEdge, new Point(x + dir * w / 2, floor - 4), lane);
+            dc.DrawLine(WarningPen, lane, new Point(end - dir * 8, floor - 10));
+            dc.DrawLine(WarningPen, lane, new Point(end - dir * 8, floor + 2));
         }
         if (targetable) dc.DrawEllipse(HitHalo, null, new Point(x, floor - h / 2), w / 2 + 10, h / 2 + 12);
         // Feet ring under the selected slime; dashed rings while choosing a target for a skill.
@@ -185,7 +199,7 @@ public sealed class BattleFieldView : FrameworkElement
             dc.DrawGeometry(PushBlue, Ink, PushArrow);
             dc.Pop();
         }
-        if (slime.Type.Marks == "speed" && slime.State == SlimeState.Moving && opacity > 0.5)
+        if (slime.Type.Marks == "speed" && slime.State is SlimeState.Moving or SlimeState.Dashing && opacity > 0.5)
         {
             // Wind streaks trailing a fast slime.
             for (int i = 0; i < 3; i++)
@@ -249,8 +263,11 @@ public sealed class BattleFieldView : FrameworkElement
                 // "!" says so, and a dashed ring on the floor shows where it still reaches (the hit
                 // misses beyond Range + 12, see BattleSim.Strike): put the cat down outside it.
                 dc.DrawEllipse(null, WarningEdge, new Point(x, y + 1), 9 + 2 * Math.Sin(time * 8), 9 + 2 * Math.Sin(time * 8));
-                dc.DrawEllipse(null, Halo, new Point(x, floor - 4), slime.Range + 12, 10);
-                dc.DrawEllipse(null, WarningEdge, new Point(x, floor - 4), slime.Range + 12, 10);
+                if (!slime.Type.Dash) // A dash shows its lane instead.
+                {
+                    dc.DrawEllipse(null, Halo, new Point(x, floor - 4), slime.Range + 12, 10);
+                    dc.DrawEllipse(null, WarningEdge, new Point(x, floor - 4), slime.Range + 12, 10);
+                }
             }
         }
         if (slime.State == SlimeState.Casting)

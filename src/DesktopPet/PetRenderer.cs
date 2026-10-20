@@ -122,7 +122,9 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
             DrawDizzyOrbit(dc, p);
             dc.Pop();
         }
-        else if (pet.BattleDazed) DrawDizzyOrbit(dc, p); // Lost the battle: seeing stars, nothing worse.
+        // Lost the battle, or stunned by a dash: seeing stars, nothing worse. A stunned cat that is
+        // picked up gets the one orbit above (the stronger of the two dizziness amounts).
+        else if (pet.BattleDazed || pet.BattleStun > 0) DrawDizzyOrbit(dc, p);
         DrawOverlays(dc, p);
         if (pet.BattleBuff) DrawCheerSparkles(dc, pet.BattleTime);
         if (pet.BattleShield) DrawShieldBubble(dc, pet.BattleTime);
@@ -139,6 +141,8 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         p.PickedUp = pet.Action == PetAction.Dragging;
         p.PickupBlend = p.PickedUp ? pet.Pickup.PoseBlend : 0;
         p.Dizzy = p.PickedUp ? pet.Pickup.Dizziness : 0;
+        // A battle stun: dazed eyes and stars, fading out over its last quarter second.
+        if (pet.BattleStun > 0) p.Dizzy = Math.Max(p.Dizzy, 0.75 * Math.Min(1, pet.BattleStun / 0.25));
         p.WakeProgress = Math.Clamp(pet.ActionTime / PetSettings.WakingDuration, 0, 1);
         bool sitting = pet.Action is PetAction.Sitting or PetAction.Grooming || p.Sleeping;
         p.Airborne = pet.Action is PetAction.Thrown or PetAction.Jumping;

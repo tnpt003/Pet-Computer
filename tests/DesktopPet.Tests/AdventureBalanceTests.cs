@@ -6,7 +6,7 @@ using DesktopPet;
 // skills by plain rules. Prints a table and checks the targets agreed on 2026-10-20.
 internal static class AdventureBalanceTests
 {
-    public readonly record struct Outcome(bool Won, double Seconds, double Hp);
+    public readonly record struct Outcome(bool Won, double Seconds, double Hp, int Stuns);
 
     // Order the simple player takes upgrades in (the first one offered wins; fish when hurt).
     private static readonly string[] Preference = { "sharp", "fast_paws", "thick_fur", "quick_feet", "heavy_push", "grilled_fish" };
@@ -31,7 +31,7 @@ internal static class AdventureBalanceTests
             double run = 72 * data.CatRunScale * sim.MoveFactor; // Walking speed × CatRunScale × upgrades.
             if (order.Command == CatCommand.Move) cat += Math.Clamp(order.X - cat, -run * dt, run * dt);
         }
-        return new(sim.Phase == BattlePhase.Won, sim.FightSeconds, sim.CatHp);
+        return new(sim.Phase == BattlePhase.Won, sim.FightSeconds, sim.CatHp, sim.StunsTaken);
     }
 
     // Plain rules a careful user could follow without lifting the cat.
@@ -39,11 +39,19 @@ internal static class AdventureBalanceTests
     {
         sim.SetCatState(false, false);
         if (sim.CatHp < data.CatMaxHp * 0.5) sim.Use(BattleSkill.Heal, cat);
-        bool danger = sim.Slimes.Any(s => s.State == SlimeState.Windup && Math.Abs(s.X - cat) <= s.Range + 12 && s.StateTime > sim.Windup(s) * 0.5);
+        // A windup that will reach the cat: a plain or slam attack in its reach, or a dash whose lane
+        // (shown on the floor) runs over the cat.
+        bool Threat(Slime s) => s.State == SlimeState.Windup && (s.Type.Dash
+            ? (cat - s.X) * s.DashDirection >= -BattleSim.CatHalfWidth && Math.Abs(cat - s.X) <= s.Type.DashDistance + s.HitWidth / 2 + BattleSim.CatHalfWidth
+            : Math.Abs(s.X - cat) <= s.Range + 12);
+        // The Shield (long cooldown) is kept for plain and slam hits; a dash is Pushed away instead.
+        bool danger = sim.Slimes.Any(s => Threat(s) && !s.Type.Dash && s.StateTime > sim.Windup(s) * 0.5);
         if (danger) sim.Use(BattleSkill.Shield, cat);
         var healer = sim.Slimes.FirstOrDefault(s => s.State == SlimeState.Casting);
+        var dasher = sim.Slimes.FirstOrDefault(s => Threat(s) && s.Type.Dash);
         if (healer != null) sim.Use(BattleSkill.Push, healer.Id, cat);
-        else if (sim.Slimes.FirstOrDefault(s => s.State == SlimeState.Windup && Math.Abs(s.X - cat) <= s.Range + 12) is Slime hitter && !danger) sim.Use(BattleSkill.Push, hitter.Id, cat);
+        else if (dasher != null) sim.Use(BattleSkill.Push, dasher.Id, cat);
+        else if (sim.Slimes.FirstOrDefault(Threat) is Slime hitter && !danger) sim.Use(BattleSkill.Push, hitter.Id, cat);
         var crowd = sim.Slimes.Where(s => s.Targetable).ToList();
         var centre = crowd.FirstOrDefault(s => crowd.Count(o => Math.Abs(o.X - s.X) <= data.BombRadius) >= 2 || s.IsBoss);
         if (centre != null) sim.Use(BattleSkill.Bomb, centre.Id, cat);
@@ -58,7 +66,7 @@ internal static class AdventureBalanceTests
         var weapons = new[] { BattleWeapon.Sword, BattleWeapon.Hammer };
         const int seeds = 10;
         var table = new Dictionary<(int Stage, string Weapon, BattleDifficulty Level, bool Skills), (double Wins, double Seconds, double Hp)>();
-        Console.WriteLine("Adventure balance (simulation, not real play): stage | weapon | level | player | wins/10 | avg s (wins) | avg HP left (wins)");
+        Console.WriteLine("Adventure balance (simulation, not real play): stage | weapon | level | player | wins/10 | avg s (wins) | avg HP left (wins) | stuns/run");
         for (int i = 0; i < stages.Length; i++)
             foreach (var weapon in weapons)
                 foreach (var level in levels)
@@ -68,7 +76,7 @@ internal static class AdventureBalanceTests
                         var wins = runs.Where(r => r.Won).ToList();
                         var row = ((double)wins.Count / seeds, wins.Count > 0 ? wins.Average(r => r.Seconds) : 0, wins.Count > 0 ? wins.Average(r => r.Hp) : 0);
                         table[(i + 1, weapon, level, skills)] = row;
-                        Console.WriteLine($"  {i + 1} | {weapon,-6} | {level,-6} | {(skills ? "simple" : "idle"),-6} | {wins.Count,2}/10 | {row.Item2,6:0} | {row.Item3,4:0}");
+                        Console.WriteLine($"  {i + 1} | {weapon,-6} | {level,-6} | {(skills ? "simple" : "idle"),-6} | {wins.Count,2}/10 | {row.Item2,6:0} | {row.Item3,4:0} | {runs.Average(r => r.Stuns),4:0.0}");
                     }
 
         // Targets (2026-10-20): Normal with the simple player wins ≥ 80 % everywhere; Easy wins

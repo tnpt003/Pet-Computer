@@ -4,7 +4,14 @@ Cập nhật: 2026-10-20 (Asia/Saigon).
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
-## Bàn giao Combat Depth (2026-10-20) — chưa triển khai
+## Combat Depth mốc 1 (2026-10-20) — slime nhanh lao tới + mèo choáng 1,5 giây
+- Người dùng chốt (chi tiết trong [COMBAT-DEPTH.md](docs/COMBAT-DEPTH.md)): build **cộng dồn qua màn** (lưu build khi thắng màn N, màn N+1 bắt đầu từ đó; thua không đổi; trận tự do vẫn reset), màn 3 tối đa 3 lần chọn, 3 thẻ khác nhóm, làm cả Phá giáp/Dư ảnh, King dừng HP ở ngưỡng khiên đầu tiên, mục tiêu cân bằng mới.
+- Đã làm: `DamageSource` + `Damage()` trả HP thật mất; `HurtCat()` chung cho đòn thường/dậm/lao (Khiên chặn cả choáng); `dash`/`dashRange`/`dashDistance`/`dashSpeed` cho quái; `stunDurationSeconds` 1.5 + `stunImmunitySeconds` 3. Slime nhanh dùng lao (gồng 0.7 s, hồi 2.6 s). Choáng chạy theo giờ trận (Pause/chọn thẻ đóng băng; cầm mèo không dừng/không xóa); mèo choáng đứng yên, không chém; hết trận xóa choáng. Vẽ: vạch lao đỏ có mũi tên, slime dẹt + vệt gió khi lao; mèo choáng có sao + mắt chéo (dùng chung DrawDizzyOrbit, cầm mèo khi choáng chỉ một vòng sao). Màn 2–5 tăng rulesVersion (3/4/4/4).
+- Test thật: scripts/test.ps1 -Ui: 55 Python OK; 786 C# đạt; 490 WPF đạt. Mới: BattleStunTests (stun 1,5 s ±1 frame, pause, cầm, Khiên, kháng, lao 1500 DIPs/s ở 10 fps không xuyên, né khỏi vạch, Đẩy hủy, thắng/thua không sót, validate), BattleChecks (choáng trong cửa sổ thật, kéo khi choáng, ném, EndBattle xóa; render sao khi đứng/cầm, một vòng khi lắc). Lần chạy UI đầu tiên lỗi 6 check cũ (HUD/menu/màn hình khác); bản HEAD trong worktree riêng lỗi y hệt → môi trường (chuột thật), lần chạy đầy đủ sau đạt hết.
+- Mô phỏng (không phải chơi thật): người chơi "đơn giản" giờ nhận ra vạch lao và dùng Đẩy cho cú lao, giữ Khiên cho đòn thường/dậm. Màn 5 Khó + đơn giản: kiếm 5/10, búa 4/10 (trước 7–8/10) — bị choáng cạnh Vua Slime ăn trọn đòn dậm. Thường + đơn giản vẫn 10/10 mọi màn; trung bình 0–2 lần choáng/lượt (tự đánh màn 3 tới ~4–5). Bảng in thêm cột stuns/run.
+- Chưa: chơi thử thật, nhìn vạch lao/sao trên nền sáng-tối thật, DPI, âm thanh (cú lao dùng cue CatHurt sẵn có). Trận tự do cũng có slime nhanh lao tới; kỷ lục trận tự do không có rulesVersion nên kỷ lục cũ vẫn so chung.
+
+## Bàn giao Combat Depth (2026-10-20) — đang triển khai (mốc 1 xong)
 - [docs/COMBAT-DEPTH.md](docs/COMBAT-DEPTH.md) ghi phản hồi màn 1–4 quá dễ, combo thẻ và vai trò từng quái; stun mèo biểu cảm choáng 1,5 giây, không khóa drag/physics và tách pickup Dizzy.
 - NEXT-STEPS đã dẫn tới tài liệu, phân biệt yêu cầu và đề xuất, có tiêu chí test/balance. Người dùng xác nhận chơi lại trơn tru. Lần này chỉ sửa tài liệu, không code/test/publish binary.
 
@@ -453,6 +460,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Lịch sử chuyển project: 2026-10-05 tạo AGENTS.md/PROGRESS.md tại ổ D khi thư mục đó trống; source hiện nằm tại ổ C, không cần khôi phục về D.
 
 ## Đang dở và việc tiếp theo
+- Combat Depth (docs/COMBAT-DEPTH.md): mốc 1 xong. Tiếp: mốc 2 nhóm thẻ Defense/Power/Speed + Giáp gai/Phá giáp/Dư ảnh + build cộng dồn lưu trong adventure-progress.json + màn 3 tối đa 3 lần chọn; mốc 3 đá chặn đòn, support đứng sau, King lui-gọi quân-khiên; mốc 4 đội hình + cân bằng theo mục tiêu mới. Người dùng cần đi mục "Combat Depth — mốc 1" trong MANUAL-TEST.md. Để ý: choáng cạnh boss làm màn 5 Khó khó hơn hẳn (xem lại ở mốc 3–4 khi King lui ra xa lúc gọi quân).
 - Hướng chính mới nhất: [Adventure Update — Chương 1](docs/ADVENTURE-UPDATE.md), thay roadmap tính năng lẻ. Mốc 1–2 đã làm (2026-10-20, test tự động đạt, commit 8b93d25, đã publish). Mốc 3 đã commit (4f0191c). Mốc 4 commit 17f6455. Mốc 5 (cân bằng mô phỏng, mẹo theo màn, cảnh báo lưu, HUD tên màn, 1.1.0-beta, tài liệu) đã làm. Việc còn lại là của người dùng: chơi thử 5 màn và điền "Nhật ký chơi thử" (MANUAL-TEST.md), thử DPI 125–150%, máy sạch, âm thanh; sau đó quyết có tăng độ khó màn 1–4 không (mô phỏng cho thấy khá dễ khi dùng kỹ năng) và có bỏ nhãn beta không. Backlog sau Chương 1 ở ADVENTURE-UPDATE.md.
 - Adventure, việc còn để ý: Mũ slime hơi nhỏ trên đầu mèo (chỉnh sau khi người dùng xem); mô phỏng không tính việc kéo mèo cứu nguy nên độ khó thật có thể thấp hơn bảng.
 - Đề xuất mới 20/10: AI kiểm tra hướng chiều sâu trận đấu ở đầu [NEXT-STEPS](docs/NEXT-STEPS.md); chưa tự triển khai tất cả. Đợt trang bị 15 đã được ghi hoàn thành, đối chiếu code trước khi làm tiếp.

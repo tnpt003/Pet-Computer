@@ -1,6 +1,6 @@
 # Combat Depth — Build & Enemy Roles
 
-Bàn giao 2026-10-20 (Asia/Saigon). Trạng thái: chưa triển khai; người dùng yêu cầu AI khác kiểm tra và lập kế hoạch từ code thật. Đọc AGENTS.md/PROGRESS.md trước. Giữ luồng chơi lại hiện có (người dùng xác nhận trơn tru); không xây lại Adventure hoặc engine C#/Python.
+Bàn giao 2026-10-20 (Asia/Saigon). Trạng thái: đang triển khai (mốc 1/4 xong 2026-10-20; xem "Quyết định người dùng đã chốt" và "Tiến độ triển khai"). Ban đầu người dùng yêu cầu AI khác kiểm tra và lập kế hoạch từ code thật. Đọc AGENTS.md/PROGRESS.md trước. Giữ luồng chơi lại hiện có (người dùng xác nhận trơn tru); không xây lại Adventure hoặc engine C#/Python.
 
 ## Yêu cầu người dùng
 
@@ -10,6 +10,21 @@ Bàn giao 2026-10-20 (Asia/Saigon). Trạng thái: chưa triển khai; người 
 - Slime đá nhiều HP hơn, có xác suất miễn nhiễm sát thương.
 - King đạt ngưỡng HP thì lui xa, triệu hồi trợ chiến và bất tử đến khi các slime trợ chiến chết hết.
 - Mèo stun dùng biểu cảm/emoji choáng khoảng **1,5 giây**.
+
+## Quyết định người dùng đã chốt (2026-10-20, sau khi Claude đối chiếu code)
+
+- **Build cộng dồn qua màn** (thay luật reset mỗi màn): thắng màn N lưu build lúc kết thúc màn đó; vào màn N+1 (lần đầu hay chơi lại) luôn bắt đầu bằng build đã lưu của màn N; màn 2 bắt đầu trống. Thua không đổi build đã lưu. Thắng lại màn cũ thì thay build lưu của màn đó. Lưu trong adventure-progress.json (tăng phiên bản file, file cũ đọc được). Trận tự do vẫn reset mỗi trận. Bảng chuẩn bị hiện build mang vào màn.
+- Màn 3 (sinh tồn) tối đa **3 lần chọn thẻ**.
+- Luật đưa thẻ: 3 thẻ thuộc 3 nhóm khác nhau (Defense/Power/Speed) để luôn đi tiếp được build; Cá nướng chỉ khi mèo mất máu, thay thẻ của nhóm đang ít điểm nhất.
+- Làm luôn Power 3 → Phá giáp và Speed 3 → Dư ảnh (con số vẫn chờ cân bằng).
+- King: đòn vượt nhiều ngưỡng thì HP dừng ở ngưỡng có khiên đầu tiên, damage dư bỏ; pha sau chỉ chạy khi khiên tắt.
+- Mục tiêu cân bằng mới: Thường + người chơi đơn giản thắng 60–85%, HP còn trung bình ≤ 60%; Thường tự đánh màn 2–5 thắng ≤ 30%; Dễ vẫn thắng màn 1–2.
+- Hiện trạng code lúc chốt: thẻ chỉ có sau đợt có đợt kế (màn 2/4/5: 2 lần chọn); Defense chỉ có `thick_fur` (tối đa 2) nên phải thêm thẻ Defense.
+
+## Tiến độ triển khai
+
+- **Mốc 1 (2026-10-20): xong** — nguồn sát thương (`DamageSource`), hàm gây sát thương lên mèo dùng chung (`HurtCat`), slime nhanh lao tới (`dash`) + mèo choáng 1,5 giây có kháng 3 giây. Dữ liệu ở [BATTLE-DATA.md](BATTLE-DATA.md#lao-tới-và-choáng-combat-depth-mốc-1). Màn 2–5 tăng rulesVersion.
+- Mốc 2: nhóm thẻ/synergy + build cộng dồn. Mốc 3: đá/support/King. Mốc 4: đội hình + cân bằng theo mục tiêu mới.
 
 ## Stun mèo — chi tiết bàn giao
 

@@ -375,6 +375,34 @@ internal static class BattleChecks
         window.RaiseEvent(MouseEvent(UIElement.MouseLeftButtonUpEvent));
         check(pet.Action == PetAction.Thrown, "The throw after it is the normal one");
 
+        // A dash stun in the real window: stars on the standing cat; a drag still starts and the
+        // stun goes on in the user's hands; ending the battle leaves nothing behind.
+        window.Reset();
+        window.BattleTuning = new BattleSettings
+        {
+            FirstWaveDelay = 0, CatDamage = 0,
+            Enemies = new[] { new EnemyType { Id = "runner", MaxHp = 1000, Damage = 1, Speed = 70, Scale = 0.75, Dash = true } },
+            Plan = new[] { new WaveSpec { Groups = new[] { new WaveGroup { Enemy = "runner", Count = 1 } } } }
+        };
+        window.StartBattle();
+        for (int i = 0; i < 900 && !Sim().CatStunned; i++) Call(window, "TickBattle", 1.0 / 60);
+        Tick(0.1);
+        check(Sim().CatStunned && pet.BattleStun > 0 && pet.Action == PetAction.Idle && pet.SwordSwing < 0,
+            "A dash stuns the cat in the window: stars, standing still, no swing");
+        window.Activate();
+        await Task.Delay(20);
+        window.RaiseEvent(MouseEvent(UIElement.MouseLeftButtonDownEvent));
+        typeof(PetWindow).GetField("pressPosition", Flags)!.SetValue(window, new Point(-100000, -100000));
+        Call(window, "CheckDragThreshold");
+        Tick(0.2);
+        check(pet.Action == PetAction.Dragging && Sim().CatStunned && pet.BattleStun > 0, "A stunned cat can still be dragged; the stun stays while carried");
+        window.RaiseEvent(MouseEvent(UIElement.MouseLeftButtonUpEvent));
+        check(pet.Action == PetAction.Thrown, "and thrown as usual");
+        window.EndBattle();
+        check(!window.BattleActive && pet.BattleStun == 0, "Ending the battle clears the stun (nothing left for Pet Mode)");
+        window.Reset();
+        window.BattleTuning = new BattleSettings();
+
         // Losing: a dizzy, harmless end.
         var reportBefore = window.BattleReport;
         window.Reset();
@@ -572,6 +600,21 @@ internal static class BattleChecks
             Render(flying, $"battle-thrown-{facing}");
             var dazed = Model(facing); dazed.SwordOut = true; dazed.BattleDazed = true; dazed.Action = PetAction.Sitting;
             Render(dazed, $"battle-dazed-{facing}");
+            // A dash stun: stars and dazed eyes on the standing cat. Picked up, the stun and the
+            // pickup's own dizziness share one orbit (the stronger one), never two.
+            var stunned = Model(facing); stunned.SwordOut = true; stunned.BattleStun = 1;
+            check(Render(stunned, $"battle-stunned-{facing}") != Render(armed, "battle-sword"), $"A stunned cat shows stars ({facing})");
+            PetModel Lifted(bool shaken, double stun)
+            {
+                var m = Model(facing); m.SwordOut = true; m.Action = PetAction.Dragging; m.Grounded = false; m.Pickup.Begin(0, 0); m.BattleStun = stun;
+                for (int frame = 0; frame < 90; frame++) m.Pickup.Step(shaken ? (frame < 45 ? frame * 40 : (90 - frame) * 40) : 0, 0, 1.0 / 120);
+                return m;
+            }
+            check(Render(Lifted(false, 1), $"battle-stunned-lifted-{facing}") != Render(Lifted(false, 0), $"battle-calm-lifted-{facing}"),
+                $"A stunned cat keeps its stars while gently carried ({facing})");
+            var shaken = Lifted(true, 0);
+            check(shaken.Pickup.Dizziness < 0.75 || Render(Lifted(true, 1), "battle-shaken-stunned") == Render(shaken, "battle-shaken"),
+                $"Shaken while stunned: one orbit, not two ({facing}, pickup dizziness {shaken.Pickup.Dizziness:0.00})");
             var shielded = Model(facing); shielded.SwordOut = true; shielded.BattleShield = shielded.BattleBuff = true; shielded.BattleTime = 2.3;
             Render(shielded, $"battle-shield-{facing}");
             var heldShield = Model(facing); heldShield.SwordOut = true; heldShield.BattleShield = heldShield.BattleBuff = true;

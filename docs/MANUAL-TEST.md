@@ -151,6 +151,13 @@ Nên chép dự phòng %LOCALAPPDATA%\DesktopPet\adventure-progress.json (nếu 
 - [ ] Giới thiệu (Khác → Giới thiệu) ghi 1.1.0-beta.
 - [ ] (Tùy chọn) Đặt adventure-progress.json chỉ đọc (Properties → Read-only) rồi thắng một màn: bảng kết quả và bản đồ báo không lưu được; app không lỗi. Bỏ chỉ đọc sau khi thử.
 
+#### Combat Depth — mốc 1: slime nhanh lao tới, mèo choáng 1,5 giây (2026-10-20)
+- [ ] Màn 2 hoặc trận tự do: slime nhanh dừng cách mèo một đoạn, gồng (dấu "!" + vạch đỏ đứt nét có mũi tên trên sàn), rồi lao thẳng theo vạch, có vệt gió phía sau. Vạch rõ trên nền sáng và tối.
+- [ ] Bị lao trúng: mất máu một lần, sao vàng xoay trên đầu + mắt chéo khoảng 1,5 giây; mèo đứng yên, không chém; sau đó đánh tiếp bình thường. Cú lao kế ngay sau đó (≤3 giây) chỉ mất máu, không choáng lại.
+- [ ] Đang choáng: kéo mèo lên được ngay (không cần đợi), sao vẫn còn khi cầm; lắc mạnh khi đang choáng chỉ có **một** vòng sao; thả/ném rơi như thường; hết choáng khi đang bay thì mèo rơi xuống rồi mới đánh tiếp.
+- [ ] Pause (HUD/menu) khi đang choáng: sao đứng yên, tiếp tục thì choáng chạy nốt phần còn lại. Bật Khiên trước cú lao: không mất máu, không choáng. Đẩy slime nhanh lúc nó gồng: không lao.
+- [ ] Lắc mèo ngoài trận (Pet Mode): Chóng mặt vẫn như cũ (lắc nhẹ không chóng mặt). Kết thúc trận khi mèo đang choáng: về desktop không còn sao.
+
 ### Nhật ký chơi thử Battle Mode (beta, thêm 2026-10-18)
 Chơi 3–5 trận mỗi độ khó trên bản publish, ghi 1 dòng/trận. Phiên bản: xem Khác → Giới thiệu (ví dụ `1.0.0 (18cb227)`). Chưa có dòng nào là chưa chơi thử; số mô phỏng trong PROGRESS.md không thay cho bảng này.
 

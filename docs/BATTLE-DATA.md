@@ -215,3 +215,9 @@ Màn sinh tồn: `"objective": "survive", "surviveSeconds": 10–600`. Các đ�
 - Quái hồi máu: `healAmount` (0–1000, 0 = không hồi), `healRange` (10–600), `healCooldown` (0.5–60), `healWindup` (0.2–5), `healBudget` (1–100000: tổng máu tối đa con đó có thể hồi). `marks: "cross"` vẽ dấu "+" trên thân.
 - Pha của boss: `phases: [ { "at": 0.5, "summon": "mender", "count": 1 }, { "at": 0.3, "enrage": true } ]` (1–6 pha; `at` trong khoảng 0–1; mỗi pha phải gọi quân hoặc nổi giận; `count` 1–6). `summonCap` 1–10 là số quân được gọi còn sống cùng lúc. Quân được gọi không được là quái biết gọi quân. Có pha nổi giận thì cần `enragedSpeed`/`enragedWindup`.
 - Phần thưởng màn: `"reward": "<id phụ kiện>"`, phụ kiện đó phải có `"reward"` trong accessories.json. Chỉ nhận một lần, chỉ với dữ liệu gốc.
+
+## Lao tới và choáng (Combat Depth mốc 1)
+
+- Quái lao tới: `"dash": true` thay đòn thường của loại đó. Khi mèo trong `dashRange` (20–600) quái gồng `windup` giây, vạch lao màu đỏ hiện trên sàn theo hướng đã chốt lúc bắt đầu gồng; rồi lao `dashDistance` (20–800) DIPs với tốc độ `dashSpeed` (50–1500, × tốc độ độ khó). Va vào mèo trên đường lao: trúng **một lần** mỗi cú lao (`damage`, × giáp) và choáng mèo. Va chạm được kiểm tra trên cả đoạn đường mỗi frame, nên lao rất nhanh cũng không xuyên qua mèo. Mặc định: 170 / 230 / 420. Slime nhanh (`runner`) có sẵn `dash`.
+- Choáng (cấp trên cùng): `stunDurationSeconds` (0–5, mặc định 1.5; 0 = chỉ mất máu, không choáng) và `stunImmunitySeconds` (0–30, mặc định 3: sau khi hết choáng không bị choáng lại trong khoảng này).
+- Luật: mèo choáng đứng yên, không chém (nhát đang chém bị hủy); người dùng vẫn nhấc/kéo/ném được, kéo không xóa choáng và đồng hồ choáng vẫn chạy khi đang cầm. Pause, menu, chọn thẻ đóng băng nó. Khiên chặn cả máu lẫn choáng; mèo đang cầm/bay hoặc đang được bảo vệ sau khi thả thì cú lao trượt. Đẩy quái lúc gồng hoặc lúc lao sẽ hủy cú lao. Hết trận (thắng/thua/kết thúc) không để lại choáng.

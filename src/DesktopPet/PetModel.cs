@@ -111,6 +111,8 @@ public sealed class PetModel
     public bool SwordCombo;
     public double BattleHurt;
     public bool BattleDazed, BattleCheer;
+    // Seconds of a battle stun still to go (stars over the head; 0: not stunned).
+    public double BattleStun;
     // The user's skills on the cat: a protective bubble (Shield) and a golden glow (Cheer).
     public bool BattleShield, BattleBuff;
     // The battle's clock for those effects (stops while the battle is paused).

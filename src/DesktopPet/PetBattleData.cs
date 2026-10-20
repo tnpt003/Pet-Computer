@@ -66,6 +66,13 @@ public sealed class EnemyType
     public double HealCooldown { get; init; } = 4;
     public double HealWindup { get; init; } = 1;
     public double HealBudget { get; init; } = 100;
+    // Dash: within DashRange of the cat it winds up (the lane is shown on the floor), then lunges
+    // DashDistance DIPs at DashSpeed. Running into the cat hits it once (Damage) and stuns it
+    // (BattleSettings.StunDurationSeconds). It replaces the kind's plain attack.
+    public bool Dash { get; init; }
+    public double DashRange { get; init; } = 170;
+    public double DashDistance { get; init; } = 230;
+    public double DashSpeed { get; init; } = 420;
     // Boss phases: each fires once when its HP fraction is reached (summon helpers and/or get
     // angry). At most SummonCap of its helpers are alive at once (more calls are skipped).
     public BossPhase[]? Phases { get; init; }
@@ -334,6 +341,7 @@ public static class BattleData
         NotNegative(s.LandingGraceSeconds, "landingGraceSeconds");
         if (s.LandingGraceSeconds > 5) throw new InvalidDataException("landingGraceSeconds must be at most 5");
         NotNegative(s.RescueGraceCooldownSeconds, "rescueGraceCooldownSeconds");
+        Within(s.StunDurationSeconds, 0, 5, "stunDurationSeconds"); Within(s.StunImmunitySeconds, 0, 30, "stunImmunitySeconds");
         if (s.RescueGraceCooldownSeconds > 60) throw new InvalidDataException("rescueGraceCooldownSeconds must be at most 60");
         Positive(s.SlimeWidth, "slimeWidth"); Positive(s.SlimeHeight, "slimeHeight"); Positive(s.MaxAlive, "maxAlive");
         foreach (var skill in BattleSkills.All) Positive(skill.Cooldown(s), skill.Skill + " cooldown");
@@ -372,6 +380,11 @@ public static class BattleData
                 Within(e.HealWindup, 0.2, 5, at + ".healWindup"); Within(e.HealBudget, 1, 100000, at + ".healBudget");
             }
             if (e.SummonCap is < 1 or > 10) throw new InvalidDataException(at + ".summonCap must be 1–10");
+            if (e.Dash)
+            {
+                Within(e.DashRange, 20, 600, at + ".dashRange"); Within(e.DashDistance, 20, 800, at + ".dashDistance");
+                Within(e.DashSpeed, 50, 1500, at + ".dashSpeed");
+            }
             if (e.Phases is { } phases)
             {
                 if (phases.Length is 0 or > 6) throw new InvalidDataException(at + ".phases must list 1–6 phases");

@@ -137,7 +137,7 @@ internal static class BattleDataTests
         var hard = Fight(BattleDifficulty.Hard);
         check(plain == normal && normal.Hp == 50.4 && normal.Damage == 10 && new BattleSim(s, 0, 1600).Difficulty == BattleDifficulty.Normal,
             "Normal is exactly today's battle (the default, no rounding)");
-        check(easy.Hp == 38 && easy.Damage == 6 && hard.Hp == 66 && hard.Damage == 14, $"Easy and Hard scale HP and damage to whole numbers ({easy.Hp}/{easy.Damage}, {hard.Hp}/{hard.Damage})");
+        check(easy.Hp == 33 && easy.Damage == 5 && hard.Hp == 66 && hard.Damage == 14, $"Easy and Hard scale HP and damage to whole numbers ({easy.Hp}/{easy.Damage}, {hard.Hp}/{hard.Damage})");
         check(easy.Moved < normal.Moved * 0.9 && hard.Moved > normal.Moved * 1.1, $"and speed ({easy.Moved:0.#} < {normal.Moved:0.#} < {hard.Moved:0.#} DIPs)");
     }
 

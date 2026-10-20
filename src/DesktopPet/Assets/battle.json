@@ -54,6 +54,10 @@
   "maxAttackers": 2,
   "attackStagger": 0.3,
   "incomingWarning": 1,
+  // Enemy Director: at most maxElites elite enemies alive at once (a stage's eliteChance rolls them,
+  // never on Easy); rareChance: how often a group's rare card takes its common card's place.
+  "maxElites": 1,
+  "rareChance": 0.15,
   "outroSeconds": 3,
   "hurtFlashSeconds": 0.35,
   "maxEffects": 32,
@@ -77,7 +81,7 @@
 
   // Difficulty: multipliers on every enemy's HP, damage and speed (0.25–3). Normal is the
   // numbers in this file as they are.
-  "easy": { "enemyHp": 0.75, "enemyDamage": 0.6, "enemySpeed": 0.85 },
+  "easy": { "enemyHp": 0.65, "enemyDamage": 0.5, "enemySpeed": 0.85 },
   "hard": { "enemyHp": 1.3, "enemyDamage": 1.4, "enemySpeed": 1.15 },
 
   // Enemy kinds (family and renderer default to "slime"). scale: drawn size against the basic
@@ -88,7 +92,7 @@
       "id": "slime", "nameVi": "Slime", "nameEn": "Slime",
       "maxHp": 50, "speed": 34, "damage": 10, "range": 64,
       "windup": 0.8, "attackCooldown": 1.8, "recover": 0.35,
-      "scale": 1, "color": "#7CD36A"
+      "scale": 1, "color": "#7CD36A", "cost": 1
     },
     {
       // Small and quick, falls fast. dash: within dashRange it winds up (its lane shows on the
@@ -97,7 +101,9 @@
       "maxHp": 25, "speed": 70, "damage": 6, "range": 54,
       "windup": 0.7, "attackCooldown": 2.6, "recover": 0.4,
       "scale": 0.75, "color": "#5CC8FF", "marks": "speed",
-      "dash": true, "dashRange": 170, "dashDistance": 230, "dashSpeed": 420
+      "dash": true, "dashRange": 170, "dashDistance": 230, "dashSpeed": 420, "cost": 1,
+      // elite: one affix it may roll when it spawns (gold rim and star): a longer windup, a faster dash.
+      "elite": { "windupAdd": 0.3, "dashSpeed": 1.4, "cost": 1, "descVi": "gồng lâu hơn, lao nhanh hơn", "descEn": "longer windup, faster dash" }
     },
     {
       // Big and slow: hard to push, hits hard; a job for Cheer and the yarn bomb. blockChance: each
@@ -111,7 +117,8 @@
       "windup": 1.0, "attackCooldown": 2.4, "recover": 0.5,
       "scale": 1.35, "hitScale": 1.5, "color": "#A8A095", "marks": "cracks",
       "pushFactor": 0.5, "stunFactor": 0.6, "blockChance": 0.3, "blockMaxStreak": 2,
-      "blocker": true, "blockFrontOnly": true, "turnSeconds": 0.6
+      "blocker": true, "blockFrontOnly": true, "turnSeconds": 0.6, "cost": 2,
+      "elite": { "sureBlocks": 1, "cost": 1, "descVi": "chắc chắn chặn đòn đầu phía trước", "descEn": "surely blocks its first front hit" }
     },
     {
       // Support: winds up a heal (its leaf glows) on the most hurt ally in healRange every healCooldown s;
@@ -124,7 +131,8 @@
       "windup": 0.8, "attackCooldown": 2.0, "recover": 0.35,
       "scale": 0.9, "color": "#4FC9A8", "marks": "leaf",
       "healAmount": 15, "healRange": 170, "healCooldown": 4.5, "healWindup": 1.0, "healBudget": 90,
-      "support": true, "keepBack": 110, "teleportBelow": 0.35, "teleportWindup": 0.6, "teleportCooldown": 8
+      "support": true, "keepBack": 110, "teleportBelow": 0.35, "teleportWindup": 0.6, "teleportCooldown": 8, "cost": 2,
+      "elite": { "firstHeal": 2, "cost": 1, "descVi": "lần hồi máu đầu mạnh gấp đôi", "descEn": "its first heal is twice as strong" }
     },
     {
       // The chapter 1 boss (Adventure stage 5): the free battle keeps "king" below. Phases fire once
@@ -186,7 +194,13 @@
     { "id": "heavy_push", "group": "power", "nameVi": "Đẩy mạnh", "nameEn": "Heavy push", "descVi": "Mỗi nhát đẩy slime lùi thêm", "descEn": "Every hit knocks slimes further", "effect": "knock", "amount": 80, "maxStacks": 2 },
     { "id": "grilled_fish", "nameVi": "Cá nướng", "nameEn": "Grilled fish", "descVi": "Hồi ngay 30 HP", "descEn": "Get 30 HP back now", "effect": "heal", "amount": 30, "maxStacks": 0 },
     { "id": "thick_fur", "group": "defense", "nameVi": "Lông dày", "nameEn": "Thick fur", "descVi": "−15% sát thương nhận vào", "descEn": "−15% damage taken", "effect": "armor", "amount": 0.15, "maxStacks": 2 },
-    { "id": "big_heart", "group": "defense", "nameVi": "Tim to", "nameEn": "Big heart", "descVi": "+20 HP tối đa (hồi luôn 20)", "descEn": "+20 max HP (and 20 HP now)", "effect": "maxHp", "amount": 20, "maxStacks": 2 }
+    { "id": "big_heart", "group": "defense", "nameVi": "Tim to", "nameEn": "Big heart", "descVi": "+20 HP tối đa (hồi luôn 20)", "descEn": "+20 max HP (and 20 HP now)", "effect": "maxHp", "amount": 20, "maxStacks": 2 },
+    // Rare cards (one per group, maxStacks 1): with rareChance one takes its group's card's place.
+    // shell: stops one whole hit, back after amount s; opener: the first landed hit on each enemy deals
+    // amount more; momentum: a swing after a run of 140 DIPs deals amount more.
+    { "id": "turtle_shell", "group": "defense", "rare": true, "nameVi": "Mai rùa", "nameEn": "Turtle shell", "descVi": "Chặn trọn 1 đòn, mọc lại sau 12 giây", "descEn": "Stops one whole hit, grows back in 12 s", "effect": "shell", "amount": 12, "maxStacks": 1 },
+    { "id": "opening_strike", "group": "power", "rare": true, "nameVi": "Đòn mở màn", "nameEn": "Opening strike", "descVi": "Đòn đầu trúng mỗi quái ×2 sát thương", "descEn": "First hit on each enemy deals ×2", "effect": "opener", "amount": 1, "maxStacks": 1 },
+    { "id": "running_start", "group": "speed", "rare": true, "nameVi": "Chạy đà", "nameEn": "Running start", "descVi": "Chạy một quãng rồi chém: +80% sát thương", "descEn": "Swing after a run: +80% damage", "effect": "momentum", "amount": 0.8, "maxStacks": 1 }
   ],
 
   // Synergies: a build holding "at" cards of a group switches the effect on for good.
@@ -212,7 +226,9 @@
   // (× the wave's). A survive stage's last wave may be a "stream" (one kind drawn from "weights"
   // whenever there is room, every "interval" s at the start down to "intervalEnd" at the end), with
   // "threatGrowth" (threat added per minute held out) and "upgradeAt" (card offers at those seconds
-  // of the clock instead of after waves). See docs/BATTLE-DATA.md.
+  // of the clock instead of after waves). eliteChance: an enemy a wave or stream sends with an "elite"
+  // affix is elite with this chance (not on Easy; maxElites alive at once). budget (a wave's or a
+  // stream's): the most its enemies may cost ("cost"), elites included. See docs/BATTLE-DATA.md.
   "campaign": {
     "chapters": [
       {
@@ -221,7 +237,7 @@
           {
             "id": "c1_first_steps", "nameVi": "Làm quen", "nameEn": "First steps",
             "goalVi": "Dọn 2 đợt slime dễ: click slime để chọn mục tiêu.", "goalEn": "Clear 2 waves of easy slimes: click a slime to pick the target.",
-            "objective": "clear", "maxAlive": 2, "rulesVersion": 3,
+            "objective": "clear", "maxAlive": 2, "rulesVersion": 4,
             "waves": [
               { "groups": [ { "enemy": "slime", "count": 2 } ] },
               { "groups": [ { "pick": { "slime": 3, "runner": 1 }, "count": 3, "atLeast": { "runner": 1 } } ] }
@@ -233,7 +249,7 @@
             "goalEn": "Mixed slimes: use skills, lift the cat when a slime winds up, pick upgrades between waves.",
             "tipVi": "Dọn xong một đợt, bạn chọn 1 trong 3 thẻ nâng cấp. Thắng màn thì build được mang sang màn sau. Slime đá chặn được đòn: đánh tiếp hoặc dùng Bom len.",
             "tipEn": "After each cleared wave, pick 1 of 3 upgrade cards. Win the stage and the build comes along to the next one. Rock slimes block some hits: keep at it or use the Yarn bomb.",
-            "objective": "clear", "upgrades": true, "rulesVersion": 7,
+            "objective": "clear", "upgrades": true, "threat": 1.6, "rulesVersion": 8,
             "waves": [
               { "groups": [ { "enemy": "rock", "count": 1 }, { "pick": { "slime": 1, "runner": 1 }, "count": 2 } ] },
               { "groups": [ { "enemy": "rock", "count": 1 }, { "pick": { "slime": 1, "runner": 1 }, "count": 2 }, { "enemy": "rock", "count": 1 } ] },
@@ -247,9 +263,9 @@
             "tipVi": "Quái kéo tới liên tục và mạnh dần tới khi hết giờ. Ở giây 20, 40, 60 bạn chọn thẻ. Bế mèo thì đồng hồ dừng, nên hãy giữ HP bằng Khiên và Cá hồi máu.",
             "tipEn": "Slimes keep coming, stronger and stronger, until time is up. At 20, 40 and 60 s you pick a card. Carrying the cat stops the clock, so keep HP up with the Shield and the fish.",
             "objective": "survive", "surviveSeconds": 75, "maxAlive": 4, "upgrades": true, "maxUpgrades": 3, "upgradeAt": [ 20, 40, 60 ],
-            "threatGrowth": 0.3, "rulesVersion": 8, "reward": "SlimeHat",
+            "threatGrowth": 0.3, "threat": 1.7, "eliteChance": 0.3, "rulesVersion": 9, "reward": "SlimeHat",
             "waves": [
-              { "stream": { "weights": { "runner": 2, "slime": 1, "rock": 1 }, "interval": 2.6, "intervalEnd": 1.4, "pincerAfter": 45 } }
+              { "stream": { "weights": { "runner": 2, "slime": 1, "rock": 1 }, "interval": 2.6, "intervalEnd": 1.4, "pincerAfter": 45, "budget": 7 } }
             ]
           },
           {
@@ -258,11 +274,11 @@
             "goalEn": "Herb slimes heal their friends: take them down first, or Push one to cut its heal.",
             "tipVi": "Slime thảo dược (mũ lá) đứng sau slime đá và hồi máu cho đồng đội. Lá sáng lên là nó đang gồng: Đẩy để cắt. Đá chặn đường: hạ đá, hoặc bế mèo thả ra sau.",
             "tipEn": "Herb slimes (leaf caps) hide behind rock slimes and heal them. A glowing leaf means a heal is coming: Push to cut it. Rocks block the way: break them, or carry the cat behind.",
-            "objective": "clear", "upgrades": true, "maxAlive": 5, "rulesVersion": 8,
+            "objective": "clear", "upgrades": true, "maxAlive": 5, "threat": 1.8, "eliteChance": 0.3, "rulesVersion": 9,
             "waves": [
               { "groups": [ { "pick": { "slime": 1, "runner": 1 }, "count": 3 } ] },
-              { "groups": [ { "squad": [ { "enemy": "mender", "count": 1 }, { "enemy": "rock", "count": 3 } ] } ] },
-              { "groups": [ { "pick": { "slime": 1, "runner": 1 }, "count": 1 }, { "squad": [ { "enemy": "mender", "count": 1 }, { "enemy": "rock", "count": 3 } ] } ] }
+              { "budget": 9, "groups": [ { "squad": [ { "enemy": "mender", "count": 1 }, { "enemy": "rock", "count": 3 } ] } ] },
+              { "budget": 10, "groups": [ { "pick": { "slime": 1, "runner": 1 }, "count": 1 }, { "squad": [ { "enemy": "mender", "count": 1 }, { "enemy": "rock", "count": 3 } ] } ] }
             ]
           },
           {
@@ -271,10 +287,10 @@
             "goalEn": "The chapter's last battle: the Slime King backs off behind a shield and calls help, herb slimes too.",
             "tipVi": "Ở 70% và 40% máu, Vua Slime lui về mép xa, bật khiên bất tử và gọi quân: hạ hết quân để phá khiên. Nổi giận ở 30%. Thấy vùng đỏ dưới sàn: kéo mèo ra ngoài hoặc bật Khiên.",
             "tipEn": "At 70% and 40% HP the Slime King backs off to the far edge behind a shield and calls help: defeat them all to break it. Angry at 30%. A red zone on the floor: lift the cat out or use the Shield.",
-            "objective": "clear", "upgrades": true, "rulesVersion": 8, "reward": "SlimeKingCrown",
+            "objective": "clear", "upgrades": true, "threat": 1.6, "eliteChance": 0.3, "rulesVersion": 9, "reward": "SlimeKingCrown",
             "waves": [
-              { "groups": [ { "enemy": "rock", "count": 1, "side": "a" }, { "enemy": "slime", "count": 1, "side": "a" }, { "enemy": "runner", "count": 2, "side": "b" } ] },
-              { "groups": [ { "squad": [ { "enemy": "mender", "count": 1 }, { "enemy": "rock", "count": 1 }, { "enemy": "slime", "count": 1 } ] } ] },
+              { "budget": 6, "groups": [ { "enemy": "rock", "count": 1, "side": "a" }, { "enemy": "slime", "count": 1, "side": "a" }, { "enemy": "runner", "count": 2, "side": "b" } ] },
+              { "budget": 6, "groups": [ { "squad": [ { "enemy": "mender", "count": 1 }, { "enemy": "rock", "count": 1 }, { "enemy": "slime", "count": 1 } ] } ] },
               { "groups": [ { "enemy": "king_c1", "count": 1 } ] }
             ]
           }

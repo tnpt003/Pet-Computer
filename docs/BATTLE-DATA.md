@@ -287,3 +287,20 @@ Màn sinh tồn: `"objective": "survive", "surviveSeconds": 10–600`. Các đ�
   - Quân boss gọi ra không xuất hiện trong vòng 90 DIPs quanh mèo khi còn chỗ.
   - `marks: "leaf"`: slime thảo dược có mũ lá + túi thảo dược (không còn dấu + trên thân); lá sáng khi gồng hồi, hạt sáng bay tới đồng minh; hết lượng hồi thì lá cụp, xỉn màu. `"cross"` vẫn hợp lệ cho dữ liệu cũ.
 - Bản gốc: slime đá `blocker`, `blockFrontOnly`, `turnSeconds` 0.6, `hitScale` 1.5 (vẽ rộng/thấp, có tấm giáp phía trước, thêm vết nứt dưới 50% HP); slime thảo dược `leaf`, `teleportBelow` 0.35 / 0.6 s / 8 s; Vua Slime chương 1 `rallyEvery` 7, `rallyCharge` 0.8, `rallySeconds` 3, `rallySpeed` 1.4, `shieldBreakStun` 2. Màn 5 đợt 1: đá + slime từ mép xa, 2 slime nhanh từ phía sau. Cầm cự: hai phía từ giây 45. rulesVersion màn 1–5: 3/7/8/8/8 (chia lượt ra đòn áp cho mọi màn).
+
+## Ngẫu nhiên có giới hạn: tinh anh, ngân sách, thẻ hiếm (Enemy Director mốc 3)
+
+- Ngân sách: mỗi quái có `cost` (0–10, mặc định 1; bản gốc slime/nhanh 1, đá/thảo dược 2).
+  - Đợt có `budget` (0–100, 0 = không giới hạn): nhóm cố định và đội luôn ra đủ; các con bốc theo trọng số chia phần còn lại (con bốc ra mà không vừa, có chừa chỗ cho các lượt bốc sau, thì đổi thành loại rẻ nhất của nhóm đó; `atLeast` thắng ngân sách). Phần ngân sách còn dư trả cho tinh anh.
+  - Stream có `budget`: tổng `cost` của quái đang trên sàn (do đợt gửi ra, kể cả phụ phí tinh anh) không vượt số này; loại bốc ra không vừa thì đổi thành loại rẻ nhất, vẫn không vừa thì chờ. Validate: ngân sách dưới loại rẻ nhất của stream bị từ chối (stream sẽ không bao giờ spawn).
+- Tinh anh: quái có `"elite": { ... }` (không cho boss) có thể thành tinh anh khi một đợt/stream gửi ra (không bao giờ là quân boss gọi): màn có `eliteChance` (0–1), không ở Dễ, dưới `maxElites` (0–5, mặc định 1) con tinh anh còn sống, còn ngân sách cho `elite.cost` (mặc định 1). Tung **một lần** lúc spawn bằng luồng ngẫu nhiên riêng (affix), nên tinh anh không đổi loại quái hay chỗ xuất hiện. Nhận diện: viền vàng quanh thân và ngôi sao vàng ở góc trên phía lưng; lần đầu mỗi loại trong trận có banner "★ … tinh anh: <descVi>".
+  - `windupAdd` (0–3 s, chỉ quái lao): gồng lâu hơn. `dashSpeed` (1–3, chỉ quái lao): lao nhanh hơn ×.
+  - `sureBlocks` (0–5, chỉ quái biết chặn): bấy nhiêu đòn phía trước đầu tiên chắc chắn bị chặn (không tung xác suất); bom, Giáp gai, combo có Phá giáp và đòn từ sau lưng vẫn trúng như cũ và không làm mất lượt chặn chắc chắn.
+  - `firstHeal` (1–5, chỉ quái hồi máu): lần hồi đầu tiên trúng mạnh × (vẫn trong `healBudget`).
+  - `descVi`/`descEn` (≤ 60 ký tự). Affix không đổi gì thì bị từ chối.
+  - Bản gốc: slime nhanh gồng +0.3 s, lao ×1.4; slime đá 1 lần chặn chắc chắn; slime thảo dược lần hồi đầu ×2. Màn 3–5 `eliteChance` 0.3, `maxElites` 1.
+- Thẻ hiếm: thẻ có `"rare": true` (phải có `group`, `maxStacks` 1; mỗi nhóm tối đa một thẻ hiếm). Khi đưa thẻ, thẻ của mỗi nhóm có xác suất `rareChance` (0–1, mặc định 0.15) bị thay bằng thẻ hiếm của nhóm đó (nếu build chưa có). Tung bằng luồng ngẫu nhiên riêng, nên các thẻ thường vẫn như khi không có thẻ hiếm. Thẻ hiếm không bao giờ là thẻ lấp chỗ trống; tính 1 điểm cho nhóm; được mang sang màn sau như thẻ khác. Thẻ có viền vàng và dòng "★ Thẻ hiếm · một lần mỗi build"; HUD/bảng chuẩn bị ghi "◆ <tên>".
+  - `shell` (Mai rùa, Phòng thủ; `amount` 3–60 s): đòn tiếp theo trúng mèo bị chặn trọn (không mất máu, không choáng), rồi mọc lại sau `amount` giây mèo đứng dưới sàn (không hồi khi đang bế). Khiên bong bóng vẫn được tính trước.
+  - `opener` (Đòn mở màn, Sức mạnh; `amount` 0.1–3): nhát vũ khí đầu tiên trúng mỗi quái gây thêm `amount` (1 = ×2). Nhát bị chặn không tính là đã mở. Dư ảnh lặp lại nhát chém không kèm thưởng này.
+  - `momentum` (Chạy đà, Tốc độ; `amount` 0.1–3): nhát chém sau khi mèo tự chạy ≥ 140 DIPs trên sàn (kể từ nhát trước) gây thêm `amount` (bản gốc +80%). Bế/kéo mèo không tính là chạy.
+- Cân bằng chương 1 (mô phỏng, không phải chơi thật): Dễ `enemyHp` 0.65, `enemyDamage` 0.5 (trước đây 0.75/0.6); `threat` màn 2–5: 1.6 / 1.7 / 1.8 / 1.6; ngân sách stream màn 3 là 7, các đợt màn 4–5 chừa đúng chỗ cho một tinh anh. rulesVersion màn 1–5: 4/8/9/9/9.

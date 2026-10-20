@@ -435,6 +435,7 @@ public sealed partial class PetWindow
             if (points > 0) parts.Add($"{BuildGroups.Name(group, English)} {points}");
             foreach (var y in BattleTuning.SynergyList) if (y.Group == group && points >= y.At) parts.Add("★ " + y.Name(English));
         }
+        foreach (var u in cards) if (u.Rare && build.TryGetValue(u.Id, out int n) && n > 0) parts.Add("◆ " + u.Name(English));
         return parts.Count == 0 ? L("Build mang vào màn: chưa có thẻ (thắng màn để giữ thẻ đã chọn sang màn sau)", "Build brought in: no cards yet (win a stage to keep its cards for the next)")
             : L("Build mang vào màn: ", "Build brought in: ") + string.Join(" · ", parts);
     }

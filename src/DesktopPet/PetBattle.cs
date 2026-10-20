@@ -80,6 +80,10 @@ public sealed class BattleSettings
     public double AttackStagger { get; init; } = 0.3;
     // A spawn from the other side of a two-sided wave is announced by an arrow this long before.
     public double IncomingWarning { get; init; } = 1;
+    // Elites alive at once (StageSpec.EliteChance rolls them), and the chance a rare card takes its
+    // group's place in an upgrade offer.
+    public int MaxElites { get; init; } = 1;
+    public double RareChance { get; init; } = 0.15;
     public double OutroSeconds { get; init; } = 3;
     public double HurtFlashSeconds { get; init; } = 0.35;
     public int MaxEffects { get; init; } = 32;
@@ -138,7 +142,7 @@ public sealed class BattleSettings
     // Threat (an Adventure stage's and wave's): enemy HP × threat, damage × only this share of the
     // rise (damage grows slower); worked out once when an enemy appears. Never stun times.
     public double ThreatDamageShare { get; init; } = 0.5;
-    public DifficultySpec Easy { get; init; } = new() { EnemyHp = 0.75, EnemyDamage = 0.6, EnemySpeed = 0.85 };
+    public DifficultySpec Easy { get; init; } = new() { EnemyHp = 0.65, EnemyDamage = 0.5, EnemySpeed = 0.85 };
     public DifficultySpec Hard { get; init; } = new() { EnemyHp = 1.3, EnemyDamage = 1.4, EnemySpeed = 1.15 };
     private static readonly DifficultySpec NormalSpec = new();
     public DifficultySpec Difficulty(BattleDifficulty difficulty) => difficulty switch
@@ -197,6 +201,9 @@ public sealed class BattleSettings
         new UpgradeSpec { Id = "grilled_fish", NameVi = "Cá nướng", NameEn = "Grilled fish", DescVi = "Hồi ngay 30 HP", DescEn = "Get 30 HP back now", Effect = "heal", Amount = 30 },
         new UpgradeSpec { Id = "thick_fur", Group = "defense", NameVi = "Lông dày", NameEn = "Thick fur", DescVi = "−15% sát thương nhận vào", DescEn = "−15% damage taken", Effect = "armor", Amount = 0.15, MaxStacks = 2 },
         new UpgradeSpec { Id = "big_heart", Group = "defense", NameVi = "Tim to", NameEn = "Big heart", DescVi = "+20 HP tối đa (hồi luôn 20)", DescEn = "+20 max HP (and 20 HP now)", Effect = "maxHp", Amount = 20, MaxStacks = 2 },
+        new UpgradeSpec { Id = "turtle_shell", Group = "defense", Rare = true, NameVi = "Mai rùa", NameEn = "Turtle shell", DescVi = "Chặn trọn 1 đòn, mọc lại sau 12 giây", DescEn = "Stops one whole hit, grows back in 12 s", Effect = "shell", Amount = 12, MaxStacks = 1 },
+        new UpgradeSpec { Id = "opening_strike", Group = "power", Rare = true, NameVi = "Đòn mở màn", NameEn = "Opening strike", DescVi = "Đòn đầu trúng mỗi quái ×2 sát thương", DescEn = "First hit on each enemy deals ×2", Effect = "opener", Amount = 1, MaxStacks = 1 },
+        new UpgradeSpec { Id = "running_start", Group = "speed", Rare = true, NameVi = "Chạy đà", NameEn = "Running start", DescVi = "Chạy một quãng rồi chém: +80% sát thương", DescEn = "Swing after a run: +80% damage", Effect = "momentum", Amount = 0.8, MaxStacks = 1 },
     };
 
     // From battle.json "synergies": what 3 points of a group switch on (null: the built-in three).
@@ -353,6 +360,12 @@ public sealed class Slime
     // Boss rally: time to its next call and the crown's glow still to run; a helper's faster walk
     // (time left and how much faster).
     public double RallyCooldown, RallyCharge, RallyRemaining, RallyFactor = 1;
+    // Its elite affix (null: a plain one), the sure blocks it still has and its next heal's factor.
+    public EliteSpec? Elite;
+    public int SureBlocks;
+    public double HealBoost = 1;
+    // A weapon hit has landed on it (the Opener card's bonus is spent).
+    public bool Opened;
     public bool Targetable => State is not (SlimeState.Spawning or SlimeState.Defeated);
     public void Set(SlimeState state) { State = state; StateTime = 0; }
 }
@@ -363,7 +376,9 @@ public enum BattleEventKind
     WaveStarted, SlimeSpawned, Swing, SlimeHit, SlimeDefeated, CatHurt, Pushed, WaveCleared, Won, Lost,
     Healed, Cheered, Shielded, Blocked, BombThrown, BombExploded, BossAppeared, BossSummoned, BossEnraged, ComboHit,
     UpgradeOffered, UpgradeChosen, EnemyHealing, EnemyHealed, CatStunned, SynergyUnlocked, Reflected, Echoed,
-    HitBlocked, BossShielded, BossShieldDown, BossImmune, EnemyTeleporting, EnemyTeleported, BossRallying, BossRallied, Incoming
+    HitBlocked, BossShielded, BossShieldDown, BossImmune, EnemyTeleporting, EnemyTeleported, BossRallying, BossRallied, Incoming,
+    // An elite appeared (Value: its id); the Turtle shell card stopped a hit on the cat.
+    EliteAppeared, ShellBlocked
 }
 public readonly record struct BattleEvent(BattleEventKind Kind, double X, double Value = 0);
 // Number: a floating damage (Value > 0) or heal (Value < 0, shown as +HP above the cat).
@@ -395,9 +410,10 @@ public readonly record struct CatOrder(CatCommand Command, double X = 0, int Fac
 public sealed class BattleSim
 {
     public BattleSettings Settings { get; }
-    // This battle's seed (BattleRandom) and its streams: what spawns where, the cards, the rock's blocks.
+    // This battle's seed (BattleRandom) and its streams: what spawns where, the cards, the rock's
+    // blocks, the elite rolls and the rare cards.
     public int Seed { get; }
-    private readonly Random spawnRandom, offerRandom, blockRandom;
+    private readonly Random spawnRandom, offerRandom, blockRandom, affixRandom, rarityRandom;
     private readonly List<Slime> slimes = new();
     private readonly List<BattleEffect> effects = new();
     private readonly List<BattleEvent> events = new();
@@ -434,6 +450,24 @@ public sealed class BattleSim
     public IReadOnlyList<UpgradeSpec>? UpgradeOffer { get; private set; }
     public bool ChoosingUpgrade => UpgradeOffer != null;
     private double damageBonus, moveBonus, cooldownCut, knockBonus, armorCut, maxHpBonus;
+    // Rare cards: Turtle shell (its regrowth time; 0 without it), Opener and Momentum bonuses.
+    private double shellRegrow, openerBonus, momentumBonus;
+    // Turtle shell: seconds until it is back (0: ready); hits it stopped.
+    public double ShellCooldown { get; private set; }
+    public bool HasShell => shellRegrow > 0;
+    public bool ShellReady => HasShell && ShellCooldown <= 0;
+    public int ShellBlocks { get; private set; }
+    // Momentum: DIPs the cat has run on the floor since its last swing, and whether the swing under
+    // way is a charged one.
+    public const double MomentumRun = 140;
+    private double runDistance, runFromX = double.NaN;
+    private bool chargedSwing;
+    public bool MomentumReady => momentumBonus > 0 && runDistance >= MomentumRun;
+    public int ChargedHits { get; private set; }
+    public int OpenerHits { get; private set; }
+    // Elites spawned in this battle; what the current wave's budget still has for elites.
+    public int ElitesSpawned { get; private set; }
+    private double eliteBudget = double.PositiveInfinity;
     public int Stacks(string upgrade) => taken.TryGetValue(upgrade, out int n) ? n : 0;
     // Cards chosen in this run (not the carried ones): a stage's maxUpgrades counts these.
     public int Picks { get; private set; }
@@ -579,6 +613,8 @@ public sealed class BattleSim
         spawnRandom = BattleRandom.Stream(Seed, BattleRandom.Spawn);
         offerRandom = BattleRandom.Stream(Seed, BattleRandom.Offer);
         blockRandom = BattleRandom.Stream(Seed, BattleRandom.Block);
+        affixRandom = BattleRandom.Stream(Seed, BattleRandom.Affix);
+        rarityRandom = BattleRandom.Stream(Seed, BattleRandom.Rarity);
         Settings = settings;
         Stage = stage;
         WavePlan = stage?.Waves is { Length: > 0 } waves ? waves : settings.WavePlan;
@@ -635,7 +671,15 @@ public sealed class BattleSim
         }
         else StunImmunity = Math.Max(0, StunImmunity - dt);
         // Skills recover only while the cat is down and at risk; buffs already running wear off as usual.
-        if (!catHeld) for (int i = 0; i < cooldowns.Length; i++) cooldowns[i] = Math.Max(0, cooldowns[i] - dt);
+        // So does the Turtle shell; Momentum counts only the cat's own run on the floor.
+        if (!catHeld)
+        {
+            for (int i = 0; i < cooldowns.Length; i++) cooldowns[i] = Math.Max(0, cooldowns[i] - dt);
+            ShellCooldown = Math.Max(0, ShellCooldown - dt);
+            if (!double.IsNaN(runFromX)) runDistance += Math.Abs(catX - runFromX);
+            runFromX = catX;
+        }
+        else runFromX = double.NaN;
         CheerRemaining = Math.Max(0, CheerRemaining - dt);
         ShieldRemaining = Math.Max(0, ShieldRemaining - dt);
         if (Over)
@@ -681,7 +725,7 @@ public sealed class BattleSim
         return CatTurn(dt, catX);
     }
 
-    private void CancelSwing() { SwingTime = -1; swingHit = false; ComboSwing = false; }
+    private void CancelSwing() { SwingTime = -1; swingHit = false; ComboSwing = false; chargedSwing = false; }
 
     // The chain only lasts ComboWindow seconds after its last hit.
     // Hits in the current chain (0 once it lapsed); the HUD shows it as ×N.
@@ -714,6 +758,9 @@ public sealed class BattleSim
             {
                 SwingTime = 0; swingHit = false; swingTargetId = target.Id; swingFacing = facing;
                 ComboSwing = LiveCombo == Settings.ComboHits - 1;
+                // Momentum: a swing after a run is a charged one (the run starts again either way).
+                chargedSwing = MomentumReady;
+                runDistance = 0;
                 double cooldown = arms.AttackCooldown * CooldownFactor / (CheerRemaining > 0 ? Settings.CheerSpeed : 1);
                 CatCooldown = Math.Max(cooldown, arms.SwingDuration);
                 events.Add(new(BattleEventKind.Swing, catX));
@@ -770,12 +817,27 @@ public sealed class BattleSim
         double damage = arms.Damage * DamageFactor * (CheerRemaining > 0 ? Settings.CheerDamage : 1) * (combo ? Settings.ComboDamage : 1);
         // Armor break: combo hits hit harder.
         if (combo && Active("armorBreak") is SynergySpec breaker) damage *= 1 + breaker.Amount;
+        // Rare cards: the first landed hit on each enemy (Opener) and a swing after a run (Momentum)
+        // hit harder; an Afterimage echo repeats the swing without them.
+        double plain = damage;
+        bool opening = openerBonus > 0 && !slime.Opened, charged = chargedSwing;
+        chargedSwing = false;
+        if (opening) damage *= 1 + openerBonus;
+        if (charged) damage *= 1 + momentumBonus;
         double knock = arms.Knock + knockBonus;
         events.Add(new(combo ? BattleEventKind.ComboHit : BattleEventKind.SlimeHit, slime.X));
-        AddEffect(combo ? BattleEffectKind.Combo : arms.Effect == "thud" ? BattleEffectKind.Thud : BattleEffectKind.Spark, slime.X, slime.Height / 2);
+        AddEffect(combo || charged ? BattleEffectKind.Combo : arms.Effect == "thud" ? BattleEffectKind.Thud : BattleEffectKind.Spark, slime.X, slime.Height / 2);
         if (combo) { Combo = 0; CombosLanded++; }
         // A blocked or shrugged-off hit (or the last one) moves nothing.
-        bool landed = Damage(slime, damage, combo ? DamageSource.Combo : DamageSource.Weapon) == HitResult.Landed && slime.State != SlimeState.Defeated;
+        var result = Damage(slime, damage, combo ? DamageSource.Combo : DamageSource.Weapon);
+        // Only a hit that lands opens an enemy (a blocked one leaves the Opener bonus for the next).
+        if (result == HitResult.Landed)
+        {
+            slime.Opened = true;
+            if (opening) OpenerHits++;
+            if (charged) ChargedHits++;
+        }
+        bool landed = result == HitResult.Landed && slime.State != SlimeState.Defeated;
         // A combo knocks back away from the cat (heavy kinds less), but does not stun; a heavy
         // weapon knocks back on every hit.
         if (landed && (combo || knock > 0))
@@ -787,7 +849,7 @@ public sealed class BattleSim
             Echoes++;
             AddEffect(BattleEffectKind.Spark, slime.X + (slime.X < catX ? -8 : 8), slime.Height * 0.7);
             events.Add(new(BattleEventKind.Echoed, slime.X));
-            Damage(slime, damage * echo.Amount, DamageSource.Echo);
+            Damage(slime, plain * echo.Amount, DamageSource.Echo);
         }
     }
 
@@ -866,7 +928,10 @@ public sealed class BattleSim
         if (type.BlockFrontOnly && (lastCatX - slime.X) * slime.Facing <= 0) { slime.BlockStreak = 0; return false; }
         // Armor break: combo hits go straight through.
         if (source == DamageSource.Combo && Active("armorBreak") != null) { slime.BlockStreak = 0; return false; }
-        if (slime.BlockStreak >= type.BlockMaxStreak || blockRandom.NextDouble() >= type.BlockChance) { slime.BlockStreak = 0; return false; }
+        // An elite's sure blocks come first (no roll); then the usual roll and streak limit.
+        bool sure = slime.SureBlocks > 0;
+        if (!sure && (slime.BlockStreak >= type.BlockMaxStreak || blockRandom.NextDouble() >= type.BlockChance)) { slime.BlockStreak = 0; return false; }
+        if (sure) slime.SureBlocks--;
         slime.BlockStreak++;
         BlocksMade++;
         AddEffect(BattleEffectKind.Block, slime.X, slime.Height * 0.6);
@@ -1134,7 +1199,7 @@ public sealed class BattleSim
         Separate();
     }
 
-    public double Windup(Slime slime) => slime.Enraged ? slime.Type.EnragedWindup : slime.Type.Windup;
+    public double Windup(Slime slime) => (slime.Enraged ? slime.Type.EnragedWindup : slime.Type.Windup) + (slime.Elite?.WindupAdd ?? 0);
 
     // How often guards are chosen (8 times a second) and where the cat stood when they last were.
     private const double DecisionInterval = 0.125;
@@ -1270,10 +1335,12 @@ public sealed class BattleSim
         var ally = Find(healer.HealTargetId);
         healer.HealTargetId = 0;
         if (ally == null || !ally.Targetable || Math.Abs(ally.X - healer.X) > healer.Type.HealRange + 20) return;
-        double amount = Math.Min(Math.Min(healer.Type.HealAmount, ally.MaxHp - ally.Hp), healer.HealLeft);
+        // An elite's first heal that lands is stronger (still within its budget).
+        double amount = Math.Min(Math.Min(healer.Type.HealAmount * healer.HealBoost, ally.MaxHp - ally.Hp), healer.HealLeft);
         if (amount <= 0) return;
         ally.Hp += amount;
         healer.HealLeft -= amount;
+        healer.HealBoost = 1;
         AddEffect(BattleEffectKind.Mend, ally.X, ally.Height / 2);
         AddEffect(BattleEffectKind.Number, ally.X + (ally.IsBoss ? ally.Width * 0.38 : 0), ally.Height + 10, -Math.Round(amount));
         events.Add(new(BattleEventKind.EnemyHealed, ally.X, amount));
@@ -1332,7 +1399,7 @@ public sealed class BattleSim
     private void StepDash(Slime slime, double dt, double catX, bool catHeld, double minX, double maxX)
     {
         double before = slime.X;
-        double step = Math.Min(slime.DashLeft, slime.Type.DashSpeed * level.EnemySpeed * dt);
+        double step = Math.Min(slime.DashLeft, slime.Type.DashSpeed * (slime.Elite?.DashSpeed ?? 1) * level.EnemySpeed * dt);
         slime.X = Math.Clamp(slime.X + slime.DashDirection * step, minX, maxX);
         slime.DashLeft = slime.X == before ? 0 : slime.DashLeft - step; // Stopped by the field's edge.
         double reach = slime.HitWidth / 2 + CatHalfWidth;
@@ -1356,6 +1423,15 @@ public sealed class BattleSim
         if (ShieldRemaining > 0)
         {
             events.Add(new(BattleEventKind.Blocked, catX));
+            return;
+        }
+        // Turtle shell: one whole hit stopped (no damage, no stun), then it grows back.
+        if (ShellReady)
+        {
+            ShellCooldown = shellRegrow;
+            ShellBlocks++;
+            AddEffect(BattleEffectKind.Block, catX, 50);
+            events.Add(new(BattleEventKind.ShellBlocked, catX));
             return;
         }
         double hurt = from.Damage * ArmorFactor;
@@ -1407,7 +1483,8 @@ public sealed class BattleSim
             farEdge = Far(catX); streamEdge = 0;
             var wave = WavePlan[Math.Min(Wave, WaveCount) - 1]; // A survive stage repeats its last wave.
             stream = wave.Stream;
-            if (stream == null) pending.AddRange(SpawnDirector.Units(wave, spawnRandom));
+            if (stream == null) pending.AddRange(SpawnDirector.Units(wave, spawnRandom, Cost));
+            eliteBudget = SpawnDirector.BudgetLeft(wave, pending, Cost);
             Phase = BattlePhase.Fighting;
             spawnTimer = 0;
             events.Add(new(BattleEventKind.WaveStarted, catX, Wave));
@@ -1430,6 +1507,12 @@ public sealed class BattleSim
             if (Alive < maxAlive && spawnTimer <= 0)
             {
                 var kind = new[] { SpawnDirector.Pick(stream.Weights, spawnRandom) };
+                // Its budget: a kind that does not fit gives way to the cheapest; nothing fits, it waits.
+                if (stream.Budget > 0 && AliveCost() + Cost(kind[0]) > stream.Budget)
+                {
+                    kind[0] = SpawnDirector.Cheapest(stream.Weights, Cost);
+                    if (AliveCost() + Cost(kind[0]) > stream.Budget) return;
+                }
                 // Late in the stage the stream comes from both sides in turn, each spawn announced.
                 if (stream.PincerAfter > 0 && Stage?.SurviveSeconds is double hold && hold - SurviveRemaining >= stream.PincerAfter)
                 {
@@ -1463,7 +1546,8 @@ public sealed class BattleSim
     // Speed) while a group has any left, so every build can always go on; other cards fill the
     // gaps. When the cat is hurt an instant heal takes the place of the group card the build has
     // the fewest points in. Never a card at its limit, never a heal at full HP, and no offer once
-    // the stage's maxUpgrades picks are made; nothing left: no choice this time.
+    // the stage's maxUpgrades picks are made; nothing left: no choice this time. A group's rare card
+    // (RareChance) may stand in for its common one, never as a filler.
     private void OfferUpgrades()
     {
         if (Stage?.MaxUpgrades is int cap && Picks >= cap) return;
@@ -1471,10 +1555,15 @@ public sealed class BattleSim
         var cards = new List<UpgradeSpec>();
         foreach (var group in BuildGroups.All)
         {
-            var options = Settings.UpgradeList.Where(u => u.Group == group && Open(u)).ToList();
-            if (options.Count > 0) cards.Add(options[offerRandom.Next(options.Count)]);
+            var options = Settings.UpgradeList.Where(u => u.Group == group && !u.Rare && Open(u)).ToList();
+            UpgradeSpec? card = options.Count > 0 ? options[offerRandom.Next(options.Count)] : null;
+            // Its rare card (not taken yet) takes the group's place now and then, rolled on its own
+            // stream so the common cards stay what they would have been.
+            var rares = Settings.UpgradeList.Where(u => u.Group == group && u.Rare && Open(u)).ToList();
+            if (rares.Count > 0 && rarityRandom.NextDouble() < Settings.RareChance) card = rares[rarityRandom.Next(rares.Count)];
+            if (card != null) cards.Add(card);
         }
-        var rest = Settings.UpgradeList.Where(u => !cards.Contains(u) && u.Effect != "heal" && Open(u)).ToList();
+        var rest = Settings.UpgradeList.Where(u => !cards.Contains(u) && !u.Rare && u.Effect != "heal" && Open(u)).ToList();
         while (cards.Count < 3 && rest.Count > 0)
         {
             int i = offerRandom.Next(rest.Count);
@@ -1527,6 +1616,9 @@ public sealed class BattleSim
             case "attackSpeed": cooldownCut += card.Amount; break;
             case "knock": knockBonus += card.Amount; break;
             case "armor": armorCut += card.Amount; break;
+            case "shell": shellRegrow = card.Amount; break; // Ready at once.
+            case "opener": openerBonus += card.Amount; break;
+            case "momentum": momentumBonus += card.Amount; break;
             case "maxHp":
                 maxHpBonus += card.Amount;
                 if (fresh) { CatHp += card.Amount; AddEffect(BattleEffectKind.Number, catX, 115, -Math.Round(card.Amount)); }
@@ -1604,6 +1696,37 @@ public sealed class BattleSim
         var slime = AddSlime(x, type);
         slime.Facing = catX < x ? -1 : 1;
         events.Add(new(type.Boss ? BattleEventKind.BossAppeared : BattleEventKind.SlimeSpawned, x));
+        RollElite(slime);
+    }
+
+    // What an enemy weighs against a budget (EnemyType.Cost).
+    private double Cost(string kind) => Settings.Enemy(kind).Cost;
+
+    // What the enemies the waves sent cost now (a boss's helpers aside), elites with their surcharge.
+    private double AliveCost()
+    {
+        double cost = 0;
+        foreach (var s in slimes)
+            if (s.State != SlimeState.Defeated && s.SummonedBy == 0) cost += s.Type.Cost + (s.Elite?.Cost ?? 0);
+        return cost;
+    }
+
+    // An enemy a wave or stream just sent may turn elite: a stage with an elite chance, not on Easy,
+    // a kind with an affix, fewer than MaxElites alive, budget for it; then one roll of its own stream.
+    private void RollElite(Slime slime)
+    {
+        if (Stage is not { EliteChance: > 0 } stage || Difficulty == BattleDifficulty.Easy || slime.Type.Elite is not EliteSpec elite) return;
+        int elites = 0;
+        foreach (var s in slimes) if (s.Elite != null && s.State != SlimeState.Defeated) elites++;
+        if (elites >= Settings.MaxElites) return;
+        if (stream is { Budget: > 0 } flow ? AliveCost() + elite.Cost > flow.Budget : elite.Cost > eliteBudget) return;
+        if (affixRandom.NextDouble() >= stage.EliteChance) return;
+        if (stream == null) eliteBudget -= elite.Cost;
+        slime.Elite = elite;
+        slime.SureBlocks = elite.SureBlocks;
+        slime.HealBoost = elite.FirstHeal;
+        ElitesSpawned++;
+        events.Add(new(BattleEventKind.EliteAppeared, slime.X, slime.Id));
     }
 
     // A point near an edge (-1 left, +1 right), up to `spread` DIPs in.
@@ -1647,6 +1770,7 @@ public sealed class BattleSim
             x += toward * gaps[i] * squeeze;
             var slime = AddSlime(x, order[i]);
             slime.Facing = catX < slime.X ? -1 : 1;
+            RollElite(slime);
         }
         events.Add(new(BattleEventKind.SlimeSpawned, back));
     }

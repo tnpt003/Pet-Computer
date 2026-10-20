@@ -606,7 +606,7 @@ next step), so a double click never starts two battles. Ending a battle by hand 
   `PET_BATTLE_AUTOSTART` (measuring) still starts a battle directly.
 - **Difficulty** (on the setup panel: Easy / Normal / Hard, remembered in
   `preferences.json` as `BattleDifficulty`): Easy and Hard multiply
-  every enemy's HP, damage and speed (battle.json `easy`/`hard`: 0.75/0.6/0.85 and 1.3/1.4/1.15,
+  every enemy's HP, damage and speed (battle.json `easy`/`hard`: 0.65/0.5/0.85 (0.75/0.6/0.85 before 2026-10-20) and 1.3/1.4/1.15,
   each 0.25–3; scaled HP and damage are rounded to whole numbers). Normal is the file's numbers
   untouched. The cat, skills and waves are the same on every level.
 - **Records** (in `%LOCALAPPDATA%\DesktopPet\battle-records.json`, `PetBattleRecords.cs`, `Version` 2

@@ -9,7 +9,7 @@ namespace DesktopPet;
 // what the others draw.
 public static class BattleRandom
 {
-    public const int Spawn = 1, Offer = 2, Block = 3, Affix = 4;
+    public const int Spawn = 1, Offer = 2, Block = 3, Affix = 4, Rarity = 5;
 
     // The same seed and stream always give the same numbers, on every machine (no string hashing).
     public static Random Stream(int seed, int stream)
@@ -42,10 +42,14 @@ public static class SpawnDirector
     }
 
     // The wave's spawns in order, drawn once when it starts. Each unit comes as one: a single enemy
-    // or a whole squad.
-    public static List<SpawnUnit> Units(WaveSpec wave, Random random)
+    // or a whole squad. cost: what a kind weighs against the wave's Budget (needed when it has one).
+    public static List<SpawnUnit> Units(WaveSpec wave, Random random, Func<string, double>? cost = null)
     {
         var units = new List<SpawnUnit>();
+        // A budget: the fixed groups and squads always come; drawn kinds share what is left.
+        double left = double.PositiveInfinity;
+        if (wave.Budget > 0 && cost != null)
+            left = wave.Budget - wave.Groups.Where(g => g.Pick == null).Sum(g => g.Count * (g.Squad?.Sum(m => m.Count * cost(m.Enemy)) ?? cost(g.Enemy)));
         foreach (var g in wave.Groups)
         {
             if (g.Squad != null)
@@ -53,18 +57,36 @@ public static class SpawnDirector
                 var members = g.Squad.SelectMany(m => Enumerable.Repeat(m.Enemy, m.Count)).ToArray();
                 for (int i = 0; i < g.Count; i++) units.Add(new(members, g.Side));
             }
-            else if (g.Pick != null) foreach (var kind in Draw(g, random)) units.Add(new(new[] { kind }, g.Side));
+            else if (g.Pick != null) foreach (var kind in Draw(g, random, cost, ref left)) units.Add(new(new[] { kind }, g.Side));
             else for (int i = 0; i < g.Count; i++) units.Add(new(new[] { g.Enemy }, g.Side));
         }
         return units;
     }
 
-    // Count kinds from the weights, then AtLeast made good by swapping drawn kinds that are not
-    // themselves needed (at random places, so a guaranteed one is not always last).
-    private static List<string> Draw(WaveGroup g, Random random)
+    // What a wave's budget leaves for elites once its kinds are drawn (infinite without a budget).
+    public static double BudgetLeft(WaveSpec wave, IEnumerable<SpawnUnit> units, Func<string, double> cost) =>
+        wave.Budget > 0 ? wave.Budget - units.Sum(u => u.Kinds.Sum(cost)) : double.PositiveInfinity;
+
+    // The cheapest kind of these weights (ties by id), for a draw that does not fit a budget.
+    public static string Cheapest(IReadOnlyDictionary<string, double> weights, Func<string, double> cost) =>
+        weights.Where(w => w.Value > 0).OrderBy(w => cost(w.Key)).ThenBy(w => w.Key, StringComparer.Ordinal).First().Key;
+
+    // Count kinds from the weights (one that does not fit the budget left, keeping room for the draws
+    // still to come, gives way to the cheapest),
+    // then AtLeast made good by swapping drawn kinds that are not themselves needed (at random places,
+    // so a guaranteed one is not always last). AtLeast wins over the budget.
+    private static List<string> Draw(WaveGroup g, Random random, Func<string, double>? cost, ref double left)
     {
         var kinds = new List<string>();
-        for (int i = 0; i < g.Count; i++) kinds.Add(Pick(g.Pick!, random));
+        string? cheapest = cost != null ? Cheapest(g.Pick!, cost) : null;
+        for (int i = 0; i < g.Count; i++)
+        {
+            string kind = Pick(g.Pick!, random);
+            // Room is kept for the draws still to come (at the cheapest kind each).
+            if (cost != null && cost(kind) > left - (g.Count - i - 1) * cost(cheapest!)) kind = cheapest!;
+            if (cost != null) left -= cost(kind);
+            kinds.Add(kind);
+        }
         if (g.AtLeast == null) return kinds;
         int Need(string kind) => g.AtLeast.TryGetValue(kind, out int n) ? n : 0;
         foreach (var (kind, n) in g.AtLeast.OrderBy(a => a.Key, StringComparer.Ordinal))

@@ -255,6 +255,8 @@ public sealed class BattleFieldView : FrameworkElement
         Brush baseFill = KindBrush(slime.Enraged ? slime.Type.AngryColor : slime.Type.Color);
         Brush fill = slime.HitFlash > 0 ? Brushes.White : slime.State == SlimeState.Windup ? Blend(baseFill, t / windup) : baseFill;
         dc.DrawGeometry(null, Halo, body);
+        // An elite: a gold rim round the body (and a star, below).
+        if (slime.Elite != null) dc.DrawGeometry(null, EliteRim, body);
         dc.DrawGeometry(fill, Outline, body);
         dc.DrawEllipse(Shine, null, new Point(-bw * 0.2, -bh * 0.68), 5, 3.5);
         double look = slime.Facing * 3;
@@ -290,6 +292,16 @@ public sealed class BattleFieldView : FrameworkElement
         if (slime.Type.Marks == "leaf") DrawHerbal(dc, slime, time);
         // An older support mark: a white "+" on its body.
         if (slime.Type.Marks == "cross") dc.DrawGeometry(Brushes.White, Outline, CrossMark);
+        if (slime.Elite != null)
+        {
+            // A twinkling gold star at its upper back corner (clear of the HP bar, the leaf cap and the
+            // armour slab on its front).
+            double twinkle = 1 + 0.1 * Math.Sin(time * 5 + slime.Id);
+            dc.PushTransform(new MatrixTransform(twinkle, 0, 0, twinkle, -slime.Facing * bw * 0.44, -bh * 0.86));
+            dc.DrawGeometry(null, Halo, EliteStar);
+            dc.DrawGeometry(Gold, StarInk, EliteStar);
+            dc.Pop();
+        }
         if (slime.IsBoss && slime.RallyCharge > 0)
         {
             // The rally call: the crown glows (push the boss now to cut it).
@@ -440,6 +452,10 @@ public sealed class BattleFieldView : FrameworkElement
     private static readonly Brush LeafGlow = Frozen(150, 0xC8, 0xFF, 0xB8);
     private static readonly Brush Pouch = Frozen(255, 0xB5, 0x83, 0x5A);
     private static readonly Brush ArmorGrey = Frozen(255, 0x7E, 0x77, 0x6D);
+    // Elites: a gold rim (drawn under the dark outline, so it shows just outside it) and a star.
+    private static readonly Pen EliteRim = FrozenPen(Frozen(255, 0xF2, 0xB8, 0x1E), 7);
+    private static readonly Geometry EliteStar = Parse("M 0,-10 L 2.8,-2.8 L 10,0 L 2.8,2.8 L 0,10 L -2.8,2.8 L -10,0 L -2.8,-2.8 Z");
+    private static readonly Pen StarInk = FrozenPen(Frozen(255, 0x30, 0x2B, 0x48), 1.3);
     private static readonly Brush RallyGlow = Frozen(170, 0xFF, 0xE6, 0x70);
     private static readonly Pen PouchStrap = FrozenPen(Frozen(255, 0x8A, 0x5E, 0x3B), 1.6);
     private static readonly Pen RallyPen = FrozenPen(Frozen(255, 0xFF, 0xE6, 0x70), 2.5);

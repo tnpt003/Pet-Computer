@@ -114,7 +114,29 @@ public sealed class EnemyType
     // A shield phase's run to the far edge: its speed, and the longest it may take before calling.
     public double RetreatSpeed { get; init; } = 240;
     public double RetreatSeconds { get; init; } = 3;
+    // What one of this kind weighs against a wave's or a stream's budget (WaveSpec.Budget).
+    public double Cost { get; init; } = 1;
+    // The one elite affix this kind may roll when it spawns (null: never elite).
+    public EliteSpec? Elite { get; init; }
     public string Name(bool english) => english ? NameEn : NameVi;
+}
+
+// An elite affix (Enemy Director): rolled once when a wave or stream spawns the enemy, never for a
+// boss's helpers, never on Easy, at most BattleSettings.MaxElites alive at once. A gold rim and a
+// star tell it apart. One small change per kind, not a stronger enemy in every way: a longer windup
+// with a faster dash, sure blocks of its first front hits, a stronger first heal. Cost: what being
+// elite adds to the budget.
+public sealed class EliteSpec
+{
+    public double WindupAdd { get; init; }
+    public double DashSpeed { get; init; } = 1;
+    public int SureBlocks { get; init; }
+    public double FirstHeal { get; init; } = 1;
+    public double Cost { get; init; } = 1;
+    // A short line for the banner the first time an elite of this kind appears in a battle.
+    public string DescVi { get; init; } = "";
+    public string DescEn { get; init; } = "";
+    public string Describe(bool english) => english ? DescEn : DescVi;
 }
 
 public sealed class BossPhase
@@ -166,6 +188,9 @@ public sealed class StreamSpec
     // From this many seconds of the clock on (0 = never), spawns come from alternate edges, each
     // after a warning arrow.
     public double PincerAfter { get; init; }
+    // The most the enemies on the floor may cost at once (EnemyType.Cost, elites included; 0 = no
+    // limit): a drawn kind that does not fit gives way to the cheapest one that does, or waits.
+    public double Budget { get; init; }
 }
 
 public sealed class WaveSpec
@@ -173,6 +198,9 @@ public sealed class WaveSpec
     public WaveGroup[] Groups { get; init; } = Array.Empty<WaveGroup>();
     // Enemies of this wave are this much stronger (× the stage's threat; see BattleSettings.ThreatDamageShare).
     public double Threat { get; init; } = 1;
+    // The most this wave's enemies may cost in all (EnemyType.Cost; 0 = no limit): a drawn kind that
+    // does not fit gives way to the cheapest kind of its pick; what is left pays for elites.
+    public double Budget { get; init; }
     public StreamSpec? Stream { get; init; }
     // The fixed kinds in spawn order (drawn kinds are not known before the wave starts).
     public IEnumerable<string> Spawns() => Groups.Where(g => g.Pick == null).SelectMany(g =>
@@ -226,6 +254,9 @@ public sealed class StageSpec
     public int RulesVersion { get; init; } = 1;
     // Enemies on the floor at once (unset: the battle's maxAlive).
     public int? MaxAlive { get; init; }
+    // The chance (0–1) that an enemy spawned by a wave or stream with an elite affix is elite
+    // (never on Easy; BattleSettings.MaxElites caps how many are alive at once).
+    public double EliteChance { get; init; }
     // An accessory id (Assets/accessories.json) given once, the first time the stage is won.
     public string? Reward { get; init; }
     // A short tip shown once when the stage first starts (and again from its setup panel).
@@ -240,7 +271,10 @@ public sealed class StageSpec
 // An upgrade offered between the waves of an Adventure stage. A run keeps what it took; in the
 // Adventure a won stage passes its build on to the next stage (AdventureProgress.Builds), a free
 // battle starts without any. Effect is one the code knows (UpgradeLimits); Amount is a fraction for
-// damage/moveSpeed/attackSpeed/armor (0.2 = 20 %), DIPs/s for knock, HP for heal and maxHp.
+// damage/moveSpeed/attackSpeed/armor (0.2 = 20 %), DIPs/s for knock, HP for heal and maxHp. The rare
+// effects: shell (the next hit on the cat is stopped whole, then it grows back in Amount s), opener
+// (the first landed hit on each enemy deals Amount more), momentum (a swing after a run of
+// BattleSim.MomentumRun DIPs deals Amount more).
 // MaxStacks: how often one build may take it (0 = no limit). Group (defense, power, speed or none)
 // counts toward that group's synergy. Definitions are shared and never changed.
 public sealed class UpgradeSpec
@@ -254,6 +288,9 @@ public sealed class UpgradeSpec
     public string Effect { get; init; } = "damage";
     public double Amount { get; init; }
     public int MaxStacks { get; init; }
+    // A rare card (one per group, at most once a build): it takes the place of its group's card in an
+    // offer with BattleSettings.RareChance. It plays differently, not better in every way.
+    public bool Rare { get; init; }
     public string Name(bool english) => english ? NameEn : NameVi;
     public string Describe(bool english) => english ? DescEn : DescVi;
 }
@@ -529,6 +566,19 @@ public static class BattleData
                 Within(e.DashRange, 20, 600, at + ".dashRange"); Within(e.DashDistance, 20, 800, at + ".dashDistance");
                 Within(e.DashSpeed, 50, 1500, at + ".dashSpeed");
             }
+            Within(e.Cost, 0, 10, at + ".cost");
+            if (e.Elite is EliteSpec elite)
+            {
+                if (e.Boss) throw new InvalidDataException(at + ".elite is not for a boss");
+                Within(elite.WindupAdd, 0, 3, at + ".elite.windupAdd"); Within(elite.DashSpeed, 1, 3, at + ".elite.dashSpeed");
+                if (elite.SureBlocks is < 0 or > 5) throw new InvalidDataException(at + ".elite.sureBlocks must be 0–5");
+                Within(elite.FirstHeal, 1, 5, at + ".elite.firstHeal"); Within(elite.Cost, 0, 10, at + ".elite.cost");
+                if ((elite.WindupAdd > 0 || elite.DashSpeed > 1) && !e.Dash) throw new InvalidDataException(at + ".elite: windupAdd/dashSpeed are for a dash enemy");
+                if (elite.SureBlocks > 0 && e.BlockChance <= 0) throw new InvalidDataException(at + ".elite.sureBlocks is for an enemy that blocks");
+                if (elite.FirstHeal > 1 && e.HealAmount <= 0) throw new InvalidDataException(at + ".elite.firstHeal is for an enemy that heals");
+                if (elite.WindupAdd <= 0 && elite.DashSpeed <= 1 && elite.SureBlocks == 0 && elite.FirstHeal <= 1) throw new InvalidDataException(at + ".elite changes nothing");
+                if (elite.DescVi == null || elite.DescEn == null || elite.DescVi.Length > 60 || elite.DescEn.Length > 60) throw new InvalidDataException(at + ".elite descriptions must be at most 60 characters");
+            }
             if (e.Phases is { } phases)
             {
                 if (phases.Length is 0 or > 6) throw new InvalidDataException(at + ".phases must list 1–6 phases");
@@ -583,10 +633,15 @@ public static class BattleData
                     Weights(stream.Weights, $"{at}[{i}].stream.weights");
                     Within(stream.Interval, 0.3, 20, $"{at}[{i}].stream.interval"); Within(stream.IntervalEnd, 0.3, 20, $"{at}[{i}].stream.intervalEnd");
                     Within(stream.PincerAfter, 0, 600, $"{at}[{i}].stream.pincerAfter");
+                    Within(stream.Budget, 0, 100, $"{at}[{i}].stream.budget");
+                    // Some drawn kind must always fit an empty floor, or the stream would never spawn.
+                    if (stream.Budget > 0 && stream.Weights.Where(w => w.Value > 0).Min(w => s.Enemy(w.Key).Cost) > stream.Budget)
+                        throw new InvalidDataException($"{at}[{i}].stream.budget is below the cheapest kind it draws");
                     if (wave.Groups is { Length: > 0 }) throw new InvalidDataException($"{at}[{i}]: a stream wave has no groups");
                     continue;
                 }
                 if (wave.Groups == null || wave.Groups.Length == 0) throw new InvalidDataException($"{at}[{i}] needs at least one group");
+                Within(wave.Budget, 0, 100, $"{at}[{i}].budget");
                 foreach (var g in wave.Groups)
                 {
                     if (g == null) throw new InvalidDataException($"{at}[{i}] has an empty group");
@@ -630,7 +685,12 @@ public static class BattleData
             if (u.MaxStacks is < 0 or > 10) throw new InvalidDataException($"{at}.maxStacks must be 0–10 (0: no limit)");
             if (u.Group != null && Array.IndexOf(BuildGroups.All, u.Group) < 0) throw new InvalidDataException($"{at}.group must be one of: {string.Join(", ", BuildGroups.All)} (or left out)");
             if (u.Group != null && u.Effect == "heal") throw new InvalidDataException($"{at}: a heal card cannot belong to a group");
+            if (u.Rare && (u.Group == null || u.MaxStacks != 1)) throw new InvalidDataException($"{at}: a rare card needs a group and maxStacks 1");
         }
+        foreach (var group in BuildGroups.All)
+            if (s.UpgradeList.Count(u => u.Rare && u.Group == group) > 1) throw new InvalidDataException($"upgrades: at most one rare card per group ({group})");
+        Within(s.RareChance, 0, 1, "rareChance");
+        if (s.MaxElites is < 0 or > 5) throw new InvalidDataException("maxElites must be 0–5");
         var synergyIds = new HashSet<string>();
         foreach (var y in s.SynergyList)
         {
@@ -657,7 +717,9 @@ public static class BattleData
     public static readonly Dictionary<string, (double Min, double Max)> UpgradeLimits = new()
     {
         ["damage"] = (0.01, 2), ["moveSpeed"] = (0.01, 1), ["attackSpeed"] = (0.01, 0.5),
-        ["knock"] = (1, 500), ["heal"] = (1, 1000), ["armor"] = (0.01, 0.5), ["maxHp"] = (1, 500)
+        ["knock"] = (1, 500), ["heal"] = (1, 1000), ["armor"] = (0.01, 0.5), ["maxHp"] = (1, 500),
+        // Rare cards' effects: shell (seconds to grow back), opener and momentum (fractions).
+        ["shell"] = (3, 60), ["opener"] = (0.1, 3), ["momentum"] = (0.1, 3)
     };
     public static readonly Dictionary<string, (double Min, double Max)> SynergyLimits = new()
     {
@@ -691,6 +753,7 @@ public static class BattleData
                 if (stage.RulesVersion is < 1 or > 1000) throw new InvalidDataException($"{where}.rulesVersion must be 1–1000");
                 if (stage.MaxAlive is int alive && alive is < 1 or > 10) throw new InvalidDataException($"{where}.maxAlive must be 1–10");
                 if (stage.MaxUpgrades is int picks && picks is < 1 or > 30) throw new InvalidDataException($"{where}.maxUpgrades must be 1–30");
+                if (!double.IsFinite(stage.EliteChance) || stage.EliteChance is < 0 or > 1) throw new InvalidDataException($"{where}.eliteChance must be 0–1");
                 if (stage.Survival && stage.SurviveSeconds is not (>= 10 and <= 600)) throw new InvalidDataException($"{where}.surviveSeconds must be 10–600 for a survive stage");
                 if (!stage.Survival && stage.SurviveSeconds != null) throw new InvalidDataException($"{where}.surviveSeconds is only for a survive stage");
                 waves(stage.Waves, where + ".waves", stage.MaxAlive, stage.Survival);

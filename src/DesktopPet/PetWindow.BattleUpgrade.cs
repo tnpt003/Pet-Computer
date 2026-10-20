@@ -143,12 +143,16 @@ public sealed partial class PetWindow
             name.Text = spec.Name(English);
             desc.Text = spec.Describe(English);
             int have = battle.Stacks(id);
-            count.Text = spec.MaxStacks > 0 ? L($"Đã có {have}/{spec.MaxStacks}", $"Have {have}/{spec.MaxStacks}") : have > 0 ? L($"Đã lấy {have} lần", $"Taken {have}×") : "";
+            count.Text = spec.Rare ? L("★ Thẻ hiếm · một lần mỗi build", "★ Rare · once per build")
+                : spec.MaxStacks > 0 ? L($"Đã có {have}/{spec.MaxStacks}", $"Have {have}/{spec.MaxStacks}") : have > 0 ? L($"Đã lấy {have} lần", $"Taken {have}×") : "";
+            count.Foreground = spec.Rare ? RareGold : Brushes.White;
+            count.Opacity = spec.Rare ? 1 : 0.65;
             build.Text = CardBuildText(battle, spec);
             build.Foreground = battle.Unlocks(spec) != null ? PrepWarning : Brushes.White;
             card.Background = chosen ? PrepChosen : PrepCardBack;
-            card.BorderBrush = chosen ? Brushes.White : PrepCardRim;
-            card.BorderThickness = new Thickness(chosen ? 2.5 : 1);
+            // A rare card keeps a gold rim (white once chosen, like any card).
+            card.BorderBrush = chosen ? Brushes.White : spec.Rare ? RareGold : PrepCardRim;
+            card.BorderThickness = new Thickness(chosen ? 2.5 : spec.Rare ? 2 : 1);
         }
         upgradeConfirmText!.Text = L("Xác nhận", "Confirm");
         bool can = upgradePick != null;
@@ -165,6 +169,8 @@ public sealed partial class PetWindow
         if (b.Unlocks(card) is SynergySpec synergy) text += L($" · Mở {synergy.Name(false)}!", $" · {synergy.Name(true)}!");
         return text;
     }
+
+    private static readonly Brush RareGold = PetUi.Frozen(Color.FromRgb(0xFF, 0xC8, 0x2E));
 
     // "Sharp edge ×2 · Quick feet" for the HUD and the result panel (empty without upgrades).
     private string UpgradeSummary(BattleSim b) => string.Join(" · ", b.Settings.UpgradeList.Where(u => b.Stacks(u.Id) > 0)
@@ -217,6 +223,19 @@ public sealed class UpgradeIcon : FrameworkElement
                 dc.DrawGeometry(Pink, Ink, Shape($"M {cx + 6},{cy} L {cx + 17},{cy - 8} L {cx + 17},{cy + 8} Z"));
                 dc.DrawEllipse(Pink, Ink, new Point(cx - 4, cy), 12, 7.5);
                 dc.DrawEllipse(Ink.Brush, null, new Point(cx - 10, cy - 1.5), 1.6, 1.6);
+                break;
+            case "shell": // A turtle shell: a dome with plates.
+                dc.DrawGeometry(Gold, Ink, Shape($"M {cx - 16},{cy + 7} C {cx - 15},{cy - 13} {cx + 15},{cy - 13} {cx + 16},{cy + 7} Z"));
+                dc.DrawGeometry(null, Ink, Shape($"M {cx - 6},{cy + 7} L {cx - 4},{cy - 3} L {cx + 4},{cy - 3} L {cx + 6},{cy + 7} M {cx - 4},{cy - 3} L {cx - 8},{cy - 8} M {cx + 4},{cy - 3} L {cx + 8},{cy - 8}"));
+                break;
+            case "opener": // A blade striking a star.
+                dc.DrawGeometry(Gold, Ink, Shape($"M {cx},{cy - 15} L {cx + 4},{cy - 4} L {cx + 15},{cy} L {cx + 4},{cy + 4} L {cx},{cy + 15} L {cx - 4},{cy + 4} L {cx - 15},{cy} L {cx - 4},{cy - 4} Z"));
+                dc.DrawLine(Line, new Point(cx - 13, cy + 13), new Point(cx + 13, cy - 13));
+                break;
+            case "momentum": // A runner's dust behind a swoosh.
+                dc.DrawGeometry(Gold, Ink, Shape($"M {cx - 16},{cy + 5} C {cx - 4},{cy + 6} {cx + 6},{cy - 1} {cx + 16},{cy - 15} C {cx + 13},{cy + 6} {cx + 2},{cy + 16} {cx - 16},{cy + 15} Z"));
+                dc.DrawEllipse(Back, Ink, new Point(cx - 13, cy - 5), 3.5, 3.5);
+                dc.DrawEllipse(Back, Ink, new Point(cx - 5, cy - 11), 2.5, 2.5);
                 break;
             default: // armor: a shield.
                 dc.DrawGeometry(Gold, Ink, Shape($"M {cx},{cy - 15} L {cx + 13},{cy - 9} C {cx + 13},{cy + 5} {cx + 7},{cy + 12} {cx},{cy + 16} C {cx - 7},{cy + 12} {cx - 13},{cy + 5} {cx - 13},{cy - 9} Z"));

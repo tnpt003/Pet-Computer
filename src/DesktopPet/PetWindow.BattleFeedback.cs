@@ -23,6 +23,7 @@ public sealed partial class PetWindow
         [BattleEventKind.BossShielded] = ("surprised", 6), [BattleEventKind.BossShieldDown] = ("excited", 6),
         [BattleEventKind.SlimeHit] = ("squish", 3), [BattleEventKind.EnemyHealed] = ("ball_tap", 3), [BattleEventKind.HitBlocked] = ("ball_tap", 3), [BattleEventKind.BossImmune] = ("ball_tap", 3),
         [BattleEventKind.Incoming] = ("surprised", 5), [BattleEventKind.BossRallying] = ("surprised", 4),
+        [BattleEventKind.EliteAppeared] = ("surprised", 5), [BattleEventKind.ShellBlocked] = ("ball_tap", 5),
         [BattleEventKind.Pushed] = ("swoosh", 2), [BattleEventKind.BombThrown] = ("swoosh", 2), [BattleEventKind.Shielded] = ("swoosh", 2),
         [BattleEventKind.EnemyTeleported] = ("swoosh", 2),
         [BattleEventKind.Swing] = ("swoosh", 1),
@@ -40,12 +41,14 @@ public sealed partial class PetWindow
     private string BossName() => battle?.Boss?.Type.Name(preferences.Language == "en") ?? "Boss";
 
     // Big moments get a banner across the HUD's centre. The first heal, rally call and attack from
-    // behind of a battle say what is going on (once each per battle).
+    // behind of a battle say what is going on (once each per battle), and so does the first elite of
+    // each kind.
     private bool healerExplained, rallyExplained, behindExplained;
+    private readonly HashSet<string> elitesExplained = new();
     private void ShowBattleBanners()
     {
         if (battle == null || battleHud == null) return;
-        if (battle.Time < 0.05) healerExplained = rallyExplained = behindExplained = false;
+        if (battle.Time < 0.05) { healerExplained = rallyExplained = behindExplained = false; elitesExplained.Clear(); }
         for (int i = 0; i < battle.Events.Count; i++)
         {
             var e = battle.Events[i];
@@ -62,6 +65,8 @@ public sealed partial class PetWindow
                 BattleEventKind.EnemyHealing when !healerExplained => L("Quái hồi máu! Hạ nó trước", "A healer! Take it down first"),
                 BattleEventKind.BossRallying when !rallyExplained => L($"{BossName()} ra lệnh xung phong! Đẩy để cắt", $"The {BossName()} rallies! Push it to cut the call"),
                 BattleEventKind.Incoming when !behindExplained => L("Quái tới từ phía sau!", "Enemies from behind!"),
+                BattleEventKind.EliteAppeared when battle.Find((int)e.Value) is { Elite: EliteSpec elite } enemy && elitesExplained.Add(enemy.Type.Id) =>
+                    L($"★ {enemy.Type.Name(false)} tinh anh: {elite.Describe(false)}", $"★ Elite {enemy.Type.Name(true)}: {elite.Describe(true)}"),
                 BattleEventKind.Won => L("CHIẾN THẮNG!", "VICTORY!"),
                 BattleEventKind.Lost => L("THUA RỒI…", "DEFEATED…"),
                 _ => null

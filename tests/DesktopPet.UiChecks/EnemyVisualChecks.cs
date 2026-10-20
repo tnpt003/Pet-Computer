@@ -6,7 +6,8 @@ using DesktopPet;
 // Enemy Director milestone 2, drawn for real: the herb slime's leaf cap (no "+" on its body), its
 // dull leaf once its heals are spent and its teleport warning; the rock's armour on the side it
 // faces; the "in the way" ring; the boss's glowing crown while it rallies; the arrow before a
-// spawn from behind. PET_RENDER_REVIEW=<folder> also saves the pictures on dark and light floors.
+// spawn from behind. Milestone 3: an elite's gold rim and star, the rare cards' icons.
+// PET_RENDER_REVIEW=<folder> also saves the pictures on dark and light floors.
 internal static class EnemyVisualChecks
 {
     const double Width = 600;
@@ -151,5 +152,37 @@ internal static class EnemyVisualChecks
         px = Shot(iview, "enemy-incoming");
         int edge = (int)incoming.IncomingX;
         check(incoming.Incoming && Count(px, Color.FromRgb(0xE5, 0x3E, 0x3E), edge - 40, edge + 40, floor - 75, floor - 15, 30) > 30, "An arrow warns of a spawn from behind at its edge");
+
+        // An elite: a gold rim round its body and a gold star at its upper back corner, for every kind.
+        var rim = Color.FromRgb(0xF2, 0xB8, 0x1E);
+        var star = Color.FromRgb(0xFF, 0xC8, 0x2E);
+        var (esim, eview) = Field(("slime", 100), ("mender", 250), ("rock", 420));
+        var plain = Shot(eview);
+        foreach (var s in esim.Slimes) { s.Elite = new EliteSpec { WindupAdd = 0.3 }; s.Facing = 1; }
+        px = Shot(eview, "enemy-elite");
+        bool all = true;
+        string counts = "";
+        foreach (var (x, half) in new[] { (100, 30), (250, 30), (420, 40) })
+        {
+            int gold = Count(px, rim, x - half, x + half, floor - 60, floor + 2, 30), before = Count(plain, rim, x - half, x + half, floor - 60, floor + 2, 30);
+            int stars = Count(px, star, x - half - 10, x, floor - 62, floor - 15, 20); // Facing right: the star is on its left.
+            all &= gold > before + 25 && stars > 6;
+            counts += $" {gold}/{before}/{stars}";
+        }
+        check(all, $"Elites show a gold rim and a star (plain, herb and rock slime; rim/before/star:{counts})");
+
+        // The rare cards' icons draw something of their own (gold over the round back).
+        foreach (var effect in new[] { "shell", "opener", "momentum" })
+        {
+            var icon = new UpgradeIcon { Effect = effect, Width = 52, Height = 52 };
+            icon.Measure(new Size(52, 52)); icon.Arrange(new Rect(0, 0, 52, 52));
+            var bitmap = new RenderTargetBitmap(52, 52, 96, 96, PixelFormats.Pbgra32);
+            bitmap.Render(icon);
+            var pixels = new byte[52 * 52 * 4];
+            bitmap.CopyPixels(pixels, 52 * 4, 0);
+            int goldPixels = 0;
+            for (int i = 0; i < pixels.Length; i += 4) if (pixels[i + 3] > 240 && pixels[i + 2] > 230 && pixels[i + 1] is > 190 and < 225 && pixels[i] < 120) goldPixels++;
+            check(goldPixels > 60, $"The {effect} card has its own icon ({goldPixels} gold pixels)");
+        }
     }
 }

@@ -188,6 +188,13 @@ Nên chép dự phòng %LOCALAPPDATA%\DesktopPet\adventure-progress.json (nếu 
 - [ ] Màn 5 đợt 1: mũi tên đỏ + banner "Quái tới từ phía sau!" rồi slime nhanh ra ở mép đó sau ~1 s. Đứng sát mép đó thì quái ra ở mép kia. Cầm cự sau giây 45: quái ra luân phiên hai mép, có mũi tên.
 - [ ] Vua Slime khi bật khiên: vương miện có vòng sáng, banner "ra lệnh xung phong", một quân chạy nhanh có vệt vàng. Đẩy Vua lúc vương miện sáng thì hủy. Khiên vỡ: Vua choáng ~2 s (sao quanh đầu), đánh được.
 
+#### Enemy Director — mốc 3: tinh anh, thẻ hiếm, cân bằng (2026-10-20)
+- [ ] Màn 3–5 ở Thường/Khó: thỉnh thoảng có quái viền vàng + ngôi sao vàng ở góc lưng (không quá 1 con cùng lúc); lần đầu mỗi loại có banner "★ … tinh anh: …". Rõ trên nền sáng và tối, không che thanh máu/mũ lá/giáp. Màn 1–2 và mức Dễ không bao giờ có.
+- [ ] Slime nhanh tinh anh gồng lâu hơn thấy rõ rồi lao nhanh hơn; vẫn né/Đẩy kịp. Slime đá tinh anh chặn chắc đòn đầu phía trước ("CHẶN"); Bom len vẫn trúng. Slime thảo dược tinh anh hồi lần đầu nhiều hơn (+30 thay vì +15).
+- [ ] Thẻ hiếm: chơi vài lượt màn 2–5, đôi khi có thẻ viền vàng "★ Thẻ hiếm · một lần mỗi build" thay thẻ cùng nhóm. Đã lấy rồi thì không hiện lại. HUD và bảng chuẩn bị màn sau ghi "◆ <tên thẻ>".
+- [ ] Mai rùa: đòn đầu trúng mèo không mất máu (mảnh đá xám ở mèo), ~12 s sau lại chặn được một đòn; bế mèo thì không hồi nhanh hơn. Đòn mở màn: nhát đầu vào mỗi quái số sát thương gấp đôi. Chạy đà: mèo chạy một quãng tới quái rồi chém, số to hơn và có vệt vàng combo; đứng yên chém thì bình thường.
+- [ ] Cảm nhận độ khó mới: Dễ màn 1–2 vẫn thoải mái; Thường màn 2–5 phải dùng kỹ năng/bế mèo mới thắng; Khó là thử thách thật. Ghi vào "Nhật ký chơi thử" (mô phỏng không thay chơi thật).
+
 ### Nhật ký chơi thử Battle Mode (beta, thêm 2026-10-18)
 Chơi 3–5 trận mỗi độ khó trên bản publish, ghi 1 dòng/trận. Phiên bản: xem Khác → Giới thiệu (ví dụ `1.0.0 (18cb227)`). Chưa có dòng nào là chưa chơi thử; số mô phỏng trong PROGRESS.md không thay cho bảng này.
 

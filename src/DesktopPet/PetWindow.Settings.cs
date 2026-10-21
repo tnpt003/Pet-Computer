@@ -31,7 +31,7 @@ public sealed record CoatChoice(string Label, CoatPalette Palette)
     public override string ToString() => Label;
 }
 
-// Settings in four tabs (Pet, Speech, Sounds, General). Nothing changes until Save;
+// Settings in four sidebar pages (Pet, Speech, Sounds, General) of titled cards. Nothing changes until Save;
 // Cancel or closing the window keeps the old settings.
 public sealed partial class PetWindow
 {
@@ -51,7 +51,7 @@ public sealed partial class PetWindow
 
         // Pet: who the cat is and how it looks. Stored values stay English ("Balanced", "Orange"...).
         string[] personalities = { "Balanced", "Playful", "Curious", "Calm" };
-        form.Name = new TextBox { Text = preferences.Name, MaxLength = 24, Padding = new Thickness(2, 3, 2, 3) };
+        form.Name = new TextBox { Text = preferences.Name, MaxLength = 24 };
         form.Personality = new ComboBox { ItemsSource = new[] { L("Cân bằng", "Balanced"), L("Ham chơi", "Playful"), L("Tò mò", "Curious"), L("Điềm tĩnh", "Calm") },
             SelectedIndex = Math.Max(0, Array.IndexOf(personalities, preferences.Personality)) };
         // Coats and their names come from Assets/coats.json, in PetPreferences.Coats order.
@@ -102,13 +102,15 @@ public sealed partial class PetWindow
         form.ShowTrophies = new CheckBox { Content = L("Góc trưng bày kỷ vật", "Keepsake display corner"), IsChecked = preferences.ShowTrophies,
             ToolTip = L("Cúp và đồ Viễn chinh đứng ở góc phải dưới màn hình; mèo thỉnh thoảng ra ngắm.", "Expedition cups and keepsakes stand at the bottom right of the screen; the cat looks at them now and then.") };
         var petTab = Page(
-            Row(L("Tên", "Name"), form.Name),
-            Row(L("Tính cách", "Personality"), form.Personality),
-            Row(L("Sinh nhật của bạn", "Your birthday"), birthday),
-            appearance,
-            form.ClimbWindows,
-            form.ShowTrophies,
-            form.Tuning);
+            Section(L("Hồ sơ", "Profile"),
+                Row(L("Tên", "Name"), form.Name),
+                Row(L("Tính cách", "Personality"), form.Personality),
+                Row(L("Sinh nhật của bạn", "Your birthday"), birthday)),
+            Section(L("Ngoại hình", "Look"), appearance),
+            Section(L("Hoạt động", "Activities"),
+                form.ClimbWindows,
+                form.ShowTrophies,
+                form.Tuning));
         // Gentle idle motion (breathing, tail, blinks) while the Pet tab is showing.
         var previewClock = System.Diagnostics.Stopwatch.StartNew();
         double previewLast = 0;
@@ -139,18 +141,19 @@ public sealed partial class PetWindow
             SavePreferences();
         };
         var speechTab = Page(
-            form.Talks,
-            Row(L("Mức độ", "How often"), form.Chattiness),
-            PetUi.Hint(L("Mèo tự chọn câu nói và học điều bạn thích khi \"Mèo thông minh (AI)\" ở biểu tượng khay đang bật.",
-                         "The pet picks its lines and learns what you like while \"Smart pet (AI)\" is on in the tray icon.")),
-            form.Forget);
+            Section(L("Bong bóng chữ", "Speech bubbles"),
+                form.Talks,
+                Row(L("Mức độ", "How often"), form.Chattiness),
+                PetUi.Hint(L("Mèo tự chọn câu nói và học điều bạn thích khi \"Mèo thông minh (AI)\" ở biểu tượng khay đang bật.",
+                             "The pet picks its lines and learns what you like while \"Smart pet (AI)\" is on in the tray icon."))),
+            Section(L("Trí nhớ", "Memory"), form.Forget));
 
         // Sounds: one master switch, three kinds, volume and a preview that plays even while muted.
         form.Sounds = new CheckBox { Content = L("Bật âm thanh", "Enable sounds"), IsChecked = preferences.Sounds };
         form.InteractionSounds = new CheckBox { Content = L("Khi tương tác (vuốt, chơi, ăn)", "Interaction (petting, play, treats)"), IsChecked = preferences.InteractionSounds };
         form.EmotionSounds = new CheckBox { Content = L("Khi có cảm xúc (giật mình, khó chịu)", "Emotions (surprised, annoyed)"), IsChecked = preferences.EmotionSounds };
         form.SleepSounds = new CheckBox { Content = L("Khi ngủ và thức dậy", "Sleeping and waking"), IsChecked = preferences.SleepSounds };
-        var kinds = new StackPanel { Margin = new Thickness(22, 2, 0, 0) };
+        var kinds = new StackPanel { Margin = new Thickness(46, 2, 0, 0) }; // Under the master switch's label.
         foreach (var box in new[] { form.InteractionSounds, form.EmotionSounds, form.SleepSounds })
         {
             box.Margin = new Thickness(0, 4, 0, 0);
@@ -174,10 +177,11 @@ public sealed partial class PetWindow
         DockPanel.SetDock(form.Preview, Dock.Right);
         previewRow.Children.Add(form.Preview); previewRow.Children.Add(form.PreviewCue);
         var soundsTab = Page(
-            form.Sounds, kinds,
-            Row(L("Âm lượng", "Volume"), volumeRow),
-            Row(L("Nghe thử", "Preview"), previewRow),
-            PetUi.Hint(L("Nghe thử phát cả khi đang tắt âm thanh.", "Preview plays even while sounds are off.")));
+            Section(L("Khi nào phát", "When to play"), form.Sounds, kinds),
+            Section(L("Âm lượng", "Volume"),
+                Row(L("Âm lượng", "Volume"), volumeRow),
+                Row(L("Nghe thử", "Preview"), previewRow),
+                PetUi.Hint(L("Nghe thử phát cả khi đang tắt âm thanh.", "Preview plays even while sounds are off."))));
 
         // General: language (labelled in both languages so it is always findable), startup, breaks.
         form.Language = new ComboBox { ItemsSource = new[] { "English", "Tiếng Việt" }, SelectedIndex = preferences.Language == "en" ? 0 : 1 };
@@ -189,20 +193,23 @@ public sealed partial class PetWindow
         form.BreakInterval = new ComboBox { ItemsSource = new[] { L("Mỗi 30 phút", "Every 30 minutes"), L("Mỗi 45 phút", "Every 45 minutes"), L("Mỗi 60 phút", "Every 60 minutes") },
             SelectedIndex = Math.Max(0, Array.IndexOf(PetPreferences.BreakChoices, preferences.BreakMinutes)) };
         EnableWith(form.BreakInterval, form.BreakReminders);
+        form.BreakReminders.Margin = default;
         var generalTab = Page(
-            Row("Language / Ngôn ngữ", form.Language),
-            form.Autostart,
-            form.BreakReminders,
-            Row(L("Nhắc", "Remind"), form.BreakInterval),
-            PetUi.Hint(L("Chỉ tính thời gian bạn dùng máy. Không nhắc khi đang mở app toàn màn hình.",
-                         "Counts only time you use the computer. Not shown during fullscreen apps.")));
+            Section(L("Ứng dụng", "App"),
+                Row("Language / Ngôn ngữ", form.Language),
+                form.Autostart),
+            Section(L("Nghỉ giải lao", "Breaks"),
+                form.BreakReminders,
+                Row(L("Nhắc", "Remind"), form.BreakInterval),
+                PetUi.Hint(L("Chỉ tính thời gian bạn dùng máy. Không nhắc khi đang mở app toàn màn hình.",
+                             "Counts only time you use the computer. Not shown during fullscreen apps."))));
 
-        form.Tabs = new TabControl { Margin = new Thickness(12, 12, 12, 0), Padding = new Thickness(0) };
-        form.Tabs.Items.Add(new TabItem { Header = L("Mèo", "Pet"), Content = petTab });
-        form.Tabs.Items.Add(new TabItem { Header = L("Lời nói", "Speech"), Content = speechTab });
-        form.Tabs.Items.Add(new TabItem { Header = L("Âm thanh", "Sounds"), Content = soundsTab });
-        form.Tabs.Items.Add(new TabItem { Header = L("Chung", "General"), Content = generalTab });
-        foreach (TabItem tab in form.Tabs.Items) tab.Padding = new Thickness(12, 4, 12, 4);
+        // A sidebar (PetControlStyle); each Tag is the page's Segoe icon: heart, chat, speaker, gear.
+        form.Tabs = new TabControl { Padding = new Thickness(0) };
+        form.Tabs.Items.Add(new TabItem { Header = L("Mèo", "Pet"), Tag = "\uEB51", Content = petTab });
+        form.Tabs.Items.Add(new TabItem { Header = L("Lời nói", "Speech"), Tag = "\uE8BD", Content = speechTab });
+        form.Tabs.Items.Add(new TabItem { Header = L("Âm thanh", "Sounds"), Tag = "\uE767", Content = soundsTab });
+        form.Tabs.Items.Add(new TabItem { Header = L("Chung", "General"), Tag = "\uE713", Content = generalTab });
 
         // Save and Cancel stay visible at the bottom; each tab scrolls on its own if the screen is small.
         form.Save = PetUi.PrimaryButton(L("Lưu", "Save"));
@@ -210,18 +217,20 @@ public sealed partial class PetWindow
         form.Cancel.IsCancel = true;
         var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(12) };
         buttons.Children.Add(form.Cancel); buttons.Children.Add(form.Save);
+        var buttonBar = new Border { Child = buttons, BorderBrush = PetUi.Line, BorderThickness = new Thickness(0, 1, 0, 0) };
         var root = new DockPanel();
-        DockPanel.SetDock(buttons, Dock.Bottom);
-        root.Children.Add(buttons); root.Children.Add(form.Tabs);
+        DockPanel.SetDock(buttonBar, Dock.Bottom);
+        root.Children.Add(buttonBar); root.Children.Add(form.Tabs);
 
         double areaHeight = Math.Max(300, bounds.Bottom - bounds.Top);
-        double height = Math.Min(490, areaHeight - 24);
-        settingsWindow = new Window { Title = L("Cài đặt", "Settings") + " — " + preferences.Name, Icon = AppIcon.WindowImage(), Width = 460, Height = height,
+        double height = Math.Min(520, areaHeight - 24);
+        settingsWindow = new Window { Title = L("Cài đặt", "Settings") + " — " + preferences.Name, Icon = AppIcon.WindowImage(), Width = SettingsWidth, Height = height,
             Content = root, Background = PetUi.Surface, ResizeMode = ResizeMode.NoResize, Topmost = true, ShowInTaskbar = false,
             WindowStartupLocation = WindowStartupLocation.Manual,
-            Left = Math.Clamp(pet.X + settings.Width / 2 - 230, bounds.Left, Math.Max(bounds.Left, bounds.Right - 460)),
+            Left = Math.Clamp(pet.X + settings.Width / 2 - SettingsWidth / 2, bounds.Left, Math.Max(bounds.Left, bounds.Right - SettingsWidth)),
             Top = bounds.Top + Math.Max(8, (areaHeight - height) / 2) };
         PetUi.ApplyWindowFont(settingsWindow);
+        PetControlStyle.Apply(settingsWindow);
         form.Cancel.Click += (_, _) => settingsWindow?.Close();
         form.Save.Click += (_, _) =>
         {
@@ -262,22 +271,34 @@ public sealed partial class PetWindow
         settingsWindow.Show();
     }
 
-    private static ScrollViewer Page(params UIElement[] children)
+    private const double SettingsWidth = 600;
+
+    // One sidebar page: its cards stacked, scrolling on its own.
+    private static ScrollViewer Page(params UIElement[] sections)
     {
-        var panel = new StackPanel { Margin = new Thickness(16, 14, 16, 14) };
-        foreach (var child in children)
-        {
-            if (child is FrameworkElement element && element.Margin == default && child is not StackPanel) element.Margin = new Thickness(0, 6, 0, 6);
-            panel.Children.Add(child);
-        }
+        var panel = new StackPanel { Margin = new Thickness(16, 14, 16, 6) };
+        foreach (var section in sections) panel.Children.Add(section);
         return new ScrollViewer { Content = panel, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
     }
 
-    // Label on the left, control on the right, so a tab reads like a short form.
+    // A titled card of related settings, spaced evenly.
+    private static Border Section(string title, params UIElement[] children)
+    {
+        var group = new StackPanel();
+        group.Children.Add(PetUi.SectionTitle(title));
+        foreach (var child in children)
+        {
+            if (child is FrameworkElement element && element.Margin == default && child is not StackPanel) element.Margin = new Thickness(0, 5, 0, 5);
+            group.Children.Add(child);
+        }
+        return PetUi.Card(group);
+    }
+
+    // Label on the left, control on the right, so a card reads like a short form.
     private static Grid Row(string label, UIElement control)
     {
         var grid = new Grid();
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(150) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(142) });
         grid.ColumnDefinitions.Add(new ColumnDefinition());
         var text = new TextBlock { Text = label, VerticalAlignment = VerticalAlignment.Center, TextWrapping = TextWrapping.Wrap };
         Grid.SetColumn(control, 1);

@@ -32,7 +32,7 @@ public sealed partial class PetWindow
         void Add(string title, string help, double min, double max, Func<PersonalityTuning, double> get, Action<PersonalityTuning, double> set)
         {
             var slider = new Slider { Minimum = min, Maximum = max, Value = get(draft), ToolTip = help, SmallChange = (max - min) / 100, Margin = new Thickness(0, 4, 0, 0) };
-            var number = new TextBox { Text = slider.Value.ToString("0.##", CultureInfo.InvariantCulture), Width = 76, TextAlignment = TextAlignment.Right, Padding = new Thickness(2, 1, 2, 1) };
+            var number = new TextBox { Text = slider.Value.ToString("0.##", CultureInfo.InvariantCulture), Width = 76, TextAlignment = TextAlignment.Right };
             validInputs[number] = true;
             bool updating = false;
             slider.ValueChanged += (_, _) => { if (!updating) number.Text = slider.Value.ToString("0.##", CultureInfo.InvariantCulture); };
@@ -91,6 +91,7 @@ public sealed partial class PetWindow
             WindowStartupLocation = settingsWindow != null ? WindowStartupLocation.CenterOwner : WindowStartupLocation.CenterScreen,
             Content = root, Background = PetUi.Surface, Topmost = true, ShowInTaskbar = false };
         PetUi.ApplyWindowFont(behaviorSettingsWindow);
+        PetControlStyle.Apply(behaviorSettingsWindow);
         behaviorSettingsWindow.Closed += (_, _) => behaviorSettingsWindow = null;
         behaviorSettingsWindow.Show();
     }

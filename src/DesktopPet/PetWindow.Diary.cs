@@ -34,6 +34,7 @@ public sealed partial class PetWindow
             Top = bounds.Top + Math.Max(8, (areaHeight - height) / 2)
         };
         PetUi.ApplyWindowFont(diaryWindow);
+        PetControlStyle.Apply(diaryWindow);
         diaryWindow.Closed += (_, _) => { diaryWindow = null; diaryPanel = null; };
         RefreshDiary();
         diaryWindow.Show();

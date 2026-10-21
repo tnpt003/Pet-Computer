@@ -75,14 +75,14 @@ public sealed class BattleHud : Border
             Child = new Canvas { Children = { portrait }, ClipToBounds = true }
         };
         face.Clip = new EllipseGeometry(new Point(27, 27), 25, 25);
-        var name = new TextBlock { Text = petName, Foreground = Brushes.White, FontWeight = FontWeights.Bold, FontSize = 13.5 };
+        var name = new TextBlock { Text = petName, Foreground = Brushes.White, FontWeight = FontWeights.Bold, FontSize = PetUi.TitleSize };
         // The current hit chain (×1, ×2…), gold when the next hit is the combo. Its space is always
         // kept (Hidden, fixed width) so the HUD never changes width and re-centres mid-fight.
-        comboText = new TextBlock { Foreground = Soft, FontWeight = FontWeights.Black, FontSize = 13.5, Width = 30, Margin = new Thickness(6, 0, 0, 0),
+        comboText = new TextBlock { Foreground = Soft, FontWeight = FontWeights.Black, FontSize = PetUi.TitleSize, Width = 30, Margin = new Thickness(6, 0, 0, 0),
             Visibility = Visibility.Hidden };
         hpTrail = new Border { Background = Trail, CornerRadius = new CornerRadius(5), HorizontalAlignment = HorizontalAlignment.Left, Width = HpWidth };
         hpFill = new Border { Background = Green, CornerRadius = new CornerRadius(5), HorizontalAlignment = HorizontalAlignment.Left, Width = HpWidth };
-        hpText = new TextBlock { Foreground = Brushes.White, FontWeight = FontWeights.Bold, FontSize = 11, HorizontalAlignment = HorizontalAlignment.Center,
+        hpText = new TextBlock { Foreground = Brushes.White, FontWeight = FontWeights.Bold, FontSize = PetUi.CaptionSize, HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center };
         var hpBar = new Border
         {
@@ -93,11 +93,11 @@ public sealed class BattleHud : Border
             Children = { face, new StackPanel { Margin = new Thickness(8, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center, Children = { new StackPanel { Orientation = Orientation.Horizontal, Children = { name, comboText } }, hpBar } } } };
 
         // Centre: the banner, or the status with wave dots / the boss's HP.
-        banner = new TextBlock { Foreground = Gold, FontWeight = FontWeights.Black, FontSize = 22, HorizontalAlignment = HorizontalAlignment.Center,
+        banner = new TextBlock { Foreground = Gold, FontWeight = FontWeights.Black, FontSize = PetUi.DisplaySize, HorizontalAlignment = HorizontalAlignment.Center,
             Visibility = Visibility.Collapsed };
-        status = new TextBlock { Foreground = Brushes.White, FontWeight = FontWeights.SemiBold, FontSize = 13, HorizontalAlignment = HorizontalAlignment.Center, TextAlignment = TextAlignment.Center };
+        status = new TextBlock { Foreground = Brushes.White, FontWeight = FontWeights.SemiBold, FontSize = PetUi.BodySize, HorizontalAlignment = HorizontalAlignment.Center, TextAlignment = TextAlignment.Center };
         waveDots = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 5, 0, 0) };
-        bossName = new TextBlock { Foreground = Brushes.White, FontWeight = FontWeights.Bold, FontSize = 11.5, HorizontalAlignment = HorizontalAlignment.Center };
+        bossName = new TextBlock { Foreground = Brushes.White, FontWeight = FontWeights.Bold, FontSize = PetUi.SmallSize, HorizontalAlignment = HorizontalAlignment.Center };
         bossFill = new Border { Background = BossColor, CornerRadius = new CornerRadius(4), HorizontalAlignment = HorizontalAlignment.Left, Width = BossWidth };
         bossBar = new Border
         {
@@ -106,7 +106,7 @@ public sealed class BattleHud : Border
         };
         var bossPanel = new StackPanel { Children = { bossName, bossBar }, Margin = new Thickness(0, 3, 0, 0) };
         // This run's upgrades (Adventure), one small line; collapsed when there are none.
-        upgradesText = new TextBlock { Foreground = Gold, FontSize = 10.5, FontWeight = FontWeights.SemiBold, HorizontalAlignment = HorizontalAlignment.Center,
+        upgradesText = new TextBlock { Foreground = Gold, FontSize = PetUi.CaptionSize, FontWeight = FontWeights.SemiBold, HorizontalAlignment = HorizontalAlignment.Center,
             TextAlignment = TextAlignment.Center, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 3, 0, 0), Visibility = Visibility.Collapsed };
         bossPanel.SetBinding(VisibilityProperty, new System.Windows.Data.Binding(nameof(Visibility)) { Source = bossBar });
         // A banner wider than the centre (a long stage or enemy name) is shrunk to fit it, so it never
@@ -139,7 +139,7 @@ public sealed class BattleHud : Border
         var top = new StackPanel { Orientation = Orientation.Horizontal, Children = { left, centre, bar, controls } };
         // As wide as the row above (never wider): a long description wraps instead of widening the
         // HUD, which would re-centre it and slide the slots out from under the mouse.
-        hint = new TextBlock { Foreground = Soft, FontSize = 11.5, TextAlignment = TextAlignment.Center, TextWrapping = TextWrapping.Wrap,
+        hint = new TextBlock { Foreground = Soft, FontSize = PetUi.SmallSize, TextAlignment = TextAlignment.Center, TextWrapping = TextWrapping.Wrap,
             Margin = new Thickness(0, 6, 0, 0), MinHeight = 15 };
         hint.SetBinding(WidthProperty, new System.Windows.Data.Binding(nameof(ActualWidth)) { Source = top });
         Child = new StackPanel { Children = { top, hint } };
@@ -396,7 +396,7 @@ public sealed class SkillSlot : Border
 {
     public BattleSkill Skill { get; }
     private readonly CooldownWipe wipe = new();
-    private readonly TextBlock seconds = new() { Foreground = Brushes.White, FontWeight = FontWeights.Bold, FontSize = 14,
+    private readonly TextBlock seconds = new() { Foreground = Brushes.White, FontWeight = FontWeights.Bold, FontSize = PetUi.TitleSize,
         HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
     private int shownSeconds = -1;
     private static readonly Brush Ready = PetUi.Frozen(Color.FromRgb(0xFF, 0xD2, 0x3F)), Waiting = PetUi.Frozen(Color.FromArgb(0x60, 255, 255, 255));

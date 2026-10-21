@@ -148,8 +148,8 @@ public sealed partial class PetWindow
             Foreground = Brushes.White, FontSize = size, FontWeight = bold ? FontWeights.Bold : FontWeights.Normal,
             TextWrapping = TextWrapping.Wrap, MaxWidth = maxWidth
         };
-        mapTitle = Line(16, true);
-        mapData = Line(11.5); mapData.Foreground = PrepWarning; mapData.Margin = new Thickness(0, 6, 0, 0);
+        mapTitle = Line(PetUi.HeadingSize, true);
+        mapData = Line(PetUi.SmallSize); mapData.Foreground = PrepWarning; mapData.Margin = new Thickness(0, 6, 0, 0);
         // The stages in order, joined by a path: gold when won, blue when open, grey with a lock when not yet.
         var row = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 12, 0, 0), HorizontalAlignment = HorizontalAlignment.Center };
         mapNodes.Clear();
@@ -162,28 +162,28 @@ public sealed partial class PetWindow
                 link = new Rectangle { Width = 24, Height = 4, RadiusX = 2, RadiusY = 2, VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(0, 19, 0, 0) };
                 row.Children.Add(link);
             }
-            var number = new TextBlock { FontSize = 15, FontWeight = FontWeights.Bold, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
+            var number = new TextBlock { FontSize = PetUi.HeadingSize, FontWeight = FontWeights.Bold, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
             var mark = new Path { StrokeThickness = 2.2, StrokeStartLineCap = PenLineCap.Round, StrokeEndLineCap = PenLineCap.Round, StrokeLineJoin = PenLineJoin.Round,
                 Width = 15, Height = 15, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
             var node = new Border { Width = 42, Height = 42, CornerRadius = new CornerRadius(21), HorizontalAlignment = HorizontalAlignment.Center,
                 Cursor = System.Windows.Input.Cursors.Hand, Child = new Grid { Children = { number, mark } } };
-            var label = new TextBlock { Foreground = Brushes.White, FontSize = 11, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center,
+            var label = new TextBlock { Foreground = Brushes.White, FontSize = PetUi.CaptionSize, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center,
                 Width = 76, Margin = new Thickness(0, 4, 0, 0) };
             var column = new StackPanel { Width = 76, Background = Brushes.Transparent, Cursor = System.Windows.Input.Cursors.Hand, Children = { node, label } };
             column.MouseLeftButtonDown += (_, e) => { AdventureSelectStage(id); e.Handled = true; };
             row.Children.Add(column);
             mapNodes.Add((id, node, number, mark, label, link));
         }
-        mapStageName = Line(14, true); mapStageName.Margin = new Thickness(0, 12, 0, 0);
-        mapGoal = Line(12.5); mapGoal.Margin = new Thickness(0, 3, 0, 0);
-        mapStatus = Line(12, true); mapStatus.Margin = new Thickness(0, 5, 0, 0);
-        mapRecord = Line(11.5); mapRecord.Opacity = 0.8; mapRecord.Margin = new Thickness(0, 2, 0, 0);
+        mapStageName = Line(PetUi.TitleSize, true); mapStageName.Margin = new Thickness(0, 12, 0, 0);
+        mapGoal = Line(PetUi.BodySize); mapGoal.Margin = new Thickness(0, 3, 0, 0);
+        mapStatus = Line(PetUi.SmallSize, true); mapStatus.Margin = new Thickness(0, 5, 0, 0);
+        mapRecord = Line(PetUi.SmallSize); mapRecord.Opacity = 0.8; mapRecord.Margin = new Thickness(0, 2, 0, 0);
         var details = new Border { Background = PrepCardBack, CornerRadius = new CornerRadius(9), Padding = new Thickness(11, 0, 11, 9), Margin = new Thickness(0, 10, 0, 0),
             Child = new StackPanel { Children = { mapStageName, mapGoal, mapStatus, mapRecord } } };
         var (close, closeText, _) = HudButton(CancelAdventureMap, plain: true);
         var (enter, enterText, _) = HudButton(() => { if (AdventureEnterStage() is string reason) ShowBattleNotice(reason); }, plain: true);
         enter.Background = PrepChosen; enter.Padding = new Thickness(18, 6, 18, 5); enter.MinWidth = 110; enter.Margin = new Thickness(0);
-        enterText.FontSize = 14; enterText.FontWeight = FontWeights.Bold;
+        enterText.FontSize = PetUi.TitleSize; enterText.FontWeight = FontWeights.Bold;
         mapEnter = enter; mapEnterText = enterText; mapCloseText = closeText;
         var actions = new DockPanel { Margin = new Thickness(0, 12, 0, 0), LastChildFill = false };
         DockPanel.SetDock(close, Dock.Left); DockPanel.SetDock(enter, Dock.Right);
@@ -339,45 +339,45 @@ public sealed partial class PetWindow
         var next = adventure?.Next(stage.Id);
         if (result.Ranked && ProgressWarning() is string warning)
         {
-            var unsaved = Line(11.5, PrepWarning); unsaved.Text = warning;
+            var unsaved = Line(PetUi.SmallSize, PrepWarning); unsaved.Text = warning;
             lines.Children.Add(unsaved);
         }
         if (!result.Ranked)
         {
-            var note = Line(11.5, PrepWarning); note.Text = L("Dữ liệu tùy chỉnh: lượt này không lưu tiến trình và kỷ lục.", "Custom data: this run saves no progress or records.");
+            var note = Line(PetUi.SmallSize, PrepWarning); note.Text = L("Dữ liệu tùy chỉnh: lượt này không lưu tiến trình và kỷ lục.", "Custom data: this run saves no progress or records.");
             lines.Children.Add(note);
         }
         else if (result.Outcome.Unlocked is StageSpec opened)
         {
-            var open = Line(12.5, RecordGold, true); open.Text = L($"Đã mở: {StageTitle(opened)}", $"Unlocked: {StageTitle(opened)}");
+            var open = Line(PetUi.BodySize, RecordGold, true); open.Text = L($"Đã mở: {StageTitle(opened)}", $"Unlocked: {StageTitle(opened)}");
             lines.Children.Add(open);
         }
         else if (result.Won && result.Outcome.FirstClear && next == null)
         {
-            var done = Line(12.5, RecordGold, true); done.Text = L("Hoàn thành chương!", "Chapter complete!");
+            var done = Line(PetUi.BodySize, RecordGold, true); done.Text = L("Hoàn thành chương!", "Chapter complete!");
             lines.Children.Add(done);
         }
         foreach (var reward in result.Outcome.Rewards ?? Array.Empty<string>())
             if (PetAccessories.Find(reward) is { } item)
             {
-                var prize = Line(12.5, RecordGold, true);
+                var prize = Line(PetUi.BodySize, RecordGold, true);
                 prize.Text = L($"Phần thưởng mới: {item.Name(false)} — đội trong Cài đặt → Mèo", $"New reward: {item.Name(true)} — wear it in Settings → Cat");
                 lines.Children.Add(prize);
             }
         if (result.Upgrades.Length > 0)
         {
-            var taken = Line(11.5, opacity: 0.85); taken.Text = L("Nâng cấp lượt này: ", "This run's upgrades: ") + result.Upgrades;
+            var taken = Line(PetUi.SmallSize, opacity: 0.85); taken.Text = L("Nâng cấp lượt này: ", "This run's upgrades: ") + result.Upgrades;
             lines.Children.Add(taken);
         }
         if (result.News.Any)
         {
-            var news = Line(12.5, RecordGold, true);
+            var news = Line(PetUi.BodySize, RecordGold, true);
             news.Text = result.News.Fastest ? L("Kỷ lục mới của màn: thắng nhanh nhất!", "New stage record: fastest win!") : L("Kỷ lục mới của màn: hạ nhiều slime nhất!", "New stage record: most slimes!");
             lines.Children.Add(news);
         }
         if (result.Ranked && adventure?.Record(stage, result.Weapon, result.Difficulty) is { Empty: false } best)
         {
-            var records = Line(11.5, opacity: 0.85); records.Text = L("Kỷ lục màn (trang bị này): ", "Stage records (this gear): ") + RecordLine(best);
+            var records = Line(PetUi.SmallSize, opacity: 0.85); records.Text = L("Kỷ lục màn (trang bị này): ", "Stage records (this gear): ") + RecordLine(best);
             lines.Children.Add(records);
         }
 
@@ -388,7 +388,7 @@ public sealed partial class PetWindow
             if (reason != null) ShowBattleNotice(reason);
         }), plain: true);
         main.Background = ResultMain; main.Padding = new Thickness(16, 6, 16, 5); main.Margin = new Thickness(0); main.HorizontalAlignment = HorizontalAlignment.Right;
-        mainText.FontSize = 13.5; mainText.FontWeight = FontWeights.Bold; mainText.Text = canNext ? L("Màn tiếp", "Next stage") : L("Chơi lại", "Play again");
+        mainText.FontSize = PetUi.TitleSize; mainText.FontWeight = FontWeights.Bold; mainText.Text = canNext ? L("Màn tiếp", "Next stage") : L("Chơi lại", "Play again");
         var others = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 8, 0, 0) };
         if (canNext)
         {

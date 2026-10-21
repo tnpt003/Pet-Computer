@@ -321,22 +321,22 @@ public sealed partial class PetWindow
             Foreground = Brushes.White, FontSize = size, FontWeight = bold ? FontWeights.Bold : FontWeights.Normal,
             TextWrapping = TextWrapping.Wrap, MaxWidth = maxWidth
         };
-        xTitle = Line(16, true);
-        xData = Line(11.5); xData.Foreground = PrepWarning; xData.Margin = new Thickness(0, 6, 0, 0);
-        xStatus = Line(12.5, true); xStatus.Margin = new Thickness(0, 6, 0, 0);
-        xBuild = Line(11.5); xBuild.Opacity = 0.85; xBuild.Margin = new Thickness(0, 2, 0, 0);
-        xNote = Line(12, true); xNote.Foreground = PrepWarning; xNote.Margin = new Thickness(0, 6, 0, 0);
+        xTitle = Line(PetUi.HeadingSize, true);
+        xData = Line(PetUi.SmallSize); xData.Foreground = PrepWarning; xData.Margin = new Thickness(0, 6, 0, 0);
+        xStatus = Line(PetUi.BodySize, true); xStatus.Margin = new Thickness(0, 6, 0, 0);
+        xBuild = Line(PetUi.SmallSize); xBuild.Opacity = 0.85; xBuild.Margin = new Thickness(0, 2, 0, 0);
+        xNote = Line(PetUi.SmallSize, true); xNote.Foreground = PrepWarning; xNote.Margin = new Thickness(0, 6, 0, 0);
 
         // Before a run: the weapon and difficulty for the whole run.
         (Border, TextBlock) Chip(Action click)
         {
-            var text = new TextBlock { Foreground = Brushes.White, FontSize = 12.5, FontWeight = FontWeights.SemiBold, HorizontalAlignment = HorizontalAlignment.Center };
+            var text = new TextBlock { Foreground = Brushes.White, FontSize = PetUi.BodySize, FontWeight = FontWeights.SemiBold, HorizontalAlignment = HorizontalAlignment.Center };
             var chip = new Border { CornerRadius = new CornerRadius(8), Padding = new Thickness(12, 5, 12, 5), Margin = new Thickness(0, 0, 6, 0), MinWidth = 64,
                 BorderThickness = new Thickness(1), Cursor = System.Windows.Input.Cursors.Hand, Child = text };
             chip.MouseLeftButtonDown += (_, e) => { click(); e.Handled = true; };
             return (chip, text);
         }
-        xSetupLabel = Line(12); xSetupLabel.Margin = new Thickness(0, 10, 0, 4);
+        xSetupLabel = Line(PetUi.SmallSize); xSetupLabel.Margin = new Thickness(0, 10, 0, 4);
         var weapons = new StackPanel { Orientation = Orientation.Horizontal };
         foreach (var weapon in BattleTuning.WeaponList)
         {
@@ -371,28 +371,28 @@ public sealed partial class PetWindow
             for (int lane = 0; lane < lanes; lane++)
             {
                 int at = lane;
-                var glyph = new TextBlock { FontSize = 16, FontWeight = FontWeights.Bold, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
+                var glyph = new TextBlock { FontSize = PetUi.HeadingSize, FontWeight = FontWeights.Bold, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
                 var node = new Border { Width = 38, Height = 38, CornerRadius = new CornerRadius(19), Margin = new Thickness(0, 2, 0, 2), HorizontalAlignment = HorizontalAlignment.Center,
                     Cursor = System.Windows.Input.Cursors.Hand, Child = glyph };
                 node.MouseLeftButtonDown += (_, e) => { ExpeditionSelect(at); e.Handled = true; };
                 column.Children.Add(node);
                 expeditionNodes.Add((step, lane, node, glyph));
             }
-            var number = new TextBlock { Foreground = Brushes.White, Opacity = 0.7, FontSize = 10.5, HorizontalAlignment = HorizontalAlignment.Center,
+            var number = new TextBlock { Foreground = Brushes.White, Opacity = 0.7, FontSize = PetUi.CaptionSize, HorizontalAlignment = HorizontalAlignment.Center,
                 Text = (step + 1).ToString() };
             if (step >= spec.Steps.Length) xBossLabel = number; // Named in the pet's language by UpdateExpeditionMap.
             column.Children.Add(number);
             row.Children.Add(column);
         }
         xMap = new StackPanel { Children = { row } };
-        xNodeName = Line(14, true);
-        xNodeGoal = Line(12.5); xNodeGoal.Margin = new Thickness(0, 3, 0, 0);
+        xNodeName = Line(PetUi.TitleSize, true);
+        xNodeGoal = Line(PetUi.BodySize); xNodeGoal.Margin = new Thickness(0, 3, 0, 0);
         xDetails = new Border { Background = PrepCardBack, CornerRadius = new CornerRadius(9), Padding = new Thickness(11, 8, 11, 9), Margin = new Thickness(0, 10, 0, 0),
             Child = new StackPanel { Children = { xNodeName, xNodeGoal } } };
         xMap.Children.Add(xDetails);
         xChoice = new StackPanel { Margin = new Thickness(0, 10, 0, 0), MaxWidth = 470 };
         xMap.Children.Add(xChoice);
-        xRecord = Line(11.5); xRecord.Opacity = 0.8; xRecord.Margin = new Thickness(0, 8, 0, 0);
+        xRecord = Line(PetUi.SmallSize); xRecord.Opacity = 0.8; xRecord.Margin = new Thickness(0, 8, 0, 0);
 
         var (close, closeText, _) = HudButton(CancelExpeditionMap, plain: true);
         var (abandon, abandonText, _) = HudButton(() =>
@@ -407,7 +407,7 @@ public sealed partial class PetWindow
             if (reason != null) ShowBattleNotice(reason);
         }, plain: true);
         main.Background = PrepChosen; main.Padding = new Thickness(18, 6, 18, 5); main.MinWidth = 110; main.Margin = new Thickness(0);
-        mainText.FontSize = 14; mainText.FontWeight = FontWeights.Bold;
+        mainText.FontSize = PetUi.TitleSize; mainText.FontWeight = FontWeights.Bold;
         xMain = main; xMainText = mainText; xAbandon = abandon; xAbandonText = abandonText; xCloseText = closeText;
         var actions = new DockPanel { Margin = new Thickness(0, 12, 0, 0), LastChildFill = false };
         DockPanel.SetDock(close, Dock.Left); DockPanel.SetDock(abandon, Dock.Left); DockPanel.SetDock(main, Dock.Right);
@@ -580,7 +580,7 @@ public sealed partial class PetWindow
             {
                 Background = picked ? PrepChosen : PrepCardBack, BorderBrush = picked ? Brushes.White : PrepCardRim, BorderThickness = new Thickness(picked ? 2 : 1),
                 CornerRadius = new CornerRadius(8), Padding = new Thickness(9, 5, 9, 6), Margin = new Thickness(0, 4, 0, 0), Cursor = System.Windows.Input.Cursors.Hand,
-                Child = new StackPanel { Children = { Text(name, 12.5, true), Text(desc, 11.5, opacity: 0.85) } }
+                Child = new StackPanel { Children = { Text(name, PetUi.BodySize, true), Text(desc, PetUi.SmallSize, opacity: 0.85) } }
             };
             box.MouseLeftButtonDown += (_, e) => { click(); e.Handled = true; };
             return box;
@@ -595,12 +595,12 @@ public sealed partial class PetWindow
             ExpeditionChoice.RewardKind => L("Phần thưởng tinh anh", "Elite reward"),
             _ => e?.Name(English) ?? KindName(ExpeditionSpec.Event)
         };
-        var head = Text(title, 14, true, brush: open.Kind == ExpeditionChoice.RewardKind ? RecordGold : null);
+        var head = Text(title, PetUi.TitleSize, true, brush: open.Kind == ExpeditionChoice.RewardKind ? RecordGold : null);
         xChoice.Children.Add(head);
-        if (open.Kind == ExpeditionChoice.RewardKind) xChoice.Children.Add(Text(L("Chọn một di vật mang theo đến hết chuyến, hoặc bỏ qua.", "Pick a relic to keep for the rest of the run, or leave them."), 12, opacity: 0.85));
-        else if (e != null) xChoice.Children.Add(Text(e.Describe(English), 12, opacity: 0.85));
+        if (open.Kind == ExpeditionChoice.RewardKind) xChoice.Children.Add(Text(L("Chọn một di vật mang theo đến hết chuyến, hoặc bỏ qua.", "Pick a relic to keep for the rest of the run, or leave them."), PetUi.SmallSize, opacity: 0.85));
+        else if (e != null) xChoice.Children.Add(Text(e.Describe(English), PetUi.SmallSize, opacity: 0.85));
         if (run.Relics.Count >= spec.MaxRelics && open.Kind != ExpeditionChoice.RestKind && e?.Kind != ExpeditionEventSpec.Swap)
-            xChoice.Children.Add(Text(L($"Đã đủ {spec.MaxRelics} di vật.", $"The run already holds {spec.MaxRelics} relics."), 11.5, brush: PrepWarning));
+            xChoice.Children.Add(Text(L($"Đã đủ {spec.MaxRelics} di vật.", $"The run already holds {spec.MaxRelics} relics."), PetUi.SmallSize, brush: PrepWarning));
 
         if (e?.Kind == ExpeditionEventSpec.Swap && run.Build.Count > 0)
         {
@@ -696,30 +696,30 @@ public sealed partial class PetWindow
             TextWrapping = TextWrapping.Wrap, MaxWidth = 300, Margin = new Thickness(0, 2, 0, 0)
         };
         var lines = new StackPanel();
-        void Add(string text, double size = 12.5, Brush? brush = null, bool bold = false, double opacity = 1) { var line = Line(size, brush, bold, opacity); line.Text = text; lines.Children.Add(line); }
-        if (!result.Ranked) Add(L("Dữ liệu tùy chỉnh: chuyến này không được lưu.", "Custom data: this run is not saved."), 11.5, PrepWarning);
-        else if (ExpeditionWarning() is string warning) Add(warning, 11.5, PrepWarning);
+        void Add(string text, double size = PetUi.BodySize, Brush? brush = null, bool bold = false, double opacity = 1) { var line = Line(size, brush, bold, opacity); line.Text = text; lines.Children.Add(line); }
+        if (!result.Ranked) Add(L("Dữ liệu tùy chỉnh: chuyến này không được lưu.", "Custom data: this run is not saved."), PetUi.SmallSize, PrepWarning);
+        else if (ExpeditionWarning() is string warning) Add(warning, PetUi.SmallSize, PrepWarning);
         int steps = Expedition?.Spec.StepCount ?? step.Step + 1;
-        if (step.RunWon) Add(L("Hoàn thành viễn chinh!", "Expedition complete!"), 13, RecordGold, true);
-        else if (step.RunOver) Add(L($"Chuyến đi kết thúc ở bậc {step.Step + 1}/{steps}.", $"The run ended at step {step.Step + 1}/{steps}."), 12.5, PrepWarning, true);
+        if (step.RunWon) Add(L("Hoàn thành viễn chinh!", "Expedition complete!"), PetUi.BodySize, RecordGold, true);
+        else if (step.RunOver) Add(L($"Chuyến đi kết thúc ở bậc {step.Step + 1}/{steps}.", $"The run ended at step {step.Step + 1}/{steps}."), PetUi.BodySize, PrepWarning, true);
         else
         {
-            Add(L($"Qua bậc {step.Step + 1}/{steps} · HP mang tiếp {Math.Ceiling(step.Hp)}/{step.MaxHp:0}", $"Step {step.Step + 1}/{steps} done · HP carried on {Math.Ceiling(step.Hp)}/{step.MaxHp:0}"), 12.5, bold: true);
-            if (step.Healed >= 0.5) Add(L($"Nghỉ chân: +{Math.Round(step.Healed)} HP", $"A short rest: +{Math.Round(step.Healed)} HP"), 11.5, opacity: 0.85);
-            if (step.Reward) Add(L("Tinh anh để lại di vật: chọn trên bản đồ viễn chinh.", "The elite left relics: pick one on the Expedition map."), 12.5, RecordGold, true);
+            Add(L($"Qua bậc {step.Step + 1}/{steps} · HP mang tiếp {Math.Ceiling(step.Hp)}/{step.MaxHp:0}", $"Step {step.Step + 1}/{steps} done · HP carried on {Math.Ceiling(step.Hp)}/{step.MaxHp:0}"), PetUi.BodySize, bold: true);
+            if (step.Healed >= 0.5) Add(L($"Nghỉ chân: +{Math.Round(step.Healed)} HP", $"A short rest: +{Math.Round(step.Healed)} HP"), PetUi.SmallSize, opacity: 0.85);
+            if (step.Reward) Add(L("Tinh anh để lại di vật: chọn trên bản đồ viễn chinh.", "The elite left relics: pick one on the Expedition map."), PetUi.BodySize, RecordGold, true);
         }
-        if (result.Upgrades.Length > 0) Add(L("Build hiện tại: ", "Build now: ") + result.Upgrades, 11.5, opacity: 0.85);
+        if (result.Upgrades.Length > 0) Add(L("Build hiện tại: ", "Build now: ") + result.Upgrades, PetUi.SmallSize, opacity: 0.85);
         // Keepsakes this run gave (each only once): where to find them.
         foreach (var id in step.Keepsakes ?? Array.Empty<string>())
             if (Expedition?.Spec.Keepsake(id) is KeepsakeSpec k)
                 Add(L("Kỷ vật mới: ", "New keepsake: ") + k.Name(English) + (k.Kind == KeepsakeSpec.AccessoryKind ? L(" (đội trong Cài đặt)", " (wear it from Settings)")
-                    : preferences.ShowTrophies ? L(" (ở góc trưng bày)", " (in the display corner)") : L(" (bật góc trưng bày trong Cài đặt)", " (turn the display corner on in Settings)")), 12.5, RecordGold, true);
-        if (step.Fastest) Add(L("Kỷ lục mới: chuyến nhanh nhất!", "New record: fastest run!"), 12.5, RecordGold, true);
-        else if (step.BestSteps && step.RunOver && !step.RunWon) Add(L("Kỷ lục mới: đi xa nhất!", "New record: furthest run!"), 12.5, RecordGold, true);
+                    : preferences.ShowTrophies ? L(" (ở góc trưng bày)", " (in the display corner)") : L(" (bật góc trưng bày trong Cài đặt)", " (turn the display corner on in Settings)")), PetUi.BodySize, RecordGold, true);
+        if (step.Fastest) Add(L("Kỷ lục mới: chuyến nhanh nhất!", "New record: fastest run!"), PetUi.BodySize, RecordGold, true);
+        else if (step.BestSteps && step.RunOver && !step.RunWon) Add(L("Kỷ lục mới: đi xa nhất!", "New record: furthest run!"), PetUi.BodySize, RecordGold, true);
 
         var (main, mainText, _) = HudButton(() => choose(() => { if (OpenExpeditionMap() is string reason) ShowBattleNotice(reason); }), plain: true);
         main.Background = ResultMain; main.Padding = new Thickness(16, 6, 16, 5); main.Margin = new Thickness(0); main.HorizontalAlignment = HorizontalAlignment.Right;
-        mainText.FontSize = 13.5; mainText.FontWeight = FontWeights.Bold;
+        mainText.FontSize = PetUi.TitleSize; mainText.FontWeight = FontWeights.Bold;
         mainText.Text = step.RunOver ? L("Bản đồ viễn chinh", "Expedition map") : L("Tiếp tục", "Continue");
         var (home, homeText, _) = HudButton(() => choose(() => { }), plain: true);
         homeText.Text = step.RunOver ? L("Về desktop", "Back to desktop") : L("Về desktop (chuyến được lưu)", "Back to desktop (the run is saved)");

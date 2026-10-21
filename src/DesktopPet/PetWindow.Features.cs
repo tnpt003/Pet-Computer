@@ -61,6 +61,9 @@ public sealed partial class PetWindow
         sounds.Click += (_, _) => { preferences.Sounds = sounds.IsChecked; if (!preferences.Sounds) sound?.Stop(); SavePreferences(); };
         var customize = PetUi.MenuItem(PetUi.Settings);
         customize.Click += (_, _) => ShowPetSettings();
+        var status = PetUi.MenuItem(PetUi.Status, PetUi.Accent);
+        // Opened after the menu has closed, so the menu taking focus back cannot dismiss the card.
+        status.Click += (_, _) => Dispatcher.BeginInvoke(ShowStatusCard, System.Windows.Threading.DispatcherPriority.Background);
         var diary = PetUi.MenuItem(PetUi.Diary);
         diary.Click += (_, _) => ShowDiary();
         // Rarely used: back to the primary screen, the debug view, About.
@@ -80,12 +83,13 @@ public sealed partial class PetWindow
         menu.Items.Add(new Separator());
         menu.Items.Add(quiet); menu.Items.Add(sounds); menu.Items.Add(home);
         menu.Items.Add(new Separator());
-        menu.Items.Add(diary); menu.Items.Add(customize); menu.Items.Add(more);
+        menu.Items.Add(status); menu.Items.Add(diary); menu.Items.Add(customize); menu.Items.Add(more);
         menu.Items.Add(new Separator());
         menu.Items.Add(exit);
         void Localize()
         {
             customize.Header = L("Cài đặt…", "Settings…");
+            status.Header = L("Trạng thái của " + preferences.Name, preferences.Name + "'s status");
             diary.Header = L("Nhật ký của " + preferences.Name, preferences.Name + "'s diary");
             more.Header = L("Khác", "More");
             reset.Header = L("Gọi mèo về màn hình chính", "Bring the pet to the main screen");
@@ -124,13 +128,13 @@ public sealed partial class PetWindow
     public static string VersionText => PetLog.BuildVersion.Split('+')[0];
 
     // The About box also names the commit the published build came from (scripts/publish.ps1).
-    private void ShowAbout() => MessageBox.Show(
+    private void ShowAbout() => PetDialog.Show(null, L("Giới thiệu Desktop Pet", "About Desktop Pet"),
         $"Desktop Pet {PetLog.VersionLabel(PetLog.BuildVersion, preferences.Language == "en")}\n\n{L("Dữ liệu và log", "Data and logs")}: {PetPreferences.DataDirectory}\n{AiStatusText}",
-        L("Giới thiệu Desktop Pet", "About Desktop Pet"));
+        L("Đóng", "Close"));
 
     private void SavePreferences()
     {
-        if (persistPreferences && !preferences.Save()) MessageBox.Show(L("Cài đặt có hiệu lực trong phiên này nhưng không lưu được.", "The setting works for this session, but could not be saved."), "Desktop Pet");
+        if (persistPreferences && !preferences.Save()) PetDialog.Show(settingsWindow, "Desktop Pet", L("Cài đặt có hiệu lực trong phiên này nhưng không lưu được.", "The setting works for this session, but could not be saved."), "OK", glyph: PetDialog.WarningGlyph);
     }
 
     public bool GiveTreat()
@@ -366,5 +370,5 @@ public sealed partial class PetWindow
     private void ApplyAccessory() =>
         renderer.Accessory = preferences.HolidayAccessories && PetAccessories.ForEvent(specialDay) is { } outfit ? outfit.Id : preferences.Accessory;
 
-    private void CloseFeatures() { CloseTrophies(); EndBattle(); CloseBattlePrep(); CloseAdventureMap(); CloseExpeditionMap(); CloseBattleSummary(); CloseBattleNotice(); CloseBattleTutorial(); laserWindow?.Close(); diaryWindow?.Close(); behaviorSettingsWindow?.Close(); toyWindow?.Close(); settingsWindow?.Close(); speechWindow?.Close(); sound?.Stop(); sound?.Dispose(); soundStream?.Dispose(); }
+    private void CloseFeatures() { CloseTrophies(); EndBattle(); CloseBattlePrep(); CloseAdventureMap(); CloseExpeditionMap(); CloseBattleSummary(); CloseBattleNotice(); CloseBattleTutorial(); laserWindow?.Close(); diaryWindow?.Close(); CloseStatusCard(); behaviorSettingsWindow?.Close(); toyWindow?.Close(); settingsWindow?.Close(); speechWindow?.Close(); sound?.Stop(); sound?.Dispose(); soundStream?.Dispose(); }
 }

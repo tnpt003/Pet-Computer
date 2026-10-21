@@ -237,12 +237,12 @@ public sealed partial class PetWindow
         Path Check() => new() { Data = CheckMark, Stroke = Brushes.White, StrokeThickness = 2.4, StrokeEndLineCap = PenLineCap.Round,
             StrokeStartLineCap = PenLineCap.Round, StrokeLineJoin = PenLineJoin.Round, Width = 15, Height = 13, Margin = new Thickness(0, 0, 5, 0),
             VerticalAlignment = VerticalAlignment.Center };
-        prepTitle = Line(16, true);
-        prepWeaponLabel = Line(11.5); prepWeaponLabel.Opacity = 0.75; prepWeaponLabel.Margin = new Thickness(0, 0, 0, 4);
-        prepLevelLabel = Line(11.5); prepLevelLabel.Opacity = 0.75; prepLevelLabel.Margin = new Thickness(0, 8, 0, 4);
-        prepData = Line(11.5, maxWidth: 470); prepData.Foreground = PrepWarning; prepData.Margin = new Thickness(0, 8, 0, 0);
-        prepBuild = Line(11.5, maxWidth: 470); prepBuild.Margin = new Thickness(0, 8, 0, 0);
-        prepStatus = Line(12, true, 470); prepStatus.Foreground = PrepWarning; prepStatus.Margin = new Thickness(0, 8, 0, 0);
+        prepTitle = Line(PetUi.HeadingSize, true);
+        prepWeaponLabel = Line(PetUi.SmallSize); prepWeaponLabel.Opacity = 0.75; prepWeaponLabel.Margin = new Thickness(0, 0, 0, 4);
+        prepLevelLabel = Line(PetUi.SmallSize); prepLevelLabel.Opacity = 0.75; prepLevelLabel.Margin = new Thickness(0, 8, 0, 4);
+        prepData = Line(PetUi.SmallSize, maxWidth: 470); prepData.Foreground = PrepWarning; prepData.Margin = new Thickness(0, 8, 0, 0);
+        prepBuild = Line(PetUi.SmallSize, maxWidth: 470); prepBuild.Margin = new Thickness(0, 8, 0, 0);
+        prepStatus = Line(PetUi.SmallSize, true, 470); prepStatus.Foreground = PrepWarning; prepStatus.Margin = new Thickness(0, 8, 0, 0);
 
         // The preview: this cat (coat, accessory) holding the chosen weapon, on a soft stage.
         prepPreview = new PetModel { Action = PetAction.Idle, Grounded = true, Facing = 1, AnimationTime = 1, ActionTime = 1, SwordOut = true };
@@ -269,8 +269,8 @@ public sealed partial class PetWindow
         {
             string id = weapon.Id;
             var check = Check();
-            var name = Line(13.5, true, 200);
-            var hint = Line(11.5, maxWidth: 230); hint.Opacity = 0.85;
+            var name = Line(PetUi.TitleSize, true, 200);
+            var hint = Line(PetUi.SmallSize, maxWidth: 230); hint.Opacity = 0.85;
             var stats = new Grid { Margin = new Thickness(0, 5, 0, 0) };
             stats.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             stats.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(64) });
@@ -282,12 +282,12 @@ public sealed partial class PetWindow
             for (int i = 0; i < WeaponStatScales.Length; i++)
             {
                 stats.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-                statNames[i] = new TextBlock { Foreground = Brushes.White, Opacity = 0.8, FontSize = 10.5, Margin = new Thickness(0, 0, 6, 0), VerticalAlignment = VerticalAlignment.Center };
+                statNames[i] = new TextBlock { Foreground = Brushes.White, Opacity = 0.8, FontSize = PetUi.CaptionSize, Margin = new Thickness(0, 0, 6, 0), VerticalAlignment = VerticalAlignment.Center };
                 double fraction = Math.Clamp(numbers[i] / WeaponStatScales[i].Max, 0, 1);
                 var bar = new Grid { Height = 5, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 2, 0, 2),
                     Children = { new Border { Background = PrepBarBack, CornerRadius = new CornerRadius(2.5) },
                                  new Border { Background = PrepBarFill, CornerRadius = new CornerRadius(2.5), HorizontalAlignment = HorizontalAlignment.Left, Width = 64 * fraction } } };
-                statValues[i] = new TextBlock { Foreground = Brushes.White, FontSize = 10.5, FontWeight = FontWeights.SemiBold, Margin = new Thickness(6, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center,
+                statValues[i] = new TextBlock { Foreground = Brushes.White, FontSize = PetUi.CaptionSize, FontWeight = FontWeights.SemiBold, Margin = new Thickness(6, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center,
                     Text = i == 1 ? numbers[i].ToString("0.0", CultureInfo.InvariantCulture) + "/s" : numbers[i].ToString("0", CultureInfo.InvariantCulture) };
                 Grid.SetRow(statNames[i], i); Grid.SetRow(bar, i); Grid.SetRow(statValues[i], i);
                 Grid.SetColumn(bar, 1); Grid.SetColumn(statValues[i], 2);
@@ -313,7 +313,7 @@ public sealed partial class PetWindow
         foreach (var level in new[] { BattleDifficulty.Easy, BattleDifficulty.Normal, BattleDifficulty.Hard })
         {
             var check = Check();
-            var text = new TextBlock { Foreground = Brushes.White, FontSize = 12.5, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center };
+            var text = new TextBlock { Foreground = Brushes.White, FontSize = PetUi.BodySize, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center };
             var chip = new Border
             {
                 CornerRadius = new CornerRadius(7), Padding = new Thickness(9, 4, 11, 4), Margin = new Thickness(0, 0, 6, 0), BorderThickness = new Thickness(1.5),
@@ -325,16 +325,16 @@ public sealed partial class PetWindow
         }
 
         // Actions: a quiet How to play link on the left; Close, then the one main button, Ready.
-        prepGuideText = new TextBlock { Foreground = Brushes.White, Opacity = 0.85, FontSize = 12, TextDecorations = TextDecorations.Underline,
+        prepGuideText = new TextBlock { Foreground = Brushes.White, Opacity = 0.85, FontSize = PetUi.SmallSize, TextDecorations = TextDecorations.Underline,
             Cursor = System.Windows.Input.Cursors.Hand, VerticalAlignment = VerticalAlignment.Center, Background = Brushes.Transparent };
         prepGuideText.MouseLeftButtonDown += (_, e) => { ShowBattleTutorial(); e.Handled = true; };
-        prepTipText = new TextBlock { Foreground = Brushes.White, Opacity = 0.85, FontSize = 12, TextDecorations = TextDecorations.Underline, Margin = new Thickness(12, 0, 0, 0),
+        prepTipText = new TextBlock { Foreground = Brushes.White, Opacity = 0.85, FontSize = PetUi.SmallSize, TextDecorations = TextDecorations.Underline, Margin = new Thickness(12, 0, 0, 0),
             Cursor = System.Windows.Input.Cursors.Hand, VerticalAlignment = VerticalAlignment.Center, Background = Brushes.Transparent };
         prepTipText.MouseLeftButtonDown += (_, e) => { if (prepStage != null) ShowStageTip(prepStage); e.Handled = true; };
         var (cancel, cancelText, _) = HudButton(CancelBattlePrep, plain: true);
         var (ready, readyText, _) = HudButton(() => BattlePrepReady(), plain: true);
         ready.Background = PrepChosen; ready.Padding = new Thickness(18, 6, 18, 5); ready.MinWidth = 110; ready.Margin = new Thickness(0);
-        readyText.FontSize = 14; readyText.FontWeight = FontWeights.Bold;
+        readyText.FontSize = PetUi.TitleSize; readyText.FontWeight = FontWeights.Bold;
         prepReady = ready; prepReadyText = readyText; prepCancelText = cancelText;
         var actions = new DockPanel { Margin = new Thickness(0, 12, 0, 0), LastChildFill = false };
         DockPanel.SetDock(prepGuideText, Dock.Left); DockPanel.SetDock(prepTipText, Dock.Left); DockPanel.SetDock(ready, Dock.Right); DockPanel.SetDock(cancel, Dock.Right);

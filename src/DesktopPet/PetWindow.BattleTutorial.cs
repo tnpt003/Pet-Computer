@@ -67,9 +67,9 @@ public sealed partial class PetWindow
         battleTutorialStep = 0;
         if (battleTutorialWindow == null)
         {
-            tutorialTitle = new TextBlock { Foreground = Brushes.White, FontSize = 15, FontWeight = FontWeights.Bold };
-            tutorialBody = new TextBlock { Foreground = Brushes.White, FontSize = 12.5, TextWrapping = TextWrapping.Wrap, Width = 320, Margin = new Thickness(0, 4, 0, 0) };
-            tutorialCount = new TextBlock { Foreground = Brushes.White, Opacity = 0.7, FontSize = 11.5, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 10, 0) };
+            tutorialTitle = new TextBlock { Foreground = Brushes.White, FontSize = PetUi.HeadingSize, FontWeight = FontWeights.Bold };
+            tutorialBody = new TextBlock { Foreground = Brushes.White, FontSize = PetUi.BodySize, TextWrapping = TextWrapping.Wrap, Width = 320, Margin = new Thickness(0, 4, 0, 0) };
+            tutorialCount = new TextBlock { Foreground = Brushes.White, Opacity = 0.7, FontSize = PetUi.SmallSize, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 10, 0) };
             var (skip, skipText, _) = HudButton(() => CloseBattleTutorial(finished: true));
             skipText.Text = L("Bỏ qua", "Skip");
             var (next, nextText, _) = HudButton(BattleTutorialNext);

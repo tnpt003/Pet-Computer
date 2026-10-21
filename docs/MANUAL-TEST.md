@@ -53,6 +53,8 @@ Tick `[x]` khi đạt; ghi lỗi ngay dưới mục kèm ngày. Mục mới chư
 - [ ] Bộ lông/phụ kiện: đổi, Save, xem khi đi, ngủ, kéo, ném, ăn, vuốt; mèo đen (mắt/miệng rõ không); mũ khi kéo sát mép trên.
 - [ ] Nhật ký (AI bật và tắt), đổi ngôn ngữ, rê lên biểu đồ xem tooltip; sau vài ngày xem biểu đồ bond/giờ chơi.
 - [ ] Behavior tuning: Save / đóng không Save / Khôi phục mặc định; khởi động lại xem có giữ.
+- [ ] Thẻ trạng thái (2026-10-21): chuột phải mèo → Trạng thái của {tên}: thẻ hiện trên đầu mèo (mèo trên cửa sổ cao/mép trên thì hiện dưới), không bị menu đóng mất; dòng "Đang làm"/"Cảm xúc" đổi theo mèo; AI bật: 5 thanh (Năng lượng, No bụng, Vui chơi, Được cưng, Thân thiết) — cho ăn rồi chờ vài giây xem No bụng tăng; AI tắt: chỉ có gợi ý bật AI. Click chỗ khác/Esc/× đóng; mở thẻ khi mèo đang ngủ không đánh thức thêm; mở trong trận ghi "Đang chiến đấu · HP".
+- [ ] Hộp thoại ấm (2026-10-21): Cài đặt → Lời nói → Quên những gì mèo đã học…: nền kem, icon cam, nút Hủy/Quên; Esc = Hủy. Khác → Giới thiệu cũng là hộp thoại ấm, chữ đường dẫn không bị cắt.
 - [ ] Danh sách bộ lông (đọc từ coats.json): đủ 10, tên và chấm màu đúng ở cả tiếng Việt/English.
 - [ ] Sinh nhật: chọn ngày + tháng = hôm nay → Lưu → thoát và mở lại mèo (Mèo biết nói + AI bật): câu chào là câu chúc sinh nhật; để lâu thỉnh thoảng nói thêm. Bỏ chọn tháng → Lưu → mở lại: chào bình thường. Mở lại Cài đặt thấy đúng ngày đã lưu.
 - [ ] Phụ kiện mới (Mũ Noel, Mũ phù thủy, Hoa mai, Đèn lồng): chọn trong Cài đặt, xem khi đi, ngủ, kéo, ném, trèo cửa sổ; mũ không bị cắt ở mép trên.

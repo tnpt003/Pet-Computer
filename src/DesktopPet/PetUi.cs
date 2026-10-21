@@ -38,6 +38,7 @@ public static class PetUi
         Home = "", Diary = "", Settings = "", More = "", Exit = "", Debug = "", About = "";
 
     public const string Battle = ""; // Game controller.
+    public const string Status = ""; // Heart.
 
     public static Brush Frozen(Color color) { var brush = new SolidColorBrush(color); brush.Freeze(); return brush; }
     public static Brush Hex(string hex) => Frozen((Color)ColorConverter.ConvertFromString(hex));

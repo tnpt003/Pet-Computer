@@ -134,9 +134,10 @@ public sealed partial class PetWindow
         form.Forget = PetUi.LinkButton(L("Quên những gì mèo đã học…", "Forget what the pet learned…"));
         form.Forget.Click += (_, _) =>
         {
-            if (MessageBox.Show(L("Mèo sẽ quên những hành động và câu nói bạn thích. Nhu cầu và độ thân thiết được giữ.",
-                                  "The pet will forget which actions and lines you liked. Needs and bond are kept."),
-                    L("Quên thói quen đã học", "Forget learned habits"), MessageBoxButton.OKCancel) != MessageBoxResult.OK) return;
+            if (!PetDialog.Show(settingsWindow, L("Quên thói quen đã học", "Forget learned habits"),
+                    L("Mèo sẽ quên những hành động và câu nói bạn thích. Nhu cầu và độ thân thiết được giữ.",
+                      "The pet will forget which actions and lines you liked. Needs and bond are kept."),
+                    L("Quên", "Forget"), L("Hủy", "Cancel"), PetDialog.QuestionGlyph)) return;
             preferences.LearningReset = Guid.NewGuid().ToString("N"); // Python applies it on its next decision.
             SavePreferences();
         };
@@ -263,7 +264,7 @@ public sealed partial class PetWindow
             // Test windows never touch the real Windows startup entry.
             if (persistPreferences && form.Autostart.IsChecked == true != autostartOn &&
                 (Environment.ProcessPath is not string path || !startup.SetEnabled(form.Autostart.IsChecked == true, path)))
-                MessageBox.Show(L("Không đổi được cài đặt khởi động cùng Windows.", "Windows startup could not be changed."), "Desktop Pet");
+                PetDialog.Show(settingsWindow, "Desktop Pet", L("Không đổi được cài đặt khởi động cùng Windows.", "Windows startup could not be changed."), "OK", glyph: PetDialog.WarningGlyph);
             sound?.Stop(); Interact("preferences_changed"); SavePreferences(); settingsWindow?.Close();
         };
         settingsWindow.Closed += (_, _) => { form.PreviewTimer.Stop(); settingsWindow = null; settingsForm = null; };

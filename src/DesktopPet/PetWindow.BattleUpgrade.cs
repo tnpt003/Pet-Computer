@@ -76,17 +76,17 @@ public sealed partial class PetWindow
     {
         if (battle?.UpgradeOffer is not { } offer) return;
         upgradePick = null;
-        upgradeTitle = new TextBlock { Foreground = Brushes.White, FontSize = 16, FontWeight = FontWeights.Bold, Margin = new Thickness(0, 0, 0, 8) };
+        upgradeTitle = new TextBlock { Foreground = Brushes.White, FontSize = PetUi.HeadingSize, FontWeight = FontWeights.Bold, Margin = new Thickness(0, 0, 0, 8) };
         var row = new StackPanel { Orientation = Orientation.Horizontal };
         upgradeCards.Clear();
         foreach (var upgrade in offer)
         {
             string id = upgrade.Id;
-            var name = new TextBlock { Foreground = Brushes.White, FontSize = 13.5, FontWeight = FontWeights.Bold, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center, Margin = new Thickness(0, 6, 0, 0) };
-            var desc = new TextBlock { Foreground = Brushes.White, FontSize = 11.5, Opacity = 0.9, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center, Margin = new Thickness(0, 3, 0, 0) };
-            var count = new TextBlock { Foreground = Brushes.White, FontSize = 10.5, Opacity = 0.65, TextAlignment = TextAlignment.Center, Margin = new Thickness(0, 4, 0, 0) };
+            var name = new TextBlock { Foreground = Brushes.White, FontSize = PetUi.TitleSize, FontWeight = FontWeights.Bold, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center, Margin = new Thickness(0, 6, 0, 0) };
+            var desc = new TextBlock { Foreground = Brushes.White, FontSize = PetUi.SmallSize, Opacity = 0.9, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center, Margin = new Thickness(0, 3, 0, 0) };
+            var count = new TextBlock { Foreground = Brushes.White, FontSize = PetUi.CaptionSize, Opacity = 0.65, TextAlignment = TextAlignment.Center, Margin = new Thickness(0, 4, 0, 0) };
             // The card's group and its progress toward the group's synergy (gold when it completes it).
-            var build = new TextBlock { Foreground = Brushes.White, FontSize = 10.5, FontWeight = FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center, Margin = new Thickness(0, 4, 0, 0) };
+            var build = new TextBlock { Foreground = Brushes.White, FontSize = PetUi.CaptionSize, FontWeight = FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center, Margin = new Thickness(0, 4, 0, 0) };
             var card = new Border
             {
                 Width = 132, MinHeight = 150, CornerRadius = new CornerRadius(10), Padding = new Thickness(8, 10, 8, 8), Margin = new Thickness(0, 0, 8, 0),
@@ -100,7 +100,7 @@ public sealed partial class PetWindow
         var (confirm, confirmText, _) = HudButton(() => ConfirmBattleUpgrade(), plain: true);
         confirm.Background = PrepChosen; confirm.Padding = new Thickness(18, 6, 18, 5); confirm.MinWidth = 110; confirm.Margin = new Thickness(0, 12, 8, 0);
         confirm.HorizontalAlignment = HorizontalAlignment.Right;
-        confirmText.FontSize = 14; confirmText.FontWeight = FontWeights.Bold;
+        confirmText.FontSize = PetUi.TitleSize; confirmText.FontWeight = FontWeights.Bold;
         upgradeConfirm = confirm; upgradeConfirmText = confirmText;
         var panel = new Border
         {

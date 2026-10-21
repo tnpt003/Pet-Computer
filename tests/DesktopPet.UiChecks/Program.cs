@@ -173,6 +173,44 @@ internal static class Program
               window.ContextMenu.Items.OfType<System.Windows.Controls.Separator>().Count() == 3 &&
               !string.IsNullOrEmpty(PetWindow.VersionText) && PetWindow.VersionText != "unknown",
             "Context menu: play items first, groups split by separators, rarely used items under More, Exit last; About has a version");
+        int statusIndex = headers.FindIndex(h => h?.EndsWith("'s status", StringComparison.Ordinal) == true);
+        var actionBeforeStatus = pet.Action;
+        long interactionsBeforeStatus = Field<long>(window, "interactionCount");
+        window.ShowStatusCard();
+        var statusCard = Field<Window?>(window, "statusWindow");
+        var statusRoot = statusCard?.Content as FrameworkElement;
+        statusRoot?.UpdateLayout();
+        var statusTexts = statusRoot == null ? new List<string>() : Descendants<System.Windows.Controls.TextBlock>(statusRoot).Where(t => t.IsVisible).Select(t => t.Text).ToList();
+        Check(statusIndex >= 0 && headers[statusIndex + 1]?.EndsWith("'s diary", StringComparison.Ordinal) == true && statusCard != null &&
+              statusTexts.Any(t => t.StartsWith("Doing: ", StringComparison.Ordinal)) && statusTexts.Any(t => t.StartsWith("Feeling: ", StringComparison.Ordinal)) &&
+              statusTexts.Any(t => t.Contains("Smart pet (AI)")) && !statusTexts.Any(t => t.EndsWith("/100", StringComparison.Ordinal)) &&
+              pet.Action == actionBeforeStatus && Field<long>(window, "interactionCount") == interactionsBeforeStatus,
+            "Status card sits before the diary, shows doing/feeling, hides need bars without the AI, and does not touch the pet");
+        if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string statusReview && statusRoot != null)
+        {
+            System.IO.Directory.CreateDirectory(statusReview);
+            var image = new RenderTargetBitmap((int)Math.Ceiling(statusRoot.ActualWidth), (int)Math.Ceiling(statusRoot.ActualHeight), 96, 96, PixelFormats.Pbgra32);
+            image.Render(statusRoot);
+            var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(image));
+            using var stream = System.IO.File.Create(System.IO.Path.Combine(statusReview, "status-card.png")); encoder.Save(stream);
+        }
+        window.CloseStatusCard();
+        Check(Field<Window?>(window, "statusWindow") == null, "Closing the status card releases it");
+        var dialog = PetDialog.Create(null, "Forget learned habits", "The pet will forget which actions and lines you liked.", "Forget", "Cancel", PetDialog.QuestionGlyph);
+        dialog.Left = -10000; dialog.Show(); dialog.UpdateLayout();
+        var dialogButtons = Descendants<System.Windows.Controls.Button>((FrameworkElement)dialog.Content).ToList();
+        Check(dialogButtons.Count == 2 && dialogButtons[0].IsCancel && dialogButtons[1].IsDefault && (string)dialogButtons[1].Content == "Forget" &&
+              dialog.Background == PetUi.Surface,
+            "The forget-habits question uses the warm dialog: Cancel, then the main button on the right");
+        if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string dialogReview && dialog.Content is FrameworkElement dialogRoot)
+        {
+            System.IO.Directory.CreateDirectory(dialogReview);
+            var image = new RenderTargetBitmap((int)Math.Ceiling(dialogRoot.ActualWidth), (int)Math.Ceiling(dialogRoot.ActualHeight), 96, 96, PixelFormats.Pbgra32);
+            image.Render(dialogRoot);
+            var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(image));
+            using var stream = System.IO.File.Create(System.IO.Path.Combine(dialogReview, "dialog.png")); encoder.Save(stream);
+        }
+        dialog.Close();
         // Lay the closed menu out off-screen to check (and, for review, render) the rounded style.
         var styledMenu = window.ContextMenu;
         styledMenu.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.ContextMenu.OpenedEvent)); // Fills labels and states.

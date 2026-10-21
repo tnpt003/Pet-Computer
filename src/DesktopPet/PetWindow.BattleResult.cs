@@ -22,7 +22,7 @@ public sealed partial class PetWindow
 
     private static (Border Button, TextBlock Text, Border Progress) HudButton(Action click, bool plain = false)
     {
-        var text = new TextBlock { Foreground = Brushes.White, FontSize = 12.5, FontWeight = FontWeights.SemiBold, HorizontalAlignment = HorizontalAlignment.Center };
+        var text = new TextBlock { Foreground = Brushes.White, FontSize = PetUi.BodySize, FontWeight = FontWeights.SemiBold, HorizontalAlignment = HorizontalAlignment.Center };
         var progress = new Border { Height = 3, Background = PetUi.Game.Progress, HorizontalAlignment = HorizontalAlignment.Left,
             Width = 0, CornerRadius = new CornerRadius(1.5), Margin = new Thickness(0, 3, 0, 0) };
         if (plain) progress.Visibility = Visibility.Collapsed; // No cooldown bar: the text sits in the middle.
@@ -45,7 +45,7 @@ public sealed partial class PetWindow
     private void ShowBattleNotice(string text)
     {
         CloseBattleNotice();
-        var label = new TextBlock { Text = text, Foreground = Brushes.White, FontSize = 12.5, FontWeight = FontWeights.SemiBold,
+        var label = new TextBlock { Text = text, Foreground = Brushes.White, FontSize = PetUi.BodySize, FontWeight = FontWeights.SemiBold,
             TextWrapping = TextWrapping.Wrap, MaxWidth = 240, FontFamily = PetUi.TextFont };
         var panel = new Border { Background = HudBack, BorderBrush = PetUi.Game.Rim, BorderThickness = new Thickness(1.5),
             CornerRadius = new CornerRadius(8), Padding = new Thickness(10, 5, 10, 6), Margin = new Thickness(4), Child = label };
@@ -108,16 +108,16 @@ public sealed partial class PetWindow
             Foreground = brush ?? Brushes.White, FontSize = size, FontWeight = bold ? FontWeights.Bold : FontWeights.Normal, Opacity = opacity,
             TextWrapping = TextWrapping.Wrap, MaxWidth = 300, Margin = new Thickness(0, 2, 0, 0)
         };
-        var title = Line(15.5, bold: true);
+        var title = Line(PetUi.HeadingSize, bold: true);
         title.Text = result.Won ? (result.Boss ? L($"Chiến thắng! Đã hạ {result.BossName ?? "boss"}", $"Victory! The {result.BossName ?? "boss"} is down") : L("Chiến thắng!", "Victory!"))
             : L("Thua rồi… mèo choáng váng", "Defeated… the cat sees stars");
         string level = DifficultyName(result.Difficulty), arms = result.WeaponLabel.Length > 0 ? result.WeaponLabel : result.Weapon;
         string place = result.Stage is not StageSpec played ? ""
             : result.Expedition is ExpeditionStepOutcome at ? ExpeditionStageTitle(at.Step, Expedition?.Spec.StepCount ?? at.Step + 1, played) + " · " : StageTitle(played) + " · ";
-        var loadout = Line(13, bold: true); loadout.Text = place + $"{arms} · {level}";
-        var main = Line(12.5);
+        var loadout = Line(PetUi.BodySize, bold: true); loadout.Text = place + $"{arms} · {level}";
+        var main = Line(PetUi.BodySize);
         main.Text = L($"Hạ {result.Defeated} slime · {Clock(result.Seconds)}", $"{result.Defeated} slime{(result.Defeated == 1 ? "" : "s")} defeated · {Clock(result.Seconds)}");
-        var hp = Line(11.5, opacity: 0.75); hp.Text = L($"HP còn {Math.Ceiling(result.Hp)}/{result.MaxHp}", $"HP {Math.Ceiling(result.Hp)}/{result.MaxHp} left");
+        var hp = Line(PetUi.SmallSize, opacity: 0.75); hp.Text = L($"HP còn {Math.Ceiling(result.Hp)}/{result.MaxHp}", $"HP {Math.Ceiling(result.Hp)}/{result.MaxHp} left");
         var info = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Children = { title, loadout, main, hp } };
         Window? window = null;
         // Each choice acts once: the panel is gone before anything else happens (no double start).
@@ -171,7 +171,7 @@ public sealed partial class PetWindow
         // Records of this loadout (weapon id + difficulty; custom data kept apart), and what this battle beat.
         if (result.News.Any)
         {
-            var news = Line(12.5, RecordGold, true);
+            var news = Line(PetUi.BodySize, RecordGold, true);
             news.Text = result.News.Fastest && result.News.MostDefeated ? L("Kỷ lục mới: thắng nhanh nhất, hạ nhiều slime nhất!", "New record: fastest win, most slimes!")
                 : result.News.Fastest ? L("Kỷ lục mới: thắng nhanh nhất!", "New record: fastest win!") : L("Kỷ lục mới: hạ nhiều slime nhất!", "New record: most slimes!");
             info.Children.Add(news);
@@ -179,20 +179,20 @@ public sealed partial class PetWindow
         var best = BattleRecords.For(result.Weapon, result.Difficulty, result.Custom);
         if (!best.Empty)
         {
-            var records = Line(11.5, opacity: 0.85);
+            var records = Line(PetUi.SmallSize, opacity: 0.85);
             records.Text = L($"Kỷ lục ({arms} · {level}{(result.Custom ? ", dữ liệu tùy chỉnh" : "")}): ", $"Records ({arms} · {level}{(result.Custom ? ", custom data" : "")}): ") + RecordLine(best);
             info.Children.Add(records);
         }
         var legacy = BattleRecords.Legacy(result.Difficulty);
         if (!legacy.Empty)
         {
-            var old = Line(11, opacity: 0.6);
+            var old = Line(PetUi.CaptionSize, opacity: 0.6);
             old.Text = L($"Trước phân loại trang bị ({level}): ", $"Before weapons were told apart ({level}): ") + RecordLine(legacy);
             info.Children.Add(old);
         }
         var (again, againText, _) = HudButton(() => Choose(() => { if (BattleReplay(result) is string reason) ShowBattleNotice(reason); }), plain: true);
         again.Background = ResultMain; again.Padding = new Thickness(16, 6, 16, 5); again.Margin = new Thickness(0);
-        againText.FontSize = 13.5; againText.FontWeight = FontWeights.Bold; againText.Text = L("Chơi lại", "Play again");
+        againText.FontSize = PetUi.TitleSize; againText.FontWeight = FontWeights.Bold; againText.Text = L("Chơi lại", "Play again");
         var (gear, gearText, _) = HudButton(() => Choose(() => { if (OpenBattlePrep(result.Weapon, result.Difficulty) is string reason) ShowBattleNotice(reason); }), plain: true);
         gearText.Text = L("Đổi trang bị", "Change gear");
         var (home, homeText, _) = HudButton(() => Choose(() => { }), plain: true);

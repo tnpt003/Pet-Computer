@@ -481,7 +481,7 @@ The cat's right-click menu is grouped, with Windows' own icon font (no new asset
 
 1. **Give treat, Play with ball, Laser pointer, Do now ›, Emotions ›**: playing with the cat.
 2. **Quiet mode, Sounds, Favorite resting spot ›**: quick switches (Quiet has a tooltip).
-3. **{name}'s diary, Settings…, More ›**: More holds Bring the pet to the main screen,
+3. **{name}'s status, {name}'s diary, Settings…, More ›**: More holds Bring the pet to the main screen,
    Behavior debug view and About.
 4. **Exit pet**.
 
@@ -505,6 +505,24 @@ opens with days together, four number tiles (petted, treats, ball games, bond) a
 for the bond chart, play hours and what was learned. **Behavior tuning** groups its eight
 values into Personality, Attention and Energy cards, each with the exact number, a slider
 and a hint; Restore defaults, Cancel and Save stay at the bottom.
+
+## Status card and warm dialogs (2026-10-21)
+
+**{name}'s status** / **Trạng thái của {name}** (right-click menu, before the diary) opens a
+small rounded card above the cat (below it when the cat is near the top of the screen): what
+the cat is doing (or "In a battle · HP", "Paused") and its emotion, refreshed twice a second,
+and, when the Python AI has reported them, five bars where full is always good: Energy, Fed
+(100 − hunger), Entertained (100 − boredom), Loved (affection) and Bond. With the AI off the
+bars are hidden and a hint points to **Smart pet (AI)** in the tray. The card is display only:
+opening it never wakes, moves or interrupts the cat and is not an interaction. Clicking
+elsewhere, Esc or the × closes it (`PetWindow.Status.cs`).
+
+The forget-habits question, About and the two "could not save" notes use `PetDialog`
+instead of the grey Windows MessageBox: a cream window with a round orange icon, the
+message and pill buttons (Cancel on the left, the main button on the right; Esc cancels).
+
+Battle, Adventure and Expedition panels use the shared type scale (`PetUi` 11/12/13/14/16/20)
+instead of half sizes (10.5–15.5 → the next step up; the 22 banner → 20).
 
 ## Keepsake display corner (2026-10-21, Expedition milestone 4)
 

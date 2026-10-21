@@ -4,6 +4,10 @@ Cập nhật: 2026-10-21 (Asia/Saigon).
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
+## Vệt vàng slime nhanh tinh anh (2026-10-21)
+- PetBattleView: tinh anh có marks "speed" vẽ 4 vệt gió vàng dài ×1.6 thay 3 vệt xanh; khi Dashing thêm hai viền bóng mờ vàng phía sau. Với 3 món polish trước, phần hình ảnh trong đề xuất làm đẹp đã xong; còn lại cue âm thanh tinh anh.
+- Test thật: scripts/test.ps1 -Ui: Python 55 OK, C# 1219, WPF 592 đạt. Chưa xem tận mắt.
+
 ## Giáp dày slime đá tinh anh (2026-10-21)
 - PetBattleView: tinh anh `pushImmune` vẽ thêm tấm lót vàng (khiên phóng ~1.2 quanh tâm) sau khiên đá và một đinh tán thứ hai. Không đổi hitbox/gameplay.
 - Test thật: scripts/test.ps1 -Ui: Python 55 OK, C# 1219, WPF 592 đạt. Chưa xem tận mắt.
@@ -687,7 +691,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Lịch sử chuyển project: 2026-10-05 tạo AGENTS.md/PROGRESS.md tại ổ D khi thư mục đó trống; source hiện nằm tại ổ C, không cần khôi phục về D.
 
 ## Đang dở và việc tiếp theo
-- Buff quái/elite 1.2.0-beta (2026-10-21): người dùng chơi thật Thường/Khó/Viễn chinh, đi mục MANUAL-TEST "Buff quái/tinh anh". Mô phỏng: Khó và Viễn chinh Thường đường an toàn rất khó (đã hạ mục tiêu theo lựa chọn người dùng); nếu thật sự quá khó, hướng đã đo: bỏ buff nền giữ elite (gần bản cũ). Polish elite (giáp dày, vệt, hào quang, nhãn trên thanh HP, cue có cooldown) chưa làm.
+- Buff quái/elite 1.2.0-beta (2026-10-21): người dùng chơi thật Thường/Khó/Viễn chinh, đi mục MANUAL-TEST "Buff quái/tinh anh". Mô phỏng: Khó và Viễn chinh Thường đường an toàn rất khó (đã hạ mục tiêu theo lựa chọn người dùng); nếu thật sự quá khó, hướng đã đo: bỏ buff nền giữ elite (gần bản cũ). Polish hình ảnh elite đã làm (nhãn, hào quang, giáp dày, vệt vàng — cần xem tận mắt); cue âm thanh riêng cho tinh anh chưa làm.
 - Viễn chinh (docs/EXPEDITION-DIRECTION.md): mốc 2–4 xong (2026-10-21). Người dùng cần: đi mục "Viễn chinh — mốc 2/3/4" trong MANUAL-TEST.md, chơi một chuyến Thường thật rồi chốt `winHeal`/`stepThreat`/`retreatCost`/`restHeal` và sức di vật (mô phỏng: đường tham lam mạnh hơn đường an toàn). Tiếp: mốc 5 (end-to-end, save lỗi/crash, DPI/nhiều màn hình, hiệu năng, phát hành — cần trình bày kế hoạch và chờ "ok"). Chưa ghi CHANGELOG cho Viễn chinh (chờ bản phát hành).
 - Cứu mèo (2026-10-21): người dùng đi mục "Cứu mèo không làm quái đứng hình" trong MANUAL-TEST.md; xem 0,3 s nhấc tối thiểu có làm hụt bảo vệ khi cứu nhanh thật không (chỉnh `rescueGraceMinLiftSeconds`).
 - Review Enemy Tactics (docs/NEXT-STEPS.md): R1+R2 xong (mốc A), R3 xong (mốc B: người chơi casual + số đo). Nếu muốn khó hơn ở Thường: cân nhắc theo bảng casual (vd. hồi chiêu Đẩy so với nhịp hồi của slime thảo dược) — đổi luật, cần người dùng chốt. R4 (tách PetBattle.cs, đo frame time trận đông quái, test vòng start→kết quả→chơi lại) để sau. Người dùng cần thử: Đẩy slime thảo dược/hạ nó ngay lúc hồi xong thấy đòn trúng bình thường.

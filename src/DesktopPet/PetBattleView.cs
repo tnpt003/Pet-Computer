@@ -319,12 +319,17 @@ public sealed class BattleFieldView : FrameworkElement
         }
         if (slime.Type.Marks == "speed" && slime.State is SlimeState.Moving or SlimeState.Dashing && opacity > 0.5)
         {
-            // Wind streaks trailing a fast slime.
-            for (int i = 0; i < 3; i++)
+            // Wind streaks trailing a fast slime; an elite's are gold, one more and longer, and its dash
+            // leaves two fading gold afterimages.
+            bool gilded = slime.Elite != null;
+            for (int i = 0; i < (gilded ? 4 : 3); i++)
             {
-                double y = floor - h * (0.3 + 0.2 * i), back = -slime.Facing * (w / 2 + 4 + 3 * i);
-                dc.DrawLine(Streak, new Point(x + back, y), new Point(x + back - slime.Facing * (10 + 4 * (i % 2)), y));
+                double y = floor - h * (0.3 + 0.2 * (i % 3)) + (i == 3 ? h * 0.1 : 0), back = -slime.Facing * (w / 2 + 4 + 3 * i);
+                dc.DrawLine(gilded ? GoldStreak : Streak, new Point(x + back, y), new Point(x + back - slime.Facing * ((10 + 4 * (i % 2)) * (gilded ? 1.6 : 1)), y));
             }
+            if (gilded && slime.State == SlimeState.Dashing)
+                for (int i = 1; i <= 2; i++)
+                    dc.DrawEllipse(null, i == 1 ? AfterimageNear : AfterimageFar, new Point(x - slime.Facing * w * 0.55 * i, floor - h / 2), w / 2, h / 2);
         }
         dc.PushOpacity(opacity);
         dc.PushTransform(new MatrixTransform(sx * size, 0, 0, sy * size, x + jitter, floor));
@@ -592,6 +597,9 @@ public sealed class BattleFieldView : FrameworkElement
     private static Geometry Parse(string data) { var g = Geometry.Parse(data); g.Freeze(); return g; }
     // Mid blue: visible on light and dark desktops alike.
     private static readonly Pen Streak = FrozenPen(Frozen(230, 0x5A, 0x9C, 0xD0), 2.4);
+    private static readonly Pen GoldStreak = FrozenPen(Frozen(220, 0xF2, 0xB8, 0x1E), 2.4);
+    private static readonly Pen AfterimageNear = FrozenPen(Frozen(140, 0xF2, 0xB8, 0x1E), 2);
+    private static readonly Pen AfterimageFar = FrozenPen(Frozen(70, 0xF2, 0xB8, 0x1E), 2);
     private static readonly Pen Crack = FrozenPen(Frozen(255, 0x5A, 0x52, 0x48), 1.6);
     // Body coordinates of the basic slime (scaled with the enemy).
     private static readonly Geometry Cracks = CreateCracks();

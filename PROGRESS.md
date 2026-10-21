@@ -9,6 +9,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Đã làm (C# only): `PetUi` thành bộ token: bảng màu ấm dạng hex (nhấn #C2561F — chữ trắng đạt 4.5:1; nhấn sáng #E8834F cho biểu đồ; chữ nâu #4A3628; phụ #7D6656 đạt 4.5:1 trên nền kem #FFF8F1; viền #EEDFD0), thang chữ 11/12/13/14/16/20, bo góc 6/12/16. Nút chính và phụ thành dạng viên thuốc (nút phụ trước đây là nút Windows mặc định), card bo 12. `PetMenuStyle` lấy màu từ token (hover kem cam, tick cam, bo 12/8). Nhật ký bỏ bảng màu xanh riêng, dùng token (biểu đồ màu cam sáng). Nền xem trước mèo trong Cài đặt thành kem.
 - Chưa đổi: màu Battle (đã gom trong partial PetWindow, để mốc 4), tab/checkbox/ô nhập/slider/combobox vẫn kiểu Windows (mốc 3), menu khay WinForms (mốc 2).
 - Test thật: scripts/test.ps1 -Ui: C# 1220 đạt, WPF 592 đạt. Đã xem ảnh render (PET_RENDER_REVIEW) Cài đặt, menu chuột phải, Nhật ký, Tinh chỉnh hành vi. Lưu ý: chạy với PET_RENDER_REVIEW thì thư mục phải có sẵn (context-menu.png không tự tạo thư mục).
+- Commit 5cdb482. Đóng mèo (PID 25696) bằng WM_CLOSE vào "Chilo — Desktop Pet". Publish sạch: 1.2.0-beta+5cdb482, ZIP artifacts\DesktopPet-1.2.0-beta-5cdb482-win-x64.zip; check-publish 3/3. Mở lại 16:38, log "Desktop Pet 1.2.0-beta (5cdb482) started". AGENTS.md/docs/NEXT-STEPS.md của người dùng trả lại đúng hash.
 - Cần test tay: mở Cài đặt/Nhật ký/Tinh chỉnh và menu chuột phải trên desktop thật, xem màu cam có dễ chịu không, hover nút Hủy/Lưu.
 
 ## Đá tinh anh không bị đẩy lùi bởi đòn đánh (2026-10-21)

@@ -7,6 +7,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 ## Nhãn đặc tính tinh anh (2026-10-21, sau 1.2.0-beta)
 - Người dùng: "làm những gì bạn thấy phù hợp" (không cần hỏi). Chọn phần polish nhỏ nhất, hữu ích nhất: `EliteSpec.Tag` (MIỄN ĐẨY > ĐÁNH NHANH > ĐÒN MẠNH > HỒI MẠNH, có tiếng Anh) và PetBattleView vẽ chữ vàng 10pt viền tối trên đầu tinh anh (lên trên dấu "!" khi gồng). Không đổi gameplay/hitbox.
 - Test thật: scripts/test.ps1 -Ui: Python 55 OK, C# 1219 đạt (thêm check nhãn của 4 tinh anh ship), WPF 592 đạt. Chưa xem tận mắt trên desktop (mục MANUAL-TEST "Buff quái/tinh anh").
+- Commit 00ec389. Publish sạch: 1.2.0-beta+00ec389, ZIP artifacts\DesktopPet-1.2.0-beta-00ec389-win-x64.zip; check-publish 3/3. Mèo không chạy nên không mở lại. AGENTS.md/docs/NEXT-STEPS.md của người dùng trả lại đúng hash.
 
 ## Buff quái/elite — bản 1.2.0-beta (2026-10-21)
 - Người dùng duyệt kế hoạch ("ok"): rally nhận chỉ số elite, nâng rulesVersion (Viễn chinh 2→3, hủy chuyến dở), làm tròn số nguyên. Sau khi thấy mô phỏng, người dùng chọn **giữ nguyên bảng buff, hạ mục tiêu cân bằng**.

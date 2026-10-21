@@ -9,6 +9,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Thẻ trạng thái mèo không làm (tính năng mới, cần duyệt riêng).
 - UiChecks: thêm check menu khay dùng renderer mới và giữ mục; tạo sẵn thư mục PET_RENDER_REVIEW cho context-menu.png. Ảnh menu khay chỉ xuất khi đặt biến riêng PET_TRAY_REVIEW: đã thử vẽ menu WinForms (cả Show lẫn DrawToBitmap) trong lúc chạy check thì 5–6 check battle tính giờ phía sau fail (hạ cánh/30 fps/Resume/menu pause/màn hình khác); tách biến riêng thì đạt hết. App thật không vẽ như vậy.
 - Test thật: scripts/test.ps1 -Ui: Python 55 OK; C# 1220 đạt; WPF 593 đạt (cả có và không PET_RENDER_REVIEW). Đã xem ảnh menu khay và bong bóng thoại; chưa thấy trạng thái hover/bo góc thật vì ảnh vẽ không mở menu.
+- Commit c1b0fe8. Đóng mèo (PID 16896) bằng WM_CLOSE, publish sạch 1.2.0-beta+c1b0fe8, ZIP artifactsDesktopPet-1.2.0-beta-c1b0fe8-win-x64.zip; check-publish 3/3; mở lại 16:46, log "Desktop Pet 1.2.0-beta (c1b0fe8) started". AGENTS.md/docs/NEXT-STEPS.md của người dùng trả lại đúng hash.
 - Cần test tay: chuột phải icon khay: bo góc (Win11), hover cam nhạt, tick Tạm dừng/AI, dòng trạng thái AI mờ; bong bóng thoại khi mèo nói.
 
 ## Cải thiện UI toàn bộ — mốc 1: nền tảng theme ấm (2026-10-21)

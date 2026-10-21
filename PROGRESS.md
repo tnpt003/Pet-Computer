@@ -16,6 +16,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
   - Thường simple: kiếm an toàn 9/10, tham lam 9/10; búa 9/10, 10/10. Thường casual: kiếm 6/10 vs 10/10; búa 6/10 vs 8/10. Dễ 10/10. Khó: 0–3/10.
   - Thời gian đánh chuyến thắng: an toàn ~4,8–5,3 phút, tham lam ~6,5–7,2 phút (≤ 8,5 phút mọi tổ hợp).
   - Nhận xét: đường tham lam (3 di vật) thắng nhiều hơn đường an toàn — di vật + thẻ đáng giá hơn hồi máu; có thể muốn tăng `restHeal` hoặc giảm sức di vật sau khi chơi thật. Chưa đổi số.
+- Commit f035101. Publish sạch: 1.1.0-beta+f035101, ZIP artifacts\DesktopPet-1.1.0-beta-f035101-win-x64.zip; check-publish 3/3. Đóng mèo (PID 20336) bằng WM_CLOSE, mở lại 14:15, log "Desktop Pet 1.1.0-beta (f035101) started". AGENTS.md/docs/NEXT-STEPS.md của người dùng trả lại đúng hash.
 - Chưa: chơi thật; xem ký hiệu ♨/? trên máy thật; ảnh tiếng Việt của bảng lựa chọn; DPI 125–150%.
 
 ## HUD: banner không tràn khung (2026-10-21)

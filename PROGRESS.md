@@ -7,6 +7,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 ## Vệt vàng slime nhanh tinh anh (2026-10-21)
 - PetBattleView: tinh anh có marks "speed" vẽ 4 vệt gió vàng dài ×1.6 thay 3 vệt xanh; khi Dashing thêm hai viền bóng mờ vàng phía sau. Với 3 món polish trước, phần hình ảnh trong đề xuất làm đẹp đã xong; còn lại cue âm thanh tinh anh.
 - Test thật: scripts/test.ps1 -Ui: Python 55 OK, C# 1219, WPF 592 đạt. Chưa xem tận mắt.
+- Commit c89abb8. Publish sạch: 1.2.0-beta+c89abb8, ZIP artifacts\DesktopPet-1.2.0-beta-c89abb8-win-x64.zip; check-publish 3/3. Mèo không chạy nên không mở lại. File của người dùng trả lại đúng hash.
 
 ## Giáp dày slime đá tinh anh (2026-10-21)
 - PetBattleView: tinh anh `pushImmune` vẽ thêm tấm lót vàng (khiên phóng ~1.2 quanh tâm) sau khiên đá và một đinh tán thứ hai. Không đổi hitbox/gameplay.

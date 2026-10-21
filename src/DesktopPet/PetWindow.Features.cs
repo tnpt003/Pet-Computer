@@ -343,7 +343,7 @@ public sealed partial class PetWindow
         soundAfter = now + 0.7;
         // Battle foley is short and frequent (a swing every ~0.75 s): its own short cooldown.
         bool foley = PetSounds.IsBattleEffect(kind);
-        soundCooldowns[kind] = now + (foley ? 0.25 : kind == "ball_tap" ? 0.7 : kind is "purr" or "sleep" ? 6 : 3.5);
+        soundCooldowns[kind] = now + (PetSounds.IsEliteCue(kind) ? 1 : foley ? 0.25 : kind == "ball_tap" ? 0.7 : kind is "purr" or "sleep" ? 6 : 3.5);
         try
         {
             sound?.Stop(); sound?.Dispose(); soundStream?.Dispose();

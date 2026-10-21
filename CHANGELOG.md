@@ -1,5 +1,9 @@
 # Nhật ký thay đổi
 
+## Chưa phát hành
+
+- **Cue âm thanh tinh anh:** tinh anh xuất hiện hoặc được Vua phong có tiếng "ting-ting" hai nốt (trước dùng tiếng mèo ngạc nhiên); Đẩy vào slime đá tinh anh miễn Đẩy có tiếng "cộp" khiên đá (trước dùng tiếng đòn bị chặn). Âm tổng hợp kiểu hoạt hình, theo tắt tiếng/âm lượng/fullscreen như mọi cue chiến đấu; mỗi cue cách nhau ít nhất 1 giây.
+
 ## 1.2.0-beta — Quái mạnh hơn, tinh anh nổi bật (2026-10-21)
 
 Bản beta: test tự động và mô phỏng đạt, **chưa chơi thử thật**. Game khó hơn rõ rệt, nhất là Khó và Viễn chinh (người dùng chọn giữ bảng buff và hạ mục tiêu cân bằng).

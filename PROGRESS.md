@@ -4,6 +4,12 @@ Cập nhật: 2026-10-21 (Asia/Saigon).
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
+## Cue âm thanh tinh anh (2026-10-21)
+- Người dùng chọn làm cue tinh anh trước, rồi Viễn chinh mốc 5 (nâng 1.3.0-beta). C# only, không đổi gameplay/rulesVersion/Python.
+- PetSounds: 2 hiệu ứng tổng hợp mới (cùng kiểu swoosh/squish/pop, không file mới): `sparkle` (2 nốt chuông đi lên, 0,22 s) cho EliteAppeared và BossRallied (trước: "surprised"); `clank` (tiếng gõ khiên trầm, 0,14 s) cho PushResisted (trước: "ball_tap"). Hạng ưu tiên trong BattleCues giữ nguyên (5/3). Cooldown riêng 1 s (`PetSounds.IsEliteCue`), foley khác vẫn 0,25 s.
+- Test thật: scripts/test.ps1 -Ui: Python 55 OK; C# 1221 đạt (foley 5 loại là WAV ngắn hợp lệ, đỉnh mềm, khác nhau và khác tiếng mèo; chỉ cue tinh anh có cooldown dài); WPF 597 đạt. Chưa nghe thử thật.
+- Cần test tay: mục "Cue âm thanh tinh anh" trong MANUAL-TEST.md.
+
 ## Thẻ trạng thái mở sát mèo và kéo được (2026-10-21)
 - Người dùng báo (ảnh chụp): thẻ trạng thái mở rất xa mèo và không kéo được. Nguyên nhân: thẻ gán thẳng Left/Top của WPF, mà cửa sổ mới hiểu tọa độ theo DPI khác với tọa độ của mèo (DIP theo scale màn hình mèo). Người dùng "ok" cách sửa.
 - PetWindow.Status.cs: đo kích thước bằng DesiredSize (DIP), đặt vị trí qua MoveWindow (SetWindowPos theo scale của mèo) như thông báo battle; bấm giữ chỗ trống trên thẻ (trừ ×) để kéo (DragMove), thả ra thẻ đứng yên, vẫn đóng khi click ra ngoài/Esc/×.
@@ -745,7 +751,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 
 ## Đang dở và việc tiếp theo
 - Cải thiện UI toàn bộ (2026-10-21, phong cách ấm/hoạt hình, không dark mode): 4 mốc xong (theme, thú cưng, Cài đặt/Nhật ký/Tinh chỉnh, Battle) + đợt cuối (cỡ chữ battle, hộp thoại ấm, thẻ trạng thái, e5840c5). Còn có thể làm: tách hàm dựng panel game chung; thẻ trạng thái có thể thêm "câu nói/ý nghĩ gần nhất" nếu người dùng muốn; người dùng xem thật và góp ý màu.
-- Buff quái/elite 1.2.0-beta (2026-10-21): người dùng chơi thật Thường/Khó/Viễn chinh, đi mục MANUAL-TEST "Buff quái/tinh anh". Mô phỏng: Khó và Viễn chinh Thường đường an toàn rất khó (đã hạ mục tiêu theo lựa chọn người dùng); nếu thật sự quá khó, hướng đã đo: bỏ buff nền giữ elite (gần bản cũ). Polish hình ảnh elite đã làm (nhãn, hào quang, giáp dày, vệt vàng — cần xem tận mắt); cue âm thanh riêng cho tinh anh chưa làm.
+- Buff quái/elite 1.2.0-beta (2026-10-21): người dùng chơi thật Thường/Khó/Viễn chinh, đi mục MANUAL-TEST "Buff quái/tinh anh". Mô phỏng: Khó và Viễn chinh Thường đường an toàn rất khó (đã hạ mục tiêu theo lựa chọn người dùng); nếu thật sự quá khó, hướng đã đo: bỏ buff nền giữ elite (gần bản cũ). Polish hình ảnh elite đã làm (nhãn, hào quang, giáp dày, vệt vàng — cần xem tận mắt); cue âm thanh tinh anh đã làm (sparkle/clank, 2026-10-21 — cần nghe thử).
 - Viễn chinh (docs/EXPEDITION-DIRECTION.md): mốc 2–4 xong (2026-10-21). Người dùng cần: đi mục "Viễn chinh — mốc 2/3/4" trong MANUAL-TEST.md, chơi một chuyến Thường thật rồi chốt `winHeal`/`stepThreat`/`retreatCost`/`restHeal` và sức di vật (mô phỏng: đường tham lam mạnh hơn đường an toàn). Tiếp: mốc 5 (end-to-end, save lỗi/crash, DPI/nhiều màn hình, hiệu năng, phát hành — cần trình bày kế hoạch và chờ "ok"). Chưa ghi CHANGELOG cho Viễn chinh (chờ bản phát hành).
 - Cứu mèo (2026-10-21): người dùng đi mục "Cứu mèo không làm quái đứng hình" trong MANUAL-TEST.md; xem 0,3 s nhấc tối thiểu có làm hụt bảo vệ khi cứu nhanh thật không (chỉnh `rescueGraceMinLiftSeconds`).
 - Review Enemy Tactics (docs/NEXT-STEPS.md): R1+R2 xong (mốc A), R3 xong (mốc B: người chơi casual + số đo). Nếu muốn khó hơn ở Thường: cân nhắc theo bảng casual (vd. hồi chiêu Đẩy so với nhịp hồi của slime thảo dược) — đổi luật, cần người dùng chốt. R4 (tách PetBattle.cs, đo frame time trận đông quái, test vòng start→kết quả→chơi lại) để sau. Người dùng cần thử: Đẩy slime thảo dược/hạ nó ngay lúc hồi xong thấy đòn trúng bình thường.

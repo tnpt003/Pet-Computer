@@ -309,3 +309,8 @@ Chuyến đang dở từ mốc 2 (nếu có) sẽ kết thúc khi mở bản đ�
 - [ ] Vua Slime phong tinh anh cho quân: quân đó cũng khỏe/đau hơn theo loại của nó.
 - [ ] Bảng kết quả/bản đồ: kỷ lục cũ không còn hiện là kỷ lục của luật mới (tính lại từ đầu). Nếu có chuyến Viễn chinh đang dở từ bản trước: không tiếp tục được (báo luật đã đổi), app không lỗi.
 - [ ] Khó và Viễn chinh Thường khó hơn rõ (mô phỏng: Viễn chinh Thường đường an toàn ~2/10) — cho biết cảm nhận thật.
+
+#### Cue âm thanh tinh anh (2026-10-21)
+- [ ] Bật âm thanh tương tác, âm lượng vừa. Tinh anh xuất hiện (màn 3–5 Thường) hoặc Vua phong tinh anh: nghe "ting-ting" hai nốt đi lên, ngắn, không chói, khác tiếng mèo ngạc nhiên trước đây.
+- [ ] Đẩy slime đá tinh anh: nghe tiếng "cộp" trầm như gõ khiên đá, khác "tách" khi đòn bị chặn thường. Đẩy nó liên tục (mỗi lần hết hồi chiêu): không ồn, không chồng tiếng.
+- [ ] Tắt âm thanh tương tác hoặc âm lượng 0: hai cue im; có app fullscreen: im. Thắng/Thua/Boss/mèo bị đánh cùng lúc vẫn át hai cue này.

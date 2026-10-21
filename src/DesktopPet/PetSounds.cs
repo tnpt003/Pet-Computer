@@ -9,9 +9,12 @@ namespace DesktopPet;
 public static class PetSounds
 {
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, Lazy<byte[]>> Prepared = new();
-    // Battle Mode foley (sword swoosh, slime squish, slime pop). Not cat voices, so they are
-    // synthesized here as soft cartoon effects instead of being cut from the recordings.
-    public static bool IsBattleEffect(string kind) => kind is "swoosh" or "squish" or "pop";
+    // Battle Mode foley (sword swoosh, slime squish, slime pop; an elite's sparkle, Push hitting a
+    // stone elite's clank). Not cat voices, so they are synthesized here as soft cartoon effects
+    // instead of being cut from the recordings.
+    public static bool IsBattleEffect(string kind) => kind is "swoosh" or "squish" or "pop" or "sparkle" or "clank";
+    // The elite cues mark rarer moments: a longer cooldown than the swing-paced foley.
+    public static bool IsEliteCue(string kind) => kind is "sparkle" or "clank";
 
     public static byte[] CreateWave(string kind, int? seed = null)
     {
@@ -76,14 +79,15 @@ public static class PetSounds
         return Cartoonize(wave, kind, random);
     }
 
-    // Rounded, short and quiet: a filtered-noise swoosh, a wobbly falling "bwop" for a hit and a
-    // rising bubble "bloop" when a slime pops. Pitch varies slightly per seed.
+    // Rounded, short and quiet: a filtered-noise swoosh, a wobbly falling "bwop" for a hit, a
+    // rising bubble "bloop" when a slime pops, a rising two-note "ting-ting" when an elite shows up
+    // and a dull "tonk" on a stone shield. Pitch varies slightly per seed.
     private static byte[] Synthesize(string kind, int seed)
     {
         const int rate = 22050;
         var random = new Random(seed);
         double pitch = 0.94 + random.NextDouble() * 0.12;
-        double duration = kind switch { "swoosh" => 0.11, "squish" => 0.15, _ => 0.2 };
+        double duration = kind switch { "swoosh" => 0.11, "squish" => 0.15, "sparkle" => 0.22, "clank" => 0.14, _ => 0.2 };
         int count = (int)(duration * rate);
         var samples = new short[count];
         double phase = 0, low = 0, band = 0;
@@ -110,6 +114,27 @@ public static class PetSounds
                     double body = Math.Sin(phase) + 0.3 * Math.Sin(phase * 2);
                     double splat = (random.NextDouble() * 2 - 1) * Math.Exp(-u * 18) * 0.5;
                     value = (body * 0.5 + splat) * Math.Min(1, u * 40) * Math.Exp(-u * 3.2);
+                    break;
+                }
+                case "sparkle":
+                {
+                    // Two bell-like notes a fourth apart, the second higher and softer.
+                    bool second = u > 0.4;
+                    double local = second ? (u - 0.4) / 0.6 : u / 0.4;
+                    double frequency = (second ? 1760 : 1320) * pitch;
+                    phase += 2 * Math.PI * frequency / rate;
+                    double bell = Math.Sin(phase) + 0.25 * Math.Sin(phase * 2.01);
+                    value = bell * Math.Min(1, local * 60) * Math.Exp(-local * 4.5) * (second ? 0.38 : 0.45);
+                    break;
+                }
+                case "clank":
+                {
+                    // A low falling knock with a short, damped ring and a tap of noise on contact.
+                    double frequency = (210 * Math.Exp(-u * 2.2) + 120) * pitch;
+                    phase += 2 * Math.PI * frequency / rate;
+                    double ring = 0.35 * Math.Sin(phase * 2.76) * Math.Exp(-u * 14);
+                    double tap = (random.NextDouble() * 2 - 1) * Math.Exp(-u * 40) * 0.4;
+                    value = (Math.Sin(phase) * 0.6 + ring + tap) * Math.Min(1, u * 60) * Math.Exp(-u * 5);
                     break;
                 }
                 default:

@@ -236,7 +236,7 @@ internal static class BattleTests
         check(full.Phase == BattlePhase.WaveBreak && full.CatHp == full.Settings.CatMaxHp && full.LastHeal == 0, "Healing never goes above full HP");
 
         // Battle foley: short, quiet, synthesized, distinct and safe to scale.
-        string[] foley = { "swoosh", "squish", "pop" };
+        string[] foley = { "swoosh", "squish", "pop", "sparkle", "clank" };
         var waves = foley.Select(kind => PetSounds.CreateWave(kind, 3)).ToArray();
         bool valid = true;
         foreach (var w in waves)
@@ -247,8 +247,9 @@ internal static class BattleTests
             valid &= w[0] == 'R' && BitConverter.ToInt32(w, 40) == w.Length - 44 && seconds is > 0.05 and < 0.25 && peak > 2000 && peak < 32767 * 0.5;
         }
         check(valid, "Battle effects are valid short WAVs with a soft peak");
-        check(waves.Select(Convert.ToBase64String).Distinct().Count() == 3 && !waves[0].SequenceEqual(PetSounds.CreateWave("meow", 3)),
-            "Swoosh, squish and pop sound different from each other and from the cat");
+        check(waves.Select(Convert.ToBase64String).Distinct().Count() == foley.Length && !waves[0].SequenceEqual(PetSounds.CreateWave("meow", 3)),
+            "Swoosh, squish, pop, sparkle and clank sound different from each other and from the cat");
+        check(PetSounds.IsEliteCue("sparkle") && PetSounds.IsEliteCue("clank") && !PetSounds.IsEliteCue("swoosh"), "Only the elite cues get the longer cooldown");
         check(PetSounds.CreateWave("pop", 3).SequenceEqual(waves[2]) && !PetSounds.CreateWave("pop", 4).SequenceEqual(waves[2]), "The same seed gives the same effect; another seed varies it");
         byte[] shared = PetSounds.CreateWave("squish"); Array.Clear(shared);
         check(PetSounds.CreateWave("squish")[0] == (byte)'R' && foley.All(PetSounds.IsBattleEffect) && !PetSounds.IsBattleEffect("meow"),

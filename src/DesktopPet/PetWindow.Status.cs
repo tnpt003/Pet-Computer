@@ -57,6 +57,8 @@ public sealed partial class PetWindow
             CornerRadius = new CornerRadius(PetUi.PillRadius), Padding = new Thickness(16, 10, 10, 14), Margin = new Thickness(14),
             Effect = new DropShadowEffect { Color = Color.FromRgb(0x4A, 0x36, 0x28), BlurRadius = 16, ShadowDepth = 2, Opacity = 0.22 }
         };
+        // Pressing anywhere on the card except × moves it; it then stays where it was dropped.
+        card.MouseLeftButtonDown += (_, e) => { if (e.ButtonState == MouseButtonState.Pressed) statusWindow?.DragMove(); };
         statusWindow = new Window
         {
             Title = L("Trạng thái", "Status") + " — " + preferences.Name, Content = card, WindowStyle = WindowStyle.None, AllowsTransparency = true,
@@ -70,9 +72,8 @@ public sealed partial class PetWindow
         statusWindow.Closing += (_, _) => statusClosing = true;
         statusWindow.Closed += (_, _) => { statusClosing = false; statusTimer?.Stop(); statusTimer = null; statusWindow = null; statusBars = null; };
         RefreshStatusCard();
-        statusWindow.Left = -10000; statusWindow.Top = -10000; // Measured first, then placed next to the cat.
+        statusWindow.Left = -10000; statusWindow.Top = -10000; // Shown off-screen, then placed next to the cat.
         statusWindow.Show();
-        statusWindow.UpdateLayout();
         PlaceStatusCard();
         statusTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(0.5) };
         statusTimer.Tick += (_, _) => RefreshStatusCard();
@@ -82,15 +83,18 @@ public sealed partial class PetWindow
 
     public void CloseStatusCard() { if (!statusClosing) statusWindow?.Close(); }
 
-    // Above the cat (like the battle notice); below it when the cat sits near the top.
+    // Above the cat (like the battle notice); below it when the cat sits near the top. The size
+    // is measured in DIPs and the position goes through MoveWindow in the pet's monitor scale:
+    // WPF's own Left/Top on a new window use another DPI and put the card far from the cat.
     private void PlaceStatusCard()
     {
-        if (statusWindow == null) return;
-        double width = statusWindow.ActualWidth, height = statusWindow.ActualHeight;
+        if (statusWindow?.Content is not FrameworkElement content) return;
+        content.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        double width = content.DesiredSize.Width, height = content.DesiredSize.Height;
         double left = Math.Clamp(pet.X + settings.Width / 2 - width / 2, bounds.Left, Math.Max(bounds.Left, bounds.Right - width));
         double top = pet.Y + 10 - height;
         if (top < bounds.Top) top = Math.Min(pet.Y + settings.Height - 10, Math.Max(bounds.Top, bounds.Bottom - height));
-        statusWindow.Left = left; statusWindow.Top = top;
+        MoveWindow(statusWindow, left, top);
     }
 
     private void RefreshStatusCard()

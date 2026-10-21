@@ -89,6 +89,10 @@ internal static class Program
     [System.Runtime.InteropServices.DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")]
     private static extern IntPtr GetWindowLongPtr(IntPtr hwnd, int index);
 
+    private struct NativeRect { public int Left, Top, Right, Bottom; }
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern bool GetWindowRect(IntPtr hwnd, out NativeRect rect);
+
     private static MouseButtonEventArgs MouseEvent(RoutedEvent routedEvent) =>
         new(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Left) { RoutedEvent = routedEvent };
 
@@ -186,6 +190,27 @@ internal static class Program
               statusTexts.Any(t => t.Contains("Smart pet (AI)")) && !statusTexts.Any(t => t.EndsWith("/100", StringComparison.Ordinal)) &&
               pet.Action == actionBeforeStatus && Field<long>(window, "interactionCount") == interactionsBeforeStatus,
             "Status card sits before the diary, shows doing/feeling, hides need bars without the AI, and does not touch the pet");
+        // The card sits right above the cat, centered, in screen pixels of the pet's monitor scale
+        // (also at a pretend 150%), not where WPF's own Left/Top would put a new window.
+        bool CardNextToCat(double testScale)
+        {
+            if (statusCard == null) return false;
+            var scaleField = typeof(PetWindow).GetField("scale", BindingFlags.NonPublic | BindingFlags.Instance)!;
+            double realScale = (double)scaleField.GetValue(window)!;
+            scaleField.SetValue(window, testScale);
+            try
+            {
+                typeof(PetWindow).GetMethod("PlaceStatusCard", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(window, null);
+                GetWindowRect(new System.Windows.Interop.WindowInteropHelper(statusCard).Handle, out var rect);
+                var petSettings = Field<PetSettings>(window, "settings");
+                var size = ((FrameworkElement)statusCard.Content).DesiredSize;
+                double left = (pet.X + petSettings.Width / 2 - size.Width / 2) * testScale, top = (pet.Y + 10 - size.Height) * testScale;
+                return size.Width > 200 && Math.Abs(rect.Left - left) <= 2 && Math.Abs(rect.Top - top) <= 2;
+            }
+            finally { scaleField.SetValue(window, realScale); }
+        }
+        double petScale = (double)typeof(PetWindow).GetField("scale", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(window)!;
+        Check(CardNextToCat(petScale) && CardNextToCat(1.5), "Status card is placed right above the cat in the pet's monitor scale (real and 150%)");
         if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string statusReview && statusRoot != null)
         {
             System.IO.Directory.CreateDirectory(statusReview);

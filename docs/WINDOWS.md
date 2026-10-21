@@ -515,7 +515,9 @@ and, when the Python AI has reported them, five bars where full is always good: 
 (100 − hunger), Entertained (100 − boredom), Loved (affection) and Bond. With the AI off the
 bars are hidden and a hint points to **Smart pet (AI)** in the tray. The card is display only:
 opening it never wakes, moves or interrupts the cat and is not an interaction. Clicking
-elsewhere, Esc or the × closes it (`PetWindow.Status.cs`).
+elsewhere, Esc or the × closes it (`PetWindow.Status.cs`). Press and drag anywhere on the
+card (except ×) to move it; it stays where it is dropped. It is placed with the pet's own
+monitor scale (MoveWindow), like the battle notice, so it opens next to the cat at any DPI.
 
 The forget-habits question, About and the two "could not save" notes use `PetDialog`
 instead of the grey Windows MessageBox: a cream window with a round orange icon, the

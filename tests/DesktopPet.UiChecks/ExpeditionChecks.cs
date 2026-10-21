@@ -6,11 +6,12 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using DesktopPet;
 
-// Expedition milestone 2 in the real pet window: locked until the Adventure's gate stage is won →
+// Expedition milestones 2–3 in the real pet window: locked until the Adventure's gate stage is won →
 // map → weapon/difficulty → run → step battle with the run's HP and build → result → Continue;
 // End leaves a battle (RetreatCost), a battle cut off by closing/reset is charged when the map next
 // opens (after a restart too), the boss ends the run, a loss ends it, giving up, custom data kept in
-// memory. A temporary expedition file only; the Adventure progress stays in memory.
+// memory; a won elite's relics, a rest kept over a restart, the relic in the next battle (milestone 3).
+// A temporary expedition file only; the Adventure progress stays in memory.
 internal static class ExpeditionChecks
 {
     private const BindingFlags Flags = BindingFlags.NonPublic | BindingFlags.Instance;
@@ -249,6 +250,69 @@ internal static class ExpeditionChecks
                 "With custom battle data the run plays but nothing is written to the file");
             window.Reset();
             typeof(PetWindow).GetProperty("BattleDataCustom")!.SetValue(window, false);
+
+            // Milestone 3: a won elite's relics, a rest, the relic in the next battle.
+            var bell = new RelicSpec { Id = "r_bell", Effect = RelicSpec.Counter, Amount = 0.6, Penalty = 3, NameVi = "Chuông", NameEn = "Bell", DescVi = "Chuông phản đòn", DescEn = "Counter after a block" };
+            var feather = new RelicSpec { Id = "r_feather", Effect = RelicSpec.Light, Amount = 0.15, Extra = 0.1, Penalty = 15, NameVi = "Lông", NameEn = "Feather", DescVi = "Nhẹ", DescEn = "Lighter" };
+            var shrine = new ExpeditionEventSpec { Id = "shrine", Kind = ExpeditionEventSpec.Shrine, Cost = 0.2, NameVi = "Đền", NameEn = "Shrine", DescVi = "Đền cũ", DescEn = "An old shrine" };
+            var trail3 = new ExpeditionSpec
+            {
+                Id = "trail3", NameVi = "Đường ba", NameEn = "Trail three", UnlockAfter = "st_gate", RetreatCost = 0.25, WinHeal = 0, StepThreat = 0, RestHeal = 0.3,
+                Steps = new[] { new[] { ExpeditionSpec.Elite }, new[] { ExpeditionSpec.Rest, ExpeditionSpec.Event }, new[] { ExpeditionSpec.Fight } },
+                Fights = new[] { Stage("x3_field", "Field") }, Elites = new[] { Stage("x3_fort", "Fort") }, Boss = Stage("x3_throne", "Throne"),
+                Events = new[] { shrine }, Relics = new[] { bell, feather }
+            };
+            window.BattleTuning = new BattleSettings { FirstWaveDelay = 0, SlimeMaxHp = 1, SlimeDamage = 1, OutroSeconds = 0.5, Campaign = campaign, Expedition = trail3 };
+            window.ReloadExpeditionProgress();
+            window.OpenExpeditionMap();
+            window.ExpeditionStart(9);
+            Tick(0.3);
+            check(window.ExpeditionMapText.Contains("Relics: none yet (0/3)") && window.ExpeditionMapText.Contains("Win: pick one of 2 relics"), "The map lists the run's relics and says what an elite gives");
+            window.ExpeditionFight(0);
+            Finish();
+            await Task.Delay(30);
+            panel = ResultText();
+            check(window.LastBattleSummary is { Expedition.Reward: true } && panel.Contains("The elite left relics") && Saved()?.Pending?.Kind == "reward" && Saved()!.Pending!.Relics.Length == 2,
+                $"A won elite leaves relics to pick on the map, saved ({panel})");
+            Click(Button(Find("Pet result")!.Content as DependencyObject ?? new Border(), "Continue")!);
+            Tick(0.3);
+            text = window.ExpeditionMapText;
+            check(window.ExpeditionHasChoice && text.Contains("Elite reward") && text.Contains("Bell") && text.Contains("Feather") && text.Contains("Counter after a block") && !text.Contains("Fight\n") && !text.Contains("Go here")
+                  && !window.ExpeditionOptionEnabled(Expedition.Take) && window.ExpeditionOptionEnabled(Expedition.Leave) && window.ExpeditionFight(0) != null && window.ExpeditionSelect(0) == false,
+                $"The map shows the relics with what they do; nothing goes on until one is taken or left ({text.Replace('\n', '|')})");
+            check(window.ExpeditionPick(relic: "r_bell") && window.ExpeditionOptionEnabled(Expedition.Take), "Picking a relic enables Take");
+            Shot("Pet expedition", "expedition-reward-en.png");
+            Click(Button(Find("Pet expedition")!.Content as DependencyObject ?? new Border(), "Take the chosen relic")!);
+            Tick(0.3);
+            check(window.Expedition!.Run!.Relics.SequenceEqual(new[] { "r_bell" }) && Saved()!.Relics.SequenceEqual(new[] { "r_bell" }) && Saved()!.Pending == null && !window.ExpeditionHasChoice
+                  && window.ExpeditionMapText.Contains("Got the Bell relic") && window.ExpeditionMapText.Contains("Relics: ◈ Bell (1/3)"), "Taking it keeps the relic in the run (saved) and says so");
+
+            // A rest: drawn once, kept over a restart; resolved once.
+            check(window.ExpeditionSelect(0) && window.ExpeditionMapText.Contains("Rest") && window.ExpeditionMapText.Contains("Go here"), "A rest node says what it offers and goes there");
+            window.Expedition!.Run!.Hp = 50;
+            check(window.ExpeditionVisit() == null && Saved()?.Pending?.Kind == "rest" && window.ExpeditionHasChoice && !window.ExpeditionMapText.Contains("Go here") && window.ExpeditionMapText.Contains("Rest — choose one"),
+                "Going to the rest opens its choice on the map (saved)");
+            var cards = Saved()!.Pending!.Cards;
+            Shot("Pet expedition", "expedition-rest-en.png");
+            window.CancelExpeditionMap();
+            window.ReloadExpeditionProgress();
+            window.OpenExpeditionMap();
+            Tick(0.3);
+            check(window.Expedition!.Run!.Pending!.Cards.SequenceEqual(cards) && window.ExpeditionMapText.Contains("Rest: +30 HP") && window.ExpeditionHasChoice, "Reopened after a restart the rest offers the same cards");
+            check(window.ExpeditionChoose(Expedition.Card) is string none3 && none3.Length > 0 && window.ExpeditionHasChoice, "Taking a card without picking one is refused");
+            check(window.ExpeditionChoose(Expedition.Heal) == null && window.Expedition.Run!.Hp == 80 && window.Expedition.Run.Step == 2 && Saved()?.Hp == 80 && !window.ExpeditionHasChoice
+                  && window.ExpeditionChoose(Expedition.Heal) != null, "Resting gives 30 HP back once and passes the step (saved)");
+
+            // The next battle carries the relic: the HUD lists it, the Shield waits longer.
+            check(window.ExpeditionFight(0) == null && window.Battle!.Relics.Count == 1 && window.Battle.SkillCooldown(BattleSkill.Shield) == window.BattleTuning.SkillCooldown(BattleSkill.Shield) + 3,
+                "The step's battle has the run's relic");
+            hud = (BattleHud)typeof(PetWindow).GetField("battleHud", Flags)!.GetValue(window)!;
+            hud.Update(window.Battle!, false, false, false, false);
+            check(hud.UpgradesText.Contains("◈ Bell"), $"The HUD lists the relic ({hud.UpgradesText})");
+            window.EndBattle();
+            window.Reset();
+            check(new BattleSim(window.BattleTuning, 0, 1600).Relics.Count == 0, "A free battle has no relics");
+            window.BattleTuning = easy;
 
             // Data without an Expedition: the menu hides it, opening explains.
             window.BattleTuning = new BattleSettings { Campaign = campaign };

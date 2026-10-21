@@ -565,6 +565,14 @@ public sealed class BattleSim
     public bool Incoming => incoming != null;
     // Survive stages: the card offers of UpgradeAt already made.
     private int timedOffers;
+    // An Expedition run's relics (PetExpedition.cs RelicSpec) and what they change; none outside one.
+    private readonly List<RelicSpec> relics = new();
+    public IReadOnlyList<RelicSpec> Relics => relics;
+    private double counterBonus, shieldDelay, fishBonus, fishDelay, recklessBonus, recklessBelow, recklessHurt;
+    // Counter bell: the Shield or the Turtle shell stopped a hit, the next landed swing hits harder.
+    public bool CounterReady { get; private set; }
+    public int CounterHits { get; private set; }
+    public bool Reckless => recklessBonus > 0 && CatHp < recklessBelow * CatMaxHp;
     // An Expedition step makes its stage this much stronger (1 otherwise).
     private readonly double threatScale = 1;
     // The threat new enemies get now: the stage's (× an Expedition step's) × the current wave's,
@@ -637,7 +645,7 @@ public sealed class BattleSim
 
     public BattleSim(BattleSettings settings, double left, double right, Random? random = null, BattleDifficulty difficulty = BattleDifficulty.Normal,
         string weapon = BattleWeapon.Sword, StageSpec? stage = null, IReadOnlyDictionary<string, int>? build = null, int? seed = null,
-        double? startHp = null, double threat = 1)
+        double? startHp = null, double threat = 1, IReadOnlyList<string>? relics = null)
     {
         // A given seed wins; otherwise one drawn from the given random (tests), else a fresh one.
         Seed = seed ?? random?.Next() ?? Random.Shared.Next();
@@ -661,6 +669,10 @@ public sealed class BattleSim
             foreach (var (id, count) in build)
                 if (Upgrade(id) is UpgradeSpec card && card.Effect != "heal")
                     for (int i = 0; i < count && (card.MaxStacks == 0 || Stacks(id) < card.MaxStacks); i++) Take(card, 0, false);
+        // An Expedition run's relics (unknown ones skipped), each its own modifier.
+        if (relics != null && settings.Expedition is ExpeditionSpec expedition)
+            foreach (var id in relics)
+                if (expedition.Relic(id) is RelicSpec relic && !this.relics.Contains(relic)) AddRelic(relic);
         // An Expedition step starts with the HP the last one ended with (within the build's max).
         CatHp = startHp is double hp && double.IsFinite(hp) ? Math.Clamp(hp, 1, CatMaxHp) : CatMaxHp;
         if (stage != null && double.IsFinite(threat) && threat > 0) threatScale = threat;
@@ -863,9 +875,12 @@ public sealed class BattleSim
         chargedSwing = false;
         if (opening) damage *= 1 + openerBonus;
         if (charged) damage *= 1 + momentumBonus;
+        if (Reckless) damage *= 1 + recklessBonus;
+        bool countered = CounterReady;
+        if (countered) damage *= 1 + counterBonus;
         double knock = arms.Knock + knockBonus;
         events.Add(new(combo ? BattleEventKind.ComboHit : BattleEventKind.SlimeHit, slime.X));
-        AddEffect(combo || charged ? BattleEffectKind.Combo : arms.Effect == "thud" ? BattleEffectKind.Thud : BattleEffectKind.Spark, slime.X, slime.Height / 2);
+        AddEffect(combo || charged || countered ? BattleEffectKind.Combo : arms.Effect == "thud" ? BattleEffectKind.Thud : BattleEffectKind.Spark, slime.X, slime.Height / 2);
         if (combo) { Combo = 0; CombosLanded++; }
         // A blocked or shrugged-off hit (or the last one) moves nothing.
         var result = Damage(slime, damage, combo ? DamageSource.Combo : DamageSource.Weapon);
@@ -875,6 +890,7 @@ public sealed class BattleSim
             slime.Opened = true;
             if (opening) OpenerHits++;
             if (charged) ChargedHits++;
+            if (countered) { CounterReady = false; CounterHits++; }
         }
         bool landed = result == HitResult.Landed && slime.State != SlimeState.Defeated;
         // A combo knocks back away from the cat (heavy kinds less), but does not stun; a heavy
@@ -1624,6 +1640,7 @@ public sealed class BattleSim
         if (ShieldRemaining > 0)
         {
             events.Add(new(BattleEventKind.Blocked, catX));
+            if (counterBonus > 0) CounterReady = true;
             return;
         }
         // Turtle shell: one whole hit stopped (no damage, no stun), then it grows back.
@@ -1631,11 +1648,12 @@ public sealed class BattleSim
         {
             ShellCooldown = shellRegrow;
             ShellBlocks++;
+            if (counterBonus > 0) CounterReady = true;
             AddEffect(BattleEffectKind.Block, catX, 50);
             events.Add(new(BattleEventKind.ShellBlocked, catX));
             return;
         }
-        double hurt = from.Damage * ArmorFactor;
+        double hurt = from.Damage * ArmorFactor * (1 + recklessHurt);
         CatHp = Math.Max(0, CatHp - hurt);
         HurtFlash = Settings.HurtFlashSeconds;
         events.Add(new(BattleEventKind.CatHurt, catX, hurt));
@@ -1798,6 +1816,36 @@ public sealed class BattleSim
         Armed = null;
         events.Add(new(BattleEventKind.UpgradeOffered, 0, UpgradeOffer.Count));
     }
+
+    // The offer a wave would make now, for an Expedition rest or swap (outside any battle: the
+    // caller makes a sim for it alone). Null: nothing to offer.
+    public IReadOnlyList<UpgradeSpec>? OfferCards()
+    {
+        if (UpgradeOffer == null) OfferUpgrades();
+        return UpgradeOffer;
+    }
+
+    // A relic's gain and price (see RelicSpec), apart from the cards' bonuses.
+    private void AddRelic(RelicSpec relic)
+    {
+        relics.Add(relic);
+        switch (relic.Effect)
+        {
+            case RelicSpec.Counter: counterBonus += relic.Amount; shieldDelay += relic.Penalty; break;
+            case RelicSpec.Relief: fishBonus += relic.Amount; fishDelay += relic.Penalty; break;
+            case RelicSpec.Reckless: recklessBonus += relic.Amount; recklessBelow = Math.Max(recklessBelow, relic.Below); recklessHurt += relic.Penalty; break;
+            case RelicSpec.Light: moveBonus += relic.Amount; cooldownCut += relic.Extra; maxHpBonus -= relic.Penalty; break;
+        }
+    }
+
+    // The Healing fish's heal and each skill's cooldown in this battle (the relics' changes included).
+    public double HealAmount => Settings.HealAmount * (1 + fishBonus);
+    public double SkillCooldown(BattleSkill skill) => skill switch
+    {
+        BattleSkill.Shield => Settings.SkillCooldown(skill) + shieldDelay,
+        BattleSkill.Heal => Settings.SkillCooldown(skill) * (1 + fishDelay),
+        _ => Settings.SkillCooldown(skill)
+    };
 
     // The user's pick: only a card on offer, only once (a second click finds no offer).
     public bool ChooseUpgrade(string id, double catX = 0)
@@ -2064,7 +2112,7 @@ public sealed class BattleSim
         switch (skill)
         {
             case BattleSkill.Heal:
-                double healed = Math.Min(Settings.HealAmount, CatMaxHp - CatHp);
+                double healed = Math.Min(HealAmount, CatMaxHp - CatHp);
                 if (healed <= 0) return false; // Full HP: keep the fish for later.
                 CatHp += healed;
                 AddEffect(BattleEffectKind.Number, catX, 115, -Math.Round(healed));
@@ -2079,7 +2127,7 @@ public sealed class BattleSim
                 events.Add(new(BattleEventKind.Shielded, catX));
                 break;
         }
-        cooldowns[(int)skill] = Settings.SkillCooldown(skill);
+        cooldowns[(int)skill] = SkillCooldown(skill);
         return true;
     }
 
@@ -2114,7 +2162,7 @@ public sealed class BattleSim
             bombs.Add(new BattleBomb { X = slime.X, Remaining = Settings.BombDelay });
             events.Add(new(BattleEventKind.BombThrown, slime.X));
         }
-        cooldowns[(int)skill] = Settings.SkillCooldown(skill);
+        cooldowns[(int)skill] = SkillCooldown(skill);
         if (Armed == skill) Armed = null;
         return true;
     }

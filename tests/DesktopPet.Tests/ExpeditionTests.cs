@@ -1,6 +1,6 @@
 using DesktopPet;
 
-// Expedition milestone 2 (docs/EXPEDITION-DIRECTION.md): the data, a run's map drawn once from its
+// Expedition milestones 2–3 (docs/EXPEDITION-DIRECTION.md): the data, a run's map drawn once from its
 // seed, HP and build carried from step to step, leaving a battle (RetreatCost), a run counted once,
 // the saved file (atomic, backup, newer versions, a run that no longer fits the data) and BattleSim's
 // start HP and step threat. Then the whole run in simulation (NOT real play). Temporary files only.
@@ -16,8 +16,8 @@ internal static class ExpeditionTests
         var encounters = spec!.Fights.Concat(spec.Elites).Append(spec.Boss!).ToList();
         check(encounters.Select(s => s.Id).Distinct().Count() == encounters.Count && encounters.All(s => !adventureIds.Contains(s.Id) && s.Upgrades && !s.Survival),
             "Encounters have their own ids (none an Adventure stage's), all clear stages with upgrade cards");
-        check(spec.Steps.Select(step => step.Count(k => k == ExpeditionSpec.Elite)).Sum() is > 0 and < 5 && spec.Steps.All(step => step.Length == 2),
-            "Every step offers two nodes, some of them elite");
+        check(spec.Steps.Select(step => step.Count(k => k == ExpeditionSpec.Elite)).Sum() is > 0 and < 5 && spec.Steps.All(step => step.Length is 2 or 3 && step.Any(ExpeditionSpec.IsBattle)),
+            "Every step offers two or three nodes, at least one a battle, some of them elite");
 
         // Unlocking: the Adventure's last stage.
         var expedition = new Expedition(data, new ExpeditionProgress());
@@ -29,14 +29,18 @@ internal static class ExpeditionTests
         // The map: drawn once from the seed, the same for the same seed, each step's nodes different.
         var run = expedition.Start(BattleWeapon.Sword, BattleDifficulty.Normal, 42, "run-a");
         var again = new Expedition(data, new ExpeditionProgress()).Start(BattleWeapon.Sword, BattleDifficulty.Normal, 42, "run-b");
-        check(run.Map.Count == 6 && run.Map[^1].Single() == "x_king" && run.Map.Take(5).All(row => row.Length == 2 && row.Distinct().Count() == 2),
-            "A run's map: 5 steps of two different encounters, then the boss");
+        check(run.Map.Count == 6 && run.Map[^1].Single() == "x_king" && run.Map.Take(5).Select((row, i) => row.Length == spec.Steps[i].Length && row.Distinct().Count() == row.Length).All(ok => ok),
+            "A run's map: 5 steps of different nodes, then the boss");
         check(run.Map.SelectMany(r => r).SequenceEqual(again.Map.SelectMany(r => r)), "The same seed draws the same map");
         bool differs = Enumerable.Range(1, 20).Any(seed => !new Expedition(data, new ExpeditionProgress()).Start(BattleWeapon.Sword, BattleDifficulty.Normal, seed).Map.SelectMany(r => r).SequenceEqual(run.Map.SelectMany(r => r)));
         check(differs, "Other seeds draw other maps");
-        bool kindsFit = Enumerable.Range(0, 5).All(step => Enumerable.Range(0, 2).All(lane =>
-            (spec.Steps[step][lane] == ExpeditionSpec.Elite ? spec.Elites : spec.Fights).Any(s => s.Id == run.Map[step][lane])));
-        check(kindsFit, "Each node's encounter comes from its kind's pool");
+        bool kindsFit = Enumerable.Range(0, 5).All(step => Enumerable.Range(0, spec.Steps[step].Length).All(lane => spec.Steps[step][lane] switch
+        {
+            ExpeditionSpec.Rest => run.Map[step][lane] == ExpeditionSpec.Rest,
+            ExpeditionSpec.Event => spec.FindEvent(run.Map[step][lane]) != null,
+            var kind => spec.Pool(kind).Any(s => s.Id == run.Map[step][lane])
+        }));
+        check(kindsFit, "Each node's encounter (or event) comes from its kind's pool");
         check(run.Hp == data.CatMaxHp && run.Path.Count == 0 && run.Fighting == null && expedition.Run == run, "A new run starts at full HP, at step 1, not fighting");
 
         // A node: its battle has a fixed seed and the step's threat.
@@ -91,7 +95,9 @@ internal static class ExpeditionTests
         ExpeditionStepOutcome last = default;
         for (int step = 0; step < full.Map.Count; step++)
         {
-            expedition.Enter(step % 2 == 0 || step == full.Map.Count - 1 ? 0 : 1);
+            // A won elite's relics are left; the first battle node of each step is fought.
+            if (full.Pending != null) expedition.Choose(Expedition.Leave);
+            expedition.Enter(Enumerable.Range(0, full.Map[step].Length).First(lane => expedition.Node(lane) != null));
             last = expedition.Finish(true, 60, new Dictionary<string, int>(), 40, 3);
         }
         record = expedition.Record(BattleWeapon.Sword, BattleDifficulty.Normal);
@@ -179,54 +185,111 @@ internal static class ExpeditionTests
     }
 
     // The whole run in simulation (NOT real play): each weapon × difficulty × player (simple: the
-    // best case, casual: slow and missing some, AdventureBalanceTests), 10 seeds. The route: an elite
-    // node while the cat has ≥ 60 % HP, otherwise a fight. Measured, not a target yet (the user plays
-    // before the numbers are agreed); checked only that it can be won and is not endless.
+    // best case, casual: slow and missing some, AdventureBalanceTests) × route policy, 10 seeds.
+    // Safe: rests when hurt, avoids elites, takes no risks at events. Greedy: elites and events
+    // first, risky chests and shrines, cards over rests unless low. A won elite's first relic is
+    // always taken. Measured, not a target yet (the user plays before the numbers are agreed);
+    // checked only that it can be won and is not endless.
+    public enum Policy { Safe, Greedy }
+    private static readonly string[] CardOrder = { "sharp", "fast_paws", "thick_fur", "big_heart", "quick_feet", "heavy_push", "turtle_shell", "opening_strike", "running_start" };
+    private static int Rank(string id) => Array.IndexOf(CardOrder, id) is int i && i >= 0 ? i : 99;
+
+    // Which node of the step to go to.
+    public static int Route(Expedition x, ExpeditionRun run, Policy policy)
+    {
+        double share = run.Hp / x.MaxHp(run);
+        string[] order = policy == Policy.Safe
+            ? share < 0.5 ? new[] { ExpeditionSpec.Rest, ExpeditionSpec.Event, ExpeditionSpec.Fight, ExpeditionSpec.Elite } : new[] { ExpeditionSpec.Fight, ExpeditionSpec.Rest, ExpeditionSpec.Event, ExpeditionSpec.Elite }
+            : share < 0.35 ? new[] { ExpeditionSpec.Rest, ExpeditionSpec.Fight, ExpeditionSpec.Event, ExpeditionSpec.Elite } : new[] { ExpeditionSpec.Elite, ExpeditionSpec.Event, ExpeditionSpec.Fight, ExpeditionSpec.Rest };
+        int lanes = run.Map[run.Step].Length;
+        foreach (var kind in order)
+            for (int lane = 0; lane < lanes; lane++)
+                if (x.Kind(run.Step, lane) == kind) return lane;
+        return 0;
+    }
+
+    // The open choice, resolved the policy's way.
+    public static void Resolve(Expedition x, ExpeditionRun run, Policy policy)
+    {
+        var open = run.Pending!;
+        double share = run.Hp / x.MaxHp(run);
+        string? best = open.Cards.OrderBy(Rank).FirstOrDefault();
+        bool Try(string option, string? card = null, string? drop = null, string? relic = null) => x.Choose(option, card, drop, relic).Done;
+        if (open.Kind == ExpeditionChoice.RewardKind) { if (!Try(Expedition.Take, relic: open.Relics.FirstOrDefault())) Try(Expedition.Leave); return; }
+        if (open.Kind == ExpeditionChoice.RestKind)
+        {
+            bool heal = policy == Policy.Safe ? share < 0.7 : share < 0.35;
+            if (heal || !Try(Expedition.Card, best)) Try(Expedition.Heal);
+            return;
+        }
+        switch (x.Spec.FindEvent(open.Event)!.Kind)
+        {
+            case ExpeditionEventSpec.Swap:
+                string? worst = run.Build.Keys.OrderByDescending(Rank).FirstOrDefault();
+                if (policy == Policy.Safe || worst == null || best == null || Rank(best) >= Rank(worst) || !Try(Expedition.SwapOption, best, worst)) Try(Expedition.Leave);
+                break;
+            case ExpeditionEventSpec.Chest:
+                if (policy == Policy.Safe || share < 0.5 || !Try(Expedition.Risk)) Try(Expedition.Safe);
+                break;
+            default:
+                if (policy == Policy.Safe || share < 0.5 || !Try(Expedition.Take, relic: open.Relics.FirstOrDefault())) Try(Expedition.Leave);
+                break;
+        }
+    }
+
     private static void Balance(Action<bool, string> check, BattleSettings data)
     {
         var levels = new[] { BattleDifficulty.Easy, BattleDifficulty.Normal, BattleDifficulty.Hard };
         var weapons = new[] { BattleWeapon.Sword, BattleWeapon.Hammer };
         var players = new[] { AdventureBalanceTests.Player.Simple, AdventureBalanceTests.Player.Casual };
         const int seeds = 10;
-        Console.WriteLine("Expedition balance (simulation, not real play): weapon | level | player | runs won/10 | avg steps won | avg fight s (won runs) | elites fought/run | HP % before the boss | HP % left (won runs)");
-        var results = new Dictionary<(string, BattleDifficulty, AdventureBalanceTests.Player), (int Wins, double Steps, double Seconds)>();
+        Console.WriteLine("Expedition balance (simulation, not real play): weapon | level | player | route | runs won/10 | avg steps passed | avg fight s (won runs) | battles/run | elites/run | relics at the end | HP % before the boss | HP % left (won runs)");
+        var results = new Dictionary<(string, BattleDifficulty, AdventureBalanceTests.Player, Policy), (int Wins, double Steps, double Seconds)>();
         foreach (var weapon in weapons)
             foreach (var level in levels)
                 foreach (var player in players)
-                {
-                    int wins = 0; double steps = 0, seconds = 0, elites = 0, beforeBoss = 0, left = 0; int reachedBoss = 0;
-                    for (int seed = 1; seed <= seeds; seed++)
+                    foreach (var policy in new[] { Policy.Safe, Policy.Greedy })
                     {
-                        var expedition = new Expedition(data, new ExpeditionProgress());
-                        var run = expedition.Start(weapon, level, seed);
-                        double fought = 0;
-                        while (expedition.Run != null)
+                        int wins = 0, reachedBoss = 0; double steps = 0, seconds = 0, battles = 0, elites = 0, relics = 0, beforeBoss = 0, left = 0;
+                        for (int seed = 1; seed <= seeds; seed++)
                         {
-                            double max = expedition.MaxHp(run.Build);
-                            int lanes = run.Map[run.Step].Length;
-                            int lane = 0;
-                            for (int l = 0; l < lanes; l++)
-                                if ((expedition.Kind(run.Step, l) == ExpeditionSpec.Elite) == (run.Hp >= 0.6 * max)) lane = l;
-                            var node = expedition.Node(lane)!.Value;
-                            if (node.Kind == ExpeditionSpec.Elite) elites++;
-                            if (node.Kind == Expedition.BossKind) { reachedBoss++; beforeBoss += run.Hp / max; }
-                            expedition.Enter(lane);
-                            var outcome = AdventureBalanceTests.Play(data, node.Stage, weapon, level, seed * 100 + run.Step, player, run.Build, run.Hp, node.Threat, node.Seed);
-                            fought += outcome.Seconds;
-                            var step = expedition.Finish(outcome.Won, outcome.Hp, outcome.Build, outcome.Seconds, 0);
-                            if (step.RunOver)
+                            var expedition = new Expedition(data, new ExpeditionProgress());
+                            var run = expedition.Start(weapon, level, seed);
+                            double fought = 0;
+                            while (expedition.Run != null)
                             {
-                                steps += step.Step + (step.RunWon ? 1 : 0);
-                                if (step.RunWon) { wins++; seconds += fought; left += outcome.HpShare; }
+                                if (run.Pending != null) { Resolve(expedition, run, policy); continue; }
+                                int lane = Route(expedition, run, policy);
+                                if (expedition.Node(lane) is not ExpeditionNode node)
+                                {
+                                    expedition.Visit(lane);
+                                    continue;
+                                }
+                                battles++;
+                                if (node.Kind == ExpeditionSpec.Elite) elites++;
+                                if (node.Kind == Expedition.BossKind) { reachedBoss++; beforeBoss += run.Hp / expedition.MaxHp(run); }
+                                expedition.Enter(lane);
+                                var outcome = AdventureBalanceTests.Play(data, node.Stage, weapon, level, seed * 100 + run.Step, player, run.Build, run.Hp, node.Threat, node.Seed, run.Relics);
+                                fought += outcome.Seconds;
+                                int held = run.Relics.Count;
+                                var step = expedition.Finish(outcome.Won, outcome.Hp, outcome.Build, outcome.Seconds, 0);
+                                if (step.RunOver)
+                                {
+                                    relics += held;
+                                    steps += step.Step + (step.RunWon ? 1 : 0);
+                                    if (step.RunWon) { wins++; seconds += fought; left += outcome.HpShare; }
+                                }
                             }
                         }
+                        results[(weapon, level, player, policy)] = (wins, steps / seeds, wins > 0 ? seconds / wins : 0);
+                        Console.WriteLine($"  {weapon,-6} | {level,-6} | {player.ToString().ToLowerInvariant(),-6} | {policy.ToString().ToLowerInvariant(),-6} | {wins,2}/10 | {steps / seeds,4:0.0} | {(wins > 0 ? seconds / wins : 0),5:0} | {battles / seeds,3:0.0} | {elites / seeds,3:0.0} | {relics / seeds,3:0.0} | {(reachedBoss > 0 ? beforeBoss / reachedBoss : 0),4:P0} | {(wins > 0 ? left / wins : 0),4:P0}");
                     }
-                    results[(weapon, level, player)] = (wins, steps / seeds, wins > 0 ? seconds / wins : 0);
-                    Console.WriteLine($"  {weapon,-6} | {level,-6} | {player.ToString().ToLowerInvariant(),-6} | {wins,2}/10 | {steps / seeds,4:0.0} | {(wins > 0 ? seconds / wins : 0),5:0} | {elites / seeds,3:0.0} | {(reachedBoss > 0 ? beforeBoss / reachedBoss : 0),4:P0} | {(wins > 0 ? left / wins : 0),4:P0}");
-                }
         foreach (var weapon in weapons)
-            check(results[(weapon, BattleDifficulty.Normal, AdventureBalanceTests.Player.Simple)].Wins >= 5,
-                $"Expedition balance: {weapon}, Normal, the simple player wins at least half its runs ({results[(weapon, BattleDifficulty.Normal, AdventureBalanceTests.Player.Simple)].Wins}/10)");
+            foreach (var policy in new[] { Policy.Safe, Policy.Greedy })
+            {
+                int won = results[(weapon, BattleDifficulty.Normal, AdventureBalanceTests.Player.Simple, policy)].Wins;
+                check(won >= 5, $"Expedition balance: {weapon}, Normal, the simple player with the {policy.ToString().ToLowerInvariant()} route wins at least half its runs ({won}/10)");
+            }
         double longest = results.Values.Where(r => r.Wins > 0).Max(r => r.Seconds);
         check(longest <= 15 * 60, $"Expedition balance: a won run's fights take at most 15 minutes in simulation (longest {longest / 60:0.0} min)");
     }

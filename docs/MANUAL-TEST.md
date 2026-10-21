@@ -266,3 +266,19 @@ Cần đã thắng màn 5 Phiêu lưu (Vua Slime). Không xóa `%LOCALAPPDATA%\D
 - [ ] Phiêu lưu và trận tự do không đổi: kỷ lục màn Phiêu lưu và kỷ lục trận tự do không tăng vì trận viễn chinh.
 - [ ] Ứng dụng toàn màn hình ẩn bản đồ và hiện lại sau; Tạm dừng mèo thì không mở được; chuột phải giữa trận vẫn đóng băng trận như thường; cứu mèo (nhấc/thả), choáng, chóng mặt khi kéo mạnh hoạt động như trận thường.
 - [ ] Thời lượng thật một chuyến Thường (mô phỏng: ~7–8 phút thời gian đánh, chưa tính chọn thẻ/bản đồ); độ khó có hợp không (mô phỏng Thường: người chơi "casual" thắng 8/10; Khó rất khó).
+
+## Viễn chinh — mốc 3: nghỉ chân, sự kiện, di vật (2026-10-21)
+
+Chuyến đang dở từ mốc 2 (nếu có) sẽ kết thúc khi mở bản đồ, kèm dòng "đã đổi luật hoặc bản đồ" (đã được chấp nhận). Kỷ lục cũ vẫn giữ nhưng tính riêng.
+
+- [ ] Bản đồ mới: bậc 2 và 4 có 3 điểm (⚔, ★, ?), bậc 3 và 5 có ♨ nghỉ chân. Rê chuột lên "?" thấy tên sự kiện. Ký hiệu ♨ và ? hiện rõ (không ra ô vuông).
+- [ ] Bấm ♨ hoặc ?: khung dưới ghi điểm đó làm gì; nút chính đổi thành "Đi tới đây". Bấm vào: hiện bảng lựa chọn ngay trên bản đồ, nút "Đi tới đây"/"Vào trận" biến mất, không bấm được điểm khác.
+- [ ] Nghỉ chân: "Nghỉ: +N HP" (30% HP tối đa) hoặc chọn một thẻ rồi "Lấy thẻ đã chọn". Đóng bản đồ (hoặc thoát app) rồi mở lại: vẫn đúng 3 thẻ cũ.
+- [ ] Lữ khách mèo: chọn thẻ bỏ + thẻ lấy rồi "Đổi thẻ"; build trên bản đồ đổi đúng. "Đi tiếp" không đổi gì.
+- [ ] Rương slime: "An toàn" hồi HP; "Liều" trừ HP và cho một di vật (không biết trước là cái nào). HP thấp quá thì nút "Liều" mờ.
+- [ ] Đền cũ: hai di vật hiện tên + tác dụng; chọn một rồi "Lấy di vật đã chọn (−N HP)".
+- [ ] Thắng tinh anh: bảng kết quả ghi "Tinh anh để lại di vật…"; Tiếp tục → bản đồ hiện "Phần thưởng tinh anh" với 2 di vật; chưa chọn/bỏ qua thì không đi tiếp được.
+- [ ] Dòng "Di vật: ◈ … (n/3)" trên bản đồ; HUD trong trận có "◈ <tên di vật>". Đủ 3 di vật thì tinh anh/đền không đưa thêm.
+- [ ] Từng di vật trong trận thật: Chuông phản đòn (bật Khiên đỡ một đòn → nhát kế có vệt vàng, mạnh hơn; ô Khiên hồi lâu hơn 3 s), Túi cứu trợ (Cá hồi ~37 HP, hồi chiêu dài hơn), Bùa liều lĩnh (HP thấp đánh mạnh hơn, bị đánh đau hơn chút), Lông vũ nhẹ (chạy nhanh hơn, HP tối đa 85).
+- [ ] Phiêu lưu và trận tự do không có di vật (HUD không có ◈, Khiên/Cá hồi chiêu như cũ).
+- [ ] Cảm giác: đi đường tinh anh (nhiều di vật) có đáng hơn đường nghỉ không? Mô phỏng cho thấy đường "tham lam" thắng nhiều hơn đường "an toàn" ở Thường — xem PROGRESS.md.

@@ -4,6 +4,20 @@ Cập nhật: 2026-10-21 (Asia/Saigon).
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
+## Viễn chinh — mốc 3: nghỉ chân, sự kiện, di vật (2026-10-21)
+- Người dùng "ok" kế hoạch mốc 3 và chấp nhận chuyến mốc 2 đang dở bị kết thúc khi cập nhật.
+- Đã làm (C# only, Python không đụng):
+  - `PetExpedition.cs`: loại điểm `rest`/`event`; `ExpeditionEventSpec` (swap/chest/shrine), `RelicSpec` (counter/relief/reckless/light) + validate; `ExpeditionRun.Relics`, `ExpeditionChoice Pending` (nghỉ, sự kiện, thưởng tinh anh) bốc một lần từ seed chuyến (stream 3000/4000 + bậc/làn) và lưu; `Visit`/`Options`/`Cost`/`Gain`/`Refusal`/`Choose` (mỗi lựa chọn một lần; giá không trả được nếu còn < 1 HP). Thẻ ở điểm nghỉ/đổi thẻ lấy từ `BattleSim.OfferCards()` (gọi `OfferUpgrades` sẵn có trên một sim riêng, đầy máu nên không có thẻ hồi máu). Thắng tinh anh → chọn 1 trong 2 di vật chưa có (tối đa 3). `expedition.json` lên version 2; `rulesVersion` 2.
+  - BattleSim: tham số `relics` (mặc định không có: Phiêu lưu/trận tự do không đổi), modifier riêng; `HealAmount`, `SkillCooldown(skill)` (HUD dùng tổng này), `CounterReady`/`CounterHits`, `Reckless`.
+  - Dữ liệu: bản đồ `[fight,fight] [fight,elite,event] [rest,elite] [fight,elite,event] [rest,fight]` + trùm; `restHeal` 0,3; 3 sự kiện; 4 di vật (Chuông phản đòn +60%/Khiên +3 s; Túi cứu trợ Cá +50%/hồi chiêu +50%; Bùa liều lĩnh +40% dưới 40% HP/nhận +10%; Lông vũ nhẹ +15% chạy, −10% hồi đòn/−15 HP tối đa).
+  - `PetWindow.Expedition.cs`: ♨ nghỉ, ? sự kiện; "Đi tới đây"; bảng lựa chọn ngay trên bản đồ (thẻ/di vật kèm mô tả, nút ghi rõ giá); dòng "Di vật: … (n/3)"; kết quả trận tinh anh báo có di vật. HUD trận thêm "◈ <di vật>".
+- Test thật: scripts/test.ps1 -Ui: Python 55 OK; C# 1178 đạt (ExpeditionChoiceTests mới: dữ liệu, nghỉ/đổi thẻ/rương/đền/thưởng tinh anh, bốc lại cùng seed giống nhau, chỉ chọn một lần, giá quá sức, tối đa di vật, không đưa lại di vật đã có, lưu/đọc lựa chọn đang mở, file v1 → chuyến cũ kết thúc + giữ kỷ lục, di vật lạ → không đi tiếp, từng di vật trong BattleSim, màn Phiêu lưu với danh sách di vật rỗng chơi giống hệt, validate); WPF 574 đạt (ExpeditionChecks: thưởng tinh anh trên bản đồ, chọn → lưu, nghỉ chân giữ nguyên sau khi mở lại, hồi 30, trận sau mang di vật, HUD ◈). Đã xem ảnh render bảng thưởng tinh anh và nghỉ chân (en): không tràn.
+- Mô phỏng cả chuyến (KHÔNG phải chơi thật; 10 seed; an toàn = nghỉ khi yếu, tránh tinh anh/rủi ro; tham lam = tinh anh/sự kiện trước, liều):
+  - Thường simple: kiếm an toàn 9/10, tham lam 9/10; búa 9/10, 10/10. Thường casual: kiếm 6/10 vs 10/10; búa 6/10 vs 8/10. Dễ 10/10. Khó: 0–3/10.
+  - Thời gian đánh chuyến thắng: an toàn ~4,8–5,3 phút, tham lam ~6,5–7,2 phút (≤ 8,5 phút mọi tổ hợp).
+  - Nhận xét: đường tham lam (3 di vật) thắng nhiều hơn đường an toàn — di vật + thẻ đáng giá hơn hồi máu; có thể muốn tăng `restHeal` hoặc giảm sức di vật sau khi chơi thật. Chưa đổi số.
+- Chưa: chơi thật; xem ký hiệu ♨/? trên máy thật; ảnh tiếng Việt của bảng lựa chọn; DPI 125–150%.
+
 ## HUD: banner không tràn khung (2026-10-21)
 - Người dùng gửi ảnh: banner "Expedition · Step 1/6 · Shortcut" (22pt, cột giữa HUD cố định 230 DIPs, không xuống dòng) tràn sang thanh HP và ô kỹ năng.
 - Đã làm: PetBattleHud bọc banner trong Viewbox chỉ thu nhỏ (DownOnly): banner dài hơn cột giữa tự nhỏ lại cho vừa, HUD giữ nguyên kích thước (không nhảy khi banner hiện). Banner viễn chinh ngắn lại thành "Bậc 1/6 · <tên trận>" (dòng tên đã ghi "Viễn chinh 1/6"). Áp dụng cho mọi banner (tên màn, tinh anh, boss…).
@@ -632,7 +646,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Lịch sử chuyển project: 2026-10-05 tạo AGENTS.md/PROGRESS.md tại ổ D khi thư mục đó trống; source hiện nằm tại ổ C, không cần khôi phục về D.
 
 ## Đang dở và việc tiếp theo
-- Viễn chinh (docs/EXPEDITION-DIRECTION.md): mốc 2 xong (2026-10-21). Người dùng cần: đi mục "Viễn chinh — mốc 2" trong MANUAL-TEST.md, chơi một chuyến Thường thật (thời lượng, độ khó, HP mang theo có ý nghĩa không) rồi chốt `winHeal`/`stepThreat`/`retreatCost`. Tiếp: mốc 3 (điểm nghỉ/sự kiện, 3–4 di vật có đánh đổi, bot cả chuyến), mốc 4 (kỷ vật một lần, góc trưng bày bật/tắt), mốc 5 (end-to-end, DPI, phát hành). Chưa ghi CHANGELOG cho Viễn chinh (chờ bản phát hành).
+- Viễn chinh (docs/EXPEDITION-DIRECTION.md): mốc 2–3 xong (2026-10-21). Người dùng cần: đi mục "Viễn chinh — mốc 2" và "mốc 3" trong MANUAL-TEST.md, chơi một chuyến Thường thật rồi chốt `winHeal`/`stepThreat`/`retreatCost`/`restHeal` và sức di vật (mô phỏng: đường tham lam mạnh hơn đường an toàn). Tiếp: mốc 4 (kỷ vật một lần, góc trưng bày bật/tắt — cần trình bày thiết kế và chờ "ok"), mốc 5 (end-to-end, DPI, phát hành). Chưa ghi CHANGELOG cho Viễn chinh (chờ bản phát hành).
 - Cứu mèo (2026-10-21): người dùng đi mục "Cứu mèo không làm quái đứng hình" trong MANUAL-TEST.md; xem 0,3 s nhấc tối thiểu có làm hụt bảo vệ khi cứu nhanh thật không (chỉnh `rescueGraceMinLiftSeconds`).
 - Review Enemy Tactics (docs/NEXT-STEPS.md): R1+R2 xong (mốc A), R3 xong (mốc B: người chơi casual + số đo). Nếu muốn khó hơn ở Thường: cân nhắc theo bảng casual (vd. hồi chiêu Đẩy so với nhịp hồi của slime thảo dược) — đổi luật, cần người dùng chốt. R4 (tách PetBattle.cs, đo frame time trận đông quái, test vòng start→kết quả→chơi lại) để sau. Người dùng cần thử: Đẩy slime thảo dược/hạ nó ngay lúc hồi xong thấy đòn trúng bình thường.
 - Enemy Director: chiến thuật a–d đã làm (2026-10-20), mỗi cái tắt được bằng battle.json; cần chơi thật để quyết giữ/tắt cái nào.

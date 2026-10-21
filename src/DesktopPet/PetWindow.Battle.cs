@@ -246,7 +246,7 @@ public sealed partial class PetWindow
             weapon: BattleTuning.Weapon(weapon ?? preferences.BattleWeapon).Id, stage: stage,
             // The build the stage before was won with, or the Expedition run's.
             build: expedition?.Expedition.Run?.Build ?? (stage != null ? AdventureOf(BattleTuning)?.StartBuild(stage) : null),
-            seed: expedition?.Node.Seed, startHp: expedition?.Expedition.Run?.Hp, threat: expedition?.Node.Threat ?? 1);
+            seed: expedition?.Node.Seed, startHp: expedition?.Expedition.Run?.Hp, threat: expedition?.Node.Threat ?? 1, relics: expedition?.Expedition.Run?.Relics);
         battleExpedition = expedition;
         battleRunId = Guid.NewGuid().ToString("N");
         battleCustomData = BattleDataCustom;

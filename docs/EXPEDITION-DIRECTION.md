@@ -18,7 +18,7 @@ Thiết kế tích hợp: bộ điều phối `Expedition`/`ExpeditionRun`/`Expe
 ## Tiến độ mốc
 
 - **Mốc 2 — xong (2026-10-21):** một chuyến hoàn chỉnh 5 bậc (giao tranh/tinh anh) + trùm, HP/build mang theo, hồi `winHeal` sau mỗi bậc thắng, quái mạnh dần `stepThreat`, rời trận/crash/resume, bỏ chuyến, kỷ lục, dữ liệu tùy chỉnh chỉ giữ trong bộ nhớ. Chưa có điểm nghỉ/sự kiện, di vật, kỷ vật. Số liệu (`winHeal` 0,05, `stepThreat` 0,1, `retreatCost` 0,25, threat từng trận) là điểm khởi đầu từ mô phỏng, chưa chốt; xem PROGRESS.md.
-- **Mốc 3 — chưa làm:** điểm nghỉ/sự kiện, 3–4 di vật (hook modifier riêng trong BattleSim), bot cho cả chuyến.
+- **Mốc 3 — xong (2026-10-21):** người dùng "ok" thiết kế: điểm nghỉ (hồi 30% hoặc lấy 1 thẻ), 3 sự kiện (Lữ khách mèo: đổi thẻ; Rương slime: an toàn +10% HP / liều −15% HP lấy di vật ngẫu nhiên; Đền cũ: −20% HP chọn 1 trong 2 di vật), thắng tinh anh chọn 1 trong 2 di vật, 4 di vật có đánh đổi (Chuông phản đòn, Túi cứu trợ, Bùa liều lĩnh, Lông vũ nhẹ), tối đa 3 di vật; bản đồ mới (`rulesVersion` 2, chuyến mốc 2 đang dở kết thúc — người dùng chấp nhận); bot cả chuyến 2 kiểu đi (an toàn/tham lam). Số liệu là điểm khởi đầu, chưa chốt; xem PROGRESS.md.
 - **Mốc 4 — chưa làm:** kỷ vật (một lần theo run), góc trưng bày bật/tắt được.
 - **Mốc 5 — chưa làm:** kiểm thử end-to-end, DPI, hiệu năng, phát hành.
 

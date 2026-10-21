@@ -320,8 +320,27 @@
   // run names them) and never an Adventure stage's. "unlockAfter": the Adventure stage to win first.
   "expedition": {
     "id": "slime_trail", "nameVi": "Đường mòn Slime", "nameEn": "The Slime Trail",
-    "rulesVersion": 1, "unlockAfter": "c1_slime_king", "retreatCost": 0.25, "winHeal": 0.05, "stepThreat": 0.1,
-    "steps": [ [ "fight", "fight" ], [ "fight", "elite" ], [ "elite", "fight" ], [ "fight", "elite" ], [ "elite", "fight" ] ],
+    "rulesVersion": 2, "unlockAfter": "c1_slime_king", "retreatCost": 0.25, "winHeal": 0.05, "stepThreat": 0.1,
+    "restHeal": 0.3, "maxRelics": 3, "eliteRelics": 2,
+    "steps": [ [ "fight", "fight" ], [ "fight", "elite", "event" ], [ "rest", "elite" ], [ "fight", "elite", "event" ], [ "rest", "fight" ] ],
+    "events": [
+      { "id": "cat_trader", "kind": "swap", "nameVi": "Lữ khách mèo", "nameEn": "Travelling cat",
+        "descVi": "Đổi một thẻ trong build lấy một trong ba thẻ mới, hoặc đi tiếp.", "descEn": "Trade one card of your build for one of three new cards, or move on." },
+      { "id": "slime_chest", "kind": "chest", "heal": 0.1, "cost": 0.15, "nameVi": "Rương slime", "nameEn": "Slime chest",
+        "descVi": "An toàn: hồi 10% HP. Liều: mất 15% HP, nhận một di vật ngẫu nhiên.", "descEn": "Safe: 10% HP back. Risky: lose 15% HP for a random relic." },
+      { "id": "old_shrine", "kind": "shrine", "cost": 0.2, "nameVi": "Đền cũ", "nameEn": "Old shrine",
+        "descVi": "Mất 20% HP để chọn một trong hai di vật, hoặc đi tiếp.", "descEn": "Lose 20% HP to pick one of two relics, or move on." }
+    ],
+    "relics": [
+      { "id": "counter_bell", "effect": "counter", "amount": 0.6, "penalty": 3, "nameVi": "Chuông phản đòn", "nameEn": "Counter bell",
+        "descVi": "Khiên hoặc Mai rùa chặn đòn: nhát chém kế +60%. Khiên hồi lâu hơn 3 giây.", "descEn": "After the Shield or Turtle shell stops a hit, the next swing deals +60%. Shield cooldown +3 s." },
+      { "id": "relief_pack", "effect": "relief", "amount": 0.5, "penalty": 0.5, "nameVi": "Túi cứu trợ", "nameEn": "Relief pack",
+        "descVi": "Cá hồi máu hồi thêm 50%. Hồi chiêu Cá dài thêm 50%.", "descEn": "The Healing fish heals 50% more. Its cooldown is 50% longer." },
+      { "id": "reckless_charm", "effect": "reckless", "amount": 0.4, "below": 0.4, "penalty": 0.1, "nameVi": "Bùa liều lĩnh", "nameEn": "Reckless charm",
+        "descVi": "HP dưới 40%: +40% sát thương. Luôn nhận thêm 10% sát thương.", "descEn": "Below 40% HP: +40% damage. Always take 10% more damage." },
+      { "id": "light_feather", "effect": "light", "amount": 0.15, "extra": 0.1, "penalty": 15, "nameVi": "Lông vũ nhẹ", "nameEn": "Light feather",
+        "descVi": "+15% tốc chạy, −10% thời gian hồi đòn. −15 HP tối đa.", "descEn": "+15% running speed, −10% time between swings. −15 max HP." }
+    ],
     "fights": [
       {
         "id": "x_meadow", "nameVi": "Đồng cỏ", "nameEn": "Meadow",

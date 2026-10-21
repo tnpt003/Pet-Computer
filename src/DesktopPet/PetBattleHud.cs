@@ -255,6 +255,8 @@ public sealed class BattleHud : Border
             }
             foreach (var y in b.Synergies) parts.Add("★ " + y.Name(English));
             foreach (var u in b.Settings.UpgradeList) if (u.Rare && b.Stacks(u.Id) > 0) parts.Add("◆ " + u.Name(English));
+            // An Expedition run's relics (fixed for the battle).
+            foreach (var r in b.Relics) parts.Add("◈ " + r.Name(English));
             upgradesText.Text = string.Join(" · ", parts);
             upgradesText.Visibility = parts.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
         }
@@ -280,7 +282,7 @@ public sealed class BattleHud : Border
         foreach (var slot in slots)
         {
             var skill = slot.Skill;
-            double cooldown = b.Cooldown(skill), total = b.Settings.SkillCooldown(skill);
+            double cooldown = b.Cooldown(skill), total = b.SkillCooldown(skill);
             bool active = skill == BattleSkill.Cheer ? b.CheerRemaining > 0 : skill == BattleSkill.Shield && b.ShieldRemaining > 0;
             slot.Show(cooldown / Math.Max(0.01, total), cooldown, b.Armed == skill, !b.Over && !b.Paused && !held, active);
         }

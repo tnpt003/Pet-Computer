@@ -35,7 +35,7 @@ internal static class ExpeditionChoiceTests
     {
         var data = BattleData.Settings;
         var spec = data.Expedition!;
-        check(spec.RulesVersion == 2 && ExpeditionProgress.CurrentVersion >= 2, "Milestone 3 raises the Expedition's rules (2) and its file version (2 or later)");
+        check(spec.RulesVersion >= 2 && ExpeditionProgress.CurrentVersion >= 2, "Milestone 3 raises the Expedition's rules (2 or later) and its file version (2 or later)");
         check(spec.Events.Select(e => e.Kind).OrderBy(k => k).SequenceEqual(new[] { "chest", "shrine", "swap" }) && spec.Relics.Select(r => r.Effect).Distinct().Count() == 4 && spec.MaxRelics == 3,
             "battle.json: three events (swap, chest, shrine), four relics with different effects, at most 3 held");
         check(spec.Steps.Any(step => step.Contains(ExpeditionSpec.Rest) && step.Contains(ExpeditionSpec.Elite)) && spec.Steps.Count(step => step.Contains(ExpeditionSpec.Event)) >= 2 && spec.Steps[0].All(ExpeditionSpec.IsBattle),

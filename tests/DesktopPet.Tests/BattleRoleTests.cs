@@ -332,8 +332,8 @@ internal static class BattleRoleTests
         var shippedRock = data.Enemy("rock");
         var herb = data.Enemy("mender");
         var chapterKing = data.Enemy("king_c1");
-        check(shippedRock is { MaxHp: 150, BlockChance: 0.3, BlockMaxStreak: 2 } && herb is { Support: true, KeepBack: 110 } &&
+        check(shippedRock is { MaxHp: 188, BlockChance: 0.3, BlockMaxStreak: 2 } && herb is { Support: true, KeepBack: 110 } &&
               chapterKing.Phases!.Where(p => p.Shield).Select(p => p.At).SequenceEqual(new[] { 0.75, 0.5, 0.25 }) && data.Enemy("king").Phases == null,
-            "battle.json: rock slime 150 HP with 30 % block, the herb slime keeps back, the chapter boss shields at 75 %, 50 % and 25 % (the free battle's king unchanged)");
+            "battle.json: rock slime 188 HP with 30 % block, the herb slime keeps back, the chapter boss shields at 75 %, 50 % and 25 % (the free battle's king unchanged)");
     }
 }

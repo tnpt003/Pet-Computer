@@ -142,15 +142,25 @@ public sealed class EnemyType
 // An elite affix (Enemy Director): rolled once when a wave or stream spawns the enemy, never for a
 // boss's helpers (a boss's rally call makes them elite instead), never on Easy, at most
 // BattleSettings.MaxElites alive at once. A gold rim and a
-// star tell it apart. One small change per kind, not a stronger enemy in every way: a longer windup
-// with a faster dash, sure blocks of its first front hits, a stronger first heal. Cost: what being
-// elite adds to the budget.
+// star tell it apart. A trait per kind (a longer windup with a faster dash, sure blocks of its first
+// front hits, a stronger first heal, no Push) and stat multipliers on top. Cost: what being elite
+// adds to the budget.
 public sealed class EliteSpec
 {
     public double WindupAdd { get; init; }
     public double DashSpeed { get; init; } = 1;
     public int SureBlocks { get; init; }
     public double FirstHeal { get; init; } = 1;
+    // Stats, applied once when it turns elite (multiplied, rounded like spawn scaling): max HP and
+    // damage, the wait between its attacks (windup and recovery stay), its heal cooldown and heal
+    // budget (not the amount per heal). PushImmune: the Push skill neither moves, stuns nor
+    // interrupts it (it still costs the cooldown).
+    public double Hp { get; init; } = 1;
+    public double Damage { get; init; } = 1;
+    public double AttackCooldown { get; init; } = 1;
+    public double HealCooldown { get; init; } = 1;
+    public double HealBudget { get; init; } = 1;
+    public bool PushImmune { get; init; }
     public double Cost { get; init; } = 1;
     // A short line for the banner the first time an elite of this kind appears in a battle.
     public string DescVi { get; init; } = "";
@@ -624,7 +634,12 @@ public static class BattleData
                 if ((elite.WindupAdd > 0 || elite.DashSpeed > 1) && !e.Dash) throw new InvalidDataException(at + ".elite: windupAdd/dashSpeed are for a dash enemy");
                 if (elite.SureBlocks > 0 && e.BlockChance <= 0) throw new InvalidDataException(at + ".elite.sureBlocks is for an enemy that blocks");
                 if (elite.FirstHeal > 1 && e.HealAmount <= 0) throw new InvalidDataException(at + ".elite.firstHeal is for an enemy that heals");
-                if (elite.WindupAdd <= 0 && elite.DashSpeed <= 1 && elite.SureBlocks == 0 && elite.FirstHeal <= 1) throw new InvalidDataException(at + ".elite changes nothing");
+                Within(elite.Hp, 1, 3, at + ".elite.hp"); Within(elite.Damage, 1, 3, at + ".elite.damage");
+                Within(elite.AttackCooldown, 0.2, 1, at + ".elite.attackCooldown"); Within(elite.HealCooldown, 0.2, 1, at + ".elite.healCooldown");
+                Within(elite.HealBudget, 1, 3, at + ".elite.healBudget");
+                if ((elite.HealCooldown < 1 || elite.HealBudget > 1) && e.HealAmount <= 0) throw new InvalidDataException(at + ".elite: healCooldown/healBudget are for an enemy that heals");
+                if (elite.WindupAdd <= 0 && elite.DashSpeed <= 1 && elite.SureBlocks == 0 && elite.FirstHeal <= 1 && elite.Hp <= 1 && elite.Damage <= 1
+                    && elite.AttackCooldown >= 1 && elite.HealCooldown >= 1 && elite.HealBudget <= 1 && !elite.PushImmune) throw new InvalidDataException(at + ".elite changes nothing");
                 if (elite.DescVi == null || elite.DescEn == null || elite.DescVi.Length > 60 || elite.DescEn.Length > 60) throw new InvalidDataException(at + ".elite descriptions must be at most 60 characters");
             }
             if (e.Phases is { } phases)

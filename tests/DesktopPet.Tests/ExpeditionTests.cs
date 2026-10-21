@@ -287,8 +287,11 @@ internal static class ExpeditionTests
         foreach (var weapon in weapons)
             foreach (var policy in new[] { Policy.Safe, Policy.Greedy })
             {
+                // The 1.2.0-beta enemy buff (user, 2026-10-21: keep the buff, lower the targets): the greedy
+                // route still wins half its runs; the safe one (fewer relics) is only required to stay winnable.
                 int won = results[(weapon, BattleDifficulty.Normal, AdventureBalanceTests.Player.Simple, policy)].Wins;
-                check(won >= 5, $"Expedition balance: {weapon}, Normal, the simple player with the {policy.ToString().ToLowerInvariant()} route wins at least half its runs ({won}/10)");
+                int least = policy == Policy.Greedy ? 5 : 1;
+                check(won >= least, $"Expedition balance: {weapon}, Normal, the simple player with the {policy.ToString().ToLowerInvariant()} route wins at least {least}/10 ({won}/10)");
             }
         double longest = results.Values.Where(r => r.Wins > 0).Max(r => r.Seconds);
         check(longest <= 15 * 60, $"Expedition balance: a won run's fights take at most 15 minutes in simulation (longest {longest / 60:0.0} min)");

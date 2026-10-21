@@ -92,22 +92,24 @@
   "enemies": [
     {
       "id": "slime", "nameVi": "Slime", "nameEn": "Slime",
-      "maxHp": 50, "speed": 34, "damage": 10, "range": 64,
+      "maxHp": 58, "speed": 34, "damage": 12, "range": 64,
       "windup": 0.8, "attackCooldown": 1.8, "recover": 0.35,
-      "scale": 1, "color": "#7CD36A", "cost": 1
+      "scale": 1, "color": "#7CD36A", "cost": 1,
+      // elite stats multiply once on top of difficulty and threat (attackCooldown: only the wait between attacks).
+      "elite": { "hp": 1.2, "attackCooldown": 0.65, "cost": 1, "descVi": "máu dày hơn, đánh dồn dập hơn", "descEn": "more HP, attacks more often" }
     },
     {
       // Small and quick, falls fast. dash: within dashRange it winds up (its lane shows on the
       // floor), then lunges dashDistance at dashSpeed; running into the cat hits once and stuns it.
       "id": "runner", "nameVi": "Slime nhanh", "nameEn": "Quick slime",
-      "maxHp": 25, "speed": 70, "damage": 6, "range": 54,
+      "maxHp": 28, "speed": 70, "damage": 7, "range": 54,
       "windup": 0.7, "attackCooldown": 2.6, "recover": 0.4,
       "scale": 0.75, "color": "#5CC8FF", "marks": "speed",
       "dash": true, "dashRange": 170, "dashDistance": 230, "dashSpeed": 420, "cost": 1,
       // hitAndRun: after a dash it runs this far away from the cat before coming back.
       "hitAndRun": 150,
       // elite: one affix it may roll when it spawns (gold rim and star): a longer windup, a faster dash.
-      "elite": { "windupAdd": 0.3, "dashSpeed": 1.4, "cost": 1, "descVi": "gồng lâu hơn, lao nhanh hơn", "descEn": "longer windup, faster dash" }
+      "elite": { "windupAdd": 0.3, "dashSpeed": 1.4, "damage": 1.2, "cost": 1, "descVi": "gồng lâu hơn, lao nhanh và đau hơn", "descEn": "longer windup, faster and harder dash" }
     },
     {
       // Big and slow: hard to push, hits hard; a job for Cheer and the yarn bomb. blockChance: each
@@ -117,12 +119,12 @@
       // floor cannot walk past it (it must defeat it, or be lifted over). Drawn wide and low, so its
       // hitScale is wider than its scale.
       "id": "rock", "nameVi": "Slime đá", "nameEn": "Rock slime",
-      "maxHp": 150, "speed": 20, "damage": 16, "range": 72,
+      "maxHp": 188, "speed": 20, "damage": 18, "range": 72,
       "windup": 1.0, "attackCooldown": 2.4, "recover": 0.5,
       "scale": 1.35, "hitScale": 1.5, "color": "#A8A095", "marks": "cracks",
       "pushFactor": 0.5, "stunFactor": 0.6, "blockChance": 0.3, "blockMaxStreak": 2,
       "blocker": true, "blockFrontOnly": true, "turnSeconds": 0.6, "cost": 2,
-      "elite": { "sureBlocks": 1, "cost": 1, "descVi": "chắc chắn chặn đòn đầu phía trước", "descEn": "surely blocks its first front hit" }
+      "elite": { "sureBlocks": 1, "hp": 1.3, "pushImmune": true, "cost": 1, "descVi": "chặn chắc đòn đầu, máu dày, miễn Đẩy", "descEn": "blocks its first front hit, more HP, no Push" }
     },
     {
       // Support: winds up a heal (its leaf glows) on the most hurt ally in healRange every healCooldown s;
@@ -131,16 +133,16 @@
       // farHealBelow: with no hurt ally in reach, an ally below that share of its HP anywhere on the field
       // gets a heal all the same (farHealWindup s of windup, once per farHealCooldown s; a push cancels it).
       "id": "mender", "nameVi": "Slime thảo dược", "nameEn": "Herb slime",
-      "maxHp": 40, "speed": 28, "damage": 5, "range": 56,
+      "maxHp": 46, "speed": 28, "damage": 5, "range": 56,
       "windup": 0.8, "attackCooldown": 2.0, "recover": 0.35,
       "scale": 0.9, "color": "#4FC9A8", "marks": "leaf",
-      "healAmount": 35, "healRange": 170, "healCooldown": 3.5, "healWindup": 0.9, "healBudget": 210,
+      "healAmount": 35, "healRange": 170, "healCooldown": 3.15, "healWindup": 0.9, "healBudget": 210,
       "support": true, "keepBack": 110, "farHealBelow": 0.35, "farHealWindup": 1.2, "farHealCooldown": 8, "cost": 2,
       // healGuard: the ally it heals takes no damage during the windup (not a boss; the same ally again after
       // healGuardRepeat s); fleeSpeed: up to this × faster backing off from a close cat; hideBehindGuard: it
       // keeps behind its guard rock.
       "healGuard": true, "healGuardRepeat": 2, "fleeSpeed": 2.5, "hideBehindGuard": true,
-      "elite": { "firstHeal": 2, "cost": 1, "descVi": "lần hồi máu đầu mạnh gấp đôi", "descEn": "its first heal is twice as strong" }
+      "elite": { "firstHeal": 2, "healCooldown": 0.85, "healBudget": 1.3, "cost": 1, "descVi": "hồi đầu gấp đôi, hồi nhanh và nhiều hơn", "descEn": "first heal doubled, heals sooner and longer" }
     },
     {
       // The chapter 1 boss (Adventure stage 5): the free battle keeps "king" below. Phases fire once
@@ -153,7 +155,7 @@
       // (leapCrouch s) and leaps (leapSeconds) to the edge opposite its half of the floor (the other one if
       // the cat is in that half); summonWarning: purple rings show where its helpers appear, that long before.
       "id": "king_c1", "nameVi": "Vua Slime", "nameEn": "Slime King",
-      "maxHp": 600, "speed": 22, "damage": 25, "range": 110,
+      "maxHp": 720, "speed": 22, "damage": 30, "range": 110,
       "windup": 1.2, "attackCooldown": 2.6, "recover": 0.7,
       "scale": 2, "color": "#9B7BE0", "angryColor": "#E86A6A",
       "boss": true, "slam": true, "pushFactor": 0.35, "stunFactor": 0.4,
@@ -168,7 +170,7 @@
     },
     {
       "id": "king", "nameVi": "Vua Slime", "nameEn": "Slime King",
-      "maxHp": 400, "speed": 22, "damage": 25, "range": 110,
+      "maxHp": 480, "speed": 22, "damage": 30, "range": 110,
       "windup": 1.2, "attackCooldown": 2.6, "recover": 0.7,
       "scale": 2, "color": "#9B7BE0", "angryColor": "#E86A6A",
       "boss": true, "slam": true, "pushFactor": 0.35, "stunFactor": 0.4,
@@ -249,7 +251,7 @@
           {
             "id": "c1_first_steps", "nameVi": "Làm quen", "nameEn": "First steps",
             "goalVi": "Dọn 2 đợt slime dễ: click slime để chọn mục tiêu.", "goalEn": "Clear 2 waves of easy slimes: click a slime to pick the target.",
-            "objective": "clear", "maxAlive": 2, "rulesVersion": 4,
+            "objective": "clear", "maxAlive": 2, "rulesVersion": 5,
             "waves": [
               { "groups": [ { "enemy": "slime", "count": 2 } ] },
               { "groups": [ { "pick": { "slime": 3, "runner": 1 }, "count": 3, "atLeast": { "runner": 1 } } ] }
@@ -261,7 +263,7 @@
             "goalEn": "Mixed slimes: use skills, lift the cat when a slime winds up, pick upgrades between waves.",
             "tipVi": "Dọn xong một đợt, bạn chọn 1 trong 3 thẻ nâng cấp. Thắng màn thì build được mang sang màn sau. Slime đá chặn được đòn: đánh tiếp hoặc dùng Bom len.",
             "tipEn": "After each cleared wave, pick 1 of 3 upgrade cards. Win the stage and the build comes along to the next one. Rock slimes block some hits: keep at it or use the Yarn bomb.",
-            "objective": "clear", "upgrades": true, "threat": 1.6, "rulesVersion": 10,
+            "objective": "clear", "upgrades": true, "threat": 1.6, "rulesVersion": 11,
             "waves": [
               { "groups": [ { "enemy": "rock", "count": 1 }, { "pick": { "slime": 1, "runner": 1 }, "count": 2 } ] },
               { "groups": [ { "enemy": "rock", "count": 1 }, { "pick": { "slime": 1, "runner": 1 }, "count": 2 }, { "enemy": "rock", "count": 1 } ] },
@@ -275,7 +277,7 @@
             "tipVi": "Quái kéo tới liên tục và mạnh dần tới khi hết giờ. Ở giây 20, 40, 60 bạn chọn thẻ. Bế mèo thì đồng hồ dừng, nên hãy giữ HP bằng Khiên và Cá hồi máu.",
             "tipEn": "Slimes keep coming, stronger and stronger, until time is up. At 20, 40 and 60 s you pick a card. Carrying the cat stops the clock, so keep HP up with the Shield and the fish.",
             "objective": "survive", "surviveSeconds": 75, "maxAlive": 4, "upgrades": true, "maxUpgrades": 3, "upgradeAt": [ 20, 40, 60 ],
-            "threatGrowth": 0.3, "threat": 1.7, "eliteChance": 0.3, "rulesVersion": 11, "reward": "SlimeHat",
+            "threatGrowth": 0.3, "threat": 1.7, "eliteChance": 0.3, "rulesVersion": 12, "reward": "SlimeHat",
             "waves": [
               { "stream": { "weights": { "runner": 2, "slime": 1, "rock": 1 }, "interval": 2.6, "intervalEnd": 1.4, "pincerAfter": 45, "budget": 7 } }
             ]
@@ -286,7 +288,7 @@
             "goalEn": "Herb slimes heal their friends: take them down first, or Push one to cut its heal.",
             "tipVi": "Slime thảo dược (mũ lá) đứng sau slime đá và hồi máu cho đồng đội. Lá sáng lên là nó đang gồng: Đẩy để cắt. Đá chặn đường: hạ đá, hoặc bế mèo thả ra sau.",
             "tipEn": "Herb slimes (leaf caps) hide behind rock slimes and heal them. A glowing leaf means a heal is coming: Push to cut it. Rocks block the way: break them, or carry the cat behind.",
-            "objective": "clear", "upgrades": true, "maxAlive": 5, "threat": 1.8, "eliteChance": 0.3, "rulesVersion": 12,
+            "objective": "clear", "upgrades": true, "maxAlive": 5, "threat": 1.8, "eliteChance": 0.3, "rulesVersion": 13,
             "waves": [
               { "groups": [ { "pick": { "slime": 1, "runner": 1 }, "count": 3 } ] },
               { "budget": 9, "groups": [ { "squad": [ { "enemy": "mender", "count": 1 }, { "enemy": "rock", "count": 3 } ] } ] },
@@ -299,7 +301,7 @@
             "goalEn": "The chapter's last battle: the Slime King backs off behind a shield and calls help, herb slimes too.",
             "tipVi": "Ở 75%, 50% và 25% máu, Vua lui về mép xa, bật khiên và gọi quân: hạ hết quân để phá khiên. Vương miện sáng là Vua sắp phong quân thành tinh anh: Đẩy để cắt. Vùng đỏ dưới sàn: kéo mèo ra hoặc bật Khiên.",
             "tipEn": "At 75%, 50% and 25% HP the King backs off behind a shield and calls help: defeat them all to break it. A glowing crown makes a helper elite: Push the King to cut it. Red zone on the floor: lift the cat out or Shield.",
-            "objective": "clear", "upgrades": true, "threat": 1.75, "eliteChance": 0.3, "rulesVersion": 12, "reward": "SlimeKingCrown",
+            "objective": "clear", "upgrades": true, "threat": 1.75, "eliteChance": 0.3, "rulesVersion": 13, "reward": "SlimeKingCrown",
             "waves": [
               { "budget": 6, "groups": [ { "enemy": "rock", "count": 1, "side": "a" }, { "enemy": "slime", "count": 1, "side": "a" }, { "enemy": "runner", "count": 2, "side": "b" } ] },
               { "budget": 6, "groups": [ { "squad": [ { "enemy": "mender", "count": 1 }, { "enemy": "rock", "count": 1 }, { "enemy": "slime", "count": 1 } ] } ] },
@@ -320,7 +322,7 @@
   // run names them) and never an Adventure stage's. "unlockAfter": the Adventure stage to win first.
   "expedition": {
     "id": "slime_trail", "nameVi": "Đường mòn Slime", "nameEn": "The Slime Trail",
-    "rulesVersion": 2, "unlockAfter": "c1_slime_king", "retreatCost": 0.25, "winHeal": 0.05, "stepThreat": 0.1,
+    "rulesVersion": 3, "unlockAfter": "c1_slime_king", "retreatCost": 0.25, "winHeal": 0.05, "stepThreat": 0.1,
     "restHeal": 0.3, "maxRelics": 3, "eliteRelics": 2,
     "keepsakes": [
       { "id": "cup_bronze", "kind": "cup", "tier": "bronze", "difficulty": "Easy", "exact": true, "nameVi": "Cúp đồng viễn chinh", "nameEn": "Bronze Expedition cup" },

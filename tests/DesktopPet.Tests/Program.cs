@@ -83,6 +83,7 @@ BattleRoleTests.Run(Check);
 EnemyDirectorTests.Run(Check);
 EnemyTacticsTests.Run(Check);
 EnemyGachaTests.Run(Check);
+EliteBuffTests.Run(Check);
 BossLeapTests.Run(Check);
 TacticsTests.Run(Check);
 RescueTests.Run(Check);

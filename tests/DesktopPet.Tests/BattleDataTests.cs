@@ -27,7 +27,13 @@ internal static class BattleDataTests
         differences.Clear();
         foreach (var builtInKind in builtIn.EnemyTypes)
             Same(shipped.Enemy(builtInKind.Id), builtInKind, typeof(EnemyType), differences, builtInKind.Id + ".");
-        check(differences.Count == 0, "battle.json's slime and Slime King match the built-in ones" + (differences.Count > 0 ? ": " + string.Join(", ", differences) : ""));
+        // The 1.2.0-beta buff changed only the shipped HP and damage: slime +15 %/+15 %, King +20 %/+20 % (rounded).
+        var buffed = new Dictionary<string, (double Hp, double Damage)> { ["slime"] = (1.15, 1.15), ["king"] = (1.2, 1.2) };
+        differences.RemoveAll(d => buffed.Keys.Any(k => d.StartsWith(k + ".MaxHp:") || d.StartsWith(k + ".Damage:")));
+        foreach (var (id, (hp, damage)) in buffed)
+            if (shipped.Enemy(id) is var kind && builtIn.Enemy(id) is var plain && (Math.Abs(kind.MaxHp - plain.MaxHp * hp) > 0.5001 || Math.Abs(kind.Damage - plain.Damage * damage) > 0.5001))
+                differences.Add($"{id}: {kind.MaxHp}/{kind.Damage} is not the built-in {plain.MaxHp}/{plain.Damage} buffed");
+        check(differences.Count == 0, "battle.json's slime and Slime King match the built-in ones (HP and damage with the 1.2.0-beta buff)" + (differences.Count > 0 ? ": " + string.Join(", ", differences) : ""));
         // The shipped "weapons" list is the sword (Cat* numbers) and the hammer, as before.
         check(shipped.WeaponList.Select(w => w.Id).SequenceEqual(builtIn.WeaponList.Select(w => w.Id)) &&
               shipped.WeaponList.Zip(builtIn.WeaponList).All(pair => pair.First == pair.Second),

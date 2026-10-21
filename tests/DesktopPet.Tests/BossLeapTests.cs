@@ -183,7 +183,7 @@ internal static class BossLeapTests
         var herb = data.Enemy("mender");
         check(king is { RetreatLeap: true, LeapCrouch: 0.35, LeapSeconds: 0.9, SummonWarning: 0.6 } && !data.Enemy("king").RetreatLeap,
             "The chapter boss leaps (0.35 s crouch, 0.9 s flight) and announces its helpers 0.6 s; the free battle's king is unchanged");
-        check(herb is { HealAmount: 35, HealCooldown: 3.5, HealWindup: 0.9, HealBudget: 210 }, "Herb slime: heals 35 every 3.5 s (0.9 s windup), 210 in all, before difficulty and threat");
+        check(herb is { HealAmount: 35, HealCooldown: 3.15, HealWindup: 0.9, HealBudget: 210 }, "Herb slime: heals 35 every 3.15 s (0.9 s windup), 210 in all, before difficulty and threat");
         string Bad(string json)
         {
             using var stream = typeof(BattleData).Assembly.GetManifestResourceStream("DesktopPet.battle.json")!;

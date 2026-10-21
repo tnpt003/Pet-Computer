@@ -24,7 +24,7 @@ public sealed partial class PetWindow
         [BattleEventKind.SlimeHit] = ("squish", 3), [BattleEventKind.EnemyHealed] = ("ball_tap", 3), [BattleEventKind.HitBlocked] = ("ball_tap", 3), [BattleEventKind.BossImmune] = ("ball_tap", 3),
         [BattleEventKind.Incoming] = ("surprised", 5), [BattleEventKind.BossRallying] = ("surprised", 4),
         [BattleEventKind.EliteAppeared] = ("surprised", 5), [BattleEventKind.ShellBlocked] = ("ball_tap", 5),
-        [BattleEventKind.HitWarded] = ("ball_tap", 3), [BattleEventKind.BossRallied] = ("surprised", 5),
+        [BattleEventKind.HitWarded] = ("ball_tap", 3), [BattleEventKind.PushResisted] = ("ball_tap", 3), [BattleEventKind.BossRallied] = ("surprised", 5),
         [BattleEventKind.BossLeaping] = ("swoosh", 3), [BattleEventKind.BossLanded] = ("pop", 5), [BattleEventKind.BossSummoning] = ("surprised", 4),
         [BattleEventKind.Pushed] = ("swoosh", 2), [BattleEventKind.BombThrown] = ("swoosh", 2), [BattleEventKind.Shielded] = ("swoosh", 2),
         [BattleEventKind.Swing] = ("swoosh", 1),
@@ -44,12 +44,12 @@ public sealed partial class PetWindow
     // Big moments get a banner across the HUD's centre. The first heal, far heal, rally call and attack
     // from behind of a battle say what is going on (once each per battle), and so does the first elite
     // of each kind; every helper a rally makes elite is named.
-    private bool healerExplained, farHealExplained, rallyExplained, behindExplained, wardExplained;
+    private bool healerExplained, farHealExplained, rallyExplained, behindExplained, wardExplained, pushResistExplained;
     private readonly HashSet<string> elitesExplained = new();
     private void ShowBattleBanners()
     {
         if (battle == null || battleHud == null) return;
-        if (battle.Time < 0.05) { healerExplained = farHealExplained = rallyExplained = behindExplained = wardExplained = false; elitesExplained.Clear(); }
+        if (battle.Time < 0.05) { healerExplained = farHealExplained = rallyExplained = behindExplained = wardExplained = pushResistExplained = false; elitesExplained.Clear(); }
         for (int i = 0; i < battle.Events.Count; i++)
         {
             var e = battle.Events[i];
@@ -71,6 +71,8 @@ public sealed partial class PetWindow
                 BattleEventKind.EnemyWarded when !wardExplained => L("Đang được hồi thì miễn sát thương! Đẩy slime thảo dược", "Healing makes it immune! Push the herb slime"),
                 BattleEventKind.EliteAppeared when battle.Find((int)e.Value) is { Elite: EliteSpec elite } enemy && elitesExplained.Add(enemy.Type.Id) =>
                     L($"★ {enemy.Type.Name(false)} tinh anh: {elite.Describe(false)}", $"★ Elite {enemy.Type.Name(true)}: {elite.Describe(true)}"),
+                BattleEventKind.PushResisted when !pushResistExplained && battle.Find((int)e.Value) is Slime firm =>
+                    L($"★ {firm.Type.Name(false)} tinh anh miễn Đẩy!", $"★ The elite {firm.Type.Name(true)} ignores Push!"),
                 BattleEventKind.Won => L("CHIẾN THẮNG!", "VICTORY!"),
                 BattleEventKind.Lost => L("THUA RỒI…", "DEFEATED…"),
                 _ => null
@@ -80,6 +82,7 @@ public sealed partial class PetWindow
             if (e.Kind == BattleEventKind.BossRallying) rallyExplained = true;
             if (e.Kind == BattleEventKind.Incoming) behindExplained = true;
             if (e.Kind == BattleEventKind.EnemyWarded) wardExplained = true;
+            if (e.Kind == BattleEventKind.PushResisted) pushResistExplained = true;
             if (text != null) battleHud.ShowBanner(text, battle.Time, e.Kind is BattleEventKind.Won or BattleEventKind.Lost ? 3 : 1.6);
         }
     }

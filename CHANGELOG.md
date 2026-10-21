@@ -1,5 +1,15 @@
 # Nhật ký thay đổi
 
+## 1.2.0-beta — Quái mạnh hơn, tinh anh nổi bật (2026-10-21)
+
+Bản beta: test tự động và mô phỏng đạt, **chưa chơi thử thật**. Game khó hơn rõ rệt, nhất là Khó và Viễn chinh (người dùng chọn giữ bảng buff và hạ mục tiêu cân bằng).
+
+- **Buff nền mọi quái:** Slime 58 HP/12 sát thương (trước 50/10), slime nhanh 28/7 (25/6), slime đá 188/18 (150/16), slime thảo dược 46 HP và hồi chiêu hồi máu 3,15 s (40, 3,5 s), Vua Slime 720/30 ở Phiêu lưu và 480/30 ở trận tự do (600/25, 400/25).
+- **Tinh anh mạnh rõ** (nhân thêm trên buff nền, đặc tính cũ giữ nguyên): slime thường nay cũng có tinh anh (+20% HP, chờ giữa hai đòn −35%, thời gian gồng giữ nguyên); slime nhanh +20% sát thương; slime đá +30% HP và **miễn Đẩy** (không bị đẩy, choáng hay ngắt; kỹ năng vẫn tốn hồi chiêu, có banner và hiệu ứng chặn); slime thảo dược hồi chiêu −15%, tổng lượng hồi +30% (mỗi lần hồi không mạnh hơn). Quân Vua Slime phong tinh anh cũng nhận các chỉ số này. Vẫn tối đa 1 tinh anh, không có ở Dễ.
+- **Kỷ lục và Viễn chinh:** luật màn Phiêu lưu và Viễn chinh được nâng phiên bản: kỷ lục cũ vẫn lưu nhưng tách riêng; chuyến Viễn chinh đang dở từ bản trước không tiếp tục được.
+- Từ sau 1.1.0-beta (đã phát hành nội bộ dưới nhãn 1.1.0-beta): Combat Depth, Enemy Director, chiến thuật quái, Vua Slime ba khiên, Viễn chinh với di vật, sự kiện và kỷ vật trưng bày — xem PROGRESS.md.
+- Dữ liệu tùy chỉnh: `elite` có thêm `hp`, `damage`, `attackCooldown`, `healCooldown`, `healBudget`, `pushImmune` (docs/BATTLE-DATA.md). File battle.json của người dùng không bị đổi.
+
 ## 1.1.0-beta — Adventure Update, Chương 1 (2026-10-20)
 
 Bản beta: đã có test tự động và mô phỏng cân bằng, **chưa được chơi thử thật**, chưa thử DPI 125–150% và máy sạch. Xem docs/MANUAL-TEST.md (mục "Phiêu lưu").

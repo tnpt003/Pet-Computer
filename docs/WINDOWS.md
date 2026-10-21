@@ -884,7 +884,7 @@ next step), so a double click never starts two battles. Ending a battle by hand 
 - **Balance:** `AdventureBalanceTests` simulates every stage × sword/hammer × Easy/Normal/Hard with an
   idle and a simple skill-using player (10 seeds) and prints the table; stage 3 now allows 4 enemies
   at once with a heavier repeating wave (rulesVersion 3). Simulation only, not real play.
-- **Version:** 1.1.0-beta (`DesktopPet.csproj`); see CHANGELOG.md.
+- **Version:** 1.1.0-beta at the time (`DesktopPet.csproj`; 1.2.0-beta since the 2026-10-21 enemy buff); see CHANGELOG.md.
 
 ### Simpler enemy tactics, far heals, a tougher Slime King (2026-10-21)
 

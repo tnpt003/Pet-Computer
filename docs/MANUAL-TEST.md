@@ -293,3 +293,13 @@ Chuyến đang dở từ mốc 2 (nếu có) sẽ kết thúc khi mở bản đ�
 - [ ] Cài đặt → Mèo → Phụ kiện: có "Khăn viễn chinh"; đội thử, xem khi đi/ngủ/kéo/trèo.
 - [ ] Để mèo tự do ~5 phút (không Quiet): mèo đi tới bên trái kệ, quay mặt nhìn kệ khoảng 4 giây rồi đi tiếp. Khi đang ngủ, Quiet hoặc đang chơi bóng/laser thì không đi.
 - [ ] Kéo mèo sang màn hình phụ: kệ chuyển theo sang góc màn hình đó (chưa kiểm tra thật trên nhiều màn hình/DPI khác nhau).
+
+#### Buff quái/tinh anh, bản 1.2.0-beta (2026-10-21)
+- [ ] Khác → Giới thiệu ghi 1.2.0-beta.
+- [ ] Màn 1–2 Thường: quái chịu đòn lâu hơn chút, đánh đau hơn; vẫn thắng được khi dùng kỹ năng. Dễ màn 2 không dùng kỹ năng thì có thể thua (mô phỏng: chỉ ~30% thắng) — báo nếu thấy quá khó.
+- [ ] Màn 3–5 Thường: gặp slime thường tinh anh (viền vàng + sao): banner "★ Slime tinh anh: máu dày hơn, đánh dồn dập hơn", nó ra đòn dày hơn nhưng vẫn gồng (có cảnh báo) như cũ.
+- [ ] Đẩy slime đá tinh anh: nó đứng yên, không choáng, vẫn gồng tiếp; hiện mảnh đá + khiên nhỏ, banner "★ Slime đá tinh anh miễn Đẩy!" chỉ lần đầu; nút Đẩy vào hồi chiêu. Đẩy slime đá thường: bị đẩy/choáng như cũ.
+- [ ] Slime thảo dược tinh anh: hồi máu dày hơn, mỗi lần hồi không lớn hơn; vẫn hết lượng hồi sau một lúc.
+- [ ] Vua Slime phong tinh anh cho quân: quân đó cũng khỏe/đau hơn theo loại của nó.
+- [ ] Bảng kết quả/bản đồ: kỷ lục cũ không còn hiện là kỷ lục của luật mới (tính lại từ đầu). Nếu có chuyến Viễn chinh đang dở từ bản trước: không tiếp tục được (báo luật đã đổi), app không lỗi.
+- [ ] Khó và Viễn chinh Thường khó hơn rõ (mô phỏng: Viễn chinh Thường đường an toàn ~2/10) — cho biết cảm nhận thật.

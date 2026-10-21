@@ -205,10 +205,15 @@ internal static class AdventureBalanceTests
             for (int s = 1; s <= stages.Length; s++)
                 check(table[(s, weapon, BattleDifficulty.Normal, Player.Simple)].Wins >= 0.8,
                     $"Balance: stage {s}, {weapon}, Normal, simple player wins ≥ 80 % ({table[(s, weapon, BattleDifficulty.Normal, Player.Simple)].Wins:P0})");
+        // Since the 1.2.0-beta enemy buff (user, 2026-10-21: keep the buff, lower the targets) only
+        // stage 1 is won idle on Easy; stage 2 on Easy needs the skills (the simple player).
         foreach (var weapon in weapons)
-            for (int s = 1; s <= 2; s++)
-                check(table[(s, weapon, BattleDifficulty.Easy, Player.Idle)].Wins >= 0.8,
-                    $"Balance: stage {s}, {weapon}, Easy, even an idle player wins ({table[(s, weapon, BattleDifficulty.Easy, Player.Idle)].Wins:P0})");
+        {
+            check(table[(1, weapon, BattleDifficulty.Easy, Player.Idle)].Wins >= 0.8,
+                $"Balance: stage 1, {weapon}, Easy, even an idle player wins ({table[(1, weapon, BattleDifficulty.Easy, Player.Idle)].Wins:P0})");
+            check(table[(2, weapon, BattleDifficulty.Easy, Player.Simple)].Wins >= 0.8,
+                $"Balance: stage 2, {weapon}, Easy, the simple player wins ({table[(2, weapon, BattleDifficulty.Easy, Player.Simple)].Wins:P0})");
+        }
         // Enemy Director milestone 3: the idle player wins at most 30 % of stages 2–5 on Normal, and the
         // simple player ends them with less HP than before (it used to finish near full: 95–119 HP).
         // The agreed ≤ 60 % HP left is not reached by this bot (it answers every windup at once).
@@ -248,13 +253,14 @@ internal static class AdventureBalanceTests
             {
                 var adventure = new Adventure(data.Campaign, AdventureProgress.Load(file));
                 inOrder &= adventure.IsUnlocked(stages[i].Id) && (i + 1 >= stages.Length || !adventure.IsUnlocked(stages[i + 1].Id));
-                var run = Play(data, stages[i], BattleWeapon.Sword, BattleDifficulty.Normal, 1, Player.Simple, adventure.StartBuild(stages[i]));
-                adventure.Apply("chapter" + i, stages[i], true, run.Won, BattleWeapon.Sword, BattleDifficulty.Normal, 1, run.Seconds, run.Build);
+                // On Easy since the 1.2.0-beta enemy buff: this checks the saved flow, not the balance.
+                var run = Play(data, stages[i], BattleWeapon.Sword, BattleDifficulty.Easy, 1, Player.Simple, adventure.StartBuild(stages[i]));
+                adventure.Apply("chapter" + i, stages[i], true, run.Won, BattleWeapon.Sword, BattleDifficulty.Easy, 1, run.Seconds, run.Build);
                 inOrder &= run.Won && adventure.Progress.Save(file);
             }
             var done = AdventureProgress.Load(file);
             check(inOrder && done.Completed.Count == 5 && done.Rewards.OrderBy(r => r).SequenceEqual(new[] { "SlimeHat", "SlimeKingCrown" }) && File.Exists(file + ".bak"),
-                "The whole chapter plays in order (simulation, Normal, sword): each stage opens the next, both rewards once, saved after every stage");
+                "The whole chapter plays in order (simulation, Easy, sword): each stage opens the next, both rewards once, saved after every stage");
         }
         finally { Directory.Delete(dir, true); }
 

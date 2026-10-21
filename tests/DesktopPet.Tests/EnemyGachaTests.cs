@@ -294,7 +294,7 @@ internal static class EnemyGachaTests
         check(Bad("\"enemies\": [ { \"id\": \"king_c1\", \"elite\": { \"windupAdd\": 0.2, \"descVi\": \"a\", \"descEn\": \"a\" } } ]").Contains("not for a boss"), "An elite affix on a boss is rejected");
         check(Bad("\"enemies\": [ { \"id\": \"slime\", \"elite\": { \"sureBlocks\": 1, \"descVi\": \"a\", \"descEn\": \"a\" } } ]").Contains("blocks"), "Sure blocks on an enemy that never blocks are rejected");
         check(Bad("\"enemies\": [ { \"id\": \"slime\", \"elite\": { \"windupAdd\": 0.2, \"descVi\": \"a\", \"descEn\": \"a\" } } ]").Contains("dash"), "A dash affix on an enemy that does not dash is rejected");
-        check(Bad("\"enemies\": [ { \"id\": \"slime\", \"elite\": { \"descVi\": \"a\", \"descEn\": \"a\" } } ]").Contains("changes nothing"), "An elite affix that changes nothing is rejected");
+        check(Bad("\"enemies\": [ { \"id\": \"slime\", \"elite\": { \"hp\": 1, \"attackCooldown\": 1, \"descVi\": \"a\", \"descEn\": \"a\" } } ]").Contains("changes nothing"), "An elite affix that changes nothing is rejected");
         check(Bad("\"enemies\": [ { \"id\": \"slime\", \"cost\": 11 } ]").Contains("cost"), "An enemy cost above 10 is rejected");
         check(Bad("\"maxElites\": 6").Contains("maxElites") && Bad("\"rareChance\": 1.5").Contains("rareChance"), "maxElites and rareChance out of range are rejected");
         check(Bad("\"upgrades\": [ { \"id\": \"odd\", \"group\": \"power\", \"rare\": true, \"nameVi\": \"a\", \"nameEn\": \"a\", \"descVi\": \"a\", \"descEn\": \"a\", \"effect\": \"damage\", \"amount\": 0.1, \"maxStacks\": 1 } ]").Contains("one rare card per group"),
@@ -314,8 +314,8 @@ internal static class EnemyGachaTests
         var runner = data.Enemy("runner").Elite;
         var rock = data.Enemy("rock").Elite;
         var mender = data.Enemy("mender").Elite;
-        check(runner is { WindupAdd: 0.3, DashSpeed: 1.4 } && rock is { SureBlocks: 1 } && mender is { FirstHeal: 2 } && data.Enemy("slime").Elite == null && data.MaxElites == 1,
-            "Shipped elites: quick slime +0.3 s windup / ×1.4 dash, rock one sure block, herb slime first heal ×2; at most one alive");
+        check(runner is { WindupAdd: 0.3, DashSpeed: 1.4 } && rock is { SureBlocks: 1 } && mender is { FirstHeal: 2 } && data.Enemy("slime").Elite != null && data.MaxElites == 1,
+            "Shipped elites: quick slime +0.3 s windup / ×1.4 dash, rock one sure block, herb slime first heal ×2 (traits kept by the 1.2.0-beta buff, which also gave the slime one); at most one alive");
         var rares = data.UpgradeList.Where(u => u.Rare).ToList();
         check(rares.Select(u => (u.Id, u.Group, u.Effect)).OrderBy(r => r.Group).SequenceEqual(new[] { ("turtle_shell", "defense", "shell"), ("opening_strike", "power", "opener"), ("running_start", "speed", "momentum") }.OrderBy(r => r.Item2))
             && data.RareChance == 0.15, "Shipped rare cards: Turtle shell, Opening strike, Running start (one per group, 15 %)");

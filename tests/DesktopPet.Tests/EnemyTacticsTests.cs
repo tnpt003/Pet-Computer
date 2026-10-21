@@ -405,8 +405,8 @@ internal static class EnemyTacticsTests
         var mender = data.Enemy("mender");
         var chapterKing = data.Enemy("king_c1");
         check(rock is { Blocker: true, BlockFrontOnly: true, TurnSeconds: 0.6 } && mender is { Marks: "leaf", FarHealBelow: 0.35, FarHealWindup: 1.2, FarHealCooldown: 8 } &&
-              chapterKing is { MaxHp: 600, RallyEvery: 10, RallyCharge: 0.8, RallyHp: 0.5, RallyDamage: 1.25, ShieldBreakStun: 2 } && data.MaxAttackers == 2,
-            "battle.json: rocks block the way and only from the front; the herb slime heals from afar; the King (600 HP) makes elites and is dazed when its shield breaks");
+              chapterKing is { MaxHp: 720, RallyEvery: 10, RallyCharge: 0.8, RallyHp: 0.5, RallyDamage: 1.25, ShieldBreakStun: 2 } && data.MaxAttackers == 2,
+            "battle.json: rocks block the way and only from the front; the herb slime heals from afar; the King (720 HP) makes elites and is dazed when its shield breaks");
         var kingPhases = chapterKing.Phases!;
         check(kingPhases.Length == 3 && kingPhases.All(p => p.Shield) && kingPhases.Select(p => p.At).SequenceEqual(new[] { 0.75, 0.5, 0.25 }) &&
               kingPhases[2].Enrage && kingPhases.All(p => p.Calls().Count() <= chapterKing.SummonCap),

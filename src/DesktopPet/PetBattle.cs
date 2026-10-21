@@ -402,7 +402,9 @@ public enum BattleEventKind
     // A boss leaping to its edge (taking off, landing) and the rings where its helpers will appear.
     BossLeaping, BossLanded, BossSummoning,
     // Tactics: a heal that guards its ally, a hit on that guarded ally.
-    EnemyWarded, HitWarded
+    EnemyWarded, HitWarded,
+    // A Push on an elite that ignores it (Value: its id).
+    PushResisted
 }
 public readonly record struct BattleEvent(BattleEventKind Kind, double X, double Value = 0);
 // Number: a floating damage (Value > 0) or heal (Value < 0, shown as +HP above the cat).
@@ -1226,16 +1228,33 @@ public sealed class BattleSim
     private static readonly EliteSpec PlainElite = new();
     private static void MakeElite(Slime helper, EnemyType boss)
     {
-        var elite = helper.Type.Elite ?? PlainElite;
-        helper.Elite = elite;
         helper.Rallied = true;
-        helper.SureBlocks = elite.SureBlocks;
-        helper.HealBoost = elite.FirstHeal;
+        ApplyElite(helper, helper.Type.Elite ?? PlainElite);
         double more = Math.Round(helper.MaxHp * boss.RallyHp);
         helper.MaxHp += more;
         helper.Hp += more;
         helper.Damage = Math.Round(helper.Damage * boss.RallyDamage);
     }
+
+    // Turning elite, once per enemy (a roll at spawn or a rally): the affix's trait and its stats on
+    // top of what difficulty and threat gave it. More max HP comes with that much HP at once.
+    private static void ApplyElite(Slime slime, EliteSpec elite)
+    {
+        if (slime.Elite != null) return;
+        slime.Elite = elite;
+        slime.SureBlocks = elite.SureBlocks;
+        slime.HealBoost = elite.FirstHeal;
+        double more = Math.Round(slime.MaxHp * (elite.Hp - 1));
+        slime.MaxHp += more;
+        slime.Hp += more;
+        if (elite.Damage != 1) slime.Damage = Math.Round(slime.Damage * elite.Damage);
+        if (elite.HealBudget != 1) slime.HealLeft = Math.Round(slime.HealLeft * elite.HealBudget);
+        slime.HealCooldown *= elite.HealCooldown;
+    }
+
+    // The wait after an attack and after a heal (an elite's are shorter).
+    private static double AttackCooldown(Slime slime) => slime.Type.AttackCooldown * (slime.Elite?.AttackCooldown ?? 1);
+    private static double HealCooldown(Slime slime) => slime.Type.HealCooldown * (slime.Elite?.HealCooldown ?? 1);
 
     private Slime? PickTarget(double catX)
     {
@@ -1539,7 +1558,7 @@ public sealed class BattleSim
         healer.MendingId = 0;
         healer.Set(SlimeState.Recover);
         RefreshGuards();
-        healer.HealCooldown = healer.Type.HealCooldown;
+        healer.HealCooldown = HealCooldown(healer);
         bool far = healer.FarHeal;
         if (far) healer.FarHealCooldown = healer.Type.FarHealCooldown;
         healer.FarHeal = false;
@@ -1598,7 +1617,7 @@ public sealed class BattleSim
     private void Strike(Slime slime, double catX)
     {
         slime.Set(SlimeState.Recover);
-        slime.Cooldown = slime.Type.AttackCooldown;
+        slime.Cooldown = AttackCooldown(slime);
         if (slime.Type.Slam) AddEffect(BattleEffectKind.Slam, slime.X, 0, slime.Range);
         // Missed: the cat moved away, is protected, or is off the floor right now.
         if (CatLifted || Math.Abs(catX - slime.X) > slime.Range + 12 || Grace > 0) return;
@@ -1627,7 +1646,7 @@ public sealed class BattleSim
         if (slime.DashLeft <= 0 && !Over)
         {
             slime.Set(SlimeState.Recover);
-            slime.Cooldown = slime.Type.AttackCooldown;
+            slime.Cooldown = AttackCooldown(slime);
             slime.RunAwayLeft = slime.Type.HitAndRun; // Hit and run: off it goes once it recovers.
         }
     }
@@ -1979,9 +1998,7 @@ public sealed class BattleSim
         if (stream is { Budget: > 0 } flow ? AliveCost() + elite.Cost > flow.Budget : elite.Cost > eliteBudget) return;
         if (affixRandom.NextDouble() >= stage.EliteChance) return;
         if (stream == null) eliteBudget -= elite.Cost;
-        slime.Elite = elite;
-        slime.SureBlocks = elite.SureBlocks;
-        slime.HealBoost = elite.FirstHeal;
+        ApplyElite(slime, elite);
         ElitesSpawned++;
         events.Add(new(BattleEventKind.EliteAppeared, slime.X, slime.Id));
     }
@@ -2137,14 +2154,20 @@ public sealed class BattleSim
     {
         var slime = Find(id);
         if (!IsAimed(skill) || !Ready(skill) || slime is not { Targetable: true }) return false;
-        if (skill == BattleSkill.Push)
+        if (skill == BattleSkill.Push && slime.Elite is { PushImmune: true })
+        {
+            // It stands firm: no knock back, no stun, its windup goes on; the skill is still spent.
+            AddEffect(BattleEffectKind.Block, slime.X, slime.Height / 2);
+            events.Add(new(BattleEventKind.PushResisted, slime.X, slime.Id));
+        }
+        else if (skill == BattleSkill.Push)
         {
             // Knock the slime away from the cat and stun it briefly; the boss is heavy.
             int push = direction is int chosen && chosen != 0 ? Math.Sign(chosen) : slime.X < catX ? -1 : 1;
             // A heal being wound up is cancelled and costs its full cooldown (a far heal's too).
             if (slime.State == SlimeState.Casting)
             {
-                slime.HealCooldown = slime.Type.HealCooldown; slime.HealTargetId = 0;
+                slime.HealCooldown = HealCooldown(slime); slime.HealTargetId = 0;
                 if (slime.FarHeal) slime.FarHealCooldown = slime.Type.FarHealCooldown;
                 slime.FarHeal = false;
                 slime.MendingId = 0; // Its guard ends with it (RefreshGuards below).

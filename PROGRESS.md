@@ -4,6 +4,13 @@ Cập nhật: 2026-10-21 (Asia/Saigon).
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
+## Thẻ trạng thái mở sát mèo và kéo được (2026-10-21)
+- Người dùng báo (ảnh chụp): thẻ trạng thái mở rất xa mèo và không kéo được. Nguyên nhân: thẻ gán thẳng Left/Top của WPF, mà cửa sổ mới hiểu tọa độ theo DPI khác với tọa độ của mèo (DIP theo scale màn hình mèo). Người dùng "ok" cách sửa.
+- PetWindow.Status.cs: đo kích thước bằng DesiredSize (DIP), đặt vị trí qua MoveWindow (SetWindowPos theo scale của mèo) như thông báo battle; bấm giữ chỗ trống trên thẻ (trừ ×) để kéo (DragMove), thả ra thẻ đứng yên, vẫn đóng khi click ra ngoài/Esc/×.
+- Test thật: scripts/test.ps1 -Ui: Python OK; C# 1220; WPF 597 đạt (check mới: thẻ nằm ngay trên đầu mèo tính bằng pixel, ở scale thật và scale giả 150%). Chưa kiểm tra trực quan trên màn hình DPI khác hay màn hình phụ thật.
+- Commit 3a751ea. Đóng mèo (PID 25212) bằng WM_CLOSE, publish sạch 1.2.0-beta+3a751ea, ZIP artifacts\DesktopPet-1.2.0-beta-3a751ea-win-x64.zip; check-publish 3/3; mở lại 18:54, log "Desktop Pet 1.2.0-beta (3a751ea) started". AGENTS.md/docs/NEXT-STEPS.md của người dùng trả lại đúng hash.
+- Cần test tay: mở thẻ khi mèo ở sàn, trên cửa sổ cao, sát mép trái/phải, ở màn hình phụ; kéo thẻ.
+
 ## Cải thiện UI — thẻ trạng thái, hộp thoại ấm, cỡ chữ battle (2026-10-21)
 - Người dùng "làm luôn" cả 3 việc còn lại (C# only, Python/IPC không đổi):
   - Cỡ chữ: panel Battle/HUD/Phiêu lưu/Viễn chinh dùng hằng PetUi (11/12/13/14/16/20) thay cỡ lẻ: 10.5→11, 11.5→12, 12.5→13, 13.5→14, 15/15.5→16, banner 22→20.

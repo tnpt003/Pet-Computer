@@ -295,6 +295,12 @@ public sealed class BattleFieldView : FrameworkElement
             dc.DrawLine(WarningPen, lane, new Point(end - dir * 8, floor + 2));
         }
         if (targetable) dc.DrawEllipse(HitHalo, null, new Point(x, floor - h / 2), w / 2 + 10, h / 2 + 12);
+        // An elite healer: a soft green aura breathing behind it (its heals come sooner and last longer).
+        if (targetable && slime.Elite != null && slime.Type.HealAmount > 0 && slime.HealLeft > 0)
+        {
+            double breath = 1 + 0.08 * Math.Sin(time * 3 + slime.Id);
+            dc.DrawEllipse(LeafGlow, null, new Point(x, floor - h / 2), (w / 2 + 14) * breath, (h / 2 + 14) * breath);
+        }
         // Feet ring under the selected slime; dashed rings while choosing a target for a skill.
         if (sim.SelectedId == slime.Id)
         {

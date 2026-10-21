@@ -7,6 +7,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 ## Giáp dày slime đá tinh anh (2026-10-21)
 - PetBattleView: tinh anh `pushImmune` vẽ thêm tấm lót vàng (khiên phóng ~1.2 quanh tâm) sau khiên đá và một đinh tán thứ hai. Không đổi hitbox/gameplay.
 - Test thật: scripts/test.ps1 -Ui: Python 55 OK, C# 1219, WPF 592 đạt. Chưa xem tận mắt.
+- Commit cbd41ad. Publish sạch: 1.2.0-beta+cbd41ad, ZIP artifacts\DesktopPet-1.2.0-beta-cbd41ad-win-x64.zip; check-publish 3/3. Mèo không chạy nên không mở lại. File của người dùng trả lại đúng hash.
 
 ## Hào quang slime thảo dược tinh anh (2026-10-21)
 - Người dùng: "làm liên tục, khỏi cần confirm". PetBattleView: quầng LeafGlow phập phồng sau thân tinh anh biết hồi máu, chỉ khi còn lượng hồi. Không đổi gameplay.

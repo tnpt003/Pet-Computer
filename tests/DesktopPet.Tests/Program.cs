@@ -95,6 +95,7 @@ AdventureContentTests.Run(Check);
 AdventureBalanceTests.Run(Check);
 ExpeditionTests.Run(Check);
 ExpeditionChoiceTests.Run(Check);
+ExpeditionKeepsakeTests.Run(Check);
 var activity = new PetActivity();
 activity.Step(PetAction.Walking, 2);
 activity.Step(PetAction.Jumping, 1);

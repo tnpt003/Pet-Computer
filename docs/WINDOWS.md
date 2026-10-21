@@ -506,6 +506,26 @@ for the bond chart, play hours and what was learned. **Behavior tuning** groups 
 values into Personality, Attention and Energy cards, each with the exact number, a slider
 and a hint; Restore defaults, Cancel and Save stay at the bottom.
 
+## Keepsake display corner (2026-10-21, Expedition milestone 4)
+
+**Settings… → Pet → Keepsake display corner** (on by default; nothing shows until a
+keepsake is earned). A won Expedition run gives keepsakes once each: a bronze, silver or
+gold cup for the first win on Easy, Normal or Hard, a slime cushion for the first win on
+Normal or Hard, and the Expedition scarf (an accessory, then offered in Settings → Pet).
+They are kept in `expedition.json` (version 3).
+
+- The cups and cushion stand on a small shelf at the bottom right of the monitor the cat is
+  on (it follows the cat to another monitor), on the same floor line. Vector art, redrawn
+  only when the list changes; placing it is one window move a frame at most.
+- Click-through, never takes focus, no taskbar button. Hidden while a fullscreen app runs
+  or a battle is on; turning the setting off hides it at once.
+- Now and then (first after ~5 minutes, then every 10–15 minutes) the cat walks to just
+  left of the shelf and looks at it for 4 seconds (local C#, like the resting-spot visit).
+  Never in Quiet mode or with a fullscreen app, never while asleep, held, on a window
+  ledge, in a battle or busy with a game or treat; Quiet turned on mid-walk ends it.
+  Python is not told anything new.
+- With a custom battle.json no keepsakes are given.
+
 ## Walking on windows (2026-10-15)
 
 **Settings… → Pet → Climb on windows** (on by default). The pet treats the visible top

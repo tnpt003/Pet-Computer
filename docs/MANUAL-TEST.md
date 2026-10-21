@@ -282,3 +282,14 @@ Chuyến đang dở từ mốc 2 (nếu có) sẽ kết thúc khi mở bản đ�
 - [ ] Từng di vật trong trận thật: Chuông phản đòn (bật Khiên đỡ một đòn → nhát kế có vệt vàng, mạnh hơn; ô Khiên hồi lâu hơn 3 s), Túi cứu trợ (Cá hồi ~37 HP, hồi chiêu dài hơn), Bùa liều lĩnh (HP thấp đánh mạnh hơn, bị đánh đau hơn chút), Lông vũ nhẹ (chạy nhanh hơn, HP tối đa 85).
 - [ ] Phiêu lưu và trận tự do không có di vật (HUD không có ◈, Khiên/Cá hồi chiêu như cũ).
 - [ ] Cảm giác: đi đường tinh anh (nhiều di vật) có đáng hơn đường nghỉ không? Mô phỏng cho thấy đường "tham lam" thắng nhiều hơn đường "an toàn" ở Thường — xem PROGRESS.md.
+
+## Viễn chinh — mốc 4: kỷ vật và góc trưng bày (2026-10-21)
+
+- [ ] Bản đồ viễn chinh ghi "Kỷ vật: n/5".
+- [ ] Thắng cả chuyến lần đầu ở Thường: bảng kết quả ghi "Kỷ vật mới: Cúp bạc viễn chinh (ở góc trưng bày)", "Khăn viễn chinh (đội trong Cài đặt)", "Đệm slime". Thắng lại ở Thường: không có kỷ vật mới. Thắng ở Dễ/Khó: cúp đồng/vàng.
+- [ ] Về desktop: góc phải dưới màn hình có kệ gỗ với đệm slime và cúp, đứng trên cùng mặt sàn với mèo (không lơ lửng, không bị thanh taskbar che). Bấm vào kệ thì bấm xuyên xuống app bên dưới; kệ không lấy focus, không có nút taskbar.
+- [ ] Mở app toàn màn hình (video/F11): kệ ẩn, đóng thì hiện lại. Vào trận: kệ ẩn, kết thúc trận thì hiện lại.
+- [ ] Cài đặt → Mèo → bỏ "Góc trưng bày kỷ vật" → Lưu: kệ biến mất ngay. Bật lại: hiện lại.
+- [ ] Cài đặt → Mèo → Phụ kiện: có "Khăn viễn chinh"; đội thử, xem khi đi/ngủ/kéo/trèo.
+- [ ] Để mèo tự do ~5 phút (không Quiet): mèo đi tới bên trái kệ, quay mặt nhìn kệ khoảng 4 giây rồi đi tiếp. Khi đang ngủ, Quiet hoặc đang chơi bóng/laser thì không đi.
+- [ ] Kéo mèo sang màn hình phụ: kệ chuyển theo sang góc màn hình đó (chưa kiểm tra thật trên nhiều màn hình/DPI khác nhau).

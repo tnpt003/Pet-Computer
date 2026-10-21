@@ -6,11 +6,12 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using DesktopPet;
 
-// Expedition milestones 2–3 in the real pet window: locked until the Adventure's gate stage is won →
+// Expedition milestones 2–4 in the real pet window: locked until the Adventure's gate stage is won →
 // map → weapon/difficulty → run → step battle with the run's HP and build → result → Continue;
 // End leaves a battle (RetreatCost), a battle cut off by closing/reset is charged when the map next
 // opens (after a restart too), the boss ends the run, a loss ends it, giving up, custom data kept in
-// memory; a won elite's relics, a rest kept over a restart, the relic in the next battle (milestone 3).
+// memory; a won elite's relics, a rest kept over a restart, the relic in the next battle (milestone 3);
+// keepsakes given once, the display corner and the cat looking at it (milestone 4).
 // A temporary expedition file only; the Adventure progress stays in memory.
 internal static class ExpeditionChecks
 {
@@ -312,6 +313,88 @@ internal static class ExpeditionChecks
             window.EndBattle();
             window.Reset();
             check(new BattleSim(window.BattleTuning, 0, 1600).Relics.Count == 0, "A free battle has no relics");
+            window.BattleTuning = easy;
+
+            // Milestone 4: a won run gives keepsakes once; the display corner shows them; the cat looks at them.
+            var tiny = new ExpeditionSpec
+            {
+                Id = "tiny", NameVi = "Ngắn", NameEn = "Short", UnlockAfter = "st_gate", WinHeal = 0, StepThreat = 0,
+                Steps = new[] { new[] { ExpeditionSpec.Fight } }, Fights = new[] { Stage("x4_field", "Field") }, Elites = Array.Empty<StageSpec>(), Boss = Stage("x4_throne", "Throne"),
+                Keepsakes = BattleData.Settings.Expedition!.Keepsakes
+            };
+            window.BattleTuning = new BattleSettings { FirstWaveDelay = 0, SlimeMaxHp = 1, SlimeDamage = 1, OutroSeconds = 0.5, Campaign = campaign, Expedition = tiny };
+            window.ReloadExpeditionProgress();
+            Call(window, "TickTrophies");
+            check(!window.AccessoryAvailable("ExpeditionScarf") && window.ShownKeepsakes.Count == 0 && !window.TrophiesVisible, "Without keepsakes: no scarf in Settings, no display corner");
+            window.OpenExpeditionMap();
+            window.ExpeditionChooseDifficulty(BattleDifficulty.Normal);
+            window.ExpeditionStart(10);
+            Tick(0.3);
+            check(window.ExpeditionMapText.Contains("Keepsakes: 0/5 · win a run at each difficulty to earn them"), $"The map counts the keepsakes ({window.ExpeditionMapText.Replace('\n', '|')})");
+            window.ExpeditionFight(0);
+            Finish();
+            await Task.Delay(30);
+            Click(Button(Find("Pet result")!.Content as DependencyObject ?? new Border(), "Continue")!);
+            Tick(0.3);
+            window.ExpeditionFight();
+            Finish();
+            await Task.Delay(30);
+            panel = ResultText();
+            check(panel.Contains("New keepsake: Silver Expedition cup (in the display corner)") && panel.Contains("New keepsake: Expedition scarf (wear it from Settings)") && panel.Contains("New keepsake: Slime cushion"),
+                $"The won run's result names its new keepsakes ({panel})");
+            check(ExpeditionProgress.Load(file).Keepsakes.OrderBy(k => k).SequenceEqual(new[] { "cup_silver", "expedition_scarf", "slime_cushion" }) && window.AccessoryAvailable("ExpeditionScarf"),
+                "The keepsakes are saved with the run; Settings now offers the scarf");
+            Click(Button(Find("Pet result")!.Content as DependencyObject ?? new Border(), "Back to desktop")!);
+            window.Reset();
+            Call(window, "TickTrophies");
+            await Task.Delay(30);
+            var shelfWindow = Find("Pet trophies");
+            long shelfStyle = shelfWindow == null ? 0 : GetWindowLongPtr(new WindowInteropHelper(shelfWindow).Handle, -20).ToInt64();
+            check(window.TrophiesVisible && shelfWindow is { ShowActivated: false, ShowInTaskbar: false, Topmost: true } && (shelfStyle & 0x20) != 0 && (shelfStyle & 0x08000000) != 0,
+                "The display corner shows: click-through, never takes focus, no taskbar button");
+            var area = (Area)typeof(PetWindow).GetField("bounds", Flags)!.GetValue(window)!;
+            var spot = window.TrophyBounds;
+            var shelf = shelfWindow?.Content as TrophyShelf;
+            check(spot.Right <= area.Right && spot.Right >= area.Right - 20 && Math.Abs(spot.Bottom - area.Bottom) < 1 && shelf != null
+                  && shelf.Items.Select(k => k.Id).SequenceEqual(new[] { "slime_cushion", "cup_silver" }) && Math.Abs(spot.Width - TrophyShelf.WidthFor(shelf.Items)) < 0.5,
+                $"Bottom right of the cat's monitor, standing on its floor: the cushion, then the silver cup ({spot}, floor {area.Bottom})");
+            Shot("Pet trophies", "trophies-shelf.png");
+            SetContext(window, true, 0); Call(window, "TickContext", 1.1); Call(window, "TickTrophies");
+            check(!window.TrophiesVisible, "A fullscreen app hides the display corner");
+            SetContext(window, false, 0); Call(window, "TickContext", 1.1); Call(window, "TickTrophies");
+            prefs.ShowTrophies = false; Call(window, "TickTrophies");
+            check(!window.TrophiesVisible && !window.AdmireTrophies(), "Turned off in Settings it hides, and the cat has nothing to look at");
+            prefs.ShowTrophies = true; Call(window, "TickTrophies");
+            check(window.TrophiesVisible, "Turned on again it shows");
+            check(window.StartBattle() == null && window.BattleActive, "A free battle starts");
+            Call(window, "TickTrophies");
+            check(!window.TrophiesVisible && !window.AdmireTrophies(), "A battle hides the display corner (and the cat stays in it)");
+            window.EndBattle();
+            window.Reset();
+            Call(window, "TickTrophies");
+
+            // The cat looks at its keepsakes: not in Quiet; walks over, looks a few seconds, done.
+            prefs.Quiet = true; behavior.Quiet = true;
+            check(!window.AdmireTrophies() && !window.Admiring, "In Quiet the cat does not go to look on its own");
+            prefs.Quiet = false; behavior.Quiet = false;
+            pet.X = Math.Max(area.Left, spot.Left - 400);
+            pet.Action = PetAction.Idle; pet.VX = 0;
+            check(window.AdmireTrophies() && window.Admiring, "The cat may go to look at its keepsakes");
+            Call(window, "TickFeatures", 1.0 / 60);
+            check(pet.Action == PetAction.Walking && pet.VX > 0, "It walks toward the shelf");
+            pet.X = spot.Left - 112 * 0.72;
+            Call(window, "TickFeatures", 1.0 / 60);
+            check(pet.Action == PetAction.Looking && pet.Facing == 1 && pet.VX == 0 && window.Admiring, "Beside it, it stops and looks at the shelf");
+            for (double t = 0; t < PetWindow.AdmireSeconds + 0.2; t += 1.0 / 60) Call(window, "TickFeatures", 1.0 / 60);
+            check(!window.Admiring && pet.Action != PetAction.Looking, "After a few seconds it goes back to its own business");
+            window.AdmireTrophies();
+            prefs.Quiet = true; behavior.Quiet = true;
+            Call(window, "TickFeatures", 1.0 / 60);
+            check(!window.Admiring, "Quiet turned on during a visit ends it");
+            prefs.Quiet = false; behavior.Quiet = false;
+            window.AdmireTrophies();
+            window.Reset();
+            check(!window.Admiring, "Bringing the pet back ends the visit");
             window.BattleTuning = easy;
 
             // Data without an Expedition: the menu hides it, opening explains.

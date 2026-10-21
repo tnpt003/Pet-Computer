@@ -29,7 +29,7 @@ public sealed partial class PetWindow
         : expeditionProgress ??= ExpeditionProgressFile != null ? ExpeditionProgress.Load(ExpeditionProgressFile) : new();
     // For checks: read the file again (like a restart).
     public void ReloadExpeditionProgress() => expeditionProgress = null;
-    public Expedition? Expedition => BattleTuning.Expedition != null ? new Expedition(BattleTuning, ExpeditionProgress) : null;
+    public Expedition? Expedition => BattleTuning.Expedition != null ? new Expedition(BattleTuning, ExpeditionProgress) { GrantKeepsakes = !BattleDataCustom } : null;
     private bool expeditionSaveFailed;
 
     // The running battle is this Expedition's step (null: a free battle or an Adventure stage).
@@ -533,8 +533,11 @@ public sealed partial class PetWindow
         UpdateExpeditionChoice(expedition);
 
         var record = expedition.Record(run?.Weapon ?? expeditionWeapon, run?.Level ?? expeditionLevel);
-        Show(xRecord, record.Runs == 0 ? null : L($"Kỷ lục ({weaponName} · {levelName}): thắng {record.Wins}/{record.Runs} chuyến · xa nhất {record.BestSteps}/{spec.StepCount} bậc", $"Records ({weaponName} · {levelName}): {record.Wins}/{record.Runs} runs won · furthest {record.BestSteps}/{spec.StepCount} steps")
-            + (record.BestSeconds is double best ? L($" · nhanh nhất {Clock(best)}", $" · fastest {Clock(best)}") : ""));
+        int keepsakesHad = spec.Keepsakes.Count(k => expedition.Progress.Keepsakes.Contains(k.Id));
+        string keepsakeLine = spec.Keepsakes.Length == 0 ? "" : (record.Runs == 0 ? "" : "\n") + L($"Kỷ vật: {keepsakesHad}/{spec.Keepsakes.Length}", $"Keepsakes: {keepsakesHad}/{spec.Keepsakes.Length}")
+            + (keepsakesHad < spec.Keepsakes.Length ? L(" · thắng cả chuyến ở mỗi độ khó để nhận", " · win a run at each difficulty to earn them") : "");
+        Show(xRecord, (record.Runs == 0 ? "" : L($"Kỷ lục ({weaponName} · {levelName}): thắng {record.Wins}/{record.Runs} chuyến · xa nhất {record.BestSteps}/{spec.StepCount} bậc", $"Records ({weaponName} · {levelName}): {record.Wins}/{record.Runs} runs won · furthest {record.BestSteps}/{spec.StepCount} steps")
+            + (record.BestSeconds is double best ? L($" · nhanh nhất {Clock(best)}", $" · fastest {Clock(best)}") : "")) + keepsakeLine);
 
         bool battleNode = run != null && run.Step < run.Map.Count && IsFightKind(expedition.Kind(run.Step, expeditionLane));
         xMainText!.Text = run == null ? L("Bắt đầu chuyến", "Start the run") : battleNode ? L("Vào trận", "Fight") : L("Đi tới đây", "Go here");
@@ -706,6 +709,11 @@ public sealed partial class PetWindow
             if (step.Reward) Add(L("Tinh anh để lại di vật: chọn trên bản đồ viễn chinh.", "The elite left relics: pick one on the Expedition map."), 12.5, RecordGold, true);
         }
         if (result.Upgrades.Length > 0) Add(L("Build hiện tại: ", "Build now: ") + result.Upgrades, 11.5, opacity: 0.85);
+        // Keepsakes this run gave (each only once): where to find them.
+        foreach (var id in step.Keepsakes ?? Array.Empty<string>())
+            if (Expedition?.Spec.Keepsake(id) is KeepsakeSpec k)
+                Add(L("Kỷ vật mới: ", "New keepsake: ") + k.Name(English) + (k.Kind == KeepsakeSpec.AccessoryKind ? L(" (đội trong Cài đặt)", " (wear it from Settings)")
+                    : preferences.ShowTrophies ? L(" (ở góc trưng bày)", " (in the display corner)") : L(" (bật góc trưng bày trong Cài đặt)", " (turn the display corner on in Settings)")), 12.5, RecordGold, true);
         if (step.Fastest) Add(L("Kỷ lục mới: chuyến nhanh nhất!", "New record: fastest run!"), 12.5, RecordGold, true);
         else if (step.BestSteps && step.RunOver && !step.RunWon) Add(L("Kỷ lục mới: đi xa nhất!", "New record: furthest run!"), 12.5, RecordGold, true);
 

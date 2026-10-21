@@ -48,7 +48,7 @@ public sealed partial class PetWindow
             System.Diagnostics.Trace.WriteLine(context.Fullscreen ? "Fullscreen app detected: pet is quiet." : "Fullscreen app closed.");
             if (context.Fullscreen)
             {
-                if (toyWindow != null || returningHome) CancelFeatureActivity();
+                if (toyWindow != null || returningHome || admiring) CancelFeatureActivity();
                 pet.Speech.Hide(); pet.Thought.Clear(); sound?.Stop();
                 CloseBattleSummary(); CloseBattleNotice(); CloseBattleTutorial();
             }

@@ -14,7 +14,7 @@ public sealed class PetSettingsForm
     public TextBox Name = null!;
     public ComboBox Language = null!, Personality = null!, Coat = null!, Accessory = null!, Chattiness = null!, BreakInterval = null!, PreviewCue = null!, BirthDay = null!, BirthMonth = null!;
     public string[] AccessoryIds = Array.Empty<string>();
-    public CheckBox HolidayAccessories = null!, ClimbWindows = null!, Talks = null!, Autostart = null!, BreakReminders = null!, Sounds = null!, InteractionSounds = null!, EmotionSounds = null!, SleepSounds = null!;
+    public CheckBox HolidayAccessories = null!, ClimbWindows = null!, ShowTrophies = null!, Talks = null!, Autostart = null!, BreakReminders = null!, Sounds = null!, InteractionSounds = null!, EmotionSounds = null!, SleepSounds = null!;
     public Slider Volume = null!;
     public Button Save = null!, Cancel = null!, Tuning = null!, Forget = null!, Preview = null!;
     public PetRenderer PetPreview = null!;
@@ -99,12 +99,15 @@ public sealed partial class PetWindow
         appearance.Children.Add(previewCard); appearance.Children.Add(looks);
         form.ClimbWindows = new CheckBox { Content = L("Mèo leo lên cửa sổ", "Climb on windows"), IsChecked = preferences.ClimbWindows,
             ToolTip = L("Mèo nhảy hoặc trèo lên mép trên các cửa sổ app và đi dạo trên đó.", "The pet jumps or climbs onto the top edge of app windows and walks along it.") };
+        form.ShowTrophies = new CheckBox { Content = L("Góc trưng bày kỷ vật", "Keepsake display corner"), IsChecked = preferences.ShowTrophies,
+            ToolTip = L("Cúp và đồ Viễn chinh đứng ở góc phải dưới màn hình; mèo thỉnh thoảng ra ngắm.", "Expedition cups and keepsakes stand at the bottom right of the screen; the cat looks at them now and then.") };
         var petTab = Page(
             Row(L("Tên", "Name"), form.Name),
             Row(L("Tính cách", "Personality"), form.Personality),
             Row(L("Sinh nhật của bạn", "Your birthday"), birthday),
             appearance,
             form.ClimbWindows,
+            form.ShowTrophies,
             form.Tuning);
         // Gentle idle motion (breathing, tail, blinks) while the Pet tab is showing.
         var previewClock = System.Diagnostics.Stopwatch.StartNew();
@@ -246,6 +249,8 @@ public sealed partial class PetWindow
             breaks.Configure(preferences.BreakReminders, preferences.BreakMinutes);
             preferences.ClimbWindows = form.ClimbWindows.IsChecked == true;
             if (!preferences.ClimbWindows) DropLedges(); // A pet on a window falls; a climbing one lets go.
+            preferences.ShowTrophies = form.ShowTrophies.IsChecked == true;
+            if (!preferences.ShowTrophies) StopAdmiring();
             // Test windows never touch the real Windows startup entry.
             if (persistPreferences && form.Autostart.IsChecked == true != autostartOn &&
                 (Environment.ProcessPath is not string path || !startup.SetEnabled(form.Autostart.IsChecked == true, path)))

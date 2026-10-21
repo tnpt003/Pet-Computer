@@ -48,11 +48,14 @@ public sealed class ExpeditionSpec
     public int EliteRelics { get; init; } = 2;
     public ExpeditionEventSpec[] Events { get; init; } = Array.Empty<ExpeditionEventSpec>();
     public RelicSpec[] Relics { get; init; } = Array.Empty<RelicSpec>();
+    // Keepsakes (milestone 4): given once each, for a won run at their difficulty.
+    public KeepsakeSpec[] Keepsakes { get; init; } = Array.Empty<KeepsakeSpec>();
 
     public IReadOnlyList<StageSpec> Pool(string kind) => kind == Elite ? Elites : Fights;
     public StageSpec? Encounter(string id) => Fights.Concat(Elites).Append(Boss).FirstOrDefault(s => s?.Id == id);
     public ExpeditionEventSpec? FindEvent(string? id) => Events.FirstOrDefault(e => e.Id == id);
     public RelicSpec? Relic(string? id) => Relics.FirstOrDefault(r => r.Id == id);
+    public KeepsakeSpec? Keepsake(string? id) => Keepsakes.FirstOrDefault(k => k.Id == id);
     // Steps including the boss's.
     [JsonIgnore] public int StepCount => Steps.Length + 1;
     public double Threat(int step) => 1 + StepThreat * step;
@@ -119,6 +122,21 @@ public sealed class ExpeditionSpec
             if (!double.IsFinite(e.Cost) || e.Cost is < 0 or > 0.9) throw new InvalidDataException(where + ".cost must be 0–0.9");
             if (e.Kind != ExpeditionEventSpec.Swap && x.Relics.Length == 0) throw new InvalidDataException(where + ": a " + e.Kind + " event needs relics");
         }
+        if (x.Keepsakes == null || x.Keepsakes.Length > 12) throw new InvalidDataException(at + ".keepsakes must list at most 12 keepsakes");
+        var keepIds = new HashSet<string>();
+        foreach (var k in x.Keepsakes)
+        {
+            string where = $"{at}.keepsakes[{k?.Id}]";
+            if (k == null) throw new InvalidDataException(at + ".keepsakes has an empty entry");
+            id(k.Id, where + ".id");
+            if (!keepIds.Add(k.Id)) throw new InvalidDataException($"keepsake id \"{k.Id}\" is used twice");
+            text(k.NameVi, where + ".nameVi"); text(k.NameEn, where + ".nameEn");
+            if (Array.IndexOf(KeepsakeSpec.Kinds, k.Kind) < 0) throw new InvalidDataException($"{where}.kind must be one of: {string.Join(", ", KeepsakeSpec.Kinds)}");
+            if (k.Kind == KeepsakeSpec.Cup && Array.IndexOf(KeepsakeSpec.Tiers, k.Tier) < 0) throw new InvalidDataException($"{where}.tier must be one of: {string.Join(", ", KeepsakeSpec.Tiers)}");
+            if (!Enum.TryParse<BattleDifficulty>(k.Difficulty, out var level) || !Enum.IsDefined(level)) throw new InvalidDataException(where + ".difficulty must be Easy, Normal or Hard");
+            if (k.Kind == KeepsakeSpec.AccessoryKind && PetAccessories.Find(k.Accessory) is not { Reward: not null })
+                throw new InvalidDataException(where + ".accessory must name a reward accessory of accessories.json");
+        }
         if (x.Steps == null || x.Steps.Length is < 1 or > 10) throw new InvalidDataException(at + ".steps must list 1–10 steps");
         for (int i = 0; i < x.Steps.Length; i++)
         {
@@ -133,6 +151,28 @@ public sealed class ExpeditionSpec
             }
         }
     }
+}
+
+// A keepsake (Expedition milestone 4): given once, the first time a run is won at Difficulty or
+// harder (only at it when Exact). cup: a trophy (Tier bronze, silver, gold) on the display corner;
+// cushion: a slime cushion there; accessory: a reward accessory (accessories.json) the cat can wear.
+public sealed class KeepsakeSpec
+{
+    public const string Cup = "cup", Cushion = "cushion", AccessoryKind = "accessory";
+    public static readonly string[] Kinds = { Cup, Cushion, AccessoryKind };
+    public static readonly string[] Tiers = { "bronze", "silver", "gold" };
+    public string Id { get; init; } = "";
+    public string Kind { get; init; } = Cup;
+    public string? Tier { get; init; }
+    public string Difficulty { get; init; } = nameof(BattleDifficulty.Easy);
+    public bool Exact { get; init; }
+    public string? Accessory { get; init; }
+    public string NameVi { get; init; } = "";
+    public string NameEn { get; init; } = "";
+    public string Name(bool english) => english ? NameEn : NameVi;
+    [JsonIgnore] public bool Shown => Kind is Cup or Cushion;
+    public bool EarnedAt(BattleDifficulty level) =>
+        Enum.TryParse<BattleDifficulty>(Difficulty, out var at) && (Exact ? level == at : level >= at);
 }
 
 // An event node (Expedition milestone 3): what it offers is said before choosing.
@@ -241,14 +281,17 @@ public sealed class ExpeditionRecord
 // as far as it is understood and never overwritten.
 public sealed class ExpeditionProgress
 {
-    // 2: relics and open choices (milestone 3). A version 1 file is read as is (its run ends when
-    // the map opens: the rules changed); an older app reads this one without overwriting it.
-    public const int CurrentVersion = 2;
+    // 2: relics and open choices (milestone 3). 3: keepsakes (milestone 4). An older file is read
+    // as is (a version 1 run ends when the map opens: the rules changed); an older app reads this
+    // one without overwriting it.
+    public const int CurrentVersion = 3;
     public int Version { get; set; } = CurrentVersion;
     public ExpeditionRun? Active { get; set; }
     public Dictionary<string, ExpeditionRecord> Records { get; set; } = new();
     // The last finished runs already counted, so one is never counted twice.
     public List<string> Runs { get; set; } = new();
+    // Keepsake ids given (each once, never taken back).
+    public List<string> Keepsakes { get; set; } = new();
     public const int RunsKept = 50;
     [JsonIgnore] public bool ReadOnly { get; private set; }
 
@@ -276,6 +319,7 @@ public sealed class ExpeditionProgress
             if (!progress.ReadOnly) progress.Version = CurrentVersion;
             progress.Records = (progress.Records ?? new()).Where(pair => !string.IsNullOrWhiteSpace(pair.Key) && pair.Value != null).ToDictionary(pair => pair.Key, pair => pair.Value);
             progress.Runs = (progress.Runs ?? new()).Where(id => !string.IsNullOrWhiteSpace(id)).Distinct().TakeLast(RunsKept).ToList();
+            progress.Keepsakes = (progress.Keepsakes ?? new()).Where(id => !string.IsNullOrWhiteSpace(id)).Distinct().ToList();
             if (progress.Active is ExpeditionRun run)
             {
                 run.Map ??= new(); run.Path ??= new(); run.Build ??= new(); run.Relics ??= new();
@@ -317,7 +361,9 @@ public sealed class ExpeditionProgress
 
 // What one step's battle (or leaving it) changed. RunOver: the run ended (Won: at the boss).
 // Reward: a won elite left relics to choose from on the map.
-public readonly record struct ExpeditionStepOutcome(bool Counted, int Step, bool Won, bool RunOver, bool RunWon, double Hp, double MaxHp, double Healed = 0, bool BestSteps = false, bool Fastest = false, bool Reward = false);
+// Keepsakes: the ones this won run gave (each only ever once).
+public readonly record struct ExpeditionStepOutcome(bool Counted, int Step, bool Won, bool RunOver, bool RunWon, double Hp, double MaxHp, double Healed = 0, bool BestSteps = false, bool Fastest = false, bool Reward = false,
+    IReadOnlyList<string>? Keepsakes = null);
 
 // One battle node the user can fight now: its encounter, its kind, and the battle it starts.
 public readonly record struct ExpeditionNode(int Step, int Lane, string Kind, StageSpec Stage, int Seed, double Threat);
@@ -338,6 +384,8 @@ public sealed class Expedition
     }
 
     public ExpeditionRun? Run => Progress.Active;
+    // False with the user's own battle data: its runs give no keepsakes.
+    public bool GrantKeepsakes { get; init; } = true;
     public bool IsUnlocked(AdventureProgress adventure) => Spec.UnlockAfter is not string stage || adventure.Completed.Contains(stage)
         || Settings.Campaign?.Chapters.Any(c => c.Stages.Any(s => s.Id == stage)) != true;
     public static string RecordKey(ExpeditionSpec spec, string weapon, BattleDifficulty difficulty) => $"{spec.Id}|r{spec.RulesVersion}|{weapon}|{difficulty}";
@@ -623,6 +671,11 @@ public sealed class Expedition
             record.Wins++;
             if (run.Seconds > 0 && (record.BestSeconds is not double s || run.Seconds < s - 0.05)) { record.BestSeconds = run.Seconds; fastest = true; }
         }
-        return new(true, step, won, true, won, hp, max, 0, best, fastest);
+        // Keepsakes: given in the same save as the run is counted, so never twice.
+        var given = new List<string>();
+        if (won && GrantKeepsakes)
+            foreach (var k in Spec.Keepsakes)
+                if (k.EarnedAt(run.Level) && !Progress.Keepsakes.Contains(k.Id)) { Progress.Keepsakes.Add(k.Id); given.Add(k.Id); }
+        return new(true, step, won, true, won, hp, max, 0, best, fastest, Keepsakes: given);
     }
 }

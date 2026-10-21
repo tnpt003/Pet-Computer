@@ -4,6 +4,16 @@ Cập nhật: 2026-10-21 (Asia/Saigon).
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
+## Viễn chinh — mốc 4: kỷ vật và góc trưng bày (2026-10-21)
+- Người dùng: danh sách kỷ vật "được", góc trưng bày "theo đề xuất" (tự bật khi có kỷ vật đầu tiên, tắt được), "ok".
+- Đã làm (C# only, Python không đụng):
+  - `PetExpedition.cs`: `KeepsakeSpec` (cup/cushion/accessory, `difficulty`, `exact`, validate: phụ kiện phải là phụ kiện thưởng), `ExpeditionProgress.Keepsakes` (file version 3; file cũ đọc được, bản app cũ chỉ đọc), cho kỷ vật trong cùng lần đếm chuyến thắng (`End`) nên không bao giờ cho hai lần; `GrantKeepsakes = false` với battle.json tùy chỉnh. `ExpeditionStepOutcome.Keepsakes`.
+  - Dữ liệu: cúp đồng/bạc/vàng (thắng lần đầu đúng Dễ/Thường/Khó), Khăn viễn chinh (thắng lần đầu, mọi độ khó; phụ kiện cổ mới trong accessories.json, `reward: slime_trail`), Đệm slime (thắng lần đầu ở Thường trở lên).
+  - `PetTrophies.cs` (`TrophyShelf`: kệ gỗ, đệm slime, cúp vẽ vector, chỉ vẽ lại khi danh sách đổi) và `PetWindow.Trophies.cs`: cửa sổ "Pet trophies" góc phải dưới màn hình mèo đang ở (theo mèo sang màn hình khác — khác đề xuất "màn hình chính" một chút để mèo luôn ra ngắm được), đứng trên mặt sàn; xuyên chuột, không focus, không nút taskbar; ẩn khi fullscreen hoặc đang trận; Cài đặt → Mèo "Góc trưng bày kỷ vật" (`ShowTrophies`, mặc định bật). Mèo ra ngắm: lần đầu sau ~5 phút rồi mỗi 10–15 phút, đi tới bên trái kệ, `Looking` 4 giây; không khi Quiet/fullscreen/ngủ/bị cầm/trên gờ cửa sổ/trận/đang chơi; Quiet bật giữa chừng thì dừng; nằm trong `FeatureOwnsMovement` nên AI/hành vi tự do không chen.
+  - Bảng kết quả chuyến thắng ghi "Kỷ vật mới: …" và chỗ tìm; bản đồ ghi "Kỷ vật: n/5"; Cài đặt có Khăn viễn chinh khi đã nhận.
+- Test thật: scripts/test.ps1 -Ui: Python 55 OK; C# 1198 đạt (ExpeditionKeepsakeTests mới: dữ liệu, Thường cho bạc+khăn+đệm, thắng lại không cho, Khó chỉ vàng, Dễ chỉ đồng, Dễ đầu tiên đồng+khăn, thua/bỏ chuyến không cho, dữ liệu tùy chỉnh không cho, lưu/đọc v3, file v2, id lặp/rỗng, validate; ContextTests thêm ExpeditionScarf vào danh sách phụ kiện; ExpeditionChoiceTests nới kiểm version); WPF 592 đạt (ExpeditionChecks: chưa có kỷ vật thì không có khăn/kệ, bản đồ đếm kỷ vật, kết quả ghi kỷ vật mới, lưu file, Cài đặt có khăn, kệ hiện xuyên chuột/không focus/không taskbar/Topmost, góc phải dưới đúng mặt sàn, thứ tự đệm → cúp, fullscreen/tắt cài đặt/trận ẩn kệ, Quiet không đi ngắm, đi tới, nhìn 4 giây rồi thôi, Quiet giữa chừng dừng, Reset dừng). Đã xem ảnh render kệ (đủ 4 món, phóng to) và mèo đeo Khăn viễn chinh.
+- Chưa: xem kệ trên desktop thật (khớp mặt sàn với mèo, taskbar ở cạnh khác), nhiều màn hình/DPI 125–150%; xem mèo đi ngắm thật.
+
 ## Viễn chinh — mốc 3: nghỉ chân, sự kiện, di vật (2026-10-21)
 - Người dùng "ok" kế hoạch mốc 3 và chấp nhận chuyến mốc 2 đang dở bị kết thúc khi cập nhật.
 - Đã làm (C# only, Python không đụng):
@@ -647,7 +657,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Lịch sử chuyển project: 2026-10-05 tạo AGENTS.md/PROGRESS.md tại ổ D khi thư mục đó trống; source hiện nằm tại ổ C, không cần khôi phục về D.
 
 ## Đang dở và việc tiếp theo
-- Viễn chinh (docs/EXPEDITION-DIRECTION.md): mốc 2–3 xong (2026-10-21). Người dùng cần: đi mục "Viễn chinh — mốc 2" và "mốc 3" trong MANUAL-TEST.md, chơi một chuyến Thường thật rồi chốt `winHeal`/`stepThreat`/`retreatCost`/`restHeal` và sức di vật (mô phỏng: đường tham lam mạnh hơn đường an toàn). Tiếp: mốc 4 (kỷ vật một lần, góc trưng bày bật/tắt — cần trình bày thiết kế và chờ "ok"), mốc 5 (end-to-end, DPI, phát hành). Chưa ghi CHANGELOG cho Viễn chinh (chờ bản phát hành).
+- Viễn chinh (docs/EXPEDITION-DIRECTION.md): mốc 2–4 xong (2026-10-21). Người dùng cần: đi mục "Viễn chinh — mốc 2/3/4" trong MANUAL-TEST.md, chơi một chuyến Thường thật rồi chốt `winHeal`/`stepThreat`/`retreatCost`/`restHeal` và sức di vật (mô phỏng: đường tham lam mạnh hơn đường an toàn). Tiếp: mốc 5 (end-to-end, save lỗi/crash, DPI/nhiều màn hình, hiệu năng, phát hành — cần trình bày kế hoạch và chờ "ok"). Chưa ghi CHANGELOG cho Viễn chinh (chờ bản phát hành).
 - Cứu mèo (2026-10-21): người dùng đi mục "Cứu mèo không làm quái đứng hình" trong MANUAL-TEST.md; xem 0,3 s nhấc tối thiểu có làm hụt bảo vệ khi cứu nhanh thật không (chỉnh `rescueGraceMinLiftSeconds`).
 - Review Enemy Tactics (docs/NEXT-STEPS.md): R1+R2 xong (mốc A), R3 xong (mốc B: người chơi casual + số đo). Nếu muốn khó hơn ở Thường: cân nhắc theo bảng casual (vd. hồi chiêu Đẩy so với nhịp hồi của slime thảo dược) — đổi luật, cần người dùng chốt. R4 (tách PetBattle.cs, đo frame time trận đông quái, test vòng start→kết quả→chơi lại) để sau. Người dùng cần thử: Đẩy slime thảo dược/hạ nó ngay lúc hồi xong thấy đòn trúng bình thường.
 - Enemy Director: chiến thuật a–d đã làm (2026-10-20), mỗi cái tắt được bằng battle.json; cần chơi thật để quyết giữ/tắt cái nào.

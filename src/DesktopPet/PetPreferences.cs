@@ -45,6 +45,8 @@ public sealed class PetPreferences
     public static readonly int[] BreakChoices = { 30, 45, 60 };
     // On by default: the pet may stand on, jump onto and climb other apps' windows.
     public bool ClimbWindows { get; set; } = true;
+    // On by default: the Expedition's keepsakes stand in the display corner once one is earned.
+    public bool ShowTrophies { get; set; } = true;
     // Battle Mode difficulty chosen in the menu: "Easy", "Normal" or "Hard".
     public string BattleDifficulty { get; set; } = "Normal";
     public static string NormalizeDifficulty(string? value) => value is "Easy" or "Normal" or "Hard" ? value : "Normal";

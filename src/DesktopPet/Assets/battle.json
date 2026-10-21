@@ -322,6 +322,13 @@
     "id": "slime_trail", "nameVi": "Đường mòn Slime", "nameEn": "The Slime Trail",
     "rulesVersion": 2, "unlockAfter": "c1_slime_king", "retreatCost": 0.25, "winHeal": 0.05, "stepThreat": 0.1,
     "restHeal": 0.3, "maxRelics": 3, "eliteRelics": 2,
+    "keepsakes": [
+      { "id": "cup_bronze", "kind": "cup", "tier": "bronze", "difficulty": "Easy", "exact": true, "nameVi": "Cúp đồng viễn chinh", "nameEn": "Bronze Expedition cup" },
+      { "id": "cup_silver", "kind": "cup", "tier": "silver", "difficulty": "Normal", "exact": true, "nameVi": "Cúp bạc viễn chinh", "nameEn": "Silver Expedition cup" },
+      { "id": "cup_gold", "kind": "cup", "tier": "gold", "difficulty": "Hard", "exact": true, "nameVi": "Cúp vàng viễn chinh", "nameEn": "Gold Expedition cup" },
+      { "id": "expedition_scarf", "kind": "accessory", "accessory": "ExpeditionScarf", "difficulty": "Easy", "nameVi": "Khăn viễn chinh", "nameEn": "Expedition scarf" },
+      { "id": "slime_cushion", "kind": "cushion", "difficulty": "Normal", "nameVi": "Đệm slime", "nameEn": "Slime cushion" }
+    ],
     "steps": [ [ "fight", "fight" ], [ "fight", "elite", "event" ], [ "rest", "elite" ], [ "fight", "elite", "event" ], [ "rest", "fight" ] ],
     "events": [
       { "id": "cat_trader", "kind": "swap", "nameVi": "Lữ khách mèo", "nameEn": "Travelling cat",

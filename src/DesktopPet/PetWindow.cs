@@ -304,6 +304,7 @@ public sealed partial class PetWindow : Window
         TickBattlePrep(dt);
         TickAdventureMap(dt);
         TickExpeditionMap(dt);
+        TickTrophies();
         if (!paused)
         {
             TickFeatures(dt);

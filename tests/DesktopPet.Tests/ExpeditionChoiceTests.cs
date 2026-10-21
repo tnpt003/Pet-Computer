@@ -35,7 +35,7 @@ internal static class ExpeditionChoiceTests
     {
         var data = BattleData.Settings;
         var spec = data.Expedition!;
-        check(spec.RulesVersion == 2 && ExpeditionProgress.CurrentVersion == 2, "Milestone 3 raises the Expedition's rules (2) and its file version (2)");
+        check(spec.RulesVersion == 2 && ExpeditionProgress.CurrentVersion >= 2, "Milestone 3 raises the Expedition's rules (2) and its file version (2 or later)");
         check(spec.Events.Select(e => e.Kind).OrderBy(k => k).SequenceEqual(new[] { "chest", "shrine", "swap" }) && spec.Relics.Select(r => r.Effect).Distinct().Count() == 4 && spec.MaxRelics == 3,
             "battle.json: three events (swap, chest, shrine), four relics with different effects, at most 3 held");
         check(spec.Steps.Any(step => step.Contains(ExpeditionSpec.Rest) && step.Contains(ExpeditionSpec.Elite)) && spec.Steps.Count(step => step.Contains(ExpeditionSpec.Event)) >= 2 && spec.Steps[0].All(ExpeditionSpec.IsBattle),
@@ -164,7 +164,7 @@ internal static class ExpeditionChoiceTests
             // A milestone 2 file: read (version 1 → 2), its run no longer fits the rules.
             File.WriteAllText(file, "{ \"Version\": 1, \"Active\": { \"RunId\": \"old\", \"Expedition\": \"slime_trail\", \"RulesVersion\": 1, \"Seed\": 1, \"Map\": [ [ \"x_meadow\", \"x_shortcut\" ] ], \"Path\": [], \"Hp\": 80, \"Build\": {} }, \"Records\": { \"slime_trail|r1|sword|Normal\": { \"Runs\": 2, \"Wins\": 1 } } }");
             var old = ExpeditionProgress.Load(file);
-            check(!old.ReadOnly && old.Version == 2 && old.Active!.Relics.Count == 0 && new Expedition(data, old).Mismatch(old.Active) is string rules && rules.Contains("rules") && old.Records.Count == 1,
+            check(!old.ReadOnly && old.Version == ExpeditionProgress.CurrentVersion && old.Active!.Relics.Count == 0 && new Expedition(data, old).Mismatch(old.Active) is string rules && rules.Contains("rules") && old.Records.Count == 1,
                 "A milestone 2 file is read: its run ends (rules changed), its records stay");
         }
         finally { if (Directory.Exists(dir)) Directory.Delete(dir, true); }

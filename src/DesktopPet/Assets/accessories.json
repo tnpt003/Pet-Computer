@@ -133,6 +133,16 @@
         {"ellipse": [63, 20.5, 1.6, 1.6], "fill": "#9B7BE0"},
         {"ellipse": [55, 3, 1.8, 1.8], "fill": "#FFFFFF", "stroke": "outline"}
       ]
+    },
+    {
+      "id": "ExpeditionScarf", "name": {"vi": "Khăn viễn chinh", "en": "Expedition scarf"}, "layer": "neck", "reward": "slime_trail",
+      "shapes": [
+        {"path": "M 33,67 Q 55,80 77,67 L 78,74 Q 55,88 32,74 Z", "fill": "#7A5AC8", "stroke": "outline"},
+        {"path": "M 61,78 L 71,76 L 74,94 L 64,96 Z", "fill": "#7A5AC8", "stroke": "outline"},
+        {"line": [64.5, 85, 72, 84], "stroke": {"color": "#7CD36A", "width": 1.8, "round": true}},
+        {"line": [65.5, 90, 72.8, 89], "stroke": {"color": "#7CD36A", "width": 1.8, "round": true}},
+        {"ellipse": [46, 76.5, 2.6, 2.6], "fill": "#F5C542", "stroke": "outline"}
+      ]
     }
   ]
 }

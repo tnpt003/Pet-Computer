@@ -104,7 +104,7 @@ public sealed partial class PetWindow
         upgradeConfirm = confirm; upgradeConfirmText = confirmText;
         var panel = new Border
         {
-            Background = HudBack, BorderBrush = Brushes.White, BorderThickness = new Thickness(1.5), CornerRadius = new CornerRadius(12),
+            Background = HudBack, BorderBrush = PetUi.Game.Rim, BorderThickness = new Thickness(1.5), CornerRadius = new CornerRadius(12),
             Padding = new Thickness(16, 12, 8, 12), Margin = new Thickness(6),
             Child = new StackPanel { Children = { upgradeTitle, row, confirm } },
             Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 6, ShadowDepth = 1, Opacity = 0.4 }
@@ -151,7 +151,7 @@ public sealed partial class PetWindow
             count.Opacity = spec.Rare ? 1 : 0.65;
             build.Text = CardBuildText(battle, spec);
             build.Foreground = battle.Unlocks(spec) != null ? PrepWarning : Brushes.White;
-            card.Background = chosen ? PrepChosen : PrepCardBack;
+            card.Background = chosen ? PrepChosen : spec.Rare ? PetUi.Game.RareBack : PrepCardBack;
             // A rare card keeps a gold rim (white once chosen, like any card).
             card.BorderBrush = chosen ? Brushes.White : spec.Rare ? RareGold : PrepCardRim;
             card.BorderThickness = new Thickness(chosen ? 2.5 : spec.Rare ? 2 : 1);
@@ -172,7 +172,7 @@ public sealed partial class PetWindow
         return text;
     }
 
-    private static readonly Brush RareGold = PetUi.Frozen(Color.FromRgb(0xFF, 0xC8, 0x2E));
+    private static readonly Brush RareGold = PetUi.Game.RareGold;
 
     // "Sharp edge ×2 · Quick feet" for the HUD and the result panel (empty without upgrades).
     private string UpgradeSummary(BattleSim b) => string.Join(" · ", b.Settings.UpgradeList.Where(u => b.Stacks(u.Id) > 0)

@@ -45,15 +45,15 @@ public sealed class BattleHud : Border
     private static readonly Brush Panel = MakePanel();
     private static Brush MakePanel()
     {
-        var brush = new LinearGradientBrush(Color.FromArgb(0xF0, 0x34, 0x2E, 0x4E), Color.FromArgb(0xF0, 0x1E, 0x1B, 0x2E), 90);
+        var brush = new LinearGradientBrush(PetUi.Game.HudTop, PetUi.Game.HudBottom, 90);
         brush.Freeze(); return brush;
     }
-    private static readonly Brush Rim = Frozen(0xC8, 255, 255, 255);
-    private static readonly Brush BarBack = Frozen(0x90, 0x0E, 0x0C, 0x18);
+    private static readonly Brush Rim = PetUi.Game.HudRim;
+    private static readonly Brush BarBack = PetUi.Game.Shadow(0x90);
     private static readonly Brush Green = Frozen(255, 0x6F, 0xE0, 0x6A), Yellow = Frozen(255, 0xF5, 0xC8, 0x42), Red = Frozen(255, 0xF2, 0x5C, 0x54);
     private static readonly Brush Trail = Frozen(255, 0xF0, 0xA0, 0x4B);
     private static readonly Brush BossColor = Frozen(255, 0xB4, 0x8C, 0xF5), BossAngryColor = Frozen(255, 0xE8, 0x6A, 0x6A), BossShieldColor = Frozen(255, 0xFF, 0xD8, 0x5A);
-    private static readonly Brush Soft = Frozen(255, 0xD8, 0xD6, 0xE8), Gold = Frozen(255, 0xFF, 0xD2, 0x3F), Dim = Frozen(0x70, 255, 255, 255);
+    private static readonly Brush Soft = PetUi.Game.Soft, Gold = Frozen(255, 0xFF, 0xD2, 0x3F), Dim = Frozen(0x70, 255, 255, 255);
 
     public BattleHud(string petName, PetRenderer portrait, Func<string, string, string> localize)
     {
@@ -400,7 +400,7 @@ public sealed class SkillSlot : Border
         HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
     private int shownSeconds = -1;
     private static readonly Brush Ready = PetUi.Frozen(Color.FromRgb(0xFF, 0xD2, 0x3F)), Waiting = PetUi.Frozen(Color.FromArgb(0x60, 255, 255, 255));
-    private static readonly Brush Back = PetUi.Frozen(Color.FromArgb(0x55, 0x0E, 0x0C, 0x18)), ArmedBack = PetUi.Frozen(Color.FromArgb(0xC0, 0x2A, 0x78, 0xD6));
+    private static readonly Brush Back = PetUi.Game.Shadow(0x55), ArmedBack = PetUi.Game.Armed;
     private static readonly Brush ActiveBack = PetUi.Frozen(Color.FromArgb(0x90, 0xFF, 0xD2, 0x3F));
     public bool IsReady { get; private set; }
     public bool IsArmed { get; private set; }
@@ -432,7 +432,7 @@ public sealed class SkillSlot : Border
 // The dark clock-wipe over a cooling skill (Fraction 1 = just used, 0 = ready).
 public sealed class CooldownWipe : FrameworkElement
 {
-    private static readonly Brush Shade = PetUi.Frozen(Color.FromArgb(0xB0, 0x0E, 0x0C, 0x18));
+    private static readonly Brush Shade = PetUi.Game.Shadow(0xB0);
     private double fraction;
     public double Fraction
     {

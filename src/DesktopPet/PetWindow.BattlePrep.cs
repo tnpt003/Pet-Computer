@@ -36,13 +36,13 @@ public sealed partial class PetWindow
     private PreviewHitMark? prepHitMark;
     private DispatcherTimer? prepPreviewTimer;
     private double prepPreviewTime;
-    private static readonly Brush PrepChosen = PetUi.Frozen(Color.FromRgb(0x3E, 0x7B, 0xE0));
-    private static readonly Brush PrepCardBack = PetUi.Frozen(Color.FromArgb(0x30, 255, 255, 255));
-    private static readonly Brush PrepCardRim = PetUi.Frozen(Color.FromArgb(0x60, 255, 255, 255));
-    private static readonly Brush PrepWarning = PetUi.Frozen(Color.FromRgb(0xFF, 0xC8, 0x6A));
-    private static readonly Brush PrepBarBack = PetUi.Frozen(Color.FromArgb(0x40, 255, 255, 255));
-    private static readonly Brush PrepBarFill = PetUi.Frozen(Color.FromRgb(0xFF, 0xD3, 0x5C));
-    private static readonly Brush PrepStage = PetUi.Frozen(Color.FromArgb(0x26, 255, 255, 255));
+    private static readonly Brush PrepChosen = PetUi.Game.Chosen;
+    private static readonly Brush PrepCardBack = PetUi.Game.CardBack;
+    private static readonly Brush PrepCardRim = PetUi.Game.CardRim;
+    private static readonly Brush PrepWarning = PetUi.Game.Warning;
+    private static readonly Brush PrepBarBack = PetUi.Game.BarBack;
+    private static readonly Brush PrepBarFill = PetUi.Game.Gold;
+    private static readonly Brush PrepStage = PetUi.Game.Stage;
     private static readonly Geometry CheckMark = PetUi.FrozenGeometry("M 1,6.5 L 5,10.5 L 13,2");
     public const double BattlePrepRefreshSeconds = 0.2;
     // Fixed scales for the card bars (the same for every weapon, so bars compare honestly; a
@@ -343,7 +343,7 @@ public sealed partial class PetWindow
         var choices = new StackPanel { Width = 300, Children = { prepWeaponLabel, cards, prepLevelLabel, levels } };
         var panel = new Border
         {
-            Background = HudBack, BorderBrush = Brushes.White, BorderThickness = new Thickness(1.5), CornerRadius = new CornerRadius(12),
+            Background = HudBack, BorderBrush = PetUi.Game.Rim, BorderThickness = new Thickness(1.5), CornerRadius = new CornerRadius(12),
             Padding = new Thickness(16, 12, 16, 12), Margin = new Thickness(6),
             Child = new StackPanel { Children = { prepTitle, new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 10, 0, 0), Children = { stage, choices } },
                 prepBuild, prepData, prepStatus, actions } },

@@ -155,4 +155,22 @@ public static class PetUi
         window.FontSize = BodySize;
         window.Foreground = Ink;
     }
+
+    // Battle Mode's floating panels and HUD: dark warm cocoa (readable over any wallpaper) with a
+    // cream rim, the app's orange for the chosen thing, gold for rewards, records and rare cards.
+    public static class Game
+    {
+        public static readonly Brush Panel = Hex("#E8302520");
+        public static readonly Color HudTop = (Color)ColorConverter.ConvertFromString("#F0473529"),
+            HudBottom = (Color)ColorConverter.ConvertFromString("#F02A1E19");
+        public static readonly Brush Rim = Hex("#FFF3E2"), HudRim = Hex("#C8FFF3E2");
+        public static readonly Brush Chosen = Accent, Armed = Hex("#C0C2561F"), Progress = AccentBright;
+        public static readonly Brush CardBack = Hex("#33FFF0E0"), CardRim = Hex("#66FFE9D2"), RareBack = Hex("#2EFFC82E");
+        public static readonly Brush ButtonBack = Hex("#50FFF0E0"), Stage = Hex("#26FFF0E0"), BarBack = Hex("#40FFF0E0");
+        public static readonly Brush Locked = Hex("#38FFF0E0"), Ahead = Hex("#50FFF0E0");
+        public static readonly Brush Gold = Hex("#FFD35C"), GoldInk = Hex("#3A2C08"), RareGold = Hex("#FFC82E"), Warning = Hex("#FFC86A");
+        public static readonly Brush Soft = Hex("#F1E4D6"); // Secondary HUD text.
+        public static Brush Shadow(byte alpha) => Frozen(Color.FromArgb(alpha, 0x14, 0x0D, 0x0A)); // Warm near-black wells.
+        public const double ButtonRadius = 12;
+    }
 }

@@ -74,8 +74,8 @@ public sealed partial class PetWindow
         .Where(t => t is { Visibility: Visibility.Visible } && t.Text.Length > 0).Select(t => t!.Text)
         .Concat(xSetup is { Visibility: Visibility.Visible } ? expeditionWeaponChips.Select(c => c.Text.Text).Concat(expeditionLevelChips.Select(c => c.Text.Text)) : Enumerable.Empty<string>()));
 
-    private static readonly Brush MapAhead = PetUi.Frozen(Color.FromArgb(0x50, 255, 255, 255));
-    private static readonly Brush EliteInk = PetUi.Frozen(Color.FromRgb(0xFF, 0xD3, 0x5C));
+    private static readonly Brush MapAhead = PetUi.Game.Ahead;
+    private static readonly Brush EliteInk = PetUi.Game.Gold;
 
     private string KindName(string kind) => kind switch
     {
@@ -414,7 +414,7 @@ public sealed partial class PetWindow
         actions.Children.Add(close); actions.Children.Add(abandon); actions.Children.Add(main);
         var panel = new Border
         {
-            Background = HudBack, BorderBrush = Brushes.White, BorderThickness = new Thickness(1.5), CornerRadius = new CornerRadius(12),
+            Background = HudBack, BorderBrush = PetUi.Game.Rim, BorderThickness = new Thickness(1.5), CornerRadius = new CornerRadius(12),
             Padding = new Thickness(16, 12, 16, 12), Margin = new Thickness(6), MinWidth = 460,
             Child = new StackPanel { Children = { xTitle, xData, xStatus, xBuild, xNote, xSetup, xMap, xRecord, actions } },
             Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 6, ShadowDepth = 1, Opacity = 0.4 }

@@ -46,9 +46,9 @@ public sealed partial class PetWindow
     private readonly List<(string Id, Border Node, TextBlock Number, Path Mark, TextBlock Label, Rectangle? Link)> mapNodes = new();
     private TextBlock? mapTitle, mapData, mapStageName, mapGoal, mapStatus, mapRecord, mapEnterText, mapCloseText;
     private Border? mapEnter;
-    private static readonly Brush MapDone = PetUi.Frozen(Color.FromRgb(0xFF, 0xD3, 0x5C));
-    private static readonly Brush MapDoneInk = PetUi.Frozen(Color.FromRgb(0x3A, 0x2C, 0x08));
-    private static readonly Brush MapLocked = PetUi.Frozen(Color.FromArgb(0x38, 255, 255, 255));
+    private static readonly Brush MapDone = PetUi.Game.Gold;
+    private static readonly Brush MapDoneInk = PetUi.Game.GoldInk;
+    private static readonly Brush MapLocked = PetUi.Game.Locked;
     private static readonly Geometry LockMark = PetUi.FrozenGeometry("M 2,7 L 12,7 L 12,14 L 2,14 Z M 4,7 L 4,5 A 3,3 0 0 1 10,5 L 10,7");
 
     public bool AdventureMapOpen => adventureMapOpen;
@@ -190,7 +190,7 @@ public sealed partial class PetWindow
         actions.Children.Add(close); actions.Children.Add(enter);
         var panel = new Border
         {
-            Background = HudBack, BorderBrush = Brushes.White, BorderThickness = new Thickness(1.5), CornerRadius = new CornerRadius(12),
+            Background = HudBack, BorderBrush = PetUi.Game.Rim, BorderThickness = new Thickness(1.5), CornerRadius = new CornerRadius(12),
             Padding = new Thickness(16, 12, 16, 12), Margin = new Thickness(6), MinWidth = 440,
             Child = new StackPanel { Children = { mapTitle, mapData, row, details, actions } },
             Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 6, ShadowDepth = 1, Opacity = 0.4 }

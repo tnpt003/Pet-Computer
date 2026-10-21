@@ -11,7 +11,7 @@ namespace DesktopPet;
 // Change gear / Back to desktop) and the short note that says why a battle cannot start. Both never take focus.
 public sealed partial class PetWindow
 {
-    private static readonly Brush HudButtonBack = PetUi.Frozen(Color.FromArgb(0x50, 255, 255, 255));
+    private static readonly Brush HudButtonBack = PetUi.Game.ButtonBack;
 
     // The cat's 192-DIP frame cropped to the cat and its weapon (the frame's margin is for
     // poses like being carried), for the setup preview and the result picture.
@@ -23,12 +23,12 @@ public sealed partial class PetWindow
     private static (Border Button, TextBlock Text, Border Progress) HudButton(Action click, bool plain = false)
     {
         var text = new TextBlock { Foreground = Brushes.White, FontSize = 12.5, FontWeight = FontWeights.SemiBold, HorizontalAlignment = HorizontalAlignment.Center };
-        var progress = new Border { Height = 3, Background = new SolidColorBrush(Color.FromRgb(0x5C, 0xC8, 0xFF)), HorizontalAlignment = HorizontalAlignment.Left,
+        var progress = new Border { Height = 3, Background = PetUi.Game.Progress, HorizontalAlignment = HorizontalAlignment.Left,
             Width = 0, CornerRadius = new CornerRadius(1.5), Margin = new Thickness(0, 3, 0, 0) };
         if (plain) progress.Visibility = Visibility.Collapsed; // No cooldown bar: the text sits in the middle.
         var button = new Border
         {
-            Background = HudButtonBack, CornerRadius = new CornerRadius(6), Padding = new Thickness(10, 4, 10, 3),
+            Background = HudButtonBack, CornerRadius = new CornerRadius(PetUi.Game.ButtonRadius), Padding = new Thickness(10, 4, 10, 3),
             Margin = new Thickness(0, 0, 6, 0), Cursor = Cursors.Hand, MinWidth = 70, Child = new StackPanel { Children = { text, progress } }
         };
         button.MouseLeftButtonDown += (_, e) => { if (button.IsEnabled) click(); e.Handled = true; };
@@ -47,7 +47,7 @@ public sealed partial class PetWindow
         CloseBattleNotice();
         var label = new TextBlock { Text = text, Foreground = Brushes.White, FontSize = 12.5, FontWeight = FontWeights.SemiBold,
             TextWrapping = TextWrapping.Wrap, MaxWidth = 240, FontFamily = PetUi.TextFont };
-        var panel = new Border { Background = HudBack, BorderBrush = Brushes.White, BorderThickness = new Thickness(1.5),
+        var panel = new Border { Background = HudBack, BorderBrush = PetUi.Game.Rim, BorderThickness = new Thickness(1.5),
             CornerRadius = new CornerRadius(8), Padding = new Thickness(10, 5, 10, 6), Margin = new Thickness(4), Child = label };
         var notice = CreateBattleWindow(panel, "Pet notice", clickThrough: true);
         notice.SizeToContent = SizeToContent.WidthAndHeight;
@@ -80,8 +80,8 @@ public sealed partial class PetWindow
         BattleDifficulty Difficulty = BattleDifficulty.Normal, BattleRecordNews News = default, string Weapon = BattleWeapon.Sword, string WeaponLabel = "",
         bool Custom = false, string WeaponStyle = "sword", StageSpec? Stage = null, AdventureOutcome Outcome = default, bool Ranked = true, string Upgrades = "",
         ExpeditionStepOutcome? Expedition = null);
-    private static readonly Brush RecordGold = PetUi.Frozen(Color.FromRgb(0xFF, 0xD3, 0x5C));
-    private static readonly Brush ResultMain = PetUi.Frozen(Color.FromRgb(0x3E, 0x7B, 0xE0));
+    private static readonly Brush RecordGold = PetUi.Game.Gold;
+    private static readonly Brush ResultMain = PetUi.Game.Chosen;
     private static string Clock(double seconds)
     {
         var time = TimeSpan.FromSeconds(Math.Round(seconds));
@@ -144,7 +144,7 @@ public sealed partial class PetWindow
             VerticalAlignment = VerticalAlignment.Top, Child = CatPicture(portrait) };
         var panel = new Border
         {
-            Background = HudBack, BorderBrush = Brushes.White, BorderThickness = new Thickness(1.5), CornerRadius = new CornerRadius(12),
+            Background = HudBack, BorderBrush = PetUi.Game.Rim, BorderThickness = new Thickness(1.5), CornerRadius = new CornerRadius(12),
             Padding = new Thickness(14, 12, 14, 12), Margin = new Thickness(6),
             Child = new StackPanel { Children = { new StackPanel { Orientation = Orientation.Horizontal, Children = { picture, info } }, actions } },
             Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 6, ShadowDepth = 1, Opacity = 0.4 }
@@ -227,7 +227,7 @@ public sealed partial class PetWindow
         battleSummaryWindow = null;
     }
 
-    private static readonly Brush HudBack = PetUi.Frozen(Color.FromArgb(0xE8, 0x26, 0x23, 0x38));
+    private static readonly Brush HudBack = PetUi.Game.Panel;
 }
 
 internal static class PictureExtensions

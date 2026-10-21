@@ -76,7 +76,7 @@ public sealed partial class PetWindow
             tutorialNextText = nextText;
             var panel = new Border
             {
-                Background = HudBack, BorderBrush = Brushes.White, BorderThickness = new Thickness(1.5), CornerRadius = new CornerRadius(10),
+                Background = HudBack, BorderBrush = PetUi.Game.Rim, BorderThickness = new Thickness(1.5), CornerRadius = new CornerRadius(10),
                 Padding = new Thickness(14, 10, 14, 10), Margin = new Thickness(6),
                 Child = new StackPanel { Children = { tutorialTitle, tutorialBody,
                     new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 8, 0, 0), Children = { tutorialCount, skip, next } } } },

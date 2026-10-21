@@ -299,6 +299,7 @@ Chuyến đang dở từ mốc 2 (nếu có) sẽ kết thúc khi mở bản đ�
 - [ ] Màn 1–2 Thường: quái chịu đòn lâu hơn chút, đánh đau hơn; vẫn thắng được khi dùng kỹ năng. Dễ màn 2 không dùng kỹ năng thì có thể thua (mô phỏng: chỉ ~30% thắng) — báo nếu thấy quá khó.
 - [ ] Màn 3–5 Thường: gặp slime thường tinh anh (viền vàng + sao): banner "★ Slime tinh anh: máu dày hơn, đánh dồn dập hơn", nó ra đòn dày hơn nhưng vẫn gồng (có cảnh báo) như cũ.
 - [ ] Quái tinh anh có nhãn vàng nhỏ trên đầu (MIỄN ĐẨY / ĐÁNH NHANH / ĐÒN MẠNH / HỒI MẠNH; tiếng Anh khi đổi ngôn ngữ): đọc được trên nền sáng và tối, không đè thanh máu; khi gồng nhãn nằm trên dấu "!". Khi được chọn (mũi tên vàng) xem có bị che khó đọc không.
+- [ ] Slime đá tinh anh: khiên to hơn, viền tấm lót vàng phía sau, hai đinh tán; quay mặt thì khiên đổi bên đúng; trúng đòn nháy trắng như khiên thường.
 - [ ] Đẩy slime đá tinh anh: nó đứng yên, không choáng, vẫn gồng tiếp; hiện mảnh đá + khiên nhỏ, banner "★ Slime đá tinh anh miễn Đẩy!" chỉ lần đầu; nút Đẩy vào hồi chiêu. Đẩy slime đá thường: bị đẩy/choáng như cũ.
 - [ ] Slime thảo dược tinh anh có quầng xanh lá phập phồng sau thân (không che slime khác quá nhiều); hết lượng hồi thì quầng tắt.
 - [ ] Slime thảo dược tinh anh: hồi máu dày hơn, mỗi lần hồi không lớn hơn; vẫn hết lượng hồi sau một lúc.

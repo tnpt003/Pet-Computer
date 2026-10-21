@@ -369,8 +369,17 @@ public sealed class BattleFieldView : FrameworkElement
             if (slime.Hp < slime.MaxHp / 2) dc.DrawGeometry(null, Crack, MoreCracks);
             dc.PushTransform(new ScaleTransform(slime.Facing, 1));
             bool flash = slime.HitFlash > 0;
+            if (slime.Elite is { PushImmune: true })
+            {
+                // An elite that ignores Push: a thicker shield on a gold backing plate, braced by a second stud.
+                dc.PushTransform(new MatrixTransform(1.22, 0, 0, 1.18, ShieldCentre.X * -0.22, ShieldCentre.Y * -0.18));
+                dc.DrawGeometry(null, Halo, Shield);
+                dc.DrawGeometry(Gold, Outline, Shield);
+                dc.Pop();
+            }
             dc.DrawGeometry(null, Halo, Shield);
             dc.DrawGeometry(flash ? Brushes.White : ArmorGrey, Outline, Shield);
+            if (slime.Elite is { PushImmune: true }) dc.DrawEllipse(flash ? Brushes.White : StoneGrey, Outline, new Point(ShieldCentre.X, ShieldCentre.Y - 8), 1.8, 1.8);
             dc.DrawGeometry(null, ShieldRim, ShieldInner);
             dc.DrawGeometry(null, Crack, ShieldCrack);
             dc.DrawEllipse(flash ? Brushes.White : StoneGrey, Outline, ShieldCentre, 2.4, 2.4);

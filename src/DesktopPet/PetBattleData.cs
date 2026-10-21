@@ -161,6 +161,13 @@ public sealed class EliteSpec
     public double HealCooldown { get; init; } = 1;
     public double HealBudget { get; init; } = 1;
     public bool PushImmune { get; init; }
+    // The trait its label over the head names (null: none worth a label), the most telling first.
+    public string? Tag(bool english) =>
+        PushImmune ? (english ? "NO PUSH" : "MIỄN ĐẨY")
+        : AttackCooldown < 1 ? (english ? "QUICK HITS" : "ĐÁNH NHANH")
+        : Damage > 1 ? (english ? "HARD HITS" : "ĐÒN MẠNH")
+        : HealCooldown < 1 || HealBudget > 1 || FirstHeal > 1 ? (english ? "BIG HEALS" : "HỒI MẠNH")
+        : null;
     public double Cost { get; init; } = 1;
     // A short line for the banner the first time an elite of this kind appears in a battle.
     public string DescVi { get; init; } = "";

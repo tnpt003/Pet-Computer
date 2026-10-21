@@ -496,6 +496,16 @@ public sealed class BattleFieldView : FrameworkElement
             dc.DrawRoundedRectangle(BarBack, null, new Rect(x - barW / 2 - 1, barY - 1, barW + 2, 7), 3, 3);
             if (hpWidth > 0) dc.DrawRoundedRectangle(BarFill, null, new Rect(x - barW / 2, barY, hpWidth, 5), 2.5, 2.5);
         }
+        // An elite's main trait in small gold letters over its head (above the "!" while it winds up),
+        // so a Push that does nothing or a quick second hit does not look like a bug.
+        if (targetable && slime.Elite is EliteSpec elite && elite.Tag(English) is string tag)
+        {
+            var (shape, width, height) = TagShape(tag);
+            dc.PushTransform(new TranslateTransform(x - width / 2, top - (slime.State == SlimeState.Windup ? 30 : 13) - height));
+            dc.DrawGeometry(null, TextHalo, shape);
+            dc.DrawGeometry(ComboGold, null, shape);
+            dc.Pop();
+        }
         if (sim.SelectedId == slime.Id)
         {
             // Bobbing yellow arrow: readable on light and dark desktops (white halo, dark outline).
@@ -646,6 +656,16 @@ public sealed class BattleFieldView : FrameworkElement
     }
 
     // A word rising from a hit (gold or grey), drawn like the damage numbers.
+    private static readonly System.Collections.Generic.Dictionary<string, (Geometry Shape, double Width, double Height)> Tags = new();
+    private static (Geometry Shape, double Width, double Height) TagShape(string text)
+    {
+        if (Tags.TryGetValue(text, out var cached)) return cached;
+        var formatted = new FormattedText(text, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, NumberFont, 10, Brushes.White, 1);
+        var geometry = formatted.BuildGeometry(new Point(0, 0));
+        geometry.Freeze();
+        return Tags[text] = (geometry, formatted.Width, formatted.Height);
+    }
+
     private static void DrawWord(DrawingContext dc, string text, Brush fill, double x, double y)
     {
         var (shape, width, height) = NumberShape(text, false);

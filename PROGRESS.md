@@ -7,6 +7,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 ## Hào quang slime thảo dược tinh anh (2026-10-21)
 - Người dùng: "làm liên tục, khỏi cần confirm". PetBattleView: quầng LeafGlow phập phồng sau thân tinh anh biết hồi máu, chỉ khi còn lượng hồi. Không đổi gameplay.
 - Test thật: scripts/test.ps1 -Ui: Python 55 OK, C# 1219, WPF 592 đạt. Chưa xem tận mắt.
+- Commit c9a090f. Publish sạch: 1.2.0-beta+c9a090f, ZIP artifacts\DesktopPet-1.2.0-beta-c9a090f-win-x64.zip; check-publish 3/3. Mèo không chạy nên không mở lại. File của người dùng trả lại đúng hash.
 
 ## Nhãn đặc tính tinh anh (2026-10-21, sau 1.2.0-beta)
 - Người dùng: "làm những gì bạn thấy phù hợp" (không cần hỏi). Chọn phần polish nhỏ nhất, hữu ích nhất: `EliteSpec.Tag` (MIỄN ĐẨY > ĐÁNH NHANH > ĐÒN MẠNH > HỒI MẠNH, có tiếng Anh) và PetBattleView vẽ chữ vàng 10pt viền tối trên đầu tinh anh (lên trên dấu "!" khi gồng). Không đổi gameplay/hitbox.

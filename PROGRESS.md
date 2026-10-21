@@ -8,7 +8,9 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Người dùng chọn làm cue tinh anh trước, rồi Viễn chinh mốc 5 (nâng 1.3.0-beta). C# only, không đổi gameplay/rulesVersion/Python.
 - PetSounds: 2 hiệu ứng tổng hợp mới (cùng kiểu swoosh/squish/pop, không file mới): `sparkle` (2 nốt chuông đi lên, 0,22 s) cho EliteAppeared và BossRallied (trước: "surprised"); `clank` (tiếng gõ khiên trầm, 0,14 s) cho PushResisted (trước: "ball_tap"). Hạng ưu tiên trong BattleCues giữ nguyên (5/3). Cooldown riêng 1 s (`PetSounds.IsEliteCue`), foley khác vẫn 0,25 s.
 - Test thật: scripts/test.ps1 -Ui: Python 55 OK; C# 1221 đạt (foley 5 loại là WAV ngắn hợp lệ, đỉnh mềm, khác nhau và khác tiếng mèo; chỉ cue tinh anh có cooldown dài); WPF 597 đạt. Chưa nghe thử thật.
+- Commit 49bbfe8. Đóng mèo (PID 23892) bằng WM_CLOSE, publish sạch 1.2.0-beta+49bbfe8, ZIP artifacts\DesktopPet-1.2.0-beta-49bbfe8-win-x64.zip; check-publish 3/3; mở lại 21:37, log "Desktop Pet 1.2.0-beta (49bbfe8) started". AGENTS.md/docs/NEXT-STEPS.md của người dùng trả lại đúng hash.
 - Cần test tay: mục "Cue âm thanh tinh anh" trong MANUAL-TEST.md.
+- Tiếp theo: Viễn chinh mốc 5 (đã được "ok"): test end-to-end lưu/tiếp tục có nghỉ/sự kiện/di vật/tinh anh, chống bấm đúp, DPI giả 150% cho bản đồ/kết quả/kệ, mất màn hình, perf.ps1 cho trận Viễn chinh và kệ trưng bày, nâng 1.3.0-beta + CHANGELOG.
 
 ## Thẻ trạng thái mở sát mèo và kéo được (2026-10-21)
 - Người dùng báo (ảnh chụp): thẻ trạng thái mở rất xa mèo và không kéo được. Nguyên nhân: thẻ gán thẳng Left/Top của WPF, mà cửa sổ mới hiểu tọa độ theo DPI khác với tọa độ của mèo (DIP theo scale màn hình mèo). Người dùng "ok" cách sửa.

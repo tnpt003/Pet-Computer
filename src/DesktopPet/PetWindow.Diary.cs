@@ -16,14 +16,7 @@ public sealed partial class PetWindow
     private PetDiary? aiDiary;
     private Window? diaryWindow;
     private StackPanel? diaryPanel;
-    private static readonly Brush DiaryAccent = Frozen(Color.FromRgb(0x2A, 0x78, 0xD6));
-    private static readonly Brush DiaryInk = Frozen(Color.FromRgb(0x2B, 0x2A, 0x28));
-    private static readonly Brush DiaryMuted = Frozen(Color.FromRgb(0x6E, 0x6C, 0x66));
-    private static readonly Brush DiaryGrid = Frozen(Color.FromRgb(0xE4, 0xE2, 0xDD));
-    private static readonly Brush DiarySurface = Frozen(Color.FromRgb(0xFC, 0xFC, 0xFB));
     private const double ChartWidth = 312, ChartHeight = 64;
-
-    private static Brush Frozen(Color color) { var brush = new SolidColorBrush(color); brush.Freeze(); return brush; }
 
     public void ShowDiary()
     {
@@ -34,7 +27,7 @@ public sealed partial class PetWindow
         diaryWindow = new Window
         {
             Title = L($"Nhật ký của {preferences.Name}", $"{preferences.Name}'s diary"), Icon = AppIcon.WindowImage(),
-            Width = 420, Height = height, Background = DiarySurface, ResizeMode = ResizeMode.NoResize, Topmost = true, ShowInTaskbar = false,
+            Width = 420, Height = height, Background = PetUi.Surface, ResizeMode = ResizeMode.NoResize, Topmost = true, ShowInTaskbar = false,
             Content = new ScrollViewer { Content = diaryPanel, VerticalScrollBarVisibility = ScrollBarVisibility.Auto },
             WindowStartupLocation = WindowStartupLocation.Manual,
             Left = Math.Clamp(pet.X + settings.Width / 2 - 210, bounds.Left, Math.Max(bounds.Left, bounds.Right - 420)),
@@ -55,27 +48,27 @@ public sealed partial class PetWindow
         {
             var session = pet.Interactions;
             AddLine(L("AI đang tắt hoặc chưa sẵn sàng, nên chỉ có số liệu của lần chạy này.",
-                   "The AI is off or not ready yet, so only this session's numbers are shown."), DiaryMuted);
+                   "The AI is off or not ready yet, so only this session's numbers are shown."), PetUi.Muted);
             AddStats((session.Petted, L("Được vuốt", "Petted")), (session.Treats, L("Treat", "Treats")), (session.Toy + session.BallClicks, L("Chơi bóng", "Ball games")));
             return;
         }
-        AddLine(L($"Đã ở cùng sen {diary.Days} ngày (từ {diary.Since})", $"Together for {diary.Days} days (since {diary.Since})"), DiaryMuted);
+        AddLine(L($"Đã ở cùng sen {diary.Days} ngày (từ {diary.Since})", $"Together for {diary.Days} days (since {diary.Since})"), PetUi.Muted);
         AddStats((diary.Petted, L("Được vuốt", "Petted")), (diary.Treats, L("Treat", "Treats")), (diary.Play, L("Chơi bóng", "Ball games")), ((long)Math.Round(diary.Bond), L("Thân thiết", "Bond")));
-        AddLine(L($"Click {diary.Clicks} lần · bị ném mạnh {diary.RoughThrows} lần", $"Clicked {Times(diary.Clicks)} · thrown roughly {Times(diary.RoughThrows)}"), DiaryMuted);
+        AddLine(L($"Click {diary.Clicks} lần · bị ném mạnh {diary.RoughThrows} lần", $"Clicked {Times(diary.Clicks)} · thrown roughly {Times(diary.RoughThrows)}"), PetUi.Muted);
         if (diary.BattlesWon + diary.BattlesLost > 0)
             AddLine(L($"Chiến đấu: thắng {diary.BattlesWon} · thua {diary.BattlesLost} · combo {diary.Combos}",
-                   $"Battles: {diary.BattlesWon} won · {diary.BattlesLost} lost · {diary.Combos} combo{(diary.Combos == 1 ? "" : "s")}"), DiaryMuted);
+                   $"Battles: {diary.BattlesWon} won · {diary.BattlesLost} lost · {diary.Combos} combo{(diary.Combos == 1 ? "" : "s")}"), PetUi.Muted);
 
         var bond = AddCard(L($"Độ thân thiết: {diary.Bond:F0}/100", $"Bond: {diary.Bond:F0}/100"));
         if (diary.BondHistory.Length >= 2) bond.Children.Add(BondChart(diary.BondHistory));
         bond.Children.Add(TextLine(diary.BondHistory.Length >= 2
             ? L($"{diary.BondHistory.Length} ngày gần nhất: {string.Join(", ", diary.BondHistory.Select(v => v.ToString("F0")))}",
                 $"Last {diary.BondHistory.Length} days: {string.Join(", ", diary.BondHistory.Select(v => v.ToString("F0")))}")
-            : L("Biểu đồ sẽ hiện sau ngày thứ hai.", "The chart appears from the second day."), DiaryMuted));
+            : L("Biểu đồ sẽ hiện sau ngày thứ hai.", "The chart appears from the second day."), PetUi.Muted));
 
         var hours = AddCard(L("Giờ sen hay chơi", "When you usually play"));
         if (diary.Habits.Sum() < 10)
-            hours.Children.Add(TextLine(L("Chưa đủ dữ liệu, chơi với mèo thêm vài hôm nhé.", "Not enough data yet; play a few more days."), DiaryMuted));
+            hours.Children.Add(TextLine(L("Chưa đủ dữ liệu, chơi với mèo thêm vài hôm nhé.", "Not enough data yet; play a few more days."), PetUi.Muted));
         else
         {
             hours.Children.Add(HourChart(diary.Habits));
@@ -93,14 +86,14 @@ public sealed partial class PetWindow
 
     private void AddHeading(string text, double size) => diaryPanel!.Children.Add(new TextBlock
     {
-        Text = text, FontSize = size, FontWeight = FontWeights.SemiBold, Foreground = DiaryInk, Margin = new Thickness(0, 0, 0, 2)
+        Text = text, FontSize = size, FontWeight = FontWeights.SemiBold, Foreground = PetUi.Ink, Margin = new Thickness(0, 0, 0, 2)
     });
 
     private void AddLine(string text, Brush? brush = null) => diaryPanel!.Children.Add(TextLine(text, brush));
 
     private static TextBlock TextLine(string text, Brush? brush = null) => new()
     {
-        Text = text, TextWrapping = TextWrapping.Wrap, Foreground = brush ?? DiaryInk, Margin = new Thickness(0, 2, 0, 2)
+        Text = text, TextWrapping = TextWrapping.Wrap, Foreground = brush ?? PetUi.Ink, Margin = new Thickness(0, 2, 0, 2)
     };
 
     // A titled card; returns the panel its content goes into.
@@ -119,8 +112,8 @@ public sealed partial class PetWindow
         foreach (var (value, label) in stats)
         {
             var tile = new StackPanel();
-            tile.Children.Add(new TextBlock { Text = value.ToString("N0", System.Globalization.CultureInfo.InvariantCulture), FontSize = 20, FontWeight = FontWeights.SemiBold, Foreground = DiaryAccent });
-            tile.Children.Add(new TextBlock { Text = label, FontSize = 12, Foreground = DiaryMuted, TextWrapping = TextWrapping.Wrap });
+            tile.Children.Add(new TextBlock { Text = value.ToString("N0", System.Globalization.CultureInfo.InvariantCulture), FontSize = PetUi.DisplaySize, FontWeight = FontWeights.SemiBold, Foreground = PetUi.Accent });
+            tile.Children.Add(new TextBlock { Text = label, FontSize = 12, Foreground = PetUi.Muted, TextWrapping = TextWrapping.Wrap });
             row.Children.Add(PetUi.Card(tile, new Thickness(4, 0, 4, 0)));
         }
         diaryPanel!.Children.Add(row);
@@ -133,9 +126,9 @@ public sealed partial class PetWindow
         foreach (double level in new[] { 0.0, 50, 100 })
         {
             double y = 3 + ChartHeight * (1 - level / 100);
-            canvas.Children.Add(new Line { X1 = 0, X2 = ChartWidth, Y1 = y, Y2 = y, Stroke = DiaryGrid, StrokeThickness = 1 });
+            canvas.Children.Add(new Line { X1 = 0, X2 = ChartWidth, Y1 = y, Y2 = y, Stroke = PetUi.Line, StrokeThickness = 1 });
         }
-        var line = new Polyline { Stroke = DiaryAccent, StrokeThickness = 2, StrokeLineJoin = PenLineJoin.Round };
+        var line = new Polyline { Stroke = PetUi.AccentBright, StrokeThickness = 2, StrokeLineJoin = PenLineJoin.Round };
         double step = (ChartWidth - 10) / Math.Max(1, values.Length - 1);
         for (int i = 0; i < values.Length; i++)
         {
@@ -148,7 +141,7 @@ public sealed partial class PetWindow
         }
         canvas.Children.Insert(3, line);
         var last = line.Points[^1];
-        var marker = new Ellipse { Width = 8, Height = 8, Fill = DiaryAccent, Stroke = DiarySurface, StrokeThickness = 2, IsHitTestVisible = false };
+        var marker = new Ellipse { Width = 8, Height = 8, Fill = PetUi.AccentBright, Stroke = PetUi.CardBack, StrokeThickness = 2, IsHitTestVisible = false };
         Canvas.SetLeft(marker, last.X - 4); Canvas.SetTop(marker, last.Y - 4);
         canvas.Children.Add(marker);
         return canvas;
@@ -159,7 +152,7 @@ public sealed partial class PetWindow
     {
         var canvas = new Canvas { Width = ChartWidth, Height = ChartHeight + 18, Margin = new Thickness(0, 2, 0, 4) };
         double max = Math.Max(1e-9, habits.Max()), slot = ChartWidth / 24;
-        canvas.Children.Add(new Line { X1 = 0, X2 = ChartWidth, Y1 = ChartHeight, Y2 = ChartHeight, Stroke = DiaryGrid, StrokeThickness = 1 });
+        canvas.Children.Add(new Line { X1 = 0, X2 = ChartWidth, Y1 = ChartHeight, Y2 = ChartHeight, Stroke = PetUi.Line, StrokeThickness = 1 });
         for (int hour = 0; hour < 24; hour++)
         {
             double height = habits[hour] <= 0 ? 0 : Math.Max(2, ChartHeight * habits[hour] / max);
@@ -170,7 +163,7 @@ public sealed partial class PetWindow
             {
                 var bar = new Border
                 {
-                    Width = slot - 2, Height = height, Background = DiaryAccent, IsHitTestVisible = false,
+                    Width = slot - 2, Height = height, Background = PetUi.AccentBright, IsHitTestVisible = false,
                     CornerRadius = new CornerRadius(Math.Min(4, (slot - 2) / 2), Math.Min(4, (slot - 2) / 2), 0, 0)
                 };
                 Canvas.SetLeft(bar, hour * slot + 1); Canvas.SetTop(bar, ChartHeight - height);
@@ -178,7 +171,7 @@ public sealed partial class PetWindow
             }
             if (hour % 6 == 0)
             {
-                var label = new TextBlock { Text = $"{hour}h", FontSize = 11, Foreground = DiaryMuted };
+                var label = new TextBlock { Text = $"{hour}h", FontSize = 11, Foreground = PetUi.Muted };
                 Canvas.SetLeft(label, hour * slot); Canvas.SetTop(label, ChartHeight + 2);
                 canvas.Children.Add(label);
             }

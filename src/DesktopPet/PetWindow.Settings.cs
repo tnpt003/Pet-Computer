@@ -84,7 +84,7 @@ public sealed partial class PetWindow
         form.Accessory.SelectionChanged += (_, _) => form.PetPreview.Accessory = form.AccessoryIds[Math.Max(0, form.Accessory.SelectedIndex)];
         var stage = new Grid { Width = 132, Height = 132, ClipToBounds = true }; // Crops the window's transparent margin.
         stage.Children.Add(form.PetPreview);
-        var previewCard = new Border { Child = stage, Background = PreviewBackground, CornerRadius = new CornerRadius(8), Padding = new Thickness(4),
+        var previewCard = new Border { Child = stage, Background = PetUi.Stage, CornerRadius = new CornerRadius(PetUi.CardRadius), Padding = new Thickness(4),
             BorderBrush = PetUi.Line, BorderThickness = new Thickness(1), VerticalAlignment = VerticalAlignment.Top };
         var looks = new StackPanel { Margin = new Thickness(16, 0, 0, 0) };
         looks.Children.Add(new TextBlock { Text = L("Bộ lông", "Coat"), Margin = new Thickness(0, 4, 0, 4) }); looks.Children.Add(form.Coat);
@@ -285,7 +285,6 @@ public sealed partial class PetWindow
         return grid;
     }
 
-    private static readonly Brush PreviewBackground = PetUi.Frozen(Color.FromRgb(0xEE, 0xF2, 0xF7));
     private static readonly DataTemplate CoatTemplate = CreateCoatTemplate();
     private static DataTemplate CreateCoatTemplate()
     {

@@ -4,6 +4,13 @@ Cập nhật: 2026-10-21 (Asia/Saigon).
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
+## Cải thiện UI toàn bộ — mốc 1: nền tảng theme ấm (2026-10-21)
+- Người dùng chọn hướng làm lại UI toàn bộ theo 4 mốc: (1) nền tảng theme → (2) phần thú cưng (menu khay, bong bóng thoại) → (3) Cài đặt/Nhật ký/Tinh chỉnh (khung chung, sidebar, công tắc gạt, control ấm) → (4) Battle (một component panel game, thẻ theo độ hiếm, HUD dễ đọc). Phong cách (a): dễ thương, hoạt hình, ấm; không làm dark mode; không thêm thư viện UI.
+- Đã làm (C# only): `PetUi` thành bộ token: bảng màu ấm dạng hex (nhấn #C2561F — chữ trắng đạt 4.5:1; nhấn sáng #E8834F cho biểu đồ; chữ nâu #4A3628; phụ #7D6656 đạt 4.5:1 trên nền kem #FFF8F1; viền #EEDFD0), thang chữ 11/12/13/14/16/20, bo góc 6/12/16. Nút chính và phụ thành dạng viên thuốc (nút phụ trước đây là nút Windows mặc định), card bo 12. `PetMenuStyle` lấy màu từ token (hover kem cam, tick cam, bo 12/8). Nhật ký bỏ bảng màu xanh riêng, dùng token (biểu đồ màu cam sáng). Nền xem trước mèo trong Cài đặt thành kem.
+- Chưa đổi: màu Battle (đã gom trong partial PetWindow, để mốc 4), tab/checkbox/ô nhập/slider/combobox vẫn kiểu Windows (mốc 3), menu khay WinForms (mốc 2).
+- Test thật: scripts/test.ps1 -Ui: C# 1220 đạt, WPF 592 đạt. Đã xem ảnh render (PET_RENDER_REVIEW) Cài đặt, menu chuột phải, Nhật ký, Tinh chỉnh hành vi. Lưu ý: chạy với PET_RENDER_REVIEW thì thư mục phải có sẵn (context-menu.png không tự tạo thư mục).
+- Cần test tay: mở Cài đặt/Nhật ký/Tinh chỉnh và menu chuột phải trên desktop thật, xem màu cam có dễ chịu không, hover nút Hủy/Lưu.
+
 ## Đá tinh anh không bị đẩy lùi bởi đòn đánh (2026-10-21)
 - Người dùng thấy combo vẫn đẩy được đá tinh anh; mình giải thích là đúng phạm vi cũ (chỉ miễn kỹ năng Đẩy), đề xuất mở rộng, người dùng "ok".
 - PetBattle.cs: đòn đánh trúng (combo, knock của búa, thẻ Đẩy mạnh) không đặt KnockVelocity cho tinh anh `pushImmune`; sát thương giữ nguyên. Bom vốn không đẩy lùi. Không thêm hiệu ứng riêng (effect Block có chữ "CHẶN" sẽ gây hiểu nhầm vì đòn vẫn trúng). rulesVersion màn 3–5: 13/14/14, Viễn chinh 4.
@@ -698,6 +705,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Lịch sử chuyển project: 2026-10-05 tạo AGENTS.md/PROGRESS.md tại ổ D khi thư mục đó trống; source hiện nằm tại ổ C, không cần khôi phục về D.
 
 ## Đang dở và việc tiếp theo
+- Cải thiện UI toàn bộ (2026-10-21, phong cách ấm/hoạt hình, không dark mode): mốc 1 nền tảng theme xong. Tiếp: mốc 2 phần thú cưng (menu khay vẽ lại bằng ToolStripRenderer theo PetUi, bong bóng thoại/suy nghĩ cùng font/bo/bóng; thẻ trạng thái mèo là tính năng mới, cần người dùng duyệt riêng) → mốc 3 Cài đặt/Nhật ký/Tinh chỉnh (khung chung, sidebar thay tab, công tắc gạt, style ấm cho ô nhập/combobox/slider) → mốc 4 Battle (một component panel game cho chuẩn bị/bản đồ/Viễn chinh/nâng cấp/kết quả, thẻ theo độ hiếm, HUD theo thang chữ). Mỗi mốc giải thích kế hoạch trước khi code.
 - Buff quái/elite 1.2.0-beta (2026-10-21): người dùng chơi thật Thường/Khó/Viễn chinh, đi mục MANUAL-TEST "Buff quái/tinh anh". Mô phỏng: Khó và Viễn chinh Thường đường an toàn rất khó (đã hạ mục tiêu theo lựa chọn người dùng); nếu thật sự quá khó, hướng đã đo: bỏ buff nền giữ elite (gần bản cũ). Polish hình ảnh elite đã làm (nhãn, hào quang, giáp dày, vệt vàng — cần xem tận mắt); cue âm thanh riêng cho tinh anh chưa làm.
 - Viễn chinh (docs/EXPEDITION-DIRECTION.md): mốc 2–4 xong (2026-10-21). Người dùng cần: đi mục "Viễn chinh — mốc 2/3/4" trong MANUAL-TEST.md, chơi một chuyến Thường thật rồi chốt `winHeal`/`stepThreat`/`retreatCost`/`restHeal` và sức di vật (mô phỏng: đường tham lam mạnh hơn đường an toàn). Tiếp: mốc 5 (end-to-end, save lỗi/crash, DPI/nhiều màn hình, hiệu năng, phát hành — cần trình bày kế hoạch và chờ "ok"). Chưa ghi CHANGELOG cho Viễn chinh (chờ bản phát hành).
 - Cứu mèo (2026-10-21): người dùng đi mục "Cứu mèo không làm quái đứng hình" trong MANUAL-TEST.md; xem 0,3 s nhấc tối thiểu có làm hụt bảo vệ khi cứu nhanh thật không (chỉnh `rescueGraceMinLiftSeconds`).

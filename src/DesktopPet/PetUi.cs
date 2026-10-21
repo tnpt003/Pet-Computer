@@ -5,15 +5,33 @@ using System.Windows.Media;
 namespace DesktopPet;
 
 // Shared look for menus and windows: Windows' own icon font (no new assets or
-// dependencies), one text font and a few colors.
+// dependencies), one text font and a warm, cartoon-friendly palette. Colors live here as
+// hex tokens so the XAML menu style and the C#-built windows use the same values.
 public static class PetUi
 {
     public static readonly FontFamily IconFont = new("Segoe Fluent Icons, Segoe MDL2 Assets");
     public static readonly FontFamily TextFont = new("Segoe UI");
-    public static readonly Brush Accent = Frozen(Color.FromRgb(0x2A, 0x78, 0xD6));
-    public static readonly Brush Muted = Frozen(Color.FromRgb(0x6E, 0x6C, 0x66));
-    public static readonly Brush Surface = Frozen(Color.FromRgb(0xFC, 0xFC, 0xFB));
-    public static readonly Brush Line = Frozen(Color.FromRgb(0xE4, 0xE2, 0xDD));
+
+    // Palette. Accent passes 4.5:1 with white text; Muted passes 4.5:1 on Surface.
+    public const string AccentHex = "#C2561F", AccentHoverHex = "#A84816", AccentBrightHex = "#E8834F",
+        AccentSoftHex = "#FCE9DB", AccentSofterHex = "#F8D9C4", InkHex = "#4A3628", MutedHex = "#7D6656",
+        SurfaceHex = "#FFF8F1", CardHex = "#FFFFFF", LineHex = "#EEDFD0", ControlLineHex = "#E2CDB9", StageHex = "#FBEFE3";
+
+    public static readonly Brush Accent = Hex(AccentHex);
+    public static readonly Brush AccentBright = Hex(AccentBrightHex); // Charts and decoration, not text.
+    public static readonly Brush AccentSoft = Hex(AccentSoftHex);
+    public static readonly Brush Ink = Hex(InkHex);
+    public static readonly Brush Muted = Hex(MutedHex);
+    public static readonly Brush Surface = Hex(SurfaceHex);
+    public static readonly Brush CardBack = Hex(CardHex);
+    public static readonly Brush Line = Hex(LineHex);
+    public static readonly Brush Stage = Hex(StageHex); // Behind pet previews.
+    private static readonly Brush AccentHover = Hex(AccentHoverHex);
+    private static readonly Brush ControlLine = Hex(ControlLineHex);
+
+    // Type scale and corner radii.
+    public const double CaptionSize = 11, SmallSize = 12, BodySize = 13, TitleSize = 14, HeadingSize = 16, DisplaySize = 20;
+    public const double SmallRadius = 6, CardRadius = 12, PillRadius = 16;
 
     // Segoe glyph codes used by the menus.
     public const string Treat = "", Ball = "", Laser = "", Play = "", Emotions = "",
@@ -22,6 +40,7 @@ public static class PetUi
     public const string Battle = ""; // Game controller.
 
     public static Brush Frozen(Color color) { var brush = new SolidColorBrush(color); brush.Freeze(); return brush; }
+    public static Brush Hex(string hex) => Frozen((Color)ColorConverter.ConvertFromString(hex));
     public static Geometry FrozenGeometry(string path) { var geometry = Geometry.Parse(path); geometry.Freeze(); return geometry; }
     public static Pen FrozenPen(Brush brush, double thickness)
     {
@@ -32,7 +51,7 @@ public static class PetUi
 
     public static TextBlock Icon(string glyph, Brush? color = null) => new()
     {
-        Text = glyph, FontFamily = IconFont, FontSize = 14, Foreground = color ?? Brushes.Black,
+        Text = glyph, FontFamily = IconFont, FontSize = TitleSize, Foreground = color ?? Ink,
         HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center
     };
 
@@ -41,7 +60,7 @@ public static class PetUi
     // Small grey explanation under a setting.
     public static TextBlock Hint(string text) => new()
     {
-        Text = text, TextWrapping = TextWrapping.Wrap, Foreground = Muted, FontSize = 12, Margin = new Thickness(0, 4, 0, 0)
+        Text = text, TextWrapping = TextWrapping.Wrap, Foreground = Muted, FontSize = SmallSize, Margin = new Thickness(0, 4, 0, 0)
     };
 
     // A text-only button that reads like a link (for rarely used, secondary actions).
@@ -62,22 +81,34 @@ public static class PetUi
         return template;
     }
 
-    // The default button look turns light blue on hover, which hides white text: draw our own.
+    // The default button look turns light blue on hover, which hides white text: draw our own,
+    // as soft pills that suit the cartoon pet.
     public static Button PrimaryButton(string text) => new()
     {
-        Content = text, MinWidth = 88, Padding = new Thickness(14, 5, 14, 5), Margin = new Thickness(8, 0, 0, 0),
-        Background = Accent, Foreground = Brushes.White, IsDefault = true, Cursor = System.Windows.Input.Cursors.Hand,
-        Template = PrimaryTemplate
+        Content = text, MinWidth = 88, Padding = new Thickness(16, 6, 16, 6), Margin = new Thickness(8, 0, 0, 0),
+        Background = Accent, Foreground = Brushes.White, FontWeight = FontWeights.SemiBold, IsDefault = true,
+        Cursor = System.Windows.Input.Cursors.Hand, Template = PrimaryTemplate
     };
 
-    private static readonly Brush AccentHover = Frozen(Color.FromRgb(0x1F, 0x63, 0xB5));
-    private static readonly ControlTemplate PrimaryTemplate = CreatePrimaryTemplate();
-    private static ControlTemplate CreatePrimaryTemplate()
+    public static Button SecondaryButton(string text) => new()
+    {
+        Content = text, MinWidth = 88, Padding = new Thickness(16, 6, 16, 6), Margin = new Thickness(8, 0, 0, 0),
+        Background = CardBack, BorderBrush = ControlLine, Foreground = Ink, Cursor = System.Windows.Input.Cursors.Hand,
+        Template = SecondaryTemplate
+    };
+
+    private static readonly ControlTemplate PrimaryTemplate = CreatePillTemplate(AccentHover, null);
+    private static readonly ControlTemplate SecondaryTemplate = CreatePillTemplate(AccentSoft, Accent);
+
+    // A pill with a hover fill and, for outlined buttons, a hover border.
+    private static ControlTemplate CreatePillTemplate(Brush hoverBack, Brush? hoverBorder)
     {
         var template = new ControlTemplate(typeof(Button));
         var border = new FrameworkElementFactory(typeof(Border), "Chrome");
-        border.SetValue(Border.CornerRadiusProperty, new CornerRadius(4));
+        border.SetValue(Border.CornerRadiusProperty, new CornerRadius(PillRadius));
         border.SetValue(Border.BackgroundProperty, new TemplateBindingExtension(Control.BackgroundProperty));
+        border.SetValue(Border.BorderBrushProperty, new TemplateBindingExtension(Control.BorderBrushProperty));
+        border.SetValue(Border.BorderThicknessProperty, new Thickness(hoverBorder == null ? 0 : 1));
         border.SetValue(Border.PaddingProperty, new TemplateBindingExtension(Control.PaddingProperty));
         var presenter = new FrameworkElementFactory(typeof(ContentPresenter));
         presenter.SetValue(FrameworkElement.HorizontalAlignmentProperty, HorizontalAlignment.Center);
@@ -85,7 +116,8 @@ public static class PetUi
         border.AppendChild(presenter);
         template.VisualTree = border;
         var hover = new Trigger { Property = UIElement.IsMouseOverProperty, Value = true };
-        hover.Setters.Add(new Setter(Border.BackgroundProperty, AccentHover, "Chrome"));
+        hover.Setters.Add(new Setter(Border.BackgroundProperty, hoverBack, "Chrome"));
+        if (hoverBorder != null) hover.Setters.Add(new Setter(Border.BorderBrushProperty, hoverBorder, "Chrome"));
         var disabled = new Trigger { Property = UIElement.IsEnabledProperty, Value = false };
         disabled.Setters.Add(new Setter(UIElement.OpacityProperty, 0.5, "Chrome"));
         template.Triggers.Add(hover); template.Triggers.Add(disabled);
@@ -93,23 +125,16 @@ public static class PetUi
         return template;
     }
 
-    public static Button SecondaryButton(string text) => new()
-    {
-        Content = text, MinWidth = 88, Padding = new Thickness(14, 5, 14, 5), Margin = new Thickness(8, 0, 0, 0)
-    };
-
-    public static readonly Brush Ink = Frozen(Color.FromRgb(0x2B, 0x2A, 0x28));
-
-    // A white, softly bordered group of related content inside a Surface window.
+    // A white, softly bordered, well-rounded group of related content inside a Surface window.
     public static Border Card(UIElement child, Thickness? margin = null) => new()
     {
-        Child = child, Background = Brushes.White, BorderBrush = Line, BorderThickness = new Thickness(1),
-        CornerRadius = new CornerRadius(8), Padding = new Thickness(14, 12, 14, 12), Margin = margin ?? new Thickness(0, 0, 0, 10)
+        Child = child, Background = CardBack, BorderBrush = Line, BorderThickness = new Thickness(1),
+        CornerRadius = new CornerRadius(CardRadius), Padding = new Thickness(14, 12, 14, 12), Margin = margin ?? new Thickness(0, 0, 0, 10)
     };
 
     public static TextBlock SectionTitle(string text) => new()
     {
-        Text = text, FontSize = 14, FontWeight = FontWeights.SemiBold, Foreground = Ink, Margin = new Thickness(0, 0, 0, 6)
+        Text = text, FontSize = TitleSize, FontWeight = FontWeights.SemiBold, Foreground = Ink, Margin = new Thickness(0, 0, 0, 6)
     };
 
     // A bottom bar: an optional link-style action on the left, buttons on the right.
@@ -127,6 +152,7 @@ public static class PetUi
     public static void ApplyWindowFont(Window window)
     {
         window.FontFamily = TextFont;
-        window.FontSize = 13;
+        window.FontSize = BodySize;
+        window.Foreground = Ink;
     }
 }

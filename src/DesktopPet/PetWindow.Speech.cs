@@ -56,17 +56,17 @@ public sealed partial class PetWindow
     private void EnsureSpeechWindow()
     {
         if (speechWindow != null) return;
-        var ink = new SolidColorBrush(Color.FromRgb(0x49, 0x37, 0x2E));
+        // Outline matches the thought bubble and emotion effects drawn with the cat; text uses the UI palette.
         var border = new SolidColorBrush(Color.FromRgb(0x30, 0x2B, 0x48));
         speechText = new TextBlock
         {
             TextWrapping = TextWrapping.Wrap, MaxWidth = 210, FontSize = 13.5, FontWeight = FontWeights.SemiBold,
-            FontFamily = new FontFamily("Segoe UI"), Foreground = ink, TextAlignment = TextAlignment.Center
+            FontFamily = PetUi.TextFont, Foreground = PetUi.Ink, TextAlignment = TextAlignment.Center
         };
         var bubble = new Border
         {
             Background = Brushes.White, BorderBrush = border, BorderThickness = new Thickness(2.5),
-            CornerRadius = new CornerRadius(14), Padding = new Thickness(12, 7, 12, 8), Child = speechText
+            CornerRadius = new CornerRadius(16), Padding = new Thickness(13, 7, 13, 8), Child = speechText
         };
         // Open figure: filled white, stroked only on its two slanted sides.
         speechTail = new System.Windows.Shapes.Path
@@ -75,7 +75,7 @@ public sealed partial class PetWindow
             HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(20, -2.5, 0, 0)
         };
         var root = new StackPanel { Margin = new Thickness(6), Children = { bubble, speechTail },
-            Effect = new DropShadowEffect { BlurRadius = 6, ShadowDepth = 1, Opacity = 0.35 } };
+            Effect = new DropShadowEffect { BlurRadius = 8, ShadowDepth = 2, Direction = 270, Opacity = 0.28 } };
         speechRoot = root;
         speechWindow = new Window
         {

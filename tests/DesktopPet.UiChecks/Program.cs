@@ -194,7 +194,30 @@ internal static class Program
             }
             image.Render(backdrop);
             var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(image));
+            System.IO.Directory.CreateDirectory(menuReview);
             using var stream = System.IO.File.Create(System.IO.Path.Combine(menuReview, "context-menu.png")); encoder.Save(stream);
+        }
+        {
+            // The tray menu uses the warm pet renderer; its items and their order stay as built.
+            using var tray = new System.Windows.Forms.ContextMenuStrip();
+            var trayPause = new System.Windows.Forms.ToolStripMenuItem("Tạm dừng") { Checked = true };
+            tray.Items.Add(trayPause);
+            tray.Items.Add(new System.Windows.Forms.ToolStripMenuItem("Mèo thông minh (AI)"));
+            tray.Items.Add(new System.Windows.Forms.ToolStripMenuItem("AI: đang chạy") { Enabled = false });
+            tray.Items.Add(new System.Windows.Forms.ToolStripSeparator());
+            tray.Items.Add(new System.Windows.Forms.ToolStripMenuItem("Thoát"));
+            PetTrayMenuStyle.Apply(tray);
+            Check(tray.Renderer is not System.Windows.Forms.ToolStripProfessionalRenderer && tray.Items.Count == 5 && tray.Items[0] == trayPause,
+                "Tray menu uses the warm pet renderer and keeps its items");
+            if (Environment.GetEnvironmentVariable("PET_TRAY_REVIEW") is string trayReview)
+            {
+                // Separate switch: drawing a WinForms menu here disturbs the timed battle checks that follow.
+                tray.PerformLayout();
+                using var bitmap = new System.Drawing.Bitmap(tray.Width, tray.Height);
+                tray.DrawToBitmap(bitmap, new System.Drawing.Rectangle(0, 0, tray.Width, tray.Height));
+                System.IO.Directory.CreateDirectory(trayReview);
+                bitmap.Save(System.IO.Path.Combine(trayReview, "tray-menu.png"));
+            }
         }
         {
             // One UI language: every menu label (submenus included) follows preferences.Language.

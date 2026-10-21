@@ -49,6 +49,7 @@ public partial class App : Application
         menu.Items.Add(new Forms.ToolStripSeparator());
         var exit = new Forms.ToolStripMenuItem(null, null, (_, _) => Shutdown());
         menu.Items.Add(exit);
+        PetTrayMenuStyle.Apply(menu);
         // Tray labels follow the pet's single UI language.
         void Localize()
         {

@@ -896,8 +896,8 @@ public sealed class BattleSim
         }
         bool landed = result == HitResult.Landed && slime.State != SlimeState.Defeated;
         // A combo knocks back away from the cat (heavy kinds less), but does not stun; a heavy
-        // weapon knocks back on every hit.
-        if (landed && (combo || knock > 0))
+        // weapon knocks back on every hit. An elite that ignores Push stands its ground (it still takes the damage).
+        if (landed && (combo || knock > 0) && slime.Elite is not { PushImmune: true })
             slime.KnockVelocity = (slime.X < catX ? -1 : 1) * (combo ? Math.Max(Settings.ComboKnock, knock) : knock) * slime.Type.PushFactor;
         // Afterimage: every Every-th landed swing hits a second time (an echo counts nothing itself).
         landedSwings++;

@@ -4,6 +4,11 @@ Cập nhật: 2026-10-21 (Asia/Saigon).
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
+## Đá tinh anh không bị đẩy lùi bởi đòn đánh (2026-10-21)
+- Người dùng thấy combo vẫn đẩy được đá tinh anh; mình giải thích là đúng phạm vi cũ (chỉ miễn kỹ năng Đẩy), đề xuất mở rộng, người dùng "ok".
+- PetBattle.cs: đòn đánh trúng (combo, knock của búa, thẻ Đẩy mạnh) không đặt KnockVelocity cho tinh anh `pushImmune`; sát thương giữ nguyên. Bom vốn không đẩy lùi. Không thêm hiệu ứng riêng (effect Block có chữ "CHẶN" sẽ gây hiểu nhầm vì đòn vẫn trúng). rulesVersion màn 3–5: 13/14/14, Viễn chinh 4.
+- Test thật: scripts/test.ps1 -Ui: Python 55 OK; C# 1220 đạt (EliteBuffTests: combo không đẩy đá tinh anh miễn Đẩy — lệch 0 DIPs, vẫn mất máu; tinh anh không miễn bị đẩy 44 DIPs); WPF 592 đạt. Mô phỏng (thắng gộp, trước → sau): Adventure Normal simple 91→90/100, casual 65→69/100, Hard simple 31→34/100; Viễn chinh Normal simple 16→22/40, Hard 0→2/40.
+
 ## Vệt vàng slime nhanh tinh anh (2026-10-21)
 - PetBattleView: tinh anh có marks "speed" vẽ 4 vệt gió vàng dài ×1.6 thay 3 vệt xanh; khi Dashing thêm hai viền bóng mờ vàng phía sau. Với 3 món polish trước, phần hình ảnh trong đề xuất làm đẹp đã xong; còn lại cue âm thanh tinh anh.
 - Test thật: scripts/test.ps1 -Ui: Python 55 OK, C# 1219, WPF 592 đạt. Chưa xem tận mắt.

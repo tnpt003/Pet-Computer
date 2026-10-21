@@ -150,6 +150,25 @@ internal static class EliteBuffTests
         Run(mortal, 1, () => 100);
         check(plain.UsePush(plain.Slimes[0].Id, 100) && plain.Slimes[0].State == SlimeState.Stunned && mortal.UsePush(mortal.Slimes[0].Id, 100) && mortal.Slimes[0].State == SlimeState.Stunned,
             "Only an elite with pushImmune ignores Push (a plain rock and an elite without it are pushed and stunned)");
+
+        // The cat's combos (and a heavy weapon's knock) move it neither; it still takes the damage.
+        (double Moved, double Lost, int Combos) Swings(bool immune)
+        {
+            var settings = new BattleSettings
+            {
+                FirstWaveDelay = 0, SpawnInterval = 0.2, CatDamage = 1, ComboKnock = 300, CatMaxHp = 1_000_000, MaxAlive = 3, MaxElites = 1, Enemies = new[] { Rock(immune) }
+            };
+            var fight = new BattleSim(settings, 0, 1600, stage: Stage(1, "rock"), seed: 1);
+            Run(fight, 1, () => 100);
+            var stone = fight.Slimes[0];
+            double start = stone.X, hp = stone.Hp, most = 0;
+            Run(fight, 6, () => stone.X - stone.Facing * -50, () => most = Math.Max(most, Math.Abs(stone.X - start)));
+            return (most, hp - stone.Hp, fight.CombosLanded);
+        }
+        var firm = Swings(true);
+        var loose = Swings(false);
+        check(firm.Combos > 0 && firm.Moved == 0 && firm.Lost > 0 && loose.Combos > 0 && loose.Moved > 5,
+            $"An elite rock that ignores Push is not knocked back by combos either, yet takes the damage (moved {firm.Moved:0} vs {loose.Moved:0} DIPs without the immunity)");
     }
 
     private static string Embedded()
@@ -190,7 +209,7 @@ internal static class EliteBuffTests
             "Each shipped elite carries a label of its main trait over its head (rock: no Push; slime: quick hits; quick: hard hits; herb: big heals)");
         check(data.Enemies!.Count(e => e.Elite?.PushImmune == true) == 1 && data.MaxElites == 1, "Only the rock elite ignores Push; still one elite at a time");
         var stages = data.Campaign!.Chapters[0].Stages;
-        check(stages.Select(s => s.RulesVersion).SequenceEqual(new[] { 5, 11, 12, 13, 13 }) && data.Expedition!.RulesVersion == 3,
+        check(stages.Select(s => s.RulesVersion).SequenceEqual(new[] { 5, 11, 13, 14, 14 }) && data.Expedition!.RulesVersion == 4,
             "The buff raises every Adventure stage's rules version and the Expedition's (old records stay apart)");
     }
 }

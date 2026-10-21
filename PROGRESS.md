@@ -4,6 +4,11 @@ Cập nhật: 2026-10-21 (Asia/Saigon).
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
+## Bàn giao buff quái và elite (2026-10-21)
+- Ghi phương án mới nhất lên đầu docs/NEXT-STEPS.md để Claude/AI đánh giá: buff theo loại, elite mạnh rõ, đề xuất miễn Push cho đá elite; bảng mới thay mọi bảng cũ, không cộng dồn.
+- Nêu hệ số, giữ cơ chế/đặc tính cũ, chưa tăng gacha; polish là đề xuất riêng; cần kiểm tra cả Viễn chinh đã có, difficulty/threat/save/rulesVersion và test trước/sau trước triển khai.
+- Chỉ tài liệu, chưa sửa gameplay hoặc chạy test/balance/publish. Giữ thay đổi có sẵn ngoài nội dung bàn giao.
+
 ## Viễn chinh — mốc 4: kỷ vật và góc trưng bày (2026-10-21)
 - Người dùng: danh sách kỷ vật "được", góc trưng bày "theo đề xuất" (tự bật khi có kỷ vật đầu tiên, tắt được), "ok".
 - Đã làm (C# only, Python không đụng):

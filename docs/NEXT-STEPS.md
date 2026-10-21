@@ -3,6 +3,50 @@
 Cập nhật bàn giao: 2026-10-20 (Asia/Saigon). Review kỹ thuật bên dưới ghi nhận ngày 18/10, sau Battle Mode đợt 11.
 Workspace lúc review: C:\Project VS\Pet Computer; HEAD e45519d với thay đổi đợt 10–11 chưa commit.
 
+## Bàn giao mới — buff toàn quái, elite nổi bật (2026-10-21)
+
+Người dùng yêu cầu ghi phương án mới nhất để AI/Claude kiểm tra. Đây là đề xuất cần đối chiếu code và thử nghiệm, chưa yêu cầu triển khai ngay. **Bảng này THAY THẾ mọi bảng buff đã trao đổi trước, không cộng dồn chúng.** Mục tiêu: quái thường khỏe hơn vừa phải; elite đủ nguy hiểm để người chơi đổi mục tiêu/dùng kỹ năng, không chỉ kéo dài trận.
+
+### Bộ chỉ số đề xuất
+
+Mốc so sánh là thông số thực tế trước đợt buff này; AI tiếp nhận ghi lại bảng trước/sau và cách kết hợp difficulty/threat/wave trước khi sửa.
+
+| Loại | Buff nền | Buff elite thêm trên nền loại đó |
+| --- | --- | --- |
+| Slime thường | HP +15%, damage +15% | HP thêm +20%; cooldown đánh -35% |
+| Slime nhanh | HP +10%, damage +20% | Damage thêm +20%; không thêm buff HP elite riêng |
+| Slime đá | HP +25%, damage +10% | HP thêm +30%; miễn kỹ năng Push |
+| Slime hỗ trợ | HP +15%, cooldown heal -10% | Cooldown heal giảm thêm 15%; ngân sách hồi +30%; không thêm buff HP elite riêng |
+| King | HP +20%, damage +20% | Chưa thêm elite King |
+
+- Nhân hệ số, không cộng phần trăm: thường elite HP x1.15 x1.20 = x1.38; nhanh elite damage x1.20 x1.20 = x1.44; đá elite HP x1.25 x1.30 = x1.625; support elite heal cooldown x0.90 x0.85 = x0.765. Không áp lại buff khi summon, chuyển phase hoặc resume save.
+- Giữ đặc tính elite cũ. Không tự cộng lại buff elite HP +10% hoặc tốc độ di chuyển +5% từ phương án cũ.
+- Giảm cooldown giữa các đòn của thường elite, không giảm windup/cảnh báo/recovery. Không suy ra tổng tốc đánh tăng đúng theo nghịch đảo cooldown vì còn các phần khác của chu kỳ.
+- Miễn Push của đá elite là ngoại lệ thêm đặc tính duy nhất đang được đề xuất: miễn đẩy lùi và ngắt đòn bởi kỹ năng Push. Không mặc định miễn mọi stun/knockback/bom hoặc sát thương; Claude phải chỉ ra các hiệu ứng hiện có của Push và xác nhận phạm vi trước sửa.
+- Support không tăng trực tiếp lượng hồi mỗi lần. Kiểm tra công thức HealPower/HP scaling hiện có, báo tác động gián tiếp thay vì vô tình buff hai lần. Ngân sách hồi elite +30% không phải tăng heal mỗi lần +30%.
+
+### Phạm vi và các giới hạn
+
+- Chỉ buff số liệu và đề xuất miễn Push nêu trên. Không thêm lao kép, Cứu nguy, thủ lĩnh aura, đổi AI/đội hình, thay đặc tính elite cũ hoặc tạo elite boss.
+- Giữ stun, kháng stun nối tiếp, giới hạn attacker, cảnh báo, tốc độ lao/di chuyển, luật chắn và xác suất miễn damage hiện có.
+- Chưa tăng tỷ lệ gacha/elite. Đề xuất bản thử tối đa một elite hoạt động cùng lúc; kiểm tra cap hiện có và ngoại lệ từng mode, không âm thầm thay cap đã được duyệt ở mode khác. Không tự bật elite ở Easy hoặc thêm elite cho quân boss gọi.
+- Đối chiếu mọi đường spawn: Adventure, trận tự do, Viễn chinh, quái triệu hồi và custom data. Chỉ rõ policy cho custom data; không ghi đè cấu hình riêng của người dùng.
+- Viễn chinh đã có theo PROGRESS.md (mốc 4 kỷ vật). Đây là bàn giao buff, không phải yêu cầu làm lại Viễn chinh từ tài liệu hướng cũ.
+
+### Phản hồi hình ảnh/âm thanh — phần polish đề xuất, chưa bắt buộc cùng mốc
+
+Elite cần dễ đọc: đá có giáp dày, nhanh có vệt chuyển động, support có hào quang; thanh HP có huy hiệu/nhãn Đánh nhanh, Đòn mạnh, Miễn Push, Hồi phục mạnh. Hiệu ứng/cue xuất hiện ngắn, có cooldown, không lặp gây ồn. Push bị chặn phản hồi rõ để không giống lỗi kỹ năng. Dùng vector/âm thanh hoạt hình hiện có; không đổi hitbox hay thêm cơ chế vì ngoại hình.
+
+### Claude/AI tiếp nhận cần làm trước khi triển khai
+
+1. Đọc AGENTS.md, PROGRESS.md và code thật; xác định từng loại/elite hiện có và thông số nguồn. Báo phần đề xuất đã có, phần thiếu, tích hợp nhỏ nhất và rủi ro; xin xác nhận thiết kế theo AGENTS.md trước code.
+2. Thử bộ buff trên một màn có đội hình hỗn hợp bằng cấu hình test riêng trước, không chỉnh save/preferences thật. Sau đó so sánh cả Easy/Normal/Hard, màn đầu, King và Viễn chinh, kiếm/búa; không dùng bot tối ưu làm bằng chứng duy nhất.
+3. Đo win rate, HP còn, thời lượng, số lần đổi mục tiêu/dùng kỹ năng/cứu mèo. Nếu chỉ kéo dài thời gian giết, đề xuất giảm HP thay vì tiếp tục chồng buff. Các con số ở đây chưa được cân bằng/playtest.
+4. Test hệ số áp đúng một lần, elite cooldown giữ windup, support budget/HealPower, miễn Push chỉ đúng phạm vi và đúng elite, JSON/fallback, không sửa definition chung; giữ pause/rescue/stun/drag và Pet Mode.
+5. Nếu được giao thực hiện: giải thích version luật/kỷ lục và tương thích chuyến viễn chinh đang lưu trước khi thay balance; không trộn luật cũ/mới âm thầm. Test/commit/publish/smoke theo AGENTS.md, báo hạn chế test tay.
+
+Trạng thái bàn giao: chỉ tài liệu, chưa sửa gameplay, chưa chạy benchmark/test buff. Giữ các review/công việc khác phía dưới theo trạng thái thật, không coi ghi chú lịch sử là lỗi còn mở.
+
 ## Hướng lớn để Claude đánh giá — Viễn chinh + góc chiến lợi phẩm (2026-10-20)
 
 Đọc [EXPEDITION-DIRECTION.md](EXPEDITION-DIRECTION.md). Người dùng đồng ý ghi hướng mở rộng để Claude kiểm tra, chưa yêu cầu code ngay. Mục tiêu: chọn đường, giữ HP/build trong chuyến, di vật có đánh đổi, boss và kỷ vật trưng bày trên desktop; tận dụng Adventure/combat hiện có, giữ Pet Mode độc lập.

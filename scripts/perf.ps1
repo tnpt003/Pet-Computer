@@ -4,8 +4,11 @@
 # (idle, sleep, fast drags, laser...) and pass -Label to name the run.
 #   powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\perf.ps1 -Minutes 5 -Label idle
 #   -Battle run|paused: start a separate pet that keeps a Battle Mode fight running (or paused);
-#   the user's pet must be closed first (one pet per session).
-param([double]$Minutes = 3, [string]$Label = 'run', [double]$Interval = 1, [ValidateSet('', 'run', 'paused')][string]$Battle = '')
+#   -Battle expedition: the same with the Expedition's heaviest kind of battle (the last elite
+#   encounter, the last step's threat, a full set of relics; a run in memory only);
+#   -Trophies: a separate pet with every keepsake, so the display corner shows (Pet Mode).
+#   For these the user's pet must be closed first (one pet per session).
+param([double]$Minutes = 3, [string]$Label = 'run', [double]$Interval = 1, [ValidateSet('', 'run', 'paused', 'expedition')][string]$Battle = '', [switch]$Trophies)
 $ErrorActionPreference = 'Stop'
 Add-Type @'
 using System;
@@ -32,7 +35,7 @@ public static class PetPerfWindow {
     }
 }
 '@
-if ($Battle -and (Get-Process DesktopPet -ErrorAction SilentlyContinue)) {
+if (($Battle -or $Trophies) -and (Get-Process DesktopPet -ErrorAction SilentlyContinue)) {
     throw 'A pet is running: close it first, then measure the battle with a separate pet.'
 }
 $savedAutostart = $env:PET_BATTLE_AUTOSTART
@@ -53,6 +56,11 @@ if (-not $pet) {
     if (-not (Test-Path $exe)) { throw 'No pet is running and artifacts\win-x64 is missing: run scripts/publish.ps1 first.' }
     # Keep the measured pet's preferences and memory apart from the user's cat.
     $env:PET_DATA_DIRECTORY = Join-Path $projectRoot ('artifacts\perf-data\' + [Guid]::NewGuid().ToString('N'))
+    if ($Trophies) {
+        # Every built-in keepsake (expedition.json version 3), in the separate data only.
+        New-Item -ItemType Directory -Force $env:PET_DATA_DIRECTORY | Out-Null
+        Set-Content -Encoding ascii -Path (Join-Path $env:PET_DATA_DIRECTORY 'expedition.json') -Value '{ "Version": 3, "Keepsakes": [ "cup_bronze", "cup_silver", "cup_gold", "slime_cushion", "expedition_scarf" ] }'
+    }
     $pet = Start-Process -FilePath $exe -WorkingDirectory $env:TEMP -PassThru
     $started = $true
     Start-Sleep -Seconds 5 # Let the window and the Python service start.

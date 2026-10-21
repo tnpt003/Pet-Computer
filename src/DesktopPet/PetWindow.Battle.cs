@@ -86,9 +86,10 @@ public sealed partial class PetWindow
     public bool BattleActive => battle != null;
 
     // Measurement only (scripts/perf.ps1 -Battle): PET_BATTLE_AUTOSTART=run keeps a battle going
-    // (a new one after each end), =paused keeps a paused one open. Unset in normal use, where a
-    // battle never starts by itself.
-    private readonly string? battleAutostart = Environment.GetEnvironmentVariable("PET_BATTLE_AUTOSTART") is "run" or "paused"
+    // (a new one after each end), =paused keeps a paused one open, =expedition keeps the
+    // Expedition's heaviest kind of battle going (StartMeasuredExpeditionBattle). Unset in normal
+    // use, where a battle never starts by itself.
+    private readonly string? battleAutostart = Environment.GetEnvironmentVariable("PET_BATTLE_AUTOSTART") is "run" or "paused" or "expedition"
         ? Environment.GetEnvironmentVariable("PET_BATTLE_AUTOSTART") : null;
     private double battleAutostartTimer;
 
@@ -98,6 +99,7 @@ public sealed partial class PetWindow
         battleAutostartTimer += dt;
         if (battleAutostartTimer < 1) return;
         battleAutostartTimer = 0;
+        if (battleAutostart == "expedition") { StartMeasuredExpeditionBattle(); return; }
         if (StartBattle() == null && battleAutostart == "paused") SetBattlePaused(true);
     }
 

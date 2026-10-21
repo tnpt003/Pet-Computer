@@ -1,7 +1,12 @@
 # Nhật ký thay đổi
 
-## Chưa phát hành
+## 1.3.0-beta — Viễn chinh hoàn thiện, cue tinh anh (2026-10-21)
 
+Bản beta: test tự động và mô phỏng đạt, **chưa chơi thử thật**, chưa thử DPI/màn hình phụ thật và máy sạch (docs/MANUAL-TEST.md → "Viễn chinh — mốc 5").
+
+- **Viễn chinh** (đã có từ sau 1.1.0-beta, nay qua kiểm thử phát hành): chọn đường qua 5 bậc (giao tranh, tinh anh, nghỉ chân, sự kiện) tới Vua Slime; HP, thẻ và tối đa 3 di vật mang theo cả chuyến; lưu ở đầu mỗi điểm, đóng app giữa trận thì mất 25% HP và đánh lại; thắng lần đầu ở mỗi độ khó nhận cúp, khăn và đệm slime cho góc trưng bày. Mở sau khi thắng Vua Slime ở Phiêu lưu.
+- **Bản đồ Viễn chinh trên màn hình thấp/scale cao:** không còn tràn khỏi màn hình (lúc cao nhất ~574 DIP); phần nội dung cuộn bằng thanh mảnh màu kem, hàng nút luôn ở dưới. Màn hình đủ cao không đổi gì.
+- **Kiểm thử:** chuyến trọn vẹn khi đóng app sau mọi thao tác hoặc bấm đúp mọi nút cho kết quả giống hệt; crash giữa trận trùm; đặt bản đồ/kệ đúng ở 150%; mất màn hình giữa trận Viễn chinh. `scripts/perf.ps1 -Battle expedition` và `-Trophies` để đo trận Viễn chinh nặng nhất và Pet Mode có kệ.
 - **Cue âm thanh tinh anh:** tinh anh xuất hiện hoặc được Vua phong có tiếng "ting-ting" hai nốt (trước dùng tiếng mèo ngạc nhiên); Đẩy vào slime đá tinh anh miễn Đẩy có tiếng "cộp" khiên đá (trước dùng tiếng đòn bị chặn). Âm tổng hợp kiểu hoạt hình, theo tắt tiếng/âm lượng/fullscreen như mọi cue chiến đấu; mỗi cue cách nhau ít nhất 1 giây.
 
 ## 1.2.0-beta — Quái mạnh hơn, tinh anh nổi bật (2026-10-21)

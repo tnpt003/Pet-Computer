@@ -412,11 +412,22 @@ public sealed partial class PetWindow
         var actions = new DockPanel { Margin = new Thickness(0, 12, 0, 0), LastChildFill = false };
         DockPanel.SetDock(close, Dock.Left); DockPanel.SetDock(abandon, Dock.Left); DockPanel.SetDock(main, Dock.Right);
         actions.Children.Add(close); actions.Children.Add(abandon); actions.Children.Add(main);
+        // Taller than the cat's monitor (a low or high-DPI screen, PlaceExpeditionMap caps the height):
+        // the content scrolls, the buttons stay in view.
+        var scroll = new ScrollViewer
+        {
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled, Focusable = false,
+            Content = new StackPanel { Children = { xTitle, xData, xStatus, xBuild, xNote, xSetup, xMap, xRecord } }
+        };
+        scroll.Resources.MergedDictionaries.Add(PetControlStyle.Resources);
+        var body = new DockPanel();
+        DockPanel.SetDock(actions, Dock.Bottom);
+        body.Children.Add(actions); body.Children.Add(scroll);
         var panel = new Border
         {
             Background = HudBack, BorderBrush = PetUi.Game.Rim, BorderThickness = new Thickness(1.5), CornerRadius = new CornerRadius(12),
             Padding = new Thickness(16, 12, 16, 12), Margin = new Thickness(6), MinWidth = 460,
-            Child = new StackPanel { Children = { xTitle, xData, xStatus, xBuild, xNote, xSetup, xMap, xRecord, actions } },
+            Child = body,
             Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 6, ShadowDepth = 1, Opacity = 0.4 }
         };
         panel.SetValue(TextBlock.FontFamilyProperty, PetUi.TextFont);
@@ -432,6 +443,7 @@ public sealed partial class PetWindow
     private void PlaceExpeditionMap()
     {
         if (expeditionMapWindow == null) return;
+        expeditionMapWindow.MaxHeight = Math.Max(240, bounds.Bottom - bounds.Top - 24);
         expeditionMapWindow.UpdateLayout();
         double width = expeditionMapWindow.ActualWidth;
         MoveWindow(expeditionMapWindow, Math.Clamp((bounds.Left + bounds.Right - width) / 2, bounds.Left, Math.Max(bounds.Left, bounds.Right - width)), bounds.Top + 12);
@@ -663,6 +675,22 @@ public sealed partial class PetWindow
             xChoiceButtons[option] = button;
         }
         xChoice.Children.Add(buttons);
+    }
+
+    // Measurement only (perf.ps1 -Battle expedition): the last elite encounter at the last step's
+    // threat, with as many relics as a run may hold, on a run kept in memory (never saved, no
+    // keepsakes). Without an Expedition in the data, the free battle.
+    private string? StartMeasuredExpeditionBattle()
+    {
+        if (BattleTuning.Expedition is not { Elites.Length: > 0 } spec) return StartBattle();
+        var expedition = new Expedition(BattleTuning, new ExpeditionProgress()) { GrantKeepsakes = false };
+        var run = expedition.Start(preferences.BattleWeapon, BattleDifficulty.Normal, Random.Shared.Next());
+        run.Relics.AddRange(spec.Relics.Take(spec.MaxRelics).Select(r => r.Id));
+        int step = spec.Steps.Length - 1;
+        var node = new ExpeditionNode(step, 0, ExpeditionSpec.Elite, spec.Elites[^1], Random.Shared.Next(), spec.Threat(step));
+        if (StartBattle(run.Weapon, run.Level, node.Stage, new ExpeditionBattle(expedition, node)) is string reason) return reason;
+        run.Fighting = 0;
+        return null;
     }
 
     // A finished step's battle: counted once in the run (saved at once).

@@ -296,6 +296,16 @@ Chuyến đang dở từ mốc 2 (nếu có) sẽ kết thúc khi mở bản đ�
 - [ ] Để mèo tự do ~5 phút (không Quiet): mèo đi tới bên trái kệ, quay mặt nhìn kệ khoảng 4 giây rồi đi tiếp. Khi đang ngủ, Quiet hoặc đang chơi bóng/laser thì không đi.
 - [ ] Kéo mèo sang màn hình phụ: kệ chuyển theo sang góc màn hình đó (chưa kiểm tra thật trên nhiều màn hình/DPI khác nhau).
 
+## Viễn chinh — mốc 5: kiểm thử phát hành, bản 1.3.0-beta (2026-10-21)
+
+Tự động đã có: 18 chuyến trọn vẹn (Dễ/Thường/Khó × 6 seed) qua nghỉ, cả 3 sự kiện, di vật tinh anh, trận bị ngắt rồi đánh lại và trùm, chạy theo 3 cách: liền mạch, đóng app sau mọi thao tác, bấm đúp mọi thao tác (kết quả giống hệt nhau); crash giữa trận trùm; bản đồ/kệ đặt đúng pixel ở scale thật và 150% giả; mất màn hình giữa trận Viễn chinh; bản đồ trên màn hình 480 DIP. Phần dưới cần làm tay:
+- [ ] Khác → Giới thiệu ghi 1.3.0-beta.
+- [ ] Chơi một chuyến Thường trọn vẹn từ đầu tới trùm (ghi thời lượng, HP trước trùm, số di vật, đường đã chọn). Giữa chừng đóng app bằng menu khay ở: bản đồ, bảng nghỉ chân đang mở, bảng chọn di vật, giữa trận. Mở lại: bản đồ/thẻ/di vật được đưa giống hệt lúc trước; đóng giữa trận thì mất 25% HP và đánh lại đúng trận đó.
+- [ ] Bấm đúp nhanh: "Tiếp tục" trên bảng kết quả, "Lấy di vật đã chọn", "Vào trận" — chỉ đi một bước, một di vật, một trận.
+- [ ] Màn hình thấp hoặc scale cao (vd. 1366×768 ở 125%, hoặc tạm đặt Display scale 175%): mở bản đồ lúc đủ 3 di vật và đang ở điểm nghỉ — bản đồ không tràn khỏi màn hình, có thanh cuộn mảnh màu kem; lăn chuột trên bản đồ cuộn được (không cần bấm vào trước); hàng nút Đóng/Bỏ chuyến luôn thấy. Màn hình thường: không có thanh cuộn, bản đồ như cũ.
+- [ ] DPI 125–150% thật và màn hình phụ khác DPI: bản đồ nằm giữa mép trên màn hình của mèo; kệ kỷ vật ở góc phải dưới đứng trên sàn. Rút màn hình phụ đang có trận Viễn chinh: trận chuyển sang màn hình còn lại, tạm dừng, HP giữ nguyên, bấm Tiếp tục đánh tiếp (không bị tính là bỏ trận).
+- [ ] Gói ZIP 1.3.0-beta trên máy sạch (không Visual Studio): mở được, Viễn chinh chơi được, tắt Python thì mèo vẫn chạy.
+
 #### Buff quái/tinh anh, bản 1.2.0-beta (2026-10-21)
 - [ ] Khác → Giới thiệu ghi 1.2.0-beta.
 - [ ] Màn 1–2 Thường: quái chịu đòn lâu hơn chút, đánh đau hơn; vẫn thắng được khi dùng kỹ năng. Dễ màn 2 không dùng kỹ năng thì có thể thua (mô phỏng: chỉ ~30% thắng) — báo nếu thấy quá khó.

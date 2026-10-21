@@ -388,12 +388,13 @@ public static class PetControlStyle
 """;
 
     private static ResourceDictionary? resources;
+    // The styles alone, for a part of a window (the Expedition map's thin scroll bar).
+    public static ResourceDictionary Resources => resources ??= (ResourceDictionary)XamlReader.Parse(Xaml);
 
     // Merges the styles into a window and, on Windows 11, tints its title bar cream with brown text.
     public static void Apply(Window window)
     {
-        resources ??= (ResourceDictionary)XamlReader.Parse(Xaml);
-        window.Resources.MergedDictionaries.Add(resources);
+        window.Resources.MergedDictionaries.Add(Resources);
         window.SourceInitialized += (_, _) =>
         {
             var handle = new WindowInteropHelper(window).Handle;

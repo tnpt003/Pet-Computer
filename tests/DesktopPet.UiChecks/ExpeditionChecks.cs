@@ -22,6 +22,26 @@ internal static class ExpeditionChecks
         SetField(window, "contextProbe", new Func<(bool, double)>(() => (fullscreen, idle)));
     [System.Runtime.InteropServices.DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")]
     private static extern IntPtr GetWindowLongPtr(IntPtr hwnd, int index);
+    private struct Rect { public int Left, Top, Right, Bottom; }
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern bool GetWindowRect(IntPtr hwnd, out Rect rect);
+    // Places a window as the pet would at a pretend monitor scale, then reads where it went (screen pixels).
+    private static Rect PlacedAt(PetWindow window, Window placed, string place, double testScale)
+    {
+        var scaleField = typeof(PetWindow).GetField("scale", Flags)!;
+        double realScale = (double)scaleField.GetValue(window)!;
+        scaleField.SetValue(window, testScale);
+        try
+        {
+            // Moved off first: MoveWindow skips a window whose Left/Top already match (the test's
+            // pretend scale can make them match by chance).
+            placed.Left += 37; placed.Top += 23;
+            Call(window, place);
+            GetWindowRect(new WindowInteropHelper(placed).Handle, out var rect);
+            return rect;
+        }
+        finally { scaleField.SetValue(window, realScale); Call(window, place); }
+    }
     private static Window? Find(string title) => Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.Title == title && w.IsLoaded);
     private static int Count(string title) => Application.Current.Windows.OfType<Window>().Count(w => w.Title == title && w.IsLoaded);
     private static string Text(DependencyObject node) => node is TextBlock t ? t.Text + "|" : string.Concat(LogicalTreeHelper.GetChildren(node).OfType<DependencyObject>().Select(Text));
@@ -125,6 +145,17 @@ internal static class ExpeditionChecks
                 $"The map shows the step, the cat's HP and the chosen node ({text.Replace('\n', '|')})");
             check(window.ExpeditionStart() is string twice && twice.Length > 0 && window.Expedition!.Run!.RunId == run.RunId, "A second Start keeps the run");
             Shot("Pet expedition", "expedition-map-en.png");
+            // DPI (milestone 5): top centre of the cat's monitor in its pixels, at its real scale and a pretend 150%.
+            var mapArea = (Area)typeof(PetWindow).GetField("bounds", Flags)!.GetValue(window)!;
+            double petScale = (double)typeof(PetWindow).GetField("scale", Flags)!.GetValue(window)!;
+            bool MapPlaced(double at)
+            {
+                var placed = Find("Pet expedition")!;
+                var rect = PlacedAt(window, placed, "PlaceExpeditionMap", at);
+                double width = placed.ActualWidth, left = Math.Clamp((mapArea.Left + mapArea.Right - width) / 2, mapArea.Left, Math.Max(mapArea.Left, mapArea.Right - width));
+                return Math.Abs(rect.Left - left * at) <= 2 && Math.Abs(rect.Top - (mapArea.Top + 12) * at) <= 2;
+            }
+            check(MapPlaced(petScale) && MapPlaced(1.5), "The map sits at the top centre of the cat's monitor in its pixels (real scale and 150%)");
 
             // Step 1: the elite node.
             check(window.ExpeditionSelect(1) && !window.ExpeditionSelect(2), "A node of the current step can be chosen (only those)");
@@ -135,6 +166,20 @@ internal static class ExpeditionChecks
                   && !window.ExpeditionMapOpen && Count("Pet expedition") == 0 && window.Battle.Weapon.Id == BattleWeapon.Hammer && window.Battle.Difficulty == BattleDifficulty.Hard,
                 "Fight starts the node's own battle with the run's gear (the map closes)");
             check(Saved()?.Fighting == 1, "The battle under way is saved before it is fought");
+            // Its monitor disconnected (milestone 5): the battle moves to another (150 %) and stays the run's step.
+            string lostMonitor = (string)typeof(PetWindow).GetField("battleMonitor", Flags)!.GetValue(window)!;
+            double hpBefore = window.Battle!.CatHp;
+            SetField(window, "battleScreenProbe", new Func<string?, (string, Area, double)?>(name => name == lostMonitor ? null : ("Other", mapArea, 1.5)));
+            SetField(window, "battleMonitorProbe", new Func<string>(() => "Other"));
+            Call(window, "RecoverLostBattleMonitor");
+            check(window.BattleActive && window.BattleIsExpedition && window.BattlePauseReasons.HasFlag(PetWindow.BattlePause.User) &&window.Battle!.CatHp == hpBefore && Saved()?.Fighting == 1 && window.Expedition!.Run!.Retreats == 0,
+                "A disconnected battle monitor moves the step's battle (paused), still the run's step: nothing is left or charged");
+            SetField(window, "battleScreenProbe", null);
+            SetField(window, "battleMonitorProbe", null);
+            typeof(PetWindow).GetField("battleMonitor", Flags)!.SetValue(window, lostMonitor);
+            typeof(PetWindow).GetField("battleScale", Flags)!.SetValue(window, petScale);
+            window.SetBattlePaused(false);
+            Call(window, "CloseBattleNotice");
             // The banner names the step and encounter and always fits the HUD's centre (a long one shrinks; the HUD keeps its width).
             var hud = (BattleHud)typeof(PetWindow).GetField("battleHud", Flags)!.GetValue(window)!;
             hud.Update(window.Battle!, false, false, false, false);
@@ -157,9 +202,11 @@ internal static class ExpeditionChecks
                 $"The step's result says what it changed and offers Continue ({panel})");
             check(window.AdventureProgress.Runs.Count == adventureRuns && window.BattleRecords.Loadouts.Values.Sum(r => r.Wins + r.MostDefeated) == freeRecords,
                 "An Expedition step counts in neither the Adventure progress nor the free battle records");
-            Click(Button(Find("Pet result")!.Content as DependencyObject ?? new Border(), "Continue")!);
+            var continueButton = Button(Find("Pet result")!.Content as DependencyObject ?? new Border(), "Continue")!;
+            Click(continueButton); Click(continueButton);
             Tick(0.3);
-            check(window.ExpeditionMapOpen && Count("Pet result") == 0 && window.ExpeditionMapText.Contains("Step 2/3"), "Continue goes back to the map at the next step");
+            check(window.ExpeditionMapOpen && Count("Pet result") == 0 && Count("Pet expedition") == 1 && window.ExpeditionMapText.Contains("Step 2/3") && window.Expedition!.Run!.Step == 1,
+                "Continue goes back to the map at the next step (clicked twice: one map, one step)");
 
             // Step 2 with the HP the run has: End leaves the battle for RetreatCost.
             run.Hp = 60;
@@ -283,7 +330,8 @@ internal static class ExpeditionChecks
                 $"The map shows the relics with what they do; nothing goes on until one is taken or left ({text.Replace('\n', '|')})");
             check(window.ExpeditionPick(relic: "r_bell") && window.ExpeditionOptionEnabled(Expedition.Take), "Picking a relic enables Take");
             Shot("Pet expedition", "expedition-reward-en.png");
-            Click(Button(Find("Pet expedition")!.Content as DependencyObject ?? new Border(), "Take the chosen relic")!);
+            var takeButton = Button(Find("Pet expedition")!.Content as DependencyObject ?? new Border(), "Take the chosen relic")!;
+            Click(takeButton); Click(takeButton); // A double click takes it once (checked below).
             Tick(0.3);
             check(window.Expedition!.Run!.Relics.SequenceEqual(new[] { "r_bell" }) && Saved()!.Relics.SequenceEqual(new[] { "r_bell" }) && Saved()!.Pending == null && !window.ExpeditionHasChoice
                   && window.ExpeditionMapText.Contains("Got the Bell relic") && window.ExpeditionMapText.Contains("Relics: ◈ Bell (1/3)"), "Taking it keeps the relic in the run (saved) and says so");
@@ -359,6 +407,12 @@ internal static class ExpeditionChecks
                   && shelf.Items.Select(k => k.Id).SequenceEqual(new[] { "slime_cushion", "cup_silver" }) && Math.Abs(spot.Width - TrophyShelf.WidthFor(shelf.Items)) < 0.5,
                 $"Bottom right of the cat's monitor, standing on its floor: the cushion, then the silver cup ({spot}, floor {area.Bottom})");
             Shot("Pet trophies", "trophies-shelf.png");
+            bool ShelfPlaced(double at)
+            {
+                var rect = PlacedAt(window, shelfWindow!, "TickTrophies", at);
+                return Math.Abs(rect.Left - Math.Max(area.Left, area.Right - shelfWindow!.Width - 10) * at) <= 2 && Math.Abs(rect.Top - (area.Bottom - shelfWindow.Height) * at) <= 2;
+            }
+            check(shelfWindow != null && ShelfPlaced(petScale) && ShelfPlaced(1.5), "The display corner is placed in the cat's monitor pixels (real scale and 150%)");
             SetContext(window, true, 0); Call(window, "TickContext", 1.1); Call(window, "TickTrophies");
             check(!window.TrophiesVisible, "A fullscreen app hides the display corner");
             SetContext(window, false, 0); Call(window, "TickContext", 1.1); Call(window, "TickTrophies");
@@ -396,6 +450,35 @@ internal static class ExpeditionChecks
             window.Reset();
             check(!window.Admiring, "Bringing the pet back ends the visit");
             window.BattleTuning = easy;
+
+            // The built-in Expedition's map at its tallest (3 relics, a rest's cards, both languages) fits
+            // under the top margin of a 1280×720 screen at 150 % (480 DIPs tall).
+            window.BattleTuning = BattleData.Settings;
+            window.AdventureProgress.Completed.Add("c1_slime_king");
+            check(window.OpenExpeditionMap() == null && window.ExpeditionStart(11) == null, "(setup) a run of the built-in Expedition");
+            var tall = window.Expedition!.Run!;
+            tall.Relics.AddRange(window.Expedition.Spec.Relics.Take(window.Expedition.Spec.MaxRelics).Select(r => r.Id));
+            tall.Path.AddRange(new[] { 0, 0 });
+            window.Expedition.Visit(0);
+            var boundsField = typeof(PetWindow).GetField("bounds", Flags)!;
+            var realBounds = (Area)boundsField.GetValue(window)!;
+            double MapHeight(string language) { prefs.Language = language; Tick(0.3); Call(window, "PlaceExpeditionMap"); var m = Find("Pet expedition")!; m.UpdateLayout(); return m.ActualHeight; }
+            double natural = Math.Max(MapHeight("en"), MapHeight("vi"));
+            Shot("Pet expedition", "expedition-map-tallest.png");
+            boundsField.SetValue(window, realBounds with { Bottom = realBounds.Top + 480 });
+            double capped = Math.Max(MapHeight("vi"), MapHeight("en")); // English last: the button is found by its English label.
+            var small = Find("Pet expedition")!;
+            static IEnumerable<DependencyObject> All(DependencyObject node) => LogicalTreeHelper.GetChildren(node).OfType<DependencyObject>().SelectMany(All).Prepend(node);
+            var scroller = All(small).OfType<ScrollViewer>().FirstOrDefault();
+            var mainButton = Button((DependencyObject)small.Content, "Give up")!; // The bottom row (the main button waits for the rest's choice).
+            var buttonBottom = mainButton.TransformToAncestor(small).Transform(new Point(0, mainButton.ActualHeight)).Y;
+            check(tall.Pending?.Kind == "rest" && capped <= 480 - 24 + 0.5 && scroller is { ScrollableHeight: > 0 } && buttonBottom <= capped,
+                $"On a screen 480 DIPs tall (1280×720 at 150 %) the tallest built-in map is capped ({natural:0} → {capped:0} DIPs): the content scrolls, the buttons stay in view");
+            Shot("Pet expedition", "expedition-map-small-screen.png");
+            boundsField.SetValue(window, realBounds);
+            check(MapHeight("en") is double back && Math.Abs(back - natural) < 1 || realBounds.Bottom - realBounds.Top < natural + 24, "On a big enough screen the map keeps its full height");
+            prefs.Language = "en";
+            window.Reset();
 
             // Data without an Expedition: the menu hides it, opening explains.
             window.BattleTuning = new BattleSettings { Campaign = campaign };

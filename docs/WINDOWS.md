@@ -526,6 +526,12 @@ message and pill buttons (Cancel on the left, the main button on the right; Esc 
 Battle, Adventure and Expedition panels use the shared type scale (`PetUi` 11/12/13/14/16/20)
 instead of half sizes (10.5–15.5 → the next step up; the 22 banner → 20).
 
+The Expedition map is at most the cat's monitor height minus 24 DIPs (set when it opens). At
+its tallest (three relics and a rest's cards) it is about 574 DIPs, so on a low or high-DPI
+screen (1366×768 at 125 %, 1920×1080 at 175 %, 1280×720 at 150 %) its content scrolls with a
+thin warm scroll bar and the Close / Give up / main buttons stay at the bottom. Big enough
+screens see no change.
+
 ## Keepsake display corner (2026-10-21, Expedition milestone 4)
 
 **Settings… → Pet → Keepsake display corner** (on by default; nothing shows until a
@@ -781,6 +787,10 @@ next step), so a double click never starts two battles. Ending a battle by hand 
   The boss's slam zone is drawn as outlines only, so it never blocks clicks to the apps below.
 - **Measuring**: `scripts\perf.ps1 -Battle run` (or `paused`) starts a separate pet that keeps a
   battle going (`PET_BATTLE_AUTOSTART`, measurement only; the user's pet must be closed first).
+  `-Battle expedition` keeps the Expedition's heaviest kind of battle going instead (its last elite
+  encounter at the last step's threat, a full set of relics, on a run kept in memory: nothing is
+  saved, no keepsakes). `-Trophies` starts the separate pet with every keepsake, to measure Pet
+  Mode with the display corner shown.
 - **Data** (`src/DesktopPet/Assets/battle.json`, embedded, `schemaVersion` 1): every number (cat,
   skills, spawning, breaks, protection), the weapons (`weapons`), the enemy kinds (`enemies`: id,
   family, renderer, HP, speed, damage, reach, windup, drawn size `scale` and combat size
@@ -904,7 +914,7 @@ next step), so a double click never starts two battles. Ending a battle by hand 
 - **Balance:** `AdventureBalanceTests` simulates every stage × sword/hammer × Easy/Normal/Hard with an
   idle and a simple skill-using player (10 seeds) and prints the table; stage 3 now allows 4 enemies
   at once with a heavier repeating wave (rulesVersion 3). Simulation only, not real play.
-- **Version:** 1.1.0-beta at the time (`DesktopPet.csproj`; 1.2.0-beta since the 2026-10-21 enemy buff); see CHANGELOG.md.
+- **Version:** 1.1.0-beta at the time (`DesktopPet.csproj`; 1.2.0-beta since the 2026-10-21 enemy buff, 1.3.0-beta since the Expedition release check); see CHANGELOG.md.
 
 ### Simpler enemy tactics, far heals, a tougher Slime King (2026-10-21)
 

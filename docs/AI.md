@@ -561,8 +561,9 @@ Quiet mode may cancel preparation. PetMotion.cs contains no AI policy or physics
   reads it (stdlib only; not named `calendar.py` so it never shadows the standard module). A
   missing or broken file keeps the old rhythm and no special days; invalid entries are skipped.
 - **Special days.** `tet` (New Year's Eve to the 3rd day) and `mid_autumn` use a per-year
-  solar date table (2026–2035; later years are simply not known until the table is extended),
-  `halloween` 31 Oct, `christmas` 24–25 Dec, `anniversary` the yearly day of `first_seen` (from
+  solar date table (2026–2050, Vietnamese calendar at UTC+7: in 2030, 2034 and 2041 a day before
+  China's; later years are simply not known until the table is extended), `new_year` 1 Jan,
+  `womens_day` 8 Mar, `vn_womens_day` 20 Oct, `halloween` 31 Oct, `christmas` 24–25 Dec, `anniversary` the yearly day of `first_seen` (from
   the second year), and `birthday` from the observation. The first matching event wins
   (birthday first).
 - **Effect.** On a special day the first greeting of the session uses that event's line

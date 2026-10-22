@@ -1,5 +1,5 @@
 {
-  "_comment": "Day rhythm and special days for the pet. rhythm: from/to are local hours (to is exclusive, from > to wraps past midnight); active/rest/sleep multiply how often the pet picks lively, calm or sleeping actions. events: date is MM-DD every year, or dates gives the day per year (lunar holidays); from/to are day offsets around it (e.g. from -1 starts the day before). Each event id is also a line category in lines.json; active (optional) makes the pet livelier that day. birthday uses the user's birthday from Settings; anniversary is the yearly day the pet first met the user. Earlier events win when several fall on the same day. Restart the AI after editing; publish again to update the standalone copy.",
+  "_comment": "Day rhythm and special days for the pet. rhythm: from/to are local hours (to is exclusive, from > to wraps past midnight); active/rest/sleep multiply how often the pet picks lively, calm or sleeping actions. events: date is MM-DD every year, or dates gives the day per year (lunar holidays: Vietnamese calendar, UTC+7); from/to are day offsets around it (e.g. from -1 starts the day before). Each event id is also a line category in lines.json; active (optional) makes the pet livelier that day. birthday uses the user's birthday from Settings; anniversary is the yearly day the pet first met the user. Earlier events win when several fall on the same day. Restart the AI after editing; publish again to update the standalone copy.",
   "rhythm": [
     { "from": 22, "to": 6, "active": 0.6, "rest": 1.2, "sleep": 1.8 },
     { "from": 7, "to": 10, "active": 1.2, "rest": 1.0, "sleep": 0.7 }
@@ -8,11 +8,20 @@
     { "id": "birthday", "special": "birthday", "active": 1.2 },
     { "id": "anniversary", "special": "anniversary", "active": 1.1 },
     { "id": "tet", "from": -1, "to": 2, "active": 1.2, "dates": {
-      "2026": "02-17", "2027": "02-06", "2028": "01-26", "2029": "02-13", "2030": "02-03",
-      "2031": "01-23", "2032": "02-11", "2033": "01-31", "2034": "02-19", "2035": "02-08" } },
+      "2026": "02-17", "2027": "02-06", "2028": "01-26", "2029": "02-13", "2030": "02-02",
+      "2031": "01-23", "2032": "02-11", "2033": "01-31", "2034": "02-19", "2035": "02-08",
+      "2036": "01-28", "2037": "02-15", "2038": "02-04", "2039": "01-24", "2040": "02-12",
+      "2041": "02-01", "2042": "01-22", "2043": "02-10", "2044": "01-30", "2045": "02-17",
+      "2046": "02-06", "2047": "01-26", "2048": "02-14", "2049": "02-02", "2050": "01-23" } },
     { "id": "mid_autumn", "from": 0, "to": 0, "active": 1.1, "dates": {
       "2026": "09-25", "2027": "09-15", "2028": "10-03", "2029": "09-22", "2030": "09-12",
-      "2031": "10-01", "2032": "09-19", "2033": "09-08", "2034": "09-27", "2035": "09-16" } },
+      "2031": "10-01", "2032": "09-19", "2033": "09-08", "2034": "09-26", "2035": "09-16",
+      "2036": "10-04", "2037": "09-24", "2038": "09-13", "2039": "10-02", "2040": "09-20",
+      "2041": "09-09", "2042": "09-28", "2043": "09-17", "2044": "10-05", "2045": "09-25",
+      "2046": "09-15", "2047": "10-04", "2048": "09-22", "2049": "09-11", "2050": "09-30" } },
+    { "id": "new_year", "date": "01-01", "active": 1.1 },
+    { "id": "womens_day", "date": "03-08" },
+    { "id": "vn_womens_day", "date": "10-20" },
     { "id": "halloween", "date": "10-31" },
     { "id": "christmas", "date": "12-24", "from": 0, "to": 1 }
   ]

@@ -455,5 +455,53 @@
       "{name} is your present this year!",
       "Is it snowing yet? {name} wants to see~"
     ]
+  },
+  "new_year": {
+    "vi": [
+      "Chúc mừng năm mới sen ơi!",
+      "Năm mới rồi, {name} chúc sen vạn sự như ý!",
+      "Năm nay sen chơi với {name} nhiều hơn nha~",
+      "Giao thừa sen có thức khuya không đó?",
+      "{name} bắt đầu năm mới bằng một giấc ngủ~"
+    ],
+    "en": [
+      "Happy New Year, human!",
+      "New year! {name} wishes you the best!",
+      "Play with {name} more this year, okay?",
+      "Did you stay up for midnight, human?",
+      "{name} starts the year with a nap~"
+    ]
+  },
+  "womens_day": {
+    "vi": [
+      "Chúc mừng 8/3! Sen là nhất đó~",
+      "8/3 rồi, {name} tặng sen một cái dụi đầu!",
+      "Hôm nay sen nghỉ ngơi đi, để {name} lo!",
+      "{name} hái hoa tặng sen nè (hoa tưởng tượng)",
+      "Chúc sen luôn vui như {name} nha!"
+    ],
+    "en": [
+      "Happy Women's Day!",
+      "{name} gives you a head bump for today!",
+      "Rest today, {name} has it covered!",
+      "{name} picked you a flower (imaginary)",
+      "Stay as happy as {name}, okay?"
+    ]
+  },
+  "vn_womens_day": {
+    "vi": [
+      "Chúc mừng 20/10 nha sen!",
+      "20/10 rồi, {name} chúc sen luôn xinh!",
+      "Hôm nay {name} ngoan hơn để mừng sen~",
+      "Có ai tặng hoa sen chưa? {name} tặng nè!",
+      "{name} chúc sen một ngày thật vui!"
+    ],
+    "en": [
+      "Happy Vietnamese Women's Day!",
+      "It's Oct 20! {name} wishes you a lovely day!",
+      "{name} is extra good today, for you~",
+      "Got flowers yet? Here's one from {name}!",
+      "{name} wishes you a really happy day!"
+    ]
   }
 }

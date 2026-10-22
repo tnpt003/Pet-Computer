@@ -649,7 +649,11 @@ class CalendarTests(unittest.TestCase):
         self.assertEqual(today(2027, 2, 5), "tet")  # New Year's Eve.
         self.assertEqual(today(2027, 2, 8), "tet")  # Third day.
         self.assertIsNone(today(2027, 2, 9))
-        self.assertIsNone(today(2040, 2, 1))  # Lunar dates beyond the table are simply not known.
+        self.assertIsNone(today(2051, 2, 11))  # Lunar dates beyond the table (to 2050) are simply not known.
+        # Vietnamese calendar (UTC+7): a day before China's when the new moon falls 23:00-24:00 here.
+        self.assertEqual((today(2030, 2, 2), today(2034, 9, 26), today(2034, 9, 27)), ("tet", "mid_autumn", None))
+        self.assertEqual((today(2050, 1, 23), today(2050, 9, 30)), ("tet", "mid_autumn"))
+        self.assertEqual((today(2027, 1, 1), today(2027, 3, 8), today(2026, 10, 20)), ("new_year", "womens_day", "vn_womens_day"))
         self.assertEqual(today(2026, 9, 25), "mid_autumn")
         self.assertEqual(today(2026, 10, 31), "halloween")
         self.assertEqual((today(2026, 12, 24), today(2026, 12, 25), today(2026, 12, 26)), ("christmas", "christmas", None))
@@ -660,6 +664,12 @@ class CalendarTests(unittest.TestCase):
         self.assertIsNone(today(2026, 10, 13, first_seen=met))  # The first day is not an anniversary.
         self.assertEqual(today(2027, 10, 13, first_seen=met), "anniversary")
         self.assertGreater(self.calendar.today(dt.date(2027, 2, 6))[1], 1)  # Livelier on Tết.
+
+    def test_every_calendar_event_has_lines(self):
+        lines = json.loads((ROOT / "ai/lines.json").read_text(encoding="utf-8"))
+        for event in json.loads((ROOT / "ai/calendar.json").read_text(encoding="utf-8"))["events"]:
+            for language in ("vi", "en"):
+                self.assertTrue(lines.get(event["id"], {}).get(language), (event["id"], language))
 
     def test_broken_or_partial_file_falls_back_safely(self):
         temporary = tempfile.TemporaryDirectory()

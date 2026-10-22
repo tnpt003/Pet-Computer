@@ -47,6 +47,10 @@ public sealed class PetPreferences
     public bool ClimbWindows { get; set; } = true;
     // On by default: the Expedition's keepsakes stand in the display corner once one is earned.
     public bool ShowTrophies { get; set; } = true;
+    // Where the user or the cat left the shelf: its monitor and the art's left edge as a fraction of
+    // the free width (null: not moved yet, 0.75 across the cat's monitor).
+    public string? TrophyMonitor { get; set; }
+    public double? TrophyFractionX { get; set; }
     // Battle Mode difficulty chosen in the menu: "Easy", "Normal" or "Hard".
     public string BattleDifficulty { get; set; } = "Normal";
     public static string NormalizeDifficulty(string? value) => value is "Easy" or "Normal" or "Hard" ? value : "Normal";
@@ -84,6 +88,7 @@ public sealed class PetPreferences
             p.PositionX = double.IsFinite(p.PositionX) ? Math.Clamp(p.PositionX, 0, 1) : 0.5;
             p.PositionY = double.IsFinite(p.PositionY) ? Math.Clamp(p.PositionY, 0, 1) : 1;
             p.RestFractionX = double.IsFinite(p.RestFractionX) ? Math.Clamp(p.RestFractionX, 0, 1) : 0.5;
+            if (p.TrophyFractionX is double tx) p.TrophyFractionX = double.IsFinite(tx) ? Math.Clamp(tx, 0, 1) : null;
             if (!p.RestX.HasValue || !p.RestY.HasValue || !double.IsFinite(p.RestX.Value) || !double.IsFinite(p.RestY.Value)) p.RestX = p.RestY = null;
             return p;
         }

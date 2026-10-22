@@ -191,6 +191,7 @@ public sealed partial class PetWindow
         toyWindow?.Close();
         returningHome = false;
         admiring = false; admireRemaining = 0;
+        shelfShove = ShelfShove.None; shelfWatch = 0; pet.Bonk = 0;
         climbPlan = null; ledgeExit = 0;
         PetPhysics.LetGo(pet); // A climbing pet lets go and drops.
         pet.TreatRemaining = 0;
@@ -203,7 +204,7 @@ public sealed partial class PetWindow
 
     // Also lets a walk carry the pet past a window ledge's end (it drops off).
     private bool FeatureOwnsMovement() => CanPlay && (pet.TreatRemaining > 0 || treatSatisfiedRemaining > 0 || toyWindow != null || returningHome || admiring ||
-        laserWindow != null || climbPlan != null || ledgeExit != 0);
+        laserWindow != null || climbPlan != null || ledgeExit != 0 || shelfShove != ShelfShove.None || shelfWatch > 0 || pet.Bonk > 0);
 
     private void TickFeatures(double dt)
     {
@@ -231,7 +232,7 @@ public sealed partial class PetWindow
         if (TickLaser(dt)) return;
         if (!CanPlay)
         {
-            if (toyWindow != null || returningHome || admiring || pet.TreatRemaining > 0 || treatSatisfiedRemaining > 0) CancelFeatureActivity();
+            if (toyWindow != null || returningHome || admiring || shelfShove != ShelfShove.None || pet.TreatRemaining > 0 || treatSatisfiedRemaining > 0) CancelFeatureActivity();
             return;
         }
         if (pet.TreatRemaining > 0)
@@ -286,8 +287,9 @@ public sealed partial class PetWindow
             if (ballHalo != null) ballHalo.Opacity = Math.Max(ball.Feedback / 0.35, toyWindow.IsMouseOver ? 0.45 : 0);
             return;
         }
-        if (EffectiveQuiet) { StopAdmiring(); return; } // Walking to the resting spot or the keepsakes on its own is autonomous.
+        if (EffectiveQuiet) { StopAdmiring(); StopShelfShove(); return; } // Walking to the resting spot or the keepsakes on its own is autonomous.
         if (TickAdmiring(dt)) return; // PetWindow.Trophies.cs
+        if (TickShelfShove(dt)) return; // Shoving the keepsake shelf along (PetWindow.Trophies.cs).
         restVisit -= dt;
         if (restVisit <= 0 && preferences.RestX.HasValue && pet.Action is PetAction.Idle or PetAction.Sitting && climbPlan == null && ledgeExit == 0)
         { returningHome = true; restVisit = 45; }

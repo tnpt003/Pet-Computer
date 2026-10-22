@@ -23,6 +23,7 @@
     <Compile Include="../../src/DesktopPet/StartupRegistration.cs" Link="StartupRegistration.cs" />
     <Compile Include="../../src/DesktopPet/PetSounds.cs" Link="PetSounds.cs" />
     <Compile Include="../../src/DesktopPet/ToyBall.cs" Link="ToyBall.cs" />
+    <Compile Include="../../src/DesktopPet/PetShelfMotion.cs" Link="PetShelfMotion.cs" />
     <Compile Include="../../src/DesktopPet/PetEmotions.cs" Link="PetEmotions.cs" />
     <Compile Include="../../src/DesktopPet/PickupAnimation.cs" Link="PickupAnimation.cs" />
     <Compile Include="../../src/DesktopPet/ThrowTracker.cs" Link="ThrowTracker.cs" />

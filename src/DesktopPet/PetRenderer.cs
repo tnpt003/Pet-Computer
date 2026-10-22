@@ -124,7 +124,7 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         }
         // Lost the battle, or stunned by a dash: seeing stars, nothing worse. A stunned cat that is
         // picked up gets the one orbit above (the stronger of the two dizziness amounts).
-        else if (pet.BattleDazed || pet.BattleStun > 0) DrawDizzyOrbit(dc, p);
+        else if (pet.BattleDazed || pet.BattleStun > 0 || pet.Bonk > 0) DrawDizzyOrbit(dc, p);
         DrawOverlays(dc, p);
         if (pet.BattleBuff) DrawCheerSparkles(dc, pet.BattleTime);
         if (pet.BattleShield) DrawShieldBubble(dc, pet.BattleTime);
@@ -143,6 +143,8 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         p.Dizzy = p.PickedUp ? pet.Pickup.Dizziness : 0;
         // A battle stun: dazed eyes and stars, fading out over its last quarter second.
         if (pet.BattleStun > 0) p.Dizzy = Math.Max(p.Dizzy, 0.75 * Math.Min(1, pet.BattleStun / 0.25));
+        // Bonked by the falling shelf: the same stars, a little stronger, fading out the same way.
+        if (pet.Bonk > 0) p.Dizzy = Math.Max(p.Dizzy, 0.85 * Math.Min(1, pet.Bonk / 0.3));
         p.WakeProgress = Math.Clamp(pet.ActionTime / PetSettings.WakingDuration, 0, 1);
         bool sitting = pet.Action is PetAction.Sitting or PetAction.Grooming || p.Sleeping;
         p.Airborne = pet.Action is PetAction.Thrown or PetAction.Jumping;
@@ -213,6 +215,12 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         p.ScaleX = 1 + selfStretch * 0.045 + preparation * 0.04 + impact * 0.045 - flight * 0.3;
         p.ScaleY = 1 + stretch + selfStretch * 0.12 - playCrouch * 0.07 - preparation * 0.09 + flight - impact * 0.09;
         if (p.Climbing) { p.ScaleX *= 0.95; p.ScaleY *= 1.06; } // Stretched long up the wall.
+        if (pet.Bonk > 0 && !p.PickedUp)
+        {
+            // The bonk squashes the cat flat, then it springs back with a wobble.
+            double since = PetModel.BonkDuration - pet.Bonk, bonk = since < 0.7 ? Math.Exp(-since * 5) * Math.Cos(since * 20) : 0;
+            p.ScaleY *= 1 - 0.2 * bonk; p.ScaleX *= 1 + 0.1 * bonk;
+        }
         if (pet.SwordOut) PoseSword(ref p);
         return p;
     }

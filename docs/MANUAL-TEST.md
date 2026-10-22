@@ -289,12 +289,24 @@ Chuyến đang dở từ mốc 2 (nếu có) sẽ kết thúc khi mở bản đ�
 
 - [ ] Bản đồ viễn chinh ghi "Kỷ vật: n/5".
 - [ ] Thắng cả chuyến lần đầu ở Thường: bảng kết quả ghi "Kỷ vật mới: Cúp bạc viễn chinh (ở góc trưng bày)", "Khăn viễn chinh (đội trong Cài đặt)", "Đệm slime". Thắng lại ở Thường: không có kỷ vật mới. Thắng ở Dễ/Khó: cúp đồng/vàng.
-- [ ] Về desktop: góc phải dưới màn hình có kệ gỗ với đệm slime và cúp, đứng trên cùng mặt sàn với mèo (không lơ lửng, không bị thanh taskbar che). Bấm vào kệ thì bấm xuyên xuống app bên dưới; kệ không lấy focus, không có nút taskbar.
+- [ ] Về desktop: kệ gỗ với đệm slime và cúp đứng trên cùng mặt sàn với mèo, lần đầu ở ~3/4 bề ngang màn hình (không lơ lửng, không bị thanh taskbar che); kệ không lấy focus, không có nút taskbar. (Từ 2026-10-22 kệ cầm được — xem mục "Kệ kỷ vật thành đồ chơi".)
 - [ ] Mở app toàn màn hình (video/F11): kệ ẩn, đóng thì hiện lại. Vào trận: kệ ẩn, kết thúc trận thì hiện lại.
 - [ ] Cài đặt → Mèo → bỏ "Góc trưng bày kỷ vật" → Lưu: kệ biến mất ngay. Bật lại: hiện lại.
 - [ ] Cài đặt → Mèo → Phụ kiện: có "Khăn viễn chinh"; đội thử, xem khi đi/ngủ/kéo/trèo.
 - [ ] Để mèo tự do ~5 phút (không Quiet): mèo đi tới bên trái kệ, quay mặt nhìn kệ khoảng 4 giây rồi đi tiếp. Khi đang ngủ, Quiet hoặc đang chơi bóng/laser thì không đi.
-- [ ] Kéo mèo sang màn hình phụ: kệ chuyển theo sang góc màn hình đó (chưa kiểm tra thật trên nhiều màn hình/DPI khác nhau).
+- [ ] (Từ 2026-10-22 kệ không chạy theo mèo nữa: kệ ở lại màn hình bạn thả nó.)
+
+## Kệ kỷ vật thành đồ chơi (2026-10-22)
+
+Tự động đã có: physics kệ (rơi, nảy, nhún, đẩy, chạm mép, cầm/lắc), rơi trúng đầu mèo (choáng; mèo ngủ thì ngủ tiếp), chạm mép → mèo ngạc nhiên → kệ về giữa (cả khi mèo đứng giữa), mèo tự đẩy kệ, Quiet/Pause. Phần dưới cần làm tay (cần đã có ít nhất một kỷ vật):
+- [ ] Rê chuột lên kệ: con trỏ bàn tay. Click (không kéo): kệ "boing" nhún một cái. Rê chuột ở vùng trống quanh kệ: click xuyên xuống app/desktop bên dưới.
+- [ ] Kéo kệ (quá ~6 px mới nhấc): kệ hơi giãn khi nhấc, lắc lư nghiêng theo hướng kéo, không nhấp nháy; kệ không lấy focus khỏi app đang gõ.
+- [ ] Thả kệ ở trên cao: rơi, chạm đất bẹp → giãn → nhún 1–2 lần, có bụi nhỏ; rơi càng cao nhún càng mạnh. Ném mạnh sang ngang: trượt, dội mép màn hình.
+- [ ] Thả kệ trúng đầu mèo đang đứng/đi: tiếng "cộp", mèo bẹp người rồi bật lại, sao xoay + mắt choáng ~2 giây, kệ nảy lên rồi rơi bên trái hoặc phải cạnh mèo. Mèo đang ngủ: không thức, kệ vẫn nảy ra.
+- [ ] Thả kệ sát mép trái/phải màn hình: mèo (cùng màn hình, đang thức) quay sang, mặt ngạc nhiên "!", kệ rung → "poof" khói + lấp lánh → hiện ở giữa màn hình (phóng to nhẹ rồi về cỡ, rơi chút rồi nhún). Mèo đứng giữa: kệ hiện cạnh mèo, không rơi lên đầu.
+- [ ] Để mèo tự do vài phút (Playful nhanh hơn, Calm lâu hơn; lần đầu ~3 phút): mèo đi tới một bên kệ, cúi người, đẩy — kệ trượt có nảy/lắc, mèo nhìn theo vui vẻ. Nếu kệ trượt tới mép: mèo ngạc nhiên, kệ về giữa. Quiet/ngủ/fullscreen/đang chơi bóng: không đẩy.
+- [ ] Đóng mở lại app: kệ ở chỗ cũ. Pause: kệ đang rơi thì đứng yên giữa không trung, bỏ Pause thì rơi tiếp.
+- [ ] Màn hình phụ (khác DPI nếu có): kéo kệ sang màn hình phụ, thả: đứng đúng sàn màn hình đó; mèo ở màn hình khác thì không đẩy/không ngắm/không bị rơi trúng. Rút màn hình phụ: kệ về màn hình của mèo.
 
 ## Viễn chinh — mốc 5: kiểm thử phát hành, bản 1.3.0-beta (2026-10-21)
 

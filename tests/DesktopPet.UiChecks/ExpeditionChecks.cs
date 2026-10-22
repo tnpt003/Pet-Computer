@@ -410,21 +410,32 @@ internal static class ExpeditionChecks
             await Task.Delay(30);
             var shelfWindow = Find("Pet trophies");
             long shelfStyle = shelfWindow == null ? 0 : GetWindowLongPtr(new WindowInteropHelper(shelfWindow).Handle, -20).ToInt64();
-            check(window.TrophiesVisible && shelfWindow is { ShowActivated: false, ShowInTaskbar: false, Topmost: true } && (shelfStyle & 0x20) != 0 && (shelfStyle & 0x08000000) != 0,
-                "The display corner shows: click-through, never takes focus, no taskbar button");
+            check(window.TrophiesVisible && shelfWindow is { ShowActivated: false, ShowInTaskbar: false, Topmost: true } && (shelfStyle & 0x20) == 0 && (shelfStyle & 0x08000000) != 0,
+                "The display corner shows: clickable (it can be picked up), never takes focus, no taskbar button");
             var area = (Area)typeof(PetWindow).GetField("bounds", Flags)!.GetValue(window)!;
             var spot = window.TrophyBounds;
             var shelf = shelfWindow?.Content as TrophyShelf;
-            check(spot.Right <= area.Right && spot.Right >= area.Right - 20 && Math.Abs(spot.Bottom - area.Bottom) < 1 && shelf != null
-                  && shelf.Items.Select(k => k.Id).SequenceEqual(new[] { "slime_cushion", "cup_silver" }) && Math.Abs(spot.Width - TrophyShelf.WidthFor(shelf.Items)) < 0.5,
-                $"Bottom right of the cat's monitor, standing on its floor: the cushion, then the silver cup ({spot}, floor {area.Bottom})");
+            double across = (spot.Left - area.Left) / (area.Right - area.Left - spot.Width);
+            check(Math.Abs(across - 0.75) < 0.01 && Math.Abs(spot.Bottom - area.Bottom) < 1 && shelf != null && !window.ShelfHopping
+                  && shelf.Items.Select(k => k.Id).SequenceEqual(new[] { "slime_cushion", "cup_silver" }) && Math.Abs(spot.Width - TrophyShelf.WidthFor(shelf.Items)) < 0.5
+                  && Math.Abs(shelfWindow!.Width - spot.Width - PetWindow.ShelfSide * 2) < 0.5,
+                $"First shown 3/4 across the cat's monitor (away from the edge), standing on its floor: the cushion, then the silver cup ({spot}, floor {area.Bottom})");
             Shot("Pet trophies", "trophies-shelf.png");
             bool ShelfPlaced(double at)
             {
-                var rect = PlacedAt(window, shelfWindow!, "TickTrophies", at);
-                return Math.Abs(rect.Left - Math.Max(area.Left, area.Right - shelfWindow!.Width - 10) * at) <= 2 && Math.Abs(rect.Top - (area.Bottom - shelfWindow.Height) * at) <= 2;
+                var shelfScale = typeof(PetWindow).GetField("shelfScale", Flags)!;
+                double real = (double)shelfScale.GetValue(window)!;
+                shelfScale.SetValue(window, at);
+                try
+                {
+                    shelfWindow!.Left += 37; shelfWindow.Top += 23;
+                    Call(window, "PositionShelf");
+                    GetWindowRect(new WindowInteropHelper(shelfWindow).Handle, out var rect);
+                    return Math.Abs(rect.Left - (spot.Left - PetWindow.ShelfSide) * at) <= 2 && Math.Abs(rect.Top - (spot.Bottom + PetWindow.ShelfBottomRoom - shelfWindow.Height) * at) <= 2;
+                }
+                finally { shelfScale.SetValue(window, real); Call(window, "PositionShelf"); }
             }
-            check(shelfWindow != null && ShelfPlaced(petScale) && ShelfPlaced(1.5), "The display corner is placed in the cat's monitor pixels (real scale and 150%)");
+            check(shelfWindow != null && ShelfPlaced(petScale) && ShelfPlaced(1.5), "The display corner is placed in its monitor's pixels (real scale and 150%)");
             SetContext(window, true, 0); Call(window, "TickContext", 1.1); Call(window, "TickTrophies");
             check(!window.TrophiesVisible, "A fullscreen app hides the display corner");
             SetContext(window, false, 0); Call(window, "TickContext", 1.1); Call(window, "TickTrophies");
@@ -461,6 +472,109 @@ internal static class ExpeditionChecks
             window.AdmireTrophies();
             window.Reset();
             check(!window.Admiring, "Bringing the pet back ends the visit");
+
+            // The shelf as a toy: falls and lands, bonks the cat, hops back from an edge, gets shoved.
+            var motion = window.TrophyMotion;
+            void Shelf(double seconds, bool features = false)
+            {
+                for (double t = 0; t < seconds; t += 1.0 / 60)
+                {
+                    Call(window, "TickShelf", 1.0 / 60);
+                    if (features) Call(window, "TickFeatures", 1.0 / 60);
+                    pet.Emotions.Step(pet, 1.0 / 60);
+                }
+            }
+            double middleX = (area.Left + area.Right - spot.Width) / 2;
+            motion.X = middleX + 300; motion.Height = 300; motion.VX = motion.VY = 0;
+            Shelf(0.2);
+            check(motion.Height > 0 && motion.Height < 300 && window.TrophyBounds.Bottom < area.Bottom, "Let go up high, the shelf falls");
+            Shelf(3);
+            check(motion.Resting && motion.Height == 0 && Math.Abs(window.TrophyBounds.Bottom - area.Bottom) < 1 && !window.ShelfHopping, "It lands on the floor and settles there");
+            if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") != null)
+            {
+                // The poses, for the render review: squashed on landing, dangling while held.
+                motion.Squash = 0.3; Call(window, "PositionShelf"); Shot("Pet trophies", "trophies-squash.png");
+                motion.Squash = 0; motion.Tilt = 22; SetField(window, "shelfHeld", true); SetField(window, "shelfGrabX", 20.0); SetField(window, "shelfGrabY", 40.0);
+                Call(window, "PositionShelf"); Shot("Pet trophies", "trophies-held.png");
+                motion.Tilt = 0; SetField(window, "shelfHeld", false); Call(window, "PositionShelf");
+            }
+            SetField(window, "paused", true);
+            motion.Height = 200;
+            Shelf(0.5);
+            check(motion.Height == 200, "A paused pet freezes the shelf in the air");
+            SetField(window, "paused", false);
+            Shelf(3);
+
+            // Dropped on the cat's head: bonk, stars, the shelf bounces off to one side.
+            window.Reset();
+            pet.Action = PetAction.Idle;
+            double headTop = pet.Y + 16;
+            motion.X = pet.X + 56 - spot.Width / 2; motion.Height = area.Bottom - headTop + 30; motion.VX = 0; motion.VY = -300;
+            Shelf(0.2);
+            check(pet.Bonk > 0 && pet.Action == PetAction.Sitting && motion.VY > 0, $"Dropped on the cat's head it bonks it (stars) and bounces up (bonk {pet.Bonk:F2}, VY {motion.VY:F0})");
+            Shelf(PetModel.BonkDuration);
+            var landedAt = window.TrophyBounds;
+            check(pet.Bonk == 0 && motion.Height == 0 && (landedAt.Right < pet.X + 24 || landedAt.Left > pet.X + 88),
+                $"The bonk passes; the shelf landed beside the cat, not on it ({landedAt.Left:F0}–{landedAt.Right:F0}, cat {pet.X:F0})");
+            Shelf(3);
+            window.Reset();
+            pet.Action = PetAction.Sleeping; pet.Emotions.EnterSleep();
+            motion.X = pet.X + 56 - spot.Width / 2; motion.Height = area.Bottom - headTop + 30; motion.VX = 0; motion.VY = -300;
+            Shelf(0.2);
+            check(pet.Bonk == 0 && pet.Action == PetAction.Sleeping && motion.VY > 0, "A sleeping cat sleeps on (no bonk); the shelf still bounces off");
+            Shelf(3);
+            window.Reset();
+            pet.Action = PetAction.Idle; pet.Emotions.Reset();
+            Shelf(3);
+
+            // Left at the edge (as if the user dropped it there): startled cat, puff, back to the middle.
+            pet.X = middleX - 400; pet.Action = PetAction.Idle;
+            SetField(window, "shelfHeld", true); motion.Held = true;
+            motion.X = area.Right - spot.Width - 5; motion.Height = 0;
+            Call(window, "EndShelfDrag", false);
+            Shelf(0.1);
+            check(window.ShelfHopping && pet.Emotions.Target == PetEmotion.Surprised, "Dropped at the screen edge: the cat is startled and the shelf starts its hop");
+            Shelf(0.5);
+            check(window.ShelfHopping && Math.Abs(motion.X - (area.Right - spot.Width - 5)) < 1 && pet.Facing == 1 && pet.VX == 0, "It trembles in place while the cat looks at it");
+            Shelf(0.35);
+            Shot("Pet trophies", "trophies-puff.png");
+            Shelf(0.25);
+            Shot("Pet trophies", "trophies-appear.png");
+            Shelf(1.9);
+            var hopped = window.TrophyBounds;
+            check(!window.ShelfHopping && motion.Resting && !ShelfMotion.NearEdge(hopped.Left, hopped.Width, area.Left, area.Right) && Math.Abs(hopped.Left - middleX) < 1,
+                $"It vanished in a puff and popped up in the middle ({hopped.Left:F0}, middle {middleX:F0})");
+            pet.X = middleX - 40; pet.Action = PetAction.Idle; pet.Emotions.Reset();
+            motion.X = area.Left + 3;
+            SetField(window, "shelfEdgeCheck", true);
+            Shelf(3);
+            hopped = window.TrophyBounds;
+            check(!window.ShelfHopping && (hopped.Right < pet.X + 10 || hopped.Left > pet.X + 102) && !ShelfMotion.NearEdge(hopped.Left, hopped.Width, area.Left, area.Right),
+                $"With the cat in the middle it lands next to the cat, not on it ({hopped.Left:F0}–{hopped.Right:F0}, cat {pet.X:F0})");
+            pet.Emotions.Reset();
+
+            // The cat shoves it along: walks to one side, crouches, pushes, watches it slide.
+            window.Reset(); pet.Emotions.Reset();
+            motion.X = pet.X + 200; motion.Height = 0; motion.VX = 0;
+            Shelf(0.1);
+            prefs.Quiet = true; behavior.Quiet = true;
+            check(!window.ShoveShelf(1), "In Quiet the cat does not shove the shelf");
+            prefs.Quiet = false; behavior.Quiet = false;
+            double shelfBefore = motion.X;
+            check(window.ShoveShelf(1) && window.ShelfShoving, "The cat may go to shove its shelf");
+            Call(window, "TickFeatures", 1.0 / 60);
+            check(pet.Action == PetAction.Walking && pet.VX > 0, "It walks to the shelf's left side");
+            pet.X = motion.X - 112 * 0.8;
+            Shelf(0.2, features: true);
+            check(pet.PlayCrouch > 0 && pet.VX == 0 && pet.Facing == 1 && motion.VX == 0, "Beside it, it crouches facing the shelf");
+            Shelf(0.4, features: true);
+            check(motion.VX > 0 && window.ShelfShoving && pet.Action == PetAction.Looking, "Then it shoves: the shelf slides away and the cat watches");
+            Shelf(2, features: true);
+            check(!window.ShelfShoving && motion.Resting && motion.X - shelfBefore > 50, $"The shelf slid {motion.X - shelfBefore:F0} DIPs; the cat goes back to its business");
+            check(window.ShoveShelf(1), "(setup) another shove");
+            window.Reset();
+            check(!window.ShelfShoving, "Bringing the pet back ends the shove");
+            Shelf(3);
             window.BattleTuning = easy;
 
             // The built-in Expedition's map at its tallest (3 relics, a rest's cards, both languages) fits

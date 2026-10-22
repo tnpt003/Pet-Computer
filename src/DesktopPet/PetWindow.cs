@@ -307,6 +307,7 @@ public sealed partial class PetWindow : Window
         TickExpeditionMap(dt);
         TickBattleBag(dt);
         TickTrophies();
+        TickShelf(dt); // The shelf's physics and its meetings with the cat (PetWindow.Trophies.cs).
         if (!paused)
         {
             TickFeatures(dt);

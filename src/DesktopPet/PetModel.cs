@@ -113,6 +113,9 @@ public sealed class PetModel
     public bool BattleDazed, BattleCheer;
     // Seconds of a battle stun still to go (stars over the head; 0: not stunned).
     public double BattleStun;
+    // Seconds of the bonk from a keepsake shelf dropped on the head still to go (stars, dazed eyes).
+    public double Bonk;
+    public const double BonkDuration = 2.2;
     // The user's skills on the cat: a protective bubble (Shield) and a golden glow (Cheer).
     public bool BattleShield, BattleBuff;
     // The battle's clock for those effects (stops while the battle is paused).

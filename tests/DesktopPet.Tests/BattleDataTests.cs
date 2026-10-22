@@ -67,6 +67,41 @@ internal static class BattleDataTests
         check(Rejected("{\"enemies\":[{\"id\":\"a\",\"summonAt\":0.5,\"summonCount\":1,\"summonType\":\"a\"}],\"waves\":[{\"groups\":[{\"enemy\":\"a\",\"count\":1}]}]}"),
             "An enemy that summons a summoner (endless helpers) is rejected");
         check(Rejected("{ not json"), "Not JSON at all is rejected");
+
+        // Skills as data (2026-10-22): battle.json "skills" says what the code said before, word for word.
+        check(shipped.SkillList.SequenceEqual(BattleSkills.BuiltIn) && builtIn.SkillList.Count == BattleSkills.All.Length,
+            "battle.json's skill names and descriptions are exactly the built-in ones");
+        var oldTexts = new (BattleSkill Skill, string Vi, string En)[]
+        {
+            (BattleSkill.Push, "Đẩy quái — chọn rồi click một slime (nửa trái: đẩy sang phải, nửa phải: sang trái), choáng 1.4 giây. Hồi 5 giây.",
+                "Push — choose, then click a slime (left half: push right, right half: push left); stuns 1.4 s. 5 s cooldown."),
+            (BattleSkill.Heal, "Cá hồi máu — mèo hồi 25 HP. Hồi 20 giây.", "Healing fish — the cat gets 25 HP back. 20 s cooldown."),
+            (BattleSkill.Cheer, "Cổ vũ — 5 giây mèo đánh nhanh ×1.6, mạnh ×1.4. Hồi 18 giây.", "Cheer — for 5 s the cat attacks ×1.6 as often, ×1.4 as hard. 18 s cooldown."),
+            (BattleSkill.Bomb, "Bom len — chọn rồi click một slime: nổ sau 0.5 giây, 30 sát thương cho mọi quái quanh đó. Hồi 12 giây.",
+                "Yarn bomb — choose, then click a slime: bursts after 0.5 s for 30 damage to every slime nearby. 12 s cooldown."),
+            (BattleSkill.Shield, "Khiên bong bóng — 3 giây mèo không mất máu. Hồi 15 giây.", "Bubble shield — for 3 s the cat takes no damage. 15 s cooldown."),
+        };
+        check(oldTexts.All(t => BattleSkills.Get(t.Skill).Describe(shipped, false) == t.Vi && BattleSkills.Get(t.Skill).Describe(shipped, true) == t.En) &&
+              BattleSkills.Get(BattleSkill.Heal).Name(false) == "Cá hồi máu" && BattleSkills.Get(BattleSkill.Shield).Name(true) == "Bubble shield",
+            "Skill descriptions fill in the numbers as before (same words in both languages)");
+        var renamed = BattleData.ParseWithOverride(ExpeditionFixture.Embedded(),
+            "{ \"schemaVersion\": 1, \"pushCooldown\": 7, \"skills\": [ { \"id\": \"heal\", \"nameEn\": \"Fish snack\", \"descEn\": \"Snack: +{healAmount} HP, every {HEALCOOLDOWN} s\" } ] }");
+        check(BattleSkills.Get(BattleSkill.Heal).Name(true, renamed) == "Fish snack" && BattleSkills.Get(BattleSkill.Heal).Name(false, renamed) == "Cá hồi máu" &&
+              BattleSkills.Get(BattleSkill.Heal).Describe(renamed, true) == "Snack: +25 HP, every 20 s" &&
+              BattleSkills.Get(BattleSkill.Push).Describe(renamed, true).EndsWith("7 s cooldown.") && renamed.SkillList.Count == 5,
+            "A user file changes one skill's texts by id (keys ignore case); the others and new numbers still show");
+        string SkillError(string skills)
+        {
+            try { BattleData.ParseWithOverride(ExpeditionFixture.Embedded(), "{ \"schemaVersion\": 1, " + skills + " }"); return ""; }
+            catch (InvalidDataException ex) { return ex.Message; }
+        }
+        string four = string.Join(",", BattleSkills.BuiltIn.Take(4).Select(k => System.Text.Json.JsonSerializer.Serialize(k)));
+        check(SkillError("\"skills\": [ { \"id\": \"dash\", \"nameVi\": \"a\", \"nameEn\": \"a\", \"descVi\": \"a\", \"descEn\": \"a\" } ]").Contains("must be one of: push, heal, cheer, bomb, shield") &&
+              SkillError("\"skills\": [ { \"id\": \"push\", \"descVi\": \"Hồi {pushCooldwn} giây\" } ]").Contains("{pushCooldwn} is not a battle.json number") &&
+              SkillError("\"skills\": [ { \"id\": \"push\", \"descEn\": \"" + new string('a', 221) + "\" } ]").Contains("1–220") &&
+              SkillError("\"skills\": [ { \"id\": \"push\", \"nameVi\": \"\" } ]").Contains("needs nameVi and nameEn") &&
+              Rejected("{\"skills\":[" + four + "]}"),
+            "Bad skills are rejected: unknown id, unknown {key}, a long description, an empty name, a missing skill");
         check(Rejected("{\"comboHits\":1}") && Rejected("{\"comboHits\":9}") && Rejected("{\"comboWindow\":0}") && Rejected("{\"comboKnock\":-1}") &&
               !Rejected("{\"comboHits\":4,\"comboDamage\":1.5}"), "Combo numbers out of range are rejected");
         check(Rejected("{\"enemies\":[{\"id\":\"slime\",\"marks\":\"spots\"}],\"waves\":[{\"groups\":[{\"enemy\":\"slime\",\"count\":1}]}]}"), "Unknown marks are rejected");

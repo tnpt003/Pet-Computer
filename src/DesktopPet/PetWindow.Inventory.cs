@@ -399,7 +399,7 @@ public sealed partial class PetWindow
             var skill = info.Skill;
             var glyph = new Border { CornerRadius = new CornerRadius(6), Background = PetUi.Game.Shadow(0x80),
                 Child = new HudGlyph(Enum.Parse<HudGlyphKind>(skill.ToString())) { Width = 18, Height = 18 } };
-            string name = info.Name(English) + (view.Live && sim.Cooldown(skill) > 0.05 ? L($" · còn {Number(sim.Cooldown(skill), "0")} giây", $" · ready in {Number(sim.Cooldown(skill), "0")} s") : "");
+            string name = info.Name(English, sim.Settings) + (view.Live && sim.Cooldown(skill) > 0.05 ? L($" · còn {Number(sim.Cooldown(skill), "0")} giây", $" · ready in {Number(sim.Cooldown(skill), "0")} s") : "");
             AddStatRow(skills, at++, glyph, name, sim.SkillCooldown(skill), view.Plain.SkillCooldown(skill), 30, false, v => L("hồi ", "every ") + Number(v, "0.#") + L(" giây", " s"), null);
             if (skill == BattleSkill.Heal)
                 AddStatRow(skills, at++, new Border(), L("lượng hồi", "heals"), sim.HealAmount, view.Plain.HealAmount, Math.Max(1, view.Plain.HealAmount * 2.5), true, v => Number(v, "0") + " HP", null);

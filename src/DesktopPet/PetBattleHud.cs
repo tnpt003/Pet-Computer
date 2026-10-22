@@ -377,7 +377,7 @@ public sealed class BattleHud : Border
             : L($" · thả xuống được {grace} giây an toàn", $" · landing gives {grace} s of safety"));
     }
 
-    public string SkillName(BattleSkill skill) => BattleSkills.Get(skill).Name(English);
+    public string SkillName(BattleSkill skill) => BattleSkills.Get(skill).Name(English, last?.Settings);
 
     // The boss of the current wave (alive or still to come).
     private string BossName(BattleSim b)

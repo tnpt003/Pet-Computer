@@ -154,6 +154,16 @@ public sealed class BattleSettings
 
     public double SkillCooldown(BattleSkill skill) => BattleSkills.Get(skill).Cooldown(this);
 
+    // battle.json "skills": each skill's names and description (null: the built-in texts). The
+    // HUD order, aiming and effects stay in code (BattleSkills); validation needs every skill.
+    [JsonPropertyName("skills")] public SkillSpec[]? Skills { get; init; }
+    [JsonIgnore] public IReadOnlyList<SkillSpec> SkillList => Skills ?? BattleSkills.BuiltIn;
+    public SkillSpec Skill(BattleSkill skill)
+    {
+        foreach (var spec in SkillList) if (string.Equals(spec.Id, skill.ToString(), StringComparison.OrdinalIgnoreCase)) return spec;
+        return Array.Find(BattleSkills.BuiltIn, spec => string.Equals(spec.Id, skill.ToString(), StringComparison.OrdinalIgnoreCase))!;
+    }
+
     // The cat's weapons, in the order the battle setup panel shows them. battle.json "weapons"
     // lists them; without it they are the sword (the Cat* numbers above: fast, only a combo
     // knocks back) and the hammer ("hammer": slow, heavy, knocks the slime back on every hit).
@@ -287,6 +297,19 @@ public sealed record WeaponSpec
     public double SwingDuration { get; init; } = 0.7;
     public double HitTime { get; init; } = 0.45;
     public double Knock { get; init; } = 170;
+}
+
+// A skill's texts. Id: push, heal, cheer, bomb or shield. A description's {key} is that
+// battle.json number of the battle (e.g. {pushCooldown}), so the HUD follows the numbers.
+public sealed record SkillSpec
+{
+    public string Id { get; init; } = "";
+    public string NameVi { get; init; } = "";
+    public string NameEn { get; init; } = "";
+    public string DescVi { get; init; } = "";
+    public string DescEn { get; init; } = "";
+    public string Name(bool english) => (english ? NameEn : NameVi) is { Length: > 0 } name ? name : Id;
+    public string Desc(bool english) => english ? DescEn : DescVi;
 }
 
 // Multipliers on every enemy kind (1 = the kind's own numbers).

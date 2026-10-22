@@ -80,6 +80,36 @@
   "bombRadius": 70,
   "shieldCooldown": 15,
   "shieldSeconds": 3,
+  // Their names and HUD descriptions (every skill once: push, heal, cheer, bomb, shield; the
+  // HUD order and what each does stay in the app). {key} in a description is that number of
+  // this file, e.g. {pushCooldown}. Names: at most 32 characters; descriptions: at most 220.
+  "skills": [
+    {
+      "id": "push", "nameVi": "Đẩy quái", "nameEn": "Push",
+      "descVi": "Đẩy quái — chọn rồi click một slime (nửa trái: đẩy sang phải, nửa phải: sang trái), choáng {pushStunSeconds} giây. Hồi {pushCooldown} giây.",
+      "descEn": "Push — choose, then click a slime (left half: push right, right half: push left); stuns {pushStunSeconds} s. {pushCooldown} s cooldown."
+    },
+    {
+      "id": "heal", "nameVi": "Cá hồi máu", "nameEn": "Healing fish",
+      "descVi": "Cá hồi máu — mèo hồi {healAmount} HP. Hồi {healCooldown} giây.",
+      "descEn": "Healing fish — the cat gets {healAmount} HP back. {healCooldown} s cooldown."
+    },
+    {
+      "id": "cheer", "nameVi": "Cổ vũ", "nameEn": "Cheer",
+      "descVi": "Cổ vũ — {cheerSeconds} giây mèo đánh nhanh ×{cheerSpeed}, mạnh ×{cheerDamage}. Hồi {cheerCooldown} giây.",
+      "descEn": "Cheer — for {cheerSeconds} s the cat attacks ×{cheerSpeed} as often, ×{cheerDamage} as hard. {cheerCooldown} s cooldown."
+    },
+    {
+      "id": "bomb", "nameVi": "Bom len", "nameEn": "Yarn bomb",
+      "descVi": "Bom len — chọn rồi click một slime: nổ sau {bombDelay} giây, {bombDamage} sát thương cho mọi quái quanh đó. Hồi {bombCooldown} giây.",
+      "descEn": "Yarn bomb — choose, then click a slime: bursts after {bombDelay} s for {bombDamage} damage to every slime nearby. {bombCooldown} s cooldown."
+    },
+    {
+      "id": "shield", "nameVi": "Khiên bong bóng", "nameEn": "Bubble shield",
+      "descVi": "Khiên bong bóng — {shieldSeconds} giây mèo không mất máu. Hồi {shieldCooldown} giây.",
+      "descEn": "Bubble shield — for {shieldSeconds} s the cat takes no damage. {shieldCooldown} s cooldown."
+    }
+  ],
 
   // Difficulty: multipliers on every enemy's HP, damage and speed (0.25–3). Normal is the
   // numbers in this file as they are.

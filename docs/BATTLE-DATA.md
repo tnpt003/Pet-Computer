@@ -19,7 +19,7 @@ Chỉ cần ghi những gì muốn đổi. File của người dùng được g�
 - `"schemaVersion": 1` là **bắt buộc**. Thiếu hoặc khác 1 thì cả file bị bỏ qua.
 - Số và chuỗi ở cấp trên cùng (ví dụ `"catMaxHp": 120`) thay giá trị gốc.
 - Object (`easy`, `hard`) gộp theo từng khóa; ví dụ `"easy": { "enemyHp": 0.5 }` chỉ đổi đúng một số đó.
-- `enemies` và `weapons` gộp **theo `id`**:
+- `enemies`, `weapons`, `upgrades`, `synergies` và `skills` gộp **theo `id`**:
   - `id` đã có: chỉ đổi các khóa được ghi (ví dụ `{ "id": "slime", "maxHp": 60 }`).
   - `id` mới: thêm vào cuối danh sách.
   - Mỗi mục phải có `id`, không được trùng trong file.
@@ -84,6 +84,16 @@ Thứ tự trong danh sách là thứ tự trên bảng chuẩn bị; vũ khí �
 
 Nếu `id` đã lưu trong preferences không còn trong dữ liệu (ví dụ file bị xóa), mèo dùng vũ khí đầu tiên. Preferences cũ ghi `"Sword"`/`"Hammer"` vẫn khớp với `sword`/`hammer`.
 
+## Kỹ năng (`skills`) (2026-10-22)
+
+Tên và mô tả của 5 kỹ năng trên HUD (và túi đồ). Gộp theo `id` như `weapons`: ghi `{ "id": "heal", "nameEn": "Fish snack" }` là đổi đúng tên tiếng Anh của Cá hồi máu. Số liệu vẫn ở cấp trên cùng (`pushCooldown`, `healAmount`…); thứ tự trên HUD, kỹ năng nào phải nhắm (Đẩy, Bom) và tác dụng nằm trong app, không đổi bằng dữ liệu.
+
+| Khóa | Giới hạn | Ý nghĩa |
+| --- | --- | --- |
+| `id` | `push`, `heal`, `cheer`, `bomb`, `shield` | Kỹ năng nào; danh sách phải có đủ cả 5, không trùng |
+| `nameVi`, `nameEn` | 1–32 ký tự | Tên |
+| `descVi`, `descEn` | 1–220 ký tự | Mô tả khi rê chuột; `{khóa}` được thay bằng số cùng tên ở cấp trên cùng của battle.json, ví dụ `{pushCooldown}` → `5` (không phân biệt hoa thường; khóa không có thì file bị từ chối) |
+
 ## Đợt quái (`waves`) và luật trận
 
 - `waves`: tối đa 30 đợt. Mỗi đợt có `groups`, mỗi group gồm `enemy` (id) và `count` (1–50). Các group ra quái theo thứ tự; tối đa `maxAlive` con cùng lúc. Đợt nào cũng có thể có boss.
@@ -144,8 +154,7 @@ Chỉ làm slime thường yếu đi:
 | WaveDefinition | `WaveSpec` / `WaveGroup` |
 | BattleRules | `BattleSettings` |
 | Nạp, gộp và kiểm tra dữ liệu | `BattleData` (`Load`, `ParseWithOverride`, `Validate`) |
-
-Kỹ năng (`BattleSkills`) chưa chuyển sang dữ liệu trong đợt này.
+| SkillDefinition | `SkillSpec` (tên, mô tả) + `BattleSkills` (thứ tự, nhắm, hồi chiêu, tác dụng trong `BattleSim.Use`) |
 
 ## Kỷ lục (battle-records.json)
 

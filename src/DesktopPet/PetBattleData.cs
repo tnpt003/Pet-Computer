@@ -372,7 +372,7 @@ public static class BuildGroups
 // Assets/battle.json (embedded) is the built-in battle: its numbers, weapons, enemy kinds and
 // waves. The user may add battle.json to the app's data folder (%LOCALAPPDATA%\DesktopPet,
 // docs/BATTLE-DATA.md) with only what it changes: it is merged over the built-in file
-// ("enemies"/"weapons" entries by id, other objects key by key, anything else replaced) and the
+// ("enemies"/"weapons"/"upgrades"/"synergies"/"skills" entries by id, other objects key by key, anything else replaced) and the
 // result is validated as a whole. A broken file never stops the pet and is never used in part:
 // it is logged, the built-in battle is used and the battle setup panel says why.
 public sealed record BattleDataLoad(BattleSettings Settings, bool Custom, string? Error);
@@ -476,7 +476,8 @@ public static class BattleData
             var current = existing != null ? target[existing] : null;
             if (value is JsonObject part && current is JsonObject whole) { Merge(whole, part, path + key + "."); continue; }
             bool byId = key.Equals("enemies", StringComparison.OrdinalIgnoreCase) || key.Equals("weapons", StringComparison.OrdinalIgnoreCase) ||
-                key.Equals("upgrades", StringComparison.OrdinalIgnoreCase) || key.Equals("synergies", StringComparison.OrdinalIgnoreCase);
+                key.Equals("upgrades", StringComparison.OrdinalIgnoreCase) || key.Equals("synergies", StringComparison.OrdinalIgnoreCase) ||
+                key.Equals("skills", StringComparison.OrdinalIgnoreCase);
             if (byId && value is JsonArray entries && current is JsonArray list) { MergeById(list, entries, path + key); continue; }
             if (existing != null) target.Remove(existing);
             target[key] = value?.DeepClone();
@@ -573,6 +574,27 @@ public static class BattleData
         Within(s.RescueGraceMinLiftSeconds, 0, 2, "rescueGraceMinLiftSeconds");
         Positive(s.SlimeWidth, "slimeWidth"); Positive(s.SlimeHeight, "slimeHeight"); Positive(s.MaxAlive, "maxAlive");
         foreach (var skill in BattleSkills.All) Positive(skill.Cooldown(s), skill.Skill + " cooldown");
+        if (s.Skills != null)
+        {
+            string known = string.Join(", ", BattleSkills.All.Select(info => info.Skill.ToString().ToLowerInvariant()));
+            var skillIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            for (int i = 0; i < s.Skills.Length; i++)
+            {
+                var k = s.Skills[i] ?? throw new InvalidDataException($"skills[{i}] is empty");
+                string at = $"skills[{(string.IsNullOrEmpty(k.Id) ? i.ToString() : k.Id)}]";
+                if (!BattleSkills.All.Any(info => string.Equals(info.Skill.ToString(), k.Id, StringComparison.OrdinalIgnoreCase)))
+                    throw new InvalidDataException($"{at}.id must be one of: {known}");
+                if (!skillIds.Add(k.Id)) throw new InvalidDataException($"skill id \"{k.Id}\" is used twice");
+                Text(k.NameVi, at + ".nameVi"); Text(k.NameEn, at + ".nameEn");
+                if (k.NameVi.Length == 0 || k.NameEn.Length == 0) throw new InvalidDataException($"{at} needs nameVi and nameEn");
+                foreach (var (desc, key) in new[] { (k.DescVi, "descVi"), (k.DescEn, "descEn") })
+                {
+                    if (desc == null || desc.Length == 0 || desc.Length > 220) throw new InvalidDataException($"{at}.{key} must be 1–220 characters");
+                    if (BattleSkills.UnknownKey(desc) is string unknown) throw new InvalidDataException($"{at}.{key}: {{{unknown}}} is not a battle.json number");
+                }
+            }
+            if (skillIds.Count != BattleSkills.All.Length) throw new InvalidDataException($"skills must list every skill: {known}");
+        }
         Positive(s.HealAmount, "healAmount"); Positive(s.CheerSeconds, "cheerSeconds"); Positive(s.CheerSpeed, "cheerSpeed");
         Positive(s.BombRadius, "bombRadius"); NotNegative(s.BombDamage, "bombDamage"); Positive(s.ShieldSeconds, "shieldSeconds");
         foreach (var (level, name) in new[] { (s.Easy, "easy"), (s.Hard, "hard") })
@@ -865,14 +887,16 @@ public static class BattleData
     }
 }
 
-// The user's skills, in HUD order: name, how it is used, cooldown and a description built
-// from the current numbers (so battle.json changes show in the HUD). Adding a skill: a
-// BattleSkill value, an entry here, its HudGlyph and its effect in BattleSim.Use.
-public sealed record BattleSkillInfo(BattleSkill Skill, bool Aimed, Func<BattleSettings, double> Cooldown,
-    string NameVi, string NameEn, Func<BattleSettings, string> DescribeVi, Func<BattleSettings, string> DescribeEn)
+// The user's skills, in HUD order: how each is used and which number is its cooldown (code).
+// Names and descriptions are data (battle.json "skills", SkillSpec); a description's {key} is
+// filled with that number of the battle, so battle.json changes show in the HUD. Adding a
+// skill: a BattleSkill value, an entry here and in BuiltIn/"skills", its HudGlyph and its
+// effect in BattleSim.Use.
+public sealed record BattleSkillInfo(BattleSkill Skill, bool Aimed, Func<BattleSettings, double> Cooldown)
 {
-    public string Name(bool english) => english ? NameEn : NameVi;
-    public string Describe(BattleSettings s, bool english) => english ? DescribeEn(s) : DescribeVi(s);
+    // Without a battle's settings: the built-in data's names.
+    public string Name(bool english, BattleSettings? s = null) => (s ?? BattleData.Settings).Skill(Skill).Name(english);
+    public string Describe(BattleSettings s, bool english) => BattleSkills.Fill(s.Skill(Skill).Desc(english), s);
 }
 
 public static class BattleSkills
@@ -880,22 +904,47 @@ public static class BattleSkills
     private static string N(double value) => value.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
     public static readonly BattleSkillInfo[] All =
     {
-        new(BattleSkill.Push, true, s => s.PushCooldown, "Đẩy quái", "Push",
-            s => $"Đẩy quái — chọn rồi click một slime (nửa trái: đẩy sang phải, nửa phải: sang trái), choáng {N(s.PushStunSeconds)} giây. Hồi {N(s.PushCooldown)} giây.",
-            s => $"Push — choose, then click a slime (left half: push right, right half: push left); stuns {N(s.PushStunSeconds)} s. {N(s.PushCooldown)} s cooldown."),
-        new(BattleSkill.Heal, false, s => s.HealCooldown, "Cá hồi máu", "Healing fish",
-            s => $"Cá hồi máu — mèo hồi {N(s.HealAmount)} HP. Hồi {N(s.HealCooldown)} giây.",
-            s => $"Healing fish — the cat gets {N(s.HealAmount)} HP back. {N(s.HealCooldown)} s cooldown."),
-        new(BattleSkill.Cheer, false, s => s.CheerCooldown, "Cổ vũ", "Cheer",
-            s => $"Cổ vũ — {N(s.CheerSeconds)} giây mèo đánh nhanh ×{N(s.CheerSpeed)}, mạnh ×{N(s.CheerDamage)}. Hồi {N(s.CheerCooldown)} giây.",
-            s => $"Cheer — for {N(s.CheerSeconds)} s the cat attacks ×{N(s.CheerSpeed)} as often, ×{N(s.CheerDamage)} as hard. {N(s.CheerCooldown)} s cooldown."),
-        new(BattleSkill.Bomb, true, s => s.BombCooldown, "Bom len", "Yarn bomb",
-            s => $"Bom len — chọn rồi click một slime: nổ sau {N(s.BombDelay)} giây, {N(s.BombDamage)} sát thương cho mọi quái quanh đó. Hồi {N(s.BombCooldown)} giây.",
-            s => $"Yarn bomb — choose, then click a slime: bursts after {N(s.BombDelay)} s for {N(s.BombDamage)} damage to every slime nearby. {N(s.BombCooldown)} s cooldown."),
-        new(BattleSkill.Shield, false, s => s.ShieldCooldown, "Khiên bong bóng", "Bubble shield",
-            s => $"Khiên bong bóng — {N(s.ShieldSeconds)} giây mèo không mất máu. Hồi {N(s.ShieldCooldown)} giây.",
-            s => $"Bubble shield — for {N(s.ShieldSeconds)} s the cat takes no damage. {N(s.ShieldCooldown)} s cooldown."),
+        new(BattleSkill.Push, true, s => s.PushCooldown),
+        new(BattleSkill.Heal, false, s => s.HealCooldown),
+        new(BattleSkill.Cheer, false, s => s.CheerCooldown),
+        new(BattleSkill.Bomb, true, s => s.BombCooldown),
+        new(BattleSkill.Shield, false, s => s.ShieldCooldown),
     };
 
     public static BattleSkillInfo Get(BattleSkill skill) => All[Array.FindIndex(All, info => info.Skill == skill)];
+
+    // The texts when battle.json has no "skills" (the shipped file says the same).
+    public static readonly SkillSpec[] BuiltIn =
+    {
+        new() { Id = "push", NameVi = "Đẩy quái", NameEn = "Push",
+            DescVi = "Đẩy quái — chọn rồi click một slime (nửa trái: đẩy sang phải, nửa phải: sang trái), choáng {pushStunSeconds} giây. Hồi {pushCooldown} giây.",
+            DescEn = "Push — choose, then click a slime (left half: push right, right half: push left); stuns {pushStunSeconds} s. {pushCooldown} s cooldown." },
+        new() { Id = "heal", NameVi = "Cá hồi máu", NameEn = "Healing fish",
+            DescVi = "Cá hồi máu — mèo hồi {healAmount} HP. Hồi {healCooldown} giây.",
+            DescEn = "Healing fish — the cat gets {healAmount} HP back. {healCooldown} s cooldown." },
+        new() { Id = "cheer", NameVi = "Cổ vũ", NameEn = "Cheer",
+            DescVi = "Cổ vũ — {cheerSeconds} giây mèo đánh nhanh ×{cheerSpeed}, mạnh ×{cheerDamage}. Hồi {cheerCooldown} giây.",
+            DescEn = "Cheer — for {cheerSeconds} s the cat attacks ×{cheerSpeed} as often, ×{cheerDamage} as hard. {cheerCooldown} s cooldown." },
+        new() { Id = "bomb", NameVi = "Bom len", NameEn = "Yarn bomb",
+            DescVi = "Bom len — chọn rồi click một slime: nổ sau {bombDelay} giây, {bombDamage} sát thương cho mọi quái quanh đó. Hồi {bombCooldown} giây.",
+            DescEn = "Yarn bomb — choose, then click a slime: bursts after {bombDelay} s for {bombDamage} damage to every slime nearby. {bombCooldown} s cooldown." },
+        new() { Id = "shield", NameVi = "Khiên bong bóng", NameEn = "Bubble shield",
+            DescVi = "Khiên bong bóng — {shieldSeconds} giây mèo không mất máu. Hồi {shieldCooldown} giây.",
+            DescEn = "Bubble shield — for {shieldSeconds} s the cat takes no damage. {shieldCooldown} s cooldown." },
+    };
+
+    // {key}: any top-level number of battle.json (case ignored).
+    private static readonly Regex Placeholder = new(@"\{([A-Za-z]+)\}");
+    private static readonly Dictionary<string, System.Reflection.PropertyInfo> Numbers = typeof(BattleSettings)
+        .GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+        .Where(p => (p.PropertyType == typeof(double) || p.PropertyType == typeof(int)) && p.GetIndexParameters().Length == 0 &&
+                    !Attribute.IsDefined(p, typeof(JsonIgnoreAttribute)))
+        .ToDictionary(p => p.Name, StringComparer.OrdinalIgnoreCase);
+
+    public static string Fill(string text, BattleSettings s) => Placeholder.Replace(text, m =>
+        Numbers.TryGetValue(m.Groups[1].Value, out var p) ? N(Convert.ToDouble(p.GetValue(s))) : m.Value);
+
+    // The first {key} that is not a battle.json number, or null.
+    public static string? UnknownKey(string text) =>
+        Placeholder.Matches(text).Select(m => m.Groups[1].Value).FirstOrDefault(key => !Numbers.ContainsKey(key));
 }

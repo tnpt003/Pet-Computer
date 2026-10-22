@@ -1,5 +1,7 @@
 # Bàn giao review hiện tại và kế hoạch đợt tiếp theo
 
+> **Quy tắc mới 20/10:** luôn commit và publish sau mỗi mốc code hoàn chỉnh, kiểm thử đạt; chạy smoke và báo artifact. Không cần hỏi lại. Mốc tài liệu-only commit, không cần publish binary. Xem AGENTS.md; quy tắc này thay các hạn chế cũ trong ghi chú lịch sử. Không tự push/upload.
+
 Cập nhật bàn giao: 2026-10-20 (Asia/Saigon). Review kỹ thuật bên dưới ghi nhận ngày 18/10, sau Battle Mode đợt 11.
 Workspace lúc review: C:\Project VS\Pet Computer; HEAD e45519d với thay đổi đợt 10–11 chưa commit.
 
@@ -125,7 +127,7 @@ Thứ tự đề xuất: R1 tái hiện/sửa → R2 ổn định test → R3 bo
 
 Người dùng yêu cầu lưu review và kế hoạch ở đây để AI khác đọc và tiếp tục công việc. Đọc AGENTS.md, PROGRESS.md và code thật trước khi triển khai; không coi các mục đã sửa bên dưới là lỗi còn mở. Giữ nguyên thay đổi chưa commit của người dùng/Claude.
 
-Lần bàn giao này chỉ cập nhật tài liệu. Hướng chính được chọn ngày 2026-10-20 là Adventure Update — Chương 1; roadmap ở ADVENTURE-UPDATE.md. Các ý tưởng lẻ và review cũ phía dưới là nguồn tham khảo/lịch sử, không còn là thứ tự triển khai độc lập. Đọc AGENTS.md và giải thích kế hoạch trước khi triển khai; giữ nguyên source đang có và không tự publish/commit/restart.
+Lần bàn giao này chỉ cập nhật tài liệu. Hướng chính được chọn ngày 2026-10-20 là Adventure Update — Chương 1; roadmap ở ADVENTURE-UPDATE.md. Các ý tưởng lẻ và review cũ phía dưới là nguồn tham khảo/lịch sử, không còn là thứ tự triển khai độc lập. Đọc AGENTS.md và giải thích kế hoạch trước khi triển khai; giữ nguyên source đang có và chủ động commit/publish theo quy tắc mới trong AGENTS.md.
 
 ## Ưu tiên mới nhất — Enemy Director, đội hình và gacha (2026-10-20)
 
@@ -146,11 +148,11 @@ Người dùng đã chọn gom các tính năng thành một bản cập nhật 
 - Một chương 5 màn: bản đồ → chuẩn bị → combat/nâng cấp giữa đợt → boss → phần thưởng → tiến trình lưu.
 - Gộp nâng cấp tạm thời, một quái hỗ trợ và cosmetic milestones thành cùng trải nghiệm. Sổ quái đầy đủ/quái khác/shop/căn cứ chuyển backlog.
 - Roadmap có các mốc kỹ thuật và tiêu chí nghiệm thu end-to-end; không phát triển các đề xuất lẻ dưới đây như những yêu cầu độc lập nữa. Nội dung roadmap mới ưu tiên nếu khác phạm vi gợi ý cũ.
-- Trạng thái: đã thống nhất hướng và gom tài liệu, chưa code/review/test trong lần này. Đọc code/AGENTS và giải thích tích hợp trước triển khai; không tự publish/commit/restart. Giữ các kết quả lịch sử, không báo chúng thành kết quả Adventure.
+- Trạng thái: đã thống nhất hướng và gom tài liệu, chưa code/review/test trong lần này. Đọc code/AGENTS và giải thích tích hợp trước triển khai; chủ động commit/publish theo quy tắc mới trong AGENTS.md. Giữ các kết quả lịch sử, không báo chúng thành kết quả Adventure.
 
 ## Ý tưởng nguồn — Chiều sâu trận đấu (đã gom vào Adventure Update)
 
-Trạng thái: **đề xuất, chưa triển khai và chưa review code mới trong lần bàn giao này**. Người dùng nói bản hiện tại có vẻ ổn và yêu cầu ghi các hướng mở rộng để AI khác kiểm tra. Không coi đây là yêu cầu làm tất cả ngay. Đọc AGENTS.md, PROGRESS.md, code và kết quả test hiện tại; báo phần đã có, phần thiếu, kế hoạch nhỏ nhất và các quyết định cần thống nhất trước khi code. Không tự publish/commit/đóng hoặc restart pet.
+Trạng thái: **đề xuất, chưa triển khai và chưa review code mới trong lần bàn giao này**. Người dùng nói bản hiện tại có vẻ ổn và yêu cầu ghi các hướng mở rộng để AI khác kiểm tra. Không coi đây là yêu cầu làm tất cả ngay. Đọc AGENTS.md, PROGRESS.md, code và kết quả test hiện tại; báo phần đã có, phần thiếu, kế hoạch nhỏ nhất và các quyết định cần thống nhất trước khi code. Commit/publish và đóng/mở lại pet phục vụ publish theo quy tắc mới trong AGENTS.md.
 
 Tài liệu bên dưới ghi đợt 15 đã triển khai trang bị/UI và test đạt; đó là ghi nhận của đợt trước, không phải kết quả kiểm chứng mới của reviewer. Giữ nguyên các trạng thái đã hoàn thành và mọi thay đổi chưa commit.
 
@@ -256,13 +258,13 @@ Inspect vũ khí hiện có trước: nếu đã có thì hoàn thiện khác bi
 
 Nâng cấp giữa đợt, shop/inventory lớn, mở khóa trang bị, quái/kỹ năng mới, đổi vũ khí giữa trận, LLM/voice/CV. Hướng sau khi đợt này ổn: chọn một nâng cấp giữa các đợt quái, chỉ hiệu lực trong trận; chưa triển khai ngay.
 
-Lần bàn giao chỉ ghi tài liệu. AI tiếp nhận đọc AGENTS.md, giải thích kế hoạch và làm theo phạm vi người dùng giao; không tự publish/commit/đóng hoặc restart pet. Giữ nguyên thay đổi chưa commit của người dùng/Claude.
+Lần bàn giao chỉ ghi tài liệu. AI tiếp nhận đọc AGENTS.md, giải thích kế hoạch và làm theo phạm vi người dùng giao; commit/publish và đóng/mở lại pet phục vụ publish theo quy tắc mới trong AGENTS.md. Giữ nguyên thay đổi chưa commit của người dùng/Claude.
 
 ## Yêu cầu trước — luồng chuẩn bị và khung dữ liệu (2026-10-19)
 
 > Trạng thái (đợt 14, 2026-10-19, commit 8a29302, đã publish): đã triển khai A, B, C. Bảng chuẩn bị ở PetWindow.BattlePrep.cs. Dữ liệu tùy chỉnh ở %LOCALAPPDATA%\DesktopPet\battle.json (schema và ví dụ: [BATTLE-DATA.md](BATTLE-DATA.md), [examples/battle.json](examples/battle.json)). Test tự động: 55 Python + 614 C# đạt; WPF 379 đạt, 6 check cũ thất bại do chuột thật ở màn hình phụ (bản HEAD cũng thất bại y hệt). Chưa chơi thử trên desktop thật. Chi tiết trong PROGRESS.md.
 
-Người dùng yêu cầu bàn giao để Claude triển khai luồng vào trận và khung dữ liệu mở rộng dưới đây. Phần này thay thế thứ tự ưu tiên cũ của review 18/10; các mục review phía dưới giữ làm backlog/thông tin lịch sử, không phải điều kiện phải hoàn tất trước luồng mới. Đọc code và giải thích kế hoạch trước khi sửa, giữ phạm vi đã yêu cầu. Không tự publish, commit, đóng/restart pet hoặc ghi đè thay đổi chưa commit.
+Người dùng yêu cầu bàn giao để Claude triển khai luồng vào trận và khung dữ liệu mở rộng dưới đây. Phần này thay thế thứ tự ưu tiên cũ của review 18/10; các mục review phía dưới giữ làm backlog/thông tin lịch sử, không phải điều kiện phải hoàn tất trước luồng mới. Đọc code và giải thích kế hoạch trước khi sửa, giữ phạm vi đã yêu cầu. Chủ động commit/publish theo AGENTS.md; không ghi đè thay đổi chưa commit không liên quan.
 
 ### A. Luồng vào trận
 
@@ -385,7 +387,7 @@ Hiện csproj để Version=1.0.0, scripts/publish.ps1 đặt tên ZIP theo vers
 - Khi chuẩn bị phát hành, thống nhất version beta và changelog; đưa version/mã commit vào thông tin build nếu phù hợp.
 - Nếu build từ working tree có thay đổi, thể hiện trạng thái đó; mã commit một mình không nhận diện đủ nội dung chưa commit.
 - Không ghi đè gói bản cũ chỉ vì cùng tên; có chiến lược tên artifact phân biệt phiên bản.
-- Chốt commit/tag theo chỉ dẫn người dùng, không tự commit/publish trong nhiệm vụ review/tài liệu.
+- Chốt commit/tag theo chỉ dẫn người dùng, áp dụng quy tắc commit/publish mới trong AGENTS.md (tài liệu-only commit, không cần publish binary).
 - Thử gói đầy đủ trên máy sạch: không cần Visual Studio, có .NET/Python/assets cần thiết; AI lỗi thì local fallback vẫn hoạt động.
 
 ## Tương lai — chưa nằm trong đợt triển khai này

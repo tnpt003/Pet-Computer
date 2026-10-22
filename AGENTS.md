@@ -13,6 +13,16 @@ C# / WPF (.NET 10) + Python AI service. Nhân vật: mèo hoạt hình.
 Ngoại lệ: nếu tôi nói "làm luôn" hoặc "không cần hỏi" thì bỏ qua bước 2-3 cho yêu cầu đó.
 Nếu hội thoại quá dài và bạn bắt đầu quên hoặc lặp lỗi, hãy tự đề nghị tôi mở phiên mới sau khi cập nhật PROGRESS.md.
 
+## Quy tắc commit và publish — người dùng cập nhật 2026-10-20
+
+- Sau mỗi mốc code hoàn chỉnh, chạy build/test phù hợp, cập nhật tài liệu, chủ động commit và publish rồi chạy scripts/check-publish.ps1. Không cần hỏi lại quyền commit/publish cho công việc đã được giao. Không chỉ để bản .dirty rồi báo hoàn tất.
+- Commit trước khi publish để artifact truy vết được source. Chỉ stage thay đổi thuộc mốc của mình; giữ nguyên thay đổi chưa commit không liên quan, không reset hoặc gom tất cả bằng git add . thiếu kiểm tra.
+- Nếu cần thay bản đang chạy: đóng đúng process pet của project bằng cách thoát bình thường, publish/smoke rồi mở lại nếu trước đó pet đang chạy. Không kill Python/app không liên quan và không ghi đè dữ liệu người dùng.
+- Nếu test/build/publish bị lỗi hoặc môi trường chặn: sửa trong phạm vi hoặc báo rõ bước còn thiếu; không tuyên bố đã phát hành thành công, không bỏ test để ép publish.
+- Mốc chỉ sửa tài liệu: commit tài liệu; không cần rebuild/publish binary không đổi. Review không có thay đổi file thì không tạo commit rỗng.
+- Commit là local; publish là đóng gói Windows bằng script project. Không suy ra quyền git push, tạo remote release, upload hoặc deploy ra ngoài. Báo commit hash, kết quả test/smoke và đường dẫn artifact sau mỗi mốc code.
+- Quy tắc này thay các chỉ dẫn cũ cấm tự commit/publish/restart phục vụ publish trong tài liệu bàn giao. Không thay phạm vi tính năng hoặc yêu cầu xác nhận thiết kế ngoài phạm vi đã giao.
+
 ## Phân vai
 - C#: window, rendering, animation, input, physics, âm thanh, tray, vòng đời Python, timeout/lỗi/fallback.
 - Python: chỉ quyết định hành vi cấp cao, tính cách, mood, memory. KHÔNG di chuyển window, KHÔNG physics.

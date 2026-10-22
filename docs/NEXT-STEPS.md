@@ -1,6 +1,6 @@
 # Trạng thái hiện tại và việc tiếp theo
 
-Cập nhật: 2026-10-22 (Asia/Saigon). Bản đang chạy: 1.3.0-beta.
+Cập nhật: 2026-10-23 (Asia/Saigon). Bản đang chạy: 1.4.0 (installer + tự cập nhật, xem docs/RELEASE.md).
 
 > **Quy tắc 20/10:** luôn commit và publish sau mỗi mốc code hoàn chỉnh, kiểm thử đạt; chạy smoke và báo artifact. Không cần hỏi lại. Mốc tài liệu-only commit, không publish binary. Xem AGENTS.md. Không tự push/upload.
 
@@ -28,11 +28,11 @@ Cập nhật: 2026-10-22 (Asia/Saigon). Bản đang chạy: 1.3.0-beta.
 
 ## Backlog (chưa chọn)
 
-- Vô tận: chỉnh số liệu sau khi chơi thật; mô phỏng cân bằng; phần thưởng mốc đợt.
+- Vô tận: chỉnh số liệu sau khi chơi thật; mô phỏng cân bằng (phần thưởng mốc đợt: xong 22/10, N3).
 
 - Mở rộng Viễn chinh: vùng/chương mới, thêm di vật/sự kiện.
-- Battle: thu dải sàn chỉ ôm vùng có slime; HUD cập nhật 15 lần/giây — số đo 22/10 (16 quái: 61 fps) cho thấy chưa cần. Kỹ năng (BattleSkills) chưa thành dữ liệu.
-- Phát hành rộng: bỏ nhãn beta, thử máy sạch, installer/MSIX, tự cập nhật, ký code.
+- Battle: thu dải sàn chỉ ôm vùng có slime; HUD cập nhật 15 lần/giây — số đo 22/10 (16 quái: 61 fps) cho thấy chưa cần. Kỹ năng: tên/mô tả đã thành dữ liệu (N2).
+- Phát hành rộng: 1.4.0 bỏ beta, installer + tự cập nhật Velopack/GitHub Releases (N5). Còn: người dùng push tag + thử máy Win 10; ký code (SignPath) khi cần; đồng hồ cát có cát chảy.
 - Dài hạn: quan hệ phát triển, nhiều mèo; LLM chỉ khi người dùng đổi quy tắc AGENTS.md.
 
 ## Đã bỏ theo người dùng (2026-10-22)

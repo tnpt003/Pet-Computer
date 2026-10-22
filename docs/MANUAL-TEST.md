@@ -311,6 +311,13 @@ Tự động đã có: physics kệ (rơi, nảy, nhún, đẩy, chạm mép, c�
 - [ ] Rê chuột lên món đồ: nhún nhẹ, hơi to lên; rời chuột thì về cỡ. Click đúp: mèo đi tới ngắm (cả khi bật Quiet).
 - [ ] Chơi bóng: bóng lăn trúng món đồ thì dội lại, món đồ lắc.
 - [ ] Chọn trưng bày đệm slime, để mèo tự do ~6 phút trở lên (không Quiet): mèo đi tới đệm, nằm ngủ TRÊN đệm (không lơ lửng, không chìm); thức sau ~10 s thì bước xuống. Click mèo lúc đó: thức như thường, kéo được.
+- [ ] Thả món đồ lên mép cửa sổ: bẹp + nảy giống khi đáp sàn (trước đây đáp "cứng").
+- [ ] Mèo đứng trên cùng cửa sổ với món đồ: chờ/click đúp → mèo ngắm; mèo tự đẩy có thể đẩy rơi khỏi mép. Mèo dưới sàn, món đồ trên cửa sổ: mèo không đi ngắm/đẩy.
+- [ ] Trưng bày đệm slime: chuột phải mèo → Làm ngay → "Ngủ trên đệm": mèo ở gần (≤ ~2 thân mèo) thì đi tới nằm ngủ trên đệm (cả khi Quiet); ở xa thì mục mờ, rê chuột thấy "Mèo ở xa đệm quá". Trưng bày cúp: không có mục này.
+- [ ] Nhấc mèo thả rơi (hoặc ném) trúng đệm slime: mèo bật lên cao hơn khi rơi xuống sàn, lệch sang bên, đệm bẹp, tiếng "squish"; 1–2 nhịp rồi đáp cạnh đệm. Cúp: không có.
+- [ ] Để mèo yên ~1,5–2 phút với đệm slime trên màn hình: mèo tự đi tới đệm rồi ngủ trên đó (thay vì ngủ tại chỗ). Không có đệm: ngủ tại chỗ như cũ.
+- [ ] Chơi bóng: quả bóng là cuộn len hồng có viền tối và sợi len thòng ra, vẫn lăn/xoay như cũ.
+- [ ] Làm mèo choáng (thả món đồ trúng đầu) rồi rê chuột thật nhanh qua mèo: KHÔNG hiện mặt Ngạc nhiên trong lúc thấy sao.
 - [ ] Trên màn hình chỉ có MỘT món (trước đây ~1,8×, nay ~1,2×): mặc định cúp xịn nhất (vàng → bạc → đồng, không có cúp thì đệm). Cài đặt → Mèo → "Món trưng bày": chọn món khác → Lưu: đổi ngay, vẫn đứng đúng sàn. Chưa có kỷ vật: ô mờ "Chưa có kỷ vật".
 - [ ] Thả kệ sát mép trái/phải màn hình: mèo (cùng màn hình, đang thức) quay sang, mặt ngạc nhiên "!", kệ rung → "poof" khói + lấp lánh → hiện ở giữa màn hình (phóng to nhẹ rồi về cỡ, rơi chút rồi nhún). Mèo đứng giữa: kệ hiện cạnh mèo, không rơi lên đầu.
 - [ ] Để mèo tự do vài phút (Playful nhanh hơn, Calm lâu hơn; lần đầu ~3 phút): mèo đi tới một bên kệ, cúi người, đẩy — kệ trượt có nảy/lắc, mèo nhìn theo vui vẻ. Nếu kệ trượt tới mép: mèo ngạc nhiên, kệ về giữa. Quiet/ngủ/fullscreen/đang chơi bóng: không đẩy.

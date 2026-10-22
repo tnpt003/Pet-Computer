@@ -19,20 +19,43 @@ public sealed partial class PetWindow
     private double shelfHoverBlend, shelfStartleAt;
     // A keepsake swap under way (from the menu): the one that appears after the puff.
     private string? shelfSwapTo;
-    // The cat went to look because the user double-clicked (allowed in Quiet: the user asked).
-    private bool admireAsked;
+    // The cat went to look (double click) or to sleep on the cushion ("Do now") because the user
+    // asked: allowed in Quiet.
+    private bool admireAsked, napAsked;
+    // "Do now → Sleep on the cushion" only when the cat is this close to it (centre to centre).
+    public const double CushionNearDistance = 200;
 
     // Napping on the slime cushion: walking over, then asleep on it (drawn lifted onto the cushion).
     private enum CushionNap { None, Walk, Asleep }
     private CushionNap cushionNap;
-    private double napVisit = 360, napTime, napLift;
-    public const double NapEvery = 600;
+    private double napVisit = 240, napTime, napLift;
+    // The cushion draws naps: every 4–7 minutes, a sleep the cat picks on its own, and a little before
+    // it would get sleepy from being left alone.
+    public const double NapEvery = 240, NapBeforeSleepy = 25, NapWalkSeconds = 20, CushionReach = 1200;
 
     public long ShelfLedgeId => shelfLedgeId;
     public bool NappingOnCushion => cushionNap == CushionNap.Asleep;
     public bool GoingToNap => cushionNap == CushionNap.Walk;
     public double NapLift => napLift;
     private bool ShelfOnFloor => shelfLedgeId == 0 && shelf.Ground == 0;
+    // On the same ground as the cat: both on the floor, or both on the same window's top edge.
+    private bool ShelfWithCat => ShelfBesideCat && pet.Grounded && (ShelfOnFloor ? pet.LedgeId == 0 : pet.LedgeId == shelfLedgeId && OnLedge);
+    private int FacingShelf => ShelfCenter < CatCenter ? -1 : 1;
+
+    // Where the cat can stand (its left edge) on the ground it shares with the keepsake; null: no room.
+    private double? CatCanStand(double x)
+    {
+        if (x < bounds.Left || x > bounds.Right - settings.Width) return null;
+        return pet.LedgeId == 0 || PetLedges.Support(ledges, pet.LedgeId, x + settings.Width / 2) != null ? x : null;
+    }
+
+    // The cat stands still in this pose, facing this way.
+    private void HoldStill(PetAction action, int facing)
+    {
+        pet.Action = action;
+        pet.VX = pet.SmoothedWalkVelocity = 0;
+        pet.Facing = facing;
+    }
     private double ShelfCenter => shelf.X + ShelfArtWidth / 2;
     private double CatCenter => pet.X + settings.Width / 2;
     // The cushion's soft top above the floor, as the sleeping cat sinks into it a little.
@@ -105,7 +128,8 @@ public sealed partial class PetWindow
     {
         if (shelfLedgeId == 0) return;
         if (!ShelfLedgesUsable || shelfHeld || windowRectProbe(shelfLedgeId) is not WindowSnapshot now) { LeaveShelfLedge(); return; }
-        bool standing = shelf.Height <= shelf.Ground + 0.5 && shelf.VY <= 0;
+        // Resting on it (not still falling onto it: the landing's squash and bounce come from the step).
+        bool standing = !shelf.Held && shelf.VY == 0 && shelf.Height <= shelf.Ground + 0.5;
         if (standing) shelf.X += now.Left - shelfLedgeLeft;
         shelfLedgeLeft = now.Left; shelfLedgeTop = now.Top;
         // The scanned list can lag a moved window: compare in its coordinates.
@@ -156,7 +180,7 @@ public sealed partial class PetWindow
     // Double click: the cat comes to look at it now (even in Quiet: the user asked).
     public bool CallCatToLook()
     {
-        if (!CanPlay || BattleActive || OnLedge || pet.LedgeId != 0 || TrophySpot() == null) return false;
+        if (!CanPlay || BattleActive || TrophySpot() == null) return false;
         CancelFeatureActivity();
         admiring = admireAsked = true;
         admireRemaining = 0;
@@ -189,18 +213,20 @@ public sealed partial class PetWindow
         napVisit -= dt;
         if (cushionNap == CushionNap.None && napVisit <= 0)
         {
-            napVisit = NapEvery + featureRandom.NextDouble() * 300;
+            napVisit = NapEvery + featureRandom.NextDouble() * 180;
             if (pet.Action is PetAction.Idle or PetAction.Sitting) GoNapOnCushion();
         }
+        // Left alone and nearly sleepy: to the cushion first, rather than falling asleep where it stands.
+        if (cushionNap == CushionNap.None && pet.Emotions.SecondsWithoutAttention >= PetEmotions.SleepyAfter - NapBeforeSleepy
+            && pet.Emotions.SecondsWithoutAttention < PetEmotions.SleepyAfter && pet.Action is PetAction.Idle or PetAction.Sitting) GoNapOnCushion();
         if (cushionNap != CushionNap.Walk) return false;
         napTime += dt;
-        if (!CushionReady || napTime > 15) { StopCushionNap(); return false; }
+        if (!CushionReady || napTime > NapWalkSeconds) { StopCushionNap(); return false; }
         double target = Math.Clamp(ShelfCenter - settings.Width / 2, bounds.Left, Math.Max(bounds.Left, bounds.Right - settings.Width));
         if (Math.Abs(target - pet.X) < 4)
         {
             pet.X = target;
-            pet.VX = pet.SmoothedWalkVelocity = 0;
-            pet.Action = PetAction.Idle;
+            HoldStill(PetAction.Idle, pet.Facing);
             if (behavior.StartManual(pet, PetAction.Sleeping))
             {
                 cushionNap = CushionNap.Asleep;
@@ -213,23 +239,63 @@ public sealed partial class PetWindow
         return true;
     }
 
-    // The cushion is on display, on the floor of the cat's monitor, still, and free.
-    private bool CushionReady => DisplayedKeepsake?.Kind == KeepsakeSpec.Cushion && ShelfBesideCat && ShelfOnFloor && shelf.Resting
-        && !shelfHeld && shelfHop == ShelfHop.None && pet.LedgeId == 0;
+    // The cushion is on display, on the ground the cat stands on (floor or the same window), still, and free.
+    private bool CushionReady => DisplayedKeepsake?.Kind == KeepsakeSpec.Cushion && ShelfWithCat && shelf.Resting
+        && !shelfHeld && shelfHop == ShelfHop.None && CatCanStand(ShelfCenter - settings.Width / 2) != null;
+    // Close enough for "Do now → Sleep on the cushion".
+    public bool CushionNear => CushionReady && Math.Abs(ShelfCenter - CatCenter) <= CushionNearDistance;
 
-    // For checks (and the timer): go and nap on the cushion now. False when it may not.
+    // For checks (and the timers): go and nap on the cushion now. False when it may not.
     public bool GoNapOnCushion()
     {
-        if (!CanPlay || EffectiveQuiet || BattleActive || FeatureOwnsMovement() || OnLedge || !CushionReady || pet.Emotions.WakeCooldownRemaining > 0) return false;
+        if (!CanPlay || EffectiveQuiet || BattleActive || FeatureOwnsMovement() || !CushionReady || pet.Emotions.WakeCooldownRemaining > 0
+            || Math.Abs(ShelfCenter - CatCenter) > CushionReach) return false;
         cushionNap = CushionNap.Walk;
         napTime = 0;
         return true;
     }
 
+    // "Do now → Sleep on the cushion": only near it; like every "Do now" also in Quiet and during the
+    // wake cooldown (the sleep rules themselves stay). Not while the pet cannot act (asleep, held, flying).
+    public bool SleepOnCushionNow()
+    {
+        if (paused || closed || dragging || BattleOwnsPet || !CushionNear || !PetBehavior.CanStartManual(pet, PetAction.Sleeping)) return false;
+        revision++; // Like DoNow: AI replies chosen before this request are dropped.
+        CancelFeatureActivity();
+        cushionNap = CushionNap.Walk;
+        napAsked = true;
+        napTime = 0;
+        return true;
+    }
+
+    // PetBehavior picked a sleep of its own: with the cushion on display it goes there to sleep instead.
+    private bool SleepOnCushionInstead(PetModel _) => GoNapOnCushion();
+
     private void StopCushionNap()
     {
         if (cushionNap == CushionNap.Walk && pet.Action == PetAction.Walking) { pet.Action = PetAction.Idle; pet.VX = 0; behavior.Reset(pet); }
         cushionNap = CushionNap.None;
+        napAsked = false;
+    }
+
+    // Dropped or thrown onto the slime cushion (only the cushion): a trampoline. The cat bounces up
+    // higher than off the floor and a little to the side, so it comes down beside it after a hop or two.
+    // From the physics loop, after each step (PetPhysics is unchanged).
+    private void BounceOnCushion(double previousFeet)
+    {
+        if (pet.Action != PetAction.Thrown || pet.VY < 250 || DisplayedKeepsake?.Kind != KeepsakeSpec.Cushion || !ShelfBesideCat
+            || shelfHeld || shelfHop != ShelfHop.None || !shelf.Grounded) return;
+        double surface = ShelfFloor - shelf.Height - (TrophyShelf.ShelfHeight + TrophyShelf.CushionHeight - 3) * DisplayScale;
+        double feet = pet.Y + settings.Height;
+        if (previousFeet > surface + 0.5 || feet < surface || CatCenter < shelf.X + 4 || CatCenter > shelf.X + ShelfArtWidth - 4) return;
+        double impact = pet.VY;
+        pet.Y = surface - settings.Height;
+        pet.VY = -Math.Min(1100, impact * 0.9 + 140);
+        int away = Math.Abs(CatCenter - ShelfCenter) < 1 ? (featureRandom.NextDouble() < 0.5 ? -1 : 1) : CatCenter < ShelfCenter ? -1 : 1;
+        pet.VX += away * 150;
+        shelf.SquashV += Math.Clamp(impact / 1000 * 7, 2.5, 9);
+        shelfDust = 0; shelfDustStrength = Math.Clamp(impact / 1200, 0.3, 1);
+        PlayPetSound("squish");
     }
 
     // Every frame (TickShelf): while asleep on the cushion it is drawn lifted onto it; it ends with
@@ -239,7 +305,7 @@ public sealed partial class PetWindow
         if (cushionNap == CushionNap.Asleep)
         {
             bool still = pet.Action is PetAction.Sleeping or PetAction.Waking && pet.Grounded && CushionReady && Math.Abs(ShelfCenter - CatCenter) < 24;
-            if (!still) cushionNap = CushionNap.None;
+            if (!still) { cushionNap = CushionNap.None; napAsked = false; }
         }
         double target = cushionNap == CushionNap.Asleep ? CushionSurface : 0;
         napLift += (target - napLift) * (1 - Math.Exp(-dt * 12));

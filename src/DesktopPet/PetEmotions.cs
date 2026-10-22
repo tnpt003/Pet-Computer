@@ -141,7 +141,7 @@ public sealed class PetEmotions
     // screen edge). Not in manual control or asleep; false when no expression was set.
     public bool Startle()
     {
-        if (SleepLocked || ManualMode || Suspended) return false;
+        if (SleepLocked || ManualMode || Suspended) return false; // (The window never calls it while bonked.)
         SetTransient(PetEmotion.Surprised, 1.1);
         surpriseAfter = now + 6;
         return true;
@@ -215,7 +215,8 @@ public sealed class PetEmotions
         }
         bool petted = false;
         PettingLean *= Math.Exp(-dt * 3);
-        bool busy = Suspended || pet.TreatRemaining > 0 || pet.Action is PetAction.Dragging or PetAction.Waking or PetAction.Climbing || PetActionRules.IsInFlight(pet.Action);
+        // Bonked (seeing stars): busy too, so a fast cursor does not startle it out of the daze.
+        bool busy = Suspended || pet.TreatRemaining > 0 || pet.Bonk > 0 || pet.Action is PetAction.Dragging or PetAction.Waking or PetAction.Climbing || PetActionRules.IsInFlight(pet.Action);
         if (busy) PettingLean = 0;
         if (cursorX.HasValue && cursorY.HasValue)
         {

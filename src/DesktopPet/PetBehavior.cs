@@ -219,8 +219,13 @@ public sealed class PetBehavior(PetSettings settings, Random? randomSource = nul
             pet.Action = PetAction.PreparingJump; pet.VX = pet.VY = pet.SmoothedWalkVelocity = 0;
             remaining = PetSettings.JumpPreparationDuration;
         }
+        // A sleep of its own may happen somewhere better (the slime cushion): the window walks it there.
+        if (pet.Action == PetAction.Sleeping && SleepElsewhere?.Invoke(pet) == true) { pet.Action = PetAction.Idle; return; }
         if (pet.Action == PetAction.Sleeping) pet.Emotions.EnterSleep();
     }
+
+    // Set by the window; returns true when it takes the pet somewhere else to sleep.
+    public Func<PetModel, bool>? SleepElsewhere { get; set; }
 
     public bool TryApply(PetModel pet, AiDecision decision)
     {

@@ -799,9 +799,9 @@ internal static class Program
         // "Do now" menu: immediate actions (even in Quiet), queued after waking, manual emotions.
         var doNow = window.ContextMenu.Items.OfType<System.Windows.Controls.MenuItem>().FirstOrDefault(item => item.Header is "Làm ngay" or "Do now");
         var feelings = window.ContextMenu.Items.OfType<System.Windows.Controls.MenuItem>().FirstOrDefault(item => item.Header is "Cảm xúc" or "Emotions");
-        Check(doNow != null && doNow.Items.OfType<System.Windows.Controls.MenuItem>().Count() == 12 &&
+        Check(doNow != null && doNow.Items.OfType<System.Windows.Controls.MenuItem>().Count(item => item.Visibility == Visibility.Visible) == 12 &&
               feelings != null && feelings.Items.OfType<System.Windows.Controls.MenuItem>().Count() == 6,
-            "Context menu offers Do now with 12 actions and Emotions with the manual switch and 5 emotions");
+            "Context menu offers Do now with 12 actions (\"Sleep on the cushion\" hidden without the cushion) and Emotions with the manual switch and 5 emotions");
         window.Reset();
         Check(window.DoNow(PetAction.ChasingTail) && pet.Action == PetAction.ChasingTail, "Do now starts a gesture at once, even in Quiet mode");
         behavior.Step(pet, 0.5);

@@ -97,6 +97,7 @@ public sealed partial class PetWindow : Window
         physics = new PetPhysics(settings);
         behavior = new PetBehavior(settings);
         behavior.DecisionRequested += RequestDecision;
+        behavior.SleepElsewhere = SleepOnCushionInstead; // With the slime cushion on display (PetWindow.TrophyPlay.cs).
         if (Environment.GetEnvironmentVariable("PET_AI_DISABLED") != "1") ai = new PythonDecisionSource();
         renderer = new PetRenderer(pet);
         Content = renderer;
@@ -350,6 +351,7 @@ public sealed partial class PetWindow : Window
                     // Battle Mode owns the pet: no random actions, sleep or AI moves (PetWindow.Battle.cs).
                     if (!FeatureOwnsMovement() && !BattleActive) behavior.Step(pet, PhysicsStep, cursorX);
                     physics.Step(pet, bounds, PhysicsStep, ledges, FeatureOwnsMovement());
+                    BounceOnCushion(previousY + settings.Height); // The slime cushion is a trampoline (PetWindow.TrophyPlay.cs).
                     accumulator -= PhysicsStep;
                 }
             }

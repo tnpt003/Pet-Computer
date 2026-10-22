@@ -634,7 +634,42 @@ internal static class ExpeditionChecks
             pet.Action = PetAction.Idle;
             Shelf(0.6);
             check(!window.NappingOnCushion && window.NapLift == 0, "Awake, it steps down");
-            pet.Emotions.Reset();
+            pet.Emotions.FinishSleep(0);
+
+            // "Do now → Sleep on the cushion": only close to it; also in Quiet.
+            double cushionCenter = window.TrophyBounds.Left + window.TrophyBounds.Width / 2;
+            pet.X = Math.Max(area.Left, cushionCenter - 56 - 400); pet.Action = PetAction.Idle;
+            check(!window.CushionNear && !window.SleepOnCushionNow(), "Far from the cushion \"Sleep on the cushion\" does nothing (greyed out)");
+            pet.X = cushionCenter - 56 - 150;
+            prefs.Quiet = true; behavior.Quiet = true;
+            check(window.CushionNear && window.SleepOnCushionNow() && window.GoingToNap, "Close to it the cat goes to sleep on the cushion, even in Quiet");
+            Call(window, "TickFeatures", 1.0 / 60);
+            check(pet.Action == PetAction.Walking && pet.VX > 0, "It walks the few steps to the cushion");
+            pet.X = cushionCenter - 56;
+            Call(window, "TickFeatures", 1.0 / 60);
+            Shelf(0.3);
+            check(window.NappingOnCushion && pet.Action == PetAction.Sleeping, "And sleeps on it");
+            prefs.Quiet = false; behavior.Quiet = false;
+            behavior.WakeByClick(pet); pet.Action = PetAction.Idle;
+            Shelf(0.6);
+            pet.Emotions.FinishSleep(0);
+            check(Call(window, "SleepOnCushionInstead", pet) is true && window.GoingToNap, "A sleep the cat picks on its own goes to the cushion instead");
+            window.Reset(); pet.Emotions.FinishSleep(0);
+            Shelf(0.5);
+
+            // Thrown onto the slime cushion: a trampoline, a stronger bounce than the floor's, to the side.
+            cushionCenter = window.TrophyBounds.Left + window.TrophyBounds.Width / 2;
+            double surface = area.Bottom - motion.Height - (TrophyShelf.ShelfHeight + TrophyShelf.CushionHeight - 3) * PetWindow.DisplayScale;
+            void ThrowOntoKeepsake()
+            {
+                pet.X = cushionCenter - 56 + 10; pet.Y = surface - 112 + 2; pet.VY = 600; pet.VX = 0; pet.Grounded = false; pet.Action = PetAction.Thrown;
+                motion.SquashV = 0;
+                Call(window, "BounceOnCushion", surface - 3);
+            }
+            ThrowOntoKeepsake();
+            check(pet.VY < -600 && pet.VX > 0 && motion.SquashV > 2 && pet.Y + 112 <= surface + 0.01,
+                $"Thrown onto the cushion the cat bounces up harder than it fell (floor: ×0.58) and a little aside (VY {pet.VY:F0}, VX {pet.VX:F0})");
+            window.Reset(); pet.Emotions.Reset();
 
             // The ball rolling into the keepsake bounces back and the keepsake wobbles.
             window.ToggleToy();
@@ -643,6 +678,16 @@ internal static class ExpeditionChecks
             motion.TiltV = 0;
             Call(window, "ShelfMeetsBall");
             check(toy.VX < 0 && toy.X <= window.TrophyBounds.Left - 12 && motion.TiltV != 0, "The toy ball bounces off the keepsake, which wobbles");
+            check(typeof(PetWindow).GetField("ballArt", Flags)!.GetValue(window) is YarnBallArt, "The toy ball is drawn as a ball of yarn");
+            if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string yarnReview)
+            {
+                var yarn = new YarnBallArt { Width = 96, Height = 96 };
+                yarn.Measure(new Size(96, 96)); yarn.Arrange(new System.Windows.Rect(0, 0, 96, 96));
+                var bitmap = new System.Windows.Media.Imaging.RenderTargetBitmap(96, 96, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
+                bitmap.Render(yarn);
+                var png = new System.Windows.Media.Imaging.PngBitmapEncoder(); png.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bitmap));
+                using var yarnFile = File.Create(Path.Combine(yarnReview, "yarn-ball.png")); png.Save(yarnFile);
+            }
             window.ToggleToy();
             Shelf(2);
 
@@ -661,6 +706,12 @@ internal static class ExpeditionChecks
 
             // While the user holds it, the cat watches it; landing close by startles the cat.
             prefs.TrophyShown = null; Call(window, "TickTrophies"); Shelf(1);
+            cushionCenter = window.TrophyBounds.Left + window.TrophyBounds.Width / 2;
+            surface = area.Bottom - motion.Height - (TrophyShelf.ShelfHeight + TrophyShelf.CushionHeight - 3) * PetWindow.DisplayScale;
+            ThrowOntoKeepsake();
+            check(pet.VY == 600 && motion.SquashV == 0, "A cup is no trampoline (only the slime cushion)");
+            check(Call(window, "SleepOnCushionInstead", pet) is false, "With a cup on display the cat sleeps where it is");
+            window.Reset(); pet.Emotions.Reset(); Shelf(0.5);
             pet.Action = PetAction.Idle; pet.Emotions.Reset();
             motion.X = pet.X + 300; motion.Height = 150;
             // (Not ticked while held: the drag would follow the real cursor.)
@@ -698,9 +749,25 @@ internal static class ExpeditionChecks
             pet.X = area.Left + 40;
             Call(window, "TickLedges", 1.0 / 60);
             motion.X = middleX; motion.Height = 420; motion.VX = motion.VY = 0;
-            Shelf(2.5);
+            double ledgeSquash = 0;
+            bool ledgeBounced = false;
+            for (double t = 0; t < 2.5; t += 1.0 / 60)
+            {
+                Shelf(1.0 / 60);
+                ledgeSquash = Math.Max(ledgeSquash, motion.Squash);
+                ledgeBounced |= window.ShelfLedgeId == 4242 && motion.VY > 0;
+            }
+            check(ledgeSquash > 0.1 && ledgeBounced, $"On the window edge it lands with a squash and a bounce, like on the floor (squash {ledgeSquash:F2})");
             check(window.ShelfLedgeId == 4242 && Math.Abs(motion.Height - 300) < 1 && motion.Resting && Math.Abs(window.TrophyBounds.Bottom - (area.Bottom - 300)) < 1,
                 $"Dropped above an app window it lands on its top edge (height {motion.Height:F0}, ledge {window.ShelfLedgeId})");
+            // The cat on the same window edge plays with it there; from the floor it does not.
+            pet.LedgeId = 4242; pet.Grounded = true; pet.Y = area.Bottom - 300 - 112; pet.X = motion.X - 200; pet.Action = PetAction.Idle; pet.Emotions.FinishSleep(0);
+            check(window.AdmireTrophies(), "On the same window as the keepsake the cat may go and look at it");
+            Call(window, "StopAdmiring");
+            check(window.ShoveShelf(1), "...and shove it (off the edge, if it slides that far)");
+            Call(window, "StopShelfShove");
+            pet.LedgeId = 0; pet.Y = area.Bottom - 112; pet.Action = PetAction.Idle;
+            check(!window.AdmireTrophies() && !window.ShoveShelf(1), "From the floor it leaves a keepsake up on a window alone");
             double onWindowX = motion.X;
             appWindow = appWindow with { Left = appWindow.Left + 50, Right = appWindow.Right + 50, Top = appWindow.Top - 20, Bottom = appWindow.Bottom - 20 };
             Shelf(0.1);

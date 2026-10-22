@@ -34,6 +34,8 @@ public sealed partial class PetWindow
     {
         var root = PetUi.MenuItem(PetUi.Play);
         var actions = new MenuItem[CommandItems.Length];
+        var cushionSleep = new MenuItem();
+        cushionSleep.Click += (_, _) => SleepOnCushionNow(); // PetWindow.TrophyPlay.cs
         for (int i = 0; i < CommandItems.Length; i++)
         {
             var action = CommandItems[i].Action;
@@ -42,6 +44,8 @@ public sealed partial class PetWindow
             root.Items.Add(actions[i]);
             // Groups: basic poses, self-care, gestures.
             if (action is PetAction.SeekingAttention or PetAction.Stretching) root.Items.Add(new Separator());
+            // Right under "Sleep": sleep on the slime cushion, when it is on display and close by.
+            if (action == PetAction.Sleeping) root.Items.Add(cushionSleep);
         }
         // Emotions have their own submenu: the manual-control switch, then the emotions it unlocks.
         var feelings = PetUi.MenuItem(PetUi.Emotions);
@@ -67,6 +71,13 @@ public sealed partial class PetWindow
             feelings.Header = en ? "Emotions" : "Cảm xúc";
             feelings.IsEnabled = !paused && !BattleOwnsPet;
             for (int i = 0; i < actions.Length; i++) actions[i].Header = en ? CommandItems[i].En : CommandItems[i].Vi;
+            // Shown only with the cushion on display; greyed out (with the reason) when the cat is far from it.
+            bool cushion = TrophiesVisible && DisplayedKeepsake?.Kind == KeepsakeSpec.Cushion;
+            cushionSleep.Visibility = cushion ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
+            cushionSleep.Header = en ? "Sleep on the cushion" : "Ngủ trên đệm";
+            cushionSleep.IsEnabled = CushionNear;
+            cushionSleep.ToolTip = CushionNear ? null : en ? "The cat is too far from the cushion" : "Mèo ở xa đệm quá";
+            ToolTipService.SetShowOnDisabled(cushionSleep, true);
             manual.Header = en ? "Control emotions myself" : "Tự điều khiển cảm xúc";
             manual.IsChecked = pet.Emotions.ManualMode;
             for (int i = 0; i < emotions.Length; i++)

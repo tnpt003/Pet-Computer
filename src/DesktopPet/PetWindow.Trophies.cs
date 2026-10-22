@@ -329,12 +329,7 @@ public sealed partial class PetWindow
         if (shelfWatch > 0)
         {
             shelfWatch = Math.Max(0, shelfWatch - dt);
-            if (PetActionRules.IsSettled(pet) && ShelfBesideCat)
-            {
-                pet.VX = pet.SmoothedWalkVelocity = 0;
-                pet.Action = PetAction.Looking;
-                pet.Facing = TrophyBounds.Left + ShelfArtWidth / 2 < pet.X + settings.Width / 2 ? -1 : 1;
-            }
+            if (PetActionRules.IsSettled(pet) && ShelfBesideCat) HoldStill(PetAction.Looking, FacingShelf);
             if (shelfWatch == 0 && pet.Action == PetAction.Looking) { pet.Action = PetAction.Idle; behavior.Reset(pet); }
         }
         shelfAreaTimer += dt;
@@ -480,15 +475,14 @@ public sealed partial class PetWindow
     // Where the cat stands to look (just left of the shelf, facing it); null: nothing to look at here.
     private double? TrophySpot()
     {
-        if (!ShelfBesideCat || shelfHeld || shelfHop != ShelfHop.None || !shelf.Grounded || !ShelfOnFloor) return null;
-        double target = shelf.X - settings.Width * 0.72;
-        return target < bounds.Left ? null : target;
+        if (!ShelfWithCat || shelfHeld || shelfHop != ShelfHop.None || !shelf.Grounded) return null;
+        return CatCanStand(shelf.X - settings.Width * 0.72);
     }
 
     // For checks: send the cat to look now (as the timer would). False when it may not.
     public bool AdmireTrophies()
     {
-        if (!CanPlay || EffectiveQuiet || BattleActive || FeatureOwnsMovement() || TrophySpot() == null || OnLedge) return false;
+        if (!CanPlay || EffectiveQuiet || BattleActive || FeatureOwnsMovement() || TrophySpot() == null) return false;
         admiring = true;
         admireRemaining = 0;
         return true;
@@ -501,21 +495,21 @@ public sealed partial class PetWindow
         if (!admiring && admireVisit <= 0)
         {
             admireVisit = AdmireEvery + featureRandom.NextDouble() * 300;
-            if (!returningHome && climbPlan == null && ledgeExit == 0 && !OnLedge && pet.Action is PetAction.Idle or PetAction.Sitting) AdmireTrophies();
+            if (!returningHome && climbPlan == null && ledgeExit == 0 && pet.Action is PetAction.Idle or PetAction.Sitting) AdmireTrophies();
         }
         if (!admiring) return false;
         if (TrophySpot() is not double target) { StopAdmiring(); return false; }
         if (admireRemaining > 0)
         {
             admireRemaining = Math.Max(0, admireRemaining - dt);
-            pet.Action = PetAction.Looking; pet.VX = pet.SmoothedWalkVelocity = 0; pet.Facing = 1;
+            HoldStill(PetAction.Looking, 1);
             if (admireRemaining <= 0) StopAdmiring();
             return true;
         }
         if (Math.Abs(target - pet.X) < 8)
         {
             admireRemaining = AdmireSeconds;
-            pet.Action = PetAction.Looking; pet.VX = pet.SmoothedWalkVelocity = 0; pet.Facing = 1;
+            HoldStill(PetAction.Looking, 1);
             System.Diagnostics.Trace.WriteLine("The cat looks at its keepsakes.");
         }
         else WalkToward(target);
@@ -535,15 +529,14 @@ public sealed partial class PetWindow
     // Where the cat stands to shove the shelf in this direction (null: no room on that side).
     private double? ShoveSpot(int direction)
     {
-        double target = direction > 0 ? shelf.X - settings.Width * 0.8 : shelf.X + ShelfArtWidth - settings.Width * 0.2;
-        return target < bounds.Left || target > bounds.Right - settings.Width ? null : target;
+        return CatCanStand(direction > 0 ? shelf.X - settings.Width * 0.8 : shelf.X + ShelfArtWidth - settings.Width * 0.2);
     }
 
     // For checks: the cat goes to shove the shelf now (as the timer would). False when it may not.
     public bool ShoveShelf(int? direction = null)
     {
-        if (!CanPlay || EffectiveQuiet || BattleActive || FeatureOwnsMovement() || OnLedge || pet.LedgeId != 0 || !ShelfBesideCat
-            || shelfHeld || shelfHop != ShelfHop.None || !shelf.Resting || !ShelfOnFloor) return false;
+        if (!CanPlay || EffectiveQuiet || BattleActive || FeatureOwnsMovement() || !ShelfWithCat
+            || shelfHeld || shelfHop != ShelfHop.None || !shelf.Resting) return false;
         int dir = direction ?? (featureRandom.NextDouble() < 0.5 ? -1 : 1);
         if (ShoveSpot(dir) == null) dir = -dir;
         if (ShoveSpot(dir) == null) return false;
@@ -575,7 +568,7 @@ public sealed partial class PetWindow
                 break;
             case ShelfShove.Crouch:
                 // Wiggles down, eyes on the shelf, then the push.
-                pet.Action = PetAction.Sitting; pet.Facing = shoveDirection; pet.VX = pet.SmoothedWalkVelocity = 0;
+                HoldStill(PetAction.Sitting, shoveDirection);
                 pet.PlayCrouch = Math.Min(1, shoveTime / 0.3);
                 if (shoveTime >= ShoveCrouchSeconds)
                 {
@@ -589,8 +582,7 @@ public sealed partial class PetWindow
                 }
                 break;
             case ShelfShove.Watch:
-                pet.Action = PetAction.Looking; pet.VX = pet.SmoothedWalkVelocity = 0;
-                pet.Facing = shelf.X + ShelfArtWidth / 2 < pet.X + settings.Width / 2 ? -1 : 1;
+                HoldStill(PetAction.Looking, FacingShelf);
                 if (shoveTime >= 0.3 && shoveTime - dt < 0.3) pet.Emotions.Cheer();
                 if (shoveTime >= ShoveWatchSeconds) { StopShelfShove(); return false; }
                 break;

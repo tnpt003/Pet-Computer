@@ -160,11 +160,8 @@ public sealed partial class PetWindow
         ball.X = Math.Clamp(pet.X + 145, bounds.Left + 12, Math.Max(bounds.Left + 12, bounds.Right - 12));
         ball.Height = 0; ball.VX = 45; ball.VY = 100; ball.BatCooldown = 0; ballTime = 45;
         var surface = new Grid { Background = new SolidColorBrush(Color.FromArgb(1, 0, 0, 0)), Cursor = System.Windows.Input.Cursors.Hand };
-        ballHalo = new Ellipse { Width = 36, Height = 36, Stroke = Brushes.White, StrokeThickness = 2, Opacity = 0 };
-        var art = new Grid { Width = 24, Height = 24, RenderTransformOrigin = new Point(0.5, 0.5) };
-        art.Children.Add(new Ellipse { Fill = Brushes.Coral, Stroke = Brushes.White, StrokeThickness = 2,
-            Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 3, ShadowDepth = 0, Color = Colors.Black } });
-        art.Children.Add(new Ellipse { Width = 8, Height = 20, Stroke = Brushes.DarkSlateBlue, StrokeThickness = 2 });
+        ballHalo = new Ellipse { Width = 36, Height = 36, Stroke = YarnBallArt.Halo, StrokeThickness = 2, Opacity = 0 };
+        var art = new YarnBallArt { Width = 24, Height = 24, RenderTransformOrigin = new Point(0.5, 0.5) };
         surface.Children.Add(ballHalo); surface.Children.Add(art); ballArt = art;
         toyWindow = new Window { Width = 56, Height = 56, WindowStyle = WindowStyle.None,
             ResizeMode = ResizeMode.NoResize, AllowsTransparency = true, Background = Brushes.Transparent,
@@ -191,7 +188,7 @@ public sealed partial class PetWindow
         toyWindow?.Close();
         returningHome = false;
         admiring = false; admireRemaining = 0;
-        shelfShove = ShelfShove.None; shelfWatch = 0; pet.Bonk = 0; cushionNap = CushionNap.None;
+        shelfShove = ShelfShove.None; shelfWatch = 0; pet.Bonk = 0; cushionNap = CushionNap.None; napAsked = false;
         climbPlan = null; ledgeExit = 0;
         PetPhysics.LetGo(pet); // A climbing pet lets go and drops.
         pet.TreatRemaining = 0;
@@ -290,11 +287,12 @@ public sealed partial class PetWindow
         }
         // Walking to the resting spot or the keepsakes on its own is autonomous; a look the user
         // asked for (double click on the keepsake) still happens in Quiet.
-        if (EffectiveQuiet) { StopShelfShove(); StopCushionNap(); if (!admireAsked) { StopAdmiring(); return; } }
+        // Walking to the cushion the user asked for ("Do now") also goes on in Quiet.
+        if (EffectiveQuiet) { StopShelfShove(); if (!napAsked) StopCushionNap(); if (!admireAsked) StopAdmiring(); }
         if (TickAdmiring(dt)) return; // PetWindow.Trophies.cs
+        if (TickCushionNap(dt)) return; // Napping on the slime cushion (PetWindow.TrophyPlay.cs).
         if (EffectiveQuiet) return;
         if (TickShelfShove(dt)) return; // Shoving the keepsake shelf along (PetWindow.Trophies.cs).
-        if (TickCushionNap(dt)) return; // Napping on the slime cushion (PetWindow.TrophyPlay.cs).
         restVisit -= dt;
         if (restVisit <= 0 && preferences.RestX.HasValue && pet.Action is PetAction.Idle or PetAction.Sitting && climbPlan == null && ledgeExit == 0)
         { returningHome = true; restVisit = 45; }

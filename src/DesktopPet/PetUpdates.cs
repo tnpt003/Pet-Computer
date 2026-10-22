@@ -42,10 +42,22 @@ public sealed class PetUpdates
     public bool Available => manager != null;
     public string? ReadyVersion => ready?.TargetFullRelease.Version.ToString();
     public string? CurrentVersion => manager?.CurrentVersion?.ToString();
+    public bool Checking => checking;
 
-    public void Start()
+    public static string ReleaseUrl(string version) => $"{RepositoryUrl}/releases/tag/v{version}";
+
+    // Automatic (Settings → General): checks on start and every few hours; off, only when the user asks.
+    public void Start(bool automatic)
     {
         if (manager == null) return;
+        SetAutomatic(automatic);
+    }
+
+    public void SetAutomatic(bool automatic)
+    {
+        if (manager == null) return;
+        if (!automatic) { timer.Stop(); return; }
+        if (timer.IsEnabled) return;
         timer.Start();
         _ = Check(false);
     }

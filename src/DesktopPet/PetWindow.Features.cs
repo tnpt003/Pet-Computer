@@ -137,6 +137,31 @@ public sealed partial class PetWindow
         if (persistPreferences && !preferences.Save()) PetDialog.Show(settingsWindow, "Desktop Pet", L("Cài đặt có hiệu lực trong phiên này nhưng không lưu được.", "The setting works for this session, but could not be saved."), "OK", glyph: PetDialog.WarningGlyph);
     }
 
+    // Self-update (App owns it; null in tests): Settings → General shows the version, the automatic
+    // switch and "Check for updates".
+    public PetUpdates? Updates { get; set; }
+    public bool AutoUpdate => preferences.AutoUpdate;
+    public string Language => preferences.Language;
+
+    // The welcome's language choice: the same as Settings → General → Language.
+    public void SetLanguage(string language)
+    {
+        if (language is not ("vi" or "en") || preferences.Language == language) return;
+        preferences.Language = language;
+        pet.Speech.Hide(); pet.Speech.DropPending(); RaiseLanguageChanged();
+        Interact("preferences_changed"); SavePreferences();
+    }
+
+    // The installed version starting now; returns the one recorded before (null: none yet).
+    public string? RecordVersion(string version)
+    {
+        string? previous = preferences.LastVersion;
+        if (previous == version) return previous;
+        preferences.LastVersion = version;
+        if (persistPreferences) preferences.Save();
+        return previous;
+    }
+
     public bool GiveTreat()
     {
         if (!CanPlay || treatCooldown > 0 || BattleOwnsPet) return false;

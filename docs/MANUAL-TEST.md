@@ -414,4 +414,8 @@ Tự động đã có: Phần thưởng trên sảnh (ô có hình, khóa, Mới
 - [ ] Cài 1.4.1 bằng Setup.exe (máy chưa cài, hoặc gỡ 1.4.0 trước): hình con mèo khi giải nén; mèo mở kèm hộp chào mừng (mẹo + ô Khởi động cùng Windows tích sẵn). Bỏ tích → Bắt đầu: Cài đặt → Chung ô tắt. Gỡ, cài lại để thử với ô tích: Task Manager → Startup apps có Desktop Pet; khởi động lại máy thì mèo tự mở (bản đã cài, không phải artifacts\win-x64).
 - [ ] Từng bật khởi động cùng Windows cho bản copy thư mục: cài 1.4.1, để ô tích → bấm Bắt đầu: khởi động lại máy chỉ mở bản đã cài.
 - [ ] Gỡ cài đặt: Startup apps không còn Desktop Pet; mục của bản copy thư mục khác (nếu có) vẫn còn.
-- [ ] Máy đã cài 1.4.0: nhận 1.4.1 qua khay (Cập nhật lên bản 1.4.1) — không hiện hộp chào mừng (chỉ lần cài đầu); trang Release 1.4.1 có ghi chú từ CHANGELOG.
+- [ ] Máy đã cài 1.4.0: nhận 1.4.1 qua khay (Cập nhật lên bản 1.4.1) — không hiện hộp chào mừng (chỉ lần cài đầu); mèo mở lại thì khay báo "Đã cập nhật lên bản 1.4.1", bấm vào mở trang Release 1.4.1 (có hướng dẫn cài + ghi chú từ CHANGELOG).
+- [ ] Hộp chào mừng: đổi Language / Ngôn ngữ → chữ trong hộp đổi ngay; bấm Bắt đầu → menu mèo, khay, Cài đặt theo ngôn ngữ đã chọn.
+- [ ] Đang chạy bản copy thư mục (artifacts\win-x64) rồi gỡ bản cài và cài lại Setup.exe: bản copy tự đóng (không còn icon khay thứ hai), bản cài mở kèm hộp chào mừng.
+- [ ] Cài đặt → Chung → Cập nhật (bản đã cài): hiện 1.4.1; bấm Kiểm tra cập nhật → nút "Đang kiểm tra…" rồi khay báo "đang dùng bản mới nhất"; tắt "Tự động tải và cài bản mới" → Lưu → mở lại Cài đặt vẫn tắt. Bản copy thư mục: mục này mờ, có dòng "không tự cập nhật".
+- [ ] README trên GitHub: link "⬇ Download" tải thẳng Setup.exe của bản mới nhất.

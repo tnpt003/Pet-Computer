@@ -44,6 +44,11 @@ public sealed class PetPreferences
     public bool BreakReminders { get; set; }
     public int BreakMinutes { get; set; } = 45;
     public static readonly int[] BreakChoices = { 30, 45, 60 };
+    // Installed app only (PetUpdates): on by default, new versions are fetched in the background;
+    // off, only Settings → General / the tray's "Check for updates" asks.
+    public bool AutoUpdate { get; set; } = true;
+    // The installed version that ran last (null: never recorded), for "Updated to x" after an update.
+    public string? LastVersion { get; set; }
     // On by default: the pet may stand on, jump onto and climb other apps' windows.
     public bool ClimbWindows { get; set; } = true;
     // On by default: the Expedition's keepsakes stand in the display corner once one is earned.

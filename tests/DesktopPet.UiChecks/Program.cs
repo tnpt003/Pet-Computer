@@ -259,12 +259,19 @@ internal static class Program
         }
         dialog.Close();
         // First run after installing: tips and "Start with Windows" (ticked); never shown to a built or copied app.
-        var welcome = PetWelcome.Create(window.L, out var welcomeAutostart);
+        var welcome = PetWelcome.Create("en", out var welcomeAutostart, out var welcomeLanguage);
         welcome.Left = -10000; welcome.Show(); welcome.UpdateLayout();
         var welcomeButtons = Descendants<System.Windows.Controls.Button>((FrameworkElement)welcome.Content).ToList();
+        bool WelcomeSays(string text) => Descendants<System.Windows.Controls.TextBlock>((FrameworkElement)welcome.Content).Any(t => t.Text.Contains(text));
         Check(welcomeAutostart.IsChecked == true && welcomeAutostart.IsVisible && welcomeButtons.Count == 1 && welcomeButtons[0].IsDefault &&
-              Descendants<System.Windows.Controls.TextBlock>((FrameworkElement)welcome.Content).Any(t => t.Text.Contains("khay") || t.Text.Contains("tray")),
-            "The welcome shows tips, one button and a ticked Start with Windows");
+              (string)welcomeButtons[0].Content == "Let's go" && welcomeLanguage.SelectedIndex == 0 && WelcomeSays("tray icon"),
+            "The welcome shows tips, the language, one button and a ticked Start with Windows");
+        welcomeLanguage.SelectedIndex = 1; welcome.UpdateLayout();
+        Check(WelcomeSays("Biểu tượng mèo ở khay") && (string)welcomeButtons[0].Content == "Bắt đầu" && (string)welcomeAutostart.Content == "Khởi động cùng Windows",
+            "Choosing Tiếng Việt rewrites the welcome at once");
+        Check(PetWelcome.DefaultLanguage(false, "vi") == "vi" && PetWelcome.DefaultLanguage(false, "en") == "en" &&
+              PetWelcome.DefaultLanguage(true, "en") == (System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "vi" ? "vi" : "en"),
+            "The welcome keeps a returning user's language; a new user starts in Windows' language");
         if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string welcomeReview && welcome.Content is FrameworkElement welcomeRoot)
         {
             System.IO.Directory.CreateDirectory(welcomeReview);
@@ -657,6 +664,10 @@ internal static class Program
         Check(form.Talks.IsChecked == true && form.Language.SelectedIndex == 0 && form.Language.Items.Count == 2 && (string)form.Language.Items[0] == "English" &&
               form.Chattiness.SelectedIndex == 1 && form.Forget != null && form.Autostart != null,
             "Settings default to English; speech defaults to talking, sometimes, with a forget link; startup lives in General");
+        // Not installed (a build): the Updates card shows the version, automatic updates on but greyed, no check button.
+        Check(form.AutoUpdate.IsChecked == true && !form.AutoUpdate.IsEnabled && !form.CheckUpdates.IsEnabled && (string)form.CheckUpdates.Content == "Check for updates" &&
+              System.Text.RegularExpressions.Regex.IsMatch(PetWindow.VersionText, @"^\d+\.\d+\.\d+"),
+            "General has Updates: version, automatic updates (off limits when not installed) and Check for updates");
         if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string settingsReview)
         {
             // Every tab in both languages, for a human look at the layout.
@@ -899,7 +910,21 @@ internal static class Program
         Check(form.BirthDay.SelectedIndex == 0 && form.BirthMonth.SelectedIndex == 0 && form.BirthDay.Items.Count == 32 && form.BirthMonth.Items.Count == 13,
             "Settings offer an unset birthday (day 1-31, month 1-12)");
         form.BirthDay.SelectedIndex = 31; form.BirthMonth.SelectedIndex = 2; // 31 February.
+        form.AutoUpdate.IsChecked = false;
         form.Save.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+        Check(!preferences.AutoUpdate && !window.AutoUpdate, "Saving keeps automatic updates off when unticked");
+        preferences.AutoUpdate = true;
+        // What's new after an update: the first installed start records its version; a later one reports the change.
+        Check(window.RecordVersion("1.4.1") == null && window.RecordVersion("1.4.1") == "1.4.1" && window.RecordVersion("1.4.2") == "1.4.1" &&
+              preferences.LastVersion == "1.4.2", "The installed version is recorded so an update can say what's new");
+        preferences.LastVersion = null;
+        // The welcome's language choice switches the whole app like Settings does.
+        int languageEvents = 0; void CountLanguage() => languageEvents++;
+        window.LanguageChanged += CountLanguage;
+        window.SetLanguage("vi"); window.SetLanguage("vi");
+        bool languageSet = window.Language == "vi" && languageEvents == 1;
+        window.SetLanguage("en"); window.LanguageChanged -= CountLanguage;
+        Check(languageSet && window.Language == "en" && languageEvents == 2, "SetLanguage switches the app's language once per change");
         var breaks = Field<PetBreaks>(window, "breaks");
         Check(preferences.Coat == "Black" && preferences.Accessory == "Hat" && renderer.Coat == "Black" && renderer.Accessory == "Hat" &&
               preferences.BreakReminders && preferences.BreakMinutes == 30 && breaks.Enabled && breaks.IntervalSeconds == 1800,

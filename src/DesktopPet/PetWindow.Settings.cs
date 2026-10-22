@@ -17,9 +17,9 @@ public sealed class PetSettingsForm
     // The keepsakes that can be on display (owned cups best first, then the cushion); empty: none yet.
     public ComboBox Trophy = null!;
     public string[] TrophyIds = Array.Empty<string>();
-    public CheckBox HolidayAccessories = null!, ClimbWindows = null!, ShowTrophies = null!, Talks = null!, Autostart = null!, BreakReminders = null!, Sounds = null!, InteractionSounds = null!, EmotionSounds = null!, SleepSounds = null!;
+    public CheckBox HolidayAccessories = null!, ClimbWindows = null!, ShowTrophies = null!, Talks = null!, Autostart = null!, BreakReminders = null!, Sounds = null!, InteractionSounds = null!, EmotionSounds = null!, SleepSounds = null!, AutoUpdate = null!;
     public Slider Volume = null!;
-    public Button Save = null!, Cancel = null!, Tuning = null!, Forget = null!, Preview = null!;
+    public Button Save = null!, Cancel = null!, Tuning = null!, Forget = null!, Preview = null!, CheckUpdates = null!;
     public PetRenderer PetPreview = null!;
     public PetModel PreviewPet = null!;
     public System.Windows.Threading.DispatcherTimer PreviewTimer = null!;
@@ -206,10 +206,33 @@ public sealed partial class PetWindow
             SelectedIndex = Math.Max(0, Array.IndexOf(PetPreferences.BreakChoices, preferences.BreakMinutes)) };
         EnableWith(form.BreakInterval, form.BreakReminders);
         form.BreakReminders.Margin = default;
+        // Updates: only the installed app (Setup.exe) updates itself; a copied folder shows its version and says so.
+        bool installed = Updates?.Available == true;
+        form.AutoUpdate = new CheckBox { Content = L("Tự động tải và cài bản mới", "Download and install new versions automatically"), IsChecked = preferences.AutoUpdate, IsEnabled = installed };
+        string checkText = L("Kiểm tra cập nhật", "Check for updates");
+        form.CheckUpdates = PetUi.SecondaryButton(checkText);
+        form.CheckUpdates.HorizontalAlignment = HorizontalAlignment.Left;
+        form.CheckUpdates.IsEnabled = installed && Updates?.Checking != true;
+        form.CheckUpdates.Click += async (_, _) =>
+        {
+            if (Updates == null) return;
+            form.CheckUpdates.IsEnabled = false; form.CheckUpdates.Content = L("Đang kiểm tra…", "Checking…");
+            await Updates.Check(true); // The tray says what it found.
+            form.CheckUpdates.IsEnabled = true; form.CheckUpdates.Content = checkText;
+        };
         var generalTab = Page(
             Section(L("Ứng dụng", "App"),
                 Row("Language / Ngôn ngữ", form.Language),
                 form.Autostart),
+            Section(L("Cập nhật", "Updates"),
+                Row(L("Phiên bản", "Version"), new TextBlock { Text = VersionText, VerticalAlignment = VerticalAlignment.Center }),
+                form.AutoUpdate,
+                form.CheckUpdates,
+                PetUi.Hint(installed
+                    ? L("Bản mới được tải ngầm, khay báo khi xong. Tắt tự động thì chỉ kiểm tra khi bạn bấm.",
+                        "New versions download in the background; the tray tells you when one is ready. Turned off, it only checks when you ask.")
+                    : L("Bản này không được cài bằng Setup nên không tự cập nhật. Bản cài đặt có ở trang Releases trên GitHub.",
+                        "This copy was not installed with Setup, so it does not update itself. The installer is on the GitHub Releases page."))),
             Section(L("Nghỉ giải lao", "Breaks"),
                 form.BreakReminders,
                 Row(L("Nhắc", "Remind"), form.BreakInterval),
@@ -270,6 +293,8 @@ public sealed partial class PetWindow
             breaks.Configure(preferences.BreakReminders, preferences.BreakMinutes);
             preferences.ClimbWindows = form.ClimbWindows.IsChecked == true;
             if (!preferences.ClimbWindows) DropLedges(); // A pet on a window falls; a climbing one lets go.
+            preferences.AutoUpdate = form.AutoUpdate.IsChecked == true;
+            Updates?.SetAutomatic(preferences.AutoUpdate);
             preferences.ShowTrophies = form.ShowTrophies.IsChecked == true;
             if (!preferences.ShowTrophies) StopAdmiring();
             if (form.TrophyIds.Length > 0) preferences.TrophyShown = form.TrophyIds[Math.Clamp(form.Trophy.SelectedIndex, 0, form.TrophyIds.Length - 1)];

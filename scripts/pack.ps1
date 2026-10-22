@@ -34,15 +34,25 @@ if ($Upload) {
     # The previous release (if any) for delta packages; a first release has none.
     & $dotnet vpk download github --repoUrl $repoUrl --token $env:GITHUB_TOKEN -o $output
 }
-# Release notes: the CHANGELOG.md section "## <version> …" (up to the next "## "), when there is one.
-$notesArgs = @()
+# Release notes: how to install (every release), then the CHANGELOG.md section "## <version> …"
+# (up to the next "## ") when there is one.
+$install = @'
+### Cài đặt / Install
+
+1. Tải **PetComputer-win-Setup.exe** ở mục Assets bên dưới rồi chạy (không cần quyền admin). / Download **PetComputer-win-Setup.exe** from Assets below and run it (no admin needed).
+2. Nếu Windows SmartScreen hiện "Windows protected your PC": bấm **More info → Run anyway** (bản cài chưa được ký số). / If SmartScreen says "Windows protected your PC": click **More info → Run anyway** (the installer is not code-signed yet).
+3. Mèo tự mở ra; bản đã cài tự cập nhật. / The pet opens by itself and keeps itself up to date.
+
+Đã cài rồi thì không cần tải lại: mèo tự cập nhật. / Already installed? No need to download again: the pet updates itself.
+'@
 $changelog = [IO.File]::ReadAllText((Join-Path $projectRoot 'CHANGELOG.md'), [Text.Encoding]::UTF8)
 $section = [regex]::Match($changelog, '(?ms)^## ' + [regex]::Escape($version) + '\b.*?(?=^## |\z)')
-if ($section.Success) {
-    $notes = Join-Path $output "notes-$version.md"
-    [IO.File]::WriteAllText($notes, $section.Value.Trim(), (New-Object Text.UTF8Encoding $false))
-    $notesArgs = @('--releaseNotes', $notes)
-} else { Write-Host "CHANGELOG.md has no section for $version; no release notes." }
+$notesText = $install.Trim()
+if ($section.Success) { $notesText += "`n`n" + $section.Value.Trim() }
+else { Write-Host "CHANGELOG.md has no section for $version; the notes only say how to install." }
+$notes = Join-Path $output "notes-$version.md"
+[IO.File]::WriteAllText($notes, $notesText, (New-Object Text.UTF8Encoding $false))
+$notesArgs = @('--releaseNotes', $notes)
 # The cat (the icon art, transparent) shows while Setup unpacks the app.
 & $dotnet vpk pack -u $packId -v $version -p $app -e DesktopPet.exe -o $output --packTitle 'Desktop Pet' --packAuthors 'tnpt003' `
     -i (Join-Path $projectRoot 'src\DesktopPet\Assets\Pet.ico') --shortcuts 'Desktop,StartMenuRoot' `

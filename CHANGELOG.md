@@ -2,9 +2,12 @@
 
 ## 1.4.1 — Chào mừng sau khi cài (2026-10-23)
 
-- **Lần mở đầu sau khi cài:** hộp chào mừng với vài mẹo (bế/ném mèo, menu chuột phải, biểu tượng khay) và ô **Khởi động cùng Windows** (tích sẵn). Nếu trước đó bạn bật khởi động cùng Windows cho bản copy thư mục, ô này chuyển nó sang bản đã cài.
+- **Lần mở đầu sau khi cài:** hộp chào mừng với vài mẹo (bế/ném mèo, menu chuột phải, biểu tượng khay), chọn **ngôn ngữ** (đổi là chữ đổi ngay; người mới mặc định theo ngôn ngữ Windows) và ô **Khởi động cùng Windows** (tích sẵn). Nếu trước đó bạn bật khởi động cùng Windows cho bản copy thư mục, ô này chuyển nó sang bản đã cài.
+- **Cài khi bản copy thư mục đang chạy:** bản đó được đóng bình thường để bản vừa cài mở ra (trước đây bản cài tự thoát, trông như không có gì xảy ra).
+- **Cài đặt → Chung → Cập nhật:** xem phiên bản, bật/tắt tự động tải và cài bản mới (tắt thì chỉ kiểm tra khi bạn bấm), nút Kiểm tra cập nhật.
+- **Sau khi cập nhật:** khay báo "Đã cập nhật lên bản …", bấm vào để xem có gì mới trên GitHub.
 - **Gỡ cài đặt** nay xóa luôn mục khởi động cùng Windows của bản đã cài (trước đây Windows vẫn cố mở file đã bị xóa). Mục khởi động của bản copy thư mục khác không bị đụng tới.
-- Trình cài đặt hiện hình con mèo trong lúc giải nén; trang Release có ghi chú thay đổi.
+- Trình cài đặt hiện hình con mèo trong lúc giải nén; trang Release có hướng dẫn cài (kể cả bước SmartScreen) và ghi chú thay đổi; README có link tải thẳng bản mới nhất.
 
 ## 1.4.0 — Vô tận, cài đặt và tự cập nhật (2026-10-22)
 

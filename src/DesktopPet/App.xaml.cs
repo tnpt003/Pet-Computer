@@ -14,22 +14,26 @@ public partial class App : Application
     private System.Threading.RegisteredWaitHandle? controlsWait;
     private bool ownsInstance;
     private PetUpdates? updates;
-    private bool firstRun;
+    private bool firstRun, restarted, newUser;
+    // Where clicking the tray's last balloon goes (null: nowhere).
+    private string? balloonLink;
 
     // Velopack first: the installer's hooks run and exit here, and an update downloaded earlier is
     // applied before anything starts. A copied (not installed) folder goes on as before.
-    // First run after installing: the welcome (PetWelcome). Uninstalling: drop this copy's Windows
-    // startup entry so Windows does not try to start a deleted file.
+    // First run after installing: the welcome (PetWelcome). Restarted by an update: "what's new".
+    // Uninstalling: drop this copy's Windows startup entry so Windows does not try to start a deleted file.
     public App()
     {
         try
         {
             Velopack.VelopackApp.Build()
                 .OnFirstRun(_ => firstRun = true)
+                .OnRestarted(_ => restarted = true)
                 .OnBeforeUninstallFastCallback(_ => { if (Environment.ProcessPath is string exe) new StartupRegistration().RemoveIfThis(exe); })
                 .Run();
         }
         catch (Exception ex) { System.Diagnostics.Trace.WriteLine($"Velopack startup skipped: {ex.Message}"); }
+        newUser = firstRun && !System.IO.File.Exists(System.IO.Path.Combine(PetPreferences.DataDirectory, "preferences.json"));
     }
 
     protected override void OnStartup(StartupEventArgs e)
@@ -39,6 +43,12 @@ public partial class App : Application
         instanceMutex = new System.Threading.Mutex(false, key);
         try { ownsInstance = instanceMutex.WaitOne(0); }
         catch (System.Threading.AbandonedMutexException) { ownsInstance = true; }
+        // Just installed while another copy runs: close that one so the installed pet (and its welcome) opens.
+        if (!ownsInstance && firstRun && PetHandover.CloseOtherCopies(TimeSpan.FromSeconds(10)))
+        {
+            try { ownsInstance = instanceMutex.WaitOne(TimeSpan.FromSeconds(5)); }
+            catch (System.Threading.AbandonedMutexException) { ownsInstance = true; }
+        }
         showControls = new System.Threading.EventWaitHandle(false, System.Threading.EventResetMode.AutoReset, key + "-controls");
         if (!ownsInstance) { showControls.Set(); Shutdown(); return; }
         PetLog.Install();
@@ -66,6 +76,7 @@ public partial class App : Application
         menu.Items.Add(reset);
         // Updates (installed app only): "Update to x" once one is downloaded, else "Check for updates".
         updates = new PetUpdates();
+        pet.Updates = updates;
         var checkUpdates = new Forms.ToolStripMenuItem(null, null, (_, _) => _ = updates.Check(true)) { Visible = updates.Available };
         var applyUpdate = new Forms.ToolStripMenuItem(null, null, (_, _) => { if (updates.ApplyAndRestart()) Shutdown(); }) { Visible = false };
         menu.Items.Add(checkUpdates);
@@ -100,19 +111,37 @@ public partial class App : Application
             Visible = true
         };
         tray.DoubleClick += (_, _) => pet.Reset();
+        tray.BalloonTipClicked += (_, _) =>
+        {
+            if (balloonLink == null) return;
+            try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(balloonLink) { UseShellExecute = true }); }
+            catch (Exception ex) { System.Diagnostics.Trace.WriteLine($"Could not open {balloonLink}: {ex.Message}"); }
+        };
         pet.LanguageChanged += Localize;
         updates.Changed += version =>
         {
             Localize();
             if (tray == null) return;
+            balloonLink = null;
             tray.ShowBalloonTip(8000, "Desktop Pet", version != null
                 ? pet.L($"Bản {version} đã tải xong. Chuột phải biểu tượng khay → Cập nhật, hoặc để lần mở mèo sau tự cập nhật.",
                         $"Version {version} is downloaded. Right-click the tray icon → Update, or it updates the next time the pet starts.")
                 : pet.L("Bạn đang dùng bản mới nhất.", "You have the latest version."), Forms.ToolTipIcon.Info);
         };
         pet.Show();
-        if (firstRun) Dispatcher.BeginInvoke(new Action(() => PetWelcome.Show(pet.L, new StartupRegistration())));
-        updates.Start();
+        if (firstRun) Dispatcher.BeginInvoke(new Action(() => PetWelcome.Show(pet, newUser, new StartupRegistration())));
+        // What's new: the installed version changed since the last start (or Velopack restarted it after updating).
+        if (updates.CurrentVersion is string current)
+        {
+            string? previous = pet.RecordVersion(current);
+            if (!firstRun && (restarted || (previous != null && previous != current)))
+            {
+                balloonLink = PetUpdates.ReleaseUrl(current);
+                tray.ShowBalloonTip(8000, "Desktop Pet", pet.L($"Đã cập nhật lên bản {current}. Bấm vào đây để xem có gì mới.",
+                    $"Updated to version {current}. Click here to see what's new."), Forms.ToolTipIcon.Info);
+            }
+        }
+        updates.Start(pet.AutoUpdate);
         controlsWait = System.Threading.ThreadPool.RegisterWaitForSingleObject(showControls,
             (_, _) => Dispatcher.BeginInvoke(new Action(() => { if (pet.IsVisible) pet.ShowControls(); })),
             null, System.Threading.Timeout.Infinite, false);

@@ -1,5 +1,8 @@
 # Desktop Pet for Windows
 
+**[⬇ Download Desktop Pet for Windows (Setup.exe)](https://github.com/tnpt003/Pet-Computer/releases/latest/download/PetComputer-win-Setup.exe)**
+— Windows 10/11 x64, no admin needed. If SmartScreen appears: **More info → Run anyway**. See **Install** below.
+
 A small animated cat that lives above your desktop windows. It walks, jumps, sits,
 sleeps, and looks around on its own. Grab it with the left mouse button, move it,
 and release to throw it. Gravity, bouncing, and friction bring it back to rest.
@@ -18,10 +21,14 @@ of attention now produce distinct expressions. See [emotion triggers and control
 **Install (Windows 10/11 x64):** download `PetComputer-win-Setup.exe` from the
 [latest release](https://github.com/tnpt003/Pet-Computer/releases/latest) and run it. No admin
 rights are needed; the cat starts right away and gets a Desktop and Start menu shortcut. The
+first start shows a welcome with a few tips, the language and **Start with Windows** (ticked);
+a copied pet that is still running is closed so the installed one takes over. The
 installer is not code-signed yet, so Windows SmartScreen may say "Windows protected your PC":
 click **More info → Run anyway**. Installed pets update themselves: they check GitHub on start
 and every 6 hours, download a new version in the background and say so in a tray notification;
-choose **Update to …** in the tray menu, or it is applied the next time the pet starts. Your
+choose **Update to …** in the tray menu, or it is applied the next time the pet starts. After an
+update the tray says so; click it to see what's new. Settings → General → Updates shows the
+version, turns automatic updates off (then it only checks when you ask) and checks now. Your
 settings, diary and battle progress (`%LOCALAPPDATA%\DesktopPet`) are kept through updates and
 uninstalling (Windows Settings → Apps → Desktop Pet). A portable zip is in each release too
 (it does not update itself).

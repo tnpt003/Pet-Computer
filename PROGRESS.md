@@ -10,6 +10,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - `PetWindow.BattleUpgrade.cs`: theo dõi thẻ dưới chuột (`upgradeHover`), chọn/rê chuột làm túi đồ làm mới ngay.
 - Test thật: scripts/test.ps1 -Ui (cả PET_RENDER_REVIEW): Python 55 OK; C# 1270; WPF 676 đạt (BagChecks thêm: kỹ năng sau Túi cứu trợ, không có "Trận này" ngoài trận, "Trận này"/Kỹ năng trong trận, chọn thẻ → "Nếu lấy" ở tab Thẻ và số "→" ở tab Chỉ số, xác nhận xong hết xem trước). Lần đầu fail 1 do test (túi nhớ tab Di vật từ trước) — sửa test. Đã xem ảnh render (xem trước Lông dày: 100% → 85%; Viễn chinh có 3 cảnh báo di vật).
 - Chưa thử thật: rê chuột qua các thẻ nâng cấp bằng chuột thật (MouseEnter/Leave trên cửa sổ no-activate).
+- Commit 86e7e6c; publish 1.3.0-beta+86e7e6c sạch, check-publish.ps1 đạt 3/3; artifacts\DesktopPet-1.3.0-beta-86e7e6c-win-x64.zip. Pet đóng bình thường trước publish và mở lại sau.
 
 ## Túi đồ theo chế độ + Phần thưởng trên Sảnh (2026-10-22, thay bản túi đồ trên Sảnh)
 - Người dùng: túi đồ riêng từng chế độ; phần thưởng là nút riêng trên Sảnh; túi mở từ HUD trận, bản đồ chọn màn và lúc máy viên nang; mở túi trong trận thì pause; cửa sổ kéo được, có hình/icon, cuộn với giới hạn; chọn 3 tab, cho mở lúc chọn thẻ, lấy cả 4 gợi ý (kỷ lục, huy hiệu Mới, nhật ký chuyến, cảnh báo giá di vật), làm một lần.

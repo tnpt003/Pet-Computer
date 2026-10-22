@@ -398,3 +398,4 @@ Tự động đã có: Phần thưởng trên sảnh (ô có hình, khóa, Mới
 - [ ] Bong bóng thoại (cỡ chữ 13) vẫn dễ đọc; menu chuột phải mèo/món trưng bày bình thường.
 - [ ] Viễn chinh: sau khi quay bậc có nút "↻ Quay lại bậc này · −N HP"; bấm: viên nang mở, điểm mới, HP trừ đúng; không còn nút lần hai; đóng/mở app vẫn giữ kết quả; ghé/vào một điểm rồi thì không còn nút.
 - [ ] Ngày lễ mới (1/1, 8/3, 20/10): bật Mèo biết nói + AI, mở mèo đúng ngày: câu chào/câu nói theo ngày lễ.
+- [ ] HUD trận: kéo tay nắm 6 chấm ở mép phải bằng chuột thật — HUD đi theo, không lấy focus app đang gõ, không ra khỏi màn hình/không đè dải chiến trường; trận sau mở lại đúng chỗ; bấm đúp tay nắm về giữa trên; thử ở màn hình phụ/DPI khác (mỗi màn hình nhớ riêng).

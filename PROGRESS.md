@@ -9,6 +9,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Người dùng muốn chọn chỗ cài + checkbox autostart trong installer; Velopack Setup cài một click, không có giao diện → người dùng chọn (phương án 2+3, không làm MSI): hỏi trong app ở lần mở đầu.
 - Đã làm: `App()` thêm `OnFirstRun` (cờ) và `OnBeforeUninstallFastCallback` (`StartupRegistration.RemoveIfThis`: xóa mục Run chỉ khi trỏ tới chính bản này). `PetWelcome.cs`: hộp chào mừng (mẹo + ô "Khởi động cùng Windows" tích sẵn), mở sau `pet.Show()` qua Dispatcher; đóng cửa sổ cũng áp lựa chọn đang hiện; ghi Run cho bản đã cài nên mục cũ của bản copy được chuyển sang. `PetDialog.Create` thêm tham số `extra` (đặt dưới câu chữ). `pack.ps1`: `--splashImage Assets\PetIcon-preview.png`, `--releaseNotes` từ mục `## <version>` của CHANGELOG.md. Version 1.4.1; CHANGELOG có mục 1.4.0 (trước là "Chưa phát hành") và 1.4.1.
 - Test thật: test.ps1 -Ui (có PET_RENDER_REVIEW): Python OK, C# 1352 (2 check mới: gỡ giữ mục của bản khác, xóa mục của bản này), WPF 765/765 (check mới: hộp chào mừng 1 nút, ô tích sẵn, có mẹo khay). Đã xem ảnh hộp chào mừng (en).
+- Commit 24dcbd6; publish 1.4.1+24dcbd6, check-publish 3/3 (đóng mèo bản cài 1.4.0 bằng WM_CLOSE trước, mở lại sau). pack.ps1 trên máy (không upload): Setup.exe 93,7 MB, 1.4.1-full + delta 1.4.0→1.4.1 0,5 MB, notes-1.4.1.md đúng mục CHANGELOG.
 - Chưa thử thật: chạy Setup 1.4.1 (hook first run/uninstall chỉ chạy ở bản cài), cập nhật 1.4.0 → 1.4.1 qua khay. Mục test tay: cuối MANUAL-TEST "1.4.1 — cài đặt".
 
 ## Kế hoạch 22/10 đợt 2 (N1–N5)

@@ -239,6 +239,10 @@ internal static class Program
         }
         window.CloseStatusCard();
         Check(Field<Window?>(window, "statusWindow") == null, "Closing the status card releases it");
+        // Self-update (2026-10-22): only the installed app checks GitHub; a build or copied folder does nothing.
+        var updates = new PetUpdates();
+        Check(!updates.Available && updates.ReadyVersion == null && updates.CurrentVersion == null && !updates.ApplyAndRestart() && updates.Check(true).IsCompleted,
+            "Not installed: no update checks, nothing to apply, no error");
         var dialog = PetDialog.Create(null, "Forget learned habits", "The pet will forget which actions and lines you liked.", "Forget", "Cancel", PetDialog.QuestionGlyph);
         dialog.Left = -10000; dialog.Show(); dialog.UpdateLayout();
         var dialogButtons = Descendants<System.Windows.Controls.Button>((FrameworkElement)dialog.Content).ToList();

@@ -15,6 +15,17 @@ Explorer after publishing. The complete release includes .NET and Python. See
 **Emotions:** clicks, gentle petting, repeated clicks, fast cursor passes, and lack
 of attention now produce distinct expressions. See [emotion triggers and controls](docs/EMOTIONS.md).
 
+**Install (Windows 10/11 x64):** download `PetComputer-win-Setup.exe` from the
+[latest release](https://github.com/tnpt003/Pet-Computer/releases/latest) and run it. No admin
+rights are needed; the cat starts right away and gets a Desktop and Start menu shortcut. The
+installer is not code-signed yet, so Windows SmartScreen may say "Windows protected your PC":
+click **More info → Run anyway**. Installed pets update themselves: they check GitHub on start
+and every 6 hours, download a new version in the background and say so in a tray notification;
+choose **Update to …** in the tray menu, or it is applied the next time the pet starts. Your
+settings, diary and battle progress (`%LOCALAPPDATA%\DesktopPet`) are kept through updates and
+uninstalling (Windows Settings → Apps → Desktop Pet). A portable zip is in each release too
+(it does not update itself).
+
 **Run from source** (Windows 10/11 x64, from a clone of this repository; `scripts\run.ps1`
 uses a local .NET SDK under `.tools\dotnet` if there is one, see section 2):
 

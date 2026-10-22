@@ -1,0 +1,32 @@
+# A release: push a tag v<version> matching DesktopPet.csproj's <Version> (e.g. v1.4.0).
+# Runs the Python and C# checks, publishes the app (bundled .NET and Python), packs the installer
+# and update files with Velopack and creates the GitHub release; installed pets update from it.
+# The WPF UI checks and scripts/check-publish.ps1 open real windows: run them locally before tagging.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Checks (Python and C#)
+        shell: pwsh
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\test.ps1
+      - name: Publish the app
+        shell: pwsh
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\publish.ps1
+      - name: Pack and release
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\pack.ps1 -Upload

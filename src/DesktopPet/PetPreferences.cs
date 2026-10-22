@@ -47,7 +47,7 @@ public sealed class PetPreferences
     public bool ClimbWindows { get; set; } = true;
     // On by default: the Expedition's keepsakes stand in the display corner once one is earned.
     public bool ShowTrophies { get; set; } = true;
-    // Where the user or the cat left the shelf: its monitor and the art's left edge as a fraction of
+    // Where the user or the cat left the keepsake: its monitor and the art's left edge as a fraction of
     // the free width (null: not moved yet, 0.75 across the cat's monitor).
     public string? TrophyMonitor { get; set; }
     // The one keepsake on display (Settings → Pet); null or not owned: the best one (gold → silver → bronze → cushion).

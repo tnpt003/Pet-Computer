@@ -143,7 +143,7 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         p.Dizzy = p.PickedUp ? pet.Pickup.Dizziness : 0;
         // A battle stun: dazed eyes and stars, fading out over its last quarter second.
         if (pet.BattleStun > 0) p.Dizzy = Math.Max(p.Dizzy, 0.75 * Math.Min(1, pet.BattleStun / 0.25));
-        // Bonked by the falling shelf: the same stars, a little stronger, fading out the same way.
+        // Bonked by the falling keepsake: the same stars, a little stronger, fading out the same way.
         if (pet.Bonk > 0) p.Dizzy = Math.Max(p.Dizzy, 0.85 * Math.Min(1, pet.Bonk / 0.3));
         p.WakeProgress = Math.Clamp(pet.ActionTime / PetSettings.WakingDuration, 0, 1);
         bool sitting = pet.Action is PetAction.Sitting or PetAction.Grooming || p.Sleeping;

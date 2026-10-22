@@ -2,11 +2,11 @@ using System;
 
 namespace DesktopPet;
 
-// The keepsake shelf as a cartoon object: picked up, thrown, falls, bounces with squash and stretch,
+// The keepsake as a cartoon object: picked up, thrown, falls, bounces with squash and stretch,
 // gets shoved by the cat. X is the art's left edge and Height the art's bottom above the floor, both
-// in DIPs of the shelf's monitor; VY is up-positive (like ToyBall). Ground: the height it stands on
+// in DIPs of the keepsake's monitor; VY is up-positive (like ToyBall). Ground: the height it stands on
 // (0: the floor; a window's top edge is higher).
-public sealed class ShelfMotion
+public sealed class KeepsakeMotion
 {
     public const double Gravity = 1700, EdgeMargin = 24;
     public double X, Height, VX, VY, Ground;
@@ -54,7 +54,7 @@ public sealed class ShelfMotion
     }
 
     // One frame; left/right bound the art's left edge (right already minus its width).
-    // Returns true when the shelf hit the floor this step with some speed.
+    // Returns true when the keepsake hit the floor this step with some speed.
     public bool Step(double dt, double left, double right)
     {
         if (!double.IsFinite(dt) || dt <= 0) return false;

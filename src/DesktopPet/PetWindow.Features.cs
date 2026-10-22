@@ -184,7 +184,7 @@ public sealed partial class PetWindow
         toyWindow?.Close();
         returningHome = false;
         admiring = false; admireRemaining = 0;
-        shelfShove = ShelfShove.None; shelfWatch = 0; pet.Bonk = 0; cushionNap = CushionNap.None; userAsked &= ~UserAsked.Nap;
+        keepsakeShove = KeepsakeShove.None; keepsakeWatch = 0; pet.Bonk = 0; cushionNap = CushionNap.None; userAsked &= ~UserAsked.Nap;
         climbPlan = null; ledgeExit = 0;
         PetPhysics.LetGo(pet); // A climbing pet lets go and drops.
         pet.TreatRemaining = 0;
@@ -197,7 +197,7 @@ public sealed partial class PetWindow
 
     // Also lets a walk carry the pet past a window ledge's end (it drops off).
     private bool FeatureOwnsMovement() => CanPlay && (pet.TreatRemaining > 0 || treatSatisfiedRemaining > 0 || toyWindow != null || returningHome || admiring ||
-        laserWindow != null || climbPlan != null || ledgeExit != 0 || shelfShove != ShelfShove.None || shelfWatch > 0 || pet.Bonk > 0 || cushionNap == CushionNap.Walk);
+        laserWindow != null || climbPlan != null || ledgeExit != 0 || keepsakeShove != KeepsakeShove.None || keepsakeWatch > 0 || pet.Bonk > 0 || cushionNap == CushionNap.Walk);
 
     private void TickFeatures(double dt)
     {
@@ -225,7 +225,7 @@ public sealed partial class PetWindow
         if (TickLaser(dt)) return;
         if (!CanPlay)
         {
-            if (toyWindow != null || returningHome || admiring || shelfShove != ShelfShove.None || cushionNap == CushionNap.Walk || pet.TreatRemaining > 0 || treatSatisfiedRemaining > 0) CancelFeatureActivity();
+            if (toyWindow != null || returningHome || admiring || keepsakeShove != KeepsakeShove.None || cushionNap == CushionNap.Walk || pet.TreatRemaining > 0 || treatSatisfiedRemaining > 0) CancelFeatureActivity();
             return;
         }
         if (pet.TreatRemaining > 0)
@@ -254,7 +254,7 @@ public sealed partial class PetWindow
             ballTime -= dt;
             if (ballTime <= 0) { CancelFeatureActivity(); return; }
             ball.Step(dt, bounds.Left + 12, Math.Max(bounds.Left + 12, bounds.Right - 12));
-            ShelfMeetsBall(); // The keepsake on display is in the way (PetWindow.TrophyPlay.cs).
+            KeepsakeMeetsBall(); // The keepsake on display is in the way (PetWindow.KeepsakePlay.cs).
             double delta = ball.X - (pet.X + PetSettings.CenterX);
             // Only from the floor: the ball never rolls on a window's edge.
             if (toyPlay.Step(dt, Math.Abs(delta) < 49 && ball.Height < 24 && ball.BatCooldown <= 0 && pet.LedgeId == 0, preferences.Personality))
@@ -284,11 +284,11 @@ public sealed partial class PetWindow
         // Walking to the resting spot or the keepsakes on its own is autonomous; a look the user
         // asked for (double click on the keepsake) still happens in Quiet.
         // Walking to the cushion the user asked for ("Do now") also goes on in Quiet.
-        if (EffectiveQuiet) { StopShelfShove(); if (!Asked(UserAsked.Nap)) StopCushionNap(); if (!Asked(UserAsked.Admire)) StopAdmiring(); }
-        if (TickAdmiring(dt)) return; // PetWindow.Trophies.cs
-        if (TickCushionNap(dt)) return; // Napping on the slime cushion (PetWindow.TrophyPlay.cs).
+        if (EffectiveQuiet) { StopKeepsakeShove(); if (!Asked(UserAsked.Nap)) StopCushionNap(); if (!Asked(UserAsked.Admire)) StopAdmiring(); }
+        if (TickAdmiring(dt)) return; // PetWindow.Keepsake.cs
+        if (TickCushionNap(dt)) return; // Napping on the slime cushion (PetWindow.KeepsakePlay.cs).
         if (EffectiveQuiet) return;
-        if (TickShelfShove(dt)) return; // Shoving the keepsake shelf along (PetWindow.Trophies.cs).
+        if (TickKeepsakeShove(dt)) return; // Shoving the keepsake along (PetWindow.Keepsake.cs).
         restVisit -= dt;
         if (restVisit <= 0 && preferences.RestX.HasValue && pet.Action is PetAction.Idle or PetAction.Sitting && climbPlan == null && ledgeExit == 0)
         { returningHome = true; restVisit = 45; }

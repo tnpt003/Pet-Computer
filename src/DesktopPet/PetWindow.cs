@@ -97,7 +97,7 @@ public sealed partial class PetWindow : Window
         physics = new PetPhysics(settings);
         behavior = new PetBehavior(settings);
         behavior.DecisionRequested += RequestDecision;
-        behavior.SleepElsewhere = SleepOnCushionInstead; // With the slime cushion on display (PetWindow.TrophyPlay.cs).
+        behavior.SleepElsewhere = SleepOnCushionInstead; // With the slime cushion on display (PetWindow.KeepsakePlay.cs).
         if (Environment.GetEnvironmentVariable("PET_AI_DISABLED") != "1") ai = new PythonDecisionSource();
         renderer = new PetRenderer(pet);
         Content = renderer;
@@ -341,7 +341,7 @@ public sealed partial class PetWindow : Window
         TickExpeditionMap(dt);
         TickBattleBag(dt);
         TickTrophies();
-        TickShelf(dt); // The shelf's physics and its meetings with the cat (PetWindow.Trophies.cs).
+        TickKeepsake(dt); // The keepsake's physics and its meetings with the cat (PetWindow.Keepsake.cs).
         if (!paused)
         {
             TickFeatures(dt);
@@ -384,7 +384,7 @@ public sealed partial class PetWindow : Window
                     // Battle Mode owns the pet: no random actions, sleep or AI moves (PetWindow.Battle.cs).
                     if (!FeatureOwnsMovement() && !BattleActive) behavior.Step(pet, PhysicsStep, cursorX);
                     physics.Step(pet, bounds, PhysicsStep, ledges, FeatureOwnsMovement());
-                    BounceOnCushion(previousY + settings.Height); // The slime cushion is a trampoline (PetWindow.TrophyPlay.cs).
+                    BounceOnCushion(previousY + settings.Height); // The slime cushion is a trampoline (PetWindow.KeepsakePlay.cs).
                     accumulator -= PhysicsStep;
                 }
             }
@@ -424,7 +424,7 @@ public sealed partial class PetWindow : Window
             y = previousY + (pet.Y - previousY) * alpha;
         }
         else SnapPresentation();
-        if (!dragging) y -= napLift; // Asleep on the slime cushion: drawn on top of it (PetWindow.TrophyPlay.cs).
+        if (!dragging) y -= napLift; // Asleep on the slime cushion: drawn on top of it (PetWindow.KeepsakePlay.cs).
         MoveWindow(x - padding, y - padding);
         UpdateSpeechWindow(x, y);
         renderer.InvalidateVisual();

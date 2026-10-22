@@ -14,11 +14,11 @@ namespace DesktopPet;
 public sealed partial class PetWindow
 {
     // The window edge it stands on (0: the floor) and that window's last known left/top (DIPs).
-    private long shelfLedgeId;
-    private double shelfLedgeLeft, shelfLedgeTop;
-    private double shelfHoverBlend, shelfStartleAt;
+    private long keepsakeLedgeId;
+    private double keepsakeLedgeLeft, keepsakeLedgeTop;
+    private double keepsakeHoverBlend, keepsakeStartleAt;
     // A keepsake swap under way (from the menu): the one that appears after the puff.
-    private string? shelfSwapTo;
+    private string? keepsakeSwapTo;
     // Keepsake activities the user asked for (double click to look, "Do now" cushion nap): they
     // keep going in Quiet, which only stops the cat's own ideas.
     [Flags] private enum UserAsked { None = 0, Admire = 1, Nap = 2 }
@@ -35,14 +35,14 @@ public sealed partial class PetWindow
     // it would get sleepy from being left alone.
     public const double NapEvery = 240, NapBeforeSleepy = 25, NapWalkSeconds = 20, CushionReach = 1200;
 
-    public long ShelfLedgeId => shelfLedgeId;
+    public long KeepsakeLedgeId => keepsakeLedgeId;
     public bool NappingOnCushion => cushionNap == CushionNap.Asleep;
     public bool GoingToNap => cushionNap == CushionNap.Walk;
     public double NapLift => napLift;
-    private bool ShelfOnFloor => shelfLedgeId == 0 && shelf.Ground == 0;
+    private bool KeepsakeOnFloor => keepsakeLedgeId == 0 && keepsake.Ground == 0;
     // On the same ground as the cat: both on the floor, or both on the same window's top edge.
-    private bool ShelfWithCat => ShelfBesideCat && pet.Grounded && (ShelfOnFloor ? pet.LedgeId == 0 : pet.LedgeId == shelfLedgeId && OnLedge);
-    private int FacingShelf => ShelfCenter < CatCenter ? -1 : 1;
+    private bool KeepsakeWithCat => KeepsakeBesideCat && pet.Grounded && (KeepsakeOnFloor ? pet.LedgeId == 0 : pet.LedgeId == keepsakeLedgeId && OnLedge);
+    private int FacingKeepsake => KeepsakeCenter < CatCenter ? -1 : 1;
 
     // Where the cat can stand (its left edge) on the ground it shares with the keepsake; null: no room.
     private double? CatCanStand(double x)
@@ -58,38 +58,38 @@ public sealed partial class PetWindow
         pet.VX = pet.SmoothedWalkVelocity = 0;
         pet.Facing = facing;
     }
-    private double ShelfCenter => shelf.X + ShelfArtWidth / 2;
+    private double KeepsakeCenter => keepsake.X + KeepsakeArtWidth / 2;
     private double CatCenter => pet.X + settings.Width / 2;
     // The cushion's soft top above the floor, as the sleeping cat sinks into it a little.
-    private static double CushionSurface => (TrophyShelf.ShelfHeight + TrophyShelf.CushionHeight * 0.6) * DisplayScale;
+    private static double CushionSurface => (KeepsakeArt.StandHeight + KeepsakeArt.CushionHeight * 0.6) * DisplayScale;
 
     // The keepsakes that can be on display, cups best first, then the cushion (menu and Settings).
     public IReadOnlyList<KeepsakeSpec> DisplayableKeepsakes =>
         ShownKeepsakes.OrderBy(k => k.Kind == KeepsakeSpec.Cushion ? 1 : -Array.IndexOf(KeepsakeSpec.Tiers, k.Tier)).ToList();
 
     // Right click: the owned keepsakes (✓ the one shown), back to the middle, hide.
-    private void InitializeShelfMenu()
+    private void InitializeKeepsakeMenu()
     {
-        if (trophyShelf == null) return;
+        if (keepsakeArt == null) return;
         var menu = new ContextMenu { FontFamily = PetUi.TextFont, FontSize = 13 };
         PetMenuStyle.Apply(menu);
-        trophyShelf.ContextMenu = menu;
-        trophyShelf.ContextMenuOpening += (_, e) =>
+        keepsakeArt.ContextMenu = menu;
+        keepsakeArt.ContextMenuOpening += (_, e) =>
         {
-            if (shelfHeld || paused) { e.Handled = true; return; }
+            if (keepsakeHeld || paused) { e.Handled = true; return; }
             menu.Items.Clear();
             bool english = preferences.Language == "en";
             string? shown = DisplayedKeepsake?.Id;
             foreach (var keepsake in DisplayableKeepsakes)
             {
                 string id = keepsake.Id;
-                var item = new MenuItem { Header = keepsake.Name(english), IsCheckable = true, IsChecked = id == shown, IsEnabled = shelfHop == ShelfHop.None };
+                var item = new MenuItem { Header = keepsake.Name(english), IsCheckable = true, IsChecked = id == shown, IsEnabled = keepsakeHop == KeepsakeHop.None };
                 item.Click += (_, _) => SwapDisplayed(id);
                 menu.Items.Add(item);
             }
             menu.Items.Add(new Separator());
-            var middle = new MenuItem { Header = L("Đưa về giữa màn hình", "Back to the middle"), IsEnabled = shelfHop == ShelfHop.None };
-            middle.Click += (_, _) => { if (shelfHop == ShelfHop.None) StartShelfHop(alarm: false); };
+            var middle = new MenuItem { Header = L("Đưa về giữa màn hình", "Back to the middle"), IsEnabled = keepsakeHop == KeepsakeHop.None };
+            middle.Click += (_, _) => { if (keepsakeHop == KeepsakeHop.None) StartKeepsakeHop(alarm: false); };
             var hide = new MenuItem { Header = L("Ẩn món trưng bày", "Hide the keepsake") };
             hide.Click += (_, _) => { preferences.ShowTrophies = false; StopAdmiring(); SavePreferences(); };
             menu.Items.Add(middle); menu.Items.Add(hide);
@@ -99,84 +99,84 @@ public sealed partial class PetWindow
     // Swaps the keepsake on display: the old one puffs away, the new one pops up in its place.
     public bool SwapDisplayed(string id)
     {
-        if (shelfHop != ShelfHop.None || shelfHeld || id == DisplayedKeepsake?.Id || ShownKeepsakes.All(k => k.Id != id)) return false;
-        shelfSwapTo = id;
-        shelfHop = ShelfHop.Vanish;
-        shelfHopTime = 0;
-        shelfHopTo = shelf.X;
+        if (keepsakeHop != KeepsakeHop.None || keepsakeHeld || id == DisplayedKeepsake?.Id || ShownKeepsakes.All(k => k.Id != id)) return false;
+        keepsakeSwapTo = id;
+        keepsakeHop = KeepsakeHop.Vanish;
+        keepsakeHopTime = 0;
+        keepsakeHopTo = keepsake.X;
         PlayPetSound("swoosh");
         return true;
     }
 
     // At the end of the puff: the new keepsake, centred where the old one stood.
-    private void ApplyShelfSwap()
+    private void ApplyKeepsakeSwap()
     {
-        if (shelfSwapTo == null) return;
-        double center = ShelfCenter;
-        preferences.TrophyShown = shelfSwapTo;
-        shelfSwapTo = null;
+        if (keepsakeSwapTo == null) return;
+        double center = KeepsakeCenter;
+        preferences.TrophyShown = keepsakeSwapTo;
+        keepsakeSwapTo = null;
         SavePreferences();
         TickTrophies();
-        shelf.X = Math.Clamp(center - ShelfArtWidth / 2, shelfArea.Left, Math.Max(shelfArea.Left, shelfArea.Right - ShelfArtWidth));
+        keepsake.X = Math.Clamp(center - KeepsakeArtWidth / 2, keepsakeArea.Left, Math.Max(keepsakeArea.Left, keepsakeArea.Right - KeepsakeArtWidth));
     }
 
-    // Window edges: the cat's ledge list (its monitor, "Climb on windows" on); the shelf's monitor must be the cat's.
-    private bool ShelfLedgesUsable => LedgesEnabled && ShelfBesideCat && ledges.Count > 0;
+    // Window edges: the cat's ledge list (its monitor, "Climb on windows" on); the keepsake's monitor must be the cat's.
+    private bool KeepsakeLedgesUsable => LedgesEnabled && KeepsakeBesideCat && ledges.Count > 0;
 
-    private void LeaveShelfLedge() { shelfLedgeId = 0; shelf.Ground = 0; }
+    private void LeaveKeepsakeLedge() { keepsakeLedgeId = 0; keepsake.Ground = 0; }
 
     // Before the step: ride along with the window it stands on, or fall when it is gone.
-    private void FollowShelfLedge()
+    private void FollowKeepsakeLedge()
     {
-        if (shelfLedgeId == 0) return;
-        if (!ShelfLedgesUsable || shelfHeld || windowRectProbe(shelfLedgeId) is not WindowSnapshot now) { LeaveShelfLedge(); return; }
+        if (keepsakeLedgeId == 0) return;
+        if (!KeepsakeLedgesUsable || keepsakeHeld || windowRectProbe(keepsakeLedgeId) is not WindowSnapshot now) { LeaveKeepsakeLedge(); return; }
         // Resting on it (not still falling onto it: the landing's squash and bounce come from the step).
-        bool standing = !shelf.Held && shelf.VY == 0 && shelf.Height <= shelf.Ground + 0.5;
-        if (standing) shelf.X += now.Left - shelfLedgeLeft;
-        shelfLedgeLeft = now.Left; shelfLedgeTop = now.Top;
+        bool standing = !keepsake.Held && keepsake.VY == 0 && keepsake.Height <= keepsake.Ground + 0.5;
+        if (standing) keepsake.X += now.Left - keepsakeLedgeLeft;
+        keepsakeLedgeLeft = now.Left; keepsakeLedgeTop = now.Top;
         // The scanned list can lag a moved window: compare in its coordinates.
-        int index = ledges.FindIndex(l => l.Id == shelfLedgeId);
+        int index = ledges.FindIndex(l => l.Id == keepsakeLedgeId);
         double offset = index < 0 ? 0 : now.Left - ledges[index].WindowLeft;
-        if (index < 0 || PetLedges.Support(ledges, shelfLedgeId, ShelfCenter - offset) == null) { LeaveShelfLedge(); return; }
-        shelf.Ground = Math.Max(0, ShelfFloor - now.Top);
-        if (standing) { shelf.Height = shelf.Ground; shelf.VY = 0; }
+        if (index < 0 || PetLedges.Support(ledges, keepsakeLedgeId, KeepsakeCenter - offset) == null) { LeaveKeepsakeLedge(); return; }
+        keepsake.Ground = Math.Max(0, KeepsakeFloor - now.Top);
+        if (standing) { keepsake.Height = keepsake.Ground; keepsake.VY = 0; }
     }
 
     // After the step: falling past a window's top edge lands it there (the next step squashes it).
-    private void LandShelfOnLedge(double bottomBefore)
+    private void LandKeepsakeOnLedge(double bottomBefore)
     {
-        if (shelfLedgeId != 0 || shelfHeld || shelf.VY >= 0 || shelfHop == ShelfHop.Appear || !ShelfLedgesUsable) return;
-        if (PetLedges.Landing(ledges, bottomBefore, ShelfFloor - shelf.Height, ShelfCenter) is not Ledge ledge
+        if (keepsakeLedgeId != 0 || keepsakeHeld || keepsake.VY >= 0 || keepsakeHop == KeepsakeHop.Appear || !KeepsakeLedgesUsable) return;
+        if (PetLedges.Landing(ledges, bottomBefore, KeepsakeFloor - keepsake.Height, KeepsakeCenter) is not Ledge ledge
             || windowRectProbe(ledge.Id) is not WindowSnapshot now) return;
-        shelfLedgeId = ledge.Id;
-        shelfLedgeLeft = now.Left; shelfLedgeTop = now.Top;
-        shelf.Ground = Math.Max(0, ShelfFloor - ledge.Top);
-        shelf.Height = shelf.Ground + 0.01;
+        keepsakeLedgeId = ledge.Id;
+        keepsakeLedgeLeft = now.Left; keepsakeLedgeTop = now.Top;
+        keepsake.Ground = Math.Max(0, KeepsakeFloor - ledge.Top);
+        keepsake.Height = keepsake.Ground + 0.01;
     }
 
     // While the user holds it, a free cat (same monitor) turns to watch it.
-    private void WatchHeldShelf()
+    private void WatchHeldKeepsake()
     {
-        if (!shelfHeld || !ShelfBesideCat || BattleActive || !CanPlay || (shelfWatch <= 0 && FeatureOwnsMovement())) return;
-        shelfWatch = Math.Max(shelfWatch, 0.4);
+        if (!keepsakeHeld || !KeepsakeBesideCat || BattleActive || !CanPlay || (keepsakeWatch <= 0 && FeatureOwnsMovement())) return;
+        keepsakeWatch = Math.Max(keepsakeWatch, 0.4);
     }
 
     // It landed hard close to the cat (not on it): the cat jumps a little (Surprised) and looks.
-    private void NoticeShelfLanding()
+    private void NoticeKeepsakeLanding()
     {
         double now = clock.Elapsed.TotalSeconds;
-        if (shelfHop != ShelfHop.None || pet.Bonk > 0 || !ShelfBesideCat || BattleActive || now < shelfStartleAt || !PetActionRules.IsSettled(pet)
-            || Math.Abs(ShelfCenter - CatCenter) > 170 || (FeatureOwnsMovement() && shelfWatch <= 0)) return;
-        shelfStartleAt = now + 5;
+        if (keepsakeHop != KeepsakeHop.None || pet.Bonk > 0 || !KeepsakeBesideCat || BattleActive || now < keepsakeStartleAt || !PetActionRules.IsSettled(pet)
+            || Math.Abs(KeepsakeCenter - CatCenter) > 170 || (FeatureOwnsMovement() && keepsakeWatch <= 0)) return;
+        keepsakeStartleAt = now + 5;
         pet.Emotions.Startle();
-        shelfWatch = Math.Max(shelfWatch, 1.2);
+        keepsakeWatch = Math.Max(keepsakeWatch, 1.2);
     }
 
     // Hover: a little wiggle as the cursor arrives, and it stays a touch bigger while under it.
-    private void HoverShelf()
+    private void HoverKeepsake()
     {
-        if (shelfHeld || shelfHop != ShelfHop.None || paused) return;
-        shelf.SquashV -= 2.2; shelf.TiltV += (shelf.TiltV >= 0 ? 1 : -1) * 25;
+        if (keepsakeHeld || keepsakeHop != KeepsakeHop.None || paused) return;
+        keepsake.SquashV -= 2.2; keepsake.TiltV += (keepsake.TiltV >= 0 ? 1 : -1) * 25;
     }
 
     // Double click: the cat comes to look at it now (even in Quiet: the user asked).
@@ -190,21 +190,21 @@ public sealed partial class PetWindow
     }
 
     // The toy ball rolling into it bounces back; the keepsake wobbles and gives a little.
-    private void ShelfMeetsBall()
+    private void KeepsakeMeetsBall()
     {
-        if (!TrophiesVisible || !ShelfBesideCat || !ShelfOnFloor || shelfHeld || shelfHop != ShelfHop.None || ball.Height > ShelfArtHeight + shelf.Height) return;
+        if (!TrophiesVisible || !KeepsakeBesideCat || !KeepsakeOnFloor || keepsakeHeld || keepsakeHop != KeepsakeHop.None || ball.Height > KeepsakeArtHeight + keepsake.Height) return;
         const double radius = 12;
-        double left = shelf.X, right = shelf.X + ShelfArtWidth;
+        double left = keepsake.X, right = keepsake.X + KeepsakeArtWidth;
         if (ball.X + radius < left || ball.X - radius > right) return;
-        int side = ball.X < ShelfCenter ? -1 : 1;
+        int side = ball.X < KeepsakeCenter ? -1 : 1;
         if (ball.VX * side > 0) return; // Already moving away.
         double incoming = ball.VX;
         ball.X = side < 0 ? left - radius : right + radius;
         ball.VX = side * (Math.Abs(incoming) * 0.7 + 20);
         ball.Feedback = 0.2;
-        shelf.VX += incoming * 0.12;
-        shelf.TiltV += -side * Math.Min(120, Math.Abs(incoming) * 0.4);
-        shelf.SquashV += 1.2;
+        keepsake.VX += incoming * 0.12;
+        keepsake.TiltV += -side * Math.Min(120, Math.Abs(incoming) * 0.4);
+        keepsake.SquashV += 1.2;
         PlayPetSound("ball_tap");
     }
 
@@ -224,7 +224,7 @@ public sealed partial class PetWindow
         if (cushionNap != CushionNap.Walk) return false;
         napTime += dt;
         if (!CushionReady || napTime > NapWalkSeconds) { StopCushionNap(); return false; }
-        double target = Math.Clamp(ShelfCenter - settings.Width / 2, bounds.Left, Math.Max(bounds.Left, bounds.Right - settings.Width));
+        double target = Math.Clamp(KeepsakeCenter - settings.Width / 2, bounds.Left, Math.Max(bounds.Left, bounds.Right - settings.Width));
         if (Math.Abs(target - pet.X) < 4)
         {
             pet.X = target;
@@ -242,16 +242,16 @@ public sealed partial class PetWindow
     }
 
     // The cushion is on display, on the ground the cat stands on (floor or the same window), still, and free.
-    private bool CushionReady => DisplayedKeepsake?.Kind == KeepsakeSpec.Cushion && ShelfWithCat && shelf.Resting
-        && !shelfHeld && shelfHop == ShelfHop.None && CatCanStand(ShelfCenter - settings.Width / 2) != null;
+    private bool CushionReady => DisplayedKeepsake?.Kind == KeepsakeSpec.Cushion && KeepsakeWithCat && keepsake.Resting
+        && !keepsakeHeld && keepsakeHop == KeepsakeHop.None && CatCanStand(KeepsakeCenter - settings.Width / 2) != null;
     // Close enough for "Do now → Sleep on the cushion".
-    public bool CushionNear => CushionReady && Math.Abs(ShelfCenter - CatCenter) <= CushionNearDistance;
+    public bool CushionNear => CushionReady && Math.Abs(KeepsakeCenter - CatCenter) <= CushionNearDistance;
 
     // For checks (and the timers): go and nap on the cushion now. False when it may not.
     public bool GoNapOnCushion()
     {
         if (!CanPlay || EffectiveQuiet || BattleActive || FeatureOwnsMovement() || !CushionReady || pet.Emotions.WakeCooldownRemaining > 0
-            || Math.Abs(ShelfCenter - CatCenter) > CushionReach) return false;
+            || Math.Abs(KeepsakeCenter - CatCenter) > CushionReach) return false;
         cushionNap = CushionNap.Walk;
         napTime = 0;
         return true;
@@ -285,28 +285,28 @@ public sealed partial class PetWindow
     // From the physics loop, after each step (PetPhysics is unchanged).
     private void BounceOnCushion(double previousFeet)
     {
-        if (pet.Action != PetAction.Thrown || pet.VY < 250 || DisplayedKeepsake?.Kind != KeepsakeSpec.Cushion || !ShelfBesideCat
-            || shelfHeld || shelfHop != ShelfHop.None || !shelf.Grounded) return;
-        double surface = ShelfFloor - shelf.Height - (TrophyShelf.ShelfHeight + TrophyShelf.CushionHeight - 3) * DisplayScale;
+        if (pet.Action != PetAction.Thrown || pet.VY < 250 || DisplayedKeepsake?.Kind != KeepsakeSpec.Cushion || !KeepsakeBesideCat
+            || keepsakeHeld || keepsakeHop != KeepsakeHop.None || !keepsake.Grounded) return;
+        double surface = KeepsakeFloor - keepsake.Height - (KeepsakeArt.StandHeight + KeepsakeArt.CushionHeight - 3) * DisplayScale;
         double feet = pet.Y + settings.Height;
-        if (previousFeet > surface + 0.5 || feet < surface || CatCenter < shelf.X + 4 || CatCenter > shelf.X + ShelfArtWidth - 4) return;
+        if (previousFeet > surface + 0.5 || feet < surface || CatCenter < keepsake.X + 4 || CatCenter > keepsake.X + KeepsakeArtWidth - 4) return;
         double impact = pet.VY;
         pet.Y = surface - settings.Height;
         pet.VY = -Math.Min(1100, impact * 0.9 + 140);
-        int away = Math.Abs(CatCenter - ShelfCenter) < 1 ? (featureRandom.NextDouble() < 0.5 ? -1 : 1) : CatCenter < ShelfCenter ? -1 : 1;
+        int away = Math.Abs(CatCenter - KeepsakeCenter) < 1 ? (featureRandom.NextDouble() < 0.5 ? -1 : 1) : CatCenter < KeepsakeCenter ? -1 : 1;
         pet.VX += away * 150;
-        shelf.SquashV += Math.Clamp(impact / 1000 * 7, 2.5, 9);
-        shelfDust = 0; shelfDustStrength = Math.Clamp(impact / 1200, 0.3, 1);
+        keepsake.SquashV += Math.Clamp(impact / 1000 * 7, 2.5, 9);
+        keepsakeDust = 0; keepsakeDustStrength = Math.Clamp(impact / 1200, 0.3, 1);
         PlayPetSound("squish");
     }
 
-    // Every frame (TickShelf): while asleep on the cushion it is drawn lifted onto it; it ends with
+    // Every frame (TickKeepsake): while asleep on the cushion it is drawn lifted onto it; it ends with
     // the sleep (waking up there is fine) or when the cushion is gone from under it.
     private void TickNapLift(double dt)
     {
         if (cushionNap == CushionNap.Asleep)
         {
-            bool still = pet.Action is PetAction.Sleeping or PetAction.Waking && pet.Grounded && CushionReady && Math.Abs(ShelfCenter - CatCenter) < 24;
+            bool still = pet.Action is PetAction.Sleeping or PetAction.Waking && pet.Grounded && CushionReady && Math.Abs(KeepsakeCenter - CatCenter) < 24;
             if (!still) { cushionNap = CushionNap.None; userAsked &= ~UserAsked.Nap; }
         }
         double target = cushionNap == CushionNap.Asleep ? CushionSurface : 0;

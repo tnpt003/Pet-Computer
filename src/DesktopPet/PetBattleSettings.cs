@@ -1,0 +1,431 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json.Serialization;
+
+namespace DesktopPet;
+
+// Battle Mode tuning: every number the fight uses (DIPs and seconds). The app reads them from
+// Assets/battle.json (BattleData); these defaults are the same numbers and are used when the
+// file is broken and by the tests. Enemy kinds and waves come from "enemies"/"waves" in the
+// file; without them, from the Slime*/Boss* numbers, Waves and Boss below. Weapons come from
+// "weapons"; without it, from the Cat* numbers (the sword) and "hammer".
+public sealed class BattleSettings
+{
+    // The data layout this build reads (BattleData.SchemaVersion); a file for another layout is rejected.
+    public int SchemaVersion { get; init; } = 1;
+    public double CatMaxHp { get; init; } = 100;
+    public double CatDamage { get; init; } = 25;
+    // Centre-to-centre distance at which the sword reaches a slime.
+    public double CatAttackRange { get; init; } = 76;
+    // From the start of one swing to the next (at least the swing itself).
+    public double CatAttackCooldown { get; init; } = 0.75;
+    public double CatSwingDuration { get; init; } = 0.36;
+    // The one moment in a swing that can deal damage.
+    public double CatHitTime { get; init; } = 0.16;
+    // The cat runs during a battle: its walking speed and acceleration times this.
+    public double CatRunScale { get; init; } = 1.8;
+    // Combo: ComboHits hits in a row, each within ComboWindow seconds of the last, make the last
+    // one a combo hit (damage × ComboDamage, knocks the slime back). A miss or lifting the cat ends the chain.
+    public int ComboHits { get; init; } = 3;
+    public double ComboWindow { get; init; } = 1.6;
+    public double ComboDamage { get; init; } = 2;
+    public double ComboKnock { get; init; } = 300;
+    [JsonIgnore]
+    public double SlimeMaxHp { get; init; } = 50;
+    [JsonIgnore]
+    public double SlimeSpeed { get; init; } = 34;
+    [JsonIgnore]
+    public double SlimeDamage { get; init; } = 10;
+    [JsonIgnore]
+    public double SlimeAttackRange { get; init; } = 64;
+    // The slime swells and shows "!" this long before its hit: time for the user to help.
+    [JsonIgnore]
+    public double SlimeWindup { get; init; } = 0.8;
+    [JsonIgnore]
+    public double SlimeAttackCooldown { get; init; } = 1.8;
+    [JsonIgnore]
+    public double SlimeRecover { get; init; } = 0.35;
+    public double SlimeWidth { get; init; } = 46;
+    public double SlimeHeight { get; init; } = 34;
+    public double SpawnDuration { get; init; } = 0.5;
+    public double DefeatDuration { get; init; } = 0.6;
+    // Slimes per wave. With Boss on, one more wave follows with the Slime King alone.
+    [JsonIgnore]
+    public int[] Waves { get; init; } = { 2, 3, 4 };
+    [JsonIgnore]
+    public bool Boss { get; init; } = true;
+    public int MaxAlive { get; init; } = 3;
+    public double SpawnInterval { get; init; } = 1.6;
+    public double FirstWaveDelay { get; init; } = 1.5;
+    public double WaveBreakSeconds { get; init; } = 3.5;
+    // HP the cat gets back after each wave except the last.
+    public double WaveHeal { get; init; } = 15;
+    // New slimes appear at least this far from the cat (centre to centre) when room allows.
+    public double SpawnMinDistance { get; init; } = 200;
+    // After the user puts the cat down: no damage and no new slime attacks on it.
+    public double LandingGraceSeconds { get; init; } = 1.5;
+    // That protection is given at most once per this many seconds of the cat on the ground in a
+    // running battle (counted from when it is given), so lifting and dropping over and over
+    // cannot keep the cat safe.
+    public double RescueGraceCooldownSeconds { get; init; } = 5;
+    // ...and only after a lift this long (a quick lift-and-drop on the spot earns none).
+    public double RescueGraceMinLiftSeconds { get; init; } = 0.3;
+    // A dashing enemy that runs into the cat stuns it this long (it stands still and does not
+    // swing; the user may still lift and throw it). Afterwards it cannot be stunned again for
+    // StunImmunitySeconds, so stuns never chain into a lock.
+    public double StunDurationSeconds { get; init; } = 1.5;
+    public double StunImmunitySeconds { get; init; } = 3;
+    // Attack turns: at most MaxAttackers enemies wind up or dash at once (0: no limit), and a new
+    // windup starts at least AttackStagger s after the last one, so hits never all land in one frame.
+    public int MaxAttackers { get; init; } = 2;
+    public double AttackStagger { get; init; } = 0.3;
+    // A spawn from the other side of a two-sided wave is announced by an arrow this long before.
+    public double IncomingWarning { get; init; } = 1;
+    // Elites alive at once (StageSpec.EliteChance rolls them), and the chance a rare card takes its
+    // group's place in an upgrade offer.
+    public int MaxElites { get; init; } = 1;
+    public double RareChance { get; init; } = 0.15;
+    public double OutroSeconds { get; init; } = 3;
+    public double HurtFlashSeconds { get; init; } = 0.35;
+    public int MaxEffects { get; init; } = 32;
+
+    // The user's skills.
+    public double PushCooldown { get; init; } = 5;
+    public double PushSpeed { get; init; } = 520;
+    public double PushStunSeconds { get; init; } = 1.4;
+    public double HealCooldown { get; init; } = 20;
+    public double HealAmount { get; init; } = 25;
+    public double CheerCooldown { get; init; } = 18;
+    public double CheerSeconds { get; init; } = 5;
+    public double CheerSpeed { get; init; } = 1.6;
+    public double CheerDamage { get; init; } = 1.4;
+    public double BombCooldown { get; init; } = 12;
+    public double BombDelay { get; init; } = 0.5;
+    public double BombDamage { get; init; } = 30;
+    public double BombRadius { get; init; } = 70;
+    public double ShieldCooldown { get; init; } = 15;
+    public double ShieldSeconds { get; init; } = 3;
+
+    // The Slime King (last wave).
+    [JsonIgnore]
+    public double BossMaxHp { get; init; } = 400;
+    [JsonIgnore]
+    public double BossScale { get; init; } = 2;
+    [JsonIgnore]
+    public double BossSpeed { get; init; } = 22;
+    [JsonIgnore]
+    public double BossDamage { get; init; } = 25;
+    // The ground slam reaches this far from the boss's centre.
+    [JsonIgnore]
+    public double BossRange { get; init; } = 110;
+    [JsonIgnore]
+    public double BossWindup { get; init; } = 1.2;
+    [JsonIgnore]
+    public double BossAttackCooldown { get; init; } = 2.6;
+    // Below these HP fractions: calls two helpers (once), then gets angry (faster, shorter windup).
+    [JsonIgnore]
+    public double BossSummonAt { get; init; } = 0.5;
+    [JsonIgnore]
+    public int BossSummonCount { get; init; } = 2;
+    [JsonIgnore]
+    public double BossEnrageAt { get; init; } = 0.3;
+    [JsonIgnore]
+    public double BossEnragedSpeed { get; init; } = 32;
+    [JsonIgnore]
+    public double BossEnragedWindup { get; init; } = 0.8;
+    // Heavy: pushes move it and stun it less.
+    [JsonIgnore]
+    public double BossPushFactor { get; init; } = 0.35;
+    [JsonIgnore]
+    public double BossStunFactor { get; init; } = 0.4;
+
+    // Difficulty: Easy and Hard scale every enemy's HP, damage and speed; Normal is the numbers above.
+    // Threat (an Adventure stage's and wave's): enemy HP × threat, damage × only this share of the
+    // rise (damage grows slower); worked out once when an enemy appears. Never stun times.
+    public double ThreatDamageShare { get; init; } = 0.5;
+    public DifficultySpec Easy { get; init; } = new() { EnemyHp = 0.65, EnemyDamage = 0.5, EnemySpeed = 0.85 };
+    public DifficultySpec Hard { get; init; } = new() { EnemyHp = 1.3, EnemyDamage = 1.4, EnemySpeed = 1.15 };
+    private static readonly DifficultySpec NormalSpec = new();
+    public DifficultySpec Difficulty(BattleDifficulty difficulty) => difficulty switch
+    {
+        BattleDifficulty.Easy => Easy, BattleDifficulty.Hard => Hard, _ => NormalSpec
+    };
+
+    public double SkillCooldown(BattleSkill skill) => BattleSkills.Get(skill).Cooldown(this);
+
+    // The cat's weapons, in the order the battle setup panel shows them. battle.json "weapons"
+    // lists them; without it they are the sword (the Cat* numbers above: fast, only a combo
+    // knocks back) and the hammer ("hammer": slow, heavy, knocks the slime back on every hit).
+    public WeaponSpec Hammer { get; init; } = new();
+    [JsonPropertyName("weapons")] public WeaponSpec[]? Weapons { get; init; }
+    private IReadOnlyList<WeaponSpec>? weaponList;
+    [JsonIgnore] public IReadOnlyList<WeaponSpec> WeaponList => weaponList ??= Weapons ?? new[]
+    {
+        new WeaponSpec { Id = BattleWeapon.Sword, NameVi = "Kiếm", NameEn = "Sword", HintVi = "nhanh, dễ nối combo", HintEn = "fast, easy combos", Style = "sword", HitEffect = "spark",
+            Damage = CatDamage, Range = CatAttackRange, AttackCooldown = CatAttackCooldown, SwingDuration = CatSwingDuration, HitTime = CatHitTime, Knock = 0 },
+        Hammer with { Id = BattleWeapon.Hammer, NameVi = "Búa", NameEn = "Hammer", HintVi = "chậm, mạnh, đẩy lùi mỗi nhát", HintEn = "slow, heavy, knocks back every hit", Style = "hammer", HitEffect = Hammer.HitEffect ?? "thud" }
+    };
+    // Null when no weapon has this id (ids ignore case, so old preferences' "Hammer" still match).
+    public WeaponSpec? FindWeapon(string? id)
+    {
+        foreach (var w in WeaponList) if (string.Equals(w.Id, id, StringComparison.OrdinalIgnoreCase)) return w;
+        return null;
+    }
+    // Unknown ids (an old choice no longer in the data) fall back to the first weapon.
+    public WeaponSpec Weapon(string? id) => FindWeapon(id) ?? WeaponList[0];
+
+    // From battle.json: every enemy kind and the waves (null: the built-in slime and king).
+    [JsonPropertyName("enemies")] public EnemyType[]? Enemies { get; init; }
+    [JsonPropertyName("waves")] public WaveSpec[]? Plan { get; init; }
+
+    private IReadOnlyList<EnemyType>? enemyTypes;
+    private IReadOnlyList<WaveSpec>? wavePlan;
+    [JsonIgnore] public IReadOnlyList<EnemyType> EnemyTypes => enemyTypes ??= Enemies ?? new[] { BuiltInSlime(), BuiltInKing() };
+    [JsonIgnore] public IReadOnlyList<WaveSpec> WavePlan => wavePlan ??= Plan ?? BuiltInPlan();
+    // Unknown ids fall back to the first kind (validation rejects them in battle.json).
+    public EnemyType Enemy(string id)
+    {
+        foreach (var e in EnemyTypes) if (e.Id == id) return e;
+        return EnemyTypes[0];
+    }
+    [JsonIgnore] public double LargestScale => EnemyTypes.Max(e => e.Scale);
+
+    // From battle.json "upgrades": the Adventure's between-wave upgrades (null: the built-in seven).
+    [JsonPropertyName("upgrades")] public UpgradeSpec[]? Upgrades { get; init; }
+    private IReadOnlyList<UpgradeSpec>? upgradeList;
+    [JsonIgnore] public IReadOnlyList<UpgradeSpec> UpgradeList => upgradeList ??= Upgrades ?? new[]
+    {
+        new UpgradeSpec { Id = "sharp", Group = "power", NameVi = "Sắc bén", NameEn = "Sharp edge", DescVi = "+20% sát thương", DescEn = "+20% damage", Effect = "damage", Amount = 0.2, MaxStacks = 3 },
+        new UpgradeSpec { Id = "quick_feet", Group = "speed", NameVi = "Nhanh chân", NameEn = "Quick feet", DescVi = "+15% tốc độ chạy", DescEn = "+15% running speed", Effect = "moveSpeed", Amount = 0.15, MaxStacks = 2 },
+        new UpgradeSpec { Id = "fast_paws", Group = "speed", NameVi = "Ra đòn nhanh", NameEn = "Fast paws", DescVi = "−12% thời gian hồi đòn", DescEn = "−12% time between swings", Effect = "attackSpeed", Amount = 0.12, MaxStacks = 3 },
+        new UpgradeSpec { Id = "heavy_push", Group = "power", NameVi = "Đẩy mạnh", NameEn = "Heavy push", DescVi = "Mỗi nhát đẩy slime lùi thêm", DescEn = "Every hit knocks slimes further", Effect = "knock", Amount = 80, MaxStacks = 2 },
+        new UpgradeSpec { Id = "grilled_fish", NameVi = "Cá nướng", NameEn = "Grilled fish", DescVi = "Hồi ngay 30 HP", DescEn = "Get 30 HP back now", Effect = "heal", Amount = 30 },
+        new UpgradeSpec { Id = "thick_fur", Group = "defense", NameVi = "Lông dày", NameEn = "Thick fur", DescVi = "−15% sát thương nhận vào", DescEn = "−15% damage taken", Effect = "armor", Amount = 0.15, MaxStacks = 2 },
+        new UpgradeSpec { Id = "big_heart", Group = "defense", NameVi = "Tim to", NameEn = "Big heart", DescVi = "+20 HP tối đa (hồi luôn 20)", DescEn = "+20 max HP (and 20 HP now)", Effect = "maxHp", Amount = 20, MaxStacks = 2 },
+        new UpgradeSpec { Id = "turtle_shell", Group = "defense", Rare = true, NameVi = "Mai rùa", NameEn = "Turtle shell", DescVi = "Chặn trọn 1 đòn, mọc lại sau 12 giây", DescEn = "Stops one whole hit, grows back in 12 s", Effect = "shell", Amount = 12, MaxStacks = 1 },
+        new UpgradeSpec { Id = "opening_strike", Group = "power", Rare = true, NameVi = "Đòn mở màn", NameEn = "Opening strike", DescVi = "Đòn đầu trúng mỗi quái ×2 sát thương", DescEn = "First hit on each enemy deals ×2", Effect = "opener", Amount = 1, MaxStacks = 1 },
+        new UpgradeSpec { Id = "running_start", Group = "speed", Rare = true, NameVi = "Chạy đà", NameEn = "Running start", DescVi = "Chạy một quãng rồi chém: +80% sát thương", DescEn = "Swing after a run: +80% damage", Effect = "momentum", Amount = 0.8, MaxStacks = 1 },
+    };
+
+    // From battle.json "synergies": what 3 points of a group switch on (null: the built-in three).
+    [JsonPropertyName("synergies")] public SynergySpec[]? SynergiesData { get; init; }
+    private IReadOnlyList<SynergySpec>? synergyList;
+    [JsonIgnore] public IReadOnlyList<SynergySpec> SynergyList => synergyList ??= SynergiesData ?? new[]
+    {
+        new SynergySpec { Id = "thorns", Group = "defense", At = 3, Effect = "thorns", Amount = 0.35, NameVi = "Giáp gai", NameEn = "Thorns",
+            DescVi = "Quái đánh trúng mèo nhận lại 35% sát thương", DescEn = "Enemies that hit the cat take 35% of it back" },
+        new SynergySpec { Id = "armor_break", Group = "power", At = 3, Effect = "armorBreak", Amount = 0.3, NameVi = "Phá giáp", NameEn = "Armor break",
+            DescVi = "Đòn combo +30% sát thương, xuyên giáp đá", DescEn = "Combo hits deal 30% more and pierce stone" },
+        new SynergySpec { Id = "afterimage", Group = "speed", At = 3, Effect = "echo", Amount = 0.5, Every = 4, NameVi = "Dư ảnh", NameEn = "Afterimage",
+            DescVi = "Cứ 4 đòn trúng, thêm một đòn 50%", DescEn = "Every 4th hit strikes again for 50%" },
+    };
+
+    // From battle.json "campaign": the Adventure chapters (null: no Adventure in this data).
+    [JsonPropertyName("campaign")] public CampaignSpec? Campaign { get; init; }
+    // From battle.json "expedition": the Expedition run (null: none in this data). PetExpedition.cs.
+    [JsonPropertyName("expedition")] public ExpeditionSpec? Expedition { get; init; }
+
+    private EnemyType BuiltInSlime() => new()
+    {
+        Id = "slime", NameVi = "Slime", NameEn = "Slime", MaxHp = SlimeMaxHp, Speed = SlimeSpeed, Damage = SlimeDamage,
+        Range = SlimeAttackRange, Windup = SlimeWindup, AttackCooldown = SlimeAttackCooldown, Recover = SlimeRecover, Color = "#7CD36A"
+    };
+
+    private EnemyType BuiltInKing() => new()
+    {
+        Id = "king", NameVi = "Vua Slime", NameEn = "Slime King", MaxHp = BossMaxHp, Speed = BossSpeed, Damage = BossDamage,
+        Range = BossRange, Windup = BossWindup, AttackCooldown = BossAttackCooldown, Recover = SlimeRecover * 2, Scale = BossScale,
+        Color = "#9B7BE0", AngryColor = "#E86A6A", Boss = true, Slam = true, PushFactor = BossPushFactor, StunFactor = BossStunFactor,
+        SummonAt = BossSummonAt, SummonCount = BossSummonCount, SummonType = "slime",
+        EnrageAt = BossEnrageAt, EnragedSpeed = BossEnragedSpeed, EnragedWindup = BossEnragedWindup
+    };
+
+    private IReadOnlyList<WaveSpec> BuiltInPlan()
+    {
+        var plan = Waves.Select(count => new WaveSpec { Groups = new[] { new WaveGroup { Enemy = "slime", Count = count } } }).ToList();
+        if (Boss) plan.Add(new WaveSpec { Groups = new[] { new WaveGroup { Enemy = "king", Count = 1 } } });
+        return plan;
+    }
+}
+
+public enum BattleDifficulty { Easy, Normal, Hard }
+
+// The ids of the two built-in weapons. Weapons are data (battle.json "weapons"), chosen by id.
+public static class BattleWeapon
+{
+    public const string Sword = "sword";
+    public const string Hammer = "hammer";
+}
+
+// One weapon (a definition shared by every battle that uses it; the swing and its cooldown live
+// in BattleSim). Numbers in DIPs and seconds. Knock: DIPs/s every hit sends the slime away from
+// the cat (× the enemy's pushFactor), not a stun; a combo hit uses ComboKnock instead if larger.
+// Style picks a drawing the renderer knows ("sword" or "hammer"). The number defaults are the
+// hammer's (battle.json "hammer" may leave keys out); the sword is built from the Cat* numbers.
+public sealed record WeaponSpec
+{
+    public string Id { get; init; } = "";
+    public string NameVi { get; init; } = "";
+    public string NameEn { get; init; } = "";
+    public string HintVi { get; init; } = "";
+    public string HintEn { get; init; } = "";
+    public string Style { get; init; } = "sword";
+    // The mark a plain hit leaves: "spark" (a quick white burst) or "thud" (dust and a ring on
+    // the floor, for heavy weapons). Unset: "thud" for the hammer style, "spark" otherwise.
+    public string? HitEffect { get; init; }
+    public string Name(bool english) => (english ? NameEn : NameVi) is { Length: > 0 } name ? name : Id;
+    [JsonIgnore] public string Effect => HitEffect ?? (Style == "hammer" ? "thud" : "spark");
+    // Where in the swing the hit lands (0–1): the drawing times its slash to this moment.
+    [JsonIgnore] public double HitFraction => SwingDuration > 0 ? Math.Clamp(HitTime / SwingDuration, 0.05, 0.95) : 0.45;
+    public string Hint(bool english) => english ? HintEn : HintVi;
+    public double Damage { get; init; } = 45;
+    public double Range { get; init; } = 76;
+    public double AttackCooldown { get; init; } = 1.35;
+    public double SwingDuration { get; init; } = 0.7;
+    public double HitTime { get; init; } = 0.45;
+    public double Knock { get; init; } = 170;
+}
+
+// Multipliers on every enemy kind (1 = the kind's own numbers).
+public sealed class DifficultySpec
+{
+    public double EnemyHp { get; init; } = 1;
+    public double EnemyDamage { get; init; } = 1;
+    public double EnemySpeed { get; init; } = 1;
+}
+
+// Push and Bomb are aimed (choose, then click a slime); the others act at once.
+public enum BattleSkill { Push, Heal, Cheer, Bomb, Shield }
+
+// Casting: a support enemy winds up a heal (a green "+"), near or far; a push or stun cancels it.
+// Dashing: a dash enemy's lunge after its windup (it hits the cat once at most).
+public enum SlimeState { Spawning, Moving, Windup, Recover, Stunned, Defeated, Casting, Dashing }
+
+// Where damage on an enemy comes from: the cat's swings (a plain hit or a combo), the yarn bomb,
+// or a build bonus (Thorns sends back what the cat took, Afterimage repeats a swing). The bonus
+// hits never set off another bonus.
+public enum DamageSource { Weapon, Combo, Bomb, Reflect, Echo }
+
+// What a hit on an enemy did: landed, blocked by a stony enemy, or nothing on a shielded boss.
+public enum HitResult { Landed, Blocked, Immune }
+
+public sealed class Slime
+{
+    public int Id { get; init; }
+    // Its kind (battle.json "enemies"): abilities and the numbers not copied below.
+    public EnemyType Type { get; init; } = new();
+    public bool IsBoss => Type.Boss;
+    // Centre of the slime on the battle floor (DIPs, screen coordinates).
+    public double X;
+    public double Hp, MaxHp;
+    // Drawn size (DIPs). The combat hitbox (sword reach, bomb blast) is HitWidth.
+    public double Width { get; init; }
+    public double HitWidth { get; init; }
+    public double Height { get; init; }
+    // Settable: a boss's rally call makes a helper elite (more HP, harder hits).
+    public double Damage { get; set; }
+    public double Range { get; init; }
+    public SlimeState State { get; private set; }
+    public double StateTime;
+    public double Cooldown, StunRemaining, KnockVelocity, HitFlash;
+    public int Facing = -1;
+    public bool Enraged, Summoned;
+    // Support: its own heal cooldown, what it may still heal, and the ally it is healing.
+    public double HealCooldown, HealLeft;
+    public int HealTargetId;
+    // Boss phases already fired (bit i = Phases[i]); the boss that called this helper (0: none).
+    public int PhasesDone;
+    public int SummonedBy;
+    // Dash: the way it lunges (fixed when the windup starts, so the warning shows the real lane),
+    // the distance still to go and whether this dash already hit the cat.
+    public int DashDirection;
+    public double DashLeft;
+    public bool DashHit;
+    // Block: how many hits in a row this one has blocked.
+    public int BlockStreak;
+    // A support falling back behind a fighting ally (it may then pass through other slimes).
+    public bool KeepingBack;
+    // Boss shield phase: the shield is up (no damage), it is still running to the far edge (side:
+    // +1 right, -1 left; RetreatTime since the phase began) with the helpers it will call there.
+    // ShieldTag tells this phase's helpers (their PhaseTag) from any other helper.
+    public bool Shielded, Retreating;
+    public int RetreatSide, ShieldTag, PhaseTag;
+    public double RetreatTime;
+    public List<string>? PendingCalls;
+    // A leaping boss (RetreatLeap): how deep it crouches (0–1), how high it flies (DIPs over the floor)
+    // and where it took off. Its helpers still to come and the warning time left (SummonWarning).
+    public double Crouch, LeapHeight, LeapFromX;
+    public List<(string Kind, double X)>? CallSpots;
+    public double SummonWarn;
+    // The helper its rally call is going to (chosen when the crown starts to glow).
+    public int RallyTargetId;
+    // A support's heals scale like the HP of what it heals (difficulty × threat; 1 at Normal, threat 1).
+    public double HealPower = 1;
+    // HealGuard: this one is being healed and takes no damage (set by the battle each frame); when it
+    // may be guarded again; the ally a healing support guards.
+    public bool Mended;
+    public double GuardAgainAt;
+    public int MendingId;
+    // HitAndRun: running off after a dash (DIPs still to go).
+    public double RunAwayLeft;
+    // Support far heal: its own cooldown, and whether the heal it is winding up is one (any distance).
+    public double FarHealCooldown;
+    public bool FarHeal;
+    // A kind that turns slowly (TurnSeconds): how long it has wanted to face the other way.
+    public double TurnTime;
+    // A blocker standing guard between the cat and this support (0: none; set by the battle).
+    public int GuardOf;
+    // Boss rally: time to its next call and the crown's glow still to run.
+    public double RallyCooldown, RallyCharge;
+    // Its elite affix (null: a plain one), the sure blocks it still has and its next heal's factor.
+    // Rallied: made elite by a boss's rally call (not counted against MaxElites).
+    public EliteSpec? Elite;
+    public bool Rallied;
+    public int SureBlocks;
+    public double HealBoost = 1;
+    // A weapon hit has landed on it (the Opener card's bonus is spent).
+    public bool Opened;
+    public bool Targetable => State is not (SlimeState.Spawning or SlimeState.Defeated);
+    public void Set(SlimeState state) { State = state; StateTime = 0; }
+}
+
+public enum BattlePhase { WaveBreak, Fighting, Won, Lost }
+public enum BattleEventKind
+{
+    WaveStarted, SlimeSpawned, Swing, SlimeHit, SlimeDefeated, CatHurt, Pushed, WaveCleared, Won, Lost,
+    Healed, Cheered, Shielded, Blocked, BombThrown, BombExploded, BossAppeared, BossSummoned, BossEnraged, ComboHit,
+    UpgradeOffered, UpgradeChosen, EnemyHealing, EnemyHealed, CatStunned, SynergyUnlocked, Reflected, Echoed,
+    HitBlocked, BossShielded, BossShieldDown, BossImmune, BossRallying, BossRallied, Incoming,
+    // An elite appeared (Value: its id); the Turtle shell card stopped a hit on the cat.
+    EliteAppeared, ShellBlocked,
+    // A boss leaping to its edge (taking off, landing) and the rings where its helpers will appear.
+    BossLeaping, BossLanded, BossSummoning,
+    // Tactics: a heal that guards its ally, a hit on that guarded ally.
+    EnemyWarded, HitWarded,
+    // A Push on an elite that ignores it (Value: its id).
+    PushResisted
+}
+public readonly record struct BattleEvent(BattleEventKind Kind, double X, double Value = 0);
+// Number: a floating damage (Value > 0) or heal (Value < 0, shown as +HP above the cat).
+// Thud: a heavy weapon's plain hit (dust and a ring on the floor), chosen by the weapon's hitEffect.
+// Mend: green pluses rising from an enemy healed by a support enemy.
+// Block: grey stone chips and a small stone shield over an enemy that blocked a hit. Immune: a
+// gold ring flashing on a shielded boss hit for nothing. Warded: a green ring and "IMMUNE" on an
+// enemy guarded by a heal.
+public enum BattleEffectKind { Spark, Poof, Push, Explosion, Slam, Number, Combo, Thud, Mend, Block, Immune, Warded }
+public sealed class BattleEffect
+{
+    public BattleEffectKind Kind;
+    // Height is how far above the floor the effect starts.
+    public double X, Height, Age, Life, Value;
+}
+public sealed class BattleBomb
+{
+    public double X, Remaining;
+}
+
+// What the battle wants the cat to do this frame. Hold: the user has the cat (or it is in
+// the air), so the battle leaves it to input and physics.
+public enum CatCommand { Hold, Stand, Move }
+public readonly record struct CatOrder(CatCommand Command, double X = 0, int Facing = 0);

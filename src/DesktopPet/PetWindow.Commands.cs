@@ -35,7 +35,7 @@ public sealed partial class PetWindow
         var root = PetUi.MenuItem(PetUi.Play);
         var actions = new MenuItem[CommandItems.Length];
         var cushionSleep = new MenuItem();
-        cushionSleep.Click += (_, _) => SleepOnCushionNow(); // PetWindow.TrophyPlay.cs
+        cushionSleep.Click += (_, _) => SleepOnCushionNow(); // PetWindow.KeepsakePlay.cs
         for (int i = 0; i < CommandItems.Length; i++)
         {
             var action = CommandItems[i].Action;

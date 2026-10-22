@@ -6,12 +6,12 @@ using System.Windows.Media;
 namespace DesktopPet;
 
 // The display corner's art (Expedition milestone 4): the keepsakes the run gave that are shown
-// (a slime cushion, then the cups bronze → gold) standing on a low wooden shelf. Vector only,
+// (a slime cushion, then the cups bronze → gold) standing on a low wooden keepsake. Vector only,
 // drawn again only when the list or the pose (squash, tilt, the puff and dust effects) changes.
-public sealed class TrophyShelf : FrameworkElement
+public sealed class KeepsakeArt : FrameworkElement
 {
-    public const double ShelfHeight = 6, Pad = 6, Gap = 4, CupWidth = 26, CupHeight = 36, CushionWidth = 46, CushionHeight = 20;
-    public static readonly double ArtHeight = CupHeight + ShelfHeight + 4;
+    public const double StandHeight = 6, Pad = 6, Gap = 4, CupWidth = 26, CupHeight = 36, CushionWidth = 46, CushionHeight = 20;
+    public static readonly double ArtHeight = CupHeight + StandHeight + 4;
 
     private static Brush B(byte r, byte g, byte b) => PetUi.Frozen(Color.FromRgb(r, g, b));
     private static readonly Pen Outline = Freeze(new Pen(B(0x3A, 0x2E, 0x4A), 1.4) { LineJoin = PenLineJoin.Round });
@@ -43,7 +43,7 @@ public sealed class TrophyShelf : FrameworkElement
     private static readonly Pen SparkEdge = Freeze(new Pen(B(0xE0, 0x9A, 0x1E), 0.8) { LineJoin = PenLineJoin.Round });
     private static readonly Pen PuffEdge = Freeze(new Pen(PetUi.Frozen(Color.FromArgb(0x90, 0x9C, 0x92, 0xB0)), 1.2));
 
-    // The pose (ShelfMotion's springs), around the bottom center; Pop: the teleport's grow/shrink;
+    // The pose (KeepsakeMotion's springs), around the bottom center; Pop: the teleport's grow/shrink;
     // Pivot: the held point (unscaled art coordinates) the tilt swings around.
     private double scaleX = 1, scaleY = 1, tilt, pop = 1, shake;
     private Point? pivot;
@@ -137,10 +137,10 @@ public sealed class TrophyShelf : FrameworkElement
 
     private void DrawArt(DrawingContext dc, double w)
     {
-        double floor = ArtHeight - ShelfHeight;
-        // The shelf: a plank with a darker front edge.
-        dc.DrawRoundedRectangle(Wood, Outline, new Rect(1, floor, w - 2, ShelfHeight - 1), 2.5, 2.5);
-        dc.DrawLine(new Pen(WoodDark, 1.2), new Point(4, floor + ShelfHeight - 2.5), new Point(w - 4, floor + ShelfHeight - 2.5));
+        double floor = ArtHeight - StandHeight;
+        // The keepsake: a plank with a darker front edge.
+        dc.DrawRoundedRectangle(Wood, Outline, new Rect(1, floor, w - 2, StandHeight - 1), 2.5, 2.5);
+        dc.DrawLine(new Pen(WoodDark, 1.2), new Point(4, floor + StandHeight - 2.5), new Point(w - 4, floor + StandHeight - 2.5));
         double x = Pad;
         foreach (var item in items)
         {

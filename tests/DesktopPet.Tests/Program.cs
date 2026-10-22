@@ -100,7 +100,7 @@ ExpeditionKeepsakeTests.Run(Check);
 ExpeditionReleaseTests.Run(Check);
 ExpeditionGachaTests.Run(Check);
 InventoryStatTests.Run(Check);
-ShelfMotionTests.Run(Check);
+KeepsakeMotionTests.Run(Check);
 SleepCushionTests.Run(Check);
 var activity = new PetActivity();
 activity.Step(PetAction.Walking, 2);

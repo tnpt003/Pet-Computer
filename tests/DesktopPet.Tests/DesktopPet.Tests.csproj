@@ -23,12 +23,17 @@
     <Compile Include="../../src/DesktopPet/StartupRegistration.cs" Link="StartupRegistration.cs" />
     <Compile Include="../../src/DesktopPet/PetSounds.cs" Link="PetSounds.cs" />
     <Compile Include="../../src/DesktopPet/ToyBall.cs" Link="ToyBall.cs" />
-    <Compile Include="../../src/DesktopPet/PetShelfMotion.cs" Link="PetShelfMotion.cs" />
+    <Compile Include="../../src/DesktopPet/PetKeepsakeMotion.cs" Link="PetKeepsakeMotion.cs" />
     <Compile Include="../../src/DesktopPet/PetEmotions.cs" Link="PetEmotions.cs" />
     <Compile Include="../../src/DesktopPet/PickupAnimation.cs" Link="PickupAnimation.cs" />
     <Compile Include="../../src/DesktopPet/ThrowTracker.cs" Link="ThrowTracker.cs" />
     <Compile Include="../../src/DesktopPet/PetBehavior.cs" Link="PetBehavior.cs" />
     <Compile Include="../../src/DesktopPet/PetBattle.cs" Link="PetBattle.cs" />
+    <Compile Include="../../src/DesktopPet/PetBattle.Boss.cs" Link="PetBattle.Boss.cs" />
+    <Compile Include="../../src/DesktopPet/PetBattle.Enemies.cs" Link="PetBattle.Enemies.cs" />
+    <Compile Include="../../src/DesktopPet/PetBattle.Upgrades.cs" Link="PetBattle.Upgrades.cs" />
+    <Compile Include="../../src/DesktopPet/PetBattle.Waves.cs" Link="PetBattle.Waves.cs" />
+    <Compile Include="../../src/DesktopPet/PetBattleSettings.cs" Link="PetBattleSettings.cs" />
     <Compile Include="../../src/DesktopPet/PetBattleData.cs" Link="PetBattleData.cs" />
     <Compile Include="../../src/DesktopPet/PetBattleDirector.cs" Link="PetBattleDirector.cs" />
     <Compile Include="../../src/DesktopPet/PetBattleRecords.cs" Link="PetBattleRecords.cs" />

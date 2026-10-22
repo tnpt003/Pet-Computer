@@ -137,7 +137,7 @@ public sealed class PetEmotions
         }
     }
 
-    // Startled by something happening next to the pet (its keepsake shelf about to vanish at the
+    // Startled by something happening next to the pet (its keepsake about to vanish at the
     // screen edge). Not in manual control or asleep; false when no expression was set.
     public bool Startle()
     {
@@ -147,7 +147,7 @@ public sealed class PetEmotions
         return true;
     }
 
-    // A short happy moment of its own (it shoved the shelf and liked it). Never over anger.
+    // A short happy moment of its own (it shoved the keepsake and liked it). Never over anger.
     public void Cheer()
     {
         if (SleepLocked || ManualMode || Suspended || (transient == PetEmotion.Angry && now < transientUntil)) return;

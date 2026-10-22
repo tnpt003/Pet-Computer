@@ -9,7 +9,7 @@ namespace DesktopPet;
 
 // The battle hub's Rewards: what was won and the best results, in place of the mode cards (the
 // hub's header, Close and rules stay). A tile per Adventure accessory (this cat wearing it) and per
-// Expedition keepsake (as it stands on the shelf), won ones in colour with where they show, the
+// Expedition keepsake (as it stands on the keepsake), won ones in colour with where they show, the
 // others greyed with a lock and what wins them (said when the mouse is over a tile). Rewards not
 // shown here before carry a "New" badge, and the hub's button counts them; showing the page marks
 // them seen (AdventureProgress.RewardsSeen, saved with the Adventure progress). Then the records:
@@ -110,7 +110,7 @@ public sealed partial class PetWindow
             if (tiles.Children.Count > 0) RewardsSection(L("Phụ kiện Phiêu lưu", "Adventure accessories"), tiles);
         }
 
-        // The Expedition's keepsakes: a cup or cushion as on the shelf, an accessory on the cat.
+        // The Expedition's keepsakes: a cup or cushion as on the keepsake, an accessory on the cat.
         if (expedition != null && expedition.Spec.Keepsakes.Length > 0)
         {
             var tiles = new WrapPanel();
@@ -118,12 +118,12 @@ public sealed partial class PetWindow
             {
                 bool won = expedition.Progress.Keepsakes.Contains(k.Id);
                 FrameworkElement art = k.Kind == KeepsakeSpec.AccessoryKind && k.Accessory != null ? WearingCat(k.Accessory)
-                    : new Viewbox { Width = 64, Height = 56, Child = new TrophyShelf { Items = new[] { k }, Width = TrophyShelf.WidthFor(new[] { k }), Height = TrophyShelf.ArtHeight } };
+                    : new Viewbox { Width = 64, Height = 56, Child = new KeepsakeArt { Items = new[] { k }, Width = KeepsakeArt.WidthFor(new[] { k }), Height = KeepsakeArt.ArtHeight } };
                 string level = Enum.TryParse<BattleDifficulty>(k.Difficulty, out var at) ? DifficultyName(at) : k.Difficulty;
                 string where = k.Kind switch
                 {
-                    KeepsakeSpec.Cup => L("Cúp: đứng trên kệ ở góc màn hình.", "Cup: stands on the shelf in the screen corner."),
-                    KeepsakeSpec.Cushion => L("Đệm: nằm trên kệ ở góc màn hình.", "Cushion: lies on the shelf in the screen corner."),
+                    KeepsakeSpec.Cup => L("Cúp: trưng bày trên màn hình (chọn trong Cài đặt → Mèo).", "Cup: displayed on the screen (choose it in Settings → Pet)."),
+                    KeepsakeSpec.Cushion => L("Đệm: trưng bày trên màn hình; mèo ngủ và nảy trên đệm.", "Cushion: displayed on the screen; the cat naps and bounces on it."),
                     _ => L("Phụ kiện: đeo trong Cài đặt → Mèo → Phụ kiện.", "Accessory: wear it from Settings → Pet → Accessory.")
                 };
                 tiles.Children.Add(RewardTile(art, k.Name(English), won, rewardsFresh.Contains(k.Id), won ? where

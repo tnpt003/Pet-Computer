@@ -19,9 +19,11 @@ public sealed partial class PetWindow
     private double shelfHoverBlend, shelfStartleAt;
     // A keepsake swap under way (from the menu): the one that appears after the puff.
     private string? shelfSwapTo;
-    // The cat went to look (double click) or to sleep on the cushion ("Do now") because the user
-    // asked: allowed in Quiet.
-    private bool admireAsked, napAsked;
+    // Keepsake activities the user asked for (double click to look, "Do now" cushion nap): they
+    // keep going in Quiet, which only stops the cat's own ideas.
+    [Flags] private enum UserAsked { None = 0, Admire = 1, Nap = 2 }
+    private UserAsked userAsked;
+    private bool Asked(UserAsked what) => (userAsked & what) != 0;
     // "Do now → Sleep on the cushion" only when the cat is this close to it (centre to centre).
     public const double CushionNearDistance = 200;
 
@@ -182,7 +184,7 @@ public sealed partial class PetWindow
     {
         if (!CanPlay || BattleActive || TrophySpot() == null) return false;
         CancelFeatureActivity();
-        admiring = admireAsked = true;
+        admiring = true; userAsked |= UserAsked.Admire;
         admireRemaining = 0;
         return true;
     }
@@ -263,7 +265,7 @@ public sealed partial class PetWindow
         revision++; // Like DoNow: AI replies chosen before this request are dropped.
         CancelFeatureActivity();
         cushionNap = CushionNap.Walk;
-        napAsked = true;
+        userAsked |= UserAsked.Nap;
         napTime = 0;
         return true;
     }
@@ -275,7 +277,7 @@ public sealed partial class PetWindow
     {
         if (cushionNap == CushionNap.Walk && pet.Action == PetAction.Walking) { pet.Action = PetAction.Idle; pet.VX = 0; behavior.Reset(pet); }
         cushionNap = CushionNap.None;
-        napAsked = false;
+        userAsked &= ~UserAsked.Nap;
     }
 
     // Dropped or thrown onto the slime cushion (only the cushion): a trampoline. The cat bounces up
@@ -305,7 +307,7 @@ public sealed partial class PetWindow
         if (cushionNap == CushionNap.Asleep)
         {
             bool still = pet.Action is PetAction.Sleeping or PetAction.Waking && pet.Grounded && CushionReady && Math.Abs(ShelfCenter - CatCenter) < 24;
-            if (!still) { cushionNap = CushionNap.None; napAsked = false; }
+            if (!still) { cushionNap = CushionNap.None; userAsked &= ~UserAsked.Nap; }
         }
         double target = cushionNap == CushionNap.Asleep ? CushionSurface : 0;
         napLift += (target - napLift) * (1 - Math.Exp(-dt * 12));

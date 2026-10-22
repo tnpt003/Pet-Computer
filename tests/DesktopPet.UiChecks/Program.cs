@@ -23,6 +23,11 @@ internal static class Program
         SetContext(window, false, 0);
         // Nor on the real desktop's windows (the pet would land on them).
         LedgeChecks.SetWindows(window, () => Array.Empty<WindowSnapshot>());
+        // Nor on the real mouse: a cursor left on another monitor carried the dragged pet there
+        // (and paused battles as "away"). A still cursor in the middle of the primary work area.
+        var primary = System.Windows.Forms.Screen.PrimaryScreen!.WorkingArea;
+        typeof(PetWindow).GetField("cursorProbe", BindingFlags.NonPublic | BindingFlags.Instance)!
+            .SetValue(window, (Func<Point>)(() => new Point(primary.Left + primary.Width / 2, primary.Top + primary.Height / 2)));
         window.Loaded += async (_, _) =>
         {
             try

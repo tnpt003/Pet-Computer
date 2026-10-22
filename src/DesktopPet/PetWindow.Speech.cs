@@ -77,21 +77,9 @@ public sealed partial class PetWindow
         var root = new StackPanel { Margin = new Thickness(6), Children = { bubble, speechTail },
             Effect = new DropShadowEffect { BlurRadius = 8, ShadowDepth = 2, Direction = 270, Opacity = 0.28 } };
         speechRoot = root;
-        speechWindow = new Window
-        {
-            WindowStyle = WindowStyle.None, ResizeMode = ResizeMode.NoResize, AllowsTransparency = true,
-            Background = Brushes.Transparent, Topmost = true, ShowInTaskbar = false, ShowActivated = false,
-            Focusable = false, IsHitTestVisible = false, SizeToContent = SizeToContent.WidthAndHeight, Content = root,
-            Title = "Pet speech"
-        };
-        speechWindow.SourceInitialized += (_, _) =>
-        {
-            var handle = new WindowInteropHelper(speechWindow).Handle;
-            const int ExStyle = -20;
-            const long Transparent = 0x20, ToolWindow = 0x80, NoActivate = 0x08000000;
-            long style = GetWindowLongPtr(handle, ExStyle).ToInt64();
-            SetWindowLongPtr(handle, ExStyle, new IntPtr(style | Transparent | ToolWindow | NoActivate));
-        };
+        speechWindow = CreateOverlayWindow(root, "Pet speech", clickThrough: true);
+        speechWindow.IsHitTestVisible = false;
+        speechWindow.SizeToContent = SizeToContent.WidthAndHeight;
         speechWindow.Closed += (_, _) => { speechWindow = null; speechShownText = null; };
     }
 
@@ -113,7 +101,7 @@ public sealed partial class PetWindow
         if (!speechWindow!.IsVisible) { speechWindow.Show(); speechWindow.UpdateLayout(); }
         double width = speechWindow.ActualWidth, height = speechWindow.ActualHeight;
         // Centered over the head, kept inside the work area; the tail still points at the cat.
-        double anchorX = petX + 56, anchorY = petY + 12;
+        double anchorX = petX + PetSettings.CenterX, anchorY = petY + PetSettings.SpeechAnchorY;
         double left = Math.Clamp(anchorX - width / 2, bounds.Left, Math.Max(bounds.Left, bounds.Right - width));
         double top = Math.Max(bounds.Top, anchorY - height);
         double tail = Math.Round(Math.Clamp(anchorX - left - 6 - 7, 14, Math.Max(14, width - 12 - 30)));

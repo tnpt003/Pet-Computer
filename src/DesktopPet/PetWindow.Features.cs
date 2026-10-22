@@ -163,18 +163,14 @@ public sealed partial class PetWindow
         ballHalo = new Ellipse { Width = 36, Height = 36, Stroke = YarnBallArt.Halo, StrokeThickness = 2, Opacity = 0 };
         var art = new YarnBallArt { Width = 24, Height = 24, RenderTransformOrigin = new Point(0.5, 0.5) };
         surface.Children.Add(ballHalo); surface.Children.Add(art); ballArt = art;
-        toyWindow = new Window { Width = 56, Height = 56, WindowStyle = WindowStyle.None,
-            ResizeMode = ResizeMode.NoResize, AllowsTransparency = true, Background = Brushes.Transparent,
-            ShowInTaskbar = false, ShowActivated = false, Topmost = true, Content = surface,
-            Left = ball.X - 28, Top = bounds.Bottom - 40 };
-        toyWindow.SourceInitialized += (_, _) =>
-            ((System.Windows.Interop.HwndSource)PresentationSource.FromVisual(toyWindow)).AddHook(WindowHook);
+        toyWindow = CreateOverlayWindow(surface, "Pet toy");
+        toyWindow.Width = 56; toyWindow.Height = 56; toyWindow.Left = ball.X - 28; toyWindow.Top = bounds.Bottom - 40;
         toyWindow.MouseLeftButtonDown += (_, e) =>
         {
             if (paused || !CanPlay) return;
             ball.Push(e.GetPosition(surface).X - 28, 0.9 + featureRandom.NextDouble() * 0.2);
             pet.Emotions.Attention();
-            pet.Facing = ball.X < pet.X + 56 ? -1 : 1;
+            pet.Facing = ball.X < pet.X + PetSettings.CenterX ? -1 : 1;
             Interact("ball_clicked"); PlayPetSound("ball_tap"); e.Handled = true;
         };
         toyWindow.Closed += (_, _) => toyWindow = null;
@@ -188,7 +184,7 @@ public sealed partial class PetWindow
         toyWindow?.Close();
         returningHome = false;
         admiring = false; admireRemaining = 0;
-        shelfShove = ShelfShove.None; shelfWatch = 0; pet.Bonk = 0; cushionNap = CushionNap.None; napAsked = false;
+        shelfShove = ShelfShove.None; shelfWatch = 0; pet.Bonk = 0; cushionNap = CushionNap.None; userAsked &= ~UserAsked.Nap;
         climbPlan = null; ledgeExit = 0;
         PetPhysics.LetGo(pet); // A climbing pet lets go and drops.
         pet.TreatRemaining = 0;
@@ -259,7 +255,7 @@ public sealed partial class PetWindow
             if (ballTime <= 0) { CancelFeatureActivity(); return; }
             ball.Step(dt, bounds.Left + 12, Math.Max(bounds.Left + 12, bounds.Right - 12));
             ShelfMeetsBall(); // The keepsake on display is in the way (PetWindow.TrophyPlay.cs).
-            double delta = ball.X - (pet.X + 56);
+            double delta = ball.X - (pet.X + PetSettings.CenterX);
             // Only from the floor: the ball never rolls on a window's edge.
             if (toyPlay.Step(dt, Math.Abs(delta) < 49 && ball.Height < 24 && ball.BatCooldown <= 0 && pet.LedgeId == 0, preferences.Personality))
             {
@@ -288,7 +284,7 @@ public sealed partial class PetWindow
         // Walking to the resting spot or the keepsakes on its own is autonomous; a look the user
         // asked for (double click on the keepsake) still happens in Quiet.
         // Walking to the cushion the user asked for ("Do now") also goes on in Quiet.
-        if (EffectiveQuiet) { StopShelfShove(); if (!napAsked) StopCushionNap(); if (!admireAsked) StopAdmiring(); }
+        if (EffectiveQuiet) { StopShelfShove(); if (!Asked(UserAsked.Nap)) StopCushionNap(); if (!Asked(UserAsked.Admire)) StopAdmiring(); }
         if (TickAdmiring(dt)) return; // PetWindow.Trophies.cs
         if (TickCushionNap(dt)) return; // Napping on the slime cushion (PetWindow.TrophyPlay.cs).
         if (EffectiveQuiet) return;

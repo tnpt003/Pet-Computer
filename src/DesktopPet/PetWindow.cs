@@ -133,15 +133,48 @@ public sealed partial class PetWindow : Window
         return IntPtr.Zero;
     }
 
+    // Borderless, transparent, topmost tool window that never takes focus: battle panels, the
+    // toy ball, the laser dot, the speech bubble, the keepsake. clickThrough lets every click fall
+    // to the window below; otherwise it is clickable without stealing keyboard focus.
+    private static Window CreateOverlayWindow(UIElement content, string title, bool clickThrough = false)
+    {
+        var window = new Window
+        {
+            WindowStyle = WindowStyle.None, ResizeMode = ResizeMode.NoResize, AllowsTransparency = true,
+            Background = Brushes.Transparent, Topmost = true, ShowInTaskbar = false, ShowActivated = false,
+            Focusable = false, Content = content, Title = title, Left = -10000, Top = -10000, Width = 10, Height = 10
+        };
+        window.SourceInitialized += (_, _) =>
+        {
+            ((HwndSource)PresentationSource.FromVisual(window)).AddHook(WindowHook);
+            var handle = new WindowInteropHelper(window).Handle;
+            const int ExStyle = -20;
+            const long ToolWindow = 0x80, NoActivate = 0x08000000, Transparent = 0x20;
+            SetWindowLongPtr(handle, ExStyle, new IntPtr(GetWindowLongPtr(handle, ExStyle).ToInt64() | ToolWindow | NoActivate | (clickThrough ? Transparent : 0)));
+        };
+        return window;
+    }
+
     private Area WorkArea(Forms.Screen screen)
     {
         var area = screen.WorkingArea;
         return new Area(area.Left / scale, area.Top / scale, area.Right / scale, area.Bottom / scale);
     }
 
+    // Replaceable for UI checks, so they never depend on where the real mouse is: the cursor in
+    // screen pixels.
+    private Func<Point>? cursorProbe;
+
+    private Point ScreenCursor()
+    {
+        if (cursorProbe != null) return cursorProbe();
+        GetCursorPos(out var point);
+        return new Point(point.X, point.Y);
+    }
+
     private Point CursorPosition()
     {
-        GetCursorPos(out var point);
+        var point = ScreenCursor();
         return new Point(point.X / scale, point.Y / scale);
     }
 

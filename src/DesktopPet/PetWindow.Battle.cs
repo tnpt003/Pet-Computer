@@ -476,35 +476,15 @@ public sealed partial class PetWindow
         return (screen.DeviceName, new Area(work.Left / at, work.Top / at, work.Right / at, work.Bottom / at), at);
     }
 
-    private Window CreateBattleWindow(UIElement content, string title, bool clickThrough = false)
-    {
-        var window = new Window
-        {
-            WindowStyle = WindowStyle.None, ResizeMode = ResizeMode.NoResize, AllowsTransparency = true,
-            Background = Brushes.Transparent, Topmost = true, ShowInTaskbar = false, ShowActivated = false,
-            Focusable = false, Content = content, Title = title, Left = -10000, Top = -10000, Width = 10, Height = 10
-        };
-        window.SourceInitialized += (_, _) =>
-        {
-            // Clickable (slimes, HUD buttons) but never activated: typing elsewhere is untouched.
-            ((HwndSource)PresentationSource.FromVisual(window)).AddHook(WindowHook);
-            var handle = new WindowInteropHelper(window).Handle;
-            const int ExStyle = -20;
-            const long ToolWindow = 0x80, NoActivate = 0x08000000, Transparent = 0x20;
-            SetWindowLongPtr(handle, ExStyle, new IntPtr(GetWindowLongPtr(handle, ExStyle).ToInt64() | ToolWindow | NoActivate | (clickThrough ? Transparent : 0)));
-        };
-        return window;
-    }
-
     private void ShowBattleWindows()
     {
         if (battle == null) return;
         battleView = new BattleFieldView(battle) { English = English };
         battleView.SlimeClicked += (id, offset) => BattleClickSlime(id, offset);
         battleView.RightClicked += () => { battle?.Arm(null); RequestBattleRedraw(); UpdateBattleHud(); }; // Right-click on the field cancels the skill.
-        battleFieldWindow = CreateBattleWindow(battleView, "Pet battle");
+        battleFieldWindow = CreateOverlayWindow(battleView, "Pet battle");
         battleFieldWindow.DpiChanged += (_, _) => battlePlacedScale = 0; // Re-place in pixels next frame.
-        battleHudWindow = CreateBattleWindow(BuildBattleHud(), "Pet battle HUD");
+        battleHudWindow = CreateOverlayWindow(BuildBattleHud(), "Pet battle HUD");
         battleHudWindow.SizeToContent = SizeToContent.WidthAndHeight;
         battlePlacedScale = 0;
         battleFrameClock = 0; battleFieldIdle = false; BattleFieldDraws = 0;
@@ -565,18 +545,13 @@ public sealed partial class PetWindow
     public const double BattleHudDodgeOpacity = 0.25;
     private bool battleHudDodging;
     public bool BattleHudDodging => battleHudDodging;
-    // Replaceable for UI checks: the cursor in screen pixels.
-    private Func<Point>? battleCursorProbe;
 
     private void UpdateBattleHudDodge()
     {
         if (battleHudWindow == null || battleHud == null || !battleHudWindow.IsVisible) return;
         var handle = new WindowInteropHelper(battleHudWindow).Handle;
         if (handle == IntPtr.Zero) return;
-        Point cursor;
-        if (battleCursorProbe != null) cursor = battleCursorProbe();
-        else if (GetCursorPos(out var raw)) cursor = new Point(raw.X, raw.Y);
-        else return;
+        var cursor = ScreenCursor();
         bool dodge = false;
         if (GetWindowRect(handle, out var rect) && cursor.X >= rect.Left && cursor.X < rect.Right && cursor.Y >= rect.Top && cursor.Y < rect.Bottom)
         {

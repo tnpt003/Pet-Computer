@@ -36,22 +36,9 @@ public sealed partial class PetWindow
         dot.Children.Add(new Ellipse { Width = 9, Height = 9, Fill = new SolidColorBrush(Color.FromRgb(255, 40, 40)),
             Stroke = new SolidColorBrush(Color.FromArgb(200, 255, 200, 200)), StrokeThickness = 1,
             Effect = new DropShadowEffect { Color = Colors.Red, BlurRadius = 8, ShadowDepth = 0, Opacity = 0.9 } });
-        laserWindow = new Window
-        {
-            Width = LaserDotSize, Height = LaserDotSize, WindowStyle = WindowStyle.None, ResizeMode = ResizeMode.NoResize,
-            AllowsTransparency = true, Background = Brushes.Transparent, Topmost = true, ShowInTaskbar = false,
-            ShowActivated = false, Focusable = false, IsHitTestVisible = false, Content = dot, Title = "Pet laser",
-            Left = -10000, Top = -10000
-        };
-        laserWindow.SourceInitialized += (_, _) =>
-        {
-            // Click-through and never activated, like the speech bubble.
-            var handle = new WindowInteropHelper(laserWindow).Handle;
-            const int ExStyle = -20;
-            const long Transparent = 0x20, ToolWindow = 0x80, NoActivate = 0x08000000;
-            long style = GetWindowLongPtr(handle, ExStyle).ToInt64();
-            SetWindowLongPtr(handle, ExStyle, new IntPtr(style | Transparent | ToolWindow | NoActivate));
-        };
+        // Click-through and never activated, like the speech bubble.
+        laserWindow = CreateOverlayWindow(dot, "Pet laser", clickThrough: true);
+        laserWindow.Width = LaserDotSize; laserWindow.Height = LaserDotSize; laserWindow.IsHitTestVisible = false;
         laserWindow.Closed += (_, _) => laserWindow = null;
         laserWindow.Show();
         PlayPetSound("excited");

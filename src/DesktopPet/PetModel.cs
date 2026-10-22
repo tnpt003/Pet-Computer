@@ -88,6 +88,13 @@ public sealed class PetSettings
     public const double LedgeBounceSpeed = 400;
     // While climbing, the pet's centre is this far outside the window's side.
     public const double ClimbOffset = 30;
+    // Where the drawn cat sits inside its 112×112 frame (DIPs from the frame's top-left),
+    // for hit tests and anchors outside the renderer.
+    public const double CenterX = 56;
+    public const double HeadLeft = 24, HeadRight = 88, HeadTop = 16;
+    public const double BodyLeft = 18, BodyRight = 94, BodyTop = 24;
+    public const double ChestY = 50;
+    public const double SpeechAnchorY = 12;
 }
 
 public sealed class PetModel

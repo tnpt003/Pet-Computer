@@ -49,7 +49,7 @@ public sealed partial class PetWindow
             TextWrapping = TextWrapping.Wrap, MaxWidth = 240, FontFamily = PetUi.TextFont };
         var panel = new Border { Background = HudBack, BorderBrush = PetUi.Game.Rim, BorderThickness = new Thickness(1.5),
             CornerRadius = new CornerRadius(8), Padding = new Thickness(10, 5, 10, 6), Margin = new Thickness(4), Child = label };
-        var notice = CreateBattleWindow(panel, "Pet notice", clickThrough: true);
+        var notice = CreateOverlayWindow(panel, "Pet notice", clickThrough: true);
         notice.SizeToContent = SizeToContent.WidthAndHeight;
         notice.IsHitTestVisible = false;
         notice.Closed += (_, _) => { if (battleNoticeWindow == notice) battleNoticeWindow = null; };
@@ -150,7 +150,7 @@ public sealed partial class PetWindow
             Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 6, ShadowDepth = 1, Opacity = 0.4 }
         };
         panel.SetValue(TextBlock.FontFamilyProperty, PetUi.TextFont);
-        window = CreateBattleWindow(panel, "Pet result");
+        window = CreateOverlayWindow(panel, "Pet result");
         window.SizeToContent = SizeToContent.WidthAndHeight;
         var shown = window;
         window.Closed += (_, _) => { if (battleSummaryWindow == shown) battleSummaryWindow = null; };

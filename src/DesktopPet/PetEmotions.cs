@@ -238,7 +238,7 @@ public sealed class PetEmotions
                 }
             }
             else pettingTime = 0;
-            double nearX = x - (pet.X + 56), nearY = y - (pet.Y + 50);
+            double nearX = x - (pet.X + PetSettings.CenterX), nearY = y - (pet.Y + PetSettings.ChestY);
             if (!ManualMode && !busy && speed >= 1600 &&
                 nearX * nearX + nearY * nearY <= 140 * 140 && now >= surpriseAfter &&
                 !(now < transientUntil && transient is PetEmotion.Angry or PetEmotion.Happy))

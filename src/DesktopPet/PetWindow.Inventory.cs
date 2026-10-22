@@ -188,7 +188,7 @@ public sealed partial class PetWindow
             Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 6, ShadowDepth = 1, Opacity = 0.4 }
         };
         panel.SetValue(TextBlock.FontFamilyProperty, PetUi.TextFont);
-        var window = CreateBattleWindow(panel, "Pet bag");
+        var window = CreateOverlayWindow(panel, "Pet bag");
         window.SizeToContent = SizeToContent.WidthAndHeight;
         window.LocationChanged += (_, _) => { if (!bagPlacing && window.IsVisible && window == bagWindow) bagPlace = new Point(window.Left, window.Top); };
         window.Closed += (_, _) => { if (bagWindow == window) bagWindow = null; };

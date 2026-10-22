@@ -94,7 +94,7 @@ public sealed partial class PetWindow
             Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 6, ShadowDepth = 1, Opacity = 0.4 }
         };
         panel.SetValue(TextBlock.FontFamilyProperty, PetUi.TextFont);
-        var window = CreateBattleWindow(panel, title);
+        var window = CreateOverlayWindow(panel, title);
         window.SizeToContent = SizeToContent.WidthAndHeight;
         return window;
     }

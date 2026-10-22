@@ -121,7 +121,8 @@ internal static class BattleChecks
             "Hovering one slot then another shows each one's text in the same place; leaving restores the hint");
         // The HUD steps aside: over its information part it fades and lets clicks through; over a
         // slot or a button it is solid and clickable; away from it, normal.
-        var cursorProbe = typeof(PetWindow).GetField("battleCursorProbe", Flags)!;
+        var cursorProbe = typeof(PetWindow).GetField("cursorProbe", Flags)!;
+        var usualCursor = cursorProbe.GetValue(window);
         var hudHandle = new WindowInteropHelper(Field<Window>(window, "battleHudWindow")).Handle;
         bool HudClickThrough() => (GetWindowLongPtr(hudHandle, -20).ToInt64() & Transparent) != 0;
         void CursorAt(Point screen) { cursorProbe.SetValue(window, (Func<Point>)(() => screen)); Call(window, "UpdateBattleHudDodge"); }
@@ -136,7 +137,7 @@ internal static class BattleChecks
         CursorAt(gameHud.PointToScreen(new Point(20, 20)));
         CursorAt(new Point(-30000, -30000));
         check(!window.BattleHudDodging && !HudClickThrough() && gameHud.Opacity == 1, "Away from the HUD it looks and works as before");
-        cursorProbe.SetValue(window, (Func<Point>)(() => new Point(-30000, -30000)));
+        cursorProbe.SetValue(window, usualCursor);
         Tick(1.0 / 60);
         check(!gameHud.Slot(BattleSkill.Push).IsReady && gameHud.Slot(BattleSkill.Push).Remaining > 0 && gameHud.Slot(BattleSkill.Heal).IsReady,
             "A used skill shows its cooldown; the others are ready");

@@ -116,21 +116,8 @@ public sealed partial class PetWindow
         if (trophyWindow == null)
         {
             trophyShelf = new TrophyShelf { Side = ShelfSide, TopRoom = ShelfTopRoom, BottomRoom = ShelfBottomRoom, Scale = DisplayScale, Cursor = Cursors.Hand };
-            trophyWindow = new Window
-            {
-                Title = "Pet trophies", WindowStyle = WindowStyle.None, ResizeMode = ResizeMode.NoResize, AllowsTransparency = true, Background = Brushes.Transparent,
-                ShowInTaskbar = false, ShowActivated = false, Topmost = true, Focusable = false, SizeToContent = SizeToContent.Manual, Content = trophyShelf
-            };
-            trophyWindow.SourceInitialized += (_, _) =>
-            {
-                // Clickable on the art (the transparent room passes clicks through), a tool window
-                // that never activates.
-                ((HwndSource)PresentationSource.FromVisual(trophyWindow)).AddHook(WindowHook);
-                const int ExStyle = -20;
-                const long ToolWindow = 0x80, NoActivate = 0x08000000;
-                var handle = new WindowInteropHelper(trophyWindow).Handle;
-                SetWindowLongPtr(handle, ExStyle, new IntPtr(GetWindowLongPtr(handle, ExStyle).ToInt64() | ToolWindow | NoActivate));
-            };
+            // Clickable on the art (the transparent room passes clicks through).
+            trophyWindow = CreateOverlayWindow(trophyShelf, "Pet trophies");
             trophyShelf.MouseLeftButtonDown += (_, e) =>
             {
                 if (e.ClickCount >= 2) CallCatToLook(); // PetWindow.TrophyPlay.cs
@@ -239,7 +226,7 @@ public sealed partial class PetWindow
 
     private Point ShelfCursor()
     {
-        GetCursorPos(out var point);
+        var point = ScreenCursor();
         return new Point(point.X / shelfScale, point.Y / shelfScale);
     }
 
@@ -278,8 +265,8 @@ public sealed partial class PetWindow
     // Test hook (and the drag's own frame): carry the held shelf to the cursor.
     private void UpdateShelfDrag()
     {
-        GetCursorPos(out var point);
-        var screen = Forms.Screen.FromPoint(new System.Drawing.Point(point.X, point.Y));
+        var point = ScreenCursor();
+        var screen = Forms.Screen.FromPoint(new System.Drawing.Point((int)point.X, (int)point.Y));
         if (screen.DeviceName != shelfMonitor)
         {
             // Carried onto another monitor: its DIPs from now on, and no throw across the two.
@@ -370,9 +357,9 @@ public sealed partial class PetWindow
         if (shelf.Held || pet.Bonk > 0 || shelfHop != ShelfHop.None || !ShelfBesideCat || cushionNap == CushionNap.Asleep) return;
         if (!pet.Grounded || pet.Action is PetAction.Dragging or PetAction.Climbing || PetActionRules.IsInFlight(pet.Action)) return;
         double w = ShelfArtWidth, bottom = ShelfFloor - shelf.Height, top = bottom - ShelfArtHeight;
-        double headLeft = pet.X + 24, headRight = pet.X + 88, headTop = pet.Y + 16;
+        double headLeft = pet.X + PetSettings.HeadLeft, headRight = pet.X + PetSettings.HeadRight, headTop = pet.Y + PetSettings.HeadTop;
         bool onHead = shelf.VY <= -150 && shelf.X + w >= headLeft && shelf.X <= headRight && bottomBefore <= headTop + 4 && bottom >= headTop;
-        double bodyLeft = pet.X + 18, bodyRight = pet.X + 94, bodyTop = pet.Y + 24, bodyBottom = pet.Y + settings.Height;
+        double bodyLeft = pet.X + PetSettings.BodyLeft, bodyRight = pet.X + PetSettings.BodyRight, bodyTop = pet.Y + PetSettings.BodyTop, bodyBottom = pet.Y + settings.Height;
         bool side = !onHead && Math.Abs(shelf.VX) >= 260 && Math.Sign(shelf.VX) == Math.Sign(CatCenter - ShelfCenter)
             && shelf.X + w > bodyLeft && shelf.X < bodyRight && bottom > bodyTop && top < bodyBottom;
         if (!onHead && !side) return;
@@ -519,7 +506,7 @@ public sealed partial class PetWindow
     private void StopAdmiring()
     {
         if (!admiring) return;
-        admiring = admireAsked = false;
+        admiring = false; userAsked &= ~UserAsked.Admire;
         admireRemaining = 0;
         if (pet.Action is PetAction.Looking or PetAction.Walking) pet.Action = PetAction.Idle;
         pet.VX = 0;

@@ -15,10 +15,10 @@ Explorer after publishing. The complete release includes .NET and Python. See
 **Emotions:** clicks, gentle petting, repeated clicks, fast cursor passes, and lack
 of attention now produce distinct expressions. See [emotion triggers and controls](docs/EMOTIONS.md).
 
-**Start on this computer:**
+**Run from source** (Windows 10/11 x64, from a clone of this repository; `scripts\run.ps1`
+uses a local .NET SDK under `.tools\dotnet` if there is one, see section 2):
 
 ```powershell
-cd 'C:\Project VS\Pet Computer'
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run.ps1
 ```
 
@@ -72,7 +72,7 @@ optional; Visual Studio Code or Visual Studio with .NET desktop tools works.
 Open a new PowerShell terminal after installing, then:
 
 ```powershell
-cd 'C:\Project VS\Pet Computer'
+cd <your clone of this repository>
 dotnet --list-sdks
 dotnet build .\src\DesktopPet\DesktopPet.csproj -c Release
 dotnet run --project .\src\DesktopPet\DesktopPet.csproj -c Release
@@ -255,3 +255,10 @@ See [the Windows guide](docs/WINDOWS.md) for build commands and dependency detai
 
 Start with this small separation of concerns; add interfaces or a larger entity
 system only when the features actually require them.
+
+## License
+
+The code and artwork are under the [MIT License](LICENSE). The bundled sounds come from
+CC0 recordings (see [src/DesktopPet/Assets/Sounds/CREDITS.md](src/DesktopPet/Assets/Sounds/CREDITS.md));
+the published app also includes the .NET runtime and the embeddable Python runtime under
+their own licenses (`python\LICENSE.txt` in the release folder).

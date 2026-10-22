@@ -8,6 +8,8 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Người dùng "ok làm cái đề xuất". UiChecks mới `PanelHeightChecks` (dữ liệu thật, tiến trình Phiêu lưu trong bộ nhớ, mọi màn đã thắng có kỷ lục, cả vi/en) đo lúc cao nhất so với màn hình 480 DIP (còn 456): bản đồ Phiêu lưu 331 (vừa); bảng kết quả 449 (vừa, sát: thắng trùm Viễn chinh có đủ kỷ vật + kỷ lục); **bảng chuẩn bị 519 (tràn, màn c1_break_through)**. Không đo: bảng nâng cấp (đặt trên chiến trường, ~267 trong ảnh test), hướng dẫn, thông báo (ngắn).
 - Sửa bảng chuẩn bị theo cách người dùng đã chọn cho bản đồ Viễn chinh: MaxHeight = chiều cao màn hình của mèo − 24 (PlaceBattlePrep), nội dung trong ScrollViewer thanh mảnh, hàng nút dock dưới. Check: màn 480 DIP → 456, cuộn được, Sẵn sàng trong khung; màn đủ cao giữ 519. Đã xem ảnh render.
 - Test thật: scripts/test.ps1 -Ui: Python OK; C# 1229; WPF 607 đạt (lần đầu có 6 check trận tính giờ fail — nhóm chập chờn đã biết; chạy lại đạt hết, cả có PET_RENDER_REVIEW).
+- Commit 2586ab1. Đóng mèo (PID 17636) bằng WM_CLOSE, publish sạch 1.3.0-beta+2586ab1, ZIP artifacts\DesktopPet-1.3.0-beta-2586ab1-win-x64.zip; check-publish 3/3; mở lại 14:43, log "Desktop Pet 1.3.0-beta (2586ab1) started". AGENTS.md/docs/NEXT-STEPS.md của người dùng trả lại đúng hash.
+- Cần test tay: dòng "bảng chuẩn bị màn 2 trên màn hình thấp" trong MANUAL-TEST.md → Viễn chinh — mốc 5.
 
 ## Viễn chinh mốc 5 — kiểm thử phát hành, bản 1.3.0-beta (2026-10-21)
 - Người dùng "ok" (làm sau cue tinh anh, nâng 1.3.0-beta). Phần lớn là test; code app chỉ đổi ở chỗ test lộ ra lỗi.

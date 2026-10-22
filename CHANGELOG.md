@@ -2,6 +2,7 @@
 
 ## Chưa phát hành
 
+- **Một món trưng bày, to hơn:** trên màn hình chỉ còn một kỷ vật (vẽ to ~1,8×) trên đế gỗ nhỏ; chọn món trong Cài đặt → Mèo → "Món trưng bày" (mặc định cúp xịn nhất). Rơi trúng mèo đang ngủ thì mèo thức dậy và choáng.
 - **Kệ kỷ vật thành đồ chơi:** cầm kệ lên kéo đi (lắc lư khi cầm), ném, thả rơi — chạm đất bẹp rồi nhún kiểu hoạt hình, có bụi; click thì kệ "boing". Thả trúng đầu mèo: mèo choáng thấy sao ~2 giây, kệ nảy sang bên cạnh (mèo đang ngủ thì ngủ tiếp). Mèo thỉnh thoảng tự đẩy kệ trượt đi. Kệ nằm sát mép màn hình: mèo ngạc nhiên, kệ biến "poof" rồi hiện lại giữa màn hình. Kệ ở lại màn hình bạn thả và nhớ vị trí; lần đầu hiện ở ~3/4 bề ngang thay vì góc phải. Kệ không còn bấm xuyên (chỉ vùng trong suốt quanh kệ xuyên).
 - **Viễn chinh: quay bậc (gacha loại điểm):** bản đồ lúc đầu chỉ lộ trùm; tới mỗi bậc bấm **Quay máy**, viên nang lắc rồi bật mở, lộ 2–3 điểm của bậc (giao tranh 45%, sự kiện 20%, tinh anh 20%, nghỉ 15%; bậc đầu không có tinh anh/nghỉ, bậc trước trùm luôn có nghỉ). Mỗi chuyến một hình bản đồ khác. Sự kiện nay có dấu "!" ("?" là chưa lộ).
 - **Viễn chinh: máy viên nang** sau mỗi trận giao tranh thắng: viên thường miễn phí (thẻ thường hoặc +10% HP) hoặc viên vàng tốn 12% HP (di vật, thẻ hiếm, hoặc thẻ + 10% HP), hay bỏ qua. Tỉ lệ hiện trên máy; kết quả bốc sẵn từ seed, đóng/mở app không quay lại được.

@@ -50,6 +50,8 @@ public sealed class PetPreferences
     // Where the user or the cat left the shelf: its monitor and the art's left edge as a fraction of
     // the free width (null: not moved yet, 0.75 across the cat's monitor).
     public string? TrophyMonitor { get; set; }
+    // The one keepsake on display (Settings → Pet); null or not owned: the best one (gold → silver → bronze → cushion).
+    public string? TrophyShown { get; set; }
     public double? TrophyFractionX { get; set; }
     // Battle Mode difficulty chosen in the menu: "Easy", "Normal" or "Hard".
     public string BattleDifficulty { get; set; } = "Normal";

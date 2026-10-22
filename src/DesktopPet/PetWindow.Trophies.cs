@@ -9,8 +9,9 @@ using Forms = System.Windows.Forms;
 
 namespace DesktopPet;
 
-// Expedition milestone 4: the display corner. The keepsakes a won run gave that are shown (cups, a
-// slime cushion) stand on a small shelf on the floor of a monitor. On once the first keepsake is
+// Expedition milestone 4: the display corner. One keepsake a won run gave (a cup or the slime
+// cushion; chosen in Settings → Pet, else the best one) stands, drawn big, on a small wooden base on
+// the floor of a monitor. On once the first keepsake is
 // earned; Settings → Pet turns it off. Never takes focus, no taskbar button; hidden while a
 // fullscreen app runs or a battle is on.
 // The shelf is a cartoon object (ShelfMotion): the user picks it up (past the drag threshold), it
@@ -23,12 +24,12 @@ public sealed partial class PetWindow
 {
     private Window? trophyWindow;
     private TrophyShelf? trophyShelf;
-    private int trophyCount = -1;
+    private string? trophyShownId;
     // Seconds until the cat next goes to look at the shelf, and how long it still looks.
     private double admireVisit = 300, admireRemaining;
     private bool admiring;
     public const double AdmireSeconds = 4, AdmireEvery = 600;
-    public const double ShelfSide = 48, ShelfTopRoom = 56, ShelfBottomRoom = 36;
+    public const double ShelfSide = 70, ShelfTopRoom = 80, ShelfBottomRoom = 44, DisplayScale = 1.8;
 
     // The shelf's place: its monitor (in that monitor's DIPs) and its motion.
     private readonly ShelfMotion shelf = new();
@@ -70,14 +71,24 @@ public sealed partial class PetWindow
     // Shown on the shelf: the cushion first, then the cups bronze → gold.
     public IReadOnlyList<KeepsakeSpec> ShownKeepsakes => KeepsakeList.Where(k => k.Shown && Keepsakes.Contains(k.Id))
         .OrderBy(k => k.Kind == KeepsakeSpec.Cushion ? -1 : Array.IndexOf(KeepsakeSpec.Tiers, k.Tier)).ToList();
+    // The one on display: the chosen one if owned, else the best (gold → silver → bronze → cushion).
+    public KeepsakeSpec? DisplayedKeepsake
+    {
+        get
+        {
+            var owned = ShownKeepsakes;
+            return owned.FirstOrDefault(k => k.Id == preferences.TrophyShown) ?? owned.LastOrDefault(k => k.Kind == KeepsakeSpec.Cup) ?? owned.FirstOrDefault();
+        }
+    }
     private bool KeepsakeAccessory(string id) => KeepsakeList.Any(k => k.Accessory == id && Keepsakes.Contains(k.Id));
 
     public bool TrophiesVisible => trophyWindow?.IsVisible == true;
-    private double ShelfArtWidth => trophyShelf == null ? 0 : TrophyShelf.WidthFor(trophyShelf.Items);
+    private double ShelfArtWidth => trophyShelf == null ? 0 : TrophyShelf.WidthFor(trophyShelf.Items) * DisplayScale;
+    private static double ShelfArtHeight => TrophyShelf.ArtHeight * DisplayScale;
     private double ShelfFloor => shelfArea.Bottom;
     // The shelf's art (not the room around it), in its monitor's DIPs.
     public Rect TrophyBounds => trophyWindow == null ? Rect.Empty
-        : new Rect(shelf.X, ShelfFloor - shelf.Height - TrophyShelf.ArtHeight, ShelfArtWidth, TrophyShelf.ArtHeight);
+        : new Rect(shelf.X, ShelfFloor - shelf.Height - ShelfArtHeight, ShelfArtWidth, ShelfArtHeight);
     public bool Admiring => admiring;
     public ShelfMotion TrophyMotion => shelf;
     public bool ShelfHeld => shelfHeld;
@@ -89,8 +100,8 @@ public sealed partial class PetWindow
     // Every frame, paused or not (cheap: only a list count and a position).
     private void TickTrophies()
     {
-        var shown = preferences.ShowTrophies && !context.Fullscreen && !BattleActive ? ShownKeepsakes : Array.Empty<KeepsakeSpec>();
-        if (shown.Count == 0)
+        var displayed = preferences.ShowTrophies && !context.Fullscreen && !BattleActive ? DisplayedKeepsake : null;
+        if (displayed == null)
         {
             if (trophyWindow?.IsVisible == true)
             {
@@ -103,7 +114,7 @@ public sealed partial class PetWindow
         }
         if (trophyWindow == null)
         {
-            trophyShelf = new TrophyShelf { Side = ShelfSide, TopRoom = ShelfTopRoom, BottomRoom = ShelfBottomRoom, Cursor = Cursors.Hand };
+            trophyShelf = new TrophyShelf { Side = ShelfSide, TopRoom = ShelfTopRoom, BottomRoom = ShelfBottomRoom, Scale = DisplayScale, Cursor = Cursors.Hand };
             trophyWindow = new Window
             {
                 Title = "Pet trophies", WindowStyle = WindowStyle.None, ResizeMode = ResizeMode.NoResize, AllowsTransparency = true, Background = Brushes.Transparent,
@@ -123,13 +134,13 @@ public sealed partial class PetWindow
             trophyShelf.MouseMove += (_, _) => CheckShelfDragThreshold();
             trophyShelf.MouseLeftButtonUp += (_, _) => EndShelfDrag(true);
             trophyShelf.LostMouseCapture += (_, _) => EndShelfDrag(false);
-            trophyWindow.Closed += (_, _) => { trophyWindow = null; trophyShelf = null; trophyCount = -1; shelfHeld = shelfPress = false; };
-            trophyCount = -1;
+            trophyWindow.Closed += (_, _) => { trophyWindow = null; trophyShelf = null; trophyShownId = null; shelfHeld = shelfPress = false; };
+            trophyShownId = null;
         }
-        if (trophyCount != shown.Count)
+        if (trophyShownId != displayed.Id)
         {
-            trophyCount = shown.Count;
-            trophyShelf!.Items = shown;
+            trophyShownId = displayed.Id;
+            trophyShelf!.Items = new[] { displayed };
             trophyWindow.Width = trophyShelf.Width;
             trophyWindow.Height = trophyShelf.Height;
             if (shelfPlaced) shelf.X = Math.Clamp(shelf.X, shelfArea.Left, Math.Max(shelfArea.Left, shelfArea.Right - ShelfArtWidth));
@@ -175,7 +186,7 @@ public sealed partial class PetWindow
         // Its monitor was unplugged: the same spot across the new one.
         if (moved) shelf.X = shelfArea.Left + Math.Clamp((shelf.X - old.Left) / Math.Max(1, old.Right - old.Left - ShelfArtWidth), 0, 1) * Math.Max(0, shelfArea.Right - shelfArea.Left - ShelfArtWidth);
         shelf.X = Math.Clamp(shelf.X, shelfArea.Left, Math.Max(shelfArea.Left, shelfArea.Right - ShelfArtWidth));
-        shelf.Height = Math.Clamp(shelf.Height, 0, Math.Max(0, ShelfFloor - shelfArea.Top - TrophyShelf.ArtHeight));
+        shelf.Height = Math.Clamp(shelf.Height, 0, Math.Max(0, ShelfFloor - shelfArea.Top - ShelfArtHeight));
     }
 
     private void PositionShelf()
@@ -203,7 +214,7 @@ public sealed partial class PetWindow
                 puff = 0.35 + 0.65 * Math.Min(1, t / ShelfAppearSeconds);
                 break;
         }
-        Point? pivot = shelfHeld ? new Point(shelfGrabX, TrophyShelf.ArtHeight - shelfGrabY) : null;
+        Point? pivot = shelfHeld ? new Point(shelfGrabX / DisplayScale, (ShelfArtHeight - shelfGrabY) / DisplayScale) : null;
         trophyShelf.SetPose(shelf.ScaleX, shelf.ScaleY, shelf.Tilt, pivot, Math.Max(0, pop), shake, shelfDust, shelfDustStrength, puff);
     }
 
@@ -245,7 +256,7 @@ public sealed partial class PetWindow
         if (admiring) StopAdmiring();
         var cursor = ShelfCursor();
         shelfGrabX = Math.Clamp(cursor.X - shelf.X, 0, ShelfArtWidth);
-        shelfGrabY = Math.Clamp(ShelfFloor - shelf.Height - cursor.Y, 0, TrophyShelf.ArtHeight);
+        shelfGrabY = Math.Clamp(ShelfFloor - shelf.Height - cursor.Y, 0, ShelfArtHeight);
         shelf.Held = true;
         shelf.VX = shelf.VY = 0;
         shelf.SquashV -= 3; // Lifted: a little stretch.
@@ -269,7 +280,7 @@ public sealed partial class PetWindow
         shelfTracker.Add(clock.Elapsed.TotalSeconds, cursor.X, cursor.Y);
         double w = ShelfArtWidth;
         shelf.X = Math.Clamp(cursor.X - shelfGrabX, shelfArea.Left, Math.Max(shelfArea.Left, shelfArea.Right - w));
-        shelf.Height = Math.Clamp(ShelfFloor - (cursor.Y + shelfGrabY), 0, Math.Max(0, ShelfFloor - shelfArea.Top - TrophyShelf.ArtHeight));
+        shelf.Height = Math.Clamp(ShelfFloor - (cursor.Y + shelfGrabY), 0, Math.Max(0, ShelfFloor - shelfArea.Top - ShelfArtHeight));
         // Dangles: swings back against the way it is carried.
         shelf.HeldTilt = Math.Clamp(shelfTracker.Velocity(3000).X * 0.018, -28, 28);
     }
@@ -320,7 +331,7 @@ public sealed partial class PetWindow
         if (shelfHeld) UpdateShelfDrag();
         double before = ShelfFloor - shelf.Height;
         shelf.Step(dt, shelfArea.Left, Math.Max(shelfArea.Left, shelfArea.Right - ShelfArtWidth));
-        double ceiling = Math.Max(0, ShelfFloor - shelfArea.Top - TrophyShelf.ArtHeight);
+        double ceiling = Math.Max(0, ShelfFloor - shelfArea.Top - ShelfArtHeight);
         if (shelf.Height > ceiling) { shelf.Height = ceiling; shelf.VY = -Math.Abs(shelf.VY) * 0.3; }
         if (shelf.Landed > 0)
         {
@@ -340,8 +351,9 @@ public sealed partial class PetWindow
         PositionShelf();
     }
 
-    // A falling shelf meets the top of the cat's head: bonk. The cat (awake, standing) sees stars;
-    // a sleeping or waking cat sleeps on (the sleep lock). Either way the shelf bounces off sideways.
+    // A falling shelf meets the top of the cat's head: bonk, stars, and the shelf bounces off sideways.
+    // A sleeping cat is woken by it (approved exception to the sleep lock, as a click: waking, then
+    // the wake cooldown) and sees stars too.
     private void CheckShelfBonk(double bottomBefore)
     {
         if (shelf.Held || shelf.VY > -150 || pet.Bonk > 0 || shelfHop == ShelfHop.Appear || !ShelfBesideCat) return;
@@ -357,7 +369,13 @@ public sealed partial class PetWindow
         shelf.Rebound(side, 250 + featureRandom.NextDouble() * 90);
         shelfEdgeCheck = true;
         PlayPetSound("clank");
-        if (pet.Action is PetAction.Sleeping or PetAction.Waking || pet.Emotions.SleepLocked) return;
+        if (pet.Action is PetAction.Sleeping or PetAction.Waking || pet.Emotions.SleepLocked)
+        {
+            behavior.WakeByClick(pet);
+            pet.Bonk = PetModel.BonkDuration;
+            System.Diagnostics.Trace.WriteLine("The keepsake shelf fell on the sleeping cat: it wakes up dazed.");
+            return;
+        }
         CancelFeatureActivity();
         pet.Bonk = PetModel.BonkDuration;
         pet.Action = PetAction.Sitting;

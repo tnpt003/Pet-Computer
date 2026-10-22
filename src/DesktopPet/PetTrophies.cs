@@ -29,7 +29,7 @@ public sealed class TrophyShelf : FrameworkElement
     public IReadOnlyList<KeepsakeSpec> Items
     {
         get => items;
-        set { items = value; Width = WidthFor(value) + Side * 2; Height = ArtHeight + TopRoom + BottomRoom; InvalidateVisual(); }
+        set { items = value; Width = WidthFor(value) * Scale + Side * 2; Height = ArtHeight * Scale + TopRoom + BottomRoom; InvalidateVisual(); }
     }
 
     // On the desktop: transparent room around the art (sides, above, and below for the tilt while
@@ -37,12 +37,14 @@ public sealed class TrophyShelf : FrameworkElement
     public double Side { get; init; }
     public double TopRoom { get; init; }
     public double BottomRoom { get; init; }
+    // Drawn this many times its natural size (the desktop's one keepsake is bigger; the Rewards cell 1).
+    public double Scale { get; init; } = 1;
     private static readonly Brush Puff = PetUi.Frozen(Color.FromArgb(0xE8, 255, 255, 255)), Dust = PetUi.Frozen(Color.FromArgb(0xA0, 0xE8, 0xDC, 0xCC)), Spark = B(0xFF, 0xD8, 0x4A);
     private static readonly Pen SparkEdge = Freeze(new Pen(B(0xE0, 0x9A, 0x1E), 0.8) { LineJoin = PenLineJoin.Round });
     private static readonly Pen PuffEdge = Freeze(new Pen(PetUi.Frozen(Color.FromArgb(0x90, 0x9C, 0x92, 0xB0)), 1.2));
 
     // The pose (ShelfMotion's springs), around the bottom center; Pop: the teleport's grow/shrink;
-    // Pivot: the held point (art coordinates) the tilt swings around.
+    // Pivot: the held point (unscaled art coordinates) the tilt swings around.
     private double scaleX = 1, scaleY = 1, tilt, pop = 1, shake;
     private Point? pivot;
     // Effects, each a progress 0..1 (negative: none): dust from a landing, the teleport's puff.
@@ -66,6 +68,7 @@ public sealed class TrophyShelf : FrameworkElement
         if (items.Count == 0) return;
         double w = WidthFor(items);
         dc.PushTransform(new TranslateTransform(Side, TopRoom));
+        dc.PushTransform(new ScaleTransform(Scale, Scale));
         if (dust is >= 0 and < 1) DrawDust(dc, w);
         if (pop > 0.01)
         {
@@ -78,6 +81,7 @@ public sealed class TrophyShelf : FrameworkElement
             dc.Pop();
         }
         if (puff is >= 0 and < 1) DrawPuff(dc, w);
+        dc.Pop();
         dc.Pop();
     }
 

@@ -417,9 +417,25 @@ internal static class ExpeditionChecks
             var shelf = shelfWindow?.Content as TrophyShelf;
             double across = (spot.Left - area.Left) / (area.Right - area.Left - spot.Width);
             check(Math.Abs(across - 0.75) < 0.01 && Math.Abs(spot.Bottom - area.Bottom) < 1 && shelf != null && !window.ShelfHopping
-                  && shelf.Items.Select(k => k.Id).SequenceEqual(new[] { "slime_cushion", "cup_silver" }) && Math.Abs(spot.Width - TrophyShelf.WidthFor(shelf.Items)) < 0.5
-                  && Math.Abs(shelfWindow!.Width - spot.Width - PetWindow.ShelfSide * 2) < 0.5,
-                $"First shown 3/4 across the cat's monitor (away from the edge), standing on its floor: the cushion, then the silver cup ({spot}, floor {area.Bottom})");
+                  && shelf.Items.Select(k => k.Id).SequenceEqual(new[] { "cup_silver" }) && Math.Abs(spot.Width - TrophyShelf.WidthFor(shelf.Items) * PetWindow.DisplayScale) < 0.5
+                  && Math.Abs(spot.Height - TrophyShelf.ArtHeight * PetWindow.DisplayScale) < 0.5 && Math.Abs(shelfWindow!.Width - spot.Width - PetWindow.ShelfSide * 2) < 0.5,
+                $"First shown 3/4 across the cat's monitor (away from the edge), standing on its floor: one keepsake, the best (silver cup over the cushion), drawn 1.8× ({spot}, floor {area.Bottom})");
+            // Settings → Pet chooses the one on display.
+            window.ShowPetSettings();
+            var settingsForm = (PetSettingsForm)typeof(PetWindow).GetField("settingsForm", Flags)!.GetValue(window)!;
+            check(settingsForm.TrophyIds.SequenceEqual(new[] { "cup_silver", "slime_cushion" }) && settingsForm.Trophy.IsEnabled && settingsForm.Trophy.SelectedIndex == 0,
+                "Settings offer the owned keepsakes (cups first), the shown one selected");
+            settingsForm.Trophy.SelectedIndex = 1;
+            settingsForm.Save.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            Call(window, "TickTrophies");
+            check(prefs.TrophyShown == "slime_cushion" && shelf!.Items.Select(k => k.Id).SequenceEqual(new[] { "slime_cushion" })
+                  && Math.Abs(window.TrophyBounds.Width - TrophyShelf.WidthFor(shelf.Items) * PetWindow.DisplayScale) < 0.5 && Math.Abs(window.TrophyBounds.Bottom - area.Bottom) < 1,
+                "Choosing the cushion and saving puts the cushion on display instead");
+            Shot("Pet trophies", "trophies-cushion.png");
+            prefs.TrophyShown = "cup_gold"; Call(window, "TickTrophies");
+            check(shelf.Items.Select(k => k.Id).SequenceEqual(new[] { "cup_silver" }), "A chosen keepsake that is not owned falls back to the best one");
+            prefs.TrophyShown = null; Call(window, "TickTrophies");
+            spot = window.TrophyBounds;
             Shot("Pet trophies", "trophies-shelf.png");
             bool ShelfPlaced(double at)
             {
@@ -521,7 +537,10 @@ internal static class ExpeditionChecks
             pet.Action = PetAction.Sleeping; pet.Emotions.EnterSleep();
             motion.X = pet.X + 56 - spot.Width / 2; motion.Height = area.Bottom - headTop + 30; motion.VX = 0; motion.VY = -300;
             Shelf(0.2);
-            check(pet.Bonk == 0 && pet.Action == PetAction.Sleeping && motion.VY > 0, "A sleeping cat sleeps on (no bonk); the shelf still bounces off");
+            check(pet.Bonk > 0 && pet.Action == PetAction.Waking && !pet.Emotions.SleepLocked && pet.Emotions.WakeCooldownRemaining > 25 && motion.VY > 0,
+                "Dropped on a sleeping cat it wakes it (waking, then the wake cooldown) dazed with stars; the shelf bounces off");
+            Shelf(PetModel.BonkDuration);
+            check(pet.Bonk == 0 && !pet.Emotions.SleepLocked, "Then the stars are gone and the cat stays awake");
             Shelf(3);
             window.Reset();
             pet.Action = PetAction.Idle; pet.Emotions.Reset();

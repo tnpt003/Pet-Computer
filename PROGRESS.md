@@ -4,6 +4,12 @@ Cập nhật: 2026-10-22 (Asia/Saigon).
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
+## Một món trưng bày (chọn trong Cài đặt), to 1,8×; rơi trúng mèo ngủ thì thức + choáng (2026-10-22)
+- Người dùng: "chỉ cần 1 vật trưng bày", "tự chọn món trong settings, cỡ này dc, ok", và rơi trúng mèo đang ngủ thì mèo bị choáng và thức dậy (ngoại lệ sleep lock, đã ghi AGENTS.md).
+- Đã làm: `PetPreferences.TrophyShown`; `PetWindow.Trophies.cs` `DisplayedKeepsake` (món đã chọn nếu có, không thì cúp cao nhất, không có cúp thì đệm), chỉ vẽ một món; `DisplayScale` 1,8, vùng trống quanh 70/80/44; `TrophyShelf.Scale` (ô Phần thưởng vẫn 1). Cài đặt → Mèo → "Món trưng bày" (ComboBox, cúp vàng → đồng rồi đệm; chưa có thì mờ). Rơi trúng mèo đang ngủ/đang thức dậy: `behavior.WakeByClick` (waking 1,2 s + wake cooldown) và `pet.Bonk`.
+- Test thật: scripts/test.ps1: Python 55 OK; C# 1295 đạt. UiChecks có PET_RENDER_REVIEW: 692 đạt + 6 fail đúng nhóm trận tính giờ đã biết; chạy lại không review: **698/698 đạt**. Check mới/sửa: một món (cúp bạc hơn đệm) 1,8×, Cài đặt liệt kê kỷ vật (cúp trước) và chọn đệm → Lưu → đệm, chọn món không có → về món xịn nhất, rơi trúng mèo ngủ → Waking + cooldown > 25 s + choáng, hết choáng không ngủ lại. Đã xem ảnh render: cúp bạc to, đệm to, khói poof, nghiêng khi cầm.
+- Cần test tay: xem docs/MANUAL-TEST.md mục "Kệ kỷ vật thành đồ chơi" (mục một món + rơi trúng mèo ngủ).
+
 ## Kệ kỷ vật thành đồ chơi: cầm, ném, rơi trúng đầu, mèo đẩy, chạm mép về giữa (2026-10-22)
 - Người dùng "ok" kế hoạch: cầm cả kệ (một vật); mèo ngủ bị rơi trúng thì ngủ tiếp; Quiet vẫn choáng (phản ứng với người dùng); kệ chỉ đáp trên sàn (không lên gờ cửa sổ); kệ ở lại màn hình được thả; nhớ vị trí. Ngoại lệ ghi trong AGENTS.md (choáng do kệ KHÔNG phải cảm xúc Dizzy).
 - Đã làm (C# only, Python không đụng):

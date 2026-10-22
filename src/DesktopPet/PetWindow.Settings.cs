@@ -14,6 +14,9 @@ public sealed class PetSettingsForm
     public TextBox Name = null!;
     public ComboBox Language = null!, Personality = null!, Coat = null!, Accessory = null!, Chattiness = null!, BreakInterval = null!, PreviewCue = null!, BirthDay = null!, BirthMonth = null!;
     public string[] AccessoryIds = Array.Empty<string>();
+    // The keepsakes that can be on display (owned cups best first, then the cushion); empty: none yet.
+    public ComboBox Trophy = null!;
+    public string[] TrophyIds = Array.Empty<string>();
     public CheckBox HolidayAccessories = null!, ClimbWindows = null!, ShowTrophies = null!, Talks = null!, Autostart = null!, BreakReminders = null!, Sounds = null!, InteractionSounds = null!, EmotionSounds = null!, SleepSounds = null!;
     public Slider Volume = null!;
     public Button Save = null!, Cancel = null!, Tuning = null!, Forget = null!, Preview = null!;
@@ -100,7 +103,14 @@ public sealed partial class PetWindow
         form.ClimbWindows = new CheckBox { Content = L("Mèo leo lên cửa sổ", "Climb on windows"), IsChecked = preferences.ClimbWindows,
             ToolTip = L("Mèo nhảy hoặc trèo lên mép trên các cửa sổ app và đi dạo trên đó.", "The pet jumps or climbs onto the top edge of app windows and walks along it.") };
         form.ShowTrophies = new CheckBox { Content = L("Góc trưng bày kỷ vật", "Keepsake display corner"), IsChecked = preferences.ShowTrophies,
-            ToolTip = L("Cúp và đồ Viễn chinh đứng ở góc phải dưới màn hình; mèo thỉnh thoảng ra ngắm.", "Expedition cups and keepsakes stand at the bottom right of the screen; the cat looks at them now and then.") };
+            ToolTip = L("Một kỷ vật Viễn chinh đứng trên sàn màn hình: cầm kéo, ném được; mèo thỉnh thoảng ra ngắm hoặc đẩy nó.",
+                        "One Expedition keepsake stands on the screen's floor: pick it up, throw it; the cat looks at it or shoves it now and then.") };
+        var displayable = ShownKeepsakes.OrderBy(k => k.Kind == KeepsakeSpec.Cushion ? 1 : -Array.IndexOf(KeepsakeSpec.Tiers, k.Tier)).ToArray();
+        form.TrophyIds = displayable.Select(k => k.Id).ToArray();
+        form.Trophy = new ComboBox { IsEnabled = displayable.Length > 0,
+            ItemsSource = displayable.Length > 0 ? displayable.Select(k => k.Name(preferences.Language == "en")).ToArray() : new[] { L("Chưa có kỷ vật", "No keepsakes yet") },
+            SelectedIndex = Math.Max(0, Array.IndexOf(form.TrophyIds, DisplayedKeepsake?.Id)),
+            ToolTip = L("Kỷ vật đứng trên màn hình (thắng Viễn chinh để nhận thêm).", "The keepsake standing on the screen (win Expeditions for more).") };
         var petTab = Page(
             Section(L("Hồ sơ", "Profile"),
                 Row(L("Tên", "Name"), form.Name),
@@ -110,6 +120,7 @@ public sealed partial class PetWindow
             Section(L("Hoạt động", "Activities"),
                 form.ClimbWindows,
                 form.ShowTrophies,
+                Row(L("Món trưng bày", "On display"), form.Trophy),
                 form.Tuning));
         // Gentle idle motion (breathing, tail, blinks) while the Pet tab is showing.
         var previewClock = System.Diagnostics.Stopwatch.StartNew();
@@ -261,6 +272,7 @@ public sealed partial class PetWindow
             if (!preferences.ClimbWindows) DropLedges(); // A pet on a window falls; a climbing one lets go.
             preferences.ShowTrophies = form.ShowTrophies.IsChecked == true;
             if (!preferences.ShowTrophies) StopAdmiring();
+            if (form.TrophyIds.Length > 0) preferences.TrophyShown = form.TrophyIds[Math.Clamp(form.Trophy.SelectedIndex, 0, form.TrophyIds.Length - 1)];
             // Test windows never touch the real Windows startup entry.
             if (persistPreferences && form.Autostart.IsChecked == true != autostartOn &&
                 (Environment.ProcessPath is not string path || !startup.SetEnabled(form.Autostart.IsChecked == true, path)))

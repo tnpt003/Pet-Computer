@@ -543,6 +543,12 @@ public sealed class BattleSim
     public double CooldownFactor => Math.Max(0.3, 1 - cooldownCut);
     public double ArmorFactor => Math.Max(0.3, 1 - armorCut);
     public double KnockBonus => knockBonus;
+    // The cat's numbers with this build and these relics, before anything that only happens in a
+    // fight (Cheer, combo, Momentum, Reckless's bonus): what the inventory shows.
+    public double SwingDamage => arms.Damage * DamageFactor;
+    public double SwingsPerSecond => 1 / Math.Max(arms.AttackCooldown * CooldownFactor, arms.SwingDuration);
+    public double Knock => arms.Knock + knockBonus;
+    public double HurtFactor => ArmorFactor * (1 + recklessHurt);
     public bool IsBossWave(int wave)
     {
         if (wave < 1 || wave > WaveCount) return false;

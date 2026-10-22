@@ -348,3 +348,12 @@ Tự động đã có: luật bốc trên 150 chuyến, bốc một lần (quay 
 - [ ] Đóng app khi máy viên nang đang chờ hoặc ngay sau khi bấm Quay máy; mở lại: vẫn đúng các viên nang/bậc như trước (không quay lại được).
 - [ ] Bậc 5 (trước trùm) luôn có điểm nghỉ. Chơi vài chuyến: hình bản đồ khác nhau; cảm nhận độ khó so với trước (mô phỏng: đường an toàn dễ hơn, đường tham lam khó hơn chút).
 - [ ] Màn hình thấp/scale cao: máy viên nang và ô quay không tràn, cuộn được.
+
+## Túi đồ trên Sảnh chiến đấu (2026-10-22)
+
+Tự động đã có: nút Túi đồ trên sảnh, mở trong cùng cửa sổ (không lấy focus, giữ thời gian rảnh của mèo), ‹ Sảnh quay lại thẻ chế độ, số gốc/Phiêu lưu/Viễn chinh đúng theo luật trận, tô vàng chỉ chỗ thẻ/di vật đổi, build/★/◆, di vật, phần thưởng ✓/?, đổi ngôn ngữ, màn hình 480 DIP cuộn được, đóng sảnh thì quên túi đồ. Đã xem ảnh render (vi/en, trống và đầy). Phần dưới cần làm tay:
+- [ ] Chuột phải → Chế độ chiến đấu → sảnh có nút "Túi đồ" góc trái dưới. Bấm: tiêu đề "Túi đồ", 3 thẻ chế độ biến mất, nút đổi thành "‹ Sảnh"; bấm lại về thẻ chế độ. Gõ phím ở app khác vẫn bình thường.
+- [ ] Với tiến trình thật của bạn: bảng Chỉ số khớp cảm nhận trong trận (HP tối đa đầu màn kế tiếp = cột Phiêu lưu); build Phiêu lưu đúng các thẻ đã chọn ở màn vừa thắng.
+- [ ] Đang có chuyến Viễn chinh: cột "Viễn chinh · <vũ khí>", HP/bậc/độ khó, thẻ và di vật khớp bản đồ Viễn chinh.
+- [ ] Phần thưởng: phụ kiện/kỷ vật đã có ghi ✓ màu vàng; chưa có ghi ? và cách nhận.
+- [ ] Màn hình thấp/scale cao: túi đồ cuộn được, nút Đóng vẫn thấy. App fullscreen: sảnh (đang ở túi đồ) ẩn rồi hiện lại vẫn ở túi đồ.

@@ -99,6 +99,7 @@ ExpeditionChoiceTests.Run(Check);
 ExpeditionKeepsakeTests.Run(Check);
 ExpeditionReleaseTests.Run(Check);
 ExpeditionGachaTests.Run(Check);
+InventoryStatTests.Run(Check);
 var activity = new PetActivity();
 activity.Step(PetAction.Walking, 2);
 activity.Step(PetAction.Jumping, 1);

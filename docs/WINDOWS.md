@@ -539,6 +539,17 @@ instead of half sizes (10.5–15.5 → the next step up; the 22 banner → 20).
   Expedition: locked until the Slime King is won / run under way with step and HP / keepsakes;
   Infinity: coming soon, a ribbon, not clickable). A card opens that mode's map in its place;
   the maps' **‹ Hub** button comes back here, the hub's **Close** goes back to the desktop.
+- **Bag** (2026-10-22, `PetWindow.Inventory.cs`, only on the hub, view only): the hub's **Bag**
+  button shows, in the hub's own window in place of the cards (its button turns into **‹ Hub**):
+  *Stats* (max HP, damage per hit, attack speed, reach, knock-back, running speed, damage taken)
+  for the chosen weapon alone, with the Adventure build carried on, and with the Expedition run
+  under way (its weapon, cards, relics); a number is gold when cards or relics change it from that
+  weapon's own (the numbers come from a `BattleSim` built for them; Cheer, combos, Momentum and
+  Reckless's bonus are fight-only and not counted); the *Adventure build* (the one carried into
+  the first stage not won, or the last stage's once all are won: cards by group, ★ synergies,
+  ◆ rare cards); the *Expedition run* (step, HP, difficulty, cards, relics n/max; or "no run");
+  *Rewards* (each stage's accessory and each keepsake: ✓ won and where it shows, or ? and what
+  wins it). Nothing in it is saved or changed; closing the hub forgets it.
 - **Expedition setup:** before a run the map's main button is **Prepare the run**: the same setup
   panel as an Adventure stage (preview cat, weapon cards with stats, difficulty), titled for the
   run; **Set out** starts the run (no battle yet, so only Pause/fullscreen keep it off) and comes

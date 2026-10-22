@@ -783,6 +783,7 @@ internal static class Program
         await ExpeditionChecks.Run(window, pet, behavior, preferences, Check);
         await UpgradeChecks.Run(window, pet, behavior, preferences, Check);
         await PanelHeightChecks.Run(window, pet, preferences, Check);
+        await InventoryChecks.Run(window, pet, behavior, preferences, Check);
         await ContentChecks.Run(window, pet, behavior, preferences, Check);
         await AcceptanceChecks.Run(window, pet, behavior, preferences, Check);
         window.ShowControls();

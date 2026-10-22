@@ -1,7 +1,7 @@
 using DesktopPet;
 
 // Expedition milestone 5 (docs/EXPEDITION-DIRECTION.md): whole runs end to end over the built-in data,
-// through rests, events, elite relics, a battle left after a crash and the boss. Each run is played
+// through step spins (2026-10-22), capsules, rests, events, elite relics, a battle left after a crash and the boss. Each run is played
 // three ways: without stopping, closing the app (saving, reading the file back) after every action,
 // and clicking every action twice. All three must give the same map, offers, HP, build, relics,
 // records and keepsakes. Simulated results only (NOT real play). Temporary files only.
@@ -30,8 +30,8 @@ internal static class ExpeditionReleaseTests
                     ended &= straight[^1].StartsWith("end won", StringComparison.Ordinal);
                 }
             check(ended, "18 whole runs (3 difficulties × 6 seeds) end at the won boss");
-            check(new[] { "rest heal", "rest card", "event swap", "event chest", "event shrine", "elite relic", "retreat" }.All(seen.Contains),
-                $"The runs pass rests (heal and card), all three events, an elite's relic and a battle left after a crash ({string.Join(", ", seen.OrderBy(s => s))})");
+            check(new[] { "spin", "rest heal", "rest card", "event swap", "event chest", "event shrine", "elite relic", "capsule free", "capsule gold", "retreat" }.All(seen.Contains),
+                $"The runs pass spins, rests (heal and card), all three events, an elite's relic, both capsules and a battle left after a crash ({string.Join(", ", seen.OrderBy(s => s))})");
             check(same, "Closing the app after any action and reading the file back changes nothing: same map, offers, HP, build, relics, records, keepsakes" + (firstDiff == "" ? "" : $" ({firstDiff})"));
             check(doubled, "Every action clicked twice: the second click is refused and changes nothing");
 
@@ -41,8 +41,10 @@ internal static class ExpeditionReleaseTests
             var run = x.Start(BattleWeapon.Sword, BattleDifficulty.Normal, 77, "boss-crash");
             while (run.Step < run.Map.Count - 1)
             {
-                if (run.Pending != null) { x.Choose(Expedition.Leave); continue; }
-                int lane = Enumerable.Range(0, run.Map[run.Step].Length).First(l => x.Node(l) != null);
+                if (x.NeedsRoll) { x.Roll(); continue; }
+                if (run.Pending != null) { var options = x.Options(); x.Choose(options.Contains(Expedition.Leave) ? Expedition.Leave : options.Contains(Expedition.Heal) ? Expedition.Heal : Expedition.Safe); continue; }
+                int lane = Enumerable.Range(0, run.Map[run.Step].Length).FirstOrDefault(l => x.Node(l) != null, -1);
+                if (lane < 0) { x.Visit(0); continue; }
                 x.Enter(lane);
                 x.Finish(true, run.Hp, run.Build, 20, 2);
             }
@@ -95,6 +97,14 @@ internal static class ExpeditionReleaseTests
         for (int guard = 0; guard < 40 && x.Run != null; guard++)
         {
             var run = x.Run;
+            if (x.NeedsRoll)
+            {
+                int step = run.Step;
+                Act(e => e.Roll(), ok => ok);
+                seen.Add("spin");
+                trace.Add($"spin {step} {string.Join(",", x.Run!.Kinds![step])} {string.Join(",", x.Run.Map[step])} | {State(x)}");
+                continue;
+            }
             if (run.Pending is ExpeditionChoice open)
             {
                 string kind = open.Kind == ExpeditionChoice.EventKind ? x.Spec.FindEvent(open.Event)!.Kind : open.Kind;
@@ -103,6 +113,8 @@ internal static class ExpeditionReleaseTests
                 {
                     ExpeditionChoice.RestKind when (run.Step / 2 + seed) % 2 == 0 && open.Cards.Length > 0 => (Expedition.Card, open.Cards[0], null, null, "rest card"),
                     ExpeditionChoice.RestKind => (Expedition.Heal, null, null, null, "rest heal"),
+                    ExpeditionChoice.CapsuleKind when (run.Step + seed) % 2 == 0 && x.Refusal(Expedition.Gold) == null => (Expedition.Gold, null, null, null, "capsule gold"),
+                    ExpeditionChoice.CapsuleKind => (Expedition.Free, null, null, null, "capsule free"),
                     ExpeditionEventSpec.Swap when x.Refusal(Expedition.SwapOption, open.Cards.FirstOrDefault(), run.Build.Keys.OrderBy(k => k).FirstOrDefault()) == null =>
                         (Expedition.SwapOption, open.Cards[0], run.Build.Keys.OrderBy(k => k).First(), null, "event swap"),
                     ExpeditionEventSpec.Swap => (Expedition.Leave, null, null, null, "event leave"),
@@ -114,7 +126,7 @@ internal static class ExpeditionReleaseTests
                 };
                 seen.Add(pick.label);
                 var chosen = Act(e => e.Choose(pick.option, pick.card, pick.drop, pick.relic), o => o.Done);
-                trace.Add($"chose {chosen.Option} hp{chosen.Hp:+0.000;-0.000} card={chosen.Card} drop={chosen.Dropped} relic={chosen.Relic} | {State(x)}");
+                trace.Add($"chose {chosen.Option} hp{chosen.Hp:+0.000;-0.000} card={chosen.Card} drop={chosen.Dropped} relic={chosen.Relic} prize={chosen.Prize} | {State(x)}");
                 continue;
             }
             // Even seeds go to events, most seeds rest; otherwise prefer the elite, so the runs pass every kind.
@@ -159,7 +171,8 @@ internal static class ExpeditionReleaseTests
 
     private static string State(Expedition x) => x.Run is not ExpeditionRun run ? "no run" :
         $"step={run.Step} path={string.Join(",", run.Path)} hp={run.Hp:0.000} fighting={run.Fighting} retreats={run.Retreats} build={string.Join(",", run.Build.OrderBy(c => c.Key).Select(c => c.Key + "×" + c.Value))} "
-        + $"relics={string.Join(",", run.Relics)} pending={run.Pending?.Kind}:{string.Join(",", run.Pending?.Cards ?? Array.Empty<string>())}:{string.Join(",", run.Pending?.Relics ?? Array.Empty<string>())}";
+        + $"relics={string.Join(",", run.Relics)} pending={run.Pending?.Kind}:{string.Join(",", run.Pending?.Cards ?? Array.Empty<string>())}:{string.Join(",", run.Pending?.Relics ?? Array.Empty<string>())}:{run.Pending?.Free}:{run.Pending?.Gold} "
+        + $"kinds={string.Join("/", (run.Kinds ?? new()).Select(k => string.Join(",", k)))}";
 
     private static string Records(Expedition x) =>
         string.Join(";", x.Progress.Records.OrderBy(r => r.Key).Select(r => $"{r.Key}={r.Value.Runs}/{r.Value.Wins}/{r.Value.BestSteps}/{r.Value.BestSeconds}")) + " kept=" + string.Join(",", x.Progress.Keepsakes);

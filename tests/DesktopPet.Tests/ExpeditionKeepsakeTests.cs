@@ -23,7 +23,7 @@ internal static class ExpeditionKeepsakeTests
 
     public static void Run(Action<bool, string> check)
     {
-        var data = BattleData.Settings;
+        var data = ExpeditionFixture.Fixed;
         var spec = data.Expedition!;
         var keepsakes = spec.Keepsakes;
         check(keepsakes.Length == 5 && keepsakes.Count(k => k.Kind == KeepsakeSpec.Cup) == 3 && keepsakes.Where(k => k.Kind == KeepsakeSpec.Cup).All(k => k.Exact)
@@ -32,7 +32,7 @@ internal static class ExpeditionKeepsakeTests
         var scarf = keepsakes.Single(k => k.Kind == KeepsakeSpec.AccessoryKind);
         check(PetAccessories.Find(scarf.Accessory) is { Reward: "slime_trail", Layer: AccessoryLayer.Neck } && PetPreferences.Accessories.Contains(scarf.Accessory!),
             "The Expedition scarf is a neck accessory earned by the Expedition");
-        check(ExpeditionProgress.CurrentVersion == 3, "Milestone 4 raises expedition.json to version 3");
+        check(ExpeditionProgress.CurrentVersion == 4, "Milestone 4 raised expedition.json to version 3, the step gacha to 4");
 
         var x = new Expedition(data, new ExpeditionProgress());
         var normal = WinRun(x, BattleDifficulty.Normal, 1);
@@ -66,10 +66,10 @@ internal static class ExpeditionKeepsakeTests
         string file = Path.Combine(dir, "expedition.json");
         try
         {
-            check(x.Progress.Save(file) && ExpeditionProgress.Load(file).Keepsakes.Count == 5 && File.ReadAllText(file).Contains("\"Version\": 3"), "Keepsakes are saved and read back (version 3)");
+            check(x.Progress.Save(file) && ExpeditionProgress.Load(file).Keepsakes.Count == 5 && File.ReadAllText(file).Contains("\"Version\": 4"), "Keepsakes are saved and read back (version 4)");
             File.WriteAllText(file, "{ \"Version\": 2, \"Records\": {} }");
             var older = ExpeditionProgress.Load(file);
-            check(!older.ReadOnly && older.Keepsakes.Count == 0 && older.Version == 3, "A milestone 3 file is read with no keepsakes");
+            check(!older.ReadOnly && older.Keepsakes.Count == 0 && older.Version == 4, "A milestone 3 file is read with no keepsakes");
             File.WriteAllText(file, "{ \"Version\": 2, \"Keepsakes\": [ \"cup_gold\", \"cup_gold\", \"\" ] }");
             check(ExpeditionProgress.Load(file).Keepsakes.SequenceEqual(new[] { "cup_gold" }), "Repeated or empty keepsake ids are cleaned when read");
         }

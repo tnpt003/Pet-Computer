@@ -2,6 +2,9 @@
 
 ## Chưa phát hành
 
+- **Viễn chinh: quay bậc (gacha loại điểm):** bản đồ lúc đầu chỉ lộ trùm; tới mỗi bậc bấm **Quay máy**, viên nang lắc rồi bật mở, lộ 2–3 điểm của bậc (giao tranh 45%, sự kiện 20%, tinh anh 20%, nghỉ 15%; bậc đầu không có tinh anh/nghỉ, bậc trước trùm luôn có nghỉ). Mỗi chuyến một hình bản đồ khác. Sự kiện nay có dấu "!" ("?" là chưa lộ).
+- **Viễn chinh: máy viên nang** sau mỗi trận giao tranh thắng: viên thường miễn phí (thẻ thường hoặc +10% HP) hoặc viên vàng tốn 12% HP (di vật, thẻ hiếm, hoặc thẻ + 10% HP), hay bỏ qua. Tỉ lệ hiện trên máy; kết quả bốc sẵn từ seed, đóng/mở app không quay lại được.
+- Luật Viễn chinh nâng phiên bản 5: chuyến đang dở từ bản trước kết thúc khi mở bản đồ; kỷ lục cũ giữ riêng.
 - **Sảnh chiến đấu:** chuột phải → Chế độ chiến đấu mở một sảnh có 3 thẻ chế độ kèm hình minh họa và tiến trình: Phiêu lưu, Viễn chinh (khóa tới khi thắng Vua Slime), Vô tận (sắp ra mắt). Nút ‹ Sảnh trên bản đồ quay về sảnh. Bỏ "Bắt đầu trận" (trận tự do) khỏi menu; trong trận menu chỉ còn Tạm dừng/Kết thúc.
 - **Viễn chinh dùng bảng chuẩn bị chung:** "Chuẩn bị chuyến" mở cùng bảng như màn Phiêu lưu (mèo xem trước, thẻ vũ khí có chỉ số, độ khó) để chọn cho cả chuyến; "Lên đường" bắt đầu chuyến. Bỏ các nút chữ chọn vũ khí trên bản đồ.
 - **Giao diện game đồng bộ:** các panel dùng chung khung, tiêu đề có huy hiệu hình chế độ, nút chính, ô chi tiết và kiểu "đang chọn"; độ khó có 1–3 ngôi sao; bản đồ Phiêu lưu nay cũng cuộn được trên màn hình thấp.

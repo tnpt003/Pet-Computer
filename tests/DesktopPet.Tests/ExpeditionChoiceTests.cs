@@ -33,7 +33,7 @@ internal static class ExpeditionChoiceTests
 
     public static void Run(Action<bool, string> check)
     {
-        var data = BattleData.Settings;
+        var data = ExpeditionFixture.Fixed;
         var spec = data.Expedition!;
         check(spec.RulesVersion >= 2 && ExpeditionProgress.CurrentVersion >= 2, "Milestone 3 raises the Expedition's rules (2 or later) and its file version (2 or later)");
         check(spec.Events.Select(e => e.Kind).OrderBy(k => k).SequenceEqual(new[] { "chest", "shrine", "swap" }) && spec.Relics.Select(r => r.Effect).Distinct().Count() == 4 && spec.MaxRelics == 3,

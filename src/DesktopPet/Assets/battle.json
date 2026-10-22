@@ -320,9 +320,15 @@
   // (End, closing the app) lets it be fought again for "retreatCost" of the max HP. Encounters are
   // clear stages (same keys as Adventure stages, no reward or tip); their ids are stable (a saved
   // run names them) and never an Adventure stage's. "unlockAfter": the Adventure stage to win first.
+  // "kindGacha" (instead of "steps", 2026-10-22): the map shows only the boss at first; each of the
+  // "steps" steps gets "minLanes"–"maxLanes" nodes drawn by "weights" when the run reaches it (the
+  // map's Spin), kept from then on. Always: step 1 has no elite or rest, a step at most one rest and
+  // never only elites, the step before the boss a rest. "capsules": after each won fight node, a free
+  // capsule ("freeCard" of the time a common card, else "freeHeal" of the max HP) or a gold one for
+  // "goldCost" of the max HP (by weight: "relic", "rare" card, "cardHeal" a card + "goldHeal" HP).
   "expedition": {
     "id": "slime_trail", "nameVi": "Đường mòn Slime", "nameEn": "The Slime Trail",
-    "rulesVersion": 4, "unlockAfter": "c1_slime_king", "retreatCost": 0.25, "winHeal": 0.05, "stepThreat": 0.1,
+    "rulesVersion": 5, "unlockAfter": "c1_slime_king", "retreatCost": 0.25, "winHeal": 0.05, "stepThreat": 0.1,
     "restHeal": 0.3, "maxRelics": 3, "eliteRelics": 2,
     "keepsakes": [
       { "id": "cup_bronze", "kind": "cup", "tier": "bronze", "difficulty": "Easy", "exact": true, "nameVi": "Cúp đồng viễn chinh", "nameEn": "Bronze Expedition cup" },
@@ -331,7 +337,8 @@
       { "id": "expedition_scarf", "kind": "accessory", "accessory": "ExpeditionScarf", "difficulty": "Easy", "nameVi": "Khăn viễn chinh", "nameEn": "Expedition scarf" },
       { "id": "slime_cushion", "kind": "cushion", "difficulty": "Normal", "nameVi": "Đệm slime", "nameEn": "Slime cushion" }
     ],
-    "steps": [ [ "fight", "fight" ], [ "fight", "elite", "event" ], [ "rest", "elite" ], [ "fight", "elite", "event" ], [ "rest", "fight" ] ],
+    "kindGacha": { "steps": 5, "minLanes": 2, "maxLanes": 3, "weights": { "fight": 45, "event": 20, "elite": 20, "rest": 15 } },
+    "capsules": { "freeHeal": 0.1, "freeCard": 0.5, "goldCost": 0.12, "goldHeal": 0.1, "relic": 40, "rare": 30, "cardHeal": 30 },
     "events": [
       { "id": "cat_trader", "kind": "swap", "nameVi": "Lữ khách mèo", "nameEn": "Travelling cat",
         "descVi": "Đổi một thẻ trong build lấy một trong ba thẻ mới, hoặc đi tiếp.", "descEn": "Trade one card of your build for one of three new cards, or move on." },

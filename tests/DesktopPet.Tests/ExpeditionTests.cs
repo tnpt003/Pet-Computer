@@ -8,7 +8,7 @@ internal static class ExpeditionTests
 {
     public static void Run(Action<bool, string> check)
     {
-        var data = BattleData.Settings;
+        var data = ExpeditionFixture.Fixed;
         var spec = data.Expedition;
         check(spec != null && spec.Steps.Length == 5 && spec.UnlockAfter == "c1_slime_king" && spec.Boss?.Id == "x_king",
             "Built-in battle.json has an Expedition: 5 steps and the boss, opened by winning the Slime King");
@@ -181,14 +181,15 @@ internal static class ExpeditionTests
         check(Error(Exp(steps: "[]")).Contains("1–10 steps"), "An expedition without steps is rejected");
         check(Error(Exp(extra: ", \"shop\": 1")) != "", "A misspelt expedition key is rejected");
 
-        Balance(check, data);
+        Balance(check, BattleData.Settings); // The real data: the step gacha and capsules.
     }
 
     // The whole run in simulation (NOT real play): each weapon × difficulty × player (simple: the
     // best case, casual: slow and missing some, AdventureBalanceTests) × route policy, 10 seeds.
     // Safe: rests when hurt, avoids elites, takes no risks at events. Greedy: elites and events
     // first, risky chests and shrines, cards over rests unless low. A won elite's first relic is
-    // always taken. Measured, not a target yet (the user plays before the numbers are agreed);
+    // always taken. The capsule machine (2026-10-22): safe takes the free capsule, greedy the gold one
+    // while at 70% HP or more. Measured, not a target yet (the user plays before the numbers are agreed);
     // checked only that it can be won and is not endless.
     public enum Policy { Safe, Greedy }
     private static readonly string[] CardOrder = { "sharp", "fast_paws", "thick_fur", "big_heart", "quick_feet", "heavy_push", "turtle_shell", "opening_strike", "running_start" };
@@ -216,6 +217,8 @@ internal static class ExpeditionTests
         string? best = open.Cards.OrderBy(Rank).FirstOrDefault();
         bool Try(string option, string? card = null, string? drop = null, string? relic = null) => x.Choose(option, card, drop, relic).Done;
         if (open.Kind == ExpeditionChoice.RewardKind) { if (!Try(Expedition.Take, relic: open.Relics.FirstOrDefault())) Try(Expedition.Leave); return; }
+        // The capsule machine: safe takes the free one; greedy pays for the gold one while healthy.
+        if (open.Kind == ExpeditionChoice.CapsuleKind) { if (policy == Policy.Safe || share < 0.7 || !Try(Expedition.Gold)) Try(Expedition.Free); return; }
         if (open.Kind == ExpeditionChoice.RestKind)
         {
             bool heal = policy == Policy.Safe ? share < 0.7 : share < 0.35;
@@ -258,6 +261,7 @@ internal static class ExpeditionTests
                             double fought = 0;
                             while (expedition.Run != null)
                             {
+                                if (expedition.NeedsRoll) { expedition.Roll(); continue; }
                                 if (run.Pending != null) { Resolve(expedition, run, policy); continue; }
                                 int lane = Route(expedition, run, policy);
                                 if (expedition.Node(lane) is not ExpeditionNode node)

@@ -460,6 +460,11 @@ public static class BattleData
 
     private static void Merge(JsonObject target, JsonObject source, string path)
     {
+        // The Expedition's map is either fixed "steps" or the "kindGacha": a user file giving one
+        // replaces the other.
+        if (path.Equals("expedition.", StringComparison.OrdinalIgnoreCase))
+            foreach (var (given, other) in new[] { ("steps", "kindGacha"), ("kindGacha", "steps") })
+                if (Key(source, given) != null && Key(target, other) is string drop) target.Remove(drop);
         foreach (var (key, value) in source.ToList())
         {
             string? existing = Key(target, key);

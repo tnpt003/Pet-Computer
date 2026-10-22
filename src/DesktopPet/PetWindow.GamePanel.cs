@@ -111,6 +111,62 @@ public sealed partial class PetWindow
     }
 }
 
+// A gacha capsule (procedural): a pill, its top half in Color, the bottom cream. Time −1: closed and
+// still. From 0 it shakes harder and harder; at PopAt the top flies up and fades while sparkles
+// burst out; at Length it is over (the owner then sets Time back to −1).
+public sealed class CapsuleArt : FrameworkElement
+{
+    public const double PopAt = 0.55, Length = 1.0;
+    public static readonly Brush PlainColor = PetUi.Hex("#5FB7A8"), GoldColor = PetUi.Game.Gold;
+    private static readonly Brush Cream = PetUi.Hex("#FFF3E2"), Shine = PetUi.Hex("#AAFFFFFF"), Glow = PetUi.Hex("#66FFF4C9");
+    private static readonly Pen Ink = PetUi.FrozenPen(PetUi.Hex("#3A2C1F"), 1.6);
+    private static readonly Pen Spark = PetUi.FrozenPen(PetUi.Hex("#FFF4C9"), 2);
+
+    private Brush color = PlainColor;
+    public Brush Color { get => color; set { color = value; InvalidateVisual(); } }
+    private double time = -1;
+    public double Time { get => time; set { time = value; InvalidateVisual(); } }
+
+    protected override void OnRender(DrawingContext dc)
+    {
+        double w = ActualWidth, h = ActualHeight;
+        if (w <= 0 || h <= 0) return;
+        double pw = Math.Min(w * 0.8, h * 0.6), ph = Math.Min(h * 0.92, pw * 1.5), cx = w / 2, cy = h / 2 + h * 0.03;
+        var pill = new RectangleGeometry(new Rect(cx - pw / 2, cy - ph / 2, pw, ph), pw / 2, pw / 2);
+        var top = Geometry.Combine(pill, new RectangleGeometry(new Rect(0, 0, w, cy)), GeometryCombineMode.Intersect, null);
+        var bottom = Geometry.Combine(pill, new RectangleGeometry(new Rect(0, cy, w, h)), GeometryCombineMode.Intersect, null);
+        bool open = time >= PopAt;
+        double angle = time is >= 0 and < PopAt ? 13 * Math.Sin(time * 38) * Math.Min(1, time / 0.3) : 0;
+        dc.PushTransform(new RotateTransform(angle, cx, cy + ph / 2));
+        if (open)
+        {
+            // Light and sparkles from the open capsule.
+            double k = Math.Clamp((time - PopAt) / (Length - PopAt), 0, 1);
+            dc.DrawEllipse(Glow, null, new Point(cx, cy), pw * (0.5 + 0.5 * k), pw * (0.5 + 0.5 * k));
+            dc.PushOpacity(1 - k * 0.6);
+            for (int i = 0; i < 7; i++)
+            {
+                double a = -Math.PI / 2 + (i - 3) * 0.42, r0 = pw * (0.35 + 0.3 * k), r1 = r0 + pw * 0.25;
+                dc.DrawLine(Spark, new Point(cx + Math.Cos(a) * r0, cy + Math.Sin(a) * r0), new Point(cx + Math.Cos(a) * r1, cy + Math.Sin(a) * r1));
+            }
+            dc.Pop();
+            dc.DrawGeometry(Cream, Ink, bottom);
+            dc.PushOpacity(1 - k);
+            dc.PushTransform(new TranslateTransform(pw * 0.15 * k, -ph * 0.45 * k));
+            dc.PushTransform(new RotateTransform(25 * k, cx, cy));
+            dc.DrawGeometry(color, Ink, top);
+            dc.Pop(); dc.Pop(); dc.Pop();
+        }
+        else
+        {
+            dc.DrawGeometry(Cream, Ink, bottom);
+            dc.DrawGeometry(color, Ink, top);
+            dc.DrawEllipse(Shine, null, new Point(cx - pw * 0.17, cy - ph * 0.27), pw * 0.1, ph * 0.08);
+        }
+        dc.Pop();
+    }
+}
+
 // A small vector scene for each game mode (procedural, no image files): "adventure" a path over
 // green hills to a flag, "expedition" a snowy peak at dusk with a flag on top, "infinity" a gold
 // loop in a starry night. Drawn on a 120×72 design that covers the box; Round clips it to a circle

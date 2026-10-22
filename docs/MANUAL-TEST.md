@@ -337,3 +337,14 @@ Tự động đã có: menu là một mục không có menu con (trong trận ch
 - [ ] Mèo đang ngủ khi mở sảnh/bản đồ/bảng chuẩn bị chuyến: mèo vẫn ngủ; "Lên đường" vẫn bấm được (chưa vào trận); "Vào trận" thì mờ tới khi mèo thức.
 - [ ] Bảng chuẩn bị: chip độ khó có 1/2/3 sao vàng; tiêu đề dài (màn 2) — huy hiệu tròn nằm ngang dòng đầu.
 - [ ] Màn hình thấp/scale cao (1366×768 125% hoặc scale 175%): sảnh, bản đồ Phiêu lưu không tràn; app fullscreen: sảnh ẩn rồi hiện lại.
+
+## Viễn chinh: quay bậc và máy viên nang (2026-10-22)
+
+Tự động đã có: luật bốc trên 150 chuyến, bốc một lần (quay lại, lưu/đọc lại, bấm đúp không đổi), máy viên nang (cả hai viên bốc lúc thắng, không ra di vật khi đã đủ, không ra thẻ hiếm đã đầy, viên vàng khóa khi mèo quá yếu), 18 chuyến trọn vẹn chạy 3 cách giống hệt, mô phỏng cân bằng, UI check bản đồ/máy quay/máy viên nang. Đã xem ảnh render. Phần dưới cần làm tay:
+- [ ] Mở Viễn chinh lần đầu sau khi cập nhật (nếu đang có chuyến dở): có dòng báo chuyến cũ đã kết thúc vì luật đổi.
+- [ ] Chuyến mới: bản đồ chỉ có các nút "?" và Trùm; nút "?" của bậc đang đi viền vàng; ô chi tiết có viên nang, tỉ lệ và dòng "Bậc đầu không có tinh anh hay nghỉ."; nút chính "Quay máy".
+- [ ] Bấm Quay máy: viên nang lắc, bật nắp, có tiếng "pop" (~1 giây), trong lúc đó không bấm được gì; sau đó bậc lộ 2–3 điểm. Bấm đúp nhanh Quay máy: chỉ quay một lần.
+- [ ] Thắng một trận giao tranh: bảng kết quả ghi "Máy viên nang đang chờ…"; về bản đồ có 2 thẻ viên nang (thường xanh ngọc, vàng) với tỉ lệ và nút Bỏ qua. Chọn viên vàng: HP trừ ngay, viên nang mở trên bản đồ rồi dòng ghi chú báo phần thưởng (tiếng lấp lánh nếu là di vật/thẻ hiếm). Tinh anh thắng: không có máy viên nang (vẫn có di vật).
+- [ ] Đóng app khi máy viên nang đang chờ hoặc ngay sau khi bấm Quay máy; mở lại: vẫn đúng các viên nang/bậc như trước (không quay lại được).
+- [ ] Bậc 5 (trước trùm) luôn có điểm nghỉ. Chơi vài chuyến: hình bản đồ khác nhau; cảm nhận độ khó so với trước (mô phỏng: đường an toàn dễ hơn, đường tham lam khó hơn chút).
+- [ ] Màn hình thấp/scale cao: máy viên nang và ô quay không tràn, cuộn được.

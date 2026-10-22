@@ -36,8 +36,12 @@ public sealed class ExpeditionSpec
     public double WinHeal { get; init; } = 0.1;
     // Each step makes its enemies this much stronger than the one before (step 1: × 1).
     public double StepThreat { get; init; }
-    // The node kinds of each step before the boss, in lane order.
+    // The node kinds of each step before the boss, in lane order (fixed for every run). Either this
+    // or KindGacha: then each step's kinds are drawn when the run reaches it.
     public string[][] Steps { get; init; } = Array.Empty<string[]>();
+    public KindGachaSpec? KindGacha { get; init; }
+    // The capsule machine after each won fight node (null: none).
+    public CapsuleSpec? Capsules { get; init; }
     public StageSpec[] Fights { get; init; } = Array.Empty<StageSpec>();
     public StageSpec[] Elites { get; init; } = Array.Empty<StageSpec>();
     public StageSpec? Boss { get; init; }
@@ -56,8 +60,9 @@ public sealed class ExpeditionSpec
     public ExpeditionEventSpec? FindEvent(string? id) => Events.FirstOrDefault(e => e.Id == id);
     public RelicSpec? Relic(string? id) => Relics.FirstOrDefault(r => r.Id == id);
     public KeepsakeSpec? Keepsake(string? id) => Keepsakes.FirstOrDefault(k => k.Id == id);
-    // Steps including the boss's.
-    [JsonIgnore] public int StepCount => Steps.Length + 1;
+    // Steps before the boss, and including the boss's.
+    [JsonIgnore] public int PathSteps => KindGacha?.Steps ?? Steps.Length;
+    [JsonIgnore] public int StepCount => PathSteps + 1;
     public double Threat(int step) => 1 + StepThreat * step;
 
     internal static void Validate(ExpeditionSpec x, BattleSettings s, Action<IReadOnlyList<WaveSpec>?, string, int?, bool> waves, Action<string?, string> id, Action<string?, string> text)
@@ -137,6 +142,31 @@ public sealed class ExpeditionSpec
             if (k.Kind == KeepsakeSpec.AccessoryKind && PetAccessories.Find(k.Accessory) is not { Reward: not null })
                 throw new InvalidDataException(where + ".accessory must name a reward accessory of accessories.json");
         }
+        if (x.Capsules is CapsuleSpec c)
+        {
+            foreach (var (value, name) in new[] { (c.FreeHeal, "freeHeal"), (c.FreeCard, "freeCard"), (c.GoldHeal, "goldHeal") })
+                if (!double.IsFinite(value) || value is < 0 or > 1) throw new InvalidDataException($"{at}.capsules.{name} must be 0–1");
+            if (!double.IsFinite(c.GoldCost) || c.GoldCost is < 0 or > 0.9) throw new InvalidDataException(at + ".capsules.goldCost must be 0–0.9");
+            foreach (var (value, name) in new[] { (c.Relic, "relic"), (c.Rare, "rare"), (c.CardHeal, "cardHeal") })
+                if (!double.IsFinite(value) || value is < 0 or > 1000) throw new InvalidDataException($"{at}.capsules.{name} must be 0–1000");
+            if (c.Relic + c.Rare + c.CardHeal <= 0) throw new InvalidDataException(at + ".capsules needs a gold weight above 0");
+        }
+        if (x.KindGacha is KindGachaSpec g)
+        {
+            if (x.Steps is { Length: > 0 }) throw new InvalidDataException(at + " has both steps and kindGacha: use one");
+            if (g.Steps is < 1 or > 10) throw new InvalidDataException(at + ".kindGacha.steps must be 1–10");
+            if (g.MinLanes is < 1 or > 3 || g.MaxLanes is < 1 or > 3 || g.MinLanes > g.MaxLanes) throw new InvalidDataException(at + ".kindGacha lanes must be 1–3, minLanes ≤ maxLanes");
+            if (g.Weights == null || g.Weights.Count == 0) throw new InvalidDataException(at + ".kindGacha.weights must list node kinds");
+            foreach (var (kind, weight) in g.Weights)
+            {
+                if (Array.IndexOf(Kinds, kind) < 0) throw new InvalidDataException($"{at}.kindGacha.weights kinds must be one of: {string.Join(", ", Kinds)}");
+                if (!double.IsFinite(weight) || weight is < 0 or > 1000) throw new InvalidDataException($"{at}.kindGacha.weights.{kind} must be 0–1000");
+            }
+            if (g.Weights.GetValueOrDefault(Fight) <= 0) throw new InvalidDataException(at + ".kindGacha.weights.fight must be above 0");
+            if (g.Weights.GetValueOrDefault(Event) > 0 && x.Events.Length == 0) throw new InvalidDataException(at + ".kindGacha draws events but there are none");
+            if (g.Weights.GetValueOrDefault(Elite) > 0 && x.Elites.Length == 0) throw new InvalidDataException(at + ".kindGacha draws elites but there are none");
+            return;
+        }
         if (x.Steps == null || x.Steps.Length is < 1 or > 10) throw new InvalidDataException(at + ".steps must list 1–10 steps");
         for (int i = 0; i < x.Steps.Length; i++)
         {
@@ -151,6 +181,34 @@ public sealed class ExpeditionSpec
             }
         }
     }
+}
+
+// The node-kind gacha: a run's map shows only the boss at first; each step's nodes (MinLanes to
+// MaxLanes of them) are drawn when the run reaches that step (the map's Spin), by Weights, and kept.
+// The draw always follows these rules: step 1 has no elite or rest; a step has at most one rest and
+// never only elites; the step before the boss has a rest; never more nodes of a kind than its pool.
+public sealed class KindGachaSpec
+{
+    public int Steps { get; init; } = 5;
+    public int MinLanes { get; init; } = 2;
+    public int MaxLanes { get; init; } = 3;
+    public Dictionary<string, double> Weights { get; init; } = new();
+}
+
+// The capsule machine after a won fight node (not an elite: it leaves relics; not the boss). Both
+// capsules are drawn when the battle is won and kept, shown only once opened; the user picks before
+// knowing. Free: a common card from the battle's offer (FreeCard of the time) or FreeHeal of the max
+// HP. Gold, for GoldCost of the max HP: by weight, a relic (while the run has room), a rare card it
+// can still take, or a card with GoldHeal of the max HP.
+public sealed class CapsuleSpec
+{
+    public double FreeHeal { get; init; } = 0.1;
+    public double FreeCard { get; init; } = 0.5;
+    public double GoldCost { get; init; } = 0.12;
+    public double GoldHeal { get; init; } = 0.1;
+    public double Relic { get; init; } = 40;
+    public double Rare { get; init; } = 30;
+    public double CardHeal { get; init; } = 30;
 }
 
 // A keepsake (Expedition milestone 4): given once, the first time a run is won at Difficulty or
@@ -231,8 +289,10 @@ public sealed class ExpeditionRun
     public int Seed { get; set; }
     public string Weapon { get; set; } = BattleWeapon.Sword;
     public string Difficulty { get; set; } = nameof(BattleDifficulty.Normal);
-    // Encounter ids per step, in lane order (the boss's step last).
+    // Encounter ids per step, in lane order (the boss's step last). With the kind gacha a step not
+    // drawn yet is empty, and Kinds holds each drawn step's node kinds (null: the data's fixed steps).
     public List<string[]> Map { get; set; } = new();
+    public List<string[]>? Kinds { get; set; }
     public List<int> Path { get; set; } = new();
     public double Hp { get; set; }
     public Dictionary<string, int> Build { get; set; } = new();
@@ -251,19 +311,24 @@ public sealed class ExpeditionRun
 }
 
 // An open choice. Kind: "rest", "event" (Event: its id) at node Lane of the step to go now, or
-// "reward" after a won elite (the step is already passed). Cards and Relics: what is offered.
+// "reward" after a won elite / "capsule" after a won fight (the step is already passed). Cards and
+// Relics: what is offered. Free and Gold: a capsule's hidden prizes ("heal", "card:<id>",
+// "rare:<id>", "relic:<id>").
 public sealed class ExpeditionChoice
 {
-    public const string RestKind = "rest", EventKind = "event", RewardKind = "reward";
+    public const string RestKind = "rest", EventKind = "event", RewardKind = "reward", CapsuleKind = "capsule";
     public string Kind { get; set; } = RestKind;
     public int Lane { get; set; }
     public string? Event { get; set; }
     public string[] Cards { get; set; } = Array.Empty<string>();
     public string[] Relics { get; set; } = Array.Empty<string>();
+    public string? Free { get; set; }
+    public string? Gold { get; set; }
 }
 
-// What resolving a choice did: HP gained (or lost), the card taken and dropped, the relic gained.
-public readonly record struct ExpeditionChoiceOutcome(bool Done, string Option, double Hp = 0, string? Card = null, string? Dropped = null, string? Relic = null);
+// What resolving a choice did: HP gained (or lost), the card taken and dropped, the relic gained,
+// and for a capsule the prize it held.
+public readonly record struct ExpeditionChoiceOutcome(bool Done, string Option, double Hp = 0, string? Card = null, string? Dropped = null, string? Relic = null, string? Prize = null);
 
 // Best results per "expedition|r<rulesVersion>|weapon|difficulty": runs ended, runs won, the most
 // steps won in one run, the fastest won run (fight time only).
@@ -281,10 +346,10 @@ public sealed class ExpeditionRecord
 // as far as it is understood and never overwritten.
 public sealed class ExpeditionProgress
 {
-    // 2: relics and open choices (milestone 3). 3: keepsakes (milestone 4). An older file is read
-    // as is (a version 1 run ends when the map opens: the rules changed); an older app reads this
-    // one without overwriting it.
-    public const int CurrentVersion = 3;
+    // 2: relics and open choices (milestone 3). 3: keepsakes (milestone 4). 4: the kind gacha and
+    // capsules (run Kinds, choice Free/Gold). An older file is read as is (an older run ends when the
+    // map opens: the rules changed); an older app reads this one without overwriting it.
+    public const int CurrentVersion = 4;
     public int Version { get; set; } = CurrentVersion;
     public ExpeditionRun? Active { get; set; }
     public Dictionary<string, ExpeditionRecord> Records { get; set; } = new();
@@ -362,8 +427,9 @@ public sealed class ExpeditionProgress
 // What one step's battle (or leaving it) changed. RunOver: the run ended (Won: at the boss).
 // Reward: a won elite left relics to choose from on the map.
 // Keepsakes: the ones this won run gave (each only ever once).
+// Capsule: a won fight left the capsule machine on the map.
 public readonly record struct ExpeditionStepOutcome(bool Counted, int Step, bool Won, bool RunOver, bool RunWon, double Hp, double MaxHp, double Healed = 0, bool BestSteps = false, bool Fastest = false, bool Reward = false,
-    IReadOnlyList<string>? Keepsakes = null);
+    IReadOnlyList<string>? Keepsakes = null, bool Capsule = false);
 
 // One battle node the user can fight now: its encounter, its kind, and the battle it starts.
 public readonly record struct ExpeditionNode(int Step, int Lane, string Kind, StageSpec Stage, int Seed, double Threat);
@@ -398,36 +464,85 @@ public sealed class Expedition
 
     // A new run (replacing none: the caller ends the old one first). The map is drawn from the
     // seed once and kept, so closing and opening the map, or resuming, never draws it again.
+    // With the kind gacha only the boss is drawn now; each step is drawn by Roll when the run gets there.
     public ExpeditionRun Start(string weapon, BattleDifficulty difficulty, int seed, string? runId = null)
     {
         var random = BattleRandom.Stream(seed, 50);
-        var uses = new Dictionary<string, int>();
         var map = new List<string[]>();
-        foreach (var step in Spec.Steps)
+        List<string[]>? kinds = null;
+        if (Spec.KindGacha != null)
         {
-            var row = new string[step.Length];
-            for (int lane = 0; lane < step.Length; lane++)
-            {
-                if (step[lane] == ExpeditionSpec.Rest) { row[lane] = ExpeditionSpec.Rest; continue; }
-                // Not one this step already has; among the rest, one used least so far.
-                var options = (step[lane] == ExpeditionSpec.Event ? Spec.Events.Select(e => e.Id) : Spec.Pool(step[lane]).Select(s => s.Id)).Where(id => !row.Contains(id)).ToList();
-                int least = options.Min(id => uses.GetValueOrDefault(id));
-                options = options.Where(id => uses.GetValueOrDefault(id) == least).ToList();
-                var pick = options[random.Next(options.Count)];
-                row[lane] = pick;
-                uses[pick] = least + 1;
-            }
-            map.Add(row);
+            kinds = Enumerable.Range(0, Spec.PathSteps).Select(_ => Array.Empty<string>()).ToList();
+            map.AddRange(kinds.Select(_ => Array.Empty<string>()));
         }
+        else foreach (var step in Spec.Steps) map.Add(DrawEncounters(step, map, random));
         map.Add(new[] { Spec.Boss!.Id });
         var run = new ExpeditionRun
         {
             RunId = runId ?? Guid.NewGuid().ToString("N"), Expedition = Spec.Id, RulesVersion = Spec.RulesVersion, Seed = seed,
-            Weapon = Settings.Weapon(weapon).Id, Difficulty = difficulty.ToString(), Map = map
+            Weapon = Settings.Weapon(weapon).Id, Difficulty = difficulty.ToString(), Map = map, Kinds = kinds
         };
         run.Hp = MaxHp(run);
         Progress.Active = run;
         return run;
+    }
+
+    // A step's content for its node kinds: an encounter or event each (never one the step already
+    // has; among the rest, one the run has used least so far), "rest" for a rest.
+    private string[] DrawEncounters(IReadOnlyList<string> kinds, IEnumerable<string[]> before, Random random)
+    {
+        var uses = new Dictionary<string, int>();
+        foreach (var id in before.SelectMany(row => row)) uses[id] = uses.GetValueOrDefault(id) + 1;
+        var row = new string[kinds.Count];
+        for (int lane = 0; lane < kinds.Count; lane++)
+        {
+            if (kinds[lane] == ExpeditionSpec.Rest) { row[lane] = ExpeditionSpec.Rest; continue; }
+            var options = (kinds[lane] == ExpeditionSpec.Event ? Spec.Events.Select(e => e.Id) : Spec.Pool(kinds[lane]).Select(s => s.Id)).Where(id => !row.Contains(id)).ToList();
+            int least = options.Min(id => uses.GetValueOrDefault(id));
+            options = options.Where(id => uses.GetValueOrDefault(id) == least).ToList();
+            var pick = options[random.Next(options.Count)];
+            row[lane] = pick;
+            uses[pick] = least + 1;
+        }
+        return row;
+    }
+
+    // The step to go now still has to be drawn (kind gacha: the map's Spin).
+    public bool NeedsRoll => Run is ExpeditionRun run && run.Kinds != null && run.Pending == null && run.Fighting == null
+        && run.Step < Spec.PathSteps && run.Step < run.Kinds.Count && run.Kinds[run.Step].Length == 0;
+
+    // Whether a step's nodes are known (always, without the kind gacha).
+    public bool Rolled(int step) => step >= Spec.PathSteps || Run?.Kinds is not List<string[]> kinds || step < kinds.Count && kinds[step].Length > 0;
+
+    // Spin: the step to go now gets its node kinds and encounters, from the run's seed (the same
+    // whenever it is drawn) and kept. False when there is nothing to draw (a double click).
+    public bool Roll()
+    {
+        if (!NeedsRoll || Spec.KindGacha is not KindGachaSpec g) return false;
+        var run = Run!;
+        int step = run.Step;
+        var random = BattleRandom.Stream(run.Seed, 6000 + step);
+        bool first = step == 0, beforeBoss = step == Spec.PathSteps - 1 && !first;
+        int lanes = random.Next(g.MinLanes, g.MaxLanes + 1);
+        var kinds = new List<string>();
+        if (beforeBoss) kinds.Add(ExpeditionSpec.Rest);
+        while (kinds.Count < lanes)
+        {
+            var allowed = ExpeditionSpec.Kinds.Where(kind => g.Weights.GetValueOrDefault(kind) > 0 && !(first && kind is ExpeditionSpec.Elite or ExpeditionSpec.Rest)
+                && kinds.Count(k => k == kind) < (kind == ExpeditionSpec.Rest ? 1 : kind == ExpeditionSpec.Event ? Spec.Events.Length : Spec.Pool(kind).Count)).ToList();
+            if (allowed.Count == 0) break;
+            double roll = random.NextDouble() * allowed.Sum(kind => g.Weights[kind]);
+            string pick = allowed[^1];
+            foreach (var kind in allowed) { roll -= g.Weights[kind]; if (roll < 0) { pick = kind; break; } }
+            kinds.Add(pick);
+        }
+        // Never only elites: the last one becomes a fight (the fights' pool always has one left then).
+        if (kinds.All(k => k == ExpeditionSpec.Elite)) kinds[^1] = ExpeditionSpec.Fight;
+        // Shuffled, so the rest before the boss is not always on top.
+        for (int i = kinds.Count - 1; i > 0; i--) { int j = random.Next(i + 1); (kinds[i], kinds[j]) = (kinds[j], kinds[i]); }
+        run.Map[step] = DrawEncounters(kinds, run.Map.Take(step), random);
+        run.Kinds![step] = kinds.ToArray();
+        return true;
     }
 
     // Whether a node's content (an encounter id, "rest", an event id) fits its kind in this data.
@@ -444,27 +559,46 @@ public sealed class Expedition
     {
         if (run.Expedition != Spec.Id || run.RulesVersion != Spec.RulesVersion) return "the expedition's rules changed";
         if (run.Map.Count != Spec.StepCount || run.Path.Count >= run.Map.Count) return "the map changed";
+        // A run drawn with the kind gacha needs data with it, and the other way round.
+        if ((run.Kinds != null) != (Spec.KindGacha != null) || run.Kinds != null && run.Kinds.Count != Spec.PathSteps) return "the map changed";
         for (int i = 0; i < run.Map.Count; i++)
         {
-            int lanes = i < Spec.Steps.Length ? Spec.Steps[i].Length : 1;
-            if (run.Map[i] == null || run.Map[i].Length != lanes) return "the map changed";
-            for (int lane = 0; lane < lanes; lane++) if (!Fits(Kind(i, lane), run.Map[i][lane])) return "the map changed";
+            int lanes = i >= Spec.PathSteps ? 1 : run.Kinds?[i]?.Length ?? (Spec.KindGacha != null ? -1 : Spec.Steps[i].Length);
+            if (run.Map[i] == null || lanes is < 0 or > 3 || run.Map[i].Length != lanes) return "the map changed";
+            // Steps passed (and one being fought) were drawn.
+            if (lanes == 0 && i <= run.Step && (i < run.Step || run.Fighting != null || run.Pending is { Kind: ExpeditionChoice.RestKind or ExpeditionChoice.EventKind })) return "the map changed";
+            for (int lane = 0; lane < lanes; lane++) if (!Fits(KindOf(run, i, lane), run.Map[i][lane])) return "the map changed";
         }
         if (run.Path.Where((lane, i) => lane < 0 || lane >= run.Map[i].Length).Any()) return "the map changed";
-        if (run.Fighting is int f && (f < 0 || f >= run.Map[run.Step].Length || !ExpeditionSpec.IsBattle(Kind(run.Step, f)) && Kind(run.Step, f) != BossKind)) return "the map changed";
+        if (run.Fighting is int f && (f < 0 || f >= run.Map[run.Step].Length || !ExpeditionSpec.IsBattle(KindOf(run, run.Step, f)) && KindOf(run, run.Step, f) != BossKind)) return "the map changed";
         if (run.Relics.Any(id => Spec.Relic(id) == null)) return "the relics changed";
         if (run.Pending is ExpeditionChoice open)
         {
             bool node = open.Kind is ExpeditionChoice.RestKind or ExpeditionChoice.EventKind;
-            if (run.Fighting != null || open.Kind is not (ExpeditionChoice.RestKind or ExpeditionChoice.EventKind or ExpeditionChoice.RewardKind)
-                || node && (open.Lane < 0 || open.Lane >= run.Map[run.Step].Length || Kind(run.Step, open.Lane) != open.Kind || open.Kind == ExpeditionChoice.EventKind && run.Map[run.Step][open.Lane] != open.Event)
+            bool PrizeFits(string? prize) => Prize(prize) switch
+            {
+                (Heal, _) => true,
+                (PrizeCard or PrizeRare, string id) => Settings.UpgradeList.Any(u => u.Id == id),
+                (PrizeRelic, string id) => Spec.Relic(id) != null,
+                _ => false
+            };
+            if (run.Fighting != null || open.Kind is not (ExpeditionChoice.RestKind or ExpeditionChoice.EventKind or ExpeditionChoice.RewardKind or ExpeditionChoice.CapsuleKind)
+                || node && (open.Lane < 0 || open.Lane >= run.Map[run.Step].Length || KindOf(run, run.Step, open.Lane) != open.Kind || open.Kind == ExpeditionChoice.EventKind && run.Map[run.Step][open.Lane] != open.Event)
+                || open.Kind == ExpeditionChoice.CapsuleKind && (!PrizeFits(open.Free) || !PrizeFits(open.Gold))
                 || open.Relics.Any(id => Spec.Relic(id) == null) || open.Cards.Any(id => Settings.UpgradeList.All(u => u.Id != id)))
                 return "the map changed";
         }
         return null;
     }
 
-    public string Kind(int step, int lane) => step >= Spec.Steps.Length ? BossKind : Spec.Steps[step][lane];
+    // A node's kind: "fight", "elite", "rest", "event", "boss", or "" for a node not drawn yet.
+    public string Kind(int step, int lane) => KindOf(Run, step, lane);
+    private string KindOf(ExpeditionRun? run, int step, int lane)
+    {
+        if (step >= Spec.PathSteps) return BossKind;
+        if (Spec.KindGacha == null) return Spec.Steps[step][lane];
+        return run?.Kinds is { } kinds && step < kinds.Count && lane >= 0 && lane < kinds[step].Length ? kinds[step][lane] : "";
+    }
 
     // A battle node of the step to go now (null: not one, or a choice is still open).
     public ExpeditionNode? Node(int lane)
@@ -502,13 +636,42 @@ public sealed class Expedition
         double before = Math.Clamp(hp, 1, max);
         run.Hp = Math.Min(max, before + Spec.WinHeal * max);
         // A won elite: relics to choose from (drawn now, kept with the run).
-        bool reward = false;
+        bool reward = false, capsule = false;
         if (Kind(step, lane) == ExpeditionSpec.Elite && DrawRelics(run, Spec.EliteRelics, BattleRandom.Stream(run.Seed, 4000 + step * 8 + lane)) is { Length: > 0 } relics)
         {
             run.Pending = new() { Kind = ExpeditionChoice.RewardKind, Lane = lane, Relics = relics };
             reward = true;
         }
-        return new(true, step, true, false, false, run.Hp, max, run.Hp - before, Reward: reward);
+        // A won fight: the capsule machine (both capsules drawn now, kept hidden).
+        else if (Kind(step, lane) == ExpeditionSpec.Fight && Spec.Capsules is CapsuleSpec c)
+        {
+            run.Pending = DrawCapsules(run, c, BattleRandom.Stream(run.Seed, 5000 + step * 8 + lane), lane);
+            capsule = true;
+        }
+        return new(true, step, true, false, false, run.Hp, max, run.Hp - before, Reward: reward, Capsule: capsule);
+    }
+
+    public const string PrizeCard = "card", PrizeRare = "rare", PrizeRelic = "relic";
+    // A capsule prize split into its kind and id: ("heal", null), ("card", id), ("rare", id), ("relic", id).
+    public static (string Kind, string? Id) Prize(string? prize) =>
+        prize == null ? ("", null) : prize.IndexOf(':') is int at and > 0 ? (prize[..at], prize[(at + 1)..]) : (prize, null);
+
+    private ExpeditionChoice DrawCapsules(ExpeditionRun run, CapsuleSpec c, Random random, int lane)
+    {
+        bool Rare(string id) => Settings.UpgradeList.FirstOrDefault(u => u.Id == id)?.Rare == true;
+        string free = Heal;
+        var commons = DrawCards(run, random.Next()).Where(id => !Rare(id)).ToArray();
+        if (random.NextDouble() < c.FreeCard && commons.Length > 0) free = PrizeCard + ":" + commons[random.Next(commons.Length)];
+        var gold = new List<(string Prize, double Weight)>();
+        if (DrawRelics(run, 1, random) is { Length: 1 } relic && c.Relic > 0) gold.Add((PrizeRelic + ":" + relic[0], c.Relic));
+        var rares = Settings.UpgradeList.Where(u => u.Rare && (u.MaxStacks == 0 || run.Build.GetValueOrDefault(u.Id) < u.MaxStacks)).ToList();
+        if (rares.Count > 0 && c.Rare > 0) gold.Add((PrizeRare + ":" + rares[random.Next(rares.Count)].Id, c.Rare));
+        var cards = DrawCards(run, random.Next());
+        if (cards.Length > 0 && c.CardHeal > 0) gold.Add((PrizeCard + ":" + cards[random.Next(cards.Length)], c.CardHeal));
+        string goldPrize = Heal;
+        double roll = random.NextDouble() * gold.Sum(g => g.Weight);
+        foreach (var (prize, weight) in gold) { goldPrize = prize; roll -= weight; if (roll < 0) break; }
+        return new() { Kind = ExpeditionChoice.CapsuleKind, Lane = lane, Free = free, Gold = goldPrize };
     }
 
     // Up to count relics the run does not hold, in a drawn order; none once it holds MaxRelics.
@@ -549,15 +712,16 @@ public sealed class Expedition
         return true;
     }
 
-    public const string Heal = "heal", Card = "card", Safe = "safe", Risk = "risk", SwapOption = "swap", Take = "take", Leave = "leave";
+    public const string Heal = "heal", Card = "card", Safe = "safe", Risk = "risk", SwapOption = "swap", Take = "take", Leave = "leave", Free = "free", Gold = "gold";
 
     // The options the open choice has: rest (heal, card), swap (swap, leave), chest (safe, risk),
-    // shrine and a won elite (take, leave).
+    // shrine and a won elite (take, leave), the capsule machine (free, gold, leave).
     public string[] Options()
     {
         if (Run?.Pending is not ExpeditionChoice open) return Array.Empty<string>();
         if (open.Kind == ExpeditionChoice.RestKind) return new[] { Heal, Card };
         if (open.Kind == ExpeditionChoice.RewardKind) return new[] { Take, Leave };
+        if (open.Kind == ExpeditionChoice.CapsuleKind) return new[] { Free, Gold, Leave };
         return Spec.FindEvent(open.Event)?.Kind switch
         {
             ExpeditionEventSpec.Swap => new[] { SwapOption, Leave },
@@ -569,7 +733,9 @@ public sealed class Expedition
     // HP an option costs (a share of the max HP; 0: free).
     public double Cost(string option)
     {
-        if (Run is not ExpeditionRun run || run.Pending is not ExpeditionChoice open || open.Kind != ExpeditionChoice.EventKind) return 0;
+        if (Run is not ExpeditionRun run || run.Pending is not ExpeditionChoice open) return 0;
+        if (open.Kind == ExpeditionChoice.CapsuleKind) return option == Gold ? (Spec.Capsules?.GoldCost ?? 0) * MaxHp(run) : 0;
+        if (open.Kind != ExpeditionChoice.EventKind) return 0;
         var e = Spec.FindEvent(open.Event);
         return e != null && (option == Risk && e.Kind == ExpeditionEventSpec.Chest || option == Take && e.Kind == ExpeditionEventSpec.Shrine) ? e.Cost * MaxHp(run) : 0;
     }
@@ -579,7 +745,10 @@ public sealed class Expedition
     {
         if (Run is not ExpeditionRun run || run.Pending is not ExpeditionChoice open) return 0;
         double max = MaxHp(run), share = option == Heal && open.Kind == ExpeditionChoice.RestKind ? Spec.RestHeal
-            : option == Safe ? Spec.FindEvent(open.Event)?.Heal ?? 0 : 0;
+            : option == Safe ? Spec.FindEvent(open.Event)?.Heal ?? 0
+            // A capsule's heal (its prize stays hidden: only Choose uses this for it).
+            : open.Kind == ExpeditionChoice.CapsuleKind && Spec.Capsules is CapsuleSpec c && option is Free or Gold
+                ? Prize(option == Free ? open.Free : open.Gold).Kind switch { Heal => option == Free ? c.FreeHeal : c.GoldHeal, PrizeCard when option == Gold => c.GoldHeal, _ => 0 } : 0;
         return Math.Max(0, Math.Min(share * max, max - run.Hp));
     }
 
@@ -600,6 +769,8 @@ public sealed class Expedition
                 if (open.Relics.Length == 0 || run.Relics.Count >= Spec.MaxRelics) return "no relic";
                 if (Cost(option) > 0 && run.Hp - Cost(option) < 1) return "too weak";
                 return option == Risk || open.Relics.Contains(relic) ? null : "pick a relic";
+            case Gold:
+                return run.Hp - Cost(option) < 1 ? "too weak" : null;
             default:
                 return null;
         }
@@ -629,10 +800,24 @@ public sealed class Expedition
             gained = option == Risk ? open.Relics[0] : relic;
             run.Relics.Add(gained!);
         }
+        // A capsule: its prize (a heal came with Gain above; a gold card also brings GoldHeal).
+        string? prize = open.Kind == ExpeditionChoice.CapsuleKind && option is Free or Gold ? (option == Free ? open.Free : open.Gold) : null;
+        switch (Prize(prize))
+        {
+            case (PrizeCard or PrizeRare, string id):
+                taken = id;
+                run.Build[id] = run.Build.GetValueOrDefault(id) + 1;
+                if (Settings.UpgradeList.FirstOrDefault(u => u.Id == id) is { Effect: "maxHp" } bigHeart) run.Hp += bigHeart.Amount;
+                break;
+            case (PrizeRelic, string id) when run.Relics.Count < Spec.MaxRelics && !run.Relics.Contains(id):
+                gained = id;
+                run.Relics.Add(id);
+                break;
+        }
         run.Hp = Math.Min(run.Hp, MaxHp(run));
-        if (open.Kind != ExpeditionChoice.RewardKind) run.Path.Add(open.Lane);
+        if (open.Kind is not (ExpeditionChoice.RewardKind or ExpeditionChoice.CapsuleKind)) run.Path.Add(open.Lane);
         run.Pending = null;
-        return new(true, option, run.Hp - before, taken, dropped, gained);
+        return new(true, option, run.Hp - before, taken, dropped, gained, prize);
     }
 
     // The step's battle was left (End, closing, a crash): the step stays to be fought again, for

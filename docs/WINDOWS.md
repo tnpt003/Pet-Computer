@@ -548,6 +548,24 @@ instead of half sizes (10.5–15.5 → the next step up; the 22 banner → 20).
   Adventure map), the title with the mode's round picture, the orange main button, the details
   card, the chosen look (orange, white rim, tick). Difficulty chips show one to three gold stars.
 
+## Expedition step gacha and capsule machine (2026-10-22)
+
+- **Step gacha:** the built-in Expedition draws each step's nodes when the run gets there. The map
+  shows each step not drawn yet as one "?" node (the step to go now with a gold rim) and the boss.
+  The details card shows a capsule, "Step N/6 · Step machine", the odds per node (fight 45 %,
+  event 20 %, elite 20 %, rest 15 %; step 1: no elite or rest) and the main button **Spin**. Spin
+  draws and saves the step at once; the capsule then shakes, pops (the "pop" cue) and opens
+  (about 1 s, cosmetic: nothing can be clicked meanwhile), and the step's 2–3 nodes appear.
+  Events now show "!" ("?" means not drawn yet).
+- **Capsule machine:** after a won fight node (not an elite or the boss) the result panel says the
+  machine waits; the map shows two capsule cards (plain · free, gold · −12 % of max HP, each with
+  its odds from what the run can still get) and Skip. Picking one changes and saves the run at
+  once; the capsule opens on the map and its prize is said when it pops ("sparkle" for a relic or
+  rare card) and stays as the map's note line.
+- Draws come from the run's seed and are kept, so a double click, closing the app or spinning
+  later never draws again. `rulesVersion` 5: a run from before ends when the map opens, with a
+  note; older records stay apart. `expedition.json` version 4.
+
 The Expedition map is at most the cat's monitor height minus 24 DIPs (set when it opens). At
 its tallest (three relics and a rest's cards) it is about 574 DIPs, so on a low or high-DPI
 screen (1366×768 at 125 %, 1920×1080 at 175 %, 1280×720 at 150 %) its content scrolls with a

@@ -54,6 +54,15 @@ public sealed partial class PetWindow
     private readonly Dictionary<string, Border> xChoiceButtons = new();
     private TextBlock? xBossLabel, xTitle, xData, xStatus, xBuild, xNodeName, xNodeGoal, xRecord, xNote, xSetupLabel, xMainText, xAbandonText, xCloseText;
     private Border? xMain, xAbandon, xDetails;
+    // The capsule beside the details (a spin waiting or opening), and the step whose nodes it is
+    // revealing now (-1: none): they stay "?" until it opens.
+    private CapsuleArt? xSpinArt;
+    private int xRevealStep = -1;
+    // A prize capsule opening: what it held (said once it pops).
+    private string? xRevealPrize;
+    private bool xRevealPopped;
+    private System.Windows.Threading.DispatcherTimer? xRevealTimer;
+    public bool ExpeditionRevealing => xRevealTimer != null;
     private StackPanel? xSetup, xMap;
 
     public bool ExpeditionMapOpen => expeditionMapOpen;
@@ -81,7 +90,7 @@ public sealed partial class PetWindow
     };
     private static string KindGlyph(string kind) => kind switch
     {
-        ExpeditionSpec.Elite => "★", DesktopPet.Expedition.BossKind => "♛", ExpeditionSpec.Rest => "♨", ExpeditionSpec.Event => "?", _ => "⚔"
+        ExpeditionSpec.Elite => "★", DesktopPet.Expedition.BossKind => "♛", ExpeditionSpec.Rest => "♨", ExpeditionSpec.Event => "!", "" => "?", _ => "⚔"
     };
     private static bool IsFightKind(string kind) => ExpeditionSpec.IsBattle(kind) || kind == DesktopPet.Expedition.BossKind;
     // A node of the step to go now that can be chosen (no choice open, no battle under way).
@@ -270,14 +279,115 @@ public sealed partial class PetWindow
             DesktopPet.Expedition.Card => L($"Đã lấy thẻ {CardName(done.Card!)}.", $"Took the {CardName(done.Card!)} card."),
             DesktopPet.Expedition.SwapOption => L($"Đã đổi {CardName(done.Dropped!)} lấy {CardName(done.Card!)}.", $"Traded {CardName(done.Dropped!)} for {CardName(done.Card!)}."),
             DesktopPet.Expedition.Risk or DesktopPet.Expedition.Take => L($"Nhận di vật {RelicName(expedition, done.Relic!)}.", $"Got the {RelicName(expedition, done.Relic!)} relic."),
+            DesktopPet.Expedition.Free or DesktopPet.Expedition.Gold => (done.Option == DesktopPet.Expedition.Free ? L("Viên thường: ", "Plain capsule: ") : L("Viên vàng: ", "Gold capsule: "))
+                + PrizeText(expedition, done.Prize) + (done.Prize == DesktopPet.Expedition.Heal ? "" : "!"),
             DesktopPet.Expedition.Leave => L("Đi tiếp.", "Moved on."),
             _ => L("Nghỉ một lát.", "A short rest.")
         }) + hp;
         expeditionPickCard = expeditionDropCard = expeditionPickRelic = null;
         expeditionLane = 0;
-        System.Diagnostics.Trace.WriteLine($"Expedition run {run.RunId}: step {step + 1} choice {done.Option} {done.Card ?? done.Relic}.");
+        System.Diagnostics.Trace.WriteLine($"Expedition run {run.RunId}: step {step + 1} choice {done.Option} {done.Card ?? done.Relic ?? done.Prize}.");
+        // A capsule opens on the map first; its prize is said when it pops.
+        if (done.Option is DesktopPet.Expedition.Free or DesktopPet.Expedition.Gold && xSpinArt != null)
+        {
+            string said = expeditionNote!;
+            expeditionNote = null;
+            PlayCapsule(done.Option == DesktopPet.Expedition.Gold ? CapsuleArt.GoldColor : CapsuleArt.PlainColor, -1, said,
+                DesktopPet.Expedition.Prize(done.Prize).Kind is DesktopPet.Expedition.PrizeRare or DesktopPet.Expedition.PrizeRelic);
+            return null;
+        }
         UpdateExpeditionMap();
         return null;
+    }
+
+    // Spin: the step to go now gets its nodes (drawn from the run's seed, saved at once); the capsule
+    // opens on the map and the nodes show after it. Null on success; a second press finds nothing to draw.
+    public string? ExpeditionRoll()
+    {
+        if (!expeditionMapOpen || Expedition is not Expedition expedition) return L("Bản đồ viễn chinh chưa mở.", "The Expedition map is not open.");
+        if (expedition.Run is not ExpeditionRun run || !expedition.NeedsRoll) return L("Chưa có gì để quay.", "Nothing to spin now.");
+        int step = run.Step;
+        if (!expedition.Roll()) return L("Chưa có gì để quay.", "Nothing to spin now.");
+        SaveExpedition(expedition.Progress);
+        expeditionLane = 0; expeditionNote = null; expeditionConfirmAbandon = false;
+        System.Diagnostics.Trace.WriteLine($"Expedition run {run.RunId}: step {step + 1} drawn: {string.Join(", ", run.Kinds![step])}.");
+        PlayCapsule(PetUi.Accent, step, null, false);
+        return null;
+    }
+
+    // What a capsule held, in words.
+    private string PrizeText(Expedition expedition, string? prize) => DesktopPet.Expedition.Prize(prize) switch
+    {
+        (DesktopPet.Expedition.PrizeCard, string id) => L($"thẻ {CardName(id)}", $"the {CardName(id)} card"),
+        (DesktopPet.Expedition.PrizeRare, string id) => L($"thẻ hiếm ◆ {CardName(id)}", $"the rare ◆ {CardName(id)} card"),
+        (DesktopPet.Expedition.PrizeRelic, string id) => L($"di vật ◈ {RelicName(expedition, id)}", $"the ◈ {RelicName(expedition, id)} relic"),
+        _ => L("hồi máu", "some HP back")
+    };
+
+    // "45%" the same in every language and culture.
+    private static string Percent(double share) => Math.Round(share * 100).ToString(System.Globalization.CultureInfo.InvariantCulture) + "%";
+
+    // The spin's odds and the rules that always hold, said before spinning.
+    private string SpinOdds(ExpeditionSpec spec, int step)
+    {
+        if (spec.KindGacha is not KindGachaSpec g) return "";
+        bool first = step == 0, beforeBoss = step == spec.PathSteps - 1 && !first;
+        var kinds = ExpeditionSpec.Kinds.Where(k => g.Weights.GetValueOrDefault(k) > 0 && !(first && k is ExpeditionSpec.Elite or ExpeditionSpec.Rest)).ToList();
+        double total = kinds.Sum(k => g.Weights[k]);
+        string odds = string.Join(" · ", kinds.OrderByDescending(k => g.Weights[k]).Select(k => $"{KindGlyph(k)} {KindName(k)} {Percent(g.Weights[k] / total)}"));
+        string lanes = g.MinLanes == g.MaxLanes ? $"{g.MinLanes}" : $"{g.MinLanes}–{g.MaxLanes}";
+        return L($"Quay để lộ {lanes} điểm của bậc này. Tỉ lệ mỗi điểm: ", $"Spin to reveal this step's {lanes} nodes. Odds per node: ") + odds
+            + (first ? L("\nBậc đầu không có tinh anh hay nghỉ.", "\nThe first step has no elite or rest.")
+                : beforeBoss ? L("\nBậc trước trùm luôn có một điểm nghỉ.", "\nThe step before the boss always has a rest.") : "");
+    }
+
+    // The capsule's little show (shake, pop, open), about a second, then the map shows what it
+    // held. step: the step being revealed (its nodes stay "?" meanwhile; -1: a prize capsule).
+    // Cosmetic only: the run already changed and was saved before it starts.
+    private void PlayCapsule(Brush color, int step, string? prize, bool special)
+    {
+        FinishExpeditionReveal(update: false);
+        if (xSpinArt == null) return;
+        xRevealStep = step;
+        xRevealPrize = prize; xRevealPopped = false;
+        xSpinArt.Color = color;
+        xSpinArt.Visibility = Visibility.Visible;
+        double time = 0;
+        bool popped = false;
+        DateTime last = DateTime.UtcNow;
+        var timer = new System.Windows.Threading.DispatcherTimer(System.Windows.Threading.DispatcherPriority.Render) { Interval = TimeSpan.FromMilliseconds(16) };
+        timer.Tick += (_, _) =>
+        {
+            var at = DateTime.UtcNow;
+            time += Math.Min(0.05, (at - last).TotalSeconds);
+            last = at;
+            xSpinArt.Time = time;
+            if (!popped && time >= CapsuleArt.PopAt)
+            {
+                popped = xRevealPopped = true;
+                if (xRevealPrize != null) expeditionNote = xRevealPrize;
+                PlayPetSound(special ? "sparkle" : "pop");
+                UpdateExpeditionMap();
+            }
+            if (time >= CapsuleArt.Length) FinishExpeditionReveal();
+        };
+        xRevealTimer = timer;
+        xSpinArt.Time = 0;
+        timer.Start();
+        UpdateExpeditionMap();
+    }
+
+    // Ends the capsule's show at once (checks call it instead of waiting).
+    public void FinishExpeditionReveal(bool update = true)
+    {
+        xRevealTimer?.Stop();
+        xRevealTimer = null;
+        // Cut short before it popped: the prize is still said.
+        if (xRevealPrize != null && !xRevealPopped) expeditionNote = xRevealPrize;
+        xRevealStep = -1;
+        xRevealPrize = null; xRevealPopped = false;
+        if (xSpinArt != null) xSpinArt.Time = -1;
+        if (update) UpdateExpeditionMap();
     }
 
     // Give the run up (the map's button asks twice). Counted as ended where it is.
@@ -308,6 +418,8 @@ public sealed partial class PetWindow
         expeditionMapWindow?.Close();
         expeditionMapWindow = null;
         xMain = xAbandon = xDetails = null;
+        FinishExpeditionReveal(update: false);
+        xSpinArt = null;
         xSetup = xMap = xChoice = null;
         xChoiceKey = null; xChoiceTexts.Clear(); xChoiceButtons.Clear();
         expeditionNodes.Clear(); expeditionLinks.Clear();
@@ -352,7 +464,8 @@ public sealed partial class PetWindow
                 expeditionLinks.Add(link);
             }
             var column = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
-            int lanes = step < spec.Steps.Length ? spec.Steps[step].Length : 1;
+            // With the kind gacha every step has room for the most nodes it may draw (the unused hidden).
+            int lanes = step >= spec.PathSteps ? 1 : spec.KindGacha?.MaxLanes ?? spec.Steps[step].Length;
             for (int lane = 0; lane < lanes; lane++)
             {
                 int at = lane;
@@ -365,14 +478,18 @@ public sealed partial class PetWindow
             }
             var number = new TextBlock { Foreground = Brushes.White, Opacity = 0.7, FontSize = PetUi.CaptionSize, HorizontalAlignment = HorizontalAlignment.Center,
                 Text = (step + 1).ToString() };
-            if (step >= spec.Steps.Length) xBossLabel = number; // Named in the pet's language by UpdateExpeditionMap.
+            if (step >= spec.PathSteps) xBossLabel = number; // Named in the pet's language by UpdateExpeditionMap.
             column.Children.Add(number);
             row.Children.Add(column);
         }
         xMap = new StackPanel { Children = { row } };
         xNodeName = Line(PetUi.TitleSize, true);
         xNodeGoal = Line(PetUi.BodySize); xNodeGoal.Margin = new Thickness(0, 3, 0, 0);
-        xDetails = DetailCard(new Thickness(11, 8, 11, 9), xNodeName, xNodeGoal);
+        // The capsule on the left of the details while a step waits for its spin or opens.
+        xSpinArt = new CapsuleArt { Width = 46, Height = 56, Margin = new Thickness(0, 0, 12, 0), VerticalAlignment = VerticalAlignment.Center, Visibility = Visibility.Collapsed };
+        var detailRow = new DockPanel { Children = { xSpinArt, new StackPanel { VerticalAlignment = VerticalAlignment.Center, Children = { xNodeName, xNodeGoal } } } };
+        DockPanel.SetDock(xSpinArt, Dock.Left);
+        xDetails = DetailCard(new Thickness(11, 8, 11, 9), detailRow);
         xMap.Children.Add(xDetails);
         xChoice = new StackPanel { Margin = new Thickness(0, 10, 0, 0), MaxWidth = 470 };
         xMap.Children.Add(xChoice);
@@ -387,6 +504,7 @@ public sealed partial class PetWindow
         var (main, mainText) = PrimaryButton(() =>
         {
             string? reason = Expedition is not Expedition x || x.Run is not ExpeditionRun r ? ExpeditionPrepare()
+                : x.NeedsRoll ? ExpeditionRoll()
                 : r.Step < r.Map.Count && IsFightKind(x.Kind(r.Step, expeditionLane)) ? ExpeditionFight() : ExpeditionVisit();
             if (reason != null) ShowBattleNotice(reason);
         });
@@ -446,11 +564,24 @@ public sealed partial class PetWindow
         int now = run?.Step ?? -1;
         foreach (var (step, lane, node, glyph) in expeditionNodes)
         {
-            string kind = expedition.Kind(step, lane);
+            // A step not drawn yet (or being revealed) is one "?" capsule; lanes it did not draw are hidden.
+            bool hidden = !expedition.Rolled(step) || step == xRevealStep;
+            string kind = hidden ? "" : expedition.Kind(step, lane);
+            bool shown = hidden ? lane == 0 : step >= spec.PathSteps || spec.KindGacha == null || run != null && lane < run.Map[step].Length;
+            node.Visibility = shown ? Visibility.Visible : Visibility.Collapsed;
+            if (!shown) continue;
+            if (hidden)
+            {
+                node.Background = MapAhead; node.BorderBrush = step == now ? PetUi.Game.Gold : PrepCardRim; node.BorderThickness = new Thickness(step == now ? 2 : 1);
+                node.Opacity = 1; node.Cursor = null;
+                glyph.Text = "?"; glyph.Foreground = step == now ? EliteInk : Brushes.White;
+                node.ToolTip = L("Chưa lộ: quay máy khi tới bậc này", "Not drawn yet: spin when you get here");
+                continue;
+            }
             bool won = run != null && step < now && run.Path[step] == lane;
             bool passed = run != null && step < now && !won;
-            // While a node's choice is open only that node stays lit; after an elite, none.
-            bool current = step == now && (run!.Pending == null || run.Pending.Kind != ExpeditionChoice.RewardKind && run.Pending.Lane == lane);
+            // While a node's choice is open only that node stays lit; after an elite or a capsule, none.
+            bool current = step == now && (run!.Pending == null || run.Pending.Kind is not (ExpeditionChoice.RewardKind or ExpeditionChoice.CapsuleKind) && run.Pending.Lane == lane);
             bool selected = current && lane == expeditionLane;
             node.Background = won ? MapDone : current ? PrepChosen : passed ? MapLocked : MapAhead;
             node.BorderBrush = selected ? Brushes.White : PrepCardRim;
@@ -465,7 +596,18 @@ public sealed partial class PetWindow
         }
         for (int i = 0; i < expeditionLinks.Count; i++) expeditionLinks[i].Fill = run != null && i + 1 < now ? MapDone : MapLocked;
 
-        if (run != null && expedition.Node(expeditionLane) is ExpeditionNode chosen)
+        // The spin: the capsule, the odds and the rules (or, while it opens, a short wait).
+        bool opening = xRevealTimer != null, prizeOpening = opening && xRevealStep < 0;
+        bool spin = run != null && run.Pending == null && (expedition.NeedsRoll || opening);
+        xSpinArt!.Visibility = spin ? Visibility.Visible : Visibility.Collapsed;
+        if (spin)
+        {
+            xDetails!.Visibility = Visibility.Visible;
+            xNodeName!.Text = prizeOpening ? L("Máy viên nang", "Capsule machine") : $"{StepTitle(run!.Step, run.Map.Count)} · " + L("Máy quay bậc", "Step machine");
+            Show(xNodeGoal, prizeOpening ? (xRevealPopped ? xRevealPrize : L("Đang mở viên nang…", "Opening the capsule…"))
+                : opening ? L("Đang mở viên nang…", "Opening the capsule…") : SpinOdds(spec, run!.Step));
+        }
+        else if (run != null && expedition.Node(expeditionLane) is ExpeditionNode chosen)
         {
             xDetails!.Visibility = Visibility.Visible;
             xNodeName!.Text = $"{StepTitle(chosen.Step, run.Map.Count)} · {KindName(chosen.Kind)} — {chosen.Stage.Name(English)}";
@@ -492,12 +634,14 @@ public sealed partial class PetWindow
             + (record.BestSeconds is double best ? L($" · nhanh nhất {Clock(best)}", $" · fastest {Clock(best)}") : "")) + keepsakeLine);
 
         bool battleNode = run != null && run.Step < run.Map.Count && IsFightKind(expedition.Kind(run.Step, expeditionLane));
-        xMainText!.Text = run == null ? L("Chuẩn bị chuyến", "Prepare the run") : battleNode ? L("Vào trận", "Fight") : L("Đi tới đây", "Go here");
+        xMainText!.Text = run == null ? L("Chuẩn bị chuyến", "Prepare the run") : expedition.NeedsRoll ? L("Quay máy", "Spin") : battleNode ? L("Vào trận", "Fight") : L("Đi tới đây", "Go here");
         xMain.Visibility = run?.Pending != null ? Visibility.Collapsed : Visibility.Visible;
         xCloseText!.Text = L("‹ Sảnh", "‹ Hub");
         xAbandonText!.Text = expeditionConfirmAbandon ? L("Bấm lần nữa để bỏ", "Click again to give up") : L("Bỏ chuyến", "Give up");
         xAbandon!.Visibility = run != null ? Visibility.Visible : Visibility.Collapsed;
-        bool can = run == null ? BattlePrepRefusal() == null : battleNode ? BattleRefusal() == null && expedition.Node(expeditionLane) != null : LaneOpen(expedition, expeditionLane);
+        // Nothing goes on while a capsule opens (it lasts about a second).
+        bool can = run == null ? BattlePrepRefusal() == null : opening ? false : expedition.NeedsRoll ? BattlePrepRefusal() == null
+            : battleNode ? BattleRefusal() == null && expedition.Node(expeditionLane) != null : LaneOpen(expedition, expeditionLane);
         if (xMain.IsEnabled != can) { xMain.IsEnabled = can; xMain.Opacity = can ? 1 : 0.5; }
     }
 
@@ -545,13 +689,15 @@ public sealed partial class PetWindow
         {
             ExpeditionChoice.RestKind => L("Nghỉ chân — chọn một", "Rest — choose one"),
             ExpeditionChoice.RewardKind => L("Phần thưởng tinh anh", "Elite reward"),
+            ExpeditionChoice.CapsuleKind => L("Máy viên nang", "Capsule machine"),
             _ => e?.Name(English) ?? KindName(ExpeditionSpec.Event)
         };
-        var head = Text(title, PetUi.TitleSize, true, brush: open.Kind == ExpeditionChoice.RewardKind ? RecordGold : null);
+        var head = Text(title, PetUi.TitleSize, true, brush: open.Kind is ExpeditionChoice.RewardKind or ExpeditionChoice.CapsuleKind ? RecordGold : null);
         xChoice.Children.Add(head);
-        if (open.Kind == ExpeditionChoice.RewardKind) xChoice.Children.Add(Text(L("Chọn một di vật mang theo đến hết chuyến, hoặc bỏ qua.", "Pick a relic to keep for the rest of the run, or leave them."), PetUi.SmallSize, opacity: 0.85));
+        if (open.Kind == ExpeditionChoice.CapsuleKind) AddCapsules(expedition, run, Text);
+        else if (open.Kind == ExpeditionChoice.RewardKind) xChoice.Children.Add(Text(L("Chọn một di vật mang theo đến hết chuyến, hoặc bỏ qua.", "Pick a relic to keep for the rest of the run, or leave them."), PetUi.SmallSize, opacity: 0.85));
         else if (e != null) xChoice.Children.Add(Text(e.Describe(English), PetUi.SmallSize, opacity: 0.85));
-        if (run.Relics.Count >= spec.MaxRelics && open.Kind != ExpeditionChoice.RestKind && e?.Kind != ExpeditionEventSpec.Swap)
+        if (run.Relics.Count >= spec.MaxRelics && open.Kind is not (ExpeditionChoice.RestKind or ExpeditionChoice.CapsuleKind) && e?.Kind != ExpeditionEventSpec.Swap)
             xChoice.Children.Add(Text(L($"Đã đủ {spec.MaxRelics} di vật.", $"The run already holds {spec.MaxRelics} relics."), PetUi.SmallSize, brush: PrepWarning));
 
         if (e?.Kind == ExpeditionEventSpec.Swap && run.Build.Count > 0)
@@ -589,6 +735,7 @@ public sealed partial class PetWindow
         var buttons = new WrapPanel { Margin = new Thickness(0, 10, 0, 0) };
         foreach (var option in expedition.Options())
         {
+            if (option is DesktopPet.Expedition.Free or DesktopPet.Expedition.Gold) continue; // The capsules are buttons themselves.
             double cost = Math.Round(expedition.Cost(option)), gain = Math.Round(expedition.Gain(option));
             string label = option switch
             {
@@ -598,7 +745,7 @@ public sealed partial class PetWindow
                 DesktopPet.Expedition.Safe => L($"An toàn: +{gain} HP", $"Safe: +{gain} HP"),
                 DesktopPet.Expedition.Risk => L($"Liều: −{cost} HP, 1 di vật ngẫu nhiên", $"Risk it: −{cost} HP, a random relic"),
                 DesktopPet.Expedition.Take => cost > 0 ? L($"Lấy di vật đã chọn (−{cost} HP)", $"Take the chosen relic (−{cost} HP)") : L("Lấy di vật đã chọn", "Take the chosen relic"),
-                _ => open.Kind == ExpeditionChoice.RewardKind ? L("Bỏ qua", "Leave them") : L("Đi tiếp", "Move on")
+                _ => open.Kind == ExpeditionChoice.RewardKind ? L("Bỏ qua", "Leave them") : open.Kind == ExpeditionChoice.CapsuleKind ? L("Bỏ qua", "Skip") : L("Đi tiếp", "Move on")
             };
             string chosen = option;
             var (button, text, _) = HudButton(() => { if (ExpeditionChoose(chosen) is string reason) ShowBattleNotice(reason); }, plain: true);
@@ -617,6 +764,53 @@ public sealed partial class PetWindow
         xChoice.Children.Add(buttons);
     }
 
+    // The capsule machine's two capsules, side by side: each a button with its picture, its price and
+    // the odds of what it may hold (worked out from what the run can still get, never from the draw).
+    private void AddCapsules(Expedition expedition, ExpeditionRun run, Func<string, double, bool, double, Brush?, TextBlock> text)
+    {
+        var spec = expedition.Spec;
+        if (spec.Capsules is not CapsuleSpec c) return;
+        xChoice!.Children.Add(text(L("Chọn một viên: chỉ biết bên trong khi mở.", "Pick one capsule: you only see what is inside once it opens."), PetUi.SmallSize, false, 0.85, null));
+        double max = expedition.MaxHp(run);
+        string Share(double part, double total) => total <= 0 ? "0%" : Percent(part / total);
+        bool relicRoom = run.Relics.Count < spec.MaxRelics && spec.Relics.Any(r => !run.Relics.Contains(r.Id));
+        bool rareLeft = BattleTuning.UpgradeList.Any(u => u.Rare && (u.MaxStacks == 0 || run.Build.GetValueOrDefault(u.Id) < u.MaxStacks));
+        double relic = relicRoom ? c.Relic : 0, rare = rareLeft ? c.Rare : 0, total = relic + rare + c.CardHeal;
+        var goldOdds = new List<string>();
+        if (relic > 0) goldOdds.Add(L("di vật ", "a relic ") + Share(relic, total));
+        if (rare > 0) goldOdds.Add(L("thẻ hiếm ", "a rare card ") + Share(rare, total));
+        if (c.CardHeal > 0) goldOdds.Add(L($"thẻ + {Percent(c.GoldHeal)} HP ", $"a card + {Percent(c.GoldHeal)} HP ") + Share(c.CardHeal, total));
+        string cost = Math.Round(c.GoldCost * max).ToString(System.Globalization.CultureInfo.InvariantCulture);
+        var row = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 8, 0, 0) };
+        foreach (var (option, color, name, odds) in new[]
+        {
+            (DesktopPet.Expedition.Free, CapsuleArt.PlainColor, L("Viên thường · miễn phí", "Plain capsule · free"),
+                L($"thẻ thường {Percent(c.FreeCard)} · +{Percent(c.FreeHeal)} HP {Percent(1 - c.FreeCard)}", $"a common card {Percent(c.FreeCard)} · +{Percent(c.FreeHeal)} HP {Percent(1 - c.FreeCard)}")),
+            (DesktopPet.Expedition.Gold, CapsuleArt.GoldColor, L($"Viên vàng · −{cost} HP", $"Gold capsule · −{cost} HP"), string.Join(" · ", goldOdds))
+        })
+        {
+            string chosen = option;
+            bool can = expedition.Refusal(option) == null;
+            var art = new CapsuleArt { Color = color, Width = 34, Height = 42, Margin = new Thickness(0, 0, 9, 0), VerticalAlignment = VerticalAlignment.Center };
+            var label = text(name, PetUi.BodySize, true, 1, color == CapsuleArt.GoldColor ? RecordGold : null);
+            var desc = text(odds, PetUi.CaptionSize, false, 0.85, null);
+            var card = new Border
+            {
+                Width = 222, Margin = new Thickness(0, 0, 8, 0), Padding = new Thickness(9, 7, 9, 8), CornerRadius = new CornerRadius(9), BorderThickness = new Thickness(1.5),
+                Background = PrepCardBack, BorderBrush = PrepCardRim, Cursor = can ? System.Windows.Input.Cursors.Hand : null, IsEnabled = can, Opacity = can ? 1 : 0.5,
+                Child = new DockPanel { Children = { art, new StackPanel { VerticalAlignment = VerticalAlignment.Center, Children = { label, desc } } } }
+            };
+            DockPanel.SetDock(art, Dock.Left);
+            if (!can) card.ToolTip = L("Mèo quá yếu để trả giá này.", "The cat is too weak to pay this.");
+            card.MouseEnter += (_, _) => { if (card.IsEnabled) card.BorderBrush = Brushes.White; };
+            card.MouseLeave += (_, _) => card.BorderBrush = PrepCardRim;
+            card.MouseLeftButtonDown += (_, e) => { if (card.IsEnabled && ExpeditionChoose(chosen) is string reason) ShowBattleNotice(reason); e.Handled = true; };
+            row.Children.Add(card);
+            xChoiceButtons[option] = card;
+        }
+        xChoice.Children.Add(row);
+    }
+
     // Measurement only (perf.ps1 -Battle expedition): the last elite encounter at the last step's
     // threat, with as many relics as a run may hold, on a run kept in memory (never saved, no
     // keepsakes). Without an Expedition in the data, the free battle.
@@ -626,7 +820,7 @@ public sealed partial class PetWindow
         var expedition = new Expedition(BattleTuning, new ExpeditionProgress()) { GrantKeepsakes = false };
         var run = expedition.Start(preferences.BattleWeapon, BattleDifficulty.Normal, Random.Shared.Next());
         run.Relics.AddRange(spec.Relics.Take(spec.MaxRelics).Select(r => r.Id));
-        int step = spec.Steps.Length - 1;
+        int step = spec.PathSteps - 1;
         var node = new ExpeditionNode(step, 0, ExpeditionSpec.Elite, spec.Elites[^1], Random.Shared.Next(), spec.Threat(step));
         if (StartBattle(run.Weapon, run.Level, node.Stage, new ExpeditionBattle(expedition, node)) is string reason) return reason;
         run.Fighting = 0;
@@ -675,6 +869,7 @@ public sealed partial class PetWindow
             Add(L($"Qua bậc {step.Step + 1}/{steps} · HP mang tiếp {Math.Ceiling(step.Hp)}/{step.MaxHp:0}", $"Step {step.Step + 1}/{steps} done · HP carried on {Math.Ceiling(step.Hp)}/{step.MaxHp:0}"), PetUi.BodySize, bold: true);
             if (step.Healed >= 0.5) Add(L($"Nghỉ chân: +{Math.Round(step.Healed)} HP", $"A short rest: +{Math.Round(step.Healed)} HP"), PetUi.SmallSize, opacity: 0.85);
             if (step.Reward) Add(L("Tinh anh để lại di vật: chọn trên bản đồ viễn chinh.", "The elite left relics: pick one on the Expedition map."), PetUi.BodySize, RecordGold, true);
+            if (step.Capsule) Add(L("Máy viên nang đang chờ trên bản đồ viễn chinh.", "The capsule machine waits on the Expedition map."), PetUi.BodySize, RecordGold, true);
         }
         if (result.Upgrades.Length > 0) Add(L("Build hiện tại: ", "Build now: ") + result.Upgrades, PetUi.SmallSize, opacity: 0.85);
         // Keepsakes this run gave (each only once): where to find them.

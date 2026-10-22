@@ -342,9 +342,10 @@ Một chuyến đi gồm nhiều bậc, mỗi bậc chọn một điểm, bậc 
 ```json
 "expedition": {
   "id": "slime_trail", "nameVi": "Đường mòn Slime", "nameEn": "The Slime Trail",
-  "rulesVersion": 2, "unlockAfter": "c1_slime_king", "retreatCost": 0.25, "winHeal": 0.05, "stepThreat": 0.1,
+  "rulesVersion": 5, "unlockAfter": "c1_slime_king", "retreatCost": 0.25, "winHeal": 0.05, "stepThreat": 0.1,
   "restHeal": 0.3, "maxRelics": 3, "eliteRelics": 2,
-  "steps": [ [ "fight", "fight" ], [ "fight", "elite", "event" ], [ "rest", "elite" ], ... ],
+  "kindGacha": { "steps": 5, "minLanes": 2, "maxLanes": 3, "weights": { "fight": 45, "event": 20, "elite": 20, "rest": 15 } },
+  "capsules": { "freeHeal": 0.1, "freeCard": 0.5, "goldCost": 0.12, "goldHeal": 0.1, "relic": 40, "rare": 30, "cardHeal": 30 },
   "events": [ { "id": "slime_chest", "kind": "chest", "heal": 0.1, "cost": 0.15, "nameVi": "...", "nameEn": "...", "descVi": "...", "descEn": "..." } ],
   "relics": [ { "id": "counter_bell", "effect": "counter", "amount": 0.6, "penalty": 3, "nameVi": "...", "nameEn": "...", "descVi": "...", "descEn": "..." } ],
   "fights": [ { "id": "x_meadow", ... như một màn Phiêu lưu ... } ],
@@ -353,7 +354,9 @@ Một chuyến đi gồm nhiều bậc, mỗi bậc chọn một điểm, bậc 
 }
 ```
 
-- `steps`: loại điểm của từng bậc (trước trùm), 1–3 điểm mỗi bậc, theo thứ tự làn. Loại: `fight` (giao tranh), `elite` (tinh anh), `rest` (nghỉ chân, tối đa 1 mỗi bậc), `event` (sự kiện, bốc từ `events`, các sự kiện cùng bậc khác nhau). Tối đa 10 bậc.
+- `kindGacha` (2026-10-22, dữ liệu gốc dùng cái này thay `steps`): bản đồ lúc đầu chỉ lộ trùm; khi chuyến tới một bậc, người chơi bấm **Quay máy** và bậc đó được bốc `minLanes`–`maxLanes` điểm (1–3) theo `weights` (`fight`, `elite`, `rest`, `event`; 0–1000, `fight` phải > 0). Luật luôn giữ: bậc 1 không có tinh anh/nghỉ; mỗi bậc tối đa 1 nghỉ và không chỉ toàn tinh anh; bậc ngay trước trùm luôn có 1 điểm nghỉ; không quá số trận/sự kiện trong kho. `steps` (1–10): số bậc trước trùm. Bốc từ seed của chuyến (seed riêng cho mỗi bậc), lưu ngay vào chuyến (`Kinds`, `Map`), nên quay lần hai, đóng/mở app hay quay lúc khác đều ra đúng kết quả đó.
+- `capsules` (2026-10-22, tùy chọn): máy viên nang sau mỗi trận **giao tranh** thắng (không sau tinh anh — đã có di vật — và không sau trùm). Cả hai viên được bốc lúc thắng, lưu trong chuyến, chỉ lộ khi mở. Viên thường miễn phí: `freeCard` (0–1) xác suất là 1 thẻ thường từ lượt đưa thẻ của build, còn lại hồi `freeHeal` HP tối đa. Viên vàng tốn `goldCost` (0–0,9) HP tối đa (phải còn ≥ 1 HP): theo trọng số `relic` (1 di vật chưa có, chỉ khi còn chỗ), `rare` (1 thẻ hiếm chưa đầy), `cardHeal` (1 thẻ + `goldHeal` HP tối đa). Có thể bỏ qua.
+- `steps`: loại điểm cố định của từng bậc (trước trùm), 1–3 điểm mỗi bậc, theo thứ tự làn. Dùng `steps` **hoặc** `kindGacha`, không cả hai; file của bạn đưa `steps` thì thay `kindGacha` của dữ liệu gốc (và ngược lại); `"capsules": null` tắt máy viên nang. Loại: `fight` (giao tranh), `elite` (tinh anh), `rest` (nghỉ chân, tối đa 1 mỗi bậc), `event` (sự kiện, bốc từ `events`, các sự kiện cùng bậc khác nhau). Tối đa 10 bậc.
 - `rest` (mốc 3): không có trận; chọn hồi `restHeal` (0–1) HP tối đa, hoặc lấy 1 trong tối đa 3 thẻ (cùng luật đưa thẻ như trong trận, không có thẻ hồi máu ngay).
 - `events` (mốc 3, tối đa 12): `kind` là `swap` (bỏ 1 thẻ của build lấy 1 trong 3 thẻ mới, hoặc đi tiếp), `chest` (an toàn: hồi `heal` HP tối đa; liều: mất `cost` HP tối đa, nhận 1 di vật ngẫu nhiên chưa có), `shrine` (mất `cost` HP tối đa để chọn 1 trong 2 di vật hiện rõ, hoặc đi tiếp). `heal` 0–1, `cost` 0–0,9; cái giá phải trả được mà mèo còn ≥ 1 HP, không thì nút bị khóa. `chest`/`shrine` cần có `relics`.
 - `relics` (mốc 3, tối đa 12): chỉ có trong chuyến đi, BattleSim áp như một modifier riêng (không sửa thẻ, kỹ năng hay luật chung; Phiêu lưu và trận tự do không có di vật). `effect`:
@@ -372,6 +375,6 @@ Một chuyến đi gồm nhiều bậc, mỗi bậc chọn một điểm, bậc 
 - `winHeal` (0–1): thắng một bậc thì hồi phần này của HP tối đa (ngoài hồi giữa các đợt như thường).
 - `stepThreat` (0–0,5): quái mỗi bậc mạnh hơn bậc trước chừng này (bậc 1 ×1, bậc 2 ×1,1…), nhân với `threat` của trận.
 - Bản đồ được bốc một lần từ seed của chuyến khi bắt đầu và được lưu lại; mỗi điểm có seed trận riêng suy ra từ seed chuyến, nên đóng/mở bản đồ hay tiếp tục sau khi mở lại app không đổi bản đồ hay trận.
-- Lưu ở `expedition.json` (phiên bản 2 từ mốc 3: thêm di vật và lựa chọn đang mở; phiên bản 3 từ mốc 4: thêm `Keepsakes`; bản app cũ chỉ đọc, không ghi đè) (cạnh preferences.json, tách khỏi `adventure-progress.json`): chuyến đang đi, kỷ lục theo `expedition|r<rulesVersion>|vũ khí|độ khó` (số chuyến, số chuyến thắng, đi xa nhất, nhanh nhất theo thời gian đánh), các chuyến đã tính. Lưu an toàn như Phiêu lưu (.tmp, .bak, file của bản mới hơn chỉ đọc). Chơi với battle.json tùy chỉnh thì chuyến đi chỉ giữ trong bộ nhớ, không ghi file.
+- Lưu ở `expedition.json` (phiên bản 2 từ mốc 3: thêm di vật và lựa chọn đang mở; phiên bản 3 từ mốc 4: thêm `Keepsakes`; phiên bản 4 từ 2026-10-22: `Kinds` của chuyến, `Free`/`Gold` của máy viên nang; bản app cũ chỉ đọc, không ghi đè) (cạnh preferences.json, tách khỏi `adventure-progress.json`): chuyến đang đi, kỷ lục theo `expedition|r<rulesVersion>|vũ khí|độ khó` (số chuyến, số chuyến thắng, đi xa nhất, nhanh nhất theo thời gian đánh), các chuyến đã tính. Lưu an toàn như Phiêu lưu (.tmp, .bak, file của bản mới hơn chỉ đọc). Chơi với battle.json tùy chỉnh thì chuyến đi chỉ giữ trong bộ nhớ, không ghi file.
 - Cách gộp: như `campaign`, khóa được gộp từng khóa; các mảng (`steps`, `fights`, `elites`, `events`, `relics`, `keepsakes`) trong file của bạn thay toàn bộ mảng gốc.
 - Log khi bắt đầu trận: `Battle started: Expedition step N <id trận>, threat ×…, <độ khó>, <vũ khí>, seed …`.

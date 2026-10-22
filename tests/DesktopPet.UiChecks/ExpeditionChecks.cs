@@ -470,8 +470,15 @@ internal static class ExpeditionChecks
             check(window.OpenExpeditionMap() == null && window.ExpeditionStart(11) == null, "(setup) a run of the built-in Expedition");
             var tall = window.Expedition!.Run!;
             tall.Relics.AddRange(window.Expedition.Spec.Relics.Take(window.Expedition.Spec.MaxRelics).Select(r => r.Id));
-            tall.Path.AddRange(new[] { 0, 0 });
-            window.Expedition.Visit(0);
+            // Spin step by step (passing each on paper) until a step has a rest; the one before the boss always does.
+            var drawing = window.Expedition;
+            for (int guard = 0; guard < 6; guard++)
+            {
+                drawing.Roll();
+                int rest = Array.IndexOf(tall.Kinds![tall.Step], ExpeditionSpec.Rest);
+                if (rest >= 0 && tall.Step >= 2) { drawing.Visit(rest); break; }
+                tall.Path.Add(0);
+            }
             var boundsField = typeof(PetWindow).GetField("bounds", Flags)!;
             var realBounds = (Area)boundsField.GetValue(window)!;
             double MapHeight(string language) { prefs.Language = language; Tick(0.3); Call(window, "PlaceExpeditionMap"); var m = Find("Pet expedition")!; m.UpdateLayout(); return m.ActualHeight; }
@@ -490,6 +497,54 @@ internal static class ExpeditionChecks
             boundsField.SetValue(window, realBounds);
             check(MapHeight("en") is double back && Math.Abs(back - natural) < 1 || realBounds.Bottom - realBounds.Top < natural + 24, "On a big enough screen the map keeps its full height");
             prefs.Language = "en";
+            window.Reset();
+
+            // The step gacha and the capsule machine on the map (2026-10-22): a 2-step trail of fights only
+            // (the step before the boss gets its rest), weak slimes.
+            var gachaTrail = new ExpeditionSpec
+            {
+                Id = "gacha_trail", NameVi = "Đường quay", NameEn = "Spin trail", UnlockAfter = "st_gate", RetreatCost = 0.25, WinHeal = 0, StepThreat = 0,
+                KindGacha = new KindGachaSpec { Steps = 2, MinLanes = 2, MaxLanes = 2, Weights = new() { [ExpeditionSpec.Fight] = 1 } }, Capsules = new CapsuleSpec(),
+                Fights = new[] { Stage("g_field", "Field"), Stage("g_hill", "Hill") }, Boss = Stage("g_throne", "Throne")
+            };
+            window.BattleTuning = new BattleSettings { FirstWaveDelay = 0, SlimeMaxHp = 1, SlimeDamage = 1, OutroSeconds = 0.5, Campaign = campaign, Expedition = gachaTrail };
+            check(window.OpenExpeditionMap() == null && window.ExpeditionStart(21) == null, "(setup) a run of a trail with the step gacha");
+            Tick(0.3);
+            string spin = window.ExpeditionMapText;
+            check(window.Expedition!.NeedsRoll && spin.Contains("Step 1/3 · Step machine") && spin.Contains("Odds per node") && spin.Contains("no elite or rest") && spin.Contains("Spin")
+                  && window.ExpeditionMainEnabled && window.ExpeditionFight() is string notYet && notYet.Length > 0,
+                $"A new run's map waits for the spin, with its odds; nothing can be fought yet ({spin.Replace('\n', '|')})");
+            Shot("Pet expedition", "expedition-spin-en.png");
+            check(window.ExpeditionRoll() == null && window.ExpeditionRevealing && !window.ExpeditionMainEnabled && window.ExpeditionRoll() is string twiceSpun && twiceSpun.Length > 0
+                  && Saved()?.Kinds?[0].Length == 2, "Spin: the step is drawn and saved at once, the capsule opens (nothing else meanwhile), a second spin draws nothing");
+            Tick(0.3);
+            check(window.ExpeditionMapText.Contains("Opening the capsule"), "While it opens the map says so");
+            window.FinishExpeditionReveal();
+            Tick(0.3);
+            check(!window.ExpeditionRevealing && window.ExpeditionMapText.Contains("Fight — ") && window.ExpeditionMainEnabled, "Once open, the step's nodes show and can be fought");
+            check(window.ExpeditionFight() == null && window.BattleActive, "(setup) the first fight");
+            Finish();
+            await Task.Delay(30);
+            check(window.LastBattleSummary is { Expedition.Capsule: true } && ResultText().Contains("capsule machine waits"), "A won fight's result says the capsule machine waits on the map");
+            Click(Button(Find("Pet result")!.Content as DependencyObject ?? new Border(), "Continue")!);
+            Tick(0.3);
+            string machine = window.ExpeditionMapText;
+            check(window.ExpeditionHasChoice && machine.Contains("Capsule machine") && machine.Contains("Plain capsule · free") && machine.Contains("Gold capsule · −12 HP") && machine.Contains("Skip")
+                  && window.ExpeditionOptionEnabled(Expedition.Free) && window.ExpeditionOptionEnabled(Expedition.Gold),
+                $"On the map: the plain capsule (free) and the gold one (12% of the max HP), with their odds ({machine.Replace('\n', '|')})");
+            Shot("Pet expedition", "expedition-capsules-en.png");
+            var capsuleRun = window.Expedition!.Run!;
+            string gold = capsuleRun.Pending!.Gold!;
+            double capsuleHp = capsuleRun.Hp;
+            check(window.ExpeditionChoose(Expedition.Gold) == null && window.ExpeditionRevealing && !window.ExpeditionMapText.Contains("Gold capsule: ") && Saved()?.Pending == null,
+                "Taking the gold capsule: the run changes and is saved at once, the prize is said only once it opens");
+            window.FinishExpeditionReveal();
+            Tick(0.3);
+            check(window.ExpeditionMapText.Contains("Gold capsule: ") && window.Expedition!.Run!.Hp < capsuleHp + 30 && window.Expedition.NeedsRoll,
+                $"Once open, the map says what it held ({gold}); then step 2 waits for its spin ({window.ExpeditionMapText.Replace('\n', '|')})");
+            window.ExpeditionRoll(); window.FinishExpeditionReveal(); Tick(0.3);
+            check(window.Expedition!.Run!.Kinds![1].Contains(ExpeditionSpec.Rest), "The step before the boss has its rest");
+            window.ExpeditionAbandon(); window.ExpeditionAbandon();
             window.Reset();
 
             // Data without an Expedition: the menu hides it, opening explains.

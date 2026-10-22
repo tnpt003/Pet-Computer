@@ -389,6 +389,7 @@ public sealed partial class PetWindow : Window
             y = previousY + (pet.Y - previousY) * alpha;
         }
         else SnapPresentation();
+        if (!dragging) y -= napLift; // Asleep on the slime cushion: drawn on top of it (PetWindow.TrophyPlay.cs).
         MoveWindow(x - padding, y - padding);
         UpdateSpeechWindow(x, y);
         renderer.InvalidateVisual();

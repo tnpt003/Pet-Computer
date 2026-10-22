@@ -10,9 +10,9 @@ using Forms = System.Windows.Forms;
 namespace DesktopPet;
 
 // Expedition milestone 4: the display corner. One keepsake a won run gave (a cup or the slime
-// cushion; chosen in Settings → Pet, else the best one) stands, drawn big, on a small wooden base on
-// the floor of a monitor. On once the first keepsake is
-// earned; Settings → Pet turns it off. Never takes focus, no taskbar button; hidden while a
+// cushion; chosen in Settings → Pet or its right-click menu, else the best one) stands, drawn 1.2×
+// (about half the cat), on a small wooden base on the floor of a monitor or on a window's top edge
+// (PetWindow.TrophyPlay.cs). On once the first keepsake is earned; Settings → Pet turns it off. Never takes focus, no taskbar button; hidden while a
 // fullscreen app runs or a battle is on.
 // The shelf is a cartoon object (ShelfMotion): the user picks it up (past the drag threshold), it
 // dangles, is thrown, falls, lands with a squash and a bounce; dropped on the cat's head it bonks the
@@ -29,7 +29,7 @@ public sealed partial class PetWindow
     private double admireVisit = 300, admireRemaining;
     private bool admiring;
     public const double AdmireSeconds = 4, AdmireEvery = 600;
-    public const double ShelfSide = 70, ShelfTopRoom = 80, ShelfBottomRoom = 44, DisplayScale = 1.8;
+    public const double ShelfSide = 56, ShelfTopRoom = 64, ShelfBottomRoom = 36, DisplayScale = 1.2;
 
     // The shelf's place: its monitor (in that monitor's DIPs) and its motion.
     private readonly ShelfMotion shelf = new();
@@ -108,6 +108,7 @@ public sealed partial class PetWindow
                 EndShelfDrag(false);
                 FinishShelfHop();
                 shelfShove = ShelfShove.None; shelfWatch = 0;
+                LeaveShelfLedge(); // Shown again: on the floor.
                 trophyWindow.Hide();
             }
             return;
@@ -130,12 +131,19 @@ public sealed partial class PetWindow
                 var handle = new WindowInteropHelper(trophyWindow).Handle;
                 SetWindowLongPtr(handle, ExStyle, new IntPtr(GetWindowLongPtr(handle, ExStyle).ToInt64() | ToolWindow | NoActivate));
             };
-            trophyShelf.MouseLeftButtonDown += (_, e) => { PressShelf(); e.Handled = true; };
+            trophyShelf.MouseLeftButtonDown += (_, e) =>
+            {
+                if (e.ClickCount >= 2) CallCatToLook(); // PetWindow.TrophyPlay.cs
+                else PressShelf();
+                e.Handled = true;
+            };
+            trophyShelf.MouseEnter += (_, _) => HoverShelf();
             trophyShelf.MouseMove += (_, _) => CheckShelfDragThreshold();
             trophyShelf.MouseLeftButtonUp += (_, _) => EndShelfDrag(true);
             trophyShelf.LostMouseCapture += (_, _) => EndShelfDrag(false);
             trophyWindow.Closed += (_, _) => { trophyWindow = null; trophyShelf = null; trophyShownId = null; shelfHeld = shelfPress = false; };
             trophyShownId = null;
+            InitializeShelfMenu();
         }
         if (trophyShownId != displayed.Id)
         {
@@ -214,6 +222,7 @@ public sealed partial class PetWindow
                 puff = 0.35 + 0.65 * Math.Min(1, t / ShelfAppearSeconds);
                 break;
         }
+        pop *= 1 + 0.06 * shelfHoverBlend;
         Point? pivot = shelfHeld ? new Point(shelfGrabX / DisplayScale, (ShelfArtHeight - shelfGrabY) / DisplayScale) : null;
         trophyShelf.SetPose(shelf.ScaleX, shelf.ScaleY, shelf.Tilt, pivot, Math.Max(0, pop), shake, shelfDust, shelfDustStrength, puff);
     }
@@ -258,6 +267,7 @@ public sealed partial class PetWindow
         shelfGrabX = Math.Clamp(cursor.X - shelf.X, 0, ShelfArtWidth);
         shelfGrabY = Math.Clamp(ShelfFloor - shelf.Height - cursor.Y, 0, ShelfArtHeight);
         shelf.Held = true;
+        LeaveShelfLedge();
         shelf.VX = shelf.VY = 0;
         shelf.SquashV -= 3; // Lifted: a little stretch.
         shelfTracker.Clear();
@@ -309,6 +319,7 @@ public sealed partial class PetWindow
     // A paused pet freezes all of it (the shelf hangs in the air with its velocity).
     private void TickShelf(double dt)
     {
+        if (!TrophiesVisible && (cushionNap != CushionNap.None || napLift > 0)) { cushionNap = CushionNap.None; napLift = 0; } // The cushion is gone.
         if (paused || !TrophiesVisible) return;
         if (pet.Bonk > 0)
         {
@@ -329,19 +340,24 @@ public sealed partial class PetWindow
         shelfAreaTimer += dt;
         if (shelfAreaTimer >= 1 && !shelfHeld) { shelfAreaTimer = 0; RefreshShelfArea(); }
         if (shelfHeld) UpdateShelfDrag();
+        WatchHeldShelf(); // PetWindow.TrophyPlay.cs
+        FollowShelfLedge();
+        shelfHoverBlend += ((trophyShelf?.IsMouseOver == true && !shelfHeld ? 1 : 0) - shelfHoverBlend) * (1 - Math.Exp(-dt * 12));
         double before = ShelfFloor - shelf.Height;
         shelf.Step(dt, shelfArea.Left, Math.Max(shelfArea.Left, shelfArea.Right - ShelfArtWidth));
+        LandShelfOnLedge(before);
         double ceiling = Math.Max(0, ShelfFloor - shelfArea.Top - ShelfArtHeight);
         if (shelf.Height > ceiling) { shelf.Height = ceiling; shelf.VY = -Math.Abs(shelf.VY) * 0.3; }
         if (shelf.Landed > 0)
         {
             shelfDust = 0; shelfDustStrength = Math.Clamp(shelf.Landed / 1200, 0.2, 1);
-            if (shelf.Landed > 300) PlayPetSound("squish");
+            if (shelf.Landed > 300) { PlayPetSound("squish"); NoticeShelfLanding(); }
             shelf.Landed = 0;
         }
         if (shelfDust >= 0 && (shelfDust += dt / 0.45) >= 1) shelfDust = -1;
         CheckShelfBonk(before);
         TickShelfHop(dt);
+        TickNapLift(dt);
         if (shelfEdgeCheck && shelf.Resting && !shelfHeld && shelfHop == ShelfHop.None)
         {
             shelfEdgeCheck = false;
@@ -351,43 +367,61 @@ public sealed partial class PetWindow
         PositionShelf();
     }
 
-    // A falling shelf meets the top of the cat's head: bonk, stars, and the shelf bounces off sideways.
-    // A sleeping cat is woken by it (approved exception to the sleep lock, as a click: waking, then
-    // the wake cooldown) and sees stars too.
+    // The shelf hits the cat: falling onto the top of its head, or thrown fast into its side. Bonk:
+    // stars, and the shelf bounces off. A sleeping cat is woken by it (approved exception to the
+    // sleep lock, as a click: waking, then the wake cooldown) and sees stars too.
     private void CheckShelfBonk(double bottomBefore)
     {
-        if (shelf.Held || shelf.VY > -150 || pet.Bonk > 0 || shelfHop == ShelfHop.Appear || !ShelfBesideCat) return;
+        if (shelf.Held || pet.Bonk > 0 || shelfHop != ShelfHop.None || !ShelfBesideCat || cushionNap == CushionNap.Asleep) return;
         if (!pet.Grounded || pet.Action is PetAction.Dragging or PetAction.Climbing || PetActionRules.IsInFlight(pet.Action)) return;
+        double w = ShelfArtWidth, bottom = ShelfFloor - shelf.Height, top = bottom - ShelfArtHeight;
         double headLeft = pet.X + 24, headRight = pet.X + 88, headTop = pet.Y + 16;
-        double bottom = ShelfFloor - shelf.Height;
-        if (shelf.X + ShelfArtWidth < headLeft || shelf.X > headRight || bottomBefore > headTop + 4 || bottom < headTop) return;
-        shelf.Height = ShelfFloor - headTop;
-        double catCenter = pet.X + settings.Width / 2, w = ShelfArtWidth;
-        int side = featureRandom.NextDouble() < 0.5 ? -1 : 1;
-        if (side < 0 && catCenter - settings.Width / 2 - w < shelfArea.Left) side = 1;
-        else if (side > 0 && catCenter + settings.Width / 2 + w > shelfArea.Right) side = -1;
-        shelf.Rebound(side, 250 + featureRandom.NextDouble() * 90);
+        bool onHead = shelf.VY <= -150 && shelf.X + w >= headLeft && shelf.X <= headRight && bottomBefore <= headTop + 4 && bottom >= headTop;
+        double bodyLeft = pet.X + 18, bodyRight = pet.X + 94, bodyTop = pet.Y + 24, bodyBottom = pet.Y + settings.Height;
+        bool side = !onHead && Math.Abs(shelf.VX) >= 260 && Math.Sign(shelf.VX) == Math.Sign(CatCenter - ShelfCenter)
+            && shelf.X + w > bodyLeft && shelf.X < bodyRight && bottom > bodyTop && top < bodyBottom;
+        if (!onHead && !side) return;
+        pet.Facing = ShelfCenter < CatCenter ? -1 : 1;
+        if (onHead)
+        {
+            shelf.Height = ShelfFloor - headTop;
+            int away = featureRandom.NextDouble() < 0.5 ? -1 : 1;
+            if (away < 0 && CatCenter - settings.Width / 2 - w < shelfArea.Left) away = 1;
+            else if (away > 0 && CatCenter + settings.Width / 2 + w > shelfArea.Right) away = -1;
+            shelf.Rebound(away, 250 + featureRandom.NextDouble() * 90);
+        }
+        else
+        {
+            // Bounces back off the cat's side.
+            int back = shelf.VX > 0 ? -1 : 1;
+            shelf.X = Math.Clamp(back < 0 ? bodyLeft - w : bodyRight, shelfArea.Left, Math.Max(shelfArea.Left, shelfArea.Right - w));
+            shelf.Rebound(back, Math.Abs(shelf.VX) * 0.35 + 60);
+            shelf.VY = 260;
+        }
+        LeaveShelfLedge();
         shelfEdgeCheck = true;
         PlayPetSound("clank");
         if (pet.Action is PetAction.Sleeping or PetAction.Waking || pet.Emotions.SleepLocked)
         {
             behavior.WakeByClick(pet);
             pet.Bonk = PetModel.BonkDuration;
-            System.Diagnostics.Trace.WriteLine("The keepsake shelf fell on the sleeping cat: it wakes up dazed.");
+            System.Diagnostics.Trace.WriteLine("The keepsake fell on the sleeping cat: it wakes up dazed.");
             return;
         }
         CancelFeatureActivity();
         pet.Bonk = PetModel.BonkDuration;
         pet.Action = PetAction.Sitting;
         pet.VX = pet.SmoothedWalkVelocity = 0;
-        System.Diagnostics.Trace.WriteLine("The keepsake shelf bonked the cat on the head.");
+        System.Diagnostics.Trace.WriteLine(onHead ? "The keepsake bonked the cat on the head." : "The keepsake was thrown into the cat.");
     }
 
     // Left at an edge: the cat startles, the shelf vanishes in a puff and pops up in the middle.
-    private void StartShelfHop()
+    // alarm false (the menu's "Back to the middle"): straight to the puff, the cat not startled.
+    private void StartShelfHop(bool alarm = true)
     {
-        shelfHop = ShelfHop.Alarm;
+        shelfHop = alarm ? ShelfHop.Alarm : ShelfHop.Vanish;
         shelfHopTime = 0;
+        if (!alarm) PlayPetSound("swoosh");
         double w = ShelfArtWidth, middle = (shelfArea.Left + shelfArea.Right - w) / 2;
         bool beside = ShelfBesideCat;
         if (beside && middle < pet.X + 102 && middle + w > pet.X + 10)
@@ -395,7 +429,7 @@ public sealed partial class PetWindow
             middle = pet.X + settings.Width / 2 < (shelfArea.Left + shelfArea.Right) / 2 ? pet.X + 102 + 24 : pet.X + 10 - 24 - w;
         double margin = ShelfMotion.EdgeMargin + 12;
         shelfHopTo = Math.Clamp(middle, shelfArea.Left + margin, Math.Max(shelfArea.Left + margin, shelfArea.Right - w - margin));
-        if (beside && PetActionRules.IsSettled(pet) && pet.Bonk <= 0 && !BattleActive)
+        if (alarm && beside && PetActionRules.IsSettled(pet) && pet.Bonk <= 0 && !BattleActive)
         {
             StopShelfShove();
             if (admiring) StopAdmiring();
@@ -413,7 +447,9 @@ public sealed partial class PetWindow
         else if (shelfHop == ShelfHop.Vanish && shelfHopTime >= ShelfVanishSeconds)
         {
             shelfHop = ShelfHop.Appear; shelfHopTime = 0;
-            shelf.X = shelfHopTo; shelf.Height = 70; shelf.VX = shelf.VY = 0; shelf.Tilt = shelf.TiltV = 0;
+            if (shelfSwapTo != null) { ApplyShelfSwap(); shelf.Height = shelf.Ground + 24; }
+            else { shelf.X = shelfHopTo; LeaveShelfLedge(); shelf.Height = 70; }
+            shelf.VX = shelf.VY = 0; shelf.Tilt = shelf.TiltV = 0;
             PlayPetSound("sparkle");
         }
         else if (shelfHop == ShelfHop.Appear && shelfHopTime >= ShelfAppearSeconds && shelf.Grounded) FinishShelfHop();
@@ -422,7 +458,12 @@ public sealed partial class PetWindow
     private void FinishShelfHop()
     {
         if (shelfHop == ShelfHop.None) return;
-        if (shelfHop != ShelfHop.Appear) { shelf.X = shelfHopTo; shelf.Height = 0; shelf.VX = shelf.VY = 0; }
+        if (shelfHop != ShelfHop.Appear)
+        {
+            if (shelfSwapTo != null) { ApplyShelfSwap(); shelf.Height = shelf.Ground; }
+            else { shelf.X = shelfHopTo; LeaveShelfLedge(); shelf.Height = 0; }
+            shelf.VX = shelf.VY = 0;
+        }
         shelfHop = ShelfHop.None;
         shelfHopTime = 0;
         shelfEdgeCheck = false;
@@ -439,7 +480,7 @@ public sealed partial class PetWindow
     // Where the cat stands to look (just left of the shelf, facing it); null: nothing to look at here.
     private double? TrophySpot()
     {
-        if (!ShelfBesideCat || shelfHeld || shelfHop != ShelfHop.None || !shelf.Grounded) return null;
+        if (!ShelfBesideCat || shelfHeld || shelfHop != ShelfHop.None || !shelf.Grounded || !ShelfOnFloor) return null;
         double target = shelf.X - settings.Width * 0.72;
         return target < bounds.Left ? null : target;
     }
@@ -484,7 +525,7 @@ public sealed partial class PetWindow
     private void StopAdmiring()
     {
         if (!admiring) return;
-        admiring = false;
+        admiring = admireAsked = false;
         admireRemaining = 0;
         if (pet.Action is PetAction.Looking or PetAction.Walking) pet.Action = PetAction.Idle;
         pet.VX = 0;
@@ -502,7 +543,7 @@ public sealed partial class PetWindow
     public bool ShoveShelf(int? direction = null)
     {
         if (!CanPlay || EffectiveQuiet || BattleActive || FeatureOwnsMovement() || OnLedge || pet.LedgeId != 0 || !ShelfBesideCat
-            || shelfHeld || shelfHop != ShelfHop.None || !shelf.Resting) return false;
+            || shelfHeld || shelfHop != ShelfHop.None || !shelf.Resting || !ShelfOnFloor) return false;
         int dir = direction ?? (featureRandom.NextDouble() < 0.5 ? -1 : 1);
         if (ShoveSpot(dir) == null) dir = -dir;
         if (ShoveSpot(dir) == null) return false;

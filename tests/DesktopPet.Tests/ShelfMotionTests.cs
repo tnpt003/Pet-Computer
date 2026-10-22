@@ -71,6 +71,13 @@ internal static class ShelfMotionTests
         Drop(bonk);
         check(top > 130 && bonk.X < 500 - 150, $"Knocked off the head it pops up and lands off to the side ({500 - bonk.X:F0} DIPs away)");
 
+        var ledge = new ShelfMotion { X = 500, Height = 300, Ground = 100 };
+        Drop(ledge);
+        check(ledge.Resting && ledge.Height == 100, "With a window edge under it (Ground) it lands on that edge");
+        ledge.Ground = 0;
+        Drop(ledge);
+        check(ledge.Resting && ledge.Height == 0, "The edge gone, it falls to the floor");
+
         check(ShelfMotion.NearEdge(10, 100, 0, 1700) && ShelfMotion.NearEdge(1590, 100, 0, 1700) && !ShelfMotion.NearEdge(800, 100, 0, 1700)
               && !ShelfMotion.NearEdge(30, 100, 0, 1700), "Near the edge: closer than 24 DIPs to either side");
         var still = new ShelfMotion { X = 500 };

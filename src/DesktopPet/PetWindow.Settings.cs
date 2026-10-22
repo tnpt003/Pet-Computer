@@ -105,7 +105,7 @@ public sealed partial class PetWindow
         form.ShowTrophies = new CheckBox { Content = L("Góc trưng bày kỷ vật", "Keepsake display corner"), IsChecked = preferences.ShowTrophies,
             ToolTip = L("Một kỷ vật Viễn chinh đứng trên sàn màn hình: cầm kéo, ném được; mèo thỉnh thoảng ra ngắm hoặc đẩy nó.",
                         "One Expedition keepsake stands on the screen's floor: pick it up, throw it; the cat looks at it or shoves it now and then.") };
-        var displayable = ShownKeepsakes.OrderBy(k => k.Kind == KeepsakeSpec.Cushion ? 1 : -Array.IndexOf(KeepsakeSpec.Tiers, k.Tier)).ToArray();
+        var displayable = DisplayableKeepsakes.ToArray();
         form.TrophyIds = displayable.Select(k => k.Id).ToArray();
         form.Trophy = new ComboBox { IsEnabled = displayable.Length > 0,
             ItemsSource = displayable.Length > 0 ? displayable.Select(k => k.Name(preferences.Language == "en")).ToArray() : new[] { L("Chưa có kỷ vật", "No keepsakes yet") },

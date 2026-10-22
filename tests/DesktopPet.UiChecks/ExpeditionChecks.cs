@@ -594,6 +594,125 @@ internal static class ExpeditionChecks
             window.Reset();
             check(!window.ShelfShoving, "Bringing the pet back ends the shove");
             Shelf(3);
+
+            // Swapping from the right-click menu: a puff, the new one where the old one stood.
+            check(shelf!.ContextMenu != null, "The keepsake has a right-click menu");
+            double centerBefore = window.TrophyBounds.Left + window.TrophyBounds.Width / 2;
+            check(window.SwapDisplayed("slime_cushion") && window.ShelfHopping && !window.SwapDisplayed("cup_silver"), "Choosing another keepsake starts the puff (one swap at a time)");
+            Shelf(0.2);
+            check(shelf.Items[0].Id == "cup_silver", "During the puff the old one is still there");
+            Shelf(1.5);
+            var swapped = window.TrophyBounds;
+            check(!window.ShelfHopping && shelf.Items.Select(k => k.Id).SequenceEqual(new[] { "slime_cushion" }) && prefs.TrophyShown == "slime_cushion"
+                  && Math.Abs(swapped.Left + swapped.Width / 2 - centerBefore) < 1 && motion.Resting && Math.Abs(swapped.Bottom - area.Bottom) < 1,
+                $"The cushion pops up where the cup stood and is remembered ({swapped.Left + swapped.Width / 2:F0} vs {centerBefore:F0})");
+            check(!window.SwapDisplayed("slime_cushion") && !window.SwapDisplayed("cup_gold"), "Not the one shown, not one not owned");
+            Call(window, "StartShelfHop", false);
+            Shelf(0.1);
+            check(window.ShelfHopping && pet.Emotions.Target != PetEmotion.Surprised, "\"Back to the middle\": the puff, the cat not startled");
+            Shelf(2);
+            check(!window.ShelfHopping && (Math.Abs(window.TrophyBounds.Left - (area.Left + area.Right - window.TrophyBounds.Width) / 2) < 1
+                  || window.TrophyBounds.Right < pet.X + 10 || window.TrophyBounds.Left > pet.X + 102), "It comes back to the middle (beside the cat if the cat stands there)");
+
+            // The cat naps on the cushion: walks over, sleeps on it (drawn lifted), and it ends with the sleep.
+            pet.X = area.Left + 60; pet.Action = PetAction.Idle; pet.Emotions.FinishSleep(0);
+            Shelf(0.5);
+            prefs.Quiet = true; behavior.Quiet = true;
+            check(!window.GoNapOnCushion(), "In Quiet it does not go to nap on the cushion");
+            prefs.Quiet = false; behavior.Quiet = false;
+            check(window.GoNapOnCushion() && window.GoingToNap, "With the cushion on display the cat may go to nap on it");
+            Call(window, "TickFeatures", 1.0 / 60);
+            check(pet.Action == PetAction.Walking && pet.VX > 0, "It walks to the cushion");
+            pet.X = window.TrophyBounds.Left + window.TrophyBounds.Width / 2 - 56;
+            Call(window, "TickFeatures", 1.0 / 60);
+            Shelf(0.6);
+            check(window.NappingOnCushion && pet.Action == PetAction.Sleeping && pet.Emotions.SleepLocked && window.NapLift > 15,
+                $"On it, it falls asleep, drawn on top of the cushion (lift {window.NapLift:F1})");
+            behavior.WakeByClick(pet);
+            Shelf(0.1);
+            check(pet.Action == PetAction.Waking && window.NappingOnCushion, "Woken, it wakes up on the cushion");
+            pet.Action = PetAction.Idle;
+            Shelf(0.6);
+            check(!window.NappingOnCushion && window.NapLift == 0, "Awake, it steps down");
+            pet.Emotions.Reset();
+
+            // The ball rolling into the keepsake bounces back and the keepsake wobbles.
+            window.ToggleToy();
+            var toy = (ToyBall)typeof(PetWindow).GetField("ball", Flags)!.GetValue(window)!;
+            toy.X = window.TrophyBounds.Left - 8; toy.Height = 0; toy.VX = 220; toy.VY = 0;
+            motion.TiltV = 0;
+            Call(window, "ShelfMeetsBall");
+            check(toy.VX < 0 && toy.X <= window.TrophyBounds.Left - 12 && motion.TiltV != 0, "The toy ball bounces off the keepsake, which wobbles");
+            window.ToggleToy();
+            Shelf(2);
+
+            // Hover wiggle, double click calls the cat over (even in Quiet).
+            motion.SquashV = 0;
+            Call(window, "HoverShelf");
+            check(motion.SquashV < 0, "The cursor arriving makes it wiggle");
+            Shelf(1);
+            pet.X = Math.Max(area.Left, window.TrophyBounds.Left - 400); pet.Action = PetAction.Idle;
+            prefs.Quiet = true; behavior.Quiet = true;
+            check(window.CallCatToLook() && window.Admiring, "A double click calls the cat to look, even in Quiet");
+            Call(window, "TickFeatures", 1.0 / 60);
+            check(window.Admiring && pet.Action == PetAction.Walking, "It walks over to look (Quiet does not stop a look the user asked for)");
+            prefs.Quiet = false; behavior.Quiet = false;
+            window.Reset();
+
+            // While the user holds it, the cat watches it; landing close by startles the cat.
+            prefs.TrophyShown = null; Call(window, "TickTrophies"); Shelf(1);
+            pet.Action = PetAction.Idle; pet.Emotions.Reset();
+            motion.X = pet.X + 300; motion.Height = 150;
+            // (Not ticked while held: the drag would follow the real cursor.)
+            SetField(window, "shelfHeld", true);
+            Call(window, "WatchHeldShelf");
+            SetField(window, "shelfHeld", false);
+            Shelf(0.1);
+            check(pet.Action == PetAction.Looking && pet.Facing == 1 && pet.VX == 0, "Held up on its right, the cat turns and watches it");
+            Shelf(3);
+            pet.Emotions.Reset(); pet.Action = PetAction.Idle;
+            SetField(window, "shelfStartleAt", 0.0);
+            motion.X = pet.X + 56 + 60; motion.Height = 250; motion.VX = motion.VY = 0;
+            Shelf(0.6);
+            check(pet.Emotions.Target == PetEmotion.Surprised && pet.Bonk == 0, "Dropped hard right beside the cat (not on it): it jumps (Surprised)");
+            Shelf(3);
+
+            // Thrown sideways into the cat: bonk too, and it bounces back.
+            window.Reset(); pet.Action = PetAction.Idle; pet.Emotions.Reset();
+            motion.X = pet.X - 150; motion.Height = 0; motion.VY = 0; motion.VX = 1200;
+            Shelf(0.4);
+            check(pet.Bonk > 0 && motion.VX <= 0, $"Thrown hard into the cat's side it bonks the cat and bounces back (VX {motion.VX:F0})");
+            Shelf(3);
+            window.Reset(); pet.Action = PetAction.Idle; pet.Emotions.Reset();
+
+            // On other windows: lands on a window's top edge, rides along, falls when it goes.
+            var probe = typeof(PetWindow).GetField("windowProbe", Flags)!.GetValue(window);
+            var rectProbe = typeof(PetWindow).GetField("windowRectProbe", Flags)!.GetValue(window);
+            var appWindow = new WindowSnapshot(4242, middleX - 200, area.Bottom - 300, middleX + 260, area.Bottom - 60, true);
+            bool appOpen = true;
+            IReadOnlyList<WindowSnapshot> Windows() => appOpen ? new[] { appWindow } : Array.Empty<WindowSnapshot>();
+            SetField(window, "windowProbe", new Func<IReadOnlyList<WindowSnapshot>>(Windows));
+            SetField(window, "windowRectProbe", new Func<long, WindowSnapshot?>(id => appOpen && id == appWindow.Id ? appWindow : null));
+            SetField(window, "ledges", new List<Ledge>());
+            SetField(window, "ledgeScan", 0.0);
+            pet.X = area.Left + 40;
+            Call(window, "TickLedges", 1.0 / 60);
+            motion.X = middleX; motion.Height = 420; motion.VX = motion.VY = 0;
+            Shelf(2.5);
+            check(window.ShelfLedgeId == 4242 && Math.Abs(motion.Height - 300) < 1 && motion.Resting && Math.Abs(window.TrophyBounds.Bottom - (area.Bottom - 300)) < 1,
+                $"Dropped above an app window it lands on its top edge (height {motion.Height:F0}, ledge {window.ShelfLedgeId})");
+            double onWindowX = motion.X;
+            appWindow = appWindow with { Left = appWindow.Left + 50, Right = appWindow.Right + 50, Top = appWindow.Top - 20, Bottom = appWindow.Bottom - 20 };
+            Shelf(0.1);
+            check(Math.Abs(motion.X - onWindowX - 50) < 1 && Math.Abs(motion.Height - 320) < 1, "The window dragged: the keepsake rides along");
+            appOpen = false;
+            Shelf(3);
+            check(window.ShelfLedgeId == 0 && motion.Height == 0 && motion.Resting, "The window closed: the keepsake falls to the floor");
+            SetField(window, "windowProbe", probe);
+            SetField(window, "windowRectProbe", rectProbe);
+            Call(window, "DropLedges");
+            window.Reset();
+            Shelf(1);
             window.BattleTuning = easy;
 
             // The built-in Expedition's map at its tallest (3 relics, a rest's cards, both languages) fits

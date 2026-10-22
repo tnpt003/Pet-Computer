@@ -303,7 +303,15 @@ Tự động đã có: physics kệ (rơi, nảy, nhún, đẩy, chạm mép, c�
 - [ ] Kéo kệ (quá ~6 px mới nhấc): kệ hơi giãn khi nhấc, lắc lư nghiêng theo hướng kéo, không nhấp nháy; kệ không lấy focus khỏi app đang gõ.
 - [ ] Thả kệ ở trên cao: rơi, chạm đất bẹp → giãn → nhún 1–2 lần, có bụi nhỏ; rơi càng cao nhún càng mạnh. Ném mạnh sang ngang: trượt, dội mép màn hình.
 - [ ] Thả kệ trúng đầu mèo đang đứng/đi: tiếng "cộp", mèo bẹp người rồi bật lại, sao xoay + mắt choáng ~2 giây, kệ nảy lên rồi rơi bên trái hoặc phải cạnh mèo. Mèo đang ngủ: thức dậy (tư thế thức 1,2 s) và choáng thấy sao; sau đó ~30 s không tự ngủ lại.
-- [ ] Trên màn hình chỉ có MỘT món, to (~1,8×): mặc định cúp xịn nhất (vàng → bạc → đồng, không có cúp thì đệm). Cài đặt → Mèo → "Món trưng bày": chọn món khác → Lưu: đổi ngay, vẫn đứng đúng sàn. Chưa có kỷ vật: ô mờ "Chưa có kỷ vật".
+- [ ] Cỡ món đồ khoảng nửa con mèo (cúp ~55 DIPs).
+- [ ] Chuột phải món đồ: menu có các kỷ vật (✓ món đang hiện), "Đưa về giữa màn hình", "Ẩn món trưng bày"; menu không lấy focus app đang gõ. Chọn món khác: khói poof, món mới hiện đúng chỗ cũ, Cài đặt cũng đổi theo. Đưa về giữa: poof, hiện giữa màn hình (mèo không giật mình). Ẩn: biến mất, bật lại trong Cài đặt.
+- [ ] Bật "Mèo leo lên cửa sổ", để một cửa sổ không phóng to (Explorer/VS Code) cùng màn hình với mèo: thả món đồ phía trên → đáp lên mép trên cửa sổ có nhún; kéo cửa sổ → món đồ đi theo; thu nhỏ/đóng cửa sổ → món đồ rơi xuống sàn. Ném trượt quá đầu mép → rơi. Món đồ ở màn hình khác mèo: chỉ đáp sàn.
+- [ ] Ném ngang mạnh món đồ vào người mèo: mèo choáng thấy sao, món đồ dội ngược lại. Mèo ngủ: thức + choáng.
+- [ ] Cầm món đồ đưa qua lại: mèo đang rảnh quay mặt nhìn theo. Thả rơi mạnh ngay cạnh mèo (không trúng): mèo giật mình "!".
+- [ ] Rê chuột lên món đồ: nhún nhẹ, hơi to lên; rời chuột thì về cỡ. Click đúp: mèo đi tới ngắm (cả khi bật Quiet).
+- [ ] Chơi bóng: bóng lăn trúng món đồ thì dội lại, món đồ lắc.
+- [ ] Chọn trưng bày đệm slime, để mèo tự do ~6 phút trở lên (không Quiet): mèo đi tới đệm, nằm ngủ TRÊN đệm (không lơ lửng, không chìm); thức sau ~10 s thì bước xuống. Click mèo lúc đó: thức như thường, kéo được.
+- [ ] Trên màn hình chỉ có MỘT món (trước đây ~1,8×, nay ~1,2×): mặc định cúp xịn nhất (vàng → bạc → đồng, không có cúp thì đệm). Cài đặt → Mèo → "Món trưng bày": chọn món khác → Lưu: đổi ngay, vẫn đứng đúng sàn. Chưa có kỷ vật: ô mờ "Chưa có kỷ vật".
 - [ ] Thả kệ sát mép trái/phải màn hình: mèo (cùng màn hình, đang thức) quay sang, mặt ngạc nhiên "!", kệ rung → "poof" khói + lấp lánh → hiện ở giữa màn hình (phóng to nhẹ rồi về cỡ, rơi chút rồi nhún). Mèo đứng giữa: kệ hiện cạnh mèo, không rơi lên đầu.
 - [ ] Để mèo tự do vài phút (Playful nhanh hơn, Calm lâu hơn; lần đầu ~3 phút): mèo đi tới một bên kệ, cúi người, đẩy — kệ trượt có nảy/lắc, mèo nhìn theo vui vẻ. Nếu kệ trượt tới mép: mèo ngạc nhiên, kệ về giữa. Quiet/ngủ/fullscreen/đang chơi bóng: không đẩy.
 - [ ] Đóng mở lại app: kệ ở chỗ cũ. Pause: kệ đang rơi thì đứng yên giữa không trung, bỏ Pause thì rơi tiếp.

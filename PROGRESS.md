@@ -10,6 +10,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Test thật: scripts/test.ps1 -Ui: Python 55 OK; C# 1297 đạt (thêm Ground: đáp mép, mép mất thì rơi); WPF **721/721** đạt (lần đầu), chạy lại có PET_RENDER_REVIEW cũng 721/721. Check mới: có menu, đổi món (poof, giữ tâm, nhớ), không đổi khi đang hop/món không có, về giữa không giật mình, ngủ đệm (Quiet không, đi tới, ngủ + nâng > 15, thức vẫn trên đệm, thức xong bước xuống), bóng dội, hover, click đúp trong Quiet, mèo nhìn món đang cầm, rơi sát → Surprised, ném ngang → choáng + dội, đáp mép cửa sổ giả (300 DIPs), cửa sổ dời → đi theo, đóng → rơi.
 - Đã xem ảnh render cúp 1,2× và khói. CHƯA xem: mèo ngủ trên đệm thật (độ nâng có khớp không), menu chuột phải thật, cửa sổ thật.
 - Cần test tay: docs/MANUAL-TEST.md mục "Kệ kỷ vật thành đồ chơi" (các dòng mới).
+- Commit 8feae1b. Publish sạch: 1.3.0-beta+8feae1b, ZIP artifacts\DesktopPet-1.3.0-beta-8feae1b-win-x64.zip; check-publish 3/3. Đóng mèo (PID 26724) bằng WM_CLOSE, mở lại 20:16, log "Desktop Pet 1.3.0-beta (8feae1b) started". AGENTS.md/docs/NEXT-STEPS.md của người dùng trả lại đúng hash.
 
 ## Một món trưng bày (chọn trong Cài đặt), to 1,8×; rơi trúng mèo ngủ thì thức + choáng (2026-10-22)
 - Người dùng: "chỉ cần 1 vật trưng bày", "tự chọn món trong settings, cỡ này dc, ok", và rơi trúng mèo đang ngủ thì mèo bị choáng và thức dậy (ngoại lệ sleep lock, đã ghi AGENTS.md).

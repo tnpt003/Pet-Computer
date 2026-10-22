@@ -349,11 +349,14 @@ Tự động đã có: luật bốc trên 150 chuyến, bốc một lần (quay 
 - [ ] Bậc 5 (trước trùm) luôn có điểm nghỉ. Chơi vài chuyến: hình bản đồ khác nhau; cảm nhận độ khó so với trước (mô phỏng: đường an toàn dễ hơn, đường tham lam khó hơn chút).
 - [ ] Màn hình thấp/scale cao: máy viên nang và ô quay không tràn, cuộn được.
 
-## Túi đồ trên Sảnh chiến đấu (2026-10-22)
+## Túi đồ theo chế độ và Phần thưởng (2026-10-22, thay mục "Túi đồ trên Sảnh chiến đấu")
 
-Tự động đã có: nút Túi đồ trên sảnh, mở trong cùng cửa sổ (không lấy focus, giữ thời gian rảnh của mèo), ‹ Sảnh quay lại thẻ chế độ, số gốc/Phiêu lưu/Viễn chinh đúng theo luật trận, tô vàng chỉ chỗ thẻ/di vật đổi, build/★/◆, di vật, phần thưởng ✓/?, đổi ngôn ngữ, màn hình 480 DIP cuộn được, đóng sảnh thì quên túi đồ. Đã xem ảnh render (vi/en, trống và đầy). Phần dưới cần làm tay:
-- [ ] Chuột phải → Chế độ chiến đấu → sảnh có nút "Túi đồ" góc trái dưới. Bấm: tiêu đề "Túi đồ", 3 thẻ chế độ biến mất, nút đổi thành "‹ Sảnh"; bấm lại về thẻ chế độ. Gõ phím ở app khác vẫn bình thường.
-- [ ] Với tiến trình thật của bạn: bảng Chỉ số khớp cảm nhận trong trận (HP tối đa đầu màn kế tiếp = cột Phiêu lưu); build Phiêu lưu đúng các thẻ đã chọn ở màn vừa thắng.
-- [ ] Đang có chuyến Viễn chinh: cột "Viễn chinh · <vũ khí>", HP/bậc/độ khó, thẻ và di vật khớp bản đồ Viễn chinh.
-- [ ] Phần thưởng: phụ kiện/kỷ vật đã có ghi ✓ màu vàng; chưa có ghi ? và cách nhận.
+Tự động đã có: Phần thưởng trên sảnh (ô có hình, khóa, Mới một lần rồi lưu đã xem, nút đếm "n mới", kỷ lục), túi đồ mở từ bản đồ Phiêu lưu/Viễn chinh và HUD, 3 tab, không lấy focus/không taskbar, trận pause khi mở (cả lúc chọn thẻ; chỉ gỡ lý do của túi), × đóng, nhớ chỗ đặt, fullscreen ẩn/hiện, màn 480 DIP cuộn, đóng bản đồ/hết trận thì đóng túi, viên nang đang mở thì chưa mở được, nhật ký chuyến (lưu/đọc lại, giới hạn 60 dòng), tiếng Việt. Đã xem ảnh render (Chỉ số, Thẻ, Di vật, Phần thưởng, HUD). Phần dưới cần làm tay:
+- [ ] Sảnh → "Phần thưởng": ô phụ kiện là mèo đang đeo, cúp/đệm như trên kệ, ô khóa mờ có ổ khóa; rê chuột lên ô thì dòng dưới ghi cách nhận/nơi dùng. Lần đầu sau cập nhật: các phần thưởng bạn đã có hiện "Mới" một lần (bình thường).
+- [ ] Trong trận: bấm nút túi (hình túi đỏ-vàng cạnh Tạm dừng/Kết thúc) → trận đứng yên, túi nổi bên phải dưới HUD; bấm lại hoặc × → trận chạy tiếp. Đang Tạm dừng rồi mở/đóng túi: trận vẫn tạm dừng.
+- [ ] Kéo túi bằng phần đầu (hình mèo/tiêu đề): đi theo chuột, không giật; đóng rồi mở lại vẫn ở chỗ cũ. Gõ phím ở app khác trong lúc túi mở vẫn bình thường. Thử cả khi kéo sang màn hình phụ.
+- [ ] Lúc chọn thẻ nâng cấp: mở túi tab Thẻ xem build, chọn thẻ + Xác nhận → túi hiện thẻ mới, trận vẫn dừng tới khi đóng túi.
+- [ ] Bản đồ Phiêu lưu: chọn màn khác rồi mở túi → dòng "Build mang vào Màn n"; Viễn chinh: túi có HP, cảnh báo giá di vật, tab Di vật có nhật ký chuyến khớp những gì bạn đã làm.
+- [ ] Máy viên nang: bấm viên → nút Túi đồ mờ tới khi viên nang bật nắp; túi đang mở không lộ phần thưởng trước khi bật.
+- [ ] Màn hình thấp/scale cao: túi không tràn, cuộn được; app fullscreen: túi ẩn rồi hiện lại.
 - [ ] Màn hình thấp/scale cao: túi đồ cuộn được, nút Đóng vẫn thấy. App fullscreen: sảnh (đang ở túi đồ) ẩn rồi hiện lại vẫn ở túi đồ.

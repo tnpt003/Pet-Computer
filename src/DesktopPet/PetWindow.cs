@@ -154,7 +154,7 @@ public sealed partial class PetWindow : Window
 
     public void Reset()
     {
-        EndBattle(); CloseBattleHub(); CloseBattlePrep(); CloseAdventureMap(); CloseExpeditionMap(); CloseBattleSummary(); CloseBattleNotice(); CloseBattleTutorial();
+        EndBattle(); CloseBattleHub(); CloseBattlePrep(); CloseAdventureMap(); CloseExpeditionMap(); CloseBattleBag(); CloseBattleSummary(); CloseBattleNotice(); CloseBattleTutorial();
         CancelFeatureActivity();
         bool keepSleeping = pet.Emotions.SleepLocked || pet.Action == PetAction.Sleeping;
         Interact("reset");
@@ -305,6 +305,7 @@ public sealed partial class PetWindow : Window
         TickBattlePrep(dt);
         TickAdventureMap(dt);
         TickExpeditionMap(dt);
+        TickBattleBag(dt);
         TickTrophies();
         if (!paused)
         {

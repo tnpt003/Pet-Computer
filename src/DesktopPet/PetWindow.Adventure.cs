@@ -44,7 +44,7 @@ public sealed partial class PetWindow
     private string? mapStageId;
     private double mapRefresh;
     private readonly List<(string Id, Border Node, TextBlock Number, Path Mark, TextBlock Label, Rectangle? Link)> mapNodes = new();
-    private TextBlock? mapTitle, mapData, mapStageName, mapGoal, mapStatus, mapRecord, mapEnterText, mapCloseText;
+    private TextBlock? mapTitle, mapData, mapStageName, mapGoal, mapStatus, mapRecord, mapEnterText, mapCloseText, mapBagText;
     private Border? mapEnter;
     private static readonly Brush MapDone = PetUi.Game.Gold;
     private static readonly Brush MapDoneInk = PetUi.Game.GoldInk;
@@ -175,10 +175,13 @@ public sealed partial class PetWindow
         mapRecord = Line(PetUi.SmallSize); mapRecord.Opacity = 0.8; mapRecord.Margin = new Thickness(0, 2, 0, 0);
         var details = DetailCard(new Thickness(11, 0, 11, 9), mapStageName, mapGoal, mapStatus, mapRecord);
         var (close, closeText, _) = HudButton(CancelAdventureMap, plain: true);
+        // The Bag (PetWindow.Inventory.cs): the build carried into the chosen stage.
+        var (bag, bagText, _) = HudButton(() => { if (BattleBagOpen) CloseBattleBag(); else if (OpenBattleBag() is string reason) ShowBattleNotice(reason); }, plain: true);
+        mapBagText = bagText;
         var (enter, enterText) = PrimaryButton(() => { if (AdventureEnterStage() is string reason) ShowBattleNotice(reason); });
         mapEnter = enter; mapEnterText = enterText; mapCloseText = closeText;
         var window = CreateGamePanel(new StackPanel { Children = { PanelTitle(HubAdventure, mapTitle), mapData, row, details } },
-            PanelActions(new UIElement[] { close }, new UIElement[] { enter }), "Pet adventure", minWidth: 440);
+            PanelActions(new UIElement[] { close, bag }, new UIElement[] { enter }), "Pet adventure", minWidth: 440);
         window.Closed += (_, _) => { if (adventureMapWindow == window) adventureMapWindow = null; };
         adventureMapWindow = window;
         UpdateAdventureMap();
@@ -243,6 +246,7 @@ public sealed partial class PetWindow
         Show(mapRecord, string.Join("\n", new[] { record, prize }.Where(t => t != null)));
         mapEnterText!.Text = L("Vào màn", "Play stage");
         mapCloseText!.Text = L("‹ Sảnh", "‹ Hub");
+        if (mapBagText != null) mapBagText.Text = L("Túi đồ", "Bag");
         bool can = unlocked && BattlePrepRefusal() == null;
         if (mapEnter.IsEnabled != can) { mapEnter.IsEnabled = can; mapEnter.Opacity = can ? 1 : 0.5; }
     }

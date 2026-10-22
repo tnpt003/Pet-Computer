@@ -52,7 +52,8 @@ public sealed partial class PetWindow
     private string? xChoiceKey, expeditionPickCard, expeditionDropCard, expeditionPickRelic;
     private readonly List<TextBlock> xChoiceTexts = new();
     private readonly Dictionary<string, Border> xChoiceButtons = new();
-    private TextBlock? xBossLabel, xTitle, xData, xStatus, xBuild, xNodeName, xNodeGoal, xRecord, xNote, xSetupLabel, xMainText, xAbandonText, xCloseText;
+    private TextBlock? xBossLabel, xTitle, xData, xStatus, xBuild, xNodeName, xNodeGoal, xRecord, xNote, xSetupLabel, xMainText, xAbandonText, xCloseText, xBagText;
+    private Border? xBag;
     private Border? xMain, xAbandon, xDetails;
     // The capsule beside the details (a spin waiting or opening), and the step whose nodes it is
     // revealing now (-1: none): they stay "?" until it opens.
@@ -501,6 +502,9 @@ public sealed partial class PetWindow
             if (!expeditionConfirmAbandon) { expeditionConfirmAbandon = true; UpdateExpeditionMap(); }
             else ExpeditionAbandon();
         }, plain: true);
+        // The Bag (PetWindow.Inventory.cs): the run's numbers, cards, relics and log.
+        var (bag, bagText, _) = HudButton(() => { if (BattleBagOpen) CloseBattleBag(); else if (OpenBattleBag() is string reason) ShowBattleNotice(reason); }, plain: true);
+        xBag = bag; xBagText = bagText;
         var (main, mainText) = PrimaryButton(() =>
         {
             string? reason = Expedition is not Expedition x || x.Run is not ExpeditionRun r ? ExpeditionPrepare()
@@ -510,7 +514,7 @@ public sealed partial class PetWindow
         });
         xMain = main; xMainText = mainText; xAbandon = abandon; xAbandonText = abandonText; xCloseText = closeText;
         var window = CreateGamePanel(new StackPanel { Children = { PanelTitle(HubExpedition, xTitle), xData, xStatus, xBuild, xNote, xSetup, xMap, xRecord } },
-            PanelActions(new UIElement[] { close, abandon }, new UIElement[] { main }), "Pet expedition", minWidth: 460);
+            PanelActions(new UIElement[] { close, abandon, bag }, new UIElement[] { main }), "Pet expedition", minWidth: 460);
         window.Closed += (_, _) => { if (expeditionMapWindow == window) expeditionMapWindow = null; };
         expeditionMapWindow = window;
         UpdateExpeditionMap();
@@ -637,6 +641,13 @@ public sealed partial class PetWindow
         xMainText!.Text = run == null ? L("Chuẩn bị chuyến", "Prepare the run") : expedition.NeedsRoll ? L("Quay máy", "Spin") : battleNode ? L("Vào trận", "Fight") : L("Đi tới đây", "Go here");
         xMain.Visibility = run?.Pending != null ? Visibility.Collapsed : Visibility.Visible;
         xCloseText!.Text = L("‹ Sảnh", "‹ Hub");
+        if (xBag != null && xBagText != null)
+        {
+            // Not while a capsule opens (its prize is said when it pops).
+            xBagText.Text = L("Túi đồ", "Bag");
+            xBag.IsEnabled = xRevealTimer == null;
+            xBag.Opacity = xBag.IsEnabled ? 1 : 0.5;
+        }
         xAbandonText!.Text = expeditionConfirmAbandon ? L("Bấm lần nữa để bỏ", "Click again to give up") : L("Bỏ chuyến", "Give up");
         xAbandon!.Visibility = run != null ? Visibility.Visible : Visibility.Collapsed;
         // Nothing goes on while a capsule opens (it lasts about a second).

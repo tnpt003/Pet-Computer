@@ -26,6 +26,9 @@ public sealed class AdventureProgress
     public List<string> Rewards { get; set; } = new();
     // Stage tips the user has seen or skipped.
     public List<string> Seen { get; set; } = new();
+    // Rewards (Adventure accessories and Expedition keepsakes) the hub's Rewards page has shown:
+    // the others it marks as new. A file without it shows every reward held as new once.
+    public List<string> RewardsSeen { get; set; } = new();
     // Best results per "stage|r<rulesVersion>|weapon|difficulty".
     public Dictionary<string, BattleRecord> Records { get; set; } = new();
     // The build (card id → times taken) each stage was last won with; the next stage starts with it.
@@ -75,7 +78,7 @@ public sealed class AdventureProgress
     private void Normalize()
     {
         static List<string> Clean(List<string>? list) => (list ?? new()).Where(id => !string.IsNullOrWhiteSpace(id)).Distinct().ToList();
-        Completed = Clean(Completed); Rewards = Clean(Rewards); Seen = Clean(Seen); Runs = Clean(Runs);
+        Completed = Clean(Completed); Rewards = Clean(Rewards); Seen = Clean(Seen); Runs = Clean(Runs); RewardsSeen = Clean(RewardsSeen);
         if (Runs.Count > RunsKept) Runs = Runs.Skip(Runs.Count - RunsKept).ToList();
         Records = (Records ?? new()).Where(pair => !string.IsNullOrWhiteSpace(pair.Key) && pair.Value != null)
             .ToDictionary(pair => pair.Key, pair => { pair.Value.Normalize(); return pair.Value; });

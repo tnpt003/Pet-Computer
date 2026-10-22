@@ -53,7 +53,7 @@ public sealed partial class PetWindow
     // App: the whole pet is paused (tray/menu Pause); only un-pausing the pet removes it.
     // Tutorial: the first-battle guide is open (PetWindow.BattleTutorial.cs).
     // Upgrade: an Adventure stage waits for the user's upgrade pick (PetWindow.BattleUpgrade.cs).
-    public enum BattlePause { None = 0, User = 1, Menu = 2, Fullscreen = 4, Away = 8, App = 16, Tutorial = 32, Upgrade = 64 }
+    public enum BattlePause { None = 0, User = 1, Menu = 2, Fullscreen = 4, Away = 8, App = 16, Tutorial = 32, Upgrade = 64, Bag = 128 }
     private BattlePause battlePause;
     public BattlePause BattlePauseReasons => battlePause;
     public bool BattleCatAway => (battlePause & BattlePause.Away) != 0;
@@ -266,6 +266,7 @@ public sealed partial class PetWindow
         battle = null;
         battleExpedition = null; // A step still marked as fought is left (RetreatCost) when the map opens again.
         CloseBattleUpgrade();
+        CloseBattleBag();
         battlePause = BattlePause.None;
         battleFieldWindow?.Close(); battleHudWindow?.Close();
         battleFieldWindow = battleHudWindow = null;
@@ -603,6 +604,7 @@ public sealed partial class PetWindow
         battleHud.SkillClicked += skill => UseBattleSkill(skill);
         battleHud.PauseClicked += () => { if (battle != null) SetBattlePaused(!BattleUserPaused); };
         battleHud.EndClicked += EndBattleByUser;
+        battleHud.BagClicked += () => { if (battle != null) { if (BattleBagOpen) CloseBattleBag(); else if (OpenBattleBag() is string reason) ShowBattleNotice(reason); } };
         UpdateBattleHud();
         return battleHud;
     }

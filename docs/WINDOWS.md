@@ -539,17 +539,32 @@ instead of half sizes (10.5–15.5 → the next step up; the 22 banner → 20).
   Expedition: locked until the Slime King is won / run under way with step and HP / keepsakes;
   Infinity: coming soon, a ribbon, not clickable). A card opens that mode's map in its place;
   the maps' **‹ Hub** button comes back here, the hub's **Close** goes back to the desktop.
-- **Bag** (2026-10-22, `PetWindow.Inventory.cs`, only on the hub, view only): the hub's **Bag**
-  button shows, in the hub's own window in place of the cards (its button turns into **‹ Hub**):
-  *Stats* (max HP, damage per hit, attack speed, reach, knock-back, running speed, damage taken)
-  for the chosen weapon alone, with the Adventure build carried on, and with the Expedition run
-  under way (its weapon, cards, relics); a number is gold when cards or relics change it from that
-  weapon's own (the numbers come from a `BattleSim` built for them; Cheer, combos, Momentum and
-  Reckless's bonus are fight-only and not counted); the *Adventure build* (the one carried into
-  the first stage not won, or the last stage's once all are won: cards by group, ★ synergies,
-  ◆ rare cards); the *Expedition run* (step, HP, difficulty, cards, relics n/max; or "no run");
-  *Rewards* (each stage's accessory and each keepsake: ✓ won and where it shows, or ? and what
-  wins it). Nothing in it is saved or changed; closing the hub forgets it.
+- **Rewards** (2026-10-22, `PetWindow.Rewards.cs`): the hub's **Rewards** button (it says
+  "· n new" when rewards were won since last shown) shows, in the hub's window in place of the
+  cards (the button turns into **‹ Hub**): a tile per Adventure accessory (this cat wearing it) and
+  per Expedition keepsake (as on the shelf), won ones in gold with ✓, the others greyed with a lock;
+  hovering a tile says where it shows or what wins it; a **New** badge on rewards not shown before
+  (then saved as seen: `RewardsSeen` in adventure-progress.json, no version change; an older file
+  shows every held reward as new once). Then **Records**: each Adventure stage (wins, fastest) and
+  the Expedition per difficulty (furthest step, runs won, fastest), over every weapon.
+- **Bag** (2026-10-22, `PetWindow.Inventory.cs`, window "Pet bag", view only): a floating window
+  for the mode being played, opened from the battle HUD's bag button (between the skills and
+  Pause/End; the battle pauses while it is open, `BattlePause.Bag`, also over a card offer, and
+  only that reason is removed on closing), the Adventure map's **Bag** (the build carried into the
+  chosen stage) and the Expedition map's **Bag** (the run; also while a choice waits; off while a
+  capsule opens, and it does not refresh until the capsule has popped). Dragged by its header;
+  where it was put is kept for the session (on the cat's monitor), otherwise top right under the
+  HUD. 440 DIPs wide, at most 540 tall (or the monitor's height less 24), the content scrolls.
+  Never takes focus, no taskbar button, hidden by a fullscreen app; closes with ×, the same button
+  again, or when its battle/map goes away. Three tabs: **Stats** (icons and bars: max HP, damage
+  per hit, attack speed, reach, knock-back, running speed, damage taken, Healing fish; cream = the
+  weapon with no cards, gold = what cards/relics add, red = what they take; numbers from the
+  battle's own rules, in a battle the battle itself; warnings: each relic's price, low HP, Reckless
+  on), **Cards** (tiles with the card picture, ×n, ◆ rare, group colours; hover for the text; each
+  group's points as pips with ★ synergies on and "n more → ★ …"), **Relics** (Expedition: slots
+  n/max, each relic's ▲ gain and ▼ price, the run log latest first; elsewhere: where relics come
+  from and the chapter's stages). The run log is `Log` in the run (expedition.json, no version
+  change, at most 60 lines): won battles, left battles and each choice with what HP did.
 - **Expedition setup:** before a run the map's main button is **Prepare the run**: the same setup
   panel as an Adventure stage (preview cat, weapon cards with stats, difficulty), titled for the
   run; **Set out** starts the run (no battle yet, so only Pause/fullscreen keep it off) and comes

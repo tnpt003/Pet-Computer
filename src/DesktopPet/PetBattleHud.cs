@@ -14,7 +14,7 @@ namespace DesktopPet;
 public sealed class BattleHud : Border
 {
     public event Action<BattleSkill>? SkillClicked;
-    public event Action? PauseClicked, EndClicked;
+    public event Action? PauseClicked, EndClicked, BagClicked;
     // Slots follow the skill list (PetBattleData.cs): a new skill gets its slot automatically.
     public static readonly BattleSkill[] SkillOrder = Array.ConvertAll(BattleSkills.All, info => info.Skill);
     private const double HpWidth = 170, BossWidth = 200;
@@ -25,7 +25,7 @@ public sealed class BattleHud : Border
     public double BannerShownWidth => banner.IsVisible ? banner.TransformToAncestor(this).TransformBounds(new Rect(banner.RenderSize)).Width : 0;
     private readonly Func<string, string, string> L;
     private readonly TextBlock hpText, status, hint, banner, bossName, comboText, upgradesText;
-    private readonly Border hpFill, hpTrail, bossFill, bossBar, pauseButton, endButton;
+    private readonly Border hpFill, hpTrail, bossFill, bossBar, pauseButton, endButton, bagButton;
     private readonly HudGlyph pauseGlyph;
     private readonly StackPanel waveDots;
     private readonly SkillSlot[] slots = new SkillSlot[SkillOrder.Length];
@@ -135,8 +135,13 @@ public sealed class BattleHud : Border
         end.MouseLeave += (_, _) => HoverControl(null);
         end.Margin = new Thickness(0, 4, 0, 0);
         var controls = new StackPanel { Margin = new Thickness(6, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center, Children = { pauseButton, end } };
+        // The Bag (PetWindow.Inventory.cs): as tall as Pause and End together; opening it pauses the battle.
+        bagButton = SmallButton(new HudGlyph(HudGlyphKind.Bag) { Width = 24, Height = 24 }, () => BagClicked?.Invoke());
+        bagButton.Height = 52; bagButton.Margin = new Thickness(6, 0, 0, 0); bagButton.VerticalAlignment = VerticalAlignment.Center;
+        bagButton.MouseEnter += (_, _) => HoverControl(L("Túi đồ: chỉ số, thẻ, di vật (tạm dừng trận khi mở)", "Bag: stats, cards, relics (pauses the battle while open)"));
+        bagButton.MouseLeave += (_, _) => HoverControl(null);
 
-        var top = new StackPanel { Orientation = Orientation.Horizontal, Children = { left, centre, bar, controls } };
+        var top = new StackPanel { Orientation = Orientation.Horizontal, Children = { left, centre, bar, bagButton, controls } };
         // As wide as the row above (never wider): a long description wraps instead of widening the
         // HUD, which would re-centre it and slide the slots out from under the mouse.
         hint = new TextBlock { Foreground = Soft, FontSize = PetUi.SmallSize, TextAlignment = TextAlignment.Center, TextWrapping = TextWrapping.Wrap,
@@ -150,6 +155,7 @@ public sealed class BattleHud : Border
     public string UpgradesText => upgradesText.Visibility == Visibility.Visible ? upgradesText.Text : "";
     public Border PauseButton => pauseButton;
     public Border EndButton => endButton;
+    public Border BagButton => bagButton;
 
     // For the HUD stepping aside (PetWindow.Battle.cs): points in this panel's coordinates.
     public bool IsInsidePanel(Point point) => point.X >= 0 && point.Y >= 0 && point.X < ActualWidth && point.Y < ActualHeight;
@@ -163,7 +169,7 @@ public sealed class BattleHud : Border
             return at.X >= 0 && at.Y >= 0 && at.X < element.ActualWidth && at.Y < element.ActualHeight;
         }
         foreach (var slot in slots) if (Over(slot)) return true;
-        return Over(pauseButton) || Over(endButton);
+        return Over(pauseButton) || Over(endButton) || Over(bagButton);
     }
     public string HintText => hint.Text;
 
@@ -289,6 +295,8 @@ public sealed class BattleHud : Border
         pauseGlyph.Kind = userPaused ? HudGlyphKind.Play : HudGlyphKind.Pause;
         pauseButton.IsEnabled = !b.Over && !(b.Paused && fullscreen);
         pauseButton.Opacity = pauseButton.IsEnabled ? 1 : 0.45;
+        bagButton.IsEnabled = !b.Over;
+        bagButton.Opacity = bagButton.IsEnabled ? 1 : 0.45;
         last = b; lastHeld = held;
         var hintKey = HintKey(b, held);
         if (hovered != null || hoveredControl != null || !hintShown || hintKey != shownHint) ShowHint();
@@ -462,7 +470,7 @@ public sealed class CooldownWipe : FrameworkElement
 }
 
 // Small vector icons for the HUD, in the cat's flat cartoon style (no font glyphs, no files).
-public enum HudGlyphKind { Push, Heal, Cheer, Bomb, Shield, Pause, Play, End, Crown }
+public enum HudGlyphKind { Push, Heal, Cheer, Bomb, Shield, Pause, Play, End, Crown, Bag }
 
 public sealed class HudGlyph : FrameworkElement
 {
@@ -486,6 +494,9 @@ public sealed class HudGlyph : FrameworkElement
     private static readonly Geometry CrownShape = G("M 3,19 L 3,8 L 8,13 L 12,5 L 16,13 L 21,8 L 21,19 Z");
     private static readonly Geometry Cross = G("M 7,7 L 17,17 M 17,7 L 7,17");
     private static readonly Geometry PlayShape = G("M 8,6 L 18,12 L 8,18 Z");
+    private static readonly Geometry BagBody = G("M 4,10 L 20,10 L 18.5,21 L 5.5,21 Z");
+    private static readonly Geometry BagHandle = G("M 8.5,10 C 8.5,4 15.5,4 15.5,10");
+    private static readonly Geometry BagFlap = G("M 4,10 L 20,10 L 19.3,14.5 L 4.7,14.5 Z");
 
     protected override void OnRender(DrawingContext dc)
     {
@@ -519,6 +530,12 @@ public sealed class HudGlyph : FrameworkElement
             case HudGlyphKind.Play: dc.DrawGeometry(Brushes.White, null, PlayShape); break;
             case HudGlyphKind.End: dc.DrawGeometry(null, WhiteBold, Cross); break;
             case HudGlyphKind.Crown: dc.DrawGeometry(GoldFill, InkPen, CrownShape); break;
+            case HudGlyphKind.Bag:
+                dc.DrawGeometry(null, WhiteThin, BagHandle);
+                dc.DrawGeometry(Salmon, InkPen, BagBody);
+                dc.DrawGeometry(GoldFill, InkPen, BagFlap);
+                dc.DrawEllipse(Brushes.White, InkPen, new Point(12, 14.5), 1.8, 1.8);
+                break;
         }
         dc.Pop(); dc.Pop();
     }

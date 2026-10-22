@@ -12,8 +12,8 @@ namespace DesktopPet;
 // sword and one card per game mode, each with its picture and where the user is in it: Adventure
 // (the chapter's stages won), Expedition (locked until the Slime King is won; a run under way;
 // keepsakes) and Infinity (coming later, not playable). A card opens that mode's map; the maps'
-// Close comes back here, the hub's Close goes back to the desktop. Its Bag button shows what the
-// cat carries in place of the cards (PetWindow.Inventory.cs). Like the maps it never takes
+// Close comes back here, the hub's Close goes back to the desktop. Its Rewards button shows what
+// was won and the records in place of the cards (PetWindow.Rewards.cs). Like the maps it never takes
 // focus, is used with the mouse only, holds the pet's free time (Quiet, no AI, games or sleep from
 // boredom), hides while a fullscreen app runs and starts nothing by itself.
 public sealed partial class PetWindow
@@ -97,7 +97,7 @@ public sealed partial class PetWindow
         battleHubWindow?.Close();
         battleHubWindow = null;
         hubCards.Clear();
-        hubInventoryShown = false; hubInventory = null; hubCardsRow = null; hubBagText = null;
+        hubRewardsShown = false; hubRewards = null; hubCardsRow = null; hubRewardsText = null;
         if (was) ApplyQuiet();
     }
 
@@ -169,17 +169,17 @@ public sealed partial class PetWindow
         }
         if (cards.Children.Count > 0) ((Border)cards.Children[^1]).Margin = new Thickness(0);
         hubStatus = PanelLine(PetUi.SmallSize, true, 520); hubStatus.Foreground = PrepWarning; hubStatus.Margin = new Thickness(0, 10, 0, 0);
-        // The Bag (PetWindow.Inventory.cs) takes the cards' place; its button turns into ‹ Hub.
+        // Rewards (PetWindow.Rewards.cs) take the cards' place; the button turns into ‹ Hub.
         hubCardsRow = cards;
-        hubInventoryShown = false; hubInventoryEnglish = null;
-        hubInventory = new StackPanel { Width = InventoryWidth, Margin = new Thickness(0, 14, 0, 0), Visibility = Visibility.Collapsed };
-        var (bag, bagText, _) = HudButton(() => ShowBattleInventory(!hubInventoryShown), plain: true);
-        hubBagText = bagText;
+        hubRewardsShown = false; hubRewardsEnglish = null;
+        hubRewards = new StackPanel { Width = RewardsWidth, Margin = new Thickness(0, 14, 0, 0), Visibility = Visibility.Collapsed };
+        var (rewards, rewardsText, _) = HudButton(() => ShowBattleRewards(!hubRewardsShown), plain: true);
+        hubRewardsText = rewardsText;
 
         var (close, closeText, _) = HudButton(CancelBattleHub, plain: true);
         close.Margin = new Thickness(0);
         hubCloseText = closeText;
-        var window = CreateGamePanel(new StackPanel { Children = { header, cards, hubInventory, hubStatus } }, PanelActions(new UIElement[] { bag }, new UIElement[] { close }), "Pet battle hub");
+        var window = CreateGamePanel(new StackPanel { Children = { header, cards, hubRewards, hubStatus } }, PanelActions(new UIElement[] { rewards }, new UIElement[] { close }), "Pet battle hub");
         window.Closed += (_, _) => { if (battleHubWindow == window) battleHubWindow = null; };
         battleHubWindow = window;
         UpdateBattleHub();
@@ -195,14 +195,14 @@ public sealed partial class PetWindow
             if (text.Text != (value ?? "")) text.Text = value ?? "";
             text.Visibility = string.IsNullOrEmpty(value) ? Visibility.Collapsed : Visibility.Visible;
         }
-        hubTitle.Text = hubInventoryShown ? L("Túi đồ", "Bag") : L("Chế độ chiến đấu", "Battle Mode");
-        hubSubtitle.Text = hubInventoryShown ? L($"Những gì {preferences.Name} mang theo sau các màn", $"What {preferences.Name} carries from the stages")
+        hubTitle.Text = hubRewardsShown ? L("Phần thưởng", "Rewards") : L("Chế độ chiến đấu", "Battle Mode");
+        hubSubtitle.Text = hubRewardsShown ? L($"Những gì {preferences.Name} đã giành được", $"What {preferences.Name} has won")
             : L($"Hôm nay {preferences.Name} ra trận theo cách nào?", $"How will {preferences.Name} fight today?");
         string? refusal = BattlePrepRefusal();
-        Show(hubStatus, refusal != null && !hubInventoryShown ? L("Chưa thể vào: ", "Not yet: ") + refusal : null);
+        Show(hubStatus, refusal != null && !hubRewardsShown ? L("Chưa thể vào: ", "Not yet: ") + refusal : null);
         hubCloseText!.Text = L("Đóng", "Close");
-        if (hubBagText != null) hubBagText.Text = hubInventoryShown ? L("‹ Sảnh", "‹ Hub") : L("Túi đồ", "Bag");
-        RefreshInventory();
+        if (hubRewardsText != null) hubRewardsText.Text = hubRewardsShown ? L("‹ Sảnh", "‹ Hub") : RewardsButtonText();
+        RefreshRewards();
         foreach (var (mode, card, art, ribbon, ribbonText, name, desc, state, bar, fill) in hubCards)
         {
             var (title, about, line, progress, open, ribbonLabel) = HubCard(mode);

@@ -305,6 +305,10 @@ public sealed class ExpeditionRun
     // closing the app or resuming never draws them again.
     public List<string> Relics { get; set; } = new();
     public ExpeditionChoice? Pending { get; set; }
+    // What happened so far (won battles, left battles, choices made), for the Bag's run log. Only
+    // shown: the rules never read it, and a file without it reads as an empty log.
+    public List<ExpeditionLogEntry> Log { get; set; } = new();
+    public const int LogKept = 60;
 
     [JsonIgnore] public int Step => Path.Count;
     [JsonIgnore] public BattleDifficulty Level => Enum.TryParse<BattleDifficulty>(Difficulty, out var level) && Enum.IsDefined(level) ? level : BattleDifficulty.Normal;
@@ -324,6 +328,23 @@ public sealed class ExpeditionChoice
     public string[] Relics { get; set; } = Array.Empty<string>();
     public string? Free { get; set; }
     public string? Gold { get; set; }
+}
+
+// One line of a run's log. Kind: a won battle's node kind (fight, elite, boss), "retreat" (a battle
+// left), or the choice's kind (rest, event, reward, capsule) with the option taken and what it gave.
+// Hp: what the run's HP changed by.
+public sealed class ExpeditionLogEntry
+{
+    public const string Retreat = "retreat";
+    public int Step { get; set; }
+    public string Kind { get; set; } = "";
+    public string? Option { get; set; }
+    public string? Event { get; set; }
+    public string? Card { get; set; }
+    public string? Dropped { get; set; }
+    public string? Relic { get; set; }
+    public string? Prize { get; set; }
+    public double Hp { get; set; }
 }
 
 // What resolving a choice did: HP gained (or lost), the card taken and dropped, the relic gained,
@@ -388,6 +409,7 @@ public sealed class ExpeditionProgress
             if (progress.Active is ExpeditionRun run)
             {
                 run.Map ??= new(); run.Path ??= new(); run.Build ??= new(); run.Relics ??= new();
+                run.Log = (run.Log ?? new()).Where(e => e != null).TakeLast(ExpeditionRun.LogKept).ToList();
                 if (run.Pending != null) { run.Pending.Cards ??= Array.Empty<string>(); run.Pending.Relics ??= Array.Empty<string>(); }
             }
             return true;
@@ -633,8 +655,9 @@ public sealed class Expedition
         run.Build = build.Where(card => card.Value > 0).ToDictionary(card => card.Key, card => card.Value);
         double max = MaxHp(run);
         if (run.Step >= run.Map.Count) return End(run, true, step, Math.Clamp(hp, 0, max), max);
-        double before = Math.Clamp(hp, 1, max);
+        double before = Math.Clamp(hp, 1, max), started = run.Hp;
         run.Hp = Math.Min(max, before + Spec.WinHeal * max);
+        AddLog(run, new() { Step = step, Kind = Kind(step, lane), Hp = run.Hp - started });
         // A won elite: relics to choose from (drawn now, kept with the run).
         bool reward = false, capsule = false;
         if (Kind(step, lane) == ExpeditionSpec.Elite && DrawRelics(run, Spec.EliteRelics, BattleRandom.Stream(run.Seed, 4000 + step * 8 + lane)) is { Length: > 0 } relics)
@@ -815,9 +838,18 @@ public sealed class Expedition
                 break;
         }
         run.Hp = Math.Min(run.Hp, MaxHp(run));
+        // The step the choice belongs to: a node's is the step to go now, a won battle's the one passed.
+        int at = open.Kind is ExpeditionChoice.RewardKind or ExpeditionChoice.CapsuleKind ? run.Step - 1 : run.Step;
+        AddLog(run, new() { Step = Math.Max(0, at), Kind = open.Kind, Option = option, Event = open.Event, Card = taken, Dropped = dropped, Relic = gained, Prize = prize, Hp = run.Hp - before });
         if (open.Kind is not (ExpeditionChoice.RewardKind or ExpeditionChoice.CapsuleKind)) run.Path.Add(open.Lane);
         run.Pending = null;
         return new(true, option, run.Hp - before, taken, dropped, gained, prize);
+    }
+
+    private static void AddLog(ExpeditionRun run, ExpeditionLogEntry entry)
+    {
+        run.Log.Add(entry);
+        if (run.Log.Count > ExpeditionRun.LogKept) run.Log.RemoveAt(0);
     }
 
     // The step's battle was left (End, closing, a crash): the step stays to be fought again, for
@@ -830,6 +862,7 @@ public sealed class Expedition
         double max = MaxHp(run);
         run.Hp -= Spec.RetreatCost * max;
         if (run.Hp <= 0.5) return End(run, false, run.Step, 0, max);
+        AddLog(run, new() { Step = run.Step, Kind = ExpeditionLogEntry.Retreat, Hp = -Spec.RetreatCost * max });
         return new(true, run.Step, false, false, false, run.Hp, max, -Spec.RetreatCost * max);
     }
 

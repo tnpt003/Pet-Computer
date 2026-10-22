@@ -157,6 +157,7 @@ public sealed class ExpeditionSpec
             if (g.Steps is < 1 or > 10) throw new InvalidDataException(at + ".kindGacha.steps must be 1–10");
             if (g.MinLanes is < 1 or > 3 || g.MaxLanes is < 1 or > 3 || g.MinLanes > g.MaxLanes) throw new InvalidDataException(at + ".kindGacha lanes must be 1–3, minLanes ≤ maxLanes");
             if (g.Weights == null || g.Weights.Count == 0) throw new InvalidDataException(at + ".kindGacha.weights must list node kinds");
+            if (!double.IsFinite(g.RerollCost) || g.RerollCost is < 0 or > 0.5) throw new InvalidDataException(at + ".kindGacha.rerollCost must be 0–0.5");
             foreach (var (kind, weight) in g.Weights)
             {
                 if (Array.IndexOf(Kinds, kind) < 0) throw new InvalidDataException($"{at}.kindGacha.weights kinds must be one of: {string.Join(", ", Kinds)}");
@@ -187,12 +188,15 @@ public sealed class ExpeditionSpec
 // MaxLanes of them) are drawn when the run reaches that step (the map's Spin), by Weights, and kept.
 // The draw always follows these rules: step 1 has no elite or rest; a step has at most one rest and
 // never only elites; the step before the boss has a rest; never more nodes of a kind than its pool.
+// RerollCost: spinning a drawn step again (once a step, before going to one of its nodes) costs
+// this share of the max HP; 0: no second spin.
 public sealed class KindGachaSpec
 {
     public int Steps { get; init; } = 5;
     public int MinLanes { get; init; } = 2;
     public int MaxLanes { get; init; } = 3;
     public Dictionary<string, double> Weights { get; init; } = new();
+    public double RerollCost { get; init; }
 }
 
 // The capsule machine after a won fight node (not an elite: it leaves relics; not the boss). Both
@@ -309,6 +313,8 @@ public sealed class ExpeditionRun
     // shown: the rules never read it, and a file without it reads as an empty log.
     public List<ExpeditionLogEntry> Log { get; set; } = new();
     public const int LogKept = 60;
+    // Steps spun a second time (each at most once).
+    public List<int> Rerolled { get; set; } = new();
 
     [JsonIgnore] public int Step => Path.Count;
     [JsonIgnore] public BattleDifficulty Level => Enum.TryParse<BattleDifficulty>(Difficulty, out var level) && Enum.IsDefined(level) ? level : BattleDifficulty.Normal;
@@ -335,7 +341,7 @@ public sealed class ExpeditionChoice
 // Hp: what the run's HP changed by.
 public sealed class ExpeditionLogEntry
 {
-    public const string Retreat = "retreat";
+    public const string Retreat = "retreat", Reroll = "reroll";
     public int Step { get; set; }
     public string Kind { get; set; } = "";
     public string? Option { get; set; }
@@ -408,7 +414,7 @@ public sealed class ExpeditionProgress
             progress.Keepsakes = (progress.Keepsakes ?? new()).Where(id => !string.IsNullOrWhiteSpace(id)).Distinct().ToList();
             if (progress.Active is ExpeditionRun run)
             {
-                run.Map ??= new(); run.Path ??= new(); run.Build ??= new(); run.Relics ??= new();
+                run.Map ??= new(); run.Path ??= new(); run.Build ??= new(); run.Relics ??= new(); run.Rerolled ??= new();
                 run.Log = (run.Log ?? new()).Where(e => e != null).TakeLast(ExpeditionRun.LogKept).ToList();
                 if (run.Pending != null) { run.Pending.Cards ??= Array.Empty<string>(); run.Pending.Relics ??= Array.Empty<string>(); }
             }
@@ -540,10 +546,43 @@ public sealed class Expedition
     // whenever it is drawn) and kept. False when there is nothing to draw (a double click).
     public bool Roll()
     {
-        if (!NeedsRoll || Spec.KindGacha is not KindGachaSpec g) return false;
+        if (!NeedsRoll || Spec.KindGacha is null) return false;
+        Draw(Run!, Run!.Step, BattleRandom.Stream(Run.Seed, 6000 + Run.Step));
+        return true;
+    }
+
+    // Spin again: the price in HP (RerollCost of the max HP), and whether the step to go now can be
+    // spun again — drawn, not spun again yet, no node entered or visited, and the cat survives it.
+    public double RerollPrice(ExpeditionRun run) => Math.Round(MaxHp(run) * (Spec.KindGacha?.RerollCost ?? 0));
+    public bool CanReroll => Run is ExpeditionRun run && Spec.KindGacha is { RerollCost: > 0 } && run.Kinds != null && run.Pending == null
+        && run.Fighting == null && run.Step < Spec.PathSteps && run.Step < run.Kinds.Count && run.Kinds[run.Step].Length > 0
+        && !run.Rerolled.Contains(run.Step) && run.Hp > RerollPrice(run);
+
+    // The step's nodes drawn again from the run's seed (another stream than the first spin, so the
+    // same whenever it happens; a draw equal to the old one is skipped), paid in HP and logged.
+    public bool Reroll()
+    {
+        if (!CanReroll) return false;
         var run = Run!;
         int step = run.Step;
-        var random = BattleRandom.Stream(run.Seed, 6000 + step);
+        double price = RerollPrice(run);
+        var oldKinds = run.Kinds![step];
+        var oldMap = run.Map[step];
+        for (int attempt = 0; attempt < 8; attempt++)
+        {
+            Draw(run, step, BattleRandom.Stream(run.Seed, 7000 + step * 8 + attempt));
+            if (!run.Kinds[step].SequenceEqual(oldKinds) || !run.Map[step].SequenceEqual(oldMap)) break;
+        }
+        run.Hp -= price;
+        run.Rerolled.Add(step);
+        AddLog(run, new() { Step = step, Kind = ExpeditionLogEntry.Reroll, Hp = -price });
+        return true;
+    }
+
+    // A step's node kinds and encounters, drawn by the kind gacha's rules and kept in the run.
+    private void Draw(ExpeditionRun run, int step, Random random)
+    {
+        var g = Spec.KindGacha!;
         bool first = step == 0, beforeBoss = step == Spec.PathSteps - 1 && !first;
         int lanes = random.Next(g.MinLanes, g.MaxLanes + 1);
         var kinds = new List<string>();
@@ -564,7 +603,6 @@ public sealed class Expedition
         for (int i = kinds.Count - 1; i > 0; i--) { int j = random.Next(i + 1); (kinds[i], kinds[j]) = (kinds[j], kinds[i]); }
         run.Map[step] = DrawEncounters(kinds, run.Map.Take(step), random);
         run.Kinds![step] = kinds.ToArray();
-        return true;
     }
 
     // Whether a node's content (an encounter id, "rest", an event id) fits its kind in this data.

@@ -322,7 +322,8 @@
   // run names them) and never an Adventure stage's. "unlockAfter": the Adventure stage to win first.
   // "kindGacha" (instead of "steps", 2026-10-22): the map shows only the boss at first; each of the
   // "steps" steps gets "minLanes"–"maxLanes" nodes drawn by "weights" when the run reaches it (the
-  // map's Spin), kept from then on. Always: step 1 has no elite or rest, a step at most one rest and
+  // map's Spin), kept from then on; "rerollCost": spinning a drawn step again (once a step, before
+  // going to a node) costs that share of the max HP. Always: step 1 has no elite or rest, a step at most one rest and
   // never only elites, the step before the boss a rest. "capsules": after each won fight node, a free
   // capsule ("freeCard" of the time a common card, else "freeHeal" of the max HP) or a gold one for
   // "goldCost" of the max HP (by weight: "relic", "rare" card, "cardHeal" a card + "goldHeal" HP).
@@ -337,7 +338,7 @@
       { "id": "expedition_scarf", "kind": "accessory", "accessory": "ExpeditionScarf", "difficulty": "Easy", "nameVi": "Khăn viễn chinh", "nameEn": "Expedition scarf" },
       { "id": "slime_cushion", "kind": "cushion", "difficulty": "Normal", "nameVi": "Đệm slime", "nameEn": "Slime cushion" }
     ],
-    "kindGacha": { "steps": 5, "minLanes": 2, "maxLanes": 3, "weights": { "fight": 45, "event": 20, "elite": 20, "rest": 15 } },
+    "kindGacha": { "steps": 5, "minLanes": 2, "maxLanes": 3, "weights": { "fight": 45, "event": 20, "elite": 20, "rest": 15 }, "rerollCost": 0.08 },
     "capsules": { "freeHeal": 0.1, "freeCard": 0.5, "goldCost": 0.12, "goldHeal": 0.1, "relic": 40, "rare": 30, "cardHeal": 30 },
     "events": [
       { "id": "cat_trader", "kind": "swap", "nameVi": "Lữ khách mèo", "nameEn": "Travelling cat",

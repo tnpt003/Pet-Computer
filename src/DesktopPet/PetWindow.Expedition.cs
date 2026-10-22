@@ -55,6 +55,9 @@ public sealed partial class PetWindow
     private TextBlock? xBossLabel, xTitle, xData, xStatus, xBuild, xNodeName, xNodeGoal, xRecord, xNote, xSetupLabel, xMainText, xAbandonText, xCloseText, xBagText;
     private Border? xBag;
     private Border? xMain, xAbandon, xDetails;
+    // Spin the drawn step again (once a step, for some HP).
+    private Border? xReroll;
+    private TextBlock? xRerollText;
     // The capsule beside the details (a spin waiting or opening), and the step whose nodes it is
     // revealing now (-1: none): they stay "?" until it opens.
     private CapsuleArt? xSpinArt;
@@ -75,6 +78,7 @@ public sealed partial class PetWindow
         .Concat(xSetup is { Visibility: Visibility.Visible } ? new[] { xSetupLabel } : Array.Empty<TextBlock?>())
         .Concat(xDetails is { Visibility: Visibility.Visible } ? new[] { xNodeName, xNodeGoal } : Array.Empty<TextBlock?>())
         .Concat(xChoice is { Visibility: Visibility.Visible } ? xChoiceTexts : Enumerable.Empty<TextBlock?>())
+        .Concat(xReroll is { Visibility: Visibility.Visible } ? new[] { xRerollText } : Array.Empty<TextBlock?>())
         .Concat(new[] { xRecord })
         .Concat(xMain is { Visibility: Visibility.Visible } ? new[] { xMainText } : Array.Empty<TextBlock?>())
         .Concat(new[] { xCloseText })
@@ -316,6 +320,21 @@ public sealed partial class PetWindow
         return null;
     }
 
+    // Spin again: the step to go now gets new nodes (once a step, RerollCost of the max HP, saved at
+    // once); the capsule opens as for a first spin. Null on success.
+    public string? ExpeditionReroll()
+    {
+        if (!expeditionMapOpen || Expedition is not Expedition expedition) return L("Bản đồ viễn chinh chưa mở.", "The Expedition map is not open.");
+        if (xRevealTimer != null || expedition.Run is not ExpeditionRun run || !expedition.CanReroll) return L("Bậc này không quay lại được nữa.", "This step cannot be spun again.");
+        int step = run.Step;
+        if (!expedition.Reroll()) return L("Bậc này không quay lại được nữa.", "This step cannot be spun again.");
+        SaveExpedition(expedition.Progress);
+        expeditionLane = 0; expeditionNote = null; expeditionConfirmAbandon = false;
+        System.Diagnostics.Trace.WriteLine($"Expedition run {run.RunId}: step {step + 1} spun again: {string.Join(", ", run.Kinds![step])}.");
+        PlayCapsule(PetUi.Accent, step, null, false);
+        return null;
+    }
+
     // What a capsule held, in words.
     private string PrizeText(Expedition expedition, string? prize) => DesktopPet.Expedition.Prize(prize) switch
     {
@@ -418,7 +437,8 @@ public sealed partial class PetWindow
         expeditionMapOpen = false;
         expeditionMapWindow?.Close();
         expeditionMapWindow = null;
-        xMain = xAbandon = xDetails = null;
+        xMain = xAbandon = xDetails = xReroll = null;
+        xRerollText = null;
         FinishExpeditionReveal(update: false);
         xSpinArt = null;
         xSetup = xMap = xChoice = null;
@@ -492,6 +512,10 @@ public sealed partial class PetWindow
         DockPanel.SetDock(xSpinArt, Dock.Left);
         xDetails = DetailCard(new Thickness(11, 8, 11, 9), detailRow);
         xMap.Children.Add(xDetails);
+        var (reroll, rerollText, _) = HudButton(() => { if (ExpeditionReroll() is string reason) ShowBattleNotice(reason); }, plain: true);
+        reroll.Margin = new Thickness(0, 8, 0, 0); reroll.HorizontalAlignment = HorizontalAlignment.Left;
+        xReroll = reroll; xRerollText = rerollText;
+        xMap.Children.Add(reroll);
         xChoice = new StackPanel { Margin = new Thickness(0, 10, 0, 0), MaxWidth = 470 };
         xMap.Children.Add(xChoice);
         xRecord = Line(PetUi.SmallSize); xRecord.Opacity = 0.8; xRecord.Margin = new Thickness(0, 8, 0, 0);
@@ -648,6 +672,10 @@ public sealed partial class PetWindow
             xBag.IsEnabled = xRevealTimer == null;
             xBag.Opacity = xBag.IsEnabled ? 1 : 0.5;
         }
+        // Spin again: only for a drawn step not entered yet, once, while nothing opens.
+        bool reroll = run != null && !opening && expedition.CanReroll;
+        xReroll!.Visibility = reroll ? Visibility.Visible : Visibility.Collapsed;
+        if (reroll) xRerollText!.Text = L($"↻ Quay lại bậc này · −{expedition.RerollPrice(run!):0} HP", $"↻ Spin this step again · −{expedition.RerollPrice(run!):0} HP");
         xAbandonText!.Text = expeditionConfirmAbandon ? L("Bấm lần nữa để bỏ", "Click again to give up") : L("Bỏ chuyến", "Give up");
         xAbandon!.Visibility = run != null ? Visibility.Visible : Visibility.Collapsed;
         // Nothing goes on while a capsule opens (it lasts about a second).

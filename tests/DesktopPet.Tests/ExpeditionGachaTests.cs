@@ -98,7 +98,59 @@ internal static class ExpeditionGachaTests
         Console.WriteLine("Expedition step gacha, 150 runs: " + string.Join(", ", counts.OrderByDescending(c => c.Value).Select(c => $"{c.Key} {100.0 * c.Value / total:0.0}%")));
 
         Capsules(check, data);
+        Rerolls(check, data);
         DataChecks(check);
+    }
+
+    // Spinning a drawn step again (2026-10-22): once a step, before going to one of its nodes, for
+    // rerollCost of the max HP; drawn from the run's seed (its own stream), saved, logged.
+    private static void Rerolls(Action<bool, string> check, BattleSettings data)
+    {
+        check(data.Expedition!.KindGacha!.RerollCost == 0.08, "Built-in: spinning a step again costs 8% of the max HP");
+        var x = new Expedition(data, new ExpeditionProgress());
+        var run = x.Start(BattleWeapon.Sword, BattleDifficulty.Normal, 42, "reroll-a");
+        check(!x.CanReroll && !x.Reroll(), "Nothing to spin again before the first spin");
+        x.Roll();
+        var kinds = run.Kinds![0];
+        var map = run.Map[0];
+        double max = x.MaxHp(run), price = x.RerollPrice(run);
+        check(price == Math.Round(max * 0.08) && x.CanReroll, $"After the spin the step can be spun again for {price} HP");
+        check(x.Reroll() && run.Hp == max - price, "Spinning again costs that HP");
+        check(!run.Kinds[0].SequenceEqual(kinds) || !run.Map[0].SequenceEqual(map), "The step gets other nodes");
+        check(run.Map[0].Length == run.Kinds[0].Length && run.Kinds[0].All(k => k is ExpeditionSpec.Fight or ExpeditionSpec.Event) && x.Mismatch(run) == null,
+            "The new nodes follow the step's rules (step 1: fights and events) and the run stays valid");
+        check(!x.CanReroll && !x.Reroll() && run.Hp == max - price, "Only once a step");
+        check(run.Log.Count == 1 && run.Log[0].Kind == ExpeditionLogEntry.Reroll && run.Log[0].Hp == -price, "The run's log says so, with the HP it cost");
+        var twin = new Expedition(data, new ExpeditionProgress());
+        twin.Start(BattleWeapon.Sword, BattleDifficulty.Normal, 42, "reroll-b");
+        twin.Roll(); twin.Reroll();
+        check(twin.Run!.Kinds![0].SequenceEqual(run.Kinds[0]) && twin.Run.Map[0].SequenceEqual(run.Map[0]), "The same seed spins again to the same nodes");
+
+        string dir = Path.Combine(Path.GetTempPath(), "pet-expedition-reroll-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dir);
+        try
+        {
+            string file = Path.Combine(dir, "expedition.json");
+            check(x.Progress.Save(file), "(setup) saved after spinning again");
+            var back = new Expedition(data, ExpeditionProgress.Load(file));
+            check(back.Mismatch(back.Run!) == null && back.Run!.Map[0].SequenceEqual(run.Map[0]) && !back.CanReroll && back.Run.Hp == run.Hp,
+                "Read back: the new nodes stay, the HP paid stays, and the step cannot be spun again");
+        }
+        finally { if (Directory.Exists(dir)) Directory.Delete(dir, true); }
+
+        Pass(x);
+        check(x.NeedsRoll && !x.CanReroll, "The next step waits for its own spin first");
+        x.Roll();
+        check(x.CanReroll, "Then it can be spun again too");
+        int lane = Enumerable.Range(0, run.Map[run.Step].Length).First(l => x.Node(l) != null || true);
+        if (x.Node(lane) != null) x.Enter(lane); else x.Visit(lane);
+        check(!x.CanReroll, "Not once a node of the step is entered or visited");
+
+        var poor = new Expedition(data, new ExpeditionProgress());
+        var low = poor.Start(BattleWeapon.Sword, BattleDifficulty.Normal, 7, "reroll-c");
+        poor.Roll();
+        low.Hp = poor.RerollPrice(low);
+        check(!poor.CanReroll && !poor.Reroll(), "Not when the HP would run out");
     }
 
     private static void Capsules(Action<bool, string> check, BattleSettings data)
@@ -206,6 +258,7 @@ internal static class ExpeditionGachaTests
         check(Error("{ \"kindGacha\": { \"minLanes\": 3, \"maxLanes\": 2 } }").Contains("lanes"), "minLanes above maxLanes is rejected");
         check(Error("{ \"kindGacha\": { \"weights\": { \"shop\": 3, \"fight\": 1 } } }").Contains("kinds"), "An unknown node kind in the weights is rejected");
         check(Error("{ \"capsules\": { \"goldCost\": 1 } }").Contains("goldCost"), "A gold capsule costing all the HP is rejected");
+        check(Error("{ \"kindGacha\": { \"weights\": { \"fight\": 1 }, \"rerollCost\": 0.9 } }").Contains("rerollCost"), "A second spin costing most of the HP is rejected");
         check(Error("{ \"capsules\": { \"relic\": 0, \"rare\": 0, \"cardHeal\": 0 } }").Contains("gold weight"), "A gold capsule with nothing in it is rejected");
     }
 }

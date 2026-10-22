@@ -823,7 +823,7 @@ internal static class ExpeditionChecks
             var gachaTrail = new ExpeditionSpec
             {
                 Id = "gacha_trail", NameVi = "Đường quay", NameEn = "Spin trail", UnlockAfter = "st_gate", RetreatCost = 0.25, WinHeal = 0, StepThreat = 0,
-                KindGacha = new KindGachaSpec { Steps = 2, MinLanes = 2, MaxLanes = 2, Weights = new() { [ExpeditionSpec.Fight] = 1 } }, Capsules = new CapsuleSpec(),
+                KindGacha = new KindGachaSpec { Steps = 2, MinLanes = 2, MaxLanes = 2, Weights = new() { [ExpeditionSpec.Fight] = 1 }, RerollCost = 0.08 }, Capsules = new CapsuleSpec(),
                 Fights = new[] { Stage("g_field", "Field"), Stage("g_hill", "Hill") }, Boss = Stage("g_throne", "Throne")
             };
             window.BattleTuning = new BattleSettings { FirstWaveDelay = 0, SlimeMaxHp = 1, SlimeDamage = 1, OutroSeconds = 0.5, Campaign = campaign, Expedition = gachaTrail };
@@ -841,6 +841,15 @@ internal static class ExpeditionChecks
             window.FinishExpeditionReveal();
             Tick(0.3);
             check(!window.ExpeditionRevealing && window.ExpeditionMapText.Contains("Fight — ") && window.ExpeditionMainEnabled, "Once open, the step's nodes show and can be fought");
+            double beforeReroll = window.Expedition!.Run!.Hp;
+            check(window.ExpeditionMapText.Contains("↻ Spin this step again · −8 HP"), "A drawn step offers one more spin for 8% of the max HP");
+            Shot("Pet expedition", "expedition-reroll-en.png");
+            check(window.ExpeditionReroll() == null && window.ExpeditionRevealing && !window.ExpeditionMapText.Contains("Spin this step again")
+                  && Saved() is { Rerolled: [0] } saved && saved.Hp == beforeReroll - 8, "Spinning again: paid, saved at once, the capsule opens, the offer is gone");
+            window.FinishExpeditionReveal();
+            Tick(0.3);
+            check(!window.ExpeditionMapText.Contains("Spin this step again") && window.ExpeditionReroll() is string noMore && noMore.Length > 0 && window.ExpeditionMainEnabled,
+                "Once a step: no second offer, the new nodes can be fought");
             check(window.ExpeditionFight() == null && window.BattleActive, "(setup) the first fight");
             Finish();
             await Task.Delay(30);

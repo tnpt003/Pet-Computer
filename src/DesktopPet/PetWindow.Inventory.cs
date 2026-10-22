@@ -643,6 +643,7 @@ public sealed partial class PetWindow
         switch (e.Kind)
         {
             case ExpeditionLogEntry.Retreat: return "↩ " + L("Rời trận", "Left the battle");
+            case ExpeditionLogEntry.Reroll: return "↻ " + L("Quay lại bậc", "Spun the step again");
             case ExpeditionChoice.RestKind:
                 return "♨ " + KindName(ExpeditionSpec.Rest) + ": " + (e.Card != null ? L("lấy thẻ ", "took ") + CardName(e.Card) : L("hồi máu", "rested"));
             case ExpeditionChoice.EventKind:

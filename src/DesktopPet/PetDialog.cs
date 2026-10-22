@@ -15,7 +15,8 @@ public static class PetDialog
     public static bool Show(Window? owner, string title, string message, string ok, string? cancel = null, string glyph = InfoGlyph) =>
         Create(owner, title, message, ok, cancel, glyph).ShowDialog() == true;
 
-    public static Window Create(Window? owner, string title, string message, string ok, string? cancel = null, string glyph = InfoGlyph)
+    // extra (optional, e.g. a checkbox) goes under the message.
+    public static Window Create(Window? owner, string title, string message, string ok, string? cancel = null, string glyph = InfoGlyph, UIElement? extra = null)
     {
         var icon = new Grid { Width = 40, Height = 40, VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(0, 0, 14, 0) };
         icon.Children.Add(new Ellipse { Fill = PetUi.AccentSoft });
@@ -25,7 +26,15 @@ public static class PetDialog
         var text = new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap, Foreground = PetUi.Ink, VerticalAlignment = VerticalAlignment.Center, LineHeight = 19 };
         var body = new DockPanel { Margin = new Thickness(20, 20, 20, 14) };
         DockPanel.SetDock(icon, Dock.Left);
-        body.Children.Add(icon); body.Children.Add(text);
+        body.Children.Add(icon);
+        if (extra == null) body.Children.Add(text);
+        else
+        {
+            if (extra is FrameworkElement element) element.Margin = new Thickness(0, 12, 0, 0);
+            var column = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
+            column.Children.Add(text); column.Children.Add(extra);
+            body.Children.Add(column);
+        }
 
         var okButton = PetUi.PrimaryButton(ok);
         Button[] buttons;

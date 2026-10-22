@@ -36,4 +36,7 @@ public sealed class StartupRegistration(string keyPath = StartupRegistration.Run
         }
         catch (Exception ex) when (ex is System.Security.SecurityException or UnauthorizedAccessException or IOException) { return false; }
     }
+
+    // Uninstalling: removes the entry only when it starts this copy (a separate copied folder keeps its own).
+    public bool RemoveIfThis(string executable) => !IsEnabled(executable) || SetEnabled(false, executable);
 }

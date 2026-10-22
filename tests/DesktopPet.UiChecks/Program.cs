@@ -258,6 +258,22 @@ internal static class Program
             using var stream = System.IO.File.Create(System.IO.Path.Combine(dialogReview, "dialog.png")); encoder.Save(stream);
         }
         dialog.Close();
+        // First run after installing: tips and "Start with Windows" (ticked); never shown to a built or copied app.
+        var welcome = PetWelcome.Create(window.L, out var welcomeAutostart);
+        welcome.Left = -10000; welcome.Show(); welcome.UpdateLayout();
+        var welcomeButtons = Descendants<System.Windows.Controls.Button>((FrameworkElement)welcome.Content).ToList();
+        Check(welcomeAutostart.IsChecked == true && welcomeAutostart.IsVisible && welcomeButtons.Count == 1 && welcomeButtons[0].IsDefault &&
+              Descendants<System.Windows.Controls.TextBlock>((FrameworkElement)welcome.Content).Any(t => t.Text.Contains("khay") || t.Text.Contains("tray")),
+            "The welcome shows tips, one button and a ticked Start with Windows");
+        if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string welcomeReview && welcome.Content is FrameworkElement welcomeRoot)
+        {
+            System.IO.Directory.CreateDirectory(welcomeReview);
+            var image = new RenderTargetBitmap((int)Math.Ceiling(welcomeRoot.ActualWidth), (int)Math.Ceiling(welcomeRoot.ActualHeight), 96, 96, PixelFormats.Pbgra32);
+            image.Render(welcomeRoot);
+            var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(image));
+            using var stream = System.IO.File.Create(System.IO.Path.Combine(welcomeReview, "welcome.png")); encoder.Save(stream);
+        }
+        welcome.Close();
         // Lay the closed menu out off-screen to check (and, for review, render) the rounded style.
         var styledMenu = window.ContextMenu;
         styledMenu.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.ContextMenu.OpenedEvent)); // Fills labels and states.

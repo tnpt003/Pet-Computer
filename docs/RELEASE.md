@@ -7,12 +7,15 @@ Từ 1.4.0 (2026-10-22). Dùng Velopack 1.2.158: thư viện trong app (`PetUpda
 - **Người dùng:** tải `PetComputer-win-Setup.exe` ở trang Releases của repo, chạy là cài (không cần admin). App cài vào `%LOCALAPPDATA%\PetComputer`, tạo shortcut Desktop + Start menu, mở mèo luôn.
 - **Dữ liệu người dùng** nằm riêng ở `%LOCALAPPDATA%\DesktopPet` (preferences, nhật ký, tiến trình, kỷ lục). Cập nhật hay gỡ cài đặt không đụng tới thư mục này. Tên gói `PetComputer` cố ý khác tên thư mục dữ liệu (`scripts/pack.ps1` chặn nếu trùng).
 - **Tự cập nhật:** chỉ bản đã cài. Lúc mở app và mỗi 6 giờ, app hỏi GitHub Releases của `tnpt003/Pet-Computer` (repo phải public). Có bản mới thì tải ngầm, rồi khay hệ thống báo bằng một thông báo. Mục khay "Cập nhật lên bản …" đóng mèo, cập nhật, mở lại; nếu không bấm thì bản đã tải được áp dụng lần mở mèo sau. Mục khay "Kiểm tra cập nhật" để hỏi ngay. Không có mạng/lỗi: chỉ ghi log.
+- **Lần mở đầu sau khi cài** (hook `OnFirstRun`, từ 1.4.1): hộp chào mừng (`PetWelcome.cs`) với mẹo và ô "Khởi động cùng Windows" tích sẵn; lựa chọn ghi vào `HKCU\...\Run` (giá trị `DesktopPet`) trỏ tới bản đã cài, nên mục cũ của bản copy thư mục được chuyển sang. Cập nhật không hiện lại hộp này. Velopack không có giao diện chọn thư mục hay checkbox trong Setup (cài một click) nên phần này nằm trong app.
+- **Gỡ cài đặt** (hook `OnBeforeUninstallFastCallback`, từ 1.4.1): xóa mục khởi động nếu nó trỏ tới chính bản đã cài; mục của bản copy khác giữ nguyên. Bản 1.4.0 chưa có hook này.
+- **Splash và ghi chú:** `pack.ps1` dùng `Assets\PetIcon-preview.png` làm hình khi Setup giải nén và lấy mục `## <version>` trong CHANGELOG.md làm release notes (không có mục thì bỏ qua, chỉ báo).
 - **Bản copy thư mục** (`artifacts\win-x64`, zip portable): không tự cập nhật, chạy như trước.
 - **Chưa ký code:** SmartScreen có thể cảnh báo khi chạy Setup lần đầu ("More info → Run anyway"). Ký miễn phí sau này: nộp đơn SignPath Foundation (repo đã public, có LICENSE MIT, build bằng GitHub Actions); `vpk pack` có `--signTemplate`.
 
 ## Phát hành một bản
 
-1. Nâng `<Version>` trong `src/DesktopPet/DesktopPet.csproj` (SemVer, ví dụ `1.4.1`). Bản mới phải lớn hơn bản đang có thì máy người dùng mới nhận.
+1. Nâng `<Version>` trong `src/DesktopPet/DesktopPet.csproj` (SemVer, ví dụ `1.4.1`). Bản mới phải lớn hơn bản đang có thì máy người dùng mới nhận. Thêm mục `## 1.4.1 — …` vào CHANGELOG.md (thành release notes).
 2. Trên máy: `scripts\test.ps1 -Ui`, `scripts\publish.ps1`, `scripts\check-publish.ps1` đạt; commit (không còn thay đổi chưa commit).
 3. Tùy chọn, thử đóng gói trên máy: `scripts\pack.ps1` → `artifacts\release` (không upload).
 4. Gắn tag và đẩy lên (người dùng làm, hoặc cho phép agent làm):
@@ -32,5 +35,6 @@ Tag phải đúng `v` + version trong csproj, nếu không pack.ps1 dừng.
 - [ ] Đổi vài cài đặt (tên mèo, bộ lông), thoát, mở lại từ shortcut: vẫn giữ.
 - [ ] Khay → "Kiểm tra cập nhật": báo "đang dùng bản mới nhất".
 - [ ] Sau khi phát hành bản kế tiếp (ví dụ 1.4.1): mở mèo, chờ thông báo "Bản 1.4.1 đã tải xong" (hoặc bấm Kiểm tra cập nhật) → khay "Cập nhật lên bản 1.4.1" → mèo đóng rồi mở lại; Cài đặt/nhật ký vẫn còn. Thử thêm: không bấm, thoát mèo rồi mở lại → đã là bản mới.
-- [ ] Gỡ cài đặt (Settings → Apps → Desktop Pet → Uninstall): shortcut và `%LOCALAPPDATA%\PetComputer` mất; `%LOCALAPPDATA%\DesktopPet` vẫn còn (cài lại thì mèo nhớ mọi thứ).
+- [ ] Cài lần đầu (từ 1.4.1): Setup hiện hình con mèo khi giải nén; mèo mở ra kèm hộp chào mừng, ô "Khởi động cùng Windows" tích sẵn. Bấm Bắt đầu → Cài đặt → Chung thấy ô này đang bật; Task Manager → Startup apps có Desktop Pet. Khởi động lại máy: mèo tự mở.
+- [ ] Gỡ cài đặt (Settings → Apps → Desktop Pet → Uninstall): shortcut và `%LOCALAPPDATA%\PetComputer` mất; `%LOCALAPPDATA%\DesktopPet` vẫn còn (cài lại thì mèo nhớ mọi thứ). Từ 1.4.1: Task Manager → Startup apps không còn Desktop Pet.
 - [ ] Ghi lại lỗi/thông báo lạ; log ở `%LOCALAPPDATA%\DesktopPet\logs\desktoppet.log` (dòng "Update check …").

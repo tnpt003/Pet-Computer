@@ -1,6 +1,6 @@
 # Trạng thái hiện tại và việc tiếp theo
 
-Cập nhật: 2026-10-23 (Asia/Saigon). Bản đang chạy: 1.4.0 (installer + tự cập nhật, xem docs/RELEASE.md).
+Cập nhật: 2026-10-23 (Asia/Saigon). Bản đang chạy: 1.4.1 (installer + tự cập nhật + chào mừng sau khi cài, xem docs/RELEASE.md). Release 1.4.0 đã có trên GitHub.
 
 > **Quy tắc 20/10:** luôn commit và publish sau mỗi mốc code hoàn chỉnh, kiểm thử đạt; chạy smoke và báo artifact. Không cần hỏi lại. Mốc tài liệu-only commit, không publish binary. Xem AGENTS.md. Không tự push/upload.
 
@@ -32,7 +32,7 @@ Cập nhật: 2026-10-23 (Asia/Saigon). Bản đang chạy: 1.4.0 (installer + t
 
 - Mở rộng Viễn chinh: vùng/chương mới, thêm di vật/sự kiện.
 - Battle: thu dải sàn chỉ ôm vùng có slime; HUD cập nhật 15 lần/giây — số đo 22/10 (16 quái: 61 fps) cho thấy chưa cần. Kỹ năng: tên/mô tả đã thành dữ liệu (N2).
-- Phát hành rộng: 1.4.0 bỏ beta, installer + tự cập nhật Velopack/GitHub Releases (N5). Còn: người dùng push tag + thử máy Win 10; ký code (SignPath) khi cần; đồng hồ cát có cát chảy.
+- Phát hành rộng: 1.4.0 bỏ beta, installer + tự cập nhật Velopack/GitHub Releases (N5). 1.4.0 đã phát hành qua Actions; 1.4.1 thêm hộp chào mừng (ô Khởi động cùng Windows) và gỡ cài đặt xóa mục khởi động. Còn: người dùng push tag v1.4.1 để thử tự cập nhật + thử máy Win 10; MSI chọn thư mục (nếu muốn); ký code (SignPath) khi cần; đồng hồ cát có cát chảy.
 - Dài hạn: quan hệ phát triển, nhiều mèo; LLM chỉ khi người dùng đổi quy tắc AGENTS.md.
 
 ## Đã bỏ theo người dùng (2026-10-22)

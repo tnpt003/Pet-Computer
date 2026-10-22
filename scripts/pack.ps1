@@ -34,8 +34,19 @@ if ($Upload) {
     # The previous release (if any) for delta packages; a first release has none.
     & $dotnet vpk download github --repoUrl $repoUrl --token $env:GITHUB_TOKEN -o $output
 }
+# Release notes: the CHANGELOG.md section "## <version> …" (up to the next "## "), when there is one.
+$notesArgs = @()
+$changelog = [IO.File]::ReadAllText((Join-Path $projectRoot 'CHANGELOG.md'), [Text.Encoding]::UTF8)
+$section = [regex]::Match($changelog, '(?ms)^## ' + [regex]::Escape($version) + '\b.*?(?=^## |\z)')
+if ($section.Success) {
+    $notes = Join-Path $output "notes-$version.md"
+    [IO.File]::WriteAllText($notes, $section.Value.Trim(), (New-Object Text.UTF8Encoding $false))
+    $notesArgs = @('--releaseNotes', $notes)
+} else { Write-Host "CHANGELOG.md has no section for $version; no release notes." }
+# The cat (the icon art, transparent) shows while Setup unpacks the app.
 & $dotnet vpk pack -u $packId -v $version -p $app -e DesktopPet.exe -o $output --packTitle 'Desktop Pet' --packAuthors 'tnpt003' `
-    -i (Join-Path $projectRoot 'src\DesktopPet\Assets\Pet.ico') --shortcuts 'Desktop,StartMenuRoot'
+    -i (Join-Path $projectRoot 'src\DesktopPet\Assets\Pet.ico') --shortcuts 'Desktop,StartMenuRoot' `
+    --splashImage (Join-Path $projectRoot 'src\DesktopPet\Assets\PetIcon-preview.png') @notesArgs
 if ($LASTEXITCODE -ne 0) { throw 'vpk pack failed.' }
 Write-Host "Packages for $version in $output"
 if ($Upload) {

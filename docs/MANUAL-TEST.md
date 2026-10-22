@@ -409,3 +409,9 @@ Tự động đã có: Phần thưởng trên sảnh (ô có hình, khóa, Mới
 - [ ] Kỹ năng thành dữ liệu: rê chuột lên 5 nút kỹ năng trên HUD (vi và en): tên/mô tả như trước, số đúng.
 - [ ] Phần thưởng Vô tận: Sảnh → thẻ Vô tận có "Thưởng k/5 · tiếp: qua đợt N"; Phần thưởng có mục "Phần thưởng Vô tận" (5 ô, khóa/✓). Chơi qua đợt 10 (hạ Vua): banner "★ Mở khóa: Vòng cổ ∞!", bảng kết quả "Mở khóa: …", Cài đặt → Mèo → Phụ kiện có Vòng cổ ∞. Nếu đã từng tới đợt 11+ trước bản này thì vòng cổ có sẵn (Mới).
 - [ ] Qua đợt 20: Đồng hồ cát chọn được trong Cài đặt → Mèo (kỷ vật trưng bày), cầm/ném/rơi như cúp. Xem 3 phụ kiện trên mèo thật (vòng cổ, vành sao, áo choàng) — nếu chưa đạt thì có thể xem ảnh trong Phần thưởng.
+
+## 1.4.1 — cài đặt (chào mừng, khởi động cùng Windows, gỡ)
+- [ ] Cài 1.4.1 bằng Setup.exe (máy chưa cài, hoặc gỡ 1.4.0 trước): hình con mèo khi giải nén; mèo mở kèm hộp chào mừng (mẹo + ô Khởi động cùng Windows tích sẵn). Bỏ tích → Bắt đầu: Cài đặt → Chung ô tắt. Gỡ, cài lại để thử với ô tích: Task Manager → Startup apps có Desktop Pet; khởi động lại máy thì mèo tự mở (bản đã cài, không phải artifacts\win-x64).
+- [ ] Từng bật khởi động cùng Windows cho bản copy thư mục: cài 1.4.1, để ô tích → bấm Bắt đầu: khởi động lại máy chỉ mở bản đã cài.
+- [ ] Gỡ cài đặt: Startup apps không còn Desktop Pet; mục của bản copy thư mục khác (nếu có) vẫn còn.
+- [ ] Máy đã cài 1.4.0: nhận 1.4.1 qua khay (Cập nhật lên bản 1.4.1) — không hiện hộp chào mừng (chỉ lần cài đầu); trang Release 1.4.1 có ghi chú từ CHANGELOG.

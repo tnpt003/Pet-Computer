@@ -1,8 +1,15 @@
 # Tiến độ Desktop Pet
 
-Cập nhật: 2026-10-22 (Asia/Saigon). Lịch sử trước 21/10: docs/archive/PROGRESS-2026-10.md.
+Cập nhật: 2026-10-23 (Asia/Saigon). Lịch sử trước 21/10: docs/archive/PROGRESS-2026-10.md.
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
+
+## 1.4.1 — chào mừng sau khi cài, khởi động cùng Windows, gỡ sạch (2026-10-23)
+- GitHub Actions lần đầu (tag v1.4.0, 22/10 17:52 UTC): thành công ~2,5 phút, Release v1.4.0 có Setup.exe 93,6 MB, Portable.zip, full.nupkg, RELEASES, releases.win.json. Người dùng đã tải được Setup.exe. (Máy này đã cài .NET SDK 10.0.402 hệ thống cho C# Dev Kit của VS Code; script vẫn dùng .tools\dotnet.)
+- Người dùng muốn chọn chỗ cài + checkbox autostart trong installer; Velopack Setup cài một click, không có giao diện → người dùng chọn (phương án 2+3, không làm MSI): hỏi trong app ở lần mở đầu.
+- Đã làm: `App()` thêm `OnFirstRun` (cờ) và `OnBeforeUninstallFastCallback` (`StartupRegistration.RemoveIfThis`: xóa mục Run chỉ khi trỏ tới chính bản này). `PetWelcome.cs`: hộp chào mừng (mẹo + ô "Khởi động cùng Windows" tích sẵn), mở sau `pet.Show()` qua Dispatcher; đóng cửa sổ cũng áp lựa chọn đang hiện; ghi Run cho bản đã cài nên mục cũ của bản copy được chuyển sang. `PetDialog.Create` thêm tham số `extra` (đặt dưới câu chữ). `pack.ps1`: `--splashImage Assets\PetIcon-preview.png`, `--releaseNotes` từ mục `## <version>` của CHANGELOG.md. Version 1.4.1; CHANGELOG có mục 1.4.0 (trước là "Chưa phát hành") và 1.4.1.
+- Test thật: test.ps1 -Ui (có PET_RENDER_REVIEW): Python OK, C# 1352 (2 check mới: gỡ giữ mục của bản khác, xóa mục của bản này), WPF 765/765 (check mới: hộp chào mừng 1 nút, ô tích sẵn, có mẹo khay). Đã xem ảnh hộp chào mừng (en).
+- Chưa thử thật: chạy Setup 1.4.1 (hook first run/uninstall chỉ chạy ở bản cài), cập nhật 1.4.0 → 1.4.1 qua khay. Mục test tay: cuối MANUAL-TEST "1.4.1 — cài đặt".
 
 ## Kế hoạch 22/10 đợt 2 (N1–N5)
 - Người dùng duyệt ("ok"; mũ và phần thưởng "làm luôn, không cần duyệt"): N1 mũ slime + thẻ trạng thái; N2 BattleSkills thành dữ liệu; N3 phần thưởng mốc Vô tận (3 phụ kiện chủ đề vô tận + 2 món trưng bày desktop + huy hiệu trên Sảnh); N4 chuẩn bị public (LICENSE MIT, rà lịch sử, README) — người dùng đã chuyển repo GitHub sang public, chấp nhận lộ email gmail trong commit; N5 Velopack + GitHub Actions (cài/tự cập nhật từ GitHub Releases, tên gói khác thư mục dữ liệu DesktopPet, lên 1.4.0 bỏ beta, checklist máy Win 10 của người dùng). Ký code: để sau (không ký trước; SignPath miễn phí khi cần).
@@ -295,7 +302,8 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Chưa: chơi thật; xem màn 5 Khó có quá khó không (có thể giảm `rallyDamage`/HP Vua); hồi xa có làm màn 4 dài/khó chịu không.
 
 ## Đang dở và việc tiếp theo
-- Kế hoạch đợt 2 (N1–N5) xong phần code. Việc của người dùng: `git push origin main` rồi `git tag v1.4.0` + `git push origin v1.4.0` → xem tab Actions tạo Release 1.4.0; cài thử trên máy Win 10 theo docs/RELEASE.md; sau đó phát hành 1.4.1 để thử tự cập nhật. Nếu workflow lỗi (lần chạy đầu trên GitHub), gửi log để sửa.
+- Release 1.4.0 đã lên GitHub (Actions đạt). Việc của người dùng: cài 1.4.0 thử theo docs/RELEASE.md; rồi `git push origin main` + `git tag v1.4.1` + `git push origin v1.4.1` → máy đã cài 1.4.0 nhận 1.4.1 qua khay (thử tự cập nhật thật); test tay mục "1.4.1 — cài đặt" cuối MANUAL-TEST.
+- Có thể sau: bộ cài MSI (`vpk pack --msi`, có màn hình từng bước) nếu muốn chọn thư mục cài — chưa thử xem MSI của Velopack có chọn thư mục tùy ý không. SmartScreen: nộp đơn SignPath Foundation khi muốn chia sẻ rộng (mình gắn bước ký vào workflow sau khi được duyệt).
 - Đồng hồ cát hiện vẽ tĩnh (đề xuất ban đầu có cát chảy/lật khi nhấc) — làm sau nếu muốn. Ký code: SignPath khi cần.
 - Kế hoạch 2026-10-22 M1–M8: xong hết (xem các mục trên và bảng trong docs/NEXT-STEPS.md). Việc còn của người dùng: test tay các mục mới cuối docs/MANUAL-TEST.md (quả bóng/focus, quay lại bậc, ngày lễ mới, HUD kéo được, Vô tận).
 - Vô tận: chỉnh số liệu `endless` trong battle.json sau khi chơi thật (đợt nào bắt đầu khó, Vua đợt 10/20 có quá mạnh không vì threat cộng dồn). Có thể làm sau: mô phỏng cân bằng như AdventureBalanceTests; phần thưởng mốc đợt (đã nêu, người dùng chưa chọn).

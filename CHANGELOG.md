@@ -1,6 +1,15 @@
 # Nhật ký thay đổi
 
-## Chưa phát hành
+## 1.4.1 — Chào mừng sau khi cài (2026-10-23)
+
+- **Lần mở đầu sau khi cài:** hộp chào mừng với vài mẹo (bế/ném mèo, menu chuột phải, biểu tượng khay) và ô **Khởi động cùng Windows** (tích sẵn). Nếu trước đó bạn bật khởi động cùng Windows cho bản copy thư mục, ô này chuyển nó sang bản đã cài.
+- **Gỡ cài đặt** nay xóa luôn mục khởi động cùng Windows của bản đã cài (trước đây Windows vẫn cố mở file đã bị xóa). Mục khởi động của bản copy thư mục khác không bị đụng tới.
+- Trình cài đặt hiện hình con mèo trong lúc giải nén; trang Release có ghi chú thay đổi.
+
+## 1.4.0 — Vô tận, cài đặt và tự cập nhật (2026-10-22)
+
+- **Cài bằng `PetComputer-win-Setup.exe`** (không cần admin, có shortcut Desktop/Start menu) và **tự cập nhật** từ GitHub Releases; khay có "Kiểm tra cập nhật". Dữ liệu của bạn ở `%LOCALAPPDATA%\DesktopPet` không bị đụng khi cập nhật hay gỡ.
+- **Phần thưởng mốc Vô tận** (qua đợt 10/20/30/40/50): 3 phụ kiện và 2 món trưng bày mới. Mũ slime to hơn; thẻ trạng thái có câu nói/ý nghĩ gần nhất.
 
 - **Chế độ Vô tận** (thẻ thứ ba trên Sảnh, mở sau khi thắng Vua Slime): đợt quái không ngừng, đông và mạnh dần; cứ 3 đợt chọn 1 thẻ; Vua Slime mỗi 10 đợt. Hết lượt khi mèo thua hoặc bấm Kết thúc; kỷ lục là đợt xa nhất theo vũ khí + độ khó; thẻ trên Sảnh hiện đợt xa nhất.
 - **Viễn chinh: quay lại bậc** — sau khi quay máy, mỗi bậc được quay lại 1 lần (trước khi vào/ghé điểm nào) với giá 8% HP tối đa.

@@ -14,12 +14,21 @@ public partial class App : Application
     private System.Threading.RegisteredWaitHandle? controlsWait;
     private bool ownsInstance;
     private PetUpdates? updates;
+    private bool firstRun;
 
     // Velopack first: the installer's hooks run and exit here, and an update downloaded earlier is
     // applied before anything starts. A copied (not installed) folder goes on as before.
+    // First run after installing: the welcome (PetWelcome). Uninstalling: drop this copy's Windows
+    // startup entry so Windows does not try to start a deleted file.
     public App()
     {
-        try { Velopack.VelopackApp.Build().Run(); }
+        try
+        {
+            Velopack.VelopackApp.Build()
+                .OnFirstRun(_ => firstRun = true)
+                .OnBeforeUninstallFastCallback(_ => { if (Environment.ProcessPath is string exe) new StartupRegistration().RemoveIfThis(exe); })
+                .Run();
+        }
         catch (Exception ex) { System.Diagnostics.Trace.WriteLine($"Velopack startup skipped: {ex.Message}"); }
     }
 
@@ -102,6 +111,7 @@ public partial class App : Application
                 : pet.L("Bạn đang dùng bản mới nhất.", "You have the latest version."), Forms.ToolTipIcon.Info);
         };
         pet.Show();
+        if (firstRun) Dispatcher.BeginInvoke(new Action(() => PetWelcome.Show(pet.L, new StartupRegistration())));
         updates.Start();
         controlsWait = System.Threading.ThreadPool.RegisterWaitForSingleObject(showControls,
             (_, _) => Dispatcher.BeginInvoke(new Action(() => { if (pet.IsVisible) pet.ShowControls(); })),

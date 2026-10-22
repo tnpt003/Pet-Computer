@@ -53,6 +53,11 @@ static class ToolingTests
                 "A startup entry for a different copy is not reported as this one");
             check(startup.SetEnabled(false, exe) && !startup.IsEnabled(exe) && startup.SetEnabled(false, exe),
                 "Disabling startup removes the entry and is idempotent");
+            string other = Path.Combine(Path.GetTempPath(), "Other", "DesktopPet.exe");
+            check(startup.SetEnabled(true, other) && startup.RemoveIfThis(exe) && startup.IsEnabled(other),
+                "Uninstalling keeps a startup entry that starts another copy");
+            check(startup.SetEnabled(true, exe) && startup.RemoveIfThis(exe) && !startup.IsEnabled(exe) && startup.RemoveIfThis(exe),
+                "Uninstalling removes this copy's startup entry");
         }
         finally { Microsoft.Win32.Registry.CurrentUser.DeleteSubKeyTree(testKey, false); }
 

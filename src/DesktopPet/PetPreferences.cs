@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
@@ -53,6 +54,9 @@ public sealed class PetPreferences
     // The one keepsake on display (Settings → Pet); null or not owned: the best one (gold → silver → bronze → cushion).
     public string? TrophyShown { get; set; }
     public double? TrophyFractionX { get; set; }
+    // Where the user dragged the battle HUD, per monitor (device name): its left and top as fractions
+    // of the room left in that monitor's work area. A monitor not listed: centred at the top.
+    public Dictionary<string, double[]>? BattleHudSpots { get; set; }
     // Battle Mode difficulty chosen in the menu: "Easy", "Normal" or "Hard".
     public string BattleDifficulty { get; set; } = "Normal";
     public static string NormalizeDifficulty(string? value) => value is "Easy" or "Normal" or "Hard" ? value : "Normal";
@@ -90,6 +94,9 @@ public sealed class PetPreferences
             p.PositionX = double.IsFinite(p.PositionX) ? Math.Clamp(p.PositionX, 0, 1) : 0.5;
             p.PositionY = double.IsFinite(p.PositionY) ? Math.Clamp(p.PositionY, 0, 1) : 1;
             p.RestFractionX = double.IsFinite(p.RestFractionX) ? Math.Clamp(p.RestFractionX, 0, 1) : 0.5;
+            p.BattleHudSpots = p.BattleHudSpots?.Where(s => !string.IsNullOrWhiteSpace(s.Key) && s.Value is { Length: 2 } && s.Value.All(double.IsFinite)).Take(16)
+                .ToDictionary(s => s.Key, s => s.Value.Select(v => Math.Clamp(v, 0, 1)).ToArray());
+            if (p.BattleHudSpots is { Count: 0 }) p.BattleHudSpots = null;
             if (p.TrophyFractionX is double tx) p.TrophyFractionX = double.IsFinite(tx) ? Math.Clamp(tx, 0, 1) : null;
             if (!p.RestX.HasValue || !p.RestY.HasValue || !double.IsFinite(p.RestX.Value) || !double.IsFinite(p.RestY.Value)) p.RestX = p.RestY = null;
             return p;

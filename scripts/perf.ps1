@@ -6,9 +6,12 @@
 #   -Battle run|paused: start a separate pet that keeps a Battle Mode fight running (or paused);
 #   -Battle expedition: the same with the Expedition's heaviest kind of battle (the last elite
 #   encounter, the last step's threat, a full set of relics; a run in memory only);
+#   -Battle crowd: a fight that keeps up to 16 slimes on the floor (the most the field draws).
+#   With -Battle the pet logs its frame numbers once a second; they are summed up at the end
+#   (fps, the longest gap between two frames, enemies on the floor).
 #   -Trophies: a separate pet with every keepsake, so the display corner shows (Pet Mode).
 #   For these the user's pet must be closed first (one pet per session).
-param([double]$Minutes = 3, [string]$Label = 'run', [double]$Interval = 1, [ValidateSet('', 'run', 'paused', 'expedition')][string]$Battle = '', [switch]$Trophies)
+param([double]$Minutes = 3, [string]$Label = 'run', [double]$Interval = 1, [ValidateSet('', 'run', 'paused', 'expedition', 'crowd')][string]$Battle = '', [switch]$Trophies)
 $ErrorActionPreference = 'Stop'
 Add-Type @'
 using System;
@@ -118,6 +121,7 @@ try {
         $window = [PetPerfWindow]::Find($pet.Id)
         if ($window -ne [IntPtr]::Zero) { [PetPerfWindow]::PostMessage($window, 0x0010, [IntPtr]::Zero, [IntPtr]::Zero) | Out-Null }
         if (-not $pet.WaitForExit(5000)) { Write-Warning 'The measured pet did not close; stopping it.'; $pet.Kill() }
+        $measuredLog = Join-Path $env:PET_DATA_DIRECTORY 'logs\desktoppet.log'
         $env:PET_DATA_DIRECTORY = $savedData
     }
     $env:PET_BATTLE_AUTOSTART = $savedAutostart
@@ -135,5 +139,17 @@ foreach ($name in @('pet', 'python')) {
     $maxPrivate = ($data | Measure-Object PrivateMB -Maximum).Maximum
     Write-Host ("{0,-7} CPU avg {1}% p95 {2}% max {3}% | private MB {4} -> {5} (max {6}) | handles {7} -> {8} | threads {9} -> {10}" -f
         $name, $avg, $p95, $cpu[-1], $first.PrivateMB, $last.PrivateMB, $maxPrivate, $first.Handles, $last.Handles, $first.Threads, $last.Threads)
+}
+if ($Battle -and $measuredLog -and (Test-Path $measuredLog)) {
+    # "Frame stats: 59.8 fps, longest gap 21 ms, 14 enemies" once a second while the fight ran.
+    $frames = @(Select-String -Path $measuredLog -Pattern 'Frame stats: ([\d.]+) fps, longest gap (\d+) ms, (\d+) enemies' | ForEach-Object {
+        [pscustomobject]@{ Fps = [double]$_.Matches[0].Groups[1].Value; Gap = [double]$_.Matches[0].Groups[2].Value; Enemies = [int]$_.Matches[0].Groups[3].Value } })
+    if ($frames.Count -gt 0) {
+        $fps = @($frames | ForEach-Object Fps | Sort-Object); $gaps = @($frames | ForEach-Object Gap | Sort-Object)
+        $p95gap = $gaps[[Math]::Min($gaps.Count - 1, [int][Math]::Floor($gaps.Count * 0.95))]
+        Write-Host ("frames  {0} s | fps median {1} min {2} | longest gap p95 {3} ms max {4} ms | enemies avg {5} max {6}" -f
+            $frames.Count, $fps[[int][Math]::Floor($fps.Count / 2)], $fps[0], $p95gap, $gaps[-1],
+            [Math]::Round(($frames | Measure-Object Enemies -Average).Average, 1), ($frames | Measure-Object Enemies -Maximum).Maximum)
+    }
 }
 Write-Host "Samples: $csv"

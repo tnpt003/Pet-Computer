@@ -87,10 +87,18 @@ public sealed partial class PetWindow
 
     // Measurement only (scripts/perf.ps1 -Battle): PET_BATTLE_AUTOSTART=run keeps a battle going
     // (a new one after each end), =paused keeps a paused one open, =expedition keeps the
-    // Expedition's heaviest kind of battle going (StartMeasuredExpeditionBattle). Unset in normal
-    // use, where a battle never starts by itself.
-    private readonly string? battleAutostart = Environment.GetEnvironmentVariable("PET_BATTLE_AUTOSTART") is "run" or "paused" or "expedition"
+    // Expedition's heaviest kind of battle going (StartMeasuredExpeditionBattle), =crowd keeps the
+    // floor full (CrowdTuning: up to 16 tough slimes at once). While measuring, the frame numbers go
+    // to the log once a second. Unset in normal use, where a battle never starts by itself.
+    private readonly string? battleAutostart = Environment.GetEnvironmentVariable("PET_BATTLE_AUTOSTART") is "run" or "paused" or "expedition" or "crowd"
         ? Environment.GetEnvironmentVariable("PET_BATTLE_AUTOSTART") : null;
+
+    // The crowded fight to measure: plain slimes that take long to beat, a cat that does not fall,
+    // waves big enough that the floor stays full.
+    public static BattleSettings CrowdTuning => new()
+    {
+        MaxAlive = 16, Waves = new[] { 60, 60, 60 }, SpawnInterval = 0.15, FirstWaveDelay = 0.5, SlimeMaxHp = 4000, CatMaxHp = 100000
+    };
     private double battleAutostartTimer;
 
     private void TickBattleAutostart(double dt)
@@ -100,6 +108,7 @@ public sealed partial class PetWindow
         if (battleAutostartTimer < 1) return;
         battleAutostartTimer = 0;
         if (battleAutostart == "expedition") { StartMeasuredExpeditionBattle(); return; }
+        if (battleAutostart == "crowd") BattleTuning = CrowdTuning;
         if (StartBattle() == null && battleAutostart == "paused") SetBattlePaused(true);
     }
 
@@ -272,6 +281,7 @@ public sealed partial class PetWindow
         battleFieldWindow = battleHudWindow = null;
         battleView = null;
         battleHud = null;
+        battleHudGrab = null;
         pet.SwordOut = false; pet.Hammer = false; pet.SwordSwing = -1; pet.SwordCombo = false; pet.BattleHurt = 0; pet.MoveScale = 1;
         battleHudDodging = false;
         pet.BattleDazed = pet.BattleCheer = pet.BattleShield = pet.BattleBuff = false;
@@ -533,8 +543,7 @@ public sealed partial class PetWindow
         }
         if (battleRedraw || (due && !b.Paused)) UpdateBattleHud();
         battleRedraw = false;
-        double width = battleHudWindow.ActualWidth;
-        MoveWindow(battleHudWindow, (area.Left + area.Right - width) / 2, area.Top + 12, fieldScale);
+        PlaceBattleHud();
         UpdateBattleHudDodge();
     }
 
@@ -580,8 +589,79 @@ public sealed partial class PetWindow
         battleHud.PauseClicked += () => { if (battle != null) SetBattlePaused(!BattleUserPaused); };
         battleHud.EndClicked += EndBattleByUser;
         battleHud.BagClicked += () => { if (battle != null) { if (BattleBagOpen) CloseBattleBag(); else if (OpenBattleBag() is string reason) ShowBattleNotice(reason); } };
+        var grip = battleHud.Grip;
+        grip.MouseLeftButtonDown += (_, e) => { e.Handled = true; if (e.ClickCount >= 2) ResetBattleHudSpot(); else StartBattleHudDrag(); };
+        grip.MouseMove += (_, _) => { if (battleHudGrab != null) PlaceBattleHud(); };
+        grip.MouseLeftButtonUp += (_, _) => EndBattleHudDrag();
+        grip.LostMouseCapture += (_, _) => EndBattleHudDrag();
         UpdateBattleHud();
         return battleHud;
+    }
+
+    // Moving the HUD by its grip: the cursor's offset from the HUD's top-left while dragging; where
+    // it is now (DIPs of the battle's monitor). Remembered per monitor in preferences (BattleHudSpots).
+    private Point? battleHudGrab;
+    private Point battleHudAt;
+    public Point BattleHudPosition => battleHudAt;
+
+    private void StartBattleHudDrag()
+    {
+        if (battleHud == null || battleHudWindow == null || !battleHud.Grip.CaptureMouse()) return;
+        var cursor = ScreenCursor();
+        battleHudGrab = new Point(cursor.X / battleScale - battleHudAt.X, cursor.Y / battleScale - battleHudAt.Y);
+    }
+
+    private void EndBattleHudDrag()
+    {
+        if (battleHudGrab == null) return;
+        PlaceBattleHud();
+        battleHudGrab = null;
+        battleHud?.Grip.ReleaseMouseCapture();
+        if (battleHudWindow == null) return;
+        var (roomX, roomY) = BattleHudRoom(battleArea, battleHudWindow.ActualWidth, battleHudWindow.ActualHeight);
+        (preferences.BattleHudSpots ??= new())[battleMonitor] = new[]
+        {
+            roomX > 0 ? Math.Clamp((battleHudAt.X - battleArea.Left) / roomX, 0, 1) : 0.5,
+            roomY > 0 ? Math.Clamp((battleHudAt.Y - battleArea.Top) / roomY, 0, 1) : 0
+        };
+        SavePreferences();
+    }
+
+    // Double click on the grip: back to the usual place (centred at the top) on this monitor.
+    private void ResetBattleHudSpot()
+    {
+        battleHudGrab = null;
+        battleHud?.Grip.ReleaseMouseCapture();
+        if (preferences.BattleHudSpots?.Remove(battleMonitor) == true)
+        {
+            if (preferences.BattleHudSpots.Count == 0) preferences.BattleHudSpots = null;
+            SavePreferences();
+        }
+        PlaceBattleHud();
+    }
+
+    // The room the HUD can move in: the work area above the battlefield strip.
+    private static (double X, double Y) BattleHudRoom(Area area, double width, double height) =>
+        (Math.Max(0, area.Right - area.Left - width), Math.Max(0, area.Bottom - area.Top - BattleFieldView.FieldHeight - height));
+
+    private void PlaceBattleHud()
+    {
+        if (battleHudWindow == null) return;
+        var area = battleArea;
+        double width = battleHudWindow.ActualWidth, height = battleHudWindow.ActualHeight;
+        var (roomX, roomY) = BattleHudRoom(area, width, height);
+        double left = (area.Left + area.Right - width) / 2, top = area.Top + 12;
+        if (battleHudGrab is Point grab)
+        {
+            var cursor = ScreenCursor();
+            left = cursor.X / battleScale - grab.X; top = cursor.Y / battleScale - grab.Y;
+        }
+        else if (preferences.BattleHudSpots?.TryGetValue(battleMonitor, out var spot) == true)
+        {
+            left = area.Left + spot[0] * roomX; top = area.Top + spot[1] * roomY;
+        }
+        battleHudAt = new Point(Math.Clamp(left, area.Left, area.Left + roomX), Math.Clamp(top, area.Top, area.Top + roomY));
+        MoveWindow(battleHudWindow, battleHudAt.X, battleHudAt.Y, battleScale);
     }
 
     private void UpdateBattleHud()

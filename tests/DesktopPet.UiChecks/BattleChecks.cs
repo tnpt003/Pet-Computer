@@ -137,6 +137,36 @@ internal static class BattleChecks
         CursorAt(gameHud.PointToScreen(new Point(20, 20)));
         CursorAt(new Point(-30000, -30000));
         check(!window.BattleHudDodging && !HudClickThrough() && gameHud.Opacity == 1, "Away from the HUD it looks and works as before");
+        // Moving the HUD by its grip (2026-10-22): it follows the cursor inside the work area above the
+        // field, is remembered per monitor, and a double click puts it back at the top centre.
+        var hudArea = Field<Area>(window, "battleArea");
+        double hudScale = Field<double>(window, "battleScale");
+        var hudHome = window.BattleHudPosition;
+        check(Math.Abs(hudHome.X - (hudArea.Left + hudArea.Right - Field<Window>(window, "battleHudWindow").ActualWidth) / 2) < 1 && Math.Abs(hudHome.Y - (hudArea.Top + 12)) < 1,
+            "The HUD starts centred at the top");
+        var gripAt = gameHud.Grip.PointToScreen(new Point(7, 26));
+        CursorAt(gripAt);
+        check(!window.BattleHudDodging && gameHud.IsInteractiveAt(gameHud.Grip.TranslatePoint(new Point(7, 26), gameHud)), "The gripAt is solid and clickable (no stepping aside over it)");
+        Call(window, "StartBattleHudDrag");
+        cursorProbe.SetValue(window, (Func<Point>)(() => new Point(gripAt.X - 150 * hudScale, gripAt.Y + 120 * hudScale)));
+        Call(window, "PlaceBattleHud");
+        check(Math.Abs(window.BattleHudPosition.X - (hudHome.X - 150)) < 1.5 && Math.Abs(window.BattleHudPosition.Y - (hudHome.Y + 120)) < 1.5, "Dragging the gripAt moves the HUD with the cursor");
+        Call(window, "EndBattleHudDrag");
+        var hudMoved = window.BattleHudPosition;
+        check(preferences.BattleHudSpots?.ContainsKey(Field<string>(window, "battleMonitor")) == true, "Let go: the place is remembered for this monitor");
+        cursorProbe.SetValue(window, usualCursor);
+        Tick(1.0 / 60);
+        check(Math.Abs(window.BattleHudPosition.X - hudMoved.X) < 1 && Math.Abs(window.BattleHudPosition.Y - hudMoved.Y) < 1, "It stays there while the battle goes on");
+        Call(window, "StartBattleHudDrag");
+        cursorProbe.SetValue(window, (Func<Point>)(() => new Point(gripAt.X + 99999, gripAt.Y + 99999)));
+        Call(window, "PlaceBattleHud");
+        Call(window, "EndBattleHudDrag");
+        double hudHeight = Field<Window>(window, "battleHudWindow").ActualHeight;
+        check(window.BattleHudPosition.Y <= hudArea.Bottom - BattleFieldView.FieldHeight - hudHeight + 0.5 && window.BattleHudPosition.X <= hudArea.Right + 0.5 - Field<Window>(window, "battleHudWindow").ActualWidth,
+            "It never goes off the work hudArea or over the battlefield strip");
+        Call(window, "ResetBattleHudSpot");
+        check(Math.Abs(window.BattleHudPosition.X - hudHome.X) < 1 && Math.Abs(window.BattleHudPosition.Y - hudHome.Y) < 1 && preferences.BattleHudSpots == null,
+            "Double click on the grip: back to the top centre, nothing remembered");
         cursorProbe.SetValue(window, usualCursor);
         Tick(1.0 / 60);
         check(!gameHud.Slot(BattleSkill.Push).IsReady && gameHud.Slot(BattleSkill.Push).Remaining > 0 && gameHud.Slot(BattleSkill.Heal).IsReady,

@@ -25,7 +25,7 @@ public sealed class BattleHud : Border
     public double BannerShownWidth => banner.IsVisible ? banner.TransformToAncestor(this).TransformBounds(new Rect(banner.RenderSize)).Width : 0;
     private readonly Func<string, string, string> L;
     private readonly TextBlock hpText, status, hint, banner, bossName, comboText, upgradesText;
-    private readonly Border hpFill, hpTrail, bossFill, bossBar, pauseButton, endButton, bagButton;
+    private readonly Border hpFill, hpTrail, bossFill, bossBar, pauseButton, endButton, bagButton, grip;
     private readonly HudGlyph pauseGlyph;
     private readonly StackPanel waveDots;
     private readonly SkillSlot[] slots = new SkillSlot[SkillOrder.Length];
@@ -141,7 +141,22 @@ public sealed class BattleHud : Border
         bagButton.MouseEnter += (_, _) => HoverControl(L("Túi đồ: chỉ số, thẻ, di vật (tạm dừng trận khi mở)", "Bag: stats, cards, relics (pauses the battle while open)"));
         bagButton.MouseLeave += (_, _) => HoverControl(null);
 
-        var top = new StackPanel { Orientation = Orientation.Horizontal, Children = { left, centre, bar, bagButton, controls } };
+        // The grip (PetWindow.Battle.cs): drag it to move the HUD, double click for its usual place.
+        var dots = new Canvas { Width = 6, Height = 16 };
+        for (int row = 0; row < 3; row++)
+            for (int column = 0; column < 2; column++)
+            {
+                var dot = new System.Windows.Shapes.Ellipse { Width = 2.6, Height = 2.6, Fill = Soft };
+                Canvas.SetLeft(dot, column * 3.6); Canvas.SetTop(dot, row * 6.2);
+                dots.Children.Add(dot);
+            }
+        grip = new Border { Width = 14, Height = 52, Margin = new Thickness(6, 0, 0, 0), CornerRadius = new CornerRadius(5), VerticalAlignment = VerticalAlignment.Center,
+            Background = Frozen(0x30, 255, 255, 255), Cursor = Cursors.SizeAll, Child = dots };
+        dots.HorizontalAlignment = HorizontalAlignment.Center; dots.VerticalAlignment = VerticalAlignment.Center;
+        grip.MouseEnter += (_, _) => HoverControl(L("Kéo để dời HUD · bấm đúp: về chỗ cũ", "Drag to move the HUD · double click: back to its place"));
+        grip.MouseLeave += (_, _) => HoverControl(null);
+
+        var top = new StackPanel { Orientation = Orientation.Horizontal, Children = { left, centre, bar, bagButton, controls, grip } };
         // As wide as the row above (never wider): a long description wraps instead of widening the
         // HUD, which would re-centre it and slide the slots out from under the mouse.
         hint = new TextBlock { Foreground = Soft, FontSize = PetUi.SmallSize, TextAlignment = TextAlignment.Center, TextWrapping = TextWrapping.Wrap,
@@ -156,6 +171,7 @@ public sealed class BattleHud : Border
     public Border PauseButton => pauseButton;
     public Border EndButton => endButton;
     public Border BagButton => bagButton;
+    public Border Grip => grip;
 
     // For the HUD stepping aside (PetWindow.Battle.cs): points in this panel's coordinates.
     public bool IsInsidePanel(Point point) => point.X >= 0 && point.Y >= 0 && point.X < ActualWidth && point.Y < ActualHeight;
@@ -169,7 +185,7 @@ public sealed class BattleHud : Border
             return at.X >= 0 && at.Y >= 0 && at.X < element.ActualWidth && at.Y < element.ActualHeight;
         }
         foreach (var slot in slots) if (Over(slot)) return true;
-        return Over(pauseButton) || Over(endButton) || Over(bagButton);
+        return Over(pauseButton) || Over(endButton) || Over(bagButton) || Over(grip);
     }
     public string HintText => hint.Text;
 

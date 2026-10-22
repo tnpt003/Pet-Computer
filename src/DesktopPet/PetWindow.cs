@@ -404,6 +404,9 @@ public sealed partial class PetWindow : Window
         if (now - frameStatsStart < 1) return;
         measuredFps = frameCount / (now - frameStatsStart);
         measuredMaxGap = frameMaxGap;
+        // Measuring (scripts/perf.ps1 -Battle): one line a second for the script to sum up.
+        if (battleAutostart != null && battle != null)
+            Trace.WriteLine(FormattableString.Invariant($"Frame stats: {measuredFps:F1} fps, longest gap {measuredMaxGap * 1000:F0} ms, {battle.Slimes.Count} enemies"));
         frameStatsStart = now; frameCount = 0; frameMaxGap = 0;
     }
 

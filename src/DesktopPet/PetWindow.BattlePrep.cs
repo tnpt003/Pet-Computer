@@ -341,12 +341,23 @@ public sealed partial class PetWindow
         actions.Children.Add(prepGuideText); actions.Children.Add(prepTipText); actions.Children.Add(ready); actions.Children.Add(cancel);
 
         var choices = new StackPanel { Width = 300, Children = { prepWeaponLabel, cards, prepLevelLabel, levels } };
+        // Taller than the cat's monitor (a low or high-DPI screen, PlaceBattlePrep caps the height):
+        // the content scrolls, the buttons stay in view (as on the Expedition map).
+        var scroll = new ScrollViewer
+        {
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled, Focusable = false,
+            Content = new StackPanel { Children = { prepTitle, new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 10, 0, 0), Children = { stage, choices } },
+                prepBuild, prepData, prepStatus } }
+        };
+        scroll.Resources.MergedDictionaries.Add(PetControlStyle.Resources);
+        var body = new DockPanel();
+        DockPanel.SetDock(actions, Dock.Bottom);
+        body.Children.Add(actions); body.Children.Add(scroll);
         var panel = new Border
         {
             Background = HudBack, BorderBrush = PetUi.Game.Rim, BorderThickness = new Thickness(1.5), CornerRadius = new CornerRadius(12),
             Padding = new Thickness(16, 12, 16, 12), Margin = new Thickness(6),
-            Child = new StackPanel { Children = { prepTitle, new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 10, 0, 0), Children = { stage, choices } },
-                prepBuild, prepData, prepStatus, actions } },
+            Child = body,
             Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 6, ShadowDepth = 1, Opacity = 0.4 }
         };
         panel.SetValue(TextBlock.FontFamilyProperty, PetUi.TextFont);
@@ -363,6 +374,7 @@ public sealed partial class PetWindow
     private void PlaceBattlePrep()
     {
         if (battlePrepWindow == null) return;
+        battlePrepWindow.MaxHeight = Math.Max(240, bounds.Bottom - bounds.Top - 24);
         battlePrepWindow.UpdateLayout();
         double width = battlePrepWindow.ActualWidth;
         MoveWindow(battlePrepWindow, Math.Clamp((bounds.Left + bounds.Right - width) / 2, bounds.Left, Math.Max(bounds.Left, bounds.Right - width)), bounds.Top + 12);

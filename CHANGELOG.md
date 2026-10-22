@@ -1,5 +1,9 @@
 # Nhật ký thay đổi
 
+## Chưa phát hành
+
+- **Bảng chuẩn bị trên màn hình thấp/scale cao:** màn có mục tiêu dài cao ~519 DIP từng tràn khỏi màn hình 480 DIP; nay cuộn như bản đồ Viễn chinh, hàng nút luôn ở dưới. Bản đồ Phiêu lưu và bảng kết quả đã đo, vừa sẵn.
+
 ## 1.3.0-beta — Viễn chinh hoàn thiện, cue tinh anh (2026-10-21)
 
 Bản beta: test tự động và mô phỏng đạt, **chưa chơi thử thật**, chưa thử DPI/màn hình phụ thật và máy sạch (docs/MANUAL-TEST.md → "Viễn chinh — mốc 5").

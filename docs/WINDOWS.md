@@ -530,7 +530,10 @@ The Expedition map is at most the cat's monitor height minus 24 DIPs (set when i
 its tallest (three relics and a rest's cards) it is about 574 DIPs, so on a low or high-DPI
 screen (1366×768 at 125 %, 1920×1080 at 175 %, 1280×720 at 150 %) its content scrolls with a
 thin warm scroll bar and the Close / Give up / main buttons stay at the bottom. Big enough
-screens see no change.
+screens see no change. The battle setup panel does the same (about 519 DIPs for a stage with a
+long goal; How to play / Stage tip / Close or Map / Ready stay at the bottom). Measured with the
+built-in data in both languages (UiChecks `PanelHeightChecks`): the Adventure map (~331 DIPs)
+and the result panel (~449 DIPs at its fullest) fit a 480-DIP screen as they are.
 
 ## Keepsake display corner (2026-10-21, Expedition milestone 4)
 

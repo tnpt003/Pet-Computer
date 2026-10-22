@@ -303,6 +303,7 @@ Tự động đã có: 18 chuyến trọn vẹn (Dễ/Thường/Khó × 6 seed) 
 - [ ] Chơi một chuyến Thường trọn vẹn từ đầu tới trùm (ghi thời lượng, HP trước trùm, số di vật, đường đã chọn). Giữa chừng đóng app bằng menu khay ở: bản đồ, bảng nghỉ chân đang mở, bảng chọn di vật, giữa trận. Mở lại: bản đồ/thẻ/di vật được đưa giống hệt lúc trước; đóng giữa trận thì mất 25% HP và đánh lại đúng trận đó.
 - [ ] Bấm đúp nhanh: "Tiếp tục" trên bảng kết quả, "Lấy di vật đã chọn", "Vào trận" — chỉ đi một bước, một di vật, một trận.
 - [ ] Màn hình thấp hoặc scale cao (vd. 1366×768 ở 125%, hoặc tạm đặt Display scale 175%): mở bản đồ lúc đủ 3 di vật và đang ở điểm nghỉ — bản đồ không tràn khỏi màn hình, có thanh cuộn mảnh màu kem; lăn chuột trên bản đồ cuộn được (không cần bấm vào trước); hàng nút Đóng/Bỏ chuyến luôn thấy. Màn hình thường: không có thanh cuộn, bản đồ như cũ.
+- [ ] Cùng màn hình thấp: bảng chuẩn bị của màn 2 "Break through/Phá vòng vây" (mục tiêu dài) không tràn, có thanh cuộn, nút Sẵn sàng/Bản đồ luôn thấy; cuộn xuống chọn được độ khó. Bản đồ Phiêu lưu và bảng kết quả không có thanh cuộn và không bị cắt.
 - [ ] DPI 125–150% thật và màn hình phụ khác DPI: bản đồ nằm giữa mép trên màn hình của mèo; kệ kỷ vật ở góc phải dưới đứng trên sàn. Rút màn hình phụ đang có trận Viễn chinh: trận chuyển sang màn hình còn lại, tạm dừng, HP giữ nguyên, bấm Tiếp tục đánh tiếp (không bị tính là bỏ trận).
 - [ ] Gói ZIP 1.3.0-beta trên máy sạch (không Visual Studio): mở được, Viễn chinh chơi được, tắt Python thì mèo vẫn chạy.
 

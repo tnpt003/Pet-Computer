@@ -370,5 +370,5 @@ public sealed partial class PetWindow
     private void ApplyAccessory() =>
         renderer.Accessory = preferences.HolidayAccessories && PetAccessories.ForEvent(specialDay) is { } outfit ? outfit.Id : preferences.Accessory;
 
-    private void CloseFeatures() { CloseTrophies(); EndBattle(); CloseBattlePrep(); CloseAdventureMap(); CloseExpeditionMap(); CloseBattleSummary(); CloseBattleNotice(); CloseBattleTutorial(); laserWindow?.Close(); diaryWindow?.Close(); CloseStatusCard(); behaviorSettingsWindow?.Close(); toyWindow?.Close(); settingsWindow?.Close(); speechWindow?.Close(); sound?.Stop(); sound?.Dispose(); soundStream?.Dispose(); }
+    private void CloseFeatures() { CloseTrophies(); EndBattle(); CloseBattleHub(); CloseBattlePrep(); CloseAdventureMap(); CloseExpeditionMap(); CloseBattleSummary(); CloseBattleNotice(); CloseBattleTutorial(); laserWindow?.Close(); diaryWindow?.Close(); CloseStatusCard(); behaviorSettingsWindow?.Close(); toyWindow?.Close(); settingsWindow?.Close(); speechWindow?.Close(); sound?.Stop(); sound?.Dispose(); soundStream?.Dispose(); }
 }

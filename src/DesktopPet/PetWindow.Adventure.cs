@@ -8,7 +8,7 @@ using System.Windows.Shapes;
 
 namespace DesktopPet;
 
-// Adventure (docs/ADVENTURE-UPDATE.md): menu → Battle Mode → Adventure opens the chapter map; a
+// Adventure (docs/ADVENTURE-UPDATE.md): the Battle Mode hub's Adventure opens the chapter map; a
 // stage opens the usual setup panel with that stage; Ready plays it with the battle engine; the
 // result panel counts the run in the saved progress (PetAdventure.cs) and offers the next stage,
 // the map or the desktop. One step owns the pet at a time: the map, the setup panel, the battle,
@@ -70,7 +70,7 @@ public sealed partial class PetWindow
         if (Adventure is not Adventure adventure || adventure.Chapter() is not ChapterSpec chapter)
             return L("Dữ liệu trận không có chương phiêu lưu.", "The battle data has no Adventure chapter.");
         if (battlePreparing) { CloseBattlePrep(); CloseBattleTutorial(); }
-        CloseExpeditionMap(); CloseBattleSummary(); CloseBattleNotice();
+        CloseBattleHub(); CloseExpeditionMap(); CloseBattleSummary(); CloseBattleNotice();
         // A reward added to a stage won before it existed is given now (only with official data).
         if (!BattleDataCustom && adventure.GrantRewards().Count > 0 && AdventureProgressFile != null) adventureSaveFailed = !AdventureProgress.Save(AdventureProgressFile);
         mapStageId = adventure.Stage(select) is StageSpec chosen ? chosen.Id
@@ -107,14 +107,13 @@ public sealed partial class PetWindow
         return OpenBattlePrep(stage: stage);
     }
 
-    // The map's Close: back to the pet's normal life.
+    // The map's Close: back to the battle hub (or the pet's normal life when the hub cannot open).
     public void CancelAdventureMap()
     {
         if (!adventureMapOpen) return;
         CloseAdventureMap();
-        revision++;
-        behavior.Reset(pet);
         System.Diagnostics.Trace.WriteLine("Adventure map closed.");
+        BackToBattleHub();
     }
 
     // Removes the map (entering a stage, reset, closing the pet). Leaves the pet's state alone.
@@ -143,14 +142,10 @@ public sealed partial class PetWindow
 
     private void ShowAdventureMapWindow(ChapterSpec chapter)
     {
-        TextBlock Line(double size, bool bold = false, double maxWidth = 420) => new()
-        {
-            Foreground = Brushes.White, FontSize = size, FontWeight = bold ? FontWeights.Bold : FontWeights.Normal,
-            TextWrapping = TextWrapping.Wrap, MaxWidth = maxWidth
-        };
+        static TextBlock Line(double size, bool bold = false) => PanelLine(size, bold, 420);
         mapTitle = Line(PetUi.HeadingSize, true);
         mapData = Line(PetUi.SmallSize); mapData.Foreground = PrepWarning; mapData.Margin = new Thickness(0, 6, 0, 0);
-        // The stages in order, joined by a path: gold when won, blue when open, grey with a lock when not yet.
+        // The stages in order, joined by a path: gold when won, orange when open, faint with a lock when not yet.
         var row = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 12, 0, 0), HorizontalAlignment = HorizontalAlignment.Center };
         mapNodes.Clear();
         for (int i = 0; i < chapter.Stages.Length; i++)
@@ -178,26 +173,12 @@ public sealed partial class PetWindow
         mapGoal = Line(PetUi.BodySize); mapGoal.Margin = new Thickness(0, 3, 0, 0);
         mapStatus = Line(PetUi.SmallSize, true); mapStatus.Margin = new Thickness(0, 5, 0, 0);
         mapRecord = Line(PetUi.SmallSize); mapRecord.Opacity = 0.8; mapRecord.Margin = new Thickness(0, 2, 0, 0);
-        var details = new Border { Background = PrepCardBack, CornerRadius = new CornerRadius(9), Padding = new Thickness(11, 0, 11, 9), Margin = new Thickness(0, 10, 0, 0),
-            Child = new StackPanel { Children = { mapStageName, mapGoal, mapStatus, mapRecord } } };
+        var details = DetailCard(new Thickness(11, 0, 11, 9), mapStageName, mapGoal, mapStatus, mapRecord);
         var (close, closeText, _) = HudButton(CancelAdventureMap, plain: true);
-        var (enter, enterText, _) = HudButton(() => { if (AdventureEnterStage() is string reason) ShowBattleNotice(reason); }, plain: true);
-        enter.Background = PrepChosen; enter.Padding = new Thickness(18, 6, 18, 5); enter.MinWidth = 110; enter.Margin = new Thickness(0);
-        enterText.FontSize = PetUi.TitleSize; enterText.FontWeight = FontWeights.Bold;
+        var (enter, enterText) = PrimaryButton(() => { if (AdventureEnterStage() is string reason) ShowBattleNotice(reason); });
         mapEnter = enter; mapEnterText = enterText; mapCloseText = closeText;
-        var actions = new DockPanel { Margin = new Thickness(0, 12, 0, 0), LastChildFill = false };
-        DockPanel.SetDock(close, Dock.Left); DockPanel.SetDock(enter, Dock.Right);
-        actions.Children.Add(close); actions.Children.Add(enter);
-        var panel = new Border
-        {
-            Background = HudBack, BorderBrush = PetUi.Game.Rim, BorderThickness = new Thickness(1.5), CornerRadius = new CornerRadius(12),
-            Padding = new Thickness(16, 12, 16, 12), Margin = new Thickness(6), MinWidth = 440,
-            Child = new StackPanel { Children = { mapTitle, mapData, row, details, actions } },
-            Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 6, ShadowDepth = 1, Opacity = 0.4 }
-        };
-        panel.SetValue(TextBlock.FontFamilyProperty, PetUi.TextFont);
-        var window = CreateBattleWindow(panel, "Pet adventure");
-        window.SizeToContent = SizeToContent.WidthAndHeight;
+        var window = CreateGamePanel(new StackPanel { Children = { PanelTitle(HubAdventure, mapTitle), mapData, row, details } },
+            PanelActions(new UIElement[] { close }, new UIElement[] { enter }), "Pet adventure", minWidth: 440);
         window.Closed += (_, _) => { if (adventureMapWindow == window) adventureMapWindow = null; };
         adventureMapWindow = window;
         UpdateAdventureMap();
@@ -205,13 +186,7 @@ public sealed partial class PetWindow
         PlaceAdventureMap();
     }
 
-    private void PlaceAdventureMap()
-    {
-        if (adventureMapWindow == null) return;
-        adventureMapWindow.UpdateLayout();
-        double width = adventureMapWindow.ActualWidth;
-        MoveWindow(adventureMapWindow, Math.Clamp((bounds.Left + bounds.Right - width) / 2, bounds.Left, Math.Max(bounds.Left, bounds.Right - width)), bounds.Top + 12);
-    }
+    private void PlaceAdventureMap() => PlaceGamePanel(adventureMapWindow);
 
     private void UpdateAdventureMap()
     {
@@ -267,7 +242,7 @@ public sealed partial class PetWindow
             ? L("Phần thưởng: ", "Reward: ") + item.Name(English) + (adventure.HasReward(reward) ? L(" ✓ đã nhận", " ✓ received") : "") : null;
         Show(mapRecord, string.Join("\n", new[] { record, prize }.Where(t => t != null)));
         mapEnterText!.Text = L("Vào màn", "Play stage");
-        mapCloseText!.Text = L("Đóng", "Close");
+        mapCloseText!.Text = L("‹ Sảnh", "‹ Hub");
         bool can = unlocked && BattlePrepRefusal() == null;
         if (mapEnter.IsEnabled != can) { mapEnter.IsEnabled = can; mapEnter.Opacity = can ? 1 : 0.5; }
     }

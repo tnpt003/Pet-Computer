@@ -10,18 +10,22 @@ using System.Windows.Threading;
 
 namespace DesktopPet;
 
-// Battle Mode's setup panel: menu → Start battle opens it, Ready starts the fight, Close goes
-// back to the pet's normal life. While it is open nothing fights yet (no slime, timer, damage or
+// Battle Mode's setup panel: an Adventure stage (from its map) or a new Expedition run (its map's
+// Prepare) opens it; Ready starts the fight (or the run), Map goes back to that map; the free battle's
+// Close goes back to the pet's normal life. While it is open nothing fights yet (no slime, timer, damage or
 // record) and it owns the pet's free time: no random actions, sleep, away nap, AI commands,
 // games or chatter (behavior runs as in Quiet mode). Sleep, waking, a drag or a flight already
 // going on are not cut; Ready just waits until the cat is free, checked again when pressed.
 // The panel never takes focus and is used with the mouse only, so it gets no keys from other apps.
 // Layout: a preview of this cat holding the chosen weapon (its own model, never the real cat;
 // Try it swings once), one card per weapon in the battle data (art, name, hint, four stats on
-// fixed scales), the difficulty, then How to play, Close and the main button, Ready.
+// fixed scales), the difficulty (with one to three stars), then How to play, Close and the main button, Ready.
 public sealed partial class PetWindow
 {
     private bool battlePreparing;
+    // The panel prepares a new Expedition run (Ready starts the run, not a battle).
+    private bool prepForExpedition;
+    public bool BattlePrepForExpedition => battlePreparing && prepForExpedition;
     private Window? battlePrepWindow;
     private string prepWeapon = BattleWeapon.Sword;
     private BattleDifficulty prepDifficulty = BattleDifficulty.Normal;
@@ -44,6 +48,7 @@ public sealed partial class PetWindow
     private static readonly Brush PrepBarFill = PetUi.Game.Gold;
     private static readonly Brush PrepStage = PetUi.Game.Stage;
     private static readonly Geometry CheckMark = PetUi.FrozenGeometry("M 1,6.5 L 5,10.5 L 13,2");
+    private static readonly Geometry DifficultyStar = PetUi.FrozenGeometry("M 5,0 L 6.2,3.4 L 9.8,3.5 L 7,5.7 L 8,9.2 L 5,7.1 L 2,9.2 L 3,5.7 L 0.2,3.5 L 3.8,3.4 Z");
     public const double BattlePrepRefreshSeconds = 0.2;
     // Fixed scales for the card bars (the same for every weapon, so bars compare honestly; a
     // custom weapon past the end shows a full bar and its real number).
@@ -52,7 +57,7 @@ public sealed partial class PetWindow
 
     public bool BattlePreparing => battlePreparing;
     // The battle or its setup owns the pet (PetWindow.Battle.cs has the battle's own rules).
-    public bool BattleOwnsPet => battle != null || battlePreparing || adventureMapOpen || expeditionMapOpen;
+    public bool BattleOwnsPet => battle != null || battleHubOpen || battlePreparing || adventureMapOpen || expeditionMapOpen;
     public string BattlePrepWeapon => prepWeapon;
     public BattleDifficulty BattlePrepDifficulty => prepDifficulty;
     public bool BattlePrepVisible => battlePrepWindow?.IsVisible == true;
@@ -83,10 +88,13 @@ public sealed partial class PetWindow
     // Null when the panel is open (opening it twice keeps the one panel), otherwise why not.
     // Without a choice given it starts from the remembered one (the last that went into a battle).
     // stage: an Adventure stage (looked up again in the fresh data; gone from it or locked: refused).
-    public string? OpenBattlePrep(string? weapon = null, BattleDifficulty? level = null, StageSpec? stage = null)
+    // forExpedition: the loadout of a new Expedition run (from its map's Prepare): Ready starts the
+    // run instead of a battle and goes back to the map, as does the Map button.
+    public string? OpenBattlePrep(string? weapon = null, BattleDifficulty? level = null, StageSpec? stage = null, bool forExpedition = false)
     {
         if (BattlePrepRefusal() is string reason) return reason;
-        if (battlePreparing && prepStage?.Id == stage?.Id) { PlaceBattlePrep(); return null; }
+        if (forExpedition) stage = null;
+        if (battlePreparing && prepStage?.Id == stage?.Id && prepForExpedition == forExpedition) { PlaceBattlePrep(); return null; }
         if (battlePreparing) { CloseBattlePrep(); CloseBattleTutorial(); }
         ReloadBattleData();
         if (stage != null)
@@ -95,8 +103,10 @@ public sealed partial class PetWindow
                 return L("Màn này không còn trong dữ liệu hoặc chưa mở.", "This stage is no longer in the data or is locked.");
             stage = fresh;
         }
-        CloseAdventureMap(); CloseExpeditionMap();
+        if (forExpedition && Expedition == null) return L("Dữ liệu trận không có viễn chinh.", "The battle data has no Expedition.");
+        CloseBattleHub(); CloseAdventureMap(); CloseExpeditionMap();
         prepStage = stage;
+        prepForExpedition = forExpedition;
         prepWeapon = BattleTuning.Weapon(weapon ?? preferences.BattleWeapon).Id;
         prepDifficulty = level is BattleDifficulty chosen && Enum.IsDefined(chosen) ? chosen : BattleDifficultyChoice;
         battlePreparing = true;
@@ -134,22 +144,26 @@ public sealed partial class PetWindow
     public string? BattlePrepReady()
     {
         if (!battlePreparing || battle != null) return L("Không có bảng chuẩn bị.", "No battle setup is open.");
-        if (BattleRefusal() is string reason) { UpdateBattlePrep(); return reason; }
+        // A run's loadout starts no battle yet: only what keeps the panel open is checked.
+        if ((prepForExpedition ? BattlePrepRefusal() : BattleRefusal()) is string reason) { UpdateBattlePrep(); return reason; }
         SetBattleWeapon(prepWeapon);
         SetBattleDifficulty(prepDifficulty);
         if (BattleTutorialOpen) CloseBattleTutorial(finished: true);
+        if (prepForExpedition) { string weapon = prepWeapon; var level = prepDifficulty; CloseBattlePrep(); return ExpeditionSetupReady(weapon, level); }
         return StartBattle(stage: prepStage);
     }
 
     // Close: no battle, no win or loss, no record; the pet goes back to its own life. For an
-    // Adventure stage the button says Map and goes back to the map instead.
+    // Adventure stage or an Expedition run the button says Map and goes back to that map instead.
     public void CancelBattlePrep()
     {
         if (!battlePreparing) return;
         var stage = prepStage;
+        bool expedition = prepForExpedition;
         CloseBattlePrep();
         CloseBattleTutorial();
         if (stage != null && OpenAdventureMap(stage.Id) == null) return;
+        if (expedition && OpenExpeditionMap() == null) return;
         revision++;
         behavior.Reset(pet);
         System.Diagnostics.Trace.WriteLine("Battle setup cancelled.");
@@ -167,6 +181,7 @@ public sealed partial class PetWindow
         prepPreview = null; prepPreviewView = null; prepHitMark = null;
         prepCards.Clear(); prepLevelChips.Clear();
         prepStage = null;
+        prepForExpedition = false;
         if (was) ApplyQuiet();
     }
 
@@ -229,11 +244,7 @@ public sealed partial class PetWindow
 
     private void ShowBattlePrepWindow()
     {
-        TextBlock Line(double size, bool bold = false, double maxWidth = 330) => new()
-        {
-            Foreground = Brushes.White, FontSize = size, FontWeight = bold ? FontWeights.Bold : FontWeights.Normal,
-            TextWrapping = TextWrapping.Wrap, MaxWidth = maxWidth
-        };
+        static TextBlock Line(double size, bool bold = false, double maxWidth = 330) => PanelLine(size, bold, maxWidth);
         Path Check() => new() { Data = CheckMark, Stroke = Brushes.White, StrokeThickness = 2.4, StrokeEndLineCap = PenLineCap.Round,
             StrokeStartLineCap = PenLineCap.Round, StrokeLineJoin = PenLineJoin.Round, Width = 15, Height = 13, Margin = new Thickness(0, 0, 5, 0),
             VerticalAlignment = VerticalAlignment.Center };
@@ -314,10 +325,14 @@ public sealed partial class PetWindow
         {
             var check = Check();
             var text = new TextBlock { Foreground = Brushes.White, FontSize = PetUi.BodySize, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center };
+            // One to three small gold stars after the name: how hard, at a glance.
+            var stars = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(5, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
+            for (int i = 0; i <= (int)level; i++)
+                stars.Children.Add(new Path { Data = DifficultyStar, Fill = PrepBarFill, Width = 9, Height = 9, Stretch = Stretch.Uniform, Margin = new Thickness(0, 0, 1, 0) });
             var chip = new Border
             {
                 CornerRadius = new CornerRadius(7), Padding = new Thickness(9, 4, 11, 4), Margin = new Thickness(0, 0, 6, 0), BorderThickness = new Thickness(1.5),
-                Cursor = System.Windows.Input.Cursors.Hand, Child = new StackPanel { Orientation = Orientation.Horizontal, Children = { check, text } }
+                Cursor = System.Windows.Input.Cursors.Hand, Child = new StackPanel { Orientation = Orientation.Horizontal, Children = { check, text, stars } }
             };
             chip.MouseLeftButtonDown += (_, e) => { BattlePrepChooseDifficulty(level); e.Handled = true; };
             levels.Children.Add(chip);
@@ -332,37 +347,15 @@ public sealed partial class PetWindow
             Cursor = System.Windows.Input.Cursors.Hand, VerticalAlignment = VerticalAlignment.Center, Background = Brushes.Transparent };
         prepTipText.MouseLeftButtonDown += (_, e) => { if (prepStage != null) ShowStageTip(prepStage); e.Handled = true; };
         var (cancel, cancelText, _) = HudButton(CancelBattlePrep, plain: true);
-        var (ready, readyText, _) = HudButton(() => BattlePrepReady(), plain: true);
-        ready.Background = PrepChosen; ready.Padding = new Thickness(18, 6, 18, 5); ready.MinWidth = 110; ready.Margin = new Thickness(0);
-        readyText.FontSize = PetUi.TitleSize; readyText.FontWeight = FontWeights.Bold;
+        var (ready, readyText) = PrimaryButton(() => BattlePrepReady());
         prepReady = ready; prepReadyText = readyText; prepCancelText = cancelText;
-        var actions = new DockPanel { Margin = new Thickness(0, 12, 0, 0), LastChildFill = false };
-        DockPanel.SetDock(prepGuideText, Dock.Left); DockPanel.SetDock(prepTipText, Dock.Left); DockPanel.SetDock(ready, Dock.Right); DockPanel.SetDock(cancel, Dock.Right);
-        actions.Children.Add(prepGuideText); actions.Children.Add(prepTipText); actions.Children.Add(ready); actions.Children.Add(cancel);
+        var actions = PanelActions(new UIElement[] { prepGuideText, prepTipText }, new UIElement[] { ready, cancel });
 
         var choices = new StackPanel { Width = 300, Children = { prepWeaponLabel, cards, prepLevelLabel, levels } };
-        // Taller than the cat's monitor (a low or high-DPI screen, PlaceBattlePrep caps the height):
-        // the content scrolls, the buttons stay in view (as on the Expedition map).
-        var scroll = new ScrollViewer
-        {
-            VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled, Focusable = false,
-            Content = new StackPanel { Children = { prepTitle, new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 10, 0, 0), Children = { stage, choices } },
-                prepBuild, prepData, prepStatus } }
-        };
-        scroll.Resources.MergedDictionaries.Add(PetControlStyle.Resources);
-        var body = new DockPanel();
-        DockPanel.SetDock(actions, Dock.Bottom);
-        body.Children.Add(actions); body.Children.Add(scroll);
-        var panel = new Border
-        {
-            Background = HudBack, BorderBrush = PetUi.Game.Rim, BorderThickness = new Thickness(1.5), CornerRadius = new CornerRadius(12),
-            Padding = new Thickness(16, 12, 16, 12), Margin = new Thickness(6),
-            Child = body,
-            Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 6, ShadowDepth = 1, Opacity = 0.4 }
-        };
-        panel.SetValue(TextBlock.FontFamilyProperty, PetUi.TextFont);
-        var window = CreateBattleWindow(panel, "Pet setup");
-        window.SizeToContent = SizeToContent.WidthAndHeight;
+        // The title's picture: the mode this setup is for (a free battle uses the Adventure's).
+        var title = PanelTitle(prepForExpedition ? HubExpedition : HubAdventure, prepTitle);
+        var window = CreateGamePanel(new StackPanel { Children = { title, new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 10, 0, 0), Children = { stage, choices } },
+            prepBuild, prepData, prepStatus } }, actions, "Pet setup");
         window.Closed += (_, _) => { if (battlePrepWindow == window) { StopPreviewSwing(); battlePrepWindow = null; } };
         battlePrepWindow = window;
         UpdateBattlePrep();
@@ -370,15 +363,7 @@ public sealed partial class PetWindow
         PlaceBattlePrep();
     }
 
-    // At the top of the cat's screen, centred (where the HUD and the result panel appear).
-    private void PlaceBattlePrep()
-    {
-        if (battlePrepWindow == null) return;
-        battlePrepWindow.MaxHeight = Math.Max(240, bounds.Bottom - bounds.Top - 24);
-        battlePrepWindow.UpdateLayout();
-        double width = battlePrepWindow.ActualWidth;
-        MoveWindow(battlePrepWindow, Math.Clamp((bounds.Left + bounds.Right - width) / 2, bounds.Left, Math.Max(bounds.Left, bounds.Right - width)), bounds.Top + 12);
-    }
+    private void PlaceBattlePrep() => PlaceGamePanel(battlePrepWindow);
 
     private void UpdateBattlePrep()
     {
@@ -390,29 +375,24 @@ public sealed partial class PetWindow
             text.Visibility = string.IsNullOrEmpty(value) ? Visibility.Collapsed : Visibility.Visible;
         }
         var chosen = BattleTuning.Weapon(prepWeapon);
-        prepTitle.Text = prepStage is StageSpec stage ? StageTitle(stage) + (stage.Goal(English) is { Length: > 0 } goal ? "\n" + goal : "") : L("Chuẩn bị trận", "Get ready to battle");
-        prepWeaponLabel!.Text = L("Chọn cách đánh", "Choose how to fight");
+        prepTitle.Text = prepStage is StageSpec stage ? StageTitle(stage) + (stage.Goal(English) is { Length: > 0 } goal ? "\n" + goal : "")
+            : prepForExpedition && Expedition is Expedition x ? L("Viễn chinh — chuẩn bị chuyến", "Expedition — prepare the run") + "\n"
+                + L($"{x.Spec.StepCount} bậc, bậc cuối là trùm. Vũ khí, độ khó, HP và build giữ suốt chuyến.", $"{x.Spec.StepCount} steps, the last one a boss. Weapon, difficulty, HP and build carry through the run.")
+            : L("Chuẩn bị trận", "Get ready to battle");
+        prepWeaponLabel!.Text = prepForExpedition ? L("Chọn cách đánh cho cả chuyến", "Choose how to fight for the whole run") : L("Chọn cách đánh", "Choose how to fight");
         prepLevelLabel!.Text = L("Độ khó", "Difficulty");
         foreach (var (id, card, check, name, hint, statNames, _) in prepCards)
         {
             var weapon = BattleTuning.Weapon(id);
-            bool selected = id == prepWeapon;
             name.Text = weapon.Name(English);
             hint.Text = weapon.Hint(English);
             for (int i = 0; i < statNames.Length; i++) statNames[i].Text = English ? WeaponStatScales[i].En : WeaponStatScales[i].Vi;
-            // Chosen: a thick white rim and a tick, not only a colour.
-            card.Background = selected ? PrepChosen : PrepCardBack;
-            card.BorderBrush = selected ? Brushes.White : PrepCardRim;
-            card.BorderThickness = new Thickness(selected ? 2.5 : 1);
-            check.Visibility = selected ? Visibility.Visible : Visibility.Collapsed;
+            ShowChosen(card, id == prepWeapon, check, rim: (2.5, 1)); // A thick white rim when chosen.
         }
         foreach (var (level, chip, check, text) in prepLevelChips)
         {
-            bool selected = level == prepDifficulty;
             text.Text = DifficultyName(level);
-            chip.Background = selected ? PrepChosen : PrepCardBack;
-            chip.BorderBrush = selected ? Brushes.White : PrepCardRim;
-            check.Visibility = selected ? Visibility.Visible : Visibility.Collapsed;
+            ShowChosen(chip, level == prepDifficulty, check);
         }
         if (prepPreview != null && (prepPreview.Hammer != (chosen.Style == "hammer") || prepPreview.SwordHitAt != chosen.HitFraction))
         {
@@ -424,11 +404,11 @@ public sealed partial class PetWindow
         Show(prepData, BattleDataError != null
             ? L("File battle.json của bạn có lỗi nên dùng dữ liệu gốc: ", "Your battle.json has a mistake, so the built-in battle is used: ") + BattleDataError
             : BattleDataCustom ? L("Đang dùng dữ liệu trận tùy chỉnh (battle.json).", "Using your custom battle data (battle.json).") : null);
-        string? waiting = BattleRefusal();
+        string? waiting = prepForExpedition ? BattlePrepRefusal() : BattleRefusal();
         Show(prepStatus, waiting != null ? L("Chưa thể bắt đầu: ", "Not yet: ") + waiting : null);
-        prepReadyText!.Text = L("Sẵn sàng", "Ready");
+        prepReadyText!.Text = prepForExpedition ? L("Lên đường", "Set out") : L("Sẵn sàng", "Ready");
         prepGuideText!.Text = L("Cách chơi", "How to play");
-        prepCancelText!.Text = prepStage != null ? L("Bản đồ", "Map") : L("Đóng", "Close");
+        prepCancelText!.Text = prepStage != null || prepForExpedition ? L("‹ Bản đồ", "‹ Map") : L("Đóng", "Close");
         prepTryText!.Text = L("Xem thử", "Try it");
         Show(prepTipText, prepStage?.Tip(English) is { Length: > 0 } ? L("Mẹo màn", "Stage tip") : null);
         bool can = waiting == null;

@@ -62,7 +62,7 @@ Tick `[x]` khi đạt; ghi lỗi ngay dưới mục kèm ngày. Mục mới chư
 - [ ] Ngày lễ (khi tới dịp): Halloween 31/10, Noel 24–25/12, Tết, Trung thu: câu chào và câu nói vu vơ theo dịp.
 
 ### Chế độ chiến đấu (Battle Mode, 2026-10-16)
-- [ ] Mặc định tắt; mở lại app không tự vào trận. Menu chuột phải → Chế độ chiến đấu → Bắt đầu trận → bảng chuẩn bị → Sẵn sàng. (Đổi 2026-10-19: khi mèo ngủ/đang kéo/trên cửa sổ/đang chơi, bảng chuẩn bị vẫn mở nhưng nút Sẵn sàng mờ kèm lý do; chỉ Pause/fullscreen làm mục Bắt đầu mờ.) Mèo không bị đánh thức/ép.
+- [ ] Mặc định tắt; mở lại app không tự vào trận. Menu chuột phải → Chế độ chiến đấu → Bắt đầu trận → bảng chuẩn bị → Sẵn sàng. (Đổi 2026-10-22: menu mở sảnh, không còn Bắt đầu trận — xem mục "Sảnh chiến đấu" cuối file.) (Đổi 2026-10-19: khi mèo ngủ/đang kéo/trên cửa sổ/đang chơi, bảng chuẩn bị vẫn mở nhưng nút Sẵn sàng mờ kèm lý do; chỉ Pause/fullscreen làm mục Bắt đầu mờ.) Mèo không bị đánh thức/ép.
 - [ ] Click xuyên: trong trận, click/gõ vào app bên dưới ở khoảng trống của dải sàn và quanh HUD vẫn được; con trỏ đang gõ ở app khác không bị mất focus khi click slime/HUD; không có cửa sổ mới trên taskbar/Alt+Tab.
 - [ ] Mèo tự đi tới slime gần nhất, vung kiếm, slime trúng đòn nhấp trắng; slime phồng lên + dấu "!" đỏ trước khi đánh; hạ slime thì bụi trắng, không máu.
 - [ ] Click slime: mũi tên vàng + vòng vàng, mèo đổi sang đánh con đó; con đó chết thì marker mất và mèo tự chọn con khác. Xem marker/HP/HUD trên nền desktop sáng và tối.
@@ -106,7 +106,7 @@ Tick `[x]` khi đạt; ghi lỗi ngay dưới mục kèm ngày. Mục mới chư
 - [ ] Boss Vua Slime ở đợt cuối: to, vương miện; vùng đỏ trên sàn khi gồng; dưới nửa máu gọi 2 slime; dưới 30% đổi màu đỏ, nhanh hơn; Đẩy chỉ xê dịch ít; hạ boss thì bụi lớn, bảng kết quả ghi "Đã hạ Vua Slime". Thử trên màn hình hẹp/DPI cao xem boss có bị cắt đầu không.
 
 #### Bảng chuẩn bị và dữ liệu tùy chỉnh (2026-10-19)
-- [ ] Menu chuột phải → Chế độ chiến đấu chỉ còn Bắt đầu trận (khi chưa đánh) / Tạm dừng / Kết thúc. Bắt đầu trận: bảng "Chuẩn bị trận" hiện ở giữa phía trên màn hình có mèo; chưa có dải sàn, slime, HUD.
+- [ ] (Cũ, thay bởi mục "Sảnh chiến đấu" 2026-10-22.) Menu chuột phải → Chế độ chiến đấu chỉ còn Bắt đầu trận (khi chưa đánh) / Tạm dừng / Kết thúc. Bắt đầu trận: bảng "Chuẩn bị trận" hiện ở giữa phía trên màn hình có mèo; chưa có dải sàn, slime, HUD.
 - [ ] Bảng chuẩn bị: bấm Kiếm/Búa và Dễ/Thường/Khó: nút đang chọn đổi màu, dòng gợi ý vũ khí đổi theo; đang gõ ở app khác (Notepad) rồi bấm các nút: con trỏ gõ không mất focus, phím gõ không vào bảng; không có cửa sổ mới trên taskbar/Alt+Tab. Đọc rõ trên nền sáng/tối, tiếng Việt/English.
 - [ ] Hủy: bảng đóng, mèo đi lại bình thường sau ~2 s, không có kết quả/kỷ lục; mở lại thấy lựa chọn cũ (lựa chọn chỉ lưu khi bấm Sẵn sàng).
 - [ ] Mở bảng khi mèo đang ngủ: mèo ngủ tiếp (không bị đánh thức), Sẵn sàng mờ + "Chưa thể bắt đầu: Mèo đang ngủ."; mèo tự thức thì nút sáng lại. Kéo mèo khi bảng đang mở: nút mờ, thả xuống thì sáng. Đang mở bảng: mèo đứng yên, không tự đi/ngủ/nói; để máy ~5 phút: mèo không ngủ "away nap".
@@ -123,13 +123,13 @@ Tick `[x]` khi đạt; ghi lỗi ngay dưới mục kèm ngày. Mục mới chư
 
 #### Phiêu lưu — mốc 2 (2026-10-20)
 Nên chép dự phòng %LOCALAPPDATA%\DesktopPet\adventure-progress.json (nếu đã có) trước khi thử.
-- [ ] Chuột phải → Chế độ chiến đấu: có "Phiêu lưu" ở trên "Bắt đầu trận". Bấm Phiêu lưu: bản đồ ở giữa phía trên màn hình, có 5 nút màn nối bằng đường. Lần đầu chỉ màn 1 xanh, các màn khác xám có ổ khóa. Gõ phím ở app khác vẫn bình thường (bản đồ không lấy focus), không có nút trên taskbar. Chữ không bị cắt ở tiếng Việt/English, DPI 125–150%.
+- [ ] Chuột phải → Chế độ chiến đấu → sảnh → thẻ Phiêu lưu (trước 2026-10-22: mục "Phiêu lưu" trong menu con): bản đồ ở giữa phía trên màn hình, có 5 nút màn nối bằng đường. Lần đầu chỉ màn 1 xanh, các màn khác xám có ổ khóa. Gõ phím ở app khác vẫn bình thường (bản đồ không lấy focus), không có nút trên taskbar. Chữ không bị cắt ở tiếng Việt/English, DPI 125–150%.
 - [ ] Click màn bị khóa: dòng "Chưa mở — thắng màn … trước", nút Vào màn mờ. Click màn 1 → Vào màn: bảng chuẩn bị có tiêu đề "Màn 1 · Làm quen" + mục tiêu, nút bên trái ghi "Bản đồ". Bấm Bản đồ: quay lại bản đồ.
 - [ ] Màn 1: tối đa 2 slime cùng lúc, 2 đợt. Thắng: bảng kết quả ghi "Màn 1 · Làm quen · Vũ khí · Độ khó", dòng vàng "Đã mở: Màn 2 · Giải vây", nút chính "Màn tiếp", bên dưới là Chơi lại / Bản đồ / Về desktop. Màn tiếp mở bảng chuẩn bị màn 2 với vũ khí vừa dùng.
 - [ ] Thua một màn (có thể bỏ mặc mèo ở độ khó Khó): không mở màn mới, nút chính là "Chơi lại". Thua màn đã thắng trước đó: màn đó vẫn được tính là đã thắng.
 - [ ] Kết thúc trận giữa chừng (HUD → Kết thúc, hoặc thoát app): không có bảng kết quả, không tính gì. Thoát app rồi mở lại → Phiêu lưu: các màn đã thắng vẫn vàng, màn kế vẫn mở, không thắng trùng.
 - [ ] Đi hết 5 màn tới Vua Slime: thắng màn 5 thì có dòng "Hoàn thành chương!" và không có nút Màn tiếp. Bấm Bản đồ: cả 5 màn vàng, có số lần thắng và thời gian nhanh nhất.
-- [ ] Trận tự do (Bắt đầu trận) vẫn như cũ; kỷ lục của trận tự do không đổi sau khi chơi Phiêu lưu.
+- [ ] (Bỏ 2026-10-22: trận tự do không còn trong menu.) Trận tự do (Bắt đầu trận) vẫn như cũ; kỷ lục của trận tự do không đổi sau khi chơi Phiêu lưu.
 - [ ] Mở bản đồ khi mèo đang ngủ: mèo vẫn ngủ. Để máy yên 5 phút khi bản đồ mở: mèo không ngủ away nap. Mở app fullscreen: bản đồ ẩn, đóng app thì hiện lại.
 - [ ] Có file %LOCALAPPDATA%\DesktopPet\battle.json tùy chỉnh: bản đồ ghi rõ "không lưu tiến trình và kỷ lục"; thắng màn không mở màn sau.
 
@@ -325,3 +325,15 @@ Tự động đã có: 18 chuyến trọn vẹn (Dễ/Thường/Khó × 6 seed) 
 - [ ] Bật âm thanh tương tác, âm lượng vừa. Tinh anh xuất hiện (màn 3–5 Thường) hoặc Vua phong tinh anh: nghe "ting-ting" hai nốt đi lên, ngắn, không chói, khác tiếng mèo ngạc nhiên trước đây.
 - [ ] Đẩy slime đá tinh anh: nghe tiếng "cộp" trầm như gõ khiên đá, khác "tách" khi đòn bị chặn thường. Đẩy nó liên tục (mỗi lần hết hồi chiêu): không ồn, không chồng tiếng.
 - [ ] Tắt âm thanh tương tác hoặc âm lượng 0: hai cue im; có app fullscreen: im. Thắng/Thua/Boss/mèo bị đánh cùng lúc vẫn át hai cue này.
+
+## Sảnh chiến đấu và giao diện game đồng bộ (2026-10-22)
+
+Tự động đã có: menu là một mục không có menu con (trong trận chỉ còn Tạm dừng/Kết thúc), sảnh mở/không lấy focus/giữ thời gian rảnh của mèo, thẻ Vô tận không mở được, Viễn chinh khóa rồi mở, ‹ Sảnh trên bản đồ quay lại sảnh, "Chuẩn bị chuyến" → bảng chuẩn bị chung → "Lên đường" tạo chuyến, ‹ Bản đồ không tạo chuyến, bấm đúp không tạo hai chuyến. Đã xem ảnh render (sảnh, bảng chuẩn bị chuyến, bản đồ Viễn chinh/Phiêu lưu, màn hình thấp). Phần dưới cần làm tay:
+- [ ] Chuột phải → Chế độ chiến đấu (không có mũi tên menu con): sảnh hiện ở giữa mép trên màn hình có mèo, có mèo cầm vũ khí, 3 thẻ có hình (đồi + cờ, núi tuyết, vòng ∞). Gõ phím ở app khác vẫn bình thường; không có nút trên taskbar/Alt+Tab.
+- [ ] Rê chuột lên thẻ mở được: viền trắng. Thẻ Phiêu lưu ghi đúng số màn đã thắng, thanh vàng đúng tỉ lệ. Thẻ Viễn chinh: khóa (dải "Đang khóa") nếu chưa thắng Vua Slime; đang có chuyến thì ghi bậc và HP; không thì ghi kỷ vật x/3. Thẻ Vô tận mờ, dải "Sắp ra mắt", bấm không có gì.
+- [ ] Tạm dừng mèo rồi mở menu: mục Chế độ chiến đấu mờ kèm lý do. Đang trong trận: mục có menu con Tạm dừng/Kết thúc.
+- [ ] Phiêu lưu → bản đồ → "‹ Sảnh": quay lại sảnh. Sảnh → Đóng: mèo hoạt động lại bình thường. Thử cả với Viễn chinh.
+- [ ] Viễn chinh chưa có chuyến: dòng "lần trước: …", nút "Chuẩn bị chuyến" → bảng chuẩn bị (tiêu đề Viễn chinh, huy hiệu núi) → chọn Búa + Khó → "Lên đường": quay lại bản đồ, dòng trạng thái ghi Búa · Khó. Mở lại bằng "‹ Bản đồ" thì không có chuyến nào.
+- [ ] Mèo đang ngủ khi mở sảnh/bản đồ/bảng chuẩn bị chuyến: mèo vẫn ngủ; "Lên đường" vẫn bấm được (chưa vào trận); "Vào trận" thì mờ tới khi mèo thức.
+- [ ] Bảng chuẩn bị: chip độ khó có 1/2/3 sao vàng; tiêu đề dài (màn 2) — huy hiệu tròn nằm ngang dòng đầu.
+- [ ] Màn hình thấp/scale cao (1366×768 125% hoặc scale 175%): sảnh, bản đồ Phiêu lưu không tràn; app fullscreen: sảnh ẩn rồi hiện lại.

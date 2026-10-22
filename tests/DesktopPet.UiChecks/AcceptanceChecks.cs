@@ -75,7 +75,7 @@ internal static class AcceptanceChecks
             window.CloseBattleTutorial(finished: true);
             check(window.BattlePauseReasons == PetWindow.BattlePause.None && !window.Battle.Paused, "Closing the tip lets the battle run");
             window.EndBattleByUser();
-            window.CancelAdventureMap();
+            window.CancelAdventureMap(); window.CancelBattleHub();
             check(window.StartBattle(stage: tipped) == null && !window.BattleTutorialOpen, "A tip already seen does not show again");
             window.EndBattle();
             // Again from the setup panel.
@@ -86,7 +86,7 @@ internal static class AcceptanceChecks
             check(window.ShowStageTip(window.BattlePrepStage!) && window.BattleTutorialText.Contains("A test tip"), "and shows it");
             window.CloseBattleTutorial(finished: true);
             window.CancelBattlePrep();
-            window.CancelAdventureMap();
+            window.CancelAdventureMap(); window.CancelBattleHub();
 
             // Progress that cannot be saved: the folder is a file. The map and the result say so.
             string blocker = Path.Combine(dir, "blocked");
@@ -102,7 +102,7 @@ internal static class AcceptanceChecks
             window.OpenAdventureMap();
             for (double t = 0; t < 0.3; t += 1.0 / 60) Call(window, "TickAdventureMap", 1.0 / 60);
             check(window.AdventureMapText.Contains("could not be saved"), "The map says so too");
-            window.CancelAdventureMap();
+            window.CancelAdventureMap(); window.CancelBattleHub();
 
             // A progress file from a newer version: read only, said on the map.
             string newer = Path.Combine(dir, "newer.json");
@@ -112,7 +112,7 @@ internal static class AcceptanceChecks
             window.OpenAdventureMap();
             for (double t = 0; t < 0.3; t += 1.0 / 60) Call(window, "TickAdventureMap", 1.0 / 60);
             check(window.AdventureMapText.Contains("newer version") && window.Adventure!.IsUnlocked("a_two"), "A newer version's progress is read, and the map says it is read only");
-            window.CancelAdventureMap();
+            window.CancelAdventureMap(); window.CancelBattleHub();
             check(File.ReadAllText(newer).Contains("\"Version\": 9"), "and the file is left as it was");
         }
         finally

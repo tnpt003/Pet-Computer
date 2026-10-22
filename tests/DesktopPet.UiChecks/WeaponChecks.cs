@@ -36,14 +36,14 @@ internal static class WeaponChecks
         string HudText(DependencyObject node) => node is TextBlock t ? t.Text + "|" : string.Concat(LogicalTreeHelper.GetChildren(node).OfType<DependencyObject>().Select(HudText));
         check(HudText(hud).Contains("· Hammer"), "The HUD names the weapon next to the cat");
 
-        // The menu holds only Adventure / Expedition / Start / Pause / End: weapon, difficulty and the guide are on the setup panel.
+        // During a battle the menu holds only Pause / End: weapon, difficulty and the guide are on the setup panel.
         window.ContextMenu!.IsOpen = true;
         await Task.Delay(30);
         var root = window.ContextMenu.Items.OfType<MenuItem>().First(i => i.Header as string == "Battle Mode");
         string[] items = root.Items.OfType<MenuItem>().Select(i => i.Header as string ?? "").ToArray();
         window.ContextMenu.IsOpen = false;
         await Task.Delay(30);
-        check(items.Length == 5 && !items.Any(h => h.StartsWith("Weapon") || h.StartsWith("Difficulty") || h.StartsWith("How to play")),
+        check(items.Length == 2 && items[0] == "Pause battle" && items[1] == "End battle" && !items.Any(h => h.StartsWith("Weapon") || h.StartsWith("Difficulty") || h.StartsWith("How to play")),
             $"The right-click menu has no weapon, difficulty or guide item ({string.Join(", ", items)})");
         window.SetBattleWeapon(BattleWeapon.Sword);
         check(window.Battle?.Weapon.Id == BattleWeapon.Hammer && pet.Hammer, "Changing it mid-battle does not change the running battle");

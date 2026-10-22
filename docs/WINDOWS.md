@@ -526,6 +526,28 @@ message and pill buttons (Cancel on the left, the main button on the right; Esc 
 Battle, Adventure and Expedition panels use the shared type scale (`PetUi` 11/12/13/14/16/20)
 instead of half sizes (10.5–15.5 → the next step up; the 22 banner → 20).
 
+## Battle hub and shared game panels (2026-10-22)
+
+- **Menu:** with no battle, **Battle Mode** is one item (no submenu) that opens the hub; it is off,
+  with the reason, while the pet is paused or a fullscreen app is open. During a battle it is a
+  submenu with **Pause / Resume** and **End battle** only. **Start battle** (the free battle) is gone.
+- **Hub** (`PetWindow.BattleHub.cs`, window "Pet battle hub", like the maps: clickable, never
+  activated, no taskbar button, mouse only, hidden by a fullscreen app, holds the pet's free time):
+  this cat holding its weapon, "Battle Mode", and three cards with a small vector picture each
+  (`ModeArt`: a path over hills to a flag; a snowy peak at dusk; a gold ∞ in a starry night), the
+  mode's name, one line about it, where the user is (Adventure: chapter · stages won with a bar;
+  Expedition: locked until the Slime King is won / run under way with step and HP / keepsakes;
+  Infinity: coming soon, a ribbon, not clickable). A card opens that mode's map in its place;
+  the maps' **‹ Hub** button comes back here, the hub's **Close** goes back to the desktop.
+- **Expedition setup:** before a run the map's main button is **Prepare the run**: the same setup
+  panel as an Adventure stage (preview cat, weapon cards with stats, difficulty), titled for the
+  run; **Set out** starts the run (no battle yet, so only Pause/fullscreen keep it off) and comes
+  back to the map, **‹ Map** comes back without one. The map's old weapon/difficulty chips are gone.
+- **Shared pieces** (`PetWindow.GamePanel.cs`): the panel frame (cocoa, cream rim, content that
+  scrolls when taller than the cat's monitor minus 24 DIPs, buttons docked below; now also the
+  Adventure map), the title with the mode's round picture, the orange main button, the details
+  card, the chosen look (orange, white rim, tick). Difficulty chips show one to three gold stars.
+
 The Expedition map is at most the cat's monitor height minus 24 DIPs (set when it opens). At
 its tallest (three relics and a rest's cards) it is about 574 DIPs, so on a low or high-DPI
 screen (1366×768 at 125 %, 1920×1080 at 175 %, 1280×720 at 150 %) its content scrolls with a
@@ -606,8 +628,10 @@ points to a leak.
 ## Battle Mode (2026-10-16)
 
 Optional mini-game, off by default and never resumed at startup. Right-click the cat →
-**Battle Mode / Chế độ chiến đấu** → **Start battle** opens the setup panel (below); **Ready**
-there starts the fight. The cat draws a wooden toy sword and
+**Battle Mode / Chế độ chiến đấu** opens the battle hub (2026-10-22, below); an Adventure stage or a
+new Expedition run opens the setup panel (below); **Ready** there starts the fight. (The free
+battle described here is no longer in the menu; its code stays for tests, `perf.ps1` and the
+coming Infinity mode.) The cat draws a wooden toy sword and
 fights slimes on the floor of its current monitor (work area) in 3 waves (2 slimes; 2 slimes +
 2 quick slimes; a rock slime + 2 quick + 2 slimes; at most 3 at once, a short break between
 waves), then the **Slime King** alone. Quick slimes are small, fast and frail (wind streaks);
@@ -820,8 +844,8 @@ next step), so a double click never starts two battles. Ending a battle by hand 
 
 ## Adventure (2026-10-20, milestone 2 of docs/ADVENTURE-UPDATE.md)
 
-- **Where:** right-click → Battle Mode → **Adventure** (above **Start battle**, which is still the
-  free battle, unchanged). It is refused, with the reason, only while the pet is paused, a
+- **Where:** right-click → Battle Mode → the hub's **Adventure** card (2026-10-22; before, a submenu
+  item above **Start battle**). It is refused, with the reason, only while the pet is paused, a
   fullscreen app is open or a battle runs.
 - **Map** (window "Pet adventure", like the setup panel: clickable, never activated, no taskbar
   button, mouse only): chapter 1 "The Slime Invasion", five stage nodes joined by a path. Won: gold

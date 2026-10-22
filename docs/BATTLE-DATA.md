@@ -10,7 +10,7 @@
 | `%LOCALAPPDATA%\DesktopPet\battle.json` | File của người dùng, cùng thư mục với `preferences.json` (hoặc `PET_DATA_DIRECTORY` nếu có đặt). Không bắt buộc phải có. |
 | `docs/examples/battle.json` | Ví dụ thêm `stone_slime`. Test tự động cũng đọc file này nên ví dụ luôn hợp lệ. |
 
-File của người dùng được đọc lại **mỗi lần mở bảng chuẩn bị** (Bắt đầu trận hoặc Chơi lại). Khi bấm Sẵn sàng, trận chụp lại dữ liệu đang có; sửa file giữa trận không ảnh hưởng trận đang chạy, chỉ áp dụng cho lần chuẩn bị sau.
+File của người dùng được đọc lại **mỗi lần mở sảnh chiến đấu, bản đồ hoặc bảng chuẩn bị** (cả Chơi lại). Khi bấm Sẵn sàng, trận chụp lại dữ liệu đang có; sửa file giữa trận không ảnh hưởng trận đang chạy, chỉ áp dụng cho lần chuẩn bị sau.
 
 ## Cách gộp
 

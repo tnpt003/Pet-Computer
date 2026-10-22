@@ -106,19 +106,13 @@ public sealed partial class PetWindow
     private void InitializeBattle(ContextMenu menu)
     {
         var root = PetUi.MenuItem(PetUi.Battle, Brushes.SeaGreen);
-        // Starting opens the setup panel (weapon, difficulty, guide, Ready); nothing else is chosen here.
-        // Adventure: the chapter map (PetWindow.Adventure.cs); Start battle is the free battle as before.
-        var adventure = new MenuItem();
-        adventure.Click += (_, _) => { if (OpenAdventureMap() is string reason) ShowBattleNotice(reason); };
-        var expedition = new MenuItem();
-        expedition.Click += (_, _) => { if (OpenExpeditionMap() is string reason) ShowBattleNotice(reason); };
-        var start = new MenuItem();
-        start.Click += (_, _) => { if (OpenBattlePrep() is string reason) ShowBattleNotice(reason); };
+        // No battle: one item that opens the hub (PetWindow.BattleHub.cs), where the modes are
+        // chosen. During a battle: a submenu with Pause and End only.
+        root.Click += (_, e) => { if (e.OriginalSource == root && battle == null && OpenBattleHub() is string reason) ShowBattleNotice(reason); };
         var pause = new MenuItem();
         pause.Click += (_, _) => { if (battle != null) SetBattlePaused(!BattleUserPaused); };
         var end = new MenuItem();
         end.Click += (_, _) => EndBattleByUser();
-        root.Items.Add(adventure); root.Items.Add(expedition); root.Items.Add(start); root.Items.Add(pause); root.Items.Add(end);
         menu.Items.Add(root);
         menu.Opened += (_, _) =>
         {
@@ -126,22 +120,13 @@ public sealed partial class PetWindow
             // arrive after a quick close, so only a menu that is still open counts.)
             if (battle != null && menu.IsOpen) SetBattlePause(BattlePause.Menu, true);
             bool userPaused = battle != null && BattleUserPaused;
-            root.Header = L("Chế độ chiến đấu", "Battle Mode");
             string? refusal = battle == null ? BattlePrepRefusal() : null;
-            start.Header = L("Bắt đầu trận", "Start battle") + (refusal != null ? $" ({refusal.TrimEnd('.')})" : "");
-            start.IsEnabled = refusal == null;
-            start.Visibility = adventure.Visibility = battle == null ? Visibility.Visible : Visibility.Collapsed;
-            adventure.Header = L("Phiêu lưu", "Adventure") + (refusal != null ? $" ({refusal.TrimEnd('.')})" : "");
-            adventure.IsEnabled = refusal == null;
-            // The Expedition opens once the Adventure's Slime King is won (the menu says so before).
-            bool locked = battle == null && Expedition is Expedition x && !x.IsUnlocked(AdventureProgress);
-            expedition.Visibility = battle == null && BattleTuning.Expedition != null ? Visibility.Visible : Visibility.Collapsed;
-            expedition.Header = L("Viễn chinh", "Expedition") + (refusal != null ? $" ({refusal.TrimEnd('.')})"
-                : locked ? L(" (thắng Vua Slime để mở)", " (win the Slime King to open)") : Expedition?.Run != null ? L(" (đang có chuyến)", " (run under way)") : "");
-            expedition.IsEnabled = refusal == null && !locked;
+            root.Header = L("Chế độ chiến đấu", "Battle Mode") + (refusal != null ? $" ({refusal.TrimEnd('.')})" : "");
+            root.IsEnabled = refusal == null;
+            if (battle == null) { if (root.Items.Count > 0) root.Items.Clear(); }
+            else if (root.Items.Count == 0) { root.Items.Add(pause); root.Items.Add(end); }
             pause.Header = userPaused ? L("Tiếp tục trận", "Resume battle") : L("Tạm dừng trận", "Pause battle");
             pause.IsEnabled = !(userPaused && context.Fullscreen);
-            pause.Visibility = end.Visibility = battle != null ? Visibility.Visible : Visibility.Collapsed;
             end.Header = L("Kết thúc trận", "End battle");
         };
         menu.Closed += (_, _) => SetBattlePause(BattlePause.Menu, false);
@@ -231,6 +216,7 @@ public sealed partial class PetWindow
     private string? StartBattle(string? weapon, BattleDifficulty? level, StageSpec? stage, ExpeditionBattle? expedition)
     {
         if (BattleRefusal() is string reason) return reason;
+        CloseBattleHub();
         CloseBattlePrep();
         CloseAdventureMap();
         CloseExpeditionMap();

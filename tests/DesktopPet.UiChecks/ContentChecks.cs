@@ -76,7 +76,7 @@ internal static class ContentChecks
                 "End during a stage goes back to the map (nothing counted)");
             Tick(window, 0.3);
             check(window.AdventureMapText.Contains("Reward: Slime hat"), $"The map shows the stage's reward ({window.AdventureMapText.Replace('\n', '|')})");
-            window.CancelAdventureMap();
+            window.CancelAdventureMap(); window.CancelBattleHub();
             window.BattleTuning = new BattleSettings { FirstWaveDelay = 0, SlimeMaxHp = 1000 };
             check(window.StartBattle() == null, "A free battle starts");
             window.EndBattleByUser();

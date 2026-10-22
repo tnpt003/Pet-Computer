@@ -2,6 +2,9 @@
 
 ## Chưa phát hành
 
+- **Sảnh chiến đấu:** chuột phải → Chế độ chiến đấu mở một sảnh có 3 thẻ chế độ kèm hình minh họa và tiến trình: Phiêu lưu, Viễn chinh (khóa tới khi thắng Vua Slime), Vô tận (sắp ra mắt). Nút ‹ Sảnh trên bản đồ quay về sảnh. Bỏ "Bắt đầu trận" (trận tự do) khỏi menu; trong trận menu chỉ còn Tạm dừng/Kết thúc.
+- **Viễn chinh dùng bảng chuẩn bị chung:** "Chuẩn bị chuyến" mở cùng bảng như màn Phiêu lưu (mèo xem trước, thẻ vũ khí có chỉ số, độ khó) để chọn cho cả chuyến; "Lên đường" bắt đầu chuyến. Bỏ các nút chữ chọn vũ khí trên bản đồ.
+- **Giao diện game đồng bộ:** các panel dùng chung khung, tiêu đề có huy hiệu hình chế độ, nút chính, ô chi tiết và kiểu "đang chọn"; độ khó có 1–3 ngôi sao; bản đồ Phiêu lưu nay cũng cuộn được trên màn hình thấp.
 - **Bảng chuẩn bị trên màn hình thấp/scale cao:** màn có mục tiêu dài cao ~519 DIP từng tràn khỏi màn hình 480 DIP; nay cuộn như bản đồ Viễn chinh, hàng nút luôn ở dưới. Bản đồ Phiêu lưu và bảng kết quả đã đo, vừa sẵn.
 
 ## 1.3.0-beta — Viễn chinh hoàn thiện, cue tinh anh (2026-10-21)

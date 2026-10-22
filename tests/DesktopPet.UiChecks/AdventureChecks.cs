@@ -77,17 +77,45 @@ internal static class AdventureChecks
         int freeRecords = FreeRecords();
         try
         {
-            // The menu: Adventure next to the free battle.
+            // The menu: Battle Mode is one item (no submenu, no free battle) that opens the hub.
             window.ContextMenu!.IsOpen = true;
             await Task.Delay(30);
             var root = window.ContextMenu.Items.OfType<MenuItem>().First(i => i.Header as string == "Battle Mode");
-            var items = root.Items.OfType<MenuItem>().Where(i => i.Visibility == Visibility.Visible).Select(i => i.Header as string ?? "").ToArray();
+            int items = root.Items.Count;
+            bool enabled = root.IsEnabled;
             window.ContextMenu.IsOpen = false;
             await Task.Delay(30);
-            check(items.Length == 2 && items[0] == "Adventure" && items[1] == "Start battle", $"Battle Mode offers Adventure and the free battle ({string.Join(", ", items)})");
+            check(items == 0 && enabled, $"Battle Mode is one item without a submenu ({items} items)");
+            root.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent, root));
+            await Task.Delay(30);
+            var hub = Find("Pet battle hub");
+            long hubStyle = hub == null ? 0 : GetWindowLongPtr(new WindowInteropHelper(hub).Handle, -20).ToInt64();
+            check(window.BattleHubOpen && hub is { ShowActivated: false, ShowInTaskbar: false, IsVisible: true } && (hubStyle & 0x08000000) != 0 && !window.BattleActive,
+                "Clicking it opens the hub: clickable, never takes focus, no taskbar button; nothing fights");
+            check(window.OpenBattleHub() == null && Count("Pet battle hub") == 1 && behavior.Quiet && window.BattleOwnsPet, "Opening it again keeps the one hub; the cat's free time belongs to it");
+            for (double t = 0; t < 0.3; t += 1.0 / 60) Call(window, "TickBattleHub", 1.0 / 60);
+            string hubText = window.BattleHubText;
+            check(hubText.Contains("Battle Mode") && hubText.Contains("Adventure") && hubText.Contains("Test chapter · 0/3 stages") && hubText.Contains("Infinity") && hubText.Contains("Coming soon"),
+                $"The hub shows the modes and where the user is ({hubText.Replace('\n', '|')})");
+            check(window.BattleHubModeEnabled(PetWindow.HubAdventure) && !window.BattleHubModeEnabled(PetWindow.HubInfinity) && window.BattleHubChoose(PetWindow.HubInfinity) is string soon && soon.Length > 0 && window.BattleHubOpen,
+                "Adventure can be opened; Infinity is coming soon and opens nothing");
+            Shot("Pet battle hub", "battle-hub-en.png");
+            window.CancelBattleHub();
+            await Task.Delay(20);
+            check(!window.BattleHubOpen && Count("Pet battle hub") == 0 && !behavior.Quiet && !window.BattleOwnsPet, "The hub's Close leaves no window and gives the pet back");
+            window.SetPaused(true);
+            window.ContextMenu.IsOpen = true;
+            await Task.Delay(30);
+            string pausedHeader = root.Header as string ?? "";
+            bool pausedEnabled = root.IsEnabled;
+            window.ContextMenu.IsOpen = false;
+            await Task.Delay(30);
+            window.SetPaused(false);
+            check(!pausedEnabled && pausedHeader.StartsWith("Battle Mode (") && window.OpenBattleHub() is null && window.BattleHubOpen, $"A paused pet: the item says why and is off ({pausedHeader})");
 
             // The map: one window, never takes focus, holds the pet's free time, starts nothing.
-            check(window.OpenAdventureMap() == null && window.AdventureMapOpen && !window.BattleActive && !window.BattlePreparing, "Adventure opens the chapter map; nothing fights");
+            check(window.BattleHubChoose(PetWindow.HubAdventure) == null && window.AdventureMapOpen && !window.BattleHubOpen && Count("Pet battle hub") == 0 && !window.BattleActive && !window.BattlePreparing,
+                "The hub's Adventure opens the chapter map in its place; nothing fights");
             await Task.Delay(30);
             var map = Find("Pet adventure");
             long style = map == null ? 0 : GetWindowLongPtr(new WindowInteropHelper(map).Handle, -20).ToInt64();
@@ -103,7 +131,9 @@ internal static class AdventureChecks
                 "A locked stage says what opens it and cannot be entered");
             window.CancelAdventureMap();
             await Task.Delay(20);
-            check(!window.AdventureMapOpen && Count("Pet adventure") == 0 && !behavior.Quiet && !window.BattleOwnsPet, "Close leaves no window and gives the pet back");
+            check(!window.AdventureMapOpen && Count("Pet adventure") == 0 && window.BattleHubOpen && behavior.Quiet, "The map's back button goes back to the hub");
+            window.CancelBattleHub();
+            check(!behavior.Quiet && !window.BattleOwnsPet, "and the hub's Close gives the pet back");
 
             // Stage → setup → back to the map, and setup → battle.
             window.OpenAdventureMap();
@@ -212,13 +242,13 @@ internal static class AdventureChecks
             // A sleeping cat: the map opens without waking it; no away nap while it is open.
             pet.Action = PetAction.Sleeping; pet.Emotions.EnterSleep();
             check(window.OpenAdventureMap() == null && pet.Action == PetAction.Sleeping && pet.Emotions.SleepLocked, "The map opens over a sleeping cat without waking it");
-            window.CancelAdventureMap();
+            window.CancelAdventureMap(); window.CancelBattleHub();
             window.Reset(); behavior.WakeByClick(pet); pet.Emotions.FinishSleep(0); pet.Action = PetAction.Idle;
             window.OpenAdventureMap();
             SetContext(window, false, 400); Call(window, "TickContext", 1.1);
             check(pet.Action != PetAction.Sleeping && !behavior.HoldSleep, "Leaving the computer does not start an away nap while the map is open");
             SetContext(window, false, 0); Call(window, "TickContext", 1.1);
-            window.CancelAdventureMap();
+            window.CancelAdventureMap(); window.CancelBattleHub();
 
             // Data without a campaign: Adventure says so.
             window.BattleTuning = new BattleSettings();

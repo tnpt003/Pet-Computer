@@ -8,12 +8,12 @@ using System.Windows.Shapes;
 
 namespace DesktopPet;
 
-// Expedition (docs/EXPEDITION-DIRECTION.md, milestones 2–3): menu → Battle Mode → Expedition opens its
-// map once the Adventure's Slime King is won. Without a run the map chooses the weapon and difficulty
-// for the whole run; with one it shows the steps (won, the one to fight now, the ones ahead) and the
-// cat's HP and build. Fight starts the chosen node with the usual battle engine, carrying the run's HP
-// and build; the result panel goes back to the map. The run is saved in expedition.json (apart from
-// the Adventure progress) at every step, and when its battle starts: a battle left by End, by closing
+// Expedition (docs/EXPEDITION-DIRECTION.md, milestones 2–3): the Battle Mode hub's Expedition opens its
+// map once the Adventure's Slime King is won. Without a run the map's Prepare opens the usual setup
+// panel (PetWindow.BattlePrep.cs) to choose the weapon and difficulty for the whole run; with one it
+// shows the steps (won, the one to fight now, the ones ahead) and the cat's HP and build. Fight starts
+// the chosen node with the usual battle engine, carrying the run's HP and build; the result panel goes
+// back to the map. The run is saved in expedition.json (apart from the Adventure progress) at every step, and when its battle starts: a battle left by End, by closing
 // the app or a crash costs ExpeditionSpec.RetreatCost when the map next opens, and the step is fought
 // again with the same battle. A rest or event node (milestone 3) opens its choice on the map (no
 // battle), and a won elite leaves relics to choose from there; nothing moves on until it is made.
@@ -47,8 +47,6 @@ public sealed partial class PetWindow
     private bool expeditionConfirmAbandon;
     private readonly List<(int Step, int Lane, Border Node, TextBlock Glyph)> expeditionNodes = new();
     private readonly List<Rectangle> expeditionLinks = new();
-    private readonly List<(string Id, Border Chip, TextBlock Text)> expeditionWeaponChips = new();
-    private readonly List<(BattleDifficulty Level, Border Chip, TextBlock Text)> expeditionLevelChips = new();
     // The open choice's panel (rest, event, a won elite's relics) and what the user picked in it.
     private StackPanel? xChoice;
     private string? xChoiceKey, expeditionPickCard, expeditionDropCard, expeditionPickRelic;
@@ -71,8 +69,7 @@ public sealed partial class PetWindow
         .Concat(xMain is { Visibility: Visibility.Visible } ? new[] { xMainText } : Array.Empty<TextBlock?>())
         .Concat(new[] { xCloseText })
         .Concat(xAbandon is { Visibility: Visibility.Visible } ? new[] { xAbandonText } : Array.Empty<TextBlock?>())
-        .Where(t => t is { Visibility: Visibility.Visible } && t.Text.Length > 0).Select(t => t!.Text)
-        .Concat(xSetup is { Visibility: Visibility.Visible } ? expeditionWeaponChips.Select(c => c.Text.Text).Concat(expeditionLevelChips.Select(c => c.Text.Text)) : Enumerable.Empty<string>()));
+        .Where(t => t is { Visibility: Visibility.Visible } && t.Text.Length > 0).Select(t => t!.Text));
 
     private static readonly Brush MapAhead = PetUi.Game.Ahead;
     private static readonly Brush EliteInk = PetUi.Game.Gold;
@@ -117,7 +114,7 @@ public sealed partial class PetWindow
         if (!expedition.IsUnlocked(AdventureProgress))
             return L("Thắng màn Vua Slime ở Phiêu lưu để mở Viễn chinh.", "Win the Slime King in the Adventure to open the Expedition.");
         if (battlePreparing) { CloseBattlePrep(); CloseBattleTutorial(); }
-        CloseAdventureMap(); CloseBattleSummary(); CloseBattleNotice();
+        CloseBattleHub(); CloseAdventureMap(); CloseBattleSummary(); CloseBattleNotice();
         if (expedition.Run is ExpeditionRun saved)
         {
             if (expedition.Mismatch(saved) is string why)
@@ -180,6 +177,23 @@ public sealed partial class PetWindow
         expeditionLevel = level;
         UpdateExpeditionMap();
         return true;
+    }
+
+    // Prepare (no run yet): the usual setup panel, for the whole run; its Ready starts the run and
+    // comes back to the map (ExpeditionSetupReady), its Map button just comes back. Null on success.
+    public string? ExpeditionPrepare()
+    {
+        if (!expeditionMapOpen || Expedition is not Expedition expedition) return L("Bản đồ viễn chinh chưa mở.", "The Expedition map is not open.");
+        if (expedition.Run != null) return L("Đang có một chuyến đi.", "A run is already under way.");
+        return OpenBattlePrep(expeditionWeapon, expeditionLevel, forExpedition: true);
+    }
+
+    // The setup panel's Ready for a run: back on the map, the run starts with the panel's choice.
+    private string? ExpeditionSetupReady(string weapon, BattleDifficulty level)
+    {
+        if (OpenExpeditionMap() is string reason) return reason;
+        expeditionWeapon = weapon; expeditionLevel = level;
+        return ExpeditionStart();
     }
 
     // Begin a run with the chosen weapon and difficulty (kept for the whole run). Null on success.
@@ -283,9 +297,8 @@ public sealed partial class PetWindow
     {
         if (!expeditionMapOpen) return;
         CloseExpeditionMap();
-        revision++;
-        behavior.Reset(pet);
         System.Diagnostics.Trace.WriteLine("Expedition map closed.");
+        BackToBattleHub();
     }
 
     private void CloseExpeditionMap()
@@ -297,7 +310,7 @@ public sealed partial class PetWindow
         xMain = xAbandon = xDetails = null;
         xSetup = xMap = xChoice = null;
         xChoiceKey = null; xChoiceTexts.Clear(); xChoiceButtons.Clear();
-        expeditionNodes.Clear(); expeditionLinks.Clear(); expeditionWeaponChips.Clear(); expeditionLevelChips.Clear();
+        expeditionNodes.Clear(); expeditionLinks.Clear();
         if (was) ApplyQuiet();
     }
 
@@ -316,43 +329,15 @@ public sealed partial class PetWindow
 
     private void ShowExpeditionMapWindow(ExpeditionSpec spec)
     {
-        TextBlock Line(double size, bool bold = false, double maxWidth = 460) => new()
-        {
-            Foreground = Brushes.White, FontSize = size, FontWeight = bold ? FontWeights.Bold : FontWeights.Normal,
-            TextWrapping = TextWrapping.Wrap, MaxWidth = maxWidth
-        };
+        static TextBlock Line(double size, bool bold = false) => PanelLine(size, bold, 460);
         xTitle = Line(PetUi.HeadingSize, true);
         xData = Line(PetUi.SmallSize); xData.Foreground = PrepWarning; xData.Margin = new Thickness(0, 6, 0, 0);
         xStatus = Line(PetUi.BodySize, true); xStatus.Margin = new Thickness(0, 6, 0, 0);
         xBuild = Line(PetUi.SmallSize); xBuild.Opacity = 0.85; xBuild.Margin = new Thickness(0, 2, 0, 0);
         xNote = Line(PetUi.SmallSize, true); xNote.Foreground = PrepWarning; xNote.Margin = new Thickness(0, 6, 0, 0);
-
-        // Before a run: the weapon and difficulty for the whole run.
-        (Border, TextBlock) Chip(Action click)
-        {
-            var text = new TextBlock { Foreground = Brushes.White, FontSize = PetUi.BodySize, FontWeight = FontWeights.SemiBold, HorizontalAlignment = HorizontalAlignment.Center };
-            var chip = new Border { CornerRadius = new CornerRadius(8), Padding = new Thickness(12, 5, 12, 5), Margin = new Thickness(0, 0, 6, 0), MinWidth = 64,
-                BorderThickness = new Thickness(1), Cursor = System.Windows.Input.Cursors.Hand, Child = text };
-            chip.MouseLeftButtonDown += (_, e) => { click(); e.Handled = true; };
-            return (chip, text);
-        }
-        xSetupLabel = Line(PetUi.SmallSize); xSetupLabel.Margin = new Thickness(0, 10, 0, 4);
-        var weapons = new StackPanel { Orientation = Orientation.Horizontal };
-        foreach (var weapon in BattleTuning.WeaponList)
-        {
-            string id = weapon.Id;
-            var (chip, text) = Chip(() => ExpeditionChooseWeapon(id));
-            weapons.Children.Add(chip);
-            expeditionWeaponChips.Add((id, chip, text));
-        }
-        var levels = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 6, 0, 0) };
-        foreach (var level in new[] { BattleDifficulty.Easy, BattleDifficulty.Normal, BattleDifficulty.Hard })
-        {
-            var (chip, text) = Chip(() => ExpeditionChooseDifficulty(level));
-            levels.Children.Add(chip);
-            expeditionLevelChips.Add((level, chip, text));
-        }
-        xSetup = new StackPanel { Children = { xSetupLabel, weapons, levels } };
+        // Before a run: the weapon and difficulty are chosen on the usual setup panel (Prepare).
+        xSetupLabel = Line(PetUi.SmallSize); xSetupLabel.Foreground = PetUi.Game.Soft; xSetupLabel.Margin = new Thickness(0, 8, 0, 0);
+        xSetup = new StackPanel { Children = { xSetupLabel } };
 
         // The steps left to right, each with its nodes stacked; the boss last. Gold: the path won;
         // blue: the step to fight now (white rim: chosen); faint: steps ahead; dim: nodes passed by.
@@ -387,8 +372,7 @@ public sealed partial class PetWindow
         xMap = new StackPanel { Children = { row } };
         xNodeName = Line(PetUi.TitleSize, true);
         xNodeGoal = Line(PetUi.BodySize); xNodeGoal.Margin = new Thickness(0, 3, 0, 0);
-        xDetails = new Border { Background = PrepCardBack, CornerRadius = new CornerRadius(9), Padding = new Thickness(11, 8, 11, 9), Margin = new Thickness(0, 10, 0, 0),
-            Child = new StackPanel { Children = { xNodeName, xNodeGoal } } };
+        xDetails = DetailCard(new Thickness(11, 8, 11, 9), xNodeName, xNodeGoal);
         xMap.Children.Add(xDetails);
         xChoice = new StackPanel { Margin = new Thickness(0, 10, 0, 0), MaxWidth = 470 };
         xMap.Children.Add(xChoice);
@@ -400,39 +384,15 @@ public sealed partial class PetWindow
             if (!expeditionConfirmAbandon) { expeditionConfirmAbandon = true; UpdateExpeditionMap(); }
             else ExpeditionAbandon();
         }, plain: true);
-        var (main, mainText, _) = HudButton(() =>
+        var (main, mainText) = PrimaryButton(() =>
         {
-            string? reason = Expedition is not Expedition x || x.Run is not ExpeditionRun r ? ExpeditionStart()
+            string? reason = Expedition is not Expedition x || x.Run is not ExpeditionRun r ? ExpeditionPrepare()
                 : r.Step < r.Map.Count && IsFightKind(x.Kind(r.Step, expeditionLane)) ? ExpeditionFight() : ExpeditionVisit();
             if (reason != null) ShowBattleNotice(reason);
-        }, plain: true);
-        main.Background = PrepChosen; main.Padding = new Thickness(18, 6, 18, 5); main.MinWidth = 110; main.Margin = new Thickness(0);
-        mainText.FontSize = PetUi.TitleSize; mainText.FontWeight = FontWeights.Bold;
+        });
         xMain = main; xMainText = mainText; xAbandon = abandon; xAbandonText = abandonText; xCloseText = closeText;
-        var actions = new DockPanel { Margin = new Thickness(0, 12, 0, 0), LastChildFill = false };
-        DockPanel.SetDock(close, Dock.Left); DockPanel.SetDock(abandon, Dock.Left); DockPanel.SetDock(main, Dock.Right);
-        actions.Children.Add(close); actions.Children.Add(abandon); actions.Children.Add(main);
-        // Taller than the cat's monitor (a low or high-DPI screen, PlaceExpeditionMap caps the height):
-        // the content scrolls, the buttons stay in view.
-        var scroll = new ScrollViewer
-        {
-            VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled, Focusable = false,
-            Content = new StackPanel { Children = { xTitle, xData, xStatus, xBuild, xNote, xSetup, xMap, xRecord } }
-        };
-        scroll.Resources.MergedDictionaries.Add(PetControlStyle.Resources);
-        var body = new DockPanel();
-        DockPanel.SetDock(actions, Dock.Bottom);
-        body.Children.Add(actions); body.Children.Add(scroll);
-        var panel = new Border
-        {
-            Background = HudBack, BorderBrush = PetUi.Game.Rim, BorderThickness = new Thickness(1.5), CornerRadius = new CornerRadius(12),
-            Padding = new Thickness(16, 12, 16, 12), Margin = new Thickness(6), MinWidth = 460,
-            Child = body,
-            Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 6, ShadowDepth = 1, Opacity = 0.4 }
-        };
-        panel.SetValue(TextBlock.FontFamilyProperty, PetUi.TextFont);
-        var window = CreateBattleWindow(panel, "Pet expedition");
-        window.SizeToContent = SizeToContent.WidthAndHeight;
+        var window = CreateGamePanel(new StackPanel { Children = { PanelTitle(HubExpedition, xTitle), xData, xStatus, xBuild, xNote, xSetup, xMap, xRecord } },
+            PanelActions(new UIElement[] { close, abandon }, new UIElement[] { main }), "Pet expedition", minWidth: 460);
         window.Closed += (_, _) => { if (expeditionMapWindow == window) expeditionMapWindow = null; };
         expeditionMapWindow = window;
         UpdateExpeditionMap();
@@ -440,14 +400,7 @@ public sealed partial class PetWindow
         PlaceExpeditionMap();
     }
 
-    private void PlaceExpeditionMap()
-    {
-        if (expeditionMapWindow == null) return;
-        expeditionMapWindow.MaxHeight = Math.Max(240, bounds.Bottom - bounds.Top - 24);
-        expeditionMapWindow.UpdateLayout();
-        double width = expeditionMapWindow.ActualWidth;
-        MoveWindow(expeditionMapWindow, Math.Clamp((bounds.Left + bounds.Right - width) / 2, bounds.Left, Math.Max(bounds.Left, bounds.Right - width)), bounds.Top + 12);
-    }
+    private void PlaceExpeditionMap() => PlaceGamePanel(expeditionMapWindow);
 
     private void UpdateExpeditionMap()
     {
@@ -475,21 +428,8 @@ public sealed partial class PetWindow
             Show(xStatus, L($"Chưa có chuyến đi · {spec.StepCount} bậc, bậc cuối là trùm. HP và build giữ suốt chuyến.",
                 $"No run yet · {spec.StepCount} steps, the last one a boss. HP and build carry through the run."));
             Show(xBuild, null);
-            xSetupLabel!.Text = L("Cách đánh và độ khó cho cả chuyến:", "Weapon and difficulty for the whole run:");
-            foreach (var (id, chip, text) in expeditionWeaponChips)
-            {
-                bool selected = id == expeditionWeapon;
-                text.Text = BattleTuning.Weapon(id).Name(English);
-                chip.Background = selected ? PrepChosen : PrepCardBack;
-                chip.BorderBrush = selected ? Brushes.White : PrepCardRim;
-            }
-            foreach (var (level, chip, text) in expeditionLevelChips)
-            {
-                bool selected = level == expeditionLevel;
-                text.Text = DifficultyName(level);
-                chip.Background = selected ? PrepChosen : PrepCardBack;
-                chip.BorderBrush = selected ? Brushes.White : PrepCardRim;
-            }
+            xSetupLabel!.Text = L($"Chuẩn bị chuyến để chọn cách đánh và độ khó cho cả chuyến (lần trước: {weaponName} · {levelName}).",
+                $"Prepare the run to choose the weapon and difficulty for all of it (last time: {weaponName} · {levelName}).");
         }
         else
         {
@@ -552,9 +492,9 @@ public sealed partial class PetWindow
             + (record.BestSeconds is double best ? L($" · nhanh nhất {Clock(best)}", $" · fastest {Clock(best)}") : "")) + keepsakeLine);
 
         bool battleNode = run != null && run.Step < run.Map.Count && IsFightKind(expedition.Kind(run.Step, expeditionLane));
-        xMainText!.Text = run == null ? L("Bắt đầu chuyến", "Start the run") : battleNode ? L("Vào trận", "Fight") : L("Đi tới đây", "Go here");
+        xMainText!.Text = run == null ? L("Chuẩn bị chuyến", "Prepare the run") : battleNode ? L("Vào trận", "Fight") : L("Đi tới đây", "Go here");
         xMain.Visibility = run?.Pending != null ? Visibility.Collapsed : Visibility.Visible;
-        xCloseText!.Text = L("Đóng", "Close");
+        xCloseText!.Text = L("‹ Sảnh", "‹ Hub");
         xAbandonText!.Text = expeditionConfirmAbandon ? L("Bấm lần nữa để bỏ", "Click again to give up") : L("Bỏ chuyến", "Give up");
         xAbandon!.Visibility = run != null ? Visibility.Visible : Visibility.Collapsed;
         bool can = run == null ? BattlePrepRefusal() == null : battleNode ? BattleRefusal() == null && expedition.Node(expeditionLane) != null : LaneOpen(expedition, expeditionLane);

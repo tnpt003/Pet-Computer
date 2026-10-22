@@ -104,22 +104,18 @@ internal static class ExpeditionChecks
         ExpeditionRun? Saved() => ExpeditionProgress.Load(file).Active;
         try
         {
-            // Locked until the gate stage is won: the menu says so.
-            window.ContextMenu!.IsOpen = true;
-            await Task.Delay(30);
-            var root = window.ContextMenu.Items.OfType<MenuItem>().First(i => i.Header as string == "Battle Mode");
-            var item = root.Items.OfType<MenuItem>().FirstOrDefault(i => (i.Header as string ?? "").StartsWith("Expedition"));
-            var items = root.Items.OfType<MenuItem>().Where(i => i.Visibility == Visibility.Visible).Select(i => i.Header as string ?? "").ToArray();
-            check(items.Length == 3 && items[1] == "Expedition (win the Slime King to open)" && item is { IsEnabled: false }, $"Battle Mode lists the Expedition, locked at first ({string.Join(", ", items)})");
-            window.ContextMenu.IsOpen = false;
-            await Task.Delay(30);
+            // Locked until the gate stage is won: the hub's card says so.
+            void TickHub() { for (double t = 0; t < 0.3; t += 1.0 / 60) Call(window, "TickBattleHub", 1.0 / 60); }
+            check(window.OpenBattleHub() == null, "The hub opens");
+            TickHub();
+            check(!window.BattleHubModeEnabled(PetWindow.HubExpedition) && window.BattleHubText.Contains("Win the Slime King in the Adventure to open") && window.BattleHubText.Contains("Locked"),
+                $"The hub lists the Expedition, locked at first ({window.BattleHubText.Replace('\n', '|')})");
             check(window.OpenExpeditionMap() is string locked && locked.Contains("Slime King") && !window.ExpeditionMapOpen, "A locked Expedition explains and opens nothing");
             window.AdventureProgress.Completed.Add("st_gate");
-            window.ContextMenu.IsOpen = true;
-            await Task.Delay(30);
-            check(item is { IsEnabled: true } && item.Header as string == "Expedition", "Once the gate stage is won the menu opens the Expedition");
-            window.ContextMenu.IsOpen = false;
-            await Task.Delay(30);
+            TickHub();
+            check(window.BattleHubModeEnabled(PetWindow.HubExpedition) && !window.BattleHubText.Contains("Locked"), "Once the gate stage is won the hub opens the Expedition");
+            Shot("Pet battle hub", "battle-hub-unlocked-en.png");
+            window.CancelBattleHub();
 
             // The map before a run: one window, never takes focus, holds the pet's free time.
             check(window.OpenExpeditionMap() == null && window.ExpeditionMapOpen && !window.BattleActive, "The Expedition map opens; nothing fights");
@@ -130,11 +126,27 @@ internal static class ExpeditionChecks
             check(window.OpenExpeditionMap() == null && Count("Pet expedition") == 1 && behavior.Quiet && window.BattleOwnsPet, "Opening it again keeps the one map; the cat's free time belongs to it");
             Tick(0.3);
             string text = window.ExpeditionMapText;
-            check(text.Contains("Expedition — Test trail") && text.Contains("No run yet · 3 steps") && text.Contains("Start the run") && text.Contains("Hammer") && text.Contains("Hard") && !text.Contains("Give up"),
-                $"Before a run the map offers the weapon and difficulty for the run ({text.Replace('\n', '|')})");
+            check(text.Contains("Expedition — Test trail") && text.Contains("No run yet · 3 steps") && text.Contains("Prepare the run") && text.Contains("last time: Sword · Normal") && !text.Contains("Give up"),
+                $"Before a run the map offers to prepare it ({text.Replace('\n', '|')})");
             check(!File.Exists(file), "Opening the map saves nothing yet");
 
-            // A run with the hammer on Hard: saved at once, the first step to fight.
+            // Prepare: the usual setup panel (weapon cards with stats, difficulty, the cat's preview), for the whole run.
+            check(window.ExpeditionPrepare() == null && window.BattlePrepForExpedition && !window.ExpeditionMapOpen && Count("Pet expedition") == 0 && window.BattlePrepCards == easy.WeaponList.Count && window.BattlePrepPreview != null,
+                "Prepare opens the shared setup panel in the map's place");
+            if (window.BattleTutorialOpen) window.CloseBattleTutorial(finished: true);
+            string prep = window.BattlePrepText;
+            check(prep.Contains("Expedition — prepare the run") && prep.Contains("Set out") && prep.Contains("‹ Map") && !window.BattleActive, $"It is titled for the run and sets out instead of fighting ({prep.Replace('\n', '|')})");
+            Shot("Pet setup", "expedition-setup-en.png");
+            window.CancelBattlePrep();
+            check(window.ExpeditionMapOpen && !window.BattlePreparing && window.Expedition!.Run == null && !File.Exists(file), "Its Map button comes back to the map; no run starts");
+            window.ExpeditionPrepare();
+            check(window.BattlePrepChooseWeapon(BattleWeapon.Hammer) && window.BattlePrepChooseDifficulty(BattleDifficulty.Hard), "The run's weapon and difficulty are chosen on the panel");
+            check(window.BattlePrepReady() == null && window.ExpeditionMapOpen && !window.BattlePreparing && !window.BattleActive &&
+                  window.Expedition!.Run is { Weapon: BattleWeapon.Hammer, Level: BattleDifficulty.Hard } && Saved() != null, "Set out begins the run with that loadout (saved) and comes back to the map");
+            check(window.BattlePrepReady() is string twice0 && twice0.Length > 0 && window.Expedition!.Run != null, "A second Set out (double click) finds no panel");
+
+            // A run with the hammer on Hard: saved at once, the first step to fight (seeded again, the same way).
+            window.ExpeditionProgress.Active = null; // Not given up: no run is counted.
             check(window.ExpeditionChooseWeapon(BattleWeapon.Hammer) && window.ExpeditionChooseDifficulty(BattleDifficulty.Hard) && window.ExpeditionStart(5) == null, "Start the run begins one");
             var run = window.Expedition!.Run!;
             Tick(0.3);
@@ -277,7 +289,7 @@ internal static class ExpeditionChecks
             SetContext(window, false, 0); Call(window, "TickContext", 1.1); Tick(0.3);
             check(window.ExpeditionMapVisible, "It comes back when the fullscreen app closes");
             prefs.Language = "vi"; Tick(0.3);
-            check(window.ExpeditionMapText.Contains("Viễn chinh — Đường thử") && window.ExpeditionMapText.Contains("Bắt đầu chuyến"), "The map follows the pet's language");
+            check(window.ExpeditionMapText.Contains("Viễn chinh — Đường thử") && window.ExpeditionMapText.Contains("Chuẩn bị chuyến"), "The map follows the pet's language");
             Shot("Pet expedition", "expedition-map-vi.png");
             prefs.Language = "en";
             window.Reset();
@@ -343,7 +355,7 @@ internal static class ExpeditionChecks
                 "Going to the rest opens its choice on the map (saved)");
             var cards = Saved()!.Pending!.Cards;
             Shot("Pet expedition", "expedition-rest-en.png");
-            window.CancelExpeditionMap();
+            window.CancelExpeditionMap(); window.CancelBattleHub();
             window.ReloadExpeditionProgress();
             window.OpenExpeditionMap();
             Tick(0.3);

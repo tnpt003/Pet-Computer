@@ -15,9 +15,12 @@ namespace DesktopPet;
 // run: also while a capsule machine, rest or event waits; not while a capsule opens). A floating
 // window the user can drag by its header (where it was dragged is kept for the session, on the
 // cat's monitor), at most BagMaxHeight tall with its content scrolling, three tabs:
-//  Stats: max HP, damage, attack speed, reach, knock-back, running speed, damage taken, the fish's
-//   heal, each with an icon and a bar (the weapon's own part, then what cards and relics add in gold
-//   or take away in red), and warnings (a relic's price, low HP, Reckless switched on).
+//  Stats: max HP, damage, attack speed, reach, knock-back, running speed, damage taken, each with
+//   an icon and a bar (the weapon's own part, then what cards and relics add in gold or take away
+//   in red); warnings (a relic's price, low HP, Reckless switched on); the skills' cooldowns and the
+//   fish's heal with the relics' changes; in a battle "This battle" (enemies defeated and what the
+//   build's effects have done) and, over a card offer, the card under the mouse (or picked) as a
+//   preview: what it does, the synergy it would switch on, and → the numbers after it in blue.
 //  Cards: the build as picture tiles (×n, rare ◆), each group's progress to its synergies.
 //  Relics: the Expedition run's relics (gain ▲, price ▼) and its log; outside the Expedition the
 //   chapter's progress instead.
@@ -263,7 +266,7 @@ public sealed partial class PetWindow
         string signature = string.Join("|", view.Mode, English, bagTab, view.Where, view.Hp is double h ? Math.Round(h).ToString(CultureInfo.InvariantCulture) : "-",
             Math.Round(sim.CatMaxHp).ToString(CultureInfo.InvariantCulture), sim.Reckless,
             string.Join(",", sim.UpgradesTaken.Where(t => t.Value > 0).Select(t => t.Key + t.Value)), string.Join(",", sim.Relics.Select(r => r.Id)),
-            view.Run?.Log.Count ?? 0, preferences.Name);
+            view.Run?.Log.Count ?? 0, preferences.Name, BattleUpgradePreview ?? "");
         if (!force && signature == bagSignature) return;
         bagSignature = signature;
 
@@ -298,9 +301,59 @@ public sealed partial class PetWindow
 
     // ── Stats ────────────────────────────────────────────────────────────────────────────────
 
+    private static readonly Brush BagPreviewInk = PetUi.Hex("#8FD3FF");
+
+    // A card on offer under the mouse (or picked): the build as it is and as it would be with it.
+    private (UpgradeSpec Card, BattleSim Before, BattleSim After)? BagPreview(BagView view)
+    {
+        if (!view.Live || BattleUpgradePreview is not string id || view.Sim.UpgradeOffer?.FirstOrDefault(u => u.Id == id) is not UpgradeSpec card) return null;
+        var build = view.Sim.UpgradesTaken.Where(t => t.Value > 0).ToDictionary(t => t.Key, t => t.Value);
+        var relics = view.Sim.Relics.Select(r => r.Id).ToList();
+        var before = new BattleSim(view.Sim.Settings, 0, 1000, weapon: view.Sim.Weapon.Id, build: build, seed: 0, relics: relics);
+        build[card.Id] = build.GetValueOrDefault(card.Id) + 1;
+        return (card, before, new BattleSim(view.Sim.Settings, 0, 1000, weapon: view.Sim.Weapon.Id, build: build, seed: 0, relics: relics));
+    }
+
+    // "If you take Sharp edge": what it does, the synergy it would switch on, how to read the arrows
+    // (numbersChange null: the Cards tab, where there are no numbers to read).
+    private void AddPreviewCard(BagView view, UpgradeSpec card, bool? numbersChange)
+    {
+        var first = BagLine(L("Nếu lấy: ", "If you take: ") + card.Name(English), PetUi.SmallSize, BagPreviewInk, bold: true);
+        first.Margin = new Thickness(0);
+        var lines = new StackPanel { Children = { first, BagLine(card.Describe(English), PetUi.CaptionSize, Brushes.White) } };
+        if (view.Sim.Unlocks(card) is SynergySpec synergy)
+            lines.Children.Add(BagLine(L($"Sẽ mở ★ {synergy.Name(false)}: {synergy.Describe(false)}", $"Switches on ★ {synergy.Name(true)}: {synergy.Describe(true)}"), PetUi.CaptionSize, PetUi.Game.Gold, bold: true));
+        string heal = Number(Math.Max(0, Math.Min(card.Amount, view.Sim.CatMaxHp - view.Sim.CatHp)), "0");
+        string? hint = card.Effect == "heal" ? L($"Hồi ngay {heal} HP (thẻ hồi máu không giữ sang màn sau).", $"Heals {heal} HP now (a heal is not carried on).")
+            : numbersChange == true ? L("Số xanh sau dấu → là chỉ số khi đã lấy thẻ này.", "Blue numbers after → are the stats with this card.")
+            : numbersChange == false ? L("Không đổi các chỉ số ở đây: tác dụng của nó hiện ra trong trận.", "Changes none of the numbers here: it works in the fight itself.")
+            : null;
+        if (hint != null) lines.Children.Add(BagLine(hint, PetUi.CaptionSize, PetUi.Game.Soft));
+        var box = BagCard(lines, bottom: 8);
+        box.BorderBrush = BagPreviewInk; box.BorderThickness = new Thickness(1.5);
+        bagBody!.Children.Add(box);
+    }
+
+    // Each number: its icon, its name, how it is shown, its bar's full length, and whether more is better.
+    private (string Icon, string Name, Func<BattleSim, double> Value, double Max, bool Higher, Func<double, string> Show)[] StatRows() => new (string, string, Func<BattleSim, double>, double, bool, Func<double, string>)[]
+    {
+        ("maxHp", L("HP tối đa", "Max HP"), s => s.CatMaxHp, 200, true, v => Number(v, "0")),
+        ("damage", L("Sát thương mỗi đòn", "Damage per hit"), s => s.SwingDamage, 80, true, v => Number(v, "0.#")),
+        ("attackSpeed", L("Tốc độ đánh", "Attack speed"), s => s.SwingsPerSecond, 3, true, v => Number(v, "0.00") + L("/giây", "/s")),
+        ("reach", L("Tầm đánh", "Reach"), s => s.Weapon.Range, 140, true, v => Number(v, "0")),
+        ("knock", L("Đẩy lùi", "Knock-back"), s => s.Knock, 400, true, v => Number(v, "0")),
+        ("moveSpeed", L("Tốc độ chạy", "Running speed"), s => s.MoveFactor * 100, 200, true, v => Number(v, "0") + "%"),
+        ("armor", L("Sát thương phải nhận", "Damage taken"), s => s.HurtFactor * 100, 150, false, v => Number(v, "0") + "%"),
+    };
+
     private void FillBagStats(BagView view)
     {
         var sim = view.Sim;
+        var rows = StatRows();
+        var preview = BagPreview(view);
+        if (preview is var (card, before, after))
+            AddPreviewCard(view, card, rows.Any(r => r.Show(r.Value(before)) != r.Show(r.Value(after))));
+
         var warnings = new List<(string Text, bool Bad)>();
         if (view.Hp is double hp && hp < 0.35 * sim.CatMaxHp)
             warnings.Add((view.Live ? L("HP thấp: cân nhắc Cá hồi máu hoặc Khiên.", "Low HP: think of the Healing fish or the Shield.")
@@ -322,51 +375,99 @@ public sealed partial class PetWindow
             bagBody!.Children.Add(BagCard(list, bottom: 8));
         }
 
-        // Each number: its icon, its name, the value with what changed it, and a bar.
-        var rows = new (string Icon, string Name, Func<BattleSim, double> Value, double Max, bool Higher, Func<double, string> Show)[]
-        {
-            ("maxHp", L("HP tối đa", "Max HP"), s => s.CatMaxHp, 200, true, v => Number(v, "0")),
-            ("damage", L("Sát thương mỗi đòn", "Damage per hit"), s => s.SwingDamage, 80, true, v => Number(v, "0.#")),
-            ("attackSpeed", L("Tốc độ đánh", "Attack speed"), s => s.SwingsPerSecond, 3, true, v => Number(v, "0.00") + L("/giây", "/s")),
-            ("reach", L("Tầm đánh", "Reach"), s => s.Weapon.Range, 140, true, v => Number(v, "0")),
-            ("knock", L("Đẩy lùi", "Knock-back"), s => s.Knock, 400, true, v => Number(v, "0")),
-            ("moveSpeed", L("Tốc độ chạy", "Running speed"), s => s.MoveFactor * 100, 200, true, v => Number(v, "0") + "%"),
-            ("armor", L("Sát thương phải nhận", "Damage taken"), s => s.HurtFactor * 100, 150, false, v => Number(v, "0") + "%"),
-            ("heal", L("Cá hồi máu", "Healing fish"), s => s.HealAmount, Math.Max(1, view.Plain.HealAmount * 2.5), true, v => Number(v, "0") + " HP"),
-        };
-        var grid = new Grid();
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(30) });
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(112) });
+        var grid = StatGrid();
         for (int r = 0; r < rows.Length; r++)
         {
             var (icon, name, value, max, higher, show) = rows[r];
-            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            double now = value(sim), plain = value(view.Plain);
-            bool changed = show(now) != show(plain);
-            bool better = changed && (now > plain) == higher;
             // The card pictures are drawn for 44 DIPs: drawn at that size and scaled down.
             FrameworkElement picture = icon == "reach" ? new BagIcon { Kind = "reach" } : new Viewbox { Child = new UpgradeIcon { Effect = icon, Width = 44, Height = 44 } };
-            picture.Width = 24; picture.Height = 24; picture.Margin = new Thickness(0, 3, 6, 3);
-            var label = BagLine(name, PetUi.SmallSize, Brushes.White); label.VerticalAlignment = VerticalAlignment.Center; label.Margin = new Thickness(0);
-            var number = new TextBlock { FontSize = PetUi.SmallSize, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(8, 0, 10, 0), TextAlignment = TextAlignment.Right };
-            number.Inlines.Add(new System.Windows.Documents.Run(show(now)) { Foreground = changed ? (better ? PetUi.Game.Gold : BagBad) : Brushes.White, FontWeight = FontWeights.Bold });
-            if (changed)
-            {
-                double delta = now - plain;
-                number.Inlines.Add(new System.Windows.Documents.Run($" {(delta > 0 ? "+" : "−")}{show(Math.Abs(delta))}") { Foreground = better ? PetUi.Game.Gold : BagBad, FontSize = PetUi.CaptionSize });
-            }
-            var bar = StatBar(Math.Min(now, plain) / max, Math.Abs(now - plain) / max, better);
-            Grid.SetRow(picture, r); Grid.SetRow(label, r); Grid.SetRow(number, r); Grid.SetRow(bar, r);
-            Grid.SetColumn(label, 1); Grid.SetColumn(number, 2); Grid.SetColumn(bar, 3);
-            grid.Children.Add(picture); grid.Children.Add(label); grid.Children.Add(number); grid.Children.Add(bar);
+            double? step = preview is var (_, b, a) ? value(a) - value(b) : null;
+            AddStatRow(grid, r, picture, name, value(sim), value(view.Plain), max, higher, show, step);
         }
         var note = BagLine(L($"Thanh kem: {view.Plain.Weapon.Name(English)} không thẻ. Vàng: thẻ/di vật cộng thêm. Đỏ: bị trừ. Cổ vũ, combo và hiệu ứng chỉ có trong trận không tính ở đây.",
             $"Cream: the {view.Plain.Weapon.Name(English)} with no cards. Gold: added by cards or relics. Red: taken away. Cheer, combos and other in-battle effects are not counted here."),
             PetUi.CaptionSize, PetUi.Game.Soft);
         note.Margin = new Thickness(0, 8, 0, 0);
-        bagBody!.Children.Add(BagCard(new StackPanel { Children = { grid, note } }));
+        bagBody!.Children.Add(BagCard(new StackPanel { Children = { grid, note } }, bottom: 8));
+
+        // The skills with the relics' changes (and, in a battle, how long until each is ready).
+        var skills = StatGrid();
+        int at = 0;
+        foreach (var info in BattleSkills.All)
+        {
+            var skill = info.Skill;
+            var glyph = new Border { CornerRadius = new CornerRadius(6), Background = PetUi.Game.Shadow(0x80),
+                Child = new HudGlyph(Enum.Parse<HudGlyphKind>(skill.ToString())) { Width = 18, Height = 18 } };
+            string name = info.Name(English) + (view.Live && sim.Cooldown(skill) > 0.05 ? L($" · còn {Number(sim.Cooldown(skill), "0")} giây", $" · ready in {Number(sim.Cooldown(skill), "0")} s") : "");
+            AddStatRow(skills, at++, glyph, name, sim.SkillCooldown(skill), view.Plain.SkillCooldown(skill), 30, false, v => L("hồi ", "every ") + Number(v, "0.#") + L(" giây", " s"), null);
+            if (skill == BattleSkill.Heal)
+                AddStatRow(skills, at++, new Border(), L("lượng hồi", "heals"), sim.HealAmount, view.Plain.HealAmount, Math.Max(1, view.Plain.HealAmount * 2.5), true, v => Number(v, "0") + " HP", null);
+        }
+        var heading = BagLine(L("Kỹ năng", "Skills"), PetUi.SmallSize, Brushes.White, bold: true);
+        heading.Margin = new Thickness(0, 0, 0, 2);
+        bagBody!.Children.Add(BagCard(new StackPanel { Children = { heading, skills } }, bottom: view.Live ? 8 : 0));
+
+        // This battle: what the build and relics have done so far.
+        if (view.Live)
+        {
+            bool Has(string effect) => sim.Settings.UpgradeList.Any(u => u.Effect == effect && sim.Stacks(u.Id) > 0);
+            bool On(string effect) => sim.Synergies.Any(y => y.Effect == effect);
+            var lines = new List<(string Name, int Count)> { (L("Quái đã hạ", "Enemies defeated"), sim.Defeated) };
+            if (On("thorns") || sim.Reflects > 0) lines.Add((L("Đòn phản lại (gai)", "Hits reflected (thorns)"), sim.Reflects));
+            if (On("echo") || sim.Echoes > 0) lines.Add((L("Đòn dội lại", "Echo hits"), sim.Echoes));
+            if (sim.HasShell || sim.ShellBlocks > 0) lines.Add((L("Đòn Mai rùa đỡ", "Hits the Turtle shell stopped"), sim.ShellBlocks));
+            if (Has("momentum") || sim.ChargedHits > 0) lines.Add((L("Đòn tích lực (chạy đà)", "Charged hits (momentum)"), sim.ChargedHits));
+            if (Has("opener") || sim.OpenerHits > 0) lines.Add((L("Đòn mở màn", "Opener hits"), sim.OpenerHits));
+            if (sim.Relics.Any(r => r.Effect == RelicSpec.Counter) || sim.CounterHits > 0) lines.Add((L("Đòn phản công (chuông)", "Counter hits (bell)"), sim.CounterHits));
+            var title = BagLine(L("Trận này", "This battle") + " · " + Clock(sim.Time), PetUi.SmallSize, Brushes.White, bold: true);
+            title.Margin = new Thickness(0, 0, 0, 2);
+            var stack = new StackPanel { Children = { title } };
+            foreach (var (what, count) in lines)
+            {
+                var line = new DockPanel { Margin = new Thickness(0, 3, 0, 0) };
+                var value = BagLine(count.ToString(CultureInfo.InvariantCulture), PetUi.SmallSize, count > 0 ? PetUi.Game.Gold : PetUi.Game.Soft, bold: true);
+                value.Margin = new Thickness(0);
+                DockPanel.SetDock(value, Dock.Right);
+                var label = BagLine(what, PetUi.SmallSize, Brushes.White); label.Margin = new Thickness(0);
+                line.Children.Add(value); line.Children.Add(label);
+                stack.Children.Add(line);
+            }
+            bagBody!.Children.Add(BagCard(stack));
+        }
+    }
+
+    private static Grid StatGrid()
+    {
+        var grid = new Grid();
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(30) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(112) });
+        return grid;
+    }
+
+    // One row: picture, name, the value (gold when cards/relics help, red when they hurt, with the
+    // change from the weapon's own; with a preview, → the value after the card in blue), and a bar.
+    private void AddStatRow(Grid grid, int r, FrameworkElement picture, string name, double now, double plain, double max, bool higher, Func<double, string> show, double? preview)
+    {
+        grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        bool changed = show(now) != show(plain);
+        bool better = changed && (now > plain) == higher;
+        picture.Width = 24; picture.Height = 24; picture.Margin = new Thickness(0, 3, 6, 3);
+        var label = BagLine(name, PetUi.SmallSize, Brushes.White); label.VerticalAlignment = VerticalAlignment.Center; label.Margin = new Thickness(0);
+        var number = new TextBlock { FontSize = PetUi.SmallSize, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(8, 0, 10, 0), TextAlignment = TextAlignment.Right };
+        number.Inlines.Add(new System.Windows.Documents.Run(show(now)) { Foreground = changed ? (better ? PetUi.Game.Gold : BagBad) : Brushes.White, FontWeight = FontWeights.Bold });
+        if (changed)
+        {
+            double delta = now - plain;
+            number.Inlines.Add(new System.Windows.Documents.Run($" {(delta > 0 ? "+" : "−")}{show(Math.Abs(delta))}") { Foreground = better ? PetUi.Game.Gold : BagBad, FontSize = PetUi.CaptionSize });
+        }
+        if (preview is double step && show(now + step) != show(now))
+            number.Inlines.Add(new System.Windows.Documents.Run(" → " + show(now + step)) { Foreground = BagPreviewInk, FontWeight = FontWeights.Bold });
+        var bar = StatBar(Math.Min(now, plain) / max, Math.Abs(now - plain) / max, better);
+        Grid.SetRow(picture, r); Grid.SetRow(label, r); Grid.SetRow(number, r); Grid.SetRow(bar, r);
+        Grid.SetColumn(label, 1); Grid.SetColumn(number, 2); Grid.SetColumn(bar, 3);
+        grid.Children.Add(picture); grid.Children.Add(label); grid.Children.Add(number); grid.Children.Add(bar);
     }
 
     // The weapon's own part in cream, then the change: gold when it helps, red when it hurts.
@@ -393,6 +494,7 @@ public sealed partial class PetWindow
     {
         var sim = view.Sim;
         var settings = sim.Settings;
+        if (BagPreview(view) is var (offered, _, _)) AddPreviewCard(view, offered, null);
         // Each group: its points as pips, what synergies it has switched on, and how far the next one is.
         var progress = new StackPanel();
         foreach (var group in BuildGroups.All)

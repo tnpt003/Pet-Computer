@@ -16,6 +16,8 @@ public sealed partial class PetWindow
 {
     private Window? upgradeWindow;
     private string? upgradePick;
+    // The card under the mouse (the Bag previews it, or else the picked one).
+    private string? upgradeHover;
     private readonly List<(string Id, Border Card, TextBlock Name, TextBlock Desc, TextBlock Count, TextBlock Build)> upgradeCards = new();
     private TextBlock? upgradeTitle, upgradeConfirmText;
     private Border? upgradeConfirm;
@@ -23,6 +25,8 @@ public sealed partial class PetWindow
     public bool BattleUpgradeOpen => upgradeWindow != null;
     public bool BattleUpgradeVisible => upgradeWindow?.IsVisible == true;
     public string? BattleUpgradePick => upgradePick;
+    // The card the open Bag previews: the one under the mouse, otherwise the picked one.
+    public string? BattleUpgradePreview => upgradeWindow == null ? null : upgradeHover ?? upgradePick;
     public bool BattleUpgradeConfirmEnabled => upgradeConfirm?.IsEnabled == true;
     public string BattleUpgradeText => string.Join("\n", new[] { upgradeTitle?.Text, upgradeConfirmText?.Text }
         .Concat(upgradeCards.SelectMany(c => new[] { c.Name.Text, c.Desc.Text, c.Count.Text, c.Build.Text })));
@@ -44,6 +48,7 @@ public sealed partial class PetWindow
         if (battle?.UpgradeOffer is not { } offer || offer.All(u => u.Id != id)) return false;
         upgradePick = id;
         UpdateBattleUpgrade();
+        FillBag(force: false);
         return true;
     }
 
@@ -67,7 +72,7 @@ public sealed partial class PetWindow
     {
         upgradeWindow?.Close();
         upgradeWindow = null;
-        upgradePick = null;
+        upgradePick = upgradeHover = null;
         upgradeConfirm = null;
         upgradeCards.Clear();
     }
@@ -94,6 +99,8 @@ public sealed partial class PetWindow
                 Child = new StackPanel { Children = { new UpgradeIcon { Effect = upgrade.Effect, Width = 52, Height = 52, HorizontalAlignment = HorizontalAlignment.Center }, name, desc, build, count } }
             };
             card.MouseLeftButtonDown += (_, e) => { PickBattleUpgrade(id); e.Handled = true; };
+            card.MouseEnter += (_, _) => { upgradeHover = id; FillBag(force: false); };
+            card.MouseLeave += (_, _) => { if (upgradeHover == id) { upgradeHover = null; FillBag(force: false); } };
             row.Children.Add(card);
             upgradeCards.Add((id, card, name, desc, count, build));
         }

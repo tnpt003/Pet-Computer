@@ -357,6 +357,8 @@ Tự động đã có: Phần thưởng trên sảnh (ô có hình, khóa, Mới
 - [ ] Kéo túi bằng phần đầu (hình mèo/tiêu đề): đi theo chuột, không giật; đóng rồi mở lại vẫn ở chỗ cũ. Gõ phím ở app khác trong lúc túi mở vẫn bình thường. Thử cả khi kéo sang màn hình phụ.
 - [ ] Lúc chọn thẻ nâng cấp: mở túi tab Thẻ xem build, chọn thẻ + Xác nhận → túi hiện thẻ mới, trận vẫn dừng tới khi đóng túi.
 - [ ] Bản đồ Phiêu lưu: chọn màn khác rồi mở túi → dòng "Build mang vào Màn n"; Viễn chinh: túi có HP, cảnh báo giá di vật, tab Di vật có nhật ký chuyến khớp những gì bạn đã làm.
+- [ ] Lúc chọn thẻ nâng cấp, túi đang mở tab Chỉ số: rê chuột qua từng thẻ → khối "Nếu lấy" và số xanh "→" đổi theo thẻ dưới chuột; rời chuột thì về thẻ đã bấm chọn (nếu có). Thẻ mở cộng hưởng có dòng "Sẽ mở ★ …".
+- [ ] Trong trận, tab Chỉ số có "Trận này" (quái đã hạ, và các dòng gai/dội/Mai rùa/chạy đà/mở màn/chuông khi build có) và khối Kỹ năng ("còn n giây" cho kỹ năng đang hồi). Viễn chinh có Túi cứu trợ/Chuông phản đòn: hồi chiêu Cá/Khiên đỏ và dài hơn.
 - [ ] Máy viên nang: bấm viên → nút Túi đồ mờ tới khi viên nang bật nắp; túi đang mở không lộ phần thưởng trước khi bật.
 - [ ] Màn hình thấp/scale cao: túi không tràn, cuộn được; app fullscreen: túi ẩn rồi hiện lại.
 - [ ] Màn hình thấp/scale cao: túi đồ cuộn được, nút Đóng vẫn thấy. App fullscreen: sảnh (đang ở túi đồ) ẩn rồi hiện lại vẫn ở túi đồ.

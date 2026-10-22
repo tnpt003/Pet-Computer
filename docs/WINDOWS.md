@@ -560,7 +560,12 @@ instead of half sizes (10.5–15.5 → the next step up; the 22 banner → 20).
   per hit, attack speed, reach, knock-back, running speed, damage taken, Healing fish; cream = the
   weapon with no cards, gold = what cards/relics add, red = what they take; numbers from the
   battle's own rules, in a battle the battle itself; warnings: each relic's price, low HP, Reckless
-  on), **Cards** (tiles with the card picture, ×n, ◆ rare, group colours; hover for the text; each
+  on; **Skills**: each skill's cooldown and the fish's heal after the relics, in a battle how long
+  until each is ready; **This battle** (in a battle only): enemies defeated and what the build has
+  done: hits reflected, echo hits, Turtle shell blocks, charged, opener and counter hits, each shown
+  once the build has that effect; **If you take** (over a card offer): the card under the mouse,
+  or else the picked one, with what it does, the synergy it would switch on and → the numbers after
+  it in blue; the Cards tab shows the same card on top), **Cards** (tiles with the card picture, ×n, ◆ rare, group colours; hover for the text; each
   group's points as pips with ★ synergies on and "n more → ★ …"), **Relics** (Expedition: slots
   n/max, each relic's ▲ gain and ▼ price, the run log latest first; elsewhere: where relics come
   from and the chapter's stages). The run log is `Log` in the run (expedition.json, no version

@@ -183,6 +183,17 @@ internal static class BagChecks
                 && text.Contains("Run log") && text.Contains("Gold capsule: the ◈ " + feather + " relic") && text.Contains("Fight: won") && text.Contains("−14 HP"),
                 $"Relics: slots, gains and prices, the run log latest first ({text.Replace('\n', '|')})");
             Shot("Pet bag", "bag-expedition-relics-en.png");
+            // The skills with the relics' changes: the Relief pack makes the fish heal more and recharge slower.
+            run.Relics.Add("relief_pack");
+            window.ShowBattleBagTab(PetWindow.BagStatsTab);
+            text = window.BattleBagText;
+            var relief = new BattleSim(data, 0, 1000, weapon: BattleWeapon.Hammer, seed: 0, relics: new[] { "relief_pack" });
+            string fish = BattleSkills.Get(BattleSkill.Heal).Name(true);
+            check(text.Contains("Skills") && text.Contains(fish) && text.Contains($"{relief.HealAmount:0} HP") && text.Contains("every " + relief.SkillCooldown(BattleSkill.Heal).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) + " s")
+                && text.Contains("every " + data.SkillCooldown(BattleSkill.Shield).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) + " s") && !text.Contains("This battle"),
+                $"Skills: cooldowns and the fish's heal after the relics; no battle numbers outside a battle ({text.Replace('\n', '|')})");
+            Shot("Pet bag", "bag-expedition-skills-en.png");
+            run.Relics.Remove("relief_pack");
             // Not while a capsule opens (its prize stays secret until it pops).
             window.CloseBattleBag();
             if (window.ExpeditionRoll() == null)
@@ -229,6 +240,10 @@ internal static class BagChecks
             Fight(1);
             check(window.Battle!.Time == before, "Nothing runs while the Bag is open");
             check(window.BattleBagText.Contains("HP " + Math.Ceiling(window.Battle.CatHp) + "/") && window.BattleBagText.Contains("Stage 1 · Field"), "In a battle it shows the battle's own HP and stage");
+            window.ShowBattleBagTab(PetWindow.BagStatsTab);
+            check(window.BattleBagText.Contains("This battle · ") && window.BattleBagText.Contains("Enemies defeated") && window.BattleBagText.Contains("Skills")
+                && !window.BattleBagText.Contains("If you take"),
+                $"In a battle: what this battle has done so far, the skills, no card preview without an offer ({window.BattleBagText.Replace('\n', '|')})");
             window.SetBattlePaused(true);
             Click(hud.BagButton);
             check(!window.BattleBagOpen && window.BattlePauseReasons == PetWindow.BattlePause.User, "Closing it removes only its own pause (the user's stays)");
@@ -251,11 +266,20 @@ internal static class BagChecks
             }
             check(window.BattleUpgradeOpen && window.OpenBattleBag(PetWindow.BagCardsTab) == null && (window.BattlePauseReasons & PetWindow.BattlePause.Bag) != 0,
                 "Over a card offer the Bag opens too");
-            var offered = window.Battle!.UpgradeOffer![0];
+            // A card that changes the numbers: picked (not confirmed) the Bag previews it on both tabs.
+            var offered = window.Battle!.UpgradeOffer!.FirstOrDefault(u => u.Effect is "damage" or "maxHp" or "armor" or "moveSpeed" or "attackSpeed" or "knock") ?? window.Battle!.UpgradeOffer![0];
+            check(window.PickBattleUpgrade(offered.Id) && window.BattleBagText.Contains("If you take: " + offered.Name(true)) && window.BattleBagText.Contains(offered.Describe(true)),
+                "Picking a card shows it in the Bag's Cards tab as a preview");
+            window.ShowBattleBagTab(PetWindow.BagStatsTab);
+            check(window.BattleBagText.Contains("If you take: " + offered.Name(true)) && window.BattleBagText.Contains(" → ") && window.BattleBagText.Contains("Blue numbers"),
+                $"The Stats tab shows → the numbers after the card ({window.BattleBagText.Replace('\n', '|')})");
+            Shot("Pet bag", "bag-card-preview-en.png");
+            Call(window, "FillBag", true);
+            window.ShowBattleBagTab(PetWindow.BagCardsTab);
             check(window.PickBattleUpgrade(offered.Id) && window.ConfirmBattleUpgrade() && window.Battle!.Paused && (window.BattlePauseReasons & PetWindow.BattlePause.Upgrade) == 0,
                 "A card picked with the Bag open: the battle stays paused for the Bag");
             TickBag(0.3);
-            check(window.BattleBagText.Contains(offered.Name(true)), "The Bag shows the card just taken");
+            check(window.BattleBagText.Contains(offered.Name(true)) && !window.BattleBagText.Contains("If you take"), "The Bag shows the card just taken; the preview is gone");
             window.CloseBattleBag();
             check(!window.Battle!.Paused, "Closing it lets the battle go on");
             window.EndBattle();

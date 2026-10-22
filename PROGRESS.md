@@ -12,6 +12,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Lưu: `AdventureProgress.RewardsSeen` (không đổi version; file cũ → mọi phần thưởng đang có hiện Mới một lần); `ExpeditionRun.Log` (`ExpeditionLogEntry`: thắng trận, rời trận, mọi lựa chọn kèm HP thay đổi; ≤ 60 dòng; không đổi version/rulesVersion; file thiếu → rỗng).
 - Test thật: scripts/test.ps1 -Ui (cả PET_RENDER_REVIEW): Python 55 OK; C# 1270 (InventoryStatTests thêm nhật ký: rời trận, thắng, viên nang một lần, lưu/đọc, file thiếu Log, giới hạn 60); WPF 672 đạt (`BagChecks` thay InventoryChecks). Lần đầu fail 2 do hàm đọc chữ test bỏ sót TextBlock dùng Inlines (đã sửa). Xem ảnh render: icon chỉ số tràn khi thu nhỏ UpgradeIcon → vẽ 44 rồi Viewbox; HUD có nút túi không tràn.
 - Chưa kiểm tra thật: kéo cửa sổ bằng chuột thật (DragMove trên cửa sổ no-activate), nhiều màn hình, DPI khác — xem MANUAL-TEST mục "Túi đồ theo chế độ và Phần thưởng".
+- Commit e2de7b1; publish 1.3.0-beta+e2de7b1 sạch (file của người dùng tạm cất rồi trả nguyên), check-publish.ps1 đạt 3/3; artifacts\DesktopPet-1.3.0-beta-e2de7b1-win-x64.zip. Pet đóng bình thường trước publish và mở lại sau.
 
 ## Túi đồ trên Sảnh chiến đấu (2026-10-22)
 - Người dùng: cần túi đồ hiện chỉ số và những gì mèo có sau các màn; chỉ hiển thị (không vật phẩm nhặt/trang bị), chỉ trên Sảnh, không xem trong trận. C# only, không đổi file lưu/luật.

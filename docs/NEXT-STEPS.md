@@ -17,12 +17,12 @@ Cập nhật: 2026-10-22 (Asia/Saigon). Bản đang chạy: 1.3.0-beta.
 
 | Mốc | Nội dung | Trạng thái |
 |---|---|---|
-| M1 | Dọn tài liệu: archive lịch sử, NEXT-STEPS này, tick MANUAL-TEST | đang làm |
-| M2 | Chuẩn hóa: hình học mèo vào PetSettings; một hàm tạo cửa sổ overlay; gộp cờ "người dùng yêu cầu"; test giả vị trí chuột (6 check trận không phụ thuộc chuột thật); test battle.json khớp fallback C# | chưa |
-| M3 | Tách PetBattle.cs thành partial theo nhóm (chỉ di chuyển code); đổi tên shelf/trophy → keepsake (giữ key preferences) | chưa |
-| M4 | Gom cỡ chữ lẻ về thang chuẩn, đo chiều cao panel | chưa |
-| M5 | Lịch: Tết/Trung thu tới 2050 (thuật toán âm lịch, đối chiếu bảng cũ); thêm 8/3, 20/10, 1/1 | chưa |
-| M6 | Viễn chinh: quay lại bậc, 8% HP tối đa, 1 lần mỗi bậc, bốc từ seed | chưa |
+| M1 | Dọn tài liệu: archive lịch sử, NEXT-STEPS này, tick MANUAL-TEST | xong (265990e) |
+| M2 | Chuẩn hóa: hình học mèo vào PetSettings; một hàm tạo cửa sổ overlay; gộp cờ "người dùng yêu cầu"; test giả vị trí chuột (6 check trận không phụ thuộc chuột thật); test battle.json khớp fallback C# | xong (587d460) |
+| M3 | Tách PetBattle.cs thành partial theo nhóm (chỉ di chuyển code); đổi tên shelf/trophy → keepsake (giữ key preferences) | xong (7f1f1cc) |
+| M4 | Gom cỡ chữ lẻ về thang chuẩn, đo chiều cao panel | xong (e1c7879) |
+| M5 | Lịch: Tết/Trung thu tới 2050 (thuật toán âm lịch, đối chiếu bảng cũ); thêm 8/3, 20/10, 1/1 | xong (c2624f2) |
+| M6 | Viễn chinh: quay lại bậc, 8% HP tối đa, 1 lần mỗi bậc, bốc từ seed | xong (2387f2d) |
 | M7 | HUD trận kéo được (nhớ theo màn hình, double-click về chỗ cũ); đo frame time trận đông quái | chưa |
 | M8 | Chế độ Vô tận: đợt mạnh dần, 3 đợt chọn 1 thẻ, Vua mỗi 10 đợt, kỷ lục đợt cao nhất theo độ khó, đóng app là hết lượt, túi đồ chế độ Vô tận | chưa |
 

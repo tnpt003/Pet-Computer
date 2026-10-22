@@ -392,3 +392,9 @@ Tự động đã có: Phần thưởng trên sảnh (ô có hình, khóa, Mới
 - [x] Máy viên nang: bấm viên → nút Túi đồ mờ tới khi viên nang bật nắp; túi đang mở không lộ phần thưởng trước khi bật.
 - [x] Màn hình thấp/scale cao: túi không tràn, cuộn được; app fullscreen: túi ẩn rồi hiện lại.
 - [x] Màn hình thấp/scale cao: túi đồ cuộn được, nút Đóng vẫn thấy. App fullscreen: sảnh (đang ở túi đồ) ẩn rồi hiện lại vẫn ở túi đồ.
+
+## Kế hoạch 22/10 — chuẩn hóa, lịch, quay lại bậc (2026-10-22)
+- [ ] Chơi bóng: bấm quả bóng không làm mất focus app đang gõ; quả bóng không hiện trong Alt+Tab.
+- [ ] Bong bóng thoại (cỡ chữ 13) vẫn dễ đọc; menu chuột phải mèo/món trưng bày bình thường.
+- [ ] Viễn chinh: sau khi quay bậc có nút "↻ Quay lại bậc này · −N HP"; bấm: viên nang mở, điểm mới, HP trừ đúng; không còn nút lần hai; đóng/mở app vẫn giữ kết quả; ghé/vào một điểm rồi thì không còn nút.
+- [ ] Ngày lễ mới (1/1, 8/3, 20/10): bật Mèo biết nói + AI, mở mèo đúng ngày: câu chào/câu nói theo ngày lễ.

@@ -15,6 +15,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Đã xem ảnh render (scratchpad): kệ bẹp, kệ nghiêng khi cầm (sửa sau khi xem: thêm vùng trống dưới vì bị cắt), khói poof, lúc hiện lại (sửa: lấp lánh viền tối → vàng sáng). Chưa xem trực tiếp trên desktop.
 - Cần test tay: docs/MANUAL-TEST.md mục "Kệ kỷ vật thành đồ chơi" (cảm giác cầm/ném/nảy, rơi trúng đầu, mèo đẩy thật, mép → giữa, nhiều màn hình/DPI, vùng trống quanh kệ có xuyên chuột thật không).
 - Ý tưởng chưa làm: kệ đáp lên gờ cửa sổ; cầm từng kỷ vật riêng.
+- Commit fea7821. Publish sạch: 1.3.0-beta+fea7821, ZIP artifacts\DesktopPet-1.3.0-beta-fea7821-win-x64.zip; check-publish 3/3. Đóng mèo (PID 11908) bằng WM_CLOSE, mở lại 19:48, log "Desktop Pet 1.3.0-beta (fea7821) started". AGENTS.md/docs/NEXT-STEPS.md của người dùng tạm stash rồi chép trả đúng hash.
 
 ## Túi đồ: xem trước thẻ, "Trận này", kỹ năng (2026-10-22)
 - Người dùng chọn 3 đề xuất 1+2+3 ("1 + 2 + 3 đi"). C# only, không đổi luật/file lưu.

@@ -188,6 +188,9 @@ public sealed class BattleHud : Border
         return Over(pauseButton) || Over(endButton) || Over(bagButton) || Over(grip);
     }
     public string HintText => hint.Text;
+    // For checks: the status line and how many wave marks show.
+    public string StatusText => status.Text;
+    public int WaveMarks => waveDots.Children.Count;
 
     // Hovering a slot (or a control) describes it in the hint line, one fixed place, instead of
     // a tooltip: WPF tooltips on a window that never activates keep showing the first one.
@@ -252,6 +255,7 @@ public sealed class BattleHud : Border
             BattlePhase.WaveBreak when b.Wave == 0 => L("Chuẩn bị!", "Get ready!"),
             BattlePhase.WaveBreak => L($"Xong đợt {b.Wave}!{HealNote(b)}", $"Wave {b.Wave} cleared!{HealNote(b)}"),
             _ when b.IsBossWave(b.Wave) => L($"Đánh bại {BossName(b)}!", $"Defeat the {BossName(b)}!"),
+            _ when b.Endless => L($"Đợt {b.Wave} · còn {left} slime", $"Wave {b.Wave} · {left} slime{(left == 1 ? "" : "s")} left"),
             _ => L($"Đợt {b.Wave}/{b.WaveCount} · còn {left} slime", $"Wave {b.Wave}/{b.WaveCount} · {left} slime{(left == 1 ? "" : "s")} left")
         };
         // A survive stage: the time left is the goal, so it leads.
@@ -386,13 +390,17 @@ public sealed class BattleHud : Border
 
     private string HealNote(BattleSim b) => b.LastHeal >= 1 ? $" +{Math.Round(b.LastHeal)} HP" : "";
 
-    // One dot per wave (filled: done, ringed: now), a small crown for the boss wave.
+    // One dot per wave (filled: done, ringed: now), a small crown for the boss wave. Infinity shows
+    // the ten waves around the current one (up to the next boss, with the default data).
+    public const int EndlessDots = 10;
     private void UpdateDots(BattleSim b)
     {
         if (dotsFor == b.WaveCount && dotsWave == b.Wave) return;
         dotsFor = b.WaveCount; dotsWave = b.Wave;
         waveDots.Children.Clear();
-        for (int wave = 1; wave <= b.WaveCount; wave++)
+        int first = b.Endless ? (Math.Max(1, b.Wave) - 1) / EndlessDots * EndlessDots + 1 : 1;
+        int last = b.Endless ? first + EndlessDots - 1 : b.WaveCount;
+        for (int wave = first; wave <= last; wave++)
         {
             bool done = wave < b.Wave || (wave == b.Wave && b.Phase == BattlePhase.WaveBreak), now = wave == b.Wave && !done;
             FrameworkElement mark = b.IsBossWave(wave)

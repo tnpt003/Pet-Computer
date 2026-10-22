@@ -30,7 +30,7 @@ namespace DesktopPet;
 public sealed partial class PetWindow
 {
     public const string BagStatsTab = "stats", BagCardsTab = "cards", BagRelicsTab = "relics";
-    public const string BagBattle = "battle", BagAdventure = "adventure", BagExpedition = "expedition";
+    public const string BagBattle = "battle", BagAdventure = "adventure", BagExpedition = "expedition", BagEndless = "endless";
     public const double BagWidth = 440, BagMaxHeight = 540;
     private static readonly string[] BagTabs = { BagStatsTab, BagCardsTab, BagRelicsTab };
     private static readonly Brush BagBad = PetUi.Hex("#FF9A8A"), BagCream = PetUi.Hex("#E8DCCB");
@@ -227,6 +227,7 @@ public sealed partial class PetWindow
             var plain = Plain(b.Settings, b.Weapon.Id);
             if (battleExpedition is ExpeditionBattle x)
                 return new(BagExpedition, b, plain, b.CatHp, StepTitle(x.Node.Step, x.Expedition.Spec.StepCount) + " · " + DifficultyName(b.Difficulty), x.Expedition, x.Expedition.Run, true);
+            if (b.Endless) return new(BagEndless, b, plain, b.CatHp, L($"Đợt {b.Wave}", $"Wave {b.Wave}") + " · " + DifficultyName(b.Difficulty), null, null, true);
             string where = (b.Stage is StageSpec stage ? StageTitle(stage) : L("Trận", "Battle")) + " · " + DifficultyName(b.Difficulty);
             return new(b.Stage != null ? BagAdventure : BagBattle, b, plain, b.CatHp, where, null, null, true);
         }
@@ -272,7 +273,7 @@ public sealed partial class PetWindow
 
         bagTitle.Text = L("Túi đồ · ", "Bag · ") + (view.Mode switch
         {
-            BagExpedition => L("Viễn chinh", "Expedition"), BagAdventure => L("Phiêu lưu", "Adventure"), _ => L("Trận", "Battle")
+            BagExpedition => L("Viễn chinh", "Expedition"), BagAdventure => L("Phiêu lưu", "Adventure"), BagEndless => L("Vô tận", "Infinity"), _ => L("Trận", "Battle")
         });
         bagSubtitle.Text = $"{preferences.Name} · {sim.Weapon.Name(English)}" + (view.Where.Length > 0 ? " · " + view.Where : "");
         bool hasHp = view.Hp is double;

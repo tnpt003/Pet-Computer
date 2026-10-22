@@ -275,11 +275,16 @@ public sealed class StageSpec
     public string Objective { get; init; } = "clear";
     public double? SurviveSeconds { get; init; }
     [JsonIgnore] public bool Survival => Objective == "survive";
+    // Infinity's stage (EndlessSpec.Stage, never from a campaign): never won, waves go on.
+    public const string EndlessObjective = "endless";
+    [JsonIgnore] public bool Endless => Objective == EndlessObjective;
     // Between waves the user picks one of up to three upgrades (battle.json "upgrades") for this run.
     public bool Upgrades { get; init; }
     // At most this many picks in one run of the stage (unset: one after every cleared wave that has
     // another after it; a survive stage would otherwise offer one per repeated wave).
     public int? MaxUpgrades { get; init; }
+    // Cards only after every n-th cleared wave (unset: after each; Infinity sets it).
+    [JsonIgnore] public int? UpgradeEvery { get; init; }
     // Survive stages: a card offer at each of these points of the clock (seconds held out) instead of
     // after cleared waves.
     public double[]? UpgradeAt { get; init; }
@@ -785,6 +790,7 @@ public static class BattleData
         if (s.MaxAttackers is < 0 or > 10) throw new InvalidDataException("maxAttackers must be 0–10 (0: no limit)");
         Within(s.AttackStagger, 0, 3, "attackStagger"); Within(s.IncomingWarning, 0, 5, "incomingWarning");
         if (s.Campaign is CampaignSpec campaign) ValidateCampaign(campaign, (waves, at, alive, survival) => Waves(waves, at, alive ?? s.MaxAlive, survival), Id, Text);
+        if (s.Endless is EndlessSpec endless) EndlessSpec.Validate(endless, s);
         if (s.Expedition is ExpeditionSpec expedition) ExpeditionSpec.Validate(expedition, s, (waves, at, alive, survival) => Waves(waves, at, alive ?? s.MaxAlive, survival), Id, Text);
     }
 

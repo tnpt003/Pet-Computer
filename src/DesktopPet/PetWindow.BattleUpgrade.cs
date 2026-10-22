@@ -141,6 +141,7 @@ public sealed partial class PetWindow
         if (upgradeTitle == null || upgradeConfirm == null || battle == null) return;
         upgradeTitle.Text = battleExpedition != null
             ? L("Chọn một nâng cấp (giữ suốt chuyến viễn chinh khi thắng bậc này)", "Pick an upgrade (kept for the rest of the Expedition when you win this step)")
+            : battle.Endless ? L("Chọn một nâng cấp (giữ tới hết lượt Vô tận)", "Pick an upgrade (kept for the rest of this Infinity run)")
             : battle.Stage != null
             ? L("Chọn một nâng cấp (giữ sang màn sau khi thắng)", "Pick an upgrade (kept for the next stage when you win)")
             : L("Chọn một nâng cấp cho lượt này", "Pick an upgrade for this run");

@@ -17,20 +17,23 @@ public sealed class BattleRecord
     // Seconds of the fastest win (null: no win yet).
     public double? BestSeconds { get; set; }
     public int MostDefeated { get; set; }
-    [JsonIgnore] public bool Empty => Wins == 0 && BestSeconds == null && MostDefeated == 0;
+    // Infinity: the furthest wave reached (0: none; only in "endless|…" records).
+    public int MostWaves { get; set; }
+    [JsonIgnore] public bool Empty => Wins == 0 && BestSeconds == null && MostDefeated == 0 && MostWaves == 0;
 
     internal void Normalize()
     {
         Wins = Math.Max(0, Wins);
         MostDefeated = Math.Max(0, MostDefeated);
+        MostWaves = Math.Max(0, MostWaves);
         if (BestSeconds is double s && (!double.IsFinite(s) || s <= 0)) BestSeconds = null;
     }
 }
 
 // What a finished battle changed: a new fastest win and/or a new most-slimes count.
-public readonly record struct BattleRecordNews(bool Fastest, bool MostDefeated)
+public readonly record struct BattleRecordNews(bool Fastest, bool MostDefeated, bool FurthestWave = false)
 {
-    public bool Any => Fastest || MostDefeated;
+    public bool Any => Fastest || MostDefeated || FurthestWave;
 }
 
 // Version 2 (2026-10-19): records per loadout, keyed by the weapon's stable id and the
@@ -62,6 +65,26 @@ public sealed class BattleRecords
     // This loadout's records (an empty one if it has none yet; nothing is stored by reading).
     public BattleRecord For(string weapon, BattleDifficulty difficulty, bool custom = false) =>
         Loadouts.TryGetValue(Key(weapon, difficulty, custom), out var record) ? record : new();
+
+    // Infinity's records live beside the free battle's, under "endless|r<rules>|<loadout key>".
+    public static string EndlessKey(EndlessSpec spec, string weapon, BattleDifficulty difficulty, bool custom = false) =>
+        $"{spec.Id}|r{spec.RulesVersion}|{Key(weapon, difficulty, custom)}";
+    public BattleRecord ForEndless(EndlessSpec spec, string weapon, BattleDifficulty difficulty, bool custom = false) =>
+        Loadouts.TryGetValue(EndlessKey(spec, weapon, difficulty, custom), out var record) ? record : new();
+    // The furthest wave over every loadout (the hub's card), custom data left out.
+    public int EndlessBest(EndlessSpec spec) => Loadouts.Where(pair => pair.Key.StartsWith($"{spec.Id}|r{spec.RulesVersion}|", StringComparison.Ordinal) && !pair.Key.EndsWith("|custom", StringComparison.Ordinal))
+        .Select(pair => pair.Value.MostWaves).DefaultIfEmpty(0).Max();
+
+    // One ended Infinity run: the wave it reached and the slimes it defeated.
+    public BattleRecordNews AddEndless(EndlessSpec spec, string weapon, BattleDifficulty difficulty, bool custom, int wave, int defeated)
+    {
+        string key = EndlessKey(spec, weapon, difficulty, custom);
+        if (!Loadouts.TryGetValue(key, out var record)) Loadouts[key] = record = new();
+        bool furthest = wave > record.MostWaves, most = defeated > record.MostDefeated;
+        if (furthest) record.MostWaves = wave;
+        if (most) record.MostDefeated = defeated;
+        return new(false, most, furthest);
+    }
 
     // Adds one finished battle (ended by a win or a loss, not by the user) to its loadout.
     public BattleRecordNews Add(string weapon, BattleDifficulty difficulty, bool custom, bool won, int defeated, double seconds)

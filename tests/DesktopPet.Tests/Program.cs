@@ -99,6 +99,7 @@ ExpeditionChoiceTests.Run(Check);
 ExpeditionKeepsakeTests.Run(Check);
 ExpeditionReleaseTests.Run(Check);
 ExpeditionGachaTests.Run(Check);
+EndlessTests.Run(Check);
 InventoryStatTests.Run(Check);
 KeepsakeMotionTests.Run(Check);
 SleepCushionTests.Run(Check);

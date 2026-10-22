@@ -79,7 +79,7 @@ public sealed partial class PetWindow
     public readonly record struct BattleSummary(bool Won, int Defeated, double Seconds, double Hp, double MaxHp, bool Boss = false, string? BossName = null,
         BattleDifficulty Difficulty = BattleDifficulty.Normal, BattleRecordNews News = default, string Weapon = BattleWeapon.Sword, string WeaponLabel = "",
         bool Custom = false, string WeaponStyle = "sword", StageSpec? Stage = null, AdventureOutcome Outcome = default, bool Ranked = true, string Upgrades = "",
-        ExpeditionStepOutcome? Expedition = null);
+        ExpeditionStepOutcome? Expedition = null, int EndlessWave = 0);
     private static readonly Brush RecordGold = PetUi.Game.Gold;
     private static readonly Brush ResultMain = PetUi.Game.Chosen;
     private static string Clock(double seconds)
@@ -110,9 +110,11 @@ public sealed partial class PetWindow
         };
         var title = Line(PetUi.HeadingSize, bold: true);
         title.Text = result.Won ? (result.Boss ? L($"Chiến thắng! Đã hạ {result.BossName ?? "boss"}", $"Victory! The {result.BossName ?? "boss"} is down") : L("Chiến thắng!", "Victory!"))
+            : result.Stage is { Endless: true } ? L("Hết lượt Vô tận", "Infinity run over")
             : L("Thua rồi… mèo choáng váng", "Defeated… the cat sees stars");
         string level = DifficultyName(result.Difficulty), arms = result.WeaponLabel.Length > 0 ? result.WeaponLabel : result.Weapon;
         string place = result.Stage is not StageSpec played ? ""
+            : played.Endless ? played.Name(English) + " · "
             : result.Expedition is ExpeditionStepOutcome at ? ExpeditionStageTitle(at.Step, Expedition?.Spec.StepCount ?? at.Step + 1, played) + " · " : StageTitle(played) + " · ";
         var loadout = Line(PetUi.BodySize, bold: true); loadout.Text = place + $"{arms} · {level}";
         var main = Line(PetUi.BodySize);
@@ -129,6 +131,7 @@ public sealed partial class PetWindow
             info.Children.Add(lines);
             actions = stepActions;
         }
+        else if (result.Stage is { Endless: true }) actions = EndlessResult(result, info, arms, level, Choose);
         else if (result.Stage is StageSpec stage)
         {
             var (lines, stageActions) = StageResult(result, stage, Choose);
@@ -217,6 +220,7 @@ public sealed partial class PetWindow
         }
         ReloadBattleData();
         if (last.Stage == null) return StartBattle(last.Weapon, last.Difficulty);
+        if (last.Stage.Endless) return EndlessRefusal() ?? StartBattle(last.Weapon, last.Difficulty, BattleTuning.Endless!.Stage());
         if (Adventure?.Stage(last.Stage.Id) is not StageSpec stage || !Adventure!.IsUnlocked(stage.Id)) return OpenAdventureMap();
         return StartBattle(last.Weapon, last.Difficulty, stage);
     }

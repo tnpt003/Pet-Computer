@@ -786,6 +786,7 @@ internal static class Program
         await BattlePrepChecks.Run(window, pet, behavior, preferences, Check);
         await AdventureChecks.Run(window, pet, behavior, preferences, Check);
         await ExpeditionChecks.Run(window, pet, behavior, preferences, Check);
+        await EndlessChecks.Run(window, pet, behavior, preferences, Check);
         await UpgradeChecks.Run(window, pet, behavior, preferences, Check);
         await PanelHeightChecks.Run(window, pet, preferences, Check);
         await BagChecks.Run(window, pet, behavior, preferences, Check);

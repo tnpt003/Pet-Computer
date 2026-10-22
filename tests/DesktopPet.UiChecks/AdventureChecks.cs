@@ -95,10 +95,10 @@ internal static class AdventureChecks
             check(window.OpenBattleHub() == null && Count("Pet battle hub") == 1 && behavior.Quiet && window.BattleOwnsPet, "Opening it again keeps the one hub; the cat's free time belongs to it");
             for (double t = 0; t < 0.3; t += 1.0 / 60) Call(window, "TickBattleHub", 1.0 / 60);
             string hubText = window.BattleHubText;
-            check(hubText.Contains("Battle Mode") && hubText.Contains("Adventure") && hubText.Contains("Test chapter · 0/3 stages") && hubText.Contains("Infinity") && hubText.Contains("Coming soon"),
+            check(hubText.Contains("Battle Mode") && hubText.Contains("Adventure") && hubText.Contains("Test chapter · 0/3 stages") && hubText.Contains("Infinity") && hubText.Contains("Not available"),
                 $"The hub shows the modes and where the user is ({hubText.Replace('\n', '|')})");
             check(window.BattleHubModeEnabled(PetWindow.HubAdventure) && !window.BattleHubModeEnabled(PetWindow.HubInfinity) && window.BattleHubChoose(PetWindow.HubInfinity) is string soon && soon.Length > 0 && window.BattleHubOpen,
-                "Adventure can be opened; Infinity is coming soon and opens nothing");
+                "Adventure can be opened; Infinity (not in this data) opens nothing");
             Shot("Pet battle hub", "battle-hub-en.png");
             window.CancelBattleHub();
             await Task.Delay(20);

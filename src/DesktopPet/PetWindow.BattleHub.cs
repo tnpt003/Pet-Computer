@@ -66,7 +66,7 @@ public sealed partial class PetWindow
         {
             HubAdventure => OpenAdventureMap(),
             HubExpedition => OpenExpeditionMap(),
-            HubInfinity => L("Chế độ Vô tận sắp ra mắt.", "Infinity mode is coming soon."),
+            HubInfinity => EndlessRefusal() ?? OpenBattlePrep(forEndless: true),
             _ => L("Không có chế độ này.", "There is no such mode.")
         };
     }
@@ -252,8 +252,7 @@ public sealed partial class PetWindow
                     x.Spec.Keepsakes.Length == 0 ? null : (double)had / x.Spec.Keepsakes.Length, true, null);
             }
             default:
-                return (L("Vô tận", "Infinity"), L("Trụ càng lâu càng tốt trước những đợt quái không ngừng.", "Hold out as long as you can against endless waves."),
-                    L("Sẽ có trong bản sau", "Coming in a later version"), null, false, L("Sắp ra mắt", "Coming soon"));
+                return EndlessCard(); // PetWindow.Endless.cs
         }
     }
 }

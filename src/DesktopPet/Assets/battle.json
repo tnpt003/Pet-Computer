@@ -327,6 +327,22 @@
   // never only elites, the step before the boss a rest. "capsules": after each won fight node, a free
   // capsule ("freeCard" of the time a common card, else "freeHeal" of the max HP) or a gold one for
   // "goldCost" of the max HP (by weight: "relic", "rare" card, "cardHeal" a card + "goldHeal" HP).
+  // Infinity ("endless", 2026-10-22): one battle that is never won. Wave n has "firstCount" +
+  // "countPerWave" × (n − 1) enemies (at most "maxCount"), drawn from "kinds" (each from its
+  // "from" wave on, by "weight"), and threat 1 + "threatPerWave" × (n − 1). Every "bossEvery"-th wave
+  // is the "boss" alone; after every "upgradeEvery"-th cleared wave the user picks a card. It ends
+  // when the cat falls or the user presses End; the record is the furthest wave per weapon and
+  // difficulty. "unlockAfter": the Adventure stage to win first. "rulesVersion" keeps old records apart.
+  "endless": {
+    "id": "endless", "rulesVersion": 1, "unlockAfter": "c1_slime_king", "upgradeEvery": 3, "bossEvery": 10, "boss": "king",
+    "firstCount": 3, "countPerWave": 0.35, "maxCount": 14, "threatPerWave": 0.06, "maxAlive": 5, "eliteChance": 0.12,
+    "kinds": [
+      { "enemy": "slime", "weight": 50 },
+      { "enemy": "runner", "weight": 25, "from": 3 },
+      { "enemy": "mender", "weight": 15, "from": 5 },
+      { "enemy": "rock", "weight": 15, "from": 7 }
+    ]
+  },
   "expedition": {
     "id": "slime_trail", "nameVi": "Đường mòn Slime", "nameEn": "The Slime Trail",
     "rulesVersion": 5, "unlockAfter": "c1_slime_king", "retreatCost": 0.25, "winHeal": 0.05, "stepThreat": 0.1,

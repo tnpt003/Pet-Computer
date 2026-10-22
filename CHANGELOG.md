@@ -2,6 +2,11 @@
 
 ## Chưa phát hành
 
+- **Chế độ Vô tận** (thẻ thứ ba trên Sảnh, mở sau khi thắng Vua Slime): đợt quái không ngừng, đông và mạnh dần; cứ 3 đợt chọn 1 thẻ; Vua Slime mỗi 10 đợt. Hết lượt khi mèo thua hoặc bấm Kết thúc; kỷ lục là đợt xa nhất theo vũ khí + độ khó; thẻ trên Sảnh hiện đợt xa nhất.
+- **Viễn chinh: quay lại bậc** — sau khi quay máy, mỗi bậc được quay lại 1 lần (trước khi vào/ghé điểm nào) với giá 8% HP tối đa.
+- **HUD trận kéo được:** kéo tay nắm 6 chấm ở mép phải để dời HUD; mỗi màn hình nhớ chỗ riêng; bấm đúp tay nắm về giữa trên.
+- **Ngày lễ:** thêm Tết dương lịch (1/1), 8/3 và 20/10 với câu thoại riêng; bảng Tết/Trung thu nối tới 2050 theo lịch Việt Nam. Sửa: Tết 2030 là 2/2 (trước ghi 3/2) và Trung thu 2034 là 26/9 (trước ghi 27/9).
+- Quả bóng đồ chơi không còn lấy focus/hiện trong Alt+Tab; chữ ô Phần thưởng không còn nhắc "kệ ở góc màn hình"; bong bóng thoại dùng cỡ chữ chuẩn.
 - **Đệm slime và cửa sổ:** món đồ đáp lên mép cửa sổ nay cũng bẹp và nảy như dưới sàn; mèo đứng cùng cửa sổ thì ngắm/đẩy/ngủ đệm trên đó. Làm ngay → "Ngủ trên đệm" (khi mèo ở gần đệm). Thả/ném mèo trúng đệm slime: nảy mạnh như bạt nhún. Mèo thích ngủ trên đệm hơn (tự đi tới đệm khi buồn ngủ). Quả bóng nay là cuộn len hồng cùng nét vẽ với mèo. Sửa: đang choáng mà rê chuột nhanh qua mèo vẫn hiện mặt Ngạc nhiên.
 - **Món trưng bày chơi được nhiều hơn:** cỡ ~nửa mèo; chuột phải món đồ để đổi món (khói "poof"), đưa về giữa hoặc ẩn; đáp được lên mép trên cửa sổ app khác, đi theo khi kéo cửa sổ, rơi khi cửa sổ đóng (khi bật "Mèo leo lên cửa sổ"); ném ngang trúng mèo cũng làm mèo choáng; mèo nhìn theo khi bạn cầm, giật mình khi món đồ rơi mạnh sát bên; rê chuột thì món đồ nhún nhẹ; click đúp gọi mèo ra ngắm; bóng đồ chơi dội khỏi món đồ; trưng bày đệm slime thì thỉnh thoảng mèo tự lên đệm ngủ.
 - **Một món trưng bày, to hơn:** trên màn hình chỉ còn một kỷ vật (vẽ to ~1,8×) trên đế gỗ nhỏ; chọn món trong Cài đặt → Mèo → "Món trưng bày" (mặc định cúp xịn nhất). Rơi trúng mèo đang ngủ thì mèo thức dậy và choáng.

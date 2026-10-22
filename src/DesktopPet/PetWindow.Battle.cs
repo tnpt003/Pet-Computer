@@ -242,7 +242,7 @@ public sealed partial class PetWindow
         battle = new BattleSim(BattleTuning, battleArea.Left, battleArea.Right, difficulty: level is BattleDifficulty chosen && Enum.IsDefined(chosen) ? chosen : BattleDifficultyChoice,
             weapon: BattleTuning.Weapon(weapon ?? preferences.BattleWeapon).Id, stage: stage,
             // The build the stage before was won with, or the Expedition run's.
-            build: expedition?.Expedition.Run?.Build ?? (stage != null ? AdventureOf(BattleTuning)?.StartBuild(stage) : null),
+            build: expedition?.Expedition.Run?.Build ?? (stage is { Endless: false } ? AdventureOf(BattleTuning)?.StartBuild(stage) : null),
             seed: expedition?.Node.Seed, startHp: expedition?.Expedition.Run?.Hp, threat: expedition?.Node.Threat ?? 1, relics: expedition?.Expedition.Run?.Relics);
         battleExpedition = expedition;
         battleRunId = Guid.NewGuid().ToString("N");
@@ -386,11 +386,14 @@ public sealed partial class PetWindow
         {
             bool won = battle.Phase == BattlePhase.Won;
             // A free battle goes to the battle records; an Adventure stage to the Adventure progress
-            // only; an Expedition step to its run only.
+            // only; an Expedition step to its run only; Infinity to its own records (the wave reached).
+            bool endless = battle.Endless;
             ExpeditionStepOutcome? step = battleExpedition != null ? CountExpeditionStep(battle, won) : null;
-            var outcome = step == null ? CountStageRun(battle, won) : default;
-            var news = battle.Stage != null ? outcome.News : BattleRecords.Add(battle.Weapon.Id, battle.Difficulty, battleCustomData, won, battle.Defeated, battle.FightSeconds);
-            if (battle.Stage == null && persistPreferences) BattleRecords.Save();
+            var outcome = step == null && !endless ? CountStageRun(battle, won) : default;
+            var news = endless && BattleTuning.Endless is EndlessSpec infinity
+                ? BattleRecords.AddEndless(infinity, battle.Weapon.Id, battle.Difficulty, battleCustomData, battle.Wave, battle.Defeated)
+                : battle.Stage != null ? outcome.News : BattleRecords.Add(battle.Weapon.Id, battle.Difficulty, battleCustomData, won, battle.Defeated, battle.FightSeconds);
+            if ((battle.Stage == null || endless) && persistPreferences) BattleRecords.Save();
             BattleReport = BattleReport with
             {
                 Won = BattleReport.Won + (won ? 1 : 0), Lost = BattleReport.Lost + (won ? 0 : 1),
@@ -398,7 +401,7 @@ public sealed partial class PetWindow
             };
             var result = new BattleSummary(won, battle.Defeated, battle.FightSeconds, battle.CatHp, battle.CatMaxHp, battle.BossDefeated,
                 battle.DefeatedBoss?.Name(English), battle.Difficulty, news, battle.Weapon.Id, WeaponName(battle.Weapon), battleCustomData, battle.Weapon.Style,
-                battle.Stage, outcome, !battleCustomData, UpgradeSummary(battle), step);
+                battle.Stage, outcome, !battleCustomData, UpgradeSummary(battle), step, endless ? battle.Wave : 0);
             EndBattle();
             ShowBattleSummary(result);
             return;
@@ -583,6 +586,7 @@ public sealed partial class PetWindow
             { Coat = renderer.Coat, Accessory = renderer.Accessory };
         // The weapon of this battle next to the cat's name.
         string stagePart = battleExpedition is ExpeditionBattle x ? L($" · Viễn chinh {x.Node.Step + 1}/{x.Expedition.Spec.StepCount}", $" · Expedition {x.Node.Step + 1}/{x.Expedition.Spec.StepCount}")
+            : battle?.Endless == true ? L(" · Vô tận", " · Infinity")
             : battle?.Stage is StageSpec stage ? L($" · Màn {StageNumber(stage)}", $" · Stage {StageNumber(stage)}") : "";
         battleHud = new BattleHud($"{preferences.Name} · {(battle != null ? WeaponName(battle.Weapon) : "")}{stagePart}", portrait, L);
         battleHud.SkillClicked += skill => UseBattleSkill(skill);

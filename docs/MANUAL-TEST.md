@@ -399,3 +399,6 @@ Tự động đã có: Phần thưởng trên sảnh (ô có hình, khóa, Mới
 - [ ] Viễn chinh: sau khi quay bậc có nút "↻ Quay lại bậc này · −N HP"; bấm: viên nang mở, điểm mới, HP trừ đúng; không còn nút lần hai; đóng/mở app vẫn giữ kết quả; ghé/vào một điểm rồi thì không còn nút.
 - [ ] Ngày lễ mới (1/1, 8/3, 20/10): bật Mèo biết nói + AI, mở mèo đúng ngày: câu chào/câu nói theo ngày lễ.
 - [ ] HUD trận: kéo tay nắm 6 chấm ở mép phải bằng chuột thật — HUD đi theo, không lấy focus app đang gõ, không ra khỏi màn hình/không đè dải chiến trường; trận sau mở lại đúng chỗ; bấm đúp tay nắm về giữa trên; thử ở màn hình phụ/DPI khác (mỗi màn hình nhớ riêng).
+
+- [ ] Vô tận: Sảnh → thẻ Vô tận (khóa khi chưa thắng Vua Slime; mở thì "Chưa chơi lần nào") → bảng chuẩn bị "Vô tận — chuẩn bị" (‹ Sảnh quay lại) → Sẵn sàng: HUD "Đợt N · còn x slime" (không có tổng), 10 chấm, vương miện ở đợt 10.
+- [ ] Vô tận: chơi tới đợt 3 có thẻ nâng cấp; đợt 10 là Vua Slime; túi đồ ghi "Vô tận · Đợt N"; bấm Kết thúc → bảng "Hết lượt Vô tận · Đạt đợt N", kỷ lục; Chơi lại / Đổi trang bị / ‹ Sảnh / Về desktop; thẻ trên Sảnh hiện "Xa nhất: đợt N". Cảm nhận độ khó (đợt bao nhiêu thì khó?) để chỉnh `endless` trong battle.json.

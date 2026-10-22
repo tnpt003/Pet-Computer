@@ -537,7 +537,8 @@ instead of half sizes (10.5–15.5 → the next step up; the 22 banner → 20).
   (`ModeArt`: a path over hills to a flag; a snowy peak at dusk; a gold ∞ in a starry night), the
   mode's name, one line about it, where the user is (Adventure: chapter · stages won with a bar;
   Expedition: locked until the Slime King is won / run under way with step and HP / keepsakes;
-  Infinity: coming soon, a ribbon, not clickable). A card opens that mode's map in its place;
+  Infinity: locked until the Slime King is won / the furthest wave). Adventure and Expedition
+  open their map in its place, Infinity the setup panel (its ‹ Hub comes back);
   the maps' **‹ Hub** button comes back here, the hub's **Close** goes back to the desktop.
 - **Rewards** (2026-10-22, `PetWindow.Rewards.cs`): the hub's **Rewards** button (it says
   "· n new" when rewards were won since last shown) shows, in the hub's window in place of the
@@ -679,8 +680,13 @@ points to a leak.
 Optional mini-game, off by default and never resumed at startup. Right-click the cat →
 **Battle Mode / Chế độ chiến đấu** opens the battle hub (2026-10-22, below); an Adventure stage or a
 new Expedition run opens the setup panel (below); **Ready** there starts the fight. (The free
-battle described here is no longer in the menu; its code stays for tests, `perf.ps1` and the
-coming Infinity mode.) The cat draws a wooden toy sword and
+battle described here is no longer in the menu; its code stays for tests and `perf.ps1`.)
+**Infinity** (2026-10-22, `PetEndless.cs`, `PetWindow.Endless.cs`, battle.json `endless`): a
+battle on a generated stage that is never won — waves grow and get stronger, a card every
+`upgradeEvery` waves, the boss every `bossEvery`; the HUD says "Wave N" with ten marks around it;
+End (HUD or menu) finishes the run as a loss at the wave reached, so the result panel and the
+record (furthest wave per weapon and difficulty, battle-records.json) follow. Closing the app
+mid-run keeps nothing. The cat draws a wooden toy sword and
 fights slimes on the floor of its current monitor (work area) in 3 waves (2 slimes; 2 slimes +
 2 quick slimes; a rock slime + 2 quick + 2 slimes; at most 3 at once, a short break between
 waves), then the **Slime King** alone. Quick slimes are small, fast and frail (wind streaks);

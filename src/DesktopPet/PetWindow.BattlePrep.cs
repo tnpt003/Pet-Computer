@@ -26,6 +26,9 @@ public sealed partial class PetWindow
     // The panel prepares a new Expedition run (Ready starts the run, not a battle).
     private bool prepForExpedition;
     public bool BattlePrepForExpedition => battlePreparing && prepForExpedition;
+    // The setup of an Infinity run (from the hub): Ready starts it, the cancel button goes back to the hub.
+    private bool prepForEndless;
+    public bool BattlePrepForEndless => battlePreparing && prepForEndless;
     private Window? battlePrepWindow;
     private string prepWeapon = BattleWeapon.Sword;
     private BattleDifficulty prepDifficulty = BattleDifficulty.Normal;
@@ -90,11 +93,11 @@ public sealed partial class PetWindow
     // stage: an Adventure stage (looked up again in the fresh data; gone from it or locked: refused).
     // forExpedition: the loadout of a new Expedition run (from its map's Prepare): Ready starts the
     // run instead of a battle and goes back to the map, as does the Map button.
-    public string? OpenBattlePrep(string? weapon = null, BattleDifficulty? level = null, StageSpec? stage = null, bool forExpedition = false)
+    public string? OpenBattlePrep(string? weapon = null, BattleDifficulty? level = null, StageSpec? stage = null, bool forExpedition = false, bool forEndless = false)
     {
         if (BattlePrepRefusal() is string reason) return reason;
-        if (forExpedition) stage = null;
-        if (battlePreparing && prepStage?.Id == stage?.Id && prepForExpedition == forExpedition) { PlaceBattlePrep(); return null; }
+        if (forExpedition || forEndless || stage?.Endless == true) { forEndless |= stage?.Endless == true; stage = null; }
+        if (battlePreparing && prepStage?.Id == stage?.Id && prepForExpedition == forExpedition && prepForEndless == forEndless) { PlaceBattlePrep(); return null; }
         if (battlePreparing) { CloseBattlePrep(); CloseBattleTutorial(); }
         ReloadBattleData();
         if (stage != null)
@@ -104,9 +107,11 @@ public sealed partial class PetWindow
             stage = fresh;
         }
         if (forExpedition && Expedition == null) return L("Dữ liệu trận không có viễn chinh.", "The battle data has no Expedition.");
+        if (forEndless && EndlessRefusal() is string closed) return closed;
         CloseBattleHub(); CloseAdventureMap(); CloseExpeditionMap();
         prepStage = stage;
         prepForExpedition = forExpedition;
+        prepForEndless = forEndless;
         prepWeapon = BattleTuning.Weapon(weapon ?? preferences.BattleWeapon).Id;
         prepDifficulty = level is BattleDifficulty chosen && Enum.IsDefined(chosen) ? chosen : BattleDifficultyChoice;
         battlePreparing = true;
@@ -150,6 +155,7 @@ public sealed partial class PetWindow
         SetBattleDifficulty(prepDifficulty);
         if (BattleTutorialOpen) CloseBattleTutorial(finished: true);
         if (prepForExpedition) { string weapon = prepWeapon; var level = prepDifficulty; CloseBattlePrep(); return ExpeditionSetupReady(weapon, level); }
+        if (prepForEndless) return EndlessRefusal() ?? StartBattle(stage: BattleTuning.Endless!.Stage());
         return StartBattle(stage: prepStage);
     }
 
@@ -159,11 +165,12 @@ public sealed partial class PetWindow
     {
         if (!battlePreparing) return;
         var stage = prepStage;
-        bool expedition = prepForExpedition;
+        bool expedition = prepForExpedition, endless = prepForEndless;
         CloseBattlePrep();
         CloseBattleTutorial();
         if (stage != null && OpenAdventureMap(stage.Id) == null) return;
         if (expedition && OpenExpeditionMap() == null) return;
+        if (endless && OpenBattleHub() == null) return;
         revision++;
         behavior.Reset(pet);
         System.Diagnostics.Trace.WriteLine("Battle setup cancelled.");
@@ -181,7 +188,7 @@ public sealed partial class PetWindow
         prepPreview = null; prepPreviewView = null; prepHitMark = null;
         prepCards.Clear(); prepLevelChips.Clear();
         prepStage = null;
-        prepForExpedition = false;
+        prepForExpedition = prepForEndless = false;
         if (was) ApplyQuiet();
     }
 
@@ -353,7 +360,7 @@ public sealed partial class PetWindow
 
         var choices = new StackPanel { Width = 300, Children = { prepWeaponLabel, cards, prepLevelLabel, levels } };
         // The title's picture: the mode this setup is for (a free battle uses the Adventure's).
-        var title = PanelTitle(prepForExpedition ? HubExpedition : HubAdventure, prepTitle);
+        var title = PanelTitle(prepForExpedition ? HubExpedition : prepForEndless ? HubInfinity : HubAdventure, prepTitle);
         var window = CreateGamePanel(new StackPanel { Children = { title, new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 10, 0, 0), Children = { stage, choices } },
             prepBuild, prepData, prepStatus } }, actions, "Pet setup");
         window.Closed += (_, _) => { if (battlePrepWindow == window) { StopPreviewSwing(); battlePrepWindow = null; } };
@@ -378,6 +385,7 @@ public sealed partial class PetWindow
         prepTitle.Text = prepStage is StageSpec stage ? StageTitle(stage) + (stage.Goal(English) is { Length: > 0 } goal ? "\n" + goal : "")
             : prepForExpedition && Expedition is Expedition x ? L("Viễn chinh — chuẩn bị chuyến", "Expedition — prepare the run") + "\n"
                 + L($"{x.Spec.StepCount} bậc, bậc cuối là trùm. Vũ khí, độ khó, HP và build giữ suốt chuyến.", $"{x.Spec.StepCount} steps, the last one a boss. Weapon, difficulty, HP and build carry through the run.")
+            : prepForEndless && BattleTuning.Endless is EndlessSpec infinity ? L("Vô tận — chuẩn bị", "Infinity — get ready") + "\n" + EndlessAbout(infinity) + EndlessRecordLine(infinity, prepWeapon, prepDifficulty)
             : L("Chuẩn bị trận", "Get ready to battle");
         prepWeaponLabel!.Text = prepForExpedition ? L("Chọn cách đánh cho cả chuyến", "Choose how to fight for the whole run") : L("Chọn cách đánh", "Choose how to fight");
         prepLevelLabel!.Text = L("Độ khó", "Difficulty");
@@ -408,7 +416,7 @@ public sealed partial class PetWindow
         Show(prepStatus, waiting != null ? L("Chưa thể bắt đầu: ", "Not yet: ") + waiting : null);
         prepReadyText!.Text = prepForExpedition ? L("Lên đường", "Set out") : L("Sẵn sàng", "Ready");
         prepGuideText!.Text = L("Cách chơi", "How to play");
-        prepCancelText!.Text = prepStage != null || prepForExpedition ? L("‹ Bản đồ", "‹ Map") : L("Đóng", "Close");
+        prepCancelText!.Text = prepStage != null || prepForExpedition ? L("‹ Bản đồ", "‹ Map") : prepForEndless ? L("‹ Sảnh", "‹ Hub") : L("Đóng", "Close");
         prepTryText!.Text = L("Xem thử", "Try it");
         Show(prepTipText, prepStage?.Tip(English) is { Length: > 0 } ? L("Mẹo màn", "Stage tip") : null);
         bool can = waiting == null;

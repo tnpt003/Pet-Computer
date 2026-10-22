@@ -39,6 +39,8 @@ public sealed partial class BattleSim
     // Survive stages: seconds still to hold out (counts only while the battle runs and the cat is
     // on the ground, like the waves). NaN for any other battle.
     public bool Survival => Stage?.Survival == true;
+    // Infinity: never won; the furthest wave reached is what counts.
+    public bool Endless => Stage?.Endless == true;
     public double SurviveRemaining { get; private set; } = double.NaN;
 
     // This run's build (Adventure stages that allow upgrades): how often each card was taken (the
@@ -598,6 +600,14 @@ public sealed partial class BattleSim
                 if (phases[i].Shield && (slime.PhasesDone & (1 << i)) == 0 && line < slime.Hp) floor = Math.Max(floor, line);
             }
         return floor;
+    }
+
+    // Infinity's End: the run stops as a loss at the wave reached, so it gets its result and record.
+    public bool Surrender()
+    {
+        if (!Endless || Over) return false;
+        Finish(BattlePhase.Lost);
+        return true;
     }
 
     private void Finish(BattlePhase phase)

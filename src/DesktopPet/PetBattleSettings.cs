@@ -225,6 +225,8 @@ public sealed class BattleSettings
     [JsonPropertyName("campaign")] public CampaignSpec? Campaign { get; init; }
     // From battle.json "expedition": the Expedition run (null: none in this data). PetExpedition.cs.
     [JsonPropertyName("expedition")] public ExpeditionSpec? Expedition { get; init; }
+    // From battle.json "endless": Infinity (null: none in this data). PetEndless.cs.
+    [JsonPropertyName("endless")] public EndlessSpec? Endless { get; init; }
 
     private EnemyType BuiltInSlime() => new()
     {

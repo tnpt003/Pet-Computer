@@ -274,6 +274,7 @@ public sealed partial class PetWindow
         // An Expedition encounter: its step and name as the banner (the HUD's name line already says
         // Expedition; encounters have no tips).
         if (battleExpedition is ExpeditionBattle x) { battleHud?.ShowBanner(StepTitle(x.Node.Step, x.Expedition.Spec.StepCount) + " · " + stage.Name(English), 0, 1.4); return; }
+        if (stage.Endless) { battleHud?.ShowBanner(stage.Name(English), 0, 1.4); return; }
         battleHud?.ShowBanner(StageTitle(stage), 0, 1.4);
         if (!AdventureProgress.Seen.Contains(stage.Id) && stage.Tip(English) is { Length: > 0 }) ShowStageTip(stage);
     }
@@ -283,6 +284,8 @@ public sealed partial class PetWindow
     // and goes back to the Expedition map.
     public void EndBattleByUser()
     {
+        // Infinity: End finishes the run at the wave reached (its result and record follow).
+        if (battle?.Surrender() == true) return;
         var stage = battle?.Stage;
         var expedition = battleExpedition;
         EndBattle();

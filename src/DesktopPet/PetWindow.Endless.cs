@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -10,6 +12,16 @@ namespace DesktopPet;
 // BattleSim.Endless. Records: BattleRecords (the furthest wave per weapon and difficulty).
 public sealed partial class PetWindow
 {
+    // Milestone rewards: the built-in definitions (as the Expedition's keepsakes), earned from the
+    // saved records' waves cleared.
+    private static EndlessSpec? EndlessRewards => BattleData.Settings.Endless is { Milestones.Length: > 0 } spec ? spec : null;
+    // Read every frame by the keepsake on the desktop: kept until an Infinity run ends.
+    private IReadOnlyList<KeepsakeSpec>? endlessEarned;
+    private IReadOnlyList<KeepsakeSpec> EndlessEarned => endlessEarned ??=
+        EndlessRewards is EndlessSpec spec ? spec.EarnedBy(BattleRecords.EndlessCleared(spec)).ToList() : Array.Empty<KeepsakeSpec>();
+
+    private string EndlessMilestoneText(KeepsakeSpec m) => L($"Vượt qua đợt {m.Wave} ở Vô tận để nhận.", $"Clear wave {m.Wave} in Infinity to get it.");
+
     // Null when Infinity can be played now, otherwise why not.
     private string? EndlessRefusal()
     {
@@ -41,7 +53,13 @@ public sealed partial class PetWindow
         if (BattleTuning.Endless is not EndlessSpec spec) return (title, about, L("Dữ liệu chưa có chế độ Vô tận", "No Infinity in the data"), null, false, L("Chưa có", "Not available"));
         if (!spec.IsUnlocked(AdventureProgress, BattleTuning)) return (title, about, L("Thắng Vua Slime ở Phiêu lưu để mở", "Win the Slime King in the Adventure to open"), null, false, L("Đang khóa", "Locked"));
         int best = BattleRecords.EndlessBest(spec);
-        return (title, about, best > 0 ? L($"Xa nhất: đợt {best}", $"Furthest: wave {best}") : L("Chưa chơi lần nào", "Not played yet"), null, true, null);
+        string state = best > 0 ? L($"Xa nhất: đợt {best}", $"Furthest: wave {best}") : L("Chưa chơi lần nào", "Not played yet");
+        // The milestone rewards: how many are won, and the next one's wave.
+        if (EndlessRewards is not EndlessSpec rewards) return (title, about, state, null, true, null);
+        int had = EndlessEarned.Count, all = rewards.Milestones.Length;
+        var next = rewards.Milestones.FirstOrDefault(m => m.Wave > BattleRecords.EndlessCleared(rewards));
+        state += L($" · Thưởng {had}/{all}", $" · Rewards {had}/{all}") + (next != null ? L($" · tiếp: qua đợt {next.Wave}", $" · next: clear wave {next.Wave}") : "");
+        return (title, about, state, (double)had / all, true, null);
     }
 
     // The result of an Infinity run: the wave reached, the records, and Play again / Change gear / Hub / Back to desktop.
@@ -61,6 +79,13 @@ public sealed partial class PetWindow
             news.Text = result.News.FurthestWave && result.News.MostDefeated ? L("Kỷ lục mới: xa nhất, hạ nhiều slime nhất!", "New record: furthest wave, most slimes!")
                 : result.News.FurthestWave ? L("Kỷ lục mới: đợt xa nhất!", "New record: furthest wave!") : L("Kỷ lục mới: hạ nhiều slime nhất!", "New record: most slimes!");
             info.Children.Add(news);
+        }
+        if (result.EndlessUnlocked is { Count: > 0 } unlocked)
+        {
+            var prize = Line(PetUi.BodySize, RecordGold, true);
+            prize.Text = L("Mở khóa: ", "Unlocked: ") + string.Join(", ", unlocked.Select(m => m.Name(English)))
+                + L(" (xem ở Sảnh → Phần thưởng)", " (see Hub → Rewards)");
+            info.Children.Add(prize);
         }
         if (BattleTuning.Endless is EndlessSpec spec && BattleRecords.ForEndless(spec, result.Weapon, result.Difficulty, result.Custom) is { MostWaves: > 0 } best)
         {

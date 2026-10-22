@@ -30,6 +30,11 @@ public sealed class EndlessSpec
     public int? MaxAlive { get; init; }
     public double EliteChance { get; init; }
     public EndlessKind[] Kinds { get; init; } = Array.Empty<EndlessKind>();
+    // Rewards for clearing a wave (2026-10-22), each given once: accessories and displayed keepsakes
+    // (KeepsakeSpec with Wave). Earned from the records (BattleRecords.EndlessCleared), never with custom data.
+    public KeepsakeSpec[] Milestones { get; init; } = Array.Empty<KeepsakeSpec>();
+    public IEnumerable<KeepsakeSpec> EarnedBy(int cleared) => Milestones.Where(m => m.Wave <= cleared);
+    public KeepsakeSpec? MilestoneAt(int wave) => Milestones.FirstOrDefault(m => m.Wave == wave);
 
     public int Count(int wave) => Math.Clamp((int)Math.Floor(FirstCount + CountPerWave * (wave - 1)), 1, MaxCount);
     public double Threat(int wave) => 1 + ThreatPerWave * (wave - 1);
@@ -76,6 +81,23 @@ public sealed class EndlessSpec
             if (k.From is < 1 or > EndlessSpec.PlannedWaves) throw new InvalidDataException(at + ".kinds from must be 1–" + PlannedWaves);
         }
         if (!e.Kinds.Any(k => k.From == 1 && k.Weight > 0)) throw new InvalidDataException(at + ".kinds needs an enemy from wave 1");
+        if (e.Milestones == null || e.Milestones.Length > 12) throw new InvalidDataException(at + ".milestones must list at most 12 rewards");
+        var taken = (s.Expedition?.Keepsakes ?? Array.Empty<KeepsakeSpec>()).Select(k => k.Id).ToHashSet();
+        int lastWave = 0;
+        foreach (var m in e.Milestones)
+        {
+            string where = $"{at}.milestones[{m?.Id}]";
+            if (m == null) throw new InvalidDataException(at + ".milestones has an empty entry");
+            if (m.Id == null || !System.Text.RegularExpressions.Regex.IsMatch(m.Id, "^[a-z0-9_-]{1,32}$")) throw new InvalidDataException(where + ".id must be 1–32 lower-case letters, digits, _ or -");
+            if (!taken.Add(m.Id)) throw new InvalidDataException($"{where}: id \"{m.Id}\" is used twice (keepsake ids are shared with the Expedition)");
+            if (m.NameVi is not { Length: > 0 and <= 32 } || m.NameEn is not { Length: > 0 and <= 32 }) throw new InvalidDataException(where + " names must be 1–32 characters");
+            if (m.Wave <= lastWave || m.Wave > PlannedWaves) throw new InvalidDataException(where + ".wave must grow from one reward to the next, at most " + PlannedWaves);
+            lastWave = m.Wave;
+            if (m.Kind is not (KeepsakeSpec.AccessoryKind or KeepsakeSpec.Hourglass or KeepsakeSpec.Orb or KeepsakeSpec.Cushion))
+                throw new InvalidDataException(where + ".kind must be accessory, hourglass, orb or cushion");
+            if (m.Kind == KeepsakeSpec.AccessoryKind && PetAccessories.Find(m.Accessory) is not { Reward: not null })
+                throw new InvalidDataException(where + ".accessory must name a reward accessory of accessories.json");
+        }
     }
 }
 

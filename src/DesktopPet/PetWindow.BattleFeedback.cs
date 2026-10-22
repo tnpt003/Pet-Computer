@@ -73,6 +73,10 @@ public sealed partial class PetWindow
                     L($"★ {enemy.Type.Name(false)} tinh anh: {elite.Describe(false)}", $"★ Elite {enemy.Type.Name(true)}: {elite.Describe(true)}"),
                 BattleEventKind.PushResisted when !pushResistExplained && battle.Find((int)e.Value) is Slime firm =>
                     L($"★ {firm.Type.Name(false)} tinh anh miễn Đẩy!", $"★ The elite {firm.Type.Name(true)} ignores Push!"),
+                // Infinity: a milestone reward not won before (it is saved when the run ends).
+                BattleEventKind.WaveCleared when battle.Endless && !battleCustomData && EndlessRewards is EndlessSpec rewards &&
+                    rewards.MilestoneAt(battle.WavesCleared) is KeepsakeSpec prize && prize.Wave > BattleRecords.EndlessCleared(rewards) =>
+                    L($"★ Mở khóa: {prize.Name(false)}!", $"★ Unlocked: {prize.Name(true)}!"),
                 BattleEventKind.Won => L("CHIẾN THẮNG!", "VICTORY!"),
                 BattleEventKind.Lost => L("THUA RỒI…", "DEFEATED…"),
                 _ => null

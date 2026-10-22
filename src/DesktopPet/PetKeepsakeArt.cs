@@ -144,8 +144,11 @@ public sealed class KeepsakeArt : FrameworkElement
         double x = Pad;
         foreach (var item in items)
         {
-            if (item.Kind == KeepsakeSpec.Cushion) { Cushion(dc, x, floor); x += CushionWidth + Gap; }
-            else { Cup(dc, x, floor, item.Tier); x += CupWidth + Gap; }
+            if (item.Kind == KeepsakeSpec.Cushion) { Cushion(dc, x, floor); x += CushionWidth + Gap; continue; }
+            if (item.Kind == KeepsakeSpec.Hourglass) Hourglass(dc, x, floor);
+            else if (item.Kind == KeepsakeSpec.Orb) Orb(dc, x, floor);
+            else Cup(dc, x, floor, item.Tier);
+            x += CupWidth + Gap;
         }
     }
 
@@ -165,6 +168,116 @@ public sealed class KeepsakeArt : FrameworkElement
         dc.DrawEllipse(Shine, null, new Point(cx - 11, top + 6), 4, 2.2);
         dc.DrawEllipse(Eye, null, new Point(cx - 4.5, top + 10), 1.6, 2.2);
         dc.DrawEllipse(Eye, null, new Point(cx + 4.5, top + 10), 1.6, 2.2);
+    }
+
+    // Infinity's keepsakes (2026-10-22), in a cup's room (CupWidth × CupHeight).
+    private static readonly Brush Glass = PetUi.Frozen(Color.FromArgb(0x70, 0xDC, 0xEE, 0xFF)), Sand = B(0xB9, 0x8C, 0xF0), SandDark = B(0x7A, 0x5A, 0xC8),
+        Gold = B(0xF5, 0xC5, 0x42), GoldDark = B(0xB8, 0x86, 0x2A), Star = B(0xFF, 0xF6, 0xD8);
+    private static readonly Brush Nebula = Freeze(new RadialGradientBrush(
+        new GradientStopCollection { new(Color.FromRgb(0xF2, 0x9C, 0xE8), 0), new(Color.FromRgb(0x8A, 0x5C, 0xE0), 0.45), new(Color.FromRgb(0x2C, 0x2A, 0x6E), 1) })
+        { GradientOrigin = new Point(0.38, 0.35), Center = new Point(0.45, 0.42), RadiusX = 0.65, RadiusY = 0.65 });
+    private static Brush Freeze(Brush brush) { brush.Freeze(); return brush; }
+
+    // An hourglass of violet "star sand": wooden caps, two glass bulbs, sand in both and a thin
+    // falling stream, a ∞ on the top cap.
+    private static void Hourglass(DrawingContext dc, double left, double floor)
+    {
+        double cx = left + CupWidth / 2, top = floor - CupHeight, neck = floor - CupHeight / 2;
+        var bulbs = new StreamGeometry();
+        using (var g = bulbs.Open())
+        {
+            g.BeginFigure(new Point(cx - 8.5, top + 4), true, true);
+            g.LineTo(new Point(cx + 8.5, top + 4), true, true);
+            g.BezierTo(new Point(cx + 9, neck - 6), new Point(cx + 1.5, neck - 2), new Point(cx + 1.5, neck), true, true);
+            g.BezierTo(new Point(cx + 1.5, neck + 2), new Point(cx + 9, neck + 6), new Point(cx + 8.5, floor - 4), true, true);
+            g.LineTo(new Point(cx - 8.5, floor - 4), true, true);
+            g.BezierTo(new Point(cx - 9, neck + 6), new Point(cx - 1.5, neck + 2), new Point(cx - 1.5, neck), true, true);
+            g.BezierTo(new Point(cx - 1.5, neck - 2), new Point(cx - 9, neck - 6), new Point(cx - 8.5, top + 4), true, true);
+        }
+        bulbs.Freeze();
+        dc.DrawGeometry(Glass, null, bulbs);
+        // Sand: a little left above, a heap below, the stream between.
+        var upper = new StreamGeometry();
+        using (var g = upper.Open())
+        {
+            g.BeginFigure(new Point(cx - 5.5, neck - 6), true, true);
+            g.QuadraticBezierTo(new Point(cx, neck - 8), new Point(cx + 5.5, neck - 6), true, true);
+            g.QuadraticBezierTo(new Point(cx + 2, neck - 2.5), new Point(cx, neck - 0.5), true, true);
+            g.QuadraticBezierTo(new Point(cx - 2, neck - 2.5), new Point(cx - 5.5, neck - 6), true, true);
+        }
+        upper.Freeze();
+        dc.DrawGeometry(Sand, null, upper);
+        var lower = new StreamGeometry();
+        using (var g = lower.Open())
+        {
+            g.BeginFigure(new Point(cx - 8, floor - 4.5), true, true);
+            g.QuadraticBezierTo(new Point(cx - 4, floor - 11), new Point(cx, floor - 12), true, true);
+            g.QuadraticBezierTo(new Point(cx + 4, floor - 11), new Point(cx + 8, floor - 4.5), true, true);
+        }
+        lower.Freeze();
+        dc.DrawGeometry(Sand, null, lower);
+        dc.DrawLine(new Pen(SandDark, 1), new Point(cx, neck), new Point(cx, floor - 12));
+        dc.DrawEllipse(Star, null, new Point(cx - 2.5, floor - 7.5), 0.9, 0.9);
+        dc.DrawEllipse(Star, null, new Point(cx + 3, floor - 6.5), 0.7, 0.7);
+        dc.DrawGeometry(null, Outline, bulbs);
+        dc.DrawEllipse(Shine, null, new Point(cx - 5, top + 9), 1.3, 2.6);
+        // Caps and posts.
+        dc.DrawRoundedRectangle(Wood, Outline, new Rect(cx - 11, top, 22, 4.5), 1.5, 1.5);
+        dc.DrawRoundedRectangle(Wood, Outline, new Rect(cx - 11, floor - 4.5, 22, 4.5), 1.5, 1.5);
+        dc.DrawLine(new Pen(WoodDark, 1.6), new Point(cx - 10, top + 4.5), new Point(cx - 10, floor - 4.5));
+        dc.DrawLine(new Pen(WoodDark, 1.6), new Point(cx + 10, top + 4.5), new Point(cx + 10, floor - 4.5));
+        Infinity(dc, cx, top + 2.25, 2.1, new Pen(Gold, 1.1));
+    }
+
+    // A nebula in a glass ball on a little gold claw stand, with a few stars inside.
+    private static void Orb(DrawingContext dc, double left, double floor)
+    {
+        double cx = left + CupWidth / 2, r = 11, cy = floor - 8 - r;
+        var stand = new StreamGeometry();
+        using (var g = stand.Open())
+        {
+            g.BeginFigure(new Point(cx - 9, floor), true, true);
+            g.LineTo(new Point(cx - 6, floor - 9), true, true);
+            g.LineTo(new Point(cx + 6, floor - 9), true, true);
+            g.LineTo(new Point(cx + 9, floor), true, true);
+        }
+        stand.Freeze();
+        dc.DrawGeometry(Gold, Outline, stand);
+        dc.DrawLine(new Pen(GoldDark, 1.2), new Point(cx - 7.5, floor - 3), new Point(cx + 7.5, floor - 3));
+        dc.DrawEllipse(Nebula, Outline, new Point(cx, cy), r, r);
+        // The swirl and the stars.
+        var swirl = new StreamGeometry();
+        using (var g = swirl.Open())
+        {
+            g.BeginFigure(new Point(cx - 7, cy + 2), false, false);
+            g.BezierTo(new Point(cx - 4, cy - 6), new Point(cx + 6, cy - 4), new Point(cx + 3, cy + 2), true, true);
+            g.BezierTo(new Point(cx + 1, cy + 5), new Point(cx - 3, cy + 2), new Point(cx - 1, cy), true, true);
+        }
+        swirl.Freeze();
+        dc.DrawGeometry(null, new Pen(PetUi.Frozen(Color.FromArgb(0xB0, 0xFF, 0xE6, 0xFA)), 1.3) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round }, swirl);
+        SparkleAt(dc, new Point(cx + 5, cy - 5), 2.4);
+        dc.DrawEllipse(Star, null, new Point(cx - 5, cy + 5), 0.9, 0.9);
+        dc.DrawEllipse(Star, null, new Point(cx + 6, cy + 4.5), 0.7, 0.7);
+        dc.DrawEllipse(Shine, null, new Point(cx - 5.5, cy - 5.5), 2.2, 3.2);
+        // Claws holding the ball.
+        dc.DrawLine(new Pen(Gold, 2) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round }, new Point(cx - 6, floor - 9), new Point(cx - 8.5, cy + 6));
+        dc.DrawLine(new Pen(Gold, 2) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round }, new Point(cx + 6, floor - 9), new Point(cx + 8.5, cy + 6));
+    }
+
+    // ∞: two loops side by side around (cx, cy), each r wide.
+    private static void Infinity(DrawingContext dc, double cx, double cy, double r, Pen pen)
+    {
+        var g = new StreamGeometry();
+        using (var s = g.Open())
+        {
+            s.BeginFigure(new Point(cx, cy), false, true);
+            s.BezierTo(new Point(cx + r * 0.6, cy - r * 0.9), new Point(cx + r * 2, cy - r * 0.9), new Point(cx + r * 2, cy), true, true);
+            s.BezierTo(new Point(cx + r * 2, cy + r * 0.9), new Point(cx + r * 0.6, cy + r * 0.9), new Point(cx, cy), true, true);
+            s.BezierTo(new Point(cx - r * 0.6, cy - r * 0.9), new Point(cx - r * 2, cy - r * 0.9), new Point(cx - r * 2, cy), true, true);
+            s.BezierTo(new Point(cx - r * 2, cy + r * 0.9), new Point(cx - r * 0.6, cy + r * 0.9), new Point(cx, cy), true, true);
+        }
+        g.Freeze();
+        dc.DrawGeometry(null, pen, g);
     }
 
     private static void Cup(DrawingContext dc, double left, double floor, string? tier)

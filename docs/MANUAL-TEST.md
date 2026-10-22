@@ -406,3 +406,6 @@ Tự động đã có: Phần thưởng trên sảnh (ô có hình, khóa, Mới
 ## Kế hoạch 22/10 (đợt 2) — mũ slime, thẻ trạng thái
 - [ ] Mũ slime (to hơn 1,25×): đeo ở Cài đặt → Mèo, xem khi đứng/ngủ/trèo/bị bế: nằm giữa hai tai, không che mắt.
 - [ ] Thẻ trạng thái: chờ mèo nói một câu (hoặc AI hiện bong bóng ý nghĩ) rồi mở thẻ: dòng "Vừa nói: “…” · vừa xong" / "Vừa nghĩ: đói bụng · …"; trước khi mèo nói gì thì không có dòng này.
+- [ ] Kỹ năng thành dữ liệu: rê chuột lên 5 nút kỹ năng trên HUD (vi và en): tên/mô tả như trước, số đúng.
+- [ ] Phần thưởng Vô tận: Sảnh → thẻ Vô tận có "Thưởng k/5 · tiếp: qua đợt N"; Phần thưởng có mục "Phần thưởng Vô tận" (5 ô, khóa/✓). Chơi qua đợt 10 (hạ Vua): banner "★ Mở khóa: Vòng cổ ∞!", bảng kết quả "Mở khóa: …", Cài đặt → Mèo → Phụ kiện có Vòng cổ ∞. Nếu đã từng tới đợt 11+ trước bản này thì vòng cổ có sẵn (Mới).
+- [ ] Qua đợt 20: Đồng hồ cát chọn được trong Cài đặt → Mèo (kỷ vật trưng bày), cầm/ném/rơi như cúp. Xem 3 phụ kiện trên mèo thật (vòng cổ, vành sao, áo choàng) — nếu chưa đạt thì có thể xem ảnh trong Phần thưởng.

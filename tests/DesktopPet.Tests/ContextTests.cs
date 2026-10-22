@@ -51,8 +51,8 @@ internal static class ContextTests
 
         // Accessories come from the embedded accessories.json; the original seven keep their ids and order.
         check(PetPreferences.Accessories.SequenceEqual(new[] { "None", "Bell", "Bow", "Hat", "Scarf", "Glasses", "Flower", "Crown",
-                "SantaHat", "WitchHat", "Apricot", "Lantern", "SlimeHat", "SlimeKingCrown", "ExpeditionScarf" }),
-            "accessories.json lists None, the seven original accessories, four holiday ones, two Adventure rewards and the Expedition scarf in order");
+                "SantaHat", "WitchHat", "Apricot", "Lantern", "SlimeHat", "SlimeKingCrown", "ExpeditionScarf", "InfinityCollar", "StarHalo", "GalaxyCape" }),
+            "accessories.json lists None, the seven original accessories, four holiday ones, two Adventure rewards, the Expedition scarf and Infinity's three in order");
         check(PetAccessories.ForEvent("christmas")?.Id == "SantaHat" && PetAccessories.ForEvent("halloween")?.Id == "WitchHat" &&
               PetAccessories.ForEvent("tet")?.Id == "Apricot" && PetAccessories.ForEvent("mid_autumn")?.Id == "Lantern" &&
               PetAccessories.ForEvent("birthday")?.Id == "Hat" && PetAccessories.ForEvent("anniversary") == null && PetAccessories.ForEvent(null) == null,

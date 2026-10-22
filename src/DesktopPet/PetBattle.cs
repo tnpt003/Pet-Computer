@@ -172,6 +172,8 @@ public sealed partial class BattleSim
         }
     }
     public int Defeated { get; private set; }
+    // Waves cleared so far (Infinity's milestones count these).
+    public int WavesCleared { get; private set; }
     public bool BossDefeated { get; private set; }
     public EnemyType? DefeatedBoss { get; private set; }
     public double PhaseRemaining { get; private set; }

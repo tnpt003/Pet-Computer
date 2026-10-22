@@ -371,6 +371,16 @@
       { "enemy": "runner", "weight": 25, "from": 3 },
       { "enemy": "mender", "weight": 15, "from": 5 },
       { "enemy": "rock", "weight": 15, "from": 7 }
+    ],
+    // Rewards for clearing a wave (any weapon or difficulty, never with custom data), each given
+    // once and kept: "accessory" (a reward accessory of accessories.json) or a keepsake shown on the
+    // screen ("hourglass", "orb", "cushion"). Waves must grow; ids are shared with the Expedition's keepsakes.
+    "milestones": [
+      { "id": "infinity_collar", "wave": 10, "kind": "accessory", "accessory": "InfinityCollar", "nameVi": "Vòng cổ ∞", "nameEn": "Infinity collar" },
+      { "id": "endless_hourglass", "wave": 20, "kind": "hourglass", "nameVi": "Đồng hồ cát vô tận", "nameEn": "Endless hourglass" },
+      { "id": "star_halo", "wave": 30, "kind": "accessory", "accessory": "StarHalo", "nameVi": "Vành sao", "nameEn": "Star halo" },
+      { "id": "nebula_orb", "wave": 40, "kind": "orb", "nameVi": "Quả cầu tinh vân", "nameEn": "Nebula orb" },
+      { "id": "galaxy_cape", "wave": 50, "kind": "accessory", "accessory": "GalaxyCape", "nameVi": "Áo choàng thiên hà", "nameEn": "Galaxy cape" }
     ]
   },
   "expedition": {

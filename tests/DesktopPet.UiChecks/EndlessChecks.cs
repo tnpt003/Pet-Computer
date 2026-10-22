@@ -103,8 +103,50 @@ internal static class EndlessChecks
             Fight(1);
             Click(Button(Find("Pet result")!.Content as DependencyObject ?? new Border(), "‹ Hub")!);
             TickHub();
-            check(window.BattleHubOpen && window.BattleHubText.Contains($"Furthest: wave {reached}"), $"The hub's card shows the furthest wave ({window.BattleHubText.Replace('\n', '|')})");
+            check(window.BattleHubOpen && window.BattleHubText.Contains($"Furthest: wave {reached}") && window.BattleHubText.Contains("Rewards 0/5 · next: clear wave 10"),
+                $"The hub's card shows the furthest wave and the milestone rewards ({window.BattleHubText.Replace('\n', '|')})");
+
+            // Milestone rewards (built-in data): 20 waves cleared once earn the collar and the hourglass.
+            var builtIn = BattleData.Settings.Endless!;
+            string clearedKey = BattleRecords.EndlessKey(builtIn, BattleWeapon.Hammer, BattleDifficulty.Easy);
+            window.BattleRecords.Loadouts[clearedKey] = new BattleRecord { MostWaves = 21, MostCleared = 20 };
+            typeof(PetWindow).GetField("endlessEarned", Flags)!.SetValue(window, null);
+            TickHub();
+            check(window.BattleHubText.Contains("Rewards 2/5 · next: clear wave 30") && window.AccessoryAvailable("InfinityCollar") && !window.AccessoryAvailable("StarHalo") &&
+                  window.DisplayableKeepsakes.Any(k => k.Id == "endless_hourglass") && window.DisplayableKeepsakes.All(k => k.Id != "nebula_orb"),
+                "Clearing wave 20 earns the Infinity collar (offered in Settings) and the hourglass (displayable); the hub counts 2/5");
+            var seenBefore = window.AdventureProgress.RewardsSeen.ToList();
+            check(window.ShowBattleRewards(true) == null, "The Rewards page opens");
+            string rewards = window.BattleRewardsText;
+            check(rewards.Contains("Infinity rewards") && rewards.Contains("✓ Wave 10 · Infinity collar") && rewards.Contains("✓ Wave 20 · Endless hourglass") &&
+                  rewards.Contains("Wave 30 · Star halo") && !rewards.Contains("✓ Wave 30") && rewards.Contains("Wave 50 · Galaxy cape") && rewards.Contains("Furthest"),
+                $"Rewards lists Infinity's five milestones, two won ({rewards.Replace('\n', '|')})");
+            Shot("Pet battle hub", "rewards-infinity-en.png");
+            // The two keepsakes as the desktop draws them (PET_RENDER_REVIEW only writes the pictures).
+            foreach (var shown in builtIn.Milestones.Where(m => m.Shown))
+            {
+                var art = new KeepsakeArt { Scale = PetWindow.DisplayScale, Items = new[] { shown } };
+                art.Measure(new Size(art.Width, art.Height)); art.Arrange(new Rect(0, 0, art.Width, art.Height));
+                if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string review)
+                {
+                    var image = new System.Windows.Media.Imaging.RenderTargetBitmap((int)Math.Ceiling(art.Width), (int)Math.Ceiling(art.Height), 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
+                    image.Render(art);
+                    var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder(); encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(image));
+                    using var stream = File.Create(Path.Combine(review, $"keepsake-{shown.Kind}.png")); encoder.Save(stream);
+                }
+            }
+            window.ShowBattleRewards(false);
             window.CancelBattleHub();
+            var collar = builtIn.MilestoneAt(10)!;
+            Call(window, "ShowBattleSummary", new PetWindow.BattleSummary(false, 40, 600, 0, 100, WeaponLabel: "Sword", Stage: infinity.Stage(), EndlessWave: 11,
+                EndlessUnlocked: new[] { collar }));
+            await Task.Delay(30);
+            check(ResultText().Contains("Unlocked: Infinity collar (see Hub → Rewards)"), $"The result names a milestone the run unlocked ({ResultText()})");
+            Shot("Pet result", "endless-unlocked-en.png");
+            Call(window, "CloseBattleSummary");
+            window.BattleRecords.Loadouts.Remove(clearedKey);
+            typeof(PetWindow).GetField("endlessEarned", Flags)!.SetValue(window, null);
+            window.AdventureProgress.RewardsSeen.Clear(); window.AdventureProgress.RewardsSeen.AddRange(seenBefore);
         }
         finally
         {

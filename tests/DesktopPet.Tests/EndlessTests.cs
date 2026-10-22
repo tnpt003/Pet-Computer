@@ -48,6 +48,7 @@ internal static class EndlessTests
             if (sim.ChoosingUpgrade) sim.ChooseUpgrade(sim.OfferCards()![0].Id);
         }
         check(sim.Wave >= 9 && !sim.Over && sim.Picks >= 3, $"It goes on past the boss and never ends in a win (wave {sim.Wave}, {sim.Picks} cards)");
+        check(sim.WavesCleared == (sim.Phase == BattlePhase.WaveBreak ? sim.Wave : sim.Wave - 1), $"Waves cleared are counted ({sim.WavesCleared} by wave {sim.Wave})");
         int reached = sim.Wave;
         check(sim.Surrender() && sim.Phase == BattlePhase.Lost && sim.Wave == reached && !sim.Surrender(), "End: a loss at the wave reached (once)");
         var plain = new BattleSim(quick, 0, 1600, new Random(5));
@@ -71,6 +72,23 @@ internal static class EndlessTests
         }
         finally { Directory.Delete(dir, true); }
 
+        // Milestone rewards (2026-10-22): earned from the waves cleared over every loadout and rules version.
+        check(spec.Milestones.Select(m => m.Wave).SequenceEqual(new[] { 10, 20, 30, 40, 50 }) &&
+              spec.Milestones.Count(m => m.Kind == KeepsakeSpec.AccessoryKind && PetAccessories.Find(m.Accessory) is { Reward: "endless" }) == 3 &&
+              spec.Milestones.Count(m => m.Shown) == 2 && spec.MilestoneAt(20)?.Kind == KeepsakeSpec.Hourglass && spec.MilestoneAt(40)?.Kind == KeepsakeSpec.Orb,
+            "Built-in milestones: waves 10–50, three accessories and two displayed keepsakes (hourglass, orb)");
+        var cleared = new BattleRecords();
+        check(cleared.EndlessCleared(spec) == 0 && !spec.EarnedBy(0).Any(), "Nothing played: nothing earned");
+        cleared.Loadouts[BattleRecords.EndlessKey(spec, BattleWeapon.Sword, BattleDifficulty.Easy)] = new BattleRecord { MostWaves = 11 };
+        check(cleared.EndlessCleared(spec) == 10 && spec.EarnedBy(10).Single().Id == "infinity_collar", "A record from before: lost at wave 11 means wave 10 was cleared");
+        cleared.AddEndless(spec, BattleWeapon.Hammer, BattleDifficulty.Hard, false, 21, 50, 21);
+        cleared.AddEndless(spec, BattleWeapon.Hammer, BattleDifficulty.Hard, true, 60, 99, 60);
+        cleared.Loadouts["endless|r9|" + BattleRecords.Key(BattleWeapon.Sword, BattleDifficulty.Hard)] = new BattleRecord { MostWaves = 30, MostCleared = 30 };
+        check(cleared.EndlessCleared(spec) == 30 && spec.EarnedBy(30).Count() == 3 && cleared.ForEndless(spec, BattleWeapon.Hammer, BattleDifficulty.Hard).MostCleared == 21,
+            "Ended in a break: all its waves count; other rules versions count; custom data does not");
+        cleared.AddEndless(spec, BattleWeapon.Hammer, BattleDifficulty.Hard, false, 8, 5, 7);
+        check(cleared.ForEndless(spec, BattleWeapon.Hammer, BattleDifficulty.Hard).MostCleared == 21, "A shorter run keeps the most waves cleared");
+
         // Data checks (the whole file is refused with the reason).
         string builtIn = ExpeditionFixture.Embedded();
         string Error(string endless)
@@ -83,5 +101,13 @@ internal static class EndlessTests
         check(Error("{ \"kinds\": [ { \"enemy\": \"runner\", \"weight\": 1, \"from\": 2 } ] }").Contains("wave 1"), "Kinds with nothing from wave 1 are rejected");
         check(Error("{ \"kinds\": [ { \"enemy\": \"king\", \"weight\": 1 } ] }").Contains("not bosses"), "The boss in the draw is rejected");
         check(Error("{ \"maxCount\": 0 }").Contains("maxCount"), "maxCount 0 is rejected");
+        const string Gift = "\"nameVi\": \"a\", \"nameEn\": \"a\"";
+        check(Error("{ \"milestones\": [ { \"id\": \"a\", \"wave\": 5, \"kind\": \"orb\", " + Gift + " }, { \"id\": \"b\", \"wave\": 5, \"kind\": \"orb\", " + Gift + " } ] }").Contains("grow") &&
+              Error("{ \"milestones\": [ { \"id\": \"cup_gold\", \"wave\": 5, \"kind\": \"orb\", " + Gift + " } ] }").Contains("used twice") &&
+              Error("{ \"milestones\": [ { \"id\": \"a\", \"wave\": 5, \"kind\": \"cup\", \"tier\": \"gold\", " + Gift + " } ] }").Contains("kind") &&
+              Error("{ \"milestones\": [ { \"id\": \"a\", \"wave\": 5, \"kind\": \"accessory\", \"accessory\": \"Bell\", " + Gift + " } ] }").Contains("reward accessory") &&
+              Error("{ \"milestones\": [ { \"id\": \"a\", \"wave\": 5, \"kind\": \"orb\", \"nameVi\": \"\", \"nameEn\": \"a\" } ] }").Contains("names") &&
+              Error("{ \"milestones\": [] }") == "",
+            "Bad milestones are rejected: waves not growing, an id the Expedition uses, a cup, a plain accessory, no name");
     }
 }

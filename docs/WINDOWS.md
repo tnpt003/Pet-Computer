@@ -688,7 +688,14 @@ battle on a generated stage that is never won — waves grow and get stronger, a
 `upgradeEvery` waves, the boss every `bossEvery`; the HUD says "Wave N" with ten marks around it;
 End (HUD or menu) finishes the run as a loss at the wave reached, so the result panel and the
 record (furthest wave per weapon and difficulty, battle-records.json) follow. Closing the app
-mid-run keeps nothing. The cat draws a wooden toy sword and
+mid-run keeps nothing. Milestone rewards (`endless.milestones`, 2026-10-22): clearing wave
+10/20/30/40/50 once (any weapon or difficulty, never with custom data) earns the Infinity collar,
+the endless hourglass (a keepsake shown on the screen), the star halo, the nebula orb (keepsake)
+and the galaxy cape. They come from the records' most waves cleared (`MostCleared`; older records
+count MostWaves − 1), so they are never lost; a banner "★ Unlocked: …" shows when the wave is
+cleared, the result panel names them, the hub's card says "Rewards k/5 · next: clear wave N",
+and Hub → Rewards has an "Infinity rewards" section. The two keepsakes join the Expedition's in
+Settings → Pet (one shown at a time, same physics as a cup). The cat draws a wooden toy sword and
 fights slimes on the floor of its current monitor (work area) in 3 waves (2 slimes; 2 slimes +
 2 quick slimes; a rock slime + 2 quick + 2 slimes; at most 3 at once, a short break between
 waves), then the **Slime King** alone. Quick slimes are small, fast and frail (wind streaks);

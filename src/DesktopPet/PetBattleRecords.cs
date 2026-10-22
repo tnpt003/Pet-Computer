@@ -19,13 +19,16 @@ public sealed class BattleRecord
     public int MostDefeated { get; set; }
     // Infinity: the furthest wave reached (0: none; only in "endless|…" records).
     public int MostWaves { get; set; }
-    [JsonIgnore] public bool Empty => Wins == 0 && BestSeconds == null && MostDefeated == 0 && MostWaves == 0;
+    // Infinity: the most waves cleared in one run (records before 2026-10-22 have 0: MostWaves − 1 stands in).
+    public int MostCleared { get; set; }
+    [JsonIgnore] public bool Empty => Wins == 0 && BestSeconds == null && MostDefeated == 0 && MostWaves == 0 && MostCleared == 0;
 
     internal void Normalize()
     {
         Wins = Math.Max(0, Wins);
         MostDefeated = Math.Max(0, MostDefeated);
         MostWaves = Math.Max(0, MostWaves);
+        MostCleared = Math.Clamp(MostCleared, 0, MostWaves);
         if (BestSeconds is double s && (!double.IsFinite(s) || s <= 0)) BestSeconds = null;
     }
 }
@@ -75,13 +78,19 @@ public sealed class BattleRecords
     public int EndlessBest(EndlessSpec spec) => Loadouts.Where(pair => pair.Key.StartsWith($"{spec.Id}|r{spec.RulesVersion}|", StringComparison.Ordinal) && !pair.Key.EndsWith("|custom", StringComparison.Ordinal))
         .Select(pair => pair.Value.MostWaves).DefaultIfEmpty(0).Max();
 
-    // One ended Infinity run: the wave it reached and the slimes it defeated.
-    public BattleRecordNews AddEndless(EndlessSpec spec, string weapon, BattleDifficulty difficulty, bool custom, int wave, int defeated)
+    // The most waves cleared in one run over every loadout and rules version (milestone rewards stay
+    // earned when the rules change), custom data left out.
+    public int EndlessCleared(EndlessSpec spec) => Loadouts.Where(pair => pair.Key.StartsWith(spec.Id + "|r", StringComparison.Ordinal) && !pair.Key.EndsWith("|custom", StringComparison.Ordinal))
+        .Select(pair => Math.Max(pair.Value.MostCleared, pair.Value.MostWaves - 1)).DefaultIfEmpty(0).Max();
+
+    // One ended Infinity run: the wave it reached, the waves it cleared and the slimes it defeated.
+    public BattleRecordNews AddEndless(EndlessSpec spec, string weapon, BattleDifficulty difficulty, bool custom, int wave, int defeated, int cleared = 0)
     {
         string key = EndlessKey(spec, weapon, difficulty, custom);
         if (!Loadouts.TryGetValue(key, out var record)) Loadouts[key] = record = new();
         bool furthest = wave > record.MostWaves, most = defeated > record.MostDefeated;
         if (furthest) record.MostWaves = wave;
+        record.MostCleared = Math.Clamp(Math.Max(record.MostCleared, cleared), 0, record.MostWaves);
         if (most) record.MostDefeated = defeated;
         return new(false, most, furthest);
     }

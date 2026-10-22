@@ -217,11 +217,14 @@ public sealed class CapsuleSpec
 
 // A keepsake (Expedition milestone 4): given once, the first time a run is won at Difficulty or
 // harder (only at it when Exact). cup: a trophy (Tier bronze, silver, gold) on the display corner;
-// cushion: a slime cushion there; accessory: a reward accessory (accessories.json) the cat can wear.
+// cushion: a slime cushion there; accessory: a reward accessory (accessories.json) the cat can wear;
+// hourglass, orb: Infinity's displayed keepsakes (EndlessSpec.Milestones, given for Wave instead).
 public sealed class KeepsakeSpec
 {
-    public const string Cup = "cup", Cushion = "cushion", AccessoryKind = "accessory";
-    public static readonly string[] Kinds = { Cup, Cushion, AccessoryKind };
+    public const string Cup = "cup", Cushion = "cushion", AccessoryKind = "accessory", Hourglass = "hourglass", Orb = "orb";
+    public static readonly string[] Kinds = { Cup, Cushion, AccessoryKind, Hourglass, Orb };
+    // Infinity's milestones only: the wave to clear (0 in the Expedition).
+    public int Wave { get; init; }
     public static readonly string[] Tiers = { "bronze", "silver", "gold" };
     public string Id { get; init; } = "";
     public string Kind { get; init; } = Cup;
@@ -232,7 +235,7 @@ public sealed class KeepsakeSpec
     public string NameVi { get; init; } = "";
     public string NameEn { get; init; } = "";
     public string Name(bool english) => english ? NameEn : NameVi;
-    [JsonIgnore] public bool Shown => Kind is Cup or Cushion;
+    [JsonIgnore] public bool Shown => Kind is Cup or Cushion or Hourglass or Orb;
     public bool EarnedAt(BattleDifficulty level) =>
         Enum.TryParse<BattleDifficulty>(Difficulty, out var at) && (Exact ? level == at : level >= at);
 }

@@ -143,6 +143,39 @@
         {"line": [65.5, 90, 72.8, 89], "stroke": {"color": "#7CD36A", "width": 1.8, "round": true}},
         {"ellipse": [46, 76.5, 2.6, 2.6], "fill": "#F5C542", "stroke": "outline"}
       ]
+    },
+    {
+      "id": "InfinityCollar", "name": {"vi": "Vòng cổ ∞", "en": "Infinity collar"}, "layer": "neck", "reward": "endless",
+      "shapes": [
+        {"path": "M 36,70 Q 55,80 74,70", "stroke": "accent"},
+        {"path": "M 36,70 Q 55,80 74,70", "stroke": {"color": "#7A5AC8", "width": 5, "round": true}},
+        {"line": [55, 75, 55, 79.5], "stroke": "outline"},
+        {"path": "M 55,83 C 57.5,79.6 64.4,79.6 64.4,83 C 64.4,86.4 57.5,86.4 55,83 C 52.5,79.6 45.6,79.6 45.6,83 C 45.6,86.4 52.5,86.4 55,83 Z", "fill": "#9FE3FF", "stroke": "outline"},
+        {"ellipse": [59.8, 81.6, 1.2, 0.9], "fill": "#E6FFFFFF"},
+        {"ellipse": [50.2, 81.6, 1.2, 0.9], "fill": "#E6FFFFFF"}
+      ]
+    },
+    {
+      "id": "StarHalo", "name": {"vi": "Vành sao", "en": "Star halo"}, "layer": "head", "reward": "endless",
+      "shapes": [
+        {"ellipse": [55, 10, 18, 4.5], "stroke": {"color": "#B4F5C542", "width": 1.4, "round": true}},
+        {"path": "M 41.00,6.40 L 41.95,8.69 L 44.42,8.89 L 42.54,10.50 L 43.12,12.91 L 41.00,11.62 L 38.88,12.91 L 39.46,10.50 L 37.58,8.89 L 40.05,8.69 Z", "fill": "#FFD45C", "stroke": "outline"},
+        {"path": "M 55.00,0.10 L 56.16,2.90 L 59.18,3.14 L 56.88,5.11 L 57.59,8.06 L 55.00,6.48 L 52.41,8.06 L 53.12,5.11 L 50.82,3.14 L 53.84,2.90 Z", "fill": "#FFF0A8", "stroke": "outline"},
+        {"path": "M 69.00,6.40 L 69.95,8.69 L 72.42,8.89 L 70.54,10.50 L 71.12,12.91 L 69.00,11.62 L 66.88,12.91 L 67.46,10.50 L 65.58,8.89 L 68.05,8.69 Z", "fill": "#FFD45C", "stroke": "outline"}
+      ]
+    },
+    {
+      "id": "GalaxyCape", "name": {"vi": "Áo choàng thiên hà", "en": "Galaxy cape"}, "layer": "neck", "reward": "endless",
+      "shapes": [
+        {"path": "M 31,67 Q 55,81 79,67 L 85,90 Q 70,98 55,97 Q 40,98 25,90 Z", "fill": "#2E2F7A", "stroke": "outline"},
+        {"path": "M 27,86 Q 40,93 55,92.5 Q 70,93 83,86", "stroke": {"color": "#8A5CE0", "width": 2.2, "round": true}},
+        {"path": "M 46.00,82.20 L 46.48,83.34 L 47.71,83.44 L 46.77,84.25 L 47.06,85.46 L 46.00,84.81 L 44.94,85.46 L 45.23,84.25 L 44.29,83.44 L 45.52,83.34 Z", "fill": "#FFF6D8"},
+        {"path": "M 64.00,86.50 L 64.40,87.45 L 65.43,87.54 L 64.64,88.21 L 64.88,89.21 L 64.00,88.67 L 63.12,89.21 L 63.36,88.21 L 62.57,87.54 L 63.60,87.45 Z", "fill": "#FFF6D8"},
+        {"path": "M 40.00,77.70 L 40.34,78.53 L 41.24,78.60 L 40.56,79.18 L 40.76,80.05 L 40.00,79.58 L 39.24,80.05 L 39.44,79.18 L 38.76,78.60 L 39.66,78.53 Z", "fill": "#FFF6D8"},
+        {"path": "M 70.00,77.70 L 70.34,78.53 L 71.24,78.60 L 70.56,79.18 L 70.76,80.05 L 70.00,79.58 L 69.24,80.05 L 69.44,79.18 L 68.76,78.60 L 69.66,78.53 Z", "fill": "#FFF6D8"},
+        {"ellipse": [55, 74, 3.4, 3.4], "fill": "#F5C542", "stroke": "outline"},
+        {"ellipse": [55, 74, 1.2, 1.2], "fill": "#FFF6D8"}
+      ]
     }
   ]
 }

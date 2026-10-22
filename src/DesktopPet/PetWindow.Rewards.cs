@@ -9,7 +9,7 @@ namespace DesktopPet;
 
 // The battle hub's Rewards: what was won and the best results, in place of the mode cards (the
 // hub's header, Close and rules stay). A tile per Adventure accessory (this cat wearing it) and per
-// Expedition keepsake (as it stands on the keepsake), won ones in colour with where they show, the
+// Expedition keepsake (as it stands on the keepsake) and per Infinity milestone (2026-10-22), won ones in colour with where they show, the
 // others greyed with a lock and what wins them (said when the mouse is over a tile). Rewards not
 // shown here before carry a "New" badge, and the hub's button counts them; showing the page marks
 // them seen (AdventureProgress.RewardsSeen, saved with the Adventure progress). Then the records:
@@ -42,6 +42,8 @@ public sealed partial class PetWindow
         if (Expedition is Expedition x)
             foreach (var k in x.Spec.Keepsakes)
                 if (x.Progress.Keepsakes.Contains(k.Id) && !held.Contains(k.Id)) held.Add(k.Id);
+        foreach (var m in EndlessEarned)
+            if (!held.Contains(m.Id)) held.Add(m.Id);
         return held;
     }
 
@@ -131,6 +133,24 @@ public sealed partial class PetWindow
             }
             RewardsSection(L("Kỷ vật Viễn chinh", "Expedition keepsakes"), tiles);
         }
+
+        // Infinity's milestones: one per wave to clear.
+        if (EndlessRewards is EndlessSpec infinity)
+        {
+            var tiles = new WrapPanel();
+            var earned = EndlessEarned;
+            foreach (var m in infinity.Milestones)
+            {
+                bool won = earned.Contains(m);
+                FrameworkElement art = m.Kind == KeepsakeSpec.AccessoryKind && m.Accessory != null ? WearingCat(m.Accessory)
+                    : new Viewbox { Width = 64, Height = 56, Child = new KeepsakeArt { Items = new[] { m }, Width = KeepsakeArt.WidthFor(new[] { m }), Height = KeepsakeArt.ArtHeight } };
+                string where = m.Kind == KeepsakeSpec.AccessoryKind
+                    ? L("Phụ kiện: đeo trong Cài đặt → Mèo → Phụ kiện.", "Accessory: wear it from Settings → Pet → Accessory.")
+                    : L("Kỷ vật: trưng bày trên màn hình (chọn trong Cài đặt → Mèo).", "Keepsake: displayed on the screen (choose it in Settings → Pet).");
+                tiles.Children.Add(RewardTile(art, L($"Đợt {m.Wave} · ", $"Wave {m.Wave} · ") + m.Name(English), won, rewardsFresh.Contains(m.Id), won ? where : EndlessMilestoneText(m)));
+            }
+            RewardsSection(L("Phần thưởng Vô tận", "Infinity rewards"), tiles);
+        }
         if (hubRewards.Children.Count == 0) hubRewards.Children.Add(BagCard(BagLine(L("Chưa có phần thưởng nào trong dữ liệu.", "No rewards in the data."), PetUi.SmallSize, PetUi.Game.Soft)));
         else hubRewards.Children.Add(rewardsDetail);
 
@@ -164,6 +184,14 @@ public sealed partial class PetWindow
                     : L($"xa nhất bậc {steps}/{expedition.Spec.StepCount} · {wins}/{runs} chuyến thắng", $"furthest step {steps}/{expedition.Spec.StepCount} · {wins}/{runs} runs won")
                       + (best is double b ? L($" · nhanh nhất {Clock(b)}", $" · fastest {Clock(b)}") : ""), wins > 0));
             }
+        }
+        if (BattleTuning.Endless is EndlessSpec endless && EndlessRefusal() == null)
+        {
+            var heading = BagLine(L("Vô tận", "Infinity"), PetUi.SmallSize, Brushes.White, bold: true);
+            heading.Margin = new Thickness(0, records.Children.Count == 0 ? 0 : 8, 0, 0);
+            records.Children.Add(heading);
+            int best = BattleRecords.EndlessBest(endless);
+            records.Children.Add(RecordLine(L("Xa nhất", "Furthest"), best == 0 ? L("chưa chơi lần nào", "not played yet") : L($"đợt {best}", $"wave {best}"), best > 0));
         }
         if (records.Children.Count > 0) RewardsSection(L("Kỷ lục", "Records"), records);
     }

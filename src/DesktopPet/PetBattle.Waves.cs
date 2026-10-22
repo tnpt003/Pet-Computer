@@ -91,6 +91,7 @@ public sealed partial class BattleSim
             else { SpawnUnit(catX, unit.Kinds, unit.Side == "a" ? farEdge : 0); spawnTimer = NextSpawnIn(); }
         }
         if (ToSpawn > 0 || Alive > 0 || bombs.Count > 0) return;
+        WavesCleared++;
         if (Wave >= WaveCount && !Survival && !Endless) { Finish(BattlePhase.Won); return; }
         Phase = BattlePhase.WaveBreak;
         PhaseRemaining = Settings.WaveBreakSeconds;

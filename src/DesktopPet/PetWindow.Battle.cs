@@ -390,10 +390,13 @@ public sealed partial class PetWindow
             bool endless = battle.Endless;
             ExpeditionStepOutcome? step = battleExpedition != null ? CountExpeditionStep(battle, won) : null;
             var outcome = step == null && !endless ? CountStageRun(battle, won) : default;
+            // Infinity's milestone rewards this run earned (none with custom data: they come from the records).
+            int clearedBefore = endless && EndlessRewards is EndlessSpec rewards ? BattleRecords.EndlessCleared(rewards) : 0;
             var news = endless && BattleTuning.Endless is EndlessSpec infinity
-                ? BattleRecords.AddEndless(infinity, battle.Weapon.Id, battle.Difficulty, battleCustomData, battle.Wave, battle.Defeated)
+                ? BattleRecords.AddEndless(infinity, battle.Weapon.Id, battle.Difficulty, battleCustomData, battle.Wave, battle.Defeated, battle.WavesCleared)
                 : battle.Stage != null ? outcome.News : BattleRecords.Add(battle.Weapon.Id, battle.Difficulty, battleCustomData, won, battle.Defeated, battle.FightSeconds);
             if ((battle.Stage == null || endless) && persistPreferences) BattleRecords.Save();
+            if (endless) endlessEarned = null;
             BattleReport = BattleReport with
             {
                 Won = BattleReport.Won + (won ? 1 : 0), Lost = BattleReport.Lost + (won ? 0 : 1),
@@ -401,7 +404,8 @@ public sealed partial class PetWindow
             };
             var result = new BattleSummary(won, battle.Defeated, battle.FightSeconds, battle.CatHp, battle.CatMaxHp, battle.BossDefeated,
                 battle.DefeatedBoss?.Name(English), battle.Difficulty, news, battle.Weapon.Id, WeaponName(battle.Weapon), battleCustomData, battle.Weapon.Style,
-                battle.Stage, outcome, !battleCustomData, UpgradeSummary(battle), step, endless ? battle.Wave : 0);
+                battle.Stage, outcome, !battleCustomData, UpgradeSummary(battle), step, endless ? battle.Wave : 0,
+                endless && EndlessRewards is EndlessSpec given ? given.EarnedBy(BattleRecords.EndlessCleared(given)).Where(m => m.Wave > clearedBefore).ToList() : null);
             EndBattle();
             ShowBattleSummary(result);
             return;

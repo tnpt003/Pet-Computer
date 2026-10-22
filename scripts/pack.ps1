@@ -34,17 +34,10 @@ if ($Upload) {
     # The previous release (if any) for delta packages; a first release has none.
     & $dotnet vpk download github --repoUrl $repoUrl --token $env:GITHUB_TOKEN -o $output
 }
-# Release notes: how to install (every release), then the CHANGELOG.md section "## <version> …"
-# (up to the next "## ") when there is one.
-$install = @'
-### Cài đặt / Install
-
-1. Tải **PetComputer-win-Setup.exe** ở mục Assets bên dưới rồi chạy (không cần quyền admin). / Download **PetComputer-win-Setup.exe** from Assets below and run it (no admin needed).
-2. Nếu Windows SmartScreen hiện "Windows protected your PC": bấm **More info → Run anyway** (bản cài chưa được ký số). / If SmartScreen says "Windows protected your PC": click **More info → Run anyway** (the installer is not code-signed yet).
-3. Mèo tự mở ra; bản đã cài tự cập nhật. / The pet opens by itself and keeps itself up to date.
-
-Đã cài rồi thì không cần tải lại: mèo tự cập nhật. / Already installed? No need to download again: the pet updates itself.
-'@
+# Release notes: how to install (scripts/release-install.md, every release), then the CHANGELOG.md
+# section "## <version> ..." (up to the next "## ") when there is one. Both are read as UTF-8: this
+# script stays ASCII because Windows PowerShell reads a .ps1 without a BOM in the ANSI code page.
+$install = [IO.File]::ReadAllText((Join-Path $PSScriptRoot 'release-install.md'), [Text.Encoding]::UTF8)
 $changelog = [IO.File]::ReadAllText((Join-Path $projectRoot 'CHANGELOG.md'), [Text.Encoding]::UTF8)
 $section = [regex]::Match($changelog, '(?ms)^## ' + [regex]::Escape($version) + '\b.*?(?=^## |\z)')
 $notesText = $install.Trim()

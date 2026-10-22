@@ -10,6 +10,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - `PetBattle.cs`: thêm thuộc tính chỉ đọc `SwingDamage`, `SwingsPerSecond`, `Knock`, `HurtFactor` (cùng công thức trận) để túi đồ không có công thức thứ hai.
 - Test thật: scripts/test.ps1 -Ui (cả PET_RENDER_REVIEW): Python 55 OK; C# 1264 (mới `InventoryStatTests`: số gốc kiếm/búa, build, di vật Bùa liều lĩnh/Lông vũ nhẹ); WPF 652 đạt (mới `InventoryChecks`: nút, cùng cửa sổ/không focus/Quiet, trống → base + ?, ‹ Sảnh, thắng cả chương → build/★/✓, chuyến Búa Khó + Lông vũ → cột Viễn chinh/di vật, tô vàng không đánh dấu số gốc của búa, tiếng Việt, màn 480 DIP cuộn 456 + Đóng trong khung, đóng sảnh quên túi đồ, không sảnh thì không mở). Đã xem ảnh render (vi đầy, en trống); sửa sau khi xem: cột Viễn chinh dùng búa từng bị tô vàng vì so với kiếm.
 - Cần test tay: mục "Túi đồ trên Sảnh chiến đấu" cuối MANUAL-TEST.md.
+- Commit 6ad824c; publish 1.3.0-beta+6ad824c sạch (AGENTS.md/NEXT-STEPS.md của người dùng tạm cất rồi trả nguyên), check-publish.ps1 đạt 3/3; artifacts\DesktopPet-1.3.0-beta-6ad824c-win-x64.zip. Pet đã đóng bình thường (WM_CLOSE) trước publish và mở lại sau.
 
 ## Viễn chinh: quay bậc (gacha loại điểm) + máy viên nang (2026-10-22)
 - Người dùng: "gacha loại màn" giữa các điểm (đánh/nghỉ/… ngẫu nhiên, chỉ bậc cuối giữ trùm), làm cả máy viên nang Claude đề xuất, nâng rulesVersion. "Quit expedition" đã có (Bỏ chuyến), giữ nguyên. C# only.

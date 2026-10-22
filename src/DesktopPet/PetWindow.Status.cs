@@ -17,8 +17,16 @@ public sealed partial class PetWindow
     private Window? statusWindow;
     private bool statusClosing; // Closing deactivates the card, which must not close it again.
     private DispatcherTimer? statusTimer;
-    private TextBlock? statusTitle, statusDoing, statusFeeling, statusHint;
+    private TextBlock? statusTitle, statusDoing, statusFeeling, statusLast, statusHint;
     private StatusBar[]? statusBars;
+    // The latest words in a speech bubble or icon in a thought bubble (whichever came last),
+    // kept for the card even after the bubble faded. Session only.
+    private string? lastWords;
+    private ThoughtKind lastThought;
+    private DateTime lastWordsAt, lastThoughtAt;
+
+    private void NoteWords(string text) { lastWords = text; lastWordsAt = DateTime.Now; }
+    private void NoteThought(ThoughtKind kind) { if (kind == ThoughtKind.None) return; lastThought = kind; lastThoughtAt = DateTime.Now; }
 
     private sealed record StatusBar(Grid Row, TextBlock Label, TextBlock Value, Border Fill);
 
@@ -34,8 +42,9 @@ public sealed partial class PetWindow
         head.Children.Add(close); head.Children.Add(statusTitle);
         statusDoing = new TextBlock { Foreground = PetUi.Ink, TextWrapping = TextWrapping.Wrap };
         statusFeeling = new TextBlock { Foreground = PetUi.Ink, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 2, 0, 0) };
+        statusLast = new TextBlock { Foreground = PetUi.Ink, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 2, 0, 0) };
         statusHint = new TextBlock { Foreground = PetUi.Muted, FontSize = PetUi.SmallSize, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 10, 0, 0) };
-        var panel = new StackPanel { Children = { head, statusDoing, statusFeeling } };
+        var panel = new StackPanel { Children = { head, statusDoing, statusFeeling, statusLast } };
         statusBars = new StatusBar[5];
         for (int i = 0; i < statusBars.Length; i++)
         {
@@ -105,6 +114,11 @@ public sealed partial class PetWindow
         if (battle != null) doing += $" · HP {Math.Ceiling(battle.CatHp)}";
         statusDoing!.Text = L("Đang làm: ", "Doing: ") + doing;
         statusFeeling!.Text = L("Cảm xúc: ", "Feeling: ") + EmotionText(pet.Emotions.Current);
+        string? last = lastWords != null && (lastThought == ThoughtKind.None || lastWordsAt >= lastThoughtAt)
+            ? L("Vừa nói: ", "Last said: ") + "“" + lastWords + "” · " + AgoText(lastWordsAt)
+            : lastThought != ThoughtKind.None ? L("Vừa nghĩ: ", "Last thought: ") + ThoughtText(lastThought) + " · " + AgoText(lastThoughtAt) : null;
+        statusLast!.Text = last ?? "";
+        statusLast.Visibility = last == null ? Visibility.Collapsed : Visibility.Visible;
         // Needs are kept so that a full bar is always good: fed, entertained, loved.
         var needs = aiNeeds;
         (string Label, double? Value)[] rows =
@@ -154,6 +168,23 @@ public sealed partial class PetWindow
         PetAction.Climbing => L("Trèo", "Climbing"),
         _ => action.ToString()
     };
+
+    private string ThoughtText(ThoughtKind kind) => kind switch
+    {
+        ThoughtKind.Hungry => L("đói bụng", "hungry"),
+        ThoughtKind.Bored => L("muốn chơi", "wants to play"),
+        ThoughtKind.Sleepy => L("buồn ngủ", "sleepy"),
+        ThoughtKind.Love => L("nhớ bạn", "misses you"),
+        _ => kind.ToString()
+    };
+
+    private string AgoText(DateTime at)
+    {
+        double minutes = (DateTime.Now - at).TotalMinutes;
+        return minutes < 1 ? L("vừa xong", "just now")
+            : minutes < 60 ? L($"{(int)minutes} phút trước", $"{(int)minutes} min ago")
+            : L($"{(int)(minutes / 60)} giờ trước", $"{(int)(minutes / 60)} h ago");
+    }
 
     private string EmotionText(PetEmotion emotion) => emotion switch
     {

@@ -559,7 +559,7 @@ public sealed partial class PetWindow : Window
             {
                 aiEnergy = decision.Energy;
                 pet.Emotions.ApplyAiHint(decision.Emotion);
-                if (!pet.Speech.Visible && !context.Fullscreen) pet.Thought.TryShow(PetThought.Parse(decision.Thought), pet);
+                if (!pet.Speech.Visible && !context.Fullscreen && pet.Thought.TryShow(PetThought.Parse(decision.Thought), pet)) NoteThought(pet.Thought.Kind);
                 if (!FeatureOwnsMovement()) behavior.TryApply(pet, decision);
             }
         }

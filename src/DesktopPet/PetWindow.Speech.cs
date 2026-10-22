@@ -45,6 +45,7 @@ public sealed partial class PetWindow
     private void SpeechShown(string id)
     {
         pet.Thought.Clear(); // Words replace the icon bubble.
+        NoteWords(pet.Speech.Text);
         PlayPetSound("meow");
         if (PetBreaks.IsBreakLine(id))
         {

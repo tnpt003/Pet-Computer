@@ -402,3 +402,7 @@ Tự động đã có: Phần thưởng trên sảnh (ô có hình, khóa, Mới
 
 - [ ] Vô tận: Sảnh → thẻ Vô tận (khóa khi chưa thắng Vua Slime; mở thì "Chưa chơi lần nào") → bảng chuẩn bị "Vô tận — chuẩn bị" (‹ Sảnh quay lại) → Sẵn sàng: HUD "Đợt N · còn x slime" (không có tổng), 10 chấm, vương miện ở đợt 10.
 - [ ] Vô tận: chơi tới đợt 3 có thẻ nâng cấp; đợt 10 là Vua Slime; túi đồ ghi "Vô tận · Đợt N"; bấm Kết thúc → bảng "Hết lượt Vô tận · Đạt đợt N", kỷ lục; Chơi lại / Đổi trang bị / ‹ Sảnh / Về desktop; thẻ trên Sảnh hiện "Xa nhất: đợt N". Cảm nhận độ khó (đợt bao nhiêu thì khó?) để chỉnh `endless` trong battle.json.
+
+## Kế hoạch 22/10 (đợt 2) — mũ slime, thẻ trạng thái
+- [ ] Mũ slime (to hơn 1,25×): đeo ở Cài đặt → Mèo, xem khi đứng/ngủ/trèo/bị bế: nằm giữa hai tai, không che mắt.
+- [ ] Thẻ trạng thái: chờ mèo nói một câu (hoặc AI hiện bong bóng ý nghĩ) rồi mở thẻ: dòng "Vừa nói: “…” · vừa xong" / "Vừa nghĩ: đói bụng · …"; trước khi mèo nói gì thì không có dòng này.

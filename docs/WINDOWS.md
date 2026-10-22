@@ -511,7 +511,9 @@ and a hint; Restore defaults, Cancel and Save stay at the bottom.
 **{name}'s status** / **Trạng thái của {name}** (right-click menu, before the diary) opens a
 small rounded card above the cat (below it when the cat is near the top of the screen): what
 the cat is doing (or "In a battle · HP", "Paused") and its emotion, refreshed twice a second,
-and, when the Python AI has reported them, five bars where full is always good: Energy, Fed
+then (2026-10-22) the newer of its last speech bubble ("Last said: “…” · 3 min ago") and last
+thought bubble ("Last thought: hungry · just now"), kept for the session even after the bubble
+faded; the line is hidden until the cat has said or thought something. And, when the Python AI has reported them, five bars where full is always good: Energy, Fed
 (100 − hunger), Entertained (100 − boredom), Loved (affection) and Bond. With the AI off the
 bars are hidden and a hint points to **Smart pet (AI)** in the tray. The card is display only:
 opening it never wakes, moves or interrupts the cat and is not an interaction. Clicking

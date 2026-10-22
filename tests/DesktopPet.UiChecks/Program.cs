@@ -216,6 +216,19 @@ internal static class Program
         }
         double petScale = (double)typeof(PetWindow).GetField("scale", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(window)!;
         Check(CardNextToCat(petScale) && CardNextToCat(1.5), "Status card is placed right above the cat in the pet's monitor scale (real and 150%)");
+        // The card's last-words line: the newer of the latest speech and thought bubble.
+        List<string> StatusTexts(string method, object arg)
+        {
+            typeof(PetWindow).GetMethod(method, BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(window, new[] { arg });
+            typeof(PetWindow).GetMethod("RefreshStatusCard", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(window, null);
+            statusRoot!.UpdateLayout();
+            return Descendants<System.Windows.Controls.TextBlock>(statusRoot).Where(t => t.IsVisible).Select(t => t.Text).ToList();
+        }
+        var saidTexts = StatusTexts("NoteWords", "Meow, check line");
+        var thoughtTexts = StatusTexts("NoteThought", ThoughtKind.Hungry);
+        Check(statusRoot != null && saidTexts.Any(t => t == "Last said: “Meow, check line” · just now") &&
+              thoughtTexts.Any(t => t == "Last thought: hungry · just now") && !thoughtTexts.Any(t => t.StartsWith("Last said", StringComparison.Ordinal)),
+            "Status card shows the newest of the last words and the last thought bubble");
         if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string statusReview && statusRoot != null)
         {
             System.IO.Directory.CreateDirectory(statusReview);

@@ -101,7 +101,7 @@ public sealed partial class PetWindow : Window
         if (Environment.GetEnvironmentVariable("PET_AI_DISABLED") != "1") ai = new PythonDecisionSource();
         renderer = new PetRenderer(pet);
         Content = renderer;
-        var menu = new ContextMenu { FontFamily = PetUi.TextFont, FontSize = 13 };
+        var menu = new ContextMenu { FontFamily = PetUi.TextFont, FontSize = PetUi.BodySize };
         PetMenuStyle.Apply(menu);
         ContextMenu = menu;
         InitializeFeatures(menu); // Builds the whole menu (PetWindow.Features.cs).
@@ -478,7 +478,7 @@ public sealed partial class PetWindow : Window
     public void ToggleDebug()
     {
         if (debugWindow != null) { debugWindow.Close(); return; }
-        debugText = new TextBlock { Margin = new Thickness(16), FontSize = 14 };
+        debugText = new TextBlock { Margin = new Thickness(16), FontSize = PetUi.TitleSize };
         debugWindow = new Window { Title = "Pet behavior", Icon = AppIcon.WindowImage(),
             Width = 520, Height = 400, Content = new ScrollViewer { Content = debugText, VerticalScrollBarVisibility = ScrollBarVisibility.Auto },
             WindowStyle = WindowStyle.ToolWindow,

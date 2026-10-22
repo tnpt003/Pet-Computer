@@ -60,7 +60,7 @@ public sealed partial class PetWindow
         var border = new SolidColorBrush(Color.FromRgb(0x30, 0x2B, 0x48));
         speechText = new TextBlock
         {
-            TextWrapping = TextWrapping.Wrap, MaxWidth = 210, FontSize = 13.5, FontWeight = FontWeights.SemiBold,
+            TextWrapping = TextWrapping.Wrap, MaxWidth = 210, FontSize = PetUi.BodySize, FontWeight = FontWeights.SemiBold,
             FontFamily = PetUi.TextFont, Foreground = PetUi.Ink, TextAlignment = TextAlignment.Center
         };
         var bubble = new Border

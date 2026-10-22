@@ -71,7 +71,7 @@ public sealed partial class PetWindow
     private void InitializeKeepsakeMenu()
     {
         if (keepsakeArt == null) return;
-        var menu = new ContextMenu { FontFamily = PetUi.TextFont, FontSize = 13 };
+        var menu = new ContextMenu { FontFamily = PetUi.TextFont, FontSize = PetUi.BodySize };
         PetMenuStyle.Apply(menu);
         keepsakeArt.ContextMenu = menu;
         keepsakeArt.ContextMenuOpening += (_, e) =>

@@ -114,7 +114,7 @@ public sealed partial class PetWindow
         {
             var tile = new StackPanel();
             tile.Children.Add(new TextBlock { Text = value.ToString("N0", System.Globalization.CultureInfo.InvariantCulture), FontSize = PetUi.DisplaySize, FontWeight = FontWeights.SemiBold, Foreground = PetUi.Accent });
-            tile.Children.Add(new TextBlock { Text = label, FontSize = 12, Foreground = PetUi.Muted, TextWrapping = TextWrapping.Wrap });
+            tile.Children.Add(new TextBlock { Text = label, FontSize = PetUi.SmallSize, Foreground = PetUi.Muted, TextWrapping = TextWrapping.Wrap });
             row.Children.Add(PetUi.Card(tile, new Thickness(4, 0, 4, 0)));
         }
         diaryPanel!.Children.Add(row);
@@ -172,7 +172,7 @@ public sealed partial class PetWindow
             }
             if (hour % 6 == 0)
             {
-                var label = new TextBlock { Text = $"{hour}h", FontSize = 11, Foreground = PetUi.Muted };
+                var label = new TextBlock { Text = $"{hour}h", FontSize = PetUi.CaptionSize, Foreground = PetUi.Muted };
                 Canvas.SetLeft(label, hour * slot); Canvas.SetTop(label, ChartHeight + 2);
                 canvas.Children.Add(label);
             }

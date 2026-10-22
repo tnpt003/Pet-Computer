@@ -144,7 +144,7 @@ public sealed partial class PetWindow
         var close = new Border
         {
             Width = 26, Height = 26, CornerRadius = new CornerRadius(13), Background = PetUi.Game.ButtonBack, Cursor = Cursors.Hand, VerticalAlignment = VerticalAlignment.Top,
-            Child = new TextBlock { Text = "×", Foreground = Brushes.White, FontSize = 16, FontWeight = FontWeights.Bold, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, -2, 0, 0) }
+            Child = new TextBlock { Text = "×", Foreground = Brushes.White, FontSize = PetUi.HeadingSize, FontWeight = FontWeights.Bold, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, -2, 0, 0) }
         };
         close.MouseLeftButtonDown += (_, e) => { CloseBattleBag(); e.Handled = true; };
         close.MouseEnter += (_, _) => close.Background = PetUi.Game.Chosen;

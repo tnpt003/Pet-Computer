@@ -443,5 +443,6 @@ Tự động đã có: Phần thưởng trên sảnh (ô có hình, khóa, Mới
 - [ ] Từ đợt 2: mỗi đợt một icon nhảy sang ô khác (nhảy vòng, đáp bẹp).
 - [ ] Màn 2 trở đi / Viễn chinh / Vô tận từ ~đợt 9: thỉnh thoảng một slime bắn cục nhớt xanh lên một icon; slime đó có virus nhỏ trên đầu; icon bị phủ nhớt, virus mặt cau ở góc, rung, ngừng sạc, thỉnh thoảng bò sang ô bên. Banner "☣ … nhiễm virus!". Icon nhiễm phá mèo: Tab bật quảng cáo (bấm × để tắt, để lâu thả slime); chuông đỏ rơi lên đầu mèo (mất máu, Khiên chặn được); "Không phản hồi" làm mèo choáng; Ctrl+Z hồi máu slime; Thùng Rác nhả slime.
 - [ ] Gỡ virus: bấm icon 3 lần (bọt xà phòng mỗi lần, chấm đỏ dưới icon giảm dần) → lấp lánh, banner "✓ … sạch virus!"; hoặc hạ con slime đeo virus. Bấm được cả khi đang cầm mèo.
+- [ ] Mở túi đồ hoặc bảng chọn thẻ đè lên icon: icon đó dời sang ô trống. Đổi Scale (Settings → Display) giữa trận: icon giữ đúng cỡ, đúng chỗ; đồ bay vẫn trúng mèo/slime.
 - [ ] Pause/menu: icon và mọi thứ đang bay đứng yên. App fullscreen: icon ẩn, thoát fullscreen hiện lại. Kết thúc trận: icon mờ dần rồi biến mất. Đổi màn hình/độ phân giải giữa trận: icon về đúng ô trên màn hình mới.
 - [ ] Cảm giác: app có quá ít/nhiều, virus có phiền quá không; trận đông quái + icon không giật hơn trước.

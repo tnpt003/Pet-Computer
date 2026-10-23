@@ -720,6 +720,30 @@ internal static class BattleChecks
             double near = window.BattleAppOpacity(first.Id);
             probe.SetValue(window, probeBefore);
             check(far < 0.6 && near > 0.97, $"An icon fades back while the cursor is far ({far:0.00}) and is solid with the cursor on it ({near:0.00})");
+            // Windows scale changed mid-battle: every icon window is placed again in the new pixels.
+            var scaleField = typeof(PetWindow).GetField("battleScale", Flags)!;
+            var iconWindow = Field<System.Collections.IDictionary>(window, "appIcons")[first.Id]!;
+            var firstWindow = (Window)iconWindow.GetType().GetField("Window")!.GetValue(iconWindow)!;
+            double widthBefore = firstWindow.ActualWidth;
+            scaleField.SetValue(window, appScale * 1.5);
+            Tick(0.1); firstWindow.UpdateLayout();
+            double widthScaled = firstWindow.ActualWidth;
+            scaleField.SetValue(window, appScale);
+            Tick(0.1); firstWindow.UpdateLayout();
+            check(Math.Abs(widthScaled - widthBefore * 1.5) < 2 && Math.Abs(firstWindow.ActualWidth - widthBefore) < 2,
+                $"A DPI change mid-battle places the icon windows again in the new pixels ({widthBefore:0} → {widthScaled:0} → {firstWindow.ActualWidth:0})");
+            // The bag opened over an icon: that icon moves to a free cell (like the HUD's cells).
+            check(window.OpenBattleBag() == null, "The bag opens during the battle");
+            var bag = Field<Window>(window, "bagWindow");
+            var covered = window.BattleAppCentre(first);
+            bag.Left = covered.X - 30; bag.Top = covered.Y - 30;
+            Tick(0.2);
+            var tile = window.BattleAppCentre(first);
+            var bagRect = new Rect(bag.Left, bag.Top, bag.ActualWidth, bag.ActualHeight);
+            check(sim.Desktop.All(a => { var c = window.BattleAppCentre(a); return !bagRect.IntersectsWith(new Rect(c.X - 25, c.Y - 25, 50, 50)); }),
+                $"An open bag over an icon sends it to a free cell (no icon under the bag; {covered} → {tile})");
+            window.CloseBattleBag();
+            Tick(0.1);
             check(!window.BattleClickApp(first.Id) && sim.Desktop[0].Charge < 1, "A click on an icon still charging does nothing (a note says so)");
             first.Charge = 1;
             var tabs = sim.Desktop.First(a => a.Kind == BattleAppKind.Tabs);

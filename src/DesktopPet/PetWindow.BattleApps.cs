@@ -9,7 +9,8 @@ using System.Windows.Media;
 namespace DesktopPet;
 
 // The battle's desktop apps on the screen (BattleSim.Desktop): each icon in its own small topmost
-// window on a desktop-like grid of cells above the strip (cells under the HUD left out), one
+// window on a desktop-like grid of cells above the strip (cells under the HUD, the card offer or
+// the bag left out; an icon there moves to a free cell when one opens), one
 // click-through canvas for what flies between the icons and the field, and a note beside the icon
 // under the mouse. Icons fade back while the cursor is far, so they do not glare while the user
 // works. A fullscreen app hides them with the rest of the battle. Drawing and input only: what the
@@ -24,6 +25,8 @@ public sealed partial class PetWindow
         public required Window Window;
         public required DesktopAppIcon View;
         public Rect Placed;
+        // The DPI scale it was placed at: a new one (Windows scale changed) places it again.
+        public double PlacedScale;
         public double Opacity = 1;
     }
     private readonly Dictionary<int, AppIconWindow> appIcons = new();
@@ -31,11 +34,13 @@ public sealed partial class PetWindow
     private AppFlightView? appFlightView;
     private bool appFlightShown;
     private Point appFlightOrigin;
+    private double appFlightScale;
     private Window? appHintWindow;
     private TextBlock? appHintText;
     private int appHintFor;
-    // What the grid was last worked out from: the battle's area and the HUD's place and size.
-    private (Area Area, Rect Hud) appGridKey;
+    // What the grid was last worked out from: the battle's area and the windows it keeps clear of.
+    private Area appGridArea;
+    private Rect[] appGridBlockers = Array.Empty<Rect>();
 
     public IReadOnlyCollection<int> BattleAppWindows => appIcons.Keys;
     public double BattleAppOpacity(int id) => appIcons.TryGetValue(id, out var icon) ? icon.Opacity : 0;
@@ -74,30 +79,37 @@ public sealed partial class PetWindow
         return new Point(at.X + DesktopAppIcon.Centre.X, at.Y + DesktopAppIcon.Centre.Y);
     }
 
-    // The HUD's rectangle (DIPs), or empty before it is laid out.
-    private Rect BattleHudRect() =>
-        battleHudWindow is { ActualWidth: > 0 } hud ? new Rect(battleHudAt.X, battleHudAt.Y, hud.ActualWidth, hud.ActualHeight) : Rect.Empty;
+    // The battle windows the icons keep clear of (DIPs): the HUD, and the card offer and the bag while open.
+    private Rect[] AppBlockers()
+    {
+        var list = new List<Rect>();
+        if (battleHudWindow is { ActualWidth: > 0 } hud) list.Add(new Rect(battleHudAt.X, battleHudAt.Y, hud.ActualWidth, hud.ActualHeight));
+        foreach (var panel in new[] { upgradeWindow, bagWindow })
+            if (panel is { IsVisible: true, ActualWidth: > 0 }) list.Add(new Rect(panel.Left, panel.Top, panel.ActualWidth, panel.ActualHeight));
+        return list.ToArray();
+    }
 
     private void UpdateAppGrid()
     {
         if (battle == null) return;
         var area = battleArea;
-        var hud = BattleHudRect();
-        if (appGridKey.Area == area && appGridKey.Hud == hud && battle.Desktop.Count > 0) return;
-        appGridKey = (area, hud);
+        var blockers = AppBlockers();
+        if (appGridArea == area && appGridBlockers.SequenceEqual(blockers) && battle.Desktop.Count > 0) return;
+        appGridArea = area;
+        appGridBlockers = blockers;
         var (cols, rows) = AppGridSize(area);
         var blocked = new List<(int, int)>();
-        if (!hud.IsEmpty)
-        {
-            var guard = hud; guard.Inflate(6, 6);
-            double width = (area.Right - area.Left) / cols;
-            for (int r = 0; r < rows; r++)
-                for (int c = 0; c < cols; c++)
+        double width = (area.Right - area.Left) / cols;
+        for (int r = 0; r < rows; r++)
+            for (int c = 0; c < cols; c++)
+            {
+                var cell = new Rect(area.Left + c * width, area.Bottom - BattleFieldView.FieldHeight - (r + 1) * AppCellHeight, width, AppCellHeight);
+                foreach (var blocker in blockers)
                 {
-                    var cell = new Rect(area.Left + c * width, area.Bottom - BattleFieldView.FieldHeight - (r + 1) * AppCellHeight, width, AppCellHeight);
-                    if (cell.IntersectsWith(guard)) blocked.Add((c, r));
+                    var guard = blocker; guard.Inflate(6, 6);
+                    if (cell.IntersectsWith(guard)) { blocked.Add((c, r)); break; }
                 }
-        }
+            }
         battle.SetAppGrid(cols, rows, blocked);
     }
 
@@ -116,7 +128,7 @@ public sealed partial class PetWindow
             if (!appIcons.TryGetValue(app.Id, out var icon)) continue;
             var centre = BattleAppCentre(app);
             var spot = new Rect(centre.X - DesktopAppIcon.Centre.X, centre.Y - DesktopAppIcon.Centre.Y, DesktopAppIcon.ViewWidth, DesktopAppIcon.ViewHeight);
-            if (spot != icon.Placed) { icon.Placed = spot; PlaceAppWindow(icon.Window, spot); }
+            if (spot != icon.Placed || battleScale != icon.PlacedScale) { icon.Placed = spot; icon.PlacedScale = battleScale; PlaceAppWindow(icon.Window, spot); }
             // Far from the cursor it fades back; a charged or infected one stays easier to see.
             double distance = (mouse - centre).Length;
             double target = icon.View.Hovered ? 1 : distance <= AppNear ? 1 : distance >= AppFar ? AppFarOpacity : 1 - (1 - AppFarOpacity) * (distance - AppNear) / (AppFar - AppNear);
@@ -140,6 +152,7 @@ public sealed partial class PetWindow
         var window = CreateOverlayWindow(view, "Pet app");
         window.Width = DesktopAppIcon.ViewWidth; window.Height = DesktopAppIcon.ViewHeight;
         var icon = new AppIconWindow { Window = window, View = view };
+        window.DpiChanged += (_, _) => icon.PlacedScale = 0; // Placed again in pixels next frame.
         appIcons[id] = icon;
         window.Show();
         icon.Placed = Rect.Empty;
@@ -166,14 +179,16 @@ public sealed partial class PetWindow
         {
             appFlightView = new AppFlightView(b) { English = English };
             appFlightView.IconCentre = id => b.FindApp(id) is DesktopApp app ? BattleAppCentre(app) - (Vector)appFlightOrigin : null;
-            appFlightView.FloorPoint = (x, h) => new Point(x - appFlightOrigin.X, area.Bottom - 2 - h - appFlightOrigin.Y);
+            appFlightView.FloorPoint = (x, h) => new Point(x - appFlightOrigin.X, battleArea.Bottom - 2 - h - appFlightOrigin.Y); // The area of now (it can change mid-battle).
             appFlightWindow = CreateOverlayWindow(appFlightView, "Pet app flights", clickThrough: true);
+            appFlightWindow.DpiChanged += (_, _) => appFlightScale = 0;
             appFlightWindow.Show();
         }
         var origin = new Point(area.Left, Math.Max(area.Top, top));
-        if (origin != appFlightOrigin || !appFlightShown)
+        if (origin != appFlightOrigin || !appFlightShown || appFlightScale != battleScale)
         {
             appFlightOrigin = origin;
+            appFlightScale = battleScale;
             PlaceAppWindow(appFlightWindow, new Rect(origin.X, origin.Y, area.Right - area.Left, area.Bottom - origin.Y));
         }
         appFlightShown = flying;
@@ -198,8 +213,8 @@ public sealed partial class PetWindow
         foreach (var icon in appIcons.Values) icon.Window.Close();
         appIcons.Clear();
         appFlightWindow?.Close();
-        appFlightWindow = null; appFlightView = null; appFlightShown = false;
-        appGridKey = default;
+        appFlightWindow = null; appFlightView = null; appFlightShown = false; appFlightScale = 0;
+        appGridArea = default; appGridBlockers = Array.Empty<Rect>();
         CloseAppHint();
     }
 

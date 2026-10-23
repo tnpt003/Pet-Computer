@@ -18,7 +18,7 @@ namespace DesktopPet;
 public sealed partial class PetWindow
 {
     private bool hubRewardsShown;
-    private bool? hubRewardsEnglish;
+    private string? hubRewardsLanguage;
     private StackPanel? hubRewards;
     private FrameworkElement? hubCardsRow;
     private TextBlock? hubRewardsText;
@@ -84,13 +84,13 @@ public sealed partial class PetWindow
     // Every hub refresh: only a language change rebuilds it (nothing it shows changes while open).
     private void RefreshRewards()
     {
-        if (hubRewardsShown && hubRewardsEnglish != English) FillRewards();
+        if (hubRewardsShown && hubRewardsLanguage != preferences.Language) FillRewards();
     }
 
     private void FillRewards()
     {
         if (hubRewards == null) return;
-        hubRewardsEnglish = English;
+        hubRewardsLanguage = preferences.Language;
         hubRewards.Children.Clear();
         var adventure = Adventure;
         var expedition = Expedition;

@@ -146,7 +146,7 @@ public sealed partial class PetWindow
     private void CreateAppIcon(BattleSim b, DesktopApp app)
     {
         int id = app.Id;
-        var view = new DesktopAppIcon(b, id) { English = English };
+        var view = new DesktopAppIcon(b, id) { Language = preferences.Language };
         view.Clicked += () => BattleClickApp(id);
         view.HoverChanged += over => { if (over) ShowAppHint(id); else if (appHintFor == id) CloseAppHint(); };
         var window = CreateOverlayWindow(view, "Pet app");
@@ -177,7 +177,7 @@ public sealed partial class PetWindow
         double top = area.Bottom - BattleFieldView.FieldHeight - b.GridRows * AppCellHeight - 80;
         if (appFlightWindow == null)
         {
-            appFlightView = new AppFlightView(b) { English = English };
+            appFlightView = new AppFlightView(b) { Language = preferences.Language };
             appFlightView.IconCentre = id => b.FindApp(id) is DesktopApp app ? BattleAppCentre(app) - (Vector)appFlightOrigin : null;
             appFlightView.FloorPoint = (x, h) => new Point(x - appFlightOrigin.X, battleArea.Bottom - 2 - h - appFlightOrigin.Y); // The area of now (it can change mid-battle).
             appFlightWindow = CreateOverlayWindow(appFlightView, "Pet app flights", clickThrough: true);

@@ -528,7 +528,7 @@ public sealed partial class PetWindow
     private void ShowBattleWindows()
     {
         if (battle == null) return;
-        battleView = new BattleFieldView(battle) { English = English };
+        battleView = new BattleFieldView(battle) { Language = preferences.Language };
         battleView.SlimeClicked += (id, offset) => BattleClickSlime(id, offset);
         battleView.PopupClicked += id => BattleClosePopup(id);
         battleView.RightClicked += () => { battle?.Arm(null); RequestBattleRedraw(); UpdateBattleHud(); }; // Right-click on the field cancels the skill.

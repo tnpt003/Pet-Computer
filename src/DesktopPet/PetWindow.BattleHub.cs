@@ -171,7 +171,7 @@ public sealed partial class PetWindow
         hubStatus = PanelLine(PetUi.SmallSize, true, 520); hubStatus.Foreground = PrepWarning; hubStatus.Margin = new Thickness(0, 10, 0, 0);
         // Rewards (PetWindow.Rewards.cs) take the cards' place; the button turns into ‹ Hub.
         hubCardsRow = cards;
-        hubRewardsShown = false; hubRewardsEnglish = null;
+        hubRewardsShown = false; hubRewardsLanguage = null;
         hubRewards = new StackPanel { Width = RewardsWidth, Margin = new Thickness(0, 14, 0, 0), Visibility = Visibility.Collapsed };
         var (rewards, rewardsText, _) = HudButton(() => ShowBattleRewards(!hubRewardsShown), plain: true);
         hubRewardsText = rewardsText;

@@ -49,6 +49,10 @@ public sealed partial class PetWindow
         ("ball_tap", "Chạm bóng", "Ball tap"), ("satisfied", "No nê", "Satisfied"), ("wake", "Thức dậy", "Wake"),
     };
 
+    // "Tháng 3", "March", "3月": the birthday month in the UI language.
+    private string MonthName(int month) => preferences.Language == PetLanguage.Vietnamese ? "Tháng " + month
+        : System.Globalization.CultureInfo.GetCultureInfo(preferences.Language).DateTimeFormat.GetMonthName(month);
+
     public void ShowPetSettings()
     {
         if (settingsWindow != null) { settingsWindow.Activate(); return; }
@@ -75,7 +79,7 @@ public sealed partial class PetWindow
             SelectedIndex = savedDay };
         form.BirthMonth = new ComboBox { Width = 120, Margin = new Thickness(8, 0, 0, 0), SelectedIndex = savedMonth,
             ItemsSource = new[] { L("Tháng", "Month") }.Concat(Enumerable.Range(1, 12).Select(m =>
-                L("Tháng " + m, System.Globalization.CultureInfo.InvariantCulture.DateTimeFormat.GetMonthName(m)))).ToArray() };
+                MonthName(m))).ToArray() };
         var birthday = new StackPanel { Orientation = Orientation.Horizontal,
             ToolTip = L("Mèo sẽ chúc mừng sinh nhật bạn vào ngày này (không cần năm sinh).", "The pet wishes you a happy birthday on this day (no year needed).") };
         birthday.Children.Add(form.BirthDay); birthday.Children.Add(form.BirthMonth);

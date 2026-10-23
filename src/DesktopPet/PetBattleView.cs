@@ -19,7 +19,9 @@ public sealed partial class BattleFieldView : FrameworkElement
     // Screen X of the strip's left edge (DIPs).
     public double OriginX { get; set; }
     // The language of the few words drawn on the field ("BLOCK", "IMMUNE").
-    public bool English { get; set; }
+    // The UI language; data names still use English for every language but Vietnamese.
+    public string Language { get; set; } = PetLanguage.English;
+    private bool English => PetLanguage.UsesEnglish(Language);
     // The slime clicked and where on it (DIPs from its centre: negative = its left half).
     public event Action<int, double>? SlimeClicked;
     public event Action? RightClicked;
@@ -524,7 +526,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         }
         // An elite's main trait in small gold letters over its head (above the "!" while it winds up),
         // so a Push that does nothing or a quick second hit does not look like a bug.
-        if (targetable && slime.Elite is EliteSpec elite && elite.Tag(English) is string tag)
+        if (targetable && slime.Elite is EliteSpec elite && elite.Tag(Language) is string tag)
         {
             var (shape, width, height) = TagShape(tag);
             dc.PushTransform(new TranslateTransform(x - width / 2, top - (slime.State == SlimeState.Windup ? 30 : 13) - height));
@@ -810,21 +812,21 @@ public sealed partial class BattleFieldView : FrameworkElement
                     var chip = new Point(x + Math.Cos(a) * (10 + 18 * k), y + Math.Sin(a) * (8 + 14 * k) + 20 * k * k);
                     dc.DrawRectangle(StoneGrey, Outline, new Rect(chip.X - 2.5, chip.Y - 2.5, 5, 5));
                 }
-                DrawWord(dc, English ? "BLOCK" : "CHẶN", StoneGrey, x, y - 14 - 22 * k);
+                DrawWord(dc, PetText.Pick(Language, "CHẶN", "BLOCK"), StoneGrey, x, y - 14 - 22 * k);
                 break;
             case BattleEffectKind.Immune:
                 // A shielded boss hit for nothing: its bubble flashes gold and "IMMUNE" rises.
                 double rx = effect.Value / 2 + 10 + 6 * k;
                 dc.DrawEllipse(null, Halo, new Point(x, y), rx, rx * 0.8);
                 dc.DrawEllipse(null, ImmunePen, new Point(x, y), rx, rx * 0.8);
-                DrawWord(dc, English ? "IMMUNE" : "BẤT TỬ", ComboGold, x, y - rx * 0.8 - 6 - 18 * k);
+                DrawWord(dc, PetText.Pick(Language, "BẤT TỬ", "IMMUNE"), ComboGold, x, y - rx * 0.8 - 6 - 18 * k);
                 break;
             case BattleEffectKind.Warded:
                 // A hit on an enemy guarded by a heal: a green ring flashes and "IMMUNE" rises.
                 double wx = effect.Value / 2 + 10 + 6 * k;
                 dc.DrawEllipse(null, Halo, new Point(x, y), wx, wx * 0.8);
                 dc.DrawEllipse(null, WardPen, new Point(x, y), wx, wx * 0.8);
-                DrawWord(dc, English ? "IMMUNE" : "MIỄN", HealGreen, x, y - wx * 0.8 - 6 - 18 * k);
+                DrawWord(dc, PetText.Pick(Language, "MIỄN", "IMMUNE"), HealGreen, x, y - wx * 0.8 - 6 - 18 * k);
                 break;
             case BattleEffectKind.Bell or BattleEffectKind.EndTask or BattleEffectKind.Rewind:
                 DrawAppEffect(dc, effect, x, y, k);

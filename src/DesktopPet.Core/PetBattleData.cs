@@ -168,6 +168,7 @@ public sealed class EliteSpec
         : Damage > 1 ? (english ? "HARD HITS" : "ĐÒN MẠNH")
         : HealCooldown < 1 || HealBudget > 1 || FirstHeal > 1 ? (english ? "BIG HEALS" : "HỒI MẠNH")
         : null;
+    public string? Tag(string language) => Tag(false) is string vi ? PetText.Pick(language, vi, Tag(true)!) : null;
     public double Cost { get; init; } = 1;
     // A short line for the banner the first time an elite of this kind appears in a battle.
     public string DescVi { get; init; } = "";
@@ -367,6 +368,7 @@ public static class BuildGroups
         "power" => english ? "Power" : "Sức mạnh",
         _ => english ? "Speed" : "Tốc độ"
     };
+    public static string Name(string group, string language) => PetText.Pick(language, Name(group, false), Name(group, true));
 }
 
 // Assets/battle.json (embedded) is the built-in battle: its numbers, weapons, enemy kinds and

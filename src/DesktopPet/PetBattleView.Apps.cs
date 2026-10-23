@@ -44,7 +44,7 @@ public sealed partial class BattleFieldView
             double k = Math.Min(1, popup.Age / 0.25), scale = k < 1 ? 0.5 + 0.6 * k - 0.1 * k * k : 1;
             if (popup.Life - popup.Age < 2) scale += 0.03 * Math.Sin(time * 30);
             dc.PushTransform(new ScaleTransform(scale, scale, r.X + r.Width / 2, r.Bottom));
-            AppArt.DrawAd(dc, r, English, popup.Age / popup.Life, time);
+            AppArt.DrawAd(dc, r, Language, popup.Age / popup.Life, time);
             dc.Pop();
         }
     }
@@ -102,9 +102,9 @@ public sealed partial class BattleFieldView
                 // The window pops over its target and shakes, then goes.
                 double pop = k < 0.15 ? k / 0.15 : 1;
                 double shake = k > 0.15 && k < 0.6 ? Math.Sin(k * 90) * 2.5 : 0;
-                double width = AppArt.NotRespondingWidth(English);
+                double width = AppArt.NotRespondingWidth(Language);
                 x = Math.Clamp(x, width / 2 + 2, Math.Max(width / 2 + 2, ActualWidth - width / 2 - 2)); // Whole on the strip, even at its ends.
-                AppArt.DrawNotResponding(dc, new Point(x + shake, y - 16), 0.6 + 0.4 * pop, English);
+                AppArt.DrawNotResponding(dc, new Point(x + shake, y - 16), 0.6 + 0.4 * pop, Language);
                 break;
             default:
                 // The undo arrow circling the cat backwards, a ring of light shrinking into it.

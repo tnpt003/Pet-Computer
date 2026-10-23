@@ -21,7 +21,7 @@ static class TextTests
         check(PetText.Pick("ja", "Chưa dịch", "Not translated (test)") == "Not translated (test)"
               && PetText.Missing.Contains("ja: Not translated (test)"), "Missing Japanese shows English and is recorded");
         int wave = 3; string heal = " +5";
-        check(PetText.PickFormat("ja", $"Xong đợt {wave}!{heal}", $"Wave {wave} cleared!{heal}") == "第3波クリア！ +5",
+        check(PetText.PickFormat("ja", $"Xong đợt {wave}!{heal}", $"Wave {wave} cleared!{heal}") == "第3ウェーブ クリア！ +5",
             "Interpolated text is looked up by its format and filled with the same values");
         check(PetText.PickFormat("vi", $"Xong đợt {wave}!", $"Wave {wave} cleared!") == "Xong đợt 3!"
               && PetText.PickFormat("ja", $"Còn {wave}", $"{wave} left (test)") == "3 left (test)",
@@ -32,22 +32,25 @@ static class TextTests
         try { PetText.Parse(new MemoryStream(Encoding.UTF8.GetBytes("{\"A\": 1}"))); } catch (InvalidDataException) { rejected = true; }
         check(rejected, "A table entry that is not text is rejected");
 
-        // The shipped tables: every translation keeps its key's holes, and every key still exists in the code.
+        // The shipped tables: holes match their keys, and every key still exists in the code
+        // (tests/ai/test_i18n.py checks the other way: every code text has a translation).
         string root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../../"));
         string code = string.Concat(Directory.EnumerateFiles(Path.Combine(root, "src"), "*.cs", SearchOption.AllDirectories).Select(File.ReadAllText));
         foreach (string language in PetLanguage.All.Where(l => l is not ("vi" or "en")))
         {
             var table = PetText.Table(language);
             check(table.Count > 0, $"The {language} table is embedded and loads");
-            var badHoles = table.Where(e => !PetText.Holes(e.Key).SequenceEqual(PetText.Holes(e.Value))).Select(e => e.Key).ToArray();
-            check(badHoles.Length == 0, $"Every {language} translation keeps its {{n}} holes: {string.Join(" | ", badHoles)}");
+            // A translation may leave a hole out (an English plural "s"), never add one.
+            var badHoles = table.Where(e => PetText.Holes(e.Value).Except(PetText.Holes(e.Key)).Any()).Select(e => e.Key).ToArray();
+            check(badHoles.Length == 0, $"Every {language} translation uses only its key's {{n}} holes: {string.Join(" | ", badHoles)}");
             var stale = table.Keys.Where(key => !InCode(code, key)).ToArray();
             check(stale.Length == 0, $"Every {language} key is still English text in the code: {string.Join(" | ", stale)}");
         }
     }
 
-    // A key is in the code if each literal part of it (between format holes) is, as C# would write it.
+    // A key is in the code if each literal part of it (between format holes and line breaks, where
+    // long text is joined with +) is, as C# would write it.
     private static bool InCode(string code, string key) =>
-        Regex.Split(key, @"\{\d+[^{}]*\}").Where(part => part.Length > 0)
+        Regex.Split(key, @"\{\d+[^{}]*\}|\n").Where(part => part.Length > 0)
             .All(part => code.Contains(part.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n")));
 }

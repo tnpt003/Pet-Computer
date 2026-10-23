@@ -175,7 +175,7 @@ public sealed partial class PetWindow
         if (card.Group is not string group) return L("Không tính vào nhóm", "Counts for no group");
         int points = b.GroupPoints(group), goal = 0;
         foreach (var y in b.Settings.SynergyList) if (y.Group == group && !b.Synergies.Contains(y) && (goal == 0 || y.At < goal)) goal = y.At;
-        string text = BuildGroups.Name(group, English) + $" {points} → {points + 1}" + (goal > 0 ? $"/{goal}" : "");
+        string text = BuildGroups.Name(group, preferences.Language) + $" {points} → {points + 1}" + (goal > 0 ? $"/{goal}" : "");
         if (b.Unlocks(card) is SynergySpec synergy) text += LF($" · Mở {synergy.Name(false)}!", $" · {synergy.Name(true)}!");
         return text;
     }

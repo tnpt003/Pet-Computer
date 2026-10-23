@@ -279,7 +279,7 @@ public sealed class BattleHud : Border
             {
                 int points = b.GroupPoints(group), goal = 0;
                 foreach (var y in b.Settings.SynergyList) if (y.Group == group && (goal == 0 || y.At < goal)) goal = y.At;
-                if (points > 0) parts.Add(goal > 0 ? $"{BuildGroups.Name(group, English)} {Math.Min(points, goal)}/{goal}" : $"{BuildGroups.Name(group, English)} {points}");
+                if (points > 0) parts.Add(goal > 0 ? $"{BuildGroups.Name(group, language())} {Math.Min(points, goal)}/{goal}" : $"{BuildGroups.Name(group, language())} {points}");
             }
             foreach (var y in b.Synergies) parts.Add("★ " + y.Name(English));
             foreach (var u in b.Settings.UpgradeList) if (u.Rare && b.Stacks(u.Id) > 0) parts.Add("◆ " + u.Name(English));

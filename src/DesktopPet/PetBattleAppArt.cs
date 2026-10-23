@@ -167,12 +167,12 @@ public static class AppArt
     private static readonly Geometry BinBody = Parse("M -7,-4 L 7,-4 L 5.5,9 L -5.5,9 Z");
 
     // A small window titled nothing, saying "Not responding" (scale: 1 = 32 DIPs tall, this wide).
-    public static double NotRespondingWidth(bool english) => Math.Max(Word(NotRespondingText(english), 10).Width + 14, 64);
-    private static string NotRespondingText(bool english) => english ? "Not responding" : "Không phản hồi";
-    public static void DrawNotResponding(DrawingContext dc, Point c, double scale, bool english)
+    public static double NotRespondingWidth(string language) => Math.Max(Word(NotRespondingText(language), 10).Width + 14, 64);
+    private static string NotRespondingText(string language) => PetText.Pick(language, "Không phản hồi", "Not responding");
+    public static void DrawNotResponding(DrawingContext dc, Point c, double scale, string language)
     {
-        var (label, lw, lh) = Word(NotRespondingText(english), 10);
-        double w = NotRespondingWidth(english), h = 32;
+        var (label, lw, lh) = Word(NotRespondingText(language), 10);
+        double w = NotRespondingWidth(language), h = 32;
         dc.PushTransform(new MatrixTransform(scale, 0, 0, scale, c.X, c.Y));
         var r = new Rect(-w / 2, -h / 2, w, h);
         dc.DrawRoundedRectangle(null, HaloPen, r, 4, 4);
@@ -229,12 +229,12 @@ public static class AppArt
     }
 
     // The ad window (w × h around c): pink title bar with a ×, "-90%!!" sticker, a bar filling up (k).
-    public static void DrawAd(DrawingContext dc, Rect r, bool english, double k, double time)
+    public static void DrawAd(DrawingContext dc, Rect r, string language, double k, double time)
     {
         dc.DrawRoundedRectangle(null, HaloPen, r, 6, 6);
         dc.DrawRoundedRectangle(AdYellow, InkPen, r, 6, 6);
         dc.DrawRoundedRectangle(AdBar, InkPen, new Rect(r.X, r.Y, r.Width, 18), 6, 6);
-        var (title, _, th) = Word(english ? "AD" : "QUẢNG CÁO", 10);
+        var (title, _, th) = Word(PetText.Pick(language, "QUẢNG CÁO", "AD"), 10);
         dc.PushTransform(new TranslateTransform(r.X + 7, r.Y + 9 - th / 2));
         dc.DrawGeometry(Brushes.White, null, title);
         dc.Pop();

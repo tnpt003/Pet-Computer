@@ -19,7 +19,8 @@ public sealed class DesktopAppIcon : FrameworkElement
     public static readonly Point Centre = new(ViewWidth / 2, 40);
     private readonly BattleSim sim;
     public int AppId { get; }
-    public bool English { get; set; }
+    public string Language { get; set; } = PetLanguage.English;
+    private bool English => PetLanguage.UsesEnglish(Language);
     public event Action? Clicked;
     public event Action<bool>? HoverChanged;
     public bool Hovered { get; private set; }
@@ -299,7 +300,8 @@ public sealed class DesktopAppIcon : FrameworkElement
 public sealed class AppFlightView : FrameworkElement
 {
     private readonly BattleSim sim;
-    public bool English { get; set; }
+    public string Language { get; set; } = PetLanguage.English;
+    private bool English => PetLanguage.UsesEnglish(Language);
     // An icon's tile centre (null: not shown), and a point `height` above the floor at floor X.
     public Func<int, Point?> IconCentre { get; set; } = _ => null;
     public Func<double, double, Point> FloorPoint { get; set; } = (x, h) => new Point(x, -h);
@@ -407,7 +409,7 @@ public sealed class AppFlightView : FrameworkElement
             case LaunchKind.Freeze:
                 Trail(dc, start, end, e, launch.Kind == LaunchKind.Freeze ? TrailRed : TrailPaper);
                 dc.PushTransform(new RotateTransform(Math.Sin(time * 14) * 8, p.X, p.Y));
-                AppArt.DrawNotResponding(dc, p, 0.45 + 0.4 * e, English);
+                AppArt.DrawNotResponding(dc, p, 0.45 + 0.4 * e, Language);
                 dc.Pop();
                 break;
             case LaunchKind.Undo:
@@ -443,7 +445,7 @@ public sealed class AppFlightView : FrameworkElement
             case LaunchKind.Popup:
                 double w = BattleSim.PopupWidth * (0.3 + 0.7 * e), h = BattleSim.PopupHeight * (0.3 + 0.7 * e);
                 dc.PushTransform(new RotateTransform((1 - e) * 20, p.X, p.Y));
-                AppArt.DrawAd(dc, new Rect(p.X - w / 2, p.Y - h / 2, w, h), English, 0, time);
+                AppArt.DrawAd(dc, new Rect(p.X - w / 2, p.Y - h / 2, w, h), Language, 0, time);
                 dc.Pop();
                 break;
         }

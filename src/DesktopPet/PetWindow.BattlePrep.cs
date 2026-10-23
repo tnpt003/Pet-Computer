@@ -394,7 +394,7 @@ public sealed partial class PetWindow
             var weapon = BattleTuning.Weapon(id);
             name.Text = weapon.Name(English);
             hint.Text = weapon.Hint(English);
-            for (int i = 0; i < statNames.Length; i++) statNames[i].Text = English ? WeaponStatScales[i].En : WeaponStatScales[i].Vi;
+            for (int i = 0; i < statNames.Length; i++) statNames[i].Text = L(WeaponStatScales[i].Vi, WeaponStatScales[i].En);
             ShowChosen(card, id == prepWeapon, check, rim: (2.5, 1)); // A thick white rim when chosen.
         }
         foreach (var (level, chip, check, text) in prepLevelChips)
@@ -439,7 +439,7 @@ public sealed partial class PetWindow
         foreach (var group in BuildGroups.All)
         {
             int points = build.Where(card => cards.FirstOrDefault(u => u.Id == card.Key)?.Group == group).Sum(card => card.Value);
-            if (points > 0) parts.Add($"{BuildGroups.Name(group, English)} {points}");
+            if (points > 0) parts.Add($"{BuildGroups.Name(group, preferences.Language)} {points}");
             foreach (var y in BattleTuning.SynergyList) if (y.Group == group && points >= y.At) parts.Add("★ " + y.Name(English));
         }
         foreach (var u in cards) if (u.Rare && build.TryGetValue(u.Id, out int n) && n > 0) parts.Add("◆ " + u.Name(English));

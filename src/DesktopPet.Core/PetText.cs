@@ -107,7 +107,7 @@ public static class PetText
     }
 
     private static readonly Regex Hole = new(@"\{(\d+)[^{}]*\}");
-    // The argument numbers a format uses ("{0:F0} of {1}" → 0, 1); a translation must use the same.
+    // The argument numbers a format uses ("{0:F0} of {1}" → 0, 1); a translation uses no others.
     public static int[] Holes(string format) =>
         Hole.Matches(format.Replace("{{", "").Replace("}}", "")).Select(m => int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture)).Distinct().Order().ToArray();
 }

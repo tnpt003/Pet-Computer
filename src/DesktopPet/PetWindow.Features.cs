@@ -95,8 +95,8 @@ public sealed partial class PetWindow
         void Localize()
         {
             customize.Header = L("Cài đặt…", "Settings…");
-            status.Header = L("Trạng thái của " + preferences.Name, preferences.Name + "'s status");
-            diary.Header = L("Nhật ký của " + preferences.Name, preferences.Name + "'s diary");
+            status.Header = LF($"Trạng thái của {preferences.Name}", $"{preferences.Name}'s status");
+            diary.Header = LF($"Nhật ký của {preferences.Name}", $"{preferences.Name}'s diary");
             more.Header = L("Khác", "More");
             reset.Header = L("Gọi mèo về màn hình chính", "Bring the pet to the main screen");
             debug.Header = L("Xem debug hành vi", "Behavior debug view");

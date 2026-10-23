@@ -16,6 +16,8 @@ if ($python) {
     $env:PET_TEST_PYTHON = $python
     & $python (Join-Path $projectRoot 'tests\ai\test_service.py') -v
     if ($LASTEXITCODE -ne 0) { throw 'Python behavior tests failed.' }
+    & $python (Join-Path $projectRoot 'tests\ai\test_i18n.py')
+    if ($LASTEXITCODE -ne 0) { throw 'Translation checks failed (run scripts\i18n.py).' }
 } else {
     Write-Warning 'Python not found: running C# checks only. Set PET_PYTHON to include Python integration checks.'
 }

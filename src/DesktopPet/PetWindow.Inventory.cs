@@ -511,7 +511,7 @@ public sealed partial class PetWindow
             var parts = synergies.Where(y => points >= y.At).Select(y => "★ " + y.Name(English)).ToList();
             if (synergies.FirstOrDefault(y => points < y.At) is SynergySpec next)
                 parts.Add(LF($"còn {next.At - points} thẻ → ★ {next.Name(English)}", $"{next.At - points} more → ★ {next.Name(English)}"));
-            var name = BagLine($"{BuildGroups.Name(group, English)} {points}", PetUi.SmallSize, GroupColor(group), bold: true); name.Margin = new Thickness(0); name.Width = 96;
+            var name = BagLine($"{BuildGroups.Name(group, preferences.Language)} {points}", PetUi.SmallSize, GroupColor(group), bold: true); name.Margin = new Thickness(0); name.Width = 96;
             var state = BagLine(string.Join(" · ", parts), PetUi.CaptionSize, parts.Any(p => p.StartsWith("★")) ? PetUi.Game.Gold : PetUi.Game.Soft); state.Margin = new Thickness(0); state.VerticalAlignment = VerticalAlignment.Center;
             progress.Children.Add(new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, progress.Children.Count == 0 ? 0 : 5, 0, 0), Children = { name, dots, state } });
         }

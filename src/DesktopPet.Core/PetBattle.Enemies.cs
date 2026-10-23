@@ -384,7 +384,7 @@ public sealed partial class BattleSim
         if (slime.Type.Slam) AddEffect(BattleEffectKind.Slam, slime.X, 0, slime.Range);
         // Missed: the cat moved away, is protected, or is off the floor right now.
         if (CatLifted || Math.Abs(catX - slime.X) > slime.Range + 12 || Grace > 0) return;
-        HurtCat(slime, catX, false);
+        HurtCat(slime, catX, false, slime.Type.SlamShare);
     }
 
     // Half the cat's width on the floor: a dash that passes over this hits it.
@@ -417,9 +417,9 @@ public sealed partial class BattleSim
     // Every hit on the cat: the Shield takes all of it (no damage, no stun), otherwise armor
     // lessens it. stun: also stun the cat, unless it is in the user's hands, already stunned or
     // still immune after its last stun.
-    private void HurtCat(Slime from, double catX, bool stun)
+    private void HurtCat(Slime from, double catX, bool stun, double share = 1)
     {
-        if (!LandHit(from.Damage, catX, out double hurt)) return;
+        if (!LandHit(from.Damage * share, catX, out double hurt)) return;
         // Thorns: part of what the cat really took goes back to the attacker.
         if (Active("thorns") is SynergySpec thorns && hurt > 0 && from.Targetable && !from.Shielded)
         {

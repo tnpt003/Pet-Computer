@@ -603,7 +603,9 @@ public sealed partial class BattleSim
                 Launch(LaunchKind.Tabs, app, catX, 45, LaunchSeconds);
                 break;
             case BattleAppKind.Ping:
-                var rung = slimes.Where(s => s.Targetable && !s.Shielded).ToList();
+                // The bells go to the enemies nearest the cat (PingTargets of them; 0: every one).
+                var rung = slimes.Where(s => s.Targetable && !s.Shielded).OrderBy(s => Math.Abs(s.X - catX))
+                    .Take(rules.PingTargets > 0 ? rules.PingTargets : int.MaxValue).ToList();
                 if (rung.Count == 0) return false;
                 var bells = Launch(LaunchKind.Bell, app, catX, 0, LaunchSeconds);
                 bells.Targets = rung.Select(s => s.Id).ToArray();

@@ -30,6 +30,8 @@ internal static class BattleDataTests
         // The 1.2.0-beta buff changed only the shipped HP and damage: slime +15 %/+15 %, King +20 %/+20 % (rounded).
         var buffed = new Dictionary<string, (double Hp, double Damage)> { ["slime"] = (1.15, 1.15), ["king"] = (1.2, 1.2) };
         differences.RemoveAll(d => buffed.Keys.Any(k => d.StartsWith(k + ".MaxHp:") || d.StartsWith(k + ".Damage:")));
+        // 2026-10-24: the shipped King's slam deals less than its damage (slamDamage 22).
+        differences.RemoveAll(d => d == "king.SlamDamage: 22 vs 0");
         foreach (var (id, (hp, damage)) in buffed)
             if (shipped.Enemy(id) is var kind && builtIn.Enemy(id) is var plain && (Math.Abs(kind.MaxHp - plain.MaxHp * hp) > 0.5001 || Math.Abs(kind.Damage - plain.Damage * damage) > 0.5001))
                 differences.Add($"{id}: {kind.MaxHp}/{kind.Damage} is not the built-in {plain.MaxHp}/{plain.Damage} buffed");
@@ -73,9 +75,9 @@ internal static class BattleDataTests
             "battle.json's skill names and descriptions are exactly the built-in ones");
         var oldTexts = new (BattleSkill Skill, string Vi, string En)[]
         {
-            (BattleSkill.Push, "Đẩy quái — chọn rồi click một slime (nửa trái: đẩy sang phải, nửa phải: sang trái), choáng 1.4 giây. Hồi 5 giây.",
-                "Push — choose, then click a slime (left half: push right, right half: push left); stuns 1.4 s. 5 s cooldown."),
-            (BattleSkill.Heal, "Cá hồi máu — mèo hồi 25 HP. Hồi 20 giây.", "Healing fish — the cat gets 25 HP back. 20 s cooldown."),
+            (BattleSkill.Push, "Đẩy quái — chọn rồi click một slime (nửa trái: đẩy sang phải, nửa phải: sang trái), choáng 1.4 giây. Hồi 3 giây.",
+                "Push — choose, then click a slime (left half: push right, right half: push left); stuns 1.4 s. 3 s cooldown."),
+            (BattleSkill.Heal, "Cá hồi máu — mèo hồi 25 HP. Hồi 14 giây.", "Healing fish — the cat gets 25 HP back. 14 s cooldown."),
             (BattleSkill.Cheer, "Cổ vũ — 5 giây mèo đánh nhanh ×1.6, mạnh ×1.4. Hồi 18 giây.", "Cheer — for 5 s the cat attacks ×1.6 as often, ×1.4 as hard. 18 s cooldown."),
             (BattleSkill.Bomb, "Bom len — chọn rồi click một slime: nổ sau 0.5 giây, 30 sát thương cho mọi quái quanh đó. Hồi 12 giây.",
                 "Yarn bomb — choose, then click a slime: bursts after 0.5 s for 30 damage to every slime nearby. 12 s cooldown."),
@@ -87,7 +89,7 @@ internal static class BattleDataTests
         var renamed = BattleData.ParseWithOverride(ExpeditionFixture.Embedded(),
             "{ \"schemaVersion\": 1, \"pushCooldown\": 7, \"skills\": [ { \"id\": \"heal\", \"nameEn\": \"Fish snack\", \"descEn\": \"Snack: +{healAmount} HP, every {HEALCOOLDOWN} s\" } ] }");
         check(BattleSkills.Get(BattleSkill.Heal).Name("en", renamed) == "Fish snack" && BattleSkills.Get(BattleSkill.Heal).Name("vi", renamed) == "Cá hồi máu" &&
-              BattleSkills.Get(BattleSkill.Heal).Describe(renamed, "en") == "Snack: +25 HP, every 20 s" &&
+              BattleSkills.Get(BattleSkill.Heal).Describe(renamed, "en") == "Snack: +25 HP, every 14 s" &&
               BattleSkills.Get(BattleSkill.Push).Describe(renamed, "en").EndsWith("7 s cooldown.") && renamed.SkillList.Count == 5,
             "A user file changes one skill's texts by id (keys ignore case); the others and new numbers still show");
         string SkillError(string skills)

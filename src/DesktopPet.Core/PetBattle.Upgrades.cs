@@ -131,6 +131,7 @@ public sealed partial class BattleSim
             var y = Settings.SynergyList[i];
             if (y.Group != card.Group || synergies.Contains(y) || points < y.At) continue;
             synergies.Add(y);
+            armorCut += y.Armor;
             if (fresh) events.Add(new(BattleEventKind.SynergyUnlocked, catX, i));
         }
     }

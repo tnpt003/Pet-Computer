@@ -65,10 +65,10 @@
   "maxEffects": 32,
 
   // The user's skills.
-  "pushCooldown": 5,
+  "pushCooldown": 3,
   "pushSpeed": 520,
   "pushStunSeconds": 1.4,
-  "healCooldown": 20,
+  "healCooldown": 14,
   "healAmount": 25,
   "cheerCooldown": 18,
   "cheerSeconds": 5,
@@ -123,7 +123,7 @@
   "apps": {
     "startCharge": 0.2, "killCharge": 0.02,
     "tabSeconds": 6, "tabRadius": 70, "tabDamage": 14, "tabEvery": 0.5,
-    "pingDamage": 14, "pingStun": 1.5, "endTaskShare": 0.25, "undoSeconds": 4, "trashCount": 2,
+    "pingDamage": 14, "pingStun": 1.5, "pingTargets": 4, "endTaskShare": 0.25, "undoSeconds": 4, "trashCount": 2,
     "infectMinThreat": 1.5, "infectChance": 0.5, "maxInfected": 1, "scrubClicks": 3, "crawlEvery": 9,
     "popupEvery": 8, "popupSeconds": 8, "popupSpawn": "slime",
     "bellEvery": 9, "bellDamage": 6, "freezeEvery": 12, "freezeSeconds": 1.2,
@@ -136,11 +136,11 @@
     // virus.exe: a file on the desktop that copies itself; with 4 copies it infects an icon. Click to delete.
     "virusExeWeight": 1, "virusExeEvery": 6, "virusExeCopies": 4,
     "list": [
-      { "id": "tabs", "nameVi": "Tab Lốc Xoáy", "nameEn": "Tab Tornado", "charge": 50, "start": 0.6,
+      { "id": "tabs", "nameVi": "Tab Lốc Xoáy", "nameEn": "Tab Tornado", "charge": 40, "start": 0.6,
         "descVi": "Ba thẻ tab bay xuống xoay quanh mèo 6 giây, chém slime ở gần.", "descEn": "Three tabs fly down and circle the cat for 6 s, cutting nearby slimes.",
         "badVi": "Nhiễm virus: bật quảng cáo đè lên slime.", "badEn": "Infected: opens ads over the slimes." },
       { "id": "ping", "nameVi": "Bão Thông Báo", "nameEn": "Ping Storm", "charge": 55, "start": 0.4,
-        "descVi": "Chuông 99+ rơi lên mọi slime: sát thương nhỏ, choáng 1,5 giây.", "descEn": "99+ bells drop on every slime: a little damage, 1.5 s stun.",
+        "descVi": "Chuông 99+ rơi lên 4 slime gần mèo nhất: sát thương nhỏ, choáng 1,5 giây.", "descEn": "99+ bells drop on the 4 slimes nearest the cat: a little damage, 1.5 s stun.",
         "badVi": "Nhiễm virus: thả chuông lên đầu mèo.", "badEn": "Infected: drops bells on the cat's head." },
       { "id": "endtask", "nameVi": "End Task", "nameEn": "End Task", "charge": 80,
         "descVi": "Tắt slime nhiều máu nhất. Trùm, tinh anh: mất 25% máu.", "descEn": "Ends the slime with the most HP. Bosses, elites: lose 25% HP.",
@@ -163,7 +163,7 @@
 
   // Enemy kinds (family and renderer default to "slime"). scale: drawn size against the basic
   // slime (0.5–2.3); hitScale: combat size for reach and bombs (default: scale). boss: crown + HUD bar.
-  // slam: area hit with a floor warning. summonAt/enrageAt: HP fraction (0 = never).
+  // slam: area hit with a floor warning (slamDamage: its damage; default: damage). summonAt/enrageAt: HP fraction (0 = never).
   "enemies": [
     {
       "id": "slime", "nameVi": "Slime", "nameEn": "Slime",
@@ -198,7 +198,7 @@
       "windup": 1.0, "attackCooldown": 2.4, "recover": 0.5,
       "scale": 1.35, "hitScale": 1.5, "color": "#A8A095", "marks": "cracks",
       "pushFactor": 0.5, "stunFactor": 0.6, "blockChance": 0.3, "blockMaxStreak": 2,
-      "blocker": true, "blockFrontOnly": true, "turnSeconds": 0.6, "cost": 2,
+      "blocker": true, "blockFrontOnly": true, "turnSeconds": 2, "cost": 2,
       "elite": { "sureBlocks": 1, "hp": 1.3, "pushImmune": true, "cost": 1, "descVi": "chặn chắc đòn đầu, máu dày, miễn Đẩy", "descEn": "blocks its first front hit, more HP, no Push" }
     },
     {
@@ -233,7 +233,7 @@
       "maxHp": 720, "speed": 22, "damage": 30, "range": 110,
       "windup": 1.2, "attackCooldown": 2.6, "recover": 0.7,
       "scale": 2, "color": "#9B7BE0", "angryColor": "#E86A6A",
-      "boss": true, "slam": true, "pushFactor": 0.35, "stunFactor": 0.4,
+      "boss": true, "slam": true, "slamDamage": 22, "pushFactor": 0.35, "stunFactor": 0.4,
       "enragedSpeed": 32, "enragedWindup": 0.8, "summonCap": 4, "retreatSpeed": 240, "retreatSeconds": 3,
       "rallyEvery": 10, "rallyCharge": 0.8, "rallyHp": 0.5, "rallyDamage": 1.25, "shieldBreakStun": 2,
       "retreatLeap": true, "leapCrouch": 0.35, "leapSeconds": 0.9, "summonWarning": 0.6,
@@ -248,7 +248,7 @@
       "maxHp": 480, "speed": 22, "damage": 30, "range": 110,
       "windup": 1.2, "attackCooldown": 2.6, "recover": 0.7,
       "scale": 2, "color": "#9B7BE0", "angryColor": "#E86A6A",
-      "boss": true, "slam": true, "pushFactor": 0.35, "stunFactor": 0.4,
+      "boss": true, "slam": true, "slamDamage": 22, "pushFactor": 0.35, "stunFactor": 0.4,
       "summonAt": 0.5, "summonCount": 2, "summonType": "slime",
       "enrageAt": 0.3, "enragedSpeed": 32, "enragedWindup": 0.8
     }
@@ -280,7 +280,7 @@
     { "id": "sharp", "group": "power", "nameVi": "Sắc bén", "nameEn": "Sharp edge", "descVi": "+20% sát thương", "descEn": "+20% damage", "effect": "damage", "amount": 0.2, "maxStacks": 3 },
     { "id": "quick_feet", "group": "speed", "nameVi": "Nhanh chân", "nameEn": "Quick feet", "descVi": "+15% tốc độ chạy", "descEn": "+15% running speed", "effect": "moveSpeed", "amount": 0.15, "maxStacks": 2 },
     { "id": "fast_paws", "group": "speed", "nameVi": "Ra đòn nhanh", "nameEn": "Fast paws", "descVi": "−12% thời gian hồi đòn", "descEn": "−12% time between swings", "effect": "attackSpeed", "amount": 0.12, "maxStacks": 3 },
-    { "id": "heavy_push", "group": "power", "nameVi": "Đẩy mạnh", "nameEn": "Heavy push", "descVi": "Mỗi nhát đẩy slime lùi thêm", "descEn": "Every hit knocks slimes further", "effect": "knock", "amount": 80, "maxStacks": 2 },
+    { "id": "heavy_push", "group": "power", "nameVi": "Đẩy mạnh", "nameEn": "Heavy push", "descVi": "Mỗi nhát đẩy slime lùi thêm", "descEn": "Every hit knocks slimes further", "effect": "knock", "amount": 40, "maxStacks": 2 },
     { "id": "grilled_fish", "nameVi": "Cá nướng", "nameEn": "Grilled fish", "descVi": "Hồi ngay 30 HP", "descEn": "Get 30 HP back now", "effect": "heal", "amount": 30, "maxStacks": 0 },
     { "id": "thick_fur", "group": "defense", "nameVi": "Lông dày", "nameEn": "Thick fur", "descVi": "−15% sát thương nhận vào", "descEn": "−15% damage taken", "effect": "armor", "amount": 0.15, "maxStacks": 2 },
     { "id": "big_heart", "group": "defense", "nameVi": "Tim to", "nameEn": "Big heart", "descVi": "+20 HP tối đa (hồi luôn 20)", "descEn": "+20 max HP (and 20 HP now)", "effect": "maxHp", "amount": 20, "maxStacks": 2 },
@@ -293,12 +293,13 @@
   ],
 
   // Synergies: a build holding "at" cards of a group switches the effect on for good.
-  // thorns: amount of the damage the cat really takes goes back to the attacker. armorBreak: combo
+  // thorns: amount of the damage the cat really takes goes back to the attacker (armor: less damage
+  // taken while it is on; all armor together at most 60 %). armorBreak: combo
   // hits deal amount more. echo: every "every"-th landed swing strikes again for amount × its damage.
   // Reflected and echoed hits never set off another bonus.
   "synergies": [
-    { "id": "thorns", "group": "defense", "at": 3, "effect": "thorns", "amount": 0.35, "nameVi": "Giáp gai", "nameEn": "Thorns",
-      "descVi": "Quái đánh trúng mèo nhận lại 35% sát thương", "descEn": "Enemies that hit the cat take 35% of it back" },
+    { "id": "thorns", "group": "defense", "at": 3, "effect": "thorns", "amount": 0.35, "armor": 0.1, "nameVi": "Giáp gai", "nameEn": "Thorns",
+      "descVi": "Quái đánh trúng mèo nhận lại 35% sát thương; −10% sát thương nhận vào", "descEn": "Enemies that hit the cat take 35% of it back; −10% damage taken" },
     { "id": "armor_break", "group": "power", "at": 3, "effect": "armorBreak", "amount": 0.3, "nameVi": "Phá giáp", "nameEn": "Armor break",
       "descVi": "Đòn combo +30% sát thương, xuyên giáp đá", "descEn": "Combo hits deal 30% more and pierce stone" },
     { "id": "afterimage", "group": "speed", "at": 3, "effect": "echo", "amount": 0.5, "every": 4, "nameVi": "Dư ảnh", "nameEn": "Afterimage",

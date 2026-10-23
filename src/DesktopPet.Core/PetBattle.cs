@@ -116,11 +116,13 @@ public sealed partial class BattleSim
     // Where the cat stood at the last Step (a boss shield phase runs away from it).
     internal double lastCatX;
     private double groundX = double.NaN, liftedFor;
-    // Multipliers the upgrades give (1 without any). Cuts never go below 30 % of the original.
+    // Multipliers the upgrades give (1 without any). Cuts never go below 30 % of the original;
+    // armor (cards and synergies together) takes at most MaxArmor off.
+    public const double MaxArmor = 0.6;
     public double DamageFactor => 1 + damageBonus;
     public double MoveFactor => 1 + moveBonus;
     public double CooldownFactor => Math.Max(0.3, 1 - cooldownCut);
-    public double ArmorFactor => Math.Max(0.3, 1 - armorCut);
+    public double ArmorFactor => Math.Max(1 - MaxArmor, 1 - armorCut);
     public double KnockBonus => knockBonus;
     // The cat's numbers with this build and these relics, before anything that only happens in a
     // fight (Cheer, combo, Momentum, Reckless's bonus): what the inventory shows.

@@ -126,7 +126,7 @@ internal static class BattleRoleTests
         Until(still, () => still.Slimes.Count == 1 && still.Slimes[0].State != SlimeState.Spawning);
         var bitten = still.Slimes[0];
         Until(still, () => still.Reflects >= 3, 20, catX: bitten.X - 40);
-        check(still.Reflects >= 3 && Math.Abs(bitten.MaxHp - bitten.Hp - still.Reflects * 20 * 0.7 * 0.35) < 1e-6 && still.BlocksMade == 0,
+        check(still.Reflects >= 3 && Math.Abs(bitten.MaxHp - bitten.Hp - still.Reflects * 20 * 0.6 * 0.35) < 1e-6 && still.BlocksMade == 0,
             $"Thorns damage is never blocked ({still.Reflects} reflects)");
     }
 

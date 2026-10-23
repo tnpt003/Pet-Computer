@@ -109,8 +109,8 @@ internal static class BuildSynergyTests
             build: new Dictionary<string, int> { ["d"] = 3 });
         Until(thorns, () => thorns.CatHp < thorns.CatMaxHp, 20);
         var biter = thorns.Slimes[0];
-        check(thorns.Synergies.Any(y => y.Effect == "thorns") && thorns.Reflects == 1 && Math.Abs(biter.MaxHp - biter.Hp - 3.5) < 1e-9,
-            $"Thorns: a 10-damage hit sends 3.5 back ({biter.MaxHp - biter.Hp})");
+        check(thorns.Synergies.Any(y => y.Effect == "thorns") && thorns.Reflects == 1 && Math.Abs(biter.MaxHp - biter.Hp - 3.15) < 1e-9,
+            $"Thorns (with its 10 % armor): a 10-damage hit lands as 9 and sends 3.15 back ({biter.MaxHp - biter.Hp})");
         double hpBefore = biter.Hp;
         Until(thorns, () => thorns.Slimes[0].State == SlimeState.Windup, 10);
         thorns.Use(BattleSkill.Shield, cat);
@@ -155,7 +155,7 @@ internal static class BuildSynergyTests
             build: new Dictionary<string, int> { ["thick_fur"] = 2, ["big_heart"] = 5, ["grilled_fish"] = 3, ["gone"] = 1 });
         check(carried.Stacks("thick_fur") == 2 && carried.Stacks("big_heart") == 2 && carried.Stacks("grilled_fish") == 0 && carried.Stacks("gone") == 0 &&
               carried.Synergies.Any(y => y.Effect == "thorns") && carried.CatMaxHp == 140 && carried.CatHp == 140 && carried.Picks == 0 &&
-              !carried.Events.Any(e => e.Kind == BattleEventKind.SynergyUnlocked) && Math.Abs(carried.ArmorFactor - 0.7) < 1e-9,
+              !carried.Events.Any(e => e.Kind == BattleEventKind.SynergyUnlocked) && Math.Abs(carried.ArmorFactor - 0.6) < 1e-9,
             "A carried build: limits kept, heals and unknown cards dropped, synergy already on, full (bigger) HP");
         check(carried.Build().OrderBy(p => p.Key).Select(p => $"{p.Key}={p.Value}").SequenceEqual(new[] { "big_heart=2", "thick_fur=2" }), "Build(): what goes on (no heals)");
 

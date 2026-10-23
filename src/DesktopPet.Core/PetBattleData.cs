@@ -46,7 +46,10 @@ public sealed class EnemyType
     // A boss: crown, its own HP bar on the HUD, a "BOSS!" banner.
     public bool Boss { get; init; }
     // Area attack: a red zone on the floor while winding up, a shock wave when it lands.
+    // SlamDamage: what the slam deals (scaled like Damage; 0 = Damage).
     public bool Slam { get; init; }
+    public double SlamDamage { get; init; }
+    [JsonIgnore] public double SlamShare => Slam && SlamDamage > 0 && Damage > 0 ? SlamDamage / Damage : 1;
     // Pushes move it and stun it this much (1 = like a slime).
     public double PushFactor { get; init; } = 1;
     public double StunFactor { get; init; } = 1;
@@ -349,6 +352,8 @@ public sealed class SynergySpec
     public string Effect { get; init; } = "thorns";
     public double Amount { get; init; }
     public int Every { get; init; } = 4;
+    // Less damage taken while it is on, on top of the cards' armor (a fraction).
+    public double Armor { get; init; }
     public string NameVi { get; init; } = "";
     public string NameEn { get; init; } = "";
     public string DescVi { get; init; } = "";
@@ -601,6 +606,7 @@ public static class BattleData
             Within(apps.TabSeconds, 0.5, 30, "apps.tabSeconds"); Within(apps.TabRadius, 10, 300, "apps.tabRadius");
             Within(apps.TabDamage, 0, 1000, "apps.tabDamage"); Within(apps.TabEvery, 0.1, 5, "apps.tabEvery");
             Within(apps.PingDamage, 0, 1000, "apps.pingDamage"); Within(apps.PingStun, 0, 5, "apps.pingStun");
+            if (apps.PingTargets is < 0 or > 20) throw new InvalidDataException("apps.pingTargets must be 0–20 (0: every enemy)");
             Within(apps.EndTaskShare, 0, 1, "apps.endTaskShare"); Within(apps.UndoSeconds, 0.5, 30, "apps.undoSeconds");
             if (apps.TrashCount is < 1 or > 5) throw new InvalidDataException("apps.trashCount must be 1–5");
             Within(apps.InfectMinThreat, 0, 100, "apps.infectMinThreat"); Within(apps.InfectChance, 0, 1, "apps.infectChance");
@@ -667,6 +673,8 @@ public static class BattleData
             if (e.Color == null || e.AngryColor == null || !Hex.IsMatch(e.Color) || !Hex.IsMatch(e.AngryColor)) throw new InvalidDataException(at + " colors must be #RRGGBB");
             if (Array.IndexOf(EnemyMarks, e.Marks) < 0) throw new InvalidDataException($"{at}.marks must be one of: {string.Join(", ", EnemyMarks)}");
             Within(e.PushFactor, 0, 3, at + ".pushFactor"); Within(e.StunFactor, 0, 3, at + ".stunFactor");
+            Within(e.SlamDamage, 0, 1000, at + ".slamDamage");
+            if (e.SlamDamage > 0 && !e.Slam) throw new InvalidDataException(at + ".slamDamage is for an enemy that slams");
             if (!(e.SummonAt >= 0 && e.SummonAt < 1) || !(e.EnrageAt >= 0 && e.EnrageAt < 1)) throw new InvalidDataException(at + " summonAt/enrageAt must be 0–1");
             if (e.SummonAt > 0 && e.SummonCount is < 1 or > 6) throw new InvalidDataException(at + ".summonCount must be 1–6");
             if (e.EnrageAt > 0 || e.Phases?.Any(p => p is { Enrage: true }) == true) { Within(e.EnragedSpeed, 0.1, 400, at + ".enragedSpeed"); Within(e.EnragedWindup, 0.1, 10, at + ".enragedWindup"); }
@@ -854,6 +862,7 @@ public static class BattleData
             Within(y.Amount, limit.Min, limit.Max, at + ".amount");
             if (y.At is < 1 or > 10) throw new InvalidDataException($"{at}.at must be 1–10");
             if (y.Effect == "echo" && y.Every is < 2 or > 10) throw new InvalidDataException($"{at}.every must be 2–10");
+            Within(y.Armor, 0, 0.5, at + ".armor");
         }
         Within(s.ThreatDamageShare, 0, 1, "threatDamageShare");
         if (s.MaxAttackers is < 0 or > 10) throw new InvalidDataException("maxAttackers must be 0–10 (0: no limit)");

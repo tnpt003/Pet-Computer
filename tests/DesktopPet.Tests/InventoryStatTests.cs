@@ -22,7 +22,7 @@ internal static class InventoryStatTests
         var build = new Dictionary<string, int> { ["sharp"] = 2, ["fast_paws"] = 1, ["heavy_push"] = 1, ["thick_fur"] = 1, ["big_heart"] = 1 };
         var built = new BattleSim(data, 0, 1000, weapon: BattleWeapon.Sword, build: build, seed: 0);
         check(Near(built.SwingDamage, w.Damage * 1.4) && Near(built.SwingsPerSecond, 1 / Math.Max(w.AttackCooldown * 0.88, w.SwingDuration))
-            && Near(built.Knock, w.Knock + 80) && Near(built.HurtFactor, 0.85) && Near(built.CatMaxHp, data.CatMaxHp + 20),
+            && Near(built.Knock, w.Knock + 40) && Near(built.HurtFactor, 0.85) && Near(built.CatMaxHp, data.CatMaxHp + 20),
             $"A build changes the numbers as its cards say (damage {built.SwingDamage}, swings {built.SwingsPerSecond:0.###}/s, knock {built.Knock}, taken {built.HurtFactor})");
 
         var relics = new BattleSim(data, 0, 1000, weapon: BattleWeapon.Sword, build: build, seed: 0, relics: new[] { "reckless_charm", "light_feather" });

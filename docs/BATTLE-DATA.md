@@ -61,6 +61,7 @@ Mỗi mục là một **mẫu quái** dùng chung cho mọi con cùng loại. M�
 | `pushFactor`, `stunFactor` | 0–3 | Hệ số bị đẩy lùi / thời gian choáng (1 = như slime thường) |
 | `boss` | true/false | Có vương miện, thanh HP riêng, banner BOSS |
 | `slam` | true/false | Đập đất trúng cả vùng, có cảnh báo đỏ trên sàn |
+| `slamDamage` | 0–1000 (chỉ khi `slam`) | Sát thương của cú dậm (nhân độ khó/threat như `damage`); 0 = bằng `damage`. Bản gốc 2026-10-24: hai Vua 22 (đòn `damage` 30 giữ nguyên) |
 | `summonAt`, `summonCount`, `summonType` | 0–1; 1–6; id | Dưới tỷ lệ HP này gọi quái phụ (một lần). Quái được gọi không được tự gọi thêm. |
 | `enrageAt`, `enragedSpeed`, `enragedWindup` | 0–1; 0.1–400; 0.1–10 | Dưới tỷ lệ HP này thì nổi giận: nhanh hơn, gồng ngắn hơn |
 
@@ -94,7 +95,7 @@ Tên và mô tả của 5 kỹ năng trên HUD (và túi đồ). Gộp theo `id`
 | --- | --- | --- |
 | `id` | `push`, `heal`, `cheer`, `bomb`, `shield` | Kỹ năng nào; danh sách phải có đủ cả 5, không trùng |
 | `nameVi`, `nameEn` | 1–32 ký tự | Tên |
-| `descVi`, `descEn` | 1–220 ký tự | Mô tả khi rê chuột; `{khóa}` được thay bằng số cùng tên ở cấp trên cùng của battle.json, ví dụ `{pushCooldown}` → `5` (không phân biệt hoa thường; khóa không có thì file bị từ chối) |
+| `descVi`, `descEn` | 1–220 ký tự | Mô tả khi rê chuột; `{khóa}` được thay bằng số cùng tên ở cấp trên cùng của battle.json, ví dụ `{pushCooldown}` → `3` (không phân biệt hoa thường; khóa không có thì file bị từ chối) |
 
 ## Đợt quái (`waves`) và luật trận
 
@@ -215,7 +216,7 @@ Màn có `"upgrades": true` sẽ cho chọn thẻ sau mỗi đợt đã dọn (k
 | `attackSpeed` | 0.01–0.5 | thời gian giữa hai nhát × (1 − tổng), không dưới 30% |
 | `knock` | 1–500 (DIP/s) | cộng thêm vào lực đẩy lùi mỗi nhát |
 | `heal` | 1–1000 (HP) | hồi ngay; không được đưa ra khi HP đầy |
-| `armor` | 0.01–0.5 | sát thương nhận vào × (1 − tổng), không dưới 30% |
+| `armor` | 0.01–0.5 | sát thương nhận vào × (1 − tổng); thẻ và synergy cộng lại giảm tối đa 60% (từ 2026-10-24; trước là 70%) |
 | `maxHp` | 1–500 (HP) | cộng HP tối đa; lúc chọn hồi luôn đúng lượng đó (Combat Depth mốc 2) |
 
 `maxStacks` 0–10 (0 là không giới hạn). Tên tối đa 32 ký tự, mô tả tối đa 80. Effect lạ, amount ngoài khoảng, id trùng hoặc danh sách rỗng đều làm cả file bị bỏ.
@@ -224,7 +225,7 @@ Màn có `"upgrades": true` sẽ cho chọn thẻ sau mỗi đợt đã dọn (k
 
 - `group`: `defense`, `power` hoặc `speed` (bỏ trống = không thuộc nhóm). Thẻ `heal` không được có nhóm. Mỗi lần lấy một thẻ có nhóm = 1 điểm nhóm đó. Bản gốc: Defense = Lông dày + Tim to (`big_heart`, +20 HP tối đa, tối đa 2), Power = Sắc bén + Đẩy mạnh, Speed = Nhanh chân + Ra đòn nhanh.
 - Luật đưa thẻ: mỗi nhóm còn thẻ chưa chạm `maxStacks` góp 1 thẻ ngẫu nhiên (thứ tự Defense, Power, Speed); nhóm hết thẻ thì thẻ khác lấp chỗ. Mèo mất máu thì thẻ hồi máu thay thẻ không nhóm hoặc thẻ của nhóm build đang ít điểm nhất; HP đầy không bao giờ có thẻ hồi máu.
-- `synergies` (gộp theo `id`): `{ "id", "group", "at": 1–10, "effect", "amount", "every", "nameVi/En" ≤ 32, "descVi/En" ≤ 80 }`. Đạt `at` điểm của nhóm thì bật vĩnh viễn trong build đó, banner "★ TÊN!" một lần.
+- `synergies` (gộp theo `id`): `{ "id", "group", "at": 1–10, "effect", "amount", "every", "armor": 0–0.5, "nameVi/En" ≤ 32, "descVi/En" ≤ 80 }`. `armor` (2026-10-24): bật synergy thì giảm thêm chừng đó sát thương nhận vào (cộng với thẻ `armor`, chung trần 60%); bản gốc Giáp gai 0.1. Đạt `at` điểm của nhóm thì bật vĩnh viễn trong build đó, banner "★ TÊN!" một lần.
 
 | effect | amount | Ý nghĩa (bản gốc) |
 | --- | --- | --- |
@@ -297,7 +298,7 @@ Màn sinh tồn: `"objective": "survive", "surviveSeconds": 10–600`. Các đ�
   - Boss `shieldBreakStun` (0–5): khiên vỡ thì boss choáng bấy nhiêu giây, vẫn nhận sát thương.
   - Quân boss gọi ra không xuất hiện trong vòng 90 DIPs quanh mèo khi còn chỗ.
   - `marks: "leaf"`: slime thảo dược có mũ lá + túi thảo dược (không còn dấu + trên thân); lá sáng khi gồng hồi, hạt sáng bay tới đồng minh; hết lượng hồi thì lá cụp, xỉn màu. `"cross"` vẫn hợp lệ cho dữ liệu cũ.
-- Bản gốc: slime đá `blocker`, `blockFrontOnly`, `turnSeconds` 0.6, `hitScale` 1.5 (vẽ rộng/thấp, cầm khiên đá hình huy hiệu ở phía mặt, thêm vết nứt dưới 50% HP); slime thảo dược `leaf`, `farHealBelow` 0.35 / 1.2 s / 8 s (trước đây `teleportBelow`); Vua Slime chương 1 `rallyEvery` 10, `rallyCharge` 0.8, `rallyHp` 0.5, `rallyDamage` 1.25, `shieldBreakStun` 2 (trước đây `rallyEvery` 7 + tăng tốc ×1.4 trong 3 s). Màn 5 đợt 1: đá + slime từ mép xa, 2 slime nhanh từ phía sau. Cầm cự: hai phía từ giây 45. rulesVersion màn 1–5: 3/7/8/8/8 (chia lượt ra đòn áp cho mọi màn).
+- Bản gốc: slime đá `blocker`, `blockFrontOnly`, `turnSeconds` 0.6 (2 từ 2026-10-24), `hitScale` 1.5 (vẽ rộng/thấp, cầm khiên đá hình huy hiệu ở phía mặt, thêm vết nứt dưới 50% HP); slime thảo dược `leaf`, `farHealBelow` 0.35 / 1.2 s / 8 s (trước đây `teleportBelow`); Vua Slime chương 1 `rallyEvery` 10, `rallyCharge` 0.8, `rallyHp` 0.5, `rallyDamage` 1.25, `shieldBreakStun` 2 (trước đây `rallyEvery` 7 + tăng tốc ×1.4 trong 3 s). Màn 5 đợt 1: đá + slime từ mép xa, 2 slime nhanh từ phía sau. Cầm cự: hai phía từ giây 45. rulesVersion màn 1–5: 3/7/8/8/8 (chia lượt ra đòn áp cho mọi màn).
 
 ## Ngẫu nhiên có giới hạn: tinh anh, ngân sách, thẻ hiếm (Enemy Director mốc 3)
 
@@ -414,7 +415,7 @@ Một "desktop giả" trong trận Phiêu lưu, Viễn chinh và Vô tận (tr�
 - **Lưới:** cột ô rộng ~84 DIPs trải hết bề ngang màn hình của trận, tối đa 3 hàng (cao 108 DIPs) ngay trên dải chiến trường (màn hình thấp thì ít hàng hơn); ô bị HUD, bảng chọn thẻ hoặc túi đồ (khi đang mở) che thì không dùng — icon đang ở đó tự sang ô trống. Đổi độ phân giải/taskbar/Scale của Windows giữa trận: lưới tính lại, cửa sổ icon và lớp đường bay đặt lại theo pixel mới. Mỗi icon là một cửa sổ nhỏ nổi trên cùng, chỉ phần hình nhận chuột. Con trỏ ở xa (≥ 280 DIPs) thì icon mờ còn 50% (icon đã sạc ≥ 75%, bị nhiễm ≥ 85%), lại gần (≤ 110) thì rõ hẳn. Rê chuột lên icon: khung chọn kiểu desktop + ghi chú bên cạnh (tên, tác dụng hoặc tác hại khi nhiễm, % sạc / số lần còn phải quét).
 - **Sạc:** mỗi icon đầy sau `charge` giây trận (đếm khi mèo không bị cầm/bay), bắt đầu ở `start` của nó (không ghi thì `startCharge`; gốc: Tab 0.6, Bão Thông Báo 0.4, còn lại 0.2 → Tab sẵn sau ~20 s, kể cả màn ngắn). Mỗi trận (mỗi màn, mỗi bước Viễn chinh) sạc lại từ đầu; trong một trận (cả lượt Vô tận) sạc chạy tiếp qua các đợt. mỗi quái bị hạ cộng `killCharge` cho mọi icon sạch. Đang sạc: lớp tối phủ phần chưa đầy; đầy: quầng vàng, sao lấp lánh, nhún nhẹ, tên màu vàng. Bấm icon đầy thì trừ hết sạc và thứ nó gửi **bay theo đường vòng từ icon xuống** (0,45 s), chạm đích mới có tác dụng:
   - `tabs` Tab Lốc Xoáy: 3 tab bay xuống rồi xoay quanh mèo `tabSeconds` giây, mỗi `tabEvery` giây gây `tabDamage` (× sát thương build) cho quái trong `tabRadius` DIPs; không đánh khi mèo bị nhấc.
-  - `ping` Bão Thông Báo: mỗi slime một chuông "99+" (bay lệch nhau một chút): `pingDamage` (× build) + choáng `pingStun` giây (không choáng quái đang lao/hồi máu/nhảy, tinh anh miễn Đẩy).
+  - `ping` Bão Thông Báo: `pingTargets` slime gần mèo nhất (0–20, 0 = mọi slime; gốc 4 từ 2026-10-24) mỗi con một chuông "99+" (bay lệch nhau một chút): `pingDamage` (× build) + choáng `pingStun` giây (không choáng quái đang lao/hồi máu/nhảy, tinh anh miễn Đẩy).
   - `endtask` End Task: cửa sổ "Không phản hồi" bay tới quái nhiều máu nhất (không tính trùm đang bật khiên, quái đang được hồi) và tắt nó; trùm/tinh anh mất `endTaskShare` máu tối đa.
   - `undo` Ctrl+Z: quả cầu mũi tên bay về mèo, trả lại máu mất trong `undoSeconds` giây trước lúc bấm. Chưa mất máu thì không dùng (giữ sạc).
   - `trash` Thùng Rác: `trashCount` quái thường gần mèo nhất (không trùm, không tinh anh) bị hút ngay, bay vào thùng (nắp mở).

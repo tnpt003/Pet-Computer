@@ -91,10 +91,10 @@ public sealed class BattleSettings
     public int MaxEffects { get; init; } = 32;
 
     // The user's skills.
-    public double PushCooldown { get; init; } = 5;
+    public double PushCooldown { get; init; } = 3;
     public double PushSpeed { get; init; } = 520;
     public double PushStunSeconds { get; init; } = 1.4;
-    public double HealCooldown { get; init; } = 20;
+    public double HealCooldown { get; init; } = 14;
     public double HealAmount { get; init; } = 25;
     public double CheerCooldown { get; init; } = 18;
     public double CheerSeconds { get; init; } = 5;
@@ -209,7 +209,7 @@ public sealed class BattleSettings
         new UpgradeSpec { Id = "sharp", Group = "power", NameVi = "Sắc bén", NameEn = "Sharp edge", DescVi = "+20% sát thương", DescEn = "+20% damage", Effect = "damage", Amount = 0.2, MaxStacks = 3 },
         new UpgradeSpec { Id = "quick_feet", Group = "speed", NameVi = "Nhanh chân", NameEn = "Quick feet", DescVi = "+15% tốc độ chạy", DescEn = "+15% running speed", Effect = "moveSpeed", Amount = 0.15, MaxStacks = 2 },
         new UpgradeSpec { Id = "fast_paws", Group = "speed", NameVi = "Ra đòn nhanh", NameEn = "Fast paws", DescVi = "−12% thời gian hồi đòn", DescEn = "−12% time between swings", Effect = "attackSpeed", Amount = 0.12, MaxStacks = 3 },
-        new UpgradeSpec { Id = "heavy_push", Group = "power", NameVi = "Đẩy mạnh", NameEn = "Heavy push", DescVi = "Mỗi nhát đẩy slime lùi thêm", DescEn = "Every hit knocks slimes further", Effect = "knock", Amount = 80, MaxStacks = 2 },
+        new UpgradeSpec { Id = "heavy_push", Group = "power", NameVi = "Đẩy mạnh", NameEn = "Heavy push", DescVi = "Mỗi nhát đẩy slime lùi thêm", DescEn = "Every hit knocks slimes further", Effect = "knock", Amount = 40, MaxStacks = 2 },
         new UpgradeSpec { Id = "grilled_fish", NameVi = "Cá nướng", NameEn = "Grilled fish", DescVi = "Hồi ngay 30 HP", DescEn = "Get 30 HP back now", Effect = "heal", Amount = 30 },
         new UpgradeSpec { Id = "thick_fur", Group = "defense", NameVi = "Lông dày", NameEn = "Thick fur", DescVi = "−15% sát thương nhận vào", DescEn = "−15% damage taken", Effect = "armor", Amount = 0.15, MaxStacks = 2 },
         new UpgradeSpec { Id = "big_heart", Group = "defense", NameVi = "Tim to", NameEn = "Big heart", DescVi = "+20 HP tối đa (hồi luôn 20)", DescEn = "+20 max HP (and 20 HP now)", Effect = "maxHp", Amount = 20, MaxStacks = 2 },
@@ -223,8 +223,8 @@ public sealed class BattleSettings
     private IReadOnlyList<SynergySpec>? synergyList;
     [JsonIgnore] public IReadOnlyList<SynergySpec> SynergyList => synergyList ??= SynergiesData ?? new[]
     {
-        new SynergySpec { Id = "thorns", Group = "defense", At = 3, Effect = "thorns", Amount = 0.35, NameVi = "Giáp gai", NameEn = "Thorns",
-            DescVi = "Quái đánh trúng mèo nhận lại 35% sát thương", DescEn = "Enemies that hit the cat take 35% of it back" },
+        new SynergySpec { Id = "thorns", Group = "defense", At = 3, Effect = "thorns", Amount = 0.35, Armor = 0.1, NameVi = "Giáp gai", NameEn = "Thorns",
+            DescVi = "Quái đánh trúng mèo nhận lại 35% sát thương; −10% sát thương nhận vào", DescEn = "Enemies that hit the cat take 35% of it back; −10% damage taken" },
         new SynergySpec { Id = "armor_break", Group = "power", At = 3, Effect = "armorBreak", Amount = 0.3, NameVi = "Phá giáp", NameEn = "Armor break",
             DescVi = "Đòn combo +30% sát thương, xuyên giáp đá", DescEn = "Combo hits deal 30% more and pierce stone" },
         new SynergySpec { Id = "afterimage", Group = "speed", At = 3, Effect = "echo", Amount = 0.5, Every = 4, NameVi = "Dư ảnh", NameEn = "Afterimage",
@@ -553,9 +553,11 @@ public sealed class AppsSpec
     public double TabRadius { get; init; } = 70;
     public double TabDamage { get; init; } = 14;
     public double TabEvery { get; init; } = 0.5;
-    // Ping storm: every enemy takes PingDamage (× the build's damage) and is stunned PingStun s.
+    // Ping storm: the PingTargets enemies nearest the cat (0: every one) take PingDamage (× the
+    // build's damage) and are stunned PingStun s.
     public double PingDamage { get; init; } = 14;
     public double PingStun { get; init; } = 1.5;
+    public int PingTargets { get; init; } = 4;
     // End task: the enemy with the most HP is gone; a boss or an elite loses this share of its max HP.
     public double EndTaskShare { get; init; } = 0.25;
     // Undo: the HP the cat lost in the last UndoSeconds comes back.
@@ -620,7 +622,7 @@ public sealed class AppsSpec
     // The texts when "apps" has no "list" (the shipped file has the descriptions too).
     public static readonly AppSpec[] BuiltIn =
     {
-        new() { Id = "tabs", NameVi = "Tab Lốc Xoáy", NameEn = "Tab Tornado", Charge = 50 },
+        new() { Id = "tabs", NameVi = "Tab Lốc Xoáy", NameEn = "Tab Tornado", Charge = 40 },
         new() { Id = "ping", NameVi = "Bão Thông Báo", NameEn = "Ping Storm", Charge = 55 },
         new() { Id = "endtask", NameVi = "End Task", NameEn = "End Task", Charge = 80 },
         new() { Id = "undo", NameVi = "Ctrl+Z", NameEn = "Ctrl+Z", Charge = 90 },

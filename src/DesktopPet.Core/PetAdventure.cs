@@ -41,8 +41,9 @@ public sealed class AdventureProgress
 
     public static string DefaultPath => Path.Combine(PetPreferences.DataDirectory, "adventure-progress.json");
 
-    public static string RecordKey(StageSpec stage, string weapon, BattleDifficulty difficulty) =>
-        $"{stage.Id}|r{stage.RulesVersion}|{weapon}|{difficulty}";
+    // Runs with the app icons turned off keep their records apart ("|noapps").
+    public static string RecordKey(StageSpec stage, string weapon, BattleDifficulty difficulty, bool noApps = false) =>
+        $"{stage.Id}|r{stage.RulesVersion}|{weapon}|{difficulty}{(noApps ? "|noapps" : "")}";
 
     public static AdventureProgress Load(string path)
     {
@@ -119,8 +120,8 @@ public sealed class Adventure
     public StageSpec? Next(string stageId) =>
         Locate(stageId) is { } at && at.Index + 1 < at.Chapter.Stages.Length ? at.Chapter.Stages[at.Index + 1] : null;
 
-    public BattleRecord Record(StageSpec stage, string weapon, BattleDifficulty difficulty) =>
-        Progress.Records.TryGetValue(AdventureProgress.RecordKey(stage, weapon, difficulty), out var record) ? record : new();
+    public BattleRecord Record(StageSpec stage, string weapon, BattleDifficulty difficulty, bool noApps = false) =>
+        Progress.Records.TryGetValue(AdventureProgress.RecordKey(stage, weapon, difficulty, noApps), out var record) ? record : new();
 
     // The build a stage starts with: the one the stage before it in its chapter was last won with
     // (empty for the first stage, or before that stage is won).
@@ -134,12 +135,12 @@ public sealed class Adventure
     // a loss never takes back what was opened before. A win keeps its build for the next stage
     // (replacing the one this stage was won with before); a loss changes no build.
     public AdventureOutcome Apply(string runId, StageSpec stage, bool ranked, bool won, string weapon, BattleDifficulty difficulty, int defeated, double seconds,
-        IReadOnlyDictionary<string, int>? build = null)
+        IReadOnlyDictionary<string, int>? build = null, bool noApps = false)
     {
         if (!ranked || string.IsNullOrEmpty(runId) || Progress.Runs.Contains(runId) || Locate(stage.Id) == null) return default;
         Progress.Runs.Add(runId);
         if (Progress.Runs.Count > AdventureProgress.RunsKept) Progress.Runs.RemoveAt(0);
-        string key = AdventureProgress.RecordKey(stage, weapon, difficulty);
+        string key = AdventureProgress.RecordKey(stage, weapon, difficulty, noApps);
         if (!Progress.Records.TryGetValue(key, out var record)) Progress.Records[key] = record = new();
         bool fastest = false, most = false;
         if (won)

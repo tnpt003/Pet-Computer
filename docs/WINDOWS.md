@@ -966,6 +966,13 @@ the game draws itself (never a real app's name, logo or colours); rules and numb
   (battle time). Ending the battle closes all of them; during the outro the icons fade out.
 - Cost: icons redraw at the battle's 30 fps cadence while it runs (five small windows); the canvas
   only while something flies.
+- **Turned off (2026-10-24):** the setup panel has a **Battle apps** chip under the difficulty
+  (not for the free battle), remembered in preferences (`BattleApps`, on by default) when Ready
+  is pressed; for an Expedition run it is set when the run sets out and kept for all its battles
+  (`ExpeditionRun.NoApps`). Off: no icons, no viruses, no ads. Records of such runs are kept apart
+  (keys end in `|noapps`; the result and the Expedition map say "no apps"; the hub's furthest
+  Infinity wave and the Rewards page count runs with apps only), but progress counts as usual:
+  stages won, the Expedition's keepsakes and Infinity's milestone rewards.
 
 ## Adventure (2026-10-20, milestone 2 of docs/ADVENTURE-UPDATE.md)
 

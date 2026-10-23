@@ -74,6 +74,9 @@ public sealed class PetPreferences
     public bool BattleTutorialSeen { get; set; }
     // Battle Mode weapon chosen in the menu: "Sword" or "Hammer" (anything else reads as Sword).
     public string BattleWeapon { get; set; } = "Sword";
+    // The app icons above the battlefield (Adventure, Expedition, Infinity), chosen in the setup
+    // panel. Off: no icons and no viruses; such runs keep their records apart.
+    public bool BattleApps { get; set; } = true;
     public string? PositionMonitor { get; set; }
     public double PositionX { get; set; } = 0.5;
     public double PositionY { get; set; } = 1;

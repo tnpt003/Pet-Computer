@@ -160,6 +160,22 @@ internal static class BattlePrepChecks
         window.Reset();
         check(!window.BattlePreparing && SetupWindows() == 0 && !behavior.Quiet, "Bringing the pet back closes the panel");
 
+        // The app icons' chip (2026-10-24): not for a free battle; elsewhere a choice only Ready keeps.
+        check(window.OpenBattlePrep() == null && Field<TextBlock>(window, "prepAppsHint").Visibility == Visibility.Collapsed && !window.BattlePrepChooseApps(false),
+            "A free battle's setup has no app chip (it never has apps)");
+        window.CancelBattlePrep();
+        bool appsBefore = prefs.BattleApps;
+        var prepTuning = window.BattleTuning;
+        window.BattleTuning = BattleData.Settings; // The test data has no Expedition.
+        string? expeditionPrep = window.OpenBattlePrep(forExpedition: true);
+        check(expeditionPrep == null && window.BattlePrepApps == appsBefore && Field<TextBlock>(window, "prepAppsHint").Visibility == Visibility.Visible
+              && Field<TextBlock>(window, "prepAppsLabel").Text == "On the screen (whole run)", $"A new Expedition run's setup has the app chip, for the whole run ({expeditionPrep ?? Field<TextBlock>(window, "prepAppsLabel").Text})");
+        check(window.BattlePrepChooseApps(false) && !window.BattlePrepApps && Field<TextBlock>(window, "prepAppsHint").Text.Contains("Records are kept apart"),
+            "Clicking the chip turns the apps off and says the records are kept apart");
+        window.Reset();
+        window.BattleTuning = prepTuning;
+        check(prefs.BattleApps == appsBefore, "Leaving the panel without Ready keeps the remembered choice");
+
         // The user's battle.json: read when the panel opens, used if valid, shown if not.
         string dir = Path.Combine(Path.GetTempPath(), "pet-prep-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(dir);

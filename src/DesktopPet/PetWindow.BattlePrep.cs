@@ -32,6 +32,11 @@ public sealed partial class PetWindow
     private Window? battlePrepWindow;
     private string prepWeapon = BattleWeapon.Sword;
     private BattleDifficulty prepDifficulty = BattleDifficulty.Normal;
+    // The app icons above the battlefield (not for a free battle, which has none).
+    private bool prepApps = true;
+    private Border? prepAppsChip;
+    private Path? prepAppsCheck;
+    private TextBlock? prepAppsLabel, prepAppsText, prepAppsHint;
     private double prepRefresh;
     private readonly List<(string Id, Border Card, Path Check, TextBlock Name, TextBlock Hint, TextBlock[] StatNames, TextBlock[] StatValues)> prepCards = new();
     private readonly List<(BattleDifficulty Level, Border Chip, Path Check, TextBlock Text)> prepLevelChips = new();
@@ -63,6 +68,8 @@ public sealed partial class PetWindow
     public bool BattleOwnsPet => battle != null || battleHubOpen || battlePreparing || adventureMapOpen || expeditionMapOpen;
     public string BattlePrepWeapon => prepWeapon;
     public BattleDifficulty BattlePrepDifficulty => prepDifficulty;
+    public bool BattlePrepApps => prepApps;
+    private bool PrepHasApps => prepStage != null || prepForExpedition || prepForEndless;
     public bool BattlePrepVisible => battlePrepWindow?.IsVisible == true;
     public bool BattlePrepReadyEnabled => prepReady?.IsEnabled == true;
     public int BattlePrepCards => prepCards.Count;
@@ -114,6 +121,7 @@ public sealed partial class PetWindow
         prepForEndless = forEndless;
         prepWeapon = BattleTuning.Weapon(weapon ?? preferences.BattleWeapon).Id;
         prepDifficulty = level is BattleDifficulty chosen && Enum.IsDefined(chosen) ? chosen : BattleDifficultyChoice;
+        prepApps = preferences.BattleApps;
         battlePreparing = true;
         CloseBattleSummary(); CloseBattleNotice();
         queuedCommand = null;
@@ -144,6 +152,14 @@ public sealed partial class PetWindow
         return true;
     }
 
+    public bool BattlePrepChooseApps(bool on)
+    {
+        if (!battlePreparing || !PrepHasApps) return false;
+        prepApps = on;
+        UpdateBattlePrep();
+        return true;
+    }
+
     // Ready: checks the cat again now, remembers the choice and starts the fight. Null on success.
     // A second press (double click) finds no panel and does nothing.
     public string? BattlePrepReady()
@@ -153,6 +169,7 @@ public sealed partial class PetWindow
         if ((prepForExpedition ? BattlePrepRefusal() : BattleRefusal()) is string reason) { UpdateBattlePrep(); return reason; }
         SetBattleWeapon(prepWeapon);
         SetBattleDifficulty(prepDifficulty);
+        if (PrepHasApps && preferences.BattleApps != prepApps) { preferences.BattleApps = prepApps; SavePreferences(); }
         if (BattleTutorialOpen) CloseBattleTutorial(finished: true);
         if (prepForExpedition) { string weapon = prepWeapon; var level = prepDifficulty; CloseBattlePrep(); return ExpeditionSetupReady(weapon, level); }
         if (prepForEndless) return EndlessRefusal() ?? StartBattle(stage: BattleTuning.Endless!.Stage());
@@ -187,6 +204,7 @@ public sealed partial class PetWindow
         prepReady = null;
         prepPreview = null; prepPreviewView = null; prepHitMark = null;
         prepCards.Clear(); prepLevelChips.Clear();
+        prepAppsChip = null; prepAppsCheck = null; prepAppsLabel = prepAppsText = prepAppsHint = null;
         prepStage = null;
         prepForExpedition = prepForEndless = false;
         if (was) ApplyQuiet();
@@ -346,6 +364,18 @@ public sealed partial class PetWindow
             prepLevelChips.Add((level, chip, check, text));
         }
 
+        // The app icons: one chip that turns them on and off, with what that means under it.
+        prepAppsLabel = Line(PetUi.SmallSize); prepAppsLabel.Opacity = 0.75; prepAppsLabel.Margin = new Thickness(0, 8, 0, 4);
+        prepAppsCheck = Check();
+        prepAppsText = new TextBlock { Foreground = Brushes.White, FontSize = PetUi.BodySize, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center };
+        prepAppsChip = new Border
+        {
+            CornerRadius = new CornerRadius(7), Padding = new Thickness(9, 4, 11, 4), BorderThickness = new Thickness(1.5), HorizontalAlignment = HorizontalAlignment.Left,
+            Cursor = System.Windows.Input.Cursors.Hand, Child = new StackPanel { Orientation = Orientation.Horizontal, Children = { prepAppsCheck, prepAppsText } }
+        };
+        prepAppsChip.MouseLeftButtonDown += (_, e) => { BattlePrepChooseApps(!prepApps); e.Handled = true; };
+        prepAppsHint = Line(PetUi.CaptionSize, maxWidth: 300); prepAppsHint.Opacity = 0.8; prepAppsHint.Margin = new Thickness(0, 4, 0, 0);
+
         // Actions: a quiet How to play link on the left; Close, then the one main button, Ready.
         prepGuideText = new TextBlock { Foreground = Brushes.White, Opacity = 0.85, FontSize = PetUi.SmallSize, TextDecorations = TextDecorations.Underline,
             Cursor = System.Windows.Input.Cursors.Hand, VerticalAlignment = VerticalAlignment.Center, Background = Brushes.Transparent };
@@ -358,7 +388,7 @@ public sealed partial class PetWindow
         prepReady = ready; prepReadyText = readyText; prepCancelText = cancelText;
         var actions = PanelActions(new UIElement[] { prepGuideText, prepTipText }, new UIElement[] { ready, cancel });
 
-        var choices = new StackPanel { Width = 300, Children = { prepWeaponLabel, cards, prepLevelLabel, levels } };
+        var choices = new StackPanel { Width = 300, Children = { prepWeaponLabel, cards, prepLevelLabel, levels, prepAppsLabel, prepAppsChip, prepAppsHint } };
         // The title's picture: the mode this setup is for (a free battle uses the Adventure's).
         var title = PanelTitle(prepForExpedition ? HubExpedition : prepForEndless ? HubInfinity : HubAdventure, prepTitle);
         var window = CreateGamePanel(new StackPanel { Children = { title, new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 10, 0, 0), Children = { stage, choices } },
@@ -401,6 +431,16 @@ public sealed partial class PetWindow
         {
             text.Text = DifficultyName(level);
             ShowChosen(chip, level == prepDifficulty, check);
+        }
+        if (prepAppsChip != null)
+        {
+            var shown = PrepHasApps ? Visibility.Visible : Visibility.Collapsed;
+            prepAppsLabel!.Visibility = prepAppsChip.Visibility = prepAppsHint!.Visibility = shown;
+            prepAppsLabel.Text = prepForExpedition ? L("Trên màn hình (cả chuyến)", "On the screen (whole run)") : L("Trên màn hình", "On the screen");
+            prepAppsText!.Text = L("App trong trận", "Battle apps");
+            prepAppsHint.Text = prepApps ? L("5 icon app giúp mèo; slime có thể nhiễm virus vào icon.", "Five app icons help the cat; slimes may infect them with viruses.")
+                : L("Không có icon app hay virus. Kỷ lục lưu riêng.", "No app icons or viruses. Records are kept apart.");
+            ShowChosen(prepAppsChip, prepApps, prepAppsCheck!);
         }
         if (prepPreview != null && (prepPreview.Hammer != (chosen.Style == "hammer") || prepPreview.SwordHitAt != chosen.HitFraction))
         {

@@ -21,8 +21,8 @@ public sealed partial class BattleSim
     public IReadOnlyList<BattlePopup> Popups => popups;
     public IReadOnlyList<AppLaunch> Launches => launches;
     private int nextAppId = 1;
-    // The apps this battle uses (null: none).
-    public AppsSpec? AppRules => Stage != null ? Settings.Apps : null;
+    // The apps this battle uses (null: none, or turned off in the setup panel).
+    public AppsSpec? AppRules => Stage != null && AppsOn ? Settings.Apps : null;
     // The desktop grid: columns across the floor's width, rows up from the strip; cells the HUD covers.
     public int GridCols { get; private set; } = 12;
     public int GridRows { get; private set; } = 3;

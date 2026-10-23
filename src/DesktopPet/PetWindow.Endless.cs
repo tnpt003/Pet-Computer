@@ -39,9 +39,9 @@ public sealed partial class PetWindow
     // "\nRecord (Sword · Normal): wave 12" for the loadout, or nothing yet.
     private string EndlessRecordLine(EndlessSpec spec, string weapon, BattleDifficulty level)
     {
-        var best = BattleRecords.ForEndless(spec, weapon, level, BattleDataCustom);
+        var best = BattleRecords.ForEndless(spec, weapon, level, BattleDataCustom, !prepApps);
         if (best.MostWaves == 0) return "";
-        string loadout = $"{BattleTuning.Weapon(weapon).Name(preferences.Language)} · {DifficultyName(level)}";
+        string loadout = $"{BattleTuning.Weapon(weapon).Name(preferences.Language)} · {DifficultyName(level)}" + (prepApps ? "" : L(" · không app", " · no apps"));
         return "\n" + LF($"Kỷ lục ({loadout}): đợt {best.MostWaves} · hạ {best.MostDefeated} slime", $"Record ({loadout}): wave {best.MostWaves} · {best.MostDefeated} slime{(best.MostDefeated == 1 ? "" : "s")}");
     }
 
@@ -87,11 +87,12 @@ public sealed partial class PetWindow
                 + L(" (xem ở Sảnh → Phần thưởng)", " (see Hub → Rewards)");
             info.Children.Add(prize);
         }
-        if (BattleTuning.Endless is EndlessSpec spec && BattleRecords.ForEndless(spec, result.Weapon, result.Difficulty, result.Custom) is { MostWaves: > 0 } best)
+        if (BattleTuning.Endless is EndlessSpec spec && BattleRecords.ForEndless(spec, result.Weapon, result.Difficulty, result.Custom, result.NoApps) is { MostWaves: > 0 } best)
         {
             var records = Line(PetUi.SmallSize, opacity: 0.85);
-            records.Text = LF($"Kỷ lục ({arms} · {level}{(result.Custom ? ", dữ liệu tùy chỉnh" : "")}): đợt {best.MostWaves} · hạ {best.MostDefeated} slime",
-                $"Records ({arms} · {level}{(result.Custom ? ", custom data" : "")}): wave {best.MostWaves} · {best.MostDefeated} slime{(best.MostDefeated == 1 ? "" : "s")}");
+            string noApps = result.NoApps ? L(" · không app", " · no apps") : "";
+            records.Text = LF($"Kỷ lục ({arms} · {level}{noApps}{(result.Custom ? ", dữ liệu tùy chỉnh" : "")}): đợt {best.MostWaves} · hạ {best.MostDefeated} slime",
+                $"Records ({arms} · {level}{noApps}{(result.Custom ? ", custom data" : "")}): wave {best.MostWaves} · {best.MostDefeated} slime{(best.MostDefeated == 1 ? "" : "s")}");
             info.Children.Add(records);
         }
         if (result.Upgrades.Length > 0)

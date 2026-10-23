@@ -242,7 +242,9 @@ public sealed partial class PetWindow
             weapon: BattleTuning.Weapon(weapon ?? preferences.BattleWeapon).Id, stage: stage,
             // The build the stage before was won with, or the Expedition run's.
             build: expedition?.Expedition.Run?.Build ?? (stage is { Endless: false } ? AdventureOf(BattleTuning)?.StartBuild(stage) : null),
-            seed: expedition?.Node.Seed, startHp: expedition?.Expedition.Run?.Hp, threat: expedition?.Node.Threat ?? 1, relics: expedition?.Expedition.Run?.Relics);
+            seed: expedition?.Node.Seed, startHp: expedition?.Expedition.Run?.Hp, threat: expedition?.Node.Threat ?? 1, relics: expedition?.Expedition.Run?.Relics,
+            // The app icons: as the Expedition run set out, else the setup panel's choice.
+            apps: expedition?.Expedition.Run is ExpeditionRun run ? !run.NoApps : preferences.BattleApps);
         battleExpedition = expedition;
         battleRunId = Guid.NewGuid().ToString("N");
         battleCustomData = BattleDataCustom;
@@ -425,7 +427,7 @@ public sealed partial class PetWindow
             // Infinity's milestone rewards this run earned (none with custom data: they come from the records).
             int clearedBefore = endless && EndlessRewards is EndlessSpec rewards ? BattleRecords.EndlessCleared(rewards) : 0;
             var news = endless && BattleTuning.Endless is EndlessSpec infinity
-                ? BattleRecords.AddEndless(infinity, battle.Weapon.Id, battle.Difficulty, battleCustomData, battle.Wave, battle.Defeated, battle.WavesCleared)
+                ? BattleRecords.AddEndless(infinity, battle.Weapon.Id, battle.Difficulty, battleCustomData, battle.Wave, battle.Defeated, battle.WavesCleared, noApps: !battle.AppsOn)
                 : battle.Stage != null ? outcome.News : BattleRecords.Add(battle.Weapon.Id, battle.Difficulty, battleCustomData, won, battle.Defeated, battle.FightSeconds);
             if ((battle.Stage == null || endless) && persistPreferences) BattleRecords.Save();
             if (endless) endlessEarned = null;
@@ -437,7 +439,8 @@ public sealed partial class PetWindow
             var result = new BattleSummary(won, battle.Defeated, battle.FightSeconds, battle.CatHp, battle.CatMaxHp, battle.BossDefeated,
                 battle.DefeatedBoss?.Name(preferences.Language), battle.Difficulty, news, battle.Weapon.Id, WeaponName(battle.Weapon), battleCustomData, battle.Weapon.Style,
                 battle.Stage, outcome, !battleCustomData, UpgradeSummary(battle), step, endless ? battle.Wave : 0,
-                endless && EndlessRewards is EndlessSpec given ? given.EarnedBy(BattleRecords.EndlessCleared(given)).Where(m => m.Wave > clearedBefore).ToList() : null);
+                endless && EndlessRewards is EndlessSpec given ? given.EarnedBy(BattleRecords.EndlessCleared(given)).Where(m => m.Wave > clearedBefore).ToList() : null,
+                NoApps: battle.Stage != null && !battle.AppsOn);
             EndBattle();
             ShowBattleSummary(result);
             return;

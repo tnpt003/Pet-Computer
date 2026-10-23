@@ -269,5 +269,27 @@ internal static class AppTests
                 "An app's start charge must be 0–1");
         }
         finally { Directory.Delete(dir, true); }
+
+        // Turned off in the setup panel (2026-10-24): no icons, no viruses; records kept apart, progress still counts.
+        var off = new BattleSim(BattleData.Settings, 0, 1600, stage: stage, seed: 2, apps: false);
+        Run(off, 20);
+        check(!off.AppsOn && off.AppRules == null && off.Desktop.Count == 0 && off.Launches.Count == 0, "Apps turned off: no icons and nothing flies, the stage plays on");
+        check(new BattleSim(BattleData.Settings, 0, 1600, seed: 2).AppRules == null, "A free battle never has apps");
+        check(AdventureProgress.RecordKey(stage, "Sword", BattleDifficulty.Normal, noApps: true) != AdventureProgress.RecordKey(stage, "Sword", BattleDifficulty.Normal)
+              && AdventureProgress.RecordKey(stage, "Sword", BattleDifficulty.Normal, noApps: false) == $"apps_test|r{stage.RulesVersion}|Sword|Normal",
+            "Adventure records without apps get their own key; the usual key is unchanged");
+        var infinity = BattleData.Settings.Endless!;
+        var records = new BattleRecords();
+        records.AddEndless(infinity, "Sword", BattleDifficulty.Normal, false, wave: 25, defeated: 90, cleared: 24, noApps: true);
+        records.AddEndless(infinity, "Sword", BattleDifficulty.Normal, false, wave: 6, defeated: 20, cleared: 5);
+        records.AddEndless(infinity, "Sword", BattleDifficulty.Normal, true, wave: 40, defeated: 99, cleared: 39, noApps: true);
+        check(records.ForEndless(infinity, "Sword", BattleDifficulty.Normal, noApps: true).MostWaves == 25 && records.ForEndless(infinity, "Sword", BattleDifficulty.Normal).MostWaves == 6,
+            "Infinity without apps keeps its own record beside the usual one");
+        check(records.EndlessBest(infinity) == 6 && records.EndlessCleared(infinity) == 24,
+            "The hub's furthest wave counts runs with apps only; milestone rewards count runs without apps too (never custom data)");
+        var trip = new Expedition(BattleData.Settings, new ExpeditionProgress());
+        var tripRun = trip.Start("Sword", BattleDifficulty.Normal, 7, noApps: true);
+        check(tripRun.NoApps && Expedition.RecordKey(trip.Spec, "Sword", BattleDifficulty.Normal, true).EndsWith("|noapps") && !trip.Start("Sword", BattleDifficulty.Normal, 7).NoApps,
+            "An Expedition run remembers it set out without apps, for its battles and its records");
     }
 }

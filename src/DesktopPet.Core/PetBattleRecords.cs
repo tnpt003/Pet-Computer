@@ -57,8 +57,9 @@ public sealed class BattleRecords
     // Read from a newer version: saving would lose what this version does not know.
     [JsonIgnore] public bool ReadOnly { get; private set; }
 
-    public static string Key(string weapon, BattleDifficulty difficulty, bool custom = false) =>
-        $"{weapon}|{difficulty}{(custom ? "|custom" : "")}";
+    // noApps: an Infinity run with the app icons turned off (its records kept apart).
+    public static string Key(string weapon, BattleDifficulty difficulty, bool custom = false, bool noApps = false) =>
+        $"{weapon}|{difficulty}{(noApps ? "|noapps" : "")}{(custom ? "|custom" : "")}";
 
     public BattleRecord Legacy(BattleDifficulty difficulty) => difficulty switch
     {
@@ -70,23 +71,24 @@ public sealed class BattleRecords
         Loadouts.TryGetValue(Key(weapon, difficulty, custom), out var record) ? record : new();
 
     // Infinity's records live beside the free battle's, under "endless|r<rules>|<loadout key>".
-    public static string EndlessKey(EndlessSpec spec, string weapon, BattleDifficulty difficulty, bool custom = false) =>
-        $"{spec.Id}|r{spec.RulesVersion}|{Key(weapon, difficulty, custom)}";
-    public BattleRecord ForEndless(EndlessSpec spec, string weapon, BattleDifficulty difficulty, bool custom = false) =>
-        Loadouts.TryGetValue(EndlessKey(spec, weapon, difficulty, custom), out var record) ? record : new();
-    // The furthest wave over every loadout (the hub's card), custom data left out.
-    public int EndlessBest(EndlessSpec spec) => Loadouts.Where(pair => pair.Key.StartsWith($"{spec.Id}|r{spec.RulesVersion}|", StringComparison.Ordinal) && !pair.Key.EndsWith("|custom", StringComparison.Ordinal))
+    public static string EndlessKey(EndlessSpec spec, string weapon, BattleDifficulty difficulty, bool custom = false, bool noApps = false) =>
+        $"{spec.Id}|r{spec.RulesVersion}|{Key(weapon, difficulty, custom, noApps)}";
+    public BattleRecord ForEndless(EndlessSpec spec, string weapon, BattleDifficulty difficulty, bool custom = false, bool noApps = false) =>
+        Loadouts.TryGetValue(EndlessKey(spec, weapon, difficulty, custom, noApps), out var record) ? record : new();
+    // The furthest wave over every loadout (the hub's card), custom data and runs without apps left out.
+    public int EndlessBest(EndlessSpec spec) => Loadouts.Where(pair => pair.Key.StartsWith($"{spec.Id}|r{spec.RulesVersion}|", StringComparison.Ordinal) && !pair.Key.EndsWith("|custom", StringComparison.Ordinal)
+            && !pair.Key.Contains("|noapps", StringComparison.Ordinal))
         .Select(pair => pair.Value.MostWaves).DefaultIfEmpty(0).Max();
 
     // The most waves cleared in one run over every loadout and rules version (milestone rewards stay
-    // earned when the rules change), custom data left out.
+    // earned when the rules change), runs without apps included, custom data left out.
     public int EndlessCleared(EndlessSpec spec) => Loadouts.Where(pair => pair.Key.StartsWith(spec.Id + "|r", StringComparison.Ordinal) && !pair.Key.EndsWith("|custom", StringComparison.Ordinal))
         .Select(pair => Math.Max(pair.Value.MostCleared, pair.Value.MostWaves - 1)).DefaultIfEmpty(0).Max();
 
     // One ended Infinity run: the wave it reached, the waves it cleared and the slimes it defeated.
-    public BattleRecordNews AddEndless(EndlessSpec spec, string weapon, BattleDifficulty difficulty, bool custom, int wave, int defeated, int cleared = 0)
+    public BattleRecordNews AddEndless(EndlessSpec spec, string weapon, BattleDifficulty difficulty, bool custom, int wave, int defeated, int cleared = 0, bool noApps = false)
     {
-        string key = EndlessKey(spec, weapon, difficulty, custom);
+        string key = EndlessKey(spec, weapon, difficulty, custom, noApps);
         if (!Loadouts.TryGetValue(key, out var record)) Loadouts[key] = record = new();
         bool furthest = wave > record.MostWaves, most = defeated > record.MostDefeated;
         if (furthest) record.MostWaves = wave;

@@ -296,6 +296,8 @@ public sealed class ExpeditionRun
     public int Seed { get; set; }
     public string Weapon { get; set; } = BattleWeapon.Sword;
     public string Difficulty { get; set; } = nameof(BattleDifficulty.Normal);
+    // The app icons were turned off when the run set out: none in its battles, its records kept apart.
+    public bool NoApps { get; set; }
     // Encounter ids per step, in lane order (the boss's step last). With the kind gacha a step not
     // drawn yet is empty, and Kinds holds each drawn step's node kinds (null: the data's fixed steps).
     public List<string[]> Map { get; set; } = new();
@@ -451,9 +453,10 @@ public sealed class Expedition
     public bool GrantKeepsakes { get; init; } = true;
     public bool IsUnlocked(AdventureProgress adventure) => Spec.UnlockAfter is not string stage || adventure.Completed.Contains(stage)
         || Settings.Campaign?.Chapters.Any(c => c.Stages.Any(s => s.Id == stage)) != true;
-    public static string RecordKey(ExpeditionSpec spec, string weapon, BattleDifficulty difficulty) => $"{spec.Id}|r{spec.RulesVersion}|{weapon}|{difficulty}";
-    public ExpeditionRecord Record(string weapon, BattleDifficulty difficulty) =>
-        Progress.Records.TryGetValue(RecordKey(Spec, weapon, difficulty), out var record) ? record : new();
+    public static string RecordKey(ExpeditionSpec spec, string weapon, BattleDifficulty difficulty, bool noApps = false) =>
+        $"{spec.Id}|r{spec.RulesVersion}|{weapon}|{difficulty}{(noApps ? "|noapps" : "")}";
+    public ExpeditionRecord Record(string weapon, BattleDifficulty difficulty, bool noApps = false) =>
+        Progress.Records.TryGetValue(RecordKey(Spec, weapon, difficulty, noApps), out var record) ? record : new();
 
     // The cat's max HP with a build (cards like Big heart raise it) and relics, as the battle would have it.
     public double MaxHp(IReadOnlyDictionary<string, int> build, IReadOnlyList<string>? relics = null) => new BattleSim(Settings, 0, 1000, build: build, seed: 0, relics: relics).CatMaxHp;
@@ -462,7 +465,7 @@ public sealed class Expedition
     // A new run (replacing none: the caller ends the old one first). The map is drawn from the
     // seed once and kept, so closing and opening the map, or resuming, never draws it again.
     // With the kind gacha only the boss is drawn now; each step is drawn by Roll when the run gets there.
-    public ExpeditionRun Start(string weapon, BattleDifficulty difficulty, int seed, string? runId = null)
+    public ExpeditionRun Start(string weapon, BattleDifficulty difficulty, int seed, string? runId = null, bool noApps = false)
     {
         var random = BattleRandom.Stream(seed, 50);
         var map = new List<string[]>();
@@ -477,7 +480,7 @@ public sealed class Expedition
         var run = new ExpeditionRun
         {
             RunId = runId ?? Guid.NewGuid().ToString("N"), Expedition = Spec.Id, RulesVersion = Spec.RulesVersion, Seed = seed,
-            Weapon = Settings.Weapon(weapon).Id, Difficulty = difficulty.ToString(), Map = map, Kinds = kinds
+            Weapon = Settings.Weapon(weapon).Id, Difficulty = difficulty.ToString(), NoApps = noApps, Map = map, Kinds = kinds
         };
         run.Hp = MaxHp(run);
         Progress.Active = run;
@@ -886,7 +889,7 @@ public sealed class Expedition
         if (Progress.Runs.Contains(run.RunId)) return new(false, step, won, true, won, hp, max);
         Progress.Runs.Add(run.RunId);
         if (Progress.Runs.Count > ExpeditionProgress.RunsKept) Progress.Runs.RemoveAt(0);
-        string key = RecordKey(Spec, run.Weapon, run.Level);
+        string key = RecordKey(Spec, run.Weapon, run.Level, run.NoApps);
         if (!Progress.Records.TryGetValue(key, out var record)) Progress.Records[key] = record = new();
         record.Runs++;
         bool best = run.Step > record.BestSteps, fastest = false;

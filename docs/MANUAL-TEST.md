@@ -478,3 +478,9 @@ Tự động đã có: Phần thưởng trên sảnh (ô có hình, khóa, Mới
 ### Đồng hồ cát chảy (2026-10-24)
 - [ ] Chọn "Đồng hồ cát vô tận" làm món trưng bày: cát tím chảy từ bầu trên xuống bầu dưới, có dòng cát mảnh, hết sau khoảng 1 phút thì đứng yên. Pause: cát dừng; Tiếp tục: chảy tiếp.
 - [ ] Cầm đồng hồ cát lên rồi thả/ném: nó lật ngược (~0,35 s) rồi cát chảy lại từ phần đã chảy xuống. Chỉ bấm (không kéo) thì "boing", không lật. Ô trong Phần thưởng vẫn vẽ tĩnh. CPU không tăng rõ khi đồng hồ cát đang hiện.
+
+### Tắt app trong trận (2026-10-24)
+- [ ] Bảng chuẩn bị (Phiêu lưu, Viễn chinh, Vô tận) có ô "App trong trận" dưới Độ khó, kèm câu giải thích; trận tự do không có. Bấm để tắt/bật; Sẵn sàng thì lần sau nhớ lựa chọn, bấm Bản đồ/Đóng thì không đổi.
+- [ ] Tắt rồi vào trận Phiêu lưu: không icon app, không virus, không quảng cáo; thắng màn vẫn mở màn sau, nhận phần thưởng. Bảng kết quả ghi "Kỷ lục màn (trang bị này, không app)" và kỷ lục tách khỏi lúc có app.
+- [ ] Viễn chinh: chuẩn bị chuyến với app tắt → cả chuyến không có app (kể cả khi đổi lựa chọn ở bảng chuẩn bị khác giữa chuyến); bản đồ ghi "· không app" cạnh độ khó. Chuyến có app như cũ.
+- [ ] Vô tận tắt app: kỷ lục riêng ("· không app"), mốc phần thưởng vẫn mở khi qua đợt 10/20…; thẻ Sảnh "xa nhất" chỉ tính lượt có app.

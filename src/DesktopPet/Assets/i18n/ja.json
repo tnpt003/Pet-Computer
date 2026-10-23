@@ -477,7 +477,7 @@
   "Records": "記録",
   "Records ({0} · {1}): {2}/{3} runs won · furthest {4}/{5} steps": "記録（{0} · {1}）：{2}/{3} 回勝利 · 最高 {4}/{5} ステップ",
   "Records ({0} · {1}{2}): ": "記録（{0} · {1}{2}）：",
-  "Records ({0} · {1}{2}): wave {3} · {4} slime{5}": "記録（{0} · {1}{2}）：第 {3} ウェーブ · {4} 体撃破",
+  "Records ({0} · {1}{2}{3}): wave {4} · {5} slime{6}": "記録（{0} · {1}{2}{3}）：第 {4} ウェーブ · {5} 体撃破",
   "Relics": "レリック",
   "Relics belong to the Expedition: a run holds a few, each with a gain and a price, and loses them when it ends.": "レリックは遠征専用：旅ごとに数個まで持て、どれも利点と代償があり、旅が終わると失われます。",
   "Relics {0}/{1}": "レリック {0}/{1}",
@@ -787,5 +787,12 @@
   "☣ Infected! Click {0} more times to scrub it (or defeat the slime wearing ☣).": "☣ 感染！あと {0} 回クリックで駆除（または ☣ を着けたスライムを倒す）。",
   "☣ {0} is infected!": "☣ {0} が感染した！",
   "☣ {0} is infected! Click it 3 times or defeat the slime wearing ☣": "☣ {0} が感染した！3 回クリックするか ☣ を着けたスライムを倒そう",
-  "✓ {0} is clean!": "✓ {0} はきれいになった！"
+  "✓ {0} is clean!": "✓ {0} はきれいになった！",
+  "Stage records (this gear, no apps): ": "ステージ記録（この装備・アプリなし）：",
+  "On the screen (whole run)": "画面上（遠征全体）",
+  "On the screen": "画面上",
+  "Battle apps": "バトルアプリ",
+  "Five app icons help the cat; slimes may infect them with viruses.": "5つのアプリが猫を助けます。スライムがウイルスを感染させることも。",
+  "No app icons or viruses. Records are kept apart.": "アプリもウイルスもなし。記録は別に保存。",
+  " · no apps": " · アプリなし"
 }

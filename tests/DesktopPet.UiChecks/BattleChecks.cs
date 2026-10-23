@@ -747,6 +747,14 @@ internal static class BattleChecks
             check(Field<Window?>(window, "appFlightWindow") is { IsVisible: true }, "What flies is drawn on the flights' canvas");
             window.EndBattle();
             check(window.BattleAppWindows.Count == 0 && Field<Window?>(window, "appFlightWindow") == null, "Ending the battle closes the app windows");
+            // Turned off in the setup panel: the stage battle runs without any icon window.
+            var appsPrefs = Field<PetPreferences>(window, "preferences");
+            appsPrefs.BattleApps = false;
+            check(window.StartBattle(stage: new StageSpec { Id = "ui_apps" }) == null, "(setup) a stage battle with the apps turned off");
+            Tick(0.4);
+            check(!Sim().AppsOn && Sim().Desktop.Count == 0 && window.BattleAppWindows.Count == 0, "With the apps turned off the stage battle has no icons or icon windows");
+            window.EndBattle();
+            appsPrefs.BattleApps = true;
 
             // The strip: an ad's × and body (an ad placed on a lone slime).
             var data = BattleData.Settings;

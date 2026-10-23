@@ -35,6 +35,8 @@ public sealed partial class BattleSim
     public int WaveCount => WavePlan.Count;
     // The Adventure stage being played (null: a free battle).
     public StageSpec? Stage { get; }
+    // The app icons are on (the setup panel's choice; a free battle never has them).
+    public bool AppsOn { get; }
     private readonly int maxAlive;
     // Survive stages: seconds still to hold out (counts only while the battle runs and the cat is
     // on the ground, like the waves). NaN for any other battle.
@@ -232,7 +234,7 @@ public sealed partial class BattleSim
 
     public BattleSim(BattleSettings settings, double left, double right, Random? random = null, BattleDifficulty difficulty = BattleDifficulty.Normal,
         string weapon = BattleWeapon.Sword, StageSpec? stage = null, IReadOnlyDictionary<string, int>? build = null, int? seed = null,
-        double? startHp = null, double threat = 1, IReadOnlyList<string>? relics = null)
+        double? startHp = null, double threat = 1, IReadOnlyList<string>? relics = null, bool apps = true)
     {
         // A given seed wins; otherwise one drawn from the given random (tests), else a fresh one.
         Seed = seed ?? random?.Next() ?? Random.Shared.Next();
@@ -244,6 +246,7 @@ public sealed partial class BattleSim
         appRandom = BattleRandom.Stream(Seed, BattleRandom.Apps);
         Settings = settings;
         Stage = stage;
+        AppsOn = apps;
         WavePlan = stage?.Waves is { Length: > 0 } waves ? waves : settings.WavePlan;
         maxAlive = stage?.MaxAlive ?? settings.MaxAlive;
         if (stage is { Survival: true, SurviveSeconds: double hold }) SurviveRemaining = hold;

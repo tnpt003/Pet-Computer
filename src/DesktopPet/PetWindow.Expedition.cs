@@ -219,7 +219,7 @@ public sealed partial class PetWindow
         if (expedition.Run != null) return L("Đang có một chuyến đi.", "A run is already under way.");
         SetBattleWeapon(expeditionWeapon);
         SetBattleDifficulty(expeditionLevel);
-        var run = expedition.Start(expeditionWeapon, expeditionLevel, seed ?? Random.Shared.Next());
+        var run = expedition.Start(expeditionWeapon, expeditionLevel, seed ?? Random.Shared.Next(), noApps: !preferences.BattleApps);
         SaveExpedition(expedition.Progress);
         expeditionLane = 0;
         expeditionNote = null;
@@ -570,7 +570,7 @@ public sealed partial class PetWindow
         Show(xData, string.Join("\n", new[] { dataNote, ExpeditionWarning() }.Where(t => t != null)));
         Show(xNote, expeditionNote);
         string weaponName = BattleTuning.Weapon(run?.Weapon ?? expeditionWeapon).Name(preferences.Language);
-        string levelName = DifficultyName(run?.Level ?? expeditionLevel);
+        string levelName = DifficultyName(run?.Level ?? expeditionLevel) + (run?.NoApps ?? !preferences.BattleApps ? L(" · không app", " · no apps") : "");
         if (run == null)
         {
             Show(xStatus, LF($"Chưa có chuyến đi · {spec.StepCount} bậc, bậc cuối là trùm. HP và build giữ suốt chuyến.",
@@ -656,7 +656,7 @@ public sealed partial class PetWindow
         else xDetails!.Visibility = Visibility.Collapsed;
         UpdateExpeditionChoice(expedition);
 
-        var record = expedition.Record(run?.Weapon ?? expeditionWeapon, run?.Level ?? expeditionLevel);
+        var record = expedition.Record(run?.Weapon ?? expeditionWeapon, run?.Level ?? expeditionLevel, run?.NoApps ?? !preferences.BattleApps);
         int keepsakesHad = spec.Keepsakes.Count(k => expedition.Progress.Keepsakes.Contains(k.Id));
         string keepsakeLine = spec.Keepsakes.Length == 0 ? "" : (record.Runs == 0 ? "" : "\n") + LF($"Kỷ vật: {keepsakesHad}/{spec.Keepsakes.Length}", $"Keepsakes: {keepsakesHad}/{spec.Keepsakes.Length}")
             + (keepsakesHad < spec.Keepsakes.Length ? L(" · thắng cả chuyến ở mỗi độ khó để nhận", " · win a run at each difficulty to earn them") : "");

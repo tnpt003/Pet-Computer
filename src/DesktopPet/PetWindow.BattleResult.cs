@@ -79,7 +79,7 @@ public sealed partial class PetWindow
     public readonly record struct BattleSummary(bool Won, int Defeated, double Seconds, double Hp, double MaxHp, bool Boss = false, string? BossName = null,
         BattleDifficulty Difficulty = BattleDifficulty.Normal, BattleRecordNews News = default, string Weapon = BattleWeapon.Sword, string WeaponLabel = "",
         bool Custom = false, string WeaponStyle = "sword", StageSpec? Stage = null, AdventureOutcome Outcome = default, bool Ranked = true, string Upgrades = "",
-        ExpeditionStepOutcome? Expedition = null, int EndlessWave = 0, IReadOnlyList<KeepsakeSpec>? EndlessUnlocked = null);
+        ExpeditionStepOutcome? Expedition = null, int EndlessWave = 0, IReadOnlyList<KeepsakeSpec>? EndlessUnlocked = null, bool NoApps = false);
     private static readonly Brush RecordGold = PetUi.Game.Gold;
     private static readonly Brush ResultMain = PetUi.Game.Chosen;
     private static string Clock(double seconds)

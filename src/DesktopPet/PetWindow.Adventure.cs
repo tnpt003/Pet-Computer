@@ -301,7 +301,7 @@ public sealed partial class PetWindow
     private AdventureOutcome CountStageRun(BattleSim finished, bool won)
     {
         if (finished.Stage is not StageSpec stage || AdventureOf(finished.Settings) is not Adventure adventure) return default;
-        var outcome = adventure.Apply(battleRunId, stage, !battleCustomData, won, finished.Weapon.Id, finished.Difficulty, finished.Defeated, finished.FightSeconds, finished.Build());
+        var outcome = adventure.Apply(battleRunId, stage, !battleCustomData, won, finished.Weapon.Id, finished.Difficulty, finished.Defeated, finished.FightSeconds, finished.Build(), noApps: !finished.AppsOn);
         if (outcome.Counted && AdventureProgressFile != null) adventureSaveFailed = !AdventureProgress.Save(AdventureProgressFile);
         if (outcome.Counted) System.Diagnostics.Trace.WriteLine($"Adventure stage {stage.Id} {(won ? "won" : "lost")}{(outcome.Unlocked != null ? $", {outcome.Unlocked.Id} opened" : "")}.");
         return outcome;
@@ -357,9 +357,10 @@ public sealed partial class PetWindow
             news.Text = result.News.Fastest ? L("Kỷ lục mới của màn: thắng nhanh nhất!", "New stage record: fastest win!") : L("Kỷ lục mới của màn: hạ nhiều slime nhất!", "New stage record: most slimes!");
             lines.Children.Add(news);
         }
-        if (result.Ranked && adventure?.Record(stage, result.Weapon, result.Difficulty) is { Empty: false } best)
+        if (result.Ranked && adventure?.Record(stage, result.Weapon, result.Difficulty, result.NoApps) is { Empty: false } best)
         {
-            var records = Line(PetUi.SmallSize, opacity: 0.85); records.Text = L("Kỷ lục màn (trang bị này): ", "Stage records (this gear): ") + RecordLine(best);
+            var records = Line(PetUi.SmallSize, opacity: 0.85);
+            records.Text = (result.NoApps ? L("Kỷ lục màn (trang bị này, không app): ", "Stage records (this gear, no apps): ") : L("Kỷ lục màn (trang bị này): ", "Stage records (this gear): ")) + RecordLine(best);
             lines.Children.Add(records);
         }
 

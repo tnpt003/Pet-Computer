@@ -207,7 +207,7 @@ public sealed class DesktopAppIcon : FrameworkElement
     private static readonly Dictionary<string, (Geometry Shape, double Width, double Height)> Labels = new();
     private void DrawLabel(DrawingContext dc, DesktopApp app, Point c, double t)
     {
-        string name = sim.AppRules?.App(app.Kind).Name(English) ?? app.Kind.ToString();
+        string name = sim.AppRules?.App(app.Kind).Name(Language) ?? app.Kind.ToString();
         if (!Labels.TryGetValue(name, out var label))
         {
             var text = new FormattedText(name, CultureInfo.CurrentUICulture, FlowDirection.LeftToRight, LabelFont, 11.5, Brushes.White, 1)

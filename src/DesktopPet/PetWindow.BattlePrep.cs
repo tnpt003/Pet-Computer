@@ -382,7 +382,7 @@ public sealed partial class PetWindow
             text.Visibility = string.IsNullOrEmpty(value) ? Visibility.Collapsed : Visibility.Visible;
         }
         var chosen = BattleTuning.Weapon(prepWeapon);
-        prepTitle.Text = prepStage is StageSpec stage ? StageTitle(stage) + (stage.Goal(English) is { Length: > 0 } goal ? "\n" + goal : "")
+        prepTitle.Text = prepStage is StageSpec stage ? StageTitle(stage) + (stage.Goal(preferences.Language) is { Length: > 0 } goal ? "\n" + goal : "")
             : prepForExpedition && Expedition is Expedition x ? L("Viễn chinh — chuẩn bị chuyến", "Expedition — prepare the run") + "\n"
                 + LF($"{x.Spec.StepCount} bậc, bậc cuối là trùm. Vũ khí, độ khó, HP và build giữ suốt chuyến.", $"{x.Spec.StepCount} steps, the last one a boss. Weapon, difficulty, HP and build carry through the run.")
             : prepForEndless && BattleTuning.Endless is EndlessSpec infinity ? L("Vô tận — chuẩn bị", "Infinity — get ready") + "\n" + EndlessAbout(infinity) + EndlessRecordLine(infinity, prepWeapon, prepDifficulty)
@@ -392,8 +392,8 @@ public sealed partial class PetWindow
         foreach (var (id, card, check, name, hint, statNames, _) in prepCards)
         {
             var weapon = BattleTuning.Weapon(id);
-            name.Text = weapon.Name(English);
-            hint.Text = weapon.Hint(English);
+            name.Text = weapon.Name(preferences.Language);
+            hint.Text = weapon.Hint(preferences.Language);
             for (int i = 0; i < statNames.Length; i++) statNames[i].Text = L(WeaponStatScales[i].Vi, WeaponStatScales[i].En);
             ShowChosen(card, id == prepWeapon, check, rim: (2.5, 1)); // A thick white rim when chosen.
         }
@@ -418,7 +418,7 @@ public sealed partial class PetWindow
         prepGuideText!.Text = L("Cách chơi", "How to play");
         prepCancelText!.Text = prepStage != null || prepForExpedition ? L("‹ Bản đồ", "‹ Map") : prepForEndless ? L("‹ Sảnh", "‹ Hub") : L("Đóng", "Close");
         prepTryText!.Text = L("Xem thử", "Try it");
-        Show(prepTipText, prepStage?.Tip(English) is { Length: > 0 } ? L("Mẹo màn", "Stage tip") : null);
+        Show(prepTipText, prepStage?.Tip(preferences.Language) is { Length: > 0 } ? L("Mẹo màn", "Stage tip") : null);
         bool can = waiting == null;
         if (prepReady.IsEnabled != can) { prepReady.IsEnabled = can; prepReady.Opacity = can ? 1 : 0.5; }
     }
@@ -440,9 +440,9 @@ public sealed partial class PetWindow
         {
             int points = build.Where(card => cards.FirstOrDefault(u => u.Id == card.Key)?.Group == group).Sum(card => card.Value);
             if (points > 0) parts.Add($"{BuildGroups.Name(group, preferences.Language)} {points}");
-            foreach (var y in BattleTuning.SynergyList) if (y.Group == group && points >= y.At) parts.Add("★ " + y.Name(English));
+            foreach (var y in BattleTuning.SynergyList) if (y.Group == group && points >= y.At) parts.Add("★ " + y.Name(preferences.Language));
         }
-        foreach (var u in cards) if (u.Rare && build.TryGetValue(u.Id, out int n) && n > 0) parts.Add("◆ " + u.Name(English));
+        foreach (var u in cards) if (u.Rare && build.TryGetValue(u.Id, out int n) && n > 0) parts.Add("◆ " + u.Name(preferences.Language));
         return parts;
     }
 }

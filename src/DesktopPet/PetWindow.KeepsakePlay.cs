@@ -78,12 +78,12 @@ public sealed partial class PetWindow
         {
             if (keepsakeHeld || paused) { e.Handled = true; return; }
             menu.Items.Clear();
-            bool english = English;
+            string language = preferences.Language;
             string? shown = DisplayedKeepsake?.Id;
             foreach (var keepsake in DisplayableKeepsakes)
             {
                 string id = keepsake.Id;
-                var item = new MenuItem { Header = keepsake.Name(english), IsCheckable = true, IsChecked = id == shown, IsEnabled = keepsakeHop == KeepsakeHop.None };
+                var item = new MenuItem { Header = keepsake.Name(language), IsCheckable = true, IsChecked = id == shown, IsEnabled = keepsakeHop == KeepsakeHop.None };
                 item.Click += (_, _) => SwapDisplayed(id);
                 menu.Items.Add(item);
             }

@@ -204,7 +204,7 @@ public sealed class BattleHud : Border
 
     private bool English => PetLanguage.UsesEnglish(language());
     // Descriptions use the battle's own numbers (battle.json), so they always match.
-    public string Describe(BattleSkill skill) => BattleSkills.Get(skill).Describe(last?.Settings ?? BattleData.Settings, English);
+    public string Describe(BattleSkill skill) => BattleSkills.Get(skill).Describe(last?.Settings ?? BattleData.Settings, language());
     private string SkillTip(BattleSkill skill) => Describe(skill);
 
     public void ShowBanner(string text, double now, double seconds = 1.6)
@@ -281,10 +281,10 @@ public sealed class BattleHud : Border
                 foreach (var y in b.Settings.SynergyList) if (y.Group == group && (goal == 0 || y.At < goal)) goal = y.At;
                 if (points > 0) parts.Add(goal > 0 ? $"{BuildGroups.Name(group, language())} {Math.Min(points, goal)}/{goal}" : $"{BuildGroups.Name(group, language())} {points}");
             }
-            foreach (var y in b.Synergies) parts.Add("★ " + y.Name(English));
-            foreach (var u in b.Settings.UpgradeList) if (u.Rare && b.Stacks(u.Id) > 0) parts.Add("◆ " + u.Name(English));
+            foreach (var y in b.Synergies) parts.Add("★ " + y.Name(language()));
+            foreach (var u in b.Settings.UpgradeList) if (u.Rare && b.Stacks(u.Id) > 0) parts.Add("◆ " + u.Name(language()));
             // An Expedition run's relics (fixed for the battle).
-            foreach (var r in b.Relics) parts.Add("◈ " + r.Name(English));
+            foreach (var r in b.Relics) parts.Add("◈ " + r.Name(language()));
             upgradesText.Text = string.Join(" · ", parts);
             upgradesText.Visibility = parts.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
         }
@@ -302,7 +302,7 @@ public sealed class BattleHud : Border
             if (bossKey != shownBoss)
             {
                 shownBoss = bossKey;
-                bossName.Text = boss.Type.Name(English) + (boss.Shielded ? L(" (khiên: hạ hết quân!)", " (shielded: defeat its helpers!)") : boss.Enraged ? L(" (nổi giận!)", " (enraged!)") : "") + $"  {bossKey.Item1}/{boss.MaxHp}";
+                bossName.Text = boss.Type.Name(language()) + (boss.Shielded ? L(" (khiên: hạ hết quân!)", " (shielded: defeat its helpers!)") : boss.Enraged ? L(" (nổi giận!)", " (enraged!)") : "") + $"  {bossKey.Item1}/{boss.MaxHp}";
             }
         }
 
@@ -379,14 +379,14 @@ public sealed class BattleHud : Border
             : LF($" · thả xuống được {grace} giây an toàn", $" · landing gives {grace} s of safety"));
     }
 
-    public string SkillName(BattleSkill skill) => BattleSkills.Get(skill).Name(English, last?.Settings);
+    public string SkillName(BattleSkill skill) => BattleSkills.Get(skill).Name(language(), last?.Settings);
 
     // The boss of the current wave (alive or still to come).
     private string BossName(BattleSim b)
     {
-        if (b.Boss is { } boss) return boss.Type.Name(English);
+        if (b.Boss is { } boss) return boss.Type.Name(language());
         foreach (var group in b.WavePlan[Math.Clamp(b.Wave, 1, b.WaveCount) - 1].Groups)
-            if (group.Fixed && b.Settings.Enemy(group.Enemy) is { Boss: true } type) return type.Name(English);
+            if (group.Fixed && b.Settings.Enemy(group.Enemy) is { Boss: true } type) return type.Name(language());
         return "Boss";
     }
 

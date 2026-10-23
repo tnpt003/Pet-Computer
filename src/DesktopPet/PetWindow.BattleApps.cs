@@ -242,13 +242,13 @@ public sealed partial class PetWindow
         string state = app.Infected ? LF($"☣ Nhiễm virus! Bấm thêm {app.ScrubsLeft} lần để quét (hoặc hạ slime đeo ☣).", $"☣ Infected! Click {app.ScrubsLeft} more times to scrub it (or defeat the slime wearing ☣).")
             : app.Ready ? L("Sẵn sàng — bấm để dùng.", "Ready — click to use.")
             : LF($"Đang sạc {Math.Floor(app.Charge * 100)}%", $"Charging {Math.Floor(app.Charge * 100)}%");
-        string text = $"{spec.Name(English)}\n{(app.Infected ? spec.Bad(English) : spec.Desc(English))}\n{state}";
+        string text = $"{spec.Name(preferences.Language)}\n{(app.Infected ? spec.Bad(preferences.Language) : spec.Desc(preferences.Language))}\n{state}";
         if (appHintText.Tag as string != text)
         {
             appHintText.Inlines.Clear();
-            appHintText.Inlines.Add(new System.Windows.Documents.Run(spec.Name(English)) { FontWeight = FontWeights.Bold, FontSize = PetUi.BodySize });
+            appHintText.Inlines.Add(new System.Windows.Documents.Run(spec.Name(preferences.Language)) { FontWeight = FontWeights.Bold, FontSize = PetUi.BodySize });
             appHintText.Inlines.Add(new System.Windows.Documents.LineBreak());
-            appHintText.Inlines.Add(new System.Windows.Documents.Run(app.Infected ? spec.Bad(English) : spec.Desc(English)));
+            appHintText.Inlines.Add(new System.Windows.Documents.Run(app.Infected ? spec.Bad(preferences.Language) : spec.Desc(preferences.Language)));
             appHintText.Inlines.Add(new System.Windows.Documents.LineBreak());
             appHintText.Inlines.Add(new System.Windows.Documents.Run(state) { Foreground = app.Infected ? AppArt.GooGreen : app.Ready ? AppArt.Gold : Brushes.LightGray });
             appHintText.Tag = text;

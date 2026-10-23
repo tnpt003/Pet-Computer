@@ -81,14 +81,14 @@ internal static class BattleDataTests
                 "Yarn bomb — choose, then click a slime: bursts after 0.5 s for 30 damage to every slime nearby. 12 s cooldown."),
             (BattleSkill.Shield, "Khiên bong bóng — 3 giây mèo không mất máu. Hồi 15 giây.", "Bubble shield — for 3 s the cat takes no damage. 15 s cooldown."),
         };
-        check(oldTexts.All(t => BattleSkills.Get(t.Skill).Describe(shipped, false) == t.Vi && BattleSkills.Get(t.Skill).Describe(shipped, true) == t.En) &&
-              BattleSkills.Get(BattleSkill.Heal).Name(false) == "Cá hồi máu" && BattleSkills.Get(BattleSkill.Shield).Name(true) == "Bubble shield",
+        check(oldTexts.All(t => BattleSkills.Get(t.Skill).Describe(shipped, "vi") == t.Vi && BattleSkills.Get(t.Skill).Describe(shipped, "en") == t.En) &&
+              BattleSkills.Get(BattleSkill.Heal).Name("vi") == "Cá hồi máu" && BattleSkills.Get(BattleSkill.Shield).Name("en") == "Bubble shield",
             "Skill descriptions fill in the numbers as before (same words in both languages)");
         var renamed = BattleData.ParseWithOverride(ExpeditionFixture.Embedded(),
             "{ \"schemaVersion\": 1, \"pushCooldown\": 7, \"skills\": [ { \"id\": \"heal\", \"nameEn\": \"Fish snack\", \"descEn\": \"Snack: +{healAmount} HP, every {HEALCOOLDOWN} s\" } ] }");
-        check(BattleSkills.Get(BattleSkill.Heal).Name(true, renamed) == "Fish snack" && BattleSkills.Get(BattleSkill.Heal).Name(false, renamed) == "Cá hồi máu" &&
-              BattleSkills.Get(BattleSkill.Heal).Describe(renamed, true) == "Snack: +25 HP, every 20 s" &&
-              BattleSkills.Get(BattleSkill.Push).Describe(renamed, true).EndsWith("7 s cooldown.") && renamed.SkillList.Count == 5,
+        check(BattleSkills.Get(BattleSkill.Heal).Name("en", renamed) == "Fish snack" && BattleSkills.Get(BattleSkill.Heal).Name("vi", renamed) == "Cá hồi máu" &&
+              BattleSkills.Get(BattleSkill.Heal).Describe(renamed, "en") == "Snack: +25 HP, every 20 s" &&
+              BattleSkills.Get(BattleSkill.Push).Describe(renamed, "en").EndsWith("7 s cooldown.") && renamed.SkillList.Count == 5,
             "A user file changes one skill's texts by id (keys ignore case); the others and new numbers still show");
         string SkillError(string skills)
         {

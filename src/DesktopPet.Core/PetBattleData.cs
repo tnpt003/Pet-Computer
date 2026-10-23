@@ -136,7 +136,7 @@ public sealed class EnemyType
     public double Cost { get; init; } = 1;
     // The one elite affix this kind may roll when it spawns (null: never elite).
     public EliteSpec? Elite { get; init; }
-    public string Name(bool english) => english ? NameEn : NameVi;
+    public string Name(string language) => PetText.Data(language, NameVi, NameEn);
 }
 
 // An elite affix (Enemy Director): rolled once when a wave or stream spawns the enemy, never for a
@@ -173,7 +173,7 @@ public sealed class EliteSpec
     // A short line for the banner the first time an elite of this kind appears in a battle.
     public string DescVi { get; init; } = "";
     public string DescEn { get; init; } = "";
-    public string Describe(bool english) => english ? DescEn : DescVi;
+    public string Describe(string language) => PetText.Data(language, DescVi, DescEn);
 }
 
 public sealed class BossPhase
@@ -260,7 +260,7 @@ public sealed class ChapterSpec
     public string NameVi { get; init; } = "";
     public string NameEn { get; init; } = "";
     public StageSpec[] Stages { get; init; } = Array.Empty<StageSpec>();
-    public string Name(bool english) => english ? NameEn : NameVi;
+    public string Name(string language) => PetText.Data(language, NameVi, NameEn);
 }
 
 public sealed class StageSpec
@@ -304,10 +304,10 @@ public sealed class StageSpec
     // A short tip shown once when the stage first starts (and again from its setup panel).
     public string? TipVi { get; init; }
     public string? TipEn { get; init; }
-    public string? Tip(bool english) => english ? TipEn : TipVi;
+    public string? Tip(string language) => language == PetLanguage.Vietnamese || TipEn == null ? (PetLanguage.UsesEnglish(language) ? TipEn : TipVi) : PetText.Data(language, TipVi ?? "", TipEn);
     public WaveSpec[] Waves { get; init; } = Array.Empty<WaveSpec>();
-    public string Name(bool english) => english ? NameEn : NameVi;
-    public string Goal(bool english) => english ? GoalEn : GoalVi;
+    public string Name(string language) => PetText.Data(language, NameVi, NameEn);
+    public string Goal(string language) => PetText.Data(language, GoalVi, GoalEn);
 }
 
 // An upgrade offered between the waves of an Adventure stage. A run keeps what it took; in the
@@ -333,8 +333,8 @@ public sealed class UpgradeSpec
     // A rare card (one per group, at most once a build): it takes the place of its group's card in an
     // offer with BattleSettings.RareChance. It plays differently, not better in every way.
     public bool Rare { get; init; }
-    public string Name(bool english) => english ? NameEn : NameVi;
-    public string Describe(bool english) => english ? DescEn : DescVi;
+    public string Name(string language) => PetText.Data(language, NameVi, NameEn);
+    public string Describe(string language) => PetText.Data(language, DescVi, DescEn);
 }
 
 // A build bonus: once a build holds At points of a group (one per card taken), the effect is on
@@ -354,8 +354,8 @@ public sealed class SynergySpec
     public string NameEn { get; init; } = "";
     public string DescVi { get; init; } = "";
     public string DescEn { get; init; } = "";
-    public string Name(bool english) => english ? NameEn : NameVi;
-    public string Describe(bool english) => english ? DescEn : DescVi;
+    public string Name(string language) => PetText.Data(language, NameVi, NameEn);
+    public string Describe(string language) => PetText.Data(language, DescVi, DescEn);
 }
 
 // The upgrade groups, in the order cards, the HUD and the setup panel show them.
@@ -936,8 +936,8 @@ public static class BattleData
 public sealed record BattleSkillInfo(BattleSkill Skill, bool Aimed, Func<BattleSettings, double> Cooldown)
 {
     // Without a battle's settings: the built-in data's names.
-    public string Name(bool english, BattleSettings? s = null) => (s ?? BattleData.Settings).Skill(Skill).Name(english);
-    public string Describe(BattleSettings s, bool english) => BattleSkills.Fill(s.Skill(Skill).Desc(english), s);
+    public string Name(string language, BattleSettings? s = null) => (s ?? BattleData.Settings).Skill(Skill).Name(language);
+    public string Describe(BattleSettings s, string language) => BattleSkills.Fill(s.Skill(Skill).Desc(language), s);
 }
 
 public static class BattleSkills

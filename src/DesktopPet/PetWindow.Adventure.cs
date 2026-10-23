@@ -59,7 +59,7 @@ public sealed partial class PetWindow
         .Where(t => t is { Visibility: Visibility.Visible }).Select(t => t!.Text).Concat(mapNodes.Select(n => n.Label.Text)));
 
     private string StageNumber(StageSpec stage) => Adventure?.Locate(stage.Id) is { } at ? (at.Index + 1).ToString() : "";
-    private string StageTitle(StageSpec stage) => LF($"Màn {StageNumber(stage)} · ", $"Stage {StageNumber(stage)} · ") + stage.Name(English);
+    private string StageTitle(StageSpec stage) => LF($"Màn {StageNumber(stage)} · ", $"Stage {StageNumber(stage)} · ") + stage.Name(preferences.Language);
 
     // Null when the map is open (opening it twice keeps the one map), otherwise why not.
     // It replaces an open setup panel or result panel; a battle must end first.
@@ -202,7 +202,7 @@ public sealed partial class PetWindow
             if (text.Text != (value ?? "")) text.Text = value ?? "";
             text.Visibility = string.IsNullOrEmpty(value) ? Visibility.Collapsed : Visibility.Visible;
         }
-        mapTitle.Text = L("Phiêu lưu — ", "Adventure — ") + chapter.Name(English);
+        mapTitle.Text = L("Phiêu lưu — ", "Adventure — ") + chapter.Name(preferences.Language);
         string? dataNote = BattleDataError != null
             ? L("File battle.json của bạn có lỗi nên dùng dữ liệu gốc: ", "Your battle.json has a mistake, so the built-in battle is used: ") + BattleDataError
             : BattleDataCustom ? L("Đang dùng battle.json tùy chỉnh: chơi được nhưng không lưu tiến trình và kỷ lục.", "Using your custom battle.json: you can play, but progress and records are not saved.") : null;
@@ -222,7 +222,7 @@ public sealed partial class PetWindow
             mark.Data = done ? CheckMark : LockMark;
             mark.Stroke = done ? MapDoneInk : Brushes.White;
             mark.Visibility = done || !open ? Visibility.Visible : Visibility.Collapsed;
-            label.Text = stage.Name(English);
+            label.Text = stage.Name(preferences.Language);
             label.Opacity = open ? 1 : 0.6;
             label.FontWeight = selected ? FontWeights.Bold : FontWeights.Normal;
             if (link != null)
@@ -234,15 +234,15 @@ public sealed partial class PetWindow
         if (adventure.Stage(mapStageId) is not StageSpec chosen) return;
         bool unlocked = adventure.IsUnlocked(chosen.Id);
         mapStageName!.Text = StageTitle(chosen);
-        Show(mapGoal, chosen.Goal(English));
+        Show(mapGoal, chosen.Goal(preferences.Language));
         var previous = adventure.Locate(chosen.Id) is { Index: > 0 } where ? where.Chapter.Stages[where.Index - 1] : null;
         Show(mapStatus, adventure.IsCompleted(chosen.Id) ? L("Đã hoàn thành", "Completed") + StageRules(chosen)
             : unlocked ? L("Đã mở · ", "Open · ") + ObjectiveText(chosen) + StageRules(chosen)
-            : LF($"Chưa mở — thắng màn {StageNumber(previous!)} ({previous!.Name(false)}) trước", $"Locked — win stage {StageNumber(previous!)} ({previous!.Name(true)}) first"));
+            : LF($"Chưa mở — thắng màn {StageNumber(previous!)} ({previous!.Name(PetLanguage.Vietnamese)}) trước", $"Locked — win stage {StageNumber(previous!)} ({previous!.Name(preferences.Language)}) first"));
         mapStatus!.Foreground = unlocked ? Brushes.White : PrepWarning;
         string? record = StageRecordLine(adventure, chosen);
         string? prize = chosen.Reward is string reward && PetAccessories.Find(reward) is { } item
-            ? L("Phần thưởng: ", "Reward: ") + item.Name(English) + (adventure.HasReward(reward) ? L(" ✓ đã nhận", " ✓ received") : "") : null;
+            ? L("Phần thưởng: ", "Reward: ") + item.Name(preferences.Language) + (adventure.HasReward(reward) ? L(" ✓ đã nhận", " ✓ received") : "") : null;
         Show(mapRecord, string.Join("\n", new[] { record, prize }.Where(t => t != null)));
         mapEnterText!.Text = L("Vào màn", "Play stage");
         mapCloseText!.Text = L("‹ Sảnh", "‹ Hub");
@@ -273,10 +273,10 @@ public sealed partial class PetWindow
     {
         // An Expedition encounter: its step and name as the banner (the HUD's name line already says
         // Expedition; encounters have no tips).
-        if (battleExpedition is ExpeditionBattle x) { battleHud?.ShowBanner(StepTitle(x.Node.Step, x.Expedition.Spec.StepCount) + " · " + stage.Name(English), 0, 1.4); return; }
-        if (stage.Endless) { battleHud?.ShowBanner(stage.Name(English), 0, 1.4); return; }
+        if (battleExpedition is ExpeditionBattle x) { battleHud?.ShowBanner(StepTitle(x.Node.Step, x.Expedition.Spec.StepCount) + " · " + stage.Name(preferences.Language), 0, 1.4); return; }
+        if (stage.Endless) { battleHud?.ShowBanner(stage.Name(preferences.Language), 0, 1.4); return; }
         battleHud?.ShowBanner(StageTitle(stage), 0, 1.4);
-        if (!AdventureProgress.Seen.Contains(stage.Id) && stage.Tip(English) is { Length: > 0 }) ShowStageTip(stage);
+        if (!AdventureProgress.Seen.Contains(stage.Id) && stage.Tip(preferences.Language) is { Length: > 0 }) ShowStageTip(stage);
     }
 
     // End (HUD or menu): the battle stops with nothing counted. A stage run goes back to the map
@@ -343,7 +343,7 @@ public sealed partial class PetWindow
             if (PetAccessories.Find(reward) is { } item)
             {
                 var prize = Line(PetUi.BodySize, RecordGold, true);
-                prize.Text = LF($"Phần thưởng mới: {item.Name(false)} — đội trong Cài đặt → Mèo", $"New reward: {item.Name(true)} — wear it in Settings → Cat");
+                prize.Text = LF($"Phần thưởng mới: {item.Name(PetLanguage.Vietnamese)} — đội trong Cài đặt → Mèo", $"New reward: {item.Name(preferences.Language)} — wear it in Settings → Cat");
                 lines.Children.Add(prize);
             }
         if (result.Upgrades.Length > 0)

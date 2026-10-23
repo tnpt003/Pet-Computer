@@ -150,8 +150,8 @@ public sealed partial class PetWindow
             var spec = battle.Settings.UpgradeList.FirstOrDefault(u => u.Id == id);
             if (spec == null) continue;
             bool chosen = id == upgradePick;
-            name.Text = spec.Name(English);
-            desc.Text = spec.Describe(English);
+            name.Text = spec.Name(preferences.Language);
+            desc.Text = spec.Describe(preferences.Language);
             int have = battle.Stacks(id);
             count.Text = spec.Rare ? L("★ Thẻ hiếm · một lần mỗi build", "★ Rare · once per build")
                 : spec.MaxStacks > 0 ? LF($"Đã có {have}/{spec.MaxStacks}", $"Have {have}/{spec.MaxStacks}") : have > 0 ? LF($"Đã lấy {have} lần", $"Taken {have}×") : "";
@@ -176,7 +176,7 @@ public sealed partial class PetWindow
         int points = b.GroupPoints(group), goal = 0;
         foreach (var y in b.Settings.SynergyList) if (y.Group == group && !b.Synergies.Contains(y) && (goal == 0 || y.At < goal)) goal = y.At;
         string text = BuildGroups.Name(group, preferences.Language) + $" {points} → {points + 1}" + (goal > 0 ? $"/{goal}" : "");
-        if (b.Unlocks(card) is SynergySpec synergy) text += LF($" · Mở {synergy.Name(false)}!", $" · {synergy.Name(true)}!");
+        if (b.Unlocks(card) is SynergySpec synergy) text += LF($" · Mở {synergy.Name(PetLanguage.Vietnamese)}!", $" · {synergy.Name(preferences.Language)}!");
         return text;
     }
 
@@ -184,7 +184,7 @@ public sealed partial class PetWindow
 
     // "Sharp edge ×2 · Quick feet" for the HUD and the result panel (empty without upgrades).
     private string UpgradeSummary(BattleSim b) => string.Join(" · ", b.Settings.UpgradeList.Where(u => b.Stacks(u.Id) > 0)
-        .Select(u => u.Name(English) + (b.Stacks(u.Id) > 1 ? $" ×{b.Stacks(u.Id)}" : "")));
+        .Select(u => u.Name(preferences.Language) + (b.Stacks(u.Id) > 1 ? $" ×{b.Stacks(u.Id)}" : "")));
 }
 
 // An upgrade card's picture, one simple vector drawing per effect.

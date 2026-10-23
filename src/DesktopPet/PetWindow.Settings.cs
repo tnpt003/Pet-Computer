@@ -114,7 +114,7 @@ public sealed partial class PetWindow
         var displayable = DisplayableKeepsakes.ToArray();
         form.TrophyIds = displayable.Select(k => k.Id).ToArray();
         form.Trophy = new ComboBox { IsEnabled = displayable.Length > 0,
-            ItemsSource = displayable.Length > 0 ? displayable.Select(k => k.Name(English)).ToArray() : new[] { L("Chưa có kỷ vật", "No keepsakes yet") },
+            ItemsSource = displayable.Length > 0 ? displayable.Select(k => k.Name(preferences.Language)).ToArray() : new[] { L("Chưa có kỷ vật", "No keepsakes yet") },
             SelectedIndex = Math.Max(0, Array.IndexOf(form.TrophyIds, DisplayedKeepsake?.Id)),
             ToolTip = L("Kỷ vật đứng trên màn hình (thắng Viễn chinh để nhận thêm).", "The keepsake standing on the screen (win Expeditions for more).") };
         var petTab = Page(

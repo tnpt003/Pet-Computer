@@ -179,7 +179,7 @@ public sealed partial class PetWindow
         return true;
     }
 
-    private string WeaponName(WeaponSpec weapon) => weapon.Name(English);
+    private string WeaponName(WeaponSpec weapon) => weapon.Name(preferences.Language);
 
     private string DifficultyName(BattleDifficulty level) => level switch
     {
@@ -359,7 +359,7 @@ public sealed partial class PetWindow
         bool done = battle.UseApp(id, pet.X + settings.Width / 2);
         if (!done && battle.AppRules is AppsSpec rules)
         {
-            string name = rules.App(app.Kind).Name(English);
+            string name = rules.App(app.Kind).Name(preferences.Language);
             ShowBattleNotice(!app.Ready ? LF($"{name} đang sạc: {Math.Floor(app.Charge * 100)}%.", $"{name} is charging: {Math.Floor(app.Charge * 100)}%.")
                 : battle.SkillsLocked ? L("Đặt mèo xuống rồi hãy dùng app.", "Put the cat down to use an app.")
                 : app.Kind == BattleAppKind.Undo ? L("Mèo chưa mất máu trong mấy giây vừa qua.", "The cat lost no HP in the last few seconds.")
@@ -435,7 +435,7 @@ public sealed partial class PetWindow
                 Combos = BattleReport.Combos + battle.CombosLanded, Records = BattleReport.Records + (news.Any ? 1 : 0)
             };
             var result = new BattleSummary(won, battle.Defeated, battle.FightSeconds, battle.CatHp, battle.CatMaxHp, battle.BossDefeated,
-                battle.DefeatedBoss?.Name(English), battle.Difficulty, news, battle.Weapon.Id, WeaponName(battle.Weapon), battleCustomData, battle.Weapon.Style,
+                battle.DefeatedBoss?.Name(preferences.Language), battle.Difficulty, news, battle.Weapon.Id, WeaponName(battle.Weapon), battleCustomData, battle.Weapon.Style,
                 battle.Stage, outcome, !battleCustomData, UpgradeSummary(battle), step, endless ? battle.Wave : 0,
                 endless && EndlessRewards is EndlessSpec given ? given.EarnedBy(BattleRecords.EndlessCleared(given)).Where(m => m.Wave > clearedBefore).ToList() : null);
             EndBattle();

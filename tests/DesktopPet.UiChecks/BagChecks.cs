@@ -70,10 +70,10 @@ internal static class BagChecks
             Click(Button(hub, "Rewards")!);
             await Task.Delay(30);
             string text = window.BattleRewardsText;
-            var accessories = data.Campaign!.Chapters.SelectMany(c => c.Stages).Where(s => s.Reward != null).Select(s => PetAccessories.Find(s.Reward)!.Name(true)).ToList();
+            var accessories = data.Campaign!.Chapters.SelectMany(c => c.Stages).Where(s => s.Reward != null).Select(s => PetAccessories.Find(s.Reward)!.Name("en")).ToList();
             check(window.BattleRewardsShown && window.BattleHubText.StartsWith("Rewards") && Button(hub, "‹ Hub") != null && Count("Pet battle hub") == 1 && behavior.Quiet
                 && text.Contains("Adventure accessories") && text.Contains("Expedition keepsakes") && accessories.All(a => text.Contains(a) && !text.Contains("✓ " + a))
-                && data.Expedition!.Keepsakes.All(k => text.Contains(k.Name(true))) && text.Contains("Records") && text.Contains("not won yet") && !text.Split('\n').Contains("New"),
+                && data.Expedition!.Keepsakes.All(k => text.Contains(k.Name("en"))) && text.Contains("Records") && text.Contains("not won yet") && !text.Split('\n').Contains("New"),
                 $"Rewards in the hub's window: locked tiles, keepsakes, records, no New badge ({text.Replace('\n', '|')})");
             Shot("Pet battle hub", "battle-rewards-empty-en.png");
             Click(Button(hub, "‹ Hub")!);
@@ -91,7 +91,7 @@ internal static class BagChecks
             check(fresh == accessories.Count + 1 && Button(hub, $"Rewards · {fresh} new") != null, $"The button counts new rewards ({fresh})");
             window.ShowBattleRewards(true);
             text = window.BattleRewardsText;
-            check(accessories.All(a => text.Contains("✓ " + a)) && text.Contains("✓ " + data.Expedition.Keepsakes[0].Name(true)) && text.Split('\n').Count(l => l == "New") == fresh
+            check(accessories.All(a => text.Contains("✓ " + a)) && text.Contains("✓ " + data.Expedition.Keepsakes[0].Name("en")) && text.Split('\n').Count(l => l == "New") == fresh
                 && text.Contains("1:01") && text.Contains("1 win"),
                 $"Won rewards are marked, each new one has a badge; records show the fastest win ({text.Replace('\n', '|')})");
             check(window.BattleRewardsNew == 0 && AdventureProgress.Load(adventureFile).RewardsSeen.Count == fresh, "Showing them saves them as seen");
@@ -124,9 +124,9 @@ internal static class BagChecks
             Click(Button(bag!, "Cards")!);
             await Task.Delay(10);
             text = window.BattleBagText;
-            string sharp = data.UpgradeList.First(u => u.Id == "sharp").Name(true);
+            string sharp = data.UpgradeList.First(u => u.Id == "sharp").Name("en");
             check(window.BattleBagTab == PetWindow.BagCardsTab && text.Contains(sharp) && text.Contains("×2") && text.Contains("Defense 3") && text.Contains("Power 2")
-                && sim.Synergies.All(y => text.Contains("★ " + y.Name(true))) && text.Contains("more → ★"),
+                && sim.Synergies.All(y => text.Contains("★ " + y.Name("en"))) && text.Contains("more → ★"),
                 $"Cards tab: tiles, ×n, each group's synergy progress ({text.Replace('\n', '|')})");
             Shot("Pet bag", "bag-adventure-cards-en.png");
             Click(Button(bag!, "Relics")!);
@@ -170,8 +170,8 @@ internal static class BagChecks
             check(window.OpenExpeditionMap() == null && window.OpenBattleBag(PetWindow.BagStatsTab) == null && window.BattleBagMode == PetWindow.BagExpedition, "The Expedition map's Bag opens on the run");
             await Task.Delay(10);
             text = window.BattleBagText;
-            string feather = data.Expedition.Relic("light_feather")!.Name(true), charm = data.Expedition.Relic("reckless_charm")!.Name(true);
-            string hammer = data.Weapon(BattleWeapon.Hammer).Name(true);
+            string feather = data.Expedition.Relic("light_feather")!.Name("en"), charm = data.Expedition.Relic("reckless_charm")!.Name("en");
+            string hammer = data.Weapon(BattleWeapon.Hammer).Name("en");
             check(text.Contains("Bag · Expedition") && text.Contains(hammer) && text.Contains("Step 1/") && text.Contains("Hard") && text.Contains("HP 20/")
                 && text.Contains("Low HP") && text.Contains(feather + ": −15 max HP") && text.Contains(charm + ": always 10% more damage taken"),
                 $"Stats: the run's weapon and HP, warnings for low HP and each relic's price ({text.Replace('\n', '|')})");
@@ -186,7 +186,7 @@ internal static class BagChecks
             window.ShowBattleBagTab(PetWindow.BagStatsTab);
             text = window.BattleBagText;
             var relief = new BattleSim(data, 0, 1000, weapon: BattleWeapon.Hammer, seed: 0, relics: new[] { "relief_pack" });
-            string fish = BattleSkills.Get(BattleSkill.Heal).Name(true);
+            string fish = BattleSkills.Get(BattleSkill.Heal).Name("en");
             check(text.Contains("Skills") && text.Contains(fish) && text.Contains($"{relief.HealAmount:0} HP") && text.Contains("every " + relief.SkillCooldown(BattleSkill.Heal).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) + " s")
                 && text.Contains("every " + data.SkillCooldown(BattleSkill.Shield).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) + " s") && !text.Contains("This battle"),
                 $"Skills: cooldowns and the fish's heal after the relics; no battle numbers outside a battle ({text.Replace('\n', '|')})");
@@ -266,10 +266,10 @@ internal static class BagChecks
                 "Over a card offer the Bag opens too");
             // A card that changes the numbers: picked (not confirmed) the Bag previews it on both tabs.
             var offered = window.Battle!.UpgradeOffer!.FirstOrDefault(u => u.Effect is "damage" or "maxHp" or "armor" or "moveSpeed" or "attackSpeed" or "knock") ?? window.Battle!.UpgradeOffer![0];
-            check(window.PickBattleUpgrade(offered.Id) && window.BattleBagText.Contains("If you take: " + offered.Name(true)) && window.BattleBagText.Contains(offered.Describe(true)),
+            check(window.PickBattleUpgrade(offered.Id) && window.BattleBagText.Contains("If you take: " + offered.Name("en")) && window.BattleBagText.Contains(offered.Describe("en")),
                 "Picking a card shows it in the Bag's Cards tab as a preview");
             window.ShowBattleBagTab(PetWindow.BagStatsTab);
-            check(window.BattleBagText.Contains("If you take: " + offered.Name(true)) && window.BattleBagText.Contains(" → ") && window.BattleBagText.Contains("Blue numbers"),
+            check(window.BattleBagText.Contains("If you take: " + offered.Name("en")) && window.BattleBagText.Contains(" → ") && window.BattleBagText.Contains("Blue numbers"),
                 $"The Stats tab shows → the numbers after the card ({window.BattleBagText.Replace('\n', '|')})");
             Shot("Pet bag", "bag-card-preview-en.png");
             Call(window, "FillBag", true);
@@ -277,7 +277,7 @@ internal static class BagChecks
             check(window.PickBattleUpgrade(offered.Id) && window.ConfirmBattleUpgrade() && window.Battle!.Paused && (window.BattlePauseReasons & PetWindow.BattlePause.Upgrade) == 0,
                 "A card picked with the Bag open: the battle stays paused for the Bag");
             TickBag(0.3);
-            check(window.BattleBagText.Contains(offered.Name(true)) && !window.BattleBagText.Contains("If you take"), "The Bag shows the card just taken; the preview is gone");
+            check(window.BattleBagText.Contains(offered.Name("en")) && !window.BattleBagText.Contains("If you take"), "The Bag shows the card just taken; the preview is gone");
             window.CloseBattleBag();
             check(!window.Battle!.Paused, "Closing it lets the battle go on");
             window.EndBattle();

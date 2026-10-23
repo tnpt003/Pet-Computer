@@ -45,9 +45,9 @@ public sealed partial class PetWindow
 
     // A desktop app's name from an app event (Value: the icon's id).
     private string? AppName(BattleEvent e) =>
-        battle?.AppRules is AppsSpec rules && battle.FindApp((int)e.Value) is DesktopApp app ? rules.App(app.Kind).Name(English) : null;
+        battle?.AppRules is AppsSpec rules && battle.FindApp((int)e.Value) is DesktopApp app ? rules.App(app.Kind).Name(preferences.Language) : null;
 
-    private string BossName() => battle?.Boss?.Type.Name(English) ?? "Boss";
+    private string BossName() => battle?.Boss?.Type.Name(preferences.Language) ?? "Boss";
 
     // Big moments get a banner across the HUD's centre. The first heal, far heal, rally call and attack
     // from behind of a battle say what is going on (once each per battle), and so does the first elite
@@ -70,21 +70,21 @@ public sealed partial class PetWindow
                 BattleEventKind.BossShieldDown => L("KHIÊN VỠ!", "SHIELD DOWN!"),
                 BattleEventKind.BossEnraged =>LF($"{BossName()} nổi giận!", $"The {BossName()} is angry!"),
                 BattleEventKind.SynergyUnlocked when (int)e.Value >= 0 && (int)e.Value < battle.Settings.SynergyList.Count =>
-                    "★ " + battle.Settings.SynergyList[(int)e.Value].Name(English).ToUpper(System.Globalization.CultureInfo.CurrentCulture) + "!",
+                    "★ " + battle.Settings.SynergyList[(int)e.Value].Name(preferences.Language).ToUpper(System.Globalization.CultureInfo.CurrentCulture) + "!",
                 BattleEventKind.EnemyHealing when e.Value > 0 && !farHealExplained => L("Slime thảo dược hồi máu từ xa! Đẩy nó để cắt", "A herb slime heals from afar! Push it to cut it"),
                 BattleEventKind.EnemyHealing when !healerExplained => L("Quái hồi máu! Hạ nó trước", "A healer! Take it down first"),
                 BattleEventKind.BossRallying when !rallyExplained => LF($"{BossName()} sắp phong tinh anh! Đẩy để cắt", $"The {BossName()} is making an elite! Push it to cut it"),
-                BattleEventKind.BossRallied when battle.Find((int)e.Value) is Slime rallied => LF($"★ {rallied.Type.Name(false)} thành tinh anh!", $"★ The {rallied.Type.Name(true)} turns elite!"),
+                BattleEventKind.BossRallied when battle.Find((int)e.Value) is Slime rallied => LF($"★ {rallied.Type.Name(PetLanguage.Vietnamese)} thành tinh anh!", $"★ The {rallied.Type.Name(preferences.Language)} turns elite!"),
                 BattleEventKind.Incoming when !behindExplained => L("Quái tới từ phía sau!", "Enemies from behind!"),
                 BattleEventKind.EnemyWarded when !wardExplained => L("Đang được hồi thì miễn sát thương! Đẩy slime thảo dược", "Healing makes it immune! Push the herb slime"),
                 BattleEventKind.EliteAppeared when battle.Find((int)e.Value) is { Elite: EliteSpec elite } enemy && elitesExplained.Add(enemy.Type.Id) =>
-                    LF($"★ {enemy.Type.Name(false)} tinh anh: {elite.Describe(false)}", $"★ Elite {enemy.Type.Name(true)}: {elite.Describe(true)}"),
+                    LF($"★ {enemy.Type.Name(PetLanguage.Vietnamese)} tinh anh: {elite.Describe(PetLanguage.Vietnamese)}", $"★ Elite {enemy.Type.Name(preferences.Language)}: {elite.Describe(preferences.Language)}"),
                 BattleEventKind.PushResisted when !pushResistExplained && battle.Find((int)e.Value) is Slime firm =>
-                    LF($"★ {firm.Type.Name(false)} tinh anh miễn Đẩy!", $"★ The elite {firm.Type.Name(true)} ignores Push!"),
+                    LF($"★ {firm.Type.Name(PetLanguage.Vietnamese)} tinh anh miễn Đẩy!", $"★ The elite {firm.Type.Name(preferences.Language)} ignores Push!"),
                 // Infinity: a milestone reward not won before (it is saved when the run ends).
                 BattleEventKind.WaveCleared when battle.Endless && !battleCustomData && EndlessRewards is EndlessSpec rewards &&
                     rewards.MilestoneAt(battle.WavesCleared) is KeepsakeSpec prize && prize.Wave > BattleRecords.EndlessCleared(rewards) =>
-                    LF($"★ Mở khóa: {prize.Name(false)}!", $"★ Unlocked: {prize.Name(true)}!"),
+                    LF($"★ Mở khóa: {prize.Name(PetLanguage.Vietnamese)}!", $"★ Unlocked: {prize.Name(preferences.Language)}!"),
                 // Desktop apps: the first drop and the first popup say what to do; every app used shouts its name.
                 BattleEventKind.AppReady when !appExplained => L("App trên màn hình đã sạc đầy! Bấm vào icon để dùng", "An app on the screen is charged! Click its icon"),
                 BattleEventKind.AppUsed when AppName(e) is string used => "★ " + used.ToUpper(System.Globalization.CultureInfo.CurrentCulture) + "!",

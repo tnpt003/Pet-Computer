@@ -26,7 +26,7 @@ public sealed partial class PetWindow
 
     private (string Title, string Body) TutorialCard(int step)
     {
-        if (tipStage != null) return (L("Mẹo · ", "Tip · ") + StageTitle(tipStage), tipStage.Tip(English) ?? "");
+        if (tipStage != null) return (L("Mẹo · ", "Tip · ") + StageTitle(tipStage), tipStage.Tip(preferences.Language) ?? "");
         var s = BattleTuning;
         string grace = s.LandingGraceSeconds.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
         string again = s.RescueGraceCooldownSeconds.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
@@ -54,7 +54,7 @@ public sealed partial class PetWindow
     // Closing it (Done or Skip) marks it seen in the Adventure progress.
     public bool ShowStageTip(StageSpec stage)
     {
-        if (stage.Tip(English) is not { Length: > 0 }) return false;
+        if (stage.Tip(preferences.Language) is not { Length: > 0 }) return false;
         ShowGuide(stage);
         return BattleTutorialOpen;
     }

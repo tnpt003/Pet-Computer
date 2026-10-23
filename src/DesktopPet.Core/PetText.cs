@@ -53,6 +53,11 @@ public static class PetText
         _ => Translate(language, english) ?? english
     };
 
+    // Data text (battle.json, coats.json, accessories.json, keyed by its English like the code's):
+    // empty text stays empty instead of being looked up.
+    public static string Data(string language, string vietnamese, string english) =>
+        english.Length == 0 && language != PetLanguage.Vietnamese ? english : Pick(language, vietnamese, english);
+
     public static string PickFormat(string language, FormattableString vietnamese, FormattableString english)
     {
         if (language == PetLanguage.Vietnamese) return vietnamese.ToString(CultureInfo.CurrentCulture);

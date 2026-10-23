@@ -289,11 +289,11 @@ public sealed record WeaponSpec
     // The mark a plain hit leaves: "spark" (a quick white burst) or "thud" (dust and a ring on
     // the floor, for heavy weapons). Unset: "thud" for the hammer style, "spark" otherwise.
     public string? HitEffect { get; init; }
-    public string Name(bool english) => (english ? NameEn : NameVi) is { Length: > 0 } name ? name : Id;
+    public string Name(string language) => PetText.Data(language, NameVi, NameEn) is { Length: > 0 } name ? name : Id;
     [JsonIgnore] public string Effect => HitEffect ?? (Style == "hammer" ? "thud" : "spark");
     // Where in the swing the hit lands (0–1): the drawing times its slash to this moment.
     [JsonIgnore] public double HitFraction => SwingDuration > 0 ? Math.Clamp(HitTime / SwingDuration, 0.05, 0.95) : 0.45;
-    public string Hint(bool english) => english ? HintEn : HintVi;
+    public string Hint(string language) => PetText.Data(language, HintVi, HintEn);
     public double Damage { get; init; } = 45;
     public double Range { get; init; } = 76;
     public double AttackCooldown { get; init; } = 1.35;
@@ -311,8 +311,8 @@ public sealed record SkillSpec
     public string NameEn { get; init; } = "";
     public string DescVi { get; init; } = "";
     public string DescEn { get; init; } = "";
-    public string Name(bool english) => (english ? NameEn : NameVi) is { Length: > 0 } name ? name : Id;
-    public string Desc(bool english) => english ? DescEn : DescVi;
+    public string Name(string language) => PetText.Data(language, NameVi, NameEn) is { Length: > 0 } name ? name : Id;
+    public string Desc(string language) => PetText.Data(language, DescVi, DescEn);
 }
 
 // Multipliers on every enemy kind (1 = the kind's own numbers).
@@ -592,9 +592,9 @@ public sealed record AppSpec
     public string BadEn { get; init; } = "";
     public double Charge { get; init; }
     public double? Start { get; init; }
-    public string Name(bool english) => (english ? NameEn : NameVi) is { Length: > 0 } name ? name : Id;
-    public string Desc(bool english) => english ? DescEn : DescVi;
-    public string Bad(bool english) => english ? BadEn : BadVi;
+    public string Name(string language) => PetText.Data(language, NameVi, NameEn) is { Length: > 0 } name ? name : Id;
+    public string Desc(string language) => PetText.Data(language, DescVi, DescEn);
+    public string Bad(string language) => PetText.Data(language, BadVi, BadEn);
 }
 
 // What the battle wants the cat to do this frame. Hold: the user has the cat (or it is in

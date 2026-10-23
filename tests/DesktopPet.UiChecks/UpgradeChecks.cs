@@ -60,7 +60,7 @@ internal static class UpgradeChecks
             check(b.ChoosingUpgrade && b.Paused && window.BattlePauseReasons == PetWindow.BattlePause.Upgrade && !window.BattleUpgradeConfirmEnabled,
                 "Choosing pauses the battle for that reason only; Confirm waits for a pick");
             var offer = b.UpgradeOffer!;
-            check(offer.Count == 3 && offer.All(u => window.BattleUpgradeText.Contains(u.Name(true)) && window.BattleUpgradeText.Contains(u.Describe(true))) &&
+            check(offer.Count == 3 && offer.All(u => window.BattleUpgradeText.Contains(u.Name("en")) && window.BattleUpgradeText.Contains(u.Describe("en"))) &&
                   window.BattleUpgradeText.Contains("Pick an upgrade"), $"Three cards with name and effect ({window.BattleUpgradeText.Replace('\n', '|')})");
             check(offer.Select(u => u.Group).OrderBy(g => g).SequenceEqual(new[] { "defense", "power", "speed" }) &&
                   new[] { "Defense 0 → 1/3", "Power 0 → 1/3", "Speed 0 → 1/3" }.All(window.BattleUpgradeText.Contains) && window.BattleUpgradeText.Contains("kept for the next stage"),

@@ -758,14 +758,15 @@ internal static class Program
         window.ContextMenu.IsOpen = false;
         Check(japaneseMenu.Contains("今すぐ") && japaneseMenu.Contains("気持ち") && (string)form.Save.Content == "保存",
             "Japanese uses the translation table (menu, Settings)");
+        Check(form.Coat.Items.OfType<CoatChoice>().Any(c => c.Label == "三毛") && form.Accessory.Items.OfType<string>().Contains("リボン"),
+            "Japanese coat and accessory names come from the data's translations");
         customize.Close();
         window.ShowStatusCard(); window.ShowDiary();
         Field<Window?>(window, "statusWindow")?.UpdateLayout();
         bool japaneseDiary = Field<Window>(window, "diaryWindow").Title.EndsWith("の日記", StringComparison.Ordinal);
         Field<Window?>(window, "statusWindow")?.Close(); Field<Window>(window, "diaryWindow").Close();
-        // Coat and accessory names come from their data files (Japanese there in milestone J3).
-        var dataNames = PetCoats.All.Select(c => c.NameEn).Concat(PetAccessories.All.Select(a => a.NameEn)).Select(n => "ja: " + n).ToHashSet();
-        var untranslated = PetText.Missing.Where(m => m.StartsWith("ja: ", StringComparison.Ordinal) && !dataNames.Contains(m)).ToArray();
+        // Coat and accessory names in Settings come from their data files, translated like the code's text.
+        var untranslated = PetText.Missing.Where(m => m.StartsWith("ja: ", StringComparison.Ordinal)).ToArray();
         Check(japaneseDiary && untranslated.Length == 0 && window.L("Thử", "Untranslated (check)") == "Untranslated (check)",
             $"Japanese Settings, menus, status and diary have no untranslated text; missing text would show in English: {string.Join(" | ", untranslated)}");
         window.SetLanguage(languageBeforeJa);

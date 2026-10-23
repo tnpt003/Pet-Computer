@@ -43,7 +43,7 @@ internal static class BuildSynergyTests
         {
             int room = data.UpgradeList.Where(u => u.Group == group).Sum(u => u.MaxStacks == 0 ? 99 : u.MaxStacks);
             var synergy = data.SynergyList.Single(y => y.Group == group);
-            check(synergy.At == 3 && room >= 3, $"battle.json: {group} has room for {room} points and a synergy at 3 ({synergy.Name(true)})");
+            check(synergy.At == 3 && room >= 3, $"battle.json: {group} has room for {room} points and a synergy at 3 ({synergy.Name("en")})");
         }
         check(data.SynergyList.Select(y => y.Effect).OrderBy(e => e).SequenceEqual(new[] { "armorBreak", "echo", "thorns" }) &&
               data.UpgradeList.Single(u => u.Effect == "heal").Group == null && data.UpgradeList.Any(u => u is { Id: "big_heart", Effect: "maxHp", Group: "defense" }),

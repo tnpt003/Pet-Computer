@@ -10,6 +10,8 @@
 | `%LOCALAPPDATA%\DesktopPet\battle.json` | File của người dùng, cùng thư mục với `preferences.json` (hoặc `PET_DATA_DIRECTORY` nếu có đặt). Không bắt buộc phải có. |
 | `docs/examples/battle.json` | Ví dụ thêm `stone_slime`. Test tự động cũng đọc file này nên ví dụ luôn hợp lệ. |
 
+Ngôn ngữ khác (tiếng Nhật): tên/mô tả hiển thị tra bản dịch theo đúng câu `...En` trong `src/DesktopPet/Assets/i18n/ja.json` (cũng như coats.json, accessories.json). Câu `...En` không có trong bảng (ví dụ tên tự thêm trong file của người dùng) thì hiện tiếng Anh. Đổi câu tiếng Anh trong dữ liệu gốc thì đổi khóa trong ja.json (`scripts/i18n.py` liệt kê câu thiếu bản dịch).
+
 File của người dùng được đọc lại **mỗi lần mở sảnh chiến đấu, bản đồ hoặc bảng chuẩn bị** (cả Chơi lại). Khi bấm Sẵn sàng, trận chụp lại dữ liệu đang có; sửa file giữa trận không ảnh hưởng trận đang chạy, chỉ áp dụng cho lần chuẩn bị sau.
 
 ## Cách gộp

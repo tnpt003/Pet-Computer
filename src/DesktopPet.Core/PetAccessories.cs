@@ -25,7 +25,7 @@ public sealed record AccessorySpec(string Id, string NameVi, string NameEn, Acce
 // Plain data (no WPF) so preferences and tests can use it; PetRenderer turns it into frozen drawing resources.
 public static class PetAccessories
 {
-    public static string Name(this AccessorySpec item, bool english) => english ? item.NameEn : item.NameVi;
+    public static string Name(this AccessorySpec item, string language) => PetText.Data(language, item.NameVi, item.NameEn);
     public const string None = "None";
     private static readonly Lazy<AccessorySpec[]> Loaded = new(Load);
 

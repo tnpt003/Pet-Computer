@@ -105,7 +105,7 @@ public sealed partial class PetWindow
                 if (stage.Reward is string id && PetAccessories.Find(id) is AccessorySpec accessory)
                 {
                     bool won = adventure.HasReward(id);
-                    tiles.Children.Add(RewardTile(WearingCat(id), accessory.Name(English), won, rewardsFresh.Contains(id),
+                    tiles.Children.Add(RewardTile(WearingCat(id), accessory.Name(preferences.Language), won, rewardsFresh.Contains(id),
                         won ? L("Phụ kiện: đeo trong Cài đặt → Mèo → Phụ kiện.", "Accessory: wear it from Settings → Pet → Accessory.")
                             : LF($"Thắng {StageTitle(stage)} để nhận.", $"Win {StageTitle(stage)} to get it.")));
                 }
@@ -128,7 +128,7 @@ public sealed partial class PetWindow
                     KeepsakeSpec.Cushion => L("Đệm: trưng bày trên màn hình; mèo ngủ và nảy trên đệm.", "Cushion: displayed on the screen; the cat naps and bounces on it."),
                     _ => L("Phụ kiện: đeo trong Cài đặt → Mèo → Phụ kiện.", "Accessory: wear it from Settings → Pet → Accessory.")
                 };
-                tiles.Children.Add(RewardTile(art, k.Name(English), won, rewardsFresh.Contains(k.Id), won ? where
+                tiles.Children.Add(RewardTile(art, k.Name(preferences.Language), won, rewardsFresh.Contains(k.Id), won ? where
                     : k.Exact ? LF($"Thắng một chuyến Viễn chinh {level} để nhận.", $"Win an Expedition run on {level} to get it.")
                     : LF($"Thắng một chuyến Viễn chinh {level} trở lên để nhận.", $"Win an Expedition run on {level} or harder to get it.")));
             }
@@ -148,7 +148,7 @@ public sealed partial class PetWindow
                 string where = m.Kind == KeepsakeSpec.AccessoryKind
                     ? L("Phụ kiện: đeo trong Cài đặt → Mèo → Phụ kiện.", "Accessory: wear it from Settings → Pet → Accessory.")
                     : L("Kỷ vật: trưng bày trên màn hình (chọn trong Cài đặt → Mèo).", "Keepsake: displayed on the screen (choose it in Settings → Pet).");
-                tiles.Children.Add(RewardTile(art, LF($"Đợt {m.Wave} · ", $"Wave {m.Wave} · ") + m.Name(English), won, rewardsFresh.Contains(m.Id), won ? where : EndlessMilestoneText(m)));
+                tiles.Children.Add(RewardTile(art, LF($"Đợt {m.Wave} · ", $"Wave {m.Wave} · ") + m.Name(preferences.Language), won, rewardsFresh.Contains(m.Id), won ? where : EndlessMilestoneText(m)));
             }
             RewardsSection(L("Phần thưởng Vô tận", "Infinity rewards"), tiles);
         }
@@ -161,7 +161,7 @@ public sealed partial class PetWindow
         var records = new StackPanel();
         if (adventure?.Chapter() is ChapterSpec chapter)
         {
-            records.Children.Add(BagLine(chapter.Name(English), PetUi.SmallSize, Brushes.White, bold: true));
+            records.Children.Add(BagLine(chapter.Name(preferences.Language), PetUi.SmallSize, Brushes.White, bold: true));
             foreach (var stage in chapter.Stages)
             {
                 var all = weapons.SelectMany(w => levels.Select(l => adventure.Record(stage, w.Id, l))).ToList();

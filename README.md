@@ -67,7 +67,7 @@ src/DesktopPet/
   PetWindow*.cs      Transparent host, mouse capture, timing, monitor selection, UI
   PetRenderer.cs     Cat artwork and animated poses
   Assets/            Icon, sounds and data (battle.json, coats.json, accessories.json);
-                     i18n/<language>.json: UI text keyed by its English (PetText.cs)
+                     i18n/<language>.json: UI and data text keyed by its English (PetText.cs)
 src/DesktopPet.Core/ Everything that does not need WPF (library, net10.0):
   PetModel.cs        State, tunable settings, gravity and collisions
   PetBehavior.cs     Timed random action selection
@@ -85,7 +85,7 @@ tests/DesktopPet.UiChecks/
 scripts/
   run.ps1            Build and launch in the background
   test.ps1           Run physics checks
-  i18n.py            List UI text in the code that a translation table is missing
+  i18n.py            List UI text in the code and data files that a translation table is missing
 ```
 
 ## 2. Setup on Windows

@@ -235,7 +235,7 @@ public sealed partial class PetWindow
                 if (Adventure is not Adventure adventure || adventure.Chapter() is not ChapterSpec chapter)
                     return (title, about, L("Dữ liệu chưa có chương", "No chapter in the data"), null, false, L("Chưa có", "Not available"));
                 int won = chapter.Stages.Count(s => adventure.IsCompleted(s.Id));
-                string line = (won == chapter.Stages.Length ? "✓ " : "") + chapter.Name(English) + LF($" · {won}/{chapter.Stages.Length} màn", $" · {won}/{chapter.Stages.Length} stages");
+                string line = (won == chapter.Stages.Length ? "✓ " : "") + chapter.Name(preferences.Language) + LF($" · {won}/{chapter.Stages.Length} màn", $" · {won}/{chapter.Stages.Length} stages");
                 return (title, about, line, chapter.Stages.Length == 0 ? 0 : (double)won / chapter.Stages.Length, true, null);
             }
             case HubExpedition:

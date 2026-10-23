@@ -32,10 +32,23 @@ static class TextTests
         try { PetText.Parse(new MemoryStream(Encoding.UTF8.GetBytes("{\"A\": 1}"))); } catch (InvalidDataException) { rejected = true; }
         check(rejected, "A table entry that is not text is rejected");
 
-        // The shipped tables: holes match their keys, and every key still exists in the code
-        // (tests/ai/test_i18n.py checks the other way: every code text has a translation).
+        // Data text (battle.json, coats.json, accessories.json) uses the same tables.
+        var calico = PetCoats.All.First(c => c.Id == "Calico");
+        check(PetText.Data("ja", calico.NameVi, calico.NameEn) == "三毛" && PetText.Data("vi", calico.NameVi, calico.NameEn) == "Tam thể"
+              && PetText.Data("ja", "", "") == "", "Data names are looked up by their English text; empty text stays empty");
+        var settings = BattleData.Settings;
+        string cheer = BattleSkills.Get(BattleSkill.Cheer).Describe(settings, "ja");
+        check(cheer.StartsWith("応援 — ", StringComparison.Ordinal) && !cheer.Contains('{') && cheer.Contains(settings.CheerCooldown.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)),
+            "A Japanese skill description is filled with the battle's numbers");
+        check(BattleSkills.Get(BattleSkill.Cheer).Name("en") == "Cheer" && BattleSkills.Get(BattleSkill.Cheer).Name("vi") == "Cổ vũ",
+            "Vietnamese and English data names are unchanged");
+
+        // The shipped tables: holes match their keys, and every key still exists in the code or data
+        // (tests/ai/test_i18n.py checks the other way: every code and data text has a translation).
         string root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../../"));
-        string code = string.Concat(Directory.EnumerateFiles(Path.Combine(root, "src"), "*.cs", SearchOption.AllDirectories).Select(File.ReadAllText));
+        string code = string.Concat(Directory.EnumerateFiles(Path.Combine(root, "src"), "*.cs", SearchOption.AllDirectories)
+            .Concat(new[] { "battle.json", "coats.json", "accessories.json" }.Select(name => Path.Combine(root, "src", "DesktopPet", "Assets", name)))
+            .Select(File.ReadAllText));
         foreach (string language in PetLanguage.All.Where(l => l is not ("vi" or "en")))
         {
             var table = PetText.Table(language);

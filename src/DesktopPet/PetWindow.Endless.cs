@@ -41,7 +41,7 @@ public sealed partial class PetWindow
     {
         var best = BattleRecords.ForEndless(spec, weapon, level, BattleDataCustom);
         if (best.MostWaves == 0) return "";
-        string loadout = $"{BattleTuning.Weapon(weapon).Name(English)} · {DifficultyName(level)}";
+        string loadout = $"{BattleTuning.Weapon(weapon).Name(preferences.Language)} · {DifficultyName(level)}";
         return "\n" + LF($"Kỷ lục ({loadout}): đợt {best.MostWaves} · hạ {best.MostDefeated} slime", $"Record ({loadout}): wave {best.MostWaves} · {best.MostDefeated} slime{(best.MostDefeated == 1 ? "" : "s")}");
     }
 
@@ -83,7 +83,7 @@ public sealed partial class PetWindow
         if (result.EndlessUnlocked is { Count: > 0 } unlocked)
         {
             var prize = Line(PetUi.BodySize, RecordGold, true);
-            prize.Text = L("Mở khóa: ", "Unlocked: ") + string.Join(", ", unlocked.Select(m => m.Name(English)))
+            prize.Text = L("Mở khóa: ", "Unlocked: ") + string.Join(", ", unlocked.Select(m => m.Name(preferences.Language)))
                 + L(" (xem ở Sảnh → Phần thưởng)", " (see Hub → Rewards)");
             info.Children.Add(prize);
         }

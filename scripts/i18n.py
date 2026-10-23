@@ -1,4 +1,5 @@
-"""The UI text keys: the English text of every L("vi", "en") / LF($"vi", $"en") call in src.
+"""The UI text keys: the English text of every L("vi", "en") / LF($"vi", $"en") call in src,
+and of the data files (battle.json, coats.json, accessories.json: nameEn, descEn, ... and "en" names).
 
 Other languages translate that English text (src/DesktopPet/Assets/i18n/<language>.json, read by
 PetText.cs); interpolated text is keyed by its format, $"Wave {b.Wave} cleared!" -> "Wave {0} cleared!".
@@ -127,6 +128,50 @@ def code_keys(root=ROOT):
     return extract(files)
 
 
+DATA_FILES = ("battle.json", "coats.json", "accessories.json")
+
+
+def strip_comments(text):
+    """battle.json allows // and /* */ comments and trailing commas (as the app reads it)."""
+    out, i, n = [], 0, len(text)
+    while i < n:
+        c = text[i]
+        if c == '"':
+            j = i + 1
+            while text[j] != '"':
+                j += 2 if text[j] == '\\' else 1
+            out.append(text[i:j + 1]); i = j + 1
+        elif text.startswith('//', i):
+            i = text.find('\n', i) if '\n' in text[i:] else n
+        elif text.startswith('/*', i):
+            i = text.index('*/', i) + 2
+        else:
+            out.append(c); i += 1
+    return re.sub(r',(\s*[}\]])', r'\1', ''.join(out))
+
+
+def data_keys(root=ROOT):
+    """English text of the data files (nameEn/descEn/... and {"vi", "en"} names), with its Vietnamese."""
+    keys = {}
+
+    def walk(node):
+        if isinstance(node, dict):
+            if isinstance(node.get("en"), str) and isinstance(node.get("vi"), str):
+                keys.setdefault(node["en"], node["vi"])
+            for name, value in node.items():
+                if isinstance(value, str) and name.endswith("En") and value:
+                    keys.setdefault(value, node.get(name[:-2] + "Vi", ""))
+                else:
+                    walk(value)
+        elif isinstance(node, list):
+            for item in node:
+                walk(item)
+
+    for name in DATA_FILES:
+        walk(json.loads(strip_comments((root / "src/DesktopPet/Assets" / name).read_text(encoding="utf-8-sig"))))
+    return keys
+
+
 def table(language, root=ROOT):
     data = json.loads((root / "src/DesktopPet/Assets/i18n" / f"{language}.json").read_text(encoding="utf-8"))
     return {k: v for k, v in data.items() if not k.startswith("_")}
@@ -143,6 +188,7 @@ if __name__ == "__main__":
     sys.stdout.reconfigure(encoding="utf-8")
     language = sys.argv[1] if len(sys.argv) > 1 else "ja"
     keys, _ = code_keys()
+    keys.update({k: v for k, v in data_keys().items() if k not in keys})
     translated = table(language)
     missing = [k for k in keys if k not in translated]
     for key in missing:

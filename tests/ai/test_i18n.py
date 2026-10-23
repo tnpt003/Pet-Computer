@@ -1,5 +1,6 @@
-"""Every UI text in the C# code has its translations (scripts/i18n.py, Assets/i18n/*.json)."""
+"""Every UI text in the C# code and the data files has its translations (scripts/i18n.py, Assets/i18n/*.json)."""
 from pathlib import Path
+import re
 import sys
 import tempfile
 import unittest
@@ -28,6 +29,26 @@ class TranslationTests(unittest.TestCase):
             table = i18n.table(language)
             missing = [k for k in keys if k not in table]
             self.assertEqual(missing, [], f"{language}: run scripts/i18n.py {language}")
+
+    def test_every_data_text_is_translated(self):
+        keys = i18n.data_keys()
+        self.assertIn("Slime King", keys)
+        self.assertEqual(keys.get("Calico"), "Tam thể")
+        for language in LANGUAGES:
+            table = i18n.table(language)
+            missing = [k for k in keys if k not in table]
+            self.assertEqual(missing, [], f"{language}: run scripts/i18n.py {language}")
+
+    def test_data_translations_keep_their_numbers_and_fit(self):
+        # A skill's {key} is filled with a battle.json number; data text has length limits.
+        named = re.compile(r"\{[A-Za-z]+\}")
+        keys = i18n.data_keys()
+        for language in LANGUAGES:
+            table = i18n.table(language)
+            for key in keys:
+                text = table.get(key, key)
+                self.assertEqual(sorted(named.findall(text)), sorted(named.findall(key)), (language, key, text))
+                self.assertLessEqual(len(text), max(len(key), 8), (language, key, text))
 
     def test_translations_use_only_their_keys_holes(self):
         for language in LANGUAGES:

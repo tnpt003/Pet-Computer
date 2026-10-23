@@ -23,7 +23,7 @@ public sealed class ExpeditionSpec
     public string Id { get; init; } = "";
     public string NameVi { get; init; } = "";
     public string NameEn { get; init; } = "";
-    public string Name(bool english) => english ? NameEn : NameVi;
+    public string Name(string language) => PetText.Data(language, NameVi, NameEn);
     // Raise it when the run changes enough that a saved run or old records should not go on.
     public int RulesVersion { get; init; } = 1;
     // The Adventure stage that must be won first (null, or a stage the data no longer has, as with a
@@ -234,7 +234,7 @@ public sealed class KeepsakeSpec
     public string? Accessory { get; init; }
     public string NameVi { get; init; } = "";
     public string NameEn { get; init; } = "";
-    public string Name(bool english) => english ? NameEn : NameVi;
+    public string Name(string language) => PetText.Data(language, NameVi, NameEn);
     [JsonIgnore] public bool Shown => Kind is Cup or Cushion or Hourglass or Orb;
     public bool EarnedAt(BattleDifficulty level) =>
         Enum.TryParse<BattleDifficulty>(Difficulty, out var at) && (Exact ? level == at : level >= at);
@@ -256,8 +256,8 @@ public sealed class ExpeditionEventSpec
     public string DescEn { get; init; } = "";
     public double Heal { get; init; }
     public double Cost { get; init; }
-    public string Name(bool english) => english ? NameEn : NameVi;
-    public string Describe(bool english) => english ? DescEn : DescVi;
+    public string Name(string language) => PetText.Data(language, NameVi, NameEn);
+    public string Describe(string language) => PetText.Data(language, DescVi, DescEn);
 }
 
 // A relic: kept for the rest of the run only, a gain with a price (BattleSim applies it as its own
@@ -281,8 +281,8 @@ public sealed class RelicSpec
     public double Extra { get; init; }
     public double Penalty { get; init; }
     public double Below { get; init; }
-    public string Name(bool english) => english ? NameEn : NameVi;
-    public string Describe(bool english) => english ? DescEn : DescVi;
+    public string Name(string language) => PetText.Data(language, NameVi, NameEn);
+    public string Describe(string language) => PetText.Data(language, DescVi, DescEn);
 }
 
 // The run in progress: the drawn map, the steps won (the lane picked at each), the cat's HP and

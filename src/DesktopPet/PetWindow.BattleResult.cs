@@ -114,7 +114,7 @@ public sealed partial class PetWindow
             : L("Thua rồi… mèo choáng váng", "Defeated… the cat sees stars");
         string level = DifficultyName(result.Difficulty), arms = result.WeaponLabel.Length > 0 ? result.WeaponLabel : result.Weapon;
         string place = result.Stage is not StageSpec played ? ""
-            : played.Endless ? played.Name(English) + " · "
+            : played.Endless ? played.Name(preferences.Language) + " · "
             : result.Expedition is ExpeditionStepOutcome at ? ExpeditionStageTitle(at.Step, Expedition?.Spec.StepCount ?? at.Step + 1, played) + " · " : StageTitle(played) + " · ";
         var loadout = Line(PetUi.BodySize, bold: true); loadout.Text = place + $"{arms} · {level}";
         var main = Line(PetUi.BodySize);

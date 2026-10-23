@@ -100,10 +100,10 @@ public sealed partial class PetWindow
     private static bool IsFightKind(string kind) => ExpeditionSpec.IsBattle(kind) || kind == DesktopPet.Expedition.BossKind;
     // A node of the step to go now that can be chosen (no choice open, no battle under way).
     private static bool LaneOpen(Expedition x, int lane) => x.Run is ExpeditionRun r && r.Pending == null && r.Fighting == null && r.Step < r.Map.Count && lane >= 0 && lane < r.Map[r.Step].Length;
-    private string CardName(string id) => BattleTuning.UpgradeList.FirstOrDefault(u => u.Id == id)?.Name(English) ?? id;
-    private string RelicName(Expedition x, string id) => x.Spec.Relic(id)?.Name(English) ?? id;
+    private string CardName(string id) => BattleTuning.UpgradeList.FirstOrDefault(u => u.Id == id)?.Name(preferences.Language) ?? id;
+    private string RelicName(Expedition x, string id) => x.Spec.Relic(id)?.Name(preferences.Language) ?? id;
     private string StepTitle(int step, int steps) => LF($"Bậc {step + 1}/{steps}", $"Step {step + 1}/{steps}");
-    private string ExpeditionStageTitle(int step, int steps, StageSpec stage) => L("Viễn chinh · ", "Expedition · ") + StepTitle(step, steps) + " · " + stage.Name(English);
+    private string ExpeditionStageTitle(int step, int steps, StageSpec stage) => L("Viễn chinh · ", "Expedition · ") + StepTitle(step, steps) + " · " + stage.Name(preferences.Language);
 
     // Saves the run's own progress (the one kept for the user's battle.json stays in memory).
     private void SaveExpedition(ExpeditionProgress progress)
@@ -560,14 +560,14 @@ public sealed partial class PetWindow
         }
         var spec = expedition.Spec;
         var run = expedition.Run;
-        xTitle.Text = L("Viễn chinh — ", "Expedition — ") + spec.Name(English);
+        xTitle.Text = L("Viễn chinh — ", "Expedition — ") + spec.Name(preferences.Language);
         if (xBossLabel != null) xBossLabel.Text = L("Trùm", "Boss");
         string? dataNote = BattleDataError != null
             ? L("File battle.json của bạn có lỗi nên dùng dữ liệu gốc: ", "Your battle.json has a mistake, so the built-in battle is used: ") + BattleDataError
             : BattleDataCustom ? L("Đang dùng battle.json tùy chỉnh: chơi được nhưng chuyến đi và kỷ lục không được lưu.", "Using your custom battle.json: you can play, but the run and records are not saved.") : null;
         Show(xData, string.Join("\n", new[] { dataNote, ExpeditionWarning() }.Where(t => t != null)));
         Show(xNote, expeditionNote);
-        string weaponName = BattleTuning.Weapon(run?.Weapon ?? expeditionWeapon).Name(English);
+        string weaponName = BattleTuning.Weapon(run?.Weapon ?? expeditionWeapon).Name(preferences.Language);
         string levelName = DifficultyName(run?.Level ?? expeditionLevel);
         if (run == null)
         {
@@ -619,8 +619,8 @@ public sealed partial class PetWindow
             glyph.Text = KindGlyph(kind);
             glyph.Foreground = won ? MapDoneInk : kind == ExpeditionSpec.Elite && !current ? EliteInk : Brushes.White;
             node.ToolTip = run == null ? KindName(kind)
-                : spec.Encounter(run.Map[step][lane]) is StageSpec encounter ? $"{KindName(kind)} — {encounter.Name(English)}"
-                : spec.FindEvent(run.Map[step][lane]) is ExpeditionEventSpec e ? $"{KindName(kind)} — {e.Name(English)}" : KindName(kind);
+                : spec.Encounter(run.Map[step][lane]) is StageSpec encounter ? $"{KindName(kind)} — {encounter.Name(preferences.Language)}"
+                : spec.FindEvent(run.Map[step][lane]) is ExpeditionEventSpec e ? $"{KindName(kind)} — {e.Name(preferences.Language)}" : KindName(kind);
         }
         for (int i = 0; i < expeditionLinks.Count; i++) expeditionLinks[i].Fill = run != null && i + 1 < now ? MapDone : MapLocked;
 
@@ -638,18 +638,18 @@ public sealed partial class PetWindow
         else if (run != null && expedition.Node(expeditionLane) is ExpeditionNode chosen)
         {
             xDetails!.Visibility = Visibility.Visible;
-            xNodeName!.Text = $"{StepTitle(chosen.Step, run.Map.Count)} · {KindName(chosen.Kind)} — {chosen.Stage.Name(English)}";
+            xNodeName!.Text = $"{StepTitle(chosen.Step, run.Map.Count)} · {KindName(chosen.Kind)} — {chosen.Stage.Name(preferences.Language)}";
             string threat = chosen.Threat > 1.001 ? LF($" · quái mạnh ×{chosen.Threat:0.00}", $" · enemies ×{chosen.Threat:0.00}") : "";
             string reward = chosen.Kind == ExpeditionSpec.Elite && spec.EliteRelics > 0 && run.Relics.Count < spec.MaxRelics
                 ? "\n" + LF($"Thắng: chọn 1 trong {spec.EliteRelics} di vật.", $"Win: pick one of {spec.EliteRelics} relics.") : "";
-            Show(xNodeGoal, chosen.Stage.Goal(English) + "\n" + ObjectiveText(chosen.Stage) + StageRules(chosen.Stage) + threat + reward);
+            Show(xNodeGoal, chosen.Stage.Goal(preferences.Language) + "\n" + ObjectiveText(chosen.Stage) + StageRules(chosen.Stage) + threat + reward);
         }
         else if (run != null && LaneOpen(expedition, expeditionLane) && expedition.Kind(run.Step, expeditionLane) is string other && !IsFightKind(other))
         {
             xDetails!.Visibility = Visibility.Visible;
             var e = spec.FindEvent(run.Map[run.Step][expeditionLane]);
-            xNodeName!.Text = $"{StepTitle(run.Step, run.Map.Count)} · {KindName(other)}" + (e != null ? " — " + e.Name(English) : "");
-            Show(xNodeGoal, e?.Describe(English) ?? LF($"Hồi {spec.RestHeal:P0} HP tối đa, hoặc lấy một thẻ nâng cấp thay vì hồi máu.", $"Get {spec.RestHeal:P0} of the max HP back, or take an upgrade card instead."));
+            xNodeName!.Text = $"{StepTitle(run.Step, run.Map.Count)} · {KindName(other)}" + (e != null ? " — " + e.Name(preferences.Language) : "");
+            Show(xNodeGoal, e?.Describe(preferences.Language) ?? LF($"Hồi {spec.RestHeal:P0} HP tối đa, hoặc lấy một thẻ nâng cấp thay vì hồi máu.", $"Get {spec.RestHeal:P0} of the max HP back, or take an upgrade card instead."));
         }
         else xDetails!.Visibility = Visibility.Collapsed;
         UpdateExpeditionChoice(expedition);
@@ -729,13 +729,13 @@ public sealed partial class PetWindow
             ExpeditionChoice.RestKind => L("Nghỉ chân — chọn một", "Rest — choose one"),
             ExpeditionChoice.RewardKind => L("Phần thưởng tinh anh", "Elite reward"),
             ExpeditionChoice.CapsuleKind => L("Máy viên nang", "Capsule machine"),
-            _ => e?.Name(English) ?? KindName(ExpeditionSpec.Event)
+            _ => e?.Name(preferences.Language) ?? KindName(ExpeditionSpec.Event)
         };
         var head = Text(title, PetUi.TitleSize, true, brush: open.Kind is ExpeditionChoice.RewardKind or ExpeditionChoice.CapsuleKind ? RecordGold : null);
         xChoice.Children.Add(head);
         if (open.Kind == ExpeditionChoice.CapsuleKind) AddCapsules(expedition, run, Text);
         else if (open.Kind == ExpeditionChoice.RewardKind) xChoice.Children.Add(Text(L("Chọn một di vật mang theo đến hết chuyến, hoặc bỏ qua.", "Pick a relic to keep for the rest of the run, or leave them."), PetUi.SmallSize, opacity: 0.85));
-        else if (e != null) xChoice.Children.Add(Text(e.Describe(English), PetUi.SmallSize, opacity: 0.85));
+        else if (e != null) xChoice.Children.Add(Text(e.Describe(preferences.Language), PetUi.SmallSize, opacity: 0.85));
         if (run.Relics.Count >= spec.MaxRelics && open.Kind is not (ExpeditionChoice.RestKind or ExpeditionChoice.CapsuleKind) && e?.Kind != ExpeditionEventSpec.Swap)
             xChoice.Children.Add(Text(LF($"Đã đủ {spec.MaxRelics} di vật.", $"The run already holds {spec.MaxRelics} relics."), PetUi.SmallSize, brush: PrepWarning));
 
@@ -746,7 +746,7 @@ public sealed partial class PetWindow
             {
                 string card = id;
                 var u = BattleTuning.UpgradeList.FirstOrDefault(x => x.Id == id);
-                xChoice.Children.Add(Option(CardName(id) + (n > 1 ? $" ×{n}" : ""), u?.Describe(English) ?? "", expeditionDropCard == id, () => ExpeditionPick(drop: card)));
+                xChoice.Children.Add(Option(CardName(id) + (n > 1 ? $" ×{n}" : ""), u?.Describe(preferences.Language) ?? "", expeditionDropCard == id, () => ExpeditionPick(drop: card)));
             }
         }
         if (open.Cards.Length > 0 && (e == null || e.Kind == ExpeditionEventSpec.Swap && run.Build.Count > 0))
@@ -756,7 +756,7 @@ public sealed partial class PetWindow
             {
                 string card = id;
                 var u = BattleTuning.UpgradeList.FirstOrDefault(x => x.Id == id);
-                xChoice.Children.Add(Option(CardName(id) + (u?.Rare == true ? " ◆" : ""), u?.Describe(English) ?? "", expeditionPickCard == id, () => ExpeditionPick(card: card)));
+                xChoice.Children.Add(Option(CardName(id) + (u?.Rare == true ? " ◆" : ""), u?.Describe(preferences.Language) ?? "", expeditionPickCard == id, () => ExpeditionPick(card: card)));
             }
         }
         // A chest's relic stays hidden until it is opened; a shrine's and an elite's are shown.
@@ -767,7 +767,7 @@ public sealed partial class PetWindow
             {
                 string relic = id;
                 var r = spec.Relic(id);
-                xChoice.Children.Add(Option("◈ " + (r?.Name(English) ?? id), r?.Describe(English) ?? "", expeditionPickRelic == id, () => ExpeditionPick(relic: relic)));
+                xChoice.Children.Add(Option("◈ " + (r?.Name(preferences.Language) ?? id), r?.Describe(preferences.Language) ?? "", expeditionPickRelic == id, () => ExpeditionPick(relic: relic)));
             }
         }
 
@@ -914,7 +914,7 @@ public sealed partial class PetWindow
         // Keepsakes this run gave (each only once): where to find them.
         foreach (var id in step.Keepsakes ?? Array.Empty<string>())
             if (Expedition?.Spec.Keepsake(id) is KeepsakeSpec k)
-                Add(L("Kỷ vật mới: ", "New keepsake: ") + k.Name(English) + (k.Kind == KeepsakeSpec.AccessoryKind ? L(" (đội trong Cài đặt)", " (wear it from Settings)")
+                Add(L("Kỷ vật mới: ", "New keepsake: ") + k.Name(preferences.Language) + (k.Kind == KeepsakeSpec.AccessoryKind ? L(" (đội trong Cài đặt)", " (wear it from Settings)")
                     : preferences.ShowTrophies ? L(" (ở góc trưng bày)", " (in the display corner)") : L(" (bật góc trưng bày trong Cài đặt)", " (turn the display corner on in Settings)")), PetUi.BodySize, RecordGold, true);
         if (step.Fastest) Add(L("Kỷ lục mới: chuyến nhanh nhất!", "New record: fastest run!"), PetUi.BodySize, RecordGold, true);
         else if (step.BestSteps && step.RunOver && !step.RunWon) Add(L("Kỷ lục mới: đi xa nhất!", "New record: furthest run!"), PetUi.BodySize, RecordGold, true);

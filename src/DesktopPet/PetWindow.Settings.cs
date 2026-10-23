@@ -15,6 +15,7 @@ public sealed class PetSettingsForm
     public TextBox Name = null!;
     public ComboBox Language = null!, Personality = null!, Coat = null!, Accessory = null!, Chattiness = null!, BreakInterval = null!, PreviewCue = null!, BirthDay = null!, BirthMonth = null!;
     public string[] AccessoryIds = Array.Empty<string>();
+    public string[] LanguageIds = Array.Empty<string>();
     // The keepsakes that can be on display (owned cups best first, then the cushion); empty: none yet.
     public ComboBox Trophy = null!;
     public string[] TrophyIds = Array.Empty<string>();
@@ -109,7 +110,7 @@ public sealed partial class PetWindow
         var displayable = DisplayableKeepsakes.ToArray();
         form.TrophyIds = displayable.Select(k => k.Id).ToArray();
         form.Trophy = new ComboBox { IsEnabled = displayable.Length > 0,
-            ItemsSource = displayable.Length > 0 ? displayable.Select(k => k.Name(preferences.Language == "en")).ToArray() : new[] { L("Chưa có kỷ vật", "No keepsakes yet") },
+            ItemsSource = displayable.Length > 0 ? displayable.Select(k => k.Name(English)).ToArray() : new[] { L("Chưa có kỷ vật", "No keepsakes yet") },
             SelectedIndex = Math.Max(0, Array.IndexOf(form.TrophyIds, DisplayedKeepsake?.Id)),
             ToolTip = L("Kỷ vật đứng trên màn hình (thắng Viễn chinh để nhận thêm).", "The keepsake standing on the screen (win Expeditions for more).") };
         var petTab = Page(
@@ -197,7 +198,8 @@ public sealed partial class PetWindow
                 PetUi.Hint(L("Nghe thử phát cả khi đang tắt âm thanh.", "Preview plays even while sounds are off."))));
 
         // General: language (labelled in both languages so it is always findable), startup, breaks.
-        form.Language = new ComboBox { ItemsSource = new[] { "English", "Tiếng Việt" }, SelectedIndex = preferences.Language == "en" ? 0 : 1 };
+        form.LanguageIds = PetLanguage.Choices(preferences.Language);
+        form.Language = new ComboBox { ItemsSource = form.LanguageIds.Select(PetLanguage.DisplayName).ToArray(), SelectedIndex = Array.IndexOf(form.LanguageIds, preferences.Language) };
         // Read fresh from the registry; written only on Save and only if it changed.
         bool autostartOn = Environment.ProcessPath is string exe && startup.IsEnabled(exe);
         form.Autostart = new CheckBox { Content = L("Khởi động cùng Windows", "Start with Windows"), IsChecked = autostartOn };
@@ -290,8 +292,9 @@ public sealed partial class PetWindow
             preferences.Volume = form.Volume.Value; preferences.Sounds = form.Sounds.IsChecked == true;
             preferences.InteractionSounds = form.InteractionSounds.IsChecked == true; preferences.EmotionSounds = form.EmotionSounds.IsChecked == true;
             preferences.SleepSounds = form.SleepSounds.IsChecked == true;
-            bool languageChanged = preferences.Language != (form.Language.SelectedIndex == 0 ? "en" : "vi");
-            preferences.Speech = form.Talks.IsChecked == true; preferences.Language = form.Language.SelectedIndex == 0 ? "en" : "vi";
+            string language = form.LanguageIds[Math.Max(0, form.Language.SelectedIndex)];
+            bool languageChanged = preferences.Language != language;
+            preferences.Speech = form.Talks.IsChecked == true; preferences.Language = language;
             if (languageChanged) { pet.Speech.Hide(); pet.Speech.DropPending(); RaiseLanguageChanged(); } // No line in the old language.
             preferences.Chattiness = Math.Clamp(form.Chattiness.SelectedIndex, 0, 2);
             if (!preferences.Speech) pet.Speech.Hide();

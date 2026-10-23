@@ -23,7 +23,10 @@ public sealed class BattleHud : Border
     // For checks: the banner and the width it takes on the HUD now (after any shrinking).
     public string BannerText => banner.Text;
     public double BannerShownWidth => banner.IsVisible ? banner.TransformToAncestor(this).TransformBounds(new Rect(banner.RenderSize)).Width : 0;
-    private readonly Func<string, string, string> L;
+    // The UI language, read live (it can change while the HUD is open).
+    private readonly Func<string> language;
+    private string L(string vietnamese, string english) => PetText.Pick(language(), vietnamese, english);
+    private string LF(FormattableString vietnamese, FormattableString english) => PetText.PickFormat(language(), vietnamese, english);
     private readonly TextBlock hpText, status, hint, banner, bossName, comboText, upgradesText;
     private readonly Border hpFill, hpTrail, bossFill, bossBar, pauseButton, endButton, bagButton, grip;
     private readonly HudGlyph pauseGlyph;
@@ -55,9 +58,9 @@ public sealed class BattleHud : Border
     private static readonly Brush BossColor = Frozen(255, 0xB4, 0x8C, 0xF5), BossAngryColor = Frozen(255, 0xE8, 0x6A, 0x6A), BossShieldColor = Frozen(255, 0xFF, 0xD8, 0x5A);
     private static readonly Brush Soft = PetUi.Game.Soft, Gold = Frozen(255, 0xFF, 0xD2, 0x3F), Dim = Frozen(0x70, 255, 255, 255);
 
-    public BattleHud(string petName, PetRenderer portrait, Func<string, string, string> localize)
+    public BattleHud(string petName, PetRenderer portrait, Func<string> language)
     {
-        L = localize;
+        this.language = language;
         Background = Panel; BorderBrush = Rim; BorderThickness = new Thickness(1.5);
         CornerRadius = new CornerRadius(12); Padding = new Thickness(10, 8, 10, 6); Margin = new Thickness(8);
         // No drop shadows here: on a transparent (layered) window every bitmap effect is redrawn in
@@ -199,8 +202,7 @@ public sealed class BattleHud : Border
     public void Hover(BattleSkill? skill) { hovered = skill; hoveredControl = null; ShowHint(); }
     private void HoverControl(string? text) { hoveredControl = text; hovered = null; ShowHint(); }
 
-    // The UI language, read through the shared localizer.
-    private bool English => L("vi", "en") == "en";
+    private bool English => PetLanguage.UsesEnglish(language());
     // Descriptions use the battle's own numbers (battle.json), so they always match.
     public string Describe(BattleSkill skill) => BattleSkills.Get(skill).Describe(last?.Settings ?? BattleData.Settings, English);
     private string SkillTip(BattleSkill skill) => Describe(skill);
@@ -253,13 +255,13 @@ public sealed class BattleHud : Border
             BattlePhase.Won => L("Chiến thắng!", "Victory!"),
             BattlePhase.Lost => L("Thua rồi… mèo choáng váng", "Defeated… the cat sees stars"),
             BattlePhase.WaveBreak when b.Wave == 0 => L("Chuẩn bị!", "Get ready!"),
-            BattlePhase.WaveBreak => L($"Xong đợt {b.Wave}!{HealNote(b)}", $"Wave {b.Wave} cleared!{HealNote(b)}"),
-            _ when b.IsBossWave(b.Wave) => L($"Đánh bại {BossName(b)}!", $"Defeat the {BossName(b)}!"),
-            _ when b.Endless => L($"Đợt {b.Wave} · còn {left} slime", $"Wave {b.Wave} · {left} slime{(left == 1 ? "" : "s")} left"),
-            _ => L($"Đợt {b.Wave}/{b.WaveCount} · còn {left} slime", $"Wave {b.Wave}/{b.WaveCount} · {left} slime{(left == 1 ? "" : "s")} left")
+            BattlePhase.WaveBreak => LF($"Xong đợt {b.Wave}!{HealNote(b)}", $"Wave {b.Wave} cleared!{HealNote(b)}"),
+            _ when b.IsBossWave(b.Wave) => LF($"Đánh bại {BossName(b)}!", $"Defeat the {BossName(b)}!"),
+            _ when b.Endless => LF($"Đợt {b.Wave} · còn {left} slime", $"Wave {b.Wave} · {left} slime{(left == 1 ? "" : "s")} left"),
+            _ => LF($"Đợt {b.Wave}/{b.WaveCount} · còn {left} slime", $"Wave {b.Wave}/{b.WaveCount} · {left} slime{(left == 1 ? "" : "s")} left")
         };
         // A survive stage: the time left is the goal, so it leads.
-        if (b.Survival && !b.Over) text = L($"Sống sót: còn {clock / 60}:{clock % 60:00}", $"Survive: {clock / 60}:{clock % 60:00} left") + (b.Phase == BattlePhase.Fighting ? L($" · {left} slime", $" · {left} slime{(left == 1 ? "" : "s")}") : "");
+        if (b.Survival && !b.Over) text = LF($"Sống sót: còn {clock / 60}:{clock % 60:00}", $"Survive: {clock / 60}:{clock % 60:00} left") + (b.Phase == BattlePhase.Fighting ? LF($" · {left} slime", $" · {left} slime{(left == 1 ? "" : "s")}") : "");
         if (b.ChoosingUpgrade && !b.Over) text += L(" · Chọn nâng cấp", " · Pick an upgrade");
         else if (b.Paused && !b.Over) text += away ? L(" · Chờ mèo về màn hình này", " · Waiting for the cat to come back")
             : fullscreen ? L(" · Tạm dừng (toàn màn hình)", " · Paused (fullscreen)") : L(" · Tạm dừng", " · Paused");
@@ -331,16 +333,16 @@ public sealed class BattleHud : Border
         if (hovered is BattleSkill skill)
         {
             double cooldown = b.Cooldown(skill);
-            string state = cooldown > 0 ? L($" · còn {Math.Ceiling(cooldown)} giây", $" · ready in {Math.Ceiling(cooldown)} s") : L(" · sẵn sàng", " · ready");
+            string state = cooldown > 0 ? LF($" · còn {Math.Ceiling(cooldown)} giây", $" · ready in {Math.Ceiling(cooldown)} s") : L(" · sẵn sàng", " · ready");
             SetText(hint, SkillTip(skill) + state);
             return;
         }
         SetText(hint, held && !b.Over ? LiftedHint(b)
             : b.Armed == BattleSkill.Push ? L("Click nửa trái slime để đẩy sang phải, nửa phải để đẩy sang trái · bấm lại ô hoặc chuột phải để hủy",
                                              "Click a slime's left half to push it right, its right half to push it left · click the slot again or right-click to cancel")
-            : b.Armed is BattleSkill armed ? L($"Click một slime để dùng {SkillName(armed)} · bấm lại ô hoặc chuột phải chiến trường để hủy",
+            : b.Armed is BattleSkill armed ? LF($"Click một slime để dùng {SkillName(armed)} · bấm lại ô hoặc chuột phải chiến trường để hủy",
                                                $"Click a slime to use {SkillName(armed)} · click the slot again or right-click the field to cancel")
-            : !b.Over && b.Grace > 0 ? L($"Được bảo vệ sau khi tiếp đất: còn {ProtectedFor(b)} giây", $"Protected after landing: {ProtectedFor(b)} s left")
+            : !b.Over && b.Grace > 0 ? LF($"Được bảo vệ sau khi tiếp đất: còn {ProtectedFor(b)} giây", $"Protected after landing: {ProtectedFor(b)} s left")
             : L("Click slime: chọn mục tiêu · Rê chuột lên ô kỹ năng để xem · Nhấc mèo lên để cứu nguy",
                 "Click a slime: set target · Hover a skill for details · Lift the cat to rescue it"));
     }
@@ -373,8 +375,8 @@ public sealed class BattleHud : Border
         int wait = GraceWait(b);
         string grace = b.Settings.LandingGraceSeconds.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
         return skills + (wait > 0
-            ? L($" · thả lúc này không có thêm bảo vệ (còn {wait} giây)", $" · no landing protection this time ({wait} s left)")
-            : L($" · thả xuống được {grace} giây an toàn", $" · landing gives {grace} s of safety"));
+            ? LF($" · thả lúc này không có thêm bảo vệ (còn {wait} giây)", $" · no landing protection this time ({wait} s left)")
+            : LF($" · thả xuống được {grace} giây an toàn", $" · landing gives {grace} s of safety"));
     }
 
     public string SkillName(BattleSkill skill) => BattleSkills.Get(skill).Name(English, last?.Settings);

@@ -42,7 +42,7 @@ public sealed partial class PetWindow
                   L("Slime phồng lên với dấu ! đỏ là sắp đánh: kéo mèo lên. Đang bế thì mèo không bị đánh; thả mèo xuống trước khi đòn rơi thì thả ra ngoài vòng đỏ để đòn trượt.",
                     "A slime swelling with a red ! is about to hit: drag the cat up. A carried cat cannot be hit; put it down before the hit falls and do it outside the red ring to make it miss.")),
             _ => (L("Bảo vệ và hồi chiêu", "Protection and cooldowns"),
-                  L($"Thả mèo xuống được {grace} giây an toàn, tối đa 1 lần mỗi {again} giây. Khi đang bế mèo, kỹ năng tạm khóa và không hồi. Mở lại hướng dẫn: nút Hướng dẫn trên bảng chuẩn bị.",
+                  LF($"Thả mèo xuống được {grace} giây an toàn, tối đa 1 lần mỗi {again} giây. Khi đang bế mèo, kỹ năng tạm khóa và không hồi. Mở lại hướng dẫn: nút Hướng dẫn trên bảng chuẩn bị.",
                     $"Putting the cat down gives {grace} s of safety, at most once every {again} s. While the cat is carried, skills wait and do not cool down. Open this again: How to play on the setup panel."))
         };
     }

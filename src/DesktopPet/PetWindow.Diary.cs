@@ -26,7 +26,7 @@ public sealed partial class PetWindow
         double height = Math.Min(600, areaHeight - 24);
         diaryWindow = new Window
         {
-            Title = L($"Nhật ký của {preferences.Name}", $"{preferences.Name}'s diary"), Icon = AppIcon.WindowImage(),
+            Title = LF($"Nhật ký của {preferences.Name}", $"{preferences.Name}'s diary"), Icon = AppIcon.WindowImage(),
             Width = 420, Height = height, Background = PetUi.Surface, ResizeMode = ResizeMode.NoResize, Topmost = true, ShowInTaskbar = false,
             Content = new ScrollViewer { Content = diaryPanel, VerticalScrollBarVisibility = ScrollBarVisibility.Auto },
             WindowStartupLocation = WindowStartupLocation.Manual,
@@ -44,7 +44,7 @@ public sealed partial class PetWindow
     {
         if (diaryPanel == null) return;
         diaryPanel.Children.Clear();
-        AddHeading(L($"Nhật ký của {preferences.Name}", $"{preferences.Name}'s diary"), 18);
+        AddHeading(LF($"Nhật ký của {preferences.Name}", $"{preferences.Name}'s diary"), 18);
         if (aiDiary is not { } diary)
         {
             var session = pet.Interactions;
@@ -53,17 +53,17 @@ public sealed partial class PetWindow
             AddStats((session.Petted, L("Được vuốt", "Petted")), (session.Treats, L("Treat", "Treats")), (session.Toy + session.BallClicks, L("Chơi bóng", "Ball games")));
             return;
         }
-        AddLine(L($"Đã ở cùng sen {diary.Days} ngày (từ {diary.Since})", $"Together for {diary.Days} days (since {diary.Since})"), PetUi.Muted);
+        AddLine(LF($"Đã ở cùng sen {diary.Days} ngày (từ {diary.Since})", $"Together for {diary.Days} days (since {diary.Since})"), PetUi.Muted);
         AddStats((diary.Petted, L("Được vuốt", "Petted")), (diary.Treats, L("Treat", "Treats")), (diary.Play, L("Chơi bóng", "Ball games")), ((long)Math.Round(diary.Bond), L("Thân thiết", "Bond")));
-        AddLine(L($"Click {diary.Clicks} lần · bị ném mạnh {diary.RoughThrows} lần", $"Clicked {Times(diary.Clicks)} · thrown roughly {Times(diary.RoughThrows)}"), PetUi.Muted);
+        AddLine(LF($"Click {diary.Clicks} lần · bị ném mạnh {diary.RoughThrows} lần", $"Clicked {Times(diary.Clicks)} · thrown roughly {Times(diary.RoughThrows)}"), PetUi.Muted);
         if (diary.BattlesWon + diary.BattlesLost > 0)
-            AddLine(L($"Chiến đấu: thắng {diary.BattlesWon} · thua {diary.BattlesLost} · combo {diary.Combos}",
+            AddLine(LF($"Chiến đấu: thắng {diary.BattlesWon} · thua {diary.BattlesLost} · combo {diary.Combos}",
                    $"Battles: {diary.BattlesWon} won · {diary.BattlesLost} lost · {diary.Combos} combo{(diary.Combos == 1 ? "" : "s")}"), PetUi.Muted);
 
-        var bond = AddCard(L($"Độ thân thiết: {diary.Bond:F0}/100", $"Bond: {diary.Bond:F0}/100"));
+        var bond = AddCard(LF($"Độ thân thiết: {diary.Bond:F0}/100", $"Bond: {diary.Bond:F0}/100"));
         if (diary.BondHistory.Length >= 2) bond.Children.Add(BondChart(diary.BondHistory));
         bond.Children.Add(TextLine(diary.BondHistory.Length >= 2
-            ? L($"{diary.BondHistory.Length} ngày gần nhất: {string.Join(", ", diary.BondHistory.Select(v => v.ToString("F0")))}",
+            ? LF($"{diary.BondHistory.Length} ngày gần nhất: {string.Join(", ", diary.BondHistory.Select(v => v.ToString("F0")))}",
                 $"Last {diary.BondHistory.Length} days: {string.Join(", ", diary.BondHistory.Select(v => v.ToString("F0")))}")
             : L("Biểu đồ sẽ hiện sau ngày thứ hai.", "The chart appears from the second day."), PetUi.Muted));
 
@@ -75,7 +75,7 @@ public sealed partial class PetWindow
             hours.Children.Add(HourChart(diary.Habits));
             var top = diary.Habits.Select((value, hour) => (value, hour)).Where(h => h.value > 0)
                 .OrderByDescending(h => h.value).Take(3).Select(h => $"{h.hour}h");
-            hours.Children.Add(TextLine(L($"Nhiều nhất: {string.Join(", ", top)}", $"Most often: {string.Join(", ", top)}")));
+            hours.Children.Add(TextLine(LF($"Nhiều nhất: {string.Join(", ", top)}", $"Most often: {string.Join(", ", top)}")));
         }
 
         var learned = AddCard(L("Những gì mèo đã học", "What the cat has learned"));

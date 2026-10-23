@@ -47,7 +47,7 @@ public sealed partial class PetWindow
     private string? AppName(BattleEvent e) =>
         battle?.AppRules is AppsSpec rules && battle.FindApp((int)e.Value) is DesktopApp app ? rules.App(app.Kind).Name(English) : null;
 
-    private string BossName() => battle?.Boss?.Type.Name(preferences.Language == "en") ?? "Boss";
+    private string BossName() => battle?.Boss?.Type.Name(English) ?? "Boss";
 
     // Big moments get a banner across the HUD's centre. The first heal, far heal, rally call and attack
     // from behind of a battle say what is going on (once each per battle), and so does the first elite
@@ -64,34 +64,34 @@ public sealed partial class PetWindow
             string? text = e.Kind switch
             {
                 BattleEventKind.WaveStarted when battle.IsBossWave((int)e.Value) => L("BOSS!", "BOSS!"),
-                BattleEventKind.WaveStarted => L($"ĐỢT {(int)e.Value}", $"WAVE {(int)e.Value}"),
-                BattleEventKind.BossSummoned => L($"{BossName()} gọi quân!", $"The {BossName()} calls for help!"),
-                BattleEventKind.BossShielded => L($"{BossName()} bật khiên! Hạ hết quân", $"The {BossName()} shields up! Defeat its helpers"),
+                BattleEventKind.WaveStarted => LF($"ĐỢT {(int)e.Value}", $"WAVE {(int)e.Value}"),
+                BattleEventKind.BossSummoned => LF($"{BossName()} gọi quân!", $"The {BossName()} calls for help!"),
+                BattleEventKind.BossShielded => LF($"{BossName()} bật khiên! Hạ hết quân", $"The {BossName()} shields up! Defeat its helpers"),
                 BattleEventKind.BossShieldDown => L("KHIÊN VỠ!", "SHIELD DOWN!"),
-                BattleEventKind.BossEnraged =>L($"{BossName()} nổi giận!", $"The {BossName()} is angry!"),
+                BattleEventKind.BossEnraged =>LF($"{BossName()} nổi giận!", $"The {BossName()} is angry!"),
                 BattleEventKind.SynergyUnlocked when (int)e.Value >= 0 && (int)e.Value < battle.Settings.SynergyList.Count =>
                     "★ " + battle.Settings.SynergyList[(int)e.Value].Name(English).ToUpper(System.Globalization.CultureInfo.CurrentCulture) + "!",
                 BattleEventKind.EnemyHealing when e.Value > 0 && !farHealExplained => L("Slime thảo dược hồi máu từ xa! Đẩy nó để cắt", "A herb slime heals from afar! Push it to cut it"),
                 BattleEventKind.EnemyHealing when !healerExplained => L("Quái hồi máu! Hạ nó trước", "A healer! Take it down first"),
-                BattleEventKind.BossRallying when !rallyExplained => L($"{BossName()} sắp phong tinh anh! Đẩy để cắt", $"The {BossName()} is making an elite! Push it to cut it"),
-                BattleEventKind.BossRallied when battle.Find((int)e.Value) is Slime rallied => L($"★ {rallied.Type.Name(false)} thành tinh anh!", $"★ The {rallied.Type.Name(true)} turns elite!"),
+                BattleEventKind.BossRallying when !rallyExplained => LF($"{BossName()} sắp phong tinh anh! Đẩy để cắt", $"The {BossName()} is making an elite! Push it to cut it"),
+                BattleEventKind.BossRallied when battle.Find((int)e.Value) is Slime rallied => LF($"★ {rallied.Type.Name(false)} thành tinh anh!", $"★ The {rallied.Type.Name(true)} turns elite!"),
                 BattleEventKind.Incoming when !behindExplained => L("Quái tới từ phía sau!", "Enemies from behind!"),
                 BattleEventKind.EnemyWarded when !wardExplained => L("Đang được hồi thì miễn sát thương! Đẩy slime thảo dược", "Healing makes it immune! Push the herb slime"),
                 BattleEventKind.EliteAppeared when battle.Find((int)e.Value) is { Elite: EliteSpec elite } enemy && elitesExplained.Add(enemy.Type.Id) =>
-                    L($"★ {enemy.Type.Name(false)} tinh anh: {elite.Describe(false)}", $"★ Elite {enemy.Type.Name(true)}: {elite.Describe(true)}"),
+                    LF($"★ {enemy.Type.Name(false)} tinh anh: {elite.Describe(false)}", $"★ Elite {enemy.Type.Name(true)}: {elite.Describe(true)}"),
                 BattleEventKind.PushResisted when !pushResistExplained && battle.Find((int)e.Value) is Slime firm =>
-                    L($"★ {firm.Type.Name(false)} tinh anh miễn Đẩy!", $"★ The elite {firm.Type.Name(true)} ignores Push!"),
+                    LF($"★ {firm.Type.Name(false)} tinh anh miễn Đẩy!", $"★ The elite {firm.Type.Name(true)} ignores Push!"),
                 // Infinity: a milestone reward not won before (it is saved when the run ends).
                 BattleEventKind.WaveCleared when battle.Endless && !battleCustomData && EndlessRewards is EndlessSpec rewards &&
                     rewards.MilestoneAt(battle.WavesCleared) is KeepsakeSpec prize && prize.Wave > BattleRecords.EndlessCleared(rewards) =>
-                    L($"★ Mở khóa: {prize.Name(false)}!", $"★ Unlocked: {prize.Name(true)}!"),
+                    LF($"★ Mở khóa: {prize.Name(false)}!", $"★ Unlocked: {prize.Name(true)}!"),
                 // Desktop apps: the first drop and the first popup say what to do; every app used shouts its name.
                 BattleEventKind.AppReady when !appExplained => L("App trên màn hình đã sạc đầy! Bấm vào icon để dùng", "An app on the screen is charged! Click its icon"),
                 BattleEventKind.AppUsed when AppName(e) is string used => "★ " + used.ToUpper(System.Globalization.CultureInfo.CurrentCulture) + "!",
                 BattleEventKind.AppInfected when AppName(e) is string hit => virusExplained
-                    ? L($"☣ {hit} nhiễm virus!", $"☣ {hit} is infected!")
-                    : L($"☣ {hit} nhiễm virus! Bấm icon 3 lần hoặc hạ slime đeo ☣", $"☣ {hit} is infected! Click it 3 times or defeat the slime wearing ☣"),
-                BattleEventKind.AppCleaned when AppName(e) is string clean => L($"✓ {clean} sạch virus!", $"✓ {clean} is clean!"),
+                    ? LF($"☣ {hit} nhiễm virus!", $"☣ {hit} is infected!")
+                    : LF($"☣ {hit} nhiễm virus! Bấm icon 3 lần hoặc hạ slime đeo ☣", $"☣ {hit} is infected! Click it 3 times or defeat the slime wearing ☣"),
+                BattleEventKind.AppCleaned when AppName(e) is string clean => LF($"✓ {clean} sạch virus!", $"✓ {clean} is clean!"),
                 BattleEventKind.PopupOpened when !popupExplained => L("Quảng cáo bật lên! Bấm × để tắt", "An ad popped up! Click × to close it"),
                 BattleEventKind.PopupSpawned => L("Quảng cáo thả slime ra!", "The ad let a slime out!"),
                 BattleEventKind.Won => L("CHIẾN THẮNG!", "VICTORY!"),

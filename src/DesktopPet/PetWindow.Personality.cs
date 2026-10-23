@@ -40,7 +40,7 @@ public sealed partial class PetWindow
             {
                 bool valid = double.TryParse(number.Text, NumberStyles.Float, CultureInfo.InvariantCulture, out double value) && double.IsFinite(value) && value >= min && value <= max;
                 validInputs[number] = valid;
-                number.ToolTip = valid ? help : L($"Nhập số từ {min} đến {max}.", $"Enter a number from {min} to {max}.");
+                number.ToolTip = valid ? help : LF($"Nhập số từ {min} đến {max}.", $"Enter a number from {min} to {max}.");
                 if (valid) { updating = true; slider.Value = value; updating = false; }
                 save.IsEnabled = !validInputs.ContainsValue(false);
             };

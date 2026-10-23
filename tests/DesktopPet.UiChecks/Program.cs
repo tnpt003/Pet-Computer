@@ -743,6 +743,25 @@ internal static class Program
             customize = Field<Window>(window, "settingsWindow");
             form = Field<PetSettingsForm>(window, "settingsForm");
         }
+        // Japanese (not offered yet): translated text where the table has it, English elsewhere.
+        string languageBeforeJa = preferences.Language;
+        customize.Close();
+        window.SetLanguage("ja");
+        window.ShowPetSettings();
+        customize = Field<Window>(window, "settingsWindow");
+        form = Field<PetSettingsForm>(window, "settingsForm");
+        Check(form.LanguageIds.Last() == "ja" && (string)form.Language.SelectedItem == "日本語" && form.Language.Items.Count == 3,
+            "A language set before it is offered stays the current choice in Settings");
+        window.ContextMenu!.IsOpen = true;
+        var japaneseMenu = window.ContextMenu.Items.OfType<System.Windows.Controls.MenuItem>().Select(i => i.Header as string).ToArray();
+        window.ContextMenu.IsOpen = false;
+        Check(japaneseMenu.Contains("今すぐ") && japaneseMenu.Contains("気持ち") && window.L("Thử", "Untranslated (check)") == "Untranslated (check)",
+            "Japanese uses the translation table and shows English for text not translated yet");
+        customize.Close();
+        window.SetLanguage(languageBeforeJa);
+        window.ShowPetSettings();
+        customize = Field<Window>(window, "settingsWindow");
+        form = Field<PetSettingsForm>(window, "settingsForm");
         string nameBefore = preferences.Name;
         double volumeBefore = preferences.Volume;
         form.Name.Text = "Changed"; form.Volume.Value = 0.1;

@@ -20,7 +20,7 @@ import uuid
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from learning import CREDIT_WINDOW, Learner, context as learning_context  # noqa: E402
 from seasons import Calendar  # noqa: E402
-from speech import Speech  # noqa: E402
+from speech import LANGUAGES, Speech  # noqa: E402
 
 VERSION = 1
 MAX_MESSAGE = 8192
@@ -30,7 +30,7 @@ COMMANDS = {"LOOK", "IDLE", "WALK_LEFT", "WALK_RIGHT", "SIT", "JUMP", "SLEEP", "
 MOODS = ("content", "playful", "bored", "sleepy")
 PERSONALITIES = ("Balanced", "Playful", "Curious", "Calm")
 # C# actions that own their duration; mirrors PetActionRules.RejectsDecisions.
-# Learned actions and situations, named in the UI language (vi or en).
+# Learned actions and situations, named in the UI language; a missing language or word uses English.
 LEARNED_NAMES = {
     "vi": {"WALK": "Đi dạo", "IDLE": "Đứng chơi", "SIT": "Ngồi", "SLEEP": "Ngủ", "JUMP": "Nhảy", "LOOK": "Nhìn quanh",
            "FOLLOW_MOUSE": "Theo chuột", "SEEK_ATTENTION": "Đòi chú ý", "ROLL_OVER": "Lăn ngửa", "CHASE_TAIL": "Đuổi đuôi",
@@ -301,12 +301,12 @@ class Brain:
 
     def describe_learned(self, key, language="en"):
         """Human-readable learned item in the user's single UI language."""
-        language = language if language in ("vi", "en") else "en"
+        language = language if language in LANGUAGES else "en"
         if key.startswith("say:"):
             return self.speech.describe(key[4:], language)
         _, ctx, action = key.split(":", 2) if key.count(":") >= 2 else ("", "", key)
         part, _, need = ctx.partition("/")
-        names = LEARNED_NAMES[language]
+        names = {**LEARNED_NAMES["en"], **LEARNED_NAMES.get(language, {})}
         situation = ", ".join(names.get(word, word) for word in (part, need) if word and word != "ok")
         label = names.get(action, action)
         return f"{label} · {situation}" if situation else label

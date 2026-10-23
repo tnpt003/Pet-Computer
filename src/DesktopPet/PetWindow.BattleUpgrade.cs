@@ -154,7 +154,7 @@ public sealed partial class PetWindow
             desc.Text = spec.Describe(English);
             int have = battle.Stacks(id);
             count.Text = spec.Rare ? L("★ Thẻ hiếm · một lần mỗi build", "★ Rare · once per build")
-                : spec.MaxStacks > 0 ? L($"Đã có {have}/{spec.MaxStacks}", $"Have {have}/{spec.MaxStacks}") : have > 0 ? L($"Đã lấy {have} lần", $"Taken {have}×") : "";
+                : spec.MaxStacks > 0 ? LF($"Đã có {have}/{spec.MaxStacks}", $"Have {have}/{spec.MaxStacks}") : have > 0 ? LF($"Đã lấy {have} lần", $"Taken {have}×") : "";
             count.Foreground = spec.Rare ? RareGold : Brushes.White;
             count.Opacity = spec.Rare ? 1 : 0.65;
             build.Text = CardBuildText(battle, spec);
@@ -176,7 +176,7 @@ public sealed partial class PetWindow
         int points = b.GroupPoints(group), goal = 0;
         foreach (var y in b.Settings.SynergyList) if (y.Group == group && !b.Synergies.Contains(y) && (goal == 0 || y.At < goal)) goal = y.At;
         string text = BuildGroups.Name(group, English) + $" {points} → {points + 1}" + (goal > 0 ? $"/{goal}" : "");
-        if (b.Unlocks(card) is SynergySpec synergy) text += L($" · Mở {synergy.Name(false)}!", $" · {synergy.Name(true)}!");
+        if (b.Unlocks(card) is SynergySpec synergy) text += LF($" · Mở {synergy.Name(false)}!", $" · {synergy.Name(true)}!");
         return text;
     }
 

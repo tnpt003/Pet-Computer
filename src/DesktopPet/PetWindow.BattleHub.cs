@@ -196,8 +196,8 @@ public sealed partial class PetWindow
             text.Visibility = string.IsNullOrEmpty(value) ? Visibility.Collapsed : Visibility.Visible;
         }
         hubTitle.Text = hubRewardsShown ? L("Phần thưởng", "Rewards") : L("Chế độ chiến đấu", "Battle Mode");
-        hubSubtitle.Text = hubRewardsShown ? L($"Những gì {preferences.Name} đã giành được", $"What {preferences.Name} has won")
-            : L($"Hôm nay {preferences.Name} ra trận theo cách nào?", $"How will {preferences.Name} fight today?");
+        hubSubtitle.Text = hubRewardsShown ? LF($"Những gì {preferences.Name} đã giành được", $"What {preferences.Name} has won")
+            : LF($"Hôm nay {preferences.Name} ra trận theo cách nào?", $"How will {preferences.Name} fight today?");
         string? refusal = BattlePrepRefusal();
         Show(hubStatus, refusal != null && !hubRewardsShown ? L("Chưa thể vào: ", "Not yet: ") + refusal : null);
         hubCloseText!.Text = L("Đóng", "Close");
@@ -235,7 +235,7 @@ public sealed partial class PetWindow
                 if (Adventure is not Adventure adventure || adventure.Chapter() is not ChapterSpec chapter)
                     return (title, about, L("Dữ liệu chưa có chương", "No chapter in the data"), null, false, L("Chưa có", "Not available"));
                 int won = chapter.Stages.Count(s => adventure.IsCompleted(s.Id));
-                string line = (won == chapter.Stages.Length ? "✓ " : "") + chapter.Name(English) + L($" · {won}/{chapter.Stages.Length} màn", $" · {won}/{chapter.Stages.Length} stages");
+                string line = (won == chapter.Stages.Length ? "✓ " : "") + chapter.Name(English) + LF($" · {won}/{chapter.Stages.Length} màn", $" · {won}/{chapter.Stages.Length} stages");
                 return (title, about, line, chapter.Stages.Length == 0 ? 0 : (double)won / chapter.Stages.Length, true, null);
             }
             case HubExpedition:
@@ -248,7 +248,7 @@ public sealed partial class PetWindow
                     return (title, about, L("Đang có chuyến · ", "Run under way · ") + StepTitle(Math.Min(run.Step, run.Map.Count - 1), run.Map.Count) + $" · HP {Math.Ceiling(run.Hp)}/{x.MaxHp(run):0}",
                         run.Map.Count == 0 ? 0 : (double)run.Step / run.Map.Count, true, null);
                 int had = x.Spec.Keepsakes.Count(k => x.Progress.Keepsakes.Contains(k.Id));
-                return (title, about, x.Spec.Keepsakes.Length == 0 ? L("Sẵn sàng lên đường", "Ready to set out") : L($"Kỷ vật {had}/{x.Spec.Keepsakes.Length}", $"Keepsakes {had}/{x.Spec.Keepsakes.Length}"),
+                return (title, about, x.Spec.Keepsakes.Length == 0 ? L("Sẵn sàng lên đường", "Ready to set out") : LF($"Kỷ vật {had}/{x.Spec.Keepsakes.Length}", $"Keepsakes {had}/{x.Spec.Keepsakes.Length}"),
                     x.Spec.Keepsakes.Length == 0 ? null : (double)had / x.Spec.Keepsakes.Length, true, null);
             }
             default:

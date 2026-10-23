@@ -239,9 +239,9 @@ public sealed partial class PetWindow
     {
         if (appHintWindow == null || appHintText == null || battle?.FindApp(appHintFor) is not DesktopApp app || battle.AppRules is not AppsSpec rules) { CloseAppHint(); return; }
         var spec = rules.App(app.Kind);
-        string state = app.Infected ? L($"☣ Nhiễm virus! Bấm thêm {app.ScrubsLeft} lần để quét (hoặc hạ slime đeo ☣).", $"☣ Infected! Click {app.ScrubsLeft} more times to scrub it (or defeat the slime wearing ☣).")
+        string state = app.Infected ? LF($"☣ Nhiễm virus! Bấm thêm {app.ScrubsLeft} lần để quét (hoặc hạ slime đeo ☣).", $"☣ Infected! Click {app.ScrubsLeft} more times to scrub it (or defeat the slime wearing ☣).")
             : app.Ready ? L("Sẵn sàng — bấm để dùng.", "Ready — click to use.")
-            : L($"Đang sạc {Math.Floor(app.Charge * 100)}%", $"Charging {Math.Floor(app.Charge * 100)}%");
+            : LF($"Đang sạc {Math.Floor(app.Charge * 100)}%", $"Charging {Math.Floor(app.Charge * 100)}%");
         string text = $"{spec.Name(English)}\n{(app.Infected ? spec.Bad(English) : spec.Desc(English))}\n{state}";
         if (appHintText.Tag as string != text)
         {

@@ -50,7 +50,7 @@ public sealed class PetBreaks
 
     public static (string Id, string Text) LocalLine(string language, string name, Random random)
     {
-        var lines = language == "en" ? English : Vietnamese;
+        var lines = PetLanguage.UsesEnglish(language) ? English : Vietnamese;
         int index = random.Next(lines.Length);
         return ($"break:local:{language}:{index}", lines[index].Replace("{name}", string.IsNullOrWhiteSpace(name) ? "Mochi" : name));
     }

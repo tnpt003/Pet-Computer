@@ -227,7 +227,7 @@ public sealed partial class PetWindow
             var plain = Plain(b.Settings, b.Weapon.Id);
             if (battleExpedition is ExpeditionBattle x)
                 return new(BagExpedition, b, plain, b.CatHp, StepTitle(x.Node.Step, x.Expedition.Spec.StepCount) + " · " + DifficultyName(b.Difficulty), x.Expedition, x.Expedition.Run, true);
-            if (b.Endless) return new(BagEndless, b, plain, b.CatHp, L($"Đợt {b.Wave}", $"Wave {b.Wave}") + " · " + DifficultyName(b.Difficulty), null, null, true);
+            if (b.Endless) return new(BagEndless, b, plain, b.CatHp, LF($"Đợt {b.Wave}", $"Wave {b.Wave}") + " · " + DifficultyName(b.Difficulty), null, null, true);
             string where = (b.Stage is StageSpec stage ? StageTitle(stage) : L("Trận", "Battle")) + " · " + DifficultyName(b.Difficulty);
             return new(b.Stage != null ? BagAdventure : BagBattle, b, plain, b.CatHp, where, null, null, true);
         }
@@ -323,9 +323,9 @@ public sealed partial class PetWindow
         first.Margin = new Thickness(0);
         var lines = new StackPanel { Children = { first, BagLine(card.Describe(English), PetUi.CaptionSize, Brushes.White) } };
         if (view.Sim.Unlocks(card) is SynergySpec synergy)
-            lines.Children.Add(BagLine(L($"Sẽ mở ★ {synergy.Name(false)}: {synergy.Describe(false)}", $"Switches on ★ {synergy.Name(true)}: {synergy.Describe(true)}"), PetUi.CaptionSize, PetUi.Game.Gold, bold: true));
+            lines.Children.Add(BagLine(LF($"Sẽ mở ★ {synergy.Name(false)}: {synergy.Describe(false)}", $"Switches on ★ {synergy.Name(true)}: {synergy.Describe(true)}"), PetUi.CaptionSize, PetUi.Game.Gold, bold: true));
         string heal = Number(Math.Max(0, Math.Min(card.Amount, view.Sim.CatMaxHp - view.Sim.CatHp)), "0");
-        string? hint = card.Effect == "heal" ? L($"Hồi ngay {heal} HP (thẻ hồi máu không giữ sang màn sau).", $"Heals {heal} HP now (a heal is not carried on).")
+        string? hint = card.Effect == "heal" ? LF($"Hồi ngay {heal} HP (thẻ hồi máu không giữ sang màn sau).", $"Heals {heal} HP now (a heal is not carried on).")
             : numbersChange == true ? L("Số xanh sau dấu → là chỉ số khi đã lấy thẻ này.", "Blue numbers after → are the stats with this card.")
             : numbersChange == false ? L("Không đổi các chỉ số ở đây: tác dụng của nó hiện ra trong trận.", "Changes none of the numbers here: it works in the fight itself.")
             : null;
@@ -360,7 +360,7 @@ public sealed partial class PetWindow
             warnings.Add((view.Live ? L("HP thấp: cân nhắc Cá hồi máu hoặc Khiên.", "Low HP: think of the Healing fish or the Shield.")
                 : L("HP thấp: cân nhắc điểm nghỉ trước trận tiếp.", "Low HP: think of a rest before the next battle."), true));
         if (view.Live && sim.Reckless && sim.Relics.FirstOrDefault(r => r.Effect == RelicSpec.Reckless) is RelicSpec reckless)
-            warnings.Add((L($"{reckless.Name(English)} đang kích hoạt: +{Percent(reckless.Amount)} sát thương.", $"{reckless.Name(English)} is on: +{Percent(reckless.Amount)} damage."), false));
+            warnings.Add((LF($"{reckless.Name(English)} đang kích hoạt: +{Percent(reckless.Amount)} sát thương.", $"{reckless.Name(English)} is on: +{Percent(reckless.Amount)} damage."), false));
         foreach (var relic in sim.Relics) warnings.Add((relic.Name(English) + ": " + RelicPrice(relic), true));
         if (warnings.Count > 0)
         {
@@ -385,7 +385,7 @@ public sealed partial class PetWindow
             double? step = preview is var (_, b, a) ? value(a) - value(b) : null;
             AddStatRow(grid, r, picture, name, value(sim), value(view.Plain), max, higher, show, step);
         }
-        var note = BagLine(L($"Thanh kem: {view.Plain.Weapon.Name(English)} không thẻ. Vàng: thẻ/di vật cộng thêm. Đỏ: bị trừ. Cổ vũ, combo và hiệu ứng chỉ có trong trận không tính ở đây.",
+        var note = BagLine(LF($"Thanh kem: {view.Plain.Weapon.Name(English)} không thẻ. Vàng: thẻ/di vật cộng thêm. Đỏ: bị trừ. Cổ vũ, combo và hiệu ứng chỉ có trong trận không tính ở đây.",
             $"Cream: the {view.Plain.Weapon.Name(English)} with no cards. Gold: added by cards or relics. Red: taken away. Cheer, combos and other in-battle effects are not counted here."),
             PetUi.CaptionSize, PetUi.Game.Soft);
         note.Margin = new Thickness(0, 8, 0, 0);
@@ -399,7 +399,7 @@ public sealed partial class PetWindow
             var skill = info.Skill;
             var glyph = new Border { CornerRadius = new CornerRadius(6), Background = PetUi.Game.Shadow(0x80),
                 Child = new HudGlyph(Enum.Parse<HudGlyphKind>(skill.ToString())) { Width = 18, Height = 18 } };
-            string name = info.Name(English, sim.Settings) + (view.Live && sim.Cooldown(skill) > 0.05 ? L($" · còn {Number(sim.Cooldown(skill), "0")} giây", $" · ready in {Number(sim.Cooldown(skill), "0")} s") : "");
+            string name = info.Name(English, sim.Settings) + (view.Live && sim.Cooldown(skill) > 0.05 ? LF($" · còn {Number(sim.Cooldown(skill), "0")} giây", $" · ready in {Number(sim.Cooldown(skill), "0")} s") : "");
             AddStatRow(skills, at++, glyph, name, sim.SkillCooldown(skill), view.Plain.SkillCooldown(skill), 30, false, v => L("hồi ", "every ") + Number(v, "0.#") + L(" giây", " s"), null);
             if (skill == BattleSkill.Heal)
                 AddStatRow(skills, at++, new Border(), L("lượng hồi", "heals"), sim.HealAmount, view.Plain.HealAmount, Math.Max(1, view.Plain.HealAmount * 2.5), true, v => Number(v, "0") + " HP", null);
@@ -510,7 +510,7 @@ public sealed partial class PetWindow
                     Background = i < points ? GroupColor(group) : Brushes.Transparent, BorderBrush = GroupColor(group), BorderThickness = new Thickness(1.3) });
             var parts = synergies.Where(y => points >= y.At).Select(y => "★ " + y.Name(English)).ToList();
             if (synergies.FirstOrDefault(y => points < y.At) is SynergySpec next)
-                parts.Add(L($"còn {next.At - points} thẻ → ★ {next.Name(English)}", $"{next.At - points} more → ★ {next.Name(English)}"));
+                parts.Add(LF($"còn {next.At - points} thẻ → ★ {next.Name(English)}", $"{next.At - points} more → ★ {next.Name(English)}"));
             var name = BagLine($"{BuildGroups.Name(group, English)} {points}", PetUi.SmallSize, GroupColor(group), bold: true); name.Margin = new Thickness(0); name.Width = 96;
             var state = BagLine(string.Join(" · ", parts), PetUi.CaptionSize, parts.Any(p => p.StartsWith("★")) ? PetUi.Game.Gold : PetUi.Game.Soft); state.Margin = new Thickness(0); state.VerticalAlignment = VerticalAlignment.Center;
             progress.Children.Add(new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, progress.Children.Count == 0 ? 0 : 5, 0, 0), Children = { name, dots, state } });
@@ -605,7 +605,7 @@ public sealed partial class PetWindow
                 BorderThickness = new Thickness(1.5), Child = new StackPanel { Children = { picture, name } }
             });
         }
-        var top = new StackPanel { Children = { BagLine(L($"Di vật {sim.Relics.Count}/{x.Spec.MaxRelics}", $"Relics {sim.Relics.Count}/{x.Spec.MaxRelics}"), PetUi.SmallSize, Brushes.White, bold: true), slots } };
+        var top = new StackPanel { Children = { BagLine(LF($"Di vật {sim.Relics.Count}/{x.Spec.MaxRelics}", $"Relics {sim.Relics.Count}/{x.Spec.MaxRelics}"), PetUi.SmallSize, Brushes.White, bold: true), slots } };
         ((TextBlock)top.Children[0]).Margin = new Thickness(0, 0, 0, 6);
         foreach (var relic in sim.Relics)
         {
@@ -628,7 +628,7 @@ public sealed partial class PetWindow
         {
             var e = entries[i];
             var line = new TextBlock { FontSize = PetUi.CaptionSize, Foreground = Brushes.White, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 3, 0, 0) };
-            line.Inlines.Add(new System.Windows.Documents.Run(L($"Bậc {e.Step + 1} · ", $"Step {e.Step + 1} · ")) { Foreground = PetUi.Game.Soft });
+            line.Inlines.Add(new System.Windows.Documents.Run(LF($"Bậc {e.Step + 1} · ", $"Step {e.Step + 1} · ")) { Foreground = PetUi.Game.Soft });
             line.Inlines.Add(new System.Windows.Documents.Run(LogText(x, e)));
             if (Math.Abs(e.Hp) >= 0.5)
                 line.Inlines.Add(new System.Windows.Documents.Run($"  {(e.Hp > 0 ? "+" : "−")}{Math.Abs(Math.Round(e.Hp))} HP") { Foreground = e.Hp > 0 ? PetUi.Hex("#C9F0B8") : BagBad, FontWeight = FontWeights.SemiBold });
@@ -652,7 +652,7 @@ public sealed partial class PetWindow
                 string name = x.Spec.FindEvent(e.Event)?.Name(English) ?? KindName(ExpeditionSpec.Event);
                 string what = e.Option switch
                 {
-                    DesktopPet.Expedition.SwapOption when e.Dropped != null && e.Card != null => L($"đổi {CardName(e.Dropped)} lấy {CardName(e.Card)}", $"traded {CardName(e.Dropped)} for {CardName(e.Card)}"),
+                    DesktopPet.Expedition.SwapOption when e.Dropped != null && e.Card != null => LF($"đổi {CardName(e.Dropped)} lấy {CardName(e.Card)}", $"traded {CardName(e.Dropped)} for {CardName(e.Card)}"),
                     DesktopPet.Expedition.Safe => L("chọn an toàn", "played safe"),
                     DesktopPet.Expedition.Risk or DesktopPet.Expedition.Take => Relic(e.Relic),
                     _ => L("đi tiếp", "moved on")
@@ -674,18 +674,18 @@ public sealed partial class PetWindow
     // What a relic gives and what it costs, from its numbers.
     private string RelicGain(RelicSpec r) => r.Effect switch
     {
-        RelicSpec.Counter => L($"Sau khi Khiên hoặc Mai rùa đỡ đòn, nhát trúng kế tiếp +{Percent(r.Amount)} sát thương", $"After the Shield or Turtle shell stops a hit, the next landed swing deals +{Percent(r.Amount)}"),
-        RelicSpec.Relief => L($"{BattleSkills.Get(BattleSkill.Heal).Name(false)} hồi thêm {Percent(r.Amount)}", $"The {BattleSkills.Get(BattleSkill.Heal).Name(true)} heals {Percent(r.Amount)} more"),
-        RelicSpec.Reckless => L($"+{Percent(r.Amount)} sát thương khi HP dưới {Percent(r.Below)}", $"+{Percent(r.Amount)} damage while HP is under {Percent(r.Below)}"),
-        _ => L($"+{Percent(r.Amount)} tốc độ chạy, −{Percent(r.Extra)} thời gian hồi đòn", $"+{Percent(r.Amount)} running speed, −{Percent(r.Extra)} time between swings")
+        RelicSpec.Counter => LF($"Sau khi Khiên hoặc Mai rùa đỡ đòn, nhát trúng kế tiếp +{Percent(r.Amount)} sát thương", $"After the Shield or Turtle shell stops a hit, the next landed swing deals +{Percent(r.Amount)}"),
+        RelicSpec.Relief => LF($"{BattleSkills.Get(BattleSkill.Heal).Name(false)} hồi thêm {Percent(r.Amount)}", $"The {BattleSkills.Get(BattleSkill.Heal).Name(true)} heals {Percent(r.Amount)} more"),
+        RelicSpec.Reckless => LF($"+{Percent(r.Amount)} sát thương khi HP dưới {Percent(r.Below)}", $"+{Percent(r.Amount)} damage while HP is under {Percent(r.Below)}"),
+        _ => LF($"+{Percent(r.Amount)} tốc độ chạy, −{Percent(r.Extra)} thời gian hồi đòn", $"+{Percent(r.Amount)} running speed, −{Percent(r.Extra)} time between swings")
     };
 
     private string RelicPrice(RelicSpec r) => r.Effect switch
     {
-        RelicSpec.Counter => L($"{BattleSkills.Get(BattleSkill.Shield).Name(false)} hồi chiêu lâu thêm {Number(r.Penalty, "0.#")} giây", $"The {BattleSkills.Get(BattleSkill.Shield).Name(true)} takes {Number(r.Penalty, "0.#")} s longer to recharge"),
-        RelicSpec.Relief => L($"{BattleSkills.Get(BattleSkill.Heal).Name(false)} hồi chiêu lâu thêm {Percent(r.Penalty)}", $"The {BattleSkills.Get(BattleSkill.Heal).Name(true)} takes {Percent(r.Penalty)} longer to recharge"),
-        RelicSpec.Reckless => L($"luôn nhận thêm {Percent(r.Penalty)} sát thương", $"always {Percent(r.Penalty)} more damage taken"),
-        _ => L($"−{Number(r.Penalty, "0")} HP tối đa", $"−{Number(r.Penalty, "0")} max HP")
+        RelicSpec.Counter => LF($"{BattleSkills.Get(BattleSkill.Shield).Name(false)} hồi chiêu lâu thêm {Number(r.Penalty, "0.#")} giây", $"The {BattleSkills.Get(BattleSkill.Shield).Name(true)} takes {Number(r.Penalty, "0.#")} s longer to recharge"),
+        RelicSpec.Relief => LF($"{BattleSkills.Get(BattleSkill.Heal).Name(false)} hồi chiêu lâu thêm {Percent(r.Penalty)}", $"The {BattleSkills.Get(BattleSkill.Heal).Name(true)} takes {Percent(r.Penalty)} longer to recharge"),
+        RelicSpec.Reckless => LF($"luôn nhận thêm {Percent(r.Penalty)} sát thương", $"always {Percent(r.Penalty)} more damage taken"),
+        _ => LF($"−{Number(r.Penalty, "0")} HP tối đa", $"−{Number(r.Penalty, "0")} max HP")
     };
 
     // ── Small pieces ─────────────────────────────────────────────────────────────────────────

@@ -20,7 +20,7 @@ public sealed partial class PetWindow
     private IReadOnlyList<KeepsakeSpec> EndlessEarned => endlessEarned ??=
         EndlessRewards is EndlessSpec spec ? spec.EarnedBy(BattleRecords.EndlessCleared(spec)).ToList() : Array.Empty<KeepsakeSpec>();
 
-    private string EndlessMilestoneText(KeepsakeSpec m) => L($"Vượt qua đợt {m.Wave} ở Vô tận để nhận.", $"Clear wave {m.Wave} in Infinity to get it.");
+    private string EndlessMilestoneText(KeepsakeSpec m) => LF($"Vượt qua đợt {m.Wave} ở Vô tận để nhận.", $"Clear wave {m.Wave} in Infinity to get it.");
 
     // Null when Infinity can be played now, otherwise why not.
     private string? EndlessRefusal()
@@ -32,8 +32,8 @@ public sealed partial class PetWindow
 
     private string EndlessAbout(EndlessSpec spec) =>
         L("Đợt quái không ngừng, mạnh dần.", "Waves that never stop and keep getting stronger.")
-        + (spec.UpgradeEvery > 0 ? L($" Cứ {spec.UpgradeEvery} đợt chọn 1 thẻ.", $" A card every {spec.UpgradeEvery} waves.") : "")
-        + (spec.BossEvery > 0 ? L($" Trùm mỗi {spec.BossEvery} đợt.", $" A boss every {spec.BossEvery} waves.") : "")
+        + (spec.UpgradeEvery > 0 ? LF($" Cứ {spec.UpgradeEvery} đợt chọn 1 thẻ.", $" A card every {spec.UpgradeEvery} waves.") : "")
+        + (spec.BossEvery > 0 ? LF($" Trùm mỗi {spec.BossEvery} đợt.", $" A boss every {spec.BossEvery} waves.") : "")
         + L(" Kết thúc khi mèo thua hoặc bạn bấm Kết thúc.", " It ends when the cat falls or you press End.");
 
     // "\nRecord (Sword · Normal): wave 12" for the loadout, or nothing yet.
@@ -42,7 +42,7 @@ public sealed partial class PetWindow
         var best = BattleRecords.ForEndless(spec, weapon, level, BattleDataCustom);
         if (best.MostWaves == 0) return "";
         string loadout = $"{BattleTuning.Weapon(weapon).Name(English)} · {DifficultyName(level)}";
-        return "\n" + L($"Kỷ lục ({loadout}): đợt {best.MostWaves} · hạ {best.MostDefeated} slime", $"Record ({loadout}): wave {best.MostWaves} · {best.MostDefeated} slime{(best.MostDefeated == 1 ? "" : "s")}");
+        return "\n" + LF($"Kỷ lục ({loadout}): đợt {best.MostWaves} · hạ {best.MostDefeated} slime", $"Record ({loadout}): wave {best.MostWaves} · {best.MostDefeated} slime{(best.MostDefeated == 1 ? "" : "s")}");
     }
 
     // The hub's card: locked until its Adventure stage is won, then the furthest wave so far.
@@ -53,12 +53,12 @@ public sealed partial class PetWindow
         if (BattleTuning.Endless is not EndlessSpec spec) return (title, about, L("Dữ liệu chưa có chế độ Vô tận", "No Infinity in the data"), null, false, L("Chưa có", "Not available"));
         if (!spec.IsUnlocked(AdventureProgress, BattleTuning)) return (title, about, L("Thắng Vua Slime ở Phiêu lưu để mở", "Win the Slime King in the Adventure to open"), null, false, L("Đang khóa", "Locked"));
         int best = BattleRecords.EndlessBest(spec);
-        string state = best > 0 ? L($"Xa nhất: đợt {best}", $"Furthest: wave {best}") : L("Chưa chơi lần nào", "Not played yet");
+        string state = best > 0 ? LF($"Xa nhất: đợt {best}", $"Furthest: wave {best}") : L("Chưa chơi lần nào", "Not played yet");
         // The milestone rewards: how many are won, and the next one's wave.
         if (EndlessRewards is not EndlessSpec rewards) return (title, about, state, null, true, null);
         int had = EndlessEarned.Count, all = rewards.Milestones.Length;
         var next = rewards.Milestones.FirstOrDefault(m => m.Wave > BattleRecords.EndlessCleared(rewards));
-        state += L($" · Thưởng {had}/{all}", $" · Rewards {had}/{all}") + (next != null ? L($" · tiếp: qua đợt {next.Wave}", $" · next: clear wave {next.Wave}") : "");
+        state += LF($" · Thưởng {had}/{all}", $" · Rewards {had}/{all}") + (next != null ? LF($" · tiếp: qua đợt {next.Wave}", $" · next: clear wave {next.Wave}") : "");
         return (title, about, state, (double)had / all, true, null);
     }
 
@@ -71,7 +71,7 @@ public sealed partial class PetWindow
             TextWrapping = TextWrapping.Wrap, MaxWidth = 300, Margin = new Thickness(0, 2, 0, 0)
         };
         var reached = Line(PetUi.TitleSize, bold: true);
-        reached.Text = L($"Đạt đợt {result.EndlessWave}", $"Reached wave {result.EndlessWave}");
+        reached.Text = LF($"Đạt đợt {result.EndlessWave}", $"Reached wave {result.EndlessWave}");
         info.Children.Insert(2, reached);
         if (result.News.Any)
         {
@@ -90,7 +90,7 @@ public sealed partial class PetWindow
         if (BattleTuning.Endless is EndlessSpec spec && BattleRecords.ForEndless(spec, result.Weapon, result.Difficulty, result.Custom) is { MostWaves: > 0 } best)
         {
             var records = Line(PetUi.SmallSize, opacity: 0.85);
-            records.Text = L($"Kỷ lục ({arms} · {level}{(result.Custom ? ", dữ liệu tùy chỉnh" : "")}): đợt {best.MostWaves} · hạ {best.MostDefeated} slime",
+            records.Text = LF($"Kỷ lục ({arms} · {level}{(result.Custom ? ", dữ liệu tùy chỉnh" : "")}): đợt {best.MostWaves} · hạ {best.MostDefeated} slime",
                 $"Records ({arms} · {level}{(result.Custom ? ", custom data" : "")}): wave {best.MostWaves} · {best.MostDefeated} slime{(best.MostDefeated == 1 ? "" : "s")}");
             info.Children.Add(records);
         }

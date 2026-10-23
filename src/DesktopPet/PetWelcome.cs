@@ -16,9 +16,13 @@ public static class PetWelcome
     public static string DefaultLanguage(bool newUser, string current) =>
         !newUser ? current : CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "vi" ? "vi" : "en";
 
+    // The language id picked in the box (its Tag holds the ids, in order).
+    public static string Chosen(ComboBox box) => ((string[])box.Tag)[Math.Max(0, box.SelectedIndex)];
+
     public static Window Create(string language, out CheckBox autostart, out ComboBox languageBox)
     {
-        var choose = new ComboBox { ItemsSource = new[] { "English", "Tiếng Việt" }, SelectedIndex = language == "en" ? 0 : 1, MinWidth = 150 };
+        var languages = PetLanguage.Choices(language);
+        var choose = new ComboBox { ItemsSource = languages.Select(PetLanguage.DisplayName).ToArray(), SelectedIndex = Array.IndexOf(languages, language), Tag = languages, MinWidth = 150 };
         var row = new DockPanel();
         var label = new TextBlock { Text = "Language / Ngôn ngữ", VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 10, 0) };
         DockPanel.SetDock(label, Dock.Left);
@@ -31,7 +35,7 @@ public static class PetWelcome
         var start = Buttons(window).Single();
         void Apply()
         {
-            Func<string, string, string> L = (vi, en) => choose.SelectedIndex == 0 ? en : vi;
+            Func<string, string, string> L = (vi, en) => PetText.Pick(Chosen(choose), vi, en);
             message.Text = L("Chào mừng! Mèo đã ở trên màn hình của bạn.\n" +
                              "• Kéo mèo để bế lên, thả hoặc vung để ném.\n" +
                              "• Chuột phải vào mèo: chơi, cho ăn, cảm xúc, Làm ngay.\n" +
@@ -57,7 +61,7 @@ public static class PetWelcome
     {
         var window = Create(DefaultLanguage(newUser, pet.UiLanguage), out var autostart, out var language);
         window.ShowDialog();
-        pet.SetLanguage(language.SelectedIndex == 0 ? "en" : "vi");
+        pet.SetLanguage(Chosen(language));
         if (Environment.ProcessPath is not string exe) return;
         bool on = autostart.IsChecked == true;
         if (!startup.SetEnabled(on, exe)) System.Diagnostics.Trace.WriteLine("Welcome: Windows startup could not be changed.");

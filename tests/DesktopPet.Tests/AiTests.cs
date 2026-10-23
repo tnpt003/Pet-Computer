@@ -84,6 +84,7 @@ internal static class AiTests
         check(names != null && Same(names["commands"], AiCommand.All), "C# and Python know the same AI commands");
         check(names != null && Same(names["moods"], AiMood.All), "C# and Python know the same moods");
         check(names != null && Same(names["personalities"], PetPersonality.All), "C# and Python know the same personalities");
+        check(names != null && Same(names["languages"], PetLanguage.All), "C# and Python know the same UI languages");
         string temporary = Path.Combine(root, ".tools", "ai-tests", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(temporary);
         var source = new PythonDecisionSource(script, python, Path.Combine(temporary, "memory.json"),
@@ -133,7 +134,7 @@ internal static class AiTests
     private static Dictionary<string, string[]>? PythonNames(string python, string root)
     {
         const string code = "import json, sys; sys.path.insert(0, sys.argv[1]); import service as s; "
-            + "print(json.dumps({'commands': sorted(s.COMMANDS), 'moods': list(s.MOODS), 'personalities': list(s.PERSONALITIES)}))";
+            + "print(json.dumps({'commands': sorted(s.COMMANDS), 'moods': list(s.MOODS), 'personalities': list(s.PERSONALITIES), 'languages': list(s.LANGUAGES)}))";
         var start = new ProcessStartInfo(python) { RedirectStandardOutput = true, UseShellExecute = false };
         foreach (string arg in new[] { "-I", "-c", code, Path.Combine(root, "ai") }) start.ArgumentList.Add(arg);
         using var process = Process.Start(start);

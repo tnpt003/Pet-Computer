@@ -384,7 +384,7 @@ public sealed partial class PetWindow
         var chosen = BattleTuning.Weapon(prepWeapon);
         prepTitle.Text = prepStage is StageSpec stage ? StageTitle(stage) + (stage.Goal(English) is { Length: > 0 } goal ? "\n" + goal : "")
             : prepForExpedition && Expedition is Expedition x ? L("Viễn chinh — chuẩn bị chuyến", "Expedition — prepare the run") + "\n"
-                + L($"{x.Spec.StepCount} bậc, bậc cuối là trùm. Vũ khí, độ khó, HP và build giữ suốt chuyến.", $"{x.Spec.StepCount} steps, the last one a boss. Weapon, difficulty, HP and build carry through the run.")
+                + LF($"{x.Spec.StepCount} bậc, bậc cuối là trùm. Vũ khí, độ khó, HP và build giữ suốt chuyến.", $"{x.Spec.StepCount} steps, the last one a boss. Weapon, difficulty, HP and build carry through the run.")
             : prepForEndless && BattleTuning.Endless is EndlessSpec infinity ? L("Vô tận — chuẩn bị", "Infinity — get ready") + "\n" + EndlessAbout(infinity) + EndlessRecordLine(infinity, prepWeapon, prepDifficulty)
             : L("Chuẩn bị trận", "Get ready to battle");
         prepWeaponLabel!.Text = prepForExpedition ? L("Chọn cách đánh cho cả chuyến", "Choose how to fight for the whole run") : L("Chọn cách đánh", "Choose how to fight");

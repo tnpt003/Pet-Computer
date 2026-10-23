@@ -92,7 +92,7 @@ public sealed class PetPreferences
         p.Personality = PetPersonality.Normalize(p.Personality);
         p.Tuning = p.Tuning?.Normalized();
         p.Volume = double.IsFinite(p.Volume) ? Math.Clamp(p.Volume, 0, 1) : 0.7;
-        if (p.Language is not ("vi" or "en")) p.Language = "en";
+        p.Language = PetLanguage.Normalize(p.Language);
         p.Chattiness = Math.Clamp(p.Chattiness, 0, 2);
         p.Coat = NormalizeCoat(p.Coat);
         p.Accessory = NormalizeAccessory(p.Accessory);

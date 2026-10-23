@@ -59,7 +59,7 @@ public sealed partial class PetWindow
         .Where(t => t is { Visibility: Visibility.Visible }).Select(t => t!.Text).Concat(mapNodes.Select(n => n.Label.Text)));
 
     private string StageNumber(StageSpec stage) => Adventure?.Locate(stage.Id) is { } at ? (at.Index + 1).ToString() : "";
-    private string StageTitle(StageSpec stage) => L($"Màn {StageNumber(stage)} · ", $"Stage {StageNumber(stage)} · ") + stage.Name(English);
+    private string StageTitle(StageSpec stage) => LF($"Màn {StageNumber(stage)} · ", $"Stage {StageNumber(stage)} · ") + stage.Name(English);
 
     // Null when the map is open (opening it twice keeps the one map), otherwise why not.
     // It replaces an open setup panel or result panel; a battle must end first.
@@ -238,7 +238,7 @@ public sealed partial class PetWindow
         var previous = adventure.Locate(chosen.Id) is { Index: > 0 } where ? where.Chapter.Stages[where.Index - 1] : null;
         Show(mapStatus, adventure.IsCompleted(chosen.Id) ? L("Đã hoàn thành", "Completed") + StageRules(chosen)
             : unlocked ? L("Đã mở · ", "Open · ") + ObjectiveText(chosen) + StageRules(chosen)
-            : L($"Chưa mở — thắng màn {StageNumber(previous!)} ({previous!.Name(false)}) trước", $"Locked — win stage {StageNumber(previous!)} ({previous!.Name(true)}) first"));
+            : LF($"Chưa mở — thắng màn {StageNumber(previous!)} ({previous!.Name(false)}) trước", $"Locked — win stage {StageNumber(previous!)} ({previous!.Name(true)}) first"));
         mapStatus!.Foreground = unlocked ? Brushes.White : PrepWarning;
         string? record = StageRecordLine(adventure, chosen);
         string? prize = chosen.Reward is string reward && PetAccessories.Find(reward) is { } item
@@ -253,8 +253,8 @@ public sealed partial class PetWindow
 
     // "survive 75 s" or "3 waves"; " · upgrades between waves" when the stage offers them.
     private string ObjectiveText(StageSpec stage) => stage.Survival
-        ? L($"sống sót {stage.SurviveSeconds:0} giây", $"survive {stage.SurviveSeconds:0} s")
-        : L($"{stage.Waves.Length} đợt", $"{stage.Waves.Length} wave{(stage.Waves.Length == 1 ? "" : "s")}");
+        ? LF($"sống sót {stage.SurviveSeconds:0} giây", $"survive {stage.SurviveSeconds:0} s")
+        : LF($"{stage.Waves.Length} đợt", $"{stage.Waves.Length} wave{(stage.Waves.Length == 1 ? "" : "s")}");
     private string StageRules(StageSpec stage) => stage.Upgrades ? L(" · có nâng cấp giữa các đợt", " · upgrades between waves") : "";
 
     // Wins and the fastest win of a stage over every loadout (the result panel shows per loadout).
@@ -264,8 +264,8 @@ public sealed partial class PetWindow
         int wins = records.Sum(r => r.Wins);
         if (wins == 0) return null;
         double? best = records.Where(r => r.BestSeconds != null).Select(r => r.BestSeconds).Min();
-        string fastest = best is double s ? L($" · nhanh nhất {Clock(s)}", $" · fastest {Clock(s)}") : "";
-        return L($"Đã thắng {wins} lần{fastest}", $"Won {wins} time{(wins == 1 ? "" : "s")}{fastest}");
+        string fastest = best is double s ? LF($" · nhanh nhất {Clock(s)}", $" · fastest {Clock(s)}") : "";
+        return LF($"Đã thắng {wins} lần{fastest}", $"Won {wins} time{(wins == 1 ? "" : "s")}{fastest}");
     }
 
     // A stage battle just started: its name as a banner, and its tip the first time.
@@ -331,7 +331,7 @@ public sealed partial class PetWindow
         }
         else if (result.Outcome.Unlocked is StageSpec opened)
         {
-            var open = Line(PetUi.BodySize, RecordGold, true); open.Text = L($"Đã mở: {StageTitle(opened)}", $"Unlocked: {StageTitle(opened)}");
+            var open = Line(PetUi.BodySize, RecordGold, true); open.Text = LF($"Đã mở: {StageTitle(opened)}", $"Unlocked: {StageTitle(opened)}");
             lines.Children.Add(open);
         }
         else if (result.Won && result.Outcome.FirstClear && next == null)
@@ -343,7 +343,7 @@ public sealed partial class PetWindow
             if (PetAccessories.Find(reward) is { } item)
             {
                 var prize = Line(PetUi.BodySize, RecordGold, true);
-                prize.Text = L($"Phần thưởng mới: {item.Name(false)} — đội trong Cài đặt → Mèo", $"New reward: {item.Name(true)} — wear it in Settings → Cat");
+                prize.Text = LF($"Phần thưởng mới: {item.Name(false)} — đội trong Cài đặt → Mèo", $"New reward: {item.Name(true)} — wear it in Settings → Cat");
                 lines.Children.Add(prize);
             }
         if (result.Upgrades.Length > 0)

@@ -1,0 +1,53 @@
+using System.Text;
+using System.Text.RegularExpressions;
+using DesktopPet;
+
+// UI languages and the translation tables keyed by English text (PetText.cs, Assets/i18n).
+static class TextTests
+{
+    public static void Run(Action<bool, string> check)
+    {
+        check(PetLanguage.Normalize("ja") == "ja" && PetLanguage.Normalize("fr") == "en" && PetLanguage.Normalize(null) == "en",
+            "Known languages are kept; anything else becomes English");
+        check(PetLanguage.UsesEnglish("ja") && PetLanguage.UsesEnglish("en") && !PetLanguage.UsesEnglish("vi"),
+            "Every language but Vietnamese starts from the English names and layouts");
+        check(PetLanguage.Choices("en").SequenceEqual(PetLanguage.Offered) && PetLanguage.Choices("ja").Last() == "ja",
+            "A language that is not offered yet still shows as the current choice");
+
+        check(PetText.Pick("vi", "Làm ngay", "Do now") == "Làm ngay" && PetText.Pick("en", "Làm ngay", "Do now") == "Do now",
+            "Vietnamese and English come straight from the code");
+        check(PetText.Pick("ja", "Làm ngay", "Do now") == "今すぐ", "Japanese is looked up by the English text");
+        PetText.ClearMissing();
+        check(PetText.Pick("ja", "Chưa dịch", "Not translated (test)") == "Not translated (test)"
+              && PetText.Missing.Contains("ja: Not translated (test)"), "Missing Japanese shows English and is recorded");
+        int wave = 3; string heal = " +5";
+        check(PetText.PickFormat("ja", $"Xong đợt {wave}!{heal}", $"Wave {wave} cleared!{heal}") == "第3波クリア！ +5",
+            "Interpolated text is looked up by its format and filled with the same values");
+        check(PetText.PickFormat("vi", $"Xong đợt {wave}!", $"Wave {wave} cleared!") == "Xong đợt 3!"
+              && PetText.PickFormat("ja", $"Còn {wave}", $"{wave} left (test)") == "3 left (test)",
+            "Vietnamese formats as written; untranslated formats fall back to English");
+
+        check(PetText.Holes("{0:F0} of {1}, {0}, {{literal}}").SequenceEqual(new[] { 0, 1 }), "Format holes are read with their numbers");
+        bool rejected = false;
+        try { PetText.Parse(new MemoryStream(Encoding.UTF8.GetBytes("{\"A\": 1}"))); } catch (InvalidDataException) { rejected = true; }
+        check(rejected, "A table entry that is not text is rejected");
+
+        // The shipped tables: every translation keeps its key's holes, and every key still exists in the code.
+        string root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../../"));
+        string code = string.Concat(Directory.EnumerateFiles(Path.Combine(root, "src"), "*.cs", SearchOption.AllDirectories).Select(File.ReadAllText));
+        foreach (string language in PetLanguage.All.Where(l => l is not ("vi" or "en")))
+        {
+            var table = PetText.Table(language);
+            check(table.Count > 0, $"The {language} table is embedded and loads");
+            var badHoles = table.Where(e => !PetText.Holes(e.Key).SequenceEqual(PetText.Holes(e.Value))).Select(e => e.Key).ToArray();
+            check(badHoles.Length == 0, $"Every {language} translation keeps its {{n}} holes: {string.Join(" | ", badHoles)}");
+            var stale = table.Keys.Where(key => !InCode(code, key)).ToArray();
+            check(stale.Length == 0, $"Every {language} key is still English text in the code: {string.Join(" | ", stale)}");
+        }
+    }
+
+    // A key is in the code if each literal part of it (between format holes) is, as C# would write it.
+    private static bool InCode(string code, string key) =>
+        Regex.Split(key, @"\{\d+[^{}]*\}").Where(part => part.Length > 0)
+            .All(part => code.Contains(part.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n")));
+}

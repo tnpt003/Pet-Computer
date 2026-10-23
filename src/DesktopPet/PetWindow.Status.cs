@@ -182,8 +182,8 @@ public sealed partial class PetWindow
     {
         double minutes = (DateTime.Now - at).TotalMinutes;
         return minutes < 1 ? L("vừa xong", "just now")
-            : minutes < 60 ? L($"{(int)minutes} phút trước", $"{(int)minutes} min ago")
-            : L($"{(int)(minutes / 60)} giờ trước", $"{(int)(minutes / 60)} h ago");
+            : minutes < 60 ? LF($"{(int)minutes} phút trước", $"{(int)minutes} min ago")
+            : LF($"{(int)(minutes / 60)} giờ trước", $"{(int)(minutes / 60)} h ago");
     }
 
     private string EmotionText(PetEmotion emotion) => emotion switch

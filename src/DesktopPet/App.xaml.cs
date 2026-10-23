@@ -96,7 +96,7 @@ public partial class App : Application
             reset.Text = pet.L("Gọi mèo về màn hình chính", "Bring the pet to the main screen");
             exit.Text = pet.L("Thoát", "Exit");
             checkUpdates.Text = pet.L("Kiểm tra cập nhật", "Check for updates");
-            applyUpdate.Text = pet.L($"Cập nhật lên bản {updates.ReadyVersion} (mở lại mèo)", $"Update to {updates.ReadyVersion} (restarts the pet)");
+            applyUpdate.Text = pet.LF($"Cập nhật lên bản {updates.ReadyVersion} (mở lại mèo)", $"Update to {updates.ReadyVersion} (restarts the pet)");
             checkUpdates.Visible = updates.Available && updates.ReadyVersion == null;
             applyUpdate.Visible = updates.ReadyVersion != null;
             if (tray != null) tray.Text = pet.L("Desktop Pet — chuột phải để điều khiển", "Desktop Pet — right-click for controls");
@@ -125,7 +125,7 @@ public partial class App : Application
             if (tray == null) return;
             balloonLink = null;
             tray.ShowBalloonTip(8000, "Desktop Pet", version != null
-                ? pet.L($"Bản {version} đã tải xong. Chuột phải biểu tượng khay → Cập nhật, hoặc để lần mở mèo sau tự cập nhật.",
+                ? pet.LF($"Bản {version} đã tải xong. Chuột phải biểu tượng khay → Cập nhật, hoặc để lần mở mèo sau tự cập nhật.",
                         $"Version {version} is downloaded. Right-click the tray icon → Update, or it updates the next time the pet starts.")
                 : pet.L("Bạn đang dùng bản mới nhất.", "You have the latest version."), Forms.ToolTipIcon.Info);
         };
@@ -138,7 +138,7 @@ public partial class App : Application
             if (!firstRun && (restarted || (previous != null && previous != current)))
             {
                 balloonLink = PetUpdates.ReleaseUrl(current);
-                tray.ShowBalloonTip(8000, "Desktop Pet", pet.L($"Đã cập nhật lên bản {current}. Bấm vào đây để xem có gì mới.",
+                tray.ShowBalloonTip(8000, "Desktop Pet", pet.LF($"Đã cập nhật lên bản {current}. Bấm vào đây để xem có gì mới.",
                     $"Updated to version {current}. Click here to see what's new."), Forms.ToolTipIcon.Info);
             }
         }

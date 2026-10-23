@@ -179,7 +179,6 @@ public sealed partial class PetWindow
         return true;
     }
 
-    private bool English => preferences.Language == "en";
     private string WeaponName(WeaponSpec weapon) => weapon.Name(English);
 
     private string DifficultyName(BattleDifficulty level) => level switch
@@ -361,7 +360,7 @@ public sealed partial class PetWindow
         if (!done && battle.AppRules is AppsSpec rules)
         {
             string name = rules.App(app.Kind).Name(English);
-            ShowBattleNotice(!app.Ready ? L($"{name} đang sạc: {Math.Floor(app.Charge * 100)}%.", $"{name} is charging: {Math.Floor(app.Charge * 100)}%.")
+            ShowBattleNotice(!app.Ready ? LF($"{name} đang sạc: {Math.Floor(app.Charge * 100)}%.", $"{name} is charging: {Math.Floor(app.Charge * 100)}%.")
                 : battle.SkillsLocked ? L("Đặt mèo xuống rồi hãy dùng app.", "Put the cat down to use an app.")
                 : app.Kind == BattleAppKind.Undo ? L("Mèo chưa mất máu trong mấy giây vừa qua.", "The cat lost no HP in the last few seconds.")
                 : L("Chưa có slime nào để dùng app này.", "No slime to use this app on yet."));
@@ -626,10 +625,10 @@ public sealed partial class PetWindow
         var portrait = new PetRenderer(new PetModel { Action = PetAction.Idle, Grounded = true, Facing = 1, AnimationTime = 1, ActionTime = 1 })
             { Coat = renderer.Coat, Accessory = renderer.Accessory };
         // The weapon of this battle next to the cat's name.
-        string stagePart = battleExpedition is ExpeditionBattle x ? L($" · Viễn chinh {x.Node.Step + 1}/{x.Expedition.Spec.StepCount}", $" · Expedition {x.Node.Step + 1}/{x.Expedition.Spec.StepCount}")
+        string stagePart = battleExpedition is ExpeditionBattle x ? LF($" · Viễn chinh {x.Node.Step + 1}/{x.Expedition.Spec.StepCount}", $" · Expedition {x.Node.Step + 1}/{x.Expedition.Spec.StepCount}")
             : battle?.Endless == true ? L(" · Vô tận", " · Infinity")
-            : battle?.Stage is StageSpec stage ? L($" · Màn {StageNumber(stage)}", $" · Stage {StageNumber(stage)}") : "";
-        battleHud = new BattleHud($"{preferences.Name} · {(battle != null ? WeaponName(battle.Weapon) : "")}{stagePart}", portrait, L);
+            : battle?.Stage is StageSpec stage ? LF($" · Màn {StageNumber(stage)}", $" · Stage {StageNumber(stage)}") : "";
+        battleHud = new BattleHud($"{preferences.Name} · {(battle != null ? WeaponName(battle.Weapon) : "")}{stagePart}", portrait, () => preferences.Language);
         battleHud.SkillClicked += skill => UseBattleSkill(skill);
         battleHud.PauseClicked += () => { if (battle != null) SetBattlePaused(!BattleUserPaused); };
         battleHud.EndClicked += EndBattleByUser;

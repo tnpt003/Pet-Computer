@@ -10,7 +10,8 @@ namespace DesktopPet;
 public static class PetUi
 {
     public static readonly FontFamily IconFont = new("Segoe Fluent Icons, Segoe MDL2 Assets");
-    public static readonly FontFamily TextFont = new("Segoe UI");
+    // Segoe UI has no Japanese; Yu Gothic UI (Windows 10/11) draws it.
+    public static readonly FontFamily TextFont = new("Segoe UI, Yu Gothic UI");
 
     // Palette. Accent passes 4.5:1 with white text; Muted passes 4.5:1 on Surface.
     public const string AccentHex = "#C2561F", AccentHoverHex = "#A84816", AccentBrightHex = "#E8834F",

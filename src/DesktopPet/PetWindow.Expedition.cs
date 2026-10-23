@@ -102,7 +102,7 @@ public sealed partial class PetWindow
     private static bool LaneOpen(Expedition x, int lane) => x.Run is ExpeditionRun r && r.Pending == null && r.Fighting == null && r.Step < r.Map.Count && lane >= 0 && lane < r.Map[r.Step].Length;
     private string CardName(string id) => BattleTuning.UpgradeList.FirstOrDefault(u => u.Id == id)?.Name(English) ?? id;
     private string RelicName(Expedition x, string id) => x.Spec.Relic(id)?.Name(English) ?? id;
-    private string StepTitle(int step, int steps) => L($"Bậc {step + 1}/{steps}", $"Step {step + 1}/{steps}");
+    private string StepTitle(int step, int steps) => LF($"Bậc {step + 1}/{steps}", $"Step {step + 1}/{steps}");
     private string ExpeditionStageTitle(int step, int steps, StageSpec stage) => L("Viễn chinh · ", "Expedition · ") + StepTitle(step, steps) + " · " + stage.Name(English);
 
     // Saves the run's own progress (the one kept for the user's battle.json stays in memory).
@@ -165,8 +165,8 @@ public sealed partial class PetWindow
     }
 
     private string RetreatNote(ExpeditionStepOutcome left) => left.RunOver
-        ? L($"Rời trận khi mèo đã quá yếu: chuyến đi kết thúc ở bậc {left.Step + 1}.", $"The battle was left with the cat too weak: the run ended at step {left.Step + 1}.")
-        : L($"Đã rời trận bậc {left.Step + 1}: mất {Math.Round(-left.Healed)} HP, đánh lại được.", $"Left the step {left.Step + 1} battle: {Math.Round(-left.Healed)} HP lost, it can be fought again.");
+        ? LF($"Rời trận khi mèo đã quá yếu: chuyến đi kết thúc ở bậc {left.Step + 1}.", $"The battle was left with the cat too weak: the run ended at step {left.Step + 1}.")
+        : LF($"Đã rời trận bậc {left.Step + 1}: mất {Math.Round(-left.Healed)} HP, đánh lại được.", $"Left the step {left.Step + 1} battle: {Math.Round(-left.Healed)} HP lost, it can be fought again.");
 
     public bool ExpeditionSelect(int lane)
     {
@@ -281,9 +281,9 @@ public sealed partial class PetWindow
         string hp = done.Hp >= 0.5 ? $" +{Math.Round(done.Hp)} HP" : done.Hp <= -0.5 ? $" −{Math.Round(-done.Hp)} HP" : "";
         expeditionNote = (done.Option switch
         {
-            DesktopPet.Expedition.Card => L($"Đã lấy thẻ {CardName(done.Card!)}.", $"Took the {CardName(done.Card!)} card."),
-            DesktopPet.Expedition.SwapOption => L($"Đã đổi {CardName(done.Dropped!)} lấy {CardName(done.Card!)}.", $"Traded {CardName(done.Dropped!)} for {CardName(done.Card!)}."),
-            DesktopPet.Expedition.Risk or DesktopPet.Expedition.Take => L($"Nhận di vật {RelicName(expedition, done.Relic!)}.", $"Got the {RelicName(expedition, done.Relic!)} relic."),
+            DesktopPet.Expedition.Card => LF($"Đã lấy thẻ {CardName(done.Card!)}.", $"Took the {CardName(done.Card!)} card."),
+            DesktopPet.Expedition.SwapOption => LF($"Đã đổi {CardName(done.Dropped!)} lấy {CardName(done.Card!)}.", $"Traded {CardName(done.Dropped!)} for {CardName(done.Card!)}."),
+            DesktopPet.Expedition.Risk or DesktopPet.Expedition.Take => LF($"Nhận di vật {RelicName(expedition, done.Relic!)}.", $"Got the {RelicName(expedition, done.Relic!)} relic."),
             DesktopPet.Expedition.Free or DesktopPet.Expedition.Gold => (done.Option == DesktopPet.Expedition.Free ? L("Viên thường: ", "Plain capsule: ") : L("Viên vàng: ", "Gold capsule: "))
                 + PrizeText(expedition, done.Prize) + (done.Prize == DesktopPet.Expedition.Heal ? "" : "!"),
             DesktopPet.Expedition.Leave => L("Đi tiếp.", "Moved on."),
@@ -338,9 +338,9 @@ public sealed partial class PetWindow
     // What a capsule held, in words.
     private string PrizeText(Expedition expedition, string? prize) => DesktopPet.Expedition.Prize(prize) switch
     {
-        (DesktopPet.Expedition.PrizeCard, string id) => L($"thẻ {CardName(id)}", $"the {CardName(id)} card"),
-        (DesktopPet.Expedition.PrizeRare, string id) => L($"thẻ hiếm ◆ {CardName(id)}", $"the rare ◆ {CardName(id)} card"),
-        (DesktopPet.Expedition.PrizeRelic, string id) => L($"di vật ◈ {RelicName(expedition, id)}", $"the ◈ {RelicName(expedition, id)} relic"),
+        (DesktopPet.Expedition.PrizeCard, string id) => LF($"thẻ {CardName(id)}", $"the {CardName(id)} card"),
+        (DesktopPet.Expedition.PrizeRare, string id) => LF($"thẻ hiếm ◆ {CardName(id)}", $"the rare ◆ {CardName(id)} card"),
+        (DesktopPet.Expedition.PrizeRelic, string id) => LF($"di vật ◈ {RelicName(expedition, id)}", $"the ◈ {RelicName(expedition, id)} relic"),
         _ => L("hồi máu", "some HP back")
     };
 
@@ -356,7 +356,7 @@ public sealed partial class PetWindow
         double total = kinds.Sum(k => g.Weights[k]);
         string odds = string.Join(" · ", kinds.OrderByDescending(k => g.Weights[k]).Select(k => $"{KindGlyph(k)} {KindName(k)} {Percent(g.Weights[k] / total)}"));
         string lanes = g.MinLanes == g.MaxLanes ? $"{g.MinLanes}" : $"{g.MinLanes}–{g.MaxLanes}";
-        return L($"Quay để lộ {lanes} điểm của bậc này. Tỉ lệ mỗi điểm: ", $"Spin to reveal this step's {lanes} nodes. Odds per node: ") + odds
+        return LF($"Quay để lộ {lanes} điểm của bậc này. Tỉ lệ mỗi điểm: ", $"Spin to reveal this step's {lanes} nodes. Odds per node: ") + odds
             + (first ? L("\nBậc đầu không có tinh anh hay nghỉ.", "\nThe first step has no elite or rest.")
                 : beforeBoss ? L("\nBậc trước trùm luôn có một điểm nghỉ.", "\nThe step before the boss always has a rest.") : "");
     }
@@ -416,7 +416,7 @@ public sealed partial class PetWindow
         if (!expeditionMapOpen || Expedition is not Expedition expedition || expedition.Run is not ExpeditionRun run) return false;
         expedition.Abandon();
         SaveExpedition(expedition.Progress);
-        expeditionNote = L($"Đã bỏ chuyến đi ở bậc {run.Step + 1}.", $"The run was given up at step {run.Step + 1}.");
+        expeditionNote = LF($"Đã bỏ chuyến đi ở bậc {run.Step + 1}.", $"The run was given up at step {run.Step + 1}.");
         expeditionConfirmAbandon = false;
         System.Diagnostics.Trace.WriteLine($"Expedition run {run.RunId} given up at step {run.Step + 1}.");
         UpdateExpeditionMap();
@@ -571,10 +571,10 @@ public sealed partial class PetWindow
         string levelName = DifficultyName(run?.Level ?? expeditionLevel);
         if (run == null)
         {
-            Show(xStatus, L($"Chưa có chuyến đi · {spec.StepCount} bậc, bậc cuối là trùm. HP và build giữ suốt chuyến.",
+            Show(xStatus, LF($"Chưa có chuyến đi · {spec.StepCount} bậc, bậc cuối là trùm. HP và build giữ suốt chuyến.",
                 $"No run yet · {spec.StepCount} steps, the last one a boss. HP and build carry through the run."));
             Show(xBuild, null);
-            xSetupLabel!.Text = L($"Chuẩn bị chuyến để chọn cách đánh và độ khó cho cả chuyến (lần trước: {weaponName} · {levelName}).",
+            xSetupLabel!.Text = LF($"Chuẩn bị chuyến để chọn cách đánh và độ khó cho cả chuyến (lần trước: {weaponName} · {levelName}).",
                 $"Prepare the run to choose the weapon and difficulty for all of it (last time: {weaponName} · {levelName}).");
         }
         else
@@ -639,9 +639,9 @@ public sealed partial class PetWindow
         {
             xDetails!.Visibility = Visibility.Visible;
             xNodeName!.Text = $"{StepTitle(chosen.Step, run.Map.Count)} · {KindName(chosen.Kind)} — {chosen.Stage.Name(English)}";
-            string threat = chosen.Threat > 1.001 ? L($" · quái mạnh ×{chosen.Threat:0.00}", $" · enemies ×{chosen.Threat:0.00}") : "";
+            string threat = chosen.Threat > 1.001 ? LF($" · quái mạnh ×{chosen.Threat:0.00}", $" · enemies ×{chosen.Threat:0.00}") : "";
             string reward = chosen.Kind == ExpeditionSpec.Elite && spec.EliteRelics > 0 && run.Relics.Count < spec.MaxRelics
-                ? "\n" + L($"Thắng: chọn 1 trong {spec.EliteRelics} di vật.", $"Win: pick one of {spec.EliteRelics} relics.") : "";
+                ? "\n" + LF($"Thắng: chọn 1 trong {spec.EliteRelics} di vật.", $"Win: pick one of {spec.EliteRelics} relics.") : "";
             Show(xNodeGoal, chosen.Stage.Goal(English) + "\n" + ObjectiveText(chosen.Stage) + StageRules(chosen.Stage) + threat + reward);
         }
         else if (run != null && LaneOpen(expedition, expeditionLane) && expedition.Kind(run.Step, expeditionLane) is string other && !IsFightKind(other))
@@ -649,17 +649,17 @@ public sealed partial class PetWindow
             xDetails!.Visibility = Visibility.Visible;
             var e = spec.FindEvent(run.Map[run.Step][expeditionLane]);
             xNodeName!.Text = $"{StepTitle(run.Step, run.Map.Count)} · {KindName(other)}" + (e != null ? " — " + e.Name(English) : "");
-            Show(xNodeGoal, e?.Describe(English) ?? L($"Hồi {spec.RestHeal:P0} HP tối đa, hoặc lấy một thẻ nâng cấp thay vì hồi máu.", $"Get {spec.RestHeal:P0} of the max HP back, or take an upgrade card instead."));
+            Show(xNodeGoal, e?.Describe(English) ?? LF($"Hồi {spec.RestHeal:P0} HP tối đa, hoặc lấy một thẻ nâng cấp thay vì hồi máu.", $"Get {spec.RestHeal:P0} of the max HP back, or take an upgrade card instead."));
         }
         else xDetails!.Visibility = Visibility.Collapsed;
         UpdateExpeditionChoice(expedition);
 
         var record = expedition.Record(run?.Weapon ?? expeditionWeapon, run?.Level ?? expeditionLevel);
         int keepsakesHad = spec.Keepsakes.Count(k => expedition.Progress.Keepsakes.Contains(k.Id));
-        string keepsakeLine = spec.Keepsakes.Length == 0 ? "" : (record.Runs == 0 ? "" : "\n") + L($"Kỷ vật: {keepsakesHad}/{spec.Keepsakes.Length}", $"Keepsakes: {keepsakesHad}/{spec.Keepsakes.Length}")
+        string keepsakeLine = spec.Keepsakes.Length == 0 ? "" : (record.Runs == 0 ? "" : "\n") + LF($"Kỷ vật: {keepsakesHad}/{spec.Keepsakes.Length}", $"Keepsakes: {keepsakesHad}/{spec.Keepsakes.Length}")
             + (keepsakesHad < spec.Keepsakes.Length ? L(" · thắng cả chuyến ở mỗi độ khó để nhận", " · win a run at each difficulty to earn them") : "");
-        Show(xRecord, (record.Runs == 0 ? "" : L($"Kỷ lục ({weaponName} · {levelName}): thắng {record.Wins}/{record.Runs} chuyến · xa nhất {record.BestSteps}/{spec.StepCount} bậc", $"Records ({weaponName} · {levelName}): {record.Wins}/{record.Runs} runs won · furthest {record.BestSteps}/{spec.StepCount} steps")
-            + (record.BestSeconds is double best ? L($" · nhanh nhất {Clock(best)}", $" · fastest {Clock(best)}") : "")) + keepsakeLine);
+        Show(xRecord, (record.Runs == 0 ? "" : LF($"Kỷ lục ({weaponName} · {levelName}): thắng {record.Wins}/{record.Runs} chuyến · xa nhất {record.BestSteps}/{spec.StepCount} bậc", $"Records ({weaponName} · {levelName}): {record.Wins}/{record.Runs} runs won · furthest {record.BestSteps}/{spec.StepCount} steps")
+            + (record.BestSeconds is double best ? LF($" · nhanh nhất {Clock(best)}", $" · fastest {Clock(best)}") : "")) + keepsakeLine);
 
         bool battleNode = run != null && run.Step < run.Map.Count && IsFightKind(expedition.Kind(run.Step, expeditionLane));
         xMainText!.Text = run == null ? L("Chuẩn bị chuyến", "Prepare the run") : expedition.NeedsRoll ? L("Quay máy", "Spin") : battleNode ? L("Vào trận", "Fight") : L("Đi tới đây", "Go here");
@@ -675,7 +675,7 @@ public sealed partial class PetWindow
         // Spin again: only for a drawn step not entered yet, once, while nothing opens.
         bool reroll = run != null && !opening && expedition.CanReroll;
         xReroll!.Visibility = reroll ? Visibility.Visible : Visibility.Collapsed;
-        if (reroll) xRerollText!.Text = L($"↻ Quay lại bậc này · −{expedition.RerollPrice(run!):0} HP", $"↻ Spin this step again · −{expedition.RerollPrice(run!):0} HP");
+        if (reroll) xRerollText!.Text = LF($"↻ Quay lại bậc này · −{expedition.RerollPrice(run!):0} HP", $"↻ Spin this step again · −{expedition.RerollPrice(run!):0} HP");
         xAbandonText!.Text = expeditionConfirmAbandon ? L("Bấm lần nữa để bỏ", "Click again to give up") : L("Bỏ chuyến", "Give up");
         xAbandon!.Visibility = run != null ? Visibility.Visible : Visibility.Collapsed;
         // Nothing goes on while a capsule opens (it lasts about a second).
@@ -737,7 +737,7 @@ public sealed partial class PetWindow
         else if (open.Kind == ExpeditionChoice.RewardKind) xChoice.Children.Add(Text(L("Chọn một di vật mang theo đến hết chuyến, hoặc bỏ qua.", "Pick a relic to keep for the rest of the run, or leave them."), PetUi.SmallSize, opacity: 0.85));
         else if (e != null) xChoice.Children.Add(Text(e.Describe(English), PetUi.SmallSize, opacity: 0.85));
         if (run.Relics.Count >= spec.MaxRelics && open.Kind is not (ExpeditionChoice.RestKind or ExpeditionChoice.CapsuleKind) && e?.Kind != ExpeditionEventSpec.Swap)
-            xChoice.Children.Add(Text(L($"Đã đủ {spec.MaxRelics} di vật.", $"The run already holds {spec.MaxRelics} relics."), PetUi.SmallSize, brush: PrepWarning));
+            xChoice.Children.Add(Text(LF($"Đã đủ {spec.MaxRelics} di vật.", $"The run already holds {spec.MaxRelics} relics."), PetUi.SmallSize, brush: PrepWarning));
 
         if (e?.Kind == ExpeditionEventSpec.Swap && run.Build.Count > 0)
         {
@@ -778,12 +778,12 @@ public sealed partial class PetWindow
             double cost = Math.Round(expedition.Cost(option)), gain = Math.Round(expedition.Gain(option));
             string label = option switch
             {
-                DesktopPet.Expedition.Heal => L($"Nghỉ: +{gain} HP", $"Rest: +{gain} HP"),
+                DesktopPet.Expedition.Heal => LF($"Nghỉ: +{gain} HP", $"Rest: +{gain} HP"),
                 DesktopPet.Expedition.Card => L("Lấy thẻ đã chọn", "Take the chosen card"),
                 DesktopPet.Expedition.SwapOption => L("Đổi thẻ", "Trade"),
-                DesktopPet.Expedition.Safe => L($"An toàn: +{gain} HP", $"Safe: +{gain} HP"),
-                DesktopPet.Expedition.Risk => L($"Liều: −{cost} HP, 1 di vật ngẫu nhiên", $"Risk it: −{cost} HP, a random relic"),
-                DesktopPet.Expedition.Take => cost > 0 ? L($"Lấy di vật đã chọn (−{cost} HP)", $"Take the chosen relic (−{cost} HP)") : L("Lấy di vật đã chọn", "Take the chosen relic"),
+                DesktopPet.Expedition.Safe => LF($"An toàn: +{gain} HP", $"Safe: +{gain} HP"),
+                DesktopPet.Expedition.Risk => LF($"Liều: −{cost} HP, 1 di vật ngẫu nhiên", $"Risk it: −{cost} HP, a random relic"),
+                DesktopPet.Expedition.Take => cost > 0 ? LF($"Lấy di vật đã chọn (−{cost} HP)", $"Take the chosen relic (−{cost} HP)") : L("Lấy di vật đã chọn", "Take the chosen relic"),
                 _ => open.Kind == ExpeditionChoice.RewardKind ? L("Bỏ qua", "Leave them") : open.Kind == ExpeditionChoice.CapsuleKind ? L("Bỏ qua", "Skip") : L("Đi tiếp", "Move on")
             };
             string chosen = option;
@@ -818,14 +818,14 @@ public sealed partial class PetWindow
         var goldOdds = new List<string>();
         if (relic > 0) goldOdds.Add(L("di vật ", "a relic ") + Share(relic, total));
         if (rare > 0) goldOdds.Add(L("thẻ hiếm ", "a rare card ") + Share(rare, total));
-        if (c.CardHeal > 0) goldOdds.Add(L($"thẻ + {Percent(c.GoldHeal)} HP ", $"a card + {Percent(c.GoldHeal)} HP ") + Share(c.CardHeal, total));
+        if (c.CardHeal > 0) goldOdds.Add(LF($"thẻ + {Percent(c.GoldHeal)} HP ", $"a card + {Percent(c.GoldHeal)} HP ") + Share(c.CardHeal, total));
         string cost = Math.Round(c.GoldCost * max).ToString(System.Globalization.CultureInfo.InvariantCulture);
         var row = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 8, 0, 0) };
         foreach (var (option, color, name, odds) in new[]
         {
             (DesktopPet.Expedition.Free, CapsuleArt.PlainColor, L("Viên thường · miễn phí", "Plain capsule · free"),
-                L($"thẻ thường {Percent(c.FreeCard)} · +{Percent(c.FreeHeal)} HP {Percent(1 - c.FreeCard)}", $"a common card {Percent(c.FreeCard)} · +{Percent(c.FreeHeal)} HP {Percent(1 - c.FreeCard)}")),
-            (DesktopPet.Expedition.Gold, CapsuleArt.GoldColor, L($"Viên vàng · −{cost} HP", $"Gold capsule · −{cost} HP"), string.Join(" · ", goldOdds))
+                LF($"thẻ thường {Percent(c.FreeCard)} · +{Percent(c.FreeHeal)} HP {Percent(1 - c.FreeCard)}", $"a common card {Percent(c.FreeCard)} · +{Percent(c.FreeHeal)} HP {Percent(1 - c.FreeCard)}")),
+            (DesktopPet.Expedition.Gold, CapsuleArt.GoldColor, LF($"Viên vàng · −{cost} HP", $"Gold capsule · −{cost} HP"), string.Join(" · ", goldOdds))
         })
         {
             string chosen = option;
@@ -902,11 +902,11 @@ public sealed partial class PetWindow
         else if (ExpeditionWarning() is string warning) Add(warning, PetUi.SmallSize, PrepWarning);
         int steps = Expedition?.Spec.StepCount ?? step.Step + 1;
         if (step.RunWon) Add(L("Hoàn thành viễn chinh!", "Expedition complete!"), PetUi.BodySize, RecordGold, true);
-        else if (step.RunOver) Add(L($"Chuyến đi kết thúc ở bậc {step.Step + 1}/{steps}.", $"The run ended at step {step.Step + 1}/{steps}."), PetUi.BodySize, PrepWarning, true);
+        else if (step.RunOver) Add(LF($"Chuyến đi kết thúc ở bậc {step.Step + 1}/{steps}.", $"The run ended at step {step.Step + 1}/{steps}."), PetUi.BodySize, PrepWarning, true);
         else
         {
-            Add(L($"Qua bậc {step.Step + 1}/{steps} · HP mang tiếp {Math.Ceiling(step.Hp)}/{step.MaxHp:0}", $"Step {step.Step + 1}/{steps} done · HP carried on {Math.Ceiling(step.Hp)}/{step.MaxHp:0}"), PetUi.BodySize, bold: true);
-            if (step.Healed >= 0.5) Add(L($"Nghỉ chân: +{Math.Round(step.Healed)} HP", $"A short rest: +{Math.Round(step.Healed)} HP"), PetUi.SmallSize, opacity: 0.85);
+            Add(LF($"Qua bậc {step.Step + 1}/{steps} · HP mang tiếp {Math.Ceiling(step.Hp)}/{step.MaxHp:0}", $"Step {step.Step + 1}/{steps} done · HP carried on {Math.Ceiling(step.Hp)}/{step.MaxHp:0}"), PetUi.BodySize, bold: true);
+            if (step.Healed >= 0.5) Add(LF($"Nghỉ chân: +{Math.Round(step.Healed)} HP", $"A short rest: +{Math.Round(step.Healed)} HP"), PetUi.SmallSize, opacity: 0.85);
             if (step.Reward) Add(L("Tinh anh để lại di vật: chọn trên bản đồ viễn chinh.", "The elite left relics: pick one on the Expedition map."), PetUi.BodySize, RecordGold, true);
             if (step.Capsule) Add(L("Máy viên nang đang chờ trên bản đồ viễn chinh.", "The capsule machine waits on the Expedition map."), PetUi.BodySize, RecordGold, true);
         }

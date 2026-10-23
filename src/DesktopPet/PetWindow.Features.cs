@@ -140,7 +140,7 @@ public sealed partial class PetWindow
 
     // The About box also names the commit the published build came from (scripts/publish.ps1).
     private void ShowAbout() => PetDialog.Show(null, L("Giới thiệu Desktop Pet", "About Desktop Pet"),
-        $"Desktop Pet {PetLog.VersionLabel(PetLog.BuildVersion, preferences.Language == "en")}\n\n{L("Dữ liệu và log", "Data and logs")}: {PetPreferences.DataDirectory}\n{AiStatusText}",
+        $"Desktop Pet {PetLog.VersionLabel(PetLog.BuildVersion, English)}\n\n{L("Dữ liệu và log", "Data and logs")}: {PetPreferences.DataDirectory}\n{AiStatusText}",
         L("Đóng", "Close"));
 
     private void SavePreferences()
@@ -157,7 +157,7 @@ public sealed partial class PetWindow
     // The welcome's language choice: the same as Settings → General → Language.
     public void SetLanguage(string language)
     {
-        if (language is not ("vi" or "en") || preferences.Language == language) return;
+        if (Array.IndexOf(PetLanguage.All, language) < 0 || preferences.Language == language) return;
         preferences.Language = language;
         pet.Speech.Hide(); pet.Speech.DropPending(); RaiseLanguageChanged();
         Interact("preferences_changed"); SavePreferences();

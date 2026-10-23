@@ -17,7 +17,7 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- Everything that does not need WPF (model, physics, battle, data, Python bridge); it also
-         embeds Assets/coats.json, accessories.json, battle.json and Sounds/*.wav. -->
+         embeds Assets/coats.json, accessories.json, battle.json, i18n/*.json and Sounds/*.wav. -->
     <ProjectReference Include="../DesktopPet.Core/DesktopPet.Core.csproj" />
   </ItemGroup>
   <ItemGroup>

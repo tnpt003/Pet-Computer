@@ -1,0 +1,6 @@
+{
+  "_comment": "Japanese UI text keyed by the exact English text in the code (L(\"vi\", \"en\")). Interpolated text is keyed by its format: LF($\"…\", $\"Wave {b.Wave} cleared!\") → \"Wave {0} cleared!\"; keep the same {n} holes (order may change). Text not here shows in English. Changing an English text in the code needs its key changed here too (tests list keys that no longer exist).",
+  "Do now": "今すぐ",
+  "Emotions": "気持ち",
+  "Wave {0} cleared!{1}": "第{0}波クリア！{1}"
+}

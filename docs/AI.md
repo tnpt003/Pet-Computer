@@ -396,7 +396,7 @@ Python stays silent unless the observation says `speech_enabled: true`.
 | Field | Meaning |
 |---|---|
 | `speech_enabled` | Whether the pet may talk |
-| `language` | `vi` or `en` |
+| `language` | `vi`, `en` or `ja` (Japanese: lines and names fall back to English until translated) |
 | `chattiness` | 0, 1 or 2 |
 | `pet_name` | The pet's name, inserted for `{name}` |
 | `quiet` | Quiet mode is on |
@@ -583,6 +583,14 @@ Quiet mode may cancel preparation. PetMotion.cs contains no AI policy or physics
 | New decision field | Meaning |
 |---|---|
 | `special_day` | Today's event id (e.g. `christmas`), only on special days. C# uses it just to pick the accessory whose `event` matches in `Assets/accessories.json` (if Dress up for holidays is on); an invalid value is ignored |
+
+## Japanese groundwork (2026-10-23)
+
+`ja` is a third UI language (`speech.LANGUAGES`, mirrored by C# `PetLanguage.All` and compared
+by AiTests). Until `lines.json` has `ja` lines for a situation, `pick` uses the `en` lines
+(`FALLBACK`); a learned English line is quoted in the Japanese UI, a Vietnamese one is named by
+its situation; `LEARNED_NAMES` falls back to English word by word. The protocol is unchanged.
+The welcome and Settings do not offer Japanese yet (milestone J4).
 
 ## Battle Mode (2026-10-16)
 

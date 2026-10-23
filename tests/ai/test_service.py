@@ -404,6 +404,18 @@ class SpeechAndLearningTests(unittest.TestCase):
         self.assertEqual(self.brain.describe_learned("act:night/hungry:CHASE_TAIL", "en"), "Chasing its tail · night, hungry")
         self.assertEqual(self.brain.describe_learned("act:day/ok:SIT", "vi"), "Ngồi · ban ngày")
 
+    def test_japanese_falls_back_to_english_until_translated(self):
+        speech = Speech(ROOT / "ai/lines.json")
+        rng = random.Random(2)
+        picked = speech.pick("hungry", "ja", "Balanced", "Mochi", lambda _: 1, rng)
+        self.assertTrue(picked["id"].startswith(("hungry:ja:", "hungry:en:")))
+        en_id = speech.lines["hello"]["en"][0][0]
+        self.assertTrue(speech.describe(en_id, "ja").startswith("“"))  # The English line it spoke is quoted.
+        vi_id = speech.lines["hello"]["vi"][0][0]
+        self.assertFalse(speech.describe(vi_id, "ja").startswith("“"))  # A Vietnamese line is named, not quoted.
+        self.assertTrue(self.brain.describe_learned("act:night/hungry:CHASE_TAIL", "ja"))
+        self.assertTrue(self.step(chattiness=0, language="ja")["speech"]["id"].startswith(("hello:ja:", "hello:en:")))
+
     def test_lines_file_is_complete_for_both_languages(self):
         speech = Speech(ROOT / "ai/lines.json")
         ids = []

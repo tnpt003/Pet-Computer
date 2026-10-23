@@ -7,7 +7,9 @@ import json
 from pathlib import Path
 import sys
 
-LANGUAGES = ("vi", "en")
+LANGUAGES = ("vi", "en", "ja")  # mirrors PetLanguage.All in C#
+# A language without its own lines for a situation (yet) speaks these instead.
+FALLBACK = {"ja": "en"}
 # How a learned line from the other language is named (the UI shows one language only).
 CATEGORY_NAMES = {
     "hello": {"vi": "câu chào", "en": "a greeting"},
@@ -84,7 +86,8 @@ class Speech:
     def pick(self, category, language, personality, name, weight, rng):
         """Weighted choice avoiding recently spoken lines; None if nothing fits."""
         language = language if language in LANGUAGES else "vi"
-        options = self.lines.get(category, {}).get(language) or self.lines.get(category, {}).get("vi") or []
+        by_language = self.lines.get(category, {})
+        options = by_language.get(language) or by_language.get(FALLBACK.get(language, "vi")) or by_language.get("vi") or []
         options = [o for o in options if not o[2] or personality in o[2]]
         fresh = [o for o in options if o[0] not in self.recent] or [o for o in options if o[0] not in list(self.recent)[-3:]]
         if not fresh:
@@ -97,8 +100,8 @@ class Speech:
         """Quote a learned line; a line in the other language is named by its situation instead."""
         category, _, rest = line_id.partition(":")
         line_language = rest.partition(":")[0]
-        if language in LANGUAGES and line_language in LANGUAGES and line_language != language:
-            return CATEGORY_NAMES.get(category, {}).get(language) or (
-                "một câu nói" if language == "vi" else "a line")
+        if language in LANGUAGES and line_language in LANGUAGES and line_language not in (language, FALLBACK.get(language)):
+            names = CATEGORY_NAMES.get(category, {})
+            return names.get(language) or names.get(FALLBACK.get(language, "")) or ("một câu nói" if language == "vi" else "a line")
         text = self.texts.get(line_id, line_id)
         return "“" + (text if len(text) <= 28 else text[:27] + "…") + "”"

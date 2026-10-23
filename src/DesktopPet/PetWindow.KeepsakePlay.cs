@@ -78,7 +78,7 @@ public sealed partial class PetWindow
         {
             if (keepsakeHeld || paused) { e.Handled = true; return; }
             menu.Items.Clear();
-            bool english = preferences.Language == "en";
+            bool english = English;
             string? shown = DisplayedKeepsake?.Id;
             foreach (var keepsake in DisplayableKeepsakes)
             {

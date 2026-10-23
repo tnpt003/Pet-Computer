@@ -18,5 +18,6 @@
     <EmbeddedResource Include="../DesktopPet/Assets/coats.json" LogicalName="DesktopPet.coats.json" />
     <EmbeddedResource Include="../DesktopPet/Assets/accessories.json" LogicalName="DesktopPet.accessories.json" />
     <EmbeddedResource Include="../DesktopPet/Assets/battle.json" LogicalName="DesktopPet.battle.json" />
+    <EmbeddedResource Include="../DesktopPet/Assets/i18n/*.json" LogicalName="DesktopPet.i18n.%(Filename)%(Extension)" />
   </ItemGroup>
 </Project>

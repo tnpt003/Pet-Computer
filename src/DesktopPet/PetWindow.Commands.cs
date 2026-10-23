@@ -65,24 +65,23 @@ public sealed partial class PetWindow
         menu.Items.Add(feelings);
         menu.Opened += (_, _) =>
         {
-            bool en = preferences.Language == "en";
-            root.Header = en ? "Do now" : "Làm ngay";
+            root.Header = L("Làm ngay", "Do now");
             root.IsEnabled = !paused && !BattleOwnsPet;
-            feelings.Header = en ? "Emotions" : "Cảm xúc";
+            feelings.Header = L("Cảm xúc", "Emotions");
             feelings.IsEnabled = !paused && !BattleOwnsPet;
-            for (int i = 0; i < actions.Length; i++) actions[i].Header = en ? CommandItems[i].En : CommandItems[i].Vi;
+            for (int i = 0; i < actions.Length; i++) actions[i].Header = L(CommandItems[i].Vi, CommandItems[i].En);
             // Shown only with the cushion on display; greyed out (with the reason) when the cat is far from it.
             bool cushion = TrophiesVisible && DisplayedKeepsake?.Kind == KeepsakeSpec.Cushion;
             cushionSleep.Visibility = cushion ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
-            cushionSleep.Header = en ? "Sleep on the cushion" : "Ngủ trên đệm";
+            cushionSleep.Header = L("Ngủ trên đệm", "Sleep on the cushion");
             cushionSleep.IsEnabled = CushionNear;
-            cushionSleep.ToolTip = CushionNear ? null : en ? "The cat is too far from the cushion" : "Mèo ở xa đệm quá";
+            cushionSleep.ToolTip = CushionNear ? null : L("Mèo ở xa đệm quá", "The cat is too far from the cushion");
             ToolTipService.SetShowOnDisabled(cushionSleep, true);
-            manual.Header = en ? "Control emotions myself" : "Tự điều khiển cảm xúc";
+            manual.Header = L("Tự điều khiển cảm xúc", "Control emotions myself");
             manual.IsChecked = pet.Emotions.ManualMode;
             for (int i = 0; i < emotions.Length; i++)
             {
-                emotions[i].Header = en ? EmotionItems[i].En : EmotionItems[i].Vi;
+                emotions[i].Header = L(EmotionItems[i].Vi, EmotionItems[i].En);
                 emotions[i].IsEnabled = pet.Emotions.ManualMode;
                 emotions[i].IsChecked = pet.Emotions.ManualMode && pet.Emotions.ManualEmotion == EmotionItems[i].Emotion;
             }

@@ -52,7 +52,7 @@ public sealed partial class PetWindow
     private string RewardsButtonText()
     {
         int fresh = BattleRewardsNew;
-        return L("Phần thưởng", "Rewards") + (fresh > 0 ? L($" · {fresh} mới", $" · {fresh} new") : "");
+        return L("Phần thưởng", "Rewards") + (fresh > 0 ? LF($" · {fresh} mới", $" · {fresh} new") : "");
     }
 
     // The hub's Rewards button (and its ‹ Hub): null on success, otherwise why not.
@@ -107,7 +107,7 @@ public sealed partial class PetWindow
                     bool won = adventure.HasReward(id);
                     tiles.Children.Add(RewardTile(WearingCat(id), accessory.Name(English), won, rewardsFresh.Contains(id),
                         won ? L("Phụ kiện: đeo trong Cài đặt → Mèo → Phụ kiện.", "Accessory: wear it from Settings → Pet → Accessory.")
-                            : L($"Thắng {StageTitle(stage)} để nhận.", $"Win {StageTitle(stage)} to get it.")));
+                            : LF($"Thắng {StageTitle(stage)} để nhận.", $"Win {StageTitle(stage)} to get it.")));
                 }
             if (tiles.Children.Count > 0) RewardsSection(L("Phụ kiện Phiêu lưu", "Adventure accessories"), tiles);
         }
@@ -129,7 +129,8 @@ public sealed partial class PetWindow
                     _ => L("Phụ kiện: đeo trong Cài đặt → Mèo → Phụ kiện.", "Accessory: wear it from Settings → Pet → Accessory.")
                 };
                 tiles.Children.Add(RewardTile(art, k.Name(English), won, rewardsFresh.Contains(k.Id), won ? where
-                    : L($"Thắng một chuyến Viễn chinh {level}" + (k.Exact ? "" : " trở lên") + " để nhận.", $"Win an Expedition run on {level}" + (k.Exact ? "" : " or harder") + " to get it.")));
+                    : k.Exact ? LF($"Thắng một chuyến Viễn chinh {level} để nhận.", $"Win an Expedition run on {level} to get it.")
+                    : LF($"Thắng một chuyến Viễn chinh {level} trở lên để nhận.", $"Win an Expedition run on {level} or harder to get it.")));
             }
             RewardsSection(L("Kỷ vật Viễn chinh", "Expedition keepsakes"), tiles);
         }
@@ -147,7 +148,7 @@ public sealed partial class PetWindow
                 string where = m.Kind == KeepsakeSpec.AccessoryKind
                     ? L("Phụ kiện: đeo trong Cài đặt → Mèo → Phụ kiện.", "Accessory: wear it from Settings → Pet → Accessory.")
                     : L("Kỷ vật: trưng bày trên màn hình (chọn trong Cài đặt → Mèo).", "Keepsake: displayed on the screen (choose it in Settings → Pet).");
-                tiles.Children.Add(RewardTile(art, L($"Đợt {m.Wave} · ", $"Wave {m.Wave} · ") + m.Name(English), won, rewardsFresh.Contains(m.Id), won ? where : EndlessMilestoneText(m)));
+                tiles.Children.Add(RewardTile(art, LF($"Đợt {m.Wave} · ", $"Wave {m.Wave} · ") + m.Name(English), won, rewardsFresh.Contains(m.Id), won ? where : EndlessMilestoneText(m)));
             }
             RewardsSection(L("Phần thưởng Vô tận", "Infinity rewards"), tiles);
         }
@@ -167,7 +168,7 @@ public sealed partial class PetWindow
                 int wins = all.Sum(r => r.Wins);
                 double? best = all.Where(r => r.BestSeconds is double).Select(r => r.BestSeconds!.Value).DefaultIfEmpty().Min() is double s && s > 0 ? s : null;
                 records.Children.Add(RecordLine(StageTitle(stage), wins == 0 ? L("chưa thắng", "not won yet")
-                    : L($"{wins} lần thắng", $"{wins} win{(wins == 1 ? "" : "s")}") + (best is double b ? L($" · nhanh nhất {Clock(b)}", $" · fastest {Clock(b)}") : ""), wins > 0));
+                    : LF($"{wins} lần thắng", $"{wins} win{(wins == 1 ? "" : "s")}") + (best is double b ? LF($" · nhanh nhất {Clock(b)}", $" · fastest {Clock(b)}") : ""), wins > 0));
             }
         }
         if (expedition != null && expedition.IsUnlocked(AdventureProgress))
@@ -181,8 +182,8 @@ public sealed partial class PetWindow
                 int runs = all.Sum(r => r.Runs), wins = all.Sum(r => r.Wins), steps = all.Max(r => r.BestSteps);
                 double? best = all.Where(r => r.BestSeconds is double).Select(r => r.BestSeconds!.Value).DefaultIfEmpty().Min() is double s && s > 0 ? s : null;
                 records.Children.Add(RecordLine(DifficultyName(level), runs == 0 ? L("chưa đi chuyến nào", "no runs yet")
-                    : L($"xa nhất bậc {steps}/{expedition.Spec.StepCount} · {wins}/{runs} chuyến thắng", $"furthest step {steps}/{expedition.Spec.StepCount} · {wins}/{runs} runs won")
-                      + (best is double b ? L($" · nhanh nhất {Clock(b)}", $" · fastest {Clock(b)}") : ""), wins > 0));
+                    : LF($"xa nhất bậc {steps}/{expedition.Spec.StepCount} · {wins}/{runs} chuyến thắng", $"furthest step {steps}/{expedition.Spec.StepCount} · {wins}/{runs} runs won")
+                      + (best is double b ? LF($" · nhanh nhất {Clock(b)}", $" · fastest {Clock(b)}") : ""), wins > 0));
             }
         }
         if (BattleTuning.Endless is EndlessSpec endless && EndlessRefusal() == null)
@@ -191,7 +192,7 @@ public sealed partial class PetWindow
             heading.Margin = new Thickness(0, records.Children.Count == 0 ? 0 : 8, 0, 0);
             records.Children.Add(heading);
             int best = BattleRecords.EndlessBest(endless);
-            records.Children.Add(RecordLine(L("Xa nhất", "Furthest"), best == 0 ? L("chưa chơi lần nào", "not played yet") : L($"đợt {best}", $"wave {best}"), best > 0));
+            records.Children.Add(RecordLine(L("Xa nhất", "Furthest"), best == 0 ? L("chưa chơi lần nào", "not played yet") : LF($"đợt {best}", $"wave {best}"), best > 0));
         }
         if (records.Children.Count > 0) RewardsSection(L("Kỷ lục", "Records"), records);
     }

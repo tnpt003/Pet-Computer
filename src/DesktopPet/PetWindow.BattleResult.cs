@@ -93,8 +93,8 @@ public sealed partial class PetWindow
 
     private string RecordLine(BattleRecord best)
     {
-        string fastest = best.BestSeconds is double s ? L($"nhanh nhất {Clock(s)} · ", $"fastest {Clock(s)} · ") : "";
-        return L($"{fastest}nhiều nhất {best.MostDefeated} slime · thắng {best.Wins} lần",
+        string fastest = best.BestSeconds is double s ? LF($"nhanh nhất {Clock(s)} · ", $"fastest {Clock(s)} · ") : "";
+        return LF($"{fastest}nhiều nhất {best.MostDefeated} slime · thắng {best.Wins} lần",
                  $"{fastest}most {best.MostDefeated} slime{(best.MostDefeated == 1 ? "" : "s")} · {best.Wins} win{(best.Wins == 1 ? "" : "s")}");
     }
 
@@ -109,7 +109,7 @@ public sealed partial class PetWindow
             TextWrapping = TextWrapping.Wrap, MaxWidth = 300, Margin = new Thickness(0, 2, 0, 0)
         };
         var title = Line(PetUi.HeadingSize, bold: true);
-        title.Text = result.Won ? (result.Boss ? L($"Chiến thắng! Đã hạ {result.BossName ?? "boss"}", $"Victory! The {result.BossName ?? "boss"} is down") : L("Chiến thắng!", "Victory!"))
+        title.Text = result.Won ? (result.Boss ? LF($"Chiến thắng! Đã hạ {result.BossName ?? "boss"}", $"Victory! The {result.BossName ?? "boss"} is down") : L("Chiến thắng!", "Victory!"))
             : result.Stage is { Endless: true } ? L("Hết lượt Vô tận", "Infinity run over")
             : L("Thua rồi… mèo choáng váng", "Defeated… the cat sees stars");
         string level = DifficultyName(result.Difficulty), arms = result.WeaponLabel.Length > 0 ? result.WeaponLabel : result.Weapon;
@@ -118,8 +118,8 @@ public sealed partial class PetWindow
             : result.Expedition is ExpeditionStepOutcome at ? ExpeditionStageTitle(at.Step, Expedition?.Spec.StepCount ?? at.Step + 1, played) + " · " : StageTitle(played) + " · ";
         var loadout = Line(PetUi.BodySize, bold: true); loadout.Text = place + $"{arms} · {level}";
         var main = Line(PetUi.BodySize);
-        main.Text = L($"Hạ {result.Defeated} slime · {Clock(result.Seconds)}", $"{result.Defeated} slime{(result.Defeated == 1 ? "" : "s")} defeated · {Clock(result.Seconds)}");
-        var hp = Line(PetUi.SmallSize, opacity: 0.75); hp.Text = L($"HP còn {Math.Ceiling(result.Hp)}/{result.MaxHp}", $"HP {Math.Ceiling(result.Hp)}/{result.MaxHp} left");
+        main.Text = LF($"Hạ {result.Defeated} slime · {Clock(result.Seconds)}", $"{result.Defeated} slime{(result.Defeated == 1 ? "" : "s")} defeated · {Clock(result.Seconds)}");
+        var hp = Line(PetUi.SmallSize, opacity: 0.75); hp.Text = LF($"HP còn {Math.Ceiling(result.Hp)}/{result.MaxHp}", $"HP {Math.Ceiling(result.Hp)}/{result.MaxHp} left");
         var info = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Children = { title, loadout, main, hp } };
         Window? window = null;
         // Each choice acts once: the panel is gone before anything else happens (no double start).
@@ -183,14 +183,14 @@ public sealed partial class PetWindow
         if (!best.Empty)
         {
             var records = Line(PetUi.SmallSize, opacity: 0.85);
-            records.Text = L($"Kỷ lục ({arms} · {level}{(result.Custom ? ", dữ liệu tùy chỉnh" : "")}): ", $"Records ({arms} · {level}{(result.Custom ? ", custom data" : "")}): ") + RecordLine(best);
+            records.Text = LF($"Kỷ lục ({arms} · {level}{(result.Custom ? ", dữ liệu tùy chỉnh" : "")}): ", $"Records ({arms} · {level}{(result.Custom ? ", custom data" : "")}): ") + RecordLine(best);
             info.Children.Add(records);
         }
         var legacy = BattleRecords.Legacy(result.Difficulty);
         if (!legacy.Empty)
         {
             var old = Line(PetUi.CaptionSize, opacity: 0.6);
-            old.Text = L($"Trước phân loại trang bị ({level}): ", $"Before weapons were told apart ({level}): ") + RecordLine(legacy);
+            old.Text = LF($"Trước phân loại trang bị ({level}): ", $"Before weapons were told apart ({level}): ") + RecordLine(legacy);
             info.Children.Add(old);
         }
         var (again, againText, _) = HudButton(() => Choose(() => { if (BattleReplay(result) is string reason) ShowBattleNotice(reason); }), plain: true);

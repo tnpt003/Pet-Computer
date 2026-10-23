@@ -6,7 +6,8 @@ Từ 1.4.0 (2026-10-22). Dùng Velopack 1.2.158: thư viện trong app (`PetUpda
 
 - **Người dùng:** tải `PetComputer-win-Setup.exe` ở trang Releases của repo, chạy là cài (không cần admin). App cài vào `%LOCALAPPDATA%\PetComputer`, tạo shortcut Desktop + Start menu, mở mèo luôn.
 - **Dữ liệu người dùng** nằm riêng ở `%LOCALAPPDATA%\DesktopPet` (preferences, nhật ký, tiến trình, kỷ lục). Cập nhật hay gỡ cài đặt không đụng tới thư mục này. Tên gói `PetComputer` cố ý khác tên thư mục dữ liệu (`scripts/pack.ps1` chặn nếu trùng).
-- **Tự cập nhật:** chỉ bản đã cài. Lúc mở app và mỗi 6 giờ, app hỏi GitHub Releases của `tnpt003/Pet-Computer` (repo phải public). Có bản mới thì tải ngầm, rồi khay hệ thống báo bằng một thông báo. Mục khay "Cập nhật lên bản …" đóng mèo, cập nhật, mở lại; nếu không bấm thì bản đã tải được áp dụng lần mở mèo sau. Mục khay "Kiểm tra cập nhật" để hỏi ngay. Không có mạng/lỗi: chỉ ghi log.
+- **Tự cập nhật:** chỉ bản đã cài. Lúc mở app và mỗi 6 giờ, app đọc `releases.win.json` của Release mới nhất qua link tải thẳng `https://github.com/tnpt003/Pet-Computer/releases/latest/download/` (repo phải public). Có bản mới thì tải ngầm, rồi khay hệ thống báo bằng một thông báo. Mục khay "Cập nhật lên bản …" đóng mèo, cập nhật, mở lại; nếu không bấm thì bản đã tải được áp dụng lần mở mèo sau. Mục khay "Kiểm tra cập nhật" để hỏi ngay. Lỗi (mạng/GitHub): ghi log; nếu người dùng bấm kiểm tra thì khay báo "Chưa kiểm tra được cập nhật…", và trong 10 phút sau một lần lỗi, bấm lại chỉ báo như vậy mà không hỏi GitHub.
+- **Vì sao không dùng API GitHub (từ 1.4.3):** 1.4.0–1.4.2 dùng `GithubSource` (API `api.github.com`), chỉ 60 lượt/giờ cho mỗi IP khi chưa đăng nhập; trên mạng dùng chung IP lượt bị người khác dùng hết → 403, mà bản cũ còn báo nhầm "bạn đang dùng bản mới nhất". Link `latest/download` là tải file thường, không bị giới hạn đó. Link chỉ chứa file của Release mới nhất: máy ở bản liền trước dùng gói delta (đã thử thật 1.4.1 → 1.4.2: tải 2,3 MB); máy cũ hơn thì delta không khớp và Velopack tự tải gói đầy đủ (đã thử 1.4.0 → 1.4.2). Máy còn 1.4.0–1.4.2 vẫn hỏi qua API cho tới khi lên được 1.4.3 (hoặc chạy Setup.exe mới để cài đè; dữ liệu giữ nguyên).
 - **Lần mở đầu sau khi cài** (hook `OnFirstRun`, từ 1.4.1): hộp chào mừng (`PetWelcome.cs`) với mẹo, ngôn ngữ (người mới: theo ngôn ngữ Windows; đã có preferences: giữ) và ô "Khởi động cùng Windows" tích sẵn; lựa chọn ghi vào `HKCU\...\Run` (giá trị `DesktopPet`) trỏ tới bản đã cài, nên mục cũ của bản copy thư mục được chuyển sang. Cập nhật không hiện lại hộp này. Velopack không có giao diện chọn thư mục hay checkbox trong Setup (cài một click) nên phần này nằm trong app.
 - **Bản khác đang chạy lúc cài** (`PetHandover.cs`, chỉ lần chạy đầu): bản đó (thường là bản copy thư mục) nhận WM_CLOSE vào cửa sổ mèo như khi bấm Thoát, chờ tối đa 10 s rồi bản cài giữ khóa single-instance. Không đóng được thì như cũ (mở bảng điều khiển của bản đang chạy).
 - **Cài đặt → Chung → Cập nhật:** phiên bản, "Tự động tải và cài bản mới" (preferences `AutoUpdate`, mặc định bật; tắt thì không kiểm tra lúc mở/6 giờ, chỉ khi bấm), nút "Kiểm tra cập nhật". Bản không cài: mờ + dòng giải thích.
@@ -25,9 +26,10 @@ Từ 1.4.0 (2026-10-22). Dùng Velopack 1.2.158: thư viện trong app (`PetUpda
 3. Tùy chọn, thử đóng gói trên máy: `scripts\pack.ps1` → `artifacts\release` (không upload).
 4. Gắn tag và đẩy lên (người dùng làm, hoặc cho phép agent làm):
    ```powershell
-   git tag v1.4.1
+   git tag -a v1.4.1 -m "Desktop Pet 1.4.1"
    git push origin main --follow-tags
    ```
+   Phải có `-a` (tag annotated): `--follow-tags` không đẩy tag thường, khi đó chỉ `main` lên GitHub và Actions không chạy (gặp ở 1.4.2). Lỡ tạo tag thường thì đẩy riêng: `git push origin v1.4.1`.
 5. GitHub Actions (`.github/workflows/release.yml`) chạy test Python + C#, publish (kèm .NET và Python), `pack.ps1 -Upload`: tải bản trước để làm gói delta, đóng gói, tạo Release `v1.4.1` "Desktop Pet 1.4.1" kèm mọi file. Xem tiến trình ở tab Actions của repo; lỗi thì Release không được tạo.
 6. Trong vòng 6 giờ (hoặc khi mở lại / bấm Kiểm tra cập nhật) các mèo đã cài tải bản mới.
 

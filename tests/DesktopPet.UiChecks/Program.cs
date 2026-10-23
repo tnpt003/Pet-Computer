@@ -257,6 +257,12 @@ internal static class Program
         var updates = new PetUpdates();
         Check(!updates.Available && updates.ReadyVersion == null && updates.CurrentVersion == null && !updates.ApplyAndRestart() && updates.Check(true).IsCompleted,
             "Not installed: no update checks, nothing to apply, no error");
+        // 1.4.3: the feed is the latest release's plain downloads (no API limit), and a failed check holds the user's retries a while.
+        var failedAt = new DateTime(2026, 10, 23, 23, 0, 0, DateTimeKind.Utc);
+        Check(PetUpdates.FeedUrl == "https://github.com/tnpt003/Pet-Computer/releases/latest/download/" &&
+              !PetUpdates.TooSoonAfterFailure(DateTime.MinValue, failedAt) && PetUpdates.TooSoonAfterFailure(failedAt, failedAt.AddMinutes(9)) &&
+              !PetUpdates.TooSoonAfterFailure(failedAt, failedAt.AddMinutes(10)),
+            "Updates come from the latest release's downloads; a failed check holds asked-for retries for 10 minutes");
         var dialog = PetDialog.Create(null, "Forget learned habits", "The pet will forget which actions and lines you liked.", "Forget", "Cancel", PetDialog.QuestionGlyph);
         dialog.Left = -10000; dialog.Show(); dialog.UpdateLayout();
         var dialogButtons = Descendants<System.Windows.Controls.Button>((FrameworkElement)dialog.Content).ToList();

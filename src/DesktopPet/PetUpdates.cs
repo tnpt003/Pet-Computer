@@ -4,7 +4,6 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Windows.Threading;
 using Velopack;
-using Velopack.Sources;
 
 namespace DesktopPet;
 
@@ -18,22 +17,32 @@ namespace DesktopPet;
 public sealed class PetUpdates
 {
     public const string RepositoryUrl = "https://github.com/tnpt003/Pet-Computer";
+    // The latest release's files, read as plain downloads (1.4.3): GitHub's API (GithubSource) allows
+    // 60 requests an hour per IP without a sign-in, and on a shared IP that ran out before the pet asked.
+    public const string FeedUrl = RepositoryUrl + "/releases/latest/download/";
     public static readonly TimeSpan CheckEvery = TimeSpan.FromHours(6);
+    // After a failed check, a check the user asks for within this time only says to try later.
+    public static readonly TimeSpan RetryAfterFailure = TimeSpan.FromMinutes(10);
 
     private readonly UpdateManager? manager;
     private readonly DispatcherTimer timer = new() { Interval = CheckEvery };
     private UpdateInfo? ready;
     private bool checking;
+    private DateTime lastFailure = DateTime.MinValue;
 
     // Raised on the UI thread when an update has been downloaded (its version), and after a check
     // the user asked for that found nothing (null).
     public event Action<string?>? Changed;
+    // Raised after a check the user asked for that could not reach the updates (or was too soon after one that could not).
+    public event Action? Failed;
+
+    public static bool TooSoonAfterFailure(DateTime lastFailure, DateTime now) => now - lastFailure < RetryAfterFailure;
 
     public PetUpdates()
     {
         try
         {
-            var candidate = new UpdateManager(new GithubSource(RepositoryUrl, null, false));
+            var candidate = new UpdateManager(FeedUrl);
             if (candidate.IsInstalled) manager = candidate;
         }
         catch (Exception ex) { Trace.WriteLine($"Updates are off: {ex.Message}"); }
@@ -66,11 +75,17 @@ public sealed class PetUpdates
     public void Stop() => timer.Stop();
 
     // Asks GitHub; a newer release is downloaded before Changed says so. userAsked: also report
-    // "nothing new" (and errors as that) so the tray can answer.
+    // "nothing new" (Changed with null) and errors (Failed) so the tray can answer.
     public async Task Check(bool userAsked)
     {
         if (manager == null || checking) return;
         if (ready != null) { if (userAsked) Changed?.Invoke(ReadyVersion); return; }
+        if (userAsked && TooSoonAfterFailure(lastFailure, DateTime.UtcNow))
+        {
+            Trace.WriteLine("Update check skipped: the last one failed moments ago.");
+            Failed?.Invoke();
+            return;
+        }
         checking = true;
         try
         {
@@ -90,7 +105,8 @@ public sealed class PetUpdates
         catch (Exception ex)
         {
             Trace.WriteLine($"Update check failed: {ex.Message}");
-            if (userAsked) Changed?.Invoke(null);
+            lastFailure = DateTime.UtcNow;
+            if (userAsked) Failed?.Invoke();
         }
         finally { checking = false; }
     }

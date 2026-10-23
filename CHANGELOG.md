@@ -1,5 +1,19 @@
 # Nhật ký thay đổi
 
+## 1.4.3 — Sửa kiểm tra cập nhật (2026-10-23)
+
+### Tiếng Việt
+
+- **Tự cập nhật không còn bị GitHub chặn:** trước đây mèo hỏi bản mới qua API của GitHub, vốn chỉ cho khoảng 60 lượt mỗi giờ trên một địa chỉ IP. Trên mạng dùng chung (4G, wifi trường/công ty, nhà mạng gom chung IP) lượt này hay bị người khác dùng hết nên mèo không thấy bản mới. Nay mèo đọc thẳng danh sách file của bản phát hành mới nhất, không bị giới hạn này.
+- **Báo đúng khi lỗi:** kiểm tra cập nhật mà lỗi (mất mạng, GitHub trục trặc) thì khay báo "Chưa kiểm tra được cập nhật… thử lại sau ít phút" thay vì báo nhầm "Bạn đang dùng bản mới nhất". Trong 10 phút sau một lần lỗi, bấm Kiểm tra lại chỉ nhắc chờ.
+- Máy đang dùng 1.4.0–1.4.2: nếu bị báo "bản mới nhất" mà chưa thấy bản này, tải `PetComputer-win-Setup.exe` ở trang Release và chạy để cài đè (mèo vẫn nhớ mọi thứ).
+
+### English
+
+- **Self-update no longer gets blocked by GitHub:** the pet used to ask for new versions through GitHub's API, which allows about 60 requests an hour per IP address. On shared networks (mobile data, school or office Wi-Fi, ISPs that share one IP) others often used them up, so the pet saw no update. It now reads the latest release's file list directly, which has no such limit.
+- **Honest errors:** when a check fails (no network, GitHub trouble) the tray says "Could not check for updates… try again in a few minutes" instead of wrongly saying "You have the latest version". For 10 minutes after a failure, clicking Check again only asks you to wait.
+- On 1.4.0–1.4.2: if it says you have the latest version but you don't see this one, download `PetComputer-win-Setup.exe` from the Release page and run it to install over (the pet keeps everything).
+
 ## 1.4.2 — Tiếng Nhật, app trong trận, menu gọn (2026-10-23)
 
 ### Tiếng Việt

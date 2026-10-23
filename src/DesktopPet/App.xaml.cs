@@ -132,6 +132,13 @@ public partial class App : Application
                         $"Version {version} is downloaded. Right-click the tray icon → Update, or it updates the next time the pet starts.")
                 : pet.L("Bạn đang dùng bản mới nhất.", "You have the latest version."), Forms.ToolTipIcon.Info);
         };
+        updates.Failed += () =>
+        {
+            if (tray == null) return;
+            balloonLink = null;
+            tray.ShowBalloonTip(8000, "Desktop Pet", pet.L("Chưa kiểm tra được cập nhật (lỗi mạng hoặc GitHub). Thử lại sau ít phút.",
+                "Could not check for updates (network or GitHub error). Try again in a few minutes."), Forms.ToolTipIcon.Warning);
+        };
         pet.Show();
         if (firstRun) Dispatcher.BeginInvoke(new Action(() => PetWelcome.Show(pet, newUser, new StartupRegistration())));
         // What's new: the installed version changed since the last start (or Velopack restarted it after updating).

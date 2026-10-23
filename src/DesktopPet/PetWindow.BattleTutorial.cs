@@ -15,7 +15,7 @@ public sealed partial class PetWindow
     private Window? battleTutorialWindow;
     private int battleTutorialStep;
     private TextBlock? tutorialTitle, tutorialBody, tutorialCount, tutorialNextText;
-    public const int BattleTutorialSteps = 4;
+    public const int BattleTutorialSteps = 5;
     // A stage tip (Adventure): the same panel with one card; null for the battle guide.
     private StageSpec? tipStage;
     public string? BattleTipStage => tipStage?.Id;
@@ -41,14 +41,18 @@ public sealed partial class PetWindow
             2 => (L("Cứu mèo", "Rescue the cat"),
                   L("Slime phồng lên với dấu ! đỏ là sắp đánh: kéo mèo lên. Đang bế thì mèo không bị đánh; thả mèo xuống trước khi đòn rơi thì thả ra ngoài vòng đỏ để đòn trượt.",
                     "A slime swelling with a red ! is about to hit: drag the cat up. A carried cat cannot be hit; put it down before the hit falls and do it outside the red ring to make it miss.")),
+            4 => (L("App trên màn hình", "Desktop apps"),
+                  L("Icon app sáng vàng là đã sạc đầy: bấm để giúp mèo. Icon dính virus ☣ quay ra hại mèo: bấm nhiều lần để gỡ. App độc rơi xuống sân (vòng loading, cập nhật, virus.exe, quảng cáo): bấm hoặc giữ chuột để tắt.",
+                    "A desktop app glowing gold is charged: click it to help the cat. An icon with a ☣ virus works against the cat: click it several times to clean it. Malware on the field (loading ring, update, virus.exe, ads): click or hold to close it.")),
             _ => (L("Bảo vệ và hồi chiêu", "Protection and cooldowns"),
                   LF($"Thả mèo xuống được {grace} giây an toàn, tối đa 1 lần mỗi {again} giây. Khi đang bế mèo, kỹ năng tạm khóa và không hồi. Mở lại hướng dẫn: nút Hướng dẫn trên bảng chuẩn bị.",
                     $"Putting the cat down gives {grace} s of safety, at most once every {again} s. While the cat is carried, skills wait and do not cool down. Open this again: How to play on the setup panel."))
         };
     }
 
-    // Opens the guide at its first card (or keeps it open). During a battle it pauses it.
-    public void ShowBattleTutorial() => ShowGuide(null);
+    // Opens the guide at its first card (or keeps it open). During a battle it pauses it. The lessons
+    // on the spot (PetWindow.BattleCoach.cs) come again in the next battles.
+    public void ShowBattleTutorial() { ResetBattleLessons(); ShowGuide(null); }
 
     // A stage's tip: once by itself when the stage first starts, or again from its setup panel.
     // Closing it (Done or Skip) marks it seen in the Adventure progress.

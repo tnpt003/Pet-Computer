@@ -838,5 +838,19 @@
   "Gale": "疾風",
   "After a combo: 3 s of +20% speed and attacks": "コンボの後：3 秒間 移動と攻撃が +20%",
   "Afterimage+": "残像+",
-  "Every 3rd hit strikes again for 75%": "3 回ヒットごとに 75% の追撃"
+  "Every 3rd hit strikes again for 75%": "3 回ヒットごとに 75% の追撃",
+  "Lift the cat!": "猫を持ち上げて！",
+  "Stunned: wait a moment": "気絶中：少し待とう",
+  "Clean the Tabs icon first": "先にタブのアイコンを駆除しよう",
+  "Click it {0}× to clean it": "{0} 回クリックで駆除",
+  "Click × to close": "× をクリックで閉じる",
+  "Hold it {0} s": "{0} 秒長押し",
+  "Click to close": "クリックで閉じる",
+  "Click Later": "「後で」をクリック",
+  "Click to delete virus.exe": "クリックで virus.exe を削除",
+  "Charged: click to use it": "チャージ完了：クリックで使おう",
+  "Use the healing fish": "回復の魚を使おう",
+  "Click a slime to attack it": "スライムをクリックして攻撃",
+  "Desktop apps": "デスクトップのアプリ",
+  "A desktop app glowing gold is charged: click it to help the cat. An icon with a ☣ virus works against the cat: click it several times to clean it. Malware on the field (loading ring, update, virus.exe, ads): click or hold to close it.": "金色に光るアプリはチャージ完了：クリックで猫を助けよう。☣ ウイルスに感染したアイコンは猫の邪魔をする：何回かクリックして駆除しよう。フィールドのマルウェア（読み込みリング、アップデート、virus.exe、広告）はクリックか長押しで閉じよう。"
 }

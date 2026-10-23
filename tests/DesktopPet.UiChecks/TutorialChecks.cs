@@ -43,8 +43,8 @@ internal static class TutorialChecks
         var cards = new List<string> { window.BattleTutorialText };
         for (int i = 1; i < PetWindow.BattleTutorialSteps; i++) { window.BattleTutorialNext(); cards.Add(window.BattleTutorialText); }
         check(cards[0].StartsWith("Pick a target") && cards[1].Contains("Push") && cards[2].Contains("red ring") &&
-              cards[3].Contains("1.5 s") && cards[3].Contains("every 5 s") && cards.Distinct().Count() == 4,
-            $"Four cards: targets, skills, rescue (the held attack), protection and cooldowns with the battle's numbers ({string.Join(" | ", cards.Select(c => c.Split('\n')[0]))})");
+              cards[3].Contains("1.5 s") && cards[3].Contains("every 5 s") && cards[4].StartsWith("Desktop apps") && cards[4].Contains("virus") && cards[4].Contains("Malware") && cards.Distinct().Count() == 5,
+            $"Five cards: targets, skills, rescue (the held attack), protection and cooldowns with the battle's numbers, the desktop apps and infected ones ({string.Join(" | ", cards.Select(c => c.Split('\n')[0]))})");
         window.BattleTutorialNext();
         check(!window.BattleTutorialOpen && prefs.BattleTutorialSeen && window.BattlePreparing && GuideWindow() == null,
             $"Done closes it and remembers it; the setup panel stays ({window.BattleTutorialOpen}, {prefs.BattleTutorialSeen}, {GuideWindow() == null})");
@@ -124,6 +124,62 @@ internal static class TutorialChecks
         check(Sim().Grace > 0 && hud.HintText.StartsWith("Protected after landing"), $"After a rescue the HUD says the cat is protected, and for how long ({hud.HintText})");
 
         window.EndBattle();
+
+        // Lessons on the spot (2026-10-24): the first slime winding up next to the cat slows the battle
+        // to a quarter and rings the cat with "Lift the cat!"; lifting it ends the lesson for good.
+        Window? CoachWindow() => Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.Title == "Pet coach" && w.IsVisible);
+        prefs.BattleLessonsSeen = new List<string> { PetWindow.LessonTarget, PetWindow.LessonStun };
+        window.BattleCoachEnabled = true;
+        window.Reset();
+        window.BattleTuning = new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 1 }, MaxAlive = 1, SpawnInterval = 0, SlimeMaxHp = 1000, CatDamage = 0, SlimeDamage = 0 };
+        check(window.StartBattle() == null, "(setup) a battle with lessons on");
+        pet.Grounded = true; pet.VX = pet.VY = 0; pet.Action = PetAction.Idle; pet.Y = Field<Area>(window, "bounds").Bottom - 112;
+        for (int i = 0; i < 120 && !Sim().Slimes.Any(s => s.Targetable); i++) Call(window, "TickBattle", 1.0 / 60);
+        foreach (var s in Sim().Slimes) s.X = pet.X + Field<PetSettings>(window, "settings").Width / 2 + 60; // Next to the cat.
+        for (int i = 0; i < 300 && window.BattleCoachLesson == null; i++) Call(window, "TickBattle", 1.0 / 60);
+        var coach = CoachWindow();
+        long coachStyle = coach == null ? 0 : GetWindowLongPtr(new WindowInteropHelper(coach).Handle, -20).ToInt64();
+        check(window.BattleCoachLesson == PetWindow.LessonLift && window.BattleCoachSlow == PetWindow.CoachSlow && coach != null && (coachStyle & 0x20) != 0 && (coachStyle & 0x08000000) != 0,
+            $"A slime winding up by the cat starts the lift lesson: the battle slows to a quarter, a click-through mark shows ({window.BattleCoachLesson})");
+        // PET_RENDER_REVIEW: a picture of the lesson's mark (ring, hand, words).
+        if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string review && coach?.Content is FrameworkElement mark)
+        {
+            mark.UpdateLayout();
+            var shot = new RenderTargetBitmap((int)CoachMark.ViewWidth, (int)CoachMark.ViewHeight, 96, 96, PixelFormats.Pbgra32);
+            var back = new DrawingVisual();
+            using (var dc = back.RenderOpen()) dc.DrawRectangle(new SolidColorBrush(Color.FromRgb(0x6A, 0x8C, 0xAF)), null, new Rect(0, 0, CoachMark.ViewWidth, CoachMark.ViewHeight));
+            shot.Render(back);
+            shot.Render(mark);
+            var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(shot));
+            System.IO.Directory.CreateDirectory(review);
+            using var stream = System.IO.File.Create(System.IO.Path.Combine(review, "battle-coach-lift.png")); encoder.Save(stream);
+        }
+        double before = Sim().Time;
+        TickBattle(0.4);
+        check(Math.Abs(Sim().Time - before - 0.1) < 0.03, $"During the lesson the battle's time runs at a quarter ({Sim().Time - before:0.00} s in 0.4 s)");
+        window.Activate(); await Task.Delay(20);
+        window.RaiseEvent(MouseEvent(UIElement.MouseLeftButtonDownEvent));
+        SetField(window, "pressPosition", new Point(-100000, -100000));
+        Call(window, "CheckDragThreshold");
+        TickBattle(0.05);
+        check(window.BattleCoachLesson == null && window.BattleCoachSlow == 1 && CoachWindow() == null && prefs.BattleLessonsSeen.Contains(PetWindow.LessonLift),
+            "Lifting the cat ends the lesson (full speed again) and it is remembered");
+        window.RaiseEvent(MouseEvent(UIElement.MouseLeftButtonUpEvent));
+        window.EndBattle();
+        pet.Grounded = true; pet.VX = pet.VY = 0; pet.Action = PetAction.Idle; pet.Y = Field<Area>(window, "bounds").Bottom - 112;
+        string? again0 = window.StartBattle();
+        check(again0 == null, $"(setup) another battle ({again0})");
+        pet.Grounded = true; pet.VX = pet.VY = 0; pet.Action = PetAction.Idle; pet.Y = Field<Area>(window, "bounds").Bottom - 112;
+        bool again = false;
+        for (int i = 0; i < 600; i++) { Call(window, "TickBattle", 1.0 / 60); again |= window.BattleCoachLesson == PetWindow.LessonLift; }
+        check(!again, "A lesson already seen does not come back");
+        window.EndBattle();
+        window.ShowBattleTutorial();
+        check(prefs.BattleLessonsSeen.Count == 0, "How to play brings the lessons back");
+        window.CloseBattleTutorial(finished: true);
+        window.BattleCoachEnabled = false;
+        prefs.BattleLessonsSeen = null;
+
         prefs.Language = language;
         prefs.BattleTutorialSeen = true;
         window.Reset();

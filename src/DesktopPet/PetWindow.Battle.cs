@@ -279,6 +279,7 @@ public sealed partial class PetWindow
         battleExpedition = null; // A step still marked as fought is left (RetreatCost) when the map opens again.
         CloseBattleUpgrade();
         CloseBattleBag();
+        EndCoach(false);
         battlePause = BattlePause.None;
         battleFieldWindow?.Close(); battleHudWindow?.Close();
         battleFieldWindow = battleHudWindow = null;
@@ -424,7 +425,8 @@ public sealed partial class PetWindow
         if (battleMonitorClock >= 1) { battleMonitorClock = 0; RecoverLostBattleMonitor(); }
         bool held = BattleHoldsOff;
         if (!held) KeepBattleOnItsMonitor();
-        var order = battle.Step(dt, pet.X + settings.Width / 2, held, BattleLifted);
+        // A lesson on the spot slows the battle down (BattleCoachSlow).
+        var order = battle.Step(dt * BattleCoachSlow, pet.X + settings.Width / 2, held, BattleLifted);
         PlayBattleSound();
         ShowBattleBanners();
         battle.ClearEvents();
@@ -458,6 +460,7 @@ public sealed partial class PetWindow
             return;
         }
         TickBattleUpgrade();
+        TickBattleCoach(dt);
         // Quick feet: this run's running speed.
         pet.MoveScale = battle.Settings.CatRunScale * battle.MoveFactor * battle.LagFactor;
         pet.SwordSwing = battle.SwingProgress;

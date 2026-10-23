@@ -82,6 +82,7 @@ public sealed partial class PetWindow : Window
     {
         preferences = options ?? PetPreferences.Load();
         persistPreferences = options == null;
+        BattleCoachEnabled = persistPreferences;
         if (persistPreferences) { BattleDataFile = BattleData.UserFilePath; AdventureProgressFile = AdventureProgress.DefaultPath; ExpeditionProgressFile = ExpeditionProgress.DefaultPath; }
         Title = "Desktop Pet";
         Icon = AppIcon.WindowImage();

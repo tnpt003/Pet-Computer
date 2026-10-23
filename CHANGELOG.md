@@ -1,8 +1,20 @@
 # Nhật ký thay đổi
 
-## 1.4.4 — App độc trong trận, tắt app, đồng hồ cát (chưa phát hành)
+## 1.4.4 — App độc trong trận, cân bằng trận, hướng dẫn tại chỗ (chưa phát hành)
 
 ### Tiếng Việt
+
+- **Cân bằng trận (2026-10-24):**
+  - Mèo: Đẩy hồi 3 giây, Cá hồi máu 14 giây, Tab Lốc Xoáy sạc nhanh hơn. Đòn combo thứ ba đánh lan sang quái đứng sát mục tiêu. Búa thỉnh thoảng làm quái choáng. Giáp gai giảm thêm 10% sát thương nhận vào. Bão Thông Báo chỉ rơi lên 4 slime gần mèo nhất, Đẩy mạnh còn +40.
+  - Mèo đang choáng thì không bế lên được; trong trận lắc mèo không còn làm mèo Chóng mặt.
+  - Quái: slime đá quay đầu chậm hơn, Vua Slime dậm đất nhẹ hơn và phong tinh anh cho một quân bất kỳ (cả slime thảo dược). Slime nhanh bị làm choáng lúc đang gồng thì không làm mèo choáng được nữa.
+  - App độc tới vào lúc ngẫu nhiên (tối đa 2 loại cùng lúc), có thêm 3 quảng cáo trải khắp sàn. Vòng loading kéo dài hơn, phải giữ chuột 2 giây để tắt; cập nhật bắt buộc cần bấm Nhắc sau 4 lần.
+  - App bị nhiễm mạnh hơn: Tab nhiễm thì quảng cáo không tắt được tới khi gỡ Tab; chuông làm mèo choáng; Ctrl+Z che chắn slime vừa hồi; Thùng Rác nhả slime tinh anh. Tối đa 3 icon nhiễm, mỗi icon cần 5 lần bấm. Slime thường tinh anh bắn virus vào icon.
+  - Thẻ mới: Móng vuốt, Kết liễu, Nhịp dài, Lướt gió, Hồi phục, Kiên cường, và thẻ tiện ích (Tay nhanh, Sạc pin, Hút năng lượng, Bom to, Khiên dày).
+  - Vô tận: thẻ sau mỗi 2 đợt, chọn 2 thẻ sau đợt trùm, giới hạn thẻ cao hơn, cộng hưởng mới ở mốc 6 và 9 thẻ cùng nhóm (từ đợt 48 bật hết), tinh anh nhiều dần, trùm là Vua chương 1 (từ đợt 30 có thêm Vua thường).
+  - Trận tự do kết thúc bằng Vua chương 1.
+- **Hướng dẫn tại chỗ:** lần đầu gặp một tình huống (slime sắp đánh, app đầy, icon nhiễm, app độc, quảng cáo, máu thấp…), trận chậm lại và một bàn tay chỉ vào đúng chỗ cần bấm, kèm vài chữ. Mỗi bài chỉ hiện một lần; nút Hướng dẫn trên bảng chuẩn bị cho xem lại. Hướng dẫn có thêm thẻ về app và app nhiễm.
+- Kỷ lục Phiêu lưu và Vô tận được tách theo luật mới; chuyến Viễn chinh đang đi không bị ảnh hưởng.
 
 - **App độc trong trận** (Phiêu lưu từ màn 2, Viễn chinh, Vô tận): thay vì bắn virus vào icon, slime đôi khi tung app độc:
   - **Vòng loading** ngay chỗ mèo: mèo đứng trong vòng chạy và đánh chậm hẳn. Bấm vòng xoay để tắt, hoặc chờ vài giây.
@@ -15,6 +27,18 @@
 
 ### English
 
+- **Battle balance (2026-10-24):**
+  - The cat: Push every 3 s, the Healing fish every 14 s, Tab Tornado charges faster. A combo's third hit also hits enemies next to its target. The hammer sometimes stuns. Thorns also takes 10% off the damage taken. Ping Storm rings only the 4 slimes nearest the cat; Heavy push gives +40.
+  - A stunned cat cannot be lifted; shaking the cat in a battle no longer makes it Dizzy.
+  - Enemies: rock slimes turn more slowly, the Slime King's slam hurts less and his rally may pick any helper (herb slimes too). A quick slime stunned during its windup can no longer stun the cat.
+  - Malware comes at random times (at most two kinds at once), now with three ads across the floor. The loading ring lasts longer and is closed by holding it 2 s; a forced update needs Later ×4.
+  - Infected apps hit harder: with Tabs infected its ads cannot be closed until it is cleaned; the bell stuns; Ctrl+Z guards the slime it heals; the Bin spits an elite. Up to 3 icons infected, 5 clicks each. Elite slimes shoot viruses at icons.
+  - New cards: Claws, Finishing blow, Long rhythm, Tailwind, Regrowth, Steady, and utility cards (Quick hands, Power bank, Energy drain, Big bomb, Thick bubble).
+  - Infinity: a card every 2 waves, two after a boss wave, higher card limits, new synergies at 6 and 9 cards of a group (all on from wave 48), more elites as it goes, the chapter King as its boss (with the plain King from wave 30).
+  - The free battle ends with the chapter King.
+- **Lessons on the spot:** the first time something needs your hand (a slime about to hit, a charged app, an infected icon, malware, ads, low HP…), the battle slows down and a hand points at what to click, with a few words. Each lesson shows once; How to play on the setup panel shows them again. The guide has a new card on the apps and infected apps.
+- Adventure and Infinity records start over under the new rules (old ones are kept apart); an Expedition run under way is not affected.
+
 - **Battle malware** (Adventure from stage 2, Expedition, Infinity): instead of a virus into an icon, a slime sometimes throws malware:
   - A **loading ring** where the cat stands: inside it the cat runs and swings much slower. Click its spinner to close it, or wait a few seconds.
   - A **forced update**: an "UPDATE" window stands as a wall between the cat and the slimes; slimes cannot pass or attack through it, and the cat hits it to get it done sooner. Click **Later** twice to close it. Bosses leap over it.
@@ -25,6 +49,18 @@
 - Adventure stages 2–5 and Infinity have a new rules version because of the malware: old records stay, kept apart. An Expedition run under way is not affected.
 
 ### 日本語
+
+- **バトルのバランス調整（2026-10-24）：**
+  - 猫：押し出しは 3 秒、回復の魚は 14 秒ごと、タブトルネードのチャージが早く。コンボの 3 撃目は近くの敵にも当たります。ハンマーは時々気絶させます。トゲの鎧は被ダメージも 10% 減。通知の嵐は猫に近いスライム 4 体だけ、強い押しは +40。
+  - 気絶中の猫は持ち上げられません。バトル中は猫を振ってもめまいになりません。
+  - 敵：岩スライムの振り向きが遅く、スライムキングの踏みつけが弱く、強化する手下はランダム（薬草スライムも）。溜め中に気絶させた素早いスライムは猫を気絶させなくなります。
+  - マルウェアはランダムなタイミングで出現（同時に 2 種類まで）、広告 3 つも追加。読み込みリングは長くなり 2 秒長押しで閉じます。強制アップデートは「後で」4 回。
+  - 感染アプリが強化：タブが感染中は広告を閉じられません。ベルは猫を気絶させ、Ctrl+Z は回復したスライムを守り、ゴミ箱はエリートを吐き出します。感染は 3 アイコンまで、駆除は各 5 クリック。エリートのスライムはアイコンにウイルスを撃ちます。
+  - 新カード：ツメ、とどめ、ロングリズム、追い風、再生、不屈、便利カード（早業、モバイルバッテリー、エナジードレイン、ビッグボム、厚いバブル）。
+  - 無限：2 ウェーブごとにカード、ボスの後は 2 枚、カード上限アップ、同じグループ 6 枚と 9 枚で新シナジー（48 ウェーブから全部オン）、エリートが段々増え、ボスは第 1 章のキング（30 ウェーブからは通常のキングも）。
+  - フリーバトルの最後は第 1 章のキング。
+- **その場のレッスン：** はじめての場面（攻撃しそうなスライム、チャージ済みアプリ、感染アイコン、マルウェア、広告、HP 低下など）では、バトルがゆっくりになり、手がクリックする場所を短い言葉で指します。各レッスンは 1 回だけ。準備画面の「遊び方」でもう一度見られます。ガイドにアプリと感染アプリのカードが加わりました。
+- アドベンチャーと無限の記録は新ルールで別になります（以前の記録は残ります）。進行中の遠征には影響しません。
 
 - **バトルのマルウェア**（アドベンチャーのステージ2以降、遠征、無限）：アイコンにウイルスを撃つ代わりに、スライムがマルウェアを投げることがあります。
   - **読み込みリング**：猫の足元に出現し、中にいる猫は移動も攻撃も遅くなります。スピナーをクリックで閉じるか、数秒待ちましょう。

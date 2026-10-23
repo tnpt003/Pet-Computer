@@ -517,3 +517,8 @@ Tự động đã có: Phần thưởng trên sảnh (ô có hình, khóa, Mới
 - [ ] Vô tận, gom 6 thẻ cùng nhóm: banner ★ tầng mới (Bất khuất / Chấn động / Gió lốc), 9 thẻ: Pháo đài / Hành quyết / Dư ảnh+. Phiêu lưu và Viễn chinh: túi đồ và HUD không nhắc tới tầng 6/9.
 - [ ] Vô tận đợt cao: tinh anh nhiều dần (từ đợt 20 có thể 2 con cùng lúc). Tới đợt 48: mọi cộng hưởng tự bật (banner).
 - [ ] Kỷ lục Phiêu lưu và Vô tận bắt đầu lại (phiên bản luật mới); Viễn chinh đang đi vẫn tiếp tục.
+
+### Hướng dẫn tại chỗ (2026-10-24, mốc 5)
+- [ ] Bấm Hướng dẫn trên bảng chuẩn bị (để các bài hiện lại), có 5 thẻ, thẻ cuối nói về app và app nhiễm. Vào trận: lần đầu một slime gồng đòn cạnh mèo → trận chậm hẳn, vòng vàng + bàn tay trên mèo, chữ "Kéo mèo lên!"; kéo mèo lên → hết chậm, mất dấu. Trận sau không hiện lại.
+- [ ] Lần đầu mỗi thứ: slime đầu tiên ("Bấm chọn slime để đánh"), app đầy ("App đầy rồi: bấm để dùng"), icon nhiễm ("Bấm 5 lần để gỡ virus"), quảng cáo ("Bấm × để tắt" hoặc "Gỡ virus khỏi Tab trước"), vòng loading ("Giữ chuột 2 giây"), cập nhật ("Bấm Nhắc sau"), virus.exe, máu dưới 60% (chỉ vào ô Cá hồi máu), mèo bị choáng (không chậm). Bàn tay đúng chỗ trên màn hình (cả màn hình phụ/DPI khác), click xuyên qua dấu được.
+- [ ] Không bấm gì: sau ~6 giây dấu tự mất và trận chạy lại bình thường. Pause/menu/fullscreen: dấu ẩn, không đếm giờ.

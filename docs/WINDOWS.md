@@ -869,14 +869,24 @@ next step), so a double click never starts two battles. Ending a battle by hand 
   id the data no longer has reads as the first weapon), never changed during a battle,
   shown next to the cat's name on the HUD and on the result panel. Records are per weapon and
   difficulty (see Records). The hammer is a vector mallet in the same poses as the sword.
-- **First-battle guide** (PetWindow.BattleTutorial.cs): four cards (targets, skills, rescue and
-  the held attack, protection and cooldowns, with battle.json's numbers) in a small panel above the
+- **First-battle guide** (PetWindow.BattleTutorial.cs): five cards (targets, skills, rescue and
+  the held attack, protection and cooldowns, with battle.json's numbers; since 2026-10-24 the
+  desktop apps, infected icons and malware) in a small panel above the
   floor strip; mouse only (Skip / Next / Done), never takes focus, follows the UI language, no
   sound. It opens by itself with the first setup panel until gone through or skipped
   (preferences `BattleTutorialSeen`, false in older files), and from the panel's How to play
   button; no battle exists behind it. Ready closes it (and marks it seen). Should it be open during
   a battle, the battle is paused (reason Tutorial). A fullscreen app, Cancel or bringing the pet
   back closes it without marking it seen; measuring runs (`PET_BATTLE_AUTOSTART`) never show it.
+- **Lessons on the spot** (PetWindow.BattleCoach.cs, 2026-10-24): the first time a slime winds up
+  next to the cat, the cat is stunned, ads (locked or not), an infected icon, a loading ring, a
+  forced update, virus.exe, a charged app, HP under 60 % or the first slimes come, the battle runs
+  at a quarter of its speed (`BattleCoachSlow`; not for the stun) and a click-through, no-activate
+  window ("Pet coach", `CoachMark`) rings the spot with a tapping hand (pressing for a hold) and a
+  few words beside it, on whichever side has room. It ends when the user does it, or after 6 s
+  real time; hidden and frozen while the battle is paused or a fullscreen app runs; closed with the
+  battle. Each lesson once (preferences `BattleLessonsSeen`); How to play clears the list. Off in
+  the window checks unless a check turns it on (`BattleCoachEnabled`).
 - **Pause / Resume / End**: HUD buttons or the menu. Pause reasons stack (User, Menu, Fullscreen,
   Away, App, Tutorial) and each owner removes only its own: closing the menu never resumes a battle the user, a
   fullscreen app or an away cat still holds. A fullscreen app pauses it, hides the field/HUD and

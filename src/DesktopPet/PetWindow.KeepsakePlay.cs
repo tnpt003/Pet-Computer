@@ -157,7 +157,7 @@ public sealed partial class PetWindow
     // While the user holds it, a free cat (same monitor) turns to watch it.
     private void WatchHeldKeepsake()
     {
-        if (!keepsakeHeld || !KeepsakeBesideCat || BattleActive || !CanPlay || (keepsakeWatch <= 0 && FeatureOwnsMovement())) return;
+        if (!keepsakeHeld || !KeepsakeBesideCat || !MayAct(AutoKind.WatchKeepsake) || (keepsakeWatch <= 0 && FeatureOwnsMovement())) return;
         keepsakeWatch = Math.Max(keepsakeWatch, 0.4);
     }
 
@@ -182,7 +182,7 @@ public sealed partial class PetWindow
     // Double click: the cat comes to look at it now (even in Quiet: the user asked).
     public bool CallCatToLook()
     {
-        if (!CanPlay || BattleActive || TrophySpot() == null) return false;
+        if (!MayAct(AutoKind.CallToLook) || TrophySpot() == null) return false;
         CancelFeatureActivity();
         admiring = true; userAsked |= UserAsked.Admire;
         admireRemaining = 0;
@@ -250,7 +250,7 @@ public sealed partial class PetWindow
     // For checks (and the timers): go and nap on the cushion now. False when it may not.
     public bool GoNapOnCushion()
     {
-        if (!CanPlay || EffectiveQuiet || BattleActive || FeatureOwnsMovement() || !CushionReady || pet.Emotions.WakeCooldownRemaining > 0
+        if (!MayAct(AutoKind.CushionNap) || !CushionReady
             || Math.Abs(KeepsakeCenter - CatCenter) > CushionReach) return false;
         cushionNap = CushionNap.Walk;
         napTime = 0;

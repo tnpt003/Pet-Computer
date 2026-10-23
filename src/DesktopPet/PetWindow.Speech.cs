@@ -21,7 +21,7 @@ public sealed partial class PetWindow
     private PetLearned? aiLearned;
 
     // Break reminders were enabled on their own, so they speak even with chatter off.
-    private bool SpeechAllowed(string id) => !closed && !context.Fullscreen && !BattleOwnsPet &&
+    private bool SpeechAllowed(string id) => !closed && MayAct(AutoKind.Speech) &&
         (PetBreaks.IsBreakLine(id) ? breaks.Due : preferences.Speech);
 
     private void ShowSpeech(PetLine line)
@@ -50,7 +50,7 @@ public sealed partial class PetWindow
         if (PetBreaks.IsBreakLine(id))
         {
             breaks.Delivered();
-            if (CanPlay && !FeatureOwnsMovement()) behavior.StartStretch(pet); // Stretch along with the user.
+            if (MayAct(AutoKind.Stretch)) behavior.StartStretch(pet); // Stretch along with the user.
         }
     }
 

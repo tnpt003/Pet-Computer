@@ -26,7 +26,7 @@ public sealed partial class PetWindow
     private SoundPlayer? sound;
     private MemoryStream? soundStream;
 
-    private bool CanPlay => !paused && !dragging && !pressPending && PetActionRules.IsSettled(pet) && !pet.Emotions.BlocksAutonomy;
+    private bool CanPlay => MayAct(AutoKind.Play);
 
     private void InitializeFeatures(ContextMenu menu)
     {
@@ -57,7 +57,7 @@ public sealed partial class PetWindow
             preferences.RestFractionX = Math.Clamp((pet.X - bounds.Left) / Math.Max(1, bounds.Right - bounds.Left - settings.Width), 0, 1);
             SavePreferences(); };
         var visit = new MenuItem();
-        visit.Click += (_, _) => { if (CanPlay && !BattleOwnsPet && !EffectiveQuiet && preferences.RestX.HasValue) { CancelFeatureActivity(); returningHome = true; Interact("rest_requested"); } };
+        visit.Click += (_, _) => { if (MayAct(AutoKind.RestVisit) && preferences.RestX.HasValue) { CancelFeatureActivity(); returningHome = true; Interact("rest_requested"); } };
         var forget = new MenuItem();
         forget.Click += (_, _) => { preferences.RestX = preferences.RestY = null; preferences.RestMonitor = null; returningHome = false; SavePreferences(); };
         home.Items.Add(remember); home.Items.Add(visit); home.Items.Add(forget);
@@ -121,15 +121,15 @@ public sealed partial class PetWindow
         {
             Localize();
             sounds.IsChecked = preferences.Sounds;
-            treat.IsEnabled = CanPlay && treatCooldown <= 0 && !BattleOwnsPet;
+            treat.IsEnabled = MayAct(AutoKind.Treat) && treatCooldown <= 0;
             // Quiet only stops what the cat does on its own; games the user starts still run.
             // A fullscreen app (game, video, slides) still keeps the cat still.
-            toy.IsEnabled = toyWindow != null || (CanPlay && !context.Fullscreen && !BattleOwnsPet);
-            laser.IsEnabled = CanPlay && !context.Fullscreen && !BattleOwnsPet; // Right-clicking the cat already ended a running game.
+            toy.IsEnabled = toyWindow != null || MayAct(AutoKind.UserGame);
+            laser.IsEnabled = MayAct(AutoKind.UserGame); // Right-clicking the cat already ended a running game.
             play.IsEnabled = toy.IsEnabled || laser.IsEnabled;
             putAway.Visibility = toyWindow != null ? Visibility.Visible : Visibility.Collapsed;
             remember.IsEnabled = pet.Grounded && pet.LedgeId == 0; // Resting spots are on the floor.
-            visit.IsEnabled = CanPlay && !EffectiveQuiet && preferences.RestX.HasValue && !BattleOwnsPet;
+            visit.IsEnabled = MayAct(AutoKind.RestVisit) && preferences.RestX.HasValue;
             forget.IsEnabled = preferences.RestX.HasValue;
         };
     }
@@ -175,7 +175,7 @@ public sealed partial class PetWindow
 
     public bool GiveTreat()
     {
-        if (!CanPlay || treatCooldown > 0 || BattleOwnsPet) return false;
+        if (!MayAct(AutoKind.Treat) || treatCooldown > 0) return false;
         CancelFeatureActivity();
         pet.TreatRemaining = PetModel.TreatDuration;
         treatCooldown = 20;
@@ -189,7 +189,7 @@ public sealed partial class PetWindow
     public void ToggleToy()
     {
         if (toyWindow != null) { CancelFeatureActivity(); return; }
-        if (!CanPlay || context.Fullscreen || BattleOwnsPet) return; // Allowed in Quiet mode: the user asked for it.
+        if (!MayAct(AutoKind.UserGame)) return; // Allowed in Quiet mode: the user asked for it.
         CancelFeatureActivity();
         Interact("toy_started");
         toyPlay.Reset();
@@ -355,7 +355,7 @@ public sealed partial class PetWindow
         double now = clock.Elapsed.TotalSeconds;
         recentPetting.Enqueue(now);
         while (recentPetting.Count > 0 && now - recentPetting.Peek() > 10) recentPetting.Dequeue();
-        if (recentPetting.Count < 2 || now < kneadReady || !CanPlay || FeatureOwnsMovement() || BattleActive) return;
+        if (recentPetting.Count < 2 || now < kneadReady || !MayAct(AutoKind.Knead)) return;
         if (!behavior.StartKneading(pet)) return;
         kneadReady = now + 20;
         recentPetting.Clear();

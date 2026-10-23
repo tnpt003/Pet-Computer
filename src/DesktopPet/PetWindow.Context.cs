@@ -19,10 +19,9 @@ public sealed partial class PetWindow
     private bool EffectiveQuiet => preferences.Quiet || context.Fullscreen;
 
     // The battle hub, setup panel and maps also keep the cat still (its free time belongs to them).
-    private void ApplyQuiet() => behavior.Quiet = EffectiveQuiet || battleHubOpen || battlePreparing || adventureMapOpen || expeditionMapOpen;
+    private void ApplyQuiet() => behavior.Quiet = !MayAct(AutoKind.LocalBehavior);
 
-    private bool CanDeliverBreak => !paused && !dragging && !BattleOwnsPet && !pressPending && !context.Fullscreen && !context.Away &&
-        !pet.Speech.Visible && PetSpeech.CanShow(pet);
+    private bool CanDeliverBreak => MayAct(AutoKind.BreakReminder) && !pet.Speech.Visible && PetSpeech.CanShow(pet);
 
     private void InitializeContext()
     {
@@ -54,7 +53,7 @@ public sealed partial class PetWindow
             }
         }
         if (change.CameBack) { behavior.EndAwayNap(pet); pet.Emotions.UserReturned(); }
-        if (context.Away && !BattleOwnsPet && !behavior.HoldSleep && !dragging && !pressPending && pet.Grounded && !PetActionRules.IsInFlight(pet.Action))
+        if (context.Away && MayAct(AutoKind.AwayNap) && !behavior.HoldSleep && pet.Grounded && !PetActionRules.IsInFlight(pet.Action))
         {
             CancelFeatureActivity();
             behavior.StartAwayNap(pet);

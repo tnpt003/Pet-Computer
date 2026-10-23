@@ -473,7 +473,7 @@ public sealed partial class PetWindow
     // For checks: send the cat to look now (as the timer would). False when it may not.
     public bool AdmireTrophies()
     {
-        if (!CanPlay || EffectiveQuiet || BattleActive || FeatureOwnsMovement() || TrophySpot() == null) return false;
+        if (!MayAct(AutoKind.Admire) || TrophySpot() == null) return false;
         admiring = true;
         admireRemaining = 0;
         return true;
@@ -526,7 +526,7 @@ public sealed partial class PetWindow
     // For checks: the cat goes to shove the keepsake now (as the timer would). False when it may not.
     public bool ShoveKeepsake(int? direction = null)
     {
-        if (!CanPlay || EffectiveQuiet || BattleActive || FeatureOwnsMovement() || !KeepsakeWithCat
+        if (!MayAct(AutoKind.ShoveKeepsake) || !KeepsakeWithCat
             || keepsakeHeld || keepsakeHop != KeepsakeHop.None || !keepsake.Resting) return false;
         int dir = direction ?? (featureRandom.NextDouble() < 0.5 ? -1 : 1);
         if (ShoveSpot(dir) == null) dir = -dir;

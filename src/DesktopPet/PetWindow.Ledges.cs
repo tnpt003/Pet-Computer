@@ -24,7 +24,7 @@ public sealed partial class PetWindow
     private const double LedgeScanSeconds = 0.3;
 
     // Battle Mode fights on the floor of one monitor, so windows are not ground meanwhile.
-    private bool LedgesEnabled => preferences.ClimbWindows && !context.Fullscreen && !BattleActive;
+    private bool LedgesEnabled => preferences.ClimbWindows && MayAct(AutoKind.Ledges);
     private bool OnLedge => pet.LedgeId != 0 && pet.Grounded;
 
     private void InitializeLedges()
@@ -73,7 +73,7 @@ public sealed partial class PetWindow
 
     private void TickLedgePlans(double dt)
     {
-        bool free = CanPlay && !EffectiveQuiet && queuedCommand == null && toyWindow == null && laserWindow == null &&
+        bool free = MayAct(AutoKind.ClimbLedge) && queuedCommand == null && toyWindow == null && laserWindow == null &&
             !returningHome && !admiring && keepsakeShove == KeepsakeShove.None && cushionNap == CushionNap.None && pet.TreatRemaining <= 0 && treatSatisfiedRemaining <= 0;
         if (!free) { climbPlan = null; ledgeExit = 0; return; }
         if (climbPlan is var (id, side, startX))

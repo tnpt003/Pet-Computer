@@ -4,6 +4,15 @@ Cập nhật: 2026-10-23 (Asia/Saigon). Lịch sử trước 21/10: docs/archive
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
+## Hotfix 1.4.3: kiểm tra cập nhật bị GitHub chặn (2026-10-23)
+- **Người dùng báo:** máy khác (đã cài 1.4.1, mạng khác) bấm Kiểm tra cập nhật báo "Bạn đang dùng bản mới nhất" dù 1.4.2 đã lên. Log máy đó: mọi lần kiểm tra `403 (rate limit exceeded)`, cả lần đầu lúc mở app (IP dùng chung). `/rate_limit` sau đó đã hồi 60/60. Người dùng muốn hotfix → 1.4.3 (không đặt lại 1.4.2 vì máy đã có 1.4.2 không nhận bản trùng số).
+- **Sửa:** `PetUpdates.FeedUrl` = `…/releases/latest/download/` thay `GithubSource` (API). Lỗi khi người dùng bấm → sự kiện `Failed` → khay "Chưa kiểm tra được cập nhật (lỗi mạng hoặc GitHub). Thử lại sau ít phút." (vi/en/ja); trong 10 phút sau lần lỗi (`RetryAfterFailure`, `TooSoonAfterFailure`) bấm lại không hỏi GitHub. RELEASE.md: giải thích + `git tag -a` (tag thường không được `--follow-tags` đẩy — lý do lần 1.4.2 Actions không chạy). CHANGELOG 1.4.3 vi/en.
+- **Thử thật nguồn mới** (harness scratchpad dùng `TestVelopackLocator` + Update.exe từ gói Portable, đọc Release 1.4.2 thật): 1.4.1 → 1.4.2 tải delta 2,3 MB, ghép thành công (cần gói 1.4.1 bản CI; gói pack trên máy khác byte → checksum lỗi rồi tự tải full); 1.4.0 → 1.4.2: feed latest chỉ có delta 1.4.2 → lỗi checksum → Velopack tự tải full 90 MB. Chưa thử cập nhật thật trên máy đã cài (cần 1.4.3 lên GitHub, rồi bản 1.4.4 để thử nguồn mới end-to-end).
+- Test thật: scripts/test.ps1 -Ui: Python OK; C# 51 suite; WPF 805/805 (check mới: FeedUrl, giữ 10 phút).
+- Commit 7854009; publish 1.4.3+7854009 (sạch), check-publish 3/3, pack.ps1 trên máy đạt (delta 1.4.2 → 1.4.3), mèo đóng WM_CLOSE và mở lại (log "Desktop Pet 1.4.3 (7854009) started"). ZIP artifacts\DesktopPet-1.4.3-7854009-win-x64.zip.
+- **Việc người dùng:** `git tag -a v1.4.3 -m "Desktop Pet 1.4.3"` + `git push origin main --follow-tags`. Máy 1.4.1/1.4.2 vẫn hỏi qua API để lên 1.4.3 (bấm 1 lần khi `/rate_limit` còn lượt, hoặc chạy Setup.exe mới cài đè).
+- Test tay: trên máy đã cài 1.4.3, rút mạng → bấm Kiểm tra cập nhật → khay báo "Chưa kiểm tra được…" (biểu tượng cảnh báo); bấm lại ngay → báo y vậy, log "skipped"; cắm mạng sau 10 phút → "bản mới nhất".
+
 ## Phiên bản 1.4.2 (2026-10-23)
 - **Người dùng yêu cầu:** lên bản 1.4.2, ghi chú phát hành cả tiếng Việt và tiếng Anh. csproj `<Version>` 1.4.2; CHANGELOG mục `## 1.4.2` có hai phần `### Tiếng Việt` / `### English` (dùng `###` vì pack.ps1 cắt mục tới `## ` kế tiếp), tóm tắt mọi thay đổi người dùng thấy từ v1.4.1 (01ded63): tiếng Nhật, app trong trận, Tab Lốc Xoáy, menu nhóm + cửa sổ Tùy biến, tiếp đất, đưa về màn hình chính, âm lượng, sửa trận/Viễn chinh, JsonStore.
 - Test thật: scripts/test.ps1 -Ui: Python 58 + 5 OK, C# 51 suite không FAIL, WPF 804/804.

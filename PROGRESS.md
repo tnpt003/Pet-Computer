@@ -10,7 +10,8 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - **Thử thật nguồn mới** (harness scratchpad dùng `TestVelopackLocator` + Update.exe từ gói Portable, đọc Release 1.4.2 thật): 1.4.1 → 1.4.2 tải delta 2,3 MB, ghép thành công (cần gói 1.4.1 bản CI; gói pack trên máy khác byte → checksum lỗi rồi tự tải full); 1.4.0 → 1.4.2: feed latest chỉ có delta 1.4.2 → lỗi checksum → Velopack tự tải full 90 MB. Chưa thử cập nhật thật trên máy đã cài (cần 1.4.3 lên GitHub, rồi bản 1.4.4 để thử nguồn mới end-to-end).
 - Test thật: scripts/test.ps1 -Ui: Python OK; C# 51 suite; WPF 805/805 (check mới: FeedUrl, giữ 10 phút).
 - Commit 7854009; publish 1.4.3+7854009 (sạch), check-publish 3/3, pack.ps1 trên máy đạt (delta 1.4.2 → 1.4.3), mèo đóng WM_CLOSE và mở lại (log "Desktop Pet 1.4.3 (7854009) started"). ZIP artifacts\DesktopPet-1.4.3-7854009-win-x64.zip.
-- **Việc người dùng:** `git tag -a v1.4.3 -m "Desktop Pet 1.4.3"` + `git push origin main --follow-tags`. Máy 1.4.1/1.4.2 vẫn hỏi qua API để lên 1.4.3 (bấm 1 lần khi `/rate_limit` còn lượt, hoặc chạy Setup.exe mới cài đè).
+- **Sau khi v1.4.3 lên GitHub (người dùng push tag, Latest = 1.4.3), thử thật bằng harness:** 1.4.2 cách cũ (GithubSource/API) thấy 1.4.3; 1.4.2 nguồn mới tải delta 1.4.3 từ `latest/download` và ghép thành công (gốc là gói 1.4.2 bản CI); 1.4.3 nguồn mới báo "up to date". Còn chưa thử trọn vòng trên máy đã cài: 1.4.3 tự cập nhật lên bản kế tiếp (thử khi phát hành 1.4.4).
+- **Việc người dùng (đã làm):** `git tag -a v1.4.3 -m "Desktop Pet 1.4.3"` + `git push origin main --follow-tags`. Máy 1.4.1/1.4.2 vẫn hỏi qua API để lên 1.4.3 (bấm 1 lần khi `/rate_limit` còn lượt, hoặc chạy Setup.exe mới cài đè).
 - Test tay: trên máy đã cài 1.4.3, rút mạng → bấm Kiểm tra cập nhật → khay báo "Chưa kiểm tra được…" (biểu tượng cảnh báo); bấm lại ngay → báo y vậy, log "skipped"; cắm mạng sau 10 phút → "bản mới nhất".
 
 ## Phiên bản 1.4.2 (2026-10-23)

@@ -33,7 +33,7 @@ Cập nhật: 2026-10-23 (Asia/Saigon). Bản đang chạy: 1.4.1 (installer + t
 - Mở rộng Viễn chinh: vùng/chương mới, thêm di vật/sự kiện.
 - Battle: thu dải sàn chỉ ôm vùng có slime; HUD cập nhật 15 lần/giây — số đo 22/10 (16 quái: 61 fps) cho thấy chưa cần. Kỹ năng: tên/mô tả đã thành dữ liệu (N2).
 - Phát hành rộng: 1.4.0 bỏ beta, installer + tự cập nhật Velopack/GitHub Releases (N5). 1.4.0 đã phát hành qua Actions; 1.4.1 thêm hộp chào mừng (ngôn ngữ + ô Khởi động cùng Windows), đóng bản copy đang chạy khi vừa cài, Cài đặt → Chung → Cập nhật, thông báo "có gì mới", hướng dẫn cài trên trang Release, link tải cố định trong README, gỡ cài đặt xóa mục khởi động. Còn: người dùng push tag v1.4.1 để thử tự cập nhật + thử máy Win 10; MSI chọn thư mục (nếu muốn); ký code (SignPath) khi cần; đồng hồ cát có cát chảy.
-- **Đang làm (23/10):** chuẩn hóa S1 (xong) → S2–S4 (xem PROGRESS.md), sau đó thiết kế i18n + **tiếng Nhật** (chuỗi UI C#, lines.json/LEARNED_NAMES Python, `Language` thêm "ja", font, độ rộng chữ) — trình người dùng duyệt trước khi làm.
+- **Đang làm (23/10):** chuẩn hóa S1, S2, S3a (xong) → S3b (chờ duyệt lại phạm vi) → khung i18n + tiếng Nhật (người dùng duyệt 23/10: câu tiếng Anh làm khóa, Claude soạn bản dịch, làm sau S3) → S4 (xem PROGRESS.md), sau đó thiết kế i18n + **tiếng Nhật** (chuỗi UI C#, lines.json/LEARNED_NAMES Python, `Language` thêm "ja", font, độ rộng chữ) — trình người dùng duyệt trước khi làm.
 - Dài hạn: quan hệ phát triển, nhiều mèo; LLM chỉ khi người dùng đổi quy tắc AGENTS.md.
 
 ## Đã bỏ theo người dùng (2026-10-22)

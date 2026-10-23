@@ -70,7 +70,7 @@ internal static class ExpeditionChoiceTests
         int swapSeed = SeedFor(data, ExpeditionEventSpec.Swap);
         var (sx, sRun) = AtStep2(data, swapSeed, 60, new() { ["sharp"] = 2, ["thick_fur"] = 1 });
         check(sx.Visit(2) && sRun.Pending!.Event == "cat_trader" && sRun.Pending.Cards.Length > 0, "A swap event offers new cards");
-        string pick = sRun.Pending.Cards.FirstOrDefault(c => c != "thick_fur") ?? sRun.Pending.Cards[0];
+        string pick = sRun.Pending!.Cards.FirstOrDefault(c => c != "thick_fur") ?? sRun.Pending.Cards[0];
         check(sx.Refusal(Expedition.SwapOption, pick) != null && sx.Refusal(Expedition.SwapOption, pick, "big_heart") != null, "A swap needs a card of the build to give up");
         var swapped = sx.Choose(Expedition.SwapOption, pick, "thick_fur");
         check(swapped.Done && swapped.Dropped == "thick_fur" && !sRun.Build.ContainsKey("thick_fur") && sRun.Build.GetValueOrDefault(pick) >= 1 && sRun.Step == 2,

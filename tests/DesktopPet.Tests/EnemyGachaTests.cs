@@ -317,7 +317,7 @@ internal static class EnemyGachaTests
         check(runner is { WindupAdd: 0.3, DashSpeed: 1.4 } && rock is { SureBlocks: 1 } && mender is { FirstHeal: 2 } && data.Enemy("slime").Elite != null && data.MaxElites == 1,
             "Shipped elites: quick slime +0.3 s windup / ×1.4 dash, rock one sure block, herb slime first heal ×2 (traits kept by the 1.2.0-beta buff, which also gave the slime one); at most one alive");
         var rares = data.UpgradeList.Where(u => u.Rare).ToList();
-        check(rares.Select(u => (u.Id, u.Group, u.Effect)).OrderBy(r => r.Group).SequenceEqual(new[] { ("turtle_shell", "defense", "shell"), ("opening_strike", "power", "opener"), ("running_start", "speed", "momentum") }.OrderBy(r => r.Item2))
+        check(rares.Select(u => (u.Id, Group: u.Group ?? "", u.Effect)).OrderBy(r => r.Group).SequenceEqual(new[] { ("turtle_shell", "defense", "shell"), ("opening_strike", "power", "opener"), ("running_start", "speed", "momentum") }.OrderBy(r => r.Item2))
             && data.RareChance == 0.15, "Shipped rare cards: Turtle shell, Opening strike, Running start (one per group, 15 %)");
         var stages = data.Campaign!.Chapters[0].Stages;
         check(stages.Take(2).All(s => s.EliteChance == 0) && stages.Skip(2).All(s => s.EliteChance > 0), "Elites start at stage 3");

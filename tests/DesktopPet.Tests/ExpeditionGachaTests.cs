@@ -38,7 +38,7 @@ internal static class ExpeditionGachaTests
             "A new run knows only the boss: every step before it is still to be drawn");
         check(x.NeedsRoll && x.Kind(0, 0) == "" && !x.Rolled(0) && x.Rolled(5) && x.Node(0) == null && !x.Visit(0), "Step 1 waits for its spin; nothing can be fought or visited yet");
         check(x.Roll() && !x.Roll() && !x.NeedsRoll && x.Rolled(0) && !x.Rolled(1), "The spin draws step 1 once; a second spin draws nothing");
-        var first = run.Kinds[0];
+        var first = run.Kinds![0];
         check(first.Length is 2 or 3 && run.Map[0].Length == first.Length && first.All(k => k is ExpeditionSpec.Fight or ExpeditionSpec.Event) && run.Map[0].Distinct().Count() == first.Length,
             $"Step 1 has 2–3 different nodes, fights and events only ({string.Join(",", first)})");
         var again = new Expedition(data, new ExpeditionProgress());
@@ -57,7 +57,7 @@ internal static class ExpeditionGachaTests
             var back = new Expedition(data, ExpeditionProgress.Load(file));
             check(back.Mismatch(back.Run!) == null && back.Run!.Kinds![0].SequenceEqual(first) && back.NeedsRoll, "Read back: step 1 as drawn, step 2 still to spin");
             back.Roll(); x.Roll();
-            check(back.Run.Kinds[1].SequenceEqual(x.Run!.Kinds![1]) && back.Run.Map[1].SequenceEqual(x.Run.Map[1]), "Step 2 draws the same after a save and reload");
+            check(back.Run!.Kinds![1].SequenceEqual(x.Run!.Kinds![1]) && back.Run.Map[1].SequenceEqual(x.Run.Map[1]), "Step 2 draws the same after a save and reload");
             check(new Expedition(ExpeditionFixture.Fixed, ExpeditionProgress.Load(file)).Mismatch(ExpeditionProgress.Load(file).Active!) != null,
                 "A drawn run does not go on with data whose map is fixed (it ends with a note)");
             var tampered = ExpeditionProgress.Load(file);

@@ -252,7 +252,7 @@ internal static class AppTests
         double ChargeOf(BattleAppKind kind) => shippedSim.Desktop.Single(a => a.Kind == kind).Charge;
         check(Math.Abs(ChargeOf(BattleAppKind.Tabs) - 0.6) < 0.01 && Math.Abs(ChargeOf(BattleAppKind.Ping) - 0.4) < 0.01 &&
               new[] { BattleAppKind.EndTask, BattleAppKind.Undo, BattleAppKind.Trash }.All(k => Math.Abs(ChargeOf(k) - 0.2) < 0.01) &&
-              shipped.App(BattleAppKind.Tabs).Charge * 0.4 <= 20.5,
+              shipped!.App(BattleAppKind.Tabs).Charge * 0.4 <= 20.5,
             "Staggered start: Tabs 60 %, Ping 40 %, the others 20 % — the first app is ready about 20 s in"); 
         string dir = Path.Combine(Path.GetTempPath(), "pet-apps-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(dir);

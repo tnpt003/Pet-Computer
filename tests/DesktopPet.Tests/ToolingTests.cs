@@ -42,7 +42,7 @@ static class ToolingTests
 
         // Uses a throwaway HKCU key, never the real Windows Run key.
         string testKey = @"Software\DesktopPetTest-" + Guid.NewGuid().ToString("N");
-        try
+        if (OperatingSystem.IsWindows()) try
         {
             var startup = new StartupRegistration(testKey);
             string exe = Path.Combine(Path.GetTempPath(), "Pet Folder", "DesktopPet.exe");

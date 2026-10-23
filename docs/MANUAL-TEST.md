@@ -427,3 +427,9 @@ Tự động đã có: Phần thưởng trên sảnh (ô có hình, khóa, Mới
 - [ ] Menu còn 10 dòng: Cho ăn, Chơi ›, Chế độ chiến đấu, Làm ngay ›, Cảm xúc ›, Chế độ yên lặng, {tên mèo} ›, Cài đặt…, Khác ›, Thoát mèo. Menu con mở mượt, không bị cắt ở mép màn hình.
 - [ ] Chơi › Chơi bóng: bóng ra; mở lại menu thấy "Cất bóng" ngay dưới Chơi, bấm cất được. Khi mèo chưa rảnh (đang bế/ngủ/trận) Chơi bị mờ.
 - [ ] {tên mèo} › Trạng thái / Nhật ký / Chỗ nghỉ yêu thích chạy như trước. Khác › Âm thanh bật/tắt có hiệu lực và khớp Cài đặt → Âm thanh.
+
+### Đáp đất chuẩn hóa mèo = món trưng bày (2026-10-23)
+- [ ] Ném/thả mèo từ cao: chạm sàn bẹp rõ (rơi càng cao càng bẹp), bật lại hơi dài người rồi lắc nhẹ ~0,4 s; bụi hai bên chân, đứng yên tại chỗ đáp khi mèo nảy lên; tiếng "squish" một lần cho cả chuỗi nảy. Có quá "cao su" không, mặt có méo khó chịu không.
+- [ ] Ném ngang trúng cạnh màn hình: mèo bẹp ngang và nghiêng ngược lại một chút. Đáp xuống mép cửa sổ và đệm slime: cùng hiệu ứng.
+- [ ] Mèo ngủ rơi khỏi gờ (cửa sổ biến mất): đáp êm, không bụi, không tiếng, vẫn ngủ. Tắt âm/volume 0/fullscreen: không tiếng. Pause giữa lúc nảy: đứng hình.
+- [ ] Món trưng bày rơi/ném: như trước (bẹp, nhún, bụi, "squish").

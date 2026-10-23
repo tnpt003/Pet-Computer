@@ -28,6 +28,9 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
     private Brush Ink => palette.Ink;
     private Brush Pink => palette.Pink;
     private Pen Outline => palette.Outline;
+    // The cat's share of the landing springs (the keepsake shows them at 1): a hard fall flattens it
+    // by up to ~22%; the wobble tips it at most this many degrees; its dust puffs are a bit bigger.
+    private const double LandingSquashScale = 0.75, LandingTiltLimit = 12, LandingDustScale = 1.25;
     private static readonly Brush EffectInk = Frozen("#302B48");
     private static readonly Pen EffectBorder = FrozenPen(EffectInk, 3, PenLineJoin.Round);
     private static readonly Pen EffectHalo = FrozenPen(Brushes.White, 5.5, PenLineJoin.Round);
@@ -96,7 +99,7 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
     {
         public double Time, PickupBlend, Dizzy, WakeProgress, EmotionStrength, EmotionTime, PettingLean;
         public double GroomingBlend, EatTime, SleepyBlend, Influence, RestBlend, Stride, FacingScale;
-        public double Shake, Bob, ScaleX, ScaleY;
+        public double Shake, Bob, ScaleX, ScaleY, ImpactTilt;
         // Gestures: the active one, its time and a 0..1 envelope; Roll is the eased roll-over amount.
         public PetAction Gesture;
         public double GestureTime, GestureBlend, Roll, AngryBlend, SneezeTilt, SneezeLift;
@@ -117,6 +120,8 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
             dc.PushTransform(new RotateTransform(pet.Pickup.Angle, PickupAnimation.AnchorX, PickupAnimation.AnchorY));
         }
         DrawCat(dc, p);
+        // The landing's dust stays where the feet touched down while the cat bounces on.
+        if (pet.Motion.Ready) LandingDust.Draw(dc, pet.Motion.Landing, 56 + pet.Motion.Landing.X - pet.X, 107 + pet.Motion.Landing.Y - pet.Y, 26, LandingDustScale);
         if (p.PickedUp)
         {
             DrawDizzyOrbit(dc, p);
@@ -210,10 +215,13 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
             p.Waking ? Math.Sin(p.WakeProgress * Math.PI) * 0.08 : 0;
         double preparation = pet.Action == PetAction.PreparingJump ? Math.Sin(Math.Clamp(pet.ActionTime / PetSettings.JumpPreparationDuration, 0, 1) * Math.PI / 2) : 0;
         double flight = p.Airborne ? Math.Clamp(Math.Abs(pet.VY) / 700, 0, 1) * 0.065 : 0;
-        double impact = pet.Motion.Ready ? pet.Motion.LandingSquash * p.Influence : 0;
-        if (p.Sleeping || p.Waking || p.SleepyBlend > 0) { preparation = flight = impact = 0; }
-        p.ScaleX = 1 + selfStretch * 0.045 + preparation * 0.04 + impact * 0.045 - flight * 0.3;
-        p.ScaleY = 1 + stretch + selfStretch * 0.12 - playCrouch * 0.07 - preparation * 0.09 + flight - impact * 0.09;
+        // The landing springs are the keepsake's (PetImpact.cs), scaled down for the cat: + squash
+        // flattens and widens, the rebound's − stretches it; the wobble tips it around its feet.
+        double impact = pet.Motion.Ready ? pet.Motion.LandingSquash * p.Influence * LandingSquashScale : 0;
+        p.ImpactTilt = pet.Motion.Ready ? Math.Clamp(pet.Motion.LandingTilt * p.Influence, -LandingTiltLimit, LandingTiltLimit) : 0;
+        if (p.Sleeping || p.Waking || p.SleepyBlend > 0) { preparation = flight = impact = p.ImpactTilt = 0; }
+        p.ScaleX = 1 + selfStretch * 0.045 + preparation * 0.04 + impact * 0.6 - flight * 0.3;
+        p.ScaleY = 1 + stretch + selfStretch * 0.12 - playCrouch * 0.07 - preparation * 0.09 + flight - impact;
         if (p.Climbing) { p.ScaleX *= 0.95; p.ScaleY *= 1.06; } // Stretched long up the wall.
         if (pet.Bonk > 0 && !p.PickedUp)
         {
@@ -389,6 +397,7 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
     // Body and head share the facing, bob/shake and squash transforms.
     private void DrawCat(DrawingContext dc, in Pose p)
     {
+        if (p.ImpactTilt != 0) dc.PushTransform(new RotateTransform(p.ImpactTilt, 56, 107));
         dc.PushTransform(new ScaleTransform(p.FacingScale, 1, 56, 56));
         // Roll onto the back: lie down sideways, lifted and shifted so the cat stays above
         // its floor line and inside the window margin.
@@ -413,6 +422,7 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         dc.Pop();
         if (p.Roll > 0) { dc.Pop(); dc.Pop(); }
         dc.Pop();
+        if (p.ImpactTilt != 0) dc.Pop();
     }
 
     private static readonly Transform ClimbLean = CreateClimbLean();

@@ -54,7 +54,23 @@ internal static class MotionTests
         double bouncedVY=pet.VY, bouncedVX=pet.VX; pet.Motion.Step(pet,0.04);
         check(pet.Motion.LandingSquash>0 && pet.VY==bouncedVY && pet.VX==bouncedVX && bouncedVY<0,
             "Landing squash observes impact without changing bounce velocity");
-        for(int i=0;i<30;i++) pet.Motion.Step(pet,0.01);
-        check(pet.Motion.LandingSquash==0,"Landing squash fully recovers");
+        double rebound=0; for(int i=0;i<200;i++) { pet.Motion.Step(pet,0.01); rebound=Math.Min(rebound,pet.Motion.LandingSquash); }
+        check(rebound<0 && pet.Motion.LandingSquash==0,"Landing squash rebounds into a stretch, then fully recovers");
+        // One landing rule for the cat and the keepsake (PetImpact.cs): the same spring kick, dust and sound.
+        var keepsake=new KeepsakeMotion{Height=300};
+        var cat=new PetModel{Action=PetAction.Thrown,VY=800}; cat.Motion.Reset(cat);
+        cat.Motion.Contact(800,cat); while(keepsake.Height>0||keepsake.VY>0) keepsake.Step(0.001,0,1000);
+        var catSpring=typeof(PetMotion).GetField("spring",System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Instance)!.GetValue(cat.Motion) as ImpactSpring;
+        check(catSpring!=null && Math.Abs(catSpring.SquashV-Landing.SquashKick(800))<1e-9 && keepsake.Landed>700,"The cat and the keepsake share the landing spring kick");
+        check(cat.Motion.Landing.Dust==0 && cat.Motion.Landing.TakeSound() && !cat.Motion.Landing.TakeSound(),"A hard landing raises dust and asks for the sound once");
+        cat.Motion.Contact(500,cat);
+        check(!cat.Motion.Landing.TakeSound(),"The bounce right after does not sound again");
+        for(int i=0;i<5;i++) cat.Motion.Step(cat,0.1); cat.Motion.Contact(500,cat);
+        check(cat.Motion.Landing.TakeSound(),"A later landing sounds again");
+        var sleeper=new PetModel{Action=PetAction.Sleeping}; sleeper.Motion.Reset(sleeper); sleeper.Motion.Contact(900,sleeper);
+        check(sleeper.Motion.LandingSquash==0 && sleeper.Motion.Landing.Dust<0 && !sleeper.Motion.Landing.TakeSound(),"A sleeping cat lands softly: no squash, dust or sound");
+        var walled=new PetModel{Action=PetAction.Thrown,X=1800,VX=900,Y=300,Grounded=false}; walled.Motion.Reset(walled);
+        new PetPhysics(settings).Step(walled,new Area(0,0,1920,1040),0.01); walled.Motion.Step(walled,0.05);
+        check(walled.VX<0 && walled.Motion.LandingTilt<0,"Bouncing off a screen side tips the cat back without changing the bounce");
     }
 }

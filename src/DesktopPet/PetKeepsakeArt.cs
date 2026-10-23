@@ -39,7 +39,7 @@ public sealed class KeepsakeArt : FrameworkElement
     public double BottomRoom { get; init; }
     // Drawn this many times its natural size (the desktop's one keepsake is bigger; the Rewards cell 1).
     public double Scale { get; init; } = 1;
-    private static readonly Brush Puff = PetUi.Frozen(Color.FromArgb(0xE8, 255, 255, 255)), Dust = PetUi.Frozen(Color.FromArgb(0xA0, 0xE8, 0xDC, 0xCC)), Spark = B(0xFF, 0xD8, 0x4A);
+    private static readonly Brush Puff = PetUi.Frozen(Color.FromArgb(0xE8, 255, 255, 255)), Spark = B(0xFF, 0xD8, 0x4A);
     private static readonly Pen SparkEdge = Freeze(new Pen(B(0xE0, 0x9A, 0x1E), 0.8) { LineJoin = PenLineJoin.Round });
     private static readonly Pen PuffEdge = Freeze(new Pen(PetUi.Frozen(Color.FromArgb(0x90, 0x9C, 0x92, 0xB0)), 1.2));
 
@@ -47,12 +47,15 @@ public sealed class KeepsakeArt : FrameworkElement
     // Pivot: the held point (unscaled art coordinates) the tilt swings around.
     private double scaleX = 1, scaleY = 1, tilt, pop = 1, shake;
     private Point? pivot;
-    // Effects, each a progress 0..1 (negative: none): dust from a landing, the teleport's puff.
-    private double dust = -1, dustStrength, puff = -1;
-    public void SetPose(double scaleX, double scaleY, double tilt, Point? pivot, double pop, double shake, double dust, double dustStrength, double puff)
+    // Effects: the landing's dust (shared with the cat, PetImpact.cs), the teleport's puff (progress
+    // 0..1, negative: none).
+    private Landing? landing;
+    private double dust = -1, puff = -1;
+    public void SetPose(double scaleX, double scaleY, double tilt, Point? pivot, double pop, double shake, Landing? landing, double puff)
     {
+        double dust = landing?.Dust ?? -1;
         if (this.scaleX == scaleX && this.scaleY == scaleY && this.tilt == tilt && this.pivot == pivot && this.pop == pop && this.shake == shake && this.dust == dust && this.puff == puff) return;
-        (this.scaleX, this.scaleY, this.tilt, this.pivot, this.pop, this.shake, this.dust, this.dustStrength, this.puff) = (scaleX, scaleY, tilt, pivot, pop, shake, dust, dustStrength, puff);
+        (this.scaleX, this.scaleY, this.tilt, this.pivot, this.pop, this.shake, this.landing, this.dust, this.puff) = (scaleX, scaleY, tilt, pivot, pop, shake, landing, dust, puff);
         InvalidateVisual();
     }
 
@@ -69,7 +72,7 @@ public sealed class KeepsakeArt : FrameworkElement
         double w = WidthFor(items);
         dc.PushTransform(new TranslateTransform(Side, TopRoom));
         dc.PushTransform(new ScaleTransform(Scale, Scale));
-        if (dust is >= 0 and < 1) DrawDust(dc, w);
+        if (landing != null) LandingDust.Draw(dc, landing, w / 2, ArtHeight, w / 2);
         if (pop > 0.01)
         {
             dc.PushTransform(new TranslateTransform(shake, 0));
@@ -82,20 +85,6 @@ public sealed class KeepsakeArt : FrameworkElement
         }
         if (puff is >= 0 and < 1) DrawPuff(dc, w);
         dc.Pop();
-        dc.Pop();
-    }
-
-    // Two little clouds kicked out sideways at the floor, fading.
-    private void DrawDust(DrawingContext dc, double w)
-    {
-        double t = dust, size = 3 + 4 * Math.Clamp(dustStrength, 0, 1);
-        dc.PushOpacity(1 - t);
-        for (int side = -1; side <= 1; side += 2)
-            for (int i = 0; i < 3; i++)
-            {
-                double x = w / 2 + side * (w / 2 - 4 + t * (14 + i * 9)), y = ArtHeight - 2 - t * (3 + i * 3) - i;
-                dc.DrawEllipse(Dust, null, new Point(x, y), size * (1 - t * 0.4) - i * 0.8, (size - i) * 0.7);
-            }
         dc.Pop();
     }
 

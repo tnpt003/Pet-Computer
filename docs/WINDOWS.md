@@ -297,8 +297,14 @@ only presentation history, freezes on pause and yields to the pickup pose.
 
 Autonomous jumps enter PreparingJump for 0.16 seconds before applying the original
 jump impulse. Sleep, Quiet mode and direct input can cancel preparation; a mouse
-throw never waits for this stage. Flight uses a small stretch; floor contact reports
-impact speed to a 0.22-second visual squash without changing collision physics.
+throw never waits for this stage. Flight uses a small stretch. Landings (floor, window
+edge, slime cushion) share one rule with the keepsake (PetImpact.cs): the same damped
+squash/tilt springs (a squash that grows with the fall, rebounds into a little stretch and
+wobbles out in ~0.4 s; the cat shows 0.75× of the squash and at most 12° of tilt), the
+same dust (from 120 DIPs/s, anchored where the feet touched down) and the same cartoon
+"squish" cue (from 300 DIPs/s, once per 0.4 s so a bounce series sounds once). Bouncing off
+a screen side mid-air squeezes and tips the cat. A sleeping cat lands softly: no squash,
+dust or sound. None of it changes collision physics.
 
 To export regression frames for inspection, set PET_RENDER_REVIEW to an absolute
 folder before running scripts/test.ps1 -Ui. This run's samples are in artifacts/motion-review.

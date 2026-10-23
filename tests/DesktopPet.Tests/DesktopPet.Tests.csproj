@@ -9,6 +9,7 @@
     <EmbeddedResource Include="../../src/DesktopPet/Assets/Sounds/*.wav" LogicalName="DesktopPet.Sounds.%(Filename)%(Extension)" />
     <Compile Include="../../src/DesktopPet/PersonalityTuning.cs" Link="PersonalityTuning.cs" />
     <Compile Include="../../src/DesktopPet/PetMotion.cs" Link="PetMotion.cs" />
+    <Compile Include="../../src/DesktopPet/PetImpact.cs" Link="PetImpact.cs" />
     <Compile Include="../../src/DesktopPet/PetThought.cs" Link="PetThought.cs" />
     <Compile Include="../../src/DesktopPet/PetSpeech.cs" Link="PetSpeech.cs" />
     <Compile Include="../../src/DesktopPet/PetBreaks.cs" Link="PetBreaks.cs" />

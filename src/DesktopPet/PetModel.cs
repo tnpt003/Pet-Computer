@@ -274,6 +274,7 @@ public sealed class PetPhysics(PetSettings settings)
             pet.X = Math.Clamp(pet.X, bounds.Left, right);
             pet.VX = -pet.VX * (pet.Action == PetAction.Walking ? 1 : settings.Bounce);
             if (Math.Abs(pet.VX) > 1) pet.Facing = Math.Sign(pet.VX);
+            if (!pet.Grounded) pet.Motion.Wall(pet.VX);
         }
         if (pet.Y < bounds.Top)
         {
@@ -289,7 +290,7 @@ public sealed class PetPhysics(PetSettings settings)
         {
             // Only from above: rising through a window's edge never stops the pet.
             pet.Y = landing.Top - settings.Height;
-            pet.Motion.Contact(pet.VY);
+            pet.Motion.Contact(pet.VY, pet);
             if (pet.VY > PetSettings.LedgeBounceSpeed && pet.Action != PetAction.Sleeping)
             {
                 pet.VY = -pet.VY * settings.Bounce;
@@ -305,7 +306,7 @@ public sealed class PetPhysics(PetSettings settings)
         else if (pet.Y >= floor)
         {
             pet.Y = floor;
-            if (!pet.Grounded) pet.Motion.Contact(pet.VY);
+            if (!pet.Grounded) pet.Motion.Contact(pet.VY, pet);
             // A sleeping pet (its window vanished) lands softly and keeps sleeping.
             if (pet.VY > 130 && pet.Action != PetAction.Sleeping)
             {

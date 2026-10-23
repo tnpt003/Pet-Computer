@@ -43,8 +43,8 @@ public sealed partial class PetWindow
     private Point keepsakePressAt;
     private double keepsakeGrabX, keepsakeGrabY;
     private readonly ThrowTracker keepsakeTracker = new();
-    // Effects: landing dust (progress 0..1, negative: none) and its strength.
-    private double keepsakeDust = -1, keepsakeDustStrength;
+    // Effects: the landing's dust and sound, the same rule as the cat's (PetImpact.cs).
+    private readonly Landing keepsakeLanding = new();
 
     // Back to the middle from a screen edge: the alarm (shakes, the cat startled), the vanish (a
     // puff) and the appear (pops up in the middle, drops, lands).
@@ -213,7 +213,7 @@ public sealed partial class PetWindow
         }
         pop *= 1 + 0.06 * keepsakeHoverBlend;
         Point? pivot = keepsakeHeld ? new Point(keepsakeGrabX / DisplayScale, (KeepsakeArtHeight - keepsakeGrabY) / DisplayScale) : null;
-        keepsakeArt.SetPose(keepsake.ScaleX, keepsake.ScaleY, keepsake.Tilt, pivot, Math.Max(0, pop), shake, keepsakeDust, keepsakeDustStrength, puff);
+        keepsakeArt.SetPose(keepsake.ScaleX, keepsake.ScaleY, keepsake.Tilt, pivot, Math.Max(0, pop), shake, keepsakeLanding, puff);
     }
 
     // Keepsake below the cat: both are topmost, and the keepsake was shown later.
@@ -332,13 +332,14 @@ public sealed partial class PetWindow
         LandKeepsakeOnLedge(before);
         double ceiling = Math.Max(0, KeepsakeFloor - keepsakeArea.Top - KeepsakeArtHeight);
         if (keepsake.Height > ceiling) { keepsake.Height = ceiling; keepsake.VY = -Math.Abs(keepsake.VY) * 0.3; }
+        keepsakeLanding.Step(dt);
         if (keepsake.Landed > 0)
         {
-            keepsakeDust = 0; keepsakeDustStrength = Math.Clamp(keepsake.Landed / 1200, 0.2, 1);
-            if (keepsake.Landed > 300) { PlayPetSound("squish"); NoticeKeepsakeLanding(); }
+            keepsakeLanding.Hit(keepsake.Landed);
+            if (keepsakeLanding.TakeSound()) PlayPetSound(Landing.Sound);
+            if (keepsake.Landed > Landing.SoundSpeed) NoticeKeepsakeLanding();
             keepsake.Landed = 0;
         }
-        if (keepsakeDust >= 0 && (keepsakeDust += dt / 0.45) >= 1) keepsakeDust = -1;
         CheckKeepsakeBonk(before);
         TickKeepsakeHop(dt);
         TickNapLift(dt);

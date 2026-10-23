@@ -10,8 +10,12 @@ public sealed class KeepsakeMotion
 {
     public const double Gravity = 1700, EdgeMargin = 24;
     public double X, Height, VX, VY, Ground;
-    // Squash: + flattened, − stretched (a damped spring), Tilt in degrees (another spring).
-    public double Squash, SquashV, Tilt, TiltV;
+    // Squash: + flattened, − stretched, Tilt in degrees: the springs every falling thing shares (PetImpact.cs).
+    public readonly ImpactSpring Spring = new();
+    public double Squash { get => Spring.Squash; set => Spring.Squash = value; }
+    public double SquashV { get => Spring.SquashV; set => Spring.SquashV = value; }
+    public double Tilt { get => Spring.Tilt; set => Spring.Tilt = value; }
+    public double TiltV { get => Spring.TiltV; set => Spring.TiltV = value; }
     public bool Held;
     // Last landing's impact speed (DIP/s), for the dust and the sound; read and cleared by the caller.
     public double Landed;
@@ -64,10 +68,7 @@ public sealed class KeepsakeMotion
         for (int i = 0; i < steps; i++)
         {
             // Springs: squash back to 0, tilt back to upright (or to the dangling angle while held).
-            SquashV += (-340 * Squash - 7 * SquashV) * h; Squash += SquashV * h;
-            double tiltTarget = Held ? HeldTilt : 0;
-            TiltV += (-180 * (Tilt - tiltTarget) - (Held ? 7 : 9) * TiltV) * h; Tilt += TiltV * h;
-            Tilt = Math.Clamp(Tilt, -35, 35);
+            Spring.Step(h, Held ? HeldTilt : 0, Held ? 7 : 9);
             if (Held) continue;
             X += VX * h;
             if (Height > Ground || VY > 0)
@@ -78,22 +79,20 @@ public sealed class KeepsakeMotion
                     double impact = -VY;
                     Height = Ground;
                     // Cartoon landing: a squash that grows with the fall, then one or two small bounces.
-                    SquashV += Math.Clamp(impact / 1000 * 5.5, 0, 7.5);
+                    Spring.Land(impact, VX);
                     VY = impact > 220 ? impact * 0.38 : 0;
-                    TiltV += VX * 0.04;
-                    if (impact > 120) { Landed = Math.Max(Landed, impact); landed = true; }
+                    if (impact > Landing.DustSpeed) { Landed = Math.Max(Landed, impact); landed = true; }
                 }
             }
             if (X < left || X > right)
             {
                 X = Math.Clamp(X, left, Math.Max(left, right));
-                VX *= -0.55; SquashV -= 1.5; TiltV += VX * 0.08;
+                VX *= -0.55; Spring.Wall(VX);
             }
             VX *= Math.Exp(-(Height <= Ground ? 4 : 0.3) * h);
             if (Math.Abs(VX) < 2 && Height <= Ground) VX = 0;
         }
-        if (Math.Abs(Squash) < 0.002 && Math.Abs(SquashV) < 0.02) Squash = SquashV = 0;
-        if (Math.Abs(Tilt) < 0.05 && Math.Abs(TiltV) < 0.2 && !Held) Tilt = TiltV = 0;
+        Spring.Settle(Held);
         return landed;
     }
 }

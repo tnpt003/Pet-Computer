@@ -292,12 +292,12 @@ public sealed partial class PetWindow
         if (previousFeet > surface + 0.5 || feet < surface || CatCenter < keepsake.X + 4 || CatCenter > keepsake.X + KeepsakeArtWidth - 4) return;
         double impact = pet.VY;
         pet.Y = surface - settings.Height;
+        pet.Motion.Contact(impact, pet); // The cat's own squash, dust and sound, like any landing.
         pet.VY = -Math.Min(1100, impact * 0.9 + 140);
         int away = Math.Abs(CatCenter - KeepsakeCenter) < 1 ? (featureRandom.NextDouble() < 0.5 ? -1 : 1) : CatCenter < KeepsakeCenter ? -1 : 1;
         pet.VX += away * 150;
         keepsake.SquashV += Math.Clamp(impact / 1000 * 7, 2.5, 9);
-        keepsakeDust = 0; keepsakeDustStrength = Math.Clamp(impact / 1200, 0.3, 1);
-        PlayPetSound("squish");
+        keepsakeLanding.Hit(impact, quiet: true); // One sound: the cat's.
     }
 
     // Every frame (TickKeepsake): while asleep on the cushion it is drawn lifted onto it; it ends with

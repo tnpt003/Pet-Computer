@@ -389,7 +389,7 @@ public sealed partial class PetWindow : Window
                 }
             }
         }
-        if (!paused) { pet.AnimationTime += dt; pet.ActionTime += dt; pet.Motion.Step(pet, dt, settings.WalkSpeed); pet.Thought.Step(pet, dt); pet.Speech.Step(pet, dt); TickPendingSpeech(); }
+        if (!paused) { pet.AnimationTime += dt; pet.ActionTime += dt; pet.Motion.Step(pet, dt, settings.WalkSpeed); if (pet.Motion.Landing.TakeSound()) PlayPetSound(Landing.Sound); pet.Thought.Step(pet, dt); pet.Speech.Step(pet, dt); TickPendingSpeech(); }
         Present(interpolate: !dragging && !paused && !pressPending);
         double interval = FramePeriod() * 1000 / 2;
         if (timer.Interval.TotalMilliseconds != interval) timer.Interval = TimeSpan.FromMilliseconds(interval);

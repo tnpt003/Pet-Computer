@@ -410,7 +410,7 @@ Một chuyến đi gồm nhiều bậc, mỗi bậc chọn một điểm, bậc 
 Một "desktop giả" trong trận Phiêu lưu, Viễn chinh và Vô tận (trận tự do không có): 5 icon app do game tự vẽ (không dùng tên, logo hay màu của app thật) đứng trên các ô lưới kiểu desktop phía trên dải chiến trường, ở vị trí ngẫu nhiên theo seed. Logic ở `PetBattle.Apps.cs`; hình ở `PetBattleAppArt.cs`, `PetDesktopAppViews.cs` (icon, đường bay), `PetBattleView.Apps.cs` (dải chiến trường); cửa sổ ở `PetWindow.BattleApps.cs`. Python không tham gia.
 
 - **Lưới:** cột ô rộng ~84 DIPs trải hết bề ngang màn hình của trận, tối đa 3 hàng (cao 108 DIPs) ngay trên dải chiến trường (màn hình thấp thì ít hàng hơn); ô bị HUD, bảng chọn thẻ hoặc túi đồ (khi đang mở) che thì không dùng — icon đang ở đó tự sang ô trống. Đổi độ phân giải/taskbar/Scale của Windows giữa trận: lưới tính lại, cửa sổ icon và lớp đường bay đặt lại theo pixel mới. Mỗi icon là một cửa sổ nhỏ nổi trên cùng, chỉ phần hình nhận chuột. Con trỏ ở xa (≥ 280 DIPs) thì icon mờ còn 50% (icon đã sạc ≥ 75%, bị nhiễm ≥ 85%), lại gần (≤ 110) thì rõ hẳn. Rê chuột lên icon: khung chọn kiểu desktop + ghi chú bên cạnh (tên, tác dụng hoặc tác hại khi nhiễm, % sạc / số lần còn phải quét).
-- **Sạc:** mỗi icon đầy sau `charge` giây trận (đếm khi mèo không bị cầm/bay), bắt đầu ở `startCharge`, mỗi quái bị hạ cộng `killCharge` cho mọi icon sạch. Đang sạc: lớp tối phủ phần chưa đầy; đầy: quầng vàng, sao lấp lánh, nhún nhẹ, tên màu vàng. Bấm icon đầy thì trừ hết sạc và thứ nó gửi **bay theo đường vòng từ icon xuống** (0,45 s), chạm đích mới có tác dụng:
+- **Sạc:** mỗi icon đầy sau `charge` giây trận (đếm khi mèo không bị cầm/bay), bắt đầu ở `start` của nó (không ghi thì `startCharge`; gốc: Tab 0.6, Bão Thông Báo 0.4, còn lại 0.2 → Tab sẵn sau ~20 s, kể cả màn ngắn). Mỗi trận (mỗi màn, mỗi bước Viễn chinh) sạc lại từ đầu; trong một trận (cả lượt Vô tận) sạc chạy tiếp qua các đợt. mỗi quái bị hạ cộng `killCharge` cho mọi icon sạch. Đang sạc: lớp tối phủ phần chưa đầy; đầy: quầng vàng, sao lấp lánh, nhún nhẹ, tên màu vàng. Bấm icon đầy thì trừ hết sạc và thứ nó gửi **bay theo đường vòng từ icon xuống** (0,45 s), chạm đích mới có tác dụng:
   - `tabs` Tab Lốc Xoáy: 3 tab bay xuống rồi xoay quanh mèo `tabSeconds` giây, mỗi `tabEvery` giây gây `tabDamage` (× sát thương build) cho quái trong `tabRadius` DIPs; không đánh khi mèo bị nhấc.
   - `ping` Bão Thông Báo: mỗi slime một chuông "99+" (bay lệch nhau một chút): `pingDamage` (× build) + choáng `pingStun` giây (không choáng quái đang lao/hồi máu/nhảy, tinh anh miễn Đẩy).
   - `endtask` End Task: cửa sổ "Không phản hồi" bay tới quái nhiều máu nhất (không tính trùm đang bật khiên, quái đang được hồi) và tắt nó; trùm/tinh anh mất `endTaskShare` máu tối đa.
@@ -426,11 +426,12 @@ Một "desktop giả" trong trận Phiêu lưu, Viễn chinh và Vô tận (tr�
   - Thùng Rác → nhả một `popupSpawn` xuống sàn dưới icon (mỗi `spitEvery` s, khi sàn còn chỗ).
   - Gỡ: **bấm icon `scrubClicks` lần** (bọt xà phòng mỗi lần, được cả khi đang cầm mèo) hoặc **hạ con slime đeo dấu virus**. Sạch rồi thì lấp lánh, sạc tiếp từ chỗ cũ.
 - Hết trận: không còn gì bay, virus và quảng cáo biến mất, icon mờ dần cùng phần kết. Random của app (vị trí, dọn nhà, virus) là luồng riêng của seed trận (`BattleRandom.Apps`).
-- `list`: mỗi app một mục (`tabs`, `ping`, `endtask`, `undo`, `trash`, `popup`), đủ cả 6, không trùng: `nameVi`/`nameEn` 1–32 ký tự, `descVi`/`descEn` (tác dụng) và `badVi`/`badEn` (khi nhiễm) ≤ 120 ký tự (chữ thường, không thay `{khóa}`), `charge` 1–600 giây (popup phải là 0). File riêng ghi `list` thì thay cả danh sách.
+- `list`: mỗi app một mục (`tabs`, `ping`, `endtask`, `undo`, `trash`, `popup`), đủ cả 6, không trùng: `nameVi`/`nameEn` 1–32 ký tự, `descVi`/`descEn` (tác dụng) và `badVi`/`badEn` (khi nhiễm) ≤ 120 ký tự (chữ thường, không thay `{khóa}`), `charge` 1–600 giây (popup phải là 0), `start` 0–1 (tùy chọn). File riêng ghi `list` thì thay cả danh sách.
 
 | Khóa | Giới hạn | Gốc |
 | --- | --- | --- |
 | `startCharge`, `killCharge` | 0–1 | 0.2, 0.02 |
+| `start` (trong `list`, tùy chọn) | 0–1 | tab 0.6, chuông 0.4 |
 | `charge` (trong `list`) | 1–600 s | tab 50, chuông 55, End Task 80, Ctrl+Z 90, thùng rác 70 |
 | `tabSeconds`, `tabRadius`, `tabDamage`, `tabEvery` | 0.5–30 s, 10–300, 0–1000, 0.1–5 s | 6, 70, 14, 0.5 |
 | `pingDamage`, `pingStun` | 0–1000, 0–5 s | 14, 1.5 |

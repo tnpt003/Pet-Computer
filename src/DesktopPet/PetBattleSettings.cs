@@ -579,7 +579,8 @@ public sealed class AppsSpec
 }
 
 // One app's texts: what it does (Desc) and what it does once infected (Bad); Charge: seconds of
-// battle to charge it (0 for the popup, which is never an icon).
+// battle to charge it (0 for the popup, which is never an icon); Start: its charge when the battle
+// starts (null: the rules' StartCharge), so the first apps come early even in a short stage.
 public sealed record AppSpec
 {
     public string Id { get; init; } = "";
@@ -590,6 +591,7 @@ public sealed record AppSpec
     public string BadVi { get; init; } = "";
     public string BadEn { get; init; } = "";
     public double Charge { get; init; }
+    public double? Start { get; init; }
     public string Name(bool english) => (english ? NameEn : NameVi) is { Length: > 0 } name ? name : Id;
     public string Desc(bool english) => english ? DescEn : DescVi;
     public string Bad(bool english) => english ? BadEn : BadVi;

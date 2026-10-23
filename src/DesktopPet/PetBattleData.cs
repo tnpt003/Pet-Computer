@@ -629,6 +629,7 @@ public static class BattleData
                     bool icon = !string.Equals(a.Id, nameof(BattleAppKind.Popup), StringComparison.OrdinalIgnoreCase);
                     if (icon) Within(a.Charge, 1, 600, at + ".charge");
                     else if (a.Charge != 0) throw new InvalidDataException($"{at}.charge must be 0 (the popup is never an icon)");
+                    if (a.Start is double start) Within(start, 0, 1, at + ".start");
                 }
                 if (seen.Count != kinds.Length) throw new InvalidDataException($"apps.list must list every app: {string.Join(", ", kinds.Select(k => k.ToLowerInvariant()))}");
             }

@@ -113,7 +113,7 @@
 
   // Desktop apps (Adventure, Expedition, Infinity; not free battles): five made-up app icons drawn
   // by the game (never a real app's name or logo) stand on random desktop cells above the strip.
-  // Each charges in "charge" s of battle (startCharge at the start, killCharge more per defeated
+  // Each charges in "charge" s of battle ("start" at the start, else startCharge; killCharge more per defeated
   // enemy); a charged icon glows and a click sends its help down to the field. From a threat of
   // infectMinThreat each wave rolls infectChance for a slime to shoot a virus at an icon (at most
   // maxInfected): the infected icon works against the cat (bad*: every *Every s) and crawls to a
@@ -129,10 +129,10 @@
     "bellEvery": 9, "bellDamage": 6, "freezeEvery": 12, "freezeSeconds": 1.2,
     "mendEvery": 7, "mendShare": 0.15, "spitEvery": 10,
     "list": [
-      { "id": "tabs", "nameVi": "Tab Lốc Xoáy", "nameEn": "Tab Tornado", "charge": 50,
+      { "id": "tabs", "nameVi": "Tab Lốc Xoáy", "nameEn": "Tab Tornado", "charge": 50, "start": 0.6,
         "descVi": "Ba thẻ tab bay xuống xoay quanh mèo 6 giây, chém slime ở gần.", "descEn": "Three tabs fly down and circle the cat for 6 s, cutting nearby slimes.",
         "badVi": "Nhiễm virus: bật quảng cáo đè lên slime.", "badEn": "Infected: opens ads over the slimes." },
-      { "id": "ping", "nameVi": "Bão Thông Báo", "nameEn": "Ping Storm", "charge": 55,
+      { "id": "ping", "nameVi": "Bão Thông Báo", "nameEn": "Ping Storm", "charge": 55, "start": 0.4,
         "descVi": "Chuông 99+ rơi lên mọi slime: sát thương nhỏ, choáng 1,5 giây.", "descEn": "99+ bells drop on every slime: a little damage, 1.5 s stun.",
         "badVi": "Nhiễm virus: thả chuông lên đầu mèo.", "badEn": "Infected: drops bells on the cat's head." },
       { "id": "endtask", "nameVi": "End Task", "nameEn": "End Task", "charge": 80,

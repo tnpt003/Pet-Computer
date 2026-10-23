@@ -247,6 +247,13 @@ internal static class AppTests
         check(shipped != null && shipped.AppList.Count == 6 && shipped.AppList.All(a => a.NameVi.Length > 0 && a.NameEn.Length > 0 && a.DescVi.Length > 0 && a.DescEn.Length > 0)
               && shipped.AppList.Where(a => a.Id != "popup").All(a => a.BadVi.Length > 0 && a.BadEn.Length > 0 && a.Charge > 0),
             "battle.json \"apps\": all six apps named and described in both languages; the five icons say what they do infected and how long they charge");
+        var shippedSim = new BattleSim(BattleData.Settings, 0, 1600, stage: stage, seed: 2);
+        shippedSim.Step(dt, 800, false);
+        double ChargeOf(BattleAppKind kind) => shippedSim.Desktop.Single(a => a.Kind == kind).Charge;
+        check(Math.Abs(ChargeOf(BattleAppKind.Tabs) - 0.6) < 0.01 && Math.Abs(ChargeOf(BattleAppKind.Ping) - 0.4) < 0.01 &&
+              new[] { BattleAppKind.EndTask, BattleAppKind.Undo, BattleAppKind.Trash }.All(k => Math.Abs(ChargeOf(k) - 0.2) < 0.01) &&
+              shipped.App(BattleAppKind.Tabs).Charge * 0.4 <= 20.5,
+            "Staggered start: Tabs 60 %, Ping 40 %, the others 20 % — the first app is ready about 20 s in"); 
         string dir = Path.Combine(Path.GetTempPath(), "pet-apps-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(dir);
         try
@@ -258,6 +265,8 @@ internal static class AppTests
             check(Error("{ \"list\": [ { \"id\": \"tabs\", \"nameVi\": \"a\", \"nameEn\": \"a\", \"descVi\": \"\", \"descEn\": \"\", \"charge\": 5 } ] }")?.Contains("every app") == true,
                 "A list missing apps is refused");
             check(Error("{ \"infectChance\": 2 }")?.Contains("infectChance") == true, "infectChance must be 0–1");
+            check(Error("{ \"list\": [ " + string.Join(", ", Enum.GetNames<BattleAppKind>().Select(k => "{ \"id\": \"" + k.ToLowerInvariant() + "\", \"nameVi\": \"a\", \"nameEn\": \"a\", \"descVi\": \"\", \"descEn\": \"\", \"charge\": " + (k == "Popup" ? "0" : "5") + (k == "Tabs" ? ", \"start\": 1.5" : "") + " }")) + " ] }")?.Contains("start") == true,
+                "An app's start charge must be 0–1");
         }
         finally { Directory.Delete(dir, true); }
     }

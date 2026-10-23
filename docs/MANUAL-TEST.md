@@ -438,6 +438,7 @@ Tự động đã có: Phần thưởng trên sảnh (ô có hình, khóa, Mới
 ### App trên màn hình trong trận (2026-10-23, bản desktop giả)
 - [ ] Vào trận Phiêu lưu/Viễn chinh/Vô tận: 5 icon (Tab Lốc Xoáy, Bão Thông Báo, End Task, Ctrl+Z, Thùng Rác) lần lượt bật ra trên các ô kiểu desktop phía trên dải chiến trường, có mũi tên shortcut và tên. Không đè lên HUD (kéo HUD đè lên thì icon dời đi). Trận tự do: không có icon.
 - [ ] Con trỏ ở xa: icon mờ đi; đưa chuột lại gần: rõ dần. Rê lên icon: khung chọn + ghi chú bên cạnh (tác dụng, % sạc). Click xuyên qua khoảng trống quanh icon tới app bên dưới.
+- [ ] Đầu trận: Tab Lốc Xoáy sạc sẵn nhiều nhất (60%), Bão Thông Báo 40%, còn lại 20%; Tab đầy sau ~20 s (cả ở màn 1 ngắn). Màn sau / bước Viễn chinh sau: sạc lại từ đầu.
 - [ ] Icon sạc dần (lớp tối rút xuống), đầy thì phát sáng vàng, sao lấp lánh, banner "App trên màn hình đã sạc đầy!" lần đầu. Bấm khi chưa đầy: báo "% đang sạc".
 - [ ] Bấm từng app khi đầy (banner tên + tiếng; thứ được gửi bay vòng từ icon xuống rồi mới có tác dụng): tab xoay quanh người mèo; chuông rơi lên đầu từng slime, slime choáng; cửa sổ "Không phản hồi" bay tới slime nhiều máu nhất, nó biến mất (Vua chỉ mất 1/4 máu); Ctrl+Z (sau khi bị đánh) quả cầu bay về mèo, máu quay lại, mũi tên quay quanh mèo; Thùng Rác: 2 slime gần mèo bị hút bay vào thùng, nắp mở. Đang cầm/ném mèo: báo "Đặt mèo xuống…".
 - [ ] Từ đợt 2: mỗi đợt một icon nhảy sang ô khác (nhảy vòng, đáp bẹp).

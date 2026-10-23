@@ -88,14 +88,14 @@ public sealed partial class BattleSim
         return open.Count == 0 ? null : open[appRandom.Next(open.Count)];
     }
 
-    // The five icons pop up on random cells, partly charged.
+    // The five icons pop up on random cells, partly charged (each its own start, or the rules').
     private void EnsureDesktop()
     {
         if (desktop.Count > 0 || AppRules is not AppsSpec rules) return;
         foreach (var kind in IconKinds)
         {
             var (col, row) = FreeCell(null) ?? (0, 0);
-            desktop.Add(new DesktopApp { Id = nextAppId++, Kind = kind, Col = col, Row = row, FromCol = col, FromRow = row, Charge = Math.Clamp(rules.StartCharge, 0, 1), BornAt = Time });
+            desktop.Add(new DesktopApp { Id = nextAppId++, Kind = kind, Col = col, Row = row, FromCol = col, FromRow = row, Charge = Math.Clamp(rules.App(kind).Start ?? rules.StartCharge, 0, 1), BornAt = Time });
         }
     }
 

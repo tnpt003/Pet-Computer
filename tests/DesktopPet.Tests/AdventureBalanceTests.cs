@@ -239,7 +239,10 @@ internal static class AdventureBalanceTests
                     $"Balance: stage {s}, {weapon}, Normal, the idle player wins ≤ 30 % ({table[(s, weapon, BattleDifficulty.Normal, Player.Idle)].Wins:P0})");
                 // Stage 5 allows more: since the boss leaps to the far edge its shield phases last longer,
                 // and a longer fight gives the bot more Healing fish (one per 20 s).
-                double most = s == 5 ? 0.92 : 0.85;
+                // Stage 4 allows 88 % (user, 2026-10-23): with the desktop apps' staggered start (Tabs
+                // ready ~20 s in) this bot, which clicks each app the moment it is charged, ends it at
+                // 85–87 % and app tuning only moved it within that noise.
+                double most = s == 5 ? 0.92 : s == 4 ? 0.88 : 0.85;
                 check(table[(s, weapon, BattleDifficulty.Normal, Player.Simple)].HpShare <= most,
                     $"Balance: stage {s}, {weapon}, Normal, the simple player ends with ≤ {most:P0} HP ({table[(s, weapon, BattleDifficulty.Normal, Player.Simple)].HpShare:P0})");
             }

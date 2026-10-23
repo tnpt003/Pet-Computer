@@ -22,6 +22,19 @@ public sealed class EndlessSpec
     public int UpgradeEvery { get; init; } = 3;
     public int BossEvery { get; init; } = 10;
     public string Boss { get; init; } = "king";
+    // From wave LateBossFrom on, a boss wave brings LateBoss beside Boss (null: never).
+    public string? LateBoss { get; init; }
+    public int LateBossFrom { get; init; } = 30;
+    // The elite chance grows by EliteChancePerWave a wave, at most EliteChanceMax (0: no cap); every
+    // MoreElitesEvery waves one more elite may be alive at once (at most MoreElitesMax more).
+    public double EliteChancePerWave { get; init; }
+    public double EliteChanceMax { get; init; }
+    public int MoreElitesEvery { get; init; }
+    public int MoreElitesMax { get; init; } = 2;
+    // From this wave on every synergy (the Infinity-only tiers too) is on (null: never).
+    public int? AllSynergiesAt { get; init; }
+    // A cleared boss wave offers a second card.
+    public bool BossBonusPick { get; init; }
     public double FirstCount { get; init; } = 3;
     public double CountPerWave { get; init; } = 0.35;
     public int MaxCount { get; init; } = 14;
@@ -42,7 +55,14 @@ public sealed class EndlessSpec
 
     public WaveSpec Wave(int wave)
     {
-        if (IsBossWave(wave)) return new() { Threat = Threat(wave), Groups = new[] { new WaveGroup { Enemy = Boss, Count = 1 } } };
+        if (IsBossWave(wave))
+            return new()
+            {
+                Threat = Threat(wave),
+                Groups = LateBoss != null && wave >= LateBossFrom
+                    ? new[] { new WaveGroup { Enemy = Boss, Count = 1 }, new WaveGroup { Enemy = LateBoss, Count = 1 } }
+                    : new[] { new WaveGroup { Enemy = Boss, Count = 1 } }
+            };
         var pick = Kinds.Where(k => k.From <= wave && k.Weight > 0).ToDictionary(k => k.Enemy, k => k.Weight);
         return new() { Threat = Threat(wave), Groups = new[] { new WaveGroup { Pick = pick, Count = Count(wave) } } };
     }
@@ -52,6 +72,8 @@ public sealed class EndlessSpec
     {
         Id = Id, NameVi = "Vô tận", NameEn = "Infinity", Objective = StageSpec.EndlessObjective, Upgrades = UpgradeEvery > 0,
         UpgradeEvery = UpgradeEvery, RulesVersion = RulesVersion, MaxAlive = MaxAlive, EliteChance = EliteChance,
+        EliteChancePerWave = EliteChancePerWave, EliteChanceMax = EliteChanceMax, MoreElitesEvery = MoreElitesEvery, MoreElitesMax = MoreElitesMax,
+        AllSynergiesAt = AllSynergiesAt, BossBonusPick = BossBonusPick,
         Waves = Enumerable.Range(1, PlannedWaves).Select(Wave).ToArray()
     };
 
@@ -67,6 +89,12 @@ public sealed class EndlessSpec
         if (e.UpgradeEvery is < 0 or > 20) throw new InvalidDataException(at + ".upgradeEvery must be 0–20 (0: no cards)");
         if (e.BossEvery is < 0 or > 100) throw new InvalidDataException(at + ".bossEvery must be 0–100 (0: no boss)");
         if (e.BossEvery > 0 && s.EnemyTypes.FirstOrDefault(t => t.Id == e.Boss) is not { Boss: true }) throw new InvalidDataException(at + ".boss must be a boss enemy");
+        if (e.LateBoss != null && s.EnemyTypes.FirstOrDefault(t => t.Id == e.LateBoss) is not { Boss: true }) throw new InvalidDataException(at + ".lateBoss must be a boss enemy");
+        if (e.LateBossFrom is < 1 or > PlannedWaves) throw new InvalidDataException(at + ".lateBossFrom must be 1–" + PlannedWaves);
+        if (!double.IsFinite(e.EliteChancePerWave) || e.EliteChancePerWave is < 0 or > 0.2) throw new InvalidDataException(at + ".eliteChancePerWave must be 0–0.2");
+        if (!double.IsFinite(e.EliteChanceMax) || e.EliteChanceMax is < 0 or > 1) throw new InvalidDataException(at + ".eliteChanceMax must be 0–1");
+        if (e.MoreElitesEvery is < 0 or > 200 || e.MoreElitesMax is < 0 or > 4) throw new InvalidDataException(at + ".moreElitesEvery must be 0–200 and moreElitesMax 0–4");
+        if (e.AllSynergiesAt is < 1 or > PlannedWaves) throw new InvalidDataException(at + ".allSynergiesAt must be 1–" + PlannedWaves);
         if (!double.IsFinite(e.FirstCount) || e.FirstCount is < 1 or > 30) throw new InvalidDataException(at + ".firstCount must be 1–30");
         if (!double.IsFinite(e.CountPerWave) || e.CountPerWave is < 0 or > 5) throw new InvalidDataException(at + ".countPerWave must be 0–5");
         if (e.MaxCount is < 1 or > 60) throw new InvalidDataException(at + ".maxCount must be 1–60");

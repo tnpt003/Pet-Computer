@@ -13,7 +13,7 @@ public sealed partial class BattleSim
     // This battle's seed (BattleRandom) and its streams: what spawns where, the cards, the rock's
     // blocks, the elite rolls, the rare cards, the desktop apps, the hammer's stuns and the boss's rally.
     public int Seed { get; }
-    private readonly Random spawnRandom, offerRandom, blockRandom, affixRandom, rarityRandom, appRandom, strikeRandom, rallyRandom;
+    private readonly Random spawnRandom, offerRandom, blockRandom, affixRandom, rarityRandom, appRandom, strikeRandom, rallyRandom, utilityRandom;
     private readonly List<Slime> slimes = new();
     private readonly List<BattleEffect> effects = new();
     private readonly List<BattleEvent> events = new();
@@ -56,6 +56,22 @@ public sealed partial class BattleSim
     private double damageBonus, moveBonus, cooldownCut, knockBonus, armorCut, maxHpBonus;
     // Rare cards: Turtle shell (its regrowth time; 0 without it), Opener and Momentum bonuses.
     private double shellRegrow, openerBonus, momentumBonus;
+    // 2026-10-24 cards (UpgradeSpec): crit chance, the bonus on enemies below 30 % HP, a longer combo
+    // window, the attack speed after being put down (rare), HP a second, a shorter stun, faster
+    // skills and apps, a bigger bomb and a longer Shield.
+    private double critChance, executeBonus, comboWindowBonus, landingRushBonus, regenRate, stunCut, skillCut, appChargeCut, killChargeBonus, bombBonus, shieldBonus;
+    // A landing rush (Tailwind) and a combo's rush (the Gale synergy): seconds left and its bonus.
+    public double LandingRushRemaining { get; private set; }
+    public double ComboRushRemaining { get; private set; }
+    private double comboRushBonus, autoShieldClock, regenShown;
+    private bool lastStandSpent;
+    // Picks still owed after this offer (a cleared boss wave in Infinity gives a second one).
+    private int bonusPicks;
+    public int Crits { get; private set; }
+    public int ExecuteHits { get; private set; }
+    public int LastStands { get; private set; }
+    public int AutoShields { get; private set; }
+    public int Finishers { get; private set; }
     // Turtle shell: seconds until it is back (0: ready); hits it stopped.
     public double ShellCooldown { get; private set; }
     public bool HasShell => shellRegrow > 0;
@@ -87,14 +103,20 @@ public sealed partial class BattleSim
     // Synergies the build has switched on (they stay on for the rest of the build).
     private readonly List<SynergySpec> synergies = new();
     public IReadOnlyList<SynergySpec> Synergies => synergies;
-    private SynergySpec? Active(string effect) { foreach (var y in synergies) if (y.Effect == effect) return y; return null; }
+    // The last one switched on wins (a higher tier of the same effect replaces the lower one).
+    private SynergySpec? Active(string effect) { for (int i = synergies.Count - 1; i >= 0; i--) if (synergies[i].Effect == effect) return synergies[i]; return null; }
+    // Synergies this battle can switch on: the Infinity-only tiers only in Infinity.
+    private bool Allowed(SynergySpec y) => !y.EndlessOnly || Endless;
+    public bool CanUnlock(SynergySpec y) => Allowed(y);
+    // How often this build may take a card here (Infinity has its own, higher limits).
+    public int StackLimit(UpgradeSpec u) => Endless && u.EndlessMaxStacks is int endless ? endless : u.MaxStacks;
     // The synergy this card would switch on now (null: none).
     public SynergySpec? Unlocks(UpgradeSpec card)
     {
         if (card.Group == null) return null;
         int points = GroupPoints(card.Group) + 1;
         foreach (var y in Settings.SynergyList)
-            if (y.Group == card.Group && !synergies.Contains(y) && points >= y.At) return y;
+            if (y.Group == card.Group && Allowed(y) && !synergies.Contains(y) && points >= y.At) return y;
         return null;
     }
     // The build to carry on: every card but the instant heals.
@@ -120,7 +142,9 @@ public sealed partial class BattleSim
     // armor (cards and synergies together) takes at most MaxArmor off.
     public const double MaxArmor = 0.6;
     public double DamageFactor => 1 + damageBonus;
-    public double MoveFactor => 1 + moveBonus;
+    public double MoveFactor => (1 + moveBonus) * (ComboRushRemaining > 0 ? 1 + comboRushBonus : 1);
+    // Attacks a second against the usual: the rushes (Tailwind, Gale).
+    public double RushFactor => 1 + (LandingRushRemaining > 0 ? landingRushBonus : 0) + (ComboRushRemaining > 0 ? comboRushBonus : 0);
     public double CooldownFactor => Math.Max(0.3, 1 - cooldownCut);
     public double ArmorFactor => Math.Max(1 - MaxArmor, 1 - armorCut);
     public double KnockBonus => knockBonus;
@@ -250,6 +274,7 @@ public sealed partial class BattleSim
         appRandom = BattleRandom.Stream(Seed, BattleRandom.Apps);
         strikeRandom = BattleRandom.Stream(Seed, BattleRandom.Strike);
         rallyRandom = BattleRandom.Stream(Seed, BattleRandom.Rally);
+        utilityRandom = BattleRandom.Stream(Seed, BattleRandom.Utility);
         Settings = settings;
         Stage = stage;
         AppsOn = apps;
@@ -265,7 +290,7 @@ public sealed partial class BattleSim
         if (build != null)
             foreach (var (id, count) in build)
                 if (Upgrade(id) is UpgradeSpec card && card.Effect != "heal")
-                    for (int i = 0; i < count && (card.MaxStacks == 0 || Stacks(id) < card.MaxStacks); i++) Take(card, 0, false);
+                    for (int i = 0; i < count && (StackLimit(card) == 0 || Stacks(id) < StackLimit(card)); i++) Take(card, 0, false);
         // An Expedition run's relics (unknown ones skipped), each its own modifier.
         if (relics != null && settings.Expedition is ExpeditionSpec expedition)
             foreach (var id in relics)
@@ -328,6 +353,9 @@ public sealed partial class BattleSim
         else runFromX = double.NaN;
         CheerRemaining = Math.Max(0, CheerRemaining - dt);
         ShieldRemaining = Math.Max(0, ShieldRemaining - dt);
+        LandingRushRemaining = Math.Max(0, LandingRushRemaining - dt);
+        ComboRushRemaining = Math.Max(0, ComboRushRemaining - dt);
+        autoShieldClock = Math.Max(0, autoShieldClock - dt);
         if (Over)
         {
             PhaseRemaining = Math.Max(0, PhaseRemaining - dt);
@@ -346,12 +374,15 @@ public sealed partial class BattleSim
                 Grace = Settings.LandingGraceSeconds;
                 GraceCooldown = Settings.RescueGraceCooldownSeconds;
             }
+            // Tailwind: put down after a real lift, the cat attacks faster a moment.
+            if (wasLifted && liftedFor >= Settings.RescueGraceMinLiftSeconds && landingRushBonus > 0) LandingRushRemaining = LandingRushSeconds;
             wasLifted = false;
             liftedFor = 0;
             Grace = Math.Max(0, Grace - dt);
             GraceCooldown = Math.Max(0, GraceCooldown - dt);
         }
         CatCooldown = Math.Max(0, CatCooldown - dt);
+        StepBuild(dt, catHeld);
         StepBombs(dt);
         StepSlimes(dt, floorX, catHeld);
         if (Over) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
@@ -377,9 +408,34 @@ public sealed partial class BattleSim
 
     private void CancelSwing() { SwingTime = -1; swingHit = false; ComboSwing = false; chargedSwing = false; swingWallId = 0; }
 
+    public const double LandingRushSeconds = 2, ComboRushSeconds = 3, AutoShieldBelow = 0.3, ExecuteBelow = 0.3;
+
+    // What the build does by itself while the fight goes on: Regrowth's HP (not while held), the
+    // Fortress's shield when HP runs low.
+    private void StepBuild(double dt, bool catHeld)
+    {
+        if (regenRate > 0 && !catHeld && Phase == BattlePhase.Fighting && CatHp < CatMaxHp)
+        {
+            double gained = Math.Min(regenRate * dt, CatMaxHp - CatHp);
+            CatHp += gained;
+            regenShown += gained;
+            if (regenShown >= 5) { AddEffect(BattleEffectKind.Number, lastCatX, 115, -5); regenShown -= 5; }
+        }
+        if (Active("autoShield") is SynergySpec fort && CatHp < CatMaxHp * AutoShieldBelow && ShieldRemaining <= 0 && autoShieldClock <= 0 && !catHeld)
+        {
+            ShieldRemaining = Settings.ShieldSeconds + shieldBonus;
+            autoShieldClock = fort.Amount;
+            AutoShields++;
+            events.Add(new(BattleEventKind.Shielded, lastCatX));
+        }
+    }
+
+    // A stun on the cat, shortened by Steady.
+    private double StunFor(double seconds) => seconds * Math.Max(0.1, 1 - stunCut);
+
     // The chain only lasts ComboWindow seconds after its last hit.
     // Hits in the current chain (0 once it lapsed); the HUD shows it as ×N.
-    public int LiveCombo => Combo > 0 && comboClock <= Settings.ComboWindow ? Combo : 0;
+    public int LiveCombo => Combo > 0 && comboClock <= Settings.ComboWindow + comboWindowBonus ? Combo : 0;
 
     private CatOrder CatTurn(double dt, double catX)
     {
@@ -434,7 +490,7 @@ public sealed partial class BattleSim
                 // Momentum: a swing after a run is a charged one (the run starts again either way).
                 chargedSwing = MomentumReady;
                 runDistance = 0;
-                double cooldown = arms.AttackCooldown * CooldownFactor / (CheerRemaining > 0 ? Settings.CheerSpeed : 1) / LagFactor;
+                double cooldown = arms.AttackCooldown * CooldownFactor / (CheerRemaining > 0 ? Settings.CheerSpeed : 1) / LagFactor / RushFactor;
                 CatCooldown = Math.Max(cooldown, arms.SwingDuration);
                 events.Add(new(BattleEventKind.Swing, catX));
             }
@@ -504,11 +560,15 @@ public sealed partial class BattleSim
         if (opening) damage *= 1 + openerBonus;
         if (charged) damage *= 1 + momentumBonus;
         if (Reckless) damage *= 1 + recklessBonus;
+        // Claws: now and then a hit deals double; Finishing blow: more on an enemy below 30 % HP.
+        bool crit = critChance > 0 && strikeRandom.NextDouble() < critChance;
+        if (crit) { damage *= 2; Crits++; }
+        if (executeBonus > 0 && slime.Hp < slime.MaxHp * ExecuteBelow) { damage *= 1 + executeBonus; ExecuteHits++; }
         bool countered = CounterReady;
         if (countered) damage *= 1 + counterBonus;
         double knock = arms.Knock + knockBonus;
         events.Add(new(combo ? BattleEventKind.ComboHit : BattleEventKind.SlimeHit, slime.X));
-        AddEffect(combo || charged || countered ? BattleEffectKind.Combo : arms.Effect == "thud" ? BattleEffectKind.Thud : BattleEffectKind.Spark, slime.X, slime.Height / 2);
+        AddEffect(combo || charged || countered || crit ? BattleEffectKind.Combo : arms.Effect == "thud" ? BattleEffectKind.Thud : BattleEffectKind.Spark, slime.X, slime.Height / 2);
         if (combo) { Combo = 0; CombosLanded++; }
         // A blocked or shrugged-off hit (or the last one) moves nothing.
         var result = Damage(slime, damage, combo ? DamageSource.Combo : DamageSource.Weapon);
@@ -527,6 +587,15 @@ public sealed partial class BattleSim
             slime.KnockVelocity = (slime.X < catX ? -1 : 1) * (combo ? Math.Max(Settings.ComboKnock, knock) : knock) * slime.Type.PushFactor;
         // A weapon that stuns (the hammer): now and then a landed hit dazes the enemy and cuts its windup.
         if (landed && arms.StunChance > 0 && strikeRandom.NextDouble() < arms.StunChance) StrikeStun(slime);
+        // Shockwave: a combo hit stuns; Gale: a combo sets the cat rushing.
+        if (landed && combo && Active("comboStun") is SynergySpec shock) Daze(slime, shock.Amount);
+        if (combo && Active("rush") is SynergySpec gale) { ComboRushRemaining = ComboRushSeconds; comboRushBonus = gale.Amount; }
+        // Finisher: a landed hit ends a plain enemy left with very little HP.
+        if (landed && !slime.IsBoss && slime.Targetable && Active("finisher") is SynergySpec end && slime.Hp < slime.MaxHp * end.Amount)
+        {
+            Finishers++;
+            Damage(slime, slime.Hp + 1, DamageSource.App);
+        }
         // A combo hit also hits the enemies close to its target for part of its damage.
         if (combo && Settings.ComboSplash > 0) Splash(slime, plain * Settings.ComboSplash);
         // Afterimage: every Every-th landed swing hits a second time (an echo counts nothing itself).
@@ -542,16 +611,19 @@ public sealed partial class BattleSim
 
     // The hammer's daze: never a boss, an elite that ignores Push, or one in the middle of something
     // it cannot stop (a dash, a heal, a leap), like a Ping bell's stun.
-    private void StrikeStun(Slime slime)
+    private void StrikeStun(Slime slime) { if (Daze(slime, arms.StunSeconds)) StrikeStuns++; }
+
+    // A daze of `seconds` × the enemy's stunFactor (see StrikeStun); true when it took.
+    private bool Daze(Slime slime, double seconds)
     {
-        if (slime.IsBoss || slime.LeapHeight > 0 || slime.Elite is { PushImmune: true }) return;
-        if (slime.State is not (SlimeState.Moving or SlimeState.Windup or SlimeState.Recover)) return;
-        double stun = arms.StunSeconds * slime.Type.StunFactor;
-        if (stun <= 0) return;
+        if (slime.IsBoss || slime.LeapHeight > 0 || slime.Elite is { PushImmune: true }) return false;
+        if (slime.State is not (SlimeState.Moving or SlimeState.Windup or SlimeState.Recover)) return false;
+        double stun = seconds * slime.Type.StunFactor;
+        if (stun <= 0) return false;
         slime.StunRemaining = stun;
         slime.Set(SlimeState.Stunned);
-        StrikeStuns++;
         AddEffect(BattleEffectKind.Push, slime.X, slime.Height / 2);
+        return true;
     }
     public int StrikeStuns { get; private set; }
 
@@ -759,7 +831,7 @@ public sealed partial class BattleSim
                 events.Add(new(BattleEventKind.Cheered, catX));
                 break;
             default:
-                ShieldRemaining = Settings.ShieldSeconds;
+                ShieldRemaining = Settings.ShieldSeconds + shieldBonus;
                 events.Add(new(BattleEventKind.Shielded, catX));
                 break;
         }

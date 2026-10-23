@@ -297,8 +297,8 @@ internal static class EnemyGachaTests
         check(Bad("\"enemies\": [ { \"id\": \"slime\", \"elite\": { \"hp\": 1, \"attackCooldown\": 1, \"virusEvery\": 0, \"descVi\": \"a\", \"descEn\": \"a\" } } ]").Contains("changes nothing"), "An elite affix that changes nothing is rejected");
         check(Bad("\"enemies\": [ { \"id\": \"slime\", \"cost\": 11 } ]").Contains("cost"), "An enemy cost above 10 is rejected");
         check(Bad("\"maxElites\": 6").Contains("maxElites") && Bad("\"rareChance\": 1.5").Contains("rareChance"), "maxElites and rareChance out of range are rejected");
-        check(Bad("\"upgrades\": [ { \"id\": \"odd\", \"group\": \"power\", \"rare\": true, \"nameVi\": \"a\", \"nameEn\": \"a\", \"descVi\": \"a\", \"descEn\": \"a\", \"effect\": \"damage\", \"amount\": 0.1, \"maxStacks\": 1 } ]").Contains("one rare card per group"),
-            "A second rare card in a group is rejected");
+        check(Bad("\"upgrades\": [ { \"id\": \"odd\", \"group\": \"power\", \"rare\": true, \"nameVi\": \"a\", \"nameEn\": \"a\", \"descVi\": \"a\", \"descEn\": \"a\", \"effect\": \"damage\", \"amount\": 0.1, \"maxStacks\": 1 } ]").Contains("two rare cards per group"),
+            "A third rare card in a group is rejected (2026-10-24: two allowed)");
         check(Bad("\"upgrades\": [ { \"id\": \"opening_strike\", \"maxStacks\": 2 } ]").Contains("maxStacks 1"), "A rare card that stacks is rejected");
         check(Bad("\"waves\": [ { \"budget\": 101, \"groups\": [ { \"enemy\": \"slime\", \"count\": 1 } ] } ]").Contains("budget"), "A wave budget above 100 is rejected");
         string Stream(string extra) => Bad("\"campaign\": { \"chapters\": [ { \"id\": \"c\", \"nameVi\": \"C\", \"nameEn\": \"C\", \"stages\": [ { \"id\": \"s\", \"nameVi\": \"S\", \"nameEn\": \"S\", \"goalVi\": \"g\", \"goalEn\": \"g\", " +
@@ -317,8 +317,8 @@ internal static class EnemyGachaTests
         check(runner is { WindupAdd: 0.3, DashSpeed: 1.4 } && rock is { SureBlocks: 1 } && mender is { FirstHeal: 2 } && data.Enemy("slime").Elite != null && data.MaxElites == 1,
             "Shipped elites: quick slime +0.3 s windup / ×1.4 dash, rock one sure block, herb slime first heal ×2 (traits kept by the 1.2.0-beta buff, which also gave the slime one); at most one alive");
         var rares = data.UpgradeList.Where(u => u.Rare).ToList();
-        check(rares.Select(u => (u.Id, Group: u.Group ?? "", u.Effect)).OrderBy(r => r.Group).SequenceEqual(new[] { ("turtle_shell", "defense", "shell"), ("opening_strike", "power", "opener"), ("running_start", "speed", "momentum") }.OrderBy(r => r.Item2))
-            && data.RareChance == 0.15, "Shipped rare cards: Turtle shell, Opening strike, Running start (one per group, 15 %)");
+        check(rares.Select(u => (u.Id, Group: u.Group ?? "", u.Effect)).OrderBy(r => r.Group).ThenBy(r => r.Id).SequenceEqual(new[] { ("turtle_shell", "defense", "shell"), ("finishing_blow", "power", "execute"), ("opening_strike", "power", "opener"), ("running_start", "speed", "momentum"), ("tailwind", "speed", "landingRush") }.OrderBy(r => r.Item2).ThenBy(r => r.Item1))
+            && data.RareChance == 0.15, "Shipped rare cards: Turtle shell; Opening strike and Finishing blow; Running start and Tailwind (15 %)");
         var stages = data.Campaign!.Chapters[0].Stages;
         check(stages.Take(2).All(s => s.EliteChance == 0) && stages.Skip(2).All(s => s.EliteChance > 0), "Elites start at stage 3");
         // The code's own defaults match the shipped file (used when the file is broken and by tests).

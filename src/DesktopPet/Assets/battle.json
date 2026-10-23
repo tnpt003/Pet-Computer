@@ -64,6 +64,7 @@
   // never on Easy); rareChance: how often a group's rare card takes its common card's place.
   "maxElites": 1,
   "rareChance": 0.15,
+  "utilityChance": 0.25,
   "outroSeconds": 3,
   "hurtFlashSeconds": 0.35,
   "maxEffects": 32,
@@ -276,7 +277,7 @@
     { "groups": [ { "enemy": "slime", "count": 2 } ] },
     { "groups": [ { "enemy": "slime", "count": 2 }, { "enemy": "runner", "count": 2 } ] },
     { "groups": [ { "enemy": "rock", "count": 1 }, { "enemy": "runner", "count": 2 }, { "enemy": "slime", "count": 2 } ] },
-    { "groups": [ { "enemy": "king", "count": 1 } ] }
+    { "groups": [ { "enemy": "king_c1", "count": 1 } ] }
   ],
 
   // Adventure upgrades: after a cleared wave (when another follows) a stage with "upgrades": true
@@ -288,19 +289,32 @@
   // full HP; it takes the place of the group card the build has least of). maxStacks: how often one
   // build may take it (0 = no limit). group: defense, power or speed (a heal has none).
   "upgrades": [
-    { "id": "sharp", "group": "power", "nameVi": "Sắc bén", "nameEn": "Sharp edge", "descVi": "+20% sát thương", "descEn": "+20% damage", "effect": "damage", "amount": 0.2, "maxStacks": 3 },
-    { "id": "quick_feet", "group": "speed", "nameVi": "Nhanh chân", "nameEn": "Quick feet", "descVi": "+15% tốc độ chạy", "descEn": "+15% running speed", "effect": "moveSpeed", "amount": 0.15, "maxStacks": 2 },
-    { "id": "fast_paws", "group": "speed", "nameVi": "Ra đòn nhanh", "nameEn": "Fast paws", "descVi": "−12% thời gian hồi đòn", "descEn": "−12% time between swings", "effect": "attackSpeed", "amount": 0.12, "maxStacks": 3 },
+    { "id": "sharp", "group": "power", "nameVi": "Sắc bén", "nameEn": "Sharp edge", "descVi": "+20% sát thương", "descEn": "+20% damage", "effect": "damage", "amount": 0.2, "maxStacks": 3, "endlessMaxStacks": 5 },
+    { "id": "quick_feet", "group": "speed", "nameVi": "Nhanh chân", "nameEn": "Quick feet", "descVi": "+15% tốc độ chạy", "descEn": "+15% running speed", "effect": "moveSpeed", "amount": 0.15, "maxStacks": 2, "endlessMaxStacks": 3 },
+    { "id": "fast_paws", "group": "speed", "nameVi": "Ra đòn nhanh", "nameEn": "Fast paws", "descVi": "−12% thời gian hồi đòn", "descEn": "−12% time between swings", "effect": "attackSpeed", "amount": 0.12, "maxStacks": 3, "endlessMaxStacks": 4 },
     { "id": "heavy_push", "group": "power", "nameVi": "Đẩy mạnh", "nameEn": "Heavy push", "descVi": "Mỗi nhát đẩy slime lùi thêm", "descEn": "Every hit knocks slimes further", "effect": "knock", "amount": 40, "maxStacks": 2 },
     { "id": "grilled_fish", "nameVi": "Cá nướng", "nameEn": "Grilled fish", "descVi": "Hồi ngay 30 HP", "descEn": "Get 30 HP back now", "effect": "heal", "amount": 30, "maxStacks": 0 },
-    { "id": "thick_fur", "group": "defense", "nameVi": "Lông dày", "nameEn": "Thick fur", "descVi": "−15% sát thương nhận vào", "descEn": "−15% damage taken", "effect": "armor", "amount": 0.15, "maxStacks": 2 },
-    { "id": "big_heart", "group": "defense", "nameVi": "Tim to", "nameEn": "Big heart", "descVi": "+20 HP tối đa (hồi luôn 20)", "descEn": "+20 max HP (and 20 HP now)", "effect": "maxHp", "amount": 20, "maxStacks": 2 },
+    { "id": "thick_fur", "group": "defense", "nameVi": "Lông dày", "nameEn": "Thick fur", "descVi": "−15% sát thương nhận vào", "descEn": "−15% damage taken", "effect": "armor", "amount": 0.15, "maxStacks": 2, "endlessMaxStacks": 3 },
+    { "id": "big_heart", "group": "defense", "nameVi": "Tim to", "nameEn": "Big heart", "descVi": "+20 HP tối đa (hồi luôn 20)", "descEn": "+20 max HP (and 20 HP now)", "effect": "maxHp", "amount": 20, "maxStacks": 2, "endlessMaxStacks": 4 },
     // Rare cards (one per group, maxStacks 1): with rareChance one takes its group's card's place.
     // shell: stops one whole hit, back after amount s; opener: the first landed hit on each enemy deals
     // amount more; momentum: a swing after a run of 140 DIPs deals amount more.
     { "id": "turtle_shell", "group": "defense", "rare": true, "nameVi": "Mai rùa", "nameEn": "Turtle shell", "descVi": "Chặn trọn 1 đòn, mọc lại sau 12 giây", "descEn": "Stops one whole hit, grows back in 12 s", "effect": "shell", "amount": 12, "maxStacks": 1 },
     { "id": "opening_strike", "group": "power", "rare": true, "nameVi": "Đòn mở màn", "nameEn": "Opening strike", "descVi": "Đòn đầu trúng mỗi quái ×2 sát thương", "descEn": "First hit on each enemy deals ×2", "effect": "opener", "amount": 1, "maxStacks": 1 },
-    { "id": "running_start", "group": "speed", "rare": true, "nameVi": "Chạy đà", "nameEn": "Running start", "descVi": "Chạy một quãng rồi chém: +80% sát thương", "descEn": "Swing after a run: +80% damage", "effect": "momentum", "amount": 0.8, "maxStacks": 1 }
+    { "id": "running_start", "group": "speed", "rare": true, "nameVi": "Chạy đà", "nameEn": "Running start", "descVi": "Chạy một quãng rồi chém: +80% sát thương", "descEn": "Swing after a run: +80% damage", "effect": "momentum", "amount": 0.8, "maxStacks": 1 },
+    // 2026-10-24: more cards (see UpgradeSpec). The ones without a group are utility cards (utilityChance:
+    // one may take a place in an offer); power_bank and energy_drain only in battles with the desktop apps.
+    { "id": "claws", "group": "power", "nameVi": "Móng vuốt", "nameEn": "Claws", "descVi": "10% đòn đánh gây ×2 sát thương", "descEn": "10% of hits deal ×2 damage", "effect": "crit", "amount": 0.1, "maxStacks": 2, "endlessMaxStacks": 3 },
+    { "id": "finishing_blow", "group": "power", "rare": true, "nameVi": "Kết liễu", "nameEn": "Finishing blow", "descVi": "+50% sát thương lên quái dưới 30% máu", "descEn": "+50% damage to enemies below 30% HP", "effect": "execute", "amount": 0.5, "maxStacks": 1 },
+    { "id": "long_rhythm", "group": "speed", "nameVi": "Nhịp dài", "nameEn": "Long rhythm", "descVi": "Thêm 0,3 giây để nối combo", "descEn": "0.3 s longer to keep a combo going", "effect": "comboWindow", "amount": 0.3, "maxStacks": 2 },
+    { "id": "tailwind", "group": "speed", "rare": true, "nameVi": "Lướt gió", "nameEn": "Tailwind", "descVi": "Vừa được thả xuống: 2 giây đánh nhanh +30%", "descEn": "Put down: 2 s of +30% attack speed", "effect": "landingRush", "amount": 0.3, "maxStacks": 1 },
+    { "id": "regrowth", "group": "defense", "nameVi": "Hồi phục", "nameEn": "Regrowth", "descVi": "Hồi 1 HP mỗi 2 giây khi đang đánh", "descEn": "1 HP back every 2 s in a fight", "effect": "regen", "amount": 0.5, "maxStacks": 2 },
+    { "id": "steady", "group": "defense", "nameVi": "Kiên cường", "nameEn": "Steady", "descVi": "−25% thời gian bị choáng", "descEn": "−25% time stunned", "effect": "stunCut", "amount": 0.25, "maxStacks": 2 },
+    { "id": "quick_hands", "nameVi": "Tay nhanh", "nameEn": "Quick hands", "descVi": "−10% thời gian hồi kỹ năng", "descEn": "−10% skill cooldowns", "effect": "skillCooldown", "amount": 0.1, "maxStacks": 3 },
+    { "id": "power_bank", "nameVi": "Sạc pin", "nameEn": "Power bank", "descVi": "App trên màn hình sạc nhanh hơn 8%", "descEn": "Desktop apps charge 8% faster", "effect": "appCharge", "amount": 0.08, "maxStacks": 3 },
+    { "id": "energy_drain", "nameVi": "Hút năng lượng", "nameEn": "Energy drain", "descVi": "Mỗi quái bị hạ: app sạc thêm 1%", "descEn": "Each defeated enemy: apps charge 1% more", "effect": "killCharge", "amount": 0.01, "maxStacks": 3 },
+    { "id": "big_bomb", "nameVi": "Bom to", "nameEn": "Big bomb", "descVi": "Bom len to hơn và mạnh hơn 20%", "descEn": "Yarn bomb 20% bigger and stronger", "effect": "bomb", "amount": 0.2, "maxStacks": 2 },
+    { "id": "thick_bubble", "nameVi": "Khiên dày", "nameEn": "Thick bubble", "descVi": "Khiên bong bóng kéo dài thêm 1 giây", "descEn": "Bubble shield lasts 1 s longer", "effect": "shieldTime", "amount": 1, "maxStacks": 2 }
   ],
 
   // Synergies: a build holding "at" cards of a group switches the effect on for good.
@@ -314,7 +328,20 @@
     { "id": "armor_break", "group": "power", "at": 3, "effect": "armorBreak", "amount": 0.3, "nameVi": "Phá giáp", "nameEn": "Armor break",
       "descVi": "Đòn combo +30% sát thương, xuyên giáp đá", "descEn": "Combo hits deal 30% more and pierce stone" },
     { "id": "afterimage", "group": "speed", "at": 3, "effect": "echo", "amount": 0.5, "every": 4, "nameVi": "Dư ảnh", "nameEn": "Afterimage",
-      "descVi": "Cứ 4 đòn trúng, thêm một đòn 50%", "descEn": "Every 4th hit strikes again for 50%" }
+      "descVi": "Cứ 4 đòn trúng, thêm một đòn 50%", "descEn": "Every 4th hit strikes again for 50%" },
+    // Infinity only (endlessOnly, 2026-10-24): the 6- and 9-point tiers of each group.
+    { "id": "last_stand", "group": "defense", "at": 6, "effect": "lastStand", "amount": 1, "endlessOnly": true, "nameVi": "Bất khuất", "nameEn": "Last stand",
+      "descVi": "Mỗi đợt một lần, đòn chí mạng chỉ để mèo còn 1 HP", "descEn": "Once a wave, a fatal hit leaves the cat at 1 HP" },
+    { "id": "fortress", "group": "defense", "at": 9, "effect": "autoShield", "amount": 30, "endlessOnly": true, "nameVi": "Pháo đài", "nameEn": "Fortress",
+      "descVi": "HP dưới 30%: tự bật Khiên, mỗi 30 giây một lần", "descEn": "Below 30% HP the Shield goes up by itself, once per 30 s" },
+    { "id": "shockwave", "group": "power", "at": 6, "effect": "comboStun", "amount": 0.6, "endlessOnly": true, "nameVi": "Chấn động", "nameEn": "Shockwave",
+      "descVi": "Đòn combo làm choáng quái 0,6 giây", "descEn": "Combo hits stun for 0.6 s" },
+    { "id": "finisher", "group": "power", "at": 9, "effect": "finisher", "amount": 0.1, "endlessOnly": true, "nameVi": "Hành quyết", "nameEn": "Finisher",
+      "descVi": "Đòn trúng hạ ngay quái thường dưới 10% máu", "descEn": "A hit finishes off a non-boss below 10% HP" },
+    { "id": "gale", "group": "speed", "at": 6, "effect": "rush", "amount": 0.2, "endlessOnly": true, "nameVi": "Gió lốc", "nameEn": "Gale",
+      "descVi": "Sau đòn combo: 3 giây chạy và đánh nhanh +20%", "descEn": "After a combo: 3 s of +20% speed and attacks" },
+    { "id": "afterimage_plus", "group": "speed", "at": 9, "effect": "echo", "amount": 0.75, "every": 3, "endlessOnly": true, "nameVi": "Dư ảnh+", "nameEn": "Afterimage+",
+      "descVi": "Cứ 3 đòn trúng, thêm một đòn 75%", "descEn": "Every 3rd hit strikes again for 75%" }
   ],
 
   // Adventure: chapters of stages played in order (winning a stage opens the next one). Stage ids
@@ -338,7 +365,7 @@
           {
             "id": "c1_first_steps", "nameVi": "Làm quen", "nameEn": "First steps",
             "goalVi": "Dọn 2 đợt slime dễ: click slime để chọn mục tiêu.", "goalEn": "Clear 2 waves of easy slimes: click a slime to pick the target.",
-            "objective": "clear", "maxAlive": 2, "rulesVersion": 6,
+            "objective": "clear", "maxAlive": 2, "rulesVersion": 7,
             "waves": [
               { "groups": [ { "enemy": "slime", "count": 2 } ] },
               { "groups": [ { "pick": { "slime": 3, "runner": 1 }, "count": 3, "atLeast": { "runner": 1 } } ] }
@@ -350,7 +377,7 @@
             "goalEn": "Mixed slimes: use skills, lift the cat when a slime winds up, pick upgrades between waves.",
             "tipVi": "Dọn xong một đợt, bạn chọn 1 trong 3 thẻ nâng cấp. Thắng màn thì build được mang sang màn sau. Slime đá chặn được đòn: đánh tiếp hoặc dùng Bom len.",
             "tipEn": "After each cleared wave, pick 1 of 3 upgrade cards. Win the stage and the build comes along to the next one. Rock slimes block some hits: keep at it or use the Yarn bomb.",
-            "objective": "clear", "upgrades": true, "threat": 1.6, "rulesVersion": 13,
+            "objective": "clear", "upgrades": true, "threat": 1.6, "rulesVersion": 14,
             "waves": [
               { "groups": [ { "enemy": "rock", "count": 1 }, { "pick": { "slime": 1, "runner": 1 }, "count": 2 } ] },
               { "groups": [ { "enemy": "rock", "count": 1 }, { "pick": { "slime": 1, "runner": 1 }, "count": 2 }, { "enemy": "rock", "count": 1 } ] },
@@ -364,7 +391,7 @@
             "tipVi": "Quái kéo tới liên tục và mạnh dần tới khi hết giờ. Ở giây 20, 40, 60 bạn chọn thẻ. Bế mèo thì đồng hồ dừng, nên hãy giữ HP bằng Khiên và Cá hồi máu.",
             "tipEn": "Slimes keep coming, stronger and stronger, until time is up. At 20, 40 and 60 s you pick a card. Carrying the cat stops the clock, so keep HP up with the Shield and the fish.",
             "objective": "survive", "surviveSeconds": 75, "maxAlive": 4, "upgrades": true, "maxUpgrades": 3, "upgradeAt": [ 20, 40, 60 ],
-            "threatGrowth": 0.3, "threat": 1.7, "eliteChance": 0.3, "rulesVersion": 15, "reward": "SlimeHat",
+            "threatGrowth": 0.3, "threat": 1.7, "eliteChance": 0.3, "rulesVersion": 16, "reward": "SlimeHat",
             "waves": [
               { "stream": { "weights": { "runner": 2, "slime": 1, "rock": 1 }, "interval": 2.6, "intervalEnd": 1.4, "pincerAfter": 45, "budget": 7 } }
             ]
@@ -375,7 +402,7 @@
             "goalEn": "Herb slimes heal their friends: take them down first, or Push one to cut its heal.",
             "tipVi": "Slime thảo dược (mũ lá) đứng sau slime đá và hồi máu cho đồng đội. Lá sáng lên là nó đang gồng: Đẩy để cắt. Đá chặn đường: hạ đá, hoặc bế mèo thả ra sau.",
             "tipEn": "Herb slimes (leaf caps) hide behind rock slimes and heal them. A glowing leaf means a heal is coming: Push to cut it. Rocks block the way: break them, or carry the cat behind.",
-            "objective": "clear", "upgrades": true, "maxAlive": 5, "threat": 1.8, "eliteChance": 0.3, "rulesVersion": 16,
+            "objective": "clear", "upgrades": true, "maxAlive": 5, "threat": 1.8, "eliteChance": 0.3, "rulesVersion": 17,
             "waves": [
               { "groups": [ { "pick": { "slime": 1, "runner": 1 }, "count": 3 } ] },
               { "budget": 9, "groups": [ { "squad": [ { "enemy": "mender", "count": 1 }, { "enemy": "rock", "count": 3 } ] } ] },
@@ -388,7 +415,7 @@
             "goalEn": "The chapter's last battle: the Slime King backs off behind a shield and calls help, herb slimes too.",
             "tipVi": "Ở 75%, 50% và 25% máu, Vua lui về mép xa, bật khiên và gọi quân: hạ hết quân để phá khiên. Vương miện sáng là Vua sắp phong quân thành tinh anh: Đẩy để cắt. Vùng đỏ dưới sàn: kéo mèo ra hoặc bật Khiên.",
             "tipEn": "At 75%, 50% and 25% HP the King backs off behind a shield and calls help: defeat them all to break it. A glowing crown makes a helper elite: Push the King to cut it. Red zone on the floor: lift the cat out or Shield.",
-            "objective": "clear", "upgrades": true, "threat": 1.75, "eliteChance": 0.3, "rulesVersion": 16, "reward": "SlimeKingCrown",
+            "objective": "clear", "upgrades": true, "threat": 1.75, "eliteChance": 0.3, "rulesVersion": 17, "reward": "SlimeKingCrown",
             "waves": [
               { "budget": 6, "groups": [ { "enemy": "rock", "count": 1, "side": "a" }, { "enemy": "slime", "count": 1, "side": "a" }, { "enemy": "runner", "count": 2, "side": "b" } ] },
               { "budget": 6, "groups": [ { "squad": [ { "enemy": "mender", "count": 1 }, { "enemy": "rock", "count": 1 }, { "enemy": "slime", "count": 1 } ] } ] },
@@ -418,11 +445,16 @@
   // Infinity ("endless", 2026-10-22): one battle that is never won. Wave n has "firstCount" +
   // "countPerWave" × (n − 1) enemies (at most "maxCount"), drawn from "kinds" (each from its
   // "from" wave on, by "weight"), and threat 1 + "threatPerWave" × (n − 1). Every "bossEvery"-th wave
-  // is the "boss" alone; after every "upgradeEvery"-th cleared wave the user picks a card. It ends
+  // is the "boss" alone (from "lateBossFrom" with "lateBoss" beside it); after every "upgradeEvery"-th
+  // cleared wave the user picks a card (a boss wave gives a second one with "bossBonusPick"). From wave
+  // "allSynergiesAt" every synergy is on. The elite chance grows by "eliteChancePerWave" a wave (at most
+  // "eliteChanceMax") and every "moreElitesEvery" waves one more elite may be alive (at most "moreElitesMax"). It ends
   // when the cat falls or the user presses End; the record is the furthest wave per weapon and
   // difficulty. "unlockAfter": the Adventure stage to win first. "rulesVersion" keeps old records apart.
   "endless": {
-    "id": "endless", "rulesVersion": 3, "unlockAfter": "c1_slime_king", "upgradeEvery": 3, "bossEvery": 10, "boss": "king",
+    "id": "endless", "rulesVersion": 4, "unlockAfter": "c1_slime_king", "upgradeEvery": 2, "bossEvery": 10, "boss": "king_c1",
+    "lateBoss": "king", "lateBossFrom": 30, "bossBonusPick": true, "allSynergiesAt": 48,
+    "eliteChancePerWave": 0.007, "eliteChanceMax": 0.45, "moreElitesEvery": 20, "moreElitesMax": 2,
     "firstCount": 3, "countPerWave": 0.35, "maxCount": 14, "threatPerWave": 0.06, "maxAlive": 5, "eliteChance": 0.12,
     "kinds": [
       { "enemy": "slime", "weight": 50 },

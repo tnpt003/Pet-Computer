@@ -480,7 +480,7 @@ public sealed partial class PetWindow
         {
             int points = build.Where(card => cards.FirstOrDefault(u => u.Id == card.Key)?.Group == group).Sum(card => card.Value);
             if (points > 0) parts.Add($"{BuildGroups.Name(group, preferences.Language)} {points}");
-            foreach (var y in BattleTuning.SynergyList) if (y.Group == group && points >= y.At) parts.Add("★ " + y.Name(preferences.Language));
+            foreach (var y in BattleTuning.SynergyList) if (y.Group == group && !y.EndlessOnly && points >= y.At) parts.Add("★ " + y.Name(preferences.Language));
         }
         foreach (var u in cards) if (u.Rare && build.TryGetValue(u.Id, out int n) && n > 0) parts.Add("◆ " + u.Name(preferences.Language));
         return parts;

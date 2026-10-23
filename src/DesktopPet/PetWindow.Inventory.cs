@@ -501,7 +501,7 @@ public sealed partial class PetWindow
         var progress = new StackPanel();
         foreach (var group in BuildGroups.All)
         {
-            var synergies = settings.SynergyList.Where(y => y.Group == group).OrderBy(y => y.At).ToList();
+            var synergies = settings.SynergyList.Where(y => y.Group == group && sim.CanUnlock(y)).OrderBy(y => y.At).ToList();
             int points = sim.GroupPoints(group);
             if (synergies.Count == 0 && points == 0) continue;
             int pips = Math.Max(points, synergies.Count == 0 ? 0 : synergies.Max(y => y.At));

@@ -278,7 +278,9 @@ public sealed class BattleHud : Border
             foreach (var group in BuildGroups.All)
             {
                 int points = b.GroupPoints(group), goal = 0;
-                foreach (var y in b.Settings.SynergyList) if (y.Group == group && (goal == 0 || y.At < goal)) goal = y.At;
+                // The next tier still to come (Infinity has three), or the last one once all are on.
+                foreach (var y in b.Settings.SynergyList) if (y.Group == group && b.CanUnlock(y) && !System.Linq.Enumerable.Contains(b.Synergies, y) && (goal == 0 || y.At < goal)) goal = y.At;
+                if (goal == 0) foreach (var y in b.Settings.SynergyList) if (y.Group == group && b.CanUnlock(y)) goal = Math.Max(goal, y.At);
                 if (points > 0) parts.Add(goal > 0 ? $"{BuildGroups.Name(group, language())} {Math.Min(points, goal)}/{goal}" : $"{BuildGroups.Name(group, language())} {points}");
             }
             foreach (var y in b.Synergies) parts.Add("★ " + y.Name(language()));

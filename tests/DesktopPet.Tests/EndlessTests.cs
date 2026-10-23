@@ -9,16 +9,19 @@ internal static class EndlessTests
     {
         const double dt = 1.0 / 60;
         var spec = BattleData.Settings.Endless;
-        check(spec is { UpgradeEvery: 3, BossEvery: 10, Boss: "king", UnlockAfter: "c1_slime_king", RulesVersion: 3 } && spec.Kinds.Length == 4,
-            "Built-in Infinity: a card every 3 waves, the Slime King every 10, open after the Slime King, 4 kinds");
+        check(spec is { UpgradeEvery: 2, BossEvery: 10, Boss: "king_c1", LateBoss: "king", LateBossFrom: 30, BossBonusPick: true, AllSynergiesAt: 48, UnlockAfter: "c1_slime_king", RulesVersion: 4 } && spec.Kinds.Length == 4,
+            "Built-in Infinity: a card every 2 waves (two after a boss), the chapter King every 10 (the plain King beside it from 30), every synergy from 48, 4 kinds"); 
         var first = spec!.Wave(1);
         check(first.Groups.Single() is { Count: 3, Pick: { Count: 1 } pick } && pick.ContainsKey("slime") && first.Threat == 1, "Wave 1: 3 plain slimes at threat 1");
         check(spec.Wave(3).Groups[0].Pick!.ContainsKey("runner") && !spec.Wave(4).Groups[0].Pick!.ContainsKey("mender") && spec.Wave(7).Groups[0].Pick!.Count == 4,
             "Kinds join the draw from their wave (quick slimes 3, herb slimes 5, rock slimes 7)");
-        check(spec.Wave(10).Groups.Single() is { Enemy: "king", Count: 1, Pick: null } && spec.IsBossWave(20) && !spec.IsBossWave(11), "Every 10th wave is the Slime King alone");
+        check(spec.Wave(10).Groups.Single() is { Enemy: "king_c1", Count: 1, Pick: null } && spec.Wave(20).Groups.Length == 1 && spec.IsBossWave(20) && !spec.IsBossWave(11)
+              && spec.Wave(30).Groups.Select(g => g.Enemy).SequenceEqual(new[] { "king_c1", "king" }),
+            "Every 10th wave is the chapter King alone; from wave 30 the plain King comes with it");
         check(spec.Count(2) == 3 && spec.Count(5) == 4 && spec.Count(100) == 14 && spec.Threat(11) > spec.Threat(2), "Waves grow (capped at 14 enemies) and get stronger");
         var stage = spec.Stage();
-        check(stage is { Endless: true, Survival: false, Upgrades: true, UpgradeEvery: 3 } && stage.Waves.Length == EndlessSpec.PlannedWaves, "Its stage: endless, cards every 3 waves");
+        check(stage is { Endless: true, Survival: false, Upgrades: true, UpgradeEvery: 2, BossBonusPick: true, AllSynergiesAt: 48, MoreElitesEvery: 20 } && stage.Waves.Length == EndlessSpec.PlannedWaves,
+            "Its stage: endless, cards every 2 waves, Infinity's elite and synergy rules"); 
 
         // A quick battle: one-hit slimes and boss, cards every 2 waves, the boss every 4.
         var quick = new BattleSettings { FirstWaveDelay = 0, SpawnInterval = 0, SlimeMaxHp = 1, BossMaxHp = 1, SlimeDamage = 0, WaveBreakSeconds = 0.3, OutroSeconds = 0.3 };

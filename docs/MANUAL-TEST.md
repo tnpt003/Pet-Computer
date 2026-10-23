@@ -509,3 +509,11 @@ Tự động đã có: Phần thưởng trên sảnh (ô có hình, khóa, Mới
 - [ ] Tab nhiễm: 3 quảng cáo bay xuống, nút × có ổ khóa, bấm × không tắt (banner nhắc gỡ Tab trước), quảng cáo không tự thả slime khi đang khóa; gỡ Tab (5 lần bấm) xong thì × tắt được.
 - [ ] Chuông nhiễm: mèo mất máu và choáng 1 s. Ctrl+Z nhiễm: slime được hồi có vòng xanh "MIỄN" ~2 s, đánh không mất máu. Thùng Rác nhiễm: nhả một slime tinh anh (viền vàng, banner), mỗi lúc chỉ một con. Có thể tới 3 icon nhiễm cùng lúc; mỗi icon cần 5 lần bấm.
 - [ ] Slime thường tinh anh (cả khi được Vua phong) bắn virus vào icon vài giây sau khi xuất hiện, tối đa 2 lần mỗi đợt.
+
+### Cân bằng trận 2026-10-24 (mốc 4: Vô tận, thẻ, cộng hưởng)
+- [ ] Trận tự do: đợt cuối là Vua chương 1 (bật khiên, gọi quân, phong tinh anh), không phải Vua thường.
+- [ ] Vô tận: thẻ sau mỗi 2 đợt; đợt 10 là Vua chương 1; dọn xong đợt trùm thì chọn liền 2 thẻ (bảng thẻ mở lại ngay sau khi xác nhận thẻ đầu). Từ đợt 30 đợt trùm có cả Vua thường đi cùng (thanh máu trùm trên HUD hiện từng con một).
+- [ ] Thẻ mới xuất hiện và có hình riêng: Móng vuốt, Kết liễu (hiếm), Nhịp dài, Lướt gió (hiếm), Hồi phục, Kiên cường; thẻ tiện ích Tay nhanh, Sạc pin, Hút năng lượng, Bom to, Khiên dày (Sạc pin/Hút năng lượng không bao giờ hiện khi tắt app). Dòng "Đã có n/m" trong Vô tận ghi giới hạn cao hơn (Sắc bén /5).
+- [ ] Vô tận, gom 6 thẻ cùng nhóm: banner ★ tầng mới (Bất khuất / Chấn động / Gió lốc), 9 thẻ: Pháo đài / Hành quyết / Dư ảnh+. Phiêu lưu và Viễn chinh: túi đồ và HUD không nhắc tới tầng 6/9.
+- [ ] Vô tận đợt cao: tinh anh nhiều dần (từ đợt 20 có thể 2 con cùng lúc). Tới đợt 48: mọi cộng hưởng tự bật (banner).
+- [ ] Kỷ lục Phiêu lưu và Vô tận bắt đầu lại (phiên bản luật mới); Viễn chinh đang đi vẫn tiếp tục.

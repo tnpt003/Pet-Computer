@@ -18,14 +18,15 @@ public sealed partial class BattleSim
             bomb.Remaining -= dt;
             if (bomb.Remaining > 0) continue;
             bombs.RemoveAt(i);
-            AddEffect(BattleEffectKind.Explosion, bomb.X, 0, Settings.BombRadius);
+            double radius = Settings.BombRadius * (1 + bombBonus);
+            AddEffect(BattleEffectKind.Explosion, bomb.X, 0, radius);
             events.Add(new(BattleEventKind.BombExploded, bomb.X));
             // One blast: a healer and the ally it guards caught together keep the guard for it,
             // whichever comes first in the list.
             blasting = true;
             foreach (var slime in slimes.ToArray())
-                if (slime.Targetable && Math.Abs(slime.X - bomb.X) <= Settings.BombRadius + slime.HitWidth / 2)
-                    Damage(slime, Settings.BombDamage, DamageSource.Bomb);
+                if (slime.Targetable && Math.Abs(slime.X - bomb.X) <= radius + slime.HitWidth / 2)
+                    Damage(slime, Settings.BombDamage * (1 + bombBonus), DamageSource.Bomb);
             blasting = false;
             RefreshGuards();
         }
@@ -47,7 +48,18 @@ public sealed partial class BattleSim
             Phase = BattlePhase.Fighting;
             spawnTimer = 0;
             AppsWaveStarted();
+            lastStandSpent = false;
             events.Add(new(BattleEventKind.WaveStarted, catX, Wave));
+            // Infinity's safety net: from AllSynergiesAt every synergy is on, whatever the build.
+            if (Endless && Stage?.AllSynergiesAt is int all && Wave >= all)
+                for (int i = 0; i < Settings.SynergyList.Count; i++)
+                {
+                    var y = Settings.SynergyList[i];
+                    if (synergies.Contains(y)) continue;
+                    synergies.Add(y);
+                    armorCut += y.Armor;
+                    events.Add(new(BattleEventKind.SynergyUnlocked, catX, i));
+                }
         }
         spawnTimer = Math.Max(0, spawnTimer - dt);
         // An announced spawn comes once its arrow has run out and the floor has room; nothing else
@@ -103,6 +115,8 @@ public sealed partial class BattleSim
         if (LastHeal > 0) AddEffect(BattleEffectKind.Number, catX, 115, -Math.Round(LastHeal));
         events.Add(new(BattleEventKind.WaveCleared, catX));
         if (Stage is { Upgrades: true, UpgradeAt: null } && (Stage.UpgradeEvery is not int every || every <= 1 || Wave % every == 0)) OfferUpgrades();
+        // A cleared boss wave in Infinity: a second card after the first.
+        if (ChoosingUpgrade && Stage is { BossBonusPick: true } && IsBossWave(Wave)) bonusPicks = 1;
     }
 
     // The edge further from the cat: -1 left, +1 right.
@@ -182,10 +196,14 @@ public sealed partial class BattleSim
     {
         if (Stage is not { EliteChance: > 0 } stage || Difficulty == BattleDifficulty.Easy || slime.Type.Elite is not EliteSpec elite) return;
         int elites = 0;
-        foreach (var s in slimes) if (s.Elite != null && !s.Rallied && s.State != SlimeState.Defeated) elites++;
-        if (elites >= Settings.MaxElites) return;
+        foreach (var s in slimes) if (s.Elite != null && !s.Rallied && !s.Spat && s.State != SlimeState.Defeated) elites++;
+        // Infinity: more elites as the waves go on (EliteChancePerWave, MoreElitesEvery).
+        int most = Settings.MaxElites + (stage.MoreElitesEvery > 0 ? Math.Min(stage.MoreElitesMax, Wave / stage.MoreElitesEvery) : 0);
+        if (elites >= most) return;
+        double chance = stage.EliteChance + stage.EliteChancePerWave * Math.Max(0, Wave - 1);
+        if (stage.EliteChanceMax > 0) chance = Math.Min(chance, stage.EliteChanceMax);
         if (stream is { Budget: > 0 } flow ? AliveCost() + elite.Cost > flow.Budget : elite.Cost > eliteBudget) return;
-        if (affixRandom.NextDouble() >= stage.EliteChance) return;
+        if (affixRandom.NextDouble() >= chance) return;
         if (stream == null) eliteBudget -= elite.Cost;
         ApplyElite(slime, elite);
         ElitesSpawned++;

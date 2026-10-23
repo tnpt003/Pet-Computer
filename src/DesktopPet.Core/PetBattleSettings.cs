@@ -90,6 +90,8 @@ public sealed class BattleSettings
     // group's place in an upgrade offer.
     public int MaxElites { get; init; } = 1;
     public double RareChance { get; init; } = 0.15;
+    // The chance a utility card (no group) takes one place of an upgrade offer (2026-10-24).
+    public double UtilityChance { get; init; } = 0.25;
     public double OutroSeconds { get; init; } = 3;
     public double HurtFlashSeconds { get; init; } = 0.35;
     public int MaxEffects { get; init; } = 32;
@@ -210,16 +212,27 @@ public sealed class BattleSettings
     private IReadOnlyList<UpgradeSpec>? upgradeList;
     [JsonIgnore] public IReadOnlyList<UpgradeSpec> UpgradeList => upgradeList ??= Upgrades ?? new[]
     {
-        new UpgradeSpec { Id = "sharp", Group = "power", NameVi = "Sắc bén", NameEn = "Sharp edge", DescVi = "+20% sát thương", DescEn = "+20% damage", Effect = "damage", Amount = 0.2, MaxStacks = 3 },
-        new UpgradeSpec { Id = "quick_feet", Group = "speed", NameVi = "Nhanh chân", NameEn = "Quick feet", DescVi = "+15% tốc độ chạy", DescEn = "+15% running speed", Effect = "moveSpeed", Amount = 0.15, MaxStacks = 2 },
-        new UpgradeSpec { Id = "fast_paws", Group = "speed", NameVi = "Ra đòn nhanh", NameEn = "Fast paws", DescVi = "−12% thời gian hồi đòn", DescEn = "−12% time between swings", Effect = "attackSpeed", Amount = 0.12, MaxStacks = 3 },
+        new UpgradeSpec { Id = "sharp", Group = "power", NameVi = "Sắc bén", NameEn = "Sharp edge", DescVi = "+20% sát thương", DescEn = "+20% damage", Effect = "damage", Amount = 0.2, MaxStacks = 3, EndlessMaxStacks = 5 },
+        new UpgradeSpec { Id = "quick_feet", Group = "speed", NameVi = "Nhanh chân", NameEn = "Quick feet", DescVi = "+15% tốc độ chạy", DescEn = "+15% running speed", Effect = "moveSpeed", Amount = 0.15, MaxStacks = 2, EndlessMaxStacks = 3 },
+        new UpgradeSpec { Id = "fast_paws", Group = "speed", NameVi = "Ra đòn nhanh", NameEn = "Fast paws", DescVi = "−12% thời gian hồi đòn", DescEn = "−12% time between swings", Effect = "attackSpeed", Amount = 0.12, MaxStacks = 3, EndlessMaxStacks = 4 },
         new UpgradeSpec { Id = "heavy_push", Group = "power", NameVi = "Đẩy mạnh", NameEn = "Heavy push", DescVi = "Mỗi nhát đẩy slime lùi thêm", DescEn = "Every hit knocks slimes further", Effect = "knock", Amount = 40, MaxStacks = 2 },
         new UpgradeSpec { Id = "grilled_fish", NameVi = "Cá nướng", NameEn = "Grilled fish", DescVi = "Hồi ngay 30 HP", DescEn = "Get 30 HP back now", Effect = "heal", Amount = 30 },
-        new UpgradeSpec { Id = "thick_fur", Group = "defense", NameVi = "Lông dày", NameEn = "Thick fur", DescVi = "−15% sát thương nhận vào", DescEn = "−15% damage taken", Effect = "armor", Amount = 0.15, MaxStacks = 2 },
-        new UpgradeSpec { Id = "big_heart", Group = "defense", NameVi = "Tim to", NameEn = "Big heart", DescVi = "+20 HP tối đa (hồi luôn 20)", DescEn = "+20 max HP (and 20 HP now)", Effect = "maxHp", Amount = 20, MaxStacks = 2 },
+        new UpgradeSpec { Id = "thick_fur", Group = "defense", NameVi = "Lông dày", NameEn = "Thick fur", DescVi = "−15% sát thương nhận vào", DescEn = "−15% damage taken", Effect = "armor", Amount = 0.15, MaxStacks = 2, EndlessMaxStacks = 3 },
+        new UpgradeSpec { Id = "big_heart", Group = "defense", NameVi = "Tim to", NameEn = "Big heart", DescVi = "+20 HP tối đa (hồi luôn 20)", DescEn = "+20 max HP (and 20 HP now)", Effect = "maxHp", Amount = 20, MaxStacks = 2, EndlessMaxStacks = 4 },
         new UpgradeSpec { Id = "turtle_shell", Group = "defense", Rare = true, NameVi = "Mai rùa", NameEn = "Turtle shell", DescVi = "Chặn trọn 1 đòn, mọc lại sau 12 giây", DescEn = "Stops one whole hit, grows back in 12 s", Effect = "shell", Amount = 12, MaxStacks = 1 },
         new UpgradeSpec { Id = "opening_strike", Group = "power", Rare = true, NameVi = "Đòn mở màn", NameEn = "Opening strike", DescVi = "Đòn đầu trúng mỗi quái ×2 sát thương", DescEn = "First hit on each enemy deals ×2", Effect = "opener", Amount = 1, MaxStacks = 1 },
         new UpgradeSpec { Id = "running_start", Group = "speed", Rare = true, NameVi = "Chạy đà", NameEn = "Running start", DescVi = "Chạy một quãng rồi chém: +80% sát thương", DescEn = "Swing after a run: +80% damage", Effect = "momentum", Amount = 0.8, MaxStacks = 1 },
+        new UpgradeSpec { Id = "claws", Group = "power", NameVi = "Móng vuốt", NameEn = "Claws", DescVi = "10% đòn đánh gây ×2 sát thương", DescEn = "10% of hits deal ×2 damage", Effect = "crit", Amount = 0.1, MaxStacks = 2, EndlessMaxStacks = 3 },
+        new UpgradeSpec { Id = "finishing_blow", Group = "power", Rare = true, NameVi = "Kết liễu", NameEn = "Finishing blow", DescVi = "+50% sát thương lên quái dưới 30% máu", DescEn = "+50% damage to enemies below 30% HP", Effect = "execute", Amount = 0.5, MaxStacks = 1 },
+        new UpgradeSpec { Id = "long_rhythm", Group = "speed", NameVi = "Nhịp dài", NameEn = "Long rhythm", DescVi = "Thêm 0,3 giây để nối combo", DescEn = "0.3 s longer to keep a combo going", Effect = "comboWindow", Amount = 0.3, MaxStacks = 2 },
+        new UpgradeSpec { Id = "tailwind", Group = "speed", Rare = true, NameVi = "Lướt gió", NameEn = "Tailwind", DescVi = "Vừa được thả xuống: 2 giây đánh nhanh +30%", DescEn = "Put down: 2 s of +30% attack speed", Effect = "landingRush", Amount = 0.3, MaxStacks = 1 },
+        new UpgradeSpec { Id = "regrowth", Group = "defense", NameVi = "Hồi phục", NameEn = "Regrowth", DescVi = "Hồi 1 HP mỗi 2 giây khi đang đánh", DescEn = "1 HP back every 2 s in a fight", Effect = "regen", Amount = 0.5, MaxStacks = 2 },
+        new UpgradeSpec { Id = "steady", Group = "defense", NameVi = "Kiên cường", NameEn = "Steady", DescVi = "−25% thời gian bị choáng", DescEn = "−25% time stunned", Effect = "stunCut", Amount = 0.25, MaxStacks = 2 },
+        new UpgradeSpec { Id = "quick_hands", NameVi = "Tay nhanh", NameEn = "Quick hands", DescVi = "−10% thời gian hồi kỹ năng", DescEn = "−10% skill cooldowns", Effect = "skillCooldown", Amount = 0.1, MaxStacks = 3 },
+        new UpgradeSpec { Id = "power_bank", NameVi = "Sạc pin", NameEn = "Power bank", DescVi = "App trên màn hình sạc nhanh hơn 8%", DescEn = "Desktop apps charge 8% faster", Effect = "appCharge", Amount = 0.08, MaxStacks = 3 },
+        new UpgradeSpec { Id = "energy_drain", NameVi = "Hút năng lượng", NameEn = "Energy drain", DescVi = "Mỗi quái bị hạ: app sạc thêm 1%", DescEn = "Each defeated enemy: apps charge 1% more", Effect = "killCharge", Amount = 0.01, MaxStacks = 3 },
+        new UpgradeSpec { Id = "big_bomb", NameVi = "Bom to", NameEn = "Big bomb", DescVi = "Bom len to hơn và mạnh hơn 20%", DescEn = "Yarn bomb 20% bigger and stronger", Effect = "bomb", Amount = 0.2, MaxStacks = 2 },
+        new UpgradeSpec { Id = "thick_bubble", NameVi = "Khiên dày", NameEn = "Thick bubble", DescVi = "Khiên bong bóng kéo dài thêm 1 giây", DescEn = "Bubble shield lasts 1 s longer", Effect = "shieldTime", Amount = 1, MaxStacks = 2 },
     };
 
     // From battle.json "synergies": what 3 points of a group switch on (null: the built-in three).
@@ -233,6 +246,18 @@ public sealed class BattleSettings
             DescVi = "Đòn combo +30% sát thương, xuyên giáp đá", DescEn = "Combo hits deal 30% more and pierce stone" },
         new SynergySpec { Id = "afterimage", Group = "speed", At = 3, Effect = "echo", Amount = 0.5, Every = 4, NameVi = "Dư ảnh", NameEn = "Afterimage",
             DescVi = "Cứ 4 đòn trúng, thêm một đòn 50%", DescEn = "Every 4th hit strikes again for 50%" },
+        new SynergySpec { Id = "last_stand", Group = "defense", At = 6, Effect = "lastStand", Amount = 1, EndlessOnly = true, NameVi = "Bất khuất", NameEn = "Last stand",
+            DescVi = "Mỗi đợt một lần, đòn chí mạng chỉ để mèo còn 1 HP", DescEn = "Once a wave, a fatal hit leaves the cat at 1 HP" },
+        new SynergySpec { Id = "fortress", Group = "defense", At = 9, Effect = "autoShield", Amount = 30, EndlessOnly = true, NameVi = "Pháo đài", NameEn = "Fortress",
+            DescVi = "HP dưới 30%: tự bật Khiên, mỗi 30 giây một lần", DescEn = "Below 30% HP the Shield goes up by itself, once per 30 s" },
+        new SynergySpec { Id = "shockwave", Group = "power", At = 6, Effect = "comboStun", Amount = 0.6, EndlessOnly = true, NameVi = "Chấn động", NameEn = "Shockwave",
+            DescVi = "Đòn combo làm choáng quái 0,6 giây", DescEn = "Combo hits stun for 0.6 s" },
+        new SynergySpec { Id = "finisher", Group = "power", At = 9, Effect = "finisher", Amount = 0.1, EndlessOnly = true, NameVi = "Hành quyết", NameEn = "Finisher",
+            DescVi = "Đòn trúng hạ ngay quái thường dưới 10% máu", DescEn = "A hit finishes off a non-boss below 10% HP" },
+        new SynergySpec { Id = "gale", Group = "speed", At = 6, Effect = "rush", Amount = 0.2, EndlessOnly = true, NameVi = "Gió lốc", NameEn = "Gale",
+            DescVi = "Sau đòn combo: 3 giây chạy và đánh nhanh +20%", DescEn = "After a combo: 3 s of +20% speed and attacks" },
+        new SynergySpec { Id = "afterimage_plus", Group = "speed", At = 9, Effect = "echo", Amount = 0.75, Every = 3, EndlessOnly = true, NameVi = "Dư ảnh+", NameEn = "Afterimage+",
+            DescVi = "Cứ 3 đòn trúng, thêm một đòn 75%", DescEn = "Every 3rd hit strikes again for 75%" },
     };
 
     // From battle.json "campaign": the Adventure chapters (null: no Adventure in this data).

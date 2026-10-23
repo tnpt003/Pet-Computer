@@ -291,6 +291,16 @@ public sealed class StageSpec
     public int? MaxUpgrades { get; init; }
     // Cards only after every n-th cleared wave (unset: after each; Infinity sets it).
     [JsonIgnore] public int? UpgradeEvery { get; init; }
+    // Infinity (EndlessSpec sets them): the elite chance grows by EliteChancePerWave a wave up to
+    // EliteChanceMax; one more elite may be alive at once every MoreElitesEvery waves (at most
+    // MoreElitesMax more); from wave AllSynergiesAt every synergy is on; a cleared boss wave gives a
+    // second pick (BossBonusPick).
+    [JsonIgnore] public double EliteChancePerWave { get; init; }
+    [JsonIgnore] public double EliteChanceMax { get; init; }
+    [JsonIgnore] public int MoreElitesEvery { get; init; }
+    [JsonIgnore] public int MoreElitesMax { get; init; }
+    [JsonIgnore] public int? AllSynergiesAt { get; init; }
+    [JsonIgnore] public bool BossBonusPick { get; init; }
     // Survive stages: a card offer at each of these points of the clock (seconds held out) instead of
     // after cleared waves.
     public double[]? UpgradeAt { get; init; }
@@ -323,7 +333,12 @@ public sealed class StageSpec
 // (the first landed hit on each enemy deals Amount more), momentum (a swing after a run of
 // BattleSim.MomentumRun DIPs deals Amount more).
 // MaxStacks: how often one build may take it (0 = no limit). Group (defense, power, speed or none)
-// counts toward that group's synergy. Definitions are shared and never changed.
+// counts toward that group's synergy. Definitions are shared and never changed. 2026-10-24: crit
+// (Amount: the chance of a ×2 hit), execute (Amount more on an enemy below 30 % HP), comboWindow
+// (seconds more to keep a combo going), landingRush (Amount more attack speed for 2 s after the cat
+// is put down), regen (HP a second while fighting), stunCut (shorter stuns on the cat), and the
+// utility cards without a group: skillCooldown, appCharge (apps charge faster), killCharge (more
+// charge per defeated enemy), bomb (bigger, stronger yarn bomb), shieldTime (seconds more Shield).
 public sealed class UpgradeSpec
 {
     public string? Group { get; init; }
@@ -335,7 +350,11 @@ public sealed class UpgradeSpec
     public string Effect { get; init; } = "damage";
     public double Amount { get; init; }
     public int MaxStacks { get; init; }
-    // A rare card (one per group, at most once a build): it takes the place of its group's card in an
+    // Infinity's own limit (unset: MaxStacks): a run there takes many more cards.
+    public int? EndlessMaxStacks { get; init; }
+    // Only offered in battles with the desktop apps (its effect is about them).
+    [JsonIgnore] public bool NeedsApps => Effect is "appCharge" or "killCharge";
+    // A rare card (up to two per group, at most once a build): it takes the place of its group's card in an
     // offer with BattleSettings.RareChance. It plays differently, not better in every way.
     public bool Rare { get; init; }
     public string Name(string language) => PetText.Data(language, NameVi, NameEn);
@@ -345,8 +364,12 @@ public sealed class UpgradeSpec
 // A build bonus: once a build holds At points of a group (one per card taken), the effect is on
 // for the rest of that build. thorns: Amount of the damage the cat really takes from an enemy's
 // hit goes back to that enemy. armorBreak: combo hits deal Amount more (and pierce a rock's block).
-// echo: every Every-th landed swing adds a second hit of Amount × its damage. The bonus hits
-// (reflected, echoed) never set off another bonus.
+// echo: every Every-th landed swing adds a second hit of Amount × its damage (a later echo replaces
+// an earlier one). 2026-10-24: lastStand (once a wave a fatal hit leaves 1 HP), autoShield (below
+// 30 % HP the Shield goes up by itself, at most once per Amount s), comboStun (combo hits stun
+// Amount s), finisher (a landed hit ends a non-boss below Amount of its HP), rush (after a combo,
+// 3 s of Amount more speed and attack speed). The bonus hits (reflected, echoed) never set off
+// another bonus.
 public sealed class SynergySpec
 {
     public string Id { get; init; } = "";
@@ -357,6 +380,8 @@ public sealed class SynergySpec
     public int Every { get; init; } = 4;
     // Less damage taken while it is on, on top of the cards' armor (a fraction).
     public double Armor { get; init; }
+    // Only in Infinity (its 6- and 9-point tiers, 2026-10-24).
+    public bool EndlessOnly { get; init; }
     public string NameVi { get; init; } = "";
     public string NameEn { get; init; } = "";
     public string DescVi { get; init; } = "";
@@ -861,7 +886,11 @@ public static class BattleData
             if (u.Rare && (u.Group == null || u.MaxStacks != 1)) throw new InvalidDataException($"{at}: a rare card needs a group and maxStacks 1");
         }
         foreach (var group in BuildGroups.All)
-            if (s.UpgradeList.Count(u => u.Rare && u.Group == group) > 1) throw new InvalidDataException($"upgrades: at most one rare card per group ({group})");
+            if (s.UpgradeList.Count(u => u.Rare && u.Group == group) > 2) throw new InvalidDataException($"upgrades: at most two rare cards per group ({group})");
+        foreach (var u in s.UpgradeList)
+            if (u.EndlessMaxStacks is int endlessMax && (endlessMax is < 1 or > 10 || u.MaxStacks == 0 || endlessMax < u.MaxStacks || u.Rare))
+                throw new InvalidDataException($"upgrades[{u.Id}].endlessMaxStacks must be 1–10, at least maxStacks (not for a rare or unlimited card)");
+        Within(s.UtilityChance, 0, 1, "utilityChance");
         Within(s.RareChance, 0, 1, "rareChance");
         if (s.MaxElites is < 0 or > 5) throw new InvalidDataException("maxElites must be 0–5");
         var synergyIds = new HashSet<string>();
@@ -895,11 +924,16 @@ public static class BattleData
         ["damage"] = (0.01, 2), ["moveSpeed"] = (0.01, 1), ["attackSpeed"] = (0.01, 0.5),
         ["knock"] = (1, 500), ["heal"] = (1, 1000), ["armor"] = (0.01, 0.5), ["maxHp"] = (1, 500),
         // Rare cards' effects: shell (seconds to grow back), opener and momentum (fractions).
-        ["shell"] = (3, 60), ["opener"] = (0.1, 3), ["momentum"] = (0.1, 3)
+        ["shell"] = (3, 60), ["opener"] = (0.1, 3), ["momentum"] = (0.1, 3),
+        // 2026-10-24.
+        ["crit"] = (0.01, 1), ["execute"] = (0.1, 3), ["comboWindow"] = (0.05, 2), ["landingRush"] = (0.05, 2),
+        ["regen"] = (0.05, 10), ["stunCut"] = (0.05, 0.9), ["skillCooldown"] = (0.01, 0.5), ["appCharge"] = (0.01, 0.5),
+        ["killCharge"] = (0.005, 0.2), ["bomb"] = (0.05, 2), ["shieldTime"] = (0.2, 5)
     };
     public static readonly Dictionary<string, (double Min, double Max)> SynergyLimits = new()
     {
-        ["thorns"] = (0.05, 2), ["armorBreak"] = (0.05, 3), ["echo"] = (0.1, 2)
+        ["thorns"] = (0.05, 2), ["armorBreak"] = (0.05, 3), ["echo"] = (0.1, 2),
+        ["lastStand"] = (1, 1), ["autoShield"] = (5, 120), ["comboStun"] = (0.1, 3), ["finisher"] = (0.01, 0.5), ["rush"] = (0.05, 1)
     };
 
     private static void ValidateCampaign(CampaignSpec campaign, Action<IReadOnlyList<WaveSpec>?, string, int?, bool> waves, Action<string?, string> id, Action<string?, string> text)

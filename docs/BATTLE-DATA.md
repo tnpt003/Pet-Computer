@@ -101,7 +101,7 @@ Tên và mô tả của 5 kỹ năng trên HUD (và túi đồ). Gộp theo `id`
 ## Đợt quái (`waves`) và luật trận
 
 - `waves`: tối đa 30 đợt. Mỗi đợt có `groups`, mỗi group gồm `enemy` (id) và `count` (1–50). Các group ra quái theo thứ tự; tối đa `maxAlive` con cùng lúc. Đợt nào cũng có thể có boss.
-- Luật trận ở cấp trên cùng: `catMaxHp`, `maxAlive`, `spawnInterval`, `firstWaveDelay`, `waveBreakSeconds`, `waveHeal`, `landingGraceSeconds` (0–5), `rescueGraceCooldownSeconds` (0–60), `rescueGraceMinLiftSeconds` (0–2, mặc định 0.3: nhấc ngắn hơn thì thả xuống không được bảo vệ), kỹ năng (`pushCooldown`, `healAmount`…), combo (`comboHits` 2–6…; `comboSplash` 0–2 và `comboSplashRadius` 0–300 DIPs từ 2026-10-24: đòn combo gây thêm `comboSplash` × sát thương của nó cho mọi quái khác trong `comboSplashRadius` DIPs tính từ mép mục tiêu, có thể bị đá chặn như combo, Phá giáp xuyên được; gốc 0.6 và 60).
+- Luật trận ở cấp trên cùng: `catMaxHp`, `maxAlive`, `spawnInterval`, `firstWaveDelay`, `waveBreakSeconds`, `waveHeal`, `landingGraceSeconds` (0–5), `rescueGraceCooldownSeconds` (0–60), `rescueGraceMinLiftSeconds` (0–2, mặc định 0.3: nhấc ngắn hơn thì thả xuống không được bảo vệ), kỹ năng (`pushCooldown`, `healAmount`…), combo (`comboHits` 2–6…; `utilityChance` 0–1 ở mục thẻ; `comboSplash` 0–2 và `comboSplashRadius` 0–300 DIPs từ 2026-10-24: đòn combo gây thêm `comboSplash` × sát thương của nó cho mọi quái khác trong `comboSplashRadius` DIPs tính từ mép mục tiêu, có thể bị đá chặn như combo, Phá giáp xuyên được; gốc 0.6 và 60).
 - Độ khó `easy`/`hard` có `enemyHp`, `enemyDamage`, `enemySpeed`, mỗi số trong khoảng 0.25–3. Mức Thường dùng nguyên số liệu.
 - Xem file gốc để biết đủ các khóa và giá trị mặc định.
 
@@ -220,7 +220,27 @@ Màn có `"upgrades": true` sẽ cho chọn thẻ sau mỗi đợt đã dọn (k
 | `armor` | 0.01–0.5 | sát thương nhận vào × (1 − tổng); thẻ và synergy cộng lại giảm tối đa 60% (từ 2026-10-24; trước là 70%) |
 | `maxHp` | 1–500 (HP) | cộng HP tối đa; lúc chọn hồi luôn đúng lượng đó (Combat Depth mốc 2) |
 
-`maxStacks` 0–10 (0 là không giới hạn). Tên tối đa 32 ký tự, mô tả tối đa 80. Effect lạ, amount ngoài khoảng, id trùng hoặc danh sách rỗng đều làm cả file bị bỏ.
+`maxStacks` 0–10 (0 là không giới hạn). `endlessMaxStacks` (2026-10-24, tùy chọn, 1–10, không nhỏ hơn `maxStacks`, không cho thẻ hiếm hay thẻ không giới hạn): giới hạn riêng trong Vô tận. Tên tối đa 32 ký tự, mô tả tối đa 80. Effect lạ, amount ngoài khoảng, id trùng hoặc danh sách rỗng đều làm cả file bị bỏ.
+
+Effect mới (2026-10-24):
+
+| effect | amount | Ý nghĩa (bản gốc) |
+| --- | --- | --- |
+| `crit` | 0.01–1 | Móng vuốt: tỉ lệ một nhát ×2 sát thương (0.1, tối đa 2, Vô tận 3) |
+| `execute` | 0.1–3 | Kết liễu (hiếm, Sức mạnh): + amount sát thương lên quái dưới 30% máu (0.5) |
+| `comboWindow` | 0.05–2 s | Nhịp dài: thêm thời gian nối combo (0.3, tối đa 2) |
+| `landingRush` | 0.05–2 | Lướt gió (hiếm, Tốc độ): được thả xuống sau khi nhấc ≥ `rescueGraceMinLiftSeconds` thì 2 s đánh nhanh + amount (0.3) |
+| `regen` | 0.05–10 HP/s | Hồi phục: hồi máu khi đang đánh (không khi đang cầm, không lúc nghỉ đợt) (0.5, tối đa 2) |
+| `stunCut` | 0.05–0.9 | Kiên cường: choáng trên mèo × (1 − tổng), ít nhất 10% (0.25, tối đa 2) |
+| `skillCooldown` | 0.01–0.5 | Tay nhanh (tiện ích): hồi chiêu mọi kỹ năng × (1 − tổng), ít nhất 50% (0.1, tối đa 3) |
+| `appCharge` | 0.01–0.5 | Sạc pin (tiện ích, chỉ trận có app): thời gian sạc icon × (1 − tổng), ít nhất 30% (0.08, tối đa 3) |
+| `killCharge` | 0.005–0.2 | Hút năng lượng (tiện ích, chỉ trận có app): cộng vào `killCharge` (0.01, tối đa 3) |
+| `bomb` | 0.05–2 | Bom to (tiện ích): bán kính và sát thương Bom len × (1 + tổng) (0.2, tối đa 2) |
+| `shieldTime` | 0.2–5 s | Khiên dày (tiện ích): Khiên kéo dài thêm (1, tối đa 2) |
+
+- Thẻ tiện ích = thẻ không có `group` (trừ `heal`): `utilityChance` (cấp trên cùng, 0–1, gốc 0.25) là tỉ lệ một thẻ tiện ích chiếm một ô ngẫu nhiên trong lượt mời (luồng random riêng `BattleRandom.Utility`); chúng vẫn lấp chỗ khi nhóm hết thẻ. Thẻ app không bao giờ được mời khi trận không có app.
+- Mỗi nhóm được tối đa **hai** thẻ hiếm (trước là một): khi thẻ hiếm thay chỗ thì bốc ngẫu nhiên trong các thẻ hiếm còn lấy được của nhóm.
+- Bản gốc thêm: Sức mạnh Móng vuốt + Kết liễu (hiếm); Tốc độ Nhịp dài + Lướt gió (hiếm); Phòng thủ Hồi phục + Kiên cường; tiện ích Tay nhanh, Sạc pin, Hút năng lượng, Bom to, Khiên dày. Giới hạn Vô tận: Sắc bén 5, Nhanh chân 3, Ra đòn nhanh 4, Lông dày 3, Tim to 4, Móng vuốt 3 (Đẩy mạnh giữ 2).
 
 ### Nhóm thẻ, synergy và build cộng dồn (Combat Depth mốc 2)
 
@@ -235,6 +255,17 @@ Màn có `"upgrades": true` sẽ cho chọn thẻ sau mỗi đợt đã dọn (k
 | `echo` | 0.1–2, `every` 2–10 | Dư ảnh: cứ `every` nhát trúng thì thêm một đòn amount × sát thương nhát đó. (0.5, mỗi 4 nhát) |
 
 Đòn dội lại và đòn dư ảnh không kích hoạt thêm bất kỳ hiệu ứng build nào (không có vòng lặp).
+
+Tầng chỉ có ở Vô tận (2026-10-24, `"endlessOnly": true`; ở chế độ khác không bật và không hiện trên HUD/túi đồ/thẻ). Synergy cùng effect bật sau thay cái trước (Dư ảnh+ thay Dư ảnh).
+
+| effect | amount | Ý nghĩa (bản gốc) |
+| --- | --- | --- |
+| `lastStand` | 1 | Bất khuất (Phòng thủ 6): mỗi đợt một lần, đòn làm mèo về 0 HP chỉ để còn 1 HP |
+| `autoShield` | 5–120 s | Pháo đài (Phòng thủ 9): HP dưới 30% thì Khiên tự bật, mỗi amount giây một lần (30) |
+| `comboStun` | 0.1–3 s | Chấn động (Sức mạnh 6): đòn combo trúng làm choáng mục tiêu × `stunFactor` (không trùm, không tinh anh miễn Đẩy) (0.6) |
+| `finisher` | 0.01–0.5 | Hành quyết (Sức mạnh 9): đòn trúng mà quái thường (không trùm) còn dưới amount máu thì hạ luôn (0.1) |
+| `rush` | 0.05–1 | Gió lốc (Tốc độ 6): sau đòn combo, 3 s chạy và đánh nhanh + amount (0.2) |
+| `echo` (Dư ảnh+) | như `echo` | Tốc độ 9: cứ 3 đòn trúng thêm một đòn 75% |
 - Build cộng dồn (Phiêu lưu): thắng màn N lưu build lúc kết thúc (không lưu thẻ hồi máu) vào `adventure-progress.json` (`Builds`, file phiên bản 2). Màn N+1, lần đầu hay chơi lại, luôn bắt đầu bằng build đã lưu của màn N; màn đầu chương bắt đầu trống. Thua không đổi build đã lưu; thắng lại màn cũ thì thay build lưu của màn đó. Chơi bằng dữ liệu tùy chỉnh thì không lưu gì. Trận tự do không có build. Thẻ trong build mà dữ liệu không còn thì bị bỏ qua; số lần vượt `maxStacks` bị cắt.
 - `maxUpgrades` (1–30) trên một màn: số lần chọn thẻ tối đa trong một lượt (màn 3 gốc: 3). Không đặt: mỗi đợt dọn xong mà còn đợt sau thì có một lần chọn.
 
@@ -396,14 +427,18 @@ Một chuyến đi gồm nhiều bậc, mỗi bậc chọn một điểm, bậc 
 
 ```jsonc
 "endless": {
-  "id": "endless", "rulesVersion": 1, "unlockAfter": "c1_slime_king", "upgradeEvery": 3, "bossEvery": 10, "boss": "king",
+  "id": "endless", "rulesVersion": 4, "unlockAfter": "c1_slime_king", "upgradeEvery": 2, "bossEvery": 10, "boss": "king_c1",
+  "lateBoss": "king", "lateBossFrom": 30, "bossBonusPick": true, "allSynergiesAt": 48,
+  "eliteChancePerWave": 0.007, "eliteChanceMax": 0.45, "moreElitesEvery": 20, "moreElitesMax": 2,
   "firstCount": 3, "countPerWave": 0.35, "maxCount": 14, "threatPerWave": 0.06, "maxAlive": 5, "eliteChance": 0.12,
   "kinds": [ { "enemy": "slime", "weight": 50 }, { "enemy": "runner", "weight": 25, "from": 3 }, { "enemy": "mender", "weight": 15, "from": 5 }, { "enemy": "rock", "weight": 15, "from": 7 } ]
 }
 ```
 
 - Một trận không bao giờ thắng. Đợt n có `firstCount` + `countPerWave` × (n − 1) quái (làm tròn xuống, 1 đến `maxCount`), bốc theo `kinds` (mỗi loại có từ đợt `from`, theo `weight`; phải có ít nhất một loại từ đợt 1; không được là trùm), threat 1 + `threatPerWave` × (n − 1).
-- Mỗi đợt thứ `bossEvery` (0 = không có) chỉ có `boss` (phải là quái trùm). Sau mỗi `upgradeEvery` đợt dọn xong (0 = không có thẻ) người chơi chọn 1 thẻ, giữ tới hết lượt.
+- Mỗi đợt thứ `bossEvery` (0 = không có) chỉ có `boss` (phải là quái trùm); từ đợt `lateBossFrom` (1–500, gốc 30) có thêm `lateBoss` (trùm, tùy chọn) cùng đợt. Sau mỗi `upgradeEvery` đợt dọn xong (0 = không có thẻ) người chơi chọn 1 thẻ, giữ tới hết lượt; `bossBonusPick` true: dọn xong đợt trùm thì chọn liền 2 thẻ.
+- (2026-10-24) Tinh anh tăng dần: tỉ lệ = `eliteChance` + `eliteChancePerWave` (0–0.2) × (n − 1), tối đa `eliteChanceMax` (0–1, 0 = không trần); cứ `moreElitesEvery` đợt (0–200, 0 = không) được thêm một tinh anh sống cùng lúc so với `maxElites`, thêm tối đa `moreElitesMax` (0–4). `allSynergiesAt` (1–500, tùy chọn): từ đợt này mọi synergy (cả tầng chỉ Vô tận) tự bật, kể cả build lệch nhóm.
+- Bản gốc từ 2026-10-24 (rulesVersion 4): `upgradeEvery` 2, `boss` `king_c1` (Vua chương 1, có khiên và phong tinh anh), `lateBoss` `king` từ đợt 30, `bossBonusPick` true, `allSynergiesAt` 48, tinh anh 12% + 0,7%/đợt tối đa 45%, thêm một tinh anh sống mỗi 20 đợt (tối đa 3 con). Tới đợt 48 có 24 lượt thẻ thường + 4 lượt thưởng sau trùm = 28 lượt, đủ 27 điểm cho ba nhóm × 9 nếu chia đều; không đều thì lưới an toàn ở đợt 48 bật nốt.
 - Hết lượt khi mèo thua hoặc người chơi bấm Kết thúc (cả hai đều có bảng kết quả và tính kỷ lục). Đóng app giữa chừng thì mất lượt, không lưu gì.
 - Kỷ lục: đợt xa nhất và số slime hạ nhiều nhất, theo vũ khí + độ khó, trong battle-records.json (khóa `endless|r<rulesVersion>|<vũ khí>|<độ khó>`, thêm `|custom` khi dùng battle.json riêng). Đổi luật nhiều thì tăng `rulesVersion` để kỷ lục cũ đứng riêng.
 - `unlockAfter`: màn Phiêu lưu phải thắng trước (không có màn đó trong dữ liệu thì mở luôn). `maxAlive`, `eliteChance`: như của màn.
@@ -454,3 +489,5 @@ Một "desktop giả" trong trận Phiêu lưu, Viễn chinh và Vô tận (tr�
 
 - Cân bằng (mô phỏng, bot simple bấm app ngay khi đầy — trường hợp tốt nhất): số sạc trên giữ bot dưới ngưỡng "≤ 85% máu còn lại" ở màn 2–4 Thường. Bản sạc nhanh hơn (20–34 s) cho bot 90–96%.
 - rulesVersion khi thêm app: màn 1–5: 6/12/14/15/15, Vô tận 2 (kỷ lục cũ đứng riêng; phần thưởng mốc Vô tận vẫn tính mọi rulesVersion). Viễn chinh giữ 5 để không bỏ chuyến đang đi dở.
+- rulesVersion sau đợt cân bằng 2026-10-24 (kỹ năng, thẻ, app độc ngẫu nhiên, Vua chương 1 ở mọi chế độ): màn 1–5: 7/14/16/17/17, Vô tận 4. Viễn chinh vẫn giữ 5 (chuyến đang đi không bị kết thúc; kỷ lục Viễn chinh cũ và mới nằm chung).
+- Cân bằng sau đợt 2026-10-24 (mô phỏng, Thường): bot "simple" (đỡ mọi đòn ngay, bấm app ngay khi đầy) kết thúc màn 2 và màn 4 với ~88% HP (ngưỡng nới thành 90%), bot "casual" 61–78% ở màn 2–5.

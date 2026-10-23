@@ -430,7 +430,7 @@ public sealed partial class BattleSim
         }
         if (stun && !from.Defanged && !CatHeld && !CatStunned && StunImmunity <= 0 && Settings.StunDurationSeconds > 0)
         {
-            CatStunRemaining = Settings.StunDurationSeconds;
+            CatStunRemaining = StunFor(Settings.StunDurationSeconds);
             StunsTaken++;
             CancelSwing();
             events.Add(new(BattleEventKind.CatStunned, catX));
@@ -463,6 +463,15 @@ public sealed partial class BattleSim
         NoteHurt(hurt);
         HurtFlash = Settings.HurtFlashSeconds;
         events.Add(new(BattleEventKind.CatHurt, catX, hurt));
+        // Last stand: once a wave, a fatal hit leaves the cat at 1 HP.
+        if (CatHp <= 0 && !lastStandSpent && Active("lastStand") != null)
+        {
+            CatHp = 1;
+            lastStandSpent = true;
+            LastStands++;
+            AddEffect(BattleEffectKind.Block, catX, 50);
+            events.Add(new(BattleEventKind.ShellBlocked, catX));
+        }
         if (CatHp <= 0) { Finish(BattlePhase.Lost); return false; }
         return true;
     }

@@ -42,8 +42,8 @@ internal static class BattleDataTests
             "battle.json's weapons are exactly the built-in sword and hammer (same numbers, names and drawing)");
         string Plan(BattleSettings s) => string.Join(" | ", s.WavePlan.Select(w => string.Join(",", w.Spawns())));
         check(Plan(builtIn) == "slime,slime | slime,slime,slime | slime,slime,slime,slime | king", "Without the file: 2, 3, 4 slimes, then the King");
-        check(Plan(shipped) == "slime,slime | slime,slime,runner,runner | rock,runner,runner,slime,slime | king",
-            $"battle.json mixes in quick and rock slimes before the King ({Plan(shipped)})");
+        check(Plan(shipped) == "slime,slime | slime,slime,runner,runner | rock,runner,runner,slime,slime | king_c1",
+            $"battle.json mixes in quick and rock slimes before the chapter King ({Plan(shipped)})");
         var quick = shipped.Enemy("runner");
         var rock = shipped.Enemy("rock");
         check(quick.Id == "runner" && quick.Speed > 2 * shipped.Enemy("slime").Speed && quick.MaxHp < 50 && quick.Scale < 1 && quick.Marks == "speed",

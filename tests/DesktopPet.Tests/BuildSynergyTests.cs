@@ -42,10 +42,13 @@ internal static class BuildSynergyTests
         foreach (var group in BuildGroups.All)
         {
             int room = data.UpgradeList.Where(u => u.Group == group).Sum(u => u.MaxStacks == 0 ? 99 : u.MaxStacks);
-            var synergy = data.SynergyList.Single(y => y.Group == group);
-            check(synergy.At == 3 && room >= 3, $"battle.json: {group} has room for {room} points and a synergy at 3 ({synergy.Name("en")})");
+            int endlessRoom = data.UpgradeList.Where(u => u.Group == group).Sum(u => u.MaxStacks == 0 ? 99 : u.EndlessMaxStacks ?? u.MaxStacks);
+            var synergy = data.SynergyList.Single(y => y.Group == group && !y.EndlessOnly);
+            var tiers = data.SynergyList.Where(y => y.Group == group && y.EndlessOnly).Select(y => y.At).OrderBy(a => a).ToArray();
+            check(synergy.At == 3 && room >= 3 && tiers.SequenceEqual(new[] { 6, 9 }) && endlessRoom >= 9,
+                $"battle.json: {group} has room for {room} points ({endlessRoom} in Infinity), a synergy at 3 ({synergy.Name("en")}) and Infinity's at 6 and 9");
         }
-        check(data.SynergyList.Select(y => y.Effect).OrderBy(e => e).SequenceEqual(new[] { "armorBreak", "echo", "thorns" }) &&
+        check(data.SynergyList.Where(y => !y.EndlessOnly).Select(y => y.Effect).OrderBy(e => e).SequenceEqual(new[] { "armorBreak", "echo", "thorns" }) &&
               data.UpgradeList.Single(u => u.Effect == "heal").Group == null && data.UpgradeList.Any(u => u is { Id: "big_heart", Effect: "maxHp", Group: "defense" }),
             "battle.json: Thorns, Armor break and Afterimage; Big heart joins Defense; the fish has no group");
         check(data.Campaign!.Chapters[0].Stages[2].MaxUpgrades == 3, "The survive stage allows at most 3 picks");
@@ -58,9 +61,11 @@ internal static class BuildSynergyTests
             var sim = new BattleSim(Quick(BattleData.Settings.UpgradeList.ToArray()), 0, 1600, new Random(seed), stage: Stage());
             Until(sim, () => sim.ChoosingUpgrade);
             var offer = sim.UpgradeOffer!;
-            distinct &= offer.Count == 3 && offer.Select(u => u.Group).OrderBy(g => g).SequenceEqual(new[] { "defense", "power", "speed" });
+            // 2026-10-24: a utility card (no group) may take one of the places.
+            var grouped = offer.Where(u => u.Group != null).Select(u => u.Group).ToList();
+            distinct &= offer.Count == 3 && offer.Distinct().Count() == 3 && offer.Count(u => u.Group == null) <= 1 && grouped.Distinct().Count() == grouped.Count;
         }
-        check(distinct, "At full HP every offer has one Defense, one Power and one Speed card (15 seeds)");
+        check(distinct, "At full HP every offer has one card from each group, or at most one utility card in a group's place (15 seeds)");
 
         // Hurt: the fish takes the place of the group the build has fewest points in (never Defense
         // here, the build holds 2 of it).

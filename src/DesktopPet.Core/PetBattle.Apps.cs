@@ -168,7 +168,8 @@ public sealed partial class BattleSim
         {
             if (!app.Infected)
             {
-                Charge(app, rules.App(app.Kind).Charge > 0 ? dt / rules.App(app.Kind).Charge : 1);
+                // Power bank: every icon charges faster.
+                Charge(app, rules.App(app.Kind).Charge > 0 ? dt / (rules.App(app.Kind).Charge * Math.Max(0.3, 1 - appChargeCut)) : 1);
                 continue;
             }
             app.AttackClock -= dt;
@@ -350,7 +351,7 @@ public sealed partial class BattleSim
         foreach (var app in desktop)
         {
             if (app.InfectedBy == slime.Id) Cure(app);
-            else Charge(app, rules.KillCharge);
+            else Charge(app, rules.KillCharge + killChargeBonus);
         }
         launches.RemoveAll(l => l.Kind == LaunchKind.Goo && l.SlimeId == slime.Id);
         if (virusFiles.Count > 0 && virusFiles[0].SlimeId == slime.Id) RemoveVirusFiles();
@@ -637,7 +638,7 @@ public sealed partial class BattleSim
                 if (!LandHit(rules.BellDamage, lastCatX, out _) || rules.BellStun <= 0) break;
                 // ...and stuns it (no stun again too soon, as after a dash).
                 if (CatHeld || CatStunned || StunImmunity > 0) break;
-                CatStunRemaining = rules.BellStun;
+                CatStunRemaining = StunFor(rules.BellStun);
                 StunsTaken++;
                 CancelSwing();
                 events.Add(new(BattleEventKind.CatStunned, lastCatX));
@@ -648,7 +649,7 @@ public sealed partial class BattleSim
                 if (ShieldRemaining > 0) { events.Add(new(BattleEventKind.Blocked, lastCatX)); break; }
                 AddEffect(BattleEffectKind.EndTask, lastCatX, 125);
                 if (CatHeld || CatStunned || StunImmunity > 0) break;
-                CatStunRemaining = rules.FreezeSeconds;
+                CatStunRemaining = StunFor(rules.FreezeSeconds);
                 StunsTaken++;
                 CancelSwing();
                 events.Add(new(BattleEventKind.CatStunned, lastCatX));

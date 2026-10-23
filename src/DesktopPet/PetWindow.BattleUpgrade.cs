@@ -154,7 +154,7 @@ public sealed partial class PetWindow
             desc.Text = spec.Describe(preferences.Language);
             int have = battle.Stacks(id);
             count.Text = spec.Rare ? L("★ Thẻ hiếm · một lần mỗi build", "★ Rare · once per build")
-                : spec.MaxStacks > 0 ? LF($"Đã có {have}/{spec.MaxStacks}", $"Have {have}/{spec.MaxStacks}") : have > 0 ? LF($"Đã lấy {have} lần", $"Taken {have}×") : "";
+                : battle.StackLimit(spec) is int most && most > 0 ? LF($"Đã có {have}/{most}", $"Have {have}/{most}") : have > 0 ? LF($"Đã lấy {have} lần", $"Taken {have}×") : "";
             count.Foreground = spec.Rare ? RareGold : Brushes.White;
             count.Opacity = spec.Rare ? 1 : 0.65;
             build.Text = CardBuildText(battle, spec);
@@ -174,7 +174,7 @@ public sealed partial class PetWindow
     {
         if (card.Group is not string group) return L("Không tính vào nhóm", "Counts for no group");
         int points = b.GroupPoints(group), goal = 0;
-        foreach (var y in b.Settings.SynergyList) if (y.Group == group && !b.Synergies.Contains(y) && (goal == 0 || y.At < goal)) goal = y.At;
+        foreach (var y in b.Settings.SynergyList) if (y.Group == group && b.CanUnlock(y) && !b.Synergies.Contains(y) && (goal == 0 || y.At < goal)) goal = y.At;
         string text = BuildGroups.Name(group, preferences.Language) + $" {points} → {points + 1}" + (goal > 0 ? $"/{goal}" : "");
         if (b.Unlocks(card) is SynergySpec synergy) text += LF($" · Mở {synergy.Name(PetLanguage.Vietnamese)}!", $" · {synergy.Name(preferences.Language)}!");
         return text;
@@ -196,6 +196,7 @@ public sealed class UpgradeIcon : FrameworkElement
     private static readonly Brush Pink = PetUi.Frozen(Color.FromRgb(0xF4, 0x9A, 0x7A));
     private static readonly Pen Ink = PetUi.FrozenPen(PetUi.Frozen(Color.FromRgb(0x30, 0x2B, 0x48)), 2);
     private static readonly Pen Line = PetUi.FrozenPen(Brushes.White, 3);
+    private static readonly Brush Green = PetUi.Frozen(Color.FromRgb(0x9A, 0xD8, 0x84)), Blue = PetUi.Frozen(Color.FromArgb(0xC0, 0x7C, 0xC0, 0xEE));
     // Path data is always written with '.' decimals, whatever the user's culture.
     private static Geometry Shape(FormattableString path) => PetUi.FrozenGeometry(FormattableString.Invariant(path));
 
@@ -246,6 +247,57 @@ public sealed class UpgradeIcon : FrameworkElement
                 dc.DrawGeometry(Gold, Ink, Shape($"M {cx - 16},{cy + 5} C {cx - 4},{cy + 6} {cx + 6},{cy - 1} {cx + 16},{cy - 15} C {cx + 13},{cy + 6} {cx + 2},{cy + 16} {cx - 16},{cy + 15} Z"));
                 dc.DrawEllipse(Back, Ink, new Point(cx - 13, cy - 5), 3.5, 3.5);
                 dc.DrawEllipse(Back, Ink, new Point(cx - 5, cy - 11), 2.5, 2.5);
+                break;
+            case "crit": // Three claw marks.
+                for (int i = -1; i <= 1; i++)
+                    dc.DrawGeometry(Gold, Ink, Shape($"M {cx - 9 + i * 7},{cy - 13} Q {cx - 2 + i * 7},{cy} {cx - 7 + i * 7},{cy + 14} Q {cx + 2 + i * 7},{cy + 1} {cx - 9 + i * 7},{cy - 13} Z"));
+                break;
+            case "execute": // A blade over a nearly empty HP bar.
+                dc.DrawRoundedRectangle(Back, Ink, new Rect(cx - 15, cy + 5, 30, 8), 3, 3);
+                dc.DrawRoundedRectangle(Pink, null, new Rect(cx - 14, cy + 6, 7, 6), 2, 2);
+                dc.DrawGeometry(Gold, Ink, Shape($"M {cx - 12},{cy + 1} L {cx + 10},{cy - 15} L {cx + 13},{cy - 12} L {cx - 9},{cy + 4} Z"));
+                break;
+            case "comboWindow": // Three hits on a stretched line.
+                dc.DrawLine(Line, new Point(cx - 16, cy + 8), new Point(cx + 16, cy + 8));
+                for (int i = 0; i < 3; i++) dc.DrawEllipse(i == 2 ? Pink : Gold, Ink, new Point(cx - 11 + i * 11, cy - 2 - i * 3), 4.5 + i, 4.5 + i);
+                break;
+            case "landingRush": // An arrow down onto the floor with speed lines.
+                dc.DrawLine(Line, new Point(cx - 14, cy + 13), new Point(cx + 14, cy + 13));
+                dc.DrawGeometry(Gold, Ink, Shape($"M {cx - 5},{cy - 15} L {cx + 5},{cy - 15} L {cx + 5},{cy - 2} L {cx + 11},{cy - 2} L {cx},{cy + 10} L {cx - 11},{cy - 2} L {cx - 5},{cy - 2} Z"));
+                dc.DrawLine(Line, new Point(cx - 15, cy - 10), new Point(cx - 15, cy + 2));
+                dc.DrawLine(Line, new Point(cx + 15, cy - 10), new Point(cx + 15, cy + 2));
+                break;
+            case "regen": // A green leaf with a plus.
+                dc.DrawGeometry(Green, Ink, Shape($"M {cx - 13},{cy + 12} C {cx - 14},{cy - 6} {cx},{cy - 15} {cx + 14},{cy - 14} C {cx + 13},{cy + 2} {cx + 2},{cy + 13} {cx - 13},{cy + 12} Z"));
+                dc.DrawLine(Line, new Point(cx - 3, cy + 1), new Point(cx + 5, cy + 1));
+                dc.DrawLine(Line, new Point(cx + 1, cy - 3), new Point(cx + 1, cy + 5));
+                break;
+            case "stunCut": // A dizzy star struck through.
+                dc.DrawGeometry(Gold, Ink, Shape($"M {cx},{cy - 13} L {cx + 4},{cy - 4} L {cx + 13},{cy - 3} L {cx + 6},{cy + 4} L {cx + 8},{cy + 13} L {cx},{cy + 8} L {cx - 8},{cy + 13} L {cx - 6},{cy + 4} L {cx - 13},{cy - 3} L {cx - 4},{cy - 4} Z"));
+                dc.DrawLine(Line, new Point(cx - 14, cy + 14), new Point(cx + 14, cy - 14));
+                break;
+            case "skillCooldown": // An hourglass.
+                dc.DrawGeometry(Gold, Ink, Shape($"M {cx - 10},{cy - 14} L {cx + 10},{cy - 14} L {cx + 1},{cy} L {cx + 10},{cy + 14} L {cx - 10},{cy + 14} L {cx - 1},{cy} Z"));
+                dc.DrawLine(Ink, new Point(cx - 12, cy - 14), new Point(cx + 12, cy - 14));
+                dc.DrawLine(Ink, new Point(cx - 12, cy + 14), new Point(cx + 12, cy + 14));
+                break;
+            case "appCharge": // A battery filling up.
+                dc.DrawRoundedRectangle(Back, Ink, new Rect(cx - 15, cy - 8, 27, 16), 3, 3);
+                dc.DrawRectangle(Ink.Brush, null, new Rect(cx + 12, cy - 4, 3, 8));
+                dc.DrawRoundedRectangle(Green, null, new Rect(cx - 13, cy - 6, 17, 12), 2, 2);
+                break;
+            case "killCharge": // A bolt.
+                dc.DrawGeometry(Gold, Ink, Shape($"M {cx + 3},{cy - 15} L {cx - 9},{cy + 2} L {cx - 1},{cy + 2} L {cx - 4},{cy + 15} L {cx + 9},{cy - 3} L {cx + 1},{cy - 3} Z"));
+                break;
+            case "bomb": // A big ball of yarn.
+                dc.DrawEllipse(Pink, Ink, new Point(cx, cy + 1), 13, 13);
+                dc.DrawLine(Line, new Point(cx - 9, cy - 5), new Point(cx + 6, cy + 10));
+                dc.DrawLine(Line, new Point(cx - 10, cy + 5), new Point(cx + 3, cy - 10));
+                break;
+            case "shieldTime": // A bubble with a plus.
+                dc.DrawEllipse(Blue, Ink, new Point(cx - 2, cy + 1), 12, 12);
+                dc.DrawLine(Line, new Point(cx + 8, cy - 12), new Point(cx + 16, cy - 12));
+                dc.DrawLine(Line, new Point(cx + 12, cy - 16), new Point(cx + 12, cy - 8));
                 break;
             default: // armor: a shield.
                 dc.DrawGeometry(Gold, Ink, Shape($"M {cx},{cy - 15} L {cx + 13},{cy - 9} C {cx + 13},{cy + 5} {cx + 7},{cy + 12} {cx},{cy + 16} C {cx - 7},{cy + 12} {cx - 13},{cy + 5} {cx - 13},{cy - 9} Z"));

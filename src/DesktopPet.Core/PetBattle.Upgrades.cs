@@ -16,7 +16,7 @@ public sealed partial class BattleSim
     private void OfferUpgrades()
     {
         if (Stage?.MaxUpgrades is int cap && Picks >= cap) return;
-        bool Open(UpgradeSpec u) => u.MaxStacks == 0 || Stacks(u.Id) < u.MaxStacks;
+        bool Open(UpgradeSpec u) => (StackLimit(u) == 0 || Stacks(u.Id) < StackLimit(u)) && (!u.NeedsApps || AppRules != null);
         var cards = new List<UpgradeSpec>();
         foreach (var group in BuildGroups.All)
         {
@@ -35,6 +35,10 @@ public sealed partial class BattleSim
             cards.Add(rest[i]);
             rest.RemoveAt(i);
         }
+        // A utility card (no group: skills, apps, bomb, Shield) now and then takes one place.
+        var utility = Settings.UpgradeList.Where(u => u.Group == null && u.Effect != "heal" && Open(u) && !cards.Contains(u)).ToList();
+        if (cards.Count > 0 && utility.Count > 0 && utilityRandom.NextDouble() < Settings.UtilityChance)
+            cards[utilityRandom.Next(cards.Count)] = utility[utilityRandom.Next(utility.Count)];
         var heals = Settings.UpgradeList.Where(u => u.Effect == "heal" && Open(u)).ToList();
         if (CatHp < CatMaxHp && heals.Count > 0)
         {
@@ -78,7 +82,7 @@ public sealed partial class BattleSim
 
     // The Healing fish's heal and each skill's cooldown in this battle (the relics' changes included).
     public double HealAmount => Settings.HealAmount * (1 + fishBonus);
-    public double SkillCooldown(BattleSkill skill) => skill switch
+    public double SkillCooldown(BattleSkill skill) => Math.Max(0.5, 1 - skillCut) * skill switch
     {
         BattleSkill.Shield => Settings.SkillCooldown(skill) + shieldDelay,
         BattleSkill.Heal => Settings.SkillCooldown(skill) * (1 + fishDelay),
@@ -96,6 +100,8 @@ public sealed partial class BattleSim
         Picks++;
         Take(pick, catX, true);
         events.Add(new(BattleEventKind.UpgradeChosen, catX));
+        // A pick still owed (a cleared boss wave in Infinity): the next offer at once.
+        if (bonusPicks > 0 && !Over) { bonusPicks--; OfferUpgrades(); }
         return true;
     }
 
@@ -114,6 +120,17 @@ public sealed partial class BattleSim
             case "shell": shellRegrow = card.Amount; break; // Ready at once.
             case "opener": openerBonus += card.Amount; break;
             case "momentum": momentumBonus += card.Amount; break;
+            case "crit": critChance += card.Amount; break;
+            case "execute": executeBonus += card.Amount; break;
+            case "comboWindow": comboWindowBonus += card.Amount; break;
+            case "landingRush": landingRushBonus += card.Amount; break;
+            case "regen": regenRate += card.Amount; break;
+            case "stunCut": stunCut += card.Amount; break;
+            case "skillCooldown": skillCut += card.Amount; break;
+            case "appCharge": appChargeCut += card.Amount; break;
+            case "killCharge": killChargeBonus += card.Amount; break;
+            case "bomb": bombBonus += card.Amount; break;
+            case "shieldTime": shieldBonus += card.Amount; break;
             case "maxHp":
                 maxHpBonus += card.Amount;
                 if (fresh) { CatHp += card.Amount; AddEffect(BattleEffectKind.Number, catX, 115, -Math.Round(card.Amount)); }
@@ -129,7 +146,7 @@ public sealed partial class BattleSim
         for (int i = 0; i < Settings.SynergyList.Count; i++)
         {
             var y = Settings.SynergyList[i];
-            if (y.Group != card.Group || synergies.Contains(y) || points < y.At) continue;
+            if (y.Group != card.Group || !Allowed(y) || synergies.Contains(y) || points < y.At) continue;
             synergies.Add(y);
             armorCut += y.Armor;
             if (fresh) events.Add(new(BattleEventKind.SynergyUnlocked, catX, i));

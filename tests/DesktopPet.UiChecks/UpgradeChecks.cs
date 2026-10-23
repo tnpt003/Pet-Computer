@@ -42,7 +42,7 @@ internal static class UpgradeChecks
         var later = new StageSpec { Id = "later", NameVi = "Sau", NameEn = "Later", Upgrades = true, Waves = new[] { One(), One(), One() } };
         // rareChance: 0 keeps the offers to the common cards these checks expect (a rare card may
         // otherwise take a group's place); the rare Defense card has its own check below.
-        BattleSettings Tuning(double rare) => new() { FirstWaveDelay = 0, SpawnInterval = 0, SlimeMaxHp = 1, SlimeDamage = 0, WaveBreakSeconds = 0.5, OutroSeconds = 0.5, RareChance = rare,
+        BattleSettings Tuning(double rare) => new() { FirstWaveDelay = 0, SpawnInterval = 0, SlimeMaxHp = 1, SlimeDamage = 0, WaveBreakSeconds = 0.5, OutroSeconds = 0.5, RareChance = rare, UtilityChance = 0,
             Campaign = new CampaignSpec { Chapters = new[] { new ChapterSpec { Id = "c", NameVi = "C", NameEn = "C", Stages = new[] { stage, hold, later } } } } };
         var tuning = Tuning(0);
         window.BattleTuning = tuning;
@@ -139,9 +139,10 @@ internal static class UpgradeChecks
             check(hud.UpgradesText.Contains("Defense 2/3"), $"The HUD shows the carried points ({hud.UpgradesText})");
             UntilOffer();
             var heart = window.Battle!.UpgradeOffer?.FirstOrDefault(u => u.Group == "defense");
-            check(heart?.Id == "big_heart" && window.BattleUpgradeText.Contains("Defense 2 → 3/3 · Thorns!"), "The Defense card says it completes Thorns (Thick fur is at its limit)");
+            // 2026-10-24: Regrowth and Steady joined Defense, so the card is any Defense card but Thick fur.
+            check(heart is { Rare: false } && heart.Id != "thick_fur" && window.BattleUpgradeText.Contains("Defense 2 → 3/3 · Thorns!"), $"The Defense card says it completes Thorns (Thick fur is at its limit; {heart?.Id})");
             window.PickBattleUpgrade(heart!.Id); window.ConfirmBattleUpgrade();
-            check(window.Battle.Synergies.Any(y => y.Id == "thorns") && Text(hud).Contains("★ THORNS!") && hud.UpgradesText.Contains("★ Thorns") && window.Battle.CatMaxHp == 120,
+            check(window.Battle.Synergies.Any(y => y.Id == "thorns") && Text(hud).Contains("★ THORNS!") && hud.UpgradesText.Contains("★ Thorns") && window.Battle.CatMaxHp == (heart.Id == "big_heart" ? 120 : 100),
                 $"Taking it switches Thorns on with a banner; the HUD keeps a star for it ({hud.UpgradesText})");
             window.Reset();
             // The rare Defense card (Turtle shell) in its place completes the group just the same.

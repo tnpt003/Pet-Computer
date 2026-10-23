@@ -55,7 +55,7 @@ public static class PetWelcome
     // Closing the window keeps the shown choices too: they were in plain sight.
     public static void Show(PetWindow pet, bool newUser, StartupRegistration startup)
     {
-        var window = Create(DefaultLanguage(newUser, pet.Language), out var autostart, out var language);
+        var window = Create(DefaultLanguage(newUser, pet.UiLanguage), out var autostart, out var language);
         window.ShowDialog();
         pet.SetLanguage(language.SelectedIndex == 0 ? "en" : "vi");
         if (Environment.ProcessPath is not string exe) return;

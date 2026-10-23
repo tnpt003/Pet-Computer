@@ -8,7 +8,7 @@
 - **Sau khi cập nhật:** khay báo "Đã cập nhật lên bản …", bấm vào để xem có gì mới trên GitHub.
 - **Gỡ cài đặt ngay trong app:** Cài đặt → Chung → Ứng dụng → "Gỡ cài đặt Desktop Pet…" (chỉ bản đã cài). Hỏi xác nhận; ô "Xóa cả dữ liệu của mèo" không tích sẵn — không tích thì cài lại mèo vẫn nhớ mọi thứ.
 - **Gỡ cài đặt** nay xóa luôn mục khởi động cùng Windows của bản đã cài (trước đây Windows vẫn cố mở file đã bị xóa). Mục khởi động của bản copy thư mục khác không bị đụng tới.
-- Trình cài đặt hiện hình con mèo trong lúc giải nén; trang Release có hướng dẫn cài (kể cả bước SmartScreen) và ghi chú thay đổi; README có link tải thẳng bản mới nhất.
+- Trình cài đặt hiện màn hình chờ mới trong lúc giải nén: mèo vui nhún nhảy, vẫy đuôi, chớp mắt, có trái tim và ba chấm chờ, thanh tiến trình màu cam; trang Release có hướng dẫn cài (kể cả bước SmartScreen) và ghi chú thay đổi; README có link tải thẳng bản mới nhất.
 
 ## 1.4.0 — Vô tận, cài đặt và tự cập nhật (2026-10-22)
 

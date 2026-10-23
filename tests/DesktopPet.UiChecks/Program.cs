@@ -947,9 +947,9 @@ internal static class Program
         int languageEvents = 0; void CountLanguage() => languageEvents++;
         window.LanguageChanged += CountLanguage;
         window.SetLanguage("vi"); window.SetLanguage("vi");
-        bool languageSet = window.Language == "vi" && languageEvents == 1;
+        bool languageSet = window.UiLanguage == "vi" && languageEvents == 1;
         window.SetLanguage("en"); window.LanguageChanged -= CountLanguage;
-        Check(languageSet && window.Language == "en" && languageEvents == 2, "SetLanguage switches the app's language once per change");
+        Check(languageSet && window.UiLanguage == "en" && languageEvents == 2, "SetLanguage switches the app's language once per change");
         var breaks = Field<PetBreaks>(window, "breaks");
         Check(preferences.Coat == "Black" && preferences.Accessory == "Hat" && renderer.Coat == "Black" && renderer.Accessory == "Hat" &&
               preferences.BreakReminders && preferences.BreakMinutes == 30 && breaks.Enabled && breaks.IntervalSeconds == 1800,

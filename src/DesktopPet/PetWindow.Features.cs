@@ -141,7 +141,7 @@ public sealed partial class PetWindow
     // switch and "Check for updates".
     public PetUpdates? Updates { get; set; }
     public bool AutoUpdate => preferences.AutoUpdate;
-    public string Language => preferences.Language;
+    public string UiLanguage => preferences.Language;
 
     // The welcome's language choice: the same as Settings → General → Language.
     public void SetLanguage(string language)

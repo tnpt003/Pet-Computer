@@ -46,10 +46,11 @@ else { Write-Host "CHANGELOG.md has no section for $version; the notes only say 
 $notes = Join-Path $output "notes-$version.md"
 [IO.File]::WriteAllText($notes, $notesText, (New-Object Text.UTF8Encoding $false))
 $notesArgs = @('--releaseNotes', $notes)
-# The cat (the icon art, transparent) shows while Setup unpacks the app.
+# While Setup unpacks the app it shows Assets\Splash.gif (the happy cat, made by tools/SplashBuilder)
+# with a progress bar in the app's accent colour.
 & $dotnet vpk pack -u $packId -v $version -p $app -e DesktopPet.exe -o $output --packTitle 'Desktop Pet' --packAuthors 'tnpt003' `
     -i (Join-Path $projectRoot 'src\DesktopPet\Assets\Pet.ico') --shortcuts 'Desktop,StartMenuRoot' `
-    --splashImage (Join-Path $projectRoot 'src\DesktopPet\Assets\PetIcon-preview.png') @notesArgs
+    --splashImage (Join-Path $projectRoot 'src\DesktopPet\Assets\Splash.gif') --splashProgressColor '#C2561F' @notesArgs
 if ($LASTEXITCODE -ne 0) { throw 'vpk pack failed.' }
 Write-Host "Packages for $version in $output"
 if ($Upload) {

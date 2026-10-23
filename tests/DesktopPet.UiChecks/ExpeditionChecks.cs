@@ -289,6 +289,8 @@ internal static class ExpeditionChecks
             prefs.Language = "vi"; Tick(0.3);
             check(window.ExpeditionMapText.Contains("Viễn chinh — Đường thử") && window.ExpeditionMapText.Contains("Chuẩn bị chuyến"), "The map follows the pet's language");
             Shot("Pet expedition", "expedition-map-vi.png");
+            prefs.Language = "ja"; Tick(0.3);
+            Shot("Pet expedition", "expedition-map-ja.png");
             prefs.Language = "en";
             window.Reset();
             check(!window.ExpeditionMapOpen && Count("Pet expedition") == 0 && !behavior.Quiet && !window.BattleOwnsPet, "Bringing the pet back closes the map");

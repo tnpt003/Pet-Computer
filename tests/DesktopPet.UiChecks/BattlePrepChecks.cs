@@ -73,7 +73,7 @@ internal static class BattlePrepChecks
             "The swing plays at the weapon's pace and stops by itself; no battle starts and the real cat is untouched");
         if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string review && SetupWindow()?.Content is FrameworkElement setupContent)
         {
-            foreach (var (shotLanguage, shotFile) in new[] { ("en", "battle-setup-en.png"), ("vi", "battle-setup-vi.png") })
+            foreach (var (shotLanguage, shotFile) in new[] { ("en", "battle-setup-en.png"), ("vi", "battle-setup-vi.png"), ("ja", "battle-setup-ja.png") })
             {
                 prefs.Language = shotLanguage; Prep(0.3); setupContent.UpdateLayout();
                 var shot = new System.Windows.Media.Imaging.RenderTargetBitmap((int)Math.Ceiling(setupContent.ActualWidth + 12), (int)Math.Ceiling(setupContent.ActualHeight + 12), 96, 96, System.Windows.Media.PixelFormats.Pbgra32);

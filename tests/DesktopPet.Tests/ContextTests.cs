@@ -106,6 +106,9 @@ internal static class ContextTests
         check(PetBreaks.IsBreakLine(id) && PetBreaks.IsBreakLine(viId) && !text.Contains("{name}") && !viText.Contains("{name}") &&
               id.Contains(":en:") && viId.Contains(":vi:") && !PetBreaks.IsBreakLine("hello:vi:1"),
             "Built-in reminder lines follow the language and never show placeholders");
+        var (jaId, jaText) = PetBreaks.LocalLine("ja", "Mochi", new Random(3));
+        check(jaId.Contains(":ja:") && jaText.Any(c => c >= '぀' && c <= 'ヿ') && !jaText.Contains("{name}"),
+            "Japanese has its own built-in reminder lines");
 
         var context = new PetContext();
         var change = context.Update(false, PetContext.AwayAfter - 1);

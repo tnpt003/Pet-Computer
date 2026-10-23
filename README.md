@@ -21,7 +21,7 @@ of attention now produce distinct expressions. See [emotion triggers and control
 **Install (Windows 10/11 x64):** download `PetComputer-win-Setup.exe` from the
 [latest release](https://github.com/tnpt003/Pet-Computer/releases/latest) and run it. No admin
 rights are needed; the cat starts right away and gets a Desktop and Start menu shortcut. The
-first start shows a welcome with a few tips, the language and **Start with Windows** (ticked);
+first start shows a welcome with a few tips, the language (English, Tiếng Việt or 日本語) and **Start with Windows** (ticked);
 a copied pet that is still running is closed so the installed one takes over. The
 installer is not code-signed yet, so Windows SmartScreen may say "Windows protected your PC":
 click **More info → Run anyway**. Installed pets update themselves: they check GitHub on start

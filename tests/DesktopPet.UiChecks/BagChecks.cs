@@ -204,6 +204,11 @@ internal static class BagChecks
             window.OpenBattleBag(PetWindow.BagStatsTab);
             check(window.BattleBagText.Contains("Túi đồ · Viễn chinh") && window.BattleBagText.Contains("Chỉ số") && window.BattleBagText.Contains("HP tối đa"), "The Bag follows the language");
             Shot("Pet bag", "bag-expedition-stats-vi.png");
+            prefs.Language = "ja"; window.OpenBattleBag(PetWindow.BagStatsTab);
+            Shot("Pet bag", "bag-expedition-stats-ja.png");
+            window.ShowBattleBagTab(PetWindow.BagRelicsTab); Shot("Pet bag", "bag-expedition-relics-ja.png");
+            window.ShowBattleBagTab(PetWindow.BagCardsTab); Shot("Pet bag", "bag-expedition-cards-ja.png");
+            window.ShowBattleBagTab(PetWindow.BagStatsTab);
             prefs.Language = "en";
 
             // A low screen: at most the screen's height less 24, the content scrolls.

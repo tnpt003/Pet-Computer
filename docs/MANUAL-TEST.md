@@ -447,3 +447,9 @@ Tự động đã có: Phần thưởng trên sảnh (ô có hình, khóa, Mới
 - [ ] Mở túi đồ hoặc bảng chọn thẻ đè lên icon: icon đó dời sang ô trống. Đổi Scale (Settings → Display) giữa trận: icon giữ đúng cỡ, đúng chỗ; đồ bay vẫn trúng mèo/slime.
 - [ ] Pause/menu: icon và mọi thứ đang bay đứng yên. App fullscreen: icon ẩn, thoát fullscreen hiện lại. Kết thúc trận: icon mờ dần rồi biến mất. Đổi màn hình/độ phân giải giữa trận: icon về đúng ô trên màn hình mới.
 - [ ] Cảm giác: app có quá ít/nhiều, virus có phiền quá không; trận đông quái + icon không giật hơn trước.
+
+### Tiếng Nhật (2026-10-23, J1–J4)
+- [ ] Cài đặt → Chung: hộp Language / Ngôn ngữ có English, Tiếng Việt, 日本語. Chọn 日本語 rồi Lưu: menu chuột phải, khay, Cài đặt, thẻ trạng thái, nhật ký đổi sang tiếng Nhật, chữ không vỡ ô (font Yu Gothic). Đổi lại English/Tiếng Việt: mọi thứ như cũ.
+- [ ] Ở 日本語 bật AI và Lời nói: mèo nói tiếng Nhật (gọi bạn là ご主人, có tên mèo), cả câu chào, đói, chán, ngủ dậy, ngày lễ; nhắc nghỉ (cả khi tắt AI) bằng tiếng Nhật. Thẻ trạng thái "điều mèo học được" đọc được (tên hành động tiếng Nhật).
+- [ ] Ở 日本語 vào trận: HUD, bảng chuẩn bị, chọn thẻ, túi đồ (Chỉ số/Thẻ/Di vật), bản đồ Phiêu lưu/Viễn chinh, kết quả, Vô tận, icon app (Không phản hồi, quảng cáo), chữ trên slime (CHẶN/MIỄN, tag tinh anh), tên quái/thẻ/di vật/kỷ vật đều tiếng Nhật và không bị cắt.
+- [ ] Bộ cài: máy Windows tiếng Nhật, lần đầu mở sau khi cài thì hộp chào mừng chọn sẵn 日本語 (máy khác: theo ngôn ngữ Windows như cũ).

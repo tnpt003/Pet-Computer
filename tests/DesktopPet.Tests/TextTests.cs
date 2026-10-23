@@ -11,8 +11,8 @@ static class TextTests
             "Known languages are kept; anything else becomes English");
         check(PetLanguage.UsesEnglish("ja") && PetLanguage.UsesEnglish("en") && !PetLanguage.UsesEnglish("vi"),
             "Every language but Vietnamese starts from the English names and layouts");
-        check(PetLanguage.Choices("en").SequenceEqual(PetLanguage.Offered) && PetLanguage.Choices("ja").Last() == "ja",
-            "A language that is not offered yet still shows as the current choice");
+        check(PetLanguage.Offered.SequenceEqual(new[] { "en", "vi", "ja" }) && PetLanguage.Choices("ja").SequenceEqual(PetLanguage.Offered),
+            "English, Vietnamese and Japanese are offered");
 
         check(PetText.Pick("vi", "Làm ngay", "Do now") == "Làm ngay" && PetText.Pick("en", "Làm ngay", "Do now") == "Do now",
             "Vietnamese and English come straight from the code");

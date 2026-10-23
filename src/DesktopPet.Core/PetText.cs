@@ -15,8 +15,8 @@ public static class PetLanguage
 {
     public const string Vietnamese = "vi", English = "en", Japanese = "ja";
     public static readonly string[] All = { Vietnamese, English, Japanese };
-    // What the welcome and Settings offer, in that order. Japanese joins once it is translated.
-    public static readonly string[] Offered = { English, Vietnamese };
+    // What the welcome and Settings offer, in that order.
+    public static readonly string[] Offered = { English, Vietnamese, Japanese };
     public static string Normalize(string? value) => Array.IndexOf(All, value) >= 0 ? value! : English;
     // Every language but Vietnamese starts from the English text, names and layouts.
     public static bool UsesEnglish(string? language) => language != Vietnamese;

@@ -281,8 +281,12 @@ internal static class Program
         welcomeLanguage.SelectedIndex = 1; welcome.UpdateLayout();
         Check(WelcomeSays("Biểu tượng mèo ở khay") && (string)welcomeButtons[0].Content == "Bắt đầu" && (string)welcomeAutostart.Content == "Khởi động cùng Windows",
             "Choosing Tiếng Việt rewrites the welcome at once");
+        welcomeLanguage.SelectedIndex = 2; welcome.UpdateLayout();
+        Check((string)welcomeLanguage.SelectedItem == "日本語" && PetWelcome.Chosen(welcomeLanguage) == "ja" && (string)welcomeButtons[0].Content == "はじめる"
+              && (string)welcomeAutostart.Content == "Windows の起動時に開始", "The welcome offers 日本語 and rewrites itself in Japanese");
         Check(PetWelcome.DefaultLanguage(false, "vi") == "vi" && PetWelcome.DefaultLanguage(false, "en") == "en" &&
-              PetWelcome.DefaultLanguage(true, "en") == (System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "vi" ? "vi" : "en"),
+              PetWelcome.DefaultLanguage(false, "ja") == "ja" &&
+              PetWelcome.DefaultLanguage(true, "en") == (System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName switch { "vi" => "vi", "ja" => "ja", _ => "en" }),
             "The welcome keeps a returning user's language; a new user starts in Windows' language");
         if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string welcomeReview && welcome.Content is FrameworkElement welcomeRoot)
         {
@@ -438,6 +442,12 @@ internal static class Program
                 .Invoke(window, new object[] { new PetLine("x:en:test", "What kind of animal is that cursor? Mochi wants to know!") });
             await Task.Delay(150);
             SaveBubble("speech-en-long");
+            pet.Speech.Hide(); await Task.Delay(50);
+            pet.Speech.Step(pet, 20);
+            MethodOf("ShowSpeech")
+                .Invoke(window, new object[] { new PetLine("x:ja:test", "{name}のおなかがぐーぐー鳴ってる…ご主人、Mochiにごはんちょうだい！".Replace("{name}", "Mochi")) });
+            await Task.Delay(150);
+            SaveBubble("speech-ja-long");
         }
         pet.Action = PetAction.Dragging; pet.Grounded = false;
         await Task.Delay(80);
@@ -673,7 +683,7 @@ internal static class Program
         form.Talks.IsChecked = true;
         Check(kindsOff && kindsOn && chattinessOff && form.Chattiness.IsEnabled && form.BreakInterval.IsEnabled == (form.BreakReminders.IsChecked == true),
             "Dependent settings are greyed out while their switch is off");
-        Check(form.Talks.IsChecked == true && form.Language.SelectedIndex == 0 && form.Language.Items.Count == 2 && (string)form.Language.Items[0] == "English" &&
+        Check(form.Talks.IsChecked == true && form.Language.SelectedIndex == 0 && form.Language.Items.Count == 3 && (string)form.Language.Items[0] == "English" && (string)form.Language.Items[2] == "日本語" &&
               form.Chattiness.SelectedIndex == 1 && form.Forget != null && form.Autostart != null,
             "Settings default to English; speech defaults to talking, sometimes, with a forget link; startup lives in General");
         // Not installed (a build): the Updates card shows the version, automatic updates on but greyed, no check button.
@@ -743,7 +753,7 @@ internal static class Program
             customize = Field<Window>(window, "settingsWindow");
             form = Field<PetSettingsForm>(window, "settingsForm");
         }
-        // Japanese (not offered yet): translated text where the table has it, English elsewhere.
+        // Japanese: translated text, English for anything a table misses.
         string languageBeforeJa = preferences.Language;
         customize.Close();
         PetText.ClearMissing();
@@ -752,7 +762,7 @@ internal static class Program
         customize = Field<Window>(window, "settingsWindow");
         form = Field<PetSettingsForm>(window, "settingsForm");
         Check(form.LanguageIds.Last() == "ja" && (string)form.Language.SelectedItem == "日本語" && form.Language.Items.Count == 3,
-            "A language set before it is offered stays the current choice in Settings");
+            "Settings offers Japanese and shows it as the current choice");
         window.ContextMenu!.IsOpen = true;
         var japaneseMenu = window.ContextMenu.Items.OfType<System.Windows.Controls.MenuItem>().Select(i => i.Header as string).ToArray();
         window.ContextMenu.IsOpen = false;
@@ -890,6 +900,10 @@ internal static class Program
         LifeChecks(window, pet, preferences);
         LedgeChecks.Run(window, pet, behavior, preferences, Check);
         FrameChecks.Run(window, pet, Check);
+        // Review only (with PET_RENDER_REVIEW): the battle, Adventure, Expedition and bag panels in
+        // another language, to look at their layout. Checks that read English text fail then.
+        string? reviewLanguage = Environment.GetEnvironmentVariable("PET_REVIEW_LANGUAGE");
+        if (reviewLanguage != null) { window.SetLanguage(reviewLanguage); PetText.ClearMissing(); }
         await BattleChecks.Run(window, pet, behavior, preferences, Check);
         await BattleRulesChecks.Run(window, pet, Check);
         await TutorialChecks.Run(window, pet, Check);
@@ -903,6 +917,8 @@ internal static class Program
         await BagChecks.Run(window, pet, behavior, preferences, Check);
         await ContentChecks.Run(window, pet, behavior, preferences, Check);
         await AcceptanceChecks.Run(window, pet, behavior, preferences, Check);
+        if (reviewLanguage != null)
+            Console.WriteLine($"REVIEW {reviewLanguage}: untranslated in battle panels: {string.Join(" | ", PetText.Missing)}");
         window.ShowControls();
         Check(window.ContextMenu!.IsOpen, "Existing pet controls can be opened by a second launch notification");
         window.ContextMenu.IsOpen = false;

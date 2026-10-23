@@ -112,11 +112,17 @@ internal static class UpgradeChecks
             if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string review && Find("Pet upgrade")?.Content is FrameworkElement content)
             {
                 window.PickBattleUpgrade(window.Battle!.UpgradeOffer![1].Id);
-                content.UpdateLayout();
-                var shot = new System.Windows.Media.Imaging.RenderTargetBitmap((int)Math.Ceiling(content.ActualWidth + 12), (int)Math.Ceiling(content.ActualHeight + 12), 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
-                shot.Render(content);
-                var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder(); encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(shot));
-                using var stream = File.Create(Path.Combine(review, "adventure-upgrade-en.png")); encoder.Save(stream);
+                foreach (var (shotLanguage, shotFile) in new[] { ("en", "adventure-upgrade-en.png"), ("ja", "adventure-upgrade-ja.png") })
+                {
+                    prefs.Language = shotLanguage; Call(window, "UpdateBattleUpgrade");
+                    var upgradePanel = Find("Pet upgrade")!.Content as FrameworkElement ?? content;
+                    upgradePanel.UpdateLayout();
+                    var shot = new System.Windows.Media.Imaging.RenderTargetBitmap((int)Math.Ceiling(upgradePanel.ActualWidth + 12), (int)Math.Ceiling(upgradePanel.ActualHeight + 12), 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
+                    shot.Render(upgradePanel);
+                    var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder(); encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(shot));
+                    using var stream = File.Create(Path.Combine(review, shotFile)); encoder.Save(stream);
+                }
+                prefs.Language = "en"; Call(window, "UpdateBattleUpgrade");
             }
             window.Reset();
             check(!window.BattleActive && !window.BattleUpgradeOpen && Find("Pet upgrade") == null, "Bringing the pet back closes the battle and the panel");

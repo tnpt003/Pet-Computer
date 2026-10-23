@@ -14,7 +14,12 @@ public static class PetWelcome
 {
     // A new user (no preferences file yet) starts in Windows' language; a returning one keeps theirs.
     public static string DefaultLanguage(bool newUser, string current) =>
-        !newUser ? current : CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "vi" ? "vi" : "en";
+        !newUser ? current : CultureInfo.CurrentUICulture.TwoLetterISOLanguageName switch
+        {
+            PetLanguage.Vietnamese => PetLanguage.Vietnamese,
+            PetLanguage.Japanese => PetLanguage.Japanese,
+            _ => PetLanguage.English
+        };
 
     // The language id picked in the box (its Tag holds the ids, in order).
     public static string Chosen(ComboBox box) => ((string[])box.Tag)[Math.Max(0, box.SelectedIndex)];

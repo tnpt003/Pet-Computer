@@ -12,32 +12,32 @@ LANGUAGES = ("vi", "en", "ja")  # mirrors PetLanguage.All in C#
 FALLBACK = {"ja": "en"}
 # How a learned line from the other language is named (the UI shows one language only).
 CATEGORY_NAMES = {
-    "hello": {"vi": "câu chào", "en": "a greeting"},
-    "welcome_back": {"vi": "câu chào khi gặp lại", "en": "a welcome back"},
-    "petted": {"vi": "câu khi được vuốt", "en": "a petting line"},
-    "treat_thanks": {"vi": "câu cảm ơn đồ ăn", "en": "a treat thank-you"},
-    "play": {"vi": "câu khi chơi", "en": "a play line"},
-    "thrown_rough": {"vi": "câu khi bị ném mạnh", "en": "a rough-throw line"},
-    "thrown_fun": {"vi": "câu khi được tung", "en": "a fun-throw line"},
-    "back": {"vi": "câu khi sen quay lại", "en": "a you're-back line"},
-    "battle_won": {"vi": "câu khi thắng trận", "en": "a battle-won line"},
-    "battle_lost": {"vi": "câu khi thua trận", "en": "a battle-lost line"},
-    "battle_record": {"vi": "câu khi có kỷ lục mới", "en": "a new-record line"},
-    "break": {"vi": "câu nhắc nghỉ", "en": "a break reminder"},
-    "wake_up": {"vi": "câu khi thức dậy", "en": "a wake-up line"},
-    "sleepy": {"vi": "câu buồn ngủ", "en": "a sleepy line"},
-    "lonely": {"vi": "câu nhớ sen", "en": "a lonely line"},
-    "hungry": {"vi": "câu đòi ăn", "en": "a hungry line"},
-    "bored": {"vi": "câu chán", "en": "a bored line"},
-    "morning": {"vi": "câu buổi sáng", "en": "a morning line"},
-    "night": {"vi": "câu buổi tối", "en": "a night line"},
-    "idle": {"vi": "câu nói vu vơ", "en": "a chatter line"},
-    "birthday": {"vi": "câu chúc sinh nhật", "en": "a birthday wish"},
-    "anniversary": {"vi": "câu kỷ niệm ngày gặp nhau", "en": "an anniversary line"},
-    "tet": {"vi": "câu chúc Tết", "en": "a Lunar New Year wish"},
-    "mid_autumn": {"vi": "câu Trung thu", "en": "a Mid-Autumn line"},
-    "halloween": {"vi": "câu Halloween", "en": "a Halloween line"},
-    "christmas": {"vi": "câu Giáng sinh", "en": "a Christmas line"},
+    "hello": {"vi": "câu chào", "en": "a greeting", "ja": "あいさつ"},
+    "welcome_back": {"vi": "câu chào khi gặp lại", "en": "a welcome back", "ja": "再会のあいさつ"},
+    "petted": {"vi": "câu khi được vuốt", "en": "a petting line", "ja": "なでられたときのセリフ"},
+    "treat_thanks": {"vi": "câu cảm ơn đồ ăn", "en": "a treat thank-you", "ja": "おやつのお礼"},
+    "play": {"vi": "câu khi chơi", "en": "a play line", "ja": "遊ぶときのセリフ"},
+    "thrown_rough": {"vi": "câu khi bị ném mạnh", "en": "a rough-throw line", "ja": "強く投げられたときのセリフ"},
+    "thrown_fun": {"vi": "câu khi được tung", "en": "a fun-throw line", "ja": "放り投げられたときのセリフ"},
+    "back": {"vi": "câu khi sen quay lại", "en": "a you're-back line", "ja": "おかえりのセリフ"},
+    "battle_won": {"vi": "câu khi thắng trận", "en": "a battle-won line", "ja": "勝ったときのセリフ"},
+    "battle_lost": {"vi": "câu khi thua trận", "en": "a battle-lost line", "ja": "負けたときのセリフ"},
+    "battle_record": {"vi": "câu khi có kỷ lục mới", "en": "a new-record line", "ja": "新記録のセリフ"},
+    "break": {"vi": "câu nhắc nghỉ", "en": "a break reminder", "ja": "休憩のお知らせ"},
+    "wake_up": {"vi": "câu khi thức dậy", "en": "a wake-up line", "ja": "起きたときのセリフ"},
+    "sleepy": {"vi": "câu buồn ngủ", "en": "a sleepy line", "ja": "眠いときのセリフ"},
+    "lonely": {"vi": "câu nhớ sen", "en": "a lonely line", "ja": "さみしいときのセリフ"},
+    "hungry": {"vi": "câu đòi ăn", "en": "a hungry line", "ja": "おなかがすいたときのセリフ"},
+    "bored": {"vi": "câu chán", "en": "a bored line", "ja": "たいくつなときのセリフ"},
+    "morning": {"vi": "câu buổi sáng", "en": "a morning line", "ja": "朝のセリフ"},
+    "night": {"vi": "câu buổi tối", "en": "a night line", "ja": "夜のセリフ"},
+    "idle": {"vi": "câu nói vu vơ", "en": "a chatter line", "ja": "ひとりごと"},
+    "birthday": {"vi": "câu chúc sinh nhật", "en": "a birthday wish", "ja": "誕生日のお祝い"},
+    "anniversary": {"vi": "câu kỷ niệm ngày gặp nhau", "en": "an anniversary line", "ja": "出会った記念日のセリフ"},
+    "tet": {"vi": "câu chúc Tết", "en": "a Lunar New Year wish", "ja": "旧正月のお祝い"},
+    "mid_autumn": {"vi": "câu Trung thu", "en": "a Mid-Autumn line", "ja": "中秋節のセリフ"},
+    "halloween": {"vi": "câu Halloween", "en": "a Halloween line", "ja": "ハロウィンのセリフ"},
+    "christmas": {"vi": "câu Giáng sinh", "en": "a Christmas line", "ja": "クリスマスのセリフ"},
 }
 MAX_TEXT = 120
 RECENT_LINES = 20
@@ -102,6 +102,6 @@ class Speech:
         line_language = rest.partition(":")[0]
         if language in LANGUAGES and line_language in LANGUAGES and line_language not in (language, FALLBACK.get(language)):
             names = CATEGORY_NAMES.get(category, {})
-            return names.get(language) or names.get(FALLBACK.get(language, "")) or ("một câu nói" if language == "vi" else "a line")
+            return names.get(language) or names.get(FALLBACK.get(language, "")) or {"vi": "một câu nói", "ja": "セリフ"}.get(language, "a line")
         text = self.texts.get(line_id, line_id)
         return "“" + (text if len(text) <= 28 else text[:27] + "…") + "”"

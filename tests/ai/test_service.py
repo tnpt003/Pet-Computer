@@ -15,7 +15,7 @@ sys.path.insert(0, str(ROOT / "ai"))
 from service import Brain, COMMANDS, day_rhythm, handle
 from learning import Learner, context as learning_context
 from seasons import Calendar
-from speech import Speech
+from speech import CATEGORY_NAMES, Speech
 
 
 class BrainTests(unittest.TestCase):
@@ -404,23 +404,42 @@ class SpeechAndLearningTests(unittest.TestCase):
         self.assertEqual(self.brain.describe_learned("act:night/hungry:CHASE_TAIL", "en"), "Chasing its tail · night, hungry")
         self.assertEqual(self.brain.describe_learned("act:day/ok:SIT", "vi"), "Ngồi · ban ngày")
 
-    def test_japanese_falls_back_to_english_until_translated(self):
+    def test_japanese_speaks_its_own_lines(self):
         speech = Speech(ROOT / "ai/lines.json")
         rng = random.Random(2)
         picked = speech.pick("hungry", "ja", "Balanced", "Mochi", lambda _: 1, rng)
-        self.assertTrue(picked["id"].startswith(("hungry:ja:", "hungry:en:")))
-        en_id = speech.lines["hello"]["en"][0][0]
-        self.assertTrue(speech.describe(en_id, "ja").startswith("“"))  # The English line it spoke is quoted.
+        self.assertTrue(picked["id"].startswith("hungry:ja:"))
+        ja_id = speech.lines["hello"]["ja"][0][0]
+        self.assertTrue(speech.describe(ja_id, "ja").startswith("“"))
+        self.assertEqual(speech.describe(ja_id, "en"), "a greeting")  # No Japanese text in the English UI.
+        self.assertEqual(speech.describe(ja_id, "vi"), "câu chào")
         vi_id = speech.lines["hello"]["vi"][0][0]
-        self.assertFalse(speech.describe(vi_id, "ja").startswith("“"))  # A Vietnamese line is named, not quoted.
-        self.assertTrue(self.brain.describe_learned("act:night/hungry:CHASE_TAIL", "ja"))
-        self.assertTrue(self.step(chattiness=0, language="ja")["speech"]["id"].startswith(("hello:ja:", "hello:en:")))
+        self.assertEqual(speech.describe(vi_id, "ja"), "あいさつ")  # A Vietnamese line is named, not quoted.
+        en_id = speech.lines["hello"]["en"][0][0]
+        self.assertTrue(speech.describe(en_id, "ja").startswith("“"))  # English spoken before (the fallback) is quoted.
+        self.assertEqual(self.brain.describe_learned("act:night/hungry:CHASE_TAIL", "ja"), "しっぽ追い · 夜, 空腹")
+        self.assertTrue(self.step(chattiness=0, language="ja")["speech"]["id"].startswith("hello:ja:"))
+        # A situation without Japanese lines (a user's lines.json) still speaks English.
+        fallback = Speech(ROOT / "ai/lines.json")
+        del fallback.lines["hungry"]["ja"]
+        self.assertTrue(fallback.pick("hungry", "ja", "Balanced", "Mochi", lambda _: 1, rng)["id"].startswith("hungry:en:"))
+
+    def test_every_category_has_japanese_like_english(self):
+        speech = Speech(ROOT / "ai/lines.json")
+        for category, languages in speech.lines.items():
+            en, ja = languages.get("en", []), languages.get("ja", [])
+            self.assertEqual(len(ja), len(en), category)
+            self.assertEqual([profiles for _, _, profiles in ja], [profiles for _, _, profiles in en], category)
+            self.assertEqual([("{name}" in text) for _, text, _ in ja], [("{name}" in text) for _, text, _ in en], category)
+        self.assertTrue(any("ご主人" in text for _, text, _ in speech.lines["hungry"]["ja"]))
+        for category in CATEGORY_NAMES:
+            self.assertIn("ja", CATEGORY_NAMES[category], category)
 
     def test_lines_file_is_complete_for_both_languages(self):
         speech = Speech(ROOT / "ai/lines.json")
         ids = []
         for category, languages in speech.lines.items():
-            for language in ("vi", "en"):
+            for language in ("vi", "en", "ja"):
                 options = languages.get(language, [])
                 self.assertGreaterEqual(len(options), 5, f"{category}/{language}")
                 ids += [line_id for line_id, text, _ in options]

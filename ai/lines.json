@@ -1,5 +1,5 @@
 {
-  "_comment": "Speech lines by situation and language. {name} is the pet's name; the user is 'sen' (vi) / 'human' (en). A line may be a string or {\"text\": ..., \"personality\": [\"Playful\", \"Calm\", \"Curious\", \"Balanced\"]} to limit it to those profiles. Keep lines short (under 60 characters). Restart the AI after editing; publish again to update the standalone copy.",
+  "_comment": "Speech lines by situation and language. {name} is the pet's name; the user is 'sen' (vi) / 'human' (en) / 'ご主人' (ja). A line may be a string or {\"text\": ..., \"personality\": [\"Playful\", \"Calm\", \"Curious\", \"Balanced\"]} to limit it to those profiles. Keep lines short (under 60 characters). Restart the AI after editing; publish again to update the standalone copy.",
   "hello": {
     "vi": [
       "Chào sen! {name} có mặt rồi đây~",
@@ -16,6 +16,14 @@
       "Hey human, over here!",
       "A brand new day with {name}!",
       "Meow meow, you're here!"
+    ],
+    "ja": [
+      "ご主人、こんにちは！{name}が来たよ〜",
+      "にゃー！今日は{name}に会いたかった？",
+      "{name}、遊ぶ準備できたよ！",
+      "ご主人、こっちこっち！",
+      "{name}と新しい一日のはじまり！",
+      "にゃーにゃー、来てくれた！"
     ]
   },
   "welcome_back": {
@@ -32,6 +40,13 @@
       "Finally, my human returns!",
       "{name} missed you sooo much!",
       "Welcome back! Pet {name} once, please~"
+    ],
+    "ja": [
+      "どこ行ってたの？{name}、すごくさみしかった！",
+      "おかえり！{name}ずーっと待ってたよ〜",
+      "やっとご主人が帰ってきた！",
+      "{name}、すっごく会いたかった！",
+      "おかえり！{name}を一回なでて〜"
     ]
   },
   "petted": {
@@ -54,6 +69,16 @@
       {"text": "You're so good at this! More!", "personality": ["Playful"]},
       {"text": "Mm… that's acceptable.", "personality": ["Calm"]},
       {"text": "Why are your hands so warm?", "personality": ["Curious"]}
+    ],
+    "ja": [
+      "ゴロゴロ〜 そこそこ、ご主人！",
+      "気持ちいい、もっと〜",
+      "{name}はご主人が一番好き！",
+      "ゴロゴロ… 気持ちいいにゃ",
+      "あとちょっとだけ〜",
+      {"text": "なでるの上手！もっともっと！", "personality": ["Playful"]},
+      {"text": "ふむ… 悪くない。", "personality": ["Calm"]},
+      {"text": "どうしてご主人の手はあったかいの？", "personality": ["Curious"]}
     ]
   },
   "treat_thanks": {
@@ -72,6 +97,14 @@
       "You're the best! One more bite?",
       "Nom nom… perfect!",
       "{name} will remember this forever!"
+    ],
+    "ja": [
+      "おいしい！ありがとう、ご主人〜",
+      "おさかな！おさかな！{name}おさかな大好き！",
+      "おなかいっぱい、えへへ",
+      "ご主人最高！もう一口いい？",
+      "もぐもぐ… 最高！",
+      "{name}、このことずっと忘れないよ！"
     ]
   },
   "play": {
@@ -90,6 +123,14 @@
       "This game is so fun!",
       "{name} will win this time!",
       {"text": "How does this ball even roll?", "personality": ["Curious"]}
+    ],
+    "ja": [
+      "ボール！ボール！{name}がつかまえた！",
+      "もっと遊ぼう、ご主人！",
+      "{name}のジャンプを見てて！",
+      "この遊び、すっごく楽しい！",
+      "今度こそ{name}が勝つよ！",
+      {"text": "このボール、どうやって転がってるの？", "personality": ["Curious"]}
     ]
   },
   "thrown_rough": {
@@ -108,6 +149,14 @@
       "Oof! That was mean",
       "Ouch… softer next time, okay?",
       "The world is going round and round…"
+    ],
+    "ja": [
+      "わっ！やさしくして、ご主人！",
+      "目が回る… ぐるぐるする",
+      "{name}はボールじゃないよ！",
+      "うっ！ひどいにゃ",
+      "いたた… 次はやさしくね？",
+      "世界がぐるぐる回ってる…"
     ]
   },
   "battle_won": {
@@ -126,6 +175,14 @@
       "Another round?",
       {"text": "Done. Time for a little rest.", "personality": ["Calm"]},
       {"text": "Again! Again! Where are the slimes?", "personality": ["Playful"]}
+    ],
+    "ja": [
+      "勝った！{name}の木の剣、どうだった？",
+      "スライムはもういないよ、ご主人！",
+      "えへへ、{name}は騎士ねこ！",
+      "もう一回やる？",
+      {"text": "おしまい。ちょっと休もう。", "personality": ["Calm"]},
+      {"text": "もう一回！もう一回！スライムはどこ？", "personality": ["Playful"]}
     ]
   },
   "battle_lost": {
@@ -144,6 +201,14 @@
       "Help {name} out next time?",
       "It's okay, practice makes perfect!",
       {"text": "Losing once is fine.", "personality": ["Calm"]}
+    ],
+    "ja": [
+      "ぶー、スライム多すぎ…",
+      "次は{name}が勝つもん！",
+      "目が回る… {name}ちょっと休むね…",
+      "次は{name}を助けてくれる？",
+      "大丈夫、練習あるのみ！",
+      {"text": "一回負けるくらい平気。", "personality": ["Calm"]}
     ]
   },
   "battle_record": {
@@ -160,6 +225,13 @@
       "Write it down: a new record!",
       "Slimes, are you scared of {name} yet?",
       "Hehe, {name} is getting stronger!"
+    ],
+    "ja": [
+      "新記録！{name}すごいでしょ？",
+      "前よりもっといい感じ！",
+      "書いといて：新記録だよ！",
+      "スライムたち、{name}が怖くなった？",
+      "えへへ、{name}どんどん強くなってる！"
     ]
   },
   "thrown_fun": {
@@ -178,6 +250,14 @@
       "{name} can fly!",
       "Nice landing, right?",
       {"text": "A little flight is nice.", "personality": ["Calm"]}
+    ],
+    "ja": [
+      "わーい〜 飛ぶの楽しい！",
+      "無事に着地！",
+      "もう一回！もう一回！",
+      "{name}は飛べるんだ！",
+      "いい着地だったでしょ？",
+      {"text": "ちょっとした空の旅もいいね。", "personality": ["Calm"]}
     ]
   },
   "back": {
@@ -198,6 +278,15 @@
       "Welcome back, human!",
       {"text": "You're back, let's play again!", "personality": ["Playful"]},
       {"text": "Such a calm nap… oh, you're back.", "personality": ["Calm"]}
+    ],
+    "ja": [
+      "おかえり！{name}ちょっとお昼寝してたよ〜",
+      "あ、いた！どこ行ってたの？",
+      "にゃー！ご主人が帰るまで{name}夢見てたよ〜",
+      "休憩おわった？{name}はおわったよ！",
+      "おかえり、ご主人！",
+      {"text": "おかえり、また遊ぼう！", "personality": ["Playful"]},
+      {"text": "静かなお昼寝… あ、おかえり。", "personality": ["Calm"]}
     ]
   },
   "break": {
@@ -216,6 +305,14 @@
       "You're working so hard, take five!",
       "{name} just stretched, your turn!",
       "Relax those shoulders, human~"
+    ],
+    "ja": [
+      "ご主人、お水を一口飲もう！",
+      "ずっと座ってるね、{name}と伸びしよう〜",
+      "目を休めて、ちょっと遠くを見よう！",
+      "がんばりすぎだよ、ひと休みしよう！",
+      "{name}は今伸びしたよ、次はご主人の番！",
+      "肩の力を抜いて、ご主人〜"
     ]
   },
   "wake_up": {
@@ -232,6 +329,13 @@
       "I'm up! Anything to eat, human?",
       "I dreamed of a giant fish…",
       "Time for a big stretch~"
+    ],
+    "ja": [
+      "ふぁ〜 {name}よく寝た",
+      "あれ、{name}うとうとしてた…",
+      "起きたよ！何か食べるものある、ご主人？",
+      "大きなおさかなの夢を見た…",
+      "思いっきり伸びをしよう〜"
     ]
   },
   "sleepy": {
@@ -248,6 +352,13 @@
       "My eyes keep closing…",
       "Yawn… just a quick nap",
       "{name}'s battery is almost empty…"
+    ],
+    "ja": [
+      "ねむい…",
+      "{name}疲れちゃった、ちょっと休ませて",
+      "まぶたが閉じちゃう…",
+      "ふぁ… ちょっとだけお昼寝",
+      "{name}の電池がもうすぐ切れそう…"
     ]
   },
   "lonely": {
@@ -266,6 +377,14 @@
       "You're so busy, huh…",
       "Just look at {name} for a second…",
       "Sniff… so lonely"
+    ],
+    "ja": [
+      "だれも{name}と遊んでくれない…",
+      "ご主人… いる？",
+      "{name}、すごくさみしい…",
+      "ご主人、忙しいんだね…",
+      "ちょっとだけ{name}を見て…",
+      "ぐすん… さみしいにゃ"
     ]
   },
   "hungry": {
@@ -284,6 +403,14 @@
       "So hungry, so hungry…",
       "{name} smells fish somewhere…",
       "It's {name}'s dinner time!"
+    ],
+    "ja": [
+      "{name}のおなかがぐーぐー鳴ってる…",
+      "ご主人、{name}にごはんちょうだい！",
+      "おさかなある？一匹だけ…",
+      "おなかすいた、おなかすいた…",
+      "{name}、どこかでおさかなのにおいがする…",
+      "{name}のごはんの時間だよ！"
     ]
   },
   "bored": {
@@ -302,6 +429,14 @@
       "Anyone want to play with {name}?",
       "You work all the time…",
       {"text": "Anything new happening today?", "personality": ["Curious"]}
+    ],
+    "ja": [
+      "たいくつ… 遊ぼうよ、ご主人",
+      "ボール出して、お願い！",
+      "{name}、たいくつでたまらない",
+      "だれか{name}と遊んでくれない？",
+      "ご主人、ずっとお仕事してる…",
+      {"text": "今日は何か新しいことある？", "personality": ["Curious"]}
     ]
   },
   "morning": {
@@ -318,6 +453,13 @@
       "The morning sun feels nice~",
       "Where's {name}'s breakfast?",
       "{name} will be super active today!"
+    ],
+    "ja": [
+      "おはよう、ご主人！",
+      "朝だよ、遊ぼう！",
+      "朝のお日さま、気持ちいい〜",
+      "{name}の朝ごはんはどこ？",
+      "今日の{name}は元気いっぱい！"
     ]
   },
   "night": {
@@ -334,6 +476,13 @@
       "{name} is getting sleepy with you…",
       "Pretty moon tonight, see it?",
       "Take a little rest, okay?"
+    ],
+    "ja": [
+      "もう遅いよ、寝よう、ご主人…",
+      "こんな時間までまだ起きてるの？",
+      "{name}もいっしょに眠くなってきた…",
+      "今夜は月がきれい、見える？",
+      "ちょっと休んでね？"
     ]
   },
   "idle": {
@@ -358,6 +507,17 @@
       {"text": "What kind of animal is that cursor?", "personality": ["Curious"]},
       {"text": "Wanna play tag, human?", "personality": ["Playful"]},
       {"text": "So peaceful…", "personality": ["Calm"]}
+    ],
+    "ja": [
+      "にゃー〜",
+      "いい天気だね",
+      "{name}がご主人の画面を守ってるよ",
+      "ららら〜",
+      "ご主人、何してるの？",
+      "{name}は世界一のねこ",
+      {"text": "あのカーソルって何の動物？", "personality": ["Curious"]},
+      {"text": "ご主人、おにごっこしよう？", "personality": ["Playful"]},
+      {"text": "おだやかだね…", "personality": ["Calm"]}
     ]
   },
   "birthday": {
@@ -374,6 +534,13 @@
       "Today is your day, human! Meow~",
       "{name} gives you a birthday head bump!",
       "One year older and still my favorite human~"
+    ],
+    "ja": [
+      "お誕生日おめでとう、ご主人！{name}が一番大好き〜",
+      "お誕生日おめでとう！{name}にもケーキある？",
+      "今日はご主人の日！にゃー〜",
+      "{name}からお誕生日の頭ごっつん！",
+      "またひとつ大人になっても、一番好きなご主人〜"
     ]
   },
   "anniversary": {
@@ -390,6 +557,13 @@
       "Thanks for keeping {name} another year!",
       "Remember the day {name} arrived?",
       "{name} still likes you best!"
+    ],
+    "ja": [
+      "{name}とご主人、またいっしょに一年！",
+      "今日はふたりの記念日だね、ご主人〜",
+      "今年も{name}といてくれてありがとう！",
+      "{name}が来た日、覚えてる？",
+      "{name}はやっぱりご主人が一番好き！"
     ]
   },
   "tet": {
@@ -406,6 +580,13 @@
       "New year, new {name}… mostly the same",
       "Is there sticky rice cake for {name}?",
       "Don't work too hard this new year, human!"
+    ],
+    "ja": [
+      "旧正月おめでとう、ご主人！{name}にお年玉ある？",
+      "テトだよ！{name}がいい一年を願ってるよ！",
+      "新しい年、新しい{name}… ほぼ同じだけど",
+      "{name}にもおもちある？",
+      "新しい年はがんばりすぎないでね、ご主人！"
     ]
   },
   "mid_autumn": {
@@ -422,6 +603,13 @@
       "Happy Mid-Autumn, human~",
       "Let's watch the moon together~",
       "Look at all the lanterns, human!"
+    ],
+    "ja": [
+      "中秋節だよ！{name}に月餅ある？",
+      "まんまるお月さま、{name}もちょうちんほしい！",
+      "中秋節おめでとう、ご主人〜",
+      "いっしょにお月見しよう〜",
+      "ちょうちんがいっぱいだよ、ご主人！"
     ]
   },
   "halloween": {
@@ -438,6 +626,13 @@
       "Halloween! {name} is a witch's cat today!",
       "What's your costume, human?",
       "{name} is off to get treats, meow!"
+    ],
+    "ja": [
+      "トリック・オア・トリート、ご主人！",
+      "ばあ！{name}はこわ〜いおばけねこ〜",
+      "ハロウィンだ！今日の{name}は魔女のねこ！",
+      "ご主人の仮装は何？",
+      "{name}、お菓子をもらいに行ってくるにゃ！"
     ]
   },
   "christmas": {
@@ -454,6 +649,13 @@
       "{name} wants to nap under the tree~",
       "{name} is your present this year!",
       "Is it snowing yet? {name} wants to see~"
+    ],
+    "ja": [
+      "メリークリスマス、ご主人！",
+      "サンタさん、{name}にプレゼントくれたかな？",
+      "{name}、ツリーの下でお昼寝したい〜",
+      "今年のプレゼントは{name}だよ！",
+      "もう雪ふってる？{name}見たい〜"
     ]
   },
   "new_year": {
@@ -470,6 +672,13 @@
       "Play with {name} more this year, okay?",
       "Did you stay up for midnight, human?",
       "{name} starts the year with a nap~"
+    ],
+    "ja": [
+      "あけましておめでとう、ご主人！",
+      "新年だ！{name}がご主人の幸せを願ってるよ！",
+      "今年はもっと{name}と遊んでね？",
+      "年越しまで起きてた、ご主人？",
+      "{name}の一年はお昼寝からスタート〜"
     ]
   },
   "womens_day": {
@@ -486,6 +695,13 @@
       "Rest today, {name} has it covered!",
       "{name} picked you a flower (imaginary)",
       "Stay as happy as {name}, okay?"
+    ],
+    "ja": [
+      "国際女性デーおめでとう！",
+      "今日は{name}から頭ごっつん！",
+      "今日はゆっくり休んで、{name}にまかせて！",
+      "{name}がお花をつんできたよ（想像の）",
+      "{name}みたいにずっとハッピーでいてね？"
     ]
   },
   "vn_womens_day": {
@@ -502,6 +718,13 @@
       "{name} is extra good today, for you~",
       "Got flowers yet? Here's one from {name}!",
       "{name} wishes you a really happy day!"
+    ],
+    "ja": [
+      "ベトナム女性の日おめでとう！",
+      "10月20日だよ！{name}がすてきな一日を願ってるよ！",
+      "今日の{name}はご主人のために特別いい子〜",
+      "もうお花もらった？{name}から一輪どうぞ！",
+      "{name}がご主人のとってもハッピーな一日を願ってるよ！"
     ]
   }
 }

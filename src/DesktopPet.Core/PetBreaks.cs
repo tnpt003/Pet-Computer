@@ -48,9 +48,14 @@ public sealed class PetBreaks
         "Human, time for a sip of water!", "Stand up and stretch with {name}~", "Rest your eyes, look far away for a bit!"
     };
 
+    private static readonly string[] Japanese =
+    {
+        "ご主人、お水を一口飲もう！", "ずっと座ってるね、{name}と伸びしよう〜", "目を休めて、ちょっと遠くを見よう！"
+    };
+
     public static (string Id, string Text) LocalLine(string language, string name, Random random)
     {
-        var lines = PetLanguage.UsesEnglish(language) ? English : Vietnamese;
+        var lines = language switch { PetLanguage.Vietnamese => Vietnamese, PetLanguage.Japanese => Japanese, _ => English };
         int index = random.Next(lines.Length);
         return ($"break:local:{language}:{index}", lines[index].Replace("{name}", string.IsNullOrWhiteSpace(name) ? "Mochi" : name));
     }

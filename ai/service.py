@@ -40,6 +40,10 @@ LEARNED_NAMES = {
            "LOOK": "Looking around", "FOLLOW_MOUSE": "Following the mouse", "SEEK_ATTENTION": "Asking for attention",
            "ROLL_OVER": "Rolling over", "CHASE_TAIL": "Chasing its tail", "SCRATCH": "Scratching", "morning": "morning",
            "day": "daytime", "evening": "evening", "night": "night", "hungry": "hungry", "bored": "bored", "tired": "tired"},
+    "ja": {"WALK": "おさんぽ", "IDLE": "ぶらぶら", "SIT": "おすわり", "SLEEP": "おねんね", "JUMP": "ジャンプ", "LOOK": "きょろきょろ",
+           "FOLLOW_MOUSE": "マウスを追いかける", "SEEK_ATTENTION": "かまってアピール", "ROLL_OVER": "ごろーん", "CHASE_TAIL": "しっぽ追い",
+           "SCRATCH": "爪とぎ", "morning": "朝", "day": "昼", "evening": "夕方", "night": "夜", "hungry": "空腹", "bored": "たいくつ",
+           "tired": "疲れ"},
 }
 BUSY_STATES = frozenset({"Dragging", "Thrown", "Jumping", "PreparingJump", "Sleeping", "Waking", "Grooming", "Stretching", "SeekingAttention",
                          "Kneading", "RollingOver", "ChasingTail", "Scratching", "Sneezing", "Climbing"})

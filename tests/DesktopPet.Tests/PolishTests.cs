@@ -91,6 +91,10 @@ internal static class PolishTests
         check(!PetSounds.CreateWave("meow", 1).SequenceEqual(PetSounds.CreateWave("meow", 2)), "Cartoon cues vary voice excerpt, pitch and volume");
         check(cues.All(wave => wave.Length <= 44 + 22050 * 2 * 1.2 && BitConverter.ToInt16(wave, 44) == 0 && BitConverter.ToInt16(wave, wave.Length - 2) == 0),
             "Every cartoon cue stays under 1.2 seconds with smooth silent endpoints");
+        check(PetSounds.Gain(0) == 0 && PetSounds.Gain(-1) == 0 && PetSounds.Gain(double.NaN) == 0 && PetSounds.Gain(1) == 1 && PetSounds.Gain(0.5) <= 0.3,
+            "The volume curve: 0 is silent, 100% is full, half way is clearly quieter (not half the amplitude)");
+        check(cues.Concat(new[] { PetSounds.CreateWave("swoosh", 1) }).All(wave => Math.Abs(PetSounds.Seconds(wave) - (wave.Length - 44) / 44100.0) < 1e-9),
+            "A cue lasts its data over the 22,050 Hz byte rate (the next cue waits for all of it)");
         var ball = new ToyBall { X = 300 };
         ball.Push(18); check(ball.VX < 0, "Click right of ball pushes left");
         double strong = Math.Abs(ball.VX);

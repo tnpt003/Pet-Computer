@@ -683,13 +683,15 @@ internal static class Program
               cat.Name.Text == preferences.Name && cat.Coat.Items.Count == 10 && cat.Tuning != null && cat.Save.IsVisible &&
               customizeWindow.Height <= settingsArea.Bottom - settingsArea.Top && customizeWindow.Top >= settingsArea.Top,
             "Customize opens next to Settings with Profile, Look, Habits and Keepsake cards and fits the pet's monitor");
-        // Each window saves only its own fields: Customize keeps the volume being edited in Settings.
-        double volumeEditing = preferences.Volume;
-        form.Volume.Value = volumeEditing > 0.5 ? 0.2 : 0.8;
+        // Each window saves only its own fields: Customize keeps the volume being edited in Settings
+        // (the volume plays at the dragged value straight away, 2026-10-23).
+        double volumeEditing = preferences.Volume, volumeDragged = volumeEditing > 0.5 ? 0.2 : 0.8;
+        form.Volume.Value = volumeDragged;
+        Check(preferences.Volume == volumeDragged, "The volume applies while it is dragged");
         string nameEditing = preferences.Name;
         cat.Name.Text = nameEditing + "X";
         cat.Save.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
-        Check(preferences.Name == nameEditing + "X" && preferences.Volume == volumeEditing && Field<Window?>(window, "customizeWindow") == null && customize.IsVisible,
+        Check(preferences.Name == nameEditing + "X" && preferences.Volume == volumeDragged && form.Volume.Value == volumeDragged && Field<Window?>(window, "customizeWindow") == null && customize.IsVisible,
             "Saving Customize changes the cat only; Settings stays open with its own unsaved edits");
         preferences.Name = nameEditing;
         form.Volume.Value = volumeEditing;

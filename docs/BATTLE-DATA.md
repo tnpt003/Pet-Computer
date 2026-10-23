@@ -353,7 +353,7 @@ Một chuyến đi gồm nhiều bậc, mỗi bậc chọn một điểm, bậc 
 ```json
 "expedition": {
   "id": "slime_trail", "nameVi": "Đường mòn Slime", "nameEn": "The Slime Trail",
-  "rulesVersion": 5, "unlockAfter": "c1_slime_king", "retreatCost": 0.25, "winHeal": 0.05, "stepThreat": 0.1,
+  "rulesVersion": 5, "unlockAfter": "c1_slime_king", "retreatCost": 0, "winHeal": 0.05, "stepThreat": 0.1,
   "restHeal": 0.3, "maxRelics": 3, "eliteRelics": 2,
   "kindGacha": { "steps": 5, "minLanes": 2, "maxLanes": 3, "weights": { "fight": 45, "event": 20, "elite": 20, "rest": 15 }, "rerollCost": 0.08 },
   "capsules": { "freeHeal": 0.1, "freeCard": 0.5, "goldCost": 0.12, "goldHeal": 0.1, "relic": 40, "rare": 30, "cardHeal": 30 },
@@ -382,7 +382,7 @@ Một chuyến đi gồm nhiều bậc, mỗi bậc chọn một điểm, bậc 
 - id trận không được trùng nhau và không trùng id màn Phiêu lưu. Chuyến đã lưu ghi id trận, nên đổi id là trận mới.
 - `rulesVersion`: tăng khi đổi luật đủ nhiều để chuyến đang lưu không nên đi tiếp và kỷ lục cũ không nên so. Chuyến đang lưu không khớp (khác `id`/`rulesVersion`, bản đồ khác hình dạng, id trận không còn) sẽ kết thúc khi mở bản đồ, kèm một dòng báo.
 - `unlockAfter`: màn Phiêu lưu phải thắng trước. Nếu dữ liệu không còn màn đó (ví dụ battle.json của bạn thay cả `campaign`), Viễn chinh mở luôn.
-- `retreatCost` (0–1): rời trận của một bậc (Kết thúc trận, đóng app, crash, đặt lại vị trí mèo) thì bậc đó vẫn chờ đánh lại với cùng seed, nhưng mèo mất phần này của HP tối đa. HP về 0 thì chuyến kết thúc (thua). Trận đang đánh khi đóng app được tính lúc mở bản đồ lần sau.
+- `retreatCost` (0–1): rời trận của một bậc (Kết thúc trận, đóng app, crash, đặt lại vị trí mèo) thì bậc đó vẫn chờ đánh lại với cùng seed, nhưng mèo mất phần này của HP tối đa. HP về 0 thì chuyến kết thúc (thua). Trận đang đánh khi đóng app được tính lúc mở bản đồ lần sau. Bản gốc từ 2026-10-23 là `0` (người dùng: thoát Battle Mode thì giữ tiến trình để chơi tiếp): rời trận không mất máu, chuyến giữ nguyên, bậc đánh lại từ đầu.
 - `winHeal` (0–1): thắng một bậc thì hồi phần này của HP tối đa (ngoài hồi giữa các đợt như thường).
 - `stepThreat` (0–0,5): quái mỗi bậc mạnh hơn bậc trước chừng này (bậc 1 ×1, bậc 2 ×1,1…), nhân với `threat` của trận.
 - Bản đồ được bốc một lần từ seed của chuyến khi bắt đầu và được lưu lại; mỗi điểm có seed trận riêng suy ra từ seed chuyến, nên đóng/mở bản đồ hay tiếp tục sau khi mở lại app không đổi bản đồ hay trận.

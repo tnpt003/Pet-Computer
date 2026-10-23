@@ -385,7 +385,8 @@
   // encounter for each node from "fights"/"elites" (never the same twice in one step) and keeps
   // that map. The cat's HP and build go on from step to step; "winHeal" (share of max HP) comes back
   // after a won step. "stepThreat": enemies get that much stronger per step. Leaving a step's battle
-  // (End, closing the app) lets it be fought again for "retreatCost" of the max HP. Encounters are
+  // (End, leaving Battle Mode, closing the app) keeps the run: the step waits to be fought again,
+  // for "retreatCost" of the max HP (0 since 2026-10-23: leaving costs nothing). Encounters are
   // clear stages (same keys as Adventure stages, no reward or tip); their ids are stable (a saved
   // run names them) and never an Adventure stage's. "unlockAfter": the Adventure stage to win first.
   // "kindGacha" (instead of "steps", 2026-10-22): the map shows only the boss at first; each of the
@@ -423,7 +424,7 @@
   },
   "expedition": {
     "id": "slime_trail", "nameVi": "Đường mòn Slime", "nameEn": "The Slime Trail",
-    "rulesVersion": 5, "unlockAfter": "c1_slime_king", "retreatCost": 0.25, "winHeal": 0.05, "stepThreat": 0.1,
+    "rulesVersion": 5, "unlockAfter": "c1_slime_king", "retreatCost": 0, "winHeal": 0.05, "stepThreat": 0.1,
     "restHeal": 0.3, "maxRelics": 3, "eliteRelics": 2,
     "keepsakes": [
       { "id": "cup_bronze", "kind": "cup", "tier": "bronze", "difficulty": "Easy", "exact": true, "nameVi": "Cúp đồng viễn chinh", "nameEn": "Bronze Expedition cup" },

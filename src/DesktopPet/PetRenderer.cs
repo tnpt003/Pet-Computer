@@ -112,6 +112,13 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         base.OnRender(dc);
         var p = ComputePose();
         dc.PushTransform(new TranslateTransform(PickupAnimation.Padding, PickupAnimation.Padding));
+        // Brought to the main screen (PetWindow.BringHome): shrinks or pops around the feet, falls in.
+        bool hop = TeleportPop != 1 || TeleportDrop != 0;
+        if (hop)
+        {
+            dc.PushTransform(new TranslateTransform(0, -TeleportDrop));
+            dc.PushTransform(new ScaleTransform(TeleportPop, TeleportPop, 56, 107));
+        }
         if (p.PickedUp)
         {
             dc.PushTransform(new RotateTransform(pet.Pickup.Angle, PickupAnimation.AnchorX, PickupAnimation.AnchorY));
@@ -130,8 +137,14 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         DrawOverlays(dc, p);
         if (pet.BattleBuff) DrawCheerSparkles(dc, pet.BattleTime);
         if (pet.BattleShield) DrawShieldBubble(dc, pet.BattleTime);
+        if (hop) { dc.Pop(); dc.Pop(); }
+        if (TeleportPuff is >= 0 and < 1) KeepsakeArt.DrawPuff(dc, TeleportPuff, 56, 66, 92);
         dc.Pop(); // Permanent transparent margin, identical for every state.
     }
+
+    // The "Bring the pet to the main screen" hop, set by PetWindow every frame of it: the cat's
+    // scale around its feet, how far above the floor it is, and the puff (0..1, negative: none).
+    public double TeleportPop = 1, TeleportDrop, TeleportPuff = -1;
 
     private Pose ComputePose()
     {

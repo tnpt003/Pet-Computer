@@ -190,13 +190,89 @@ public sealed partial class PetWindow : Window
         RefreshRestingSpot();
     }
 
+    // Straight to the middle of the main screen (UI checks set the scene with it); the menus use BringHome.
     public void Reset()
+    {
+        bool keepSleeping = PrepareReset();
+        catHop = CatHop.None; ApplyCatHopPose(); // A hop under way ends here.
+        MoveHome(keepSleeping);
+    }
+
+    // "Bring the pet to the main screen": the cat vanishes in a puff, pops up in the middle of the
+    // main screen with another, drops a little and lands surprised (a sleeping cat goes on sleeping,
+    // no surprise). Paused or hidden: straight there, so the rescue always works.
+    public void BringHome()
+    {
+        if (CatTeleporting) return;
+        bool keepSleeping = PrepareReset();
+        if (paused || closed || !IsVisible) { MoveHome(keepSleeping); return; }
+        catHopSleeping = keepSleeping;
+        catHop = CatHop.Vanish; catHopTime = 0;
+        pet.VX = pet.VY = pet.SmoothedWalkVelocity = 0;
+        PlayPetSound("swoosh");
+        ApplyCatHopPose();
+        Present();
+    }
+
+    private enum CatHop { None, Vanish, Appear }
+    private CatHop catHop;
+    private double catHopTime;
+    private bool catHopSleeping;
+    public const double CatVanishSeconds = 0.3, CatAppearSeconds = 0.55, CatDropHeight = 36;
+    public bool CatTeleporting => catHop != CatHop.None;
+
+    private void TickCatHop(double dt)
+    {
+        if (catHop == CatHop.None) return;
+        catHopTime += dt;
+        if (catHop == CatHop.Vanish && catHopTime >= CatVanishSeconds)
+        {
+            MoveHome(catHopSleeping);
+            catHop = CatHop.Appear; catHopTime = 0;
+            PlayPetSound("sparkle");
+        }
+        else if (catHop == CatHop.Appear && catHopTime >= CatAppearSeconds)
+        {
+            catHop = CatHop.None;
+            // Off in manual emotion control (the cat only looks); never for a sleeping cat.
+            if (!catHopSleeping && !pet.Emotions.SleepLocked && pet.Action != PetAction.Sleeping) pet.Emotions.Startle();
+            System.Diagnostics.Trace.WriteLine("The pet was brought to the main screen.");
+        }
+        ApplyCatHopPose();
+    }
+
+    // The same timing as the keepsake's hop (PetWindow.Keepsake.cs), plus a short fall on arrival.
+    private void ApplyCatHopPose()
+    {
+        double pop = 1, drop = 0, puff = -1, t = catHopTime;
+        if (catHop == CatHop.Vanish)
+        {
+            double v = Math.Min(1, t / CatVanishSeconds);
+            pop = v < 0.25 ? 1 + v / 0.25 * 0.18 : 1.18 * (1 - (v - 0.25) / 0.75);
+            puff = v * 0.45;
+        }
+        else if (catHop == CatHop.Appear)
+        {
+            double u = Math.Min(1, t / 0.32), fall = Math.Min(1, t / 0.4);
+            pop = 1 + 2.7 * Math.Pow(u - 1, 3) + 1.7 * Math.Pow(u - 1, 2);
+            drop = CatDropHeight * (1 - fall * fall);
+            puff = 0.35 + 0.65 * Math.Min(1, t / CatAppearSeconds);
+        }
+        renderer.TeleportPop = Math.Max(0, pop); renderer.TeleportDrop = drop; renderer.TeleportPuff = puff;
+    }
+
+    private bool PrepareReset()
     {
         EndBattle(); CloseBattleHub(); CloseBattlePrep(); CloseAdventureMap(); CloseExpeditionMap(); CloseBattleBag(); CloseBattleSummary(); CloseBattleNotice(); CloseBattleTutorial();
         CancelFeatureActivity();
         bool keepSleeping = pet.Emotions.SleepLocked || pet.Action == PetAction.Sleeping;
         Interact("reset");
         EndDrag(false);
+        return keepSleeping;
+    }
+
+    private void MoveHome(bool keepSleeping)
+    {
         bounds = WorkArea(Forms.Screen.PrimaryScreen ?? Forms.Screen.AllScreens[0]);
         pet.X = (bounds.Left + bounds.Right - settings.Width) / 2;
         pet.Y = bounds.Bottom - settings.Height;
@@ -229,6 +305,9 @@ public sealed partial class PetWindow : Window
 
     private void BeginDrag(object sender, MouseButtonEventArgs e)
     {
+        // A held battle (paused, menu, card pick, bag...) freezes the cat: it cannot be picked up.
+        // Nor while it is being brought to the main screen (a puff, under a second).
+        if (BattleFreezesPet || CatTeleporting) { e.Handled = true; return; }
         CancelFeatureActivity();
         behavior.WakeByClick(pet);
         pet.Emotions.Attention(click: true);
@@ -378,7 +457,7 @@ public sealed partial class PetWindow : Window
             }
             // A paused battle also holds the cat's physics: a throw waits mid-air with its
             // position and velocity and goes on after Resume (one normal frame, no catch-up).
-            if (!paused && !pressPending && !BattleFreezesPet)
+            if (!paused && !pressPending && !BattleFreezesPet && !CatTeleporting)
             {
                 double cursorX = CursorPosition().X;
                 accumulator += dt;
@@ -393,7 +472,10 @@ public sealed partial class PetWindow : Window
                 }
             }
         }
-        if (!paused) { pet.AnimationTime += dt; pet.ActionTime += dt; pet.Motion.Step(pet, dt, settings.WalkSpeed); if (pet.Motion.Landing.TakeSound()) PlayPetSound(Landing.Sound); pet.Thought.Step(pet, dt); pet.Speech.Step(pet, dt); TickPendingSpeech(); }
+        if (!paused) TickCatHop(dt);
+        // A held battle freezes the cat's poses too (a dazed cat stops swaying), as Pause does.
+        if (!paused && (!BattleFreezesPet || dragging)) { pet.AnimationTime += dt; pet.ActionTime += dt; pet.Motion.Step(pet, dt, settings.WalkSpeed); if (pet.Motion.Landing.TakeSound()) PlayPetSound(Landing.Sound); }
+        if (!paused) { pet.Thought.Step(pet, dt); pet.Speech.Step(pet, dt); TickPendingSpeech(); }
         Present(interpolate: !dragging && !paused && !pressPending);
         double interval = FramePeriod() * 1000 / 2;
         if (timer.Interval.TotalMilliseconds != interval) timer.Interval = TimeSpan.FromMilliseconds(interval);

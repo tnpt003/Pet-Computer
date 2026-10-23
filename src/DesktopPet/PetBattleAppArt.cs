@@ -107,6 +107,25 @@ public static class AppArt
     }
     private static readonly Geometry TabShape = Parse("M -7,-3 L -5,-7 L 1,-7 L 3,-3 L 7,-3 L 7,7 L -7,7 Z");
 
+    // A flying browser tab of the tornado, centred on c (about 30 × 20 at k 1): a white halo for
+    // any desktop, the rounded tab with a coloured dot, a title line and its ×. color: the dot.
+    public static void DrawFlyingTab(DrawingContext dc, Point c, double k, Brush color)
+    {
+        dc.PushTransform(new MatrixTransform(k, 0, 0, k, c.X, c.Y));
+        dc.DrawGeometry(null, HaloPen, FlyingTabShape);
+        dc.DrawGeometry(Paper, ThinInk, FlyingTabShape);
+        dc.DrawRectangle(TabsStripe, null, new Rect(-14.2, 4, 28.4, 4.2));
+        dc.DrawEllipse(color, ThinInk, new Point(-8, -2), 3, 3);
+        dc.DrawLine(ThinInk, new Point(-3, -2), new Point(5, -2));
+        dc.DrawLine(ThinInk, new Point(8.5, -4.5), new Point(12.5, 0.5));
+        dc.DrawLine(ThinInk, new Point(12.5, -4.5), new Point(8.5, 0.5));
+        dc.Pop();
+    }
+    private static readonly Geometry FlyingTabShape = Parse("M -15,9 L -15,-4 Q -15,-9 -10,-9 L 10,-9 Q 15,-9 15,-4 L 15,9 Z");
+    private static readonly Brush TabsStripe = Frozen(255, 0xF7, 0xC2, 0xB0);
+    // The tornado's three tab dots: the Tab app's coral, a gold and a teal.
+    public static readonly Brush[] TabDots = { TabsBack, Gold, UndoBack };
+
     // A bell with a red "99+" badge (angry: a red glow and a frown, the infected app's).
     public static void DrawBell(DrawingContext dc, Point c, double k, bool angry)
     {

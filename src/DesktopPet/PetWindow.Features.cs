@@ -61,7 +61,7 @@ public sealed partial class PetWindow
         var forget = new MenuItem();
         forget.Click += (_, _) => { preferences.RestX = preferences.RestY = null; preferences.RestMonitor = null; returningHome = false; SavePreferences(); };
         var reset = new MenuItem();
-        reset.Click += (_, _) => Reset();
+        reset.Click += (_, _) => BringHome();
         var place = PetUi.MenuItem(PetUi.Place);
         place.Items.Add(visit); place.Items.Add(remember); place.Items.Add(forget); place.Items.Add(new Separator()); place.Items.Add(reset);
         var quiet = new MenuItem { IsCheckable = true, IsChecked = preferences.Quiet };
@@ -379,8 +379,8 @@ public sealed partial class PetWindow
         bool category = kind is "sleep" or "wake" ? preferences.SleepSounds : kind is "annoyed" or "surprised" ? preferences.EmotionSounds : preferences.InteractionSounds;
         // A fullscreen app (game, video, slides) gets no pet sounds; previews still play.
         if (!preview && (context.Fullscreen || !preferences.Sounds || !category || paused || clock.Elapsed.TotalSeconds < soundAfter)) return false;
-        double volume = Math.Clamp(previewVolume ?? preferences.Volume, 0, 1);
-        if (volume <= 0) { if (preview) sound?.Stop(); return false; }
+        double volume = PetSounds.Gain(previewVolume ?? preferences.Volume);
+        if (volume <= 0) { sound?.Stop(); return false; }
         double now = clock.Elapsed.TotalSeconds;
         if (!preview && soundCooldowns.TryGetValue(kind, out double until) && now < until) return false;
         soundAfter = now + 0.7;
@@ -397,7 +397,7 @@ public sealed partial class PetWindow
                 recording[i] = (byte)sample; recording[i + 1] = (byte)(sample >> 8);
             }
             // Let the cartoon cue finish before another cue can replace it.
-            soundAfter = now + (recording.Length - 44) / 44100.0 + (foley ? 0.02 : 0.15);
+            soundAfter = now + PetSounds.Seconds(recording) + (foley ? 0.02 : 0.15);
             soundStream = new MemoryStream(recording);
             soundStream.Position = 0; sound = new SoundPlayer(soundStream); sound.Play();
             return true;

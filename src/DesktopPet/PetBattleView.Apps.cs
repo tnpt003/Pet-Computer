@@ -50,27 +50,45 @@ public sealed partial class BattleFieldView
         }
     }
 
-    // The tab tornado: three tabs circling the cat's middle, the near ones in front, fading out in
-    // its last half second.
+    // The tab tornado: three browser tabs circling the cat's legs on a flat ring, each trailing a
+    // curved swish along the ring. The far half of the ring is drawn first, faded and smaller, so
+    // the tabs read as going round behind the cat; all of it fades out in its last half second.
     private void DrawTabs(DrawingContext dc, double catX, double floor, double time)
     {
-        double radius = (sim.AppRules?.TabRadius ?? 70) * 0.85;
+        double radius = (sim.AppRules?.TabRadius ?? 70) * 0.85, middle = floor - 26;
+        Point On(double a) => new(catX + Math.Cos(a) * radius, middle + Math.Sin(a) * 11);
         dc.PushOpacity(Math.Min(1, sim.TabsRemaining / 0.5));
-        for (int i = 0; i < 3; i++)
-        {
-            double a = time * 5 + i * Math.PI * 2 / 3;
-            double x = catX + Math.Cos(a) * radius, y = floor - 48 + Math.Sin(a) * 12;
-            double size = 1.25 + 0.25 * Math.Sin(a); // Bigger when it passes in front.
-            dc.PushTransform(new RotateTransform(Math.Cos(a) * 30, x, y));
-            AppArt.DrawTab(dc, new Point(x, y), size);
-            dc.Pop();
-            // A short swish behind it.
-            var tail = new Point(catX + Math.Cos(a - 0.35) * radius, floor - 48 + Math.Sin(a - 0.35) * 12);
-            dc.DrawLine(SwishPen, tail, new Point(x, y));
-        }
+        for (int pass = 0; pass < 2; pass++)
+            for (int i = 0; i < 3; i++)
+            {
+                double a = time * 5 + i * Math.PI * 2 / 3;
+                bool front = Math.Sin(a) >= 0;
+                if (front != (pass == 1)) continue;
+                var at = On(a);
+                var swish = new StreamGeometry();
+                using (var g = swish.Open())
+                {
+                    g.BeginFigure(On(a - 0.9), false, false);
+                    for (int s = 1; s <= 6; s++) g.LineTo(On(a - 0.9 + 0.15 * s), true, true);
+                }
+                dc.DrawGeometry(null, front ? SwishPen : SwishBackPen, swish);
+                if (!front) dc.PushOpacity(0.55);
+                double size = 0.8 + 0.25 * Math.Sin(a); // 0.55 at the back, 1.05 in front.
+                dc.PushTransform(new RotateTransform(-Math.Cos(a) * 12, at.X, at.Y));
+                AppArt.DrawFlyingTab(dc, at, size, AppArt.TabDots[i]);
+                dc.Pop();
+                if (!front) dc.Pop();
+            }
         dc.Pop();
     }
-    private static readonly Pen SwishPen = FrozenPen(Frozen(150, 255, 246, 230), 3);
+    private static readonly Pen SwishPen = RoundPen(Frozen(170, 255, 246, 230), 3.5);
+    private static readonly Pen SwishBackPen = RoundPen(Frozen(90, 255, 246, 230), 2.5);
+    private static Pen RoundPen(Brush brush, double width)
+    {
+        var pen = new Pen(brush, width) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round, LineJoin = PenLineJoin.Round };
+        pen.Freeze();
+        return pen;
+    }
 
     // A slime holding an icon with its virus wears a small virus over its head.
     private void DrawVirusMark(DrawingContext dc, Slime slime, double x, double floor, double time)

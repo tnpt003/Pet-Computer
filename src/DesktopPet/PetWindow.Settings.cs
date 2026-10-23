@@ -166,7 +166,13 @@ public sealed partial class PetWindow
             if (!preferences.ClimbWindows) DropLedges(); // A pet on a window falls; a climbing one lets go.
             preferences.ShowTrophies = form.ShowTrophies.IsChecked == true;
             if (!preferences.ShowTrophies) StopAdmiring();
-            if (form.TrophyIds.Length > 0) preferences.TrophyShown = form.TrophyIds[Math.Clamp(form.Trophy.SelectedIndex, 0, form.TrophyIds.Length - 1)];
+            if (form.TrophyIds.Length > 0)
+            {
+                string chosen = form.TrophyIds[Math.Clamp(form.Trophy.SelectedIndex, 0, form.TrophyIds.Length - 1)];
+                // A keepsake on show swaps with its puff, like the keepsake's own menu; otherwise straight away.
+                if (chosen == DisplayedKeepsake?.Id || !preferences.ShowTrophies || !TrophiesVisible || paused || !SwapDisplayed(chosen))
+                    preferences.TrophyShown = chosen;
+            }
             Interact("preferences_changed"); SavePreferences(); customizeWindow?.Close();
         };
         customizeWindow.Closed += (_, _) => { form.PreviewTimer.Stop(); customizeWindow = null; customizeForm = null; };
@@ -218,7 +224,15 @@ public sealed partial class PetWindow
         form.Volume = new Slider { Minimum = 0, Maximum = 1, Value = preferences.Volume, SmallChange = 0.05, LargeChange = 0.1, VerticalAlignment = VerticalAlignment.Center };
         var percent = new TextBlock { Width = 40, TextAlignment = TextAlignment.Right, VerticalAlignment = VerticalAlignment.Center };
         void ShowPercent() => percent.Text = Math.Round(form.Volume.Value * 100) + "%";
-        form.Volume.ValueChanged += (_, _) => ShowPercent(); ShowPercent();
+        // The volume applies while it is dragged (0 silences the cue playing now); Cancel puts it back.
+        double savedVolume = preferences.Volume;
+        form.Volume.ValueChanged += (_, _) =>
+        {
+            ShowPercent();
+            preferences.Volume = form.Volume.Value;
+            if (preferences.Volume <= 0) sound?.Stop();
+        };
+        ShowPercent();
         var volumeRow = new DockPanel();
         DockPanel.SetDock(percent, Dock.Right);
         volumeRow.Children.Add(percent); volumeRow.Children.Add(form.Volume);
@@ -236,7 +250,8 @@ public sealed partial class PetWindow
             Section(L("Âm lượng", "Volume"),
                 Row(L("Âm lượng", "Volume"), volumeRow),
                 Row(L("Nghe thử", "Preview"), previewRow),
-                PetUi.Hint(L("Nghe thử phát cả khi đang tắt âm thanh.", "Preview plays even while sounds are off."))));
+                PetUi.Hint(L("Âm lượng đổi ngay khi kéo (Hủy để trả lại). Nghe thử phát cả khi đang tắt âm thanh.",
+                             "The volume changes as you drag it (Cancel puts it back). Preview plays even while sounds are off."))));
 
         // General: language (labelled in both languages so it is always findable), startup, breaks.
         form.LanguageIds = PetLanguage.Choices(preferences.Language);
@@ -306,7 +321,7 @@ public sealed partial class PetWindow
         settingsWindow = FormWindow(L("Cài đặt", "Settings") + " — " + preferences.Name, SettingsWidth, 520, form.Tabs, form);
         form.Save.Click += (_, _) =>
         {
-            preferences.Volume = form.Volume.Value; preferences.Sounds = form.Sounds.IsChecked == true;
+            preferences.Volume = savedVolume = form.Volume.Value; preferences.Sounds = form.Sounds.IsChecked == true;
             preferences.InteractionSounds = form.InteractionSounds.IsChecked == true; preferences.EmotionSounds = form.EmotionSounds.IsChecked == true;
             preferences.SleepSounds = form.SleepSounds.IsChecked == true;
             string language = form.LanguageIds[Math.Max(0, form.Language.SelectedIndex)];
@@ -326,7 +341,7 @@ public sealed partial class PetWindow
                 PetDialog.Show(settingsWindow, "Desktop Pet", L("Không đổi được cài đặt khởi động cùng Windows.", "Windows startup could not be changed."), "OK", glyph: PetDialog.WarningGlyph);
             sound?.Stop(); Interact("preferences_changed"); SavePreferences(); settingsWindow?.Close();
         };
-        settingsWindow.Closed += (_, _) => { settingsWindow = null; settingsForm = null; };
+        settingsWindow.Closed += (_, _) => { preferences.Volume = savedVolume; settingsWindow = null; settingsForm = null; };
         settingsForm = form;
         settingsWindow.Show();
     }

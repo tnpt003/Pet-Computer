@@ -83,15 +83,16 @@ public sealed class KeepsakeArt : FrameworkElement
             if (tilt != 0) dc.Pop();
             dc.Pop();
         }
-        if (puff is >= 0 and < 1) DrawPuff(dc, w);
+        if (puff is >= 0 and < 1) DrawPuff(dc, puff, w / 2, ArtHeight * 0.55, w);
         dc.Pop();
         dc.Pop();
     }
 
     // The teleport's "poof": a ring of cloud puffs swelling out and fading, with gold sparkles.
-    private void DrawPuff(DrawingContext dc, double w)
+    // t: 0..1; (cx, cy): its middle; w: the width of what vanishes or appears. Also the cat's
+    // (PetRenderer, "Bring the pet to the main screen").
+    public static void DrawPuff(DrawingContext dc, double t, double cx, double cy, double w)
     {
-        double t = puff, cx = w / 2, cy = ArtHeight * 0.55;
         dc.PushOpacity(t < 0.6 ? 1 : 1 - (t - 0.6) / 0.4);
         double ring = 10 + t * (w * 0.45 + 18);
         for (int i = 0; i < 9; i++)

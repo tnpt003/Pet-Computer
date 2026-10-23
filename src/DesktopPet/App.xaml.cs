@@ -74,7 +74,7 @@ public partial class App : Application
         menu.Items.Add(customize);
         var settings = new Forms.ToolStripMenuItem(null, null, (_, _) => pet.ShowPetSettings());
         menu.Items.Add(settings);
-        var reset = new Forms.ToolStripMenuItem(null, null, (_, _) => pet.Reset());
+        var reset = new Forms.ToolStripMenuItem(null, null, (_, _) => pet.BringHome());
         menu.Items.Add(reset);
         // Updates (installed app only): "Update to x" once one is downloaded, else "Check for updates".
         updates = new PetUpdates();

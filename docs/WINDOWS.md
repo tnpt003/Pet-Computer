@@ -506,6 +506,11 @@ The cat's right-click menu is grouped, with Windows' own icon font (no new asset
    About).
 4. **Exit**.
 
+Bring the pet to the main screen (this menu and the tray, 2026-10-23): the cat vanishes in a puff
+where it is, pops up in the middle of the main screen with another puff and sparkles, drops a
+little and lands Surprised (not in manual emotion control; a sleeping cat goes on sleeping). It
+cannot be picked up during the ~0.85 s hop; while paused it is moved straight there.
+
 **Customize…** ({name} ›, the tray menu, or a keepsake's right-click menu, which opens it at the
 keepsake card) is the cat's own window, one scrolling page of cards:
 - **Profile:** name, personality, the user's birthday (day and month, optional; the pet wishes a

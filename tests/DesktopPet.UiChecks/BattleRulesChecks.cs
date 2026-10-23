@@ -64,22 +64,27 @@ internal static class BattleRulesChecks
         check(Math.Abs(pet.X - x) <= Math.Abs(vx) * 0.05 && Math.Abs(pet.Y - y) <= 20 && pet.X != x && Sim().Time - time <= 0.1 + 1e-9 && Sim().CatHp == hp,
             $"After Resume the throw goes on from there: one normal frame, no jump or catch-up ({pet.X - x:F1}, {pet.Y - y:F1} DIPs; {Sim().Time - time:F3} s)");
 
-        // 2. Dragging during the pause: the new drop wins; physics waits for Resume.
+        // 2. The pause holds the cat (user, 2026-10-23): it cannot be picked up, and its poses stop
+        // (a stunned cat's stars and sway hold still).
+        Ground(); TickBattle(1.0 / 60);
+        pet.BattleStun = 1;
         window.SetBattlePaused(true);
         window.Activate();
         await Task.Delay(20);
-        Press(); DragPastThreshold();
-        check(pet.Action == PetAction.Dragging && Sim().Paused, "The cat can be dragged while the battle is paused");
-        Frames(5);
-        Release();
-        var dropped = (pet.X, pet.Y, pet.VX, pet.VY);
+        double pose = pet.AnimationTime, action = pet.ActionTime;
         Frames(20);
-        check(pet.Action == PetAction.Thrown && (pet.X, pet.Y, pet.VX, pet.VY) == dropped && Math.Abs(dropped.VX - vx) > 1,
-            "Dropped during the pause it stays where it was let go, with the drop's velocity (no old snapshot), until Resume");
+        check(pet.AnimationTime == pose && pet.ActionTime == action, "A paused battle freezes the cat's poses (a stunned cat does not sway)");
+        Press(); DragPastThreshold();
+        check(pet.Action != PetAction.Dragging && !window.IsMouseCaptured && !Field<bool>(window, "pressPending") && Sim().Paused,
+            "The cat cannot be picked up while the battle is paused");
+        Release();
         window.SetBattlePaused(false);
-        Frame();
-        check(Math.Abs(pet.X - dropped.X) < 20 && Math.Abs(pet.Y - dropped.Y) < 20, "Resume goes on from the drop point (no teleport)");
-        Ground(); TickBattle(1.0 / 60);
+        Frames(2);
+        check(pet.AnimationTime > pose, "Resume: the poses go on");
+        Press(); DragPastThreshold();
+        check(pet.Action == PetAction.Dragging, "After Resume it can be picked up again");
+        Release(); Ground(); TickBattle(1.0 / 60);
+        pet.BattleStun = 0;
 
         // 3. Pause reasons stack: nothing resumes while another reason holds the battle.
         window.SetBattlePaused(true);
@@ -240,5 +245,28 @@ internal static class BattleRulesChecks
         SetField(window, "battleScreenProbe", null);
         window.Reset();
         window.BattleTuning = new BattleSettings();
+
+        // 7. "Bring the pet to the main screen" (tray and menu): a puff where the cat is, then it pops
+        // up in the middle of the main screen, falls in and is surprised; it cannot be grabbed meanwhile.
+        var home = Floor();
+        double middle = (home.Left + home.Right - 112) / 2, start = home.Left + 30;
+        pet.X = start; Ground(); pet.Emotions.Reset();
+        window.BringHome();
+        Frames(6);
+        check(window.CatTeleporting && pet.X == start, "Bring home: first the cat vanishes in a puff where it is");
+        Press();
+        check(!window.IsMouseCaptured && pet.Action != PetAction.Dragging, "It cannot be picked up during the puff");
+        Release();
+        Frames(20);
+        check(window.CatTeleporting && Math.Abs(pet.X - middle) < 1, $"Then it pops up in the middle of the main screen ({pet.X:F0} vs {middle:F0})");
+        Frames(40);
+        check(!window.CatTeleporting && Math.Abs(pet.X - middle) < 1 && pet.Grounded && pet.Emotions.Target == PetEmotion.Surprised,
+            $"It lands there, surprised ({pet.Emotions.Target})");
+        pet.Emotions.Reset();
+        window.SetPaused(true);
+        pet.X = start;
+        window.BringHome();
+        check(!window.CatTeleporting && Math.Abs(pet.X - middle) < 1, "Paused, it is brought straight there (the rescue always works)");
+        window.SetPaused(false);
     }
 }

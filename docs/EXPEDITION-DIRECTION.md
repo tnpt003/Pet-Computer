@@ -6,7 +6,7 @@ Ngày bàn giao: 2026-10-20. Trạng thái: người dùng đồng ý đưa hư�
 
 Người dùng trả lời "ok theo đề xuất" cho các điểm sau:
 
-1. Rời trận giữa chừng (Kết thúc trận, đóng app, crash, đặt lại mèo): chuyến được lưu ở đầu mỗi điểm; bậc đó đánh lại với cùng seed, HP lúc vào, nhưng trừ 25% HP tối đa (`retreatCost`); HP về 0 thì thua chuyến. Trận bị ngắt do đóng app/crash được tính khi mở bản đồ lần sau.
+1. Rời trận giữa chừng (Kết thúc trận, đóng app, crash, đặt lại mèo): chuyến được lưu ở đầu mỗi điểm; bậc đó đánh lại với cùng seed, HP lúc vào, nhưng trừ 25% HP tối đa (`retreatCost`); HP về 0 thì thua chuyến. (2026-10-23: `retreatCost` thành 0 theo người dùng — rời trận giữ nguyên chuyến, không mất máu.) Trận bị ngắt do đóng app/crash được tính khi mở bản đồ lần sau.
 2. Thua bất kỳ trận nào (kể cả trùm): chuyến kết thúc, chỉ ghi kỷ lục (đi xa nhất), không có phần thưởng an ủi.
 3. Mở Viễn chinh sau khi thắng `c1_slime_king`.
 4. Vũ khí và độ khó chọn một lần đầu chuyến; kỷ lục theo `expedition|r<rulesVersion>|vũ khí|độ khó`, không so với Phiêu lưu.
@@ -17,7 +17,7 @@ Thiết kế tích hợp: bộ điều phối `Expedition`/`ExpeditionRun`/`Expe
 
 ## Tiến độ mốc
 
-- **Mốc 2 — xong (2026-10-21):** một chuyến hoàn chỉnh 5 bậc (giao tranh/tinh anh) + trùm, HP/build mang theo, hồi `winHeal` sau mỗi bậc thắng, quái mạnh dần `stepThreat`, rời trận/crash/resume, bỏ chuyến, kỷ lục, dữ liệu tùy chỉnh chỉ giữ trong bộ nhớ. Chưa có điểm nghỉ/sự kiện, di vật, kỷ vật. Số liệu (`winHeal` 0,05, `stepThreat` 0,1, `retreatCost` 0,25, threat từng trận) là điểm khởi đầu từ mô phỏng, chưa chốt; xem PROGRESS.md.
+- **Mốc 2 — xong (2026-10-21):** một chuyến hoàn chỉnh 5 bậc (giao tranh/tinh anh) + trùm, HP/build mang theo, hồi `winHeal` sau mỗi bậc thắng, quái mạnh dần `stepThreat`, rời trận/crash/resume, bỏ chuyến, kỷ lục, dữ liệu tùy chỉnh chỉ giữ trong bộ nhớ. Chưa có điểm nghỉ/sự kiện, di vật, kỷ vật. Số liệu (`winHeal` 0,05, `stepThreat` 0,1, `retreatCost` 0,25 — 0 từ 2026-10-23, threat từng trận) là điểm khởi đầu từ mô phỏng, chưa chốt; xem PROGRESS.md.
 - **Mốc 3 — xong (2026-10-21):** người dùng "ok" thiết kế: điểm nghỉ (hồi 30% hoặc lấy 1 thẻ), 3 sự kiện (Lữ khách mèo: đổi thẻ; Rương slime: an toàn +10% HP / liều −15% HP lấy di vật ngẫu nhiên; Đền cũ: −20% HP chọn 1 trong 2 di vật), thắng tinh anh chọn 1 trong 2 di vật, 4 di vật có đánh đổi (Chuông phản đòn, Túi cứu trợ, Bùa liều lĩnh, Lông vũ nhẹ), tối đa 3 di vật; bản đồ mới (`rulesVersion` 2, chuyến mốc 2 đang dở kết thúc — người dùng chấp nhận); bot cả chuyến 2 kiểu đi (an toàn/tham lam). Số liệu là điểm khởi đầu, chưa chốt; xem PROGRESS.md.
 - **Mốc 4 — xong (2026-10-21):** người dùng "ok": kỷ vật cho một lần (cúp đồng/bạc/vàng theo lần thắng đầu ở Dễ/Thường/Khó, Khăn viễn chinh khi thắng lần đầu, Đệm slime khi thắng lần đầu ở Thường trở lên), góc trưng bày (kệ nhỏ góc phải dưới màn hình của mèo, xuyên chuột, mặc định bật khi có kỷ vật, tắt trong Cài đặt → Mèo), mèo thỉnh thoảng ra ngắm (C#, không Python). `expedition.json` version 3.
 - **Sau mốc 5 — quay bậc và máy viên nang (2026-10-22):** người dùng muốn gacha loại điểm giữa các bậc (trùm giữ cố định) và đồng ý thêm máy viên nang sau giao tranh. `kindGacha` thay `steps` trong dữ liệu gốc, `capsules` mới, `rulesVersion` 5, `expedition.json` version 4. Chi tiết luật ở BATTLE-DATA.md, số đo ở PROGRESS.md.

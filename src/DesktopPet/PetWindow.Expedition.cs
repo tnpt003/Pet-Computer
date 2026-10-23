@@ -166,6 +166,8 @@ public sealed partial class PetWindow
 
     private string RetreatNote(ExpeditionStepOutcome left) => left.RunOver
         ? LF($"Rời trận khi mèo đã quá yếu: chuyến đi kết thúc ở bậc {left.Step + 1}.", $"The battle was left with the cat too weak: the run ended at step {left.Step + 1}.")
+        : Math.Round(-left.Healed) < 1
+        ? LF($"Đã rời trận bậc {left.Step + 1}: chuyến đi được giữ nguyên, đánh lại được.", $"Left the step {left.Step + 1} battle: the run is kept, it can be fought again.")
         : LF($"Đã rời trận bậc {left.Step + 1}: mất {Math.Round(-left.Healed)} HP, đánh lại được.", $"Left the step {left.Step + 1} battle: {Math.Round(-left.Healed)} HP lost, it can be fought again.");
 
     public bool ExpeditionSelect(int lane)

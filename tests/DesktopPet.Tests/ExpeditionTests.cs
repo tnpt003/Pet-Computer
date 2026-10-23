@@ -82,13 +82,16 @@ internal static class ExpeditionTests
             "A lost battle ends the run: one run counted, its steps won kept as the best");
         check(expedition.Progress.Runs.Contains("run-a") && expedition.Finish(false, 0, build, 1, 1) == default, "The ended run is counted once");
 
-        // Leaving with too little HP ends the run too.
+        // The shipped data (2026-10-23): leaving costs nothing, so even a weak cat keeps its run.
+        check(spec.RetreatCost == 0, "Leaving a step's battle costs no HP in the shipped data");
         var weak = expedition.Start(BattleWeapon.Hammer, BattleDifficulty.Hard, 7, "run-weak");
         weak.Hp = 10;
         expedition.Enter(0);
-        var fallen = expedition.Retreat();
-        check(fallen.RunOver && !fallen.RunWon && expedition.Run == null && expedition.Record(BattleWeapon.Hammer, BattleDifficulty.Hard).Runs == 1,
-            "Leaving a battle with less HP than it costs ends the run as lost");
+        var kept = expedition.Retreat();
+        check(kept.Counted && !kept.RunOver && expedition.Run == weak && weak.Hp == 10 && weak.Fighting == null,
+            "Leaving a battle with little HP keeps the run, the HP and the step");
+        expedition.Abandon();
+        check(expedition.Record(BattleWeapon.Hammer, BattleDifficulty.Hard).Runs == 1, "Giving the run up still counts it");
 
         // A whole run won: the boss ends it; the record keeps the time.
         var full = expedition.Start(BattleWeapon.Sword, BattleDifficulty.Normal, 9, "run-full");

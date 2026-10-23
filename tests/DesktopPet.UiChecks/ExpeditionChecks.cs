@@ -427,8 +427,10 @@ internal static class ExpeditionChecks
                 "Settings offer the owned keepsakes (cups first), the shown one selected");
             settingsForm.Trophy.SelectedIndex = 1;
             settingsForm.Save.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            check(window.KeepsakeHopping && keepsake!.Items[0].Id == "cup_silver", "Saving another keepsake in Customize swaps it with the puff, like its own menu");
+            Keepsake(1.5);
             Call(window, "TickTrophies");
-            check(prefs.TrophyShown == "slime_cushion" && keepsake!.Items.Select(k => k.Id).SequenceEqual(new[] { "slime_cushion" })
+            check(!window.KeepsakeHopping && prefs.TrophyShown == "slime_cushion" && keepsake!.Items.Select(k => k.Id).SequenceEqual(new[] { "slime_cushion" })
                   && Math.Abs(window.TrophyBounds.Width - KeepsakeArt.WidthFor(keepsake.Items) * PetWindow.DisplayScale) < 0.5 && Math.Abs(window.TrophyBounds.Bottom - area.Bottom) < 1,
                 "Choosing the cushion and saving puts the cushion on display instead");
             Shot("Pet trophies", "trophies-cushion.png");

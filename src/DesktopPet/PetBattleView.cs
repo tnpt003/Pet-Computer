@@ -521,7 +521,8 @@ public sealed partial class BattleFieldView : FrameworkElement
         if (targetable && slime.Elite is EliteSpec elite && elite.Tag(Language) is string tag)
         {
             var (shape, width, height) = TagShape(tag);
-            dc.PushTransform(new TranslateTransform(x - width / 2, top - (slime.State == SlimeState.Windup ? 30 : 13) - height));
+            double tagBottom = top - (slime.State == SlimeState.Windup ? 30 : 13);
+            dc.PushTransform(new TranslateTransform(ClearOfCat(x, width, tagBottom - height / 2) - width / 2, tagBottom - height));
             dc.DrawGeometry(null, TextHalo, shape);
             dc.DrawGeometry(ComboGold, null, shape);
             dc.Pop();
@@ -666,6 +667,17 @@ public sealed partial class BattleFieldView : FrameworkElement
         return Numbers[text] = (geometry, formatted.Width, formatted.Height);
     }
 
+    // The cat's window is above the field: a word or a number at the cat's height and over its body
+    // would be hidden behind it, so it moves just clear of the body, on the side its middle is on.
+    // x: the text's middle; y: its vertical middle (field coordinates).
+    private double ClearOfCat(double x, double width, double y)
+    {
+        const double half = 36, height = 104;
+        double cat = sim.CatX - OriginX;
+        if (y < Floor - height || x + width / 2 < cat - half || x - width / 2 > cat + half) return x;
+        return x < cat ? cat - half - width / 2 : cat + half + width / 2;
+    }
+
     private static Geometry? body;
     private static double bodyW, bodyH;
     private static Geometry Body(double w, double h)
@@ -689,10 +701,10 @@ public sealed partial class BattleFieldView : FrameworkElement
         return Tags[text] = (geometry, formatted.Width, formatted.Height);
     }
 
-    private static void DrawWord(DrawingContext dc, string text, Brush fill, double x, double y)
+    private void DrawWord(DrawingContext dc, string text, Brush fill, double x, double y)
     {
         var (shape, width, height) = NumberShape(text, false);
-        dc.PushTransform(new TranslateTransform(x - width / 2, y - height));
+        dc.PushTransform(new TranslateTransform(ClearOfCat(x, width, y - height / 2) - width / 2, y - height));
         dc.DrawGeometry(null, TextHalo, shape);
         dc.DrawGeometry(fill, null, shape);
         dc.Pop();
@@ -828,7 +840,8 @@ public sealed partial class BattleFieldView : FrameworkElement
                 bool heal = effect.Value < 0;
                 string text = heal ? "+" + (-effect.Value).ToString("0", CultureInfo.InvariantCulture) : effect.Value.ToString("0", CultureInfo.InvariantCulture);
                 var (shape, width, height) = NumberShape(text, heal);
-                dc.PushTransform(new TranslateTransform(x - width / 2, y - 26 * k - height));
+                double numberBottom = y - 26 * k;
+                dc.PushTransform(new TranslateTransform((heal ? x : ClearOfCat(x, width, numberBottom - height / 2)) - width / 2, numberBottom - height));
                 dc.DrawGeometry(null, TextHalo, shape);
                 dc.DrawGeometry(heal ? HealGreen : DamageWhite, null, shape);
                 dc.Pop();

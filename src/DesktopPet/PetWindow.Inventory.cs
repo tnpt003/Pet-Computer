@@ -402,7 +402,8 @@ public sealed partial class PetWindow
             string name = info.Name(preferences.Language, sim.Settings) + (view.Live && sim.Cooldown(skill) > 0.05 ? LF($" · còn {Number(sim.Cooldown(skill), "0")} giây", $" · ready in {Number(sim.Cooldown(skill), "0")} s") : "");
             AddStatRow(skills, at++, glyph, name, sim.SkillCooldown(skill), view.Plain.SkillCooldown(skill), 30, false, v => L("hồi ", "every ") + Number(v, "0.#") + L(" giây", " s"), null);
             if (skill == BattleSkill.Heal)
-                AddStatRow(skills, at++, new Border(), L("lượng hồi", "heals"), sim.HealAmount, view.Plain.HealAmount, Math.Max(1, view.Plain.HealAmount * 2.5), true, v => Number(v, "0") + " HP", null);
+                AddStatRow(skills, at++, new Border { CornerRadius = new CornerRadius(6), Background = PetUi.Game.Shadow(0x80),
+                    Child = new BagIcon { Kind = "healAmount", Width = 18, Height = 18 } }, L("Lượng hồi", "Heals"), sim.HealAmount, view.Plain.HealAmount, Math.Max(1, view.Plain.HealAmount * 2.5), true, v => Number(v, "0") + " HP", null);
         }
         var heading = BagLine(L("Kỹ năng", "Skills"), PetUi.SmallSize, Brushes.White, bold: true);
         heading.Margin = new Thickness(0, 0, 0, 2);
@@ -766,6 +767,12 @@ public sealed class BagIcon : FrameworkElement
             case RelicSpec.Light: // A feather.
                 dc.DrawGeometry(Cream, Ink, Shape($"M 19,3 C 9,4 4,12 5,19 C 12,19 19,13 19,3 Z"));
                 dc.DrawLine(Ink, new Point(3, 21), new Point(16, 7));
+                break;
+            case "healAmount": // A green heart with a white "+" and a sparkle: how much a heal gives.
+                dc.DrawGeometry(Green, Ink, Shape($"M 12,21 C 1,14 2,4 8,4 C 10,4 11.3,5.2 12,6.6 C 12.7,5.2 14,4 16,4 C 22,4 23,14 12,21 Z"));
+                dc.DrawLine(PetUi.FrozenPen(Brushes.White, 2.4), new Point(12, 9), new Point(12, 16));
+                dc.DrawLine(PetUi.FrozenPen(Brushes.White, 2.4), new Point(8.5, 12.5), new Point(15.5, 12.5));
+                dc.DrawGeometry(Gold, null, Shape($"M 20,0.5 Q 20.4,2.6 22.5,3 Q 20.4,3.4 20,5.5 Q 19.6,3.4 17.5,3 Q 19.6,2.6 20,0.5 Z"));
                 break;
             case "warning": // A triangle with "!".
                 dc.DrawGeometry(Red, Ink, Shape($"M 12,2.5 L 22,20.5 L 2,20.5 Z"));

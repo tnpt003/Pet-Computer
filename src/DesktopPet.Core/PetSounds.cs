@@ -15,6 +15,11 @@ public static class PetSounds
     public static bool IsBattleEffect(string kind) => kind is "swoosh" or "squish" or "pop" or "sparkle" or "clank";
     // The elite cues mark rarer moments: a longer cooldown than the swing-paced foley.
     public static bool IsEliteCue(string kind) => kind is "sparkle" or "clank";
+    // The slider's 0–1 as a sample gain that sounds even to the ear: half way is clearly quieter,
+    // 0 is silent.
+    public static double Gain(double volume) => Math.Pow(Math.Clamp(double.IsFinite(volume) ? volume : 0, 0, 1), 2);
+    // How long a CreateWave clip plays: its data bytes over the header's byte rate.
+    public static double Seconds(byte[] wave) => wave.Length < 44 ? 0 : (wave.Length - 44) / (double)Math.Max(1, BitConverter.ToInt32(wave, 28));
 
     public static byte[] CreateWave(string kind, int? seed = null)
     {

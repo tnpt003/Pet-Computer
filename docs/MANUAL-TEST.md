@@ -492,3 +492,8 @@ Tự động đã có: Phần thưởng trên sảnh (ô có hình, khóa, Mới
 ### App độc: cập nhật bắt buộc (2026-10-24)
 - [ ] Trong trận có virus: đôi khi một cửa sổ "CẬP NHẬT" rơi xuống giữa mèo và slime; banner lần đầu giải thích. Slime bên kia không đi qua, không đánh được mèo; mèo đi tới đánh tường (tiếng "clank", tường rung, % nhảy lên).
 - [ ] Bấm "Nhắc sau ×2" hai lần: lần đầu còn "Nhắc sau", lần hai tường biến mất. Để yên ~8 s (ít hơn nếu mèo đánh): tự xong. Trùm vẫn nhảy qua. Bấm vào thân tường không chọn slime phía sau. Cầm mèo lên thả sang bên kia tường: mèo đánh slime bên đó bình thường.
+
+### App độc: virus.exe (2026-10-24)
+- [ ] Trong trận có virus: đôi khi một file "virus.exe" (tờ giấy có dấu ☣ tím, chữ xanh) hiện ở ô trống giữa các icon; banner lần đầu giải thích; slime thả nó đeo dấu virus. Vài giây sau nó nhân thêm bản ở ô kề bên; đủ 4 bản thì một icon bị nhiễm và các file biến mất.
+- [ ] Bấm từng file: biến mất (tiếng "pop"). Hạ slime đeo dấu: mọi file biến mất. Cầm mèo lên: file không nhân thêm. Pause: đứng yên. Fullscreen: file ẩn cùng icon. Kết thúc trận: file đóng. Icon app không nhảy vào ô có file.
+- [ ] Kỷ lục Phiêu lưu màn 2–5 và Vô tận bắt đầu lại (phiên bản luật mới; kỷ lục cũ vẫn trong file). Chuyến Viễn chinh đang đi vẫn tiếp tục được.

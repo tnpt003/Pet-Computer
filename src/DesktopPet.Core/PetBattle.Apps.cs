@@ -18,6 +18,10 @@ public sealed partial class BattleSim
     internal readonly List<BattlePopup> popups = new();
     internal readonly List<AppLaunch> launches = new();
     internal readonly List<BattleHazard> hazards = new();
+    internal readonly List<VirusFile> virusFiles = new();
+    public IReadOnlyList<VirusFile> VirusFiles => virusFiles;
+    // When virus.exe next copies itself.
+    private double virusExeClock;
     public IReadOnlyList<DesktopApp> Desktop => desktop;
     public IReadOnlyList<BattlePopup> Popups => popups;
     public IReadOnlyList<BattleHazard> Hazards => hazards;
@@ -65,6 +69,7 @@ public sealed partial class BattleSim
     public bool IsInfector(int slimeId)
     {
         foreach (var a in desktop) if (a.InfectedBy == slimeId) return true;
+        if (virusFiles.Count > 0 && virusFiles[0].SlimeId == slimeId) return true;
         foreach (var l in launches) if (l.Kind == LaunchKind.Goo && l.SlimeId == slimeId) return true;
         return false;
     }
@@ -86,6 +91,7 @@ public sealed partial class BattleSim
     {
         if (col < 0 || col >= GridCols || row < 0 || row >= GridRows || blockedCells.Contains((col, row))) return false;
         foreach (var a in desktop) if (a != self && a.Col == col && a.Row == row) return false;
+        foreach (var f in virusFiles) if (f.Col == col && f.Row == row) return false;
         return true;
     }
 
@@ -132,6 +138,7 @@ public sealed partial class BattleSim
             if (Over) return;
         }
         if (catHeld) return;
+        StepVirusFiles(dt, rules);
         for (int i = popups.Count - 1; i >= 0; i--)
         {
             var popup = popups[i];
@@ -221,6 +228,7 @@ public sealed partial class BattleSim
         popups.Clear();
         foreach (var hazard in hazards) AddEffect(BattleEffectKind.Poof, hazard.X, 20);
         hazards.Clear();
+        RemoveVirusFiles();
     }
 
     // A defeated enemy: every clean icon charges a little; an icon it infected is clean again and a
@@ -234,6 +242,7 @@ public sealed partial class BattleSim
             else Charge(app, rules.KillCharge);
         }
         launches.RemoveAll(l => l.Kind == LaunchKind.Goo && l.SlimeId == slime.Id);
+        if (virusFiles.Count > 0 && virusFiles[0].SlimeId == slime.Id) RemoveVirusFiles();
     }
 
     private void Cure(DesktopApp app)
@@ -248,7 +257,7 @@ public sealed partial class BattleSim
     // one of them can happen).
     private void VirusTurn(AppsSpec rules)
     {
-        double[] weights = { Math.Max(0, rules.InfectWeight), Math.Max(0, rules.LoadingWeight), Math.Max(0, rules.UpdateWeight) };
+        double[] weights = { Math.Max(0, rules.InfectWeight), Math.Max(0, rules.LoadingWeight), Math.Max(0, rules.UpdateWeight), Math.Max(0, rules.VirusExeWeight) };
         double total = weights.Sum();
         if (total <= 0) return;
         int pick = Array.FindIndex(weights, w => w > 0);
@@ -261,8 +270,79 @@ public sealed partial class BattleSim
         {
             case 0: ShootGoo(rules); break;
             case 1: ThrowLoading(rules); break;
-            default: ThrowUpdate(rules); break;
+            case 2: ThrowUpdate(rules); break;
+            default: DropVirusExe(rules); break;
         }
+    }
+
+    // A slime drops virus.exe on a free desktop cell (one outbreak at a time, and only with a clean icon to go for).
+    private void DropVirusExe(AppsSpec rules)
+    {
+        if (virusFiles.Count > 0 || !desktop.Any(a => !a.Infected)) return;
+        var shooters = slimes.Where(s => s.Targetable).ToList();
+        if (shooters.Count == 0 || FreeCell(null) is not (int col, int row)) return;
+        var slime = shooters[appRandom.Next(shooters.Count)];
+        AddVirusFile(slime.Id, col, row);
+        virusExeClock = rules.VirusExeEvery;
+        events.Add(new(BattleEventKind.GooShot, slime.X, slime.Id));
+    }
+
+    private void AddVirusFile(int slimeId, int col, int row)
+    {
+        var file = new VirusFile { Id = nextAppId++, SlimeId = slimeId, Col = col, Row = row, BornAt = Time };
+        virusFiles.Add(file);
+        events.Add(new(BattleEventKind.VirusFileAdded, Left + (col + 0.5) * (Right - Left) / GridCols, file.Id));
+    }
+
+    // Every VirusExeEvery s one copy appears next to a file (anywhere free when none has room); with
+    // VirusExeCopies of them they infect a clean icon and are gone (they wait while none can be taken).
+    private void StepVirusFiles(double dt, AppsSpec rules)
+    {
+        if (virusFiles.Count == 0) return;
+        if (virusFiles.Count >= rules.VirusExeCopies) { InfectFromFiles(rules); return; }
+        virusExeClock -= dt;
+        if (virusExeClock > 0) return;
+        virusExeClock = rules.VirusExeEvery;
+        var spots = new List<(int, int)>();
+        foreach (var f in virusFiles)
+            foreach (var (c, r) in new[] { (f.Col - 1, f.Row), (f.Col + 1, f.Row), (f.Col, f.Row - 1), (f.Col, f.Row + 1) })
+                if (CellOpen(c, r, null) && !spots.Contains((c, r))) spots.Add((c, r));
+        (int, int)? spot = spots.Count > 0 ? spots[appRandom.Next(spots.Count)] : FreeCell(null);
+        if (spot is (int col, int row)) AddVirusFile(virusFiles[0].SlimeId, col, row);
+        if (virusFiles.Count >= rules.VirusExeCopies) InfectFromFiles(rules);
+    }
+
+    private void InfectFromFiles(AppsSpec rules)
+    {
+        int busy = desktop.Count(a => a.Infected) + launches.Count(l => l.Kind == LaunchKind.Goo);
+        var clean = desktop.Where(a => !a.Infected).ToList();
+        if (busy >= rules.MaxInfected || clean.Count == 0 || Find(virusFiles[0].SlimeId) is not { Targetable: true } slime) return;
+        var app = clean[appRandom.Next(clean.Count)];
+        app.InfectedBy = slime.Id;
+        app.ScrubsLeft = Math.Max(1, rules.ScrubClicks);
+        app.AttackClock = rules.AttackEvery(app.Kind) * 0.5;
+        app.CrawlClock = rules.CrawlEvery;
+        app.InfectedAt = Time;
+        events.Add(new(BattleEventKind.AppInfected, IconX(app), app.Id));
+        RemoveVirusFiles();
+    }
+
+    private void RemoveVirusFiles()
+    {
+        if (virusFiles.Count == 0) return;
+        virusFiles.Clear();
+        events.Add(new(BattleEventKind.VirusFilesGone, 0));
+    }
+
+    // A click on a virus.exe copy deletes it (whatever the cat is doing).
+    public bool DeleteVirusFile(int id)
+    {
+        int index = virusFiles.FindIndex(f => f.Id == id);
+        if (index < 0 || Over || Paused || ChoosingUpgrade) return false;
+        var file = virusFiles[index];
+        virusFiles.RemoveAt(index);
+        events.Add(new(BattleEventKind.VirusFileDeleted, Left + (file.Col + 0.5) * (Right - Left) / GridCols, file.Id));
+        return true;
     }
 
     // The forced update's half width and height on the strip (the view draws it, the walls use it).
@@ -612,6 +692,7 @@ public sealed partial class BattleSim
         launches.Clear();
         popups.Clear();
         hazards.Clear();
+        virusFiles.Clear();
         TabsRemaining = 0;
         infectTimer = double.NaN;
         hurts.Clear();

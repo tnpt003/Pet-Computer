@@ -440,7 +440,10 @@ public enum BattleEventKind
     // Malware a slime threw onto the field (Value: its id): it opened, the user closed it.
     HazardOpened, HazardClosed,
     // A click on a forced update's Later that did not close it yet; the cat's hit on it (Value: its id).
-    HazardTapped, WallHit
+    HazardTapped, WallHit,
+    // virus.exe (Value: the file's id): dropped or copied, deleted by a click; all its copies gone
+    // (they infected an icon, or their slime fell).
+    VirusFileAdded, VirusFileDeleted, VirusFilesGone
 }
 public readonly record struct BattleEvent(BattleEventKind Kind, double X, double Value = 0);
 // Number: a floating damage (Value > 0) or heal (Value < 0, shown as +HP above the cat).
@@ -508,6 +511,16 @@ public sealed class BattleHazard
     public int ClicksLeft;
     // Battle time of the last hit or click (the view shakes it), -1: none.
     public double HitAt = -1;
+}
+
+// Malware on the desktop grid (2026-10-24): a "virus.exe" file a slime dropped on a free cell. It
+// copies itself to a cell next to it now and then; with enough copies they infect a clean icon and
+// go. A click deletes one copy; defeating the slime that dropped them deletes them all.
+public sealed class VirusFile
+{
+    public int Id, SlimeId;
+    public int Col, Row;
+    public double BornAt;
 }
 
 // Something on its way between an icon and the floor: what an app sends (ToIcon false) or what goes
@@ -584,6 +597,10 @@ public sealed class AppsSpec
     public double UpdateSeconds { get; init; } = 8;
     public double UpdateHitSeconds { get; init; } = 1.2;
     public int UpdateClicks { get; init; } = 2;
+    // virus.exe: copies itself every VirusExeEvery s; VirusExeCopies of them infect a clean icon.
+    public double VirusExeWeight { get; init; }
+    public double VirusExeEvery { get; init; } = 6;
+    public int VirusExeCopies { get; init; } = 4;
     [JsonPropertyName("list")] public AppSpec[]? List { get; init; }
     [JsonIgnore] public IReadOnlyList<AppSpec> AppList => List ?? BuiltIn;
 

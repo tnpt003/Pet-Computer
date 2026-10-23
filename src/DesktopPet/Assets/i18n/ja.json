@@ -800,5 +800,6 @@
   "Forced update! It walls off the cat and the slimes. Click Later twice": "強制アップデート！猫とスライムを壁がさえぎる。「後で」を2回クリック",
   "Updating…": "アップデート中…",
   "UPDATE": "アップデート",
-  "Later": "後で"
+  "Later": "後で",
+  "virus.exe copies itself! Click each file before there are {0}": "virus.exe が増殖中！{0} 個になる前にファイルを1つずつクリック"
 }

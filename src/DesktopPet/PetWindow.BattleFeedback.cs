@@ -33,6 +33,7 @@ public sealed partial class PetWindow
         [BattleEventKind.GooShot] = ("squish", 4), [BattleEventKind.PopupClosed] = ("pop", 4), [BattleEventKind.AppScrubbed] = ("ball_tap", 3),
         [BattleEventKind.HazardOpened] = ("surprised", 5), [BattleEventKind.HazardClosed] = ("pop", 4),
         [BattleEventKind.HazardTapped] = ("ball_tap", 3), [BattleEventKind.WallHit] = ("clank", 3),
+        [BattleEventKind.VirusFileAdded] = ("squish", 4), [BattleEventKind.VirusFileDeleted] = ("pop", 4),
         [BattleEventKind.AppAttack] = ("swoosh", 3), [BattleEventKind.AppReady] = ("ball_tap", 2), [BattleEventKind.AppMoved] = ("swoosh", 1),
     };
 
@@ -57,12 +58,12 @@ public sealed partial class PetWindow
     // Big moments get a banner across the HUD's centre. The first heal, far heal, rally call and attack
     // from behind of a battle say what is going on (once each per battle), and so does the first elite
     // of each kind; every helper a rally makes elite is named.
-    private bool healerExplained, farHealExplained, rallyExplained, behindExplained, wardExplained, pushResistExplained, appExplained, popupExplained, virusExplained, loadingExplained, updateExplained;
+    private bool healerExplained, farHealExplained, rallyExplained, behindExplained, wardExplained, pushResistExplained, appExplained, popupExplained, virusExplained, loadingExplained, updateExplained, virusExeExplained;
     private readonly HashSet<string> elitesExplained = new();
     private void ShowBattleBanners()
     {
         if (battle == null || battleHud == null) return;
-        if (battle.Time < 0.05) { healerExplained = farHealExplained = rallyExplained = behindExplained = wardExplained = pushResistExplained = appExplained = popupExplained = virusExplained = loadingExplained = updateExplained = false; elitesExplained.Clear(); }
+        if (battle.Time < 0.05) { healerExplained = farHealExplained = rallyExplained = behindExplained = wardExplained = pushResistExplained = appExplained = popupExplained = virusExplained = loadingExplained = updateExplained = virusExeExplained = false; elitesExplained.Clear(); }
         for (int i = 0; i < battle.Events.Count; i++)
         {
             var e = battle.Events[i];
@@ -99,6 +100,8 @@ public sealed partial class PetWindow
                 BattleEventKind.AppCleaned when AppName(e) is string clean => LF($"✓ {clean} sạch virus!", $"✓ {clean} is clean!"),
                 BattleEventKind.PopupOpened when !popupExplained => L("Quảng cáo bật lên! Bấm × để tắt", "An ad popped up! Click × to close it"),
                 BattleEventKind.PopupSpawned => L("Quảng cáo thả slime ra!", "The ad let a slime out!"),
+                BattleEventKind.VirusFileAdded when !virusExeExplained && battle.AppRules is AppsSpec exe =>
+                    LF($"virus.exe tự nhân bản! Bấm từng file để xóa trước khi đủ {exe.VirusExeCopies}", $"virus.exe copies itself! Click each file before there are {exe.VirusExeCopies}"),
                 BattleEventKind.HazardOpened when IsUpdate(e) && !updateExplained => L("Cập nhật bắt buộc! Tường chắn mèo và slime. Bấm Nhắc sau 2 lần", "Forced update! It walls off the cat and the slimes. Click Later twice"),
                 BattleEventKind.HazardOpened when IsUpdate(e) => L("Đang cập nhật…", "Updating…"),
                 BattleEventKind.HazardOpened when !loadingExplained => L("⟳ Vòng loading! Mèo trong vòng bị chậm. Bấm vòng xoay để tắt", "⟳ A loading ring! The cat is slow inside it. Click the spinner to close it"),
@@ -116,6 +119,7 @@ public sealed partial class PetWindow
             if (e.Kind == BattleEventKind.AppReady) appExplained = true;
             if (e.Kind == BattleEventKind.AppInfected) virusExplained = true;
             if (e.Kind == BattleEventKind.PopupOpened) popupExplained = true;
+            if (e.Kind == BattleEventKind.VirusFileAdded) virusExeExplained = true;
             if (e.Kind == BattleEventKind.HazardOpened && IsUpdate(e)) updateExplained = true;
             else if (e.Kind == BattleEventKind.HazardOpened) loadingExplained = true;
             if (text != null) battleHud.ShowBanner(text, battle.Time, e.Kind is BattleEventKind.Won or BattleEventKind.Lost ? 3 : 1.6);

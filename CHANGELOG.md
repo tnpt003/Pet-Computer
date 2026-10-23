@@ -1,5 +1,40 @@
 # Nhật ký thay đổi
 
+## 1.4.4 — App độc trong trận, tắt app, đồng hồ cát (chưa phát hành)
+
+### Tiếng Việt
+
+- **App độc trong trận** (Phiêu lưu từ màn 2, Viễn chinh, Vô tận): thay vì bắn virus vào icon, slime đôi khi tung app độc:
+  - **Vòng loading** ngay chỗ mèo: mèo đứng trong vòng chạy và đánh chậm hẳn. Bấm vòng xoay để tắt, hoặc chờ vài giây.
+  - **Cập nhật bắt buộc**: một cửa sổ "CẬP NHẬT" làm tường chắn giữa mèo và slime; slime không qua được và không đánh xuyên được, mèo phải đánh tường cho nhanh xong. Bấm **Nhắc sau** 2 lần để tắt ngay. Trùm thì nhảy qua.
+  - **virus.exe**: một file hiện trên màn hình cạnh các icon và tự nhân bản; đủ 4 bản thì nhiễm một icon. Bấm từng file để xóa, hoặc hạ con slime đã thả nó.
+- **Tắt app trong trận:** ô "App trong trận" ở bảng chuẩn bị (mặc định bật; Viễn chinh giữ lựa chọn cả chuyến). Tắt thì không có icon, virus hay app độc; kỷ lục lưu riêng, còn tiến trình và phần thưởng vẫn tính như thường.
+- **Đồng hồ cát vô tận** trên kệ trưng bày: cát chảy thật; cầm lên rồi thả thì đồng hồ lật ngược và cát chảy lại.
+- Trình cài và trang tải có thêm tiếng Nhật.
+- Luật các màn Phiêu lưu 2–5 và Vô tận được nâng phiên bản vì có app độc: kỷ lục cũ vẫn giữ nhưng tách riêng. Chuyến Viễn chinh đang đi không bị ảnh hưởng.
+
+### English
+
+- **Battle malware** (Adventure from stage 2, Expedition, Infinity): instead of a virus into an icon, a slime sometimes throws malware:
+  - A **loading ring** where the cat stands: inside it the cat runs and swings much slower. Click its spinner to close it, or wait a few seconds.
+  - A **forced update**: an "UPDATE" window stands as a wall between the cat and the slimes; slimes cannot pass or attack through it, and the cat hits it to get it done sooner. Click **Later** twice to close it. Bosses leap over it.
+  - **virus.exe**: a file appears among the icons and copies itself; with 4 copies it infects an icon. Click each file to delete it, or defeat the slime that dropped it.
+- **Battle apps can be turned off:** a "Battle apps" chip in the setup panel (on by default; an Expedition keeps the choice for the whole run). Off: no icons, viruses or malware; records are kept apart, progress and rewards count as usual.
+- The **endless hourglass** on the keepsake shelf now runs: its sand flows, and carried and let go it turns over and runs again.
+- The installer and download page also speak Japanese.
+- Adventure stages 2–5 and Infinity have a new rules version because of the malware: old records stay, kept apart. An Expedition run under way is not affected.
+
+### 日本語
+
+- **バトルのマルウェア**（アドベンチャーのステージ2以降、遠征、無限）：アイコンにウイルスを撃つ代わりに、スライムがマルウェアを投げることがあります。
+  - **読み込みリング**：猫の足元に出現し、中にいる猫は移動も攻撃も遅くなります。スピナーをクリックで閉じるか、数秒待ちましょう。
+  - **強制アップデート**：「アップデート」ウィンドウが猫とスライムの間に壁として立ちます。スライムは通れず攻撃も届きません。猫が叩くと早く終わります。「後で」を2回クリックで閉じます。ボスは飛び越えます。
+  - **virus.exe**：アイコンの間にファイルが現れて増殖し、4つになるとアイコンに感染します。ファイルを1つずつクリックで削除するか、落としたスライムを倒しましょう。
+- **バトルアプリをオフにできます**：準備画面の「バトルアプリ」（初期はオン。遠征は旅の間ずっと同じ設定）。オフならアイコン・ウイルス・マルウェアなし。記録は別に保存され、進行と報酬は通常どおり。
+- 飾り棚の**無限の砂時計**の砂が流れるようになりました。持ち上げて離すとひっくり返り、また流れます。
+- インストーラーとダウンロードページが日本語にも対応しました。
+- マルウェア追加のため、アドベンチャーのステージ2〜5と無限のルールバージョンを上げました。以前の記録は残り、別に表示されます。進行中の遠征には影響しません。
+
 ## 1.4.3 — Sửa kiểm tra cập nhật (2026-10-23)
 
 ### Tiếng Việt

@@ -9,7 +9,7 @@ internal static class EndlessTests
     {
         const double dt = 1.0 / 60;
         var spec = BattleData.Settings.Endless;
-        check(spec is { UpgradeEvery: 3, BossEvery: 10, Boss: "king", UnlockAfter: "c1_slime_king", RulesVersion: 2 } && spec.Kinds.Length == 4,
+        check(spec is { UpgradeEvery: 3, BossEvery: 10, Boss: "king", UnlockAfter: "c1_slime_king", RulesVersion: 3 } && spec.Kinds.Length == 4,
             "Built-in Infinity: a card every 3 waves, the Slime King every 10, open after the Slime King, 4 kinds");
         var first = spec!.Wave(1);
         check(first.Groups.Single() is { Count: 3, Pick: { Count: 1 } pick } && pick.ContainsKey("slime") && first.Threat == 1, "Wave 1: 3 plain slimes at threat 1");

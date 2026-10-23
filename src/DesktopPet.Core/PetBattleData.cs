@@ -617,6 +617,8 @@ public static class BattleData
             Within(apps.UpdateWeight, 0, 100, "apps.updateWeight"); Within(apps.UpdateSeconds, 2, 30, "apps.updateSeconds");
             Within(apps.UpdateHitSeconds, 0, 10, "apps.updateHitSeconds");
             if (apps.UpdateClicks is < 1 or > 10) throw new InvalidDataException("apps.updateClicks must be 1–10");
+            Within(apps.VirusExeWeight, 0, 100, "apps.virusExeWeight"); Within(apps.VirusExeEvery, 1, 60, "apps.virusExeEvery");
+            if (apps.VirusExeCopies is < 2 or > 8) throw new InvalidDataException("apps.virusExeCopies must be 2–8");
             if (!s.EnemyTypes.Any(e => e?.Id == apps.PopupSpawn)) throw new InvalidDataException($"apps.popupSpawn \"{apps.PopupSpawn}\" is not an enemy id");
             if (apps.List != null)
             {

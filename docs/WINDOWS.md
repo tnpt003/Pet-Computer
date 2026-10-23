@@ -975,6 +975,10 @@ the game draws itself (never a real app's name, logo or colours); rules and numb
   hit or clicked): its Later button takes the click (`BattleCloseHazard`, one click less each time),
   the rest of it stops clicks reaching a slime behind. The wall itself is simulation: slimes'
   `Bounds` end at it, the cat's orders stop at it and its swings hit it.
+  **virus.exe** copies (`BattleSim.VirusFiles`) take grid cells like icons; each has its own small
+  topmost window (`VirusFileIcon`, the icon window's size, placed again when its cell moves on the
+  screen or the DPI scale changes), hidden, shown and closed with the icons. A click deletes that
+  copy (`BattleDeleteVirusFile`).
 - **Turned off (2026-10-24):** the setup panel has a **Battle apps** chip under the difficulty
   (not for the free battle), remembered in preferences (`BattleApps`, on by default) when Ready
   is pressed; for an Expedition run it is set when the run sets out and kept for all its battles

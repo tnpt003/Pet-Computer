@@ -768,6 +768,18 @@ internal static class BattleChecks
             Tick(0.05);
             check(Math.Abs(pet.MoveScale - ringSim.Settings.CatRunScale * ringSim.MoveFactor) < 1e-9, "Then the cat runs at full speed again");
             window.EndBattle();
+            // virus.exe: each copy in its own window on its cell; a click deletes it and its window closes.
+            window.BattleTuning = new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 1 }, SlimeMaxHp = 1000, SlimeDamage = 0,
+                Apps = new AppsSpec { InfectMinThreat = 0, InfectChance = 1, InfectWeight = 0, VirusExeWeight = 1, VirusExeEvery = 30 } };
+            check(window.StartBattle(stage: new StageSpec { Id = "ui_virus_exe" }) == null, "(setup) a stage battle that drops virus.exe");
+            for (int i = 0; i < 600 && Sim().VirusFiles.Count == 0; i++) Tick(1.0 / 60);
+            Tick(0.05);
+            var exeSim = Sim();
+            check(exeSim.VirusFiles.Count == 1 && window.BattleVirusWindows.Count == 1, "virus.exe opens a window of its own on the desktop grid");
+            check(window.BattleDeleteVirusFile(exeSim.VirusFiles[0].Id), "Clicking virus.exe deletes it");
+            Tick(0.05);
+            check(exeSim.VirusFiles.Count == 0 && window.BattleVirusWindows.Count == 0, "Its window closes with it");
+            window.EndBattle();
 
             // The strip: an ad's × and body (an ad placed on a lone slime).
             var data = BattleData.Settings;
@@ -810,6 +822,11 @@ internal static class BattleChecks
                     }
                     return visual;
                 }
+                // virus.exe as the desktop draws it.
+                appField.virusFiles.Add(new VirusFile { Id = 96, SlimeId = behind.Id, Col = 0, Row = 0, BornAt = -5 });
+                Save(OnBack(new VirusFileIcon(appField, 96), DesktopAppIcon.ViewWidth, DesktopAppIcon.ViewHeight, Color.FromRgb(0x3A, 0x6E, 0xA5)),
+                    (int)DesktopAppIcon.ViewWidth, (int)DesktopAppIcon.ViewHeight, "battle-virus-exe.png");
+                appField.virusFiles.Clear();
                 // The icons in each state: charging, charged, infected (just scrubbed once), just used, hovered.
                 var states = appField.Desktop.ToList();
                 appField.Time = 10.0;

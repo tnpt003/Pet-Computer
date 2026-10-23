@@ -429,6 +429,7 @@ Một "desktop giả" trong trận Phiêu lưu, Viễn chinh và Vô tận (tr�
   - Gỡ: **bấm icon `scrubClicks` lần** (bọt xà phòng mỗi lần, được cả khi đang cầm mèo) hoặc **hạ con slime đeo dấu virus**. Sạch rồi thì lấp lánh, sạc tiếp từ chỗ cũ.
 - **App độc (2026-10-24):** virus của đợt chọn theo trọng số giữa nhiễm icon (`infectWeight`) và ném app độc xuống sân (trọng số 0 = không bao giờ; chỉ có một loại thì không bốc thăm). **Vòng loading** (`loadingWeight`): một slime ném vòng ngay chỗ mèo đứng (một vòng mỗi lúc), mảng xanh trên sàn rộng `loadingRadius` DIPs mỗi bên, vòng xoay ở trên cao (chỗ mèo không che) có thanh thời gian. Mèo đứng trong vòng (trên sàn) chạy và vung vũ khí bằng `loadingSlow` tốc độ thường. Hết `loadingSeconds` s, hoặc bấm vòng xoay (được cả khi đang cầm mèo), hoặc dọn xong đợt thì vòng đóng. Cầm mèo lên thì vòng đứng yên và không làm chậm.
   **Cập nhật bắt buộc** (`updateWeight`): cửa sổ "CẬP NHẬT" (76×96 DIPs) rơi xuống sàn cách mèo 86 DIPs về phía slime gần nhất còn đủ chỗ (không đè lên slime nào; không có chỗ thì thành vòng loading). Nó là **tường**: slime (trừ trùm, trùm nhảy qua) không đi, không bị đẩy hay lao xuyên qua và không vung đòn vào mèo ở bên kia; mèo không đi qua, mục tiêu ở bên kia thì mèo đánh tường, mỗi nhát trúng cộng `updateHitSeconds` s vào tiến độ. Xong sau `updateSeconds` s, hoặc bấm nút **Nhắc sau** `updateClicks` lần, hoặc dọn xong đợt. Cầm mèo lên thì tường đứng yên; thả mèo vào giữa tường thì mèo bước ra.
+  **virus.exe** (`virusExeWeight`): một slime thả file "virus.exe" vào một ô trống của lưới icon (mỗi lúc một đợt bùng phát, chỉ khi còn icon sạch); slime đó đeo dấu virus. Cứ `virusExeEvery` s file tự nhân đôi sang ô trống kề bên (không có thì ô trống bất kỳ); đủ `virusExeCopies` bản thì nhiễm một icon sạch (như virus thường, tôn trọng `maxInfected`: đang đủ thì chờ) rồi biến mất hết. Bấm một bản để xóa bản đó (được cả khi đang cầm mèo); hạ slime đã thả thì xóa hết; dọn xong đợt cũng hết. Cầm mèo lên thì file không nhân bản.
 - Hết trận: không còn gì bay, virus, quảng cáo và app độc biến mất, icon mờ dần cùng phần kết. Random của app (vị trí, dọn nhà, virus) là luồng riêng của seed trận (`BattleRandom.Apps`).
 - `list`: mỗi app một mục (`tabs`, `ping`, `endtask`, `undo`, `trash`, `popup`), đủ cả 6, không trùng: `nameVi`/`nameEn` 1–32 ký tự, `descVi`/`descEn` (tác dụng) và `badVi`/`badEn` (khi nhiễm) ≤ 120 ký tự (chữ thường, không thay `{khóa}`), `charge` 1–600 giây (popup phải là 0), `start` 0–1 (tùy chọn). File riêng ghi `list` thì thay cả danh sách.
 
@@ -443,7 +444,8 @@ Một "desktop giả" trong trận Phiêu lưu, Viễn chinh và Vô tận (tr�
 | `infectMinThreat`, `infectChance`, `maxInfected`, `scrubClicks`, `crawlEvery` | 0–100, 0–1, 0–5, 1–10, 1–120 s | 1.5, 0.5, 1, 3, 9 |
 | `popupEvery`, `bellEvery`, `freezeEvery`, `mendEvery`, `spitEvery` | 1–120 s | 8, 9, 12, 7, 10 |
 | `popupSeconds`, `popupSpawn`, `bellDamage`, `freezeSeconds`, `mendShare` | 2–60 s, id quái, 0–1000, 0–5 s, 0–1 | 8, `slime`, 6, 1.2, 0.15 |
-| `infectWeight`, `loadingWeight`, `updateWeight` | 0–100 | 1, 1, 1 |
+| `infectWeight`, `loadingWeight`, `updateWeight`, `virusExeWeight` | 0–100 | 1, 1, 1, 1 |
+| `virusExeEvery`, `virusExeCopies` | 1–60 s, 2–8 | 6, 4 |
 | `updateSeconds`, `updateHitSeconds`, `updateClicks` | 2–30 s, 0–10 s, 1–10 | 8, 1.2, 2 |
 | `loadingSeconds`, `loadingRadius`, `loadingSlow` | 1–30 s, 20–200 DIPs, 0.2–1 | 6, 60, 0.5 |
 

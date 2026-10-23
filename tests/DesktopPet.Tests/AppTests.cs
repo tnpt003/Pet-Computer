@@ -335,6 +335,27 @@ internal static class AppTests
         check(expiring.Hazards.Count == 0, "Left alone, the update is done after its time");
         check(BattleData.Settings.Apps!.UpdateWeight > 0, "The shipped data throws forced updates too");
 
+        // Malware: virus.exe on the desktop grid, copying itself until it infects an icon.
+        var exeRules = new AppsSpec { InfectMinThreat = 0, InfectChance = 1, InfectWeight = 0, VirusExeWeight = 1, VirusExeEvery = 2, VirusExeCopies = 3 };
+        var outbreak = Out(exeRules, new[] { 1 });
+        Until(outbreak, () => outbreak.VirusFiles.Count > 0, 10);
+        var firstFile = outbreak.VirusFiles.FirstOrDefault();
+        check(firstFile != null && outbreak.Desktop.All(a => (a.Col, a.Row) != (firstFile.Col, firstFile.Row) && !a.Infected) && outbreak.IsInfector(firstFile.SlimeId),
+            "virus.exe lands on a free desktop cell; the slime that dropped it wears the virus mark");
+        Run(outbreak, 2, held: true, lifted: true);
+        check(outbreak.VirusFiles.Count == 1, "While the cat is lifted it does not copy itself");
+        Run(outbreak, 2.1);
+        var cells = outbreak.VirusFiles.Select(f => (f.Col, f.Row)).ToList();
+        check(outbreak.VirusFiles.Count == 2 && cells.Distinct().Count() == 2 && outbreak.Desktop.All(a => !cells.Contains((a.Col, a.Row))),
+            "Every few seconds it copies itself to another free cell");
+        int copyId = outbreak.VirusFiles[^1].Id;
+        check(outbreak.DeleteVirusFile(copyId) && outbreak.VirusFiles.Count == 1 && !outbreak.DeleteVirusFile(copyId), "A click deletes one copy (once)");
+        Until(outbreak, () => outbreak.Desktop.Any(a => a.Infected), 10);
+        check(outbreak.Desktop.Count(a => a.Infected) == 1 && outbreak.VirusFiles.Count == 0,
+            "With enough copies they infect a clean icon and are gone");
+        check(BattleData.Settings.Apps!.VirusExeWeight > 0 && BattleData.Settings.Campaign!.Chapters[0].Stages.Skip(1).All(s => s.RulesVersion >= 13) && BattleData.Settings.Endless!.RulesVersion >= 3,
+            "The shipped data drops virus.exe too; Adventure stages 2–5 and Infinity have new rules versions for the malware");
+
         // Turned off in the setup panel (2026-10-24): no icons, no viruses; records kept apart, progress still counts.
         var off = new BattleSim(BattleData.Settings, 0, 1600, stage: stage, seed: 2, apps: false);
         Run(off, 20);

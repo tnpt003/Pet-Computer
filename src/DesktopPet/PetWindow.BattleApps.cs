@@ -30,6 +30,9 @@ public sealed partial class PetWindow
         public double Opacity = 1;
     }
     private readonly Dictionary<int, AppIconWindow> appIcons = new();
+    // virus.exe copies (BattleSim.VirusFiles), each in its own window like an icon.
+    private readonly Dictionary<int, (Window Window, VirusFileIcon View)> virusIcons = new();
+    public IReadOnlyCollection<int> BattleVirusWindows => virusIcons.Keys;
     private Window? appFlightWindow;
     private AppFlightView? appFlightView;
     private bool appFlightShown;
@@ -139,8 +142,47 @@ public sealed partial class PetWindow
             if (opacity != icon.Opacity) { icon.Opacity = opacity; icon.View.Opacity = opacity; }
             if (draw) icon.View.InvalidateVisual();
         }
+        UpdateVirusFiles(b, draw);
         UpdateAppFlights(b, draw);
         if (appHintFor != 0) UpdateAppHint();
+    }
+
+    // The virus.exe windows follow the files: new ones open on their cell, deleted ones close.
+    private void UpdateVirusFiles(BattleSim b, bool draw)
+    {
+        foreach (var id in virusIcons.Keys.Where(id => b.VirusFiles.All(f => f.Id != id)).ToList())
+        {
+            virusIcons[id].Window.Close();
+            virusIcons.Remove(id);
+        }
+        foreach (var file in b.VirusFiles)
+        {
+            if (!virusIcons.TryGetValue(file.Id, out var icon))
+            {
+                int id = file.Id;
+                var view = new VirusFileIcon(b, id);
+                view.Clicked += () => BattleDeleteVirusFile(id);
+                var window = CreateOverlayWindow(view, "Pet virus file");
+                window.Width = DesktopAppIcon.ViewWidth; window.Height = DesktopAppIcon.ViewHeight;
+                window.Show();
+                window.DpiChanged += (_, _) => window.Tag = null; // Placed again in pixels below.
+                virusIcons[id] = icon = (window, view);
+            }
+            // Placed again when its cell moves on the screen (the area or the grid changed) or the scale changes.
+            var at = AppCellTopLeft(file.Col, file.Row);
+            var spot = (new Rect(at.X, at.Y, DesktopAppIcon.ViewWidth, DesktopAppIcon.ViewHeight), battleScale);
+            if (icon.Window.Tag is not ValueTuple<Rect, double> placed || placed != spot) { icon.Window.Tag = spot; PlaceAppWindow(icon.Window, spot.Item1); }
+            if (draw) icon.View.InvalidateVisual();
+        }
+    }
+
+    // A click on a virus.exe copy.
+    public bool BattleDeleteVirusFile(int id)
+    {
+        if (battle == null || battle.Paused) return false;
+        bool done = battle.DeleteVirusFile(id);
+        RequestBattleRedraw();
+        return done;
     }
 
     private void CreateAppIcon(BattleSim b, DesktopApp app)
@@ -198,6 +240,7 @@ public sealed partial class PetWindow
     private void HideBattleApps()
     {
         foreach (var icon in appIcons.Values) if (icon.Window.IsVisible) icon.Window.Hide();
+        foreach (var (window, _) in virusIcons.Values) if (window.IsVisible) window.Hide();
         appFlightWindow?.Hide();
         CloseAppHint();
     }
@@ -205,6 +248,7 @@ public sealed partial class PetWindow
     private void ShowBattleApps()
     {
         foreach (var icon in appIcons.Values) if (!icon.Window.IsVisible) { icon.Window.Show(); icon.Placed = Rect.Empty; }
+        foreach (var (window, _) in virusIcons.Values) if (!window.IsVisible) window.Show();
         if (appFlightWindow is { IsVisible: false }) { appFlightWindow.Show(); appFlightShown = true; }
     }
 
@@ -212,6 +256,8 @@ public sealed partial class PetWindow
     {
         foreach (var icon in appIcons.Values) icon.Window.Close();
         appIcons.Clear();
+        foreach (var (window, _) in virusIcons.Values) window.Close();
+        virusIcons.Clear();
         appFlightWindow?.Close();
         appFlightWindow = null; appFlightView = null; appFlightShown = false; appFlightScale = 0;
         appGridArea = default; appGridBlockers = Array.Empty<Rect>();

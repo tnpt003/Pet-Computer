@@ -129,11 +129,12 @@ internal static class AdventureBalanceTests
         var centre = crowd.FirstOrDefault(s => crowd.Count(o => Math.Abs(o.X - s.X) <= data.BombRadius) >= 2 || s.IsBoss);
         if (centre != null) sim.Use(BattleSkill.Bomb, centre.Id, cat);
         if (crowd.Count > 0) sim.Use(BattleSkill.Cheer, cat);
-        // Desktop apps: an ad or a loading ring is closed and an infected icon scrubbed once noticed (the
+        // Desktop apps: an ad or malware is closed (each virus.exe deleted) and an infected icon scrubbed once noticed (the
         // casual player after its reaction time; one click a frame); a charged icon is clicked at once,
         // Undo only after a real loss.
         foreach (var popup in sim.Popups.ToList()) if (reflex.NoticesAge(popup.Age)) sim.ClosePopup(popup.Id);
         foreach (var hazard in sim.Hazards.ToList()) if (reflex.NoticesAge(hazard.Age)) sim.CloseHazard(hazard.Id);
+        foreach (var file in sim.VirusFiles.ToList()) if (reflex.NoticesAge(sim.Time - file.BornAt)) sim.DeleteVirusFile(file.Id);
         foreach (var app in sim.Desktop)
         {
             if (app.Infected) { if (reflex.NoticesAge(sim.Time - app.InfectedAt)) sim.UseApp(app.Id, cat); continue; }
@@ -212,8 +213,10 @@ internal static class AdventureBalanceTests
         // Counted on the simple player's runs that won stage 3: a run lost early never got its picks
         // (since Enemy Director milestone 3 the idle player loses stage 2 on Normal and Hard).
         var thirdWins = played.Where(p => p.Key.Stage == 3 && p.Key.Player == Player.Simple).SelectMany(p => p.Value).Where(r => r.Won).ToList();
+        // 88 % (user, 2026-10-24): with the battle malware (virus.exe) this bot reached 85/95, one run
+        // short of 90 %; 92 % without virus.exe.
         double reached = thirdWins.Count(r => r.Synergies > 0) / (double)thirdWins.Count;
-        check(reached >= 0.9, $"Balance: following one group, a synergy is on by the end of stage 3 in ≥ 90 % of the simple player's runs that win it ({reached:P0})");
+        check(reached >= 0.88, $"Balance: following one group, a synergy is on by the end of stage 3 in ≥ 88 % of the simple player's runs that win it ({reached:P0}: {thirdWins.Count(r => r.Synergies > 0)}/{thirdWins.Count})");
 
         // Targets (2026-10-20): Normal with the simple player wins ≥ 80 % everywhere; Easy wins
         // stages 1–2 even idle; no win takes longer than ~4 minutes; sword and hammer stay close.

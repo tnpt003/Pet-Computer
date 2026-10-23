@@ -473,3 +473,88 @@ public sealed class AppFlightView : FrameworkElement
         }
     }
 }
+
+// virus.exe on the desktop grid (BattleSim.VirusFiles), in a window the size of an app icon's: a
+// sheet of paper with a folded corner and a biohazard sign, "virus.exe" under it. It pops in and
+// wobbles. A click deletes it. Drawing only.
+public sealed class VirusFileIcon : FrameworkElement
+{
+    private readonly BattleSim sim;
+    public int FileId { get; }
+    public event Action? Clicked;
+
+    public VirusFileIcon(BattleSim sim, int fileId)
+    {
+        this.sim = sim;
+        FileId = fileId;
+        Width = DesktopAppIcon.ViewWidth; Height = DesktopAppIcon.ViewHeight;
+        Cursor = Cursors.Hand;
+        MouseLeftButtonDown += (_, e) => { Clicked?.Invoke(); e.Handled = true; };
+    }
+
+    private static readonly Brush Sheet = PetUi.Frozen(255, 0xF4, 0xF0, 0xFA), Fold = PetUi.Frozen(255, 0xD3, 0xC9, 0xE6);
+    private static readonly Brush Hazard = PetUi.Frozen(255, 0x8E, 0x4F, 0xC9), HazardGlow = PetUi.Frozen(90, 0x7A, 0xD9, 0x4E);
+    private static readonly Pen Ink = PetUi.FrozenPen(PetUi.Frozen(255, 0x30, 0x2B, 0x48), 2);
+    private static readonly Pen Halo = PetUi.FrozenPen(PetUi.Frozen(230, 0x1E, 0x1B, 0x2C), 3);
+    private static readonly Brush LabelGreen = PetUi.Frozen(255, 0xA8, 0xF0, 0x7A);
+    private static Geometry? label;
+    private static double labelWidth;
+
+    protected override void OnRender(DrawingContext dc)
+    {
+        VirusFile? file = null;
+        foreach (var f in sim.VirusFiles) if (f.Id == FileId) { file = f; break; }
+        if (file == null) return;
+        var c = DesktopAppIcon.Centre;
+        double k = Math.Clamp((sim.Time - file.BornAt) / 0.35, 0, 1);
+        double grow = k >= 1 ? 1 : 1 - Math.Pow(1 - k, 3) * Math.Cos(k * Math.PI * 2.5);
+        dc.PushTransform(new RotateTransform(Math.Sin(sim.Time * 5 + file.Id) * 5, c.X, c.Y + 20));
+        dc.PushTransform(new ScaleTransform(grow, grow, c.X, c.Y + 20));
+        dc.DrawEllipse(HazardGlow, null, c, 28, 28);
+        // The sheet: 34 × 42 with the top right corner folded.
+        double l = c.X - 17, t = c.Y - 21, r = c.X + 17, b = c.Y + 21;
+        var sheet = new StreamGeometry();
+        using (var g = sheet.Open())
+        {
+            g.BeginFigure(new Point(l, t), true, true);
+            g.LineTo(new Point(r - 10, t), true, true);
+            g.LineTo(new Point(r, t + 10), true, true);
+            g.LineTo(new Point(r, b), true, true);
+            g.LineTo(new Point(l, b), true, true);
+        }
+        sheet.Freeze();
+        dc.DrawGeometry(Sheet, Ink, sheet);
+        var fold = new StreamGeometry();
+        using (var g = fold.Open())
+        {
+            g.BeginFigure(new Point(r - 10, t), true, true);
+            g.LineTo(new Point(r - 10, t + 10), true, true);
+            g.LineTo(new Point(r, t + 10), true, true);
+        }
+        fold.Freeze();
+        dc.DrawGeometry(Fold, Ink, fold);
+        // A biohazard sign: three lobes round a ring.
+        var mid = new Point(c.X, c.Y + 4);
+        for (int i = 0; i < 3; i++)
+        {
+            double a = -Math.PI / 2 + i * Math.PI * 2 / 3;
+            dc.DrawEllipse(Hazard, null, new Point(mid.X + Math.Cos(a) * 6, mid.Y + Math.Sin(a) * 6), 5, 5);
+        }
+        dc.DrawEllipse(Sheet, null, mid, 3.4, 3.4);
+        dc.DrawEllipse(Hazard, null, mid, 1.8, 1.8);
+        dc.Pop(); dc.Pop();
+        if (label == null)
+        {
+            var text = new FormattedText("virus.exe", CultureInfo.InvariantCulture, FlowDirection.LeftToRight,
+                new Typeface(new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.SemiBold, FontStretches.Normal), 11.5, Brushes.White, 1);
+            label = text.BuildGeometry(new Point(0, 0));
+            label.Freeze();
+            labelWidth = text.Width;
+        }
+        dc.PushOpacity(k);
+        dc.PushTransform(new TranslateTransform(c.X - labelWidth / 2, c.Y + DesktopAppIcon.TileSize / 2 + 6));
+        dc.DrawGeometry(null, Halo, label);
+        dc.DrawGeometry(LabelGreen, null, label);
+        dc.Pop(); dc.Pop();
+    }
+}

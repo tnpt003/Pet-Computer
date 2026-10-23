@@ -31,6 +31,9 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
     // The cat's share of the landing springs (the keepsake shows them at 1): a hard fall flattens it
     // by up to ~22%; the wobble tips it at most this many degrees; its dust puffs are a bit bigger.
     private const double LandingSquashScale = 0.75, LandingTiltLimit = 12, LandingDustScale = 1.25;
+    // The landing's jolt: ears flatten, front paws splay, the tail flicks up (full from JoltSpeed,
+    // fading in ~0.45 s); from WinceSpeed (a fall of ~330 DIPs) the eyes squeeze shut for WinceSeconds.
+    private const double LandingJoltSpeed = 1200, LandingWinceSpeed = 1000, LandingWinceSeconds = 0.3;
     private static readonly Brush EffectInk = Frozen("#302B48");
     private static readonly Pen EffectBorder = FrozenPen(EffectInk, 3, PenLineJoin.Round);
     private static readonly Pen EffectHalo = FrozenPen(Brushes.White, 5.5, PenLineJoin.Round);
@@ -99,7 +102,8 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
     {
         public double Time, PickupBlend, Dizzy, WakeProgress, EmotionStrength, EmotionTime, PettingLean;
         public double GroomingBlend, EatTime, SleepyBlend, Influence, RestBlend, Stride, FacingScale;
-        public double Shake, Bob, ScaleX, ScaleY, ImpactTilt;
+        public double Shake, Bob, ScaleX, ScaleY, ImpactTilt, Jolt;
+        public bool Wince;
         // Gestures: the active one, its time and a 0..1 envelope; Roll is the eased roll-over amount.
         public PetAction Gesture;
         public double GestureTime, GestureBlend, Roll, AngryBlend, SneezeTilt, SneezeLift;
@@ -219,7 +223,13 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         // flattens and widens, the rebound's − stretches it; the wobble tips it around its feet.
         double impact = pet.Motion.Ready ? pet.Motion.LandingSquash * p.Influence * LandingSquashScale : 0;
         p.ImpactTilt = pet.Motion.Ready ? Math.Clamp(pet.Motion.LandingTilt * p.Influence, -LandingTiltLimit, LandingTiltLimit) : 0;
-        if (p.Sleeping || p.Waking || p.SleepyBlend > 0) { preparation = flight = impact = p.ImpactTilt = 0; }
+        if (pet.Motion.Ready && pet.Motion.Landing.Since < 0.45)
+        {
+            var landing = pet.Motion.Landing;
+            p.Jolt = Math.Clamp(landing.Impact / LandingJoltSpeed, 0, 1) * Math.Min(1, landing.Since / 0.04) * Math.Exp(-landing.Since * 7) * p.Influence;
+            p.Wince = landing.Impact >= LandingWinceSpeed && landing.Since < LandingWinceSeconds && p.Influence > 0.5;
+        }
+        if (p.Sleeping || p.Waking || p.SleepyBlend > 0) { preparation = flight = impact = p.ImpactTilt = p.Jolt = 0; p.Wince = false; }
         p.ScaleX = 1 + selfStretch * 0.045 + preparation * 0.04 + impact * 0.6 - flight * 0.3;
         p.ScaleY = 1 + stretch + selfStretch * 0.12 - playCrouch * 0.07 - preparation * 0.09 + flight - impact;
         if (p.Climbing) { p.ScaleX *= 0.95; p.ScaleY *= 1.06; } // Stretched long up the wall.
@@ -449,7 +459,7 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
             {
                 context.BeginFigure(new Point(77, 84), false, false);
                 context.BezierTo(new Point(108, 88), new Point(104, 59),
-                    new Point(92, 62 + (pet.Motion.Ready ? pet.Motion.TailLag * p.Influence * pet.Motion.Facing : 0) + Math.Sin(p.Time * (3 - 2 * (p.Sleeping ? 1 : p.SleepyBlend))) * (5 - 4 * (p.Sleeping ? 1 : p.SleepyBlend)) + TailSwish(p)), true, false);
+                    new Point(92, 62 + (pet.Motion.Ready ? pet.Motion.TailLag * p.Influence * pet.Motion.Facing : 0) + Math.Sin(p.Time * (3 - 2 * (p.Sleeping ? 1 : p.SleepyBlend))) * (5 - 4 * (p.Sleeping ? 1 : p.SleepyBlend)) + TailSwish(p) - 16 * p.Jolt), true, false);
             }
         }
         dc.DrawGeometry(null, TailOutline, tail);
@@ -471,8 +481,8 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
             Oval(dc, palette.Paw, 88, 88 - p.Stride, 5, 9);
             return;
         }
-        Oval(dc, palette.Paw, 40 + p.Stride, p.PickedUp ? 104 + p.PickupBlend * 2 : p.Airborne ? 95 : 104 - Math.Max(0, p.Stride), 11, 5);
-        Oval(dc, palette.Paw, 70 - p.Stride, p.PickedUp ? 104 + p.PickupBlend * 2 : p.Airborne ? 95 : 104 + Math.Min(0, p.Stride), 11, 5);
+        Oval(dc, palette.Paw, 40 + p.Stride - 5 * p.Jolt, p.PickedUp ? 104 + p.PickupBlend * 2 : p.Airborne ? 95 : 104 - Math.Max(0, p.Stride), 11, 5);
+        Oval(dc, palette.Paw, 70 - p.Stride + 5 * p.Jolt, p.PickedUp ? 104 + p.PickupBlend * 2 : p.Airborne ? 95 : 104 + Math.Min(0, p.Stride), 11, 5);
         if (p.Gesture is PetAction.Kneading or PetAction.Scratching) DrawGesturePaws(dc, p);
     }
 
@@ -560,11 +570,11 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
             (p.Eating && p.EatTime > 1.3 ? Math.Sin(p.EatTime * 16) * 1.2 : 0)));
         dc.PushTransform(new RotateTransform(p.PickedUp ? Math.Sin(pet.Pickup.Time * 10) * p.Dizzy * 3 + (pet.Motion.Ready ? pet.Motion.HeadTilt * p.Influence * pet.Motion.Facing : 0) : glanceDirection * glanceBlend * 2.5 + (pet.Motion.Ready ? pet.Motion.HeadTilt * p.Influence * pet.Motion.Facing : 0) + p.PettingLean * 7 + (p.Seeking ? Math.Sin(Math.PI * Math.Clamp(pet.ActionTime / PetSettings.AttentionGestureDuration, 0, 1)) * 6 : 0) + p.SneezeTilt, 55, 49));
         DrawAccessory(dc, AccessoryLayer.Neck);
-        dc.PushTransform(new RotateTransform(twitch - 28 * p.AngryBlend, 37, 33)); // Angry: ears flatten.
+        dc.PushTransform(new RotateTransform(twitch - 28 * p.AngryBlend - 24 * p.Jolt, 37, 33)); // Angry or a hard landing: ears flatten.
         Triangle(dc, new Point(27, 38), new Point(27, 13), new Point(47, 31), palette.Ear);
         Triangle(dc, new Point(31, 30), new Point(31, 21), new Point(40, 30), Pink);
         dc.Pop();
-        dc.PushTransform(new RotateTransform(-twitch * 0.6 + 28 * p.AngryBlend, 75, 33));
+        dc.PushTransform(new RotateTransform(-twitch * 0.6 + 28 * p.AngryBlend + 24 * p.Jolt, 75, 33));
         Triangle(dc, new Point(64, 30), new Point(83, 13), new Point(84, 41), palette.Ear);
         Triangle(dc, new Point(72, 30), new Point(79, 21), new Point(80, 33), Pink);
         dc.Pop();
@@ -605,6 +615,13 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
                 double eyeSize = 2 + p.Dizzy * 2;
                 dc.DrawLine(Outline, new Point(eyeX - eyeSize, 46 - eyeSize), new Point(eyeX + eyeSize, 46 + eyeSize));
                 dc.DrawLine(Outline, new Point(eyeX + eyeSize, 46 - eyeSize), new Point(eyeX - eyeSize, 46 + eyeSize));
+            }
+            else if (p.Wince)
+            {
+                // Squeezed shut, "> <": each eye's point toward the nose.
+                double toward = eyeX < 55 ? 1 : -1;
+                dc.DrawLine(Outline, new Point(eyeX - 3.5 * toward, 43), new Point(eyeX + 3.5 * toward, 46.5));
+                dc.DrawLine(Outline, new Point(eyeX + 3.5 * toward, 46.5), new Point(eyeX - 3.5 * toward, 50));
             }
             else if (Content(p))
                 Curve(dc, new Point(eyeX - 4, 48), new Point(eyeX, 42), new Point(eyeX + 4, 48));

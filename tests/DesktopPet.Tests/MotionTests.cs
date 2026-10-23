@@ -67,6 +67,8 @@ internal static class MotionTests
         check(!cat.Motion.Landing.TakeSound(),"The bounce right after does not sound again");
         for(int i=0;i<5;i++) cat.Motion.Step(cat,0.1); cat.Motion.Contact(500,cat);
         check(cat.Motion.Landing.TakeSound(),"A later landing sounds again");
+        cat.Motion.Step(cat,0.1);
+        check(cat.Motion.Landing.Impact==500 && Math.Abs(cat.Motion.Landing.Since-0.1)<1e-9,"The landing keeps its speed and age for the cat's reaction");
         var sleeper=new PetModel{Action=PetAction.Sleeping}; sleeper.Motion.Reset(sleeper); sleeper.Motion.Contact(900,sleeper);
         check(sleeper.Motion.LandingSquash==0 && sleeper.Motion.Landing.Dust<0 && !sleeper.Motion.Landing.TakeSound(),"A sleeping cat lands softly: no squash, dust or sound");
         var walled=new PetModel{Action=PetAction.Thrown,X=1800,VX=900,Y=300,Grounded=false}; walled.Motion.Reset(walled);

@@ -45,6 +45,9 @@ public sealed class Landing
     public double Strength { get; private set; }
     public double X { get; private set; }
     public double Y { get; private set; }
+    // The last hit's speed and the seconds since it (for a character's reaction: ears, tail, a wince).
+    public double Impact { get; private set; }
+    public double Since { get; private set; } = double.PositiveInfinity;
     private double sinceSound = SoundGap;
     private bool soundDue;
 
@@ -52,7 +55,7 @@ public sealed class Landing
     public void Hit(double impact, double x = 0, double y = 0, bool quiet = false)
     {
         if (!double.IsFinite(impact) || impact <= DustSpeed) return;
-        Dust = 0; Strength = Math.Clamp(impact / 1200, 0.2, 1); X = x; Y = y;
+        Dust = 0; Strength = Math.Clamp(impact / 1200, 0.2, 1); X = x; Y = y; Impact = impact; Since = 0;
         if (!quiet && impact > SoundSpeed && sinceSound >= SoundGap) { soundDue = true; sinceSound = 0; }
     }
 
@@ -62,8 +65,8 @@ public sealed class Landing
     public void Step(double dt)
     {
         if (!double.IsFinite(dt) || dt <= 0) return;
-        sinceSound += dt;
+        sinceSound += dt; Since += dt;
         if (Dust >= 0 && (Dust += dt / DustSeconds) >= 1) Dust = -1;
     }
-    public void Clear() { Dust = -1; soundDue = false; }
+    public void Clear() { Dust = -1; soundDue = false; Since = double.PositiveInfinity; }
 }

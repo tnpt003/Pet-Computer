@@ -39,6 +39,10 @@ internal static class MotionVisualChecks
         string contact=Render(pet,"motion-contact");
         for(int i=0;i<30;i++)pet.Motion.Step(pet,0.01);
         check(contact!=Render(pet,"motion-contact-settled"),"Landing compression visibly recovers");
+        pet.Motion.Contact(1200,pet); pet.Motion.Step(pet,0.08);
+        string wince=Render(pet,"motion-landing-wince");
+        for(int i=0;i<60;i++)pet.Motion.Step(pet,0.01);
+        check(wince!=contact && wince!=Render(pet,"motion-landing-wince-settled"),"A hard landing winces (eyes squeezed, ears flat, tail up), then settles");
         pet.Action=PetAction.Walking; pet.VX=72;
         for(int i=0;i<20;i++)pet.Motion.Step(pet,0.016);
         string moving=Render(pet,"motion-walk"); pet.Motion.Step(pet,0.1);

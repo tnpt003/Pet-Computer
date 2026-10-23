@@ -303,8 +303,10 @@ squash/tilt springs (a squash that grows with the fall, rebounds into a little s
 wobbles out in ~0.4 s; the cat shows 0.75× of the squash and at most 12° of tilt), the
 same dust (from 120 DIPs/s, anchored where the feet touched down) and the same cartoon
 "squish" cue (from 300 DIPs/s, once per 0.4 s so a bounce series sounds once). Bouncing off
-a screen side mid-air squeezes and tips the cat. A sleeping cat lands softly: no squash,
-dust or sound. None of it changes collision physics.
+a screen side mid-air squeezes and tips the cat. The cat also reacts to the jolt (full at
+1200 DIPs/s, fading in ~0.45 s): ears flatten, front paws splay and the tail flicks up; from
+1000 DIPs/s (a fall of ~330 DIPs) its eyes squeeze shut "> <" for 0.3 s. This is not the
+Dizzy emotion. A sleeping cat lands softly: no squash, dust, sound or reaction. None of it changes collision physics.
 
 To export regression frames for inspection, set PET_RENDER_REVIEW to an absolute
 folder before running scripts/test.ps1 -Ui. This run's samples are in artifacts/motion-review.

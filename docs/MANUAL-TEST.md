@@ -433,3 +433,4 @@ Tự động đã có: Phần thưởng trên sảnh (ô có hình, khóa, Mới
 - [ ] Ném ngang trúng cạnh màn hình: mèo bẹp ngang và nghiêng ngược lại một chút. Đáp xuống mép cửa sổ và đệm slime: cùng hiệu ứng.
 - [ ] Mèo ngủ rơi khỏi gờ (cửa sổ biến mất): đáp êm, không bụi, không tiếng, vẫn ngủ. Tắt âm/volume 0/fullscreen: không tiếng. Pause giữa lúc nảy: đứng hình.
 - [ ] Món trưng bày rơi/ném: như trước (bẹp, nhún, bụi, "squish").
+- [ ] Đợt 2: khi đáp tai cụp, chân trước xoè, đuôi giật lên rồi về; thả từ cao (≥ ~1/3 chiều cao mèo×3) mắt nhắm tịt "> <" ~0,3 s. Nhảy thường (AI/tự nhảy) chỉ giật tai nhẹ, không nhắm mắt. Không bật cảm xúc Chóng mặt. Đang có cảm xúc (Vui/Giận…) thì mặt cảm xúc vẫn hiện bình thường.

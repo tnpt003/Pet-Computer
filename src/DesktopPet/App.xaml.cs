@@ -164,6 +164,7 @@ public partial class App : Application
         if (ownsInstance) instanceMutex?.ReleaseMutex();
         instanceMutex?.Dispose();
         if (ownsInstance) System.Diagnostics.Trace.WriteLine($"Desktop Pet exited (code {e.ApplicationExitCode})");
+        updates?.RunPendingUninstall(); // Last: everything above is closed.
         base.OnExit(e);
     }
 }

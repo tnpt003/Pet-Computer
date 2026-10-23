@@ -102,6 +102,8 @@ public sealed class PetUpdates
     public const string RemoveDataMarker = "remove-data-on-uninstall";
     private static string InstallRoot => Path.GetDirectoryName(AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar))!;
 
+    // Prepares the uninstall; RunPendingUninstall (the app's very last step on exit) starts it, so the
+    // pet has closed its tray, Python and log first instead of being stopped by the uninstaller.
     public bool StartUninstall(bool removeData)
     {
         if (manager == null) return false;
@@ -111,8 +113,8 @@ public sealed class PetUpdates
             if (!File.Exists(uninstaller)) { Trace.WriteLine("Uninstall: Update.exe not found."); return false; }
             string marker = Path.Combine(InstallRoot, RemoveDataMarker);
             if (removeData) File.WriteAllText(marker, ""); else File.Delete(marker);
-            Process.Start(new ProcessStartInfo(uninstaller, "--uninstall") { UseShellExecute = false });
-            Trace.WriteLine($"Uninstall started (remove data: {removeData}).");
+            pendingUninstall = uninstaller;
+            Trace.WriteLine($"Uninstall requested (remove data: {removeData}); starts when the pet has closed.");
             return true;
         }
         catch (Exception ex)
@@ -120,6 +122,15 @@ public sealed class PetUpdates
             Trace.WriteLine($"Uninstall could not start: {ex.Message}");
             return false;
         }
+    }
+
+    private string? pendingUninstall;
+
+    public void RunPendingUninstall()
+    {
+        if (pendingUninstall == null) return;
+        try { Process.Start(new ProcessStartInfo(pendingUninstall, "--uninstall") { UseShellExecute = false }); }
+        catch (Exception ex) { Trace.WriteLine($"Uninstall could not start: {ex.Message}"); }
     }
 
     public void ForgetUninstallChoice()

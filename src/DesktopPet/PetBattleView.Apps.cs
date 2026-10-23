@@ -102,7 +102,7 @@ public sealed partial class BattleFieldView
                 // The window pops over its target and shakes, then goes.
                 double pop = k < 0.15 ? k / 0.15 : 1;
                 double shake = k > 0.15 && k < 0.6 ? Math.Sin(k * 90) * 2.5 : 0;
-                double width = 90;
+                double width = AppArt.NotRespondingWidth(English);
                 x = Math.Clamp(x, width / 2 + 2, Math.Max(width / 2 + 2, ActualWidth - width / 2 - 2)); // Whole on the strip, even at its ends.
                 AppArt.DrawNotResponding(dc, new Point(x + shake, y - 16), 0.6 + 0.4 * pop, English);
                 break;

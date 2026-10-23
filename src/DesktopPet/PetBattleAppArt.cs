@@ -11,8 +11,9 @@ namespace DesktopPet;
 // Everything is drawn around a centre point at a scale (1 = the 50 DIP desktop icon).
 public static class AppArt
 {
-    private static Brush Frozen(byte a, byte r, byte g, byte b) { var brush = new SolidColorBrush(System.Windows.Media.Color.FromArgb(a, r, g, b)); brush.Freeze(); return brush; }
-    private static Pen FrozenPen(Brush brush, double thickness)
+    // Frozen brushes and round-capped pens, for every desktop-app drawing.
+    public static Brush Frozen(byte a, byte r, byte g, byte b) { var brush = new SolidColorBrush(System.Windows.Media.Color.FromArgb(a, r, g, b)); brush.Freeze(); return brush; }
+    public static Pen FrozenPen(Brush brush, double thickness)
     {
         var pen = new Pen(brush, thickness) { LineJoin = PenLineJoin.Round, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
         pen.Freeze(); return pen;
@@ -50,7 +51,8 @@ public static class AppArt
     private static readonly Brush UndoBack = Frozen(255, 0x3F, 0xB0, 0x9A);
     private static readonly Brush TrashBack = Frozen(255, 0x8F, 0xB5, 0x6A);
 
-    // A word drawn as an outline (the same few repeat): cached.
+    // A word drawn as an outline (the same few repeat): cached. The strip keeps its own (TagShape,
+    // NumberShape) for its words and numbers.
     private static readonly Dictionary<(string, double), (Geometry Shape, double Width, double Height)> Words = new();
     public static (Geometry Shape, double Width, double Height) Word(string text, double size)
     {
@@ -164,11 +166,13 @@ public static class AppArt
     }
     private static readonly Geometry BinBody = Parse("M -7,-4 L 7,-4 L 5.5,9 L -5.5,9 Z");
 
-    // A small window titled nothing, saying "Not responding" (scale: 1 = 32 DIPs tall).
+    // A small window titled nothing, saying "Not responding" (scale: 1 = 32 DIPs tall, this wide).
+    public static double NotRespondingWidth(bool english) => Math.Max(Word(NotRespondingText(english), 10).Width + 14, 64);
+    private static string NotRespondingText(bool english) => english ? "Not responding" : "Không phản hồi";
     public static void DrawNotResponding(DrawingContext dc, Point c, double scale, bool english)
     {
-        var (label, lw, lh) = Word(english ? "Not responding" : "Không phản hồi", 10);
-        double w = Math.Max(lw + 14, 64), h = 32;
+        var (label, lw, lh) = Word(NotRespondingText(english), 10);
+        double w = NotRespondingWidth(english), h = 32;
         dc.PushTransform(new MatrixTransform(scale, 0, 0, scale, c.X, c.Y));
         var r = new Rect(-w / 2, -h / 2, w, h);
         dc.DrawRoundedRectangle(null, HaloPen, r, 4, 4);

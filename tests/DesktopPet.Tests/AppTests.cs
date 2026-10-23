@@ -14,10 +14,10 @@ internal static class AppTests
         }
         int Count(BattleSim sim, BattleEventKind kind) => sim.Events.Count(e => e.Kind == kind);
         // Steps until `done` (at most `seconds`), counting one kind of event on the way.
-        int Until(BattleSim sim, Func<bool> done, double seconds, BattleEventKind kind = BattleEventKind.Won, bool held = false)
+        int Until(BattleSim sim, Func<bool> done, double seconds, BattleEventKind kind = BattleEventKind.Won)
         {
             int n = 0;
-            for (double t = 0; t < seconds && !done(); t += dt) { sim.Step(dt, 800, held); n += Count(sim, kind); sim.ClearEvents(); }
+            for (double t = 0; t < seconds && !done(); t += dt) { sim.Step(dt, 800, false); n += Count(sim, kind); sim.ClearEvents(); }
             return n;
         }
         BattleSettings Data(AppsSpec apps, int[] waves, double slimeHp = 1000, double slimeDamage = 0) => new()

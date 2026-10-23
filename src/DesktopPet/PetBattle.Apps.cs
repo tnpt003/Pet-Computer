@@ -34,10 +34,7 @@ public sealed partial class BattleSim
     private double infectTimer = double.NaN;
     // What the cat lost and when (battle time), for Undo.
     private readonly List<(double Time, double Hp)> hurts = new();
-    public int AppsUsed { get; private set; }
-    public int Infections { get; private set; }
     public int PopupsClosed { get; private set; }
-    public int PopupsMissed { get; private set; }
     // Where the cat stood on the floor at the last Step (the tabs circle it, the bad bells fall on it).
     public double CatX => lastCatX;
     // Flight times (s): what an app sends, a virus, an infected app's attack.
@@ -321,7 +318,6 @@ public sealed partial class BattleSim
                 app.AttackClock = rules.AttackEvery(app.Kind) * 0.5;
                 app.CrawlClock = rules.CrawlEvery;
                 app.InfectedAt = Time;
-                Infections++;
                 events.Add(new(BattleEventKind.AppInfected, IconX(app), app.Id));
                 break;
             case LaunchKind.BadBell:
@@ -366,7 +362,6 @@ public sealed partial class BattleSim
     // Left alone, the ad lets an enemy out where it was (when the floor has room).
     private void PopupRanOut(BattlePopup popup, AppsSpec rules)
     {
-        PopupsMissed++;
         AddEffect(BattleEffectKind.Poof, popup.X, 40);
         if (Alive >= maxAlive || Settings.EnemyTypes.All(e => e.Id != rules.PopupSpawn)) return;
         var slime = AddSlime(popup.X, Settings.Enemy(rules.PopupSpawn));
@@ -439,7 +434,6 @@ public sealed partial class BattleSim
         }
         app.Charge = 0;
         app.UsedAt = Time;
-        AppsUsed++;
         Armed = null;
         events.Add(new(BattleEventKind.AppUsed, IconX(app), app.Id));
         return true;

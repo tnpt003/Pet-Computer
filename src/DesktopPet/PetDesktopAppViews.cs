@@ -35,21 +35,19 @@ public sealed class DesktopAppIcon : FrameworkElement
         MouseLeave += (_, _) => { Hovered = false; HoverChanged?.Invoke(false); InvalidateVisual(); };
     }
 
-    private static Brush Frozen(byte a, byte r, byte g, byte b) { var brush = new SolidColorBrush(Color.FromArgb(a, r, g, b)); brush.Freeze(); return brush; }
-    private static Pen FrozenPen(Brush brush, double thickness) { var pen = new Pen(brush, thickness) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round }; pen.Freeze(); return pen; }
-    private static readonly Brush Veil = Frozen(150, 0x26, 0x23, 0x38);
-    private static readonly Brush Selection = Frozen(70, 0xFF, 0xF6, 0xE6);
-    private static readonly Pen SelectionRim = FrozenPen(Frozen(150, 0xFF, 0xF6, 0xE6), 1);
-    private static readonly Brush GoldGlow = Frozen(110, 0xFF, 0xD2, 0x3F);
-    private static readonly Pen GoldRing = FrozenPen(Frozen(255, 0xFF, 0xD2, 0x3F), 3);
-    private static readonly Brush GooTint = Frozen(80, 0x7A, 0xD9, 0x4E);
-    private static readonly Pen PipPen = FrozenPen(Frozen(255, 0xE5, 0x4B, 0x4B), 1.6);
-    private static readonly Brush Bubble = Frozen(200, 255, 255, 255);
-    private static readonly Pen BubbleRim = FrozenPen(Frozen(200, 0x9A, 0xD8, 0xF0), 1.2);
-    private static readonly Brush ArrowBlue = Frozen(255, 0x2F, 0x7B, 0xD6);
-    private static readonly Pen ArrowPen = FrozenPen(ArrowBlue, 1.8);
-    private static readonly Pen TextHalo = FrozenPen(Frozen(230, 0x1E, 0x1B, 0x2C), 3);
-    private static readonly Brush LabelGreen = Frozen(255, 0xA8, 0xF0, 0x7A);
+    private static readonly Brush Veil = AppArt.Frozen(150, 0x26, 0x23, 0x38);
+    private static readonly Brush Selection = AppArt.Frozen(70, 0xFF, 0xF6, 0xE6);
+    private static readonly Pen SelectionRim = AppArt.FrozenPen(AppArt.Frozen(150, 0xFF, 0xF6, 0xE6), 1);
+    private static readonly Brush GoldGlow = AppArt.Frozen(110, 0xFF, 0xD2, 0x3F);
+    private static readonly Pen GoldRing = AppArt.FrozenPen(AppArt.Frozen(255, 0xFF, 0xD2, 0x3F), 3);
+    private static readonly Brush GooTint = AppArt.Frozen(80, 0x7A, 0xD9, 0x4E);
+    private static readonly Pen PipPen = AppArt.FrozenPen(AppArt.Frozen(255, 0xE5, 0x4B, 0x4B), 1.6);
+    private static readonly Brush Bubble = AppArt.Frozen(200, 255, 255, 255);
+    private static readonly Pen BubbleRim = AppArt.FrozenPen(AppArt.Frozen(200, 0x9A, 0xD8, 0xF0), 1.2);
+    private static readonly Brush ArrowBlue = AppArt.Frozen(255, 0x2F, 0x7B, 0xD6);
+    private static readonly Pen ArrowPen = AppArt.FrozenPen(ArrowBlue, 1.8);
+    private static readonly Pen TextHalo = AppArt.FrozenPen(AppArt.Frozen(230, 0x1E, 0x1B, 0x2C), 3);
+    private static readonly Brush LabelGreen = AppArt.Frozen(255, 0xA8, 0xF0, 0x7A);
     private static readonly Typeface LabelFont = new(new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.SemiBold, FontStretches.Normal);
 
     // An elastic pop: 0 → past 1 → 1.
@@ -132,7 +130,7 @@ public sealed class DesktopAppIcon : FrameworkElement
         DrawBursts(dc, app, tile, t, ready, used, scrubbed);
         dc.Pop();
     }
-    private static readonly Pen FillEdge = FrozenPen(Frozen(200, 0xFF, 0xF6, 0xE6), 1.5);
+    private static readonly Pen FillEdge = AppArt.FrozenPen(AppArt.Frozen(200, 0xFF, 0xF6, 0xE6), 1.5);
 
     public const double HopSeconds = 0.5, CrawlSeconds = 1.4;
 
@@ -229,7 +227,7 @@ public sealed class DesktopAppIcon : FrameworkElement
     private static Pen SparkPen(BattleAppKind kind)
     {
         if (SparkPens.TryGetValue(kind, out var pen)) return pen;
-        pen = FrozenPen(AppArt.Back(kind), 3);
+        pen = AppArt.FrozenPen(AppArt.Back(kind), 3);
         return SparkPens[kind] = pen;
     }
 
@@ -312,14 +310,13 @@ public sealed class AppFlightView : FrameworkElement
         IsHitTestVisible = false;
     }
 
-    private static Brush Frozen(byte a, byte r, byte g, byte b) { var brush = new SolidColorBrush(Color.FromArgb(a, r, g, b)); brush.Freeze(); return brush; }
-    private static readonly Brush TealOrb = Frozen(255, 0x3F, 0xB0, 0x9A);
-    private static readonly Brush TrailGold = Frozen(170, 0xFF, 0xD2, 0x3F);
-    private static readonly Brush TrailGreen = Frozen(170, 0x7A, 0xD9, 0x4E);
-    private static readonly Brush TrailPaper = Frozen(170, 0xFF, 0xF6, 0xE6);
-    private static readonly Brush TrailTeal = Frozen(170, 0x3F, 0xB0, 0x9A);
-    private static readonly Brush TrailRed = Frozen(170, 0xE5, 0x4B, 0x4B);
-    private static readonly Pen PlusPen = new Pen(Brushes.White, 3) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
+    private static readonly Brush TealOrb = AppArt.Frozen(255, 0x3F, 0xB0, 0x9A);
+    private static readonly Brush TrailGold = AppArt.Frozen(170, 0xFF, 0xD2, 0x3F);
+    private static readonly Brush TrailGreen = AppArt.Frozen(170, 0x7A, 0xD9, 0x4E);
+    private static readonly Brush TrailPaper = AppArt.Frozen(170, 0xFF, 0xF6, 0xE6);
+    private static readonly Brush TrailTeal = AppArt.Frozen(170, 0x3F, 0xB0, 0x9A);
+    private static readonly Brush TrailRed = AppArt.Frozen(170, 0xE5, 0x4B, 0x4B);
+    private static readonly Pen PlusPen = AppArt.FrozenPen(Brushes.White, 3);
 
     // Along the arc from `from` to `to` at t (0–1): bulging upward by a share of the distance.
     private static Point Arc(Point from, Point to, double t)
@@ -438,7 +435,7 @@ public sealed class AppFlightView : FrameworkElement
                 break;
             case LaunchKind.Spit:
                 Trail(dc, start, end, e, TrailGreen);
-                string color = sim.AppRules is AppsSpec rules && sim.Settings.EnemyTypes is var kinds ? FindColor(kinds, rules.PopupSpawn) : "#7CD36A";
+                string color = SpitColor();
                 dc.PushTransform(new RotateTransform(e * 360, p.X, p.Y));
                 AppArt.DrawBlob(dc, p, 8 + 6 * e, AppArt.Tint(color), 1 + 0.3 * Math.Sin(e * Math.PI * 3));
                 dc.Pop();
@@ -452,9 +449,11 @@ public sealed class AppFlightView : FrameworkElement
         }
     }
 
-    private static string FindColor(IReadOnlyList<EnemyType> kinds, string id)
+    // The colour of the slime an infected bin spits out (a slime green when it is not in the data).
+    private string SpitColor()
     {
-        foreach (var k in kinds) if (k.Id == id) return k.Color;
+        if (sim.AppRules is AppsSpec rules)
+            foreach (var kind in sim.Settings.EnemyTypes) if (kind.Id == rules.PopupSpawn) return kind.Color;
         return "#7CD36A";
     }
 

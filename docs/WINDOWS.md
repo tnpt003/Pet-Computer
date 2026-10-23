@@ -918,6 +918,31 @@ next step), so a double click never starts two battles. Ending a battle by hand 
   (surprised), wave clear/victory (excited) and defeat (annoyed). One cue per frame, the most
   important event wins; the usual mute/volume/category rules apply, effects have a 0.25 s cooldown.
 
+## Battle desktop apps (2026-10-23)
+
+Adventure, Expedition and Infinity battles (not the free battle) add five made-up app icons that
+the game draws itself (never a real app's name, logo or colours); rules and numbers in
+`docs/BATTLE-DATA.md` (`apps`), simulation in `PetBattle.Apps.cs`. Windows (`PetWindow.BattleApps.cs`):
+
+- **One small window per icon** (`DesktopAppIcon`, 100×124 DIPs, `CreateOverlayWindow`: topmost, no
+  focus, no taskbar button). Only the drawn icon takes the mouse; clicks on its transparent margin
+  reach the app below. The icons stand on a grid of cells (~84 × 108 DIPs) across the battle
+  monitor, up to three rows right above the strip; cells under the HUD, or the card offer / bag
+  while open, are left out (an icon there moves to a free cell). The grid is worked out again when
+  the battle's area changes (resolution, taskbar) or one of those windows moves.
+- **Placement in pixels** of the battle's monitor (`SetWindowPos`, like the strip); a new DPI scale
+  (Windows Scale changed, or `DpiChanged`) places every icon window and the flights' canvas again.
+- **Fading:** each icon eases toward 50 % opacity with the cursor ≥ 280 DIPs away and full with it
+  ≤ 110 DIPs (a charged icon stays ≥ 75 %, an infected one ≥ 85 %); read from the cursor every frame.
+- **Flights' canvas** (`AppFlightView`): one click-through window over the icon rows and the strip,
+  drawn only while something flies (cleared once after), placed in pixels like the icons.
+- **Note on hover:** a click-through panel beside the icon (name, what it does or what it does
+  infected, charge or clicks left), following the icon.
+- A fullscreen app hides the icons, canvas and note with the strip and HUD; Pause/menus freeze them
+  (battle time). Ending the battle closes all of them; during the outro the icons fade out.
+- Cost: icons redraw at the battle's 30 fps cadence while it runs (five small windows); the canvas
+  only while something flies.
+
 ## Adventure (2026-10-20, milestone 2 of docs/ADVENTURE-UPDATE.md)
 
 - **Where:** right-click → Battle Mode → the hub's **Adventure** card (2026-10-22; before, a submenu

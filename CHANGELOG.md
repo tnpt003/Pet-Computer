@@ -1,5 +1,33 @@
 # Nhật ký thay đổi
 
+## 1.4.2 — Tiếng Nhật, app trong trận, menu gọn (2026-10-23)
+
+### Tiếng Việt
+
+- **日本語 (tiếng Nhật):** chọn được trong hộp chào mừng và Cài đặt; toàn bộ giao diện, dữ liệu trận, bộ lông/phụ kiện và câu nói của mèo đều có tiếng Nhật. Máy Windows tiếng Nhật thì người mới bắt đầu bằng tiếng Nhật.
+- **App trong trận** (Phiêu lưu, Viễn chinh, Vô tận): 5 icon app do game tự vẽ đứng phía trên chiến trường — Tab Tornado, Ping Storm, End Task, Ctrl+Z, Thùng rác. Icon tự sạc theo thời gian và khi hạ quái; đầy thì bấm để hiệu ứng bay xuống giúp mèo. Slime có thể bắn virus vào icon, khi đó icon quay sang phá mèo (quảng cáo, chuông trên đầu, "Not responding"…) cho tới khi bạn bấm nó 3 lần hoặc hạ con slime đó. Icon tránh HUD/túi đồ/bảng thẻ, ẩn khi app khác toàn màn hình, theo DPI màn hình.
+- **Tab Tornado** vẽ thành vòng tab trình duyệt quay quanh mèo, nửa trước vòng nằm đè lên mèo.
+- **Menu chuột phải gọn hơn:** chia nhóm Chơi, tên mèo (trạng thái, nhật ký, Tùy biến…), Vị trí (chỗ nghỉ, đưa về màn hình chính), Thêm. **Tùy biến** (hồ sơ, ngoại hình, thói quen, món trưng bày) nay là cửa sổ riêng, mở từ menu, khay hoặc chuột phải món trưng bày; Cài đặt chỉ còn Lời nói, Âm thanh, Chung.
+- **Tiếp đất sống động hơn:** mèo bẹp/nhún, có bụi và tiếng như món trưng bày; tai cụp, chân xòe, đuôi giật; rơi mạnh thì nhắm tịt mắt "> <" (không phải cảm xúc Chóng mặt; mèo ngủ vẫn đáp nhẹ).
+- **Đưa mèo về màn hình chính:** mèo biến "poof", hiện ra giữa màn hình, rơi nhẹ xuống và ngạc nhiên.
+- **Âm lượng** đổi ngay khi kéo thanh trượt (Hủy thì trả lại), hai tai đều nhau.
+- Lưu trong Tùy biến mà đổi món trưng bày thì món cũ biến "poof" và món mới hiện ra.
+- **Trận đấu:** Tạm dừng đóng băng cả tư thế mèo và không cầm mèo lên được; chữ/số trong trận né khỏi người mèo; túi đồ có biểu tượng cho dòng hồi máu. Viễn chinh: rút khỏi trận của một bậc vẫn giữ chuyến và HP.
+- Sửa: file kỷ lục trận chứa `null` không còn làm lỗi; dữ liệu lưu an toàn hơn (ghi file tạm rồi thay). Luật màn Phiêu lưu và Vô tận được nâng phiên bản vì có app trong trận: kỷ lục cũ vẫn giữ nhưng tách riêng.
+
+### English
+
+- **日本語 (Japanese):** offered in the welcome dialog and Settings; the whole UI, battle data, coats/accessories and the cat's speech lines are translated. New users whose Windows is Japanese start in Japanese.
+- **Battle apps** (Adventure, Expedition, Infinity): five made-up app icons drawn by the game stand above the battlefield — Tab Tornado, Ping Storm, End Task, Ctrl+Z, Bin. They charge over time and on kills; click a full one and its help flies down to the cat. Slimes can shoot viruses into icons, which then work against the cat (ads, bells on its head, "Not responding"…) until you click them 3 times or defeat that slime. Icons keep clear of the HUD, bag and card offer, hide while another app is fullscreen and follow the screen's DPI.
+- **Tab Tornado** is drawn as a ring of browser tabs spinning around the cat, with the near half in front of it.
+- **Shorter right-click menu:** grouped into Play, the cat's name (status, diary, Customize…), Location (resting spot, bring to the main screen) and More. **Customize** (profile, look, habits, keepsake) is now its own window, opened from the menu, the tray or a keepsake's right-click menu; Settings keeps Speech, Sounds and General.
+- **Livelier landings:** the cat squashes and wobbles with dust and a sound like the keepsake; ears flatten, paws splay, tail flicks; hard falls squeeze the eyes shut "> <" (not the Dizzy emotion; a sleeping cat still lands softly).
+- **Bring the cat to the main screen:** it vanishes in a puff, pops up in the middle, drops a little and looks surprised.
+- **Volume** applies while you drag the slider (Cancel restores it), with both ears even.
+- Saving Customize with a different keepsake swaps it with a puff.
+- **Battles:** Pause freezes the cat's poses too and the cat can't be picked up; battle words and numbers move clear of the cat's body; the bag has an icon for the heal row. Expedition: leaving a step's battle keeps the run and its HP.
+- Fixes: a battle-records file holding `null` no longer causes an error; data files are saved more safely (temp file, then swap). Adventure and Infinity rules got a new version because of the battle apps: old records are kept, but separately.
+
 ## 1.4.1 — Chào mừng sau khi cài (2026-10-23)
 
 - **Lần mở đầu sau khi cài:** hộp chào mừng với vài mẹo (bế/ném mèo, menu chuột phải, biểu tượng khay), chọn **ngôn ngữ** (đổi là chữ đổi ngay; người mới mặc định theo ngôn ngữ Windows) và ô **Khởi động cùng Windows** (tích sẵn). Nếu trước đó bạn bật khởi động cùng Windows cho bản copy thư mục, ô này chuyển nó sang bản đã cài.

@@ -111,6 +111,31 @@
     }
   ],
 
+  // Desktop apps (Adventure, Expedition, Infinity; not free battles): made-up apps drawn by the
+  // game, never a real app's name or logo. A cleared wave (not the last) drops one near the cat,
+  // a defeated enemy drops one with dropChance; it waits "life" s for a click (at most maxOnField).
+  // From a threat of popupMinThreat each wave rolls popupChance for an ad popup over an enemy:
+  // close it with its ×, or after popupSeconds it lets a popupSpawn enemy out. "list": one entry
+  // per app (tabs, ping, endtask, undo, popup); weight: how often it drops (the popup never drops).
+  "apps": {
+    "dropChance": 0.12, "waveDrop": true, "life": 10, "maxOnField": 2,
+    "tabSeconds": 6, "tabRadius": 70, "tabDamage": 14, "tabEvery": 0.5,
+    "pingDamage": 14, "pingStun": 1.5, "endTaskShare": 0.25, "undoSeconds": 4,
+    "popupMinThreat": 1.5, "popupChance": 0.35, "popupSeconds": 8, "popupSpawn": "slime",
+    "list": [
+      { "id": "tabs", "nameVi": "Tab Lốc Xoáy", "nameEn": "Tab Tornado", "weight": 1,
+        "descVi": "Ba thẻ tab xoay quanh mèo 6 giây, chém slime ở gần.", "descEn": "Three tabs circle the cat for 6 s, cutting nearby slimes." },
+      { "id": "ping", "nameVi": "Bão Thông Báo", "nameEn": "Ping Storm", "weight": 1,
+        "descVi": "Chuông 99+ rơi lên mọi slime: sát thương nhỏ, choáng 1,5 giây.", "descEn": "99+ bells drop on every slime: a little damage, 1.5 s stun." },
+      { "id": "endtask", "nameVi": "End Task", "nameEn": "End Task", "weight": 0.6,
+        "descVi": "Tắt slime nhiều máu nhất. Trùm, tinh anh: mất 25% máu.", "descEn": "Ends the slime with the most HP. Bosses, elites: lose 25% HP." },
+      { "id": "undo", "nameVi": "Ctrl+Z", "nameEn": "Ctrl+Z", "weight": 0.8,
+        "descVi": "Hoàn lại máu mèo mất trong 4 giây vừa qua.", "descEn": "Gives back the HP the cat lost in the last 4 s." },
+      { "id": "popup", "nameVi": "Quảng cáo", "nameEn": "Ad popup",
+        "descVi": "Che slime phía sau. Bấm × để tắt, để lâu sẽ thả slime ra.", "descEn": "Covers the slimes behind it. Click × to close, or it lets a slime out." }
+    ]
+  },
+
   // Difficulty: multipliers on every enemy's HP, damage and speed (0.25–3). Normal is the
   // numbers in this file as they are.
   "easy": { "enemyHp": 0.65, "enemyDamage": 0.5, "enemySpeed": 0.85 },
@@ -281,7 +306,7 @@
           {
             "id": "c1_first_steps", "nameVi": "Làm quen", "nameEn": "First steps",
             "goalVi": "Dọn 2 đợt slime dễ: click slime để chọn mục tiêu.", "goalEn": "Clear 2 waves of easy slimes: click a slime to pick the target.",
-            "objective": "clear", "maxAlive": 2, "rulesVersion": 5,
+            "objective": "clear", "maxAlive": 2, "rulesVersion": 6,
             "waves": [
               { "groups": [ { "enemy": "slime", "count": 2 } ] },
               { "groups": [ { "pick": { "slime": 3, "runner": 1 }, "count": 3, "atLeast": { "runner": 1 } } ] }
@@ -293,7 +318,7 @@
             "goalEn": "Mixed slimes: use skills, lift the cat when a slime winds up, pick upgrades between waves.",
             "tipVi": "Dọn xong một đợt, bạn chọn 1 trong 3 thẻ nâng cấp. Thắng màn thì build được mang sang màn sau. Slime đá chặn được đòn: đánh tiếp hoặc dùng Bom len.",
             "tipEn": "After each cleared wave, pick 1 of 3 upgrade cards. Win the stage and the build comes along to the next one. Rock slimes block some hits: keep at it or use the Yarn bomb.",
-            "objective": "clear", "upgrades": true, "threat": 1.6, "rulesVersion": 11,
+            "objective": "clear", "upgrades": true, "threat": 1.6, "rulesVersion": 12,
             "waves": [
               { "groups": [ { "enemy": "rock", "count": 1 }, { "pick": { "slime": 1, "runner": 1 }, "count": 2 } ] },
               { "groups": [ { "enemy": "rock", "count": 1 }, { "pick": { "slime": 1, "runner": 1 }, "count": 2 }, { "enemy": "rock", "count": 1 } ] },
@@ -307,7 +332,7 @@
             "tipVi": "Quái kéo tới liên tục và mạnh dần tới khi hết giờ. Ở giây 20, 40, 60 bạn chọn thẻ. Bế mèo thì đồng hồ dừng, nên hãy giữ HP bằng Khiên và Cá hồi máu.",
             "tipEn": "Slimes keep coming, stronger and stronger, until time is up. At 20, 40 and 60 s you pick a card. Carrying the cat stops the clock, so keep HP up with the Shield and the fish.",
             "objective": "survive", "surviveSeconds": 75, "maxAlive": 4, "upgrades": true, "maxUpgrades": 3, "upgradeAt": [ 20, 40, 60 ],
-            "threatGrowth": 0.3, "threat": 1.7, "eliteChance": 0.3, "rulesVersion": 13, "reward": "SlimeHat",
+            "threatGrowth": 0.3, "threat": 1.7, "eliteChance": 0.3, "rulesVersion": 14, "reward": "SlimeHat",
             "waves": [
               { "stream": { "weights": { "runner": 2, "slime": 1, "rock": 1 }, "interval": 2.6, "intervalEnd": 1.4, "pincerAfter": 45, "budget": 7 } }
             ]
@@ -318,7 +343,7 @@
             "goalEn": "Herb slimes heal their friends: take them down first, or Push one to cut its heal.",
             "tipVi": "Slime thảo dược (mũ lá) đứng sau slime đá và hồi máu cho đồng đội. Lá sáng lên là nó đang gồng: Đẩy để cắt. Đá chặn đường: hạ đá, hoặc bế mèo thả ra sau.",
             "tipEn": "Herb slimes (leaf caps) hide behind rock slimes and heal them. A glowing leaf means a heal is coming: Push to cut it. Rocks block the way: break them, or carry the cat behind.",
-            "objective": "clear", "upgrades": true, "maxAlive": 5, "threat": 1.8, "eliteChance": 0.3, "rulesVersion": 14,
+            "objective": "clear", "upgrades": true, "maxAlive": 5, "threat": 1.8, "eliteChance": 0.3, "rulesVersion": 15,
             "waves": [
               { "groups": [ { "pick": { "slime": 1, "runner": 1 }, "count": 3 } ] },
               { "budget": 9, "groups": [ { "squad": [ { "enemy": "mender", "count": 1 }, { "enemy": "rock", "count": 3 } ] } ] },
@@ -331,7 +356,7 @@
             "goalEn": "The chapter's last battle: the Slime King backs off behind a shield and calls help, herb slimes too.",
             "tipVi": "Ở 75%, 50% và 25% máu, Vua lui về mép xa, bật khiên và gọi quân: hạ hết quân để phá khiên. Vương miện sáng là Vua sắp phong quân thành tinh anh: Đẩy để cắt. Vùng đỏ dưới sàn: kéo mèo ra hoặc bật Khiên.",
             "tipEn": "At 75%, 50% and 25% HP the King backs off behind a shield and calls help: defeat them all to break it. A glowing crown makes a helper elite: Push the King to cut it. Red zone on the floor: lift the cat out or Shield.",
-            "objective": "clear", "upgrades": true, "threat": 1.75, "eliteChance": 0.3, "rulesVersion": 14, "reward": "SlimeKingCrown",
+            "objective": "clear", "upgrades": true, "threat": 1.75, "eliteChance": 0.3, "rulesVersion": 15, "reward": "SlimeKingCrown",
             "waves": [
               { "budget": 6, "groups": [ { "enemy": "rock", "count": 1, "side": "a" }, { "enemy": "slime", "count": 1, "side": "a" }, { "enemy": "runner", "count": 2, "side": "b" } ] },
               { "budget": 6, "groups": [ { "squad": [ { "enemy": "mender", "count": 1 }, { "enemy": "rock", "count": 1 }, { "enemy": "slime", "count": 1 } ] } ] },
@@ -364,7 +389,7 @@
   // when the cat falls or the user presses End; the record is the furthest wave per weapon and
   // difficulty. "unlockAfter": the Adventure stage to win first. "rulesVersion" keeps old records apart.
   "endless": {
-    "id": "endless", "rulesVersion": 1, "unlockAfter": "c1_slime_king", "upgradeEvery": 3, "bossEvery": 10, "boss": "king",
+    "id": "endless", "rulesVersion": 2, "unlockAfter": "c1_slime_king", "upgradeEvery": 3, "bossEvery": 10, "boss": "king",
     "firstCount": 3, "countPerWave": 0.35, "maxCount": 14, "threatPerWave": 0.06, "maxAlive": 5, "eliteChance": 0.12,
     "kinds": [
       { "enemy": "slime", "weight": 50 },

@@ -350,6 +350,22 @@ public sealed partial class PetWindow
         return done;
     }
 
+    // A click on a desktop app: a popup closes, a helper does its work; when it cannot, a short note why.
+    public bool BattleClickApp(int id)
+    {
+        if (battle == null || battle.Paused || battle.FindApp(id) is not BattleApp app) return false;
+        SyncBattleCatState();
+        bool done = battle.UseApp(id, pet.X + settings.Width / 2);
+        if (!done && !app.Hostile)
+            ShowBattleNotice(battle.SkillsLocked ? L("Đặt mèo xuống rồi hãy dùng app.", "Put the cat down to use an app.")
+                : app.Kind == BattleAppKind.Undo ? L("Mèo chưa mất máu trong mấy giây vừa qua.", "The cat lost no HP in the last few seconds.")
+                : L("Chưa có slime nào để dùng app này.", "No slime to use this app on yet."));
+        RequestBattleRedraw();
+        UpdateBattleHud();
+        battleView?.InvalidateVisual();
+        return done;
+    }
+
     // The battle may not move or hurt the cat: pressed, dragged, in the air or climbing.
     private bool BattleHoldsOff => dragging || pressPending || !pet.Grounded ||
         pet.Action is PetAction.Dragging or PetAction.Climbing || PetActionRules.IsInFlight(pet.Action);
@@ -498,6 +514,7 @@ public sealed partial class PetWindow
         if (battle == null) return;
         battleView = new BattleFieldView(battle) { English = English };
         battleView.SlimeClicked += (id, offset) => BattleClickSlime(id, offset);
+        battleView.AppClicked += id => BattleClickApp(id);
         battleView.RightClicked += () => { battle?.Arm(null); RequestBattleRedraw(); UpdateBattleHud(); }; // Right-click on the field cancels the skill.
         battleFieldWindow = CreateOverlayWindow(battleView, "Pet battle");
         battleFieldWindow.DpiChanged += (_, _) => battlePlacedScale = 0; // Re-place in pixels next frame.
@@ -538,7 +555,7 @@ public sealed partial class PetWindow
         }
         // Paused, or nothing on the floor (wave breaks): the strip is drawn once and left alone.
         var b = battle;
-        bool moving = !b.Paused && (b.Slimes.Count > 0 || b.Effects.Count > 0 || b.Bombs.Count > 0);
+        bool moving = !b.Paused && (b.Slimes.Count > 0 || b.Effects.Count > 0 || b.Bombs.Count > 0 || b.Apps.Count > 0 || b.TabsRemaining > 0);
         battleFrameClock += dt;
         bool due = battleFrameClock >= BattleFrameSeconds;
         if (due) battleFrameClock = Math.Min(battleFrameClock - BattleFrameSeconds, BattleFrameSeconds);

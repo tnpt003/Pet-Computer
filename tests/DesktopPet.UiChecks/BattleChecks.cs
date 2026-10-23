@@ -690,6 +690,60 @@ internal static class BattleChecks
             }
         }
 
+        // Desktop apps on the strip (PetBattleView.Apps.cs): an icon and a popup's × take the click,
+        // the rest of a popup hides the slime behind it. With PET_RENDER_REVIEW, a picture of every app.
+        {
+            var data = BattleData.Settings;
+            var appField = new BattleSim(data, 0, 600, stage: new StageSpec { Id = "apps_review" }, seed: 1);
+            var spawn = typeof(BattleSim).GetMethod("AddSlime", Flags)!;
+            var behind = (Slime)spawn.Invoke(appField, new object[] { 470.0, data.EnemyTypes[0] })!;
+            behind.Set(SlimeState.Moving); behind.StateTime = 0.4; behind.Facing = -1;
+            var appList = (System.Collections.Generic.List<BattleApp>)typeof(BattleSim).GetField("apps", Flags)!.GetValue(appField)!;
+            double x = 50;
+            foreach (var kind in new[] { BattleAppKind.Tabs, BattleAppKind.Ping, BattleAppKind.EndTask, BattleAppKind.Undo })
+            {
+                appList.Add(new BattleApp { Id = (int)kind + 1, Kind = kind, X = x, Age = 1, Life = 10 });
+                x += 80;
+            }
+            appList.Add(new BattleApp { Id = 9, Kind = BattleAppKind.Popup, X = 470, Age = 3, Life = 8 });
+            var appView = new BattleFieldView(appField) { OriginX = 0 };
+            appView.Measure(new Size(600, BattleFieldView.FieldHeight)); appView.Arrange(new Rect(0, 0, 600, BattleFieldView.FieldHeight));
+            double appFloor = BattleFieldView.FieldHeight - 2;
+            var popupTop = appFloor - 2 - BattleSim.PopupHeight;
+            check(appView.AppAt(new Point(50, appFloor - 100)) == 1 && appView.AppAt(new Point(290, appFloor - 100)) == 4,
+                "A click on a helper icon picks that app");
+            check(appView.AppAt(new Point(470 + BattleSim.PopupWidth / 2 - 10, popupTop + 9)) == 9 && appView.AppAt(new Point(470, appFloor - 20)) == null &&
+                  appView.OnPopup(new Point(470, appFloor - 20)) && appView.SlimeAt(new Point(470, appFloor - 20)) == behind.Id,
+                "A popup takes clicks only on its ×; the rest of it covers the slime behind (the click goes to neither)");
+            if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string appsReview)
+            {
+                var addEffect = typeof(BattleSim).GetMethod("AddEffect", Flags)!;
+                foreach (var (effect, at, height) in new[] { (BattleEffectKind.Bell, 380.0, 60.0), (BattleEffectKind.EndTask, 560.0, 64.0), (BattleEffectKind.Rewind, 540.0, 60.0) })
+                    addEffect.Invoke(appField, new object[] { effect, at, height, 46.0 });
+                foreach (var e in appField.Effects) e.Age = e.Life * 0.4;
+                typeof(BattleSim).GetProperty(nameof(BattleSim.TabsRemaining))!.SetValue(appField, 3.0);
+                typeof(BattleSim).GetField("lastCatX", Flags)!.SetValue(appField, 560.0);
+                // A fresh view draws the state set up above (the first one drew before it).
+                appView = new BattleFieldView(appField) { OriginX = 0 };
+                typeof(BattleFieldView).GetField("hoverAppId", Flags)!.SetValue(appView, 2);
+                appView.Measure(new Size(600, BattleFieldView.FieldHeight)); appView.Arrange(new Rect(0, 0, 600, BattleFieldView.FieldHeight));
+                foreach (var (name, back) in new[] { ("light", Colors.WhiteSmoke), ("dark", Color.FromRgb(0x1E, 0x1E, 0x24)) })
+                {
+                    var visual = new DrawingVisual();
+                    using (var dc = visual.RenderOpen())
+                    {
+                        dc.DrawRectangle(new SolidColorBrush(back), null, new Rect(0, 0, 600, BattleFieldView.FieldHeight));
+                        dc.DrawRectangle(new VisualBrush(appView) { Stretch = Stretch.None, AlignmentX = AlignmentX.Left, AlignmentY = AlignmentY.Top,
+                            ViewboxUnits = BrushMappingMode.Absolute, Viewbox = new Rect(0, 0, 600, BattleFieldView.FieldHeight) },
+                            null, new Rect(0, 0, 600, BattleFieldView.FieldHeight));
+                    }
+                    var image = new RenderTargetBitmap(1200, (int)BattleFieldView.FieldHeight * 2, 192, 192, PixelFormats.Pbgra32); image.Render(visual);
+                    var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(image));
+                    using var stream = System.IO.File.Create(System.IO.Path.Combine(appsReview, $"battle-apps-{name}.png")); encoder.Save(stream);
+                }
+            }
+        }
+
         // The Slime King on the field (drawn larger, with a crown and its slam warning).
         window.Reset();
         window.BattleTuning = new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 1 }, SlimeMaxHp = 1, WaveBreakSeconds = 0.2 };

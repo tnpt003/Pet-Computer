@@ -30,6 +30,7 @@
     <Compile Include="../../src/DesktopPet/ThrowTracker.cs" Link="ThrowTracker.cs" />
     <Compile Include="../../src/DesktopPet/PetBehavior.cs" Link="PetBehavior.cs" />
     <Compile Include="../../src/DesktopPet/PetBattle.cs" Link="PetBattle.cs" />
+    <Compile Include="../../src/DesktopPet/PetBattle.Apps.cs" Link="PetBattle.Apps.cs" />
     <Compile Include="../../src/DesktopPet/PetBattle.Boss.cs" Link="PetBattle.Boss.cs" />
     <Compile Include="../../src/DesktopPet/PetBattle.Enemies.cs" Link="PetBattle.Enemies.cs" />
     <Compile Include="../../src/DesktopPet/PetBattle.Upgrades.cs" Link="PetBattle.Upgrades.cs" />

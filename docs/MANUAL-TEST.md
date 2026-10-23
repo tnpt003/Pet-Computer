@@ -434,3 +434,10 @@ Tự động đã có: Phần thưởng trên sảnh (ô có hình, khóa, Mới
 - [ ] Mèo ngủ rơi khỏi gờ (cửa sổ biến mất): đáp êm, không bụi, không tiếng, vẫn ngủ. Tắt âm/volume 0/fullscreen: không tiếng. Pause giữa lúc nảy: đứng hình.
 - [ ] Món trưng bày rơi/ném: như trước (bẹp, nhún, bụi, "squish").
 - [ ] Đợt 2: khi đáp tai cụp, chân trước xoè, đuôi giật lên rồi về; thả từ cao (từ ~3 lần chiều cao mèo trở lên) mắt nhắm tịt "> <" ~0,3 s. Nhảy thường (AI/tự nhảy) chỉ giật tai nhẹ, không nhắm mắt. Không bật cảm xúc Chóng mặt. Đang có cảm xúc (Vui/Giận…) thì mặt cảm xúc vẫn hiện bình thường.
+
+### App trên màn hình trong trận (2026-10-23)
+- [ ] Phiêu lưu màn 1: dọn xong đợt 1 thì một icon app rơi từ trên xuống gần mèo, lơ lửng phía trên sàn, có tên bên dưới; banner "Rơi ra một app! Bấm vào icon để dùng" (chỉ lần đầu mỗi trận). Rê chuột lên icon: hiện mô tả bên cạnh. 3 giây cuối icon nhấp nháy rồi mất.
+- [ ] Bấm từng app: Tab Lốc Xoáy (3 tab xoay quanh mèo ~6 s, slime sát mèo mất máu), Bão Thông Báo (chuông 99+ rơi lên mọi slime, chúng choáng), End Task (cửa sổ "Không phản hồi" trên slime nhiều máu nhất rồi nó biến mất; Vua chỉ mất 1/4 máu), Ctrl+Z (sau khi bị đánh: máu vừa mất quay lại, mũi tên quay ngược quanh mèo; chưa mất máu thì báo và icon còn nguyên). Mỗi lần dùng: banner tên app + tiếng.
+- [ ] Đang cầm/ném mèo: bấm icon thì báo "Đặt mèo xuống rồi hãy dùng app", icon đứng thời gian (không mất khi đang cầm). Pause/menu/fullscreen: icon đứng yên. Đang chọn Đẩy/Bom rồi bấm icon: kỹ năng đang chọn bị bỏ.
+- [ ] Màn 2 trở đi / Viễn chinh / Vô tận từ ~đợt 10: thỉnh thoảng cửa sổ "QUẢNG CÁO -90%!!" bật lên đè lên slime; click vào thân nó không chọn được slime phía sau; bấm × thì tắt (cả khi đang cầm mèo); để thanh đỏ chạy hết thì nó thả ra 1 slime. Dọn xong đợt thì quảng cáo tự đóng.
+- [ ] Trận nhiều quái + app: không giật hơn trước; icon/popup không đè lên HUD. Hình icon không giống logo app thật nào.

@@ -237,6 +237,9 @@ public sealed class BattleSettings
     [JsonPropertyName("expedition")] public ExpeditionSpec? Expedition { get; init; }
     // From battle.json "endless": Infinity (null: none in this data). PetEndless.cs.
     [JsonPropertyName("endless")] public EndlessSpec? Endless { get; init; }
+    // From battle.json "apps": the desktop apps of Adventure, Expedition and Infinity battles
+    // (null: none). PetBattle.Apps.cs.
+    [JsonPropertyName("apps")] public AppsSpec? Apps { get; init; }
 
     private EnemyType BuiltInSlime() => new()
     {
@@ -329,8 +332,8 @@ public enum SlimeState { Spawning, Moving, Windup, Recover, Stunned, Defeated, C
 
 // Where damage on an enemy comes from: the cat's swings (a plain hit or a combo), the yarn bomb,
 // or a build bonus (Thorns sends back what the cat took, Afterimage repeats a swing). The bonus
-// hits never set off another bonus.
-public enum DamageSource { Weapon, Combo, Bomb, Reflect, Echo }
+// hits never set off another bonus. App: a desktop app (PetBattle.Apps.cs).
+public enum DamageSource { Weapon, Combo, Bomb, Reflect, Echo, App }
 
 // What a hit on an enemy did: landed, blocked by a stony enemy, or nothing on a shielded boss.
 public enum HitResult { Landed, Blocked, Immune }
@@ -429,7 +432,10 @@ public enum BattleEventKind
     // Tactics: a heal that guards its ally, a hit on that guarded ally.
     EnemyWarded, HitWarded,
     // A Push on an elite that ignores it (Value: its id).
-    PushResisted
+    PushResisted,
+    // Desktop apps: one dropped (Value: its id), used (Value: its BattleAppKind), faded unused; an ad
+    // popup opened, closed by the user, or left to run out (it let out a slime).
+    AppDropped, AppUsed, AppExpired, PopupOpened, PopupClosed, PopupSpawned
 }
 public readonly record struct BattleEvent(BattleEventKind Kind, double X, double Value = 0);
 // Number: a floating damage (Value > 0) or heal (Value < 0, shown as +HP above the cat).
@@ -437,8 +443,10 @@ public readonly record struct BattleEvent(BattleEventKind Kind, double X, double
 // Mend: green pluses rising from an enemy healed by a support enemy.
 // Block: grey stone chips and a small stone shield over an enemy that blocked a hit. Immune: a
 // gold ring flashing on a shielded boss hit for nothing. Warded: a green ring and "IMMUNE" on an
-// enemy guarded by a heal.
-public enum BattleEffectKind { Spark, Poof, Push, Explosion, Slam, Number, Combo, Thud, Mend, Block, Immune, Warded }
+// enemy guarded by a heal. Apps: Bell (a notification bell dropping on an enemy), EndTask (a
+// "not responding" window over the enemy it ends; Value: its width), Rewind (an undo arrow
+// circling the cat).
+public enum BattleEffectKind { Spark, Poof, Push, Explosion, Slam, Number, Combo, Thud, Mend, Block, Immune, Warded, Bell, EndTask, Rewind }
 public sealed class BattleEffect
 {
     public BattleEffectKind Kind;
@@ -448,6 +456,81 @@ public sealed class BattleEffect
 public sealed class BattleBomb
 {
     public double X, Remaining;
+}
+
+// The desktop apps (made-up ones, drawn by the game: no real app's name or logo). The first four
+// help the cat when clicked; Popup is the enemies' ad window, closed by its ×.
+public enum BattleAppKind { Tabs, Ping, EndTask, Undo, Popup }
+public sealed class BattleApp
+{
+    public int Id;
+    public BattleAppKind Kind;
+    // Age runs on battle time while the cat is on the floor; at Life the icon fades (a popup lets
+    // its slime out).
+    public double X, Age, Life;
+    public bool Hostile => Kind == BattleAppKind.Popup;
+}
+
+// battle.json "apps": how often apps drop, how long they stay and what each does. Names and
+// descriptions are data ("list": one entry per BattleAppKind); what each does is code.
+public sealed class AppsSpec
+{
+    // A defeated enemy drops one with this chance; a cleared wave (not the last) always does.
+    public double DropChance { get; init; } = 0.1;
+    public bool WaveDrop { get; init; } = true;
+    public double Life { get; init; } = 10;
+    // Helper icons on the field at once (popups aside).
+    public int MaxOnField { get; init; } = 2;
+    // Tab tornado: tabs circle the cat for TabSeconds, hitting every enemy within TabRadius DIPs
+    // for TabDamage (× the build's damage) every TabEvery s.
+    public double TabSeconds { get; init; } = 6;
+    public double TabRadius { get; init; } = 70;
+    public double TabDamage { get; init; } = 10;
+    public double TabEvery { get; init; } = 0.5;
+    // Ping storm: every enemy takes PingDamage (× the build's damage) and is stunned PingStun s.
+    public double PingDamage { get; init; } = 10;
+    public double PingStun { get; init; } = 1.5;
+    // End task: the enemy with the most HP is gone; a boss or an elite loses this share of its max HP.
+    public double EndTaskShare { get; init; } = 0.25;
+    // Undo: the HP the cat lost in the last UndoSeconds comes back.
+    public double UndoSeconds { get; init; } = 4;
+    // Ad popup: from a threat of PopupMinThreat, each wave rolls PopupChance to open one over an
+    // enemy; left PopupSeconds it lets out a PopupSpawn enemy.
+    public double PopupMinThreat { get; init; } = 1.5;
+    public double PopupChance { get; init; } = 0.35;
+    public double PopupSeconds { get; init; } = 8;
+    public string PopupSpawn { get; init; } = "slime";
+    [JsonPropertyName("list")] public AppSpec[]? List { get; init; }
+    [JsonIgnore] public IReadOnlyList<AppSpec> AppList => List ?? BuiltIn;
+
+    public AppSpec App(BattleAppKind kind)
+    {
+        foreach (var spec in AppList) if (string.Equals(spec.Id, kind.ToString(), StringComparison.OrdinalIgnoreCase)) return spec;
+        return Array.Find(BuiltIn, spec => string.Equals(spec.Id, kind.ToString(), StringComparison.OrdinalIgnoreCase))!;
+    }
+
+    // The texts when "apps" has no "list" (the shipped file says the same).
+    public static readonly AppSpec[] BuiltIn =
+    {
+        new() { Id = "tabs", NameVi = "Tab Lốc Xoáy", NameEn = "Tab Tornado", Weight = 1 },
+        new() { Id = "ping", NameVi = "Bão Thông Báo", NameEn = "Ping Storm", Weight = 1 },
+        new() { Id = "endtask", NameVi = "End Task", NameEn = "End Task", Weight = 0.6 },
+        new() { Id = "undo", NameVi = "Ctrl+Z", NameEn = "Ctrl+Z", Weight = 0.8 },
+        new() { Id = "popup", NameVi = "Quảng cáo", NameEn = "Ad popup" }
+    };
+}
+
+// One app's texts and how often it drops (Weight, relative; the popup never drops).
+public sealed record AppSpec
+{
+    public string Id { get; init; } = "";
+    public string NameVi { get; init; } = "";
+    public string NameEn { get; init; } = "";
+    public string DescVi { get; init; } = "";
+    public string DescEn { get; init; } = "";
+    public double Weight { get; init; }
+    public string Name(bool english) => (english ? NameEn : NameVi) is { Length: > 0 } name ? name : Id;
+    public string Desc(bool english) => english ? DescEn : DescVi;
 }
 
 // What the battle wants the cat to do this frame. Hold: the user has the cat (or it is in

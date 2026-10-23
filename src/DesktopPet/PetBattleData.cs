@@ -595,6 +595,35 @@ public static class BattleData
             }
             if (skillIds.Count != BattleSkills.All.Length) throw new InvalidDataException($"skills must list every skill: {known}");
         }
+        if (s.Apps is AppsSpec apps)
+        {
+            Within(apps.DropChance, 0, 1, "apps.dropChance"); Within(apps.Life, 2, 60, "apps.life");
+            if (apps.MaxOnField is < 1 or > 4) throw new InvalidDataException("apps.maxOnField must be 1–4");
+            Within(apps.TabSeconds, 0.5, 30, "apps.tabSeconds"); Within(apps.TabRadius, 10, 300, "apps.tabRadius");
+            Within(apps.TabDamage, 0, 1000, "apps.tabDamage"); Within(apps.TabEvery, 0.1, 5, "apps.tabEvery");
+            Within(apps.PingDamage, 0, 1000, "apps.pingDamage"); Within(apps.PingStun, 0, 5, "apps.pingStun");
+            Within(apps.EndTaskShare, 0, 1, "apps.endTaskShare"); Within(apps.UndoSeconds, 0.5, 30, "apps.undoSeconds");
+            Within(apps.PopupMinThreat, 0, 100, "apps.popupMinThreat"); Within(apps.PopupChance, 0, 1, "apps.popupChance");
+            Within(apps.PopupSeconds, 2, 60, "apps.popupSeconds");
+            if (!s.EnemyTypes.Any(e => e?.Id == apps.PopupSpawn)) throw new InvalidDataException($"apps.popupSpawn \"{apps.PopupSpawn}\" is not an enemy id");
+            if (apps.List != null)
+            {
+                var kinds = Enum.GetNames<BattleAppKind>();
+                var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                for (int i = 0; i < apps.List.Length; i++)
+                {
+                    var a = apps.List[i] ?? throw new InvalidDataException($"apps.list[{i}] is empty");
+                    string at = $"apps.list[{(string.IsNullOrEmpty(a.Id) ? i.ToString() : a.Id)}]";
+                    if (!kinds.Any(k => string.Equals(k, a.Id, StringComparison.OrdinalIgnoreCase)))
+                        throw new InvalidDataException($"{at}.id must be one of: {string.Join(", ", kinds.Select(k => k.ToLowerInvariant()))}");
+                    if (!seen.Add(a.Id)) throw new InvalidDataException($"app id \"{a.Id}\" is used twice");
+                    Text(a.NameVi, at + ".nameVi"); Text(a.NameEn, at + ".nameEn");
+                    if (a.DescVi == null || a.DescEn == null || a.DescVi.Length > 120 || a.DescEn.Length > 120) throw new InvalidDataException($"{at} descriptions must be at most 120 characters");
+                    Within(a.Weight, 0, 100, at + ".weight");
+                }
+                if (seen.Count != kinds.Length) throw new InvalidDataException($"apps.list must list every app: {string.Join(", ", kinds.Select(k => k.ToLowerInvariant()))}");
+            }
+        }
         Positive(s.HealAmount, "healAmount"); Positive(s.CheerSeconds, "cheerSeconds"); Positive(s.CheerSpeed, "cheerSpeed");
         Positive(s.BombRadius, "bombRadius"); NotNegative(s.BombDamage, "bombDamage"); Positive(s.ShieldSeconds, "shieldSeconds");
         foreach (var (level, name) in new[] { (s.Easy, "easy"), (s.Hard, "hard") })

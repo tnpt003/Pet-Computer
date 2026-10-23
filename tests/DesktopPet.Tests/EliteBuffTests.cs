@@ -209,7 +209,7 @@ internal static class EliteBuffTests
             "Each shipped elite carries a label of its main trait over its head (rock: no Push; slime: quick hits; quick: hard hits; herb: big heals)");
         check(data.Enemies!.Count(e => e.Elite?.PushImmune == true) == 1 && data.MaxElites == 1, "Only the rock elite ignores Push; still one elite at a time");
         var stages = data.Campaign!.Chapters[0].Stages;
-        check(stages.Select(s => s.RulesVersion).SequenceEqual(new[] { 5, 11, 13, 14, 14 }) && data.Expedition!.RulesVersion == 5,
-            "The buff raises every Adventure stage's rules version and the Expedition's (old records stay apart; 5 since the step gacha)");
+        check(stages.Select(s => s.RulesVersion).Zip(new[] { 5, 11, 13, 14, 14 }).All(p => p.First >= p.Second) && data.Expedition!.RulesVersion >= 5,
+            "The buff raised every Adventure stage's rules version and the Expedition's (old records stay apart; later changes only raise them)");
     }
 }

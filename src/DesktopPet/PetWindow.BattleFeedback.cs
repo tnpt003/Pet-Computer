@@ -28,6 +28,8 @@ public sealed partial class PetWindow
         [BattleEventKind.BossLeaping] = ("swoosh", 3), [BattleEventKind.BossLanded] = ("pop", 5), [BattleEventKind.BossSummoning] = ("surprised", 4),
         [BattleEventKind.Pushed] = ("swoosh", 2), [BattleEventKind.BombThrown] = ("swoosh", 2), [BattleEventKind.Shielded] = ("swoosh", 2),
         [BattleEventKind.Swing] = ("swoosh", 1),
+        [BattleEventKind.AppUsed] = ("sparkle", 6), [BattleEventKind.PopupOpened] = ("surprised", 5), [BattleEventKind.PopupSpawned] = ("surprised", 5),
+        [BattleEventKind.AppDropped] = ("ball_tap", 4), [BattleEventKind.PopupClosed] = ("pop", 4),
     };
 
     private void PlayBattleSound()
@@ -44,12 +46,12 @@ public sealed partial class PetWindow
     // Big moments get a banner across the HUD's centre. The first heal, far heal, rally call and attack
     // from behind of a battle say what is going on (once each per battle), and so does the first elite
     // of each kind; every helper a rally makes elite is named.
-    private bool healerExplained, farHealExplained, rallyExplained, behindExplained, wardExplained, pushResistExplained;
+    private bool healerExplained, farHealExplained, rallyExplained, behindExplained, wardExplained, pushResistExplained, appExplained, popupExplained;
     private readonly HashSet<string> elitesExplained = new();
     private void ShowBattleBanners()
     {
         if (battle == null || battleHud == null) return;
-        if (battle.Time < 0.05) { healerExplained = farHealExplained = rallyExplained = behindExplained = wardExplained = pushResistExplained = false; elitesExplained.Clear(); }
+        if (battle.Time < 0.05) { healerExplained = farHealExplained = rallyExplained = behindExplained = wardExplained = pushResistExplained = appExplained = popupExplained = false; elitesExplained.Clear(); }
         for (int i = 0; i < battle.Events.Count; i++)
         {
             var e = battle.Events[i];
@@ -77,6 +79,12 @@ public sealed partial class PetWindow
                 BattleEventKind.WaveCleared when battle.Endless && !battleCustomData && EndlessRewards is EndlessSpec rewards &&
                     rewards.MilestoneAt(battle.WavesCleared) is KeepsakeSpec prize && prize.Wave > BattleRecords.EndlessCleared(rewards) =>
                     L($"★ Mở khóa: {prize.Name(false)}!", $"★ Unlocked: {prize.Name(true)}!"),
+                // Desktop apps: the first drop and the first popup say what to do; every app used shouts its name.
+                BattleEventKind.AppDropped when !appExplained => L("Rơi ra một app! Bấm vào icon để dùng", "An app dropped! Click its icon to use it"),
+                BattleEventKind.AppUsed when battle.AppRules is AppsSpec rules =>
+                    "★ " + rules.App((BattleAppKind)(int)e.Value).Name(English).ToUpper(System.Globalization.CultureInfo.CurrentCulture) + "!",
+                BattleEventKind.PopupOpened when !popupExplained => L("Quảng cáo bật lên! Bấm × để tắt", "An ad popped up! Click × to close it"),
+                BattleEventKind.PopupSpawned => L("Quảng cáo thả slime ra!", "The ad let a slime out!"),
                 BattleEventKind.Won => L("CHIẾN THẮNG!", "VICTORY!"),
                 BattleEventKind.Lost => L("THUA RỒI…", "DEFEATED…"),
                 _ => null
@@ -87,6 +95,8 @@ public sealed partial class PetWindow
             if (e.Kind == BattleEventKind.Incoming) behindExplained = true;
             if (e.Kind == BattleEventKind.EnemyWarded) wardExplained = true;
             if (e.Kind == BattleEventKind.PushResisted) pushResistExplained = true;
+            if (e.Kind == BattleEventKind.AppDropped) appExplained = true;
+            if (e.Kind == BattleEventKind.PopupOpened) popupExplained = true;
             if (text != null) battleHud.ShowBanner(text, battle.Time, e.Kind is BattleEventKind.Won or BattleEventKind.Lost ? 3 : 1.6);
         }
     }

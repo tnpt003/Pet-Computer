@@ -429,6 +429,7 @@ public sealed partial class BattleSim
         }
         double hurt = from.Damage * ArmorFactor * (1 + recklessHurt);
         CatHp = Math.Max(0, CatHp - hurt);
+        NoteHurt(hurt);
         HurtFlash = Settings.HurtFlashSeconds;
         events.Add(new(BattleEventKind.CatHurt, catX, hurt));
         if (CatHp <= 0) { Finish(BattlePhase.Lost); return; }

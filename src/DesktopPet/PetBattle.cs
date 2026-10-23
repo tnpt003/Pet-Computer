@@ -11,9 +11,9 @@ public sealed partial class BattleSim
 {
     public BattleSettings Settings { get; }
     // This battle's seed (BattleRandom) and its streams: what spawns where, the cards, the rock's
-    // blocks, the elite rolls and the rare cards.
+    // blocks, the elite rolls, the rare cards and the desktop apps.
     public int Seed { get; }
-    private readonly Random spawnRandom, offerRandom, blockRandom, affixRandom, rarityRandom;
+    private readonly Random spawnRandom, offerRandom, blockRandom, affixRandom, rarityRandom, appRandom;
     private readonly List<Slime> slimes = new();
     private readonly List<BattleEffect> effects = new();
     private readonly List<BattleEvent> events = new();
@@ -240,6 +240,7 @@ public sealed partial class BattleSim
         blockRandom = BattleRandom.Stream(Seed, BattleRandom.Block);
         affixRandom = BattleRandom.Stream(Seed, BattleRandom.Affix);
         rarityRandom = BattleRandom.Stream(Seed, BattleRandom.Rarity);
+        appRandom = BattleRandom.Stream(Seed, BattleRandom.Apps);
         Settings = settings;
         Stage = stage;
         WavePlan = stage?.Waves is { Length: > 0 } waves ? waves : settings.WavePlan;
@@ -343,6 +344,8 @@ public sealed partial class BattleSim
         CatCooldown = Math.Max(0, CatCooldown - dt);
         StepBombs(dt);
         StepSlimes(dt, floorX, catHeld);
+        if (Over) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
+        StepApps(dt, floorX, catHeld);
         if (Over) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
         // Holding the cat freezes the waves (no spawning, no progress) and a survive stage's clock.
         if (!catHeld) StepWaves(dt, catX);
@@ -531,6 +534,7 @@ public sealed partial class BattleSim
             if (slime.MendingId != 0) { slime.MendingId = 0; if (!blasting) RefreshGuards(); }
             AddEffect(BattleEffectKind.Poof, slime.X, slime.Height / 2, slime.IsBoss ? 2 : 1);
             events.Add(new(BattleEventKind.SlimeDefeated, slime.X, slime.IsBoss ? 1 : 0));
+            AppsEnemyDefeated(slime);
             return HitResult.Landed;
         }
         var type = slime.Type;
@@ -575,7 +579,7 @@ public sealed partial class BattleSim
     private bool Blocks(Slime slime, DamageSource source)
     {
         var type = slime.Type;
-        if (type.BlockChance <= 0 || source is DamageSource.Bomb or DamageSource.Reflect) return false;
+        if (type.BlockChance <= 0 || source is DamageSource.Bomb or DamageSource.Reflect or DamageSource.App) return false;
         // A front-only blocker: a hit from behind always lands (and ends its streak).
         if (type.BlockFrontOnly && (lastCatX - slime.X) * slime.Facing <= 0) { slime.BlockStreak = 0; return false; }
         // Armor break: combo hits go straight through.
@@ -623,6 +627,7 @@ public sealed partial class BattleSim
         TargetId = null;
         BlockedById = 0;
         bombs.Clear();
+        ClearApps();
         incoming = null;
         IncomingRemaining = 0;
         CancelSwing();
@@ -750,6 +755,7 @@ public sealed partial class BattleSim
         IncomingX = left + (IncomingX - Left) / oldWidth * newWidth;
         foreach (var e in effects) e.X = left + (e.X - Left) / oldWidth * newWidth;
         foreach (var b in bombs) b.X = left + (b.X - Left) / oldWidth * newWidth;
+        foreach (var a in apps) a.X = left + (a.X - Left) / oldWidth * newWidth;
         Left = left; Right = right;
         foreach (var s in slimes) { var (minX, maxX) = Bounds(s); s.X = Math.Clamp(s.X, minX, maxX); }
     }
@@ -760,7 +766,8 @@ public sealed partial class BattleSim
         double life = kind switch
         {
             BattleEffectKind.Poof => 0.6 * Math.Max(1, value), BattleEffectKind.Number => 0.9, BattleEffectKind.Combo => 0.7, BattleEffectKind.Mend => 0.8,
-            BattleEffectKind.Explosion or BattleEffectKind.Slam => 0.5, BattleEffectKind.Warded => 0.6, _ => 0.35
+            BattleEffectKind.Explosion or BattleEffectKind.Slam => 0.5, BattleEffectKind.Warded => 0.6,
+            BattleEffectKind.Bell => 0.9, BattleEffectKind.EndTask => 1.0, BattleEffectKind.Rewind => 0.8, _ => 0.35
         };
         effects.Add(new BattleEffect { Kind = kind, X = x, Height = height, Life = life, Value = value });
     }

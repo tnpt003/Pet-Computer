@@ -1,7 +1,7 @@
 using DesktopPet;
 
 // Adventure milestone 5: the chapter's balance in simulation (NOT real play: a real user also
-// lifts the cat out of danger). Every stage × weapon × difficulty, 10 seeds, three players:
+// lifts the cat out of danger). Every stage × weapon × difficulty, Seeds seeds, three players:
 // "idle" lets the cat fight alone (no skills), "simple" also uses skills by plain rules and
 // answers every windup or heal the frame it starts (a best case), "casual" follows the same rules
 // but notices a windup or heal only CasualReaction s (simulation time) after it starts and misses
@@ -12,6 +12,9 @@ using DesktopPet;
 internal static class AdventureBalanceTests
 {
     public enum Player { Idle, Simple, Casual }
+    // Runs per row: 20 since the desktop apps (2026-10-23, user): with 10 a single seed moved a
+    // row by 10 points and rows near a target flipped on any change (the targets are shares, unchanged).
+    public const int Seeds = 20;
     // The casual player's reaction time and the share of windups/heals it never answers.
     public const double CasualReaction = 0.6, CasualMiss = 0.3;
 
@@ -98,6 +101,8 @@ internal static class AdventureBalanceTests
                 seen[s.Id] = known = (s.State, since, rolls.NextDouble() < CasualMiss);
             return !known.Missed && s.StateTime >= CasualReaction;
         }
+
+        public bool NoticesApp(BattleApp app) => player != Player.Casual || app.Age >= CasualReaction;
     }
 
     // Plain rules a careful user could follow without lifting the cat (windups and heals only once
@@ -124,6 +129,14 @@ internal static class AdventureBalanceTests
         var centre = crowd.FirstOrDefault(s => crowd.Count(o => Math.Abs(o.X - s.X) <= data.BombRadius) >= 2 || s.IsBoss);
         if (centre != null) sim.Use(BattleSkill.Bomb, centre.Id, cat);
         if (crowd.Count > 0) sim.Use(BattleSkill.Cheer, cat);
+        // Desktop apps: an ad is closed once noticed (the casual player after its reaction time);
+        // a helper is clicked at once, Undo only after a real loss.
+        foreach (var app in sim.Apps.ToList())
+        {
+            if (app.Hostile) { if (reflex.NoticesApp(app)) sim.UseApp(app.Id, cat); continue; }
+            if (app.Kind == BattleAppKind.Undo && sim.CatHp > sim.CatMaxHp * 0.8) continue;
+            sim.UseApp(app.Id, cat);
+        }
     }
 
     private static readonly Player[] Players = { Player.Idle, Player.Simple, Player.Casual };
@@ -136,7 +149,7 @@ internal static class AdventureBalanceTests
         var stages = data.Campaign!.Chapters[0].Stages;
         var levels = new[] { BattleDifficulty.Easy, BattleDifficulty.Normal, BattleDifficulty.Hard };
         var weapons = new[] { BattleWeapon.Sword, BattleWeapon.Hammer };
-        const int seeds = 10;
+        const int seeds = Seeds;
         var table = new Dictionary<(int Stage, string Weapon, BattleDifficulty Level, Player Player), (double Wins, double Seconds, double Hp, double HpShare)>();
         // Each seed plays the chapter in order; a stage starts with the build the stage before was
         // won with (a lost stage passes on the last winning build, as a retry would).
@@ -155,7 +168,7 @@ internal static class AdventureBalanceTests
                             list.Add(run);
                         }
                     }
-        Console.WriteLine("Adventure balance (simulation, not real play): stage | weapon | level | player | wins/10 | avg s (wins) | avg HP left (wins) | stuns/run | synergies at end | blocks/run | boss shield s/run | HP % left (wins) | elites/run");
+        Console.WriteLine($"Adventure balance (simulation, not real play): stage | weapon | level | player | wins/{seeds} | avg s (wins) | avg HP left (wins) | stuns/run | synergies at end | blocks/run | boss shield s/run | HP % left (wins) | elites/run");
         for (int i = 0; i < stages.Length; i++)
             foreach (var weapon in weapons)
                 foreach (var level in levels)
@@ -165,7 +178,7 @@ internal static class AdventureBalanceTests
                         var wins = runs.Where(r => r.Won).ToList();
                         var row = ((double)wins.Count / seeds, wins.Count > 0 ? wins.Average(r => r.Seconds) : 0, wins.Count > 0 ? wins.Average(r => r.Hp) : 0, wins.Count > 0 ? wins.Average(r => r.HpShare) : 0);
                         table[(i + 1, weapon, level, player)] = row;
-                        Console.WriteLine($"  {i + 1} | {weapon,-6} | {level,-6} | {Name(player),-6} | {wins.Count,2}/10 | {row.Item2,6:0} | {row.Item3,4:0} | {runs.Average(r => r.Stuns),4:0.0} | {runs.Average(r => r.Synergies),3:0.0} | {runs.Average(r => r.Blocks),4:0.0} | {runs.Average(r => r.ShieldSeconds),4:0} | {row.Item4,4:P0} | {runs.Average(r => r.Elites),3:0.0}");
+                        Console.WriteLine($"  {i + 1} | {weapon,-6} | {level,-6} | {Name(player),-6} | {wins.Count,2}/{seeds} | {row.Item2,6:0} | {row.Item3,4:0} | {runs.Average(r => r.Stuns),4:0.0} | {runs.Average(r => r.Synergies),3:0.0} | {runs.Average(r => r.Blocks),4:0.0} | {runs.Average(r => r.ShieldSeconds),4:0} | {row.Item4,4:P0} | {runs.Average(r => r.Elites),3:0.0}");
                     }
         // What the players meet (R3): per stage, level and player, both weapons together.
         Console.WriteLine($"Adventure tactics (simulation; casual: notices after {CasualReaction} s, misses {CasualMiss:P0}): stage | level | player | warded hits/run | enemy heals landed/started | quiet time (≥ {QuietAfter} s without damage) | target changes/min | stun chains/run | rock blocks/run");
@@ -233,7 +246,8 @@ internal static class AdventureBalanceTests
         check(Enumerable.Range(3, 3).All(s => Elites(s, BattleDifficulty.Normal) >= 0.5) && Enumerable.Range(1, 5).All(s => Elites(s, BattleDifficulty.Easy) == 0)
             && Elites(1, BattleDifficulty.Normal) == 0 && Elites(2, BattleDifficulty.Hard) == 0,
             $"Balance: elites come from stage 3 on Normal/Hard (stage 3–5 Normal: {Elites(3, BattleDifficulty.Normal):0.0}/{Elites(4, BattleDifficulty.Normal):0.0}/{Elites(5, BattleDifficulty.Normal):0.0} a run), never on Easy");
-        double longest = table.Values.Where(r => r.Wins > 0).Max(r => r.Seconds);
+        // An average needs at least two wins (one lucky win of an otherwise lost row is not one).
+        double longest = table.Values.Where(r => r.Wins * seeds >= 2).Max(r => r.Seconds);
         check(longest <= 240, $"Balance: no stage takes longer than 4 minutes on average (longest {longest:0} s)");
         foreach (var level in levels)
             for (int s = 1; s <= stages.Length; s++)

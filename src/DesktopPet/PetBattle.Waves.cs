@@ -46,6 +46,7 @@ public sealed partial class BattleSim
             eliteBudget = SpawnDirector.BudgetLeft(wave, pending, Cost);
             Phase = BattlePhase.Fighting;
             spawnTimer = 0;
+            RollPopup();
             events.Add(new(BattleEventKind.WaveStarted, catX, Wave));
         }
         spawnTimer = Math.Max(0, spawnTimer - dt);
@@ -92,7 +93,9 @@ public sealed partial class BattleSim
         }
         if (ToSpawn > 0 || Alive > 0 || bombs.Count > 0) return;
         WavesCleared++;
-        if (Wave >= WaveCount && !Survival && !Endless) { Finish(BattlePhase.Won); return; }
+        bool last = Wave >= WaveCount && !Survival && !Endless;
+        AppsWaveCleared(catX, last);
+        if (last) { Finish(BattlePhase.Won); return; }
         Phase = BattlePhase.WaveBreak;
         PhaseRemaining = Settings.WaveBreakSeconds;
         LastHeal = Math.Max(0, Math.Min(Settings.WaveHeal, CatMaxHp - CatHp));

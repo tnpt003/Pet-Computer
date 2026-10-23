@@ -404,3 +404,31 @@ Một chuyến đi gồm nhiều bậc, mỗi bậc chọn một điểm, bậc 
 - Kỷ lục: đợt xa nhất và số slime hạ nhiều nhất, theo vũ khí + độ khó, trong battle-records.json (khóa `endless|r<rulesVersion>|<vũ khí>|<độ khó>`, thêm `|custom` khi dùng battle.json riêng). Đổi luật nhiều thì tăng `rulesVersion` để kỷ lục cũ đứng riêng.
 - `unlockAfter`: màn Phiêu lưu phải thắng trước (không có màn đó trong dữ liệu thì mở luôn). `maxAlive`, `eliteChance`: như của màn.
 - `milestones` (2026-10-22): phần thưởng khi **vượt qua** đợt `wave` (bất kỳ vũ khí/độ khó; dữ liệu tùy chỉnh không tính), nhận một lần và giữ mãi. Mỗi mục: `id` (dùng chung không gian id với kỷ vật Viễn chinh, không được trùng), `wave` (tăng dần, tối đa 500), `kind` = `accessory` (kèm `accessory`: phụ kiện có `reward` trong accessories.json) hoặc kỷ vật trưng bày `hourglass`, `orb`, `cushion`; `nameVi`/`nameEn` 1–32 ký tự; tối đa 12 mục. Gốc: đợt 10 Vòng cổ ∞, 20 Đồng hồ cát vô tận, 30 Vành sao, 40 Quả cầu tinh vân, 50 Áo choàng thiên hà. Đã nhận hay chưa tính từ kỷ lục (`MostCleared`, kỷ lục cũ dùng đợt xa nhất − 1) của mọi `rulesVersion`.
+
+## App trên màn hình (`apps`) (2026-10-23)
+
+App "giả" do game tự vẽ (không dùng tên hay logo app thật), có trong trận Phiêu lưu, Viễn chinh và Vô tận (trận tự do không có). Logic ở `PetBattle.Apps.cs`, hình ở `PetBattleView.Apps.cs`; Python không tham gia.
+
+- **App giúp mèo:** dọn xong một đợt (không phải đợt cuối) thì rơi 1 icon gần mèo (90–160 DIPs); hạ một quái thì rơi với xác suất `dropChance`. Icon lơ lửng trên dải chiến trường `life` giây (3 giây cuối nhấp nháy), tối đa `maxOnField` icon. Người chơi **bấm vào icon** để dùng; rê chuột lên icon thì hiện mô tả.
+  - `tabs` Tab Lốc Xoáy: 3 tab xoay quanh mèo `tabSeconds` giây, mỗi `tabEvery` giây gây `tabDamage` (× sát thương của build) cho quái trong `tabRadius` DIPs (cộng nửa bề ngang quái). Không đánh khi mèo đang bị nhấc.
+  - `ping` Bão Thông Báo: chuông "99+" rơi lên mọi quái: `pingDamage` (× build) và choáng `pingStun` giây (× hệ số choáng của loại quái); không choáng quái đang lao/hồi máu/nhảy, tinh anh miễn Đẩy.
+  - `endtask` End Task: quái nhiều máu nhất (không tính trùm đang bật khiên, quái đang được hồi) bị tắt; trùm hoặc tinh anh chỉ mất `endTaskShare` máu tối đa (vẫn dừng ở mốc khiên như mọi đòn).
+  - `undo` Ctrl+Z: hoàn lại máu mèo mất trong `undoSeconds` giây vừa qua. Chưa mất gì thì icon ở lại.
+  - Sát thương từ app không bị đá chặn (như bom len). App không dùng được khi mèo đang bị cầm/bay (giống kỹ năng); khi đó icon cũng đứng thời gian.
+- **Quảng cáo (quái):** từ khi `threat` hiện tại (màn × đợt × bậc Viễn chinh) ≥ `popupMinThreat`, mỗi đợt có `popupChance` bật 1 cửa sổ quảng cáo 2–6 giây sau khi đợt bắt đầu, đè lên một con quái. Click vào thân cửa sổ không trúng quái phía sau; bấm **×** để tắt (được cả khi đang cầm mèo). Để `popupSeconds` giây thì nó thả ra 1 con `popupSpawn` (nếu sàn còn chỗ). Dọn xong đợt thì quảng cáo tự đóng.
+- Pause/menu/fullscreen đóng băng icon như mọi thứ trong trận; kết thúc trận xóa hết. Random của app là luồng riêng của seed trận (`BattleRandom.Apps`): thêm app không đổi quái/thẻ/chặn đòn của cùng seed.
+- `list`: mỗi app một mục (`tabs`, `ping`, `endtask`, `undo`, `popup`), đủ cả 5, không trùng: `nameVi`/`nameEn` 1–32 ký tự, `descVi`/`descEn` ≤ 120 ký tự (mô tả là chữ thường, không thay `{khóa}`), `weight` 0–100 = tần suất rơi tương đối (popup không bao giờ rơi). File riêng ghi `list` thì thay cả danh sách.
+
+| Khóa | Giới hạn | Gốc |
+| --- | --- | --- |
+| `dropChance` | 0–1 | 0.12 |
+| `waveDrop` | true/false | true |
+| `life` | 2–60 s | 10 |
+| `maxOnField` | 1–4 | 2 |
+| `tabSeconds`, `tabRadius`, `tabDamage`, `tabEvery` | 0.5–30 s, 10–300, 0–1000, 0.1–5 s | 6, 70, 14, 0.5 |
+| `pingDamage`, `pingStun` | 0–1000, 0–5 s | 14, 1.5 |
+| `endTaskShare` | 0–1 | 0.25 |
+| `undoSeconds` | 0.5–30 | 4 |
+| `popupMinThreat`, `popupChance`, `popupSeconds`, `popupSpawn` | 0–100, 0–1, 2–60 s, id quái | 1.5, 0.35, 8, `slime` |
+
+- rulesVersion khi thêm app: màn 1–5: 6/12/14/15/15, Vô tận 2 (kỷ lục cũ đứng riêng; phần thưởng mốc Vô tận vẫn tính mọi rulesVersion). Viễn chinh giữ 5 để không bỏ chuyến đang đi dở.

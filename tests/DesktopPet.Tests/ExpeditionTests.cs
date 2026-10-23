@@ -185,7 +185,7 @@ internal static class ExpeditionTests
     }
 
     // The whole run in simulation (NOT real play): each weapon × difficulty × player (simple: the
-    // best case, casual: slow and missing some, AdventureBalanceTests) × route policy, 10 seeds.
+    // best case, casual: slow and missing some, AdventureBalanceTests) × route policy, 2 × AdventureBalanceTests.Seeds seeds.
     // Safe: rests when hurt, avoids elites, takes no risks at events. Greedy: elites and events
     // first, risky chests and shrines, cards over rests unless low. A won elite's first relic is
     // always taken. The capsule machine (2026-10-22): safe takes the free capsule, greedy the gold one
@@ -245,8 +245,9 @@ internal static class ExpeditionTests
         var levels = new[] { BattleDifficulty.Easy, BattleDifficulty.Normal, BattleDifficulty.Hard };
         var weapons = new[] { BattleWeapon.Sword, BattleWeapon.Hammer };
         var players = new[] { AdventureBalanceTests.Player.Simple, AdventureBalanceTests.Player.Casual };
-        const int seeds = 10;
-        Console.WriteLine("Expedition balance (simulation, not real play): weapon | level | player | route | runs won/10 | avg steps passed | avg fight s (won runs) | battles/run | elites/run | relics at the end | HP % before the boss | HP % left (won runs)");
+        // A run is a chain of fights, so it varies more than one stage: twice the Adventure's seeds.
+        const int seeds = AdventureBalanceTests.Seeds * 2;
+        Console.WriteLine($"Expedition balance (simulation, not real play): weapon | level | player | route | runs won/{seeds} | avg steps passed | avg fight s (won runs) | battles/run | elites/run | relics at the end | HP % before the boss | HP % left (won runs)");
         var results = new Dictionary<(string, BattleDifficulty, AdventureBalanceTests.Player, Policy), (int Wins, double Steps, double Seconds)>();
         foreach (var weapon in weapons)
             foreach (var level in levels)
@@ -286,7 +287,7 @@ internal static class ExpeditionTests
                             }
                         }
                         results[(weapon, level, player, policy)] = (wins, steps / seeds, wins > 0 ? seconds / wins : 0);
-                        Console.WriteLine($"  {weapon,-6} | {level,-6} | {player.ToString().ToLowerInvariant(),-6} | {policy.ToString().ToLowerInvariant(),-6} | {wins,2}/10 | {steps / seeds,4:0.0} | {(wins > 0 ? seconds / wins : 0),5:0} | {battles / seeds,3:0.0} | {elites / seeds,3:0.0} | {relics / seeds,3:0.0} | {(reachedBoss > 0 ? beforeBoss / reachedBoss : 0),4:P0} | {(wins > 0 ? left / wins : 0),4:P0}");
+                        Console.WriteLine($"  {weapon,-6} | {level,-6} | {player.ToString().ToLowerInvariant(),-6} | {policy.ToString().ToLowerInvariant(),-6} | {wins,2}/{seeds} | {steps / seeds,4:0.0} | {(wins > 0 ? seconds / wins : 0),5:0} | {battles / seeds,3:0.0} | {elites / seeds,3:0.0} | {relics / seeds,3:0.0} | {(reachedBoss > 0 ? beforeBoss / reachedBoss : 0),4:P0} | {(wins > 0 ? left / wins : 0),4:P0}");
                     }
         foreach (var weapon in weapons)
             foreach (var policy in new[] { Policy.Safe, Policy.Greedy })
@@ -294,8 +295,8 @@ internal static class ExpeditionTests
                 // The 1.2.0-beta enemy buff (user, 2026-10-21: keep the buff, lower the targets): the greedy
                 // route still wins half its runs; the safe one (fewer relics) is only required to stay winnable.
                 int won = results[(weapon, BattleDifficulty.Normal, AdventureBalanceTests.Player.Simple, policy)].Wins;
-                int least = policy == Policy.Greedy ? 5 : 1;
-                check(won >= least, $"Expedition balance: {weapon}, Normal, the simple player with the {policy.ToString().ToLowerInvariant()} route wins at least {least}/10 ({won}/10)");
+                int least = policy == Policy.Greedy ? seeds / 2 : seeds / 10;
+                check(won >= least, $"Expedition balance: {weapon}, Normal, the simple player with the {policy.ToString().ToLowerInvariant()} route wins at least {least}/{seeds} ({won}/{seeds})");
             }
         double longest = results.Values.Where(r => r.Wins > 0).Max(r => r.Seconds);
         check(longest <= 15 * 60, $"Expedition balance: a won run's fights take at most 15 minutes in simulation (longest {longest / 60:0.0} min)");

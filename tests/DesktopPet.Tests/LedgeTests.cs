@@ -136,7 +136,7 @@ internal static class LedgeTests
         var wakeBehavior = new PetBehavior(settings);
         wakeBehavior.Reset();
         double elapsed = 0;
-        typeof(PetBehavior).GetField("remaining", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.SetValue(wakeBehavior, PetSettings.WakingDuration);
+        wakeBehavior.remaining = PetSettings.WakingDuration;
         while (waking.Action == PetAction.Waking && elapsed < 3) { wakeBehavior.Step(waking, step); elapsed += step; }
         check(Math.Abs(elapsed - PetSettings.WakingDuration) < 0.02, "Waking lasts 1.2 s even while falling");
     }

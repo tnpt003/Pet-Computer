@@ -169,13 +169,11 @@ internal static class BattleChecks
         check(!gameHud.Slot(BattleSkill.Push).IsReady && gameHud.Slot(BattleSkill.Push).Remaining > 0 && gameHud.Slot(BattleSkill.Heal).IsReady,
             "A used skill shows its cooldown; the others are ready");
         // The hit chain on the HUD: ×1, then gold ×2 (the next hit is the combo), hidden once it lapses.
-        var comboProperty = typeof(BattleSim).GetProperty(nameof(BattleSim.Combo))!;
-        var comboClock = typeof(BattleSim).GetField("comboClock", Flags)!;
-        int savedCombo = Sim().Combo; object savedClock = comboClock.GetValue(Sim())!;
+        int savedCombo = Sim().Combo; double savedClock = Sim().comboClock;
         double hudWidth = gameHud.ActualWidth;
         string ShowChain(int hits, double since)
         {
-            comboProperty.SetValue(Sim(), hits); comboClock.SetValue(Sim(), since);
+            Sim().Combo = hits; Sim().comboClock = since;
             gameHud.Update(Sim(), false, false, false);
             gameHud.UpdateLayout();
             return gameHud.ComboText.Visibility == Visibility.Visible ? gameHud.ComboText.Text : "";
@@ -194,7 +192,7 @@ internal static class BattleChecks
         check(none == "" && one == "×1" && two == "×2" && twoBrush.Color == Color.FromRgb(0xFF, 0xD2, 0x3F) && lapsed == "" &&
               Math.Abs(gameHud.ActualWidth - hudWidth) < 0.5,
             $"The HUD shows the hit chain (×1, gold ×2 before the combo) and hides it once it lapses, without changing width ({none}|{one}|{two}|{lapsed})");
-        comboProperty.SetValue(Sim(), savedCombo); comboClock.SetValue(Sim(), savedClock);
+        Sim().Combo = savedCombo; Sim().comboClock = savedClock;
         Press(gameHud.Slot(BattleSkill.Heal));
         check(Sim().Cooldown(BattleSkill.Heal) == 0, "The fish slot does nothing at full HP");
         Press(gameHud.Slot(BattleSkill.Shield)); Press(gameHud.Slot(BattleSkill.Cheer));
@@ -228,7 +226,7 @@ internal static class BattleChecks
             Sim().Select(slime.Id);
             foreach (var s in Sim().Slimes.Where(s => s.Targetable && s.Id != slime.Id)) { s.X = slime.X + 90; s.Set(SlimeState.Windup); s.StateTime = 0.6; }
             // A combo burst on the marked slime, a moment after the hit.
-            typeof(BattleSim).GetMethod("AddEffect", Flags)!.Invoke(Sim(), new object[] { BattleEffectKind.Combo, slime.X, slime.Height / 2, 0.0 });
+            Sim().AddEffect(BattleEffectKind.Combo, slime.X, slime.Height / 2, 0.0);
             Sim().Effects[^1].Age = 0.15;
             view.InvalidateVisual(); view.UpdateLayout();
             var full = new RenderTargetBitmap(vw, vh, 96, 96, PixelFormats.Pbgra32); full.Render(view);
@@ -661,11 +659,10 @@ internal static class BattleChecks
         {
             var data = BattleData.Settings;
             var lineup = new BattleSim(data, 0, 600, new Random(1));
-            var spawn = typeof(BattleSim).GetMethod("AddSlime", Flags)!;
             double at = 60;
             foreach (var kind in data.EnemyTypes)
             {
-                var made = (Slime)spawn.Invoke(lineup, new object[] { at + data.SlimeWidth * kind.Scale / 2, kind })!;
+                var made = lineup.AddSlime(at + data.SlimeWidth * kind.Scale / 2, kind);
                 made.Set(SlimeState.Moving); made.StateTime = 0.4; made.Facing = -1;
                 at += data.SlimeWidth * kind.Scale + 50;
             }
@@ -755,10 +752,9 @@ internal static class BattleChecks
             var data = BattleData.Settings;
             var appField = new BattleSim(data, 0, 600, stage: new StageSpec { Id = "apps_review" }, seed: 1);
             appField.SetAppGrid(7, 1);
-            var spawn = typeof(BattleSim).GetMethod("AddSlime", Flags)!;
-            var behind = (Slime)spawn.Invoke(appField, new object[] { 470.0, data.EnemyTypes[0] })!;
+            var behind = appField.AddSlime(470.0, data.EnemyTypes[0]);
             behind.Set(SlimeState.Moving); behind.StateTime = 0.4; behind.Facing = -1;
-            var popupList = (System.Collections.Generic.List<BattlePopup>)typeof(BattleSim).GetField("popups", Flags)!.GetValue(appField)!;
+            var popupList = appField.popups;
             popupList.Add(new BattlePopup { Id = 99, X = 470, Age = 3, Life = 8 });
             var stripView = new BattleFieldView(appField) { OriginX = 0 };
             stripView.Measure(new Size(600, BattleFieldView.FieldHeight)); stripView.Arrange(new Rect(0, 0, 600, BattleFieldView.FieldHeight));
@@ -788,7 +784,7 @@ internal static class BattleChecks
                 }
                 // The icons in each state: charging, charged, infected (just scrubbed once), just used, hovered.
                 var states = appField.Desktop.ToList();
-                typeof(BattleSim).GetProperty(nameof(BattleSim.Time))!.SetValue(appField, 10.0);
+                appField.Time = 10.0;
                 states[0].Charge = 0.35;
                 states[1].Charge = 1; states[1].ReadyAt = 9.8;
                 states[2].InfectedBy = behind.Id; states[2].ScrubsLeft = 2; states[2].InfectedAt = 8; states[2].ScrubbedAt = 9.9;
@@ -800,13 +796,13 @@ internal static class BattleChecks
                     foreach (var app in states)
                     {
                         var icon = new DesktopAppIcon(appField, app.Id);
-                        if (app == states[4]) typeof(DesktopAppIcon).GetProperty(nameof(DesktopAppIcon.Hovered))!.SetValue(icon, true);
+                        if (app == states[4]) icon.Hovered = true;
                         row.Children.Add(icon);
                     }
                     Save(OnBack(row, DesktopAppIcon.ViewWidth * 5, DesktopAppIcon.ViewHeight, back), (int)DesktopAppIcon.ViewWidth * 5, (int)DesktopAppIcon.ViewHeight, $"battle-apps-icons-{name}.png");
                 }
                 // Flights halfway: tabs, bells, the bin's catch, a virus, a bad bell, an ad.
-                var launchList = (System.Collections.Generic.List<AppLaunch>)typeof(BattleSim).GetField("launches", Flags)!.GetValue(appField)!;
+                var launchList = appField.launches;
                 var kinds = new[] { (LaunchKind.Tabs, false, 120.0), (LaunchKind.Goo, true, 300.0), (LaunchKind.Trash, true, 380.0), (LaunchKind.BadBell, false, 200.0), (LaunchKind.Popup, false, 520.0), (LaunchKind.Freeze, false, 60.0) };
                 int i = 0;
                 foreach (var (kind, toIcon, x) in kinds)
@@ -824,11 +820,10 @@ internal static class BattleChecks
                 // The strip: the ad, the tornado around the cat, the virus mark, the effects.
                 launchList.Clear();
                 states[2].InfectedBy = behind.Id;
-                typeof(BattleSim).GetProperty(nameof(BattleSim.TabsRemaining))!.SetValue(appField, 3.0);
-                typeof(BattleSim).GetField("lastCatX", Flags)!.SetValue(appField, 200.0);
-                var addEffect = typeof(BattleSim).GetMethod("AddEffect", Flags)!;
+                appField.TabsRemaining = 3.0;
+                appField.lastCatX = 200.0;
                 foreach (var (effect, at, height) in new[] { (BattleEffectKind.Bell, 330.0, 60.0), (BattleEffectKind.EndTask, 560.0, 70.0), (BattleEffectKind.Rewind, 60.0, 60.0) })
-                    addEffect.Invoke(appField, new object[] { effect, at, height, 46.0 });
+                    appField.AddEffect(effect, at, height, 46.0);
                 foreach (var e in appField.Effects) e.Age = e.Life * 0.4;
                 var strip = new BattleFieldView(appField) { OriginX = 0 };
                 foreach (var (name, back) in new[] { ("light", Colors.WhiteSmoke), ("dark", Color.FromRgb(0x1E, 0x1E, 0x24)) })
@@ -896,11 +891,10 @@ internal static class BattleChecks
             string shielded = FieldShot("battle-boss-shielded");
             check(open != shielded, "A shielded boss is drawn inside a bubble");
             Call(window, "UpdateBattleHud");
-            var bossLabel = (System.Windows.Controls.TextBlock)typeof(BattleHud).GetField("bossName", Flags)!.GetValue(Field<BattleHud>(window, "battleHud"))!;
+            var bossLabel = Field<BattleHud>(window, "battleHud").bossName;
             check(bossLabel.Text.Contains("khiên") || bossLabel.Text.Contains("shield"), $"The HUD's boss bar says the shield is up (\"{bossLabel.Text}\")");
-            var addEffect = typeof(BattleSim).GetMethod("AddEffect", Flags)!;
-            addEffect.Invoke(Sim(), new object[] { BattleEffectKind.Immune, bossSlime.X, bossSlime.Height / 2, bossSlime.Width });
-            addEffect.Invoke(Sim(), new object[] { BattleEffectKind.Block, bossSlime.X + 120, 30.0, 0.0 });
+            Sim().AddEffect(BattleEffectKind.Immune, bossSlime.X, bossSlime.Height / 2, bossSlime.Width);
+            Sim().AddEffect(BattleEffectKind.Block, bossSlime.X + 120, 30.0, 0.0);
             string marks = FieldShot("battle-block-immune");
             check(marks != shielded, "The IMMUNE and BLOCK marks are drawn");
             bossSlime.Shielded = false;

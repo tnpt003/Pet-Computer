@@ -109,6 +109,15 @@ internal static class ContextTests
         var (jaId, jaText) = PetBreaks.LocalLine("ja", "Mochi", new Random(3));
         check(jaId.Contains(":ja:") && jaText.Any(c => c >= '぀' && c <= 'ヿ') && !jaText.Contains("{name}"),
             "Japanese has its own built-in reminder lines");
+        string root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../../"));
+        using (var lines = System.Text.Json.JsonDocument.Parse(File.ReadAllText(Path.Combine(root, "ai", "lines.json"))))
+            foreach (string language in new[] { PetLanguage.Vietnamese, PetLanguage.English, PetLanguage.Japanese })
+            {
+                var python = lines.RootElement.GetProperty("break").GetProperty(language).EnumerateArray().Select(line => line.GetString()).ToArray();
+                var local = PetBreaks.Lines(language);
+                check(python.Length >= local.Length && local.SequenceEqual(python.Take(local.Length)),
+                    $"Built-in reminder lines ({language}) are the first break lines of ai/lines.json");
+            }
 
         var context = new PetContext();
         var change = context.Update(false, PetContext.AwayAfter - 1);

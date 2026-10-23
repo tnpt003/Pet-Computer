@@ -162,13 +162,12 @@ public sealed class EliteSpec
     public double HealBudget { get; init; } = 1;
     public bool PushImmune { get; init; }
     // The trait its label over the head names (null: none worth a label), the most telling first.
-    public string? Tag(bool english) =>
-        PushImmune ? (english ? "NO PUSH" : "MIỄN ĐẨY")
-        : AttackCooldown < 1 ? (english ? "QUICK HITS" : "ĐÁNH NHANH")
-        : Damage > 1 ? (english ? "HARD HITS" : "ĐÒN MẠNH")
-        : HealCooldown < 1 || HealBudget > 1 || FirstHeal > 1 ? (english ? "BIG HEALS" : "HỒI MẠNH")
+    public string? Tag(string language) =>
+        PushImmune ? PetText.Pick(language, "MIỄN ĐẨY", "NO PUSH")
+        : AttackCooldown < 1 ? PetText.Pick(language, "ĐÁNH NHANH", "QUICK HITS")
+        : Damage > 1 ? PetText.Pick(language, "ĐÒN MẠNH", "HARD HITS")
+        : HealCooldown < 1 || HealBudget > 1 || FirstHeal > 1 ? PetText.Pick(language, "HỒI MẠNH", "BIG HEALS")
         : null;
-    public string? Tag(string language) => Tag(false) is string vi ? PetText.Pick(language, vi, Tag(true)!) : null;
     public double Cost { get; init; } = 1;
     // A short line for the banner the first time an elite of this kind appears in a battle.
     public string DescVi { get; init; } = "";
@@ -362,13 +361,12 @@ public sealed class SynergySpec
 public static class BuildGroups
 {
     public static readonly string[] All = { "defense", "power", "speed" };
-    public static string Name(string group, bool english) => group switch
+    public static string Name(string group, string language) => group switch
     {
-        "defense" => english ? "Defense" : "Phòng thủ",
-        "power" => english ? "Power" : "Sức mạnh",
-        _ => english ? "Speed" : "Tốc độ"
+        "defense" => PetText.Pick(language, "Phòng thủ", "Defense"),
+        "power" => PetText.Pick(language, "Sức mạnh", "Power"),
+        _ => PetText.Pick(language, "Tốc độ", "Speed")
     };
-    public static string Name(string group, string language) => PetText.Pick(language, Name(group, false), Name(group, true));
 }
 
 // Assets/battle.json (embedded) is the built-in battle: its numbers, weapons, enemy kinds and

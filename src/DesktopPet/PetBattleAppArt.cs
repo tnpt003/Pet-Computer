@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
+using static DesktopPet.PetUi;
 
 namespace DesktopPet;
 
@@ -11,13 +12,6 @@ namespace DesktopPet;
 // Everything is drawn around a centre point at a scale (1 = the 50 DIP desktop icon).
 public static class AppArt
 {
-    // Frozen brushes and round-capped pens, for every desktop-app drawing.
-    public static Brush Frozen(byte a, byte r, byte g, byte b) { var brush = new SolidColorBrush(System.Windows.Media.Color.FromArgb(a, r, g, b)); brush.Freeze(); return brush; }
-    public static Pen FrozenPen(Brush brush, double thickness)
-    {
-        var pen = new Pen(brush, thickness) { LineJoin = PenLineJoin.Round, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
-        pen.Freeze(); return pen;
-    }
     private static Geometry Parse(string path) { var g = Geometry.Parse(path); g.Freeze(); return g; }
 
     public static readonly Brush Ink = Frozen(255, 0x30, 0x2B, 0x48);
@@ -269,7 +263,7 @@ public static class AppArt
     {
         if (Colors.TryGetValue(hex, out var brush)) return brush;
         Brush made;
-        try { made = new SolidColorBrush((System.Windows.Media.Color)ColorConverter.ConvertFromString(hex)); made.Freeze(); }
+        try { made = Hex(hex); }
         catch (FormatException) { made = GooGreen; }
         return Colors[hex] = made;
     }

@@ -453,3 +453,7 @@ Tự động đã có: Phần thưởng trên sảnh (ô có hình, khóa, Mới
 - [ ] Ở 日本語 bật AI và Lời nói: mèo nói tiếng Nhật (gọi bạn là ご主人, có tên mèo), cả câu chào, đói, chán, ngủ dậy, ngày lễ; nhắc nghỉ (cả khi tắt AI) bằng tiếng Nhật. Thẻ trạng thái "điều mèo học được" đọc được (tên hành động tiếng Nhật).
 - [ ] Ở 日本語 vào trận: HUD, bảng chuẩn bị, chọn thẻ, túi đồ (Chỉ số/Thẻ/Di vật), bản đồ Phiêu lưu/Viễn chinh, kết quả, Vô tận, icon app (Không phản hồi, quảng cáo), chữ trên slime (CHẶN/MIỄN, tag tinh anh), tên quái/thẻ/di vật/kỷ vật đều tiếng Nhật và không bị cắt.
 - [ ] Bộ cài: máy Windows tiếng Nhật, lần đầu mở sau khi cài thì hộp chào mừng chọn sẵn 日本語 (máy khác: theo ngôn ngữ Windows như cũ).
+
+### Chuẩn hóa S5 (2026-10-23)
+- [ ] Tắt AI (hoặc Python lỗi), bật nhắc nghỉ với khoảng ngắn: câu nhắc tiếng Việt/English đúng câu mới (vd. "Ngồi lâu rồi đó, đứng dậy vươn vai với {tên mèo} nha~"), không còn {name}.
+- [ ] Đèn laser, bong bóng thoại, bóng len, các trận đấu (slime, icon app, quảng cáo), bộ lông/phụ kiện: màu và nét như trước.

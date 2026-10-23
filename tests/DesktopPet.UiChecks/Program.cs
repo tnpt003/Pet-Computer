@@ -370,9 +370,9 @@ internal static class Program
             Check(vietnamese.Contains("Làm ngay") && vietnamese.Contains("Thoát mèo") && vietnamese.Contains("Cài đặt…") && vietnamese.Contains("Cảm xúc") &&
                   !vietnamese.Intersect(new[] { "Do now", "Emotions", "Exit pet", "Give treat", "Quiet mode", "Sounds", "Settings…", "More", "About Desktop Pet", "Behavior debug view" }).Any(),
                 "Vietnamese UI: no English menu label is left behind");
-            Check(PetWindow.LocalizeAiStatus("Python AI: connected (playful)", false) == "Python AI: đã kết nối (ham chơi)" &&
-                  PetWindow.LocalizeAiStatus("Local behavior: timeout (retry after 4s)", false) == "Hành vi local: hết thời gian chờ (thử lại sau 4s)" &&
-                  PetWindow.LocalizeAiStatus("Python AI: stopped", true) == "Python AI: stopped",
+            Check(PetWindow.LocalizeAiStatus("Python AI: connected (playful)", "vi") == "Python AI: đã kết nối (ham chơi)" &&
+                  PetWindow.LocalizeAiStatus("Local behavior: timeout (retry after 4s)", "vi") == "Hành vi local: hết thời gian chờ (thử lại sau 4s)" &&
+                  PetWindow.LocalizeAiStatus("Python AI: stopped", "en") == "Python AI: stopped",
                 "AI status follows the UI language (debug view keeps English)");
         }
         window.ToggleDebug();
@@ -642,7 +642,7 @@ internal static class Program
         FeatureStep(0.1);
         Check(!window.LaserActive && pet.Emotions.SleepLocked, "Sleep ends the laser game without being interrupted");
         window.Reset();
-        typeof(PetBehavior).GetMethod("WakeByClick")!.Invoke(Field<PetBehavior>(window, "behavior"), new object[] { pet });
+        Field<PetBehavior>(window, "behavior").WakeByClick(pet);
         pet.Emotions.FinishSleep(0); pet.Action = PetAction.Idle;
         bool quietBefore = preferences.Quiet;
         preferences.Quiet = true; behavior.Quiet = true;
@@ -1087,7 +1087,7 @@ internal static class Program
         Call("TickPendingSpeech");
         bool heldAsleep = !pet.Speech.Visible && pet.Speech.PendingId == "hello:vi:test";
         window.Reset();
-        typeof(PetBehavior).GetMethod("WakeByClick")!.Invoke(Field<PetBehavior>(window, "behavior"), new object[] { pet });
+        Field<PetBehavior>(window, "behavior").WakeByClick(pet);
         pet.Emotions.FinishSleep(0); pet.Action = PetAction.Idle;
         Call("TickPendingSpeech");
         Check(heldAsleep && pet.Speech.Visible && pet.Speech.Id == "hello:vi:test",

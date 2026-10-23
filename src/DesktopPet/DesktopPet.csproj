@@ -21,6 +21,10 @@
     <ProjectReference Include="../DesktopPet.Core/DesktopPet.Core.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <!-- UiChecks set up battle views through their internal members instead of reflection. -->
+    <InternalsVisibleTo Include="DesktopPet.UiChecks" />
+  </ItemGroup>
+  <ItemGroup>
     <!-- Installer and self-update from GitHub Releases (PetUpdates.cs, scripts/pack.ps1). -->
     <PackageReference Include="Velopack" Version="1.2.158" />
   </ItemGroup>

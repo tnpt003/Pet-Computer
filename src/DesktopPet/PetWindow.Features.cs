@@ -140,7 +140,7 @@ public sealed partial class PetWindow
 
     // The About box also names the commit the published build came from (scripts/publish.ps1).
     private void ShowAbout() => PetDialog.Show(null, L("Giới thiệu Desktop Pet", "About Desktop Pet"),
-        $"Desktop Pet {PetLog.VersionLabel(PetLog.BuildVersion, English)}\n\n{L("Dữ liệu và log", "Data and logs")}: {PetPreferences.DataDirectory}\n{AiStatusText}",
+        $"Desktop Pet {PetLog.VersionLabel(PetLog.BuildVersion, preferences.Language)}\n\n{L("Dữ liệu và log", "Data and logs")}: {PetPreferences.DataDirectory}\n{AiStatusText}",
         L("Đóng", "Close"));
 
     private void SavePreferences()
@@ -195,7 +195,7 @@ public sealed partial class PetWindow
         toyPlay.Reset();
         ball.X = Math.Clamp(pet.X + 145, bounds.Left + 12, Math.Max(bounds.Left + 12, bounds.Right - 12));
         ball.Height = 0; ball.VX = 45; ball.VY = 100; ball.BatCooldown = 0; ballTime = 45;
-        var surface = new Grid { Background = new SolidColorBrush(Color.FromArgb(1, 0, 0, 0)), Cursor = System.Windows.Input.Cursors.Hand };
+        var surface = new Grid { Background = PetUi.Frozen(1, 0, 0, 0), Cursor = System.Windows.Input.Cursors.Hand };
         ballHalo = new Ellipse { Width = 36, Height = 36, Stroke = YarnBallArt.Halo, StrokeThickness = 2, Opacity = 0 };
         var art = new YarnBallArt { Width = 24, Height = 24, RenderTransformOrigin = new Point(0.5, 0.5) };
         surface.Children.Add(ballHalo); surface.Children.Add(art); ballArt = art;

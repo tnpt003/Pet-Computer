@@ -85,7 +85,7 @@ internal static class UpgradeChecks
             check(!b.Paused, "Resuming starts the battle again");
             var hud = Field<BattleHud>(window, "battleHud");
             Fight(0.1);
-            check(hud.UpgradesText.Contains(BuildGroups.Name(offer[0].Group!, true) + " 1/3"), $"The HUD shows the build's group points ({hud.UpgradesText})");
+            check(hud.UpgradesText.Contains(BuildGroups.Name(offer[0].Group!, "en") + " 1/3"), $"The HUD shows the build's group points ({hud.UpgradesText})");
 
             // Quick feet changes the cat's running speed for this run only.
             UntilOffer();

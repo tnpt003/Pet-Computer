@@ -23,7 +23,7 @@ public sealed class DesktopAppIcon : FrameworkElement
     private bool English => PetLanguage.UsesEnglish(Language);
     public event Action? Clicked;
     public event Action<bool>? HoverChanged;
-    public bool Hovered { get; private set; }
+    public bool Hovered { get; internal set; }
 
     public DesktopAppIcon(BattleSim sim, int appId)
     {
@@ -36,19 +36,19 @@ public sealed class DesktopAppIcon : FrameworkElement
         MouseLeave += (_, _) => { Hovered = false; HoverChanged?.Invoke(false); InvalidateVisual(); };
     }
 
-    private static readonly Brush Veil = AppArt.Frozen(150, 0x26, 0x23, 0x38);
-    private static readonly Brush Selection = AppArt.Frozen(70, 0xFF, 0xF6, 0xE6);
-    private static readonly Pen SelectionRim = AppArt.FrozenPen(AppArt.Frozen(150, 0xFF, 0xF6, 0xE6), 1);
-    private static readonly Brush GoldGlow = AppArt.Frozen(110, 0xFF, 0xD2, 0x3F);
-    private static readonly Pen GoldRing = AppArt.FrozenPen(AppArt.Frozen(255, 0xFF, 0xD2, 0x3F), 3);
-    private static readonly Brush GooTint = AppArt.Frozen(80, 0x7A, 0xD9, 0x4E);
-    private static readonly Pen PipPen = AppArt.FrozenPen(AppArt.Frozen(255, 0xE5, 0x4B, 0x4B), 1.6);
-    private static readonly Brush Bubble = AppArt.Frozen(200, 255, 255, 255);
-    private static readonly Pen BubbleRim = AppArt.FrozenPen(AppArt.Frozen(200, 0x9A, 0xD8, 0xF0), 1.2);
-    private static readonly Brush ArrowBlue = AppArt.Frozen(255, 0x2F, 0x7B, 0xD6);
-    private static readonly Pen ArrowPen = AppArt.FrozenPen(ArrowBlue, 1.8);
-    private static readonly Pen TextHalo = AppArt.FrozenPen(AppArt.Frozen(230, 0x1E, 0x1B, 0x2C), 3);
-    private static readonly Brush LabelGreen = AppArt.Frozen(255, 0xA8, 0xF0, 0x7A);
+    private static readonly Brush Veil = PetUi.Frozen(150, 0x26, 0x23, 0x38);
+    private static readonly Brush Selection = PetUi.Frozen(70, 0xFF, 0xF6, 0xE6);
+    private static readonly Pen SelectionRim = PetUi.FrozenPen(PetUi.Frozen(150, 0xFF, 0xF6, 0xE6), 1);
+    private static readonly Brush GoldGlow = PetUi.Frozen(110, 0xFF, 0xD2, 0x3F);
+    private static readonly Pen GoldRing = PetUi.FrozenPen(PetUi.Frozen(255, 0xFF, 0xD2, 0x3F), 3);
+    private static readonly Brush GooTint = PetUi.Frozen(80, 0x7A, 0xD9, 0x4E);
+    private static readonly Pen PipPen = PetUi.FrozenPen(PetUi.Frozen(255, 0xE5, 0x4B, 0x4B), 1.6);
+    private static readonly Brush Bubble = PetUi.Frozen(200, 255, 255, 255);
+    private static readonly Pen BubbleRim = PetUi.FrozenPen(PetUi.Frozen(200, 0x9A, 0xD8, 0xF0), 1.2);
+    private static readonly Brush ArrowBlue = PetUi.Frozen(255, 0x2F, 0x7B, 0xD6);
+    private static readonly Pen ArrowPen = PetUi.FrozenPen(ArrowBlue, 1.8);
+    private static readonly Pen TextHalo = PetUi.FrozenPen(PetUi.Frozen(230, 0x1E, 0x1B, 0x2C), 3);
+    private static readonly Brush LabelGreen = PetUi.Frozen(255, 0xA8, 0xF0, 0x7A);
     private static readonly Typeface LabelFont = new(new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.SemiBold, FontStretches.Normal);
 
     // An elastic pop: 0 → past 1 → 1.
@@ -131,7 +131,7 @@ public sealed class DesktopAppIcon : FrameworkElement
         DrawBursts(dc, app, tile, t, ready, used, scrubbed);
         dc.Pop();
     }
-    private static readonly Pen FillEdge = AppArt.FrozenPen(AppArt.Frozen(200, 0xFF, 0xF6, 0xE6), 1.5);
+    private static readonly Pen FillEdge = PetUi.FrozenPen(PetUi.Frozen(200, 0xFF, 0xF6, 0xE6), 1.5);
 
     public const double HopSeconds = 0.5, CrawlSeconds = 1.4;
 
@@ -228,7 +228,7 @@ public sealed class DesktopAppIcon : FrameworkElement
     private static Pen SparkPen(BattleAppKind kind)
     {
         if (SparkPens.TryGetValue(kind, out var pen)) return pen;
-        pen = AppArt.FrozenPen(AppArt.Back(kind), 3);
+        pen = PetUi.FrozenPen(AppArt.Back(kind), 3);
         return SparkPens[kind] = pen;
     }
 
@@ -312,13 +312,13 @@ public sealed class AppFlightView : FrameworkElement
         IsHitTestVisible = false;
     }
 
-    private static readonly Brush TealOrb = AppArt.Frozen(255, 0x3F, 0xB0, 0x9A);
-    private static readonly Brush TrailGold = AppArt.Frozen(170, 0xFF, 0xD2, 0x3F);
-    private static readonly Brush TrailGreen = AppArt.Frozen(170, 0x7A, 0xD9, 0x4E);
-    private static readonly Brush TrailPaper = AppArt.Frozen(170, 0xFF, 0xF6, 0xE6);
-    private static readonly Brush TrailTeal = AppArt.Frozen(170, 0x3F, 0xB0, 0x9A);
-    private static readonly Brush TrailRed = AppArt.Frozen(170, 0xE5, 0x4B, 0x4B);
-    private static readonly Pen PlusPen = AppArt.FrozenPen(Brushes.White, 3);
+    private static readonly Brush TealOrb = PetUi.Frozen(255, 0x3F, 0xB0, 0x9A);
+    private static readonly Brush TrailGold = PetUi.Frozen(170, 0xFF, 0xD2, 0x3F);
+    private static readonly Brush TrailGreen = PetUi.Frozen(170, 0x7A, 0xD9, 0x4E);
+    private static readonly Brush TrailPaper = PetUi.Frozen(170, 0xFF, 0xF6, 0xE6);
+    private static readonly Brush TrailTeal = PetUi.Frozen(170, 0x3F, 0xB0, 0x9A);
+    private static readonly Brush TrailRed = PetUi.Frozen(170, 0xE5, 0x4B, 0x4B);
+    private static readonly Pen PlusPen = PetUi.FrozenPen(Brushes.White, 3);
 
     // Along the arc from `from` to `to` at t (0–1): bulging upward by a share of the distance.
     private static Point Arc(Point from, Point to, double t)

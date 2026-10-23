@@ -433,7 +433,7 @@ internal static class ExpeditionChecks
                 "Choosing the cushion and saving puts the cushion on display instead");
             Shot("Pet trophies", "trophies-cushion.png");
             prefs.TrophyShown = "cup_gold"; Call(window, "TickTrophies");
-            check(keepsake.Items.Select(k => k.Id).SequenceEqual(new[] { "cup_silver" }), "A chosen keepsake that is not owned falls back to the best one");
+            check(keepsake!.Items.Select(k => k.Id).SequenceEqual(new[] { "cup_silver" }), "A chosen keepsake that is not owned falls back to the best one");
             prefs.TrophyShown = null; Call(window, "TickTrophies");
             spot = window.TrophyBounds;
             Shot("Pet trophies", "trophies-keepsake.png");

@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
+using static DesktopPet.PetUi;
 
 namespace DesktopPet;
 
@@ -81,22 +82,13 @@ public sealed partial class BattleFieldView : FrameworkElement
     // standing behind its guards is never hidden by them.
     public static int Layer(Slime slime) => slime.Type.Blocker ? 0 : slime.Type.Support ? 2 : 1;
 
-    private static Brush Frozen(byte a, byte r, byte g, byte b) { var brush = new SolidColorBrush(Color.FromArgb(a, r, g, b)); brush.Freeze(); return brush; }
-    private static Pen FrozenPen(Brush brush, double thickness, DashStyle? dash = null)
-    {
-        var pen = new Pen(brush, thickness) { LineJoin = PenLineJoin.Round, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
-        if (dash != null) pen.DashStyle = dash;
-        pen.Freeze(); return pen;
-    }
     private static readonly Brush HitHalo = Frozen(1, 0, 0, 0); // Invisible but clickable.
     // Each enemy kind's colours (battle.json), frozen once.
     private static readonly System.Collections.Generic.Dictionary<string, Brush> KindBrushes = new();
     private static Brush KindBrush(string hex)
     {
         if (KindBrushes.TryGetValue(hex, out var brush)) return brush;
-        var color = (Color)ColorConverter.ConvertFromString(hex);
-        var made = new SolidColorBrush(color); made.Freeze();
-        return KindBrushes[hex] = made;
+        return KindBrushes[hex] = Hex(hex);
     }
     private static readonly Brush SlimeAngry = Frozen(255, 0xF5, 0xA6, 0x3C);
     private static readonly Brush Shine = Frozen(220, 255, 255, 255);

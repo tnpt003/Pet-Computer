@@ -6,7 +6,7 @@ namespace DesktopPet;
 public sealed class PetBehavior(PetSettings settings, Random? randomSource = null)
 {
     private readonly Random random = randomSource ?? new();
-    private double remaining = 2;
+    internal double remaining = 2;
     private bool followingMouse;
     private double attentionCooldown, selfCareCooldown = 25;
     public string Personality { get; set; } = PetPersonality.Balanced;

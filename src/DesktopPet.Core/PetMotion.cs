@@ -15,7 +15,7 @@ public sealed class PetMotion
     public double LandingSquash => spring.Squash;
     public double LandingTilt => spring.Tilt;
     public Landing Landing { get; } = new();
-    private readonly ImpactSpring spring = new();
+    internal readonly ImpactSpring spring = new();
     public int Facing { get; private set; } = 1;
     public double FacingScale => Facing * (turnTime < TurnDuration ? 1 - 0.14 * Math.Sin(Math.PI * turnTime / TurnDuration) : 1);
     private const double TurnDuration = 0.18;

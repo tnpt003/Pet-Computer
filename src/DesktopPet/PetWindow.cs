@@ -46,7 +46,7 @@ public sealed partial class PetWindow : Window
     private readonly string sessionId = Guid.NewGuid().ToString("N");
     // English status for the debug view and logs; AiStatusText follows the UI language.
     public string AiStatus => ai?.Status ?? "Python AI: off (local behavior)";
-    public string AiStatusText => LocalizeAiStatus(AiStatus, English);
+    public string AiStatusText => LocalizeAiStatus(AiStatus, preferences.Language);
     // The whole UI uses one language (preferences.Language). The debug view stays English.
     // Other languages translate the English text (PetText); LF is for interpolated text.
     public string L(string vietnamese, string english) => PetText.Pick(preferences.Language, vietnamese, english);
@@ -56,9 +56,9 @@ public sealed partial class PetWindow : Window
     public event Action? LanguageChanged;
     private void RaiseLanguageChanged() => LanguageChanged?.Invoke();
 
-    public static string LocalizeAiStatus(string status, bool english)
+    public static string LocalizeAiStatus(string status, string language)
     {
-        if (english) return status;
+        if (language != PetLanguage.Vietnamese) return status; // Other languages keep the English debug text.
         const string connected = "Python AI: connected (", local = "Local behavior: ";
         if (status.StartsWith(connected, StringComparison.Ordinal) && status.EndsWith(')'))
         {

@@ -172,7 +172,7 @@ internal static class AdventureChecks
                 $"The result says what opened and offers Next stage first ({panel})");
             // The same run counted again (a result shown twice) changes nothing.
             int wins = progress.Records.Values.Sum(r => r.Wins);
-            var again = window.Adventure.Apply(Field<string>(window, "battleRunId"), window.Adventure.Stage("st_one")!, true, true, BattleWeapon.Sword, BattleDifficulty.Normal, 1, 1);
+            var again = window.Adventure!.Apply(Field<string>(window, "battleRunId"), window.Adventure.Stage("st_one")!, true, true, BattleWeapon.Sword, BattleDifficulty.Normal, 1, 1);
             check(!again.Counted && progress.Records.Values.Sum(r => r.Wins) == wins, "The same run is never counted twice");
             Shot("Pet result", "adventure-result-en.png");
 

@@ -39,13 +39,14 @@ public sealed class PetBreaks
 
     public static bool IsBreakLine(string? id) => id != null && id.StartsWith("break:", StringComparison.Ordinal);
 
+    // The first three "break" lines of ai/lines.json in each language (ContextTests compares them).
     private static readonly string[] Vietnamese =
     {
-        "Sen ơi, uống ngụm nước đi nào!", "Đứng dậy vươn vai với {name} nha~", "Nghỉ mắt chút đi sen, nhìn ra xa nè!"
+        "Sen ơi, uống ngụm nước đi nào!", "Ngồi lâu rồi đó, đứng dậy vươn vai với {name} nha~", "Nghỉ mắt chút đi sen, nhìn ra xa nè!"
     };
     private static readonly string[] English =
     {
-        "Human, time for a sip of water!", "Stand up and stretch with {name}~", "Rest your eyes, look far away for a bit!"
+        "Human, time for a sip of water!", "You've been sitting a while, stretch with {name}~", "Rest your eyes, look far away for a bit!"
     };
 
     private static readonly string[] Japanese =
@@ -53,9 +54,12 @@ public sealed class PetBreaks
         "ご主人、お水を一口飲もう！", "ずっと座ってるね、{name}と伸びしよう〜", "目を休めて、ちょっと遠くを見よう！"
     };
 
+    internal static string[] Lines(string language) =>
+        language switch { PetLanguage.Vietnamese => Vietnamese, PetLanguage.Japanese => Japanese, _ => English };
+
     public static (string Id, string Text) LocalLine(string language, string name, Random random)
     {
-        var lines = language switch { PetLanguage.Vietnamese => Vietnamese, PetLanguage.Japanese => Japanese, _ => English };
+        var lines = Lines(language);
         int index = random.Next(lines.Length);
         return ($"break:local:{language}:{index}", lines[index].Replace("{name}", string.IsNullOrWhiteSpace(name) ? "Mochi" : name));
     }

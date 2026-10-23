@@ -32,9 +32,9 @@ public sealed partial class PetWindow
         laserTime = LaserDuration;
         laserLastCursor = null;
         var dot = new Grid { Width = LaserDotSize, Height = LaserDotSize, IsHitTestVisible = false };
-        dot.Children.Add(new Ellipse { Width = 18, Height = 18, Fill = new SolidColorBrush(Color.FromArgb(70, 255, 40, 40)) });
-        dot.Children.Add(new Ellipse { Width = 9, Height = 9, Fill = new SolidColorBrush(Color.FromRgb(255, 40, 40)),
-            Stroke = new SolidColorBrush(Color.FromArgb(200, 255, 200, 200)), StrokeThickness = 1,
+        dot.Children.Add(new Ellipse { Width = 18, Height = 18, Fill = PetUi.Frozen(70, 255, 40, 40) });
+        dot.Children.Add(new Ellipse { Width = 9, Height = 9, Fill = PetUi.Frozen(255, 255, 40, 40),
+            Stroke = PetUi.Frozen(200, 255, 200, 200), StrokeThickness = 1,
             Effect = new DropShadowEffect { Color = Colors.Red, BlurRadius = 8, ShadowDepth = 0, Opacity = 0.9 } });
         // Click-through and never activated, like the speech bubble.
         laserWindow = CreateOverlayWindow(dot, "Pet laser", clickThrough: true);

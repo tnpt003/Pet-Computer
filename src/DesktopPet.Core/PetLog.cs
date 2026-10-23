@@ -70,7 +70,7 @@ public static class PetLog
             System.Reflection.Assembly.GetEntryAssembly() ?? typeof(PetLog).Assembly)?.InformationalVersion ?? "unknown";
 
     // For people: "1.0.0", "1.0.0 (abc1234)" or "1.0.0 (abc1234, uncommitted changes)".
-    public static string VersionLabel(string? informational, bool english)
+    public static string VersionLabel(string? informational, string language)
     {
         if (string.IsNullOrWhiteSpace(informational)) return "unknown";
         int plus = informational.IndexOf('+');
@@ -80,7 +80,7 @@ public static class PetLog
         if (dirty) revision = revision[..^".dirty".Length];
         if (revision.Length == 0) return version;
         if (revision.Length > 7) revision = revision[..7]; // A full git hash: the short form is enough to find it.
-        return dirty ? $"{version} ({revision}, {(english ? "uncommitted changes" : "có thay đổi chưa commit")})" : $"{version} ({revision})";
+        return dirty ? $"{version} ({revision}, {PetText.Pick(language, "có thay đổi chưa commit", "uncommitted changes")})" : $"{version} ({revision})";
     }
 
     public static PetLogListener? Install()
@@ -90,7 +90,7 @@ public static class PetLog
             var listener = new PetLogListener(Path.Combine(PetPreferences.DataDirectory, "logs", "desktoppet.log"));
             Trace.Listeners.Add(listener);
             Trace.AutoFlush = true;
-            Trace.WriteLine($"Desktop Pet {VersionLabel(BuildVersion, english: true)} started");
+            Trace.WriteLine($"Desktop Pet {VersionLabel(BuildVersion, PetLanguage.English)} started");
             return listener;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException) { return null; }

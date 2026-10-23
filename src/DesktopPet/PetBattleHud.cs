@@ -27,7 +27,8 @@ public sealed class BattleHud : Border
     private readonly Func<string> language;
     private string L(string vietnamese, string english) => PetText.Pick(language(), vietnamese, english);
     private string LF(FormattableString vietnamese, FormattableString english) => PetText.PickFormat(language(), vietnamese, english);
-    private readonly TextBlock hpText, status, hint, banner, bossName, comboText, upgradesText;
+    private readonly TextBlock hpText, status, hint, banner, comboText, upgradesText;
+    internal readonly TextBlock bossName;
     private readonly Border hpFill, hpTrail, bossFill, bossBar, pauseButton, endButton, bagButton, grip;
     private readonly HudGlyph pauseGlyph;
     private readonly StackPanel waveDots;
@@ -44,7 +45,6 @@ public sealed class BattleHud : Border
     private BattleSim? last;
     private bool lastHeld;
 
-    private static Brush Frozen(byte a, byte r, byte g, byte b) => PetUi.Frozen(Color.FromArgb(a, r, g, b));
     private static readonly Brush Panel = MakePanel();
     private static Brush MakePanel()
     {
@@ -53,10 +53,10 @@ public sealed class BattleHud : Border
     }
     private static readonly Brush Rim = PetUi.Game.HudRim;
     private static readonly Brush BarBack = PetUi.Game.Shadow(0x90);
-    private static readonly Brush Green = Frozen(255, 0x6F, 0xE0, 0x6A), Yellow = Frozen(255, 0xF5, 0xC8, 0x42), Red = Frozen(255, 0xF2, 0x5C, 0x54);
-    private static readonly Brush Trail = Frozen(255, 0xF0, 0xA0, 0x4B);
-    private static readonly Brush BossColor = Frozen(255, 0xB4, 0x8C, 0xF5), BossAngryColor = Frozen(255, 0xE8, 0x6A, 0x6A), BossShieldColor = Frozen(255, 0xFF, 0xD8, 0x5A);
-    private static readonly Brush Soft = PetUi.Game.Soft, Gold = Frozen(255, 0xFF, 0xD2, 0x3F), Dim = Frozen(0x70, 255, 255, 255);
+    private static readonly Brush Green = PetUi.Frozen(255, 0x6F, 0xE0, 0x6A), Yellow = PetUi.Frozen(255, 0xF5, 0xC8, 0x42), Red = PetUi.Frozen(255, 0xF2, 0x5C, 0x54);
+    private static readonly Brush Trail = PetUi.Frozen(255, 0xF0, 0xA0, 0x4B);
+    private static readonly Brush BossColor = PetUi.Frozen(255, 0xB4, 0x8C, 0xF5), BossAngryColor = PetUi.Frozen(255, 0xE8, 0x6A, 0x6A), BossShieldColor = PetUi.Frozen(255, 0xFF, 0xD8, 0x5A);
+    private static readonly Brush Soft = PetUi.Game.Soft, Gold = PetUi.Frozen(255, 0xFF, 0xD2, 0x3F), Dim = PetUi.Frozen(0x70, 255, 255, 255);
 
     public BattleHud(string petName, PetRenderer portrait, Func<string> language)
     {
@@ -74,7 +74,7 @@ public sealed class BattleHud : Border
         var face = new Border
         {
             Width = 54, Height = 54, CornerRadius = new CornerRadius(27), BorderBrush = Gold, BorderThickness = new Thickness(2.5),
-            Background = Frozen(255, 0xF6, 0xEE, 0xE2), ClipToBounds = true, VerticalAlignment = VerticalAlignment.Center,
+            Background = PetUi.Frozen(255, 0xF6, 0xEE, 0xE2), ClipToBounds = true, VerticalAlignment = VerticalAlignment.Center,
             Child = new Canvas { Children = { portrait }, ClipToBounds = true }
         };
         face.Clip = new EllipseGeometry(new Point(27, 27), 25, 25);
@@ -154,7 +154,7 @@ public sealed class BattleHud : Border
                 dots.Children.Add(dot);
             }
         grip = new Border { Width = 14, Height = 52, Margin = new Thickness(6, 0, 0, 0), CornerRadius = new CornerRadius(5), VerticalAlignment = VerticalAlignment.Center,
-            Background = Frozen(0x30, 255, 255, 255), Cursor = Cursors.SizeAll, Child = dots };
+            Background = PetUi.Frozen(0x30, 255, 255, 255), Cursor = Cursors.SizeAll, Child = dots };
         dots.HorizontalAlignment = HorizontalAlignment.Center; dots.VerticalAlignment = VerticalAlignment.Center;
         grip.MouseEnter += (_, _) => HoverControl(L("Kéo để dời HUD · bấm đúp: về chỗ cũ", "Drag to move the HUD · double click: back to its place"));
         grip.MouseLeave += (_, _) => HoverControl(null);
@@ -416,7 +416,7 @@ public sealed class BattleHud : Border
 
     private static Border SmallButton(UIElement content, Action click)
     {
-        var button = new Border { Width = 28, Height = 24, CornerRadius = new CornerRadius(6), Background = Frozen(0x50, 255, 255, 255), Cursor = Cursors.Hand, Child = content };
+        var button = new Border { Width = 28, Height = 24, CornerRadius = new CornerRadius(6), Background = PetUi.Frozen(0x50, 255, 255, 255), Cursor = Cursors.Hand, Child = content };
         button.MouseLeftButtonDown += (_, e) => { if (button.IsEnabled) click(); e.Handled = true; };
         return button;
     }

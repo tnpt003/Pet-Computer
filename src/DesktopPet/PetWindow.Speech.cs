@@ -58,7 +58,7 @@ public sealed partial class PetWindow
     {
         if (speechWindow != null) return;
         // Outline matches the thought bubble and emotion effects drawn with the cat; text uses the UI palette.
-        var border = new SolidColorBrush(Color.FromRgb(0x30, 0x2B, 0x48));
+        var border = PetUi.Frozen(255, 0x30, 0x2B, 0x48);
         speechText = new TextBlock
         {
             TextWrapping = TextWrapping.Wrap, MaxWidth = 210, FontSize = PetUi.BodySize, FontWeight = FontWeights.SemiBold,

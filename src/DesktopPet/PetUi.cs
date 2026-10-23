@@ -41,12 +41,15 @@ public static class PetUi
     public const string Battle = ""; // Game controller.
     public const string Status = ""; // Heart.
 
+    // Frozen brushes, geometries and round pens: the one copy for every drawing in the app.
     public static Brush Frozen(Color color) { var brush = new SolidColorBrush(color); brush.Freeze(); return brush; }
+    public static Brush Frozen(byte a, byte r, byte g, byte b) => Frozen(Color.FromArgb(a, r, g, b));
     public static Brush Hex(string hex) => Frozen((Color)ColorConverter.ConvertFromString(hex));
     public static Geometry FrozenGeometry(string path) { var geometry = Geometry.Parse(path); geometry.Freeze(); return geometry; }
-    public static Pen FrozenPen(Brush brush, double thickness)
+    public static Pen FrozenPen(Brush brush, double thickness, DashStyle? dash = null)
     {
         var pen = new Pen(brush, thickness) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round, LineJoin = PenLineJoin.Round };
+        if (dash != null) pen.DashStyle = dash;
         pen.Freeze();
         return pen;
     }

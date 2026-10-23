@@ -112,7 +112,8 @@ public sealed partial class BattleSim
     public double BossShieldSeconds { get; private set; }
     private int landedSwings;
     // Where the cat stood at the last Step (a boss shield phase runs away from it).
-    private double lastCatX, groundX = double.NaN, liftedFor;
+    internal double lastCatX;
+    private double groundX = double.NaN, liftedFor;
     // Multipliers the upgrades give (1 without any). Cuts never go below 30 % of the original.
     public double DamageFactor => 1 + damageBonus;
     public double MoveFactor => 1 + moveBonus;
@@ -182,10 +183,10 @@ public sealed partial class BattleSim
     public double SwingTime { get; private set; } = -1;
     public double SwingProgress => SwingTime < 0 ? -1 : Math.Clamp(SwingTime / arms.SwingDuration, 0, 1);
     // Hits in the current chain, and whether the swing under way would finish it (a gold slash).
-    public int Combo { get; private set; }
+    public int Combo { get; internal set; }
     public bool ComboSwing { get; private set; }
     public int CombosLanded { get; private set; }
-    private double comboClock;
+    internal double comboClock;
     public int? SelectedId { get; private set; }
     // The slime the cat is going for (selected or chosen automatically).
     public int? TargetId { get; private set; }
@@ -212,7 +213,7 @@ public sealed partial class BattleSim
     public bool CatStunned => CatStunRemaining > 0;
     public int StunsTaken { get; private set; }
     // Simulation clock (stops while paused); animations read it instead of wall time.
-    public double Time { get; private set; }
+    public double Time { get; internal set; }
     // HP given back after the last cleared wave, and the battle's length (for the result panel).
     public double LastHeal { get; private set; }
     public double FightSeconds { get; private set; }
@@ -761,7 +762,7 @@ public sealed partial class BattleSim
         foreach (var s in slimes) { var (minX, maxX) = Bounds(s); s.X = Math.Clamp(s.X, minX, maxX); }
     }
 
-    private void AddEffect(BattleEffectKind kind, double x, double height = 0, double value = 0)
+    internal void AddEffect(BattleEffectKind kind, double x, double height = 0, double value = 0)
     {
         if (effects.Count >= Settings.MaxEffects) effects.RemoveAt(0);
         double life = kind switch

@@ -238,7 +238,7 @@ public sealed partial class BattleSim
         events.Add(new(BattleEventKind.SlimeSpawned, back));
     }
 
-    private Slime AddSlime(double x, EnemyType type)
+    internal Slime AddSlime(double x, EnemyType type)
     {
         // Difficulty × the threat of now, once. Scaled numbers round to whole ones so the HUD and
         // damage numbers stay tidy; Normal at threat 1 is untouched.

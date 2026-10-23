@@ -60,7 +60,7 @@ internal static class MotionTests
         var keepsake=new KeepsakeMotion{Height=300};
         var cat=new PetModel{Action=PetAction.Thrown,VY=800}; cat.Motion.Reset(cat);
         cat.Motion.Contact(800,cat); while(keepsake.Height>0||keepsake.VY>0) keepsake.Step(0.001,0,1000);
-        var catSpring=typeof(PetMotion).GetField("spring",System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Instance)!.GetValue(cat.Motion) as ImpactSpring;
+        var catSpring=cat.Motion.spring;
         check(catSpring!=null && Math.Abs(catSpring.SquashV-Landing.SquashKick(800))<1e-9 && keepsake.Landed>700,"The cat and the keepsake share the landing spring kick");
         check(cat.Motion.Landing.Dust==0 && cat.Motion.Landing.TakeSound() && !cat.Motion.Landing.TakeSound(),"A hard landing raises dust and asks for the sound once");
         cat.Motion.Contact(500,cat);

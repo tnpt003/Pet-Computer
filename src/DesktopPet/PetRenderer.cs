@@ -34,7 +34,7 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
     // The landing's jolt: ears flatten, front paws splay, the tail flicks up (full from JoltSpeed,
     // fading in ~0.45 s); from WinceSpeed (a fall of ~330 DIPs) the eyes squeeze shut for WinceSeconds.
     private const double LandingJoltSpeed = 1200, LandingWinceSpeed = 1000, LandingWinceSeconds = 0.3;
-    private static readonly Brush EffectInk = Frozen("#302B48");
+    private static readonly Brush EffectInk = PetUi.Hex("#302B48");
     private static readonly Pen EffectBorder = FrozenPen(EffectInk, 3, PenLineJoin.Round);
     private static readonly Pen EffectHalo = FrozenPen(Brushes.White, 5.5, PenLineJoin.Round);
     // Frozen, shared pens avoid allocating new pens for every frame at 60 FPS.
@@ -73,13 +73,6 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         var text = new FormattedText("Z", CultureInfo.InvariantCulture, FlowDirection.LeftToRight,
             new Typeface(new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.Bold, FontStretches.Normal), 18, Brushes.White, 1);
         var glyph = text.BuildGeometry(new Point()); glyph.Freeze(); return glyph;
-    }
-
-    private static Brush Frozen(string color)
-    {
-        var brush = (SolidColorBrush)new BrushConverter().ConvertFromString(color)!;
-        brush.Freeze();
-        return brush;
     }
 
     private void Oval(DrawingContext dc, Brush fill, double x, double y, double rx, double ry)
@@ -300,25 +293,25 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         p.SwordAngle = angle; p.GripX = gripX; p.GripY = gripY;
     }
 
-    private static readonly Brush SwordWood = Frozen("#E8C48A");
-    private static readonly Brush SwordHandle = Frozen("#8A5A3B");
+    private static readonly Brush SwordWood = PetUi.Hex("#E8C48A");
+    private static readonly Brush SwordHandle = PetUi.Hex("#8A5A3B");
     private static readonly Pen SwordPen = FrozenPen(EffectInk, 1.8, PenLineJoin.Round);
-    private static readonly Pen SwordGrainPen = FrozenPen(Frozen("#C79A5B"), 1.2);
-    private static readonly Pen SwooshPen = FrozenPen(Frozen("#B0FFFFFF"), 5, PenLineJoin.Round, true);
-    private static readonly Pen ComboSwooshPen = FrozenPen(Frozen("#E0FFD23F"), 8, PenLineJoin.Round, true);
+    private static readonly Pen SwordGrainPen = FrozenPen(PetUi.Hex("#C79A5B"), 1.2);
+    private static readonly Pen SwooshPen = FrozenPen(PetUi.Hex("#B0FFFFFF"), 5, PenLineJoin.Round, true);
+    private static readonly Pen ComboSwooshPen = FrozenPen(PetUi.Hex("#E0FFD23F"), 8, PenLineJoin.Round, true);
     private static readonly Geometry SwordBlade = CachedGeometry("M -3.2,-8 L 3.2,-8 L 3.2,-33 L 0,-38.5 L -3.2,-33 Z");
     private static readonly Geometry SwordGuard = CachedGeometry("M -8,-9 L 8,-9 L 8,-4.5 L -8,-4.5 Z");
     private static readonly Geometry SwordGrip = CachedGeometry("M -2.2,-4.5 L 2.2,-4.5 L 2.2,6 L -2.2,6 Z");
     // The toy wooden hammer: a long handle and a mallet head (same grip, so the same poses).
     private static readonly Geometry HammerHandle = CachedGeometry("M -2.2,-29 L 2.2,-29 L 2.2,6 L -2.2,6 Z");
     private static readonly Geometry HammerHead = CachedGeometry("M -9,-39 L 9,-39 L 9,-27 L -9,-27 Z");
-    private static readonly Pen HammerSwooshPen = FrozenPen(Frozen("#B0FFFFFF"), 7, PenLineJoin.Round, true);
+    private static readonly Pen HammerSwooshPen = FrozenPen(PetUi.Hex("#B0FFFFFF"), 7, PenLineJoin.Round, true);
 
     // Battle Mode skills on the cat. Shield: a soap bubble around it. Cheer: golden sparkles rising.
-    private static readonly Brush BubbleFill = Frozen("#3062D6FF");
-    private static readonly Pen BubbleRim = FrozenPen(Frozen("#D0FFFFFF"), 2.5);
-    private static readonly Pen BubbleEdge = FrozenPen(Frozen("#9062B8E8"), 1.5);
-    private static readonly Pen BubbleShine = FrozenPen(Frozen("#E0FFFFFF"), 3, PenLineJoin.Round, true);
+    private static readonly Brush BubbleFill = PetUi.Hex("#3062D6FF");
+    private static readonly Pen BubbleRim = FrozenPen(PetUi.Hex("#D0FFFFFF"), 2.5);
+    private static readonly Pen BubbleEdge = FrozenPen(PetUi.Hex("#9062B8E8"), 1.5);
+    private static readonly Pen BubbleShine = FrozenPen(PetUi.Hex("#E0FFFFFF"), 3, PenLineJoin.Round, true);
     private static readonly Geometry SparkleGeometry = CachedGeometry("M 0,-6 L 1.6,-1.6 L 6,0 L 1.6,1.6 L 0,6 L -1.6,1.6 L -6,0 L -1.6,-1.6 Z");
 
     // Skill effects follow the battle's clock (time), so they stand still while it is paused.
@@ -717,14 +710,14 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
                 {
                     var v = shape.Values;
                     Pen? pen = shape.Stroke.Kind == StrokeKind.Custom
-                        ? FrozenPen(Frozen(shape.Stroke.Color!), shape.Stroke.Width, shape.Stroke.RoundJoin ? PenLineJoin.Round : PenLineJoin.Miter, shape.Stroke.Round)
+                        ? FrozenPen(PetUi.Hex(shape.Stroke.Color!), shape.Stroke.Width, shape.Stroke.RoundJoin ? PenLineJoin.Round : PenLineJoin.Miter, shape.Stroke.Round)
                         : null;
                     return shape.Kind switch
                     {
                         ShapeKind.Path => new DrawnShape(shape.Kind, CachedGeometry(shape.Path!), default, default, 0, 0,
-                            shape.Fill == null ? null : Frozen(shape.Fill), shape.Stroke.Kind, pen),
+                            shape.Fill == null ? null : PetUi.Hex(shape.Fill), shape.Stroke.Kind, pen),
                         ShapeKind.Ellipse => new DrawnShape(shape.Kind, null, new Point(v[0], v[1]), default, v[2], v[3],
-                            shape.Fill == null ? null : Frozen(shape.Fill), shape.Stroke.Kind, pen),
+                            shape.Fill == null ? null : PetUi.Hex(shape.Fill), shape.Stroke.Kind, pen),
                         _ => new DrawnShape(shape.Kind, null, new Point(v[0], v[1]), new Point(v[2], v[3]), 0, 0, null, shape.Stroke.Kind, pen)
                     };
                 }).ToArray());

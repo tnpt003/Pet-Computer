@@ -204,8 +204,8 @@ internal static class EliteBuffTests
         check(E("slime").Elite is { Hp: 1.2, AttackCooldown: 0.65, Damage: 1 } && E("runner").Elite is { Damage: 1.2, Hp: 1, WindupAdd: 0.3, DashSpeed: 1.4 }
             && E("rock").Elite is { Hp: 1.3, PushImmune: true, SureBlocks: 1 } && E("mender").Elite is { HealCooldown: 0.85, HealBudget: 1.3, FirstHeal: 2, Hp: 1 },
             "Shipped elites: slime +20 % HP and −35 % wait, quick +20 % damage, rock +30 % HP and no Push, herb −15 % heal cooldown and +30 % budget; old traits kept");
-        check(E("rock").Elite!.Tag(false) == "MIỄN ĐẨY" && E("slime").Elite!.Tag(true) == "QUICK HITS"
-            && E("runner").Elite!.Tag(false) == "ĐÒN MẠNH" && E("mender").Elite!.Tag(false) == "HỒI MẠNH",
+        check(E("rock").Elite!.Tag("vi") == "MIỄN ĐẨY" && E("slime").Elite!.Tag("en") == "QUICK HITS"
+            && E("runner").Elite!.Tag("vi") == "ĐÒN MẠNH" && E("mender").Elite!.Tag("vi") == "HỒI MẠNH",
             "Each shipped elite carries a label of its main trait over its head (rock: no Push; slime: quick hits; quick: hard hits; herb: big heals)");
         check(data.Enemies!.Count(e => e.Elite?.PushImmune == true) == 1 && data.MaxElites == 1, "Only the rock elite ignores Push; still one elite at a time");
         var stages = data.Campaign!.Chapters[0].Stages;

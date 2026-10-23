@@ -15,8 +15,8 @@ namespace DesktopPet;
 public sealed partial class BattleSim
 {
     private readonly List<DesktopApp> desktop = new();
-    private readonly List<BattlePopup> popups = new();
-    private readonly List<AppLaunch> launches = new();
+    internal readonly List<BattlePopup> popups = new();
+    internal readonly List<AppLaunch> launches = new();
     public IReadOnlyList<DesktopApp> Desktop => desktop;
     public IReadOnlyList<BattlePopup> Popups => popups;
     public IReadOnlyList<AppLaunch> Launches => launches;
@@ -28,7 +28,7 @@ public sealed partial class BattleSim
     public int GridRows { get; private set; } = 3;
     private readonly HashSet<(int Col, int Row)> blockedCells = new();
     // Tab tornado: seconds left, and the time to its next pulse.
-    public double TabsRemaining { get; private set; }
+    public double TabsRemaining { get; internal set; }
     private double tabClock;
     // When this wave's virus is shot (NaN: none coming).
     private double infectTimer = double.NaN;

@@ -59,12 +59,7 @@ public sealed class CoatPalette
         return Palettes[0];
     }
 
-    private static Brush Brush(string color)
-    {
-        var brush = (SolidColorBrush)new BrushConverter().ConvertFromString(color)!;
-        brush.Freeze();
-        return brush;
-    }
+    private static Brush Brush(string color) => PetUi.Hex(color);
 }
 
 internal static class PetRendererPens

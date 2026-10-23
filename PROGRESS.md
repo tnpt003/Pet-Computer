@@ -4,6 +4,12 @@ Cập nhật: 2026-10-23 (Asia/Saigon). Lịch sử trước 21/10: docs/archive
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
+## Phiên bản 1.4.2 (2026-10-23)
+- **Người dùng yêu cầu:** lên bản 1.4.2, ghi chú phát hành cả tiếng Việt và tiếng Anh. csproj `<Version>` 1.4.2; CHANGELOG mục `## 1.4.2` có hai phần `### Tiếng Việt` / `### English` (dùng `###` vì pack.ps1 cắt mục tới `## ` kế tiếp), tóm tắt mọi thay đổi người dùng thấy từ v1.4.1 (01ded63): tiếng Nhật, app trong trận, Tab Lốc Xoáy, menu nhóm + cửa sổ Tùy biến, tiếp đất, đưa về màn hình chính, âm lượng, sửa trận/Viễn chinh, JsonStore.
+- Test thật: scripts/test.ps1 -Ui: Python 58 + 5 OK, C# 51 suite không FAIL, WPF 804/804.
+- Commit 20c2887; publish 1.4.2+20c2887 (sạch, AGENTS.md của người dùng cất rồi trả nguyên byte), check-publish 3/3, mèo đóng WM_CLOSE và mở lại bản artifacts\win-x64 (log "Desktop Pet 1.4.2 (20c2887) started"). ZIP artifacts\DesktopPet-1.4.2-20c2887-win-x64.zip. pack.ps1 trên máy đạt (delta 1.4.1 → 1.4.2, artifacts\release\notes-1.4.2.md có cả hai phần).
+- **Việc của người dùng:** `git tag v1.4.2` rồi `git push origin main --follow-tags` để GitHub Actions tạo Release; máy đã cài sẽ tự cập nhật trong ~6 giờ. Agent không push.
+
 ## Tab Lốc Xoáy quay qua trước mèo (2026-10-23)
 - **Người dùng báo + duyệt (xem mô phỏng trước):** cả vòng tab nằm sau mèo vì dải trận là cửa sổ riêng luôn dưới cửa sổ mèo; nửa trước cũng bị che.
 - **Sửa:** `AppArt.DrawTabRing(front)` vẽ một nửa vòng (dùng chung). Dải trận vẽ nửa sau; renderer mèo vẽ nửa trước sau con mèo (`pet.BattleTabs`/`BattleTabRing`, gán mỗi frame trong TickBattle, 0 khi kết thúc trận). Mèo bị nhấc (`battle.CatLifted`) hoặc đang bay: dải trận vẽ cả vòng như cũ. Bán kính vẽ `TabRingRadius` = min(tabRadius × 0,85, 74) để nửa trước không bị cắt ở mép cửa sổ mèo (192 DIPs); bán kính sát thương không đổi.

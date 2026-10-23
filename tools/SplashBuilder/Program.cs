@@ -32,6 +32,7 @@ internal static class Program
         var text = new StackPanel { HorizontalAlignment = HorizontalAlignment.Center };
         text.Children.Add(new TextBlock { Text = "Desktop Pet", FontFamily = PetUi.TextFont, FontSize = 20, FontWeight = FontWeights.SemiBold, Foreground = PetUi.Ink, HorizontalAlignment = HorizontalAlignment.Center });
         text.Children.Add(new TextBlock { Text = "Đang chuẩn bị mèo của bạn · Getting your cat ready", FontFamily = PetUi.TextFont, FontSize = 12, Foreground = PetUi.Muted, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 2, 0, 0) });
+        text.Children.Add(new TextBlock { Text = "猫を準備しています", FontFamily = PetUi.TextFont, FontSize = 12, Foreground = PetUi.Muted, HorizontalAlignment = HorizontalAlignment.Center });
         text.Children.Add(dotRow);
         // A soft floor shadow under the cat.
         var stage = new Grid { Width = 170, Height = 150, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 6, 0, 0) };

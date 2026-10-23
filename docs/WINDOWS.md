@@ -728,7 +728,10 @@ and the galaxy cape. They come from the records' most waves cleared (`MostCleare
 count MostWaves − 1), so they are never lost; a banner "★ Unlocked: …" shows when the wave is
 cleared, the result panel names them, the hub's card says "Rewards k/5 · next: clear wave N",
 and Hub → Rewards has an "Infinity rewards" section. The two keepsakes join the Expedition's in
-Customize (one shown at a time, same physics as a cup). The cat draws a wooden toy sword and
+Customize (one shown at a time, same physics as a cup). On the desktop the hourglass's sand
+runs down over a minute (full on top when it is put on display) and stops when it runs out;
+carried and let go, it turns over (0.35 s) and runs again. Pause stops the sand; the Rewards
+tile stays still (2026-10-24). The cat draws a wooden toy sword and
 fights slimes on the floor of its current monitor (work area) in 3 waves (2 slimes; 2 slimes +
 2 quick slimes; a rock slime + 2 quick + 2 slimes; at most 3 at once, a short break between
 waves), then the **Slime King** alone. Quick slimes are small, fast and frail (wind streaks);

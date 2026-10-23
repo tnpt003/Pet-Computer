@@ -55,6 +55,11 @@ public sealed partial class PetWindow
     public const double KeepsakeAlarmSeconds = 0.8, KeepsakeVanishSeconds = 0.3, KeepsakeAppearSeconds = 0.55;
     // Seconds the cat still watches the keepsake (the hop); while it does it stands still.
     private double keepsakeWatch;
+    // The hourglass keepsake: the share of its sand that has run down (full on top when it is put on
+    // display) and, after the user carried it and let go, how far it is into turning over (seconds;
+    // negative: upright). Turned over, what had run down is on top again.
+    private double hourglassSand, hourglassFlip = -1;
+    public const double HourglassRunSeconds = 60, HourglassFlipSeconds = 0.35;
 
     // The cat's shove: walk to one side, crouch, push, watch it slide.
     private enum KeepsakeShove { None, Approach, Crouch, Watch }
@@ -139,6 +144,7 @@ public sealed partial class PetWindow
         {
             trophyShownId = displayed.Id;
             keepsakeArt!.Items = new[] { displayed };
+            hourglassSand = 0; hourglassFlip = -1;
             keepsakeWindow.Width = keepsakeArt.Width;
             keepsakeWindow.Height = keepsakeArt.Height;
             if (keepsakePlaced) keepsake.X = Math.Clamp(keepsake.X, keepsakeArea.Left, Math.Max(keepsakeArea.Left, keepsakeArea.Right - KeepsakeArtWidth));
@@ -301,6 +307,7 @@ public sealed partial class PetWindow
         keepsakeArt?.ReleaseMouseCapture();
         var (vx, vy) = throwIt && !paused ? keepsakeTracker.Velocity(2200) : (0.0, 0.0);
         keepsake.Release(vx, vy);
+        if (HourglassShown && hourglassFlip < 0) hourglassFlip = 0;
         keepsakeEdgeCheck = true;
         KeepCatAboveKeepsake();
     }
@@ -343,6 +350,7 @@ public sealed partial class PetWindow
         }
         CheckKeepsakeBonk(before);
         TickKeepsakeHop(dt);
+        TickHourglass(dt);
         TickNapLift(dt);
         if (keepsakeEdgeCheck && keepsake.Resting && !keepsakeHeld && keepsakeHop == KeepsakeHop.None)
         {
@@ -351,6 +359,24 @@ public sealed partial class PetWindow
             else SaveKeepsakePlace();
         }
         PositionKeepsake();
+    }
+
+    private bool HourglassShown => keepsakeArt?.Items.Any(k => k.Kind == KeepsakeSpec.Hourglass) == true;
+
+    // The sand runs down (a paused pet stops it with everything else); a turn over ends with the sand
+    // that had run down on top. The art is drawn again only when the level moves a visible step.
+    private void TickHourglass(double dt)
+    {
+        if (!HourglassShown || keepsakeArt == null) return;
+        double flip = 0;
+        if (hourglassFlip >= 0)
+        {
+            hourglassFlip += dt;
+            if (hourglassFlip >= HourglassFlipSeconds) { hourglassFlip = -1; hourglassSand = 1 - hourglassSand; }
+            else flip = hourglassFlip / HourglassFlipSeconds;
+        }
+        else hourglassSand = Math.Min(1, hourglassSand + dt / HourglassRunSeconds);
+        keepsakeArt.SetHourglass(Math.Round(hourglassSand * 60) / 60, flip);
     }
 
     // The keepsake hits the cat: falling onto the top of its head, or thrown fast into its side. Bonk:

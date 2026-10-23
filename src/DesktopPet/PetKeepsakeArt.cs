@@ -59,6 +59,18 @@ public sealed class KeepsakeArt : FrameworkElement
         InvalidateVisual();
     }
 
+    // The hourglass: the share of its sand that has run down (0..1) and how far it is through a flip
+    // (0..1, 0: upright). The desktop sets them every frame; the Rewards cell keeps this still look.
+    private double sand = 0.75, flip;
+    public double SandRan => sand;
+    public double Flip => flip;
+    public void SetHourglass(double sand, double flip)
+    {
+        if (this.sand == sand && this.flip == flip) return;
+        (this.sand, this.flip) = (sand, flip);
+        InvalidateVisual();
+    }
+
     public static double WidthFor(IReadOnlyList<KeepsakeSpec> shown)
     {
         double width = Pad * 2;
@@ -135,7 +147,7 @@ public sealed class KeepsakeArt : FrameworkElement
         foreach (var item in items)
         {
             if (item.Kind == KeepsakeSpec.Cushion) { Cushion(dc, x, floor); x += CushionWidth + Gap; continue; }
-            if (item.Kind == KeepsakeSpec.Hourglass) Hourglass(dc, x, floor);
+            if (item.Kind == KeepsakeSpec.Hourglass) Hourglass(dc, x, floor, sand, flip);
             else if (item.Kind == KeepsakeSpec.Orb) Orb(dc, x, floor);
             else Cup(dc, x, floor, item.Tier);
             x += CupWidth + Gap;
@@ -169,10 +181,12 @@ public sealed class KeepsakeArt : FrameworkElement
     private static Brush Freeze(Brush brush) { brush.Freeze(); return brush; }
 
     // An hourglass of violet "star sand": wooden caps, two glass bulbs, sand in both and a thin
-    // falling stream, a ∞ on the top cap.
-    private static void Hourglass(DrawingContext dc, double left, double floor)
+    // falling stream, a ∞ on the top cap. ran: the share of the sand down below; flip: 0..1 of a
+    // half turn around its middle (the sand stays as it was until the turn is over).
+    private static void Hourglass(DrawingContext dc, double left, double floor, double ran, double flip)
     {
         double cx = left + CupWidth / 2, top = floor - CupHeight, neck = floor - CupHeight / 2;
+        if (flip > 0) dc.PushTransform(new RotateTransform(180 * (0.5 - 0.5 * Math.Cos(Math.PI * flip)), cx, neck));
         var bulbs = new StreamGeometry();
         using (var g = bulbs.Open())
         {
@@ -186,29 +200,45 @@ public sealed class KeepsakeArt : FrameworkElement
         }
         bulbs.Freeze();
         dc.DrawGeometry(Glass, null, bulbs);
-        // Sand: a little left above, a heap below, the stream between.
-        var upper = new StreamGeometry();
-        using (var g = upper.Open())
+        // Sand, inside the glass: what is left above (its top sinks in the middle while it runs), the
+        // heap below, the stream between while there is sand to run.
+        dc.PushClip(bulbs);
+        double room = neck - top - 6, above = 1 - ran, heap = ran * room, peak = floor - 4 - heap;
+        if (above > 0)
         {
-            g.BeginFigure(new Point(cx - 5.5, neck - 6), true, true);
-            g.QuadraticBezierTo(new Point(cx, neck - 8), new Point(cx + 5.5, neck - 6), true, true);
-            g.QuadraticBezierTo(new Point(cx + 2, neck - 2.5), new Point(cx, neck - 0.5), true, true);
-            g.QuadraticBezierTo(new Point(cx - 2, neck - 2.5), new Point(cx - 5.5, neck - 6), true, true);
+            double surface = neck - above * room;
+            var upper = new StreamGeometry();
+            using (var g = upper.Open())
+            {
+                g.BeginFigure(new Point(cx - 10, surface), true, true);
+                g.QuadraticBezierTo(new Point(cx, surface + (ran > 0 && above < 1 ? 3 : 0)), new Point(cx + 10, surface), true, true);
+                g.LineTo(new Point(cx + 10, neck + 0.5), true, true);
+                g.LineTo(new Point(cx - 10, neck + 0.5), true, true);
+            }
+            upper.Freeze();
+            dc.DrawGeometry(Sand, null, upper);
         }
-        upper.Freeze();
-        dc.DrawGeometry(Sand, null, upper);
-        var lower = new StreamGeometry();
-        using (var g = lower.Open())
+        if (ran > 0)
         {
-            g.BeginFigure(new Point(cx - 8, floor - 4.5), true, true);
-            g.QuadraticBezierTo(new Point(cx - 4, floor - 11), new Point(cx, floor - 12), true, true);
-            g.QuadraticBezierTo(new Point(cx + 4, floor - 11), new Point(cx + 8, floor - 4.5), true, true);
+            var lower = new StreamGeometry();
+            using (var g = lower.Open())
+            {
+                g.BeginFigure(new Point(cx - 10, floor - 3), true, true);
+                g.LineTo(new Point(cx - 10, floor - 4 - heap * 0.55), true, true);
+                g.QuadraticBezierTo(new Point(cx - 4, peak), new Point(cx, peak), true, true);
+                g.QuadraticBezierTo(new Point(cx + 4, peak), new Point(cx + 10, floor - 4 - heap * 0.55), true, true);
+                g.LineTo(new Point(cx + 10, floor - 3), true, true);
+            }
+            lower.Freeze();
+            dc.DrawGeometry(Sand, null, lower);
         }
-        lower.Freeze();
-        dc.DrawGeometry(Sand, null, lower);
-        dc.DrawLine(new Pen(SandDark, 1), new Point(cx, neck), new Point(cx, floor - 12));
-        dc.DrawEllipse(Star, null, new Point(cx - 2.5, floor - 7.5), 0.9, 0.9);
-        dc.DrawEllipse(Star, null, new Point(cx + 3, floor - 6.5), 0.7, 0.7);
+        if (above > 0 && ran > 0 && flip == 0) dc.DrawLine(new Pen(SandDark, 1), new Point(cx, neck), new Point(cx, peak));
+        if (ran > 0.35)
+        {
+            dc.DrawEllipse(Star, null, new Point(cx - 2.5, floor - 7.5), 0.9, 0.9);
+            dc.DrawEllipse(Star, null, new Point(cx + 3, floor - 6.5), 0.7, 0.7);
+        }
+        dc.Pop();
         dc.DrawGeometry(null, Outline, bulbs);
         dc.DrawEllipse(Shine, null, new Point(cx - 5, top + 9), 1.3, 2.6);
         // Caps and posts.
@@ -217,6 +247,7 @@ public sealed class KeepsakeArt : FrameworkElement
         dc.DrawLine(new Pen(WoodDark, 1.6), new Point(cx - 10, top + 4.5), new Point(cx - 10, floor - 4.5));
         dc.DrawLine(new Pen(WoodDark, 1.6), new Point(cx + 10, top + 4.5), new Point(cx + 10, floor - 4.5));
         Infinity(dc, cx, top + 2.25, 2.1, new Pen(Gold, 1.1));
+        if (flip > 0) dc.Pop();
     }
 
     // A nebula in a glass ball on a little gold claw stand, with a few stars inside.

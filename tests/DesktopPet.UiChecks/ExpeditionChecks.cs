@@ -574,6 +574,33 @@ internal static class ExpeditionChecks
                 $"With the cat in the middle it lands next to the cat, not on it ({hopped.Left:F0}–{hopped.Right:F0}, cat {pet.X:F0})");
             pet.Emotions.Reset();
 
+            // The hourglass (Infinity's keepsake): its sand runs down; carried and let go it turns over.
+            var art = Field<KeepsakeArt>(window, "keepsakeArt");
+            var shownBefore = art.Items;
+            art.Items = new[] { BattleData.Settings.Endless!.Milestones.First(m => m.Kind == KeepsakeSpec.Hourglass) };
+            SetField(window, "hourglassSand", 0.0); SetField(window, "hourglassFlip", -1.0);
+            Keepsake(PetWindow.HourglassRunSeconds * 0.75);
+            check(Math.Abs(art.SandRan - 0.75) < 0.03 && art.Flip == 0, $"The hourglass's sand runs down over a minute ({art.SandRan:F2} after 45 s)");
+            Shot("Pet trophies", "hourglass-running.png");
+            SetField(window, "paused", true);
+            Keepsake(2);
+            check(Math.Abs(art.SandRan - 0.75) < 0.03, "A paused pet stops the sand");
+            SetField(window, "paused", false);
+            SetField(window, "keepsakeHeld", true); motion.Held = true;
+            Call(window, "EndKeepsakeDrag", false);
+            Keepsake(PetWindow.HourglassFlipSeconds / 2);
+            check(art.Flip > 0.3 && art.Flip < 0.7, $"Carried and let go, it turns over ({art.Flip:F2})");
+            Shot("Pet trophies", "hourglass-flip.png");
+            Keepsake(PetWindow.HourglassFlipSeconds);
+            check(art.Flip == 0 && Math.Abs(art.SandRan - 0.25) < 0.03, $"Turned over, what had run down is on top again ({art.SandRan:F2})");
+            Keepsake(PetWindow.HourglassRunSeconds);
+            check(art.SandRan == 1 && art.Flip == 0, "Then it runs out and stands still");
+            Call(window, "EndKeepsakeDrag", true);
+            Keepsake(0.1);
+            check(art.Flip == 0, "A click that never picked it up does not turn it over");
+            art.Items = shownBefore;
+            Keepsake(3);
+
             // The cat shoves it along: walks to one side, crouches, pushes, watches it slide.
             window.Reset(); pet.Emotions.Reset();
             motion.X = pet.X + 200; motion.Height = 0; motion.VX = 0;

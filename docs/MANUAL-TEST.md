@@ -474,3 +474,7 @@ Tự động đã có: Phần thưởng trên sảnh (ô có hình, khóa, Mới
 - [ ] Trận đang dừng (nút HUD, túi đồ, chọn thẻ, menu): bấm/kéo mèo không nhấc lên được; Tiếp tục thì bế được như thường. Mèo ở màn hình khác (trận chờ mèo) vẫn bế về được.
 - [ ] Viễn chinh: giữa trận bấm Kết thúc trận / tắt Battle Mode / thoát app → mở lại Viễn chinh: chuyến còn nguyên, HP như lúc vào trận, ghi chú "chuyến đi được giữ nguyên, đánh lại được", đánh lại đúng trận đó. Thua trận (mèo hết máu) vẫn kết thúc chuyến như cũ.
 - [ ] Trong trận, slime đứng sát/sau lưng mèo: chữ tinh anh (ĐÁNH NHANH…), số sát thương, CHẶN/MIỄN hiện ngay cạnh thân mèo, không bị mèo che.
+
+### Đồng hồ cát chảy (2026-10-24)
+- [ ] Chọn "Đồng hồ cát vô tận" làm món trưng bày: cát tím chảy từ bầu trên xuống bầu dưới, có dòng cát mảnh, hết sau khoảng 1 phút thì đứng yên. Pause: cát dừng; Tiếp tục: chảy tiếp.
+- [ ] Cầm đồng hồ cát lên rồi thả/ném: nó lật ngược (~0,35 s) rồi cát chảy lại từ phần đã chảy xuống. Chỉ bấm (không kéo) thì "boing", không lật. Ô trong Phần thưởng vẫn vẽ tĩnh. CPU không tăng rõ khi đồng hồ cát đang hiện.

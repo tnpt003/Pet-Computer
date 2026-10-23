@@ -466,7 +466,7 @@ Tự động đã có: Phần thưởng trên sảnh (ô có hình, khóa, Mới
 
 ### Sửa lỗi + hoạt ảnh (2026-10-23, tiếp)
 - [ ] Cài đặt → Âm thanh: kéo âm lượng về 0% (không cần Lưu): mọi tiếng mèo và hiệu ứng (vung kiếm, slime, bóng, kỷ vật) im hẳn; âm đang kêu tắt ngay. Kéo lên 50%: nhỏ rõ so với 100%. Hủy: âm lượng trở lại như trước khi mở; Lưu: giữ. Hiệu ứng trận không còn cắt ngang nhau giữa chừng.
-- [ ] Tab Lốc Xoáy: 3 tab trình duyệt (chấm màu, dấu ×) xoay quanh chân mèo, vệt bay cong; tab phía sau mờ/nhỏ; không có vạch trắng thẳng cắt ngang mặt mèo. Xem trên nền sáng và tối.
+- [ ] Tab Lốc Xoáy: 3 tab trình duyệt (chấm màu, dấu ×) xoay quanh chân mèo, vệt bay cong; tab phía sau mờ/nhỏ và khuất sau mèo, tab phía trước đè lên chân/thân mèo (vòng liền, hai nửa không lệch); nhấc/ném mèo lúc đang xoay thì vòng ở lại sàn, không vẽ đôi; không có vạch trắng thẳng cắt ngang mặt mèo. Xem trên nền sáng và tối.
 - [ ] Tùy chỉnh → chọn món trưng bày khác → Lưu: món cũ "phụt" khói biến mất, món mới hiện ra đúng chỗ (như menu chuột phải món đồ). Kệ đang ẩn/đang tắt góc trưng bày: đổi ngay, không lỗi.
 - [ ] Menu khay và menu chuột phải → Gọi mèo về màn hình chính: mèo phụt khói biến mất ở chỗ cũ (cả từ màn hình phụ/trên cửa sổ), hiện ra giữa màn hình chính có khói + sao, rơi nhẹ xuống rồi Ngạc nhiên. Đang tự điều khiển cảm xúc: không Ngạc nhiên. Mèo đang ngủ: vẫn ngủ, không Ngạc nhiên. Đang Pause: dịch chuyển ngay. Trong lúc khói không nhấc được mèo. Mèo bị kẹt ngoài màn hình vẫn gọi về được.
 - [ ] Túi đồ → Kỹ năng: dòng "Lượng hồi" có icon trái tim xanh dấu + (khung giống các ô kỹ năng).

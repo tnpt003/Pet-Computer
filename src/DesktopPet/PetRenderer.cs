@@ -138,6 +138,14 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         if (pet.BattleBuff) DrawCheerSparkles(dc, pet.BattleTime);
         if (pet.BattleShield) DrawShieldBubble(dc, pet.BattleTime);
         if (hop) { dc.Pop(); dc.Pop(); }
+        // The tab tornado's near half, over the cat (the far half is on the battle strip below this
+        // window): the same ring, on the floor 2 DIPs under the window's bottom edge like the strip's.
+        if (pet.BattleTabs > 0 && !p.PickedUp && !p.Airborne)
+        {
+            dc.PushOpacity(Math.Min(1, pet.BattleTabs / 0.5));
+            AppArt.DrawTabRing(dc, 56, 110 - 26, pet.BattleTabRing, pet.BattleTime, true);
+            dc.Pop();
+        }
         if (TeleportPuff is >= 0 and < 1) KeepsakeArt.DrawPuff(dc, TeleportPuff, 56, 66, 92);
         dc.Pop(); // Permanent transparent margin, identical for every state.
     }

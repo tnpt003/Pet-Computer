@@ -4,6 +4,13 @@ Cập nhật: 2026-10-23 (Asia/Saigon). Lịch sử trước 21/10: docs/archive
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
+## Tab Lốc Xoáy quay qua trước mèo (2026-10-23)
+- **Người dùng báo + duyệt (xem mô phỏng trước):** cả vòng tab nằm sau mèo vì dải trận là cửa sổ riêng luôn dưới cửa sổ mèo; nửa trước cũng bị che.
+- **Sửa:** `AppArt.DrawTabRing(front)` vẽ một nửa vòng (dùng chung). Dải trận vẽ nửa sau; renderer mèo vẽ nửa trước sau con mèo (`pet.BattleTabs`/`BattleTabRing`, gán mỗi frame trong TickBattle, 0 khi kết thúc trận). Mèo bị nhấc (`battle.CatLifted`) hoặc đang bay: dải trận vẽ cả vòng như cũ. Bán kính vẽ `TabRingRadius` = min(tabRadius × 0,85, 74) để nửa trước không bị cắt ở mép cửa sổ mèo (192 DIPs); bán kính sát thương không đổi.
+- Tab nửa trước nằm trên cửa sổ mèo nên bấm trúng tab = bấm mèo (giống bong bóng Khiên).
+- Test thật: build Release OK; scripts/test.ps1 -Ui: C# 1458, WPF 804/804, Python OK. Chưa xem trên màn hình thật.
+- Test tay: trong trận Phiêu lưu bật Tab Lốc Xoáy: tab đi qua trước chân/thân mèo, nửa sau mờ sau mèo, vòng liền (không lệch giữa hai nửa); nhấc/ném mèo giữa lúc lốc xoáy: vòng ở lại sàn, không vẽ đôi; Pause đóng băng cả hai nửa; hết lốc xoáy mờ dần cả hai nửa.
+
 ## Sửa lỗi âm lượng, tab lốc xoáy, đổi kỷ vật, pause trận; gọi mèo về có hoạt ảnh; Viễn chinh giữ chuyến (2026-10-23)
 - **Người dùng yêu cầu + duyệt:** 8 mục + đề xuất a (chữ trận bị mèo che) và c (âm lượng áp dụng khi kéo). Viễn chinh: "thoát battle mode thì lưu tiến trình để chơi lại" (không đổi luật thua trận).
 - **Âm lượng:** nguyên nhân chính: thanh trượt chỉ có hiệu lực khi bấm Lưu (preferences.json của người dùng vẫn 0.7). Nay kéo là áp dụng ngay (0% tắt luôn âm đang kêu), Hủy/đóng không Lưu thì trả giá trị cũ. Thang theo tai: gain = âm lượng² (`PetSounds.Gain`; 50% → 0.25 biên độ). Sửa thời lượng cue tính theo 44100 Hz trong khi WAV là 22050 Hz (cue sau cắt ngang cue trước) → `PetSounds.Seconds` đọc byte rate từ header.

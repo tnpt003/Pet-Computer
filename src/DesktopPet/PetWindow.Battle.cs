@@ -285,7 +285,7 @@ public sealed partial class PetWindow
         pet.SwordOut = false; pet.Hammer = false; pet.SwordSwing = -1; pet.SwordCombo = false; pet.BattleHurt = 0; pet.MoveScale = 1;
         battleHudDodging = false;
         pet.BattleDazed = pet.BattleCheer = pet.BattleShield = pet.BattleBuff = false;
-        pet.BattleStun = 0;
+        pet.BattleStun = pet.BattleTabs = 0;
         pet.Emotions.SetSuspended(false);
         revision++; // Nothing requested during the battle may run late.
         behavior.Reset(pet);
@@ -453,6 +453,8 @@ public sealed partial class PetWindow
         pet.BattleStun = battle.CatStunRemaining;
         pet.BattleShield = battle.ShieldRemaining > 0;
         pet.BattleBuff = battle.CheerRemaining > 0;
+        pet.BattleTabs = battle.CatLifted ? 0 : battle.TabsRemaining;
+        pet.BattleTabRing = AppArt.TabRingRadius(battle.AppRules?.TabRadius ?? 70);
         pet.BattleTime = battle.Time;
         if (!held)
         {

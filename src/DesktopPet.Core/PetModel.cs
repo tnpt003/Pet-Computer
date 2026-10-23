@@ -125,6 +125,9 @@ public sealed class PetModel
     public const double BonkDuration = 2.2;
     // The user's skills on the cat: a protective bubble (Shield) and a golden glow (Cheer).
     public bool BattleShield, BattleBuff;
+    // The tab tornado's near half, drawn over the cat standing on the floor: seconds left (0: none
+    // or the cat is lifted) and the ring's drawn radius.
+    public double BattleTabs, BattleTabRing;
     // The battle's clock for those effects (stops while the battle is paused).
     public double BattleTime;
     // Battle Mode runs: walking speed and acceleration multiplier (1 outside a battle).

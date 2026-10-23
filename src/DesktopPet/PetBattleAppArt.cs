@@ -126,6 +126,44 @@ public static class AppArt
     // The tornado's three tab dots: the Tab app's coral, a gold and a teal.
     public static readonly Brush[] TabDots = { TabsBack, Gold, UndoBack };
 
+    // The tornado's ring: three tabs circling (cx, middle) on a flat ring, each trailing a curved
+    // swish along it. It is drawn in two halves so the cat comes between them: the far half (faded,
+    // smaller) on the strip under the pet's window, the near half by the cat's renderer over the cat.
+    public static void DrawTabRing(DrawingContext dc, double cx, double middle, double radius, double time, bool front)
+    {
+        Point On(double a) => new(cx + Math.Cos(a) * radius, middle + Math.Sin(a) * 11);
+        for (int i = 0; i < 3; i++)
+        {
+            double a = time * 5 + i * Math.PI * 2 / 3;
+            if (Math.Sin(a) >= 0 != front) continue;
+            var at = On(a);
+            var swish = new StreamGeometry();
+            using (var g = swish.Open())
+            {
+                g.BeginFigure(On(a - 0.9), false, false);
+                for (int s = 1; s <= 6; s++) g.LineTo(On(a - 0.9 + 0.15 * s), true, true);
+            }
+            dc.DrawGeometry(null, front ? SwishPen : SwishBackPen, swish);
+            if (!front) dc.PushOpacity(0.55);
+            double size = 0.8 + 0.25 * Math.Sin(a); // 0.55 at the back, 1.05 in front.
+            dc.PushTransform(new RotateTransform(-Math.Cos(a) * 12, at.X, at.Y));
+            DrawFlyingTab(dc, at, size, TabDots[i]);
+            dc.Pop();
+            if (!front) dc.Pop();
+        }
+    }
+    // The ring's drawn radius for the tornado's hit radius: capped so the near half stays whole
+    // inside the pet's window (96 DIPs either side of the cat's middle).
+    public static double TabRingRadius(double hitRadius) => Math.Min(hitRadius * 0.85, 74);
+    private static readonly Pen SwishPen = RoundPen(Frozen(170, 255, 246, 230), 3.5);
+    private static readonly Pen SwishBackPen = RoundPen(Frozen(90, 255, 246, 230), 2.5);
+    private static Pen RoundPen(Brush brush, double width)
+    {
+        var pen = new Pen(brush, width) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round, LineJoin = PenLineJoin.Round };
+        pen.Freeze();
+        return pen;
+    }
+
     // A bell with a red "99+" badge (angry: a red glow and a frown, the infected app's).
     public static void DrawBell(DrawingContext dc, Point c, double k, bool angry)
     {

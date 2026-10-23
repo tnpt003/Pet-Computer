@@ -106,7 +106,7 @@ public sealed partial class PetWindow
                 {
                     bool won = adventure.HasReward(id);
                     tiles.Children.Add(RewardTile(WearingCat(id), accessory.Name(preferences.Language), won, rewardsFresh.Contains(id),
-                        won ? L("Phụ kiện: đeo trong Cài đặt → Mèo → Phụ kiện.", "Accessory: wear it from Settings → Pet → Accessory.")
+                        won ? L("Phụ kiện: đeo trong Tùy chỉnh → Phụ kiện.", "Accessory: wear it from Customize → Accessory.")
                             : LF($"Thắng {StageTitle(stage)} để nhận.", $"Win {StageTitle(stage)} to get it.")));
                 }
             if (tiles.Children.Count > 0) RewardsSection(L("Phụ kiện Phiêu lưu", "Adventure accessories"), tiles);
@@ -124,9 +124,9 @@ public sealed partial class PetWindow
                 string level = Enum.TryParse<BattleDifficulty>(k.Difficulty, out var at) ? DifficultyName(at) : k.Difficulty;
                 string where = k.Kind switch
                 {
-                    KeepsakeSpec.Cup => L("Cúp: trưng bày trên màn hình (chọn trong Cài đặt → Mèo).", "Cup: displayed on the screen (choose it in Settings → Pet)."),
+                    KeepsakeSpec.Cup => L("Cúp: trưng bày trên màn hình (chọn trong Tùy chỉnh).", "Cup: displayed on the screen (choose it in Customize)."),
                     KeepsakeSpec.Cushion => L("Đệm: trưng bày trên màn hình; mèo ngủ và nảy trên đệm.", "Cushion: displayed on the screen; the cat naps and bounces on it."),
-                    _ => L("Phụ kiện: đeo trong Cài đặt → Mèo → Phụ kiện.", "Accessory: wear it from Settings → Pet → Accessory.")
+                    _ => L("Phụ kiện: đeo trong Tùy chỉnh → Phụ kiện.", "Accessory: wear it from Customize → Accessory.")
                 };
                 tiles.Children.Add(RewardTile(art, k.Name(preferences.Language), won, rewardsFresh.Contains(k.Id), won ? where
                     : k.Exact ? LF($"Thắng một chuyến Viễn chinh {level} để nhận.", $"Win an Expedition run on {level} to get it.")
@@ -146,8 +146,8 @@ public sealed partial class PetWindow
                 FrameworkElement art = m.Kind == KeepsakeSpec.AccessoryKind && m.Accessory != null ? WearingCat(m.Accessory)
                     : new Viewbox { Width = 64, Height = 56, Child = new KeepsakeArt { Items = new[] { m }, Width = KeepsakeArt.WidthFor(new[] { m }), Height = KeepsakeArt.ArtHeight } };
                 string where = m.Kind == KeepsakeSpec.AccessoryKind
-                    ? L("Phụ kiện: đeo trong Cài đặt → Mèo → Phụ kiện.", "Accessory: wear it from Settings → Pet → Accessory.")
-                    : L("Kỷ vật: trưng bày trên màn hình (chọn trong Cài đặt → Mèo).", "Keepsake: displayed on the screen (choose it in Settings → Pet).");
+                    ? L("Phụ kiện: đeo trong Tùy chỉnh → Phụ kiện.", "Accessory: wear it from Customize → Accessory.")
+                    : L("Kỷ vật: trưng bày trên màn hình (chọn trong Tùy chỉnh).", "Keepsake: displayed on the screen (choose it in Customize).");
                 tiles.Children.Add(RewardTile(art, LF($"Đợt {m.Wave} · ", $"Wave {m.Wave} · ") + m.Name(preferences.Language), won, rewardsFresh.Contains(m.Id), won ? where : EndlessMilestoneText(m)));
             }
             RewardsSection(L("Phần thưởng Vô tận", "Infinity rewards"), tiles);

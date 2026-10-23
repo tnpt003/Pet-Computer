@@ -11,7 +11,7 @@ namespace DesktopPet;
 public sealed partial class PetWindow
 {
     private readonly PetPreferences preferences;
-    private Window? toyWindow, settingsWindow;
+    private Window? toyWindow, settingsWindow, customizeWindow;
     private readonly ToyBall ball = new();
     private readonly ToyPlaySequence toyPlay = new();
     private readonly Random featureRandom = new();
@@ -37,8 +37,9 @@ public sealed partial class PetWindow
         renderer.Coat = preferences.Coat;
         ApplyAccessory();
         behavior.Personality = preferences.Personality;
-        // Menu groups: play with the cat · Quiet, the cat's pages, settings · exit; games, the cat's
-        // pages and rarely used items sit in submenus to keep the menu short.
+        // Menu groups: play with the cat · the Quiet and Sounds switches · who the cat is ({name}: status,
+        // diary, Customize), where it is (resting spot, back to the main screen), app settings, rarely used · exit.
+        // The tray holds the app-level controls (pause, AI, updates).
         var treat = PetUi.MenuItem(PetUi.Treat);
         treat.Click += (_, _) => GiveTreat();
         var play = PetUi.MenuItem(PetUi.Ball, Brushes.Coral);
@@ -50,64 +51,69 @@ public sealed partial class PetWindow
         // While the ball is out, putting it away is one click on the main menu.
         var putAway = PetUi.MenuItem(PetUi.Ball, Brushes.Coral);
         putAway.Click += (_, _) => ToggleToy();
-        var home = PetUi.MenuItem(PetUi.Home);
         var remember = new MenuItem();
         remember.Click += (_, _) => { preferences.RestX = pet.X; preferences.RestY = pet.Y;
             preferences.RestMonitor = CurrentMonitor().DeviceName;
             preferences.RestFractionX = Math.Clamp((pet.X - bounds.Left) / Math.Max(1, bounds.Right - bounds.Left - settings.Width), 0, 1);
             SavePreferences(); };
-        var visit = new MenuItem();
+        var visit = PetUi.MenuItem(PetUi.Home);
         visit.Click += (_, _) => { if (MayAct(AutoKind.RestVisit) && preferences.RestX.HasValue) { CancelFeatureActivity(); returningHome = true; Interact("rest_requested"); } };
         var forget = new MenuItem();
         forget.Click += (_, _) => { preferences.RestX = preferences.RestY = null; preferences.RestMonitor = null; returningHome = false; SavePreferences(); };
-        home.Items.Add(remember); home.Items.Add(visit); home.Items.Add(forget);
+        var reset = new MenuItem();
+        reset.Click += (_, _) => Reset();
+        var place = PetUi.MenuItem(PetUi.Place);
+        place.Items.Add(visit); place.Items.Add(remember); place.Items.Add(forget); place.Items.Add(new Separator()); place.Items.Add(reset);
         var quiet = new MenuItem { IsCheckable = true, IsChecked = preferences.Quiet };
         quiet.Click += (_, _) => { preferences.Quiet = quiet.IsChecked; ApplyQuiet(); CancelFeatureActivity(); Interact("quiet_changed"); SavePreferences(); };
         var sounds = new MenuItem { IsCheckable = true, IsChecked = preferences.Sounds };
         sounds.Click += (_, _) => { preferences.Sounds = sounds.IsChecked; if (!preferences.Sounds) sound?.Stop(); SavePreferences(); };
-        var customize = PetUi.MenuItem(PetUi.Settings);
-        customize.Click += (_, _) => ShowPetSettings();
+        var settingsItem = PetUi.MenuItem(PetUi.Settings);
+        settingsItem.Click += (_, _) => ShowPetSettings();
+        var customize = PetUi.MenuItem(PetUi.Customize);
+        customize.Click += (_, _) => ShowCustomize();
         var status = PetUi.MenuItem(PetUi.Status, PetUi.Accent);
         // Opened after the menu has closed, so the menu taking focus back cannot dismiss the card.
         status.Click += (_, _) => Dispatcher.BeginInvoke(ShowStatusCard, System.Windows.Threading.DispatcherPriority.Background);
         var diary = PetUi.MenuItem(PetUi.Diary);
         diary.Click += (_, _) => ShowDiary();
         var cat = PetUi.MenuItem(PetUi.Status, PetUi.Accent);
-        cat.Items.Add(status); cat.Items.Add(diary); cat.Items.Add(home);
-        // Rarely used: the sound switch (also in Settings → Sounds), back to the primary screen, the debug view, About.
+        cat.Items.Add(status); cat.Items.Add(diary); cat.Items.Add(customize);
+        // Rarely used: the debug view, About.
         var more = PetUi.MenuItem(PetUi.More);
-        var reset = new MenuItem();
-        reset.Click += (_, _) => Reset();
         var debug = PetUi.MenuItem(PetUi.Debug);
         debug.Click += (_, _) => ToggleDebug();
         var about = PetUi.MenuItem(PetUi.About);
         about.Click += (_, _) => ShowAbout();
-        more.Items.Add(sounds); more.Items.Add(reset); more.Items.Add(debug); more.Items.Add(about);
+        more.Items.Add(debug); more.Items.Add(about);
         var exit = PetUi.MenuItem(PetUi.Exit);
         exit.Click += (_, _) => Application.Current.Shutdown();
         menu.Items.Add(treat); menu.Items.Add(play); menu.Items.Add(putAway);
         InitializeBattle(menu); // "Battle Mode" (PetWindow.Battle.cs).
         InitializeCommands(menu); // "Do now" and "Emotions".
         menu.Items.Add(new Separator());
-        menu.Items.Add(quiet); menu.Items.Add(cat); menu.Items.Add(customize); menu.Items.Add(more);
+        menu.Items.Add(quiet); menu.Items.Add(sounds);
+        menu.Items.Add(new Separator());
+        menu.Items.Add(cat); menu.Items.Add(place); menu.Items.Add(settingsItem); menu.Items.Add(more);
         menu.Items.Add(new Separator());
         menu.Items.Add(exit);
         void Localize()
         {
-            customize.Header = L("Cài đặt…", "Settings…");
+            settingsItem.Header = L("Cài đặt…", "Settings…");
+            customize.Header = L("Tùy chỉnh…", "Customize…");
             status.Header = LF($"Trạng thái của {preferences.Name}", $"{preferences.Name}'s status");
             diary.Header = LF($"Nhật ký của {preferences.Name}", $"{preferences.Name}'s diary");
             more.Header = L("Khác", "More");
             reset.Header = L("Gọi mèo về màn hình chính", "Bring the pet to the main screen");
             debug.Header = L("Xem debug hành vi", "Behavior debug view");
-            exit.Header = L("Thoát mèo", "Exit pet");
+            exit.Header = L("Thoát", "Exit");
             treat.Header = L("Cho ăn", "Give treat");
             play.Header = L("Chơi", "Play");
             toy.Header = toyWindow == null ? L("Chơi bóng", "Play with ball") : L("Cất bóng", "Put ball away");
             putAway.Header = L("Cất bóng", "Put ball away");
             cat.Header = preferences.Name;
             laser.Header = L("Chơi đèn laser", "Laser pointer");
-            home.Header = L("Chỗ nghỉ yêu thích", "Favorite resting spot");
+            place.Header = L("Vị trí", "Location");
             remember.Header = L("Nhớ chỗ này", "Remember this spot");
             visit.Header = L("Đến chỗ nghỉ", "Go to resting spot");
             forget.Header = L("Quên chỗ nghỉ", "Forget resting spot");
@@ -145,7 +151,7 @@ public sealed partial class PetWindow
 
     private void SavePreferences()
     {
-        if (persistPreferences && !preferences.Save()) PetDialog.Show(settingsWindow, "Desktop Pet", L("Cài đặt có hiệu lực trong phiên này nhưng không lưu được.", "The setting works for this session, but could not be saved."), "OK", glyph: PetDialog.WarningGlyph);
+        if (persistPreferences && !preferences.Save()) PetDialog.Show(settingsWindow ?? customizeWindow, "Desktop Pet", L("Cài đặt có hiệu lực trong phiên này nhưng không lưu được.", "The setting works for this session, but could not be saved."), "OK", glyph: PetDialog.WarningGlyph);
     }
 
     // Self-update (App owns it; null in tests): Settings → General shows the version, the automatic
@@ -407,5 +413,5 @@ public sealed partial class PetWindow
     private void ApplyAccessory() =>
         renderer.Accessory = preferences.HolidayAccessories && PetAccessories.ForEvent(specialDay) is { } outfit ? outfit.Id : preferences.Accessory;
 
-    private void CloseFeatures() { CloseTrophies(); EndBattle(); CloseBattleHub(); CloseBattlePrep(); CloseAdventureMap(); CloseExpeditionMap(); CloseBattleBag(); CloseBattleSummary(); CloseBattleNotice(); CloseBattleTutorial(); laserWindow?.Close(); diaryWindow?.Close(); CloseStatusCard(); behaviorSettingsWindow?.Close(); toyWindow?.Close(); settingsWindow?.Close(); speechWindow?.Close(); sound?.Stop(); sound?.Dispose(); soundStream?.Dispose(); }
+    private void CloseFeatures() { CloseTrophies(); EndBattle(); CloseBattleHub(); CloseBattlePrep(); CloseAdventureMap(); CloseExpeditionMap(); CloseBattleBag(); CloseBattleSummary(); CloseBattleNotice(); CloseBattleTutorial(); laserWindow?.Close(); diaryWindow?.Close(); CloseStatusCard(); behaviorSettingsWindow?.Close(); toyWindow?.Close(); settingsWindow?.Close(); customizeWindow?.Close(); speechWindow?.Close(); sound?.Stop(); sound?.Dispose(); soundStream?.Dispose(); }
 }

@@ -343,7 +343,7 @@ public sealed partial class PetWindow
             if (PetAccessories.Find(reward) is { } item)
             {
                 var prize = Line(PetUi.BodySize, RecordGold, true);
-                prize.Text = LF($"Phần thưởng mới: {item.Name(PetLanguage.Vietnamese)} — đội trong Cài đặt → Mèo", $"New reward: {item.Name(preferences.Language)} — wear it in Settings → Cat");
+                prize.Text = LF($"Phần thưởng mới: {item.Name(PetLanguage.Vietnamese)} — đội trong Tùy chỉnh", $"New reward: {item.Name(preferences.Language)} — wear it in Customize");
                 lines.Children.Add(prize);
             }
         if (result.Upgrades.Length > 0)

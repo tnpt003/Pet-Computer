@@ -113,7 +113,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run.ps1 -NoAi
 
 ## Stop the pet from appearing
 
-**Right-click the cat and select `Exit pet`.** Alternatively, right-click its
+**Right-click the cat and select `Exit`.** Alternatively, right-click its
 system-tray icon (possibly inside the hidden-icons arrow) and select **Exit**.
 This closes the desktop pet, stops its owned Python child, and removes the tray icon.
 Closing the PowerShell window used to launch it does not stop the background app.
@@ -578,7 +578,7 @@ Quiet mode may cancel preparation. PetMotion.cs contains no AI policy or physics
 
 | New observation field | Meaning |
 |---|---|
-| `birthday` | The user's birthday as `MM-dd` from Settings → Pet, or `""` (no year is stored) |
+| `birthday` | The user's birthday as `MM-dd` from Customize, or `""` (no year is stored) |
 
 | New decision field | Meaning |
 |---|---|

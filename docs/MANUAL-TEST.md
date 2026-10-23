@@ -457,3 +457,9 @@ Tự động đã có: Phần thưởng trên sảnh (ô có hình, khóa, Mới
 ### Chuẩn hóa S5 (2026-10-23)
 - [ ] Tắt AI (hoặc Python lỗi), bật nhắc nghỉ với khoảng ngắn: câu nhắc tiếng Việt/English đúng câu mới (vd. "Ngồi lâu rồi đó, đứng dậy vươn vai với {tên mèo} nha~"), không còn {name}.
 - [ ] Đèn laser, bong bóng thoại, bóng len, các trận đấu (slime, icon app, quảng cáo), bộ lông/phụ kiện: màu và nét như trước.
+
+### Menu theo nhóm + Tùy chỉnh (2026-10-23)
+- [ ] Chuột phải mèo: 12 dòng như docs/WINDOWS.md mục Menu; Âm thanh bật/tắt ngay ở menu ngoài; {tên mèo} › Tùy chỉnh…; Vị trí › đến/nhớ/quên chỗ nghỉ và Gọi về màn hình chính chạy như trước; Khác chỉ còn Debug và Giới thiệu; Thoát.
+- [ ] Tùy chỉnh: đổi tên, tính cách, sinh nhật, bộ lông, phụ kiện (xem trước động), leo cửa sổ, góc trưng bày + món trưng bày → Lưu: áp dụng ngay; Hủy/Esc không đổi gì. Tinh chỉnh hành vi mở giữa cửa sổ Tùy chỉnh.
+- [ ] Cài đặt chỉ còn Lời nói, Âm thanh, Chung. Mở cả Cài đặt và Tùy chỉnh, sửa cả hai, Lưu từng cái: cái nào chỉ đổi phần của nó.
+- [ ] Khay: có Tùy chỉnh…. Chuột phải món trưng bày → Tùy chỉnh…: mở và cuộn tới thẻ Kỷ vật. Màn hình thấp: cửa sổ vừa, cuộn được, nút Lưu/Hủy luôn thấy.

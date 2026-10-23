@@ -70,6 +70,8 @@ public partial class App : Application
         menu.Items.Add(enableAi);
         menu.Items.Add(aiStatus);
         menu.Items.Add(new Forms.ToolStripSeparator());
+        var customize = new Forms.ToolStripMenuItem(null, null, (_, _) => pet.ShowCustomize());
+        menu.Items.Add(customize);
         var settings = new Forms.ToolStripMenuItem(null, null, (_, _) => pet.ShowPetSettings());
         menu.Items.Add(settings);
         var reset = new Forms.ToolStripMenuItem(null, null, (_, _) => pet.Reset());
@@ -92,6 +94,7 @@ public partial class App : Application
             pause.Text = pet.L("Tạm dừng", "Pause");
             enableAi.Text = pet.L("Mèo thông minh (AI)", "Smart pet (AI)");
             aiStatus.Text = pet.AiStatusText;
+            customize.Text = pet.L("Tùy chỉnh…", "Customize…");
             settings.Text = pet.L("Cài đặt…", "Settings…");
             reset.Text = pet.L("Gọi mèo về màn hình chính", "Bring the pet to the main screen");
             exit.Text = pet.L("Thoát", "Exit");

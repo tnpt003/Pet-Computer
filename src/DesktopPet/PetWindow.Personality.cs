@@ -87,8 +87,8 @@ public sealed partial class PetWindow
         root.Children.Add(bar);
         root.Children.Add(new ScrollViewer { Content = panel, VerticalScrollBarVisibility = ScrollBarVisibility.Auto });
         behaviorSettingsWindow = new Window { Title = L("Tinh chỉnh hành vi", "Behavior tuning") + " — " + preferences.Name, Icon = AppIcon.WindowImage(), Width = 440,
-            Height = Math.Min(680, SystemParameters.WorkArea.Height - 24), Owner = settingsWindow, ResizeMode = ResizeMode.NoResize,
-            WindowStartupLocation = settingsWindow != null ? WindowStartupLocation.CenterOwner : WindowStartupLocation.CenterScreen,
+            Height = Math.Min(680, SystemParameters.WorkArea.Height - 24), Owner = customizeWindow, ResizeMode = ResizeMode.NoResize,
+            WindowStartupLocation = customizeWindow != null ? WindowStartupLocation.CenterOwner : WindowStartupLocation.CenterScreen,
             Content = root, Background = PetUi.Surface, Topmost = true, ShowInTaskbar = false };
         PetUi.ApplyWindowFont(behaviorSettingsWindow);
         PetControlStyle.Apply(behaviorSettingsWindow);

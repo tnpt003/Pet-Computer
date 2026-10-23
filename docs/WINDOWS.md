@@ -13,7 +13,7 @@ C:\Project VS\Pet Computer\artifacts\win-x64\DesktopPet.exe
    or Python installation is needed to run the published copy.
 3. Only the desktop cat and tray icon appear. The transparent, borderless,
    always-on-top WPF window and existing input/physics remain in use.
-4. Right-click the cat and choose **Exit pet**, or choose **Exit** from its tray icon.
+4. Right-click the cat and choose **Exit**, or choose **Exit** from its tray icon.
    Exiting also stops the owned Python process. Pause freezes rather than hides it.
 
 Keep **the entire `win-x64` folder together**. It includes .NET libraries plus `ai`
@@ -373,7 +373,7 @@ The version number itself, a changelog and tags are still the user's call when p
 
 ## Appearance, break reminders and computer context (2026-10-13)
 
-**Appearance.** In **Settings… → Pet**, the coat and accessory pickers offer ten coats
+**Appearance.** In **{name} › Customize… → Look**, the coat and accessory pickers offer ten coats
 (Orange, the original, plus Gray, Black, White, Calico, Tabby, Ginger tabby, Tuxedo with
 white chest and mittens, Russian blue, and Siamese with dark ears, mask, tail and paws)
 and twelve accessories (none, collar with bell, bow, party hat, scarf, round glasses,
@@ -491,28 +491,39 @@ follows the personality like ball play.
 ## Menu and settings layout (2026-10-15)
 
 The cat's right-click menu is grouped, with Windows' own icon font (no new assets). Since
-2026-10-23 it is kept short (10 rows, 2 separators); games, the cat's pages and rarely used items
-sit in submenus:
+2026-10-23 every group holds one kind of thing, so a submenu has everything related to its name
+(12 rows, 3 separators):
 
 1. **Give treat, Play › (Play with ball / Put ball away, Laser pointer), Battle Mode, Do now ›,
-   Emotions ›**: playing with the cat. While the ball is out, **Put ball away** also shows on the
-   main menu right under Play (one click). Play is dimmed when neither game can start.
-2. **Quiet mode** (tooltip), **{name} ›** ({name}'s status, {name}'s diary, Favorite resting spot ›),
-   **Settings…**, **More ›** (Sounds, Bring the pet to the main screen, Behavior debug view, About).
-   Sounds is also the master switch in Settings → Sounds.
-3. **Exit pet**.
+   Emotions ›**: playing with the cat and telling it what to do. While the ball is out, **Put ball
+   away** also shows on the main menu right under Play (one click). Play is dimmed when neither
+   game can start.
+2. **Quiet mode** (tooltip), **Sounds**: the two quick switches. Sounds is also the master switch
+   in Settings → Sounds.
+3. **{name} ›** ({name}'s status, {name}'s diary, **Customize…**): who the cat is.
+   **Location ›** (Go to resting spot, Remember this spot, Forget resting spot, then Bring the pet
+   to the main screen): where the cat is. **Settings…**: the app. **More ›** (Behavior debug view,
+   About).
+4. **Exit**.
 
-**Settings…** (also in the tray menu) opens one window with four tabs:
-- **Pet:** name, personality, the user's birthday (day and month, optional; the pet wishes a happy
-  birthday that day), coat and accessory with a live preview, link to Advanced behavior tuning…
+**Customize…** ({name} ›, the tray menu, or a keepsake's right-click menu, which opens it at the
+keepsake card) is the cat's own window, one scrolling page of cards:
+- **Profile:** name, personality, the user's birthday (day and month, optional; the pet wishes a
+  happy birthday that day).
+- **Look:** coat and accessory with a live, gently moving preview; Dress up for holidays.
+- **Habits:** Climb on windows, link to Advanced behavior tuning…
+- **Keepsake:** Keepsake display corner, the keepsake on display.
+
+**Settings…** (also in the tray menu) is the app, in three tabs:
 - **Speech:** talking on/off, how often (greyed out while off), link to forget what was learned.
 - **Sounds:** master switch, three kinds, volume, preview picker + Play.
-- **General:** Language / Ngôn ngữ, Start with Windows, break reminders.
+- **General:** Language / Ngôn ngữ, Start with Windows, updates, uninstall, break reminders.
 
-Nothing changes until **Save**; **Cancel**, Esc or closing the window keeps the old
-settings. Save and Cancel stay at the bottom; a tab scrolls on its own on a small screen.
-The tray menu calls the AI switch **Smart pet (AI)** / **Mèo thông minh (AI)** and adds
-**Settings…**.
+In both windows nothing changes until **Save**; **Cancel**, Esc or closing the window keeps the
+old values. Each saves only its own fields, so both can be open at once. Save and Cancel stay at
+the bottom; a page scrolls on its own on a small screen. The tray menu holds the app-level
+controls: Pause, **Smart pet (AI)** / **Mèo thông minh (AI)**, **Customize…**, **Settings…**,
+Bring the pet to the main screen, updates, Exit.
 
 The right-click menu (not the tray menu, which is a WinForms menu) has its own look
 (`PetMenuStyle.cs`, 2026-10-16): a rounded white panel with a soft shadow, rounded hover
@@ -628,10 +639,10 @@ and the result panel (~449 DIPs at its fullest) fit a 480-DIP screen as they are
 
 ## Keepsake display corner (2026-10-21, Expedition milestone 4)
 
-**Settings… → Pet → Keepsake display corner** (on by default; nothing shows until a
+**Customize… → Keepsake → Keepsake display corner** (on by default; nothing shows until a
 keepsake is earned). A won Expedition run gives keepsakes once each: a bronze, silver or
 gold cup for the first win on Easy, Normal or Hard, a slime cushion for the first win on
-Normal or Hard, and the Expedition scarf (an accessory, then offered in Settings → Pet).
+Normal or Hard, and the Expedition scarf (an accessory, then offered in Customize).
 They are kept in `expedition.json` (version 3).
 
 - The cups and cushion stand on a small shelf at the bottom right of the monitor the cat is
@@ -648,7 +659,7 @@ They are kept in `expedition.json` (version 3).
 
 ## Walking on windows (2026-10-15)
 
-**Settings… → Pet → Climb on windows** (on by default). The pet treats the visible top
+**Customize… → Habits → Climb on windows** (on by default). The pet treats the visible top
 edge of ordinary app windows on its monitor as a floor:
 
 - **What counts:** visible, not minimized or maximized, not cloaked (other virtual
@@ -712,7 +723,7 @@ and the galaxy cape. They come from the records' most waves cleared (`MostCleare
 count MostWaves − 1), so they are never lost; a banner "★ Unlocked: …" shows when the wave is
 cleared, the result panel names them, the hub's card says "Rewards k/5 · next: clear wave N",
 and Hub → Rewards has an "Infinity rewards" section. The two keepsakes join the Expedition's in
-Settings → Pet (one shown at a time, same physics as a cup). The cat draws a wooden toy sword and
+Customize (one shown at a time, same physics as a cup). The cat draws a wooden toy sword and
 fights slimes on the floor of its current monitor (work area) in 3 waves (2 slimes; 2 slimes +
 2 quick slimes; a rock slime + 2 quick + 2 slimes; at most 3 at once, a short break between
 waves), then the **Slime King** alone. Quick slimes are small, fast and frail (wind streaks);
@@ -1027,8 +1038,8 @@ the game draws itself (never a real app's name, logo or colours); rules and numb
 - **Rewards:** stage 3 gives the Slime hat, stage 5 the Slime King's crown (accessories.json entries
   with `"reward"`). Given once, the first time the stage is won with official data, recorded in
   `Rewards` of adventure-progress.json; stages won before a reward existed give it when the map
-  opens. The result panel says "New reward: … — wear it in Settings → Cat"; the cat never puts it on
-  by itself. Settings → Cat lists a reward accessory only once received (or while worn), and maps
+  opens. The result panel says "New reward: … — wear it in Customize"; the cat never puts it on
+  by itself. Customize lists a reward accessory only once received (or while worn), and maps
   the list back by id. The map lists a stage's reward ("✓ received").
 - **End** (HUD or menu) during a stage goes back to the map at that stage; nothing is counted. The
   free battle's End goes back to the desktop as before.

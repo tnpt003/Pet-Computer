@@ -178,13 +178,15 @@ internal static class Program
         string catName = Field<PetPreferences>(window, "preferences").Name;
         var catMenu = topItems.Single(item => (string)item.Header == catName);
         var catHeaders = catMenu.Items.OfType<System.Windows.Controls.MenuItem>().Select(item => item.Header as string).ToList();
-        Check(headers.SequenceEqual(new[] { "Give treat", "Play", "Battle Mode", "Do now", "Emotions", "Quiet mode", catName, "Settings…", "More", "Exit pet" }) &&
+        Check(headers.SequenceEqual(new[] { "Give treat", "Play", "Battle Mode", "Do now", "Emotions", "Quiet mode", "Sounds", catName, "Location", "Settings…", "More", "Exit" }) &&
               SubHeaders("Play") == "Play with ball|Laser pointer" &&
-              SubHeaders("More") == "Sounds|Bring the pet to the main screen|Behavior debug view|About Desktop Pet" &&
-              catHeaders.Count == 3 && catHeaders[2] == "Favorite resting spot" &&
-              window.ContextMenu.Items.OfType<System.Windows.Controls.Separator>().Count() == 2 &&
+              SubHeaders("Location") == "Go to resting spot|Remember this spot|Forget resting spot|Bring the pet to the main screen" &&
+              SubHeaders("More") == "Behavior debug view|About Desktop Pet" &&
+              catHeaders.Count == 3 && catHeaders[2] == "Customize…" &&
+              topItems.Single(item => (string)item.Header == "Sounds").IsCheckable &&
+              window.ContextMenu.Items.OfType<System.Windows.Controls.Separator>().Count() == 3 &&
               !string.IsNullOrEmpty(PetWindow.VersionText) && PetWindow.VersionText != "unknown",
-            "Context menu: 10 items in 3 groups; games, the cat's pages and Sounds sit in submenus; Exit last; About has a version");
+            "Context menu: 12 items in 4 groups (play · Quiet and Sounds · the cat, where it is, settings, more · Exit); Customize sits under the cat's name; About has a version");
         window.ToggleToy();
         window.ContextMenu.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.ContextMenu.OpenedEvent));
         var putAway = topItems.Where(item => item.Visibility == Visibility.Visible).Select(item => item.Header as string).ToList();
@@ -365,10 +367,10 @@ internal static class Program
             var vietnamese = Labels();
             options.Language = original;
             Labels();
-            Check(english.All(t => t.Length > 0 && !HasVietnamese(t)) && english.Contains("Do now") && english.Contains("Exit pet"),
+            Check(english.All(t => t.Length > 0 && !HasVietnamese(t)) && english.Contains("Do now") && english.Contains("Exit") && english.Contains("Customize…"),
                 "English UI: every context-menu label (submenus included) is English");
-            Check(vietnamese.Contains("Làm ngay") && vietnamese.Contains("Thoát mèo") && vietnamese.Contains("Cài đặt…") && vietnamese.Contains("Cảm xúc") &&
-                  !vietnamese.Intersect(new[] { "Do now", "Emotions", "Exit pet", "Give treat", "Quiet mode", "Sounds", "Settings…", "More", "About Desktop Pet", "Behavior debug view" }).Any(),
+            Check(vietnamese.Contains("Làm ngay") && vietnamese.Contains("Thoát") && vietnamese.Contains("Cài đặt…") && vietnamese.Contains("Tùy chỉnh…") && vietnamese.Contains("Vị trí") && vietnamese.Contains("Cảm xúc") &&
+                  !vietnamese.Intersect(new[] { "Do now", "Emotions", "Exit", "Give treat", "Quiet mode", "Sounds", "Settings…", "Customize…", "Location", "More", "About Desktop Pet", "Behavior debug view" }).Any(),
                 "Vietnamese UI: no English menu label is left behind");
             Check(PetWindow.LocalizeAiStatus("Python AI: connected (playful)", "vi") == "Python AI: đã kết nối (ham chơi)" &&
                   PetWindow.LocalizeAiStatus("Local behavior: timeout (retry after 4s)", "vi") == "Hành vi local: hết thời gian chờ (thử lại sau 4s)" &&
@@ -668,8 +670,36 @@ internal static class Program
               form.Tabs.Items.OfType<System.Windows.Controls.TabItem>().All(t => t.Content is System.Windows.Controls.ScrollViewer { VerticalScrollBarVisibility: System.Windows.Controls.ScrollBarVisibility.Auto }) &&
               !form.Save.IsDescendantOf(form.Tabs) && !form.Cancel.IsDescendantOf(form.Tabs) && form.Save.IsVisible,
             "Settings window fits the pet's monitor; tabs scroll while Save and Cancel stay visible outside them");
-        Check(form.Tabs.Items.OfType<System.Windows.Controls.TabItem>().Select(t => (string)t.Header).SequenceEqual(new[] { "Pet", "Speech", "Sounds", "General" }),
-            "Settings are split into Pet, Speech, Sounds and General tabs");
+        Check(form.Tabs.Items.OfType<System.Windows.Controls.TabItem>().Select(t => (string)t.Header).SequenceEqual(new[] { "Speech", "Sounds", "General" }) &&
+              form.Coat == null && form.Name == null,
+            "Settings hold the app's pages (Speech, Sounds, General); the cat's profile and look moved to Customize");
+        // Customize ({name} › Customize…): the cat's own cards in one scrolling page, its own Save and Cancel.
+        window.ShowCustomize();
+        var customizeWindow = Field<Window>(window, "customizeWindow");
+        var cat = Field<PetSettingsForm>(window, "customizeForm");
+        var catCards = Descendants<System.Windows.Controls.TextBlock>((FrameworkElement)customizeWindow.Content).Select(t => t.Text).ToList();
+        Check(customizeWindow.IsVisible && form.Save.IsVisible && customizeWindow.Title.StartsWith("Customize — ", StringComparison.Ordinal) &&
+              new[] { "Profile", "Look", "Habits", "Keepsake" }.All(catCards.Contains) && cat.Tabs == null && cat.Volume == null &&
+              cat.Name.Text == preferences.Name && cat.Coat.Items.Count == 10 && cat.Tuning != null && cat.Save.IsVisible &&
+              customizeWindow.Height <= settingsArea.Bottom - settingsArea.Top && customizeWindow.Top >= settingsArea.Top,
+            "Customize opens next to Settings with Profile, Look, Habits and Keepsake cards and fits the pet's monitor");
+        // Each window saves only its own fields: Customize keeps the volume being edited in Settings.
+        double volumeEditing = preferences.Volume;
+        form.Volume.Value = volumeEditing > 0.5 ? 0.2 : 0.8;
+        string nameEditing = preferences.Name;
+        cat.Name.Text = nameEditing + "X";
+        cat.Save.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+        Check(preferences.Name == nameEditing + "X" && preferences.Volume == volumeEditing && Field<Window?>(window, "customizeWindow") == null && customize.IsVisible,
+            "Saving Customize changes the cat only; Settings stays open with its own unsaved edits");
+        preferences.Name = nameEditing;
+        form.Volume.Value = volumeEditing;
+        // A keepsake's menu opens Customize at its keepsake card.
+        window.ShowCustomize(keepsakes: true);
+        cat = Field<PetSettingsForm>(window, "customizeForm");
+        var catScroll = (System.Windows.Controls.ScrollViewer)((System.Windows.Controls.DockPanel)Field<Window>(window, "customizeWindow").Content).Children[1];
+        Check(cat.KeepsakeSection.IsDescendantOf(catScroll) && cat.PreviewTimer.IsEnabled, "Customize can open at the keepsake card");
+        Field<Window>(window, "customizeWindow").Close();
+        Check(!cat.PreviewTimer.IsEnabled && Field<PetSettingsForm?>(window, "customizeForm") == null, "Closing Customize stops its preview");
         Check(form.Volume.Value == preferences.Volume && form.PreviewCue.Items.Count == 9 && form.Sounds.IsChecked == preferences.Sounds,
             "Sound settings expose master/category switches, volume and all nine previews");
         bool soundsBefore = form.Sounds.IsChecked == true;
@@ -738,6 +768,15 @@ internal static class Program
                     using var stream = System.IO.File.Create(System.IO.Path.Combine(settingsReview, $"settings-{language}-{tab}.png")); encoder.Save(stream);
                 }
                 customize = reviewWindow;
+                window.ShowCustomize();
+                var catReview = Field<Window>(window, "customizeWindow");
+                catReview.UpdateLayout();
+                var catRoot = (FrameworkElement)catReview.Content;
+                var catImage = new RenderTargetBitmap((int)catRoot.ActualWidth, (int)catRoot.ActualHeight, 96, 96, PixelFormats.Pbgra32);
+                catImage.Render(catRoot);
+                var catEncoder = new PngBitmapEncoder(); catEncoder.Frames.Add(BitmapFrame.Create(catImage));
+                using (var catStream = System.IO.File.Create(System.IO.Path.Combine(settingsReview, $"customize-{language}.png"))) catEncoder.Save(catStream);
+                catReview.Close();
                 window.ShowControls();
                 var menu = window.ContextMenu!;
                 menu.UpdateLayout();
@@ -768,8 +807,12 @@ internal static class Program
         window.ContextMenu.IsOpen = false;
         Check(japaneseMenu.Contains("今すぐ") && japaneseMenu.Contains("気持ち") && (string)form.Save.Content == "保存",
             "Japanese uses the translation table (menu, Settings)");
-        Check(form.Coat.Items.OfType<CoatChoice>().Any(c => c.Label == "三毛") && form.Accessory.Items.OfType<string>().Contains("リボン"),
+        window.ShowCustomize();
+        var japaneseCat = Field<PetSettingsForm>(window, "customizeForm");
+        Check(japaneseCat.Coat.Items.OfType<CoatChoice>().Any(c => c.Label == "三毛") && japaneseCat.Accessory.Items.OfType<string>().Contains("リボン") &&
+              Field<Window>(window, "customizeWindow").Title.StartsWith("カスタマイズ", StringComparison.Ordinal),
             "Japanese coat and accessory names come from the data's translations");
+        Field<Window>(window, "customizeWindow").Close();
         customize.Close();
         window.ShowStatusCard(); window.ShowDiary();
         Field<Window?>(window, "statusWindow")?.UpdateLayout();
@@ -785,12 +828,17 @@ internal static class Program
         form = Field<PetSettingsForm>(window, "settingsForm");
         string nameBefore = preferences.Name;
         double volumeBefore = preferences.Volume;
-        form.Name.Text = "Changed"; form.Volume.Value = 0.1;
+        form.Volume.Value = 0.1;
         form.Cancel.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
-        Check(!customize.IsVisible && Field<Window?>(window, "settingsWindow") == null && preferences.Name == nameBefore && preferences.Volume == volumeBefore,
-            "Cancel closes settings without changing anything");
-        window.ShowPetSettings();
-        customize = Field<Window>(window, "settingsWindow");
+        window.ShowCustomize();
+        var catCancel = Field<PetSettingsForm>(window, "customizeForm");
+        catCancel.Name.Text = "Changed";
+        catCancel.Cancel.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+        Check(!customize.IsVisible && Field<Window?>(window, "settingsWindow") == null && Field<Window?>(window, "customizeWindow") == null &&
+              preferences.Name == nameBefore && preferences.Volume == volumeBefore,
+            "Cancel closes Settings or Customize without changing anything");
+        window.ShowCustomize();
+        customize = Field<Window>(window, "customizeWindow");
         var playSound = MethodOf("PlayPetSound");
         Check(!(bool)playSound.Invoke(window, new object?[] { "meow", true, 0.0 })!, "Zero-volume preview stays silent");
         MethodOf("ShowBehaviorSettings").Invoke(window, null);
@@ -971,13 +1019,15 @@ internal static class Program
     {
         var renderer = (PetRenderer)window.Content;
         window.ShowPetSettings();
-        var form = Field<PetSettingsForm>(window, "settingsForm");
+        var app = Field<PetSettingsForm>(window, "settingsForm");
+        window.ShowCustomize();
+        var form = Field<PetSettingsForm>(window, "customizeForm");
         var looks = new[] { form.Coat, form.Accessory };
-        var reminder = form.BreakReminders;
-        var interval = form.BreakInterval;
+        var reminder = app.BreakReminders;
+        var interval = app.BreakInterval;
         Check(looks.Length == 2 && looks[0].Items.Count == 10 && looks[1].Items.Count == 12 && form.HolidayAccessories.IsChecked == true && looks[0].SelectedIndex == 0 && looks[1].SelectedIndex == 0 &&
               reminder.IsChecked == false && interval.SelectedIndex == 1,
-            "Settings offer ten coats, twelve accessories and break reminders (off, 45 minutes)");
+            "Customize offers ten coats and twelve accessories; Settings offer break reminders (off, 45 minutes)");
         // The preview follows the pickers and moves gently; the real pet waits for Save.
         looks[0].SelectedIndex = 9; looks[1].SelectedIndex = 7;
         double previewTime = form.PreviewPet.AnimationTime;
@@ -988,13 +1038,14 @@ internal static class Program
         System.Windows.Threading.Dispatcher.PushFrame(frame); // Let the preview timer tick a few times.
         Check(form.PetPreview.Coat == "Siamese" && form.PetPreview.Accessory == "Crown" && renderer.Coat == "Orange" && renderer.Accessory == "None" &&
               form.PreviewPet.AnimationTime > previewTime && form.PreviewTimer.IsEnabled,
-            "The settings preview shows the chosen coat and accessory at once and animates, without changing the real pet");
+            "The Customize preview shows the chosen coat and accessory at once and animates, without changing the real pet");
         looks[0].SelectedIndex = 2; looks[1].SelectedIndex = 3; reminder.IsChecked = true; interval.SelectedIndex = 0;
         Check(form.BirthDay.SelectedIndex == 0 && form.BirthMonth.SelectedIndex == 0 && form.BirthDay.Items.Count == 32 && form.BirthMonth.Items.Count == 13,
-            "Settings offer an unset birthday (day 1-31, month 1-12)");
+            "Customize offers an unset birthday (day 1-31, month 1-12)");
         form.BirthDay.SelectedIndex = 31; form.BirthMonth.SelectedIndex = 2; // 31 February.
-        form.AutoUpdate.IsChecked = false;
+        app.AutoUpdate.IsChecked = false;
         form.Save.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+        app.Save.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
         Check(!preferences.AutoUpdate && !window.AutoUpdate, "Saving keeps automatic updates off when unticked");
         preferences.AutoUpdate = true;
         // What's new after an update: the first installed start records its version; a later one reports the change.
@@ -1013,13 +1064,13 @@ internal static class Program
               preferences.BreakReminders && preferences.BreakMinutes == 30 && breaks.Enabled && breaks.IntervalSeconds == 1800,
             "Saving applies the coat, accessory and break interval at once");
         Check(preferences.Birthday == "02-29", "A birthday past the month's end is saved as its last day (31 Feb -> 02-29)");
-        window.ShowPetSettings();
-        form = Field<PetSettingsForm>(window, "settingsForm");
-        Check(form.BirthDay.SelectedIndex == 29 && form.BirthMonth.SelectedIndex == 2, "Settings show the saved birthday again");
+        window.ShowCustomize();
+        form = Field<PetSettingsForm>(window, "customizeForm");
+        Check(form.BirthDay.SelectedIndex == 29 && form.BirthMonth.SelectedIndex == 2, "Customize shows the saved birthday again");
         form.BirthMonth.SelectedIndex = 0;
         form.Save.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
         Check(preferences.Birthday == "", "Clearing the month removes the birthday");
-        Check(!form.PreviewTimer.IsEnabled, "Closing settings stops the preview animation");
+        Check(!form.PreviewTimer.IsEnabled, "Closing Customize stops the preview animation");
         renderer.Coat = preferences.Coat = "Orange"; renderer.Accessory = preferences.Accessory = "None";
 
         bool quiet = preferences.Quiet, sounds = preferences.Sounds;

@@ -8,7 +8,8 @@ using DesktopPet.AI;
 
 namespace DesktopPet;
 
-// The controls of an open settings window (kept so checks can drive the form).
+// The controls of an open Customize or Settings window (kept so checks can drive the form).
+// Customize fills the cat's controls (profile, look, habits, keepsake), Settings the app's (speech, sounds, general).
 public sealed class PetSettingsForm
 {
     public TabControl Tabs = null!;
@@ -19,6 +20,7 @@ public sealed class PetSettingsForm
     // The keepsakes that can be on display (owned cups best first, then the cushion); empty: none yet.
     public ComboBox Trophy = null!;
     public string[] TrophyIds = Array.Empty<string>();
+    public Border KeepsakeSection = null!;
     public CheckBox HolidayAccessories = null!, ClimbWindows = null!, ShowTrophies = null!, Talks = null!, Autostart = null!, BreakReminders = null!, Sounds = null!, InteractionSounds = null!, EmotionSounds = null!, SleepSounds = null!, AutoUpdate = null!;
     public Slider Volume = null!;
     public Button Save = null!, Cancel = null!, Tuning = null!, Forget = null!, Preview = null!, CheckUpdates = null!, Uninstall = null!;
@@ -36,11 +38,12 @@ public sealed record CoatChoice(string Label, CoatPalette Palette)
     public override string ToString() => Label;
 }
 
-// Settings in four sidebar pages (Pet, Speech, Sounds, General) of titled cards. Nothing changes until Save;
-// Cancel or closing the window keeps the old settings.
+// Two windows of titled cards, each with Save and Cancel; nothing changes until Save, and each saves only
+// its own fields. Customize ({name} › Customize…, the tray, a keepsake's menu): who the cat is, how it looks,
+// its habits and keepsake. Settings: the app, in three sidebar pages (Speech, Sounds, General).
 public sealed partial class PetWindow
 {
-    private PetSettingsForm? settingsForm;
+    private PetSettingsForm? settingsForm, customizeForm;
 
     private static readonly (string Cue, string Vi, string En)[] PreviewCues =
     {
@@ -53,12 +56,13 @@ public sealed partial class PetWindow
     private string MonthName(int month) => preferences.Language == PetLanguage.Vietnamese ? "Tháng " + month
         : System.Globalization.CultureInfo.GetCultureInfo(preferences.Language).DateTimeFormat.GetMonthName(month);
 
-    public void ShowPetSettings()
+    // keepsakes: scroll to the keepsake card (opened from a keepsake's menu).
+    public void ShowCustomize(bool keepsakes = false)
     {
-        if (settingsWindow != null) { settingsWindow.Activate(); return; }
+        if (customizeWindow != null) { customizeWindow.Activate(); if (keepsakes) customizeForm?.KeepsakeSection.BringIntoView(); return; }
         var form = new PetSettingsForm();
 
-        // Pet: who the cat is and how it looks. Stored values stay English ("Balanced", "Orange"...).
+        // Who the cat is and how it looks. Stored values stay English ("Balanced", "Orange"...).
         string[] personalities = PetPersonality.All;
         form.Name = new TextBox { Text = preferences.Name, MaxLength = 24 };
         form.Personality = new ComboBox { ItemsSource = new[] { L("Cân bằng", "Balanced"), L("Ham chơi", "Playful"), L("Tò mò", "Curious"), L("Điềm tĩnh", "Calm") },
@@ -117,18 +121,20 @@ public sealed partial class PetWindow
             ItemsSource = displayable.Length > 0 ? displayable.Select(k => k.Name(preferences.Language)).ToArray() : new[] { L("Chưa có kỷ vật", "No keepsakes yet") },
             SelectedIndex = Math.Max(0, Array.IndexOf(form.TrophyIds, DisplayedKeepsake?.Id)),
             ToolTip = L("Kỷ vật đứng trên màn hình (thắng Viễn chinh để nhận thêm).", "The keepsake standing on the screen (win Expeditions for more).") };
-        var petTab = Page(
+        form.KeepsakeSection = Section(L("Kỷ vật", "Keepsake"),
+            form.ShowTrophies,
+            Row(L("Món trưng bày", "On display"), form.Trophy));
+        var page = Page(
             Section(L("Hồ sơ", "Profile"),
                 Row(L("Tên", "Name"), form.Name),
                 Row(L("Tính cách", "Personality"), form.Personality),
                 Row(L("Sinh nhật của bạn", "Your birthday"), birthday)),
             Section(L("Ngoại hình", "Look"), appearance),
-            Section(L("Hoạt động", "Activities"),
+            Section(L("Thói quen", "Habits"),
                 form.ClimbWindows,
-                form.ShowTrophies,
-                Row(L("Món trưng bày", "On display"), form.Trophy),
-                form.Tuning));
-        // Gentle idle motion (breathing, tail, blinks) while the Pet tab is showing.
+                form.Tuning),
+            form.KeepsakeSection);
+        // Gentle idle motion (breathing, tail, blinks) while the window is open.
         var previewClock = System.Diagnostics.Stopwatch.StartNew();
         double previewLast = 0;
         var previewTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(33) };
@@ -136,12 +142,43 @@ public sealed partial class PetWindow
         {
             double now = previewClock.Elapsed.TotalSeconds, dt = Math.Min(0.1, now - previewLast);
             previewLast = now;
-            if (form.Tabs.SelectedIndex != 0) return;
             previewPet.AnimationTime += dt; previewPet.ActionTime += dt;
             form.PetPreview.InvalidateVisual();
         };
         previewTimer.Start();
         form.PreviewTimer = previewTimer;
+
+        customizeWindow = FormWindow(L("Tùy chỉnh", "Customize") + " — " + preferences.Name, CustomizeWidth, 620, page, form);
+        form.Save.Click += (_, _) =>
+        {
+            preferences.Name = string.IsNullOrWhiteSpace(form.Name.Text) ? "Mochi" : form.Name.Text.Trim();
+            preferences.Personality = personalities[Math.Max(0, form.Personality.SelectedIndex)]; Title = preferences.Name + " — Desktop Pet";
+            behavior.Personality = preferences.Personality;
+            preferences.Coat = PetPreferences.Coats[Math.Max(0, form.Coat.SelectedIndex)];
+            preferences.Accessory = form.AccessoryIds[Math.Max(0, form.Accessory.SelectedIndex)];
+            // A day past the month's end (31 February) becomes its last day; both parts are needed.
+            int birthMonth = Math.Max(0, form.BirthMonth.SelectedIndex), birthDay = Math.Max(0, form.BirthDay.SelectedIndex);
+            preferences.Birthday = birthMonth > 0 && birthDay > 0
+                ? $"{birthMonth:00}-{Math.Min(birthDay, DateTime.DaysInMonth(2000, birthMonth)):00}" : "";
+            preferences.HolidayAccessories = form.HolidayAccessories.IsChecked == true;
+            renderer.Coat = preferences.Coat; ApplyAccessory();
+            preferences.ClimbWindows = form.ClimbWindows.IsChecked == true;
+            if (!preferences.ClimbWindows) DropLedges(); // A pet on a window falls; a climbing one lets go.
+            preferences.ShowTrophies = form.ShowTrophies.IsChecked == true;
+            if (!preferences.ShowTrophies) StopAdmiring();
+            if (form.TrophyIds.Length > 0) preferences.TrophyShown = form.TrophyIds[Math.Clamp(form.Trophy.SelectedIndex, 0, form.TrophyIds.Length - 1)];
+            Interact("preferences_changed"); SavePreferences(); customizeWindow?.Close();
+        };
+        customizeWindow.Closed += (_, _) => { form.PreviewTimer.Stop(); customizeWindow = null; customizeForm = null; };
+        customizeForm = form;
+        customizeWindow.Show();
+        if (keepsakes) { customizeWindow.UpdateLayout(); form.KeepsakeSection.BringIntoView(); }
+    }
+
+    public void ShowPetSettings()
+    {
+        if (settingsWindow != null) { settingsWindow.Activate(); return; }
+        var form = new PetSettingsForm();
 
         // Speech bubbles (lines come from the AI): how often, and forgetting learned habits.
         form.Talks = new CheckBox { Content = L("Mèo biết nói (bong bóng chữ)", "Pet talks (speech bubbles)"), IsChecked = preferences.Speech };
@@ -260,39 +297,15 @@ public sealed partial class PetWindow
                 PetUi.Hint(L("Chỉ tính thời gian bạn dùng máy. Không nhắc khi đang mở app toàn màn hình.",
                              "Counts only time you use the computer. Not shown during fullscreen apps."))));
 
-        // A sidebar (PetControlStyle); each Tag is the page's Segoe icon: heart, chat, speaker, gear.
+        // A sidebar (PetControlStyle); each Tag is the page's Segoe icon: chat, speaker, gear.
         form.Tabs = new TabControl { Padding = new Thickness(0) };
-        form.Tabs.Items.Add(new TabItem { Header = L("Mèo", "Pet"), Tag = "\uEB51", Content = petTab });
-        form.Tabs.Items.Add(new TabItem { Header = L("Lời nói", "Speech"), Tag = "\uE8BD", Content = speechTab });
-        form.Tabs.Items.Add(new TabItem { Header = L("Âm thanh", "Sounds"), Tag = "\uE767", Content = soundsTab });
-        form.Tabs.Items.Add(new TabItem { Header = L("Chung", "General"), Tag = "\uE713", Content = generalTab });
+        form.Tabs.Items.Add(new TabItem { Header = L("Lời nói", "Speech"), Tag = "", Content = speechTab });
+        form.Tabs.Items.Add(new TabItem { Header = L("Âm thanh", "Sounds"), Tag = "", Content = soundsTab });
+        form.Tabs.Items.Add(new TabItem { Header = L("Chung", "General"), Tag = "", Content = generalTab });
 
-        // Save and Cancel stay visible at the bottom; each tab scrolls on its own if the screen is small.
-        form.Save = PetUi.PrimaryButton(L("Lưu", "Save"));
-        form.Cancel = PetUi.SecondaryButton(L("Hủy", "Cancel"));
-        form.Cancel.IsCancel = true;
-        var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(12) };
-        buttons.Children.Add(form.Cancel); buttons.Children.Add(form.Save);
-        var buttonBar = new Border { Child = buttons, BorderBrush = PetUi.Line, BorderThickness = new Thickness(0, 1, 0, 0) };
-        var root = new DockPanel();
-        DockPanel.SetDock(buttonBar, Dock.Bottom);
-        root.Children.Add(buttonBar); root.Children.Add(form.Tabs);
-
-        double areaHeight = Math.Max(300, bounds.Bottom - bounds.Top);
-        double height = Math.Min(520, areaHeight - 24);
-        settingsWindow = new Window { Title = L("Cài đặt", "Settings") + " — " + preferences.Name, Icon = AppIcon.WindowImage(), Width = SettingsWidth, Height = height,
-            Content = root, Background = PetUi.Surface, ResizeMode = ResizeMode.NoResize, Topmost = true, ShowInTaskbar = false,
-            WindowStartupLocation = WindowStartupLocation.Manual,
-            Left = Math.Clamp(pet.X + settings.Width / 2 - SettingsWidth / 2, bounds.Left, Math.Max(bounds.Left, bounds.Right - SettingsWidth)),
-            Top = bounds.Top + Math.Max(8, (areaHeight - height) / 2) };
-        PetUi.ApplyWindowFont(settingsWindow);
-        PetControlStyle.Apply(settingsWindow);
-        form.Cancel.Click += (_, _) => settingsWindow?.Close();
+        settingsWindow = FormWindow(L("Cài đặt", "Settings") + " — " + preferences.Name, SettingsWidth, 520, form.Tabs, form);
         form.Save.Click += (_, _) =>
         {
-            preferences.Name = string.IsNullOrWhiteSpace(form.Name.Text) ? "Mochi" : form.Name.Text.Trim();
-            preferences.Personality = personalities[Math.Max(0, form.Personality.SelectedIndex)]; Title = preferences.Name + " — Desktop Pet";
-            behavior.Personality = preferences.Personality;
             preferences.Volume = form.Volume.Value; preferences.Sounds = form.Sounds.IsChecked == true;
             preferences.InteractionSounds = form.InteractionSounds.IsChecked == true; preferences.EmotionSounds = form.EmotionSounds.IsChecked == true;
             preferences.SleepSounds = form.SleepSounds.IsChecked == true;
@@ -302,36 +315,50 @@ public sealed partial class PetWindow
             if (languageChanged) { pet.Speech.Hide(); pet.Speech.DropPending(); RaiseLanguageChanged(); } // No line in the old language.
             preferences.Chattiness = Math.Clamp(form.Chattiness.SelectedIndex, 0, 2);
             if (!preferences.Speech) pet.Speech.Hide();
-            preferences.Coat = PetPreferences.Coats[Math.Max(0, form.Coat.SelectedIndex)];
-            preferences.Accessory = form.AccessoryIds[Math.Max(0, form.Accessory.SelectedIndex)];
-            // A day past the month's end (31 February) becomes its last day; both parts are needed.
-            int birthMonth = Math.Max(0, form.BirthMonth.SelectedIndex), birthDay = Math.Max(0, form.BirthDay.SelectedIndex);
-            preferences.Birthday = birthMonth > 0 && birthDay > 0
-                ? $"{birthMonth:00}-{Math.Min(birthDay, DateTime.DaysInMonth(2000, birthMonth)):00}" : "";
-            preferences.HolidayAccessories = form.HolidayAccessories.IsChecked == true;
-            renderer.Coat = preferences.Coat; ApplyAccessory();
             preferences.BreakReminders = form.BreakReminders.IsChecked == true;
             preferences.BreakMinutes = PetPreferences.BreakChoices[Math.Max(0, form.BreakInterval.SelectedIndex)];
             breaks.Configure(preferences.BreakReminders, preferences.BreakMinutes);
-            preferences.ClimbWindows = form.ClimbWindows.IsChecked == true;
-            if (!preferences.ClimbWindows) DropLedges(); // A pet on a window falls; a climbing one lets go.
             preferences.AutoUpdate = form.AutoUpdate.IsChecked == true;
             Updates?.SetAutomatic(preferences.AutoUpdate);
-            preferences.ShowTrophies = form.ShowTrophies.IsChecked == true;
-            if (!preferences.ShowTrophies) StopAdmiring();
-            if (form.TrophyIds.Length > 0) preferences.TrophyShown = form.TrophyIds[Math.Clamp(form.Trophy.SelectedIndex, 0, form.TrophyIds.Length - 1)];
             // Test windows never touch the real Windows startup entry.
             if (persistPreferences && form.Autostart.IsChecked == true != autostartOn &&
                 (Environment.ProcessPath is not string path || !startup.SetEnabled(form.Autostart.IsChecked == true, path)))
                 PetDialog.Show(settingsWindow, "Desktop Pet", L("Không đổi được cài đặt khởi động cùng Windows.", "Windows startup could not be changed."), "OK", glyph: PetDialog.WarningGlyph);
             sound?.Stop(); Interact("preferences_changed"); SavePreferences(); settingsWindow?.Close();
         };
-        settingsWindow.Closed += (_, _) => { form.PreviewTimer.Stop(); settingsWindow = null; settingsForm = null; };
+        settingsWindow.Closed += (_, _) => { settingsWindow = null; settingsForm = null; };
         settingsForm = form;
         settingsWindow.Show();
     }
 
-    private const double SettingsWidth = 600;
+    private const double SettingsWidth = 600, CustomizeWidth = 480;
+
+    // A form window on the pet's monitor, near the cat: the body above, Save and Cancel always visible
+    // below it (the body scrolls on its own if the screen is small). Cancel or closing keeps everything.
+    private Window FormWindow(string title, double width, double maxHeight, UIElement body, PetSettingsForm form)
+    {
+        form.Save = PetUi.PrimaryButton(L("Lưu", "Save"));
+        form.Cancel = PetUi.SecondaryButton(L("Hủy", "Cancel"));
+        form.Cancel.IsCancel = true;
+        var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(12) };
+        buttons.Children.Add(form.Cancel); buttons.Children.Add(form.Save);
+        var buttonBar = new Border { Child = buttons, BorderBrush = PetUi.Line, BorderThickness = new Thickness(0, 1, 0, 0) };
+        var root = new DockPanel();
+        DockPanel.SetDock(buttonBar, Dock.Bottom);
+        root.Children.Add(buttonBar); root.Children.Add(body);
+
+        double areaHeight = Math.Max(300, bounds.Bottom - bounds.Top);
+        double height = Math.Min(maxHeight, areaHeight - 24);
+        var window = new Window { Title = title, Icon = AppIcon.WindowImage(), Width = width, Height = height,
+            Content = root, Background = PetUi.Surface, ResizeMode = ResizeMode.NoResize, Topmost = true, ShowInTaskbar = false,
+            WindowStartupLocation = WindowStartupLocation.Manual,
+            Left = Math.Clamp(pet.X + settings.Width / 2 - width / 2, bounds.Left, Math.Max(bounds.Left, bounds.Right - width)),
+            Top = bounds.Top + Math.Max(8, (areaHeight - height) / 2) };
+        PetUi.ApplyWindowFont(window);
+        PetControlStyle.Apply(window);
+        form.Cancel.Click += (_, _) => window.Close();
+        return window;
+    }
 
     // "Uninstall Desktop Pet?" with "Also delete the pet's data" (not ticked: reinstalling remembers everything).
     public static Window UninstallQuestion(Func<string, string, string> L, out CheckBox removeData)

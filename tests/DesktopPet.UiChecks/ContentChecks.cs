@@ -28,8 +28,8 @@ internal static class ContentChecks
             // Settings: no reward accessory before it is received.
             string[] Offered()
             {
-                window.ShowPetSettings();
-                var form = Field<PetSettingsForm>(window, "settingsForm");
+                window.ShowCustomize();
+                var form = Field<PetSettingsForm>(window, "customizeForm");
                 var ids = form.AccessoryIds.ToArray();
                 form.Cancel.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
                 return ids;
@@ -48,13 +48,13 @@ internal static class ContentChecks
             for (int i = 0; i < 200 && window.BattleActive; i++) Fight(0.05);
             await Task.Delay(30);
             string panel = Find("Pet result")?.Content is DependencyObject content ? Text(content) : "";
-            check(window.AdventureProgress.Rewards.SequenceEqual(new[] { "SlimeHat" }) && panel.Contains("New reward: Slime hat") && panel.Contains("Settings → Cat"),
+            check(window.AdventureProgress.Rewards.SequenceEqual(new[] { "SlimeHat" }) && panel.Contains("New reward: Slime hat") && panel.Contains("Customize"),
                 $"Winning gives the Slime hat once and the result says where to wear it ({panel})");
             check(prefs.Accessory == "None" && renderer.Accessory == "None", "The cat does not put the reward on by itself");
 
             // Settings now offer it; choosing it by its id works (the list is not the full accessory list).
-            window.ShowPetSettings();
-            var form = Field<PetSettingsForm>(window, "settingsForm");
+            window.ShowCustomize();
+            var form = Field<PetSettingsForm>(window, "customizeForm");
             int index = Array.IndexOf(form.AccessoryIds, "SlimeHat");
             check(index > 0 && form.AccessoryIds.Length == 13 && !form.AccessoryIds.Contains("SlimeKingCrown"), "After the win Settings offer the Slime hat (and not the crown yet)");
             form.Accessory.SelectedIndex = index;

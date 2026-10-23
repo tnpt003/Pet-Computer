@@ -67,7 +67,7 @@ public sealed partial class PetWindow
     public IReadOnlyList<KeepsakeSpec> DisplayableKeepsakes =>
         ShownKeepsakes.OrderBy(k => k.Kind == KeepsakeSpec.Cushion ? 1 : -Array.IndexOf(KeepsakeSpec.Tiers, k.Tier)).ToList();
 
-    // Right click: the owned keepsakes (✓ the one shown), back to the middle, hide.
+    // Right click: the owned keepsakes (✓ the one shown), back to the middle, hide, and Customize at its keepsake card.
     private void InitializeKeepsakeMenu()
     {
         if (keepsakeArt == null) return;
@@ -92,7 +92,9 @@ public sealed partial class PetWindow
             middle.Click += (_, _) => { if (keepsakeHop == KeepsakeHop.None) StartKeepsakeHop(alarm: false); };
             var hide = new MenuItem { Header = L("Ẩn món trưng bày", "Hide the keepsake") };
             hide.Click += (_, _) => { preferences.ShowTrophies = false; StopAdmiring(); SavePreferences(); };
-            menu.Items.Add(middle); menu.Items.Add(hide);
+            var customize = new MenuItem { Header = L("Tùy chỉnh…", "Customize…") };
+            customize.Click += (_, _) => ShowCustomize(keepsakes: true);
+            menu.Items.Add(middle); menu.Items.Add(hide); menu.Items.Add(new Separator()); menu.Items.Add(customize);
         };
     }
 

@@ -420,9 +420,9 @@ internal static class ExpeditionChecks
                   && keepsake.Items.Select(k => k.Id).SequenceEqual(new[] { "cup_silver" }) && Math.Abs(spot.Width - KeepsakeArt.WidthFor(keepsake.Items) * PetWindow.DisplayScale) < 0.5
                   && Math.Abs(spot.Height - KeepsakeArt.ArtHeight * PetWindow.DisplayScale) < 0.5 && Math.Abs(keepsakeWindow!.Width - spot.Width - PetWindow.KeepsakeSide * 2) < 0.5,
                 $"First shown 3/4 across the cat's monitor (away from the edge), standing on its floor: one keepsake, the best (silver cup over the cushion), drawn 1.8× ({spot}, floor {area.Bottom})");
-            // Settings → Pet chooses the one on display.
-            window.ShowPetSettings();
-            var settingsForm = (PetSettingsForm)FieldOf("settingsForm").GetValue(window)!;
+            // Customize chooses the one on display.
+            window.ShowCustomize();
+            var settingsForm = (PetSettingsForm)FieldOf("customizeForm").GetValue(window)!;
             check(settingsForm.TrophyIds.SequenceEqual(new[] { "cup_silver", "slime_cushion" }) && settingsForm.Trophy.IsEnabled && settingsForm.Trophy.SelectedIndex == 0,
                 "Settings offer the owned keepsakes (cups first), the shown one selected");
             settingsForm.Trophy.SelectedIndex = 1;

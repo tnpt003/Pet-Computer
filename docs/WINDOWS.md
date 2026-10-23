@@ -226,7 +226,12 @@ Right-click the cat to access the new optional controls:
   overlap and frequent repetition. Disable to stop playback. Original recording
   provenance remains in `Assets/Sounds/CREDITS.md` in the published folder.
 
-Preferences are stored in `%LOCALAPPDATA%\DesktopPet\preferences.json`. No extra
+Preferences are stored in `%LOCALAPPDATA%\DesktopPet\preferences.json` with a layout
+`Version` (1; files from before it read as 1, and a future layout change migrates older
+files on load). Every data file (preferences, battle records, Adventure and Expedition
+progress) is read and written through `JsonStore` (PetJsonStore.cs): written to `.tmp`
+and swapped in; progress files also keep `.bak`. A missing, broken or `null` file reads
+as defaults (logged) instead of failing. No extra
 packages or sound downloads are required. Treat/toy commands never break a sleep
 lock; the direct right-click wakes the pet first, and commands become available
 after the Waking animation. The existing 10-second sleep and 30-second wake

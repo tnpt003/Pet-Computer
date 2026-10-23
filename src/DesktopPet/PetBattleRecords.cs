@@ -122,29 +122,18 @@ public sealed class BattleRecords
 
     public static BattleRecords Load(string? path = null)
     {
-        path ??= DefaultPath;
-        if (!File.Exists(path)) return new();
-        try
-        {
-            string text = File.ReadAllText(path);
-            var records = JsonSerializer.Deserialize<BattleRecords>(text) ?? new();
-            // A version 1 file has no "Version": its Easy/Normal/Hard are the legacy records.
-            using (var document = JsonDocument.Parse(text))
-                if (!document.RootElement.TryGetProperty("Version", out _)) records.Version = 1;
-            records.ReadOnly = records.Version > CurrentVersion;
-            records.Easy ??= new(); records.Normal ??= new(); records.Hard ??= new();
-            records.Easy.Normalize(); records.Normal.Normalize(); records.Hard.Normalize();
-            records.Loadouts = (records.Loadouts ?? new())
-                .Where(pair => !string.IsNullOrWhiteSpace(pair.Key) && pair.Value != null)
-                .ToDictionary(pair => pair.Key, pair => { pair.Value.Normalize(); return pair.Value; });
-            if (!records.ReadOnly) records.Version = CurrentVersion;
-            return records;
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
-        {
-            Trace.WriteLine($"Battle records could not be read, starting over: {ex.Message}");
-            return new();
-        }
+        // A version 1 file has no "Version": its Easy/Normal/Hard are the legacy records.
+        var records = JsonStore.Read<BattleRecords>(path ?? DefaultPath, "Battle records",
+            (file, root) => { if (!root.TryGetProperty("Version", out _)) file.Version = 1; });
+        if (records == null) return new();
+        records.ReadOnly = records.Version > CurrentVersion;
+        records.Easy ??= new(); records.Normal ??= new(); records.Hard ??= new();
+        records.Easy.Normalize(); records.Normal.Normalize(); records.Hard.Normalize();
+        records.Loadouts = (records.Loadouts ?? new())
+            .Where(pair => !string.IsNullOrWhiteSpace(pair.Key) && pair.Value != null)
+            .ToDictionary(pair => pair.Key, pair => { pair.Value.Normalize(); return pair.Value; });
+        if (!records.ReadOnly) records.Version = CurrentVersion;
+        return records;
     }
 
     public bool Save(string? path = null)
@@ -154,19 +143,6 @@ public sealed class BattleRecords
             Trace.WriteLine("Battle records come from a newer version of the pet; they are not overwritten.");
             return false;
         }
-        path ??= DefaultPath;
-        string temp = path + ".tmp";
-        try
-        {
-            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-            File.WriteAllText(temp, JsonSerializer.Serialize(this));
-            File.Move(temp, path, true);
-            return true;
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            Trace.WriteLine($"Battle records could not be saved: {ex.Message}");
-            return false;
-        }
+        return JsonStore.Write(path ?? DefaultPath, this, "Battle records");
     }
 }

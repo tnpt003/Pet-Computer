@@ -394,41 +394,20 @@ public sealed class ExpeditionProgress
 
     public static ExpeditionProgress Load(string path)
     {
-        if (TryLoad(path, out var progress)) return progress!;
-        if (TryLoad(path + ".bak", out progress))
+        var progress = JsonStore.ReadOrBackup<ExpeditionProgress>(path, "Expedition progress");
+        if (progress == null) return new();
+        progress.ReadOnly = progress.Version > CurrentVersion;
+        if (!progress.ReadOnly) progress.Version = CurrentVersion;
+        progress.Records = (progress.Records ?? new()).Where(pair => !string.IsNullOrWhiteSpace(pair.Key) && pair.Value != null).ToDictionary(pair => pair.Key, pair => pair.Value);
+        progress.Runs = (progress.Runs ?? new()).Where(id => !string.IsNullOrWhiteSpace(id)).Distinct().TakeLast(RunsKept).ToList();
+        progress.Keepsakes = (progress.Keepsakes ?? new()).Where(id => !string.IsNullOrWhiteSpace(id)).Distinct().ToList();
+        if (progress.Active is ExpeditionRun run)
         {
-            Trace.WriteLine("Expedition progress was read from its backup.");
-            return progress!;
+            run.Map ??= new(); run.Path ??= new(); run.Build ??= new(); run.Relics ??= new(); run.Rerolled ??= new();
+            run.Log = (run.Log ?? new()).Where(e => e != null).TakeLast(ExpeditionRun.LogKept).ToList();
+            if (run.Pending != null) { run.Pending.Cards ??= Array.Empty<string>(); run.Pending.Relics ??= Array.Empty<string>(); }
         }
-        return new();
-    }
-
-    private static bool TryLoad(string path, out ExpeditionProgress? progress)
-    {
-        progress = null;
-        if (!File.Exists(path)) return false;
-        try
-        {
-            progress = JsonSerializer.Deserialize<ExpeditionProgress>(File.ReadAllText(path)) ?? throw new JsonException("empty file");
-            progress.ReadOnly = progress.Version > CurrentVersion;
-            if (!progress.ReadOnly) progress.Version = CurrentVersion;
-            progress.Records = (progress.Records ?? new()).Where(pair => !string.IsNullOrWhiteSpace(pair.Key) && pair.Value != null).ToDictionary(pair => pair.Key, pair => pair.Value);
-            progress.Runs = (progress.Runs ?? new()).Where(id => !string.IsNullOrWhiteSpace(id)).Distinct().TakeLast(RunsKept).ToList();
-            progress.Keepsakes = (progress.Keepsakes ?? new()).Where(id => !string.IsNullOrWhiteSpace(id)).Distinct().ToList();
-            if (progress.Active is ExpeditionRun run)
-            {
-                run.Map ??= new(); run.Path ??= new(); run.Build ??= new(); run.Relics ??= new(); run.Rerolled ??= new();
-                run.Log = (run.Log ?? new()).Where(e => e != null).TakeLast(ExpeditionRun.LogKept).ToList();
-                if (run.Pending != null) { run.Pending.Cards ??= Array.Empty<string>(); run.Pending.Relics ??= Array.Empty<string>(); }
-            }
-            return true;
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
-        {
-            Trace.WriteLine($"Expedition progress {path} could not be read: {ex.Message}");
-            progress = null;
-            return false;
-        }
+        return progress;
     }
 
     public bool Save(string path)
@@ -438,20 +417,7 @@ public sealed class ExpeditionProgress
             Trace.WriteLine("Expedition progress comes from a newer version of the pet; it is not overwritten.");
             return false;
         }
-        string temp = path + ".tmp";
-        try
-        {
-            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-            File.WriteAllText(temp, JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true }));
-            if (File.Exists(path)) File.Replace(temp, path, path + ".bak", true);
-            else File.Move(temp, path);
-            return true;
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            Trace.WriteLine($"Expedition progress could not be saved: {ex.Message}");
-            return false;
-        }
+        return JsonStore.Write(path, this, "Expedition progress", indented: true, backup: true);
     }
 }
 

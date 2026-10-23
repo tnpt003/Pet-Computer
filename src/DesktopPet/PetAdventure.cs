@@ -46,33 +46,12 @@ public sealed class AdventureProgress
 
     public static AdventureProgress Load(string path)
     {
-        if (TryLoad(path, out var progress)) return progress!;
-        if (TryLoad(path + ".bak", out progress))
-        {
-            Trace.WriteLine("Adventure progress was read from its backup.");
-            return progress!;
-        }
-        return new();
-    }
-
-    private static bool TryLoad(string path, out AdventureProgress? progress)
-    {
-        progress = null;
-        if (!File.Exists(path)) return false;
-        try
-        {
-            progress = JsonSerializer.Deserialize<AdventureProgress>(File.ReadAllText(path)) ?? throw new JsonException("empty file");
-            progress.ReadOnly = progress.Version > CurrentVersion;
-            if (!progress.ReadOnly) progress.Version = CurrentVersion; // An older file is saved back in this layout.
-            progress.Normalize();
-            return true;
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
-        {
-            Trace.WriteLine($"Adventure progress {path} could not be read: {ex.Message}");
-            progress = null;
-            return false;
-        }
+        var progress = JsonStore.ReadOrBackup<AdventureProgress>(path, "Adventure progress");
+        if (progress == null) return new();
+        progress.ReadOnly = progress.Version > CurrentVersion;
+        if (!progress.ReadOnly) progress.Version = CurrentVersion; // An older file is saved back in this layout.
+        progress.Normalize();
+        return progress;
     }
 
     private void Normalize()
@@ -94,20 +73,7 @@ public sealed class AdventureProgress
             Trace.WriteLine("Adventure progress comes from a newer version of the pet; it is not overwritten.");
             return false;
         }
-        string temp = path + ".tmp";
-        try
-        {
-            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-            File.WriteAllText(temp, JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true }));
-            if (File.Exists(path)) File.Replace(temp, path, path + ".bak", true);
-            else File.Move(temp, path);
-            return true;
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            Trace.WriteLine($"Adventure progress could not be saved: {ex.Message}");
-            return false;
-        }
+        return JsonStore.Write(path, this, "Adventure progress", indented: true, backup: true);
     }
 }
 

@@ -9,6 +9,10 @@ namespace DesktopPet;
 
 public sealed class PetPreferences
 {
+    // The layout this file was written in. Files without it are layout 1. A future layout change
+    // raises CurrentVersion and migrates older files in Load; Save always writes CurrentVersion.
+    public const int CurrentVersion = 1;
+    public int Version { get; set; } = CurrentVersion;
     public string Name { get; set; } = "Mochi";
     public string Personality { get; set; } = PetPersonality.Balanced;
     public PersonalityTuning? Tuning { get; set; }
@@ -82,44 +86,29 @@ public sealed class PetPreferences
     private static string FilePath => Path.Combine(DataDirectory, "preferences.json");
     public static PetPreferences Load(string? path = null)
     {
-        try
-        {
-            var p = JsonSerializer.Deserialize<PetPreferences>(File.ReadAllText(path ?? FilePath)) ?? new();
-            p.Name = string.IsNullOrWhiteSpace(p.Name) ? "Mochi" : p.Name.Trim()[..Math.Min(p.Name.Trim().Length, 24)];
-            p.Personality = PetPersonality.Normalize(p.Personality);
-            p.Tuning = p.Tuning?.Normalized();
-            p.Volume = double.IsFinite(p.Volume) ? Math.Clamp(p.Volume, 0, 1) : 0.7;
-            if (p.Language is not ("vi" or "en")) p.Language = "en";
-            p.Chattiness = Math.Clamp(p.Chattiness, 0, 2);
-            p.Coat = NormalizeCoat(p.Coat);
-            p.Accessory = NormalizeAccessory(p.Accessory);
-            p.Birthday = NormalizeBirthday(p.Birthday);
-            p.BattleDifficulty = NormalizeDifficulty(p.BattleDifficulty);
-            if (Array.IndexOf(BreakChoices, p.BreakMinutes) < 0) p.BreakMinutes = 45;
-            if (p.LearningReset == null || p.LearningReset.Length > 64) p.LearningReset = "";
-            p.PositionX = double.IsFinite(p.PositionX) ? Math.Clamp(p.PositionX, 0, 1) : 0.5;
-            p.PositionY = double.IsFinite(p.PositionY) ? Math.Clamp(p.PositionY, 0, 1) : 1;
-            p.RestFractionX = double.IsFinite(p.RestFractionX) ? Math.Clamp(p.RestFractionX, 0, 1) : 0.5;
-            p.BattleHudSpots = p.BattleHudSpots?.Where(s => !string.IsNullOrWhiteSpace(s.Key) && s.Value is { Length: 2 } && s.Value.All(double.IsFinite)).Take(16)
-                .ToDictionary(s => s.Key, s => s.Value.Select(v => Math.Clamp(v, 0, 1)).ToArray());
-            if (p.BattleHudSpots is { Count: 0 }) p.BattleHudSpots = null;
-            if (p.TrophyFractionX is double tx) p.TrophyFractionX = double.IsFinite(tx) ? Math.Clamp(tx, 0, 1) : null;
-            if (!p.RestX.HasValue || !p.RestY.HasValue || !double.IsFinite(p.RestX.Value) || !double.IsFinite(p.RestY.Value)) p.RestX = p.RestY = null;
-            return p;
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException) { return new(); }
+        var p = JsonStore.Read<PetPreferences>(path ?? FilePath, "Preferences") ?? new();
+        p.Version = CurrentVersion;
+        p.Name = string.IsNullOrWhiteSpace(p.Name) ? "Mochi" : p.Name.Trim()[..Math.Min(p.Name.Trim().Length, 24)];
+        p.Personality = PetPersonality.Normalize(p.Personality);
+        p.Tuning = p.Tuning?.Normalized();
+        p.Volume = double.IsFinite(p.Volume) ? Math.Clamp(p.Volume, 0, 1) : 0.7;
+        if (p.Language is not ("vi" or "en")) p.Language = "en";
+        p.Chattiness = Math.Clamp(p.Chattiness, 0, 2);
+        p.Coat = NormalizeCoat(p.Coat);
+        p.Accessory = NormalizeAccessory(p.Accessory);
+        p.Birthday = NormalizeBirthday(p.Birthday);
+        p.BattleDifficulty = NormalizeDifficulty(p.BattleDifficulty);
+        if (Array.IndexOf(BreakChoices, p.BreakMinutes) < 0) p.BreakMinutes = 45;
+        if (p.LearningReset == null || p.LearningReset.Length > 64) p.LearningReset = "";
+        p.PositionX = double.IsFinite(p.PositionX) ? Math.Clamp(p.PositionX, 0, 1) : 0.5;
+        p.PositionY = double.IsFinite(p.PositionY) ? Math.Clamp(p.PositionY, 0, 1) : 1;
+        p.RestFractionX = double.IsFinite(p.RestFractionX) ? Math.Clamp(p.RestFractionX, 0, 1) : 0.5;
+        p.BattleHudSpots = p.BattleHudSpots?.Where(s => !string.IsNullOrWhiteSpace(s.Key) && s.Value is { Length: 2 } && s.Value.All(double.IsFinite)).Take(16)
+            .ToDictionary(s => s.Key, s => s.Value.Select(v => Math.Clamp(v, 0, 1)).ToArray());
+        if (p.BattleHudSpots is { Count: 0 }) p.BattleHudSpots = null;
+        if (p.TrophyFractionX is double tx) p.TrophyFractionX = double.IsFinite(tx) ? Math.Clamp(tx, 0, 1) : null;
+        if (!p.RestX.HasValue || !p.RestY.HasValue || !double.IsFinite(p.RestX.Value) || !double.IsFinite(p.RestY.Value)) p.RestX = p.RestY = null;
+        return p;
     }
-    public bool Save(string? path = null)
-    {
-        path ??= FilePath;
-        string temp = path + ".tmp";
-        try
-        {
-            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-            File.WriteAllText(temp, JsonSerializer.Serialize(this));
-            File.Move(temp, path, true);
-            return true;
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return false; }
-    }
+    public bool Save(string? path = null) => JsonStore.Write(path ?? FilePath, this, "Preferences");
 }

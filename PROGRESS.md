@@ -9,6 +9,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - **Sửa:** `AppArt.DrawTabRing(front)` vẽ một nửa vòng (dùng chung). Dải trận vẽ nửa sau; renderer mèo vẽ nửa trước sau con mèo (`pet.BattleTabs`/`BattleTabRing`, gán mỗi frame trong TickBattle, 0 khi kết thúc trận). Mèo bị nhấc (`battle.CatLifted`) hoặc đang bay: dải trận vẽ cả vòng như cũ. Bán kính vẽ `TabRingRadius` = min(tabRadius × 0,85, 74) để nửa trước không bị cắt ở mép cửa sổ mèo (192 DIPs); bán kính sát thương không đổi.
 - Tab nửa trước nằm trên cửa sổ mèo nên bấm trúng tab = bấm mèo (giống bong bóng Khiên).
 - Test thật: build Release OK; scripts/test.ps1 -Ui: C# 1458, WPF 804/804, Python OK. Chưa xem trên màn hình thật.
+- Commit f6a35e7; publish 1.4.1+f6a35e7 (sạch, AGENTS.md của người dùng cất rồi trả nguyên byte), check-publish 3/3, mèo đóng bằng WM_CLOSE và mở lại bản artifacts\win-x64 (log "Desktop Pet 1.4.1 (f6a35e7) started"). ZIP artifacts\DesktopPet-1.4.1-f6a35e7-win-x64.zip.
 - Test tay: trong trận Phiêu lưu bật Tab Lốc Xoáy: tab đi qua trước chân/thân mèo, nửa sau mờ sau mèo, vòng liền (không lệch giữa hai nửa); nhấc/ném mèo giữa lúc lốc xoáy: vòng ở lại sàn, không vẽ đôi; Pause đóng băng cả hai nửa; hết lốc xoáy mờ dần cả hai nửa.
 
 ## Sửa lỗi âm lượng, tab lốc xoáy, đổi kỷ vật, pause trận; gọi mèo về có hoạt ảnh; Viễn chinh giữ chuyến (2026-10-23)

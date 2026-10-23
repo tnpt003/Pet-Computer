@@ -1,3 +1,4 @@
+using System.Reflection;
 using DesktopPet;
 
 var settings = new PetSettings();
@@ -56,54 +57,19 @@ velocity = tracker.Velocity(2200);
 Check(Math.Abs(Math.Sqrt(velocity.X * velocity.X + velocity.Y * velocity.Y) - 2200) < 0.01,
     "Extreme throws are capped by total speed");
 Console.WriteLine($"Physics checks done ({checks} passed so far).");
-await AiTests.Run(Check);
-SleepTests.Run(Check);
-PickupTests.Run(Check);
-EmotionTests.Run(Check);
-EmotionPriorityTests.Run(Check);
-PolishTests.Run(Check);
-InteractionPolishTests.Run(Check);
-FeatureExpansionTests.Run(Check);
-MotionTests.Run(Check);
-ToolingTests.Run(Check);
-NeedsTests.Run(Check);
-SpeechTests.Run(Check);
-ContextTests.Run(Check);
-GestureTests.Run(Check);
-ManualControlTests.Run(Check);
-LaserTests.Run(Check);
-LedgeTests.Run(Check);
-CombinationTests.Run(Check);
-BattleTests.Run(Check);
-BattleSkillTests.Run(Check);
-BattleRulesTests.Run(Check);
-BattleStunTests.Run(Check);
-BuildSynergyTests.Run(Check);
-BattleRoleTests.Run(Check);
-EnemyDirectorTests.Run(Check);
-EnemyTacticsTests.Run(Check);
-EnemyGachaTests.Run(Check);
-EliteBuffTests.Run(Check);
-BossLeapTests.Run(Check);
-TacticsTests.Run(Check);
-RescueTests.Run(Check);
-BattleWeaponTests.Run(Check);
-BattleDataTests.Run(Check);
-BattleCustomDataTests.Run(Check);
-AdventureTests.Run(Check);
-AdventureUpgradeTests.Run(Check);
-AdventureContentTests.Run(Check);
-AdventureBalanceTests.Run(Check);
-ExpeditionTests.Run(Check);
-ExpeditionChoiceTests.Run(Check);
-ExpeditionKeepsakeTests.Run(Check);
-ExpeditionReleaseTests.Run(Check);
-ExpeditionGachaTests.Run(Check);
-EndlessTests.Run(Check);
-AppTests.Run(Check);
-InventoryStatTests.Run(Check);
-KeepsakeMotionTests.Run(Check);
-SleepCushionTests.Run(Check);
+// Every class with a public static Run(Action<bool, string> check, optional...) is a test
+// suite. Found by reflection (by name) so a new suite cannot be left out of this list.
+int suites = 0;
+foreach (var run in typeof(Program).Assembly.GetTypes().OrderBy(type => type.Name, StringComparer.Ordinal)
+    .SelectMany(type => type.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly))
+    .Where(method => method.Name == "Run" && method.GetParameters() is { Length: > 0 } parameters
+        && parameters[0].ParameterType == typeof(Action<bool, string>) && parameters.Skip(1).All(p => p.IsOptional)))
+{
+    object?[] arguments = run.GetParameters().Select((p, i) => i == 0 ? (object?)(Action<bool, string>)Check : Type.Missing).ToArray();
+    if (run.Invoke(null, arguments) is Task task) await task;
+    suites++;
+}
+Console.WriteLine($"Ran {suites} test suites.");
 var activity = new PetActivity();
 activity.Step(PetAction.Walking, 2);
 activity.Step(PetAction.Jumping, 1);

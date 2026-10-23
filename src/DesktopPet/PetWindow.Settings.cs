@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using System.Linq;
 using System.Windows.Data;
 using System.Windows.Media;
+using DesktopPet.AI;
 
 namespace DesktopPet;
 
@@ -53,7 +54,7 @@ public sealed partial class PetWindow
         var form = new PetSettingsForm();
 
         // Pet: who the cat is and how it looks. Stored values stay English ("Balanced", "Orange"...).
-        string[] personalities = { "Balanced", "Playful", "Curious", "Calm" };
+        string[] personalities = PetPersonality.All;
         form.Name = new TextBox { Text = preferences.Name, MaxLength = 24 };
         form.Personality = new ComboBox { ItemsSource = new[] { L("Cân bằng", "Balanced"), L("Ham chơi", "Playful"), L("Tò mò", "Curious"), L("Điềm tĩnh", "Calm") },
             SelectedIndex = Math.Max(0, Array.IndexOf(personalities, preferences.Personality)) };

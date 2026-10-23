@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
+using DesktopPet.AI;
 using Forms = System.Windows.Forms;
 
 namespace DesktopPet;
@@ -543,7 +544,7 @@ public sealed partial class PetWindow
         if (keepsakeShove == KeepsakeShove.None && shoveVisit <= 0)
         {
             double every = 180 + featureRandom.NextDouble() * 180;
-            shoveVisit = every * (preferences.Personality switch { "Playful" => 0.6, "Calm" => 1.6, _ => 1 });
+            shoveVisit = every * (preferences.Personality switch { PetPersonality.Playful => 0.6, PetPersonality.Calm => 1.6, _ => 1 });
             if (!returningHome && climbPlan == null && ledgeExit == 0 && pet.Action is PetAction.Idle or PetAction.Sitting) ShoveKeepsake();
         }
         if (keepsakeShove == KeepsakeShove.None) return false;

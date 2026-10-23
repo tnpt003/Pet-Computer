@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
+using DesktopPet.AI;
 
 namespace DesktopPet;
 
@@ -94,7 +95,7 @@ public sealed partial class PetWindow
         }
         ledgeIdea -= dt;
         if (ledgeIdea > 0 || pet.Action is not (PetAction.Idle or PetAction.Walking or PetAction.Sitting or PetAction.Looking)) return;
-        double pace = preferences.Personality == "Playful" ? 0.6 : preferences.Personality == "Calm" ? 1.6 : 1;
+        double pace = preferences.Personality == PetPersonality.Playful ? 0.6 : preferences.Personality == PetPersonality.Calm ? 1.6 : 1;
         ledgeIdea = (30 + featureRandom.NextDouble() * 30) * pace;
         if (OnLedge && ledgeStay >= ledgeLeaveAfter)
         {

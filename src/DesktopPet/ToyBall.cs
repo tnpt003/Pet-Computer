@@ -1,4 +1,5 @@
 using System;
+using DesktopPet.AI;
 
 namespace DesktopPet;
 
@@ -48,9 +49,9 @@ public sealed class ToyPlaySequence
     {
         if (!double.IsFinite(dt) || dt <= 0) return false;
         Elapsed += dt;
-        double observe = personality == "Curious" ? 1.4 : personality == "Playful" ? 0.4 : 0.8;
-        double prepare = personality == "Playful" ? 0.35 : 0.55;
-        double recover = personality == "Calm" ? 1.8 : personality == "Playful" ? 0.7 : 1.1;
+        double observe = personality == PetPersonality.Curious ? 1.4 : personality == PetPersonality.Playful ? 0.4 : 0.8;
+        double prepare = personality == PetPersonality.Playful ? 0.35 : 0.55;
+        double recover = personality == PetPersonality.Calm ? 1.8 : personality == PetPersonality.Playful ? 0.7 : 1.1;
         var next = Phase;
         bool bat = false;
         if (Phase == ToyPlayPhase.Observe && Elapsed >= observe) next = ToyPlayPhase.Crouch;
@@ -83,9 +84,9 @@ public sealed class LaserChase
         if (!double.IsFinite(dt) || dt <= 0 || Phase == LaserPhase.Pounce) return false;
         Elapsed += dt;
         still = double.IsFinite(dotSpeed) && dotSpeed < StillSpeed ? still + dt : 0;
-        double observe = personality == "Curious" ? 1.2 : personality == "Playful" ? 0.3 : 0.6;
-        double prepare = personality == "Playful" ? 0.35 : 0.55;
-        double recover = personality == "Calm" ? 1.6 : personality == "Playful" ? 0.6 : 1.0;
+        double observe = personality == PetPersonality.Curious ? 1.2 : personality == PetPersonality.Playful ? 0.3 : 0.6;
+        double prepare = personality == PetPersonality.Playful ? 0.35 : 0.55;
+        double recover = personality == PetPersonality.Calm ? 1.6 : personality == PetPersonality.Playful ? 0.6 : 1.0;
         var next = Phase;
         bool pounce = false;
         if (!reachable) next = LaserPhase.Watch;

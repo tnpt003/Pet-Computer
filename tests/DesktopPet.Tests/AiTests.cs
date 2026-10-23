@@ -78,6 +78,12 @@ internal static class AiTests
             Console.WriteLine("SKIP: Python integration tests. Set PET_TEST_PYTHON to a real python.exe to enable.");
             return;
         }
+        // Names both sides must agree on (AiNames.cs ↔ ai/service.py; BUSY_STATES: ToolingTests).
+        var names = PythonNames(python, root);
+        static bool Same(IEnumerable<string> a, IEnumerable<string> b) => a.Order().SequenceEqual(b.Order());
+        check(names != null && Same(names["commands"], AiCommand.All), "C# and Python know the same AI commands");
+        check(names != null && Same(names["moods"], AiMood.All), "C# and Python know the same moods");
+        check(names != null && Same(names["personalities"], PetPersonality.All), "C# and Python know the same personalities");
         string temporary = Path.Combine(root, ".tools", "ai-tests", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(temporary);
         var source = new PythonDecisionSource(script, python, Path.Combine(temporary, "memory.json"),
@@ -122,4 +128,18 @@ internal static class AiTests
     }
 
     private static PetObservation Observation() => new("Idle", true, 10, 0, "started", "LOCAL");
+
+    // Python's shared name lists, read by importing ai/service.py; null if that fails.
+    private static Dictionary<string, string[]>? PythonNames(string python, string root)
+    {
+        const string code = "import json, sys; sys.path.insert(0, sys.argv[1]); import service as s; "
+            + "print(json.dumps({'commands': sorted(s.COMMANDS), 'moods': list(s.MOODS), 'personalities': list(s.PERSONALITIES)}))";
+        var start = new ProcessStartInfo(python) { RedirectStandardOutput = true, UseShellExecute = false };
+        foreach (string arg in new[] { "-I", "-c", code, Path.Combine(root, "ai") }) start.ArgumentList.Add(arg);
+        using var process = Process.Start(start);
+        if (process == null) return null;
+        string output = process.StandardOutput.ReadToEnd();
+        process.WaitForExit();
+        return process.ExitCode == 0 ? JsonSerializer.Deserialize<Dictionary<string, string[]>>(output) : null;
+    }
 }

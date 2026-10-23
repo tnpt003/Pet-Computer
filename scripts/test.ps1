@@ -1,8 +1,6 @@
 param([switch]$Ui)
 $ErrorActionPreference = 'Stop'
-$projectRoot = Split-Path $PSScriptRoot -Parent
-$localDotnet = Join-Path $projectRoot '.tools\dotnet\dotnet.exe'
-$dotnet = if (Test-Path $localDotnet) { $localDotnet } else { 'dotnet' }
+. (Join-Path $PSScriptRoot 'common.ps1')
 $env:DOTNET_CLI_HOME = Join-Path $projectRoot '.tools\cli'
 $localPython = Join-Path $projectRoot '.tools\python\python.exe'
 $python = if ($env:PET_PYTHON) { $env:PET_PYTHON } elseif (Test-Path $localPython) { $localPython } else { $null }

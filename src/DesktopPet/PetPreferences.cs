@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using DesktopPet.AI;
 
 namespace DesktopPet;
 
 public sealed class PetPreferences
 {
     public string Name { get; set; } = "Mochi";
-    public string Personality { get; set; } = "Balanced";
+    public string Personality { get; set; } = PetPersonality.Balanced;
     public PersonalityTuning? Tuning { get; set; }
     public bool Quiet { get; set; }
     public bool Sounds { get; set; }
@@ -85,7 +86,7 @@ public sealed class PetPreferences
         {
             var p = JsonSerializer.Deserialize<PetPreferences>(File.ReadAllText(path ?? FilePath)) ?? new();
             p.Name = string.IsNullOrWhiteSpace(p.Name) ? "Mochi" : p.Name.Trim()[..Math.Min(p.Name.Trim().Length, 24)];
-            if (p.Personality is not ("Balanced" or "Playful" or "Curious" or "Calm")) p.Personality = "Balanced";
+            p.Personality = PetPersonality.Normalize(p.Personality);
             p.Tuning = p.Tuning?.Normalized();
             p.Volume = double.IsFinite(p.Volume) ? Math.Clamp(p.Volume, 0, 1) : 0.7;
             if (p.Language is not ("vi" or "en")) p.Language = "en";

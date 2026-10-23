@@ -1,7 +1,5 @@
 $ErrorActionPreference = 'Stop'
-$projectRoot = Split-Path $PSScriptRoot -Parent
-$localDotnet = Join-Path $projectRoot '.tools\dotnet\dotnet.exe'
-$dotnet = if (Test-Path $localDotnet) { $localDotnet } else { 'dotnet' }
+. (Join-Path $PSScriptRoot 'common.ps1')
 $env:DOTNET_CLI_HOME = Join-Path $projectRoot '.tools\cli'
 $pythonRoot = Join-Path $projectRoot '.tools\python'
 $python = Join-Path $pythonRoot 'python.exe'

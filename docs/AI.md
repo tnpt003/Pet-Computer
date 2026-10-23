@@ -80,6 +80,7 @@ This keeps the cat responsive while Python starts, hangs, crashes, or is absent.
 | `ai/personality.json` | Playfulness, curiosity, sleepiness, attention interval |
 | `ai/calendar.json`, `ai/seasons.py` | Day rhythm by hour and special days (holidays, the user's birthday, anniversary) |
 | `src/DesktopPet/AI/AiProtocol.cs` | Transport interface, observation/decision records, response validation |
+| `src/DesktopPet/AI/AiNames.cs` | Command, mood and personality names shared with `ai/service.py` (`COMMANDS`, `MOODS`, `PERSONALITIES`) |
 | `src/DesktopPet/AI/PythonDecisionSource.cs` | Python discovery, process ownership, async IPC, timeout/restart |
 | `src/DesktopPet/AI/DecisionGuard.cs` | Reject stale replies and preserve input/physics priority |
 | `src/DesktopPet/PetBehavior.cs` | Execute high-level commands using existing actions and movement settings |
@@ -194,7 +195,9 @@ commands are weighted ×0.6, IDLE/SIT ×1.2 and SLEEP ×1.8; in the morning
 activity is never forbidden, and C# still owns sleep length, the sleep lock and
 the wake cooldown. A missing or invalid value leaves the weights unchanged.
 Python's `BUSY_STATES` must match `PetActionRules.RejectsDecisions` in C#; a C#
-check fails if the two lists drift apart.
+check fails if the two lists drift apart. The same holds for commands, moods and
+personalities (`AiNames.cs`): with Python available, `AiTests` imports `ai/service.py` and
+compares the lists, so a new command or personality must be added on both sides.
 
 These are periodic snapshots with an event summary, not a lossless event queue.
 Interactions occurring between requests are reflected in the counter. The idle
@@ -292,6 +295,8 @@ Run `scripts/test.ps1` for the original physics checks, command/priority checks,
 Python unit tests, and subprocess integration tests. Without Python it reports
 the skipped integration tests. `PET_TEST_PYTHON` selects an interpreter when
 running the C# test project directly.
+The C# test project finds its suites by reflection: any class with a public static
+`Run(Action<bool, string> check, ...)` (other parameters optional) runs, in name order.
 
 To also run the automated WPF checks on an interactive Windows desktop:
 

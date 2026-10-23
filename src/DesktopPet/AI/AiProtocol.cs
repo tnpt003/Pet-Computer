@@ -8,7 +8,7 @@ namespace DesktopPet.AI;
 public sealed record PetObservation(
     string State, bool Grounded, double SecondsSinceInteraction,
     long InteractionCount, string LastEvent, string LastAppliedCommand, string Emotion = "Neutral",
-    PetActivity? Activity = null, string Personality = "Balanced", string SessionId = "", PersonalityTuning? Tuning = null,
+    PetActivity? Activity = null, string Personality = PetPersonality.Balanced, string SessionId = "", PersonalityTuning? Tuning = null,
     double? LocalHour = null, PetInteractions? Interactions = null,
     bool SpeechEnabled = false, string Language = "vi", int Chattiness = 1, string PetName = "", bool Quiet = false,
     SpeechReport? LastSpeech = null, string LearningReset = "",
@@ -51,9 +51,7 @@ public static class AiProtocol
     public const int MaxMessageLength = 8192;
     public static readonly JsonSerializerOptions Json = new() { PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower };
 
-    public static bool IsCommand(string? command) => command is
-        "LOOK" or "IDLE" or "WALK_LEFT" or "WALK_RIGHT" or "SIT" or "JUMP" or "SLEEP" or "FOLLOW_MOUSE" or "SEEK_ATTENTION" or
-        "ROLL_OVER" or "CHASE_TAIL" or "SCRATCH";
+    public static bool IsCommand(string? command) => AiCommand.IsValid(command);
 
     public static AiDecision Parse(string line, long requestId)
     {
@@ -67,7 +65,7 @@ public static class AiProtocol
         double duration = root.GetProperty("duration_seconds").GetDouble();
         var mood = root.GetProperty("mood").GetString();
         if (!IsCommand(command) || !double.IsFinite(duration) || duration < 0.5 || duration > 12 ||
-            mood is not ("content" or "playful" or "bored" or "sleepy"))
+            !AiMood.IsValid(mood))
             throw new JsonException("Invalid command, duration, or mood.");
         string? emotion = root.TryGetProperty("emotion", out var hint) ? hint.GetString() : null;
         if (emotion is not (null or "neutral" or "sad" or "sleepy")) throw new JsonException("Invalid long-term emotion hint.");

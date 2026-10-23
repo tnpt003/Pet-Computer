@@ -5,9 +5,7 @@
 # unless you mean to publish a release.
 param([switch]$Upload)
 $ErrorActionPreference = 'Stop'
-$projectRoot = Split-Path $PSScriptRoot -Parent
-$localDotnet = Join-Path $projectRoot '.tools\dotnet\dotnet.exe'
-$dotnet = if (Test-Path $localDotnet) { $localDotnet } else { 'dotnet' }
+. (Join-Path $PSScriptRoot 'common.ps1')
 if (Test-Path (Join-Path $projectRoot '.tools')) { $env:DOTNET_CLI_HOME = Join-Path $projectRoot '.tools\cli' }
 # vpk targets an older .NET; let it run on the SDK's newer runtime.
 $env:DOTNET_ROLL_FORWARD = 'Major'

@@ -26,6 +26,9 @@ VERSION = 1
 MAX_MESSAGE = 8192
 COMMANDS = {"LOOK", "IDLE", "WALK_LEFT", "WALK_RIGHT", "SIT", "JUMP", "SLEEP", "FOLLOW_MOUSE", "SEEK_ATTENTION",
             "ROLL_OVER", "CHASE_TAIL", "SCRATCH"}
+# Shared with C# (src/DesktopPet/AI/AiNames.cs); the C# tests compare both sides.
+MOODS = ("content", "playful", "bored", "sleepy")
+PERSONALITIES = ("Balanced", "Playful", "Curious", "Calm")
 # C# actions that own their duration; mirrors PetActionRules.RejectsDecisions.
 # Learned actions and situations, named in the UI language (vi or en).
 LEARNED_NAMES = {
@@ -119,7 +122,7 @@ class Brain:
             "last_command": memory.get("last_command") if isinstance(memory.get("last_command"), str)
                             and memory.get("last_command") in COMMANDS else "IDLE",
             "mood": memory.get("mood") if isinstance(memory.get("mood"), str)
-                    and memory.get("mood") in {"content", "playful", "bored", "sleepy"} else "content",
+                    and memory.get("mood") in MOODS else "content",
         }
         # Counts from C# are per app session; the first snapshot establishes a baseline.
         self.last_interaction_count = None

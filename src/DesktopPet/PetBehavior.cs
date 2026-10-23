@@ -9,7 +9,7 @@ public sealed class PetBehavior(PetSettings settings, Random? randomSource = nul
     private double remaining = 2;
     private bool followingMouse;
     private double attentionCooldown, selfCareCooldown = 25;
-    public string Personality { get; set; } = "Balanced";
+    public string Personality { get; set; } = PetPersonality.Balanced;
     private PetAction? lastLocalAction;
     // The action the user asked for from the menu; it runs its full length even in Quiet mode.
     private PetAction? manualAction;
@@ -34,14 +34,14 @@ public sealed class PetBehavior(PetSettings settings, Random? randomSource = nul
             double weight = choices[i] switch
             {
                 PetAction.Walking => 3,
-                PetAction.ChasingTail => Personality == "Playful" ? 1.1 : Personality == "Calm" ? 0.2 : 0.6,
+                PetAction.ChasingTail => Personality == PetPersonality.Playful ? 1.1 : Personality == PetPersonality.Calm ? 0.2 : 0.6,
                 PetAction.Scratching => 0.5,
                 PetAction.Sneezing => 0.2,
                 _ => 1
             };
-            if (Personality == "Calm" && choices[i] is PetAction.Walking or PetAction.Jumping) weight *= 0.4;
-            if (Personality == "Curious" && choices[i] == PetAction.Looking) weight *= 2;
-            if (Personality == "Playful" && choices[i] == PetAction.Jumping) weight *= 1.8;
+            if (Personality == PetPersonality.Calm && choices[i] is PetAction.Walking or PetAction.Jumping) weight *= 0.4;
+            if (Personality == PetPersonality.Curious && choices[i] == PetAction.Looking) weight *= 2;
+            if (Personality == PetPersonality.Playful && choices[i] == PetAction.Jumping) weight *= 1.8;
             foreach (var previous in recentLocal) if (previous == choices[i]) weight *= 0.4;
             total += weights[i] = weight;
         }
@@ -212,7 +212,7 @@ public sealed class PetBehavior(PetSettings settings, Random? randomSource = nul
         if (pet.Action is PetAction.Grooming or PetAction.Stretching)
         { remaining = pet.Action == PetAction.Grooming ? PetSettings.GroomingDuration : PetSettings.StretchingDuration; selfCareCooldown = PetSettings.SelfCareCooldown; }
         if (PetActionRules.IsGesture(pet.Action)) { remaining = PetSettings.GestureDuration(pet.Action); selfCareCooldown = PetSettings.SelfCareCooldown; }
-        if (pet.Action == PetAction.Looking && Personality == "Curious") remaining = 5 + random.NextDouble() * 2;
+        if (pet.Action == PetAction.Looking && Personality == PetPersonality.Curious) remaining = 5 + random.NextDouble() * 2;
         if (pet.Action == PetAction.Walking) pet.VX = settings.WalkSpeed * pet.Facing * pet.Emotions.WalkScale;
         if (pet.Action == PetAction.Jumping)
         {
@@ -229,37 +229,37 @@ public sealed class PetBehavior(PetSettings settings, Random? randomSource = nul
 
     public bool TryApply(PetModel pet, AiDecision decision)
     {
-        if (decision.Command == "SEEK_ATTENTION" && attentionCooldown > 0) return false;
+        if (decision.Command == AiCommand.SeekAttention && attentionCooldown > 0) return false;
         if (Quiet) return false; // Quiet (or a fullscreen app): no AI-driven action of any kind.
-        if (decision.Command == "SLEEP" && pet.Emotions.WakeCooldownRemaining > 0) return false;
+        if (decision.Command == AiCommand.Sleep && pet.Emotions.WakeCooldownRemaining > 0) return false;
         if (!pet.Grounded || pet.Emotions.BlocksAutonomy || PetActionRules.RejectsDecisions(pet.Action) ||
             !AiProtocol.IsCommand(decision.Command) || !double.IsFinite(decision.DurationSeconds) ||
             decision.DurationSeconds < 0.5 || decision.DurationSeconds > 12) return false;
-        followingMouse = decision.Command == "FOLLOW_MOUSE";
+        followingMouse = decision.Command == AiCommand.FollowMouse;
         manualAction = null;
         leap = null;
-        remaining = decision.Command == "SEEK_ATTENTION" ? PetSettings.AttentionGestureDuration : decision.DurationSeconds;
-        if (decision.Command == "SEEK_ATTENTION") attentionCooldown = PetSettings.AttentionCooldown;
+        remaining = decision.Command == AiCommand.SeekAttention ? PetSettings.AttentionGestureDuration : decision.DurationSeconds;
+        if (decision.Command == AiCommand.SeekAttention) attentionCooldown = PetSettings.AttentionCooldown;
         LastAppliedCommand = decision.Command;
         pet.VX = pet.VY = 0;
         pet.Action = decision.Command switch
         {
-            "WALK_LEFT" or "WALK_RIGHT" or "FOLLOW_MOUSE" => PetAction.Walking,
-            "LOOK" => PetAction.Looking,
-            "SIT" => PetAction.Sitting,
-            "SLEEP" => PetAction.Sleeping,
-            "JUMP" => PetAction.Jumping,
-            "SEEK_ATTENTION" => PetAction.SeekingAttention,
-            "ROLL_OVER" => PetAction.RollingOver,
-            "CHASE_TAIL" => PetAction.ChasingTail,
-            "SCRATCH" => PetAction.Scratching,
+            AiCommand.WalkLeft or AiCommand.WalkRight or AiCommand.FollowMouse => PetAction.Walking,
+            AiCommand.Look => PetAction.Looking,
+            AiCommand.Sit => PetAction.Sitting,
+            AiCommand.Sleep => PetAction.Sleeping,
+            AiCommand.Jump => PetAction.Jumping,
+            AiCommand.SeekAttention => PetAction.SeekingAttention,
+            AiCommand.RollOver => PetAction.RollingOver,
+            AiCommand.ChaseTail => PetAction.ChasingTail,
+            AiCommand.Scratch => PetAction.Scratching,
             _ => PetAction.Idle
         };
         // Gestures own a fixed C# duration; Python's duration only paces ordinary actions.
         if (PetActionRules.IsGesture(pet.Action)) remaining = PetSettings.GestureDuration(pet.Action);
-        if (decision.Command is "WALK_LEFT" or "WALK_RIGHT")
+        if (decision.Command is AiCommand.WalkLeft or AiCommand.WalkRight)
         {
-            pet.Facing = decision.Command == "WALK_LEFT" ? -1 : 1;
+            pet.Facing = decision.Command == AiCommand.WalkLeft ? -1 : 1;
             pet.VX = pet.Facing * settings.WalkSpeed * pet.Emotions.WalkScale;
         }
         if (pet.Action == PetAction.Jumping)

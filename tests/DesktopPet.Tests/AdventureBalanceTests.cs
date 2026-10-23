@@ -102,7 +102,7 @@ internal static class AdventureBalanceTests
             return !known.Missed && s.StateTime >= CasualReaction;
         }
 
-        public bool NoticesApp(BattleApp app) => player != Player.Casual || app.Age >= CasualReaction;
+        public bool NoticesAge(double age) => player != Player.Casual || age >= CasualReaction;
     }
 
     // Plain rules a careful user could follow without lifting the cat (windups and heals only once
@@ -129,12 +129,14 @@ internal static class AdventureBalanceTests
         var centre = crowd.FirstOrDefault(s => crowd.Count(o => Math.Abs(o.X - s.X) <= data.BombRadius) >= 2 || s.IsBoss);
         if (centre != null) sim.Use(BattleSkill.Bomb, centre.Id, cat);
         if (crowd.Count > 0) sim.Use(BattleSkill.Cheer, cat);
-        // Desktop apps: an ad is closed once noticed (the casual player after its reaction time);
-        // a helper is clicked at once, Undo only after a real loss.
-        foreach (var app in sim.Apps.ToList())
+        // Desktop apps: an ad is closed and an infected icon scrubbed once noticed (the casual player
+        // after its reaction time; one click a frame); a charged icon is clicked at once, Undo only
+        // after a real loss.
+        foreach (var popup in sim.Popups.ToList()) if (reflex.NoticesAge(popup.Age)) sim.ClosePopup(popup.Id);
+        foreach (var app in sim.Desktop)
         {
-            if (app.Hostile) { if (reflex.NoticesApp(app)) sim.UseApp(app.Id, cat); continue; }
-            if (app.Kind == BattleAppKind.Undo && sim.CatHp > sim.CatMaxHp * 0.8) continue;
+            if (app.Infected) { if (reflex.NoticesAge(sim.Time - app.InfectedAt)) sim.UseApp(app.Id, cat); continue; }
+            if (!app.Ready || app.Kind == BattleAppKind.Undo && sim.CatHp > sim.CatMaxHp * 0.8) continue;
             sim.UseApp(app.Id, cat);
         }
     }

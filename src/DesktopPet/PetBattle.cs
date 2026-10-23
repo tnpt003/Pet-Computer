@@ -755,7 +755,8 @@ public sealed partial class BattleSim
         IncomingX = left + (IncomingX - Left) / oldWidth * newWidth;
         foreach (var e in effects) e.X = left + (e.X - Left) / oldWidth * newWidth;
         foreach (var b in bombs) b.X = left + (b.X - Left) / oldWidth * newWidth;
-        foreach (var a in apps) a.X = left + (a.X - Left) / oldWidth * newWidth;
+        foreach (var p in popups) p.X = left + (p.X - Left) / oldWidth * newWidth;
+        foreach (var l in launches) { l.FloorX = left + (l.FloorX - Left) / oldWidth * newWidth; for (int i = 0; i < l.TargetX.Length; i++) l.TargetX[i] = left + (l.TargetX[i] - Left) / oldWidth * newWidth; }
         Left = left; Right = right;
         foreach (var s in slimes) { var (minX, maxX) = Bounds(s); s.X = Math.Clamp(s.X, minX, maxX); }
     }

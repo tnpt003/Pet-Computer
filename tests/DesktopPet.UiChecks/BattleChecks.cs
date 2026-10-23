@@ -690,57 +690,128 @@ internal static class BattleChecks
             }
         }
 
-        // Desktop apps on the strip (PetBattleView.Apps.cs): an icon and a popup's × take the click,
-        // the rest of a popup hides the slime behind it. With PET_RENDER_REVIEW, a picture of every app.
+        // The battle's desktop apps (PetWindow.BattleApps.cs): five icon windows on the grid above the
+        // strip, faded while the cursor is far; an ad's × on the strip takes the click and the rest of
+        // it covers the slime behind. With PET_RENDER_REVIEW, pictures of the icons, flights and strip.
         {
+            window.Reset();
+            window.BattleTuning = new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 1 }, SlimeMaxHp = 1000, SlimeDamage = 0, Apps = new AppsSpec { StartCharge = 0.4 } };
+            check(window.StartBattle(stage: new StageSpec { Id = "ui_apps" }) == null, "A stage battle with desktop apps starts");
+            Tick(0.4);
+            var sim = Sim();
+            double appScale = Field<double>(window, "battleScale");
+            var appArea = Field<Area>(window, "battleArea");
+            var probe = typeof(PetWindow).GetField("cursorProbe", Flags)!;
+            var probeBefore = probe.GetValue(window);
+            check(window.BattleAppWindows.Count == 5 && sim.Desktop.All(a =>
+                {
+                    var c = window.BattleAppCentre(a);
+                    return c.Y < appArea.Bottom - BattleFieldView.FieldHeight && c.Y > appArea.Top && c.X > appArea.Left && c.X < appArea.Right;
+                }) && sim.Desktop.Select(a => window.BattleAppCentre(a)).Distinct().Count() == 5,
+                "Five app icons stand in their own windows on distinct cells above the strip");
+            var first = sim.Desktop[0];
+            var centre = window.BattleAppCentre(first);
+            probe.SetValue(window, (Func<Point>)(() => new Point((appArea.Left + 2) * appScale, (appArea.Top + 2) * appScale)));
+            if (window.BattleAppCentre(first).X < appArea.Left + 400) probe.SetValue(window, (Func<Point>)(() => new Point((appArea.Right - 2) * appScale, (appArea.Top + 2) * appScale)));
+            Tick(1);
+            double far = window.BattleAppOpacity(first.Id);
+            probe.SetValue(window, (Func<Point>)(() => new Point(centre.X * appScale, centre.Y * appScale)));
+            Tick(1);
+            double near = window.BattleAppOpacity(first.Id);
+            probe.SetValue(window, probeBefore);
+            check(far < 0.6 && near > 0.97, $"An icon fades back while the cursor is far ({far:0.00}) and is solid with the cursor on it ({near:0.00})");
+            check(!window.BattleClickApp(first.Id) && sim.Desktop[0].Charge < 1, "A click on an icon still charging does nothing (a note says so)");
+            first.Charge = 1;
+            var tabs = sim.Desktop.First(a => a.Kind == BattleAppKind.Tabs);
+            tabs.Charge = 1;
+            check(window.BattleClickApp(tabs.Id) && sim.Launches.Count == 1, "A click on a charged icon sends its help");
+            Tick(0.1);
+            check(Field<Window?>(window, "appFlightWindow") is { IsVisible: true }, "What flies is drawn on the flights' canvas");
+            window.EndBattle();
+            check(window.BattleAppWindows.Count == 0 && Field<Window?>(window, "appFlightWindow") == null, "Ending the battle closes the app windows");
+
+            // The strip: an ad's × and body (an ad placed on a lone slime).
             var data = BattleData.Settings;
             var appField = new BattleSim(data, 0, 600, stage: new StageSpec { Id = "apps_review" }, seed: 1);
+            appField.SetAppGrid(7, 1);
             var spawn = typeof(BattleSim).GetMethod("AddSlime", Flags)!;
             var behind = (Slime)spawn.Invoke(appField, new object[] { 470.0, data.EnemyTypes[0] })!;
             behind.Set(SlimeState.Moving); behind.StateTime = 0.4; behind.Facing = -1;
-            var appList = (System.Collections.Generic.List<BattleApp>)typeof(BattleSim).GetField("apps", Flags)!.GetValue(appField)!;
-            double x = 50;
-            foreach (var kind in new[] { BattleAppKind.Tabs, BattleAppKind.Ping, BattleAppKind.EndTask, BattleAppKind.Undo })
-            {
-                appList.Add(new BattleApp { Id = (int)kind + 1, Kind = kind, X = x, Age = 1, Life = 10 });
-                x += 80;
-            }
-            appList.Add(new BattleApp { Id = 9, Kind = BattleAppKind.Popup, X = 470, Age = 3, Life = 8 });
-            var appView = new BattleFieldView(appField) { OriginX = 0 };
-            appView.Measure(new Size(600, BattleFieldView.FieldHeight)); appView.Arrange(new Rect(0, 0, 600, BattleFieldView.FieldHeight));
-            double appFloor = BattleFieldView.FieldHeight - 2;
-            var popupTop = appFloor - 2 - BattleSim.PopupHeight;
-            check(appView.AppAt(new Point(50, appFloor - 100)) == 1 && appView.AppAt(new Point(290, appFloor - 100)) == 4,
-                "A click on a helper icon picks that app");
-            check(appView.AppAt(new Point(470 + BattleSim.PopupWidth / 2 - 10, popupTop + 9)) == 9 && appView.AppAt(new Point(470, appFloor - 20)) == null &&
-                  appView.OnPopup(new Point(470, appFloor - 20)) && appView.SlimeAt(new Point(470, appFloor - 20)) == behind.Id,
-                "A popup takes clicks only on its ×; the rest of it covers the slime behind (the click goes to neither)");
+            var popupList = (System.Collections.Generic.List<BattlePopup>)typeof(BattleSim).GetField("popups", Flags)!.GetValue(appField)!;
+            popupList.Add(new BattlePopup { Id = 99, X = 470, Age = 3, Life = 8 });
+            var stripView = new BattleFieldView(appField) { OriginX = 0 };
+            stripView.Measure(new Size(600, BattleFieldView.FieldHeight)); stripView.Arrange(new Rect(0, 0, 600, BattleFieldView.FieldHeight));
+            double appFloor = BattleFieldView.FieldHeight - 2, popupTop = appFloor - 2 - BattleSim.PopupHeight;
+            check(stripView.PopupCloseAt(new Point(470 + BattleSim.PopupWidth / 2 - 10, popupTop + 9)) == 99 && stripView.PopupCloseAt(new Point(470, appFloor - 20)) == null &&
+                  stripView.OnPopup(new Point(470, appFloor - 20)) && stripView.SlimeAt(new Point(470, appFloor - 20)) == behind.Id,
+                "An ad takes clicks only on its ×; the rest of it covers the slime behind (the click goes to neither)");
             if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string appsReview)
             {
-                var addEffect = typeof(BattleSim).GetMethod("AddEffect", Flags)!;
-                foreach (var (effect, at, height) in new[] { (BattleEffectKind.Bell, 380.0, 60.0), (BattleEffectKind.EndTask, 560.0, 64.0), (BattleEffectKind.Rewind, 540.0, 60.0) })
-                    addEffect.Invoke(appField, new object[] { effect, at, height, 46.0 });
-                foreach (var e in appField.Effects) e.Age = e.Life * 0.4;
-                typeof(BattleSim).GetProperty(nameof(BattleSim.TabsRemaining))!.SetValue(appField, 3.0);
-                typeof(BattleSim).GetField("lastCatX", Flags)!.SetValue(appField, 560.0);
-                // A fresh view draws the state set up above (the first one drew before it).
-                appView = new BattleFieldView(appField) { OriginX = 0 };
-                typeof(BattleFieldView).GetField("hoverAppId", Flags)!.SetValue(appView, 2);
-                appView.Measure(new Size(600, BattleFieldView.FieldHeight)); appView.Arrange(new Rect(0, 0, 600, BattleFieldView.FieldHeight));
-                foreach (var (name, back) in new[] { ("light", Colors.WhiteSmoke), ("dark", Color.FromRgb(0x1E, 0x1E, 0x24)) })
+                void Save(Visual visual, int width, int height, string name)
                 {
+                    var image = new RenderTargetBitmap(width * 2, height * 2, 192, 192, PixelFormats.Pbgra32); image.Render(visual);
+                    var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(image));
+                    using var stream = System.IO.File.Create(System.IO.Path.Combine(appsReview, name)); encoder.Save(stream);
+                }
+                Visual OnBack(FrameworkElement element, double width, double height, Color back)
+                {
+                    element.Measure(new Size(width, height)); element.Arrange(new Rect(0, 0, width, height));
                     var visual = new DrawingVisual();
                     using (var dc = visual.RenderOpen())
                     {
-                        dc.DrawRectangle(new SolidColorBrush(back), null, new Rect(0, 0, 600, BattleFieldView.FieldHeight));
-                        dc.DrawRectangle(new VisualBrush(appView) { Stretch = Stretch.None, AlignmentX = AlignmentX.Left, AlignmentY = AlignmentY.Top,
-                            ViewboxUnits = BrushMappingMode.Absolute, Viewbox = new Rect(0, 0, 600, BattleFieldView.FieldHeight) },
-                            null, new Rect(0, 0, 600, BattleFieldView.FieldHeight));
+                        dc.DrawRectangle(new SolidColorBrush(back), null, new Rect(0, 0, width, height));
+                        dc.DrawRectangle(new VisualBrush(element) { Stretch = Stretch.None, AlignmentX = AlignmentX.Left, AlignmentY = AlignmentY.Top,
+                            ViewboxUnits = BrushMappingMode.Absolute, Viewbox = new Rect(0, 0, width, height) }, null, new Rect(0, 0, width, height));
                     }
-                    var image = new RenderTargetBitmap(1200, (int)BattleFieldView.FieldHeight * 2, 192, 192, PixelFormats.Pbgra32); image.Render(visual);
-                    var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(image));
-                    using var stream = System.IO.File.Create(System.IO.Path.Combine(appsReview, $"battle-apps-{name}.png")); encoder.Save(stream);
+                    return visual;
                 }
+                // The icons in each state: charging, charged, infected (just scrubbed once), just used, hovered.
+                var states = appField.Desktop.ToList();
+                typeof(BattleSim).GetProperty(nameof(BattleSim.Time))!.SetValue(appField, 10.0);
+                states[0].Charge = 0.35;
+                states[1].Charge = 1; states[1].ReadyAt = 9.8;
+                states[2].InfectedBy = behind.Id; states[2].ScrubsLeft = 2; states[2].InfectedAt = 8; states[2].ScrubbedAt = 9.9;
+                states[3].Charge = 0; states[3].UsedAt = 9.85;
+                states[4].Charge = 1; states[4].ReadyAt = 2;
+                foreach (var (name, back) in new[] { ("light", Colors.WhiteSmoke), ("dark", Color.FromRgb(0x1E, 0x1E, 0x24)) })
+                {
+                    var row = new System.Windows.Controls.StackPanel { Orientation = System.Windows.Controls.Orientation.Horizontal };
+                    foreach (var app in states)
+                    {
+                        var icon = new DesktopAppIcon(appField, app.Id);
+                        if (app == states[4]) typeof(DesktopAppIcon).GetProperty(nameof(DesktopAppIcon.Hovered))!.SetValue(icon, true);
+                        row.Children.Add(icon);
+                    }
+                    Save(OnBack(row, DesktopAppIcon.ViewWidth * 5, DesktopAppIcon.ViewHeight, back), (int)DesktopAppIcon.ViewWidth * 5, (int)DesktopAppIcon.ViewHeight, $"battle-apps-icons-{name}.png");
+                }
+                // Flights halfway: tabs, bells, the bin's catch, a virus, a bad bell, an ad.
+                var launchList = (System.Collections.Generic.List<AppLaunch>)typeof(BattleSim).GetField("launches", Flags)!.GetValue(appField)!;
+                var kinds = new[] { (LaunchKind.Tabs, false, 120.0), (LaunchKind.Goo, true, 300.0), (LaunchKind.Trash, true, 380.0), (LaunchKind.BadBell, false, 200.0), (LaunchKind.Popup, false, 520.0), (LaunchKind.Freeze, false, 60.0) };
+                int i = 0;
+                foreach (var (kind, toIcon, x) in kinds)
+                    launchList.Add(new AppLaunch { Id = 200 + i, Kind = kind, AppId = states[i++ % 5].Id, FloorX = x, Height = 40, Duration = 1, Age = 0.5, ToIcon = toIcon, SlimeId = behind.Id,
+                        TargetX = new[] { x, x + 40 }, Targets = new[] { -1, -2 }, Colors = new[] { "#7CD36A", "#5CC8FF" } });
+                foreach (var (name, back) in new[] { ("light", Colors.WhiteSmoke), ("dark", Color.FromRgb(0x1E, 0x1E, 0x24)) })
+                {
+                    var flights = new AppFlightView(appField)
+                    {
+                        IconCentre = id => new Point(60 + (appField.FindApp(id)?.Col ?? 0) * 80, 40),
+                        FloorPoint = (x, h) => new Point(x, 300 - h)
+                    };
+                    Save(OnBack(flights, 600, 300, back), 600, 300, $"battle-apps-flights-{name}.png");
+                }
+                // The strip: the ad, the tornado around the cat, the virus mark, the effects.
+                launchList.Clear();
+                states[2].InfectedBy = behind.Id;
+                typeof(BattleSim).GetProperty(nameof(BattleSim.TabsRemaining))!.SetValue(appField, 3.0);
+                typeof(BattleSim).GetField("lastCatX", Flags)!.SetValue(appField, 200.0);
+                var addEffect = typeof(BattleSim).GetMethod("AddEffect", Flags)!;
+                foreach (var (effect, at, height) in new[] { (BattleEffectKind.Bell, 330.0, 60.0), (BattleEffectKind.EndTask, 560.0, 70.0), (BattleEffectKind.Rewind, 60.0, 60.0) })
+                    addEffect.Invoke(appField, new object[] { effect, at, height, 46.0 });
+                foreach (var e in appField.Effects) e.Age = e.Life * 0.4;
+                var strip = new BattleFieldView(appField) { OriginX = 0 };
+                foreach (var (name, back) in new[] { ("light", Colors.WhiteSmoke), ("dark", Color.FromRgb(0x1E, 0x1E, 0x24)) })
+                    Save(OnBack(strip, 600, BattleFieldView.FieldHeight, back), 600, (int)BattleFieldView.FieldHeight, $"battle-apps-strip-{name}.png");
             }
         }
 

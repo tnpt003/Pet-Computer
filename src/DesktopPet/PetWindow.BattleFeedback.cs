@@ -28,8 +28,10 @@ public sealed partial class PetWindow
         [BattleEventKind.BossLeaping] = ("swoosh", 3), [BattleEventKind.BossLanded] = ("pop", 5), [BattleEventKind.BossSummoning] = ("surprised", 4),
         [BattleEventKind.Pushed] = ("swoosh", 2), [BattleEventKind.BombThrown] = ("swoosh", 2), [BattleEventKind.Shielded] = ("swoosh", 2),
         [BattleEventKind.Swing] = ("swoosh", 1),
-        [BattleEventKind.AppUsed] = ("sparkle", 6), [BattleEventKind.PopupOpened] = ("surprised", 5), [BattleEventKind.PopupSpawned] = ("surprised", 5),
-        [BattleEventKind.AppDropped] = ("ball_tap", 4), [BattleEventKind.PopupClosed] = ("pop", 4),
+        [BattleEventKind.AppUsed] = ("sparkle", 6), [BattleEventKind.AppInfected] = ("surprised", 6), [BattleEventKind.AppCleaned] = ("excited", 6),
+        [BattleEventKind.PopupOpened] = ("surprised", 5), [BattleEventKind.PopupSpawned] = ("surprised", 5),
+        [BattleEventKind.GooShot] = ("squish", 4), [BattleEventKind.PopupClosed] = ("pop", 4), [BattleEventKind.AppScrubbed] = ("ball_tap", 3),
+        [BattleEventKind.AppAttack] = ("swoosh", 3), [BattleEventKind.AppReady] = ("ball_tap", 2), [BattleEventKind.AppMoved] = ("swoosh", 1),
     };
 
     private void PlayBattleSound()
@@ -41,17 +43,21 @@ public sealed partial class PetWindow
         if (best.Rank > 0) PlayPetSound(best.Sound);
     }
 
+    // A desktop app's name from an app event (Value: the icon's id).
+    private string? AppName(BattleEvent e) =>
+        battle?.AppRules is AppsSpec rules && battle.FindApp((int)e.Value) is DesktopApp app ? rules.App(app.Kind).Name(English) : null;
+
     private string BossName() => battle?.Boss?.Type.Name(preferences.Language == "en") ?? "Boss";
 
     // Big moments get a banner across the HUD's centre. The first heal, far heal, rally call and attack
     // from behind of a battle say what is going on (once each per battle), and so does the first elite
     // of each kind; every helper a rally makes elite is named.
-    private bool healerExplained, farHealExplained, rallyExplained, behindExplained, wardExplained, pushResistExplained, appExplained, popupExplained;
+    private bool healerExplained, farHealExplained, rallyExplained, behindExplained, wardExplained, pushResistExplained, appExplained, popupExplained, virusExplained;
     private readonly HashSet<string> elitesExplained = new();
     private void ShowBattleBanners()
     {
         if (battle == null || battleHud == null) return;
-        if (battle.Time < 0.05) { healerExplained = farHealExplained = rallyExplained = behindExplained = wardExplained = pushResistExplained = appExplained = popupExplained = false; elitesExplained.Clear(); }
+        if (battle.Time < 0.05) { healerExplained = farHealExplained = rallyExplained = behindExplained = wardExplained = pushResistExplained = appExplained = popupExplained = virusExplained = false; elitesExplained.Clear(); }
         for (int i = 0; i < battle.Events.Count; i++)
         {
             var e = battle.Events[i];
@@ -80,9 +86,12 @@ public sealed partial class PetWindow
                     rewards.MilestoneAt(battle.WavesCleared) is KeepsakeSpec prize && prize.Wave > BattleRecords.EndlessCleared(rewards) =>
                     L($"★ Mở khóa: {prize.Name(false)}!", $"★ Unlocked: {prize.Name(true)}!"),
                 // Desktop apps: the first drop and the first popup say what to do; every app used shouts its name.
-                BattleEventKind.AppDropped when !appExplained => L("Rơi ra một app! Bấm vào icon để dùng", "An app dropped! Click its icon to use it"),
-                BattleEventKind.AppUsed when battle.AppRules is AppsSpec rules =>
-                    "★ " + rules.App((BattleAppKind)(int)e.Value).Name(English).ToUpper(System.Globalization.CultureInfo.CurrentCulture) + "!",
+                BattleEventKind.AppReady when !appExplained => L("App trên màn hình đã sạc đầy! Bấm vào icon để dùng", "An app on the screen is charged! Click its icon"),
+                BattleEventKind.AppUsed when AppName(e) is string used => "★ " + used.ToUpper(System.Globalization.CultureInfo.CurrentCulture) + "!",
+                BattleEventKind.AppInfected when AppName(e) is string hit => virusExplained
+                    ? L($"☣ {hit} nhiễm virus!", $"☣ {hit} is infected!")
+                    : L($"☣ {hit} nhiễm virus! Bấm icon 3 lần hoặc hạ slime đeo ☣", $"☣ {hit} is infected! Click it 3 times or defeat the slime wearing ☣"),
+                BattleEventKind.AppCleaned when AppName(e) is string clean => L($"✓ {clean} sạch virus!", $"✓ {clean} is clean!"),
                 BattleEventKind.PopupOpened when !popupExplained => L("Quảng cáo bật lên! Bấm × để tắt", "An ad popped up! Click × to close it"),
                 BattleEventKind.PopupSpawned => L("Quảng cáo thả slime ra!", "The ad let a slime out!"),
                 BattleEventKind.Won => L("CHIẾN THẮNG!", "VICTORY!"),
@@ -95,7 +104,8 @@ public sealed partial class PetWindow
             if (e.Kind == BattleEventKind.Incoming) behindExplained = true;
             if (e.Kind == BattleEventKind.EnemyWarded) wardExplained = true;
             if (e.Kind == BattleEventKind.PushResisted) pushResistExplained = true;
-            if (e.Kind == BattleEventKind.AppDropped) appExplained = true;
+            if (e.Kind == BattleEventKind.AppReady) appExplained = true;
+            if (e.Kind == BattleEventKind.AppInfected) virusExplained = true;
             if (e.Kind == BattleEventKind.PopupOpened) popupExplained = true;
             if (text != null) battleHud.ShowBanner(text, battle.Time, e.Kind is BattleEventKind.Won or BattleEventKind.Lost ? 3 : 1.6);
         }

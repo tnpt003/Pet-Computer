@@ -433,9 +433,10 @@ public enum BattleEventKind
     EnemyWarded, HitWarded,
     // A Push on an elite that ignores it (Value: its id).
     PushResisted,
-    // Desktop apps: one dropped (Value: its id), used (Value: its BattleAppKind), faded unused; an ad
-    // popup opened, closed by the user, or left to run out (it let out a slime).
-    AppDropped, AppUsed, AppExpired, PopupOpened, PopupClosed, PopupSpawned
+    // Desktop apps (Value: the icon's id): charged, used, moved to another cell; a slime shot a virus
+    // (Value: the slime's id), an icon got infected, was scrubbed once, was cleaned; an infected icon
+    // acted against the cat. An ad popup opened, was closed, or let a slime out.
+    AppReady, AppUsed, AppMoved, GooShot, AppInfected, AppScrubbed, AppCleaned, AppAttack, PopupOpened, PopupClosed, PopupSpawned
 }
 public readonly record struct BattleEvent(BattleEventKind Kind, double X, double Value = 0);
 // Number: a floating damage (Value > 0) or heal (Value < 0, shown as +HP above the cat).
@@ -458,48 +459,97 @@ public sealed class BattleBomb
     public double X, Remaining;
 }
 
-// The desktop apps (made-up ones, drawn by the game: no real app's name or logo). The first four
-// help the cat when clicked; Popup is the enemies' ad window, closed by its ×.
-public enum BattleAppKind { Tabs, Ping, EndTask, Undo, Popup }
-public sealed class BattleApp
+// The desktop apps: made-up shortcuts the game draws itself (no real app's name, logo or colours),
+// standing on a grid of desktop cells above the battle strip. The first five help the cat once
+// charged; Popup is the ad an infected Tabs opens on the strip.
+public enum BattleAppKind { Tabs, Ping, EndTask, Undo, Trash, Popup }
+
+// One icon of the battle's desktop: its grid cell (column from the left, row up from the strip),
+// its charge (0–1, ready at 1) and, while a slime's virus holds it, the slime and the clicks left
+// to scrub it. The times (battle time, -1: never) let the views animate what just happened.
+public sealed class DesktopApp
 {
     public int Id;
     public BattleAppKind Kind;
-    // Age runs on battle time while the cat is on the floor; at Life the icon fades (a popup lets
-    // its slime out).
-    public double X, Age, Life;
-    public bool Hostile => Kind == BattleAppKind.Popup;
+    public int Col, Row, FromCol, FromRow;
+    public double Charge;
+    public int InfectedBy, ScrubsLeft;
+    public double AttackClock, CrawlClock;
+    public double BornAt, MovedAt = -1, UsedAt = -1, ReadyAt = -1, InfectedAt = -1, ScrubbedAt = -1, CleanedAt = -1;
+    // The last move was a crawl (slow, infected) rather than a hop.
+    public bool Crawled;
+    public bool Infected => InfectedBy != 0;
+    public bool Ready => Charge >= 1 && !Infected;
 }
 
-// battle.json "apps": how often apps drop, how long they stay and what each does. Names and
-// descriptions are data ("list": one entry per BattleAppKind); what each does is code.
+// An ad on the strip (opened by an infected Tabs): it covers the slimes behind it; left Life s it
+// lets a slime out.
+public sealed class BattlePopup
+{
+    public int Id;
+    public double X, Age, Life;
+}
+
+// Something on its way between an icon and the floor: what an app sends (ToIcon false) or what goes
+// into an icon (a slime's virus, the slimes the bin takes). It acts when it lands (Age = Duration).
+// FloorX/Height: the floor end (DIPs; Height above the floor). Targets: the slimes it goes for.
+public enum LaunchKind { Tabs, Bell, EndTask, Undo, Trash, Goo, BadBell, Freeze, Mend, Spit, Popup }
+public sealed class AppLaunch
+{
+    public int Id, AppId, SlimeId;
+    public LaunchKind Kind;
+    public double FloorX, Height, Age, Duration;
+    public bool ToIcon;
+    public int[] Targets = Array.Empty<int>();
+    // Where each target stood and its colour when it flew (the bin's slimes), #RRGGBB.
+    public double[] TargetX = Array.Empty<double>();
+    public string[] Colors = Array.Empty<string>();
+    public double Progress => Duration > 0 ? Math.Clamp(Age / Duration, 0, 1) : 1;
+}
+
+// battle.json "apps": charging, what each app does, how slimes infect icons and what an infected
+// icon does. Names and texts are data ("list": one entry per BattleAppKind); the effects are code.
 public sealed class AppsSpec
 {
-    // A defeated enemy drops one with this chance; a cleared wave (not the last) always does.
-    public double DropChance { get; init; } = 0.1;
-    public bool WaveDrop { get; init; } = true;
-    public double Life { get; init; } = 10;
-    // Helper icons on the field at once (popups aside).
-    public int MaxOnField { get; init; } = 2;
-    // Tab tornado: tabs circle the cat for TabSeconds, hitting every enemy within TabRadius DIPs
-    // for TabDamage (× the build's damage) every TabEvery s.
+    // Charge at the start, and what each defeated enemy adds to every clean icon (shares of a charge).
+    public double StartCharge { get; init; } = 0.2;
+    public double KillCharge { get; init; } = 0.02;
+    // Tab tornado: tabs circle the cat for TabSeconds, hitting every enemy within TabRadius DIPs for
+    // TabDamage (× the build's damage) every TabEvery s.
     public double TabSeconds { get; init; } = 6;
     public double TabRadius { get; init; } = 70;
-    public double TabDamage { get; init; } = 10;
+    public double TabDamage { get; init; } = 14;
     public double TabEvery { get; init; } = 0.5;
     // Ping storm: every enemy takes PingDamage (× the build's damage) and is stunned PingStun s.
-    public double PingDamage { get; init; } = 10;
+    public double PingDamage { get; init; } = 14;
     public double PingStun { get; init; } = 1.5;
     // End task: the enemy with the most HP is gone; a boss or an elite loses this share of its max HP.
     public double EndTaskShare { get; init; } = 0.25;
     // Undo: the HP the cat lost in the last UndoSeconds comes back.
     public double UndoSeconds { get; init; } = 4;
-    // Ad popup: from a threat of PopupMinThreat, each wave rolls PopupChance to open one over an
-    // enemy; left PopupSeconds it lets out a PopupSpawn enemy.
-    public double PopupMinThreat { get; init; } = 1.5;
-    public double PopupChance { get; init; } = 0.35;
+    // Bin: takes the TrashCount plain enemies (no boss, no elite) nearest the cat.
+    public int TrashCount { get; init; } = 2;
+    // Viruses: from a threat of InfectMinThreat each wave rolls InfectChance for a slime to shoot one
+    // at a clean icon (at most MaxInfected at once). ScrubClicks clicks clean it, or defeating that
+    // slime; an infected icon crawls to a cell next to it every CrawlEvery s.
+    public double InfectMinThreat { get; init; } = 1.5;
+    public double InfectChance { get; init; } = 0.5;
+    public int MaxInfected { get; init; } = 1;
+    public int ScrubClicks { get; init; } = 3;
+    public double CrawlEvery { get; init; } = 9;
+    // What an infected icon does, every so often: Tabs opens an ad (it lets a PopupSpawn enemy out
+    // after PopupSeconds), Ping drops a bell on the cat, End task freezes the cat, Undo heals the most
+    // hurt enemy, the bin spits out a slime.
+    public double PopupEvery { get; init; } = 8;
     public double PopupSeconds { get; init; } = 8;
     public string PopupSpawn { get; init; } = "slime";
+    public double BellEvery { get; init; } = 9;
+    public double BellDamage { get; init; } = 6;
+    public double FreezeEvery { get; init; } = 12;
+    public double FreezeSeconds { get; init; } = 1.2;
+    public double MendEvery { get; init; } = 7;
+    public double MendShare { get; init; } = 0.15;
+    public double SpitEvery { get; init; } = 10;
     [JsonPropertyName("list")] public AppSpec[]? List { get; init; }
     [JsonIgnore] public IReadOnlyList<AppSpec> AppList => List ?? BuiltIn;
 
@@ -509,18 +559,27 @@ public sealed class AppsSpec
         return Array.Find(BuiltIn, spec => string.Equals(spec.Id, kind.ToString(), StringComparison.OrdinalIgnoreCase))!;
     }
 
-    // The texts when "apps" has no "list" (the shipped file says the same).
+    // How often an infected icon of this kind acts (s).
+    public double AttackEvery(BattleAppKind kind) => kind switch
+    {
+        BattleAppKind.Tabs => PopupEvery, BattleAppKind.Ping => BellEvery, BattleAppKind.EndTask => FreezeEvery,
+        BattleAppKind.Undo => MendEvery, _ => SpitEvery
+    };
+
+    // The texts when "apps" has no "list" (the shipped file has the descriptions too).
     public static readonly AppSpec[] BuiltIn =
     {
-        new() { Id = "tabs", NameVi = "Tab Lốc Xoáy", NameEn = "Tab Tornado", Weight = 1 },
-        new() { Id = "ping", NameVi = "Bão Thông Báo", NameEn = "Ping Storm", Weight = 1 },
-        new() { Id = "endtask", NameVi = "End Task", NameEn = "End Task", Weight = 0.6 },
-        new() { Id = "undo", NameVi = "Ctrl+Z", NameEn = "Ctrl+Z", Weight = 0.8 },
+        new() { Id = "tabs", NameVi = "Tab Lốc Xoáy", NameEn = "Tab Tornado", Charge = 50 },
+        new() { Id = "ping", NameVi = "Bão Thông Báo", NameEn = "Ping Storm", Charge = 55 },
+        new() { Id = "endtask", NameVi = "End Task", NameEn = "End Task", Charge = 80 },
+        new() { Id = "undo", NameVi = "Ctrl+Z", NameEn = "Ctrl+Z", Charge = 90 },
+        new() { Id = "trash", NameVi = "Thùng Rác", NameEn = "Bin", Charge = 70 },
         new() { Id = "popup", NameVi = "Quảng cáo", NameEn = "Ad popup" }
     };
 }
 
-// One app's texts and how often it drops (Weight, relative; the popup never drops).
+// One app's texts: what it does (Desc) and what it does once infected (Bad); Charge: seconds of
+// battle to charge it (0 for the popup, which is never an icon).
 public sealed record AppSpec
 {
     public string Id { get; init; } = "";
@@ -528,9 +587,12 @@ public sealed record AppSpec
     public string NameEn { get; init; } = "";
     public string DescVi { get; init; } = "";
     public string DescEn { get; init; } = "";
-    public double Weight { get; init; }
+    public string BadVi { get; init; } = "";
+    public string BadEn { get; init; } = "";
+    public double Charge { get; init; }
     public string Name(bool english) => (english ? NameEn : NameVi) is { Length: > 0 } name ? name : Id;
     public string Desc(bool english) => english ? DescEn : DescVi;
+    public string Bad(bool english) => english ? BadEn : BadVi;
 }
 
 // What the battle wants the cat to do this frame. Hold: the user has the cat (or it is in

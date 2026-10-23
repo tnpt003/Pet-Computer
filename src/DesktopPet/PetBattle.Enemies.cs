@@ -411,28 +411,7 @@ public sealed partial class BattleSim
     // still immune after its last stun.
     private void HurtCat(Slime from, double catX, bool stun)
     {
-        if (ShieldRemaining > 0)
-        {
-            events.Add(new(BattleEventKind.Blocked, catX));
-            if (counterBonus > 0) CounterReady = true;
-            return;
-        }
-        // Turtle shell: one whole hit stopped (no damage, no stun), then it grows back.
-        if (ShellReady)
-        {
-            ShellCooldown = shellRegrow;
-            ShellBlocks++;
-            if (counterBonus > 0) CounterReady = true;
-            AddEffect(BattleEffectKind.Block, catX, 50);
-            events.Add(new(BattleEventKind.ShellBlocked, catX));
-            return;
-        }
-        double hurt = from.Damage * ArmorFactor * (1 + recklessHurt);
-        CatHp = Math.Max(0, CatHp - hurt);
-        NoteHurt(hurt);
-        HurtFlash = Settings.HurtFlashSeconds;
-        events.Add(new(BattleEventKind.CatHurt, catX, hurt));
-        if (CatHp <= 0) { Finish(BattlePhase.Lost); return; }
+        if (!LandHit(from.Damage, catX, out double hurt)) return;
         // Thorns: part of what the cat really took goes back to the attacker.
         if (Active("thorns") is SynergySpec thorns && hurt > 0 && from.Targetable && !from.Shielded)
         {
@@ -448,5 +427,35 @@ public sealed partial class BattleSim
             CancelSwing();
             events.Add(new(BattleEventKind.CatStunned, catX));
         }
+    }
+
+    // A hit of `damage` on the cat (a slime's, or an infected app's bell): the Shield takes all of it,
+    // then the Turtle shell, otherwise armor lessens it. True when it got through and the cat is still up.
+    private bool LandHit(double damage, double catX, out double hurt)
+    {
+        hurt = 0;
+        if (ShieldRemaining > 0)
+        {
+            events.Add(new(BattleEventKind.Blocked, catX));
+            if (counterBonus > 0) CounterReady = true;
+            return false;
+        }
+        // Turtle shell: one whole hit stopped (no damage, no stun), then it grows back.
+        if (ShellReady)
+        {
+            ShellCooldown = shellRegrow;
+            ShellBlocks++;
+            if (counterBonus > 0) CounterReady = true;
+            AddEffect(BattleEffectKind.Block, catX, 50);
+            events.Add(new(BattleEventKind.ShellBlocked, catX));
+            return false;
+        }
+        hurt = damage * ArmorFactor * (1 + recklessHurt);
+        CatHp = Math.Max(0, CatHp - hurt);
+        NoteHurt(hurt);
+        HurtFlash = Settings.HurtFlashSeconds;
+        events.Add(new(BattleEventKind.CatHurt, catX, hurt));
+        if (CatHp <= 0) { Finish(BattlePhase.Lost); return false; }
+        return true;
     }
 }

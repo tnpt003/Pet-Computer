@@ -279,6 +279,7 @@ public sealed partial class PetWindow
         battlePause = BattlePause.None;
         battleFieldWindow?.Close(); battleHudWindow?.Close();
         battleFieldWindow = battleHudWindow = null;
+        CloseBattleApps();
         battleView = null;
         battleHud = null;
         battleHudGrab = null;
@@ -350,18 +351,34 @@ public sealed partial class PetWindow
         return done;
     }
 
-    // A click on a desktop app: a popup closes, a helper does its work; when it cannot, a short note why.
+    // A click on a desktop app: an infected one is scrubbed, a charged one sends its help; when it
+    // cannot, a short note why (still charging, the cat in hand, nothing to do).
     public bool BattleClickApp(int id)
     {
-        if (battle == null || battle.Paused || battle.FindApp(id) is not BattleApp app) return false;
+        if (battle == null || battle.Paused || battle.FindApp(id) is not DesktopApp app) return false;
         SyncBattleCatState();
         bool done = battle.UseApp(id, pet.X + settings.Width / 2);
-        if (!done && !app.Hostile)
-            ShowBattleNotice(battle.SkillsLocked ? L("Đặt mèo xuống rồi hãy dùng app.", "Put the cat down to use an app.")
+        if (!done && battle.AppRules is AppsSpec rules)
+        {
+            string name = rules.App(app.Kind).Name(English);
+            ShowBattleNotice(!app.Ready ? L($"{name} đang sạc: {Math.Floor(app.Charge * 100)}%.", $"{name} is charging: {Math.Floor(app.Charge * 100)}%.")
+                : battle.SkillsLocked ? L("Đặt mèo xuống rồi hãy dùng app.", "Put the cat down to use an app.")
                 : app.Kind == BattleAppKind.Undo ? L("Mèo chưa mất máu trong mấy giây vừa qua.", "The cat lost no HP in the last few seconds.")
                 : L("Chưa có slime nào để dùng app này.", "No slime to use this app on yet."));
+        }
         RequestBattleRedraw();
         UpdateBattleHud();
+        battleView?.InvalidateVisual();
+        if (appIcons.TryGetValue(id, out var icon)) icon.View.InvalidateVisual();
+        return done;
+    }
+
+    // An ad's × on the strip.
+    public bool BattleClosePopup(int id)
+    {
+        if (battle == null || battle.Paused) return false;
+        bool done = battle.ClosePopup(id);
+        RequestBattleRedraw();
         battleView?.InvalidateVisual();
         return done;
     }
@@ -514,7 +531,7 @@ public sealed partial class PetWindow
         if (battle == null) return;
         battleView = new BattleFieldView(battle) { English = English };
         battleView.SlimeClicked += (id, offset) => BattleClickSlime(id, offset);
-        battleView.AppClicked += id => BattleClickApp(id);
+        battleView.PopupClicked += id => BattleClosePopup(id);
         battleView.RightClicked += () => { battle?.Arm(null); RequestBattleRedraw(); UpdateBattleHud(); }; // Right-click on the field cancels the skill.
         battleFieldWindow = CreateOverlayWindow(battleView, "Pet battle");
         battleFieldWindow.DpiChanged += (_, _) => battlePlacedScale = 0; // Re-place in pixels next frame.
@@ -535,9 +552,10 @@ public sealed partial class PetWindow
         if (context.Fullscreen)
         {
             if (battleFieldWindow.IsVisible) { battleFieldWindow.Hide(); battleHudWindow.Hide(); }
+            HideBattleApps();
             return;
         }
-        if (!battleFieldWindow.IsVisible) { battleFieldWindow.Show(); battleHudWindow.Show(); battlePlacedScale = 0; RequestBattleRedraw(); }
+        if (!battleFieldWindow.IsVisible) { battleFieldWindow.Show(); battleHudWindow.Show(); ShowBattleApps(); battlePlacedScale = 0; RequestBattleRedraw(); }
         var area = battleArea;
         double fieldScale = battleScale;
         if (battlePlacedScale != fieldScale || battlePlacedArea != area)
@@ -555,7 +573,7 @@ public sealed partial class PetWindow
         }
         // Paused, or nothing on the floor (wave breaks): the strip is drawn once and left alone.
         var b = battle;
-        bool moving = !b.Paused && (b.Slimes.Count > 0 || b.Effects.Count > 0 || b.Bombs.Count > 0 || b.Apps.Count > 0 || b.TabsRemaining > 0);
+        bool moving = !b.Paused && (b.Slimes.Count > 0 || b.Effects.Count > 0 || b.Bombs.Count > 0 || b.Popups.Count > 0 || b.Launches.Count > 0 || b.TabsRemaining > 0);
         battleFrameClock += dt;
         bool due = battleFrameClock >= BattleFrameSeconds;
         if (due) battleFrameClock = Math.Min(battleFrameClock - BattleFrameSeconds, BattleFrameSeconds);
@@ -565,10 +583,12 @@ public sealed partial class PetWindow
             BattleFieldDraws++;
             battleFieldIdle = !moving;
         }
+        bool drawApps = battleRedraw || (due && !b.Paused);
         if (battleRedraw || (due && !b.Paused)) UpdateBattleHud();
         battleRedraw = false;
         PlaceBattleHud();
         UpdateBattleHudDodge();
+        UpdateBattleApps(dt, drawApps);
     }
 
     // The HUD steps aside for the cursor: over its information part (portrait, HP, status, hint)

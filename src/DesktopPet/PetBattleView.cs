@@ -9,7 +9,7 @@ namespace DesktopPet;
 // The one drawing layer for every slime, the boss, markers and effects: a transparent strip
 // along the floor of the battle monitor. Empty pixels stay fully transparent, so clicks there
 // pass through to the windows below; only slimes (and a near-invisible halo around each, to
-// make them easy to click) and the desktop apps (PetBattleView.Apps.cs) take the mouse. Drawing
+// make them easy to click) and the ads' × (PetBattleView.Apps.cs) take the mouse. Drawing
 // only: the fight itself is BattleSim.
 public sealed partial class BattleFieldView : FrameworkElement
 {
@@ -35,19 +35,18 @@ public sealed partial class BattleFieldView : FrameworkElement
         MouseLeftButtonDown += (_, e) =>
         {
             var point = e.GetPosition(this);
-            // An app icon or a popup's × first; the rest of a popup hides the slimes behind it.
-            if (AppAt(point) is int app) AppClicked?.Invoke(app);
+            // An ad's × first; the rest of an ad hides the slimes behind it.
+            if (PopupCloseAt(point) is int popup) PopupClicked?.Invoke(popup);
             else if (!OnPopup(point) && SlimeAt(point) is int id && sim.Find(id) is { } slime) SlimeClicked?.Invoke(id, point.X - (slime.X - OriginX));
             e.Handled = true;
         };
         MouseRightButtonDown += (_, e) => { RightClicked?.Invoke(); e.Handled = true; };
         MouseMove += (_, e) => Hover(e.GetPosition(this));
-        MouseLeave += (_, _) => { if (hoverId != null || hoverAppId != null) { hoverId = hoverAppId = null; InvalidateVisual(); } };
+        MouseLeave += (_, _) => { if (hoverId != null) { hoverId = null; InvalidateVisual(); } };
     }
 
     private void Hover(Point point)
     {
-        HoverApp(point);
         int? id = sim.PushArmed && !OnPopup(point) ? SlimeAt(point) : null;
         double offset = id is int found && sim.Find(found) is { } slime ? point.X - (slime.X - OriginX) : 0;
         if (id == hoverId && Math.Sign(offset) == Math.Sign(hoverOffset)) return;
@@ -155,13 +154,14 @@ public sealed partial class BattleFieldView : FrameworkElement
                     dc.DrawEllipse(LeapShadow, ShadowRim, new Point(x, floor - 2), slime.Width / 2 * k, 6 * k); // A pale rim: seen on dark desktops too.
                 }
                 DrawSlime(dc, slime, x, floor - slime.LeapHeight, sim.Settings, time);
+                if (sim.AppRules != null && sim.IsInfector(slime.Id) && slime.State != SlimeState.Defeated) DrawVirusMark(dc, slime, x, floor, time);
             }
         for (int i = 0; i < sim.Slimes.Count; i++)
             if (sim.Slimes[i].IsBoss && sim.RallyTarget(sim.Slimes[i]) is Slime rallied) DrawRallyLink(dc, sim.Slimes[i], rallied, floor, time);
         if (sim.TabsRemaining > 0) DrawTabs(dc, sim.CatX - OriginX, floor, time);
         for (int i = 0; i < sim.Effects.Count; i++) DrawEffect(dc, sim.Effects[i], sim.Effects[i].X - OriginX, floor - sim.Effects[i].Height, floor);
         if (sim.Incoming) DrawIncoming(dc, sim.IncomingX - OriginX, floor, time);
-        DrawApps(dc, floor, time);
+        DrawPopups(dc, floor, time);
     }
 
     // A spawn from behind is coming at this edge: a pulsing red arrow pointing into the field and a "!".

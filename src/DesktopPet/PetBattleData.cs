@@ -597,14 +597,20 @@ public static class BattleData
         }
         if (s.Apps is AppsSpec apps)
         {
-            Within(apps.DropChance, 0, 1, "apps.dropChance"); Within(apps.Life, 2, 60, "apps.life");
-            if (apps.MaxOnField is < 1 or > 4) throw new InvalidDataException("apps.maxOnField must be 1–4");
+            Within(apps.StartCharge, 0, 1, "apps.startCharge"); Within(apps.KillCharge, 0, 1, "apps.killCharge");
             Within(apps.TabSeconds, 0.5, 30, "apps.tabSeconds"); Within(apps.TabRadius, 10, 300, "apps.tabRadius");
             Within(apps.TabDamage, 0, 1000, "apps.tabDamage"); Within(apps.TabEvery, 0.1, 5, "apps.tabEvery");
             Within(apps.PingDamage, 0, 1000, "apps.pingDamage"); Within(apps.PingStun, 0, 5, "apps.pingStun");
             Within(apps.EndTaskShare, 0, 1, "apps.endTaskShare"); Within(apps.UndoSeconds, 0.5, 30, "apps.undoSeconds");
-            Within(apps.PopupMinThreat, 0, 100, "apps.popupMinThreat"); Within(apps.PopupChance, 0, 1, "apps.popupChance");
-            Within(apps.PopupSeconds, 2, 60, "apps.popupSeconds");
+            if (apps.TrashCount is < 1 or > 5) throw new InvalidDataException("apps.trashCount must be 1–5");
+            Within(apps.InfectMinThreat, 0, 100, "apps.infectMinThreat"); Within(apps.InfectChance, 0, 1, "apps.infectChance");
+            if (apps.MaxInfected is < 0 or > 5) throw new InvalidDataException("apps.maxInfected must be 0–5");
+            if (apps.ScrubClicks is < 1 or > 10) throw new InvalidDataException("apps.scrubClicks must be 1–10");
+            Within(apps.CrawlEvery, 1, 120, "apps.crawlEvery");
+            foreach (var (value, key) in new[] { (apps.PopupEvery, "popupEvery"), (apps.BellEvery, "bellEvery"), (apps.FreezeEvery, "freezeEvery"), (apps.MendEvery, "mendEvery"), (apps.SpitEvery, "spitEvery") })
+                Within(value, 1, 120, "apps." + key);
+            Within(apps.PopupSeconds, 2, 60, "apps.popupSeconds"); Within(apps.BellDamage, 0, 1000, "apps.bellDamage");
+            Within(apps.FreezeSeconds, 0, 5, "apps.freezeSeconds"); Within(apps.MendShare, 0, 1, "apps.mendShare");
             if (!s.EnemyTypes.Any(e => e?.Id == apps.PopupSpawn)) throw new InvalidDataException($"apps.popupSpawn \"{apps.PopupSpawn}\" is not an enemy id");
             if (apps.List != null)
             {
@@ -618,8 +624,11 @@ public static class BattleData
                         throw new InvalidDataException($"{at}.id must be one of: {string.Join(", ", kinds.Select(k => k.ToLowerInvariant()))}");
                     if (!seen.Add(a.Id)) throw new InvalidDataException($"app id \"{a.Id}\" is used twice");
                     Text(a.NameVi, at + ".nameVi"); Text(a.NameEn, at + ".nameEn");
-                    if (a.DescVi == null || a.DescEn == null || a.DescVi.Length > 120 || a.DescEn.Length > 120) throw new InvalidDataException($"{at} descriptions must be at most 120 characters");
-                    Within(a.Weight, 0, 100, at + ".weight");
+                    foreach (var text in new[] { a.DescVi, a.DescEn, a.BadVi, a.BadEn })
+                        if (text == null || text.Length > 120) throw new InvalidDataException($"{at} descriptions (desc, bad) must be at most 120 characters");
+                    bool icon = !string.Equals(a.Id, nameof(BattleAppKind.Popup), StringComparison.OrdinalIgnoreCase);
+                    if (icon) Within(a.Charge, 1, 600, at + ".charge");
+                    else if (a.Charge != 0) throw new InvalidDataException($"{at}.charge must be 0 (the popup is never an icon)");
                 }
                 if (seen.Count != kinds.Length) throw new InvalidDataException($"apps.list must list every app: {string.Join(", ", kinds.Select(k => k.ToLowerInvariant()))}");
             }

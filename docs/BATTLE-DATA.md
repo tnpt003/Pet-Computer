@@ -407,28 +407,37 @@ Một chuyến đi gồm nhiều bậc, mỗi bậc chọn một điểm, bậc 
 
 ## App trên màn hình (`apps`) (2026-10-23)
 
-App "giả" do game tự vẽ (không dùng tên hay logo app thật), có trong trận Phiêu lưu, Viễn chinh và Vô tận (trận tự do không có). Logic ở `PetBattle.Apps.cs`, hình ở `PetBattleView.Apps.cs`; Python không tham gia.
+Một "desktop giả" trong trận Phiêu lưu, Viễn chinh và Vô tận (trận tự do không có): 5 icon app do game tự vẽ (không dùng tên, logo hay màu của app thật) đứng trên các ô lưới kiểu desktop phía trên dải chiến trường, ở vị trí ngẫu nhiên theo seed. Logic ở `PetBattle.Apps.cs`; hình ở `PetBattleAppArt.cs`, `PetDesktopAppViews.cs` (icon, đường bay), `PetBattleView.Apps.cs` (dải chiến trường); cửa sổ ở `PetWindow.BattleApps.cs`. Python không tham gia.
 
-- **App giúp mèo:** dọn xong một đợt (không phải đợt cuối) thì rơi 1 icon gần mèo (90–160 DIPs); hạ một quái thì rơi với xác suất `dropChance`. Icon lơ lửng trên dải chiến trường `life` giây (3 giây cuối nhấp nháy), tối đa `maxOnField` icon. Người chơi **bấm vào icon** để dùng; rê chuột lên icon thì hiện mô tả.
-  - `tabs` Tab Lốc Xoáy: 3 tab xoay quanh mèo `tabSeconds` giây, mỗi `tabEvery` giây gây `tabDamage` (× sát thương của build) cho quái trong `tabRadius` DIPs (cộng nửa bề ngang quái). Không đánh khi mèo đang bị nhấc.
-  - `ping` Bão Thông Báo: chuông "99+" rơi lên mọi quái: `pingDamage` (× build) và choáng `pingStun` giây (× hệ số choáng của loại quái); không choáng quái đang lao/hồi máu/nhảy, tinh anh miễn Đẩy.
-  - `endtask` End Task: quái nhiều máu nhất (không tính trùm đang bật khiên, quái đang được hồi) bị tắt; trùm hoặc tinh anh chỉ mất `endTaskShare` máu tối đa (vẫn dừng ở mốc khiên như mọi đòn).
-  - `undo` Ctrl+Z: hoàn lại máu mèo mất trong `undoSeconds` giây vừa qua. Chưa mất gì thì icon ở lại.
-  - Sát thương từ app không bị đá chặn (như bom len). App không dùng được khi mèo đang bị cầm/bay (giống kỹ năng); khi đó icon cũng đứng thời gian.
-- **Quảng cáo (quái):** từ khi `threat` hiện tại (màn × đợt × bậc Viễn chinh) ≥ `popupMinThreat`, mỗi đợt có `popupChance` bật 1 cửa sổ quảng cáo 2–6 giây sau khi đợt bắt đầu, đè lên một con quái. Click vào thân cửa sổ không trúng quái phía sau; bấm **×** để tắt (được cả khi đang cầm mèo). Để `popupSeconds` giây thì nó thả ra 1 con `popupSpawn` (nếu sàn còn chỗ). Dọn xong đợt thì quảng cáo tự đóng.
-- Pause/menu/fullscreen đóng băng icon như mọi thứ trong trận; kết thúc trận xóa hết. Random của app là luồng riêng của seed trận (`BattleRandom.Apps`): thêm app không đổi quái/thẻ/chặn đòn của cùng seed.
-- `list`: mỗi app một mục (`tabs`, `ping`, `endtask`, `undo`, `popup`), đủ cả 5, không trùng: `nameVi`/`nameEn` 1–32 ký tự, `descVi`/`descEn` ≤ 120 ký tự (mô tả là chữ thường, không thay `{khóa}`), `weight` 0–100 = tần suất rơi tương đối (popup không bao giờ rơi). File riêng ghi `list` thì thay cả danh sách.
+- **Lưới:** cột ô rộng ~84 DIPs trải hết bề ngang màn hình của trận, tối đa 3 hàng (cao 108 DIPs) ngay trên dải chiến trường (màn hình thấp thì ít hàng hơn); ô bị HUD che không dùng (kéo HUD đè lên thì icon tự sang ô trống). Mỗi icon là một cửa sổ nhỏ nổi trên cùng, chỉ phần hình nhận chuột. Con trỏ ở xa (≥ 280 DIPs) thì icon mờ còn 50% (icon đã sạc ≥ 75%, bị nhiễm ≥ 85%), lại gần (≤ 110) thì rõ hẳn. Rê chuột lên icon: khung chọn kiểu desktop + ghi chú bên cạnh (tên, tác dụng hoặc tác hại khi nhiễm, % sạc / số lần còn phải quét).
+- **Sạc:** mỗi icon đầy sau `charge` giây trận (đếm khi mèo không bị cầm/bay), bắt đầu ở `startCharge`, mỗi quái bị hạ cộng `killCharge` cho mọi icon sạch. Đang sạc: lớp tối phủ phần chưa đầy; đầy: quầng vàng, sao lấp lánh, nhún nhẹ, tên màu vàng. Bấm icon đầy thì trừ hết sạc và thứ nó gửi **bay theo đường vòng từ icon xuống** (0,45 s), chạm đích mới có tác dụng:
+  - `tabs` Tab Lốc Xoáy: 3 tab bay xuống rồi xoay quanh mèo `tabSeconds` giây, mỗi `tabEvery` giây gây `tabDamage` (× sát thương build) cho quái trong `tabRadius` DIPs; không đánh khi mèo bị nhấc.
+  - `ping` Bão Thông Báo: mỗi slime một chuông "99+" (bay lệch nhau một chút): `pingDamage` (× build) + choáng `pingStun` giây (không choáng quái đang lao/hồi máu/nhảy, tinh anh miễn Đẩy).
+  - `endtask` End Task: cửa sổ "Không phản hồi" bay tới quái nhiều máu nhất (không tính trùm đang bật khiên, quái đang được hồi) và tắt nó; trùm/tinh anh mất `endTaskShare` máu tối đa.
+  - `undo` Ctrl+Z: quả cầu mũi tên bay về mèo, trả lại máu mất trong `undoSeconds` giây trước lúc bấm. Chưa mất máu thì không dùng (giữ sạc).
+  - `trash` Thùng Rác: `trashCount` quái thường gần mèo nhất (không trùm, không tinh anh) bị hút ngay, bay vào thùng (nắp mở).
+  - Không dùng được khi mèo đang bị cầm/bay (giống kỹ năng); Pause/menu/fullscreen đóng băng tất cả; app fullscreen thì icon ẩn cùng trận. Sát thương từ app không bị đá chặn.
+- **Dọn nhà:** từ đợt 2, mỗi đợt mới một icon sạch nhảy sang ô trống khác (bay vòng 0,5 s, đáp bẹp).
+- **Virus:** khi `threat` hiện tại ≥ `infectMinThreat`, mỗi đợt có `infectChance` để 3–8 giây sau khi đợt bắt đầu, một slime bắn cục nhớt (0,7 s) vào một icon sạch (tối đa `maxInfected` icon cùng lúc). Slime đó đeo dấu virus trên đầu. Icon bị nhiễm: phủ nhớt, virus mặt cau ngồi ở góc, rung từng cơn, ngừng sạc, cứ `crawlEvery` giây bò sang ô kế bên, và phản chủ:
+  - Tab → bật quảng cáo đè lên slime (mỗi `popupEvery` s, một cái mỗi lúc). Quảng cáo che slime phía sau; bấm **×** để tắt (được cả khi đang cầm mèo); để `popupSeconds` s thì thả một `popupSpawn`. Dọn xong đợt thì quảng cáo tự đóng.
+  - Bão Thông Báo → chuông đỏ rơi lên đầu mèo (`bellDamage`, mỗi `bellEvery` s; đi qua Khiên/Mai rùa/giáp như đòn thường, mèo đang bị nhấc hoặc vừa được thả thì trượt).
+  - End Task → "Không phản hồi" trên đầu mèo: choáng `freezeSeconds` (Khiên chặn; vẫn theo luật miễn choáng).
+  - Ctrl+Z → hồi `mendShare` máu tối đa cho slime còn ít máu nhất (mỗi `mendEvery` s).
+  - Thùng Rác → nhả một `popupSpawn` xuống sàn dưới icon (mỗi `spitEvery` s, khi sàn còn chỗ).
+  - Gỡ: **bấm icon `scrubClicks` lần** (bọt xà phòng mỗi lần, được cả khi đang cầm mèo) hoặc **hạ con slime đeo dấu virus**. Sạch rồi thì lấp lánh, sạc tiếp từ chỗ cũ.
+- Hết trận: không còn gì bay, virus và quảng cáo biến mất, icon mờ dần cùng phần kết. Random của app (vị trí, dọn nhà, virus) là luồng riêng của seed trận (`BattleRandom.Apps`).
+- `list`: mỗi app một mục (`tabs`, `ping`, `endtask`, `undo`, `trash`, `popup`), đủ cả 6, không trùng: `nameVi`/`nameEn` 1–32 ký tự, `descVi`/`descEn` (tác dụng) và `badVi`/`badEn` (khi nhiễm) ≤ 120 ký tự (chữ thường, không thay `{khóa}`), `charge` 1–600 giây (popup phải là 0). File riêng ghi `list` thì thay cả danh sách.
 
 | Khóa | Giới hạn | Gốc |
 | --- | --- | --- |
-| `dropChance` | 0–1 | 0.12 |
-| `waveDrop` | true/false | true |
-| `life` | 2–60 s | 10 |
-| `maxOnField` | 1–4 | 2 |
+| `startCharge`, `killCharge` | 0–1 | 0.2, 0.02 |
+| `charge` (trong `list`) | 1–600 s | tab 50, chuông 55, End Task 80, Ctrl+Z 90, thùng rác 70 |
 | `tabSeconds`, `tabRadius`, `tabDamage`, `tabEvery` | 0.5–30 s, 10–300, 0–1000, 0.1–5 s | 6, 70, 14, 0.5 |
 | `pingDamage`, `pingStun` | 0–1000, 0–5 s | 14, 1.5 |
-| `endTaskShare` | 0–1 | 0.25 |
-| `undoSeconds` | 0.5–30 | 4 |
-| `popupMinThreat`, `popupChance`, `popupSeconds`, `popupSpawn` | 0–100, 0–1, 2–60 s, id quái | 1.5, 0.35, 8, `slime` |
+| `endTaskShare`, `undoSeconds`, `trashCount` | 0–1, 0.5–30 s, 1–5 | 0.25, 4, 2 |
+| `infectMinThreat`, `infectChance`, `maxInfected`, `scrubClicks`, `crawlEvery` | 0–100, 0–1, 0–5, 1–10, 1–120 s | 1.5, 0.5, 1, 3, 9 |
+| `popupEvery`, `bellEvery`, `freezeEvery`, `mendEvery`, `spitEvery` | 1–120 s | 8, 9, 12, 7, 10 |
+| `popupSeconds`, `popupSpawn`, `bellDamage`, `freezeSeconds`, `mendShare` | 2–60 s, id quái, 0–1000, 0–5 s, 0–1 | 8, `slime`, 6, 1.2, 0.15 |
 
+- Cân bằng (mô phỏng, bot simple bấm app ngay khi đầy — trường hợp tốt nhất): số sạc trên giữ bot dưới ngưỡng "≤ 85% máu còn lại" ở màn 2–4 Thường. Bản sạc nhanh hơn (20–34 s) cho bot 90–96%.
 - rulesVersion khi thêm app: màn 1–5: 6/12/14/15/15, Vô tận 2 (kỷ lục cũ đứng riêng; phần thưởng mốc Vô tận vẫn tính mọi rulesVersion). Viễn chinh giữ 5 để không bỏ chuyến đang đi dở.

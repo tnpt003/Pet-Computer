@@ -223,6 +223,8 @@ public sealed partial class BattleSim
     public bool Over => Phase is BattlePhase.Won or BattlePhase.Lost;
     public Slime? Boss { get { foreach (var s in slimes) if (s.IsBoss && s.State != SlimeState.Defeated) return s; return null; } }
     private int nextId = 1, autoTargetId, swingTargetId, swingFacing = 1;
+    // The forced update the swing under way is aimed at (0: a slime).
+    private int swingWallId;
     private bool swingHit, wasLifted;
     private double spawnTimer;
 
@@ -369,7 +371,7 @@ public sealed partial class BattleSim
         return CatTurn(dt, catX);
     }
 
-    private void CancelSwing() { SwingTime = -1; swingHit = false; ComboSwing = false; chargedSwing = false; }
+    private void CancelSwing() { SwingTime = -1; swingHit = false; ComboSwing = false; chargedSwing = false; swingWallId = 0; }
 
     // The chain only lasts ComboWindow seconds after its last hit.
     // Hits in the current chain (0 once it lapsed); the HUD shows it as ×N.
@@ -391,6 +393,29 @@ public sealed partial class BattleSim
         // Put down on top of a blocker: a few steps off it to the nearest free side.
         if (Unstick(catX) is double free) return new(CatCommand.Move, free, free < catX ? -1 : 1);
         if (target == null) return new(CatCommand.Stand, catX);
+        // A forced update: put down in it, the cat steps out; between the cat and its target, the cat
+        // walks up to it and hits it (each hit brings the update closer to done).
+        if (WallAt(catX) is BattleHazard inWall)
+        {
+            double outside = Math.Clamp(inWall.X + (catX < inWall.X ? -1 : 1) * (WallHalfWidth + CatHalfWidth + 4), Left + CatHalfWidth, Right - CatHalfWidth);
+            return new(CatCommand.Move, outside, outside < catX ? -1 : 1);
+        }
+        if (WallBetween(catX, target.X) is BattleHazard update)
+        {
+            int toWall = update.X < catX ? -1 : 1;
+            if (Math.Abs(update.X - catX) - WallHalfWidth <= arms.Range * 0.8)
+            {
+                if (CatCooldown <= 0)
+                {
+                    SwingTime = 0; swingHit = false; swingTargetId = 0; swingWallId = update.Id; swingFacing = toWall;
+                    ComboSwing = false; chargedSwing = false; runDistance = 0;
+                    CatCooldown = Math.Max(arms.AttackCooldown * CooldownFactor / LagFactor, arms.SwingDuration);
+                    events.Add(new(BattleEventKind.Swing, catX));
+                }
+                return new(CatCommand.Stand, catX, toWall);
+            }
+            return new(CatCommand.Move, update.X - toWall * (WallHalfWidth + arms.Range * 0.5), toWall);
+        }
         // A blocker on the floor between the cat and its target is hit first (the target keeps its marker).
         if (BlockerBetween(catX, target) is Slime wall) { BlockedById = wall.Id; target = wall; }
         double dx = target.X - catX;
@@ -453,6 +478,12 @@ public sealed partial class BattleSim
     // The swing's single hit: only its own target, only if still in reach at this moment.
     private void ResolveHit(double catX)
     {
+        if (swingWallId != 0)
+        {
+            if (FindHazard(swingWallId) is BattleHazard wall && Math.Abs(wall.X - catX) - WallHalfWidth <= arms.Range + 14) HitWall(wall);
+            swingWallId = 0;
+            return;
+        }
         var slime = Find(swingTargetId);
         if (slime == null || !slime.Targetable || Math.Abs(slime.X - catX) > Reach(slime) + 14) { Combo = 0; return; } // A miss ends the chain.
         Combo = LiveCombo + 1;

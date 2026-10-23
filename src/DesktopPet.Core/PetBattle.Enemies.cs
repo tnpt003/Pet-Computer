@@ -38,10 +38,18 @@ public sealed partial class BattleSim
         return nearest;
     }
 
+    // The floor a slime may stand on: the strip, up to a forced update on either side (a boss leaps over).
     private (double Min, double Max) Bounds(Slime slime)
     {
-        double min = Left + slime.Width / 2;
-        return (min, Math.Max(min, Right - slime.Width / 2));
+        double min = Left + slime.Width / 2, max = Right - slime.Width / 2;
+        if (!slime.IsBoss)
+            foreach (var h in hazards)
+            {
+                if (h.Kind != HazardKind.Update) continue;
+                if (slime.X < h.X) max = Math.Min(max, h.X - WallHalfWidth - slime.Width / 2);
+                else min = Math.Max(min, h.X + WallHalfWidth + slime.Width / 2);
+            }
+        return (min, Math.Max(min, max));
     }
 
     private void StepSlimes(double dt, double catX, bool catHeld)
@@ -145,7 +153,7 @@ public sealed partial class BattleSim
                     bool facingCat = Math.Abs(dx) <= 1 || Turn(slime, dx < 0 ? -1 : 1, dt);
                     // A dash enemy starts its windup from further away; its lane is set now.
                     double reach = slime.Type.Dash ? slime.Type.DashRange : slime.Range;
-                    if (!catHeld && facingCat && Math.Abs(dx) <= reach && slime.Cooldown <= 0 && Grace <= 0 && MayAttack(slime))
+                    if (!catHeld && facingCat && Math.Abs(dx) <= reach && slime.Cooldown <= 0 && Grace <= 0 && MayAttack(slime) && (slime.IsBoss || WallBetween(slime.X, catX) == null))
                     {
                         slime.DashDirection = slime.Facing;
                         slime.Set(SlimeState.Windup);

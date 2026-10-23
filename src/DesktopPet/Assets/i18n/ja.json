@@ -796,5 +796,9 @@
   "No app icons or viruses. Records are kept apart.": "アプリもウイルスもなし。記録は別に保存。",
   " · no apps": " · アプリなし",
   "⟳ A loading ring! The cat is slow inside it. Click the spinner to close it": "⟳ 読み込みリング！中の猫は遅くなる。スピナーをクリックで閉じよう",
-  "⟳ Loading…": "⟳ 読み込み中…"
+  "⟳ Loading…": "⟳ 読み込み中…",
+  "Forced update! It walls off the cat and the slimes. Click Later twice": "強制アップデート！猫とスライムを壁がさえぎる。「後で」を2回クリック",
+  "Updating…": "アップデート中…",
+  "UPDATE": "アップデート",
+  "Later": "後で"
 }

@@ -438,7 +438,9 @@ public enum BattleEventKind
     // acted against the cat. An ad popup opened, was closed, or let a slime out.
     AppReady, AppUsed, AppMoved, GooShot, AppInfected, AppScrubbed, AppCleaned, AppAttack, PopupOpened, PopupClosed, PopupSpawned,
     // Malware a slime threw onto the field (Value: its id): it opened, the user closed it.
-    HazardOpened, HazardClosed
+    HazardOpened, HazardClosed,
+    // A click on a forced update's Later that did not close it yet; the cat's hit on it (Value: its id).
+    HazardTapped, WallHit
 }
 public readonly record struct BattleEvent(BattleEventKind Kind, double X, double Value = 0);
 // Number: a floating damage (Value > 0) or heal (Value < 0, shown as +HP above the cat).
@@ -494,13 +496,18 @@ public sealed class BattlePopup
 
 // Malware a slime throws onto the field instead of shooting a virus into an icon (2026-10-24).
 // Loading: a spinning ring on the floor; the cat inside it runs and swings slower. It wears off
-// after Life s, or the user clicks its spinner.
-public enum HazardKind { Loading }
+// after Life s, or the user clicks its spinner. Update: a "forced update" window standing on the
+// floor as a wall neither the cat nor the slimes (bosses leap over) can pass; done at Life s (the
+// cat's hits bring it closer), or the user clicks its Later button ClicksLeft times.
+public enum HazardKind { Loading, Update }
 public sealed class BattleHazard
 {
     public int Id;
     public HazardKind Kind;
     public double X, Age, Life;
+    public int ClicksLeft;
+    // Battle time of the last hit or click (the view shakes it), -1: none.
+    public double HitAt = -1;
 }
 
 // Something on its way between an icon and the floor: what an app sends (ToIcon false) or what goes
@@ -571,6 +578,12 @@ public sealed class AppsSpec
     public double LoadingSeconds { get; init; } = 6;
     public double LoadingRadius { get; init; } = 60;
     public double LoadingSlow { get; init; } = 0.6;
+    // Forced update: a wall for UpdateSeconds; each hit of the cat's adds UpdateHitSeconds to its
+    // progress; UpdateClicks clicks on Later close it.
+    public double UpdateWeight { get; init; }
+    public double UpdateSeconds { get; init; } = 8;
+    public double UpdateHitSeconds { get; init; } = 1.2;
+    public int UpdateClicks { get; init; } = 2;
     [JsonPropertyName("list")] public AppSpec[]? List { get; init; }
     [JsonIgnore] public IReadOnlyList<AppSpec> AppList => List ?? BuiltIn;
 

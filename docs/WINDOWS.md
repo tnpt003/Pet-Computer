@@ -971,6 +971,10 @@ the game draws itself (never a real app's name, logo or colours); rules and numb
   stood and a spinner up at floor − 132 DIPs (above the cat's window area) with a time bar. A
   click within 20 DIPs of the spinner closes it (`BattleCloseHazard`). While the cat stands inside
   it `BattleSim.LagFactor` slows the cat's run (`pet.MoveScale`) and its swing cooldown.
+  Or a **forced update** (`AppArt.DrawUpdateWall`, 76×96 DIPs on the floor, drops in, shakes when
+  hit or clicked): its Later button takes the click (`BattleCloseHazard`, one click less each time),
+  the rest of it stops clicks reaching a slime behind. The wall itself is simulation: slimes'
+  `Bounds` end at it, the cat's orders stop at it and its swings hit it.
 - **Turned off (2026-10-24):** the setup panel has a **Battle apps** chip under the difficulty
   (not for the free battle), remembered in preferences (`BattleApps`, on by default) when Ready
   is pressed; for an Expedition run it is set when the run sets out and kept for all its battles

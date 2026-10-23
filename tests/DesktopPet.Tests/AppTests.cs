@@ -303,6 +303,38 @@ internal static class AppTests
         check(rings > 3 && infections > 3, $"With both weighted, waves get a ring or an infection ({rings} rings, {infections} infections in 24 battles)");
         check(BattleData.Settings.Apps!.LoadingWeight > 0 && BattleData.Settings.Apps.InfectWeight > 0, "The shipped data throws loading rings as well as viruses");
 
+        // Malware: a forced update standing between the cat and the slimes as a wall.
+        var wallRules = new AppsSpec { InfectMinThreat = 0, InfectChance = 1, InfectWeight = 0, UpdateWeight = 1, UpdateSeconds = 20, UpdateHitSeconds = 1.2, UpdateClicks = 2 };
+        var walled = Out(wallRules, new[] { 1 });
+        Until(walled, () => walled.Hazards.Count > 0, 10);
+        var update = walled.Hazards.FirstOrDefault();
+        var walledSlime = walled.Slimes.FirstOrDefault(s => s.Targetable);
+        check(update is { Kind: HazardKind.Update, ClicksLeft: 2 } && walledSlime != null && Math.Abs(Math.Abs(update.X - 800) - (BattleSim.WallHalfWidth + BattleSim.CatHalfWidth + 30)) < 1
+              && Math.Sign(update.X - 800) == Math.Sign(walledSlime.X - 800),
+            $"A forced update lands between the cat and the slime ({update?.X:0}, slime {walledSlime?.X:0})");
+        bool woundUp = false;
+        for (double t = 0; t < 3; t += dt) { walled.Step(dt, 800, false); woundUp |= walledSlime!.State == SlimeState.Windup; }
+        check(Math.Abs(walledSlime!.X - update!.X) >= BattleSim.WallHalfWidth + walledSlime.Width / 2 - 0.5 && !woundUp,
+            $"The slime cannot pass the wall nor attack across it ({walledSlime.X:0})");
+        int toWall = Math.Sign(update.X - 800);
+        double nextTo = update.X - toWall * (BattleSim.WallHalfWidth + 30);
+        double ageBefore = update.Age;
+        double back = 800 - toWall * 120;
+        var order = walled.Step(dt, back, false);
+        for (double t = 0; t < 1.5 && order.Command != CatCommand.Move; t += dt) order = walled.Step(dt, back, false); // A swing under way ends first.
+        check(order.Command == CatCommand.Move && Math.Sign(order.X - back) == toWall && Math.Sign(update.X - order.X) == toWall && Math.Abs(order.X - update.X) > BattleSim.WallHalfWidth,
+            $"From further away the cat walks up to the wall, not through it ({order.Command} to {order.X:0}, wall {update.X:0})");
+        int wallHits = 0;
+        for (double t = 0; t < 2; t += dt) { walled.Step(dt, nextTo, false); wallHits += Count(walled, BattleEventKind.WallHit); walled.ClearEvents(); }
+        check(wallHits >= 1 && update.Age - ageBefore >= 1.2 + 2 - 0.1, $"Next to it, the cat hits the wall and each hit brings the update closer to done ({wallHits} hits)");
+        check(walled.CloseHazard(update.Id) && walled.Hazards.Count == 1 && update.ClicksLeft == 1 && walled.CloseHazard(update.Id) && walled.Hazards.Count == 0,
+            "Later twice closes the forced update");
+        var expiring = Out(new AppsSpec { InfectMinThreat = 0, InfectChance = 1, InfectWeight = 0, UpdateWeight = 1, UpdateSeconds = 8 }, new[] { 1 });
+        Until(expiring, () => expiring.Hazards.Count > 0, 10);
+        Run(expiring, 8.5, catX: 800);
+        check(expiring.Hazards.Count == 0, "Left alone, the update is done after its time");
+        check(BattleData.Settings.Apps!.UpdateWeight > 0, "The shipped data throws forced updates too");
+
         // Turned off in the setup panel (2026-10-24): no icons, no viruses; records kept apart, progress still counts.
         var off = new BattleSim(BattleData.Settings, 0, 1600, stage: stage, seed: 2, apps: false);
         Run(off, 20);

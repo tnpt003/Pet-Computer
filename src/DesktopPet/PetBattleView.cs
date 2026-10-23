@@ -41,7 +41,7 @@ public sealed partial class BattleFieldView : FrameworkElement
             // An ad's × first; the rest of an ad hides the slimes behind it.
             if (PopupCloseAt(point) is int popup) PopupClicked?.Invoke(popup);
             else if (HazardAt(point) is int hazard) HazardClicked?.Invoke(hazard);
-            else if (!OnPopup(point) && SlimeAt(point) is int id && sim.Find(id) is { } slime) SlimeClicked?.Invoke(id, point.X - (slime.X - OriginX));
+            else if (!OnPopup(point) && !OnWall(point) && SlimeAt(point) is int id && sim.Find(id) is { } slime) SlimeClicked?.Invoke(id, point.X - (slime.X - OriginX));
             e.Handled = true;
         };
         MouseRightButtonDown += (_, e) => { RightClicked?.Invoke(); e.Handled = true; };

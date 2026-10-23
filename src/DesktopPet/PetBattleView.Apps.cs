@@ -18,13 +18,30 @@ public sealed partial class BattleFieldView
     // Malware's spinner: up in the strip where the cat (in its own window above) does not cover it.
     private static Point Spinner(BattleHazard hazard, double originX, double floor) => new(hazard.X - originX, floor - 132);
 
-    // The malware whose spinner is under the point.
+    // A forced update standing on the floor.
+    private static Rect WallRect(BattleHazard hazard, double originX, double floor) =>
+        new(hazard.X - originX - BattleSim.WallHalfWidth, floor - BattleSim.WallHeight, BattleSim.WallHalfWidth * 2, BattleSim.WallHeight);
+
+    // The malware whose spinner (a loading ring) or Later button (a forced update) is under the point.
     public int? HazardAt(Point point)
     {
         double floor = Floor;
         for (int i = sim.Hazards.Count - 1; i >= 0; i--)
-            if ((point - Spinner(sim.Hazards[i], OriginX, floor)).Length <= 20) return sim.Hazards[i].Id;
+        {
+            var hazard = sim.Hazards[i];
+            bool hit = hazard.Kind == HazardKind.Update ? AppArt.LaterButton(WallRect(hazard, OriginX, floor)).Contains(point)
+                : (point - Spinner(hazard, OriginX, floor)).Length <= 20;
+            if (hit) return hazard.Id;
+        }
         return null;
+    }
+
+    // On a forced update (anywhere): clicks there never reach a slime behind it.
+    public bool OnWall(Point point)
+    {
+        foreach (var hazard in sim.Hazards)
+            if (hazard.Kind == HazardKind.Update && WallRect(hazard, OriginX, Floor).Contains(point)) return true;
+        return false;
     }
 
     private void DrawHazards(DrawingContext dc, double floor, double time)
@@ -35,7 +52,17 @@ public sealed partial class BattleFieldView
             // Opens with a little overshoot; fades in its last half second.
             double k = Math.Min(1, hazard.Age / 0.3), grow = k < 1 ? 0.4 + 0.8 * k - 0.2 * k * k : 1;
             dc.PushOpacity(Math.Clamp((hazard.Life - hazard.Age) / 0.5, 0, 1));
-            AppArt.DrawLoading(dc, hazard.X - OriginX, floor, radius, Spinner(hazard, OriginX, floor), grow, 1 - hazard.Age / hazard.Life, time);
+            if (hazard.Kind == HazardKind.Update)
+            {
+                // Drops in from above and lands; shakes for a moment when hit or clicked.
+                var r = WallRect(hazard, OriginX, floor);
+                double drop = k < 1 ? -(1 - k) * (1 - k) * 60 : 0;
+                double shake = hazard.HitAt >= 0 && sim.Time - hazard.HitAt < 0.25 ? Math.Sin((sim.Time - hazard.HitAt) * 80) * 2.5 : 0;
+                dc.PushTransform(new TranslateTransform(shake, drop));
+                AppArt.DrawUpdateWall(dc, r, Language, hazard.Age / hazard.Life, hazard.ClicksLeft);
+                dc.Pop();
+            }
+            else AppArt.DrawLoading(dc, hazard.X - OriginX, floor, radius, Spinner(hazard, OriginX, floor), grow, 1 - hazard.Age / hazard.Life, time);
             dc.Pop();
         }
     }

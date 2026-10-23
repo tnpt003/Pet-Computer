@@ -144,7 +144,7 @@ public sealed partial class BattleSim
         {
             hazards[i].Age += dt;
             if (hazards[i].Age < hazards[i].Life) continue;
-            AddEffect(BattleEffectKind.Poof, hazards[i].X, 20);
+            AddEffect(BattleEffectKind.Poof, hazards[i].X, hazards[i].Kind == HazardKind.Update ? WallHeight / 2 : 20);
             hazards.RemoveAt(i);
         }
         foreach (var app in desktop)
@@ -248,9 +248,72 @@ public sealed partial class BattleSim
     // one of them can happen).
     private void VirusTurn(AppsSpec rules)
     {
-        double total = rules.InfectWeight + rules.LoadingWeight;
-        if (rules.LoadingWeight > 0 && (rules.InfectWeight <= 0 || appRandom.NextDouble() * total >= rules.InfectWeight)) ThrowLoading(rules);
-        else if (rules.InfectWeight > 0) ShootGoo(rules);
+        double[] weights = { Math.Max(0, rules.InfectWeight), Math.Max(0, rules.LoadingWeight), Math.Max(0, rules.UpdateWeight) };
+        double total = weights.Sum();
+        if (total <= 0) return;
+        int pick = Array.FindIndex(weights, w => w > 0);
+        if (weights.Count(w => w > 0) > 1)
+        {
+            double roll = appRandom.NextDouble() * total;
+            for (pick = 0; pick < weights.Length - 1 && roll >= weights[pick]; pick++) roll -= weights[pick];
+        }
+        switch (pick)
+        {
+            case 0: ShootGoo(rules); break;
+            case 1: ThrowLoading(rules); break;
+            default: ThrowUpdate(rules); break;
+        }
+    }
+
+    // The forced update's half width and height on the strip (the view draws it, the walls use it).
+    public const double WallHalfWidth = 38, WallHeight = 96;
+
+    // A forced update standing strictly between two floor points (the nearest to `from`), or null.
+    public BattleHazard? WallBetween(double from, double to)
+    {
+        BattleHazard? wall = null;
+        foreach (var h in hazards)
+            if (h.Kind == HazardKind.Update && (h.X - from) * (to - h.X) > 0 && (wall == null || Math.Abs(h.X - from) < Math.Abs(wall.X - from))) wall = h;
+        return wall;
+    }
+
+    // The forced update the cat stands in (put down there), or null.
+    private BattleHazard? WallAt(double catX)
+    {
+        foreach (var h in hazards)
+            if (h.Kind == HazardKind.Update && Math.Abs(h.X - catX) < WallHalfWidth + CatHalfWidth - 4) return h;
+        return null;
+    }
+
+    // A slime throws a forced update between the cat and the nearest slime far enough away (one at a
+    // time, never on a slime); with no room for it, a loading ring instead.
+    private void ThrowUpdate(AppsSpec rules)
+    {
+        if (hazards.Any(h => h.Kind == HazardKind.Update)) return;
+        double gap = WallHalfWidth + CatHalfWidth + 30;
+        double? spot = null;
+        foreach (var s in slimes.Where(s => s.Targetable && !s.IsBoss).OrderBy(s => Math.Abs(s.X - lastCatX)))
+        {
+            double x = lastCatX + Math.Sign(s.X - lastCatX) * gap;
+            if (Math.Abs(s.X - lastCatX) < gap + WallHalfWidth + s.Width / 2 || x < Left + WallHalfWidth || x > Right - WallHalfWidth) continue;
+            if (slimes.Any(o => o.Targetable && Math.Abs(o.X - x) < WallHalfWidth + o.Width / 2)) continue;
+            spot = x;
+            break;
+        }
+        if (spot is not double at) { ThrowLoading(rules); return; }
+        var wall = new BattleHazard { Id = nextAppId++, Kind = HazardKind.Update, X = at, Life = rules.UpdateSeconds, ClicksLeft = Math.Max(1, rules.UpdateClicks) };
+        hazards.Add(wall);
+        events.Add(new(BattleEventKind.HazardOpened, at, wall.Id));
+    }
+
+    // The cat's swing on a forced update: its progress jumps.
+    private void HitWall(BattleHazard wall)
+    {
+        if (AppRules is not AppsSpec rules) return;
+        wall.Age += rules.UpdateHitSeconds;
+        wall.HitAt = Time;
+        AddEffect(BattleEffectKind.Spark, wall.X, WallHeight * 0.5);
+        events.Add(new(BattleEventKind.WallHit, wall.X, wall.Id));
     }
 
     // A slime throws a loading ring where the cat stands (one at a time).
@@ -263,10 +326,17 @@ public sealed partial class BattleSim
         events.Add(new(BattleEventKind.HazardOpened, x, hazard.Id));
     }
 
-    // A click on malware's spinner: it closes (whatever the cat is doing).
+    // A click on malware's spinner or Later button: it closes (a forced update after its clicks),
+    // whatever the cat is doing.
     public bool CloseHazard(int id)
     {
         if (FindHazard(id) is not BattleHazard hazard || Over || Paused || ChoosingUpgrade) return false;
+        if (hazard.Kind == HazardKind.Update && --hazard.ClicksLeft > 0)
+        {
+            hazard.HitAt = Time;
+            events.Add(new(BattleEventKind.HazardTapped, hazard.X, hazard.Id));
+            return true;
+        }
         hazards.Remove(hazard);
         AddEffect(BattleEffectKind.Poof, hazard.X, 20);
         events.Add(new(BattleEventKind.HazardClosed, hazard.X, hazard.Id));

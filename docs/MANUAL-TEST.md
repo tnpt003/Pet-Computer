@@ -488,3 +488,7 @@ Tự động đã có: Phần thưởng trên sảnh (ô có hình, khóa, Mới
 ### App độc: vòng loading (2026-10-24)
 - [ ] Trận Phiêu lưu từ màn có virus (threat ≥ 1,5): thỉnh thoảng thay vì virus vào icon, một vòng loading xuất hiện ngay chỗ mèo (mảng xanh dưới sàn + vòng xoay chấm trên cao), banner lần đầu giải thích. Mèo trong vòng chạy/đánh chậm rõ; ra khỏi vòng thì bình thường.
 - [ ] Bấm vòng xoay: vòng đóng ngay (có tiếng "pop"). Để yên ~6 s: tự đóng. Cầm mèo lên: vòng đứng yên, không làm chậm. Pause/menu: đứng yên. Dọn xong đợt: vòng đóng. Vòng xoay không bị mèo che, bấm được.
+
+### App độc: cập nhật bắt buộc (2026-10-24)
+- [ ] Trong trận có virus: đôi khi một cửa sổ "CẬP NHẬT" rơi xuống giữa mèo và slime; banner lần đầu giải thích. Slime bên kia không đi qua, không đánh được mèo; mèo đi tới đánh tường (tiếng "clank", tường rung, % nhảy lên).
+- [ ] Bấm "Nhắc sau ×2" hai lần: lần đầu còn "Nhắc sau", lần hai tường biến mất. Để yên ~8 s (ít hơn nếu mèo đánh): tự xong. Trùm vẫn nhảy qua. Bấm vào thân tường không chọn slime phía sau. Cầm mèo lên thả sang bên kia tường: mèo đánh slime bên đó bình thường.

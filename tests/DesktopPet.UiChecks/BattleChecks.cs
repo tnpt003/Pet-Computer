@@ -787,6 +787,9 @@ internal static class BattleChecks
             appField.hazards.Add(new BattleHazard { Id = 98, Kind = HazardKind.Loading, X = 200, Age = 1, Life = 6 });
             check(stripView.HazardAt(new Point(200, appFloor - 132)) == 98 && stripView.HazardAt(new Point(200, appFloor - 20)) == null,
                 "A loading ring takes clicks on its spinner above the cat, not on the floor patch");
+            appField.hazards.Add(new BattleHazard { Id = 97, Kind = HazardKind.Update, X = 330, Age = 3, Life = 8, ClicksLeft = 2 });
+            check(stripView.HazardAt(new Point(330, appFloor - 15)) == 97 && stripView.HazardAt(new Point(330, appFloor - 60)) == null && stripView.OnWall(new Point(330, appFloor - 60)),
+                "A forced update takes clicks on its Later button; the rest of it is a wall clicks do not pass");
             if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string appsReview)
             {
                 void Save(Visual visual, int width, int height, string name)

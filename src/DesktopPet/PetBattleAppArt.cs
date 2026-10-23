@@ -328,6 +328,37 @@ public static class AppArt
         dc.DrawRoundedRectangle(LoadingDot, null, new Rect(track.X, track.Y, track.Width * Math.Clamp(left, 0, 1), track.Height), 2, 2);
         dc.Pop();
     }
+    // Malware's forced update: a grey window standing on the floor (r), titled "UPDATE", with its
+    // percentage, a progress bar and a Later button (clicks left after it).
+    public static Rect LaterButton(Rect r) => new(r.X + 7, r.Bottom - 24, r.Width - 14, 17);
+    public static void DrawUpdateWall(DrawingContext dc, Rect r, string language, double progress, int clicksLeft)
+    {
+        dc.DrawRoundedRectangle(null, HaloPen, r, 5, 5);
+        dc.DrawRoundedRectangle(WindowGrey, InkPen, r, 5, 5);
+        dc.DrawRoundedRectangle(UpdateBar, InkPen, new Rect(r.X, r.Y, r.Width, 16), 5, 5);
+        var (title, tw, th) = Word(PetText.Pick(language, "CẬP NHẬT", "UPDATE"), 8.5);
+        dc.PushTransform(new TranslateTransform(r.X + r.Width / 2 - tw / 2, r.Y + 8 - th / 2));
+        dc.DrawGeometry(Brushes.White, null, title);
+        dc.Pop();
+        // Two arrows chasing round: "updating".
+        var c = new Point(r.X + r.Width / 2, r.Y + 32);
+        dc.DrawEllipse(null, UpdateArrow, c, 9, 9);
+        var (percent, pw, ph) = Word($"{Math.Clamp((int)(progress * 100), 0, 99)}%", 13);
+        dc.PushTransform(new TranslateTransform(c.X - pw / 2, r.Y + 46));
+        dc.DrawGeometry(Ink, null, percent);
+        dc.Pop();
+        var track = new Rect(r.X + 7, r.Y + 50 + ph, r.Width - 14, 5);
+        dc.DrawRoundedRectangle(AdTrack, null, track, 2.5, 2.5);
+        dc.DrawRoundedRectangle(UpdateFill, null, new Rect(track.X, track.Y, track.Width * Math.Clamp(progress, 0, 1), track.Height), 2.5, 2.5);
+        var button = LaterButton(r);
+        dc.DrawRoundedRectangle(Brushes.White, InkPen, button, 4, 4);
+        var (later, lw, lh) = Word(PetText.Pick(language, "Nhắc sau", "Later") + (clicksLeft > 1 ? $" ×{clicksLeft}" : ""), 8.5);
+        dc.PushTransform(new TranslateTransform(button.X + button.Width / 2 - lw / 2, button.Y + button.Height / 2 - lh / 2));
+        dc.DrawGeometry(Ink, null, later);
+        dc.Pop();
+    }
+    private static readonly Brush UpdateBar = Frozen(255, 0x4A, 0x8F, 0xD8), UpdateFill = Frozen(255, 0x4A, 0x8F, 0xD8);
+    private static readonly Pen UpdateArrow = FrozenPen(Frozen(255, 0x4A, 0x8F, 0xD8), 2.6, new DashStyle(new[] { 2.2, 1.4 }, 0));
     private static readonly Brush LoadingFloor = Frozen(70, 0x5C, 0x9C, 0xF0), LoadingDot = Frozen(255, 0x3D, 0x7B, 0xD9), LoadingTrack = Frozen(160, 255, 255, 255);
     private static readonly Pen LoadingRim = FrozenPen(Frozen(200, 0x3D, 0x7B, 0xD9), 1.6, new DashStyle(new[] { 3.0, 2.5 }, 0));
 

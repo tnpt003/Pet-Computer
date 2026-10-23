@@ -5,6 +5,7 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using DesktopPet;
+using static PetPrivate;
 
 // Battle Mode's first-battle guide and its danger feedback in the real pet window: the guide
 // opens once, holds the battle while open, is mouse-only and never takes focus; a slime holding
@@ -12,10 +13,6 @@ using DesktopPet;
 // preferences only (the real preferences file is never written).
 internal static class TutorialChecks
 {
-    private const BindingFlags Flags = BindingFlags.NonPublic | BindingFlags.Instance;
-    private static T Field<T>(PetWindow window, string name) => (T)typeof(PetWindow).GetField(name, Flags)!.GetValue(window)!;
-    private static void SetField(PetWindow window, string name, object? value) => typeof(PetWindow).GetField(name, Flags)!.SetValue(window, value);
-    private static object? Call(PetWindow window, string name, params object?[] args) => typeof(PetWindow).GetMethod(name, Flags)!.Invoke(window, args);
     private static MouseButtonEventArgs MouseEvent(RoutedEvent routedEvent) => new(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Left) { RoutedEvent = routedEvent };
     [System.Runtime.InteropServices.DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")]
     private static extern IntPtr GetWindowLongPtr(IntPtr hwnd, int index);

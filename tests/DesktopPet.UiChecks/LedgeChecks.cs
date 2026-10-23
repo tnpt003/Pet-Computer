@@ -1,13 +1,11 @@
 using System.Reflection;
 using DesktopPet;
+using static PetPrivate;
 
 // Walking on windows inside the real PetWindow, with a fake list of app windows.
 internal static class LedgeChecks
 {
     private const BindingFlags Private = BindingFlags.NonPublic | BindingFlags.Instance;
-
-    private static T Field<T>(PetWindow window, string name) => (T)typeof(PetWindow).GetField(name, Private)!.GetValue(window)!;
-    private static void SetField(PetWindow window, string name, object? value) => typeof(PetWindow).GetField(name, Private)!.SetValue(window, value);
 
     // Replaces the Windows probes; the list is read fresh on every scan.
     public static void SetWindows(PetWindow window, Func<IReadOnlyList<WindowSnapshot>> windows)
@@ -24,9 +22,9 @@ internal static class LedgeChecks
     public static void Run(PetWindow window, PetModel pet, PetBehavior behavior, PetPreferences preferences, Action<bool, string> check)
     {
         var physics = Field<PetPhysics>(window, "physics");
-        var tickLedges = typeof(PetWindow).GetMethod("TickLedges", Private)!;
-        var tickFeatures = typeof(PetWindow).GetMethod("TickFeatures", Private)!;
-        var ownsMovement = typeof(PetWindow).GetMethod("FeatureOwnsMovement", Private)!;
+        var tickLedges = MethodOf("TickLedges");
+        var tickFeatures = MethodOf("TickFeatures");
+        var ownsMovement = MethodOf("FeatureOwnsMovement");
         const double step = 1.0 / 120;
         void Simulate(double seconds, Func<bool>? until = null)
         {
@@ -66,8 +64,8 @@ internal static class LedgeChecks
 
         // The once-a-second floor correction leaves a pet on a window alone.
         SetField(window, "boundsTimer", 1.0);
-        typeof(PetWindow).GetField("previous", Private)!.SetValue(window, Field<System.Diagnostics.Stopwatch>(window, "clock").Elapsed.TotalSeconds - 0.05);
-        typeof(PetWindow).GetMethod("Tick", Private)!.Invoke(window, new object?[] { null, EventArgs.Empty });
+        FieldOf("previous").SetValue(window, Field<System.Diagnostics.Stopwatch>(window, "clock").Elapsed.TotalSeconds - 0.05);
+        MethodOf("Tick").Invoke(window, new object?[] { null, EventArgs.Empty });
         check(pet.LedgeId == 77 && Math.Abs(pet.Y - (app.Top - 112)) < 1, "The monitor/work-area check does not pull a pet off its window");
 
         // Minimized or closed: it falls to the floor.
@@ -92,7 +90,7 @@ internal static class LedgeChecks
         pet.X = app.Right + PetSettings.ClimbOffset - 56;
         pet.Action = PetAction.Climbing; pet.Grounded = false; pet.ClimbId = 77; pet.ClimbSide = 1;
         Simulate(1);
-        typeof(PetWindow).GetMethod("CancelFeatureActivity", Private)!.Invoke(window, null);
+        MethodOf("CancelFeatureActivity").Invoke(window, null);
         check(pet.Action == PetAction.Jumping && !pet.Grounded && pet.ClimbId == 0, "A click or right-click makes a climbing pet let go");
         Simulate(4, () => pet.Grounded);
 

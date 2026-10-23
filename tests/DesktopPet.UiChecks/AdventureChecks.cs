@@ -5,16 +5,13 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
 using DesktopPet;
+using static PetPrivate;
 
 // Adventure milestone 2 in the real pet window: menu → Adventure → map → stage setup → battle →
 // result → progress saved → next stage open; loss, cancel, ending a run, custom data, closing and
 // reopening (the progress read again from its file). A temporary progress file only.
 internal static class AdventureChecks
 {
-    private const BindingFlags Flags = BindingFlags.NonPublic | BindingFlags.Instance;
-    private static void SetField(PetWindow window, string name, object? value) => typeof(PetWindow).GetField(name, Flags)!.SetValue(window, value);
-    private static T Field<T>(PetWindow window, string name) => (T)typeof(PetWindow).GetField(name, Flags)!.GetValue(window)!;
-    private static object? Call(PetWindow window, string name, params object[] args) => typeof(PetWindow).GetMethod(name, Flags)!.Invoke(window, args);
     private static void SetContext(PetWindow window, bool fullscreen, double idle) =>
         SetField(window, "contextProbe", new Func<(bool, double)>(() => (fullscreen, idle)));
     [System.Runtime.InteropServices.DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")]

@@ -1,14 +1,13 @@
 using System.Reflection;
 using System.Windows;
 using DesktopPet;
+using static PetPrivate;
 
 // The game panels at their tallest with the built-in data, in both languages, against a screen
 // 480 DIPs tall (1280×720 at 150 %): each opens 12 DIPs below the top, so it has 456 DIPs.
 // Measurement first (the Expedition map was found too tall in milestone 5). In-memory progress only.
 internal static class PanelHeightChecks
 {
-    private const BindingFlags Flags = BindingFlags.NonPublic | BindingFlags.Instance;
-    private static object? Call(PetWindow window, string name, params object[] args) => typeof(PetWindow).GetMethod(name, Flags)!.Invoke(window, args);
     private static Window? Find(string title) => Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.Title == title && w.IsLoaded);
     public const double Room = 480 - 24;
 
@@ -75,7 +74,7 @@ internal static class PanelHeightChecks
                         Expedition: new ExpeditionStepOutcome(true, 5, true, true, true, 64, 120, 0, true, true, false, data.Expedition.Keepsakes.Select(k => k.Id).ToList()))),
                     ("free", new(true, 30, 312, 64, 120, Boss: true, BossName: "Slime King", News: new BattleRecordNews(true, true))),
                 };
-                typeof(PetWindow).GetField("adventureSaveFailed", Flags)!.SetValue(window, true);
+                FieldOf("adventureSaveFailed").SetValue(window, true);
                 foreach (var (where, summary) in summaries)
                 {
                     Call(window, "ShowBattleSummary", summary);
@@ -83,7 +82,7 @@ internal static class PanelHeightChecks
                     Note("Pet result", $"{lang} {where}");
                     Call(window, "CloseBattleSummary");
                 }
-                typeof(PetWindow).GetField("adventureSaveFailed", Flags)!.SetValue(window, false);
+                FieldOf("adventureSaveFailed").SetValue(window, false);
             }
             foreach (var panel in new[] { "Pet adventure", "Pet result" })
                 check(tallest[panel].Height > 100 && tallest[panel].Height <= Room,
@@ -94,7 +93,7 @@ internal static class PanelHeightChecks
             var (natural, at) = tallest["Pet setup"];
             var setupStage = stages.FirstOrDefault(s => at.EndsWith(" " + s.Id));
             prefs.Language = at[..2];
-            var boundsField = typeof(PetWindow).GetField("bounds", Flags)!;
+            var boundsField = FieldOf("bounds");
             var realBounds = (Area)boundsField.GetValue(window)!;
             boundsField.SetValue(window, realBounds with { Bottom = realBounds.Top + 480 });
             window.OpenBattlePrep(stage: setupStage);
@@ -103,7 +102,7 @@ internal static class PanelHeightChecks
             var setup = Find("Pet setup")!;
             static IEnumerable<DependencyObject> All(DependencyObject node) => LogicalTreeHelper.GetChildren(node).OfType<DependencyObject>().SelectMany(All).Prepend(node);
             var scroller = All(setup).OfType<System.Windows.Controls.ScrollViewer>().FirstOrDefault();
-            var ready = (FrameworkElement)typeof(PetWindow).GetField("prepReady", Flags)!.GetValue(window)!;
+            var ready = (FrameworkElement)FieldOf("prepReady").GetValue(window)!;
             double readyBottom = ready.TransformToAncestor(setup).Transform(new Point(0, ready.ActualHeight)).Y;
             check(capped <= Room + 0.5 && scroller is { ScrollableHeight: > 0 } && readyBottom <= capped,
                 $"On a 480-DIP screen the tallest setup panel is capped ({natural:0} → {capped:0} DIPs, {at}): the content scrolls, Ready stays in view");

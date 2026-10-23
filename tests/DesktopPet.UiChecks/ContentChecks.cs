@@ -3,16 +3,13 @@ using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
 using DesktopPet;
+using static PetPrivate;
 
 // Adventure milestone 4 in the real pet window: reward accessories (hidden in Settings until
 // received, offered after, never put on by themselves), the result panel's reward line, End
 // going back to the map, and the herb slime drawn while it heals. In-memory progress only.
 internal static class ContentChecks
 {
-    private const BindingFlags Flags = BindingFlags.NonPublic | BindingFlags.Instance;
-    private static void SetField(PetWindow window, string name, object? value) => typeof(PetWindow).GetField(name, Flags)!.SetValue(window, value);
-    private static T Field<T>(PetWindow window, string name) => (T)typeof(PetWindow).GetField(name, Flags)!.GetValue(window)!;
-    private static object? Call(PetWindow window, string name, params object[] args) => typeof(PetWindow).GetMethod(name, Flags)!.Invoke(window, args);
     private static Window? Find(string title) => Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.Title == title && w.IsLoaded);
     private static string Text(DependencyObject node) => node is TextBlock t ? t.Text + "|" : string.Concat(LogicalTreeHelper.GetChildren(node).OfType<DependencyObject>().Select(Text));
 

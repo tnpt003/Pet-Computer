@@ -6,6 +6,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using DesktopPet;
 using DesktopPet.AI;
+using static PetPrivate;
 
 internal static class Program
 {
@@ -26,7 +27,7 @@ internal static class Program
         // Nor on the real mouse: a cursor left on another monitor carried the dragged pet there
         // (and paused battles as "away"). A still cursor in the middle of the primary work area.
         var primary = System.Windows.Forms.Screen.PrimaryScreen!.WorkingArea;
-        typeof(PetWindow).GetField("cursorProbe", BindingFlags.NonPublic | BindingFlags.Instance)!
+        FieldOf("cursorProbe")
             .SetValue(window, (Func<Point>)(() => new Point(primary.Left + primary.Width / 2, primary.Top + primary.Height / 2)));
         window.Loaded += async (_, _) =>
         {
@@ -56,11 +57,11 @@ internal static class Program
     }
 
     private static void SetContext(PetWindow window, bool fullscreen, double idle) =>
-        typeof(PetWindow).GetField("contextProbe", BindingFlags.NonPublic | BindingFlags.Instance)!
+        FieldOf("contextProbe")
             .SetValue(window, new Func<(bool, double)>(() => (fullscreen, idle)));
 
     private static void TickContext(PetWindow window, double dt) =>
-        typeof(PetWindow).GetMethod("TickContext", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(window, new object[] { dt });
+        MethodOf("TickContext").Invoke(window, new object[] { dt });
 
     // Every element of type T under root (logical tree), in document order.
     private static IEnumerable<T> Descendants<T>(object root) where T : DependencyObject
@@ -72,9 +73,6 @@ internal static class Program
             foreach (var inner in Descendants<T>(child)) yield return inner;
         }
     }
-
-    private static T Field<T>(PetWindow window, string name) =>
-        (T)typeof(PetWindow).GetField(name, BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(window)!;
 
     private static readonly List<string> failures = new();
 
@@ -118,7 +116,7 @@ internal static class Program
         var pet = Field<PetModel>(window, "pet");
         var behavior = Field<PetBehavior>(window, "behavior");
         var ai = new DelayedSource();
-        typeof(PetWindow).GetField("ai", BindingFlags.NonPublic | BindingFlags.Instance)!.SetValue(window, ai);
+        FieldOf("ai").SetValue(window, ai);
         window.Reset();
         behavior.Step(pet, 3); // Starts a pending Python-equivalent decision, with immediate local fallback.
         window.Activate(); // Synthetic routed input needs an active presentation source.
@@ -144,9 +142,9 @@ internal static class Program
         await Task.Delay(70);
         // The real user's cursor may move during the test. Compare a fresh update
         // with its current global position rather than assuming a stationary mouse.
-        typeof(PetWindow).GetMethod("UpdateDrag", BindingFlags.NonPublic | BindingFlags.Instance)!
+        MethodOf("UpdateDrag")
             .Invoke(window, new object[] { 1.0 / 120 });
-        var cursorNow = (Point)typeof(PetWindow).GetMethod("CursorPosition", BindingFlags.NonPublic | BindingFlags.Instance)!
+        var cursorNow = (Point)MethodOf("CursorPosition")
             .Invoke(window, null)!;
         var easedOffset = Field<Point>(window, "dragOffset");
         var workArea = Field<Area>(window, "bounds");
@@ -214,12 +212,12 @@ internal static class Program
         bool CardNextToCat(double testScale)
         {
             if (statusCard == null) return false;
-            var scaleField = typeof(PetWindow).GetField("scale", BindingFlags.NonPublic | BindingFlags.Instance)!;
+            var scaleField = FieldOf("scale");
             double realScale = (double)scaleField.GetValue(window)!;
             scaleField.SetValue(window, testScale);
             try
             {
-                typeof(PetWindow).GetMethod("PlaceStatusCard", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(window, null);
+                MethodOf("PlaceStatusCard").Invoke(window, null);
                 GetWindowRect(new System.Windows.Interop.WindowInteropHelper(statusCard).Handle, out var rect);
                 var petSettings = Field<PetSettings>(window, "settings");
                 var size = ((FrameworkElement)statusCard.Content).DesiredSize;
@@ -228,13 +226,13 @@ internal static class Program
             }
             finally { scaleField.SetValue(window, realScale); }
         }
-        double petScale = (double)typeof(PetWindow).GetField("scale", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(window)!;
+        double petScale = (double)FieldOf("scale").GetValue(window)!;
         Check(CardNextToCat(petScale) && CardNextToCat(1.5), "Status card is placed right above the cat in the pet's monitor scale (real and 150%)");
         // The card's last-words line: the newer of the latest speech and thought bubble.
         List<string> StatusTexts(string method, object arg)
         {
-            typeof(PetWindow).GetMethod(method, BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(window, new[] { arg });
-            typeof(PetWindow).GetMethod("RefreshStatusCard", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(window, null);
+            MethodOf(method).Invoke(window, new[] { arg });
+            MethodOf("RefreshStatusCard").Invoke(window, null);
             statusRoot!.UpdateLayout();
             return Descendants<System.Windows.Controls.TextBlock>(statusRoot).Where(t => t.IsVisible).Select(t => t.Text).ToList();
         }
@@ -408,7 +406,7 @@ internal static class Program
             "Thrown flight presents an interpolated position between physics states");
         window.Reset();
         await Task.Delay(50);
-        typeof(PetWindow).GetMethod("ShowSpeech", BindingFlags.NonPublic | BindingFlags.Instance)!
+        MethodOf("ShowSpeech")
             .Invoke(window, new object[] { new PetLine("hello:vi:test", "Chào sen! Mochi có mặt rồi đây~") });
         await Task.Delay(150);
         var speechWindow = Field<Window>(window, "speechWindow");
@@ -436,7 +434,7 @@ internal static class Program
             SaveBubble("speech-vi");
             pet.Speech.Hide(); await Task.Delay(50);
             pet.Speech.Step(pet, 20);
-            typeof(PetWindow).GetMethod("ShowSpeech", BindingFlags.NonPublic | BindingFlags.Instance)!
+            MethodOf("ShowSpeech")
                 .Invoke(window, new object[] { new PetLine("x:en:test", "What kind of animal is that cursor? Mochi wants to know!") });
             await Task.Delay(150);
             SaveBubble("speech-en-long");
@@ -570,13 +568,13 @@ internal static class Program
         Check(window.GiveTreat() && pet.TreatRemaining > 0 && pet.Activity.Treats == 0,
             "Treat appears before consumption or energy reward");
         Check(!window.GiveTreat(), "Treat cooldown prevents repeated feeding");
-        void FeatureStep(double dt) => typeof(PetWindow).GetMethod("TickFeatures", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(window, new object[] { dt });
+        void FeatureStep(double dt) => MethodOf("TickFeatures").Invoke(window, new object[] { dt });
         FeatureStep(0.2);
         Check(pet.Action == PetAction.Sitting && pet.VX == 0, "Eating stays planted");
         for (int i = 0; i < 50; i++) { FeatureStep(0.1); pet.Emotions.Step(pet, 0.1); }
         Check(pet.TreatRemaining == 0 && pet.Activity.Treats == 1 && pet.Emotions.Current == PetEmotion.Happy,
             "Completed eating gives one energy reward and a satisfied reaction");
-        Check((bool)typeof(PetWindow).GetMethod("FeatureOwnsMovement", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(window, null)!,
+        Check((bool)MethodOf("FeatureOwnsMovement").Invoke(window, null)!,
             "Satisfied pause protects the happy reaction from immediate AI movement");
         window.Reset();
         window.ToggleToy();
@@ -607,7 +605,7 @@ internal static class Program
         window.Reset();
         Check(window.StartLaser() && window.LaserActive && Field<Window?>(window, "laserWindow") is { IsVisible: true, ShowActivated: false, Focusable: false, IsHitTestVisible: false },
             "Laser pointer shows a click-through red dot that never takes focus");
-        Check((bool)typeof(PetWindow).GetMethod("FeatureOwnsMovement", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(window, null)!,
+        Check((bool)MethodOf("FeatureOwnsMovement").Invoke(window, null)!,
             "The laser game owns movement (no random actions or AI moves meanwhile)");
         var laserChase = Field<LaserChase>(window, "laserChase");
         laserChase.Reset();
@@ -641,11 +639,11 @@ internal static class Program
         Check(window.StartLaser() && window.LaserActive, "Quiet mode still lets the user start the laser game");
         FeatureStep(0.1);
         Check(window.LaserActive, "Quiet mode does not stop a laser game the user started");
-        typeof(PetWindow).GetMethod("StopLaser", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(window, null);
+        MethodOf("StopLaser").Invoke(window, null);
         preferences.Quiet = quietBefore; behavior.Quiet = quietBefore;
         double? oldRestX = preferences.RestX, oldRestY = preferences.RestY;
         preferences.RestX = pet.X - 100; preferences.RestY = pet.Y;
-        typeof(PetWindow).GetField("returningHome", BindingFlags.NonPublic | BindingFlags.Instance)!.SetValue(window, true);
+        FieldOf("returningHome").SetValue(window, true);
         FeatureStep(0.1);
         Check(pet.Action == PetAction.Walking && pet.VX < 0, "Favorite spot is approached by walking, not teleporting");
         preferences.RestX = oldRestX; preferences.RestY = oldRestY;
@@ -753,9 +751,9 @@ internal static class Program
             "Cancel closes settings without changing anything");
         window.ShowPetSettings();
         customize = Field<Window>(window, "settingsWindow");
-        var playSound = typeof(PetWindow).GetMethod("PlayPetSound", BindingFlags.NonPublic | BindingFlags.Instance)!;
+        var playSound = MethodOf("PlayPetSound");
         Check(!(bool)playSound.Invoke(window, new object?[] { "meow", true, 0.0 })!, "Zero-volume preview stays silent");
-        typeof(PetWindow).GetMethod("ShowBehaviorSettings", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(window, null);
+        MethodOf("ShowBehaviorSettings").Invoke(window, null);
         var tuningWindow = Field<Window>(window, "behaviorSettingsWindow");
         var tuningSliders = Descendants<System.Windows.Controls.Slider>(tuningWindow).ToArray();
         System.Windows.Controls.Button TuningButton(bool save) => Descendants<System.Windows.Controls.Button>(tuningWindow)
@@ -773,7 +771,7 @@ internal static class Program
         tuningSliders[0].Value = 0.23;
         TuningButton(true).RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));
         Check(preferences.Tuning?.Playfulness == 0.23, "Tuning save applies draft without writing personal test preferences");
-        typeof(PetWindow).GetMethod("ShowBehaviorSettings", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(window, null);
+        MethodOf("ShowBehaviorSettings").Invoke(window, null);
         tuningWindow = Field<Window>(window, "behaviorSettingsWindow");
         Descendants<System.Windows.Controls.TextBox>(tuningWindow).First().Text = "NaN";
         Check(!TuningButton(true).IsEnabled, "Tuning editor refuses nonfinite input");
@@ -784,7 +782,7 @@ internal static class Program
         preferences.PositionMonitor = "disconnected-monitor";
         preferences.PositionX = 0.3; preferences.PositionY = 1;
         preferences.RestMonitor = "disconnected-monitor"; preferences.RestFractionX = 0.7;
-        typeof(PetWindow).GetMethod("RestorePosition", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(window, null);
+        MethodOf("RestorePosition").Invoke(window, null);
         var restoredBounds = Field<Area>(window, "bounds");
         Check(pet.Grounded && pet.X >= restoredBounds.Left && pet.X <= restoredBounds.Right - 112
             && preferences.RestX >= restoredBounds.Left && preferences.RestX <= restoredBounds.Right - 112,
@@ -800,7 +798,7 @@ internal static class Program
             for (; waking < 0.6; waking += 1.0 / 60) behavior.Step(pet, 1.0 / 60);
             window.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Right) { RoutedEvent = UIElement.MouseRightButtonDownEvent });
             window.SetAiEnabled(false);
-            typeof(PetWindow).GetMethod("CancelFeatureActivity", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(window, null); // Quiet menu path.
+            MethodOf("CancelFeatureActivity").Invoke(window, null); // Quiet menu path.
             while (pet.Action == PetAction.Waking && waking < 5) { behavior.Step(pet, 1.0 / 60); waking += 1.0 / 60; }
             Check(Math.Abs(waking - PetSettings.WakingDuration) < 0.05,
                 $"Right-click, AI toggle and Quiet toggle during waking do not stretch it ({waking:F2} s)");
@@ -811,8 +809,8 @@ internal static class Program
             string languageBefore = preferences.Language;
             bool speechBefore = preferences.Speech;
             preferences.Speech = true; preferences.Language = "en";
-            var requestDecision = typeof(PetWindow).GetMethod("RequestDecision", BindingFlags.NonPublic | BindingFlags.Instance)!;
-            var aiField = typeof(PetWindow).GetField("ai", BindingFlags.NonPublic | BindingFlags.Instance)!;
+            var requestDecision = MethodOf("RequestDecision");
+            var aiField = FieldOf("ai");
             var staleSource = new DelayedSource();
             aiField.SetValue(window, staleSource);
             requestDecision.Invoke(window, null);
@@ -900,7 +898,7 @@ internal static class Program
             { RoutedEvent = UIElement.MouseRightButtonDownEvent });
         bool queuedWhileWaking = pet.Action == PetAction.Waking && !window.DoNow(PetAction.Grooming) &&
                                  Field<PetAction?>(window, "queuedCommand") == PetAction.Grooming;
-        var tickCommands = typeof(PetWindow).GetMethod("TickCommands", BindingFlags.NonPublic | BindingFlags.Instance)!;
+        var tickCommands = MethodOf("TickCommands");
         tickCommands.Invoke(window, null);
         bool waitedForWaking = pet.Action == PetAction.Waking;
         for (int i = 0; i < 80 && pet.Action == PetAction.Waking; i++) behavior.Step(pet, 1.0 / 60);
@@ -982,8 +980,8 @@ internal static class Program
         preferences.Sounds = true;
         SetContext(window, true, 0);
         TickContext(window, 1.1);
-        var playSound = typeof(PetWindow).GetMethod("PlayPetSound", BindingFlags.NonPublic | BindingFlags.Instance)!;
-        var showSpeech = typeof(PetWindow).GetMethod("ShowSpeech", BindingFlags.NonPublic | BindingFlags.Instance)!;
+        var playSound = MethodOf("PlayPetSound");
+        var showSpeech = MethodOf("ShowSpeech");
         showSpeech.Invoke(window, new object[] { new DesktopPet.AI.PetLine("hello:vi:test", "Chào sen!") });
         Check(behavior.Quiet && preferences.Quiet == quiet && !(bool)playSound.Invoke(window, new object?[] { "meow", false, null })! && !pet.Speech.Visible,
             "A fullscreen app makes the pet quiet and silent without changing the saved Quiet setting");
@@ -1022,8 +1020,7 @@ internal static class Program
 
     private static void LifeChecks(PetWindow window, PetModel pet, PetPreferences preferences)
     {
-        var flags = BindingFlags.NonPublic | BindingFlags.Instance;
-        void Call(string name, params object[] args) => typeof(PetWindow).GetMethod(name, flags)!.Invoke(window, args);
+        void Call(string name, params object[] args) => PetPrivate.Call(window, name, args);
         // Pending speech: a line during eating appears right after the meal.
         window.Reset();
         pet.Speech.Hide(); pet.Speech.Step(pet, 20);
@@ -1067,7 +1064,7 @@ internal static class Program
         string Texts() => string.Join("\n", Descendants<System.Windows.Controls.TextBlock>(diaryPanel).Select(t => t.Text));
         Check(diaryWindow.IsVisible && Texts().Contains("AI đang tắt") && Texts().Contains("Được vuốt"), "Diary opens and explains it only has this session's numbers when the AI is off");
         var habits = Enumerable.Range(0, 24).Select(h => h is 20 or 21 ? 8.0 : h == 9 ? 3 : 0).ToArray();
-        typeof(PetWindow).GetField("aiDiary", flags)!.SetValue(window,
+        FieldOf("aiDiary").SetValue(window,
             new DesktopPet.AI.PetDiary(12, "2026-10-01", 40, 9, 7, 1, 30, 61.5, new[] { 50, 55.5, 61.5 }, habits));
         preferences.Language = "en";
         Call("RefreshDiary");
@@ -1087,14 +1084,14 @@ internal static class Program
         }
         diaryWindow.Close();
         preferences.Language = language;
-        typeof(PetWindow).GetField("aiDiary", flags)!.SetValue(window, null);
+        FieldOf("aiDiary").SetValue(window, null);
     }
 
     private static void CrossDragThreshold(PetWindow window)
     {
-        var cursor = (Point)typeof(PetWindow).GetMethod("CursorPosition", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(window, null)!;
-        typeof(PetWindow).GetField("pressPosition", BindingFlags.NonPublic | BindingFlags.Instance)!.SetValue(window, new Point(cursor.X - 10, cursor.Y));
-        typeof(PetWindow).GetMethod("CheckDragThreshold", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(window, null);
+        var cursor = (Point)MethodOf("CursorPosition").Invoke(window, null)!;
+        FieldOf("pressPosition").SetValue(window, new Point(cursor.X - 10, cursor.Y));
+        MethodOf("CheckDragThreshold").Invoke(window, null);
     }
 
     private sealed class DelayedSource : IPetDecisionSource

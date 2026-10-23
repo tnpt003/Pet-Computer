@@ -3,15 +3,13 @@ using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
 using DesktopPet;
+using static PetPrivate;
 
 // Adventure milestone 5 in the real pet window: a stage's tip (once, pauses the battle, seen is
 // saved, again from the setup panel), pauses stacking (tip + upgrade + user), the HUD naming the
 // stage, and progress that cannot be saved (map and result say so). Temporary files only.
 internal static class AcceptanceChecks
 {
-    private const BindingFlags Flags = BindingFlags.NonPublic | BindingFlags.Instance;
-    private static T Field<T>(PetWindow window, string name) => (T)typeof(PetWindow).GetField(name, Flags)!.GetValue(window)!;
-    private static object? Call(PetWindow window, string name, params object[] args) => typeof(PetWindow).GetMethod(name, Flags)!.Invoke(window, args);
     private static Window? Find(string title) => Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.Title == title && w.IsLoaded);
     private static string Text(DependencyObject node) => node is TextBlock t ? t.Text + "|" : string.Concat(LogicalTreeHelper.GetChildren(node).OfType<DependencyObject>().Select(Text));
 

@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using DesktopPet;
+using static PetPrivate;
 
 // Infinity (2026-10-22) in the real pet window: locked until its Adventure stage is won → the hub
 // opens the shared setup panel → Ready starts a battle that is never won (the HUD counts waves
@@ -11,9 +12,6 @@ using DesktopPet;
 // with the wave reached and a record (in memory only), Play again, the hub's card shows the best.
 internal static class EndlessChecks
 {
-    private const BindingFlags Flags = BindingFlags.NonPublic | BindingFlags.Instance;
-    private static object? Call(PetWindow window, string name, params object[] args) => typeof(PetWindow).GetMethod(name, Flags)!.Invoke(window, args);
-    private static T Field<T>(PetWindow window, string name) => (T)typeof(PetWindow).GetField(name, Flags)!.GetValue(window)!;
     private static Window? Find(string title) => Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.Title == title && w.IsLoaded);
     private static string Text(DependencyObject node) => node is TextBlock t ? t.Text + "|" : string.Concat(LogicalTreeHelper.GetChildren(node).OfType<DependencyObject>().Select(Text));
     private static string ResultText() => Find("Pet result")?.Content is DependencyObject content ? Text(content) : "";
@@ -110,7 +108,7 @@ internal static class EndlessChecks
             var builtIn = BattleData.Settings.Endless!;
             string clearedKey = BattleRecords.EndlessKey(builtIn, BattleWeapon.Hammer, BattleDifficulty.Easy);
             window.BattleRecords.Loadouts[clearedKey] = new BattleRecord { MostWaves = 21, MostCleared = 20 };
-            typeof(PetWindow).GetField("endlessEarned", Flags)!.SetValue(window, null);
+            FieldOf("endlessEarned").SetValue(window, null);
             TickHub();
             check(window.BattleHubText.Contains("Rewards 2/5 · next: clear wave 30") && window.AccessoryAvailable("InfinityCollar") && !window.AccessoryAvailable("StarHalo") &&
                   window.DisplayableKeepsakes.Any(k => k.Id == "endless_hourglass") && window.DisplayableKeepsakes.All(k => k.Id != "nebula_orb"),
@@ -145,7 +143,7 @@ internal static class EndlessChecks
             Shot("Pet result", "endless-unlocked-en.png");
             Call(window, "CloseBattleSummary");
             window.BattleRecords.Loadouts.Remove(clearedKey);
-            typeof(PetWindow).GetField("endlessEarned", Flags)!.SetValue(window, null);
+            FieldOf("endlessEarned").SetValue(window, null);
             window.AdventureProgress.RewardsSeen.Clear(); window.AdventureProgress.RewardsSeen.AddRange(seenBefore);
         }
         finally

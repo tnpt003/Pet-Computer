@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
 using DesktopPet;
+using static PetPrivate;
 
 // Battle Mode's setup panel in the real pet window: menu → Start battle → setup → Ready → fight.
 // Opening, cancelling, Ready (also twice), the cat changing while the panel is open, pause and
@@ -12,10 +13,6 @@ using DesktopPet;
 // its fallback. In-memory preferences and temporary files only.
 internal static class BattlePrepChecks
 {
-    private const BindingFlags Flags = BindingFlags.NonPublic | BindingFlags.Instance;
-    private static T Field<T>(PetWindow window, string name) => (T)typeof(PetWindow).GetField(name, Flags)!.GetValue(window)!;
-    private static void SetField(PetWindow window, string name, object? value) => typeof(PetWindow).GetField(name, Flags)!.SetValue(window, value);
-    private static object? Call(PetWindow window, string name, params object[] args) => typeof(PetWindow).GetMethod(name, Flags)!.Invoke(window, args);
     private static void SetContext(PetWindow window, bool fullscreen, double idle) =>
         SetField(window, "contextProbe", new Func<(bool, double)>(() => (fullscreen, idle)));
     private static MouseButtonEventArgs MouseEvent(RoutedEvent routedEvent) => new(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Left) { RoutedEvent = routedEvent };

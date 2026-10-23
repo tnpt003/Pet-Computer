@@ -5,16 +5,13 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
 using DesktopPet;
+using static PetPrivate;
 
 // Adventure milestone 3 in the real pet window: the upgrade panel between waves (pause reason of
 // its own, pick + Confirm, double click, other pauses kept, fullscreen, ending the battle), the
 // HUD's upgrade line and a survive stage's clock. In-memory progress only.
 internal static class UpgradeChecks
 {
-    private const BindingFlags Flags = BindingFlags.NonPublic | BindingFlags.Instance;
-    private static void SetField(PetWindow window, string name, object? value) => typeof(PetWindow).GetField(name, Flags)!.SetValue(window, value);
-    private static T Field<T>(PetWindow window, string name) => (T)typeof(PetWindow).GetField(name, Flags)!.GetValue(window)!;
-    private static object? Call(PetWindow window, string name, params object[] args) => typeof(PetWindow).GetMethod(name, Flags)!.Invoke(window, args);
     private static void SetContext(PetWindow window, bool fullscreen, double idle) =>
         SetField(window, "contextProbe", new Func<(bool, double)>(() => (fullscreen, idle)));
     [System.Runtime.InteropServices.DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")]

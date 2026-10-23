@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Windows;
 using System.Windows.Input;
 using DesktopPet;
+using static PetPrivate;
 
 // Battle Mode rules inside the real pet window: a paused battle holds the cat's physics too,
 // pause reasons do not undo each other, lifting the cat cannot be used to dodge or to wait out
@@ -10,10 +11,6 @@ using DesktopPet;
 // with probes (no real monitor is plugged or unplugged); the real cursor is never moved.
 internal static class BattleRulesChecks
 {
-    private const BindingFlags Flags = BindingFlags.NonPublic | BindingFlags.Instance;
-    private static T Field<T>(PetWindow window, string name) => (T)typeof(PetWindow).GetField(name, Flags)!.GetValue(window)!;
-    private static void SetField(PetWindow window, string name, object? value) => typeof(PetWindow).GetField(name, Flags)!.SetValue(window, value);
-    private static object? Call(PetWindow window, string name, params object?[] args) => typeof(PetWindow).GetMethod(name, Flags)!.Invoke(window, args);
     private static MouseButtonEventArgs MouseEvent(RoutedEvent routedEvent) => new(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Left) { RoutedEvent = routedEvent };
     private static int Notices() => Application.Current.Windows.OfType<Window>().Count(w => w.Title == "Pet notice" && w.IsVisible);
 

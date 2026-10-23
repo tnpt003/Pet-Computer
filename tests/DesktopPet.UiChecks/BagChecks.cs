@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
 using DesktopPet;
+using static PetPrivate;
 
 // The Bag and the hub's Rewards in the real pet window, with the built-in data (and a small data
 // set for the card offer). Rewards: the hub's button counts new rewards, the page shows tiles,
@@ -14,11 +15,8 @@ using DesktopPet;
 // a low screen; hides for a fullscreen app; closes with its battle or map. Temporary files only.
 internal static class BagChecks
 {
-    private const BindingFlags Flags = BindingFlags.NonPublic | BindingFlags.Instance;
-    private static object? Call(PetWindow window, string name, params object[] args) => typeof(PetWindow).GetMethod(name, Flags, null, args.Select(a => a.GetType()).ToArray(), null)!.Invoke(window, args);
-    private static T Field<T>(PetWindow window, string name) => (T)typeof(PetWindow).GetField(name, Flags)!.GetValue(window)!;
     private static void SetContext(PetWindow window, bool fullscreen, double idle) =>
-        typeof(PetWindow).GetField("contextProbe", Flags)!.SetValue(window, new Func<(bool, double)>(() => (fullscreen, idle)));
+        FieldOf("contextProbe").SetValue(window, new Func<(bool, double)>(() => (fullscreen, idle)));
     [System.Runtime.InteropServices.DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")]
     private static extern IntPtr GetWindowLongPtr(IntPtr hwnd, int index);
     private static Window? Find(string title) => Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.Title == title && w.IsLoaded);
@@ -52,7 +50,7 @@ internal static class BagChecks
         var data = BattleData.Settings;
         string dir = Path.Combine(Path.GetTempPath(), "pet-bag-ui-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(dir);
-        var boundsField = typeof(PetWindow).GetField("bounds", Flags)!;
+        var boundsField = FieldOf("bounds");
         var realBounds = (Area)boundsField.GetValue(window)!;
         prefs.Language = "en"; prefs.BattleWeapon = BattleWeapon.Sword;
         SetContext(window, false, 0); Call(window, "TickContext", 1.1);
@@ -148,7 +146,7 @@ internal static class BagChecks
             bag = Find("Pet bag")!;
             check(place is Point p && Math.Abs(bag.Left - p.X) < 2 && Math.Abs(bag.Top - p.Y) < 2 && window.BattleBagTab == PetWindow.BagRelicsTab,
                 $"Opened again it is where it was put, on the tab left open ({place})");
-            typeof(PetWindow).GetField("bagPlace", Flags)!.SetValue(window, null);
+            FieldOf("bagPlace").SetValue(window, null);
 
             // A fullscreen app hides it; it comes back after.
             SetContext(window, true, 0); Call(window, "TickContext", 1.1);
@@ -288,7 +286,7 @@ internal static class BagChecks
         {
             boundsField.SetValue(window, realBounds);
             window.Reset();
-            typeof(PetWindow).GetField("bagPlace", Flags)!.SetValue(window, null);
+            FieldOf("bagPlace").SetValue(window, null);
             prefs.Language = language; prefs.BattleWeapon = weapon;
             window.BattleTuning = tuningBefore;
             window.AdventureProgressFile = null; window.ExpeditionProgressFile = null;

@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
 using DesktopPet;
+using static PetPrivate;
 
 // Expedition milestones 2–4 in the real pet window: locked until the Adventure's gate stage is won →
 // map → weapon/difficulty → run → step battle with the run's HP and build → result → Continue;
@@ -15,9 +16,6 @@ using DesktopPet;
 // A temporary expedition file only; the Adventure progress stays in memory.
 internal static class ExpeditionChecks
 {
-    private const BindingFlags Flags = BindingFlags.NonPublic | BindingFlags.Instance;
-    private static object? Call(PetWindow window, string name, params object[] args) => typeof(PetWindow).GetMethod(name, Flags)!.Invoke(window, args);
-    private static void SetField(PetWindow window, string name, object? value) => typeof(PetWindow).GetField(name, Flags)!.SetValue(window, value);
     private static void SetContext(PetWindow window, bool fullscreen, double idle) =>
         SetField(window, "contextProbe", new Func<(bool, double)>(() => (fullscreen, idle)));
     [System.Runtime.InteropServices.DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")]
@@ -28,7 +26,7 @@ internal static class ExpeditionChecks
     // Places a window as the pet would at a pretend monitor scale, then reads where it went (screen pixels).
     private static Rect PlacedAt(PetWindow window, Window placed, string place, double testScale)
     {
-        var scaleField = typeof(PetWindow).GetField("scale", Flags)!;
+        var scaleField = FieldOf("scale");
         double realScale = (double)scaleField.GetValue(window)!;
         scaleField.SetValue(window, testScale);
         try
@@ -158,8 +156,8 @@ internal static class ExpeditionChecks
             check(window.ExpeditionStart() is string twice && twice.Length > 0 && window.Expedition!.Run!.RunId == run.RunId, "A second Start keeps the run");
             Shot("Pet expedition", "expedition-map-en.png");
             // DPI (milestone 5): top centre of the cat's monitor in its pixels, at its real scale and a pretend 150%.
-            var mapArea = (Area)typeof(PetWindow).GetField("bounds", Flags)!.GetValue(window)!;
-            double petScale = (double)typeof(PetWindow).GetField("scale", Flags)!.GetValue(window)!;
+            var mapArea = (Area)FieldOf("bounds").GetValue(window)!;
+            double petScale = (double)FieldOf("scale").GetValue(window)!;
             bool MapPlaced(double at)
             {
                 var placed = Find("Pet expedition")!;
@@ -179,7 +177,7 @@ internal static class ExpeditionChecks
                 "Fight starts the node's own battle with the run's gear (the map closes)");
             check(Saved()?.Fighting == 1, "The battle under way is saved before it is fought");
             // Its monitor disconnected (milestone 5): the battle moves to another (150 %) and stays the run's step.
-            string lostMonitor = (string)typeof(PetWindow).GetField("battleMonitor", Flags)!.GetValue(window)!;
+            string lostMonitor = (string)FieldOf("battleMonitor").GetValue(window)!;
             double hpBefore = window.Battle!.CatHp;
             SetField(window, "battleScreenProbe", new Func<string?, (string, Area, double)?>(name => name == lostMonitor ? null : ("Other", mapArea, 1.5)));
             SetField(window, "battleMonitorProbe", new Func<string>(() => "Other"));
@@ -188,12 +186,12 @@ internal static class ExpeditionChecks
                 "A disconnected battle monitor moves the step's battle (paused), still the run's step: nothing is left or charged");
             SetField(window, "battleScreenProbe", null);
             SetField(window, "battleMonitorProbe", null);
-            typeof(PetWindow).GetField("battleMonitor", Flags)!.SetValue(window, lostMonitor);
-            typeof(PetWindow).GetField("battleScale", Flags)!.SetValue(window, petScale);
+            FieldOf("battleMonitor").SetValue(window, lostMonitor);
+            FieldOf("battleScale").SetValue(window, petScale);
             window.SetBattlePaused(false);
             Call(window, "CloseBattleNotice");
             // The banner names the step and encounter and always fits the HUD's centre (a long one shrinks; the HUD keeps its width).
-            var hud = (BattleHud)typeof(PetWindow).GetField("battleHud", Flags)!.GetValue(window)!;
+            var hud = (BattleHud)FieldOf("battleHud").GetValue(window)!;
             hud.Update(window.Battle!, false, false, false, false);
             hud.UpdateLayout();
             double hudWidth = hud.ActualWidth;
@@ -367,7 +365,7 @@ internal static class ExpeditionChecks
             // The next battle carries the relic: the HUD lists it, the Shield waits longer.
             check(window.ExpeditionFight(0) == null && window.Battle!.Relics.Count == 1 && window.Battle.SkillCooldown(BattleSkill.Shield) == window.BattleTuning.SkillCooldown(BattleSkill.Shield) + 3,
                 "The step's battle has the run's relic");
-            hud = (BattleHud)typeof(PetWindow).GetField("battleHud", Flags)!.GetValue(window)!;
+            hud = (BattleHud)FieldOf("battleHud").GetValue(window)!;
             hud.Update(window.Battle!, false, false, false, false);
             check(hud.UpgradesText.Contains("◈ Bell"), $"The HUD lists the relic ({hud.UpgradesText})");
             window.EndBattle();
@@ -412,7 +410,7 @@ internal static class ExpeditionChecks
             long keepsakeStyle = keepsakeWindow == null ? 0 : GetWindowLongPtr(new WindowInteropHelper(keepsakeWindow).Handle, -20).ToInt64();
             check(window.TrophiesVisible && keepsakeWindow is { ShowActivated: false, ShowInTaskbar: false, Topmost: true } && (keepsakeStyle & 0x20) == 0 && (keepsakeStyle & 0x08000000) != 0,
                 "The display corner shows: clickable (it can be picked up), never takes focus, no taskbar button");
-            var area = (Area)typeof(PetWindow).GetField("bounds", Flags)!.GetValue(window)!;
+            var area = (Area)FieldOf("bounds").GetValue(window)!;
             var spot = window.TrophyBounds;
             var keepsake = keepsakeWindow?.Content as KeepsakeArt;
             double across = (spot.Left - area.Left) / (area.Right - area.Left - spot.Width);
@@ -422,7 +420,7 @@ internal static class ExpeditionChecks
                 $"First shown 3/4 across the cat's monitor (away from the edge), standing on its floor: one keepsake, the best (silver cup over the cushion), drawn 1.8× ({spot}, floor {area.Bottom})");
             // Settings → Pet chooses the one on display.
             window.ShowPetSettings();
-            var settingsForm = (PetSettingsForm)typeof(PetWindow).GetField("settingsForm", Flags)!.GetValue(window)!;
+            var settingsForm = (PetSettingsForm)FieldOf("settingsForm").GetValue(window)!;
             check(settingsForm.TrophyIds.SequenceEqual(new[] { "cup_silver", "slime_cushion" }) && settingsForm.Trophy.IsEnabled && settingsForm.Trophy.SelectedIndex == 0,
                 "Settings offer the owned keepsakes (cups first), the shown one selected");
             settingsForm.Trophy.SelectedIndex = 1;
@@ -439,7 +437,7 @@ internal static class ExpeditionChecks
             Shot("Pet trophies", "trophies-keepsake.png");
             bool KeepsakePlaced(double at)
             {
-                var keepsakeScale = typeof(PetWindow).GetField("keepsakeScale", Flags)!;
+                var keepsakeScale = FieldOf("keepsakeScale");
                 double real = (double)keepsakeScale.GetValue(window)!;
                 keepsakeScale.SetValue(window, at);
                 try
@@ -673,12 +671,12 @@ internal static class ExpeditionChecks
 
             // The ball rolling into the keepsake bounces back and the keepsake wobbles.
             window.ToggleToy();
-            var toy = (ToyBall)typeof(PetWindow).GetField("ball", Flags)!.GetValue(window)!;
+            var toy = (ToyBall)FieldOf("ball").GetValue(window)!;
             toy.X = window.TrophyBounds.Left - 8; toy.Height = 0; toy.VX = 220; toy.VY = 0;
             motion.TiltV = 0;
             Call(window, "KeepsakeMeetsBall");
             check(toy.VX < 0 && toy.X <= window.TrophyBounds.Left - 12 && motion.TiltV != 0, "The toy ball bounces off the keepsake, which wobbles");
-            check(typeof(PetWindow).GetField("ballArt", Flags)!.GetValue(window) is YarnBallArt, "The toy ball is drawn as a ball of yarn");
+            check(FieldOf("ballArt").GetValue(window) is YarnBallArt, "The toy ball is drawn as a ball of yarn");
             if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string yarnReview)
             {
                 var yarn = new YarnBallArt { Width = 96, Height = 96 };
@@ -737,8 +735,8 @@ internal static class ExpeditionChecks
             window.Reset(); pet.Action = PetAction.Idle; pet.Emotions.Reset();
 
             // On other windows: lands on a window's top edge, rides along, falls when it goes.
-            var probe = typeof(PetWindow).GetField("windowProbe", Flags)!.GetValue(window);
-            var rectProbe = typeof(PetWindow).GetField("windowRectProbe", Flags)!.GetValue(window);
+            var probe = FieldOf("windowProbe").GetValue(window);
+            var rectProbe = FieldOf("windowRectProbe").GetValue(window);
             var appWindow = new WindowSnapshot(4242, middleX - 200, area.Bottom - 300, middleX + 260, area.Bottom - 60, true);
             bool appOpen = true;
             IReadOnlyList<WindowSnapshot> Windows() => appOpen ? new[] { appWindow } : Array.Empty<WindowSnapshot>();
@@ -798,7 +796,7 @@ internal static class ExpeditionChecks
                 if (rest >= 0 && tall.Step >= 2) { drawing.Visit(rest); break; }
                 tall.Path.Add(0);
             }
-            var boundsField = typeof(PetWindow).GetField("bounds", Flags)!;
+            var boundsField = FieldOf("bounds");
             var realBounds = (Area)boundsField.GetValue(window)!;
             double MapHeight(string language) { prefs.Language = language; Tick(0.3); Call(window, "PlaceExpeditionMap"); var m = Find("Pet expedition")!; m.UpdateLayout(); return m.ActualHeight; }
             double natural = Math.Max(MapHeight("en"), MapHeight("vi"));

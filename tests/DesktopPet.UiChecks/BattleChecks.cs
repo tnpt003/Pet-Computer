@@ -6,15 +6,12 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using DesktopPet;
 using DesktopPet.AI;
+using static PetPrivate;
 
 // Battle Mode inside the real pet window: lifecycle, ownership of the pet, input, pause,
 // Python isolation and cleanup. The real cursor is never moved.
 internal static class BattleChecks
 {
-    private const BindingFlags Flags = BindingFlags.NonPublic | BindingFlags.Instance;
-    private static T Field<T>(PetWindow window, string name) => (T)typeof(PetWindow).GetField(name, Flags)!.GetValue(window)!;
-    private static void SetField(PetWindow window, string name, object? value) => typeof(PetWindow).GetField(name, Flags)!.SetValue(window, value);
-    private static object? Call(PetWindow window, string name, params object[] args) => typeof(PetWindow).GetMethod(name, Flags)!.Invoke(window, args);
     private static void SetContext(PetWindow window, bool fullscreen, double idle) =>
         SetField(window, "contextProbe", new Func<(bool, double)>(() => (fullscreen, idle)));
     private static MouseButtonEventArgs MouseEvent(RoutedEvent routedEvent, MouseButton button = MouseButton.Left) =>
@@ -121,7 +118,7 @@ internal static class BattleChecks
             "Hovering one slot then another shows each one's text in the same place; leaving restores the hint");
         // The HUD steps aside: over its information part it fades and lets clicks through; over a
         // slot or a button it is solid and clickable; away from it, normal.
-        var cursorProbe = typeof(PetWindow).GetField("cursorProbe", Flags)!;
+        var cursorProbe = FieldOf("cursorProbe");
         var usualCursor = cursorProbe.GetValue(window);
         var hudHandle = new WindowInteropHelper(Field<Window>(window, "battleHudWindow")).Handle;
         bool HudClickThrough() => (GetWindowLongPtr(hudHandle, -20).ToInt64() & Transparent) != 0;
@@ -262,7 +259,7 @@ internal static class BattleChecks
             "A click on a slime finds it; a click on empty floor finds nothing");
 
         // Python cannot drive or override the fight.
-        var aiField = typeof(PetWindow).GetField("ai", Flags)!;
+        var aiField = FieldOf("ai");
         var stale = new DelayedSource();
         bool requested = false;
         stale.Requested = () => requested = true;
@@ -286,7 +283,7 @@ internal static class BattleChecks
         Tick(0.5);
         check(Sim().CatHp == hpBefore && windups.All(w => w.s.State == SlimeState.Windup && w.s.StateTime == w.StateTime),
             $"A press on the cat (before any drag) already holds slime attacks ({windups.Count} held)");
-        typeof(PetWindow).GetField("pressPosition", Flags)!.SetValue(window, new Point(-100000, -100000));
+        FieldOf("pressPosition").SetValue(window, new Point(-100000, -100000));
         Call(window, "CheckDragThreshold");
         check(pet.Action == PetAction.Dragging, "Dragging works as always during the battle");
         Tick(3);
@@ -347,8 +344,8 @@ internal static class BattleChecks
             $"Running reaches {72 * Sim().Settings.CatRunScale:F0} DIPs/s; normal walking stays 72 ({runner.VX:F0} / {walker.VX:F0})");
 
         // Carried to another monitor: the battle waits there, paused, and resumes when the cat is back.
-        var monitorProbe = typeof(PetWindow).GetField("battleMonitorProbe", Flags)!;
-        var home = (string)typeof(PetWindow).GetField("battleMonitor", Flags)!.GetValue(window)!;
+        var monitorProbe = FieldOf("battleMonitorProbe");
+        var home = (string)FieldOf("battleMonitor").GetValue(window)!;
         monitorProbe.SetValue(window, new Func<string>(() => "\\\\.\\OTHER"));
         double fieldLeft = field!.Left;
         Tick(1.0 / 60);
@@ -399,7 +396,7 @@ internal static class BattleChecks
         window.Reset();
         window.StartBattle();
         window.RaiseEvent(MouseEvent(UIElement.MouseLeftButtonDownEvent));
-        typeof(PetWindow).GetField("pressPosition", Flags)!.SetValue(window, new Point(-100000, -100000));
+        FieldOf("pressPosition").SetValue(window, new Point(-100000, -100000));
         Call(window, "CheckDragThreshold");
         window.EndBattle();
         check(pet.Action == PetAction.Dragging && !window.BattleActive, "Ending mid-drag keeps the drag (no forced Idle in the air)");
@@ -423,7 +420,7 @@ internal static class BattleChecks
         window.Activate();
         await Task.Delay(20);
         window.RaiseEvent(MouseEvent(UIElement.MouseLeftButtonDownEvent));
-        typeof(PetWindow).GetField("pressPosition", Flags)!.SetValue(window, new Point(-100000, -100000));
+        FieldOf("pressPosition").SetValue(window, new Point(-100000, -100000));
         Call(window, "CheckDragThreshold");
         Tick(0.2);
         check(pet.Action == PetAction.Dragging && Sim().CatStunned && pet.BattleStun > 0, "A stunned cat can still be dragged; the stun stays while carried");
@@ -701,7 +698,7 @@ internal static class BattleChecks
             var sim = Sim();
             double appScale = Field<double>(window, "battleScale");
             var appArea = Field<Area>(window, "battleArea");
-            var probe = typeof(PetWindow).GetField("cursorProbe", Flags)!;
+            var probe = FieldOf("cursorProbe");
             var probeBefore = probe.GetValue(window);
             check(window.BattleAppWindows.Count == 5 && sim.Desktop.All(a =>
                 {
@@ -721,7 +718,7 @@ internal static class BattleChecks
             probe.SetValue(window, probeBefore);
             check(far < 0.6 && near > 0.97, $"An icon fades back while the cursor is far ({far:0.00}) and is solid with the cursor on it ({near:0.00})");
             // Windows scale changed mid-battle: every icon window is placed again in the new pixels.
-            var scaleField = typeof(PetWindow).GetField("battleScale", Flags)!;
+            var scaleField = FieldOf("battleScale");
             var iconWindow = Field<System.Collections.IDictionary>(window, "appIcons")[first.Id]!;
             var firstWindow = (Window)iconWindow.GetType().GetField("Window")!.GetValue(iconWindow)!;
             double widthBefore = firstWindow.ActualWidth;

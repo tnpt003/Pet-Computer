@@ -1,14 +1,12 @@
 using System.Diagnostics;
 using System.Reflection;
 using DesktopPet;
+using static PetPrivate;
 
 // The debug view's frame statistics report real gaps between frames, while the simulation
 // keeps its 0.1 s cap (no catch-up after a stall). Time is faked by moving the last frame back.
 internal static class FrameChecks
 {
-    private const BindingFlags Flags = BindingFlags.NonPublic | BindingFlags.Instance;
-    private static T Field<T>(PetWindow window, string name) => (T)typeof(PetWindow).GetField(name, Flags)!.GetValue(window)!;
-    private static void SetField(PetWindow window, string name, object? value) => typeof(PetWindow).GetField(name, Flags)!.SetValue(window, value);
 
     public static void Run(PetWindow window, PetModel pet, Action<bool, string> check)
     {
@@ -16,7 +14,7 @@ internal static class FrameChecks
         void FrameAfter(double gap)
         {
             SetField(window, "previous", clock.Elapsed.TotalSeconds - gap);
-            typeof(PetWindow).GetMethod("Tick", Flags)!.Invoke(window, new object?[] { null, EventArgs.Empty });
+            MethodOf("Tick").Invoke(window, new object?[] { null, EventArgs.Empty });
         }
         window.Reset();
         SetField(window, "frameStatsStart", clock.Elapsed.TotalSeconds);

@@ -4,15 +4,13 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using DesktopPet;
+using static PetPrivate;
 
 // Battle Mode's weapon choice in the real pet window: the choice (by id, from the battle data) is
 // remembered and used by the next battle, never by a running one; the menu has no weapon item; the HUD and the result panel name it; the hammer is drawn in
 // every pose without leaving the window. In-memory preferences only.
 internal static class WeaponChecks
 {
-    private const BindingFlags Flags = BindingFlags.NonPublic | BindingFlags.Instance;
-    private static T Field<T>(PetWindow window, string name) => (T)typeof(PetWindow).GetField(name, Flags)!.GetValue(window)!;
-    private static object? Call(PetWindow window, string name, params object?[] args) => typeof(PetWindow).GetMethod(name, Flags)!.Invoke(window, args);
 
     public static async Task Run(PetWindow window, PetModel pet, Action<bool, string> check)
     {

@@ -35,6 +35,16 @@ Từ 1.4.0 (2026-10-22). Dùng Velopack 1.2.158: thư viện trong app (`PetUpda
 
 Tag phải đúng `v` + version trong csproj, nếu không pack.ps1 dừng.
 
+## Quy tắc giữ cho nguồn `latest/download` chạy đúng (từ 1.4.3)
+
+Mọi máy đã cài đọc `releases.win.json` của Release GitHub đánh dấu **Latest**. Vì vậy:
+
+- **Chỉ workflow release tạo Release.** Không tạo Release bằng tay để đăng thông báo/tài liệu: Release đó thành "Latest" mà không có `releases.win.json`, mọi máy kiểm tra sẽ báo "Chưa kiểm tra được cập nhật" tới khi có bản app mới. Nếu thật sự cần Release không phải bản app thì đánh dấu **pre-release** (GitHub không coi pre-release là Latest).
+- **Bản vá cho nhánh cũ** (ví dụ 1.3.x sau khi đã có 1.4.x) không được thành Latest: tạo với "Set as the latest release" bỏ chọn (API/CLI: `make_latest=false`). Nếu lỡ, Velopack không hạ version nên không hỏng máy nào, nhưng máy 1.4.x không thấy bản 1.4 tiếp theo cho tới khi Latest trỏ về đúng. Kiểm tra sau mỗi lần phát hành: link `https://github.com/tnpt003/Pet-Computer/releases/latest/download/releases.win.json` trả về đúng version mới.
+- **Kênh beta** (nếu làm sau này) không đi qua Latest: cần đánh dấu pre-release và một nguồn riêng cho máy dùng beta. Không có phát hành theo tỷ lệ (mọi máy đọc cùng file).
+- Máy bỏ qua từ hai bản trở lên tải gói đầy đủ (~90 MB) thay vì delta; bình thường, không cần làm gì.
+- Repo phải public. Không chuyển khỏi GitHub (người dùng quyết 2026-10-23), nên nguồn để cố định trong `PetUpdates.FeedUrl`.
+
 ## Checklist máy Windows 10 sạch (người dùng)
 
 - [ ] Tải `PetComputer-win-Setup.exe` từ Releases, chạy: nếu SmartScreen chặn → More info → Run anyway. Cài xong mèo hiện ra, có shortcut "Desktop Pet" trên Desktop và Start menu.

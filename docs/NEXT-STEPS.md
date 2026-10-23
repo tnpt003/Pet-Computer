@@ -1,6 +1,6 @@
 # Trạng thái hiện tại và việc tiếp theo
 
-Cập nhật: 2026-10-23 (Asia/Saigon). Bản đang chạy: 1.4.1 (installer + tự cập nhật + chào mừng sau khi cài, xem docs/RELEASE.md). Release 1.4.0 đã có trên GitHub.
+Cập nhật: 2026-10-23 (Asia/Saigon). Bản đang chạy: 1.4.1 (installer + tự cập nhật + chào mừng sau khi cài, xem docs/RELEASE.md). Release 1.4.0 và 1.4.1 đã có trên GitHub; bản sau nâng lên 1.4.2. Máy dev chạy bản copy `artifacts\win-x64` (không cài Setup).
 
 > **Quy tắc 20/10:** luôn commit và publish sau mỗi mốc code hoàn chỉnh, kiểm thử đạt; chạy smoke và báo artifact. Không cần hỏi lại. Mốc tài liệu-only commit, không publish binary. Xem AGENTS.md. Không tự push/upload.
 

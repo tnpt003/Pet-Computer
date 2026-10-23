@@ -312,7 +312,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Chưa: chơi thật; xem màn 5 Khó có quá khó không (có thể giảm `rallyDamage`/HP Vua); hồi xa có làm màn 4 dài/khó chịu không.
 
 ## Đang dở và việc tiếp theo
-- Release 1.4.0 đã lên GitHub (Actions đạt). Việc của người dùng: cài 1.4.0 thử theo docs/RELEASE.md; rồi `git push origin main` + `git tag v1.4.1` + `git push origin v1.4.1` → máy đã cài 1.4.0 nhận 1.4.1 qua khay (thử tự cập nhật thật); test tay mục "1.4.1 — cài đặt" cuối MANUAL-TEST.
+- **Release v1.4.1 đã lên GitHub (23/10, người dùng push tag tại 01ded63):** Actions thành công, 6 file (có delta 1.4.0→1.4.1 1,6 MB), ghi chú có hướng dẫn cài (chữ Việt đúng) + mục CHANGELOG; link README `releases/latest/download/PetComputer-win-Setup.exe` trả 200 (94,7 MB). Người dùng xác nhận "cập nhật tự động đã ổn". Bản phát hành sau phải nâng version (1.4.2) — csproj vẫn 1.4.1. Còn chưa thử: khởi động lại máy, gỡ có xóa dữ liệu, thứ tự thoát trước khi gỡ (01ded63) chạy thật.
 - Có thể sau: bộ cài MSI (`vpk pack --msi`, có màn hình từng bước) nếu muốn chọn thư mục cài — chưa thử xem MSI của Velopack có chọn thư mục tùy ý không. SmartScreen: nộp đơn SignPath Foundation khi muốn chia sẻ rộng (mình gắn bước ký vào workflow sau khi được duyệt).
 - Đồng hồ cát hiện vẽ tĩnh (đề xuất ban đầu có cát chảy/lật khi nhấc) — làm sau nếu muốn. Ký code: SignPath khi cần.
 - Kế hoạch 2026-10-22 M1–M8: xong hết (xem các mục trên và bảng trong docs/NEXT-STEPS.md). Việc còn của người dùng: test tay các mục mới cuối docs/MANUAL-TEST.md (quả bóng/focus, quay lại bậc, ngày lễ mới, HUD kéo được, Vô tận).

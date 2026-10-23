@@ -101,7 +101,7 @@ public sealed class EnemyType
     public bool BlockFrontOnly { get; init; }
     public double TurnSeconds { get; init; }
     // Boss rally (during a shield phase, after its helpers came): every RallyEvery s (0 = never) its
-    // crown glows RallyCharge s, then one fighting helper of the phase that is not elite becomes elite
+    // crown glows RallyCharge s, then one helper of the phase that is not elite (drawn at random) becomes elite
     // for good: its kind's own affix (if any), RallyHp more max HP (and that much HP) and its hits ×
     // RallyDamage. Pushing the boss while its crown glows cancels the call.
     public double RallyEvery { get; init; }
@@ -164,6 +164,9 @@ public sealed class EliteSpec
     public double HealCooldown { get; init; } = 1;
     public double HealBudget { get; init; } = 1;
     public bool PushImmune { get; init; }
+    // Shoots a virus at a clean desktop icon every VirusEvery s (0: never; the first a few seconds after
+    // it turns elite), at most AppsSpec.EliteVirusPerWave a wave, in battles with the desktop apps.
+    public double VirusEvery { get; init; }
     // The trait its label over the head names (null: none worth a label), the most telling first.
     public string? Tag(string language) =>
         PushImmune ? PetText.Pick(language, "MIỄN ĐẨY", "NO PUSH")
@@ -448,6 +451,8 @@ public static class BattleData
     // they are dropped with a log line instead of failing as misspelt keys.
     private static readonly string[] RetiredKeys = { "maxFlankers" };
     private static readonly string[] RetiredEnemyKeys = { "fallBackBelow", "flank", "flankSpeed", "teleportBelow", "teleportWindup", "teleportCooldown", "rallySeconds", "rallySpeed" };
+    // 2026-10-24: malware comes at random times, no longer instead of a wave's virus.
+    private static readonly string[] RetiredAppKeys = { "infectWeight" };
     private static void DropRetired(JsonObject user)
     {
         var dropped = new List<string>();
@@ -456,6 +461,7 @@ public static class BattleData
             foreach (var key in keys) if (Key(node, key) is string found) { node.Remove(found); dropped.Add(at + key); }
         }
         Drop(user, RetiredKeys, "");
+        if (Key(user, "apps") is string appsKey && user[appsKey] is JsonObject appsNode) Drop(appsNode, RetiredAppKeys, "apps.");
         if (Key(user, "enemies") is string list && user[list] is JsonArray enemies)
             foreach (var entry in enemies.OfType<JsonObject>()) Drop(entry, RetiredEnemyKeys, $"enemies[{IdOf(entry)}].");
         if (dropped.Count > 0) Trace.WriteLine($"battle.json: no longer used, ignored: {string.Join(", ", dropped)}");
@@ -552,6 +558,7 @@ public static class BattleData
         if (s.CatRunScale > 3) throw new InvalidDataException("catRunScale must be at most 3"); Positive(s.CatSwingDuration, "catSwingDuration");
         if (s.ComboHits is < 2 or > 6) throw new InvalidDataException("comboHits must be 2–6");
         Positive(s.ComboWindow, "comboWindow"); Positive(s.ComboDamage, "comboDamage"); NotNegative(s.ComboKnock, "comboKnock");
+        Within(s.ComboSplash, 0, 2, "comboSplash"); Within(s.ComboSplashRadius, 0, 300, "comboSplashRadius");
         if (!(s.CatHitTime > 0 && s.CatHitTime < s.CatSwingDuration)) throw new InvalidDataException("catHitTime must fall inside the swing");
         if (s.Hammer == null) throw new InvalidDataException("hammer is missing");
         if (s.Weapons is { Length: 0 }) throw new InvalidDataException("weapons must list at least one weapon");
@@ -570,6 +577,7 @@ public static class BattleData
             Within(w.AttackCooldown, 0.1, 10, at + ".attackCooldown"); Within(w.SwingDuration, 0.05, 5, at + ".swingDuration");
             if (!(w.HitTime > 0 && w.HitTime < w.SwingDuration)) throw new InvalidDataException(at + ".hitTime must fall inside the swing");
             Within(w.Knock, 0, 1000, at + ".knock");
+            Within(w.StunChance, 0, 1, at + ".stunChance"); Within(w.StunSeconds, 0, 3, at + ".stunSeconds");
         }
         NotNegative(s.LandingGraceSeconds, "landingGraceSeconds");
         if (s.LandingGraceSeconds > 5) throw new InvalidDataException("landingGraceSeconds must be at most 5");
@@ -612,12 +620,19 @@ public static class BattleData
             Within(apps.InfectMinThreat, 0, 100, "apps.infectMinThreat"); Within(apps.InfectChance, 0, 1, "apps.infectChance");
             if (apps.MaxInfected is < 0 or > 5) throw new InvalidDataException("apps.maxInfected must be 0–5");
             if (apps.ScrubClicks is < 1 or > 10) throw new InvalidDataException("apps.scrubClicks must be 1–10");
+            if (apps.EliteVirusPerWave is < 0 or > 10) throw new InvalidDataException("apps.eliteVirusPerWave must be 0–10");
+            if (apps.AdCount is < 1 or > 5) throw new InvalidDataException("apps.adCount must be 1–5");
+            Within(apps.BellStun, 0, 5, "apps.bellStun"); Within(apps.MendGuard, 0, 10, "apps.mendGuard");
+            Within(apps.MalwareMinThreat, 0, 100, "apps.malwareMinThreat"); Within(apps.MalwareEveryMin, 3, 300, "apps.malwareEveryMin");
+            Within(apps.MalwareEveryMax, apps.MalwareEveryMin, 300, "apps.malwareEveryMax");
+            if (apps.MaxMalware is < 1 or > 4) throw new InvalidDataException("apps.maxMalware must be 1–4");
+            Within(apps.AdWeight, 0, 100, "apps.adWeight"); Within(apps.LoadingHold, 0, 10, "apps.loadingHold");
             Within(apps.CrawlEvery, 1, 120, "apps.crawlEvery");
             foreach (var (value, key) in new[] { (apps.PopupEvery, "popupEvery"), (apps.BellEvery, "bellEvery"), (apps.FreezeEvery, "freezeEvery"), (apps.MendEvery, "mendEvery"), (apps.SpitEvery, "spitEvery") })
                 Within(value, 1, 120, "apps." + key);
             Within(apps.PopupSeconds, 2, 60, "apps.popupSeconds"); Within(apps.BellDamage, 0, 1000, "apps.bellDamage");
             Within(apps.FreezeSeconds, 0, 5, "apps.freezeSeconds"); Within(apps.MendShare, 0, 1, "apps.mendShare");
-            Within(apps.InfectWeight, 0, 100, "apps.infectWeight"); Within(apps.LoadingWeight, 0, 100, "apps.loadingWeight");
+            Within(apps.LoadingWeight, 0, 100, "apps.loadingWeight");
             Within(apps.LoadingSeconds, 1, 30, "apps.loadingSeconds"); Within(apps.LoadingRadius, 20, 200, "apps.loadingRadius");
             Within(apps.LoadingSlow, 0.2, 1, "apps.loadingSlow");
             Within(apps.UpdateWeight, 0, 100, "apps.updateWeight"); Within(apps.UpdateSeconds, 2, 30, "apps.updateSeconds");
@@ -731,9 +746,10 @@ public static class BattleData
                 Within(elite.Hp, 1, 3, at + ".elite.hp"); Within(elite.Damage, 1, 3, at + ".elite.damage");
                 Within(elite.AttackCooldown, 0.2, 1, at + ".elite.attackCooldown"); Within(elite.HealCooldown, 0.2, 1, at + ".elite.healCooldown");
                 Within(elite.HealBudget, 1, 3, at + ".elite.healBudget");
+                if (elite.VirusEvery != 0) Within(elite.VirusEvery, 5, 120, at + ".elite.virusEvery");
                 if ((elite.HealCooldown < 1 || elite.HealBudget > 1) && e.HealAmount <= 0) throw new InvalidDataException(at + ".elite: healCooldown/healBudget are for an enemy that heals");
                 if (elite.WindupAdd <= 0 && elite.DashSpeed <= 1 && elite.SureBlocks == 0 && elite.FirstHeal <= 1 && elite.Hp <= 1 && elite.Damage <= 1
-                    && elite.AttackCooldown >= 1 && elite.HealCooldown >= 1 && elite.HealBudget <= 1 && !elite.PushImmune) throw new InvalidDataException(at + ".elite changes nothing");
+                    && elite.AttackCooldown >= 1 && elite.HealCooldown >= 1 && elite.HealBudget <= 1 && !elite.PushImmune && elite.VirusEvery <= 0) throw new InvalidDataException(at + ".elite changes nothing");
                 if (elite.DescVi == null || elite.DescEn == null || elite.DescVi.Length > 60 || elite.DescEn.Length > 60) throw new InvalidDataException(at + ".elite descriptions must be at most 60 characters");
             }
             if (e.Phases is { } phases)

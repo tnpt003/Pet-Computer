@@ -190,7 +190,7 @@ internal static class EliteBuffTests
             "Elite stats out of range are rejected (hp/damage 1–3, attackCooldown 0.2–1)");
         check(Bad("\"healBudget\": 1.3, ").Contains("heals") && Bad("\"healCooldown\": 0.8, ").Contains("heals") && Bad("\"healBudget\": 1.3, ", "mender") == "",
             "healCooldown/healBudget are only for an enemy that heals");
-        check(Bad("\"hp\": 1, \"damage\": 1, \"attackCooldown\": 1, ").Contains("changes nothing"), "An elite affix of only ×1 stats changes nothing and is rejected");
+        check(Bad("\"hp\": 1, \"damage\": 1, \"attackCooldown\": 1, \"virusEvery\": 0, ").Contains("changes nothing"), "An elite affix of only ×1 stats changes nothing and is rejected");
     }
 
     // The shipped numbers (2026-10-21): the base buff and the elite affixes as agreed.

@@ -8,25 +8,29 @@
   // The cat runs during a battle (walking speed and acceleration × this).
   "catRunScale": 1.8,
   // Combo: this many hits in a row (each within comboWindow s of the last) make the last one
-  // a combo: damage × comboDamage and a knock-back (DIPs/s, × the enemy's pushFactor).
+  // a combo: damage × comboDamage and a knock-back (DIPs/s, × the enemy's pushFactor). comboSplash: the
+  // other enemies within comboSplashRadius DIPs of its target (edge to edge) take that share of its damage.
   "comboHits": 3,
   "comboWindow": 1.6,
   "comboDamage": 2,
   "comboKnock": 300,
+  "comboSplash": 0.6,
+  "comboSplashRadius": 60,
   // The cat's weapons, in the order the battle setup panel shows them (the first one is the
   // default). style: the drawing ("sword" or "hammer"). range: centre-to-centre reach.
   // attackCooldown: from one swing to the next; hitTime: the one moment in the swing that hits.
   // knock: every hit sends the slime back (DIPs/s × its pushFactor, no stun); 0 = only combos do.
+  // stunChance: a landed hit dazes the enemy stunSeconds (× its stunFactor; never a boss) this often.
   "weapons": [
     {
       "id": "sword", "nameVi": "Kiếm", "nameEn": "Sword", "style": "sword", "hitEffect": "spark",
       "hintVi": "nhanh, dễ nối combo", "hintEn": "fast, easy combos",
-      "damage": 25, "range": 76, "attackCooldown": 0.75, "swingDuration": 0.36, "hitTime": 0.16, "knock": 0
+      "damage": 25, "range": 76, "attackCooldown": 0.75, "swingDuration": 0.36, "hitTime": 0.16, "knock": 0, "stunChance": 0
     },
     {
       "id": "hammer", "nameVi": "Búa", "nameEn": "Hammer", "style": "hammer", "hitEffect": "thud",
-      "hintVi": "chậm, mạnh, đẩy lùi mỗi nhát", "hintEn": "slow, heavy, knocks back every hit",
-      "damage": 45, "range": 76, "attackCooldown": 1.35, "swingDuration": 0.7, "hitTime": 0.45, "knock": 170
+      "hintVi": "chậm, mạnh, đẩy lùi mỗi nhát, đôi khi làm choáng", "hintEn": "slow, heavy, knocks back every hit, sometimes stuns",
+      "damage": 45, "range": 76, "attackCooldown": 1.35, "swingDuration": 0.7, "hitTime": 0.45, "knock": 170, "stunChance": 0.15, "stunSeconds": 0.8
     }
   ],
 
@@ -116,43 +120,49 @@
   // Each charges in "charge" s of battle ("start" at the start, else startCharge; killCharge more per defeated
   // enemy); a charged icon glows and a click sends its help down to the field. From a threat of
   // infectMinThreat each wave rolls infectChance for a slime to shoot a virus at an icon (at most
-  // maxInfected): the infected icon works against the cat (bad*: every *Every s) and crawls to a
-  // nearby cell every crawlEvery s, until clicked scrubClicks times or its slime is defeated.
+  // maxInfected); an elite slime with "virusEvery" also shoots (at most eliteVirusPerWave a wave). The
+  // infected icon works against the cat (every *Every s: adCount ads that cannot be closed while it is
+  // infected, a bell that stuns bellStun s, a freeze, a heal that guards the slime mendGuard s, an elite
+  // spat out when spitElite) and crawls to a nearby cell every crawlEvery s, until clicked scrubClicks
+  // times or its slime is defeated.
   // "list": one entry per app (tabs, ping, endtask, undo, trash, popup): desc = what it does,
   // bad = what it does once infected.
   "apps": {
     "startCharge": 0.2, "killCharge": 0.02,
     "tabSeconds": 6, "tabRadius": 70, "tabDamage": 14, "tabEvery": 0.5,
     "pingDamage": 14, "pingStun": 1.5, "pingTargets": 4, "endTaskShare": 0.25, "undoSeconds": 4, "trashCount": 2,
-    "infectMinThreat": 1.5, "infectChance": 0.5, "maxInfected": 1, "scrubClicks": 3, "crawlEvery": 9,
-    "popupEvery": 8, "popupSeconds": 8, "popupSpawn": "slime",
-    "bellEvery": 9, "bellDamage": 6, "freezeEvery": 12, "freezeSeconds": 1.2,
-    "mendEvery": 7, "mendShare": 0.15, "spitEvery": 10,
-    // The wave's virus: into an icon, or malware onto the field (by weight). Loading ring: the cat
-    // inside it is slowed for a few seconds; click its spinner to close it. Forced update: a wall
-    // between the cat and the slimes; the cat's hits speed it up, two clicks on Later close it.
-    "infectWeight": 1, "loadingWeight": 1, "loadingSeconds": 6, "loadingRadius": 60, "loadingSlow": 0.5,
-    "updateWeight": 1, "updateSeconds": 8, "updateHitSeconds": 1.2, "updateClicks": 2,
+    "infectMinThreat": 1.3, "infectChance": 0.75, "maxInfected": 3, "scrubClicks": 5, "crawlEvery": 9, "eliteVirusPerWave": 2,
+    "popupEvery": 8, "popupSeconds": 8, "popupSpawn": "slime", "adCount": 3,
+    "bellEvery": 10, "bellDamage": 6, "bellStun": 1, "freezeEvery": 12, "freezeSeconds": 1.2,
+    "mendEvery": 7, "mendShare": 0.15, "mendGuard": 2, "spitEvery": 15, "spitElite": true,
+    // Malware at random times (from a threat of malwareMinThreat, every malwareEveryMin–malwareEveryMax s
+    // of fighting, one kind by weight among those not out yet, at most maxMalware kinds at once).
+    // Loading ring: the cat inside it is slowed; hold its spinner loadingHold s to close it. Forced
+    // update: a wall between the cat and the slimes; the cat's hits speed it up, updateClicks clicks on
+    // Later close it. Ads: adCount of them across the floor.
+    "malwareMinThreat": 1.3, "malwareEveryMin": 15, "malwareEveryMax": 30, "maxMalware": 2, "adWeight": 1,
+    "loadingWeight": 1, "loadingSeconds": 12, "loadingRadius": 85, "loadingSlow": 0.5, "loadingHold": 2,
+    "updateWeight": 1, "updateSeconds": 8, "updateHitSeconds": 1.2, "updateClicks": 4,
     // virus.exe: a file on the desktop that copies itself; with 4 copies it infects an icon. Click to delete.
     "virusExeWeight": 1, "virusExeEvery": 6, "virusExeCopies": 4,
     "list": [
       { "id": "tabs", "nameVi": "Tab Lốc Xoáy", "nameEn": "Tab Tornado", "charge": 40, "start": 0.6,
         "descVi": "Ba thẻ tab bay xuống xoay quanh mèo 6 giây, chém slime ở gần.", "descEn": "Three tabs fly down and circle the cat for 6 s, cutting nearby slimes.",
-        "badVi": "Nhiễm virus: bật quảng cáo đè lên slime.", "badEn": "Infected: opens ads over the slimes." },
+        "badVi": "Nhiễm virus: bật 3 quảng cáo không tắt được tới khi gỡ virus khỏi Tab.", "badEn": "Infected: opens 3 ads that cannot be closed until the Tabs icon is cleaned." },
       { "id": "ping", "nameVi": "Bão Thông Báo", "nameEn": "Ping Storm", "charge": 55, "start": 0.4,
         "descVi": "Chuông 99+ rơi lên 4 slime gần mèo nhất: sát thương nhỏ, choáng 1,5 giây.", "descEn": "99+ bells drop on the 4 slimes nearest the cat: a little damage, 1.5 s stun.",
-        "badVi": "Nhiễm virus: thả chuông lên đầu mèo.", "badEn": "Infected: drops bells on the cat's head." },
+        "badVi": "Nhiễm virus: thả chuông lên đầu mèo, làm mèo choáng 1 giây.", "badEn": "Infected: drops bells on the cat's head that stun it for 1 s." },
       { "id": "endtask", "nameVi": "End Task", "nameEn": "End Task", "charge": 80,
         "descVi": "Tắt slime nhiều máu nhất. Trùm, tinh anh: mất 25% máu.", "descEn": "Ends the slime with the most HP. Bosses, elites: lose 25% HP.",
         "badVi": "Nhiễm virus: làm mèo \"Không phản hồi\" một lúc.", "badEn": "Infected: leaves the cat \"Not responding\" for a moment." },
       { "id": "undo", "nameVi": "Ctrl+Z", "nameEn": "Ctrl+Z", "charge": 90,
         "descVi": "Hoàn lại máu mèo mất trong 4 giây vừa qua.", "descEn": "Gives back the HP the cat lost in the last 4 s.",
-        "badVi": "Nhiễm virus: hồi máu cho slime yếu nhất.", "badEn": "Infected: heals the weakest slime." },
+        "badVi": "Nhiễm virus: hồi máu cho slime yếu nhất và che chắn nó 2 giây.", "badEn": "Infected: heals the weakest slime and guards it for 2 s." },
       { "id": "trash", "nameVi": "Thùng Rác", "nameEn": "Bin", "charge": 70,
         "descVi": "Hút 2 slime thường gần mèo nhất vào thùng.", "descEn": "Sucks the 2 plain slimes nearest the cat into the bin.",
-        "badVi": "Nhiễm virus: nhả slime ra sàn.", "badEn": "Infected: spits slimes onto the floor." },
+        "badVi": "Nhiễm virus: nhả một slime tinh anh ra sàn.", "badEn": "Infected: spits an elite slime onto the floor." },
       { "id": "popup", "nameVi": "Quảng cáo", "nameEn": "Ad popup",
-        "descVi": "Che slime phía sau. Bấm × để tắt, để lâu sẽ thả slime ra.", "descEn": "Covers the slimes behind it. Click × to close, or it lets a slime out." }
+        "descVi": "Ba quảng cáo che slime phía sau. Bấm × để tắt (Tab nhiễm thì gỡ Tab trước); để lâu sẽ thả slime ra.", "descEn": "Three ads cover the slimes behind them. Click × to close (clean an infected Tabs first), or one lets a slime out." }
     ]
   },
 
@@ -171,7 +181,8 @@
       "windup": 0.8, "attackCooldown": 1.8, "recover": 0.35,
       "scale": 1, "color": "#7CD36A", "cost": 1,
       // elite stats multiply once on top of difficulty and threat (attackCooldown: only the wait between attacks).
-      "elite": { "hp": 1.2, "attackCooldown": 0.65, "cost": 1, "descVi": "máu dày hơn, đánh dồn dập hơn", "descEn": "more HP, attacks more often" }
+      // virusEvery: in battles with the desktop apps it shoots a virus at a clean icon that often.
+      "elite": { "hp": 1.2, "attackCooldown": 0.65, "virusEvery": 25, "cost": 1, "descVi": "máu dày, đánh dồn dập, bắn virus vào icon", "descEn": "more HP, attacks more often, shoots viruses at icons" }
     },
     {
       // Small and quick, falls fast. dash: within dashRange it winds up (its lane shows on the
@@ -224,7 +235,7 @@
       // each at their HP fraction; at most summonCap helpers alive at once. A shield phase stops a
       // hit at its line, runs to the far edge (retreatSpeed, at most retreatSeconds), calls its
       // helpers there and takes no damage until they are all defeated. rallyEvery: meanwhile its crown
-      // glows (rallyCharge s; a push cuts it) and one fighting helper becomes elite for good: rallyHp more
+      // glows (rallyCharge s; a push cuts it) and one helper (drawn at random, herb slimes too) becomes elite for good: rallyHp more
       // max HP, hits × rallyDamage and its kind's own elite affix.
       // shieldBreakStun: dazed that long when the shield breaks. retreatLeap: instead of running it crouches
       // (leapCrouch s) and leaps (leapSeconds) to the edge opposite its half of the floor (the other one if

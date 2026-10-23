@@ -20,6 +20,8 @@ public sealed class PickupAnimation
     private double lastX, lastY, velocityX, velocityY, angularVelocity, dizzyHold;
     private double movementSpeed, movementIntensity;
     private bool vigorousMovement;
+    // No dizziness however the cat is shaken (Battle Mode, 2026-10-24: its stars mean a stun there).
+    public bool NoDizzy { get; set; }
 
     public void Begin(double x, double y)
     {
@@ -80,6 +82,7 @@ public sealed class PickupAnimation
                     movementIntensity = Math.Max(0, movementIntensity - 2 * h);
                 vigorousMovement = movementIntensity >= DizzyRequiredIntensity;
             }
+            if (NoDizzy) { vigorousMovement = false; movementIntensity = 0; }
             double targetDizziness = vigorousMovement ? Math.Clamp(movementSpeed / 2200, 0.65, 1) : 0;
             if (vigorousMovement) dizzyHold = 1.2;
             else dizzyHold = Math.Max(0, dizzyHold - h);

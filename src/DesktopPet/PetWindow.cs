@@ -306,8 +306,9 @@ public sealed partial class PetWindow : Window
     private void BeginDrag(object sender, MouseButtonEventArgs e)
     {
         // A held battle (paused, menu, card pick, bag...) freezes the cat: it cannot be picked up.
-        // Nor while it is being brought to the main screen (a puff, under a second).
-        if (BattleFreezesPet || CatTeleporting) { e.Handled = true; return; }
+        // Nor while it is being brought to the main screen (a puff, under a second), nor while a
+        // battle's stun holds it (2026-10-24: the stars over its head; it can be lifted again after).
+        if (BattleFreezesPet || CatTeleporting || BattleStunHolds) { e.Handled = true; return; }
         CancelFeatureActivity();
         behavior.WakeByClick(pet);
         pet.Emotions.Attention(click: true);
@@ -358,6 +359,7 @@ public sealed partial class PetWindow : Window
             double ease = 1 - Math.Exp(-12 * dt);
             dragOffset = new Point(dragOffset.X + (PickupAnimation.AnchorX - dragOffset.X) * ease,
                 dragOffset.Y + (PickupAnimation.AnchorY - dragOffset.Y) * ease);
+            pet.Pickup.NoDizzy = battle != null;
             if (!paused) pet.Pickup.Step(cursor.X, cursor.Y, dt);
         }
         pet.X = cursor.X - dragOffset.X;

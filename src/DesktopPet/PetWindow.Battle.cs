@@ -61,6 +61,8 @@ public sealed partial class PetWindow
     // Any pause but Away also freezes the cat's own physics (a throw stops mid-air and goes on
     // after). Away does not: the cat has to be able to fall and be carried back.
     private bool BattleFreezesPet => battle != null && (battlePause & ~BattlePause.Away) != 0;
+    // A stunned cat (a dash, an infected bell, "Not responding") cannot be picked up until the stun ends.
+    private bool BattleStunHolds => battle is { CatStunned: true, Over: false };
     // Replaceable for UI checks; the default asks Windows which monitor the cat is on.
     private Func<string>? battleMonitorProbe;
     private string CatMonitor() => (battleMonitorProbe ??= () => CurrentMonitor().DeviceName)();
@@ -547,6 +549,7 @@ public sealed partial class PetWindow
         battleView.SlimeClicked += (id, offset) => BattleClickSlime(id, offset);
         battleView.PopupClicked += id => BattleClosePopup(id);
         battleView.HazardClicked += id => BattleCloseHazard(id);
+        battleView.HazardReleased += () => { battle?.ReleaseHazard(); RequestBattleRedraw(); };
         battleView.RightClicked += () => { battle?.Arm(null); RequestBattleRedraw(); UpdateBattleHud(); }; // Right-click on the field cancels the skill.
         battleFieldWindow = CreateOverlayWindow(battleView, "Pet battle");
         battleFieldWindow.DpiChanged += (_, _) => battlePlacedScale = 0; // Re-place in pixels next frame.

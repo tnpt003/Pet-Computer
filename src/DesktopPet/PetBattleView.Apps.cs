@@ -11,9 +11,10 @@ namespace DesktopPet;
 // in their own windows (DesktopAppIcon); what flies between them and the field is AppFlightView.
 public sealed partial class BattleFieldView
 {
-    // An ad's × clicked; malware's spinner clicked.
+    // An ad's × clicked; malware's spinner clicked (a loading ring's: pressed) and let go.
     public event Action<int>? PopupClicked;
     public event Action<int>? HazardClicked;
+    public event Action? HazardReleased;
 
     // Malware's spinner: up in the strip where the cat (in its own window above) does not cover it.
     private static Point Spinner(BattleHazard hazard, double originX, double floor) => new(hazard.X - originX, floor - 132);
@@ -62,7 +63,14 @@ public sealed partial class BattleFieldView
                 AppArt.DrawUpdateWall(dc, r, Language, hazard.Age / hazard.Life, hazard.ClicksLeft);
                 dc.Pop();
             }
-            else AppArt.DrawLoading(dc, hazard.X - OriginX, floor, radius, Spinner(hazard, OriginX, floor), grow, 1 - hazard.Age / hazard.Life, time);
+            else
+            {
+                var spinner = Spinner(hazard, OriginX, floor);
+                AppArt.DrawLoading(dc, hazard.X - OriginX, floor, radius, spinner, grow, 1 - hazard.Age / hazard.Life, time);
+                // Held: a ring fills around the spinner; not held yet, a small hand says "hold".
+                double hold = sim.AppRules?.LoadingHold ?? 0;
+                if (hold > 0) AppArt.DrawHoldRing(dc, spinner, hazard.Held / hold, sim.HoldingHazardId == hazard.Id, time);
+            }
             dc.Pop();
         }
     }
@@ -99,6 +107,8 @@ public sealed partial class BattleFieldView
             if (popup.Life - popup.Age < 2) scale += 0.03 * Math.Sin(time * 30);
             dc.PushTransform(new ScaleTransform(scale, scale, r.X + r.Width / 2, r.Bottom));
             AppArt.DrawAd(dc, r, Language, popup.Age / popup.Life, time);
+            // An infected Tabs keeps the ads open: a padlock over the ×.
+            if (sim.PopupsLocked) AppArt.DrawAdLock(dc, CloseButton(r));
             dc.Pop();
         }
     }

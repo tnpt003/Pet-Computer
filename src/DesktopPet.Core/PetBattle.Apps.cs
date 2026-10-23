@@ -38,6 +38,13 @@ public sealed partial class BattleSim
     private double tabClock;
     // When this wave's virus is shot (NaN: none coming).
     private double infectTimer = double.NaN;
+    // When the next malware comes (NaN: not started yet), and the viruses elites shot this wave.
+    private double malwareClock = double.NaN;
+    private int eliteShots;
+    // The loading ring whose spinner the user is holding down (0: none).
+    public int HoldingHazardId { get; private set; }
+    // While an infected Tabs holds an icon, its ads cannot be closed (and do not run out).
+    public bool PopupsLocked => desktop.Any(a => a.Infected && a.Kind == BattleAppKind.Tabs);
     // What the cat lost and when (battle time), for Undo.
     private readonly List<(double Time, double Hp)> hurts = new();
     public int PopupsClosed { get; private set; }
@@ -137,11 +144,14 @@ public sealed partial class BattleSim
             Land(launch, rules);
             if (Over) return;
         }
+        StepHold(dt, rules);
         if (catHeld) return;
         StepVirusFiles(dt, rules);
+        bool locked = PopupsLocked;
         for (int i = popups.Count - 1; i >= 0; i--)
         {
             var popup = popups[i];
+            if (locked) continue;
             popup.Age += dt;
             if (popup.Age < popup.Life) continue;
             popups.RemoveAt(i);
@@ -169,8 +179,108 @@ public sealed partial class BattleSim
         if (!double.IsNaN(infectTimer) && Phase == BattlePhase.Fighting)
         {
             infectTimer -= dt;
-            if (infectTimer <= 0) { infectTimer = double.NaN; VirusTurn(rules); }
+            if (infectTimer <= 0) { infectTimer = double.NaN; ShootGoo(rules); }
         }
+        if (Phase != BattlePhase.Fighting) return;
+        StepMalware(dt, rules);
+        StepEliteViruses(dt, rules);
+    }
+
+    // Malware at random times while the fight goes on (from MalwareMinThreat): the first after half a
+    // usual wait, then every MalwareEveryMin–MalwareEveryMax s.
+    private void StepMalware(double dt, AppsSpec rules)
+    {
+        if (Threat < rules.MalwareMinThreat) return;
+        double Wait() => rules.MalwareEveryMin + appRandom.NextDouble() * (rules.MalwareEveryMax - rules.MalwareEveryMin);
+        if (double.IsNaN(malwareClock)) malwareClock = Wait() * 0.5;
+        malwareClock -= dt;
+        if (malwareClock > 0) return;
+        malwareClock = Wait();
+        ThrowMalware(rules);
+    }
+
+    // The kinds of malware out now: a loading ring, a forced update, virus.exe, the ads.
+    private bool MalwareOut(int kind) => kind switch
+    {
+        0 => hazards.Any(h => h.Kind == HazardKind.Loading),
+        1 => hazards.Any(h => h.Kind == HazardKind.Update),
+        2 => virusFiles.Count > 0,
+        _ => popups.Count > 0 || launches.Any(l => l.Kind == LaunchKind.Popup)
+    };
+
+    // One kind drawn by weight among those not out yet (none while MaxMalware kinds are out).
+    private void ThrowMalware(AppsSpec rules)
+    {
+        if (!slimes.Any(s => s.Targetable)) return;
+        double[] weights = { rules.LoadingWeight, rules.UpdateWeight, rules.VirusExeWeight, rules.AdWeight };
+        int outNow = Enumerable.Range(0, weights.Length).Count(MalwareOut);
+        if (outNow >= rules.MaxMalware) return;
+        for (int i = 0; i < weights.Length; i++) if (MalwareOut(i) || weights[i] < 0) weights[i] = 0;
+        if (!desktop.Any(a => !a.Infected)) weights[2] = 0; // virus.exe needs a clean icon to go for.
+        double total = weights.Sum();
+        if (total <= 0) return;
+        double roll = appRandom.NextDouble() * total;
+        int pick = 0;
+        while (pick < weights.Length - 1 && (weights[pick] <= 0 || roll >= weights[pick])) { roll -= weights[pick]; pick++; }
+        switch (pick)
+        {
+            case 0: ThrowLoading(rules); break;
+            case 1: ThrowUpdate(rules); break;
+            case 2: DropVirusExe(rules); break;
+            default: OpenAds(rules, null); break;
+        }
+    }
+
+    // An elite with a virus affix shoots at a clean icon every VirusEvery s (at most EliteVirusPerWave a
+    // wave; with no icon to take it tries again a second later).
+    private void StepEliteViruses(double dt, AppsSpec rules)
+    {
+        foreach (var slime in slimes)
+        {
+            if (!slime.Targetable || slime.Elite is not { VirusEvery: > 0 } elite) continue;
+            slime.VirusClock -= dt;
+            if (slime.VirusClock > 0) continue;
+            if (eliteShots >= rules.EliteVirusPerWave) { slime.VirusClock = elite.VirusEvery; continue; }
+            if (ShootGoo(rules, slime)) { eliteShots++; slime.VirusClock = elite.VirusEvery; }
+            else slime.VirusClock = 1;
+        }
+    }
+
+    // The user holds a loading ring's spinner: it closes after LoadingHold s of holding.
+    private void StepHold(double dt, AppsSpec rules)
+    {
+        if (HoldingHazardId == 0) return;
+        if (FindHazard(HoldingHazardId) is not { Kind: HazardKind.Loading } hazard) { HoldingHazardId = 0; return; }
+        hazard.Held += dt;
+        if (hazard.Held < rules.LoadingHold) return;
+        HoldingHazardId = 0;
+        RemoveHazard(hazard);
+    }
+
+    // The ads (AdCount in all, spread over the floor's width in random spots): from an infected Tabs
+    // they fly from its icon, as malware they pop up where they stand.
+    private void OpenAds(AppsSpec rules, DesktopApp? from)
+    {
+        int count = rules.AdCount - popups.Count - launches.Count(l => l.Kind == LaunchKind.Popup);
+        if (count <= 0) return;
+        double minX = Left + PopupWidth / 2, maxX = Math.Max(minX, Right - PopupWidth / 2), slot = (maxX - minX) / rules.AdCount;
+        var taken = popups.Select(p => p.X).Concat(launches.Where(l => l.Kind == LaunchKind.Popup).Select(l => l.FloorX)).ToList();
+        var slots = Enumerable.Range(0, rules.AdCount).Where(i => !taken.Any(x => Math.Abs(x - (minX + (i + 0.5) * slot)) < slot / 2)).ToList();
+        for (int n = 0; n < count && slots.Count > 0; n++)
+        {
+            int k = appRandom.Next(slots.Count);
+            double x = minX + (slots[k] + 0.2 + 0.6 * appRandom.NextDouble()) * slot;
+            slots.RemoveAt(k);
+            if (from != null) Launch(LaunchKind.Popup, from, x, PopupHeight / 2, AttackSeconds);
+            else OpenPopup(x, rules);
+        }
+    }
+
+    private void OpenPopup(double x, AppsSpec rules)
+    {
+        var popup = new BattlePopup { Id = nextAppId++, X = x, Life = rules.PopupSeconds };
+        popups.Add(popup);
+        events.Add(new(BattleEventKind.PopupOpened, popup.X, popup.Id));
     }
 
     private void Charge(DesktopApp app, double amount)
@@ -186,6 +296,7 @@ public sealed partial class BattleSim
     private void AppsWaveStarted()
     {
         infectTimer = double.NaN;
+        eliteShots = 0;
         if (AppRules is not AppsSpec rules) return;
         EnsureDesktop();
         if (Wave > 1)
@@ -251,28 +362,6 @@ public sealed partial class BattleSim
         app.ScrubsLeft = 0;
         app.CleanedAt = Time;
         events.Add(new(BattleEventKind.AppCleaned, IconX(app), app.Id));
-    }
-
-    // The wave's virus: into an icon, or malware onto the field, by the weights (no draw when only
-    // one of them can happen).
-    private void VirusTurn(AppsSpec rules)
-    {
-        double[] weights = { Math.Max(0, rules.InfectWeight), Math.Max(0, rules.LoadingWeight), Math.Max(0, rules.UpdateWeight), Math.Max(0, rules.VirusExeWeight) };
-        double total = weights.Sum();
-        if (total <= 0) return;
-        int pick = Array.FindIndex(weights, w => w > 0);
-        if (weights.Count(w => w > 0) > 1)
-        {
-            double roll = appRandom.NextDouble() * total;
-            for (pick = 0; pick < weights.Length - 1 && roll >= weights[pick]; pick++) roll -= weights[pick];
-        }
-        switch (pick)
-        {
-            case 0: ShootGoo(rules); break;
-            case 1: ThrowLoading(rules); break;
-            case 2: ThrowUpdate(rules); break;
-            default: DropVirusExe(rules); break;
-        }
     }
 
     // A slime drops virus.exe on a free desktop cell (one outbreak at a time, and only with a clean icon to go for).
@@ -406,8 +495,8 @@ public sealed partial class BattleSim
         events.Add(new(BattleEventKind.HazardOpened, x, hazard.Id));
     }
 
-    // A click on malware's spinner or Later button: it closes (a forced update after its clicks),
-    // whatever the cat is doing.
+    // A click on malware's spinner or Later button: it closes (a forced update after its clicks; a
+    // loading ring with LoadingHold once its spinner is held that long), whatever the cat is doing.
     public bool CloseHazard(int id)
     {
         if (FindHazard(id) is not BattleHazard hazard || Over || Paused || ChoosingUpgrade) return false;
@@ -417,24 +506,44 @@ public sealed partial class BattleSim
             events.Add(new(BattleEventKind.HazardTapped, hazard.X, hazard.Id));
             return true;
         }
-        hazards.Remove(hazard);
-        AddEffect(BattleEffectKind.Poof, hazard.X, 20);
-        events.Add(new(BattleEventKind.HazardClosed, hazard.X, hazard.Id));
+        if (hazard.Kind == HazardKind.Loading && AppRules is { LoadingHold: > 0 })
+        {
+            HoldingHazardId = hazard.Id;
+            hazard.HitAt = Time;
+            return true;
+        }
+        RemoveHazard(hazard);
         return true;
     }
 
-    // A slime spits its virus at a clean icon (while fewer than MaxInfected are taken).
-    private void ShootGoo(AppsSpec rules)
+    // The user let go of a loading ring's spinner before it closed: its hold starts over.
+    public void ReleaseHazard()
+    {
+        if (FindHazard(HoldingHazardId) is BattleHazard hazard) hazard.Held = 0;
+        HoldingHazardId = 0;
+    }
+
+    private void RemoveHazard(BattleHazard hazard)
+    {
+        hazards.Remove(hazard);
+        AddEffect(BattleEffectKind.Poof, hazard.X, 20);
+        events.Add(new(BattleEventKind.HazardClosed, hazard.X, hazard.Id));
+    }
+
+    // A slime (any, or the one given) spits its virus at a clean icon (while fewer than MaxInfected
+    // are taken). False: no shot.
+    private bool ShootGoo(AppsSpec rules, Slime? from = null)
     {
         int busy = desktop.Count(a => a.Infected) + launches.Count(l => l.Kind == LaunchKind.Goo);
-        if (busy >= rules.MaxInfected) return;
-        var shooters = slimes.Where(s => s.Targetable && !s.Shielded && s.LeapHeight == 0).ToList();
+        if (busy >= rules.MaxInfected) return false;
+        var shooters = from != null ? new List<Slime> { from } : slimes.Where(s => s.Targetable && !s.Shielded && s.LeapHeight == 0).ToList();
         var clean = desktop.Where(a => !a.Infected && !launches.Any(l => l.Kind == LaunchKind.Goo && l.AppId == a.Id)).ToList();
-        if (shooters.Count == 0 || clean.Count == 0) return;
+        if (shooters.Count == 0 || clean.Count == 0 || from is { LeapHeight: > 0 }) return false;
         var slime = shooters[appRandom.Next(shooters.Count)];
         var app = clean[appRandom.Next(clean.Count)];
         Launch(LaunchKind.Goo, app, slime.X, slime.Height * 0.8, GooSeconds, toIcon: true).SlimeId = slime.Id;
         events.Add(new(BattleEventKind.GooShot, slime.X, slime.Id));
+        return true;
     }
 
     private AppLaunch Launch(LaunchKind kind, DesktopApp app, double floorX, double height, double seconds, bool toIcon = false)
@@ -450,11 +559,9 @@ public sealed partial class BattleSim
         switch (app.Kind)
         {
             case BattleAppKind.Tabs:
-                // An ad over one of the slimes (one ad at a time).
+                // The ads (AdCount of them, a new set once none is open).
                 if (popups.Count > 0 || launches.Any(l => l.Kind == LaunchKind.Popup)) return;
-                var covered = slimes.Where(s => s.Targetable).ToList();
-                double x = covered.Count > 0 ? covered[appRandom.Next(covered.Count)].X : IconX(app);
-                Launch(LaunchKind.Popup, app, Math.Clamp(x, Left + PopupWidth / 2, Math.Max(Left + PopupWidth / 2, Right - PopupWidth / 2)), PopupHeight / 2, AttackSeconds);
+                OpenAds(rules, app);
                 break;
             case BattleAppKind.Ping:
                 Launch(LaunchKind.BadBell, app, lastCatX, 100, AttackSeconds);
@@ -472,7 +579,8 @@ public sealed partial class BattleSim
                 mend.Targets = new[] { hurt.Id };
                 break;
             default:
-                if (Alive >= maxAlive || Settings.EnemyTypes.All(e => e.Id != rules.PopupSpawn)) return;
+                // One spat enemy alive at a time.
+                if (Alive >= maxAlive || SpitKinds(rules).Count == 0 || slimes.Any(s => s.Spat && s.State != SlimeState.Defeated)) return;
                 Launch(LaunchKind.Spit, app, Math.Clamp(IconX(app), Left + 30, Math.Max(Left + 30, Right - 30)), 0, AttackSeconds);
                 break;
         }
@@ -526,7 +634,13 @@ public sealed partial class BattleSim
                 // Falls on the cat's head (a lifted or protected cat is missed).
                 if (CatLifted || Grace > 0) break;
                 AddEffect(BattleEffectKind.Bell, lastCatX, 100);
-                LandHit(rules.BellDamage, lastCatX, out _);
+                if (!LandHit(rules.BellDamage, lastCatX, out _) || rules.BellStun <= 0) break;
+                // ...and stuns it (no stun again too soon, as after a dash).
+                if (CatHeld || CatStunned || StunImmunity > 0) break;
+                CatStunRemaining = rules.BellStun;
+                StunsTaken++;
+                CancelSwing();
+                events.Add(new(BattleEventKind.CatStunned, lastCatX));
                 break;
             case LaunchKind.Freeze:
                 // "Not responding" over the cat: a short stun (the Shield stops it; no stun again too soon).
@@ -544,14 +658,25 @@ public sealed partial class BattleSim
                 double heal = Math.Min(mended.MaxHp - mended.Hp, mended.MaxHp * rules.MendShare);
                 if (heal <= 0) break;
                 mended.Hp += heal;
+                // ...and guards it a moment (never a boss).
+                if (!mended.IsBoss && rules.MendGuard > 0) mended.WardUntil = Time + rules.MendGuard;
                 AddEffect(BattleEffectKind.Mend, mended.X, mended.Height);
                 AddEffect(BattleEffectKind.Number, mended.X, mended.Height + 10, -Math.Round(heal));
                 break;
             case LaunchKind.Spit:
-                if (Alive >= maxAlive || Settings.EnemyTypes.All(e => e.Id != rules.PopupSpawn)) break;
-                var spat = AddSlime(launch.FloorX, Settings.Enemy(rules.PopupSpawn));
+                var kinds = SpitKinds(rules);
+                if (Alive >= maxAlive || kinds.Count == 0) break;
+                var kind = kinds[appRandom.Next(kinds.Count)];
+                var spat = AddSlime(launch.FloorX, kind);
                 spat.Facing = lastCatX < spat.X ? -1 : 1;
+                spat.Spat = true;
                 events.Add(new(BattleEventKind.SlimeSpawned, spat.X));
+                // An elite of its kind (not counted against maxElites: one spat enemy at a time anyway).
+                if (rules.SpitElite && kind.Elite is EliteSpec affix)
+                {
+                    ApplyElite(spat, affix);
+                    events.Add(new(BattleEventKind.EliteAppeared, spat.X, spat.Id));
+                }
                 break;
             case LaunchKind.Popup:
                 var popup = new BattlePopup { Id = nextAppId++, X = launch.FloorX, Life = rules.PopupSeconds };
@@ -560,6 +685,11 @@ public sealed partial class BattleSim
                 break;
         }
     }
+
+    // What an infected bin spits: any kind with an elite affix (no boss), or the popup's enemy.
+    private List<EnemyType> SpitKinds(AppsSpec rules) => rules.SpitElite
+        ? Settings.EnemyTypes.Where(e => !e.Boss && e.Elite != null).ToList()
+        : Settings.EnemyTypes.Where(e => e.Id == rules.PopupSpawn).ToList();
 
     // Left alone, the ad lets an enemy out where it was (when the floor has room).
     private void PopupRanOut(BattlePopup popup, AppsSpec rules)
@@ -575,6 +705,7 @@ public sealed partial class BattleSim
     public bool ClosePopup(int id)
     {
         if (FindPopup(id) is not BattlePopup popup || Over || Paused || ChoosingUpgrade) return false;
+        if (PopupsLocked) { events.Add(new(BattleEventKind.PopupLocked, popup.X, popup.Id)); return false; }
         popups.Remove(popup);
         PopupsClosed++;
         AddEffect(BattleEffectKind.Poof, popup.X, 40);
@@ -697,6 +828,7 @@ public sealed partial class BattleSim
         virusFiles.Clear();
         TabsRemaining = 0;
         infectTimer = double.NaN;
+        HoldingHazardId = 0;
         hurts.Clear();
         foreach (var app in desktop) { app.InfectedBy = 0; app.ScrubsLeft = 0; }
     }

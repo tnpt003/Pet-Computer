@@ -40,17 +40,33 @@ public sealed partial class BattleFieldView : FrameworkElement
             var point = e.GetPosition(this);
             // An ad's × first; the rest of an ad hides the slimes behind it.
             if (PopupCloseAt(point) is int popup) PopupClicked?.Invoke(popup);
-            else if (HazardAt(point) is int hazard) HazardClicked?.Invoke(hazard);
+            else if (HazardAt(point) is int hazard)
+            {
+                HazardClicked?.Invoke(hazard);
+                // A loading ring closes while its spinner is held: keep the mouse until it is let go.
+                if (sim.HoldingHazardId == hazard) CaptureMouse();
+            }
             else if (!OnPopup(point) && !OnWall(point) && SlimeAt(point) is int id && sim.Find(id) is { } slime) SlimeClicked?.Invoke(id, point.X - (slime.X - OriginX));
             e.Handled = true;
         };
+        MouseLeftButtonUp += (_, _) => EndHold();
+        LostMouseCapture += (_, _) => EndHold();
         MouseRightButtonDown += (_, e) => { RightClicked?.Invoke(); e.Handled = true; };
         MouseMove += (_, e) => Hover(e.GetPosition(this));
         MouseLeave += (_, _) => { if (hoverId != null) { hoverId = null; InvalidateVisual(); } };
     }
 
+    // The user let go of (or slid off) a loading ring's spinner.
+    private void EndHold()
+    {
+        if (sim.HoldingHazardId == 0) return;
+        HazardReleased?.Invoke();
+        if (IsMouseCaptured) ReleaseMouseCapture();
+    }
+
     private void Hover(Point point)
     {
+        if (sim.HoldingHazardId != 0 && HazardAt(point) != sim.HoldingHazardId) EndHold();
         int? id = sim.PushArmed && !OnPopup(point) ? SlimeAt(point) : null;
         double offset = id is int found && sim.Find(found) is { } slime ? point.X - (slime.X - OriginX) : 0;
         if (id == hoverId && Math.Sign(offset) == Math.Sign(hoverOffset)) return;

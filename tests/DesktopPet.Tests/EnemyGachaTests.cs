@@ -294,7 +294,7 @@ internal static class EnemyGachaTests
         check(Bad("\"enemies\": [ { \"id\": \"king_c1\", \"elite\": { \"windupAdd\": 0.2, \"descVi\": \"a\", \"descEn\": \"a\" } } ]").Contains("not for a boss"), "An elite affix on a boss is rejected");
         check(Bad("\"enemies\": [ { \"id\": \"slime\", \"elite\": { \"sureBlocks\": 1, \"descVi\": \"a\", \"descEn\": \"a\" } } ]").Contains("blocks"), "Sure blocks on an enemy that never blocks are rejected");
         check(Bad("\"enemies\": [ { \"id\": \"slime\", \"elite\": { \"windupAdd\": 0.2, \"descVi\": \"a\", \"descEn\": \"a\" } } ]").Contains("dash"), "A dash affix on an enemy that does not dash is rejected");
-        check(Bad("\"enemies\": [ { \"id\": \"slime\", \"elite\": { \"hp\": 1, \"attackCooldown\": 1, \"descVi\": \"a\", \"descEn\": \"a\" } } ]").Contains("changes nothing"), "An elite affix that changes nothing is rejected");
+        check(Bad("\"enemies\": [ { \"id\": \"slime\", \"elite\": { \"hp\": 1, \"attackCooldown\": 1, \"virusEvery\": 0, \"descVi\": \"a\", \"descEn\": \"a\" } } ]").Contains("changes nothing"), "An elite affix that changes nothing is rejected");
         check(Bad("\"enemies\": [ { \"id\": \"slime\", \"cost\": 11 } ]").Contains("cost"), "An enemy cost above 10 is rejected");
         check(Bad("\"maxElites\": 6").Contains("maxElites") && Bad("\"rareChance\": 1.5").Contains("rareChance"), "maxElites and rareChance out of range are rejected");
         check(Bad("\"upgrades\": [ { \"id\": \"odd\", \"group\": \"power\", \"rare\": true, \"nameVi\": \"a\", \"nameEn\": \"a\", \"descVi\": \"a\", \"descEn\": \"a\", \"effect\": \"damage\", \"amount\": 0.1, \"maxStacks\": 1 } ]").Contains("one rare card per group"),

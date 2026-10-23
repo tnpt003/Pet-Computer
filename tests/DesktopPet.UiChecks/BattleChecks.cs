@@ -401,8 +401,8 @@ internal static class BattleChecks
         window.RaiseEvent(MouseEvent(UIElement.MouseLeftButtonUpEvent));
         check(pet.Action == PetAction.Thrown, "The throw after it is the normal one");
 
-        // A dash stun in the real window: stars on the standing cat; a drag still starts and the
-        // stun goes on in the user's hands; ending the battle leaves nothing behind.
+        // A dash stun in the real window: stars on the standing cat; (2026-10-24) it cannot be picked
+        // up until the stun ends, then it can; ending the battle leaves nothing behind.
         window.Reset();
         window.BattleTuning = new BattleSettings
         {
@@ -421,7 +421,14 @@ internal static class BattleChecks
         FieldOf("pressPosition").SetValue(window, new Point(-100000, -100000));
         Call(window, "CheckDragThreshold");
         Tick(0.2);
-        check(pet.Action == PetAction.Dragging && Sim().CatStunned && pet.BattleStun > 0, "A stunned cat can still be dragged; the stun stays while carried");
+        check(pet.Action != PetAction.Dragging && Sim().CatStunned && pet.BattleStun > 0, "A stunned cat cannot be dragged; it stays stunned on the floor");
+        window.RaiseEvent(MouseEvent(UIElement.MouseLeftButtonUpEvent));
+        for (int i = 0; i < 200 && Sim().CatStunned; i++) Call(window, "TickBattle", 1.0 / 60);
+        window.RaiseEvent(MouseEvent(UIElement.MouseLeftButtonDownEvent));
+        FieldOf("pressPosition").SetValue(window, new Point(-100000, -100000));
+        Call(window, "CheckDragThreshold");
+        Tick(0.1);
+        check(!Sim().CatStunned && pet.Action == PetAction.Dragging, "Once the stun is over it can be dragged");
         window.RaiseEvent(MouseEvent(UIElement.MouseLeftButtonUpEvent));
         check(pet.Action == PetAction.Thrown, "and thrown as usual");
         window.EndBattle();
@@ -757,7 +764,7 @@ internal static class BattleChecks
             appsPrefs.BattleApps = true;
             // A loading ring thrown where the cat stands slows the cat's running; clicking its spinner closes it.
             window.BattleTuning = new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 1 }, SlimeMaxHp = 1000, SlimeDamage = 0,
-                Apps = new AppsSpec { InfectMinThreat = 0, InfectChance = 1, InfectWeight = 0, LoadingWeight = 1, LoadingSlow = 0.5 } };
+                Apps = new AppsSpec { InfectChance = 0, MalwareMinThreat = 0, MalwareEveryMin = 3, MalwareEveryMax = 3, LoadingWeight = 1, LoadingSlow = 0.5 } };
             check(window.StartBattle(stage: new StageSpec { Id = "ui_loading" }) == null, "(setup) a stage battle that throws a loading ring");
             for (int i = 0; i < 600 && Sim().Hazards.Count == 0; i++) Tick(1.0 / 60);
             Tick(0.05);
@@ -768,9 +775,20 @@ internal static class BattleChecks
             Tick(0.05);
             check(Math.Abs(pet.MoveScale - ringSim.Settings.CatRunScale * ringSim.MoveFactor) < 1e-9, "Then the cat runs at full speed again");
             window.EndBattle();
+            // With loadingHold (the shipped 2 s) a press starts holding the spinner; the battle's ticks close it.
+            window.BattleTuning = new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 1 }, SlimeMaxHp = 1000, SlimeDamage = 0,
+                Apps = new AppsSpec { InfectChance = 0, MalwareMinThreat = 0, MalwareEveryMin = 3, MalwareEveryMax = 3, LoadingWeight = 1, LoadingSeconds = 30, LoadingHold = 2 } };
+            check(window.StartBattle(stage: new StageSpec { Id = "ui_loading_hold" }) == null, "(setup) a stage battle whose rings are held to close");
+            for (int i = 0; i < 600 && Sim().Hazards.Count == 0; i++) Tick(1.0 / 60);
+            var holdSim = Sim();
+            check(holdSim.Hazards.Count == 1 && window.BattleCloseHazard(holdSim.Hazards[0].Id) && holdSim.Hazards.Count == 1 && holdSim.HoldingHazardId != 0,
+                "Pressing the spinner starts holding it (the ring stays)");
+            for (int i = 0; i < 130; i++) Tick(1.0 / 60);
+            check(holdSim.Hazards.Count == 0 && holdSim.HoldingHazardId == 0, "Held 2 s, the ring closes");
+            window.EndBattle();
             // virus.exe: each copy in its own window on its cell; a click deletes it and its window closes.
             window.BattleTuning = new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 1 }, SlimeMaxHp = 1000, SlimeDamage = 0,
-                Apps = new AppsSpec { InfectMinThreat = 0, InfectChance = 1, InfectWeight = 0, VirusExeWeight = 1, VirusExeEvery = 30 } };
+                Apps = new AppsSpec { InfectChance = 0, MalwareMinThreat = 0, MalwareEveryMin = 3, MalwareEveryMax = 3, VirusExeWeight = 1, VirusExeEvery = 30 } };
             check(window.StartBattle(stage: new StageSpec { Id = "ui_virus_exe" }) == null, "(setup) a stage battle that drops virus.exe");
             for (int i = 0; i < 600 && Sim().VirusFiles.Count == 0; i++) Tick(1.0 / 60);
             Tick(0.05);

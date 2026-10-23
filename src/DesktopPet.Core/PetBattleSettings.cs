@@ -31,6 +31,10 @@ public sealed class BattleSettings
     public double ComboWindow { get; init; } = 1.6;
     public double ComboDamage { get; init; } = 2;
     public double ComboKnock { get; init; } = 300;
+    // A combo hit also deals ComboSplash of its damage to every other enemy within ComboSplashRadius
+    // DIPs of its target (edge to edge; 0: none).
+    public double ComboSplash { get; init; } = 0.6;
+    public double ComboSplashRadius { get; init; } = 60;
     [JsonIgnore]
     public double SlimeMaxHp { get; init; } = 50;
     [JsonIgnore]
@@ -173,8 +177,8 @@ public sealed class BattleSettings
     [JsonIgnore] public IReadOnlyList<WeaponSpec> WeaponList => weaponList ??= Weapons ?? new[]
     {
         new WeaponSpec { Id = BattleWeapon.Sword, NameVi = "Kiếm", NameEn = "Sword", HintVi = "nhanh, dễ nối combo", HintEn = "fast, easy combos", Style = "sword", HitEffect = "spark",
-            Damage = CatDamage, Range = CatAttackRange, AttackCooldown = CatAttackCooldown, SwingDuration = CatSwingDuration, HitTime = CatHitTime, Knock = 0 },
-        Hammer with { Id = BattleWeapon.Hammer, NameVi = "Búa", NameEn = "Hammer", HintVi = "chậm, mạnh, đẩy lùi mỗi nhát", HintEn = "slow, heavy, knocks back every hit", Style = "hammer", HitEffect = Hammer.HitEffect ?? "thud" }
+            Damage = CatDamage, Range = CatAttackRange, AttackCooldown = CatAttackCooldown, SwingDuration = CatSwingDuration, HitTime = CatHitTime, Knock = 0, StunChance = 0 },
+        Hammer with { Id = BattleWeapon.Hammer, NameVi = "Búa", NameEn = "Hammer", HintVi = "chậm, mạnh, đẩy lùi mỗi nhát, đôi khi làm choáng", HintEn = "slow, heavy, knocks back every hit, sometimes stuns", Style = "hammer", HitEffect = Hammer.HitEffect ?? "thud" }
     };
     // Null when no weapon has this id (ids ignore case, so old preferences' "Hammer" still match).
     public WeaponSpec? FindWeapon(string? id)
@@ -300,6 +304,10 @@ public sealed record WeaponSpec
     public double SwingDuration { get; init; } = 0.7;
     public double HitTime { get; init; } = 0.45;
     public double Knock { get; init; } = 170;
+    // Now and then (StunChance of the landed hits) a hit dazes the enemy StunSeconds (× its
+    // stunFactor; never a boss): the hammer's 15 % and 0.8 s.
+    public double StunChance { get; init; } = 0.15;
+    public double StunSeconds { get; init; } = 0.8;
 }
 
 // A skill's texts. Id: push, heal, cheer, bomb or shield. A description's {key} is that
@@ -332,8 +340,9 @@ public enum SlimeState { Spawning, Moving, Windup, Recover, Stunned, Defeated, C
 
 // Where damage on an enemy comes from: the cat's swings (a plain hit or a combo), the yarn bomb,
 // or a build bonus (Thorns sends back what the cat took, Afterimage repeats a swing). The bonus
-// hits never set off another bonus. App: a desktop app (PetBattle.Apps.cs).
-public enum DamageSource { Weapon, Combo, Bomb, Reflect, Echo, App }
+// hits never set off another bonus. App: a desktop app (PetBattle.Apps.cs). Splash: a combo's hit on
+// the enemies next to its target.
+public enum DamageSource { Weapon, Combo, Bomb, Reflect, Echo, App, Splash }
 
 // What a hit on an enemy did: landed, blocked by a stony enemy, or nothing on a shielded boss.
 public enum HitResult { Landed, Blocked, Immune }
@@ -414,8 +423,20 @@ public sealed class Slime
     public double HealBoost = 1;
     // A weapon hit has landed on it (the Opener card's bonus is spent).
     public bool Opened;
+    // A dash enemy stunned during its windup has lost its sting: its dashes still hurt but never stun the cat.
+    public bool Defanged;
+    // Guarded by an infected Ctrl+Z's heal until this battle time (no damage meanwhile).
+    public double WardUntil = -1;
+    // Spat onto the floor by an infected bin (one such alive at a time).
+    public bool Spat;
+    // An elite whose affix shoots viruses (EliteSpec.VirusEvery): seconds to its next shot.
+    public double VirusClock;
     public bool Targetable => State is not (SlimeState.Spawning or SlimeState.Defeated);
-    public void Set(SlimeState state) { State = state; StateTime = 0; }
+    public void Set(SlimeState state)
+    {
+        if (state == SlimeState.Stunned && State == SlimeState.Windup && Type.Dash) Defanged = true;
+        State = state; StateTime = 0;
+    }
 }
 
 public enum BattlePhase { WaveBreak, Fighting, Won, Lost }
@@ -427,6 +448,8 @@ public enum BattleEventKind
     HitBlocked, BossShielded, BossShieldDown, BossImmune, BossRallying, BossRallied, Incoming,
     // An elite appeared (Value: its id); the Turtle shell card stopped a hit on the cat.
     EliteAppeared, ShellBlocked,
+    // A click on an ad's × while an infected Tabs keeps the ads open (Value: the ad's id).
+    PopupLocked,
     // A boss leaping to its edge (taking off, landing) and the rings where its helpers will appear.
     BossLeaping, BossLanded, BossSummoning,
     // Tactics: a heal that guards its ally, a hit on that guarded ally.
@@ -511,6 +534,8 @@ public sealed class BattleHazard
     public int ClicksLeft;
     // Battle time of the last hit or click (the view shakes it), -1: none.
     public double HitAt = -1;
+    // A loading ring closes after the user holds its spinner AppsSpec.LoadingHold s: how long so far.
+    public double Held;
 }
 
 // Malware on the desktop grid (2026-10-24): a "virus.exe" file a slime dropped on a free cell. It
@@ -542,7 +567,7 @@ public sealed class AppLaunch
 
 // battle.json "apps": charging, what each app does, how slimes infect icons and what an infected
 // icon does. Names and texts are data ("list": one entry per BattleAppKind); the effects are code.
-public sealed class AppsSpec
+public sealed record AppsSpec
 {
     // Charge at the start, and what each defeated enemy adds to every clean icon (shares of a charge).
     public double StartCharge { get; init; } = 0.2;
@@ -565,34 +590,50 @@ public sealed class AppsSpec
     // Bin: takes the TrashCount plain enemies (no boss, no elite) nearest the cat.
     public int TrashCount { get; init; } = 2;
     // Viruses: from a threat of InfectMinThreat each wave rolls InfectChance for a slime to shoot one
-    // at a clean icon (at most MaxInfected at once). ScrubClicks clicks clean it, or defeating that
+    // at a clean icon (at most MaxInfected at once); an elite whose affix has VirusEvery shoots one
+    // too, at most EliteVirusPerWave a wave. ScrubClicks clicks clean it, or defeating that
     // slime; an infected icon crawls to a cell next to it every CrawlEvery s.
     public double InfectMinThreat { get; init; } = 1.5;
     public double InfectChance { get; init; } = 0.5;
     public int MaxInfected { get; init; } = 1;
     public int ScrubClicks { get; init; } = 3;
     public double CrawlEvery { get; init; } = 9;
-    // What an infected icon does, every so often: Tabs opens an ad (it lets a PopupSpawn enemy out
-    // after PopupSeconds), Ping drops a bell on the cat, End task freezes the cat, Undo heals the most
-    // hurt enemy, the bin spits out a slime.
+    public int EliteVirusPerWave { get; init; } = 2;
+    // What an infected icon does, every so often: Tabs opens the ads (AdCount of them; they cannot be
+    // closed while it is infected), Ping drops a bell on the cat (BellDamage and a BellStun s stun),
+    // End task freezes the cat, Undo heals the most hurt enemy (and guards it MendGuard s), the bin
+    // spits out an enemy (an elite of a kind with an affix when SpitElite; one such alive at a time).
+    // An ad left PopupSeconds lets a PopupSpawn enemy out (once).
     public double PopupEvery { get; init; } = 8;
     public double PopupSeconds { get; init; } = 8;
     public string PopupSpawn { get; init; } = "slime";
-    public double BellEvery { get; init; } = 9;
+    public int AdCount { get; init; } = 3;
+    public double BellEvery { get; init; } = 10;
     public double BellDamage { get; init; } = 6;
+    public double BellStun { get; init; } = 1;
     public double FreezeEvery { get; init; } = 12;
     public double FreezeSeconds { get; init; } = 1.2;
     public double MendEvery { get; init; } = 7;
     public double MendShare { get; init; } = 0.15;
-    public double SpitEvery { get; init; } = 10;
-    // The wave's virus goes into an icon or is thrown onto the field as malware, drawn by weight
-    // (a weight of 0 never). Loading ring: LoadingRadius DIPs either side of where the cat stood,
-    // LoadingSeconds long; inside it the cat runs and swings at LoadingSlow of its speed.
-    public double InfectWeight { get; init; } = 1;
+    public double MendGuard { get; init; } = 2;
+    public double SpitEvery { get; init; } = 15;
+    public bool SpitElite { get; init; } = true;
+    // Malware (2026-10-24: at random times, no longer instead of a wave's virus): from a threat of
+    // MalwareMinThreat, every MalwareEveryMin–MalwareEveryMax s of fighting one kind is drawn by weight
+    // among those not out already (a weight of 0 never), at most MaxMalware kinds at once: a loading
+    // ring, a forced update, virus.exe or the ads. Loading ring: LoadingRadius DIPs either side of
+    // where the cat stood, LoadingSeconds long; inside it the cat runs and swings at LoadingSlow of its
+    // speed; holding its spinner LoadingHold s closes it (0: a click does).
+    public double MalwareMinThreat { get; init; } = 1.3;
+    public double MalwareEveryMin { get; init; } = 15;
+    public double MalwareEveryMax { get; init; } = 30;
+    public int MaxMalware { get; init; } = 2;
+    public double AdWeight { get; init; }
     public double LoadingWeight { get; init; }
     public double LoadingSeconds { get; init; } = 6;
     public double LoadingRadius { get; init; } = 60;
     public double LoadingSlow { get; init; } = 0.6;
+    public double LoadingHold { get; init; }
     // Forced update: a wall for UpdateSeconds; each hit of the cat's adds UpdateHitSeconds to its
     // progress; UpdateClicks clicks on Later close it.
     public double UpdateWeight { get; init; }

@@ -497,3 +497,15 @@ Tự động đã có: Phần thưởng trên sảnh (ô có hình, khóa, Mới
 - [ ] Trong trận có virus: đôi khi một file "virus.exe" (tờ giấy có dấu ☣ tím, chữ xanh) hiện ở ô trống giữa các icon; banner lần đầu giải thích; slime thả nó đeo dấu virus. Vài giây sau nó nhân thêm bản ở ô kề bên; đủ 4 bản thì một icon bị nhiễm và các file biến mất.
 - [ ] Bấm từng file: biến mất (tiếng "pop"). Hạ slime đeo dấu: mọi file biến mất. Cầm mèo lên: file không nhân thêm. Pause: đứng yên. Fullscreen: file ẩn cùng icon. Kết thúc trận: file đóng. Icon app không nhảy vào ô có file.
 - [ ] Kỷ lục Phiêu lưu màn 2–5 và Vô tận bắt đầu lại (phiên bản luật mới; kỷ lục cũ vẫn trong file). Chuyến Viễn chinh đang đi vẫn tiếp tục được.
+
+### Cân bằng trận 2026-10-24 (mốc 1–3)
+- [ ] Đẩy hồi 3 s, Cá hồi máu 14 s (số trên ô kỹ năng và mô tả rê chuột khớp). Tab Lốc Xoáy sạc nhanh hơn (~40 s). Bão Thông Báo chỉ rơi lên 4 slime gần mèo nhất.
+- [ ] Đòn combo thứ 3 trúng một slime đứng sát slime khác: con bên cạnh cũng mất máu (số nhỏ hơn) và có tia lửa. Búa: thỉnh thoảng một nhát làm slime choáng (đứng khựng, hủy đòn đang gồng); Vua không bao giờ bị búa làm choáng.
+- [ ] Slime nhanh đang gồng mà bị Đẩy/chuông/búa làm choáng: các cú lao sau vẫn trúng nhưng không làm mèo choáng nữa.
+- [ ] Mèo đang choáng (sao trên đầu): bấm/kéo mèo không nhấc lên được; hết choáng thì nhấc bình thường. Trong trận lắc mèo thật mạnh: không hiện Chóng mặt; ngoài trận lắc mạnh vẫn Chóng mặt như cũ.
+- [ ] Vua Slime chương 1 khi bật khiên: vương miện sáng rồi phong tinh anh cho một quân bất kỳ, có lúc là slime thảo dược. Đòn dậm đất mất ít máu hơn trước (~22 ở mức Thường, chưa nhân threat). Slime đá quay đầu chậm (~2 s): bế mèo ra sau lưng đá có thời gian đánh.
+- [ ] App độc tới ngẫu nhiên trong lúc đánh (khoảng 15–30 s một lần, tối đa 2 loại cùng lúc): vòng loading, cập nhật bắt buộc, virus.exe, hoặc 3 quảng cáo trải khắp bề ngang sàn (tắt được bằng × khi Tab sạch).
+- [ ] Vòng loading rộng hơn, kéo dài 12 s: nhấn giữ vòng xoay ~2 s (vòng vàng đầy dần) thì tắt; thả chuột giữa chừng thì phải giữ lại từ đầu. Cập nhật bắt buộc cần bấm Nhắc sau 4 lần.
+- [ ] Tab nhiễm: 3 quảng cáo bay xuống, nút × có ổ khóa, bấm × không tắt (banner nhắc gỡ Tab trước), quảng cáo không tự thả slime khi đang khóa; gỡ Tab (5 lần bấm) xong thì × tắt được.
+- [ ] Chuông nhiễm: mèo mất máu và choáng 1 s. Ctrl+Z nhiễm: slime được hồi có vòng xanh "MIỄN" ~2 s, đánh không mất máu. Thùng Rác nhiễm: nhả một slime tinh anh (viền vàng, banner), mỗi lúc chỉ một con. Có thể tới 3 icon nhiễm cùng lúc; mỗi icon cần 5 lần bấm.
+- [ ] Slime thường tinh anh (cả khi được Vua phong) bắn virus vào icon vài giây sau khi xuất hiện, tối đa 2 lần mỗi đợt.

@@ -11,9 +11,9 @@ public sealed partial class BattleSim
 {
     public BattleSettings Settings { get; }
     // This battle's seed (BattleRandom) and its streams: what spawns where, the cards, the rock's
-    // blocks, the elite rolls, the rare cards and the desktop apps.
+    // blocks, the elite rolls, the rare cards, the desktop apps, the hammer's stuns and the boss's rally.
     public int Seed { get; }
-    private readonly Random spawnRandom, offerRandom, blockRandom, affixRandom, rarityRandom, appRandom;
+    private readonly Random spawnRandom, offerRandom, blockRandom, affixRandom, rarityRandom, appRandom, strikeRandom, rallyRandom;
     private readonly List<Slime> slimes = new();
     private readonly List<BattleEffect> effects = new();
     private readonly List<BattleEvent> events = new();
@@ -248,6 +248,8 @@ public sealed partial class BattleSim
         affixRandom = BattleRandom.Stream(Seed, BattleRandom.Affix);
         rarityRandom = BattleRandom.Stream(Seed, BattleRandom.Rarity);
         appRandom = BattleRandom.Stream(Seed, BattleRandom.Apps);
+        strikeRandom = BattleRandom.Stream(Seed, BattleRandom.Strike);
+        rallyRandom = BattleRandom.Stream(Seed, BattleRandom.Rally);
         Settings = settings;
         Stage = stage;
         AppsOn = apps;
@@ -523,6 +525,10 @@ public sealed partial class BattleSim
         // weapon knocks back on every hit. An elite that ignores Push stands its ground (it still takes the damage).
         if (landed && (combo || knock > 0) && slime.Elite is not { PushImmune: true })
             slime.KnockVelocity = (slime.X < catX ? -1 : 1) * (combo ? Math.Max(Settings.ComboKnock, knock) : knock) * slime.Type.PushFactor;
+        // A weapon that stuns (the hammer): now and then a landed hit dazes the enemy and cuts its windup.
+        if (landed && arms.StunChance > 0 && strikeRandom.NextDouble() < arms.StunChance) StrikeStun(slime);
+        // A combo hit also hits the enemies close to its target for part of its damage.
+        if (combo && Settings.ComboSplash > 0) Splash(slime, plain * Settings.ComboSplash);
         // Afterimage: every Every-th landed swing hits a second time (an echo counts nothing itself).
         landedSwings++;
         if (Active("echo") is SynergySpec echo && landedSwings % echo.Every == 0 && slime.Targetable)
@@ -533,6 +539,38 @@ public sealed partial class BattleSim
             Damage(slime, plain * echo.Amount, DamageSource.Echo);
         }
     }
+
+    // The hammer's daze: never a boss, an elite that ignores Push, or one in the middle of something
+    // it cannot stop (a dash, a heal, a leap), like a Ping bell's stun.
+    private void StrikeStun(Slime slime)
+    {
+        if (slime.IsBoss || slime.LeapHeight > 0 || slime.Elite is { PushImmune: true }) return;
+        if (slime.State is not (SlimeState.Moving or SlimeState.Windup or SlimeState.Recover)) return;
+        double stun = arms.StunSeconds * slime.Type.StunFactor;
+        if (stun <= 0) return;
+        slime.StunRemaining = stun;
+        slime.Set(SlimeState.Stunned);
+        StrikeStuns++;
+        AddEffect(BattleEffectKind.Push, slime.X, slime.Height / 2);
+    }
+    public int StrikeStuns { get; private set; }
+
+    // A combo's splash: every other enemy within ComboSplashRadius DIPs of the target's edge takes
+    // `damage` (it can be blocked like the combo, never sets off another bonus).
+    private void Splash(Slime target, double damage)
+    {
+        blasting = true;
+        foreach (var other in slimes.ToArray())
+        {
+            if (other == target || !other.Targetable || Math.Abs(other.X - target.X) - other.HitWidth / 2 - target.HitWidth / 2 > Settings.ComboSplashRadius) continue;
+            SplashHits++;
+            AddEffect(BattleEffectKind.Spark, other.X, other.Height * 0.6);
+            Damage(other, damage, DamageSource.Splash);
+        }
+        blasting = false;
+        RefreshGuards();
+    }
+    public int SplashHits { get; private set; }
 
     // Every hit on an enemy goes through here: Landed, or why it did nothing.
     private HitResult Damage(Slime slime, double amount, DamageSource source)
@@ -546,7 +584,7 @@ public sealed partial class BattleSim
             events.Add(new(BattleEventKind.BossImmune, slime.X));
             return HitResult.Immune;
         }
-        if (slime.Mended)
+        if (slime.Mended || slime.WardUntil > Time)
         {
             // Guarded by a heal winding up on it (push the healer to end it).
             WardedHits++;
@@ -620,7 +658,7 @@ public sealed partial class BattleSim
         // A front-only blocker: a hit from behind always lands (and ends its streak).
         if (type.BlockFrontOnly && (lastCatX - slime.X) * slime.Facing <= 0) { slime.BlockStreak = 0; return false; }
         // Armor break: combo hits go straight through.
-        if (source == DamageSource.Combo && Active("armorBreak") != null) { slime.BlockStreak = 0; return false; }
+        if (source is DamageSource.Combo or DamageSource.Splash && Active("armorBreak") != null) { slime.BlockStreak = 0; return false; }
         // An elite's sure blocks come first (no roll); then the usual roll and streak limit.
         bool sure = slime.SureBlocks > 0;
         if (!sure && (slime.BlockStreak >= type.BlockMaxStreak || blockRandom.NextDouble() >= type.BlockChance)) { slime.BlockStreak = 0; return false; }

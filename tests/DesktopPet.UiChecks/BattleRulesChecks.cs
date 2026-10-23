@@ -86,6 +86,27 @@ internal static class BattleRulesChecks
         Release(); Ground(); TickBattle(1.0 / 60);
         pet.BattleStun = 0;
 
+        // 2b. (2026-10-24) A stunned cat cannot be picked up until the stun ends; shaking it hard in a
+        // battle never makes it Dizzy (the stars there mean a stun).
+        var stunField = typeof(BattleSim).GetField("<CatStunRemaining>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic)!;
+        stunField.SetValue(Sim(), 1.0);
+        Press(); DragPastThreshold();
+        check(Sim().CatStunned && pet.Action != PetAction.Dragging && !window.IsMouseCaptured && !Field<bool>(window, "pressPending"),
+            "A stunned cat cannot be picked up");
+        Release();
+        stunField.SetValue(Sim(), 0.0);
+        Press(); DragPastThreshold();
+        check(pet.Action == PetAction.Dragging, "Once the stun is over it can be picked up");
+        double shake = 0;
+        for (int i = 0; i < 90; i++)
+        {
+            pet.Pickup.Step((i % 2 == 0 ? 0 : 120), 0, 1.0 / 60);
+            Call(window, "UpdateDrag", 1.0 / 60);
+            shake = Math.Max(shake, pet.Pickup.Dizziness);
+        }
+        check(pet.Pickup.NoDizzy && shake < 0.02 && pet.Emotions.Current != PetEmotion.Dizzy, $"Shaking the cat hard in a battle never makes it Dizzy ({shake:0.00})");
+        Release(); Ground(); TickBattle(1.0 / 60);
+
         // 3. Pause reasons stack: nothing resumes while another reason holds the battle.
         window.SetBattlePaused(true);
         window.ContextMenu!.IsOpen = true;

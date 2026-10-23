@@ -147,7 +147,7 @@ internal static class AppTests
         AppsSpec Virus(double every = 2) => new()
         {
             StartCharge = 0.5, InfectMinThreat = 0, InfectChance = 1, CrawlEvery = 2,
-            PopupEvery = every, BellEvery = every, FreezeEvery = every, MendEvery = every, SpitEvery = every, PopupSeconds = 3
+            PopupEvery = every, BellEvery = every, FreezeEvery = every, MendEvery = every, SpitEvery = every, PopupSeconds = 3, SpitElite = false
         };
         BattleSim Infected(int seed, int[]? waves = null)
         {
@@ -190,22 +190,30 @@ internal static class AppTests
             throw new InvalidOperationException("no seed infects " + kind);
         }
         sim = Sick(BattleAppKind.Tabs);
-        Until(sim, () => sim.Popups.Count > 0, 4);
-        var ad = sim.Popups.FirstOrDefault();
-        check(ad != null && sim.Slimes.Any(s => s.Targetable && Math.Abs(s.X - ad.X) < BattleSim.PopupWidth), "Infected Tabs opens an ad over a slime");
+        Until(sim, () => sim.Popups.Count == 3, 4);
+        var xs = sim.Popups.Select(p => p.X).OrderBy(x => x).ToList();
+        check(sim.Popups.Count == 3 && xs.Zip(xs.Skip(1)).All(p => p.Second - p.First >= BattleSim.PopupWidth * 0.5) && xs[^1] - xs[0] > 600,
+            $"Infected Tabs opens three ads spread over the floor ({string.Join(", ", xs.Select(x => x.ToString("0")))})");
+        var ad = sim.Popups[0];
+        double adAge = ad.Age;
+        Run(sim, 4);
+        check(sim.PopupsLocked && !sim.ClosePopup(ad.Id) && sim.Popups.Count == 3 && sim.Events.Any(e => e.Kind == BattleEventKind.PopupLocked) && ad.Age == adAge,
+            "While Tabs is infected its ads cannot be closed (a PopupLocked event) and do not run out");
+        var tabsIcon = App(sim, BattleAppKind.Tabs);
+        while (tabsIcon.Infected) sim.UseApp(tabsIcon.Id, 800);
         sim.SetCatState(true, true);
-        check(ad != null && sim.ClosePopup(ad.Id) && sim.Popups.Count == 0 && sim.PopupsClosed == 1, "The ad's × closes it, even with the cat in the user's hands");
+        check(!sim.PopupsLocked && sim.ClosePopup(ad.Id) && sim.Popups.Count == 2 && sim.PopupsClosed == 1, "Once Tabs is clean the ad's × closes it, even with the cat in the user's hands");
         sim.SetCatState(false, false);
-        Until(sim, () => sim.Popups.Count > 0, 4);
-        int alive = sim.Alive;
+        int alive = sim.Alive, room = Math.Min(2, sim.Settings.MaxAlive - alive);
         int spawned = Until(sim, () => sim.Popups.Count == 0, 4, BattleEventKind.PopupSpawned);
-        check(spawned == 1 && sim.Alive == alive + 1, $"Left alone, the ad lets a slime out ({alive} → {sim.Alive})");
+        check(room > 0 && spawned == room && sim.Alive == alive + room && sim.Popups.Count == 0, $"Left alone, each ad goes and lets a slime out while the floor has room ({alive} → {sim.Alive})");
 
         sim = Sick(BattleAppKind.Ping);
         foreach (var s in sim.Slimes) s.X = 1500; // Only the bells can hurt the cat here.
         double hp = sim.CatHp;
         Until(sim, () => sim.CatHp < hp, 4);
         check(hp - sim.CatHp == 6 && sim.Effects.Any(e => e.Kind == BattleEffectKind.Bell), $"Infected Ping drops a bell on the cat's head (6 damage, {hp} → {sim.CatHp})");
+        check(sim.CatStunned && sim.CatStunRemaining <= 1 && sim.CatStunRemaining > 0.9, $"...and the bell stuns the cat 1 s ({sim.CatStunRemaining:0.00})");
         sim.Use(BattleSkill.Shield, 800);
         hp = sim.CatHp;
         int blocked = Until(sim, () => false, 2.5, BattleEventKind.Blocked);
@@ -223,11 +231,34 @@ internal static class AppTests
         double weakHp = weak.Hp;
         Until(sim, () => weak.Hp > weakHp, 4);
         check(weak.Hp == weakHp + weak.MaxHp * 0.15, $"Infected Ctrl+Z heals the most hurt slime 15 % ({weakHp} → {weak.Hp})");
+        double guardedHp = weak.Hp;
+        sim.Use(BattleSkill.Bomb, weak.Id, weak.X);
+        Run(sim, 0.6);
+        check(weak.WardUntil > sim.Time - 0.7 && weak.Hp == guardedHp && sim.WardedHits >= 1, $"...and guards it 2 s: a bomb on it does nothing ({weak.Hp})");
 
         sim = Sick(BattleAppKind.Trash);
         alive = sim.Alive;
         Until(sim, () => sim.Alive > alive, 4);
-        check(sim.Alive == alive + 1, "The infected bin spits a slime onto the floor");
+        check(sim.Alive == alive + 1 && sim.Slimes.Count(s => s.Spat) == 1, "The infected bin spits a slime onto the floor");
+        Run(sim, 4);
+        check(sim.Slimes.Count(s => s.Spat && s.State != SlimeState.Defeated) == 1, "Only one spat slime at a time");
+        // With kinds that have an elite affix, what it spits is an elite (not counted as a rolled one).
+        var eliteKinds = new BattleSettings
+        {
+            FirstWaveDelay = 0, CatDamage = 0, CatMaxHp = 1_000_000, Apps = Virus() with { SpitElite = true },
+            Enemies = new[] { new EnemyType { Id = "slime", MaxHp = 1000, Speed = 0, Damage = 0, Elite = new EliteSpec { Hp = 1.2, DescVi = "a", DescEn = "a" } } },
+            Plan = new[] { new WaveSpec { Groups = new[] { new WaveGroup { Enemy = "slime", Count = 2 } } } }
+        };
+        BattleSim? spitter = null;
+        for (int seed = 1; seed < 80 && spitter == null; seed++)
+        {
+            var s = new BattleSim(eliteKinds, 0, 1600, stage: stage, seed: seed);
+            Until(s, () => s.Desktop.Any(a => a.Infected), 12);
+            if (s.Desktop.Any(a => a.Infected && a.Kind == BattleAppKind.Trash)) spitter = s;
+        }
+        int spatAlive = spitter?.Alive ?? 0;
+        if (spitter != null) Until(spitter, () => spitter.Alive > spatAlive, 4);
+        check(spitter?.Slimes.FirstOrDefault(s => s.Spat) is { Elite: not null, MaxHp: 1200 } && spitter.ElitesSpawned == 0, "With elite kinds, the bin spits an elite (its affix applied)");
 
         // The end: nothing flies, viruses and ads are gone, the icons stay for the outro.
         sim = Infected(8, new[] { 1 });
@@ -270,13 +301,18 @@ internal static class AppTests
         }
         finally { Directory.Delete(dir, true); }
 
-        // Malware (2026-10-24): the wave's virus thrown onto the field as a loading ring.
-        var ringRules = new AppsSpec { InfectMinThreat = 0, InfectChance = 1, InfectWeight = 0, LoadingWeight = 1, LoadingSeconds = 6, LoadingRadius = 60, LoadingSlow = 0.6 };
+        // Malware (2026-10-24): at random times while the fight goes on (every 3 s here, the first after 1.5 s).
+        AppsSpec Malware(double loading = 0, double update = 0, double exe = 0, double ads = 0, int max = 2) => new()
+        {
+            InfectChance = 0, MalwareMinThreat = 0, MalwareEveryMin = 3, MalwareEveryMax = 3, MaxMalware = max,
+            LoadingWeight = loading, UpdateWeight = update, VirusExeWeight = exe, AdWeight = ads
+        };
+        var ringRules = Malware(loading: 1) with { MalwareEveryMin = 6, MalwareEveryMax = 6, LoadingSeconds = 5 };
         var ring = Out(ringRules, new[] { 1 });
         Until(ring, () => ring.Hazards.Count > 0, 10);
         var loading = ring.Hazards.FirstOrDefault();
-        check(loading is { Kind: HazardKind.Loading } && Math.Abs(loading.X - 800) < 1 && ring.Desktop.All(a => !a.Infected),
-            "With only malware weighted, the wave's virus becomes a loading ring where the cat stands (no icon infected)");
+        check(loading is { Kind: HazardKind.Loading } && Math.Abs(loading.X - 800) < 1 && ring.Desktop.All(a => !a.Infected) && ring.Time < 3.5,
+            $"Malware comes at a random time of the fight: a loading ring where the cat stands, no icon infected ({ring.Time:0.0} s)");
         check(ring.LagFactor == 0.6, "Inside the ring the cat runs and swings at 60 % speed");
         ring.Step(dt, 900, false);
         check(ring.LagFactor == 1, "Out of the ring the cat is at full speed");
@@ -284,27 +320,54 @@ internal static class AppTests
         double heldAge = loading!.Age;
         Run(ring, 2, held: true, lifted: true);
         check(loading.Age == heldAge && ring.LagFactor == 1, "While the cat is lifted the ring waits and does not slow it");
-        Run(ring, 6.5);
+        Run(ring, 5.3);
         check(ring.Hazards.Count == 0, "The ring wears off after its time");
         var closing = Out(ringRules, new[] { 1 });
         Until(closing, () => closing.Hazards.Count > 0, 10);
         int ringId = closing.Hazards[0].Id;
         check(closing.CloseHazard(ringId) && closing.Hazards.Count == 0 && closing.Events.Any(e => e.Kind == BattleEventKind.HazardClosed) && !closing.CloseHazard(ringId),
-            "Clicking the spinner closes the ring at once (once)");
-        var mixed = new AppsSpec { InfectMinThreat = 0, InfectChance = 1, LoadingWeight = 1 };
-        int rings = 0, infections = 0;
-        for (int seed = 1; seed <= 24; seed++)
-        {
-            var roll = Out(mixed, new[] { 1 }, seed: seed);
-            Until(roll, () => roll.Hazards.Count > 0 || roll.Desktop.Any(a => a.Infected), 12);
-            if (roll.Hazards.Count > 0) rings++;
-            if (roll.Desktop.Any(a => a.Infected)) infections++;
-        }
-        check(rings > 3 && infections > 3, $"With both weighted, waves get a ring or an infection ({rings} rings, {infections} infections in 24 battles)");
-        check(BattleData.Settings.Apps!.LoadingWeight > 0 && BattleData.Settings.Apps.InfectWeight > 0, "The shipped data throws loading rings as well as viruses");
+            "loadingHold 0: clicking the spinner closes the ring at once (once)");
+        var holding = Out(new AppsSpec { InfectChance = 0, MalwareMinThreat = 0, MalwareEveryMin = 3, MalwareEveryMax = 3, LoadingWeight = 1, LoadingSeconds = 30, LoadingHold = 2 }, new[] { 1 });
+        Until(holding, () => holding.Hazards.Count > 0, 10);
+        var held = holding.Hazards[0];
+        check(holding.CloseHazard(held.Id) && holding.HoldingHazardId == held.Id && holding.Hazards.Count == 1, "loadingHold 2: pressing the spinner starts holding it (the ring stays)");
+        Run(holding, 1);
+        holding.ReleaseHazard();
+        check(holding.Hazards.Count == 1 && held.Held == 0 && holding.HoldingHazardId == 0, "Letting go after 1 s: the ring stays and its hold starts over");
+        holding.CloseHazard(held.Id);
+        Run(holding, 1.5, held: true, lifted: false);
+        check(holding.Hazards.Count == 1, "(the hold counts even while the cat is pressed)");
+        Run(holding, 0.6);
+        check(holding.Hazards.Count == 0 && holding.HoldingHazardId == 0 && holding.Events.Count(e => e.Kind == BattleEventKind.HazardClosed) <= 1, "Held 2 s, the ring closes");
+        // At most maxMalware kinds out at once, a kind never twice.
+        var capped = Out(Malware(loading: 1, update: 1, max: 1) with { LoadingSeconds = 30, UpdateSeconds = 30 }, new[] { 1 });
+        Run(capped, 12);
+        check(capped.Hazards.Count == 1, $"maxMalware 1: one kind out at a time ({capped.Hazards.Count})");
+        var both = Out(Malware(loading: 1, update: 1, max: 2) with { LoadingSeconds = 30, UpdateSeconds = 30 }, new[] { 1 }, slimeHp: 1000);
+        foreach (var s in both.Slimes) s.X = 1400;
+        Run(both, 12);
+        check(both.Hazards.Select(h => h.Kind).Distinct().Count() == 2 && both.Hazards.Count == 2, $"maxMalware 2: a ring and an update together, each once ({both.Hazards.Count})");
+        // The ads as malware: three of them, closable (no infected Tabs).
+        var adWave = Out(Malware(ads: 1), new[] { 1 });
+        Until(adWave, () => adWave.Popups.Count > 0, 10);
+        check(adWave.Popups.Count == 3 && !adWave.PopupsLocked && adWave.ClosePopup(adWave.Popups[0].Id), "Ads come as malware too: three of them, each closed by its ×");
+        var calm = Out(Malware(loading: 1) with { MalwareMinThreat = 1.5 }, new[] { 1 });
+        Run(calm, 10);
+        check(calm.Hazards.Count == 0, "No malware below malwareMinThreat");
+        var shippedApps = BattleData.Settings.Apps!;
+        check(shippedApps is { LoadingWeight: > 0, UpdateWeight: > 0, VirusExeWeight: > 0, AdWeight: > 0, MaxMalware: 2, MaxInfected: 3, ScrubClicks: 5, LoadingHold: 2, UpdateClicks: 4, LoadingSeconds: 12, AdCount: 3 },
+            "The shipped data: every malware kind, at most two at once; up to 3 icons infected, 5 clicks to clean; hold 2 s, Later ×4, 12 s rings, 3 ads");
+        check(BattleData.ParseWithOverride(ExpeditionFixture.Embedded(), "{ \"schemaVersion\": 1, \"apps\": { \"infectWeight\": 1 } }").Apps!.LoadingWeight > 0,
+            "A user file that still sets apps.infectWeight keeps working (the key is dropped)");
+
+        // Elites with a virus affix shoot at icons: soon after turning elite, at most eliteVirusPerWave a wave.
+        var shots2 = Out(new AppsSpec { InfectChance = 0, MaxInfected = 5, EliteVirusPerWave = 2 }, new[] { 2 });
+        foreach (var s in shots2.Slimes.Where(s => s.Targetable)) { s.Elite = new EliteSpec { VirusEvery = 5 }; s.VirusClock = 0.5; }
+        int eliteGoo = Until(shots2, () => false, 20, BattleEventKind.GooShot);
+        check(eliteGoo == 2, $"Elite slimes with virusEvery shoot at icons, at most 2 a wave ({eliteGoo} shots in 20 s)");
 
         // Malware: a forced update standing between the cat and the slimes as a wall.
-        var wallRules = new AppsSpec { InfectMinThreat = 0, InfectChance = 1, InfectWeight = 0, UpdateWeight = 1, UpdateSeconds = 20, UpdateHitSeconds = 1.2, UpdateClicks = 2 };
+        var wallRules = Malware(update: 1) with { UpdateSeconds = 20, UpdateHitSeconds = 1.2, UpdateClicks = 2 };
         var walled = Out(wallRules, new[] { 1 });
         Until(walled, () => walled.Hazards.Count > 0, 10);
         var update = walled.Hazards.FirstOrDefault();
@@ -329,14 +392,14 @@ internal static class AppTests
         check(wallHits >= 1 && update.Age - ageBefore >= 1.2 + 2 - 0.1, $"Next to it, the cat hits the wall and each hit brings the update closer to done ({wallHits} hits)");
         check(walled.CloseHazard(update.Id) && walled.Hazards.Count == 1 && update.ClicksLeft == 1 && walled.CloseHazard(update.Id) && walled.Hazards.Count == 0,
             "Later twice closes the forced update");
-        var expiring = Out(new AppsSpec { InfectMinThreat = 0, InfectChance = 1, InfectWeight = 0, UpdateWeight = 1, UpdateSeconds = 8 }, new[] { 1 });
+        var expiring = Out(Malware(update: 1, max: 1) with { UpdateSeconds = 8, MalwareEveryMin = 20, MalwareEveryMax = 20 }, new[] { 1 });
         Until(expiring, () => expiring.Hazards.Count > 0, 10);
         Run(expiring, 8.5, catX: 800);
         check(expiring.Hazards.Count == 0, "Left alone, the update is done after its time");
         check(BattleData.Settings.Apps!.UpdateWeight > 0, "The shipped data throws forced updates too");
 
         // Malware: virus.exe on the desktop grid, copying itself until it infects an icon.
-        var exeRules = new AppsSpec { InfectMinThreat = 0, InfectChance = 1, InfectWeight = 0, VirusExeWeight = 1, VirusExeEvery = 2, VirusExeCopies = 3 };
+        var exeRules = Malware(exe: 1) with { VirusExeEvery = 2, VirusExeCopies = 3 };
         var outbreak = Out(exeRules, new[] { 1 });
         Until(outbreak, () => outbreak.VirusFiles.Count > 0, 10);
         var firstFile = outbreak.VirusFiles.FirstOrDefault();

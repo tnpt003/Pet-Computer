@@ -51,6 +51,7 @@ internal static class EnemyTacticsTests
         FarHealChecks(check);
         SideChecks(check);
         RallyChecks(check);
+        SupportRally(check);
         DataChecks(check);
     }
 
@@ -324,6 +325,31 @@ internal static class EnemyTacticsTests
         for (int i = 0; i < 240 && sim.Slimes.Count(s => s.SummonedBy == boss.Id) < 2; i++) sim.Step(dt, catX, false);
         sim.ClearEvents();
         return sim;
+    }
+
+    // 2026-10-24: the rally draws among the phase's helpers at random, supports too (it used to skip
+    // them, so a phase that left only a herb slime was never rallied).
+    private static void SupportRally(Action<bool, string> check)
+    {
+        var herb = new EnemyType
+        {
+            Id = "herb", MaxHp = 40, Speed = 0, Damage = 0, Range = 56, Windup = 0.8, AttackCooldown = 2, Support = true, KeepBack = 0,
+            HealAmount = 10, HealRange = 170, HealCooldown = 30, HealWindup = 1, HealBudget = 100
+        };
+        var king = new EnemyType
+        {
+            Id = "king", MaxHp = 400, Speed = 0, Damage = 0, Range = 110, Windup = 1.2, AttackCooldown = 2.6, Recover = 0.7, Scale = 2, Boss = true, Slam = true,
+            PushFactor = 0.35, StunFactor = 0.4, RetreatSpeed = 600, RetreatSeconds = 3, SummonCap = 4,
+            Phases = new[] { new BossPhase { At = 0.5, Shield = true, Summon = "herb", Count = 1 } },
+            RallyEvery = 1, RallyCharge = 0.5, RallyHp = 0.5, RallyDamage = 1.25, ShieldBreakStun = 2
+        };
+        var sim = new BattleSim(Settings(new[] { king, herb }, Plan(G("king")), 0, 6, 1000), 0, 1600, seed: 1);
+        Ready(sim, 1, 400);
+        var boss = sim.Slimes[0];
+        sim.Use(BattleSkill.Bomb, boss.Id, 400);
+        bool rallied = false;
+        for (int i = 0; i < 600 && !rallied; i++) { sim.Step(dt, 400, false); rallied = sim.Events.Any(e => e.Kind == BattleEventKind.BossRallied); sim.ClearEvents(); }
+        check(rallied && sim.Slimes.Any(s => s.Type.Support && s.Rallied && s.Elite != null), "A boss whose phase called only a herb slime rallies it (supports can be drawn)");
     }
 
     private static void RallyChecks(Action<bool, string> check)

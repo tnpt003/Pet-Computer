@@ -157,16 +157,17 @@ public sealed partial class BattleSim
             boss.CallSpots = null;
             if (SpawnHelpers(boss, called, boss.ShieldTag) > 0) { events.Add(new(BattleEventKind.BossSummoned, boss.X)); return; }
         }
-        // While this phase's helpers stand, the boss may rally the fighter nearest the cat that is not elite yet.
+        // While this phase's helpers stand, the boss may rally one of them that is not elite yet, drawn at
+        // random (2026-10-24: supports too; it used to be the fighter nearest the cat).
         bool helpers = false;
-        Slime? nearest = null;
+        rallyable.Clear();
         foreach (var s in slimes)
         {
             if (s.SummonedBy != boss.Id || s.PhaseTag != boss.ShieldTag || s.State == SlimeState.Defeated) continue;
             helpers = true;
-            if (!s.Type.Support && s.Elite == null && s.Targetable && (nearest == null || Math.Abs(s.X - lastCatX) < Math.Abs(nearest.X - lastCatX))) nearest = s;
+            if (s.Elite == null && s.Targetable) rallyable.Add(s);
         }
-        if (helpers) { StepRally(boss, dt, nearest); return; }
+        if (helpers) { StepRally(boss, dt); return; }
         boss.Shielded = false;
         boss.ShieldTag = 0;
         boss.RallyCharge = 0;
@@ -182,8 +183,11 @@ public sealed partial class BattleSim
 
     // The rally call: every RallyEvery s the crown glows RallyCharge s (a push now cuts it short),
     // then the chosen helper becomes elite for good (MakeElite).
-    private void StepRally(Slime boss, double dt, Slime? helper)
+    private readonly List<Slime> rallyable = new();
+    private Slime? DrawRallied() => rallyable.Count == 0 ? null : rallyable[rallyRandom.Next(rallyable.Count)];
+    private void StepRally(Slime boss, double dt)
     {
+        Slime? helper = null;
         var type = boss.Type;
         if (type.RallyEvery <= 0) return;
         if (boss.RallyCharge > 0)
@@ -192,8 +196,8 @@ public sealed partial class BattleSim
             boss.RallyCharge = Math.Max(0, boss.RallyCharge - dt);
             if (boss.RallyCharge > 0) return;
             boss.RallyCooldown = type.RallyEvery;
-            // The helper the glow pointed at, or the nearest one if that one is gone.
-            if (Find(boss.RallyTargetId) is { Targetable: true, Elite: null } chosen) helper = chosen;
+            // The helper the glow pointed at, or another one drawn now if that one is gone.
+            helper = Find(boss.RallyTargetId) is { Targetable: true, Elite: null } chosen ? chosen : DrawRallied();
             boss.RallyTargetId = 0;
             if (helper == null) return;
             MakeElite(helper, type);
@@ -201,7 +205,8 @@ public sealed partial class BattleSim
             return;
         }
         boss.RallyCooldown -= dt;
-        if (boss.RallyCooldown > 0 || helper == null || boss.State == SlimeState.Stunned) return;
+        if (boss.RallyCooldown > 0 || rallyable.Count == 0 || boss.State == SlimeState.Stunned) return;
+        helper = DrawRallied()!;
         boss.RallyCharge = type.RallyCharge;
         boss.RallyTargetId = helper.Id;
         events.Add(new(BattleEventKind.BossRallying, boss.X));
@@ -230,6 +235,7 @@ public sealed partial class BattleSim
         if (slime.Elite != null) return;
         slime.Elite = elite;
         slime.SureBlocks = elite.SureBlocks;
+        slime.VirusClock = Math.Min(3, elite.VirusEvery); // Its first virus soon after.
         slime.HealBoost = elite.FirstHeal;
         double more = Math.Round(slime.MaxHp * (elite.Hp - 1));
         slime.MaxHp += more;

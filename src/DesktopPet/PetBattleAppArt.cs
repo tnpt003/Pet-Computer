@@ -328,6 +328,44 @@ public static class AppArt
         dc.DrawRoundedRectangle(LoadingDot, null, new Rect(track.X, track.Y, track.Width * Math.Clamp(left, 0, 1), track.Height), 2, 2);
         dc.Pop();
     }
+    // Holding a loading ring's spinner: a gold arc fills around it (k: 0–1). Not held, a dashed ring
+    // breathes around it, so it reads as something to press and hold.
+    public static void DrawHoldRing(DrawingContext dc, Point spinner, double k, bool held, double time)
+    {
+        if (!held || k <= 0)
+        {
+            double r = 19 + Math.Sin(time * 4) * 1.5;
+            dc.DrawEllipse(null, HoldHint, spinner, r, r);
+            return;
+        }
+        k = Math.Clamp(k, 0, 1);
+        dc.DrawEllipse(null, HoldTrack, spinner, 19, 19);
+        if (k >= 0.999) { dc.DrawEllipse(null, HoldFill, spinner, 19, 19); return; }
+        var arc = new StreamGeometry();
+        using (var g = arc.Open())
+        {
+            double a = k * 2 * Math.PI;
+            g.BeginFigure(new Point(spinner.X, spinner.Y - 19), false, false);
+            g.ArcTo(new Point(spinner.X + Math.Sin(a) * 19, spinner.Y - Math.Cos(a) * 19), new Size(19, 19), 0, k > 0.5, SweepDirection.Clockwise, true, false);
+        }
+        arc.Freeze();
+        dc.DrawGeometry(null, HoldFill, arc);
+    }
+    private static readonly Pen HoldTrack = FrozenPen(Frozen(150, 255, 255, 255), 4.5);
+    private static readonly Pen HoldFill = FrozenPen(Frozen(255, 0xFF, 0xD2, 0x3F), 4.5);
+    private static readonly Pen HoldHint = FrozenPen(Frozen(200, 0xFF, 0xD2, 0x3F), 2, new DashStyle(new[] { 2.0, 2.0 }, 0));
+
+    // A padlock over an ad's × (c: the ×'s centre): the infected Tabs keeps the ads open.
+    public static void DrawAdLock(DrawingContext dc, Point c)
+    {
+        dc.DrawEllipse(WindowGrey, InkPen, c, 7.5, 7.5);
+        dc.PushTransform(new TranslateTransform(c.X, c.Y));
+        dc.DrawGeometry(null, ThinInk, LockShackle);
+        dc.DrawRoundedRectangle(Gold, ThinInk, new Rect(-4, -1, 8, 6), 1.2, 1.2);
+        dc.Pop();
+    }
+    private static readonly Geometry LockShackle = Parse("M -2.6,-1 L -2.6,-3 A 2.6,2.6 0 0 1 2.6,-3 L 2.6,-1");
+
     // Malware's forced update: a grey window standing on the floor (r), titled "UPDATE", with its
     // percentage, a progress bar and a Later button (clicks left after it).
     public static Rect LaterButton(Rect r) => new(r.X + 7, r.Bottom - 24, r.Width - 14, 17);

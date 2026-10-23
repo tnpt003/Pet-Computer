@@ -428,7 +428,7 @@ public sealed partial class BattleSim
             Damage(from, hurt * thorns.Amount, DamageSource.Reflect);
             if (Over) return;
         }
-        if (stun && !CatHeld && !CatStunned && StunImmunity <= 0 && Settings.StunDurationSeconds > 0)
+        if (stun && !from.Defanged && !CatHeld && !CatStunned && StunImmunity <= 0 && Settings.StunDurationSeconds > 0)
         {
             CatStunRemaining = Settings.StunDurationSeconds;
             StunsTaken++;

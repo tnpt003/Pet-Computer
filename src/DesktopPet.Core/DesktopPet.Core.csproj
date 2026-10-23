@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- The pet without WPF: model, physics, behavior, emotions, battle simulation, data files,
+       preferences and the Python bridge. DesktopPet (the app) and the tests reference it. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <RootNamespace>DesktopPet</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="DesktopPet" />
+    <InternalsVisibleTo Include="DesktopPet.Tests" />
+    <InternalsVisibleTo Include="DesktopPet.UiChecks" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- The data and sounds stay in the app's Assets folder (art, credits and tools live there). -->
+    <EmbeddedResource Include="../DesktopPet/Assets/Sounds/*.wav" LogicalName="DesktopPet.Sounds.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="../DesktopPet/Assets/coats.json" LogicalName="DesktopPet.coats.json" />
+    <EmbeddedResource Include="../DesktopPet/Assets/accessories.json" LogicalName="DesktopPet.accessories.json" />
+    <EmbeddedResource Include="../DesktopPet/Assets/battle.json" LogicalName="DesktopPet.battle.json" />
+  </ItemGroup>
+</Project>

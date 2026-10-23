@@ -112,7 +112,7 @@ Sleeping -> direct click -> Waking or Dragging -> normal interaction
 ```
 
 Sleep lasts **10 seconds** by default. Edit `SleepDurationSeconds` in
-`src/DesktopPet/PetModel.cs` (`PetSettings`) to adjust it, then rebuild/publish.
+`src/DesktopPet.Core/PetModel.cs` (`PetSettings`) to adjust it, then rebuild/publish.
 For tests, use `new PetSettings { SleepDurationSeconds = 2 }`.
 This setting applies to inactivity, local random sleep, and Python SLEEP; the
 protocol duration field remains accepted but does not override this sleep setting.
@@ -151,7 +151,7 @@ head shift/tilt. Each glance eases in, holds about 1.4 seconds, and eases back.
 After waking, a **30-second cooldown** blocks autonomous sleep from both Python
 and local random behavior. Pause freezes it; toggling AI does not reset it.
 `WakeCooldownSeconds`, `WalkAcceleration`, and `DragThreshold` are adjustable in
-`PetSettings` in `src/DesktopPet/PetModel.cs`.
+`PetSettings` in `src/DesktopPet.Core/PetModel.cs`.
 
 Right-click the cat and choose **More → Behavior debug view** to inspect action, emotion,
 sleep elapsed time, wake cooldown, input state, and Python energy. Energy is the

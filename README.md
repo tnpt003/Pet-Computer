@@ -64,17 +64,23 @@ src/DesktopPet/
   app.manifest       Per-monitor DPI awareness, normal user privileges
   App.xaml           Application entry point
   App.xaml.cs        Application lifetime and notification-area menu
-  PetWindow.cs       Transparent host, mouse capture, timing, monitor selection
+  PetWindow*.cs      Transparent host, mouse capture, timing, monitor selection, UI
+  PetRenderer.cs     Cat artwork and animated poses
+  Assets/            Icon, sounds and data (battle.json, coats.json, accessories.json)
+src/DesktopPet.Core/ Everything that does not need WPF (library, net10.0):
   PetModel.cs        State, tunable settings, gravity and collisions
   PetBehavior.cs     Timed random action selection
   ThrowTracker.cs    Cursor history and release velocity
-  PetRenderer.cs     Cat artwork and animated poses
+  PetBattle*.cs      Battle simulation; PetAdventure/PetExpedition/PetEndless modes
+  PetPreferences.cs  Preferences; PetJsonStore.cs reads/writes every data file
   AI/                Replaceable decision source, protocol, Python process bridge
 ai/
   service.py         Personality, mood, memory, and high-level decisions
   personality.json   Behavior preferences
 tests/DesktopPet.Tests/
-  Program.cs         Dependency-free executable physics checks
+  Program.cs         Dependency-free executable checks (references DesktopPet.Core)
+tests/DesktopPet.UiChecks/
+  Program.cs         WPF checks against a real PetWindow
 scripts/
   run.ps1            Build and launch in the background
   test.ps1           Run physics checks

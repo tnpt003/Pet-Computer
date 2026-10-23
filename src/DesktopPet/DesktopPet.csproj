@@ -16,15 +16,16 @@
     <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
   </PropertyGroup>
   <ItemGroup>
+    <!-- Everything that does not need WPF (model, physics, battle, data, Python bridge); it also
+         embeds Assets/coats.json, accessories.json, battle.json and Sounds/*.wav. -->
+    <ProjectReference Include="../DesktopPet.Core/DesktopPet.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
     <!-- Installer and self-update from GitHub Releases (PetUpdates.cs, scripts/pack.ps1). -->
     <PackageReference Include="Velopack" Version="1.2.158" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Assets/Pet.ico" />
-    <EmbeddedResource Include="Assets/Sounds/*.wav" LogicalName="DesktopPet.Sounds.%(Filename)%(Extension)" />
-    <EmbeddedResource Include="Assets/coats.json" LogicalName="DesktopPet.coats.json" />
-    <EmbeddedResource Include="Assets/accessories.json" LogicalName="DesktopPet.accessories.json" />
-    <EmbeddedResource Include="Assets/battle.json" LogicalName="DesktopPet.battle.json" />
     <Content Include="Assets/Sounds/CREDITS.md;Assets/Sounds/sources.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>

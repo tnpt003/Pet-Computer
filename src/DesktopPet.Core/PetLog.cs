@@ -64,9 +64,10 @@ public static class PetLog
 {
     // The build's informational version: "1.0.0", or "1.0.0+<commit>" / "1.0.0+<commit>.dirty"
     // when scripts/publish.ps1 built it from git (".dirty": the working tree had uncommitted changes).
+    // Read from the app (the entry assembly, whose csproj holds <Version>), not from this library.
     public static string BuildVersion =>
-        System.Reflection.CustomAttributeExtensions.GetCustomAttribute<System.Reflection.AssemblyInformationalVersionAttribute>(typeof(PetLog).Assembly)
-            ?.InformationalVersion ?? "unknown";
+        System.Reflection.CustomAttributeExtensions.GetCustomAttribute<System.Reflection.AssemblyInformationalVersionAttribute>(
+            System.Reflection.Assembly.GetEntryAssembly() ?? typeof(PetLog).Assembly)?.InformationalVersion ?? "unknown";
 
     // For people: "1.0.0", "1.0.0 (abc1234)" or "1.0.0 (abc1234, uncommitted changes)".
     public static string VersionLabel(string? informational, bool english)

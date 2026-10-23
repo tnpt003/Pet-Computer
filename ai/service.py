@@ -26,7 +26,7 @@ VERSION = 1
 MAX_MESSAGE = 8192
 COMMANDS = {"LOOK", "IDLE", "WALK_LEFT", "WALK_RIGHT", "SIT", "JUMP", "SLEEP", "FOLLOW_MOUSE", "SEEK_ATTENTION",
             "ROLL_OVER", "CHASE_TAIL", "SCRATCH"}
-# Shared with C# (src/DesktopPet/AI/AiNames.cs); the C# tests compare both sides.
+# Shared with C# (src/DesktopPet.Core/AI/AiNames.cs); the C# tests compare both sides.
 MOODS = ("content", "playful", "bored", "sleepy")
 PERSONALITIES = ("Balanced", "Playful", "Curious", "Calm")
 # C# actions that own their duration; mirrors PetActionRules.RejectsDecisions.

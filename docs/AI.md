@@ -79,11 +79,11 @@ This keeps the cat responsive while Python starts, hangs, crashes, or is absent.
 | `ai/service.py` | Standard-library Python service and replaceable `Brain.decide` policy |
 | `ai/personality.json` | Playfulness, curiosity, sleepiness, attention interval |
 | `ai/calendar.json`, `ai/seasons.py` | Day rhythm by hour and special days (holidays, the user's birthday, anniversary) |
-| `src/DesktopPet/AI/AiProtocol.cs` | Transport interface, observation/decision records, response validation |
-| `src/DesktopPet/AI/AiNames.cs` | Command, mood and personality names shared with `ai/service.py` (`COMMANDS`, `MOODS`, `PERSONALITIES`) |
-| `src/DesktopPet/AI/PythonDecisionSource.cs` | Python discovery, process ownership, async IPC, timeout/restart |
-| `src/DesktopPet/AI/DecisionGuard.cs` | Reject stale replies and preserve input/physics priority |
-| `src/DesktopPet/PetBehavior.cs` | Execute high-level commands using existing actions and movement settings |
+| `src/DesktopPet.Core/AI/AiProtocol.cs` | Transport interface, observation/decision records, response validation |
+| `src/DesktopPet.Core/AI/AiNames.cs` | Command, mood and personality names shared with `ai/service.py` (`COMMANDS`, `MOODS`, `PERSONALITIES`) |
+| `src/DesktopPet.Core/AI/PythonDecisionSource.cs` | Python discovery, process ownership, async IPC, timeout/restart |
+| `src/DesktopPet.Core/AI/DecisionGuard.cs` | Reject stale replies and preserve input/physics priority |
+| `src/DesktopPet.Core/PetBehavior.cs` | Execute high-level commands using existing actions and movement settings |
 | `tests/ai/` | Python unit tests and subprocess fault injection |
 | `tests/DesktopPet.Tests/AiTests.cs` | Behavior, protocol, fallback, and real-process integration tests |
 

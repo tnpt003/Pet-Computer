@@ -36,6 +36,51 @@ Cập nhật: 2026-10-23 (Asia/Saigon). Bản đang chạy: 1.4.1 (installer + t
 - **Xong (23/10):** chuẩn hóa S1, S2, S3a, S3b (xong), i18n J1 khung, J2 dịch UI C#, J3 dữ liệu, J4 câu thoại + hiện 日本語 (xong; tiếng Nhật: câu tiếng Anh làm khóa, Claude soạn bản dịch; người dùng duyệt 23/10), S4 cổng `MayAct(AutoKind)` (xong, e6dc357; xem PROGRESS.md).
 - Dài hạn: quan hệ phát triển, nhiều mèo; LLM chỉ khi người dùng đổi quy tắc AGENTS.md.
 
+## Hướng mở rộng mới: mèo nói tiếng người (người dùng đề xuất 2026-10-23, chưa duyệt thiết kế)
+
+Ý tưởng: mèo **đọc to thành tiếng** câu đang hiện trong bong bóng chữ (vi/en/ja), giọng kiểu nhân vật hoạt hình. Chưa làm; trước khi code cần người dùng duyệt và **đổi quy tắc AGENTS.md** ("Chưa tích hợp voice"). Không gồm nghe người dùng nói (nhận dạng giọng): đó là hướng riêng nếu muốn.
+
+**Giữ nguyên:**
+- Phân vai: Python vẫn chỉ chọn câu (đã có: lines.json, speech.py, `PetLine`). C# phát giọng, như mọi âm thanh khác.
+- Khi Python tắt: câu local (PetBreaks…) cũng đọc được.
+- Không chặn luồng UI.
+- Cue âm thanh hoạt hình hiện có giữ nguyên; giọng là lớp thêm vào, không thay cue.
+
+**Các cách làm (từ rẻ đến tốn):**
+
+| Cách | Mô tả | Ưu | Nhược |
+|---|---|---|---|
+| A. Tiếng "líu lo" hoạt hình | Ghép âm tiết ngắn theo nhịp chữ trong bong bóng, kiểu Animal Crossing; không phải lời thật | Hợp phong cách, không phụ thuộc máy, nhẹ (vài file wav CC0 hoặc tự tổng hợp), mọi ngôn ngữ như nhau | Không nghe ra chữ |
+| B. Giọng Windows có sẵn | `Windows.Media.SpeechSynthesis` / System.Speech, SSML chỉnh cao độ/tốc độ cho "dễ thương" | Nói ra chữ thật, offline, không thêm dependency lớn | Giọng hơi "robot"; máy thiếu giọng vi/ja nếu chưa cài gói ngôn ngữ (khi đó dùng A) |
+| C. Thu/tổng hợp sẵn lúc build | Tạo file giọng cho ~165 câu × 3 ngôn ngữ bằng TTS offline, đóng gói vào app | Giọng đồng nhất, chọn được giọng đẹp | Tăng dung lượng; câu có `{name}` và câu học được phải xử lý riêng; sửa câu là phải tạo lại |
+| D. Giọng neural offline lúc chạy | Piper/sherpa-onnx, model ~20–60 MB mỗi ngôn ngữ | Tự nhiên, đọc được mọi câu kể cả tên mèo | Dependency + dung lượng lớn, tốn CPU; trái nguyên tắc hạn chế dependency |
+
+**Quy tắc hành vi đề xuất:**
+- Chỉ nói khi bong bóng hiện.
+- Theo công tắc Âm thanh và âm lượng chung.
+- Im khi:
+  - Quiet;
+  - app fullscreen;
+  - mèo đang ngủ (trừ câu chào khi thức);
+  - trong trận;
+  - Tạm dừng.
+- Không chồng lên cue âm thanh khác và có cooldown.
+- Bị cầm hoặc ném thì ngắt giọng.
+- Đổi ngôn ngữ thì bỏ câu đang đọc.
+- Có công tắc riêng "Mèo nói thành tiếng", **mặc định tắt**.
+- Trong Tùy chỉnh có thêm mục giọng: cao/thấp, nhanh/chậm, nút nghe thử. Nghe thử vẫn phát kể cả khi tắt âm thanh, giống nghe thử cue.
+
+**Mốc gợi ý (khi duyệt):**
+- **V1:** công tắc + cách A, để có cảm giác "mèo nói" mà không phụ thuộc máy.
+- **V2:** cách B. Đọc câu thật nếu máy có giọng của ngôn ngữ đang dùng, thiếu thì quay về A. Mục giọng trong Tùy chỉnh.
+- **V3 (tùy chọn):** C hoặc D nếu giọng Windows chưa đủ đẹp.
+
+**Cần người dùng chọn:**
+1. Muốn nghe ra chữ thật (B/C/D) hay chỉ "líu lo" hoạt hình (A)?
+2. Ngôn ngữ nào trước (vi/en/ja)?
+3. Có chấp nhận tăng dung lượng hoặc thêm dependency (C/D) không?
+4. Duyệt đổi quy tắc "chưa tích hợp voice" trong AGENTS.md.
+
 ## Đã bỏ theo người dùng (2026-10-22)
 
 - Cho ăn bỏ cooldown/xếp hàng (phương án 1) và mèo no từ chối ăn.

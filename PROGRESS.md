@@ -373,6 +373,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Ghi chú bảo trì: câu nhắc nghỉ dự phòng trong C# (PetBreaks, vi/en/ja) trùng 3 câu `break` đầu của ai/lines.json — sửa giọng văn thì sửa cả hai. Câu không phải câu chào do Python chọn đúng lúc mèo vừa ngủ vẫn bị bỏ. Fullscreen chỉ xét màn hình có mèo; app bị nhận nhầm thì xem log "Fullscreen app detected". Nếu ném vẫn giật: cân nhắc vòng lặp active theo CompositionTarget.Rendering. Bảng Tết/Trung thu tới 2050 (scratch script thuật toán âm lịch không nằm trong repo; nối tiếp thì dùng lại thuật toán Hồ Ngọc Đức UTC+7).
 - Ngày kỷ niệm đầu tiên của người dùng là 2026-10-13 → lần đầu thấy được 2027-10-13.
 - Đã bỏ theo người dùng (2026-10-22): cho ăn bỏ cooldown/xếp hàng và mèo no từ chối ăn; đo RAM chạy dài; phím tắt toàn cục cho Làm ngay; dạy mèo nói (cách 2) không làm trong đợt này. LLM trò chuyện chỉ khi người dùng đổi quy tắc AGENTS.md.
+- **Hướng mở rộng mới (người dùng 23/10): mèo nói tiếng người** — đọc to câu trong bong bóng (vi/en/ja). Chưa duyệt thiết kế; cần đổi quy tắc AGENTS.md "chưa tích hợp voice". Các cách A líu lo hoạt hình / B giọng Windows / C tạo sẵn / D neural offline, quy tắc im lặng (Quiet, fullscreen, ngủ, trận, Pause), mốc V1–V3 và câu hỏi cho người dùng: docs/NEXT-STEPS.md mục "Hướng mở rộng mới: mèo nói tiếng người".
 - Backlog khác: docs/NEXT-STEPS.md → "Backlog".
 
 ## Cần test thủ công

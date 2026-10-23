@@ -29,7 +29,7 @@ public partial class App : Application
             Velopack.VelopackApp.Build()
                 .OnFirstRun(_ => firstRun = true)
                 .OnRestarted(_ => restarted = true)
-                .OnBeforeUninstallFastCallback(_ => { if (Environment.ProcessPath is string exe) new StartupRegistration().RemoveIfThis(exe); })
+                .OnBeforeUninstallFastCallback(_ => PetUpdates.OnUninstall())
                 .Run();
         }
         catch (Exception ex) { System.Diagnostics.Trace.WriteLine($"Velopack startup skipped: {ex.Message}"); }
@@ -76,6 +76,7 @@ public partial class App : Application
         menu.Items.Add(reset);
         // Updates (installed app only): "Update to x" once one is downloaded, else "Check for updates".
         updates = new PetUpdates();
+        updates.ForgetUninstallChoice();
         pet.Updates = updates;
         var checkUpdates = new Forms.ToolStripMenuItem(null, null, (_, _) => _ = updates.Check(true)) { Visible = updates.Available };
         var applyUpdate = new Forms.ToolStripMenuItem(null, null, (_, _) => { if (updates.ApplyAndRestart()) Shutdown(); }) { Visible = false };

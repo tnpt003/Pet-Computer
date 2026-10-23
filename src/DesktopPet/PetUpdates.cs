@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Threading.Tasks;
 using System.Windows.Threading;
 using Velopack;
@@ -92,6 +93,62 @@ public sealed class PetUpdates
             if (userAsked) Changed?.Invoke(null);
         }
         finally { checking = false; }
+    }
+
+    // Uninstall from Settings → General (installed app only): runs Velopack's uninstaller, the same as
+    // Windows Settings → Apps; the caller then closes the app the normal way. removeData leaves a marker
+    // in the install folder that the uninstall hook (OnUninstall) reads to delete the user's data too;
+    // any normal start clears a marker left by an uninstall that did not happen.
+    public const string RemoveDataMarker = "remove-data-on-uninstall";
+    private static string InstallRoot => Path.GetDirectoryName(AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar))!;
+
+    public bool StartUninstall(bool removeData)
+    {
+        if (manager == null) return false;
+        try
+        {
+            string uninstaller = Path.Combine(InstallRoot, "Update.exe");
+            if (!File.Exists(uninstaller)) { Trace.WriteLine("Uninstall: Update.exe not found."); return false; }
+            string marker = Path.Combine(InstallRoot, RemoveDataMarker);
+            if (removeData) File.WriteAllText(marker, ""); else File.Delete(marker);
+            Process.Start(new ProcessStartInfo(uninstaller, "--uninstall") { UseShellExecute = false });
+            Trace.WriteLine($"Uninstall started (remove data: {removeData}).");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"Uninstall could not start: {ex.Message}");
+            return false;
+        }
+    }
+
+    public void ForgetUninstallChoice()
+    {
+        if (manager == null) return;
+        try { File.Delete(Path.Combine(InstallRoot, RemoveDataMarker)); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+    }
+
+    // Velopack's before-uninstall hook (its own short-lived process): drop this copy's Windows startup
+    // entry, and delete the user's data only when the in-app uninstall asked for it.
+    public static void OnUninstall() => OnUninstall(InstallRoot, PetPreferences.DataDirectory, Environment.ProcessPath);
+
+    public static bool OnUninstall(string installRoot, string dataDirectory, string? executable)
+    {
+        if (executable != null) new StartupRegistration().RemoveIfThis(executable);
+        string marker = Path.Combine(installRoot, RemoveDataMarker);
+        if (!File.Exists(marker)) return false;
+        File.Delete(marker);
+        string data = Path.GetFullPath(dataDirectory);
+        // Never a drive root or the install folder itself.
+        if (Path.GetPathRoot(data) == data || string.Equals(data.TrimEnd('\\'), Path.GetFullPath(installRoot).TrimEnd('\\'), StringComparison.OrdinalIgnoreCase)) return false;
+        // The closing pet may still hold its log for a moment: retry briefly (the hook has 30 s).
+        for (int attempt = 0; attempt < 10 && Directory.Exists(data); attempt++)
+        {
+            try { Directory.Delete(data, true); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { System.Threading.Thread.Sleep(500); }
+        }
+        return !Directory.Exists(data);
     }
 
     // Starts the updater, which waits for this app to exit, applies the update and opens the new

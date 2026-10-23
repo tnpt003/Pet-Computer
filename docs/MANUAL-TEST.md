@@ -419,3 +419,5 @@ Tự động đã có: Phần thưởng trên sảnh (ô có hình, khóa, Mới
 - [ ] Đang chạy bản copy thư mục (artifacts\win-x64) rồi gỡ bản cài và cài lại Setup.exe: bản copy tự đóng (không còn icon khay thứ hai), bản cài mở kèm hộp chào mừng.
 - [ ] Cài đặt → Chung → Cập nhật (bản đã cài): hiện 1.4.1; bấm Kiểm tra cập nhật → nút "Đang kiểm tra…" rồi khay báo "đang dùng bản mới nhất"; tắt "Tự động tải và cài bản mới" → Lưu → mở lại Cài đặt vẫn tắt. Bản copy thư mục: mục này mờ, có dòng "không tự cập nhật".
 - [ ] README trên GitHub: link "⬇ Download" tải thẳng Setup.exe của bản mới nhất.
+- [ ] Gỡ trong app (bản đã cài 1.4.1): Cài đặt → Chung → "Gỡ cài đặt Desktop Pet…" → Hủy: không có gì xảy ra. Lại bấm → Gỡ cài đặt (ô dữ liệu KHÔNG tích): mèo đóng, Settings → Apps không còn Desktop Pet, shortcut mất, Startup apps không còn, `%LOCALAPPDATA%\DesktopPet` còn. Cài lại: mèo nhớ tên/bộ lông.
+- [ ] Gỡ trong app có tích "Xóa cả dữ liệu của mèo": sau khi gỡ, `%LOCALAPPDATA%\DesktopPet` không còn (sao lưu thư mục này trước nếu muốn giữ). Bản copy thư mục: không có nút gỡ.

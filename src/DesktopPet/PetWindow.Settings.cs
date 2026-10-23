@@ -19,7 +19,7 @@ public sealed class PetSettingsForm
     public string[] TrophyIds = Array.Empty<string>();
     public CheckBox HolidayAccessories = null!, ClimbWindows = null!, ShowTrophies = null!, Talks = null!, Autostart = null!, BreakReminders = null!, Sounds = null!, InteractionSounds = null!, EmotionSounds = null!, SleepSounds = null!, AutoUpdate = null!;
     public Slider Volume = null!;
-    public Button Save = null!, Cancel = null!, Tuning = null!, Forget = null!, Preview = null!, CheckUpdates = null!;
+    public Button Save = null!, Cancel = null!, Tuning = null!, Forget = null!, Preview = null!, CheckUpdates = null!, Uninstall = null!;
     public PetRenderer PetPreview = null!;
     public PetModel PreviewPet = null!;
     public System.Windows.Threading.DispatcherTimer PreviewTimer = null!;
@@ -220,10 +220,24 @@ public sealed partial class PetWindow
             await Updates.Check(true); // The tray says what it found.
             form.CheckUpdates.IsEnabled = true; form.CheckUpdates.Content = checkText;
         };
+        // Uninstall (installed app only; a copied folder is removed by deleting it): asks first, data kept unless ticked.
+        form.Uninstall = PetUi.SecondaryButton(L("Gỡ cài đặt Desktop Pet…", "Uninstall Desktop Pet…"));
+        form.Uninstall.HorizontalAlignment = HorizontalAlignment.Left;
+        form.Uninstall.Visibility = installed ? Visibility.Visible : Visibility.Collapsed;
+        form.Uninstall.Click += (_, _) =>
+        {
+            var question = UninstallQuestion(L, out var removeData);
+            question.Owner = settingsWindow;
+            if (question.ShowDialog() != true || Updates == null) return;
+            if (Updates.StartUninstall(removeData.IsChecked == true)) Application.Current.Shutdown();
+            else PetDialog.Show(settingsWindow, "Desktop Pet", L("Không mở được trình gỡ cài đặt. Hãy gỡ trong Cài đặt Windows → Ứng dụng.",
+                "The uninstaller could not start. Uninstall from Windows Settings → Apps instead."), "OK", glyph: PetDialog.WarningGlyph);
+        };
         var generalTab = Page(
             Section(L("Ứng dụng", "App"),
                 Row("Language / Ngôn ngữ", form.Language),
-                form.Autostart),
+                form.Autostart,
+                form.Uninstall),
             Section(L("Cập nhật", "Updates"),
                 Row(L("Phiên bản", "Version"), new TextBlock { Text = VersionText, VerticalAlignment = VerticalAlignment.Center }),
                 form.AutoUpdate,
@@ -310,6 +324,17 @@ public sealed partial class PetWindow
     }
 
     private const double SettingsWidth = 600;
+
+    // "Uninstall Desktop Pet?" with "Also delete the pet's data" (not ticked: reinstalling remembers everything).
+    public static Window UninstallQuestion(Func<string, string, string> L, out CheckBox removeData)
+    {
+        removeData = new CheckBox { Content = L("Xóa cả dữ liệu của mèo (cài đặt, nhật ký, tiến trình trận, kỷ lục)",
+            "Also delete the pet's data (settings, diary, battle progress, records)"), IsChecked = false };
+        return PetDialog.Create(null, L("Gỡ cài đặt Desktop Pet", "Uninstall Desktop Pet"),
+            L("Gỡ Desktop Pet khỏi máy? Mèo sẽ đóng, shortcut và mục khởi động cùng Windows bị xóa. Không tích ô dưới thì cài lại mèo vẫn nhớ mọi thứ.",
+              "Remove Desktop Pet from this PC? The pet closes; its shortcuts and Windows startup entry are removed. Leave the box unticked and a reinstall remembers everything."),
+            L("Gỡ cài đặt", "Uninstall"), L("Hủy", "Cancel"), PetDialog.WarningGlyph, removeData);
+    }
 
     // One sidebar page: its cards stacked, scrolling on its own.
     private static ScrollViewer Page(params UIElement[] sections)

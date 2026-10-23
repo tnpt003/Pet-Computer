@@ -668,6 +668,31 @@ internal static class Program
         Check(form.AutoUpdate.IsChecked == true && !form.AutoUpdate.IsEnabled && !form.CheckUpdates.IsEnabled && (string)form.CheckUpdates.Content == "Check for updates" &&
               System.Text.RegularExpressions.Regex.IsMatch(PetWindow.VersionText, @"^\d+\.\d+\.\d+"),
             "General has Updates: version, automatic updates (off limits when not installed) and Check for updates");
+        Check(form.Uninstall.Visibility == Visibility.Collapsed && !new PetUpdates().StartUninstall(true),
+            "Not installed: no Uninstall button, and uninstalling does nothing");
+        var uninstallQuestion = PetWindow.UninstallQuestion(window.L, out var removeData);
+        uninstallQuestion.Left = -10000; uninstallQuestion.Show(); uninstallQuestion.UpdateLayout();
+        var uninstallButtons = Descendants<System.Windows.Controls.Button>((FrameworkElement)uninstallQuestion.Content).ToList();
+        Check(removeData.IsChecked == false && removeData.IsVisible && uninstallButtons.Count == 2 && uninstallButtons[0].IsCancel && (string)uninstallButtons[1].Content == "Uninstall",
+            "Uninstalling asks first; deleting the pet's data is a separate, unticked choice");
+        uninstallQuestion.Close();
+        // The uninstall hook deletes the data only when the in-app uninstall left its marker.
+        string uninstallTest = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "PetUninstallCheck-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            string root = System.IO.Path.Combine(uninstallTest, "PetComputer"), data = System.IO.Path.Combine(uninstallTest, "DesktopPet");
+            System.IO.Directory.CreateDirectory(root); System.IO.Directory.CreateDirectory(data);
+            System.IO.File.WriteAllText(System.IO.Path.Combine(data, "preferences.json"), "{}");
+            bool keptWithoutMarker = !PetUpdates.OnUninstall(root, data, null) && System.IO.File.Exists(System.IO.Path.Combine(data, "preferences.json"));
+            System.IO.File.WriteAllText(System.IO.Path.Combine(root, PetUpdates.RemoveDataMarker), "");
+            bool removedWithMarker = PetUpdates.OnUninstall(root, data, null) && !System.IO.Directory.Exists(data) &&
+                                     !System.IO.File.Exists(System.IO.Path.Combine(root, PetUpdates.RemoveDataMarker));
+            System.IO.File.WriteAllText(System.IO.Path.Combine(root, PetUpdates.RemoveDataMarker), "");
+            bool refusesInstallFolder = !PetUpdates.OnUninstall(root, root, null) && System.IO.Directory.Exists(root);
+            Check(keptWithoutMarker && removedWithMarker && refusesInstallFolder,
+                "Uninstalling keeps the data unless asked; when asked it deletes the data folder, never the install folder");
+        }
+        finally { if (System.IO.Directory.Exists(uninstallTest)) System.IO.Directory.Delete(uninstallTest, true); }
         if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string settingsReview)
         {
             // Every tab in both languages, for a human look at the layout.

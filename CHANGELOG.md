@@ -6,6 +6,7 @@
 - **Cài khi bản copy thư mục đang chạy:** bản đó được đóng bình thường để bản vừa cài mở ra (trước đây bản cài tự thoát, trông như không có gì xảy ra).
 - **Cài đặt → Chung → Cập nhật:** xem phiên bản, bật/tắt tự động tải và cài bản mới (tắt thì chỉ kiểm tra khi bạn bấm), nút Kiểm tra cập nhật.
 - **Sau khi cập nhật:** khay báo "Đã cập nhật lên bản …", bấm vào để xem có gì mới trên GitHub.
+- **Gỡ cài đặt ngay trong app:** Cài đặt → Chung → Ứng dụng → "Gỡ cài đặt Desktop Pet…" (chỉ bản đã cài). Hỏi xác nhận; ô "Xóa cả dữ liệu của mèo" không tích sẵn — không tích thì cài lại mèo vẫn nhớ mọi thứ.
 - **Gỡ cài đặt** nay xóa luôn mục khởi động cùng Windows của bản đã cài (trước đây Windows vẫn cố mở file đã bị xóa). Mục khởi động của bản copy thư mục khác không bị đụng tới.
 - Trình cài đặt hiện hình con mèo trong lúc giải nén; trang Release có hướng dẫn cài (kể cả bước SmartScreen) và ghi chú thay đổi; README có link tải thẳng bản mới nhất.
 

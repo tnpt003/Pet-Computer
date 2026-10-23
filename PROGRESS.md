@@ -7,6 +7,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 ## Menu chuột phải gọn (2026-10-23)
 - Người dùng thấy menu dài (14 mục, 3 vạch) → duyệt phương án 10 dòng, 2 vạch: Cho ăn, **Chơi ›** (Chơi bóng/Cất bóng, Đèn laser), Battle Mode, Làm ngay ›, Cảm xúc › | Yên lặng, **{tên mèo} ›** (Trạng thái, Nhật ký, Chỗ nghỉ yêu thích ›), Cài đặt…, **Khác ›** (Âm thanh, Gọi về màn hình chính, Debug, Giới thiệu) | Thoát. Khi bóng đang ra, "Cất bóng" hiện thêm ở menu ngoài dưới Chơi. Chơi mờ khi cả bóng và laser đều không chơi được. Chỉ đổi chỗ, logic bật/mờ và hành vi giữ nguyên (PetWindow.Features.cs).
 - Test thật: test.ps1 -Ui (có PET_RENDER_REVIEW): Python 56 OK, C# 1352, WPF 775/775 (check menu viết lại: thứ tự 10 dòng, menu con Chơi/Khác/tên mèo, 2 vạch; check mới: bóng ra thì có "Cất bóng" ở ngoài, cất xong thì ẩn). Đã xem ảnh menu-vi. docs/WINDOWS.md mục Menu, MANUAL-TEST mục mới.
+- Commit 0d64bb5; publish 1.4.1+0d64bb5, check-publish 3/3; mèo bản copy đóng WM_CLOSE trước, mở lại sau. Chưa mở menu trên màn hình thật (chỉ ảnh render).
 
 ## 1.4.1 — chào mừng sau khi cài, khởi động cùng Windows, gỡ sạch (2026-10-23)
 - GitHub Actions lần đầu (tag v1.4.0, 22/10 17:52 UTC): thành công ~2,5 phút, Release v1.4.0 có Setup.exe 93,6 MB, Portable.zip, full.nupkg, RELEASES, releases.win.json. Người dùng đã tải được Setup.exe. (Máy này đã cài .NET SDK 10.0.402 hệ thống cho C# Dev Kit của VS Code; script vẫn dùng .tools\dotnet.)

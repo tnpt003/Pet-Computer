@@ -477,13 +477,17 @@ follows the personality like ball play.
 
 ## Menu and settings layout (2026-10-15)
 
-The cat's right-click menu is grouped, with Windows' own icon font (no new assets):
+The cat's right-click menu is grouped, with Windows' own icon font (no new assets). Since
+2026-10-23 it is kept short (10 rows, 2 separators); games, the cat's pages and rarely used items
+sit in submenus:
 
-1. **Give treat, Play with ball, Laser pointer, Do now ›, Emotions ›**: playing with the cat.
-2. **Quiet mode, Sounds, Favorite resting spot ›**: quick switches (Quiet has a tooltip).
-3. **{name}'s status, {name}'s diary, Settings…, More ›**: More holds Bring the pet to the main screen,
-   Behavior debug view and About.
-4. **Exit pet**.
+1. **Give treat, Play › (Play with ball / Put ball away, Laser pointer), Battle Mode, Do now ›,
+   Emotions ›**: playing with the cat. While the ball is out, **Put ball away** also shows on the
+   main menu right under Play (one click). Play is dimmed when neither game can start.
+2. **Quiet mode** (tooltip), **{name} ›** ({name}'s status, {name}'s diary, Favorite resting spot ›),
+   **Settings…**, **More ›** (Sounds, Bring the pet to the main screen, Behavior debug view, About).
+   Sounds is also the master switch in Settings → Sounds.
+3. **Exit pet**.
 
 **Settings…** (also in the tray menu) opens one window with four tabs:
 - **Pet:** name, personality, the user's birthday (day and month, optional; the pet wishes a happy
@@ -508,7 +512,7 @@ and a hint; Restore defaults, Cancel and Save stay at the bottom.
 
 ## Status card and warm dialogs (2026-10-21)
 
-**{name}'s status** / **Trạng thái của {name}** (right-click menu, before the diary) opens a
+**{name}'s status** / **Trạng thái của {name}** (right-click menu → {name} ›, before the diary) opens a
 small rounded card above the cat (below it when the cat is near the top of the screen): what
 the cat is doing (or "In a battle · HP", "Paused") and its emotion, refreshed twice a second,
 then (2026-10-22) the newer of its last speech bubble ("Last said: “…” · 3 min ago") and last

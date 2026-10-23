@@ -422,3 +422,8 @@ Tự động đã có: Phần thưởng trên sảnh (ô có hình, khóa, Mới
 - [ ] README trên GitHub: link "⬇ Download" tải thẳng Setup.exe của bản mới nhất.
 - [x] Gỡ trong app (bản đã cài 1.4.1): Cài đặt → Chung → "Gỡ cài đặt Desktop Pet…" → Hủy: không có gì xảy ra. Lại bấm → Gỡ cài đặt (ô dữ liệu KHÔNG tích): mèo đóng, Settings → Apps không còn Desktop Pet, shortcut mất, Startup apps không còn, `%LOCALAPPDATA%\DesktopPet` còn. Cài lại: mèo nhớ tên/bộ lông.
 - [ ] Gỡ trong app có tích "Xóa cả dữ liệu của mèo": sau khi gỡ, `%LOCALAPPDATA%\DesktopPet` không còn (sao lưu thư mục này trước nếu muốn giữ). Bản copy thư mục: không có nút gỡ.
+
+### Menu chuột phải gọn (2026-10-23)
+- [ ] Menu còn 10 dòng: Cho ăn, Chơi ›, Chế độ chiến đấu, Làm ngay ›, Cảm xúc ›, Chế độ yên lặng, {tên mèo} ›, Cài đặt…, Khác ›, Thoát mèo. Menu con mở mượt, không bị cắt ở mép màn hình.
+- [ ] Chơi › Chơi bóng: bóng ra; mở lại menu thấy "Cất bóng" ngay dưới Chơi, bấm cất được. Khi mèo chưa rảnh (đang bế/ngủ/trận) Chơi bị mờ.
+- [ ] {tên mèo} › Trạng thái / Nhật ký / Chỗ nghỉ yêu thích chạy như trước. Khác › Âm thanh bật/tắt có hiệu lực và khớp Cài đặt → Âm thanh.

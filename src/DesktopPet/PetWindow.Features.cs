@@ -37,13 +37,19 @@ public sealed partial class PetWindow
         renderer.Coat = preferences.Coat;
         ApplyAccessory();
         behavior.Personality = preferences.Personality;
-        // Menu groups: play with the cat · quick switches · the cat's pages · rarely used · exit.
+        // Menu groups: play with the cat · Quiet, the cat's pages, settings · exit; games, the cat's
+        // pages and rarely used items sit in submenus to keep the menu short.
         var treat = PetUi.MenuItem(PetUi.Treat);
         treat.Click += (_, _) => GiveTreat();
+        var play = PetUi.MenuItem(PetUi.Ball, Brushes.Coral);
         var toy = PetUi.MenuItem(PetUi.Ball, Brushes.Coral);
         toy.Click += (_, _) => ToggleToy();
         var laser = PetUi.MenuItem(PetUi.Laser, Brushes.Red);
         laser.Click += (_, _) => StartLaser();
+        play.Items.Add(toy); play.Items.Add(laser);
+        // While the ball is out, putting it away is one click on the main menu.
+        var putAway = PetUi.MenuItem(PetUi.Ball, Brushes.Coral);
+        putAway.Click += (_, _) => ToggleToy();
         var home = PetUi.MenuItem(PetUi.Home);
         var remember = new MenuItem();
         remember.Click += (_, _) => { preferences.RestX = pet.X; preferences.RestY = pet.Y;
@@ -66,7 +72,9 @@ public sealed partial class PetWindow
         status.Click += (_, _) => Dispatcher.BeginInvoke(ShowStatusCard, System.Windows.Threading.DispatcherPriority.Background);
         var diary = PetUi.MenuItem(PetUi.Diary);
         diary.Click += (_, _) => ShowDiary();
-        // Rarely used: back to the primary screen, the debug view, About.
+        var cat = PetUi.MenuItem(PetUi.Status, PetUi.Accent);
+        cat.Items.Add(status); cat.Items.Add(diary); cat.Items.Add(home);
+        // Rarely used: the sound switch (also in Settings → Sounds), back to the primary screen, the debug view, About.
         var more = PetUi.MenuItem(PetUi.More);
         var reset = new MenuItem();
         reset.Click += (_, _) => Reset();
@@ -74,16 +82,14 @@ public sealed partial class PetWindow
         debug.Click += (_, _) => ToggleDebug();
         var about = PetUi.MenuItem(PetUi.About);
         about.Click += (_, _) => ShowAbout();
-        more.Items.Add(reset); more.Items.Add(debug); more.Items.Add(about);
+        more.Items.Add(sounds); more.Items.Add(reset); more.Items.Add(debug); more.Items.Add(about);
         var exit = PetUi.MenuItem(PetUi.Exit);
         exit.Click += (_, _) => Application.Current.Shutdown();
-        menu.Items.Add(treat); menu.Items.Add(toy); menu.Items.Add(laser);
+        menu.Items.Add(treat); menu.Items.Add(play); menu.Items.Add(putAway);
         InitializeBattle(menu); // "Battle Mode" (PetWindow.Battle.cs).
         InitializeCommands(menu); // "Do now" and "Emotions".
         menu.Items.Add(new Separator());
-        menu.Items.Add(quiet); menu.Items.Add(sounds); menu.Items.Add(home);
-        menu.Items.Add(new Separator());
-        menu.Items.Add(status); menu.Items.Add(diary); menu.Items.Add(customize); menu.Items.Add(more);
+        menu.Items.Add(quiet); menu.Items.Add(cat); menu.Items.Add(customize); menu.Items.Add(more);
         menu.Items.Add(new Separator());
         menu.Items.Add(exit);
         void Localize()
@@ -96,7 +102,10 @@ public sealed partial class PetWindow
             debug.Header = L("Xem debug hành vi", "Behavior debug view");
             exit.Header = L("Thoát mèo", "Exit pet");
             treat.Header = L("Cho ăn", "Give treat");
+            play.Header = L("Chơi", "Play");
             toy.Header = toyWindow == null ? L("Chơi bóng", "Play with ball") : L("Cất bóng", "Put ball away");
+            putAway.Header = L("Cất bóng", "Put ball away");
+            cat.Header = preferences.Name;
             laser.Header = L("Chơi đèn laser", "Laser pointer");
             home.Header = L("Chỗ nghỉ yêu thích", "Favorite resting spot");
             remember.Header = L("Nhớ chỗ này", "Remember this spot");
@@ -117,6 +126,8 @@ public sealed partial class PetWindow
             // A fullscreen app (game, video, slides) still keeps the cat still.
             toy.IsEnabled = toyWindow != null || (CanPlay && !context.Fullscreen && !BattleOwnsPet);
             laser.IsEnabled = CanPlay && !context.Fullscreen && !BattleOwnsPet; // Right-clicking the cat already ended a running game.
+            play.IsEnabled = toy.IsEnabled || laser.IsEnabled;
+            putAway.Visibility = toyWindow != null ? Visibility.Visible : Visibility.Collapsed;
             remember.IsEnabled = pet.Grounded && pet.LedgeId == 0; // Resting spots are on the floor.
             visit.IsEnabled = CanPlay && !EffectiveQuiet && preferences.RestX.HasValue && !BattleOwnsPet;
             forget.IsEnabled = preferences.RestX.HasValue;

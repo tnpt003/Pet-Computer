@@ -173,16 +173,30 @@ internal static class Program
         window.RaiseEvent(MouseEvent(UIElement.MouseLeftButtonUpEvent));
         Check(!window.IsMouseCaptured && pet.Action != PetAction.Thrown && pet.Action != PetAction.Dragging,
             "Quick click releases capture without creating a throw");
-        var headers = window.ContextMenu!.Items.OfType<System.Windows.Controls.MenuItem>().Select(item => item.Header as string).ToList();
-        var more = window.ContextMenu.Items.OfType<System.Windows.Controls.MenuItem>().Single(item => (string)item.Header == "More");
-        var moreHeaders = more.Items.OfType<System.Windows.Controls.MenuItem>().Select(item => item.Header as string).ToList();
-        Check(headers.Take(3).SequenceEqual(new[] { "Give treat", "Play with ball", "Laser pointer" }) && headers.Contains("Settings…") &&
-              !headers.Contains("Start with Windows") && headers[^1] == "Exit pet" && headers[^2] == "More" &&
-              moreHeaders.SequenceEqual(new[] { "Bring the pet to the main screen", "Behavior debug view", "About Desktop Pet" }) &&
-              window.ContextMenu.Items.OfType<System.Windows.Controls.Separator>().Count() == 3 &&
+        window.ContextMenu!.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.ContextMenu.OpenedEvent)); // Fills labels and visibility.
+        var topItems = window.ContextMenu.Items.OfType<System.Windows.Controls.MenuItem>().ToList();
+        var headers = topItems.Where(item => item.Visibility == Visibility.Visible).Select(item => item.Header as string).ToList();
+        string SubHeaders(string header) => string.Join("|", topItems.Single(item => (string)item.Header == header).Items.OfType<System.Windows.Controls.MenuItem>().Select(item => item.Header as string));
+        string catName = Field<PetPreferences>(window, "preferences").Name;
+        var catMenu = topItems.Single(item => (string)item.Header == catName);
+        var catHeaders = catMenu.Items.OfType<System.Windows.Controls.MenuItem>().Select(item => item.Header as string).ToList();
+        Check(headers.SequenceEqual(new[] { "Give treat", "Play", "Battle Mode", "Do now", "Emotions", "Quiet mode", catName, "Settings…", "More", "Exit pet" }) &&
+              SubHeaders("Play") == "Play with ball|Laser pointer" &&
+              SubHeaders("More") == "Sounds|Bring the pet to the main screen|Behavior debug view|About Desktop Pet" &&
+              catHeaders.Count == 3 && catHeaders[2] == "Favorite resting spot" &&
+              window.ContextMenu.Items.OfType<System.Windows.Controls.Separator>().Count() == 2 &&
               !string.IsNullOrEmpty(PetWindow.VersionText) && PetWindow.VersionText != "unknown",
-            "Context menu: play items first, groups split by separators, rarely used items under More, Exit last; About has a version");
-        int statusIndex = headers.FindIndex(h => h?.EndsWith("'s status", StringComparison.Ordinal) == true);
+            "Context menu: 10 items in 3 groups; games, the cat's pages and Sounds sit in submenus; Exit last; About has a version");
+        window.ToggleToy();
+        window.ContextMenu.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.ContextMenu.OpenedEvent));
+        var putAway = topItems.Where(item => item.Visibility == Visibility.Visible).Select(item => item.Header as string).ToList();
+        bool ballOut = Field<Window?>(window, "toyWindow") != null;
+        window.ToggleToy();
+        window.ContextMenu.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.ContextMenu.OpenedEvent));
+        Check(ballOut && putAway.SequenceEqual(new[] { "Give treat", "Play", "Put ball away" }.Concat(headers.Skip(2))) && Field<Window?>(window, "toyWindow") == null &&
+              topItems.Where(item => item.Visibility == Visibility.Visible).Count() == headers.Count,
+            "While the ball is out, \"Put ball away\" shows on the main menu; it hides again once the ball is gone");
+        int statusIndex = catHeaders.FindIndex(h => h?.EndsWith("'s status", StringComparison.Ordinal) == true);
         var actionBeforeStatus = pet.Action;
         long interactionsBeforeStatus = Field<long>(window, "interactionCount");
         window.ShowStatusCard();
@@ -190,11 +204,11 @@ internal static class Program
         var statusRoot = statusCard?.Content as FrameworkElement;
         statusRoot?.UpdateLayout();
         var statusTexts = statusRoot == null ? new List<string>() : Descendants<System.Windows.Controls.TextBlock>(statusRoot).Where(t => t.IsVisible).Select(t => t.Text).ToList();
-        Check(statusIndex >= 0 && headers[statusIndex + 1]?.EndsWith("'s diary", StringComparison.Ordinal) == true && statusCard != null &&
+        Check(statusIndex == 0 && catHeaders[statusIndex + 1]?.EndsWith("'s diary", StringComparison.Ordinal) == true && statusCard != null &&
               statusTexts.Any(t => t.StartsWith("Doing: ", StringComparison.Ordinal)) && statusTexts.Any(t => t.StartsWith("Feeling: ", StringComparison.Ordinal)) &&
               statusTexts.Any(t => t.Contains("Smart pet (AI)")) && !statusTexts.Any(t => t.EndsWith("/100", StringComparison.Ordinal)) &&
               pet.Action == actionBeforeStatus && Field<long>(window, "interactionCount") == interactionsBeforeStatus,
-            "Status card sits before the diary, shows doing/feeling, hides need bars without the AI, and does not touch the pet");
+            "Status card sits first in the cat's submenu, before the diary, shows doing/feeling, hides need bars without the AI, and does not touch the pet");
         // The card sits right above the cat, centered, in screen pixels of the pet's monitor scale
         // (also at a pretend 150%), not where WPF's own Left/Top would put a new window.
         bool CardNextToCat(double testScale)

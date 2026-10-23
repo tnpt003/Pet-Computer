@@ -755,6 +755,19 @@ internal static class BattleChecks
             check(!Sim().AppsOn && Sim().Desktop.Count == 0 && window.BattleAppWindows.Count == 0, "With the apps turned off the stage battle has no icons or icon windows");
             window.EndBattle();
             appsPrefs.BattleApps = true;
+            // A loading ring thrown where the cat stands slows the cat's running; clicking its spinner closes it.
+            window.BattleTuning = new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 1 }, SlimeMaxHp = 1000, SlimeDamage = 0,
+                Apps = new AppsSpec { InfectMinThreat = 0, InfectChance = 1, InfectWeight = 0, LoadingWeight = 1, LoadingSlow = 0.5 } };
+            check(window.StartBattle(stage: new StageSpec { Id = "ui_loading" }) == null, "(setup) a stage battle that throws a loading ring");
+            for (int i = 0; i < 600 && Sim().Hazards.Count == 0; i++) Tick(1.0 / 60);
+            Tick(0.05);
+            var ringSim = Sim();
+            check(ringSim.Hazards.Count == 1 && ringSim.LagFactor == 0.5 && Math.Abs(pet.MoveScale - ringSim.Settings.CatRunScale * ringSim.MoveFactor * 0.5) < 1e-9,
+                $"A loading ring at the cat halves its running speed (MoveScale {pet.MoveScale:0.00})");
+            check(window.BattleCloseHazard(ringSim.Hazards[0].Id) && ringSim.Hazards.Count == 0, "Clicking the ring's spinner closes it");
+            Tick(0.05);
+            check(Math.Abs(pet.MoveScale - ringSim.Settings.CatRunScale * ringSim.MoveFactor) < 1e-9, "Then the cat runs at full speed again");
+            window.EndBattle();
 
             // The strip: an ad's × and body (an ad placed on a lone slime).
             var data = BattleData.Settings;
@@ -770,6 +783,10 @@ internal static class BattleChecks
             check(stripView.PopupCloseAt(new Point(470 + BattleSim.PopupWidth / 2 - 10, popupTop + 9)) == 99 && stripView.PopupCloseAt(new Point(470, appFloor - 20)) == null &&
                   stripView.OnPopup(new Point(470, appFloor - 20)) && stripView.SlimeAt(new Point(470, appFloor - 20)) == behind.Id,
                 "An ad takes clicks only on its ×; the rest of it covers the slime behind (the click goes to neither)");
+            // Malware's loading ring (2026-10-24): its spinner up in the strip takes the click.
+            appField.hazards.Add(new BattleHazard { Id = 98, Kind = HazardKind.Loading, X = 200, Age = 1, Life = 6 });
+            check(stripView.HazardAt(new Point(200, appFloor - 132)) == 98 && stripView.HazardAt(new Point(200, appFloor - 20)) == null,
+                "A loading ring takes clicks on its spinner above the cat, not on the floor patch");
             if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string appsReview)
             {
                 void Save(Visual visual, int width, int height, string name)

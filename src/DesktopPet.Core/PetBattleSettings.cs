@@ -436,7 +436,9 @@ public enum BattleEventKind
     // Desktop apps (Value: the icon's id): charged, used, moved to another cell; a slime shot a virus
     // (Value: the slime's id), an icon got infected, was scrubbed once, was cleaned; an infected icon
     // acted against the cat. An ad popup opened, was closed, or let a slime out.
-    AppReady, AppUsed, AppMoved, GooShot, AppInfected, AppScrubbed, AppCleaned, AppAttack, PopupOpened, PopupClosed, PopupSpawned
+    AppReady, AppUsed, AppMoved, GooShot, AppInfected, AppScrubbed, AppCleaned, AppAttack, PopupOpened, PopupClosed, PopupSpawned,
+    // Malware a slime threw onto the field (Value: its id): it opened, the user closed it.
+    HazardOpened, HazardClosed
 }
 public readonly record struct BattleEvent(BattleEventKind Kind, double X, double Value = 0);
 // Number: a floating damage (Value > 0) or heal (Value < 0, shown as +HP above the cat).
@@ -487,6 +489,17 @@ public sealed class DesktopApp
 public sealed class BattlePopup
 {
     public int Id;
+    public double X, Age, Life;
+}
+
+// Malware a slime throws onto the field instead of shooting a virus into an icon (2026-10-24).
+// Loading: a spinning ring on the floor; the cat inside it runs and swings slower. It wears off
+// after Life s, or the user clicks its spinner.
+public enum HazardKind { Loading }
+public sealed class BattleHazard
+{
+    public int Id;
+    public HazardKind Kind;
     public double X, Age, Life;
 }
 
@@ -550,6 +563,14 @@ public sealed class AppsSpec
     public double MendEvery { get; init; } = 7;
     public double MendShare { get; init; } = 0.15;
     public double SpitEvery { get; init; } = 10;
+    // The wave's virus goes into an icon or is thrown onto the field as malware, drawn by weight
+    // (a weight of 0 never). Loading ring: LoadingRadius DIPs either side of where the cat stood,
+    // LoadingSeconds long; inside it the cat runs and swings at LoadingSlow of its speed.
+    public double InfectWeight { get; init; } = 1;
+    public double LoadingWeight { get; init; }
+    public double LoadingSeconds { get; init; } = 6;
+    public double LoadingRadius { get; init; } = 60;
+    public double LoadingSlow { get; init; } = 0.6;
     [JsonPropertyName("list")] public AppSpec[]? List { get; init; }
     [JsonIgnore] public IReadOnlyList<AppSpec> AppList => List ?? BuiltIn;
 

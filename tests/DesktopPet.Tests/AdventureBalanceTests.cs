@@ -129,10 +129,11 @@ internal static class AdventureBalanceTests
         var centre = crowd.FirstOrDefault(s => crowd.Count(o => Math.Abs(o.X - s.X) <= data.BombRadius) >= 2 || s.IsBoss);
         if (centre != null) sim.Use(BattleSkill.Bomb, centre.Id, cat);
         if (crowd.Count > 0) sim.Use(BattleSkill.Cheer, cat);
-        // Desktop apps: an ad is closed and an infected icon scrubbed once noticed (the casual player
-        // after its reaction time; one click a frame); a charged icon is clicked at once, Undo only
-        // after a real loss.
+        // Desktop apps: an ad or a loading ring is closed and an infected icon scrubbed once noticed (the
+        // casual player after its reaction time; one click a frame); a charged icon is clicked at once,
+        // Undo only after a real loss.
         foreach (var popup in sim.Popups.ToList()) if (reflex.NoticesAge(popup.Age)) sim.ClosePopup(popup.Id);
+        foreach (var hazard in sim.Hazards.ToList()) if (reflex.NoticesAge(hazard.Age)) sim.CloseHazard(hazard.Id);
         foreach (var app in sim.Desktop)
         {
             if (app.Infected) { if (reflex.NoticesAge(sim.Time - app.InfectedAt)) sim.UseApp(app.Id, cat); continue; }

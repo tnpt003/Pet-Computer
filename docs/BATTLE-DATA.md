@@ -427,7 +427,8 @@ Một "desktop giả" trong trận Phiêu lưu, Viễn chinh và Vô tận (tr�
   - Ctrl+Z → hồi `mendShare` máu tối đa cho slime còn ít máu nhất (mỗi `mendEvery` s).
   - Thùng Rác → nhả một `popupSpawn` xuống sàn dưới icon (mỗi `spitEvery` s, khi sàn còn chỗ).
   - Gỡ: **bấm icon `scrubClicks` lần** (bọt xà phòng mỗi lần, được cả khi đang cầm mèo) hoặc **hạ con slime đeo dấu virus**. Sạch rồi thì lấp lánh, sạc tiếp từ chỗ cũ.
-- Hết trận: không còn gì bay, virus và quảng cáo biến mất, icon mờ dần cùng phần kết. Random của app (vị trí, dọn nhà, virus) là luồng riêng của seed trận (`BattleRandom.Apps`).
+- **App độc (2026-10-24):** virus của đợt chọn theo trọng số giữa nhiễm icon (`infectWeight`) và ném app độc xuống sân (trọng số 0 = không bao giờ; chỉ có một loại thì không bốc thăm). **Vòng loading** (`loadingWeight`): một slime ném vòng ngay chỗ mèo đứng (một vòng mỗi lúc), mảng xanh trên sàn rộng `loadingRadius` DIPs mỗi bên, vòng xoay ở trên cao (chỗ mèo không che) có thanh thời gian. Mèo đứng trong vòng (trên sàn) chạy và vung vũ khí bằng `loadingSlow` tốc độ thường. Hết `loadingSeconds` s, hoặc bấm vòng xoay (được cả khi đang cầm mèo), hoặc dọn xong đợt thì vòng đóng. Cầm mèo lên thì vòng đứng yên và không làm chậm.
+- Hết trận: không còn gì bay, virus, quảng cáo và app độc biến mất, icon mờ dần cùng phần kết. Random của app (vị trí, dọn nhà, virus) là luồng riêng của seed trận (`BattleRandom.Apps`).
 - `list`: mỗi app một mục (`tabs`, `ping`, `endtask`, `undo`, `trash`, `popup`), đủ cả 6, không trùng: `nameVi`/`nameEn` 1–32 ký tự, `descVi`/`descEn` (tác dụng) và `badVi`/`badEn` (khi nhiễm) ≤ 120 ký tự (chữ thường, không thay `{khóa}`), `charge` 1–600 giây (popup phải là 0), `start` 0–1 (tùy chọn). File riêng ghi `list` thì thay cả danh sách.
 
 | Khóa | Giới hạn | Gốc |
@@ -441,6 +442,8 @@ Một "desktop giả" trong trận Phiêu lưu, Viễn chinh và Vô tận (tr�
 | `infectMinThreat`, `infectChance`, `maxInfected`, `scrubClicks`, `crawlEvery` | 0–100, 0–1, 0–5, 1–10, 1–120 s | 1.5, 0.5, 1, 3, 9 |
 | `popupEvery`, `bellEvery`, `freezeEvery`, `mendEvery`, `spitEvery` | 1–120 s | 8, 9, 12, 7, 10 |
 | `popupSeconds`, `popupSpawn`, `bellDamage`, `freezeSeconds`, `mendShare` | 2–60 s, id quái, 0–1000, 0–5 s, 0–1 | 8, `slime`, 6, 1.2, 0.15 |
+| `infectWeight`, `loadingWeight` | 0–100 | 1, 1 |
+| `loadingSeconds`, `loadingRadius`, `loadingSlow` | 1–30 s, 20–200 DIPs, 0.2–1 | 6, 60, 0.5 |
 
 - Cân bằng (mô phỏng, bot simple bấm app ngay khi đầy — trường hợp tốt nhất): số sạc trên giữ bot dưới ngưỡng "≤ 85% máu còn lại" ở màn 2–4 Thường. Bản sạc nhanh hơn (20–34 s) cho bot 90–96%.
 - rulesVersion khi thêm app: màn 1–5: 6/12/14/15/15, Vô tận 2 (kỷ lục cũ đứng riêng; phần thưởng mốc Vô tận vẫn tính mọi rulesVersion). Viễn chinh giữ 5 để không bỏ chuyến đang đi dở.

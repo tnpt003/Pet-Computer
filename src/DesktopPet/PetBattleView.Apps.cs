@@ -11,8 +11,34 @@ namespace DesktopPet;
 // in their own windows (DesktopAppIcon); what flies between them and the field is AppFlightView.
 public sealed partial class BattleFieldView
 {
-    // An ad's × clicked.
+    // An ad's × clicked; malware's spinner clicked.
     public event Action<int>? PopupClicked;
+    public event Action<int>? HazardClicked;
+
+    // Malware's spinner: up in the strip where the cat (in its own window above) does not cover it.
+    private static Point Spinner(BattleHazard hazard, double originX, double floor) => new(hazard.X - originX, floor - 132);
+
+    // The malware whose spinner is under the point.
+    public int? HazardAt(Point point)
+    {
+        double floor = Floor;
+        for (int i = sim.Hazards.Count - 1; i >= 0; i--)
+            if ((point - Spinner(sim.Hazards[i], OriginX, floor)).Length <= 20) return sim.Hazards[i].Id;
+        return null;
+    }
+
+    private void DrawHazards(DrawingContext dc, double floor, double time)
+    {
+        double radius = sim.AppRules?.LoadingRadius ?? 60;
+        foreach (var hazard in sim.Hazards)
+        {
+            // Opens with a little overshoot; fades in its last half second.
+            double k = Math.Min(1, hazard.Age / 0.3), grow = k < 1 ? 0.4 + 0.8 * k - 0.2 * k * k : 1;
+            dc.PushOpacity(Math.Clamp((hazard.Life - hazard.Age) / 0.5, 0, 1));
+            AppArt.DrawLoading(dc, hazard.X - OriginX, floor, radius, Spinner(hazard, OriginX, floor), grow, 1 - hazard.Age / hazard.Life, time);
+            dc.Pop();
+        }
+    }
 
     private Rect PopupRect(BattlePopup popup, double floor) =>
         new(popup.X - OriginX - BattleSim.PopupWidth / 2, floor - 2 - BattleSim.PopupHeight, BattleSim.PopupWidth, BattleSim.PopupHeight);

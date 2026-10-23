@@ -794,5 +794,7 @@
   "Battle apps": "バトルアプリ",
   "Five app icons help the cat; slimes may infect them with viruses.": "5つのアプリが猫を助けます。スライムがウイルスを感染させることも。",
   "No app icons or viruses. Records are kept apart.": "アプリもウイルスもなし。記録は別に保存。",
-  " · no apps": " · アプリなし"
+  " · no apps": " · アプリなし",
+  "⟳ A loading ring! The cat is slow inside it. Click the spinner to close it": "⟳ 読み込みリング！中の猫は遅くなる。スピナーをクリックで閉じよう",
+  "⟳ Loading…": "⟳ 読み込み中…"
 }

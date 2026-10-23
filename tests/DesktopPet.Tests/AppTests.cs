@@ -270,6 +270,39 @@ internal static class AppTests
         }
         finally { Directory.Delete(dir, true); }
 
+        // Malware (2026-10-24): the wave's virus thrown onto the field as a loading ring.
+        var ringRules = new AppsSpec { InfectMinThreat = 0, InfectChance = 1, InfectWeight = 0, LoadingWeight = 1, LoadingSeconds = 6, LoadingRadius = 60, LoadingSlow = 0.6 };
+        var ring = Out(ringRules, new[] { 1 });
+        Until(ring, () => ring.Hazards.Count > 0, 10);
+        var loading = ring.Hazards.FirstOrDefault();
+        check(loading is { Kind: HazardKind.Loading } && Math.Abs(loading.X - 800) < 1 && ring.Desktop.All(a => !a.Infected),
+            "With only malware weighted, the wave's virus becomes a loading ring where the cat stands (no icon infected)");
+        check(ring.LagFactor == 0.6, "Inside the ring the cat runs and swings at 60 % speed");
+        ring.Step(dt, 900, false);
+        check(ring.LagFactor == 1, "Out of the ring the cat is at full speed");
+        ring.Step(dt, 800, true, true);
+        double heldAge = loading!.Age;
+        Run(ring, 2, held: true, lifted: true);
+        check(loading.Age == heldAge && ring.LagFactor == 1, "While the cat is lifted the ring waits and does not slow it");
+        Run(ring, 6.5);
+        check(ring.Hazards.Count == 0, "The ring wears off after its time");
+        var closing = Out(ringRules, new[] { 1 });
+        Until(closing, () => closing.Hazards.Count > 0, 10);
+        int ringId = closing.Hazards[0].Id;
+        check(closing.CloseHazard(ringId) && closing.Hazards.Count == 0 && closing.Events.Any(e => e.Kind == BattleEventKind.HazardClosed) && !closing.CloseHazard(ringId),
+            "Clicking the spinner closes the ring at once (once)");
+        var mixed = new AppsSpec { InfectMinThreat = 0, InfectChance = 1, LoadingWeight = 1 };
+        int rings = 0, infections = 0;
+        for (int seed = 1; seed <= 24; seed++)
+        {
+            var roll = Out(mixed, new[] { 1 }, seed: seed);
+            Until(roll, () => roll.Hazards.Count > 0 || roll.Desktop.Any(a => a.Infected), 12);
+            if (roll.Hazards.Count > 0) rings++;
+            if (roll.Desktop.Any(a => a.Infected)) infections++;
+        }
+        check(rings > 3 && infections > 3, $"With both weighted, waves get a ring or an infection ({rings} rings, {infections} infections in 24 battles)");
+        check(BattleData.Settings.Apps!.LoadingWeight > 0 && BattleData.Settings.Apps.InfectWeight > 0, "The shipped data throws loading rings as well as viruses");
+
         // Turned off in the setup panel (2026-10-24): no icons, no viruses; records kept apart, progress still counts.
         var off = new BattleSim(BattleData.Settings, 0, 1600, stage: stage, seed: 2, apps: false);
         Run(off, 20);

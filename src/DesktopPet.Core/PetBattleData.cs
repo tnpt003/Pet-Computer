@@ -611,6 +611,9 @@ public static class BattleData
                 Within(value, 1, 120, "apps." + key);
             Within(apps.PopupSeconds, 2, 60, "apps.popupSeconds"); Within(apps.BellDamage, 0, 1000, "apps.bellDamage");
             Within(apps.FreezeSeconds, 0, 5, "apps.freezeSeconds"); Within(apps.MendShare, 0, 1, "apps.mendShare");
+            Within(apps.InfectWeight, 0, 100, "apps.infectWeight"); Within(apps.LoadingWeight, 0, 100, "apps.loadingWeight");
+            Within(apps.LoadingSeconds, 1, 30, "apps.loadingSeconds"); Within(apps.LoadingRadius, 20, 200, "apps.loadingRadius");
+            Within(apps.LoadingSlow, 0.2, 1, "apps.loadingSlow");
             if (!s.EnemyTypes.Any(e => e?.Id == apps.PopupSpawn)) throw new InvalidDataException($"apps.popupSpawn \"{apps.PopupSpawn}\" is not an enemy id");
             if (apps.List != null)
             {

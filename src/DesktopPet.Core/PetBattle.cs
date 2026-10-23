@@ -405,7 +405,7 @@ public sealed partial class BattleSim
                 // Momentum: a swing after a run is a charged one (the run starts again either way).
                 chargedSwing = MomentumReady;
                 runDistance = 0;
-                double cooldown = arms.AttackCooldown * CooldownFactor / (CheerRemaining > 0 ? Settings.CheerSpeed : 1);
+                double cooldown = arms.AttackCooldown * CooldownFactor / (CheerRemaining > 0 ? Settings.CheerSpeed : 1) / LagFactor;
                 CatCooldown = Math.Max(cooldown, arms.SwingDuration);
                 events.Add(new(BattleEventKind.Swing, catX));
             }

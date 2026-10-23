@@ -484,3 +484,7 @@ Tự động đã có: Phần thưởng trên sảnh (ô có hình, khóa, Mới
 - [ ] Tắt rồi vào trận Phiêu lưu: không icon app, không virus, không quảng cáo; thắng màn vẫn mở màn sau, nhận phần thưởng. Bảng kết quả ghi "Kỷ lục màn (trang bị này, không app)" và kỷ lục tách khỏi lúc có app.
 - [ ] Viễn chinh: chuẩn bị chuyến với app tắt → cả chuyến không có app (kể cả khi đổi lựa chọn ở bảng chuẩn bị khác giữa chuyến); bản đồ ghi "· không app" cạnh độ khó. Chuyến có app như cũ.
 - [ ] Vô tận tắt app: kỷ lục riêng ("· không app"), mốc phần thưởng vẫn mở khi qua đợt 10/20…; thẻ Sảnh "xa nhất" chỉ tính lượt có app.
+
+### App độc: vòng loading (2026-10-24)
+- [ ] Trận Phiêu lưu từ màn có virus (threat ≥ 1,5): thỉnh thoảng thay vì virus vào icon, một vòng loading xuất hiện ngay chỗ mèo (mảng xanh dưới sàn + vòng xoay chấm trên cao), banner lần đầu giải thích. Mèo trong vòng chạy/đánh chậm rõ; ra khỏi vòng thì bình thường.
+- [ ] Bấm vòng xoay: vòng đóng ngay (có tiếng "pop"). Để yên ~6 s: tự đóng. Cầm mèo lên: vòng đứng yên, không làm chậm. Pause/menu: đứng yên. Dọn xong đợt: vòng đóng. Vòng xoay không bị mèo che, bấm được.

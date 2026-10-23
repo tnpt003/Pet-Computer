@@ -128,6 +128,9 @@
     "popupEvery": 8, "popupSeconds": 8, "popupSpawn": "slime",
     "bellEvery": 9, "bellDamage": 6, "freezeEvery": 12, "freezeSeconds": 1.2,
     "mendEvery": 7, "mendShare": 0.15, "spitEvery": 10,
+    // The wave's virus: into an icon, or malware onto the field (by weight). Loading ring: the cat
+    // inside it is slowed for a few seconds; click its spinner to close it.
+    "infectWeight": 1, "loadingWeight": 1, "loadingSeconds": 6, "loadingRadius": 60, "loadingSlow": 0.5,
     "list": [
       { "id": "tabs", "nameVi": "Tab Lốc Xoáy", "nameEn": "Tab Tornado", "charge": 50, "start": 0.6,
         "descVi": "Ba thẻ tab bay xuống xoay quanh mèo 6 giây, chém slime ở gần.", "descEn": "Three tabs fly down and circle the cat for 6 s, cutting nearby slimes.",

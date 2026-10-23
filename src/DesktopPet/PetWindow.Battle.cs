@@ -384,6 +384,16 @@ public sealed partial class PetWindow
         return done;
     }
 
+    // Malware's spinner on the strip.
+    public bool BattleCloseHazard(int id)
+    {
+        if (battle == null || battle.Paused) return false;
+        bool done = battle.CloseHazard(id);
+        RequestBattleRedraw();
+        battleView?.InvalidateVisual();
+        return done;
+    }
+
     // The battle may not move or hurt the cat: pressed, dragged, in the air or climbing.
     private bool BattleHoldsOff => dragging || pressPending || !pet.Grounded ||
         pet.Action is PetAction.Dragging or PetAction.Climbing || PetActionRules.IsInFlight(pet.Action);
@@ -447,7 +457,7 @@ public sealed partial class PetWindow
         }
         TickBattleUpgrade();
         // Quick feet: this run's running speed.
-        pet.MoveScale = battle.Settings.CatRunScale * battle.MoveFactor;
+        pet.MoveScale = battle.Settings.CatRunScale * battle.MoveFactor * battle.LagFactor;
         pet.SwordSwing = battle.SwingProgress;
         pet.SwordCombo = battle.ComboSwing;
         pet.BattleHurt = battle.HurtFlash;
@@ -536,6 +546,7 @@ public sealed partial class PetWindow
         battleView = new BattleFieldView(battle) { Language = preferences.Language };
         battleView.SlimeClicked += (id, offset) => BattleClickSlime(id, offset);
         battleView.PopupClicked += id => BattleClosePopup(id);
+        battleView.HazardClicked += id => BattleCloseHazard(id);
         battleView.RightClicked += () => { battle?.Arm(null); RequestBattleRedraw(); UpdateBattleHud(); }; // Right-click on the field cancels the skill.
         battleFieldWindow = CreateOverlayWindow(battleView, "Pet battle");
         battleFieldWindow.DpiChanged += (_, _) => battlePlacedScale = 0; // Re-place in pixels next frame.
@@ -577,7 +588,7 @@ public sealed partial class PetWindow
         }
         // Paused, or nothing on the floor (wave breaks): the strip is drawn once and left alone.
         var b = battle;
-        bool moving = !b.Paused && (b.Slimes.Count > 0 || b.Effects.Count > 0 || b.Bombs.Count > 0 || b.Popups.Count > 0 || b.Launches.Count > 0 || b.TabsRemaining > 0);
+        bool moving = !b.Paused && (b.Slimes.Count > 0 || b.Effects.Count > 0 || b.Bombs.Count > 0 || b.Popups.Count > 0 || b.Hazards.Count > 0 || b.Launches.Count > 0 || b.TabsRemaining > 0);
         battleFrameClock += dt;
         bool due = battleFrameClock >= BattleFrameSeconds;
         if (due) battleFrameClock = Math.Min(battleFrameClock - BattleFrameSeconds, BattleFrameSeconds);

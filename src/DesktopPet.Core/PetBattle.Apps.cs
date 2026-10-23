@@ -17,8 +17,10 @@ public sealed partial class BattleSim
     private readonly List<DesktopApp> desktop = new();
     internal readonly List<BattlePopup> popups = new();
     internal readonly List<AppLaunch> launches = new();
+    internal readonly List<BattleHazard> hazards = new();
     public IReadOnlyList<DesktopApp> Desktop => desktop;
     public IReadOnlyList<BattlePopup> Popups => popups;
+    public IReadOnlyList<BattleHazard> Hazards => hazards;
     public IReadOnlyList<AppLaunch> Launches => launches;
     private int nextAppId = 1;
     // The apps this battle uses (null: none, or turned off in the setup panel).
@@ -44,6 +46,18 @@ public sealed partial class BattleSim
     private static readonly BattleAppKind[] IconKinds = { BattleAppKind.Tabs, BattleAppKind.Ping, BattleAppKind.EndTask, BattleAppKind.Undo, BattleAppKind.Trash };
 
     public DesktopApp? FindApp(int id) { foreach (var a in desktop) if (a.Id == id) return a; return null; }
+    public BattleHazard? FindHazard(int id) { foreach (var h in hazards) if (h.Id == id) return h; return null; }
+    // The cat's speed (running and swinging) against its usual: slower inside a loading ring (on the floor).
+    public double LagFactor
+    {
+        get
+        {
+            if (AppRules is not AppsSpec rules || CatLifted) return 1;
+            foreach (var h in hazards)
+                if (h.Kind == HazardKind.Loading && Math.Abs(lastCatX - h.X) <= rules.LoadingRadius) return rules.LoadingSlow;
+            return 1;
+        }
+    }
     public BattlePopup? FindPopup(int id) { foreach (var p in popups) if (p.Id == id) return p; return null; }
     // The floor X under an icon's column (the grid spans the floor's width).
     public double IconX(DesktopApp app) => Left + (app.Col + 0.5) * (Right - Left) / GridCols;
@@ -126,6 +140,13 @@ public sealed partial class BattleSim
             popups.RemoveAt(i);
             PopupRanOut(popup, rules);
         }
+        for (int i = hazards.Count - 1; i >= 0; i--)
+        {
+            hazards[i].Age += dt;
+            if (hazards[i].Age < hazards[i].Life) continue;
+            AddEffect(BattleEffectKind.Poof, hazards[i].X, 20);
+            hazards.RemoveAt(i);
+        }
         foreach (var app in desktop)
         {
             if (!app.Infected)
@@ -141,7 +162,7 @@ public sealed partial class BattleSim
         if (!double.IsNaN(infectTimer) && Phase == BattlePhase.Fighting)
         {
             infectTimer -= dt;
-            if (infectTimer <= 0) { infectTimer = double.NaN; ShootGoo(rules); }
+            if (infectTimer <= 0) { infectTimer = double.NaN; VirusTurn(rules); }
         }
     }
 
@@ -191,13 +212,15 @@ public sealed partial class BattleSim
         Move(app, c, r, true);
     }
 
-    // A cleared wave: open ads close by themselves (their slimes are gone with the wave).
+    // A cleared wave: open ads and malware close by themselves (their slimes are gone with the wave).
     private void AppsWaveCleared()
     {
         if (AppRules == null) return;
         infectTimer = double.NaN;
         foreach (var popup in popups) AddEffect(BattleEffectKind.Poof, popup.X, 40);
         popups.Clear();
+        foreach (var hazard in hazards) AddEffect(BattleEffectKind.Poof, hazard.X, 20);
+        hazards.Clear();
     }
 
     // A defeated enemy: every clean icon charges a little; an icon it infected is clean again and a
@@ -219,6 +242,35 @@ public sealed partial class BattleSim
         app.ScrubsLeft = 0;
         app.CleanedAt = Time;
         events.Add(new(BattleEventKind.AppCleaned, IconX(app), app.Id));
+    }
+
+    // The wave's virus: into an icon, or malware onto the field, by the weights (no draw when only
+    // one of them can happen).
+    private void VirusTurn(AppsSpec rules)
+    {
+        double total = rules.InfectWeight + rules.LoadingWeight;
+        if (rules.LoadingWeight > 0 && (rules.InfectWeight <= 0 || appRandom.NextDouble() * total >= rules.InfectWeight)) ThrowLoading(rules);
+        else if (rules.InfectWeight > 0) ShootGoo(rules);
+    }
+
+    // A slime throws a loading ring where the cat stands (one at a time).
+    private void ThrowLoading(AppsSpec rules)
+    {
+        if (hazards.Any(h => h.Kind == HazardKind.Loading) || !slimes.Any(s => s.Targetable)) return;
+        double x = Math.Clamp(lastCatX, Left + rules.LoadingRadius, Math.Max(Left + rules.LoadingRadius, Right - rules.LoadingRadius));
+        var hazard = new BattleHazard { Id = nextAppId++, Kind = HazardKind.Loading, X = x, Life = rules.LoadingSeconds };
+        hazards.Add(hazard);
+        events.Add(new(BattleEventKind.HazardOpened, x, hazard.Id));
+    }
+
+    // A click on malware's spinner: it closes (whatever the cat is doing).
+    public bool CloseHazard(int id)
+    {
+        if (FindHazard(id) is not BattleHazard hazard || Over || Paused || ChoosingUpgrade) return false;
+        hazards.Remove(hazard);
+        AddEffect(BattleEffectKind.Poof, hazard.X, 20);
+        events.Add(new(BattleEventKind.HazardClosed, hazard.X, hazard.Id));
+        return true;
     }
 
     // A slime spits its virus at a clean icon (while fewer than MaxInfected are taken).
@@ -489,6 +541,7 @@ public sealed partial class BattleSim
     {
         launches.Clear();
         popups.Clear();
+        hazards.Clear();
         TabsRemaining = 0;
         infectTimer = double.NaN;
         hurts.Clear();

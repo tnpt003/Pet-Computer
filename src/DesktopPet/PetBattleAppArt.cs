@@ -307,6 +307,30 @@ public static class AppArt
     }
     private static readonly Brush AdTrack = Frozen(255, 0xF3, 0xC3, 0x4E);
 
+    // Malware's loading ring: a pale patch on the floor (radius either side of x) and, up where the
+    // cat does not cover it, a spinner of eight dots on a white disc with a thin bar of the time left.
+    // grow: 0..1 as it opens; left: share of its time left.
+    public static void DrawLoading(DrawingContext dc, double x, double floor, double radius, Point spinner, double grow, double left, double time)
+    {
+        dc.PushTransform(new ScaleTransform(grow, grow, x, floor));
+        dc.DrawEllipse(LoadingFloor, LoadingRim, new Point(x, floor - 3), radius, 8);
+        dc.Pop();
+        dc.PushTransform(new ScaleTransform(grow, grow, spinner.X, spinner.Y));
+        dc.DrawEllipse(Brushes.White, InkPen, spinner, 15, 15);
+        int lit = (int)(time * 10) % 8;
+        for (int i = 0; i < 8; i++)
+        {
+            double a = i * Math.PI / 4, shade = ((lit - i + 8) % 8) / 8.0;
+            dc.DrawEllipse(LoadingDot, null, new Point(spinner.X + Math.Cos(a) * 9, spinner.Y + Math.Sin(a) * 9), 2.6 - shade * 1.4, 2.6 - shade * 1.4);
+        }
+        var track = new Rect(spinner.X - 16, spinner.Y + 19, 32, 4);
+        dc.DrawRoundedRectangle(LoadingTrack, null, track, 2, 2);
+        dc.DrawRoundedRectangle(LoadingDot, null, new Rect(track.X, track.Y, track.Width * Math.Clamp(left, 0, 1), track.Height), 2, 2);
+        dc.Pop();
+    }
+    private static readonly Brush LoadingFloor = Frozen(70, 0x5C, 0x9C, 0xF0), LoadingDot = Frozen(255, 0x3D, 0x7B, 0xD9), LoadingTrack = Frozen(160, 255, 255, 255);
+    private static readonly Pen LoadingRim = FrozenPen(Frozen(200, 0x3D, 0x7B, 0xD9), 1.6, new DashStyle(new[] { 3.0, 2.5 }, 0));
+
     // A four-point twinkle (r: its size).
     public static void DrawTwinkle(DrawingContext dc, Point c, double r, Brush fill)
     {

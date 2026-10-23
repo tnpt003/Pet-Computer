@@ -40,6 +40,7 @@ public sealed partial class BattleFieldView : FrameworkElement
             var point = e.GetPosition(this);
             // An ad's × first; the rest of an ad hides the slimes behind it.
             if (PopupCloseAt(point) is int popup) PopupClicked?.Invoke(popup);
+            else if (HazardAt(point) is int hazard) HazardClicked?.Invoke(hazard);
             else if (!OnPopup(point) && SlimeAt(point) is int id && sim.Find(id) is { } slime) SlimeClicked?.Invoke(id, point.X - (slime.X - OriginX));
             e.Handled = true;
         };
@@ -156,6 +157,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         for (int i = 0; i < sim.Effects.Count; i++) DrawEffect(dc, sim.Effects[i], sim.Effects[i].X - OriginX, floor - sim.Effects[i].Height, floor);
         if (sim.Incoming) DrawIncoming(dc, sim.IncomingX - OriginX, floor, time);
         DrawPopups(dc, floor, time);
+        DrawHazards(dc, floor, time);
     }
 
     // A spawn from behind is coming at this edge: a pulsing red arrow pointing into the field and a "!".

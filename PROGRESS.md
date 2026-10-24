@@ -12,7 +12,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 ## Sửa: vòng loading khi hướng dẫn; sổ lỗi 2026-10-24 (người dùng "sửa luôn", "nhớ lưu lại các lỗi")
 - Bước loading chiếu sáng vòng xoay + vùng làm chậm dưới sàn (`BattleFieldView.LoadingZoneBounds`) + con mèo; vẫn chờ vòng hiện xong (≥ 0,35 s, từ ec27b0a). Người dùng thấy lỗi ở bản trước ec27b0a (log 22:52).
 - Issue_fixxed.md: thêm #14–#22 (lỗi/góp ý người dùng trong phiên này) và 4 dòng phần B. Memory: từ nay mỗi lỗi người dùng báo ghi vào Issue_fixxed.md.
-- Test thật: WPF 847/847 (mới: bước loading bắt đầu khi vòng 0,35 s, 3 chỗ sáng, vùng sàn ≥ 2 × bán kính). C#/Python không đổi code nên không chạy lại (lần đầy đủ trước: C# 1533, Python OK).
+- Test thật: WPF 847/847 (mới: bước loading bắt đầu khi vòng 0,35 s, 3 chỗ sáng, vùng sàn ≥ 2 × bán kính). C#/Python không đổi code nên không chạy lại (lần đầy đủ trước: C# 1533, Python OK). Commit 5cf8980; publish 1.4.3+5cf8980 (sạch), check-publish 3/3, mèo mở lại. ZIP artifacts\DesktopPet-1.4.3-5cf8980-win-x64.zip.
 
 ## Sửa: không chọn được thẻ sau vòng loading; virus.exe sáng khi chưa hiện hết 2026-10-24 (người dùng "ok làm đi")
 - Thẻ: dải chiến trường `CaptureMouse` khi giữ vòng xoay; vòng tự tắt lúc đang giữ (2 s) thì `EndHold` thấy HoldingHazardId 0 và bỏ qua, không trả chuột → mọi click (cả bảng thẻ) vào dải chiến trường tới khi đổi cửa sổ (log 22:46–22:47 màn Cầm cự). Sửa PetBattleView: `EndHold` luôn `ReleaseMouseCapture`; `DropStaleHold()` mỗi khung (gọi trong TickBattle) trả chuột khi không còn vòng nào được giữ. Lỗi có từ 6b (giữ 2 s), lộ ra vì hướng dẫn màn 3 dạy giữ vòng ngay trước mốc chọn thẻ 20 s.

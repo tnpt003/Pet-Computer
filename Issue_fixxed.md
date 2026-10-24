@@ -8,7 +8,7 @@ Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm 
 
 ---
 
-## #22 — Vòng loading khi hướng dẫn trông như chưa hiện hết (2026-10-24, commit kế tiếp sau ec27b0a)
+## #22 — Vòng loading khi hướng dẫn trông như chưa hiện hết (2026-10-24, commit 5cf8980)
 - **Triệu chứng:** ở bước hướng dẫn vòng loading (màn 3), vòng trông chưa hiện đủ.
 - **Nguyên nhân:** (1) trước ec27b0a trận đứng hình đúng lúc vòng còn đang lớn dần (0,3 s); (2) chỗ sáng chỉ ôm vòng xoay phía trên, còn vùng làm chậm dưới sàn (hình bầu dục quanh chân mèo) và con mèo nằm trong vùng tối.
 - **Sửa:** bước chờ vòng hiện xong (≥ 0,35 s); chiếu sáng cả vòng xoay, vùng dưới sàn (`BattleFieldView.LoadingZoneBounds`) và con mèo.

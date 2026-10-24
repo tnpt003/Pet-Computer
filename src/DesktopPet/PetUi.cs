@@ -62,7 +62,16 @@ public static class PetUi
         HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center
     };
 
-    public static MenuItem MenuItem(string glyph, Brush? color = null) => new() { Icon = Icon(glyph, color) };
+    // Semantic inks work on light surfaces; bright variants remain artwork only.
+    public static readonly Brush Care = Hex("#327354"), Mystery = Hex("#7953A1"), Danger = Hex("#B94444"), Reward = Hex("#976412");
+    public static Brush IconColor(string glyph) => glyph == Status || glyph == Emotions ? Care
+        : glyph == Diary ? Mystery : glyph == Battle || glyph == Treat ? Reward
+        : glyph == Exit ? Danger : Accent;
+    public static MenuItem MenuItem(string glyph, Brush? color = null) => new()
+    {
+        Icon = new Border { Width = 24, Height = 24, CornerRadius = new CornerRadius(7), Background = AccentSoft,
+            IsHitTestVisible = false, Child = Icon(glyph, color ?? IconColor(glyph)) }
+    };
 
     // Small grey explanation under a setting.
     public static TextBlock Hint(string text) => new()

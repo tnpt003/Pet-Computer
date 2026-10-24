@@ -34,6 +34,7 @@ public static class PetWelcome
         row.Children.Add(label); row.Children.Add(choose);
         var check = new CheckBox { IsChecked = true, Margin = new Thickness(0, 10, 0, 0) };
         var extra = new StackPanel();
+        extra.Children.Add(new PetIllustration(PetMotif.Cat, 64) { HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0,0,0,10) });
         extra.Children.Add(row); extra.Children.Add(check);
         var window = PetDialog.Create(null, "Desktop Pet", "", "", extra: extra);
         var message = (TextBlock)((Panel)extra.Parent).Children[0];

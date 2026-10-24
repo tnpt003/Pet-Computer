@@ -365,8 +365,10 @@ public static class PetControlStyle
         <ControlTemplate TargetType="TabItem">
           <Border x:Name="Row" CornerRadius="8" Padding="10,8,10,8" Margin="0,2,0,2" Background="Transparent">
             <StackPanel Orientation="Horizontal">
+              <Border Background="{StaticResource PetAccentSoft}" CornerRadius="6" Padding="4" IsHitTestVisible="False">
               <TextBlock x:Name="Glyph" Width="18" FontSize="14" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" VerticalAlignment="Center"
-                         Foreground="{StaticResource PetMuted}" Text="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}"/>
+                         Foreground="{StaticResource PetAccent}" Text="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}"/>
+              </Border>
               <ContentPresenter x:Name="Label" ContentSource="Header" Margin="8,0,0,0" VerticalAlignment="Center" RecognizesAccessKey="True"/>
             </StackPanel>
           </Border>

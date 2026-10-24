@@ -85,7 +85,10 @@ public sealed partial class PetWindow
         scroll.Resources.MergedDictionaries.Add(PetControlStyle.Resources);
         var body = new DockPanel();
         DockPanel.SetDock(actions, Dock.Bottom);
-        body.Children.Add(actions); body.Children.Add(scroll);
+        body.Children.Add(actions);
+        var crest = new Border { Height = 3, CornerRadius = new CornerRadius(1.5), Margin = new Thickness(0,0,0,8),
+            Background = PetUi.Game.Gold, Opacity = 0.65, IsHitTestVisible = false };
+        DockPanel.SetDock(crest, Dock.Top); body.Children.Add(crest); body.Children.Add(scroll);
         var panel = new Border
         {
             Background = HudBack, BorderBrush = PetUi.Game.Rim, BorderThickness = new Thickness(1.5), CornerRadius = new CornerRadius(12),

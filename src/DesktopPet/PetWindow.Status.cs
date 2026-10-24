@@ -39,7 +39,7 @@ public sealed partial class PetWindow
         close.Click += (_, _) => CloseStatusCard();
         var head = new DockPanel { Margin = new Thickness(0, 0, 0, 4) };
         DockPanel.SetDock(close, Dock.Right);
-        head.Children.Add(close); head.Children.Add(statusTitle);
+        head.Children.Add(close); head.Children.Add(PetIllustration.Beside(statusTitle, PetMotif.Cat, 36));
         statusDoing = new TextBlock { Foreground = PetUi.Ink, TextWrapping = TextWrapping.Wrap };
         statusFeeling = new TextBlock { Foreground = PetUi.Ink, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 2, 0, 0) };
         statusLast = new TextBlock { Foreground = PetUi.Ink, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 2, 0, 0) };
@@ -50,11 +50,14 @@ public sealed partial class PetWindow
         {
             var label = new TextBlock { Foreground = PetUi.Ink, FontSize = PetUi.SmallSize };
             var value = new TextBlock { Foreground = PetUi.Muted, FontSize = PetUi.SmallSize, HorizontalAlignment = HorizontalAlignment.Right };
-            var fill = new Border { Background = PetUi.AccentBright, CornerRadius = new CornerRadius(4), HorizontalAlignment = HorizontalAlignment.Left, Width = 0 };
+            var fill = new Border { Background = i is 0 or 1 ? PetUi.Care : i == 2 ? PetUi.Reward : PetUi.Mystery, CornerRadius = new CornerRadius(4), HorizontalAlignment = HorizontalAlignment.Left, Width = 0 };
             var track = new Border { Background = PetUi.AccentSoft, CornerRadius = new CornerRadius(4), Height = 8, Margin = new Thickness(0, 3, 0, 0), Child = fill };
             var row = new Grid { Margin = new Thickness(0, i == 0 ? 12 : 8, 0, 0) };
             row.RowDefinitions.Add(new RowDefinition()); row.RowDefinitions.Add(new RowDefinition());
             Grid.SetRow(track, 1);
+            label.Margin = new Thickness(23, 0, 32, 0);
+            row.Children.Add(new PetIllustration(i == 0 ? PetMotif.Spark : i == 1 ? PetMotif.Leaf : i == 2 ? PetMotif.Cat : PetMotif.Heart, 18)
+                { HorizontalAlignment = HorizontalAlignment.Left });
             row.Children.Add(label); row.Children.Add(value); row.Children.Add(track);
             panel.Children.Add(row);
             statusBars[i] = new StatusBar(row, label, value, fill);

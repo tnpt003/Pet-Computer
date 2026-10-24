@@ -44,6 +44,7 @@ public sealed partial class PetWindow
     {
         if (diaryPanel == null) return;
         diaryPanel.Children.Clear();
+        diaryPanel.Children.Add(new PetIllustration(PetMotif.Book, 56) { HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0,0,0,8) });
         AddHeading(LF($"Nhật ký của {preferences.Name}", $"{preferences.Name}'s diary"), 18);
         if (aiDiary is not { } diary)
         {
@@ -101,7 +102,7 @@ public sealed partial class PetWindow
     private StackPanel AddCard(string title)
     {
         var content = new StackPanel();
-        content.Children.Add(PetUi.SectionTitle(title));
+        content.Children.Add(PetIllustration.Beside(PetUi.SectionTitle(title), PetMotif.Book, 24));
         diaryPanel!.Children.Add(PetUi.Card(content));
         return content;
     }
@@ -113,6 +114,7 @@ public sealed partial class PetWindow
         foreach (var (value, label) in stats)
         {
             var tile = new StackPanel();
+            tile.Children.Add(new PetIllustration(row.Children.Count == 0 ? PetMotif.Heart : row.Children.Count == 1 ? PetMotif.Leaf : row.Children.Count == 2 ? PetMotif.Cat : PetMotif.Heart, 30) { HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0,0,0,6) });
             tile.Children.Add(new TextBlock { Text = value.ToString("N0", System.Globalization.CultureInfo.InvariantCulture), FontSize = PetUi.DisplaySize, FontWeight = FontWeights.SemiBold, Foreground = PetUi.Accent });
             tile.Children.Add(new TextBlock { Text = label, FontSize = PetUi.SmallSize, Foreground = PetUi.Muted, TextWrapping = TextWrapping.Wrap });
             row.Children.Add(PetUi.Card(tile, new Thickness(4, 0, 4, 0)));

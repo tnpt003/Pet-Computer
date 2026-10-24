@@ -20,7 +20,7 @@ public static class PetDialog
     {
         var icon = new Grid { Width = 40, Height = 40, VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(0, 0, 14, 0) };
         icon.Children.Add(new Ellipse { Fill = PetUi.AccentSoft });
-        var mark = PetUi.Icon(glyph, PetUi.Accent);
+        var mark = PetUi.Icon(glyph, glyph == WarningGlyph ? PetUi.Danger : glyph == QuestionGlyph ? PetUi.Mystery : PetUi.Care);
         mark.FontSize = PetUi.HeadingSize + 2;
         icon.Children.Add(mark);
         var text = new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap, Foreground = PetUi.Ink, VerticalAlignment = VerticalAlignment.Center, LineHeight = 19 };

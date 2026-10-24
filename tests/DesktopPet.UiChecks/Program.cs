@@ -33,6 +33,7 @@ internal static class Program
         {
             try
             {
+                VisualPolishChecks.Run(Check);
                 await Run(window);
                 window.Close();
                 if (failures.Count > 0)

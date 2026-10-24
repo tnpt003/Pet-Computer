@@ -144,7 +144,9 @@ public sealed partial class PetWindow
             Hammer = result.WeaponStyle == "hammer", BattleCheer = result.Won, BattleDazed = !result.Won };
         var portrait = new PetRenderer(model) { Coat = renderer.Coat, Accessory = renderer.Accessory, Width = 192, Height = 192 };
         var picture = new Border { Width = 96, Height = 96, Margin = new Thickness(0, 0, 12, 0), CornerRadius = new CornerRadius(48), Background = PrepStage,
-            VerticalAlignment = VerticalAlignment.Top, Child = CatPicture(portrait) };
+            VerticalAlignment = VerticalAlignment.Top, Child = new Grid { Children = { CatPicture(portrait),
+                new PetIllustration(result.Won ? PetMotif.Trophy : PetMotif.Heart, 28, result.Won ? PetUi.Game.Gold : PetUi.AccentBright)
+                    { HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Bottom } } } };
         var panel = new Border
         {
             Background = HudBack, BorderBrush = PetUi.Game.Rim, BorderThickness = new Thickness(1.5), CornerRadius = new CornerRadius(12),

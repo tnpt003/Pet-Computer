@@ -531,3 +531,11 @@ Tự động đã có: Phần thưởng trên sảnh (ô có hình, khóa, Mới
 - [ ] "Bỏ qua hướng dẫn": tắt cho hết trận. Pause/menu/túi đồ/fullscreen trong lúc đứng hình: hướng dẫn ẩn, Tiếp tục thì hiện lại. Lớp tối không chặn chuột (click xuyên tới mèo/HUD/icon); dòng chữ không lấy focus. Màn hình phụ/DPI khác: lớp tối phủ đúng màn hình trận, chỗ sáng đúng vị trí.
 - [ ] Combo (đòn thứ 3, chữ "COMBO!"): chỉ slime sát sau mục tiêu (trong tầm kiếm/búa) có tia lửa và mất máu; slime đứng xa không bị lan.
 - [ ] Túi đồ → tab Thẻ (Vô tận có nhiều thẻ; Phiêu lưu/Viễn chinh): cộng hưởng là các ô có icon; ô đã bật lóe sáng một lần khi mở tab; rê chuột lên ô thì dòng dưới hiện mô tả; không chữ nào tràn ra ngoài túi đồ (thử cả tiếng Anh/Nhật).
+
+## Visual Polish 2026-10-25 — cần kiểm tra tay
+
+- [ ] Mở trạng thái khi AI bật/tắt: chân dung/icon và thanh nhu cầu không đè nhãn/số, không đánh thức hoặc di chuyển mèo.
+- [ ] Nhật ký ít/nhiều dữ liệu, menu/cài đặt/welcome bằng vi/en/ja: không tràn chữ; Tab/focus/click và nút đóng vẫn hoạt động.
+- [ ] Sảnh, bản đồ, prep, thẻ, túi đồ, reward, kết quả: hình cũ và huy hiệu mới rõ; popup nhỏ vẫn scroll và thao tác được.
+- [ ] Desktop sáng/tối/nhiều màu, DPI 100/125/150/200%, chuyển màn hình: không clipping, không che cảnh báo; hình trang trí không giữ chuột.
+- [ ] Pet Mode, pause/fullscreen, sleep/wake/drag/throw và trận hoạt động như trước; không có animation trang trí chạy liên tục khi nghỉ.

@@ -4,6 +4,14 @@ Cập nhật: 2026-10-24 (Asia/Saigon). Lịch sử trước 21/10: docs/archive
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
+## Visual Polish — Cozy Desktop Adventure (2026-10-25)
+- Người dùng duyệt triển khai. Thêm PetIllustration: 6 hình vector tĩnh (mèo/sổ/tim/lá/sao/cúp), màu theo vai trò, không nhận input/focus và không thêm timer. PetUi có ink Care/Mystery/Danger/Reward; menu có icon màu trên nền kem.
+- Trạng thái: chân dung mèo + icon từng nhu cầu và màu thanh riêng. Nhật ký: minh họa sổ, icon thống kê và section. Welcome thêm mèo; dialog info/question/warning phân màu. Settings sidebar có nền icon. Khung game chung có đường nhấn vàng; sảnh phân màu progress theo mode; kết quả có cúp/tim cạnh chân dung.
+- Giữ art đã có: ModeArt/WeaponIcon/UpgradeIcon/SynergyIcon/BagIcon/KeepsakeArt/AppArt cho bản đồ, prep, thẻ, túi đồ, reward và app trong trận; không vẽ lại hoặc thêm trang trí che cảnh báo HUD. Không đổi gameplay/Python/save/input.
+- Build Release đạt (5 warning hiện có). Test đầy đủ: 58 Python + 5 i18n, 1535 C#, 866 WPF đạt. Thêm test tương phản 4 ink trên Surface và 12 check hình không nhận input trên hai nền. Sau chỉnh màu artwork chạy lại WPF (kết quả ghi ở dòng publish sau).
+- Đã xem ảnh render icons trên nền sáng/tối, status, menu, welcome, diary, settings tiếng Việt, battle hub/result. Ảnh content một số bảng không chứa background Window nên phần trong suốt hiển thị đen trong viewer; không coi đó là màu nền thực của ứng dụng. Chưa kiểm tra trực tiếp nhiều màn hình/DPI hoặc toàn bộ trạng thái hover bằng tay.
+- Giữ AGENTS.md thay đổi có sẵn ngoài commit. Kiểm tra/publish sau commit theo quy tắc project.
+
 ## Túi đồ: cộng hưởng thành huy hiệu có icon, hết tràn chữ 2026-10-25 (người dùng gửi ảnh, duyệt kế hoạch có icon "ok làm đi")
 - Nguyên nhân tràn: mỗi nhóm là StackPanel ngang (tên, chấm, chuỗi "★ … · còn N thẻ → ★ …") nên chữ không xuống dòng; ở Vô tận 3 mốc/nhóm thì dài quá khung.
 - Sửa `FillBagCards` (PetWindow.Inventory.cs): đầu nhóm (tên + điểm, thanh `SynergyBar` chia đoạn theo mốc, viền vàng khi đủ đoạn, "n/max" hoặc TỐI ĐA); mỗi mốc là `SynergyMedal` trong cột Grid bằng nhau: icon 44 (`SynergyIcon` mới ở PetWindow.BattleUpgrade.cs: Giáp gai, Phá giáp, Dư ảnh, Dư ảnh+, Bất khuất, Pháo đài, Chấn động, Hành quyết, Gió lốc; id lạ dùng theo effect rồi ngôi sao), vòng tiến độ (vàng đủ khi bật, màu nhóm khi là mốc kế tiếp), ★ khi bật, ổ khóa + mờ khi mốc xa; tên tối đa 2 dòng rồi "…", trạng thái Đã bật / còn N thẻ / mốc N; rê chuột hiện mô tả ở dòng dưới khối. Mỗi nhóm chỉ 1 cộng hưởng (Phiêu lưu/Viễn chinh/trận tự do) thì 3 nhóm xếp cạnh nhau. Huy hiệu đã bật lóe một vệt sáng một lần khi mở tab hoặc khi có cộng hưởng mới (`bagShineKey`, không lặp).

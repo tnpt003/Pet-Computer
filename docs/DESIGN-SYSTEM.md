@@ -106,3 +106,9 @@ Vùng tương lai có thể là Khu vườn cửa sổ, Kho lưu trữ thất l�
 - Kiểm kê UI thực tế: sảnh, prep, thẻ, kết quả, settings, menu, HUD, app giả và kỷ vật; đánh dấu đã dùng token hoặc còn hardcode, chụp ảnh nền sáng/tối.
 - Gom semantic colors sau khi kiểm tra tương phản; không đổi các màu báo trạng thái đồng loạt thiếu đối chiếu.
 - Chuẩn hóa lần lượt từng thành phần đang được sửa, giữ layout/input và sự dễ đọc. Chưa có cuộc rà trực quan toàn app trong mốc tài liệu này.
+
+## Áp dụng Visual Polish — 2026-10-25
+
+Đã triển khai PetIllustration (Cat/Book/Heart/Leaf/Spark/Trophy) dùng lại ở trạng thái, nhật ký, welcome và kết quả; hình tĩnh, không nhận input. PetUi.Care #327354, Mystery #7953A1, Danger #B94444, Reward #976412 là semantic ink trên nền kem (đã test tỷ lệ 4.5:1); không tự dùng các ink tối này cho chữ trên nền game tối. Artwork dùng hồng #F3A1A0, lá #9BD2AE, sổ #C5ADE5 và Game.Gold, có viền Ink. Menu/sidebar có nền icon, frame game chung có nhấn vàng.
+
+Các vùng đã có art riêng (ModeArt, WeaponIcon, UpgradeIcon, SynergyIcon, BagIcon, KeepsakeArt, AppArt) tiếp tục dùng art đó. HUD giữ độ rõ của cảnh báo; không thêm hình trang trí vào từng dòng. Kiểm chứng ảnh render khác với nghiệm thu desktop/DPI thật; xem PROGRESS và MANUAL-TEST.

@@ -148,7 +148,7 @@ public sealed partial class PetWindow
             var name = PanelLine(PetUi.TitleSize, true, 148);
             var desc = PanelLine(PetUi.SmallSize, maxWidth: 148); desc.Foreground = PetUi.Game.Soft; desc.Margin = new Thickness(0, 3, 0, 0);
             var state = PanelLine(PetUi.CaptionSize, true, 148); state.Margin = new Thickness(0, 8, 0, 0);
-            var fill = new Border { Background = PrepBarFill, CornerRadius = new CornerRadius(2.5), HorizontalAlignment = HorizontalAlignment.Left, Width = 0 };
+            var fill = new Border { Background = mode == HubAdventure ? PetUi.Game.Gold : mode == HubExpedition ? PetUi.AccentBright : PetUi.Hex("#BCA3E1"), CornerRadius = new CornerRadius(2.5), HorizontalAlignment = HorizontalAlignment.Left, Width = 0 };
             var bar = new Border { Height = 5, Background = PrepBarBack, CornerRadius = new CornerRadius(2.5), Margin = new Thickness(0, 4, 0, 0), Child = fill };
             var card = new Border
             {

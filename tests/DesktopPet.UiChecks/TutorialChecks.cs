@@ -133,12 +133,17 @@ internal static class TutorialChecks
         double scale = Field<double>(window, "battleScale");
         Point OnScreen(UIElement element, Point at) { var p = element.PointToScreen(at); return new Point(p.X / scale, p.Y / scale); }
         var spots = window.BattleGuideSpots;
-        var catCentre = OnScreen(window, new Point(PetSettings.CenterX, 0));
+        // The cat's frame sits PickupAnimation.Padding in from its window's corner; pet.X/Y is the frame's corner.
+        double pad = PickupAnimation.Padding;
+        var catCentre = OnScreen(window, new Point(pad + PetSettings.CenterX, 0));
+        var frameCorner = OnScreen(window, new Point(pad, pad));
         var fieldView = Field<BattleFieldView>(window, "battleView");
         var hitter = Sim().Slimes.First(s => s.State == SlimeState.Windup);
         var slimeCentre = OnScreen(fieldView, new Point(hitter.X - fieldView.OriginX, 0));
-        bool catLit = spots.Count == 2 && Math.Abs(spots[0].X + spots[0].Width / 2 - catCentre.X) < 1 && spots[0].Top <= OnScreen(window, new Point(0, PetSettings.HeadTop)).Y
-            && spots[0].Bottom >= OnScreen(window, new Point(0, 104)).Y;
+        bool catLit = spots.Count == 2 && Math.Abs(spots[0].X + spots[0].Width / 2 - catCentre.X) < 1 && spots[0].Top <= OnScreen(window, new Point(0, pad + PetSettings.HeadTop)).Y
+            && spots[0].Bottom >= OnScreen(window, new Point(0, pad + 104)).Y
+            // And where the pet's own position says the cat is (no window padding in between).
+            && Math.Abs(spots[0].X + spots[0].Width / 2 - (pet.X + PetSettings.CenterX)) < 1.5 && Math.Abs(frameCorner.X - pet.X) < 1.5;
         bool slimeLit = spots.Count == 2 && Math.Abs(spots[1].X + spots[1].Width / 2 - slimeCentre.X) < 1 && spots[1].Height >= hitter.Height * 1.28;
         check(catLit && slimeLit, $"The lit spots are centred on the cat's body and on the slime, the slime's at its tallest ({string.Join(" ", spots.Select(r => $"{r.X:0.#},{r.Y:0.#} {r.Width:0.#}×{r.Height:0.#}"))}; cat x {catCentre.X:0.#}, slime x {slimeCentre.X:0.#})");
         double frozenAt = Sim().Time;

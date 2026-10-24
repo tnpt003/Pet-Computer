@@ -4,6 +4,9 @@ Cập nhật: 2026-10-24 (Asia/Saigon). Lịch sử trước 21/10: docs/archive
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
+## Hướng dẫn: chỗ sáng của mèo lệch 40 DIP 2026-10-24 (người dùng gửi ảnh sau bản 8dab2d4)
+- Nguyên nhân: cửa sổ mèo có lề `PickupAnimation.Padding` 40 DIP quanh khung 112×112 (Present đặt cửa sổ tại pet.X − 40), `CatSpot` đo từ góc cửa sổ nên lệch lên trái 40; test cũ đo cùng gốc sai nên vẫn PASS. Sửa: cộng Padding; test giờ so thêm với `pet.X + CenterX` (độc lập). WPF 843/843 (tâm chỗ sáng mèo 960 = pet.X + 56).
+
 ## Hướng dẫn: chỗ sáng căn đúng tâm 2026-10-24 (người dùng gửi ảnh thanh kỹ năng lệch, "ok làm đi")
 - Nguyên nhân: chỗ sáng HUD/bảng thẻ tính theo khung trong cửa sổ (HUD có Margin 8) + battleHudAt; thanh kỹ năng ôm cả lề StackPanel; mèo lấy cả khung 112×112; slime không tính phồng khi gồng; quảng cáo/vòng xoay/tường dùng số ước lượng.
 - Sửa (PetWindow.BattleGuide.cs): `ScreenSpot` đo bằng `PointToScreen` của chính phần tử rồi chia `battleScale` (đúng với lề, HUD bị kéo, cửa sổ mèo, DPI), đệm đều `GuidePad` 6; `SkillBarSpot` = hợp 5 ô; bảng thẻ = panel (không tính lề bóng), dòng nhóm thẻ đo trực tiếp; mèo = vùng đầu→chân căn theo `CenterX`; sân trận lấy đúng hình vẽ từ BattleFieldView (`SlimeBounds` cao ×1.3 + nhãn tinh anh, `PopupBounds`, `SpinnerBounds`, `WallBounds`, `SlamBounds`); icon app/virus.exe theo `TileSize`. `BattleGuideSpots` cho test.

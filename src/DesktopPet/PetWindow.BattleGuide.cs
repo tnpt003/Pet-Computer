@@ -221,8 +221,9 @@ public sealed partial class PetWindow
     }
     private Rect? Whole(FrameworkElement? element, double pad = GuidePad) => element == null ? null : ScreenSpot(element, new Rect(element.RenderSize), pad);
     private Rect? FieldSpot(Rect? local, double pad = GuidePad) => local is Rect r ? ScreenSpot(battleView, r, pad) : null;
-    // The drawn cat (head to paws, centred on its body), not its whole 112×112 window.
-    private Rect? CatSpot() => ScreenSpot(this, new Rect(PetSettings.CenterX - 42, PetSettings.HeadTop - 4, 84, 112 - PetSettings.HeadTop));
+    // The drawn cat (head to paws, centred on its body), not its whole window: the 112×112 frame sits
+    // PickupAnimation.Padding in from the window's corner (room for the pickup's swing).
+    private Rect? CatSpot() => ScreenSpot(this, new Rect(PickupAnimation.Padding + PetSettings.CenterX - 42, PickupAnimation.Padding + PetSettings.HeadTop - 4, 84, 112 - PetSettings.HeadTop));
     private Rect? SlimeSpot(Slime s) => battleView == null ? null : FieldSpot(battleView.SlimeBounds(s));
     private Rect? SlamSpot(Slime king) => battleView == null ? null : FieldSpot(battleView.SlamBounds(king), 2);
     private Rect? PopupSpot(BattlePopup ad) => FieldSpot(battleView?.PopupBounds(ad.Id), 4);

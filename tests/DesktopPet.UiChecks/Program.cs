@@ -18,7 +18,7 @@ internal static class Program
         Environment.SetEnvironmentVariable("PET_AI_DISABLED", "1");
         var app = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
         // The Adventure Guide is off here (BattleGuideEnabled follows persisted preferences); TutorialChecks turns it on.
-        var window = new PetWindow(new PetPreferences());
+        var window = new PetWindow(new PetPreferences { Sounds = false }); // Unattended runs stay silent.
         // Unattended runs must not depend on the real foreground window or on how long
         // nobody touched the machine (that would trigger the away nap mid-test).
         SetContext(window, false, 0);

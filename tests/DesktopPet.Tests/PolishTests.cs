@@ -74,8 +74,8 @@ internal static class PolishTests
                 Volume = 0.35, EmotionSounds = false, PositionMonitor = "test-monitor", PositionX = 0.25, RestMonitor = "test-monitor", RestFractionX = 0.6 };
             check(preferences.Save(file), "Preferences can be saved atomically");
             var loaded = PetPreferences.Load(file);
-            check(loaded.Name == "Luna" && loaded.Personality == "Curious" && loaded.Quiet && loaded.RestX == -400 && !loaded.Sounds,
-                "Name, personality, quiet and resting spot survive restart; sounds default off");
+            check(loaded.Name == "Luna" && loaded.Personality == "Curious" && loaded.Quiet && loaded.RestX == -400 && loaded.Sounds && loaded.AdventureGuide,
+                "Name, personality, quiet and resting spot survive restart; sounds and the Adventure Guide default on");
             check(loaded.Tuning?.Playfulness == 0.24 && loaded.Tuning.AttentionAfterSeconds == 95, "Personality tuning persists without editing packaged JSON");
             File.WriteAllText(file, "broken");
             check(loaded.Volume == 0.35 && !loaded.EmotionSounds && loaded.InteractionSounds && loaded.SleepSounds

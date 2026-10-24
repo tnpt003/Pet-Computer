@@ -17,7 +17,8 @@ public sealed class PetPreferences
     public string Personality { get; set; } = PetPersonality.Balanced;
     public PersonalityTuning? Tuning { get; set; }
     public bool Quiet { get; set; }
-    public bool Sounds { get; set; }
+    // On by default since 2026-10-24 (a saved file keeps its own value).
+    public bool Sounds { get; set; } = true;
     public double Volume { get; set; } = 0.7;
     public bool InteractionSounds { get; set; } = true;
     public bool EmotionSounds { get; set; } = true;
@@ -75,6 +76,8 @@ public sealed class PetPreferences
     // The app icons above the battlefield (Adventure, Expedition, Infinity), chosen in the setup
     // panel. Off: no icons and no viruses; such runs keep their records apart.
     public bool BattleApps { get; set; } = true;
+    // The Adventure Guide in chapter 1 stages (the setup panel's chip, kept from its last Ready): on by default.
+    public bool AdventureGuide { get; set; } = true;
     public string? PositionMonitor { get; set; }
     public double PositionX { get; set; } = 0.5;
     public double PositionY { get; set; } = 1;

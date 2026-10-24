@@ -218,7 +218,7 @@ Right-click the cat to access the new optional controls:
   turning Quiet on stops a game in progress. A fullscreen app still blocks them.
   The cat still reacts with short lines and thought bubbles in Quiet mode (no idle
   chatter), and the diary stays up to date.
-- **Pet sounds:** off by default. All nine cues use a consistent cartoon-cat
+- **Pet sounds:** on by default since 2026-10-24 (off before; a saved preferences file keeps its value). All nine cues use a consistent cartoon-cat
   treatment of the embedded recordings: short voiced excerpts, expressive pitch
   glides, rounded dynamics, soft fades, and small voice/volume variations. Meows
   bend downward, play cues bounce, surprise rises, annoyed cues gently descend,
@@ -893,8 +893,9 @@ next step), so a double click never starts two battles. Ending a battle by hand 
     times; not a push-immune one); the first elite.
   - Stage 5: the King when he appears; his first slam close to the cat (lift, or the Shield when
     ready); his first shield phase; his first rally (Push, then the King; once).
-  It runs by itself until the stage is won; the stage setup panel has a **Guide in the battle** chip
-  (on for a stage not won, off for a won one; `BattlePrepChooseGuide`) to learn it again. Off in the
+  It is on by default, won stages too: the stage setup panel's **Guide in the battle** chip starts
+  ticked (preferences `AdventureGuide`, default true; `BattlePrepChooseGuide`) and its state on Ready
+  is kept for the next stages. Off in the
   window checks unless a check turns it on (`BattleGuideEnabled`). Old preferences keys
   (`BattleTutorialSeen`, `BattleLessonsSeen`) are ignored.
 - **Pause / Resume / End**: HUD buttons or the menu. Pause reasons stack (User, Menu, Fullscreen,

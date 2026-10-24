@@ -10,8 +10,8 @@ using static PetPrivate;
 // Battle Mode's danger feedback and the Adventure Guide in the real pet window: a slime holding its
 // attack while the cat is carried is shown on the field and in the HUD hint; the guide runs only in
 // a chapter 1 Adventure stage, holds the battle still (the cat can still be lifted) with a dark,
-// click-through shade and a line that never takes focus, and comes back for a won stage only when
-// the setup chip asks. In-memory preferences only (the real preferences file is never written).
+// click-through shade and a line that never takes focus; on by default (won stages too), and an
+// unticked setup chip is remembered. In-memory preferences only (the real preferences file is never written).
 internal static class TutorialChecks
 {
     private static MouseButtonEventArgs MouseEvent(RoutedEvent routedEvent) => new(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Left) { RoutedEvent = routedEvent };
@@ -112,7 +112,7 @@ internal static class TutorialChecks
         // The setup panel: the Guide chip for a chapter 1 stage, on until the stage is won.
         ToGround();
         check(window.OpenBattlePrep(stage: chapter[0]) == null && window.BattlePrepHasGuide && window.BattlePrepGuide && window.BattlePrepText.Contains("Guide in the battle"),
-            $"A stage not won yet: the setup panel's Guide chip is on ({window.BattlePrepGuide})");
+            $"The setup panel's Guide chip starts ticked ({window.BattlePrepGuide})");
         check(window.BattlePrepChooseGuide(false) && !window.BattlePrepGuide && window.BattlePrepChooseGuide(true) && window.BattlePrepGuide, "The chip turns the guide off and on");
         check(!window.BattlePrepText.Contains("How to play"), "The old How to play guide is gone from the setup panel");
         window.CancelBattlePrep(); window.CancelAdventureMap(); window.CancelBattleHub();
@@ -207,21 +207,27 @@ internal static class TutorialChecks
         check(pushLine.StartsWith("Push: ") && pushLine.Contains("5 s cooldown"), $"A skill's line is its name and the data's description ({pushLine})");
         window.EndBattle();
 
-        // A won stage: no guide by itself; the chip brings it back.
+        // On by default, a won stage too; unticked on Ready, the choice is kept; ticked again, it teaches.
         window.AdventureProgress.Completed.Add(PetWindow.StageFirstSteps);
         ToGround();
         window.StartBattle(stage: chapter[0]);
-        RunToStep(6);
-        check(!window.BattleGuideOn && window.BattleGuideStep == null, "A won stage plays without the guide");
+        RunToStep(8);
+        check(window.BattleGuideOn && window.BattleGuideStep == PetWindow.GuideLift, "A won stage still has the guide by default");
+        await Lift(); Drop();
         window.EndBattle();
-        check(window.OpenBattlePrep(stage: chapter[0]) == null && !window.BattlePrepGuide, "Its setup chip starts off");
-        window.BattlePrepChooseGuide(true);
+        check(window.OpenBattlePrep(stage: chapter[0]) == null && window.BattlePrepGuide, "Its setup chip starts ticked");
+        window.BattlePrepChooseGuide(false);
         ToGround();
         window.BattlePrepReady();
         ToGround();
-        RunToStep(8);
-        check(window.BattleGuideOn && window.BattleGuideStep == PetWindow.GuideLift, "Turned on, the guide teaches the won stage again");
-        await Lift(); Drop();
+        RunToStep(6);
+        check(!window.BattleGuideOn && window.BattleGuideStep == null && !prefs.AdventureGuide, "Unticked: no guide, and the choice is kept");
+        window.EndBattle();
+        check(window.OpenBattlePrep(stage: chapter[1]) == null && !window.BattlePrepGuide, "The next setup remembers it unticked");
+        window.BattlePrepChooseGuide(true);
+        ToGround();
+        window.BattlePrepReady();
+        check(prefs.AdventureGuide, "Ticked again on Ready: kept on");
         window.EndBattle();
         window.AdventureProgress.Completed.Remove(PetWindow.StageFirstSteps);
         window.BattleGuideEnabled = false;

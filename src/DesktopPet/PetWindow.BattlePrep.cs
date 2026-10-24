@@ -37,7 +37,7 @@ public sealed partial class PetWindow
     private Border? prepAppsChip;
     private Path? prepAppsCheck;
     private TextBlock? prepAppsLabel, prepAppsText, prepAppsHint;
-    // The Adventure Guide for this stage (PetWindow.BattleGuide.cs): on until the stage is won.
+    // The Adventure Guide for this stage (PetWindow.BattleGuide.cs): preferences.AdventureGuide, kept on Ready.
     private bool prepGuide;
     private Border? prepGuideChip;
     private Path? prepGuideCheck;
@@ -129,7 +129,7 @@ public sealed partial class PetWindow
         prepWeapon = BattleTuning.Weapon(weapon ?? preferences.BattleWeapon).Id;
         prepDifficulty = level is BattleDifficulty chosen && Enum.IsDefined(chosen) ? chosen : BattleDifficultyChoice;
         prepApps = preferences.BattleApps;
-        prepGuide = stage != null && !(Adventure?.IsCompleted(stage.Id) ?? false);
+        prepGuide = preferences.AdventureGuide;
         battlePreparing = true;
         CloseBattleSummary(); CloseBattleNotice();
         queuedCommand = null;
@@ -187,7 +187,11 @@ public sealed partial class PetWindow
         if (BattleTutorialOpen) CloseBattleTutorial(finished: true);
         if (prepForExpedition) { string weapon = prepWeapon; var level = prepDifficulty; CloseBattlePrep(); return ExpeditionSetupReady(weapon, level); }
         if (prepForEndless) return EndlessRefusal() ?? StartBattle(stage: BattleTuning.Endless!.Stage());
-        if (StageHasGuide(prepStage)) guideChoice = prepGuide;
+        if (StageHasGuide(prepStage))
+        {
+            guideChoice = prepGuide;
+            if (preferences.AdventureGuide != prepGuide) { preferences.AdventureGuide = prepGuide; SavePreferences(); }
+        }
         return StartBattle(stage: prepStage);
     }
 
@@ -473,7 +477,7 @@ public sealed partial class PetWindow
             prepGuideLabel!.Visibility = prepGuideChip.Visibility = prepGuideHint!.Visibility = shown;
             prepGuideLabel.Text = L("Hướng dẫn phiêu lưu", "Adventure Guide");
             prepGuideText!.Text = L("Hướng dẫn trong trận", "Guide in the battle");
-            prepGuideHint.Text = prepGuide ? L("Trận đứng hình đúng lúc và chỉ chỗ cần làm. Tự tắt khi đã thắng màn; bật lại để học lại.", "The battle stands still at the right moments and shows what to do. Off once the stage is won; turn it on to learn it again.")
+            prepGuideHint.Text = prepGuide ? L("Trận đứng hình đúng lúc và chỉ chỗ cần làm. Bỏ tick khi đã quen; lựa chọn được nhớ cho lần sau.", "The battle stands still at the right moments and shows what to do. Untick it once you know the game; the choice is kept.")
                 : L("Không có hướng dẫn trong trận này.", "No guide in this battle.");
             ShowChosen(prepGuideChip, prepGuide, prepGuideCheck!);
         }

@@ -519,7 +519,8 @@ Tự động đã có: Phần thưởng trên sảnh (ô có hình, khóa, Mới
 - [ ] Kỷ lục Phiêu lưu và Vô tận bắt đầu lại (phiên bản luật mới); Viễn chinh đang đi vẫn tiếp tục.
 
 ### Hướng dẫn phiêu lưu (2026-10-24, thay hướng dẫn tại chỗ)
-- [ ] Sảnh: thẻ "Hướng dẫn phiêu lưu" ghi "Học chơi qua từng màn…"; bản đồ và túi đồ cũng gọi là Hướng dẫn phiêu lưu. Bảng chuẩn bị màn chương 1 có ô "Hướng dẫn trong trận" (màn chưa thắng: bật; đã thắng: tắt), link "Màn này dạy gì" mở danh sách bài học; không còn link "Cách chơi" và hướng dẫn 5 thẻ.
+- [ ] Máy mới (xóa/đổi tên %LOCALAPPDATA%\DesktopPet\preferences.json trên máy thử, KHÔNG trên máy chính): menu "Sounds" và Cài đặt → Âm thanh tick sẵn, mèo có tiếng ngay. Máy đã có preferences giữ lựa chọn cũ.
+- [ ] Sảnh: thẻ "Hướng dẫn phiêu lưu" ghi "Học chơi qua từng màn…"; bản đồ và túi đồ cũng gọi là Hướng dẫn phiêu lưu. Bảng chuẩn bị màn chương 1 có ô "Hướng dẫn trong trận" (mặc định tick, cả màn đã thắng; bỏ tick rồi Sẵn sàng thì lần sau vẫn bỏ tick), link "Màn này dạy gì" mở danh sách bài học; không còn link "Cách chơi" và hướng dẫn 5 thẻ.
 - [ ] Trận tự do, Viễn chinh, Vô tận: không có hướng dẫn. Đẩy hồi 5 giây (ô kỹ năng, mô tả).
 - [ ] Màn 1: khi slime gồng tới mèo → trận đứng hình (slime, đồng hồ dừng, mèo không đi), màn hình tối, mèo và slime sáng viền vàng, dòng chữ "Kéo mèo lên…"; kéo được mèo trong lúc đứng hình → trận chạy tiếp. 5 lần + 1 lần cho slime nhanh lao tới, sau đó không đứng hình nữa.
 - [ ] Màn 2 lúc mở màn: lần lượt máu, đợt, thanh kỹ năng, từng kỹ năng (tên + mô tả), túi đồ, icon app — mỗi cái bấm "Hiểu rồi". Lần chọn thẻ đầu: sáng bảng thẻ, rồi dòng nhóm thẻ của thẻ đầu. Màn 2 không có app độc/icon nhiễm.

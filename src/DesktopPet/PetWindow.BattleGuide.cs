@@ -16,8 +16,8 @@ namespace DesktopPet;
 // to do. A "do" step waits until the user does it (lifting the cat stays possible: the battle is
 // frozen, not paused); a "see" step waits for Got it. Every line has Skip the guide (for this run).
 // Only in a chapter 1 Adventure stage, each step in its own stage, as often as its Times in one run;
-// it runs by itself until the stage is won and from the stage setup's Guide chip after that, so a
-// stage can be learned again. Never in a free battle, the Expedition or Infinity. Pause, the menu
+// it is on by default (preferences.AdventureGuide, the stage setup's Guide chip, kept from its last
+// Ready), so a won stage teaches again until the user unticks it. Never in a free battle, the Expedition or Infinity. Pause, the menu
 // and a fullscreen app hide it like the rest of the battle.
 public sealed partial class PetWindow
 {
@@ -44,7 +44,7 @@ public sealed partial class PetWindow
     private int guideRef;
     private double guideRefValue;
     private readonly Dictionary<string, int> guideShown = new();
-    // The stage setup's Guide chip for the next stage battle (null: on until the stage is won).
+    // The stage setup's Guide chip for the next stage battle (null: preferences.AdventureGuide).
     private bool? guideChoice;
     private Window? guideShadeWindow, guideBubbleWindow;
     private GuideShade? guideShade;
@@ -248,7 +248,7 @@ public sealed partial class PetWindow
             EndGuide();
             guideBattle = battle;
             guideShown.Clear();
-            guideOn = GuideFits && (guideChoice ?? !(Adventure?.IsCompleted(battle.Stage!.Id) ?? false));
+            guideOn = GuideFits && (guideChoice ?? preferences.AdventureGuide);
             guideChoice = null;
             if (guideOn) System.Diagnostics.Trace.WriteLine($"Adventure Guide on for {battle.Stage!.Id}.");
         }

@@ -109,7 +109,8 @@ public sealed partial class PetWindow
                     "Malware: ads cover the floor. Click × to close each one (with Tabs infected, clean Tabs first).")),
         new(GuideLoading, StageHoldOn, true, true, 1,
             () => HazardDue(HazardKind.Loading), () => battle!.FindHazard(guideRef) == null || battle.HoldingHazardId == guideRef,
-            () => Spots(FieldSpot(battleView?.SpinnerBounds(guideRef), 4)),
+            // The spinner, the slowing zone on the floor and the cat standing in it.
+            () => Spots(FieldSpot(battleView?.SpinnerBounds(guideRef), 4), FieldSpot(battleView?.LoadingZoneBounds(guideRef), 4), CatSpot()),
             () => battle?.AppRules is { LoadingHold: > 0 } rules
                 ? LF($"App độc: vòng loading làm mèo chậm hẳn. Giữ chuột lên vòng xoay {Number(rules.LoadingHold, "0.#")} giây để tắt.",
                      $"Malware: the loading ring slows the cat right down. Hold the mouse on the spinner for {Number(rules.LoadingHold, "0.#")} s to close it.")

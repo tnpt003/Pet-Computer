@@ -8,6 +8,60 @@ Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm 
 
 ---
 
+## #22 — Vòng loading khi hướng dẫn trông như chưa hiện hết (2026-10-24, commit kế tiếp sau ec27b0a)
+- **Triệu chứng:** ở bước hướng dẫn vòng loading (màn 3), vòng trông chưa hiện đủ.
+- **Nguyên nhân:** (1) trước ec27b0a trận đứng hình đúng lúc vòng còn đang lớn dần (0,3 s); (2) chỗ sáng chỉ ôm vòng xoay phía trên, còn vùng làm chậm dưới sàn (hình bầu dục quanh chân mèo) và con mèo nằm trong vùng tối.
+- **Sửa:** bước chờ vòng hiện xong (≥ 0,35 s); chiếu sáng cả vòng xoay, vùng dưới sàn (`BattleFieldView.LoadingZoneBounds`) và con mèo.
+- **Kiểm chứng:** WPF 847/847 (bước loading bắt đầu khi vòng đã 0,35 s, có 3 chỗ sáng, vùng sàn rộng ≥ 2 × bán kính). Chưa xem trên màn hình thật.
+
+## #21 — Hướng dẫn chiếu sáng virus.exe khi nó chưa hiện hết (2026-10-24, commit ec27b0a)
+- **Triệu chứng:** virus.exe còn nhỏ, đang bung ra mà hướng dẫn đã sáng và trận đứng hình.
+- **Nguyên nhân:** hướng dẫn đứng hình ngay khung đầu tiên file xuất hiện; thời gian trận dừng nên hoạt ảnh bung (0,35 s) dừng giữa chừng. Quảng cáo (0,25 s), tường cập nhật (0,3 s), icon lúc bị nhiễm (0,6 s) cùng kiểu.
+- **Sửa:** các bước app độc chỉ bắt đầu khi thứ đó đã hiện xong (quảng cáo ≥ 0,3 s hoặc đang khóa, vòng/tường ≥ 0,35 s, virus.exe ≥ 0,4 s, icon nhiễm ≥ 0,65 s).
+- **Kiểm chứng:** WPF (bước virus.exe bắt đầu khi file đã hiện 0,42 s).
+
+## #20 — Không chọn được thẻ, phải chuyển cửa sổ khác mới chọn được (2026-10-24, commit ec27b0a)
+- **Triệu chứng:** màn Cầm cự, bảng chọn thẻ hiện mà bấm không ăn; chuyển sang cửa sổ phía sau rồi quay lại mới chọn được (log: bảng thẻ mở ~22:46, chọn được 22:47:43).
+- **Nguyên nhân:** giữ chuột lên vòng loading thì dải chiến trường `CaptureMouse`; vòng tự tắt khi đang giữ (đủ 2 s) → lúc thả, `EndHold` thấy không còn vòng được giữ nên thoát luôn, không `ReleaseMouseCapture`. Mọi click sau đó (cả bảng thẻ) chạy vào dải chiến trường cho tới khi Windows lấy lại chuột (đổi cửa sổ). Lỗi có từ khi thêm "giữ 2 s" (6b), lộ ra vì hướng dẫn màn 3 dạy giữ vòng ngay trước mốc chọn thẻ 20 s.
+- **Sửa:** `EndHold` luôn trả chuột; `DropStaleHold()` mỗi khung trả chuột khi không còn vòng nào được giữ.
+- **Kiểm chứng:** WPF (vòng tự tắt dưới chuột → khung sau trả chuột; thả chuột sau đó cũng trả). Cần thử tay: giữ vòng tới khi tắt rồi chọn thẻ ngay.
+
+## #19 — Chỗ sáng của hướng dẫn nằm lệch khỏi con mèo (2026-10-24, commit 1d07490)
+- **Triệu chứng:** bước "Kéo mèo lên", viền vàng nằm phía trên bên trái con mèo.
+- **Nguyên nhân:** cửa sổ mèo có lề `PickupAnimation.Padding` 40 DIP quanh khung mèo 112×112; chỗ sáng đo từ góc cửa sổ nên lệch 40 DIP. Test lúc đó đo cùng gốc sai nên vẫn PASS (xem phần B).
+- **Sửa:** cộng lề; test so thêm với `pet.X + CenterX` (độc lập với cách đo).
+- **Kiểm chứng:** WPF 843/843 (tâm chỗ sáng 960 = pet.X + 56).
+
+## #18 — Chỗ sáng của hướng dẫn chưa căn giữa (thanh kỹ năng HUD) (2026-10-24, commit 8dab2d4)
+- **Triệu chứng:** viền vàng quanh thanh kỹ năng lệch, khoảng hở hai bên không đều.
+- **Nguyên nhân:** HUD có Margin 8 mà chỗ sáng tính theo khung bên trong; thanh kỹ năng ôm cả lề StackPanel; slime chưa tính lúc phồng khi gồng; quảng cáo/vòng xoay/tường dùng số ước lượng.
+- **Sửa:** đo mọi chỗ sáng bằng `PointToScreen` của chính phần tử (đúng lề, HUD bị kéo, DPI), đệm đều 6 DIP; thanh kỹ năng = hợp 5 ô; sân trận lấy đúng hình chữ nhật đang vẽ.
+- **Kiểm chứng:** WPF (ô máu, thanh kỹ năng, ô Đẩy, túi đồ đều đệm đúng 6 DIP; tâm slime < 1 DIP).
+
+## #17 — Âm thanh mèo và ô hướng dẫn chưa tick sẵn ở máy khác (2026-10-24, commit f6ea181)
+- **Triệu chứng:** máy khác cài mới, âm thanh mèo tắt; ô "Hướng dẫn trong trận" tắt ở màn đã thắng.
+- **Nguyên nhân:** `PetPreferences.Sounds` mặc định false (thiết kế cũ "off by default"); ô hướng dẫn mặc định theo "màn chưa thắng".
+- **Sửa:** `Sounds` = true cho preferences mới (file đã lưu giữ giá trị cũ, theo người dùng chọn); `AdventureGuide` = true, ô luôn tick sẵn, bỏ tick lúc Sẵn sàng thì được nhớ. Rà các mặc định khác: giữ nguyên.
+- **Kiểm chứng:** C# (preferences mới bật cả hai), WPF 841/841.
+
+## #16 — Hướng dẫn tại chỗ: nhiều kiểu, khó hiểu; cần một kiểu và chỉ ở Phiêu lưu (2026-10-24, commit cb77240)
+- **Góp ý:** hướng dẫn nên một kiểu, bỏ những gì nhìn là hiểu, theo từng màn chương 1 (màn 1 kéo mèo 6 lần có slime nhanh, màn 2 HUD/kỹ năng/túi/thẻ/cộng hưởng có làm tối, màn 3 gom app độc + icon nhiễm, màn 4 Đẩy ~4 lần + tinh anh, màn 5 Vua theo cơ chế, Đẩy chặn phong tinh anh 1 lần); đổi Phiêu lưu → Hướng dẫn phiêu lưu; mô tả kỹ từng màn.
+- **Làm:** khung "Hướng dẫn phiêu lưu" (đứng hình không phải Pause, làm tối + chỗ sáng + một dòng, Hiểu rồi/Bỏ qua); bỏ hướng dẫn 5 thẻ và dấu tay; màn 2 không app độc, màn 3 lịch app độc cố định + không tinh anh, màn 4 đủ 4 loại slime mỗi loại một tinh anh; goal/tip từng màn viết lại. Ngoại lệ nhấc mèo khi đứng hình ghi vào AGENTS.md.
+- **Kiểm chứng:** C# 1533, WPF 839/839 lúc đó.
+
+## #15 — Đẩy hồi 3 giây thay vì 5 giây (2026-10-24, commit cb77240)
+- **Triệu chứng:** người dùng nhớ Đẩy hồi 5 s, game đang 3 s.
+- **Nguyên nhân:** mốc cân bằng 1 (5c1efcc) hạ 5 → 3 s.
+- **Sửa:** trả về 5 s (battle.json `pushCooldown`, mặc định code), cập nhật mô tả/test.
+
+## #14 — Trận "pause bất thường" và chậm (slow down) khi đang chơi (2026-10-24, commit 9fe79b2, rồi thay bằng cb77240)
+- **Triệu chứng:** đang đánh thì trận như khựng, chậm hẳn.
+- **Bằng chứng:** log 16:10 trận trùm: 8 bài hướng dẫn tại chỗ (target, lift, infected, ads, heal, app, stun, loading) nổ trong 47 s đầu.
+- **Nguyên nhân:** mỗi bài làm trận chạy ×0,25 tới 6 s (mèo vẫn chạy tốc độ thường) và các bài nối nhau; bài chạy ở mọi chế độ; hết giờ vẫn tính đã học.
+- **Sửa:** 9fe79b2 bỏ làm chậm, chỉ Phiêu lưu, giãn 10 s; sau đó cb77240 thay hẳn bằng Hướng dẫn phiêu lưu (#16).
+
+---
+
 ## #13 — Máy đã cài báo "Bạn đang dùng bản mới nhất" dù đã có bản mới (sửa ở 1.4.3, 2026-10-23)
 
 **Triệu chứng**
@@ -115,6 +169,10 @@ Release 1.4.2 trên GitHub lúc đó hoàn toàn bình thường: Actions thành
 
 | Ngày | Lỗi | Tìm bởi | Sửa |
 |---|---|---|---|
+| 2026-10-24 | Lịch app độc (`malwarePlan`/`malwareFrom`) không chạy ở màn thường: đếm bằng `FightSeconds`, giá trị chỉ ghi lúc trận kết thúc | Test virus.exe của hướng dẫn (UiChecks) | Màn thường đếm `Time` (màn sống sót vẫn theo đồng hồ) — ec27b0a |
+| 2026-10-24 | Test tâm chỗ sáng của mèo PASS dù lệch 40 DIP: test đo cùng gốc sai với code | Người dùng gửi ảnh (#19) | Test so thêm với `pet.X` (độc lập) — 1d07490 |
+| 2026-10-24 | Một seed màn 3 không ra "Cập nhật bắt buộc": không có chỗ đặt tường thì game đổi sang vòng loading | GuideStageTests | Lịch chờ tới khi đặt được tường (`ThrowUpdate(orLoading: false)`) — cb77240 |
+| 2026-10-24 | battle.json gốc bị từ chối (goal > 160 ký tự) → test cân bằng không thấy chương | Test C# | Rút gọn goal; đo độ dài trước khi sửa dữ liệu — cb77240 |
 | 2026-10-23 | Lên bản 1.4.2: `git tag` thường + `--follow-tags` không đẩy tag → GitHub Actions không chạy | Người dùng thấy Release không lên | Tài liệu dùng `git tag -a`; lần đó đẩy riêng `git push origin v1.4.2` |
 | 2026-10-23 | Câu nhắc nghỉ dựng sẵn trong C# lệch với ai/lines.json (dòng thứ hai vi/en) | Test đối chiếu mới (S5) | Sửa cho khớp lines.json |
 | 2026-10-23 | Thuộc tính `PetWindow.Language` che `FrameworkElement.Language` của WPF | Lúc làm hộp chào mừng | Đổi tên `UiLanguage` |

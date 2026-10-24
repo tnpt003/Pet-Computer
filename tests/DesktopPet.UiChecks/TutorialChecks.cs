@@ -77,7 +77,7 @@ internal static class TutorialChecks
         var ids = new[] { PetWindow.StageFirstSteps, PetWindow.StageBreakThrough, PetWindow.StageHoldOn, PetWindow.StageCutSupport, PetWindow.StageSlimeKing };
         // Stage 3 sends virus.exe 1 s in (its plan), no random malware.
         var chapter = ids.Select(id => new StageSpec { Id = id, NameVi = id, NameEn = id, Waves = new[] { Slimes(1) },
-            MalwarePlan = id == PetWindow.StageHoldOn ? new[] { new MalwareCue { At = 1, Kind = "virus" } } : null }).ToArray();
+            MalwarePlan = id == PetWindow.StageHoldOn ? new[] { new MalwareCue { At = 1, Kind = "loading" }, new MalwareCue { At = 3, Kind = "virus" } } : null }).ToArray();
         var outside = new StageSpec { Id = "t_other", NameVi = "Khác", NameEn = "Other", Waves = new[] { Slimes(1) } };
         window.BattleTuning = new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 1 }, MaxAlive = 1, SpawnInterval = 0, SlimeMaxHp = 1000, CatDamage = 0, SlimeDamage = 0,
             Apps = new AppsSpec { InfectChance = 0, MalwareMinThreat = 99, VirusExeWeight = 1, VirusExeEvery = 30 },
@@ -246,6 +246,14 @@ internal static class TutorialChecks
         // 3 · Malware is shown once it has finished appearing (the battle stands still during the step).
         ToGround();
         window.StartBattle(stage: chapter[2]);
+        for (int i = 0; i < 60 * 6 && window.BattleGuideStep != PetWindow.GuideLoading; i++) { NextToCat(); ToGround(); Call(window, "TickBattle", 1.0 / 60); }
+        var ring = Sim().Hazards.FirstOrDefault(h => h.Kind == HazardKind.Loading);
+        var ringSpots = window.BattleGuideSpots;
+        double ringRadius = Sim().AppRules?.LoadingRadius ?? 60;
+        check(window.BattleGuideStep == PetWindow.GuideLoading && ring != null && ring.Age >= 0.3 && ringSpots.Count == 3 && ringSpots[1].Width >= ringRadius * 2,
+            $"The loading ring step waits for the ring to grow in, and lights its spinner, its zone on the floor and the cat ({ring?.Age:0.00} s, {ringSpots.Count} spots, zone {(ringSpots.Count > 1 ? ringSpots[1].Width : 0):0} DIPs)");
+        window.BattleGuideOk();
+        TickBattle(1.0 / 60);
         for (int i = 0; i < 60 * 8 && window.BattleGuideStep != PetWindow.GuideVirus; i++) { NextToCat(); ToGround(); Call(window, "TickBattle", 1.0 / 60); }
         // The battle stands still from the step's start, so the file's age now is its age then.
         var file = Sim().VirusFiles.FirstOrDefault();

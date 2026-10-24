@@ -8,7 +8,7 @@ Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm 
 
 ---
 
-## #24 — Chữ cộng hưởng trong túi đồ tràn ra ngoài khung; cần sinh động hơn (2026-10-25)
+## #24 — Chữ cộng hưởng trong túi đồ tràn ra ngoài khung; cần sinh động hơn (2026-10-25, commit aa6312b)
 - **Triệu chứng:** tab Thẻ ở Vô tận: dòng "★ Giáp gai · còn 2 thẻ → ★ Bất khuất…" bị cắt ở mép phải túi đồ; phần cộng hưởng chỉ là chấm + chữ.
 - **Nguyên nhân:** mỗi nhóm là một hàng ngang (StackPanel) nên chữ không xuống dòng; Vô tận có 3 mốc/nhóm nên chuỗi dài quá khung.
 - **Sửa:** mỗi mốc là một huy hiệu có icon riêng (9 hình vector), vòng tiến độ, trạng thái, mô tả khi rê chuột; các huy hiệu nằm trong cột Grid bằng nhau, tên tối đa 2 dòng rồi "…". Thanh nhóm chia đoạn theo mốc. Lóe sáng một lần khi mở tab.

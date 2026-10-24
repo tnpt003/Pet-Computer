@@ -13,7 +13,7 @@
   - Thẻ mới: Móng vuốt, Kết liễu, Nhịp dài, Lướt gió, Hồi phục, Kiên cường, và thẻ tiện ích (Tay nhanh, Sạc pin, Hút năng lượng, Bom to, Khiên dày).
   - Vô tận: thẻ sau mỗi 2 đợt, chọn 2 thẻ sau đợt trùm, giới hạn thẻ cao hơn, cộng hưởng mới ở mốc 6 và 9 thẻ cùng nhóm (từ đợt 48 bật hết), tinh anh nhiều dần, trùm là Vua chương 1 (từ đợt 30 có thêm Vua thường).
   - Trận tự do kết thúc bằng Vua chương 1.
-- **Hướng dẫn tại chỗ:** lần đầu gặp một tình huống (slime sắp đánh, app đầy, icon nhiễm, app độc, quảng cáo, máu thấp…), trận chậm lại và một bàn tay chỉ vào đúng chỗ cần bấm, kèm vài chữ. Mỗi bài chỉ hiện một lần; nút Hướng dẫn trên bảng chuẩn bị cho xem lại. Hướng dẫn có thêm thẻ về app và app nhiễm.
+- **Học chơi trong Phiêu lưu:** mỗi màn của chương 1 dạy vài thứ (mẹo màn ghi "Màn này học: …"). Khi tới lúc (slime sắp đánh, chọn thẻ, app đầy, icon nhiễm, app độc, quảng cáo, máu thấp, lúc nên dùng Đẩy quái/Bom len/Khiên bong bóng/Cổ vũ, cú dậm của trùm…), một bàn tay chỉ vào đúng chỗ cần bấm, kèm vài chữ; trận vẫn chạy tốc độ thường. Mỗi lần một bài, cách nhau ít nhất 10 giây. Bài chỉ tính đã học khi bạn làm đúng (bỏ lỡ thì hiện lại, tối đa 3 lần). Trận tự do, Viễn chinh và Vô tận không có bài; hướng dẫn chữ chỉ tự mở ở màn Phiêu lưu đầu tiên. Nút Hướng dẫn trên bảng chuẩn bị cho học lại. Hướng dẫn có thêm thẻ về app và app nhiễm.
 - Kỷ lục Phiêu lưu và Vô tận được tách theo luật mới; chuyến Viễn chinh đang đi không bị ảnh hưởng.
 
 - **App độc trong trận** (Phiêu lưu từ màn 2, Viễn chinh, Vô tận): thay vì bắn virus vào icon, slime đôi khi tung app độc:
@@ -36,7 +36,7 @@
   - New cards: Claws, Finishing blow, Long rhythm, Tailwind, Regrowth, Steady, and utility cards (Quick hands, Power bank, Energy drain, Big bomb, Thick bubble).
   - Infinity: a card every 2 waves, two after a boss wave, higher card limits, new synergies at 6 and 9 cards of a group (all on from wave 48), more elites as it goes, the chapter King as its boss (with the plain King from wave 30).
   - The free battle ends with the chapter King.
-- **Lessons on the spot:** the first time something needs your hand (a slime about to hit, a charged app, an infected icon, malware, ads, low HP…), the battle slows down and a hand points at what to click, with a few words. Each lesson shows once; How to play on the setup panel shows them again. The guide has a new card on the apps and infected apps.
+- **Learn to play in Adventure:** each chapter 1 stage teaches a few things (its tip says "In this stage: …"). When the moment comes (a slime about to hit, a card offer, a charged app, an infected icon, malware, ads, low HP, a good time for Push/Yarn bomb/Bubble shield/Cheer, the boss's slam…), a hand points at what to click, with a few words; the battle keeps its speed. One lesson at a time, at least 10 s apart. A lesson counts once you do it (missed ones come again, up to 3 times). Free battles, the Expedition and Infinity have none; the guide opens by itself only with the first Adventure stage. How to play on the setup panel teaches them again. The guide has a new card on the apps and infected apps.
 - Adventure and Infinity records start over under the new rules (old ones are kept apart); an Expedition run under way is not affected.
 
 - **Battle malware** (Adventure from stage 2, Expedition, Infinity): instead of a virus into an icon, a slime sometimes throws malware:
@@ -59,7 +59,7 @@
   - 新カード：ツメ、とどめ、ロングリズム、追い風、再生、不屈、便利カード（早業、モバイルバッテリー、エナジードレイン、ビッグボム、厚いバブル）。
   - 無限：2 ウェーブごとにカード、ボスの後は 2 枚、カード上限アップ、同じグループ 6 枚と 9 枚で新シナジー（48 ウェーブから全部オン）、エリートが段々増え、ボスは第 1 章のキング（30 ウェーブからは通常のキングも）。
   - フリーバトルの最後は第 1 章のキング。
-- **その場のレッスン：** はじめての場面（攻撃しそうなスライム、チャージ済みアプリ、感染アイコン、マルウェア、広告、HP 低下など）では、バトルがゆっくりになり、手がクリックする場所を短い言葉で指します。各レッスンは 1 回だけ。準備画面の「遊び方」でもう一度見られます。ガイドにアプリと感染アプリのカードが加わりました。
+- **アドベンチャーで遊び方を学ぶ：** 第 1 章の各ステージがいくつかのことを教えます（ステージのヒントに「このステージで学ぶこと：…」）。その場面（攻撃しそうなスライム、カード選択、チャージ済みアプリ、感染アイコン、マルウェア、広告、HP 低下、押し出し/毛糸ボム/バブルシールド/応援の使いどき、ボスの叩きつけなど）になると、手がクリックする場所を短い言葉で指します。バトルの速さは変わりません。レッスンは 1 つずつ、10 秒以上あけて。実際にやると覚えたことになります（逃したら最大 3 回まで再表示）。フリーバトル、遠征、インフィニティにはレッスンはなく、ガイドが自動で開くのは最初のアドベンチャーステージだけです。準備画面の「遊び方」でもう一度学べます。ガイドにアプリと感染アプリのカードが加わりました。
 - アドベンチャーと無限の記録は新ルールで別になります（以前の記録は残ります）。進行中の遠征には影響しません。
 
 - **バトルのマルウェア**（アドベンチャーのステージ2以降、遠征、無限）：アイコンにウイルスを撃つ代わりに、スライムがマルウェアを投げることがあります。

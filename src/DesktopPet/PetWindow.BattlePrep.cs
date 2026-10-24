@@ -129,8 +129,9 @@ public sealed partial class PetWindow
         pet.Speech.Hide(); pet.Thought.Clear();
         ApplyQuiet();
         ShowBattlePrepWindow();
-        // The guide opens by itself once, with the first setup (no battle is waiting behind it).
-        if (!preferences.BattleTutorialSeen) ShowBattleTutorial();
+        // The guide opens by itself once, with the first Adventure stage setup (Adventure is where the
+        // game is learned; no battle is waiting behind it).
+        if (!preferences.BattleTutorialSeen && stage != null && !forExpedition && !forEndless) ShowBattleTutorial();
         System.Diagnostics.Trace.WriteLine("Battle setup opened.");
         return null;
     }
@@ -458,7 +459,7 @@ public sealed partial class PetWindow
         prepGuideText!.Text = L("Cách chơi", "How to play");
         prepCancelText!.Text = prepStage != null || prepForExpedition ? L("‹ Bản đồ", "‹ Map") : prepForEndless ? L("‹ Sảnh", "‹ Hub") : L("Đóng", "Close");
         prepTryText!.Text = L("Xem thử", "Try it");
-        Show(prepTipText, prepStage?.Tip(preferences.Language) is { Length: > 0 } ? L("Mẹo màn", "Stage tip") : null);
+        Show(prepTipText, prepStage != null && StageTip(prepStage) is { Length: > 0 } ? L("Mẹo màn", "Stage tip") : null);
         bool can = waiting == null;
         if (prepReady.IsEnabled != can) { prepReady.IsEnabled = can; prepReady.Opacity = can ? 1 : 0.5; }
     }

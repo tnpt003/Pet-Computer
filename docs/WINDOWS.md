@@ -873,20 +873,39 @@ next step), so a double click never starts two battles. Ending a battle by hand 
   the held attack, protection and cooldowns, with battle.json's numbers; since 2026-10-24 the
   desktop apps, infected icons and malware) in a small panel above the
   floor strip; mouse only (Skip / Next / Done), never takes focus, follows the UI language, no
-  sound. It opens by itself with the first setup panel until gone through or skipped
+  sound. It opens by itself with the first Adventure stage's setup panel (since 2026-10-24; not a
+  free battle's, the Expedition's or Infinity's) until gone through or skipped
   (preferences `BattleTutorialSeen`, false in older files), and from the panel's How to play
   button; no battle exists behind it. Ready closes it (and marks it seen). Should it be open during
   a battle, the battle is paused (reason Tutorial). A fullscreen app, Cancel or bringing the pet
   back closes it without marking it seen; measuring runs (`PET_BATTLE_AUTOSTART`) never show it.
-- **Lessons on the spot** (PetWindow.BattleCoach.cs, 2026-10-24): the first time a slime winds up
-  next to the cat, the cat is stunned, ads (locked or not), an infected icon, a loading ring, a
-  forced update, virus.exe, a charged app, HP under 60 % or the first slimes come, the battle runs
-  at a quarter of its speed (`BattleCoachSlow`; not for the stun) and a click-through, no-activate
-  window ("Pet coach", `CoachMark`) rings the spot with a tapping hand (pressing for a hold) and a
-  few words beside it, on whichever side has room. It ends when the user does it, or after 6 s
-  real time; hidden and frozen while the battle is paused or a fullscreen app runs; closed with the
-  battle. Each lesson once (preferences `BattleLessonsSeen`); How to play clears the list. Off in
-  the window checks unless a check turns it on (`BattleCoachEnabled`).
+- **Lessons on the spot** (PetWindow.BattleCoach.cs, 2026-10-24; Adventure only since the same
+  day): Adventure is where the game is learned. One table (`Lessons`) gives each lesson its
+  teaching stage, whether it is urgent, when it is due, when it is done, where it points, its words
+  and its name in the stage tip. Chapter 1: First steps — pick a slime (`target`), lift the cat
+  when a slime winds up next to it (`lift`), the stun (`stun`); Break through — the card offer
+  (`cards`, over the offer's own pause; the build carries on), a charged app (`app`), the Healing
+  fish under 60 % HP (`heal`); Hold on — infected icon (`infected`), ads (`ads`, `ads_locked`),
+  Shield with 3 slimes within 140 DIPs (`shield`), Yarn bomb on 3 slimes within its radius
+  (`bomb`: the slot, then the bunch); Cut the support — Push on a slime casting a heal (`push`:
+  the slot, then the healer), the loading ring (`loading`), the forced update (`update`); Slime
+  King — the boss's slam (`slam`: the Shield slot when ready, otherwise lift), virus.exe
+  (`virus`), Cheer with 3 slimes up (`cheer`). A lesson comes in its stage or any later one
+  (missed malware is taught the first time it shows); a stage the data does not have takes any
+  lesson. Never in a free battle, an Expedition encounter or Infinity. The battle keeps its speed.
+  One lesson at a time: none in the first 3 s (`CoachFirst`, battle time), then `CoachGap` 10 s
+  after the last one ends; lessons that can wait (all but lift, slam, stun, cards) only while no
+  slime is winding up an attack that reaches the cat. A click-through, no-activate window ("Pet
+  coach", `CoachMark`) rings the spot with a tapping hand (pressing for a hold) and a few words
+  beside it, on whichever side has room (the card lesson's to the left of the offer). Learned when
+  the user does it (preferences `BattleLessonsSeen`); after 6 s or when its target is gone it ends
+  unlearned and comes again at a later moment, at most `CoachTries` 3 times a session, then it
+  rests (the stun only tells, so it counts as learned). Hidden and frozen while the battle is
+  paused (the card lesson: other than by the offer) or a fullscreen app runs; closed with the
+  battle. How to play clears the list. A chapter 1 stage's tip is "In this stage: …" from the same
+  table (other stages keep battle.json's tip); stage 1 has one now. The hub's Adventure card: "Learn
+  to play stage by stage, carry your build and beat the boss." Off in the window checks unless a
+  check turns it on (`BattleCoachEnabled`).
 - **Pause / Resume / End**: HUD buttons or the menu. Pause reasons stack (User, Menu, Fullscreen,
   Away, App, Tutorial) and each owner removes only its own: closing the menu never resumes a battle the user, a
   fullscreen app or an away cat still holds. A fullscreen app pauses it, hides the field/HUD and

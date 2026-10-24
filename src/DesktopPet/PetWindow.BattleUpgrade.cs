@@ -15,6 +15,8 @@ namespace DesktopPet;
 public sealed partial class PetWindow
 {
     private Window? upgradeWindow;
+    // Where the offer was put (DIPs on the battle's monitor; the card lesson points at it).
+    private Point upgradeAt;
     private string? upgradePick;
     // The card under the mouse (the Bag previews it, or else the picked one).
     private string? upgradeHover;
@@ -134,6 +136,7 @@ public sealed partial class PetWindow
         double left = Math.Clamp((battleArea.Left + battleArea.Right - width) / 2, battleArea.Left, Math.Max(battleArea.Left, battleArea.Right - width));
         double top = Math.Max(battleArea.Top, battleArea.Bottom - BattleFieldView.FieldHeight - height - 12);
         MoveWindow(upgradeWindow, left, top, battleScale);
+        upgradeAt = new Point(left, top);
     }
 
     private void UpdateBattleUpgrade()

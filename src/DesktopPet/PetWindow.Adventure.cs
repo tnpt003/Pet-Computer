@@ -276,7 +276,7 @@ public sealed partial class PetWindow
         if (battleExpedition is ExpeditionBattle x) { battleHud?.ShowBanner(StepTitle(x.Node.Step, x.Expedition.Spec.StepCount) + " · " + stage.Name(preferences.Language), 0, 1.4); return; }
         if (stage.Endless) { battleHud?.ShowBanner(stage.Name(preferences.Language), 0, 1.4); return; }
         battleHud?.ShowBanner(StageTitle(stage), 0, 1.4);
-        if (!AdventureProgress.Seen.Contains(stage.Id) && stage.Tip(preferences.Language) is { Length: > 0 }) ShowStageTip(stage);
+        if (!AdventureProgress.Seen.Contains(stage.Id) && StageTip(stage) is { Length: > 0 }) ShowStageTip(stage);
     }
 
     // End (HUD or menu): the battle stops with nothing counted. A stage run goes back to the map

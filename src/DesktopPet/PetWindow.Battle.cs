@@ -425,8 +425,7 @@ public sealed partial class PetWindow
         if (battleMonitorClock >= 1) { battleMonitorClock = 0; RecoverLostBattleMonitor(); }
         bool held = BattleHoldsOff;
         if (!held) KeepBattleOnItsMonitor();
-        // A lesson on the spot slows the battle down (BattleCoachSlow).
-        var order = battle.Step(dt * BattleCoachSlow, pet.X + settings.Width / 2, held, BattleLifted);
+        var order = battle.Step(dt, pet.X + settings.Width / 2, held, BattleLifted);
         PlayBattleSound();
         ShowBattleBanners();
         battle.ClearEvents();

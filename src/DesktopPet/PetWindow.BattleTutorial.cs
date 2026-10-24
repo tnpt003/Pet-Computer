@@ -26,7 +26,7 @@ public sealed partial class PetWindow
 
     private (string Title, string Body) TutorialCard(int step)
     {
-        if (tipStage != null) return (L("Mẹo · ", "Tip · ") + StageTitle(tipStage), tipStage.Tip(preferences.Language) ?? "");
+        if (tipStage != null) return (L("Mẹo · ", "Tip · ") + StageTitle(tipStage), StageTip(tipStage) ?? "");
         var s = BattleTuning;
         string grace = s.LandingGraceSeconds.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
         string again = s.RescueGraceCooldownSeconds.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
@@ -51,17 +51,20 @@ public sealed partial class PetWindow
     }
 
     // Opens the guide at its first card (or keeps it open). During a battle it pauses it. The lessons
-    // on the spot (PetWindow.BattleCoach.cs) come again in the next battles.
+    // on the spot (PetWindow.BattleCoach.cs) come again in the next Adventure battles.
     public void ShowBattleTutorial() { ResetBattleLessons(); ShowGuide(null); }
 
     // A stage's tip: once by itself when the stage first starts, or again from its setup panel.
     // Closing it (Done or Skip) marks it seen in the Adventure progress.
     public bool ShowStageTip(StageSpec stage)
     {
-        if (stage.Tip(preferences.Language) is not { Length: > 0 }) return false;
+        if (StageTip(stage) is not { Length: > 0 }) return false;
         ShowGuide(stage);
         return BattleTutorialOpen;
     }
+
+    // A chapter 1 stage's tip is what it teaches (PetWindow.BattleCoach.cs); other stages keep the data's tip.
+    private string? StageTip(StageSpec stage) => StageLessonsLine(stage) ?? stage.Tip(preferences.Language);
 
     private void ShowGuide(StageSpec? tip)
     {

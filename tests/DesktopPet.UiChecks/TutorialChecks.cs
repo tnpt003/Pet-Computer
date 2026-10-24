@@ -28,12 +28,18 @@ internal static class TutorialChecks
         prefs.Language = "en";
         SetContext(false);
         window.Reset();
-        window.BattleTuning = new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 2 }, MaxAlive = 2, SpawnInterval = 0, SlimeMaxHp = 1000, CatDamage = 0, SlimeDamage = 0 };
+        WaveSpec Slimes(int count) => new() { Groups = new[] { new WaveGroup { Enemy = "slime", Count = count } } };
+        var learn = new StageSpec { Id = "t_learn", NameVi = "Học", NameEn = "Learn", Waves = new[] { Slimes(2) } };
+        window.BattleTuning = new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 2 }, MaxAlive = 2, SpawnInterval = 0, SlimeMaxHp = 1000, CatDamage = 0, SlimeDamage = 0,
+            Campaign = new CampaignSpec { Chapters = new[] { new ChapterSpec { Id = "t", NameVi = "T", NameEn = "T", Stages = new[] { learn } } } } };
 
-        // The first battle setup opens the guide; no battle exists behind it yet.
+        // Adventure is where the game is learned: the first Adventure stage setup opens the guide (a
+        // free battle's does not); no battle exists behind it yet.
         prefs.BattleTutorialSeen = false;
-        check(window.OpenBattlePrep() == null && window.BattleTutorialOpen && window.BattleTutorialStep == 0 && !window.BattleActive,
-            "The first battle setup opens the guide (no battle runs yet)");
+        check(window.OpenBattlePrep() == null && !window.BattleTutorialOpen, "A free battle's setup does not open the guide by itself");
+        window.CancelBattlePrep();
+        check(window.OpenBattlePrep(stage: learn) == null && window.BattleTutorialOpen && window.BattleTutorialStep == 0 && !window.BattleActive,
+            "The first Adventure stage setup opens the guide (no battle runs yet)");
         await Task.Delay(20);
         var guide = GuideWindow();
         long style = guide == null ? 0 : GetWindowLongPtr(new WindowInteropHelper(guide).Handle, -20).ToInt64();
@@ -125,22 +131,42 @@ internal static class TutorialChecks
 
         window.EndBattle();
 
-        // Lessons on the spot (2026-10-24): the first slime winding up next to the cat slows the battle
-        // to a quarter and rings the cat with "Lift the cat!"; lifting it ends the lesson for good.
+        // Lessons on the spot (2026-10-24), only in Adventure: the first slime winding up next to the
+        // cat in the stage that teaches it rings the cat with "Lift the cat!" (the battle keeps its
+        // speed); lifting it ends the lesson for good.
         Window? CoachWindow() => Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.Title == "Pet coach" && w.IsVisible);
         prefs.BattleLessonsSeen = new List<string> { PetWindow.LessonTarget, PetWindow.LessonStun };
         window.BattleCoachEnabled = true;
         window.Reset();
-        window.BattleTuning = new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 1 }, MaxAlive = 1, SpawnInterval = 0, SlimeMaxHp = 1000, CatDamage = 0, SlimeDamage = 0 };
-        check(window.StartBattle() == null, "(setup) a battle with lessons on");
-        pet.Grounded = true; pet.VX = pet.VY = 0; pet.Action = PetAction.Idle; pet.Y = Field<Area>(window, "bounds").Bottom - 112;
-        for (int i = 0; i < 120 && !Sim().Slimes.Any(s => s.Targetable); i++) Call(window, "TickBattle", 1.0 / 60);
-        foreach (var s in Sim().Slimes) s.X = pet.X + Field<PetSettings>(window, "settings").Width / 2 + 60; // Next to the cat.
-        for (int i = 0; i < 300 && window.BattleCoachLesson == null; i++) Call(window, "TickBattle", 1.0 / 60);
+        var firstSteps = new StageSpec { Id = PetWindow.StageFirstSteps, NameVi = "Bước đầu", NameEn = "First steps", Waves = new[] { Slimes(1) } };
+        // The chapter's five stages, so each lesson waits for the stage that teaches it.
+        var chapter = new[] { PetWindow.StageBreakThrough, PetWindow.StageHoldOn, PetWindow.StageCutSupport, PetWindow.StageSlimeKing }
+            .Select(id => new StageSpec { Id = id, NameVi = id, NameEn = id, Waves = new[] { Slimes(1) } }).Prepend(firstSteps).ToArray();
+        window.BattleTuning = new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 1 }, MaxAlive = 1, SpawnInterval = 0, SlimeMaxHp = 1000, CatDamage = 0, SlimeDamage = 0,
+            Campaign = new CampaignSpec { Chapters = new[] { new ChapterSpec { Id = "c1", NameVi = "C", NameEn = "C", Stages = chapter } } } };
+        window.AdventureProgress.Seen.Add(PetWindow.StageFirstSteps); // Its tip was read.
+        void ToGround() { pet.Grounded = true; pet.VX = pet.VY = 0; pet.Action = PetAction.Idle; pet.Y = Field<Area>(window, "bounds").Bottom - 112; }
+        void NextToCat() { foreach (var s in Sim().Slimes) s.X = pet.X + Field<PetSettings>(window, "settings").Width / 2 + 60; }
+        // Keeps every slime next to the cat until a lesson starts (at most `seconds` of battle).
+        void RunToLesson(double seconds)
+        {
+            for (int i = 0; i < seconds * 60 && window.BattleCoachLesson == null; i++) { NextToCat(); Call(window, "TickBattle", 1.0 / 60); }
+        }
+        check(window.StartBattle() == null, "(setup) a free battle with lessons on");
+        ToGround();
+        RunToLesson(8);
+        check(window.BattleCoachLesson == null && CoachWindow() == null, $"A free battle has no lessons ({window.BattleCoachLesson})");
+        window.EndBattle();
+        ToGround();
+        check(window.StartBattle(stage: firstSteps) == null, "(setup) the Adventure stage that teaches lifting");
+        ToGround();
+        RunToLesson(PetWindow.CoachFirst - 0.5);
+        check(window.BattleCoachLesson == null, $"No lesson in the first {PetWindow.CoachFirst:0} s of a stage ({window.BattleCoachLesson})");
+        RunToLesson(8);
         var coach = CoachWindow();
         long coachStyle = coach == null ? 0 : GetWindowLongPtr(new WindowInteropHelper(coach).Handle, -20).ToInt64();
-        check(window.BattleCoachLesson == PetWindow.LessonLift && window.BattleCoachSlow == PetWindow.CoachSlow && coach != null && (coachStyle & 0x20) != 0 && (coachStyle & 0x08000000) != 0,
-            $"A slime winding up by the cat starts the lift lesson: the battle slows to a quarter, a click-through mark shows ({window.BattleCoachLesson})");
+        check(window.BattleCoachLesson == PetWindow.LessonLift && coach != null && (coachStyle & 0x20) != 0 && (coachStyle & 0x08000000) != 0,
+            $"A slime winding up by the cat starts the lift lesson: a click-through mark shows ({window.BattleCoachLesson})");
         // PET_RENDER_REVIEW: a picture of the lesson's mark (ring, hand, words).
         if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string review && coach?.Content is FrameworkElement mark)
         {
@@ -155,30 +181,54 @@ internal static class TutorialChecks
             using var stream = System.IO.File.Create(System.IO.Path.Combine(review, "battle-coach-lift.png")); encoder.Save(stream);
         }
         double before = Sim().Time;
-        TickBattle(0.4);
-        check(Math.Abs(Sim().Time - before - 0.1) < 0.03, $"During the lesson the battle's time runs at a quarter ({Sim().Time - before:0.00} s in 0.4 s)");
+        TickBattle(0.2);
+        check(Math.Abs(Sim().Time - before - 0.2) < 0.03, $"During the lesson the battle runs at its own speed ({Sim().Time - before:0.00} s in 0.2 s)");
         window.Activate(); await Task.Delay(20);
         window.RaiseEvent(MouseEvent(UIElement.MouseLeftButtonDownEvent));
         SetField(window, "pressPosition", new Point(-100000, -100000));
         Call(window, "CheckDragThreshold");
         TickBattle(0.05);
-        check(window.BattleCoachLesson == null && window.BattleCoachSlow == 1 && CoachWindow() == null && prefs.BattleLessonsSeen.Contains(PetWindow.LessonLift),
-            "Lifting the cat ends the lesson (full speed again) and it is remembered");
+        check(window.BattleCoachLesson == null && CoachWindow() == null && prefs.BattleLessonsSeen.Contains(PetWindow.LessonLift),
+            "Lifting the cat ends the lesson and it is remembered");
         window.RaiseEvent(MouseEvent(UIElement.MouseLeftButtonUpEvent));
         window.EndBattle();
-        pet.Grounded = true; pet.VX = pet.VY = 0; pet.Action = PetAction.Idle; pet.Y = Field<Area>(window, "bounds").Bottom - 112;
-        string? again0 = window.StartBattle();
+        ToGround();
+        string? again0 = window.StartBattle(stage: firstSteps);
         check(again0 == null, $"(setup) another battle ({again0})");
-        pet.Grounded = true; pet.VX = pet.VY = 0; pet.Action = PetAction.Idle; pet.Y = Field<Area>(window, "bounds").Bottom - 112;
+        ToGround();
         bool again = false;
-        for (int i = 0; i < 600; i++) { Call(window, "TickBattle", 1.0 / 60); again |= window.BattleCoachLesson == PetWindow.LessonLift; }
-        check(!again, "A lesson already seen does not come back");
+        for (int i = 0; i < 600; i++) { NextToCat(); Call(window, "TickBattle", 1.0 / 60); again |= window.BattleCoachLesson == PetWindow.LessonLift; }
+        check(!again, "A lesson already learned does not come back");
         window.EndBattle();
+
+        // Not done: the lesson comes again at a later moment (CoachGap s apart), CoachTries times, then rests.
+        prefs.BattleLessonsSeen = new List<string> { PetWindow.LessonTarget, PetWindow.LessonStun };
+        ToGround();
+        check(window.StartBattle(stage: firstSteps) == null, "(setup) a stage where the cat is never lifted");
+        ToGround();
+        var shown = new List<double>();
+        for (int i = 0; i < 60 * 60 && shown.Count <= PetWindow.CoachTries; i++)
+        {
+            string? was = window.BattleCoachLesson;
+            NextToCat(); Call(window, "TickBattle", 1.0 / 60); ToGround();
+            if (was == null && window.BattleCoachLesson == PetWindow.LessonLift) shown.Add(Sim().Time);
+        }
+        bool spaced = shown.Zip(shown.Skip(1), (a, b) => b - a).All(gap => gap >= PetWindow.CoachGap);
+        check(shown.Count == PetWindow.CoachTries && spaced && prefs.BattleLessonsSeen.Contains(PetWindow.LessonLift),
+            $"Not lifting: the lesson comes {PetWindow.CoachTries} times at least {PetWindow.CoachGap:0} s apart, then rests ({string.Join(", ", shown.Select(t => t.ToString("0.0")))})");
+        window.EndBattle();
+        // A chapter stage's tip says what it teaches (the boss stage's lessons are not in the first stage's).
+        window.ShowStageTip(firstSteps);
+        string tip = window.BattleTutorialText;
+        check(tip.StartsWith("Tip · ") && tip.Contains("In this stage: ") && tip.Contains("lift the cat") && !tip.Contains("slam"),
+            $"The first stage's tip lists its lessons ({tip.Replace('\n', ' ')})");
+        window.CloseBattleTutorial();
         window.ShowBattleTutorial();
         check(prefs.BattleLessonsSeen.Count == 0, "How to play brings the lessons back");
         window.CloseBattleTutorial(finished: true);
         window.BattleCoachEnabled = false;
         prefs.BattleLessonsSeen = null;
+        window.AdventureProgress.Seen.Remove(PetWindow.StageFirstSteps);
 
         prefs.Language = language;
         prefs.BattleTutorialSeen = true;

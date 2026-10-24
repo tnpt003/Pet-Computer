@@ -4,6 +4,12 @@ Cập nhật: 2026-10-24 (Asia/Saigon). Lịch sử trước 21/10: docs/archive
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
+## Túi đồ: cộng hưởng thành huy hiệu có icon, hết tràn chữ 2026-10-25 (người dùng gửi ảnh, duyệt kế hoạch có icon "ok làm đi")
+- Nguyên nhân tràn: mỗi nhóm là StackPanel ngang (tên, chấm, chuỗi "★ … · còn N thẻ → ★ …") nên chữ không xuống dòng; ở Vô tận 3 mốc/nhóm thì dài quá khung.
+- Sửa `FillBagCards` (PetWindow.Inventory.cs): đầu nhóm (tên + điểm, thanh `SynergyBar` chia đoạn theo mốc, viền vàng khi đủ đoạn, "n/max" hoặc TỐI ĐA); mỗi mốc là `SynergyMedal` trong cột Grid bằng nhau: icon 44 (`SynergyIcon` mới ở PetWindow.BattleUpgrade.cs: Giáp gai, Phá giáp, Dư ảnh, Dư ảnh+, Bất khuất, Pháo đài, Chấn động, Hành quyết, Gió lốc; id lạ dùng theo effect rồi ngôi sao), vòng tiến độ (vàng đủ khi bật, màu nhóm khi là mốc kế tiếp), ★ khi bật, ổ khóa + mờ khi mốc xa; tên tối đa 2 dòng rồi "…", trạng thái Đã bật / còn N thẻ / mốc N; rê chuột hiện mô tả ở dòng dưới khối. Mỗi nhóm chỉ 1 cộng hưởng (Phiêu lưu/Viễn chinh/trận tự do) thì 3 nhóm xếp cạnh nhau. Huy hiệu đã bật lóe một vệt sáng một lần khi mở tab hoặc khi có cộng hưởng mới (`bagShineKey`, không lặp).
+- ja.json: bỏ khóa "{0} more → ★ {1}", thêm "{0} more", "at {0}", "On", "MAX", "Hover a synergy…". CHANGELOG 1.4.4 vi/en/ja.
+- Test thật: scripts/test.ps1 -Ui: Python OK; C# 1535; WPF 850/850 (mới, EndlessChecks: Vô tận đủ 9 mốc, vi/en/ja: 9 huy hiệu có icon, không chữ nào ra ngoài huy hiệu hay vùng túi đồ; BagChecks đổi theo chữ mới). i18n.py: 0 khóa thiếu ja. Đã xem ảnh render (PET_RENDER_REVIEW) Vô tận vi/en/ja, Phiêu lưu en, Viễn chinh ja; chưa xem hiệu ứng lóe sáng chạy thật, DPI khác.
+
 ## Sửa: combo đánh lan tới slime ở xa 2026-10-24 (người dùng gửi ảnh, "ok làm đi")
 - Nguyên nhân: splash của combo (`comboSplash` 0.6, `comboSplashRadius` 60) đo từ mép mục tiêu, không xét mèo → slime cách mèo ~gấp đôi tầm kiếm vẫn dính đòn + tia lửa (ảnh: mục tiêu là đá tinh anh sát mèo, slime xanh xa bị lan).
 - Sửa `PetBattle.Splash`: thêm điều kiện quái nằm trong tầm vung — phía mèo đang vung (`swingFacing`), mép gần cách tâm mèo ≤ tầm vũ khí + 14 DIPs (dung sai như đòn chính). Tầm đánh, sát thương, đẩy lùi combo giữ nguyên. rulesVersion: màn 1–5 9/16/18/19/19, Vô tận 5, Viễn chinh 6. CHANGELOG 1.4.4 (vi/en/ja), docs/BATTLE-DATA.md cập nhật.

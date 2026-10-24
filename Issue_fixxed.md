@@ -8,6 +8,12 @@ Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm 
 
 ---
 
+## #24 — Chữ cộng hưởng trong túi đồ tràn ra ngoài khung; cần sinh động hơn (2026-10-25)
+- **Triệu chứng:** tab Thẻ ở Vô tận: dòng "★ Giáp gai · còn 2 thẻ → ★ Bất khuất…" bị cắt ở mép phải túi đồ; phần cộng hưởng chỉ là chấm + chữ.
+- **Nguyên nhân:** mỗi nhóm là một hàng ngang (StackPanel) nên chữ không xuống dòng; Vô tận có 3 mốc/nhóm nên chuỗi dài quá khung.
+- **Sửa:** mỗi mốc là một huy hiệu có icon riêng (9 hình vector), vòng tiến độ, trạng thái, mô tả khi rê chuột; các huy hiệu nằm trong cột Grid bằng nhau, tên tối đa 2 dòng rồi "…". Thanh nhóm chia đoạn theo mốc. Lóe sáng một lần khi mở tab.
+- **Kiểm chứng:** WPF 850/850 (Vô tận vi/en/ja: không chữ nào ra ngoài huy hiệu hay túi đồ), xem ảnh render. Chưa xem trên màn hình thật.
+
 ## #23 — Đòn combo thứ 3 đánh trúng slime ở khoảng cách xa (2026-10-24, commit 61324a8)
 - **Triệu chứng:** combo trúng mục tiêu sát mèo nhưng slime đứng xa (khoảng gấp đôi tầm kiếm) cũng có tia lửa và mất máu.
 - **Nguyên nhân:** sát thương lan của combo tính mọi quái trong 60 DIPs từ mép mục tiêu, không xét vị trí mèo/tầm vũ khí.

@@ -308,3 +308,133 @@ public sealed class UpgradeIcon : FrameworkElement
         }
     }
 }
+
+// A synergy's medal in the Bag: its picture on a round back (drawn on a 44×44 design and scaled),
+// and a ring around it: Progress of the way to it (1: full), in Ring (null: no ring).
+// Picked by the synergy's id; a synergy battle.json adds later falls back on its effect.
+public sealed class SynergyIcon : FrameworkElement
+{
+    public string Id { get; init; } = "";
+    // The synergy's effect, for a picture when its id has none.
+    public string Fallback { get; init; } = "";
+    public Brush? Ring { get; init; }
+    public double Progress { get; init; }
+    private static readonly Brush Back = PetUi.Frozen(Color.FromArgb(0x40, 255, 255, 255)), Track = PetUi.Frozen(Color.FromArgb(0x30, 255, 255, 255));
+    private static readonly Brush Gold = PetUi.Frozen(Color.FromRgb(0xFF, 0xD3, 0x5C)), Pink = PetUi.Frozen(Color.FromRgb(0xF4, 0x9A, 0x7A));
+    private static readonly Brush Cream = PetUi.Frozen(Color.FromRgb(0xFF, 0xF3, 0xE2)), Stone = PetUi.Frozen(Color.FromRgb(0xB8, 0xB4, 0xC8));
+    private static readonly Brush Blue = PetUi.Frozen(Color.FromArgb(0xB0, 0x7C, 0xC0, 0xEE)), Green = PetUi.Frozen(Color.FromRgb(0x9A, 0xD8, 0x84));
+    private static readonly Pen Ink = PetUi.FrozenPen(PetUi.Frozen(Color.FromRgb(0x30, 0x2B, 0x48)), 2);
+    private static readonly Pen Line = PetUi.FrozenPen(Brushes.White, 3), Thin = PetUi.FrozenPen(Brushes.White, 2);
+    private static readonly Pen TrackPen = PetUi.FrozenPen(Track, 3);
+    private static readonly Pen WindInk = PetUi.FrozenPen(PetUi.Frozen(Color.FromRgb(0x30, 0x2B, 0x48)), 6.5), Wind = PetUi.FrozenPen(Gold, 3.5);
+    private static Geometry Shape(FormattableString path) => PetUi.FrozenGeometry(FormattableString.Invariant(path));
+
+    private string Picture => Id switch
+    {
+        "thorns" or "armor_break" or "afterimage" or "afterimage_plus" or "last_stand" or "fortress" or "shockwave" or "finisher" or "gale" => Id,
+        _ => Fallback switch
+        {
+            "thorns" => "thorns", "armorBreak" => "armor_break", "echo" => "afterimage", "lastStand" => "last_stand", "autoShield" => "fortress",
+            "comboStun" => "shockwave", "finisher" => "finisher", "rush" => "gale", _ => "star"
+        }
+    };
+
+    protected override void OnRender(DrawingContext dc)
+    {
+        double w = ActualWidth, h = ActualHeight;
+        if (w <= 0 || h <= 0) return;
+        double k = Math.Min(w, h) / 44;
+        dc.PushTransform(new TranslateTransform((w - 44 * k) / 2, (h - 44 * k) / 2));
+        dc.PushTransform(new ScaleTransform(k, k));
+        const double cx = 22, cy = 22;
+        dc.DrawEllipse(Back, null, new Point(cx, cy), 20, 20);
+        switch (Picture)
+        {
+            case "thorns": // A shield with spikes all round.
+                foreach (var (x, y, dx, dy) in new[] { (cx, cy - 14, 0.0, -1.0), (cx - 12, cy - 7, -1.0, -0.4), (cx + 12, cy - 7, 1.0, -0.4), (cx - 11, cy + 5, -1.0, 0.5), (cx + 11, cy + 5, 1.0, 0.5) })
+                    dc.DrawGeometry(Cream, Ink, Shape($"M {x - dy * 4},{y + dx * 4} L {x + dx * 7},{y + dy * 7} L {x + dy * 4},{y - dx * 4} Z"));
+                dc.DrawGeometry(Gold, Ink, Shape($"M {cx},{cy - 13} L {cx + 11},{cy - 8} C {cx + 11},{cy + 4} {cx + 6},{cy + 10} {cx},{cy + 14} C {cx - 6},{cy + 10} {cx - 11},{cy + 4} {cx - 11},{cy - 8} Z"));
+                break;
+            case "armor_break": // A stone shield cracked by a blade.
+                dc.DrawGeometry(Stone, Ink, Shape($"M {cx - 2},{cy - 14} L {cx + 11},{cy - 8} C {cx + 11},{cy + 4} {cx + 6},{cy + 11} {cx - 2},{cy + 15} C {cx - 9},{cy + 11} {cx - 14},{cy + 4} {cx - 14},{cy - 8} Z"));
+                dc.DrawGeometry(null, Ink, Shape($"M {cx - 4},{cy - 13} L {cx},{cy - 5} L {cx - 5},{cy + 1} L {cx},{cy + 6} L {cx - 3},{cy + 14}"));
+                dc.DrawLine(Line, new Point(cx - 15, cy + 13), new Point(cx + 15, cy - 13));
+                dc.DrawGeometry(Gold, Ink, Shape($"M {cx + 11},{cy - 17} L {cx + 17},{cy - 11} L {cx + 13},{cy - 9} L {cx + 9},{cy - 13} Z"));
+                break;
+            case "afterimage": // A sword and its fading echo.
+            case "afterimage_plus": // Two echoes and a plus.
+            {
+                bool plus = Picture == "afterimage_plus";
+                var copies = plus ? new[] { (-16.0, 0.35), (-9.0, 0.6), (-2.0, 1.0) } : new[] { (-14.0, 0.5), (-4.0, 1.0) };
+                foreach (var (shift, opacity) in copies)
+                {
+                    dc.PushOpacity(opacity);
+                    dc.PushTransform(new TranslateTransform(cx + shift, cy + 15));
+                    PetRenderer.DrawWeaponIcon(dc, false);
+                    dc.Pop();
+                    dc.Pop();
+                }
+                if (plus)
+                {
+                    dc.DrawEllipse(Gold, Ink, new Point(cx + 13, cy - 13), 6.5, 6.5);
+                    dc.DrawLine(Ink, new Point(cx + 10, cy - 13), new Point(cx + 16, cy - 13));
+                    dc.DrawLine(Ink, new Point(cx + 13, cy - 16), new Point(cx + 13, cy - 10));
+                }
+                break;
+            }
+            case "last_stand": // A heart that keeps its flag up.
+                dc.DrawLine(Ink, new Point(cx + 9, cy - 1), new Point(cx + 9, cy - 17));
+                dc.DrawGeometry(Gold, Ink, Shape($"M {cx + 9},{cy - 17} L {cx + 18},{cy - 14} L {cx + 9},{cy - 11} Z"));
+                dc.DrawGeometry(Pink, Ink, Shape($"M {cx - 2},{cy + 14} C {cx - 19},{cy + 3} {cx - 16},{cy - 12} {cx - 2},{cy - 5} C {cx + 12},{cy - 12} {cx + 15},{cy + 3} {cx - 2},{cy + 14} Z"));
+                dc.DrawLine(Line, new Point(cx - 9, cy - 2), new Point(cx - 6, cy - 5));
+                break;
+            case "fortress": // A tower inside a shield bubble.
+                dc.DrawEllipse(Blue, null, new Point(cx, cy), 17, 17);
+                dc.DrawGeometry(Cream, Ink, Shape($"M {cx - 9},{cy + 12} L {cx - 9},{cy - 9} L {cx - 5},{cy - 9} L {cx - 5},{cy - 5} L {cx - 2},{cy - 5} L {cx - 2},{cy - 9} L {cx + 2},{cy - 9} L {cx + 2},{cy - 5} L {cx + 5},{cy - 5} L {cx + 5},{cy - 9} L {cx + 9},{cy - 9} L {cx + 9},{cy + 12} Z"));
+                dc.DrawGeometry(Ink.Brush, null, Shape($"M {cx - 3},{cy + 12} L {cx - 3},{cy + 5} C {cx - 3},{cy + 1} {cx + 3},{cy + 1} {cx + 3},{cy + 5} L {cx + 3},{cy + 12} Z"));
+                dc.DrawEllipse(null, Thin, new Point(cx, cy), 17, 17);
+                break;
+            case "shockwave": // A star of a hit with rings running out.
+                dc.DrawEllipse(null, Thin, new Point(cx, cy + 2), 17, 7);
+                dc.DrawEllipse(null, Line, new Point(cx, cy + 2), 11, 4.5);
+                dc.DrawGeometry(Gold, Ink, Shape($"M {cx},{cy - 15} L {cx + 4},{cy - 6} L {cx + 13},{cy - 5} L {cx + 6},{cy + 1} L {cx + 8},{cy + 10} L {cx},{cy + 5} L {cx - 8},{cy + 10} L {cx - 6},{cy + 1} L {cx - 13},{cy - 5} L {cx - 4},{cy - 6} Z"));
+                break;
+            case "finisher": // An axe over a nearly empty HP bar.
+                dc.DrawRoundedRectangle(Back, Ink, new Rect(cx - 15, cy + 7, 30, 8), 3, 3);
+                dc.DrawRoundedRectangle(Pink, null, new Rect(cx - 14, cy + 8, 5, 6), 2, 2);
+                dc.DrawLine(Ink, new Point(cx - 11, cy + 4), new Point(cx + 7, cy - 14));
+                dc.DrawGeometry(Gold, Ink, Shape($"M {cx + 1},{cy - 15} C {cx + 10},{cy - 20} {cx + 18},{cy - 10} {cx + 13},{cy - 2} L {cx + 4},{cy - 8} Z"));
+                break;
+            case "gale": // A gust curling round with speed lines.
+                foreach (var pen in new[] { WindInk, Wind })
+                    dc.DrawGeometry(null, pen, Shape($"M {cx + 13},{cy - 8} C {cx + 4},{cy - 17} {cx - 14},{cy - 11} {cx - 12},{cy + 2} C {cx - 10},{cy + 12} {cx + 5},{cy + 12} {cx + 6},{cy + 3} C {cx + 7},{cy - 3} {cx - 2},{cy - 5} {cx - 3},{cy + 1}"));
+                dc.DrawLine(Line, new Point(cx + 8, cy + 9), new Point(cx + 16, cy + 9));
+                dc.DrawLine(Line, new Point(cx + 11, cy + 14), new Point(cx + 17, cy + 14));
+                break;
+            default: // Any other synergy: a star.
+                dc.DrawGeometry(Green, Ink, Shape($"M {cx},{cy - 14} L {cx + 4},{cy - 5} L {cx + 13},{cy - 4} L {cx + 6},{cy + 2} L {cx + 8},{cy + 12} L {cx},{cy + 7} L {cx - 8},{cy + 12} L {cx - 6},{cy + 2} L {cx - 13},{cy - 4} L {cx - 4},{cy - 5} Z"));
+                break;
+        }
+        if (Ring != null)
+        {
+            dc.DrawEllipse(null, TrackPen, new Point(cx, cy), 20.5, 20.5);
+            double share = Math.Clamp(Progress, 0, 1);
+            var ring = new Pen(Ring, 3) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
+            if (share >= 0.999) dc.DrawEllipse(null, ring, new Point(cx, cy), 20.5, 20.5);
+            else if (share > 0)
+            {
+                // Clockwise from the top.
+                double end = share * 2 * Math.PI;
+                var arc = new StreamGeometry();
+                using (var g = arc.Open())
+                {
+                    g.BeginFigure(new Point(cx, cy - 20.5), false, false);
+                    g.ArcTo(new Point(cx + Math.Sin(end) * 20.5, cy - Math.Cos(end) * 20.5), new Size(20.5, 20.5), 0, share > 0.5, SweepDirection.Clockwise, true, false);
+                }
+                dc.DrawGeometry(null, ring, arc);
+            }
+        }
+        dc.Pop();
+        dc.Pop();
+    }
+}

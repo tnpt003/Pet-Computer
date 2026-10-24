@@ -39,6 +39,8 @@ public sealed partial class PetWindow
     private string? bagContext;
     private string bagTab = BagStatsTab;
     private string bagSignature = "";
+    // The tab and switched-on synergies the medals last shone for (they shine again only when it changes).
+    private string bagShineKey = "";
     private double bagRefresh;
     private bool bagPlacing;
     // Where the user dragged the Bag (DIPs; null: not dragged in this session).
@@ -105,7 +107,7 @@ public sealed partial class PetWindow
         window.Close();
         bagTabButtons.Clear();
         bagBody = null; bagTitle = bagSubtitle = bagHpText = null; bagHpBar = bagHpFill = null;
-        bagSignature = "";
+        bagSignature = bagShineKey = "";
         if (bagContext == BagBattle) SetBattlePause(BattlePause.Bag, false);
         bagContext = null;
         System.Diagnostics.Trace.WriteLine("Bag closed.");
@@ -492,31 +494,162 @@ public sealed partial class PetWindow
         "defense" => PetUi.Hex("#7CC0EE"), "power" => PetUi.Hex("#F49272"), "speed" => PetUi.Hex("#9AD884"), _ => PetUi.Game.CardRim
     };
 
+    private static readonly Brush MedalOnBack = PetUi.Hex("#30FFD35C"), MedalBack = PetUi.Hex("#14FFFFFF");
+
+    // A group's points as a bar cut into one piece per synergy (a threshold at each cut).
+    private static FrameworkElement SynergyBar(int points, IReadOnlyList<int> thresholds, Brush color)
+    {
+        var bar = new Grid { Height = 8, VerticalAlignment = VerticalAlignment.Center };
+        int from = 0;
+        for (int i = 0; i < thresholds.Count; i++)
+        {
+            int span = Math.Max(1, thresholds[i] - from), filled = Math.Clamp(points - from, 0, span);
+            bar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(span, GridUnitType.Star) });
+            var piece = new Grid();
+            piece.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(filled, GridUnitType.Star) });
+            piece.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(span - filled, GridUnitType.Star) });
+            piece.Children.Add(new Border { Background = color });
+            var segment = new Border
+            {
+                Background = PetUi.Game.BarBack, CornerRadius = new CornerRadius(4), ClipToBounds = true, Margin = new Thickness(i == 0 ? 0 : 2, 0, i == thresholds.Count - 1 ? 0 : 2, 0),
+                BorderBrush = filled == span ? PetUi.Game.Gold : Brushes.Transparent, BorderThickness = new Thickness(filled == span ? 1 : 0), Child = piece
+            };
+            Grid.SetColumn(segment, i);
+            bar.Children.Add(segment);
+            from = thresholds[i];
+        }
+        return bar;
+    }
+
+    // One synergy's medal: its picture (a gold ring and a star once on; a ring filling on the way to
+    // the next one; faded with a lock further on), its name (two lines at most, then "…") and its state.
+    // shineAt ≥ 0: a switched-on medal shines once, that many medals after the first.
+    private FrameworkElement SynergyMedal(SynergySpec y, int points, int from, bool next, string group, TextBlock about, int shineAt)
+    {
+        bool on = points >= y.At;
+        var picture = new Grid { Width = 44, Height = 44, HorizontalAlignment = HorizontalAlignment.Center };
+        picture.Children.Add(new SynergyIcon
+        {
+            Id = y.Id, Fallback = y.Effect, Width = 44, Height = 44, Opacity = on || next ? 1 : 0.45,
+            Ring = on ? PetUi.Game.Gold : next ? GroupColor(group) : null, Progress = on ? 1 : (points - from) / (double)Math.Max(1, y.At - from)
+        });
+        if (on)
+            picture.Children.Add(new Border { Width = 17, Height = 17, CornerRadius = new CornerRadius(8.5), Background = PetUi.Game.Gold, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Top,
+                Margin = new Thickness(0, -3, -5, 0), Child = new TextBlock { Text = "★", FontSize = PetUi.CaptionSize, FontWeight = FontWeights.Bold, Foreground = PetUi.Game.GoldInk, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center } });
+        else if (!next)
+            picture.Children.Add(new BagIcon { Kind = "lock", Width = 15, Height = 15, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Bottom, Margin = new Thickness(0, 0, -4, -2) });
+        var name = new TextBlock
+        {
+            Text = y.Name(preferences.Language), FontSize = PetUi.CaptionSize, FontWeight = FontWeights.SemiBold, Foreground = on || next ? Brushes.White : PetUi.Game.Soft,
+            TextWrapping = TextWrapping.Wrap, TextTrimming = TextTrimming.CharacterEllipsis, TextAlignment = TextAlignment.Center,
+            LineStackingStrategy = LineStackingStrategy.BlockLineHeight, LineHeight = 14, MaxHeight = 28, Margin = new Thickness(0, 4, 0, 0)
+        };
+        var state = new TextBlock
+        {
+            Text = on ? L("Đã bật", "On") : next ? LF($"còn {y.At - points} thẻ", $"{y.At - points} more") : LF($"mốc {y.At}", $"at {y.At}"),
+            FontSize = PetUi.CaptionSize, FontWeight = FontWeights.Bold, Foreground = on ? PetUi.Game.Gold : next ? GroupColor(group) : PetUi.Game.Soft,
+            TextTrimming = TextTrimming.CharacterEllipsis, TextAlignment = TextAlignment.Center, Margin = new Thickness(0, 1, 0, 0)
+        };
+        var face = new Grid { Children = { new StackPanel { Children = { picture, name, state } } } };
+        var medal = new Border
+        {
+            Background = on ? MedalOnBack : MedalBack, BorderBrush = on ? PetUi.Game.Gold : next ? GroupColor(group) : PetUi.Game.CardRim,
+            BorderThickness = new Thickness(on ? 1.5 : 1), CornerRadius = new CornerRadius(9), Padding = new Thickness(4, 6, 4, 5), ClipToBounds = true, Child = face, Tag = "synergy"
+        };
+        if (on && shineAt >= 0)
+        {
+            // A soft light sweeps across once; it ends outside the medal (clipped) and stays there.
+            var sweep = new TranslateTransform(-60, 0);
+            var light = new LinearGradientBrush { StartPoint = new Point(0, 0), EndPoint = new Point(1, 0.3) };
+            light.GradientStops.Add(new GradientStop(Color.FromArgb(0, 255, 245, 210), 0));
+            light.GradientStops.Add(new GradientStop(Color.FromArgb(0x90, 255, 245, 210), 0.5));
+            light.GradientStops.Add(new GradientStop(Color.FromArgb(0, 255, 245, 210), 1));
+            face.Children.Add(new Border { Width = 34, Margin = new Thickness(-4, -6, 0, -5), HorizontalAlignment = HorizontalAlignment.Left, Background = light, IsHitTestVisible = false, RenderTransform = sweep });
+            sweep.BeginAnimation(TranslateTransform.XProperty, new System.Windows.Media.Animation.DoubleAnimation(-60, 260, TimeSpan.FromSeconds(0.7))
+            {
+                BeginTime = TimeSpan.FromSeconds(0.15 + 0.1 * shineAt), EasingFunction = new System.Windows.Media.Animation.QuadraticEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseInOut }
+            });
+        }
+        string desc = y.Describe(preferences.Language);
+        string what = $"★ {y.Name(preferences.Language)} · {BuildGroups.Name(group, preferences.Language)} {y.At}" + (desc.Length > 0 ? " — " + desc : "");
+        medal.MouseEnter += (_, _) => { about.Text = what; about.Foreground = Brushes.White; };
+        return medal;
+    }
+
     private void FillBagCards(BagView view)
     {
         var sim = view.Sim;
         var settings = sim.Settings;
         if (BagPreview(view) is var (offered, _, _)) AddPreviewCard(view, offered, null);
-        // Each group: its points as pips, what synergies it has switched on, and how far the next one is.
+        // Each group: a bar cut at its synergies' thresholds, then one medal per synergy (picture,
+        // name, state) in equal columns, so no text runs out of the Bag. Hovering one says what it does.
         var progress = new StackPanel();
-        foreach (var group in BuildGroups.All)
+        var synergyAbout = BagLine(L("Rê chuột lên một cộng hưởng để xem nó làm gì.", "Hover a synergy to see what it does."), PetUi.CaptionSize, PetUi.Game.Soft);
+        synergyAbout.Margin = new Thickness(2, 6, 0, 0); synergyAbout.MinHeight = 30;
+        // The switched-on medals shine once when they are first shown (opening the tab, a new one).
+        var on = settings.SynergyList.Where(y => sim.CanUnlock(y) && sim.GroupPoints(y.Group) >= y.At).Select(y => y.Id).ToList();
+        string shineKey = bagTab + ":" + string.Join(",", on);
+        bool shine = shineKey != bagShineKey;
+        bagShineKey = shineKey;
+        int shown = 0;
+        var groups = BuildGroups.All.Select(g => (Group: g, Points: sim.GroupPoints(g), Synergies: settings.SynergyList.Where(y => y.Group == g && sim.CanUnlock(y)).OrderBy(y => y.At).ToList()))
+            .Where(g => g.Synergies.Count > 0 || g.Points > 0).ToList();
+        // One synergy a group (the Adventure): the groups side by side, one column each.
+        bool sideBySide = groups.Count > 1 && groups.All(g => g.Synergies.Count <= 1);
+        var columns = new Grid();
+        foreach (var (group, points, synergies) in groups)
         {
-            var synergies = settings.SynergyList.Where(y => y.Group == group && sim.CanUnlock(y)).OrderBy(y => y.At).ToList();
-            int points = sim.GroupPoints(group);
-            if (synergies.Count == 0 && points == 0) continue;
-            int pips = Math.Max(points, synergies.Count == 0 ? 0 : synergies.Max(y => y.At));
-            var dots = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(8, 0, 8, 0) };
-            for (int i = 0; i < pips; i++)
-                dots.Children.Add(new Border { Width = 9, Height = 9, CornerRadius = new CornerRadius(4.5), Margin = new Thickness(0, 0, 3, 0),
-                    Background = i < points ? GroupColor(group) : Brushes.Transparent, BorderBrush = GroupColor(group), BorderThickness = new Thickness(1.3) });
-            var parts = synergies.Where(y => points >= y.At).Select(y => "★ " + y.Name(preferences.Language)).ToList();
-            if (synergies.FirstOrDefault(y => points < y.At) is SynergySpec next)
-                parts.Add(LF($"còn {next.At - points} thẻ → ★ {next.Name(preferences.Language)}", $"{next.At - points} more → ★ {next.Name(preferences.Language)}"));
-            var name = BagLine($"{BuildGroups.Name(group, preferences.Language)} {points}", PetUi.SmallSize, GroupColor(group), bold: true); name.Margin = new Thickness(0); name.Width = 96;
-            var state = BagLine(string.Join(" · ", parts), PetUi.CaptionSize, parts.Any(p => p.StartsWith("★")) ? PetUi.Game.Gold : PetUi.Game.Soft); state.Margin = new Thickness(0); state.VerticalAlignment = VerticalAlignment.Center;
-            progress.Children.Add(new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, progress.Children.Count == 0 ? 0 : 5, 0, 0), Children = { name, dots, state } });
+            var name = BagLine($"{BuildGroups.Name(group, preferences.Language)} {points}", PetUi.SmallSize, GroupColor(group), bold: true);
+            name.Margin = new Thickness(0); name.TextWrapping = TextWrapping.NoWrap; name.TextTrimming = TextTrimming.CharacterEllipsis; name.VerticalAlignment = VerticalAlignment.Center;
+            var head = new Grid();
+            head.ColumnDefinitions.Add(new ColumnDefinition { Width = sideBySide ? new GridLength(1, GridUnitType.Star) : GridLength.Auto });
+            head.ColumnDefinitions.Add(new ColumnDefinition { Width = sideBySide ? new GridLength(0) : new GridLength(1, GridUnitType.Star) });
+            head.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            head.Children.Add(name);
+            var block = new StackPanel { Children = { head } };
+            if (synergies.Count > 0)
+            {
+                int last = synergies[^1].At;
+                var bar = SynergyBar(points, synergies.Select(y => y.At).ToList(), GroupColor(group));
+                var count = BagLine(points >= last ? L("TỐI ĐA", "MAX") : $"{points}/{last}", PetUi.CaptionSize, points >= last ? PetUi.Game.Gold : PetUi.Game.Soft, bold: true);
+                count.Margin = new Thickness(6, 0, 0, 0); count.TextWrapping = TextWrapping.NoWrap; count.VerticalAlignment = VerticalAlignment.Center;
+                Grid.SetColumn(count, 2);
+                head.Children.Add(count);
+                if (sideBySide) { bar.Margin = new Thickness(0, 5, 0, 0); block.Children.Add(bar); }
+                else { bar.Margin = new Thickness(10, 0, 4, 0); Grid.SetColumn(bar, 1); head.Children.Add(bar); }
+                var medals = new Grid();
+                int slots = sideBySide ? 1 : Math.Max(3, synergies.Count);
+                for (int c = 0; c < slots; c++) medals.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                var next = synergies.FirstOrDefault(y => points < y.At);
+                for (int i = 0; i < synergies.Count; i++)
+                {
+                    var medal = SynergyMedal(synergies[i], points, i == 0 ? 0 : synergies[i - 1].At, synergies[i] == next, group, synergyAbout, shine ? shown++ : -1);
+                    medal.Margin = new Thickness(i == 0 ? 0 : 3, 6, i == slots - 1 ? 0 : 3, 0);
+                    Grid.SetColumn(medal, i);
+                    medals.Children.Add(medal);
+                }
+                block.Children.Add(medals);
+            }
+            if (sideBySide)
+            {
+                int column = columns.ColumnDefinitions.Count;
+                columns.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                block.Margin = new Thickness(column == 0 ? 0 : 3, 0, column == groups.Count - 1 ? 0 : 3, 0);
+                Grid.SetColumn(block, column);
+                columns.Children.Add(block);
+            }
+            else
+            {
+                block.Margin = new Thickness(0, progress.Children.Count == 0 ? 0 : 10, 0, 0);
+                progress.Children.Add(block);
+            }
         }
-        if (progress.Children.Count > 0) bagBody!.Children.Add(BagCard(progress, bottom: 8));
+        if (sideBySide) progress.Children.Add(columns);
+        if (groups.Count > 0)
+        {
+            progress.Children.Add(synergyAbout);
+            bagBody!.Children.Add(BagCard(progress, bottom: 8));
+        }
 
         var cards = settings.UpgradeList.Where(u => sim.Stacks(u.Id) > 0).OrderBy(u => Array.IndexOf(BuildGroups.All, u.Group ?? "")).ToList();
         var detail = BagLine(L("Rê chuột lên một thẻ để xem nó làm gì.", "Hover a card to see what it does."), PetUi.CaptionSize, PetUi.Game.Soft);

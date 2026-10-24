@@ -82,6 +82,48 @@ internal static class EndlessChecks
             for (int i = 0; i < 400 && window.Battle?.Wave < 3; i++) { Fight(0.05); if (window.Battle?.Slimes.Count > 0) window.Battle.Slimes[0].X = pet.X + 56 + 50; }
             check(window.OpenBattleBag() == null && window.BattleBagMode == PetWindow.BagEndless, "The bag opens as Infinity's");
             window.CloseBattleBag();
+
+            // The Cards tab's synergy medals (2026-10-24): all nine tiers shown, each with its picture;
+            // in every language each text stays inside its medal and every medal inside the Bag.
+            var taken = (Dictionary<string, int>)typeof(BattleSim).GetField("taken", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(window.Battle)!;
+            var held = new Dictionary<string, int>(taken);
+            string tabBefore = Field<string>(window, "bagTab");
+            foreach (var (group, n) in new[] { ("defense", 4), ("power", 1), ("speed", 9) })
+                taken[window.Battle!.Settings.UpgradeList.First(u => u.Group == group).Id] = n;
+            static IEnumerable<DependencyObject> Tree(DependencyObject node)
+            {
+                yield return node;
+                for (int i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(node); i++)
+                    foreach (var child in Tree(System.Windows.Media.VisualTreeHelper.GetChild(node, i))) yield return child;
+            }
+            foreach (string lang in new[] { "vi", "en", "ja" })
+            {
+                prefs.Language = lang;
+                window.OpenBattleBag(PetWindow.BagCardsTab);
+                await Task.Delay(30);
+                var content = (FrameworkElement)Find("Pet bag")!.Content;
+                content.UpdateLayout();
+                var scroll = Tree(content).OfType<ScrollViewer>().First();
+                var medals = Tree(scroll).OfType<Border>().Where(b => "synergy".Equals(b.Tag)).ToList();
+                var outside = new List<string>();
+                foreach (var medal in medals)
+                    foreach (var line in Tree(medal).OfType<TextBlock>())
+                    {
+                        var r = line.TransformToAncestor(medal).TransformBounds(new Rect(line.RenderSize));
+                        if (r.Left < -0.5 || r.Right > medal.ActualWidth + 0.5 || r.Bottom > medal.ActualHeight + 0.5) outside.Add(line.Text);
+                    }
+                foreach (var line in Tree(scroll).OfType<TextBlock>().Where(t => t.IsVisible))
+                    if (line.TransformToAncestor(scroll).TransformBounds(new Rect(line.RenderSize)).Right > scroll.ViewportWidth + 0.5) outside.Add(line.Text);
+                int pictures = medals.Sum(m => Tree(m).OfType<SynergyIcon>().Count());
+                check(medals.Count == 9 && pictures == 9 && outside.Count == 0,
+                    $"Bag ({lang}): nine synergy medals with pictures, no text outside its medal or the Bag ({medals.Count} medals, {pictures} pictures; outside: {string.Join(" / ", outside)})");
+                Shot("Pet bag", $"bag-endless-synergies-{lang}.png");
+                window.CloseBattleBag();
+            }
+            prefs.Language = "en";
+            SetField(window, "bagTab", tabBefore);
+            taken.Clear();
+            foreach (var (id, n) in held) taken[id] = n;
             int reached = window.Battle!.Wave;
             Shot("Pet battle HUD", "endless-hud-en.png");
 

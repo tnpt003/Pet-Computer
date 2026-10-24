@@ -126,7 +126,7 @@ internal static class BagChecks
             text = window.BattleBagText;
             string sharp = data.UpgradeList.First(u => u.Id == "sharp").Name("en");
             check(window.BattleBagTab == PetWindow.BagCardsTab && text.Contains(sharp) && text.Contains("×2") && text.Contains("Defense 3") && text.Contains("Power 2")
-                && sim.Synergies.All(y => text.Contains("★ " + y.Name("en"))) && text.Contains("more → ★"),
+                && sim.Synergies.All(y => text.Contains(y.Name("en"))) && text.Contains("On") && text.Contains("1 more") && text.Contains("Hover a synergy"),
                 $"Cards tab: tiles, ×n, each group's synergy progress ({text.Replace('\n', '|')})");
             Shot("Pet bag", "bag-adventure-cards-en.png");
             Click(Button(bag!, "Relics")!);

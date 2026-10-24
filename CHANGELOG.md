@@ -14,6 +14,7 @@
   - Thẻ mới: Móng vuốt, Kết liễu, Nhịp dài, Lướt gió, Hồi phục, Kiên cường, và thẻ tiện ích (Tay nhanh, Sạc pin, Hút năng lượng, Bom to, Khiên dày).
   - Vô tận: thẻ sau mỗi 2 đợt, chọn 2 thẻ sau đợt trùm, giới hạn thẻ cao hơn, cộng hưởng mới ở mốc 6 và 9 thẻ cùng nhóm (từ đợt 48 bật hết), tinh anh nhiều dần, trùm là Vua chương 1 (từ đợt 30 có thêm Vua thường).
   - Trận tự do kết thúc bằng Vua chương 1.
+- **Cộng hưởng trong túi đồ có hình:** mỗi mốc cộng hưởng là một ô có icon riêng, vòng tiến độ, trạng thái (Đã bật / còn N thẻ / mốc N) và mô tả khi rê chuột; thanh nhóm chia theo mốc. Chữ không còn tràn ra ngoài túi đồ.
 - **Hướng dẫn phiêu lưu:** Phiêu lưu đổi tên thành Hướng dẫn phiêu lưu và là nơi học chơi. Đúng lúc tình huống xảy ra, trận đứng hình, màn hình tối đi và chỉ chỗ cần làm sáng lên kèm một dòng chữ; bạn vẫn kéo được mèo và bấm kỹ năng, icon để làm theo. Màn 1 dạy kéo mèo né đòn (cả cú lao của slime nhanh); màn 2 giới thiệu HUD, 5 kỹ năng, túi đồ, icon app, thẻ và cộng hưởng; màn 3 lần lượt đưa ra từng app độc và icon bị nhiễm kèm cách xử lý (app độc có từ màn 3, màn 2 không còn); màn 4 luyện Đẩy cắt hồi máu và giới thiệu tinh anh của cả 4 loại slime (màn 3 không còn tinh anh); màn 5 dạy từng chiêu của Vua Slime. Có nút Bỏ qua; ô "Hướng dẫn trong trận" ở bảng chuẩn bị tick sẵn (cả màn đã thắng), bỏ tick thì được nhớ. Mỗi màn ghi rõ mình sẽ học gì (link "Màn này dạy gì"). Bỏ hướng dẫn 5 thẻ và dấu tay cũ. Đẩy hồi lại 5 giây.
 - Kỷ lục Phiêu lưu và Vô tận được tách theo luật mới; chuyến Viễn chinh đang đi không bị ảnh hưởng.
 
@@ -38,6 +39,7 @@
   - New cards: Claws, Finishing blow, Long rhythm, Tailwind, Regrowth, Steady, and utility cards (Quick hands, Power bank, Energy drain, Big bomb, Thick bubble).
   - Infinity: a card every 2 waves, two after a boss wave, higher card limits, new synergies at 6 and 9 cards of a group (all on from wave 48), more elites as it goes, the chapter King as its boss (with the plain King from wave 30).
   - The free battle ends with the chapter King.
+- **Bag synergies get pictures:** each synergy tier is a medal with its own icon, a progress ring, its state (On / N more / at N) and a description on hover; the group bar is cut at each tier. Text no longer runs out of the Bag.
 - **Adventure Guide:** the Adventure is now the Adventure Guide, where the game is learned. At the right moment the battle stands still, the screen goes dark and only what to use is lit, with one line of text; you can still lift the cat and click skills and icons to do it. Stage 1 teaches lifting the cat out of hits (a quick slime's dash too); stage 2 the HUD, the five skills, the bag, the app icons, cards and synergies; stage 3 brings each malware and an infected icon in turn with what to do (malware starts at stage 3, none in stage 2); stage 4 practises Push against heals and shows an elite of all four slimes (none in stage 3); stage 5 the Slime King's moves one by one. Skip is there; the setup panel's "Guide in the battle" starts ticked (won stages too) and an untick is remembered. Each stage says what you learn ("What you learn here"). The five-card guide and the old pointing hand are gone. Push is back to 5 s.
 - Adventure and Infinity records start over under the new rules (old ones are kept apart); an Expedition run under way is not affected.
 
@@ -62,6 +64,7 @@
   - 新カード：ツメ、とどめ、ロングリズム、追い風、再生、不屈、便利カード（早業、モバイルバッテリー、エナジードレイン、ビッグボム、厚いバブル）。
   - 無限：2 ウェーブごとにカード、ボスの後は 2 枚、カード上限アップ、同じグループ 6 枚と 9 枚で新シナジー（48 ウェーブから全部オン）、エリートが段々増え、ボスは第 1 章のキング（30 ウェーブからは通常のキングも）。
   - フリーバトルの最後は第 1 章のキング。
+- **バッグのシナジーに絵：** 各段階が専用アイコン付きのメダルになり、進行リング・状態（発動中／あと N 枚／N で解放）・カーソルで説明を表示。グループのバーは段階ごとに区切られます。文字がバッグからはみ出さなくなりました。
 - **アドベンチャーガイド：** アドベンチャーはアドベンチャーガイドになり、遊び方を学ぶ場所になりました。大事な場面でバトルが止まり、画面が暗くなって使うものだけが光り、短い説明が出ます。止まっている間も猫を持ち上げたり、スキルやアイコンをクリックしたりできます。ステージ 1 は攻撃のよけ方（素早いスライムの突進も）、ステージ 2 は HUD・5 つのスキル・バッグ・アプリアイコン・カードとシナジー、ステージ 3 はマルウェアと感染アイコンを 1 つずつ対処法とともに（マルウェアはステージ 3 から、ステージ 2 にはなし）、ステージ 4 は押し出しで回復を止める練習と 4 種類すべてのエリート（ステージ 3 にはエリートなし）、ステージ 5 はスライムキングの技を 1 つずつ。スキップ可能。準備画面の「バトル中のガイド」は最初からオン（クリア済みステージも）、外すと次回も保たれます。各ステージで学ぶことは「このステージで学ぶこと」で確認できます。5 枚のガイドと以前の指差しは廃止。押し出しは 5 秒に戻りました。
 - アドベンチャーと無限の記録は新ルールで別になります（以前の記録は残ります）。進行中の遠征には影響しません。
 

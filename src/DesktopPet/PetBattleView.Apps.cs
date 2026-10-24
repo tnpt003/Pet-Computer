@@ -75,6 +75,20 @@ public sealed partial class BattleFieldView
         }
     }
 
+    // Where things are drawn on the strip (view DIPs), for the Adventure Guide's lit spots.
+    public Rect? PopupBounds(int id) => sim.FindPopup(id) is BattlePopup popup ? PopupRect(popup, Floor) : null;
+    public Rect? SpinnerBounds(int id)
+    {
+        if (sim.FindHazard(id) is not BattleHazard hazard) return null;
+        var at = Spinner(hazard, OriginX, Floor);
+        return new Rect(at.X - 26, at.Y - 26, 52, 52);
+    }
+    public Rect? WallBounds(int id) => sim.FindHazard(id) is BattleHazard wall ? WallRect(wall, OriginX, Floor) : null;
+    // A slime as drawn at its tallest (a windup swells it to ×1.28), with the elite label over its head.
+    public Rect SlimeBounds(Slime slime) => new(slime.X - OriginX - slime.Width * 0.6, Floor - slime.Height * 1.3 - (slime.Elite != null ? 18 : 4), slime.Width * 1.2, slime.Height * 1.3 + (slime.Elite != null ? 18 : 4) + 2);
+    // A slam's red zone on the floor.
+    public Rect SlamBounds(Slime boss) => new(boss.X - OriginX - boss.Range, Floor - 24, boss.Range * 2, 26);
+
     private Rect PopupRect(BattlePopup popup, double floor) =>
         new(popup.X - OriginX - BattleSim.PopupWidth / 2, floor - 2 - BattleSim.PopupHeight, BattleSim.PopupWidth, BattleSim.PopupHeight);
     private static Point CloseButton(Rect popup) => new(popup.Right - 10, popup.Top + 9);

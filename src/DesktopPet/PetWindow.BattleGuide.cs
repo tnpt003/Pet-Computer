@@ -83,7 +83,7 @@ public sealed partial class PetWindow
             () => L("Máu của mèo. Hết máu là thua; giữa các đợt mèo hồi lại một ít.", "The cat's HP. At zero the battle is lost; between waves the cat gets a little back.")),
         See(GuideWaves, StageBreakThrough, () => TourDue(), () => Spots(HudPart(battleHud?.StatusBlock)),
             () => L("Đợt quái đang đánh và số đợt còn lại. Dọn hết các đợt là thắng màn.", "The wave being fought and how many are left. Clear them all to win the stage.")),
-        See(GuideSkills, StageBreakThrough, () => TourDue(), () => Spots(HudPart(battleHud?.SkillBar)),
+        See(GuideSkills, StageBreakThrough, () => TourDue(), () => Spots(SkillBarSpot()),
             () => L("Kỹ năng của mèo: bấm ô để dùng. Vòng quét trên ô là thời gian hồi; đang bế mèo thì kỹ năng chờ.",
                     "The cat's skills: click a slot to use it. The sweep on a slot is its cooldown; while the cat is carried, skills wait.")),
         SkillSee(GuidePush, BattleSkill.Push), SkillSee(GuideHeal, BattleSkill.Heal), SkillSee(GuideCheer, BattleSkill.Cheer),
@@ -104,19 +104,19 @@ public sealed partial class PetWindow
             () => L("Cầm cự tới khi đồng hồ về 0. Bế mèo thì đồng hồ dừng, nên chỉ bế khi cần né đòn.", "Hold out until the clock reaches 0. Carrying the cat stops the clock, so lift it only to dodge.")),
         new(GuideAds, StageHoldOn, true, true, 1,
             () => { guideRefValue = battle!.Popups.Count; return battle.Popups.Count > 0; },
-            () => battle!.Popups.Count < guideRefValue, () => battle!.Popups.Select(PopupSpot).ToList(),
+            () => battle!.Popups.Count < guideRefValue, () => Spots(battle!.Popups.Select(PopupSpot).ToArray()),
             () => L("App độc: quảng cáo che sân. Bấm × để tắt từng cái (Tab bị nhiễm thì phải gỡ Tab trước).",
                     "Malware: ads cover the floor. Click × to close each one (with Tabs infected, clean Tabs first).")),
         new(GuideLoading, StageHoldOn, true, true, 1,
             () => HazardDue(HazardKind.Loading), () => battle!.FindHazard(guideRef) == null || battle.HoldingHazardId == guideRef,
-            () => battle!.FindHazard(guideRef) is BattleHazard ring ? new List<Rect> { new(ring.X - 34, Floor() - 166, 68, 68) } : new(),
+            () => Spots(FieldSpot(battleView?.SpinnerBounds(guideRef), 4)),
             () => battle?.AppRules is { LoadingHold: > 0 } rules
                 ? LF($"App độc: vòng loading làm mèo chậm hẳn. Giữ chuột lên vòng xoay {Number(rules.LoadingHold, "0.#")} giây để tắt.",
                      $"Malware: the loading ring slows the cat right down. Hold the mouse on the spinner for {Number(rules.LoadingHold, "0.#")} s to close it.")
                 : L("App độc: vòng loading làm mèo chậm hẳn. Bấm vòng xoay để tắt.", "Malware: the loading ring slows the cat right down. Click the spinner to close it.")),
         new(GuideUpdate, StageHoldOn, true, true, 1,
             () => HazardDue(HazardKind.Update), () => battle!.FindHazard(guideRef) is not { } wall || wall.ClicksLeft < guideRefValue,
-            () => battle!.FindHazard(guideRef) is BattleHazard wall ? new List<Rect> { new(wall.X - BattleSim.WallHalfWidth - 6, Floor() - BattleSim.WallHeight - 6, BattleSim.WallHalfWidth * 2 + 12, BattleSim.WallHeight + 8) } : new(),
+            () => Spots(FieldSpot(battleView?.WallBounds(guideRef))),
             () => L("App độc: Cập nhật bắt buộc dựng tường giữa mèo và slime. Bấm Nhắc sau vài lần để dẹp nó.",
                     "Malware: a forced update stands as a wall between the cat and the slimes. Click Later a few times to get rid of it.")),
         new(GuideVirus, StageHoldOn, true, true, 1,
@@ -139,18 +139,18 @@ public sealed partial class PetWindow
             () => { var healer = battle!.Slimes.FirstOrDefault(s => s.State == SlimeState.Casting && s.Elite is not { PushImmune: true }); guideRef = healer?.Id ?? 0; return healer != null && battle.Ready(BattleSkill.Push) && !BattleHoldsOff; },
             () => battle!.Cooldown(BattleSkill.Push) > 0,
             () => battle!.Find(guideRef) is not { State: SlimeState.Casting } healer ? new()
-                : battle.Armed == BattleSkill.Push ? new List<Rect> { SlimeSpot(healer) } : Spots(SlimeSpot(healer), SkillSpot(BattleSkill.Push)),
+                : battle.Armed == BattleSkill.Push ? Spots(SlimeSpot(healer)) : Spots(SlimeSpot(healer), SkillSpot(BattleSkill.Push)),
             () => battle?.Armed == BattleSkill.Push
                 ? L("Giờ bấm vào slime thảo dược đang gồng.", "Now click the herb slime winding up.")
                 : LF($"Slime thảo dược sắp hồi máu cho đồng đội. Bấm {SkillName(BattleSkill.Push)} rồi bấm nó để cắt. ({GuideTimes(GuideCutHeal)}/{GuideCutHeals})",
                      $"A herb slime is about to heal its friends. Click {SkillName(BattleSkill.Push)}, then click it to cut the heal. ({GuideTimes(GuideCutHeal)}/{GuideCutHeals})")),
         See(GuideElite, StageCutSupport, () => { var elite = battle!.Slimes.FirstOrDefault(s => s.Elite != null && s.Targetable && s.State != SlimeState.Spawning); guideRef = elite?.Id ?? 0; return elite != null; },
-            () => battle!.Find(guideRef) is { Targetable: true } elite ? new List<Rect> { SlimeSpot(elite) } : new(),
+            () => battle!.Find(guideRef) is { Targetable: true } elite ? Spots(SlimeSpot(elite)) : new(),
             () => L("Slime tinh anh: viền vàng và ngôi sao, mạnh hơn bản thường và có một khả năng riêng (chữ trên đầu). Loại slime nào cũng có tinh anh.",
                     "An elite slime: a gold rim and a star, stronger than the plain one with a trait of its own (the word over its head). Every kind of slime has elites.")),
 
         // 5 · The Slime King: the King, then each of his moves the first time it comes.
-        See(GuideKing, StageSlimeKing, () => King() is { State: not SlimeState.Spawning }, () => King() is Slime king ? new List<Rect> { SlimeSpot(king) } : new(),
+        See(GuideKing, StageSlimeKing, () => King() is { State: not SlimeState.Spawning }, () => King() is Slime king ? Spots(SlimeSpot(king)) : new(),
             () => L("Vua Slime, trùm chương: rất nhiều máu, dậm đất trúng cả vùng, lui về bật khiên và gọi quân. Hạ Vua là xong chương.",
                     "The Slime King, the chapter's boss: lots of HP, a slam that hits a whole area, and he backs off behind a shield to call help. Beat him to finish the chapter.")),
         new(GuideSlam, StageSlimeKing, true, false, 1,
@@ -162,14 +162,14 @@ public sealed partial class PetWindow
                 ? LF($"Vua sắp dậm đất: vùng đỏ trúng hết. Kéo mèo ra khỏi vùng, hoặc bấm {SkillName(BattleSkill.Shield)}.",
                      $"The King is about to slam: the red zone hits everything. Lift the cat out of it, or click {SkillName(BattleSkill.Shield)}.")
                 : L("Vua sắp dậm đất: vùng đỏ trúng hết. Kéo mèo ra khỏi vùng!", "The King is about to slam: the red zone hits everything. Lift the cat out of it!")),
-        See(GuideKingShield, StageSlimeKing, () => King() is { Shielded: true }, () => King() is Slime king ? new List<Rect> { SlimeSpot(king) } : new(),
+        See(GuideKingShield, StageSlimeKing, () => King() is { Shielded: true }, () => King() is Slime king ? Spots(SlimeSpot(king)) : new(),
             () => L("Vua lui về bật khiên và gọi quân: đánh Vua lúc này không ăn thua. Hạ hết quân để phá khiên.",
                     "The King backs off behind a shield and calls help: hitting him does nothing now. Defeat his helpers to break it.")),
         new(GuideRally, StageSlimeKing, true, false, 1,
             () => King() is { RallyCharge: > 0 } && battle!.Ready(BattleSkill.Push) && !BattleHoldsOff,
             () => battle!.Cooldown(BattleSkill.Push) > 0,
             () => King() is not { RallyCharge: > 0 } king ? new()
-                : battle!.Armed == BattleSkill.Push ? new List<Rect> { SlimeSpot(king) } : Spots(SlimeSpot(king), SkillSpot(BattleSkill.Push)),
+                : battle!.Armed == BattleSkill.Push ? Spots(SlimeSpot(king)) : Spots(SlimeSpot(king), SkillSpot(BattleSkill.Push)),
             () => battle?.Armed == BattleSkill.Push
                 ? L("Giờ bấm vào Vua.", "Now click the King.")
                 : LF($"Vương miện sáng: Vua sắp phong một quân thành tinh anh. Bấm {SkillName(BattleSkill.Push)} rồi bấm Vua để cắt.",
@@ -204,37 +204,57 @@ public sealed partial class PetWindow
     }
 
     private double CatX() => pet.X + settings.Width / 2;
-    private double Floor() => battleArea.Bottom - 2;
     private string SkillName(BattleSkill skill) => BattleSkills.Get(skill).Name(preferences.Language, battle?.Settings ?? BattleTuning);
     private static List<Rect> Spots(params Rect?[] spots) => spots.Where(s => s != null).Select(s => s!.Value).ToList();
-    private Rect CatSpot() => new(pet.X + 4, pet.Y + 4, settings.Width - 8, settings.Height - 4);
-    private Rect SlimeSpot(Slime s) => new(s.X - s.Width / 2 - 8, Floor() - s.Height - 12, s.Width + 16, s.Height + 16);
-    private Rect SlamSpot(Slime king) => new(king.X - king.Range, Floor() - 26, king.Range * 2, 30);
-    private Rect AppSpot(DesktopApp app) { var c = BattleAppCentre(app); return new(c.X - 30, c.Y - 30, 60, 60); }
-    private Rect PopupSpot(BattlePopup ad) => new(ad.X - BattleSim.PopupWidth / 2 - 4, Floor() - BattleSim.PopupHeight - 6, BattleSim.PopupWidth + 8, BattleSim.PopupHeight + 8);
+
+    // Every lit spot is measured where the thing is really shown: a rectangle of an element (its own
+    // DIPs) through the screen, then in the battle monitor's DIPs, with the same padding all round.
+    // Margins, a dragged HUD, the cat's own window and a monitor's DPI all come out right.
+    public const double GuidePad = 6;
+    private Rect? ScreenSpot(UIElement? element, Rect local, double pad = GuidePad)
+    {
+        if (element == null || !element.IsVisible || PresentationSource.FromVisual(element) == null) return null;
+        var a = element.PointToScreen(local.TopLeft);
+        var b = element.PointToScreen(local.BottomRight);
+        return new Rect(Math.Min(a.X, b.X) / battleScale - pad, Math.Min(a.Y, b.Y) / battleScale - pad,
+            Math.Abs(b.X - a.X) / battleScale + pad * 2, Math.Abs(b.Y - a.Y) / battleScale + pad * 2);
+    }
+    private Rect? Whole(FrameworkElement? element, double pad = GuidePad) => element == null ? null : ScreenSpot(element, new Rect(element.RenderSize), pad);
+    private Rect? FieldSpot(Rect? local, double pad = GuidePad) => local is Rect r ? ScreenSpot(battleView, r, pad) : null;
+    // The drawn cat (head to paws, centred on its body), not its whole 112×112 window.
+    private Rect? CatSpot() => ScreenSpot(this, new Rect(PetSettings.CenterX - 42, PetSettings.HeadTop - 4, 84, 112 - PetSettings.HeadTop));
+    private Rect? SlimeSpot(Slime s) => battleView == null ? null : FieldSpot(battleView.SlimeBounds(s));
+    private Rect? SlamSpot(Slime king) => battleView == null ? null : FieldSpot(battleView.SlamBounds(king), 2);
+    private Rect? PopupSpot(BattlePopup ad) => FieldSpot(battleView?.PopupBounds(ad.Id), 4);
+    private Rect AppSpot(DesktopApp app) { var c = BattleAppCentre(app); return new(c.X - DesktopAppIcon.TileSize / 2 - GuidePad, c.Y - DesktopAppIcon.TileSize / 2 - GuidePad, DesktopAppIcon.TileSize + GuidePad * 2, DesktopAppIcon.TileSize + GuidePad * 2); }
     private Rect VirusSpot(VirusFile file)
     {
         var cell = AppCellTopLeft(file.Col, file.Row);
-        return new(cell.X + DesktopAppIcon.Centre.X - 30, cell.Y + DesktopAppIcon.Centre.Y - 30, 60, 60);
+        double half = DesktopAppIcon.TileSize / 2 + GuidePad;
+        return new(cell.X + DesktopAppIcon.Centre.X - half, cell.Y + DesktopAppIcon.Centre.Y - half, half * 2, half * 2);
     }
-    private Rect? SkillSpot(BattleSkill skill) => HudPart(battleHud?.Slot(skill));
-    // A part of the HUD, in DIPs on the battle's monitor (null while it is not shown).
-    private Rect? HudPart(FrameworkElement? part)
+    private Rect? SkillSpot(BattleSkill skill) => Whole(battleHud?.Slot(skill));
+    // A part of the HUD (null while it is not shown).
+    private Rect? HudPart(FrameworkElement? part) => Whole(part);
+    // The skill bar: exactly its five slots, not the bar's margins.
+    private Rect? SkillBarSpot()
     {
-        if (part == null || !part.IsVisible || battleHudWindow?.Content is not Visual root) return null;
-        var at = part.TranslatePoint(new Point(0, 0), (UIElement)root);
-        return new Rect(battleHudAt.X + at.X - 4, battleHudAt.Y + at.Y - 4, part.ActualWidth + 8, part.ActualHeight + 8);
+        if (battleHud == null) return null;
+        var slots = BattleHud.SkillOrder.Select(k => Whole(battleHud.Slot(k), 0)).Where(r => r != null).Select(r => r!.Value).ToList();
+        if (slots.Count == 0) return null;
+        var all = slots.Aggregate(Rect.Union);
+        all.Inflate(GuidePad, GuidePad);
+        return all;
     }
-    private Rect? UpgradeSpot() => upgradeWindow is { IsVisible: true } w ? new Rect(upgradeAt.X, upgradeAt.Y, w.ActualWidth, w.ActualHeight) : null;
-    // The first card's group line ("Defense 1 → 2/3").
+    // The card offer's panel (not its window's shadow margin), and the first card's group line.
+    private Rect? UpgradeSpot() => upgradeWindow is { IsVisible: true, Content: FrameworkElement panel } ? Whole(panel, 2) : null;
     private Rect? UpgradeBuildSpot()
     {
-        if (upgradeWindow is not { IsVisible: true, Content: UIElement root } || upgradeCards.Count == 0) return null;
+        if (upgradeWindow is not { IsVisible: true } || upgradeCards.Count == 0) return null;
         var line = upgradeCards[0].Build;
-        if (!line.IsVisible) return UpgradeSpot();
-        var at = line.TranslatePoint(new Point(0, 0), root);
-        return new Rect(upgradeAt.X + at.X - 6, upgradeAt.Y + at.Y - 4, line.ActualWidth + 12, line.ActualHeight + 8);
+        return line.IsVisible ? Whole(line, 4) : UpgradeSpot();
     }
+    public IReadOnlyList<Rect> BattleGuideSpots => guideStep?.Spots() ?? new List<Rect>();
 
     // The guide runs in a chapter 1 Adventure stage (not the Expedition's encounters, not Infinity).
     private bool GuideFits => BattleGuideEnabled && battle is { Over: false, Stage: { Endless: false } stage } && battleExpedition == null && StageHasGuide(stage);
@@ -351,7 +371,8 @@ public sealed partial class PetWindow
         if (!guideBubbleWindow.IsVisible) guideBubbleWindow.Show();
         if (fresh) { var raise = new WindowInteropHelper(guideBubbleWindow).Handle; SetWindowPos(raise, new IntPtr(-1), 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0010); }
         guideBubbleWindow.UpdateLayout();
-        // Under the spots when there is room, otherwise over them; centred on them, inside the monitor.
+        // Under the spots when there is room, otherwise over them; centred on them (pushed aside only
+        // at the monitor's edge).
         var lit = spots.Aggregate(Rect.Union);
         double w = guideBubbleWindow.ActualWidth, h = guideBubbleWindow.ActualHeight;
         double y = lit.Bottom + 10 + h <= area.Bottom ? lit.Bottom + 10 : lit.Top - 10 - h >= area.Top ? lit.Top - 10 - h : area.Top + 10;

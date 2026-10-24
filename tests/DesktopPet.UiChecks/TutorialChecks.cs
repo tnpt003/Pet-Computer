@@ -129,6 +129,18 @@ internal static class TutorialChecks
               && (shadeStyle & 0x20) != 0 && (shadeStyle & 0x08000000) != 0 && (bubbleStyle & 0x20) == 0 && (bubbleStyle & 0x08000000) != 0,
             $"A slime winding up by the cat: the lift step shows a click-through shade and a line that never takes focus ({window.BattleGuideStep})");
         check(window.BattleGuideText.Contains("red !") && window.BattleGuideText.Contains("Drag the cat up"), $"The line says what to do ({window.BattleGuideText})");
+        // Centred on what it points at: the drawn cat (its body's centre, not its window's) and the slime.
+        double scale = Field<double>(window, "battleScale");
+        Point OnScreen(UIElement element, Point at) { var p = element.PointToScreen(at); return new Point(p.X / scale, p.Y / scale); }
+        var spots = window.BattleGuideSpots;
+        var catCentre = OnScreen(window, new Point(PetSettings.CenterX, 0));
+        var fieldView = Field<BattleFieldView>(window, "battleView");
+        var hitter = Sim().Slimes.First(s => s.State == SlimeState.Windup);
+        var slimeCentre = OnScreen(fieldView, new Point(hitter.X - fieldView.OriginX, 0));
+        bool catLit = spots.Count == 2 && Math.Abs(spots[0].X + spots[0].Width / 2 - catCentre.X) < 1 && spots[0].Top <= OnScreen(window, new Point(0, PetSettings.HeadTop)).Y
+            && spots[0].Bottom >= OnScreen(window, new Point(0, 104)).Y;
+        bool slimeLit = spots.Count == 2 && Math.Abs(spots[1].X + spots[1].Width / 2 - slimeCentre.X) < 1 && spots[1].Height >= hitter.Height * 1.28;
+        check(catLit && slimeLit, $"The lit spots are centred on the cat's body and on the slime, the slime's at its tallest ({string.Join(" ", spots.Select(r => $"{r.X:0.#},{r.Y:0.#} {r.Width:0.#}×{r.Height:0.#}"))}; cat x {catCentre.X:0.#}, slime x {slimeCentre.X:0.#})");
         double frozenAt = Sim().Time;
         var windup = Sim().Slimes.First(s => s.State == SlimeState.Windup);
         double windupLeft = windup.StateTime;
@@ -187,6 +199,7 @@ internal static class TutorialChecks
         window.StartBattle(stage: chapter[1]);
         var tour = new List<string>();
         string pushLine = "";
+        var litByStep = new Dictionary<string, List<Rect>>();
         for (int i = 0; i < 40; i++)
         {
             RunToStep(2);
@@ -194,6 +207,7 @@ internal static class TutorialChecks
             if (tour.LastOrDefault() == step) break;
             tour.Add(step);
             if (step == PetWindow.GuidePush) pushLine = window.BattleGuideText;
+            if (step is PetWindow.GuideHp or PetWindow.GuideSkills or PetWindow.GuidePush or PetWindow.GuideBag) litByStep[step] = window.BattleGuideSpots.ToList();
             double held = Sim().Time;
             TickBattle(0.2);
             if (Sim().Time != held) { tour.Add("(ran)"); break; }
@@ -205,6 +219,20 @@ internal static class TutorialChecks
         if (Sim().Desktop.Count > 0) expected.Add(PetWindow.GuideApps);
         check(tour.SequenceEqual(expected), $"Stage 2 starts with the HUD tour, each point held until Got it ({string.Join(", ", tour)})");
         check(pushLine.StartsWith("Push: ") && pushLine.Contains("5 s cooldown"), $"A skill's line is its name and the data's description ({pushLine})");
+        // Each HUD point is lit exactly: its own bounds (wherever the HUD stands) with the same padding all round.
+        var tourHud = Field<BattleHud>(window, "battleHud");
+        double tourScale = Field<double>(window, "battleScale");
+        Rect Bounds(FrameworkElement e)
+        {
+            var a = e.PointToScreen(new Point(0, 0)); var b = e.PointToScreen(new Point(e.ActualWidth, e.ActualHeight));
+            return new Rect(a.X / tourScale, a.Y / tourScale, (b.X - a.X) / tourScale, (b.Y - a.Y) / tourScale);
+        }
+        bool Snug(string step, Rect inner) => litByStep.TryGetValue(step, out var lit) && lit.Count == 1
+            && new[] { inner.Left - lit[0].Left, lit[0].Right - inner.Right, inner.Top - lit[0].Top, lit[0].Bottom - inner.Bottom }.All(gap => Math.Abs(gap - PetWindow.GuidePad) < 0.6);
+        var slotsUnion = BattleHud.SkillOrder.Select(k => Bounds(tourHud.Slot(k))).Aggregate(Rect.Union);
+        check(Snug(PetWindow.GuideHp, Bounds(tourHud.HpBlock)) && Snug(PetWindow.GuideSkills, slotsUnion) && Snug(PetWindow.GuidePush, Bounds(tourHud.Slot(BattleSkill.Push)))
+              && Snug(PetWindow.GuideBag, Bounds(tourHud.BagButton)),
+            $"HP, the skill bar (its five slots), a skill and the bag are each lit with {PetWindow.GuidePad} DIPs all round ({string.Join("; ", litByStep.Select(p => $"{p.Key} {string.Join(" ", p.Value.Select(r => $"{r.X:0.#},{r.Y:0.#} {r.Width:0.#}×{r.Height:0.#}"))}"))} | bar {slotsUnion.X:0.#},{slotsUnion.Y:0.#} {slotsUnion.Width:0.#}×{slotsUnion.Height:0.#})");
         window.EndBattle();
 
         // On by default, a won stage too; unticked on Ready, the choice is kept; ticked again, it teaches.

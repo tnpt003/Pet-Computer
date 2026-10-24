@@ -598,7 +598,7 @@ public sealed partial class BattleSim
             Damage(slime, slime.Hp + 1, DamageSource.App);
         }
         // A combo hit also hits the enemies close to its target for part of its damage.
-        if (combo && Settings.ComboSplash > 0) Splash(slime, plain * Settings.ComboSplash);
+        if (combo && Settings.ComboSplash > 0) Splash(slime, plain * Settings.ComboSplash, catX);
         // Afterimage: every Every-th landed swing hits a second time (an echo counts nothing itself).
         landedSwings++;
         if (Active("echo") is SynergySpec echo && landedSwings % echo.Every == 0 && slime.Targetable)
@@ -629,13 +629,16 @@ public sealed partial class BattleSim
     public int StrikeStuns { get; private set; }
 
     // A combo's splash: every other enemy within ComboSplashRadius DIPs of the target's edge takes
-    // `damage` (it can be blocked like the combo, never sets off another bonus).
-    private void Splash(Slime target, double damage)
+    // `damage` (it can be blocked like the combo, never sets off another bonus), but only one the
+    // swing itself reaches: on the side the cat swings to, its near edge within the weapon's range
+    // (+ the hit's 14 DIPs of slack) of the cat, so a combo never hurts a slime far from the blade.
+    private void Splash(Slime target, double damage, double catX)
     {
         blasting = true;
         foreach (var other in slimes.ToArray())
         {
             if (other == target || !other.Targetable || Math.Abs(other.X - target.X) - other.HitWidth / 2 - target.HitWidth / 2 > Settings.ComboSplashRadius) continue;
+            if ((other.X - catX) * swingFacing <= 0 ||Math.Abs(other.X - catX) - other.HitWidth / 2 > arms.Range + 14) continue;
             SplashHits++;
             AddEffect(BattleEffectKind.Spark, other.X, other.Height * 0.6);
             Damage(other, damage, DamageSource.Splash);

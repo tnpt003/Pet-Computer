@@ -8,6 +8,12 @@ Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm 
 
 ---
 
+## #23 — Đòn combo thứ 3 đánh trúng slime ở khoảng cách xa (2026-10-24)
+- **Triệu chứng:** combo trúng mục tiêu sát mèo nhưng slime đứng xa (khoảng gấp đôi tầm kiếm) cũng có tia lửa và mất máu.
+- **Nguyên nhân:** sát thương lan của combo tính mọi quái trong 60 DIPs từ mép mục tiêu, không xét vị trí mèo/tầm vũ khí.
+- **Sửa:** `PetBattle.Splash` chỉ lan tới quái phía mèo đang vung, mép gần cách tâm mèo ≤ tầm vũ khí + 14 DIPs. Nâng rulesVersion các chế độ.
+- **Kiểm chứng:** C# 1535 (slime sau mục tiêu 40 DIPs không còn dính, slime sát sau vẫn dính), WPF 847/847, Python OK. Chưa xem trên màn hình thật.
+
 ## #22 — Vòng loading khi hướng dẫn trông như chưa hiện hết (2026-10-24, commit 5cf8980)
 - **Triệu chứng:** ở bước hướng dẫn vòng loading (màn 3), vòng trông chưa hiện đủ.
 - **Nguyên nhân:** (1) trước ec27b0a trận đứng hình đúng lúc vòng còn đang lớn dần (0,3 s); (2) chỗ sáng chỉ ôm vòng xoay phía trên, còn vùng làm chậm dưới sàn (hình bầu dục quanh chân mèo) và con mèo nằm trong vùng tối.

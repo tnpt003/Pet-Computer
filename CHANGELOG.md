@@ -6,7 +6,7 @@
 
 - **Âm thanh của mèo bật sẵn** khi cài mới (trước đây tắt; máy đã có cài đặt giữ lựa chọn cũ).
 - **Cân bằng trận (2026-10-24):**
-  - Mèo: Cá hồi máu 14 giây, Tab Lốc Xoáy sạc nhanh hơn. Đòn combo thứ ba đánh lan sang quái đứng sát mục tiêu. Búa thỉnh thoảng làm quái choáng. Giáp gai giảm thêm 10% sát thương nhận vào. Bão Thông Báo chỉ rơi lên 4 slime gần mèo nhất, Đẩy mạnh còn +40.
+  - Mèo: Cá hồi máu 14 giây, Tab Lốc Xoáy sạc nhanh hơn. Đòn combo thứ ba đánh lan sang quái đứng sát mục tiêu (chỉ quái còn trong tầm vung kiếm/búa, không trúng slime ở xa). Búa thỉnh thoảng làm quái choáng. Giáp gai giảm thêm 10% sát thương nhận vào. Bão Thông Báo chỉ rơi lên 4 slime gần mèo nhất, Đẩy mạnh còn +40.
   - Mèo đang choáng thì không bế lên được; trong trận lắc mèo không còn làm mèo Chóng mặt.
   - Quái: slime đá quay đầu chậm hơn, Vua Slime dậm đất nhẹ hơn và phong tinh anh cho một quân bất kỳ (cả slime thảo dược). Slime nhanh bị làm choáng lúc đang gồng thì không làm mèo choáng được nữa.
   - App độc tới vào lúc ngẫu nhiên (tối đa 2 loại cùng lúc), có thêm 3 quảng cáo trải khắp sàn. Vòng loading kéo dài hơn, phải giữ chuột 2 giây để tắt; cập nhật bắt buộc cần bấm Nhắc sau 4 lần.
@@ -30,7 +30,7 @@
 
 - **Pet sounds are on** on a new install (they were off; existing settings keep their choice).
 - **Battle balance (2026-10-24):**
-  - The cat: the Healing fish every 14 s, Tab Tornado charges faster. A combo's third hit also hits enemies next to its target. The hammer sometimes stuns. Thorns also takes 10% off the damage taken. Ping Storm rings only the 4 slimes nearest the cat; Heavy push gives +40.
+  - The cat: the Healing fish every 14 s, Tab Tornado charges faster. A combo's third hit also hits enemies next to its target (only those within the swing's reach, never a slime far away). The hammer sometimes stuns. Thorns also takes 10% off the damage taken. Ping Storm rings only the 4 slimes nearest the cat; Heavy push gives +40.
   - A stunned cat cannot be lifted; shaking the cat in a battle no longer makes it Dizzy.
   - Enemies: rock slimes turn more slowly, the Slime King's slam hurts less and his rally may pick any helper (herb slimes too). A quick slime stunned during its windup can no longer stun the cat.
   - Malware comes at random times (at most two kinds at once), now with three ads across the floor. The loading ring lasts longer and is closed by holding it 2 s; a forced update needs Later ×4.
@@ -54,7 +54,7 @@
 
 - **猫のサウンドは新規インストールでオン**（以前はオフ。既存の設定はそのまま）。
 - **バトルのバランス調整（2026-10-24）：**
-  - 猫：回復の魚は 14 秒ごと、タブトルネードのチャージが早く。コンボの 3 撃目は近くの敵にも当たります。ハンマーは時々気絶させます。トゲの鎧は被ダメージも 10% 減。通知の嵐は猫に近いスライム 4 体だけ、強い押しは +40。
+  - 猫：回復の魚は 14 秒ごと、タブトルネードのチャージが早く。コンボの 3 撃目は近くの敵にも当たります（振りの届く範囲だけ、遠くのスライムには当たりません）。ハンマーは時々気絶させます。トゲの鎧は被ダメージも 10% 減。通知の嵐は猫に近いスライム 4 体だけ、強い押しは +40。
   - 気絶中の猫は持ち上げられません。バトル中は猫を振ってもめまいになりません。
   - 敵：岩スライムの振り向きが遅く、スライムキングの踏みつけが弱く、強化する手下はランダム（薬草スライムも）。溜め中に気絶させた素早いスライムは猫を気絶させなくなります。
   - マルウェアはランダムなタイミングで出現（同時に 2 種類まで）、広告 3 つも追加。読み込みリングは長くなり 2 秒長押しで閉じます。強制アップデートは「後で」4 回。

@@ -529,3 +529,4 @@ Tự động đã có: Phần thưởng trên sảnh (ô có hình, khóa, Mới
 - [ ] Màn 5: Vua xuất hiện → giới thiệu; lần đầu Vua gồng dậm gần mèo → sáng mèo + vùng dậm (+ ô Khiên nếu sẵn), kéo mèo hoặc bấm Khiên; lần đầu bật khiên gọi quân → giới thiệu; lần đầu vương miện sáng (Đẩy sẵn) → Đẩy rồi bấm Vua, chỉ 1 lần.
 - [ ] Màn 3: giữ vòng loading tới khi nó tự tắt, thả chuột, rồi chọn thẻ ngay (không phải đổi cửa sổ). Quảng cáo, vòng loading, tường, virus.exe, icon nhiễm đã hiện đủ (không còn bé/đang rơi) khi hướng dẫn sáng.
 - [ ] "Bỏ qua hướng dẫn": tắt cho hết trận. Pause/menu/túi đồ/fullscreen trong lúc đứng hình: hướng dẫn ẩn, Tiếp tục thì hiện lại. Lớp tối không chặn chuột (click xuyên tới mèo/HUD/icon); dòng chữ không lấy focus. Màn hình phụ/DPI khác: lớp tối phủ đúng màn hình trận, chỗ sáng đúng vị trí.
+- [ ] Combo (đòn thứ 3, chữ "COMBO!"): chỉ slime sát sau mục tiêu (trong tầm kiếm/búa) có tia lửa và mất máu; slime đứng xa không bị lan.

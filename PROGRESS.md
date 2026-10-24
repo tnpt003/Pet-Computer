@@ -4,6 +4,12 @@ Cập nhật: 2026-10-24 (Asia/Saigon). Lịch sử trước 21/10: docs/archive
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
+## Sửa: combo đánh lan tới slime ở xa 2026-10-24 (người dùng gửi ảnh, "ok làm đi")
+- Nguyên nhân: splash của combo (`comboSplash` 0.6, `comboSplashRadius` 60) đo từ mép mục tiêu, không xét mèo → slime cách mèo ~gấp đôi tầm kiếm vẫn dính đòn + tia lửa (ảnh: mục tiêu là đá tinh anh sát mèo, slime xanh xa bị lan).
+- Sửa `PetBattle.Splash`: thêm điều kiện quái nằm trong tầm vung — phía mèo đang vung (`swingFacing`), mép gần cách tâm mèo ≤ tầm vũ khí + 14 DIPs (dung sai như đòn chính). Tầm đánh, sát thương, đẩy lùi combo giữ nguyên. rulesVersion: màn 1–5 9/16/18/19/19, Vô tận 5, Viễn chinh 6. CHANGELOG 1.4.4 (vi/en/ja), docs/BATTLE-DATA.md cập nhật.
+- Mô phỏng (trước → sau, cùng seed): đa số trong nhiễu; màn 4 búa Normal simple HP còn 90 → 91% (trận 65 → 73 s) nên ngưỡng màn 4 nới 0,90 → 0,91 (ghi chú trong AdventureBalanceTests); màn 3 kiếm Hard simple thắng 16 → 14/20; Viễn chinh Hard simple safe kiếm 21 → 18/40, búa 20 → 21/40.
+- Test thật: scripts/test.ps1 -Ui: Python OK; C# 1535 (mới: splash bỏ qua slime sau mục tiêu 40 DIPs — trước đây dính 12; slime sát sau mục tiêu vẫn dính); WPF 847/847. Chưa xem trên màn hình thật.
+
 ## Chuẩn theme project (2026-10-24)
 - Người dùng duyệt hướng Cozy Desktop Adventure. Thêm docs/DESIGN-SYSTEM.md: bản sắc, palette/font/radius đúng PetUi, quy ước component/art/motion/sound, mode mapping, checklist và backlog chuẩn hóa.
 - Liên kết từ AGENTS.md, README.md, NEXT-STEPS.md để AI/người phát triển dùng chung. Phân biệt token đã có và chuẩn mới chưa thực thi; giữ code/gameplay đang sửa dở.

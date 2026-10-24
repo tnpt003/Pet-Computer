@@ -43,6 +43,18 @@ internal static class CombatTuningTests
         }, 0, 1600, new Random(2));
         Walk(apart, 300, 30, () => apart.CombosLanded >= 1);
         check(apart.CombosLanded == 1 && apart.SplashHits == 0 && apart.Slimes.Count(s => s.Hp < s.MaxHp) == 1, "comboSplash 0: the combo hits only its target");
+        // The splash only reaches what the swing reaches: a slime 40 DIPs behind the target (inside
+        // comboSplashRadius) but out of the blade's range takes nothing; one right behind it does.
+        foreach (var (gap, splashed) in new[] { (40.0, false), (0.0, true) })
+        {
+            var reach = new BattleSim(Settings(new[] { Kind("slime", speed: 0) }, new[] { new WaveGroup { Enemy = "slime", Count = 2, Side = "a" } }), 0, 1600, new Random(2));
+            for (int i = 0; i < 120 && reach.Slimes.Count(s => s.Targetable) < 2; i++) reach.Step(dt, 300, false);
+            var (near, back) = (reach.Slimes[0], reach.Slimes[1]);
+            near.X = 355; back.X = 355 + near.HitWidth / 2 + back.HitWidth / 2 + gap;
+            Walk(reach, 300, 30, () => reach.CombosLanded >= 1);
+            check(reach.CombosLanded == 1 && near.Hp < near.MaxHp && (reach.SplashHits == 1) == splashed && (back.Hp < back.MaxHp) == splashed,
+                $"A combo's splash {(splashed ? "hits" : "skips")} a slime {gap} DIPs behind its target ({reach.SplashHits} splash, back {back.MaxHp - back.Hp} lost)");
+        }
 
         // The hammer's stun: a weapon that always stuns dazes a plain slime, never a boss; a sword never does.
         var maul = new[] { new WeaponSpec { Id = "maul", Damage = 5, Knock = 0, StunChance = 1, StunSeconds = 0.8 } };

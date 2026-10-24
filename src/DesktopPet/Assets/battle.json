@@ -9,7 +9,8 @@
   "catRunScale": 1.8,
   // Combo: this many hits in a row (each within comboWindow s of the last) make the last one
   // a combo: damage × comboDamage and a knock-back (DIPs/s, × the enemy's pushFactor). comboSplash: the
-  // other enemies within comboSplashRadius DIPs of its target (edge to edge) take that share of its damage.
+  // other enemies within comboSplashRadius DIPs of its target (edge to edge) take that share of its damage,
+  // only those the swing reaches (in front of the cat, near edge within the weapon's range + 14 DIPs).
   "comboHits": 3,
   "comboWindow": 1.6,
   "comboDamage": 2,
@@ -368,7 +369,7 @@
             "goalEn": "Learn to dodge: a slime swelling with a red ! is about to hit, so lift the cat. Quick slimes dash in too. The cat fights by itself; click a slime to pick one.",
             "tipVi": "Bạn sẽ học: nhận ra đòn sắp tới (slime phồng lên, dấu ! đỏ), kéo mèo lên để né (đang bế thì mèo không bị đánh), thả mèo ra ngoài vòng đỏ cho đòn trượt, và né cú lao của slime nhanh. Mèo tự đánh con gần nhất; bấm một slime để mèo đánh nó trước.",
             "tipEn": "You learn: to spot a coming hit (a swelling slime, a red !), to lift the cat out of it (a carried cat cannot be hit), to put it down outside the red ring so the hit misses, and to dodge a quick slime's dash. The cat fights the nearest slime; click one to make it go for that one first.",
-            "objective": "clear", "maxAlive": 2, "rulesVersion": 8,
+            "objective": "clear", "maxAlive": 2, "rulesVersion": 9,
             "waves": [
               { "groups": [ { "enemy": "slime", "count": 2 } ] },
               { "groups": [ { "pick": { "slime": 3, "runner": 1 }, "count": 3, "atLeast": { "runner": 1 } } ] }
@@ -380,7 +381,7 @@
             "goalEn": "Know the HUD: HP, waves, five skills, the bag and the app icons. Pick cards between waves; cards of one group open synergies. The build carries on.",
             "tipVi": "Bạn sẽ học: đọc HUD (máu, đợt, kỹ năng và vòng hồi chiêu), dùng Đẩy quái, Cá hồi máu, Cổ vũ, Bom len và Khiên bong bóng, mở túi đồ, dùng app đã sạc, chọn thẻ nâng cấp, hiểu nhóm thẻ và cộng hưởng. Slime đá chặn một số đòn: đánh tiếp hoặc dùng Bom len.",
             "tipEn": "You learn: to read the HUD (HP, waves, skills and their cooldown sweep), to use Push, the Healing fish, Cheer, the Yarn bomb and the Bubble shield, to open the bag, to use charged apps, to pick upgrade cards and what groups and synergies are. Rock slimes block some hits: keep at it or use the Yarn bomb.",
-            "objective": "clear", "upgrades": true, "threat": 1.6, "malware": false, "rulesVersion": 15,
+            "objective": "clear", "upgrades": true, "threat": 1.6, "malware": false, "rulesVersion": 16,
             "waves": [
               { "groups": [ { "enemy": "rock", "count": 1 }, { "pick": { "slime": 1, "runner": 1 }, "count": 2 } ] },
               { "groups": [ { "enemy": "rock", "count": 1 }, { "pick": { "slime": 1, "runner": 1 }, "count": 2 }, { "enemy": "rock", "count": 1 } ] },
@@ -394,7 +395,7 @@
             "tipVi": "Bạn sẽ học: giữ máu tới khi hết giờ (Khiên, Cá hồi máu) và dẹp app độc: bấm × tắt quảng cáo, giữ chuột lên vòng loading, bấm Nhắc sau để dẹp tường cập nhật, bấm xóa virus.exe. Slime bắn virus vào icon thì icon quay ra hại mèo: bấm vài lần để gỡ. Từ màn này app độc có ở mọi trận.",
             "tipEn": "You learn: to keep HP up until time runs out (Shield, Healing fish) and to deal with malware: click × on ads, hold the mouse on the loading ring, click Later on the update wall, click virus.exe away. A slime's virus turns an icon against the cat: click it a few times to clean it. From here on every battle has malware.",
             "objective": "survive", "surviveSeconds": 75, "maxAlive": 4, "upgrades": true, "maxUpgrades": 3, "upgradeAt": [ 20, 40, 60 ],
-            "threatGrowth": 0.3, "threat": 1.7, "rulesVersion": 17, "reward": "SlimeHat",
+            "threatGrowth": 0.3, "threat": 1.7, "rulesVersion": 18, "reward": "SlimeHat",
             "malwarePlan": [ { "at": 6, "kind": "ads" }, { "at": 14, "kind": "loading" }, { "at": 27, "kind": "update" }, { "at": 34, "kind": "virus" }, { "at": 47, "kind": "infect" } ],
             "malwareFrom": 50,
             "waves": [
@@ -407,7 +408,7 @@
             "goalEn": "Practise Push: cut a herb slime's heal short. Meet all four kinds of slime, each with an elite that is stronger and has a trait of its own.",
             "tipVi": "Bạn sẽ học: Đẩy để hất slime, làm choáng và cắt đòn hồi máu (lá sáng là đang gồng); hạ slime thảo dược trước; nhận ra slime tinh anh (viền vàng, ngôi sao, chữ khả năng trên đầu) của cả 4 loại: slime, slime nhanh, slime đá (miễn Đẩy) và slime thảo dược.",
             "tipEn": "You learn: to Push a slime back, stun it and cut its heal short (a glowing leaf means a heal is coming); to take herb slimes down first; to spot elites (gold rim, star, their trait over the head) of all four kinds: slime, quick slime, rock slime (no Push) and herb slime.",
-            "objective": "clear", "upgrades": true, "maxAlive": 5, "threat": 1.8, "rulesVersion": 18,
+            "objective": "clear", "upgrades": true, "maxAlive": 5, "threat": 1.8, "rulesVersion": 19,
             "waves": [
               { "groups": [ { "enemy": "slime", "count": 1, "elite": true }, { "enemy": "runner", "count": 1, "elite": true }, { "enemy": "slime", "count": 1 } ] },
               { "budget": 9, "groups": [ { "squad": [ { "enemy": "mender", "count": 1 }, { "enemy": "rock", "count": 1, "elite": true }, { "enemy": "rock", "count": 2 } ] } ] },
@@ -420,7 +421,7 @@
             "goalEn": "The last battle: the Slime King slams, hides behind a shield to call help and makes elites. Use all you learned to beat him and open Expedition and Infinity.",
             "tipVi": "Bạn sẽ học: né cú dậm (kéo mèo khỏi vùng đỏ hoặc bật Khiên), phá khiên của Vua bằng cách hạ hết quân, và Đẩy Vua khi vương miện sáng để cắt việc phong tinh anh. Thắng màn này là mở Viễn chinh và Vô tận.",
             "tipEn": "You learn: to dodge the slam (lift the cat out of the red zone or Shield), to break the King's shield by defeating his helpers, and to Push the King when his crown glows so no helper turns elite. Winning opens the Expedition and Infinity.",
-            "objective": "clear", "upgrades": true, "threat": 1.75, "eliteChance": 0.3, "rulesVersion": 18, "reward": "SlimeKingCrown",
+            "objective": "clear", "upgrades": true, "threat": 1.75, "eliteChance": 0.3, "rulesVersion": 19, "reward": "SlimeKingCrown",
             "waves": [
               { "budget": 6, "groups": [ { "enemy": "rock", "count": 1, "side": "a" }, { "enemy": "slime", "count": 1, "side": "a" }, { "enemy": "runner", "count": 2, "side": "b" } ] },
               { "budget": 6, "groups": [ { "squad": [ { "enemy": "mender", "count": 1 }, { "enemy": "rock", "count": 1 }, { "enemy": "slime", "count": 1 } ] } ] },
@@ -457,7 +458,7 @@
   // when the cat falls or the user presses End; the record is the furthest wave per weapon and
   // difficulty. "unlockAfter": the Adventure stage to win first. "rulesVersion" keeps old records apart.
   "endless": {
-    "id": "endless", "rulesVersion": 4, "unlockAfter": "c1_slime_king", "upgradeEvery": 2, "bossEvery": 10, "boss": "king_c1",
+    "id": "endless", "rulesVersion": 5, "unlockAfter": "c1_slime_king", "upgradeEvery": 2, "bossEvery": 10, "boss": "king_c1",
     "lateBoss": "king", "lateBossFrom": 30, "bossBonusPick": true, "allSynergiesAt": 48,
     "eliteChancePerWave": 0.007, "eliteChanceMax": 0.45, "moreElitesEvery": 20, "moreElitesMax": 2,
     "firstCount": 3, "countPerWave": 0.35, "maxCount": 14, "threatPerWave": 0.06, "maxAlive": 5, "eliteChance": 0.12,
@@ -480,7 +481,7 @@
   },
   "expedition": {
     "id": "slime_trail", "nameVi": "Đường mòn Slime", "nameEn": "The Slime Trail",
-    "rulesVersion": 5, "unlockAfter": "c1_slime_king", "retreatCost": 0, "winHeal": 0.05, "stepThreat": 0.1,
+    "rulesVersion": 6, "unlockAfter": "c1_slime_king", "retreatCost": 0, "winHeal": 0.05, "stepThreat": 0.1,
     "restHeal": 0.3, "maxRelics": 3, "eliteRelics": 2,
     "keepsakes": [
       { "id": "cup_bronze", "kind": "cup", "tier": "bronze", "difficulty": "Easy", "exact": true, "nameVi": "Cúp đồng viễn chinh", "nameEn": "Bronze Expedition cup" },

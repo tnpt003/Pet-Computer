@@ -32,7 +32,8 @@ public sealed class BattleSettings
     public double ComboDamage { get; init; } = 2;
     public double ComboKnock { get; init; } = 300;
     // A combo hit also deals ComboSplash of its damage to every other enemy within ComboSplashRadius
-    // DIPs of its target (edge to edge; 0: none).
+    // DIPs of its target (edge to edge; 0: none) that the swing reaches (in front of the cat, near
+    // edge within the weapon's range + 14 DIPs).
     public double ComboSplash { get; init; } = 0.6;
     public double ComboSplashRadius { get; init; } = 60;
     [JsonIgnore]

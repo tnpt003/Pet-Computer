@@ -9,6 +9,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Sửa `PetBattle.Splash`: thêm điều kiện quái nằm trong tầm vung — phía mèo đang vung (`swingFacing`), mép gần cách tâm mèo ≤ tầm vũ khí + 14 DIPs (dung sai như đòn chính). Tầm đánh, sát thương, đẩy lùi combo giữ nguyên. rulesVersion: màn 1–5 9/16/18/19/19, Vô tận 5, Viễn chinh 6. CHANGELOG 1.4.4 (vi/en/ja), docs/BATTLE-DATA.md cập nhật.
 - Mô phỏng (trước → sau, cùng seed): đa số trong nhiễu; màn 4 búa Normal simple HP còn 90 → 91% (trận 65 → 73 s) nên ngưỡng màn 4 nới 0,90 → 0,91 (ghi chú trong AdventureBalanceTests); màn 3 kiếm Hard simple thắng 16 → 14/20; Viễn chinh Hard simple safe kiếm 21 → 18/40, búa 20 → 21/40.
 - Test thật: scripts/test.ps1 -Ui: Python OK; C# 1535 (mới: splash bỏ qua slime sau mục tiêu 40 DIPs — trước đây dính 12; slime sát sau mục tiêu vẫn dính); WPF 847/847. Chưa xem trên màn hình thật.
+- Commit 61324a8; publish 1.4.3+61324a8 (sạch), check-publish 3/3, mèo mở lại. ZIP artifacts\DesktopPet-1.4.3-61324a8-win-x64.zip. Test tay: mục combo cuối docs/MANUAL-TEST.md.
 
 ## Chuẩn theme project (2026-10-24)
 - Người dùng duyệt hướng Cozy Desktop Adventure. Thêm docs/DESIGN-SYSTEM.md: bản sắc, palette/font/radius đúng PetUi, quy ước component/art/motion/sound, mode mapping, checklist và backlog chuẩn hóa.

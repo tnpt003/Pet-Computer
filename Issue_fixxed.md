@@ -8,7 +8,7 @@ Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm 
 
 ---
 
-## #23 — Đòn combo thứ 3 đánh trúng slime ở khoảng cách xa (2026-10-24)
+## #23 — Đòn combo thứ 3 đánh trúng slime ở khoảng cách xa (2026-10-24, commit 61324a8)
 - **Triệu chứng:** combo trúng mục tiêu sát mèo nhưng slime đứng xa (khoảng gấp đôi tầm kiếm) cũng có tia lửa và mất máu.
 - **Nguyên nhân:** sát thương lan của combo tính mọi quái trong 60 DIPs từ mép mục tiêu, không xét vị trí mèo/tầm vũ khí.
 - **Sửa:** `PetBattle.Splash` chỉ lan tới quái phía mèo đang vung, mép gần cách tâm mèo ≤ tầm vũ khí + 14 DIPs. Nâng rulesVersion các chế độ.

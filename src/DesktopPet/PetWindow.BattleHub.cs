@@ -230,7 +230,7 @@ public sealed partial class PetWindow
         {
             case HubAdventure:
             {
-                string title = L("Phiêu lưu", "Adventure");
+                string title = L("Hướng dẫn phiêu lưu", "Adventure Guide");
                 string about = L("Học chơi qua từng màn của chương, mang build theo và hạ trùm.", "Learn to play stage by stage, carry your build and beat the boss.");
                 if (Adventure is not Adventure adventure || adventure.Chapter() is not ChapterSpec chapter)
                     return (title, about, L("Dữ liệu chưa có chương", "No chapter in the data"), null, false, L("Chưa có", "Not available"));

@@ -5,71 +5,37 @@ using System.Windows.Media;
 
 namespace DesktopPet;
 
-// Battle Mode's short first-battle guide: four cards (targets, skills, rescue, protection and
-// cooldowns) in a small panel that never takes focus and is used with the mouse only. It opens
-// by itself once, with the first battle setup panel (preferences.BattleTutorialSeen), and again
-// from the panel's How to play button; Ready closes it. Should it be open during a battle, the
-// battle is paused (BattlePause.Tutorial), so no timer, wave or slime attack runs behind it.
+// A stage's tip: one card in a small panel that never takes focus and is used with the mouse only,
+// opened from the stage's setup panel (Stage tip). Should it be open during a battle, the battle is
+// paused (BattlePause.Tutorial), so no timer, wave or slime attack runs behind it. The battle guide's
+// cards are gone since 2026-10-24: the Adventure Guide itself teaches the game (PetWindow.BattleGuide.cs).
 public sealed partial class PetWindow
 {
     private Window? battleTutorialWindow;
     private int battleTutorialStep;
     private TextBlock? tutorialTitle, tutorialBody, tutorialCount, tutorialNextText;
-    public const int BattleTutorialSteps = 5;
-    // A stage tip (Adventure): the same panel with one card; null for the battle guide.
     private StageSpec? tipStage;
     public string? BattleTipStage => tipStage?.Id;
-    private int TutorialSteps => tipStage != null ? 1 : BattleTutorialSteps;
+    private const int TutorialSteps = 1;
     public bool BattleTutorialOpen => battleTutorialWindow != null;
     public int BattleTutorialStep => battleTutorialStep;
     public string BattleTutorialText => $"{tutorialTitle?.Text}\n{tutorialBody?.Text}";
 
-    private (string Title, string Body) TutorialCard(int step)
-    {
-        if (tipStage != null) return (L("Mẹo · ", "Tip · ") + StageTitle(tipStage), StageTip(tipStage) ?? "");
-        var s = BattleTuning;
-        string grace = s.LandingGraceSeconds.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
-        string again = s.RescueGraceCooldownSeconds.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
-        return step switch
-        {
-            0 => (L("Chọn mục tiêu", "Pick a target"),
-                  L("Click một slime: mèo đánh con đó trước. Không chọn thì mèo tự đánh con gần nhất. Vũ khí và độ khó chọn trên bảng chuẩn bị trước khi bấm Sẵn sàng.",
-                    "Click a slime: the cat goes for it first. Otherwise it fights the nearest one by itself. Pick the weapon and difficulty on the setup panel before pressing Ready.")),
-            1 => (L("Kỹ năng", "Skills"),
-                  L("Bấm một ô kỹ năng trên HUD. Đẩy và Bom len: bấm ô rồi click slime. Vòng quét trên ô là thời gian hồi; rê chuột lên ô để xem mô tả.",
-                    "Press a skill slot on the HUD. Push and Yarn bomb: press the slot, then click a slime. The sweep on a slot is its cooldown; hover a slot for details.")),
-            2 => (L("Cứu mèo", "Rescue the cat"),
-                  L("Slime phồng lên với dấu ! đỏ là sắp đánh: kéo mèo lên. Đang bế thì mèo không bị đánh; thả mèo xuống trước khi đòn rơi thì thả ra ngoài vòng đỏ để đòn trượt.",
-                    "A slime swelling with a red ! is about to hit: drag the cat up. A carried cat cannot be hit; put it down before the hit falls and do it outside the red ring to make it miss.")),
-            4 => (L("App trên màn hình", "Desktop apps"),
-                  L("Icon app sáng vàng là đã sạc đầy: bấm để giúp mèo. Icon dính virus ☣ quay ra hại mèo: bấm nhiều lần để gỡ. App độc rơi xuống sân (vòng loading, cập nhật, virus.exe, quảng cáo): bấm hoặc giữ chuột để tắt.",
-                    "A desktop app glowing gold is charged: click it to help the cat. An icon with a ☣ virus works against the cat: click it several times to clean it. Malware on the field (loading ring, update, virus.exe, ads): click or hold to close it.")),
-            _ => (L("Bảo vệ và hồi chiêu", "Protection and cooldowns"),
-                  LF($"Thả mèo xuống được {grace} giây an toàn, tối đa 1 lần mỗi {again} giây. Khi đang bế mèo, kỹ năng tạm khóa và không hồi. Mở lại hướng dẫn: nút Hướng dẫn trên bảng chuẩn bị.",
-                    $"Putting the cat down gives {grace} s of safety, at most once every {again} s. While the cat is carried, skills wait and do not cool down. Open this again: How to play on the setup panel."))
-        };
-    }
+    private (string Title, string Body) TutorialCard(int step) =>
+        tipStage == null ? ("", "") : (L("Bài học · ", "Lessons · ") + StageTitle(tipStage), tipStage.Tip(preferences.Language) ?? "");
 
-    // Opens the guide at its first card (or keeps it open). During a battle it pauses it. The lessons
-    // on the spot (PetWindow.BattleCoach.cs) come again in the next Adventure battles.
-    public void ShowBattleTutorial() { ResetBattleLessons(); ShowGuide(null); }
-
-    // A stage's tip: once by itself when the stage first starts, or again from its setup panel.
-    // Closing it (Done or Skip) marks it seen in the Adventure progress.
+    // A stage's tip, from its setup panel. Closing it (Done or Skip) marks it seen in the Adventure progress.
     public bool ShowStageTip(StageSpec stage)
     {
-        if (StageTip(stage) is not { Length: > 0 }) return false;
+        if (stage.Tip(preferences.Language) is not { Length: > 0 }) return false;
         ShowGuide(stage);
         return BattleTutorialOpen;
     }
 
-    // A chapter 1 stage's tip is what it teaches (PetWindow.BattleCoach.cs); other stages keep the data's tip.
-    private string? StageTip(StageSpec stage) => StageLessonsLine(stage) ?? stage.Tip(preferences.Language);
-
-    private void ShowGuide(StageSpec? tip)
+    private void ShowGuide(StageSpec tip)
     {
         if (closed || context.Fullscreen) return;
-        if (battleTutorialWindow != null && tipStage?.Id != tip?.Id) { battleTutorialWindow.Close(); battleTutorialWindow = null; }
+        if (battleTutorialWindow != null && tipStage?.Id != tip.Id) { battleTutorialWindow.Close(); battleTutorialWindow = null; }
         tipStage = tip;
         battleTutorialStep = 0;
         if (battleTutorialWindow == null)
@@ -126,8 +92,8 @@ public sealed partial class PetWindow
         MoveWindow(battleTutorialWindow, left, top, at);
     }
 
-    // finished: the user went through it or skipped it, so it does not open by itself again.
-    // Otherwise (the battle ended, a fullscreen app, the pet reset) it just goes away.
+    // finished: the user went through it or skipped it (the tip is marked seen). Otherwise (the
+    // battle ended, a fullscreen app, the pet reset) it just goes away.
     public void CloseBattleTutorial(bool finished = false)
     {
         if (tipStage != null)
@@ -138,12 +104,6 @@ public sealed partial class PetWindow
                 if (AdventureProgressFile != null) adventureSaveFailed = !AdventureProgress.Save(AdventureProgressFile);
             }
             tipStage = null;
-            finished = false; // A tip is not the battle guide.
-        }
-        if (finished && !preferences.BattleTutorialSeen)
-        {
-            preferences.BattleTutorialSeen = true;
-            SavePreferences();
         }
         battleTutorialWindow?.Close();
         battleTutorialWindow = null;

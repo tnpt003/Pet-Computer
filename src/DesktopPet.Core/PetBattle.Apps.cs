@@ -40,6 +40,8 @@ public sealed partial class BattleSim
     private double infectTimer = double.NaN;
     // When the next malware comes (NaN: not started yet), and the viruses elites shot this wave.
     private double malwareClock = double.NaN;
+    // The stage's malware plan cues already sent (StageSpec.MalwarePlan).
+    private int malwareCued;
     private int eliteShots;
     // The loading ring whose spinner the user is holding down (0: none).
     public int HoldingHazardId { get; private set; }
@@ -182,7 +184,8 @@ public sealed partial class BattleSim
             infectTimer -= dt;
             if (infectTimer <= 0) { infectTimer = double.NaN; ShootGoo(rules); }
         }
-        if (Phase != BattlePhase.Fighting) return;
+        if (Phase != BattlePhase.Fighting || Stage is { Malware: false }) return;
+        StepMalwarePlan(rules);
         StepMalware(dt, rules);
         StepEliteViruses(dt, rules);
     }
@@ -191,13 +194,36 @@ public sealed partial class BattleSim
     // usual wait, then every MalwareEveryMin–MalwareEveryMax s.
     private void StepMalware(double dt, AppsSpec rules)
     {
-        if (Threat < rules.MalwareMinThreat) return;
+        if (Threat < rules.MalwareMinThreat || MalwareSeconds < (Stage?.MalwareFrom ?? 0)) return;
         double Wait() => rules.MalwareEveryMin + appRandom.NextDouble() * (rules.MalwareEveryMax - rules.MalwareEveryMin);
         if (double.IsNaN(malwareClock)) malwareClock = Wait() * 0.5;
         malwareClock -= dt;
         if (malwareClock > 0) return;
         malwareClock = Wait();
         ThrowMalware(rules);
+    }
+
+    // The fight's seconds a malware plan counts (a survive stage: its clock, which carrying stops).
+    private double MalwareSeconds => Stage is { Survival: true, SurviveSeconds: double hold } ? hold - SurviveRemaining : FightSeconds;
+
+    // A stage's malware plan: each cue once, when its time comes (one that cannot come yet — no
+    // slime to throw it, no clean icon — waits and tries again).
+    private void StepMalwarePlan(AppsSpec rules)
+    {
+        if (Stage?.MalwarePlan is not { } plan || malwareCued >= plan.Length || !slimes.Any(s => s.Targetable)) return;
+        var cue = plan.OrderBy(c => c.At).ElementAt(malwareCued);
+        if (MalwareSeconds < cue.At) return;
+        int kind = Array.IndexOf(MalwareCue.Kinds, cue.Kind);
+        bool sent;
+        switch (cue.Kind)
+        {
+            case "infect": sent = ShootGoo(rules); break;
+            case "loading": ThrowLoading(rules); sent = MalwareOut(0); break;
+            case "update": ThrowUpdate(rules, orLoading: false); sent = MalwareOut(1); break;
+            case "virus": DropVirusExe(rules); sent = MalwareOut(2); break;
+            default: OpenAds(rules, null); sent = MalwareOut(3); break;
+        }
+        if (sent || kind < 0) malwareCued++;
     }
 
     // The kinds of malware out now: a loading ring, a forced update, virus.exe, the ads.
@@ -309,6 +335,8 @@ public sealed partial class BattleSim
                 if (FreeCell(app) is (int c, int r)) Move(app, c, r, false);
             }
         }
+        // A stage without malware, or one with a plan (it sends the infection itself), draws none.
+        if (Stage is { Malware: false } or { MalwarePlan: not null }) return;
         if (Threat >= rules.InfectMinThreat && appRandom.NextDouble() < rules.InfectChance) infectTimer = 3 + appRandom.NextDouble() * 5;
     }
 
@@ -457,7 +485,8 @@ public sealed partial class BattleSim
 
     // A slime throws a forced update between the cat and the nearest slime far enough away (one at a
     // time, never on a slime); with no room for it, a loading ring instead.
-    private void ThrowUpdate(AppsSpec rules)
+    // orLoading: with no room for the wall a loading ring comes instead (a stage's plan waits for room).
+    private void ThrowUpdate(AppsSpec rules, bool orLoading = true)
     {
         if (hazards.Any(h => h.Kind == HazardKind.Update)) return;
         double gap = WallHalfWidth + CatHalfWidth + 30;
@@ -470,7 +499,7 @@ public sealed partial class BattleSim
             spot = x;
             break;
         }
-        if (spot is not double at) { ThrowLoading(rules); return; }
+        if (spot is not double at) { if (orLoading) ThrowLoading(rules); return; }
         var wall = new BattleHazard { Id = nextAppId++, Kind = HazardKind.Update, X = at, Life = rules.UpdateSeconds, ClicksLeft = Math.Max(1, rules.UpdateClicks) };
         hazards.Add(wall);
         events.Add(new(BattleEventKind.HazardOpened, at, wall.Id));

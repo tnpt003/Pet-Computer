@@ -216,6 +216,9 @@ public sealed class WaveGroup
     // Two-sided waves: "a" spawns at the edge far from the cat (as the wave starts), "b" at the
     // other edge after a warning arrow there (BattleSettings.IncomingWarning); unset: either edge.
     public string? Side { get; init; }
+    // Every enemy of this group (or squad member) comes elite, whatever the stage's chance or the
+    // difficulty (the Adventure Guide shows each kind's elite this way); its kind needs an affix.
+    public bool Elite { get; init; }
     [JsonIgnore] public bool Fixed => Pick == null && Squad == null;
     [JsonIgnore] public int SquadSize => Squad?.Sum(m => Math.Max(0, m.Count)) ?? 1;
 }
@@ -314,6 +317,13 @@ public sealed class StageSpec
     // The chance (0–1) that an enemy spawned by a wave or stream with an elite affix is elite
     // (never on Easy; BattleSettings.MaxElites caps how many are alive at once).
     public double EliteChance { get; init; }
+    // false: no malware and no infected icons in this stage (the icons still help the cat).
+    public bool Malware { get; init; } = true;
+    // Malware sent at set times (s of the fight; a survive stage: of its clock), each once: "ads",
+    // "loading", "update", "virus" (virus.exe) or "infect" (a slime's virus into an icon). With a plan,
+    // random malware and infections wait until MalwareFrom s.
+    public MalwareCue[]? MalwarePlan { get; init; }
+    public double MalwareFrom { get; init; }
     // An accessory id (Assets/accessories.json) given once, the first time the stage is won.
     public string? Reward { get; init; }
     // A short tip shown once when the stage first starts (and again from its setup panel).
@@ -323,6 +333,14 @@ public sealed class StageSpec
     public WaveSpec[] Waves { get; init; } = Array.Empty<WaveSpec>();
     public string Name(string language) => PetText.Data(language, NameVi, NameEn);
     public string Goal(string language) => PetText.Data(language, GoalVi, GoalEn);
+}
+
+// One cue of a stage's malware plan (StageSpec.MalwarePlan).
+public sealed class MalwareCue
+{
+    public double At { get; init; }
+    public string Kind { get; init; } = "";
+    public static readonly string[] Kinds = { "ads", "loading", "update", "virus", "infect" };
 }
 
 // An upgrade offered between the waves of an Adventure stage. A run keeps what it took; in the
@@ -846,6 +864,8 @@ public static class BattleData
                     if (g.Count is < 1 or > 50) throw new InvalidDataException($"{at}[{i}] {g.Enemy}: count must be 1–50");
                     if (g.Side != null && Array.IndexOf(GroupSides, g.Side) < 0) throw new InvalidDataException($"{at}[{i}].side must be \"a\" or \"b\"");
                     if (g.Pick != null && g.Squad != null) throw new InvalidDataException($"{at}[{i}]: a group is a pick or a squad, not both");
+                    foreach (var kind in g.Squad?.Where(m => m is { Elite: true }).Select(m => m.Enemy) ?? (g.Elite ? g.Pick?.Keys ?? (IEnumerable<string>)new[] { g.Enemy } : Array.Empty<string>()))
+                        if (ids.Contains(kind) && s.Enemy(kind).Elite == null) throw new InvalidDataException($"{at}[{i}].elite: \"{kind}\" has no elite affix");
                     if (g.Pick != null)
                     {
                         Weights(g.Pick, $"{at}[{i}].pick");
@@ -965,13 +985,21 @@ public static class BattleData
     internal static void ValidateStage(StageSpec stage, string where, Action<IReadOnlyList<WaveSpec>?, string, int?, bool> waves, Action<string?, string> text)
     {
         text(stage.NameVi, where + ".nameVi"); text(stage.NameEn, where + ".nameEn");
-        if (stage.GoalVi == null || stage.GoalEn == null || stage.GoalVi.Length > 120 || stage.GoalEn.Length > 120)
-            throw new InvalidDataException($"{where} goals must be at most 120 characters");
+        if (stage.GoalVi == null || stage.GoalEn == null || stage.GoalVi.Length > 160 || stage.GoalEn.Length > 160)
+            throw new InvalidDataException($"{where} goals must be at most 160 characters");
         if (Array.IndexOf(StageObjectives, stage.Objective) < 0) throw new InvalidDataException($"{where}.objective must be one of: {string.Join(", ", StageObjectives)}");
         if (stage.RulesVersion is < 1 or > 1000) throw new InvalidDataException($"{where}.rulesVersion must be 1–1000");
         if (stage.MaxAlive is int alive && alive is < 1 or > 10) throw new InvalidDataException($"{where}.maxAlive must be 1–10");
         if (stage.MaxUpgrades is int picks && picks is < 1 or > 30) throw new InvalidDataException($"{where}.maxUpgrades must be 1–30");
         if (!double.IsFinite(stage.EliteChance) || stage.EliteChance is < 0 or > 1) throw new InvalidDataException($"{where}.eliteChance must be 0–1");
+        if (!double.IsFinite(stage.MalwareFrom) || stage.MalwareFrom is < 0 or > 600) throw new InvalidDataException($"{where}.malwareFrom must be 0–600");
+        if (stage.MalwarePlan is { } plan)
+        {
+            if (!stage.Malware || plan.Length is 0 or > 12) throw new InvalidDataException($"{where}.malwarePlan must list 1–12 cues, in a stage with malware");
+            foreach (var cue in plan)
+                if (cue == null || Array.IndexOf(MalwareCue.Kinds, cue.Kind) < 0 || !double.IsFinite(cue.At) || cue.At is < 0 or > 600)
+                    throw new InvalidDataException($"{where}.malwarePlan: each cue needs \"at\" 0–600 and a kind of {string.Join(", ", MalwareCue.Kinds)}");
+        }
         if (stage.Survival && stage.SurviveSeconds is not (>= 10 and <= 600)) throw new InvalidDataException($"{where}.surviveSeconds must be 10–600 for a survive stage");
         if (!stage.Survival && stage.SurviveSeconds != null) throw new InvalidDataException($"{where}.surviveSeconds is only for a survive stage");
         waves(stage.Waves, where + ".waves", stage.MaxAlive, stage.Survival);
@@ -986,8 +1014,8 @@ public static class BattleData
                 if (!double.IsFinite(offers[k]) || offers[k] < 1 || offers[k] >= stage.SurviveSeconds || (k > 0 && offers[k] <= offers[k - 1]))
                     throw new InvalidDataException($"{where}.upgradeAt must rise and stay inside the survive time");
         }
-        if ((stage.TipVi == null) != (stage.TipEn == null) || stage.TipVi?.Length > 220 || stage.TipEn?.Length > 220)
-            throw new InvalidDataException($"{where} tips need both languages, at most 220 characters each");
+        if ((stage.TipVi == null) != (stage.TipEn == null) || stage.TipVi?.Length > 400 || stage.TipEn?.Length > 400)
+            throw new InvalidDataException($"{where} tips need both languages, at most 400 characters each");
         if (stage.Reward != null && PetAccessories.Find(stage.Reward) is not { Reward: not null })
             throw new InvalidDataException($"{where}.reward \"{stage.Reward}\" is not a reward accessory in accessories.json");
     }

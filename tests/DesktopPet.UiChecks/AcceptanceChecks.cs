@@ -52,9 +52,11 @@ internal static class AcceptanceChecks
             Win();
             check(window.Adventure!.IsUnlocked("a_two"), "Winning stage 1 opens stage 2");
 
-            // The tip: by itself the first time, the battle paused for it; Done marks it seen (saved).
-            check(window.StartBattle(stage: tipped) == null && window.BattleTutorialOpen && window.BattleTipStage == "a_two" && window.BattleTutorialText.Contains("A test tip"),
-                "The first start of a stage with a tip shows it");
+            // The tip (what the stage teaches) no longer opens by itself (2026-10-24: the Adventure
+            // Guide teaches in the battle); from the setup panel it pauses the battle; Done marks it seen.
+            check(window.StartBattle(stage: tipped) == null && !window.BattleTutorialOpen && !window.Battle!.Paused, "A stage's tip does not open by itself");
+            check(window.ShowStageTip(tipped) && window.BattleTipStage == "a_two" && window.BattleTutorialText.Contains("A test tip") && window.BattleTutorialText.StartsWith("Lessons · "),
+                "Opened, the tip shows what the stage teaches");
             check(window.Battle!.Paused && (window.BattlePauseReasons & PetWindow.BattlePause.Tutorial) != 0, "The battle waits while the tip is open");
             window.SetBattlePaused(true);
             window.BattleTutorialNext(); // Done: one card.
@@ -74,13 +76,11 @@ internal static class AcceptanceChecks
             check(window.BattlePauseReasons == PetWindow.BattlePause.None && !window.Battle.Paused, "Closing the tip lets the battle run");
             window.EndBattleByUser();
             window.CancelAdventureMap(); window.CancelBattleHub();
-            check(window.StartBattle(stage: tipped) == null && !window.BattleTutorialOpen, "A tip already seen does not show again");
-            window.EndBattle();
             // Again from the setup panel.
             window.OpenAdventureMap("a_two");
             window.AdventureEnterStage();
             await Task.Delay(30);
-            check(window.BattlePrepText.Contains("Stage tip"), "The stage's setup panel offers its tip again");
+            check(window.BattlePrepText.Contains("What you learn here"), "The stage's setup panel offers its tip");
             check(window.ShowStageTip(window.BattlePrepStage!) && window.BattleTutorialText.Contains("A test tip"), "and shows it");
             window.CloseBattleTutorial(finished: true);
             window.CancelBattlePrep();

@@ -97,7 +97,7 @@ public sealed class BattleSettings
     public int MaxEffects { get; init; } = 32;
 
     // The user's skills.
-    public double PushCooldown { get; init; } = 3;
+    public double PushCooldown { get; init; } = 5;
     public double PushSpeed { get; init; } = 520;
     public double PushStunSeconds { get; init; } = 1.4;
     public double HealCooldown { get; init; } = 14;

@@ -179,7 +179,7 @@ Từ 2026-10-20 battle.json có khóa tùy chọn `campaign`: các chương, m�
       "stages": [
         {
           "id": "c1_first_steps", "nameVi": "Làm quen", "nameEn": "First steps",
-          "goalVi": "…", "goalEn": "…",       // tối đa 120 ký tự, hiện trên bản đồ và bảng chuẩn bị
+          "goalVi": "…", "goalEn": "…",       // tối đa 160 ký tự, hiện trên bản đồ và bảng chuẩn bị
           "objective": "clear",              // hiện chỉ có "clear": dọn hết các đợt
           "maxAlive": 2,                     // 1–10, số quái cùng lúc (bỏ trống: dùng maxAlive chung)
           "rulesVersion": 1,                 // tăng khi đổi màn nhiều để kỷ lục cũ không bị so với luật mới
@@ -276,6 +276,10 @@ Màn sinh tồn: `"objective": "survive", "surviveSeconds": 10–600`. Các đ�
 - Quái hồi máu: `healAmount` (0–1000, 0 = không hồi), `healRange` (10–600), `healCooldown` (0.5–60), `healWindup` (0.2–5), `healBudget` (1–100000: tổng máu tối đa con đó có thể hồi). `marks: "cross"` vẽ dấu "+" trên thân.
 - Pha của boss: `phases: [ { "at": 0.5, "summon": "mender", "count": 1 }, { "at": 0.3, "enrage": true } ]` (1–6 pha; `at` trong khoảng 0–1; mỗi pha phải gọi quân hoặc nổi giận; `count` 1–6). `summonCap` 1–10 là số quân được gọi còn sống cùng lúc. Quân được gọi không được là quái biết gọi quân. Có pha nổi giận thì cần `enragedSpeed`/`enragedWindup`.
 - Phần thưởng màn: `"reward": "<id phụ kiện>"`, phụ kiện đó phải có `"reward"` trong accessories.json. Chỉ nhận một lần, chỉ với dữ liệu gốc.
+- (2026-10-24, Hướng dẫn phiêu lưu) `tipVi`/`tipEn` (tối đa 400 ký tự, cần cả hai): màn này dạy gì, mở từ bảng chuẩn bị ("Màn này dạy gì"), không tự bật nữa.
+- `"malware": false`: màn không có app độc và không có icon bị nhiễm (icon app vẫn giúp mèo). Gốc: màn 2.
+- `"malwarePlan": [ { "at": 6, "kind": "ads" }, … ]` (1–12 mục, màn có app độc): gửi đúng lúc (giây đánh; màn sống sót: giây của đồng hồ, bế mèo thì đồng hồ dừng), mỗi mục một lần; `kind` là `ads`, `loading`, `update`, `virus` (virus.exe) hoặc `infect` (slime bắn virus vào icon). Chưa gửi được (không có slime, không chỗ đặt tường, không còn icon sạch) thì chờ và thử lại. Có kế hoạch thì app độc ngẫu nhiên chờ tới `"malwareFrom"` giây (0–600) và đợt không tự bốc virus nhiễm icon. Gốc: màn 3 quảng cáo 6, loading 14, cập nhật 27, virus.exe 34, nhiễm 47, ngẫu nhiên từ 50.
+- Nhóm quái (hoặc thành viên squad) có `"elite": true`: mọi con của nhóm ra là tinh anh, bất kể `eliteChance`, độ khó (cả Dễ), `maxElites` hay ngân sách; loại quái phải có `"elite"`. Gốc: màn 4 có một tinh anh mỗi loại (slime, slime nhanh, slime đá, slime thảo dược) và `eliteChance` 0; màn 3 không còn tinh anh.
 
 ## Lao tới và choáng (Combat Depth mốc 1)
 
@@ -344,7 +348,7 @@ Màn sinh tồn: `"objective": "survive", "surviveSeconds": 10–600`. Các đ�
   - Chỉ số (từ 1.2.0-beta, nhân **một lần** lúc thành tinh anh, sau độ khó/threat, làm tròn như khi spawn; cũng áp cho quân boss phong tinh anh): `hp` (1–3, thêm HP tối đa và HP hiện tại tương ứng), `damage` (1–3), `attackCooldown` (0.2–1: chỉ thời gian chờ giữa hai đòn, gồng/hồi sức giữ nguyên), `healCooldown` (0.2–1) và `healBudget` (1–3) chỉ cho quái hồi máu (không đổi lượng mỗi lần hồi hay HealPower).
   - `pushImmune` (true/false): kỹ năng Đẩy không đẩy, không choáng, không ngắt gồng/hồi máu của nó; kỹ năng vẫn tốn hồi chiêu; banner "… tinh anh miễn Đẩy!" lần đầu mỗi trận. Đòn của mèo (combo, búa, thẻ Đẩy mạnh) cũng không đẩy lùi nó nhưng vẫn gây sát thương; bom vẫn như cũ.
   - `descVi`/`descEn` (≤ 60 ký tự). Affix không đổi gì thì bị từ chối.
-  - Bản gốc (1.2.0-beta): slime thường `hp` 1.2, `attackCooldown` 0.65; slime nhanh gồng +0.3 s, lao ×1.4, `damage` 1.2; slime đá 1 lần chặn chắc chắn, `hp` 1.3, `pushImmune`; slime thảo dược lần hồi đầu ×2, `healCooldown` 0.85, `healBudget` 1.3. Màn 3–5 `eliteChance` 0.3, `maxElites` 1.
+  - Bản gốc (1.2.0-beta): slime thường `hp` 1.2, `attackCooldown` 0.65; slime nhanh gồng +0.3 s, lao ×1.4, `damage` 1.2; slime đá 1 lần chặn chắc chắn, `hp` 1.3, `pushImmune`; slime thảo dược lần hồi đầu ×2, `healCooldown` 0.85, `healBudget` 1.3. Màn 5 `eliteChance` 0.3 (màn 3 bỏ từ 2026-10-24; màn 4 đặt tinh anh bằng `"elite": true`), `maxElites` 1.
 - Thẻ hiếm: thẻ có `"rare": true` (phải có `group`, `maxStacks` 1; mỗi nhóm tối đa một thẻ hiếm). Khi đưa thẻ, thẻ của mỗi nhóm có xác suất `rareChance` (0–1, mặc định 0.15) bị thay bằng thẻ hiếm của nhóm đó (nếu build chưa có). Tung bằng luồng ngẫu nhiên riêng, nên các thẻ thường vẫn như khi không có thẻ hiếm. Thẻ hiếm không bao giờ là thẻ lấp chỗ trống; tính 1 điểm cho nhóm; được mang sang màn sau như thẻ khác. Thẻ có viền vàng và dòng "★ Thẻ hiếm · một lần mỗi build"; HUD/bảng chuẩn bị ghi "◆ <tên>".
   - `shell` (Mai rùa, Phòng thủ; `amount` 3–60 s): đòn tiếp theo trúng mèo bị chặn trọn (không mất máu, không choáng), rồi mọc lại sau `amount` giây mèo đứng dưới sàn (không hồi khi đang bế). Khiên bong bóng vẫn được tính trước.
   - `opener` (Đòn mở màn, Sức mạnh; `amount` 0.1–3): nhát vũ khí đầu tiên trúng mỗi quái gây thêm `amount` (1 = ×2). Nhát bị chặn không tính là đã mở. Dư ảnh lặp lại nhát chém không kèm thưởng này.

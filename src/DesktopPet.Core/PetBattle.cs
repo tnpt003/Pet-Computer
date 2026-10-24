@@ -172,6 +172,7 @@ public sealed partial class BattleSim
     // IncomingRemaining s.
     private int farEdge, streamEdge;
     private string[]? incoming;
+    private bool[]? incomingElite;
     public double IncomingRemaining { get; private set; }
     public double IncomingX { get; private set; }
     public int IncomingEdge { get; private set; }

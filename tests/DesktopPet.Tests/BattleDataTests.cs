@@ -75,8 +75,8 @@ internal static class BattleDataTests
             "battle.json's skill names and descriptions are exactly the built-in ones");
         var oldTexts = new (BattleSkill Skill, string Vi, string En)[]
         {
-            (BattleSkill.Push, "Đẩy quái — chọn rồi click một slime (nửa trái: đẩy sang phải, nửa phải: sang trái), choáng 1.4 giây. Hồi 3 giây.",
-                "Push — choose, then click a slime (left half: push right, right half: push left); stuns 1.4 s. 3 s cooldown."),
+            (BattleSkill.Push, "Đẩy quái — chọn rồi click một slime (nửa trái: đẩy sang phải, nửa phải: sang trái), choáng 1.4 giây. Hồi 5 giây.",
+                "Push — choose, then click a slime (left half: push right, right half: push left); stuns 1.4 s. 5 s cooldown."),
             (BattleSkill.Heal, "Cá hồi máu — mèo hồi 25 HP. Hồi 14 giây.", "Healing fish — the cat gets 25 HP back. 14 s cooldown."),
             (BattleSkill.Cheer, "Cổ vũ — 5 giây mèo đánh nhanh ×1.6, mạnh ×1.4. Hồi 18 giây.", "Cheer — for 5 s the cat attacks ×1.6 as often, ×1.4 as hard. 18 s cooldown."),
             (BattleSkill.Bomb, "Bom len — chọn rồi click một slime: nổ sau 0.5 giây, 30 sát thương cho mọi quái quanh đó. Hồi 12 giây.",

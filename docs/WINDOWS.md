@@ -869,43 +869,34 @@ next step), so a double click never starts two battles. Ending a battle by hand 
   id the data no longer has reads as the first weapon), never changed during a battle,
   shown next to the cat's name on the HUD and on the result panel. Records are per weapon and
   difficulty (see Records). The hammer is a vector mallet in the same poses as the sword.
-- **First-battle guide** (PetWindow.BattleTutorial.cs): five cards (targets, skills, rescue and
-  the held attack, protection and cooldowns, with battle.json's numbers; since 2026-10-24 the
-  desktop apps, infected icons and malware) in a small panel above the
-  floor strip; mouse only (Skip / Next / Done), never takes focus, follows the UI language, no
-  sound. It opens by itself with the first Adventure stage's setup panel (since 2026-10-24; not a
-  free battle's, the Expedition's or Infinity's) until gone through or skipped
-  (preferences `BattleTutorialSeen`, false in older files), and from the panel's How to play
-  button; no battle exists behind it. Ready closes it (and marks it seen). Should it be open during
-  a battle, the battle is paused (reason Tutorial). A fullscreen app, Cancel or bringing the pet
-  back closes it without marking it seen; measuring runs (`PET_BATTLE_AUTOSTART`) never show it.
-- **Lessons on the spot** (PetWindow.BattleCoach.cs, 2026-10-24; Adventure only since the same
-  day): Adventure is where the game is learned. One table (`Lessons`) gives each lesson its
-  teaching stage, whether it is urgent, when it is due, when it is done, where it points, its words
-  and its name in the stage tip. Chapter 1: First steps — pick a slime (`target`), lift the cat
-  when a slime winds up next to it (`lift`), the stun (`stun`); Break through — the card offer
-  (`cards`, over the offer's own pause; the build carries on), a charged app (`app`), the Healing
-  fish under 60 % HP (`heal`); Hold on — infected icon (`infected`), ads (`ads`, `ads_locked`),
-  Shield with 3 slimes within 140 DIPs (`shield`), Yarn bomb on 3 slimes within its radius
-  (`bomb`: the slot, then the bunch); Cut the support — Push on a slime casting a heal (`push`:
-  the slot, then the healer), the loading ring (`loading`), the forced update (`update`); Slime
-  King — the boss's slam (`slam`: the Shield slot when ready, otherwise lift), virus.exe
-  (`virus`), Cheer with 3 slimes up (`cheer`). A lesson comes in its stage or any later one
-  (missed malware is taught the first time it shows); a stage the data does not have takes any
-  lesson. Never in a free battle, an Expedition encounter or Infinity. The battle keeps its speed.
-  One lesson at a time: none in the first 3 s (`CoachFirst`, battle time), then `CoachGap` 10 s
-  after the last one ends; lessons that can wait (all but lift, slam, stun, cards) only while no
-  slime is winding up an attack that reaches the cat. A click-through, no-activate window ("Pet
-  coach", `CoachMark`) rings the spot with a tapping hand (pressing for a hold) and a few words
-  beside it, on whichever side has room (the card lesson's to the left of the offer). Learned when
-  the user does it (preferences `BattleLessonsSeen`); after 6 s or when its target is gone it ends
-  unlearned and comes again at a later moment, at most `CoachTries` 3 times a session, then it
-  rests (the stun only tells, so it counts as learned). Hidden and frozen while the battle is
-  paused (the card lesson: other than by the offer) or a fullscreen app runs; closed with the
-  battle. How to play clears the list. A chapter 1 stage's tip is "In this stage: …" from the same
-  table (other stages keep battle.json's tip); stage 1 has one now. The hub's Adventure card: "Learn
-  to play stage by stage, carry your build and beat the boss." Off in the window checks unless a
-  check turns it on (`BattleCoachEnabled`).
+- **Adventure Guide** (PetWindow.BattleGuide.cs, 2026-10-24; it replaced the five-card first-battle
+  guide, its How to play link and the lessons on the spot): chapter 1 of the Adventure (the hub card,
+  map and bag call it "Adventure Guide") is where the game is learned, with one kind of guidance.
+  Only in a chapter 1 stage (`StageHasGuide`; never a free battle, an Expedition encounter or
+  Infinity). When a step's moment comes the battle **stands still**: `Step(0)` (time, slimes, the
+  survive clock, cooldowns, malware) and `pet.MoveScale` 0 — not a pause (`BattleGuideFreezes`), so
+  the cat can be lifted and skills, icons and malware clicked to do what the step asks. A
+  click-through, no-activate window ("Pet guide shade", `GuideShade`) darkens the battle's monitor
+  with the lit spots cut out (gold rim); a no-activate line ("Pet guide") sits under (or over) them
+  with **Got it** (see steps) and **Skip the guide** (off for the rest of the run). A do step ends
+  when the user does it, a see step on Got it; a step whose spot is gone ends. Pause, the menu, the
+  bag and a fullscreen app hide it (the card steps show over the card offer's own pause). One table
+  (`GuideSteps`: stage, do/see, times per run, due, done, spots, words):
+  - Stage 1: a slime winding up a hit that reaches the cat — lift it (5 times), and once for a
+    quick slime's dash.
+  - Stage 2: the HUD tour at the start — HP, waves, the skill bar, each skill (its name and the
+    data's description), the bag, the app icons; at the first card offer the offer, then the first
+    card's group line (groups and synergies, the bag).
+  - Stage 3: the survive clock; then ads, the loading ring (hold), the forced update, virus.exe and
+    the infected icon as the stage's malware plan sends them (each may also be passed with Got it).
+  - Stage 4: Push's role; a herb slime casting a heal with Push ready — Push, then the healer (4
+    times; not a push-immune one); the first elite.
+  - Stage 5: the King when he appears; his first slam close to the cat (lift, or the Shield when
+    ready); his first shield phase; his first rally (Push, then the King; once).
+  It runs by itself until the stage is won; the stage setup panel has a **Guide in the battle** chip
+  (on for a stage not won, off for a won one; `BattlePrepChooseGuide`) to learn it again. Off in the
+  window checks unless a check turns it on (`BattleGuideEnabled`). Old preferences keys
+  (`BattleTutorialSeen`, `BattleLessonsSeen`) are ignored.
 - **Pause / Resume / End**: HUD buttons or the menu. Pause reasons stack (User, Menu, Fullscreen,
   Away, App, Tutorial) and each owner removes only its own: closing the menu never resumes a battle the user, a
   fullscreen app or an away cat still holds. A fullscreen app pauses it, hides the field/HUD and
@@ -1103,11 +1094,11 @@ the game draws itself (never a real app's name, logo or colours); rules and numb
 
 ### Stage tips, saving notices, version (2026-10-20, milestone 5)
 
-- **Stage tips** (battle.json `tipVi`/`tipEn`, stages 2–5): the first time a stage starts, its tip
-  shows in the guide panel (one card, "Tip · Stage N · name", Done/Skip) and the battle waits
-  (`BattlePause.Tutorial`). Closing it with Done/Skip saves it as seen (`Seen` in
-  adventure-progress.json); a fullscreen app or the battle's end just closes it. The stage's setup
-  panel has a **Stage tip** link to see it again.
+- **Stage tips** (battle.json `tipVi`/`tipEn`; since 2026-10-24 every chapter 1 stage says what it
+  teaches, up to 400 characters): shown only from the stage's setup panel (**What you learn here**,
+  one card "Lessons · Stage N · name", Done/Skip; the battle waits, `BattlePause.Tutorial`). Done/Skip
+  saves it as seen (`Seen` in adventure-progress.json). It no longer opens by itself when a stage
+  starts: the Adventure Guide teaches in the battle.
 - **HUD:** the name line reads "Name · Weapon · Stage N"; a short banner names the stage at start.
 - **Saving notices:** when the progress cannot be saved (no access, disk full) the result panel and
   the map say "Progress could not be saved"; when adventure-progress.json comes from a newer version

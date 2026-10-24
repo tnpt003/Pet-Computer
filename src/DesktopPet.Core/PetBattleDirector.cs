@@ -23,7 +23,8 @@ public static class BattleRandom
 }
 
 // One spawn: a single enemy or a whole squad, from the side its group asks for ("a", "b" or either).
-public readonly record struct SpawnUnit(string[] Kinds, string? Side = null);
+// Elite: which of Kinds come elite whatever the chance (WaveGroup.Elite; null: none).
+public readonly record struct SpawnUnit(string[] Kinds, string? Side = null, bool[]? Elite = null);
 
 // What a wave sends and how strong (no WPF, no state of its own: BattleSim keeps the queue).
 public static class SpawnDirector
@@ -55,10 +56,11 @@ public static class SpawnDirector
             if (g.Squad != null)
             {
                 var members = g.Squad.SelectMany(m => Enumerable.Repeat(m.Enemy, m.Count)).ToArray();
-                for (int i = 0; i < g.Count; i++) units.Add(new(members, g.Side));
+                var elite = g.Squad.SelectMany(m => Enumerable.Repeat(m.Elite || g.Elite, m.Count)).ToArray();
+                for (int i = 0; i < g.Count; i++) units.Add(new(members, g.Side, elite.Any(e => e) ? elite : null));
             }
-            else if (g.Pick != null) foreach (var kind in Draw(g, random, cost, ref left)) units.Add(new(new[] { kind }, g.Side));
-            else for (int i = 0; i < g.Count; i++) units.Add(new(new[] { g.Enemy }, g.Side));
+            else if (g.Pick != null) foreach (var kind in Draw(g, random, cost, ref left)) units.Add(new(new[] { kind }, g.Side, g.Elite ? new[] { true } : null));
+            else for (int i = 0; i < g.Count; i++) units.Add(new(new[] { g.Enemy }, g.Side, g.Elite ? new[] { true } : null));
         }
         return units;
     }

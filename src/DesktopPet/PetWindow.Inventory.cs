@@ -273,7 +273,7 @@ public sealed partial class PetWindow
 
         bagTitle.Text = L("Túi đồ · ", "Bag · ") + (view.Mode switch
         {
-            BagExpedition => L("Viễn chinh", "Expedition"), BagAdventure => L("Phiêu lưu", "Adventure"), BagEndless => L("Vô tận", "Infinity"), _ => L("Trận", "Battle")
+            BagExpedition => L("Viễn chinh", "Expedition"), BagAdventure => L("Hướng dẫn phiêu lưu", "Adventure Guide"), BagEndless => L("Vô tận", "Infinity"), _ => L("Trận", "Battle")
         });
         bagSubtitle.Text = $"{preferences.Name} · {sim.Weapon.Name(preferences.Language)}" + (view.Where.Length > 0 ? " · " + view.Where : "");
         bool hasHp = view.Hp is double;

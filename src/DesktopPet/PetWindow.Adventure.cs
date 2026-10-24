@@ -202,7 +202,7 @@ public sealed partial class PetWindow
             if (text.Text != (value ?? "")) text.Text = value ?? "";
             text.Visibility = string.IsNullOrEmpty(value) ? Visibility.Collapsed : Visibility.Visible;
         }
-        mapTitle.Text = L("Phiêu lưu — ", "Adventure — ") + chapter.Name(preferences.Language);
+        mapTitle.Text = L("Hướng dẫn phiêu lưu — ", "Adventure Guide — ") + chapter.Name(preferences.Language);
         string? dataNote = BattleDataError != null
             ? L("File battle.json của bạn có lỗi nên dùng dữ liệu gốc: ", "Your battle.json has a mistake, so the built-in battle is used: ") + BattleDataError
             : BattleDataCustom ? L("Đang dùng battle.json tùy chỉnh: chơi được nhưng không lưu tiến trình và kỷ lục.", "Using your custom battle.json: you can play, but progress and records are not saved.") : null;
@@ -268,7 +268,7 @@ public sealed partial class PetWindow
         return LF($"Đã thắng {wins} lần{fastest}", $"Won {wins} time{(wins == 1 ? "" : "s")}{fastest}");
     }
 
-    // A stage battle just started: its name as a banner, and its tip the first time.
+    // A stage battle just started: its name as a banner (the guide teaches the stage, PetWindow.BattleGuide.cs).
     private void StageBattleStarted(StageSpec stage)
     {
         // An Expedition encounter: its step and name as the banner (the HUD's name line already says
@@ -276,7 +276,6 @@ public sealed partial class PetWindow
         if (battleExpedition is ExpeditionBattle x) { battleHud?.ShowBanner(StepTitle(x.Node.Step, x.Expedition.Spec.StepCount) + " · " + stage.Name(preferences.Language), 0, 1.4); return; }
         if (stage.Endless) { battleHud?.ShowBanner(stage.Name(preferences.Language), 0, 1.4); return; }
         battleHud?.ShowBanner(StageTitle(stage), 0, 1.4);
-        if (!AdventureProgress.Seen.Contains(stage.Id) && StageTip(stage) is { Length: > 0 }) ShowStageTip(stage);
     }
 
     // End (HUD or menu): the battle stops with nothing counted. A stage run goes back to the map

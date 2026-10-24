@@ -30,6 +30,8 @@ public sealed class BattleHud : Border
     private readonly TextBlock hpText, status, hint, banner, comboText, upgradesText;
     internal readonly TextBlock bossName;
     private readonly Border hpFill, hpTrail, bossFill, bossBar, pauseButton, endButton, bagButton, grip;
+    // The portrait with HP, the status column and the skill slots (the Adventure Guide lights them).
+    private readonly FrameworkElement hpBlock, statusBlock, skillBar;
     private readonly HudGlyph pauseGlyph;
     private readonly StackPanel waveDots;
     private readonly SkillSlot[] slots = new SkillSlot[SkillOrder.Length];
@@ -160,6 +162,7 @@ public sealed class BattleHud : Border
         grip.MouseLeave += (_, _) => HoverControl(null);
 
         var top = new StackPanel { Orientation = Orientation.Horizontal, Children = { left, centre, bar, bagButton, controls, grip } };
+        hpBlock = left; statusBlock = centre; skillBar = bar;
         // As wide as the row above (never wider): a long description wraps instead of widening the
         // HUD, which would re-centre it and slide the slots out from under the mouse.
         hint = new TextBlock { Foreground = Soft, FontSize = PetUi.SmallSize, TextAlignment = TextAlignment.Center, TextWrapping = TextWrapping.Wrap,
@@ -174,6 +177,9 @@ public sealed class BattleHud : Border
     public Border PauseButton => pauseButton;
     public Border EndButton => endButton;
     public Border BagButton => bagButton;
+    public FrameworkElement HpBlock => hpBlock;
+    public FrameworkElement StatusBlock => statusBlock;
+    public FrameworkElement SkillBar => skillBar;
     public Border Grip => grip;
 
     // For the HUD stepping aside (PetWindow.Battle.cs): points in this panel's coordinates.

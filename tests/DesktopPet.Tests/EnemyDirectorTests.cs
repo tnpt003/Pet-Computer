@@ -225,10 +225,14 @@ internal static class EnemyDirectorTests
         var stream = stages[2].Waves.Single().Stream!;
         check(stream.Weights["runner"] > stream.Weights["slime"] && stream.Weights["slime"] == stream.Weights["rock"] && stages[2].UpgradeAt?.Length == 3 && stages[2].MaxUpgrades == 3 && stages[2].ThreatGrowth > 0,
             "Stage 3: one endless stream (quick slimes most), threat growing, 3 timed card picks");
-        // Cut the support: a herb slime with three rocks together, room for them.
+        // Cut the support: a herb slime with three rocks together, room for them; every kind once
+        // elite (the Adventure Guide shows them), so no elite is left to chance.
         var squads = stages[3].Waves.SelectMany(w => w.Groups).Where(g => g.Squad != null).ToList();
-        check(squads.Count >= 2 && squads.All(g => g.Squad!.Single(m => m.Enemy == "mender").Count == 1 && g.Squad!.Single(m => m.Enemy == "rock").Count == 3) && stages[3].MaxAlive >= 4,
+        var groups4 = stages[3].Waves.SelectMany(w => w.Groups).SelectMany(g => g.Squad ?? new[] { g }).ToList();
+        check(squads.Count >= 2 && squads.All(g => g.Squad!.Count(m => m.Enemy == "mender") == 1 && g.Squad!.Where(m => m.Enemy == "rock").Sum(m => m.Count) == 3) && stages[3].MaxAlive >= 4,
             "Stage 4: herb slime + 3 rocks come as squads (room for all four)");
+        check(new[] { "slime", "runner", "rock", "mender" }.All(kind => groups4.Any(g => g.Elite && g.Enemy == kind)) && stages[3].EliteChance == 0,
+            "Stage 4: one elite of each of the four kinds, set in the data (no random ones)");
         check(stages[4].Waves[^1].Groups.Single() is { Fixed: true, Enemy: "king_c1", Count: 1 }, "Stage 5: the King's wave is the King alone (his helpers are his phases')");
 
         // Many seeds: every stage ends (won or lost) within ten minutes of battle; nothing deadlocks.

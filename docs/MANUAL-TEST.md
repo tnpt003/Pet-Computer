@@ -499,7 +499,7 @@ Tự động đã có: Phần thưởng trên sảnh (ô có hình, khóa, Mới
 - [ ] Kỷ lục Phiêu lưu màn 2–5 và Vô tận bắt đầu lại (phiên bản luật mới; kỷ lục cũ vẫn trong file). Chuyến Viễn chinh đang đi vẫn tiếp tục được.
 
 ### Cân bằng trận 2026-10-24 (mốc 1–3)
-- [ ] Đẩy hồi 3 s, Cá hồi máu 14 s (số trên ô kỹ năng và mô tả rê chuột khớp). Tab Lốc Xoáy sạc nhanh hơn (~40 s). Bão Thông Báo chỉ rơi lên 4 slime gần mèo nhất.
+- [ ] Đẩy hồi 5 s (trả lại 2026-10-24), Cá hồi máu 14 s (số trên ô kỹ năng và mô tả rê chuột khớp). Tab Lốc Xoáy sạc nhanh hơn (~40 s). Bão Thông Báo chỉ rơi lên 4 slime gần mèo nhất.
 - [ ] Đòn combo thứ 3 trúng một slime đứng sát slime khác: con bên cạnh cũng mất máu (số nhỏ hơn) và có tia lửa. Búa: thỉnh thoảng một nhát làm slime choáng (đứng khựng, hủy đòn đang gồng); Vua không bao giờ bị búa làm choáng.
 - [ ] Slime nhanh đang gồng mà bị Đẩy/chuông/búa làm choáng: các cú lao sau vẫn trúng nhưng không làm mèo choáng nữa.
 - [ ] Mèo đang choáng (sao trên đầu): bấm/kéo mèo không nhấc lên được; hết choáng thì nhấc bình thường. Trong trận lắc mèo thật mạnh: không hiện Chóng mặt; ngoài trận lắc mạnh vẫn Chóng mặt như cũ.
@@ -518,8 +518,12 @@ Tự động đã có: Phần thưởng trên sảnh (ô có hình, khóa, Mới
 - [ ] Vô tận đợt cao: tinh anh nhiều dần (từ đợt 20 có thể 2 con cùng lúc). Tới đợt 48: mọi cộng hưởng tự bật (banner).
 - [ ] Kỷ lục Phiêu lưu và Vô tận bắt đầu lại (phiên bản luật mới); Viễn chinh đang đi vẫn tiếp tục.
 
-### Hướng dẫn tại chỗ (2026-10-24, mốc 5)
-- [ ] (Sửa 2026-10-24: chỉ Phiêu lưu, không làm chậm.) Bấm Hướng dẫn trên bảng chuẩn bị (để các bài hiện lại), có 5 thẻ, thẻ cuối nói về app và app nhiễm. Trận tự do, Viễn chinh, Vô tận: không có bài nào. Phiêu lưu màn 1: mẹo màn "Màn này học: …"; một slime gồng đòn cạnh mèo → vòng vàng + bàn tay trên mèo, chữ "Kéo mèo lên!", trận KHÔNG chậm lại; kéo mèo lên → mất dấu, trận sau không hiện lại.
-- [ ] Nhịp: 3 giây đầu trận không có bài; các bài cách nhau ít nhất ~10 giây, không bao giờ nổ liên tiếp; bài không gấp không hiện khi có slime đang gồng cạnh mèo. Không kéo mèo: bài "Kéo mèo lên!" hiện lại ở lần gồng sau (tối đa 3 lần trong phiên).
-- [ ] Theo màn: màn 1 chọn slime/kéo mèo/choáng; màn 2 bảng thẻ (dấu chỉ vào bảng, chữ "build mang sang màn sau"), app đầy, Cá hồi máu (máu < 60%); màn 3 icon nhiễm, quảng cáo, Khiên khi ≥3 slime vây, Bom len khi slime đứng sát (chỉ ô rồi chỉ đám slime); màn 4 Đẩy khi slime thảo dược đang hồi máu (chỉ ô rồi chỉ slime), vòng loading ("Giữ chuột 2 giây"), Cập nhật ("Bấm Nhắc sau"); màn 5 cú dậm của trùm (Khiên nếu sẵn, không thì "Kéo mèo lên"), virus.exe, Cổ vũ. Bài của màn sau không hiện ở màn trước. Bàn tay đúng chỗ (cả màn hình phụ/DPI khác), click xuyên qua dấu được.
-- [ ] Không bấm gì: sau ~6 giây dấu tự mất, trận vẫn chạy bình thường. Pause/menu/fullscreen: dấu ẩn, không đếm giờ.
+### Hướng dẫn phiêu lưu (2026-10-24, thay hướng dẫn tại chỗ)
+- [ ] Sảnh: thẻ "Hướng dẫn phiêu lưu" ghi "Học chơi qua từng màn…"; bản đồ và túi đồ cũng gọi là Hướng dẫn phiêu lưu. Bảng chuẩn bị màn chương 1 có ô "Hướng dẫn trong trận" (màn chưa thắng: bật; đã thắng: tắt), link "Màn này dạy gì" mở danh sách bài học; không còn link "Cách chơi" và hướng dẫn 5 thẻ.
+- [ ] Trận tự do, Viễn chinh, Vô tận: không có hướng dẫn. Đẩy hồi 5 giây (ô kỹ năng, mô tả).
+- [ ] Màn 1: khi slime gồng tới mèo → trận đứng hình (slime, đồng hồ dừng, mèo không đi), màn hình tối, mèo và slime sáng viền vàng, dòng chữ "Kéo mèo lên…"; kéo được mèo trong lúc đứng hình → trận chạy tiếp. 5 lần + 1 lần cho slime nhanh lao tới, sau đó không đứng hình nữa.
+- [ ] Màn 2 lúc mở màn: lần lượt máu, đợt, thanh kỹ năng, từng kỹ năng (tên + mô tả), túi đồ, icon app — mỗi cái bấm "Hiểu rồi". Lần chọn thẻ đầu: sáng bảng thẻ, rồi dòng nhóm thẻ của thẻ đầu. Màn 2 không có app độc/icon nhiễm.
+- [ ] Màn 3: đồng hồ sống sót; khoảng giây 6 quảng cáo, 14 vòng loading (giữ chuột thì trận chạy tiếp và vòng tắt sau 2 s), 27 Cập nhật bắt buộc, 34 virus.exe, 47 icon bị nhiễm — mỗi cái đứng hình + sáng đúng chỗ, bấm/giữ đúng thứ hoặc "Hiểu rồi" thì chạy tiếp. Không có tinh anh. Sau giây 50 app độc ngẫu nhiên như thường.
+- [ ] Màn 4: giới thiệu Đẩy; slime thảo dược gồng hồi máu → đứng hình, sáng slime + ô Đẩy; bấm Đẩy (chỉ còn sáng slime) rồi bấm slime → chạy tiếp (tối đa 4 lần). Gặp đủ 4 loại, mỗi loại một tinh anh (cả ở Dễ); lần đầu thấy tinh anh có bước giới thiệu.
+- [ ] Màn 5: Vua xuất hiện → giới thiệu; lần đầu Vua gồng dậm gần mèo → sáng mèo + vùng dậm (+ ô Khiên nếu sẵn), kéo mèo hoặc bấm Khiên; lần đầu bật khiên gọi quân → giới thiệu; lần đầu vương miện sáng (Đẩy sẵn) → Đẩy rồi bấm Vua, chỉ 1 lần.
+- [ ] "Bỏ qua hướng dẫn": tắt cho hết trận. Pause/menu/túi đồ/fullscreen trong lúc đứng hình: hướng dẫn ẩn, Tiếp tục thì hiện lại. Lớp tối không chặn chuột (click xuyên tới mèo/HUD/icon); dòng chữ không lấy focus. Màn hình phụ/DPI khác: lớp tối phủ đúng màn hình trận, chỗ sáng đúng vị trí.

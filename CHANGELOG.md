@@ -1,11 +1,11 @@
 # Nhật ký thay đổi
 
-## 1.4.4 — App độc trong trận, cân bằng trận, hướng dẫn tại chỗ (chưa phát hành)
+## 1.4.4 — App độc trong trận, cân bằng trận, Hướng dẫn phiêu lưu (chưa phát hành)
 
 ### Tiếng Việt
 
 - **Cân bằng trận (2026-10-24):**
-  - Mèo: Đẩy hồi 3 giây, Cá hồi máu 14 giây, Tab Lốc Xoáy sạc nhanh hơn. Đòn combo thứ ba đánh lan sang quái đứng sát mục tiêu. Búa thỉnh thoảng làm quái choáng. Giáp gai giảm thêm 10% sát thương nhận vào. Bão Thông Báo chỉ rơi lên 4 slime gần mèo nhất, Đẩy mạnh còn +40.
+  - Mèo: Cá hồi máu 14 giây, Tab Lốc Xoáy sạc nhanh hơn. Đòn combo thứ ba đánh lan sang quái đứng sát mục tiêu. Búa thỉnh thoảng làm quái choáng. Giáp gai giảm thêm 10% sát thương nhận vào. Bão Thông Báo chỉ rơi lên 4 slime gần mèo nhất, Đẩy mạnh còn +40.
   - Mèo đang choáng thì không bế lên được; trong trận lắc mèo không còn làm mèo Chóng mặt.
   - Quái: slime đá quay đầu chậm hơn, Vua Slime dậm đất nhẹ hơn và phong tinh anh cho một quân bất kỳ (cả slime thảo dược). Slime nhanh bị làm choáng lúc đang gồng thì không làm mèo choáng được nữa.
   - App độc tới vào lúc ngẫu nhiên (tối đa 2 loại cùng lúc), có thêm 3 quảng cáo trải khắp sàn. Vòng loading kéo dài hơn, phải giữ chuột 2 giây để tắt; cập nhật bắt buộc cần bấm Nhắc sau 4 lần.
@@ -13,10 +13,10 @@
   - Thẻ mới: Móng vuốt, Kết liễu, Nhịp dài, Lướt gió, Hồi phục, Kiên cường, và thẻ tiện ích (Tay nhanh, Sạc pin, Hút năng lượng, Bom to, Khiên dày).
   - Vô tận: thẻ sau mỗi 2 đợt, chọn 2 thẻ sau đợt trùm, giới hạn thẻ cao hơn, cộng hưởng mới ở mốc 6 và 9 thẻ cùng nhóm (từ đợt 48 bật hết), tinh anh nhiều dần, trùm là Vua chương 1 (từ đợt 30 có thêm Vua thường).
   - Trận tự do kết thúc bằng Vua chương 1.
-- **Học chơi trong Phiêu lưu:** mỗi màn của chương 1 dạy vài thứ (mẹo màn ghi "Màn này học: …"). Khi tới lúc (slime sắp đánh, chọn thẻ, app đầy, icon nhiễm, app độc, quảng cáo, máu thấp, lúc nên dùng Đẩy quái/Bom len/Khiên bong bóng/Cổ vũ, cú dậm của trùm…), một bàn tay chỉ vào đúng chỗ cần bấm, kèm vài chữ; trận vẫn chạy tốc độ thường. Mỗi lần một bài, cách nhau ít nhất 10 giây. Bài chỉ tính đã học khi bạn làm đúng (bỏ lỡ thì hiện lại, tối đa 3 lần). Trận tự do, Viễn chinh và Vô tận không có bài; hướng dẫn chữ chỉ tự mở ở màn Phiêu lưu đầu tiên. Nút Hướng dẫn trên bảng chuẩn bị cho học lại. Hướng dẫn có thêm thẻ về app và app nhiễm.
+- **Hướng dẫn phiêu lưu:** Phiêu lưu đổi tên thành Hướng dẫn phiêu lưu và là nơi học chơi. Đúng lúc tình huống xảy ra, trận đứng hình, màn hình tối đi và chỉ chỗ cần làm sáng lên kèm một dòng chữ; bạn vẫn kéo được mèo và bấm kỹ năng, icon để làm theo. Màn 1 dạy kéo mèo né đòn (cả cú lao của slime nhanh); màn 2 giới thiệu HUD, 5 kỹ năng, túi đồ, icon app, thẻ và cộng hưởng; màn 3 lần lượt đưa ra từng app độc và icon bị nhiễm kèm cách xử lý (app độc có từ màn 3, màn 2 không còn); màn 4 luyện Đẩy cắt hồi máu và giới thiệu tinh anh của cả 4 loại slime (màn 3 không còn tinh anh); màn 5 dạy từng chiêu của Vua Slime. Có nút Bỏ qua; tự tắt khi đã thắng màn, bật lại bằng ô "Hướng dẫn trong trận" ở bảng chuẩn bị. Mỗi màn ghi rõ mình sẽ học gì (link "Màn này dạy gì"). Bỏ hướng dẫn 5 thẻ và dấu tay cũ. Đẩy hồi lại 5 giây.
 - Kỷ lục Phiêu lưu và Vô tận được tách theo luật mới; chuyến Viễn chinh đang đi không bị ảnh hưởng.
 
-- **App độc trong trận** (Phiêu lưu từ màn 2, Viễn chinh, Vô tận): thay vì bắn virus vào icon, slime đôi khi tung app độc:
+- **App độc trong trận** (Hướng dẫn phiêu lưu từ màn 3, Viễn chinh, Vô tận): thay vì bắn virus vào icon, slime đôi khi tung app độc:
   - **Vòng loading** ngay chỗ mèo: mèo đứng trong vòng chạy và đánh chậm hẳn. Bấm vòng xoay để tắt, hoặc chờ vài giây.
   - **Cập nhật bắt buộc**: một cửa sổ "CẬP NHẬT" làm tường chắn giữa mèo và slime; slime không qua được và không đánh xuyên được, mèo phải đánh tường cho nhanh xong. Bấm **Nhắc sau** 2 lần để tắt ngay. Trùm thì nhảy qua.
   - **virus.exe**: một file hiện trên màn hình cạnh các icon và tự nhân bản; đủ 4 bản thì nhiễm một icon. Bấm từng file để xóa, hoặc hạ con slime đã thả nó.
@@ -28,7 +28,7 @@
 ### English
 
 - **Battle balance (2026-10-24):**
-  - The cat: Push every 3 s, the Healing fish every 14 s, Tab Tornado charges faster. A combo's third hit also hits enemies next to its target. The hammer sometimes stuns. Thorns also takes 10% off the damage taken. Ping Storm rings only the 4 slimes nearest the cat; Heavy push gives +40.
+  - The cat: the Healing fish every 14 s, Tab Tornado charges faster. A combo's third hit also hits enemies next to its target. The hammer sometimes stuns. Thorns also takes 10% off the damage taken. Ping Storm rings only the 4 slimes nearest the cat; Heavy push gives +40.
   - A stunned cat cannot be lifted; shaking the cat in a battle no longer makes it Dizzy.
   - Enemies: rock slimes turn more slowly, the Slime King's slam hurts less and his rally may pick any helper (herb slimes too). A quick slime stunned during its windup can no longer stun the cat.
   - Malware comes at random times (at most two kinds at once), now with three ads across the floor. The loading ring lasts longer and is closed by holding it 2 s; a forced update needs Later ×4.
@@ -36,10 +36,10 @@
   - New cards: Claws, Finishing blow, Long rhythm, Tailwind, Regrowth, Steady, and utility cards (Quick hands, Power bank, Energy drain, Big bomb, Thick bubble).
   - Infinity: a card every 2 waves, two after a boss wave, higher card limits, new synergies at 6 and 9 cards of a group (all on from wave 48), more elites as it goes, the chapter King as its boss (with the plain King from wave 30).
   - The free battle ends with the chapter King.
-- **Learn to play in Adventure:** each chapter 1 stage teaches a few things (its tip says "In this stage: …"). When the moment comes (a slime about to hit, a card offer, a charged app, an infected icon, malware, ads, low HP, a good time for Push/Yarn bomb/Bubble shield/Cheer, the boss's slam…), a hand points at what to click, with a few words; the battle keeps its speed. One lesson at a time, at least 10 s apart. A lesson counts once you do it (missed ones come again, up to 3 times). Free battles, the Expedition and Infinity have none; the guide opens by itself only with the first Adventure stage. How to play on the setup panel teaches them again. The guide has a new card on the apps and infected apps.
+- **Adventure Guide:** the Adventure is now the Adventure Guide, where the game is learned. At the right moment the battle stands still, the screen goes dark and only what to use is lit, with one line of text; you can still lift the cat and click skills and icons to do it. Stage 1 teaches lifting the cat out of hits (a quick slime's dash too); stage 2 the HUD, the five skills, the bag, the app icons, cards and synergies; stage 3 brings each malware and an infected icon in turn with what to do (malware starts at stage 3, none in stage 2); stage 4 practises Push against heals and shows an elite of all four slimes (none in stage 3); stage 5 the Slime King's moves one by one. Skip is there; it is off once a stage is won and back with the setup panel's "Guide in the battle". Each stage says what you learn ("What you learn here"). The five-card guide and the old pointing hand are gone. Push is back to 5 s.
 - Adventure and Infinity records start over under the new rules (old ones are kept apart); an Expedition run under way is not affected.
 
-- **Battle malware** (Adventure from stage 2, Expedition, Infinity): instead of a virus into an icon, a slime sometimes throws malware:
+- **Battle malware** (the Adventure Guide from stage 3, Expedition, Infinity): instead of a virus into an icon, a slime sometimes throws malware:
   - A **loading ring** where the cat stands: inside it the cat runs and swings much slower. Click its spinner to close it, or wait a few seconds.
   - A **forced update**: an "UPDATE" window stands as a wall between the cat and the slimes; slimes cannot pass or attack through it, and the cat hits it to get it done sooner. Click **Later** twice to close it. Bosses leap over it.
   - **virus.exe**: a file appears among the icons and copies itself; with 4 copies it infects an icon. Click each file to delete it, or defeat the slime that dropped it.
@@ -51,7 +51,7 @@
 ### 日本語
 
 - **バトルのバランス調整（2026-10-24）：**
-  - 猫：押し出しは 3 秒、回復の魚は 14 秒ごと、タブトルネードのチャージが早く。コンボの 3 撃目は近くの敵にも当たります。ハンマーは時々気絶させます。トゲの鎧は被ダメージも 10% 減。通知の嵐は猫に近いスライム 4 体だけ、強い押しは +40。
+  - 猫：回復の魚は 14 秒ごと、タブトルネードのチャージが早く。コンボの 3 撃目は近くの敵にも当たります。ハンマーは時々気絶させます。トゲの鎧は被ダメージも 10% 減。通知の嵐は猫に近いスライム 4 体だけ、強い押しは +40。
   - 気絶中の猫は持ち上げられません。バトル中は猫を振ってもめまいになりません。
   - 敵：岩スライムの振り向きが遅く、スライムキングの踏みつけが弱く、強化する手下はランダム（薬草スライムも）。溜め中に気絶させた素早いスライムは猫を気絶させなくなります。
   - マルウェアはランダムなタイミングで出現（同時に 2 種類まで）、広告 3 つも追加。読み込みリングは長くなり 2 秒長押しで閉じます。強制アップデートは「後で」4 回。
@@ -59,10 +59,10 @@
   - 新カード：ツメ、とどめ、ロングリズム、追い風、再生、不屈、便利カード（早業、モバイルバッテリー、エナジードレイン、ビッグボム、厚いバブル）。
   - 無限：2 ウェーブごとにカード、ボスの後は 2 枚、カード上限アップ、同じグループ 6 枚と 9 枚で新シナジー（48 ウェーブから全部オン）、エリートが段々増え、ボスは第 1 章のキング（30 ウェーブからは通常のキングも）。
   - フリーバトルの最後は第 1 章のキング。
-- **アドベンチャーで遊び方を学ぶ：** 第 1 章の各ステージがいくつかのことを教えます（ステージのヒントに「このステージで学ぶこと：…」）。その場面（攻撃しそうなスライム、カード選択、チャージ済みアプリ、感染アイコン、マルウェア、広告、HP 低下、押し出し/毛糸ボム/バブルシールド/応援の使いどき、ボスの叩きつけなど）になると、手がクリックする場所を短い言葉で指します。バトルの速さは変わりません。レッスンは 1 つずつ、10 秒以上あけて。実際にやると覚えたことになります（逃したら最大 3 回まで再表示）。フリーバトル、遠征、インフィニティにはレッスンはなく、ガイドが自動で開くのは最初のアドベンチャーステージだけです。準備画面の「遊び方」でもう一度学べます。ガイドにアプリと感染アプリのカードが加わりました。
+- **アドベンチャーガイド：** アドベンチャーはアドベンチャーガイドになり、遊び方を学ぶ場所になりました。大事な場面でバトルが止まり、画面が暗くなって使うものだけが光り、短い説明が出ます。止まっている間も猫を持ち上げたり、スキルやアイコンをクリックしたりできます。ステージ 1 は攻撃のよけ方（素早いスライムの突進も）、ステージ 2 は HUD・5 つのスキル・バッグ・アプリアイコン・カードとシナジー、ステージ 3 はマルウェアと感染アイコンを 1 つずつ対処法とともに（マルウェアはステージ 3 から、ステージ 2 にはなし）、ステージ 4 は押し出しで回復を止める練習と 4 種類すべてのエリート（ステージ 3 にはエリートなし）、ステージ 5 はスライムキングの技を 1 つずつ。スキップ可能。ステージに勝つとオフになり、準備画面の「バトル中のガイド」でまたオンにできます。各ステージで学ぶことは「このステージで学ぶこと」で確認できます。5 枚のガイドと以前の指差しは廃止。押し出しは 5 秒に戻りました。
 - アドベンチャーと無限の記録は新ルールで別になります（以前の記録は残ります）。進行中の遠征には影響しません。
 
-- **バトルのマルウェア**（アドベンチャーのステージ2以降、遠征、無限）：アイコンにウイルスを撃つ代わりに、スライムがマルウェアを投げることがあります。
+- **バトルのマルウェア**（アドベンチャーガイドのステージ3以降、遠征、無限）：アイコンにウイルスを撃つ代わりに、スライムがマルウェアを投げることがあります。
   - **読み込みリング**：猫の足元に出現し、中にいる猫は移動も攻撃も遅くなります。スピナーをクリックで閉じるか、数秒待ちましょう。
   - **強制アップデート**：「アップデート」ウィンドウが猫とスライムの間に壁として立ちます。スライムは通れず攻撃も届きません。猫が叩くと早く終わります。「後で」を2回クリックで閉じます。ボスは飛び越えます。
   - **virus.exe**：アイコンの間にファイルが現れて増殖し、4つになるとアイコンに感染します。ファイルを1つずつクリックで削除するか、落としたスライムを倒しましょう。

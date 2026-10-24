@@ -17,8 +17,8 @@ internal static class Program
     {
         Environment.SetEnvironmentVariable("PET_AI_DISABLED", "1");
         var app = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
-        // The first-battle guide is checked on its own (TutorialChecks); elsewhere it would pause every battle.
-        var window = new PetWindow(new PetPreferences { BattleTutorialSeen = true });
+        // The Adventure Guide is off here (BattleGuideEnabled follows persisted preferences); TutorialChecks turns it on.
+        var window = new PetWindow(new PetPreferences());
         // Unattended runs must not depend on the real foreground window or on how long
         // nobody touched the machine (that would trigger the away nap mid-test).
         SetContext(window, false, 0);

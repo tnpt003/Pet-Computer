@@ -37,6 +37,11 @@ public sealed partial class PetWindow
     private Border? prepAppsChip;
     private Path? prepAppsCheck;
     private TextBlock? prepAppsLabel, prepAppsText, prepAppsHint;
+    // The Adventure Guide for this stage (PetWindow.BattleGuide.cs): on until the stage is won.
+    private bool prepGuide;
+    private Border? prepGuideChip;
+    private Path? prepGuideCheck;
+    private TextBlock? prepGuideLabel, prepGuideHint;
     private double prepRefresh;
     private readonly List<(string Id, Border Card, Path Check, TextBlock Name, TextBlock Hint, TextBlock[] StatNames, TextBlock[] StatValues)> prepCards = new();
     private readonly List<(BattleDifficulty Level, Border Chip, Path Check, TextBlock Text)> prepLevelChips = new();
@@ -69,6 +74,8 @@ public sealed partial class PetWindow
     public string BattlePrepWeapon => prepWeapon;
     public BattleDifficulty BattlePrepDifficulty => prepDifficulty;
     public bool BattlePrepApps => prepApps;
+    public bool BattlePrepGuide => prepGuide;
+    public bool BattlePrepHasGuide => StageHasGuide(prepStage);
     private bool PrepHasApps => prepStage != null || prepForExpedition || prepForEndless;
     public bool BattlePrepVisible => battlePrepWindow?.IsVisible == true;
     public bool BattlePrepReadyEnabled => prepReady?.IsEnabled == true;
@@ -122,6 +129,7 @@ public sealed partial class PetWindow
         prepWeapon = BattleTuning.Weapon(weapon ?? preferences.BattleWeapon).Id;
         prepDifficulty = level is BattleDifficulty chosen && Enum.IsDefined(chosen) ? chosen : BattleDifficultyChoice;
         prepApps = preferences.BattleApps;
+        prepGuide = stage != null && !(Adventure?.IsCompleted(stage.Id) ?? false);
         battlePreparing = true;
         CloseBattleSummary(); CloseBattleNotice();
         queuedCommand = null;
@@ -129,9 +137,6 @@ public sealed partial class PetWindow
         pet.Speech.Hide(); pet.Thought.Clear();
         ApplyQuiet();
         ShowBattlePrepWindow();
-        // The guide opens by itself once, with the first Adventure stage setup (Adventure is where the
-        // game is learned; no battle is waiting behind it).
-        if (!preferences.BattleTutorialSeen && stage != null && !forExpedition && !forEndless) ShowBattleTutorial();
         System.Diagnostics.Trace.WriteLine("Battle setup opened.");
         return null;
     }
@@ -149,6 +154,14 @@ public sealed partial class PetWindow
     {
         if (!battlePreparing || !Enum.IsDefined(level)) return false;
         prepDifficulty = level;
+        UpdateBattlePrep();
+        return true;
+    }
+
+    public bool BattlePrepChooseGuide(bool on)
+    {
+        if (!battlePreparing || !StageHasGuide(prepStage)) return false;
+        prepGuide = on;
         UpdateBattlePrep();
         return true;
     }
@@ -174,6 +187,7 @@ public sealed partial class PetWindow
         if (BattleTutorialOpen) CloseBattleTutorial(finished: true);
         if (prepForExpedition) { string weapon = prepWeapon; var level = prepDifficulty; CloseBattlePrep(); return ExpeditionSetupReady(weapon, level); }
         if (prepForEndless) return EndlessRefusal() ?? StartBattle(stage: BattleTuning.Endless!.Stage());
+        if (StageHasGuide(prepStage)) guideChoice = prepGuide;
         return StartBattle(stage: prepStage);
     }
 
@@ -206,6 +220,7 @@ public sealed partial class PetWindow
         prepPreview = null; prepPreviewView = null; prepHitMark = null;
         prepCards.Clear(); prepLevelChips.Clear();
         prepAppsChip = null; prepAppsCheck = null; prepAppsLabel = prepAppsText = prepAppsHint = null;
+        prepGuideChip = null; prepGuideCheck = null; prepGuideLabel = prepGuideText = prepGuideHint = null;
         prepStage = null;
         prepForExpedition = prepForEndless = false;
         if (was) ApplyQuiet();
@@ -377,19 +392,28 @@ public sealed partial class PetWindow
         prepAppsChip.MouseLeftButtonDown += (_, e) => { BattlePrepChooseApps(!prepApps); e.Handled = true; };
         prepAppsHint = Line(PetUi.CaptionSize, maxWidth: 300); prepAppsHint.Opacity = 0.8; prepAppsHint.Margin = new Thickness(0, 4, 0, 0);
 
-        // Actions: a quiet How to play link on the left; Close, then the one main button, Ready.
-        prepGuideText = new TextBlock { Foreground = Brushes.White, Opacity = 0.85, FontSize = PetUi.SmallSize, TextDecorations = TextDecorations.Underline,
-            Cursor = System.Windows.Input.Cursors.Hand, VerticalAlignment = VerticalAlignment.Center, Background = Brushes.Transparent };
-        prepGuideText.MouseLeftButtonDown += (_, e) => { ShowBattleTutorial(); e.Handled = true; };
-        prepTipText = new TextBlock { Foreground = Brushes.White, Opacity = 0.85, FontSize = PetUi.SmallSize, TextDecorations = TextDecorations.Underline, Margin = new Thickness(12, 0, 0, 0),
+        // The Adventure Guide (a chapter 1 stage): one chip, on until the stage is won.
+        prepGuideLabel = Line(PetUi.SmallSize); prepGuideLabel.Opacity = 0.75; prepGuideLabel.Margin = new Thickness(0, 8, 0, 4);
+        prepGuideCheck = Check();
+        prepGuideText = new TextBlock { Foreground = Brushes.White, FontSize = PetUi.BodySize, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center };
+        prepGuideChip = new Border
+        {
+            CornerRadius = new CornerRadius(7), Padding = new Thickness(9, 4, 11, 4), BorderThickness = new Thickness(1.5), HorizontalAlignment = HorizontalAlignment.Left,
+            Cursor = System.Windows.Input.Cursors.Hand, Child = new StackPanel { Orientation = Orientation.Horizontal, Children = { prepGuideCheck, prepGuideText } }
+        };
+        prepGuideChip.MouseLeftButtonDown += (_, e) => { BattlePrepChooseGuide(!prepGuide); e.Handled = true; };
+        prepGuideHint = Line(PetUi.CaptionSize, maxWidth: 300); prepGuideHint.Opacity = 0.8; prepGuideHint.Margin = new Thickness(0, 4, 0, 0);
+
+        // Actions: a quiet Stage tip link on the left; Close, then the one main button, Ready.
+        prepTipText = new TextBlock { Foreground = Brushes.White, Opacity = 0.85, FontSize = PetUi.SmallSize, TextDecorations = TextDecorations.Underline,
             Cursor = System.Windows.Input.Cursors.Hand, VerticalAlignment = VerticalAlignment.Center, Background = Brushes.Transparent };
         prepTipText.MouseLeftButtonDown += (_, e) => { if (prepStage != null) ShowStageTip(prepStage); e.Handled = true; };
         var (cancel, cancelText, _) = HudButton(CancelBattlePrep, plain: true);
         var (ready, readyText) = PrimaryButton(() => BattlePrepReady());
         prepReady = ready; prepReadyText = readyText; prepCancelText = cancelText;
-        var actions = PanelActions(new UIElement[] { prepGuideText, prepTipText }, new UIElement[] { ready, cancel });
+        var actions = PanelActions(new UIElement[] { prepTipText }, new UIElement[] { ready, cancel });
 
-        var choices = new StackPanel { Width = 300, Children = { prepWeaponLabel, cards, prepLevelLabel, levels, prepAppsLabel, prepAppsChip, prepAppsHint } };
+        var choices = new StackPanel { Width = 300, Children = { prepWeaponLabel, cards, prepLevelLabel, levels, prepAppsLabel, prepAppsChip, prepAppsHint, prepGuideLabel, prepGuideChip, prepGuideHint } };
         // The title's picture: the mode this setup is for (a free battle uses the Adventure's).
         var title = PanelTitle(prepForExpedition ? HubExpedition : prepForEndless ? HubInfinity : HubAdventure, prepTitle);
         var window = CreateGamePanel(new StackPanel { Children = { title, new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 10, 0, 0), Children = { stage, choices } },
@@ -443,6 +467,16 @@ public sealed partial class PetWindow
                 : L("Không có icon app hay virus. Kỷ lục lưu riêng.", "No app icons or viruses. Records are kept apart.");
             ShowChosen(prepAppsChip, prepApps, prepAppsCheck!);
         }
+        if (prepGuideChip != null)
+        {
+            var shown = StageHasGuide(prepStage) ? Visibility.Visible : Visibility.Collapsed;
+            prepGuideLabel!.Visibility = prepGuideChip.Visibility = prepGuideHint!.Visibility = shown;
+            prepGuideLabel.Text = L("Hướng dẫn phiêu lưu", "Adventure Guide");
+            prepGuideText!.Text = L("Hướng dẫn trong trận", "Guide in the battle");
+            prepGuideHint.Text = prepGuide ? L("Trận đứng hình đúng lúc và chỉ chỗ cần làm. Tự tắt khi đã thắng màn; bật lại để học lại.", "The battle stands still at the right moments and shows what to do. Off once the stage is won; turn it on to learn it again.")
+                : L("Không có hướng dẫn trong trận này.", "No guide in this battle.");
+            ShowChosen(prepGuideChip, prepGuide, prepGuideCheck!);
+        }
         if (prepPreview != null && (prepPreview.Hammer != (chosen.Style == "hammer") || prepPreview.SwordHitAt != chosen.HitFraction))
         {
             prepPreview.Hammer = chosen.Style == "hammer";
@@ -456,10 +490,9 @@ public sealed partial class PetWindow
         string? waiting = prepForExpedition ? BattlePrepRefusal() : BattleRefusal();
         Show(prepStatus, waiting != null ? L("Chưa thể bắt đầu: ", "Not yet: ") + waiting : null);
         prepReadyText!.Text = prepForExpedition ? L("Lên đường", "Set out") : L("Sẵn sàng", "Ready");
-        prepGuideText!.Text = L("Cách chơi", "How to play");
         prepCancelText!.Text = prepStage != null || prepForExpedition ? L("‹ Bản đồ", "‹ Map") : prepForEndless ? L("‹ Sảnh", "‹ Hub") : L("Đóng", "Close");
         prepTryText!.Text = L("Xem thử", "Try it");
-        Show(prepTipText, prepStage != null && StageTip(prepStage) is { Length: > 0 } ? L("Mẹo màn", "Stage tip") : null);
+        Show(prepTipText, prepStage?.Tip(preferences.Language) is { Length: > 0 } ? L("Màn này dạy gì", "What you learn here") : null);
         bool can = waiting == null;
         if (prepReady.IsEnabled != can) { prepReady.IsEnabled = can; prepReady.Opacity = can ? 1 : 0.5; }
     }

@@ -253,11 +253,12 @@ internal static class AdventureBalanceTests
                 check(table[(s, weapon, BattleDifficulty.Normal, Player.Simple)].HpShare <= most,
                     $"Balance: stage {s}, {weapon}, Normal, the simple player ends with ≤ {most:P0} HP ({table[(s, weapon, BattleDifficulty.Normal, Player.Simple)].HpShare:P0})");
             }
-        // Elites: some on Normal from stage 3 on, none on Easy, none before stage 3.
+        // Elites (the Adventure Guide, 2026-10-24): none before stage 4; stage 4 sets one of each
+        // kind on every difficulty (it introduces them); stage 5 draws some on Normal, none on Easy.
         double Elites(int s, BattleDifficulty level) => played.Where(p => p.Key.Stage == s && p.Key.Level == level).SelectMany(p => p.Value).Average(r => r.Elites);
-        check(Enumerable.Range(3, 3).All(s => Elites(s, BattleDifficulty.Normal) >= 0.5) && Enumerable.Range(1, 5).All(s => Elites(s, BattleDifficulty.Easy) == 0)
-            && Elites(1, BattleDifficulty.Normal) == 0 && Elites(2, BattleDifficulty.Hard) == 0,
-            $"Balance: elites come from stage 3 on Normal/Hard (stage 3–5 Normal: {Elites(3, BattleDifficulty.Normal):0.0}/{Elites(4, BattleDifficulty.Normal):0.0}/{Elites(5, BattleDifficulty.Normal):0.0} a run), never on Easy");
+        check(Enumerable.Range(1, 3).All(s => Elites(s, BattleDifficulty.Hard) == 0 && Elites(s, BattleDifficulty.Normal) == 0)
+            && Elites(4, BattleDifficulty.Easy) >= 3 && Elites(4, BattleDifficulty.Normal) >= 3 && Elites(5, BattleDifficulty.Normal) >= 0.5 && Elites(5, BattleDifficulty.Easy) == 0,
+            $"Balance: no elites before stage 4, stage 4 shows its set ones on every difficulty, stage 5 draws some on Normal (stage 4 Easy/Normal, 5 Normal: {Elites(4, BattleDifficulty.Easy):0.0}/{Elites(4, BattleDifficulty.Normal):0.0}/{Elites(5, BattleDifficulty.Normal):0.0} a run)");
         // An average needs at least two wins (one lucky win of an otherwise lost row is not one).
         double longest = table.Values.Where(r => r.Wins * seeds >= 2).Max(r => r.Seconds);
         check(longest <= 240, $"Balance: no stage takes longer than 4 minutes on average (longest {longest:0} s)");
@@ -290,16 +291,16 @@ internal static class AdventureBalanceTests
         }
         finally { Directory.Delete(dir, true); }
 
-        // Stage tips: stages 2–5 have one in both languages; a tip in one language only is rejected.
-        check(stages[0].TipVi == null && stages.Skip(1).All(st => st.TipVi?.Length > 0 && st.TipEn?.Length > 0), "Stages 2–5 have a tip in both languages");
+        // Stage tips (what the stage teaches): every stage has one in both languages; one language only is rejected.
+        check(stages.All(st => st.TipVi?.Length > 0 && st.TipEn?.Length > 0), "Every chapter 1 stage says what it teaches in both languages");
         string Tip(string extra)
         {
             try { BattleData.Parse("{ \"schemaVersion\": 1, \"campaign\": { \"chapters\": [ { \"id\": \"c\", \"nameVi\": \"C\", \"nameEn\": \"C\", \"stages\": [ { \"id\": \"s\", \"nameVi\": \"S\", \"nameEn\": \"S\", " + extra +
                 "\"waves\": [ { \"groups\": [ { \"enemy\": \"slime\", \"count\": 1 } ] } ] } ] } ] } }"); return ""; }
             catch (Exception ex) when (ex is InvalidDataException or System.Text.Json.JsonException) { return ex.Message; }
         }
-        check(Tip("\"tipVi\": \"a\", \"tipEn\": \"b\", ") == "" && Tip("\"tipVi\": \"a\", ").Contains("tips") && Tip($"\"tipVi\": \"{new string('a', 221)}\", \"tipEn\": \"b\", ").Contains("tips"),
-            "A stage tip needs both languages and at most 220 characters");
+        check(Tip("\"tipVi\": \"a\", \"tipEn\": \"b\", ") == "" && Tip("\"tipVi\": \"a\", ").Contains("tips") && Tip($"\"tipVi\": \"{new string('a', 401)}\", \"tipEn\": \"b\", ").Contains("tips"),
+            "A stage tip needs both languages and at most 400 characters");
 
         // Harder stages ask more: on Normal the idle player does not do better on stage 5 than on stage 1.
         check(table[(5, BattleWeapon.Sword, BattleDifficulty.Normal, Player.Idle)].Wins <= table[(1, BattleWeapon.Sword, BattleDifficulty.Normal, Player.Idle)].Wins,

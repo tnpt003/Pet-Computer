@@ -320,7 +320,7 @@ internal static class EnemyGachaTests
         check(rares.Select(u => (u.Id, Group: u.Group ?? "", u.Effect)).OrderBy(r => r.Group).ThenBy(r => r.Id).SequenceEqual(new[] { ("turtle_shell", "defense", "shell"), ("finishing_blow", "power", "execute"), ("opening_strike", "power", "opener"), ("running_start", "speed", "momentum"), ("tailwind", "speed", "landingRush") }.OrderBy(r => r.Item2).ThenBy(r => r.Item1))
             && data.RareChance == 0.15, "Shipped rare cards: Turtle shell; Opening strike and Finishing blow; Running start and Tailwind (15 %)");
         var stages = data.Campaign!.Chapters[0].Stages;
-        check(stages.Take(2).All(s => s.EliteChance == 0) && stages.Skip(2).All(s => s.EliteChance > 0), "Elites start at stage 3");
+        check(stages.Take(4).All(s => s.EliteChance == 0) && stages[4].EliteChance > 0, "Random elites only in stage 5 (stage 4 sets its own, the Adventure Guide shows them)");
         // The code's own defaults match the shipped file (used when the file is broken and by tests).
         var defaults = new BattleSettings();
         check(defaults.UpgradeList.Where(u => u.Rare).Select(u => (u.Id, u.Effect, u.Amount)).SequenceEqual(rares.Select(u => (u.Id, u.Effect, u.Amount)))

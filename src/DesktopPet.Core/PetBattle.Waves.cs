@@ -68,8 +68,8 @@ public sealed partial class BattleSim
         {
             IncomingRemaining = Math.Max(0, IncomingRemaining - dt);
             if (IncomingRemaining > 0 || Alive + incoming.Length > maxAlive) return;
-            SpawnUnit(catX, incoming, IncomingEdge);
-            incoming = null;
+            SpawnUnit(catX, incoming, IncomingEdge, incomingElite);
+            incoming = null; incomingElite = null;
             spawnTimer = NextSpawnIn();
             return;
         }
@@ -100,8 +100,8 @@ public sealed partial class BattleSim
         if (pendingNext < pending.Count && Alive + pending[pendingNext].Kinds.Length <= maxAlive && spawnTimer <= 0)
         {
             var unit = pending[pendingNext++];
-            if (unit.Side == "b") Announce(catX, unit.Kinds, -farEdge);
-            else { SpawnUnit(catX, unit.Kinds, unit.Side == "a" ? farEdge : 0); spawnTimer = NextSpawnIn(); }
+            if (unit.Side == "b") Announce(catX, unit.Kinds, -farEdge, unit.Elite);
+            else { SpawnUnit(catX, unit.Kinds, unit.Side == "a" ? farEdge : 0, unit.Elite); spawnTimer = NextSpawnIn(); }
         }
         if (ToSpawn > 0 || Alive > 0 || bombs.Count > 0) return;
         WavesCleared++;
@@ -132,31 +132,32 @@ public sealed partial class BattleSim
 
     // A spawn from behind: an arrow at that edge first (IncomingWarning s). A cat standing at that
     // edge gets it from the other edge instead, unannounced (never on top of the cat).
-    private void Announce(double catX, string[] kinds, int edge)
+    private void Announce(double catX, string[] kinds, int edge, bool[]? elite = null)
     {
         double x = EdgePoint(edge, Settings.SlimeWidth * kinds.Max(k => Settings.Enemy(k).Scale), 0);
         if (Math.Abs(x - catX) < Settings.SpawnMinDistance)
         {
-            SpawnUnit(catX, kinds, -edge);
+            SpawnUnit(catX, kinds, -edge, elite);
             spawnTimer = NextSpawnIn();
             return;
         }
         incoming = kinds;
+        incomingElite = elite;
         IncomingEdge = edge;
         IncomingX = x;
         IncomingRemaining = Settings.IncomingWarning;
         events.Add(new(BattleEventKind.Incoming, x));
     }
 
-    private void SpawnUnit(double catX, string[] kinds, int edge)
+    private void SpawnUnit(double catX, string[] kinds, int edge, bool[]? elite = null)
     {
-        if (kinds.Length == 1) Spawn(catX, Settings.Enemy(kinds[0]), edge);
-        else SpawnSquad(catX, kinds.Select(Settings.Enemy).ToArray(), edge);
+        if (kinds.Length == 1) Spawn(catX, Settings.Enemy(kinds[0]), edge, elite?[0] == true);
+        else SpawnSquad(catX, kinds.Select(Settings.Enemy).ToArray(), edge, elite);
     }
 
     // edge: -1 / +1 that edge, 0 either. A lone support (no edge asked) joins the fighting ally
     // furthest from the cat, on its far side, when there is one.
-    private void Spawn(double catX, EnemyType type, int edge = 0)
+    private void Spawn(double catX, EnemyType type, int edge = 0, bool elite = false)
     {
         double w = Settings.SlimeWidth * type.Scale;
         double x = SpawnPoint(catX, w, edge);
@@ -175,7 +176,7 @@ public sealed partial class BattleSim
         var slime = AddSlime(x, type);
         slime.Facing = catX < x ? -1 : 1;
         events.Add(new(type.Boss ? BattleEventKind.BossAppeared : BattleEventKind.SlimeSpawned, x));
-        RollElite(slime);
+        if (elite) ForceElite(slime); else RollElite(slime);
     }
 
     // What an enemy weighs against a budget (EnemyType.Cost).
@@ -210,6 +211,15 @@ public sealed partial class BattleSim
         events.Add(new(BattleEventKind.EliteAppeared, slime.X, slime.Id));
     }
 
+    // A group the data marks elite (WaveGroup.Elite): elite whatever the chance, the difficulty or the cap.
+    private void ForceElite(Slime slime)
+    {
+        if (slime.Type.Elite is not EliteSpec elite || slime.Elite != null) return;
+        ApplyElite(slime, elite);
+        ElitesSpawned++;
+        events.Add(new(BattleEventKind.EliteAppeared, slime.X, slime.Id));
+    }
+
     // A point near an edge (-1 left, +1 right), up to `spread` DIPs in.
     private double EdgePoint(int edge, double w, double spread)
     {
@@ -234,8 +244,11 @@ public sealed partial class BattleSim
 
     // A squad appears together near one edge, side by side: its supports at the back (the edge),
     // its fighters in front of them toward the cat, never on top of the cat when there is room.
-    private void SpawnSquad(double catX, EnemyType[] members, int edge = 0)
+    private void SpawnSquad(double catX, EnemyType[] members, int edge = 0, bool[]? elite = null)
     {
+        // Supports first (each keeps its own elite flag).
+        var ranked = members.Select((m, i) => (Type: m, Elite: elite?[i] == true)).ToArray();
+        var flags = ranked.Where(m => m.Type.Support).Concat(ranked.Where(m => !m.Type.Support)).Select(m => m.Elite).ToArray();
         var order = members.Where(m => m.Support).Concat(members.Where(m => !m.Support)).ToArray();
         double back = SpawnPoint(catX, Settings.SlimeWidth * order.Max(m => m.Scale), edge);
         int toward = catX >= back ? 1 : -1;
@@ -251,7 +264,7 @@ public sealed partial class BattleSim
             x += toward * gaps[i] * squeeze;
             var slime = AddSlime(x, order[i]);
             slime.Facing = catX < slime.X ? -1 : 1;
-            RollElite(slime);
+            if (flags[i]) ForceElite(slime); else RollElite(slime);
         }
         events.Add(new(BattleEventKind.SlimeSpawned, back));
     }

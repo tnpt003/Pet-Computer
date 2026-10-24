@@ -228,7 +228,7 @@ internal static class AdventureChecks
             check(window.AdventureMapVisible, "It comes back when the fullscreen app closes");
             prefs.Language = "vi"; Tick(0.3);
             Shot("Pet adventure", "adventure-map-vi.png");
-            check(window.AdventureMapText.Contains("Phiêu lưu — Chương thử") && window.AdventureMapText.Contains("Màn 3") && window.AdventureMapText.Contains("Vào màn"), "The map follows the pet's language");
+            check(window.AdventureMapText.Contains("Hướng dẫn phiêu lưu — Chương thử") && window.AdventureMapText.Contains("Màn 3") && window.AdventureMapText.Contains("Vào màn"), "The map follows the pet's language");
             prefs.Language = "ja"; Tick(0.3);
             Shot("Pet adventure", "adventure-map-ja.png");
             prefs.Language = "en";

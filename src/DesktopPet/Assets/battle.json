@@ -70,7 +70,7 @@
   "maxEffects": 32,
 
   // The user's skills.
-  "pushCooldown": 3,
+  "pushCooldown": 5,
   "pushSpeed": 520,
   "pushStunSeconds": 1.4,
   "healCooldown": 14,
@@ -364,8 +364,11 @@
         "stages": [
           {
             "id": "c1_first_steps", "nameVi": "Làm quen", "nameEn": "First steps",
-            "goalVi": "Dọn 2 đợt slime dễ: click slime để chọn mục tiêu.", "goalEn": "Clear 2 waves of easy slimes: click a slime to pick the target.",
-            "objective": "clear", "maxAlive": 2, "rulesVersion": 7,
+            "goalVi": "Học né đòn: slime phồng lên với dấu ! đỏ là sắp đánh, kéo mèo lên để né. Có cả slime nhanh lao tới. Mèo tự đánh; bấm slime để chọn mục tiêu.",
+            "goalEn": "Learn to dodge: a slime swelling with a red ! is about to hit, so lift the cat. Quick slimes dash in too. The cat fights by itself; click a slime to pick one.",
+            "tipVi": "Bạn sẽ học: nhận ra đòn sắp tới (slime phồng lên, dấu ! đỏ), kéo mèo lên để né (đang bế thì mèo không bị đánh), thả mèo ra ngoài vòng đỏ cho đòn trượt, và né cú lao của slime nhanh. Mèo tự đánh con gần nhất; bấm một slime để mèo đánh nó trước.",
+            "tipEn": "You learn: to spot a coming hit (a swelling slime, a red !), to lift the cat out of it (a carried cat cannot be hit), to put it down outside the red ring so the hit misses, and to dodge a quick slime's dash. The cat fights the nearest slime; click one to make it go for that one first.",
+            "objective": "clear", "maxAlive": 2, "rulesVersion": 8,
             "waves": [
               { "groups": [ { "enemy": "slime", "count": 2 } ] },
               { "groups": [ { "pick": { "slime": 3, "runner": 1 }, "count": 3, "atLeast": { "runner": 1 } } ] }
@@ -373,11 +376,11 @@
           },
           {
             "id": "c1_break_through", "nameVi": "Giải vây", "nameEn": "Break through",
-            "goalVi": "Quái hỗn hợp: dùng kỹ năng, kéo mèo ra khi slime gồng đòn, chọn nâng cấp giữa các đợt.",
-            "goalEn": "Mixed slimes: use skills, lift the cat when a slime winds up, pick upgrades between waves.",
-            "tipVi": "Dọn xong một đợt, bạn chọn 1 trong 3 thẻ nâng cấp. Thắng màn thì build được mang sang màn sau. Slime đá chặn được đòn: đánh tiếp hoặc dùng Bom len.",
-            "tipEn": "After each cleared wave, pick 1 of 3 upgrade cards. Win the stage and the build comes along to the next one. Rock slimes block some hits: keep at it or use the Yarn bomb.",
-            "objective": "clear", "upgrades": true, "threat": 1.6, "rulesVersion": 14,
+            "goalVi": "Làm quen HUD: máu, đợt quái, 5 kỹ năng, túi đồ và icon app. Chọn thẻ giữa các đợt; thẻ cùng nhóm mở cộng hưởng. Build mang sang màn sau.",
+            "goalEn": "Know the HUD: HP, waves, five skills, the bag and the app icons. Pick cards between waves; cards of one group open synergies. The build carries on.",
+            "tipVi": "Bạn sẽ học: đọc HUD (máu, đợt, kỹ năng và vòng hồi chiêu), dùng Đẩy quái, Cá hồi máu, Cổ vũ, Bom len và Khiên bong bóng, mở túi đồ, dùng app đã sạc, chọn thẻ nâng cấp, hiểu nhóm thẻ và cộng hưởng. Slime đá chặn một số đòn: đánh tiếp hoặc dùng Bom len.",
+            "tipEn": "You learn: to read the HUD (HP, waves, skills and their cooldown sweep), to use Push, the Healing fish, Cheer, the Yarn bomb and the Bubble shield, to open the bag, to use charged apps, to pick upgrade cards and what groups and synergies are. Rock slimes block some hits: keep at it or use the Yarn bomb.",
+            "objective": "clear", "upgrades": true, "threat": 1.6, "malware": false, "rulesVersion": 15,
             "waves": [
               { "groups": [ { "enemy": "rock", "count": 1 }, { "pick": { "slime": 1, "runner": 1 }, "count": 2 } ] },
               { "groups": [ { "enemy": "rock", "count": 1 }, { "pick": { "slime": 1, "runner": 1 }, "count": 2 }, { "enemy": "rock", "count": 1 } ] },
@@ -386,36 +389,38 @@
           },
           {
             "id": "c1_hold_on", "nameVi": "Cầm cự", "nameEn": "Hold on",
-            "goalVi": "Sống sót 75 giây: biết lúc đánh và lúc giữ máu. Bế mèo thì đồng hồ dừng.",
-            "goalEn": "Survive 75 seconds: know when to attack and when to save HP. Carrying the cat stops the clock.",
-            "tipVi": "Quái kéo tới liên tục và mạnh dần tới khi hết giờ. Ở giây 20, 40, 60 bạn chọn thẻ. Bế mèo thì đồng hồ dừng, nên hãy giữ HP bằng Khiên và Cá hồi máu.",
-            "tipEn": "Slimes keep coming, stronger and stronger, until time is up. At 20, 40 and 60 s you pick a card. Carrying the cat stops the clock, so keep HP up with the Shield and the fish.",
+            "goalVi": "Sống sót 75 giây giữa app độc: quảng cáo, vòng loading, Cập nhật bắt buộc, virus.exe và icon bị nhiễm. Học cách dẹp từng thứ. Bế mèo thì đồng hồ dừng.",
+            "goalEn": "Survive 75 s among malware: ads, a loading ring, a forced update, virus.exe and an infected icon. Learn to deal with each. Carrying the cat stops the clock.",
+            "tipVi": "Bạn sẽ học: giữ máu tới khi hết giờ (Khiên, Cá hồi máu) và dẹp app độc: bấm × tắt quảng cáo, giữ chuột lên vòng loading, bấm Nhắc sau để dẹp tường cập nhật, bấm xóa virus.exe. Slime bắn virus vào icon thì icon quay ra hại mèo: bấm vài lần để gỡ. Từ màn này app độc có ở mọi trận.",
+            "tipEn": "You learn: to keep HP up until time runs out (Shield, Healing fish) and to deal with malware: click × on ads, hold the mouse on the loading ring, click Later on the update wall, click virus.exe away. A slime's virus turns an icon against the cat: click it a few times to clean it. From here on every battle has malware.",
             "objective": "survive", "surviveSeconds": 75, "maxAlive": 4, "upgrades": true, "maxUpgrades": 3, "upgradeAt": [ 20, 40, 60 ],
-            "threatGrowth": 0.3, "threat": 1.7, "eliteChance": 0.3, "rulesVersion": 16, "reward": "SlimeHat",
+            "threatGrowth": 0.3, "threat": 1.7, "rulesVersion": 17, "reward": "SlimeHat",
+            "malwarePlan": [ { "at": 6, "kind": "ads" }, { "at": 14, "kind": "loading" }, { "at": 27, "kind": "update" }, { "at": 34, "kind": "virus" }, { "at": 47, "kind": "infect" } ],
+            "malwareFrom": 50,
             "waves": [
               { "stream": { "weights": { "runner": 2, "slime": 1, "rock": 1 }, "interval": 2.6, "intervalEnd": 1.4, "pincerAfter": 45, "budget": 7 } }
             ]
           },
           {
             "id": "c1_cut_support", "nameVi": "Cắt viện trợ", "nameEn": "Cut the support",
-            "goalVi": "Slime thảo dược hồi máu cho đồng đội: hạ nó trước, hoặc Đẩy để cắt lúc nó gồng.",
-            "goalEn": "Herb slimes heal their friends: take them down first, or Push one to cut its heal.",
-            "tipVi": "Slime thảo dược (mũ lá) đứng sau slime đá và hồi máu cho đồng đội. Lá sáng lên là nó đang gồng: Đẩy để cắt. Đá chặn đường: hạ đá, hoặc bế mèo thả ra sau.",
-            "tipEn": "Herb slimes (leaf caps) hide behind rock slimes and heal them. A glowing leaf means a heal is coming: Push to cut it. Rocks block the way: break them, or carry the cat behind.",
-            "objective": "clear", "upgrades": true, "maxAlive": 5, "threat": 1.8, "eliteChance": 0.3, "rulesVersion": 17,
+            "goalVi": "Luyện Đẩy: cắt đòn hồi máu của slime thảo dược. Gặp đủ 4 loại slime, loại nào cũng có một con tinh anh mạnh hơn với khả năng riêng.",
+            "goalEn": "Practise Push: cut a herb slime's heal short. Meet all four kinds of slime, each with an elite that is stronger and has a trait of its own.",
+            "tipVi": "Bạn sẽ học: Đẩy để hất slime, làm choáng và cắt đòn hồi máu (lá sáng là đang gồng); hạ slime thảo dược trước; nhận ra slime tinh anh (viền vàng, ngôi sao, chữ khả năng trên đầu) của cả 4 loại: slime, slime nhanh, slime đá (miễn Đẩy) và slime thảo dược.",
+            "tipEn": "You learn: to Push a slime back, stun it and cut its heal short (a glowing leaf means a heal is coming); to take herb slimes down first; to spot elites (gold rim, star, their trait over the head) of all four kinds: slime, quick slime, rock slime (no Push) and herb slime.",
+            "objective": "clear", "upgrades": true, "maxAlive": 5, "threat": 1.8, "rulesVersion": 18,
             "waves": [
-              { "groups": [ { "pick": { "slime": 1, "runner": 1 }, "count": 3 } ] },
-              { "budget": 9, "groups": [ { "squad": [ { "enemy": "mender", "count": 1 }, { "enemy": "rock", "count": 3 } ] } ] },
-              { "budget": 10, "groups": [ { "pick": { "slime": 1, "runner": 1 }, "count": 1 }, { "squad": [ { "enemy": "mender", "count": 1 }, { "enemy": "rock", "count": 3 } ] } ] }
+              { "groups": [ { "enemy": "slime", "count": 1, "elite": true }, { "enemy": "runner", "count": 1, "elite": true }, { "enemy": "slime", "count": 1 } ] },
+              { "budget": 9, "groups": [ { "squad": [ { "enemy": "mender", "count": 1 }, { "enemy": "rock", "count": 1, "elite": true }, { "enemy": "rock", "count": 2 } ] } ] },
+              { "budget": 10, "groups": [ { "pick": { "slime": 1, "runner": 1 }, "count": 1 }, { "squad": [ { "enemy": "mender", "count": 1, "elite": true }, { "enemy": "rock", "count": 3 } ] } ] }
             ]
           },
           {
             "id": "c1_slime_king", "nameVi": "Vua Slime", "nameEn": "The Slime King",
-            "goalVi": "Trận cuối chương: Vua Slime lui về bật khiên và gọi quân, có cả slime thảo dược.",
-            "goalEn": "The chapter's last battle: the Slime King backs off behind a shield and calls help, herb slimes too.",
-            "tipVi": "Ở 75%, 50% và 25% máu, Vua lui về mép xa, bật khiên và gọi quân: hạ hết quân để phá khiên. Vương miện sáng là Vua sắp phong quân thành tinh anh: Đẩy để cắt. Vùng đỏ dưới sàn: kéo mèo ra hoặc bật Khiên.",
-            "tipEn": "At 75%, 50% and 25% HP the King backs off behind a shield and calls help: defeat them all to break it. A glowing crown makes a helper elite: Push the King to cut it. Red zone on the floor: lift the cat out or Shield.",
-            "objective": "clear", "upgrades": true, "threat": 1.75, "eliteChance": 0.3, "rulesVersion": 17, "reward": "SlimeKingCrown",
+            "goalVi": "Trận cuối chương: Vua Slime dậm đất, lui về bật khiên gọi quân và phong tinh anh. Dùng mọi thứ đã học để hạ Vua và mở Viễn chinh, Vô tận.",
+            "goalEn": "The last battle: the Slime King slams, hides behind a shield to call help and makes elites. Use all you learned to beat him and open Expedition and Infinity.",
+            "tipVi": "Bạn sẽ học: né cú dậm (kéo mèo khỏi vùng đỏ hoặc bật Khiên), phá khiên của Vua bằng cách hạ hết quân, và Đẩy Vua khi vương miện sáng để cắt việc phong tinh anh. Thắng màn này là mở Viễn chinh và Vô tận.",
+            "tipEn": "You learn: to dodge the slam (lift the cat out of the red zone or Shield), to break the King's shield by defeating his helpers, and to Push the King when his crown glows so no helper turns elite. Winning opens the Expedition and Infinity.",
+            "objective": "clear", "upgrades": true, "threat": 1.75, "eliteChance": 0.3, "rulesVersion": 18, "reward": "SlimeKingCrown",
             "waves": [
               { "budget": 6, "groups": [ { "enemy": "rock", "count": 1, "side": "a" }, { "enemy": "slime", "count": 1, "side": "a" }, { "enemy": "runner", "count": 2, "side": "b" } ] },
               { "budget": 6, "groups": [ { "squad": [ { "enemy": "mender", "count": 1 }, { "enemy": "rock", "count": 1 }, { "enemy": "slime", "count": 1 } ] } ] },

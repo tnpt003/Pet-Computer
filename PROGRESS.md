@@ -10,7 +10,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Giữ art đã có: ModeArt/WeaponIcon/UpgradeIcon/SynergyIcon/BagIcon/KeepsakeArt/AppArt cho bản đồ, prep, thẻ, túi đồ, reward và app trong trận; không vẽ lại hoặc thêm trang trí che cảnh báo HUD. Không đổi gameplay/Python/save/input.
 - Build Release đạt (5 warning hiện có). Test đầy đủ: 58 Python + 5 i18n, 1535 C#, 866 WPF đạt. Thêm test tương phản 4 ink trên Surface và 12 check hình không nhận input trên hai nền. Sau chỉnh màu artwork chạy lại WPF (kết quả ghi ở dòng publish sau).
 - Đã xem ảnh render icons trên nền sáng/tối, status, menu, welcome, diary, settings tiếng Việt, battle hub/result. Ảnh content một số bảng không chứa background Window nên phần trong suốt hiển thị đen trong viewer; không coi đó là màu nền thực của ứng dụng. Chưa kiểm tra trực tiếp nhiều màn hình/DPI hoặc toàn bộ trạng thái hover bằng tay.
-- Giữ AGENTS.md thay đổi có sẵn ngoài commit. Kiểm tra/publish sau commit theo quy tắc project.
+- Commit 8e81f42. WPF sau chỉnh màu cuối: 866/866 đạt. Publish sạch 1.4.3+8e81f42; ZIP artifacts\DesktopPet-1.4.3-8e81f42-win-x64.zip; check-publish 3/3 đạt. Đóng đúng pet bằng WM_CLOSE và mở lại sau smoke. AGENTS.md giữ nguyên byte ngoài commit.
 
 ## Túi đồ: cộng hưởng thành huy hiệu có icon, hết tràn chữ 2026-10-25 (người dùng gửi ảnh, duyệt kế hoạch có icon "ok làm đi")
 - Nguyên nhân tràn: mỗi nhóm là StackPanel ngang (tên, chấm, chuỗi "★ … · còn N thẻ → ★ …") nên chữ không xuống dòng; ở Vô tận 3 mốc/nhóm thì dài quá khung.

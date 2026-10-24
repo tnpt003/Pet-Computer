@@ -11,6 +11,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 - Test túi đồ: đọc assertion hint ban đầu ngay sau đổi tab, trước khi pump mouse thật; hover hợp lệ có thể thay hint bằng mô tả synergy. Không bỏ assertion hoặc sửa gameplay để ép xanh.
 - Kết quả core lần đầy đủ: 58 Python + 5 i18n, 1535 C# đạt. WPF lượt cuối sau sửa layout/test hover: 898/898 đạt. Build có 5 warning hiện có, không sửa ngoài scope.
 - Đã xem scene catalog, sảnh, settings, portrait status, upgrade và prep ở màn hình giả lập thấp. Render scene ở 100/150/200%; chưa kiểm tra multi-monitor/DPI bằng desktop thật. Không đổi balance, Python, save, HUD chiến đấu hoặc phát sinh sound.
+- Phát hành: commit 904043a, publish sạch 1.4.3+904043a; artifacts\DesktopPet-1.4.3-904043a-win-x64.zip; smoke 3/3 đạt. Đóng pet bằng WM_CLOSE rồi mở lại; AGENTS.md ngoài commit được trả nguyên byte.
 
 ## Visual Polish — Cozy Desktop Adventure (2026-10-25)
 - Người dùng duyệt triển khai. Thêm PetIllustration: 6 hình vector tĩnh (mèo/sổ/tim/lá/sao/cúp), màu theo vai trò, không nhận input/focus và không thêm timer. PetUi có ink Care/Mystery/Danger/Reward; menu có icon màu trên nền kem.

@@ -6,7 +6,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 
 ## Đổi art Viễn chinh và Vô tận (2026-10-25)
 - Theo phản hồi người dùng: bỏ bố cục mèo trên đồi lặp lại. PetScene.Expedition thành bản đồ cuộn + la bàn + ba lô; Infinity thành cổng năng lượng với dấu vô tận và 3 slime tiến ra. Giữ điểm chính giữa để thẻ sảnh crop vẫn đọc được; banner/map tái dùng cùng cảnh.
-- Chỉ đổi vector trong PetScene.cs, cache frozen/no timer/input như cũ, không đổi gameplay hay layout. Đã xem scene catalog; kết quả WPF/publish ghi sau khi hoàn tất. Không chạy lại core/Python vì không thay logic.
+- Chỉ đổi vector trong PetScene.cs, cache frozen/no timer/input như cũ, không đổi gameplay hay layout. Đã xem scene catalog và thẻ sảnh thực. WPF 898/898 đạt; commit fde00bd, publish sạch 1.4.3+fde00bd, smoke 3/3. Pet đã mở lại; ZIP artifacts\DesktopPet-1.4.3-fde00bd-win-x64.zip. Không chạy lại core/Python vì không thay logic.
 
 ## Visual Polish lớn — cảnh minh họa toàn giao diện (2026-10-25)
 - Người dùng yêu cầu tăng quy mô x3, làm luôn. Thêm PetScene: 12 cảnh vector (Home/Adventure/Expedition/Infinity/Workshop/Diary/Speech/Sound/Settings/Treasure/Victory/Rest), DrawingGroup frozen/cache theo loại, không timer hoặc hit test. Cùng 6 motif đã có thành 18 mẫu; không tăng tải hoạt ảnh liên tục.

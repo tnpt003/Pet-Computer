@@ -539,3 +539,10 @@ Tự động đã có: Phần thưởng trên sảnh (ô có hình, khóa, Mới
 - [ ] Sảnh, bản đồ, prep, thẻ, túi đồ, reward, kết quả: hình cũ và huy hiệu mới rõ; popup nhỏ vẫn scroll và thao tác được.
 - [ ] Desktop sáng/tối/nhiều màu, DPI 100/125/150/200%, chuyển màn hình: không clipping, không che cảnh báo; hình trang trí không giữ chuột.
 - [ ] Pet Mode, pause/fullscreen, sleep/wake/drag/throw và trận hoạt động như trước; không có animation trang trí chạy liên tục khi nghỉ.
+## Minh họa lớn 2026-10-25 — cần nghiệm thu desktop thật
+
+- [ ] Sảnh/map/prep có banner theo mode; máy màn hình thấp cuộn được và nút Ready/Back luôn truy cập được.
+- [ ] Kết quả dài (kỷ vật, record, cảnh báo save) cuộn được, các nút không mất; replay/đổi trang bị/desktop đúng flow.
+- [ ] Settings/Customize/diary/welcome/túi đồ/reward không tràn vi/en/ja; mở đóng nhiều lần không giữ window/timer cũ.
+- [ ] Status portrait đúng coat/accessory/ngủ/emotion; mở status không thay hành vi mèo.
+- [ ] Thẻ upgrade vẫn click/hover/confirm đúng; kiểm tra ở DPI thật 100/150/200% và nhiều màn hình, giữ cảnh báo battle dễ đọc.

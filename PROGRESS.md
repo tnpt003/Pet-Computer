@@ -4,6 +4,14 @@ Cập nhật: 2026-10-24 (Asia/Saigon). Lịch sử trước 21/10: docs/archive
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
+## Visual Polish lớn — cảnh minh họa toàn giao diện (2026-10-25)
+- Người dùng yêu cầu tăng quy mô x3, làm luôn. Thêm PetScene: 12 cảnh vector (Home/Adventure/Expedition/Infinity/Workshop/Diary/Speech/Sound/Settings/Treasure/Victory/Rest), DrawingGroup frozen/cache theo loại, không timer hoặc hit test. Cùng 6 motif đã có thành 18 mẫu; không tăng tải hoạt ảnh liên tục.
+- Banner lớn trong sảnh/bản đồ/prep; 3 thẻ mode dùng cảnh riêng lớn hơn. Settings 3 tab, Customize, nhật ký, welcome, túi đồ/reward và kết quả có minh họa theo chức năng. Thẻ upgrade icon 64 trong huy hiệu 86, viền theo nhóm; bản đồ có landmark. Status có PetRenderer đọc trạng thái/coat/accessory thật, refresh theo timer 0,5 s đã có, không đổi model.
+- Kết quả chuyển sang frame game chung, nội dung cuộn và nút thao tác cố định; minh họa nằm trong scroll content. Rà ảnh phát hiện panel dài hơn: test PanelHeightChecks giờ giả lập màn hình 480 DIP và kiểm tra scroll + nút trong khung, thay việc yêu cầu kích thước tự nhiên trên màn hình lớn phải nhỏ hơn 456 DIP.
+- Test túi đồ: đọc assertion hint ban đầu ngay sau đổi tab, trước khi pump mouse thật; hover hợp lệ có thể thay hint bằng mô tả synergy. Không bỏ assertion hoặc sửa gameplay để ép xanh.
+- Kết quả core lần đầy đủ: 58 Python + 5 i18n, 1535 C# đạt. WPF lượt cuối sau sửa layout/test hover: 898/898 đạt. Build có 5 warning hiện có, không sửa ngoài scope.
+- Đã xem scene catalog, sảnh, settings, portrait status, upgrade và prep ở màn hình giả lập thấp. Render scene ở 100/150/200%; chưa kiểm tra multi-monitor/DPI bằng desktop thật. Không đổi balance, Python, save, HUD chiến đấu hoặc phát sinh sound.
+
 ## Visual Polish — Cozy Desktop Adventure (2026-10-25)
 - Người dùng duyệt triển khai. Thêm PetIllustration: 6 hình vector tĩnh (mèo/sổ/tim/lá/sao/cúp), màu theo vai trò, không nhận input/focus và không thêm timer. PetUi có ink Care/Mystery/Danger/Reward; menu có icon màu trên nền kem.
 - Trạng thái: chân dung mèo + icon từng nhu cầu và màu thanh riêng. Nhật ký: minh họa sổ, icon thống kê và section. Welcome thêm mèo; dialog info/question/warning phân màu. Settings sidebar có nền icon. Khung game chung có đường nhấn vàng; sảnh phân màu progress theo mode; kết quả có cúp/tim cạnh chân dung.

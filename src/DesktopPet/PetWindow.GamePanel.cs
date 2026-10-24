@@ -75,12 +75,14 @@ public sealed partial class PetWindow
 
     // The frame and window of a game panel. The content scrolls when it is taller than the cat's
     // monitor (PlaceGamePanel caps the height); the actions stay in view. Not shown yet.
-    private Window CreateGamePanel(UIElement content, UIElement actions, string title, double minWidth = 0)
+    private Window CreateGamePanel(UIElement content, UIElement actions, string title, double minWidth = 0, PetSceneKind? scene = null)
     {
         var scroll = new ScrollViewer
         {
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled, Focusable = false,
-            Content = content
+            Content = new StackPanel { Children = {
+                new PetScene(scene ?? (title switch { "Pet adventure" => PetSceneKind.Adventure, "Pet expedition" => PetSceneKind.Expedition,
+                    "Pet setup" => PetSceneKind.Workshop, _ => PetSceneKind.Home }), 104), content } }
         };
         scroll.Resources.MergedDictionaries.Add(PetControlStyle.Resources);
         var body = new DockPanel();
@@ -232,6 +234,8 @@ public sealed class ModeArt : FrameworkElement
     {
         double w = ActualWidth, h = ActualHeight;
         if (w <= 0 || h <= 0) return;
+        if (CardTop) { PetScene.Draw(dc, Mode == "expedition" ? PetSceneKind.Expedition : Mode == "infinity" ? PetSceneKind.Infinity : PetSceneKind.Adventure, w, h); return; }
+
         Geometry clip = Round ? new EllipseGeometry(new Point(w / 2, h / 2), w / 2, h / 2)
             : CardTop ? Geometry.Combine(new RectangleGeometry(new Rect(0, 0, w, h), 9, 9), new RectangleGeometry(new Rect(0, h / 2, w, h / 2)), GeometryCombineMode.Union, null)
             : new RectangleGeometry(new Rect(0, 0, w, h), 9, 9);

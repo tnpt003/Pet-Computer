@@ -112,3 +112,8 @@ Vùng tương lai có thể là Khu vườn cửa sổ, Kho lưu trữ thất l�
 Đã triển khai PetIllustration (Cat/Book/Heart/Leaf/Spark/Trophy) dùng lại ở trạng thái, nhật ký, welcome và kết quả; hình tĩnh, không nhận input. PetUi.Care #327354, Mystery #7953A1, Danger #B94444, Reward #976412 là semantic ink trên nền kem (đã test tỷ lệ 4.5:1); không tự dùng các ink tối này cho chữ trên nền game tối. Artwork dùng hồng #F3A1A0, lá #9BD2AE, sổ #C5ADE5 và Game.Gold, có viền Ink. Menu/sidebar có nền icon, frame game chung có nhấn vàng.
 
 Các vùng đã có art riêng (ModeArt, WeaponIcon, UpgradeIcon, SynergyIcon, BagIcon, KeepsakeArt, AppArt) tiếp tục dùng art đó. HUD giữ độ rõ của cảnh báo; không thêm hình trang trí vào từng dòng. Kiểm chứng ảnh render khác với nghiệm thu desktop/DPI thật; xem PROGRESS và MANUAL-TEST.
+## Minh họa lớn — 2026-10-25
+
+PetScene cung cấp 12 cảnh vector có cache frozen; dùng banner 76–104 DIP trong vùng nội dung cuộn. Dùng kiểu scene theo chức năng (WorkShop trang bị, Diary nhật ký, Speech/Sound/Settings tab cài đặt, Treasure vật phẩm, Victory/Rest kết quả). Scene không chứa text hoặc điều khiển, không nhận input, không có timer. Portrait status dùng renderer của trạng thái mèo thật. Thẻ nâng cấp có hình 64 DIP trên huy hiệu 86 DIP và viền nhóm.
+
+Bảng kết quả dùng CreateGamePanel như bản đồ/prep: nút ở ngoài scroll. Artwork không được làm mất nút trên màn hình thấp; kiểm tra bằng bounds 480 DIP và ảnh render. Tăng mật độ minh họa ở panel, không phủ thêm trang trí vào HUD/cảnh báo đang đánh.

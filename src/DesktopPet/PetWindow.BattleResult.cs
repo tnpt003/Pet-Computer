@@ -147,22 +147,14 @@ public sealed partial class PetWindow
             VerticalAlignment = VerticalAlignment.Top, Child = new Grid { Children = { CatPicture(portrait),
                 new PetIllustration(result.Won ? PetMotif.Trophy : PetMotif.Heart, 28, result.Won ? PetUi.Game.Gold : PetUi.AccentBright)
                     { HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Bottom } } } };
-        var panel = new Border
-        {
-            Background = HudBack, BorderBrush = PetUi.Game.Rim, BorderThickness = new Thickness(1.5), CornerRadius = new CornerRadius(12),
-            Padding = new Thickness(14, 12, 14, 12), Margin = new Thickness(6),
-            Child = new StackPanel { Children = { new StackPanel { Orientation = Orientation.Horizontal, Children = { picture, info } }, actions } },
-            Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 6, ShadowDepth = 1, Opacity = 0.4 }
-        };
-        panel.SetValue(TextBlock.FontFamilyProperty, PetUi.TextFont);
-        window = CreateOverlayWindow(panel, "Pet result");
-        window.SizeToContent = SizeToContent.WidthAndHeight;
+        window = CreateGamePanel(new StackPanel { Orientation = Orientation.Horizontal, Children = { picture, info } },
+            actions, "Pet result", scene: result.Won ? PetSceneKind.Victory : PetSceneKind.Rest);
         var shown = window;
         window.Closed += (_, _) => { if (battleSummaryWindow == shown) battleSummaryWindow = null; };
         battleSummaryWindow = window;
         window.Show();
         window.UpdateLayout();
-        MoveWindow(window, (bounds.Left + bounds.Right - window.ActualWidth) / 2, bounds.Top + 12);
+        PlaceGamePanel(window);
     }
 
     // A free battle's records lines and its Play again / Change gear / Back to desktop.

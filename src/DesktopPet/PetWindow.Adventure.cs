@@ -164,7 +164,7 @@ public sealed partial class PetWindow
                 Cursor = System.Windows.Input.Cursors.Hand, Child = new Grid { Children = { number, mark } } };
             var label = new TextBlock { Foreground = Brushes.White, FontSize = PetUi.CaptionSize, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center,
                 Width = 76, Margin = new Thickness(0, 4, 0, 0) };
-            var column = new StackPanel { Width = 76, Background = Brushes.Transparent, Cursor = System.Windows.Input.Cursors.Hand, Children = { node, label } };
+            var column = new StackPanel { Width = 76, Background = Brushes.Transparent, Cursor = System.Windows.Input.Cursors.Hand, Children = { node, label, new PetIllustration(i == chapter.Stages.Length - 1 ? PetMotif.Trophy : i % 2 == 0 ? PetMotif.Leaf : PetMotif.Spark, 40) { Margin = new Thickness(0,6,0,0), HorizontalAlignment = HorizontalAlignment.Center } } };
             column.MouseLeftButtonDown += (_, e) => { AdventureSelectStage(id); e.Handled = true; };
             row.Children.Add(column);
             mapNodes.Add((id, node, number, mark, label, link));

@@ -44,7 +44,7 @@ public sealed partial class PetWindow
     {
         if (diaryPanel == null) return;
         diaryPanel.Children.Clear();
-        diaryPanel.Children.Add(new PetIllustration(PetMotif.Book, 56) { HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0,0,0,8) });
+        diaryPanel.Children.Add(new PetScene(PetSceneKind.Diary, 100));
         AddHeading(LF($"Nhật ký của {preferences.Name}", $"{preferences.Name}'s diary"), 18);
         if (aiDiary is not { } diary)
         {

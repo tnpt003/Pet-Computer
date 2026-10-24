@@ -98,7 +98,10 @@ public sealed partial class PetWindow
             {
                 Width = 132, MinHeight = 150, CornerRadius = new CornerRadius(10), Padding = new Thickness(8, 10, 8, 8), Margin = new Thickness(0, 0, 8, 0),
                 Cursor = System.Windows.Input.Cursors.Hand,
-                Child = new StackPanel { Children = { new UpgradeIcon { Effect = upgrade.Effect, Width = 52, Height = 52, HorizontalAlignment = HorizontalAlignment.Center }, name, desc, build, count } }
+                Child = new StackPanel { Children = { new Border { Width = 86, Height = 86, CornerRadius = new CornerRadius(43), BorderThickness = new Thickness(2),
+                    BorderBrush = upgrade.Group == "defense" ? PetUi.Hex("#9BD2AE") : upgrade.Group == "speed" ? PetUi.Hex("#C5ADE5") : PetUi.AccentBright,
+                    Background = PetUi.Game.Stage, HorizontalAlignment = HorizontalAlignment.Center, IsHitTestVisible = false,
+                    Child = new UpgradeIcon { Effect = upgrade.Effect, Width = 64, Height = 64, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center } }, name, desc, build, count } }
             };
             card.MouseLeftButtonDown += (_, e) => { PickBattleUpgrade(id); e.Handled = true; };
             card.MouseEnter += (_, _) => { upgradeHover = id; FillBag(force: false); };

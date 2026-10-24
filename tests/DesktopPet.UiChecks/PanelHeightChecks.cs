@@ -40,6 +40,24 @@ internal static class PanelHeightChecks
             void Note(string panel, string where)
             {
                 double h = Height(panel);
+                if (panel is "Pet adventure" or "Pet result" && Find(panel) is Window shown)
+                {
+                    var field = FieldOf("bounds"); var area = (Area)field.GetValue(window)!;
+                    try
+                    {
+                        field.SetValue(window, area with { Bottom = area.Top + 480 });
+                        Call(window, "PlaceGamePanel", shown); shown.UpdateLayout();
+                        var frame = (System.Windows.Controls.Border)shown.Content;
+                        var dock = (System.Windows.Controls.DockPanel)frame.Child;
+                        var actions = (FrameworkElement)dock.Children[0];
+                        double bottom = actions.TransformToAncestor(shown).Transform(new Point(0, actions.ActualHeight)).Y;
+                        var scroll = dock.Children.OfType<System.Windows.Controls.ScrollViewer>().Single();
+                        check(bottom <= shown.ActualHeight && (h <= Room || scroll.ScrollableHeight > 0),
+                            panel + " keeps actions visible and tall content scrolls on a 480-DIP screen: " + where);
+                        h = Height(panel);
+                    }
+                    finally { field.SetValue(window, area); }
+                }
                 if (!tallest.TryGetValue(panel, out var best) || h > best.Height) tallest[panel] = (h, where);
             }
             foreach (var lang in new[] { "en", "vi" })

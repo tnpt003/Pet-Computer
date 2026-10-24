@@ -19,6 +19,7 @@ public sealed partial class PetWindow
     private DispatcherTimer? statusTimer;
     private TextBlock? statusTitle, statusDoing, statusFeeling, statusLast, statusHint;
     private StatusBar[]? statusBars;
+    private PetRenderer? statusPortrait;
     // The latest words in a speech bubble or icon in a thought bubble (whichever came last),
     // kept for the card even after the bubble faded. Session only.
     private string? lastWords;
@@ -44,7 +45,10 @@ public sealed partial class PetWindow
         statusFeeling = new TextBlock { Foreground = PetUi.Ink, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 2, 0, 0) };
         statusLast = new TextBlock { Foreground = PetUi.Ink, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 2, 0, 0) };
         statusHint = new TextBlock { Foreground = PetUi.Muted, FontSize = PetUi.SmallSize, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 10, 0, 0) };
-        var panel = new StackPanel { Children = { head, statusDoing, statusFeeling, statusLast } };
+        statusPortrait = new PetRenderer(pet) { Coat = renderer.Coat, Accessory = renderer.Accessory, Width = 192, Height = 192 };
+        var portrait = new Border { Background = PetUi.Stage, CornerRadius = new CornerRadius(12), Height = 88, Margin = new Thickness(0,4,0,8),
+            IsHitTestVisible = false, Child = CatPicture(statusPortrait) };
+        var panel = new StackPanel { Children = { head, portrait, statusDoing, statusFeeling, statusLast } };
         statusBars = new StatusBar[5];
         for (int i = 0; i < statusBars.Length; i++)
         {
@@ -82,7 +86,7 @@ public sealed partial class PetWindow
         statusWindow.Deactivated += (_, _) => CloseStatusCard();
         statusWindow.KeyDown += (_, e) => { if (e.Key == Key.Escape) CloseStatusCard(); };
         statusWindow.Closing += (_, _) => statusClosing = true;
-        statusWindow.Closed += (_, _) => { statusClosing = false; statusTimer?.Stop(); statusTimer = null; statusWindow = null; statusBars = null; };
+        statusWindow.Closed += (_, _) => { statusClosing = false; statusTimer?.Stop(); statusTimer = null; statusWindow = null; statusBars = null; statusPortrait = null; };
         RefreshStatusCard();
         statusWindow.Left = -10000; statusWindow.Top = -10000; // Shown off-screen, then placed next to the cat.
         statusWindow.Show();
@@ -113,6 +117,7 @@ public sealed partial class PetWindow
     {
         if (statusWindow == null || statusBars == null) return;
         statusTitle!.Text = preferences.Name;
+        if (statusPortrait != null) { statusPortrait.Coat = renderer.Coat; statusPortrait.Accessory = renderer.Accessory; statusPortrait.InvalidateVisual(); }
         string doing = battle != null ? L("Đang chiến đấu", "In a battle") : paused ? L("Đang tạm dừng", "Paused") : ActionText(pet.Action);
         if (battle != null) doing += $" · HP {Math.Ceiling(battle.CatHp)}";
         statusDoing!.Text = L("Đang làm: ", "Doing: ") + doing;

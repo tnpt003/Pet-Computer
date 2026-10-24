@@ -92,6 +92,7 @@ public sealed partial class PetWindow
         if (hubRewards == null) return;
         hubRewardsLanguage = preferences.Language;
         hubRewards.Children.Clear();
+        hubRewards.Children.Add(new PetScene(PetSceneKind.Treasure, 100));
         var adventure = Adventure;
         var expedition = Expedition;
         rewardsDetail = BagLine(L("Rê chuột lên một ô để xem cách nhận hoặc nơi dùng.", "Hover a tile to see how to win it or where it shows."), PetUi.CaptionSize, PetUi.Game.Soft);

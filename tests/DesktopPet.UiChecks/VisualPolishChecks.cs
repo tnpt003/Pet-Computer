@@ -10,6 +10,25 @@ internal static class VisualPolishChecks
 {
     public static void Run(Action<bool,string> check)
     {
+        var scenes = new StackPanel { Background = PetUi.Surface };
+        foreach (var kind in Enum.GetValues<PetSceneKind>()) {
+            var art = new PetScene(kind, 120) { Width = 480, Margin = new Thickness(0) };
+            scenes.Children.Add(art);
+            check(!art.IsHitTestVisible && !art.Focusable, "Scene is decorative: " + kind);
+        }
+        scenes.Measure(new Size(480, double.PositiveInfinity)); scenes.Arrange(new Rect(0,0,480,1440)); scenes.UpdateLayout();
+        foreach (double scale in new[] { 1.0, 1.5, 2.0 }) {
+            var sheet = new RenderTargetBitmap((int)(480*scale),(int)(1440*scale),96*scale,96*scale,PixelFormats.Pbgra32);
+            sheet.Render(scenes);
+            check(sheet.PixelWidth == (int)(480*scale), "Vector scene sheet renders at " + scale);
+            if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string output && scale == 1) {
+                var png = new PngBitmapEncoder(); png.Frames.Add(BitmapFrame.Create(sheet));
+                using var stream = File.Create(Path.Combine(output,"scene-catalog.png")); png.Save(stream);
+            }
+        }
+        var narrow = new PetScene(PetSceneKind.Home, 80);
+        narrow.Measure(new Size(180,80)); narrow.Arrange(new Rect(0,0,180,80));
+        check(narrow.DesiredSize.Width <= 180 && narrow.ActualWidth == 180, "Scene does not force narrow panels wider");
         double L(Brush b) {
             var c=((SolidColorBrush)b).Color;
             double F(byte x) { double v=x/255.0; return v<=0.04045 ? v/12.92 : Math.Pow((v+0.055)/1.055,2.4); }

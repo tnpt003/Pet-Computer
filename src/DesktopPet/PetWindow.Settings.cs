@@ -148,6 +148,7 @@ public sealed partial class PetWindow
         previewTimer.Start();
         form.PreviewTimer = previewTimer;
 
+        if (page.Content is StackPanel customizePage) customizePage.Children.Insert(0, new PetScene(PetSceneKind.Home, 100));
         customizeWindow = FormWindow(L("Tùy chỉnh", "Customize") + " — " + preferences.Name, CustomizeWidth, 620, page, form);
         form.Save.Click += (_, _) =>
         {
@@ -311,6 +312,9 @@ public sealed partial class PetWindow
                 Row(L("Nhắc", "Remind"), form.BreakInterval),
                 PetUi.Hint(L("Chỉ tính thời gian bạn dùng máy. Không nhắc khi đang mở app toàn màn hình.",
                              "Counts only time you use the computer. Not shown during fullscreen apps."))));
+
+        foreach (var pair in new[] { (speechTab, PetSceneKind.Speech), (soundsTab, PetSceneKind.Sound), (generalTab, PetSceneKind.Settings) })
+            if (pair.Item1.Content is StackPanel page) page.Children.Insert(0, new PetScene(pair.Item2, 100));
 
         // A sidebar (PetControlStyle); each Tag is the page's Segoe icon: chat, speaker, gear.
         form.Tabs = new TabControl { Padding = new Thickness(0) };

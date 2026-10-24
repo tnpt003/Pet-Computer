@@ -122,7 +122,8 @@ internal static class BagChecks
                 $"Stats tab: the numbers with the build carried into the chosen stage ({text.Replace('\n', '|')})");
             Shot("Pet bag", "bag-adventure-stats-en.png");
             Click(Button(bag!, "Cards")!);
-            await Task.Delay(10);
+            // Assert the initial hint before pumping real mouse input: a cursor over a medal
+            // legitimately replaces it with that synergy's description.
             text = window.BattleBagText;
             string sharp = data.UpgradeList.First(u => u.Id == "sharp").Name("en");
             check(window.BattleBagTab == PetWindow.BagCardsTab && text.Contains(sharp) && text.Contains("×2") && text.Contains("Defense 3") && text.Contains("Power 2")

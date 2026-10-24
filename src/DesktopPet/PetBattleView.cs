@@ -56,12 +56,19 @@ public sealed partial class BattleFieldView : FrameworkElement
         MouseLeave += (_, _) => { if (hoverId != null) { hoverId = null; InvalidateVisual(); } };
     }
 
-    // The user let go of (or slid off) a loading ring's spinner.
+    // The user let go of (or slid off) a loading ring's spinner. The mouse is given back even when the
+    // ring already closed while held (2026-10-24: it was kept, and every later click — the card offer's
+    // too — went to the strip until another window was activated).
     private void EndHold()
     {
-        if (sim.HoldingHazardId == 0) return;
-        HazardReleased?.Invoke();
+        if (sim.HoldingHazardId != 0) HazardReleased?.Invoke();
         if (IsMouseCaptured) ReleaseMouseCapture();
+    }
+
+    // Each battle frame: no ring held any more (it closed under the mouse) but the mouse still kept: give it back.
+    public void DropStaleHold()
+    {
+        if (sim.HoldingHazardId == 0 && IsMouseCaptured) ReleaseMouseCapture();
     }
 
     private void Hover(Point point)

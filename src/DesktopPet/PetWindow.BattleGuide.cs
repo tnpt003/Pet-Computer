@@ -103,7 +103,7 @@ public sealed partial class PetWindow
         See(GuideClock, StageHoldOn, () => battle!.Time >= 0.6 && battle.Survival, () => Spots(HudPart(battleHud?.StatusBlock)),
             () => L("Cầm cự tới khi đồng hồ về 0. Bế mèo thì đồng hồ dừng, nên chỉ bế khi cần né đòn.", "Hold out until the clock reaches 0. Carrying the cat stops the clock, so lift it only to dodge.")),
         new(GuideAds, StageHoldOn, true, true, 1,
-            () => { guideRefValue = battle!.Popups.Count; return battle.Popups.Count > 0; },
+            () => { guideRefValue = battle!.Popups.Count; return battle.Popups.Count > 0 && battle.Popups.All(p => p.Age >= PopupShown || battle.PopupsLocked); },
             () => battle!.Popups.Count < guideRefValue, () => Spots(battle!.Popups.Select(PopupSpot).ToArray()),
             () => L("App độc: quảng cáo che sân. Bấm × để tắt từng cái (Tab bị nhiễm thì phải gỡ Tab trước).",
                     "Malware: ads cover the floor. Click × to close each one (with Tabs infected, clean Tabs first).")),
@@ -120,12 +120,12 @@ public sealed partial class PetWindow
             () => L("App độc: Cập nhật bắt buộc dựng tường giữa mèo và slime. Bấm Nhắc sau vài lần để dẹp nó.",
                     "Malware: a forced update stands as a wall between the cat and the slimes. Click Later a few times to get rid of it.")),
         new(GuideVirus, StageHoldOn, true, true, 1,
-            () => { guideRef = battle!.VirusFiles.Count > 0 ? battle.VirusFiles[0].Id : 0; return guideRef != 0; },
+            () => { var file = battle!.VirusFiles.FirstOrDefault(f => battle.Time - f.BornAt >= VirusShown); guideRef = file?.Id ?? 0; return file != null; },
             () => battle!.VirusFiles.All(f => f.Id != guideRef), () => battle!.VirusFiles.Select(VirusSpot).ToList(),
             () => L("App độc: virus.exe tự nhân bản, đủ bản thì nhiễm một icon. Bấm từng file để xóa.",
                     "Malware: virus.exe copies itself and, with enough copies, infects an icon. Click each file to delete it.")),
         new(GuideInfected, StageHoldOn, true, true, 1,
-            () => { var sick = battle!.Desktop.FirstOrDefault(a => a.Infected); guideRef = sick?.Id ?? 0; guideRefValue = sick?.ScrubbedAt ?? 0; return sick != null; },
+            () => { var sick = battle!.Desktop.FirstOrDefault(a => a.Infected && a.InfectedAt >= 0 && battle.Time - a.InfectedAt >= InfectedShown); guideRef = sick?.Id ?? 0; guideRefValue = sick?.ScrubbedAt ?? 0; return sick != null; },
             () => battle!.FindApp(guideRef) is not { Infected: true } app || app.ScrubbedAt > guideRefValue,
             () => battle!.FindApp(guideRef) is DesktopApp app ? new List<Rect> { AppSpot(app) } : new(),
             () => L("Slime bắn virus vào icon: icon bị nhiễm quay ra hại mèo. Bấm icon vài lần để gỡ, hoặc hạ con slime đã nhiễm nó.",
@@ -195,9 +195,12 @@ public sealed partial class PetWindow
         return hitter != null;
     }
     private List<Rect> LiftSpots() => battle!.Find(guideRef) is { State: SlimeState.Windup } hitter ? Spots(CatSpot(), SlimeSpot(hitter)) : new();
+    // A step about malware waits until it has finished appearing (the battle stands still during the
+    // step, so a half-grown file or a wall still dropping would stay so): the views' appear times.
+    private const double PopupShown = 0.3, HazardShown = 0.35, VirusShown = 0.4, InfectedShown = 0.65;
     private bool HazardDue(HazardKind kind)
     {
-        var hazard = battle!.Hazards.FirstOrDefault(h => h.Kind == kind);
+        var hazard = battle!.Hazards.FirstOrDefault(h => h.Kind == kind && h.Age >= HazardShown);
         guideRef = hazard?.Id ?? 0;
         guideRefValue = hazard?.ClicksLeft ?? 0;
         return hazard != null;

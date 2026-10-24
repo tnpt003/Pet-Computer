@@ -21,7 +21,7 @@ internal static class GuideStageTests
         {
             sim = new BattleSim(data, 0, 1600, difficulty: level, stage: stage, seed: seed, startHp: 100000);
             var seen = new Dictionary<string, double>();
-            void Note(string what, bool now, BattleSim b) { if (now && !seen.ContainsKey(what)) seen[what] = b.Stage!.Survival ? b.Stage.SurviveSeconds!.Value - b.SurviveRemaining : b.FightSeconds; }
+            void Note(string what, bool now, BattleSim b) { if (now && !seen.ContainsKey(what)) seen[what] = b.Stage!.Survival ? b.Stage.SurviveSeconds!.Value - b.SurviveRemaining : b.Time; }
             for (double t = 0; t < seconds && !sim.Over; t += 1.0 / 30)
             {
                 sim.Step(1.0 / 30, 800, false);

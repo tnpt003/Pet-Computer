@@ -4,6 +4,12 @@ Cập nhật: 2026-10-24 (Asia/Saigon). Lịch sử trước 21/10: docs/archive
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
+## Sửa: không chọn được thẻ sau vòng loading; virus.exe sáng khi chưa hiện hết 2026-10-24 (người dùng "ok làm đi")
+- Thẻ: dải chiến trường `CaptureMouse` khi giữ vòng xoay; vòng tự tắt lúc đang giữ (2 s) thì `EndHold` thấy HoldingHazardId 0 và bỏ qua, không trả chuột → mọi click (cả bảng thẻ) vào dải chiến trường tới khi đổi cửa sổ (log 22:46–22:47 màn Cầm cự). Sửa PetBattleView: `EndHold` luôn `ReleaseMouseCapture`; `DropStaleHold()` mỗi khung (gọi trong TickBattle) trả chuột khi không còn vòng nào được giữ. Lỗi có từ 6b (giữ 2 s), lộ ra vì hướng dẫn màn 3 dạy giữ vòng ngay trước mốc chọn thẻ 20 s.
+- virus.exe/app độc: trận đứng hình đúng lúc hoạt ảnh xuất hiện nên đứng yên ở hình nhỏ. Bước hướng dẫn chờ hiện xong: quảng cáo Age ≥ 0,3 (hoặc đang khóa), vòng loading/tường Age ≥ 0,35, virus.exe ≥ 0,4 s từ BornAt, icon nhiễm ≥ 0,65 s từ InfectedAt.
+- Lõi: `MalwareSeconds` màn thường dùng `Time` (trước dùng FightSeconds — chỉ ghi lúc trận kết thúc, nên lịch app độc/malwareFrom không chạy ở màn thường; màn 3 gốc là màn sống sót nên không bị).
+- Test thật: scripts/test.ps1 -Ui: Python OK; C# 1533; WPF 846/846 (mới: vòng tự tắt dưới chuột thì khung sau trả chuột; thả chuột sau đó cũng trả; bước virus.exe bắt đầu khi file đã hiện 0,42 s). Test tay: màn 3 giữ vòng loading tới khi tắt rồi chọn thẻ ngay bằng chuột; virus.exe hiện đủ to khi hướng dẫn sáng.
+
 ## Hướng dẫn: chỗ sáng của mèo lệch 40 DIP 2026-10-24 (người dùng gửi ảnh sau bản 8dab2d4)
 - Nguyên nhân: cửa sổ mèo có lề `PickupAnimation.Padding` 40 DIP quanh khung 112×112 (Present đặt cửa sổ tại pet.X − 40), `CatSpot` đo từ góc cửa sổ nên lệch lên trái 40; test cũ đo cùng gốc sai nên vẫn PASS. Sửa: cộng Padding; test giờ so thêm với `pet.X + CenterX` (độc lập). WPF 843/843 (tâm chỗ sáng mèo 960 = pet.X + 56). Commit 1d07490; publish 1.4.3+1d07490 (sạch), check-publish 3/3, mèo mở lại. ZIP artifacts\DesktopPet-1.4.3-1d07490-win-x64.zip.
 

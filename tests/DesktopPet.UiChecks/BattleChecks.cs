@@ -781,10 +781,18 @@ internal static class BattleChecks
             check(window.StartBattle(stage: new StageSpec { Id = "ui_loading_hold" }) == null, "(setup) a stage battle whose rings are held to close");
             for (int i = 0; i < 600 && Sim().Hazards.Count == 0; i++) Tick(1.0 / 60);
             var holdSim = Sim();
+            var holdStrip = Field<BattleFieldView>(window, "battleView");
             check(holdSim.Hazards.Count == 1 && window.BattleCloseHazard(holdSim.Hazards[0].Id) && holdSim.Hazards.Count == 1 && holdSim.HoldingHazardId != 0,
                 "Pressing the spinner starts holding it (the ring stays)");
             for (int i = 0; i < 130; i++) Tick(1.0 / 60);
             check(holdSim.Hazards.Count == 0 && holdSim.HoldingHazardId == 0, "Held 2 s, the ring closes");
+            // The strip kept the mouse for that press; the ring is gone now: the next frame gives it back.
+            holdStrip.CaptureMouse();
+            Tick(1.0 / 60);
+            check(!holdStrip.IsMouseCaptured, "Once the ring closed under the mouse, the strip gives the mouse back (later clicks reach the card offer)");
+            holdStrip.CaptureMouse();
+            holdStrip.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Left) { RoutedEvent = UIElement.MouseLeftButtonUpEvent });
+            check(!holdStrip.IsMouseCaptured, "Letting go after the ring closed gives the mouse back too");
             window.EndBattle();
             // virus.exe: each copy in its own window on its cell; a click deletes it and its window closes.
             window.BattleTuning = new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 1 }, SlimeMaxHp = 1000, SlimeDamage = 0,

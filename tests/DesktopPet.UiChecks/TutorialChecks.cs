@@ -75,9 +75,12 @@ internal static class TutorialChecks
         // The Adventure Guide (2026-10-24). Chapter 1's five stages with one slime each that never dies.
         WaveSpec Slimes(int count) => new() { Groups = new[] { new WaveGroup { Enemy = "slime", Count = count } } };
         var ids = new[] { PetWindow.StageFirstSteps, PetWindow.StageBreakThrough, PetWindow.StageHoldOn, PetWindow.StageCutSupport, PetWindow.StageSlimeKing };
-        var chapter = ids.Select(id => new StageSpec { Id = id, NameVi = id, NameEn = id, Waves = new[] { Slimes(1) } }).ToArray();
+        // Stage 3 sends virus.exe 1 s in (its plan), no random malware.
+        var chapter = ids.Select(id => new StageSpec { Id = id, NameVi = id, NameEn = id, Waves = new[] { Slimes(1) },
+            MalwarePlan = id == PetWindow.StageHoldOn ? new[] { new MalwareCue { At = 1, Kind = "virus" } } : null }).ToArray();
         var outside = new StageSpec { Id = "t_other", NameVi = "Khác", NameEn = "Other", Waves = new[] { Slimes(1) } };
         window.BattleTuning = new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 1 }, MaxAlive = 1, SpawnInterval = 0, SlimeMaxHp = 1000, CatDamage = 0, SlimeDamage = 0,
+            Apps = new AppsSpec { InfectChance = 0, MalwareMinThreat = 99, VirusExeWeight = 1, VirusExeEvery = 30 },
             Campaign = new CampaignSpec { Chapters = new[] { new ChapterSpec { Id = "c1", NameVi = "C", NameEn = "C", Stages = chapter.Append(outside).ToArray() } } } };
         window.BattleGuideEnabled = true;
         void ToGround() { pet.Grounded = true; pet.VX = pet.VY = 0; pet.Action = PetAction.Idle; pet.Y = Field<Area>(window, "bounds").Bottom - 112; }
@@ -238,6 +241,16 @@ internal static class TutorialChecks
         check(Snug(PetWindow.GuideHp, Bounds(tourHud.HpBlock)) && Snug(PetWindow.GuideSkills, slotsUnion) && Snug(PetWindow.GuidePush, Bounds(tourHud.Slot(BattleSkill.Push)))
               && Snug(PetWindow.GuideBag, Bounds(tourHud.BagButton)),
             $"HP, the skill bar (its five slots), a skill and the bag are each lit with {PetWindow.GuidePad} DIPs all round ({string.Join("; ", litByStep.Select(p => $"{p.Key} {string.Join(" ", p.Value.Select(r => $"{r.X:0.#},{r.Y:0.#} {r.Width:0.#}×{r.Height:0.#}"))}"))} | bar {slotsUnion.X:0.#},{slotsUnion.Y:0.#} {slotsUnion.Width:0.#}×{slotsUnion.Height:0.#})");
+        window.EndBattle();
+
+        // 3 · Malware is shown once it has finished appearing (the battle stands still during the step).
+        ToGround();
+        window.StartBattle(stage: chapter[2]);
+        for (int i = 0; i < 60 * 8 && window.BattleGuideStep != PetWindow.GuideVirus; i++) { NextToCat(); ToGround(); Call(window, "TickBattle", 1.0 / 60); }
+        // The battle stands still from the step's start, so the file's age now is its age then.
+        var file = Sim().VirusFiles.FirstOrDefault();
+        check(window.BattleGuideStep == PetWindow.GuideVirus && file != null && Sim().Time - file.BornAt >= 0.35,
+            $"The virus.exe step waits until the file has popped in fully ({(file == null ? "no file" : $"{Sim().Time - file.BornAt:0.00} s after it appeared")})");
         window.EndBattle();
 
         // On by default, a won stage too; unticked on Ready, the choice is kept; ticked again, it teaches.

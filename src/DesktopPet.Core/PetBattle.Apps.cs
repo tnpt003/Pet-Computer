@@ -203,8 +203,9 @@ public sealed partial class BattleSim
         ThrowMalware(rules);
     }
 
-    // The fight's seconds a malware plan counts (a survive stage: its clock, which carrying stops).
-    private double MalwareSeconds => Stage is { Survival: true, SurviveSeconds: double hold } ? hold - SurviveRemaining : FightSeconds;
+    // The seconds a malware plan counts: a survive stage's clock (carrying the cat stops it), otherwise
+    // the battle's time (FightSeconds is only set when the battle ends).
+    private double MalwareSeconds => Stage is { Survival: true, SurviveSeconds: double hold } ? hold - SurviveRemaining : Time;
 
     // A stage's malware plan: each cue once, when its time comes (one that cannot come yet — no
     // slime to throw it, no clean icon — waits and tries again).

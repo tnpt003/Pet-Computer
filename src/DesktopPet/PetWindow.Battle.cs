@@ -460,6 +460,7 @@ public sealed partial class PetWindow
             return;
         }
         TickBattleUpgrade();
+        battleView?.DropStaleHold();
         TickBattleGuide();
         // Quick feet: this run's running speed (none while the guide holds the battle still).
         pet.MoveScale = BattleGuideFreezes ? 0 : battle.Settings.CatRunScale * battle.MoveFactor * battle.LagFactor;

@@ -2,6 +2,8 @@
 Trao đổi bằng tiếng Việt. Thư mục: C:\Project VS\Pet Computer
 C# / WPF (.NET 10) + Python AI service. Nhân vật: mèo hoạt hình.
 
+Theme chính thức: **Cozy Desktop Adventure — Một thế giới nhỏ trên bàn làm việc**. Khi sửa UI/art/motion/sound, đọc [docs/DESIGN-SYSTEM.md](docs/DESIGN-SYSTEM.md), tái dùng PetUi/style chung; không thay gameplay chỉ để hợp theme.
+
 ## QUY TRÌNH BẮT BUỘC CHO MỖI YÊU CẦU (tự động, không cần tôi nhắc)
 1. ĐỌC: PROGRESS.md, docs và code liên quan. Đối chiếu với code thật vì ghi chú có thể đã cũ.
 2. GIẢI THÍCH: nêu ngắn gọn nguyên nhân/cách làm, danh sách file sẽ đổi, rủi ro đến hành vi hiện có. KHÔNG code, KHÔNG sửa file ở bước này.

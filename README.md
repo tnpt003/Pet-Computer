@@ -1,5 +1,7 @@
 # Desktop Pet for Windows
 
+**Theme: Cozy Desktop Adventure** — a small world on your desktop. See the [design system](docs/DESIGN-SYSTEM.md) for the shared visual, motion, and sound direction.
+
 **[⬇ Download Desktop Pet for Windows (Setup.exe)](https://github.com/tnpt003/Pet-Computer/releases/latest/download/PetComputer-win-Setup.exe)**
 — Windows 10/11 x64, no admin needed. If SmartScreen appears: **More info → Run anyway**. See **Install** below.
 

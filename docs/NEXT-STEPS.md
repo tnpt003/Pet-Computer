@@ -6,6 +6,10 @@ Cập nhật: 2026-10-23 (Asia/Saigon). Bản đang chạy: 1.4.1 (installer + t
 
 Đọc AGENTS.md, PROGRESS.md và code thật trước khi làm. Các bàn giao/review cũ (18/10 → 21/10: Battle Mode, Adventure, Combat Depth, Enemy Director, Enemy Tactics R1–R4, buff quái) đã triển khai và nằm ở [archive/NEXT-STEPS-2026-10.md](archive/NEXT-STEPS-2026-10.md); không coi chúng là việc còn mở.
 
+## Theme chính thức — Cozy Desktop Adventure (2026-10-24)
+
+Đọc [DESIGN-SYSTEM.md](DESIGN-SYSTEM.md) khi thiết kế hoặc sửa UI/art/motion/sound. Theme: Một thế giới nhỏ trên bàn làm việc; ấm áp, tinh nghịch, phiêu lưu. Kế thừa PetUi và các style chung. Chuẩn đã được ghi; chưa tuyên bố toàn app đã được rà/đổi giao diện. Việc tiếp theo là kiểm kê từng màn và semantic colors, chuẩn hóa dần, không thay gameplay hoặc làm lại roadmap đã xong.
+
 ## Đã xong
 
 - Pet Mode đầy đủ (ngủ/thức, kéo/ném/Dizzy, cảm xúc, bóng/laser/cho ăn, đi trên cửa sổ, nói + AI, nhật ký, bộ lông/phụ kiện/ngày lễ).

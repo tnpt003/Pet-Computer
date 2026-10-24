@@ -4,6 +4,11 @@ Cập nhật: 2026-10-24 (Asia/Saigon). Lịch sử trước 21/10: docs/archive
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
+## Chuẩn theme project (2026-10-24)
+- Người dùng duyệt hướng Cozy Desktop Adventure. Thêm docs/DESIGN-SYSTEM.md: bản sắc, palette/font/radius đúng PetUi, quy ước component/art/motion/sound, mode mapping, checklist và backlog chuẩn hóa.
+- Liên kết từ AGENTS.md, README.md, NEXT-STEPS.md để AI/người phát triển dùng chung. Phân biệt token đã có và chuẩn mới chưa thực thi; giữ code/gameplay đang sửa dở.
+- Mốc tài liệu-only: kiểm tra diff/link, không chạy build/test hoặc publish binary; chưa rà trực quan toàn app. Không thay Issue_fixxed.md vì không sửa bug trong mốc này.
+
 ## Sửa: không chọn được thẻ sau vòng loading; virus.exe sáng khi chưa hiện hết 2026-10-24 (người dùng "ok làm đi")
 - Thẻ: dải chiến trường `CaptureMouse` khi giữ vòng xoay; vòng tự tắt lúc đang giữ (2 s) thì `EndHold` thấy HoldingHazardId 0 và bỏ qua, không trả chuột → mọi click (cả bảng thẻ) vào dải chiến trường tới khi đổi cửa sổ (log 22:46–22:47 màn Cầm cự). Sửa PetBattleView: `EndHold` luôn `ReleaseMouseCapture`; `DropStaleHold()` mỗi khung (gọi trong TickBattle) trả chuột khi không còn vòng nào được giữ. Lỗi có từ 6b (giữ 2 s), lộ ra vì hướng dẫn màn 3 dạy giữ vòng ngay trước mốc chọn thẻ 20 s.
 - virus.exe/app độc: trận đứng hình đúng lúc hoạt ảnh xuất hiện nên đứng yên ở hình nhỏ. Bước hướng dẫn chờ hiện xong: quảng cáo Age ≥ 0,3 (hoặc đang khóa), vòng loading/tường Age ≥ 0,35, virus.exe ≥ 0,4 s từ BornAt, icon nhiễm ≥ 0,65 s từ InfectedAt.

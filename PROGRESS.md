@@ -5,7 +5,7 @@ Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt 
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
 ## Hướng dẫn: chỗ sáng của mèo lệch 40 DIP 2026-10-24 (người dùng gửi ảnh sau bản 8dab2d4)
-- Nguyên nhân: cửa sổ mèo có lề `PickupAnimation.Padding` 40 DIP quanh khung 112×112 (Present đặt cửa sổ tại pet.X − 40), `CatSpot` đo từ góc cửa sổ nên lệch lên trái 40; test cũ đo cùng gốc sai nên vẫn PASS. Sửa: cộng Padding; test giờ so thêm với `pet.X + CenterX` (độc lập). WPF 843/843 (tâm chỗ sáng mèo 960 = pet.X + 56).
+- Nguyên nhân: cửa sổ mèo có lề `PickupAnimation.Padding` 40 DIP quanh khung 112×112 (Present đặt cửa sổ tại pet.X − 40), `CatSpot` đo từ góc cửa sổ nên lệch lên trái 40; test cũ đo cùng gốc sai nên vẫn PASS. Sửa: cộng Padding; test giờ so thêm với `pet.X + CenterX` (độc lập). WPF 843/843 (tâm chỗ sáng mèo 960 = pet.X + 56). Commit 1d07490; publish 1.4.3+1d07490 (sạch), check-publish 3/3, mèo mở lại. ZIP artifacts\DesktopPet-1.4.3-1d07490-win-x64.zip.
 
 ## Hướng dẫn: chỗ sáng căn đúng tâm 2026-10-24 (người dùng gửi ảnh thanh kỹ năng lệch, "ok làm đi")
 - Nguyên nhân: chỗ sáng HUD/bảng thẻ tính theo khung trong cửa sổ (HUD có Margin 8) + battleHudAt; thanh kỹ năng ôm cả lề StackPanel; mèo lấy cả khung 112×112; slime không tính phồng khi gồng; quảng cáo/vòng xoay/tường dùng số ước lượng.

@@ -82,16 +82,41 @@ public sealed class PetScene : FrameworkElement
             sky.Freeze();d.DrawRectangle(sky,null,new Rect(0,0,480,120));
             for(int i=0;i<8;i++) { if(night) Star(d,22+i*60,16+(i%3)*10,2); else d.DrawEllipse(Cream,null,new Point(25+i*67,21+(i%2)*9),18,5); }
             d.DrawEllipse(night?Cream:Gold,null,new Point(410,23),13,13);
-            if(k is PetSceneKind.Adventure or PetSceneKind.Expedition or PetSceneKind.Infinity) {
+            if(k == PetSceneKind.Expedition) {
+                // Central composition stays readable when the wide banner is cropped to a mode card.
+                d.DrawRectangle(DarkWood,null,new Rect(0,94,480,26));
+                Box(d,182,25,104,70,Cream,4);
+                Box(d,176,20,12,80,Gold,5);Box(d,280,20,12,80,Gold,5);
+                Path(d,"M195,79 C209,79 204,47 225,51 S246,77 265,38",null,PetUi.FrozenPen(Wood,3));
+                for(int i=0;i<3;i++)d.DrawEllipse(Orange,Rim,new Point(204+i*23,70-i*12),3,3);
+                Path(d,"M258,32 L270,44 M270,32 L258,44",null,PetUi.FrozenPen(PetUi.Danger,3));
+                d.DrawEllipse(Gold,Rim,new Point(203,31),18,18);
+                d.DrawEllipse(Cream,Fine,new Point(203,31),14,14);
+                Path(d,"M203,17 L209,34 L203,31 L197,28Z",PetUi.Danger,Fine);
+                Path(d,"M203,45 L197,28 L203,31 L209,34Z",Mint,Fine);
+                Box(d,266,61,39,43,Mint,9);Box(d,271,85,29,15,Wood,4);
+                Path(d,"M277,61 L277,54 Q286,48 295,54 L295,61",null,Rim);
+                Box(d,263,57,44,12,Lilac,5);
+                Star(d,160,31,4);Star(d,323,52,3);
+                Plant(d,82,81);Chest(d,350,76);
+            } else if(k == PetSceneKind.Infinity) {
+                d.DrawEllipse(PetUi.Hex("#35264F"),null,new Point(240,111),150,24);
+                d.DrawEllipse(null,PetUi.FrozenPen(PetUi.Hex("#5548D6C7"),16),new Point(240,54),45,42);
+                d.DrawEllipse(PetUi.Hex("#251F43"),PetUi.FrozenPen(Mint,5),new Point(240,54),40,39);
+                d.DrawEllipse(null,PetUi.FrozenPen(Lilac,2),new Point(240,54),32,31);
+                Path(d,"M240,48 C252,31 274,32 274,48 C274,64 252,65 240,48 C228,31 206,32 206,48 C206,64 228,65 240,48Z",null,PetUi.FrozenPen(Gold,5));
+                // Three incoming enemies, rather than another cat on a landscape.
+                Slime(d,207,96,Mint);Slime(d,241,104,Lilac);Slime(d,275,96,Rose);
+                Path(d,"M184,32 L176,44 L185,48 M295,62 L304,70 L295,80",null,PetUi.FrozenPen(Gold,2));
+                for(int i=0;i<3;i++) { double x=96+i*16;Path(d,$"M{x},69 L{x+7},77 L{x},85",null,PetUi.FrozenPen(Lilac,2)); }
+                Star(d,328,34,5);Star(d,160,77,4);
+            } else if(k == PetSceneKind.Adventure) {
                 Path(d,"M0,88 Q90,22 180,82 Q290,12 390,76 Q440,42 480,66 L480,120 L0,120Z",night?Lilac:Mint);
                 Path(d,"M0,103 Q100,68 220,100 Q340,74 480,96 L480,120 L0,120Z",night?DarkWood:PetUi.Care);
                 Path(d,"M80,120 C120,88 180,115 235,93 S330,68 362,58",null,PetUi.FrozenPen(Cream,5));
                 for(int i=0;i<4;i++)d.DrawEllipse(Gold,Rim,new Point(148+i*52,104-i*12),4,4);
                 d.DrawLine(Rim,new Point(360,60),new Point(360,24));Path(d,"M360,24 L390,32 L360,40Z",Orange,Rim);
                 Cat(d,235,67);Slime(d,105,99,Mint);Chest(d,319,83);
-                if(k==PetSceneKind.Infinity) {
-                    Path(d,"M232,23 C247,5 273,7 270,24 C267,41 248,38 232,23 C217,5 191,7 194,24 C197,41 216,38 232,23Z",null,PetUi.FrozenPen(Gold,4));
-                }
             } else {
                 Box(d,0,97,480,27,Wood,0);d.DrawLine(Fine,new Point(0,105),new Point(480,105));
                 Plant(d,46,81);Plant(d,432,81);

@@ -4,6 +4,10 @@ Cập nhật: 2026-10-24 (Asia/Saigon). Lịch sử trước 21/10: docs/archive
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
+## Đổi art Viễn chinh và Vô tận (2026-10-25)
+- Theo phản hồi người dùng: bỏ bố cục mèo trên đồi lặp lại. PetScene.Expedition thành bản đồ cuộn + la bàn + ba lô; Infinity thành cổng năng lượng với dấu vô tận và 3 slime tiến ra. Giữ điểm chính giữa để thẻ sảnh crop vẫn đọc được; banner/map tái dùng cùng cảnh.
+- Chỉ đổi vector trong PetScene.cs, cache frozen/no timer/input như cũ, không đổi gameplay hay layout. Đã xem scene catalog; kết quả WPF/publish ghi sau khi hoàn tất. Không chạy lại core/Python vì không thay logic.
+
 ## Visual Polish lớn — cảnh minh họa toàn giao diện (2026-10-25)
 - Người dùng yêu cầu tăng quy mô x3, làm luôn. Thêm PetScene: 12 cảnh vector (Home/Adventure/Expedition/Infinity/Workshop/Diary/Speech/Sound/Settings/Treasure/Victory/Rest), DrawingGroup frozen/cache theo loại, không timer hoặc hit test. Cùng 6 motif đã có thành 18 mẫu; không tăng tải hoạt ảnh liên tục.
 - Banner lớn trong sảnh/bản đồ/prep; 3 thẻ mode dùng cảnh riêng lớn hơn. Settings 3 tab, Customize, nhật ký, welcome, túi đồ/reward và kết quả có minh họa theo chức năng. Thẻ upgrade icon 64 trong huy hiệu 86, viền theo nhóm; bản đồ có landmark. Status có PetRenderer đọc trạng thái/coat/accessory thật, refresh theo timer 0,5 s đã có, không đổi model.

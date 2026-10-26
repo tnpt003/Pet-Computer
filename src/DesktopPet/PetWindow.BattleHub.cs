@@ -133,7 +133,7 @@ public sealed partial class PetWindow
         hubCards.Clear();
         foreach (var mode in HubModes)
         {
-            var art = new ModeArt { Mode = mode, CardTop = true, Height = 116 };
+            var art = new ModeArt { Mode = mode, Height = 116 };
             var ribbonText = new TextBlock { Foreground = Brushes.White, FontSize = PetUi.CaptionSize, FontWeight = FontWeights.Bold, VerticalAlignment = VerticalAlignment.Center };
             var ribbon = new Border
             {

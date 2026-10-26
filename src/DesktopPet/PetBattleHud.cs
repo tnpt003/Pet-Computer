@@ -33,7 +33,7 @@ public sealed class BattleHud : Border
     // The portrait with HP, the status column and the skill slots (the Adventure Guide lights them).
     private readonly FrameworkElement hpBlock, statusBlock, skillBar;
     private readonly HudGlyph pauseGlyph;
-    private readonly StackPanel waveDots;
+    private readonly StackPanel waveDots, statusColumn;
     private readonly SkillSlot[] slots = new SkillSlot[SkillOrder.Length];
     private double trail = 1, lastTime = -1, bannerUntil = -1;
     private int dotsFor = -1, dotsWave = -1;
@@ -118,7 +118,7 @@ public sealed class BattleHud : Border
         // spills over the HP bar or the skills and the HUD keeps its size.
         var bannerFit = new Viewbox { Stretch = Stretch.Uniform, StretchDirection = StretchDirection.DownOnly, VerticalAlignment = VerticalAlignment.Center, Child = banner };
         var centre = new Grid { Width = CentreWidth, Margin = new Thickness(14, 0, 14, 0), VerticalAlignment = VerticalAlignment.Center,
-            Children = { new StackPanel { Children = { status, waveDots, bossPanel, upgradesText } }, bannerFit } };
+            Children = { (statusColumn = new StackPanel { Children = { status, waveDots, bossPanel, upgradesText } }), bannerFit } };
 
         // Right: skills, then Pause / End.
         var bar = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
@@ -250,6 +250,8 @@ public sealed class BattleHud : Border
         bool showBanner = b.Time < bannerUntil;
         banner.Visibility = showBanner ? Visibility.Visible : Visibility.Collapsed;
         if (showBanner) banner.Opacity = Math.Clamp((bannerUntil - b.Time) / 0.4, 0, 1);
+        // The banner takes the status's place (hidden, not collapsed, so the HUD keeps its size).
+        statusColumn.Visibility = showBanner ? Visibility.Hidden : Visibility.Visible;
         int left = b.Alive + b.ToSpawn;
         int clock = b.Survival ? (int)Math.Ceiling(b.SurviveRemaining) : -1;
         var statusKey = (b.Phase, b.Wave, left, b.Paused, fullscreen, Math.Round(b.LastHeal), (b.IsBossWave(b.Wave) ? 1 : 0) + (away ? 2 : 0) + (b.ChoosingUpgrade ? 4 : 0), clock);

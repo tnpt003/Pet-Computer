@@ -180,7 +180,7 @@ public sealed partial class PetWindow
         mapBagText = bagText;
         var (enter, enterText) = PrimaryButton(() => { if (AdventureEnterStage() is string reason) ShowBattleNotice(reason); });
         mapEnter = enter; mapEnterText = enterText; mapCloseText = closeText;
-        var window = CreateGamePanel(new StackPanel { Children = { PanelTitle(HubAdventure, mapTitle), mapData, row, details } },
+        var window = CreateGamePanel(new StackPanel { Children = { PanelTitle(mapTitle), mapData, row, details } },
             PanelActions(new UIElement[] { close, bag }, new UIElement[] { enter }), "Pet adventure", minWidth: 440);
         window.Closed += (_, _) => { if (adventureMapWindow == window) adventureMapWindow = null; };
         adventureMapWindow = window;

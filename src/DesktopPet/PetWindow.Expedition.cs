@@ -539,7 +539,7 @@ public sealed partial class PetWindow
             if (reason != null) ShowBattleNotice(reason);
         });
         xMain = main; xMainText = mainText; xAbandon = abandon; xAbandonText = abandonText; xCloseText = closeText;
-        var window = CreateGamePanel(new StackPanel { Children = { PanelTitle(HubExpedition, xTitle), xData, xStatus, xBuild, xNote, xSetup, xMap, xRecord } },
+        var window = CreateGamePanel(new StackPanel { Children = { PanelTitle(xTitle), xData, xStatus, xBuild, xNote, xSetup, xMap, xRecord } },
             PanelActions(new UIElement[] { close, abandon, bag }, new UIElement[] { main }), "Pet expedition", minWidth: 460);
         window.Closed += (_, _) => { if (expeditionMapWindow == window) expeditionMapWindow = null; };
         expeditionMapWindow = window;

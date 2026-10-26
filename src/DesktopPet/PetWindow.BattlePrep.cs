@@ -418,8 +418,7 @@ public sealed partial class PetWindow
         var actions = PanelActions(new UIElement[] { prepTipText }, new UIElement[] { ready, cancel });
 
         var choices = new StackPanel { Width = 300, Children = { prepWeaponLabel, cards, prepLevelLabel, levels, prepAppsLabel, prepAppsChip, prepAppsHint, prepGuideLabel, prepGuideChip, prepGuideHint } };
-        // The title's picture: the mode this setup is for (a free battle uses the Adventure's).
-        var title = PanelTitle(prepForExpedition ? HubExpedition : prepForEndless ? HubInfinity : HubAdventure, prepTitle);
+        var title = PanelTitle(prepTitle);
         var window = CreateGamePanel(new StackPanel { Children = { title, new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 10, 0, 0), Children = { stage, choices } },
             prepBuild, prepData, prepStatus } }, actions, "Pet setup");
         window.Closed += (_, _) => { if (battlePrepWindow == window) { StopPreviewSwing(); battlePrepWindow = null; } };

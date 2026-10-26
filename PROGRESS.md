@@ -4,6 +4,14 @@ Cập nhật: 2026-10-24 (Asia/Saigon). Lịch sử trước 21/10: docs/archive
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
+## Đợt visual lớn — mốc 1: lỗi hiển thị (2026-10-26, người dùng "làm tất cả", giữ dòng hướng dẫn HUD)
+- Kế hoạch 4 mốc (thứ tự 1 → 2 → 4 → 3): 1 lỗi hiển thị, 2 bỏ trùng lặp, 4 tối ưu, 3 thống nhất art trận. Dòng hướng dẫn dưới HUD giữ nguyên theo người dùng.
+- HUD: banner lớn ("WAVE 3", tên màn/trùm) hiện chồng lên dòng trạng thái + dãy chấm đợt → giờ ẩn cột trạng thái (Hidden, giữ kích thước HUD) khi banner hiện.
+- Nhật ký: mỗi ô số có icon riêng (Được vuốt = tim, Treat = cá, Chơi bóng = cuộn len, Thân thiết = sao); mỗi mục có icon riêng (Thân thiết = tim, Giờ chơi = đồng hồ, Đã học = sổ). PetIllustration thêm motif Fish/Ball/Clock.
+- Bảng game (bản đồ Phiêu lưu, Viễn chinh, chuẩn bị): bỏ huy hiệu mode tròn nhỏ cạnh tiêu đề (banner phía trên đã nói mode); tiêu đề căn trái (trước bị căn giữa vì MaxWidth trong DockPanel → khoảng trống lớn ở bảng chuẩn bị). ModeArt bỏ phần vẽ phong cảnh cũ không còn dùng, chỉ còn bọc PetScene cho thẻ sảnh.
+- Chưa sửa (backlog): ghi chú bản đồ Viễn chinh và dòng cộng hưởng HUD lưu chữ theo ngôn ngữ lúc tạo, nên đổi ngôn ngữ giữa chuyến/trận thì còn chữ cũ tới khi nội dung đổi.
+- Test thật: scripts/test.ps1 -Ui exit 0, WPF 908/908 (thêm 6 do 3 motif mới). Đã xem endless-hud-en (banner không còn đè chấm), battle-setup-vi, diary-window.
+
 ## Vẽ lại cảnh minh họa PetScene (2026-10-26, người dùng "làm hết đi")
 - Mèo trong cảnh mặc coat của pet: `PetScene.Coat` (đặt ở InitializeFeatures và khi Lưu cài đặt), cache theo (cảnh, CoatPalette); lông/mõm/tai điểm màu/bàn chân/mắt màu/hoa văn tam thể và mướp; đuôi có viền như mèo thật. Trước đây là mèo cam cố định (#E8834F), khác cả coat Cam mặc định (#E9AE65).
 - Mỗi cảnh có nền riêng thay cho kệ + 2 chậu + mặt trời lặp lại: Workshop (bảng treo kiếm có lưỡi/chắn/chuôi, búa, khiên; bàn thợ; đèn treo), Diary (giá sách, bàn có sổ mở + bút, cửa sổ hoàng hôn), Speech (bãi cỏ, hoa, cây), Sound (sân khấu rèm, đèn rọi, tai nghe có quai + chụp tai), Settings (bánh răng, đồng hồ), Treasure (rương mở phát sáng, xu, cúp có quai, đá quý), Victory (bục ba bậc, cúp, cờ, giấy màu), Rest (đêm, trăng khuyết, mèo cuộn tròn ngủ, ZZZ, đèn ngủ). Adventure: slime/mèo/rương dời vào phần thẻ mode giữ lại (hết cắt rương). Home, Expedition, Infinity giữ nguyên.

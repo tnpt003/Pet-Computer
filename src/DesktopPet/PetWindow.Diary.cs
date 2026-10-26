@@ -51,24 +51,24 @@ public sealed partial class PetWindow
             var session = pet.Interactions;
             AddLine(L("AI đang tắt hoặc chưa sẵn sàng, nên chỉ có số liệu của lần chạy này.",
                    "The AI is off or not ready yet, so only this session's numbers are shown."), PetUi.Muted);
-            AddStats((session.Petted, L("Được vuốt", "Petted")), (session.Treats, L("Treat", "Treats")), (session.Toy + session.BallClicks, L("Chơi bóng", "Ball games")));
+            AddStats((session.Petted, L("Được vuốt", "Petted"), PetMotif.Heart), (session.Treats, L("Treat", "Treats"), PetMotif.Fish), (session.Toy + session.BallClicks, L("Chơi bóng", "Ball games"), PetMotif.Ball));
             return;
         }
         AddLine(LF($"Đã ở cùng sen {diary.Days} ngày (từ {diary.Since})", $"Together for {diary.Days} days (since {diary.Since})"), PetUi.Muted);
-        AddStats((diary.Petted, L("Được vuốt", "Petted")), (diary.Treats, L("Treat", "Treats")), (diary.Play, L("Chơi bóng", "Ball games")), ((long)Math.Round(diary.Bond), L("Thân thiết", "Bond")));
+        AddStats((diary.Petted, L("Được vuốt", "Petted"), PetMotif.Heart), (diary.Treats, L("Treat", "Treats"), PetMotif.Fish), (diary.Play, L("Chơi bóng", "Ball games"), PetMotif.Ball), ((long)Math.Round(diary.Bond), L("Thân thiết", "Bond"), PetMotif.Spark));
         AddLine(LF($"Click {diary.Clicks} lần · bị ném mạnh {diary.RoughThrows} lần", $"Clicked {Times(diary.Clicks)} · thrown roughly {Times(diary.RoughThrows)}"), PetUi.Muted);
         if (diary.BattlesWon + diary.BattlesLost > 0)
             AddLine(LF($"Chiến đấu: thắng {diary.BattlesWon} · thua {diary.BattlesLost} · combo {diary.Combos}",
                    $"Battles: {diary.BattlesWon} won · {diary.BattlesLost} lost · {diary.Combos} combo{(diary.Combos == 1 ? "" : "s")}"), PetUi.Muted);
 
-        var bond = AddCard(LF($"Độ thân thiết: {diary.Bond:F0}/100", $"Bond: {diary.Bond:F0}/100"));
+        var bond = AddCard(LF($"Độ thân thiết: {diary.Bond:F0}/100", $"Bond: {diary.Bond:F0}/100"), PetMotif.Heart);
         if (diary.BondHistory.Length >= 2) bond.Children.Add(BondChart(diary.BondHistory));
         bond.Children.Add(TextLine(diary.BondHistory.Length >= 2
             ? LF($"{diary.BondHistory.Length} ngày gần nhất: {string.Join(", ", diary.BondHistory.Select(v => v.ToString("F0")))}",
                 $"Last {diary.BondHistory.Length} days: {string.Join(", ", diary.BondHistory.Select(v => v.ToString("F0")))}")
             : L("Biểu đồ sẽ hiện sau ngày thứ hai.", "The chart appears from the second day."), PetUi.Muted));
 
-        var hours = AddCard(L("Giờ sen hay chơi", "When you usually play"));
+        var hours = AddCard(L("Giờ sen hay chơi", "When you usually play"), PetMotif.Clock);
         if (diary.Habits.Sum() < 10)
             hours.Children.Add(TextLine(L("Chưa đủ dữ liệu, chơi với mèo thêm vài hôm nhé.", "Not enough data yet; play a few more days."), PetUi.Muted));
         else
@@ -79,7 +79,7 @@ public sealed partial class PetWindow
             hours.Children.Add(TextLine(LF($"Nhiều nhất: {string.Join(", ", top)}", $"Most often: {string.Join(", ", top)}")));
         }
 
-        var learned = AddCard(L("Những gì mèo đã học", "What the cat has learned"));
+        var learned = AddCard(L("Những gì mèo đã học", "What the cat has learned"), PetMotif.Book);
         learned.Children.Add(TextLine(L("Thích: ", "Likes: ") + (aiLearned is { Likes.Length: > 0 } ? string.Join("; ", aiLearned.Likes) : L("chưa có", "nothing yet"))));
         learned.Children.Add(TextLine(L("Không thích: ", "Dislikes: ") + (aiLearned is { Dislikes.Length: > 0 } ? string.Join("; ", aiLearned.Dislikes) : L("chưa có", "nothing yet"))));
     }
@@ -99,22 +99,22 @@ public sealed partial class PetWindow
     };
 
     // A titled card; returns the panel its content goes into.
-    private StackPanel AddCard(string title)
+    private StackPanel AddCard(string title, PetMotif motif)
     {
         var content = new StackPanel();
-        content.Children.Add(PetIllustration.Beside(PetUi.SectionTitle(title), PetMotif.Book, 24));
+        content.Children.Add(PetIllustration.Beside(PetUi.SectionTitle(title), motif, 24));
         diaryPanel!.Children.Add(PetUi.Card(content));
         return content;
     }
 
     // Headline numbers as equal tiles: the value large, its label small underneath.
-    private void AddStats(params (long Value, string Label)[] stats)
+    private void AddStats(params (long Value, string Label, PetMotif Motif)[] stats)
     {
         var row = new System.Windows.Controls.Primitives.UniformGrid { Rows = 1, Margin = new Thickness(-4, 10, -4, 6) };
-        foreach (var (value, label) in stats)
+        foreach (var (value, label, motif) in stats)
         {
             var tile = new StackPanel();
-            tile.Children.Add(new PetIllustration(row.Children.Count == 0 ? PetMotif.Heart : row.Children.Count == 1 ? PetMotif.Leaf : row.Children.Count == 2 ? PetMotif.Cat : PetMotif.Heart, 30) { HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0,0,0,6) });
+            tile.Children.Add(new PetIllustration(motif, 30) { HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0,0,0,6) });
             tile.Children.Add(new TextBlock { Text = value.ToString("N0", System.Globalization.CultureInfo.InvariantCulture), FontSize = PetUi.DisplaySize, FontWeight = FontWeights.SemiBold, Foreground = PetUi.AccentText });
             tile.Children.Add(new TextBlock { Text = label, FontSize = PetUi.SmallSize, Foreground = PetUi.Muted, TextWrapping = TextWrapping.Wrap });
             row.Children.Add(PetUi.Card(tile, new Thickness(4, 0, 4, 0)));

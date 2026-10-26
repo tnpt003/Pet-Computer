@@ -29,7 +29,9 @@ Physics kéo/ném giữ nguyên; mèo vẫn không nhận sát thương khi đan
 - **Đạn dính của slime bay vẫn trúng trong `landingGrace`** (vài giây không bị đánh sau khi thả mèo), cho khớp với việc trúng cả khi đang cầm. Khiên bong bóng vẫn chặn.
 - **Hướng dẫn phiêu lưu mở rộng sang chương 2**, luật như chương 1 (đứng hình nhưng không phải Pause), dạy cả quái mới lẫn kỹ năng mới.
 - **Chuột không quá tải:** mỗi trận chương 2/Viễn chinh tối đa 2 loại quái cần dùng chuột (S1–S4) cùng lúc; Vô tận tính sau khi chơi thật.
-- **Trận tự do giữ nguyên** (chờ người dùng xác nhận): không có quái, kỹ năng, luật mới.
+- **Trận tự do thành Trận tự chọn (F1)**, xem mục F1 bên dưới. Bộ mặc định giữ đúng 4 đợt hiện tại.
+- **App độc cùng lúc: `maxMalware` 2 → 4** ở Viễn chinh, Vô tận và chương 2. Chương 1 giữ 2 (giữ nguyên chương 1 và rulesVersion của nó). Mỗi loại vẫn tối đa 1 cái cùng lúc; `maxInfected` vẫn 3. **Captcha không xuất hiện khi đang có slime bay.**
+- **Bỏ bục tự vẽ (M3).**
 
 **Ngoại lệ miễn sát thương khi cầm (người dùng chốt 2026-10-26):** đạn dính của **slime bay (S5)** gây sát thương cho mèo **kể cả khi đang cầm** (Khiên bong bóng vẫn chặn). Đây là quái duy nhất làm vậy; mọi quái khác vẫn không gây sát thương cho mèo đang cầm/bay. Trúng đạn khi đang cầm không làm rơi mèo khỏi tay, không choáng mèo (drag giữ nguyên).
 Người dùng chốt (2026-10-26): mèo đang cầm **chỉ đánh được quái trên không** (slime bay), không đánh quái dưới sàn, để không có chuyện "cầm mèo lơ lửng đánh mãi" mà không bị gì.
@@ -49,7 +51,7 @@ Người dùng chốt (2026-10-26): mèo đang cầm **chỉ đánh được qu�
 | Mã | Quái | Việc riêng | Liên kết | Cách phá |
 |---|---|---|---|---|
 | Q1 | Slime phun | Đứng xa phun giọt nhầy cong, có vòng báo chỗ rơi | Giọt rơi thành **vũng tăng tốc**: slime nhanh lao qua vũng thì lao xa và nhanh hơn | Nhấc mèo khỏi vòng; Đẩy; cho mèo chạy tới đánh; Quạt làm khô vũng |
-| Q2 | Slime lò xo | Không đánh, nằm bẹp như bạt nhún | Đồng minh nhảy lên thì **bật qua đầu mèo** đánh từ sau, hoặc qua tường "Cập nhật" | Đẩy/Quạt nó khỏi đường; thả mèo lên nó thì mèo bật lên đánh xuống |
+| Q2 | Slime lò xo | **Đang đổi thiết kế** (người dùng muốn đơn giản hơn, có hại cho mèo, công bằng); xem đề xuất mới trong trao đổi 2026-10-26 | | |
 | Q3 | Slime nhạc trưởng | Đánh trống, vòng nhịp trên đầu | Mỗi 4 nhịp mọi quái trong vùng **gồng đánh cùng lúc** | Đẩy/choáng/Quạt để lệch nhịp; Khiên đúng nhịp 4 |
 | Q4 | Slime xích | Yếu, đi sau đồng đội | **Dây nhầy** nối một đồng minh, gánh 50% sát thương đồng minh nhận | Kéo/ném mèo xuyên dây; Kéo cắt; hạ xích thì đồng minh choáng 1 s |
 | Q5 | Slime hợp thể | Nhỏ, đi bầy 3 con | Chạm nhau quá 2 s thì **nhập thành Slime khổng lồ** (máu bằng tổng), có thanh đếm ngược | Đẩy/Quạt/Kẹp gắp tách bầy; Bom khi đang chụm |
@@ -65,7 +67,7 @@ Người dùng chốt (2026-10-26): mèo đang cầm **chỉ đánh được qu�
 | Kỵ binh | 2 slime nhanh cõng 2 slime bom, thêm vũng của phun | Hạ ngựa giữa đường |
 | Đội trống | Nhạc trưởng + 3 slime thường | Đẩy nhạc trưởng trước nhịp 4 |
 | Dây chuyền | 2 slime xích nối vào 1 đá tinh anh | Cắt dây trước rồi đánh đá |
-| Bạt nhún | Lò xo + slime thường + slime nhanh | Đẩy lò xo đi, hoặc mèo tự dùng lò xo |
+| Bạt nhún | Lò xo + slime thường + slime nhanh (chờ thiết kế Q2 mới) | Chốt cùng Q2 |
 | Bầy nhập | 2 bầy hợp thể + thảo dược | Bom đúng lúc chụm |
 
 ### Quái solo (S)
@@ -120,7 +122,7 @@ Trong trận cảm xúc tự động vẫn bị chặn: S1, S4 không gây cảm
 - Sát thương kỹ năng mới ≈ 1/5 sức đánh của mèo; được kết liễu và tính như mèo hạ (cả Hút năng lượng); boss nhận 50%.
 - Quạt và Bình xịt dùng kiểu giữ chuột: vòng hồi trên ô là thanh "hơi", cạn thì chờ.
 - Icon 5 kỹ năng mới vẽ đúng kiểu ô hiện tại (viền vàng, nền nâu).
-- **K5 Mèo nổi giận** (không chiếm ô HUD): thanh nộ đầy dần khi đánh và bị đánh; đầy thì 6 s mèo to lên, đánh lan, không bị choáng. Chỉ to ra về hình vẽ; vùng nhấc mèo và vùng trúng đòn giữ nguyên. Đây là tư thế trận, không phải cảm xúc Angry. (Chờ người dùng xác nhận cách kích hoạt.)
+- **K5 Mèo nổi giận** (không chiếm ô HUD): thanh nộ đầy dần khi đánh và bị đánh; đầy thì 6 s mèo to lên, đánh lan, không bị choáng. Chỉ to ra về hình vẽ; vùng nhấc mèo và vùng trúng đòn giữ nguyên. Đây là tư thế trận, không phải cảm xúc Angry. Thanh nộ nằm dưới thanh HP; đầy thì sáng lên và **người dùng click vào thanh để bật** (không tự bật). Trong 6 s: hình mèo to ~1,3 lần, lông ánh đỏ; mỗi nhát trúng mọi slime trong tầm, đẩy lùi mạnh hơn; quái không làm choáng được. Vẫn nhấc được (mèo đang cầm vẫn chỉ đánh quái trên không); Pause đóng băng thời gian.
 
 ### Cơ chế trận (M)
 
@@ -128,7 +130,6 @@ Trong trận cảm xúc tự động vẫn bị chặn: S1, S4 không gây cảm
 |---|---|
 | M1 | Mèo đánh khi đang cầm: đưa mèo lại gần slime thì tự vung vuốt. Cú ném không phải đòn đánh chung, chỉ có tác dụng với quái có tương tác ném (S7, S8, dây Q4/B1) |
 | M2 | Hiệu ứng trên quái: độc (mất máu dần), đóng băng (chậm), dính (đứng yên); thẻ, vũ khí, Bình xịt gây được |
-| M3 | Bục tự vẽ trong trận (không phải cửa sổ thật): mèo trên bục đánh xuống mạnh hơn, slime phun bắn không tới |
 | M4 | Đồ rơi: slime đôi khi rơi cá, xu, bình; click để nhặt, để lâu thì tan |
 | M5 | Xu trong chuyến (từ M4), tiêu ở cửa hàng Viễn chinh; không thành tiền tệ vĩnh viễn |
 
@@ -148,12 +149,13 @@ Trong trận cảm xúc tự động vẫn bị chặn: S1, S4 không gây cảm
 | E2 | Vô tận "Đột biến": mỗi 10 đợt chọn 1 trong 3 luật lạ có thưởng |
 | J1 | Nhóm thẻ thứ 4 "Mưu mẹo" (kỹ năng, bom, app, đồ rơi), cộng hưởng ở 3/6/9 thẻ; kèm 1–2 thẻ riêng cho mỗi kỹ năng mới. **Thẻ hiếm Chấn động** (ý của người dùng): mèo được thả rơi xuống sàn thì tạo chấn động quanh chỗ đáp, gây sát thương cho slime đang ở mặt đất (không trúng slime bay). Chặn lạm dụng: cần nhấc tối thiểu `rescueGraceMinLiftSeconds` và có thời gian hồi; số liệu chốt khi làm |
 | A1 | App mới Chụp màn hình: chớp sáng đóng băng mọi quái 2 s |
-| A2 | App độc Captcha: che khung trận tới khi click đúng ô có hình mèo |
+| A2 | App độc Captcha: tung ra như app độc khác. Cửa sổ giả "Xác minh bạn không phải robot" che ~1/3 dải trận quanh mèo, lưới 3×3 hình; click hết ô có hình mèo thì đóng, click sai thì xáo lại; tự đóng sau ~15 s. Slime sau nó vẫn đánh; nhấc mèo ở chỗ không bị che vẫn được. Không ra khi đang có slime bay |
 | A3 | App độc Pin yếu: kỹ năng hồi chậm tới khi click "cắm sạc" |
 | A4 | App độc Con trỏ đơ: khóa 5 ô kỹ năng 5 s tới khi click "Tiếp tục" |
 | L1 | Sổ tay quái trong Sảnh: hình, cách khắc chế (cả kỹ năng hợp), số đã hạ, trang đội hình phối hợp |
 | L2 | Khoảng 20 thành tựu trong trận, thưởng màu lông hoặc phụ kiện |
 | L3 | 2–3 bộ lông và phụ kiện mới (thành tựu, chương 2) |
+| F1 | **Trận tự chọn** (thay Trận tự do, ý người dùng 2026-10-26): người dùng tự dựng trận. Chọn: quái nào và tần suất (trọng số mỗi loại, kể cả tinh anh), số đợt và số quái tối đa trên sàn, boss cuối (hoặc không boss), app nào có (từng icon) và app độc nào (từng loại, tần suất), độ khó/threat, vũ khí, bộ kỹ năng, có thẻ giữa đợt hay không. Chỉ chọn được quái/boss/app đã gặp (theo Sổ tay quái). Lưu được vài bộ (preset); bộ "Mặc định" là đúng 4 đợt của trận tự do hiện tại. Không lưu kỷ lục, không cho phần thưởng (như dữ liệu custom hiện nay). Chi tiết giao diện chốt khi làm mốc |
 
 ## Các mốc
 
@@ -185,7 +187,7 @@ Mỗi mốc: build + `scripts/test.ps1 -Ui` đạt, test mới cho phần thêm 
 | M17 | B1 Slime Nén | 3 pha chạy đủ; dây về boss cắt được bằng ném mèo và Kéo cắt |
 | M18 | B2 Slime Mẹ, B3 Vua biến dị | Như trên |
 | **Nội dung và chế độ chơi** | | |
-| M19 | M3 bục tự vẽ, M4 đồ rơi, M5 xu | Bục không phải cửa sổ thật; đồ rơi tan đúng giờ; Pause đóng băng |
+| M19 | M4 đồ rơi, M5 xu | Đồ rơi tan đúng giờ; Pause đóng băng; xu chỉ trong chuyến |
 | M20 | T1 Bảo vệ giỏ cá | Thua khi mất hết cá; kết quả/kỷ lục đúng |
 | M21 | C1 Chương 2: 5 màn + hướng dẫn đứng hình | Chơi được từ màn 1 tới trùm; mở khóa kỹ năng đúng màn; mô phỏng cân bằng |
 | M22 | C2 tranh/bản đồ/phông, C3 phần thưởng | Ảnh kiểm tra UI đạt; kỷ vật mới có physics như kệ |
@@ -196,6 +198,7 @@ Mỗi mốc: build + `scripts/test.ps1 -Ui` đạt, test mới cho phần thêm 
 | M27 | L1 Sổ tay quái | Mở trang khi gặp quái lần đầu; có cả đội hình |
 | M28 | L2 thành tựu, L3 lông/phụ kiện | Lưu tiến trình an toàn (.tmp + .bak) |
 | **Chốt** | | |
+| M29a | F1 Trận tự chọn: bảng dựng trận, preset, dựng đợt từ lựa chọn bằng cấu trúc `waves` có sẵn | Bộ Mặc định cho kết quả như trận tự do cũ (test mô phỏng); preset lưu an toàn (.tmp + .bak); quái chưa gặp bị khóa |
 | M29 | Cân bằng mô phỏng toàn bản, perf, rà ja, CHANGELOG vi/en/ja, MANUAL-TEST | Toàn bộ test đạt; người dùng test tay phần mới |
 | M30 | Release 1.5.0 | Theo docs/RELEASE.md |
 
@@ -203,7 +206,7 @@ Thứ tự có thể đổi trong một nhóm; nhóm Nền làm trước.
 
 ## Rủi ro
 
-- **Phạm vi rất lớn** (30 mốc). Nếu cần phát hành sớm: tách 1.5 (Nền, kỹ năng, quái liên kết, B1, chương 2) và 1.6 (quái solo còn lại, Viễn chinh, Vô tận, sưu tầm).
+- **Phạm vi rất lớn** (31 mốc). Nếu cần phát hành sớm: tách 1.5 (Nền, kỹ năng, quái liên kết, B1, chương 2) và 1.6 (quái solo còn lại, Viễn chinh, Vô tận, sưu tầm).
 - **Hiệu năng:** hợp thể, tách đôi, kỵ binh làm tăng số quái; nhiều dây/vòng cần vẽ.
 - **Input:** kỹ năng dùng chuột (kẹp, kéo, quạt, xịt) và quái dùng chuột (S1–S4) dễ xung đột với nhấc mèo và icon app; luật ưu tiên: mèo → kỹ năng đang chọn → quái → icon.
 - **Cân bằng:** nhiều tổ hợp kỹ năng × quái; cần mô phỏng như AdventureBalanceTests và chơi thật.

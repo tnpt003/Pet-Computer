@@ -47,6 +47,7 @@ public static class PetUi
     public const string Status = ""; // Heart.
     public const string Customize = ""; // Personalize (brush).
     public const string Place = ""; // Map pin.
+    public const string Update = ""; // Download arrow (tray: check for / install an update).
 
     // Frozen brushes, geometries and round pens: the one copy for every drawing in the app.
     public static Brush Frozen(Color color) { var brush = new SolidColorBrush(color); brush.Freeze(); return brush; }

@@ -121,16 +121,16 @@ public sealed partial class PetWindow
             ItemsSource = displayable.Length > 0 ? displayable.Select(k => k.Name(preferences.Language)).ToArray() : new[] { L("Chưa có kỷ vật", "No keepsakes yet") },
             SelectedIndex = Math.Max(0, Array.IndexOf(form.TrophyIds, DisplayedKeepsake?.Id)),
             ToolTip = L("Kỷ vật đứng trên màn hình (thắng Viễn chinh để nhận thêm).", "The keepsake standing on the screen (win Expeditions for more).") };
-        form.KeepsakeSection = Section(L("Kỷ vật", "Keepsake"),
+        form.KeepsakeSection = Section(L("Kỷ vật", "Keepsake"), PetMotif.Gem,
             form.ShowTrophies,
             Row(L("Món trưng bày", "On display"), form.Trophy));
         var page = Page(
-            Section(L("Hồ sơ", "Profile"),
+            Section(L("Hồ sơ", "Profile"), PetMotif.Cat,
                 Row(L("Tên", "Name"), form.Name),
                 Row(L("Tính cách", "Personality"), form.Personality),
                 Row(L("Sinh nhật của bạn", "Your birthday"), birthday)),
-            Section(L("Ngoại hình", "Look"), appearance),
-            Section(L("Thói quen", "Habits"),
+            Section(L("Ngoại hình", "Look"), PetMotif.Palette, appearance),
+            Section(L("Thói quen", "Habits"), PetMotif.Clock,
                 form.ClimbWindows,
                 form.Tuning),
             form.KeepsakeSection);
@@ -202,12 +202,12 @@ public sealed partial class PetWindow
             SavePreferences();
         };
         var speechTab = Page(
-            Section(L("Bong bóng chữ", "Speech bubbles"),
+            Section(L("Bong bóng chữ", "Speech bubbles"), PetMotif.Bubble,
                 form.Talks,
                 Row(L("Mức độ", "How often"), form.Chattiness),
                 PetUi.Hint(L("Mèo tự chọn câu nói và học điều bạn thích khi \"Mèo thông minh (AI)\" ở biểu tượng khay đang bật.",
                              "The pet picks its lines and learns what you like while \"Smart pet (AI)\" is on in the tray icon."))),
-            Section(L("Trí nhớ", "Memory"), form.Forget));
+            Section(L("Trí nhớ", "Memory"), PetMotif.Book, form.Forget));
 
         // Sounds: one master switch, three kinds, volume and a preview that plays even while muted.
         form.Sounds = new CheckBox { Content = L("Bật âm thanh", "Enable sounds"), IsChecked = preferences.Sounds };
@@ -246,8 +246,8 @@ public sealed partial class PetWindow
         DockPanel.SetDock(form.Preview, Dock.Right);
         previewRow.Children.Add(form.Preview); previewRow.Children.Add(form.PreviewCue);
         var soundsTab = Page(
-            Section(L("Khi nào phát", "When to play"), form.Sounds, kinds),
-            Section(L("Âm lượng", "Volume"),
+            Section(L("Khi nào phát", "When to play"), PetMotif.Note, form.Sounds, kinds),
+            Section(L("Âm lượng", "Volume"), PetMotif.Speaker,
                 Row(L("Âm lượng", "Volume"), volumeRow),
                 Row(L("Nghe thử", "Preview"), previewRow),
                 PetUi.Hint(L("Âm lượng đổi ngay khi kéo (Hủy để trả lại). Nghe thử phát cả khi đang tắt âm thanh.",
@@ -293,11 +293,11 @@ public sealed partial class PetWindow
                 "The uninstaller could not start. Uninstall from Windows Settings → Apps instead."), "OK", glyph: PetDialog.WarningGlyph);
         };
         var generalTab = Page(
-            Section(L("Ứng dụng", "App"),
+            Section(L("Ứng dụng", "App"), PetMotif.Gear,
                 Row("Language / Ngôn ngữ", form.Language),
                 form.Autostart,
                 form.Uninstall),
-            Section(L("Cập nhật", "Updates"),
+            Section(L("Cập nhật", "Updates"), PetMotif.Gift,
                 Row(L("Phiên bản", "Version"), new TextBlock { Text = VersionText, VerticalAlignment = VerticalAlignment.Center }),
                 form.AutoUpdate,
                 form.CheckUpdates,
@@ -306,7 +306,7 @@ public sealed partial class PetWindow
                         "New versions download in the background; the tray tells you when one is ready. Turned off, it only checks when you ask.")
                     : L("Bản này không được cài bằng Setup nên không tự cập nhật. Bản cài đặt có ở trang Releases trên GitHub.",
                         "This copy was not installed with Setup, so it does not update itself. The installer is on the GitHub Releases page."))),
-            Section(L("Nghỉ giải lao", "Breaks"),
+            Section(L("Nghỉ giải lao", "Breaks"), PetMotif.Cup,
                 form.BreakReminders,
                 Row(L("Nhắc", "Remind"), form.BreakInterval),
                 PetUi.Hint(L("Chỉ tính thời gian bạn dùng máy. Không nhắc khi đang mở app toàn màn hình.",
@@ -397,11 +397,15 @@ public sealed partial class PetWindow
         return new ScrollViewer { Content = panel, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
     }
 
-    // A titled card of related settings, spaced evenly.
-    private static Border Section(string title, params UIElement[] children)
+    // A titled card of related settings, spaced evenly; a small picture leads the title.
+    private static Border Section(string title, PetMotif motif, params UIElement[] children)
     {
         var group = new StackPanel();
-        group.Children.Add(PetUi.SectionTitle(title));
+        var heading = PetUi.SectionTitle(title);
+        heading.Margin = new Thickness(0); heading.VerticalAlignment = VerticalAlignment.Center;
+        var titled = PetIllustration.Beside(heading, motif, 26);
+        titled.Margin = new Thickness(0, 0, 0, 6);
+        group.Children.Add(titled);
         foreach (var child in children)
         {
             if (child is FrameworkElement element && element.Margin == default && child is not StackPanel) element.Margin = new Thickness(0, 5, 0, 5);

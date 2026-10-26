@@ -19,12 +19,35 @@ public static class PetTrayMenuStyle
         menu.ForeColor = ToColor(PetUi.InkHex);
         menu.Padding = new Forms.Padding(4, 4, 4, 4);
         menu.ShowImageMargin = true;
+        // Icons (badges drawn at 48 px) shown at 20 DIPs on the menu's own monitor.
+        menu.Opening += (_, _) => { int side = (int)Math.Round(20 * menu.DeviceDpi / 96.0); menu.ImageScalingSize = new Size(side, side); };
         menu.Opened += (_, _) => RoundCorners(menu.Handle);
         foreach (Forms.ToolStripItem item in menu.Items)
             if (item is Forms.ToolStripMenuItem) item.Padding = new Forms.Padding(2, 5, 2, 5);
     }
 
     private static Color ToColor(string hex) => ColorTranslator.FromHtml(hex);
+
+    // The right-click menu's icon badge (a glyph in its group colour on a soft orange tile) as a
+    // bitmap, so both menus show the same pictures.
+    public static Image Icon(string glyph, System.Windows.Media.Brush? color = null)
+    {
+        const int Side = 24, Pixels = 48;
+        var badge = new System.Windows.Controls.Border { Width = Side, Height = Side, CornerRadius = new System.Windows.CornerRadius(7),
+            Background = PetUi.AccentSoft, Child = PetUi.Icon(glyph, color ?? PetUi.IconColor(glyph)) };
+        badge.Measure(new System.Windows.Size(Side, Side));
+        badge.Arrange(new System.Windows.Rect(0, 0, Side, Side));
+        badge.UpdateLayout();
+        var target = new System.Windows.Media.Imaging.RenderTargetBitmap(Pixels, Pixels, 96.0 * Pixels / Side, 96.0 * Pixels / Side, System.Windows.Media.PixelFormats.Pbgra32);
+        target.Render(badge);
+        var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder();
+        encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(target));
+        using var png = new System.IO.MemoryStream();
+        encoder.Save(png);
+        png.Position = 0;
+        using var loaded = new Bitmap(png);
+        return new Bitmap(loaded); // A copy: GDI+ keeps reading the stream a bitmap was loaded from.
+    }
 
     private sealed class Renderer : Forms.ToolStripRenderer
     {

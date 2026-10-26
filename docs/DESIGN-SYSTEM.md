@@ -107,7 +107,13 @@ Không tự thêm confirm, màn trung gian hoặc đổi navigation chỉ để 
 
 - Giữ vector/procedural WPF: silhouette tròn rõ ở kích thước thật, nét nâu đậm, bóng nhẹ, chi tiết vừa đủ. Không đổi sang sprite hoặc engine khác.
 - Mèo là tâm điểm. Trang bị và quái dùng cùng nét, độ đơn giản và chất liệu gỗ/vải/giấy/kim loại hoạt hình.
-- **PetIllustration**: 6 motif nhỏ (Cat/Book/Heart/Leaf/Spark/Trophy) cho trạng thái, nhật ký, welcome, kết quả.
+- **PetIllustration**: 28 motif nhỏ trên ô 64, nét Ink, màu Rose/Mint/Lilac/Gold/gỗ, nền đĩa AccentSoft (`Backdrop = false` khi hình nằm trên nút tròn có sẵn, ví dụ nút bản đồ Viễn chinh; `Motif` đổi tại chỗ). Gán theo chức năng, mỗi chỗ một nghĩa:
+  - Thẻ mục Cài đặt/Tùy chỉnh (26 DIP cạnh tiêu đề): Hồ sơ = Cat, Ngoại hình = Palette, Thói quen = Clock, Kỷ vật = Gem, Bong bóng chữ = Bubble, Trí nhớ = Book, Khi nào phát = Note, Âm lượng = Speaker, Ứng dụng = Gear, Cập nhật = Gift, Nghỉ giải lao = Cup.
+  - Phần thưởng ở sảnh: Phụ kiện Phiêu lưu = Crown, Kỷ vật Viễn chinh = Gem, Vô tận = Moon, Kỷ lục = Trophy.
+  - Bản đồ Phiêu lưu (mốc dưới màn): màn đầu Flag, màn cuối (trùm) Crown, giữa lần lượt Sword/Shield/Mushroom. Bản đồ Viễn chinh (trong nút): giao tranh Sword, tinh anh Spark, trùm Crown, nghỉ Campfire, sự kiện Scroll, chưa lộ Question; dòng tỉ lệ quay vẫn dùng ký tự.
+  - Trống: Box (túi đồ chưa có thẻ = Cat + Box; chưa có di vật; chưa có phần thưởng). Hộp thoại: thông tin = Cat, câu hỏi = Question, cảnh báo = Warning.
+  - Trạng thái, nhật ký (Heart/Fish/Ball/Spark/Clock/Book), welcome, kết quả giữ như trước.
+- Menu khay (WinForms) dùng cùng huy hiệu glyph của menu chuột phải, vẽ thành ảnh 48 px (`PetTrayMenuStyle.Icon`), hiện 20 DIP theo DPI của menu; mục bật/tắt (Tạm dừng, AI) chỉ có dấu ✓.
 - **PetScene**: 12 cảnh banner 76–104 DIP trong vùng nội dung cuộn, chọn theo chức năng; mỗi cảnh có nền và đồ vật riêng, không lặp một bố cục: Home (phòng ban ngày, màn hình + cuộn len), Adventure (đồi xanh, slime, rương), Expedition (bản đồ + la bàn + ba lô, đêm), Infinity (cổng vô tận + slime, đêm), Workshop (bảng treo kiếm/búa/khiên, bàn thợ, đèn treo), Diary (giá sách, bàn có sổ mở, cửa sổ hoàng hôn), Speech (bãi cỏ, cây, bong bóng thoại), Sound (sân khấu rèm, đèn rọi, mèo đeo tai nghe), Settings (bảng trượt, bánh răng, đồng hồ), Treasure (rương mở, xu, cúp, đá quý), Victory (bục ba bậc, cúp, cờ, giấy màu), Rest (đêm, trăng khuyết, mèo cuộn tròn ngủ trên đệm, ZZZ, đèn ngủ). Giữ bố cục chính ở giữa vì thẻ mode crop cảnh: Adventure đặt slime/mèo/rương trong x 152–328 của khung 480.
 - Scene/illustration là trang trí: không text, không nút, không nhận input, không timer; DrawingGroup frozen, cache theo loại.
 - Mỗi bảng tối đa một banner; không đặt banner ngay cạnh preview/chân dung mèo (Tùy chỉnh, Túi đồ, trang Phần thưởng của sảnh không có banner riêng). Bảng game (CreateGamePanel) co banner theo màn hình của mèo: 104 DIP; màn hình còn < 700 DIP thì 56 DIP; < 540 DIP thì ẩn (PlaceGamePanel).

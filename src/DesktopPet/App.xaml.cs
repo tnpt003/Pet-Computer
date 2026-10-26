@@ -87,6 +87,12 @@ public partial class App : Application
         menu.Items.Add(new Forms.ToolStripSeparator());
         var exit = new Forms.ToolStripMenuItem(null, null, (_, _) => Shutdown());
         menu.Items.Add(exit);
+        // The same icon badges as the pet's right-click menu (the switches keep their tick).
+        customize.Image = PetTrayMenuStyle.Icon(PetUi.Customize);
+        settings.Image = PetTrayMenuStyle.Icon(PetUi.Settings);
+        reset.Image = PetTrayMenuStyle.Icon(PetUi.Home);
+        checkUpdates.Image = applyUpdate.Image = PetTrayMenuStyle.Icon(PetUi.Update);
+        exit.Image = PetTrayMenuStyle.Icon(PetUi.Exit);
         PetTrayMenuStyle.Apply(menu);
         // Tray labels follow the pet's single UI language.
         void Localize()

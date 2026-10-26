@@ -45,7 +45,7 @@ public sealed partial class PetWindow
     // A one-time line on the map: what happened to the run since it was last shown.
     private string? expeditionNote;
     private bool expeditionConfirmAbandon;
-    private readonly List<(int Step, int Lane, Border Node, TextBlock Glyph)> expeditionNodes = new();
+    private readonly List<(int Step, int Lane, Border Node, PetIllustration Glyph)> expeditionNodes = new();
     private readonly List<Rectangle> expeditionLinks = new();
     // The open choice's panel (rest, event, a won elite's relics) and what the user picked in it.
     private StackPanel? xChoice;
@@ -86,7 +86,12 @@ public sealed partial class PetWindow
         .Where(t => t is { Visibility: Visibility.Visible } && t.Text.Length > 0).Select(t => t!.Text));
 
     private static readonly Brush MapAhead = PetUi.Game.Ahead;
-    private static readonly Brush EliteInk = PetUi.Game.Gold;
+    // The node's picture on the map (the odds line keeps KindGlyph's characters).
+    private static PetMotif KindMotif(string kind) => kind switch
+    {
+        ExpeditionSpec.Elite => PetMotif.Spark, DesktopPet.Expedition.BossKind => PetMotif.Crown, ExpeditionSpec.Rest => PetMotif.Campfire,
+        ExpeditionSpec.Event => PetMotif.Scroll, "" => PetMotif.Question, _ => PetMotif.Sword
+    };
 
     private string KindName(string kind) => kind switch
     {
@@ -492,7 +497,7 @@ public sealed partial class PetWindow
             for (int lane = 0; lane < lanes; lane++)
             {
                 int at = lane;
-                var glyph = new TextBlock { FontSize = PetUi.HeadingSize, FontWeight = FontWeights.Bold, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
+                var glyph = new PetIllustration(PetMotif.Question, 30) { Backdrop = false, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
                 var node = new Border { Width = 38, Height = 38, CornerRadius = new CornerRadius(19), Margin = new Thickness(0, 2, 0, 2), HorizontalAlignment = HorizontalAlignment.Center,
                     Cursor = System.Windows.Input.Cursors.Hand, Child = glyph };
                 node.MouseLeftButtonDown += (_, e) => { ExpeditionSelect(at); e.Handled = true; };
@@ -604,7 +609,7 @@ public sealed partial class PetWindow
             {
                 node.Background = MapAhead; node.BorderBrush = step == now ? PetUi.Game.Gold : PrepCardRim; node.BorderThickness = new Thickness(step == now ? 2 : 1);
                 node.Opacity = 1; node.Cursor = null;
-                glyph.Text = "?"; glyph.Foreground = step == now ? EliteInk : Brushes.White;
+                glyph.Motif = PetMotif.Question;
                 node.ToolTip = L("Chưa lộ: quay máy khi tới bậc này", "Not drawn yet: spin when you get here");
                 continue;
             }
@@ -618,8 +623,7 @@ public sealed partial class PetWindow
             node.BorderThickness = new Thickness(selected ? 3 : 1);
             node.Opacity = passed ? 0.5 : 1;
             node.Cursor = current ? System.Windows.Input.Cursors.Hand : null;
-            glyph.Text = KindGlyph(kind);
-            glyph.Foreground = won ? MapDoneInk : kind == ExpeditionSpec.Elite && !current ? EliteInk : Brushes.White;
+            glyph.Motif = KindMotif(kind);
             node.ToolTip = run == null ? KindName(kind)
                 : spec.Encounter(run.Map[step][lane]) is StageSpec encounter ? $"{KindName(kind)} — {encounter.Name(preferences.Language)}"
                 : spec.FindEvent(run.Map[step][lane]) is ExpeditionEventSpec e ? $"{KindName(kind)} — {e.Name(preferences.Language)}" : KindName(kind);

@@ -338,10 +338,12 @@ internal static class Program
             tray.Items.Add(new System.Windows.Forms.ToolStripMenuItem("Mèo thông minh (AI)"));
             tray.Items.Add(new System.Windows.Forms.ToolStripMenuItem("AI: đang chạy") { Enabled = false });
             tray.Items.Add(new System.Windows.Forms.ToolStripSeparator());
-            tray.Items.Add(new System.Windows.Forms.ToolStripMenuItem("Thoát"));
+            var trayExit = new System.Windows.Forms.ToolStripMenuItem("Thoát") { Image = PetTrayMenuStyle.Icon(PetUi.Exit) };
+            tray.Items.Add(trayExit);
             PetTrayMenuStyle.Apply(tray);
             Check(tray.Renderer is not System.Windows.Forms.ToolStripProfessionalRenderer && tray.Items.Count == 5 && tray.Items[0] == trayPause,
                 "Tray menu uses the warm pet renderer and keeps its items");
+            Check(trayExit.Image is { Width: 48, Height: 48 }, "Tray items carry the right-click menu's icon badges (drawn at 48 px)");
             if (Environment.GetEnvironmentVariable("PET_TRAY_REVIEW") is string trayReview)
             {
                 // Separate switch: drawing a WinForms menu here disturbs the timed battle checks that follow.

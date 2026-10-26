@@ -660,7 +660,8 @@ public sealed partial class PetWindow
         {
             var empty = new StackPanel { HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 6, 0, 6), Children =
             {
-                new BagIcon { Kind = "cards", Width = 44, Height = 44, Opacity = 0.5 },
+                new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 0, 0, 4), // The cat by an empty box.
+                    Children = { new PetIllustration(PetMotif.Cat, 38) { Margin = new Thickness(0, 6, 4, 0) }, new PetIllustration(PetMotif.Box, 46) } },
                 BagLine(view.Mode == BagExpedition ? L("Chuyến này chưa có thẻ. Thẻ có từ trận thắng, điểm nghỉ, sự kiện và viên nang.", "No cards in this run yet: battles, rests, events and capsules give them.")
                     : L("Chưa có thẻ. Chọn thẻ trong trận; thắng màn thì giữ thẻ sang màn sau.", "No cards yet. Cards are chosen in battle; winning a stage keeps them for the next."),
                     PetUi.SmallSize, PetUi.Game.Soft)
@@ -752,8 +753,8 @@ public sealed partial class PetWindow
             top.Children.Add(BagLine("▼ " + RelicPrice(relic), PetUi.CaptionSize, BagBad));
         }
         if (sim.Relics.Count == 0)
-            top.Children.Add(BagLine(L("Chưa có di vật. Thắng điểm tinh anh, mở rương hay đền, hoặc may mắn với viên nang vàng.", "No relics yet: win an elite node, open a chest or shrine, or get lucky with a gold capsule."),
-                PetUi.CaptionSize, PetUi.Game.Soft));
+            top.Children.Add(PetIllustration.Beside(BagLine(L("Chưa có di vật. Thắng điểm tinh anh, mở rương hay đền, hoặc may mắn với viên nang vàng.", "No relics yet: win an elite node, open a chest or shrine, or get lucky with a gold capsule."),
+                PetUi.CaptionSize, PetUi.Game.Soft), PetMotif.Box, 30));
         bagBody!.Children.Add(BagCard(top, bottom: 8));
 
         // The run's log, the latest first.

@@ -109,7 +109,7 @@ public sealed partial class PetWindow
                         won ? L("Phụ kiện: đeo trong Tùy chỉnh → Phụ kiện.", "Accessory: wear it from Customize → Accessory.")
                             : LF($"Thắng {StageTitle(stage)} để nhận.", $"Win {StageTitle(stage)} to get it.")));
                 }
-            if (tiles.Children.Count > 0) RewardsSection(L("Phụ kiện Phiêu lưu", "Adventure accessories"), tiles);
+            if (tiles.Children.Count > 0) RewardsSection(L("Phụ kiện Phiêu lưu", "Adventure accessories"), PetMotif.Crown, tiles);
         }
 
         // The Expedition's keepsakes: a cup or cushion as on the keepsake, an accessory on the cat.
@@ -132,7 +132,7 @@ public sealed partial class PetWindow
                     : k.Exact ? LF($"Thắng một chuyến Viễn chinh {level} để nhận.", $"Win an Expedition run on {level} to get it.")
                     : LF($"Thắng một chuyến Viễn chinh {level} trở lên để nhận.", $"Win an Expedition run on {level} or harder to get it.")));
             }
-            RewardsSection(L("Kỷ vật Viễn chinh", "Expedition keepsakes"), tiles);
+            RewardsSection(L("Kỷ vật Viễn chinh", "Expedition keepsakes"), PetMotif.Gem, tiles);
         }
 
         // Infinity's milestones: one per wave to clear.
@@ -150,9 +150,9 @@ public sealed partial class PetWindow
                     : L("Kỷ vật: trưng bày trên màn hình (chọn trong Tùy chỉnh).", "Keepsake: displayed on the screen (choose it in Customize).");
                 tiles.Children.Add(RewardTile(art, LF($"Đợt {m.Wave} · ", $"Wave {m.Wave} · ") + m.Name(preferences.Language), won, rewardsFresh.Contains(m.Id), won ? where : EndlessMilestoneText(m)));
             }
-            RewardsSection(L("Phần thưởng Vô tận", "Infinity rewards"), tiles);
+            RewardsSection(L("Phần thưởng Vô tận", "Infinity rewards"), PetMotif.Moon, tiles);
         }
-        if (hubRewards.Children.Count == 0) hubRewards.Children.Add(BagCard(BagLine(L("Chưa có phần thưởng nào trong dữ liệu.", "No rewards in the data."), PetUi.SmallSize, PetUi.Game.Soft)));
+        if (hubRewards.Children.Count == 0) hubRewards.Children.Add(BagCard(PetIllustration.Beside(BagLine(L("Chưa có phần thưởng nào trong dữ liệu.", "No rewards in the data."), PetUi.SmallSize, PetUi.Game.Soft), PetMotif.Box, 30)));
         else hubRewards.Children.Add(rewardsDetail);
 
         // Records, over every weapon.
@@ -194,15 +194,16 @@ public sealed partial class PetWindow
             int best = BattleRecords.EndlessBest(endless);
             records.Children.Add(RecordLine(L("Xa nhất", "Furthest"), best == 0 ? L("chưa chơi lần nào", "not played yet") : LF($"đợt {best}", $"wave {best}"), best > 0));
         }
-        if (records.Children.Count > 0) RewardsSection(L("Kỷ lục", "Records"), records);
+        if (records.Children.Count > 0) RewardsSection(L("Kỷ lục", "Records"), PetMotif.Trophy, records);
     }
 
-    private void RewardsSection(string title, UIElement content)
+    private void RewardsSection(string title, PetMotif motif, UIElement content)
     {
-        var heading = PanelLine(PetUi.TitleSize, true, RewardsWidth);
-        heading.Text = title;
-        heading.Margin = new Thickness(0, hubRewards!.Children.Count == 0 ? 0 : 10, 0, 6);
-        hubRewards.Children.Add(heading);
+        var heading = PanelLine(PetUi.TitleSize, true, RewardsWidth - 34);
+        heading.Text = title; heading.VerticalAlignment = VerticalAlignment.Center;
+        var titled = PetIllustration.Beside(heading, motif, 24);
+        titled.Margin = new Thickness(0, hubRewards!.Children.Count == 0 ? 0 : 10, 0, 6);
+        hubRewards.Children.Add(titled);
         hubRewards.Children.Add(BagCard(content));
     }
 

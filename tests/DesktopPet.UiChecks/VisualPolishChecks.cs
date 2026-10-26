@@ -80,18 +80,33 @@ internal static class VisualPolishChecks
         check((L(PetUi.Surface)+.05)/(L(PetUi.AccentText)+.05)>=4.5,"Accent-coloured text is readable on the cream surface");
         var edge=PetUi.Hex(PetUi.ControlEdgeHex);
         check((L(PetUi.CardBack)+.05)/(L(edge)+.05)>=3 && (L(PetUi.Surface)+.05)/(L(edge)+.05)>=3,"Input outlines stand out 3:1 on cards and cream");
+        var motifs=Enum.GetValues<PetMotif>();
         var panel=new StackPanel();
-        foreach(var background in new[]{PetUi.Surface,PetUi.Ink}) {
+        // Cream and dark with the disc; the last row without it on a game node colour (the Expedition map).
+        foreach(var (background,backdrop) in new[]{(PetUi.Surface,true),(PetUi.Ink,true),(PetUi.Game.Panel,false)}) {
             var row=new StackPanel { Orientation=Orientation.Horizontal, Background=background };
-            foreach(var motif in Enum.GetValues<PetMotif>()) {
-                var art=new PetIllustration(motif,64);
+            foreach(var motif in motifs) {
+                var art=new PetIllustration(motif,64) { Backdrop=backdrop };
                 check(!art.IsHitTestVisible && !art.Focusable,"Decorative artwork never captures input: "+motif);
                 row.Children.Add(art);
             }
             panel.Children.Add(row);
         }
-        panel.Measure(new Size(384,128));panel.Arrange(new Rect(0,0,384,128));panel.UpdateLayout();
-        var image=new RenderTargetBitmap(384,128,96,96,PixelFormats.Pbgra32);image.Render(panel);
+        int width=64*motifs.Length;
+        panel.Measure(new Size(width,192));panel.Arrange(new Rect(0,0,width,192));panel.UpdateLayout();
+        var image=new RenderTargetBitmap(width,192,96,96,PixelFormats.Pbgra32);image.Render(panel);
+        // 2026-10-26: every motif draws a picture of its own (none falls through to a bare disc).
+        foreach(var motif in motifs) {
+            var bare=new PetIllustration(motif,64) { Backdrop=false };
+            bare.Measure(new Size(64,64));bare.Arrange(new Rect(0,0,64,64));
+            var shot=new RenderTargetBitmap(64,64,96,96,PixelFormats.Pbgra32);shot.Render(bare);
+            var pixels=new byte[64*64*4];shot.CopyPixels(pixels,64*4,0);
+            int inked=0;for(int i=3;i<pixels.Length;i+=4) if(pixels[i]>128) inked++;
+            check(inked>200,$"The {motif} motif draws a picture ({inked} px)");
+        }
+        var mapArt=new PetIllustration(PetMotif.Question,30){Backdrop=false};
+        mapArt.Motif=PetMotif.Crown;
+        check(mapArt.Motif==PetMotif.Crown,"A map node's picture changes in place");
         if(Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string dir) {
             var encoder=new PngBitmapEncoder();encoder.Frames.Add(BitmapFrame.Create(image));
             using var stream=File.Create(Path.Combine(dir,"visual-polish-icons.png"));encoder.Save(stream);

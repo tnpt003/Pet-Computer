@@ -18,11 +18,9 @@ public static class PetDialog
     // extra (optional, e.g. a checkbox) goes under the message.
     public static Window Create(Window? owner, string title, string message, string ok, string? cancel = null, string glyph = InfoGlyph, UIElement? extra = null)
     {
-        var icon = new Grid { Width = 40, Height = 40, VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(0, 0, 14, 0) };
-        icon.Children.Add(new Ellipse { Fill = PetUi.AccentSoft });
-        var mark = PetUi.Icon(glyph, glyph == WarningGlyph ? PetUi.Danger : glyph == QuestionGlyph ? PetUi.Mystery : PetUi.Care);
-        mark.FontSize = PetUi.HeadingSize + 2;
-        icon.Children.Add(mark);
+        // A drawn badge by kind: the cat for news, a "?" for a question, a warning sign (rose) before something risky.
+        var icon = new PetIllustration(glyph == WarningGlyph ? PetMotif.Warning : glyph == QuestionGlyph ? PetMotif.Question : PetMotif.Cat, 44)
+            { VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(0, 0, 14, 0) };
         var text = new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap, Foreground = PetUi.Ink, VerticalAlignment = VerticalAlignment.Center, LineHeight = 19 };
         var body = new DockPanel { Margin = new Thickness(20, 20, 20, 14) };
         DockPanel.SetDock(icon, Dock.Left);

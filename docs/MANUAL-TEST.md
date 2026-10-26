@@ -546,3 +546,12 @@ Tự động đã có: Phần thưởng trên sảnh (ô có hình, khóa, Mới
 - [ ] Settings/Customize/diary/welcome/túi đồ/reward không tràn vi/en/ja; mở đóng nhiều lần không giữ window/timer cũ.
 - [ ] Status portrait đúng coat/accessory/ngủ/emotion; mở status không thay hành vi mèo.
 - [ ] Thẻ upgrade vẫn click/hover/confirm đúng; kiểm tra ở DPI thật 100/150/200% và nhiều màn hình, giữ cảnh báo battle dễ đọc.
+
+## Icon toàn app 2026-10-26 — cần nghiệm thu desktop thật
+
+- [ ] Chọn nâng cấp ở Viễn chinh (tiếng Việt): bảng vừa đúng 3 thẻ, tiêu đề xuống dòng, không còn khoảng trống bên phải; "★ Thẻ hiếm · một lần mỗi build" xuống dòng, không bị cắt.
+- [ ] Cài đặt và Tùy chỉnh: mỗi thẻ mục có icon cạnh tiêu đề, vi/en/ja không tràn chữ.
+- [ ] Bản đồ Viễn chinh: nút hiện kiếm/sao/vương miện/lửa trại/cuộn giấy/dấu hỏi rõ ở mọi trạng thái (đang chọn, đã thắng, đã qua, chưa lộ); bấm nút vẫn chọn đúng.
+- [ ] Bản đồ Phiêu lưu: cờ → kiếm → khiên → nấm → vương miện dưới các màn; Phần thưởng ở sảnh có icon từng mục.
+- [ ] Hộp thoại (Quên thói quen, Gỡ cài đặt): huy hiệu dấu hỏi / biển cảnh báo.
+- [ ] Menu khay: Tùy chỉnh, Cài đặt, Gọi mèo về, Cập nhật, Thoát có icon giống menu chuột phải; nét rõ ở DPI 100/150/200%; Tạm dừng và AI vẫn có ✓.

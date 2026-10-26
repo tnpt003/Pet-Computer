@@ -164,7 +164,7 @@ public sealed partial class PetWindow
                 Cursor = System.Windows.Input.Cursors.Hand, Child = new Grid { Children = { number, mark } } };
             var label = new TextBlock { Foreground = Brushes.White, FontSize = PetUi.CaptionSize, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center,
                 Width = 76, Margin = new Thickness(0, 4, 0, 0) };
-            var column = new StackPanel { Width = 76, Background = Brushes.Transparent, Cursor = System.Windows.Input.Cursors.Hand, Children = { node, label, new PetIllustration(i == chapter.Stages.Length - 1 ? PetMotif.Trophy : i % 2 == 0 ? PetMotif.Leaf : PetMotif.Spark, 40) { Margin = new Thickness(0,6,0,0), HorizontalAlignment = HorizontalAlignment.Center } } };
+            var column = new StackPanel { Width = 76, Background = Brushes.Transparent, Cursor = System.Windows.Input.Cursors.Hand, Children = { node, label, new PetIllustration(StageLandmark(i, chapter.Stages.Length), 40) { Margin = new Thickness(0,6,0,0), HorizontalAlignment = HorizontalAlignment.Center } } };
             column.MouseLeftButtonDown += (_, e) => { AdventureSelectStage(id); e.Handled = true; };
             row.Children.Add(column);
             mapNodes.Add((id, node, number, mark, label, link));
@@ -190,6 +190,11 @@ public sealed partial class PetWindow
     }
 
     private void PlaceAdventureMap() => PlaceGamePanel(adventureMapWindow);
+
+    // A landmark under each stage of the map: a flag at the start, the boss's crown at the end, and
+    // the road between (for chapter 1: break through, hold on, cut the support).
+    internal static PetMotif StageLandmark(int index, int count) =>
+        index == count - 1 ? PetMotif.Crown : index == 0 ? PetMotif.Flag : ((index - 1) % 3) switch { 0 => PetMotif.Sword, 1 => PetMotif.Shield, _ => PetMotif.Mushroom };
 
     private void UpdateAdventureMap()
     {

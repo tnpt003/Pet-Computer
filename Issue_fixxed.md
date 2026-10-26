@@ -8,6 +8,14 @@ Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm 
 
 ---
 
+## #27 — Bóng chân của mèo trong trận trông như mảng tối (2026-10-26, commit bacde5a)
+- **Triệu chứng:** ảnh người dùng (bản 7cd2bf5, nền tối): dưới chân mèo có một mảng tối lộ quanh chân và đuôi, không đọc ra là bóng.
+- **Nguyên nhân:** bóng mèo vẽ trên dải chiến trường, dưới cửa sổ riêng của mèo; chân mèo trong cửa sổ cao hơn sàn dải vài DIP nên bóng không khớp bàn chân, và trên nền tối bóng nâu đen thành một khối.
+- **Sửa:** bỏ bóng của mèo (mèo vốn không có bóng ở Pet Mode); giữ bóng slime (cùng lớp nên luôn khớp), nhỏ hơn (0,45 → 0,4 bề rộng, cao 4,5 → 4) và nhạt hơn (alpha 70 → 55, viền 90 → 70).
+- **Kiểm chứng:** WPF 1027/1027, C# 1538; ảnh battle-kinds sáng/tối không còn mảng xám ở chỗ mèo. Chưa xem trong trận thật.
+
+---
+
 ## #26 — Túi đồ: lưới thẻ và ô di vật dư khoảng trống bên phải (2026-10-26, commit 958146a)
 - **Triệu chứng:** ảnh người dùng: tab Di vật (Viễn chinh) 3 ô "Ô trống" chừa một dải trống bên phải; tab Thẻ (Hướng dẫn phiêu lưu) mỗi hàng 3 thẻ, bên phải trống một khoảng.
 - **Nguyên nhân:** cả hai dùng WrapPanel với ô cố định (thẻ 92 DIP, di vật 116 DIP); khung 389 DIP chỉ vừa 3 ô, phần dư không ai lấp.

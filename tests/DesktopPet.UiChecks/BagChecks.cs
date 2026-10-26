@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
+using System.Windows.Media;
 using DesktopPet;
 using static PetPrivate;
 
@@ -31,6 +32,33 @@ internal static class BagChecks
     }
     private static void Click(UIElement element) =>
         element.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Left) { RoutedEvent = UIElement.MouseLeftButtonDownEvent });
+    // 2026-10-26 (user's screenshots): card tiles and relic slots fill the card's width, no empty strip on the right.
+    private static bool TilesFillWidth(out string detail)
+    {
+        detail = "no tile grid";
+        if (Find("Pet bag")?.Content is not FrameworkElement content) return false;
+        content.UpdateLayout();
+        var grids = Descendants(content).OfType<System.Windows.Controls.Primitives.UniformGrid>().Where(g => g.Children.Count > 0).ToList();
+        if (grids.Count == 0) return false;
+        foreach (var grid in grids)
+        {
+            var last = (FrameworkElement)grid.Children[Math.Min(grid.Columns, grid.Children.Count) - 1];
+            double right = last.TranslatePoint(new Point(last.ActualWidth + last.Margin.Right, 0), grid).X;
+            var holder = (FrameworkElement)VisualTreeHelper.GetParent(grid);
+            detail = $"row right {right:F0}, grid {grid.ActualWidth:F0}, holder {holder.ActualWidth:F0}";
+            if (grid.Children.Count >= grid.Columns && right < grid.ActualWidth - 1 || grid.ActualWidth < holder.ActualWidth - 1) return false;
+        }
+        return true;
+    }
+    private static IEnumerable<DependencyObject> Descendants(DependencyObject node)
+    {
+        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(node); i++)
+        {
+            var child = VisualTreeHelper.GetChild(node, i);
+            yield return child;
+            foreach (var d in Descendants(child)) yield return d;
+        }
+    }
     private static void Shot(string title, string name)
     {
         if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is not string review || Find(title)?.Content is not FrameworkElement content) return;
@@ -129,6 +157,7 @@ internal static class BagChecks
             check(window.BattleBagTab == PetWindow.BagCardsTab && text.Contains(sharp) && text.Contains("×2") && text.Contains("Defense 3") && text.Contains("Power 2")
                 && sim.Synergies.All(y => text.Contains(y.Name("en"))) && text.Contains("On") && text.Contains("1 more") && text.Contains("Hover a synergy"),
                 $"Cards tab: tiles, ×n, each group's synergy progress ({text.Replace('\n', '|')})");
+            check(TilesFillWidth(out var cardsFill), $"Card tiles fill the Bag's width ({cardsFill})");
             Shot("Pet bag", "bag-adventure-cards-en.png");
             Click(Button(bag!, "Relics")!);
             await Task.Delay(10);
@@ -181,6 +210,7 @@ internal static class BagChecks
             check(text.Contains("Relics 2/3") && text.Contains("◈ " + feather) && text.Contains("▲ +15% running speed") && text.Contains("▼ −15 max HP") && text.Contains("Empty")
                 && text.Contains("Run log") && text.Contains("Gold capsule: the ◈ " + feather + " relic") && text.Contains("Fight: won") && text.Contains("−14 HP"),
                 $"Relics: slots, gains and prices, the run log latest first ({text.Replace('\n', '|')})");
+            check(TilesFillWidth(out var relicsFill), $"Relic slots fill the Bag's width ({relicsFill})");
             Shot("Pet bag", "bag-expedition-relics-en.png");
             // The skills with the relics' changes: the Relief pack makes the fish heal more and recharge slower.
             run.Relics.Add("relief_pack");

@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 
@@ -32,6 +33,8 @@ public sealed partial class PetWindow
     public const string BagStatsTab = "stats", BagCardsTab = "cards", BagRelicsTab = "relics";
     public const string BagBattle = "battle", BagAdventure = "adventure", BagExpedition = "expedition", BagEndless = "endless";
     public const double BagWidth = 440, BagMaxHeight = 540;
+    // Card tiles per row in the Bag, in line with the three synergy medals above (relic slots: up to this many share a row).
+    private const int BagCardColumns = 3;
     private static readonly string[] BagTabs = { BagStatsTab, BagCardsTab, BagRelicsTab };
     private static readonly Brush BagBad = PetUi.Hex("#FF9A8A"), BagCream = PetUi.Hex("#E8DCCB"), BagHp = PetUi.Hex("#7FD06A"), BagGain = PetUi.Hex("#C9F0B8");
     // The three card groups (bars, rims and medals).
@@ -670,7 +673,8 @@ public sealed partial class PetWindow
             bagBody!.Children.Add(BagCard(empty));
             return;
         }
-        var tiles = new WrapPanel();
+        // Even columns across the card's whole width (fixed tiles in a WrapPanel left an empty strip on the right).
+        var tiles = new UniformGrid { Columns = BagCardColumns };
         foreach (var u in cards)
         {
             int n = sim.Stacks(u.Id);
@@ -686,7 +690,7 @@ public sealed partial class PetWindow
                 face.Children.Add(new TextBlock { Text = "◆", Foreground = PetUi.Game.RareGold, FontSize = PetUi.SmallSize, HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top });
             var tile = new Border
             {
-                Width = 92, MinHeight = 92, Margin = new Thickness(0, 0, 6, 6), Padding = new Thickness(6, 6, 6, 6), CornerRadius = new CornerRadius(9),
+                MinHeight = 92, Margin = new Thickness(3, 0, 3, 6), Padding = new Thickness(6, 6, 6, 6), CornerRadius = new CornerRadius(9),
                 Background = u.Rare ? PetUi.Game.RareBack : PetUi.Game.CardBack, BorderBrush = u.Rare ? PetUi.Game.RareGold : GroupColor(u.Group), BorderThickness = new Thickness(u.Rare ? 2 : 1.5),
                 Child = face
             };
@@ -727,8 +731,9 @@ public sealed partial class PetWindow
         }
 
         // The slots: the held relics, then empty ones up to the cap.
-        var slots = new WrapPanel();
-        for (int i = 0; i < Math.Max(x.Spec.MaxRelics, sim.Relics.Count); i++)
+        int slotCount = Math.Max(x.Spec.MaxRelics, sim.Relics.Count);
+        var slots = new UniformGrid { Columns = Math.Clamp(slotCount, 1, BagCardColumns) }; // The slots share the row evenly.
+        for (int i = 0; i < slotCount; i++)
         {
             var relic = i < sim.Relics.Count ? sim.Relics[i] : null;
             var name = new TextBlock { Text = relic?.Name(preferences.Language) ?? L("Ô trống", "Empty"), Foreground = relic != null ? Brushes.White : PetUi.Game.Soft, FontSize = PetUi.CaptionSize,
@@ -737,7 +742,7 @@ public sealed partial class PetWindow
                 : (UIElement)new TextBlock { Text = "?", FontSize = 26, FontWeight = FontWeights.Bold, Foreground = PetUi.Game.Soft, HorizontalAlignment = HorizontalAlignment.Center, Height = 44 };
             slots.Children.Add(new Border
             {
-                Width = 116, MinHeight = 86, Margin = new Thickness(0, 0, 6, 6), Padding = new Thickness(6), CornerRadius = new CornerRadius(9),
+                MinHeight = 86, Margin = new Thickness(3, 0, 3, 6), Padding = new Thickness(6), CornerRadius = new CornerRadius(9),
                 Background = relic != null ? PetUi.Game.CardBack : Brushes.Transparent, BorderBrush = relic != null ? PetUi.Game.Gold : PetUi.Game.CardRim,
                 BorderThickness = new Thickness(1.5), Child = new StackPanel { Children = { picture, name } }
             });

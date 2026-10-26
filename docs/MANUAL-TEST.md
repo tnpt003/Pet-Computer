@@ -555,3 +555,4 @@ Tự động đã có: Phần thưởng trên sảnh (ô có hình, khóa, Mới
 - [ ] Bản đồ Phiêu lưu: cờ → kiếm → khiên → nấm → vương miện dưới các màn; Phần thưởng ở sảnh có icon từng mục.
 - [ ] Hộp thoại (Quên thói quen, Gỡ cài đặt): huy hiệu dấu hỏi / biển cảnh báo.
 - [ ] Menu khay: Tùy chỉnh, Cài đặt, Gọi mèo về, Cập nhật, Thoát có icon giống menu chuột phải; nét rõ ở DPI 100/150/200%; Tạm dừng và AI vẫn có ✓.
+- [ ] Túi đồ tab Thẻ (1–2, 3, 5+ thẻ) và tab Di vật (Viễn chinh): ô lấp đủ bề rộng khung, không dải trống bên phải; rê chuột lên thẻ vẫn hiện mô tả.

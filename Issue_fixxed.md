@@ -8,6 +8,14 @@ Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm 
 
 ---
 
+## #26 — Túi đồ: lưới thẻ và ô di vật dư khoảng trống bên phải (2026-10-26, commit 958146a)
+- **Triệu chứng:** ảnh người dùng: tab Di vật (Viễn chinh) 3 ô "Ô trống" chừa một dải trống bên phải; tab Thẻ (Hướng dẫn phiêu lưu) mỗi hàng 3 thẻ, bên phải trống một khoảng.
+- **Nguyên nhân:** cả hai dùng WrapPanel với ô cố định (thẻ 92 DIP, di vật 116 DIP); khung 389 DIP chỉ vừa 3 ô, phần dư không ai lấp.
+- **Sửa:** UniformGrid cột đều: thẻ 3 cột (thẳng hàng 3 huy hiệu cộng hưởng phía trên), ô di vật chia đều một hàng (tối đa 3 cột); ô giãn theo cột.
+- **Kiểm chứng:** WPF 1024/1024 (thêm: hàng thẻ và hàng ô di vật chạm mép phải khung, 389/389 DIP), xem ảnh bag-adventure-cards-en, bag-expedition-relics-en. Chưa xem trên màn hình thật.
+
+---
+
 ## #25 — Bảng chọn nâng cấp Viễn chinh dư khoảng trống bên phải (2026-10-26, commit a58dbd5)
 - **Triệu chứng:** ảnh người dùng: bảng "Chọn một nâng cấp (giữ suốt chuyến viễn chinh khi thắng bậc này)" rộng hơn 3 thẻ, bên phải trống; tiêu đề sát mép; "★ Thẻ hiếm · một lần mỗi build" bị cắt.
 - **Nguyên nhân:** cửa sổ tự co theo nội dung (SizeToContent) mà tiêu đề không xuống dòng, nên bảng rộng theo tiêu đề tiếng Việt dài; dòng đếm cũng không wrap trong thẻ 132 DIP.

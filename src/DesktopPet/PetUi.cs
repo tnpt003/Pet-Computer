@@ -14,11 +14,15 @@ public static class PetUi
     public static readonly FontFamily TextFont = new("Segoe UI, Yu Gothic UI");
 
     // Palette. Accent passes 4.5:1 with white text; Muted passes 4.5:1 on Surface.
+    // Accent as text on cream is 4.3:1, so text uses AccentText (5.8:1). ControlEdge outlines inputs (3:1);
+    // ControlLine is for dividers and decoration only.
     public const string AccentHex = "#C2561F", AccentHoverHex = "#A84816", AccentBrightHex = "#E8834F",
         AccentSoftHex = "#FCE9DB", AccentSofterHex = "#F8D9C4", InkHex = "#4A3628", MutedHex = "#7D6656",
-        SurfaceHex = "#FFF8F1", CardHex = "#FFFFFF", LineHex = "#EEDFD0", ControlLineHex = "#E2CDB9", StageHex = "#FBEFE3";
+        SurfaceHex = "#FFF8F1", CardHex = "#FFFFFF", LineHex = "#EEDFD0", ControlLineHex = "#E2CDB9", StageHex = "#FBEFE3",
+        ControlEdgeHex = "#A38670";
 
     public static readonly Brush Accent = Hex(AccentHex);
+    public static readonly Brush AccentText = Hex(AccentHoverHex); // Accent-coloured text on light surfaces.
     public static readonly Brush AccentBright = Hex(AccentBrightHex); // Charts and decoration, not text.
     public static readonly Brush AccentSoft = Hex(AccentSoftHex);
     public static readonly Brush Ink = Hex(InkHex);
@@ -82,7 +86,7 @@ public static class PetUi
     // A text-only button that reads like a link (for rarely used, secondary actions).
     public static Button LinkButton(string text)
     {
-        var label = new TextBlock { Text = text, Foreground = Accent, TextDecorations = TextDecorations.Underline };
+        var label = new TextBlock { Text = text, Foreground = AccentText, TextDecorations = TextDecorations.Underline };
         return new Button { Content = label, Cursor = System.Windows.Input.Cursors.Hand, HorizontalAlignment = HorizontalAlignment.Left,
             Margin = new Thickness(0, 10, 0, 0), Template = LinkTemplate };
     }

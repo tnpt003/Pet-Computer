@@ -42,14 +42,14 @@ public sealed partial class PetWindow
         // The tray holds the app-level controls (pause, AI, updates).
         var treat = PetUi.MenuItem(PetUi.Treat);
         treat.Click += (_, _) => GiveTreat();
-        var play = PetUi.MenuItem(PetUi.Ball, Brushes.Coral);
-        var toy = PetUi.MenuItem(PetUi.Ball, Brushes.Coral);
+        var play = PetUi.MenuItem(PetUi.Ball);
+        var toy = PetUi.MenuItem(PetUi.Ball);
         toy.Click += (_, _) => ToggleToy();
-        var laser = PetUi.MenuItem(PetUi.Laser, Brushes.Red);
+        var laser = PetUi.MenuItem(PetUi.Laser, PetUi.Danger);
         laser.Click += (_, _) => StartLaser();
         play.Items.Add(toy); play.Items.Add(laser);
         // While the ball is out, putting it away is one click on the main menu.
-        var putAway = PetUi.MenuItem(PetUi.Ball, Brushes.Coral);
+        var putAway = PetUi.MenuItem(PetUi.Ball);
         putAway.Click += (_, _) => ToggleToy();
         var remember = new MenuItem();
         remember.Click += (_, _) => { preferences.RestX = pet.X; preferences.RestY = pet.Y;

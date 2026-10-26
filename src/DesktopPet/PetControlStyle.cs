@@ -23,6 +23,7 @@ public static class PetControlStyle
   <SolidColorBrush x:Key="PetAccentSofter" Color="{{{PetUi.AccentSofterHex}}}"/>
   <SolidColorBrush x:Key="PetLine" Color="{{{PetUi.LineHex}}}"/>
   <SolidColorBrush x:Key="PetControlLine" Color="{{{PetUi.ControlLineHex}}}"/>
+  <SolidColorBrush x:Key="PetControlEdge" Color="{{{PetUi.ControlEdgeHex}}}"/>
   <SolidColorBrush x:Key="PetStage" Color="{{{PetUi.StageHex}}}"/>
   <SolidColorBrush x:Key="PetTrackOff" Color="#EADBCB"/>
   <DropShadowEffect x:Key="PetPopupShadow" BlurRadius="12" ShadowDepth="3" Direction="270" Opacity="0.16"/>
@@ -51,7 +52,7 @@ public static class PetControlStyle
               <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             <Border x:Name="Track" Width="36" Height="20" CornerRadius="10" VerticalAlignment="Center"
-                    Background="{StaticResource PetTrackOff}" BorderBrush="{StaticResource PetControlLine}" BorderThickness="1">
+                    Background="{StaticResource PetTrackOff}" BorderBrush="{StaticResource PetControlEdge}" BorderThickness="1">
               <Ellipse x:Name="Knob" Width="14" Height="14" Fill="White" HorizontalAlignment="Left" Margin="2,0,0,0">
                 <Ellipse.Effect>
                   <DropShadowEffect BlurRadius="3" ShadowDepth="1" Direction="270" Opacity="0.25"/>
@@ -86,7 +87,7 @@ public static class PetControlStyle
   <Style TargetType="TextBox">
     <Setter Property="Foreground" Value="{StaticResource PetInk}"/>
     <Setter Property="Background" Value="White"/>
-    <Setter Property="BorderBrush" Value="{StaticResource PetControlLine}"/>
+    <Setter Property="BorderBrush" Value="{StaticResource PetControlEdge}"/>
     <Setter Property="BorderThickness" Value="1"/>
     <Setter Property="Padding" Value="6,4,6,4"/>
     <Setter Property="CaretBrush" Value="{StaticResource PetInk}"/>
@@ -157,7 +158,7 @@ public static class PetControlStyle
                           IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
               <ToggleButton.Template>
                 <ControlTemplate TargetType="ToggleButton">
-                  <Border x:Name="Box" CornerRadius="8" Background="White" BorderBrush="{StaticResource PetControlLine}" BorderThickness="1">
+                  <Border x:Name="Box" CornerRadius="8" Background="White" BorderBrush="{StaticResource PetControlEdge}" BorderThickness="1">
                     <TextBlock Text="&#xE70D;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="10" Foreground="{StaticResource PetMuted}"
                                HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,10,0"/>
                   </Border>

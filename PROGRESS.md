@@ -4,6 +4,13 @@ Cập nhật: 2026-10-24 (Asia/Saigon). Lịch sử trước 21/10: docs/archive
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
+## Rà theme + sửa tương phản token (2026-10-26, người dùng "ok cả 2")
+- Rà DESIGN-SYSTEM.md với code: viết lại tài liệu (thêm bảng màu game tối PetUi.Game, bảng màu theo nền kem/tối có tỷ lệ tương phản đo thật, quy ước màu icon menu, màu art; gộp các mục theo ngày vào đúng phần; checklist chia "luôn làm" / "khi đụng overlay"; backlog art).
+- Code (chỉ màu, không đổi layout/input/gameplay): `PetUi.AccentText` (#A84816, 5.8:1) cho LinkButton và số ở Nhật ký (Accent làm chữ trên kem chỉ 4.3:1); `ControlEdgeHex` #A38670 (3.4:1) làm viền ô nhập, combo box, rãnh công tắc tắt (ControlLine 1.5:1 giữ cho phân cách/thanh cuộn). Menu: Chơi/bóng bỏ `Brushes.Coral` → Accent, laser `Brushes.Red` → Danger, Chế độ chiến đấu bỏ `Brushes.SeaGreen` → IconColor (Reward); gợi ý app trong trận `Brushes.LightGray` → Game.Soft. UiChecks thêm 2 kiểm tra tương phản (AccentText ≥ 4.5, ControlEdge ≥ 3 trên trắng và kem).
+- Test thật: scripts/test.ps1 -Ui exit 0, WPF 900/900. Đã xem ảnh render (PET_RENDER_REVIEW) settings-vi, menu-vi trước/sau, scene-catalog, visual-polish-icons, battle-hub-en, status-card. Chưa xem trên desktop/DPI thật.
+- Rà ảnh art của đợt Visual Polish (chưa sửa, chờ người dùng duyệt): mèo trong PetScene là mèo cam cố định, khác coat mèo thật ở sảnh/trạng thái; 9/12 cảnh cùng bố cục kệ + 2 chậu + mặt trời; cúp ở Treasure/Victory là khối vàng trên que; kiếm ở Workshop giống dấu cộng; Rest có mặt trời, không ZZZ; vòng tai nghe ở Sound giống hào quang; thẻ Adventure ở sảnh cắt đôi rương mép phải.
+- Test tay: mở Cài đặt (ô combo/công tắc tắt có viền rõ, link "Quên những gì mèo đã học…" đậm hơn), menu chuột phải (icon Chơi/laser/chiến đấu), Nhật ký (số lớn).
+
 ## Đổi art Viễn chinh và Vô tận (2026-10-25)
 - Theo phản hồi người dùng: bỏ bố cục mèo trên đồi lặp lại. PetScene.Expedition thành bản đồ cuộn + la bàn + ba lô; Infinity thành cổng năng lượng với dấu vô tận và 3 slime tiến ra. Giữ điểm chính giữa để thẻ sảnh crop vẫn đọc được; banner/map tái dùng cùng cảnh.
 - Chỉ đổi vector trong PetScene.cs, cache frozen/no timer/input như cũ, không đổi gameplay hay layout. Đã xem scene catalog và thẻ sảnh thực. WPF 898/898 đạt; commit fde00bd, publish sạch 1.4.3+fde00bd, smoke 3/3. Pet đã mở lại; ZIP artifacts\DesktopPet-1.4.3-fde00bd-win-x64.zip. Không chạy lại core/Python vì không thay logic.

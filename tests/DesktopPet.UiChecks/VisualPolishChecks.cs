@@ -36,6 +36,9 @@ internal static class VisualPolishChecks
         }
         foreach(var ink in new[]{PetUi.Care,PetUi.Mystery,PetUi.Danger,PetUi.Reward})
             check((L(PetUi.Surface)+.05)/(L(ink)+.05)>=4.5,"Semantic ink is readable on the cream surface");
+        check((L(PetUi.Surface)+.05)/(L(PetUi.AccentText)+.05)>=4.5,"Accent-coloured text is readable on the cream surface");
+        var edge=PetUi.Hex(PetUi.ControlEdgeHex);
+        check((L(PetUi.CardBack)+.05)/(L(edge)+.05)>=3 && (L(PetUi.Surface)+.05)/(L(edge)+.05)>=3,"Input outlines stand out 3:1 on cards and cream");
         var panel=new StackPanel();
         foreach(var background in new[]{PetUi.Surface,PetUi.Ink}) {
             var row=new StackPanel { Orientation=Orientation.Horizontal, Background=background };

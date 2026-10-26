@@ -116,7 +116,7 @@ public sealed partial class PetWindow
 
     private void InitializeBattle(ContextMenu menu)
     {
-        var root = PetUi.MenuItem(PetUi.Battle, Brushes.SeaGreen);
+        var root = PetUi.MenuItem(PetUi.Battle);
         // No battle: one item that opens the hub (PetWindow.BattleHub.cs), where the modes are
         // chosen. During a battle: a submenu with Pause and End only.
         root.Click += (_, e) => { if (e.OriginalSource == root && battle == null && OpenBattleHub() is string reason) ShowBattleNotice(reason); };

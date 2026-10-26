@@ -296,7 +296,7 @@ public sealed partial class PetWindow
             appHintText.Inlines.Add(new System.Windows.Documents.LineBreak());
             appHintText.Inlines.Add(new System.Windows.Documents.Run(app.Infected ? spec.Bad(preferences.Language) : spec.Desc(preferences.Language)));
             appHintText.Inlines.Add(new System.Windows.Documents.LineBreak());
-            appHintText.Inlines.Add(new System.Windows.Documents.Run(state) { Foreground = app.Infected ? AppArt.GooGreen : app.Ready ? AppArt.Gold : Brushes.LightGray });
+            appHintText.Inlines.Add(new System.Windows.Documents.Run(state) { Foreground = app.Infected ? AppArt.GooGreen : app.Ready ? AppArt.Gold : PetUi.Game.Soft });
             appHintText.Tag = text;
             appHintWindow.UpdateLayout();
         }

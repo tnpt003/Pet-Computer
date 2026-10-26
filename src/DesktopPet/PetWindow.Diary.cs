@@ -115,7 +115,7 @@ public sealed partial class PetWindow
         {
             var tile = new StackPanel();
             tile.Children.Add(new PetIllustration(row.Children.Count == 0 ? PetMotif.Heart : row.Children.Count == 1 ? PetMotif.Leaf : row.Children.Count == 2 ? PetMotif.Cat : PetMotif.Heart, 30) { HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0,0,0,6) });
-            tile.Children.Add(new TextBlock { Text = value.ToString("N0", System.Globalization.CultureInfo.InvariantCulture), FontSize = PetUi.DisplaySize, FontWeight = FontWeights.SemiBold, Foreground = PetUi.Accent });
+            tile.Children.Add(new TextBlock { Text = value.ToString("N0", System.Globalization.CultureInfo.InvariantCulture), FontSize = PetUi.DisplaySize, FontWeight = FontWeights.SemiBold, Foreground = PetUi.AccentText });
             tile.Children.Add(new TextBlock { Text = label, FontSize = PetUi.SmallSize, Foreground = PetUi.Muted, TextWrapping = TextWrapping.Wrap });
             row.Children.Add(PetUi.Card(tile, new Thickness(4, 0, 4, 0)));
         }

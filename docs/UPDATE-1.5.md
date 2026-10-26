@@ -51,7 +51,7 @@ Người dùng chốt (2026-10-26): mèo đang cầm **chỉ đánh được qu�
 | Mã | Quái | Việc riêng | Liên kết | Cách phá |
 |---|---|---|---|---|
 | Q1 | Slime phun | Đứng xa phun giọt nhầy cong, có vòng báo chỗ rơi | Giọt rơi thành **vũng tăng tốc**: slime nhanh lao qua vũng thì lao xa và nhanh hơn | Nhấc mèo khỏi vòng; Đẩy; cho mèo chạy tới đánh; Quạt làm khô vũng |
-| Q2 | Slime lò xo | **Đang đổi thiết kế** (người dùng muốn đơn giản hơn, có hại cho mèo, công bằng); xem đề xuất mới trong trao đổi 2026-10-26 | | |
+| Q2 | Slime lò xo (bẫy, chốt 2026-10-26) | Nằm im trên sàn như tấm thảm, luôn có vòng vàng. Mèo vào vòng thì nó nén 0,8 s (kẽo kẹt, vòng đỏ) rồi bật: mèo còn trong vòng mất máu và choáng ~0,8 s; nghỉ ~4 s mới bật lại. Không bật trúng mèo đang cầm; không đổi physics của mèo | Không có liên kết riêng; mạnh khi đi cùng đội hình (slime khác dồn mèo vào vòng) | Nhấc mèo ra khỏi vòng trong 0,8 s; đánh 2 đòn thì nó bẹp, nằm im 3 s; Bom, Đẩy, Quạt |
 | Q3 | Slime nhạc trưởng | Đánh trống, vòng nhịp trên đầu | Mỗi 4 nhịp mọi quái trong vùng **gồng đánh cùng lúc** | Đẩy/choáng/Quạt để lệch nhịp; Khiên đúng nhịp 4 |
 | Q4 | Slime xích | Yếu, đi sau đồng đội | **Dây nhầy** nối một đồng minh, gánh 50% sát thương đồng minh nhận | Kéo/ném mèo xuyên dây; Kéo cắt; hạ xích thì đồng minh choáng 1 s |
 | Q5 | Slime hợp thể | Nhỏ, đi bầy 3 con | Chạm nhau quá 2 s thì **nhập thành Slime khổng lồ** (máu bằng tổng), có thanh đếm ngược | Đẩy/Quạt/Kẹp gắp tách bầy; Bom khi đang chụm |
@@ -67,7 +67,7 @@ Người dùng chốt (2026-10-26): mèo đang cầm **chỉ đánh được qu�
 | Kỵ binh | 2 slime nhanh cõng 2 slime bom, thêm vũng của phun | Hạ ngựa giữa đường |
 | Đội trống | Nhạc trưởng + 3 slime thường | Đẩy nhạc trưởng trước nhịp 4 |
 | Dây chuyền | 2 slime xích nối vào 1 đá tinh anh | Cắt dây trước rồi đánh đá |
-| Bạt nhún | Lò xo + slime thường + slime nhanh (chờ thiết kế Q2 mới) | Chốt cùng Q2 |
+| Bạt nhún | Lò xo + slime thường + slime nhanh lao tới ép mèo lùi vào vòng lò xo | Đánh bẹp lò xo trước, hoặc nhấc mèo khỏi vòng khi nó nén |
 | Bầy nhập | 2 bầy hợp thể + thảo dược | Bom đúng lúc chụm |
 
 ### Quái solo (S)

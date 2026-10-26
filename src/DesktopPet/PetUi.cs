@@ -68,6 +68,12 @@ public static class PetUi
     };
 
     // Semantic inks work on light surfaces; bright variants remain artwork only.
+    // Ink for artwork over the desktop and in game panels (battle, icons, keepsakes, the speech bubble):
+    // a warm near-black, darker than Ink so outlines hold on any wallpaper. Shade: see-through halos and veils.
+    public static readonly Color ArtInkColor = Color.FromRgb(0x3A, 0x2C, 0x1F), ShadeColor = Color.FromRgb(0x2A, 0x1F, 0x16);
+    public static readonly Brush ArtInk = Frozen(ArtInkColor);
+    // Artwork fills (never text): leaf/defense, notebook/speed, rose/cheeks. Outlined in Ink.
+    public static readonly Brush Mint = Hex("#9BD2AE"), Lilac = Hex("#C5ADE5"), Rose = Hex("#F3A1A0");
     public static readonly Brush Care = Hex("#327354"), Mystery = Hex("#7953A1"), Danger = Hex("#B94444"), Reward = Hex("#976412");
     public static Brush IconColor(string glyph) => glyph == Status || glyph == Emotions ? Care
         : glyph == Diary ? Mystery : glyph == Battle || glyph == Treat ? Reward
@@ -185,6 +191,8 @@ public static class PetUi
         public static readonly Color HudTop = (Color)ColorConverter.ConvertFromString("#F0473529"),
             HudBottom = (Color)ColorConverter.ConvertFromString("#F02A1E19");
         public static readonly Brush Rim = Hex("#FFF3E2"), HudRim = Hex("#C8FFF3E2");
+        // A chosen card: a see-through orange over the panel, an orange rim and a tick (chips and tabs fill with Chosen).
+        public static readonly Brush ChosenCard = Hex("#73C2561F"), ChosenRim = AccentBright;
         public static readonly Brush Chosen = Accent, Armed = Hex("#C0C2561F"), Progress = AccentBright;
         public static readonly Brush CardBack = Hex("#33FFF0E0"), CardRim = Hex("#66FFE9D2"), RareBack = Hex("#2EFFC82E");
         public static readonly Brush ButtonBack = Hex("#50FFF0E0"), Stage = Hex("#26FFF0E0"), BarBack = Hex("#40FFF0E0");

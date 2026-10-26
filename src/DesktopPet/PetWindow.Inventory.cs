@@ -33,7 +33,9 @@ public sealed partial class PetWindow
     public const string BagBattle = "battle", BagAdventure = "adventure", BagExpedition = "expedition", BagEndless = "endless";
     public const double BagWidth = 440, BagMaxHeight = 540;
     private static readonly string[] BagTabs = { BagStatsTab, BagCardsTab, BagRelicsTab };
-    private static readonly Brush BagBad = PetUi.Hex("#FF9A8A"), BagCream = PetUi.Hex("#E8DCCB");
+    private static readonly Brush BagBad = PetUi.Hex("#FF9A8A"), BagCream = PetUi.Hex("#E8DCCB"), BagHp = PetUi.Hex("#7FD06A"), BagGain = PetUi.Hex("#C9F0B8");
+    // The three card groups (bars, rims and medals).
+    private static readonly Brush GroupDefense = PetUi.Hex("#7CC0EE"), GroupPower = PetUi.Hex("#F49272"), GroupSpeed = PetUi.Hex("#9AD884");
 
     private Window? bagWindow;
     private string? bagContext;
@@ -139,7 +141,7 @@ public sealed partial class PetWindow
             Child = CatPicture(new Grid { Width = 192, Height = 192, Children = { catView } }) };
         bagTitle = PanelLine(PetUi.TitleSize, true, 300);
         bagSubtitle = PanelLine(PetUi.CaptionSize, maxWidth: 300); bagSubtitle.Foreground = PetUi.Game.Soft; bagSubtitle.Margin = new Thickness(0, 1, 0, 0);
-        bagHpFill = new Border { Background = PetUi.Hex("#7FD06A"), CornerRadius = new CornerRadius(3), HorizontalAlignment = HorizontalAlignment.Left, Width = 0 };
+        bagHpFill = new Border { Background = BagHp, CornerRadius = new CornerRadius(3), HorizontalAlignment = HorizontalAlignment.Left, Width = 0 };
         bagHpBar = new Border { Width = 150, Height = 6, Background = PetUi.Game.BarBack, CornerRadius = new CornerRadius(3), VerticalAlignment = VerticalAlignment.Center, Child = bagHpFill };
         bagHpText = new TextBlock { Foreground = Brushes.White, FontSize = PetUi.CaptionSize, FontWeight = FontWeights.SemiBold, Margin = new Thickness(6, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
         var hpRow = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 4, 0, 0), Children = { bagHpBar, bagHpText } };
@@ -284,7 +286,7 @@ public sealed partial class PetWindow
         {
             double share = Math.Clamp(hp / Math.Max(1, sim.CatMaxHp), 0, 1);
             bagHpFill!.Width = 150 * share;
-            bagHpFill.Background = share < 0.35 ? BagBad : PetUi.Hex("#7FD06A");
+            bagHpFill.Background = share < 0.35 ? BagBad : BagHp;
             bagHpText.Text = $"HP {Math.Ceiling(hp)}/{sim.CatMaxHp:0}";
         }
         foreach (var (tab, button, text) in bagTabButtons)
@@ -491,7 +493,7 @@ public sealed partial class PetWindow
 
     private static Brush GroupColor(string? group) => group switch
     {
-        "defense" => PetUi.Hex("#7CC0EE"), "power" => PetUi.Hex("#F49272"), "speed" => PetUi.Hex("#9AD884"), _ => PetUi.Game.CardRim
+        "defense" => GroupDefense, "power" => GroupPower, "speed" => GroupSpeed, _ => PetUi.Game.CardRim
     };
 
     private static readonly Brush MedalOnBack = PetUi.Hex("#30FFD35C"), MedalBack = PetUi.Hex("#14FFFFFF");
@@ -746,7 +748,7 @@ public sealed partial class PetWindow
             var title = BagLine("◈ " + relic.Name(preferences.Language) + (relic.Effect == RelicSpec.Reckless && view.Live && sim.Reckless ? L(" · đang kích hoạt", " · on now") : ""), PetUi.SmallSize, PetUi.Game.Gold, bold: true);
             title.Margin = new Thickness(0, 6, 0, 0);
             top.Children.Add(title);
-            top.Children.Add(BagLine("▲ " + RelicGain(relic), PetUi.CaptionSize, PetUi.Hex("#C9F0B8")));
+            top.Children.Add(BagLine("▲ " + RelicGain(relic), PetUi.CaptionSize, BagGain));
             top.Children.Add(BagLine("▼ " + RelicPrice(relic), PetUi.CaptionSize, BagBad));
         }
         if (sim.Relics.Count == 0)
@@ -765,7 +767,7 @@ public sealed partial class PetWindow
             line.Inlines.Add(new System.Windows.Documents.Run(LF($"Bậc {e.Step + 1} · ", $"Step {e.Step + 1} · ")) { Foreground = PetUi.Game.Soft });
             line.Inlines.Add(new System.Windows.Documents.Run(LogText(x, e)));
             if (Math.Abs(e.Hp) >= 0.5)
-                line.Inlines.Add(new System.Windows.Documents.Run($"  {(e.Hp > 0 ? "+" : "−")}{Math.Abs(Math.Round(e.Hp))} HP") { Foreground = e.Hp > 0 ? PetUi.Hex("#C9F0B8") : BagBad, FontWeight = FontWeights.SemiBold });
+                line.Inlines.Add(new System.Windows.Documents.Run($"  {(e.Hp > 0 ? "+" : "−")}{Math.Abs(Math.Round(e.Hp))} HP") { Foreground = e.Hp > 0 ? BagGain : BagBad, FontWeight = FontWeights.SemiBold });
             log.Children.Add(line);
         }
         bagBody!.Children.Add(BagCard(log));
@@ -845,8 +847,9 @@ public sealed class BagIcon : FrameworkElement
 {
     public string Kind { get; init; } = "relic";
     private static readonly Brush Back = PetUi.Frozen(Color.FromArgb(0x40, 255, 255, 255));
-    private static readonly Brush Gold = PetUi.Game.Gold, Pink = PetUi.Hex("#F49A7A"), Red = PetUi.Hex("#FF8A70"), Blue = PetUi.Hex("#7CC0EE"), Green = PetUi.Hex("#9AD884"), Cream = PetUi.Hex("#FFF3E2");
-    private static readonly Pen Ink = PetUi.FrozenPen(PetUi.Frozen(Color.FromRgb(0x30, 0x2B, 0x48)), 1.6);
+    private static readonly Brush Gold = PetUi.Game.Gold, Pink = PetUi.Hex("#F49A7A"), Red = PetUi.Hex("#FF8A70"), Blue = PetUi.Hex("#7CC0EE"), Green = PetUi.Hex("#9AD884"), Cream = PetUi.Hex("#FFF3E2"),
+        Leather = PetUi.Hex("#C88B5A"), Iron = PetUi.Hex("#8A7A6C"), Plinth = PetUi.Hex("#4A3C5C"), Gem = PetUi.Hex("#C49BFF");
+    private static readonly Pen Ink = PetUi.FrozenPen(PetUi.ArtInk, 1.6);
     private static readonly Pen White = PetUi.FrozenPen(Brushes.White, 2);
     private static Geometry Shape(FormattableString path) => PetUi.FrozenGeometry(FormattableString.Invariant(path));
 
@@ -888,7 +891,7 @@ public sealed class BagIcon : FrameworkElement
                 break;
             case RelicSpec.Relief: // A pouch with a fish peeking out.
                 dc.DrawGeometry(Pink, Ink, Shape($"M 13,6 L 20,2.5 L 20,9.5 Z"));
-                dc.DrawGeometry(PetUi.Hex("#C88B5A"), Ink, Shape($"M 5,9 C 3,14 4,21 12,21 C 20,21 21,14 19,9 Z"));
+                dc.DrawGeometry(Leather, Ink, Shape($"M 5,9 C 3,14 4,21 12,21 C 20,21 21,14 19,9 Z"));
                 dc.DrawLine(Ink, new Point(5, 9), new Point(19, 9));
                 dc.DrawEllipse(Green, Ink, new Point(12, 15), 2.6, 2.6);
                 break;
@@ -917,17 +920,17 @@ public sealed class BagIcon : FrameworkElement
                 break;
             case "lock":
                 dc.DrawGeometry(null, PetUi.FrozenPen(Cream, 2.2), Shape($"M 7.5,11 L 7.5,8 A 4.5,4.5 0 0 1 16.5,8 L 16.5,11"));
-                dc.DrawRoundedRectangle(PetUi.Hex("#8A7A6C"), Ink, new Rect(5, 11, 14, 10), 2, 2);
+                dc.DrawRoundedRectangle(Iron, Ink, new Rect(5, 11, 14, 10), 2, 2);
                 dc.DrawEllipse(Cream, null, new Point(12, 15.5), 1.6, 1.6);
                 break;
             case "cup": // A trophy.
                 dc.DrawGeometry(Gold, Ink, Shape($"M 6,3 L 18,3 L 17,10 C 16,14 8,14 7,10 Z"));
                 dc.DrawGeometry(null, Ink, Shape($"M 6,5 C 2,5 2,10 7,10 M 18,5 C 22,5 22,10 17,10"));
                 dc.DrawRectangle(Gold, Ink, new Rect(10.5, 13.5, 3, 4));
-                dc.DrawRoundedRectangle(PetUi.Hex("#4A3C5C"), Ink, new Rect(7, 17.5, 10, 3.5), 1, 1);
+                dc.DrawRoundedRectangle(Plinth, Ink, new Rect(7, 17.5, 10, 3.5), 1, 1);
                 break;
             default: // "relic": a gem.
-                dc.DrawGeometry(PetUi.Hex("#C49BFF"), Ink, Shape($"M 7,4 L 17,4 L 21,9 L 12,21 L 3,9 Z"));
+                dc.DrawGeometry(Gem, Ink, Shape($"M 7,4 L 17,4 L 21,9 L 12,21 L 3,9 Z"));
                 dc.DrawGeometry(null, Ink, Shape($"M 3,9 L 21,9 M 9,4 L 12,9 L 15,4 M 12,9 L 12,21"));
                 break;
         }

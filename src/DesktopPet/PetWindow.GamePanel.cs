@@ -54,12 +54,13 @@ public sealed partial class PetWindow
         return new Border { Background = PrepCardBack, CornerRadius = new CornerRadius(9), Padding = padding, Margin = new Thickness(0, 10, 0, 0), Child = stack };
     }
 
-    // Chosen: the orange fill, a white rim and a tick (not only a colour). rim: the rim's width
-    // when chosen and when not (null keeps the item's own).
-    private static void ShowChosen(Border item, bool selected, Path? check = null, (double On, double Off)? rim = null)
+    // Chosen: a tick, not only a colour. A chip or tab fills orange with a white rim; a big card
+    // (card: true) gets a see-through orange and an orange rim so its text and stats stay calm.
+    // rim: the rim's width when chosen and when not (null keeps the item's own).
+    private static void ShowChosen(Border item, bool selected, Path? check = null, (double On, double Off)? rim = null, bool card = false)
     {
-        item.Background = selected ? PrepChosen : PrepCardBack;
-        item.BorderBrush = selected ? Brushes.White : PrepCardRim;
+        item.Background = selected ? (card ? PetUi.Game.ChosenCard : PrepChosen) : PrepCardBack;
+        item.BorderBrush = selected ? (card ? PetUi.Game.ChosenRim : Brushes.White) : PrepCardRim;
         if (rim is var (on, off)) item.BorderThickness = new Thickness(selected ? on : off);
         if (check != null) check.Visibility = selected ? Visibility.Visible : Visibility.Collapsed;
     }

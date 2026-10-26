@@ -12,7 +12,7 @@ public sealed class YarnBallArt : FrameworkElement
     private static Brush B(byte r, byte g, byte b) => PetUi.Frozen(Color.FromRgb(r, g, b));
     private static Pen P(Brush brush, double width) { var pen = new Pen(brush, width) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round }; pen.Freeze(); return pen; }
     private static readonly Brush Yarn = B(0xE8, 0x7A, 0xB8), Shine = PetUi.Frozen(Color.FromArgb(0xB0, 255, 255, 255));
-    private static readonly Pen Outline = P(B(0x3A, 0x2E, 0x4A), 1.4), Strand = P(B(0xB0, 0x4A, 0x88), 1.3);
+    private static readonly Pen Outline = P(PetUi.ArtInk, 1.4), Strand = P(B(0xB0, 0x4A, 0x88), 1.3);
     // The hover/hit ring around it (cream, like the game panels' highlight).
     public static readonly Brush Halo = B(0xFF, 0xF4, 0xE0);
 

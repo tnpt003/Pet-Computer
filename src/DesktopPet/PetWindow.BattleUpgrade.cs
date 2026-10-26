@@ -99,7 +99,7 @@ public sealed partial class PetWindow
                 Width = 132, MinHeight = 150, CornerRadius = new CornerRadius(10), Padding = new Thickness(8, 10, 8, 8), Margin = new Thickness(0, 0, 8, 0),
                 Cursor = System.Windows.Input.Cursors.Hand,
                 Child = new StackPanel { Children = { new Border { Width = 86, Height = 86, CornerRadius = new CornerRadius(43), BorderThickness = new Thickness(2),
-                    BorderBrush = upgrade.Group == "defense" ? PetUi.Hex("#9BD2AE") : upgrade.Group == "speed" ? PetUi.Hex("#C5ADE5") : PetUi.AccentBright,
+                    BorderBrush = upgrade.Group == "defense" ? PetUi.Mint : upgrade.Group == "speed" ? PetUi.Lilac : PetUi.AccentBright,
                     Background = PetUi.Game.Stage, HorizontalAlignment = HorizontalAlignment.Center, IsHitTestVisible = false,
                     Child = new UpgradeIcon { Effect = upgrade.Effect, Width = 64, Height = 64, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center } }, name, desc, build, count } }
             };
@@ -156,7 +156,7 @@ public sealed partial class PetWindow
             var spec = battle.Settings.UpgradeList.FirstOrDefault(u => u.Id == id);
             if (spec == null) continue;
             bool chosen = id == upgradePick;
-            name.Text = spec.Name(preferences.Language);
+            name.Text = (chosen ? "✓ " : "") + spec.Name(preferences.Language); // Chosen: a tick, not only a colour.
             desc.Text = spec.Describe(preferences.Language);
             int have = battle.Stacks(id);
             count.Text = spec.Rare ? L("★ Thẻ hiếm · một lần mỗi build", "★ Rare · once per build")
@@ -165,9 +165,9 @@ public sealed partial class PetWindow
             count.Opacity = spec.Rare ? 1 : 0.65;
             build.Text = CardBuildText(battle, spec);
             build.Foreground = battle.Unlocks(spec) != null ? PrepWarning : Brushes.White;
-            card.Background = chosen ? PrepChosen : spec.Rare ? PetUi.Game.RareBack : PrepCardBack;
-            // A rare card keeps a gold rim (white once chosen, like any card).
-            card.BorderBrush = chosen ? Brushes.White : spec.Rare ? RareGold : PrepCardRim;
+            card.Background = chosen ? PetUi.Game.ChosenCard : spec.Rare ? PetUi.Game.RareBack : PrepCardBack;
+            // A rare card keeps a gold rim (orange once chosen, like any card).
+            card.BorderBrush = chosen ? PetUi.Game.ChosenRim : spec.Rare ? RareGold : PrepCardRim;
             card.BorderThickness = new Thickness(chosen ? 2.5 : spec.Rare ? 2 : 1);
         }
         upgradeConfirmText!.Text = L("Xác nhận", "Confirm");
@@ -200,7 +200,7 @@ public sealed class UpgradeIcon : FrameworkElement
     private static readonly Brush Back = PetUi.Frozen(Color.FromArgb(0x40, 255, 255, 255));
     private static readonly Brush Gold = PetUi.Frozen(Color.FromRgb(0xFF, 0xD3, 0x5C));
     private static readonly Brush Pink = PetUi.Frozen(Color.FromRgb(0xF4, 0x9A, 0x7A));
-    private static readonly Pen Ink = PetUi.FrozenPen(PetUi.Frozen(Color.FromRgb(0x30, 0x2B, 0x48)), 2);
+    private static readonly Pen Ink = PetUi.FrozenPen(PetUi.ArtInk, 2);
     private static readonly Pen Line = PetUi.FrozenPen(Brushes.White, 3);
     private static readonly Brush Green = PetUi.Frozen(Color.FromRgb(0x9A, 0xD8, 0x84)), Blue = PetUi.Frozen(Color.FromArgb(0xC0, 0x7C, 0xC0, 0xEE));
     // Path data is always written with '.' decimals, whatever the user's culture.
@@ -326,10 +326,10 @@ public sealed class SynergyIcon : FrameworkElement
     private static readonly Brush Gold = PetUi.Frozen(Color.FromRgb(0xFF, 0xD3, 0x5C)), Pink = PetUi.Frozen(Color.FromRgb(0xF4, 0x9A, 0x7A));
     private static readonly Brush Cream = PetUi.Frozen(Color.FromRgb(0xFF, 0xF3, 0xE2)), Stone = PetUi.Frozen(Color.FromRgb(0xB8, 0xB4, 0xC8));
     private static readonly Brush Blue = PetUi.Frozen(Color.FromArgb(0xB0, 0x7C, 0xC0, 0xEE)), Green = PetUi.Frozen(Color.FromRgb(0x9A, 0xD8, 0x84));
-    private static readonly Pen Ink = PetUi.FrozenPen(PetUi.Frozen(Color.FromRgb(0x30, 0x2B, 0x48)), 2);
+    private static readonly Pen Ink = PetUi.FrozenPen(PetUi.ArtInk, 2);
     private static readonly Pen Line = PetUi.FrozenPen(Brushes.White, 3), Thin = PetUi.FrozenPen(Brushes.White, 2);
     private static readonly Pen TrackPen = PetUi.FrozenPen(Track, 3);
-    private static readonly Pen WindInk = PetUi.FrozenPen(PetUi.Frozen(Color.FromRgb(0x30, 0x2B, 0x48)), 6.5), Wind = PetUi.FrozenPen(Gold, 3.5);
+    private static readonly Pen WindInk = PetUi.FrozenPen(PetUi.ArtInk, 6.5), Wind = PetUi.FrozenPen(Gold, 3.5);
     private static Geometry Shape(FormattableString path) => PetUi.FrozenGeometry(FormattableString.Invariant(path));
 
     private string Picture => Id switch

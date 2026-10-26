@@ -14,9 +14,9 @@ public sealed class KeepsakeArt : FrameworkElement
     public static readonly double ArtHeight = CupHeight + StandHeight + 4;
 
     private static Brush B(byte r, byte g, byte b) => PetUi.Frozen(Color.FromRgb(r, g, b));
-    private static readonly Pen Outline = Freeze(new Pen(B(0x3A, 0x2E, 0x4A), 1.4) { LineJoin = PenLineJoin.Round });
+    private static readonly Pen Outline = Freeze(new Pen(PetUi.ArtInk, 1.4) { LineJoin = PenLineJoin.Round });
     private static readonly Brush Wood = B(0xA8, 0x72, 0x45), WoodDark = B(0x7A, 0x4E, 0x2C), Shine = PetUi.Frozen(Color.FromArgb(0xB0, 255, 255, 255));
-    private static readonly Brush Slime = B(0x7C, 0xD3, 0x6A), SlimeDark = B(0x4F, 0x9E, 0x45), Eye = B(0x30, 0x2B, 0x48), Plinth = B(0x4A, 0x3C, 0x5C);
+    private static readonly Brush Slime = B(0x7C, 0xD3, 0x6A), SlimeDark = B(0x4F, 0x9E, 0x45), Eye = PetUi.ArtInk, Plinth = B(0x4A, 0x3C, 0x5C);
     private static Pen Freeze(Pen pen) { pen.Freeze(); return pen; }
     // Brushes and pens are frozen once here; drawing (each squash or tilt frame) allocates none.
     private static readonly (Brush Fill, Brush Dark, Pen Handle) GoldCup = Cup(B(0xF5, 0xC5, 0x42), B(0xB8, 0x86, 0x2A)),

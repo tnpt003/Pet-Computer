@@ -453,7 +453,7 @@ public sealed partial class PetWindow
             name.Text = weapon.Name(preferences.Language);
             hint.Text = weapon.Hint(preferences.Language);
             for (int i = 0; i < statNames.Length; i++) statNames[i].Text = L(WeaponStatScales[i].Vi, WeaponStatScales[i].En);
-            ShowChosen(card, id == prepWeapon, check, rim: (2.5, 1)); // A thick white rim when chosen.
+            ShowChosen(card, id == prepWeapon, check, rim: (2.5, 1), card: true);
         }
         foreach (var (level, chip, check, text) in prepLevelChips)
         {
@@ -543,7 +543,7 @@ public sealed class PreviewHitMark : FrameworkElement
     private string effect = "";
     private double age = -1;
     private static readonly Pen Spark = PetUi.FrozenPen(Brushes.White, 3);
-    private static readonly Pen Ink = PetUi.FrozenPen(PetUi.Frozen(Color.FromRgb(0x30, 0x2B, 0x48)), 1.4);
+    private static readonly Pen Ink = PetUi.FrozenPen(PetUi.ArtInk, 1.4);
     public string Showing => age >= 0 && age <= 0.25 ? effect : "";
 
     public void Show(string kind, double sinceHit)

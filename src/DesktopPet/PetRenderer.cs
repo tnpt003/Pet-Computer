@@ -34,7 +34,7 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
     // The landing's jolt: ears flatten, front paws splay, the tail flicks up (full from JoltSpeed,
     // fading in ~0.45 s); from WinceSpeed (a fall of ~330 DIPs) the eyes squeeze shut for WinceSeconds.
     private const double LandingJoltSpeed = 1200, LandingWinceSpeed = 1000, LandingWinceSeconds = 0.3;
-    private static readonly Brush EffectInk = PetUi.Hex("#302B48");
+    private static readonly Brush EffectInk = PetUi.ArtInk;
     private static readonly Pen EffectBorder = FrozenPen(EffectInk, 3, PenLineJoin.Round);
     private static readonly Pen EffectHalo = FrozenPen(Brushes.White, 5.5, PenLineJoin.Round);
     // Frozen, shared pens avoid allocating new pens for every frame at 60 FPS.
@@ -754,12 +754,15 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
 
     // Neck items sit inside the head transform before the ears (so they follow tilts and rest
     // poses and only show below the chin); head items are drawn over the face.
-    private void DrawAccessory(DrawingContext dc, AccessoryLayer layer)
+    private void DrawAccessory(DrawingContext dc, AccessoryLayer layer) => DrawAccessory(dc, accessory, layer, palette);
+
+    // Also used by PetScene's banner cat, which maps this head's coordinates onto its own.
+    internal static void DrawAccessory(DrawingContext dc, string accessory, AccessoryLayer layer, CoatPalette palette)
     {
         if (!Accessories.TryGetValue(accessory, out var item) || item.Layer != layer) return;
         foreach (var shape in item.Shapes)
         {
-            var pen = shape.Stroke switch { StrokeKind.Outline => Outline, StrokeKind.Accent => palette.AccentOutline, _ => shape.Pen };
+            var pen = shape.Stroke switch { StrokeKind.Outline => palette.Outline, StrokeKind.Accent => palette.AccentOutline, _ => shape.Pen };
             switch (shape.Kind)
             {
                 case ShapeKind.Path: dc.DrawGeometry(shape.Fill, pen, shape.Geometry); break;

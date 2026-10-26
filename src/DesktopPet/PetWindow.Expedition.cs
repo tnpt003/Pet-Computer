@@ -710,14 +710,14 @@ public sealed partial class PetWindow
             xChoiceTexts.Add(t);
             return t;
         }
-        // A pickable card or relic: its name and what it does; the picked one is blue with a white rim.
+        // A pickable card or relic: its name and what it does; the picked one has the chosen-card look and a tick.
         Border Option(string name, string desc, bool picked, Action click)
         {
             var box = new Border
             {
-                Background = picked ? PrepChosen : PrepCardBack, BorderBrush = picked ? Brushes.White : PrepCardRim, BorderThickness = new Thickness(picked ? 2 : 1),
+                Background = picked ? PetUi.Game.ChosenCard : PrepCardBack, BorderBrush = picked ? PetUi.Game.ChosenRim : PrepCardRim, BorderThickness = new Thickness(picked ? 2 : 1),
                 CornerRadius = new CornerRadius(8), Padding = new Thickness(9, 5, 9, 6), Margin = new Thickness(0, 4, 0, 0), Cursor = System.Windows.Input.Cursors.Hand,
-                Child = new StackPanel { Children = { Text(name, PetUi.BodySize, true), Text(desc, PetUi.SmallSize, opacity: 0.85) } }
+                Child = new StackPanel { Children = { Text((picked ? "✓ " : "") + name, PetUi.BodySize, true), Text(desc, PetUi.SmallSize, opacity: 0.85) } }
             };
             box.MouseLeftButtonDown += (_, e) => { click(); e.Handled = true; };
             return box;

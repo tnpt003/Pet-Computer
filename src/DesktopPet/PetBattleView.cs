@@ -116,13 +116,13 @@ public sealed partial class BattleFieldView : FrameworkElement
     }
     private static readonly Brush SlimeAngry = Frozen(255, 0xF5, 0xA6, 0x3C);
     private static readonly Brush Shine = Frozen(220, 255, 255, 255);
-    private static readonly Brush Eye = Frozen(255, 0x2B, 0x2A, 0x33);
+    private static readonly Brush Eye = PetUi.ArtInk;
     private static readonly Brush Marker = Frozen(255, 0xFF, 0xD2, 0x3F);
     // Support enemies: a green "+" while healing, a ring on the ally being healed, rising pluses.
     private static readonly Pen HealPen = FrozenPen(Frozen(255, 0x3F, 0xC8, 0x6B), 2.4);
     private static readonly Pen HealDash = FrozenPen(Frozen(220, 0x3F, 0xC8, 0x6B), 2, new DashStyle(new[] { 3.0, 2.0 }, 0));
     private static readonly Brush Gold = Frozen(255, 0xFF, 0xC8, 0x2E);
-    private static readonly Brush BarBack = Frozen(200, 0x26, 0x23, 0x38);
+    private static readonly Brush BarBack = Frozen(200, 0x2A, 0x1F, 0x16);
     private static readonly Brush BarFill = Frozen(255, 0x6F, 0xE0, 0x6A);
     private static readonly Brush Warning = Frozen(255, 0xE5, 0x3E, 0x3E);
     private static readonly Brush PushBlue = Frozen(255, 0x5C, 0xC8, 0xFF);
@@ -130,10 +130,10 @@ public sealed partial class BattleFieldView : FrameworkElement
     private static readonly Brush HealGreen = Frozen(255, 0x7C, 0xF0, 0x7A);
     private static readonly Brush DamageWhite = Frozen(255, 0xFF, 0xF4, 0xD6);
     private static readonly Brush ComboGold = Frozen(255, 0xFF, 0xD2, 0x3F);
-    private static readonly Pen Outline = FrozenPen(Frozen(255, 0x2E, 0x3A, 0x2B), 2.2);
+    private static readonly Pen Outline = FrozenPen(PetUi.ArtInk, 2.2);
     private static readonly Pen Halo = FrozenPen(Brushes.White, 5);
-    private static readonly Pen TextHalo = FrozenPen(Frozen(255, 0x26, 0x23, 0x38), 3.5);
-    private static readonly Pen Ink = FrozenPen(Frozen(255, 0x30, 0x2B, 0x48), 2.4);
+    private static readonly Pen TextHalo = FrozenPen(Frozen(255, 0x2A, 0x1F, 0x16), 3.5);
+    private static readonly Pen Ink = FrozenPen(PetUi.ArtInk, 2.4);
     private static readonly Pen MarkerRing = FrozenPen(Marker, 3);
     private static readonly Pen PushRing = FrozenPen(PushBlue, 2.5, new DashStyle(new double[] { 2, 2 }, 0));
     private static readonly Pen BombRing = FrozenPen(Yarn, 2.5, new DashStyle(new double[] { 2, 2 }, 0));
@@ -232,7 +232,7 @@ public sealed partial class BattleFieldView : FrameworkElement
     }
 
     private static readonly Pen WardPen = FrozenPen(Frozen(255, 0x3F, 0xC8, 0x6B), 3);
-    private static readonly Brush LeapShadow = Frozen(90, 0x26, 0x23, 0x38);
+    private static readonly Brush LeapShadow = Frozen(90, 0x2A, 0x1F, 0x16);
     private static readonly Pen ShadowRim = FrozenPen(Frozen(150, 255, 255, 255), 1.5);
     private static readonly Brush SummonPurple = Frozen(255, 0x9B, 0x5C, 0xE0);
     private static readonly Pen SummonPen = FrozenPen(SummonPurple, 3.5);
@@ -600,11 +600,11 @@ public sealed partial class BattleFieldView : FrameworkElement
     private static readonly Point ShieldCentre = new(23, -18);
     private static readonly Pen ShieldRim = FrozenPen(Frozen(255, 0x5E, 0x58, 0x50), 1.6);
     private static readonly Geometry ShieldCrack = Parse("M 26,-27 L 25,-23 L 27,-21");
-    private static readonly Pen Edge = FrozenPen(Frozen(150, 0x26, 0x23, 0x38), 7.5);
+    private static readonly Pen Edge = FrozenPen(Frozen(150, 0x2A, 0x1F, 0x16), 7.5);
     // Elites: a gold rim (drawn under the dark outline, so it shows just outside it) and a star.
     private static readonly Pen EliteRim = FrozenPen(Frozen(255, 0xF2, 0xB8, 0x1E), 7);
     private static readonly Geometry EliteStar = Parse("M 0,-10 L 2.8,-2.8 L 10,0 L 2.8,2.8 L 0,10 L -2.8,2.8 L -10,0 L -2.8,-2.8 Z");
-    private static readonly Pen StarInk = FrozenPen(Frozen(255, 0x30, 0x2B, 0x48), 1.3);
+    private static readonly Pen StarInk = FrozenPen(PetUi.ArtInk, 1.3);
     private static readonly Brush RallyGlow = Frozen(170, 0xFF, 0xE6, 0x70);
     private static readonly Pen PouchStrap = FrozenPen(Frozen(255, 0x8A, 0x5E, 0x3B), 1.6);
     private static readonly Pen RallyPen = FrozenPen(Frozen(255, 0xFF, 0xE6, 0x70), 2.5);

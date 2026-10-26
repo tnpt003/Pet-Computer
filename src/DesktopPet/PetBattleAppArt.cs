@@ -14,7 +14,7 @@ public static class AppArt
 {
     private static Geometry Parse(string path) { var g = Geometry.Parse(path); g.Freeze(); return g; }
 
-    public static readonly Brush Ink = Frozen(255, 0x30, 0x2B, 0x48);
+    public static readonly Brush Ink = PetUi.ArtInk;
     public static readonly Pen InkPen = FrozenPen(Ink, 2.2);
     public static readonly Pen ThinInk = FrozenPen(Ink, 1.5);
     public static readonly Pen HaloPen = FrozenPen(Brushes.White, 5);

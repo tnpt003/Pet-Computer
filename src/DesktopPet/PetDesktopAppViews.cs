@@ -36,7 +36,7 @@ public sealed class DesktopAppIcon : FrameworkElement
         MouseLeave += (_, _) => { Hovered = false; HoverChanged?.Invoke(false); InvalidateVisual(); };
     }
 
-    private static readonly Brush Veil = PetUi.Frozen(150, 0x26, 0x23, 0x38);
+    private static readonly Brush Veil = PetUi.Frozen(150, 0x2A, 0x1F, 0x16);
     private static readonly Brush Selection = PetUi.Frozen(70, 0xFF, 0xF6, 0xE6);
     private static readonly Pen SelectionRim = PetUi.FrozenPen(PetUi.Frozen(150, 0xFF, 0xF6, 0xE6), 1);
     private static readonly Brush GoldGlow = PetUi.Frozen(110, 0xFF, 0xD2, 0x3F);
@@ -494,7 +494,7 @@ public sealed class VirusFileIcon : FrameworkElement
 
     private static readonly Brush Sheet = PetUi.Frozen(255, 0xF4, 0xF0, 0xFA), Fold = PetUi.Frozen(255, 0xD3, 0xC9, 0xE6);
     private static readonly Brush Hazard = PetUi.Frozen(255, 0x8E, 0x4F, 0xC9), HazardGlow = PetUi.Frozen(90, 0x7A, 0xD9, 0x4E);
-    private static readonly Pen Ink = PetUi.FrozenPen(PetUi.Frozen(255, 0x30, 0x2B, 0x48), 2);
+    private static readonly Pen Ink = PetUi.FrozenPen(PetUi.ArtInk, 2);
     private static readonly Pen Halo = PetUi.FrozenPen(PetUi.Frozen(230, 0x1E, 0x1B, 0x2C), 3);
     private static readonly Brush LabelGreen = PetUi.Frozen(255, 0xA8, 0xF0, 0x7A);
     private static Geometry? label;

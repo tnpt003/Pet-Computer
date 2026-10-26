@@ -56,7 +56,8 @@ Accent làm chữ trên kem chỉ đạt 4.3:1, nên chữ dùng AccentText. Car
 | Rim, HudRim | Viền kem quanh khung game |
 | Soft (#F1E4D6) | Chữ phụ trên nền tối (≈ 9:1) |
 | Gold (#FFD35C), RareGold, Warning (#FFC86A) | Nhấn vàng, độ hiếm, cảnh báo nhẹ; GoldInk là chữ đặt trên nền vàng |
-| Chosen (= Accent), Armed, Progress (= AccentBright) | Lựa chọn, kỹ năng sẵn sàng, thanh tiến độ |
+| Chosen (= Accent), Armed, Progress (= AccentBright) | Chip/tab đang chọn, kỹ năng sẵn sàng, thanh tiến độ, nút chính |
+| ChosenCard (#73C2561F) + ChosenRim (= AccentBright) | Thẻ lớn đang chọn (vũ khí, nâng cấp, lựa chọn Viễn chinh): cam trong suốt + viền cam + ✓, không tô kín |
 | CardBack, CardRim, RareBack, ButtonBack, Stage, BarBack, Locked, Ahead | Lớp kem trong suốt chồng lên nền tối |
 | Shadow(alpha) | Hố bóng nâu ấm |
 
@@ -68,7 +69,11 @@ Icon menu có nền AccentSoft; màu lấy qua `PetUi.IconColor(glyph)` theo nh�
 
 ### Màu của art
 
-Artwork (mèo, PetRenderer, PetScene, PetIllustration, kỷ vật, quái) có palette riêng: hồng #F3A1A0, lá #9BD2AE, tím sổ #C5ADE5, gỗ #B4815E/#6D4E40, Game.Gold, viền Ink. Hiệu ứng cảm xúc trong PetRenderer (vàng, đỏ cà chua, hồng, xanh giọt nước) là màu art có viền, không phải token UI.
+Artwork (mèo, PetRenderer, PetScene, PetIllustration, kỷ vật, quái) có palette riêng: `PetUi.Rose` #F3A1A0, `PetUi.Mint` #9BD2AE, `PetUi.Lilac` #C5ADE5 (chỉ tô hình, không làm chữ), gỗ #B4815E/#6D4E40, Game.Gold.
+
+Nét viền: cảnh/icon trên nền kem dùng Ink #4A3628; art vẽ trên desktop và trong bảng game (chiến trường, slime, icon thẻ/túi đồ/chuẩn bị, app giả, kỷ vật, bong bóng thoại, hiệu ứng cảm xúc) dùng `PetUi.ArtInk` #3A2C1F — nâu gần đen, đậm hơn Ink để giữ viền trên mọi hình nền. Bóng/viền chữ/màn che bán trong suốt dùng `ShadeColor` #2A1F16 với alpha. Không dùng mực chàm/tím/xanh rêu cho viền.
+
+Màu tín hiệu trận giữ độ rực để đọc trên mọi hình nền: cảnh báo đỏ #E53E3E, hồi máu xanh lá, Đẩy xanh dương, bom len hồng, vàng combo/khiên. Ba nhóm thẻ: thủ #7CC0EE, công #F49272, tốc #9AD884 (thanh, viền, huy hiệu túi đồ); vòng icon thẻ nâng cấp dùng Mint/AccentBright/Lilac. Hiệu ứng cảm xúc trong PetRenderer (vàng, đỏ cà chua, hồng, xanh giọt nước) là màu art có viền, không phải token UI.
 
 ### Không chỉ dựa vào màu
 
@@ -107,7 +112,7 @@ Không tự thêm confirm, màn trung gian hoặc đổi navigation chỉ để 
 - Scene/illustration là trang trí: không text, không nút, không nhận input, không timer; DrawingGroup frozen, cache theo loại.
 - Mỗi bảng tối đa một banner; không đặt banner ngay cạnh preview/chân dung mèo (Tùy chỉnh, Túi đồ, trang Phần thưởng của sảnh không có banner riêng). Bảng game (CreateGamePanel) co banner theo màn hình của mèo: 104 DIP; màn hình còn < 700 DIP thì 56 DIP; < 540 DIP thì ẩn (PlaceGamePanel).
 - Tiêu đề bảng game căn trái, không huy hiệu mode (banner đã nói mode).
-- Mèo trong PetScene mặc coat của pet (`PetScene.Coat`, PetWindow đặt khi tải và khi Lưu cài đặt): lông, mõm, tai/điểm màu, bàn chân, mắt màu, hoa văn tam thể/mướp lấy từ CoatPalette; cache theo (cảnh, coat). Chân dung trạng thái/sảnh/kết quả dùng PetRenderer thật (có phụ kiện); mèo trong cảnh không đội phụ kiện.
+- Mèo trong PetScene mặc coat và phụ kiện của pet (`PetScene.Coat`, `PetScene.Accessory`; PetWindow đặt khi tải, khi Lưu cài đặt và khi đổi đồ ngày lễ): lông, mõm, tai/điểm màu, bàn chân, mắt màu, hoa văn tam thể/mướp lấy từ CoatPalette; phụ kiện vẽ bằng chính dữ liệu accessories.json của PetRenderer, đổi tỷ lệ 0,75 vào đầu mèo nhỏ (cả mèo ngồi và mèo cuộn ngủ). Cache theo (cảnh, coat, phụ kiện).
 - Vùng đã có art riêng tiếp tục dùng art đó: ModeArt, WeaponIcon, UpgradeIcon (64 DIP trên huy hiệu 86), SynergyIcon, BagIcon, KeepsakeArt, AppArt.
 - Vai trò slime nhận ra từ hình dáng/phụ kiện, không chỉ recolor. Elite thêm một dấu hiệu rõ, không phủ hiệu ứng che windup.
 - App giả là đồ chơi hình cửa sổ/icon máy tính; giữ quy tắc không dùng app/logo thật, không đọc nội dung desktop. Phân biệt cảnh báo game với lỗi Windows thật.
@@ -149,7 +154,8 @@ Khi đụng overlay, cửa sổ trận hoặc animation:
 
 ## Việc tiếp theo để chuẩn hóa dần
 
-- Mèo trong PetScene chưa đội phụ kiện của pet (mũ, nơ…); có thể thêm nếu cần.
+- Ghi chú bản đồ Viễn chinh và dòng cộng hưởng HUD giữ chữ theo ngôn ngữ lúc tạo; đổi ngôn ngữ giữa chuyến/trận thì còn chữ cũ tới khi nội dung đổi.
+- Màu riêng còn lại trong PetBattleView (tín hiệu, kỹ năng), PetBattleAppArt (app giả) và PetRenderer (hiệu ứng cảm xúc) là màu art có chủ đích; chỉ gom khi sửa đúng phần đó.
 - Kiểm kê màu hardcode còn lại (Inventory, BattleUpgrade, GamePanel, BattleHud) để gom vào PetUi.Game hoặc file art tương ứng.
 - Thêm hằng khoảng cách nếu nhiều màn mới cần cùng nhịp.
 - Chưa có cuộc rà trực quan toàn app trên desktop/DPI thật.

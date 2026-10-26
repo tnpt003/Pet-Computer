@@ -11,7 +11,7 @@ public sealed class PetIllustration : FrameworkElement
 {
     private readonly PetMotif motif;
     private readonly Brush color;
-    private static readonly Brush Rose = PetUi.Hex("#F3A1A0"), Mint = PetUi.Hex("#9BD2AE"), Lilac = PetUi.Hex("#C5ADE5");
+    private static readonly Brush Rose = PetUi.Rose, Mint = PetUi.Mint, Lilac = PetUi.Lilac;
     private static readonly Pen Outline = PetUi.FrozenPen(PetUi.Ink, 2);
     public PetIllustration(PetMotif motif, double size = 40, Brush? color = null)
     {

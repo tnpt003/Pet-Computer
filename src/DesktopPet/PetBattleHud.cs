@@ -516,7 +516,7 @@ public sealed class HudGlyph : FrameworkElement
 
     private static Pen P(Brush b, double t) { var p = new Pen(b, t) { LineJoin = PenLineJoin.Round, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round }; p.Freeze(); return p; }
     private static Geometry G(string path) { var g = Geometry.Parse(path); g.Freeze(); return g; }
-    private static readonly Pen InkPen = P(PetUi.Frozen(Color.FromRgb(0x30, 0x2B, 0x48)), 1.6);
+    private static readonly Pen InkPen = P(PetUi.ArtInk, 1.6);
     private static readonly Pen WhiteBold = P(Brushes.White, 3.2);
     private static readonly Pen WhiteThin = P(Brushes.White, 1.6);
     private static readonly Pen YarnLine = P(PetUi.Frozen(Color.FromRgb(0xB0, 0x4A, 0x88)), 1.3);

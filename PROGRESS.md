@@ -4,6 +4,14 @@ Cập nhật: 2026-10-24 (Asia/Saigon). Lịch sử trước 21/10: docs/archive
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
+## Đợt visual lớn — mốc 3: thống nhất art (2026-10-26)
+- Mực art: token `PetUi.ArtInk` #3A2C1F (+ `ShadeColor` #2A1F16 cho bóng/viền chữ/màn che) thay mực chàm #302B48/#262338, viền slime xanh rêu #2E3A2B, mắt #2B2A33 và viền tím kỷ vật #3A2E4A (22 chỗ: chiến trường, HUD, app giả, icon thẻ/túi đồ/chuẩn bị, kỷ vật, cuộn len, bong bóng thoại, hiệu ứng cảm xúc). Độ tối gần như cũ; màu tín hiệu trận (đỏ cảnh báo, xanh hồi máu, xanh Đẩy, hồng bom, vàng) giữ nguyên để đọc trên mọi hình nền.
+- Thẻ lớn đang chọn (vũ khí ở bảng chuẩn bị, thẻ nâng cấp, lựa chọn thẻ/vật phẩm Viễn chinh): `Game.ChosenCard` cam trong suốt + viền `ChosenRim` cam + ✓ (thẻ nâng cấp và lựa chọn Viễn chinh trước không có ✓); chip/tab/nút giữ cam đặc.
+- Mèo trong banner đội phụ kiện của pet: `PetRenderer.DrawAccessory` dùng chung (static), PetScene vẽ ở tỷ lệ 0,75 vào đầu mèo ngồi và mèo cuộn ngủ; `PetScene.Accessory` đặt trong ApplyAccessory (cả đồ ngày lễ). Cache theo (cảnh, coat, phụ kiện).
+- Gom màu: `PetUi.Mint/Lilac/Rose` dùng chung cho PetScene, PetIllustration, vòng icon thẻ nâng cấp, thanh tiến độ Vô tận ở sảnh (#BCA3E1 → Lilac). Túi đồ: màu thanh HP, chữ tăng, ba nhóm thẻ, icon túi (da, sắt, đế, đá) thành field static (trước tạo brush mới mỗi lần cập nhật/vẽ).
+- Test thật: scripts/test.ps1 -Ui exit 0, WPF 925/925 (thêm: mèo cảnh đội phụ kiện; Lưu cài đặt đặt phụ kiện cho cảnh). Đã xem scene-accessories (18 phụ kiện × ngồi/ngủ), battle-kinds light/dark, battle-apps-strip-dark, adventure-upgrade-en, battle-setup-vi, speech-vi. Chưa xem trên desktop/DPI thật.
+- Test tay: một trận (viền slime/số/thanh máu trên hình nền sáng và tối), chọn thẻ nâng cấp và vũ khí (✓ + viền cam), đổi phụ kiện rồi mở sảnh/nhật ký (mèo banner đội đúng đồ).
+
 ## Đợt visual lớn — mốc 4: tối ưu vẽ (2026-10-26)
 - Quét các file vẽ tìm Pen/Brush/FormattedText tạo trong hàm vẽ: chữ số sát thương, nhãn app, chữ app độc, màu gồng của slime và tia lửa app đã được cache sẵn. Chỉ PetKeepsakeArt còn tạo mới mỗi lần vẽ (kệ vẽ lại mỗi frame khi nảy/nghiêng/lật đồng hồ cát): 11 Pen và 6 Brush (màu cúp tạo mới mỗi lần gọi) → static frozen.
 - Ảnh render keepsake-orb, keepsake-hourglass, rewards-infinity-en giống trước từng pixel (so hash). Test thật: scripts/test.ps1 -Ui exit 0, WPF 924/924.

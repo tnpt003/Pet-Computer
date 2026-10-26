@@ -11,15 +11,16 @@ public enum PetSceneKind { Home, Adventure, Expedition, Infinity, Workshop, Diar
 // Decoration only. Height belongs to the scrollable content, never to an overlay above controls.
 public sealed class PetScene : FrameworkElement
 {
-    private static readonly Dictionary<(PetSceneKind, CoatPalette), DrawingGroup> Scenes = new();
+    private static readonly Dictionary<(PetSceneKind, CoatPalette, string), DrawingGroup> Scenes = new();
     private readonly PetSceneKind kind;
     private static readonly Brush Ink = PetUi.Ink, Cream = PetUi.Surface, Orange = PetUi.AccentBright,
-        Gold = PetUi.Game.Gold, Mint = PetUi.Hex("#9BD2AE"), Rose = PetUi.Hex("#F3A1A0"), Lilac = PetUi.Hex("#C5ADE5"),
+        Gold = PetUi.Game.Gold, Mint = PetUi.Mint, Rose = PetUi.Rose, Lilac = PetUi.Lilac,
         Wood = PetUi.Hex("#B4815E"), DarkWood = PetUi.Hex("#6D4E40"), Steel = PetUi.Hex("#E4E2EC"), Glow = PetUi.Hex("#55FFE7A6");
     private static readonly Pen Rim = PetUi.FrozenPen(Ink, 2), Fine = PetUi.FrozenPen(Ink, 1.3);
     private static readonly Color NightTop = Color.FromRgb(57,49,90);
-    // The scene cat wears the pet's coat; PetWindow sets this when the coat is loaded or saved.
+    // The scene cat wears the pet's coat and accessory; PetWindow sets these when they are loaded or saved.
     public static string? Coat { get; set; }
+    public static string Accessory { get; set; } = "None";
     public PetScene(PetSceneKind kind, double height = 96)
     {
         this.kind = kind; Height = height; MinWidth = 0;
@@ -32,8 +33,8 @@ public sealed class PetScene : FrameworkElement
     }
     internal static void Draw(DrawingContext dc, PetSceneKind kind, double width, double height)
     {
-        var coat = CoatPalette.For(Coat);
-        if (!Scenes.TryGetValue((kind,coat), out var scene)) { scene = Build(kind,coat); Scenes.Add((kind,coat),scene); }
+        var key = (kind, CoatPalette.For(Coat), Accessory ?? "None");
+        if (!Scenes.TryGetValue(key, out var scene)) { scene = Build(kind,key.Item2,key.Item3); Scenes.Add(key,scene); }
         double ActualWidth = width, ActualHeight = height;
         dc.PushClip(new RectangleGeometry(new Rect(0,0,ActualWidth,ActualHeight),12,12));
         // Fill the banner while preserving shapes, never stretch the cat.
@@ -90,7 +91,12 @@ public sealed class PetScene : FrameworkElement
         d.DrawEllipse(c.Pink,PetUi.FrozenPen(c.Ink,1),new Point(x,y+6),2.6,1.8);
         d.DrawLine(PetUi.FrozenPen(c.Ink,1.3),new Point(x,y+8),new Point(x,y+11));
     }
-    private static void Cat(DrawingContext d,CoatPalette c,double x,double y) {
+    // The pet's accessory from PetRenderer, its head (centre 55,48) mapped onto this smaller head.
+    private static void Wear(DrawingContext d,CoatPalette c,string accessory,AccessoryLayer layer,double hx,double hy) {
+        d.PushTransform(new TranslateTransform(hx-55*0.75,hy-48*0.75));d.PushTransform(new ScaleTransform(0.75,0.75));
+        PetRenderer.DrawAccessory(d,accessory,layer,c);d.Pop();d.Pop();
+    }
+    private static void Cat(DrawingContext d,CoatPalette c,string a,double x,double y) {
         var rim=PetUi.FrozenPen(c.Ink,2);
         d.DrawEllipse(PetUi.Hex("#25000000"),null,new Point(x,y+29),29,5);
         // Tail behind the body, outlined like the pet's own.
@@ -98,23 +104,27 @@ public sealed class PetScene : FrameworkElement
         Path(d,tail,null,Round(c.Ink,11));Path(d,tail,null,Round(c.Ear,7));
         d.DrawEllipse(c.Fur,rim,new Point(x,y+12),18,19);
         d.DrawEllipse(c.Cream,null,new Point(x,y+14),11,13);
+        Wear(d,c,a,AccessoryLayer.Neck,x,y-6);
         Path(d,$"M{x-20},{y-6} L{x-21},{y-29} L{x-6},{y-18} M{x+6},{y-18} L{x+21},{y-29} L{x+20},{y-6}",c.Ear,rim);
         Path(d,$"M{x-17},{y-12} L{x-18},{y-23} L{x-10},{y-17}Z M{x+17},{y-12} L{x+18},{y-23} L{x+10},{y-17}Z",c.Pink);
         d.DrawEllipse(c.Fur,rim,new Point(x,y-6),23,19);
         Face(d,c,x,y-6,23,19,false);
         d.DrawEllipse(c.Paw,rim,new Point(x-12,y+29),10,4);d.DrawEllipse(c.Paw,rim,new Point(x+12,y+29),10,4);
+        Wear(d,c,a,AccessoryLayer.Head,x,y-6);
     }
     // Curled up asleep: head resting on the paws, tail wrapped in front.
-    private static void SleepingCat(DrawingContext d,CoatPalette c,double x,double y) {
+    private static void SleepingCat(DrawingContext d,CoatPalette c,string a,double x,double y) {
         var rim=PetUi.FrozenPen(c.Ink,2);double hx=x-26,hy=y+6;
         d.DrawEllipse(PetUi.Hex("#25000000"),null,new Point(x+4,y+31),46,5);
         d.DrawEllipse(c.Fur,rim,new Point(x+8,y+16),36,15);
         if(c.Markings==CoatMarkings.Calico && c.PatchB!=null) {
             d.PushClip(new EllipseGeometry(new Point(x+8,y+16),35,14));d.DrawEllipse(c.PatchB,null,new Point(x+24,y+8),14,10);d.Pop();
         }
+        Wear(d,c,a,AccessoryLayer.Neck,hx,hy);
         Path(d,$"M{hx-18},{hy-4} L{hx-19},{hy-25} L{hx-5},{hy-15} M{hx+5},{hy-15} L{hx+19},{hy-25} L{hx+18},{hy-4}",c.Ear,rim);
         d.DrawEllipse(c.Fur,rim,new Point(hx,hy),22,18);
         Face(d,c,hx,hy,22,18,true);
+        Wear(d,c,a,AccessoryLayer.Head,hx,hy);
         d.DrawEllipse(c.Paw,rim,new Point(hx+20,y+28),10,4);
         var tail=$"M{x+42},{y+20} C{x+56},{y+34} {x+20},{y+34} {x-2},{y+29}";
         Path(d,tail,null,Round(c.Ink,11));Path(d,tail,null,Round(c.Ear,7));
@@ -168,7 +178,7 @@ public sealed class PetScene : FrameworkElement
         }
         Path(d,path.Append('Z').ToString(),fill,Rim);d.DrawEllipse(Cream,Fine,new Point(x,y),r*0.3,r*0.3);
     }
-    private static DrawingGroup Build(PetSceneKind k,CoatPalette coat)
+    private static DrawingGroup Build(PetSceneKind k,CoatPalette coat,string wear)
     {
         var g=new DrawingGroup();using(var d=g.Open()) {
             switch(k) {
@@ -212,7 +222,7 @@ public sealed class PetScene : FrameworkElement
                     for(int i=0;i<4;i++)d.DrawEllipse(Gold,Rim,new Point(148+i*52,104-i*12),4,4);
                     d.DrawLine(Rim,new Point(372,60),new Point(372,24));Path(d,"M372,24 L402,32 L372,40Z",Orange,Rim);
                     // Slime, cat and chest sit inside x 152–328, the part a mode card keeps.
-                    Cat(d,coat,222,67);Slime(d,170,99,Mint);Chest(d,272,83);
+                    Cat(d,coat,wear,222,67);Slime(d,170,99,Mint);Chest(d,272,83);
                     break;
                 case PetSceneKind.Workshop:
                     Sky(d,Color.FromRgb(242,211,179),Color.FromRgb(253,235,216));
@@ -226,7 +236,7 @@ public sealed class PetScene : FrameworkElement
                     d.DrawEllipse(Glow,null,new Point(312,30),22,8);
                     Box(d,330,70,118,9,Wood,3);d.DrawLine(Round(DarkWood,5),new Point(342,79),new Point(342,97));d.DrawLine(Round(DarkWood,5),new Point(436,79),new Point(436,97));
                     Chest(d,350,38);Box(d,410,56,26,14,Steel,3);
-                    Cat(d,coat,276,65);Plant(d,46,81);
+                    Cat(d,coat,wear,276,65);Plant(d,46,81);
                     break;
                 case PetSceneKind.Diary:
                     Sky(d,Color.FromRgb(244,198,168),Color.FromRgb(255,240,223));
@@ -245,14 +255,14 @@ public sealed class PetScene : FrameworkElement
                     Box(d,136,44,124,30,Lilac);Box(d,142,38,56,32,Cream,3);Box(d,198,38,56,32,Cream,3);
                     for(int i=0;i<3;i++){d.DrawLine(Fine,new Point(150,47+i*8),new Point(190,47+i*8));d.DrawLine(Fine,new Point(206,47+i*8),new Point(244,47+i*8));}
                     d.DrawLine(Round(Ink,5),new Point(232,34),new Point(256,20));d.DrawLine(Round(Orange,3),new Point(232,34),new Point(256,20));
-                    Cat(d,coat,318,65);
+                    Cat(d,coat,wear,318,65);
                     break;
                 case PetSceneKind.Speech:
                     Sky(d,Color.FromRgb(214,234,240),Color.FromRgb(255,246,230));Clouds(d);d.DrawEllipse(Gold,null,new Point(60,26),13,13);
                     Path(d,"M0,92 Q240,80 480,92 L480,120 L0,120Z",Mint,Rim);
                     Box(d,404,40,14,57,Wood,3);d.DrawEllipse(Mint,Rim,new Point(411,34),36,26);d.DrawEllipse(Rose,null,new Point(398,28),3,3);d.DrawEllipse(Rose,null,new Point(424,40),3,3);
                     for(int i=0;i<6;i++){double x=40+i*30+(i%2)*8;d.DrawLine(PetUi.FrozenPen(PetUi.Care,2),new Point(x,104),new Point(x,94));d.DrawEllipse(i%3==0?Rose:i%3==1?Lilac:Gold,Fine,new Point(x,92),4,4);}
-                    Cat(d,coat,205,63);Box(d,254,21,105,49,Cream,12);Path(d,"M271,69 L259,82 L293,69",Cream,Rim);
+                    Cat(d,coat,wear,205,63);Box(d,254,21,105,49,Cream,12);Path(d,"M271,69 L259,82 L293,69",Cream,Rim);
                     for(int i=0;i<3;i++)d.DrawEllipse(i==0?Mint:i==1?Rose:Lilac,null,new Point(280+i*24,45),5,5);
                     break;
                 case PetSceneKind.Sound:
@@ -263,7 +273,7 @@ public sealed class PetScene : FrameworkElement
                     Path(d,"M0,0 L74,0 Q54,48 66,97 L0,97Z",Rose,Rim);Path(d,"M480,0 L406,0 Q426,48 414,97 L480,97Z",Rose,Rim);
                     Path(d,"M20,0 Q30,50 22,97 M44,0 Q52,50 46,97 M460,0 Q450,50 458,97 M436,0 Q428,50 434,97",null,Fine);
                     Box(d,108,29,52,68,Lilac);d.DrawEllipse(DarkWood,Rim,new Point(134,72),16,16);d.DrawEllipse(Cream,null,new Point(134,72),7,7);d.DrawEllipse(Gold,Rim,new Point(134,43),6,6);
-                    Cat(d,coat,240,65);Headphones(d,240,59);
+                    Cat(d,coat,wear,240,65);Headphones(d,240,59);
                     for(int i=0;i<3;i++){double x=318+i*20;d.DrawEllipse(Gold,Rim,new Point(x,49+i*8),5,3.5);d.DrawLine(Rim,new Point(x+5,49+i*8),new Point(x+5,29+i*8));}
                     break;
                 case PetSceneKind.Settings:
@@ -272,14 +282,14 @@ public sealed class PetScene : FrameworkElement
                     Box(d,104,21,126,72,Cream);for(int i=0;i<3;i++){d.DrawLine(PetUi.FrozenPen(Lilac,4),new Point(119,38+i*20),new Point(214,38+i*20));d.DrawEllipse(i==1?Mint:Orange,Rim,new Point(i==1?155:190,38+i*20),6,6);}
                     Gear(d,372,40,18,Gold);Gear(d,398,64,12,Mint);
                     d.DrawEllipse(Cream,Rim,new Point(446,30),15,15);d.DrawLine(Rim,new Point(446,30),new Point(446,20));d.DrawLine(Rim,new Point(446,30),new Point(453,33));
-                    Cat(d,coat,302,65);Plant(d,46,81);
+                    Cat(d,coat,wear,302,65);Plant(d,46,81);
                     break;
                 case PetSceneKind.Treasure:
                     Sky(d,Color.FromRgb(247,217,154),Color.FromRgb(255,243,217));
                     Floor(d,Wood);
                     for(int i=0;i<7;i++)Star(d,108+i*39,15+(i%3)*13,3);
                     OpenChest(d,92,61);Coins(d,170,97,8);
-                    Cat(d,coat,245,65);Trophy(d,340,97);
+                    Cat(d,coat,wear,245,65);Trophy(d,340,97);
                     Gem(d,392,90,Mint);Gem(d,410,86,Lilac);Gem(d,428,90,Rose);Coins(d,440,97,4);
                     break;
                 case PetSceneKind.Victory:
@@ -292,13 +302,13 @@ public sealed class PetScene : FrameworkElement
                         d.PushTransform(new RotateTransform(i*37%90-45,x,y));d.DrawRectangle(confetti[i%4],null,new Rect(x-3,y-1.5,6,3));d.Pop(); }
                     // Podium: the cat stands on the top step.
                     Box(d,170,86,50,11,Lilac,2);Box(d,218,80,56,17,Gold,2);Box(d,272,89,46,8,Mint,2);Star(d,246,88,4);
-                    Cat(d,coat,246,47);Trophy(d,372,97);Plant(d,46,81);
+                    Cat(d,coat,wear,246,47);Trophy(d,372,97);Plant(d,46,81);
                     break;
                 case PetSceneKind.Rest:
                     Sky(d,NightTop,Color.FromRgb(130,110,164));Stars(d);Moon(d,410,25);
                     Floor(d,Wood);
                     d.DrawEllipse(Lilac,Rim,new Point(244,94),66,11);
-                    SleepingCat(d,coat,252,64);
+                    SleepingCat(d,coat,wear,252,64);
                     Z(d,206,46,7);Z(d,192,30,9);Z(d,174,12,11);
                     Box(d,330,66,34,31,Cream,4);d.DrawLine(Rim,new Point(347,66),new Point(347,52));
                     d.DrawEllipse(Glow,null,new Point(347,46),24,16);Path(d,"M336,52 L340,36 L354,36 L358,52Z",Gold,Rim);
@@ -307,7 +317,7 @@ public sealed class PetScene : FrameworkElement
                 default:
                     Sky(d,Color.FromRgb(250,214,174),Color.FromRgb(255,244,221));Clouds(d);d.DrawEllipse(Gold,null,new Point(410,23),13,13);
                     Floor(d,Wood);Plant(d,46,81);Plant(d,432,81);
-                    Box(d,110,19,90,66,Cream);Box(d,117,26,76,46,Mint);d.DrawLine(Rim,new Point(155,85),new Point(155,94));Cat(d,coat,261,65);d.DrawEllipse(Lilac,Rim,new Point(345,84),13,13);
+                    Box(d,110,19,90,66,Cream);Box(d,117,26,76,46,Mint);d.DrawLine(Rim,new Point(155,85),new Point(155,94));Cat(d,coat,wear,261,65);d.DrawEllipse(Lilac,Rim,new Point(345,84),13,13);
                     Path(d,"M335,79 Q350,95 356,75 M333,86 Q346,71 358,86",null,Fine);
                     break;
             }

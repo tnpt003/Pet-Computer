@@ -34,7 +34,7 @@ public sealed partial class PetWindow
         InitializeContext();
         InitializeLedges();
         ApplyQuiet();
-        renderer.Coat = preferences.Coat;
+        renderer.Coat = PetScene.Coat = preferences.Coat;
         ApplyAccessory();
         behavior.Personality = preferences.Personality;
         // Menu groups: play with the cat · the Quiet and Sounds switches · who the cat is ({name}: status,

@@ -103,9 +103,9 @@ Không tự thêm confirm, màn trung gian hoặc đổi navigation chỉ để 
 - Giữ vector/procedural WPF: silhouette tròn rõ ở kích thước thật, nét nâu đậm, bóng nhẹ, chi tiết vừa đủ. Không đổi sang sprite hoặc engine khác.
 - Mèo là tâm điểm. Trang bị và quái dùng cùng nét, độ đơn giản và chất liệu gỗ/vải/giấy/kim loại hoạt hình.
 - **PetIllustration**: 6 motif nhỏ (Cat/Book/Heart/Leaf/Spark/Trophy) cho trạng thái, nhật ký, welcome, kết quả.
-- **PetScene**: 12 cảnh banner 76–104 DIP trong vùng nội dung cuộn, chọn theo chức năng: Home, Adventure, Expedition (bản đồ + la bàn + ba lô), Infinity (cổng vô tận + slime), Workshop (trang bị), Diary, Speech/Sound/Settings (tab cài đặt), Treasure (vật phẩm), Victory/Rest (kết quả). Giữ bố cục chính ở giữa vì thẻ mode crop cảnh.
+- **PetScene**: 12 cảnh banner 76–104 DIP trong vùng nội dung cuộn, chọn theo chức năng; mỗi cảnh có nền và đồ vật riêng, không lặp một bố cục: Home (phòng ban ngày, màn hình + cuộn len), Adventure (đồi xanh, slime, rương), Expedition (bản đồ + la bàn + ba lô, đêm), Infinity (cổng vô tận + slime, đêm), Workshop (bảng treo kiếm/búa/khiên, bàn thợ, đèn treo), Diary (giá sách, bàn có sổ mở, cửa sổ hoàng hôn), Speech (bãi cỏ, cây, bong bóng thoại), Sound (sân khấu rèm, đèn rọi, mèo đeo tai nghe), Settings (bảng trượt, bánh răng, đồng hồ), Treasure (rương mở, xu, cúp, đá quý), Victory (bục ba bậc, cúp, cờ, giấy màu), Rest (đêm, trăng khuyết, mèo cuộn tròn ngủ trên đệm, ZZZ, đèn ngủ). Giữ bố cục chính ở giữa vì thẻ mode crop cảnh: Adventure đặt slime/mèo/rương trong x 152–328 của khung 480.
 - Scene/illustration là trang trí: không text, không nút, không nhận input, không timer; DrawingGroup frozen, cache theo loại.
-- Chân dung trạng thái dùng renderer của mèo thật (coat/phụ kiện). Mèo trong PetScene là mèo cam cách điệu cố định — xem "Việc tiếp theo".
+- Mèo trong PetScene mặc coat của pet (`PetScene.Coat`, PetWindow đặt khi tải và khi Lưu cài đặt): lông, mõm, tai/điểm màu, bàn chân, mắt màu, hoa văn tam thể/mướp lấy từ CoatPalette; cache theo (cảnh, coat). Chân dung trạng thái/sảnh/kết quả dùng PetRenderer thật (có phụ kiện); mèo trong cảnh không đội phụ kiện.
 - Vùng đã có art riêng tiếp tục dùng art đó: ModeArt, WeaponIcon, UpgradeIcon (64 DIP trên huy hiệu 86), SynergyIcon, BagIcon, KeepsakeArt, AppArt.
 - Vai trò slime nhận ra từ hình dáng/phụ kiện, không chỉ recolor. Elite thêm một dấu hiệu rõ, không phủ hiệu ứng che windup.
 - App giả là đồ chơi hình cửa sổ/icon máy tính; giữ quy tắc không dùng app/logo thật, không đọc nội dung desktop. Phân biệt cảnh báo game với lỗi Windows thật.
@@ -147,8 +147,7 @@ Khi đụng overlay, cửa sổ trận hoặc animation:
 
 ## Việc tiếp theo để chuẩn hóa dần
 
-- Mèo trong PetScene là mèo cam cố định, khác mèo thật của người dùng (coat/phụ kiện) đứng ngay cạnh ở sảnh/trạng thái. Cân nhắc vẽ mèo của scene theo coat hiện tại (cache theo coat) hoặc dùng PetRenderer.
-- PetScene: 9/12 cảnh dùng cùng bố cục kệ gỗ + 2 chậu cây + mặt trời. Một số vật thể khó đọc ở kích thước banner: cúp (Treasure/Victory) chỉ là khối vàng trên que, thanh kiếm ở Workshop giống dấu cộng, Rest vẫn có mặt trời và không có ZZZ, vòng tai nghe ở Sound giống hào quang. Thẻ Adventure ở sảnh cắt đôi rương ở mép phải.
+- Mèo trong PetScene chưa đội phụ kiện của pet (mũ, nơ…); có thể thêm nếu cần.
 - Kiểm kê màu hardcode còn lại (Inventory, BattleUpgrade, GamePanel, BattleHud) để gom vào PetUi.Game hoặc file art tương ứng.
 - Thêm hằng khoảng cách nếu nhiều màn mới cần cùng nhịp.
 - Chưa có cuộc rà trực quan toàn app trên desktop/DPI thật.

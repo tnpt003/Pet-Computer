@@ -1069,7 +1069,7 @@ internal static class Program
         window.SetLanguage("en"); window.LanguageChanged -= CountLanguage;
         Check(languageSet && window.UiLanguage == "en" && languageEvents == 2, "SetLanguage switches the app's language once per change");
         var breaks = Field<PetBreaks>(window, "breaks");
-        Check(preferences.Coat == "Black" && preferences.Accessory == "Hat" && renderer.Coat == "Black" && renderer.Accessory == "Hat" &&
+        Check(preferences.Coat == "Black" && preferences.Accessory == "Hat" && renderer.Coat == "Black" && PetScene.Coat == "Black" && renderer.Accessory == "Hat" &&
               preferences.BreakReminders && preferences.BreakMinutes == 30 && breaks.Enabled && breaks.IntervalSeconds == 1800,
             "Saving applies the coat, accessory and break interval at once");
         Check(preferences.Birthday == "02-29", "A birthday past the month's end is saved as its last day (31 Feb -> 02-29)");
@@ -1080,7 +1080,7 @@ internal static class Program
         form.Save.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
         Check(preferences.Birthday == "", "Clearing the month removes the birthday");
         Check(!form.PreviewTimer.IsEnabled, "Closing Customize stops the preview animation");
-        renderer.Coat = preferences.Coat = "Orange"; renderer.Accessory = preferences.Accessory = "None";
+        renderer.Coat = PetScene.Coat = preferences.Coat = "Orange"; renderer.Accessory = preferences.Accessory = "None";
 
         bool quiet = preferences.Quiet, sounds = preferences.Sounds;
         preferences.Sounds = true;

@@ -26,6 +26,31 @@ internal static class VisualPolishChecks
                 using var stream = File.Create(Path.Combine(output,"scene-catalog.png")); png.Save(stream);
             }
         }
+        // The scene cat wears the pet's coat: each coat draws differently, one row per coat for review.
+        string? coatBefore = PetScene.Coat;
+        byte[] Pixels(PetSceneKind kind, string coat) {
+            PetScene.Coat = coat;
+            var visual = new DrawingVisual();
+            using (var dc = visual.RenderOpen()) PetScene.Draw(dc, kind, 240, 60);
+            var bitmap = new RenderTargetBitmap(240,60,96,96,PixelFormats.Pbgra32); bitmap.Render(visual);
+            var bytes = new byte[240*60*4]; bitmap.CopyPixels(bytes, 240*4, 0); return bytes;
+        }
+        check(!Pixels(PetSceneKind.Home,"Orange").AsSpan().SequenceEqual(Pixels(PetSceneKind.Home,"Black")), "Scene cat follows the pet's coat");
+        check(Pixels(PetSceneKind.Infinity,"Orange").AsSpan().SequenceEqual(Pixels(PetSceneKind.Infinity,"Black")), "Scenes without the cat ignore the coat");
+        if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string coatDir) {
+            var coats = PetCoats.All; var sheetVisual = new DrawingVisual();
+            using (var dc = sheetVisual.RenderOpen())
+                for (int i = 0; i < coats.Count; i++) {
+                    PetScene.Coat = coats[i].Id;
+                    foreach (var (kind, column) in new[]{(PetSceneKind.Home,0),(PetSceneKind.Rest,1),(PetSceneKind.Sound,2)}) {
+                        dc.PushTransform(new TranslateTransform(column*240, i*60)); PetScene.Draw(dc, kind, 240, 60); dc.Pop();
+                    }
+                }
+            var coatSheet = new RenderTargetBitmap(720, coats.Count*60, 96, 96, PixelFormats.Pbgra32); coatSheet.Render(sheetVisual);
+            var png = new PngBitmapEncoder(); png.Frames.Add(BitmapFrame.Create(coatSheet));
+            using var stream = File.Create(Path.Combine(coatDir,"scene-coats.png")); png.Save(stream);
+        }
+        PetScene.Coat = coatBefore;
         var narrow = new PetScene(PetSceneKind.Home, 80);
         narrow.Measure(new Size(180,80)); narrow.Arrange(new Rect(0,0,180,80));
         check(narrow.DesiredSize.Width <= 180 && narrow.ActualWidth == 180, "Scene does not force narrow panels wider");

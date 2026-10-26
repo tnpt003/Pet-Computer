@@ -162,7 +162,7 @@ public sealed partial class PetWindow
             preferences.Birthday = birthMonth > 0 && birthDay > 0
                 ? $"{birthMonth:00}-{Math.Min(birthDay, DateTime.DaysInMonth(2000, birthMonth)):00}" : "";
             preferences.HolidayAccessories = form.HolidayAccessories.IsChecked == true;
-            renderer.Coat = preferences.Coat; ApplyAccessory();
+            renderer.Coat = PetScene.Coat = preferences.Coat; ApplyAccessory();
             preferences.ClimbWindows = form.ClimbWindows.IsChecked == true;
             if (!preferences.ClimbWindows) DropLedges(); // A pet on a window falls; a climbing one lets go.
             preferences.ShowTrophies = form.ShowTrophies.IsChecked == true;

@@ -24,6 +24,13 @@ Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Battle Mode. Tóm tắt:
 
 Physics kéo/ném giữ nguyên; mèo vẫn không nhận sát thương khi đang cầm/bay.
 
+**Chốt thêm 2026-10-26:**
+- **Thả đè (S6)** là tương tác riêng của slime đào hang: mèo vừa được thả rơi trúng nó lúc nó trồi thì nó kẹt ngoài. Quái khác không bị mèo rơi trúng ảnh hưởng (trừ thẻ hiếm Chấn động bên dưới).
+- **Đạn dính của slime bay vẫn trúng trong `landingGrace`** (vài giây không bị đánh sau khi thả mèo), cho khớp với việc trúng cả khi đang cầm. Khiên bong bóng vẫn chặn.
+- **Hướng dẫn phiêu lưu mở rộng sang chương 2**, luật như chương 1 (đứng hình nhưng không phải Pause), dạy cả quái mới lẫn kỹ năng mới.
+- **Chuột không quá tải:** mỗi trận chương 2/Viễn chinh tối đa 2 loại quái cần dùng chuột (S1–S4) cùng lúc; Vô tận tính sau khi chơi thật.
+- **Trận tự do giữ nguyên** (chờ người dùng xác nhận): không có quái, kỹ năng, luật mới.
+
 **Ngoại lệ miễn sát thương khi cầm (người dùng chốt 2026-10-26):** đạn dính của **slime bay (S5)** gây sát thương cho mèo **kể cả khi đang cầm** (Khiên bong bóng vẫn chặn). Đây là quái duy nhất làm vậy; mọi quái khác vẫn không gây sát thương cho mèo đang cầm/bay. Trúng đạn khi đang cầm không làm rơi mèo khỏi tay, không choáng mèo (drag giữ nguyên).
 Người dùng chốt (2026-10-26): mèo đang cầm **chỉ đánh được quái trên không** (slime bay), không đánh quái dưới sàn, để không có chuyện "cầm mèo lơ lửng đánh mãi" mà không bị gì.
 
@@ -70,7 +77,7 @@ Người dùng chốt (2026-10-26): mèo đang cầm **chỉ đánh được qu�
 | S3 | Slime ảo ảnh | 3 bản giống nhau, 1 bản thật | Rê chuột: bản giả nhòe, bản thật có bóng; đánh trúng bản giả thì nó tan; Đèn laser |
 | S4 | Slime dỗi | Đánh không mất máu, còn phồng to dần | Vuốt ve (rê chuột qua lại); hết giận thì vẫy tay bỏ đi, tính là hạ |
 | S5 | Slime bay | Lơ lửng ở **vị trí bất kỳ trên màn hình** (không chỉ trên dải trận; vẽ trong cửa sổ nhỏ topmost riêng như icon app), đổi chỗ định kỳ. Bắn **đạn dính** có báo trước vào mèo: trúng thì mất máu **kể cả khi đang cầm**; mèo dưới sàn trúng đạn thì chậm một lúc. Bị choáng thì **rơi xuống đất**, nằm choáng khoảng 3 s và nhận sát thương ×1,5, rồi gồng khoảng 1 s bay lên lại, lặp lại vòng đó | Cầm mèo đưa lại gần để mèo vung vuốt; làm choáng bằng Đẩy, Kẹp gắp kéo xuống hoặc vài đòn liên tiếp khi cầm; rơi xuống thì đánh dưới sàn. Số liệu chốt ở M14 |
-| S6 | Slime đào hang | Chui sàn, trồi dưới chân mèo (vòng nứt báo trước) | Nhấc mèo lúc vòng hiện, thả đè khi nó trồi (kẹt ngoài 3 s); Kẹp gắp lôi lên |
+| S6 | Slime đào hang | Chui sàn, trồi dưới chân mèo (vòng nứt báo trước) | Nhấc mèo lúc vòng hiện, thả đè khi nó trồi (kẹt ngoài 3 s; tương tác thả đè riêng của S6); Kẹp gắp lôi lên |
 | S7 | Slime băng | Giáp băng: kiếm/búa chỉ xước | Ném mèo đập vào đủ mạnh (ngưỡng tốc độ) thì vỡ; Bình xịt làm mềm (hạ ngưỡng) |
 | S8 | Slime bám tường | Leo mép trái/phải khung trận, bắn gai xuống | Ném mèo lên tường; Đẩy; Kẹp gắp kéo xuống |
 | S9 | Slime nhím | Phồng gai theo chu kỳ; đánh lúc phồng thì mèo bị phản sát thương | Đánh lúc xẹp; Bom; Bình xịt làm xẹp |
@@ -97,7 +104,7 @@ Trong trận cảm xúc tự động vẫn bị chặn: S1, S4 không gây cảm
 ### Kỹ năng (K): 10 kỹ năng, mang 5 lên HUD
 
 - HUD giữ 5 ô như hiện tại. Bảng chuẩn bị có ô chọn 5 trong 10, nhớ lựa chọn. **Mặc định là 5 kỹ năng cũ.**
-- Viễn chinh chọn lúc bắt đầu chuyến, đổi được ở trạm nghỉ; Vô tận chọn lúc bắt đầu.
+- Viễn chinh chọn lúc bắt đầu chuyến. **Điểm nghỉ (`rest`, đã có trong code: hồi `restHeal` HP hoặc lấy 1 trong 3 thẻ) có thêm nút "Đổi kỹ năng"**, miễn phí, không thay cho lựa chọn hồi máu/thẻ. Vô tận chọn lúc bắt đầu.
 - Màn chương 2 có dòng "Gợi ý mang: …". 5 kỹ năng mới mở khóa dần qua chương 2; chưa mở thì ô hiện khóa.
 - Thẻ gắn với kỹ năng (Đẩy mạnh, Bom to, Khiên dày…) chỉ ra khi kỹ năng đó có trong bộ mang theo.
 
@@ -113,7 +120,7 @@ Trong trận cảm xúc tự động vẫn bị chặn: S1, S4 không gây cảm
 - Sát thương kỹ năng mới ≈ 1/5 sức đánh của mèo; được kết liễu và tính như mèo hạ (cả Hút năng lượng); boss nhận 50%.
 - Quạt và Bình xịt dùng kiểu giữ chuột: vòng hồi trên ô là thanh "hơi", cạn thì chờ.
 - Icon 5 kỹ năng mới vẽ đúng kiểu ô hiện tại (viền vàng, nền nâu).
-- **K5 Mèo nổi giận** (không chiếm ô HUD): thanh nộ đầy dần khi đánh và bị đánh; đầy thì 6 s mèo to lên, đánh lan, không bị choáng.
+- **K5 Mèo nổi giận** (không chiếm ô HUD): thanh nộ đầy dần khi đánh và bị đánh; đầy thì 6 s mèo to lên, đánh lan, không bị choáng. Chỉ to ra về hình vẽ; vùng nhấc mèo và vùng trúng đòn giữ nguyên. Đây là tư thế trận, không phải cảm xúc Angry. (Chờ người dùng xác nhận cách kích hoạt.)
 
 ### Cơ chế trận (M)
 
@@ -139,7 +146,7 @@ Trong trận cảm xúc tự động vẫn bị chặn: S1, S4 không gây cảm
 | X4 | 6–8 di vật mới, có đánh đổi |
 | E1 | Vô tận: quái mới vào dần từ khoảng đợt 15; trùm xoay vòng Vua → Slime Nén → Vua biến dị |
 | E2 | Vô tận "Đột biến": mỗi 10 đợt chọn 1 trong 3 luật lạ có thưởng |
-| J1 | Nhóm thẻ thứ 4 "Mưu mẹo" (kỹ năng, bom, app, đồ rơi), cộng hưởng ở 3/6/9 thẻ; kèm 1–2 thẻ riêng cho mỗi kỹ năng mới |
+| J1 | Nhóm thẻ thứ 4 "Mưu mẹo" (kỹ năng, bom, app, đồ rơi), cộng hưởng ở 3/6/9 thẻ; kèm 1–2 thẻ riêng cho mỗi kỹ năng mới. **Thẻ hiếm Chấn động** (ý của người dùng): mèo được thả rơi xuống sàn thì tạo chấn động quanh chỗ đáp, gây sát thương cho slime đang ở mặt đất (không trúng slime bay). Chặn lạm dụng: cần nhấc tối thiểu `rescueGraceMinLiftSeconds` và có thời gian hồi; số liệu chốt khi làm |
 | A1 | App mới Chụp màn hình: chớp sáng đóng băng mọi quái 2 s |
 | A2 | App độc Captcha: che khung trận tới khi click đúng ô có hình mèo |
 | A3 | App độc Pin yếu: kỹ năng hồi chậm tới khi click "cắm sạc" |

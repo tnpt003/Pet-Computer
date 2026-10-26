@@ -168,6 +168,15 @@ internal static class BattleChecks
         Tick(1.0 / 60);
         check(!gameHud.Slot(BattleSkill.Push).IsReady && gameHud.Slot(BattleSkill.Push).Remaining > 0 && gameHud.Slot(BattleSkill.Heal).IsReady,
             "A used skill shows its cooldown; the others are ready");
+        // 2026-10-26: the seconds sit in a corner badge; a cooldown running out flashes the slot once.
+        var lone = new SkillSlot(BattleSkill.Push);
+        lone.Show(1, 0, false, true, false);
+        bool firstFlash = lone.Flashing;
+        lone.Show(0.5, 3.2, false, true, false);
+        string coolingText = lone.SecondsText;
+        lone.Show(0, 0, false, true, false);
+        check(!firstFlash && coolingText == "4" && lone.IsReady && lone.Flashing && lone.SecondsText == "",
+            $"Skill slot: seconds in the badge ({coolingText}), one flash when ready again, none on the first draw");
         // The hit chain on the HUD: ×1, then gold ×2 (the next hit is the combo), hidden once it lapses.
         int savedCombo = Sim().Combo; double savedClock = Sim().comboClock;
         double hudWidth = gameHud.ActualWidth;

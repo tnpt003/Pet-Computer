@@ -504,9 +504,14 @@ public readonly record struct BattleEvent(BattleEventKind Kind, double X, double
 // "not responding" window over the enemy it ends; Value: its width), Rewind (an undo arrow
 // circling the cat).
 public enum BattleEffectKind { Spark, Poof, Push, Explosion, Slam, Number, Combo, Thud, Mend, Block, Immune, Warded, Bell, EndTask, Rewind }
+// How a damage Number reads (display only): a plain hit, a combo hit, or a critical (Claws) hit.
+public enum NumberTone { Plain, Combo, Crit }
 public sealed class BattleEffect
 {
     public BattleEffectKind Kind;
+    public NumberTone Tone;
+    // Poof of a defeated slime: its body colour, for the droplets it bursts into (display only).
+    public string? Tint;
     // Height is how far above the floor the effect starts.
     public double X, Height, Age, Life, Value;
 }

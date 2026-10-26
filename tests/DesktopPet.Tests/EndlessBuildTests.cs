@@ -72,6 +72,7 @@ internal static class EndlessBuildTests
         var crit = new BattleSim(Data(cards: new[] { Card("c", "crit", 1) }), 0, 1600, seed: 1, stage: Plain(), build: new Dictionary<string, int> { ["c"] = 1 });
         Walk(crit, 20, () => crit.Slimes.Count > 0 && crit.Slimes[0].Hp <= 1000 - 20);
         check(crit.Crits >= 1 && crit.Slimes[0].MaxHp - crit.Slimes[0].Hp == 20, $"Claws: a crit hit deals ×2 ({crit.Slimes[0].MaxHp - crit.Slimes[0].Hp})");
+        check(crit.Effects.Any(e => e.Kind == BattleEffectKind.Number && e.Value > 0 && e.Tone == NumberTone.Crit), "...and its damage number reads as a crit (gold, \"!\")");
 
         // Finishing blow (+100 % here) below 30 % HP.
         var exec = new BattleSim(Data(cards: new[] { Card("e", "execute", 1) }), 0, 1600, seed: 1, stage: Plain(), build: new Dictionary<string, int> { ["e"] = 1 });

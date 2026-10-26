@@ -66,6 +66,9 @@ internal static class BattleSkillTests
         }
         check(string.Join(",", kinds) == "SlimeHit,SlimeHit,ComboHit" && Math.Abs(comboDamage - 50) < 0.01 && combo.CombosLanded == 1 && combo.Combo == 0,
             $"Two hits, then a combo hit for double damage ({string.Join(",", kinds)}; {comboDamage})");
+        var comboNumbers = combo.Effects.Where(e => e.Kind == BattleEffectKind.Number && e.Value > 0).Select(e => e.Tone).ToList();
+        check(comboNumbers.Count > 0 && comboNumbers[^1] == NumberTone.Combo && comboNumbers.Take(comboNumbers.Count - 1).All(t => t == NumberTone.Plain),
+            $"Plain hits show plain numbers; the combo hit's number reads as a combo ({string.Join(",", comboNumbers)})");
         check(knock > 100 && target.State != SlimeState.Stunned && combo.Effects.Any(e => e.Kind == BattleEffectKind.Combo),
             $"The combo knocks the slime away from the cat (not stunned) with its own burst ({knock:0})");
         check(comboSwingSeen && !plainSwingGold, "Only the swing that can finish the chain is the gold one");

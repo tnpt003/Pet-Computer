@@ -130,6 +130,9 @@ public sealed partial class BattleFieldView : FrameworkElement
     private static readonly Brush HealGreen = Frozen(255, 0x7C, 0xF0, 0x7A);
     private static readonly Brush DamageWhite = Frozen(255, 0xFF, 0xF4, 0xD6);
     private static readonly Brush ComboGold = Frozen(255, 0xFF, 0xD2, 0x3F);
+    // A four-point twinkle on a 16-unit radius (scaled where it is drawn).
+    private static readonly Geometry Twinkle = PetUi.FrozenGeometry("M 0,-16 L 4,-4 L 16,0 L 4,4 L 0,16 L -4,4 L -16,0 L -4,-4 Z");
+    private static readonly Brush ComboOrange = Frozen(255, 0xFF, 0x9F, 0x4A); // A combo hit's number (a crit's is gold, bigger, with "!").
     private static readonly Pen Outline = FrozenPen(PetUi.ArtInk, 2.2);
     private static readonly Pen Halo = FrozenPen(Brushes.White, 5);
     private static readonly Pen TextHalo = FrozenPen(Frozen(255, 0x2A, 0x1F, 0x16), 3.5);
@@ -159,6 +162,9 @@ public sealed partial class BattleFieldView : FrameworkElement
         // Index loops: foreach over IReadOnlyList boxes an enumerator every frame.
         for (int i = 0; i < sim.Bombs.Count; i++) DrawBomb(dc, sim.Bombs[i], sim.Bombs[i].X - OriginX, floor);
         for (int i = 0; i < sim.Slimes.Count; i++) if (sim.Slimes[i].CallSpots is { } spots) DrawCallSpots(dc, sim.Slimes[i], spots, floor, time);
+        // Contact shadows ground the cat and the slimes on any wallpaper (two tones like the leap shadow).
+        // The cat's window stands on this floor; lifted off it, the cat leaves no shadow behind.
+        if (!sim.CatLifted) dc.DrawEllipse(FootShadow, FootRim, new Point(sim.CatX - OriginX, floor - 2), CatShadowRadius, 5);
         for (int layer = 0; layer <= 2; layer++)
             for (int i = 0; i < sim.Slimes.Count; i++)
             {
@@ -171,6 +177,8 @@ public sealed partial class BattleFieldView : FrameworkElement
                     double k = 1 - Math.Clamp(slime.LeapHeight / 100, 0, 0.6);
                     dc.DrawEllipse(LeapShadow, ShadowRim, new Point(x, floor - 2), slime.Width / 2 * k, 6 * k); // A pale rim: seen on dark desktops too.
                 }
+                else if (slime.State != SlimeState.Defeated)
+                    dc.DrawEllipse(FootShadow, FootRim, new Point(x, floor - 2), slime.Width * 0.45, 4.5);
                 DrawSlime(dc, slime, x, floor - slime.LeapHeight, sim.Settings, time);
                 if (sim.AppRules != null && sim.IsInfector(slime.Id) && slime.State != SlimeState.Defeated) DrawVirusMark(dc, slime, x, floor, time);
             }
@@ -234,6 +242,10 @@ public sealed partial class BattleFieldView : FrameworkElement
     private static readonly Pen WardPen = FrozenPen(Frozen(255, 0x3F, 0xC8, 0x6B), 3);
     private static readonly Brush LeapShadow = Frozen(90, 0x2A, 0x1F, 0x16);
     private static readonly Pen ShadowRim = FrozenPen(Frozen(150, 255, 255, 255), 1.5);
+    // The everyday contact shadow: lighter than a leap's, so the warning rings and markers stay on top in weight.
+    private static readonly Brush FootShadow = Frozen(70, 0x2A, 0x1F, 0x16);
+    private static readonly Pen FootRim = FrozenPen(Frozen(90, 255, 255, 255), 1);
+    private const double CatShadowRadius = 24;
     private static readonly Brush SummonPurple = Frozen(255, 0x9B, 0x5C, 0xE0);
     private static readonly Pen SummonPen = FrozenPen(SummonPurple, 3.5);
     private static readonly Pen SummonEdge = FrozenPen(SummonPurple, 2.5, new DashStyle(new double[] { 3, 2 }, 0));
@@ -681,15 +693,15 @@ public sealed partial class BattleFieldView : FrameworkElement
     }
 
     // Floating numbers are few and repeat ("25", "+25"...): their outlines are built once.
-    private static readonly System.Collections.Generic.Dictionary<string, (Geometry Shape, double Width, double Height)> Numbers = new();
-    private static (Geometry Shape, double Width, double Height) NumberShape(string text, bool heal)
+    private static readonly System.Collections.Generic.Dictionary<(string, double), (Geometry Shape, double Width, double Height)> Numbers = new();
+    private static (Geometry Shape, double Width, double Height) NumberShape(string text, double size)
     {
-        if (Numbers.TryGetValue(text, out var cached)) return cached;
-        var formatted = new FormattedText(text, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, NumberFont, heal ? 18 : 16, Brushes.White, 1);
+        if (Numbers.TryGetValue((text, size), out var cached)) return cached;
+        var formatted = new FormattedText(text, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, NumberFont, size, Brushes.White, 1);
         var geometry = formatted.BuildGeometry(new Point(0, 0));
         geometry.Freeze();
         if (Numbers.Count > 64) Numbers.Clear();
-        return Numbers[text] = (geometry, formatted.Width, formatted.Height);
+        return Numbers[(text, size)] = (geometry, formatted.Width, formatted.Height);
     }
 
     // The cat's window is above the field: a word or a number at the cat's height and over its body
@@ -728,7 +740,7 @@ public sealed partial class BattleFieldView : FrameworkElement
 
     private void DrawWord(DrawingContext dc, string text, Brush fill, double x, double y)
     {
-        var (shape, width, height) = NumberShape(text, false);
+        var (shape, width, height) = NumberShape(text, 16);
         dc.PushTransform(new TranslateTransform(ClearOfCat(x, width, y - height / 2) - width / 2, y - height));
         dc.DrawGeometry(null, TextHalo, shape);
         dc.DrawGeometry(fill, null, shape);
@@ -759,6 +771,28 @@ public sealed partial class BattleFieldView : FrameworkElement
                     double a = i * Math.PI * 2 / (5 + 2 * (int)(big - 1)) - Math.PI / 2;
                     var c = new Point(x + Math.Cos(a) * 18 * k * big, y + 6 + Math.Sin(a) * 12 * k * big);
                     dc.DrawEllipse(Brushes.White, Outline, c, (5 + 4 * k) * big, (5 + 4 * k) * big);
+                }
+                // A defeated slime also bursts into a few droplets of its colour, thrown up and falling
+                // back, and a short gold twinkle at its middle (the moment of the win).
+                if (effect.Tint is string tint)
+                {
+                    var drop = KindBrush(tint);
+                    int drops = big > 1 ? 8 : 6;
+                    for (int i = 0; i < drops; i++)
+                    {
+                        // Fast out, easing off (clear of the puffs at once), then falling back.
+                        double a = -Math.PI * (0.1 + 0.8 * i / (drops - 1)), reach = (40 + 12 * (i % 3)) * big * (1 - (1 - k) * (1 - k));
+                        var c = new Point(x + Math.Cos(a) * reach, y + Math.Sin(a) * reach * 0.8 + 60 * k * k);
+                        double r = (5.2 - 2.6 * k) * (big > 1 ? 1.4 : 1);
+                        dc.DrawEllipse(drop, Outline, c, r, r * 1.15);
+                    }
+                    if (k < 0.45)
+                    {
+                        double tw = (1 - k / 0.45) * 13 * big;
+                        dc.PushTransform(new MatrixTransform(tw / 16, 0, 0, tw / 16, x, y));
+                        dc.DrawGeometry(ComboGold, Outline, Twinkle);
+                        dc.Pop();
+                    }
                 }
                 break;
             case BattleEffectKind.Push:
@@ -827,7 +861,7 @@ public sealed partial class BattleFieldView : FrameworkElement
                     dc.DrawLine(SparkPen, from, to);
                 }
                 dc.DrawEllipse(null, SparkPen, new Point(x, y), 12 + 26 * k, 12 + 26 * k);
-                var (word, wordWidth, wordHeight) = NumberShape("COMBO!", false);
+                var (word, wordWidth, wordHeight) = NumberShape("COMBO!", 16);
                 dc.PushTransform(new TranslateTransform(x - wordWidth / 2, y - 40 - 20 * k - wordHeight));
                 dc.DrawGeometry(null, TextHalo, word);
                 dc.DrawGeometry(ComboGold, null, word);
@@ -861,14 +895,17 @@ public sealed partial class BattleFieldView : FrameworkElement
                 DrawAppEffect(dc, effect, x, y, k);
                 break;
             case BattleEffectKind.Number:
-                // Damage numbers rise from the slime; heals (+HP, green) rise over the cat.
+                // Damage numbers rise from the slime; heals (+HP, green) rise over the cat. A combo hit's
+                // number is orange and a little bigger; a critical one gold, bigger still, with "!".
                 bool heal = effect.Value < 0;
-                string text = heal ? "+" + (-effect.Value).ToString("0", CultureInfo.InvariantCulture) : effect.Value.ToString("0", CultureInfo.InvariantCulture);
-                var (shape, width, height) = NumberShape(text, heal);
+                var tone = heal ? NumberTone.Plain : effect.Tone;
+                string text = heal ? "+" + (-effect.Value).ToString("0", CultureInfo.InvariantCulture)
+                    : effect.Value.ToString("0", CultureInfo.InvariantCulture) + (tone == NumberTone.Crit ? "!" : "");
+                var (shape, width, height) = NumberShape(text, heal ? 18 : tone == NumberTone.Crit ? 22 : tone == NumberTone.Combo ? 19 : 16);
                 double numberBottom = y - 26 * k;
                 dc.PushTransform(new TranslateTransform((heal ? x : ClearOfCat(x, width, numberBottom - height / 2)) - width / 2, numberBottom - height));
                 dc.DrawGeometry(null, TextHalo, shape);
-                dc.DrawGeometry(heal ? HealGreen : DamageWhite, null, shape);
+                dc.DrawGeometry(heal ? HealGreen : tone == NumberTone.Crit ? ComboGold : tone == NumberTone.Combo ? ComboOrange : DamageWhite, null, shape);
                 dc.Pop();
                 break;
         }

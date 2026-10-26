@@ -435,17 +435,22 @@ public sealed class BattleHud : Border
     private static void SetText(TextBlock block, string text) { if (block.Text != text) block.Text = text; }
 }
 
-// One skill slot: icon, clock-wipe cooldown, seconds left; gold rim when ready, blue when chosen.
+// One skill slot: icon, clock-wipe cooldown, seconds left in a corner badge (the icon stays
+// readable while it cools); gold rim and one gold flash when it comes back, white when chosen.
 public sealed class SkillSlot : Border
 {
     public BattleSkill Skill { get; }
     private readonly CooldownWipe wipe = new();
-    private readonly TextBlock seconds = new() { Foreground = Brushes.White, FontWeight = FontWeights.Bold, FontSize = PetUi.TitleSize,
-        HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
+    private readonly TextBlock seconds = new() { Foreground = Brushes.White, FontWeight = FontWeights.Bold, FontSize = PetUi.SmallSize };
+    private readonly Border secondsBadge;
+    private readonly Border flash = new() { Background = Ready, Opacity = 0, IsHitTestVisible = false, CornerRadius = new CornerRadius(7) };
     private int shownSeconds = -1;
+    private bool shown;
     private static readonly Brush Ready = PetUi.Frozen(Color.FromRgb(0xFF, 0xD2, 0x3F)), Waiting = PetUi.Frozen(Color.FromArgb(0x60, 255, 255, 255));
-    private static readonly Brush Back = PetUi.Game.Shadow(0x55), ArmedBack = PetUi.Game.Armed;
-    private static readonly Brush ActiveBack = PetUi.Frozen(Color.FromArgb(0x90, 0xFF, 0xD2, 0x3F));
+    private static readonly Brush Back = PetUi.Game.Stage, ReadyBack = PetUi.Game.CardBack, ArmedBack = PetUi.Game.Armed;
+    private static readonly Brush ActiveBack = PetUi.Frozen(Color.FromArgb(0x90, 0xFF, 0xD2, 0x3F)), BadgeBack = PetUi.Game.Shadow(0xD8);
+    // The "ready again" flash: once, short, then gone (no running animation while idle).
+    private static readonly System.Windows.Media.Animation.DoubleAnimation Flash = FlashAnimation();
     public bool IsReady { get; private set; }
     public bool IsArmed { get; private set; }
     public double Remaining { get; private set; }
@@ -455,18 +460,40 @@ public sealed class SkillSlot : Border
         Skill = skill;
         Width = Height = 46; CornerRadius = new CornerRadius(9); BorderThickness = new Thickness(2); Margin = new Thickness(3, 0, 3, 0);
         Cursor = Cursors.Hand; ClipToBounds = true; Background = Back; BorderBrush = Ready;
-        Child = new Grid { Children = { new HudGlyph((HudGlyphKind)(int)skill) { Margin = new Thickness(6) }, wipe, seconds } };
+        secondsBadge = new Border { Background = BadgeBack, CornerRadius = new CornerRadius(6), Padding = new Thickness(4, 0, 4, 1), Margin = new Thickness(0, 0, 1, 1),
+            HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Bottom, IsHitTestVisible = false, Visibility = Visibility.Collapsed, Child = seconds };
+        Child = new Grid { Children = { new HudGlyph((HudGlyphKind)(int)skill) { Margin = new Thickness(6) }, wipe, flash, secondsBadge } };
     }
+
+    private static System.Windows.Media.Animation.DoubleAnimation FlashAnimation()
+    {
+        var animation = new System.Windows.Media.Animation.DoubleAnimation(0.6, 0, TimeSpan.FromSeconds(0.45)) { FillBehavior = System.Windows.Media.Animation.FillBehavior.Stop };
+        animation.Freeze();
+        return animation;
+    }
+
+    // True while the "ready again" flash plays (for checks).
+    public bool Flashing => flash.HasAnimatedProperties;
+    public string SecondsText => seconds.Text;
 
     public void Show(double fraction, double remaining, bool armed, bool usable, bool active)
     {
+        bool wasReady = IsReady;
         Remaining = remaining; IsArmed = armed; IsReady = usable && remaining <= 0;
+        // A cooldown running out flashes the slot once (not the first draw, a resume or a battle starting).
+        if (shown && !wasReady && IsReady && shownSeconds > 0) flash.BeginAnimation(OpacityProperty, Flash);
+        shown = true;
         wipe.Fraction = remaining > 0 ? fraction : 0;
         int whole = remaining > 0 ? (int)Math.Ceiling(remaining) : 0;
-        if (whole != shownSeconds) { shownSeconds = whole; seconds.Text = whole > 0 ? whole.ToString(CultureInfo.InvariantCulture) : ""; }
+        if (whole != shownSeconds)
+        {
+            shownSeconds = whole;
+            seconds.Text = whole > 0 ? whole.ToString(CultureInfo.InvariantCulture) : "";
+            secondsBadge.Visibility = whole > 0 ? Visibility.Visible : Visibility.Collapsed;
+        }
         var rim = armed ? Brushes.White : IsReady ? Ready : Waiting;
         if (BorderBrush != rim) BorderBrush = rim;
-        var back = armed ? ArmedBack : active ? ActiveBack : Back;
+        var back = armed ? ArmedBack : active ? ActiveBack : IsReady ? ReadyBack : Back;
         if (Background != back) Background = back;
         double opacity = usable || armed ? 1 : 0.55;
         if (Opacity != opacity) Opacity = opacity;
@@ -476,7 +503,7 @@ public sealed class SkillSlot : Border
 // The dark clock-wipe over a cooling skill (Fraction 1 = just used, 0 = ready).
 public sealed class CooldownWipe : FrameworkElement
 {
-    private static readonly Brush Shade = PetUi.Game.Shadow(0xB0);
+    private static readonly Brush Shade = PetUi.Game.Shadow(0x8C); // Light enough to see the icon under it.
     private double fraction;
     public double Fraction
     {

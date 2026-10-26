@@ -108,6 +108,7 @@ internal static class AppTests
         sim.UseApp(App(sim, BattleAppKind.EndTask).Id, 800);
         Run(sim, BattleSim.LaunchSeconds + 0.02);
         check(big.State == SlimeState.Defeated && small.Hp == 100, "End task ends the slime with the most HP when it lands, and leaves the other");
+        check(sim.Effects.Any(e => e.Kind == BattleEffectKind.Poof && e.Tint == big.Type.Color), "A defeated slime's poof carries its colour (the droplets it bursts into)");
         sim = Out(full, new[] { 1 });
         var elite = sim.Slimes.First(s => s.Targetable);
         elite.Hp = elite.MaxHp = 400; elite.Elite = new EliteSpec();

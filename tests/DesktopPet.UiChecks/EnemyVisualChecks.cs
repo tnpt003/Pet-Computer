@@ -215,6 +215,29 @@ internal static class EnemyVisualChecks
         }
         check(all, $"Elites show a gold rim and a star (plain, herb and rock slime; rim/before/star:{counts})");
 
+        // 2026-10-26: hits read at a glance (plain cream, combo orange, crit gold with "!"), a defeated
+        // slime bursts into droplets of its colour, every slime on the floor has a contact shadow.
+        var (jsim, jview) = Field(("slime", 110));
+        var juice = (List<BattleEffect>)jsim.Effects;
+        juice.Clear();
+        juice.Add(new BattleEffect { Kind = BattleEffectKind.Number, X = 200, Height = 40, Value = 25, Life = 0.9, Age = 0.1 });
+        juice.Add(new BattleEffect { Kind = BattleEffectKind.Number, X = 280, Height = 40, Value = 50, Life = 0.9, Age = 0.1, Tone = NumberTone.Combo });
+        juice.Add(new BattleEffect { Kind = BattleEffectKind.Number, X = 360, Height = 40, Value = 50, Life = 0.9, Age = 0.1, Tone = NumberTone.Crit });
+        juice.Add(new BattleEffect { Kind = BattleEffectKind.Poof, X = 480, Height = 25, Value = 1, Life = 0.6, Age = 0.15, Tint = "#E86A6A" });
+        px = Shot(jview, "battle-juice");
+        int orange = Count(px, Color.FromRgb(0xFF, 0x9F, 0x4A), 255, 305, 0, floor), critGold = Count(px, Color.FromRgb(0xFF, 0xD2, 0x3F), 330, 395, 0, floor),
+            plainOrange = Count(px, Color.FromRgb(0xFF, 0x9F, 0x4A), 175, 225, 0, floor);
+        // The poof fades as it goes, so its droplets are counted as reddish rather than one exact colour.
+        int drops = 0;
+        for (int y = 0; y < floor; y++)
+            for (int x = 420; x < 540; x++) { int i = (y * (int)Width + x) * 4; if (px[i + 3] > 100 && px[i + 2] > px[i + 1] + 40 && px[i + 2] > px[i] + 40) drops++; }
+        check(orange > 30 && critGold > 30 && plainOrange == 0 && drops > 25,
+            $"Damage numbers by kind (combo orange {orange}, crit gold {critGold}, plain none {plainOrange}) and a defeated slime's droplets ({drops})");
+        int shadowBelow = 0;
+        for (int y = floor - 1; y < Math.Min((int)BattleFieldView.FieldHeight, floor + 3); y++)
+            for (int x = 110 - 22; x < 110 + 22; x++) if (px[(y * (int)Width + x) * 4 + 3] > 20) shadowBelow++;
+        check(shadowBelow > 40, $"A slime standing on the floor has a contact shadow ({shadowBelow} px at its feet)");
+
         // The rare cards' icons draw something of their own (gold over the round back).
         foreach (var effect in new[] { "shell", "opener", "momentum" })
         {

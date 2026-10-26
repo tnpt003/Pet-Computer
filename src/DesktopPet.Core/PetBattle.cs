@@ -572,7 +572,9 @@ public sealed partial class BattleSim
         AddEffect(combo || charged || countered || crit ? BattleEffectKind.Combo : arms.Effect == "thud" ? BattleEffectKind.Thud : BattleEffectKind.Spark, slime.X, slime.Height / 2);
         if (combo) { Combo = 0; CombosLanded++; }
         // A blocked or shrugged-off hit (or the last one) moves nothing.
+        hitTone = crit ? NumberTone.Crit : combo ? NumberTone.Combo : NumberTone.Plain;
         var result = Damage(slime, damage, combo ? DamageSource.Combo : DamageSource.Weapon);
+        hitTone = NumberTone.Plain;
         // Only a hit that lands opens an enemy (a blocked one leaves the Opener bonus for the next).
         if (result == HitResult.Landed)
         {
@@ -647,6 +649,8 @@ public sealed partial class BattleSim
         RefreshGuards();
     }
     public int SplashHits { get; private set; }
+    // The look of the next damage number: set by the cat's own swing only (splash, bomb, apps: plain).
+    private NumberTone hitTone;
 
     // Every hit on an enemy goes through here: Landed, or why it did nothing.
     private HitResult Damage(Slime slime, double amount, DamageSource source)
@@ -673,6 +677,7 @@ public sealed partial class BattleSim
         slime.Hp = Math.Max(ShieldFloor(slime), slime.Hp - amount);
         slime.HitFlash = 0.18;
         AddEffect(BattleEffectKind.Number, slime.X + (slime.IsBoss ? slime.Width * 0.38 : 0), slime.Height + 10, Math.Round(amount));
+        effects[^1].Tone = hitTone;
         if (slime.Hp <= 0)
         {
             slime.Set(SlimeState.Defeated);
@@ -684,6 +689,7 @@ public sealed partial class BattleSim
             // everything in it at once).
             if (slime.MendingId != 0) { slime.MendingId = 0; if (!blasting) RefreshGuards(); }
             AddEffect(BattleEffectKind.Poof, slime.X, slime.Height / 2, slime.IsBoss ? 2 : 1);
+            effects[^1].Tint = slime.Enraged ? slime.Type.AngryColor : slime.Type.Color;
             events.Add(new(BattleEventKind.SlimeDefeated, slime.X, slime.IsBoss ? 1 : 0));
             AppsEnemyDefeated(slime);
             return HitResult.Landed;

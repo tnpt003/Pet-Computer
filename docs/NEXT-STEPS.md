@@ -30,6 +30,10 @@ Cập nhật: 2026-10-23 (Asia/Saigon). Bản đang chạy: 1.4.1 (installer + t
 | M7 | HUD trận kéo được (nhớ theo màn hình, double-click về chỗ cũ); đo frame time trận đông quái | xong (a35c582; đông quái 61 fps, p95 33 ms — chưa cần tối ưu) |
 | M8 | Chế độ Vô tận: đợt mạnh dần, 3 đợt chọn 1 thẻ, Vua mỗi 10 đợt, kỷ lục đợt cao nhất theo độ khó, đóng app là hết lượt, túi đồ chế độ Vô tận | xong (88da9f7) |
 
+## Bản 1.5 (đã chốt thiết kế 2026-10-26)
+
+Xem docs/UPDATE-1.5.md. Ý tưởng mới ngoài danh sách đó vào "Backlog sau 1.5" của file ấy.
+
 ## Backlog (chưa chọn)
 
 - Vô tận: chỉnh số liệu sau khi chơi thật; mô phỏng cân bằng (phần thưởng mốc đợt: xong 22/10, N3).

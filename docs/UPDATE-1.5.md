@@ -18,14 +18,14 @@ Ngoài danh sách này thì ý tưởng mới vào mục "Backlog sau 1.5" cuố
 
 Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Battle Mode. Tóm tắt:
 
-1. **Mèo đang được cầm gây được sát thương:** đưa mèo lại gần slime thì mèo tự vung vuốt (ví dụ slime bay S5), thả mèo đè slime đào hang lúc nó trồi (S6), kéo mèo xuyên dây nhầy để cắt (Q4, B1).
+1. **Mèo đang được cầm gây được sát thương, chỉ với quái trên không:** đưa mèo lại gần slime bay (S5) thì mèo tự vung vuốt; quái dưới sàn không bị mèo đang cầm đánh, thả mèo đè slime đào hang lúc nó trồi (S6), kéo mèo xuyên dây nhầy để cắt (Q4, B1).
 2. **Mèo đang bay sau cú ném không tự đánh.** Cú ném chỉ tác động lên quái có tương tác ném riêng: slime băng vỡ băng (S7), slime bám tường rơi xuống (S8), dây nhầy đứt (Q4, B1). Mọi quái khác không bị cú ném ảnh hưởng.
 3. **Con trỏ tương tác với slime trong khung trận:** soi (S1, S3), vuốt ve (S4), chọc bong bóng (S2), các kỹ năng dùng chuột. Click trúng mèo luôn là nhấc mèo.
 
 Physics kéo/ném giữ nguyên; mèo vẫn không nhận sát thương khi đang cầm/bay.
 
 **Ngoại lệ miễn sát thương khi cầm (người dùng chốt 2026-10-26):** đạn dính của **slime bay (S5)** gây sát thương cho mèo **kể cả khi đang cầm** (Khiên bong bóng vẫn chặn). Đây là quái duy nhất làm vậy; mọi quái khác vẫn không gây sát thương cho mèo đang cầm/bay. Trúng đạn khi đang cầm không làm rơi mèo khỏi tay, không choáng mèo (drag giữ nguyên).
-Đề xuất kèm theo, chờ người dùng xác nhận ở M03: mèo đang cầm **chỉ đánh được quái trên không** (slime bay), không đánh quái dưới sàn, để không có chuyện "cầm mèo lơ lửng đánh mãi" mà không bị gì.
+Người dùng chốt (2026-10-26): mèo đang cầm **chỉ đánh được quái trên không** (slime bay), không đánh quái dưới sàn, để không có chuyện "cầm mèo lơ lửng đánh mãi" mà không bị gì.
 
 ## Nguyên tắc thiết kế
 
@@ -41,7 +41,7 @@ Physics kéo/ném giữ nguyên; mèo vẫn không nhận sát thương khi đan
 
 | Mã | Quái | Việc riêng | Liên kết | Cách phá |
 |---|---|---|---|---|
-| Q1 | Slime phun | Đứng xa phun giọt nhầy cong, có vòng báo chỗ rơi | Giọt rơi thành **vũng tăng tốc**: slime nhanh lao qua vũng thì lao xa và nhanh hơn | Nhấc mèo khỏi vòng; Đẩy; cầm mèo đưa tới đánh; Quạt làm khô vũng |
+| Q1 | Slime phun | Đứng xa phun giọt nhầy cong, có vòng báo chỗ rơi | Giọt rơi thành **vũng tăng tốc**: slime nhanh lao qua vũng thì lao xa và nhanh hơn | Nhấc mèo khỏi vòng; Đẩy; cho mèo chạy tới đánh; Quạt làm khô vũng |
 | Q2 | Slime lò xo | Không đánh, nằm bẹp như bạt nhún | Đồng minh nhảy lên thì **bật qua đầu mèo** đánh từ sau, hoặc qua tường "Cập nhật" | Đẩy/Quạt nó khỏi đường; thả mèo lên nó thì mèo bật lên đánh xuống |
 | Q3 | Slime nhạc trưởng | Đánh trống, vòng nhịp trên đầu | Mỗi 4 nhịp mọi quái trong vùng **gồng đánh cùng lúc** | Đẩy/choáng/Quạt để lệch nhịp; Khiên đúng nhịp 4 |
 | Q4 | Slime xích | Yếu, đi sau đồng đội | **Dây nhầy** nối một đồng minh, gánh 50% sát thương đồng minh nhận | Kéo/ném mèo xuyên dây; Kéo cắt; hạ xích thì đồng minh choáng 1 s |

@@ -8,6 +8,14 @@ Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm 
 
 ---
 
+## #25 — Bảng chọn nâng cấp Viễn chinh dư khoảng trống bên phải (2026-10-26, commit a58dbd5)
+- **Triệu chứng:** ảnh người dùng: bảng "Chọn một nâng cấp (giữ suốt chuyến viễn chinh khi thắng bậc này)" rộng hơn 3 thẻ, bên phải trống; tiêu đề sát mép; "★ Thẻ hiếm · một lần mỗi build" bị cắt.
+- **Nguyên nhân:** cửa sổ tự co theo nội dung (SizeToContent) mà tiêu đề không xuống dòng, nên bảng rộng theo tiêu đề tiếng Việt dài; dòng đếm cũng không wrap trong thẻ 132 DIP.
+- **Sửa:** tiêu đề wrap với MaxWidth = số thẻ × 140 − 8; dòng đếm wrap.
+- **Kiểm chứng:** WPF 1022/1022 (tiêu đề Viễn chinh vi nằm trong bề rộng hàng thẻ, bảng không rộng hơn thẻ + padding), xem ảnh expedition-upgrade-vi. Chưa xem trên màn hình thật.
+
+---
+
 ## #24 — Chữ cộng hưởng trong túi đồ tràn ra ngoài khung; cần sinh động hơn (2026-10-25, commit aa6312b)
 - **Triệu chứng:** tab Thẻ ở Vô tận: dòng "★ Giáp gai · còn 2 thẻ → ★ Bất khuất…" bị cắt ở mép phải túi đồ; phần cộng hưởng chỉ là chấm + chữ.
 - **Nguyên nhân:** mỗi nhóm là một hàng ngang (StackPanel) nên chữ không xuống dòng; Vô tận có 3 mốc/nhóm nên chuỗi dài quá khung.

@@ -14,14 +14,17 @@ Ngoài danh sách này thì ý tưởng mới vào mục "Backlog sau 1.5" cuố
 - App trong trận vẫn là icon tự vẽ, không đọc app thật.
 - Mọi chữ mới có vi/en/ja. Icon và tranh mới theo docs/DESIGN-SYSTEM.md.
 
-## Cần duyệt ngoại lệ trước khi code (bổ sung Battle Mode)
+## Bổ sung ngoại lệ Battle Mode (đã duyệt 2026-10-26)
 
-Hiện tại trong trận mèo đang cầm/bay chỉ được miễn sát thương, không bao giờ gây sát thương. 1.5 cần thêm:
+Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Battle Mode. Tóm tắt:
 
-1. **Mèo gây sát thương khi đang được cầm hoặc đang bay:** ném mèo trúng slime (M1), mèo được cầm ở gần slime bay thì tự vung vuốt (S5), thả mèo đè slime đào hang (S6), ném mèo vỡ băng (S7) và đập slime bám tường (S8), kéo/ném mèo xuyên dây nhầy để cắt (Q4, B1). Physics kéo/ném không đổi; vẫn không nhận sát thương khi đang cầm/bay.
-2. **Con trỏ tương tác với slime trong khung trận:** rê chuột soi (S1, S3), vuốt ve (S4), click chọc bong bóng (S2), kỹ năng Kẹp gắp nhấc và ném slime. Click trúng mèo luôn là nhấc mèo.
+1. **Mèo đang được cầm gây được sát thương:** đưa mèo lại gần slime thì mèo tự vung vuốt (ví dụ slime bay S5), thả mèo đè slime đào hang lúc nó trồi (S6), kéo mèo xuyên dây nhầy để cắt (Q4, B1).
+2. **Mèo đang bay sau cú ném không tự đánh.** Cú ném chỉ tác động lên quái có tương tác ném riêng: slime băng vỡ băng (S7), slime bám tường rơi xuống (S8), dây nhầy đứt (Q4, B1). Mọi quái khác không bị cú ném ảnh hưởng.
+3. **Con trỏ tương tác với slime trong khung trận:** soi (S1, S3), vuốt ve (S4), chọc bong bóng (S2), các kỹ năng dùng chuột. Click trúng mèo luôn là nhấc mèo.
 
-Khi người dùng duyệt: ghi bản đầy đủ vào docs/APPROVED-EXCEPTIONS.md → Battle Mode, sửa tóm tắt trong AGENTS.md. Mốc 3 (M03) và các quái liên quan chỉ bắt đầu sau khi duyệt.
+Physics kéo/ném giữ nguyên; mèo vẫn không nhận sát thương khi đang cầm/bay.
+
+**Cân bằng cần chốt ở M03:** mèo đang cầm vừa miễn sát thương vừa đánh được, nên có thể "cầm mèo lơ lửng đánh mãi". M03 sẽ đề xuất cách chặn (ví dụ đòn khi cầm yếu hơn hoặc hồi lâu hơn đòn dưới sàn) để người dùng chọn; không bỏ miễn sát thương khi cầm nếu chưa được duyệt.
 
 ## Nguyên tắc thiết kế
 
@@ -37,7 +40,7 @@ Khi người dùng duyệt: ghi bản đầy đủ vào docs/APPROVED-EXCEPTIONS
 
 | Mã | Quái | Việc riêng | Liên kết | Cách phá |
 |---|---|---|---|---|
-| Q1 | Slime phun | Đứng xa phun giọt nhầy cong, có vòng báo chỗ rơi | Giọt rơi thành **vũng tăng tốc**: slime nhanh lao qua vũng thì lao xa và nhanh hơn | Nhấc mèo khỏi vòng; Đẩy/ném mèo vào nó; Quạt làm khô vũng |
+| Q1 | Slime phun | Đứng xa phun giọt nhầy cong, có vòng báo chỗ rơi | Giọt rơi thành **vũng tăng tốc**: slime nhanh lao qua vũng thì lao xa và nhanh hơn | Nhấc mèo khỏi vòng; Đẩy; cầm mèo đưa tới đánh; Quạt làm khô vũng |
 | Q2 | Slime lò xo | Không đánh, nằm bẹp như bạt nhún | Đồng minh nhảy lên thì **bật qua đầu mèo** đánh từ sau, hoặc qua tường "Cập nhật" | Đẩy/Quạt nó khỏi đường; thả mèo lên nó thì mèo bật lên đánh xuống |
 | Q3 | Slime nhạc trưởng | Đánh trống, vòng nhịp trên đầu | Mỗi 4 nhịp mọi quái trong vùng **gồng đánh cùng lúc** | Đẩy/choáng/Quạt để lệch nhịp; Khiên đúng nhịp 4 |
 | Q4 | Slime xích | Yếu, đi sau đồng đội | **Dây nhầy** nối một đồng minh, gánh 50% sát thương đồng minh nhận | Kéo/ném mèo xuyên dây; Kéo cắt; hạ xích thì đồng minh choáng 1 s |
@@ -115,7 +118,7 @@ Trong trận cảm xúc tự động vẫn bị chặn: S1, S4 không gây cảm
 
 | Mã | Nội dung |
 |---|---|
-| M1 | Ném mèo làm đòn: ném trúng slime thì sát thương và đẩy lùi (cần ngoại lệ) |
+| M1 | Mèo đánh khi đang cầm: đưa mèo lại gần slime thì tự vung vuốt. Cú ném không phải đòn đánh chung, chỉ có tác dụng với quái có tương tác ném (S7, S8, dây Q4/B1) |
 | M2 | Hiệu ứng trên quái: độc (mất máu dần), đóng băng (chậm), dính (đứng yên); thẻ, vũ khí, Bình xịt gây được |
 | M3 | Bục tự vẽ trong trận (không phải cửa sổ thật): mèo trên bục đánh xuống mạnh hơn, slime phun bắn không tới |
 | M4 | Đồ rơi: slime đôi khi rơi cá, xu, bình; click để nhặt, để lâu thì tan |
@@ -153,7 +156,7 @@ Mỗi mốc: build + `scripts/test.ps1 -Ui` đạt, test mới cho phần thêm 
 | **Nền** | | |
 | M01 | Khung liên kết quái: khóa `link` trong battle.json (tether / rhythm / ride / merge / bounce / aura), vẽ dây/vòng, công tắc tắt từng liên kết, giới hạn 2 loại mỗi trận | Có test cho mỗi loại liên kết với quái giả; battle.json hiện tại không đổi kết quả mô phỏng chương 1 |
 | M02 | Chọn 5 trong 10 kỹ năng: dữ liệu, bảng chuẩn bị, lưu lựa chọn, ô khóa, lọc thẻ theo kỹ năng | Mặc định 5 kỹ năng cũ, chương 1 và kỷ lục cũ không đổi; đổi bộ thì HUD đổi đúng ô |
-| M03 | Mèo gây sát thương khi cầm/bay (M1) — **sau khi duyệt ngoại lệ** | Ném mèo trúng slime gây sát thương; physics ném không đổi (test drag/throw cũ đạt); vẫn không nhận sát thương khi cầm/bay |
+| M03 | Mèo đánh khi đang cầm (M1) + khung "tương tác ném" cho quái | Cầm mèo gần slime thì mèo vung vuốt; cú ném không gây sát thương cho quái thường; quái có cờ tương tác ném nhận va chạm (test bằng quái giả); physics kéo/ném không đổi (test drag/throw cũ đạt); vẫn không nhận sát thương khi cầm/bay; người dùng chọn cách chặn "cầm đánh mãi" |
 | M04 | Hiệu ứng trên quái (M2): độc, đóng băng, dính | Hiển thị rõ trên quái; có test thời gian/cộng dồn; Pause đóng băng hiệu ứng |
 | **Kỹ năng và vũ khí** | | |
 | M05 | Đèn laser, Quạt | Hai kỹ năng chạy, có sát thương nhẹ và thanh hơi (Quạt); hướng dẫn đứng hình chỉ cho kỹ năng đang dạy |
@@ -200,8 +203,12 @@ Thứ tự có thể đổi trong một nhóm; nhóm Nền làm trước.
 
 ## Backlog sau 1.5
 
+- **Bút vẽ tường** (kỹ năng 11): chọn rồi vuốt chuột một nét trên sàn, thành tường tạm 4 s mà slime không đi qua (giống tường "Cập nhật" nhưng bạn tự đặt chỗ). Dùng chặn Kỵ binh/slime nhanh, che giỏ cá. Để sau vì: trùng vai trò giữ quái xa với Đẩy/Quạt, dễ làm trận quá dễ (chặn hết quái đánh gần), và phải viết lại luật tường đang dùng cho app độc "Cập nhật".
+- **Kính lúp** (kỹ năng 12): click một slime, 5 s mọi đòn vào nó là chí mạng. Dùng cho boss, Slime khổng lồ. Để sau vì: chỉ tăng sát thương thuần như Cổ vũ, không tạo cách chơi mới; 10 kỹ năng đã đủ để chọn.
+- Thêm hai cái này thì bảng chọn thành 5 trong 12, không cần đổi HUD.
+
 - Vũ khí Cần câu cá (V3), thẻ riêng theo vũ khí (V4).
-- Kỹ năng Cào lướt (K4); Bút vẽ tường, Kính lúp làm kỹ năng thứ 11–12; Cục tẩy bóc tinh anh.
+- Kỹ năng Cào lướt (K4); Cục tẩy bóc tinh anh.
 - Kiểu màn Đuổi trộm, Cầm cự tính giờ, Dọn nhiễm, Liên hoàn trùm (T2–T5).
 - Mốc thưởng Vô tận đợt 60/75/100 (E3); khoảng 12 thẻ mới chia đều 4 nhóm (J2).
 - Mèo nói tiếng người (docs/NEXT-STEPS.md), cần đổi quy tắc AGENTS.md.

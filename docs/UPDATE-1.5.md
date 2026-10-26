@@ -30,7 +30,7 @@ Physics kéo/ném giữ nguyên; mèo vẫn không nhận sát thương khi đan
 - **Hướng dẫn phiêu lưu mở rộng sang chương 2**, luật như chương 1 (đứng hình nhưng không phải Pause), dạy cả quái mới lẫn kỹ năng mới.
 - **Chuột không quá tải:** mỗi trận chương 2/Viễn chinh tối đa 2 loại quái cần dùng chuột (S1–S4) cùng lúc; Vô tận tính sau khi chơi thật.
 - **Trận tự do thành Trận tự chọn (F1)**, xem mục F1 bên dưới. Bộ mặc định giữ đúng 4 đợt hiện tại.
-- **App độc cùng lúc: `maxMalware` 2 → 4** ở Viễn chinh, Vô tận và chương 2. Chương 1 giữ 2 (giữ nguyên chương 1 và rulesVersion của nó). Mỗi loại vẫn tối đa 1 cái cùng lúc; `maxInfected` vẫn 3. **Captcha không xuất hiện khi đang có slime bay.**
+- **App độc cùng lúc: `maxMalware` 2 → 4** ở Viễn chinh, Vô tận và chương 2. Chương 1 giữ 2 (giữ nguyên chương 1 và rulesVersion của nó; người dùng duyệt 2026-10-26). Mỗi loại vẫn tối đa 1 cái cùng lúc; `maxInfected` vẫn 3. **Captcha không xuất hiện khi đang có slime bay.**
 - **Bỏ bục tự vẽ (M3).**
 
 **Ngoại lệ miễn sát thương khi cầm (người dùng chốt 2026-10-26):** đạn dính của **slime bay (S5)** gây sát thương cho mèo **kể cả khi đang cầm** (Khiên bong bóng vẫn chặn). Đây là quái duy nhất làm vậy; mọi quái khác vẫn không gây sát thương cho mèo đang cầm/bay. Trúng đạn khi đang cầm không làm rơi mèo khỏi tay, không choáng mèo (drag giữ nguyên).
@@ -155,7 +155,7 @@ Trong trận cảm xúc tự động vẫn bị chặn: S1, S4 không gây cảm
 | L1 | Sổ tay quái trong Sảnh: hình, cách khắc chế (cả kỹ năng hợp), số đã hạ, trang đội hình phối hợp |
 | L2 | Khoảng 20 thành tựu trong trận, thưởng màu lông hoặc phụ kiện |
 | L3 | 2–3 bộ lông và phụ kiện mới (thành tựu, chương 2) |
-| F1 | **Trận tự chọn** (thay Trận tự do, ý người dùng 2026-10-26): người dùng tự dựng trận. Chọn: quái nào và tần suất (trọng số mỗi loại, kể cả tinh anh), số đợt và số quái tối đa trên sàn, boss cuối (hoặc không boss), app nào có (từng icon) và app độc nào (từng loại, tần suất), độ khó/threat, vũ khí, bộ kỹ năng, có thẻ giữa đợt hay không. Chỉ chọn được quái/boss/app đã gặp (theo Sổ tay quái). Lưu được vài bộ (preset); bộ "Mặc định" là đúng 4 đợt của trận tự do hiện tại. Không lưu kỷ lục, không cho phần thưởng (như dữ liệu custom hiện nay). Chi tiết giao diện chốt khi làm mốc |
+| F1 | **Trận tự chọn** (thay Trận tự do, ý người dùng 2026-10-26): người dùng tự dựng trận. Chọn: quái nào và tần suất (trọng số mỗi loại, kể cả tinh anh), số đợt và số quái tối đa trên sàn, boss cuối (hoặc không boss), app nào có (từng icon) và app độc nào (từng loại, tần suất), độ khó/threat, vũ khí, bộ kỹ năng, có thẻ giữa đợt hay không. Chỉ chọn được quái/boss/app đã gặp (theo Sổ tay quái). Lưu được vài bộ (preset); bộ "Mặc định" là đúng 4 đợt của trận tự do hiện tại. Không lưu kỷ lục, không cho phần thưởng (như dữ liệu custom hiện nay). Người dùng duyệt các luật này 2026-10-26; chi tiết giao diện chốt khi làm mốc |
 
 ## Các mốc
 

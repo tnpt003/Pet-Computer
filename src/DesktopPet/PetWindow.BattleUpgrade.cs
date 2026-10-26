@@ -83,7 +83,9 @@ public sealed partial class PetWindow
     {
         if (battle?.UpgradeOffer is not { } offer) return;
         upgradePick = null;
-        upgradeTitle = new TextBlock { Foreground = Brushes.White, FontSize = PetUi.HeadingSize, FontWeight = FontWeights.Bold, Margin = new Thickness(0, 0, 0, 8) };
+        // The cards set the panel's width; a long title wraps instead of widening it (an empty strip right of the cards).
+        upgradeTitle = new TextBlock { Foreground = Brushes.White, FontSize = PetUi.HeadingSize, FontWeight = FontWeights.Bold, Margin = new Thickness(0, 0, 0, 8),
+            TextWrapping = TextWrapping.Wrap, MaxWidth = Math.Max(1, offer.Count) * UpgradeCardStep - 8 };
         var row = new StackPanel { Orientation = Orientation.Horizontal };
         upgradeCards.Clear();
         foreach (var upgrade in offer)
@@ -91,12 +93,12 @@ public sealed partial class PetWindow
             string id = upgrade.Id;
             var name = new TextBlock { Foreground = Brushes.White, FontSize = PetUi.TitleSize, FontWeight = FontWeights.Bold, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center, Margin = new Thickness(0, 6, 0, 0) };
             var desc = new TextBlock { Foreground = Brushes.White, FontSize = PetUi.SmallSize, Opacity = 0.9, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center, Margin = new Thickness(0, 3, 0, 0) };
-            var count = new TextBlock { Foreground = Brushes.White, FontSize = PetUi.CaptionSize, Opacity = 0.65, TextAlignment = TextAlignment.Center, Margin = new Thickness(0, 4, 0, 0) };
+            var count = new TextBlock { Foreground = Brushes.White, FontSize = PetUi.CaptionSize, Opacity = 0.65, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center, Margin = new Thickness(0, 4, 0, 0) };
             // The card's group and its progress toward the group's synergy (gold when it completes it).
             var build = new TextBlock { Foreground = Brushes.White, FontSize = PetUi.CaptionSize, FontWeight = FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center, Margin = new Thickness(0, 4, 0, 0) };
             var card = new Border
             {
-                Width = 132, MinHeight = 150, CornerRadius = new CornerRadius(10), Padding = new Thickness(8, 10, 8, 8), Margin = new Thickness(0, 0, 8, 0),
+                Width = UpgradeCardStep - 8, MinHeight = 150, CornerRadius = new CornerRadius(10), Padding = new Thickness(8, 10, 8, 8), Margin = new Thickness(0, 0, 8, 0),
                 Cursor = System.Windows.Input.Cursors.Hand,
                 Child = new StackPanel { Children = { new Border { Width = 86, Height = 86, CornerRadius = new CornerRadius(43), BorderThickness = new Thickness(2),
                     BorderBrush = upgrade.Group == "defense" ? PetUi.Mint : upgrade.Group == "speed" ? PetUi.Lilac : PetUi.AccentBright,
@@ -187,6 +189,8 @@ public sealed partial class PetWindow
     }
 
     private static readonly Brush RareGold = PetUi.Game.RareGold;
+    // An upgrade card's width with the gap after it.
+    private const double UpgradeCardStep = 140;
 
     // "Sharp edge ×2 · Quick feet" for the HUD and the result panel (empty without upgrades).
     private string UpgradeSummary(BattleSim b) => string.Join(" · ", b.Settings.UpgradeList.Where(u => b.Stacks(u.Id) > 0)

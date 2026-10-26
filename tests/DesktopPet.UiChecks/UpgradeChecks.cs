@@ -108,6 +108,22 @@ internal static class UpgradeChecks
             check(window.BattleUpgradeVisible, "It comes back when the fullscreen app closes");
             prefs.Language = "vi"; Call(window, "UpdateBattleUpgrade");
             check(window.BattleUpgradeText.Contains("Chọn một nâng cấp") && window.BattleUpgradeText.Contains("Xác nhận"), "The panel follows the pet's language");
+            // 2026-10-26 (user's screenshot): the long Expedition title widened the panel past the three cards.
+            if (Find("Pet upgrade") is { Content: Border { Child: StackPanel { Children: [TextBlock title, StackPanel cards, ..] } } upgradeBorder })
+            {
+                title.Text = "Chọn một nâng cấp (giữ suốt chuyến viễn chinh khi thắng bậc này)";
+                upgradeBorder.UpdateLayout();
+                check(title.ActualWidth <= cards.ActualWidth && upgradeBorder.ActualWidth - cards.ActualWidth <= upgradeBorder.Padding.Left + upgradeBorder.Padding.Right + 4,
+                    $"A long title wraps inside the cards' width (panel {upgradeBorder.ActualWidth:F0}, cards {cards.ActualWidth:F0}, title {title.ActualWidth:F0})");
+                if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string reviewVi)
+                {
+                    var shotVi = new System.Windows.Media.Imaging.RenderTargetBitmap((int)Math.Ceiling(upgradeBorder.ActualWidth + 12), (int)Math.Ceiling(upgradeBorder.ActualHeight + 12), 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
+                    shotVi.Render(upgradeBorder);
+                    var encoderVi = new System.Windows.Media.Imaging.PngBitmapEncoder(); encoderVi.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(shotVi));
+                    using var streamVi = File.Create(Path.Combine(reviewVi, "expedition-upgrade-vi.png")); encoderVi.Save(streamVi);
+                }
+            }
+            else check(false, "The upgrade panel's layout is title, cards, confirm");
             prefs.Language = "en";
             if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string review && Find("Pet upgrade")?.Content is FrameworkElement content)
             {

@@ -24,7 +24,8 @@ Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Battle Mode. Tóm tắt:
 
 Physics kéo/ném giữ nguyên; mèo vẫn không nhận sát thương khi đang cầm/bay.
 
-**Cân bằng cần chốt ở M03:** mèo đang cầm vừa miễn sát thương vừa đánh được, nên có thể "cầm mèo lơ lửng đánh mãi". M03 sẽ đề xuất cách chặn (ví dụ đòn khi cầm yếu hơn hoặc hồi lâu hơn đòn dưới sàn) để người dùng chọn; không bỏ miễn sát thương khi cầm nếu chưa được duyệt.
+**Ngoại lệ miễn sát thương khi cầm (người dùng chốt 2026-10-26):** đạn dính của **slime bay (S5)** gây sát thương cho mèo **kể cả khi đang cầm** (Khiên bong bóng vẫn chặn). Đây là quái duy nhất làm vậy; mọi quái khác vẫn không gây sát thương cho mèo đang cầm/bay. Trúng đạn khi đang cầm không làm rơi mèo khỏi tay, không choáng mèo (drag giữ nguyên).
+Đề xuất kèm theo, chờ người dùng xác nhận ở M03: mèo đang cầm **chỉ đánh được quái trên không** (slime bay), không đánh quái dưới sàn, để không có chuyện "cầm mèo lơ lửng đánh mãi" mà không bị gì.
 
 ## Nguyên tắc thiết kế
 
@@ -68,7 +69,7 @@ Physics kéo/ném giữ nguyên; mèo vẫn không nhận sát thương khi đan
 | S2 | Slime bong bóng | Trong bong bóng miễn mọi đòn; bong bóng mọc lại sau 6 s | Click 3 lần chọc vỡ (rơi xuống choáng 1,5 s); Kéo cắt |
 | S3 | Slime ảo ảnh | 3 bản giống nhau, 1 bản thật | Rê chuột: bản giả nhòe, bản thật có bóng; đánh trúng bản giả thì nó tan; Đèn laser |
 | S4 | Slime dỗi | Đánh không mất máu, còn phồng to dần | Vuốt ve (rê chuột qua lại); hết giận thì vẫy tay bỏ đi, tính là hạ |
-| S5 | Slime bay | Lơ lửng trên cao, thỉnh thoảng sà xuống cắn | Nhấc mèo lên sát nó (mèo tự vung vuốt); đánh lúc sà xuống; Kẹp gắp kéo xuống |
+| S5 | Slime bay | Lơ lửng ở **vị trí bất kỳ trên màn hình** (không chỉ trên dải trận; vẽ trong cửa sổ nhỏ topmost riêng như icon app), đổi chỗ định kỳ. Bắn **đạn dính** có báo trước vào mèo: trúng thì mất máu **kể cả khi đang cầm**; mèo dưới sàn trúng đạn thì chậm một lúc. Bị choáng thì **rơi xuống đất**, nằm choáng khoảng 3 s và nhận sát thương ×1,5, rồi gồng khoảng 1 s bay lên lại, lặp lại vòng đó | Cầm mèo đưa lại gần để mèo vung vuốt; làm choáng bằng Đẩy, Kẹp gắp kéo xuống hoặc vài đòn liên tiếp khi cầm; rơi xuống thì đánh dưới sàn. Số liệu chốt ở M14 |
 | S6 | Slime đào hang | Chui sàn, trồi dưới chân mèo (vòng nứt báo trước) | Nhấc mèo lúc vòng hiện, thả đè khi nó trồi (kẹt ngoài 3 s); Kẹp gắp lôi lên |
 | S7 | Slime băng | Giáp băng: kiếm/búa chỉ xước | Ném mèo đập vào đủ mạnh (ngưỡng tốc độ) thì vỡ; Bình xịt làm mềm (hạ ngưỡng) |
 | S8 | Slime bám tường | Leo mép trái/phải khung trận, bắn gai xuống | Ném mèo lên tường; Đẩy; Kẹp gắp kéo xuống |
@@ -170,7 +171,7 @@ Mỗi mốc: build + `scripts/test.ps1 -Ui` đạt, test mới cho phần thêm 
 | M12 | Q8 cờ hiệu + 6 đội hình phối hợp trong Enemy Director | Director bốc đội hình theo threat/ngân sách; banner lần đầu |
 | **Quái solo** | | |
 | M13 | S1 bóng ma, S2 bong bóng, S3 ảo ảnh, S4 dỗi | Chỉ đọc chuột trong khung trận; không gây cảm xúc cho mèo |
-| M14 | S5 bay, S6 đào hang | Hạ được bằng nhấc/thả mèo và bằng Kẹp gắp |
+| M14 | S5 bay, S6 đào hang | Slime bay đi khắp màn hình (theo DPI, đa màn hình chỉ màn có trận, ẩn khi app khác fullscreen), đạn dính trúng cả mèo đang cầm mà không làm rơi mèo; vòng choáng → rơi → ×1,5 sát thương → bay lên chạy đúng; hạ được bằng nhấc/thả mèo và bằng Kẹp gắp |
 | M15 | S7 băng, S8 bám tường | Hạ được bằng ném mèo; ngưỡng tốc độ trong battle.json |
 | M16 | S9 nhím, S10 hẹn giờ, S11 trộm | Thứ bị trộm trả lại khi hạ; test |
 | **Boss** | | |

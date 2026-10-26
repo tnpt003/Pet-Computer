@@ -560,6 +560,6 @@ Tự động đã có: Phần thưởng trên sảnh (ô có hình, khóa, Mới
 ## Visual combat 2026-10-26 — cần nghiệm thu trong trận thật
 - [ ] Ô kỹ năng khi hồi chiêu: nhìn ra icon, số giây ở góc dưới phải; vừa hồi xong thì lóe vàng một lần; Pause/tiếp tục không làm lóe.
 - [ ] Số sát thương: thường kem, combo cam to hơn, chí mạng (thẻ Móng vuốt) vàng to có "!"; không bị thân mèo che.
-- [ ] Bóng chân dưới slime và mèo trên hình nền sáng/tối; nhấc mèo lên thì bóng mèo mất; vòng đỏ cảnh báo trùm vẫn rõ.
+- [ ] Bóng chân dưới slime trên hình nền sáng/tối (nhẹ, không thành mảng đen); mèo không có bóng; vòng đỏ cảnh báo trùm vẫn rõ.
 - [ ] Hạ slime/trùm: giọt cùng màu bắn ra rồi rơi, tia sáng vàng ngắn; trận đông quái không giật thêm.
 - [ ] Hướng dẫn phiêu lưu: chỗ sáng vẫn ôm đúng thanh kỹ năng và nút Đẩy.

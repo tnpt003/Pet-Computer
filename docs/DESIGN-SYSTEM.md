@@ -124,7 +124,7 @@ Không tự thêm confirm, màn trung gian hoặc đổi navigation chỉ để 
 - App giả là đồ chơi hình cửa sổ/icon máy tính; giữ quy tắc không dùng app/logo thật, không đọc nội dung desktop. Phân biệt cảnh báo game với lỗi Windows thật.
 - ZZZ, sao stun, số damage và dấu miễn có viền/nền tương phản. Kiểm tra thứ tự lớp giữa cửa sổ mèo/chiến trường; không để thân mèo che chữ như các lỗi đã ghi ở Issue_fixxed.md.
 - Số sát thương theo loại đòn (chỉ hiển thị, `BattleEffect.Tone`): thường kem 16, combo cam #FF9F4A 19, chí mạng vàng 22 kèm "!"; hồi máu xanh "+". Đều có viền tối.
-- Bóng chân: slime đứng trên sàn và mèo (khi không bị nhấc) có bóng mờ hai tông, nhạt hơn bóng lúc nhảy; vòng cảnh báo, vòng chọn và windup luôn vẽ đè lên bóng.
+- Bóng chân: slime đứng trên sàn có bóng mờ hai tông, nhạt hơn bóng lúc nhảy; vòng cảnh báo, vòng chọn và windup luôn vẽ đè lên bóng. Mèo không có bóng: cửa sổ mèo nằm trên dải chiến trường nên bóng vẽ ở dải không khớp bàn chân (thử 26/10, người dùng thấy như mảng tối).
 - Slime bị hạ: bẹp + khói trắng như cũ, thêm 6 giọt cùng màu thân (8 với trùm) bắn ra rồi rơi và một tia sáng vàng ngắn (`BattleEffect.Tint`); chỉ trong vòng đời hiệu ứng khói, không timer riêng.
 - Ô kỹ năng HUD: lớp quét hồi chiêu đủ nhạt để thấy icon, số giây trong huy hiệu nhỏ góc dưới phải, nền sáng hơn khi sẵn sàng và lóe vàng một lần khi vừa hồi xong (không nhấp nháy liên tục); kích thước ô giữ 46 DIP cho chỗ sáng của hướng dẫn.
 - Art không tự đổi hitbox, input region hoặc physics. Giữ vùng trong suốt xuyên chuột và vùng tương tác đã được duyệt cho từng vật thể.

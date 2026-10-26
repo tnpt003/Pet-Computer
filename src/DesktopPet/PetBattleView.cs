@@ -162,9 +162,6 @@ public sealed partial class BattleFieldView : FrameworkElement
         // Index loops: foreach over IReadOnlyList boxes an enumerator every frame.
         for (int i = 0; i < sim.Bombs.Count; i++) DrawBomb(dc, sim.Bombs[i], sim.Bombs[i].X - OriginX, floor);
         for (int i = 0; i < sim.Slimes.Count; i++) if (sim.Slimes[i].CallSpots is { } spots) DrawCallSpots(dc, sim.Slimes[i], spots, floor, time);
-        // Contact shadows ground the cat and the slimes on any wallpaper (two tones like the leap shadow).
-        // The cat's window stands on this floor; lifted off it, the cat leaves no shadow behind.
-        if (!sim.CatLifted) dc.DrawEllipse(FootShadow, FootRim, new Point(sim.CatX - OriginX, floor - 2), CatShadowRadius, 5);
         for (int layer = 0; layer <= 2; layer++)
             for (int i = 0; i < sim.Slimes.Count; i++)
             {
@@ -177,8 +174,10 @@ public sealed partial class BattleFieldView : FrameworkElement
                     double k = 1 - Math.Clamp(slime.LeapHeight / 100, 0, 0.6);
                     dc.DrawEllipse(LeapShadow, ShadowRim, new Point(x, floor - 2), slime.Width / 2 * k, 6 * k); // A pale rim: seen on dark desktops too.
                 }
+                // A contact shadow grounds a slime on any wallpaper (the cat has none: its own window sits
+                // above this strip, so a shadow here never lines up with its paws; 2026-10-26 user's screenshot).
                 else if (slime.State != SlimeState.Defeated)
-                    dc.DrawEllipse(FootShadow, FootRim, new Point(x, floor - 2), slime.Width * 0.45, 4.5);
+                    dc.DrawEllipse(FootShadow, FootRim, new Point(x, floor - 2), slime.Width * 0.4, 4);
                 DrawSlime(dc, slime, x, floor - slime.LeapHeight, sim.Settings, time);
                 if (sim.AppRules != null && sim.IsInfector(slime.Id) && slime.State != SlimeState.Defeated) DrawVirusMark(dc, slime, x, floor, time);
             }
@@ -243,9 +242,8 @@ public sealed partial class BattleFieldView : FrameworkElement
     private static readonly Brush LeapShadow = Frozen(90, 0x2A, 0x1F, 0x16);
     private static readonly Pen ShadowRim = FrozenPen(Frozen(150, 255, 255, 255), 1.5);
     // The everyday contact shadow: lighter than a leap's, so the warning rings and markers stay on top in weight.
-    private static readonly Brush FootShadow = Frozen(70, 0x2A, 0x1F, 0x16);
-    private static readonly Pen FootRim = FrozenPen(Frozen(90, 255, 255, 255), 1);
-    private const double CatShadowRadius = 24;
+    private static readonly Brush FootShadow = Frozen(55, 0x2A, 0x1F, 0x16);
+    private static readonly Pen FootRim = FrozenPen(Frozen(70, 255, 255, 255), 1);
     private static readonly Brush SummonPurple = Frozen(255, 0x9B, 0x5C, 0xE0);
     private static readonly Pen SummonPen = FrozenPen(SummonPurple, 3.5);
     private static readonly Pen SummonEdge = FrozenPen(SummonPurple, 2.5, new DashStyle(new double[] { 3, 2 }, 0));

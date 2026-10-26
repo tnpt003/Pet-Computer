@@ -18,12 +18,12 @@ public sealed class KeepsakeArt : FrameworkElement
     private static readonly Brush Wood = B(0xA8, 0x72, 0x45), WoodDark = B(0x7A, 0x4E, 0x2C), Shine = PetUi.Frozen(Color.FromArgb(0xB0, 255, 255, 255));
     private static readonly Brush Slime = B(0x7C, 0xD3, 0x6A), SlimeDark = B(0x4F, 0x9E, 0x45), Eye = B(0x30, 0x2B, 0x48), Plinth = B(0x4A, 0x3C, 0x5C);
     private static Pen Freeze(Pen pen) { pen.Freeze(); return pen; }
-    private static (Brush Fill, Brush Dark) CupColors(string? tier) => tier switch
-    {
-        "gold" => (B(0xF5, 0xC5, 0x42), B(0xB8, 0x86, 0x2A)),
-        "silver" => (B(0xD6, 0xDC, 0xE4), B(0x8C, 0x96, 0xA3)),
-        _ => (B(0xD0, 0x8A, 0x45), B(0x8E, 0x55, 0x23))
-    };
+    // Brushes and pens are frozen once here; drawing (each squash or tilt frame) allocates none.
+    private static readonly (Brush Fill, Brush Dark, Pen Handle) GoldCup = Cup(B(0xF5, 0xC5, 0x42), B(0xB8, 0x86, 0x2A)),
+        SilverCup = Cup(B(0xD6, 0xDC, 0xE4), B(0x8C, 0x96, 0xA3)), BronzeCup = Cup(B(0xD0, 0x8A, 0x45), B(0x8E, 0x55, 0x23));
+    private static (Brush, Brush, Pen) Cup(Brush fill, Brush dark) => (fill, dark, Freeze(new Pen(dark, 2.2)));
+    private static (Brush Fill, Brush Dark, Pen Handle) CupColors(string? tier) => tier switch { "gold" => GoldCup, "silver" => SilverCup, _ => BronzeCup };
+    private static readonly Pen PlankEdge = Freeze(new Pen(WoodDark, 1.2)), CushionEdge = Freeze(new Pen(SlimeDark, 1.6)), CapEdge = Freeze(new Pen(WoodDark, 1.6));
 
     private IReadOnlyList<KeepsakeSpec> items = Array.Empty<KeepsakeSpec>();
     public IReadOnlyList<KeepsakeSpec> Items
@@ -142,7 +142,7 @@ public sealed class KeepsakeArt : FrameworkElement
         double floor = ArtHeight - StandHeight;
         // The keepsake: a plank with a darker front edge.
         dc.DrawRoundedRectangle(Wood, Outline, new Rect(1, floor, w - 2, StandHeight - 1), 2.5, 2.5);
-        dc.DrawLine(new Pen(WoodDark, 1.2), new Point(4, floor + StandHeight - 2.5), new Point(w - 4, floor + StandHeight - 2.5));
+        dc.DrawLine(PlankEdge, new Point(4, floor + StandHeight - 2.5), new Point(w - 4, floor + StandHeight - 2.5));
         double x = Pad;
         foreach (var item in items)
         {
@@ -166,7 +166,7 @@ public sealed class KeepsakeArt : FrameworkElement
         }
         body.Freeze();
         dc.DrawGeometry(Slime, Outline, body);
-        dc.DrawLine(new Pen(SlimeDark, 1.6), new Point(left + 6, floor - 3), new Point(left + CushionWidth - 6, floor - 3));
+        dc.DrawLine(CushionEdge, new Point(left + 6, floor - 3), new Point(left + CushionWidth - 6, floor - 3));
         dc.DrawEllipse(Shine, null, new Point(cx - 11, top + 6), 4, 2.2);
         dc.DrawEllipse(Eye, null, new Point(cx - 4.5, top + 10), 1.6, 2.2);
         dc.DrawEllipse(Eye, null, new Point(cx + 4.5, top + 10), 1.6, 2.2);
@@ -175,6 +175,9 @@ public sealed class KeepsakeArt : FrameworkElement
     // Infinity's keepsakes (2026-10-22), in a cup's room (CupWidth × CupHeight).
     private static readonly Brush Glass = PetUi.Frozen(Color.FromArgb(0x70, 0xDC, 0xEE, 0xFF)), Sand = B(0xB9, 0x8C, 0xF0), SandDark = B(0x7A, 0x5A, 0xC8),
         Gold = B(0xF5, 0xC5, 0x42), GoldDark = B(0xB8, 0x86, 0x2A), Star = B(0xFF, 0xF6, 0xD8);
+    private static readonly Pen Stream = Freeze(new Pen(SandDark, 1)), InfinityMark = Freeze(new Pen(Gold, 1.1)), CollarEdge = Freeze(new Pen(GoldDark, 1.2)),
+        Swirl = Freeze(new Pen(PetUi.Frozen(Color.FromArgb(0xB0, 0xFF, 0xE6, 0xFA)), 1.3) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round }),
+        Prong = Freeze(new Pen(Gold, 2) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round });
     private static readonly Brush Nebula = Freeze(new RadialGradientBrush(
         new GradientStopCollection { new(Color.FromRgb(0xF2, 0x9C, 0xE8), 0), new(Color.FromRgb(0x8A, 0x5C, 0xE0), 0.45), new(Color.FromRgb(0x2C, 0x2A, 0x6E), 1) })
         { GradientOrigin = new Point(0.38, 0.35), Center = new Point(0.45, 0.42), RadiusX = 0.65, RadiusY = 0.65 });
@@ -232,7 +235,7 @@ public sealed class KeepsakeArt : FrameworkElement
             lower.Freeze();
             dc.DrawGeometry(Sand, null, lower);
         }
-        if (above > 0 && ran > 0 && flip == 0) dc.DrawLine(new Pen(SandDark, 1), new Point(cx, neck), new Point(cx, peak));
+        if (above > 0 && ran > 0 && flip == 0) dc.DrawLine(Stream, new Point(cx, neck), new Point(cx, peak));
         if (ran > 0.35)
         {
             dc.DrawEllipse(Star, null, new Point(cx - 2.5, floor - 7.5), 0.9, 0.9);
@@ -244,9 +247,9 @@ public sealed class KeepsakeArt : FrameworkElement
         // Caps and posts.
         dc.DrawRoundedRectangle(Wood, Outline, new Rect(cx - 11, top, 22, 4.5), 1.5, 1.5);
         dc.DrawRoundedRectangle(Wood, Outline, new Rect(cx - 11, floor - 4.5, 22, 4.5), 1.5, 1.5);
-        dc.DrawLine(new Pen(WoodDark, 1.6), new Point(cx - 10, top + 4.5), new Point(cx - 10, floor - 4.5));
-        dc.DrawLine(new Pen(WoodDark, 1.6), new Point(cx + 10, top + 4.5), new Point(cx + 10, floor - 4.5));
-        Infinity(dc, cx, top + 2.25, 2.1, new Pen(Gold, 1.1));
+        dc.DrawLine(CapEdge, new Point(cx - 10, top + 4.5), new Point(cx - 10, floor - 4.5));
+        dc.DrawLine(CapEdge, new Point(cx + 10, top + 4.5), new Point(cx + 10, floor - 4.5));
+        Infinity(dc, cx, top + 2.25, 2.1, InfinityMark);
         if (flip > 0) dc.Pop();
     }
 
@@ -264,7 +267,7 @@ public sealed class KeepsakeArt : FrameworkElement
         }
         stand.Freeze();
         dc.DrawGeometry(Gold, Outline, stand);
-        dc.DrawLine(new Pen(GoldDark, 1.2), new Point(cx - 7.5, floor - 3), new Point(cx + 7.5, floor - 3));
+        dc.DrawLine(CollarEdge, new Point(cx - 7.5, floor - 3), new Point(cx + 7.5, floor - 3));
         dc.DrawEllipse(Nebula, Outline, new Point(cx, cy), r, r);
         // The swirl and the stars.
         var swirl = new StreamGeometry();
@@ -275,14 +278,14 @@ public sealed class KeepsakeArt : FrameworkElement
             g.BezierTo(new Point(cx + 1, cy + 5), new Point(cx - 3, cy + 2), new Point(cx - 1, cy), true, true);
         }
         swirl.Freeze();
-        dc.DrawGeometry(null, new Pen(PetUi.Frozen(Color.FromArgb(0xB0, 0xFF, 0xE6, 0xFA)), 1.3) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round }, swirl);
+        dc.DrawGeometry(null, Swirl, swirl);
         SparkleAt(dc, new Point(cx + 5, cy - 5), 2.4);
         dc.DrawEllipse(Star, null, new Point(cx - 5, cy + 5), 0.9, 0.9);
         dc.DrawEllipse(Star, null, new Point(cx + 6, cy + 4.5), 0.7, 0.7);
         dc.DrawEllipse(Shine, null, new Point(cx - 5.5, cy - 5.5), 2.2, 3.2);
         // Claws holding the ball.
-        dc.DrawLine(new Pen(Gold, 2) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round }, new Point(cx - 6, floor - 9), new Point(cx - 8.5, cy + 6));
-        dc.DrawLine(new Pen(Gold, 2) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round }, new Point(cx + 6, floor - 9), new Point(cx + 8.5, cy + 6));
+        dc.DrawLine(Prong, new Point(cx - 6, floor - 9), new Point(cx - 8.5, cy + 6));
+        dc.DrawLine(Prong, new Point(cx + 6, floor - 9), new Point(cx + 8.5, cy + 6));
     }
 
     // ∞: two loops side by side around (cx, cy), each r wide.
@@ -303,13 +306,12 @@ public sealed class KeepsakeArt : FrameworkElement
 
     private static void Cup(DrawingContext dc, double left, double floor, string? tier)
     {
-        var (fill, dark) = CupColors(tier);
+        var (fill, dark, handle) = CupColors(tier);
         double cx = left + CupWidth / 2;
         // Plinth, stem, bowl, handles, a star on the bowl and a shine.
         dc.DrawRoundedRectangle(Plinth, Outline, new Rect(cx - 9, floor - 6, 18, 6), 1.5, 1.5);
         dc.DrawRectangle(dark, Outline, new Rect(cx - 2.5, floor - 14, 5, 8));
         dc.DrawRoundedRectangle(fill, Outline, new Rect(cx - 6.5, floor - 16, 13, 3), 1, 1);
-        var handle = new Pen(dark, 2.2);
         dc.DrawEllipse(null, handle, new Point(cx - 9.5, floor - 27), 3.5, 4.5);
         dc.DrawEllipse(null, handle, new Point(cx + 9.5, floor - 27), 3.5, 4.5);
         var bowl = new StreamGeometry();

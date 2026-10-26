@@ -4,6 +4,11 @@ Cập nhật: 2026-10-24 (Asia/Saigon). Lịch sử trước 21/10: docs/archive
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
+## Đợt visual lớn — mốc 4: tối ưu vẽ (2026-10-26)
+- Quét các file vẽ tìm Pen/Brush/FormattedText tạo trong hàm vẽ: chữ số sát thương, nhãn app, chữ app độc, màu gồng của slime và tia lửa app đã được cache sẵn. Chỉ PetKeepsakeArt còn tạo mới mỗi lần vẽ (kệ vẽ lại mỗi frame khi nảy/nghiêng/lật đồng hồ cát): 11 Pen và 6 Brush (màu cúp tạo mới mỗi lần gọi) → static frozen.
+- Ảnh render keepsake-orb, keepsake-hourglass, rewards-infinity-en giống trước từng pixel (so hash). Test thật: scripts/test.ps1 -Ui exit 0, WPF 924/924.
+- Gom màu hardcode của Túi đồ/thẻ nâng cấp/khung game chuyển sang mốc 3 (cùng bảng màu trận).
+
 ## Đợt visual lớn — mốc 2: bỏ trùng lặp + banner co theo màn hình (2026-10-26)
 - Bỏ banner thứ hai: trang Phần thưởng trong sảnh (đã có banner sảnh + chân dung), Tùy chỉnh (banner nằm ngay trên preview mèo), Túi đồ (banner chen giữa tab và nội dung).
 - Menu chuột phải: "Chế độ yên lặng" (trăng, Mystery) và "Âm thanh" (loa) có icon; khi bật thì dấu ✓ ở cuối dòng (PetMenuStyle: TailCheck; mục bật/tắt không icon như "Tự điều khiển cảm xúc" vẫn ✓ ở cột icon).

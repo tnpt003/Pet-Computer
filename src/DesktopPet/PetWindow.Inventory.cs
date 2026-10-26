@@ -178,7 +178,7 @@ public sealed partial class PetWindow
         }
 
         bagBody = new StackPanel();
-        var scroll = new ScrollViewer { VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled, Focusable = false, Content = new StackPanel { Children = { new PetScene(PetSceneKind.Treasure, 76), bagBody } } };
+        var scroll = new ScrollViewer { VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled, Focusable = false, Content = bagBody };
         scroll.Resources.MergedDictionaries.Add(PetControlStyle.Resources);
         var body = new DockPanel();
         DockPanel.SetDock(header, Dock.Top); DockPanel.SetDock(tabs, Dock.Top);

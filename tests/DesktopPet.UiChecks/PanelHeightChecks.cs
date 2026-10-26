@@ -52,11 +52,17 @@ internal static class PanelHeightChecks
                         var actions = (FrameworkElement)dock.Children[0];
                         double bottom = actions.TransformToAncestor(shown).Transform(new Point(0, actions.ActualHeight)).Y;
                         var scroll = dock.Children.OfType<System.Windows.Controls.ScrollViewer>().Single();
-                        check(bottom <= shown.ActualHeight && (h <= Room || scroll.ScrollableHeight > 0),
+                        check(bottom <= shown.ActualHeight && shown.ActualHeight <= Room + 0.5 && (scroll.ExtentHeight <= scroll.ViewportHeight + 0.5 || scroll.ScrollableHeight > 0),
                             panel + " keeps actions visible and tall content scrolls on a 480-DIP screen: " + where);
                         h = Height(panel);
+                        var banner = (PetScene)shown.Resources["PetBanner"];
+                        bool none = banner.Visibility == Visibility.Collapsed;
+                        field.SetValue(window, area with { Bottom = area.Top + 640 });
+                        Call(window, "PlaceGamePanel", shown);
+                        check(none && banner.Visibility == Visibility.Visible && banner.Height == PetWindow.ShortBannerHeight,
+                            panel + ": no banner on a 480-DIP screen, a short one on 640 DIPs");
                     }
-                    finally { field.SetValue(window, area); }
+                    finally { field.SetValue(window, area); Call(window, "PlaceGamePanel", shown); }
                 }
                 if (!tallest.TryGetValue(panel, out var best) || h > best.Height) tallest[panel] = (h, where);
             }

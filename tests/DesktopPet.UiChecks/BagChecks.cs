@@ -275,7 +275,9 @@ internal static class BagChecks
             check(window.PickBattleUpgrade(offered.Id) && window.BattleBagText.Contains("If you take: " + offered.Name("en")) && window.BattleBagText.Contains(offered.Describe("en")),
                 "Picking a card shows it in the Bag's Cards tab as a preview");
             window.ShowBattleBagTab(PetWindow.BagStatsTab);
-            check(window.BattleBagText.Contains("If you take: " + offered.Name("en")) && window.BattleBagText.Contains(" → ") && window.BattleBagText.Contains("Blue numbers"),
+            // The offer is random: only a card that changes a number has "→" and the blue-number note.
+            bool changesNumbers = offered.Effect is "damage" or "maxHp" or "armor" or "moveSpeed" or "attackSpeed" or "knock";
+            check(window.BattleBagText.Contains("If you take: " + offered.Name("en")) && (!changesNumbers || window.BattleBagText.Contains(" → ") && window.BattleBagText.Contains("Blue numbers")),
                 $"The Stats tab shows → the numbers after the card ({window.BattleBagText.Replace('\n', '|')})");
             Shot("Pet bag", "bag-card-preview-en.png");
             Call(window, "FillBag", true);

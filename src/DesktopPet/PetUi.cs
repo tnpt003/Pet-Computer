@@ -43,6 +43,7 @@ public static class PetUi
         Home = "", Diary = "", Settings = "", More = "", Exit = "", Debug = "", About = "";
 
     public const string Battle = ""; // Game controller.
+    public const string Quiet = "", Sound = ""; // Moon (quiet hours), speaker.
     public const string Status = ""; // Heart.
     public const string Customize = ""; // Personalize (brush).
     public const string Place = ""; // Map pin.

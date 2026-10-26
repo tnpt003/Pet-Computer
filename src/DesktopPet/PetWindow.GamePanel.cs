@@ -64,16 +64,19 @@ public sealed partial class PetWindow
         if (check != null) check.Visibility = selected ? Visibility.Visible : Visibility.Collapsed;
     }
 
+    private const string BannerKey = "PetBanner";
+    internal const double BannerHeight = 104, ShortBannerHeight = 56, ShortScreen = 700, TinyScreen = 540;
+
     // The frame and window of a game panel. The content scrolls when it is taller than the cat's
     // monitor (PlaceGamePanel caps the height); the actions stay in view. Not shown yet.
     private Window CreateGamePanel(UIElement content, UIElement actions, string title, double minWidth = 0, PetSceneKind? scene = null)
     {
+        var banner = new PetScene(scene ?? (title switch { "Pet adventure" => PetSceneKind.Adventure, "Pet expedition" => PetSceneKind.Expedition,
+            "Pet setup" => PetSceneKind.Workshop, _ => PetSceneKind.Home }), BannerHeight);
         var scroll = new ScrollViewer
         {
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled, Focusable = false,
-            Content = new StackPanel { Children = {
-                new PetScene(scene ?? (title switch { "Pet adventure" => PetSceneKind.Adventure, "Pet expedition" => PetSceneKind.Expedition,
-                    "Pet setup" => PetSceneKind.Workshop, _ => PetSceneKind.Home }), 104), content } }
+            Content = new StackPanel { Children = { banner, content } }
         };
         scroll.Resources.MergedDictionaries.Add(PetControlStyle.Resources);
         var body = new DockPanel();
@@ -91,6 +94,7 @@ public sealed partial class PetWindow
         };
         panel.SetValue(TextBlock.FontFamilyProperty, PetUi.TextFont);
         var window = CreateOverlayWindow(panel, title);
+        window.Resources[BannerKey] = banner;
         window.SizeToContent = SizeToContent.WidthAndHeight;
         return window;
     }
@@ -101,6 +105,13 @@ public sealed partial class PetWindow
     {
         if (window == null) return;
         window.MaxHeight = Math.Max(240, bounds.Bottom - bounds.Top - 24);
+        // A low screen keeps its room for the content: a shorter banner, none on a very low one.
+        if (window.Resources[BannerKey] is PetScene banner)
+        {
+            double room = window.MaxHeight;
+            banner.Height = room < ShortScreen ? ShortBannerHeight : BannerHeight;
+            banner.Visibility = room < TinyScreen ? Visibility.Collapsed : Visibility.Visible;
+        }
         window.UpdateLayout();
         double width = window.ActualWidth;
         MoveWindow(window, Math.Clamp((bounds.Left + bounds.Right - width) / 2, bounds.Left, Math.Max(bounds.Left, bounds.Right - width)), bounds.Top + 12);

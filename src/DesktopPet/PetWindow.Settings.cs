@@ -148,7 +148,6 @@ public sealed partial class PetWindow
         previewTimer.Start();
         form.PreviewTimer = previewTimer;
 
-        if (page.Content is StackPanel customizePage) customizePage.Children.Insert(0, new PetScene(PetSceneKind.Home, 100));
         customizeWindow = FormWindow(L("Tùy chỉnh", "Customize") + " — " + preferences.Name, CustomizeWidth, 620, page, form);
         form.Save.Click += (_, _) =>
         {

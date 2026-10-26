@@ -4,6 +4,14 @@ Cập nhật: 2026-10-24 (Asia/Saigon). Lịch sử trước 21/10: docs/archive
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
+## Đợt visual lớn — mốc 2: bỏ trùng lặp + banner co theo màn hình (2026-10-26)
+- Bỏ banner thứ hai: trang Phần thưởng trong sảnh (đã có banner sảnh + chân dung), Tùy chỉnh (banner nằm ngay trên preview mèo), Túi đồ (banner chen giữa tab và nội dung).
+- Menu chuột phải: "Chế độ yên lặng" (trăng, Mystery) và "Âm thanh" (loa) có icon; khi bật thì dấu ✓ ở cuối dòng (PetMenuStyle: TailCheck; mục bật/tắt không icon như "Tự điều khiển cảm xúc" vẫn ✓ ở cột icon).
+- Responsive: bảng game (sảnh, bản đồ, chuẩn bị, Viễn chinh, kết quả) đặt chiều cao banner khi đặt bảng theo màn hình của mèo: 104 DIP; màn hình chừa < 700 DIP → 56; < 540 → ẩn. Màn 480 DIP giờ thấy tiêu đề + lựa chọn ngay, không mất 1/3 cho hình.
+- Test: PanelHeightChecks thêm kiểm tra không banner ở 480 DIP, banner 56 ở 640 DIP, rồi đặt lại theo màn hình thật; điều kiện "actions trong khung, nội dung vừa hoặc cuộn" đo sau khi đặt (trước đo chiều cao cũ). BagChecks: thẻ được đưa ra là ngẫu nhiên, chỉ đòi "→"/ghi chú số xanh khi thẻ đổi chỉ số (lần chạy ra "Steady" từng làm test đỏ).
+- Test thật: scripts/test.ps1 -Ui exit 0, WPF 924/924. Đã xem context-menu, rewards-infinity-en, bag-adventure-cards-en, customize-vi, battle-setup-small-screen (480 DIP, không banner). Chưa xem trên desktop/DPI thật.
+- Test tay: bật/tắt Yên lặng và Âm thanh trong menu (✓ cuối dòng); mở sảnh/chuẩn bị trên màn hình thấp hoặc DPI 150–200% (banner thấp/ẩn).
+
 ## Đợt visual lớn — mốc 1: lỗi hiển thị (2026-10-26, người dùng "làm tất cả", giữ dòng hướng dẫn HUD)
 - Kế hoạch 4 mốc (thứ tự 1 → 2 → 4 → 3): 1 lỗi hiển thị, 2 bỏ trùng lặp, 4 tối ưu, 3 thống nhất art trận. Dòng hướng dẫn dưới HUD giữ nguyên theo người dùng.
 - HUD: banner lớn ("WAVE 3", tên màn/trùm) hiện chồng lên dòng trạng thái + dãy chấm đợt → giờ ẩn cột trạng thái (Hidden, giữ kích thước HUD) khi banner hiện.

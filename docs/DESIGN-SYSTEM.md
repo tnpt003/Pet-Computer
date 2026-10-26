@@ -64,7 +64,7 @@ Chữ chính trên nền tối là trắng; chữ phụ dùng Soft; số liệu/
 
 ### Màu icon menu
 
-Icon menu có nền AccentSoft; màu lấy qua `PetUi.IconColor(glyph)` theo nhóm: chăm sóc/cảm xúc = Care, nhật ký = Mystery, chiến đấu/cho ăn = Reward, thoát = Danger, còn lại = Accent. Chỉ truyền màu riêng khi cần nghĩa khác nhóm (ví dụ laser = Danger), và luôn là token.
+Icon menu có nền AccentSoft; màu lấy qua `PetUi.IconColor(glyph)` theo nhóm: chăm sóc/cảm xúc = Care, nhật ký = Mystery, chiến đấu/cho ăn = Reward, thoát = Danger, còn lại = Accent. Chỉ truyền màu riêng khi cần nghĩa khác nhóm (ví dụ laser = Danger, yên lặng = Mystery), và luôn là token. Mục bật/tắt có icon (Yên lặng = trăng, Âm thanh = loa): khi bật, nền icon đậm hơn và dấu ✓ hiện ở cuối dòng; mục bật/tắt không icon giữ dấu ✓ ở cột icon.
 
 ### Màu của art
 
@@ -105,6 +105,8 @@ Không tự thêm confirm, màn trung gian hoặc đổi navigation chỉ để 
 - **PetIllustration**: 6 motif nhỏ (Cat/Book/Heart/Leaf/Spark/Trophy) cho trạng thái, nhật ký, welcome, kết quả.
 - **PetScene**: 12 cảnh banner 76–104 DIP trong vùng nội dung cuộn, chọn theo chức năng; mỗi cảnh có nền và đồ vật riêng, không lặp một bố cục: Home (phòng ban ngày, màn hình + cuộn len), Adventure (đồi xanh, slime, rương), Expedition (bản đồ + la bàn + ba lô, đêm), Infinity (cổng vô tận + slime, đêm), Workshop (bảng treo kiếm/búa/khiên, bàn thợ, đèn treo), Diary (giá sách, bàn có sổ mở, cửa sổ hoàng hôn), Speech (bãi cỏ, cây, bong bóng thoại), Sound (sân khấu rèm, đèn rọi, mèo đeo tai nghe), Settings (bảng trượt, bánh răng, đồng hồ), Treasure (rương mở, xu, cúp, đá quý), Victory (bục ba bậc, cúp, cờ, giấy màu), Rest (đêm, trăng khuyết, mèo cuộn tròn ngủ trên đệm, ZZZ, đèn ngủ). Giữ bố cục chính ở giữa vì thẻ mode crop cảnh: Adventure đặt slime/mèo/rương trong x 152–328 của khung 480.
 - Scene/illustration là trang trí: không text, không nút, không nhận input, không timer; DrawingGroup frozen, cache theo loại.
+- Mỗi bảng tối đa một banner; không đặt banner ngay cạnh preview/chân dung mèo (Tùy chỉnh, Túi đồ, trang Phần thưởng của sảnh không có banner riêng). Bảng game (CreateGamePanel) co banner theo màn hình của mèo: 104 DIP; màn hình còn < 700 DIP thì 56 DIP; < 540 DIP thì ẩn (PlaceGamePanel).
+- Tiêu đề bảng game căn trái, không huy hiệu mode (banner đã nói mode).
 - Mèo trong PetScene mặc coat của pet (`PetScene.Coat`, PetWindow đặt khi tải và khi Lưu cài đặt): lông, mõm, tai/điểm màu, bàn chân, mắt màu, hoa văn tam thể/mướp lấy từ CoatPalette; cache theo (cảnh, coat). Chân dung trạng thái/sảnh/kết quả dùng PetRenderer thật (có phụ kiện); mèo trong cảnh không đội phụ kiện.
 - Vùng đã có art riêng tiếp tục dùng art đó: ModeArt, WeaponIcon, UpgradeIcon (64 DIP trên huy hiệu 86), SynergyIcon, BagIcon, KeepsakeArt, AppArt.
 - Vai trò slime nhận ra từ hình dáng/phụ kiện, không chỉ recolor. Elite thêm một dấu hiệu rõ, không phủ hiệu ứng che windup.

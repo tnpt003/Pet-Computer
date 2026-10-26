@@ -44,6 +44,8 @@ public static class PetMenuStyle
                 <TextBlock x:Name="Check" Text="&#xE73E;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="12"
                            Foreground="{{{PetUi.AccentHex}}}" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
                 <ContentPresenter Grid.Column="1" ContentSource="Header" RecognizesAccessKey="True" VerticalAlignment="Center" Margin="2,0,14,0"/>
+                <TextBlock x:Name="TailCheck" Grid.Column="2" Text="&#xE73E;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="12"
+                           Foreground="{{{PetUi.AccentHex}}}" VerticalAlignment="Center" Visibility="Collapsed"/>
                 <TextBlock x:Name="Arrow" Grid.Column="2" Text="&#xE76C;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="10"
                            Foreground="{{{PetUi.MutedHex}}}" VerticalAlignment="Center" Visibility="Collapsed"/>
               </Grid>
@@ -69,6 +71,7 @@ public static class PetMenuStyle
             </Trigger>
             <Trigger Property="IsChecked" Value="True">
               <Setter TargetName="IconBack" Property="Background" Value="{{{PetUi.AccentSofterHex}}}"/>
+              <Setter TargetName="TailCheck" Property="Visibility" Value="Visible"/>
             </Trigger>
             <MultiTrigger>
               <MultiTrigger.Conditions>
@@ -76,6 +79,7 @@ public static class PetMenuStyle
                 <Condition Property="Icon" Value="{x:Null}"/>
               </MultiTrigger.Conditions>
               <Setter TargetName="Check" Property="Visibility" Value="Visible"/>
+              <Setter TargetName="TailCheck" Property="Visibility" Value="Collapsed"/>
             </MultiTrigger>
             <Trigger Property="IsEnabled" Value="False">
               <Setter TargetName="Chrome" Property="Opacity" Value="0.45"/>

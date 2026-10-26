@@ -64,9 +64,10 @@ public sealed partial class PetWindow
         reset.Click += (_, _) => BringHome();
         var place = PetUi.MenuItem(PetUi.Place);
         place.Items.Add(visit); place.Items.Add(remember); place.Items.Add(forget); place.Items.Add(new Separator()); place.Items.Add(reset);
-        var quiet = new MenuItem { IsCheckable = true, IsChecked = preferences.Quiet };
+        // Switches keep their icon; when on, a tick shows at the end of the row.
+        var quiet = PetUi.MenuItem(PetUi.Quiet, PetUi.Mystery); quiet.IsCheckable = true; quiet.IsChecked = preferences.Quiet;
         quiet.Click += (_, _) => { preferences.Quiet = quiet.IsChecked; ApplyQuiet(); CancelFeatureActivity(); Interact("quiet_changed"); SavePreferences(); };
-        var sounds = new MenuItem { IsCheckable = true, IsChecked = preferences.Sounds };
+        var sounds = PetUi.MenuItem(PetUi.Sound); sounds.IsCheckable = true; sounds.IsChecked = preferences.Sounds;
         sounds.Click += (_, _) => { preferences.Sounds = sounds.IsChecked; if (!preferences.Sounds) sound?.Stop(); SavePreferences(); };
         var settingsItem = PetUi.MenuItem(PetUi.Settings);
         settingsItem.Click += (_, _) => ShowPetSettings();

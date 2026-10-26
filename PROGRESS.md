@@ -23,7 +23,7 @@ Quy ước file này: chỉ giữ trạng thái hiện tại, các đợt đang 
 - Ngày kỷ niệm đầu tiên của người dùng là 2026-10-13 → lần đầu thấy được 2027-10-13.
 - Đã bỏ theo người dùng (2026-10-22): cho ăn bỏ cooldown/xếp hàng và mèo no từ chối ăn; đo RAM chạy dài; phím tắt toàn cục cho Làm ngay; dạy mèo nói (cách 2) không làm trong đợt này. Bỏ (2026-10-24, trước tạm hoãn từ 16/10): tùy chọn away nap 5/10/15 phút; tốc độ đói/chán, khoảng cách bong bóng trong Behavior tuning. LLM trò chuyện chỉ khi người dùng đổi quy tắc AGENTS.md.
 - **Hướng mở rộng mới (người dùng 23/10): mèo nói tiếng người** — đọc to câu trong bong bóng (vi/en/ja). Chưa duyệt thiết kế; cần đổi quy tắc AGENTS.md "chưa tích hợp voice". Các cách A líu lo hoạt hình / B giọng Windows / C tạo sẵn / D neural offline, quy tắc im lặng (Quiet, fullscreen, ngủ, trận, Pause), mốc V1–V3 và câu hỏi cho người dùng: docs/NEXT-STEPS.md mục "Hướng mở rộng mới: mèo nói tiếng người".
-- Đề xuất quy trình (2026-10-26, người dùng đồng ý dọn tài liệu): mỗi bản chốt danh sách tính năng trước; mỗi ý tưởng kèm tiêu chí "xong"; test tay chia smoke ngắn mỗi release + mục mới của bản; dọn PROGRESS sau release. Chưa làm: danh sách smoke ngắn trong MANUAL-TEST.md.
+- Đề xuất quy trình (2026-10-26, người dùng đồng ý dọn tài liệu): mỗi bản chốt danh sách tính năng trước; mỗi ý tưởng kèm tiêu chí "xong"; test tay chia smoke ngắn mỗi release + mục mới của bản; dọn PROGRESS sau release. Mẫu prompt theo quy trình này: docs/PROMPTS.md. Chưa làm: danh sách smoke ngắn trong MANUAL-TEST.md.
 - Backlog khác: docs/NEXT-STEPS.md → "Backlog".
 
 ## Cần test thủ công

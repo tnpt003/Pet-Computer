@@ -5,6 +5,7 @@ Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt 
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 
 ## Đợt visual lớn — mốc 3: thống nhất art (2026-10-26)
+- Publish từng mốc (AGENTS.md của người dùng cất rồi trả nguyên byte mỗi lần, mèo đóng WM_CLOSE và mở lại bản artifacts\win-x64, check-publish 3/3 mỗi lần): mốc 1 f62bcb3, mốc 2 535f758, mốc 4 df9d519, mốc 3 1062b63. ZIP mới nhất artifacts\DesktopPet-1.4.3-1062b63-win-x64.zip.
 - Mực art: token `PetUi.ArtInk` #3A2C1F (+ `ShadeColor` #2A1F16 cho bóng/viền chữ/màn che) thay mực chàm #302B48/#262338, viền slime xanh rêu #2E3A2B, mắt #2B2A33 và viền tím kỷ vật #3A2E4A (22 chỗ: chiến trường, HUD, app giả, icon thẻ/túi đồ/chuẩn bị, kỷ vật, cuộn len, bong bóng thoại, hiệu ứng cảm xúc). Độ tối gần như cũ; màu tín hiệu trận (đỏ cảnh báo, xanh hồi máu, xanh Đẩy, hồng bom, vàng) giữ nguyên để đọc trên mọi hình nền.
 - Thẻ lớn đang chọn (vũ khí ở bảng chuẩn bị, thẻ nâng cấp, lựa chọn thẻ/vật phẩm Viễn chinh): `Game.ChosenCard` cam trong suốt + viền `ChosenRim` cam + ✓ (thẻ nâng cấp và lựa chọn Viễn chinh trước không có ✓); chip/tab/nút giữ cam đặc.
 - Mèo trong banner đội phụ kiện của pet: `PetRenderer.DrawAccessory` dùng chung (static), PetScene vẽ ở tỷ lệ 0,75 vào đầu mèo ngồi và mèo cuộn ngủ; `PetScene.Accessory` đặt trong ApplyAccessory (cả đồ ngày lễ). Cache theo (cảnh, coat, phụ kiện).

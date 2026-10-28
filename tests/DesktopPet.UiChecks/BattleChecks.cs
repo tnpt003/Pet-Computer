@@ -812,6 +812,35 @@ internal static class BattleChecks
             Shot(Colors.WhiteSmoke, "battle-tools-light.png");
             var both = Shot(dark, "battle-tools-dark.png");
             check(Changed(withDot, both, 380, 600) > 80, "The fan's blades and wind show where it blows");
+
+            // 1.5 M06: a slime in the Grabber's claw (lifted, its cable from the top), a soaked one under the
+            // spray, a Scissors stroke being drawn; with PET_RENDER_REVIEW, the strip on light and dark.
+            var handSim = new BattleSim(data, 0, 600, new Random(1), skills: new[] { BattleSkill.Push, BattleSkill.Heal, BattleSkill.Grabber, BattleSkill.Scissors, BattleSkill.Spray });
+            foreach (var x in new[] { 110.0, 300, 470 })
+            {
+                var s = handSim.AddSlime(x, data.Enemy("slime"));
+                s.Set(SlimeState.Moving); s.StateTime = 0.4; s.Facing = -1;
+            }
+            toolView = new BattleFieldView(handSim) { OriginX = 0, Width = 600, Height = BattleFieldView.FieldHeight };
+            toolView.Measure(new Size(600, BattleFieldView.FieldHeight)); toolView.Arrange(new Rect(0, 0, 600, BattleFieldView.FieldHeight)); toolView.UpdateLayout();
+            var handBare = Shot(dark, null);
+            var lifted = handSim.Slimes[0];
+            check(handSim.Arm(BattleSkill.Grabber) && handSim.Grab(lifted.Id, 110, 10), "(setup) the claw on the first slime");
+            for (int i = 0; i < 12; i++) { handSim.MoveGrab(110, 10 + i * 5); handSim.Step(1.0 / 60, 590, false); handSim.ClearEvents(); }
+            var withClaw = Shot(dark, null);
+            check(lifted.Lift > 30 && Changed(handBare, withClaw, 80, 140) > 150, $"The lifted slime and its claw show ({lifted.Lift:0} DIPs up, {Changed(handBare, withClaw, 80, 140)} px)");
+            check(handSim.Arm(BattleSkill.Spray) && handSim.StartSpray(470, 20), "(setup) the spray on the third slime");
+            for (int i = 0; i < 20; i++) { handSim.Step(1.0 / 60, 590, false); handSim.ClearEvents(); }
+            var stroke = typeof(BattleFieldView).GetField("strokeFrom", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
+            var strokeEnd = typeof(BattleFieldView).GetField("strokeTo", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
+            var noStroke = Shot(dark, null);
+            stroke.SetValue(toolView, (Point?)new Point(200, 140)); strokeEnd.SetValue(toolView, new Point(380, 120));
+            Shot(Colors.WhiteSmoke, "battle-hands-light.png");
+            var withHands = Shot(dark, "battle-hands-dark.png");
+            check(handSim.Slimes[2].Wet && Changed(withClaw, noStroke, 420, 560) > 120, "The spray and the soaked slime show");
+            check(Changed(noStroke, withHands, 200, 390) > 60, "The Scissors stroke shows while it is drawn");
+            stroke.SetValue(toolView, null);
+            handSim.ReleaseGrab();
         }
 
         // The battle's desktop apps (PetWindow.BattleApps.cs): five icon windows on the grid above the

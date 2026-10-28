@@ -3,8 +3,8 @@ using DesktopPet;
 // 1.5 M02: the five skills a battle carries, out of ten. Without a loadout a battle has the five
 // first skills (chapter 1, old saves, the balance runs); a loadout is read in HUD order and anything
 // that does not fit falls back to the default; a skill not carried is never ready; a card or relic
-// about a skill is only offered when that skill is carried; the five 1.5 skills have no effect yet
-// and are only opened by a won stage that names them; an Expedition run keeps its loadout.
+// about a skill is only offered when that skill is carried; the five 1.5 skills (working since
+// M05/M06) are only opened by a won stage that names them; an Expedition run keeps its loadout.
 internal static class BattleLoadoutTests
 {
     public static void Run(Action<bool, string> check)
@@ -15,8 +15,7 @@ internal static class BattleLoadoutTests
         // The ten skills and their data.
         check(BattleSkills.All.Length == 10 && BattleSkills.Carry == 5 && BattleSkills.Default.SequenceEqual(old),
             "Ten skills, five carried; the default is the five first ones");
-        check(BattleSkills.All.Where(info => info.Working).Select(info => info.Skill).SequenceEqual(old.Append(BattleSkill.Laser).Append(BattleSkill.Fan)),
-            "The five first skills, the Laser and the Fan work so far (the other 1.5 ones come with M06)");
+        check(BattleSkills.All.All(info => info.Working), "All ten skills work (Laser and Fan since M05, the other three since M06)");
         var data = BattleData.Settings;
         check(BattleSkills.All.All(info => data.Skill(info.Skill).Name("en").Length > 0 && data.Skill(info.Skill).Name("vi").Length > 0
                 && data.Skill(info.Skill).Name("ja") != data.Skill(info.Skill).Name("en")),
@@ -62,8 +61,8 @@ internal static class BattleLoadoutTests
             "A carried Laser is ready (it is aimed: no use at once)");
         var grabber = new BattleSim(new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 1 } }, 0, 1600, seed: 1,
             skills: new[] { BattleSkill.Push, BattleSkill.Heal, BattleSkill.Cheer, BattleSkill.Shield, BattleSkill.Grabber });
-        check(grabber.Carries(BattleSkill.Grabber) && !grabber.Ready(BattleSkill.Grabber) && !grabber.Arm(BattleSkill.Grabber) && !grabber.Use(BattleSkill.Grabber, 800),
-            "A new skill that has no effect yet is never ready, even when carried");
+        check(grabber.Carries(BattleSkill.Grabber) && grabber.Ready(BattleSkill.Grabber) && !grabber.Use(BattleSkill.Grabber, 800) && grabber.Arm(BattleSkill.Grabber),
+            "A carried Grabber is ready (it is used on a slime: no use at once)");
         check(noBomb.Ready(BattleSkill.Push) && noBomb.Ready(BattleSkill.Shield) && noBomb.Use(BattleSkill.Shield, 800) && noBomb.ShieldRemaining > 0,
             "The carried old skills work as before");
 
@@ -103,7 +102,7 @@ internal static class BattleLoadoutTests
         progress.Completed.Add("b");
         check(adventure.SkillOpen(BattleSkill.Laser) && !adventure.SkillOpen(BattleSkill.Fan), "Winning the stage that opens a working skill opens it (only it)");
         progress.Completed.Add("d");
-        check(!adventure.SkillOpen(BattleSkill.Grabber), "Winning the stage that opens a skill does not open one with no effect yet");
+        check(adventure.SkillOpen(BattleSkill.Grabber), "Winning the stage that opens the Grabber opens it (it works since M06)");
         check(!adventure.SkillChoice(campaign.Chapters[0].Stages[0]) && adventure.SkillChoice(campaign.Chapters[1].Stages[0]),
             "Only a chapter with skillChoice lets the user choose (chapter 1 keeps the five first skills)");
         check(!data.Campaign!.Chapters[0].SkillChoice && data.Campaign.Chapters.SelectMany(c => c.Stages).All(s => s.UnlocksSkill == null),

@@ -329,6 +329,7 @@ public sealed partial class BattleSim
         wasLifted = true;
         Armed = null;
         FanX = null;
+        SprayX = null;
     }
 
     // catHeld / lifted: see SetCatState. Putting a lifted cat down grants grace (if ready).
@@ -399,6 +400,8 @@ public sealed partial class BattleSim
         StepSlimes(dt, floorX, catHeld);
         if (Over) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
         StepTools(dt, catHeld);
+        if (Over) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
+        StepGrabber(dt, catHeld);
         if (Over) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
         StepApps(dt, floorX, catHeld);
         if (Over) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
@@ -850,6 +853,7 @@ public sealed partial class BattleSim
     {
         if (skill is BattleSkill chosen && (!IsAimed(chosen) || !Ready(chosen))) return false;
         if (skill != BattleSkill.Fan) FanX = null;
+        if (skill != BattleSkill.Spray) SprayX = null;
         Armed = skill;
         return true;
     }

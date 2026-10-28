@@ -328,10 +328,11 @@ public sealed class BattleHud : Border
             bool active = skill switch
             {
                 BattleSkill.Cheer => b.CheerRemaining > 0, BattleSkill.Shield => b.ShieldRemaining > 0,
-                BattleSkill.Laser => b.LaserX != null, BattleSkill.Fan => b.FanBlowing, _ => false
+                BattleSkill.Laser => b.LaserX != null, BattleSkill.Fan => b.FanBlowing,
+                BattleSkill.Spray => b.Spraying, BattleSkill.Grabber => b.GrabberBusy, _ => false
             };
-            // The Fan's air used so far shows as the same wipe while it is still usable.
-            double gauge = skill == BattleSkill.Fan ? 1 - b.FanSteam : 0;
+            // A hold skill's air or water used so far shows as the same wipe while it is still usable.
+            double gauge = skill == BattleSkill.Fan ? 1 - b.FanSteam : skill == BattleSkill.Spray ? 1 - b.SprayTank : 0;
             slot.Show(cooldown / Math.Max(0.01, total), cooldown, b.Armed == skill, !b.Over && !b.Paused && !held, active, gauge);
         }
         pauseGlyph.Kind = userPaused ? HudGlyphKind.Play : HudGlyphKind.Pause;
@@ -364,6 +365,12 @@ public sealed class BattleHud : Border
                                               "Click a spot of the field to put the laser dot there · click the slot again or right-click to cancel")
             : b.Armed == BattleSkill.Fan ? L("Giữ chuột trên dải trận để thổi slime ra xa con trỏ · bấm lại ô hoặc chuột phải để cất quạt",
                                             "Hold the mouse on the field to blow slimes away from the cursor · click the slot again or right-click to put the fan away")
+            : b.Armed == BattleSkill.Grabber ? L("Nhấn giữ một slime nhỏ rồi vung chuột để ném · không gắp được đá và boss · bấm lại ô hoặc chuột phải để hủy",
+                                                "Press a small slime and fling the mouse to throw it · not a rock or a boss · click the slot again or right-click to cancel")
+            : b.Armed == BattleSkill.Scissors ? L("Kéo chuột thành một nét trên dải trận: cắt dây nhầy và slime nằm trên nét · bấm lại ô hoặc chuột phải để hủy",
+                                                 "Drag a stroke across the field: it cuts ropes and the slimes on it · click the slot again or right-click to cancel")
+            : b.Armed == BattleSkill.Spray ? L("Giữ chuột trên dải trận để xịt ướt slime gần con trỏ · bấm lại ô hoặc chuột phải để cất bình xịt",
+                                              "Hold the mouse on the field to soak the slimes near the cursor · click the slot again or right-click to put the spray away")
             : b.Armed is BattleSkill armed ? LF($"Click một slime để dùng {SkillName(armed)} · bấm lại ô hoặc chuột phải chiến trường để hủy",
                                                $"Click a slime to use {SkillName(armed)} · click the slot again or right-click the field to cancel")
             : !b.Over && b.Grace > 0 ? LF($"Được bảo vệ sau khi tiếp đất: còn {ProtectedFor(b)} giây", $"Protected after landing: {ProtectedFor(b)} s left")

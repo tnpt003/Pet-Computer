@@ -97,6 +97,25 @@
   "fanRange": 200,
   "fanSpeed": 220,
   "fanBumpDamage": 4,
+  // 1.5 Grabber: cooldown, the longest hold (s), the largest kind it lifts (scale), a throw's hit damage,
+  // its daze (s), the cursor speed a let-go needs to be a throw (DIPs/s). Scissors: cooldown, a cut's
+  // damage, the shortest stroke (DIPs). Spray: seconds of water, the refill once spent, its reach
+  // around the cursor (DIPs), HP a second, how much slower (0–0.9), how long a slime stays wet (s).
+  "grabberCooldown": 12,
+  "grabberHoldSeconds": 3,
+  "grabberMaxScale": 1.3,
+  "grabberHitDamage": 8,
+  "grabberStun": 1,
+  "grabberThrowSpeed": 300,
+  "scissorsCooldown": 8,
+  "scissorsDamage": 6,
+  "scissorsMinLength": 40,
+  "sprayTankSeconds": 4,
+  "sprayRefillSeconds": 8,
+  "sprayRange": 70,
+  "sprayDps": 2,
+  "sprayChill": 0.35,
+  "spraySoakSeconds": 1.5,
   // Their names and HUD descriptions (every skill once: push, heal, cheer, bomb, shield; the
   // HUD order and what each does stay in the app). {key} in a description is that number of
   // this file, e.g. {pushCooldown}. Names: at most 32 characters; descriptions: at most 220.
@@ -126,8 +145,7 @@
       "descVi": "Khiên bong bóng — {shieldSeconds} giây mèo không mất máu. Hồi {shieldCooldown} giây.",
       "descEn": "Bubble shield — for {shieldSeconds} s the cat takes no damage. {shieldCooldown} s cooldown."
     },
-    // 1.5: laser and fan work since M05 (free battles may carry them until chapter 2 opens them); the
-    // other three are shown locked until M06.
+    // 1.5: the five new skills work since M05/M06 (free battles may carry them until chapter 2 opens them).
     {
       "id": "laser", "nameVi": "Đèn laser", "nameEn": "Laser pointer",
       "descVi": "Đèn laser — chọn rồi click một chỗ: {laserSeconds} giây slime gần đó chạy theo chấm đỏ, không đánh mèo; con trên chấm mất {laserDps} máu/giây. Hồi {laserCooldown} giây.",
@@ -135,13 +153,13 @@
     },
     {
       "id": "grabber", "nameVi": "Kẹp gắp", "nameEn": "Grabber",
-      "descVi": "Kẹp gắp — chọn rồi kéo một slime nhỏ, ném nó vào slime khác. Mở ở chương 2.",
-      "descEn": "Grabber — choose, then drag a small slime and throw it at another. Opens in chapter 2."
+      "descVi": "Kẹp gắp — chọn rồi nhấn giữ một slime nhỏ (không phải đá hay boss) và vung chuột để ném: trúng slime khác thì cả hai mất {grabberHitDamage} máu, con kia choáng. Hồi {grabberCooldown} giây.",
+      "descEn": "Grabber — choose, then press a small slime (not a rock or a boss) and fling the mouse: thrown into another, both lose {grabberHitDamage} HP and the other is dazed. {grabberCooldown} s cooldown."
     },
     {
       "id": "scissors", "nameVi": "Kéo cắt", "nameEn": "Scissors",
-      "descVi": "Kéo cắt — chọn rồi vuốt ngang: cắt dây nhầy, chọc vỡ bong bóng. Mở ở chương 2.",
-      "descEn": "Scissors — choose, then swipe across: cuts slime strings and pops bubbles. Opens in chapter 2."
+      "descVi": "Kéo cắt — chọn rồi kéo chuột thành một nét: cắt đứt dây nhầy, slime nằm trên nét mất {scissorsDamage} máu. Hồi {scissorsCooldown} giây.",
+      "descEn": "Scissors — choose, then drag a stroke: it cuts slime ropes, and each slime on it loses {scissorsDamage} HP. {scissorsCooldown} s cooldown."
     },
     {
       "id": "fan", "nameVi": "Quạt", "nameEn": "Fan",
@@ -150,8 +168,8 @@
     },
     {
       "id": "spray", "nameVi": "Bình xịt nước", "nameEn": "Water spray",
-      "descVi": "Bình xịt nước — chọn rồi giữ chuột: slime chậm lại và co nhỏ. Mở ở chương 2.",
-      "descEn": "Water spray — choose, then hold the mouse: slimes slow down and shrink. Opens in chapter 2."
+      "descVi": "Bình xịt nước — chọn rồi giữ chuột: slime bị xịt ướt sũng, chậm lại, co nhỏ và mất {sprayDps} máu/giây. Nước đủ {sprayTankSeconds} giây; cạn thì chờ {sprayRefillSeconds} giây.",
+      "descEn": "Water spray — choose, then hold the mouse: soaked slimes slow down, shrink and lose {sprayDps} HP/s. {sprayTankSeconds} s of water; empty, it refills in {sprayRefillSeconds} s."
     }
   ],
 

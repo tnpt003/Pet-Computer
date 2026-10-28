@@ -1,7 +1,7 @@
 # Bản 1.5 — Slime phản công (thiết kế đã chốt)
 
 Ngày chốt hướng: 2026-10-26 (Asia/Saigon). Người dùng chọn "bản rất lớn", rồi chỉnh lại phần quái và kỹ năng qua trao đổi cùng ngày.
-Trạng thái: **đang code** — xong M01, M02, M03, M04, M05 (2026-10-28). Mỗi mốc bên dưới làm trong một phiên chat; trước mỗi mốc vẫn theo quy trình AGENTS.md (đọc → giải thích → chờ "ok" → làm → test → ghi nhớ).
+Trạng thái: **đang code** — xong M01, M02, M03, M04, M05, M06 (2026-10-28). Mỗi mốc bên dưới làm trong một phiên chat; trước mỗi mốc vẫn theo quy trình AGENTS.md (đọc → giải thích → chờ "ok" → làm → test → ghi nhớ).
 
 Ngoài danh sách này thì ý tưởng mới vào mục "Backlog sau 1.5" cuối file, không làm trong 1.5.
 
@@ -170,7 +170,7 @@ Mỗi mốc: build + `scripts/test.ps1 -Ui` đạt, test mới cho phần thêm 
 | M04 ✅ | Hiệu ứng trên quái (M2): độc, đóng băng, dính | **Xong 2026-10-28:** khóa `onHit` cho vũ khí và thẻ (`effect: "onHit"`, `amount` là tỉ lệ), `ApplyStatus` cho kỹ năng/app sau này. Độc tối đa 3 lớp, trừ mỗi 0,5 s, không bị đá chặn, tính là mèo hạ; đóng băng giữ mức chậm mạnh hơn; dính đứng yên nhưng vẫn đánh, hết dính miễn 1,5 s; boss nhận một nửa. Hình: độc tím + bọt, băng xanh + tinh thể, keo hổ phách dưới chân, huy hiệu có vòng đếm. BattleStatusTests (thời gian, cộng dồn, Pause, boss, dữ liệu) + ảnh UiChecks; mô phỏng cân bằng giống hệt trước từng dòng. Chưa gắn âm thanh. Chi tiết: docs/BATTLE-DATA.md → Hiệu ứng trên quái |
 | **Kỹ năng và vũ khí** | | |
 | M05 ✅ | Đèn laser, Quạt | **Xong 2026-10-28:** Laser click một chỗ (dụ quái trong 300 DIPs 4 s, không gồng đòn mới, 3 máu/s trên chấm, hồi 14 s); Quạt giữ chuột (thổi ra xa con trỏ, va nhau/va mép 4 máu, hơi 3 s, cạn chờ 6 s); boss nhận 50%, không bị đá chặn; bước hướng dẫn `laser`/`fan` chỉ ở màn có `unlocksSkill` đó. Người dùng chốt: trận tự do mang được ngay, chế độ khác chờ chương 2. BattleToolsTests + UiChecks (ảnh, hướng dẫn, bảng chuẩn bị); mô phỏng cân bằng giống hệt trước từng dòng. Chi tiết: docs/BATTLE-DATA.md → Đèn laser và Quạt |
-| M06 | Kẹp gắp, Kéo cắt, Bình xịt nước; nút "Đổi kỹ năng" ở điểm nghỉ Viễn chinh (dời từ M02) | Click trúng mèo luôn nhấc mèo; đá/boss không gắp được; có test va chạm khi ném slime; đổi kỹ năng ở điểm nghỉ miễn phí, không thay lựa chọn hồi máu/thẻ |
+| M06 ✅ | Kẹp gắp, Kéo cắt, Bình xịt nước; nút "Đổi kỹ năng" ở điểm nghỉ Viễn chinh (dời từ M02) | **Xong 2026-10-28:** Kẹp gắp nhấn giữ slime nhỏ (không đá/boss/quái lớn), vung chuột thả là ném: trúng con khác cả hai mất 8, con kia choáng 1 s, trúng mép tự mất 8, thả chậm chỉ rơi; giữ tối đa 3 s, hồi 12 s. Kéo cắt kéo một nét ≥ 40 DIPs: cắt dây nhầy, slime trên nét mất 6, hồi 8 s. Bình xịt giữ chuột: ướt + đóng băng 35% + 2 máu/s trong 70 DIPs, nước 4 s, cạn chờ 8 s. Đổi kỹ năng ở điểm nghỉ: miễn phí, không thay hồi máu/thẻ, thẻ của kỹ năng vừa bỏ rút khỏi lựa chọn; nút chỉ hiện khi đã mở hơn 5 kỹ năng. Click trúng mèo vẫn nhấc mèo (mèo là cửa sổ riêng). BattleHandToolsTests (va chạm khi ném, đá/boss không gắp, Pause, nhấc mèo, cắt dây, xịt, đổi kỹ năng ở điểm nghỉ) + UiChecks (ảnh, hướng dẫn, bảng chuẩn bị, điểm nghỉ); mô phỏng cân bằng giống hệt trước từng dòng. Chi tiết: docs/BATTLE-DATA.md → Kẹp gắp, Kéo cắt, Bình xịt nước |
 | M07 | K5 Mèo nổi giận | Thanh nộ trên HUD, 6 s hiệu ứng; không phá choáng/Pause/drag |
 | M08 | V1 Cuộn len, V2 Găng đấm | Chọn được ở bảng chuẩn bị; số liệu trong `weapons`; mô phỏng cân bằng không lệch quá kiếm/búa |
 | **Quái liên kết** | | |

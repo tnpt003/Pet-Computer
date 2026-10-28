@@ -51,6 +51,8 @@ public sealed partial class PetWindow
     private StackPanel? xChoice;
     private string? xChoiceKey, expeditionPickCard, expeditionDropCard, expeditionPickRelic;
     private readonly List<TextBlock> xChoiceTexts = new();
+    // A rest's skill change being picked (1.5 M06; null: closed).
+    private HashSet<BattleSkill>? expeditionSkillPick;
     private readonly Dictionary<string, Border> xChoiceButtons = new();
     private TextBlock? xBossLabel, xTitle, xData, xStatus, xBuild, xNodeName, xNodeGoal, xRecord, xNote, xSetupLabel, xMainText, xAbandonText, xCloseText, xBagText;
     private Border? xBag;
@@ -253,8 +255,55 @@ public sealed partial class PetWindow
         if (!expedition.Visit(lane ?? expeditionLane)) return L("Không có điểm này.", "There is no such node.");
         SaveExpedition(expedition.Progress);
         expeditionPickCard = expeditionDropCard = expeditionPickRelic = null;
+        expeditionSkillPick = null;
         expeditionNote = null;
         System.Diagnostics.Trace.WriteLine($"Expedition run {run.RunId}: step {run.Step + 1} {run.Pending!.Kind} {run.Pending.Event}.");
+        UpdateExpeditionMap();
+        return null;
+    }
+
+    // A rest's "Change skills" (1.5 M06, docs/BATTLE-DATA.md → Bộ kỹ năng mang theo): free, as often as
+    // wanted, the heal or card still to choose. Shown only when more skills are open than the HUD carries.
+    public bool ExpeditionCanChangeSkills => expeditionMapOpen && Expedition?.Run is { Pending.Kind: ExpeditionChoice.RestKind, Fighting: null }
+        && BattleSkills.All.Count(info => BattleSkillOpen(info.Skill)) > BattleSkills.Carry;
+    public bool ExpeditionSkillsPicking => expeditionSkillPick != null;
+    public IReadOnlyList<BattleSkill> ExpeditionSkillPick => BattleSkills.All.Select(info => info.Skill).Where(skill => expeditionSkillPick?.Contains(skill) == true).ToArray();
+
+    public bool ExpeditionOpenSkills()
+    {
+        if (!ExpeditionCanChangeSkills || Expedition?.Run is not ExpeditionRun run) return false;
+        expeditionSkillPick = new HashSet<BattleSkill>(run.Loadout);
+        UpdateExpeditionMap();
+        return true;
+    }
+
+    public bool ExpeditionToggleSkill(BattleSkill skill)
+    {
+        if (expeditionSkillPick is not HashSet<BattleSkill> pick) return false;
+        bool changed = pick.Remove(skill) || (BattleSkillOpen(skill) && pick.Count < BattleSkills.Carry && pick.Add(skill));
+        UpdateExpeditionMap();
+        return changed;
+    }
+
+    public void ExpeditionCancelSkills()
+    {
+        expeditionSkillPick = null;
+        UpdateExpeditionMap();
+    }
+
+    // Null on success.
+    public string? ExpeditionKeepSkills()
+    {
+        if (expeditionSkillPick is not HashSet<BattleSkill> pick || Expedition is not Expedition expedition || expedition.Run is not ExpeditionRun run)
+            return L("Không có lựa chọn nào đang mở.", "No choice is open.");
+        if (pick.Count != BattleSkills.Carry) return LF($"Chọn đủ {BattleSkills.Carry} kỹ năng.", $"Choose {BattleSkills.Carry} skills.");
+        if (pick.SetEquals(run.Loadout)) { ExpeditionCancelSkills(); return null; }
+        if (!expedition.ChangeSkills(pick.ToArray(), skill => BattleSkillOpen(skill))) return L("Không đổi được.", "That cannot be chosen.");
+        SaveExpedition(expedition.Progress);
+        if (expeditionPickCard != null && run.Pending?.Cards.Contains(expeditionPickCard) != true) expeditionPickCard = null;
+        expeditionSkillPick = null;
+        expeditionNote = L("Đã đổi kỹ năng.", "Skills changed.");
+        System.Diagnostics.Trace.WriteLine($"Expedition run {run.RunId}: skills {string.Join(",", run.Loadout)}.");
         UpdateExpeditionMap();
         return null;
     }
@@ -700,10 +749,12 @@ public sealed partial class PetWindow
         {
             xChoice.Visibility = Visibility.Collapsed;
             xChoiceKey = null; xChoiceTexts.Clear(); xChoiceButtons.Clear(); xChoice.Children.Clear();
+            expeditionSkillPick = null;
             return;
         }
         string key = string.Join("|", open.Kind, open.Lane, open.Event, string.Join(",", open.Cards), string.Join(",", open.Relics), expeditionPickCard, expeditionDropCard, expeditionPickRelic,
-            English, Math.Round(run.Hp), string.Join(",", run.Build.Select(c => c.Key + c.Value)), run.Relics.Count);
+            English, Math.Round(run.Hp), string.Join(",", run.Build.Select(c => c.Key + c.Value)), run.Relics.Count,
+            string.Join(",", run.Loadout), expeditionSkillPick == null ? "-" : string.Join(",", ExpeditionSkillPick), ExpeditionCanChangeSkills);
         xChoice.Visibility = Visibility.Visible;
         if (key == xChoiceKey) return;
         xChoiceKey = key;
@@ -777,7 +828,18 @@ public sealed partial class PetWindow
             }
         }
 
+        if (open.Kind == ExpeditionChoice.RestKind && expeditionSkillPick is HashSet<BattleSkill> pick) AddSkillPick(pick, Text);
+
         var buttons = new WrapPanel { Margin = new Thickness(0, 10, 0, 0) };
+        if (open.Kind == ExpeditionChoice.RestKind && expeditionSkillPick == null && ExpeditionCanChangeSkills)
+        {
+            var (change, changeText, _) = HudButton(() => ExpeditionOpenSkills(), plain: true);
+            changeText.Text = L("Đổi kỹ năng", "Change skills");
+            xChoiceTexts.Add(changeText);
+            change.Margin = new Thickness(0, 0, 6, 6);
+            buttons.Children.Add(change);
+            xChoiceButtons["skills"] = change;
+        }
         foreach (var option in expedition.Options())
         {
             if (option is DesktopPet.Expedition.Free or DesktopPet.Expedition.Gold) continue; // The capsules are buttons themselves.
@@ -807,6 +869,48 @@ public sealed partial class PetWindow
             xChoiceButtons[option] = button;
         }
         xChoice.Children.Add(buttons);
+    }
+
+    // The rest's skill change: every open skill as a chip (the carried ones ticked), then keep or cancel.
+    private void AddSkillPick(HashSet<BattleSkill> pick, Func<string, double, bool, double, Brush?, TextBlock> text)
+    {
+        var label = text(LF($"Kỹ năng cho phần còn lại của chuyến ({pick.Count}/{BattleSkills.Carry}) · miễn phí, vẫn được nghỉ hoặc lấy thẻ",
+            $"Skills for the rest of the run ({pick.Count}/{BattleSkills.Carry}) · free, the rest's choice stays"), 12, true, 1, null);
+        label.Margin = new Thickness(0, 8, 0, 0);
+        xChoice!.Children.Add(label);
+        var chips = new WrapPanel { Margin = new Thickness(0, 4, 0, 0) };
+        foreach (var info in BattleSkills.All)
+        {
+            var skill = info.Skill;
+            if (!BattleSkillOpen(skill)) continue;
+            bool picked = pick.Contains(skill);
+            var chip = new Border
+            {
+                Background = picked ? PetUi.Game.ChosenCard : PrepCardBack, BorderBrush = picked ? PetUi.Game.ChosenRim : PrepCardRim, BorderThickness = new Thickness(picked ? 2 : 1),
+                CornerRadius = new CornerRadius(8), Padding = new Thickness(8, 3, 8, 4), Margin = new Thickness(0, 0, 5, 5), Cursor = System.Windows.Input.Cursors.Hand,
+                ToolTip = info.Describe(BattleTuning, preferences.Language),
+                Child = text((picked ? "✓ " : "") + SkillName(skill), PetUi.SmallSize, picked, 1, null)
+            };
+            chip.MouseLeftButtonDown += (_, e) => { ExpeditionToggleSkill(skill); e.Handled = true; };
+            chips.Children.Add(chip);
+            xChoiceButtons["skill:" + BattleSkills.Id(skill)] = chip;
+        }
+        xChoice.Children.Add(chips);
+        var row = new WrapPanel { Margin = new Thickness(0, 2, 0, 0) };
+        var (keep, keepText, _) = HudButton(() => { if (ExpeditionKeepSkills() is string reason) ShowBattleNotice(reason); }, plain: true);
+        keepText.Text = L("Giữ bộ này", "Keep these skills");
+        xChoiceTexts.Add(keepText);
+        keep.Margin = new Thickness(0, 0, 6, 0);
+        keep.Background = PrepChosen;
+        bool full = pick.Count == BattleSkills.Carry;
+        keep.IsEnabled = full; keep.Opacity = full ? 1 : 0.5;
+        xChoiceButtons["skills:keep"] = keep;
+        var (cancel, cancelText, _) = HudButton(() => ExpeditionCancelSkills(), plain: true);
+        cancelText.Text = L("Hủy", "Cancel");
+        xChoiceTexts.Add(cancelText);
+        row.Children.Add(keep);
+        row.Children.Add(cancel);
+        xChoice.Children.Add(row);
     }
 
     // The capsule machine's two capsules, side by side: each a button with its picture, its price and

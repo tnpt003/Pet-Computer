@@ -82,10 +82,13 @@ internal static class TutorialChecks
         // 1.5 M05: stages that teach a skill (their unlocksSkill), in a chapter with the skill choice.
         var teachLaser = new StageSpec { Id = "t_laser", NameVi = "Laser", NameEn = "Laser", UnlocksSkill = "laser", Waves = new[] { Slimes(2) } };
         var teachFan = new StageSpec { Id = "t_fan", NameVi = "Quạt", NameEn = "Fan", UnlocksSkill = "fan", Waves = new[] { Slimes(2) } };
+        var teachGrabber = new StageSpec { Id = "t_grabber", NameVi = "Kẹp", NameEn = "Grabber", UnlocksSkill = "grabber", Waves = new[] { Slimes(2) } };
+        var teachScissors = new StageSpec { Id = "t_scissors", NameVi = "Kéo", NameEn = "Scissors", UnlocksSkill = "scissors", Waves = new[] { Slimes(2) } };
+        var teachSpray = new StageSpec { Id = "t_spray", NameVi = "Xịt", NameEn = "Spray", UnlocksSkill = "spray", Waves = new[] { Slimes(2) } };
         window.BattleTuning = new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 1 }, MaxAlive = 1, SpawnInterval = 0, SlimeMaxHp = 1000, CatDamage = 0, SlimeDamage = 0,
             Apps = new AppsSpec { InfectChance = 0, MalwareMinThreat = 99, VirusExeWeight = 1, VirusExeEvery = 30 },
             Campaign = new CampaignSpec { Chapters = new[] { new ChapterSpec { Id = "c1", NameVi = "C", NameEn = "C", Stages = chapter.Append(outside).ToArray() },
-                new ChapterSpec { Id = "c2", NameVi = "C2", NameEn = "C2", SkillChoice = true, Stages = new[] { teachLaser, teachFan } } } } };
+                new ChapterSpec { Id = "c2", NameVi = "C2", NameEn = "C2", SkillChoice = true, Stages = new[] { teachLaser, teachFan, teachGrabber, teachScissors, teachSpray } } } } };
         window.BattleGuideEnabled = true;
         void ToGround() { pet.Grounded = true; pet.VX = pet.VY = 0; pet.Action = PetAction.Idle; pet.Y = Field<Area>(window, "bounds").Bottom - 112; }
         void NextToCat() { foreach (var s in Sim().Slimes) s.X = pet.X + Field<PetSettings>(window, "settings").Width / 2 + 60; }
@@ -323,6 +326,49 @@ internal static class TutorialChecks
         window.EndBattle();
         window.AdventureProgress.Completed.Remove(teachLaser.Id);
         window.AdventureProgress.Completed.Remove(teachFan.Id);
+
+        // 1.5 M06: the same for the Grabber, the Scissors and the Spray.
+        foreach (var stage in new[] { teachGrabber, teachScissors, teachSpray }) window.AdventureProgress.Completed.Add(stage.Id);
+        prefs.BattleLoadout = new() { "push", "heal", "grabber", "scissors", "spray" };
+        ToGround();
+        check(window.StartBattle(stage: teachGrabber) == null && Sim().Carries(BattleSkill.Grabber), "(setup) the Grabber's stage, the Grabber carried");
+        RunToStep(4);
+        check(window.BattleGuideStep == PetWindow.GuideGrabber && window.BattleGuideSpots.Count == 1, $"The Grabber's stage teaches it ({window.BattleGuideStep})");
+        window.UseBattleSkill(BattleSkill.Grabber);
+        TickBattle(1.0 / 60);
+        check(Sim().Armed == BattleSkill.Grabber && window.BattleGuideText.Contains("press a slime"), $"Chosen, the step says to press a slime ({window.BattleGuideText})");
+        var grabbed = Sim().Slimes.First(s => s.Targetable);
+        check(window.BattleGrab(grabbed.Id, grabbed.X, 10) && Sim().Grabbing, "A press on a slime lifts it (the battle frozen, not paused)");
+        TickBattle(1.0 / 60);
+        check(window.BattleGuideStep == null && GuideTimesShown(PetWindow.GuideGrabber) == 1, "Lifting one ends the step");
+        window.BattleReleaseGrab();
+        check(!Sim().Grabbing && Sim().Cooldown(BattleSkill.Grabber) > 0, "Let go, the Grabber cools down");
+        window.EndBattle();
+        ToGround();
+        window.StartBattle(stage: teachScissors);
+        RunToStep(4);
+        check(window.BattleGuideStep == PetWindow.GuideScissors, $"The Scissors' stage teaches them ({window.BattleGuideStep})");
+        window.UseBattleSkill(BattleSkill.Scissors);
+        TickBattle(1.0 / 60);
+        double cx = Sim().CatX;
+        check(!window.BattleSnip(cx + 100, 20, cx + 110, 20) && Sim().Armed == BattleSkill.Scissors, "A stroke too short does nothing");
+        check(window.BattleSnip(cx + 60, 20, cx + 400, 20) && Sim().Snips == 1, "A long stroke is a cut");
+        TickBattle(1.0 / 60);
+        check(window.BattleGuideStep == null && GuideTimesShown(PetWindow.GuideScissors) == 1, "Cutting ends the step");
+        window.EndBattle();
+        ToGround();
+        window.StartBattle(stage: teachSpray);
+        RunToStep(4);
+        check(window.BattleGuideStep == PetWindow.GuideSpray, $"The Spray's stage teaches it ({window.BattleGuideStep})");
+        window.UseBattleSkill(BattleSkill.Spray);
+        TickBattle(1.0 / 60);
+        check(window.BattlePressHold(Sim().CatX + 120, 20) && Sim().Spraying && !Sim().FanBlowing, "Held on the floor, the Spray sprays (not the Fan)");
+        TickBattle(1.0 / 60);
+        check(window.BattleGuideStep == null && Sim().Spraying, "Spraying ends the step; it goes on while held");
+        window.BattleReleaseFan();
+        check(!Sim().Spraying && Sim().Armed == BattleSkill.Spray, "Let go, it stops and stays chosen");
+        window.EndBattle();
+        foreach (var stage in new[] { teachGrabber, teachScissors, teachSpray }) window.AdventureProgress.Completed.Remove(stage.Id);
         prefs.BattleLoadout = null;
         window.BattleGuideEnabled = false;
 

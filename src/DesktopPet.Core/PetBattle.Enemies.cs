@@ -17,7 +17,7 @@ public sealed partial class BattleSim
         {
             var chosen = Find(selected);
             // A shielded boss stays chosen; the cat goes for the others until its shield drops.
-            if (chosen != null && chosen.Targetable && !chosen.Shielded && !chosen.Mended && !chosen.Riding && !chosen.Airborne) return chosen;
+            if (chosen != null && chosen.Targetable && !chosen.Shielded && !chosen.Mended && !chosen.Riding && !chosen.Airborne && !chosen.Handled) return chosen;
             if (chosen == null || !chosen.Targetable) SelectedId = null;
         }
         // Never a shielded boss: the cat cannot hurt it (with nothing else to hit it waits).
@@ -28,6 +28,7 @@ public sealed partial class BattleSim
             if (!s.Targetable || s.Shielded) continue;
             if (s.Riding) continue; // A rider: the cat goes for its mount.
             if (s.Airborne) continue; // Out of reach from the floor (PetBattle.Held.cs).
+            if (s.Handled) continue; // In the Grabber's claw or flying from it (PetBattle.Grabber.cs).
             if (s.Mended) { if (guarded == null || Math.Abs(s.X - catX) < Math.Abs(guarded.X - catX)) guarded = s; continue; }
             if (nearest == null || Math.Abs(s.X - catX) < Math.Abs(nearest.X - catX)) nearest = s;
         }
@@ -96,6 +97,7 @@ public sealed partial class BattleSim
             StepStatus(slime, dt);
             if (Over) break;
             if (slime.State == SlimeState.Defeated) continue;
+            if (slime.Handled) continue; // In the Grabber's claw or flying from it (PetBattle.Grabber.cs).
             if (slime.Riding && slime.State == SlimeState.Moving) continue; // Carried by its mount (StepLinks).
             if (slime.Shielded && slime.State != SlimeState.Defeated)
             {
@@ -383,7 +385,7 @@ public sealed partial class BattleSim
         var live = scratch;
         live.Clear();
         // A leaping boss flies over the others.
-        foreach (var slime in slimes) if (slime.State != SlimeState.Defeated && !slime.KeepingBack && slime.LeapHeight <= 0 && !slime.Riding && !slime.Airborne && slime.Type.Blocker == blockers) live.Add(slime);
+        foreach (var slime in slimes) if (slime.State != SlimeState.Defeated && !slime.KeepingBack && slime.LeapHeight <= 0 && !slime.Riding && !slime.Airborne && !slime.Handled && slime.Type.Blocker == blockers) live.Add(slime);
         live.Sort(ByX);
         for (int i = 1; i < live.Count; i++)
         {

@@ -103,9 +103,10 @@ Tên và mô tả của 10 kỹ năng (HUD, túi đồ, bảng chuẩn bị). G�
 - Mỗi trận mang **5 trong 10** kỹ năng; HUD có đúng 5 ô theo thứ tự cố định ở bảng trên (5 kỹ năng cũ trước, rồi `laser`, `grabber`, `scissors`, `fan`, `spray`). Mặc định là 5 kỹ năng cũ.
 - Bảng chuẩn bị có mục "Kỹ năng mang theo (n/5)": 10 ô icon, bấm ô đã chọn để bỏ, bấm ô còn mở để thêm khi chưa đủ 5; Sẵn sàng chỉ chạy khi đủ 5. Lựa chọn lưu trong preferences (`BattleLoadout`, null = mặc định); id không còn hợp lệ hoặc kỹ năng chưa mở thì đọc như mặc định.
 - Có mục chọn ở trận tự do, Vô tận, chuẩn bị chuyến Viễn chinh (bộ kỹ năng giữ suốt chuyến, lưu trong chuyến: `Skills`, null = mặc định) và màn thuộc chương có `"skillChoice": true`. **Chương 1 không có `skillChoice`**: luôn 5 kỹ năng cũ, mục chọn ẩn.
-- Kỹ năng mới **chưa có tác dụng** (Kẹp gắp, Kéo cắt, Bình xịt: M06) hiện ô khóa, không chọn được, không bao giờ "sẵn sàng". Đèn laser và Quạt chạy từ M05 (mục "Đèn laser và Quạt"). Một kỹ năng mở khi có tác dụng và đã thắng màn có `"unlocksSkill": "<id>"` (dữ liệu gốc chưa màn nào có; chương 2 thêm ở M21); riêng **trận tự do** mang được mọi kỹ năng đã chạy (người dùng chốt 2026-10-28, tới khi có chương 2).
+- Cả 5 kỹ năng mới đã có tác dụng: Đèn laser, Quạt từ M05 (mục "Đèn laser và Quạt"); Kẹp gắp, Kéo cắt, Bình xịt nước từ M06 (mục "Kẹp gắp, Kéo cắt, Bình xịt nước"). Một kỹ năng mới mở khi đã thắng màn có `"unlocksSkill": "<id>"` (dữ liệu gốc chưa màn nào có; chương 2 thêm ở M21); chưa mở thì hiện ô khóa, không chọn được. Riêng **trận tự do** mang được cả 10 kỹ năng (người dùng chốt 2026-10-28, tới khi có chương 2). Cờ `Working` trong code vẫn còn cho kỹ năng sau này chưa có tác dụng.
 - Kỹ năng không mang theo: ô không có trên HUD, không dùng được. Thẻ có `"skill": "<id>"` (gốc: Bom to → `bomb`, Khiên dày → `shield`) và di vật có `"skill"` (gốc: Chuông phản đòn → `shield`, Túi cứu trợ → `heal`) chỉ được đưa khi bộ mang theo có kỹ năng đó. Thẻ/di vật đã có từ trước vẫn giữ.
-- Kỷ lục không tách theo bộ kỹ năng. Đổi kỹ năng ở điểm nghỉ Viễn chinh: chưa có (làm khi kỹ năng mới có tác dụng, M06).
+- Kỷ lục không tách theo bộ kỹ năng.
+- **Đổi kỹ năng ở điểm nghỉ Viễn chinh (M06):** khi điểm nghỉ đang mở và số kỹ năng đã mở nhiều hơn 5, khung lựa chọn có nút "Đổi kỹ năng": hiện các kỹ năng đã mở (đang mang có dấu ✓), bỏ/chọn cho đủ 5 rồi "Giữ bộ này" (hoặc "Hủy"). Miễn phí, đổi bao nhiêu lần cũng được, **không thay** lựa chọn hồi máu/lấy thẻ của điểm nghỉ (vẫn phải chọn một trong hai). Thẻ đang được điểm nghỉ đưa mà gắn với kỹ năng vừa bỏ thì rút khỏi lựa chọn (không bốc lại thẻ khác). Chuyến lưu bộ mới (`Skills`); trận sau mang bộ mới. Chỉ có 5 kỹ năng cũ mở (hiện tại, tới khi có chương 2) thì nút không hiện.
 
 ## Đợt quái (`waves`) và luật trận
 
@@ -474,6 +475,36 @@ Code: `src/DesktopPet.Core/PetBattle.Tools.cs` (luật), `src/DesktopPet/PetBatt
 - **Được mang ở đâu:** theo người dùng chốt 2026-10-28, **trận tự do** mang được mọi kỹ năng đã chạy (Laser, Quạt) ngay; Phiêu lưu, Viễn chinh, Vô tận vẫn chỉ mở bằng `unlocksSkill` (chương 2, M21). Lựa chọn lưu chung `BattleLoadout`: chế độ khác đọc bộ có Laser/Quạt chưa mở thành 5 kỹ năng cũ.
 - **Hướng dẫn đứng hình:** bước `laser` và `fan` (kiểu "làm") chỉ chạy trong màn có `unlocksSkill` đúng kỹ năng đó và khi trận mang kỹ năng ấy: sáng ô, chọn xong thì sáng khoảng sàn quanh mèo; dùng xong là hết bước. Chương 1 không có màn như vậy nên không đổi. Màn dạy tự cho mượn kỹ năng: làm cùng chương 2 (M21).
 - Hình: chấm đỏ có quầng sáng và vòng đếm ngược, đốm đỏ nhấp nhô trên đầu quái bị dụ; Quạt là cánh quạt xanh quay ở chỗ con trỏ và vệt gió chạy ra hai bên. Âm thanh dùng cue có sẵn (`LaserOn` lấp lánh, `FanOn` vút, `FanBump` cộc, `FanSpent` keng). Icon ô giữ bản vẽ từ M02.
+
+## Kẹp gắp, Kéo cắt, Bình xịt nước (bản 1.5, mốc M06, 2026-10-28)
+
+Code: `src/DesktopPet.Core/PetBattle.Grabber.cs` (Kẹp gắp), `src/DesktopPet.Core/PetBattle.Tools.cs` (Kéo cắt, Bình xịt), `src/DesktopPet/PetBattleView.Tools.cs` (vẽ), test `tests/DesktopPet.Tests/BattleHandToolsTests.cs` (quái giả, cả đổi kỹ năng ở điểm nghỉ), ảnh UiChecks, bước hướng dẫn trong TutorialChecks, điểm nghỉ trong ExpeditionChecks. Số liệu ở cấp trên cùng của battle.json:
+
+| Khóa | Giới hạn | Gốc | Ý nghĩa |
+| --- | --- | --- | --- |
+| `grabberCooldown` | 1–120 s | 12 | Hồi chiêu Kẹp gắp (tính từ lúc thả) |
+| `grabberHoldSeconds` | 0,5–15 s | 3 | Giữ slime lâu nhất; quá thì slime tự tuột (rơi, không tính ném) |
+| `grabberMaxScale` | 0,5–2,3 | 1,3 | Loại quái có `scale` lớn hơn thì không gắp được |
+| `grabberHitDamage` | 0–100 | 8 | Sát thương khi slime bị ném trúng slime khác (cả hai) hoặc trúng mép (nó) |
+| `grabberStun` | 0–5 s | 1 | Choáng của con bị trúng, và của con bị ném khi đáp |
+| `grabberThrowSpeed` | 50–1500 DIPs/s | 300 | Tốc độ con trỏ lúc thả để tính là "ném"; chậm hơn thì chỉ thả rơi |
+| `scissorsCooldown` | 1–120 s | 8 | Hồi chiêu Kéo cắt |
+| `scissorsDamage` | 0–100 | 6 | Sát thương mỗi slime nằm trên nét cắt |
+| `scissorsMinLength` | 10–400 DIPs | 40 | Nét ngắn hơn thì không tính (kỹ năng vẫn được chọn) |
+| `sprayTankSeconds` | 0,5–30 s | 4 | Xịt liên tục được bao lâu (thanh nước) |
+| `sprayRefillSeconds` | 1–120 s | 8 | Cạn nước thì chờ bao lâu (là hồi chiêu); khi chưa cạn, nước cũng hồi với nhịp này |
+| `sprayRange` | 10–500 DIPs | 70 | Tầm xịt quanh con trỏ (tính tới thân slime) |
+| `sprayDps` | 0–100 | 2 | Máu/giây slime bị xịt mất (trừ mỗi 0,5 s) |
+| `sprayChill` | 0,05–0,9 | 0,35 | Slime bị xịt chậm đi bao nhiêu (hiệu ứng đóng băng của M04) |
+| `spraySoakSeconds` | 0,5–10 s | 1,5 | Ướt (và đóng băng) bao lâu sau lần xịt cuối |
+
+- **Kẹp gắp** (chọn ô rồi **nhấn giữ một slime** và kéo): chỉ gắp slime nhỏ (`scale` ≤ `grabberMaxScale`), không gắp **đá** (`blocker`), **boss**, quái bay hay quái đang nhảy. Slime bị gắp treo theo con trỏ (cao tối đa 100 DIPs trên sàn), không đi, không đánh (đòn đang gồng, hồi máu đang gồng bị hủy), mèo không nhắm nó, không chen ai; đang cưỡi thì rơi khỏi thú cưỡi, đang cõng thì con cưỡi rơi xuống; dây nhầy (liên kết `tether`) vẫn giữ. **Thả chuột:** con trỏ đang vung đủ nhanh (`grabberThrowSpeed`) thì slime bị **ném** theo hướng và tốc độ đó (luôn bật lên một chút để bay thành vòng cung), rơi theo trọng lực; trúng slime khác đầu tiên trên đường bay thì **cả hai mất `grabberHitDamage`** (boss nhận 50%), con kia choáng `grabberStun` giây, con bị ném rơi thẳng xuống; trúng mép/tường "Cập nhật" thì chỉ nó mất máu; đáp đất thì nó choáng `grabberStun` giây. Thả chậm thì slime chỉ rơi xuống, không ai mất máu. Hồi chiêu bắt đầu lúc thả. Kéo S5/S8 xuống, lôi S6 lên làm cùng các quái đó (M14/M15).
+- **Kéo cắt** (chọn ô rồi **kéo chuột thành một nét** trên dải trận, thả chuột là cắt): nét dài ít nhất `scissorsMinLength` DIPs; mọi dây nhầy (`tether`) nét đi qua bị cắt (như `CutLink`: đồng minh choáng `breakStun`, có thưởng); mọi slime có thân nằm trên nét mất `scissorsDamage` một lần. Nét ngắn hơn không làm gì và Kéo cắt vẫn được chọn. Dây được coi như hình vẽ (từ thân tới thân, võng ở giữa, không thấp hơn mặt sàn), nét chỉ cần đi gần dây vài DIPs. Chọc vỡ bong bóng S2 làm cùng quái đó (M13).
+- **Bình xịt nước** (chọn ô rồi **giữ chuột**, như Quạt): slime trong `sprayRange` quanh con trỏ bị **ướt** (vẽ nhỏ lại ~14%, giọt nước chảy trên thân), bị đóng băng `sprayChill` (hiệu ứng M04, boss một nửa) và mất `sprayDps` máu/giây; hết xịt thì khô sau `spraySoakSeconds`. Rê chuột khi giữ thì vòi đi theo, kể cả lên cao (tầm tính theo cả chiều dọc). Thả chuột thì ngừng nhưng vẫn được chọn; cạn nước thì tự cất và chờ `sprayRefillSeconds`; vòng quét trên ô là nước đã dùng. "Ướt" (`Wet`) là móc cho băng mềm (S7, M15) và gai nhím xẹp (S9, M16).
+- **Luật chung** như Đèn laser và Quạt: sát thương kỹ năng (không bị đá chặn, có Kết liễu, quái chết tính là mèo hạ, boss 50%); đang cầm mèo thì kỹ năng chờ (Kẹp gắp thả slime ra không tính ném, Bình xịt ngừng); nhấc mèo thật thì bỏ chọn; Pause, menu, chọn thẻ, túi đồ, hướng dẫn đứng hình đóng băng (slime đang gắp đứng yên giữa không trung). Kết thúc trận hoặc dải trận đổi chỗ thì thả mọi slime xuống. Click trúng mèo luôn là nhấc mèo (mèo là cửa sổ riêng); thứ tự trên dải trận như cũ: dấu × quảng cáo, app độc, rồi kỹ năng.
+- **Được mang ở đâu:** như Laser/Quạt: trận tự do mang ngay; Phiêu lưu, Viễn chinh, Vô tận chờ `unlocksSkill` (chương 2, M21).
+- **Hướng dẫn đứng hình:** bước `grabber`, `scissors`, `spray` chỉ chạy ở màn có `unlocksSkill` đúng kỹ năng đó và khi trận mang nó (như `laser`/`fan`).
+- Hình: càng kẹp kim loại trên dây thả từ mép trên dải trận, slime bị gắp hơi kéo dài, bóng dưới sàn nhỏ dần theo độ cao; nét cắt là đường đứt nét trắng viền tối với cây kéo mở ở đầu con trỏ; Bình xịt là bình xanh vòi vàng, vòng chấm xanh là tầm xịt, giọt nước bắn ra. Âm thanh dùng cue có sẵn (`Grabbed` bóp, `GrabReleased` vút, `GrabHit` cộc, `Snipped` vút, `SprayOn` bóp, `SpraySpent` keng). Icon ô giữ bản vẽ từ M02.
 
 ## Viễn chinh (`expedition`) (2026-10-21)
 

@@ -567,7 +567,7 @@ public sealed partial class BattleSim
     {
         int busy = desktop.Count(a => a.Infected) + launches.Count(l => l.Kind == LaunchKind.Goo);
         if (busy >= rules.MaxInfected) return false;
-        var shooters = from != null ? new List<Slime> { from } : slimes.Where(s => s.Targetable && !s.Shielded && s.LeapHeight == 0).ToList();
+        var shooters = from != null ? new List<Slime> { from } : slimes.Where(s => s.Targetable && !s.Shielded && !s.Handled && s.LeapHeight == 0).ToList();
         var clean = desktop.Where(a => !a.Infected && !launches.Any(l => l.Kind == LaunchKind.Goo && l.AppId == a.Id)).ToList();
         if (shooters.Count == 0 || clean.Count == 0 || from is { LeapHeight: > 0 }) return false;
         var slime = shooters[appRandom.Next(shooters.Count)];

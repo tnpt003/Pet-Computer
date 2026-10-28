@@ -152,7 +152,7 @@ public sealed partial class BattleFieldView
     // A slime holding an icon with its virus wears a small virus over its head.
     private void DrawVirusMark(DrawingContext dc, Slime slime, double x, double floor, double time)
     {
-        double y = floor - slime.LeapHeight - slime.Height - 16 + Math.Sin(time * 4 + slime.Id) * 2;
+        double y = floor - slime.LeapHeight - slime.Lift - slime.Height - 16 + Math.Sin(time * 4 + slime.Id) * 2;
         AppArt.DrawVirus(dc, new Point(x + slime.Width * 0.3, y), 7, time);
     }
 

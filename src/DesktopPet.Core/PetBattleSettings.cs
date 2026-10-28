@@ -124,6 +124,25 @@ public sealed class BattleSettings
     public double FanRange { get; init; } = 200;
     public double FanSpeed { get; init; } = 220;
     public double FanBumpDamage { get; init; } = 4;
+    // 1.5 M06 (PetBattle.Grabber.cs, PetBattle.Tools.cs). Grabber: the longest hold, the largest kind
+    // it lifts (scale), a hit's damage, the daze of a throw, the speed a let-go needs to be a throw.
+    // Scissors: a cut's damage, the shortest swipe (DIPs). Spray: seconds of water, the refill once
+    // spent, its reach around the cursor, HP a second, how much slower it makes a slime, a soaking's time.
+    public double GrabberCooldown { get; init; } = 12;
+    public double GrabberHoldSeconds { get; init; } = 3;
+    public double GrabberMaxScale { get; init; } = 1.3;
+    public double GrabberHitDamage { get; init; } = 8;
+    public double GrabberStun { get; init; } = 1;
+    public double GrabberThrowSpeed { get; init; } = 300;
+    public double ScissorsCooldown { get; init; } = 8;
+    public double ScissorsDamage { get; init; } = 6;
+    public double ScissorsMinLength { get; init; } = 40;
+    public double SprayTankSeconds { get; init; } = 4;
+    public double SprayRefillSeconds { get; init; } = 8;
+    public double SprayRange { get; init; } = 70;
+    public double SprayDps { get; init; } = 2;
+    public double SprayChill { get; init; } = 0.35;
+    public double SpraySoakSeconds { get; init; } = 1.5;
 
     // The Slime King (last wave).
     [JsonIgnore]
@@ -371,12 +390,13 @@ public sealed class DifficultySpec
 }
 
 // Push and Bomb are aimed (choose, then click a slime); the others act at once. The last five
-// (1.5) are in the data and the setup panel's choice but have no effect yet (BattleSkillInfo.Working).
+// (1.5) are used with the mouse on the field (SkillAim; PetBattle.Tools.cs, PetBattle.Grabber.cs).
 public enum BattleSkill { Push, Heal, Cheer, Bomb, Shield, Laser, Grabber, Scissors, Fan, Spray }
 
 // How a chosen skill is used: at once (None), on a clicked slime (Push, Bomb), on a clicked spot of
-// the field (Laser) or while the mouse is held on the field (Fan).
-public enum SkillAim { None, Slime, Point, Hold }
+// the field (Laser), while the mouse is held on the field (Fan, Spray), a slime pressed and dragged
+// (Grabber) or a stroke across the field (Scissors).
+public enum SkillAim { None, Slime, Point, Hold, Drag, Swipe }
 
 // Casting: a support enemy winds up a heal (a green "+"), near or far; a push or stun cancels it.
 // Dashing: a dash enemy's lunge after its windup (it hits the cat once at most).
@@ -388,7 +408,7 @@ public enum SlimeState { Spawning, Moving, Windup, Recover, Stunned, Defeated, C
 // the enemies next to its target.
 // Link: the share of a hit a tether's holder takes for its ally.
 // Poison: a status's damage over time (PetBattle.Status.cs).
-// Tool: the Laser's and the Fan's damage (PetBattle.Tools.cs).
+// Tool: the mouse skills' damage (Laser, Fan, Grabber, Scissors, Spray; PetBattle.Tools.cs, PetBattle.Grabber.cs).
 public enum DamageSource { Weapon, Combo, Bomb, Reflect, Echo, App, Splash, Link, Throw, Poison, Tool }
 
 // What a hit on an enemy did: landed, blocked by a stony enemy, or nothing on a shielded boss.
@@ -505,6 +525,12 @@ public sealed class Slime
     // it may be hurt by a bump again once BumpCooldown is 0.
     public bool Lured;
     public double Blown, BumpCooldown;
+    // 1.5 M06: in the Grabber's claw, or flying after it let go (Thrown: fast enough to hurt); how high
+    // its bottom is over the floor (DIPs) and its flight's speed (VY up); seconds of the spray's soaking left.
+    public bool Grabbed, Tossed, Thrown;
+    public double Lift, TossVX, TossVY, WetRemaining;
+    public bool Handled => Grabbed || Tossed;
+    public bool Wet => WetRemaining > 0;
     // How fast it acts under a chill (1: not chilled).
     public double ChillFactor => ChillRemaining > 0 ? 1 - ChillPower : 1;
     public bool Targetable => State is not (SlimeState.Spawning or SlimeState.Defeated);
@@ -554,7 +580,11 @@ public enum BattleEventKind
     StatusApplied,
     // 1.5 M05: the laser's dot put down and gone; the fan started, ran out of air; an enemy blown into
     // another or the edge (Value: its id).
-    LaserOn, LaserOff, FanOn, FanSpent, FanBump
+    LaserOn, LaserOff, FanOn, FanSpent, FanBump,
+    // 1.5 M06 (Value: the enemy's id): the Grabber lifted one, let it go (Value 1: thrown), a thrown one
+    // flew into another or the edge; a Scissors stroke (Value: what it cut and hit); the spray started,
+    // ran out of water.
+    Grabbed, GrabReleased, GrabHit, Snipped, SprayOn, SpraySpent
 }
 public readonly record struct BattleEvent(BattleEventKind Kind, double X, double Value = 0);
 // Number: a floating damage (Value > 0) or heal (Value < 0, shown as +HP above the cat).

@@ -52,12 +52,12 @@ public sealed partial class BattleSim
         if (linkKinds.Count == 0) return;
         foreach (var slime in slimes)
         {
-            if (slime.Link is not LinkSpec link || slime.LinkedTo != 0 || slime.State != SlimeState.Moving || Time < slime.RelinkAt) continue;
+            if (slime.Link is not LinkSpec link || slime.LinkedTo != 0 || slime.State != SlimeState.Moving || slime.Handled || Time < slime.RelinkAt) continue;
             Slime? best = null;
             if (link.Kind == EnemyLinks.Tether)
             {
                 foreach (var s in slimes)
-                    if (s != slime && s.Targetable && !s.IsBoss && !Is(s, EnemyLinks.Tether) && !s.Riding && TetherHolder(s) == null &&
+                    if (s != slime && s.Targetable && !s.IsBoss && !s.Handled && !Is(s, EnemyLinks.Tether) && !s.Riding && TetherHolder(s) == null &&
                         Math.Abs(s.X - slime.X) <= link.Range && (best == null || Math.Abs(s.X - slime.X) < Math.Abs(best.X - slime.X))) best = s;
             }
             else if (link.Kind == EnemyLinks.Ride)
@@ -65,7 +65,7 @@ public sealed partial class BattleSim
                 // Never mounting right next to the cat (it would hop off at once).
                 if (Math.Abs(slime.X - catX) <= link.DropRange * 1.5) continue;
                 foreach (var s in slimes)
-                    if (s != slime && s.Targetable && s.Type.Id == link.Mount && !s.Riding && !Ridden(s) &&
+                    if (s != slime && s.Targetable && !s.Handled && s.Type.Id == link.Mount && !s.Riding && !Ridden(s) &&
                         Math.Abs(s.X - slime.X) <= link.Range && (best == null || Math.Abs(s.X - slime.X) < Math.Abs(best.X - slime.X))) best = s;
             }
             if (best == null) continue;

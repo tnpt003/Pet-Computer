@@ -189,7 +189,9 @@ public sealed partial class PetWindow
     // reads as the five first skills. freeBattle: until chapter 2 opens them (M21) a free battle may
     // already carry every skill that works (user's choice 2026-10-28, 1.5 M05); the Adventure, the
     // Expedition and Infinity keep the rule above.
-    public bool BattleSkillOpen(BattleSkill skill, bool freeBattle = false) => (freeBattle && BattleSkills.Get(skill).Working)
+    // skillOpenProbe: UI checks only (set by reflection), skills read as open as if chapter 2 had opened them.
+    private Func<BattleSkill, bool>? skillOpenProbe = null;
+    public bool BattleSkillOpen(BattleSkill skill, bool freeBattle = false) => ((freeBattle || skillOpenProbe?.Invoke(skill) == true) && BattleSkills.Get(skill).Working)
         || (AdventureOf(BattleTuning) is Adventure adventure ? adventure.SkillOpen(skill)
             : BattleSkills.Get(skill).Working && Array.IndexOf(BattleSkills.Default, skill) >= 0);
     public BattleSkill[] BattleLoadoutChoice => LoadoutChoice(false);
@@ -397,22 +399,54 @@ public sealed partial class PetWindow
         return done;
     }
 
-    // The Fan chosen: pressed on the field it blows from there until let go (or out of air).
-    public bool BattlePressFan(double x)
+    // The Fan or the Spray chosen: pressed on the field (battle x, height over the floor) it works from
+    // there until let go (or out of air or water).
+    public bool BattlePressHold(double x, double height = 20)
     {
         if (battle == null || battle.Paused) return false;
         SyncBattleCatState();
-        bool done = battle.StartFan(x);
+        bool done = battle.Armed == BattleSkill.Spray ? battle.StartSpray(x, height) : battle.StartFan(x);
+        RequestBattleRedraw();
+        UpdateBattleHud();
+        return done;
+    }
+    public bool BattlePressFan(double x) => BattlePressHold(x);
+
+    public void BattleReleaseFan()
+    {
+        battle?.StopFan();
+        battle?.StopSpray();
+        RequestBattleRedraw();
+        UpdateBattleHud();
+    }
+
+    // The Grabber chosen: pressed on a small slime it lifts it; let go, it is thrown (1.5 M06).
+    public bool BattleGrab(int id, double x, double height)
+    {
+        if (battle == null || battle.Paused) return false;
+        SyncBattleCatState();
+        bool done = battle.Grab(id, x, height);
         RequestBattleRedraw();
         UpdateBattleHud();
         return done;
     }
 
-    public void BattleReleaseFan()
+    public void BattleReleaseGrab()
     {
-        battle?.StopFan();
+        battle?.ReleaseGrab();
         RequestBattleRedraw();
         UpdateBattleHud();
+    }
+
+    // The Scissors chosen: a stroke across the field (battle x, height over the floor) cuts what it crosses.
+    public bool BattleSnip(double x0, double h0, double x1, double h1)
+    {
+        if (battle == null || battle.Paused) return false;
+        SyncBattleCatState();
+        bool done = battle.Snip(x0, h0, x1, h1);
+        RequestBattleRedraw();
+        UpdateBattleHud();
+        return done;
     }
 
     // A click on a desktop app: an infected one is scrubbed, a charged one sends its help; when it
@@ -622,9 +656,13 @@ public sealed partial class PetWindow
         battleView.HazardReleased += () => { battle?.ReleaseHazard(); RequestBattleRedraw(); };
         battleView.RightClicked += () => { battle?.Arm(null); RequestBattleRedraw(); UpdateBattleHud(); }; // Right-click on the field cancels the skill.
         battleView.SpotClicked += x => BattleClickSpot(x);
-        battleView.FanPressed += x => BattlePressFan(x);
-        battleView.FanMoved += x => battle?.MoveFan(x);
-        battleView.FanReleased += () => BattleReleaseFan();
+        battleView.HoldPressed += (x, h) => BattlePressHold(x, h);
+        battleView.HoldMoved += (x, h) => { battle?.MoveFan(x); battle?.MoveSpray(x, h); };
+        battleView.HoldReleased += () => BattleReleaseFan();
+        battleView.GrabPressed += (id, x, h) => BattleGrab(id, x, h);
+        battleView.GrabMoved += (x, h) => battle?.MoveGrab(x, h);
+        battleView.GrabReleased += () => BattleReleaseGrab();
+        battleView.Swiped += (x0, h0, x1, h1) => BattleSnip(x0, h0, x1, h1);
         battleFieldWindow = CreateOverlayWindow(battleView, "Pet battle");
         battleFieldWindow.DpiChanged += (_, _) => battlePlacedScale = 0; // Re-place in pixels next frame.
         battleHudWindow = CreateOverlayWindow(BuildBattleHud(), "Pet battle HUD");

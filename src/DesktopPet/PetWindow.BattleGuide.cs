@@ -28,7 +28,7 @@ public sealed partial class PetWindow
         GuideCards = "cards", GuideSynergy = "synergy", GuideClock = "clock", GuideAds = "ads", GuideLoading = "loading", GuideUpdate = "update",
         GuideVirus = "virus", GuideInfected = "infected", GuidePushRole = "push_role", GuideCutHeal = "cut_heal", GuideElite = "elite",
         GuideKing = "king", GuideSlam = "slam", GuideKingShield = "king_shield", GuideRally = "rally",
-        GuideLaser = "laser", GuideFan = "fan";
+        GuideLaser = "laser", GuideFan = "fan", GuideGrabber = "grabber", GuideScissors = "scissors", GuideSpray = "spray";
     // A step for the stage that teaches a skill (its unlocksSkill; chapter 2 from M21), not a stage id.
     public const string GuideTeaches = "teaches:";
     public const int GuideLifts = 5, GuideCutHeals = 4;
@@ -194,6 +194,25 @@ public sealed partial class PetWindow
             () => battle?.Armed == BattleSkill.Fan
                 ? L("Giờ giữ chuột trên sàn cạnh đám slime: gió thổi chúng ra xa con trỏ. Vòng trên ô là hơi còn lại.", "Now hold the mouse on the floor next to the slimes: the wind blows them away from the cursor. The sweep on the slot is the air used.")
                 : LF($"Kỹ năng mới: {SkillName(BattleSkill.Fan)}. Bấm ô này, rồi giữ chuột trên sàn.", $"A new skill: {SkillName(BattleSkill.Fan)}. Click this slot, then hold the mouse on the floor.")),
+        // 1.5 M06 · the same for the Grabber, the Scissors and the Spray.
+        new(GuideGrabber, GuideTeaches + "grabber", true, true, 1,
+            () => ToolDue(BattleSkill.Grabber), () => battle!.GrabberBusy || battle.Cooldown(BattleSkill.Grabber) > 0,
+            () => battle!.Armed == BattleSkill.Grabber ? Spots(FloorSpot()) : Spots(SkillSpot(BattleSkill.Grabber)),
+            () => battle?.Armed == BattleSkill.Grabber
+                ? L("Giờ nhấn giữ một slime, vung chuột về phía slime khác rồi thả ra.", "Now press a slime and fling the mouse toward another slime, then let go.")
+                : LF($"Kỹ năng mới: {SkillName(BattleSkill.Grabber)}. Bấm ô này, rồi nhấn giữ một slime nhỏ.", $"A new skill: {SkillName(BattleSkill.Grabber)}. Click this slot, then press a small slime.")),
+        new(GuideScissors, GuideTeaches + "scissors", true, true, 1,
+            () => ToolDue(BattleSkill.Scissors), () => battle!.Cooldown(BattleSkill.Scissors) > 0,
+            () => battle!.Armed == BattleSkill.Scissors ? Spots(FloorSpot()) : Spots(SkillSpot(BattleSkill.Scissors)),
+            () => battle?.Armed == BattleSkill.Scissors
+                ? L("Giờ kéo chuột thành một nét cắt ngang đám slime (hoặc sợi dây giữa chúng).", "Now drag a stroke across the slimes (or the rope between them).")
+                : LF($"Kỹ năng mới: {SkillName(BattleSkill.Scissors)}. Bấm ô này, rồi kéo chuột thành một nét trên sàn.", $"A new skill: {SkillName(BattleSkill.Scissors)}. Click this slot, then drag a stroke across the floor.")),
+        new(GuideSpray, GuideTeaches + "spray", true, true, 1,
+            () => ToolDue(BattleSkill.Spray), () => battle!.Spraying,
+            () => battle!.Armed == BattleSkill.Spray ? Spots(FloorSpot()) : Spots(SkillSpot(BattleSkill.Spray)),
+            () => battle?.Armed == BattleSkill.Spray
+                ? L("Giờ giữ chuột cạnh đám slime: slime ướt sẽ chậm lại. Vòng trên ô là nước đã dùng.", "Now hold the mouse next to the slimes: wet ones slow down. The sweep on the slot is the water used.")
+                : LF($"Kỹ năng mới: {SkillName(BattleSkill.Spray)}. Bấm ô này, rồi giữ chuột trên sàn.", $"A new skill: {SkillName(BattleSkill.Spray)}. Click this slot, then hold the mouse on the floor.")),
     };
 
     // A skill to teach: carried, ready (or chosen) and slimes on the floor to use it on.

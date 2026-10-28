@@ -360,6 +360,23 @@ internal static class ExpeditionChecks
             window.OpenExpeditionMap();
             Tick(0.3);
             check(window.Expedition!.Run!.Pending!.Cards.SequenceEqual(cards) && window.ExpeditionMapText.Contains("Rest: +30 HP") && window.ExpeditionHasChoice, "Reopened after a restart the rest offers the same cards");
+            // 1.5 M06: "Change skills" at a rest, only once more skills are open than the HUD carries (here as
+            // if chapter 2 had opened the Grabber); free, and the rest's own choice stays.
+            check(!window.ExpeditionCanChangeSkills && !window.ExpeditionMapText.Contains("Change skills"), "With only the five first skills open a rest has no skill change");
+            var openProbe = FieldOf("skillOpenProbe");
+            openProbe.SetValue(window, (Func<BattleSkill, bool>)(skill => skill == BattleSkill.Grabber));
+            window.ExpeditionCancelSkills();
+            check(window.ExpeditionCanChangeSkills && window.ExpeditionMapText.Contains("Change skills") && window.ExpeditionOpenSkills()
+                  && window.ExpeditionMapText.Contains("Skills for the rest of the run (5/5)") && window.ExpeditionSkillPick.SequenceEqual(BattleSkills.Default),
+                $"Another skill open: the rest offers to change the skills, starting from the run's ({window.ExpeditionMapText.Replace('\n', '|')})");
+            check(window.ExpeditionToggleSkill(BattleSkill.Bomb) && window.ExpeditionMapText.Contains("(4/5)") && !window.ExpeditionOptionEnabled("skills:keep")
+                  && !window.ExpeditionToggleSkill(BattleSkill.Laser) && window.ExpeditionToggleSkill(BattleSkill.Grabber) && window.ExpeditionOptionEnabled("skills:keep"),
+                "Drop one, choose an open one (a locked one is refused); Keep needs five");
+            Shot("Pet expedition", "expedition-rest-skills-en.png");
+            check(window.ExpeditionKeepSkills() == null && window.Expedition!.Run!.Loadout.Contains(BattleSkill.Grabber) && !window.Expedition.Run.Loadout.Contains(BattleSkill.Bomb)
+                  && Saved()!.Loadout.Contains(BattleSkill.Grabber) && window.ExpeditionHasChoice && window.ExpeditionMapText.Contains("Rest: +30 HP") && window.ExpeditionMapText.Contains("Skills changed."),
+                "Kept: the run carries the new skills (saved) and the rest is still to choose");
+            openProbe.SetValue(window, null);
             check(window.ExpeditionChoose(Expedition.Card) is string none3 && none3.Length > 0 && window.ExpeditionHasChoice, "Taking a card without picking one is refused");
             check(window.ExpeditionChoose(Expedition.Heal) == null && window.Expedition.Run!.Hp == 80 && window.Expedition.Run.Step == 2 && Saved()?.Hp == 80 && !window.ExpeditionHasChoice
                   && window.ExpeditionChoose(Expedition.Heal) != null, "Resting gives 30 HP back once and passes the step (saved)");

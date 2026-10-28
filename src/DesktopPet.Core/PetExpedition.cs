@@ -754,6 +754,20 @@ public sealed class Expedition
         return true;
     }
 
+    // A rest open (1.5 M06): the run's five skills may change for free, as often as wanted; the heal or
+    // card is still to choose. A card on offer for a skill no longer carried is taken out (no new draw).
+    // open: whether a skill may be carried (the setup panel's rule). False: no rest open, not five
+    // different skills, or one not open; the same five again changes nothing.
+    public bool ChangeSkills(IReadOnlyList<BattleSkill> skills, Func<BattleSkill, bool> open)
+    {
+        if (Run is not ExpeditionRun run || run.Pending is not { Kind: ExpeditionChoice.RestKind } rest || run.Fighting != null
+            || BattleSkills.Order(skills) is not BattleSkill[] ordered || !ordered.All(open)) return false;
+        run.Skills = BattleSkills.Save(ordered);
+        rest.Cards = rest.Cards.Where(id => Settings.UpgradeList.FirstOrDefault(u => u.Id == id) is not { Skill: string need }
+            || BattleSkills.Parse(need) is BattleSkill skill && Array.IndexOf(ordered, skill) >= 0).ToArray();
+        return true;
+    }
+
     public const string Heal = "heal", Card = "card", Safe = "safe", Risk = "risk", SwapOption = "swap", Take = "take", Leave = "leave", Free = "free", Gold = "gold";
 
     // The options the open choice has: rest (heal, card), swap (swap, leave), chest (safe, risk),

@@ -21,7 +21,7 @@ public sealed partial class BattleFieldView
     private static readonly Brush SweatBlue = Frozen(255, 0x7F, 0xC8, 0xFF);
     private const int RopeSegments = 10;
 
-    private static double Top(Slime slime, double floor) => floor - slime.LeapHeight - slime.RideHeight - slime.Height;
+    private static double Top(Slime slime, double floor) => floor - slime.LeapHeight - slime.RideHeight - slime.Lift - slime.Height;
 
     // Under the slimes: ropes and the rings on the floor.
     private void DrawLinksBehind(DrawingContext dc, double floor, double time)
@@ -52,8 +52,8 @@ public sealed partial class BattleFieldView
     // A sagging rope of goo between the two, swaying a little (plain lines: no geometry each frame).
     private void DrawRope(DrawingContext dc, Slime holder, Slime ally, double floor, double time)
     {
-        var a = new Point(holder.X - OriginX, floor - holder.LeapHeight - holder.Height * 0.45);
-        var b = new Point(ally.X - OriginX, floor - ally.LeapHeight - ally.Height * 0.45);
+        var a = new Point(holder.X - OriginX, floor - holder.LeapHeight - holder.Lift - holder.Height * 0.45);
+        var b = new Point(ally.X - OriginX, floor - ally.LeapHeight - ally.Lift - ally.Height * 0.45);
         double sag = Math.Min(28, Math.Abs(b.X - a.X) * 0.18) + 3 * Math.Sin(time * 3 + holder.Id);
         for (int pass = 0; pass < 2; pass++)
         {

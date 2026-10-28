@@ -595,3 +595,14 @@ Mở Trận tự do → bảng chuẩn bị: bỏ một kỹ năng cũ, chọn �
 - [ ] Sau khi thả chuột (cả khi cạn hơi giữa chừng): click slime, icon app, thẻ giữa đợt, nút HUD vẫn bình thường (dải trận không giữ chuột).
 - [ ] Đang chọn Laser/Quạt: kéo mèo vẫn nhấc mèo, bỏ chọn kỹ năng; mèo đang cầm thì Quạt không thổi. Chuột phải dải trận thì bỏ chọn. Pause/menu giữa lúc có chấm hoặc đang thổi: đứng yên; tiếp tục thì chạy tiếp.
 - [ ] Âm thanh: đặt chấm, bật quạt, va chạm có tiếng hoạt hình ngắn, không chồng nhau; DPI 100/150/200% chấm và gió đúng chỗ con trỏ.
+
+## Kẹp gắp, Kéo cắt, Bình xịt nước 1.5 M06 (2026-10-28) — trận tự do
+Mở Trận tự do → bảng chuẩn bị: bỏ vài kỹ năng cũ, chọn Kẹp gắp, Kéo cắt, Bình xịt (cả 10 kỹ năng đều chọn được ở trận tự do). Ảnh càng kẹp/nét cắt/tia nước đã xem qua render UiChecks nền sáng/tối, chưa xem trong trận thật, chưa thử chuột thật và DPI thật.
+- [ ] Vô tận / chuẩn bị Viễn chinh: 5 kỹ năng mới vẫn hiện khóa; chương 1 không đổi.
+- [ ] Kẹp gắp: bấm ô, nhấn giữ một slime thường/slime nhanh/slime thảo dược: nó bị nhấc theo con trỏ (càng kẹp trên dây từ mép trên dải trận), không đánh mèo. Nhấn vào slime đá hoặc Vua: không gắp được. Vung chuột về phía slime khác rồi thả: slime bay vòng cung, trúng con kia thì cả hai hiện số 8, con kia choáng; ném vào mép thì nó mất 8 và choáng khi đáp. Thả nhẹ: chỉ rơi xuống. Giữ quá ~3 s thì slime tự tuột. Ô hồi ~12 s tính từ lúc thả.
+- [ ] Kéo cắt: bấm ô, kéo chuột thành một nét qua đám slime: thấy đường đứt nét và cây kéo ở đầu con trỏ; thả chuột thì mỗi slime trên nét hiện số 6, ô hồi ~8 s. Nét rất ngắn (như một click) không làm gì, Kéo cắt vẫn được chọn. (Cắt dây nhầy chỉ thử được bằng battle.json có liên kết `tether`, không bắt buộc.)
+- [ ] Bình xịt: bấm ô, giữ chuột cạnh slime: bình xanh và vòng chấm xanh theo con trỏ, slime trong vòng nhỏ lại, có giọt nước và tinh thể băng, đi chậm, mất máu dần (số nhỏ). Thả: ngừng, vòng tối trên ô là nước đã dùng và hồi dần; giữ tới cạn thì tự cất, ô chờ ~8 s.
+- [ ] Sau mỗi lần dùng (cả khi slime tự tuột hay cạn nước giữa chừng): click slime, icon app, thẻ giữa đợt, nút HUD vẫn bình thường (dải trận không giữ chuột).
+- [ ] Đang chọn một trong ba: kéo mèo vẫn nhấc mèo và bỏ chọn; đang gắp slime mà nhấc mèo (nếu với được) thì slime rơi xuống. Chuột phải dải trận thì bỏ chọn. Pause/menu giữa lúc đang gắp/xịt: đứng yên; tiếp tục thì chạy tiếp.
+- [ ] Âm thanh gắp/thả/va chạm/cắt/xịt là cue hoạt hình ngắn, không chồng nhau; DPI 100/150/200% càng kẹp, nét cắt, vòi xịt đúng chỗ con trỏ.
+- [ ] Viễn chinh, điểm nghỉ: hiện tại chỉ 5 kỹ năng cũ mở nên **không có** nút "Đổi kỹ năng" (đúng thiết kế). Nút hiện khi chương 2 mở thêm kỹ năng (M21); khi đó kiểm tra: đổi miễn phí, vẫn phải chọn Nghỉ hoặc Lấy thẻ, trận sau mang bộ mới. Ảnh khung đổi kỹ năng đã xem qua render UiChecks (en).

@@ -38,6 +38,9 @@ public sealed partial class PetWindow
         // 1.5 M05: the Laser and the Fan (no cue of their own yet: the shared cartoon cues).
         [BattleEventKind.LaserOn] = ("sparkle", 3), [BattleEventKind.FanOn] = ("swoosh", 2), [BattleEventKind.FanBump] = ("ball_tap", 3),
         [BattleEventKind.FanSpent] = ("clank", 2),
+        // 1.5 M06: the Grabber, the Scissors and the Spray (the shared cartoon cues as well).
+        [BattleEventKind.Grabbed] = ("squish", 3), [BattleEventKind.GrabReleased] = ("swoosh", 2), [BattleEventKind.GrabHit] = ("ball_tap", 4),
+        [BattleEventKind.Snipped] = ("swoosh", 3), [BattleEventKind.SprayOn] = ("squish", 2), [BattleEventKind.SpraySpent] = ("clank", 2),
     };
 
     private void PlayBattleSound()

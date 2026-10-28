@@ -784,6 +784,13 @@ public static class BattleData
         Within(s.LaserLureRange, 20, 2000, "laserLureRange"); Within(s.LaserDps, 0, 100, "laserDps");
         Within(s.FanSteamSeconds, 0.5, 30, "fanSteamSeconds"); Within(s.FanRefillSeconds, 1, 120, "fanRefillSeconds");
         Within(s.FanRange, 20, 1000, "fanRange"); Within(s.FanSpeed, 0, 1500, "fanSpeed"); Within(s.FanBumpDamage, 0, 100, "fanBumpDamage");
+        Within(s.GrabberCooldown, 1, 120, "grabberCooldown"); Within(s.GrabberHoldSeconds, 0.5, 15, "grabberHoldSeconds");
+        Within(s.GrabberMaxScale, 0.5, 2.3, "grabberMaxScale"); Within(s.GrabberHitDamage, 0, 100, "grabberHitDamage");
+        Within(s.GrabberStun, 0, 5, "grabberStun"); Within(s.GrabberThrowSpeed, 50, 1500, "grabberThrowSpeed");
+        Within(s.ScissorsCooldown, 1, 120, "scissorsCooldown"); Within(s.ScissorsDamage, 0, 100, "scissorsDamage"); Within(s.ScissorsMinLength, 10, 400, "scissorsMinLength");
+        Within(s.SprayTankSeconds, 0.5, 30, "sprayTankSeconds"); Within(s.SprayRefillSeconds, 1, 120, "sprayRefillSeconds");
+        Within(s.SprayRange, 10, 500, "sprayRange"); Within(s.SprayDps, 0, 100, "sprayDps");
+        Within(s.SprayChill, 0.05, 0.9, "sprayChill"); Within(s.SpraySoakSeconds, 0.5, 10, "spraySoakSeconds");
         foreach (var (level, name) in new[] { (s.Easy, "easy"), (s.Hard, "hard") })
             foreach (var (value, key) in new[] { (level.EnemyHp, "enemyHp"), (level.EnemyDamage, "enemyDamage"), (level.EnemySpeed, "enemySpeed") })
                 if (!double.IsFinite(value) || value < 0.25 || value > 3) throw new InvalidDataException($"{name}.{key} must be 0.25–3");
@@ -1200,15 +1207,15 @@ public static class BattleSkills
         new(BattleSkill.Cheer, SkillAim.None, s => s.CheerCooldown),
         new(BattleSkill.Bomb, SkillAim.Slime, s => s.BombCooldown),
         new(BattleSkill.Shield, SkillAim.None, s => s.ShieldCooldown),
-        // 1.5 (docs/UPDATE-1.5.md): Laser and Fan since M05 (PetBattle.Tools.cs); the Fan's cooldown is
-        // its steam's refill once spent. The others come with M06.
+        // 1.5 (docs/UPDATE-1.5.md): Laser and Fan since M05 (PetBattle.Tools.cs), Grabber, Scissors and
+        // Spray since M06 (PetBattle.Grabber.cs, PetBattle.Tools.cs); a hold skill's cooldown is its
+        // tank's refill once spent.
         new(BattleSkill.Laser, SkillAim.Point, s => s.LaserCooldown),
-        new(BattleSkill.Grabber, SkillAim.None, _ => NotYet, false),
-        new(BattleSkill.Scissors, SkillAim.None, _ => NotYet, false),
+        new(BattleSkill.Grabber, SkillAim.Drag, s => s.GrabberCooldown),
+        new(BattleSkill.Scissors, SkillAim.Swipe, s => s.ScissorsCooldown),
         new(BattleSkill.Fan, SkillAim.Hold, s => s.FanRefillSeconds),
-        new(BattleSkill.Spray, SkillAim.None, _ => NotYet, false),
+        new(BattleSkill.Spray, SkillAim.Hold, s => s.SprayRefillSeconds),
     };
-    private const double NotYet = 10;
 
     public static BattleSkillInfo Get(BattleSkill skill) => All[Array.FindIndex(All, info => info.Skill == skill)];
 
@@ -1264,17 +1271,17 @@ public static class BattleSkills
             DescVi = "Đèn laser — chọn rồi click một chỗ: {laserSeconds} giây slime gần đó chạy theo chấm đỏ, không đánh mèo; con trên chấm mất {laserDps} máu/giây. Hồi {laserCooldown} giây.",
             DescEn = "Laser pointer — choose, then click a spot: for {laserSeconds} s nearby slimes chase the red dot, not the cat; one on the dot loses {laserDps} HP/s. {laserCooldown} s cooldown." },
         new() { Id = "grabber", NameVi = "Kẹp gắp", NameEn = "Grabber",
-            DescVi = "Kẹp gắp — chọn rồi kéo một slime nhỏ, ném nó vào slime khác. Mở ở chương 2.",
-            DescEn = "Grabber — choose, then drag a small slime and throw it at another. Opens in chapter 2." },
+            DescVi = "Kẹp gắp — chọn rồi nhấn giữ một slime nhỏ (không phải đá hay boss) và vung chuột để ném: trúng slime khác thì cả hai mất {grabberHitDamage} máu, con kia choáng. Hồi {grabberCooldown} giây.",
+            DescEn = "Grabber — choose, then press a small slime (not a rock or a boss) and fling the mouse: thrown into another, both lose {grabberHitDamage} HP and the other is dazed. {grabberCooldown} s cooldown." },
         new() { Id = "scissors", NameVi = "Kéo cắt", NameEn = "Scissors",
-            DescVi = "Kéo cắt — chọn rồi vuốt ngang: cắt dây nhầy, chọc vỡ bong bóng. Mở ở chương 2.",
-            DescEn = "Scissors — choose, then swipe across: cuts slime strings and pops bubbles. Opens in chapter 2." },
+            DescVi = "Kéo cắt — chọn rồi kéo chuột thành một nét: cắt đứt dây nhầy, slime nằm trên nét mất {scissorsDamage} máu. Hồi {scissorsCooldown} giây.",
+            DescEn = "Scissors — choose, then drag a stroke: it cuts slime ropes, and each slime on it loses {scissorsDamage} HP. {scissorsCooldown} s cooldown." },
         new() { Id = "fan", NameVi = "Quạt", NameEn = "Fan",
             DescVi = "Quạt — chọn rồi giữ chuột: thổi slime ra xa con trỏ, va nhau hoặc va mép mất {fanBumpDamage} máu. Hơi đủ {fanSteamSeconds} giây; cạn thì chờ {fanRefillSeconds} giây.",
             DescEn = "Fan — choose, then hold the mouse: blows slimes away from the cursor; one blown into another or the edge loses {fanBumpDamage} HP. {fanSteamSeconds} s of air; empty, it refills in {fanRefillSeconds} s." },
         new() { Id = "spray", NameVi = "Bình xịt nước", NameEn = "Water spray",
-            DescVi = "Bình xịt nước — chọn rồi giữ chuột: slime chậm lại và co nhỏ. Mở ở chương 2.",
-            DescEn = "Water spray — choose, then hold the mouse: slimes slow down and shrink. Opens in chapter 2." },
+            DescVi = "Bình xịt nước — chọn rồi giữ chuột: slime bị xịt ướt sũng, chậm lại, co nhỏ và mất {sprayDps} máu/giây. Nước đủ {sprayTankSeconds} giây; cạn thì chờ {sprayRefillSeconds} giây.",
+            DescEn = "Water spray — choose, then hold the mouse: soaked slimes slow down, shrink and lose {sprayDps} HP/s. {sprayTankSeconds} s of water; empty, it refills in {sprayRefillSeconds} s." },
     };
 
     // {key}: any top-level number of battle.json (case ignored).

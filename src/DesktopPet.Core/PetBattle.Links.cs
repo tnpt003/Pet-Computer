@@ -29,6 +29,10 @@ public sealed partial class BattleSim
 
     private static bool Is(Slime slime, string kind) => slime.Link?.Kind == kind;
 
+    // A rhythm's count up to its strike, a tether's share of its ally's hits: an elite's own when it has one (1.5 M10).
+    public static int Beats(Slime slime) => slime.Link is not LinkSpec link ? 0 : slime.Elite != null && link.EliteBeats > 0 ? link.EliteBeats : link.Beats;
+    public static double Share(Slime holder) => holder.Link is not LinkSpec link ? 0 : holder.Elite != null && link.EliteShare > 0 ? link.EliteShare : link.Share;
+
     // The holder of the tether on this ally (null: none).
     public Slime? TetherHolder(Slime ally)
     {
@@ -113,7 +117,7 @@ public sealed partial class BattleSim
                     slime.BeatClock += dt;
                     if (slime.BeatClock < link.Beat) break;
                     slime.BeatClock -= link.Beat;
-                    if (++slime.BeatCount < link.Beats) { events.Add(new(BattleEventKind.LinkBeat, slime.X, slime.Id)); break; }
+                    if (++slime.BeatCount < Beats(slime)) { events.Add(new(BattleEventKind.LinkBeat, slime.X, slime.Id)); break; }
                     slime.BeatCount = 0;
                     StrikeTogether(slime, link, catX, catHeld);
                     break;

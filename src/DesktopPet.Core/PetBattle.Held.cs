@@ -17,13 +17,15 @@ public readonly record struct CatPose(double X, double Height, double VX, double
 //   own swing clock so the swing on the floor is untouched.
 // - The thrown cat flying through an enemy with a ThrowHit, fast enough, hurts and/or dazes it, once
 //   per enemy per throw; every other enemy ignores a throw.
+// - The cat held (past the drag threshold) or thrown through a tether's rope at its CutSpeed or more
+//   cuts it (1.5 M10, CutLink: the ally is dazed), as the Scissors do.
 // The cat still takes no hit while held or flying.
 public sealed partial class BattleSim
 {
     private double heldSwingTime = -1, heldCooldown;
     private int heldTargetId;
     private bool heldHit;
-    private CatPose? lastFlight;
+    private CatPose? lastFlight, lastRopePose;
     private readonly HashSet<int> thrownInto = new();
 
     public bool HeldSwinging => heldSwingTime >= 0;
@@ -31,6 +33,8 @@ public sealed partial class BattleSim
     public int HeldFacing { get; private set; } = 1;
     public int HeldHits { get; private set; }
     public int ThrowHits { get; private set; }
+    // Ropes the cat itself cut, held or thrown (the Scissors count theirs in RopesCut).
+    public int CatRopeCuts { get; private set; }
 
     // How far from the cat's centre to an enemy's edge its weapon reaches: as on the floor
     // (Reach: arms.Range centre to centre for a basic slime).
@@ -44,9 +48,11 @@ public sealed partial class BattleSim
         {
             CancelHeldSwing();
             thrownInto.Clear();
-            lastFlight = null;
+            lastFlight = lastRopePose = null;
             return;
         }
+        if ((cat.InHand && CatLifted) || (cat.Flying && !cat.InHand)) CatThroughRopes(cat);
+        else lastRopePose = null;
         if (cat.InHand && CatLifted && !CatStunned) HeldSwing(dt, cat);
         else CancelHeldSwing();
         if (cat.Flying && !cat.InHand) ThrowContact(cat);
@@ -133,6 +139,23 @@ public sealed partial class BattleSim
             AddEffect(BattleEffectKind.Combo, s.X, s.Altitude + s.Height / 2);
             if (rule.Damage > 0) Damage(s, rule.Damage, DamageSource.Throw);
             if (rule.Stun > 0 && s.Targetable) Daze(s, rule.Stun);
+        }
+    }
+
+    // The cat's way since the last step (a segment, as for a throw) against every tether's rope, its
+    // centre within a third of its width of the rope, going at the rope's CutSpeed or more.
+    private void CatThroughRopes(CatPose cat)
+    {
+        var from = lastRopePose ?? cat;
+        lastRopePose = cat;
+        if (!HasLink(EnemyLinks.Tether) || from == cat) return;
+        double speed = Math.Sqrt(cat.VX * cat.VX + cat.VY * cat.VY);
+        foreach (var holder in slimes.ToArray())
+        {
+            if (!Is(holder, EnemyLinks.Tether) || speed < holder.Link!.CutSpeed || LinkPartner(holder) is not Slime ally) continue;
+            if (!RopeCrossed(holder, ally, from.X, from.Height, cat.X, cat.Height, CatHalfWidth * 2 / 3)) continue;
+            if (CutLink(holder.Id)) CatRopeCuts++;
+            if (Over) return;
         }
     }
 

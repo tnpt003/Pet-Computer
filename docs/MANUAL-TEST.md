@@ -633,3 +633,13 @@ Chưa trận gốc nào có hai quái này (chương 2 mới có). Muốn thử:
 - [ ] Nhấc mèo ra khỏi vòng khi vòng đang đỏ: không trúng. Cầm mèo lơ lửng trên vòng: không kích. Đẩy lò xo khi đang nén: không bật. Mèo đánh trúng 2 đòn: lò xo bẹp (vòng xám, banner "Lò xo bẹp rồi!"), mèo đứng trong vòng ~3 s không sao.
 - [ ] Tinh anh (viền vàng, sao): slime phun phun 2 giọt (2 vòng cam), lò xo có vòng to hơn. Pause/menu khi giọt đang bay hoặc lò xo đang nén: đứng yên; tiếp tục thì chạy tiếp.
 - [ ] Click chỗ trống trên vũng/vòng vẫn xuyên xuống desktop; DPI 100/150/200% vòng và vũng đúng chỗ; âm thanh ngắn, không chồng nhau; banner vi/en/ja đúng chữ.
+
+## Slime nhạc trưởng và Slime xích 1.5 M10 (2026-10-28) — file tùy chỉnh
+Chưa trận gốc nào có hai quái này (chương 2 mới có). Muốn thử: cất file `%LOCALAPPDATA%\DesktopPet\battle.json` của bạn (nếu có), chép `docs/examples/battle-m10.json` vào chỗ đó, mở Trận tự do; xong thì xóa file (hoặc trả file cũ). Ảnh đã xem qua render UiChecks nền sáng/tối, chưa xem trong trận thật, chưa thử chuột thật và DPI thật.
+- [ ] Không có file: Trận tự do, Phiêu lưu chương 1, Vô tận, Viễn chinh như cũ, không thấy slime cam ôm trống hay slime xanh có mắt xích (kể cả do Thùng Rác nhả).
+- [ ] Slime nhạc trưởng (cam, trống đỏ phía trước, dùi gõ theo nhịp): 4 chấm trên đầu sáng dần, chấm cuối đỏ nháy; vòng cam chấm trên sàn. Hết nhịp các slime trong vòng cùng hiện "!" và đánh một lượt (tiếng keng); banner "Nhạc trưởng đếm nhịp!" lần đầu.
+- [ ] Đẩy nhạc trưởng (hoặc thổi Quạt vào nó) trước nhịp cuối: chấm về 0, không có loạt đánh. Bật Khiên bong bóng đúng lúc loạt đánh: không mất máu.
+- [ ] Slime xích (xanh nhỏ, mắt xích trên đầu): nối dây nhầy xanh vào slime gần nhất, đứng sát sau nó; dây không chìm xuống dưới sàn; banner "Dây nhầy!" lần đầu. Đánh slime được nối: hai con cùng mất máu (số trên cả hai).
+- [ ] Nhấc mèo rồi kéo nhanh xuyên qua dây: dây đứt (tiếng bụp, banner "Đứt dây!"), slime được nối choáng ~1 s; kéo chậm qua dây hoặc chỉ nhấn giữ mèo: không đứt. Ném mèo bay xuyên qua dây: đứt. Kéo cắt một nét qua dây: đứt. ~6 s sau slime xích nối lại.
+- [ ] Kéo/ném mèo trong trận cảm giác như cũ (không khựng, không đổi quỹ đạo); mèo đang cầm/bay không mất máu. Pause/menu khi đang kéo mèo qua dây: không đứt.
+- [ ] Tinh anh (viền vàng, sao): nhạc trưởng chỉ 3 chấm; slime xích gánh nhiều hơn (số trên nó lớn hơn số trên đồng minh). Âm thanh nhịp không quá ồn, không chồng nhau; banner vi/en/ja đúng chữ; DPI 100/150/200% dây và vòng đúng chỗ.

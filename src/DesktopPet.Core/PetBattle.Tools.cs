@@ -225,8 +225,8 @@ public sealed partial class BattleSim
 
     // The rope as drawn (PetBattleView.Links.cs, without its sway): from body to body at 45% of their
     // height, sagging in the middle (never below the floor line: a stroke along the floor still meets
-    // it); crossed when the stroke comes within a few DIPs of it.
-    private static bool RopeCrossed(Slime holder, Slime ally, double x0, double h0, double x1, double h1)
+    // it); crossed when the stroke comes within `pad` DIPs of it.
+    private static bool RopeCrossed(Slime holder, Slime ally, double x0, double h0, double x1, double h1, double pad = 6)
     {
         double ax = holder.X, ay = Body(holder).Bottom + holder.Height * 0.45, bx = ally.X, by = Body(ally).Bottom + ally.Height * 0.45;
         double sag = Math.Min(28, Math.Abs(bx - ax) * 0.18);
@@ -234,7 +234,7 @@ public sealed partial class BattleSim
         for (int k = 1; k <= 10; k++)
         {
             double t = k / 10.0, qx = ax + (bx - ax) * t, qy = Math.Max(2, ay + (by - ay) * t - sag * 4 * t * (1 - t));
-            if (SegmentGap(x0, h0, x1, h1, px, py, qx, qy) <= 6) return true;
+            if (SegmentGap(x0, h0, x1, h1, px, py, qx, qy) <= pad) return true;
             px = qx; py = qy;
         }
         return false;

@@ -333,7 +333,9 @@ internal static class BattleLinkTests
         check(on.ActiveLink is { Kind: EnemyLinks.Tether, Share: 0.4 } && off.Link is { Kind: EnemyLinks.Tether, Share: 0.4, Enabled: false } && off.ActiveLink == null,
             "\"link\": { \"enabled\": false } in a user file switches the link off and keeps the rest");
 
-        // 1.5 M01 adds no link to the built-in battles: chapter 1 and every current mode play as before.
-        check(BattleData.Settings.EnemyTypes.All(e => e.Link == null), "No built-in enemy has a link yet");
+        // The built-in battles have no link yet: chapter 1 and every current mode play as before. Only the
+        // 1.5 M10 drummer and chain slime carry one, and no battle uses them yet (BattleBandTests).
+        check(BattleData.Settings.EnemyTypes.Where(e => e.Link != null).Select(e => e.Id).OrderBy(id => id).SequenceEqual(new[] { "chain", "drummer" }),
+            "Only the drummer and the chain slime have a link");
     }
 }

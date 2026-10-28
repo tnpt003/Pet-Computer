@@ -215,10 +215,11 @@ public sealed class ThrowHitSpec
 // tether: a rope to the nearest ally within Range (never a boss, never another holder); the holder
 //   takes Share of every hit on that ally and keeps behind it. Cut (CutLink) or the holder defeated:
 //   the ally is dazed BreakStun s; a rope stretched past Range × 1.5 snaps with no reward. Relink s
-//   later it may tie itself to an ally again.
+//   later it may tie itself to an ally again. The cat held (past the drag threshold) or thrown through
+//   the rope at CutSpeed DIPs/s or more cuts it too (1.5 M10). An elite takes EliteShare (0: Share).
 // rhythm: a beat every Beat s (a ring over its head); on every Beats-th beat each ally within Range
 //   that could attack the cat winds up at once, attack turns or not. A push or a stun on it starts
-//   the count again.
+//   the count again. An elite strikes on every EliteBeats-th beat (0: Beats).
 // ride: it rides an ally of kind Mount found within Range (not one already ridden), drawn on top and
 //   left alone by the cat; DropRange from the cat it hops off. Its mount defeated (or CutLink): it falls
 //   where it is, dazed BreakStun s.
@@ -234,8 +235,11 @@ public sealed class LinkSpec
     public double BreakStun { get; init; } = 1;
     public double Relink { get; init; } = 6;
     public double Share { get; init; } = 0.5;
+    public double EliteShare { get; init; }
+    public double CutSpeed { get; init; } = 300;
     public double Beat { get; init; } = 0.8;
     public int Beats { get; init; } = 4;
+    public int EliteBeats { get; init; }
     public string? Mount { get; init; }
     public double DropRange { get; init; } = 90;
     public int Count { get; init; } = 3;
@@ -688,7 +692,7 @@ public static class BattleData
     public static readonly string[] WeaponStyles = { "sword", "hammer", "yarn", "glove" };
     public static readonly string[] WeaponHitEffects = { "spark", "thud" };
     public static readonly string[] EnemyRenderers = { "slime" };
-    public static readonly string[] EnemyMarks = { "none", "speed", "cracks", "leaf", "cross", "spout", "spring" };
+    public static readonly string[] EnemyMarks = { "none", "speed", "cracks", "leaf", "cross", "spout", "spring", "drum", "chain" };
     public static readonly string[] GroupSides = { "a", "b" };
 
     // Throws on any mistake, so a half-valid file is never used.
@@ -937,11 +941,16 @@ public static class BattleData
                 if (Array.IndexOf(EnemyLinks.All, link.Kind) < 0) throw new InvalidDataException($"{at}.link.kind must be one of: {string.Join(", ", EnemyLinks.All)}");
                 if (e.Boss) throw new InvalidDataException(at + ".link is not for a boss");
                 Within(link.Range, 20, 800, at + ".link.range"); Within(link.BreakStun, 0, 5, at + ".link.breakStun"); Within(link.Relink, 0, 60, at + ".link.relink");
-                if (link.Kind == EnemyLinks.Tether) Within(link.Share, 0.05, 0.95, at + ".link.share");
+                if (link.Kind == EnemyLinks.Tether)
+                {
+                    Within(link.Share, 0.05, 0.95, at + ".link.share"); Within(link.CutSpeed, 100, 5000, at + ".link.cutSpeed");
+                    if (link.EliteShare != 0) Within(link.EliteShare, 0.05, 0.95, at + ".link.eliteShare");
+                }
                 if (link.Kind == EnemyLinks.Rhythm)
                 {
                     Within(link.Beat, 0.2, 3, at + ".link.beat");
                     if (link.Beats is < 2 or > 8) throw new InvalidDataException(at + ".link.beats must be 2–8");
+                    if (link.EliteBeats is not 0 and (< 2 or > 8)) throw new InvalidDataException(at + ".link.eliteBeats must be 2–8");
                 }
                 if (link.Kind == EnemyLinks.Ride) Within(link.DropRange, 20, 400, at + ".link.dropRange");
                 if (link.Kind == EnemyLinks.Merge)

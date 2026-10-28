@@ -344,6 +344,30 @@
       "elite": { "hp": 1.2, "cost": 1, "descVi": "vòng to hơn, bật lại nhanh, 3 đòn mới bẹp", "descEn": "bigger ring, springs back sooner, 3 hits to flatten" }
     },
     {
+      // 1.5 Q3 (M10): a drummer. link rhythm: a beat every `beat` s (dots over its head); on every
+      // `beats`-th beat every ally within `range` (and itself) that could reach the cat winds up at once.
+      // A push, a stun or the Fan on it starts the count again; the Shield takes the strike. Elite: it
+      // strikes every eliteBeats beats. binSpit false: an infected bin never spits it.
+      "id": "drummer", "nameVi": "Slime nhạc trưởng", "nameEn": "Drummer slime",
+      "maxHp": 60, "speed": 32, "damage": 9, "range": 56,
+      "windup": 0.8, "attackCooldown": 2.0, "recover": 0.4,
+      "scale": 1.0, "color": "#E8825A", "marks": "drum", "cost": 2, "binSpit": false,
+      "link": { "kind": "rhythm", "range": 220, "beat": 0.8, "beats": 4, "eliteBeats": 3 },
+      "elite": { "hp": 1.2, "cost": 1, "descVi": "3 nhịp là cả đội đánh", "descEn": "the band strikes every 3 beats" }
+    },
+    {
+      // 1.5 Q4 (M10): a weak chain slime. link tether: a rope of goo to the nearest ally within `range`;
+      // it takes `share` of every hit on that ally and keeps just behind it. Cut the rope (the Scissors,
+      // or the cat held or thrown through it at cutSpeed DIPs/s or more) or defeat it: the ally is dazed
+      // breakStun s; it ties itself again `relink` s later. Elite: it takes eliteShare instead.
+      "id": "chain", "nameVi": "Slime xích", "nameEn": "Chain slime",
+      "maxHp": 36, "speed": 44, "damage": 6, "range": 52,
+      "windup": 0.7, "attackCooldown": 2.2, "recover": 0.4,
+      "scale": 0.8, "color": "#9AD17A", "marks": "chain", "cost": 2, "binSpit": false,
+      "link": { "kind": "tether", "range": 200, "share": 0.5, "breakStun": 1, "relink": 6, "cutSpeed": 300, "eliteShare": 0.7 },
+      "elite": { "hp": 1.3, "cost": 1, "descVi": "gánh 70% sát thương cho đồng đội", "descEn": "takes 70% of its ally's hits" }
+    },
+    {
       // The chapter 1 boss (Adventure stage 5): the free battle keeps "king" below. Phases fire once
       // each at their HP fraction; at most summonCap helpers alive at once. A shield phase stops a
       // hit at its line, runs to the far edge (retreatSpeed, at most retreatSeconds), calls its

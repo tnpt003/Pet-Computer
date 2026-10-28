@@ -706,7 +706,7 @@ public sealed partial class BattleSim
         // A tether's holder takes its share of every hit on its ally (never passed on again).
         if (source != DamageSource.Link && TetherHolder(slime) is Slime holder)
         {
-            double share = amount * holder.Link!.Share;
+            double share = amount * Share(holder);
             amount -= share;
             Damage(holder, share, DamageSource.Link);
             if (!slime.Targetable) return HitResult.Landed;

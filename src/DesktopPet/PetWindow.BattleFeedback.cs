@@ -49,6 +49,9 @@ public sealed partial class PetWindow
         [BattleEventKind.SpitAimed] = ("squish", 2), [BattleEventKind.GooLanded] = ("squish", 3), [BattleEventKind.PuddleBoost] = ("swoosh", 3),
         [BattleEventKind.PuddleDried] = ("pop", 2), [BattleEventKind.SpringSqueezed] = ("clank", 4), [BattleEventKind.SpringBounced] = ("ball_tap", 5),
         [BattleEventKind.SpringFlattened] = ("squish", 4),
+        // 1.5 M10: the drummer's beats and strike, the chain slime's rope.
+        [BattleEventKind.LinkBeat] = ("ball_tap", 1), [BattleEventKind.LinkStrike] = ("clank", 4), [BattleEventKind.LinkFormed] = ("squish", 2),
+        [BattleEventKind.LinkCut] = ("pop", 4), [BattleEventKind.LinkSnapped] = ("pop", 2),
     };
 
     private void PlayBattleSound()
@@ -65,6 +68,13 @@ public sealed partial class PetWindow
         battle?.AppRules is AppsSpec rules && battle.FindApp((int)e.Value) is DesktopApp app ? rules.App(app.Kind).Name(preferences.Language) : null;
 
     // A malware event about a forced update (Value: its id).
+    // A link made by a tether's holder (a rider mounting makes one too).
+    private bool IsRope(BattleEvent e)
+    {
+        if (battle == null) return false;
+        foreach (var s in battle.Slimes) if (s.Id == (int)e.Value) return s.Link?.Kind == EnemyLinks.Tether;
+        return false;
+    }
     private bool IsUpdate(BattleEvent e) => battle?.FindHazard((int)e.Value) is { Kind: HazardKind.Update };
 
     private string BossName() => battle?.Boss?.Type.Name(preferences.Language) ?? "Boss";
@@ -72,12 +82,12 @@ public sealed partial class PetWindow
     // Big moments get a banner across the HUD's centre. The first heal, far heal, rally call and attack
     // from behind of a battle say what is going on (once each per battle), and so does the first elite
     // of each kind; every helper a rally makes elite is named.
-    private bool healerExplained, farHealExplained, rallyExplained, behindExplained, wardExplained, pushResistExplained, appExplained, popupExplained, virusExplained, loadingExplained, updateExplained, virusExeExplained, lockExplained, rageExplained, spitExplained, puddleExplained, springExplained, flatExplained;
+    private bool healerExplained, farHealExplained, rallyExplained, behindExplained, wardExplained, pushResistExplained, appExplained, popupExplained, virusExplained, loadingExplained, updateExplained, virusExeExplained, lockExplained, rageExplained, spitExplained, puddleExplained, springExplained, flatExplained, beatExplained, ropeExplained, cutExplained;
     private readonly HashSet<string> elitesExplained = new();
     private void ShowBattleBanners()
     {
         if (battle == null || battleHud == null) return;
-        if (battle.Time < 0.05) { healerExplained = farHealExplained = rallyExplained = behindExplained = wardExplained = pushResistExplained = appExplained = popupExplained = virusExplained = loadingExplained = updateExplained = virusExeExplained = lockExplained = rageExplained = spitExplained = puddleExplained = springExplained = flatExplained = false; elitesExplained.Clear(); }
+        if (battle.Time < 0.05) { healerExplained = farHealExplained = rallyExplained = behindExplained = wardExplained = pushResistExplained = appExplained = popupExplained = virusExplained = loadingExplained = updateExplained = virusExeExplained = lockExplained = rageExplained = spitExplained = puddleExplained = springExplained = flatExplained = beatExplained = ropeExplained = cutExplained = false; elitesExplained.Clear(); }
         var rules = battle.AppRules;
         for (int i = 0; i < battle.Events.Count; i++)
         {
@@ -132,6 +142,10 @@ public sealed partial class PetWindow
                 BattleEventKind.PuddleBoost when !puddleExplained => L("Vũng nhầy làm slime lao xa hơn! Dùng Quạt làm khô", "Goo puddles make dashes longer! Dry them with the Fan"),
                 BattleEventKind.SpringSqueezed when !springExplained => L("Lò xo đang nén! Nhấc mèo ra khỏi vòng", "The spring is squeezing! Lift the cat out of the ring"),
                 BattleEventKind.SpringFlattened when !flatExplained => L("Lò xo bẹp rồi! Nó nằm im một lúc", "The spring is flattened! It lies still a while"),
+                // 1.5 M10: the drummer and the chain slime, once each per battle.
+                BattleEventKind.LinkBeat when !beatExplained => L("Nhạc trưởng đếm nhịp! Đẩy nó trước nhịp cuối", "The drummer counts! Push it before the last beat"),
+                BattleEventKind.LinkFormed when !ropeExplained && IsRope(e) => L("Dây nhầy! Ném hoặc kéo mèo xuyên dây, hay dùng Kéo cắt", "A goo rope! Throw or drag the cat through it, or use the Scissors"),
+                BattleEventKind.LinkCut when !cutExplained => L("Đứt dây! Đồng đội choáng", "Rope cut! Its ally is dazed"),
                 BattleEventKind.Won => L("CHIẾN THẮNG!", "VICTORY!"),
                 BattleEventKind.Lost => L("THUA RỒI…", "DEFEATED…"),
                 _ => null
@@ -151,6 +165,9 @@ public sealed partial class PetWindow
             if (e.Kind == BattleEventKind.PuddleBoost) puddleExplained = true;
             if (e.Kind == BattleEventKind.SpringSqueezed) springExplained = true;
             if (e.Kind == BattleEventKind.SpringFlattened) flatExplained = true;
+            if (e.Kind == BattleEventKind.LinkBeat) beatExplained = true;
+            if (e.Kind == BattleEventKind.LinkFormed && IsRope(e)) ropeExplained = true;
+            if (e.Kind == BattleEventKind.LinkCut) cutExplained = true;
             if (e.Kind == BattleEventKind.VirusFileAdded) virusExeExplained = true;
             if (e.Kind == BattleEventKind.HazardOpened && IsUpdate(e)) updateExplained = true;
             else if (e.Kind == BattleEventKind.HazardOpened) loadingExplained = true;

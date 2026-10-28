@@ -334,6 +334,8 @@ public sealed record WeaponSpec
     // stunFactor; never a boss): the hammer's 15 % and 0.8 s.
     public double StunChance { get; init; } = 0.15;
     public double StunSeconds { get; init; } = 0.8;
+    // A status its landed hits may leave (1.5 M04; null: none).
+    public StatusHit? OnHit { get; init; }
 }
 
 // A skill's texts. Id: push, heal, cheer, bomb or shield. A description's {key} is that
@@ -370,7 +372,8 @@ public enum SlimeState { Spawning, Moving, Windup, Recover, Stunned, Defeated, C
 // hits never set off another bonus. App: a desktop app (PetBattle.Apps.cs). Splash: a combo's hit on
 // the enemies next to its target.
 // Link: the share of a hit a tether's holder takes for its ally.
-public enum DamageSource { Weapon, Combo, Bomb, Reflect, Echo, App, Splash, Link, Throw }
+// Poison: a status's damage over time (PetBattle.Status.cs).
+public enum DamageSource { Weapon, Combo, Bomb, Reflect, Echo, App, Splash, Link, Throw, Poison }
 
 // What a hit on an enemy did: landed, blocked by a stony enemy, or nothing on a shielded boss.
 public enum HitResult { Landed, Blocked, Immune }
@@ -471,6 +474,19 @@ public sealed class Slime
     // In the air (its kind's Hover): the bottom of its body this many DIPs over the floor (0: on the floor).
     public double Altitude;
     public bool Airborne => Altitude > 0;
+    // Statuses (PetBattle.Status.cs): poison's layers, HP a second, time left, time and HP since its
+    // last tick; chill's slow (0–0.9) and time left; stick's time left and the time it cannot stick again.
+    public int PoisonLayers;
+    public double PoisonDps, PoisonRemaining, PoisonClock, PoisonOwed;
+    public double ChillPower, ChillRemaining;
+    public double StuckRemaining, StickImmune;
+    // Each status's whole time when it last grew (drawing its countdown ring).
+    public double PoisonTotal, ChillTotal, StuckTotal;
+    public bool Poisoned => PoisonRemaining > 0;
+    public bool Chilled => ChillRemaining > 0;
+    public bool Stuck => StuckRemaining > 0;
+    // How fast it acts under a chill (1: not chilled).
+    public double ChillFactor => ChillRemaining > 0 ? 1 - ChillPower : 1;
     public bool Targetable => State is not (SlimeState.Spawning or SlimeState.Defeated);
     public void Set(SlimeState state)
     {
@@ -513,7 +529,9 @@ public enum BattleEventKind
     LinkFormed, LinkCut, LinkSnapped, LinkBeat, LinkStrike, Merged, Dismounted, Panicked,
     // The cat in the user's hand hit an enemy in the air; the thrown cat flew into an enemy that
     // reacts to it (Value: the enemy's id).
-    HeldHit, ThrowHit
+    HeldHit, ThrowHit,
+    // A status took on an enemy (Value: its SlimeStatus).
+    StatusApplied
 }
 public readonly record struct BattleEvent(BattleEventKind Kind, double X, double Value = 0);
 // Number: a floating damage (Value > 0) or heal (Value < 0, shown as +HP above the cat).
@@ -525,8 +543,8 @@ public readonly record struct BattleEvent(BattleEventKind Kind, double X, double
 // "not responding" window over the enemy it ends; Value: its width), Rewind (an undo arrow
 // circling the cat).
 public enum BattleEffectKind { Spark, Poof, Push, Explosion, Slam, Number, Combo, Thud, Mend, Block, Immune, Warded, Bell, EndTask, Rewind }
-// How a damage Number reads (display only): a plain hit, a combo hit, or a critical (Claws) hit.
-public enum NumberTone { Plain, Combo, Crit }
+// How a damage Number reads (display only): a plain hit, a combo hit, a critical (Claws) hit, or poison's tick.
+public enum NumberTone { Plain, Combo, Crit, Poison }
 public sealed class BattleEffect
 {
     public BattleEffectKind Kind;

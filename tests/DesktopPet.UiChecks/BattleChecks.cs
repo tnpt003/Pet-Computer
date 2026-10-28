@@ -706,6 +706,64 @@ internal static class BattleChecks
             }
         }
 
+        // 1.5 M04: statuses show on the enemy (poison, chill, stick, all three): each one's column looks
+        // unlike the same enemy without it, the plain one's not; with PET_RENDER_REVIEW, the strip on light and dark.
+        {
+            var data = BattleData.Settings;
+            var statusSim = new BattleSim(data, 0, 600, new Random(1));
+            var made = new System.Collections.Generic.List<Slime>();
+            for (int i = 0; i < 5; i++)
+            {
+                var s = statusSim.AddSlime(70 + 110 * i, data.Enemy("slime"));
+                s.Set(SlimeState.Moving); s.StateTime = 0.4; s.Facing = -1;
+                made.Add(s);
+            }
+            var statusView = new BattleFieldView(statusSim) { OriginX = 0, Width = 600, Height = BattleFieldView.FieldHeight };
+            statusView.Measure(new Size(600, BattleFieldView.FieldHeight)); statusView.Arrange(new Rect(0, 0, 600, BattleFieldView.FieldHeight)); statusView.UpdateLayout();
+            var plainShot = Shot(Color.FromRgb(0x1E, 0x1E, 0x24), null);
+            statusSim.ApplyStatus(made[1], SlimeStatus.Poison, 4, 10);
+            statusSim.ApplyStatus(made[1], SlimeStatus.Poison, 4, 10);
+            statusSim.ApplyStatus(made[2], SlimeStatus.Chill, 4, 0.5);
+            statusSim.ApplyStatus(made[3], SlimeStatus.Stick, 2);
+            statusSim.ApplyStatus(made[4], SlimeStatus.Poison, 4, 10);
+            statusSim.ApplyStatus(made[4], SlimeStatus.Chill, 4, 0.5);
+            statusSim.ApplyStatus(made[4], SlimeStatus.Stick, 2);
+            made[4].PoisonRemaining = 1; // Its ring part run down.
+            statusView.InvalidateVisual(); statusView.UpdateLayout();
+            byte[] Shot(Color back, string? file)
+            {
+                var visual = new DrawingVisual();
+                using (var dc = visual.RenderOpen())
+                {
+                    dc.DrawRectangle(new SolidColorBrush(back), null, new Rect(0, 0, 600, BattleFieldView.FieldHeight));
+                    dc.DrawRectangle(new VisualBrush(statusView) { Stretch = Stretch.None, AlignmentX = AlignmentX.Left, AlignmentY = AlignmentY.Top,
+                        ViewboxUnits = BrushMappingMode.Absolute, Viewbox = new Rect(0, 0, 600, BattleFieldView.FieldHeight) },
+                        null, new Rect(0, 0, 600, BattleFieldView.FieldHeight));
+                }
+                var image = new RenderTargetBitmap(600, (int)BattleFieldView.FieldHeight, 96, 96, PixelFormats.Pbgra32); image.Render(visual);
+                if (file != null && Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string review)
+                {
+                    var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(image));
+                    using var stream = System.IO.File.Create(System.IO.Path.Combine(review, file)); encoder.Save(stream);
+                }
+                var pixels = new byte[600 * 4 * (int)BattleFieldView.FieldHeight];
+                image.CopyPixels(pixels, 600 * 4, 0);
+                return pixels;
+            }
+            Shot(Colors.WhiteSmoke, "battle-status-light.png");
+            var pixelsOf = Shot(Color.FromRgb(0x1E, 0x1E, 0x24), "battle-status-dark.png");
+            // Each enemy's own column, 110 DIPs wide round its centre.
+            byte[] Column(byte[] all, int index)
+            {
+                int height = (int)BattleFieldView.FieldHeight, left = 70 + 110 * index - 55;
+                var part = new byte[110 * 4 * height];
+                for (int y = 0; y < height; y++) Array.Copy(all, (y * 600 + left) * 4, part, y * 110 * 4, 110 * 4);
+                return part;
+            }
+            bool shows = Enumerable.Range(1, 4).All(i => !Column(pixelsOf, i).AsSpan().SequenceEqual(Column(plainShot, i)));
+            check(shows && Column(pixelsOf, 0).AsSpan().SequenceEqual(Column(plainShot, 0)), "Poison, chill, stick and all three each show on the enemy; a plain one is unchanged");
+        }
+
         // The battle's desktop apps (PetWindow.BattleApps.cs): five icon windows on the grid above the
         // strip, faded while the cursor is far; an ad's × on the strip takes the click and the rest of
         // it covers the slime behind. With PET_RENDER_REVIEW, pictures of the icons, flights and strip.

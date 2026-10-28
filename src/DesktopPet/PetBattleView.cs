@@ -368,6 +368,7 @@ public sealed partial class BattleFieldView : FrameworkElement
                 for (int i = 1; i <= 2; i++)
                     dc.DrawEllipse(null, i == 1 ? AfterimageNear : AfterimageFar, new Point(x - slime.Facing * w * 0.55 * i, floor - h / 2), w / 2, h / 2);
         }
+        DrawStatusUnder(dc, slime, x, floor, w);
         dc.PushOpacity(opacity);
         dc.PushTransform(new MatrixTransform(sx * size, 0, 0, sy * size, x + jitter, floor));
         double bw = s.SlimeWidth, bh = s.SlimeHeight;
@@ -381,6 +382,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         // An elite: a gold rim round the body (and a star, below).
         if (slime.Elite != null) dc.DrawGeometry(null, EliteRim, body);
         dc.DrawGeometry(fill, Outline, body);
+        DrawStatusTint(dc, slime, body, bw, bh, time);
         dc.DrawEllipse(Shine, null, new Point(-bw * 0.2, -bh * 0.68), 5, 3.5);
         double look = slime.Facing * 3;
         if (slime.State == SlimeState.Stunned || slime.State == SlimeState.Defeated)
@@ -471,6 +473,8 @@ public sealed partial class BattleFieldView : FrameworkElement
             dc.DrawGeometry(null, BubbleShine, shine);
         }
         double top = floor - h * sy - (slime.IsBoss ? 9 * size : 0);
+        // Status badges over the head push the elite's tag and the selection arrow up.
+        double lift = DrawStatusOver(dc, slime, x, floor, top, w, h, time);
         if (slime.Mended && slime.State != SlimeState.Defeated)
         {
             // Guarded by a heal: a green bubble with leaves turning round it (push the healer to end it).
@@ -558,7 +562,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         if (targetable && slime.Elite is EliteSpec elite && elite.Tag(Language) is string tag)
         {
             var (shape, width, height) = TagShape(tag);
-            double tagBottom = top - (slime.State == SlimeState.Windup ? 30 : 13);
+            double tagBottom = top - (slime.State == SlimeState.Windup ? 30 : 13) - lift;
             dc.PushTransform(new TranslateTransform(ClearOfCat(x, width, tagBottom - height / 2) - width / 2, tagBottom - height));
             dc.DrawGeometry(null, TextHalo, shape);
             dc.DrawGeometry(ComboGold, null, shape);
@@ -567,7 +571,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         if (sim.SelectedId == slime.Id)
         {
             // Bobbing yellow arrow: readable on light and dark desktops (white halo, dark outline).
-            double y = top - 30 - (slime.State == SlimeState.Windup ? 14 : 0) + Math.Sin(time * 4) * 3;
+            double y = top - 30 - (slime.State == SlimeState.Windup ? 14 : 0) - lift + Math.Sin(time * 4) * 3;
             dc.PushTransform(new TranslateTransform(x, y));
             dc.DrawGeometry(null, Halo, Arrow);
             dc.DrawGeometry(Marker, Ink, Arrow);
@@ -901,11 +905,11 @@ public sealed partial class BattleFieldView : FrameworkElement
                 var tone = heal ? NumberTone.Plain : effect.Tone;
                 string text = heal ? "+" + (-effect.Value).ToString("0", CultureInfo.InvariantCulture)
                     : effect.Value.ToString("0", CultureInfo.InvariantCulture) + (tone == NumberTone.Crit ? "!" : "");
-                var (shape, width, height) = NumberShape(text, heal ? 18 : tone == NumberTone.Crit ? 22 : tone == NumberTone.Combo ? 19 : 16);
+                var (shape, width, height) = NumberShape(text, heal ? 18 : tone == NumberTone.Crit ? 22 : tone == NumberTone.Combo ? 19 : tone == NumberTone.Poison ? 14 : 16);
                 double numberBottom = y - 26 * k;
                 dc.PushTransform(new TranslateTransform((heal ? x : ClearOfCat(x, width, numberBottom - height / 2)) - width / 2, numberBottom - height));
                 dc.DrawGeometry(null, TextHalo, shape);
-                dc.DrawGeometry(heal ? HealGreen : tone == NumberTone.Crit ? ComboGold : tone == NumberTone.Combo ? ComboOrange : DamageWhite, null, shape);
+                dc.DrawGeometry(heal ? HealGreen : tone == NumberTone.Crit ? ComboGold : tone == NumberTone.Combo ? ComboOrange : tone == NumberTone.Poison ? PoisonNumber : DamageWhite, null, shape);
                 dc.Pop();
                 break;
         }

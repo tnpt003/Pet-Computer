@@ -433,6 +433,24 @@ Khung cho ngoại lệ Battle Mode 1.5 (docs/APPROVED-EXCEPTIONS.md → Battle M
 - Mèo vẫn không nhận sát thương khi đang cầm/bay. Pause/menu/chọn thẻ/hướng dẫn đứng hình: không vung, không va chạm. Physics kéo/ném không đổi: PetWindow chỉ đọc vị trí/vận tốc (`CatPose`).
 - Sự kiện: `HeldHit`, `ThrowHit` (Value: id quái; chưa gắn âm thanh riêng, đòn khi cầm dùng tiếng trúng đòn thường). Hình: vệt chém hiện cả khi mèo đang bị nhấc. Vẽ quái bay là việc của M14 (cửa sổ riêng).
 
+## Hiệu ứng trên quái: độc, đóng băng, dính (`onHit`) (bản 1.5, mốc M04, 2026-10-28)
+
+Code: `src/DesktopPet.Core/PetBattle.Status.cs` (luật), `src/DesktopPet/PetBattleView.Status.cs` (vẽ), test `tests/DesktopPet.Tests/BattleStatusTests.cs` (quái giả) và ảnh UiChecks. **battle.json gốc chưa có vũ khí hay thẻ nào gây hiệu ứng**: mọi trận hiện tại chạy y như trước (mô phỏng cân bằng giống hệt từng dòng). Bình xịt (M06), vũ khí mới (M08) và thẻ Mưu mẹo (J1) sẽ dùng khung này; trong code là `BattleSim.ApplyStatus(quái, loại, giây, power)`.
+
+```json
+"weapons": [ { "id": "fang", "onHit": { "status": "poison", "chance": 0.3, "seconds": 3, "power": 6 } } ]
+"upgrades": [ { "id": "glue_paw", "effect": "onHit", "amount": 0.2, "onHit": { "status": "stick", "seconds": 1.2 },
+  "nameVi": "Vuốt keo", "nameEn": "Glue paw", "descVi": "20% đòn trúng làm quái dính 1,2 s", "descEn": "20% of hits stick an enemy 1.2 s" } ]
+```
+
+- **`onHit`** trên vũ khí hoặc thẻ: mỗi đòn vũ khí **trúng** (dưới sàn, combo, hay mèo đang cầm đánh quái trên không; không tính đòn lan, Dư ảnh, phản đòn, bom, app) gieo `chance` (0,01–1, mặc định 1) để gây hiệu ứng. Thẻ: `"effect": "onHit"`, **`amount` là tỉ lệ** (0,01–1), không ghi `chance` trong object; lấy lại cùng thẻ thì cộng tỉ lệ (tối đa 1). Mỗi nguồn gieo riêng trên luồng ngẫu nhiên riêng (`BattleRandom.Status`), nên các lần gieo khác của trận không đổi.
+- **Độc** (`poison`): `seconds` 0,5–20, `power` 2–200 máu/giây (× sát thương của build lúc gây). Trừ mỗi 0,5 s, số trừ màu tím nhỏ (số < 1 không hiện). Tối đa **3 lớp**, mỗi lớp cộng thêm `power`; trúng lại thì thời gian lấy giá trị dài hơn (lớp thứ 4 chỉ làm dài thời gian). Không bị đá chặn, không đẩy lùi/choáng, không kích hoạt thẻ cộng thêm (Mở màn, Dư ảnh, Gai…). Quái chết vì độc vẫn tính là mèo hạ. Boss khiên/quái đang được hồi máu bảo vệ: không mất máu, thời gian vẫn chạy, không hiện "MIỄN".
+- **Đóng băng** (`chill`): `seconds` 0,5–10, `power` 0,05–0,9 = chậm bao nhiêu (0,5: còn nửa tốc độ). Đi, lao, gồng đòn, hồi đòn, gồng hồi máu và thời gian chờ giữa các đòn đều chậm theo. Không cộng dồn: giữ mức chậm mạnh hơn và thời gian dài hơn.
+- **Dính** (`stick`): `seconds` 0,2–5, không có `power`. Quái đứng yên: không đi, không lao, không bị đẩy lùi, quái khác không đẩy nó được (chúng tự dạt ra); vẫn quay mặt và đánh mèo trong tầm. Không cộng dồn (giữ thời gian dài hơn); hết dính thì miễn dính 1,5 s.
+- **Boss**: nhận nửa độc, nửa mức chậm, dính nửa thời gian. Không gây hiệu ứng lên quái đang ra sân, đã bị hạ, đang trong pha khiên, đang nhảy; quái đang cưỡi không bị dính. Bị hạ thì mất hết hiệu ứng.
+- Thời gian chỉ chạy khi trận chạy: Pause, menu, chọn thẻ, túi đồ, hướng dẫn đứng hình đều đóng băng hiệu ứng.
+- Hình: độc phủ tím và bọt nổi lên; đóng băng phủ sương xanh nhạt và tinh thể băng; dính có vũng keo màu hổ phách dưới chân và sợi keo hai bên. Trên đầu mỗi hiệu ứng một huy hiệu tròn có vòng đếm thời gian còn lại (đẩy chữ tinh anh và mũi tên chọn lên cao hơn). Sự kiện `StatusApplied` (Value: loại), chưa gắn âm thanh.
+
 ## Viễn chinh (`expedition`) (2026-10-21)
 
 Một chuyến đi gồm nhiều bậc, mỗi bậc chọn một điểm, bậc cuối là trùm. HP và build của mèo đi tiếp từ bậc này sang bậc sau; chuyến mới bắt đầu lại từ đầu. Code: `src/DesktopPet.Core/PetExpedition.cs` (luật, không WPF), `PetWindow.Expedition.cs` (bản đồ, kết quả).

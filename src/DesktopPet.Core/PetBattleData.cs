@@ -442,6 +442,8 @@ public sealed class UpgradeSpec
     // A rare card (up to two per group, at most once a build): it takes the place of its group's card in an
     // offer with BattleSettings.RareChance. It plays differently, not better in every way.
     public bool Rare { get; init; }
+    // Effect "onHit" (1.5 M04): the status the cat's landed weapon hits may leave; Amount is its chance.
+    public StatusHit? OnHit { get; init; }
     public string Name(string language) => PetText.Data(language, NameVi, NameEn);
     public string Describe(string language) => PetText.Data(language, DescVi, DescEn);
 }
@@ -690,6 +692,7 @@ public static class BattleData
             if (!(w.HitTime > 0 && w.HitTime < w.SwingDuration)) throw new InvalidDataException(at + ".hitTime must fall inside the swing");
             Within(w.Knock, 0, 1000, at + ".knock");
             Within(w.StunChance, 0, 1, at + ".stunChance"); Within(w.StunSeconds, 0, 3, at + ".stunSeconds");
+            if (w.OnHit != null) StatusHit.Validate(w.OnHit, at + ".onHit");
         }
         NotNegative(s.LandingGraceSeconds, "landingGraceSeconds");
         if (s.LandingGraceSeconds > 5) throw new InvalidDataException("landingGraceSeconds must be at most 5");
@@ -1040,6 +1043,12 @@ public static class BattleData
             if (u.Group != null && Array.IndexOf(BuildGroups.All, u.Group) < 0) throw new InvalidDataException($"{at}.group must be one of: {string.Join(", ", BuildGroups.All)} (or left out)");
             if (u.Group != null && u.Effect == "heal") throw new InvalidDataException($"{at}: a heal card cannot belong to a group");
             if (u.Rare && (u.Group == null || u.MaxStacks != 1)) throw new InvalidDataException($"{at}: a rare card needs a group and maxStacks 1");
+            if ((u.Effect == "onHit") != (u.OnHit != null)) throw new InvalidDataException($"{at}: effect \"onHit\" needs an \"onHit\" object, and only it may have one");
+            if (u.OnHit != null)
+            {
+                StatusHit.Validate(u.OnHit, at + ".onHit");
+                if (u.OnHit.Chance != 1) throw new InvalidDataException($"{at}.onHit.chance must be left out (a card's chance is its amount)");
+            }
             if (u.Skill != null && BattleSkills.Parse(u.Skill) == null) throw new InvalidDataException($"{at}.skill must be a skill id: {KnownSkills}");
         }
         foreach (var group in BuildGroups.All)
@@ -1085,7 +1094,9 @@ public static class BattleData
         // 2026-10-24.
         ["crit"] = (0.01, 1), ["execute"] = (0.1, 3), ["comboWindow"] = (0.05, 2), ["landingRush"] = (0.05, 2),
         ["regen"] = (0.05, 10), ["stunCut"] = (0.05, 0.9), ["skillCooldown"] = (0.01, 0.5), ["appCharge"] = (0.01, 0.5),
-        ["killCharge"] = (0.005, 0.2), ["bomb"] = (0.05, 2), ["shieldTime"] = (0.2, 5)
+        ["killCharge"] = (0.005, 0.2), ["bomb"] = (0.05, 2), ["shieldTime"] = (0.2, 5),
+        // 1.5 M04: the chance a landed weapon hit leaves the card's onHit status.
+        ["onHit"] = (0.01, 1)
     };
     public static readonly Dictionary<string, (double Min, double Max)> SynergyLimits = new()
     {

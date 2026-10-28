@@ -76,12 +76,15 @@ public sealed partial class BattleSim
         {
             var slime = slimes[index];
             var (minX, maxX) = Bounds(slime);
-            slime.StateTime += dt;
+            // A chill slows what it does: its windup, recovery and heal, and the waits after them.
+            double act = dt * slime.ChillFactor;
+            slime.StateTime += slime.State is SlimeState.Windup or SlimeState.Recover or SlimeState.Casting ? act : dt;
             slime.HitFlash = Math.Max(0, slime.HitFlash - dt);
-            slime.Cooldown = Math.Max(0, slime.Cooldown - dt);
-            slime.HealCooldown = Math.Max(0, slime.HealCooldown - dt);
-            slime.FarHealCooldown = Math.Max(0, slime.FarHealCooldown - dt);
+            slime.Cooldown = Math.Max(0, slime.Cooldown - act);
+            slime.HealCooldown = Math.Max(0, slime.HealCooldown - act);
+            slime.FarHealCooldown = Math.Max(0, slime.FarHealCooldown - act);
             slime.PanicRemaining = Math.Max(0, slime.PanicRemaining - dt);
+            if (slime.Stuck) slime.KnockVelocity = 0; // Stuck: no knock back either.
             if (slime.KnockVelocity != 0)
             {
                 slime.X += slime.KnockVelocity * dt;
@@ -90,6 +93,9 @@ public sealed partial class BattleSim
             }
             slime.X = Math.Clamp(slime.X, minX, maxX);
             if (Over) continue; // The outro: slimes just bounce in place.
+            StepStatus(slime, dt);
+            if (Over) break;
+            if (slime.State == SlimeState.Defeated) continue;
             if (slime.Riding && slime.State == SlimeState.Moving) continue; // Carried by its mount (StepLinks).
             if (slime.Shielded && slime.State != SlimeState.Defeated)
             {
@@ -97,6 +103,8 @@ public sealed partial class BattleSim
                 if (slime.Retreating && slime.State == SlimeState.Moving) continue; // Running for the edge: nothing else.
             }
             double dx = catX - slime.X;
+            // Stuck: it may turn and hit, but whatever moved it this step is undone.
+            double stuckAt = slime.X;
             switch (slime.State)
             {
                 case SlimeState.Spawning:
@@ -177,6 +185,7 @@ public sealed partial class BattleSim
                         slime.X =Math.Clamp(slime.X + Math.Sign(dx) * Math.Min(Math.Abs(dx), Speed(slime) * dt), minX, maxX);
                     break;
             }
+            if (slime.Stuck && slime.State != SlimeState.Defeated) slime.X = stuckAt;
             if (Over) break;
         }
         // Plain loops here and below: this runs every frame, so no per-call lambdas or lists.
@@ -352,7 +361,7 @@ public sealed partial class BattleSim
 
     // The ally a support enemy is healing right now (null when it is not casting).
     public Slime? Healing(Slime healer) => healer.State == SlimeState.Casting ? Find(healer.HealTargetId) : null;
-    private double Speed(Slime slime) => (slime.Enraged ? slime.Type.EnragedSpeed : slime.Type.Speed) * level.EnemySpeed * slime.AuraSpeed;
+    private double Speed(Slime slime) => (slime.Enraged ? slime.Type.EnragedSpeed : slime.Type.Speed) * level.EnemySpeed * slime.AuraSpeed * slime.ChillFactor;
 
     private readonly List<Slime> scratch = new();
     private static readonly Comparison<Slime> ByX = (a, b) => a.X.CompareTo(b.X);
@@ -381,8 +390,12 @@ public sealed partial class BattleSim
             if (overlap <= 0) continue;
             var (minA, maxA) = Bounds(live[i - 1]);
             var (minB, maxB) = Bounds(live[i]);
-            live[i - 1].X = Math.Clamp(live[i - 1].X - overlap / 2, minA, maxA);
-            live[i].X = Math.Clamp(live[i].X + overlap / 2, minB, maxB);
+            // A stuck one is not shoved: the other one moves the whole way.
+            bool stuckA = live[i - 1].Stuck, stuckB = live[i].Stuck;
+            if (stuckA && stuckB) continue;
+            double moveA = stuckA ? 0 : stuckB ? overlap : overlap / 2;
+            live[i - 1].X = Math.Clamp(live[i - 1].X - moveA, minA, maxA);
+            live[i].X = Math.Clamp(live[i].X + (overlap - moveA), minB, maxB);
         }
     }
 
@@ -406,7 +419,7 @@ public sealed partial class BattleSim
     private void StepDash(Slime slime, double dt, double catX, double minX, double maxX)
     {
         double before = slime.X;
-        double step = Math.Min(slime.DashLeft, slime.Type.DashSpeed * (slime.Elite?.DashSpeed ?? 1) * level.EnemySpeed * dt);
+        double step = slime.Stuck ? 0 : Math.Min(slime.DashLeft, slime.Type.DashSpeed * (slime.Elite?.DashSpeed ?? 1) * level.EnemySpeed * slime.ChillFactor * dt);
         slime.X = Math.Clamp(slime.X + slime.DashDirection * step, minX, maxX);
         slime.DashLeft = slime.X == before ? 0 : slime.DashLeft - step; // Stopped by the field's edge.
         double reach = slime.HitWidth / 2 + CatHalfWidth;

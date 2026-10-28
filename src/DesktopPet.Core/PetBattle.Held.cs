@@ -108,7 +108,7 @@ public sealed partial class BattleSim
         events.Add(new(BattleEventKind.HeldHit, slime.X, slime.Id));
         AddEffect(crit ? BattleEffectKind.Combo : BattleEffectKind.Spark, slime.X, slime.Altitude + slime.Height / 2);
         hitTone = crit ? NumberTone.Crit : NumberTone.Plain;
-        if (Damage(slime, damage, DamageSource.Weapon) == HitResult.Landed) slime.Opened = true;
+        if (Damage(slime, damage, DamageSource.Weapon) == HitResult.Landed) { slime.Opened = true; HitStatuses(slime); }
         hitTone = NumberTone.Plain;
     }
 

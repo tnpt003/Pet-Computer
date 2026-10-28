@@ -284,6 +284,7 @@ public sealed partial class BattleSim
         strikeRandom = BattleRandom.Stream(Seed, BattleRandom.Strike);
         rallyRandom = BattleRandom.Stream(Seed, BattleRandom.Rally);
         utilityRandom = BattleRandom.Stream(Seed, BattleRandom.Utility);
+        statusRandom = BattleRandom.Stream(Seed, BattleRandom.Status);
         Settings = settings;
         Stage = stage;
         AppsOn = apps;
@@ -590,6 +591,7 @@ public sealed partial class BattleSim
         if (result == HitResult.Landed)
         {
             slime.Opened = true;
+            HitStatuses(slime);
             if (opening) OpenerHits++;
             if (charged) ChargedHits++;
             if (countered) { CounterReady = false; CounterHits++; }
@@ -695,12 +697,17 @@ public sealed partial class BattleSim
         // A hit never takes a boss past its next shield phase: it stops there, the rest is lost.
         slime.Hp = Math.Max(ShieldFloor(slime), slime.Hp - amount);
         slime.HitFlash = 0.18;
-        AddEffect(BattleEffectKind.Number, slime.X + (slime.IsBoss ? slime.Width * 0.38 : 0), slime.Altitude + slime.Height + 10, Math.Round(amount));
-        effects[^1].Tone = hitTone;
+        // A poison tick too small to read shows no number.
+        if (source != DamageSource.Poison || Math.Round(amount) >= 1)
+        {
+            AddEffect(BattleEffectKind.Number, slime.X + (slime.IsBoss ? slime.Width * 0.38 : 0), slime.Altitude + slime.Height + 10, Math.Round(amount));
+            effects[^1].Tone = hitTone;
+        }
         if (slime.Hp <= 0)
         {
             slime.Set(SlimeState.Defeated);
             slime.KnockVelocity = 0;
+            ClearStatus(slime);
             Defeated++;
             if (slime.IsBoss) { BossDefeated = true; DefeatedBoss = slime.Type; }
             if (SelectedId == slime.Id) SelectedId = null;
@@ -756,7 +763,7 @@ public sealed partial class BattleSim
     private bool Blocks(Slime slime, DamageSource source)
     {
         var type = slime.Type;
-        if (type.BlockChance <= 0 || source is DamageSource.Bomb or DamageSource.Reflect or DamageSource.App or DamageSource.Link or DamageSource.Throw) return false;
+        if (type.BlockChance <= 0 || source is DamageSource.Bomb or DamageSource.Reflect or DamageSource.App or DamageSource.Link or DamageSource.Throw or DamageSource.Poison) return false;
         // A front-only blocker: a hit from behind always lands (and ends its streak).
         if (type.BlockFrontOnly && (lastCatX - slime.X) * slime.Facing <= 0) { slime.BlockStreak = 0; return false; }
         // Armor break: combo hits go straight through.

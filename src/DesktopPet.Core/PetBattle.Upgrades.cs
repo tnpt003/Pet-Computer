@@ -131,6 +131,7 @@ public sealed partial class BattleSim
             case "killCharge": killChargeBonus += card.Amount; break;
             case "bomb": bombBonus += card.Amount; break;
             case "shieldTime": shieldBonus += card.Amount; break;
+            case "onHit": TakeStatusCard(card); break;
             case "maxHp":
                 maxHpBonus += card.Amount;
                 if (fresh) { CatHp += card.Amount; AddEffect(BattleEffectKind.Number, catX, 115, -Math.Round(card.Amount)); }

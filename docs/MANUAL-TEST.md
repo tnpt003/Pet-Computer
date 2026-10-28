@@ -579,3 +579,10 @@ Trận gốc chưa có quái dùng liên kết; bỏ qua mục này nếu không
 Trận gốc chưa có quái bay hay quái có tương tác ném (quái thật có từ M14/M15); mục này không bắt buộc. Vẽ quái bay chưa có (M14), nên quái `hover` vẫn hiện trên sàn dù trận coi nó ở trên cao. Ví dụ file của người dùng: `{ "schemaVersion": 1, "enemies": [ { "id": "runner", "throwHit": { "minSpeed": 600, "damage": 30, "stun": 1.5 } } ] }`.
 - [ ] Trận thường: kéo/ném/thả mèo, nhấc mèo cứu, cảm giác giống hệt trước; mèo đang cầm không vung kiếm; slime không đánh được mèo đang cầm/bay.
 - [ ] Với file ví dụ: ném mèo mạnh xuyên qua slime nhanh thì nó mất máu và choáng; ném nhẹ hoặc kéo lê qua thì không; slime thường không bị cú ném ảnh hưởng.
+
+## Hiệu ứng trên quái 1.5 M04 (2026-10-28) — chỉ xem được bằng battle.json tùy chỉnh
+Trận gốc chưa có vũ khí/thẻ gây hiệu ứng (Bình xịt, thẻ Mưu mẹo, vũ khí mới dùng sau); mục này không bắt buộc. Ảnh độc/đóng băng/dính đã xem qua render UiChecks (nền sáng/tối), chưa xem trong trận thật. Ví dụ file của người dùng (kiếm gây độc mỗi đòn): `{ "schemaVersion": 1, "weapons": [ { "id": "sword", "onHit": { "status": "poison", "seconds": 3, "power": 6 } } ] }` (đổi `poison` thành `chill` với `"power": 0.5`, hoặc `stick` bỏ `power`, để thử hai loại kia).
+- [ ] Trận thường không có file: đánh, đẩy, bom, choáng của búa cảm giác như cũ; không thấy huy hiệu hiệu ứng nào.
+- [ ] Với file độc: slime trúng đòn phủ tím, bọt nổi, huy hiệu tím có vòng đếm; số tím nhỏ trừ dần; hết giờ thì huy hiệu biến mất. Slime chết vì độc vẫn tính vào số đã hạ.
+- [ ] Chill: slime đi/gồng đòn chậm rõ, phủ sương xanh. Stick: slime đứng yên trên vũng keo nhưng vẫn đánh mèo ở gần; Đẩy không đẩy nó đi.
+- [ ] Pause (và mở menu chuột phải) giữa lúc có hiệu ứng: vòng đếm và máu đứng yên; tiếp tục thì chạy tiếp. Xem DPI 100/150/200%, huy hiệu không đè thanh máu.

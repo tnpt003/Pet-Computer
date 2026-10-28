@@ -586,3 +586,12 @@ Trận gốc chưa có vũ khí/thẻ gây hiệu ứng (Bình xịt, thẻ Mưu
 - [ ] Với file độc: slime trúng đòn phủ tím, bọt nổi, huy hiệu tím có vòng đếm; số tím nhỏ trừ dần; hết giờ thì huy hiệu biến mất. Slime chết vì độc vẫn tính vào số đã hạ.
 - [ ] Chill: slime đi/gồng đòn chậm rõ, phủ sương xanh. Stick: slime đứng yên trên vũng keo nhưng vẫn đánh mèo ở gần; Đẩy không đẩy nó đi.
 - [ ] Pause (và mở menu chuột phải) giữa lúc có hiệu ứng: vòng đếm và máu đứng yên; tiếp tục thì chạy tiếp. Xem DPI 100/150/200%, huy hiệu không đè thanh máu.
+
+## Đèn laser và Quạt 1.5 M05 (2026-10-28) — trận tự do
+Mở Trận tự do → bảng chuẩn bị: bỏ một kỹ năng cũ, chọn Đèn laser và/hoặc Quạt (Kẹp gắp, Kéo cắt, Bình xịt vẫn khóa). Ảnh chấm laser/gió đã xem qua render UiChecks nền sáng/tối, chưa xem trong trận thật.
+- [ ] Vô tận / chuẩn bị Viễn chinh: Laser và Quạt vẫn hiện khóa; chương 1 không đổi.
+- [ ] Laser: bấm ô (con trỏ thành chữ thập, dòng gợi ý đổi), click một chỗ trên sàn: chấm đỏ có vòng đếm, slime gần đó chạy tới và đứng quanh chấm, không đánh mèo; con trên chấm mất máu dần; ~4 s thì chấm tắt và slime quay lại đánh. Boss không bị dụ.
+- [ ] Quạt: bấm ô, giữ chuột trên sàn cạnh đám slime: cánh quạt quay, vệt gió, slime bị đẩy ra xa con trỏ; va nhau/va mép hiện số 4. Rê chuột khi giữ thì gió đi theo. Thả chuột: ngừng, vòng tối trên ô cho thấy hơi đã dùng và hồi dần; giữ tới cạn thì Quạt tự cất, ô chờ ~6 s.
+- [ ] Sau khi thả chuột (cả khi cạn hơi giữa chừng): click slime, icon app, thẻ giữa đợt, nút HUD vẫn bình thường (dải trận không giữ chuột).
+- [ ] Đang chọn Laser/Quạt: kéo mèo vẫn nhấc mèo, bỏ chọn kỹ năng; mèo đang cầm thì Quạt không thổi. Chuột phải dải trận thì bỏ chọn. Pause/menu giữa lúc có chấm hoặc đang thổi: đứng yên; tiếp tục thì chạy tiếp.
+- [ ] Âm thanh: đặt chấm, bật quạt, va chạm có tiếng hoạt hình ngắn, không chồng nhau; DPI 100/150/200% chấm và gió đúng chỗ con trỏ.

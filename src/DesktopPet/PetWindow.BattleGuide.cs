@@ -27,7 +27,10 @@ public sealed partial class PetWindow
         GuidePush = "push", GuideHeal = "heal", GuideCheer = "cheer", GuideBomb = "bomb", GuideShield = "shield", GuideBag = "bag", GuideApps = "apps",
         GuideCards = "cards", GuideSynergy = "synergy", GuideClock = "clock", GuideAds = "ads", GuideLoading = "loading", GuideUpdate = "update",
         GuideVirus = "virus", GuideInfected = "infected", GuidePushRole = "push_role", GuideCutHeal = "cut_heal", GuideElite = "elite",
-        GuideKing = "king", GuideSlam = "slam", GuideKingShield = "king_shield", GuideRally = "rally";
+        GuideKing = "king", GuideSlam = "slam", GuideKingShield = "king_shield", GuideRally = "rally",
+        GuideLaser = "laser", GuideFan = "fan";
+    // A step for the stage that teaches a skill (its unlocksSkill; chapter 2 from M21), not a stage id.
+    public const string GuideTeaches = "teaches:";
     public const int GuideLifts = 5, GuideCutHeals = 4;
 
     // One step: its stage; Do (waits for Done) or See (waits for Got it; Done may end it sooner);
@@ -62,7 +65,9 @@ public sealed partial class PetWindow
     public bool BattleGuideFreezes => guideStep != null;
 
     // A stage the guide teaches (chapter 1).
-    public bool StageHasGuide(StageSpec? stage) => stage != null && GuideSteps.Any(g => g.Stage == stage.Id);
+    public bool StageHasGuide(StageSpec? stage) => stage != null && GuideSteps.Any(g => GuideFor(g, stage));
+    private static bool GuideFor(GuideStep step, StageSpec stage) => step.Stage == stage.Id
+        || (stage.UnlocksSkill is string skill && step.Stage == GuideTeaches + skill.ToLowerInvariant());
 
     private GuideStep[] GuideSteps => guideSteps ??= new GuideStep[]
     {
@@ -175,7 +180,27 @@ public sealed partial class PetWindow
                 ? L("Giờ bấm vào Vua.", "Now click the King.")
                 : LF($"Vương miện sáng: Vua sắp phong một quân thành tinh anh. Bấm {SkillName(BattleSkill.Push)} rồi bấm Vua để cắt.",
                      $"A glowing crown: the King is about to make a helper elite. Click {SkillName(BattleSkill.Push)}, then click the King to stop it.")),
+
+        // 1.5 M05 · the stage that teaches a new skill: try it once (only while the battle carries it).
+        new(GuideLaser, GuideTeaches + "laser", true, true, 1,
+            () => ToolDue(BattleSkill.Laser), () => battle!.Cooldown(BattleSkill.Laser) > 0,
+            () => battle!.Armed == BattleSkill.Laser ? Spots(FloorSpot()) : Spots(SkillSpot(BattleSkill.Laser)),
+            () => battle?.Armed == BattleSkill.Laser
+                ? L("Giờ click một chỗ trên sàn, xa mèo một chút: slime quanh đó chạy theo chấm đỏ.", "Now click a spot of the floor a little away from the cat: the slimes around it chase the red dot.")
+                : LF($"Kỹ năng mới: {SkillName(BattleSkill.Laser)}. Bấm ô này, rồi click một chỗ trên sàn.", $"A new skill: {SkillName(BattleSkill.Laser)}. Click this slot, then click a spot of the floor.")),
+        new(GuideFan, GuideTeaches + "fan", true, true, 1,
+            () => ToolDue(BattleSkill.Fan), () => battle!.FanBlowing,
+            () => battle!.Armed == BattleSkill.Fan ? Spots(FloorSpot()) : Spots(SkillSpot(BattleSkill.Fan)),
+            () => battle?.Armed == BattleSkill.Fan
+                ? L("Giờ giữ chuột trên sàn cạnh đám slime: gió thổi chúng ra xa con trỏ. Vòng trên ô là hơi còn lại.", "Now hold the mouse on the floor next to the slimes: the wind blows them away from the cursor. The sweep on the slot is the air used.")
+                : LF($"Kỹ năng mới: {SkillName(BattleSkill.Fan)}. Bấm ô này, rồi giữ chuột trên sàn.", $"A new skill: {SkillName(BattleSkill.Fan)}. Click this slot, then hold the mouse on the floor.")),
     };
+
+    // A skill to teach: carried, ready (or chosen) and slimes on the floor to use it on.
+    private bool ToolDue(BattleSkill skill) => battle!.Carries(skill) && TourDue() && !BattleHoldsOff
+        && (battle.Ready(skill) || battle.Armed == skill) && battle.Slimes.Any(s => s.Targetable && s.State != SlimeState.Spawning);
+    // The floor around the cat (where to click or hold).
+    private Rect? FloorSpot() => battleView == null ? null : FieldSpot(battleView.FloorBounds(CatX(), 180), 2);
 
     private GuideStep See(string id, string stage, Func<bool> due, Func<List<Rect>> spots, Func<string> words) =>
         new(id, stage, false, true, 1, due, () => false, spots, words);
@@ -294,7 +319,7 @@ public sealed partial class PetWindow
         if (b.Paused && !(overCards && b.ChoosingUpgrade)) return;
         foreach (var step in GuideSteps)
         {
-            if (step.Stage != b.Stage!.Id || GuideTimes(step.Id) >= step.Times) continue;
+            if (!GuideFor(step, b.Stage!) || GuideTimes(step.Id) >= step.Times) continue;
             bool cards = step.Id is GuideCards or GuideSynergy;
             if (b.Paused != cards || !step.Due()) continue;
             StartGuideStep(step);

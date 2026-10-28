@@ -86,6 +86,17 @@
   "bombRadius": 70,
   "shieldCooldown": 15,
   "shieldSeconds": 3,
+  // 1.5 Laser pointer: the dot's seconds, how far it lures slimes (DIPs), HP a second for a slime on
+  // it. Fan: seconds of air, the refill once spent, its reach (DIPs), the wind's speed, a bump's damage.
+  "laserCooldown": 14,
+  "laserSeconds": 4,
+  "laserLureRange": 300,
+  "laserDps": 3,
+  "fanSteamSeconds": 3,
+  "fanRefillSeconds": 6,
+  "fanRange": 200,
+  "fanSpeed": 220,
+  "fanBumpDamage": 4,
   // Their names and HUD descriptions (every skill once: push, heal, cheer, bomb, shield; the
   // HUD order and what each does stay in the app). {key} in a description is that number of
   // this file, e.g. {pushCooldown}. Names: at most 32 characters; descriptions: at most 220.
@@ -115,11 +126,12 @@
       "descVi": "Khiên bong bóng — {shieldSeconds} giây mèo không mất máu. Hồi {shieldCooldown} giây.",
       "descEn": "Bubble shield — for {shieldSeconds} s the cat takes no damage. {shieldCooldown} s cooldown."
     },
-    // 1.5: shown locked on the setup panel until they work (milestones M05/M06) and a chapter 2 stage opens them.
+    // 1.5: laser and fan work since M05 (free battles may carry them until chapter 2 opens them); the
+    // other three are shown locked until M06.
     {
       "id": "laser", "nameVi": "Đèn laser", "nameEn": "Laser pointer",
-      "descVi": "Đèn laser — chọn rồi click một điểm: slime chạy theo chấm đỏ, soi lộ slime bóng ma và ảo ảnh. Mở ở chương 2.",
-      "descEn": "Laser pointer — choose, then click a spot: slimes chase the red dot; it shows ghost and mirage slimes. Opens in chapter 2."
+      "descVi": "Đèn laser — chọn rồi click một chỗ: {laserSeconds} giây slime gần đó chạy theo chấm đỏ, không đánh mèo; con trên chấm mất {laserDps} máu/giây. Hồi {laserCooldown} giây.",
+      "descEn": "Laser pointer — choose, then click a spot: for {laserSeconds} s nearby slimes chase the red dot, not the cat; one on the dot loses {laserDps} HP/s. {laserCooldown} s cooldown."
     },
     {
       "id": "grabber", "nameVi": "Kẹp gắp", "nameEn": "Grabber",
@@ -133,8 +145,8 @@
     },
     {
       "id": "fan", "nameVi": "Quạt", "nameEn": "Fan",
-      "descVi": "Quạt — chọn rồi giữ chuột: thổi slime theo hướng, làm khô vũng nhầy. Mở ở chương 2.",
-      "descEn": "Fan — choose, then hold the mouse: blows slimes along and dries slime puddles. Opens in chapter 2."
+      "descVi": "Quạt — chọn rồi giữ chuột: thổi slime ra xa con trỏ, va nhau hoặc va mép mất {fanBumpDamage} máu. Hơi đủ {fanSteamSeconds} giây; cạn thì chờ {fanRefillSeconds} giây.",
+      "descEn": "Fan — choose, then hold the mouse: blows slimes away from the cursor; one blown into another or the edge loses {fanBumpDamage} HP. {fanSteamSeconds} s of air; empty, it refills in {fanRefillSeconds} s."
     },
     {
       "id": "spray", "nameVi": "Bình xịt nước", "nameEn": "Water spray",

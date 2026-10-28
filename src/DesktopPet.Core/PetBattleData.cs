@@ -780,6 +780,10 @@ public static class BattleData
         }
         Positive(s.HealAmount, "healAmount"); Positive(s.CheerSeconds, "cheerSeconds"); Positive(s.CheerSpeed, "cheerSpeed");
         Positive(s.BombRadius, "bombRadius"); NotNegative(s.BombDamage, "bombDamage"); Positive(s.ShieldSeconds, "shieldSeconds");
+        Within(s.LaserCooldown, 1, 120, "laserCooldown"); Within(s.LaserSeconds, 0.5, 15, "laserSeconds");
+        Within(s.LaserLureRange, 20, 2000, "laserLureRange"); Within(s.LaserDps, 0, 100, "laserDps");
+        Within(s.FanSteamSeconds, 0.5, 30, "fanSteamSeconds"); Within(s.FanRefillSeconds, 1, 120, "fanRefillSeconds");
+        Within(s.FanRange, 20, 1000, "fanRange"); Within(s.FanSpeed, 0, 1500, "fanSpeed"); Within(s.FanBumpDamage, 0, 100, "fanBumpDamage");
         foreach (var (level, name) in new[] { (s.Easy, "easy"), (s.Hard, "hard") })
             foreach (var (value, key) in new[] { (level.EnemyHp, "enemyHp"), (level.EnemyDamage, "enemyDamage"), (level.EnemySpeed, "enemySpeed") })
                 if (!double.IsFinite(value) || value < 0.25 || value > 3) throw new InvalidDataException($"{name}.{key} must be 0.25–3");
@@ -1177,8 +1181,10 @@ public static class BattleData
 // skill: a BattleSkill value, an entry here and in BuiltIn/"skills", its HudGlyph and its
 // effect in BattleSim.Use. A battle carries Carry of them (its loadout, chosen on the setup
 // panel); Working: false for a skill that has no effect yet (shown locked, never ready).
-public sealed record BattleSkillInfo(BattleSkill Skill, bool Aimed, Func<BattleSettings, double> Cooldown, bool Working = true)
+// Aim: how a chosen skill is used on the field (none: it acts at once when its slot is clicked).
+public sealed record BattleSkillInfo(BattleSkill Skill, SkillAim Aim, Func<BattleSettings, double> Cooldown, bool Working = true)
 {
+    public bool Aimed => Aim != SkillAim.None;
     // Without a battle's settings: the built-in data's names.
     public string Name(string language, BattleSettings? s = null) => (s ?? BattleData.Settings).Skill(Skill).Name(language);
     public string Describe(BattleSettings s, string language) => BattleSkills.Fill(s.Skill(Skill).Desc(language), s);
@@ -1189,17 +1195,18 @@ public static class BattleSkills
     private static string N(double value) => value.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
     public static readonly BattleSkillInfo[] All =
     {
-        new(BattleSkill.Push, true, s => s.PushCooldown),
-        new(BattleSkill.Heal, false, s => s.HealCooldown),
-        new(BattleSkill.Cheer, false, s => s.CheerCooldown),
-        new(BattleSkill.Bomb, true, s => s.BombCooldown),
-        new(BattleSkill.Shield, false, s => s.ShieldCooldown),
-        // 1.5: their use and numbers come with milestones M05/M06 (docs/UPDATE-1.5.md).
-        new(BattleSkill.Laser, false, _ => NotYet, false),
-        new(BattleSkill.Grabber, false, _ => NotYet, false),
-        new(BattleSkill.Scissors, false, _ => NotYet, false),
-        new(BattleSkill.Fan, false, _ => NotYet, false),
-        new(BattleSkill.Spray, false, _ => NotYet, false),
+        new(BattleSkill.Push, SkillAim.Slime, s => s.PushCooldown),
+        new(BattleSkill.Heal, SkillAim.None, s => s.HealCooldown),
+        new(BattleSkill.Cheer, SkillAim.None, s => s.CheerCooldown),
+        new(BattleSkill.Bomb, SkillAim.Slime, s => s.BombCooldown),
+        new(BattleSkill.Shield, SkillAim.None, s => s.ShieldCooldown),
+        // 1.5 (docs/UPDATE-1.5.md): Laser and Fan since M05 (PetBattle.Tools.cs); the Fan's cooldown is
+        // its steam's refill once spent. The others come with M06.
+        new(BattleSkill.Laser, SkillAim.Point, s => s.LaserCooldown),
+        new(BattleSkill.Grabber, SkillAim.None, _ => NotYet, false),
+        new(BattleSkill.Scissors, SkillAim.None, _ => NotYet, false),
+        new(BattleSkill.Fan, SkillAim.Hold, s => s.FanRefillSeconds),
+        new(BattleSkill.Spray, SkillAim.None, _ => NotYet, false),
     };
     private const double NotYet = 10;
 
@@ -1254,8 +1261,8 @@ public static class BattleSkills
             DescVi = "Khiên bong bóng — {shieldSeconds} giây mèo không mất máu. Hồi {shieldCooldown} giây.",
             DescEn = "Bubble shield — for {shieldSeconds} s the cat takes no damage. {shieldCooldown} s cooldown." },
         new() { Id = "laser", NameVi = "Đèn laser", NameEn = "Laser pointer",
-            DescVi = "Đèn laser — chọn rồi click một điểm: slime chạy theo chấm đỏ, soi lộ slime bóng ma và ảo ảnh. Mở ở chương 2.",
-            DescEn = "Laser pointer — choose, then click a spot: slimes chase the red dot; it shows ghost and mirage slimes. Opens in chapter 2." },
+            DescVi = "Đèn laser — chọn rồi click một chỗ: {laserSeconds} giây slime gần đó chạy theo chấm đỏ, không đánh mèo; con trên chấm mất {laserDps} máu/giây. Hồi {laserCooldown} giây.",
+            DescEn = "Laser pointer — choose, then click a spot: for {laserSeconds} s nearby slimes chase the red dot, not the cat; one on the dot loses {laserDps} HP/s. {laserCooldown} s cooldown." },
         new() { Id = "grabber", NameVi = "Kẹp gắp", NameEn = "Grabber",
             DescVi = "Kẹp gắp — chọn rồi kéo một slime nhỏ, ném nó vào slime khác. Mở ở chương 2.",
             DescEn = "Grabber — choose, then drag a small slime and throw it at another. Opens in chapter 2." },
@@ -1263,8 +1270,8 @@ public static class BattleSkills
             DescVi = "Kéo cắt — chọn rồi vuốt ngang: cắt dây nhầy, chọc vỡ bong bóng. Mở ở chương 2.",
             DescEn = "Scissors — choose, then swipe across: cuts slime strings and pops bubbles. Opens in chapter 2." },
         new() { Id = "fan", NameVi = "Quạt", NameEn = "Fan",
-            DescVi = "Quạt — chọn rồi giữ chuột: thổi slime theo hướng, làm khô vũng nhầy. Mở ở chương 2.",
-            DescEn = "Fan — choose, then hold the mouse: blows slimes along and dries slime puddles. Opens in chapter 2." },
+            DescVi = "Quạt — chọn rồi giữ chuột: thổi slime ra xa con trỏ, va nhau hoặc va mép mất {fanBumpDamage} máu. Hơi đủ {fanSteamSeconds} giây; cạn thì chờ {fanRefillSeconds} giây.",
+            DescEn = "Fan — choose, then hold the mouse: blows slimes away from the cursor; one blown into another or the edge loses {fanBumpDamage} HP. {fanSteamSeconds} s of air; empty, it refills in {fanRefillSeconds} s." },
         new() { Id = "spray", NameVi = "Bình xịt nước", NameEn = "Water spray",
             DescVi = "Bình xịt nước — chọn rồi giữ chuột: slime chậm lại và co nhỏ. Mở ở chương 2.",
             DescEn = "Water spray — choose, then hold the mouse: slimes slow down and shrink. Opens in chapter 2." },

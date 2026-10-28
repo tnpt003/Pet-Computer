@@ -764,6 +764,56 @@ internal static class BattleChecks
             check(shows && Column(pixelsOf, 0).AsSpan().SequenceEqual(Column(plainShot, 0)), "Poison, chill, stick and all three each show on the enemy; a plain one is unchanged");
         }
 
+        // 1.5 M05: the Laser's dot (and the glint over the slimes chasing it) and the Fan's blades and wind
+        // show on the strip; with PET_RENDER_REVIEW, the strip on light and dark.
+        {
+            var data = BattleData.Settings;
+            var toolSim = new BattleSim(data, 0, 600, new Random(1), skills: new[] { BattleSkill.Push, BattleSkill.Heal, BattleSkill.Cheer, BattleSkill.Laser, BattleSkill.Fan });
+            foreach (var x in new[] { 110.0, 190, 470 })
+            {
+                var s = toolSim.AddSlime(x, data.Enemy("slime"));
+                s.Set(SlimeState.Moving); s.StateTime = 0.4; s.Facing = -1;
+            }
+            var toolView = new BattleFieldView(toolSim) { OriginX = 0, Width = 600, Height = BattleFieldView.FieldHeight };
+            toolView.Measure(new Size(600, BattleFieldView.FieldHeight)); toolView.Arrange(new Rect(0, 0, 600, BattleFieldView.FieldHeight)); toolView.UpdateLayout();
+            byte[] Shot(Color back, string? file)
+            {
+                toolView.InvalidateVisual(); toolView.UpdateLayout();
+                var visual = new DrawingVisual();
+                using (var dc = visual.RenderOpen())
+                {
+                    dc.DrawRectangle(new SolidColorBrush(back), null, new Rect(0, 0, 600, BattleFieldView.FieldHeight));
+                    dc.DrawRectangle(new VisualBrush(toolView) { Stretch = Stretch.None, AlignmentX = AlignmentX.Left, AlignmentY = AlignmentY.Top,
+                        ViewboxUnits = BrushMappingMode.Absolute, Viewbox = new Rect(0, 0, 600, BattleFieldView.FieldHeight) },
+                        null, new Rect(0, 0, 600, BattleFieldView.FieldHeight));
+                }
+                var image = new RenderTargetBitmap(600, (int)BattleFieldView.FieldHeight, 96, 96, PixelFormats.Pbgra32); image.Render(visual);
+                if (file != null && Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string review)
+                {
+                    var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(image));
+                    using var stream = System.IO.File.Create(System.IO.Path.Combine(review, file)); encoder.Save(stream);
+                }
+                var pixels = new byte[600 * 4 * (int)BattleFieldView.FieldHeight];
+                image.CopyPixels(pixels, 600 * 4, 0);
+                return pixels;
+            }
+            int Changed(byte[] a, byte[] b, int left, int right)
+            {
+                int n = 0, height = (int)BattleFieldView.FieldHeight;
+                for (int y = 0; y < height; y++) for (int x = left; x < right; x++) if (a[(y * 600 + x) * 4 + 3] != b[(y * 600 + x) * 4 + 3] || a[(y * 600 + x) * 4] != b[(y * 600 + x) * 4]) n++;
+                return n;
+            }
+            var dark = Color.FromRgb(0x1E, 0x1E, 0x24);
+            var bare = Shot(dark, null);
+            check(toolSim.Arm(BattleSkill.Laser) && toolSim.UseAt(BattleSkill.Laser, 150) && toolSim.Slimes.Take(2).All(s => s.Lured), "(setup) the dot between two slimes");
+            var withDot = Shot(dark, null);
+            check(Changed(bare, withDot, 135, 166) > 40 && Changed(bare, withDot, 300, 600) == 0, "The dot shows where it was put (and nothing far from it)");
+            check(toolSim.Arm(BattleSkill.Fan) && toolSim.StartFan(420), "(setup) the fan blowing near the third slime");
+            Shot(Colors.WhiteSmoke, "battle-tools-light.png");
+            var both = Shot(dark, "battle-tools-dark.png");
+            check(Changed(withDot, both, 380, 600) > 80, "The fan's blades and wind show where it blows");
+        }
+
         // The battle's desktop apps (PetWindow.BattleApps.cs): five icon windows on the grid above the
         // strip, faded while the cursor is far; an ad's × on the strip takes the click and the rest of
         // it covers the slime behind. With PET_RENDER_REVIEW, pictures of the icons, flights and strip.

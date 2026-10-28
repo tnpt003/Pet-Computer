@@ -26,6 +26,9 @@ public sealed partial class BattleFieldView : FrameworkElement
     // The slime clicked and where on it (DIPs from its centre: negative = its left half).
     public event Action<int, double>? SlimeClicked;
     public event Action? RightClicked;
+    // The Laser's click on a spot and the Fan's hold (battle x, screen DIPs): pressed, moved, let go.
+    public event Action<double>? SpotClicked, FanPressed, FanMoved;
+    public event Action? FanReleased;
     // The slime under the mouse while Push is chosen, and the side the cursor is on: the
     // arrow shows which way it will fly.
     private int? hoverId;
@@ -46,6 +49,17 @@ public sealed partial class BattleFieldView : FrameworkElement
                 // A loading ring closes while its spinner is held: keep the mouse until it is let go.
                 if (sim.HoldingHazardId == hazard) CaptureMouse();
             }
+            // A spot or hold skill chosen: anywhere on the field, a slime too (an ad still hides what is behind it).
+            else if (sim.Armed is BattleSkill armed && BattleSkills.Get(armed).Aim is SkillAim.Point or SkillAim.Hold)
+            {
+                if (OnPopup(point)) { }
+                else if (BattleSkills.Get(armed).Aim == SkillAim.Point) SpotClicked?.Invoke(point.X + OriginX);
+                else
+                {
+                    FanPressed?.Invoke(point.X + OriginX);
+                    if (sim.FanBlowing) CaptureMouse();
+                }
+            }
             else if (!OnPopup(point) && !OnWall(point) && SlimeAt(point) is int id && sim.Find(id) is { } slime) SlimeClicked?.Invoke(id, point.X - (slime.X - OriginX));
             e.Handled = true;
         };
@@ -62,18 +76,20 @@ public sealed partial class BattleFieldView : FrameworkElement
     private void EndHold()
     {
         if (sim.HoldingHazardId != 0) HazardReleased?.Invoke();
+        if (sim.FanBlowing) FanReleased?.Invoke();
         if (IsMouseCaptured) ReleaseMouseCapture();
     }
 
     // Each battle frame: no ring held any more (it closed under the mouse) but the mouse still kept: give it back.
     public void DropStaleHold()
     {
-        if (sim.HoldingHazardId == 0 && IsMouseCaptured) ReleaseMouseCapture();
+        if (sim.HoldingHazardId == 0 && !sim.FanBlowing && IsMouseCaptured) ReleaseMouseCapture();
     }
 
     private void Hover(Point point)
     {
         if (sim.HoldingHazardId != 0 && HazardAt(point) != sim.HoldingHazardId) EndHold();
+        if (sim.FanBlowing) FanMoved?.Invoke(point.X + OriginX);
         int? id = sim.PushArmed && !OnPopup(point) ? SlimeAt(point) : null;
         double offset = id is int found && sim.Find(found) is { } slime ? point.X - (slime.X - OriginX) : 0;
         if (id == hoverId && Math.Sign(offset) == Math.Sign(hoverOffset)) return;
@@ -185,6 +201,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         for (int i = 0; i < sim.Slimes.Count; i++)
             if (sim.Slimes[i].IsBoss && sim.RallyTarget(sim.Slimes[i]) is Slime rallied) DrawRallyLink(dc, sim.Slimes[i], rallied, floor, time);
         DrawLinkMarks(dc, floor, time);
+        DrawTools(dc, floor, time);
         if (sim.TabsRemaining > 0) DrawTabs(dc, sim.CatX - OriginX, floor, time);
         for (int i = 0; i < sim.Effects.Count; i++) DrawEffect(dc, sim.Effects[i], sim.Effects[i].X - OriginX, floor - sim.Effects[i].Height, floor);
         if (sim.Incoming) DrawIncoming(dc, sim.IncomingX - OriginX, floor, time);
@@ -344,7 +361,7 @@ public sealed partial class BattleFieldView : FrameworkElement
             dc.DrawEllipse(null, Halo, new Point(x, floor - 1), w / 2 + 6, 6);
             dc.DrawEllipse(null, MarkerRing, new Point(x, floor - 1), w / 2 + 6, 6);
         }
-        if (sim.Armed is BattleSkill armed && targetable)
+        if (sim.Armed is BattleSkill armed && targetable && BattleSkills.Get(armed).Aim == SkillAim.Slime)
             dc.DrawEllipse(null, armed == BattleSkill.Bomb ? BombRing : PushRing, new Point(x, floor - h / 2), w / 2 + 7, h / 2 + 8);
         if (sim.PushArmed && targetable && hoverId == slime.Id && BattleSim.PushDirection(hoverOffset) is int way)
         {

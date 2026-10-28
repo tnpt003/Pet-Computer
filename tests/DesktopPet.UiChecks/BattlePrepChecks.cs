@@ -171,18 +171,26 @@ internal static class BattlePrepChecks
         window.Reset();
         check(!window.BattlePreparing && SetupWindows() == 0 && !behavior.Quiet, "Bringing the pet back closes the panel");
 
-        // The skills (1.5 M02): a free battle chooses five of ten; the 1.5 skills are locked for now.
+        // The skills (1.5 M02): a free battle chooses five of ten; the 1.5 skills without an effect are locked,
+        // the working ones (Laser, Fan since M05) open in a free battle only until chapter 2 opens them.
         check(window.OpenBattlePrep() == null && window.BattlePrepHasSkillChoice && window.BattlePrepSkills.SequenceEqual(BattleSkills.Default)
               && window.BattlePrepText.Contains("Skills to bring (5/5)"), "A free battle's setup offers the skill choice, starting from the five first skills");
-        check(!window.BattlePrepToggleSkill(BattleSkill.Laser) && window.BattlePrepSkills.Count == 5 && window.BattlePrepSkillsHint.Contains("Laser pointer")
+        check(!window.BattlePrepToggleSkill(BattleSkill.Grabber) && window.BattlePrepSkills.Count == 5 && window.BattlePrepSkillsHint.Contains("Grabber")
               && window.BattlePrepSkillsHint.Contains("Not open yet"), $"A locked skill cannot be chosen; the hint says what it does and why ({window.BattlePrepSkillsHint})");
+        check(!window.BattlePrepToggleSkill(BattleSkill.Laser) && window.BattlePrepSkills.Count == 5, "Five chosen: a sixth (the Laser) is not added");
         check(window.BattlePrepToggleSkill(BattleSkill.Bomb) && window.BattlePrepSkills.Count == 4 && window.BattlePrepText.Contains("Skills to bring (4/5)")
               && !window.BattlePrepReadyEnabled && window.BattlePrepReady() != null && !window.BattleActive && window.BattlePreparing, "Dropping a skill leaves four: Ready waits for five");
         check(window.BattlePrepToggleSkill(BattleSkill.Bomb) && window.BattlePrepSkills.Count == 5 && window.BattlePrepReadyEnabled, "Choosing it again makes five: Ready works");
+        check(window.BattlePrepToggleSkill(BattleSkill.Bomb) && window.BattlePrepToggleSkill(BattleSkill.Laser) && window.BattlePrepSkills.Contains(BattleSkill.Laser)
+              && window.BattlePrepReadyEnabled && !window.BattlePrepSkillsHint.Contains("Not open yet"), "A free battle may carry the Laser already (1.5 M05, until chapter 2)");
         window.CancelBattlePrep();
         prefs.BattleLoadout = new() { "push", "heal", "cheer", "bomb", "laser" };
-        check(window.OpenBattlePrep() == null && window.BattlePrepSkills.SequenceEqual(BattleSkills.Default) && window.BattleLoadoutChoice.SequenceEqual(BattleSkills.Default),
-            "A saved choice with a skill that is not open reads as the five first skills");
+        check(window.OpenBattlePrep() == null && window.BattlePrepSkills.Contains(BattleSkill.Laser) && window.BattleLoadoutChoice.SequenceEqual(BattleSkills.Default),
+            "A saved choice with the Laser: a free battle keeps it, elsewhere (still locked) it reads as the five first skills");
+        window.CancelBattlePrep();
+        prefs.BattleLoadout = new() { "push", "heal", "cheer", "bomb", "grabber" };
+        check(window.OpenBattlePrep() == null && window.BattlePrepSkills.SequenceEqual(BattleSkills.Default),
+            "A saved choice with a skill that has no effect yet reads as the five first skills");
         window.CancelBattlePrep();
         prefs.BattleLoadout = null;
 

@@ -875,13 +875,19 @@
   "Choose {0} more. Point at a skill to see what it does.": "あと {0} つ選んでください。スキルにマウスを合わせると効果が見られる。",
   "The skills stay for the whole run. Click a chosen skill to drop it, then choose another.": "スキルは遠征のあいだずっと同じ。選んだスキルをクリックして外し、別のスキルを選ぼう。",
   "Click a chosen skill to drop it, then choose another. The choice is kept.": "選んだスキルをクリックして外し、別のスキルを選ぼう。選択は次回も覚えている。",
-  "Laser pointer — choose, then click a spot: slimes chase the red dot; it shows ghost and mirage slimes. Opens in chapter 2.": "レーザーポインター — 選んでから場所をクリック：スライムが赤い点を追いかけ、ゴーストと幻影のスライムが見える。第 2 章で解放。",
+  "Laser pointer — choose, then click a spot: for {laserSeconds} s nearby slimes chase the red dot, not the cat; one on the dot loses {laserDps} HP/s. {laserCooldown} s cooldown.": "レーザーポインター — 選んでから場所をクリック：{laserSeconds} 秒間、近くのスライムが猫ではなく赤い点を追いかける。点の上のスライムは毎秒 {laserDps} HP 減る。クールダウン {laserCooldown} 秒。",
   "Grabber": "クレーンアーム",
   "Grabber — choose, then drag a small slime and throw it at another. Opens in chapter 2.": "クレーンアーム — 選んでから小さなスライムをドラッグし、別のスライムに投げつける。第 2 章で解放。",
   "Scissors": "はさみ",
   "Scissors — choose, then swipe across: cuts slime strings and pops bubbles. Opens in chapter 2.": "はさみ — 選んでから横にスワイプ：スライムの糸を切り、泡を割る。第 2 章で解放。",
   "Fan": "扇風機",
-  "Fan — choose, then hold the mouse: blows slimes along and dries slime puddles. Opens in chapter 2.": "扇風機 — 選んでからマウスを押し続ける：スライムを吹き飛ばし、スライムの水たまりを乾かす。第 2 章で解放。",
+  "Fan — choose, then hold the mouse: blows slimes away from the cursor; one blown into another or the edge loses {fanBumpDamage} HP. {fanSteamSeconds} s of air; empty, it refills in {fanRefillSeconds} s.": "扇風機 — 選んでからマウスを押し続ける：スライムをカーソルから遠くへ吹き飛ばす。ほかのスライムや端にぶつかると {fanBumpDamage} HP 減る。風は {fanSteamSeconds} 秒ぶん。空になると {fanRefillSeconds} 秒で満タン。",
   "Water spray": "霧吹き",
-  "Water spray — choose, then hold the mouse: slimes slow down and shrink. Opens in chapter 2.": "霧吹き — 選んでからマウスを押し続ける：スライムが遅くなり、小さく縮む。第 2 章で解放。"
+  "Water spray — choose, then hold the mouse: slimes slow down and shrink. Opens in chapter 2.": "霧吹き — 選んでからマウスを押し続ける：スライムが遅くなり、小さく縮む。第 2 章で解放。",
+  "Click a spot of the field to put the laser dot there · click the slot again or right-click to cancel": "戦場の場所をクリックしてレーザーの点を置く · もう一度スロットを押すか右クリックでキャンセル",
+  "Hold the mouse on the field to blow slimes away from the cursor · click the slot again or right-click to put the fan away": "戦場でマウスを押し続けると、スライムをカーソルから遠くへ吹き飛ばす · もう一度スロットを押すか右クリックで扇風機をしまう",
+  "Now click a spot of the floor a little away from the cat: the slimes around it chase the red dot.": "猫から少し離れた床の場所をクリック：その周りのスライムが赤い点を追いかける。",
+  "A new skill: {0}. Click this slot, then click a spot of the floor.": "新しいスキル：{0}。このスロットを押してから、床の場所をクリック。",
+  "Now hold the mouse on the floor next to the slimes: the wind blows them away from the cursor. The sweep on the slot is the air used.": "スライムのそばの床でマウスを押し続けよう：風がスライムをカーソルから遠くへ吹き飛ばす。スロットの影は使った風の量。",
+  "A new skill: {0}. Click this slot, then hold the mouse on the floor.": "新しいスキル：{0}。このスロットを押してから、床でマウスを押し続ける。"
 }

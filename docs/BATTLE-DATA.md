@@ -103,7 +103,7 @@ Tên và mô tả của 10 kỹ năng (HUD, túi đồ, bảng chuẩn bị). G�
 - Mỗi trận mang **5 trong 10** kỹ năng; HUD có đúng 5 ô theo thứ tự cố định ở bảng trên (5 kỹ năng cũ trước, rồi `laser`, `grabber`, `scissors`, `fan`, `spray`). Mặc định là 5 kỹ năng cũ.
 - Bảng chuẩn bị có mục "Kỹ năng mang theo (n/5)": 10 ô icon, bấm ô đã chọn để bỏ, bấm ô còn mở để thêm khi chưa đủ 5; Sẵn sàng chỉ chạy khi đủ 5. Lựa chọn lưu trong preferences (`BattleLoadout`, null = mặc định); id không còn hợp lệ hoặc kỹ năng chưa mở thì đọc như mặc định.
 - Có mục chọn ở trận tự do, Vô tận, chuẩn bị chuyến Viễn chinh (bộ kỹ năng giữ suốt chuyến, lưu trong chuyến: `Skills`, null = mặc định) và màn thuộc chương có `"skillChoice": true`. **Chương 1 không có `skillChoice`**: luôn 5 kỹ năng cũ, mục chọn ẩn.
-- 5 kỹ năng mới **chưa có tác dụng** (làm ở M05/M06): hiện ô khóa, không chọn được, không bao giờ "sẵn sàng". Một kỹ năng mở khi có tác dụng và đã thắng màn có `"unlocksSkill": "<id>"` (dữ liệu gốc chưa màn nào có; chương 2 thêm ở M21).
+- Kỹ năng mới **chưa có tác dụng** (Kẹp gắp, Kéo cắt, Bình xịt: M06) hiện ô khóa, không chọn được, không bao giờ "sẵn sàng". Đèn laser và Quạt chạy từ M05 (mục "Đèn laser và Quạt"). Một kỹ năng mở khi có tác dụng và đã thắng màn có `"unlocksSkill": "<id>"` (dữ liệu gốc chưa màn nào có; chương 2 thêm ở M21); riêng **trận tự do** mang được mọi kỹ năng đã chạy (người dùng chốt 2026-10-28, tới khi có chương 2).
 - Kỹ năng không mang theo: ô không có trên HUD, không dùng được. Thẻ có `"skill": "<id>"` (gốc: Bom to → `bomb`, Khiên dày → `shield`) và di vật có `"skill"` (gốc: Chuông phản đòn → `shield`, Túi cứu trợ → `heal`) chỉ được đưa khi bộ mang theo có kỹ năng đó. Thẻ/di vật đã có từ trước vẫn giữ.
 - Kỷ lục không tách theo bộ kỹ năng. Đổi kỹ năng ở điểm nghỉ Viễn chinh: chưa có (làm khi kỹ năng mới có tác dụng, M06).
 
@@ -450,6 +450,30 @@ Code: `src/DesktopPet.Core/PetBattle.Status.cs` (luật), `src/DesktopPet/PetBat
 - **Boss**: nhận nửa độc, nửa mức chậm, dính nửa thời gian. Không gây hiệu ứng lên quái đang ra sân, đã bị hạ, đang trong pha khiên, đang nhảy; quái đang cưỡi không bị dính. Bị hạ thì mất hết hiệu ứng.
 - Thời gian chỉ chạy khi trận chạy: Pause, menu, chọn thẻ, túi đồ, hướng dẫn đứng hình đều đóng băng hiệu ứng.
 - Hình: độc phủ tím và bọt nổi lên; đóng băng phủ sương xanh nhạt và tinh thể băng; dính có vũng keo màu hổ phách dưới chân và sợi keo hai bên. Trên đầu mỗi hiệu ứng một huy hiệu tròn có vòng đếm thời gian còn lại (đẩy chữ tinh anh và mũi tên chọn lên cao hơn). Sự kiện `StatusApplied` (Value: loại), chưa gắn âm thanh.
+
+## Đèn laser và Quạt (bản 1.5, mốc M05, 2026-10-28)
+
+Code: `src/DesktopPet.Core/PetBattle.Tools.cs` (luật), `src/DesktopPet/PetBattleView.Tools.cs` (vẽ), test `tests/DesktopPet.Tests/BattleToolsTests.cs` (quái giả), ảnh UiChecks và bước hướng dẫn trong TutorialChecks. Số liệu ở cấp trên cùng của battle.json:
+
+| Khóa | Giới hạn | Gốc | Ý nghĩa |
+| --- | --- | --- | --- |
+| `laserCooldown` | 1–120 s | 14 | Hồi chiêu Đèn laser |
+| `laserSeconds` | 0,5–15 s | 4 | Chấm đỏ nằm bao lâu |
+| `laserLureRange` | 20–2000 DIPs | 300 | Quái cách chấm trong khoảng này thì bị dụ |
+| `laserDps` | 0–100 | 3 | Máu/giây quái đứng trên chấm mất |
+| `fanSteamSeconds` | 0,5–30 s | 3 | Thổi liên tục được bao lâu (thanh hơi) |
+| `fanRefillSeconds` | 1–120 s | 6 | Cạn hơi thì chờ bao lâu (là hồi chiêu của Quạt); khi chưa cạn, hơi cũng hồi với nhịp này |
+| `fanRange` | 20–1000 DIPs | 200 | Tầm gió quanh con trỏ |
+| `fanSpeed` | 0–1500 DIPs/s | 220 | Tốc độ gió đẩy (× `pushFactor` của quái) |
+| `fanBumpDamage` | 0–100 | 4 | Sát thương khi quái bị thổi va quái khác hoặc va mép |
+
+- **Đèn laser** (chọn ô rồi click **một chỗ** trên dải trận, kể cả trúng slime): chấm đỏ đứng yên `laserSeconds`. Quái trong `laserLureRange` mà tự đi được (không phải boss, không cưỡi, không bay, không bị dính, không đang gồng hồi máu, không trong pha khiên) đi về chấm thay vì về mèo và **không gồng đòn mới**; đòn đã gồng vẫn đánh. Quái đứng trên chấm mất `laserDps` máu mỗi giây (trừ mỗi 0,5 s). Có `LaserShows(x, nửa rộng)` cho slime bóng ma/ảo ảnh (M13).
+- **Quạt** (chọn ô rồi **giữ chuột** trên dải trận): gió thổi quái trong `fanRange` ra xa con trỏ, càng gần càng mạnh (ở mép tầm còn 25%), nhân `pushFactor`; tinh anh miễn Đẩy chỉ bị 20%; boss, quái dính, quái cưỡi, quái bay không bị thổi. Quái bị thổi đủ nhanh va vào quái khác (không cùng bay theo) hoặc vào mép/tường "Cập nhật" thì cả hai mất `fanBumpDamage`, mỗi con tối đa một lần mỗi giây. Quái có nhịp trống (liên kết `rhythm`) bị gió thổi thì mất đếm nhịp. Rê chuột khi giữ thì gió đi theo. Thả chuột thì ngừng nhưng **Quạt vẫn được chọn**; cạn hơi thì tự cất và chờ `fanRefillSeconds`. Vòng quét trên ô Quạt là phần hơi đã dùng. Làm khô vũng/tách bầy sẽ có cùng quái thật (M09/M11).
+- **Sát thương** của cả hai là sát thương kỹ năng: không bị đá chặn, có Kết liễu, quái chết tính là mèo hạ; boss nhận 50%. Không kích hoạt thẻ cộng thêm khác.
+- **Luật chung như kỹ năng cũ:** đang cầm mèo thì kỹ năng chờ (Quạt ngừng, hơi không hồi; chấm laser đã đặt vẫn chạy hết giờ như Cổ vũ); nhấc mèo thật thì bỏ chọn. Pause, menu, chọn thẻ, túi đồ, hướng dẫn đứng hình đóng băng chấm và hơi. Kết thúc trận xóa chấm và gió. Trên dải trận: dấu × quảng cáo và app độc nhận click trước; quảng cáo che phần sau nó. Click trúng mèo luôn là nhấc mèo (mèo là cửa sổ riêng).
+- **Được mang ở đâu:** theo người dùng chốt 2026-10-28, **trận tự do** mang được mọi kỹ năng đã chạy (Laser, Quạt) ngay; Phiêu lưu, Viễn chinh, Vô tận vẫn chỉ mở bằng `unlocksSkill` (chương 2, M21). Lựa chọn lưu chung `BattleLoadout`: chế độ khác đọc bộ có Laser/Quạt chưa mở thành 5 kỹ năng cũ.
+- **Hướng dẫn đứng hình:** bước `laser` và `fan` (kiểu "làm") chỉ chạy trong màn có `unlocksSkill` đúng kỹ năng đó và khi trận mang kỹ năng ấy: sáng ô, chọn xong thì sáng khoảng sàn quanh mèo; dùng xong là hết bước. Chương 1 không có màn như vậy nên không đổi. Màn dạy tự cho mượn kỹ năng: làm cùng chương 2 (M21).
+- Hình: chấm đỏ có quầng sáng và vòng đếm ngược, đốm đỏ nhấp nhô trên đầu quái bị dụ; Quạt là cánh quạt xanh quay ở chỗ con trỏ và vệt gió chạy ra hai bên. Âm thanh dùng cue có sẵn (`LaserOn` lấp lánh, `FanOn` vút, `FanBump` cộc, `FanSpent` keng). Icon ô giữ bản vẽ từ M02.
 
 ## Viễn chinh (`expedition`) (2026-10-21)
 

@@ -35,6 +35,9 @@ public sealed partial class PetWindow
         [BattleEventKind.HazardTapped] = ("ball_tap", 3), [BattleEventKind.WallHit] = ("clank", 3), [BattleEventKind.PopupLocked] = ("clank", 3),
         [BattleEventKind.VirusFileAdded] = ("squish", 4), [BattleEventKind.VirusFileDeleted] = ("pop", 4),
         [BattleEventKind.AppAttack] = ("swoosh", 3), [BattleEventKind.AppReady] = ("ball_tap", 2), [BattleEventKind.AppMoved] = ("swoosh", 1),
+        // 1.5 M05: the Laser and the Fan (no cue of their own yet: the shared cartoon cues).
+        [BattleEventKind.LaserOn] = ("sparkle", 3), [BattleEventKind.FanOn] = ("swoosh", 2), [BattleEventKind.FanBump] = ("ball_tap", 3),
+        [BattleEventKind.FanSpent] = ("clank", 2),
     };
 
     private void PlayBattleSound()

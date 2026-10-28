@@ -186,20 +186,21 @@ public sealed partial class PetWindow
 
     // The five skills (1.5): the setup panel's choice, kept in preferences.BattleLoadout. Only skills
     // that work and are open (Adventure.SkillOpen) are carried; a saved choice that no longer fits
-    // reads as the five first skills.
-    public bool BattleSkillOpen(BattleSkill skill) => AdventureOf(BattleTuning) is Adventure adventure ? adventure.SkillOpen(skill)
-        : BattleSkills.Get(skill).Working && Array.IndexOf(BattleSkills.Default, skill) >= 0;
-    public BattleSkill[] BattleLoadoutChoice
+    // reads as the five first skills. freeBattle: until chapter 2 opens them (M21) a free battle may
+    // already carry every skill that works (user's choice 2026-10-28, 1.5 M05); the Adventure, the
+    // Expedition and Infinity keep the rule above.
+    public bool BattleSkillOpen(BattleSkill skill, bool freeBattle = false) => (freeBattle && BattleSkills.Get(skill).Working)
+        || (AdventureOf(BattleTuning) is Adventure adventure ? adventure.SkillOpen(skill)
+            : BattleSkills.Get(skill).Working && Array.IndexOf(BattleSkills.Default, skill) >= 0);
+    public BattleSkill[] BattleLoadoutChoice => LoadoutChoice(false);
+    private BattleSkill[] LoadoutChoice(bool freeBattle)
     {
-        get
-        {
-            var chosen = BattleSkills.Loadout(preferences.BattleLoadout);
-            return chosen.All(BattleSkillOpen) ? chosen : BattleSkills.Default;
-        }
+        var chosen = BattleSkills.Loadout(preferences.BattleLoadout);
+        return chosen.All(skill => BattleSkillOpen(skill, freeBattle)) ? chosen : BattleSkills.Default;
     }
-    public bool SetBattleLoadout(IReadOnlyList<BattleSkill> skills)
+    public bool SetBattleLoadout(IReadOnlyList<BattleSkill> skills, bool freeBattle = false)
     {
-        if (BattleSkills.Order(skills) is not BattleSkill[] ordered || !ordered.All(BattleSkillOpen)) return false;
+        if (BattleSkills.Order(skills) is not BattleSkill[] ordered || !ordered.All(skill => BattleSkillOpen(skill, freeBattle))) return false;
         var saved = BattleSkills.Save(ordered);
         if (saved == null ? preferences.BattleLoadout == null : preferences.BattleLoadout?.SequenceEqual(saved) == true) return true;
         preferences.BattleLoadout = saved;
@@ -209,7 +210,7 @@ public sealed partial class PetWindow
     // A stage of a chapter without the choice (chapter 1) always has the five first skills.
     private bool StageSkillChoice(StageSpec? stage) => stage is not { Endless: false } || AdventureOf(BattleTuning)?.SkillChoice(stage) == true;
     private IReadOnlyList<BattleSkill> BattleLoadoutFor(StageSpec? stage, ExpeditionBattle? expedition) =>
-        expedition?.Expedition.Run is ExpeditionRun run ? run.Loadout : StageSkillChoice(stage) ? BattleLoadoutChoice : BattleSkills.Default;
+        expedition?.Expedition.Run is ExpeditionRun run ? run.Loadout : StageSkillChoice(stage) ? LoadoutChoice(stage == null) : BattleSkills.Default;
 
     private string DifficultyName(BattleDifficulty level) => level switch
     {
@@ -383,6 +384,35 @@ public sealed partial class PetWindow
         UpdateBattleHud();
         battleView?.InvalidateVisual();
         return done;
+    }
+
+    // The Laser chosen: a click on a spot of the field (battle x) puts its dot there.
+    public bool BattleClickSpot(double x)
+    {
+        if (battle == null || battle.Paused || battle.Armed is not BattleSkill skill) return false;
+        SyncBattleCatState();
+        bool done = battle.UseAt(skill, x);
+        RequestBattleRedraw();
+        UpdateBattleHud();
+        return done;
+    }
+
+    // The Fan chosen: pressed on the field it blows from there until let go (or out of air).
+    public bool BattlePressFan(double x)
+    {
+        if (battle == null || battle.Paused) return false;
+        SyncBattleCatState();
+        bool done = battle.StartFan(x);
+        RequestBattleRedraw();
+        UpdateBattleHud();
+        return done;
+    }
+
+    public void BattleReleaseFan()
+    {
+        battle?.StopFan();
+        RequestBattleRedraw();
+        UpdateBattleHud();
     }
 
     // A click on a desktop app: an infected one is scrubbed, a charged one sends its help; when it
@@ -591,6 +621,10 @@ public sealed partial class PetWindow
         battleView.HazardClicked += id => BattleCloseHazard(id);
         battleView.HazardReleased += () => { battle?.ReleaseHazard(); RequestBattleRedraw(); };
         battleView.RightClicked += () => { battle?.Arm(null); RequestBattleRedraw(); UpdateBattleHud(); }; // Right-click on the field cancels the skill.
+        battleView.SpotClicked += x => BattleClickSpot(x);
+        battleView.FanPressed += x => BattlePressFan(x);
+        battleView.FanMoved += x => battle?.MoveFan(x);
+        battleView.FanReleased += () => BattleReleaseFan();
         battleFieldWindow = CreateOverlayWindow(battleView, "Pet battle");
         battleFieldWindow.DpiChanged += (_, _) => battlePlacedScale = 0; // Re-place in pixels next frame.
         battleHudWindow = CreateOverlayWindow(BuildBattleHud(), "Pet battle HUD");

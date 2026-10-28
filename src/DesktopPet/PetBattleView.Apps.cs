@@ -94,6 +94,8 @@ public sealed partial class BattleFieldView
     // A slime as drawn at its tallest (a windup swells it to ×1.28), with the elite label over its head.
     public Rect SlimeBounds(Slime slime) => new(slime.X - OriginX - slime.Width * 0.6, Floor - slime.Height * 1.3 - (slime.Elite != null ? 18 : 4), slime.Width * 1.2, slime.Height * 1.3 + (slime.Elite != null ? 18 : 4) + 2);
     // A slam's red zone on the floor.
+    // A stretch of the floor (battle x ± half), as tall as a slime: where the guide points for a spot or hold skill.
+    public Rect FloorBounds(double x, double half) => new(Math.Max(0, x - OriginX - half), Floor - 56, Math.Min(ActualWidth, half * 2), 58);
     public Rect SlamBounds(Slime boss) => new(boss.X - OriginX - boss.Range, Floor - 24, boss.Range * 2, 26);
 
     private Rect PopupRect(BattlePopup popup, double floor) =>

@@ -87,6 +87,7 @@ public sealed partial class PetWindow
     public IReadOnlyList<BattleSkill> BattlePrepSkills => BattleSkills.All.Select(info => info.Skill).Where(prepSkills.Contains).ToArray();
     public string BattlePrepSkillsHint => prepSkillsHint?.Text ?? "";
     private bool PrepHasApps => prepStage != null || prepForExpedition || prepForEndless;
+    private bool PrepFree => prepStage == null && !prepForExpedition && !prepForEndless;
     public bool BattlePrepVisible => battlePrepWindow?.IsVisible == true;
     public bool BattlePrepReadyEnabled => prepReady?.IsEnabled == true;
     public int BattlePrepCards => prepCards.Count;
@@ -142,7 +143,7 @@ public sealed partial class PetWindow
         prepApps = preferences.BattleApps;
         prepGuide = preferences.AdventureGuide;
         prepSkills.Clear();
-        prepSkills.UnionWith(BattleLoadoutChoice);
+        prepSkills.UnionWith(LoadoutChoice(PrepFree));
         prepSkillHover = null;
         battlePreparing = true;
         CloseBattleSummary(); CloseBattleNotice();
@@ -194,7 +195,7 @@ public sealed partial class PetWindow
     {
         if (!BattlePrepHasSkillChoice) return false;
         prepSkillHover = skill;
-        bool changed = prepSkills.Remove(skill) || (BattleSkillOpen(skill) && prepSkills.Count < BattleSkills.Carry && prepSkills.Add(skill));
+        bool changed = prepSkills.Remove(skill) || (BattleSkillOpen(skill, PrepFree) && prepSkills.Count < BattleSkills.Carry && prepSkills.Add(skill));
         UpdateBattlePrep();
         return changed;
     }
@@ -212,7 +213,7 @@ public sealed partial class PetWindow
         if ((prepForExpedition ? BattlePrepRefusal() : BattleRefusal()) is string reason) { UpdateBattlePrep(); return reason; }
         if (PrepSkillsRefusal() is string skills) { UpdateBattlePrep(); return skills; }
         SetBattleWeapon(prepWeapon);
-        if (BattlePrepHasSkillChoice) SetBattleLoadout(prepSkills.ToArray());
+        if (BattlePrepHasSkillChoice) SetBattleLoadout(prepSkills.ToArray(), PrepFree);
         SetBattleDifficulty(prepDifficulty);
         if (PrepHasApps && preferences.BattleApps != prepApps) { preferences.BattleApps = prepApps; SavePreferences(); }
         if (BattleTutorialOpen) CloseBattleTutorial(finished: true);
@@ -532,14 +533,14 @@ public sealed partial class PetWindow
             prepSkillsLabel.Text = LF($"Kỹ năng mang theo ({prepSkills.Count}/{BattleSkills.Carry})", $"Skills to bring ({prepSkills.Count}/{BattleSkills.Carry})");
             foreach (var (skill, chip, mark) in prepSkillChips)
             {
-                bool open = BattleSkillOpen(skill), carried = prepSkills.Contains(skill);
+                bool open = BattleSkillOpen(skill, PrepFree), carried = prepSkills.Contains(skill);
                 ShowChosen(chip, carried);
                 mark.Visibility = open ? Visibility.Collapsed : Visibility.Visible;
                 chip.Opacity = open || carried ? 1 : 0.5;
             }
             prepSkillsHint.Text = prepSkillHover is BattleSkill hover
                 ? BattleSkills.Get(hover).Describe(BattleTuning, preferences.Language)
-                    + (BattleSkillOpen(hover) || prepSkills.Contains(hover) ? ""
+                    + (BattleSkillOpen(hover, PrepFree) || prepSkills.Contains(hover) ? ""
                         : " " + (BattleSkills.Get(hover).Working ? L("(Chưa mở.)", "(Not open yet.)") : L("(Chưa mở: có trong bản cập nhật sau.)", "(Not open yet: coming in a later update.)")))
                 : prepSkills.Count < BattleSkills.Carry ? LF($"Chọn thêm {BattleSkills.Carry - prepSkills.Count} kỹ năng. Rê chuột lên ô để xem tác dụng.", $"Choose {BattleSkills.Carry - prepSkills.Count} more. Point at a skill to see what it does.")
                 : prepForExpedition ? L("Bộ kỹ năng giữ suốt chuyến. Bấm một ô đã chọn để bỏ, rồi chọn ô khác.", "The skills stay for the whole run. Click a chosen skill to drop it, then choose another.")

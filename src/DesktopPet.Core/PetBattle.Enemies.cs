@@ -159,6 +159,8 @@ public sealed partial class BattleSim
                     }
                     // Panicking (its aura holder fell): away from the cat, no attack.
                     if (Panic(slime, dt, catX, minX, maxX)) break;
+                    // Chasing the laser's dot (PetBattle.Tools.cs): nothing else.
+                    if (slime.Lured && LaserX is double dot) { Lure(slime, dot, dt, minX, maxX); break; }
                     // A support keeps behind its fighting allies and leaves the cat to them.
                     if (slime.Type.Support && (slime.KeepingBack = KeepBack(slime, dt, catX, minX, maxX))) break;
                     // A dasher runs off after its lunge.

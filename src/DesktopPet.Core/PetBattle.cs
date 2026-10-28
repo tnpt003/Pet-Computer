@@ -328,6 +328,7 @@ public sealed partial class BattleSim
         if (!CatLifted) return;
         wasLifted = true;
         Armed = null;
+        FanX = null;
     }
 
     // catHeld / lifted: see SetCatState. Putting a lifted cat down grants grace (if ready).
@@ -396,6 +397,8 @@ public sealed partial class BattleSim
         StepBuild(dt, catHeld);
         StepBombs(dt);
         StepSlimes(dt, floorX, catHeld);
+        if (Over) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
+        StepTools(dt, catHeld);
         if (Over) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
         StepApps(dt, floorX, catHeld);
         if (Over) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
@@ -763,7 +766,7 @@ public sealed partial class BattleSim
     private bool Blocks(Slime slime, DamageSource source)
     {
         var type = slime.Type;
-        if (type.BlockChance <= 0 || source is DamageSource.Bomb or DamageSource.Reflect or DamageSource.App or DamageSource.Link or DamageSource.Throw or DamageSource.Poison) return false;
+        if (type.BlockChance <= 0 || source is DamageSource.Bomb or DamageSource.Reflect or DamageSource.App or DamageSource.Link or DamageSource.Throw or DamageSource.Poison or DamageSource.Tool) return false;
         // A front-only blocker: a hit from behind always lands (and ends its streak).
         if (type.BlockFrontOnly && (lastCatX - slime.X) * slime.Facing <= 0) { slime.BlockStreak = 0; return false; }
         // Armor break: combo hits go straight through.
@@ -811,6 +814,7 @@ public sealed partial class BattleSim
         TargetId = null;
         BlockedById = 0;
         bombs.Clear();
+        ClearTools();
         ClearApps();
         incoming = null;
         IncomingRemaining = 0;
@@ -841,10 +845,11 @@ public sealed partial class BattleSim
         return true;
     }
 
-    // Choose an aimed skill (the next slime click uses it), or null to cancel the choice.
+    // Choose an aimed skill (the next slime click, spot click or hold uses it), or null to cancel the choice.
     public bool Arm(BattleSkill? skill)
     {
         if (skill is BattleSkill chosen && (!IsAimed(chosen) || !Ready(chosen))) return false;
+        if (skill != BattleSkill.Fan) FanX = null;
         Armed = skill;
         return true;
     }
@@ -883,7 +888,7 @@ public sealed partial class BattleSim
     public bool Use(BattleSkill skill, int id, double catX, int? direction = null)
     {
         var slime = Find(id);
-        if (!IsAimed(skill) || !Ready(skill) || slime is not { Targetable: true }) return false;
+        if (BattleSkills.Get(skill).Aim != SkillAim.Slime || !Ready(skill) || slime is not { Targetable: true }) return false;
         if (skill == BattleSkill.Push && slime.Elite is { PushImmune: true })
         {
             // It stands firm: no knock back, no stun, its windup goes on; the skill is still spent.
@@ -941,6 +946,7 @@ public sealed partial class BattleSim
         IncomingX = left + (IncomingX - Left) / oldWidth * newWidth;
         foreach (var e in effects) e.X = left + (e.X - Left) / oldWidth * newWidth;
         foreach (var b in bombs) b.X = left + (b.X - Left) / oldWidth * newWidth;
+        MapTools(left, oldWidth, newWidth);
         foreach (var p in popups) p.X = left + (p.X - Left) / oldWidth * newWidth;
         foreach (var l in launches) { l.FloorX = left + (l.FloorX - Left) / oldWidth * newWidth; for (int i = 0; i < l.TargetX.Length; i++) l.TargetX[i] = left + (l.TargetX[i] - Left) / oldWidth * newWidth; }
         Left = left; Right = right;

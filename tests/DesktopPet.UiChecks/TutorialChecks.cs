@@ -79,9 +79,13 @@ internal static class TutorialChecks
         var chapter = ids.Select(id => new StageSpec { Id = id, NameVi = id, NameEn = id, Waves = new[] { Slimes(1) },
             MalwarePlan = id == PetWindow.StageHoldOn ? new[] { new MalwareCue { At = 1, Kind = "loading" }, new MalwareCue { At = 3, Kind = "virus" } } : null }).ToArray();
         var outside = new StageSpec { Id = "t_other", NameVi = "Khác", NameEn = "Other", Waves = new[] { Slimes(1) } };
+        // 1.5 M05: stages that teach a skill (their unlocksSkill), in a chapter with the skill choice.
+        var teachLaser = new StageSpec { Id = "t_laser", NameVi = "Laser", NameEn = "Laser", UnlocksSkill = "laser", Waves = new[] { Slimes(2) } };
+        var teachFan = new StageSpec { Id = "t_fan", NameVi = "Quạt", NameEn = "Fan", UnlocksSkill = "fan", Waves = new[] { Slimes(2) } };
         window.BattleTuning = new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 1 }, MaxAlive = 1, SpawnInterval = 0, SlimeMaxHp = 1000, CatDamage = 0, SlimeDamage = 0,
             Apps = new AppsSpec { InfectChance = 0, MalwareMinThreat = 99, VirusExeWeight = 1, VirusExeEvery = 30 },
-            Campaign = new CampaignSpec { Chapters = new[] { new ChapterSpec { Id = "c1", NameVi = "C", NameEn = "C", Stages = chapter.Append(outside).ToArray() } } } };
+            Campaign = new CampaignSpec { Chapters = new[] { new ChapterSpec { Id = "c1", NameVi = "C", NameEn = "C", Stages = chapter.Append(outside).ToArray() },
+                new ChapterSpec { Id = "c2", NameVi = "C2", NameEn = "C2", SkillChoice = true, Stages = new[] { teachLaser, teachFan } } } } };
         window.BattleGuideEnabled = true;
         void ToGround() { pet.Grounded = true; pet.VX = pet.VY = 0; pet.Action = PetAction.Idle; pet.Y = Field<Area>(window, "bounds").Bottom - 112; }
         void NextToCat() { foreach (var s in Sim().Slimes) s.X = pet.X + Field<PetSettings>(window, "settings").Width / 2 + 60; }
@@ -98,6 +102,7 @@ internal static class TutorialChecks
             Call(window, "CheckDragThreshold");
             TickBattle(0.05);
         }
+        int GuideTimesShown(string id) => window.BattleGuideShown(id);
         void Drop() { window.RaiseEvent(MouseEvent(UIElement.MouseLeftButtonUpEvent)); ToGround(); TickBattle(1.0 / 60); }
 
         // Not in a free battle, nor in a stage it does not teach.
@@ -284,6 +289,41 @@ internal static class TutorialChecks
         check(prefs.AdventureGuide, "Ticked again on Ready: kept on");
         window.EndBattle();
         window.AdventureProgress.Completed.Remove(PetWindow.StageFirstSteps);
+
+        // 1.5 M05: the stage that teaches a skill shows a do-step for it while the battle carries it
+        // (here both stages are won, so the skills are open and chosen; lending them comes with chapter 2).
+        window.AdventureProgress.Completed.Add(teachLaser.Id);
+        window.AdventureProgress.Completed.Add(teachFan.Id);
+        prefs.BattleLoadout = new() { "push", "heal", "cheer", "laser", "fan" };
+        prefs.AdventureGuide = true;
+        ToGround();
+        check(window.StartBattle(stage: teachLaser) == null && Sim().Carries(BattleSkill.Laser), "(setup) the Laser's stage, the Laser carried");
+        RunToStep(4);
+        check(window.BattleGuideStep == PetWindow.GuideLaser && window.BattleGuideFreezes && window.BattleGuideSpots.Count == 1,
+            $"The Laser's stage teaches it: the slot is lit ({window.BattleGuideStep})");
+        window.UseBattleSkill(BattleSkill.Laser);
+        TickBattle(1.0 / 60);
+        check(window.BattleGuideStep == PetWindow.GuideLaser && Sim().Armed == BattleSkill.Laser && window.BattleGuideText.Contains("click a spot") && window.BattleGuideSpots.Count == 1,
+            $"Chosen, the step points at the floor ({window.BattleGuideText})");
+        check(window.BattleClickSpot(Sim().CatX + 150) && Sim().LaserX != null, "A click on the floor puts the dot down (the battle frozen, not paused)");
+        TickBattle(1.0 / 60);
+        check(window.BattleGuideStep == null && GuideTimesShown(PetWindow.GuideLaser) == 1, "Using it ends the step");
+        window.EndBattle();
+        ToGround();
+        window.StartBattle(stage: teachFan);
+        RunToStep(4);
+        check(window.BattleGuideStep == PetWindow.GuideFan, $"The Fan's stage teaches the Fan ({window.BattleGuideStep})");
+        window.UseBattleSkill(BattleSkill.Fan);
+        TickBattle(1.0 / 60);
+        check(window.BattlePressFan(Sim().CatX + 120) && Sim().FanBlowing, "Held on the floor, the Fan blows");
+        TickBattle(1.0 / 60);
+        check(window.BattleGuideStep == null && Sim().FanBlowing, "Blowing ends the step; the fan goes on while held");
+        window.BattleReleaseFan();
+        check(!Sim().FanBlowing && Sim().Armed == BattleSkill.Fan, "Let go, it stops and stays chosen");
+        window.EndBattle();
+        window.AdventureProgress.Completed.Remove(teachLaser.Id);
+        window.AdventureProgress.Completed.Remove(teachFan.Id);
+        prefs.BattleLoadout = null;
         window.BattleGuideEnabled = false;
 
         prefs.Language = language;

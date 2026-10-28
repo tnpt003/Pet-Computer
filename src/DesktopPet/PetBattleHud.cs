@@ -325,8 +325,14 @@ public sealed class BattleHud : Border
         {
             var skill = slot.Skill;
             double cooldown = b.Cooldown(skill), total = b.SkillCooldown(skill);
-            bool active = skill == BattleSkill.Cheer ? b.CheerRemaining > 0 : skill == BattleSkill.Shield && b.ShieldRemaining > 0;
-            slot.Show(cooldown / Math.Max(0.01, total), cooldown, b.Armed == skill, !b.Over && !b.Paused && !held, active);
+            bool active = skill switch
+            {
+                BattleSkill.Cheer => b.CheerRemaining > 0, BattleSkill.Shield => b.ShieldRemaining > 0,
+                BattleSkill.Laser => b.LaserX != null, BattleSkill.Fan => b.FanBlowing, _ => false
+            };
+            // The Fan's air used so far shows as the same wipe while it is still usable.
+            double gauge = skill == BattleSkill.Fan ? 1 - b.FanSteam : 0;
+            slot.Show(cooldown / Math.Max(0.01, total), cooldown, b.Armed == skill, !b.Over && !b.Paused && !held, active, gauge);
         }
         pauseGlyph.Kind = userPaused ? HudGlyphKind.Play : HudGlyphKind.Pause;
         pauseButton.IsEnabled = !b.Over && !(b.Paused && fullscreen);
@@ -354,6 +360,10 @@ public sealed class BattleHud : Border
         SetText(hint, held && !b.Over ? LiftedHint(b)
             : b.Armed == BattleSkill.Push ? L("Click nửa trái slime để đẩy sang phải, nửa phải để đẩy sang trái · bấm lại ô hoặc chuột phải để hủy",
                                              "Click a slime's left half to push it right, its right half to push it left · click the slot again or right-click to cancel")
+            : b.Armed == BattleSkill.Laser ? L("Click một chỗ trên dải trận để đặt chấm laser · bấm lại ô hoặc chuột phải để hủy",
+                                              "Click a spot of the field to put the laser dot there · click the slot again or right-click to cancel")
+            : b.Armed == BattleSkill.Fan ? L("Giữ chuột trên dải trận để thổi slime ra xa con trỏ · bấm lại ô hoặc chuột phải để cất quạt",
+                                            "Hold the mouse on the field to blow slimes away from the cursor · click the slot again or right-click to put the fan away")
             : b.Armed is BattleSkill armed ? LF($"Click một slime để dùng {SkillName(armed)} · bấm lại ô hoặc chuột phải chiến trường để hủy",
                                                $"Click a slime to use {SkillName(armed)} · click the slot again or right-click the field to cancel")
             : !b.Over && b.Grace > 0 ? LF($"Được bảo vệ sau khi tiếp đất: còn {ProtectedFor(b)} giây", $"Protected after landing: {ProtectedFor(b)} s left")
@@ -480,14 +490,15 @@ public sealed class SkillSlot : Border
     public bool Flashing => flash.HasAnimatedProperties;
     public string SecondsText => seconds.Text;
 
-    public void Show(double fraction, double remaining, bool armed, bool usable, bool active)
+    // gauge: a wipe shown while ready (the Fan's air used, 0–1).
+    public void Show(double fraction, double remaining, bool armed, bool usable, bool active, double gauge = 0)
     {
         bool wasReady = IsReady;
         Remaining = remaining; IsArmed = armed; IsReady = usable && remaining <= 0;
         // A cooldown running out flashes the slot once (not the first draw, a resume or a battle starting).
         if (shown && !wasReady && IsReady && shownSeconds > 0) flash.BeginAnimation(OpacityProperty, Flash);
         shown = true;
-        wipe.Fraction = remaining > 0 ? fraction : 0;
+        wipe.Fraction = remaining > 0 ? fraction : gauge;
         int whole = remaining > 0 ? (int)Math.Ceiling(remaining) : 0;
         if (whole != shownSeconds)
         {

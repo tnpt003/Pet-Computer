@@ -113,6 +113,17 @@ public sealed class BattleSettings
     public double BombRadius { get; init; } = 70;
     public double ShieldCooldown { get; init; } = 15;
     public double ShieldSeconds { get; init; } = 3;
+    // 1.5 M05 (PetBattle.Tools.cs). Laser: the dot's time, the reach of its lure, HP a second for a
+    // slime on it. Fan: seconds of air, the refill once spent, its reach, the wind's speed and a bump's damage.
+    public double LaserCooldown { get; init; } = 14;
+    public double LaserSeconds { get; init; } = 4;
+    public double LaserLureRange { get; init; } = 300;
+    public double LaserDps { get; init; } = 3;
+    public double FanSteamSeconds { get; init; } = 3;
+    public double FanRefillSeconds { get; init; } = 6;
+    public double FanRange { get; init; } = 200;
+    public double FanSpeed { get; init; } = 220;
+    public double FanBumpDamage { get; init; } = 4;
 
     // The Slime King (last wave).
     [JsonIgnore]
@@ -363,6 +374,10 @@ public sealed class DifficultySpec
 // (1.5) are in the data and the setup panel's choice but have no effect yet (BattleSkillInfo.Working).
 public enum BattleSkill { Push, Heal, Cheer, Bomb, Shield, Laser, Grabber, Scissors, Fan, Spray }
 
+// How a chosen skill is used: at once (None), on a clicked slime (Push, Bomb), on a clicked spot of
+// the field (Laser) or while the mouse is held on the field (Fan).
+public enum SkillAim { None, Slime, Point, Hold }
+
 // Casting: a support enemy winds up a heal (a green "+"), near or far; a push or stun cancels it.
 // Dashing: a dash enemy's lunge after its windup (it hits the cat once at most).
 public enum SlimeState { Spawning, Moving, Windup, Recover, Stunned, Defeated, Casting, Dashing }
@@ -373,7 +388,8 @@ public enum SlimeState { Spawning, Moving, Windup, Recover, Stunned, Defeated, C
 // the enemies next to its target.
 // Link: the share of a hit a tether's holder takes for its ally.
 // Poison: a status's damage over time (PetBattle.Status.cs).
-public enum DamageSource { Weapon, Combo, Bomb, Reflect, Echo, App, Splash, Link, Throw, Poison }
+// Tool: the Laser's and the Fan's damage (PetBattle.Tools.cs).
+public enum DamageSource { Weapon, Combo, Bomb, Reflect, Echo, App, Splash, Link, Throw, Poison, Tool }
 
 // What a hit on an enemy did: landed, blocked by a stony enemy, or nothing on a shielded boss.
 public enum HitResult { Landed, Blocked, Immune }
@@ -485,6 +501,10 @@ public sealed class Slime
     public bool Poisoned => PoisonRemaining > 0;
     public bool Chilled => ChillRemaining > 0;
     public bool Stuck => StuckRemaining > 0;
+    // Tools (PetBattle.Tools.cs): it is chasing the laser's dot this frame; the wind has it (s left);
+    // it may be hurt by a bump again once BumpCooldown is 0.
+    public bool Lured;
+    public double Blown, BumpCooldown;
     // How fast it acts under a chill (1: not chilled).
     public double ChillFactor => ChillRemaining > 0 ? 1 - ChillPower : 1;
     public bool Targetable => State is not (SlimeState.Spawning or SlimeState.Defeated);
@@ -531,7 +551,10 @@ public enum BattleEventKind
     // reacts to it (Value: the enemy's id).
     HeldHit, ThrowHit,
     // A status took on an enemy (Value: its SlimeStatus).
-    StatusApplied
+    StatusApplied,
+    // 1.5 M05: the laser's dot put down and gone; the fan started, ran out of air; an enemy blown into
+    // another or the edge (Value: its id).
+    LaserOn, LaserOff, FanOn, FanSpent, FanBump
 }
 public readonly record struct BattleEvent(BattleEventKind Kind, double X, double Value = 0);
 // Number: a floating damage (Value > 0) or heal (Value < 0, shown as +HP above the cat).

@@ -15,8 +15,8 @@ internal static class BattleLoadoutTests
         // The ten skills and their data.
         check(BattleSkills.All.Length == 10 && BattleSkills.Carry == 5 && BattleSkills.Default.SequenceEqual(old),
             "Ten skills, five carried; the default is the five first ones");
-        check(BattleSkills.All.Count(info => info.Working) == 5 && BattleSkills.All.Where(info => info.Working).Select(info => info.Skill).SequenceEqual(old),
-            "Only the five first skills work so far (the 1.5 ones come with M05/M06)");
+        check(BattleSkills.All.Where(info => info.Working).Select(info => info.Skill).SequenceEqual(old.Append(BattleSkill.Laser).Append(BattleSkill.Fan)),
+            "The five first skills, the Laser and the Fan work so far (the other 1.5 ones come with M06)");
         var data = BattleData.Settings;
         check(BattleSkills.All.All(info => data.Skill(info.Skill).Name("en").Length > 0 && data.Skill(info.Skill).Name("vi").Length > 0
                 && data.Skill(info.Skill).Name("ja") != data.Skill(info.Skill).Name("en")),
@@ -58,7 +58,11 @@ internal static class BattleLoadoutTests
         int slime = noBomb.Slimes[0].Id;
         check(!noBomb.Carries(BattleSkill.Bomb) && !noBomb.Ready(BattleSkill.Bomb) && !noBomb.Arm(BattleSkill.Bomb) && !noBomb.Use(BattleSkill.Bomb, slime, 800)
               && noBomb.Bombs.Count == 0, "A skill left at home is never ready, armed or used");
-        check(noBomb.Carries(BattleSkill.Laser) && !noBomb.Ready(BattleSkill.Laser) && !noBomb.Use(BattleSkill.Laser, 800) && noBomb.Cooldown(BattleSkill.Laser) == 0,
+        check(noBomb.Carries(BattleSkill.Laser) && noBomb.Ready(BattleSkill.Laser) && !noBomb.Use(BattleSkill.Laser, 800) && noBomb.Cooldown(BattleSkill.Laser) == 0,
+            "A carried Laser is ready (it is aimed: no use at once)");
+        var grabber = new BattleSim(new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 1 } }, 0, 1600, seed: 1,
+            skills: new[] { BattleSkill.Push, BattleSkill.Heal, BattleSkill.Cheer, BattleSkill.Shield, BattleSkill.Grabber });
+        check(grabber.Carries(BattleSkill.Grabber) && !grabber.Ready(BattleSkill.Grabber) && !grabber.Arm(BattleSkill.Grabber) && !grabber.Use(BattleSkill.Grabber, 800),
             "A new skill that has no effect yet is never ready, even when carried");
         check(noBomb.Ready(BattleSkill.Push) && noBomb.Ready(BattleSkill.Shield) && noBomb.Use(BattleSkill.Shield, 800) && noBomb.ShieldRemaining > 0,
             "The carried old skills work as before");
@@ -90,14 +94,16 @@ internal static class BattleLoadoutTests
             Chapters = new[]
             {
                 new ChapterSpec { Id = "c1", Stages = new[] { new StageSpec { Id = "a" } } },
-                new ChapterSpec { Id = "c2", SkillChoice = true, Stages = new[] { new StageSpec { Id = "b", UnlocksSkill = "laser" }, new StageSpec { Id = "c", UnlocksSkill = "bomb" } } },
+                new ChapterSpec { Id = "c2", SkillChoice = true, Stages = new[] { new StageSpec { Id = "b", UnlocksSkill = "laser" }, new StageSpec { Id = "c", UnlocksSkill = "bomb" }, new StageSpec { Id = "d", UnlocksSkill = "grabber" } } },
             }
         };
         var progress = new AdventureProgress();
         var adventure = new Adventure(campaign, progress);
         check(old.All(adventure.SkillOpen) && !adventure.SkillOpen(BattleSkill.Laser) && !adventure.SkillOpen(BattleSkill.Fan), "The five first skills are always open; the new ones are not");
         progress.Completed.Add("b");
-        check(!adventure.SkillOpen(BattleSkill.Laser), "Winning the stage that opens a skill does not open one with no effect yet");
+        check(adventure.SkillOpen(BattleSkill.Laser) && !adventure.SkillOpen(BattleSkill.Fan), "Winning the stage that opens a working skill opens it (only it)");
+        progress.Completed.Add("d");
+        check(!adventure.SkillOpen(BattleSkill.Grabber), "Winning the stage that opens a skill does not open one with no effect yet");
         check(!adventure.SkillChoice(campaign.Chapters[0].Stages[0]) && adventure.SkillChoice(campaign.Chapters[1].Stages[0]),
             "Only a chapter with skillChoice lets the user choose (chapter 1 keeps the five first skills)");
         check(!data.Campaign!.Chapters[0].SkillChoice && data.Campaign.Chapters.SelectMany(c => c.Stages).All(s => s.UnlocksSkill == null),

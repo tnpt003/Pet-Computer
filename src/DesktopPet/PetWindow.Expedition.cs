@@ -224,7 +224,7 @@ public sealed partial class PetWindow
         if (expedition.Run != null) return L("Đang có một chuyến đi.", "A run is already under way.");
         SetBattleWeapon(expeditionWeapon);
         SetBattleDifficulty(expeditionLevel);
-        var run = expedition.Start(expeditionWeapon, expeditionLevel, seed ?? Random.Shared.Next(), noApps: !preferences.BattleApps);
+        var run = expedition.Start(expeditionWeapon, expeditionLevel, seed ?? Random.Shared.Next(), noApps: !preferences.BattleApps, skills: BattleLoadoutChoice);
         SaveExpedition(expedition.Progress);
         expeditionLane = 0;
         expeditionNote = null;

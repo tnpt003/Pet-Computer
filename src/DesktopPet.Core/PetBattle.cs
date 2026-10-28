@@ -18,7 +18,7 @@ public sealed partial class BattleSim
     private readonly List<BattleEffect> effects = new();
     private readonly List<BattleEvent> events = new();
     private readonly List<BattleBomb> bombs = new();
-    private readonly double[] cooldowns = new double[5];
+    private readonly double[] cooldowns = new double[BattleSkills.All.Length];
     public IReadOnlyList<Slime> Slimes => slimes;
     public IReadOnlyList<BattleEffect> Effects => effects;
     public IReadOnlyList<BattleEvent> Events => events;
@@ -260,11 +260,18 @@ public sealed partial class BattleSim
     // This battle's weapon (its definition is shared; the swing and cooldown are below).
     public WeaponSpec Weapon { get; }
     private readonly WeaponSpec arms;
+    // The five skills this battle carries, in HUD order (BattleSkills.Order); the others are never ready
+    // and a card or relic about one of them is never offered.
+    public IReadOnlyList<BattleSkill> Skills => carried;
+    private readonly BattleSkill[] carried;
+    public bool Carries(BattleSkill skill) => Array.IndexOf(carried, skill) >= 0;
+    public bool Carries(string? skillId) => skillId == null || BattleSkills.Parse(skillId) is BattleSkill skill && Carries(skill);
 
     public BattleSim(BattleSettings settings, double left, double right, Random? random = null, BattleDifficulty difficulty = BattleDifficulty.Normal,
         string weapon = BattleWeapon.Sword, StageSpec? stage = null, IReadOnlyDictionary<string, int>? build = null, int? seed = null,
-        double? startHp = null, double threat = 1, IReadOnlyList<string>? relics = null, bool apps = true)
+        double? startHp = null, double threat = 1, IReadOnlyList<string>? relics = null, bool apps = true, IEnumerable<BattleSkill>? skills = null)
     {
+        carried = skills != null ? BattleSkills.Order(skills) ?? BattleSkills.Default : BattleSkills.Default;
         // A given seed wins; otherwise one drawn from the given random (tests), else a fresh one.
         Seed = seed ?? random?.Next() ?? Random.Shared.Next();
         spawnRandom = BattleRandom.Stream(Seed, BattleRandom.Spawn);
@@ -307,7 +314,7 @@ public sealed partial class BattleSim
     public void ClearEvents() => events.Clear();
     public double Cooldown(BattleSkill skill) => cooldowns[(int)skill];
     public static bool IsAimed(BattleSkill skill) => BattleSkills.Get(skill).Aimed;
-    public bool Ready(BattleSkill skill) => !Over && !Paused && !ChoosingUpgrade && !SkillsLocked && cooldowns[(int)skill] <= 0;
+    public bool Ready(BattleSkill skill) => !Over && !Paused && !ChoosingUpgrade && !SkillsLocked && Carries(skill) && BattleSkills.Get(skill).Working && cooldowns[(int)skill] <= 0;
 
     // The one description of the user's hold on the cat, shared by Step, the skills and the HUD.
     // A real lift cancels a chosen skill at once, so a later click cannot use it by mistake;
@@ -850,10 +857,11 @@ public sealed partial class BattleSim
                 CheerRemaining = Settings.CheerSeconds;
                 events.Add(new(BattleEventKind.Cheered, catX));
                 break;
-            default:
+            case BattleSkill.Shield:
                 ShieldRemaining = Settings.ShieldSeconds + shieldBonus;
                 events.Add(new(BattleEventKind.Shielded, catX));
                 break;
+            default: return false; // No effect yet (BattleSkillInfo.Working).
         }
         cooldowns[(int)skill] = SkillCooldown(skill);
         return true;

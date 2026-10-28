@@ -569,3 +569,8 @@ Trận gốc chưa có quái dùng liên kết; bỏ qua mục này nếu không
 - [ ] Dây nhầy xanh võng nhẹ nối hai slime, đi theo khi chúng di chuyển; hạ con giữ dây thì con kia choáng; không giật khi đông quái.
 - [ ] Thử `rhythm` (chấm nhịp trên đầu, chấm cuối đỏ rồi cả nhóm gồng cùng lúc), `aura` (vòng vàng trên sàn), nét vẽ rõ trên hình nền sáng/tối và DPI 100/150/200%; click vào khoảng trống giữa slime vẫn xuyên xuống desktop.
 - [ ] Pause giữa lúc có dây/nhịp: mọi thứ đứng yên, tiếp tục thì chạy tiếp.
+
+## Chọn kỹ năng 1.5 M02 (2026-10-28)
+- [ ] Trận tự do / Vô tận / chuẩn bị chuyến Viễn chinh: bảng chuẩn bị có mục "Kỹ năng mang theo (5/5)", hàng trên 5 kỹ năng cũ đã chọn, hàng dưới 5 kỹ năng mới mờ có ổ khóa; rê chuột lên ô thì dòng dưới hiện tác dụng (ô khóa ghi "Chưa mở"). Kiểm tra cả vi/en/ja và DPI 100/150/200% (ô và ổ khóa không bị cắt, bảng không bị cao quá màn hình nhỏ).
+- [ ] Bấm bỏ một kỹ năng: còn 4/5, nút Sẵn sàng mờ và dòng trạng thái nhắc chọn đủ 5; bấm lại thì Sẵn sàng sáng. Ô khóa bấm không có tác dụng.
+- [ ] Màn chương 1 (Phiêu lưu): không có mục kỹ năng; HUD trong trận vẫn đúng 5 ô cũ như trước; Hướng dẫn phiêu lưu vẫn chỉ đúng thanh kỹ năng và nút Đẩy.

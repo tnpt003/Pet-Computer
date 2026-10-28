@@ -106,7 +106,7 @@ internal static class BattleChecks
         // The game HUD: five skill slots, used with the mouse.
         var gameHud = Field<BattleHud>(window, "battleHud");
         void Press(UIElement element) => element.RaiseEvent(MouseEvent(UIElement.MouseLeftButtonDownEvent));
-        check(BattleHud.SkillOrder.Length == 5 && BattleHud.SkillOrder.All(skill => gameHud.Describe(skill).Length > 10 && gameHud.Slot(skill).ToolTip == null),
+        check(gameHud.SkillOrder.Count == 5 && gameHud.SkillOrder.All(skill => gameHud.Describe(skill).Length > 10 && gameHud.Slot(skill)!.ToolTip == null),
             "The HUD has five skill slots, each described in the hint line (no tooltips)");
         string idleHint = gameHud.HintText;
         gameHud.Hover(BattleSkill.Heal);
@@ -125,7 +125,7 @@ internal static class BattleChecks
         void CursorAt(Point screen) { cursorProbe.SetValue(window, (Func<Point>)(() => screen)); Call(window, "UpdateBattleHudDodge"); }
         CursorAt(gameHud.PointToScreen(new Point(20, 20)));
         check(window.BattleHudDodging && HudClickThrough() && gameHud.Opacity < 0.5, "Over the HUD's portrait the HUD fades and lets clicks through");
-        var slotCentre = gameHud.Slot(BattleSkill.Heal);
+        var slotCentre = gameHud.Slot(BattleSkill.Heal)!;
         CursorAt(slotCentre.PointToScreen(new Point(slotCentre.ActualWidth / 2, slotCentre.ActualHeight / 2)));
         check(!window.BattleHudDodging && !HudClickThrough() && gameHud.Opacity == 1, "Over a skill slot it is solid and clickable again");
         CursorAt(gameHud.PointToScreen(new Point(20, 20)));
@@ -166,7 +166,7 @@ internal static class BattleChecks
             "Double click on the grip: back to the top centre, nothing remembered");
         cursorProbe.SetValue(window, usualCursor);
         Tick(1.0 / 60);
-        check(!gameHud.Slot(BattleSkill.Push).IsReady && gameHud.Slot(BattleSkill.Push).Remaining > 0 && gameHud.Slot(BattleSkill.Heal).IsReady,
+        check(!gameHud.Slot(BattleSkill.Push)!.IsReady && gameHud.Slot(BattleSkill.Push)!.Remaining > 0 && gameHud.Slot(BattleSkill.Heal)!.IsReady,
             "A used skill shows its cooldown; the others are ready");
         // 2026-10-26: the seconds sit in a corner badge; a cooldown running out flashes the slot once.
         var lone = new SkillSlot(BattleSkill.Push);
@@ -202,20 +202,20 @@ internal static class BattleChecks
               Math.Abs(gameHud.ActualWidth - hudWidth) < 0.5,
             $"The HUD shows the hit chain (×1, gold ×2 before the combo) and hides it once it lapses, without changing width ({none}|{one}|{two}|{lapsed})");
         Sim().Combo = savedCombo; Sim().comboClock = savedClock;
-        Press(gameHud.Slot(BattleSkill.Heal));
+        Press(gameHud.Slot(BattleSkill.Heal)!);
         check(Sim().Cooldown(BattleSkill.Heal) == 0, "The fish slot does nothing at full HP");
-        Press(gameHud.Slot(BattleSkill.Shield)); Press(gameHud.Slot(BattleSkill.Cheer));
+        Press(gameHud.Slot(BattleSkill.Shield)!); Press(gameHud.Slot(BattleSkill.Cheer)!);
         Tick(1.0 / 60);
         check(Sim().ShieldRemaining > 0 && Sim().CheerRemaining > 0 && pet.BattleShield && pet.BattleBuff, "Shield and Cheer act at once and show on the cat");
-        Press(gameHud.Slot(BattleSkill.Bomb));
-        check(Sim().Armed == BattleSkill.Bomb && gameHud.Slot(BattleSkill.Bomb).IsArmed, "The bomb slot is chosen first");
-        Press(gameHud.Slot(BattleSkill.Bomb));
+        Press(gameHud.Slot(BattleSkill.Bomb)!);
+        check(Sim().Armed == BattleSkill.Bomb && gameHud.Slot(BattleSkill.Bomb)!.IsArmed, "The bomb slot is chosen first");
+        Press(gameHud.Slot(BattleSkill.Bomb)!);
         check(Sim().Armed == null, "Clicking it again cancels the choice");
-        Press(gameHud.Slot(BattleSkill.Bomb));
+        Press(gameHud.Slot(BattleSkill.Bomb)!);
         int? markedBefore = Sim().SelectedId;
         var bombTarget = Sim().Slimes.First(s => s.Targetable);
         check(window.BattleClickSlime(bombTarget.Id) && Sim().Bombs.Count == 1 && Sim().SelectedId == markedBefore, "Clicking a slime drops the yarn bomb there; the target stays");
-        Press(gameHud.Slot(BattleSkill.Bomb));
+        Press(gameHud.Slot(BattleSkill.Bomb)!);
         check(Sim().Armed == null, "A cooling skill cannot be chosen");
         check(hud!.ActualWidth < Field<Area>(window, "bounds").Right - Field<Area>(window, "bounds").Left, $"The HUD fits on the screen (width {hud.ActualWidth:F0})");
 

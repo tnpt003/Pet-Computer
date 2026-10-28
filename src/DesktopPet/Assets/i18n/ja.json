@@ -867,5 +867,21 @@
   "You learn: to dodge the slam (lift the cat out of the red zone or Shield), to break the King's shield by defeating his helpers, and to Push the King when his crown glows so no helper turns elite. Winning opens the Expedition and Infinity.": "学ぶこと：叩きつけをよける（赤い範囲から猫を持ち上げるかシールド）、手下を倒してキングのシールドを壊す、王冠が光ったらキングを押し出して手下のエリート化を止める。勝つと遠征とインフィニティが開く。",
   "You learn: to keep HP up until time runs out (Shield, Healing fish) and to deal with malware: click × on ads, hold the mouse on the loading ring, click Later on the update wall, click virus.exe away. A slime's virus turns an icon against the cat: click it a few times to clean it. From here on every battle has malware.": "学ぶこと：時間切れまで HP を保つ（シールド、回復の魚）、マルウェアの対処：広告は ×、読み込みリングは長押し、アップデートの壁は「後で」、virus.exe はクリックで削除。スライムのウイルスでアイコンが猫の敵になる：何回かクリックして駆除。ここからはどのバトルにもマルウェアが出る。",
   "You learn: to read the HUD (HP, waves, skills and their cooldown sweep), to use Push, the Healing fish, Cheer, the Yarn bomb and the Bubble shield, to open the bag, to use charged apps, to pick upgrade cards and what groups and synergies are. Rock slimes block some hits: keep at it or use the Yarn bomb.": "学ぶこと：HUD の見方（HP、ウェーブ、スキルとクールダウン）、押し出し・回復の魚・応援・毛糸ボム・バブルシールドの使い方、バッグ、チャージしたアプリ、強化カードの選び方とグループ・シナジー。岩スライムは攻撃を防ぐことがある：攻撃を続けるか毛糸ボムを使おう。",
-  "You learn: to spot a coming hit (a swelling slime, a red !), to lift the cat out of it (a carried cat cannot be hit), to put it down outside the red ring so the hit misses, and to dodge a quick slime's dash. The cat fights the nearest slime; click one to make it go for that one first.": "学ぶこと：攻撃の前ぶれ（膨らむスライム、赤い !）に気づく、猫を持ち上げてよける（持ち上げた猫は攻撃されない）、赤い輪の外に降ろして攻撃を外させる、素早いスライムの突進をよける。猫は一番近いスライムと戦い、クリックすればそのスライムを先に狙う。"
+  "You learn: to spot a coming hit (a swelling slime, a red !), to lift the cat out of it (a carried cat cannot be hit), to put it down outside the red ring so the hit misses, and to dodge a quick slime's dash. The cat fights the nearest slime; click one to make it go for that one first.": "学ぶこと：攻撃の前ぶれ（膨らむスライム、赤い !）に気づく、猫を持ち上げてよける（持ち上げた猫は攻撃されない）、赤い輪の外に降ろして攻撃を外させる、素早いスライムの突進をよける。猫は一番近いスライムと戦い、クリックすればそのスライムを先に狙う。",
+  "choose {0} skills ({1} chosen).": "スキルを {0} つ選んでください（いま {1} つ）。",
+  "Skills to bring ({0}/{1})": "持っていくスキル（{0}/{1}）",
+  "(Not open yet.)": "（まだ解放されていない。）",
+  "(Not open yet: coming in a later update.)": "（まだ解放されていない：今後のアップデートで登場。）",
+  "Choose {0} more. Point at a skill to see what it does.": "あと {0} つ選んでください。スキルにマウスを合わせると効果が見られる。",
+  "The skills stay for the whole run. Click a chosen skill to drop it, then choose another.": "スキルは遠征のあいだずっと同じ。選んだスキルをクリックして外し、別のスキルを選ぼう。",
+  "Click a chosen skill to drop it, then choose another. The choice is kept.": "選んだスキルをクリックして外し、別のスキルを選ぼう。選択は次回も覚えている。",
+  "Laser pointer — choose, then click a spot: slimes chase the red dot; it shows ghost and mirage slimes. Opens in chapter 2.": "レーザーポインター — 選んでから場所をクリック：スライムが赤い点を追いかけ、ゴーストと幻影のスライムが見える。第 2 章で解放。",
+  "Grabber": "クレーンアーム",
+  "Grabber — choose, then drag a small slime and throw it at another. Opens in chapter 2.": "クレーンアーム — 選んでから小さなスライムをドラッグし、別のスライムに投げつける。第 2 章で解放。",
+  "Scissors": "はさみ",
+  "Scissors — choose, then swipe across: cuts slime strings and pops bubbles. Opens in chapter 2.": "はさみ — 選んでから横にスワイプ：スライムの糸を切り、泡を割る。第 2 章で解放。",
+  "Fan": "扇風機",
+  "Fan — choose, then hold the mouse: blows slimes along and dries slime puddles. Opens in chapter 2.": "扇風機 — 選んでからマウスを押し続ける：スライムを吹き飛ばし、スライムの水たまりを乾かす。第 2 章で解放。",
+  "Water spray": "霧吹き",
+  "Water spray — choose, then hold the mouse: slimes slow down and shrink. Opens in chapter 2.": "霧吹き — 選んでからマウスを押し続ける：スライムが遅くなり、小さく縮む。第 2 章で解放。"
 }

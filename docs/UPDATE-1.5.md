@@ -1,7 +1,7 @@
 # Bản 1.5 — Slime phản công (thiết kế đã chốt)
 
 Ngày chốt hướng: 2026-10-26 (Asia/Saigon). Người dùng chọn "bản rất lớn", rồi chỉnh lại phần quái và kỹ năng qua trao đổi cùng ngày.
-Trạng thái: **đang code** — xong M01 (2026-10-28). Mỗi mốc bên dưới làm trong một phiên chat; trước mỗi mốc vẫn theo quy trình AGENTS.md (đọc → giải thích → chờ "ok" → làm → test → ghi nhớ).
+Trạng thái: **đang code** — xong M01, M02 (2026-10-28). Mỗi mốc bên dưới làm trong một phiên chat; trước mỗi mốc vẫn theo quy trình AGENTS.md (đọc → giải thích → chờ "ok" → làm → test → ghi nhớ).
 
 Ngoài danh sách này thì ý tưởng mới vào mục "Backlog sau 1.5" cuối file, không làm trong 1.5.
 
@@ -165,12 +165,12 @@ Mỗi mốc: build + `scripts/test.ps1 -Ui` đạt, test mới cho phần thêm 
 |---|---|---|
 | **Nền** | | |
 | M01 ✅ | Khung liên kết quái: khóa `link` trong battle.json (tether / rhythm / ride / merge / aura; **bỏ `bounce`** vì Q2 thành bẫy, người dùng duyệt 2026-10-28), vẽ dây/vòng, công tắc tắt từng liên kết, giới hạn 2 loại mỗi trận. Làm cả tác dụng gốc của 5 loại (người dùng chọn 2026-10-28); M09–M12 chỉ thêm quái thật | **Xong 2026-10-28:** BattleLinkTests (39 kiểm tra, quái giả); mô phỏng cân bằng chương 1 và Viễn chinh giống hệt trước từng dòng; chi tiết docs/BATTLE-DATA.md → Liên kết quái |
-| M02 | Chọn 5 trong 10 kỹ năng: dữ liệu, bảng chuẩn bị, lưu lựa chọn, ô khóa, lọc thẻ theo kỹ năng | Mặc định 5 kỹ năng cũ, chương 1 và kỷ lục cũ không đổi; đổi bộ thì HUD đổi đúng ô |
+| M02 ✅ | Chọn 5 trong 10 kỹ năng: dữ liệu, bảng chuẩn bị, lưu lựa chọn, ô khóa, lọc thẻ theo kỹ năng | **Xong 2026-10-28:** BattleLoadoutTests + UiChecks; mô phỏng cân bằng giống hệt trước từng dòng. Người dùng chốt: chương 1 luôn 5 kỹ năng cũ (mục chọn ẩn, chương có `skillChoice` mới chọn); kỷ lục không tách theo bộ kỹ năng; nút "Đổi kỹ năng" ở điểm nghỉ dời sang M06. 5 kỹ năng mới hiện ô khóa tới khi có tác dụng (M05/M06) và được mở bằng `unlocksSkill` (M21). Chi tiết: docs/BATTLE-DATA.md → Bộ kỹ năng mang theo |
 | M03 | Mèo đánh khi đang cầm (M1) + khung "tương tác ném" cho quái | Cầm mèo gần slime thì mèo vung vuốt; cú ném không gây sát thương cho quái thường; quái có cờ tương tác ném nhận va chạm (test bằng quái giả); physics kéo/ném không đổi (test drag/throw cũ đạt); vẫn không nhận sát thương khi cầm/bay; người dùng chọn cách chặn "cầm đánh mãi" |
 | M04 | Hiệu ứng trên quái (M2): độc, đóng băng, dính | Hiển thị rõ trên quái; có test thời gian/cộng dồn; Pause đóng băng hiệu ứng |
 | **Kỹ năng và vũ khí** | | |
 | M05 | Đèn laser, Quạt | Hai kỹ năng chạy, có sát thương nhẹ và thanh hơi (Quạt); hướng dẫn đứng hình chỉ cho kỹ năng đang dạy |
-| M06 | Kẹp gắp, Kéo cắt, Bình xịt nước | Click trúng mèo luôn nhấc mèo; đá/boss không gắp được; có test va chạm khi ném slime |
+| M06 | Kẹp gắp, Kéo cắt, Bình xịt nước; nút "Đổi kỹ năng" ở điểm nghỉ Viễn chinh (dời từ M02) | Click trúng mèo luôn nhấc mèo; đá/boss không gắp được; có test va chạm khi ném slime; đổi kỹ năng ở điểm nghỉ miễn phí, không thay lựa chọn hồi máu/thẻ |
 | M07 | K5 Mèo nổi giận | Thanh nộ trên HUD, 6 s hiệu ứng; không phá choáng/Pause/drag |
 | M08 | V1 Cuộn len, V2 Găng đấm | Chọn được ở bảng chuẩn bị; số liệu trong `weapons`; mô phỏng cân bằng không lệch quá kiếm/búa |
 | **Quái liên kết** | | |

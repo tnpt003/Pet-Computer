@@ -116,6 +116,15 @@ public sealed class Adventure
         return at.Index == 0 || IsCompleted(stageId) || IsCompleted(at.Chapter.Stages[at.Index - 1].Id);
     }
 
+    // The setup panel's skill choice for this stage: only in a chapter that allows it (chapter 1 keeps
+    // the five first skills, BattleSkills.Default).
+    public bool SkillChoice(StageSpec stage) => Locate(stage.Id) is { } at && at.Chapter.SkillChoice;
+
+    // A skill the user may carry: one that works, and is one of the five first or opened by a won
+    // stage (StageSpec.UnlocksSkill).
+    public bool SkillOpen(BattleSkill skill) => BattleSkills.Get(skill).Working && (Array.IndexOf(BattleSkills.Default, skill) >= 0
+        || Campaign.Chapters.SelectMany(c => c.Stages).Any(s => BattleSkills.Parse(s.UnlocksSkill) == skill && IsCompleted(s.Id)));
+
     // The stage after this one in its chapter (null for the last).
     public StageSpec? Next(string stageId) =>
         Locate(stageId) is { } at && at.Index + 1 < at.Chapter.Stages.Length ? at.Chapter.Stages[at.Index + 1] : null;

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
@@ -15,8 +16,8 @@ public sealed class BattleHud : Border
 {
     public event Action<BattleSkill>? SkillClicked;
     public event Action? PauseClicked, EndClicked, BagClicked;
-    // Slots follow the skill list (PetBattleData.cs): a new skill gets its slot automatically.
-    public static readonly BattleSkill[] SkillOrder = Array.ConvertAll(BattleSkills.All, info => info.Skill);
+    // One slot per skill the battle carries (BattleSim.Skills, in HUD order).
+    public IReadOnlyList<BattleSkill> SkillOrder { get; }
     private const double HpWidth = 170, BossWidth = 200;
     // The centre column (status, wave dots, boss bar, banner).
     public const double CentreWidth = 230;
@@ -34,7 +35,7 @@ public sealed class BattleHud : Border
     private readonly FrameworkElement hpBlock, statusBlock, skillBar;
     private readonly HudGlyph pauseGlyph;
     private readonly StackPanel waveDots, statusColumn;
-    private readonly SkillSlot[] slots = new SkillSlot[SkillOrder.Length];
+    private readonly SkillSlot[] slots;
     private double trail = 1, lastTime = -1, bannerUntil = -1;
     private int dotsFor = -1, dotsWave = -1;
     private (double Hp, double Max) shownHp = (-1, -1);
@@ -60,9 +61,11 @@ public sealed class BattleHud : Border
     private static readonly Brush BossColor = PetUi.Frozen(255, 0xB4, 0x8C, 0xF5), BossAngryColor = PetUi.Frozen(255, 0xE8, 0x6A, 0x6A), BossShieldColor = PetUi.Frozen(255, 0xFF, 0xD8, 0x5A);
     private static readonly Brush Soft = PetUi.Game.Soft, Gold = PetUi.Frozen(255, 0xFF, 0xD2, 0x3F), Dim = PetUi.Frozen(0x70, 255, 255, 255);
 
-    public BattleHud(string petName, PetRenderer portrait, Func<string> language)
+    public BattleHud(string petName, PetRenderer portrait, Func<string> language, IReadOnlyList<BattleSkill>? skills = null)
     {
         this.language = language;
+        SkillOrder = skills ?? BattleSkills.Default;
+        slots = new SkillSlot[SkillOrder.Count];
         Background = Panel; BorderBrush = Rim; BorderThickness = new Thickness(1.5);
         CornerRadius = new CornerRadius(12); Padding = new Thickness(10, 8, 10, 6); Margin = new Thickness(8);
         // No drop shadows here: on a transparent (layered) window every bitmap effect is redrawn in
@@ -171,7 +174,8 @@ public sealed class BattleHud : Border
         Child = new StackPanel { Children = { top, hint } };
     }
 
-    public SkillSlot Slot(BattleSkill skill) => slots[Array.IndexOf(SkillOrder, skill)];
+    // Null for a skill this battle does not carry.
+    public SkillSlot? Slot(BattleSkill skill) => Array.Find(slots, slot => slot.Skill == skill);
     public TextBlock ComboText => comboText;
     public string UpgradesText => upgradesText.Visibility == Visibility.Visible ? upgradesText.Text : "";
     public Border PauseButton => pauseButton;
@@ -462,7 +466,7 @@ public sealed class SkillSlot : Border
         Cursor = Cursors.Hand; ClipToBounds = true; Background = Back; BorderBrush = Ready;
         secondsBadge = new Border { Background = BadgeBack, CornerRadius = new CornerRadius(6), Padding = new Thickness(4, 0, 4, 1), Margin = new Thickness(0, 0, 1, 1),
             HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Bottom, IsHitTestVisible = false, Visibility = Visibility.Collapsed, Child = seconds };
-        Child = new Grid { Children = { new HudGlyph((HudGlyphKind)(int)skill) { Margin = new Thickness(6) }, wipe, flash, secondsBadge } };
+        Child = new Grid { Children = { new HudGlyph(HudGlyph.For(skill)) { Margin = new Thickness(6) }, wipe, flash, secondsBadge } };
     }
 
     private static System.Windows.Media.Animation.DoubleAnimation FlashAnimation()
@@ -533,13 +537,20 @@ public sealed class CooldownWipe : FrameworkElement
 }
 
 // Small vector icons for the HUD, in the cat's flat cartoon style (no font glyphs, no files).
-public enum HudGlyphKind { Push, Heal, Cheer, Bomb, Shield, Pause, Play, End, Crown, Bag }
+public enum HudGlyphKind { Push, Heal, Cheer, Bomb, Shield, Pause, Play, End, Crown, Bag, Laser, Grabber, Scissors, Fan, Spray, Lock }
 
 public sealed class HudGlyph : FrameworkElement
 {
     private HudGlyphKind kind;
     public HudGlyphKind Kind { get => kind; set { if (kind != value) { kind = value; InvalidateVisual(); } } }
     public HudGlyph(HudGlyphKind kind) { this.kind = kind; IsHitTestVisible = false; }
+    public static HudGlyphKind For(BattleSkill skill) => skill switch
+    {
+        BattleSkill.Push => HudGlyphKind.Push, BattleSkill.Heal => HudGlyphKind.Heal, BattleSkill.Cheer => HudGlyphKind.Cheer,
+        BattleSkill.Bomb => HudGlyphKind.Bomb, BattleSkill.Shield => HudGlyphKind.Shield, BattleSkill.Laser => HudGlyphKind.Laser,
+        BattleSkill.Grabber => HudGlyphKind.Grabber, BattleSkill.Scissors => HudGlyphKind.Scissors, BattleSkill.Fan => HudGlyphKind.Fan,
+        _ => HudGlyphKind.Spray
+    };
 
     private static Pen P(Brush b, double t) { var p = new Pen(b, t) { LineJoin = PenLineJoin.Round, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round }; p.Freeze(); return p; }
     private static Geometry G(string path) { var g = Geometry.Parse(path); g.Freeze(); return g; }
@@ -560,6 +571,18 @@ public sealed class HudGlyph : FrameworkElement
     private static readonly Geometry BagBody = G("M 4,10 L 20,10 L 18.5,21 L 5.5,21 Z");
     private static readonly Geometry BagHandle = G("M 8.5,10 C 8.5,4 15.5,4 15.5,10");
     private static readonly Geometry BagFlap = G("M 4,10 L 20,10 L 19.3,14.5 L 4.7,14.5 Z");
+    // 1.5 skills (simple first drawings; milestones M05/M06 may refine them) and the setup panel's lock.
+    private static readonly Brush Red = PetUi.Frozen(Color.FromRgb(0xF2, 0x5C, 0x54)), Steel = PetUi.Frozen(Color.FromRgb(0xC9, 0xD3, 0xDE));
+    private static readonly Brush Leaf = PetUi.Frozen(Color.FromRgb(0x6F, 0xC9, 0x8A)), Water = PetUi.Frozen(Color.FromRgb(0x62, 0xB8, 0xF0));
+    private static readonly Pen RedBeam = P(PetUi.Frozen(Color.FromArgb(0xC0, 0xF2, 0x5C, 0x54)), 2);
+    private static readonly Pen InkBold = P(PetUi.ArtInk, 2.2), SteelLine = P(Steel, 1.2);
+    private static readonly Geometry PointerBody = G("M 3,17 L 13,7 L 17,11 L 7,21 Z");
+    private static readonly Geometry ClawArm = G("M 12,2 L 12,9 M 12,9 C 7,10 6,15 8,19 M 12,9 C 17,10 18,15 16,19");
+    private static readonly Geometry Blades = G("M 6,4 L 16,16 M 18,4 L 8,16");
+    private static readonly Geometry FanBlades = G("M 12,12 C 8,4 14,2 15,6 Z M 12,12 C 20,10 21,16 17,16 Z M 12,12 C 8,18 3,15 5,12 Z");
+    private static readonly Geometry Bottle = G("M 7,10 L 15,10 L 16,21 L 6,21 Z");
+    private static readonly Geometry Nozzle = G("M 9,10 L 9,6 L 15,6 L 15,8 L 12,8 L 12,10");
+    private static readonly Geometry Shackle = G("M 8,11 L 8,8 C 8,3 16,3 16,8 L 16,11");
 
     protected override void OnRender(DrawingContext dc)
     {
@@ -593,6 +616,36 @@ public sealed class HudGlyph : FrameworkElement
             case HudGlyphKind.Play: dc.DrawGeometry(Brushes.White, null, PlayShape); break;
             case HudGlyphKind.End: dc.DrawGeometry(null, WhiteBold, Cross); break;
             case HudGlyphKind.Crown: dc.DrawGeometry(GoldFill, InkPen, CrownShape); break;
+            case HudGlyphKind.Laser:
+                dc.DrawLine(RedBeam, new Point(15, 9), new Point(20.5, 3.5));
+                dc.DrawGeometry(Steel, InkPen, PointerBody);
+                dc.DrawEllipse(Red, InkPen, new Point(21, 3), 2, 2);
+                break;
+            case HudGlyphKind.Grabber:
+                dc.DrawGeometry(null, InkBold, ClawArm);
+                dc.DrawGeometry(null, SteelLine, ClawArm);
+                dc.DrawEllipse(Leaf, InkPen, new Point(12, 19), 4, 3);
+                break;
+            case HudGlyphKind.Scissors:
+                dc.DrawGeometry(null, InkBold, Blades);
+                dc.DrawEllipse(Salmon, InkPen, new Point(6, 18.5), 3, 3);
+                dc.DrawEllipse(Salmon, InkPen, new Point(18, 18.5), 3, 3);
+                break;
+            case HudGlyphKind.Fan:
+                dc.DrawGeometry(Water, InkPen, FanBlades);
+                dc.DrawEllipse(GoldFill, InkPen, new Point(12, 12), 2, 2);
+                break;
+            case HudGlyphKind.Spray:
+                dc.DrawGeometry(Steel, InkPen, Nozzle);
+                dc.DrawGeometry(Water, InkPen, Bottle);
+                dc.DrawEllipse(Water, null, new Point(19, 5), 1.2, 1.2);
+                dc.DrawEllipse(Water, null, new Point(21, 8), 1, 1);
+                break;
+            case HudGlyphKind.Lock:
+                dc.DrawGeometry(null, InkBold, Shackle);
+                dc.DrawRectangle(GoldFill, InkPen, new Rect(6, 11, 12, 9));
+                dc.DrawEllipse(PetUi.ArtInk, null, new Point(12, 15.5), 1.4, 1.4);
+                break;
             case HudGlyphKind.Bag:
                 dc.DrawGeometry(null, WhiteThin, BagHandle);
                 dc.DrawGeometry(Salmon, InkPen, BagBody);

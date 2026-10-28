@@ -42,6 +42,13 @@ public sealed partial class PetWindow
     private Border? prepGuideChip;
     private Path? prepGuideCheck;
     private TextBlock? prepGuideLabel, prepGuideHint;
+    // The five skills (1.5): ten chips, the five first in the top row; a skill not open yet shows a lock.
+    // Hidden for a chapter 1 stage (always the five first skills); Ready needs exactly five.
+    private readonly HashSet<BattleSkill> prepSkills = new();
+    private BattleSkill? prepSkillHover;
+    private readonly List<(BattleSkill Skill, Border Chip, UIElement Lock)> prepSkillChips = new();
+    private TextBlock? prepSkillsLabel, prepSkillsHint;
+    private FrameworkElement? prepSkillsGrid;
     private double prepRefresh;
     private readonly List<(string Id, Border Card, Path Check, TextBlock Name, TextBlock Hint, TextBlock[] StatNames, TextBlock[] StatValues)> prepCards = new();
     private readonly List<(BattleDifficulty Level, Border Chip, Path Check, TextBlock Text)> prepLevelChips = new();
@@ -76,6 +83,9 @@ public sealed partial class PetWindow
     public bool BattlePrepApps => prepApps;
     public bool BattlePrepGuide => prepGuide;
     public bool BattlePrepHasGuide => StageHasGuide(prepStage);
+    public bool BattlePrepHasSkillChoice => battlePreparing && (prepForExpedition || prepForEndless || StageSkillChoice(prepStage));
+    public IReadOnlyList<BattleSkill> BattlePrepSkills => BattleSkills.All.Select(info => info.Skill).Where(prepSkills.Contains).ToArray();
+    public string BattlePrepSkillsHint => prepSkillsHint?.Text ?? "";
     private bool PrepHasApps => prepStage != null || prepForExpedition || prepForEndless;
     public bool BattlePrepVisible => battlePrepWindow?.IsVisible == true;
     public bool BattlePrepReadyEnabled => prepReady?.IsEnabled == true;
@@ -86,7 +96,8 @@ public sealed partial class PetWindow
     public string BattlePrepText => string.Join("\n", new[] { prepTitle, prepBuild, prepData, prepStatus, prepTryText, prepGuideText, prepTipText, prepCancelText, prepReadyText }
         .Where(t => t is { Visibility: Visibility.Visible }).Select(t => t!.Text)
         .Concat(prepCards.SelectMany(c => new[] { c.Name.Text, c.Hint.Text }.Concat(c.StatValues.Select(v => v.Text))))
-        .Concat(prepLevelChips.Select(c => c.Text.Text)));
+        .Concat(prepLevelChips.Select(c => c.Text.Text))
+        .Concat(new[] { prepSkillsLabel, prepSkillsHint }.Where(t => t is { Visibility: Visibility.Visible }).Select(t => t!.Text)));
 
     // The numbers a card shows, from the weapon's own data (what the battle really uses).
     public static (double Damage, double Speed, double Reach, double Knock) WeaponStats(WeaponSpec w) =>
@@ -130,6 +141,9 @@ public sealed partial class PetWindow
         prepDifficulty = level is BattleDifficulty chosen && Enum.IsDefined(chosen) ? chosen : BattleDifficultyChoice;
         prepApps = preferences.BattleApps;
         prepGuide = preferences.AdventureGuide;
+        prepSkills.Clear();
+        prepSkills.UnionWith(BattleLoadoutChoice);
+        prepSkillHover = null;
         battlePreparing = true;
         CloseBattleSummary(); CloseBattleNotice();
         queuedCommand = null;
@@ -174,6 +188,21 @@ public sealed partial class PetWindow
         return true;
     }
 
+    // A skill chip: a chosen skill is put back; an open one is added while fewer than five are chosen.
+    // A locked skill (or a sixth) changes nothing; the hint under the chips says why.
+    public bool BattlePrepToggleSkill(BattleSkill skill)
+    {
+        if (!BattlePrepHasSkillChoice) return false;
+        prepSkillHover = skill;
+        bool changed = prepSkills.Remove(skill) || (BattleSkillOpen(skill) && prepSkills.Count < BattleSkills.Carry && prepSkills.Add(skill));
+        UpdateBattlePrep();
+        return changed;
+    }
+
+    // Null when the skill choice lets Ready go on.
+    private string? PrepSkillsRefusal() => BattlePrepHasSkillChoice && prepSkills.Count != BattleSkills.Carry
+        ? LF($"chọn đủ {BattleSkills.Carry} kỹ năng (đang có {prepSkills.Count}).", $"choose {BattleSkills.Carry} skills ({prepSkills.Count} chosen).") : null;
+
     // Ready: checks the cat again now, remembers the choice and starts the fight. Null on success.
     // A second press (double click) finds no panel and does nothing.
     public string? BattlePrepReady()
@@ -181,7 +210,9 @@ public sealed partial class PetWindow
         if (!battlePreparing || battle != null) return L("Không có bảng chuẩn bị.", "No battle setup is open.");
         // A run's loadout starts no battle yet: only what keeps the panel open is checked.
         if ((prepForExpedition ? BattlePrepRefusal() : BattleRefusal()) is string reason) { UpdateBattlePrep(); return reason; }
+        if (PrepSkillsRefusal() is string skills) { UpdateBattlePrep(); return skills; }
         SetBattleWeapon(prepWeapon);
+        if (BattlePrepHasSkillChoice) SetBattleLoadout(prepSkills.ToArray());
         SetBattleDifficulty(prepDifficulty);
         if (PrepHasApps && preferences.BattleApps != prepApps) { preferences.BattleApps = prepApps; SavePreferences(); }
         if (BattleTutorialOpen) CloseBattleTutorial(finished: true);
@@ -222,7 +253,8 @@ public sealed partial class PetWindow
         battlePrepWindow = null;
         prepReady = null;
         prepPreview = null; prepPreviewView = null; prepHitMark = null;
-        prepCards.Clear(); prepLevelChips.Clear();
+        prepCards.Clear(); prepLevelChips.Clear(); prepSkillChips.Clear();
+        prepSkillsLabel = prepSkillsHint = null; prepSkillsGrid = null;
         prepAppsChip = null; prepAppsCheck = null; prepAppsLabel = prepAppsText = prepAppsHint = null;
         prepGuideChip = null; prepGuideCheck = null; prepGuideLabel = prepGuideText = prepGuideHint = null;
         prepStage = null;
@@ -396,6 +428,29 @@ public sealed partial class PetWindow
         prepAppsChip.MouseLeftButtonDown += (_, e) => { BattlePrepChooseApps(!prepApps); e.Handled = true; };
         prepAppsHint = Line(PetUi.CaptionSize, maxWidth: 300); prepAppsHint.Opacity = 0.8; prepAppsHint.Margin = new Thickness(0, 4, 0, 0);
 
+        // The skills: two rows of five chips (the five first, then the 1.5 ones), a hint under them.
+        prepSkillsLabel = Line(PetUi.SmallSize); prepSkillsLabel.Opacity = 0.75; prepSkillsLabel.Margin = new Thickness(0, 8, 0, 4);
+        var skillRows = new WrapPanel { Width = BattleSkills.Carry * 42, HorizontalAlignment = HorizontalAlignment.Left };
+        prepSkillChips.Clear();
+        foreach (var info in BattleSkills.All)
+        {
+            var skill = info.Skill;
+            var mark = new HudGlyph(HudGlyphKind.Lock) { Width = 15, Height = 15, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Bottom,
+                Margin = new Thickness(0, 0, -4, -4) };
+            var chip = new Border
+            {
+                Width = 36, Height = 36, CornerRadius = new CornerRadius(8), BorderThickness = new Thickness(1.5), Margin = new Thickness(0, 0, 6, 6), Padding = new Thickness(5),
+                Cursor = System.Windows.Input.Cursors.Hand, Child = new Grid { Children = { new HudGlyph(HudGlyph.For(skill)), mark } }
+            };
+            chip.MouseLeftButtonDown += (_, e) => { BattlePrepToggleSkill(skill); e.Handled = true; };
+            chip.MouseEnter += (_, _) => { prepSkillHover = skill; UpdateBattlePrep(); };
+            chip.MouseLeave += (_, _) => { if (prepSkillHover == skill) { prepSkillHover = null; UpdateBattlePrep(); } };
+            skillRows.Children.Add(chip);
+            prepSkillChips.Add((skill, chip, mark));
+        }
+        prepSkillsGrid = skillRows;
+        prepSkillsHint = Line(PetUi.CaptionSize, maxWidth: 300); prepSkillsHint.Opacity = 0.85;
+
         // The Adventure Guide (a chapter 1 stage): one chip, on until the stage is won.
         prepGuideLabel = Line(PetUi.SmallSize); prepGuideLabel.Opacity = 0.75; prepGuideLabel.Margin = new Thickness(0, 8, 0, 4);
         prepGuideCheck = Check();
@@ -417,7 +472,7 @@ public sealed partial class PetWindow
         prepReady = ready; prepReadyText = readyText; prepCancelText = cancelText;
         var actions = PanelActions(new UIElement[] { prepTipText }, new UIElement[] { ready, cancel });
 
-        var choices = new StackPanel { Width = 300, Children = { prepWeaponLabel, cards, prepLevelLabel, levels, prepAppsLabel, prepAppsChip, prepAppsHint, prepGuideLabel, prepGuideChip, prepGuideHint } };
+        var choices = new StackPanel { Width = 300, Children = { prepWeaponLabel, cards, prepLevelLabel, levels, prepSkillsLabel, skillRows, prepSkillsHint, prepAppsLabel, prepAppsChip, prepAppsHint, prepGuideLabel, prepGuideChip, prepGuideHint } };
         var title = PanelTitle(prepTitle);
         var window = CreateGamePanel(new StackPanel { Children = { title, new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 10, 0, 0), Children = { stage, choices } },
             prepBuild, prepData, prepStatus } }, actions, "Pet setup");
@@ -470,6 +525,26 @@ public sealed partial class PetWindow
                 : L("Không có icon app hay virus. Kỷ lục lưu riêng.", "No app icons or viruses. Records are kept apart.");
             ShowChosen(prepAppsChip, prepApps, prepAppsCheck!);
         }
+        if (prepSkillsGrid != null)
+        {
+            var shown = BattlePrepHasSkillChoice ? Visibility.Visible : Visibility.Collapsed;
+            prepSkillsLabel!.Visibility = prepSkillsGrid.Visibility = prepSkillsHint!.Visibility = shown;
+            prepSkillsLabel.Text = LF($"Kỹ năng mang theo ({prepSkills.Count}/{BattleSkills.Carry})", $"Skills to bring ({prepSkills.Count}/{BattleSkills.Carry})");
+            foreach (var (skill, chip, mark) in prepSkillChips)
+            {
+                bool open = BattleSkillOpen(skill), carried = prepSkills.Contains(skill);
+                ShowChosen(chip, carried);
+                mark.Visibility = open ? Visibility.Collapsed : Visibility.Visible;
+                chip.Opacity = open || carried ? 1 : 0.5;
+            }
+            prepSkillsHint.Text = prepSkillHover is BattleSkill hover
+                ? BattleSkills.Get(hover).Describe(BattleTuning, preferences.Language)
+                    + (BattleSkillOpen(hover) || prepSkills.Contains(hover) ? ""
+                        : " " + (BattleSkills.Get(hover).Working ? L("(Chưa mở.)", "(Not open yet.)") : L("(Chưa mở: có trong bản cập nhật sau.)", "(Not open yet: coming in a later update.)")))
+                : prepSkills.Count < BattleSkills.Carry ? LF($"Chọn thêm {BattleSkills.Carry - prepSkills.Count} kỹ năng. Rê chuột lên ô để xem tác dụng.", $"Choose {BattleSkills.Carry - prepSkills.Count} more. Point at a skill to see what it does.")
+                : prepForExpedition ? L("Bộ kỹ năng giữ suốt chuyến. Bấm một ô đã chọn để bỏ, rồi chọn ô khác.", "The skills stay for the whole run. Click a chosen skill to drop it, then choose another.")
+                : L("Bấm một ô đã chọn để bỏ, rồi chọn ô khác. Lựa chọn được nhớ cho lần sau.", "Click a chosen skill to drop it, then choose another. The choice is kept.");
+        }
         if (prepGuideChip != null)
         {
             var shown = StageHasGuide(prepStage) ? Visibility.Visible : Visibility.Collapsed;
@@ -490,7 +565,7 @@ public sealed partial class PetWindow
         Show(prepData, BattleDataError != null
             ? L("File battle.json của bạn có lỗi nên dùng dữ liệu gốc: ", "Your battle.json has a mistake, so the built-in battle is used: ") + BattleDataError
             : BattleDataCustom ? L("Đang dùng dữ liệu trận tùy chỉnh (battle.json).", "Using your custom battle data (battle.json).") : null);
-        string? waiting = prepForExpedition ? BattlePrepRefusal() : BattleRefusal();
+        string? waiting = (prepForExpedition ? BattlePrepRefusal() : BattleRefusal()) ?? PrepSkillsRefusal();
         Show(prepStatus, waiting != null ? L("Chưa thể bắt đầu: ", "Not yet: ") + waiting : null);
         prepReadyText!.Text = prepForExpedition ? L("Lên đường", "Set out") : L("Sẵn sàng", "Ready");
         prepCancelText!.Text = prepStage != null || prepForExpedition ? L("‹ Bản đồ", "‹ Map") : prepForEndless ? L("‹ Sảnh", "‹ Hub") : L("Đóng", "Close");

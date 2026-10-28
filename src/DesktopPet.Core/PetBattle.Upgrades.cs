@@ -16,7 +16,7 @@ public sealed partial class BattleSim
     private void OfferUpgrades()
     {
         if (Stage?.MaxUpgrades is int cap && Picks >= cap) return;
-        bool Open(UpgradeSpec u) => (StackLimit(u) == 0 || Stacks(u.Id) < StackLimit(u)) && (!u.NeedsApps || AppRules != null);
+        bool Open(UpgradeSpec u) => (StackLimit(u) == 0 || Stacks(u.Id) < StackLimit(u)) && (!u.NeedsApps || AppRules != null) && Carries(u.Skill);
         var cards = new List<UpgradeSpec>();
         foreach (var group in BuildGroups.All)
         {

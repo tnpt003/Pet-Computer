@@ -232,8 +232,8 @@ public sealed class BattleSettings
         new UpgradeSpec { Id = "quick_hands", NameVi = "Tay nhanh", NameEn = "Quick hands", DescVi = "−10% thời gian hồi kỹ năng", DescEn = "−10% skill cooldowns", Effect = "skillCooldown", Amount = 0.1, MaxStacks = 3 },
         new UpgradeSpec { Id = "power_bank", NameVi = "Sạc pin", NameEn = "Power bank", DescVi = "App trên màn hình sạc nhanh hơn 8%", DescEn = "Desktop apps charge 8% faster", Effect = "appCharge", Amount = 0.08, MaxStacks = 3 },
         new UpgradeSpec { Id = "energy_drain", NameVi = "Hút năng lượng", NameEn = "Energy drain", DescVi = "Mỗi quái bị hạ: app sạc thêm 1%", DescEn = "Each defeated enemy: apps charge 1% more", Effect = "killCharge", Amount = 0.01, MaxStacks = 3 },
-        new UpgradeSpec { Id = "big_bomb", NameVi = "Bom to", NameEn = "Big bomb", DescVi = "Bom len to hơn và mạnh hơn 20%", DescEn = "Yarn bomb 20% bigger and stronger", Effect = "bomb", Amount = 0.2, MaxStacks = 2 },
-        new UpgradeSpec { Id = "thick_bubble", NameVi = "Khiên dày", NameEn = "Thick bubble", DescVi = "Khiên bong bóng kéo dài thêm 1 giây", DescEn = "Bubble shield lasts 1 s longer", Effect = "shieldTime", Amount = 1, MaxStacks = 2 },
+        new UpgradeSpec { Id = "big_bomb", Skill = "bomb", NameVi = "Bom to", NameEn = "Big bomb", DescVi = "Bom len to hơn và mạnh hơn 20%", DescEn = "Yarn bomb 20% bigger and stronger", Effect = "bomb", Amount = 0.2, MaxStacks = 2 },
+        new UpgradeSpec { Id = "thick_bubble", Skill = "shield", NameVi = "Khiên dày", NameEn = "Thick bubble", DescVi = "Khiên bong bóng kéo dài thêm 1 giây", DescEn = "Bubble shield lasts 1 s longer", Effect = "shieldTime", Amount = 1, MaxStacks = 2 },
     };
 
     // From battle.json "synergies": what 3 points of a group switch on (null: the built-in three).
@@ -357,8 +357,9 @@ public sealed class DifficultySpec
     public double EnemySpeed { get; init; } = 1;
 }
 
-// Push and Bomb are aimed (choose, then click a slime); the others act at once.
-public enum BattleSkill { Push, Heal, Cheer, Bomb, Shield }
+// Push and Bomb are aimed (choose, then click a slime); the others act at once. The last five
+// (1.5) are in the data and the setup panel's choice but have no effect yet (BattleSkillInfo.Working).
+public enum BattleSkill { Push, Heal, Cheer, Bomb, Shield, Laser, Grabber, Scissors, Fan, Spray }
 
 // Casting: a support enemy winds up a heal (a green "+"), near or far; a push or stun cancels it.
 // Dashing: a dash enemy's lunge after its windup (it hits the cat once at most).

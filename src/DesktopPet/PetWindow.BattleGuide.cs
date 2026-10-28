@@ -245,7 +245,7 @@ public sealed partial class PetWindow
     private Rect? SkillBarSpot()
     {
         if (battleHud == null) return null;
-        var slots = BattleHud.SkillOrder.Select(k => Whole(battleHud.Slot(k), 0)).Where(r => r != null).Select(r => r!.Value).ToList();
+        var slots = battleHud.SkillOrder.Select(k => Whole(battleHud.Slot(k), 0)).Where(r => r != null).Select(r => r!.Value).ToList();
         if (slots.Count == 0) return null;
         var all = slots.Aggregate(Rect.Union);
         all.Inflate(GuidePad, GuidePad);

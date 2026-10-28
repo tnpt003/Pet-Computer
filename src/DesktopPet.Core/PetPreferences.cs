@@ -76,6 +76,9 @@ public sealed class PetPreferences
     // The app icons above the battlefield (Adventure, Expedition, Infinity), chosen in the setup
     // panel. Off: no icons and no viruses; such runs keep their records apart.
     public bool BattleApps { get; set; } = true;
+    // The five skills chosen in the setup panel (skill ids; null: the five first ones, BattleSkills.Default).
+    // Read through BattleSkills.Loadout, so ids that no longer fit fall back to the default.
+    public List<string>? BattleLoadout { get; set; }
     // The Adventure Guide in chapter 1 stages (the setup panel's chip, kept from its last Ready): on by default.
     public bool AdventureGuide { get; set; } = true;
     public string? PositionMonitor { get; set; }

@@ -90,7 +90,7 @@ internal static class BattleDataTests
             "{ \"schemaVersion\": 1, \"pushCooldown\": 7, \"skills\": [ { \"id\": \"heal\", \"nameEn\": \"Fish snack\", \"descEn\": \"Snack: +{healAmount} HP, every {HEALCOOLDOWN} s\" } ] }");
         check(BattleSkills.Get(BattleSkill.Heal).Name("en", renamed) == "Fish snack" && BattleSkills.Get(BattleSkill.Heal).Name("vi", renamed) == "Cá hồi máu" &&
               BattleSkills.Get(BattleSkill.Heal).Describe(renamed, "en") == "Snack: +25 HP, every 14 s" &&
-              BattleSkills.Get(BattleSkill.Push).Describe(renamed, "en").EndsWith("7 s cooldown.") && renamed.SkillList.Count == 5,
+              BattleSkills.Get(BattleSkill.Push).Describe(renamed, "en").EndsWith("7 s cooldown.") && renamed.SkillList.Count == BattleSkills.All.Length,
             "A user file changes one skill's texts by id (keys ignore case); the others and new numbers still show");
         string SkillError(string skills)
         {

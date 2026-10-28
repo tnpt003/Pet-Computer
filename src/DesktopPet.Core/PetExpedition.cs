@@ -110,6 +110,7 @@ public sealed class ExpeditionSpec
             if (!relicIds.Add(r.Id)) throw new InvalidDataException($"relic id \"{r.Id}\" is used twice");
             text(r.NameVi, where + ".nameVi"); text(r.NameEn, where + ".nameEn"); Desc(r.DescVi, r.DescEn, where);
             if (Array.IndexOf(RelicSpec.Effects, r.Effect) < 0) throw new InvalidDataException($"{where}.effect must be one of: {string.Join(", ", RelicSpec.Effects)}");
+            if (r.Skill != null && BattleSkills.Parse(r.Skill) == null) throw new InvalidDataException($"{where}.skill must be a skill id: {BattleData.KnownSkills}");
             foreach (var (value, name, max) in new[] { (r.Amount, "amount", 2.0), (r.Extra, "extra", 0.5), (r.Penalty, "penalty", r.Effect switch { RelicSpec.Light => 50.0, RelicSpec.Counter => 30.0, _ => 2.0 }), (r.Below, "below", 1.0) })
                 if (!double.IsFinite(value) || value < 0 || value > max) throw new InvalidDataException($"{where}.{name} must be 0–{max}");
         }
@@ -281,6 +282,8 @@ public sealed class RelicSpec
     public double Extra { get; init; }
     public double Penalty { get; init; }
     public double Below { get; init; }
+    // A skill id ("shield", "heal"…): only offered to a run that carries that skill.
+    public string? Skill { get; init; }
     public string Name(string language) => PetText.Data(language, NameVi, NameEn);
     public string Describe(string language) => PetText.Data(language, DescVi, DescEn);
 }
@@ -298,6 +301,9 @@ public sealed class ExpeditionRun
     public string Difficulty { get; set; } = nameof(BattleDifficulty.Normal);
     // The app icons were turned off when the run set out: none in its battles, its records kept apart.
     public bool NoApps { get; set; }
+    // The five skills the run set out with (null: BattleSkills.Default; read through BattleSkills.Loadout).
+    public List<string>? Skills { get; set; }
+    [JsonIgnore] public BattleSkill[] Loadout => BattleSkills.Loadout(Skills);
     // Encounter ids per step, in lane order (the boss's step last). With the kind gacha a step not
     // drawn yet is empty, and Kinds holds each drawn step's node kinds (null: the data's fixed steps).
     public List<string[]> Map { get; set; } = new();
@@ -465,7 +471,7 @@ public sealed class Expedition
     // A new run (replacing none: the caller ends the old one first). The map is drawn from the
     // seed once and kept, so closing and opening the map, or resuming, never draws it again.
     // With the kind gacha only the boss is drawn now; each step is drawn by Roll when the run gets there.
-    public ExpeditionRun Start(string weapon, BattleDifficulty difficulty, int seed, string? runId = null, bool noApps = false)
+    public ExpeditionRun Start(string weapon, BattleDifficulty difficulty, int seed, string? runId = null, bool noApps = false, IReadOnlyList<BattleSkill>? skills = null)
     {
         var random = BattleRandom.Stream(seed, 50);
         var map = new List<string[]>();
@@ -480,7 +486,8 @@ public sealed class Expedition
         var run = new ExpeditionRun
         {
             RunId = runId ?? Guid.NewGuid().ToString("N"), Expedition = Spec.Id, RulesVersion = Spec.RulesVersion, Seed = seed,
-            Weapon = Settings.Weapon(weapon).Id, Difficulty = difficulty.ToString(), NoApps = noApps, Map = map, Kinds = kinds
+            Weapon = Settings.Weapon(weapon).Id, Difficulty = difficulty.ToString(), NoApps = noApps, Map = map, Kinds = kinds,
+            Skills = BattleSkills.Save(BattleSkills.Order(skills ?? BattleSkills.Default) ?? BattleSkills.Default)
         };
         run.Hp = MaxHp(run);
         Progress.Active = run;
@@ -711,7 +718,9 @@ public sealed class Expedition
     private string[] DrawRelics(ExpeditionRun run, int count, Random random)
     {
         if (run.Relics.Count >= Spec.MaxRelics) return Array.Empty<string>();
-        var left = Spec.Relics.Select(r => r.Id).Where(id => !run.Relics.Contains(id)).ToList();
+        var carried = run.Loadout;
+        var left = Spec.Relics.Where(r => r.Skill == null || Array.IndexOf(carried, BattleSkills.Parse(r.Skill)) >= 0)
+            .Select(r => r.Id).Where(id => !run.Relics.Contains(id)).ToList();
         var drawn = new List<string>();
         while (drawn.Count < count && left.Count > 0) { int i = random.Next(left.Count); drawn.Add(left[i]); left.RemoveAt(i); }
         return drawn.ToArray();
@@ -721,7 +730,7 @@ public sealed class Expedition
     // battle seeded by the node, at full HP (no instant heal: resting is the heal).
     private string[] DrawCards(ExpeditionRun run, int seed)
     {
-        var sim = new BattleSim(Settings, 0, 1000, build: run.Build, seed: seed, relics: run.Relics);
+        var sim = new BattleSim(Settings, 0, 1000, build: run.Build, seed: seed, relics: run.Relics, skills: run.Loadout);
         return sim.OfferCards()?.Select(u => u.Id).ToArray() ?? Array.Empty<string>();
     }
 

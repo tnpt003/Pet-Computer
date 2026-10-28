@@ -243,7 +243,7 @@ public sealed partial class PetWindow
         {
             if (expedition.Run is ExpeditionRun run)
             {
-                var sim = new BattleSim(settings, 0, 1000, weapon: run.Weapon, build: run.Build, seed: 0, relics: run.Relics);
+                var sim = new BattleSim(settings, 0, 1000, weapon: run.Weapon, build: run.Build, seed: 0, relics: run.Relics, skills: run.Loadout);
                 return new(BagExpedition, sim, Plain(settings, sim.Weapon.Id), run.Hp,
                     StepTitle(Math.Min(run.Step, Math.Max(0, run.Map.Count - 1)), run.Map.Count) + " · " + DifficultyName(run.Level), expedition, run, false);
             }

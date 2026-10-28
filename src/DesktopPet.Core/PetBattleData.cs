@@ -313,6 +313,9 @@ public sealed class ChapterSpec
     public string NameVi { get; init; } = "";
     public string NameEn { get; init; } = "";
     public StageSpec[] Stages { get; init; } = Array.Empty<StageSpec>();
+    // The setup panel lets the user choose the five skills for this chapter's stages (1.5). Unset
+    // (chapter 1): its stages always have the five first skills (BattleSkills.Default).
+    public bool SkillChoice { get; init; }
     public string Name(string language) => PetText.Data(language, NameVi, NameEn);
 }
 
@@ -371,6 +374,8 @@ public sealed class StageSpec
     public double MalwareFrom { get; init; }
     // An accessory id (Assets/accessories.json) given once, the first time the stage is won.
     public string? Reward { get; init; }
+    // A skill id: winning this stage opens that skill for the setup panel's choice (Adventure.SkillOpen).
+    public string? UnlocksSkill { get; init; }
     // A short tip shown once when the stage first starts (and again from its setup panel).
     public string? TipVi { get; init; }
     public string? TipEn { get; init; }
@@ -417,6 +422,8 @@ public sealed class UpgradeSpec
     public int? EndlessMaxStacks { get; init; }
     // Only offered in battles with the desktop apps (its effect is about them).
     [JsonIgnore] public bool NeedsApps => Effect is "appCharge" or "killCharge";
+    // A skill id ("bomb", "shield"…): only offered in battles that carry that skill (its effect is about it).
+    public string? Skill { get; init; }
     // A rare card (up to two per group, at most once a build): it takes the place of its group's card in an
     // offer with BattleSettings.RareChance. It plays differently, not better in every way.
     public bool Rare { get; init; }
@@ -475,6 +482,8 @@ public sealed record BattleDataLoad(BattleSettings Settings, bool Custom, string
 
 public static class BattleData
 {
+    // The skill ids a "skill" field may name, for error messages.
+    public static string KnownSkills => string.Join(", ", BattleSkills.All.Select(info => BattleSkills.Id(info.Skill)));
     public const int SchemaVersion = 1;
     public static string UserFilePath => Path.Combine(PetPreferences.DataDirectory, "battle.json");
     private static readonly Lazy<BattleSettings> Loaded = new(LoadBuiltIn);
@@ -677,7 +686,7 @@ public static class BattleData
         foreach (var skill in BattleSkills.All) Positive(skill.Cooldown(s), skill.Skill + " cooldown");
         if (s.Skills != null)
         {
-            string known = string.Join(", ", BattleSkills.All.Select(info => info.Skill.ToString().ToLowerInvariant()));
+            string known = KnownSkills;
             var skillIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             for (int i = 0; i < s.Skills.Length; i++)
             {
@@ -1008,6 +1017,7 @@ public static class BattleData
             if (u.Group != null && Array.IndexOf(BuildGroups.All, u.Group) < 0) throw new InvalidDataException($"{at}.group must be one of: {string.Join(", ", BuildGroups.All)} (or left out)");
             if (u.Group != null && u.Effect == "heal") throw new InvalidDataException($"{at}: a heal card cannot belong to a group");
             if (u.Rare && (u.Group == null || u.MaxStacks != 1)) throw new InvalidDataException($"{at}: a rare card needs a group and maxStacks 1");
+            if (u.Skill != null && BattleSkills.Parse(u.Skill) == null) throw new InvalidDataException($"{at}.skill must be a skill id: {KnownSkills}");
         }
         foreach (var group in BuildGroups.All)
             if (s.UpgradeList.Count(u => u.Rare && u.Group == group) > 2) throw new InvalidDataException($"upgrades: at most two rare cards per group ({group})");
@@ -1120,6 +1130,8 @@ public static class BattleData
         }
         if ((stage.TipVi == null) != (stage.TipEn == null) || stage.TipVi?.Length > 400 || stage.TipEn?.Length > 400)
             throw new InvalidDataException($"{where} tips need both languages, at most 400 characters each");
+        if (stage.UnlocksSkill != null && BattleSkills.Parse(stage.UnlocksSkill) == null)
+            throw new InvalidDataException($"{where}.unlocksSkill must be a skill id: {BattleData.KnownSkills}");
         if (stage.Reward != null && PetAccessories.Find(stage.Reward) is not { Reward: not null })
             throw new InvalidDataException($"{where}.reward \"{stage.Reward}\" is not a reward accessory in accessories.json");
     }
@@ -1129,8 +1141,9 @@ public static class BattleData
 // Names and descriptions are data (battle.json "skills", SkillSpec); a description's {key} is
 // filled with that number of the battle, so battle.json changes show in the HUD. Adding a
 // skill: a BattleSkill value, an entry here and in BuiltIn/"skills", its HudGlyph and its
-// effect in BattleSim.Use.
-public sealed record BattleSkillInfo(BattleSkill Skill, bool Aimed, Func<BattleSettings, double> Cooldown)
+// effect in BattleSim.Use. A battle carries Carry of them (its loadout, chosen on the setup
+// panel); Working: false for a skill that has no effect yet (shown locked, never ready).
+public sealed record BattleSkillInfo(BattleSkill Skill, bool Aimed, Func<BattleSettings, double> Cooldown, bool Working = true)
 {
     // Without a battle's settings: the built-in data's names.
     public string Name(string language, BattleSettings? s = null) => (s ?? BattleData.Settings).Skill(Skill).Name(language);
@@ -1147,9 +1160,46 @@ public static class BattleSkills
         new(BattleSkill.Cheer, false, s => s.CheerCooldown),
         new(BattleSkill.Bomb, true, s => s.BombCooldown),
         new(BattleSkill.Shield, false, s => s.ShieldCooldown),
+        // 1.5: their use and numbers come with milestones M05/M06 (docs/UPDATE-1.5.md).
+        new(BattleSkill.Laser, false, _ => NotYet, false),
+        new(BattleSkill.Grabber, false, _ => NotYet, false),
+        new(BattleSkill.Scissors, false, _ => NotYet, false),
+        new(BattleSkill.Fan, false, _ => NotYet, false),
+        new(BattleSkill.Spray, false, _ => NotYet, false),
     };
+    private const double NotYet = 10;
 
     public static BattleSkillInfo Get(BattleSkill skill) => All[Array.FindIndex(All, info => info.Skill == skill)];
+
+    // The HUD's five slots. Default: the five first skills (chapter 1 always has them, and so does a
+    // battle given no loadout).
+    public const int Carry = 5;
+    public static readonly BattleSkill[] Default = { BattleSkill.Push, BattleSkill.Heal, BattleSkill.Cheer, BattleSkill.Bomb, BattleSkill.Shield };
+    public static bool IsDefault(IReadOnlyList<BattleSkill> skills) => skills.SequenceEqual(Default);
+
+    // A skill id as battle.json and the saved choices write it ("push", "laser"; case ignored).
+    public static string Id(BattleSkill skill) => skill.ToString().ToLowerInvariant();
+    public static BattleSkill? Parse(string? id) =>
+        Enum.TryParse<BattleSkill>(id, true, out var skill) && Enum.IsDefined(skill) && !int.TryParse(id, out _) ? skill : null;
+
+    // A loadout in HUD order (the order of All), or null when it is not Carry different known
+    // skills. Saved ids that no longer fit fall back to Default (Loadout). Which skills the user may
+    // choose (open, working) is the setup panel's rule (PetWindow.BattleSkillOpen).
+    public static BattleSkill[]? Order(IEnumerable<BattleSkill> skills)
+    {
+        var set = skills.ToHashSet();
+        if (set.Count != Carry || set.Any(skill => !Enum.IsDefined(skill))) return null;
+        return All.Select(info => info.Skill).Where(set.Contains).ToArray();
+    }
+    public static BattleSkill[] Loadout(IEnumerable<string>? ids)
+    {
+        if (ids == null) return Default;
+        var skills = new List<BattleSkill>();
+        foreach (var id in ids) if (Parse(id) is BattleSkill skill) skills.Add(skill); else return Default;
+        return Order(skills) ?? Default;
+    }
+    // What to save: null for the default (an old file and a new one read the same).
+    public static List<string>? Save(IReadOnlyList<BattleSkill> skills) => IsDefault(skills) ? null : skills.Select(Id).ToList();
 
     // The texts when battle.json has no "skills" (the shipped file says the same).
     public static readonly SkillSpec[] BuiltIn =
@@ -1169,6 +1219,21 @@ public static class BattleSkills
         new() { Id = "shield", NameVi = "Khiên bong bóng", NameEn = "Bubble shield",
             DescVi = "Khiên bong bóng — {shieldSeconds} giây mèo không mất máu. Hồi {shieldCooldown} giây.",
             DescEn = "Bubble shield — for {shieldSeconds} s the cat takes no damage. {shieldCooldown} s cooldown." },
+        new() { Id = "laser", NameVi = "Đèn laser", NameEn = "Laser pointer",
+            DescVi = "Đèn laser — chọn rồi click một điểm: slime chạy theo chấm đỏ, soi lộ slime bóng ma và ảo ảnh. Mở ở chương 2.",
+            DescEn = "Laser pointer — choose, then click a spot: slimes chase the red dot; it shows ghost and mirage slimes. Opens in chapter 2." },
+        new() { Id = "grabber", NameVi = "Kẹp gắp", NameEn = "Grabber",
+            DescVi = "Kẹp gắp — chọn rồi kéo một slime nhỏ, ném nó vào slime khác. Mở ở chương 2.",
+            DescEn = "Grabber — choose, then drag a small slime and throw it at another. Opens in chapter 2." },
+        new() { Id = "scissors", NameVi = "Kéo cắt", NameEn = "Scissors",
+            DescVi = "Kéo cắt — chọn rồi vuốt ngang: cắt dây nhầy, chọc vỡ bong bóng. Mở ở chương 2.",
+            DescEn = "Scissors — choose, then swipe across: cuts slime strings and pops bubbles. Opens in chapter 2." },
+        new() { Id = "fan", NameVi = "Quạt", NameEn = "Fan",
+            DescVi = "Quạt — chọn rồi giữ chuột: thổi slime theo hướng, làm khô vũng nhầy. Mở ở chương 2.",
+            DescEn = "Fan — choose, then hold the mouse: blows slimes along and dries slime puddles. Opens in chapter 2." },
+        new() { Id = "spray", NameVi = "Bình xịt nước", NameEn = "Water spray",
+            DescVi = "Bình xịt nước — chọn rồi giữ chuột: slime chậm lại và co nhỏ. Mở ở chương 2.",
+            DescEn = "Water spray — choose, then hold the mouse: slimes slow down and shrink. Opens in chapter 2." },
     };
 
     // {key}: any top-level number of battle.json (case ignored).

@@ -138,6 +138,8 @@ internal static class AdventureChecks
                 "Play stage opens the setup panel for that stage (the map closes)");
             Tick(0.3);
             check(window.BattlePrepText.Contains("Stage 1 · Meadow") && window.BattlePrepText.Contains("Map") && behavior.Quiet, "The setup panel names the stage; its close button says Map");
+            check(!window.BattlePrepHasSkillChoice && !window.BattlePrepText.Contains("Skills to bring") && !window.BattlePrepToggleSkill(BattleSkill.Bomb),
+                "A stage of a chapter without skillChoice (chapter 1) has no skill choice: it keeps the five first skills");
             window.CancelBattlePrep();
             check(window.AdventureMapOpen && !window.BattlePreparing && window.AdventureSelectedStage == "st_one", "Map on the setup panel goes back to the map");
 

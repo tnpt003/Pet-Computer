@@ -90,13 +90,22 @@ Nếu `id` đã lưu trong preferences không còn trong dữ liệu (ví dụ f
 
 ## Kỹ năng (`skills`) (2026-10-22)
 
-Tên và mô tả của 5 kỹ năng trên HUD (và túi đồ). Gộp theo `id` như `weapons`: ghi `{ "id": "heal", "nameEn": "Fish snack" }` là đổi đúng tên tiếng Anh của Cá hồi máu. Số liệu vẫn ở cấp trên cùng (`pushCooldown`, `healAmount`…); thứ tự trên HUD, kỹ năng nào phải nhắm (Đẩy, Bom) và tác dụng nằm trong app, không đổi bằng dữ liệu.
+Tên và mô tả của 10 kỹ năng (HUD, túi đồ, bảng chuẩn bị). Gộp theo `id` như `weapons`: ghi `{ "id": "heal", "nameEn": "Fish snack" }` là đổi đúng tên tiếng Anh của Cá hồi máu; file tùy chỉnh trước 1.5 chỉ có 5 kỹ năng vẫn đọc được (5 kỹ năng mới giữ chữ gốc). Số liệu vẫn ở cấp trên cùng (`pushCooldown`, `healAmount`…); thứ tự trên HUD, kỹ năng nào phải nhắm (Đẩy, Bom) và tác dụng nằm trong app, không đổi bằng dữ liệu.
 
 | Khóa | Giới hạn | Ý nghĩa |
 | --- | --- | --- |
-| `id` | `push`, `heal`, `cheer`, `bomb`, `shield` | Kỹ năng nào; danh sách phải có đủ cả 5, không trùng |
+| `id` | `push`, `heal`, `cheer`, `bomb`, `shield`, `laser`, `grabber`, `scissors`, `fan`, `spray` | Kỹ năng nào; danh sách gộp xong phải có đủ cả 10, không trùng |
 | `nameVi`, `nameEn` | 1–32 ký tự | Tên |
 | `descVi`, `descEn` | 1–220 ký tự | Mô tả khi rê chuột; `{khóa}` được thay bằng số cùng tên ở cấp trên cùng của battle.json, ví dụ `{pushCooldown}` → `3` (không phân biệt hoa thường; khóa không có thì file bị từ chối) |
+
+### Bộ kỹ năng mang theo (1.5 M02, 2026-10-28)
+
+- Mỗi trận mang **5 trong 10** kỹ năng; HUD có đúng 5 ô theo thứ tự cố định ở bảng trên (5 kỹ năng cũ trước, rồi `laser`, `grabber`, `scissors`, `fan`, `spray`). Mặc định là 5 kỹ năng cũ.
+- Bảng chuẩn bị có mục "Kỹ năng mang theo (n/5)": 10 ô icon, bấm ô đã chọn để bỏ, bấm ô còn mở để thêm khi chưa đủ 5; Sẵn sàng chỉ chạy khi đủ 5. Lựa chọn lưu trong preferences (`BattleLoadout`, null = mặc định); id không còn hợp lệ hoặc kỹ năng chưa mở thì đọc như mặc định.
+- Có mục chọn ở trận tự do, Vô tận, chuẩn bị chuyến Viễn chinh (bộ kỹ năng giữ suốt chuyến, lưu trong chuyến: `Skills`, null = mặc định) và màn thuộc chương có `"skillChoice": true`. **Chương 1 không có `skillChoice`**: luôn 5 kỹ năng cũ, mục chọn ẩn.
+- 5 kỹ năng mới **chưa có tác dụng** (làm ở M05/M06): hiện ô khóa, không chọn được, không bao giờ "sẵn sàng". Một kỹ năng mở khi có tác dụng và đã thắng màn có `"unlocksSkill": "<id>"` (dữ liệu gốc chưa màn nào có; chương 2 thêm ở M21).
+- Kỹ năng không mang theo: ô không có trên HUD, không dùng được. Thẻ có `"skill": "<id>"` (gốc: Bom to → `bomb`, Khiên dày → `shield`) và di vật có `"skill"` (gốc: Chuông phản đòn → `shield`, Túi cứu trợ → `heal`) chỉ được đưa khi bộ mang theo có kỹ năng đó. Thẻ/di vật đã có từ trước vẫn giữ.
+- Kỷ lục không tách theo bộ kỹ năng. Đổi kỹ năng ở điểm nghỉ Viễn chinh: chưa có (làm khi kỹ năng mới có tác dụng, M06).
 
 ## Đợt quái (`waves`) và luật trận
 
@@ -220,7 +229,7 @@ Màn có `"upgrades": true` sẽ cho chọn thẻ sau mỗi đợt đã dọn (k
 | `armor` | 0.01–0.5 | sát thương nhận vào × (1 − tổng); thẻ và synergy cộng lại giảm tối đa 60% (từ 2026-10-24; trước là 70%) |
 | `maxHp` | 1–500 (HP) | cộng HP tối đa; lúc chọn hồi luôn đúng lượng đó (Combat Depth mốc 2) |
 
-`maxStacks` 0–10 (0 là không giới hạn). `endlessMaxStacks` (2026-10-24, tùy chọn, 1–10, không nhỏ hơn `maxStacks`, không cho thẻ hiếm hay thẻ không giới hạn): giới hạn riêng trong Vô tận. Tên tối đa 32 ký tự, mô tả tối đa 80. Effect lạ, amount ngoài khoảng, id trùng hoặc danh sách rỗng đều làm cả file bị bỏ.
+`skill` (1.5, tùy chọn): id một kỹ năng; thẻ chỉ được đưa khi trận mang kỹ năng đó. `maxStacks` 0–10 (0 là không giới hạn). `endlessMaxStacks` (2026-10-24, tùy chọn, 1–10, không nhỏ hơn `maxStacks`, không cho thẻ hiếm hay thẻ không giới hạn): giới hạn riêng trong Vô tận. Tên tối đa 32 ký tự, mô tả tối đa 80. Effect lạ, amount ngoài khoảng, id trùng hoặc danh sách rỗng đều làm cả file bị bỏ.
 
 Effect mới (2026-10-24):
 
@@ -276,6 +285,7 @@ Màn sinh tồn: `"objective": "survive", "surviveSeconds": 10–600`. Các đ�
 - Quái hồi máu: `healAmount` (0–1000, 0 = không hồi), `healRange` (10–600), `healCooldown` (0.5–60), `healWindup` (0.2–5), `healBudget` (1–100000: tổng máu tối đa con đó có thể hồi). `marks: "cross"` vẽ dấu "+" trên thân.
 - Pha của boss: `phases: [ { "at": 0.5, "summon": "mender", "count": 1 }, { "at": 0.3, "enrage": true } ]` (1–6 pha; `at` trong khoảng 0–1; mỗi pha phải gọi quân hoặc nổi giận; `count` 1–6). `summonCap` 1–10 là số quân được gọi còn sống cùng lúc. Quân được gọi không được là quái biết gọi quân. Có pha nổi giận thì cần `enragedSpeed`/`enragedWindup`.
 - Phần thưởng màn: `"reward": "<id phụ kiện>"`, phụ kiện đó phải có `"reward"` trong accessories.json. Chỉ nhận một lần, chỉ với dữ liệu gốc.
+- (1.5) `"unlocksSkill": "<id kỹ năng>"`: thắng màn này thì kỹ năng đó mở ở bảng chuẩn bị (nếu kỹ năng đã có tác dụng). Chương có `"skillChoice": true` thì màn của nó cho chọn bộ kỹ năng. Xem "Bộ kỹ năng mang theo".
 - (2026-10-24, Hướng dẫn phiêu lưu) `tipVi`/`tipEn` (tối đa 400 ký tự, cần cả hai): màn này dạy gì, mở từ bảng chuẩn bị ("Màn này dạy gì"), không tự bật nữa.
 - `"malware": false`: màn không có app độc và không có icon bị nhiễm (icon app vẫn giúp mèo). Gốc: màn 2.
 - `"malwarePlan": [ { "at": 6, "kind": "ads" }, … ]` (1–12 mục, màn có app độc): gửi đúng lúc (giây của trận; màn sống sót: giây của đồng hồ, bế mèo thì đồng hồ dừng), mỗi mục một lần; `kind` là `ads`, `loading`, `update`, `virus` (virus.exe) hoặc `infect` (slime bắn virus vào icon). Chưa gửi được (không có slime, không chỗ đặt tường, không còn icon sạch) thì chờ và thử lại. Có kế hoạch thì app độc ngẫu nhiên chờ tới `"malwareFrom"` giây (0–600) và đợt không tự bốc virus nhiễm icon. Gốc: màn 3 quảng cáo 6, loading 14, cập nhật 27, virus.exe 34, nhiễm 47, ngẫu nhiên từ 50.
@@ -437,6 +447,7 @@ Một chuyến đi gồm nhiều bậc, mỗi bậc chọn một điểm, bậc 
   - `relief`: Cá hồi máu hồi thêm `amount`; hồi chiêu Cá dài thêm `penalty` (tỉ lệ).
   - `reckless`: HP dưới `below` HP tối đa thì +`amount` sát thương; luôn nhận thêm `penalty` sát thương.
   - `light`: +`amount` tốc chạy, −`extra` thời gian hồi đòn (0–0,5); −`penalty` HP tối đa (0–50).
+  - `skill` (1.5, tùy chọn): id một kỹ năng; di vật chỉ được đưa cho chuyến mang kỹ năng đó.
 - `keepsakes` (mốc 4, tối đa 12): mỗi món cho một lần, khi thắng cả chuyến ở độ khó `difficulty` trở lên (`exact: true`: chỉ đúng độ khó đó). `kind`: `cup` (cúp trên góc trưng bày, `tier` là `bronze`/`silver`/`gold`), `cushion` (đệm slime trên góc trưng bày), `accessory` (`accessory` là id một phụ kiện có `reward` trong accessories.json; nhận rồi thì Cài đặt cho đội). Cho cùng lần lưu với kết quả chuyến nên không bao giờ cho hai lần; battle.json tùy chỉnh không cho kỷ vật. Góc trưng bày vẽ theo dữ liệu gốc của app.
 - `maxRelics` (0–6): số di vật giữ cùng lúc tối đa; đủ thì không còn được đưa di vật. `eliteRelics` (0–3): thắng tinh anh được chọn 1 trong ngần ấy di vật (hoặc bỏ qua) trên bản đồ trước khi đi tiếp.
 - Lựa chọn ở điểm nghỉ/sự kiện/thưởng tinh anh được bốc một lần từ seed của chuyến và lưu trong chuyến (`Pending`), nên đóng/mở bản đồ hay mở lại app không bốc lại; mỗi lựa chọn chỉ áp dụng một lần.

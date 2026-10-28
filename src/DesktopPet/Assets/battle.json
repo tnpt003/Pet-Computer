@@ -114,6 +114,32 @@
       "id": "shield", "nameVi": "Khiên bong bóng", "nameEn": "Bubble shield",
       "descVi": "Khiên bong bóng — {shieldSeconds} giây mèo không mất máu. Hồi {shieldCooldown} giây.",
       "descEn": "Bubble shield — for {shieldSeconds} s the cat takes no damage. {shieldCooldown} s cooldown."
+    },
+    // 1.5: shown locked on the setup panel until they work (milestones M05/M06) and a chapter 2 stage opens them.
+    {
+      "id": "laser", "nameVi": "Đèn laser", "nameEn": "Laser pointer",
+      "descVi": "Đèn laser — chọn rồi click một điểm: slime chạy theo chấm đỏ, soi lộ slime bóng ma và ảo ảnh. Mở ở chương 2.",
+      "descEn": "Laser pointer — choose, then click a spot: slimes chase the red dot; it shows ghost and mirage slimes. Opens in chapter 2."
+    },
+    {
+      "id": "grabber", "nameVi": "Kẹp gắp", "nameEn": "Grabber",
+      "descVi": "Kẹp gắp — chọn rồi kéo một slime nhỏ, ném nó vào slime khác. Mở ở chương 2.",
+      "descEn": "Grabber — choose, then drag a small slime and throw it at another. Opens in chapter 2."
+    },
+    {
+      "id": "scissors", "nameVi": "Kéo cắt", "nameEn": "Scissors",
+      "descVi": "Kéo cắt — chọn rồi vuốt ngang: cắt dây nhầy, chọc vỡ bong bóng. Mở ở chương 2.",
+      "descEn": "Scissors — choose, then swipe across: cuts slime strings and pops bubbles. Opens in chapter 2."
+    },
+    {
+      "id": "fan", "nameVi": "Quạt", "nameEn": "Fan",
+      "descVi": "Quạt — chọn rồi giữ chuột: thổi slime theo hướng, làm khô vũng nhầy. Mở ở chương 2.",
+      "descEn": "Fan — choose, then hold the mouse: blows slimes along and dries slime puddles. Opens in chapter 2."
+    },
+    {
+      "id": "spray", "nameVi": "Bình xịt nước", "nameEn": "Water spray",
+      "descVi": "Bình xịt nước — chọn rồi giữ chuột: slime chậm lại và co nhỏ. Mở ở chương 2.",
+      "descEn": "Water spray — choose, then hold the mouse: slimes slow down and shrink. Opens in chapter 2."
     }
   ],
 
@@ -314,8 +340,8 @@
     { "id": "quick_hands", "nameVi": "Tay nhanh", "nameEn": "Quick hands", "descVi": "−10% thời gian hồi kỹ năng", "descEn": "−10% skill cooldowns", "effect": "skillCooldown", "amount": 0.1, "maxStacks": 3 },
     { "id": "power_bank", "nameVi": "Sạc pin", "nameEn": "Power bank", "descVi": "App trên màn hình sạc nhanh hơn 8%", "descEn": "Desktop apps charge 8% faster", "effect": "appCharge", "amount": 0.08, "maxStacks": 3 },
     { "id": "energy_drain", "nameVi": "Hút năng lượng", "nameEn": "Energy drain", "descVi": "Mỗi quái bị hạ: app sạc thêm 1%", "descEn": "Each defeated enemy: apps charge 1% more", "effect": "killCharge", "amount": 0.01, "maxStacks": 3 },
-    { "id": "big_bomb", "nameVi": "Bom to", "nameEn": "Big bomb", "descVi": "Bom len to hơn và mạnh hơn 20%", "descEn": "Yarn bomb 20% bigger and stronger", "effect": "bomb", "amount": 0.2, "maxStacks": 2 },
-    { "id": "thick_bubble", "nameVi": "Khiên dày", "nameEn": "Thick bubble", "descVi": "Khiên bong bóng kéo dài thêm 1 giây", "descEn": "Bubble shield lasts 1 s longer", "effect": "shieldTime", "amount": 1, "maxStacks": 2 }
+    { "id": "big_bomb", "skill": "bomb", "nameVi": "Bom to", "nameEn": "Big bomb", "descVi": "Bom len to hơn và mạnh hơn 20%", "descEn": "Yarn bomb 20% bigger and stronger", "effect": "bomb", "amount": 0.2, "maxStacks": 2 },
+    { "id": "thick_bubble", "skill": "shield", "nameVi": "Khiên dày", "nameEn": "Thick bubble", "descVi": "Khiên bong bóng kéo dài thêm 1 giây", "descEn": "Bubble shield lasts 1 s longer", "effect": "shieldTime", "amount": 1, "maxStacks": 2 }
   ],
 
   // Synergies: a build holding "at" cards of a group switches the effect on for good.
@@ -501,9 +527,9 @@
         "descVi": "Mất 20% HP để chọn một trong hai di vật, hoặc đi tiếp.", "descEn": "Lose 20% HP to pick one of two relics, or move on." }
     ],
     "relics": [
-      { "id": "counter_bell", "effect": "counter", "amount": 0.6, "penalty": 3, "nameVi": "Chuông phản đòn", "nameEn": "Counter bell",
+      { "id": "counter_bell", "skill": "shield", "effect": "counter", "amount": 0.6, "penalty": 3, "nameVi": "Chuông phản đòn", "nameEn": "Counter bell",
         "descVi": "Khiên hoặc Mai rùa chặn đòn: nhát chém kế +60%. Khiên hồi lâu hơn 3 giây.", "descEn": "After the Shield or Turtle shell stops a hit, the next swing deals +60%. Shield cooldown +3 s." },
-      { "id": "relief_pack", "effect": "relief", "amount": 0.5, "penalty": 0.5, "nameVi": "Túi cứu trợ", "nameEn": "Relief pack",
+      { "id": "relief_pack", "skill": "heal", "effect": "relief", "amount": 0.5, "penalty": 0.5, "nameVi": "Túi cứu trợ", "nameEn": "Relief pack",
         "descVi": "Cá hồi máu hồi thêm 50%. Hồi chiêu Cá dài thêm 50%.", "descEn": "The Healing fish heals 50% more. Its cooldown is 50% longer." },
       { "id": "reckless_charm", "effect": "reckless", "amount": 0.4, "below": 0.4, "penalty": 0.1, "nameVi": "Bùa liều lĩnh", "nameEn": "Reckless charm",
         "descVi": "HP dưới 40%: +40% sát thương. Luôn nhận thêm 10% sát thương.", "descEn": "Below 40% HP: +40% damage. Always take 10% more damage." },

@@ -166,13 +166,13 @@ internal static class BattleRulesChecks
         Press();
         TickBattle(0.1);
         var hudNow = Field<BattleHud>(window, "battleHud");
-        bool slotsDuringPress = hudNow.Slot(BattleSkill.Cheer).IsReady;
+        bool slotsDuringPress = hudNow.Slot(BattleSkill.Cheer)!.IsReady;
         Release();
         TickBattle(1.0 / 60);
         check(Sim().Armed == BattleSkill.Bomb && Sim().Grace == 0 && Sim().RescueGraceReady && slotsDuringPress,
             "A plain click on the cat keeps the chosen skill, leaves the HUD as it was and gives no protection");
         Press(); DragPastThreshold();
-        check(Sim().Armed == null && !window.UseBattleSkill(BattleSkill.Cheer) && !window.ArmBattlePush(true) && !hudNow.Slot(BattleSkill.Cheer).IsReady,
+        check(Sim().Armed == null && !window.UseBattleSkill(BattleSkill.Cheer) && !window.ArmBattlePush(true) && !hudNow.Slot(BattleSkill.Cheer)!.IsReady,
             "A real drag drops the chosen skill at once; skills cannot be used and the HUD shows them waiting");
         TickBattle(1);
         Release();
@@ -241,9 +241,9 @@ internal static class BattleRulesChecks
         window.SetPaused(true);
         var appHud = Field<BattleHud>(window, "battleHud");
         time = Sim().Time; hp = Sim().CatHp;
-        appHud.Slot(BattleSkill.Shield).RaiseEvent(MouseEvent(UIElement.MouseLeftButtonDownEvent));
-        appHud.Slot(BattleSkill.Bomb).RaiseEvent(MouseEvent(UIElement.MouseLeftButtonDownEvent));
-        check(Sim().Paused && Reasons() == PetWindow.BattlePause.App && !appHud.Slot(BattleSkill.Shield).IsReady,
+        appHud.Slot(BattleSkill.Shield)!.RaiseEvent(MouseEvent(UIElement.MouseLeftButtonDownEvent));
+        appHud.Slot(BattleSkill.Bomb)!.RaiseEvent(MouseEvent(UIElement.MouseLeftButtonDownEvent));
+        check(Sim().Paused && Reasons() == PetWindow.BattlePause.App && !appHud.Slot(BattleSkill.Shield)!.IsReady,
             $"Pausing the pet pauses the battle; the HUD shows the skills unavailable ({Reasons()})");
         check(Sim().ShieldRemaining == 0 && Sim().Cooldown(BattleSkill.Shield) == 0 && Sim().Armed == null &&
               !window.UseBattleSkill(BattleSkill.Cheer) && !window.ArmBattlePush(true) && !window.BattleClickSlime(target.Id) && Sim().SelectedId == null &&

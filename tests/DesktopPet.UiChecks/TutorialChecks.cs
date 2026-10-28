@@ -237,8 +237,8 @@ internal static class TutorialChecks
         }
         bool Snug(string step, Rect inner) => litByStep.TryGetValue(step, out var lit) && lit.Count == 1
             && new[] { inner.Left - lit[0].Left, lit[0].Right - inner.Right, inner.Top - lit[0].Top, lit[0].Bottom - inner.Bottom }.All(gap => Math.Abs(gap - PetWindow.GuidePad) < 0.6);
-        var slotsUnion = BattleHud.SkillOrder.Select(k => Bounds(tourHud.Slot(k))).Aggregate(Rect.Union);
-        check(Snug(PetWindow.GuideHp, Bounds(tourHud.HpBlock)) && Snug(PetWindow.GuideSkills, slotsUnion) && Snug(PetWindow.GuidePush, Bounds(tourHud.Slot(BattleSkill.Push)))
+        var slotsUnion = tourHud.SkillOrder.Select(k => Bounds(tourHud.Slot(k)!)).Aggregate(Rect.Union);
+        check(Snug(PetWindow.GuideHp, Bounds(tourHud.HpBlock)) && Snug(PetWindow.GuideSkills, slotsUnion) && Snug(PetWindow.GuidePush, Bounds(tourHud.Slot(BattleSkill.Push)!))
               && Snug(PetWindow.GuideBag, Bounds(tourHud.BagButton)),
             $"HP, the skill bar (its five slots), a skill and the bag are each lit with {PetWindow.GuidePad} DIPs all round ({string.Join("; ", litByStep.Select(p => $"{p.Key} {string.Join(" ", p.Value.Select(r => $"{r.X:0.#},{r.Y:0.#} {r.Width:0.#}×{r.Height:0.#}"))}"))} | bar {slotsUnion.X:0.#},{slotsUnion.Y:0.#} {slotsUnion.Width:0.#}×{slotsUnion.Height:0.#})");
         window.EndBattle();

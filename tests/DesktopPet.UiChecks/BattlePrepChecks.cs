@@ -153,12 +153,38 @@ internal static class BattlePrepChecks
         check(window.Battle is { Difficulty: BattleDifficulty.Hard } b && b.Weapon.Id == BattleWeapon.Hammer && pet.Hammer && !window.BattlePreparing &&
               SetupWindows() == 0 && BattleWindows() == 2 && prefs.BattleWeapon == BattleWeapon.Hammer && prefs.BattleDifficulty == "Hard",
             "Ready starts one battle with the chosen hammer and Hard, closes the panel and remembers the choice");
+        var hud = Field<BattleHud>(window, "battleHud");
+        check(window.Battle!.Skills.SequenceEqual(BattleSkills.Default) && hud.SkillOrder.SequenceEqual(BattleSkills.Default) && BattleSkills.Default.All(k => hud.Slot(k) != null)
+              && prefs.BattleLoadout == null, "The battle and its HUD carry the five first skills (saved as no choice)");
+        // A HUD for another loadout (1.5 M02): one slot per carried skill, in HUD order, the new icons drawn.
+        var other = new[] { BattleSkill.Push, BattleSkill.Heal, BattleSkill.Cheer, BattleSkill.Shield, BattleSkill.Laser };
+        var otherHud = new BattleHud("Test", new PetRenderer(new PetModel()), () => "en", other);
+        otherHud.Measure(new Size(2000, 400)); otherHud.Arrange(new Rect(otherHud.DesiredSize));
+        var drawn = new System.Windows.Media.Imaging.RenderTargetBitmap(Math.Max(1, (int)otherHud.ActualWidth), Math.Max(1, (int)otherHud.ActualHeight), 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
+        drawn.Render(otherHud);
+        check(otherHud.SkillOrder.SequenceEqual(other) && otherHud.Slot(BattleSkill.Bomb) == null && otherHud.Slot(BattleSkill.Laser) is { Skill: BattleSkill.Laser }
+              && Math.Abs(otherHud.ActualWidth - hud.ActualWidth) < 1, "Another loadout gives its own five slots (no Yarn bomb, a Laser slot) and the HUD keeps its width");
         check(window.OpenBattlePrep() is string running && running.Length > 0 && !window.BattlePreparing, "No setup while a battle runs");
         window.EndBattle();
         check(window.OpenBattlePrep() == null && window.BattlePrepWeapon == BattleWeapon.Hammer && window.BattlePrepDifficulty == BattleDifficulty.Hard,
             "The next setup starts from the last choice");
         window.Reset();
         check(!window.BattlePreparing && SetupWindows() == 0 && !behavior.Quiet, "Bringing the pet back closes the panel");
+
+        // The skills (1.5 M02): a free battle chooses five of ten; the 1.5 skills are locked for now.
+        check(window.OpenBattlePrep() == null && window.BattlePrepHasSkillChoice && window.BattlePrepSkills.SequenceEqual(BattleSkills.Default)
+              && window.BattlePrepText.Contains("Skills to bring (5/5)"), "A free battle's setup offers the skill choice, starting from the five first skills");
+        check(!window.BattlePrepToggleSkill(BattleSkill.Laser) && window.BattlePrepSkills.Count == 5 && window.BattlePrepSkillsHint.Contains("Laser pointer")
+              && window.BattlePrepSkillsHint.Contains("Not open yet"), $"A locked skill cannot be chosen; the hint says what it does and why ({window.BattlePrepSkillsHint})");
+        check(window.BattlePrepToggleSkill(BattleSkill.Bomb) && window.BattlePrepSkills.Count == 4 && window.BattlePrepText.Contains("Skills to bring (4/5)")
+              && !window.BattlePrepReadyEnabled && window.BattlePrepReady() != null && !window.BattleActive && window.BattlePreparing, "Dropping a skill leaves four: Ready waits for five");
+        check(window.BattlePrepToggleSkill(BattleSkill.Bomb) && window.BattlePrepSkills.Count == 5 && window.BattlePrepReadyEnabled, "Choosing it again makes five: Ready works");
+        window.CancelBattlePrep();
+        prefs.BattleLoadout = new() { "push", "heal", "cheer", "bomb", "laser" };
+        check(window.OpenBattlePrep() == null && window.BattlePrepSkills.SequenceEqual(BattleSkills.Default) && window.BattleLoadoutChoice.SequenceEqual(BattleSkills.Default),
+            "A saved choice with a skill that is not open reads as the five first skills");
+        window.CancelBattlePrep();
+        prefs.BattleLoadout = null;
 
         // The app icons' chip (2026-10-24): not for a free battle; elsewhere a choice only Ready keeps.
         check(window.OpenBattlePrep() == null && Field<TextBlock>(window, "prepAppsHint").Visibility == Visibility.Collapsed && !window.BattlePrepChooseApps(false),

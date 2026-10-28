@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -183,6 +184,33 @@ public sealed partial class PetWindow
 
     private string WeaponName(WeaponSpec weapon) => weapon.Name(preferences.Language);
 
+    // The five skills (1.5): the setup panel's choice, kept in preferences.BattleLoadout. Only skills
+    // that work and are open (Adventure.SkillOpen) are carried; a saved choice that no longer fits
+    // reads as the five first skills.
+    public bool BattleSkillOpen(BattleSkill skill) => AdventureOf(BattleTuning) is Adventure adventure ? adventure.SkillOpen(skill)
+        : BattleSkills.Get(skill).Working && Array.IndexOf(BattleSkills.Default, skill) >= 0;
+    public BattleSkill[] BattleLoadoutChoice
+    {
+        get
+        {
+            var chosen = BattleSkills.Loadout(preferences.BattleLoadout);
+            return chosen.All(BattleSkillOpen) ? chosen : BattleSkills.Default;
+        }
+    }
+    public bool SetBattleLoadout(IReadOnlyList<BattleSkill> skills)
+    {
+        if (BattleSkills.Order(skills) is not BattleSkill[] ordered || !ordered.All(BattleSkillOpen)) return false;
+        var saved = BattleSkills.Save(ordered);
+        if (saved == null ? preferences.BattleLoadout == null : preferences.BattleLoadout?.SequenceEqual(saved) == true) return true;
+        preferences.BattleLoadout = saved;
+        SavePreferences();
+        return true;
+    }
+    // A stage of a chapter without the choice (chapter 1) always has the five first skills.
+    private bool StageSkillChoice(StageSpec? stage) => stage is not { Endless: false } || AdventureOf(BattleTuning)?.SkillChoice(stage) == true;
+    private IReadOnlyList<BattleSkill> BattleLoadoutFor(StageSpec? stage, ExpeditionBattle? expedition) =>
+        expedition?.Expedition.Run is ExpeditionRun run ? run.Loadout : StageSkillChoice(stage) ? BattleLoadoutChoice : BattleSkills.Default;
+
     private string DifficultyName(BattleDifficulty level) => level switch
     {
         BattleDifficulty.Easy => L("Dễ", "Easy"), BattleDifficulty.Hard => L("Khó", "Hard"), _ => L("Thường", "Normal")
@@ -246,7 +274,8 @@ public sealed partial class PetWindow
             build: expedition?.Expedition.Run?.Build ?? (stage is { Endless: false } ? AdventureOf(BattleTuning)?.StartBuild(stage) : null),
             seed: expedition?.Node.Seed, startHp: expedition?.Expedition.Run?.Hp, threat: expedition?.Node.Threat ?? 1, relics: expedition?.Expedition.Run?.Relics,
             // The app icons: as the Expedition run set out, else the setup panel's choice.
-            apps: expedition?.Expedition.Run is ExpeditionRun run ? !run.NoApps : preferences.BattleApps);
+            apps: expedition?.Expedition.Run is ExpeditionRun run ? !run.NoApps : preferences.BattleApps,
+            skills: BattleLoadoutFor(stage, expedition));
         battleExpedition = expedition;
         battleRunId = Guid.NewGuid().ToString("N");
         battleCustomData = BattleDataCustom;
@@ -265,7 +294,8 @@ public sealed partial class PetWindow
         // The seed and rules let a run be replayed (BattleSim's seed parameter).
         System.Diagnostics.Trace.WriteLine((expedition != null ? $"Battle started: Expedition step {expedition.Node.Step + 1} {stage!.Id}, threat ×{expedition.Node.Threat:0.00}"
             : stage != null ? $"Battle started: Adventure stage {stage.Id} r{stage.RulesVersion}" : "Battle started")
-            + $", {battle.Difficulty}, {battle.Weapon.Id}, seed {battle.Seed}.");
+            + $", {battle.Difficulty}, {battle.Weapon.Id}, seed {battle.Seed}"
+            + (BattleSkills.IsDefault(battle.Skills) ? "." : $", skills {string.Join("/", battle.Skills.Select(BattleSkills.Id))}."));
         PlayPetSound("excited");
         return null;
     }
@@ -651,7 +681,7 @@ public sealed partial class PetWindow
         string stagePart = battleExpedition is ExpeditionBattle x ? LF($" · Viễn chinh {x.Node.Step + 1}/{x.Expedition.Spec.StepCount}", $" · Expedition {x.Node.Step + 1}/{x.Expedition.Spec.StepCount}")
             : battle?.Endless == true ? L(" · Vô tận", " · Infinity")
             : battle?.Stage is StageSpec stage ? LF($" · Màn {StageNumber(stage)}", $" · Stage {StageNumber(stage)}") : "";
-        battleHud = new BattleHud($"{preferences.Name} · {(battle != null ? WeaponName(battle.Weapon) : "")}{stagePart}", portrait, () => preferences.Language);
+        battleHud = new BattleHud($"{preferences.Name} · {(battle != null ? WeaponName(battle.Weapon) : "")}{stagePart}", portrait, () => preferences.Language, battle?.Skills);
         battleHud.SkillClicked += skill => UseBattleSkill(skill);
         battleHud.PauseClicked += () => { if (battle != null) SetBattlePaused(!BattleUserPaused); };
         battleHud.EndClicked += EndBattleByUser;

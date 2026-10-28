@@ -51,15 +51,16 @@ public sealed partial class BattleSim
     // A landed hit's knock back while raging: stronger, at least RageKnock.
     private double RageKnockOf(double knock) => Raging ? Math.Max(knock * Settings.RageKnockFactor, Settings.RageKnock) : knock;
 
-    // The raging swing's sweep: `damage` on every other enemy within the weapon's reach (+ the hit's 14
-    // DIPs of slack): in front of the cat or overlapping it, on the floor (air: only enemies in the air,
-    // for the held cat). Blocked like a combo's splash; no bonus of its own; knocked back away from the cat.
-    private void RageSweep(Slime target, double damage, double catX, int facing, CatPose? held = null)
+    // A sweeping swing (raging, or a weapon with Sweep, PetBattle.Weapons.cs): `damage` on every other
+    // enemy within the weapon's reach (+ the hit's 14 DIPs of slack): in front of the cat or overlapping
+    // it, on the floor (air: only enemies in the air, for the held cat). Blocked like a combo's splash; no
+    // bonus of its own; knocked back away from the cat if the hit knocks at all; a pulling weapon pulls.
+    private void Sweep(Slime target, double damage, double catX, int facing, CatPose? held = null)
     {
         blasting = true;
         foreach (var other in slimes.ToArray())
         {
-            if (other == target || !other.Targetable || other.Shielded) continue;
+            if (other == target || !other.Targetable || other.Shielded || other.Handled) continue;
             if (held is CatPose cat)
             {
                 if (!other.Airborne || Gap(cat, other) > HeldReach + 14) continue;
@@ -70,10 +71,14 @@ public sealed partial class BattleSim
                 double dx = other.X - catX;
                 if (dx * facing < -CatHalfWidth || Math.Abs(dx) - other.HitWidth / 2 > arms.Range + 14) continue;
             }
-            RageHits++;
+            if (Raging) RageHits++; else SweepHits++;
             AddEffect(BattleEffectKind.Spark, other.X, other.Altitude + other.Height * 0.6);
-            if (Damage(other, damage, DamageSource.Splash) == HitResult.Landed && other.State != SlimeState.Defeated && held == null && other.Elite is not { PushImmune: true })
-                other.KnockVelocity = (other.X < catX ? -1 : 1) * RageKnockOf(arms.Knock + knockBonus) * other.Type.PushFactor;
+            if (Damage(other, damage, DamageSource.Splash) == HitResult.Landed && other.State != SlimeState.Defeated && held == null)
+            {
+                double knock = RageKnockOf(arms.Knock + knockBonus);
+                if (knock > 0 && other.Elite is not { PushImmune: true }) other.KnockVelocity = (other.X < catX ? -1 : 1) * knock * other.Type.PushFactor;
+                PullIn(other, catX);
+            }
             if (Over) break;
         }
         blasting = false;

@@ -218,7 +218,7 @@ public sealed class UpgradeIcon : FrameworkElement
         {
             case "damage": // A blade with a gleam.
                 dc.PushTransform(new TranslateTransform(cx - 10, cy + 17));
-                PetRenderer.DrawWeaponIcon(dc, false);
+                PetRenderer.DrawWeaponIcon(dc, "sword");
                 dc.Pop();
                 break;
             case "moveSpeed": // Speed lines behind an arrow.
@@ -377,7 +377,7 @@ public sealed class SynergyIcon : FrameworkElement
                 {
                     dc.PushOpacity(opacity);
                     dc.PushTransform(new TranslateTransform(cx + shift, cy + 15));
-                    PetRenderer.DrawWeaponIcon(dc, false);
+                    PetRenderer.DrawWeaponIcon(dc, "sword");
                     dc.Pop();
                     dc.Pop();
                 }

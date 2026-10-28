@@ -141,7 +141,7 @@ public sealed partial class PetWindow
         else actions = FreeBattleResult(result, info, arms, level, Choose);
         // This cat, as the battle ended: cheering with its weapon, or sitting dazed.
         var model = new PetModel { Action = PetAction.Sitting, Grounded = true, Facing = 1, AnimationTime = 1, ActionTime = 1, SwordOut = true,
-            Hammer = result.WeaponStyle == "hammer", BattleCheer = result.Won, BattleDazed = !result.Won };
+            WeaponStyle = result.WeaponStyle ?? "sword", BattleCheer = result.Won, BattleDazed = !result.Won };
         var portrait = new PetRenderer(model) { Coat = renderer.Coat, Accessory = renderer.Accessory, Width = 192, Height = 192 };
         var picture = new Border { Width = 96, Height = 96, Margin = new Thickness(0, 0, 12, 0), CornerRadius = new CornerRadius(48), Background = PrepStage,
             VerticalAlignment = VerticalAlignment.Top, Child = new Grid { Children = { CatPicture(portrait),

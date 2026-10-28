@@ -137,7 +137,7 @@ public sealed partial class PetWindow
     {
         var view = BagData();
         var cat = new PetModel { Action = PetAction.Idle, Grounded = true, Facing = 1, AnimationTime = 1, ActionTime = 1, SwordOut = true,
-            Hammer = view?.Sim.Weapon.Style == "hammer" };
+            WeaponStyle = view?.Sim.Weapon.Style ?? "sword" };
         var catView = new PetRenderer(cat) { Coat = renderer.Coat, Accessory = renderer.Accessory, Width = 192, Height = 192 };
         var stage = new Border { Background = PetUi.Game.Stage, CornerRadius = new CornerRadius(25), Width = 50, Height = 50, Margin = new Thickness(0, 0, 10, 0),
             BorderBrush = PetUi.Game.CardRim, BorderThickness = new Thickness(1), VerticalAlignment = VerticalAlignment.Top,

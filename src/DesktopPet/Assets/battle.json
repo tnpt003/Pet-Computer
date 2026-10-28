@@ -32,6 +32,21 @@
       "id": "hammer", "nameVi": "Búa", "nameEn": "Hammer", "style": "hammer", "hitEffect": "thud",
       "hintVi": "chậm, mạnh, đẩy lùi mỗi nhát, đôi khi làm choáng", "hintEn": "slow, heavy, knocks back every hit, sometimes stuns",
       "damage": 45, "range": 76, "attackCooldown": 1.35, "swingDuration": 0.7, "hitTime": 0.45, "knock": 170, "stunChance": 0.15, "stunSeconds": 0.8
+    },
+    // 1.5 M08. sweep: every landed swing also hits every other enemy in reach; pull: DIPs/s a hit draws
+    // a slime that keeps its distance (support kinds) toward the cat. comboHits: this weapon's chain
+    // (2–6); launch: DIPs/s a combo hit tosses its enemy up, launchStun: its daze on landing (s).
+    {
+      "id": "yarn", "nameVi": "Cuộn len", "nameEn": "Yarn", "style": "yarn", "hitEffect": "spark",
+      "hintVi": "tầm xa, quét mọi slime trong tầm, kéo slime đứng xa lại gần", "hintEn": "long reach, sweeps every slime in reach, pulls back-liners in",
+      "damage": 14, "range": 114, "attackCooldown": 0.8, "swingDuration": 0.42, "hitTime": 0.2, "knock": 0, "stunChance": 0,
+      "sweep": true, "pull": 420
+    },
+    {
+      "id": "glove", "nameVi": "Găng đấm", "nameEn": "Glove", "style": "glove", "hitEffect": "spark",
+      "hintVi": "rất nhanh, combo 5 nhát, nhát cuối hất tung slime", "hintEn": "very fast, 5-hit combo, the last hit launches the slime",
+      "damage": 14, "range": 70, "attackCooldown": 0.38, "swingDuration": 0.22, "hitTime": 0.09, "knock": 0, "stunChance": 0,
+      "comboHits": 5, "launch": 560, "launchStun": 0.8
     }
   ],
 

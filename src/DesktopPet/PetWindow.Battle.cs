@@ -283,7 +283,7 @@ public sealed partial class PetWindow
         battleRunId = Guid.NewGuid().ToString("N");
         battleCustomData = BattleDataCustom;
         pet.SwordOut = true;
-        pet.Hammer = battle.Weapon.Style == "hammer";
+        pet.WeaponStyle = battle.Weapon.Style;
         pet.SwordHitAt = battle.Weapon.HitFraction;
         pet.MoveScale = battle.Settings.CatRunScale;
         pet.Emotions.SetSuspended(true);

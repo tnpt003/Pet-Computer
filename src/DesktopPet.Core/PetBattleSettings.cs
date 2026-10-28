@@ -375,6 +375,16 @@ public sealed record WeaponSpec
     public double StunSeconds { get; init; } = 0.8;
     // A status its landed hits may leave (1.5 M04; null: none).
     public StatusHit? OnHit { get; init; }
+    // 1.5 M08 (PetBattle.Weapons.cs). Sweep: every landed swing also hits every other enemy in reach in
+    // front of the cat (the yarn's lash). Pull: DIPs/s a landed hit draws an enemy that keeps its
+    // distance (a support kind) toward the cat, up to just short of it. ComboHits: hits a chain needs
+    // (null: the battle's comboHits). Launch: DIPs/s a combo hit tosses its enemy up (never a boss, a
+    // rock, a big or a firm one), LaunchStun: its daze on landing.
+    public bool Sweep { get; init; }
+    public double Pull { get; init; }
+    public int? ComboHits { get; init; }
+    public double Launch { get; init; }
+    public double LaunchStun { get; init; }
 }
 
 // A skill's texts. Id: push, heal, cheer, bomb or shield. A description's {key} is that
@@ -537,6 +547,8 @@ public sealed class Slime
     // 1.5 M06: in the Grabber's claw, or flying after it let go (Thrown: fast enough to hurt); how high
     // its bottom is over the floor (DIPs) and its flight's speed (VY up); seconds of the spray's soaking left.
     public bool Grabbed, Tossed, Thrown;
+    // Tossed up by a combo of a weapon that launches (PetBattle.Weapons.cs): dazed on landing.
+    public bool Launched;
     public double Lift, TossVX, TossVY, WetRemaining;
     public bool Handled => Grabbed || Tossed;
     public bool Wet => WetRemaining > 0;
@@ -595,7 +607,9 @@ public enum BattleEventKind
     // ran out of water.
     Grabbed, GrabReleased, GrabHit, Snipped, SprayOn, SpraySpent,
     // 1.5 M07 (PetBattle.Rage.cs): the rage bar filled up, the user set the cat raging, the rage wore off.
-    RageFull, Raged, RageEnded
+    RageFull, Raged, RageEnded,
+    // 1.5 M08 (Value: the enemy's id): a combo of a launching weapon tossed it up.
+    Launched
 }
 public readonly record struct BattleEvent(BattleEventKind Kind, double X, double Value = 0);
 // Number: a floating damage (Value > 0) or heal (Value < 0, shown as +HP above the cat).

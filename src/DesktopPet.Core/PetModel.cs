@@ -108,8 +108,10 @@ public sealed class PetModel
     // the wooden sword, the swing's progress (0..1, negative when not swinging), a short
     // flinch after a hit, and the end-of-battle pose.
     public bool SwordOut;
-    // The battle's weapon is the hammer (drawn instead of the sword, same poses).
-    public bool Hammer;
+    // The battle's weapon drawing (WeaponSpec.Style: sword, hammer, yarn or glove; same grip and poses).
+    // Hammer: the old flag, kept for the places that only knew sword or hammer.
+    public string WeaponStyle = "sword";
+    public bool Hammer { get => WeaponStyle == "hammer"; set => WeaponStyle = value ? "hammer" : "sword"; }
     public double SwordSwing = -1;
     // Where in the swing the weapon's hit lands (0..1, WeaponSpec.HitFraction): the slash or
     // slam is drawn reaching its target at that moment. 0.44 is the sword's.

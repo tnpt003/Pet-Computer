@@ -59,7 +59,7 @@ internal static class BattleCustomDataTests
             var t2 = tweak.Settings;
             check(tweak.Error == null && t2.Enemy("slime") is { MaxHp: 60, Speed: 34, Color: "#7CD36A" } && t2.Easy.EnemyHp == 0.5 && t2.Easy.EnemyDamage == builtIn.Easy.EnemyDamage,
                 $"An entry with a known id changes just the keys it names (keys match without case) ({tweak.Error})");
-            check(t2.WeaponList.Select(w => w.Id).SequenceEqual(new[] { "sword", "hammer", "spear" }) && t2.Weapon("sword") == builtIn.Weapon("sword"),
+            check(t2.WeaponList.Select(w => w.Id).SequenceEqual(new[] { "sword", "hammer", "yarn", "glove", "spear" }) && t2.Weapon("sword") == builtIn.Weapon("sword"),
                 "A new weapon joins the list after the built-in ones");
 
             // The chosen weapon is what the battle swings: damage and reach come from it.

@@ -117,7 +117,7 @@ public sealed partial class PetWindow
     {
         // The header: this cat with its sword on a soft round stage, the title and a line under it.
         var cat = new PetModel { Action = PetAction.Idle, Grounded = true, Facing = 1, AnimationTime = 1, ActionTime = 1, SwordOut = true,
-            Hammer = BattleTuning.Weapon(preferences.BattleWeapon).Style == "hammer" };
+            WeaponStyle = BattleTuning.Weapon(preferences.BattleWeapon).Style };
         var catView = new PetRenderer(cat) { Coat = renderer.Coat, Accessory = renderer.Accessory, Width = 192, Height = 192 };
         var stage = new Border { Background = PrepStage, CornerRadius = new CornerRadius(36), Width = 72, Height = 72, Margin = new Thickness(0, 0, 12, 0),
             BorderBrush = PrepCardRim, BorderThickness = new Thickness(1), Child = CatPicture(new Grid { Width = 192, Height = 192, Children = { catView } }) };

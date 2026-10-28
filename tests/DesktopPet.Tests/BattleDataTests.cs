@@ -36,10 +36,11 @@ internal static class BattleDataTests
             if (shipped.Enemy(id) is var kind && builtIn.Enemy(id) is var plain && (Math.Abs(kind.MaxHp - plain.MaxHp * hp) > 0.5001 || Math.Abs(kind.Damage - plain.Damage * damage) > 0.5001))
                 differences.Add($"{id}: {kind.MaxHp}/{kind.Damage} is not the built-in {plain.MaxHp}/{plain.Damage} buffed");
         check(differences.Count == 0, "battle.json's slime and Slime King match the built-in ones (HP and damage with the 1.2.0-beta buff)" + (differences.Count > 0 ? ": " + string.Join(", ", differences) : ""));
-        // The shipped "weapons" list is the sword (Cat* numbers) and the hammer, as before.
-        check(shipped.WeaponList.Select(w => w.Id).SequenceEqual(builtIn.WeaponList.Select(w => w.Id)) &&
+        // The shipped "weapons" list starts with the sword (Cat* numbers) and the hammer, as before; the
+        // yarn and the glove (1.5 M08) follow.
+        check(shipped.WeaponList.Select(w => w.Id).SequenceEqual(builtIn.WeaponList.Select(w => w.Id).Concat(new[] { "yarn", "glove" })) &&
               shipped.WeaponList.Zip(builtIn.WeaponList).All(pair => pair.First == pair.Second),
-            "battle.json's weapons are exactly the built-in sword and hammer (same numbers, names and drawing)");
+            "battle.json's weapons are the built-in sword and hammer (same numbers, names and drawing), then the yarn and the glove");
         string Plan(BattleSettings s) => string.Join(" | ", s.WavePlan.Select(w => string.Join(",", w.Spawns())));
         check(Plan(builtIn) == "slime,slime | slime,slime,slime | slime,slime,slime,slime | king", "Without the file: 2, 3, 4 slimes, then the King");
         check(Plan(shipped) == "slime,slime | slime,slime,runner,runner | rock,runner,runner,slime,slime | king_c1",

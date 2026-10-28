@@ -256,7 +256,7 @@ public sealed class BattleHud : Border
 
         // Hit chain: shown from the first hit until it lapses or the combo lands.
         int chain = b.Over ? 0 : b.LiveCombo;
-        var comboKey = (chain, chain > 0 && chain == b.Settings.ComboHits - 1);
+        var comboKey = (chain, chain > 0 && chain == b.ComboHits - 1);
         if (comboKey != shownCombo)
         {
             shownCombo = comboKey;

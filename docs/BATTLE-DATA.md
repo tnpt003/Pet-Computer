@@ -76,7 +76,7 @@ Thứ tự trong danh sách là thứ tự trên bảng chuẩn bị; vũ khí �
 | `id` | như id quái | Được lưu trong `preferences.json` (`BattleWeapon`) |
 | `nameVi`, `nameEn` | tối đa 32 ký tự (trống thì hiện id) | Tên |
 | `hintVi`, `hintEn` | tối đa 80 ký tự | Dòng gợi ý dưới nút chọn |
-| `style` | `sword` hoặc `hammer` | Hình vẽ cầm tay và kiểu vung (búa: giơ cao, gồng, đập) |
+| `style` | `sword`, `hammer`, `yarn`, `glove` | Hình vẽ cầm tay và kiểu vung (búa: giơ cao, gồng, đập; cuộn len: quất rộng; găng: đấm thẳng, không có vệt chém) |
 | `hitEffect` | `spark` hoặc `thud`, mặc định theo style | Dấu đòn trúng: tia trắng / bụi và vòng trên sàn |
 | `damage` | 0–1000 | Sát thương mỗi nhát |
 | `range` | 10–300 | Tầm đánh |
@@ -85,6 +85,21 @@ Thứ tự trong danh sách là thứ tự trên bảng chuẩn bị; vũ khí �
 | `hitTime` | lớn hơn 0 và nhỏ hơn `swingDuration` | Thời điểm duy nhất trong lần vung gây sát thương |
 | `knock` | 0–1000 | Mỗi nhát đẩy lùi slime (DIP/giây × `pushFactor`); 0 = chỉ combo mới đẩy |
 | `stunChance`, `stunSeconds` | 0–1, 0–3 s (mặc định 0.15, 0.8) | (2026-10-24) Tỉ lệ một nhát trúng làm choáng quái `stunSeconds` × `stunFactor` của nó, hủy đòn đang gồng. Không choáng trùm, tinh anh miễn Đẩy, quái đang lao/hồi máu/nhảy. Bản gốc: búa 0.15 / 0.8 s, kiếm 0 |
+| `sweep` | true/false (mặc định false) | (1.5 M08) Mỗi nhát trúng còn trúng mọi slime khác trong tầm phía trước mèo (nguyên đòn thường, bị đá chặn như đòn lan); combo không lan thêm. Bản gốc: cuộn len |
+| `pull` | 0–1000 DIP/giây | (1.5 M08) Nhát trúng kéo slime **đứng xa** (loại `support`, ví dụ slime thảo dược; slime phun Q1 ở M09) về phía mèo, dừng ngay cạnh mèo; không kéo boss, tinh anh miễn Đẩy, slime dính. Bản gốc: cuộn len 420 |
+| `comboHits` | 2–6 (trống: theo `comboHits` của trận) | (1.5 M08) Số nhát liền để thành combo của vũ khí này. Bản gốc: găng 5 |
+| `launch`, `launchStun` | 0–1500 DIP/giây, 0–3 s | (1.5 M08) Nhát combo hất tung quái lên (bay vòng cung như Kẹp gắp thả, không va ai), khi bay quái không đánh và mèo không nhắm nó; đáp đất thì choáng `launchStun`. Không hất boss, đá, quái lớn hơn `grabberMaxScale`, tinh anh miễn Đẩy, quái bay/cưỡi/dính. Bản gốc: găng 560 / 0,8 s |
+
+Bốn vũ khí gốc (1.5 M08 thêm hai cái cuối, chọn được ở mọi bảng chuẩn bị; kỷ lục tách theo vũ khí như trước):
+
+| Vũ khí | Sát thương | Tầm | Hồi | Đặc điểm |
+| --- | --- | --- | --- | --- |
+| Kiếm `sword` | 25 | 76 | 0,75 s | combo 3 nhát |
+| Búa `hammer` | 45 | 76 | 1,35 s | đẩy lùi mỗi nhát, 15% choáng |
+| Cuộn len `yarn` | 14 | 114 | 0,8 s | quét mọi slime trong tầm, kéo slime đứng xa, không choáng |
+| Găng đấm `glove` | 14 | 70 | 0,38 s | combo 5 nhát, nhát cuối hất tung (choáng 0,8 s khi đáp) |
+
+Mô phỏng cân bằng chương 1 (AdventureBalanceTests, người chơi "simple", 20 seed): cuộn len và găng thắng trong khoảng 30 điểm so với kiếm ở mọi màn và độ khó, ≥ 80% ở Normal; bảng kiếm/búa không đổi. Găng ở Hard yếu hơn kiếm rõ nhất (màn 4–5: 55–60% so với 80–85%). Số lần hất tung thực tế ít (1–4 mỗi trận) vì chuỗi 5 nhát hay đứt khi đổi mục tiêu.
 
 Nếu `id` đã lưu trong preferences không còn trong dữ liệu (ví dụ file bị xóa), mèo dùng vũ khí đầu tiên. Preferences cũ ghi `"Sword"`/`"Hammer"` vẫn khớp với `sword`/`hammer`.
 

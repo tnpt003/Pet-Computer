@@ -506,7 +506,7 @@ public sealed partial class BattleSim
             if (CatCooldown <= 0)
             {
                 SwingTime = 0; swingHit = false; swingTargetId = target.Id; swingFacing = facing;
-                ComboSwing = LiveCombo == Settings.ComboHits - 1;
+                ComboSwing = LiveCombo == ComboHits - 1;
                 // Momentum: a swing after a run is a charged one (the run starts again either way).
                 chargedSwing = MomentumReady;
                 runDistance = 0;
@@ -568,7 +568,7 @@ public sealed partial class BattleSim
         if (slime == null || !slime.Targetable || Math.Abs(slime.X - catX) > Reach(slime) + 14) { Combo = 0; return; } // A miss ends the chain.
         Combo = LiveCombo + 1;
         comboClock = 0;
-        bool combo = Combo >= Settings.ComboHits;
+        bool combo = Combo >= ComboHits;
         double damage = arms.Damage * DamageFactor * (CheerRemaining > 0 ? Settings.CheerDamage : 1) * (combo ? Settings.ComboDamage : 1);
         // Armor break: combo hits hit harder.
         if (combo && Active("armorBreak") is SynergySpec breaker) damage *= 1 + breaker.Amount;
@@ -610,8 +610,11 @@ public sealed partial class BattleSim
         // An elite that ignores Push stands its ground (it still takes the damage).
         if (landed && (combo || knock > 0 || Raging) && slime.Elite is not { PushImmune: true })
             slime.KnockVelocity = (slime.X < catX ? -1 : 1) * RageKnockOf(combo ? Math.Max(Settings.ComboKnock, knock) : knock) * slime.Type.PushFactor;
-        // Raging: the swing also hits every other enemy in its reach.
-        if (Raging && !Over) RageSweep(slime, plain, catX, swingFacing);
+        // The yarn draws a slime that keeps its distance in; the glove's combo tosses its enemy up (PetBattle.Weapons.cs).
+        if (landed) PullIn(slime, catX);
+        if (landed && combo) LaunchUp(slime, catX);
+        // Raging or a sweeping weapon: the swing also hits every other enemy in its reach.
+        if ((Raging || arms.Sweep) && !Over) Sweep(slime, plain, catX, swingFacing);
         // A weapon that stuns (the hammer): now and then a landed hit dazes the enemy and cuts its windup.
         if (landed && arms.StunChance > 0 && strikeRandom.NextDouble() < arms.StunChance) StrikeStun(slime);
         // Shockwave: a combo hit stuns; Gale: a combo sets the cat rushing.
@@ -625,7 +628,7 @@ public sealed partial class BattleSim
         }
         // A combo hit also hits the enemies close to its target for part of its damage (raging, the
         // sweep above already hit them all).
-        if (combo && Settings.ComboSplash > 0 && !Raging) Splash(slime, plain * Settings.ComboSplash, catX);
+        if (combo && Settings.ComboSplash > 0 && !Raging && !arms.Sweep) Splash(slime, plain * Settings.ComboSplash, catX);
         // Afterimage: every Every-th landed swing hits a second time (an echo counts nothing itself).
         landedSwings++;
         if (Active("echo") is SynergySpec echo && landedSwings % echo.Every == 0 && slime.Targetable)

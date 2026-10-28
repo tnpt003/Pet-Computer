@@ -43,6 +43,8 @@ public sealed partial class PetWindow
         [BattleEventKind.Snipped] = ("swoosh", 3), [BattleEventKind.SprayOn] = ("squish", 2), [BattleEventKind.SpraySpent] = ("clank", 2),
         // 1.5 M07: the rage bar full, the cat raging.
         [BattleEventKind.RageFull] = ("sparkle", 5), [BattleEventKind.Raged] = ("excited", 6),
+        // 1.5 M08: the glove's combo tossed a slime up.
+        [BattleEventKind.Launched] = ("swoosh", 3),
     };
 
     private void PlayBattleSound()

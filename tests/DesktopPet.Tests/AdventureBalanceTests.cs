@@ -23,7 +23,7 @@ internal static class AdventureBalanceTests
     // QuietAfter s or more (QuietShare), the cat's target changes a minute, stuns that come right
     // after the last one's immunity (StunChains).
     public readonly record struct Outcome(bool Won, double Seconds, double Hp, int Stuns, int Synergies, Dictionary<string, int> Build, int Blocks = 0, double ShieldSeconds = 0, double HpShare = 0, int Elites = 0,
-        int Warded = 0, int HealsCast = 0, int HealsLanded = 0, double QuietShare = 0, double Switches = 0, int StunChains = 0);
+        int Warded = 0, int HealsCast = 0, int HealsLanded = 0, double QuietShare = 0, double Switches = 0, int StunChains = 0, int SweepHits = 0, int Launches = 0);
     private const double QuietAfter = 2;
 
     // Order cards are liked in when the build gives no lead (fish when hurt).
@@ -82,7 +82,7 @@ internal static class AdventureBalanceTests
             else sinceDamage = 0;
         }
         return new(sim.Phase == BattlePhase.Won, sim.FightSeconds, sim.CatHp, sim.StunsTaken, sim.Synergies.Count, sim.Build(), sim.BlocksMade, sim.BossShieldSeconds, sim.CatHp / sim.CatMaxHp, sim.ElitesSpawned,
-            sim.WardedHits, healsCast, healsLanded, fighting > 0 ? quiet / fighting : 0, sim.FightSeconds > 0 ? switches * 60 / sim.FightSeconds : 0, chains);
+            sim.WardedHits, healsCast, healsLanded, fighting > 0 ? quiet / fighting : 0, sim.FightSeconds > 0 ? switches * 60 / sim.FightSeconds : 0, chains, sim.SweepHits, sim.WeaponLaunches);
     }
 
     // When the player notices a windup or a heal: the simple player at once, the casual one after
@@ -271,6 +271,41 @@ internal static class AdventureBalanceTests
                 // In whole points: 6/10 against 9/10 is 30 points, not 0.30000000000000004.
                 check(Math.Round(Math.Abs(sword - hammer) * 100) <= 30, $"Balance: stage {s}, {level}: sword and hammer within 30 points ({sword:P0} vs {hammer:P0})");
             }
+        // 1.5 M08: the yarn and the glove, played the same way (their own table, so the one above stays
+        // comparable with older runs): the simple player within 30 points of the sword everywhere and ≥ 80 %
+        // on Normal; the idle player's wins are shown, not held to a target.
+        Console.WriteLine($"Adventure balance, 1.5 weapons (simulation): stage | weapon | level | player | wins/{seeds} | avg s (wins) | HP % left (wins) | sweep hits/run | launches/run");
+        foreach (var weapon in new[] { "yarn", "glove" })
+        {
+            if (data.FindWeapon(weapon) == null) continue;
+            var newRuns = new Dictionary<(int Stage, BattleDifficulty Level, Player Player), List<Outcome>>();
+            foreach (var level in levels)
+                foreach (var player in new[] { Player.Idle, Player.Simple })
+                    for (int seed = 1; seed <= seeds; seed++)
+                    {
+                        var carried = new Dictionary<string, int>();
+                        for (int i = 0; i < stages.Length; i++)
+                        {
+                            var run = Play(data, stages[i], weapon, level, seed, player, carried);
+                            if (run.Won) carried = run.Build;
+                            if (!newRuns.TryGetValue((i + 1, level, player), out var list)) newRuns[(i + 1, level, player)] = list = new();
+                            list.Add(run);
+                        }
+                    }
+            for (int i = 1; i <= stages.Length; i++)
+                foreach (var level in levels)
+                    foreach (var player in new[] { Player.Idle, Player.Simple })
+                    {
+                        var runs = newRuns[(i, level, player)];
+                        var wins = runs.Where(r => r.Won).ToList();
+                        double share = (double)wins.Count / seeds;
+                        Console.WriteLine($"  {i} | {weapon,-6} | {level,-6} | {Name(player),-6} | {wins.Count,2}/{seeds} | {(wins.Count > 0 ? wins.Average(r => r.Seconds) : 0),6:0} | {(wins.Count > 0 ? wins.Average(r => r.HpShare) : 0),4:P0} | {runs.Average(r => r.SweepHits),5:0.0} | {runs.Average(r => r.Launches),4:0.0}");
+                        if (player != Player.Simple) continue;
+                        double sword = table[(i, BattleWeapon.Sword, level, Player.Simple)].Wins;
+                        check(Math.Round(Math.Abs(sword - share) * 100) <= 30, $"Balance: stage {i}, {level}: {weapon} within 30 points of the sword ({share:P0} vs {sword:P0})");
+                        if (level == BattleDifficulty.Normal) check(share >= 0.8, $"Balance: stage {i}, {weapon}, Normal, simple player wins ≥ 80 % ({share:P0})");
+                    }
+        }
         // The whole chapter in one go, saved and read back after every stage (like closing the app).
         string dir = Path.Combine(Path.GetTempPath(), "pet-chapter-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(dir);

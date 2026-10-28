@@ -280,12 +280,17 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
 
     // Swing keyframes (progress, angle), timed so the weapon reaches its target at the hit moment
     // (pet.SwordHitAt). Sword: a quick wind-up over the head and a slash down in front. Hammer:
-    // raised higher, held there (the heavy wind-up), then a short slam and a slow recovery.
+    // raised higher, held there (the heavy wind-up), then a short slam and a slow recovery. Yarn: a wider
+    // lash. Glove: a short jab straight ahead and back.
     private (double At, double Angle)[] SwingKeys()
     {
         double h = Math.Clamp(pet.SwordHitAt, 0.2, 0.85);
-        if (swingKeys != null && swingKeysFor == (h, pet.Hammer)) return swingKeys;
-        swingKeysFor = (h, pet.Hammer);
+        if (swingKeys != null && swingKeysFor == (h, pet.WeaponStyle)) return swingKeys;
+        swingKeysFor = (h, pet.WeaponStyle);
+        if (pet.WeaponStyle == "yarn")
+            return swingKeys = new[] { (0.0, 30.0), (Math.Max(0.1, h - 0.12), -35.0), (h + 0.05, 135.0), (Math.Min(0.95, h + 0.17), 128.0), (1.0, 30.0) };
+        if (pet.WeaponStyle == "glove")
+            return swingKeys = new[] { (0.0, 40.0), (Math.Max(0.1, h - 0.08), 20.0), (h + 0.02, 95.0), (Math.Min(0.95, h + 0.25), 90.0), (1.0, 40.0) };
         if (pet.Hammer)
         {
             double raised = Math.Max(0.12, h - 0.3), held = Math.Max(raised + 0.05, h - 0.08);
@@ -294,7 +299,7 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         return swingKeys = new[] { (0.0, 30.0), (Math.Max(0.1, h - 0.1), -25.0), (h + 0.05, 125.0), (Math.Min(0.95, h + 0.17), 120.0), (1.0, 30.0) };
     }
     private (double At, double Angle)[]? swingKeys;
-    private (double, bool) swingKeysFor;
+    private (double, string) swingKeysFor;
 
     private void PoseSword(ref Pose p)
     {
@@ -348,6 +353,16 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
     private static readonly Geometry HammerHandle = CachedGeometry("M -2.2,-29 L 2.2,-29 L 2.2,6 L -2.2,6 Z");
     private static readonly Geometry HammerHead = CachedGeometry("M -9,-39 L 9,-39 L 9,-27 L -9,-27 Z");
     private static readonly Pen HammerSwooshPen = FrozenPen(PetUi.Hex("#B0FFFFFF"), 7, PenLineJoin.Round, true);
+    // 1.5 M08: the yarn (a wooden handle, a strand of wool and its ball) and the boxing glove.
+    private static readonly Brush YarnWool = PetUi.Hex("#F28AB2"), GloveRed = PetUi.Hex("#E2483C"), GloveCuff = PetUi.Hex("#FFF3E2");
+    private static readonly Pen YarnStrandPen = FrozenPen(PetUi.Hex("#D9608F"), 2.4, PenLineJoin.Round, true);
+    private static readonly Pen YarnLinePen = FrozenPen(PetUi.Hex("#C04F7C"), 1.1, PenLineJoin.Round, true);
+    private static readonly Pen YarnSwooshPen = FrozenPen(PetUi.Hex("#B0FFC8DC"), 4, PenLineJoin.Round, true);
+    private static readonly Geometry YarnHandle = CachedGeometry("M -2.2,-12 L 2.2,-12 L 2.2,6 L -2.2,6 Z");
+    private static readonly Geometry YarnStrand = CachedGeometry("M 0,-12 C 4,-17 -4,-22 0,-27 C 3,-30 -1,-31 1,-32");
+    private static readonly Geometry GloveBody = CachedGeometry("M -7,-3 C -11,-9 -10,-20 -2,-22 C 6,-24 11,-17 9,-9 C 8,-5 6,-3 5,-3 Z");
+    private static readonly Geometry GloveThumb = CachedGeometry("M -7,-6 C -12,-8 -12,-14 -8,-15");
+    private static readonly Geometry GloveBand = CachedGeometry("M -7,-3 L 5,-3 L 5,4 L -7,4 Z");
 
     // Battle Mode skills on the cat. Shield: a soap bubble around it. Cheer: golden sparkles rising.
     private static readonly Brush BubbleFill = PetUi.Hex("#3062D6FF");
@@ -388,16 +403,30 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
 
     // The weapon alone, for the battle setup cards: the same wooden art as in the paw, tilted,
     // about 46 DIPs long with its grip end at (0, 0).
-    public static void DrawWeaponIcon(DrawingContext dc, bool hammer)
+    public static void DrawWeaponIcon(DrawingContext dc, string style)
     {
         dc.PushTransform(new RotateTransform(35));
-        DrawWeaponShape(dc, hammer);
+        DrawWeaponShape(dc, style);
         dc.Pop();
     }
 
-    private static void DrawWeaponShape(DrawingContext dc, bool hammer)
+    private static void DrawWeaponShape(DrawingContext dc, string style)
     {
-        if (hammer)
+        if (style == "yarn")
+        {
+            dc.DrawGeometry(SwordHandle, SwordPen, YarnHandle);
+            dc.DrawGeometry(null, YarnStrandPen, YarnStrand);
+            dc.DrawEllipse(YarnWool, SwordPen, new Point(1, -37), 6.5, 6.5);
+            dc.DrawLine(YarnLinePen, new Point(-4, -40), new Point(5, -35));
+            dc.DrawLine(YarnLinePen, new Point(-3, -34), new Point(4, -41));
+        }
+        else if (style == "glove")
+        {
+            dc.DrawGeometry(GloveRed, SwordPen, GloveBody);
+            dc.DrawGeometry(null, SwordPen, GloveThumb);
+            dc.DrawGeometry(GloveCuff, SwordPen, GloveBand);
+        }
+        else if (style == "hammer")
         {
             dc.DrawGeometry(SwordHandle, SwordPen, HammerHandle);
             dc.DrawGeometry(SwordWood, SwordPen, HammerHead);
@@ -417,7 +446,8 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
     private void DrawSword(DrawingContext dc, in Pose p)
     {
         double swing = pet.SwordSwing, hitAt = Math.Clamp(pet.SwordHitAt, 0.2, 0.85);
-        if (swing > hitAt - 0.08 && swing < hitAt + 0.26)
+        // A punch has no slash arc (the glove's jab reads by itself).
+        if (pet.WeaponStyle != "glove" && swing > hitAt - 0.08 && swing < hitAt + 0.26)
         {
             // A soft swoosh along the slash (the hammer's is wider), brightest just after the hit.
             double fade = 1 - Math.Abs(swing - (hitAt + 0.06)) / 0.2;
@@ -429,14 +459,17 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
                 context.ArcTo(new Point(p.GripX + Math.Sin(a1) * 34, p.GripY - Math.Cos(a1) * 34), new Size(34, 34), 0, false, SweepDirection.Clockwise, true, false);
             }
             dc.PushOpacity(Math.Clamp(fade, 0, 1));
-            dc.DrawGeometry(null, pet.SwordCombo ? ComboSwooshPen : pet.Hammer ? HammerSwooshPen : SwooshPen, arc);
+            dc.DrawGeometry(null, pet.SwordCombo ? ComboSwooshPen : pet.Hammer ? HammerSwooshPen : pet.WeaponStyle == "yarn" ? YarnSwooshPen : SwooshPen, arc);
             dc.Pop();
         }
+        // The glove is worn: the paw goes in first, the glove over it.
+        bool glove = pet.WeaponStyle == "glove";
+        if (glove) Oval(dc, Fur, p.GripX, p.GripY, 5.5, 5);
         dc.PushTransform(new TranslateTransform(p.GripX, p.GripY));
         dc.PushTransform(new RotateTransform(p.SwordAngle));
-        DrawWeaponShape(dc, pet.Hammer);
+        DrawWeaponShape(dc, pet.WeaponStyle);
         dc.Pop(); dc.Pop();
-        Oval(dc, Fur, p.GripX, p.GripY, 5.5, 5); // The paw around the grip.
+        if (!glove) Oval(dc, Fur, p.GripX, p.GripY, 5.5, 5); // The paw around the grip.
     }
 
     // Body and head share the facing, bob/shake and squash transforms.

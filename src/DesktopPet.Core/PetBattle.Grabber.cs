@@ -23,7 +23,7 @@ public sealed partial class BattleSim
     private double grabX, grabHeight, gripX, gripY, grabHeld, grabVX, grabVY;
     public bool Grabbing => GrabbedId != 0;
     // The Grabber is in use: an enemy in the claw or one of its throws still flying.
-    public bool GrabberBusy { get { if (GrabbedId != 0) return true; foreach (var s in slimes) if (s.Tossed) return true; return false; } }
+    public bool GrabberBusy { get { if (GrabbedId != 0) return true; foreach (var s in slimes) if (s.Tossed && !s.Launched) return true; return false; } }
 
     public bool Grabbable(Slime s) => s.Targetable && !s.IsBoss && !s.Type.Blocker && s.Type.Scale <= Settings.GrabberMaxScale + 1e-9
         && !s.Handled && !s.Airborne && s.LeapHeight <= 0 && !s.Shielded;
@@ -109,7 +109,7 @@ public sealed partial class BattleSim
 
     private void Fly(Slime slime, double dt)
     {
-        if (!slime.Targetable) { slime.Tossed = slime.Thrown = false; slime.Lift = 0; return; }
+        if (!slime.Targetable) { slime.Tossed = slime.Thrown = slime.Launched = false; slime.Lift = 0; return; }
         var (minX, maxX) = Bounds(slime);
         slime.TossVY -= Gravity * dt;
         slime.X += slime.TossVX * dt;
@@ -125,6 +125,7 @@ public sealed partial class BattleSim
         slime.Lift = 0;
         slime.Tossed = false;
         if (slime.Thrown) Daze(slime, Settings.GrabberStun);
+        if (slime.Launched) { slime.Launched = false; if (arms.LaunchStun > 0) Daze(slime, arms.LaunchStun); }
         slime.Thrown = false;
     }
 
@@ -165,6 +166,6 @@ public sealed partial class BattleSim
     private void ClearGrabber()
     {
         GrabbedId = 0;
-        foreach (var s in slimes) { s.Grabbed = s.Tossed = s.Thrown = false; s.Lift = 0; s.TossVX = s.TossVY = 0; }
+        foreach (var s in slimes) { s.Grabbed = s.Tossed = s.Thrown = s.Launched = false; s.Lift = 0; s.TossVX = s.TossVY = 0; }
     }
 }

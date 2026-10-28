@@ -662,6 +662,20 @@ internal static class BattleChecks
                 var m = Model(facing); m.SwordOut = true; m.SwordSwing = u; m.BattleHurt = u < 0.3 ? 0.3 : 0;
                 Render(m, $"battle-swing-{(facing > 0 ? "right" : "left")}-{u:F1}");
             }
+            // 1.5 M08: the yarn and the glove, through their swings and carried (inside the window too).
+            foreach (var (style, hitAt) in new[] { ("yarn", 0.2 / 0.42), ("glove", 0.09 / 0.22) })
+            {
+                string still = Render(new Func<PetModel>(() => { var m = Model(facing); m.SwordOut = true; m.WeaponStyle = style; m.SwordHitAt = hitAt; return m; })(), $"battle-{style}-{facing}");
+                check(still != Render(armed, "battle-sword"), $"The {style} has its own drawing ({facing})");
+                for (double u = 0; u <= 1.0001; u += 0.1)
+                {
+                    var m = Model(facing); m.SwordOut = true; m.WeaponStyle = style; m.SwordHitAt = hitAt; m.SwordSwing = u;
+                    Render(m, $"battle-{style}-swing-{(facing > 0 ? "right" : "left")}-{u:F1}");
+                }
+                var carried = Model(facing); carried.SwordOut = true; carried.WeaponStyle = style; carried.Action = PetAction.Dragging; carried.Grounded = false; carried.Pickup.Begin(0, 0);
+                for (int frame = 0; frame < 90; frame++) carried.Pickup.Step(frame < 45 ? frame * 40 : (90 - frame) * 40, 0, 1.0 / 120);
+                Render(carried, $"battle-{style}-dragged-{facing}");
+            }
             var dragged = Model(facing); dragged.SwordOut = true; dragged.Action = PetAction.Dragging; dragged.Grounded = false; dragged.Pickup.Begin(0, 0);
             for (int frame = 0; frame < 90; frame++) dragged.Pickup.Step(frame < 45 ? frame * 40 : (90 - frame) * 40, 0, 1.0 / 120);
             Render(dragged, $"battle-dragged-{facing}");

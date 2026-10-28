@@ -382,7 +382,7 @@ public sealed partial class PetWindow
                 Grid.SetColumn(bar, 1); Grid.SetColumn(statValues[i], 2);
                 stats.Children.Add(statNames[i]); stats.Children.Add(bar); stats.Children.Add(statValues[i]);
             }
-            var icon = new WeaponIcon { Hammer = weapon.Style == "hammer", Width = 46, Height = 52, Margin = new Thickness(0, 0, 8, 0), VerticalAlignment = VerticalAlignment.Top };
+            var icon = new WeaponIcon { Style = weapon.Style, Width = 46, Height = 52, Margin = new Thickness(0, 0, 8, 0), VerticalAlignment = VerticalAlignment.Top };
             var card = new Border
             {
                 CornerRadius = new CornerRadius(9), Padding = new Thickness(9, 7, 10, 7), Margin = new Thickness(0, 0, 0, 6), Cursor = System.Windows.Input.Cursors.Hand,
@@ -556,9 +556,9 @@ public sealed partial class PetWindow
                 : L("Không có hướng dẫn trong trận này.", "No guide in this battle.");
             ShowChosen(prepGuideChip, prepGuide, prepGuideCheck!);
         }
-        if (prepPreview != null && (prepPreview.Hammer != (chosen.Style == "hammer") || prepPreview.SwordHitAt != chosen.HitFraction))
+        if (prepPreview != null && (prepPreview.WeaponStyle != chosen.Style || prepPreview.SwordHitAt != chosen.HitFraction))
         {
-            prepPreview.Hammer = chosen.Style == "hammer";
+            prepPreview.WeaponStyle = chosen.Style;
             prepPreview.SwordHitAt = chosen.HitFraction;
             prepPreviewView?.InvalidateVisual();
         }
@@ -603,11 +603,11 @@ public sealed partial class PetWindow
 // A weapon's art for a setup card (the same drawing as in the cat's paw).
 public sealed class WeaponIcon : FrameworkElement
 {
-    public bool Hammer { get; init; }
+    public string Style { get; init; } = "sword";
     protected override void OnRender(DrawingContext dc)
     {
         dc.PushTransform(new TranslateTransform(ActualWidth / 2 - 10, ActualHeight / 2 + 17));
-        PetRenderer.DrawWeaponIcon(dc, Hammer);
+        PetRenderer.DrawWeaponIcon(dc, Style);
         dc.Pop();
     }
 }

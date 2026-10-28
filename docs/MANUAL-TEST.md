@@ -615,3 +615,10 @@ Thanh nộ mỏng dưới thanh HP trên HUD. Ảnh mèo nổi giận (đứng, 
 - [ ] Đang choáng mà thanh đầy: click không làm gì, hết choáng click lại được. Đang cầm mèo: click không làm gì. Pause/menu/túi đồ: click không làm gì, đang nổi giận thì thời gian đứng yên.
 - [ ] Nhấc mèo khi đang nổi giận: kéo/lắc/ném/thả như thường (mèo to hơn một chút khi bị cầm, kiếm không bị cắt mép); thả xuống vẫn còn nổi giận nếu chưa hết giờ.
 - [ ] Kết thúc trận (nút End, thắng, thua) giữa lúc nổi giận: mèo về cỡ và màu cũ. Đổi bộ lông (Cài đặt) rồi vào trận: lông đỏ theo màu bộ lông đó. Rê chuột lên thanh: dòng gợi ý mô tả (vi/en/ja). DPI 100/150/200%: thanh không lệch, mèo to không bị cắt.
+
+## Cuộn len và Găng đấm 1.5 M08 (2026-10-28) — mọi bảng chuẩn bị
+Bảng chuẩn bị có 4 vũ khí: Kiếm, Búa, Cuộn len, Găng đấm (icon riêng, thanh chỉ số). Ảnh mèo cầm cuộn len/găng ở mọi pha vung đã xem qua render UiChecks, chưa xem trong trận thật, chưa thử DPI thật.
+- [ ] Bảng chuẩn bị (trận tự do, Phiêu lưu, Vô tận, Viễn chinh): 4 thẻ vũ khí không tràn khung, chọn được, lựa chọn được nhớ; vi/en/ja đúng tên và gợi ý. Sảnh/túi đồ/bảng kết quả vẽ đúng vũ khí đang dùng.
+- [ ] Cuộn len: mèo đánh từ xa hơn kiếm; một nhát làm mấy slime đứng gần nhau phía trước cùng hiện số; slime thảo dược đứng sau bị kéo về sát mèo; không có sao choáng trên slime.
+- [ ] Găng đấm: mèo đấm rất nhanh, số ×1…×4 trên HUD, ×4 màu vàng; nhát thứ 5 hất slime bay lên (có bóng dưới sàn), slime rơi xuống thì choáng; Vua/slime đá không bị hất. Đang hất mà Pause: slime đứng yên giữa không trung.
+- [ ] Kỷ lục trận tự do/Phiêu lưu tách theo vũ khí (dòng "this gear"/"vũ khí này"); bảng kết quả ghi đúng tên vũ khí.

@@ -636,7 +636,7 @@ public static class BattleData
     // Ids stay stable across versions: lower-case letters, digits, '_' and '-', at most 32.
     private static readonly Regex IdPattern = new("^[a-z0-9_-]{1,32}$");
     // What the code can draw and do; data can only choose among these.
-    public static readonly string[] WeaponStyles = { "sword", "hammer" };
+    public static readonly string[] WeaponStyles = { "sword", "hammer", "yarn", "glove" };
     public static readonly string[] WeaponHitEffects = { "spark", "thud" };
     public static readonly string[] EnemyRenderers = { "slime" };
     public static readonly string[] EnemyMarks = { "none", "speed", "cracks", "leaf", "cross" };
@@ -693,6 +693,8 @@ public static class BattleData
             Within(w.Knock, 0, 1000, at + ".knock");
             Within(w.StunChance, 0, 1, at + ".stunChance"); Within(w.StunSeconds, 0, 3, at + ".stunSeconds");
             if (w.OnHit != null) StatusHit.Validate(w.OnHit, at + ".onHit");
+            Within(w.Pull, 0, 1000, at + ".pull"); Within(w.Launch, 0, 1500, at + ".launch"); Within(w.LaunchStun, 0, 3, at + ".launchStun");
+            if (w.ComboHits is < 2 or > 6) throw new InvalidDataException(at + ".comboHits must be 2–6");
         }
         NotNegative(s.LandingGraceSeconds, "landingGraceSeconds");
         if (s.LandingGraceSeconds > 5) throw new InvalidDataException("landingGraceSeconds must be at most 5");

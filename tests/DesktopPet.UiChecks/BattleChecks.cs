@@ -654,6 +654,12 @@ internal static class BattleChecks
             }
             check(Render(Lifted(false, 1), $"battle-stunned-lifted-{facing}") != Render(Lifted(false, 0), $"battle-calm-lifted-{facing}"),
                 $"A stunned cat keeps its stars while gently carried ({facing})");
+            // 1.5 M03: carried near an enemy in the air the cat swings, slash included.
+            var heldSwing = Lifted(false, 0); heldSwing.SwordSwing = 0.5;
+            var heldEarly = Lifted(false, 0); heldEarly.SwordSwing = 0.1;
+            check(Render(heldSwing, $"battle-held-swing-{facing}") != Render(heldEarly, $"battle-held-windup-{facing}") &&
+                  Render(heldEarly, $"battle-held-windup-{facing}") != Render(Lifted(false, 0), $"battle-calm-lifted-{facing}"),
+                $"A carried cat's swing moves the sword and shows its slash ({facing})");
             var shaken = Lifted(true, 0);
             check(shaken.Pickup.Dizziness < 0.75 || Render(Lifted(true, 1), "battle-shaken-stunned") == Render(shaken, "battle-shaken"),
                 $"Shaken while stunned: one orbit, not two ({facing}, pickup dizziness {shaken.Pickup.Dizziness:0.00})");

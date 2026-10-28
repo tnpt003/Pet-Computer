@@ -370,7 +370,7 @@ public enum SlimeState { Spawning, Moving, Windup, Recover, Stunned, Defeated, C
 // hits never set off another bonus. App: a desktop app (PetBattle.Apps.cs). Splash: a combo's hit on
 // the enemies next to its target.
 // Link: the share of a hit a tether's holder takes for its ally.
-public enum DamageSource { Weapon, Combo, Bomb, Reflect, Echo, App, Splash, Link }
+public enum DamageSource { Weapon, Combo, Bomb, Reflect, Echo, App, Splash, Link, Throw }
 
 // What a hit on an enemy did: landed, blocked by a stony enemy, or nothing on a shielded boss.
 public enum HitResult { Landed, Blocked, Immune }
@@ -468,6 +468,9 @@ public sealed class Slime
     public double RelinkAt, BeatClock, MergeClock, RideHeight, PanicRemaining;
     public double AuraSpeed = 1;
     public bool Riding => LinkedTo != 0 && Link?.Kind == EnemyLinks.Ride;
+    // In the air (its kind's Hover): the bottom of its body this many DIPs over the floor (0: on the floor).
+    public double Altitude;
+    public bool Airborne => Altitude > 0;
     public bool Targetable => State is not (SlimeState.Spawning or SlimeState.Defeated);
     public void Set(SlimeState state)
     {
@@ -507,7 +510,10 @@ public enum BattleEventKind
     // Links (Value: the slime's id): a link made, cut by the user (or its holder defeated), snapped by
     // itself; a rhythm's beat and its strike together; a merge done (Value: the new enemy's id); a
     // rider hopped off or fell; an enemy panicked (an aura holder fell).
-    LinkFormed, LinkCut, LinkSnapped, LinkBeat, LinkStrike, Merged, Dismounted, Panicked
+    LinkFormed, LinkCut, LinkSnapped, LinkBeat, LinkStrike, Merged, Dismounted, Panicked,
+    // The cat in the user's hand hit an enemy in the air; the thrown cat flew into an enemy that
+    // reacts to it (Value: the enemy's id).
+    HeldHit, ThrowHit
 }
 public readonly record struct BattleEvent(BattleEventKind Kind, double X, double Value = 0);
 // Number: a floating damage (Value > 0) or heal (Value < 0, shown as +HP above the cat).

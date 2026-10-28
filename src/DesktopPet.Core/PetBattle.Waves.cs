@@ -286,6 +286,7 @@ public sealed partial class BattleSim
         slime.HealCooldown = type.HealCooldown / 2;
         slime.HealPower = hpFactor;
         slime.HealLeft = hpFactor != 1 ? Math.Round(type.HealBudget * hpFactor) : type.HealBudget;
+        slime.Altitude = type.Hover;
         var (minX, maxX) = Bounds(slime);
         slime.X = Math.Clamp(x, minX, maxX);
         slime.Set(SlimeState.Spawning);

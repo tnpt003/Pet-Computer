@@ -418,6 +418,21 @@ Mỗi quái có tối đa một `link`. Khóa chung: `kind`, `enabled` (mặc đ
 - Sự kiện mới cho âm thanh/hiệu ứng sau này: `LinkFormed`, `LinkCut`, `LinkSnapped`, `LinkBeat`, `LinkStrike`, `Merged`, `Dismounted`, `Panicked` (chưa gắn âm thanh ở M01).
 - Đã bỏ loại `bounce` khỏi thiết kế (người dùng duyệt 2026-10-28): Q2 lò xo là bẫy, không có liên kết riêng.
 
+## Quái trên không và tương tác ném (`hover`, `throwHit`) (bản 1.5, mốc M03, 2026-10-28)
+
+Khung cho ngoại lệ Battle Mode 1.5 (docs/APPROVED-EXCEPTIONS.md → Battle Mode). Code: `src/DesktopPet.Core/PetBattle.Held.cs`, test `tests/DesktopPet.Tests/BattleHeldTests.cs` (quái giả). **battle.json gốc chưa có quái nào dùng hai khóa này**: mọi trận hiện tại chạy y như trước (mô phỏng cân bằng giống hệt từng dòng). Quái thật dùng ở M14 (slime bay), M15 (slime băng, bám tường); cắt dây bằng ném mèo làm cùng Q4 (M10).
+
+```json
+{ "id": "flyer", "hover": 160 }
+{ "id": "ice_slime", "throwHit": { "minSpeed": 600, "damage": 30, "stun": 1.5 } }
+```
+
+- **`hover`** (0–2000 DIPs, mặc định 0): quái lơ lửng, đáy thân cách sàn chừng đó. Mèo dưới sàn không nhắm, không click chọn được, đòn lan của combo không trúng nó; nó không đánh gần mèo và không chen chỗ quái dưới sàn. Không dùng cho boss, quái chắn, lao, Slam hay quái có `link`.
+- **Mèo đang cầm tự vung vuốt** (chỉ khi đã kéo quá ngưỡng ~6 DIPs, không phải chỉ nhấn): quái `hover` gần nhất có mép thân cách tâm mèo ≤ tầm vũ khí như dưới sàn (`range` − nửa bề rộng slime). Là đòn thường của vũ khí: tính thẻ tăng sát thương, Cổ vũ, Liều lĩnh, Móng vuốt (chí mạng), Kết liễu; **không** combo, Mở màn, Đà chạy, phản đòn, Dư ảnh, đánh lan hay đẩy lùi. Hồi chiêu như đòn thường (có Cổ vũ, vòng loading), đồng hồ riêng nên đòn dưới sàn không đổi. Thả mèo trước lúc trúng thì đòn hủy. Quái dưới sàn không bao giờ bị mèo đang cầm đánh.
+- **`throwHit`**: mèo **đang bay** sau cú ném (không phải đang cầm) đi xuyên thân quái (nở thêm nửa bề rộng mèo) với tốc độ ≥ `minSpeed` (100–5000 DIPs/s, mặc định 600) thì quái mất `damage` (0–1000, không bị chặn) và choáng `stun` s (0–5, theo `stunFactor`; boss/tinh anh miễn Đẩy không choáng). Mỗi quái một lần mỗi cú ném; xét theo đoạn bay giữa hai khung hình nên ném nhanh không lọt qua. Phải có `damage` hoặc `stun`. Quái không có `throwHit` không bị cú ném ảnh hưởng.
+- Mèo vẫn không nhận sát thương khi đang cầm/bay. Pause/menu/chọn thẻ/hướng dẫn đứng hình: không vung, không va chạm. Physics kéo/ném không đổi: PetWindow chỉ đọc vị trí/vận tốc (`CatPose`).
+- Sự kiện: `HeldHit`, `ThrowHit` (Value: id quái; chưa gắn âm thanh riêng, đòn khi cầm dùng tiếng trúng đòn thường). Hình: vệt chém hiện cả khi mèo đang bị nhấc. Vẽ quái bay là việc của M14 (cửa sổ riêng).
+
 ## Viễn chinh (`expedition`) (2026-10-21)
 
 Một chuyến đi gồm nhiều bậc, mỗi bậc chọn một điểm, bậc cuối là trùm. HP và build của mèo đi tiếp từ bậc này sang bậc sau; chuyến mới bắt đầu lại từ đầu. Code: `src/DesktopPet.Core/PetExpedition.cs` (luật, không WPF), `PetWindow.Expedition.cs` (bản đồ, kết quả).

@@ -574,3 +574,8 @@ Trận gốc chưa có quái dùng liên kết; bỏ qua mục này nếu không
 - [ ] Trận tự do / Vô tận / chuẩn bị chuyến Viễn chinh: bảng chuẩn bị có mục "Kỹ năng mang theo (5/5)", hàng trên 5 kỹ năng cũ đã chọn, hàng dưới 5 kỹ năng mới mờ có ổ khóa; rê chuột lên ô thì dòng dưới hiện tác dụng (ô khóa ghi "Chưa mở"). Kiểm tra cả vi/en/ja và DPI 100/150/200% (ô và ổ khóa không bị cắt, bảng không bị cao quá màn hình nhỏ).
 - [ ] Bấm bỏ một kỹ năng: còn 4/5, nút Sẵn sàng mờ và dòng trạng thái nhắc chọn đủ 5; bấm lại thì Sẵn sàng sáng. Ô khóa bấm không có tác dụng.
 - [ ] Màn chương 1 (Phiêu lưu): không có mục kỹ năng; HUD trong trận vẫn đúng 5 ô cũ như trước; Hướng dẫn phiêu lưu vẫn chỉ đúng thanh kỹ năng và nút Đẩy.
+
+## Mèo đánh khi đang cầm, tương tác ném 1.5 M03 (2026-10-28) — chỉ xem được bằng battle.json tùy chỉnh
+Trận gốc chưa có quái bay hay quái có tương tác ném (quái thật có từ M14/M15); mục này không bắt buộc. Vẽ quái bay chưa có (M14), nên quái `hover` vẫn hiện trên sàn dù trận coi nó ở trên cao. Ví dụ file của người dùng: `{ "schemaVersion": 1, "enemies": [ { "id": "runner", "throwHit": { "minSpeed": 600, "damage": 30, "stun": 1.5 } } ] }`.
+- [ ] Trận thường: kéo/ném/thả mèo, nhấc mèo cứu, cảm giác giống hệt trước; mèo đang cầm không vung kiếm; slime không đánh được mèo đang cầm/bay.
+- [ ] Với file ví dụ: ném mèo mạnh xuyên qua slime nhanh thì nó mất máu và choáng; ném nhẹ hoặc kéo lê qua thì không; slime thường không bị cú ném ảnh hưởng.

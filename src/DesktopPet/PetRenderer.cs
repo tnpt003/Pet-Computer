@@ -396,7 +396,7 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
     private void DrawSword(DrawingContext dc, in Pose p)
     {
         double swing = pet.SwordSwing, hitAt = Math.Clamp(pet.SwordHitAt, 0.2, 0.85);
-        if (swing > hitAt - 0.08 && swing < hitAt + 0.26 && !p.PickedUp)
+        if (swing > hitAt - 0.08 && swing < hitAt + 0.26)
         {
             // A soft swoosh along the slash (the hammer's is wider), brightest just after the hit.
             double fade = 1 - Math.Abs(swing - (hitAt + 0.06)) / 0.2;

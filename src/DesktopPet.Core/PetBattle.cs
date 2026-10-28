@@ -210,7 +210,8 @@ public sealed partial class BattleSim
     public double CatCooldown { get; private set; }
     // Seconds into the current swing; negative when not swinging.
     public double SwingTime { get; private set; } = -1;
-    public double SwingProgress => SwingTime < 0 ? -1 : Math.Clamp(SwingTime / arms.SwingDuration, 0, 1);
+    public double SwingProgress => SwingTime >= 0 ? Math.Clamp(SwingTime / arms.SwingDuration, 0, 1)
+        : heldSwingTime >= 0 ? Math.Clamp(heldSwingTime / arms.SwingDuration, 0, 1) : -1;
     // Hits in the current chain, and whether the swing under way would finish it (a gold slash).
     public int Combo { get; internal set; }
     public bool ComboSwing { get; private set; }
@@ -329,7 +330,8 @@ public sealed partial class BattleSim
     }
 
     // catHeld / lifted: see SetCatState. Putting a lifted cat down grants grace (if ready).
-    public CatOrder Step(double dt, double catX, bool catHeld, bool lifted = false)
+    // pose: where the cat really is (held swing, thrown cat; PetBattle.Held.cs); null: neither happens.
+    public CatOrder Step(double dt, double catX, bool catHeld, bool lifted = false, CatPose? pose = null)
     {
         SetCatState(catHeld, lifted);
         if (Paused || ChoosingUpgrade || !double.IsFinite(dt) || dt <= 0 || !double.IsFinite(catX)) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
@@ -395,6 +397,8 @@ public sealed partial class BattleSim
         StepSlimes(dt, floorX, catHeld);
         if (Over) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
         StepApps(dt, floorX, catHeld);
+        if (Over) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
+        StepHeld(dt, catHeld ? pose : null);
         if (Over) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
         // Holding the cat freezes the waves (no spawning, no progress) and a survive stage's clock.
         if (!catHeld) StepWaves(dt, catX);
@@ -646,7 +650,7 @@ public sealed partial class BattleSim
         blasting = true;
         foreach (var other in slimes.ToArray())
         {
-            if (other == target || !other.Targetable || Math.Abs(other.X - target.X) - other.HitWidth / 2 - target.HitWidth / 2 > Settings.ComboSplashRadius) continue;
+            if (other == target || !other.Targetable || other.Airborne || Math.Abs(other.X - target.X) - other.HitWidth / 2 - target.HitWidth / 2 > Settings.ComboSplashRadius) continue;
             if ((other.X - catX) * swingFacing <= 0 ||Math.Abs(other.X - catX) - other.HitWidth / 2 > arms.Range + 14) continue;
             SplashHits++;
             AddEffect(BattleEffectKind.Spark, other.X, other.Height * 0.6);
@@ -691,7 +695,7 @@ public sealed partial class BattleSim
         // A hit never takes a boss past its next shield phase: it stops there, the rest is lost.
         slime.Hp = Math.Max(ShieldFloor(slime), slime.Hp - amount);
         slime.HitFlash = 0.18;
-        AddEffect(BattleEffectKind.Number, slime.X + (slime.IsBoss ? slime.Width * 0.38 : 0), slime.Height + 10, Math.Round(amount));
+        AddEffect(BattleEffectKind.Number, slime.X + (slime.IsBoss ? slime.Width * 0.38 : 0), slime.Altitude + slime.Height + 10, Math.Round(amount));
         effects[^1].Tone = hitTone;
         if (slime.Hp <= 0)
         {
@@ -703,7 +707,7 @@ public sealed partial class BattleSim
             // A defeated healer's guard ends with it (after the whole blast for a bomb, which hits
             // everything in it at once).
             if (slime.MendingId != 0) { slime.MendingId = 0; if (!blasting) RefreshGuards(); }
-            AddEffect(BattleEffectKind.Poof, slime.X, slime.Height / 2, slime.IsBoss ? 2 : 1);
+            AddEffect(BattleEffectKind.Poof, slime.X, slime.Altitude + slime.Height / 2, slime.IsBoss ? 2 : 1);
             effects[^1].Tint = slime.Enraged ? slime.Type.AngryColor : slime.Type.Color;
             events.Add(new(BattleEventKind.SlimeDefeated, slime.X, slime.IsBoss ? 1 : 0));
             LinkFallen(slime, true);
@@ -752,7 +756,7 @@ public sealed partial class BattleSim
     private bool Blocks(Slime slime, DamageSource source)
     {
         var type = slime.Type;
-        if (type.BlockChance <= 0 || source is DamageSource.Bomb or DamageSource.Reflect or DamageSource.App or DamageSource.Link) return false;
+        if (type.BlockChance <= 0 || source is DamageSource.Bomb or DamageSource.Reflect or DamageSource.App or DamageSource.Link or DamageSource.Throw) return false;
         // A front-only blocker: a hit from behind always lands (and ends its streak).
         if (type.BlockFrontOnly && (lastCatX - slime.X) * slime.Facing <= 0) { slime.BlockStreak = 0; return false; }
         // Armor break: combo hits go straight through.
@@ -825,7 +829,7 @@ public sealed partial class BattleSim
     // Click on a slime: the cat goes for it first. Never deals damage by itself.
     public bool Select(int id)
     {
-        if (Over || Paused || Find(id) is not { Targetable: true, Riding: false }) return false;
+        if (Over || Paused || Find(id) is not { Targetable: true, Riding: false, Airborne: false }) return false;
         SelectedId = id;
         return true;
     }

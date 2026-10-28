@@ -1,7 +1,7 @@
 # Bản 1.5 — Slime phản công (thiết kế đã chốt)
 
 Ngày chốt hướng: 2026-10-26 (Asia/Saigon). Người dùng chọn "bản rất lớn", rồi chỉnh lại phần quái và kỹ năng qua trao đổi cùng ngày.
-Trạng thái: **đang code** — xong M01, M02 (2026-10-28). Mỗi mốc bên dưới làm trong một phiên chat; trước mỗi mốc vẫn theo quy trình AGENTS.md (đọc → giải thích → chờ "ok" → làm → test → ghi nhớ).
+Trạng thái: **đang code** — xong M01, M02, M03 (2026-10-28). Mỗi mốc bên dưới làm trong một phiên chat; trước mỗi mốc vẫn theo quy trình AGENTS.md (đọc → giải thích → chờ "ok" → làm → test → ghi nhớ).
 
 Ngoài danh sách này thì ý tưởng mới vào mục "Backlog sau 1.5" cuối file, không làm trong 1.5.
 
@@ -166,7 +166,7 @@ Mỗi mốc: build + `scripts/test.ps1 -Ui` đạt, test mới cho phần thêm 
 | **Nền** | | |
 | M01 ✅ | Khung liên kết quái: khóa `link` trong battle.json (tether / rhythm / ride / merge / aura; **bỏ `bounce`** vì Q2 thành bẫy, người dùng duyệt 2026-10-28), vẽ dây/vòng, công tắc tắt từng liên kết, giới hạn 2 loại mỗi trận. Làm cả tác dụng gốc của 5 loại (người dùng chọn 2026-10-28); M09–M12 chỉ thêm quái thật | **Xong 2026-10-28:** BattleLinkTests (39 kiểm tra, quái giả); mô phỏng cân bằng chương 1 và Viễn chinh giống hệt trước từng dòng; chi tiết docs/BATTLE-DATA.md → Liên kết quái |
 | M02 ✅ | Chọn 5 trong 10 kỹ năng: dữ liệu, bảng chuẩn bị, lưu lựa chọn, ô khóa, lọc thẻ theo kỹ năng | **Xong 2026-10-28:** BattleLoadoutTests + UiChecks; mô phỏng cân bằng giống hệt trước từng dòng. Người dùng chốt: chương 1 luôn 5 kỹ năng cũ (mục chọn ẩn, chương có `skillChoice` mới chọn); kỷ lục không tách theo bộ kỹ năng; nút "Đổi kỹ năng" ở điểm nghỉ dời sang M06. 5 kỹ năng mới hiện ô khóa tới khi có tác dụng (M05/M06) và được mở bằng `unlocksSkill` (M21). Chi tiết: docs/BATTLE-DATA.md → Bộ kỹ năng mang theo |
-| M03 | Mèo đánh khi đang cầm (M1) + khung "tương tác ném" cho quái | Cầm mèo gần slime thì mèo vung vuốt; cú ném không gây sát thương cho quái thường; quái có cờ tương tác ném nhận va chạm (test bằng quái giả); physics kéo/ném không đổi (test drag/throw cũ đạt); vẫn không nhận sát thương khi cầm/bay; người dùng chọn cách chặn "cầm đánh mãi" |
+| M03 ✅ | Mèo đánh khi đang cầm (M1) + khung "tương tác ném" cho quái | **Xong 2026-10-28:** khóa `hover` (quái trên không) và `throwHit` (tương tác ném); mèo đang cầm tự vung vuốt chỉ với quái `hover` (đòn thường, không combo); cú ném chỉ tác động quái có `throwHit`; physics kéo/ném không đổi, test drag/throw cũ đạt; vẫn không nhận sát thương khi cầm/bay. Cách chặn "cầm đánh mãi": chỉ quái trên không (người dùng chốt 26/10). BattleHeldTests (quái giả) + ảnh UiChecks; mô phỏng cân bằng giống hệt trước từng dòng. Chi tiết: docs/BATTLE-DATA.md → Quái trên không và tương tác ném |
 | M04 | Hiệu ứng trên quái (M2): độc, đóng băng, dính | Hiển thị rõ trên quái; có test thời gian/cộng dồn; Pause đóng băng hiệu ứng |
 | **Kỹ năng và vũ khí** | | |
 | M05 | Đèn laser, Quạt | Hai kỹ năng chạy, có sát thương nhẹ và thanh hơi (Quạt); hướng dẫn đứng hình chỉ cho kỹ năng đang dạy |

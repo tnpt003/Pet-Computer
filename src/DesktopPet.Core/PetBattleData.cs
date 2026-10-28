@@ -142,7 +142,22 @@ public sealed class EnemyType
     // Its one link with its allies (1.5, PetBattle.Links.cs; null: none).
     public LinkSpec? Link { get; init; }
     [JsonIgnore] public LinkSpec? ActiveLink => Link is { Enabled: true } link ? link : null;
+    // An enemy in the air (1.5, PetBattle.Held.cs): it floats Hover DIPs over the floor (0: on the floor).
+    // The cat on the floor never goes for it and it never attacks up close; only the cat in the
+    // user's hand reaches it (and hits it by itself).
+    public double Hover { get; init; }
+    // What the thrown cat flying into it does (1.5, PetBattle.Held.cs; null: nothing, like every other enemy).
+    public ThrowHitSpec? ThrowHit { get; init; }
     public string Name(string language) => PetText.Data(language, NameVi, NameEn);
+}
+
+// The thrown cat flying through an enemy at MinSpeed DIPs/s or more: Damage (as is, never blocked)
+// and a daze of Stun s; once per enemy per throw. The cat itself is not hurt.
+public sealed class ThrowHitSpec
+{
+    public double MinSpeed { get; init; } = 600;
+    public double Damage { get; init; }
+    public double Stun { get; init; }
 }
 
 // A link between an enemy and its allies (1.5 "Slime phản công", PetBattle.Links.cs): always
@@ -867,6 +882,14 @@ public static class BattleData
                     Within(link.MergeSeconds, 0.5, 10, at + ".link.mergeSeconds");
                 }
                 if (link.Kind == EnemyLinks.Aura) Within(link.Speed, 1, 3, at + ".link.speed");
+            }
+            Within(e.Hover, 0, 2000, at + ".hover");
+            if (e.Hover > 0 && (e.Boss || e.Blocker || e.Dash || e.Slam || e.Link != null)) throw new InvalidDataException(at + ".hover is not for a boss, blocker, dash, slam or linked enemy");
+            if (e.ThrowHit is ThrowHitSpec thrown)
+            {
+                Within(thrown.MinSpeed, 100, 5000, at + ".throwHit.minSpeed");
+                Within(thrown.Damage, 0, 1000, at + ".throwHit.damage"); Within(thrown.Stun, 0, 5, at + ".throwHit.stun");
+                if (thrown.Damage <= 0 && thrown.Stun <= 0) throw new InvalidDataException(at + ".throwHit changes nothing");
             }
             if (e.Phases is { } phases)
             {

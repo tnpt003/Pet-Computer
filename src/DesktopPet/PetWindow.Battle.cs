@@ -434,6 +434,11 @@ public sealed partial class PetWindow
     // BattleHoldsOff covers but a plain click, the one case slimes' hits under way still reach.
     private bool BattleLifted => dragging || !pet.Grounded || pet.Action is PetAction.Dragging or PetAction.Thrown or PetAction.Climbing || PetActionRules.IsInFlight(pet.Action);
 
+    // Where the held cat really is, for its swing at enemies in the air and a throw into enemies that
+    // react to it (1.5 M03). Only read: the drag and throw physics stay as they are.
+    private CatPose BattleCatPose() => new(pet.X + settings.Width / 2, bounds.Bottom - (pet.Y + settings.Height / 2), pet.VX, pet.VY,
+        InHand: dragging, Flying: !dragging && pet.Action != PetAction.Climbing && (!pet.Grounded || pet.Action == PetAction.Thrown || PetActionRules.IsInFlight(pet.Action)));
+
     // A real drag just began: a chosen skill is dropped and the HUD shows it at once.
     private void BattleCatLifted()
     {
@@ -456,7 +461,7 @@ public sealed partial class PetWindow
         bool held = BattleHoldsOff;
         if (!held) KeepBattleOnItsMonitor();
         // The Adventure Guide holds the battle still while a step shows (PetWindow.BattleGuide.cs).
-        var order = battle.Step(BattleGuideFreezes ? 0 : dt, pet.X + settings.Width / 2, held, BattleLifted);
+        var order = battle.Step(BattleGuideFreezes ? 0 : dt, pet.X + settings.Width / 2, held, BattleLifted, held ? BattleCatPose() : null);
         PlayBattleSound();
         ShowBattleBanners();
         battle.ClearEvents();
@@ -495,6 +500,7 @@ public sealed partial class PetWindow
         // Quick feet: this run's running speed (none while the guide holds the battle still).
         pet.MoveScale = BattleGuideFreezes ? 0 : battle.Settings.CatRunScale * battle.MoveFactor * battle.LagFactor;
         pet.SwordSwing = battle.SwingProgress;
+        if (held && battle.HeldSwinging) pet.Facing = battle.HeldFacing;
         pet.SwordCombo = battle.ComboSwing;
         pet.BattleHurt = battle.HurtFlash;
         pet.BattleCheer = battle.Phase == BattlePhase.Won;

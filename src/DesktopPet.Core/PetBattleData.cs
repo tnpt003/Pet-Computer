@@ -152,6 +152,10 @@ public sealed class EnemyType
     // trap (Q2). Null: neither.
     public SpitSpec? Spit { get; init; }
     public SpringSpec? Spring { get; init; }
+    // 1.5 M11 (PetBattle.Fuse.cs, PetBattle.Split.cs): it lights a fuse next to the cat and blows up (Q6),
+    // or breaks into smaller ones when defeated (Q7). Null: neither.
+    public FuseSpec? Fuse { get; init; }
+    public SplitSpec? Split { get; init; }
     // An infected bin may spit one of this kind (with an elite affix). False keeps a kind out of battles
     // that never list it (the 1.5 enemies until their chapter brings them in).
     public bool BinSpit { get; init; } = true;
@@ -200,6 +204,35 @@ public sealed class SpringSpec
     public int EliteHits { get; init; } = 3;
 }
 
+// Q6 (1.5 M11): with the cat on the floor within Range DIPs (centre to centre) it stops and lights its fuse:
+// Seconds later it blows up (a red ring shows the blast's Radius all along). The cat on the floor in the
+// ring takes the enemy's damage and a stun of Stun s; every other enemy in it (not one in the air) loses
+// EnemyDamage. It is gone then, not counted as the cat's. Defeated before it is lit it fizzles; defeated
+// while lit it blows up on the spot. Knocked off its mount (the mount defeated, the rope cut) it lights a
+// DropFuse s fuse where it falls; thrown by the Grabber it blows up where it hits or lands. An elite
+// burns EliteSeconds and blasts EliteRadius × as wide.
+public sealed class FuseSpec
+{
+    public double Range { get; init; } = 70;
+    public double Seconds { get; init; } = 1.5;
+    public double Radius { get; init; } = 90;
+    public double Stun { get; init; } = 0.6;
+    public double EnemyDamage { get; init; } = 20;
+    public double DropFuse { get; init; } = 0.8;
+    public double EliteSeconds { get; init; } = 1.1;
+    public double EliteRadius { get; init; } = 1.3;
+}
+
+// Q7 (1.5 M11): defeated, it breaks into Count enemies of kind Into (an elite into EliteCount), each with
+// Health of its own max HP. They do not split again (Into may not split).
+public sealed class SplitSpec
+{
+    public string Into { get; init; } = "";
+    public int Count { get; init; } = 2;
+    public int EliteCount { get; init; } = 3;
+    public double Health { get; init; } = 0.6;
+}
+
 // The thrown cat flying through an enemy at MinSpeed DIPs/s or more: Damage (as is, never blocked)
 // and a daze of Stun s; once per enemy per throw. The cat itself is not hurt.
 public sealed class ThrowHitSpec
@@ -224,7 +257,8 @@ public sealed class ThrowHitSpec
 //   left alone by the cat; DropRange from the cat it hops off. Its mount defeated (or CutLink): it falls
 //   where it is, dazed BreakStun s.
 // merge: Count of its kind within Range of each other for MergeSeconds (a bar counts down) become one
-//   Into enemy with their HP added up. A push or a stun on one starts its clock again.
+//   Into enemy with their HP added up. A push or a stun on one starts its clock again. AfterHeal (1.5
+//   M11, Q7): only ones a healer has healed since they came count (split halves made whole again).
 // aura: allies within Range move Speed × faster; defeated, every other enemy (never a boss) panics
 //   BreakStun s: runs away from the cat and does not attack.
 public sealed class LinkSpec
@@ -245,6 +279,7 @@ public sealed class LinkSpec
     public int Count { get; init; } = 3;
     public double MergeSeconds { get; init; } = 2;
     public string? Into { get; init; }
+    public bool AfterHeal { get; init; }
     public double Speed { get; init; } = 1.3;
 }
 
@@ -692,7 +727,7 @@ public static class BattleData
     public static readonly string[] WeaponStyles = { "sword", "hammer", "yarn", "glove" };
     public static readonly string[] WeaponHitEffects = { "spark", "thud" };
     public static readonly string[] EnemyRenderers = { "slime" };
-    public static readonly string[] EnemyMarks = { "none", "speed", "cracks", "leaf", "cross", "spout", "spring", "drum", "chain" };
+    public static readonly string[] EnemyMarks = { "none", "speed", "cracks", "leaf", "cross", "spout", "spring", "drum", "chain", "swarm", "giant", "bomb", "split", "half" };
     public static readonly string[] GroupSides = { "a", "b" };
 
     // Throws on any mistake, so a half-valid file is never used.
@@ -933,7 +968,7 @@ public static class BattleData
                 if ((elite.HealCooldown < 1 || elite.HealBudget > 1) && e.HealAmount <= 0) throw new InvalidDataException(at + ".elite: healCooldown/healBudget are for an enemy that heals");
                 if (elite.WindupAdd <= 0 && elite.DashSpeed <= 1 && elite.SureBlocks == 0 && elite.FirstHeal <= 1 && elite.Hp <= 1 && elite.Damage <= 1
                     && elite.AttackCooldown >= 1 && elite.HealCooldown >= 1 && elite.HealBudget <= 1 && !elite.PushImmune && elite.VirusEvery <= 0
-                    && e.Spit == null && e.Spring == null) throw new InvalidDataException(at + ".elite changes nothing");
+                    && e.Spit == null && e.Spring == null && e.Fuse == null && e.Split == null) throw new InvalidDataException(at + ".elite changes nothing");
                 if (elite.DescVi == null || elite.DescEn == null || elite.DescVi.Length > 60 || elite.DescEn.Length > 60) throw new InvalidDataException(at + ".elite descriptions must be at most 60 characters");
             }
             if (e.Link is LinkSpec link)
@@ -958,6 +993,7 @@ public static class BattleData
                     if (link.Count is < 2 or > 6) throw new InvalidDataException(at + ".link.count must be 2–6");
                     Within(link.MergeSeconds, 0.5, 10, at + ".link.mergeSeconds");
                 }
+                if (link.AfterHeal && link.Kind != EnemyLinks.Merge) throw new InvalidDataException(at + ".link.afterHeal is for a merge link");
                 if (link.Kind == EnemyLinks.Aura) Within(link.Speed, 1, 3, at + ".link.speed");
             }
             Within(e.Hover, 0, 2000, at + ".hover");
@@ -990,6 +1026,21 @@ public static class BattleData
                 Within(spring.FlatSeconds, 0.5, 15, at + ".spring.flatSeconds"); Within(spring.CreepRange, 0, 1500, at + ".spring.creepRange");
                 Within(spring.EliteRadius, 1, 2, at + ".spring.eliteRadius"); Within(spring.EliteRest, 0.5, 20, at + ".spring.eliteRest");
             }
+            if (e.Fuse is FuseSpec fuse)
+            {
+                if (e.Boss || e.Blocker || e.Dash || e.Slam || e.Hover > 0 || e.Support || e.Spit != null || e.Spring != null || e.HealAmount > 0)
+                    throw new InvalidDataException(at + ".fuse is not for a boss, blocker, dash, slam, hovering, support, spitting, spring or healing enemy");
+                Within(fuse.Range, 20, 400, at + ".fuse.range"); Within(fuse.Seconds, 0.3, 5, at + ".fuse.seconds");
+                Within(fuse.Radius, 20, 300, at + ".fuse.radius"); Within(fuse.Stun, 0, 3, at + ".fuse.stun");
+                Within(fuse.EnemyDamage, 0, 1000, at + ".fuse.enemyDamage"); Within(fuse.DropFuse, 0.2, 5, at + ".fuse.dropFuse");
+                Within(fuse.EliteSeconds, 0.3, 5, at + ".fuse.eliteSeconds"); Within(fuse.EliteRadius, 1, 2, at + ".fuse.eliteRadius");
+            }
+            if (e.Split is SplitSpec split)
+            {
+                if (e.Boss) throw new InvalidDataException(at + ".split is not for a boss");
+                if (split.Count is < 2 or > 4 || split.EliteCount is < 2 or > 4) throw new InvalidDataException(at + ".split.count/eliteCount must be 2–4");
+                Within(split.Health, 0.1, 1, at + ".split.health");
+            }
             if (e.Phases is { } phases)
             {
                 if (phases.Length is 0 or > 6) throw new InvalidDataException(at + ".phases must list 1–6 phases");
@@ -1017,6 +1068,10 @@ public static class BattleData
             if (link.Kind is not EnemyLinks.Ride && link.Mount != null) throw new InvalidDataException($"enemies[{e.Id}].link.mount is for a ride link");
             if (link.Kind is not EnemyLinks.Merge && link.Into != null) throw new InvalidDataException($"enemies[{e.Id}].link.into is for a merge link");
         }
+        // What a splitting enemy breaks into: a known enemy that is not a boss and does not split (no chains).
+        foreach (var e in s.EnemyTypes)
+            if (e.Split is SplitSpec split && (!ids.Contains(split.Into) || s.Enemy(split.Into) is { Boss: true } or { Split: not null }))
+                throw new InvalidDataException($"enemies[{e.Id}].split.into must name a known enemy that is not a boss and does not split");
         // A summoned helper may not summon in turn (no chains of calls).
         static bool Summons(EnemyType e) => e.SummonAt > 0 || e.Phases?.Any(p => p.Calls().Any()) == true;
         foreach (var e in s.EnemyTypes)
@@ -1117,6 +1172,7 @@ public static class BattleData
                     if (link.Into != null) reach.Push(link.Into);
                 }
                 if (e.SummonAt > 0) reach.Push(e.SummonType);
+                if (e.Split != null) reach.Push(e.Split.Into);
                 foreach (var p in e.Phases ?? Array.Empty<BossPhase>()) foreach (var call in p.Calls()) reach.Push(call);
             }
             if (links.Count > EnemyLinks.MaxKinds)

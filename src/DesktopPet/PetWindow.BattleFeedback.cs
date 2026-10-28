@@ -52,6 +52,9 @@ public sealed partial class PetWindow
         // 1.5 M10: the drummer's beats and strike, the chain slime's rope.
         [BattleEventKind.LinkBeat] = ("ball_tap", 1), [BattleEventKind.LinkStrike] = ("clank", 4), [BattleEventKind.LinkFormed] = ("squish", 2),
         [BattleEventKind.LinkCut] = ("pop", 4), [BattleEventKind.LinkSnapped] = ("pop", 2),
+        // 1.5 M11: the fusing slimes, the bomb slime, the splitting slime.
+        [BattleEventKind.Merged] = ("squish", 4), [BattleEventKind.Dismounted] = ("swoosh", 2), [BattleEventKind.FuseLit] = ("clank", 4),
+        [BattleEventKind.Blasted] = ("pop", 6), [BattleEventKind.SlimeSplit] = ("squish", 4),
     };
 
     private void PlayBattleSound()
@@ -69,11 +72,13 @@ public sealed partial class PetWindow
 
     // A malware event about a forced update (Value: its id).
     // A link made by a tether's holder (a rider mounting makes one too).
-    private bool IsRope(BattleEvent e)
+    private bool IsRope(BattleEvent e) => EventSlime(e)?.Link?.Kind == EnemyLinks.Tether;
+    private bool IsRide(BattleEvent e) => EventSlime(e)?.Link?.Kind == EnemyLinks.Ride;
+    private Slime? EventSlime(BattleEvent e)
     {
-        if (battle == null) return false;
-        foreach (var s in battle.Slimes) if (s.Id == (int)e.Value) return s.Link?.Kind == EnemyLinks.Tether;
-        return false;
+        if (battle == null) return null;
+        foreach (var s in battle.Slimes) if (s.Id == (int)e.Value) return s;
+        return null;
     }
     private bool IsUpdate(BattleEvent e) => battle?.FindHazard((int)e.Value) is { Kind: HazardKind.Update };
 
@@ -82,12 +87,12 @@ public sealed partial class PetWindow
     // Big moments get a banner across the HUD's centre. The first heal, far heal, rally call and attack
     // from behind of a battle say what is going on (once each per battle), and so does the first elite
     // of each kind; every helper a rally makes elite is named.
-    private bool healerExplained, farHealExplained, rallyExplained, behindExplained, wardExplained, pushResistExplained, appExplained, popupExplained, virusExplained, loadingExplained, updateExplained, virusExeExplained, lockExplained, rageExplained, spitExplained, puddleExplained, springExplained, flatExplained, beatExplained, ropeExplained, cutExplained;
+    private bool healerExplained, farHealExplained, rallyExplained, behindExplained, wardExplained, pushResistExplained, appExplained, popupExplained, virusExplained, loadingExplained, updateExplained, virusExeExplained, lockExplained, rageExplained, spitExplained, puddleExplained, springExplained, flatExplained, beatExplained, ropeExplained, cutExplained, mergeExplained, remergeExplained, rideExplained, fuseExplained, splitExplained;
     private readonly HashSet<string> elitesExplained = new();
     private void ShowBattleBanners()
     {
         if (battle == null || battleHud == null) return;
-        if (battle.Time < 0.05) { healerExplained = farHealExplained = rallyExplained = behindExplained = wardExplained = pushResistExplained = appExplained = popupExplained = virusExplained = loadingExplained = updateExplained = virusExeExplained = lockExplained = rageExplained = spitExplained = puddleExplained = springExplained = flatExplained = beatExplained = ropeExplained = cutExplained = false; elitesExplained.Clear(); }
+        if (battle.Time < 0.05) { healerExplained = farHealExplained = rallyExplained = behindExplained = wardExplained = pushResistExplained = appExplained = popupExplained = virusExplained = loadingExplained = updateExplained = virusExeExplained = lockExplained = rageExplained = spitExplained = puddleExplained = springExplained = flatExplained = beatExplained = ropeExplained = cutExplained = mergeExplained = remergeExplained = rideExplained = fuseExplained = splitExplained = false; elitesExplained.Clear(); }
         var rules = battle.AppRules;
         for (int i = 0; i < battle.Events.Count; i++)
         {
@@ -146,6 +151,12 @@ public sealed partial class PetWindow
                 BattleEventKind.LinkBeat when !beatExplained => L("Nhạc trưởng đếm nhịp! Đẩy nó trước nhịp cuối", "The drummer counts! Push it before the last beat"),
                 BattleEventKind.LinkFormed when !ropeExplained && IsRope(e) => L("Dây nhầy! Ném hoặc kéo mèo xuyên dây, hay dùng Kéo cắt", "A goo rope! Throw or drag the cat through it, or use the Scissors"),
                 BattleEventKind.LinkCut when !cutExplained => L("Đứt dây! Đồng đội choáng", "Rope cut! Its ally is dazed"),
+                // 1.5 M11: the fusing slimes, the bomb slime, the splitting slime, once each per battle.
+                BattleEventKind.Merged when !remergeExplained && EventSlime(e)?.Type.Split != null => L("Hai nửa nhập lại! Hạ slime thảo dược trước", "The halves merged back! Take down the herb slime first"),
+                BattleEventKind.Merged when !mergeExplained && EventSlime(e)?.Type.Split == null => L("Slime nhập thành khổng lồ! Lần sau Đẩy hoặc Quạt tách bầy ra", "The slimes merged into a giant! Push or fan the pack apart next time"),
+                BattleEventKind.LinkFormed when !rideExplained && IsRide(e) => L("Slime bom cưỡi slime nhanh! Hạ con ngựa giữa đường", "A bomb rides a quick slime! Take the mount down on the way"),
+                BattleEventKind.FuseLit when !fuseExplained => L("Bom châm ngòi! Nhấc mèo ra khỏi vòng đỏ", "The fuse is lit! Lift the cat out of the red ring"),
+                BattleEventKind.SlimeSplit when !splitExplained => L("Slime tách đôi! Đừng để thảo dược hồi cho hai nửa", "It split in two! Don't let a herb slime heal the halves"),
                 BattleEventKind.Won => L("CHIẾN THẮNG!", "VICTORY!"),
                 BattleEventKind.Lost => L("THUA RỒI…", "DEFEATED…"),
                 _ => null
@@ -168,6 +179,11 @@ public sealed partial class PetWindow
             if (e.Kind == BattleEventKind.LinkBeat) beatExplained = true;
             if (e.Kind == BattleEventKind.LinkFormed && IsRope(e)) ropeExplained = true;
             if (e.Kind == BattleEventKind.LinkCut) cutExplained = true;
+            if (e.Kind == BattleEventKind.Merged && EventSlime(e)?.Type.Split != null) remergeExplained = true;
+            else if (e.Kind == BattleEventKind.Merged) mergeExplained = true;
+            if (e.Kind == BattleEventKind.LinkFormed && IsRide(e)) rideExplained = true;
+            if (e.Kind == BattleEventKind.FuseLit) fuseExplained = true;
+            if (e.Kind == BattleEventKind.SlimeSplit) splitExplained = true;
             if (e.Kind == BattleEventKind.VirusFileAdded) virusExeExplained = true;
             if (e.Kind == BattleEventKind.HazardOpened && IsUpdate(e)) updateExplained = true;
             else if (e.Kind == BattleEventKind.HazardOpened) loadingExplained = true;

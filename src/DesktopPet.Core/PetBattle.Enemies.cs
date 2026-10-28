@@ -98,6 +98,8 @@ public sealed partial class BattleSim
             StepStatus(slime, dt);
             if (Over) break;
             if (slime.State == SlimeState.Defeated) continue;
+            // A lit bomb burns on whatever it does (in the Grabber's claw too).
+            if (slime.Lit && BurnFuse(slime, dt)) { if (Over) break; continue; }
             if (slime.Handled) continue; // In the Grabber's claw or flying from it (PetBattle.Grabber.cs).
             if (slime.Riding && slime.State == SlimeState.Moving) continue; // Carried by its mount (StepLinks).
             if (slime.Type.Spring != null) { StepSpring(slime, dt, catX, catHeld); if (Over) break; }
@@ -162,6 +164,8 @@ public sealed partial class BattleSim
                         }
                         break;
                     }
+                    // A lit bomb stands still while its fuse burns (PetBattle.Fuse.cs).
+                    if (slime.Lit) break;
                     // Panicking (its aura holder fell): away from the cat, no attack.
                     if (Panic(slime, dt, catX, minX, maxX)) break;
                     // Chasing the laser's dot (PetBattle.Tools.cs): nothing else.
@@ -170,6 +174,8 @@ public sealed partial class BattleSim
                     if (slime.Type.Spring != null) { Creep(slime, dt, catX, minX, maxX); break; }
                     // A spitter spits from afar before anything else (even from behind its allies).
                     if (slime.Type.Spit != null && StartSpit(slime, catX, catHeld)) break;
+                    // A bomb lights its fuse next to the cat rather than attacking.
+                    if (slime.Type.Fuse != null && StartFuse(slime, catX, catHeld)) break;
                     // A support keeps behind its fighting allies and leaves the cat to them.
                     if (slime.Type.Support && (slime.KeepingBack = KeepBack(slime, dt, catX, minX, maxX))) break;
                     // A dasher runs off after its lunge.
@@ -180,7 +186,7 @@ public sealed partial class BattleSim
                     bool facingCat = Math.Abs(dx) <= 1 || Turn(slime, dx < 0 ? -1 : 1, dt);
                     // A dash enemy starts its windup from further away; its lane is set now.
                     double reach = slime.Type.Dash ? slime.Type.DashRange : slime.Range;
-                    if (!catHeld && !slime.Airborne && facingCat && Math.Abs(dx) <= reach && slime.Cooldown <= 0 && Grace <= 0 && MayAttack(slime) && (slime.IsBoss || WallBetween(slime.X, catX) == null))
+                    if (!catHeld && !slime.Airborne && slime.Type.Fuse == null && facingCat && Math.Abs(dx) <= reach && slime.Cooldown <= 0 && Grace <= 0 && MayAttack(slime) && (slime.IsBoss || WallBetween(slime.X, catX) == null))
                     {
                         slime.DashDirection = slime.Facing;
                         slime.Set(SlimeState.Windup);
@@ -363,6 +369,7 @@ public sealed partial class BattleSim
         double amount = Math.Min(Math.Min(heal, ally.MaxHp - ally.Hp), healer.HealLeft);
         if (amount <= 0) return;
         ally.Hp += amount;
+        ally.Healed = true;
         healer.HealLeft -= amount;
         healer.HealBoost = 1;
         AddEffect(BattleEffectKind.Mend, ally.X, ally.Height / 2);

@@ -1,0 +1,15 @@
+{
+  // 1.5 M11 try-out: the fusing slime (Q5), the bomb slime riding a quick slime (Q6) and the splitting
+  // slime (Q7) are in the built-in data but no battle uses them yet (chapter 2 brings them in). Copy this
+  // file to %LOCALAPPDATA%\DesktopPet\battle.json (keep a copy of yours first), then Battle Mode → Start
+  // battle (the free battle). Custom data: no records, no rewards. Delete the file to get the usual free
+  // battle back.
+  "schemaVersion": 1,
+  "waves": [
+    { "groups": [ { "squad": [ { "enemy": "fuser", "count": 3 } ] }, { "enemy": "slime", "count": 1 } ] },
+    { "groups": [ { "squad": [ { "enemy": "bomber", "count": 1 }, { "enemy": "runner", "count": 1 } ] }, { "enemy": "slime", "count": 2 },
+      { "squad": [ { "enemy": "bomber", "count": 1 }, { "enemy": "runner", "count": 1 } ] } ] },
+    { "groups": [ { "squad": [ { "enemy": "mender", "count": 1 }, { "enemy": "splitter", "count": 1 } ] }, { "squad": [ { "enemy": "fuser", "count": 3 } ] },
+      { "squad": [ { "enemy": "bomber", "count": 1 }, { "enemy": "runner", "count": 1 } ] } ] }
+  ]
+}

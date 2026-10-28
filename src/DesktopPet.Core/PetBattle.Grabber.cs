@@ -124,6 +124,8 @@ public sealed partial class BattleSim
         if (slime.Lift > 0 || !slime.Targetable) return;
         slime.Lift = 0;
         slime.Tossed = false;
+        // A thrown bomb slime blows up where it lands (1.5 M11).
+        if (slime.Thrown && slime.Type.Fuse != null) { slime.Thrown = false; Blast(slime, true); return; }
         if (slime.Thrown) Daze(slime, Settings.GrabberStun);
         if (slime.Launched) { slime.Launched = false; if (arms.LaunchStun > 0) Daze(slime, arms.LaunchStun); }
         slime.Thrown = false;
@@ -155,6 +157,8 @@ public sealed partial class BattleSim
             ToolHit(other, Settings.GrabberHitDamage);
             if (other.Targetable) Daze(other, Settings.GrabberStun);
         }
+        // A thrown bomb slime blows up where it hits (1.5 M11).
+        if (thrown.Type.Fuse != null && thrown.Targetable) { thrown.Tossed = thrown.Thrown = false; thrown.Lift = 0; Blast(thrown, true); return; }
         ToolHit(thrown, Settings.GrabberHitDamage);
     }
 

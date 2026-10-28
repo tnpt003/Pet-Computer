@@ -91,9 +91,10 @@ public sealed partial class PetWindow
     // Measurement only (scripts/perf.ps1 -Battle): PET_BATTLE_AUTOSTART=run keeps a battle going
     // (a new one after each end), =paused keeps a paused one open, =expedition keeps the
     // Expedition's heaviest kind of battle going (StartMeasuredExpeditionBattle), =crowd keeps the
-    // floor full (CrowdTuning: up to 16 tough slimes at once). While measuring, the frame numbers go
+    // floor full (CrowdTuning: up to 16 tough slimes at once), =crowd-new keeps it full of the 1.5 slimes
+    // (CrowdNewTuning: merging, riding, splitting, spitting, springs). While measuring, the frame numbers go
     // to the log once a second. Unset in normal use, where a battle never starts by itself.
-    private readonly string? battleAutostart = Environment.GetEnvironmentVariable("PET_BATTLE_AUTOSTART") is "run" or "paused" or "expedition" or "crowd"
+    private readonly string? battleAutostart = Environment.GetEnvironmentVariable("PET_BATTLE_AUTOSTART") is "run" or "paused" or "expedition" or "crowd" or "crowd-new"
         ? Environment.GetEnvironmentVariable("PET_BATTLE_AUTOSTART") : null;
 
     // The crowded fight to measure: plain slimes that take long to beat, a cat that does not fall,
@@ -102,6 +103,23 @@ public sealed partial class PetWindow
     {
         MaxAlive = 16, Waves = new[] { 60, 60, 60 }, SpawnInterval = 0.15, FirstWaveDelay = 0.5, SlimeMaxHp = 4000, CatMaxHp = 100000
     };
+    // The 1.5 slimes at their shipped numbers (1.5 M11), up to 16 at once from an endless stream, and a
+    // cat that does not fall: merges, rides, blasts, splits and goo all happen while it is measured.
+    public static BattleSettings CrowdNewTuning
+    {
+        get
+        {
+            var shipped = BattleData.Settings;
+            return new()
+            {
+                MaxAlive = 16, SpawnInterval = 0.15, FirstWaveDelay = 0.5, CatMaxHp = 100000, Enemies = shipped.EnemyTypes.ToArray(), Weapons = shipped.Weapons,
+                Plan = new[] { new WaveSpec { Stream = new StreamSpec { Interval = 0.15, IntervalEnd = 0.15, Weights = new()
+                {
+                    ["fuser"] = 3, ["bomber"] = 2, ["runner"] = 2, ["splitter"] = 2, ["mender"] = 1, ["spitter"] = 1, ["springer"] = 1, ["slime"] = 1
+                } } } }
+            };
+        }
+    }
     private double battleAutostartTimer;
 
     private void TickBattleAutostart(double dt)
@@ -112,6 +130,7 @@ public sealed partial class PetWindow
         battleAutostartTimer = 0;
         if (battleAutostart == "expedition") { StartMeasuredExpeditionBattle(); return; }
         if (battleAutostart == "crowd") BattleTuning = CrowdTuning;
+        if (battleAutostart == "crowd-new") BattleTuning = CrowdNewTuning;
         if (StartBattle() == null && battleAutostart == "paused") SetBattlePaused(true);
     }
 

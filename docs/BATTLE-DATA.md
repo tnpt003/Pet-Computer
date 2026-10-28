@@ -606,6 +606,43 @@ Q3 và Q4 của docs/UPDATE-1.5.md, dùng khung liên kết M01 (mục Liên k�
 - Banner lần đầu mỗi trận: "Nhạc trưởng đếm nhịp! Đẩy nó trước nhịp cuối", "Dây nhầy! Ném hoặc kéo mèo xuyên dây, hay dùng Kéo cắt", "Đứt dây! Đồng đội choáng" (vi/en/ja). Âm thanh dùng cue có sẵn: `LinkBeat` gõ nhẹ (`ball_tap`, hạng thấp nhất), `LinkStrike` keng, `LinkFormed` bóp, `LinkCut` bụp, `LinkSnapped` bụp nhỏ.
 - Bước hướng dẫn đứng hình (chương 2) và trang Sổ tay quái làm ở M21/M27. Python không tham gia.
 
+## Slime hợp thể, Slime bom, Slime tách đôi (`fuser`, `bomber`, `splitter`) (bản 1.5, mốc M11, 2026-10-28)
+
+Q5, Q6, Q7 của docs/UPDATE-1.5.md, dùng liên kết `merge` và `ride` của M01 (mục Liên kết quái) cùng hai khóa mới `fuse`, `split` và cờ `afterHeal`. Code: `src/DesktopPet.Core/PetBattle.Fuse.cs` (bom), `src/DesktopPet.Core/PetBattle.Split.cs` (tách đôi), `src/DesktopPet.Core/PetBattle.Links.cs` (nhập, cưỡi), `src/DesktopPet/PetBattleView.Swarm.cs` (vẽ), test `tests/DesktopPet.Tests/BattleSwarmTests.cs` và ảnh UiChecks (`SwarmVisualChecks`, `enemy-swarm.png`). **Năm quái có trong battle.json gốc nhưng chưa trận nào dùng** (`binSpit: false`): chương 1, trận tự do, Viễn chinh, Vô tận không đổi (bảng mô phỏng cân bằng giống hệt bản trước từng dòng). Chương 2 (M21), đội hình "Bầy nhập"/"Kỵ binh" (M12) và Vô tận (M24) sẽ đưa vào. Muốn thử ngay: chép `docs/examples/battle-m11.json` thành `%LOCALAPPDATA%\DesktopPet\battle.json` rồi mở Trận tự do (dữ liệu tùy chỉnh: không kỷ lục, không thưởng). File này dùng `merge` + `ride` nên không trộn được với dây/nhịp của M10 (tối đa 2 loại liên kết mỗi trận).
+
+```json
+{ "id": "fuser", "link": { "kind": "merge", "range": 70, "count": 3, "mergeSeconds": 2, "into": "giant" } }
+{ "id": "bomber", "link": { "kind": "ride", "mount": "runner", "range": 160, "dropRange": 120, "breakStun": 1 },
+  "fuse": { "range": 70, "seconds": 1.5, "radius": 90, "stun": 0.6, "enemyDamage": 20, "dropFuse": 0.8, "eliteSeconds": 1.1, "eliteRadius": 1.3 } }
+{ "id": "splitter", "split": { "into": "splitling", "count": 2, "eliteCount": 3, "health": 0.6 } }
+{ "id": "splitling", "link": { "kind": "merge", "range": 120, "count": 2, "mergeSeconds": 1.5, "into": "splitter", "afterHeal": true } }
+```
+
+- **Slime hợp thể** (`fuser`, 26 HP, nhỏ 0,7, hồng, một râu trên đầu; ra theo bầy 3 con bằng `squad`): 3 con đứng trong 70 DIPs của nhau liên tục 2 s (thanh tím đếm ngược) thì thành **Slime khổng lồ** (`giant`: to 1,6, chậm 22, đánh 20, ba râu và lông mày nặng), máu bằng tổng máu hiện tại, máu tối đa bằng tổng. Đẩy, choáng hay Kẹp gắp làm đồng hồ con đó về 0; Quạt thổi tách bầy; Bom len khi đang chụm. Khổng lồ quá to cho Kẹp gắp (`scale` > 1,3). Tinh anh hợp thể: máu ×1,3.
+- **Slime bom** (`bomber`, 30 HP, xám xanh, nắp thép và ngòi trên đầu): cưỡi slime nhanh (`runner`) ở xa mèo, cách mèo 120 thì nhảy xuống. Cách mèo dưới sàn ≤ `fuse.range` thì dừng, châm ngòi `seconds` (tia lửa chạy dọc ngòi, vòng nổ trên sàn đỏ dần), rồi nổ: mèo dưới sàn trong `radius` mất `damage` của nó (22, nhân độ khó/threat như đòn thường) và choáng `stun` s; mọi slime khác trong vòng (không tính slime trên không) mất `enemyDamage` (không bị đá chặn, tính là mèo hạ). Bom tự nổ thì biến mất, **không tính là mèo hạ**. Không đánh gần, không vào nhịp trống.
+  - Hạ bom trước khi châm: xì, không nổ (tính là mèo hạ). Hạ bom khi ngòi đang cháy: nổ tại chỗ.
+  - Hạ con ngựa giữa đường (hoặc cắt dây cưỡi): bom rơi, choáng `breakStun` s, châm ngòi ngắn `dropFuse` s và nổ tại chỗ rơi.
+  - Đẩy bom đang cháy ngòi: bom văng đi, nổ ở chỗ dừng. Kẹp gắp ném bom (đủ nhanh): nổ ở chỗ trúng slime khác/mép hoặc chỗ đáp.
+  - Mèo đang được cầm, đang trong `landingGrace`: không bị nổ trúng; Khiên bong bóng, Mai rùa chặn như đòn khác. Không châm ngòi khi người dùng đang cầm mèo hay trong `landingGrace`.
+  - Tinh anh (`elite.hp` 1,2): ngòi `eliteSeconds`, vòng nổ ×`eliteRadius`.
+
+| Khóa `fuse` | Giới hạn | Gốc |
+| --- | --- | --- |
+| `range` | 20–400 DIPs | 70 |
+| `seconds`, `dropFuse`, `eliteSeconds` | 0,3–5 s, 0,2–5 s, 0,3–5 s | 1,5, 0,8, 1,1 |
+| `radius` | 20–300 DIPs | 90 |
+| `stun` | 0–3 s | 0,6 |
+| `enemyDamage` | 0–1000 | 20 |
+| `eliteRadius` | 1–2 | 1,3 |
+
+  `fuse` không dành cho boss, đá chặn, quái lao, quái dậm, quái trên không, quái hỗ trợ, quái phun, lò xo hay quái hồi máu.
+- **Slime tách đôi** (`splitter`, 70 HP, nâu caramel, đường nứt zigzag giữa thân): bị hạ thì vỡ thành `count` **Slime nửa** (`splitling`, 35 HP tối đa, ra với `health` × máu tối đa, băng dán trên đầu); tinh anh (`elite.hp` 1,2) vỡ thành `eliteCount`. Nửa không tách tiếp (`split.into` phải là quái đã biết, không phải boss, không tự tách). Nửa luôn ra kể cả khi sân đã đủ `maxAlive` (quái mới chờ chỗ như thường); nửa của quân boss gọi giữ khiên của pha đó. Giới hạn: `count`/`eliteCount` 2–4, `health` 0,1–1.
+  - Nhập lại (`afterHeal`, chỉ cho `merge`): chỉ những nửa đã được slime thảo dược hồi máu từ lúc ra mới tính; 2 nửa như vậy đứng trong 120 DIPs liên tục 1,5 s thì nhập lại thành Slime tách đôi (máu bằng tổng). Hạ thảo dược trước, hoặc Bom len cả 2 nửa. Con mẹ nhập lại bị hạ thì tách tiếp (ngân sách hồi của thảo dược có hạn).
+- Pause, menu, chọn thẻ, túi đồ, hướng dẫn đứng hình đóng băng ngòi, đồng hồ nhập. Kết thúc trận tắt mọi ngòi. Không dùng luồng ngẫu nhiên mới, nên seed cũ cho đúng trận cũ.
+- Banner lần đầu mỗi trận (vi/en/ja): "Slime nhập thành khổng lồ! Lần sau Đẩy hoặc Quạt tách bầy ra", "Slime bom cưỡi slime nhanh! Hạ con ngựa giữa đường", "Bom châm ngòi! Nhấc mèo ra khỏi vòng đỏ", "Slime tách đôi! Đừng để thảo dược hồi cho hai nửa", "Hai nửa nhập lại! Hạ slime thảo dược trước". Âm thanh dùng cue có sẵn: `Merged` bóp, `Dismounted` vút, `FuseLit` keng, `Blasted` bụp to, `SlimeSplit` bóp. Sự kiện mới: `FuseLit`, `Blasted`, `SlimeSplit`.
+- Đo perf: `scripts/perf.ps1 -Battle crowd-new` giữ sàn đầy 16 quái 1.5 (hợp thể, bom cưỡi, tách đôi, phun, lò xo, thảo dược) bằng số liệu gốc.
+- Bước hướng dẫn đứng hình (chương 2) và trang Sổ tay quái làm ở M21/M27. Python không tham gia.
+
 ## Viễn chinh (`expedition`) (2026-10-21)
 
 Một chuyến đi gồm nhiều bậc, mỗi bậc chọn một điểm, bậc cuối là trùm. HP và build của mèo đi tiếp từ bậc này sang bậc sau; chuyến mới bắt đầu lại từ đầu. Code: `src/DesktopPet.Core/PetExpedition.cs` (luật, không WPF), `PetWindow.Expedition.cs` (bản đồ, kết quả).

@@ -146,7 +146,7 @@ public sealed partial class BattleSim
         if (!catHeld && Grace <= 0)
             foreach (var s in slimes)
             {
-                if (!s.Targetable || s.State != SlimeState.Moving || s.IsBoss || s.Type.Support || s.Type.Spring != null || s.Riding || s.PanicRemaining > 0 || s.Shielded) continue;
+                if (!s.Targetable || s.State != SlimeState.Moving || s.IsBoss || s.Type.Support || s.Type.Spring != null || s.Type.Fuse != null || s.Riding || s.PanicRemaining > 0 || s.Shielded) continue;
                 if (Math.Abs(s.X - holder.X) > link.Range) continue;
                 double dx = catX - s.X, reach = s.Type.Dash ? s.Type.DashRange : s.Range;
                 if (Math.Abs(dx) > reach || WallBetween(s.X, catX) != null) continue;
@@ -158,12 +158,17 @@ public sealed partial class BattleSim
         events.Add(new(BattleEventKind.LinkStrike, holder.X, strikers));
     }
 
+    // One of a merging slime's kind ready to merge with it (healed since it came, for AfterHeal).
+    private static bool Merging(Slime s, Slime slime, LinkSpec link) =>
+        s.Type == slime.Type && s.Link != null && s.Targetable && s.State != SlimeState.Stunned && !s.Riding && !s.Handled
+        && (!link.AfterHeal || s.Healed) && Math.Abs(s.X - slime.X) <= link.Range;
+
     // How many of a merging slime's kind (itself included) stand within its range, ready to merge.
     private int Huddle(Slime slime, LinkSpec link)
     {
         int n = 0;
         foreach (var s in slimes)
-            if (s.Type == slime.Type && s.Link != null && s.Targetable && s.State != SlimeState.Stunned && !s.Riding && Math.Abs(s.X - slime.X) <= link.Range) n++;
+            if (Merging(s, slime, link)) n++;
         return n;
     }
 
@@ -173,7 +178,7 @@ public sealed partial class BattleSim
         var group = linkScratch;
         group.Clear();
         foreach (var s in slimes)
-            if (s.Type == slime.Type && s.Link != null && s.Targetable && s.State != SlimeState.Stunned && !s.Riding && Math.Abs(s.X - slime.X) <= link.Range) group.Add(s);
+            if (Merging(s, slime, link)) group.Add(s);
         if (group.Count < link.Count) return false;
         group.Sort((a, b) => Math.Abs(a.X - slime.X).CompareTo(Math.Abs(b.X - slime.X)));
         group.RemoveRange(link.Count, group.Count - link.Count);
@@ -209,11 +214,13 @@ public sealed partial class BattleSim
         slime.RelinkAt = Time + (slime.Link?.Relink ?? 0);
     }
 
-    // A rider off its mount: hopping off near the cat (no stun) or falling (dazed `stun` s).
+    // A rider off its mount: hopping off near the cat (no stun) or falling (dazed `stun` s; a bomb's
+    // short fuse lights as it falls, 1.5 M11).
     private void Fall(Slime rider, double stun)
     {
         Unlink(rider);
         events.Add(new(BattleEventKind.Dismounted, rider.X, rider.Id));
+        if (stun > 0 && rider.Type.Fuse is FuseSpec fuse) Light(rider, fuse.DropFuse);
         if (stun > 0) Daze(rider, stun);
     }
 

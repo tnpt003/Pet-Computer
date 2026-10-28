@@ -7,11 +7,12 @@
 #   -Battle expedition: the same with the Expedition's heaviest kind of battle (the last elite
 #   encounter, the last step's threat, a full set of relics; a run in memory only);
 #   -Battle crowd: a fight that keeps up to 16 slimes on the floor (the most the field draws).
+#   -Battle crowd-new: the same floor full of the 1.5 slimes (merging, riding bombs, splitting, goo, springs).
 #   With -Battle the pet logs its frame numbers once a second; they are summed up at the end
 #   (fps, the longest gap between two frames, enemies on the floor).
 #   -Trophies: a separate pet with every keepsake, so the display corner shows (Pet Mode).
 #   For these the user's pet must be closed first (one pet per session).
-param([double]$Minutes = 3, [string]$Label = 'run', [double]$Interval = 1, [ValidateSet('', 'run', 'paused', 'expedition', 'crowd')][string]$Battle = '', [switch]$Trophies)
+param([double]$Minutes = 3, [string]$Label = 'run', [double]$Interval = 1, [ValidateSet('', 'run', 'paused', 'expedition', 'crowd', 'crowd-new')][string]$Battle = '', [switch]$Trophies)
 $ErrorActionPreference = 'Stop'
 Add-Type @'
 using System;

@@ -562,6 +562,12 @@ public sealed class Slime
     public SpringState Spring;
     public double SpringClock;
     public int SpringHits;
+    // 1.5 M11 (PetBattle.Fuse.cs, PetBattle.Split.cs): a lit fuse's seconds left and its whole length
+    // (0: not lit); blown up by its own fuse (gone, not drawn as defeated); healed by a healer since it
+    // came (a split half's merge waits for it).
+    public double FuseLeft, FuseTotal;
+    public bool Exploded, Healed;
+    public bool Lit => FuseLeft > 0;
     public bool Targetable => State is not (SlimeState.Spawning or SlimeState.Defeated);
     public void Set(SlimeState state)
     {
@@ -622,7 +628,10 @@ public enum BattleEventKind
     // 1.5 M09 (Value: the enemy's id): a spitter started its windup (X: where its goo will land); a drop
     // landed (Value 1: on the cat); a puddle made a dash longer; the fan dried a puddle. A spring trap
     // started to squeeze; it sprang (Value 1: on the cat); it was flattened.
-    SpitAimed, GooLanded, PuddleBoost, PuddleDried, SpringSqueezed, SpringBounced, SpringFlattened
+    SpitAimed, GooLanded, PuddleBoost, PuddleDried, SpringSqueezed, SpringBounced, SpringFlattened,
+    // 1.5 M11 (Value: the enemy's id): a bomb slime lit its fuse; it blew up (Value 1: on the cat); a
+    // splitting slime broke apart.
+    FuseLit, Blasted, SlimeSplit
 }
 // A spring trap (PetBattle.Spring.cs): set and waiting, squeezing before it springs, resting after, flattened.
 public enum SpringState { Ready, Squeezing, Resting, Flat }

@@ -736,6 +736,9 @@ public sealed partial class BattleSim
             events.Add(new(BattleEventKind.SlimeDefeated, slime.X, slime.IsBoss ? 1 : 0));
             LinkFallen(slime, true);
             AppsEnemyDefeated(slime);
+            // A bomb slime defeated while lit blows up there; a splitting one breaks apart (1.5 M11).
+            if (slime.Lit) Blast(slime, false);
+            SplitApart(slime);
             return HitResult.Landed;
         }
         SpringStruck(slime, source);
@@ -850,6 +853,7 @@ public sealed partial class BattleSim
             s.MendingId = 0;
             s.RunAwayLeft = 0;
             s.PanicRemaining = 0;
+            s.FuseLeft = 0;
             if (s.Spring == SpringState.Squeezing) s.Spring = SpringState.Ready;
         }
         events.Add(new(phase == BattlePhase.Won ? BattleEventKind.Won : BattleEventKind.Lost, 0));

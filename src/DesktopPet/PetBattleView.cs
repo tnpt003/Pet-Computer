@@ -215,7 +215,7 @@ public sealed partial class BattleFieldView : FrameworkElement
             for (int i = 0; i < sim.Slimes.Count; i++)
             {
                 var slime = sim.Slimes[i];
-                if (Layer(slime) != layer) continue;
+                if (Layer(slime) != layer || slime.Exploded) continue; // A bomb that blew up: only its blast shows.
                 double x = slime.X - OriginX;
                 // A leaping boss: its shadow stays on the floor, shrinking as it rises.
                 if (slime.LeapHeight + slime.Lift > 0)
@@ -367,6 +367,7 @@ public sealed partial class BattleFieldView : FrameworkElement
             dc.DrawEllipse(null, WallRing, new Point(x, floor - 1), w / 2 + 9, 7);
         }
         DrawSpringRing(dc, slime, x, floor);
+        DrawBlastRing(dc, slime, x, floor);
         if (slime.Type.Slam && slime.State == SlimeState.Windup)
         {
             // The slam's reach on the floor, filling up as it comes: get out (or push, shield, lift).
@@ -490,6 +491,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         if (slime.Type.Marks == "spring") DrawSpringCoil(dc, slime);
         if (slime.Type.Marks == "drum") DrawDrum(dc, slime);
         if (slime.Type.Marks == "chain") DrawChainLinks(dc);
+        DrawSwarmMarks(dc, slime, time);
         // An older support mark: a white "+" on its body.
         if (slime.Type.Marks == "cross") dc.DrawGeometry(Brushes.White, Outline, CrossMark);
         if (slime.Elite != null)

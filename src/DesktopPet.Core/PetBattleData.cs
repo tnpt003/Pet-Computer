@@ -139,7 +139,52 @@ public sealed class EnemyType
     public double Cost { get; init; } = 1;
     // The one elite affix this kind may roll when it spawns (null: never elite).
     public EliteSpec? Elite { get; init; }
+    // Its one link with its allies (1.5, PetBattle.Links.cs; null: none).
+    public LinkSpec? Link { get; init; }
+    [JsonIgnore] public LinkSpec? ActiveLink => Link is { Enabled: true } link ? link : null;
     public string Name(string language) => PetText.Data(language, NameVi, NameEn);
+}
+
+// A link between an enemy and its allies (1.5 "Slime phản công", PetBattle.Links.cs): always
+// drawn, always breakable, breaking it is rewarded. Enabled false switches it off (a user file's
+// "link": { "enabled": false }). At most two kinds of link in one battle. Kinds:
+// tether: a rope to the nearest ally within Range (never a boss, never another holder); the holder
+//   takes Share of every hit on that ally and keeps behind it. Cut (CutLink) or the holder defeated:
+//   the ally is dazed BreakStun s; a rope stretched past Range × 1.5 snaps with no reward. Relink s
+//   later it may tie itself to an ally again.
+// rhythm: a beat every Beat s (a ring over its head); on every Beats-th beat each ally within Range
+//   that could attack the cat winds up at once, attack turns or not. A push or a stun on it starts
+//   the count again.
+// ride: it rides an ally of kind Mount found within Range (not one already ridden), drawn on top and
+//   left alone by the cat; DropRange from the cat it hops off. Its mount defeated (or CutLink): it falls
+//   where it is, dazed BreakStun s.
+// merge: Count of its kind within Range of each other for MergeSeconds (a bar counts down) become one
+//   Into enemy with their HP added up. A push or a stun on one starts its clock again.
+// aura: allies within Range move Speed × faster; defeated, every other enemy (never a boss) panics
+//   BreakStun s: runs away from the cat and does not attack.
+public sealed class LinkSpec
+{
+    public string Kind { get; init; } = "";
+    public bool Enabled { get; init; } = true;
+    public double Range { get; init; } = 200;
+    public double BreakStun { get; init; } = 1;
+    public double Relink { get; init; } = 6;
+    public double Share { get; init; } = 0.5;
+    public double Beat { get; init; } = 0.8;
+    public int Beats { get; init; } = 4;
+    public string? Mount { get; init; }
+    public double DropRange { get; init; } = 90;
+    public int Count { get; init; } = 3;
+    public double MergeSeconds { get; init; } = 2;
+    public string? Into { get; init; }
+    public double Speed { get; init; } = 1.3;
+}
+
+public static class EnemyLinks
+{
+    public const string Tether = "tether", Rhythm = "rhythm", Ride = "ride", Merge = "merge", Aura = "aura";
+    public static readonly string[] All = { Tether, Rhythm, Ride, Merge, Aura };
+    public const int MaxKinds = 2;
 }
 
 // An elite affix (Enemy Director): rolled once when a wave or stream spawns the enemy, never for a
@@ -795,6 +840,25 @@ public static class BattleData
                     && elite.AttackCooldown >= 1 && elite.HealCooldown >= 1 && elite.HealBudget <= 1 && !elite.PushImmune && elite.VirusEvery <= 0) throw new InvalidDataException(at + ".elite changes nothing");
                 if (elite.DescVi == null || elite.DescEn == null || elite.DescVi.Length > 60 || elite.DescEn.Length > 60) throw new InvalidDataException(at + ".elite descriptions must be at most 60 characters");
             }
+            if (e.Link is LinkSpec link)
+            {
+                if (Array.IndexOf(EnemyLinks.All, link.Kind) < 0) throw new InvalidDataException($"{at}.link.kind must be one of: {string.Join(", ", EnemyLinks.All)}");
+                if (e.Boss) throw new InvalidDataException(at + ".link is not for a boss");
+                Within(link.Range, 20, 800, at + ".link.range"); Within(link.BreakStun, 0, 5, at + ".link.breakStun"); Within(link.Relink, 0, 60, at + ".link.relink");
+                if (link.Kind == EnemyLinks.Tether) Within(link.Share, 0.05, 0.95, at + ".link.share");
+                if (link.Kind == EnemyLinks.Rhythm)
+                {
+                    Within(link.Beat, 0.2, 3, at + ".link.beat");
+                    if (link.Beats is < 2 or > 8) throw new InvalidDataException(at + ".link.beats must be 2–8");
+                }
+                if (link.Kind == EnemyLinks.Ride) Within(link.DropRange, 20, 400, at + ".link.dropRange");
+                if (link.Kind == EnemyLinks.Merge)
+                {
+                    if (link.Count is < 2 or > 6) throw new InvalidDataException(at + ".link.count must be 2–6");
+                    Within(link.MergeSeconds, 0.5, 10, at + ".link.mergeSeconds");
+                }
+                if (link.Kind == EnemyLinks.Aura) Within(link.Speed, 1, 3, at + ".link.speed");
+            }
             if (e.Phases is { } phases)
             {
                 if (phases.Length is 0 or > 6) throw new InvalidDataException(at + ".phases must list 1–6 phases");
@@ -810,6 +874,17 @@ public static class BattleData
                     if (p.Shield && !p.Calls().Any()) throw new InvalidDataException(at + ".phases: a shield phase must summon");
                 }
             }
+        }
+        // A rider's mount and a merge's result: known enemies without a link of that kind (no chains).
+        foreach (var e in s.EnemyTypes)
+        {
+            if (e.Link is not LinkSpec link) continue;
+            if (link.Kind == EnemyLinks.Ride && (link.Mount == null || !ids.Contains(link.Mount) || s.Enemy(link.Mount) is { Boss: true } or { Link.Kind: EnemyLinks.Ride }))
+                throw new InvalidDataException($"enemies[{e.Id}].link.mount must name a known enemy that is not a boss and does not ride");
+            if (link.Kind == EnemyLinks.Merge && (link.Into == null || !ids.Contains(link.Into) || s.Enemy(link.Into) is { Boss: true } or { Link.Kind: EnemyLinks.Merge }))
+                throw new InvalidDataException($"enemies[{e.Id}].link.into must name a known enemy that is not a boss and does not merge");
+            if (link.Kind is not EnemyLinks.Ride && link.Mount != null) throw new InvalidDataException($"enemies[{e.Id}].link.mount is for a ride link");
+            if (link.Kind is not EnemyLinks.Merge && link.Into != null) throw new InvalidDataException($"enemies[{e.Id}].link.into is for a merge link");
         }
         // A summoned helper may not summon in turn (no chains of calls).
         static bool Summons(EnemyType e) => e.SummonAt > 0 || e.Phases?.Any(p => p.Calls().Any()) == true;
@@ -886,6 +961,35 @@ public static class BattleData
                     if (!ids.Contains(g.Enemy)) throw new InvalidDataException($"{at}[{i}] names an unknown enemy \"{g.Enemy}\"");
                 }
             }
+            // At most two kinds of link in one battle: every kind its waves can bring (drawn ones,
+            // helpers a boss or an enemy calls, mounts, merged results) counts.
+            var reach = new Stack<string>();
+            foreach (var wave in waves)
+            {
+                foreach (var kind in wave.Stream?.Weights.Keys ?? Enumerable.Empty<string>()) reach.Push(kind);
+                foreach (var g in wave.Groups ?? Array.Empty<WaveGroup>())
+                    if (g.Pick != null) foreach (var kind in g.Pick.Keys) reach.Push(kind);
+                    else if (g.Squad != null) foreach (var m in g.Squad) reach.Push(m.Enemy);
+                    else reach.Push(g.Enemy);
+            }
+            var met = new HashSet<string>();
+            var links = new HashSet<string>();
+            while (reach.Count > 0)
+            {
+                string kind = reach.Pop();
+                if (!ids.Contains(kind) || !met.Add(kind)) continue;
+                var e = s.Enemy(kind);
+                if (e.ActiveLink is LinkSpec link)
+                {
+                    links.Add(link.Kind);
+                    if (link.Mount != null) reach.Push(link.Mount);
+                    if (link.Into != null) reach.Push(link.Into);
+                }
+                if (e.SummonAt > 0) reach.Push(e.SummonType);
+                foreach (var p in e.Phases ?? Array.Empty<BossPhase>()) foreach (var call in p.Calls()) reach.Push(call);
+            }
+            if (links.Count > EnemyLinks.MaxKinds)
+                throw new InvalidDataException($"{at} brings {links.Count} kinds of link ({string.Join(", ", links)}): at most {EnemyLinks.MaxKinds} in one battle");
         }
         Waves(s.WavePlan, "waves", s.MaxAlive, false);
         if (s.Upgrades is { Length: 0 }) throw new InvalidDataException("upgrades must list at least one upgrade");

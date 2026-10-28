@@ -563,3 +563,9 @@ Tự động đã có: Phần thưởng trên sảnh (ô có hình, khóa, Mới
 - [ ] Bóng chân dưới slime trên hình nền sáng/tối (nhẹ, không thành mảng đen); mèo không có bóng; vòng đỏ cảnh báo trùm vẫn rõ.
 - [ ] Hạ slime/trùm: giọt cùng màu bắn ra rồi rơi, tia sáng vàng ngắn; trận đông quái không giật thêm.
 - [ ] Hướng dẫn phiêu lưu: chỗ sáng vẫn ôm đúng thanh kỹ năng và nút Đẩy.
+
+## Liên kết quái 1.5 M01 (2026-10-28) — chỉ xem được bằng battle.json tùy chỉnh
+Trận gốc chưa có quái dùng liên kết; bỏ qua mục này nếu không muốn thử file tùy chỉnh (quái thật có từ M09). Ví dụ file của người dùng: `{ "schemaVersion": 1, "enemies": [ { "id": "runner", "link": { "kind": "tether" } } ] }` (slime nhanh tự buộc dây vào slime khác ở gần; chơi trận tự do hoặc màn có slime nhanh). Đổi `"tether"` thành `"rhythm"` hoặc `"aura"` để xem hai loại kia.
+- [ ] Dây nhầy xanh võng nhẹ nối hai slime, đi theo khi chúng di chuyển; hạ con giữ dây thì con kia choáng; không giật khi đông quái.
+- [ ] Thử `rhythm` (chấm nhịp trên đầu, chấm cuối đỏ rồi cả nhóm gồng cùng lúc), `aura` (vòng vàng trên sàn), nét vẽ rõ trên hình nền sáng/tối và DPI 100/150/200%; click vào khoảng trống giữa slime vẫn xuyên xuống desktop.
+- [ ] Pause giữa lúc có dây/nhịp: mọi thứ đứng yên, tiếp tục thì chạy tiếp.

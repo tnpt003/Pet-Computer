@@ -368,7 +368,8 @@ public enum SlimeState { Spawning, Moving, Windup, Recover, Stunned, Defeated, C
 // or a build bonus (Thorns sends back what the cat took, Afterimage repeats a swing). The bonus
 // hits never set off another bonus. App: a desktop app (PetBattle.Apps.cs). Splash: a combo's hit on
 // the enemies next to its target.
-public enum DamageSource { Weapon, Combo, Bomb, Reflect, Echo, App, Splash }
+// Link: the share of a hit a tether's holder takes for its ally.
+public enum DamageSource { Weapon, Combo, Bomb, Reflect, Echo, App, Splash, Link }
 
 // What a hit on an enemy did: landed, blocked by a stony enemy, or nothing on a shielded boss.
 public enum HitResult { Landed, Blocked, Immune }
@@ -457,6 +458,15 @@ public sealed class Slime
     public bool Spat;
     // An elite whose affix shoots viruses (EliteSpec.VirusEvery): seconds to its next shot.
     public double VirusClock;
+    // Links (PetBattle.Links.cs): its link in this battle (null: none, switched off, or a third kind of
+    // link); the ally it is tied to or rides (0: none); when it may tie itself again; a rhythm's beats
+    // so far and the time into the next one; a merge's time in contact; a rider's height over the floor
+    // (drawing); seconds of panic left (an aura holder fell); its speed factor from an ally's aura this frame.
+    public LinkSpec? Link;
+    public int LinkedTo, BeatCount;
+    public double RelinkAt, BeatClock, MergeClock, RideHeight, PanicRemaining;
+    public double AuraSpeed = 1;
+    public bool Riding => LinkedTo != 0 && Link?.Kind == EnemyLinks.Ride;
     public bool Targetable => State is not (SlimeState.Spawning or SlimeState.Defeated);
     public void Set(SlimeState state)
     {
@@ -492,7 +502,11 @@ public enum BattleEventKind
     HazardTapped, WallHit,
     // virus.exe (Value: the file's id): dropped or copied, deleted by a click; all its copies gone
     // (they infected an icon, or their slime fell).
-    VirusFileAdded, VirusFileDeleted, VirusFilesGone
+    VirusFileAdded, VirusFileDeleted, VirusFilesGone,
+    // Links (Value: the slime's id): a link made, cut by the user (or its holder defeated), snapped by
+    // itself; a rhythm's beat and its strike together; a merge done (Value: the new enemy's id); a
+    // rider hopped off or fell; an enemy panicked (an aura holder fell).
+    LinkFormed, LinkCut, LinkSnapped, LinkBeat, LinkStrike, Merged, Dismounted, Panicked
 }
 public readonly record struct BattleEvent(BattleEventKind Kind, double X, double Value = 0);
 // Number: a floating damage (Value > 0) or heal (Value < 0, shown as +HP above the cat).

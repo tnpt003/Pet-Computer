@@ -289,6 +289,7 @@ public sealed partial class BattleSim
         var (minX, maxX) = Bounds(slime);
         slime.X = Math.Clamp(x, minX, maxX);
         slime.Set(SlimeState.Spawning);
+        JoinLinks(slime);
         slimes.Add(slime);
         return slime;
     }

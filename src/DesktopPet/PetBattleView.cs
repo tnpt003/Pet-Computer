@@ -93,7 +93,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         for (int i = 0; i < sim.Slimes.Count; i++)
         {
             var slime = sim.Slimes[i];
-            if (!slime.Targetable) continue;
+            if (!slime.Targetable || slime.Riding) continue; // A rider: the cat goes for its mount.
             double dx = Math.Abs(point.X - (slime.X - OriginX));
             if (dx > slime.Width / 2 + 10 || point.Y < Floor - slime.Height - 24 || point.Y > Floor + 4) continue;
             int rank = dx <= slime.Width / 2 ? Layer(slime) : -1;
@@ -103,8 +103,8 @@ public sealed partial class BattleFieldView : FrameworkElement
     }
 
     // Drawing layers, back to front: blockers (rocks), then the others, supports on top, so a healer
-    // standing behind its guards is never hidden by them.
-    public static int Layer(Slime slime) => slime.Type.Blocker ? 0 : slime.Type.Support ? 2 : 1;
+    // standing behind its guards is never hidden by them; riders over everything (on their mounts).
+    public static int Layer(Slime slime) => slime.Riding ? 3 : slime.Type.Blocker ? 0 : slime.Type.Support ? 2 : 1;
 
     private static readonly Brush HitHalo = Frozen(1, 0, 0, 0); // Invisible but clickable.
     // Each enemy kind's colours (battle.json), frozen once.
@@ -162,7 +162,8 @@ public sealed partial class BattleFieldView : FrameworkElement
         // Index loops: foreach over IReadOnlyList boxes an enumerator every frame.
         for (int i = 0; i < sim.Bombs.Count; i++) DrawBomb(dc, sim.Bombs[i], sim.Bombs[i].X - OriginX, floor);
         for (int i = 0; i < sim.Slimes.Count; i++) if (sim.Slimes[i].CallSpots is { } spots) DrawCallSpots(dc, sim.Slimes[i], spots, floor, time);
-        for (int layer = 0; layer <= 2; layer++)
+        DrawLinksBehind(dc, floor, time);
+        for (int layer = 0; layer <= 3; layer++)
             for (int i = 0; i < sim.Slimes.Count; i++)
             {
                 var slime = sim.Slimes[i];
@@ -176,13 +177,14 @@ public sealed partial class BattleFieldView : FrameworkElement
                 }
                 // A contact shadow grounds a slime on any wallpaper (the cat has none: its own window sits
                 // above this strip, so a shadow here never lines up with its paws; 2026-10-26 user's screenshot).
-                else if (slime.State != SlimeState.Defeated)
+                else if (slime.State != SlimeState.Defeated && !slime.Riding)
                     dc.DrawEllipse(FootShadow, FootRim, new Point(x, floor - 2), slime.Width * 0.4, 4);
-                DrawSlime(dc, slime, x, floor - slime.LeapHeight, sim.Settings, time);
+                DrawSlime(dc, slime, x, floor - slime.LeapHeight - slime.RideHeight, sim.Settings, time);
                 if (sim.AppRules != null && sim.IsInfector(slime.Id) && slime.State != SlimeState.Defeated) DrawVirusMark(dc, slime, x, floor, time);
             }
         for (int i = 0; i < sim.Slimes.Count; i++)
             if (sim.Slimes[i].IsBoss && sim.RallyTarget(sim.Slimes[i]) is Slime rallied) DrawRallyLink(dc, sim.Slimes[i], rallied, floor, time);
+        DrawLinkMarks(dc, floor, time);
         if (sim.TabsRemaining > 0) DrawTabs(dc, sim.CatX - OriginX, floor, time);
         for (int i = 0; i < sim.Effects.Count; i++) DrawEffect(dc, sim.Effects[i], sim.Effects[i].X - OriginX, floor - sim.Effects[i].Height, floor);
         if (sim.Incoming) DrawIncoming(dc, sim.IncomingX - OriginX, floor, time);

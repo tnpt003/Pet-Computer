@@ -673,6 +673,14 @@ public sealed partial class BattleSim
             return HitResult.Immune;
         }
         if (Blocks(slime, source)) return HitResult.Blocked;
+        // A tether's holder takes its share of every hit on its ally (never passed on again).
+        if (source != DamageSource.Link && TetherHolder(slime) is Slime holder)
+        {
+            double share = amount * holder.Link!.Share;
+            amount -= share;
+            Damage(holder, share, DamageSource.Link);
+            if (!slime.Targetable) return HitResult.Landed;
+        }
         // A hit never takes a boss past its next shield phase: it stops there, the rest is lost.
         slime.Hp = Math.Max(ShieldFloor(slime), slime.Hp - amount);
         slime.HitFlash = 0.18;
@@ -691,6 +699,7 @@ public sealed partial class BattleSim
             AddEffect(BattleEffectKind.Poof, slime.X, slime.Height / 2, slime.IsBoss ? 2 : 1);
             effects[^1].Tint = slime.Enraged ? slime.Type.AngryColor : slime.Type.Color;
             events.Add(new(BattleEventKind.SlimeDefeated, slime.X, slime.IsBoss ? 1 : 0));
+            LinkFallen(slime, true);
             AppsEnemyDefeated(slime);
             return HitResult.Landed;
         }
@@ -736,7 +745,7 @@ public sealed partial class BattleSim
     private bool Blocks(Slime slime, DamageSource source)
     {
         var type = slime.Type;
-        if (type.BlockChance <= 0 || source is DamageSource.Bomb or DamageSource.Reflect or DamageSource.App) return false;
+        if (type.BlockChance <= 0 || source is DamageSource.Bomb or DamageSource.Reflect or DamageSource.App or DamageSource.Link) return false;
         // A front-only blocker: a hit from behind always lands (and ends its streak).
         if (type.BlockFrontOnly && (lastCatX - slime.X) * slime.Facing <= 0) { slime.BlockStreak = 0; return false; }
         // Armor break: combo hits go straight through.
@@ -801,6 +810,7 @@ public sealed partial class BattleSim
             s.Mended = false;
             s.MendingId = 0;
             s.RunAwayLeft = 0;
+            s.PanicRemaining = 0;
         }
         events.Add(new(phase == BattlePhase.Won ? BattleEventKind.Won : BattleEventKind.Lost, 0));
     }
@@ -808,7 +818,7 @@ public sealed partial class BattleSim
     // Click on a slime: the cat goes for it first. Never deals damage by itself.
     public bool Select(int id)
     {
-        if (Over || Paused || Find(id) is not { Targetable: true }) return false;
+        if (Over || Paused || Find(id) is not { Targetable: true, Riding: false }) return false;
         SelectedId = id;
         return true;
     }

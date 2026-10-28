@@ -383,6 +383,31 @@ Mỗi khóa tắt được riêng trong battle.json của người dùng (ví d�
 - File battle.json **của người dùng** còn các khóa cũ (`fallBackBelow`, `flank`, `flankSpeed`, `maxFlankers`, `teleportBelow`, `teleportWindup`, `teleportCooldown`, `rallySeconds`, `rallySpeed`) vẫn dùng được: các khóa đó bị bỏ qua và ghi một dòng log, phần còn lại của file vẫn áp dụng. File gốc nhúng trong exe không được có các khóa này.
 - rulesVersion màn 1–5: 4/10/11/12/12.
 
+## Liên kết quái (`link`) (bản 1.5, mốc M01, 2026-10-28)
+
+Khung cho quái liên kết của 1.5 (docs/UPDATE-1.5.md). Code: `src/DesktopPet.Core/PetBattle.Links.cs` (luật), `src/DesktopPet/PetBattleView.Links.cs` (vẽ), test `tests/DesktopPet.Tests/BattleLinkTests.cs` (quái giả). **battle.json gốc chưa có quái nào dùng `link`**: chương 1 và mọi chế độ hiện tại chạy y như trước (mô phỏng cân bằng giống hệt từng dòng). Quái thật dùng khung này làm ở M09–M12.
+
+```json
+{ "id": "chain_slime", "link": { "kind": "tether", "range": 200, "share": 0.5, "breakStun": 1, "relink": 6 } }
+```
+
+Mỗi quái có tối đa một `link`. Khóa chung: `kind`, `enabled` (mặc định `true`), `range` (20–800 DIPs, mặc định 200), `breakStun` (0–5 s, mặc định 1), `relink` (0–60 s, mặc định 6). Boss không có `link`.
+
+| `kind` | Tác dụng | Khóa riêng | Cách phá / thưởng |
+|---|---|---|---|
+| `tether` (dây, Q4) | Tự buộc dây vào đồng minh gần nhất trong `range` (không phải boss, không phải con giữ dây khác, chưa bị ai buộc); gánh `share` (0.05–0.95, mặc định 0.5) mọi sát thương đồng minh nhận; đi sát ngay sau đồng minh, phía xa mèo | `share` | `CutLink` (ném mèo xuyên dây, Kéo cắt: M03/M06) hoặc hạ con giữ dây: đồng minh choáng `breakStun` s. Dây giãn quá `range` × 1,5 thì tự đứt, không thưởng. Sau `relink` s mới buộc lại |
+| `rhythm` (nhịp, Q3) | Mỗi `beat` s (0.2–3, mặc định 0.8) một nhịp; nhịp thứ `beats` (2–8, mặc định 4) mọi quái trong `range` (cả nó) đang đánh tới mèo được thì **gồng cùng lúc**, bỏ qua lượt ra đòn và hồi chiêu | `beat`, `beats` | Bị choáng (Đẩy, búa…) thì đếm lại từ 0. Không gồng khi mèo đang được cầm hay đang `landingGrace`; không áp dụng cho boss, quái hỗ trợ, con đang cưỡi, con đang hoảng |
+| `ride` (cưỡi, Q6) | Cưỡi lên quái loại `mount` (bắt buộc, quái đã biết, không phải boss, không tự cưỡi) trong `range`, chưa bị ai cưỡi; được chở đi, vẽ trên lưng; mèo không nhắm và không click chọn được con đang cưỡi (đánh con bị cưỡi). Cách mèo `dropRange` (20–400, mặc định 90) thì nhảy xuống, không choáng | `mount`, `dropRange` | Hạ con bị cưỡi hoặc `CutLink`: con cưỡi rơi tại chỗ, choáng `breakStun` s |
+| `merge` (nhập, Q5/Q7) | `count` (2–6, mặc định 3) con cùng loại đứng trong `range` của nhau liên tục `mergeSeconds` (0.5–10, mặc định 2) s thì nhập thành một quái `into` (bắt buộc, quái đã biết, không phải boss, không tự nhập), máu = tổng máu hiện tại, máu tối đa = tổng máu tối đa. Không tính là hạ quái, không kết thúc đợt | `count`, `mergeSeconds`, `into` | Bị choáng (Đẩy…) thì đồng hồ của con đó về 0; tách xa nhau cũng vậy |
+| `aura` (hào quang, Q8) | Đồng minh trong `range` đi nhanh ×`speed` (1–3, mặc định 1.3); lao (dash) không nhanh thêm | `speed` | Hạ nó: mọi quái khác (trừ boss) **hoảng** `breakStun` s: chạy ra xa mèo, không đánh |
+
+- **Tối đa 2 loại liên kết mỗi trận** (`EnemyLinks.MaxKinds`): lúc nạp dữ liệu, mỗi danh sách đợt (trận tự do, màn Phiêu lưu, Viễn chinh) mà tính cả quái bốc ngẫu nhiên, quân boss gọi, quái được gọi, `mount`, `into` có hơn 2 loại `link` thì file bị từ chối. Lúc chạy (đợt sinh tự động như Vô tận) hai loại đến trước được dùng, quái mang loại thứ 3 đánh như quái thường.
+- **Tắt** một liên kết trong battle.json của người dùng: `"enemies": [ { "id": "chain_slime", "link": { "enabled": false } } ]` (gộp với file gốc, phần còn lại giữ nguyên).
+- Hình: dây nhầy xanh võng nhẹ từ con giữ dây tới đồng minh; vòng vàng đứt nét trên sàn quanh con hào quang; vòng cam chấm trên sàn quanh con nhịp và các chấm nhịp trên đầu (nhịp ngay trước khi gồng chuyển đỏ và nháy); thanh tím đếm ngược trên con sắp nhập; giọt mồ hôi xanh trên con đang hoảng. Chỉ vẽ nét viền, không tô nền, nên click vào khoảng trống vẫn xuyên xuống desktop.
+- Pause/menu/chọn thẻ đóng băng mọi đồng hồ liên kết (như cả trận). Không dùng luồng ngẫu nhiên nào, nên seed cũ cho đúng trận cũ.
+- Sự kiện mới cho âm thanh/hiệu ứng sau này: `LinkFormed`, `LinkCut`, `LinkSnapped`, `LinkBeat`, `LinkStrike`, `Merged`, `Dismounted`, `Panicked` (chưa gắn âm thanh ở M01).
+- Đã bỏ loại `bounce` khỏi thiết kế (người dùng duyệt 2026-10-28): Q2 lò xo là bẫy, không có liên kết riêng.
+
 ## Viễn chinh (`expedition`) (2026-10-21)
 
 Một chuyến đi gồm nhiều bậc, mỗi bậc chọn một điểm, bậc cuối là trùm. HP và build của mèo đi tiếp từ bậc này sang bậc sau; chuyến mới bắt đầu lại từ đầu. Code: `src/DesktopPet.Core/PetExpedition.cs` (luật, không WPF), `PetWindow.Expedition.cs` (bản đồ, kết quả).

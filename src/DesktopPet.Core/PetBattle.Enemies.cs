@@ -17,7 +17,7 @@ public sealed partial class BattleSim
         {
             var chosen = Find(selected);
             // A shielded boss stays chosen; the cat goes for the others until its shield drops.
-            if (chosen != null && chosen.Targetable && !chosen.Shielded && !chosen.Mended) return chosen;
+            if (chosen != null && chosen.Targetable && !chosen.Shielded && !chosen.Mended && !chosen.Riding) return chosen;
             if (chosen == null || !chosen.Targetable) SelectedId = null;
         }
         // Never a shielded boss: the cat cannot hurt it (with nothing else to hit it waits).
@@ -26,6 +26,7 @@ public sealed partial class BattleSim
         foreach (var s in slimes)
         {
             if (!s.Targetable || s.Shielded) continue;
+            if (s.Riding) continue; // A rider: the cat goes for its mount.
             if (s.Mended) { if (guarded == null || Math.Abs(s.X - catX) < Math.Abs(guarded.X - catX)) guarded = s; continue; }
             if (nearest == null || Math.Abs(s.X - catX) < Math.Abs(nearest.X - catX)) nearest = s;
         }
@@ -63,8 +64,10 @@ public sealed partial class BattleSim
             decisionClock = DecisionInterval;
             decisionCatX = catX;
             AssignGuards();
+            FormLinks(catX);
         }
         RefreshGuards();
+        if (linkKinds.Count > 0 && !Over) StepLinks(dt, catX, catHeld);
         // By index over the slimes there were at the start: a hit on the cat can send damage back
         // (Thorns) and make a boss call helpers, which join the list and move from the next frame.
         int count = slimes.Count;
@@ -77,6 +80,7 @@ public sealed partial class BattleSim
             slime.Cooldown = Math.Max(0, slime.Cooldown - dt);
             slime.HealCooldown = Math.Max(0, slime.HealCooldown - dt);
             slime.FarHealCooldown = Math.Max(0, slime.FarHealCooldown - dt);
+            slime.PanicRemaining = Math.Max(0, slime.PanicRemaining - dt);
             if (slime.KnockVelocity != 0)
             {
                 slime.X += slime.KnockVelocity * dt;
@@ -85,6 +89,7 @@ public sealed partial class BattleSim
             }
             slime.X = Math.Clamp(slime.X, minX, maxX);
             if (Over) continue; // The outro: slimes just bounce in place.
+            if (slime.Riding && slime.State == SlimeState.Moving) continue; // Carried by its mount (StepLinks).
             if (slime.Shielded && slime.State != SlimeState.Defeated)
             {
                 StepShield(slime, dt, minX, maxX);
@@ -143,6 +148,8 @@ public sealed partial class BattleSim
                         }
                         break;
                     }
+                    // Panicking (its aura holder fell): away from the cat, no attack.
+                    if (Panic(slime, dt, catX, minX, maxX)) break;
                     // A support keeps behind its fighting allies and leaves the cat to them.
                     if (slime.Type.Support && (slime.KeepingBack = KeepBack(slime, dt, catX, minX, maxX))) break;
                     // A dasher runs off after its lunge.
@@ -160,7 +167,7 @@ public sealed partial class BattleSim
                         lastWindup = Time;
                     }
                     // A guard holds its post between the cat and its support (it still hits a cat in reach).
-                    else if (facingCat && GuardPost(slime) is double post)
+                    else if (facingCat && (GuardPost(slime) ?? TetherPost(slime)) is double post)
                     {
                         if (Math.Abs(post - slime.X) > 6) slime.X = Math.Clamp(slime.X + Math.Sign(post - slime.X) * Math.Min(Math.Abs(post - slime.X), Speed(slime) * dt), minX, maxX);
                     }
@@ -175,6 +182,7 @@ public sealed partial class BattleSim
         for (int i = slimes.Count - 1; i >= 0; i--)
             if (slimes[i].State == SlimeState.Defeated && slimes[i].StateTime >= s.DefeatDuration * (slimes[i].IsBoss ? 1.5 : 1)) slimes.RemoveAt(i);
         Separate();
+        CarryRiders();
     }
 
     public double Windup(Slime slime) => (slime.Enraged ? slime.Type.EnragedWindup : slime.Type.Windup) + (slime.Elite?.WindupAdd ?? 0);
@@ -343,7 +351,7 @@ public sealed partial class BattleSim
 
     // The ally a support enemy is healing right now (null when it is not casting).
     public Slime? Healing(Slime healer) => healer.State == SlimeState.Casting ? Find(healer.HealTargetId) : null;
-    private double Speed(Slime slime) => (slime.Enraged ? slime.Type.EnragedSpeed : slime.Type.Speed) * level.EnemySpeed;
+    private double Speed(Slime slime) => (slime.Enraged ? slime.Type.EnragedSpeed : slime.Type.Speed) * level.EnemySpeed * slime.AuraSpeed;
 
     private readonly List<Slime> scratch = new();
     private static readonly Comparison<Slime> ByX = (a, b) => a.X.CompareTo(b.X);
@@ -363,7 +371,7 @@ public sealed partial class BattleSim
         var live = scratch;
         live.Clear();
         // A leaping boss flies over the others.
-        foreach (var slime in slimes) if (slime.State != SlimeState.Defeated && !slime.KeepingBack && slime.LeapHeight <= 0 && slime.Type.Blocker == blockers) live.Add(slime);
+        foreach (var slime in slimes) if (slime.State != SlimeState.Defeated && !slime.KeepingBack && slime.LeapHeight <= 0 && !slime.Riding && slime.Type.Blocker == blockers) live.Add(slime);
         live.Sort(ByX);
         for (int i = 1; i < live.Count; i++)
         {

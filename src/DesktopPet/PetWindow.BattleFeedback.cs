@@ -41,6 +41,8 @@ public sealed partial class PetWindow
         // 1.5 M06: the Grabber, the Scissors and the Spray (the shared cartoon cues as well).
         [BattleEventKind.Grabbed] = ("squish", 3), [BattleEventKind.GrabReleased] = ("swoosh", 2), [BattleEventKind.GrabHit] = ("ball_tap", 4),
         [BattleEventKind.Snipped] = ("swoosh", 3), [BattleEventKind.SprayOn] = ("squish", 2), [BattleEventKind.SpraySpent] = ("clank", 2),
+        // 1.5 M07: the rage bar full, the cat raging.
+        [BattleEventKind.RageFull] = ("sparkle", 5), [BattleEventKind.Raged] = ("excited", 6),
     };
 
     private void PlayBattleSound()
@@ -64,12 +66,12 @@ public sealed partial class PetWindow
     // Big moments get a banner across the HUD's centre. The first heal, far heal, rally call and attack
     // from behind of a battle say what is going on (once each per battle), and so does the first elite
     // of each kind; every helper a rally makes elite is named.
-    private bool healerExplained, farHealExplained, rallyExplained, behindExplained, wardExplained, pushResistExplained, appExplained, popupExplained, virusExplained, loadingExplained, updateExplained, virusExeExplained, lockExplained;
+    private bool healerExplained, farHealExplained, rallyExplained, behindExplained, wardExplained, pushResistExplained, appExplained, popupExplained, virusExplained, loadingExplained, updateExplained, virusExeExplained, lockExplained, rageExplained;
     private readonly HashSet<string> elitesExplained = new();
     private void ShowBattleBanners()
     {
         if (battle == null || battleHud == null) return;
-        if (battle.Time < 0.05) { healerExplained = farHealExplained = rallyExplained = behindExplained = wardExplained = pushResistExplained = appExplained = popupExplained = virusExplained = loadingExplained = updateExplained = virusExeExplained = lockExplained = false; elitesExplained.Clear(); }
+        if (battle.Time < 0.05) { healerExplained = farHealExplained = rallyExplained = behindExplained = wardExplained = pushResistExplained = appExplained = popupExplained = virusExplained = loadingExplained = updateExplained = virusExeExplained = lockExplained = rageExplained = false; elitesExplained.Clear(); }
         var rules = battle.AppRules;
         for (int i = 0; i < battle.Events.Count; i++)
         {
@@ -117,6 +119,8 @@ public sealed partial class PetWindow
                     LF($"⟳ Vòng loading! Mèo trong vòng bị chậm. Giữ chuột trên vòng xoay {hold.LoadingHold:0.#} giây để tắt", $"⟳ A loading ring! The cat is slow inside it. Hold the spinner {hold.LoadingHold:0.#} s to close it"),
                 BattleEventKind.HazardOpened when !loadingExplained => L("⟳ Vòng loading! Mèo trong vòng bị chậm. Bấm vòng xoay để tắt", "⟳ A loading ring! The cat is slow inside it. Click the spinner to close it"),
                 BattleEventKind.HazardOpened => L("⟳ Đang tải…", "⟳ Loading…"),
+                BattleEventKind.RageFull when !rageExplained => L("Thanh nộ đầy! Bấm vào thanh để mèo nổi giận", "The rage bar is full! Click it to make the cat rage"),
+                BattleEventKind.Raged => L("MÈO NỔI GIẬN!", "THE CAT RAGES!"),
                 BattleEventKind.Won => L("CHIẾN THẮNG!", "VICTORY!"),
                 BattleEventKind.Lost => L("THUA RỒI…", "DEFEATED…"),
                 _ => null
@@ -131,6 +135,7 @@ public sealed partial class PetWindow
             if (e.Kind == BattleEventKind.AppInfected) virusExplained = true;
             if (e.Kind == BattleEventKind.PopupOpened) popupExplained = true;
             if (e.Kind == BattleEventKind.PopupLocked) lockExplained = true;
+            if (e.Kind == BattleEventKind.RageFull) rageExplained = true;
             if (e.Kind == BattleEventKind.VirusFileAdded) virusExeExplained = true;
             if (e.Kind == BattleEventKind.HazardOpened && IsUpdate(e)) updateExplained = true;
             else if (e.Kind == BattleEventKind.HazardOpened) loadingExplained = true;

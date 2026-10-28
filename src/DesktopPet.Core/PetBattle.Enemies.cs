@@ -454,7 +454,7 @@ public sealed partial class BattleSim
             Damage(from, hurt * thorns.Amount, DamageSource.Reflect);
             if (Over) return;
         }
-        if (stun && !from.Defanged && !CatHeld && !CatStunned && StunImmunity <= 0 && Settings.StunDurationSeconds > 0)
+        if (stun && !from.Defanged && !CatHeld && !CatStunned && !Raging && StunImmunity <= 0 && Settings.StunDurationSeconds > 0)
         {
             CatStunRemaining = StunFor(Settings.StunDurationSeconds);
             StunsTaken++;
@@ -487,6 +487,7 @@ public sealed partial class BattleSim
         hurt = damage * ArmorFactor * (1 + recklessHurt);
         CatHp = Math.Max(0, CatHp - hurt);
         NoteHurt(hurt);
+        GainRage(hurt * Settings.RageHurtGain);
         HurtFlash = Settings.HurtFlashSeconds;
         events.Add(new(BattleEventKind.CatHurt, catX, hurt));
         // Last stand: once a wave, a fatal hit leaves the cat at 1 HP.

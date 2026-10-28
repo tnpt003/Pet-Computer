@@ -15,7 +15,7 @@ namespace DesktopPet;
 public sealed class BattleHud : Border
 {
     public event Action<BattleSkill>? SkillClicked;
-    public event Action? PauseClicked, EndClicked, BagClicked;
+    public event Action? PauseClicked, EndClicked, BagClicked, RageClicked;
     // One slot per skill the battle carries (BattleSim.Skills, in HUD order).
     public IReadOnlyList<BattleSkill> SkillOrder { get; }
     private const double HpWidth = 170, BossWidth = 200;
@@ -30,7 +30,7 @@ public sealed class BattleHud : Border
     private string LF(FormattableString vietnamese, FormattableString english) => PetText.PickFormat(language(), vietnamese, english);
     private readonly TextBlock hpText, status, hint, banner, comboText, upgradesText;
     internal readonly TextBlock bossName;
-    private readonly Border hpFill, hpTrail, bossFill, bossBar, pauseButton, endButton, bagButton, grip;
+    private readonly Border hpFill, hpTrail, bossFill, bossBar, pauseButton, endButton, bagButton, grip, rageBar, rageFill;
     // The portrait with HP, the status column and the skill slots (the Adventure Guide lights them).
     private readonly FrameworkElement hpBlock, statusBlock, skillBar;
     private readonly HudGlyph pauseGlyph;
@@ -58,6 +58,7 @@ public sealed class BattleHud : Border
     private static readonly Brush BarBack = PetUi.Game.Shadow(0x90);
     private static readonly Brush Green = PetUi.Frozen(255, 0x6F, 0xE0, 0x6A), Yellow = PetUi.Frozen(255, 0xF5, 0xC8, 0x42), Red = PetUi.Frozen(255, 0xF2, 0x5C, 0x54);
     private static readonly Brush Trail = PetUi.Frozen(255, 0xF0, 0xA0, 0x4B);
+    private static readonly Brush RageFilling = PetUi.Frozen(255, 0xD8, 0x5A, 0x3A), RageFullColor = PetUi.Frozen(255, 0xFF, 0x5A, 0x3C), RagingColor = PetUi.Frozen(255, 0xFF, 0x3E, 0x2E);
     private static readonly Brush BossColor = PetUi.Frozen(255, 0xB4, 0x8C, 0xF5), BossAngryColor = PetUi.Frozen(255, 0xE8, 0x6A, 0x6A), BossShieldColor = PetUi.Frozen(255, 0xFF, 0xD8, 0x5A);
     private static readonly Brush Soft = PetUi.Game.Soft, Gold = PetUi.Frozen(255, 0xFF, 0xD2, 0x3F), Dim = PetUi.Frozen(0x70, 255, 255, 255);
 
@@ -97,8 +98,19 @@ public sealed class BattleHud : Border
             Width = HpWidth + 4, Height = 16, CornerRadius = new CornerRadius(7), Background = BarBack, BorderBrush = Dim, BorderThickness = new Thickness(1),
             Padding = new Thickness(1), Margin = new Thickness(0, 4, 0, 0), Child = new Grid { Children = { hpTrail, hpFill, hpText } }
         };
+        // The rage bar (1.5 M07, PetBattle.Rage.cs) under the HP: fills as the cat hits and is hit; full, it
+        // glows and a click on it makes the cat rage; while raging it drains with the time left.
+        rageFill = new Border { Background = RageFilling, CornerRadius = new CornerRadius(3), HorizontalAlignment = HorizontalAlignment.Left, Width = 0 };
+        rageBar = new Border
+        {
+            Width = HpWidth + 4, Height = 10, CornerRadius = new CornerRadius(4), Background = BarBack, BorderBrush = Dim, BorderThickness = new Thickness(1),
+            Padding = new Thickness(1), Margin = new Thickness(0, 3, 0, 0), Child = rageFill
+        };
         var left = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center,
-            Children = { face, new StackPanel { Margin = new Thickness(8, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center, Children = { new StackPanel { Orientation = Orientation.Horizontal, Children = { name, comboText } }, hpBar } } } };
+            Children = { face, new StackPanel { Margin = new Thickness(8, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center, Children = { new StackPanel { Orientation = Orientation.Horizontal, Children = { name, comboText } }, hpBar, rageBar } } } };
+        rageBar.MouseLeftButtonDown += (_, e) => { RageClicked?.Invoke(); e.Handled = true; };
+        rageBar.MouseEnter += (_, _) => HoverControl(RageTip());
+        rageBar.MouseLeave += (_, _) => HoverControl(null);
 
         // Centre: the banner, or the status with wave dots / the boss's HP.
         banner = new TextBlock { Foreground = Gold, FontWeight = FontWeights.Black, FontSize = PetUi.DisplaySize, HorizontalAlignment = HorizontalAlignment.Center,
@@ -185,6 +197,8 @@ public sealed class BattleHud : Border
     public FrameworkElement StatusBlock => statusBlock;
     public FrameworkElement SkillBar => skillBar;
     public Border Grip => grip;
+    public Border RageBar => rageBar;
+    public double RageShown => rageFill.Width / HpWidth;
 
     // For the HUD stepping aside (PetWindow.Battle.cs): points in this panel's coordinates.
     public bool IsInsidePanel(Point point) => point.X >= 0 && point.Y >= 0 && point.X < ActualWidth && point.Y < ActualHeight;
@@ -198,7 +212,7 @@ public sealed class BattleHud : Border
             return at.X >= 0 && at.Y >= 0 && at.X < element.ActualWidth && at.Y < element.ActualHeight;
         }
         foreach (var slot in slots) if (Over(slot)) return true;
-        return Over(pauseButton) || Over(endButton) || Over(bagButton) || Over(grip);
+        return Over(pauseButton) || Over(endButton) || Over(bagButton) || Over(grip) || Over(rageBar);
     }
     public string HintText => hint.Text;
     // For checks: the status line and how many wave marks show.
@@ -238,6 +252,7 @@ public sealed class BattleHud : Border
         if (hpFill.Background != hpBrush) hpFill.Background = hpBrush;
         var hp = (Math.Ceiling(b.CatHp), b.CatMaxHp);
         if (hp != shownHp) { shownHp = hp; hpText.Text = $"{hp.Item1} / {hp.Item2}"; }
+        UpdateRage(b, held);
 
         // Hit chain: shown from the first hit until it lapses or the combo lands.
         int chain = b.Over ? 0 : b.LiveCombo;
@@ -376,6 +391,30 @@ public sealed class BattleHud : Border
             : !b.Over && b.Grace > 0 ? LF($"Được bảo vệ sau khi tiếp đất: còn {ProtectedFor(b)} giây", $"Protected after landing: {ProtectedFor(b)} s left")
             : L("Click slime: chọn mục tiêu · Rê chuột lên ô kỹ năng để xem · Nhấc mèo lên để cứu nguy",
                 "Click a slime: set target · Hover a skill for details · Lift the cat to rescue it"));
+    }
+
+    // The rage bar: the gauge while it fills, the time left while raging; full and usable, it pulses
+    // and takes clicks (Hand cursor); full but not usable now (held, stunned, paused), it stays lit.
+    private void UpdateRage(BattleSim b, bool held)
+    {
+        double fraction = b.Raging ? b.RageRemaining / Math.Max(0.01, b.Settings.RageSeconds) : b.Over ? 0 : Math.Clamp(b.Rage, 0, 1);
+        Set(rageFill, HpWidth * fraction);
+        var brush = b.Raging ? RagingColor : b.RageFull ? RageFullColor : RageFilling;
+        if (rageFill.Background != brush) rageFill.Background = brush;
+        bool ready = b.RageReady && !held;
+        var rim = ready || b.Raging ? Gold : Dim;
+        if (rageBar.BorderBrush != rim) rageBar.BorderBrush = rim;
+        rageFill.Opacity = ready ? 0.7 + 0.3 * Math.Sin(b.Time * 8) : 1;
+        var cursor = ready ? Cursors.Hand : null;
+        if (rageBar.Cursor != cursor) rageBar.Cursor = cursor;
+    }
+
+    private string RageTip()
+    {
+        var s = last?.Settings ?? BattleData.Settings;
+        string seconds = s.RageSeconds.ToString("0.#", CultureInfo.InvariantCulture);
+        return LF($"Thanh nộ: đầy dần khi mèo đánh trúng và bị đánh · đầy thì bấm vào để mèo nổi giận {seconds} giây: to lên, mỗi nhát trúng mọi slime trong tầm, đẩy lùi mạnh hơn, không bị choáng",
+                  $"Rage: fills as the cat lands hits and takes them · once full, click it to make the cat rage for {seconds} s: bigger, every swing hits every slime in reach, stronger knock back, no stuns");
     }
 
     // Whole seconds until putting the cat down protects it again (0: ready). Frozen while the cat is

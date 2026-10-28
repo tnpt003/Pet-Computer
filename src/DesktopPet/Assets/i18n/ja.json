@@ -902,5 +902,8 @@
   "Skills for the rest of the run ({0}/{1}) · free, the rest's choice stays": "この先の遠征のスキル（{0}/{1}）· 無料、休憩の選択はそのまま",
   "Keep these skills": "このスキルにする",
   "Skills changed.": "スキルを変えた。",
-  "Choose {0} skills.": "スキルを {0} つ選んでください。"
+  "Choose {0} skills.": "スキルを {0} つ選んでください。",
+  "The rage bar is full! Click it to make the cat rage": "怒りゲージ満タン！クリックで猫が怒る",
+  "THE CAT RAGES!": "猫が怒った！",
+  "Rage: fills as the cat lands hits and takes them · once full, click it to make the cat rage for {0} s: bigger, every swing hits every slime in reach, stronger knock back, no stuns": "怒りゲージ：猫が攻撃を当てる・受けるとたまる · 満タンでクリックすると {0} 秒間怒る：大きくなり、一振りで届くスライム全部に当たり、ふっ飛ばしが強くなり、気絶しない"
 }

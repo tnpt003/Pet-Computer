@@ -62,6 +62,12 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
     private static readonly Geometry MoonGeometry = Frozen(new CombinedGeometry(GeometryCombineMode.Exclude,
         new EllipseGeometry(BubbleCenter, 8, 8), new EllipseGeometry(new Point(34, -15), 7, 7)));
     private static readonly Pen BallStripePen = FrozenPen(Brushes.DarkSlateBlue, 1.6);
+    private static readonly Brush RageGlow = MakeRageGlow();
+    private static Brush MakeRageGlow()
+    {
+        var brush = new RadialGradientBrush(Color.FromArgb(0x70, 0xF0, 0x40, 0x2C), Color.FromArgb(0, 0xF0, 0x40, 0x2C));
+        brush.Freeze(); return brush;
+    }
     private static Geometry Frozen(Geometry geometry) { geometry.Freeze(); return geometry; }
     private static Geometry CachedGeometry(string path)
     {
@@ -119,6 +125,20 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
             dc.PushTransform(new TranslateTransform(0, -TeleportDrop));
             dc.PushTransform(new ScaleTransform(TeleportPop, TeleportPop, 56, 107));
         }
+        // The battle's rage stance (1.5 M07): drawn bigger around its feet (around the scruff while
+        // held, the same point the dangle turns around, and only 30 % as much more, so a shaken cat's
+        // swing stays inside the window), a red glow behind, the fur reddened.
+        bool rage = pet.BattleRage > 0;
+        var calm = palette;
+        if (rage)
+        {
+            double grow = 1 + (pet.BattleRageScale - 1) * pet.BattleRage * (p.PickedUp ? 0.3 : 1);
+            dc.PushTransform(p.PickedUp ? new ScaleTransform(grow, grow, PickupAnimation.AnchorX, PickupAnimation.AnchorY) : new ScaleTransform(grow, grow, 56, 107));
+            dc.PushOpacity(pet.BattleRage * (0.75 + 0.25 * Math.Sin(pet.BattleTime * 9)));
+            dc.DrawEllipse(RageGlow, null, new Point(56, p.PickedUp ? 66 : 70), 62, 52);
+            dc.Pop();
+            if (pet.BattleRage > 0.35) palette = CoatPalette.Enraged(coat);
+        }
         if (p.PickedUp)
         {
             dc.PushTransform(new RotateTransform(pet.Pickup.Angle, PickupAnimation.AnchorX, PickupAnimation.AnchorY));
@@ -137,6 +157,7 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         DrawOverlays(dc, p);
         if (pet.BattleBuff) DrawCheerSparkles(dc, pet.BattleTime);
         if (pet.BattleShield) DrawShieldBubble(dc, pet.BattleTime);
+        if (rage) { dc.Pop(); palette = calm; }
         if (hop) { dc.Pop(); dc.Pop(); }
         // The tab tornado's near half, over the cat (the far half is on the battle strip below this
         // window): the same ring, on the floor 2 DIPs under the window's bottom edge like the strip's.

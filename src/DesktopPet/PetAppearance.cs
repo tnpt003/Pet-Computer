@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Windows.Media;
 
@@ -57,6 +58,29 @@ public sealed class CoatPalette
         for (int i = 0; i < Palettes.Length; i++)
             if (PetCoats.All[i].Id == coat) return Palettes[i];
         return Palettes[0];
+    }
+
+    // The same coat with its fur glowing red (the battle's rage stance, 1.5 M07): fur, points, paws and
+    // patches lean toward red, the cream a little; the ink, pink and eyes stay.
+    private static readonly CoatPalette[] Raging = PetCoats.All.Select(spec => new CoatPalette(spec with
+    {
+        Fur = Redden(spec.Fur, 0.4), Cream = Redden(spec.Cream, 0.18), Points = spec.Points == null ? null : Redden(spec.Points, 0.4),
+        Paw = spec.Paw == null ? null : Redden(spec.Paw, 0.3), PatchA = spec.PatchA == null ? null : Redden(spec.PatchA, 0.35),
+        PatchB = spec.PatchB == null ? null : Redden(spec.PatchB, 0.35)
+    })).ToArray();
+
+    public static CoatPalette Enraged(string? coat)
+    {
+        for (int i = 0; i < Raging.Length; i++)
+            if (PetCoats.All[i].Id == coat) return Raging[i];
+        return Raging[0];
+    }
+
+    private static string Redden(string hex, double amount)
+    {
+        var c = ((SolidColorBrush)PetUi.Hex(hex)).Color;
+        byte Mix(byte from, byte to) => (byte)Math.Round(from + (to - from) * amount);
+        return $"#{Mix(c.R, 0xE8):X2}{Mix(c.G, 0x4A):X2}{Mix(c.B, 0x3C):X2}";
     }
 
     private static Brush Brush(string color) => PetUi.Hex(color);

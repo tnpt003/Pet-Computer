@@ -143,6 +143,15 @@ public sealed class BattleSettings
     public double SprayDps { get; init; } = 2;
     public double SprayChill { get; init; } = 0.35;
     public double SpraySoakSeconds { get; init; } = 1.5;
+    // 1.5 M07 (PetBattle.Rage.cs): the rage stance's time, the bar gained by each landed swing of the cat
+    // and by each HP it loses (0 and 0: it never fills), how much bigger the cat is drawn, and a raging
+    // hit's knock back (× the usual, at least RageKnock DIPs/s).
+    public double RageSeconds { get; init; } = 6;
+    public double RageHitGain { get; init; } = 0.05;
+    public double RageHurtGain { get; init; } = 0.012;
+    public double RageScale { get; init; } = 1.3;
+    public double RageKnock { get; init; } = 220;
+    public double RageKnockFactor { get; init; } = 1.5;
 
     // The Slime King (last wave).
     [JsonIgnore]
@@ -584,7 +593,9 @@ public enum BattleEventKind
     // 1.5 M06 (Value: the enemy's id): the Grabber lifted one, let it go (Value 1: thrown), a thrown one
     // flew into another or the edge; a Scissors stroke (Value: what it cut and hit); the spray started,
     // ran out of water.
-    Grabbed, GrabReleased, GrabHit, Snipped, SprayOn, SpraySpent
+    Grabbed, GrabReleased, GrabHit, Snipped, SprayOn, SpraySpent,
+    // 1.5 M07 (PetBattle.Rage.cs): the rage bar filled up, the user set the cat raging, the rage wore off.
+    RageFull, Raged, RageEnded
 }
 public readonly record struct BattleEvent(BattleEventKind Kind, double X, double Value = 0);
 // Number: a floating damage (Value > 0) or heal (Value < 0, shown as +HP above the cat).

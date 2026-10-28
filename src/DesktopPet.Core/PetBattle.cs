@@ -368,6 +368,7 @@ public sealed partial class BattleSim
         ShieldRemaining = Math.Max(0, ShieldRemaining - dt);
         LandingRushRemaining = Math.Max(0, LandingRushRemaining - dt);
         ComboRushRemaining = Math.Max(0, ComboRushRemaining - dt);
+        StepRage(dt);
         autoShieldClock = Math.Max(0, autoShieldClock - dt);
         if (Over)
         {
@@ -601,12 +602,16 @@ public sealed partial class BattleSim
             if (opening) OpenerHits++;
             if (charged) ChargedHits++;
             if (countered) { CounterReady = false; CounterHits++; }
+            GainRage(Settings.RageHitGain);
         }
         bool landed = result == HitResult.Landed && slime.State != SlimeState.Defeated;
         // A combo knocks back away from the cat (heavy kinds less), but does not stun; a heavy
-        // weapon knocks back on every hit. An elite that ignores Push stands its ground (it still takes the damage).
-        if (landed && (combo || knock > 0) && slime.Elite is not { PushImmune: true })
-            slime.KnockVelocity = (slime.X < catX ? -1 : 1) * (combo ? Math.Max(Settings.ComboKnock, knock) : knock) * slime.Type.PushFactor;
+        // weapon knocks back on every hit; raging, every hit knocks back harder (PetBattle.Rage.cs).
+        // An elite that ignores Push stands its ground (it still takes the damage).
+        if (landed && (combo || knock > 0 || Raging) && slime.Elite is not { PushImmune: true })
+            slime.KnockVelocity = (slime.X < catX ? -1 : 1) * RageKnockOf(combo ? Math.Max(Settings.ComboKnock, knock) : knock) * slime.Type.PushFactor;
+        // Raging: the swing also hits every other enemy in its reach.
+        if (Raging && !Over) RageSweep(slime, plain, catX, swingFacing);
         // A weapon that stuns (the hammer): now and then a landed hit dazes the enemy and cuts its windup.
         if (landed && arms.StunChance > 0 && strikeRandom.NextDouble() < arms.StunChance) StrikeStun(slime);
         // Shockwave: a combo hit stuns; Gale: a combo sets the cat rushing.
@@ -618,8 +623,9 @@ public sealed partial class BattleSim
             Finishers++;
             Damage(slime, slime.Hp + 1, DamageSource.App);
         }
-        // A combo hit also hits the enemies close to its target for part of its damage.
-        if (combo && Settings.ComboSplash > 0) Splash(slime, plain * Settings.ComboSplash, catX);
+        // A combo hit also hits the enemies close to its target for part of its damage (raging, the
+        // sweep above already hit them all).
+        if (combo && Settings.ComboSplash > 0 && !Raging) Splash(slime, plain * Settings.ComboSplash, catX);
         // Afterimage: every Every-th landed swing hits a second time (an echo counts nothing itself).
         landedSwings++;
         if (Active("echo") is SynergySpec echo && landedSwings % echo.Every == 0 && slime.Targetable)
@@ -824,6 +830,7 @@ public sealed partial class BattleSim
         CancelSwing();
         Combo = 0;
         CatStunRemaining = StunImmunity = 0;
+        RageRemaining = 0;
         foreach (var s in slimes)
         {
             if (s.State is SlimeState.Windup or SlimeState.Casting or SlimeState.Dashing) s.Set(SlimeState.Moving);

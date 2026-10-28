@@ -506,6 +506,26 @@ Code: `src/DesktopPet.Core/PetBattle.Grabber.cs` (Kẹp gắp), `src/DesktopPet.
 - **Hướng dẫn đứng hình:** bước `grabber`, `scissors`, `spray` chỉ chạy ở màn có `unlocksSkill` đúng kỹ năng đó và khi trận mang nó (như `laser`/`fan`).
 - Hình: càng kẹp kim loại trên dây thả từ mép trên dải trận, slime bị gắp hơi kéo dài, bóng dưới sàn nhỏ dần theo độ cao; nét cắt là đường đứt nét trắng viền tối với cây kéo mở ở đầu con trỏ; Bình xịt là bình xanh vòi vàng, vòng chấm xanh là tầm xịt, giọt nước bắn ra. Âm thanh dùng cue có sẵn (`Grabbed` bóp, `GrabReleased` vút, `GrabHit` cộc, `Snipped` vút, `SprayOn` bóp, `SpraySpent` keng). Icon ô giữ bản vẽ từ M02.
 
+## Mèo nổi giận (bản 1.5, mốc M07, 2026-10-28)
+
+Tư thế trận, **không phải** cảm xúc Angry (cảm xúc vẫn bị khóa trong trận như cũ). Code: `src/DesktopPet.Core/PetBattle.Rage.cs` (luật), thanh nộ trong `src/DesktopPet/PetBattleHud.cs`, hình trong `src/DesktopPet/PetRenderer.cs` (+ bảng màu đỏ `CoatPalette.Enraged`), test `tests/DesktopPet.Tests/BattleRageTests.cs` (quái giả) và UiChecks (HUD, ảnh). Số liệu ở cấp trên cùng của battle.json:
+
+| Khóa | Giới hạn | Gốc | Ý nghĩa |
+| --- | --- | --- | --- |
+| `rageSeconds` | 1–30 s | 6 | Nổi giận bao lâu (thời gian trận) |
+| `rageHitGain` | 0–1 | 0,05 | Thanh nộ tăng mỗi nhát mèo tự đánh trúng (cả nhát khi đang cầm); 20 nhát là đầy |
+| `rageHurtGain` | 0–1 | 0,012 | Thanh nộ tăng mỗi HP mèo mất (Khiên/Mai rùa chặn thì không tính) |
+| `rageScale` | 1–1,4 | 1,3 | Hình mèo to bao nhiêu (chỉ hình vẽ) |
+| `rageKnock` | 0–1000 DIPs/s | 220 | Đẩy lùi ít nhất của mỗi nhát khi nổi giận (× `pushFactor` của quái) |
+| `rageKnockFactor` | 1–5 | 1,5 | Đẩy lùi thường (combo, búa) nhân bao nhiêu khi nổi giận |
+
+- **Thanh nộ** nằm dưới thanh HP trên HUD, mỗi trận bắt đầu rỗng (Viễn chinh: mỗi bước một trận mới). Đầy dần khi mèo đánh trúng và khi mèo mất máu; không tăng khi đang nổi giận. Bom, kỹ năng, app, nhát vọng, đòn lan không cộng. `rageHitGain` và `rageHurtGain` cùng 0 thì thanh không bao giờ đầy.
+- **Đầy thì sáng lên** (viền vàng, nhấp nháy), lần đầu mỗi trận có banner "Thanh nộ đầy! Bấm vào thanh để mèo nổi giận". **Không bao giờ tự bật**: người dùng click vào thanh. Click chỉ có tác dụng khi trận đang chạy, mèo đang ở dưới sàn (không bị cầm) và **không đang choáng** (đang choáng thì thanh vẫn đầy, chờ hết choáng; nổi giận không cắt ngắn cú choáng đang có). Pause, menu, chọn thẻ, túi đồ đều chặn click.
+- **Trong `rageSeconds` giây:** mỗi nhát mèo tự đánh trúng còn trúng **mọi slime khác trong tầm** vũ khí (+14 DIPs) ở phía mèo đang vung hoặc chồng lên mèo, mỗi con nhận nguyên đòn thường (không thêm chí mạng/Mở màn/Đà chạy), bị đá chặn như đòn lan của combo; combo lúc này không lan thêm. Mọi nhát trúng đều đẩy lùi (`rageKnock`, mạnh hơn ×`rageKnockFactor`), tinh anh miễn Đẩy vẫn đứng yên. **Không quái hay app nào làm mèo choáng** (vẫn mất máu bình thường). Mèo đang cầm vẫn chỉ đánh quái trên không; nổi giận thì nhát đó trúng mọi quái trên không trong tầm.
+- **Thời gian:** chạy theo thời gian trận: Pause, menu, chọn thẻ, túi đồ, hướng dẫn đứng hình đóng băng; mèo đang bị cầm thì vẫn trôi (như Cổ vũ). Hết giờ, thua/thắng hoặc kết thúc trận thì mèo về cỡ cũ.
+- **Hình:** mèo to dần lên ×`rageScale` trong 0,25 s đầu, nhỏ lại trong 0,25 s cuối, quanh chân; lông ánh đỏ (bảng màu đỏ của chính bộ lông đang chọn), quầng đỏ nhấp nháy sau lưng. Đang bị cầm thì chỉ to thêm 30% phần đó (quanh gáy) để kiếm khi lắc không ra khỏi cửa sổ. **Cửa sổ mèo, vùng trúng đòn trên sàn (`CatHalfWidth`) và cách kéo không đổi**; vì cửa sổ mèo nhận click theo điểm ảnh có vẽ, phần hình to ra cũng nhấc mèo được. Thanh nộ khi nổi giận là thời gian còn lại, màu đỏ tươi.
+- Âm thanh dùng cue có sẵn (`RageFull` lấp lánh, `Raged` phấn khích); banner "MÈO NỔI GIẬN!". Không có bước hướng dẫn riêng (rê chuột lên thanh xem mô tả). Python không tham gia.
+
 ## Viễn chinh (`expedition`) (2026-10-21)
 
 Một chuyến đi gồm nhiều bậc, mỗi bậc chọn một điểm, bậc cuối là trùm. HP và build của mèo đi tiếp từ bậc này sang bậc sau; chuyến mới bắt đầu lại từ đầu. Code: `src/DesktopPet.Core/PetExpedition.cs` (luật, không WPF), `PetWindow.Expedition.cs` (bản đồ, kết quả).

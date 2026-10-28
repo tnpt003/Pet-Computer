@@ -667,7 +667,7 @@ public sealed partial class BattleSim
                 AddEffect(BattleEffectKind.Bell, lastCatX, 100);
                 if (!LandHit(rules.BellDamage, lastCatX, out _) || rules.BellStun <= 0) break;
                 // ...and stuns it (no stun again too soon, as after a dash).
-                if (CatHeld || CatStunned || StunImmunity > 0) break;
+                if (CatHeld || CatStunned || Raging || StunImmunity > 0) break;
                 CatStunRemaining = StunFor(rules.BellStun);
                 StunsTaken++;
                 CancelSwing();
@@ -678,7 +678,7 @@ public sealed partial class BattleSim
                 if (CatLifted || Grace > 0) break;
                 if (ShieldRemaining > 0) { events.Add(new(BattleEventKind.Blocked, lastCatX)); break; }
                 AddEffect(BattleEffectKind.EndTask, lastCatX, 125);
-                if (CatHeld || CatStunned || StunImmunity > 0) break;
+                if (CatHeld || CatStunned || Raging || StunImmunity > 0) break;
                 CatStunRemaining = StunFor(rules.FreezeSeconds);
                 StunsTaken++;
                 CancelSwing();

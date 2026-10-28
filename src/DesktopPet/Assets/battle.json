@@ -116,6 +116,15 @@
   "sprayDps": 2,
   "sprayChill": 0.35,
   "spraySoakSeconds": 1.5,
+  // 1.5 M07 rage (clicked on its bar once full): its time (s), the bar gained by each landed swing of the cat
+  // and by each HP it loses (both 0: it never fills), how much bigger the cat is drawn (1–1.4, drawing only),
+  // a raging hit's knock back (× rageKnockFactor, at least rageKnock DIPs/s).
+  "rageSeconds": 6,
+  "rageHitGain": 0.05,
+  "rageHurtGain": 0.012,
+  "rageScale": 1.3,
+  "rageKnock": 220,
+  "rageKnockFactor": 1.5,
   // Their names and HUD descriptions (every skill once: push, heal, cheer, bomb, shield; the
   // HUD order and what each does stay in the app). {key} in a description is that number of
   // this file, e.g. {pushCooldown}. Names: at most 32 characters; descriptions: at most 220.

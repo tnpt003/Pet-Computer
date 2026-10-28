@@ -791,6 +791,8 @@ public static class BattleData
         Within(s.SprayTankSeconds, 0.5, 30, "sprayTankSeconds"); Within(s.SprayRefillSeconds, 1, 120, "sprayRefillSeconds");
         Within(s.SprayRange, 10, 500, "sprayRange"); Within(s.SprayDps, 0, 100, "sprayDps");
         Within(s.SprayChill, 0.05, 0.9, "sprayChill"); Within(s.SpraySoakSeconds, 0.5, 10, "spraySoakSeconds");
+        Within(s.RageSeconds, 1, 30, "rageSeconds"); Within(s.RageHitGain, 0, 1, "rageHitGain"); Within(s.RageHurtGain, 0, 1, "rageHurtGain");
+        Within(s.RageScale, 1, 1.4, "rageScale"); Within(s.RageKnock, 0, 1000, "rageKnock"); Within(s.RageKnockFactor, 1, 5, "rageKnockFactor");
         foreach (var (level, name) in new[] { (s.Easy, "easy"), (s.Hard, "hard") })
             foreach (var (value, key) in new[] { (level.EnemyHp, "enemyHp"), (level.EnemyDamage, "enemyDamage"), (level.EnemySpeed, "enemySpeed") })
                 if (!double.IsFinite(value) || value < 0.25 || value > 3) throw new InvalidDataException($"{name}.{key} must be 0.25–3");

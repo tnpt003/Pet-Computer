@@ -606,3 +606,12 @@ Mở Trận tự do → bảng chuẩn bị: bỏ vài kỹ năng cũ, chọn K�
 - [ ] Đang chọn một trong ba: kéo mèo vẫn nhấc mèo và bỏ chọn; đang gắp slime mà nhấc mèo (nếu với được) thì slime rơi xuống. Chuột phải dải trận thì bỏ chọn. Pause/menu giữa lúc đang gắp/xịt: đứng yên; tiếp tục thì chạy tiếp.
 - [ ] Âm thanh gắp/thả/va chạm/cắt/xịt là cue hoạt hình ngắn, không chồng nhau; DPI 100/150/200% càng kẹp, nét cắt, vòi xịt đúng chỗ con trỏ.
 - [ ] Viễn chinh, điểm nghỉ: hiện tại chỉ 5 kỹ năng cũ mở nên **không có** nút "Đổi kỹ năng" (đúng thiết kế). Nút hiện khi chương 2 mở thêm kỹ năng (M21); khi đó kiểm tra: đổi miễn phí, vẫn phải chọn Nghỉ hoặc Lấy thẻ, trận sau mang bộ mới. Ảnh khung đổi kỹ năng đã xem qua render UiChecks (en).
+
+## Mèo nổi giận 1.5 M07 (2026-10-28) — mọi trận
+Thanh nộ mỏng dưới thanh HP trên HUD. Ảnh mèo nổi giận (đứng, vung kiếm, bị cầm, bay, có Khiên) và HUD thanh đầy đã xem qua render UiChecks, chưa xem trong trận thật, chưa thử DPI thật.
+- [ ] Đầu trận thanh rỗng; mèo đánh trúng hoặc bị đánh thì thanh đỏ cam dài dần (~20 nhát là đầy). Đầy: viền vàng, nhấp nháy, con trỏ thành bàn tay, banner "Thanh nộ đầy!…" một lần, tiếng lấp lánh. Để yên thì mèo **không** tự nổi giận.
+- [ ] Click thanh đầy: banner "MÈO NỔI GIẬN!", mèo to dần lên (~1,3 lần) quanh chân, lông ánh đỏ, quầng đỏ sau lưng; thanh đỏ tươi rút dần trong ~6 s rồi mèo nhỏ lại như cũ. Không phải mặt giận (cảm xúc Angry).
+- [ ] Khi nổi giận: một nhát trúng cả mấy slime đứng sát nhau phía trước mèo (mỗi con hiện số), slime bị đẩy lùi rõ; slime nhanh lao vào chỉ trừ máu, mèo không choáng (không có sao quay).
+- [ ] Đang choáng mà thanh đầy: click không làm gì, hết choáng click lại được. Đang cầm mèo: click không làm gì. Pause/menu/túi đồ: click không làm gì, đang nổi giận thì thời gian đứng yên.
+- [ ] Nhấc mèo khi đang nổi giận: kéo/lắc/ném/thả như thường (mèo to hơn một chút khi bị cầm, kiếm không bị cắt mép); thả xuống vẫn còn nổi giận nếu chưa hết giờ.
+- [ ] Kết thúc trận (nút End, thắng, thua) giữa lúc nổi giận: mèo về cỡ và màu cũ. Đổi bộ lông (Cài đặt) rồi vào trận: lông đỏ theo màu bộ lông đó. Rê chuột lên thanh: dòng gợi ý mô tả (vi/en/ja). DPI 100/150/200%: thanh không lệch, mèo to không bị cắt.

@@ -108,8 +108,11 @@ public sealed partial class BattleSim
         events.Add(new(BattleEventKind.HeldHit, slime.X, slime.Id));
         AddEffect(crit ? BattleEffectKind.Combo : BattleEffectKind.Spark, slime.X, slime.Altitude + slime.Height / 2);
         hitTone = crit ? NumberTone.Crit : NumberTone.Plain;
-        if (Damage(slime, damage, DamageSource.Weapon) == HitResult.Landed) { slime.Opened = true; HitStatuses(slime); }
+        double plain = damage;
+        if (Damage(slime, damage, DamageSource.Weapon) == HitResult.Landed) { slime.Opened = true; HitStatuses(slime); GainRage(Settings.RageHitGain); }
         hitTone = NumberTone.Plain;
+        // Raging: every other enemy in the air within reach too (PetBattle.Rage.cs).
+        if (Raging && !Over) RageSweep(slime, plain, cat.X, HeldFacing, cat);
     }
 
     // The flight since the last step (a segment, so a fast throw cannot skip over an enemy) against

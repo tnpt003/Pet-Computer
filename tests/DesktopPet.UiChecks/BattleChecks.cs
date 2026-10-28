@@ -374,11 +374,38 @@ internal static class BattleChecks
         window.SetBattlePaused(false);
         monitorProbe.SetValue(window, null);
 
+        // 1.5 M07: the rage bar under the HP. Not full, a click does nothing; full, it lights up and a
+        // click makes the cat rage (drawn bigger); while raging it drains with the time left.
+        Press(gameHud.RageBar);
+        check(!Sim().Raging && Sim().Rages == 0, "A click on a rage bar that is not full does nothing");
+        typeof(BattleSim).GetProperty(nameof(BattleSim.Rage))!.SetValue(Sim(), 1.0);
+        Tick(1.0 / 60);
+        check(gameHud.RageShown > 0.99 && gameHud.RageBar.Cursor == Cursors.Hand && gameHud.IsInteractiveAt(gameHud.RageBar.TranslatePoint(new Point(20, 4), gameHud)),
+            "Full, the bar is lit and clickable (the HUD never lets that click through)");
+        if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string rageReview)
+        {
+            gameHud.UpdateLayout();
+            var rageShot = new RenderTargetBitmap((int)Math.Ceiling(gameHud.ActualWidth + 16), (int)Math.Ceiling(gameHud.ActualHeight + 16), 96, 96, PixelFormats.Pbgra32);
+            rageShot.Render(gameHud);
+            var rageEncoder = new PngBitmapEncoder(); rageEncoder.Frames.Add(BitmapFrame.Create(rageShot));
+            using var rageStream = System.IO.File.Create(System.IO.Path.Combine(rageReview, "battle-hud-rage-full.png")); rageEncoder.Save(rageStream);
+        }
+        Press(gameHud.RageBar);
+        Tick(1.0);
+        check(Sim().Raging && Sim().Rage == 0 && pet.BattleRage == 1 && pet.BattleRageScale == Sim().Settings.RageScale && gameHud.RageShown < 0.9 && gameHud.RageShown > 0.7,
+            $"The click makes the cat rage: drawn bigger, the bar drains with its time ({gameHud.RageShown:0.00})");
+        Tick(Sim().Settings.RageSeconds);
+        check(!Sim().Raging && pet.BattleRage == 0, "It wears off");
+        typeof(BattleSim).GetProperty(nameof(BattleSim.Rage))!.SetValue(Sim(), 1.0);
+        bool ragingAtEnd = window.UseBattleRage();
+        Tick(0.5);
+
         // End: everything goes away and the pet lives normally again.
         window.EndBattle();
         await Task.Delay(20);
         check(!window.BattleActive && OpenBattleWindows() == 0 && Field<Window?>(window, "battleFieldWindow") == null && !pet.SwordOut && !pet.Emotions.Suspended && pet.MoveScale == 1,
             "End Battle removes the field, HUD, sword and the emotion lock");
+        check(ragingAtEnd && pet.BattleRage == 0, "Ending the battle mid-rage leaves the cat its usual size");
         SetField(window, "treatCooldown", 0.0);
         check(pet.Action == PetAction.Idle && pet.VX == 0 && window.GiveTreat(), "The pet is idle and its normal life (treats, games) works again");
         Call(window, "CancelFeatureActivity");
@@ -673,8 +700,22 @@ internal static class BattleChecks
             Render(cheer, $"battle-cheer-{facing}");
             var walking = Model(facing); walking.SwordOut = true; walking.Action = PetAction.Walking; walking.VX = 72 * facing;
             Render(walking, $"battle-walk-{facing}");
+            // 1.5 M07: the rage stance, ×1.3 and reddened, in every battle pose (inside the window too).
+            PetModel Raging(PetModel m, double look = 1) { m.BattleRage = look; m.BattleRageScale = 1.3; m.BattleTime = 1.7; return m; }
+            check(Render(Raging(Model(facing)), $"battle-rage-{facing}") != Render(Model(facing), "battle-calm") &&
+                  Render(Raging(Model(facing), 0.2), $"battle-rage-swelling-{facing}") != Render(Raging(Model(facing)), $"battle-rage-{facing}"),
+                $"The raging cat is drawn bigger and red, swelling in ({facing})");
+            var rageSwing = Raging(Model(facing)); rageSwing.SwordOut = true; rageSwing.SwordSwing = 0.5;
+            Render(rageSwing, $"battle-rage-swing-{facing}");
+            var rageHeld = Raging(Lifted(false, 0)); rageHeld.SwordSwing = 0.5;
+            Render(rageHeld, $"battle-rage-held-swing-{facing}");
+            Render(Raging(Lifted(true, 0)), $"battle-rage-shaken-{facing}");
+            var rageThrown = Raging(Model(facing)); rageThrown.SwordOut = true; rageThrown.Action = PetAction.Thrown; rageThrown.Grounded = false; rageThrown.VY = -700;
+            Render(rageThrown, $"battle-rage-thrown-{facing}");
+            var rageShield = Raging(Model(facing)); rageShield.SwordOut = true; rageShield.BattleShield = rageShield.BattleBuff = true;
+            Render(rageShield, $"battle-rage-shield-{facing}");
         }
-        check(edgesClear, "The sword, shield bubble and cheer sparkles stay inside the window in every pose, both ways");
+        check(edgesClear, "The sword, shield bubble, cheer sparkles and the rage stance stay inside the window in every pose, both ways");
 
         // Every enemy kind from battle.json side by side, for a person to look at.
         if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string kindsReview)

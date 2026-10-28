@@ -1,0 +1,12 @@
+{
+  // 1.5 M09 try-out: the spitter slime (Q1) and the spring slime (Q2) are in the built-in data but no
+  // battle uses them yet (chapter 2 brings them in). Copy this file to %LOCALAPPDATA%\DesktopPet\battle.json
+  // (keep a copy of yours first), then Battle Mode → Start battle (the free battle). Custom data: no records,
+  // no rewards. Delete the file to get the usual free battle back.
+  "schemaVersion": 1,
+  "waves": [
+    { "groups": [ { "enemy": "spitter", "count": 1 }, { "enemy": "runner", "count": 2 } ] },
+    { "groups": [ { "enemy": "springer", "count": 1 }, { "enemy": "slime", "count": 2 }, { "enemy": "runner", "count": 1 } ] },
+    { "groups": [ { "enemy": "spitter", "count": 2 }, { "enemy": "springer", "count": 1 }, { "enemy": "rock", "count": 1 } ] }
+  ]
+}

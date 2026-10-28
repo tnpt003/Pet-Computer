@@ -717,9 +717,9 @@ public sealed partial class BattleSim
         }
     }
 
-    // What an infected bin spits: any kind with an elite affix (no boss), or the popup's enemy.
+    // What an infected bin spits: any kind with an elite affix (no boss, not kept out by binSpit), or the popup's enemy.
     private List<EnemyType> SpitKinds(AppsSpec rules) => rules.SpitElite
-        ? Settings.EnemyTypes.Where(e => !e.Boss && e.Elite != null).ToList()
+        ? Settings.EnemyTypes.Where(e => !e.Boss && e.Elite != null && e.BinSpit).ToList()
         : Settings.EnemyTypes.Where(e => e.Id == rules.PopupSpawn).ToList();
 
     // Left alone, the ad lets an enemy out where it was (when the floor has room).

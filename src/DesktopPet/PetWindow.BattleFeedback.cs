@@ -45,6 +45,10 @@ public sealed partial class PetWindow
         [BattleEventKind.RageFull] = ("sparkle", 5), [BattleEventKind.Raged] = ("excited", 6),
         // 1.5 M08: the glove's combo tossed a slime up.
         [BattleEventKind.Launched] = ("swoosh", 3),
+        // 1.5 M09: the spitter and the spring trap (the shared cartoon cues).
+        [BattleEventKind.SpitAimed] = ("squish", 2), [BattleEventKind.GooLanded] = ("squish", 3), [BattleEventKind.PuddleBoost] = ("swoosh", 3),
+        [BattleEventKind.PuddleDried] = ("pop", 2), [BattleEventKind.SpringSqueezed] = ("clank", 4), [BattleEventKind.SpringBounced] = ("ball_tap", 5),
+        [BattleEventKind.SpringFlattened] = ("squish", 4),
     };
 
     private void PlayBattleSound()
@@ -68,12 +72,12 @@ public sealed partial class PetWindow
     // Big moments get a banner across the HUD's centre. The first heal, far heal, rally call and attack
     // from behind of a battle say what is going on (once each per battle), and so does the first elite
     // of each kind; every helper a rally makes elite is named.
-    private bool healerExplained, farHealExplained, rallyExplained, behindExplained, wardExplained, pushResistExplained, appExplained, popupExplained, virusExplained, loadingExplained, updateExplained, virusExeExplained, lockExplained, rageExplained;
+    private bool healerExplained, farHealExplained, rallyExplained, behindExplained, wardExplained, pushResistExplained, appExplained, popupExplained, virusExplained, loadingExplained, updateExplained, virusExeExplained, lockExplained, rageExplained, spitExplained, puddleExplained, springExplained, flatExplained;
     private readonly HashSet<string> elitesExplained = new();
     private void ShowBattleBanners()
     {
         if (battle == null || battleHud == null) return;
-        if (battle.Time < 0.05) { healerExplained = farHealExplained = rallyExplained = behindExplained = wardExplained = pushResistExplained = appExplained = popupExplained = virusExplained = loadingExplained = updateExplained = virusExeExplained = lockExplained = rageExplained = false; elitesExplained.Clear(); }
+        if (battle.Time < 0.05) { healerExplained = farHealExplained = rallyExplained = behindExplained = wardExplained = pushResistExplained = appExplained = popupExplained = virusExplained = loadingExplained = updateExplained = virusExeExplained = lockExplained = rageExplained = spitExplained = puddleExplained = springExplained = flatExplained = false; elitesExplained.Clear(); }
         var rules = battle.AppRules;
         for (int i = 0; i < battle.Events.Count; i++)
         {
@@ -123,6 +127,11 @@ public sealed partial class PetWindow
                 BattleEventKind.HazardOpened => L("⟳ Đang tải…", "⟳ Loading…"),
                 BattleEventKind.RageFull when !rageExplained => L("Thanh nộ đầy! Bấm vào thanh để mèo nổi giận", "The rage bar is full! Click it to make the cat rage"),
                 BattleEventKind.Raged => L("MÈO NỔI GIẬN!", "THE CAT RAGES!"),
+                // 1.5 M09: the spitter and the spring trap, once each per battle.
+                BattleEventKind.SpitAimed when !spitExplained => L("Slime phun! Nhấc mèo khỏi vòng cam", "A spitter! Lift the cat out of the orange ring"),
+                BattleEventKind.PuddleBoost when !puddleExplained => L("Vũng nhầy làm slime lao xa hơn! Dùng Quạt làm khô", "Goo puddles make dashes longer! Dry them with the Fan"),
+                BattleEventKind.SpringSqueezed when !springExplained => L("Lò xo đang nén! Nhấc mèo ra khỏi vòng", "The spring is squeezing! Lift the cat out of the ring"),
+                BattleEventKind.SpringFlattened when !flatExplained => L("Lò xo bẹp rồi! Nó nằm im một lúc", "The spring is flattened! It lies still a while"),
                 BattleEventKind.Won => L("CHIẾN THẮNG!", "VICTORY!"),
                 BattleEventKind.Lost => L("THUA RỒI…", "DEFEATED…"),
                 _ => null
@@ -138,6 +147,10 @@ public sealed partial class PetWindow
             if (e.Kind == BattleEventKind.PopupOpened) popupExplained = true;
             if (e.Kind == BattleEventKind.PopupLocked) lockExplained = true;
             if (e.Kind == BattleEventKind.RageFull) rageExplained = true;
+            if (e.Kind == BattleEventKind.SpitAimed) spitExplained = true;
+            if (e.Kind == BattleEventKind.PuddleBoost) puddleExplained = true;
+            if (e.Kind == BattleEventKind.SpringSqueezed) springExplained = true;
+            if (e.Kind == BattleEventKind.SpringFlattened) flatExplained = true;
             if (e.Kind == BattleEventKind.VirusFileAdded) virusExeExplained = true;
             if (e.Kind == BattleEventKind.HazardOpened && IsUpdate(e)) updateExplained = true;
             else if (e.Kind == BattleEventKind.HazardOpened) loadingExplained = true;

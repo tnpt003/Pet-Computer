@@ -84,6 +84,7 @@ public sealed partial class BattleSim
             slime.Cooldown = Math.Max(0, slime.Cooldown - act);
             slime.HealCooldown = Math.Max(0, slime.HealCooldown - act);
             slime.FarHealCooldown = Math.Max(0, slime.FarHealCooldown - act);
+            slime.SpitCooldown = Math.Max(0, slime.SpitCooldown - act);
             slime.PanicRemaining = Math.Max(0, slime.PanicRemaining - dt);
             if (slime.Stuck) slime.KnockVelocity = 0; // Stuck: no knock back either.
             if (slime.KnockVelocity != 0)
@@ -99,6 +100,7 @@ public sealed partial class BattleSim
             if (slime.State == SlimeState.Defeated) continue;
             if (slime.Handled) continue; // In the Grabber's claw or flying from it (PetBattle.Grabber.cs).
             if (slime.Riding && slime.State == SlimeState.Moving) continue; // Carried by its mount (StepLinks).
+            if (slime.Type.Spring != null) { StepSpring(slime, dt, catX, catHeld); if (Over) break; }
             if (slime.Shielded && slime.State != SlimeState.Defeated)
             {
                 StepShield(slime, dt, minX, maxX);
@@ -127,7 +129,8 @@ public sealed partial class BattleSim
                     // only pressed (not lifted) is on the floor and is hit too.
                     if (slime.StateTime >= Windup(slime))
                     {
-                        if (slime.Type.Dash) { slime.DashLeft = slime.Type.DashDistance; slime.DashHit = false; slime.Set(SlimeState.Dashing); }
+                        if (slime.Spitting) Spit(slime);
+                        else if (slime.Type.Dash) { slime.DashLeft = slime.Type.DashDistance; slime.DashHit = false; slime.DashBoost = 1; slime.Set(SlimeState.Dashing); }
                         else Strike(slime, catX);
                     }
                     break;
@@ -163,6 +166,10 @@ public sealed partial class BattleSim
                     if (Panic(slime, dt, catX, minX, maxX)) break;
                     // Chasing the laser's dot (PetBattle.Tools.cs): nothing else.
                     if (slime.Lured && LaserX is double dot) { Lure(slime, dot, dt, minX, maxX); break; }
+                    // A spring trap never attacks: it lies still, or slides up to a cat far away (PetBattle.Spring.cs).
+                    if (slime.Type.Spring != null) { Creep(slime, dt, catX, minX, maxX); break; }
+                    // A spitter spits from afar before anything else (even from behind its allies).
+                    if (slime.Type.Spit != null && StartSpit(slime, catX, catHeld)) break;
                     // A support keeps behind its fighting allies and leaves the cat to them.
                     if (slime.Type.Support && (slime.KeepingBack = KeepBack(slime, dt, catX, minX, maxX))) break;
                     // A dasher runs off after its lunge.
@@ -199,7 +206,7 @@ public sealed partial class BattleSim
         CarryRiders();
     }
 
-    public double Windup(Slime slime) => (slime.Enraged ? slime.Type.EnragedWindup : slime.Type.Windup) + (slime.Elite?.WindupAdd ?? 0);
+    public double Windup(Slime slime) => slime.Spitting && slime.Type.Spit is SpitSpec spit ? spit.Windup : (slime.Enraged ? slime.Type.EnragedWindup : slime.Type.Windup) + (slime.Elite?.WindupAdd ?? 0);
     // A far heal winds up longer than one in reach.
     public static double HealWindup(Slime healer) => healer.FarHeal ? healer.Type.FarHealWindup : healer.Type.HealWindup;
 
@@ -228,7 +235,7 @@ public sealed partial class BattleSim
         if (Time - lastWindup < Settings.AttackStagger) return false;
         if (Settings.MaxAttackers <= 0) return true;
         int busy = 0;
-        foreach (var s in slimes) if (s != slime && s.State is SlimeState.Windup or SlimeState.Dashing) busy++;
+        foreach (var s in slimes) if (s != slime && !s.Spitting && s.State is SlimeState.Windup or SlimeState.Dashing) busy++;
         return busy < Settings.MaxAttackers;
     }
 
@@ -385,7 +392,7 @@ public sealed partial class BattleSim
         var live = scratch;
         live.Clear();
         // A leaping boss flies over the others.
-        foreach (var slime in slimes) if (slime.State != SlimeState.Defeated && !slime.KeepingBack && slime.LeapHeight <= 0 && !slime.Riding && !slime.Airborne && !slime.Handled && slime.Type.Blocker == blockers) live.Add(slime);
+        foreach (var slime in slimes) if (slime.State != SlimeState.Defeated && !slime.KeepingBack && slime.LeapHeight <= 0 && !slime.Riding && !slime.Airborne && !slime.Handled && slime.Type.Spring == null && slime.Type.Blocker == blockers) live.Add(slime);
         live.Sort(ByX);
         for (int i = 1; i < live.Count; i++)
         {
@@ -423,7 +430,9 @@ public sealed partial class BattleSim
     private void StepDash(Slime slime, double dt, double catX, double minX, double maxX)
     {
         double before = slime.X;
-        double step = slime.Stuck ? 0 : Math.Min(slime.DashLeft, slime.Type.DashSpeed * (slime.Elite?.DashSpeed ?? 1) * level.EnemySpeed * slime.ChillFactor * dt);
+        // Through a spitter's puddle: the rest of the dash goes further and faster (once per dash).
+        if (slime.DashBoost == 1 && puddles.Count > 0 && PuddleAt(slime.X) is BattlePuddle puddle) BoostDash(slime, puddle);
+        double step = slime.Stuck ? 0 : Math.Min(slime.DashLeft, slime.Type.DashSpeed * slime.DashBoost * (slime.Elite?.DashSpeed ?? 1) * level.EnemySpeed * slime.ChillFactor * dt);
         slime.X = Math.Clamp(slime.X + slime.DashDirection * step, minX, maxX);
         slime.DashLeft = slime.X == before ? 0 : slime.DashLeft - step; // Stopped by the field's edge.
         double reach = slime.HitWidth / 2 + CatHalfWidth;
@@ -442,8 +451,8 @@ public sealed partial class BattleSim
 
     // Every hit on the cat: the Shield takes all of it (no damage, no stun), otherwise armor
     // lessens it. stun: also stun the cat, unless it is in the user's hands, already stunned or
-    // still immune after its last stun.
-    private void HurtCat(Slime from, double catX, bool stun, double share = 1)
+    // still immune after its last stun. stunSeconds: how long (negative: the battle's StunDurationSeconds).
+    private void HurtCat(Slime from, double catX, bool stun, double share = 1, double stunSeconds = -1)
     {
         if (!LandHit(from.Damage * share, catX, out double hurt)) return;
         // Thorns: part of what the cat really took goes back to the attacker.
@@ -454,9 +463,10 @@ public sealed partial class BattleSim
             Damage(from, hurt * thorns.Amount, DamageSource.Reflect);
             if (Over) return;
         }
-        if (stun && !from.Defanged && !CatHeld && !CatStunned && !Raging && StunImmunity <= 0 && Settings.StunDurationSeconds > 0)
+        double seconds = stunSeconds >= 0 ? stunSeconds : Settings.StunDurationSeconds;
+        if (stun && !from.Defanged && !CatHeld && !CatStunned && !Raging && StunImmunity <= 0 && seconds > 0)
         {
-            CatStunRemaining = StunFor(Settings.StunDurationSeconds);
+            CatStunRemaining = StunFor(seconds);
             StunsTaken++;
             CancelSwing();
             events.Add(new(BattleEventKind.CatStunned, catX));

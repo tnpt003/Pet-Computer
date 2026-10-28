@@ -554,10 +554,19 @@ public sealed class Slime
     public bool Wet => WetRemaining > 0;
     // How fast it acts under a chill (1: not chilled).
     public double ChillFactor => ChillRemaining > 0 ? 1 - ChillPower : 1;
+    // 1.5 M09 (PetBattle.Spit.cs): the windup is a spit at SpitAt (not a hit); time to its next spit; a
+    // dash's factor from a puddle it went through (1: none yet this dash).
+    public bool Spitting;
+    public double SpitAt, SpitCooldown, DashBoost = 1;
+    // 1.5 M09 (PetBattle.Spring.cs): the trap's state, the time left in it and the hits towards flattening it.
+    public SpringState Spring;
+    public double SpringClock;
+    public int SpringHits;
     public bool Targetable => State is not (SlimeState.Spawning or SlimeState.Defeated);
     public void Set(SlimeState state)
     {
         if (state == SlimeState.Stunned && State == SlimeState.Windup && Type.Dash) Defanged = true;
+        if (state != SlimeState.Windup) Spitting = false;
         State = state; StateTime = 0;
     }
 }
@@ -609,7 +618,26 @@ public enum BattleEventKind
     // 1.5 M07 (PetBattle.Rage.cs): the rage bar filled up, the user set the cat raging, the rage wore off.
     RageFull, Raged, RageEnded,
     // 1.5 M08 (Value: the enemy's id): a combo of a launching weapon tossed it up.
-    Launched
+    Launched,
+    // 1.5 M09 (Value: the enemy's id): a spitter started its windup (X: where its goo will land); a drop
+    // landed (Value 1: on the cat); a puddle made a dash longer; the fan dried a puddle. A spring trap
+    // started to squeeze; it sprang (Value 1: on the cat); it was flattened.
+    SpitAimed, GooLanded, PuddleBoost, PuddleDried, SpringSqueezed, SpringBounced, SpringFlattened
+}
+// A spring trap (PetBattle.Spring.cs): set and waiting, squeezing before it springs, resting after, flattened.
+public enum SpringState { Ready, Squeezing, Resting, Flat }
+// A drop of goo in flight from a spitter (PetBattle.Spit.cs) and the puddle it leaves.
+public sealed class BattleGoo
+{
+    public int OwnerId;
+    public double FromX, X, Flight, Remaining, Damage, Radius, PuddleSeconds, PuddleRadius, DashDistance, DashSpeed;
+    public string? Tint;
+    // How far along its flight it is (0–1).
+    public double Progress => Flight > 0 ? Math.Clamp(1 - Remaining / Flight, 0, 1) : 1;
+}
+public sealed class BattlePuddle
+{
+    public double X, Radius, Remaining, Life, DashDistance, DashSpeed;
 }
 public readonly record struct BattleEvent(BattleEventKind Kind, double X, double Value = 0);
 // Number: a floating damage (Value > 0) or heal (Value < 0, shown as +HP above the cat).
@@ -619,8 +647,8 @@ public readonly record struct BattleEvent(BattleEventKind Kind, double X, double
 // gold ring flashing on a shielded boss hit for nothing. Warded: a green ring and "IMMUNE" on an
 // enemy guarded by a heal. Apps: Bell (a notification bell dropping on an enemy), EndTask (a
 // "not responding" window over the enemy it ends; Value: its width), Rewind (an undo arrow
-// circling the cat).
-public enum BattleEffectKind { Spark, Poof, Push, Explosion, Slam, Number, Combo, Thud, Mend, Block, Immune, Warded, Bell, EndTask, Rewind }
+// circling the cat). Splat (1.5 M09): a spitter's drop of goo landing (Tint: its colour).
+public enum BattleEffectKind { Spark, Poof, Push, Explosion, Slam, Number, Combo, Thud, Mend, Block, Immune, Warded, Bell, EndTask, Rewind, Splat }
 // How a damage Number reads (display only): a plain hit, a combo hit, a critical (Claws) hit, or poison's tick.
 public enum NumberTone { Plain, Combo, Crit, Poison }
 public sealed class BattleEffect

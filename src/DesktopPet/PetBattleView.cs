@@ -208,6 +208,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         double floor = Floor, time = sim.Time;
         // Index loops: foreach over IReadOnlyList boxes an enumerator every frame.
         for (int i = 0; i < sim.Bombs.Count; i++) DrawBomb(dc, sim.Bombs[i], sim.Bombs[i].X - OriginX, floor);
+        DrawSpitBehind(dc, floor, time);
         for (int i = 0; i < sim.Slimes.Count; i++) if (sim.Slimes[i].CallSpots is { } spots) DrawCallSpots(dc, sim.Slimes[i], spots, floor, time);
         DrawLinksBehind(dc, floor, time);
         for (int layer = 0; layer <= 3; layer++)
@@ -232,6 +233,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         for (int i = 0; i < sim.Slimes.Count; i++)
             if (sim.Slimes[i].IsBoss && sim.RallyTarget(sim.Slimes[i]) is Slime rallied) DrawRallyLink(dc, sim.Slimes[i], rallied, floor, time);
         DrawLinkMarks(dc, floor, time);
+        DrawGoos(dc, floor);
         DrawTools(dc, floor, time);
         if (sim.TabsRemaining > 0) DrawTabs(dc, sim.CatX - OriginX, floor, time);
         for (int i = 0; i < sim.Effects.Count; i++) DrawEffect(dc, sim.Effects[i], sim.Effects[i].X - OriginX, floor - sim.Effects[i].Height, floor);
@@ -355,6 +357,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         if (slime.Crouch > 0) { sx *= 1 + 0.18 * slime.Crouch; sy *= 1 - 0.25 * slime.Crouch; }
         // A stony body is wide and low (its hitScale is wider to match).
         if (slime.Type.Marks == "cracks") { sx *= 1.12; sy *= 0.9; }
+        SpringShape(slime, ref sx, ref sy);
         // A blocker in front of a support fades a little, so the support shows through it.
         if (slime.Type.Blocker && CoversSupport(slime)) opacity *= 0.72;
         if (sim.BlockedById == slime.Id)
@@ -363,6 +366,7 @@ public sealed partial class BattleFieldView : FrameworkElement
             dc.DrawEllipse(null, Halo, new Point(x, floor - 1), w / 2 + 9, 7);
             dc.DrawEllipse(null, WallRing, new Point(x, floor - 1), w / 2 + 9, 7);
         }
+        DrawSpringRing(dc, slime, x, floor);
         if (slime.Type.Slam && slime.State == SlimeState.Windup)
         {
             // The slam's reach on the floor, filling up as it comes: get out (or push, shield, lift).
@@ -482,6 +486,8 @@ public sealed partial class BattleFieldView : FrameworkElement
             dc.Pop();
         }
         if (slime.Type.Marks == "leaf") DrawHerbal(dc, slime, time);
+        if (slime.Type.Marks == "spout") DrawSpout(dc, slime, fill);
+        if (slime.Type.Marks == "spring") DrawSpringCoil(dc, slime);
         // An older support mark: a white "+" on its body.
         if (slime.Type.Marks == "cross") dc.DrawGeometry(Brushes.White, Outline, CrossMark);
         if (slime.Elite != null)
@@ -553,7 +559,7 @@ public sealed partial class BattleFieldView : FrameworkElement
                 // "!" says so, and a dashed ring on the floor shows where it still reaches (the hit
                 // misses beyond Range + 12, see BattleSim.Strike): put the cat down outside it.
                 dc.DrawEllipse(null, WarningEdge, new Point(x, y + 1), 9 + 2 * Math.Sin(time * 8), 9 + 2 * Math.Sin(time * 8));
-                if (!slime.Type.Dash) // A dash shows its lane instead.
+                if (!slime.Type.Dash && !slime.Spitting) // A dash shows its lane instead, a spit its landing ring.
                 {
                     dc.DrawEllipse(null, Halo, new Point(x, floor - 4), slime.Range + 12, 10);
                     dc.DrawEllipse(null, WarningEdge, new Point(x, floor - 4), slime.Range + 12, 10);
@@ -817,6 +823,9 @@ public sealed partial class BattleFieldView : FrameworkElement
                     dc.DrawLine(Halo, from, to);
                     dc.DrawLine(SparkPen, from, to);
                 }
+                break;
+            case BattleEffectKind.Splat:
+                DrawSplat(dc, effect, x, floor, k);
                 break;
             case BattleEffectKind.Poof:
                 // Soft white puffs as the slime pops; nothing gory. Bigger for the boss.

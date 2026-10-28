@@ -313,6 +313,37 @@
       "elite": { "firstHeal": 2, "healCooldown": 0.85, "healBudget": 1.3, "cost": 1, "descVi": "hồi đầu gấp đôi, hồi nhanh và nhiều hơn", "descEn": "first heal doubled, heals sooner and longer" }
     },
     {
+      // 1.5 Q1 (M09): a support that spits goo from afar. spit: with the cat between minRange and range
+      // DIPs it winds up (an orange ring marks the cat's spot), the drop flies `flight` s and hurts a cat
+      // still on the floor within radius (its damage, no stun). It leaves a puddle for puddleSeconds: a dash
+      // through it goes dashDistance × further and dashSpeed × faster; the fan dries it. An elite spits
+      // eliteDrops drops (eliteSpread DIPs apart) and its puddles last elitePuddle × longer. binSpit false:
+      // an infected bin never spits it (it only comes where a wave names it).
+      "id": "spitter", "nameVi": "Slime phun", "nameEn": "Spitter slime",
+      "maxHp": 40, "speed": 30, "damage": 9, "range": 56,
+      "windup": 0.8, "attackCooldown": 2.0, "recover": 0.5,
+      "scale": 0.9, "color": "#C38BE8", "marks": "spout",
+      "support": true, "keepBack": 160, "fleeSpeed": 1.8, "cost": 2, "binSpit": false,
+      "spit": { "range": 380, "minRange": 90, "windup": 1.0, "flight": 0.8, "radius": 42, "cooldown": 4,
+        "puddleSeconds": 6, "puddleRadius": 48, "dashDistance": 1.5, "dashSpeed": 1.4, "eliteDrops": 2, "eliteSpread": 70, "elitePuddle": 1.5 },
+      "elite": { "hp": 1.2, "cost": 1, "descVi": "phun 2 giọt, vũng lâu hơn", "descEn": "spits two drops, longer puddles" }
+    },
+    {
+      // 1.5 Q2 (M09): a trap lying on the floor with a gold ring of spring.radius. The cat on the floor
+      // stepping in sets it off: it squeezes `compress` s (the ring turns red), then springs: a cat still
+      // in the ring takes its damage and a stun of `stun` s; then it rests `rest` s. flattenHits hits
+      // (weapon or bomb) flatten it for flatSeconds. It never attacks otherwise; with the cat further than
+      // creepRange it slides up. Elite: eliteRadius × the ring, eliteRest s of rest, eliteHits to flatten.
+      "id": "springer", "nameVi": "Slime lò xo", "nameEn": "Spring slime",
+      "maxHp": 70, "speed": 26, "damage": 14, "range": 40,
+      "windup": 0.8, "attackCooldown": 2.0, "recover": 0.4,
+      "scale": 1.1, "hitScale": 1.3, "color": "#F2C14E", "marks": "spring",
+      "pushFactor": 0.8, "cost": 2, "binSpit": false,
+      "spring": { "radius": 60, "compress": 0.8, "stun": 0.8, "rest": 4, "flattenHits": 2, "flatSeconds": 3, "creepRange": 120,
+        "eliteRadius": 1.35, "eliteRest": 2.5, "eliteHits": 3 },
+      "elite": { "hp": 1.2, "cost": 1, "descVi": "vòng to hơn, bật lại nhanh, 3 đòn mới bẹp", "descEn": "bigger ring, springs back sooner, 3 hits to flatten" }
+    },
+    {
       // The chapter 1 boss (Adventure stage 5): the free battle keeps "king" below. Phases fire once
       // each at their HP fraction; at most summonCap helpers alive at once. A shield phase stops a
       // hit at its line, runs to the far edge (retreatSpeed, at most retreatSeconds), calls its

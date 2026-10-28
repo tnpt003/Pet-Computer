@@ -1,7 +1,7 @@
 # Bản 1.5 — Slime phản công (thiết kế đã chốt)
 
 Ngày chốt hướng: 2026-10-26 (Asia/Saigon). Người dùng chọn "bản rất lớn", rồi chỉnh lại phần quái và kỹ năng qua trao đổi cùng ngày.
-Trạng thái: **đang code** — xong M01, M02, M03, M04, M05, M06 (2026-10-28). Mỗi mốc bên dưới làm trong một phiên chat; trước mỗi mốc vẫn theo quy trình AGENTS.md (đọc → giải thích → chờ "ok" → làm → test → ghi nhớ).
+Trạng thái: **đang code** — xong M01 tới M09 (2026-10-28). Mỗi mốc bên dưới làm trong một phiên chat; trước mỗi mốc vẫn theo quy trình AGENTS.md (đọc → giải thích → chờ "ok" → làm → test → ghi nhớ).
 
 Ngoài danh sách này thì ý tưởng mới vào mục "Backlog sau 1.5" cuối file, không làm trong 1.5.
 
@@ -174,7 +174,7 @@ Mỗi mốc: build + `scripts/test.ps1 -Ui` đạt, test mới cho phần thêm 
 | M07 ✅ | K5 Mèo nổi giận | **Xong 2026-10-28:** thanh nộ dưới thanh HP, đầy dần khi mèo đánh trúng (5%/nhát) và mất máu (1,2%/HP), mỗi trận bắt đầu rỗng; đầy thì sáng, người dùng click mới bật (không khi đang cầm, đang choáng, Pause). 6 s: hình mèo ×1,3 (khi bị cầm ×1,09) lông đỏ, mỗi nhát trúng mọi slime trong tầm, đẩy lùi mạnh hơn, không bị choáng (vẫn mất máu); không cắt cú choáng đang có; Pause/chọn thẻ/hướng dẫn đóng băng, khi cầm vẫn trôi. Cửa sổ, vùng trúng đòn, kéo/ném không đổi. Số liệu `rage*` trong battle.json. BattleRageTests + UiChecks (HUD, ảnh mọi tư thế trong cửa sổ); mô phỏng cân bằng giống hệt trước từng dòng. Chi tiết: docs/BATTLE-DATA.md → Mèo nổi giận |
 | M08 ✅ | V1 Cuộn len, V2 Găng đấm | **Xong 2026-10-28:** hai vũ khí dữ liệu trong `weapons` (chọn được ở mọi bảng chuẩn bị, kỷ lục tách theo vũ khí) với khóa mới `sweep`, `pull`, `comboHits`, `launch`/`launchStun` (PetBattle.Weapons.cs) và hình `yarn`/`glove`. Cuộn len: tầm 114 (×1,5), 14 sát thương, mỗi nhát trúng mọi slime trong tầm phía trước, kéo slime đứng xa (`support`; slime phun Q1 dùng ở M09) lại sát mèo, không choáng. Găng: 14 sát thương, hồi 0,38 s, combo 5 nhát, nhát cuối hất tung quái (không boss/đá/quái lớn/tinh anh miễn Đẩy), đáp đất choáng 0,8 s. BattleNewWeaponTests + mô phỏng cân bằng riêng cho hai vũ khí (trong 30 điểm so với kiếm ở mọi màn/độ khó, ≥ 80% Normal); bảng kiếm/búa giống hệt trước. Chi tiết: docs/BATTLE-DATA.md → Vũ khí |
 | **Quái liên kết** | | |
-| M09 | Q1 phun, Q2 lò xo | Mỗi con có hình vector, tinh anh, banner, test hành vi |
+| M09 ✅ | Q1 phun, Q2 lò xo | **Xong 2026-10-28:** `spitter` (khóa `spit`, quái hỗ trợ: vòng cam ở chỗ mèo, giọt bay vòng cung trúng mèo dưới sàn không choáng, vũng tăng lao ×1,5 xa/×1,4 nhanh, Quạt làm khô; tinh anh 2 giọt) và `springer` (khóa `spring`: bẫy vòng 60, nén 0,8 s rồi bật mất máu + choáng 0,8 s, nghỉ 4 s, 2 đòn thì bẹp 3 s, trượt lại gần khi mèo xa hơn 120 — người dùng duyệt "trượt chậm", số 120 thay 250 vì mèo đứng cách mục tiêu ~83 > vòng 60; tinh anh vòng ×1,35). Có trong battle.json gốc nhưng chưa trận nào dùng (`binSpit: false`), thử bằng docs/examples/battle-m09.json (người dùng chọn). BattleSpitSpringTests + UiChecks; bảng mô phỏng cân bằng giống hệt trước từng dòng. Chi tiết: docs/BATTLE-DATA.md → Slime phun và Slime lò xo |
 | M10 | Q3 nhạc trưởng, Q4 xích | Như trên; cắt dây bằng ném mèo và Kéo cắt đều được |
 | M11 | Q5 hợp thể, Q6 bom (cưỡi), Q7 tách đôi | Như trên; số quái trên sàn vẫn theo `maxAlive`/ngân sách; fps trận đông đạt |
 | M12 | Q8 cờ hiệu + 6 đội hình phối hợp trong Enemy Director | Director bốc đội hình theo threat/ngân sách; banner lần đầu |

@@ -148,7 +148,56 @@ public sealed class EnemyType
     public double Hover { get; init; }
     // What the thrown cat flying into it does (1.5, PetBattle.Held.cs; null: nothing, like every other enemy).
     public ThrowHitSpec? ThrowHit { get; init; }
+    // 1.5 M09 (PetBattle.Spit.cs, PetBattle.Spring.cs): it spits goo from afar (Q1), or lies as a spring
+    // trap (Q2). Null: neither.
+    public SpitSpec? Spit { get; init; }
+    public SpringSpec? Spring { get; init; }
+    // An infected bin may spit one of this kind (with an elite affix). False keeps a kind out of battles
+    // that never list it (the 1.5 enemies until their chapter brings them in).
+    public bool BinSpit { get; init; } = true;
     public string Name(string language) => PetText.Data(language, NameVi, NameEn);
+}
+
+// Q1 (1.5 M09): with the cat on the floor between MinRange and Range DIPs away it winds up Windup s
+// (an orange ring marks the cat's spot then), then a drop of goo flies Flight s and lands there: a
+// cat on the floor within Radius takes the enemy's damage (no stun). Where it lands a puddle stays
+// PuddleSeconds (0: none) with PuddleRadius: a dashing enemy going through it lunges DashDistance ×
+// further and DashSpeed × faster. Once per Cooldown s. An elite spits EliteDrops drops (the others
+// EliteSpread DIPs further on) and its puddles last ElitePuddle × longer.
+public sealed class SpitSpec
+{
+    public double Range { get; init; } = 380;
+    public double MinRange { get; init; } = 90;
+    public double Windup { get; init; } = 1;
+    public double Flight { get; init; } = 0.8;
+    public double Radius { get; init; } = 42;
+    public double Cooldown { get; init; } = 4;
+    public double PuddleSeconds { get; init; } = 6;
+    public double PuddleRadius { get; init; } = 48;
+    public double DashDistance { get; init; } = 1.5;
+    public double DashSpeed { get; init; } = 1.4;
+    public int EliteDrops { get; init; } = 2;
+    public double EliteSpread { get; init; } = 70;
+    public double ElitePuddle { get; init; } = 1.5;
+}
+
+// Q2 (1.5 M09): a trap lying on the floor with a ring of Radius. The cat on the floor stepping in sets
+// it off: it squeezes Compress s, then springs; the cat still in the ring (and on the floor) takes the
+// enemy's damage and is stunned Stun s. Then it rests Rest s. FlattenHits hits (weapon or bomb) flatten
+// it for FlatSeconds (no trap meanwhile). With the cat further than CreepRange (0: never) it slides
+// towards it. An elite: EliteRadius × the ring, EliteRest s of rest, EliteHits hits to flatten.
+public sealed class SpringSpec
+{
+    public double Radius { get; init; } = 60;
+    public double Compress { get; init; } = 0.8;
+    public double Stun { get; init; } = 0.8;
+    public double Rest { get; init; } = 4;
+    public int FlattenHits { get; init; } = 2;
+    public double FlatSeconds { get; init; } = 3;
+    public double CreepRange { get; init; } = 120;
+    public double EliteRadius { get; init; } = 1.35;
+    public double EliteRest { get; init; } = 2.5;
+    public int EliteHits { get; init; } = 3;
 }
 
 // The thrown cat flying through an enemy at MinSpeed DIPs/s or more: Damage (as is, never blocked)
@@ -639,7 +688,7 @@ public static class BattleData
     public static readonly string[] WeaponStyles = { "sword", "hammer", "yarn", "glove" };
     public static readonly string[] WeaponHitEffects = { "spark", "thud" };
     public static readonly string[] EnemyRenderers = { "slime" };
-    public static readonly string[] EnemyMarks = { "none", "speed", "cracks", "leaf", "cross" };
+    public static readonly string[] EnemyMarks = { "none", "speed", "cracks", "leaf", "cross", "spout", "spring" };
     public static readonly string[] GroupSides = { "a", "b" };
 
     // Throws on any mistake, so a half-valid file is never used.
@@ -879,7 +928,8 @@ public static class BattleData
                 if (elite.VirusEvery != 0) Within(elite.VirusEvery, 5, 120, at + ".elite.virusEvery");
                 if ((elite.HealCooldown < 1 || elite.HealBudget > 1) && e.HealAmount <= 0) throw new InvalidDataException(at + ".elite: healCooldown/healBudget are for an enemy that heals");
                 if (elite.WindupAdd <= 0 && elite.DashSpeed <= 1 && elite.SureBlocks == 0 && elite.FirstHeal <= 1 && elite.Hp <= 1 && elite.Damage <= 1
-                    && elite.AttackCooldown >= 1 && elite.HealCooldown >= 1 && elite.HealBudget <= 1 && !elite.PushImmune && elite.VirusEvery <= 0) throw new InvalidDataException(at + ".elite changes nothing");
+                    && elite.AttackCooldown >= 1 && elite.HealCooldown >= 1 && elite.HealBudget <= 1 && !elite.PushImmune && elite.VirusEvery <= 0
+                    && e.Spit == null && e.Spring == null) throw new InvalidDataException(at + ".elite changes nothing");
                 if (elite.DescVi == null || elite.DescEn == null || elite.DescVi.Length > 60 || elite.DescEn.Length > 60) throw new InvalidDataException(at + ".elite descriptions must be at most 60 characters");
             }
             if (e.Link is LinkSpec link)
@@ -908,6 +958,28 @@ public static class BattleData
                 Within(thrown.MinSpeed, 100, 5000, at + ".throwHit.minSpeed");
                 Within(thrown.Damage, 0, 1000, at + ".throwHit.damage"); Within(thrown.Stun, 0, 5, at + ".throwHit.stun");
                 if (thrown.Damage <= 0 && thrown.Stun <= 0) throw new InvalidDataException(at + ".throwHit changes nothing");
+            }
+            if (e.Spit is SpitSpec spit)
+            {
+                if (e.Boss || e.Blocker || e.Dash || e.Slam || e.Hover > 0 || e.Spring != null) throw new InvalidDataException(at + ".spit is not for a boss, blocker, dash, slam, hovering or spring enemy");
+                Within(spit.Range, 100, 900, at + ".spit.range"); Within(spit.MinRange, 0, 400, at + ".spit.minRange");
+                if (spit.MinRange >= spit.Range) throw new InvalidDataException(at + ".spit.minRange must be below its range");
+                Within(spit.Windup, 0.3, 5, at + ".spit.windup"); Within(spit.Flight, 0.2, 3, at + ".spit.flight");
+                Within(spit.Radius, 10, 200, at + ".spit.radius"); Within(spit.Cooldown, 0.5, 30, at + ".spit.cooldown");
+                Within(spit.PuddleSeconds, 0, 30, at + ".spit.puddleSeconds"); Within(spit.PuddleRadius, 10, 200, at + ".spit.puddleRadius");
+                Within(spit.DashDistance, 1, 3, at + ".spit.dashDistance"); Within(spit.DashSpeed, 1, 3, at + ".spit.dashSpeed");
+                if (spit.EliteDrops is < 1 or > 3) throw new InvalidDataException(at + ".spit.eliteDrops must be 1–3");
+                Within(spit.EliteSpread, 0, 300, at + ".spit.eliteSpread"); Within(spit.ElitePuddle, 1, 3, at + ".spit.elitePuddle");
+            }
+            if (e.Spring is SpringSpec spring)
+            {
+                if (e.Boss || e.Blocker || e.Dash || e.Slam || e.Hover > 0 || e.Support || e.Link != null || e.HealAmount > 0)
+                    throw new InvalidDataException(at + ".spring is not for a boss, blocker, dash, slam, hovering, support, healing or linked enemy");
+                Within(spring.Radius, 20, 200, at + ".spring.radius"); Within(spring.Compress, 0.3, 3, at + ".spring.compress");
+                Within(spring.Stun, 0, 3, at + ".spring.stun"); Within(spring.Rest, 0.5, 20, at + ".spring.rest");
+                if (spring.FlattenHits is < 1 or > 10 || spring.EliteHits is < 1 or > 10) throw new InvalidDataException(at + ".spring.flattenHits/eliteHits must be 1–10");
+                Within(spring.FlatSeconds, 0.5, 15, at + ".spring.flatSeconds"); Within(spring.CreepRange, 0, 1500, at + ".spring.creepRange");
+                Within(spring.EliteRadius, 1, 2, at + ".spring.eliteRadius"); Within(spring.EliteRest, 0.5, 20, at + ".spring.eliteRest");
             }
             if (e.Phases is { } phases)
             {

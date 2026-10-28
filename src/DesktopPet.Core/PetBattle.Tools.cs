@@ -114,6 +114,7 @@ public sealed partial class BattleSim
         {
             fanSteam = Math.Max(0, fanSteam - dt / Settings.FanSteamSeconds);
             Blow(from, dt);
+            if (puddles.Count > 0) DryPuddles(from);
             if (fanSteam <= 0)
             {
                 FanX = null;

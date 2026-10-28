@@ -909,5 +909,13 @@
   "long reach, sweeps every slime in reach, pulls back-liners in": "リーチが長い、届くスライムを全部なぎ払う、後ろのスライムを引き寄せる",
   "Glove": "グローブ",
   "very fast, 5-hit combo, the last hit launches the slime": "とても速い、5連コンボ、最後の一撃でスライムを打ち上げる",
-  "Rage: fills as the cat lands hits and takes them · once full, click it to make the cat rage for {0} s: bigger, every swing hits every slime in reach, stronger knock back, no stuns": "怒りゲージ：猫が攻撃を当てる・受けるとたまる · 満タンでクリックすると {0} 秒間怒る：大きくなり、一振りで届くスライム全部に当たり、ふっ飛ばしが強くなり、気絶しない"
+  "Rage: fills as the cat lands hits and takes them · once full, click it to make the cat rage for {0} s: bigger, every swing hits every slime in reach, stronger knock back, no stuns": "怒りゲージ：猫が攻撃を当てる・受けるとたまる · 満タンでクリックすると {0} 秒間怒る：大きくなり、一振りで届くスライム全部に当たり、ふっ飛ばしが強くなり、気絶しない",
+  "Spitter slime": "吐き出しスライム",
+  "Spring slime": "バネスライム",
+  "spits two drops, longer puddles": "2滴吐く、水たまりが長持ち",
+  "bigger ring, springs back sooner, 3 hits to flatten": "輪が大きい、すぐ跳ね直す、3回でつぶれる",
+  "A spitter! Lift the cat out of the orange ring": "吐き出しスライム！猫をオレンジの輪から持ち上げよう",
+  "Goo puddles make dashes longer! Dry them with the Fan": "ねばねばの水たまりで突進が伸びる！扇風機で乾かそう",
+  "The spring is squeezing! Lift the cat out of the ring": "バネが縮んでいる！猫を輪の外へ持ち上げよう",
+  "The spring is flattened! It lies still a while": "バネがつぶれた！しばらく動かない"
 }

@@ -135,14 +135,14 @@ public sealed partial class BattleSim
     }
 
     // A rhythm's strike: every ally within its range (and itself) that could hit the cat now winds up,
-    // attack turns or not (never a support, a boss, a rider or one in a panic).
+    // attack turns or not (never a support, a spring trap, a boss, a rider or one in a panic).
     private void StrikeTogether(Slime holder, LinkSpec link, double catX, bool catHeld)
     {
         int strikers = 0;
         if (!catHeld && Grace <= 0)
             foreach (var s in slimes)
             {
-                if (!s.Targetable || s.State != SlimeState.Moving || s.IsBoss || s.Type.Support || s.Riding || s.PanicRemaining > 0 || s.Shielded) continue;
+                if (!s.Targetable || s.State != SlimeState.Moving || s.IsBoss || s.Type.Support || s.Type.Spring != null || s.Riding || s.PanicRemaining > 0 || s.Shielded) continue;
                 if (Math.Abs(s.X - holder.X) > link.Range) continue;
                 double dx = catX - s.X, reach = s.Type.Dash ? s.Type.DashRange : s.Range;
                 if (Math.Abs(dx) > reach || WallBetween(s.X, catX) != null) continue;

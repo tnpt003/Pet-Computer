@@ -398,6 +398,8 @@ public sealed partial class BattleSim
         CatCooldown = Math.Max(0, CatCooldown - dt);
         StepBuild(dt, catHeld);
         StepBombs(dt);
+        StepSpit(dt);
+        if (Over) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
         StepSlimes(dt, floorX, catHeld);
         if (Over) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
         StepTools(dt, catHeld);
@@ -736,6 +738,7 @@ public sealed partial class BattleSim
             AppsEnemyDefeated(slime);
             return HitResult.Landed;
         }
+        SpringStruck(slime, source);
         var type = slime.Type;
         double fraction = slime.Hp / slime.MaxHp;
         if (type.SummonAt > 0 && !slime.Summoned && fraction <= type.SummonAt)
@@ -826,6 +829,7 @@ public sealed partial class BattleSim
         TargetId = null;
         BlockedById = 0;
         bombs.Clear();
+        ClearSpit();
         ClearTools();
         ClearApps();
         incoming = null;
@@ -846,6 +850,7 @@ public sealed partial class BattleSim
             s.MendingId = 0;
             s.RunAwayLeft = 0;
             s.PanicRemaining = 0;
+            if (s.Spring == SpringState.Squeezing) s.Spring = SpringState.Ready;
         }
         events.Add(new(phase == BattlePhase.Won ? BattleEventKind.Won : BattleEventKind.Lost, 0));
     }
@@ -961,6 +966,7 @@ public sealed partial class BattleSim
         foreach (var e in effects) e.X = left + (e.X - Left) / oldWidth * newWidth;
         foreach (var b in bombs) b.X = left + (b.X - Left) / oldWidth * newWidth;
         MapTools(left, oldWidth, newWidth);
+        MapSpit(left, oldWidth, newWidth);
         foreach (var p in popups) p.X = left + (p.X - Left) / oldWidth * newWidth;
         foreach (var l in launches) { l.FloorX = left + (l.FloorX - Left) / oldWidth * newWidth; for (int i = 0; i < l.TargetX.Length; i++) l.TargetX[i] = left + (l.TargetX[i] - Left) / oldWidth * newWidth; }
         Left = left; Right = right;
@@ -974,7 +980,7 @@ public sealed partial class BattleSim
         {
             BattleEffectKind.Poof => 0.6 * Math.Max(1, value), BattleEffectKind.Number => 0.9, BattleEffectKind.Combo => 0.7, BattleEffectKind.Mend => 0.8,
             BattleEffectKind.Explosion or BattleEffectKind.Slam => 0.5, BattleEffectKind.Warded => 0.6,
-            BattleEffectKind.Bell => 0.9, BattleEffectKind.EndTask => 1.0, BattleEffectKind.Rewind => 0.8, _ => 0.35
+            BattleEffectKind.Bell => 0.9, BattleEffectKind.EndTask => 1.0, BattleEffectKind.Rewind => 0.8, BattleEffectKind.Splat => 0.5, _ => 0.35
         };
         effects.Add(new BattleEffect { Kind = kind, X = x, Height = height, Life = life, Value = value });
     }

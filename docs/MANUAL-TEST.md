@@ -622,3 +622,14 @@ Bảng chuẩn bị có 4 vũ khí: Kiếm, Búa, Cuộn len, Găng đấm (icon
 - [ ] Cuộn len: mèo đánh từ xa hơn kiếm; một nhát làm mấy slime đứng gần nhau phía trước cùng hiện số; slime thảo dược đứng sau bị kéo về sát mèo; không có sao choáng trên slime.
 - [ ] Găng đấm: mèo đấm rất nhanh, số ×1…×4 trên HUD, ×4 màu vàng; nhát thứ 5 hất slime bay lên (có bóng dưới sàn), slime rơi xuống thì choáng; Vua/slime đá không bị hất. Đang hất mà Pause: slime đứng yên giữa không trung.
 - [ ] Kỷ lục trận tự do/Phiêu lưu tách theo vũ khí (dòng "this gear"/"vũ khí này"); bảng kết quả ghi đúng tên vũ khí.
+
+## Slime phun và Slime lò xo 1.5 M09 (2026-10-28) — file tùy chỉnh
+Chưa trận gốc nào có hai quái này (chương 2 mới có). Muốn thử: cất file `%LOCALAPPDATA%\DesktopPet\battle.json` của bạn (nếu có), chép `docs/examples/battle-m09.json` vào chỗ đó, mở Trận tự do; xong thì xóa file (hoặc trả file cũ). Ảnh đã xem qua render UiChecks nền sáng/tối, chưa xem trong trận thật, chưa thử DPI thật.
+- [ ] Không có file: Trận tự do, Phiêu lưu chương 1, Vô tận, Viễn chinh như cũ, không thấy slime tím có vòi hay tấm thảm vàng (kể cả do Thùng Rác nhả).
+- [ ] Slime phun (tím nhạt, vòi trên đầu): đứng xa sau đồng đội; khi gồng má phồng, dấu "!" và vòng cam đứt nét hiện ở chỗ mèo đứng; giọt tím bay vòng cung rơi đúng vòng. Mèo đứng yên trong vòng: mất máu, không choáng. Nhấc mèo ra khỏi vòng trước khi giọt rơi: không mất máu.
+- [ ] Chỗ giọt rơi còn vũng viền tím có mũi tên ~6 s. Slime nhanh lao qua vũng thì lao xa và nhanh hơn rõ (banner "Vũng nhầy…" lần đầu). Mang Quạt (bảng chuẩn bị) rồi thổi qua vũng: vũng biến mất.
+- [ ] Đẩy slime phun lúc nó đang gồng: không có giọt nào bay ra. Bật Khiên bong bóng: giọt rơi trúng không mất máu. Cuộn len đánh trúng slime phun ở xa thì kéo nó lại gần.
+- [ ] Slime lò xo (tấm thảm vàng, cuộn lò xo + đệm đỏ trên lưng, vòng vàng dưới sàn): mèo ở xa thì nó trượt chậm lại gần rồi nằm im. Mèo bước vào vòng: vòng đỏ đầy dần, tiếng kẽo kẹt, ~0,8 s sau bật (thân giãn cao): mèo còn trong vòng mất máu và choáng ngắn; sau đó ~4 s không bật lại.
+- [ ] Nhấc mèo ra khỏi vòng khi vòng đang đỏ: không trúng. Cầm mèo lơ lửng trên vòng: không kích. Đẩy lò xo khi đang nén: không bật. Mèo đánh trúng 2 đòn: lò xo bẹp (vòng xám, banner "Lò xo bẹp rồi!"), mèo đứng trong vòng ~3 s không sao.
+- [ ] Tinh anh (viền vàng, sao): slime phun phun 2 giọt (2 vòng cam), lò xo có vòng to hơn. Pause/menu khi giọt đang bay hoặc lò xo đang nén: đứng yên; tiếp tục thì chạy tiếp.
+- [ ] Click chỗ trống trên vũng/vòng vẫn xuyên xuống desktop; DPI 100/150/200% vòng và vũng đúng chỗ; âm thanh ngắn, không chồng nhau; banner vi/en/ja đúng chữ.

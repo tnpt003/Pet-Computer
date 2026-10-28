@@ -57,7 +57,8 @@ Mỗi mục là một **mẫu quái** dùng chung cho mọi con cùng loại. M�
 | `scale` | 0.5–2.3 | Kích thước **vẽ** so với slime thường |
 | `hitScale` | 0.3–2.3, mặc định = `scale` | Kích thước **trúng đòn** (tầm kiếm, vùng nổ bom) |
 | `color`, `angryColor` | `#RRGGBB` | Màu thường / màu khi nổi giận |
-| `marks` | `none`, `speed`, `cracks` | Họa tiết: vệt gió / vết nứt |
+| `marks` | `none`, `speed`, `cracks`, `leaf`, `cross`, `spout`, `spring` | Họa tiết: vệt gió / vết nứt / lá thảo dược / dấu "+" cũ / vòi phun (1.5 M09) / lò xo (1.5 M09) |
+| `binSpit` | true/false (mặc định true) | (1.5 M09) Thùng Rác nhiễm virus được nhả loại này (khi `spitElite`). Quái 1.5 đặt `false` để không lọt vào trận chưa dùng chúng |
 | `pushFactor`, `stunFactor` | 0–3 | Hệ số bị đẩy lùi / thời gian choáng (1 = như slime thường) |
 | `boss` | true/false | Có vương miện, thanh HP riêng, banner BOSS |
 | `slam` | true/false | Đập đất trúng cả vùng, có cảnh báo đỏ trên sàn |
@@ -65,7 +66,7 @@ Mỗi mục là một **mẫu quái** dùng chung cho mọi con cùng loại. M�
 | `summonAt`, `summonCount`, `summonType` | 0–1; 1–6; id | Dưới tỷ lệ HP này gọi quái phụ (một lần). Quái được gọi không được tự gọi thêm. |
 | `enrageAt`, `enragedSpeed`, `enragedWindup` | 0–1; 0.1–400; 0.1–10 | Dưới tỷ lệ HP này thì nổi giận: nhanh hơn, gồng ngắn hơn |
 
-JSON chỉ chọn được những khả năng code đã hỗ trợ. Khóa lạ như `"flying": true` sẽ bị từ chối. Muốn có khả năng mới (bay, bắn đạn…) phải viết code controller/renderer trước.
+JSON chỉ chọn được những khả năng code đã hỗ trợ (từ 1.5 có thêm `link`, `hover`, `throwHit`, `spit`, `spring`, xem các mục cuối). Khóa lạ như `"flying": true` sẽ bị từ chối. Muốn có khả năng mới (bay, bắn đạn…) phải viết code controller/renderer trước.
 
 ## Vũ khí (`weapons`): mẫu dùng chung
 
@@ -540,6 +541,54 @@ Tư thế trận, **không phải** cảm xúc Angry (cảm xúc vẫn bị khó
 - **Thời gian:** chạy theo thời gian trận: Pause, menu, chọn thẻ, túi đồ, hướng dẫn đứng hình đóng băng; mèo đang bị cầm thì vẫn trôi (như Cổ vũ). Hết giờ, thua/thắng hoặc kết thúc trận thì mèo về cỡ cũ.
 - **Hình:** mèo to dần lên ×`rageScale` trong 0,25 s đầu, nhỏ lại trong 0,25 s cuối, quanh chân; lông ánh đỏ (bảng màu đỏ của chính bộ lông đang chọn), quầng đỏ nhấp nháy sau lưng. Đang bị cầm thì chỉ to thêm 30% phần đó (quanh gáy) để kiếm khi lắc không ra khỏi cửa sổ. **Cửa sổ mèo, vùng trúng đòn trên sàn (`CatHalfWidth`) và cách kéo không đổi**; vì cửa sổ mèo nhận click theo điểm ảnh có vẽ, phần hình to ra cũng nhấc mèo được. Thanh nộ khi nổi giận là thời gian còn lại, màu đỏ tươi.
 - Âm thanh dùng cue có sẵn (`RageFull` lấp lánh, `Raged` phấn khích); banner "MÈO NỔI GIẬN!". Không có bước hướng dẫn riêng (rê chuột lên thanh xem mô tả). Python không tham gia.
+
+## Slime phun và Slime lò xo (`spit`, `spring`) (bản 1.5, mốc M09, 2026-10-28)
+
+Q1 và Q2 của docs/UPDATE-1.5.md. Code: `src/DesktopPet.Core/PetBattle.Spit.cs`, `src/DesktopPet.Core/PetBattle.Spring.cs` (luật), `src/DesktopPet/PetBattleView.Traps.cs` (vẽ), test `tests/DesktopPet.Tests/BattleSpitSpringTests.cs` và ảnh UiChecks (`TrapVisualChecks`, `enemy-spit-spring.png`). **Hai quái có trong battle.json gốc (`spitter`, `springer`) nhưng chưa trận nào dùng**: chương 1, trận tự do, Viễn chinh, Vô tận không đổi (bảng mô phỏng cân bằng giống hệt bản trước từng dòng), Thùng Rác không nhả chúng (`binSpit: false`). Chương 2 (M21) và Vô tận (M24) sẽ đưa vào. Muốn thử ngay: chép `docs/examples/battle-m09.json` thành `%LOCALAPPDATA%\DesktopPet\battle.json` rồi mở Trận tự do (dữ liệu tùy chỉnh: không kỷ lục, không thưởng).
+
+```json
+{ "id": "spitter", "support": true, "spit": { "range": 380, "minRange": 90, "windup": 1.0, "flight": 0.8, "radius": 42, "cooldown": 4, "puddleSeconds": 6, "puddleRadius": 48, "dashDistance": 1.5, "dashSpeed": 1.4 } }
+{ "id": "springer", "spring": { "radius": 60, "compress": 0.8, "stun": 0.8, "rest": 4, "flattenHits": 2, "flatSeconds": 3, "creepRange": 120 } }
+```
+
+**Slime phun (`spit`)** — quái hỗ trợ (`support`: đứng sau đồng đội, Cuộn len kéo được), 40 HP, đánh gần yếu.
+
+| Khóa | Giới hạn | Gốc | Ý nghĩa |
+| --- | --- | --- | --- |
+| `range`, `minRange` | 100–900, 0–400 DIPs (`minRange` < `range`) | 380, 90 | Mèo cách trong khoảng này thì phun |
+| `windup` | 0,3–5 s | 1 | Gồng trước khi phun; vòng cam hiện ngay ở **chỗ mèo đứng lúc bắt đầu gồng** |
+| `flight` | 0,2–3 s | 0,8 | Giọt bay vòng cung bao lâu |
+| `radius` | 10–200 DIPs | 42 | Giọt rơi trúng mèo nếu tâm mèo trong khoảng này |
+| `cooldown` | 0,5–30 s | 4 | Hồi giữa hai lần phun (con mới ra sân chờ một nửa) |
+| `puddleSeconds`, `puddleRadius` | 0–30 s, 10–200 DIPs | 6, 48 | Vũng nằm bao lâu (0: không có vũng), rộng bao nhiêu |
+| `dashDistance`, `dashSpeed` | 1–3 | 1,5, 1,4 | Quái lao đi qua vũng: quãng lao ×, tốc độ lao × (mỗi cú lao một lần) |
+| `eliteDrops`, `eliteSpread`, `elitePuddle` | 1–3, 0–300 DIPs, 1–3 | 2, 70, 1,5 | Tinh anh: phun mấy giọt (giọt sau xa hơn về phía bên kia mèo), vũng lâu × |
+
+- Giọt rơi trúng mèo **đang ở dưới sàn** (không bị nhấc, không trong `landingGrace`): mất máu bằng `damage` của slime phun (nhân độ khó/threat như đòn thường; Gai phản lại một phần nếu slime phun còn sống), **không choáng**. Khiên bong bóng và Mai rùa chặn. Mèo đã đi khỏi vòng hoặc đang được nhấc: trượt, vũng vẫn thành.
+- Không bắt đầu phun khi người dùng đang cầm mèo, trong `landingGrace`, khi bị Đèn laser dụ hay đang hoảng. Đẩy hoặc choáng trong lúc gồng thì hủy cú phun. Gồng phun không chiếm lượt ra đòn (`maxAttackers`) của quái khác.
+- Vũng: tối đa 6 vũng cùng lúc (vũng thứ 7 làm khô vũng cũ nhất); giọt rơi trùng vũng cũ thì làm mới vũng đó. Quạt thổi tới (trong `fanRange` + bán kính vũng) thì vũng khô ngay. Vũng **không** phải loại `link`, không tính vào giới hạn 2 loại liên kết.
+- Tinh anh (`elite.hp` 1,2): phun 2 giọt, vũng lâu ×1,5.
+
+**Slime lò xo (`spring`)** — bẫy nằm trên sàn, 70 HP, thân dẹt (`hitScale` 1,3 vì vẽ rộng hơn 20%). Không bao giờ đánh gần hay gồng đòn (kể cả nhịp trống `rhythm`).
+
+| Khóa | Giới hạn | Gốc | Ý nghĩa |
+| --- | --- | --- | --- |
+| `radius` | 20–200 DIPs | 60 | Vòng vàng trên sàn, luôn hiện |
+| `compress` | 0,3–3 s | 0,8 | Mèo dưới sàn bước vào vòng thì nén chừng này (vòng đỏ, kẽo kẹt) rồi bật |
+| `stun` | 0–3 s | 0,8 | Mèo còn trong vòng lúc bật: mất `damage` và choáng chừng này (có Kiên cường, miễn choáng sau choáng, nổi giận, Khiên, Mai rùa như đòn khác) |
+| `rest` | 0,5–20 s | 4 | Nghỉ sau khi bật (dù trúng hay không) |
+| `flattenHits`, `flatSeconds` | 1–10, 0,5–15 s | 2, 3 | Trúng chừng này đòn vũ khí/bom (thường, combo, lan, Dư ảnh, bom; không tính độc, kỹ năng, app) thì bẹp, nằm im không bật |
+| `creepRange` | 0–1500 DIPs (0: không trượt) | 120 | Mèo xa hơn chừng này thì trượt chậm (`speed`) lại gần, tới đó thì nằm im; đang nén hay bẹp thì không trượt |
+| `eliteRadius`, `eliteRest`, `eliteHits` | 1–2, 0,5–20 s, 1–10 | 1,35, 2,5, 3 | Tinh anh: vòng to ×, nghỉ ngắn hơn, cần nhiều đòn hơn mới bẹp |
+
+- Mèo đang được cầm không bao giờ kích bẫy và không bị bật trúng; nhấc mèo ra trong lúc nén là né được (thả lại vào vòng thì có `landingGrace` như thường). Đẩy/choáng/Kẹp gắp trong lúc nén: lò xo xả hơi, chuyển sang nghỉ. Physics kéo/ném của mèo không đổi.
+- Không chen chỗ với quái khác (quái khác đứng lên được "tấm thảm"), nên mạnh khi đi cùng đội hình dồn mèo vào vòng.
+- `creepRange` gốc là 120 (kế hoạch nói ~250): mèo tự đánh đứng cách mục tiêu ~83 DIPs, lớn hơn vòng 60, nên nằm im ở 250 thì bẫy gần như không bao giờ bật; 120 đủ gần để mèo bước vào vòng khi đánh các con khác.
+
+- Pause, menu, chọn thẻ, túi đồ, hướng dẫn đứng hình đóng băng giọt đang bay, vũng, đồng hồ nén/nghỉ/bẹp. Kết thúc trận xóa giọt và vũng. Đổi vùng trận (DPI, màn hình) giữ đúng vị trí tương đối.
+- Hình: slime phun màu tím nhạt có vòi trên đầu, gồng thì má phồng và miệng vòi cam; vòng cam đứt nét trên sàn đầy dần; giọt bay vòng cung với bóng tròn lớn dần ở chỗ rơi; vũng là viền tím bóng có mũi tên chạy hai chiều, mờ dần khi sắp khô. Lò xo là tấm thảm vàng có cuộn lò xo và đệm đỏ trên lưng; vòng vàng đứt nét (sẵn sàng), đỏ đầy dần (đang nén), xám chấm (nghỉ/bẹp); bật thì thân giãn cao lên. Chỉ vẽ nét viền trên sàn, nên click chỗ trống vẫn xuyên xuống desktop.
+- Banner lần đầu mỗi trận: "Slime phun! Nhấc mèo khỏi vòng cam", "Vũng nhầy làm slime lao xa hơn! Dùng Quạt làm khô", "Lò xo đang nén! Nhấc mèo ra khỏi vòng", "Lò xo bẹp rồi! Nó nằm im một lúc"; tinh anh có banner tinh anh sẵn có. Âm thanh dùng cue có sẵn (`SpitAimed`/`GooLanded` bóp, `PuddleBoost` vút, `PuddleDried` bụp, `SpringSqueezed` keng, `SpringBounced` cộc, `SpringFlattened` bóp). Sự kiện mới: `SpitAimed`, `GooLanded`, `PuddleBoost`, `PuddleDried`, `SpringSqueezed`, `SpringBounced`, `SpringFlattened`; hiệu ứng `Splat`.
+- Bước hướng dẫn đứng hình (chương 2) và trang Sổ tay quái làm ở M21/M27. Python không tham gia.
 
 ## Viễn chinh (`expedition`) (2026-10-21)
 

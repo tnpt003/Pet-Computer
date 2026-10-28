@@ -6,7 +6,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 Quy ước file này: chỉ giữ trạng thái hiện tại, các đợt đang làm, việc dở và test tay. Sau mỗi lần release, chuyển các mục đợt đã xong sang docs/archive/ (giữ file dưới ~20 KB).
 
 ## Trạng thái hiện tại
-- Bản phát hành mới nhất: **1.4.4** (2026-10-26, tag v1.4.4, commit e8f97d4). GitHub Actions success, Release "Desktop Pet 1.4.4" là Latest, `releases/latest/download/releases.win.json` trả về 1.4.4. Bản trên máy: artifacts\win-x64 (1.4.4+e8f97d4), ZIP artifacts\DesktopPet-1.4.4-e8f97d4-win-x64.zip.
+- Bản phát hành mới nhất: **1.4.4** (2026-10-26, tag v1.4.4, commit e8f97d4). GitHub Actions success, Release "Desktop Pet 1.4.4" là Latest, `releases/latest/download/releases.win.json` trả về 1.4.4. Bản trên máy: artifacts\win-x64 (1.4.4+612d321, mốc 1.5 M02; check-publish 3/3), ZIP artifacts\DesktopPet-1.4.4-612d321-win-x64.zip.
 - Test thật lần cuối (2026-10-28, mốc 1.5 M02): scripts/test.ps1 -Ui exit 0: Python đạt, C# 1608, WPF 1035/1035. Release 1.4.4 (2026-10-26): check-publish 3/3; pack.ps1 trên máy đạt (delta 1.4.3 → 1.4.4).
 - Nội dung chính đã có: mèo vector (cảm xúc, ngủ/away nap, kéo/ném/Dizzy, đi trên cửa sổ, đồ chơi, kệ kỷ vật có physics, AI Python có fallback local), Battle Mode (Phiêu lưu chương 1 + Hướng dẫn phiêu lưu, Viễn chinh, Vô tận, trận tự do, app trong trận + app độc, thẻ/di vật/cộng hưởng), giao diện Cozy Desktop Adventure (tranh minh họa, icon), vi/en/ja, bộ cài Velopack tự cập nhật.
 - Ngoại lệ đã duyệt dạng đầy đủ: docs/APPROVED-EXCEPTIONS.md (AGENTS.md chỉ còn tóm tắt).

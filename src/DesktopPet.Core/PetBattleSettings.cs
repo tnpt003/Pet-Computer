@@ -91,8 +91,9 @@ public sealed class BattleSettings
     // group's place in an upgrade offer.
     public int MaxElites { get; init; } = 1;
     public double RareChance { get; init; } = 0.15;
-    // The chance a utility card (no group) takes one place of an upgrade offer (2026-10-24).
-    public double UtilityChance { get; init; } = 0.25;
+    // The chance a utility card (no group) or a Trickery card takes one place of an upgrade offer
+    // (2026-10-24; 1.5 M25: 0.25 → 0.35 with the Trickery group).
+    public double UtilityChance { get; init; } = 0.35;
     public double OutroSeconds { get; init; } = 3;
     public double HurtFlashSeconds { get; init; } = 0.35;
     public int MaxEffects { get; init; } = 32;
@@ -280,11 +281,21 @@ public sealed class BattleSettings
         new UpgradeSpec { Id = "tailwind", Group = "speed", Rare = true, NameVi = "Lướt gió", NameEn = "Tailwind", DescVi = "Vừa được thả xuống: 2 giây đánh nhanh +30%", DescEn = "Put down: 2 s of +30% attack speed", Effect = "landingRush", Amount = 0.3, MaxStacks = 1 },
         new UpgradeSpec { Id = "regrowth", Group = "defense", NameVi = "Hồi phục", NameEn = "Regrowth", DescVi = "Hồi 1 HP mỗi 2 giây khi đang đánh", DescEn = "1 HP back every 2 s in a fight", Effect = "regen", Amount = 0.5, MaxStacks = 2 },
         new UpgradeSpec { Id = "steady", Group = "defense", NameVi = "Kiên cường", NameEn = "Steady", DescVi = "−25% thời gian bị choáng", DescEn = "−25% time stunned", Effect = "stunCut", Amount = 0.25, MaxStacks = 2 },
-        new UpgradeSpec { Id = "quick_hands", NameVi = "Tay nhanh", NameEn = "Quick hands", DescVi = "−10% thời gian hồi kỹ năng", DescEn = "−10% skill cooldowns", Effect = "skillCooldown", Amount = 0.1, MaxStacks = 3 },
-        new UpgradeSpec { Id = "power_bank", NameVi = "Sạc pin", NameEn = "Power bank", DescVi = "App trên màn hình sạc nhanh hơn 8%", DescEn = "Desktop apps charge 8% faster", Effect = "appCharge", Amount = 0.08, MaxStacks = 3 },
-        new UpgradeSpec { Id = "energy_drain", NameVi = "Hút năng lượng", NameEn = "Energy drain", DescVi = "Mỗi quái bị hạ: app sạc thêm 1%", DescEn = "Each defeated enemy: apps charge 1% more", Effect = "killCharge", Amount = 0.01, MaxStacks = 3 },
-        new UpgradeSpec { Id = "big_bomb", Skill = "bomb", NameVi = "Bom to", NameEn = "Big bomb", DescVi = "Bom len to hơn và mạnh hơn 20%", DescEn = "Yarn bomb 20% bigger and stronger", Effect = "bomb", Amount = 0.2, MaxStacks = 2 },
-        new UpgradeSpec { Id = "thick_bubble", Skill = "shield", NameVi = "Khiên dày", NameEn = "Thick bubble", DescVi = "Khiên bong bóng kéo dài thêm 1 giây", DescEn = "Bubble shield lasts 1 s longer", Effect = "shieldTime", Amount = 1, MaxStacks = 2 },
+        new UpgradeSpec { Id = "quick_hands", Group = BuildGroups.Trick, NameVi = "Tay nhanh", NameEn = "Quick hands", DescVi = "−10% thời gian hồi kỹ năng", DescEn = "−10% skill cooldowns", Effect = "skillCooldown", Amount = 0.1, MaxStacks = 3 },
+        new UpgradeSpec { Id = "power_bank", Group = BuildGroups.Trick, NameVi = "Sạc pin", NameEn = "Power bank", DescVi = "App trên màn hình sạc nhanh hơn 8%", DescEn = "Desktop apps charge 8% faster", Effect = "appCharge", Amount = 0.08, MaxStacks = 3 },
+        new UpgradeSpec { Id = "energy_drain", Group = BuildGroups.Trick, NameVi = "Hút năng lượng", NameEn = "Energy drain", DescVi = "Mỗi quái bị hạ: app sạc thêm 1%", DescEn = "Each defeated enemy: apps charge 1% more", Effect = "killCharge", Amount = 0.01, MaxStacks = 3 },
+        new UpgradeSpec { Id = "big_bomb", Group = BuildGroups.Trick, Skill = "bomb", NameVi = "Bom to", NameEn = "Big bomb", DescVi = "Bom len to hơn và mạnh hơn 20%", DescEn = "Yarn bomb 20% bigger and stronger", Effect = "bomb", Amount = 0.2, MaxStacks = 2 },
+        new UpgradeSpec { Id = "thick_bubble", Group = BuildGroups.Trick, Skill = "shield", NameVi = "Khiên dày", NameEn = "Thick bubble", DescVi = "Khiên bong bóng kéo dài thêm 1 giây", DescEn = "Bubble shield lasts 1 s longer", Effect = "shieldTime", Amount = 1, MaxStacks = 2 },
+        // 1.5 M25: Trickery cards for the new skills and the drops, and its two rare cards.
+        new UpgradeSpec { Id = "long_laser", Group = BuildGroups.Trick, Skill = "laser", NameVi = "Laser bền", NameEn = "Lasting laser", DescVi = "Chấm laser sáng thêm 1,5 giây", DescEn = "The laser dot lasts 1.5 s longer", Effect = "laserTime", Amount = 1.5, MaxStacks = 2 },
+        new UpgradeSpec { Id = "turbo_fan", Group = BuildGroups.Trick, Skill = "fan", NameVi = "Quạt turbo", NameEn = "Turbo fan", DescVi = "Quạt thổi xa và mạnh hơn 25%", DescEn = "The fan reaches and blows 25% further", Effect = "fanPower", Amount = 0.25, MaxStacks = 2 },
+        new UpgradeSpec { Id = "firm_grip", Group = BuildGroups.Trick, Skill = "grabber", NameVi = "Kẹp chắc", NameEn = "Firm grip", DescVi = "Cú ném của Kẹp gắp: +50% sát thương và choáng", DescEn = "Grabber throws: +50% damage and daze", Effect = "grabberThrow", Amount = 0.5, MaxStacks = 2 },
+        new UpgradeSpec { Id = "sharp_scissors", Group = BuildGroups.Trick, Skill = "scissors", NameVi = "Kéo sắc", NameEn = "Sharp scissors", DescVi = "Kéo cắt mạnh hơn 40%", DescEn = "Scissors cut 40% harder", Effect = "scissorsDamage", Amount = 0.4, MaxStacks = 2 },
+        new UpgradeSpec { Id = "big_tank", Group = BuildGroups.Trick, Skill = "spray", NameVi = "Bình to", NameEn = "Big tank", DescVi = "Bình xịt thêm 1,5 giây nước", DescEn = "The spray holds 1.5 s more water", Effect = "sprayTime", Amount = 1.5, MaxStacks = 2 },
+        new UpgradeSpec { Id = "keen_nose", Group = BuildGroups.Trick, NameVi = "Mũi thính", NameEn = "Keen nose", DescVi = "Quái rơi đồ nhiều hơn 30%", DescEn = "Enemies leave 30% more drops", Effect = "dropChance", Amount = 0.3, MaxStacks = 2 },
+        new UpgradeSpec { Id = "fat_fish", Group = BuildGroups.Trick, NameVi = "Cá béo", NameEn = "Fat fish", DescVi = "Cá rơi ra hồi thêm 10 HP", DescEn = "Dropped fish heal 10 HP more", Effect = "fishHeal", Amount = 10, MaxStacks = 2 },
+        new UpgradeSpec { Id = "ground_quake", Group = BuildGroups.Trick, Rare = true, NameVi = "Cú đáp địa chấn", NameEn = "Ground quake", DescVi = "Thả mèo xuống: sóng 12 sát thương quái trên sàn (hồi 6 giây)", DescEn = "Put down: a 12-damage wave on floor enemies (6 s cooldown)", Effect = "landingQuake", Amount = 12, MaxStacks = 1 },
+        new UpgradeSpec { Id = "sleight", Group = BuildGroups.Trick, Rare = true, NameVi = "Ảo thuật", NameEn = "Sleight of paw", DescVi = "25% lần dùng kỹ năng chỉ hồi một nửa", DescEn = "25% of skill uses cool down only half", Effect = "skillRefund", Amount = 0.25, MaxStacks = 1 },
     };
 
     // From battle.json "synergies": what 3 points of a group switch on (null: the built-in three).
@@ -310,6 +321,13 @@ public sealed class BattleSettings
             DescVi = "Sau đòn combo: 3 giây chạy và đánh nhanh +20%", DescEn = "After a combo: 3 s of +20% speed and attacks" },
         new SynergySpec { Id = "afterimage_plus", Group = "speed", At = 9, Effect = "echo", Amount = 0.75, Every = 3, EndlessOnly = true, NameVi = "Dư ảnh+", NameEn = "Afterimage+",
             DescVi = "Cứ 3 đòn trúng, thêm một đòn 75%", DescEn = "Every 3rd hit strikes again for 75%" },
+        // 1.5 M25: Trickery (3 everywhere, 6 and 9 in Infinity).
+        new SynergySpec { Id = "teamwork", Group = BuildGroups.Trick, At = 3, Effect = "skillRush", Amount = 0.2, NameVi = "Phối hợp", NameEn = "Teamwork",
+            DescVi = "Dùng kỹ năng xong: 3 giây mèo +20% sát thương", DescEn = "After a skill: 3 s of +20% damage" },
+        new SynergySpec { Id = "quick_reload", Group = BuildGroups.Trick, At = 6, Effect = "killRecharge", Amount = 0.5, EndlessOnly = true, NameVi = "Nạp nhanh", NameEn = "Quick reload",
+            DescVi = "Mỗi quái bị hạ: kỹ năng đang hồi xong sớm thêm 0,5 giây", DescEn = "Each defeat: every skill cooling down is 0.5 s nearer" },
+        new SynergySpec { Id = "skill_feast", Group = BuildGroups.Trick, At = 9, Effect = "skillFeast", Amount = 40, EndlessOnly = true, NameVi = "Đại tiệc", NameEn = "Skill feast",
+            DescVi = "Mỗi 40 giây: kỹ năng hồi lâu nhất sẵn sàng ngay", DescEn = "Every 40 s the skill with most cooldown left is ready" },
     };
 
     // From battle.json "campaign": the Adventure chapters (null: no Adventure in this data).
@@ -759,7 +777,10 @@ public enum BattleEventKind
     FishTaken, FishDropped, FishReturned, FishLost,
     // 1.5 M24 (PetBattle.Mutations.cs): an Infinity stretch began (Value: its index in EndlessSpec.Eras); a
     // mutation was picked, was seen through and paid (Value: its index in MutationRules.List).
-    EraStarted, MutationStarted, MutationEnded
+    EraStarted, MutationStarted, MutationEnded,
+    // 1.5 M25 (PetBattle.Trickery.cs): Ground quake shook the floor where the cat landed (Value: enemies hit);
+    // Sleight of paw halved a skill's cooldown, Skill feast made one ready (Value: the BattleSkill).
+    Quaked, SkillRefunded, SkillFeast
 }
 // 1.5 M14: a flyer's round (PetBattle.Fly.cs) and a burrower's (PetBattle.Burrow.cs).
 public enum FlyPhase { Aloft, Falling, Downed, Rising }

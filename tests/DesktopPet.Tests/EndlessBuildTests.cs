@@ -121,8 +121,8 @@ internal static class EndlessBuildTests
         check(!appCards, "Power bank and Energy drain are never offered with the apps turned off");
         bool utilityOffered = false;
         for (int seed = 1; seed <= 30 && !utilityOffered; seed++)
-            utilityOffered |= new BattleSim(data, 0, 1600, seed: seed, stage: data.Campaign.Chapters[0].Stages[1]).OfferCards()?.Any(u => u.Group == null && u.Effect != "heal") == true;
-        check(utilityOffered, "A utility card turns up in some offers");
+            utilityOffered |= new BattleSim(data, 0, 1600, seed: seed, stage: data.Campaign.Chapters[0].Stages[1]).OfferCards()?.Any(u => u.Group == BuildGroups.Trick) == true;
+        check(utilityOffered, "A Trickery card (the old utility cards) turns up in some offers");
 
         // A boss wave cleared with BossBonusPick: two offers in a row.
         var king = new EnemyType { Id = "king", MaxHp = 1, Speed = 30, Damage = 0, Range = 110, Windup = 1.2, AttackCooldown = 2.6, Boss = true, Slam = true, Scale = 2 };
@@ -185,7 +185,7 @@ internal static class EndlessBuildTests
         check(fort.AutoShields == 1 && shield > 2.9, "Fortress: below 30 % HP the Shield goes up by itself, once per 30 s");
 
         // The shipped data: Infinity's cards and tiers.
-        check(data.UpgradeList.Count(u => u.EndlessMaxStacks != null) == 6 && data.SynergyList.Count(y => y.EndlessOnly) == 6 && data.UtilityChance == 0.25,
-            "battle.json: six cards have higher Infinity limits, six Infinity-only synergies, utility cards 25 % of offers");
+        check(data.UpgradeList.Count(u => u.EndlessMaxStacks != null) == 6 && data.SynergyList.Count(y => y.EndlessOnly) == 8 && data.UtilityChance == 0.35,
+            "battle.json: six cards have higher Infinity limits, eight Infinity-only synergies, Trickery cards 35 % of offers (1.5 M25)");
     }
 }

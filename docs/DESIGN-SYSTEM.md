@@ -73,7 +73,7 @@ Artwork (mèo, PetRenderer, PetScene, PetIllustration, kỷ vật, quái) có pa
 
 Nét viền: cảnh/icon trên nền kem dùng Ink #4A3628; art vẽ trên desktop và trong bảng game (chiến trường, slime, icon thẻ/túi đồ/chuẩn bị, app giả, kỷ vật, bong bóng thoại, hiệu ứng cảm xúc) dùng `PetUi.ArtInk` #3A2C1F — nâu gần đen, đậm hơn Ink để giữ viền trên mọi hình nền. Bóng/viền chữ/màn che bán trong suốt dùng `ShadeColor` #2A1F16 với alpha. Không dùng mực chàm/tím/xanh rêu cho viền.
 
-Màu tín hiệu trận giữ độ rực để đọc trên mọi hình nền: cảnh báo đỏ #E53E3E, hồi máu xanh lá, Đẩy xanh dương, bom len hồng, vàng combo/khiên. Ba nhóm thẻ: thủ #7CC0EE, công #F49272, tốc #9AD884 (thanh, viền, huy hiệu túi đồ); vòng icon thẻ nâng cấp dùng Mint/AccentBright/Lilac. Hiệu ứng cảm xúc trong PetRenderer (vàng, đỏ cà chua, hồng, xanh giọt nước) là màu art có viền, không phải token UI.
+Màu tín hiệu trận giữ độ rực để đọc trên mọi hình nền: cảnh báo đỏ #E53E3E, hồi máu xanh lá, Đẩy xanh dương, bom len hồng, vàng combo/khiên. Bốn nhóm thẻ: thủ #7CC0EE, công #F49272, tốc #9AD884, Mưu mẹo #EE9AD6 (1.5 M25) (thanh, viền, huy hiệu túi đồ); vòng icon thẻ nâng cấp dùng Mint/AccentBright/Lilac, Mưu mẹo dùng chính #EE9AD6. Hiệu ứng cảm xúc trong PetRenderer (vàng, đỏ cà chua, hồng, xanh giọt nước) là màu art có viền, không phải token UI.
 
 ### Không chỉ dựa vào màu
 

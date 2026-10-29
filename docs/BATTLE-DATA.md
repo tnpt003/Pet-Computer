@@ -264,14 +264,14 @@ Effect mới (2026-10-24):
 | `bomb` | 0.05–2 | Bom to (tiện ích): bán kính và sát thương Bom len × (1 + tổng) (0.2, tối đa 2) |
 | `shieldTime` | 0.2–5 s | Khiên dày (tiện ích): Khiên kéo dài thêm (1, tối đa 2) |
 
-- Thẻ tiện ích = thẻ không có `group` (trừ `heal`): `utilityChance` (cấp trên cùng, 0–1, gốc 0.25) là tỉ lệ một thẻ tiện ích chiếm một ô ngẫu nhiên trong lượt mời (luồng random riêng `BattleRandom.Utility`); chúng vẫn lấp chỗ khi nhóm hết thẻ. Thẻ app không bao giờ được mời khi trận không có app.
+- Thẻ tiện ích = thẻ không có `group` (trừ `heal`) **hoặc thẻ nhóm Mưu mẹo** (`trick`, từ 1.5 M25: 5 thẻ tiện ích gốc đều vào nhóm này): `utilityChance` (cấp trên cùng, 0–1, gốc 0.25, từ M25 là 0.35) là tỉ lệ một thẻ như vậy chiếm một ô ngẫu nhiên trong lượt mời (luồng random riêng `BattleRandom.Utility`); chúng vẫn lấp chỗ khi nhóm hết thẻ. Thẻ app không bao giờ được mời khi trận không có app.
 - Mỗi nhóm được tối đa **hai** thẻ hiếm (trước là một): khi thẻ hiếm thay chỗ thì bốc ngẫu nhiên trong các thẻ hiếm còn lấy được của nhóm.
 - Bản gốc thêm: Sức mạnh Móng vuốt + Kết liễu (hiếm); Tốc độ Nhịp dài + Lướt gió (hiếm); Phòng thủ Hồi phục + Kiên cường; tiện ích Tay nhanh, Sạc pin, Hút năng lượng, Bom to, Khiên dày. Giới hạn Vô tận: Sắc bén 5, Nhanh chân 3, Ra đòn nhanh 4, Lông dày 3, Tim to 4, Móng vuốt 3 (Đẩy mạnh giữ 2).
 
 ### Nhóm thẻ, synergy và build cộng dồn (Combat Depth mốc 2)
 
-- `group`: `defense`, `power` hoặc `speed` (bỏ trống = không thuộc nhóm). Thẻ `heal` không được có nhóm. Mỗi lần lấy một thẻ có nhóm = 1 điểm nhóm đó. Bản gốc: Defense = Lông dày + Tim to (`big_heart`, +20 HP tối đa, tối đa 2), Power = Sắc bén + Đẩy mạnh, Speed = Nhanh chân + Ra đòn nhanh.
-- Luật đưa thẻ: mỗi nhóm còn thẻ chưa chạm `maxStacks` góp 1 thẻ ngẫu nhiên (thứ tự Defense, Power, Speed); nhóm hết thẻ thì thẻ khác lấp chỗ. Mèo mất máu thì thẻ hồi máu thay thẻ không nhóm hoặc thẻ của nhóm build đang ít điểm nhất; HP đầy không bao giờ có thẻ hồi máu.
+- `group`: `defense`, `power`, `speed` hoặc `trick` (Mưu mẹo, từ 1.5 M25; bỏ trống = không thuộc nhóm). Thẻ `heal` không được có nhóm. Mỗi lần lấy một thẻ có nhóm = 1 điểm nhóm đó. Bản gốc: Defense = Lông dày + Tim to (`big_heart`, +20 HP tối đa, tối đa 2), Power = Sắc bén + Đẩy mạnh, Speed = Nhanh chân + Ra đòn nhanh.
+- Luật đưa thẻ: mỗi nhóm còn thẻ chưa chạm `maxStacks` góp 1 thẻ ngẫu nhiên (thứ tự Defense, Power, Speed; Mưu mẹo không có ô riêng mà vào qua ô tiện ích, xem "Nhóm Mưu mẹo"); nhóm hết thẻ thì thẻ khác lấp chỗ. Mèo mất máu thì thẻ hồi máu thay thẻ không nhóm hoặc thẻ của nhóm build đang ít điểm nhất; HP đầy không bao giờ có thẻ hồi máu.
 - `synergies` (gộp theo `id`): `{ "id", "group", "at": 1–10, "effect", "amount", "every", "armor": 0–0.5, "nameVi/En" ≤ 32, "descVi/En" ≤ 80 }`. `armor` (2026-10-24): bật synergy thì giảm thêm chừng đó sát thương nhận vào (cộng với thẻ `armor`, chung trần 60%); bản gốc Giáp gai 0.1. Đạt `at` điểm của nhóm thì bật vĩnh viễn trong build đó, banner "★ TÊN!" một lần.
 
 | effect | amount | Ý nghĩa (bản gốc) |
@@ -819,7 +819,7 @@ M4, M5 của docs/UPDATE-1.5.md. Code: `src/DesktopPet.Core/PetBattle.Drops.cs` 
 - **Xu trong chuyến (M5):** trận Viễn chinh thắng cộng `BattleSim.Coins` vào `ExpeditionRun.Coins` (lưu trong expedition.json; file cũ không có thì là 0). Rời trận hoặc thua thì không cộng; chuyến kết thúc là hết xu, không thành tiền tệ vĩnh viễn. HUD trận Viễn chinh hiện "Xu N" (xu chuyến + trận này), bản đồ hiện "N xu", kết quả trận hiện "Nhặt được N xu · chuyến có M xu". Tiêu ở cửa hàng mèo (từ M23a, xem "Tuyến Viễn chinh và cửa hàng mèo").
 - Kiểm tra lúc nạp: `chance`, `eliteChance` 0–1; `bossDrops` 0–10; `life` 2–60; `fade` 0–`life`; `maxOnFloor` 1–20; `fishHeal` 0–200; `coin`, `eliteCoin`, `bossCoin` 1–100; `weights` ít nhất một loại, chỉ `fish`/`coin`/`potion`, mỗi trọng số 0–100.
 - Sự kiện mới: `DropAppeared`, `DropFaded` (Value: id món), `DropPicked` (Value: loại); nhặt dùng cue `sparkle` có sẵn.
-- rulesVersion của Viễn chinh tăng 6 → 7 ở M23a (cửa hàng; chuyến r6 đang đi vẫn đi tiếp); của Vô tận tăng 5 → 6 ở M24. Chưa làm: thẻ Mưu mẹo về đồ rơi (M25); số liệu là ước lượng, chốt khi chơi thật/M29.
+- rulesVersion của Viễn chinh tăng 6 → 7 ở M23a (cửa hàng; chuyến r6 đang đi vẫn đi tiếp); của Vô tận tăng 5 → 6 ở M24. Thẻ Mưu mẹo về đồ rơi (Mũi thính, Cá béo) có từ M25 (xem "Nhóm Mưu mẹo"); số liệu là ước lượng, chốt khi chơi thật/M29.
 
 ## Bảo vệ giỏ cá (`basket` của màn) (bản 1.5, mốc M20, 2026-10-29)
 
@@ -1018,6 +1018,40 @@ E1, E2 của docs/UPDATE-1.5.md. Code: `src/DesktopPet.Core/PetEndless.cs` (dữ
 - Sự kiện mới: `EraStarted` (Value: chỉ số chặng), `MutationStarted`, `MutationEnded` (Value: chỉ số luật). Bảng đột biến dùng `UpgradeOffered`/`UpgradeChosen` như thẻ.
 - rulesVersion Vô tận 5 → 6: kỷ lục cũ đứng riêng (khóa `endless|r5|…`); mốc phần thưởng vẫn tính kỷ lục của mọi phiên bản.
 - Mô phỏng (không phải chơi thật; bot "simple" của AdventureBalanceTests, Normal, kiếm, 8 lượt, tối đa 20 phút): luật cũ đợt 30 30 30 30 30 33 38 38 (trung vị 30), luật mới 20 30 30 31 31 32 34 35 (trung vị 31). Số liệu chặng và đột biến là ước lượng, chốt khi chơi thật/M29.
+
+## Nhóm Mưu mẹo (`trick`) (bản 1.5, mốc M25, 2026-10-30)
+
+J1 của docs/UPDATE-1.5.md. Code: `src/DesktopPet.Core/PetBattle.Trickery.cs` (hiệu ứng thẻ, cú đáp, synergy), mời thẻ ở `PetBattle.Upgrades.cs`, nhóm ở `BuildGroups` (`PetBattleData.cs`); màu nhóm #EE9AD6 (thanh, viền icon thẻ, huy hiệu túi đồ). Test `tests/DesktopPet.Tests/BattleTrickeryTests.cs`, UiChecks (`UpgradeChecks`: thẻ Mưu mẹo trong bảng chọn; `EnemyVisualChecks`: icon 9 thẻ mới; túi đồ Vô tận 12 huy hiệu).
+
+- **Nhóm thứ 4** `trick` "Mưu mẹo / Trickery" (kỹ năng, bom, app, đồ rơi). `BuildGroups.All` có 4 nhóm (HUD, túi đồ, bảng chuẩn bị), `BuildGroups.Offered` chỉ 3 nhóm cũ: mỗi lượt mời vẫn 3 thẻ, mỗi nhóm cũ một ô; thẻ Mưu mẹo vào **ô tiện ích** (`utilityChance` 0.35) và lấp chỗ khi nhóm khác hết thẻ. Trong ô tiện ích, thẻ hiếm Mưu mẹo thay thẻ thường với `rareChance` (cùng luồng `Utility`). Mỗi nhóm tối đa 2 thẻ hiếm như cũ.
+- **Thẻ của kỹ năng** (`skill`: chỉ mời khi trận mang kỹ năng đó) và **thẻ đồ rơi** (chỉ mời ở trận có đồ rơi: Viễn chinh, Vô tận). Thẻ hiếm và Đột biến "Toàn tinh anh" theo cùng điều kiện.
+
+| id | effect | amount (khoảng) | Gốc |
+| --- | --- | --- | --- |
+| `quick_hands`, `power_bank`, `energy_drain`, `big_bomb`, `thick_bubble` | như cũ | như cũ | 5 thẻ tiện ích cũ, nay `group: trick` |
+| `long_laser` (laser) | `laserTime` | 0.2–5 s | Laser bền: chấm sáng thêm 1,5 s (tối đa 2) |
+| `turbo_fan` (fan) | `fanPower` | 0.05–1 | Quạt turbo: tầm và lực gió +25% |
+| `firm_grip` (grabber) | `grabberThrow` | 0.05–2 | Kẹp chắc: cú ném +50% sát thương và thời gian choáng |
+| `sharp_scissors` (scissors) | `scissorsDamage` | 0.05–2 | Kéo sắc: +40% sát thương |
+| `big_tank` (spray) | `sprayTime` | 0.2–5 s | Bình to: thêm 1,5 s nước |
+| `keen_nose` | `dropChance` | 0.05–2 | Mũi thính: tỉ lệ rơi đồ ×1,3 (nhân cùng Nam châm xu, đột biến) |
+| `fat_fish` | `fishHeal` | 1–100 HP | Cá béo: cá rơi ra hồi thêm 10 HP |
+| `ground_quake` (hiếm) | `landingQuake` | 1–100 | Cú đáp địa chấn: 12 sát thương |
+| `sleight` (hiếm) | `skillRefund` | 0.05–1 | Ảo thuật: 25% lần dùng kỹ năng chỉ hồi một nửa |
+
+- **Cú đáp địa chấn** (ý của người dùng, ngoại lệ Battle Mode (3) trong docs/APPROVED-EXCEPTIONS.md): mèo được thả hoặc ném rồi đáp sau khi nhấc ≥ `rescueGraceMinLiftSeconds` → sóng bán kính `BattleSim.QuakeRadius` 110 DIPs quanh chỗ đáp: `amount` sát thương như đòn công cụ (boss một nửa, Kết liễu cộng) và đẩy nhẹ (160 × `pushFactor`; boss và tinh anh miễn Đẩy không bị đẩy). Không trúng quái trên không, bám tường, đang đào hang, trong kẹp gắp hay đang nhảy. Hồi `QuakeCooldown` 6 s (đếm theo thời gian trận). Hình dùng hiệu ứng Slam có sẵn, cue `pop`; sự kiện `Quaked` (Value: số quái trúng).
+- **Ảo thuật**: mỗi lần kỹ năng bắt đầu hồi (mọi loại, cả quạt/bình xịt khi hết hơi) bốc trên luồng random riêng `BattleRandom.Tricks`; trúng thì thời gian hồi còn một nửa, sự kiện `SkillRefunded`, cue `sparkle`. Kẻ trộm lấy kỹ năng không tính.
+- **Cộng hưởng** (3 ở mọi chế độ; 6 và 9 chỉ Vô tận, `endlessOnly`):
+
+| effect | amount | Ý nghĩa (gốc) |
+| --- | --- | --- |
+| `skillRush` | 0.05–1 | Phối hợp (3): dùng kỹ năng (lúc nó tác dụng: bấm, nhắm trúng, bắt đầu giữ quạt/bình, nhấc slime, cắt) → 3 s đòn của mèo (cả đòn khi đang cầm) +amount sát thương (0.2) |
+| `killRecharge` | 0.1–5 s | Nạp nhanh (6): mỗi quái bị mèo hạ, mọi kỹ năng mang theo đang hồi bớt amount giây (0.5) |
+| `skillFeast` | 10–300 s | Đại tiệc (9): cứ amount giây đánh nhau (không khi mèo bị cầm), kỹ năng mang theo còn hồi lâu nhất sẵn sàng ngay; không kỹ năng nào đang hồi thì đồng hồ chờ đầy (40) |
+
+- Build cũ đã lưu có thẻ tiện ích giờ tính điểm Mưu mẹo (3 thẻ bật ngay Phối hợp).
+- rulesVersion: Vô tận 6 → 7; Viễn chinh tuyến 1 7 → 8 (`keepRuns: [6, 7]`, khóa mới `shopFrom: 7` = phiên bản đầu có cửa hàng, chuyến r7 đang đi vẫn có cửa hàng, r6 thì không), tuyến 2 1 → 2 (`keepRuns: [1]`). Chương Phiêu lưu không đổi.
+- Bot mô phỏng (AdventureBalanceTests) xếp thẻ Mưu mẹo như thẻ tiện ích cũ (cuối cùng) nên bảng đo như trước; check "không màn nào quá 4 phút" từ M25 không tính bot đứng yên (màn 5, búa, Dễ: trước 1/20 trận thắng trong 277 s, sau 2/20 trong 252 s). Mô phỏng sau M25: Vô tận trung vị đợt 31 (như trước); Viễn chinh Normal bot simple thắng 39/35/38/32 trên 40 (trước 39/34/39/32). Số liệu thẻ là ước lượng, chốt khi chơi thật/M29.
 
 ## App trên màn hình (`apps`) (2026-10-23)
 

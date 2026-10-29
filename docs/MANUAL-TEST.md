@@ -804,3 +804,14 @@ Dữ liệu gốc, không cần file tùy chỉnh. Bảng đột biến đã xem
 - [ ] Pause, menu, toàn màn hình khi đang mở bảng đột biến: bảng ẩn/hiện như bảng thẻ, trận đứng yên.
 - [ ] Cảm giác (ghi vào Nhật ký chơi thử): đợt 15–20 có khó vọt không; Slime Nén ở đợt 20 có quá mạnh không; luật nào luôn chọn/không bao giờ chọn.
 - [ ] Chữ vi/en/ja đúng, không tràn; DPI 100/150/200%: bảng đột biến không bị cắt.
+
+## Nhóm thẻ Mưu mẹo 1.5 M25 (2026-10-30)
+Dữ liệu gốc, không cần file tùy chỉnh. Bảng chọn thẻ có thẻ Mưu mẹo và túi đồ 4 nhóm đã xem qua render UiChecks, **chưa chơi thật**, chưa xem trên màn hình thật.
+- [ ] Phiêu lưu chương 1 màn 2+: khoảng 1/3 lượt chọn có một thẻ Mưu mẹo (viền icon hồng), dòng "Mưu mẹo 0 → 1/3"; Tay nhanh/Bom to/Khiên dày giờ ghi nhóm Mưu mẹo. Build cũ có sẵn thẻ tiện ích: bảng chuẩn bị và HUD tính điểm Mưu mẹo.
+- [ ] Mang Laser/Quạt/Kẹp gắp/Kéo/Bình xịt (chương 2 hoặc Viễn chinh/Vô tận): thẻ của kỹ năng đó có ra, kỹ năng không mang thì không. Lấy Laser bền: chấm đỏ sáng lâu hơn (vòng đếm trên chấm khớp); Quạt turbo: vùng gió rộng hơn.
+- [ ] Viễn chinh/Vô tận: có Mũi thính, Cá béo; chương 1 thì không. Cá béo: nhặt cá hồi 20 HP.
+- [ ] **Cú đáp địa chấn** (thẻ hiếm, dễ gặp ở Lời nguyền/viên nang/cửa hàng Viễn chinh): nhấc mèo ≥ 0,3 s rồi thả hoặc ném xuống cạnh slime → sóng, tiếng "pop", slime trên sàn mất máu và bị đẩy nhẹ; slime bay, slime bám tường không bị. Bấm-thả nhanh không tạo sóng; thả liên tục chỉ 6 s mới có lại. Kéo/ném/pendulum vẫn như cũ, mèo không nhận sát thương khi đang cầm/bay.
+- [ ] Ảo thuật: thỉnh thoảng dùng kỹ năng nghe tiếng lấp lánh và ô kỹ năng hồi nhanh còn nửa.
+- [ ] 3 thẻ Mưu mẹo: banner "★ PHỐI HỢP!"; dùng kỹ năng xong mèo đánh mạnh hơn một lúc. Vô tận 6/9 điểm: Nạp nhanh (hạ quái làm kỹ năng hồi nhanh), Đại tiệc (~40 s một kỹ năng sẵn sàng, tiếng lấp lánh). Túi đồ Vô tận hiện hàng Mưu mẹo với 3 huy hiệu có hình.
+- [ ] Đang có chuyến Viễn chinh từ bản trước (luật 7): mở bản đồ vẫn đi tiếp, các bậc quay sau vẫn ra cửa hàng. Kỷ lục Vô tận cũ không hiện là kỷ lục mới (luật 7 bắt đầu "Chưa chơi").
+- [ ] Chữ vi/en/ja đúng, không tràn (tên thẻ dài "Cú đáp địa chấn"); DPI 100/150/200%: bảng chọn thẻ, túi đồ 4 cột không bị cắt.

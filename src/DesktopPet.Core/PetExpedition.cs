@@ -30,6 +30,8 @@ public sealed class ExpeditionSpec
     // 1.5 M23: older rules versions whose saved run still goes on to its end (its records stay under
     // its own version; its steps still to spin draw no shop).
     public int[] KeepRuns { get; init; } = Array.Empty<int>();
+    // 1.5 M25: the first rules version with the cat shop (a kept run of an older one draws no shop; 1: always).
+    public int ShopFrom { get; init; } = 1;
     // 1.5 M23: more routes ("routes", each its own map, encounters, boss and records). A route gives
     // its id, names, rules version, unlockAfter, map (steps or kindGacha), encounters, zones and scene;
     // the rest (HP rules, events, relics, capsules, shop) is this Expedition's (Routes, read through All).
@@ -48,7 +50,7 @@ public sealed class ExpeditionSpec
     public ExpeditionSpec? Route(string? id) => All.FirstOrDefault(r => r.Id == id);
     private ExpeditionSpec Inherit(ExpeditionSpec r) => new()
     {
-        Id = r.Id, NameVi = r.NameVi, NameEn = r.NameEn, RulesVersion = r.RulesVersion, KeepRuns = r.KeepRuns, UnlockAfter = r.UnlockAfter,
+        Id = r.Id, NameVi = r.NameVi, NameEn = r.NameEn, RulesVersion = r.RulesVersion, KeepRuns = r.KeepRuns, ShopFrom = r.ShopFrom, UnlockAfter = r.UnlockAfter,
         Steps = r.Steps, KindGacha = r.KindGacha, Fights = r.Fights, Elites = r.Elites, Boss = r.Boss, Zones = r.Zones, Scene = r.Scene, Keepsakes = r.Keepsakes,
         RetreatCost = RetreatCost, WinHeal = WinHeal, StepThreat = StepThreat, RestHeal = RestHeal, MaxRelics = MaxRelics, EliteRelics = EliteRelics,
         Events = Events, Relics = Relics, Capsules = Capsules, Store = Store
@@ -132,6 +134,7 @@ public sealed class ExpeditionSpec
         if (x.Scene != null && x.Scene != ChapterSpec.Dump) throw new InvalidDataException(at + ".scene must be \"" + ChapterSpec.Dump + "\"");
         text(x.NameVi, at + ".nameVi"); text(x.NameEn, at + ".nameEn");
         if (x.RulesVersion is < 1 or > 1000) throw new InvalidDataException(at + ".rulesVersion must be 1–1000");
+        if (x.ShopFrom < 1 || x.ShopFrom > x.RulesVersion) throw new InvalidDataException(at + ".shopFrom must be 1 to rulesVersion");
         if (!double.IsFinite(x.RetreatCost) || x.RetreatCost is < 0 or > 1) throw new InvalidDataException(at + ".retreatCost must be 0–1");
         if (!double.IsFinite(x.WinHeal) || x.WinHeal is < 0 or > 1) throw new InvalidDataException(at + ".winHeal must be 0–1");
         if (!double.IsFinite(x.StepThreat) || x.StepThreat is < 0 or > 0.5) throw new InvalidDataException(at + ".stepThreat must be 0–0.5");
@@ -650,8 +653,8 @@ public sealed class Expedition
     // rulesVersion: an older run's (KeepRuns) records are its own version's.
     public ExpeditionRecord Record(string weapon, BattleDifficulty difficulty, bool noApps = false, int? rulesVersion = null) =>
         Progress.Records.TryGetValue(RecordKey(Spec, weapon, difficulty, noApps, rulesVersion), out var record) ? record : new();
-    // A run going on under older rules (KeepRuns): its steps still to spin draw no shop.
-    private bool Older(ExpeditionRun run) => run.RulesVersion != Spec.RulesVersion;
+    // A run going on under rules from before the shop (KeepRuns, ShopFrom): its steps still to spin draw no shop.
+    private bool Older(ExpeditionRun run) => run.RulesVersion < Spec.ShopFrom;
     private bool Draws(ExpeditionRun run, string kind) => Spec.KindGacha!.Weights.GetValueOrDefault(kind) > 0 && !(kind == ExpeditionSpec.Shop && Older(run));
 
     // The cat's max HP with a build (cards like Big heart raise it) and relics, as the battle would have it.

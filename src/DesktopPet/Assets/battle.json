@@ -80,7 +80,8 @@
   // never on Easy); rareChance: how often a group's rare card takes its common card's place.
   "maxElites": 1,
   "rareChance": 0.15,
-  "utilityChance": 0.25,
+  // utilityChance (1.5 M25: 0.25 → 0.35): how often a utility or Trickery card takes one place of an offer.
+  "utilityChance": 0.35,
   "outroSeconds": 3,
   "hurtFlashSeconds": 0.35,
   "maxEffects": 32,
@@ -728,7 +729,7 @@
   // (less damage taken) take a fraction (0.2 = 20 %); knock: extra knock-back on every hit
   // (DIPs/s); maxHp: more max HP (and that much HP at once); heal: HP at once (never offered at
   // full HP; it takes the place of the group card the build has least of). maxStacks: how often one
-  // build may take it (0 = no limit). group: defense, power or speed (a heal has none).
+  // build may take it (0 = no limit). group: defense, power, speed or trick (a heal has none).
   "upgrades": [
     { "id": "sharp", "group": "power", "nameVi": "Sắc bén", "nameEn": "Sharp edge", "descVi": "+20% sát thương", "descEn": "+20% damage", "effect": "damage", "amount": 0.2, "maxStacks": 3, "endlessMaxStacks": 5 },
     { "id": "quick_feet", "group": "speed", "nameVi": "Nhanh chân", "nameEn": "Quick feet", "descVi": "+15% tốc độ chạy", "descEn": "+15% running speed", "effect": "moveSpeed", "amount": 0.15, "maxStacks": 2, "endlessMaxStacks": 3 },
@@ -743,19 +744,34 @@
     { "id": "turtle_shell", "group": "defense", "rare": true, "nameVi": "Mai rùa", "nameEn": "Turtle shell", "descVi": "Chặn trọn 1 đòn, mọc lại sau 12 giây", "descEn": "Stops one whole hit, grows back in 12 s", "effect": "shell", "amount": 12, "maxStacks": 1 },
     { "id": "opening_strike", "group": "power", "rare": true, "nameVi": "Đòn mở màn", "nameEn": "Opening strike", "descVi": "Đòn đầu trúng mỗi quái ×2 sát thương", "descEn": "First hit on each enemy deals ×2", "effect": "opener", "amount": 1, "maxStacks": 1 },
     { "id": "running_start", "group": "speed", "rare": true, "nameVi": "Chạy đà", "nameEn": "Running start", "descVi": "Chạy một quãng rồi chém: +80% sát thương", "descEn": "Swing after a run: +80% damage", "effect": "momentum", "amount": 0.8, "maxStacks": 1 },
-    // 2026-10-24: more cards (see UpgradeSpec). The ones without a group are utility cards (utilityChance:
-    // one may take a place in an offer); power_bank and energy_drain only in battles with the desktop apps.
+    // 2026-10-24: more cards (see UpgradeSpec). power_bank and energy_drain only in battles with the desktop
+    // apps. 1.5 M25: the old utility cards are the Trickery group ("trick"): no place of its own in an offer,
+    // its cards (and its rare ones, with rareChance) take the utility place (utilityChance).
     { "id": "claws", "group": "power", "nameVi": "Móng vuốt", "nameEn": "Claws", "descVi": "10% đòn đánh gây ×2 sát thương", "descEn": "10% of hits deal ×2 damage", "effect": "crit", "amount": 0.1, "maxStacks": 2, "endlessMaxStacks": 3 },
     { "id": "finishing_blow", "group": "power", "rare": true, "nameVi": "Kết liễu", "nameEn": "Finishing blow", "descVi": "+50% sát thương lên quái dưới 30% máu", "descEn": "+50% damage to enemies below 30% HP", "effect": "execute", "amount": 0.5, "maxStacks": 1 },
     { "id": "long_rhythm", "group": "speed", "nameVi": "Nhịp dài", "nameEn": "Long rhythm", "descVi": "Thêm 0,3 giây để nối combo", "descEn": "0.3 s longer to keep a combo going", "effect": "comboWindow", "amount": 0.3, "maxStacks": 2 },
     { "id": "tailwind", "group": "speed", "rare": true, "nameVi": "Lướt gió", "nameEn": "Tailwind", "descVi": "Vừa được thả xuống: 2 giây đánh nhanh +30%", "descEn": "Put down: 2 s of +30% attack speed", "effect": "landingRush", "amount": 0.3, "maxStacks": 1 },
     { "id": "regrowth", "group": "defense", "nameVi": "Hồi phục", "nameEn": "Regrowth", "descVi": "Hồi 1 HP mỗi 2 giây khi đang đánh", "descEn": "1 HP back every 2 s in a fight", "effect": "regen", "amount": 0.5, "maxStacks": 2 },
     { "id": "steady", "group": "defense", "nameVi": "Kiên cường", "nameEn": "Steady", "descVi": "−25% thời gian bị choáng", "descEn": "−25% time stunned", "effect": "stunCut", "amount": 0.25, "maxStacks": 2 },
-    { "id": "quick_hands", "nameVi": "Tay nhanh", "nameEn": "Quick hands", "descVi": "−10% thời gian hồi kỹ năng", "descEn": "−10% skill cooldowns", "effect": "skillCooldown", "amount": 0.1, "maxStacks": 3 },
-    { "id": "power_bank", "nameVi": "Sạc pin", "nameEn": "Power bank", "descVi": "App trên màn hình sạc nhanh hơn 8%", "descEn": "Desktop apps charge 8% faster", "effect": "appCharge", "amount": 0.08, "maxStacks": 3 },
-    { "id": "energy_drain", "nameVi": "Hút năng lượng", "nameEn": "Energy drain", "descVi": "Mỗi quái bị hạ: app sạc thêm 1%", "descEn": "Each defeated enemy: apps charge 1% more", "effect": "killCharge", "amount": 0.01, "maxStacks": 3 },
-    { "id": "big_bomb", "skill": "bomb", "nameVi": "Bom to", "nameEn": "Big bomb", "descVi": "Bom len to hơn và mạnh hơn 20%", "descEn": "Yarn bomb 20% bigger and stronger", "effect": "bomb", "amount": 0.2, "maxStacks": 2 },
-    { "id": "thick_bubble", "skill": "shield", "nameVi": "Khiên dày", "nameEn": "Thick bubble", "descVi": "Khiên bong bóng kéo dài thêm 1 giây", "descEn": "Bubble shield lasts 1 s longer", "effect": "shieldTime", "amount": 1, "maxStacks": 2 }
+    { "id": "quick_hands", "group": "trick", "nameVi": "Tay nhanh", "nameEn": "Quick hands", "descVi": "−10% thời gian hồi kỹ năng", "descEn": "−10% skill cooldowns", "effect": "skillCooldown", "amount": 0.1, "maxStacks": 3 },
+    { "id": "power_bank", "group": "trick", "nameVi": "Sạc pin", "nameEn": "Power bank", "descVi": "App trên màn hình sạc nhanh hơn 8%", "descEn": "Desktop apps charge 8% faster", "effect": "appCharge", "amount": 0.08, "maxStacks": 3 },
+    { "id": "energy_drain", "group": "trick", "nameVi": "Hút năng lượng", "nameEn": "Energy drain", "descVi": "Mỗi quái bị hạ: app sạc thêm 1%", "descEn": "Each defeated enemy: apps charge 1% more", "effect": "killCharge", "amount": 0.01, "maxStacks": 3 },
+    { "id": "big_bomb", "group": "trick", "skill": "bomb", "nameVi": "Bom to", "nameEn": "Big bomb", "descVi": "Bom len to hơn và mạnh hơn 20%", "descEn": "Yarn bomb 20% bigger and stronger", "effect": "bomb", "amount": 0.2, "maxStacks": 2 },
+    { "id": "thick_bubble", "group": "trick", "skill": "shield", "nameVi": "Khiên dày", "nameEn": "Thick bubble", "descVi": "Khiên bong bóng kéo dài thêm 1 giây", "descEn": "Bubble shield lasts 1 s longer", "effect": "shieldTime", "amount": 1, "maxStacks": 2 },
+    // 1.5 M25 Trickery: one card for each new skill (offered only when it is carried), two for the drops
+    // (only in battles with drops: Expedition, Infinity). laserTime, sprayTime: seconds more; fanPower: reach
+    // and wind; grabberThrow: a throw's damage and daze; scissorsDamage; dropChance (fractions); fishHeal: HP.
+    // Rare: landingQuake (the cat put down after a real lift, a throw too: amount damage to enemies on the
+    // floor near it, a little knock back; once per 6 s) and skillRefund (the chance a skill costs half its cooldown).
+    { "id": "long_laser", "group": "trick", "skill": "laser", "nameVi": "Laser bền", "nameEn": "Lasting laser", "descVi": "Chấm laser sáng thêm 1,5 giây", "descEn": "The laser dot lasts 1.5 s longer", "effect": "laserTime", "amount": 1.5, "maxStacks": 2 },
+    { "id": "turbo_fan", "group": "trick", "skill": "fan", "nameVi": "Quạt turbo", "nameEn": "Turbo fan", "descVi": "Quạt thổi xa và mạnh hơn 25%", "descEn": "The fan reaches and blows 25% further", "effect": "fanPower", "amount": 0.25, "maxStacks": 2 },
+    { "id": "firm_grip", "group": "trick", "skill": "grabber", "nameVi": "Kẹp chắc", "nameEn": "Firm grip", "descVi": "Cú ném của Kẹp gắp: +50% sát thương và choáng", "descEn": "Grabber throws: +50% damage and daze", "effect": "grabberThrow", "amount": 0.5, "maxStacks": 2 },
+    { "id": "sharp_scissors", "group": "trick", "skill": "scissors", "nameVi": "Kéo sắc", "nameEn": "Sharp scissors", "descVi": "Kéo cắt mạnh hơn 40%", "descEn": "Scissors cut 40% harder", "effect": "scissorsDamage", "amount": 0.4, "maxStacks": 2 },
+    { "id": "big_tank", "group": "trick", "skill": "spray", "nameVi": "Bình to", "nameEn": "Big tank", "descVi": "Bình xịt thêm 1,5 giây nước", "descEn": "The spray holds 1.5 s more water", "effect": "sprayTime", "amount": 1.5, "maxStacks": 2 },
+    { "id": "keen_nose", "group": "trick", "nameVi": "Mũi thính", "nameEn": "Keen nose", "descVi": "Quái rơi đồ nhiều hơn 30%", "descEn": "Enemies leave 30% more drops", "effect": "dropChance", "amount": 0.3, "maxStacks": 2 },
+    { "id": "fat_fish", "group": "trick", "nameVi": "Cá béo", "nameEn": "Fat fish", "descVi": "Cá rơi ra hồi thêm 10 HP", "descEn": "Dropped fish heal 10 HP more", "effect": "fishHeal", "amount": 10, "maxStacks": 2 },
+    { "id": "ground_quake", "group": "trick", "rare": true, "nameVi": "Cú đáp địa chấn", "nameEn": "Ground quake", "descVi": "Thả mèo xuống: sóng 12 sát thương quái trên sàn (hồi 6 giây)", "descEn": "Put down: a 12-damage wave on floor enemies (6 s cooldown)", "effect": "landingQuake", "amount": 12, "maxStacks": 1 },
+    { "id": "sleight", "group": "trick", "rare": true, "nameVi": "Ảo thuật", "nameEn": "Sleight of paw", "descVi": "25% lần dùng kỹ năng chỉ hồi một nửa", "descEn": "25% of skill uses cool down only half", "effect": "skillRefund", "amount": 0.25, "maxStacks": 1 }
   ],
 
   // Synergies: a build holding "at" cards of a group switches the effect on for good.
@@ -782,7 +798,16 @@
     { "id": "gale", "group": "speed", "at": 6, "effect": "rush", "amount": 0.2, "endlessOnly": true, "nameVi": "Gió lốc", "nameEn": "Gale",
       "descVi": "Sau đòn combo: 3 giây chạy và đánh nhanh +20%", "descEn": "After a combo: 3 s of +20% speed and attacks" },
     { "id": "afterimage_plus", "group": "speed", "at": 9, "effect": "echo", "amount": 0.75, "every": 3, "endlessOnly": true, "nameVi": "Dư ảnh+", "nameEn": "Afterimage+",
-      "descVi": "Cứ 3 đòn trúng, thêm một đòn 75%", "descEn": "Every 3rd hit strikes again for 75%" }
+      "descVi": "Cứ 3 đòn trúng, thêm một đòn 75%", "descEn": "Every 3rd hit strikes again for 75%" },
+    // 1.5 M25 Trickery. skillRush: a skill used gives 3 s of amount more swing damage; killRecharge: each
+    // enemy defeated takes amount s off every carried skill's cooldown; skillFeast: every amount s of
+    // fighting, the carried skill with the most cooldown left is ready.
+    { "id": "teamwork", "group": "trick", "at": 3, "effect": "skillRush", "amount": 0.2, "nameVi": "Phối hợp", "nameEn": "Teamwork",
+      "descVi": "Dùng kỹ năng xong: 3 giây mèo +20% sát thương", "descEn": "After a skill: 3 s of +20% damage" },
+    { "id": "quick_reload", "group": "trick", "at": 6, "effect": "killRecharge", "amount": 0.5, "endlessOnly": true, "nameVi": "Nạp nhanh", "nameEn": "Quick reload",
+      "descVi": "Mỗi quái bị hạ: kỹ năng đang hồi xong sớm thêm 0,5 giây", "descEn": "Each defeat: every skill cooling down is 0.5 s nearer" },
+    { "id": "skill_feast", "group": "trick", "at": 9, "effect": "skillFeast", "amount": 40, "endlessOnly": true, "nameVi": "Đại tiệc", "nameEn": "Skill feast",
+      "descVi": "Mỗi 40 giây: kỹ năng hồi lâu nhất sẵn sàng ngay", "descEn": "Every 40 s the skill with most cooldown left is ready" }
   ],
 
   // 1.5 M19 drops (Expedition: fish, coins, potions; Infinity: fish and potions; none in Adventure
@@ -997,12 +1022,12 @@
   // "eliteChanceMax") and every "moreElitesEvery" waves one more elite may be alive (at most "moreElitesMax"). It ends
   // when the cat falls or the user presses End; the record is the furthest wave per weapon and
   // difficulty. "unlockAfter": the Adventure stage to win first. "rulesVersion" keeps old records apart.
-  // 1.5 M24 (rules 6): "bosses" take turns on the boss waves; "eras" add newer kinds to the draw, the
+  // 1.5 M25 (rules 7): the Trickery cards. 1.5 M24 (rules 6): "bosses" take turns on the boss waves; "eras" add newer kinds to the draw, the
   // first from wave "erasFrom", the next after each boss wave, round again after the last (each with the
   // older kinds: at most two kinds of link and two the cursor beats); "mutations": after each cleared boss
   // wave pick one of "offer" odd rules, held until the next boss wave is cleared, then its reward.
   "endless": {
-    "id": "endless", "rulesVersion": 6, "unlockAfter": "c1_slime_king", "upgradeEvery": 2, "bossEvery": 10, "boss": "king_c1",
+    "id": "endless", "rulesVersion": 7, "unlockAfter": "c1_slime_king", "upgradeEvery": 2, "bossEvery": 10, "boss": "king_c1",
     "bosses": [ "king_c1", "zip", "mutant_king" ],
     "lateBoss": "king", "lateBossFrom": 40, "bossBonusPick": true, "allSynergiesAt": 48,
     "eliteChancePerWave": 0.007, "eliteChanceMax": 0.45, "moreElitesEvery": 20, "moreElitesMax": 2,
@@ -1062,8 +1087,9 @@
   },
   "expedition": {
     "id": "slime_trail", "nameVi": "Đường mòn Slime", "nameEn": "The Slime Trail",
-    // 1.5 M23: rules 7 brought the cat shop; a run started under rules 6 goes on to its end (keepRuns).
-    "rulesVersion": 7, "keepRuns": [ 6 ], "unlockAfter": "c1_slime_king", "retreatCost": 0, "winHeal": 0.05, "stepThreat": 0.1,
+    // 1.5 M23: rules 7 brought the cat shop ("shopFrom"); a run started under rules 6 goes on to its end
+    // (keepRuns) without it. 1.5 M25: rules 8 brought the Trickery cards; a rules 7 run goes on, with its shop.
+    "rulesVersion": 8, "keepRuns": [ 6, 7 ], "shopFrom": 7, "unlockAfter": "c1_slime_king", "retreatCost": 0, "winHeal": 0.05, "stepThreat": 0.1,
     "restHeal": 0.3, "maxRelics": 3, "eliteRelics": 2,
     "keepsakes": [
       { "id": "cup_bronze", "kind": "cup", "tier": "bronze", "difficulty": "Easy", "exact": true, "nameVi": "Cúp đồng viễn chinh", "nameEn": "Bronze Expedition cup" },
@@ -1210,7 +1236,7 @@
     "routes": [
       {
         "id": "dump_trail", "nameVi": "Lối Bãi rác", "nameEn": "The Dump Trail",
-        "rulesVersion": 1, "unlockAfter": "c2_zip_slime", "scene": "dump",
+        "rulesVersion": 2, "keepRuns": [ 1 ], "unlockAfter": "c2_zip_slime", "scene": "dump",
         "kindGacha": { "steps": 6, "minLanes": 2, "maxLanes": 3, "weights": { "fight": 45, "event": 18, "elite": 20, "rest": 12, "shop": 14 }, "rerollCost": 0.08 },
         "zones": [
           { "id": "swamp", "nameVi": "Đầm nhầy", "nameEn": "Slime swamp", "steps": 2, "fights": [ "y_puddles", "y_ice_pond", "y_split_bog" ], "elites": [ "y_mother_nest" ] },

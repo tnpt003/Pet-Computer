@@ -9,7 +9,7 @@ internal static class EndlessTests
     {
         const double dt = 1.0 / 60;
         var spec = BattleData.Settings.Endless;
-        check(spec is { UpgradeEvery: 2, BossEvery: 10, Boss: "king_c1", LateBoss: "king", LateBossFrom: 40, BossBonusPick: true, AllSynergiesAt: 48, UnlockAfter: "c1_slime_king", RulesVersion: 6 } && spec.Kinds.Length == 4,
+        check(spec is { UpgradeEvery: 2, BossEvery: 10, Boss: "king_c1", LateBoss: "king", LateBossFrom: 40, BossBonusPick: true, AllSynergiesAt: 48, UnlockAfter: "c1_slime_king", RulesVersion: 7 } && spec.Kinds.Length == 4,
             "Built-in Infinity: a card every 2 waves (two after a boss), bosses every 10 (the plain King beside them from 40), every synergy from 48, 4 kinds"); 
         var first = spec!.Wave(1);
         check(first.Groups.Single() is { Count: 3, Pick: { Count: 1 } pick } && pick.ContainsKey("slime") && first.Threat == 1, "Wave 1: 3 plain slimes at threat 1");

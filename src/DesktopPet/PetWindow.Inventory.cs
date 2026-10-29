@@ -39,6 +39,8 @@ public sealed partial class PetWindow
     private static readonly Brush BagBad = PetUi.Hex("#FF9A8A"), BagCream = PetUi.Hex("#E8DCCB"), BagHp = PetUi.Hex("#7FD06A"), BagGain = PetUi.Hex("#C9F0B8");
     // The three card groups (bars, rims and medals).
     private static readonly Brush GroupDefense = PetUi.Hex("#7CC0EE"), GroupPower = PetUi.Hex("#F49272"), GroupSpeed = PetUi.Hex("#9AD884");
+    // 1.5 M25: Trickery (also the ring of its cards' icons).
+    internal static readonly Brush GroupTrick = PetUi.Hex("#EE9AD6");
 
     private Window? bagWindow;
     private string? bagContext;
@@ -502,7 +504,7 @@ public sealed partial class PetWindow
 
     private static Brush GroupColor(string? group) => group switch
     {
-        "defense" => GroupDefense, "power" => GroupPower, "speed" => GroupSpeed, _ => PetUi.Game.CardRim
+        "defense" => GroupDefense, "power" => GroupPower, "speed" => GroupSpeed, BuildGroups.Trick => GroupTrick, _ => PetUi.Game.CardRim
     };
 
     private static readonly Brush MedalOnBack = PetUi.Hex("#30FFD35C"), MedalBack = PetUi.Hex("#14FFFFFF");

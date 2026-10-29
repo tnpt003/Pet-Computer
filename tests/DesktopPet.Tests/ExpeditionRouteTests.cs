@@ -71,7 +71,7 @@ internal static class ExpeditionRouteTests
         var reopened = new Expedition(data, progress);
         check(reopened.Spec.Id == "dump_trail" && reopened.Mismatch(reopened.Run!) == null, "A saved run is read back on its own route, whatever route is asked for");
         reopened.Abandon();
-        check(progress.Records.Keys.Single().StartsWith("dump_trail|r1|", StringComparison.Ordinal) && new Expedition(data, progress).Record(BattleWeapon.Sword, BattleDifficulty.Normal).Runs == 0
+        check(progress.Records.Keys.Single().StartsWith("dump_trail|r2|", StringComparison.Ordinal) && new Expedition(data, progress).Record(BattleWeapon.Sword, BattleDifficulty.Normal).Runs == 0
               && new Expedition(data, progress, "dump_trail").Record(BattleWeapon.Sword, BattleDifficulty.Normal).Runs == 1,
             "Each route keeps its own records");
         var lost = new ExpeditionProgress { Active = new ExpeditionRun { RunId = "gone", Expedition = "old_route", RulesVersion = 1 } };
@@ -185,7 +185,7 @@ internal static class ExpeditionRouteTests
         older.Abandon();
         check(older.Progress.Records.ContainsKey(Expedition.RecordKey(main, BattleWeapon.Hammer, BattleDifficulty.Hard, false, 6)) && older.Record(BattleWeapon.Hammer, BattleDifficulty.Hard).Runs == 0
               && older.Record(BattleWeapon.Hammer, BattleDifficulty.Hard, rulesVersion: 6).Runs == 1,
-            "Its end is counted in the records of rules 6, apart from rules 7's");
+            "Its end is counted in the records of rules 6, apart from rules 8's");
         var r5 = new Expedition(data, new ExpeditionProgress()).Start(BattleWeapon.Sword, BattleDifficulty.Normal, 5);
         r5.RulesVersion = 5;
         check(new Expedition(data, new ExpeditionProgress { Active = r5 }).Mismatch(r5) != null, "A run of rules 5 still ends (not kept)");
@@ -213,7 +213,8 @@ internal static class ExpeditionRouteTests
         check(Error(Route(zones: ", \"zones\": [ { \"id\": \"z\", \"nameVi\": \"Z\", \"nameEn\": \"Z\", \"steps\": 2, \"fights\": [ \"x_meadow\" ] } ]")).Contains("fight encounters of the route"),
             "A zone naming another route's encounter is rejected");
         check(Error(Route(extra: ", \"scene\": \"beach\"")).Contains("scene"), "An unknown scene is rejected");
-        check(Error("{ \"keepRuns\": [ 7 ] }").Contains("keepRuns"), "keepRuns must be older than the rules version");
+        check(Error("{ \"keepRuns\": [ 8 ] }").Contains("keepRuns"), "keepRuns must be older than the rules version");
+        check(Error("{ \"shopFrom\": 9 }").Contains("shopFrom"), "shopFrom must be a rules version up to the current one (1.5 M25)");
         check(Error("{ \"shop\": { \"cardPrice\": 0 } }").Contains("cardPrice"), "A free shop ware is rejected");
         check(Error("{ \"shop\": null, \"routes\": [] }").Contains("no shop"), "Shop nodes without a shop are rejected");
         check(Error("{ \"kindGacha\": { \"weights\": { \"fight\": 1, \"shop\": 0 } }, \"shop\": null, \"routes\": [] }") == "", "No shop nodes: no shop needed");

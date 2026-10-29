@@ -53,11 +53,12 @@ public sealed partial class BattleSim
     {
         if (BattleSkills.Get(skill).Aim != SkillAim.Point || Armed != skill || !Ready(skill) || !double.IsFinite(x)) return false;
         LaserX = Math.Clamp(x, Left, Right);
-        LaserRemaining = Settings.LaserSeconds;
+        LaserRemaining = LaserSeconds;
         laserClock = 0;
         // At once, so no slime near the dot winds up in the frame it appears.
         foreach (var s in slimes) s.Lured = Lurable(s) && Math.Abs(s.X - LaserX.Value) <= Settings.LaserLureRange;
-        cooldowns[(int)skill] = SkillCooldown(skill);
+        Recharge(skill);
+        SkillUsed();
         if (Armed == skill) Armed = null;
         events.Add(new(BattleEventKind.LaserOn, LaserX.Value));
         return true;
@@ -72,7 +73,7 @@ public sealed partial class BattleSim
         if (Armed != BattleSkill.Fan || !Ready(BattleSkill.Fan) || !double.IsFinite(x)) return false;
         bool fresh = FanX == null;
         FanX = Math.Clamp(x, Left, Right);
-        if (fresh) events.Add(new(BattleEventKind.FanOn, FanX.Value));
+        if (fresh) { events.Add(new(BattleEventKind.FanOn, FanX.Value)); SkillUsed(); }
         return true;
     }
     public void MoveFan(double x) { if (FanX != null && double.IsFinite(x)) FanX = Math.Clamp(x, Left, Right); }
@@ -125,7 +126,7 @@ public sealed partial class BattleSim
         else { FanX = null; Refill(BattleSkill.Fan, ref fanSteam, dt); }
         if (SprayX is double at && Holding(BattleSkill.Spray))
         {
-            sprayTank = Math.Max(0, sprayTank - dt / Settings.SprayTankSeconds);
+            sprayTank = Math.Max(0, sprayTank - dt / SprayTankSeconds);
             Soak(at, SprayHeight, dt);
             if (Over) return;
             if (sprayTank <= 0)
@@ -142,7 +143,7 @@ public sealed partial class BattleSim
     // A hold skill (Fan, Spray) works this step: pressed on the field, still chosen, not cooling down.
     private bool Holding(BattleSkill skill) => Armed == skill && cooldowns[(int)skill] <= 0;
     // Used up: put away and cooling down (its tank refills with the cooldown).
-    private void Spend(BattleSkill skill) { Armed = null; cooldowns[(int)skill] = SkillCooldown(skill); }
+    private void Spend(BattleSkill skill) { Armed = null; Recharge(skill); }
     // Not in use: spent, the tank comes back with the cooldown; otherwise at the same pace.
     private void Refill(BattleSkill skill, ref double tank, double dt)
     {
@@ -157,7 +158,7 @@ public sealed partial class BattleSim
         bool fresh = SprayX == null;
         SprayX = Math.Clamp(x, Left, Right);
         SprayHeight = Math.Max(0, height);
-        if (fresh) events.Add(new(BattleEventKind.SprayOn, SprayX.Value));
+        if (fresh) { events.Add(new(BattleEventKind.SprayOn, SprayX.Value)); SkillUsed(); }
         return true;
     }
     public void MoveSpray(double x, double height)
@@ -218,12 +219,13 @@ public sealed partial class BattleSim
             // A bubble the stroke goes through bursts (no hurt; 1.5 M13).
             if (s.Bubbled) { PopBubble(s); done++; continue; }
             AddEffect(BattleEffectKind.Spark, s.X, bottom + s.Height / 2);
-            ToolHit(s, Settings.ScissorsDamage);
+            ToolHit(s, ScissorsDamage);
             done++;
             if (Over) break;
         }
         Snips++;
         Spend(BattleSkill.Scissors);
+        SkillUsed();
         events.Add(new(BattleEventKind.Snipped, (x0 + x1) / 2, done));
         return true;
     }
@@ -275,7 +277,7 @@ public sealed partial class BattleSim
 
     private void Blow(double from, double dt)
     {
-        double range = Settings.FanRange;
+        double range = FanRange;
         foreach (var s in slimes)
         {
             if (!s.Targetable || s.IsBoss || s.Stuck || s.Riding || s.Airborne || s.Handled || s.Burrowed || s.LeapHeight > 0 || s.Shielded) continue;
@@ -283,7 +285,7 @@ public sealed partial class BattleSim
             if (Math.Abs(d) > range + s.Width / 2) continue;
             int away = Math.Abs(d) >= 1 ? Math.Sign(d) : s.X >= lastCatX ? 1 : -1;
             double strength = Math.Clamp(1 - Math.Max(0, Math.Abs(d) - s.Width / 2) / range, 0.25, 1);
-            double push = Settings.FanSpeed * strength * s.Type.PushFactor * (s.Elite is { PushImmune: true } ? FanImmuneShare : 1);
+            double push = FanSpeed * strength * s.Type.PushFactor * (s.Elite is { PushImmune: true } ? FanImmuneShare : 1);
             if (push <= 0) continue;
             if (s.KnockVelocity * away < push) s.KnockVelocity = away * push;
             s.Blown = 0.3;

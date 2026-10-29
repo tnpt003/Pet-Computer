@@ -45,12 +45,12 @@ public sealed partial class BattleFieldView
             dc.DrawEllipse(LaserGlow, null, new Point(x, y), 11 * pulse, 6 * pulse);
             dc.DrawEllipse(LaserCore, null, new Point(x, y), 4, 3);
             dc.DrawEllipse(LaserHot, null, new Point(x, y - 0.5), 1.6, 1.2);
-            double left = Math.Clamp(sim.LaserRemaining / Math.Max(0.01, sim.Settings.LaserSeconds), 0, 1);
+            double left = Math.Clamp(sim.LaserRemaining / Math.Max(0.01, sim.LaserSeconds), 0, 1);
             DrawArc(dc, LaserRing, new Point(x, y), 14, left);
         }
         if (sim.FanX is double from)
         {
-            double x = from - OriginX, range = sim.Settings.FanRange;
+            double x = from - OriginX, range = sim.FanRange;
             for (int side = -1; side <= 1; side += 2)
                 for (int k = 0; k < 4; k++)
                 {

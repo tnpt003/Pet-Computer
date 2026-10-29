@@ -67,6 +67,7 @@ public sealed partial class BattleSim
         grabHeld = 0; grabVX = grabVY = 0;
         if (swingTargetId == slime.Id) CancelSwing();
         events.Add(new(BattleEventKind.Grabbed, slime.X, slime.Id));
+        SkillUsed();
         return true;
     }
 
@@ -84,7 +85,7 @@ public sealed partial class BattleSim
         if (GrabbedId == 0) return;
         var slime = Find(GrabbedId);
         GrabbedId = 0;
-        cooldowns[(int)BattleSkill.Grabber] = SkillCooldown(BattleSkill.Grabber);
+        Recharge(BattleSkill.Grabber);
         if (slime == null) return;
         slime.Grabbed = false;
         if (!slime.Targetable) { slime.Lift = 0; return; }
@@ -144,7 +145,7 @@ public sealed partial class BattleSim
         slime.Tossed = false;
         // A thrown bomb slime blows up where it lands (1.5 M11).
         if (slime.Thrown && slime.Type.Fuse != null) { slime.Thrown = false; Blast(slime, true); return; }
-        if (slime.Thrown) Daze(slime, Settings.GrabberStun);
+        if (slime.Thrown) Daze(slime, GrabberStun);
         if (slime.Launched) { slime.Launched = false; if (arms.LaunchStun > 0) Daze(slime, arms.LaunchStun); }
         slime.Thrown = false;
     }
@@ -172,12 +173,12 @@ public sealed partial class BattleSim
         thrown.TossVX = 0;
         if (other != null)
         {
-            ToolHit(other, Settings.GrabberHitDamage);
-            if (other.Targetable) Daze(other, Settings.GrabberStun);
+            ToolHit(other, GrabberHitDamage);
+            if (other.Targetable) Daze(other, GrabberStun);
         }
         // A thrown bomb slime blows up where it hits (1.5 M11).
         if (thrown.Type.Fuse != null && thrown.Targetable) { thrown.Tossed = thrown.Thrown = false; thrown.Lift = 0; Blast(thrown, true); return; }
-        ToolHit(thrown, Settings.GrabberHitDamage);
+        ToolHit(thrown, GrabberHitDamage);
     }
 
     private void MapGrab(double left, double oldWidth, double newWidth)

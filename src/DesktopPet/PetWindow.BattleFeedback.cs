@@ -30,6 +30,8 @@ public sealed partial class PetWindow
         [BattleEventKind.Swing] = ("swoosh", 1),
         // 1.5 M19: a drop picked up.
         [BattleEventKind.DropPicked] = ("sparkle", 5),
+        // 1.5 M25: Ground quake, Sleight of paw, Skill feast.
+        [BattleEventKind.Quaked] = ("pop", 5), [BattleEventKind.SkillRefunded] = ("sparkle", 4), [BattleEventKind.SkillFeast] = ("sparkle", 5),
         // 1.5 M20: the fish basket.
         [BattleEventKind.FishTaken] = ("swoosh", 4), [BattleEventKind.FishDropped] = ("pop", 4), [BattleEventKind.FishReturned] = ("satisfied", 4),
         [BattleEventKind.FishLost] = ("annoyed", 6),

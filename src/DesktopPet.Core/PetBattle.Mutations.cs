@@ -101,7 +101,7 @@ public sealed partial class BattleSim
     // Up to three rare cards the build can still take (none: a plain offer instead).
     private void OfferRares()
     {
-        var rares = Settings.UpgradeList.Where(u => u.Rare && (StackLimit(u) == 0 || Stacks(u.Id) < StackLimit(u)) && (!u.NeedsApps || AppRules != null) && Carries(u.Skill)).ToList();
+        var rares = Settings.UpgradeList.Where(u => u.Rare && (StackLimit(u) == 0 || Stacks(u.Id) < StackLimit(u)) && Fits(u)).ToList();
         if (rares.Count == 0) { OfferUpgrades(); return; }
         var cards = new List<UpgradeSpec>();
         while (cards.Count < 3 && rares.Count > 0)

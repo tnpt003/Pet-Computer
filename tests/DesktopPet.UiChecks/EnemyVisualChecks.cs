@@ -251,5 +251,24 @@ internal static class EnemyVisualChecks
             for (int i = 0; i < pixels.Length; i += 4) if (pixels[i + 3] > 240 && pixels[i + 2] > 230 && pixels[i + 1] is > 190 and < 225 && pixels[i] < 120) goldPixels++;
             check(goldPixels > 60, $"The {effect} card has its own icon ({goldPixels} gold pixels)");
         }
+        // 1.5 M25: every Trickery effect draws its own picture, not the default shield (and none like another).
+        byte[] Icon(string effect)
+        {
+            var icon = new UpgradeIcon { Effect = effect, Width = 52, Height = 52 };
+            icon.Measure(new Size(52, 52)); icon.Arrange(new Rect(0, 0, 52, 52));
+            var bitmap = new RenderTargetBitmap(52, 52, 96, 96, PixelFormats.Pbgra32);
+            bitmap.Render(icon);
+            var pixels = new byte[52 * 52 * 4];
+            bitmap.CopyPixels(pixels, 52 * 4, 0);
+            return pixels;
+        }
+        var shield = Icon("armor");
+        var tricks = new[] { "laserTime", "fanPower", "grabberThrow", "scissorsDamage", "sprayTime", "dropChance", "fishHeal", "landingQuake", "skillRefund" };
+        var drawn = tricks.Select(Icon).ToList();
+        int Differ(byte[] a, byte[] b) { int n = 0; for (int i = 0; i < a.Length; i += 4) if (Math.Abs(a[i] - b[i]) + Math.Abs(a[i + 1] - b[i + 1]) + Math.Abs(a[i + 2] - b[i + 2]) > 60) n++; return n; }
+        int leastFromShield = drawn.Min(p => Differ(p, shield));
+        int leastApart = int.MaxValue;
+        for (int i = 0; i < drawn.Count; i++) for (int j = i + 1; j < drawn.Count; j++) leastApart = Math.Min(leastApart, Differ(drawn[i], drawn[j]));
+        check(leastFromShield > 150 && leastApart > 100, $"The nine Trickery cards each have their own icon (least {leastFromShield} px from the shield, {leastApart} px from each other)");
     }
 }

@@ -843,6 +843,8 @@ public sealed class UpgradeSpec
     public int? EndlessMaxStacks { get; init; }
     // Only offered in battles with the desktop apps (its effect is about them).
     [JsonIgnore] public bool NeedsApps => Effect is "appCharge" or "killCharge";
+    // 1.5 M25: only offered in battles with drops (Expedition, Infinity; its effect is about them).
+    [JsonIgnore] public bool NeedsDrops => Effect is "dropChance" or "fishHeal";
     // A skill id ("bomb", "shield"…): only offered in battles that carry that skill (its effect is about it).
     public string? Skill { get; init; }
     // A rare card (up to two per group, at most once a build): it takes the place of its group's card in an
@@ -883,14 +885,19 @@ public sealed class SynergySpec
     public string Describe(string language) => PetText.Data(language, DescVi, DescEn);
 }
 
-// The upgrade groups, in the order cards, the HUD and the setup panel show them.
+// The upgrade groups, in the order cards, the HUD and the setup panel show them. 1.5 M25: Trickery
+// (skills, bombs, apps, drops) is the fourth; an offer gives each of Offered a place and Trickery
+// the utility place (BattleSettings.UtilityChance).
 public static class BuildGroups
 {
-    public static readonly string[] All = { "defense", "power", "speed" };
+    public const string Trick = "trick";
+    public static readonly string[] All = { "defense", "power", "speed", Trick };
+    public static readonly string[] Offered = { "defense", "power", "speed" };
     public static string Name(string group, string language) => group switch
     {
         "defense" => PetText.Pick(language, "Phòng thủ", "Defense"),
         "power" => PetText.Pick(language, "Sức mạnh", "Power"),
+        Trick => PetText.Pick(language, "Mưu mẹo", "Trickery"),
         _ => PetText.Pick(language, "Tốc độ", "Speed")
     };
 }
@@ -1793,12 +1800,19 @@ public static class BattleData
         ["regen"] = (0.05, 10), ["stunCut"] = (0.05, 0.9), ["skillCooldown"] = (0.01, 0.5), ["appCharge"] = (0.01, 0.5),
         ["killCharge"] = (0.005, 0.2), ["bomb"] = (0.05, 2), ["shieldTime"] = (0.2, 5),
         // 1.5 M04: the chance a landed weapon hit leaves the card's onHit status.
-        ["onHit"] = (0.01, 1)
+        ["onHit"] = (0.01, 1),
+        // 1.5 M25 (Trickery): seconds more Laser, more Fan reach and wind, more Grabber throw damage and daze,
+        // more Scissors damage (fractions), seconds more Spray; more drops (a fraction), HP more a fish;
+        // rare: a landing quake's damage, the chance a skill costs half its cooldown.
+        ["laserTime"] = (0.2, 5), ["fanPower"] = (0.05, 1), ["grabberThrow"] = (0.05, 2), ["scissorsDamage"] = (0.05, 2),
+        ["sprayTime"] = (0.2, 5), ["dropChance"] = (0.05, 2), ["fishHeal"] = (1, 100), ["landingQuake"] = (1, 100), ["skillRefund"] = (0.05, 1)
     };
     public static readonly Dictionary<string, (double Min, double Max)> SynergyLimits = new()
     {
         ["thorns"] = (0.05, 2), ["armorBreak"] = (0.05, 3), ["echo"] = (0.1, 2),
-        ["lastStand"] = (1, 1), ["autoShield"] = (5, 120), ["comboStun"] = (0.1, 3), ["finisher"] = (0.01, 0.5), ["rush"] = (0.05, 1)
+        ["lastStand"] = (1, 1), ["autoShield"] = (5, 120), ["comboStun"] = (0.1, 3), ["finisher"] = (0.01, 0.5), ["rush"] = (0.05, 1),
+        // 1.5 M25 (Trickery): damage after a skill (a fraction), seconds off every cooldown a defeat, seconds between free skills.
+        ["skillRush"] = (0.05, 1), ["killRecharge"] = (0.1, 5), ["skillFeast"] = (10, 300)
     };
 
     private static void ValidateCampaign(CampaignSpec campaign, Action<IReadOnlyList<WaveSpec>?, string, int?, bool> waves, Action<string?, string> id, Action<string?, string> text)

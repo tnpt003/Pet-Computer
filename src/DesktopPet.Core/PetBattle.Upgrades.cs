@@ -12,13 +12,14 @@ public sealed partial class BattleSim
     // gaps. When the cat is hurt an instant heal takes the place of the group card the build has
     // the fewest points in. Never a card at its limit, never a heal at full HP, and no offer once
     // the stage's maxUpgrades picks are made; nothing left: no choice this time. A group's rare card
-    // (RareChance) may stand in for its common one, never as a filler.
+    // (RareChance) may stand in for its common one, never as a filler. Trickery (1.5 M25) has no place
+    // of its own: its cards come by the utility place (UtilityChance), its rare ones there too.
     private void OfferUpgrades()
     {
         if (Stage?.MaxUpgrades is int cap && Picks >= cap) return;
-        bool Open(UpgradeSpec u) => (StackLimit(u) == 0 || Stacks(u.Id) < StackLimit(u)) && (!u.NeedsApps || AppRules != null) && Carries(u.Skill);
+        bool Open(UpgradeSpec u) => (StackLimit(u) == 0 || Stacks(u.Id) < StackLimit(u)) && Fits(u);
         var cards = new List<UpgradeSpec>();
-        foreach (var group in BuildGroups.All)
+        foreach (var group in BuildGroups.Offered)
         {
             var options = Settings.UpgradeList.Where(u => u.Group == group && !u.Rare && Open(u)).ToList();
             UpgradeSpec? card = options.Count > 0 ? options[offerRandom.Next(options.Count)] : null;
@@ -35,10 +36,18 @@ public sealed partial class BattleSim
             cards.Add(rest[i]);
             rest.RemoveAt(i);
         }
-        // A utility card (no group: skills, apps, bomb, Shield) now and then takes one place.
-        var utility = Settings.UpgradeList.Where(u => u.Group == null && u.Effect != "heal" && Open(u) && !cards.Contains(u)).ToList();
-        if (cards.Count > 0 && utility.Count > 0 && utilityRandom.NextDouble() < Settings.UtilityChance)
-            cards[utilityRandom.Next(cards.Count)] = utility[utilityRandom.Next(utility.Count)];
+        // A utility or Trickery card (skills, apps, bomb, Shield, drops) now and then takes one place;
+        // then a Trickery rare card may stand in for it (RareChance, on the same stream).
+        bool Utility(UpgradeSpec u) => (u.Group == null || u.Group == BuildGroups.Trick) && u.Effect != "heal";
+        var utility = Settings.UpgradeList.Where(u => Utility(u) && !u.Rare && Open(u) && !cards.Contains(u)).ToList();
+        var trickRares = Settings.UpgradeList.Where(u => Utility(u) && u.Rare && Open(u)).ToList();
+        if (cards.Count > 0 && (utility.Count > 0 || trickRares.Count > 0) && utilityRandom.NextDouble() < Settings.UtilityChance)
+        {
+            int at = utilityRandom.Next(cards.Count);
+            UpgradeSpec? pick = utility.Count > 0 ? utility[utilityRandom.Next(utility.Count)] : null;
+            if (trickRares.Count > 0 && utilityRandom.NextDouble() < Settings.RareChance) pick = trickRares[utilityRandom.Next(trickRares.Count)];
+            if (pick != null) cards[at] = pick;
+        }
         var heals = Settings.UpgradeList.Where(u => u.Effect == "heal" && Open(u)).ToList();
         if (CatHp < CatMaxHp && heals.Count > 0)
         {
@@ -58,6 +67,9 @@ public sealed partial class BattleSim
         Armed = null;
         events.Add(new(BattleEventKind.UpgradeOffered, 0, UpgradeOffer.Count));
     }
+
+    // A card this battle can use: an app's only with the apps, a drop's only with drops, a skill's only when carried.
+    private bool Fits(UpgradeSpec u) => (!u.NeedsApps || AppRules != null) && (!u.NeedsDrops || DropRules != null) && Carries(u.Skill);
 
     // The offer a wave would make now, for an Expedition rest or swap (outside any battle: the
     // caller makes a sim for it alone). Null: nothing to offer.
@@ -157,6 +169,7 @@ public sealed partial class BattleSim
                 CatHp += healed;
                 if (healed > 0) AddEffect(BattleEffectKind.Number, catX, 115, -Math.Round(healed));
                 break;
+            default: TakeTrick(card); break; // 1.5 M25: Trickery.
         }
         if (card.Group == null) return;
         int points = GroupPoints(card.Group);

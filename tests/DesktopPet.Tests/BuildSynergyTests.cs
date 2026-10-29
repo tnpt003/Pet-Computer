@@ -37,7 +37,7 @@ internal static class BuildSynergyTests
 
     public static void Run(Action<bool, string> check)
     {
-        // The shipped data: three groups, each able to reach its synergy at 3; the fish counts for none.
+        // The shipped data: four groups (Trickery since 1.5 M25), each able to reach its synergy at 3; the fish counts for none.
         var data = BattleData.Settings;
         foreach (var group in BuildGroups.All)
         {
@@ -48,9 +48,9 @@ internal static class BuildSynergyTests
             check(synergy.At == 3 && room >= 3 && tiers.SequenceEqual(new[] { 6, 9 }) && endlessRoom >= 9,
                 $"battle.json: {group} has room for {room} points ({endlessRoom} in Infinity), a synergy at 3 ({synergy.Name("en")}) and Infinity's at 6 and 9");
         }
-        check(data.SynergyList.Where(y => !y.EndlessOnly).Select(y => y.Effect).OrderBy(e => e).SequenceEqual(new[] { "armorBreak", "echo", "thorns" }) &&
+        check(data.SynergyList.Where(y => !y.EndlessOnly).Select(y => y.Effect).OrderBy(e => e).SequenceEqual(new[] { "armorBreak", "echo", "skillRush", "thorns" }) &&
               data.UpgradeList.Single(u => u.Effect == "heal").Group == null && data.UpgradeList.Any(u => u is { Id: "big_heart", Effect: "maxHp", Group: "defense" }),
-            "battle.json: Thorns, Armor break and Afterimage; Big heart joins Defense; the fish has no group");
+            "battle.json: Thorns, Armor break, Afterimage and Teamwork; Big heart joins Defense; the fish has no group");
         check(data.Campaign!.Chapters[0].Stages[2].MaxUpgrades == 3, "The survive stage allows at most 3 picks");
 
         // The offer: one card from each group at full HP.

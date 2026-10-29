@@ -28,8 +28,8 @@ internal static class ExpeditionGachaTests
     {
         var data = BattleData.Settings;
         var spec = data.Expedition!;
-        check(spec.KindGacha is { Steps: 5, MinLanes: 2, MaxLanes: 3 } && spec.Steps.Length == 0 && spec.StepCount == 6 && spec.Capsules != null && spec.RulesVersion == 7 && spec.KeepRuns.SequenceEqual(new[] { 6 }),
-            "Built-in Expedition: 5 steps drawn by the step gacha (2–3 nodes), then the boss; the capsule machine; rules version 7 (1.5 M23 shop), runs of 6 go on");
+        check(spec.KindGacha is { Steps: 5, MinLanes: 2, MaxLanes: 3 } && spec.Steps.Length == 0 && spec.StepCount == 6 && spec.Capsules != null && spec.RulesVersion == 8 && spec.KeepRuns.SequenceEqual(new[] { 6, 7 }) && spec.ShopFrom == 7,
+            "Built-in Expedition: 5 steps drawn by the step gacha (2–3 nodes), then the boss; the capsule machine; rules version 8 (7: the M23 shop, 8: M25 Trickery), runs of 6 and 7 go on");
 
         // A new run: only the boss is known; nothing can be fought or visited before the spin.
         var x = new Expedition(data, new ExpeditionProgress());

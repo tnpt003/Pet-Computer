@@ -115,8 +115,8 @@ internal static class EndlessChecks
                 foreach (var line in Tree(scroll).OfType<TextBlock>().Where(t => t.IsVisible))
                     if (line.TransformToAncestor(scroll).TransformBounds(new Rect(line.RenderSize)).Right > scroll.ViewportWidth + 0.5) outside.Add(line.Text);
                 int pictures = medals.Sum(m => Tree(m).OfType<SynergyIcon>().Count());
-                check(medals.Count == 9 && pictures == 9 && outside.Count == 0,
-                    $"Bag ({lang}): nine synergy medals with pictures, no text outside its medal or the Bag ({medals.Count} medals, {pictures} pictures; outside: {string.Join(" / ", outside)})");
+                check(medals.Count == 12 && pictures == 12 && outside.Count == 0,
+                    $"Bag ({lang}): twelve synergy medals (four groups since 1.5 M25) with pictures, no text outside its medal or the Bag ({medals.Count} medals, {pictures} pictures; outside: {string.Join(" / ", outside)})");
                 Shot("Pet bag", $"bag-endless-synergies-{lang}.png");
                 window.CloseBattleBag();
             }

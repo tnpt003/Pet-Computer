@@ -42,7 +42,7 @@ internal static class UpgradeChecks
         var later = new StageSpec { Id = "later", NameVi = "Sau", NameEn = "Later", Upgrades = true, Waves = new[] { One(), One(), One() } };
         // rareChance: 0 keeps the offers to the common cards these checks expect (a rare card may
         // otherwise take a group's place); the rare Defense card has its own check below.
-        BattleSettings Tuning(double rare) => new() { FirstWaveDelay = 0, SpawnInterval = 0, SlimeMaxHp = 1, SlimeDamage = 0, WaveBreakSeconds = 0.5, OutroSeconds = 0.5, RareChance = rare, UtilityChance = 0,
+        BattleSettings Tuning(double rare, double utility = 0) => new() { FirstWaveDelay = 0, SpawnInterval = 0, SlimeMaxHp = 1, SlimeDamage = 0, WaveBreakSeconds = 0.5, OutroSeconds = 0.5, RareChance = rare, UtilityChance = utility,
             Campaign = new CampaignSpec { Chapters = new[] { new ChapterSpec { Id = "c", NameVi = "C", NameEn = "C", Stages = new[] { stage, hold, later } } } } };
         var tuning = Tuning(0);
         window.BattleTuning = tuning;
@@ -172,6 +172,25 @@ internal static class UpgradeChecks
             window.PickBattleUpgrade(shell!.Id); window.ConfirmBattleUpgrade();
             check(window.Battle.Synergies.Any(y => y.Id == "thorns") && Text(hud).Contains("★ THORNS!") && hud.UpgradesText.Contains("★ Thorns") && hud.UpgradesText.Contains("◆ Turtle shell") && window.Battle.CatMaxHp == 100,
                 $"Taking it switches Thorns on too; the HUD shows the star and the rare card ({hud.UpgradesText})");
+            window.Reset();
+            // 1.5 M25: a Trickery card in the utility place, its ring and progress like the other groups'.
+            window.BattleTuning = Tuning(0, 1);
+            check(window.StartBattle(stage: stage) == null, "With the utility place always used a stage starts");
+            UntilOffer();
+            var tricks = window.Battle!.UpgradeOffer?.Where(u => u.Group == BuildGroups.Trick).ToList();
+            check(tricks is { Count: 1 } && window.BattleUpgradeText.Contains("Trickery 0 → 1/3"), $"One Trickery card takes a place and shows its group's progress ({window.BattleUpgradeText.Replace('\n', '|')})");
+            if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string reviewTrick)
+                foreach (var (shotLanguage, shotFile) in new[] { ("en", "adventure-upgrade-trick-en.png"), ("vi", "adventure-upgrade-trick-vi.png") })
+                {
+                    prefs.Language = shotLanguage; Call(window, "UpdateBattleUpgrade");
+                    if (Find("Pet upgrade")?.Content is not FrameworkElement trickPanel) continue;
+                    trickPanel.UpdateLayout();
+                    var shot = new System.Windows.Media.Imaging.RenderTargetBitmap((int)Math.Ceiling(trickPanel.ActualWidth + 12), (int)Math.Ceiling(trickPanel.ActualHeight + 12), 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
+                    shot.Render(trickPanel);
+                    var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder(); encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(shot));
+                    using var stream = File.Create(Path.Combine(reviewTrick, shotFile)); encoder.Save(stream);
+                }
+            prefs.Language = "en";
             window.Reset();
             window.BattleTuning = tuning;
             progress.Completed.RemoveAll(id => id is "up" or "hold");

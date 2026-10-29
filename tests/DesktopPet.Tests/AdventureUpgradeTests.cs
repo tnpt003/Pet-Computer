@@ -9,9 +9,9 @@ internal static class AdventureUpgradeTests
         const double dt = 1.0 / 60;
         var data = BattleData.Settings;
         var json = data.UpgradeList;
-        check(json.Count == 21 && json.Select(u => u.Effect).Distinct().Count() == 21 && json.Count(u => u.Rare) == 5 && json.All(u => u.NameVi.Length > 0 && u.DescEn.Length > 0)
-              && json.Count(u => u.Group == null && u.Effect != "heal") == 5,
-            "battle.json lists 21 upgrades (5 of them rare, 5 utility cards), one per effect, named in both languages");
+        check(json.Count == 30 && json.Select(u => u.Effect).Distinct().Count() == 30 && json.Count(u => u.Rare) == 7 && json.All(u => u.NameVi.Length > 0 && u.DescEn.Length > 0)
+              && json.Count(u => u.Group == null) == 1 && json.Count(u => u.Group == BuildGroups.Trick) == 14,
+            "battle.json lists 30 upgrades (7 of them rare, 14 Trickery cards since 1.5 M25, only the fish without a group), one per effect, named in both languages"); 
         check(json.Select(u => (u.Id, u.Group, u.Effect, u.Amount, u.MaxStacks)).SequenceEqual(new BattleSettings().UpgradeList.Select(u => (u.Id, u.Group, u.Effect, u.Amount, u.MaxStacks))) &&
               data.SynergyList.Select(y => (y.Id, y.Group, y.At, y.Effect, y.Amount, y.Every)).SequenceEqual(new BattleSettings().SynergyList.Select(y => (y.Id, y.Group, y.At, y.Effect, y.Amount, y.Every))),
             "battle.json's upgrades and synergies match the built-in ones");

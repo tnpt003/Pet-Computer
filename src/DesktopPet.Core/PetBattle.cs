@@ -301,6 +301,7 @@ public sealed partial class BattleSim
         statusRandom = BattleRandom.Stream(Seed, BattleRandom.Status);
         dropRandom = BattleRandom.Stream(Seed, BattleRandom.Drops);
         mutationRandom = BattleRandom.Stream(Seed, BattleRandom.Mutations);
+        trickRandom = BattleRandom.Stream(Seed, BattleRandom.Tricks);
         Loot = loot;
         Settings = settings;
         Stage = stage;
@@ -411,6 +412,8 @@ public sealed partial class BattleSim
             }
             // Tailwind: put down after a real lift, the cat attacks faster a moment.
             if (wasLifted && liftedFor >= Settings.RescueGraceMinLiftSeconds && landingRushBonus > 0) LandingRushRemaining = LandingRushSeconds;
+            // Ground quake (1.5 M25): the same real lift shakes the floor where the cat lands.
+            if (wasLifted && liftedFor >= Settings.RescueGraceMinLiftSeconds) Quake(catX);
             // Let go onto a burrower coming up: it is pinned (1.5 M14).
             if (wasLifted) CatLanded(catX);
             wasLifted = false;
@@ -420,6 +423,7 @@ public sealed partial class BattleSim
         }
         CatCooldown = Math.Max(0, CatCooldown - dt);
         StepBuild(dt, catHeld);
+        StepTrickery(dt, catHeld);
         StepBombs(dt);
         StepSpit(dt);
         if (Over) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
@@ -599,7 +603,7 @@ public sealed partial class BattleSim
         Combo = LiveCombo + 1;
         comboClock = 0;
         bool combo = Combo >= ComboHits;
-        double damage = arms.Damage * DamageFactor * ArmsFactor * (CheerRemaining > 0 ? Settings.CheerDamage : 1) * (combo ? Settings.ComboDamage : 1);
+        double damage = arms.Damage * DamageFactor * ArmsFactor * SkillRushFactor * (CheerRemaining > 0 ? Settings.CheerDamage : 1) * (combo ? Settings.ComboDamage : 1);
         // Armor break: combo hits hit harder.
         if (combo && Active("armorBreak") is SynergySpec breaker) damage *= 1 + breaker.Amount;
         // Rare cards: the first landed hit on each enemy (Opener) and a swing after a run (Momentum)
@@ -832,6 +836,7 @@ public sealed partial class BattleSim
         if (slime.Lit) Blast(slime, false);
         SplitApart(slime);
         DropLoot(slime); // 1.5 M19: a fish, a coin or a potion, sometimes.
+        DefeatRecharge(); // 1.5 M25: Quick reload.
         DropFish(slime); // 1.5 M20: the basket's fish it carried falls there.
     }
 
@@ -964,7 +969,8 @@ public sealed partial class BattleSim
                 break;
             default: return false; // No effect yet (BattleSkillInfo.Working).
         }
-        cooldowns[(int)skill] = SkillCooldown(skill);
+        Recharge(skill);
+        SkillUsed();
         return true;
     }
 
@@ -1009,7 +1015,8 @@ public sealed partial class BattleSim
             bombs.Add(new BattleBomb { X = slime.X, Remaining = Settings.BombDelay });
             events.Add(new(BattleEventKind.BombThrown, slime.X));
         }
-        cooldowns[(int)skill] = SkillCooldown(skill);
+        Recharge(skill);
+        SkillUsed();
         if (Armed == skill) Armed = null;
         return true;
     }

@@ -101,7 +101,7 @@ public sealed partial class PetWindow
                 Width = UpgradeCardStep - 8, MinHeight = 150, CornerRadius = new CornerRadius(10), Padding = new Thickness(8, 10, 8, 8), Margin = new Thickness(0, 0, 8, 0),
                 Cursor = System.Windows.Input.Cursors.Hand,
                 Child = new StackPanel { Children = { new Border { Width = 86, Height = 86, CornerRadius = new CornerRadius(43), BorderThickness = new Thickness(2),
-                    BorderBrush = upgrade.Group == "defense" ? PetUi.Mint : upgrade.Group == "speed" ? PetUi.Lilac : PetUi.AccentBright,
+                    BorderBrush = upgrade.Group switch { "defense" => PetUi.Mint, "speed" => PetUi.Lilac, BuildGroups.Trick => GroupTrick, _ => PetUi.AccentBright },
                     Background = PetUi.Game.Stage, HorizontalAlignment = HorizontalAlignment.Center, IsHitTestVisible = false,
                     Child = new UpgradeIcon { Effect = upgrade.Effect, Width = 64, Height = 64, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center } }, name, desc, build, count } }
             };
@@ -332,6 +332,58 @@ public sealed class UpgradeIcon : FrameworkElement
                 dc.DrawLine(Line, new Point(cx + 8, cy - 12), new Point(cx + 16, cy - 12));
                 dc.DrawLine(Line, new Point(cx + 12, cy - 16), new Point(cx + 12, cy - 8));
                 break;
+            // 1.5 M25 Trickery cards.
+            case "laserTime": // A pointer and its red dot.
+                dc.DrawGeometry(Back, Ink, Shape($"M {cx - 16},{cy + 10} L {cx - 3},{cy - 3} L {cx},{cy} L {cx - 13},{cy + 13} Z"));
+                dc.DrawEllipse(Brushes.Red, Ink, new Point(cx + 9, cy - 9), 4.5, 4.5);
+                dc.DrawLine(Line, new Point(cx + 9, cy - 19), new Point(cx + 9, cy - 16));
+                dc.DrawLine(Line, new Point(cx + 19, cy - 9), new Point(cx + 16, cy - 9));
+                break;
+            case "fanPower": // A fan blowing three gusts.
+                dc.DrawEllipse(Blue, Ink, new Point(cx - 9, cy), 9, 9);
+                dc.DrawEllipse(Ink.Brush, null, new Point(cx - 9, cy), 2, 2);
+                for (int i = -1; i <= 1; i++) dc.DrawLine(Line, new Point(cx + 3, cy + i * 8), new Point(cx + 16, cy + i * 8));
+                break;
+            case "grabberThrow": // A claw flinging a ball.
+                dc.DrawGeometry(null, Ink, Shape($"M {cx - 14},{cy - 14} L {cx - 6},{cy - 4} M {cx - 6},{cy - 4} Q {cx - 13},{cy + 2} {cx - 9},{cy + 9} M {cx - 6},{cy - 4} Q {cx + 1},{cy - 3} {cx + 2},{cy + 4}"));
+                dc.DrawEllipse(Green, Ink, new Point(cx + 10, cy + 6), 6, 6);
+                dc.DrawLine(Line, new Point(cx + 4, cy - 10), new Point(cx + 13, cy - 6));
+                break;
+            case "scissorsDamage": // Scissors.
+                dc.DrawEllipse(Back, Ink, new Point(cx - 10, cy + 9), 5, 5);
+                dc.DrawEllipse(Back, Ink, new Point(cx + 1, cy + 11), 5, 5);
+                dc.DrawGeometry(Gold, Ink, Shape($"M {cx - 7},{cy + 5} L {cx + 15},{cy - 14} L {cx - 2},{cy + 7} Z"));
+                dc.DrawGeometry(Gold, Ink, Shape($"M {cx - 3},{cy + 7} L {cx + 9},{cy - 16} L {cx + 1},{cy + 8} Z"));
+                break;
+            case "sprayTime": // A spray bottle and its drops.
+                dc.DrawRoundedRectangle(Blue, Ink, new Rect(cx - 12, cy - 4, 13, 18), 3, 3);
+                dc.DrawGeometry(Back, Ink, Shape($"M {cx - 9},{cy - 4} L {cx - 9},{cy - 11} L {cx + 4},{cy - 11} L {cx + 4},{cy - 7} L {cx - 2},{cy - 7} L {cx - 2},{cy - 4} Z"));
+                foreach (var (x, y) in new[] { (cx + 10, cy - 12), (cx + 14, cy - 5), (cx + 9, cy - 3) })
+                    dc.DrawEllipse(Blue, Ink, new Point(x, y), 2.4, 2.4);
+                break;
+            case "dropChance": // A coin and a potion side by side.
+                dc.DrawEllipse(Gold, Ink, new Point(cx - 6, cy + 4), 9, 9);
+                dc.DrawLine(Ink, new Point(cx - 6, cy - 1), new Point(cx - 6, cy + 9));
+                dc.DrawGeometry(Green, Ink, Shape($"M {cx + 6},{cy - 14} L {cx + 12},{cy - 14} L {cx + 12},{cy - 8} C {cx + 19},{cy - 5} {cx + 18},{cy + 6} {cx + 9},{cy + 6} C {cx},{cy + 6} {cx - 1},{cy - 5} {cx + 6},{cy - 8} Z"));
+                break;
+            case "fishHeal": // A round fish with a plus.
+                dc.DrawGeometry(Pink, Ink, Shape($"M {cx + 5},{cy + 2} L {cx + 16},{cy - 6} L {cx + 16},{cy + 10} Z"));
+                dc.DrawEllipse(Pink, Ink, new Point(cx - 4, cy + 2), 12, 10);
+                dc.DrawEllipse(Ink.Brush, null, new Point(cx - 10, cy), 1.6, 1.6);
+                dc.DrawLine(Line, new Point(cx + 6, cy - 14), new Point(cx + 14, cy - 14));
+                dc.DrawLine(Line, new Point(cx + 10, cy - 18), new Point(cx + 10, cy - 10));
+                break;
+            case "landingQuake": // An arrow down onto the floor, the ground cracking and shaking.
+                dc.DrawLine(Line, new Point(cx - 16, cy + 12), new Point(cx + 16, cy + 12));
+                dc.DrawGeometry(Gold, Ink, Shape($"M {cx - 4},{cy - 16} L {cx + 4},{cy - 16} L {cx + 4},{cy - 4} L {cx + 9},{cy - 4} L {cx},{cy + 7} L {cx - 9},{cy - 4} L {cx - 4},{cy - 4} Z"));
+                dc.DrawGeometry(null, Ink, Shape($"M {cx - 17},{cy + 4} Q {cx - 14},{cy} {cx - 11},{cy + 4} M {cx + 11},{cy + 4} Q {cx + 14},{cy} {cx + 17},{cy + 4}"));
+                break;
+            case "skillRefund": // A magician's top hat and a sparkle.
+                dc.DrawRoundedRectangle(Ink.Brush, null, new Rect(cx - 16, cy + 6, 26, 4), 2, 2);
+                dc.DrawRectangle(Ink.Brush, null, new Rect(cx - 10, cy - 10, 14, 17));
+                dc.DrawRectangle(Pink, null, new Rect(cx - 10, cy + 1, 14, 3));
+                dc.DrawGeometry(Gold, Ink, Shape($"M {cx + 12},{cy - 16} L {cx + 14},{cy - 10} L {cx + 19},{cy - 8} L {cx + 14},{cy - 6} L {cx + 12},{cy} L {cx + 10},{cy - 6} L {cx + 5},{cy - 8} L {cx + 10},{cy - 10} Z"));
+                break;
             default: // armor: a shield.
                 dc.DrawGeometry(Gold, Ink, Shape($"M {cx},{cy - 15} L {cx + 13},{cy - 9} C {cx + 13},{cy + 5} {cx + 7},{cy + 12} {cx},{cy + 16} C {cx - 7},{cy + 12} {cx - 13},{cy + 5} {cx - 13},{cy - 9} Z"));
                 break;
@@ -361,11 +413,13 @@ public sealed class SynergyIcon : FrameworkElement
 
     private string Picture => Id switch
     {
-        "thorns" or "armor_break" or "afterimage" or "afterimage_plus" or "last_stand" or "fortress" or "shockwave" or "finisher" or "gale" => Id,
+        "thorns" or "armor_break" or "afterimage" or "afterimage_plus" or "last_stand" or "fortress" or "shockwave" or "finisher" or "gale"
+            or "teamwork" or "quick_reload" or "skill_feast" => Id,
         _ => Fallback switch
         {
             "thorns" => "thorns", "armorBreak" => "armor_break", "echo" => "afterimage", "lastStand" => "last_stand", "autoShield" => "fortress",
-            "comboStun" => "shockwave", "finisher" => "finisher", "rush" => "gale", _ => "star"
+            "comboStun" => "shockwave", "finisher" => "finisher", "rush" => "gale",
+            "skillRush" => "teamwork", "killRecharge" => "quick_reload", "skillFeast" => "skill_feast", _ => "star"
         }
     };
 
@@ -440,6 +494,25 @@ public sealed class SynergyIcon : FrameworkElement
                     dc.DrawGeometry(null, pen, Shape($"M {cx + 13},{cy - 8} C {cx + 4},{cy - 17} {cx - 14},{cy - 11} {cx - 12},{cy + 2} C {cx - 10},{cy + 12} {cx + 5},{cy + 12} {cx + 6},{cy + 3} C {cx + 7},{cy - 3} {cx - 2},{cy - 5} {cx - 3},{cy + 1}"));
                 dc.DrawLine(Line, new Point(cx + 8, cy + 9), new Point(cx + 16, cy + 9));
                 dc.DrawLine(Line, new Point(cx + 11, cy + 14), new Point(cx + 17, cy + 14));
+                break;
+            // 1.5 M25 Trickery.
+            case "teamwork": // A paw and a sparkle side by side.
+                dc.DrawEllipse(Cream, Ink, new Point(cx - 5, cy + 5), 8, 7);
+                for (int i = 0; i < 3; i++) dc.DrawEllipse(Cream, Ink, new Point(cx - 13 + i * 8, cy - 6 - (i == 1 ? 3 : 0)), 3.2, 3.6);
+                dc.DrawGeometry(Gold, Ink, Shape($"M {cx + 11},{cy - 15} L {cx + 13},{cy - 8} L {cx + 19},{cy - 6} L {cx + 13},{cy - 4} L {cx + 11},{cy + 3} L {cx + 9},{cy - 4} L {cx + 3},{cy - 6} L {cx + 9},{cy - 8} Z"));
+                break;
+            case "quick_reload": // An hourglass in a turning arrow.
+                dc.DrawGeometry(null, WindInk, Shape($"M {cx + 12},{cy - 9} A 14,14 0 1 0 {cx + 14},{cy + 3}"));
+                dc.DrawGeometry(null, Thin, Shape($"M {cx + 12},{cy - 9} A 14,14 0 1 0 {cx + 14},{cy + 3}"));
+                dc.DrawGeometry(Gold, Ink, Shape($"M {cx + 7},{cy - 14} L {cx + 16},{cy - 11} L {cx + 10},{cy - 4} Z"));
+                dc.DrawGeometry(Blue, Ink, Shape($"M {cx - 6},{cy - 8} L {cx + 6},{cy - 8} L {cx + 1},{cy} L {cx + 6},{cy + 8} L {cx - 6},{cy + 8} L {cx - 1},{cy} Z"));
+                break;
+            case "skill_feast": // A party cone with confetti.
+                dc.DrawGeometry(Pink, Ink, Shape($"M {cx - 13},{cy + 14} L {cx + 2},{cy - 12} L {cx + 9},{cy + 6} Z"));
+                dc.DrawLine(Thin, new Point(cx - 6, cy + 4), new Point(cx + 4, cy + 8));
+                foreach (var (x, y) in new[] { (cx + 9, cy - 14), (cx + 16, cy - 6), (cx - 4, cy - 15) })
+                    dc.DrawEllipse(Gold, Ink, new Point(x, y), 2.6, 2.6);
+                dc.DrawLine(Line, new Point(cx + 13, cy + 3), new Point(cx + 17, cy + 1));
                 break;
             default: // Any other synergy: a star.
                 dc.DrawGeometry(Green, Ink, Shape($"M {cx},{cy - 14} L {cx + 4},{cy - 5} L {cx + 13},{cy - 4} L {cx + 6},{cy + 2} L {cx + 8},{cy + 12} L {cx},{cy + 7} L {cx - 8},{cy + 12} L {cx - 6},{cy + 2} L {cx - 13},{cy - 4} L {cx - 4},{cy - 5} Z"));

@@ -198,7 +198,7 @@ internal static class EnemyGachaTests
     {
         var offers = Enumerable.Range(1, 600).Select(seed => Offering(seed, 0.15).UpgradeOffer!).ToList();
         check(offers.All(o => o.Count == 3 && o.Select(c => c.Group).Distinct().Count() == 3), "Offers keep one card of each group, rare or not");
-        foreach (var group in BuildGroups.All)
+        foreach (var group in BuildGroups.Offered)
         {
             double share = offers.Count(o => o.Any(c => c.Rare && c.Group == group)) / (double)offers.Count;
             check(share is > 0.1 and < 0.2, $"The {group} rare card takes its group's place about 15 % of the time ({share:P0})");
@@ -317,8 +317,8 @@ internal static class EnemyGachaTests
         check(runner is { WindupAdd: 0.3, DashSpeed: 1.4 } && rock is { SureBlocks: 1 } && mender is { FirstHeal: 2 } && data.Enemy("slime").Elite != null && data.MaxElites == 1,
             "Shipped elites: quick slime +0.3 s windup / ×1.4 dash, rock one sure block, herb slime first heal ×2 (traits kept by the 1.2.0-beta buff, which also gave the slime one); at most one alive");
         var rares = data.UpgradeList.Where(u => u.Rare).ToList();
-        check(rares.Select(u => (u.Id, Group: u.Group ?? "", u.Effect)).OrderBy(r => r.Group).ThenBy(r => r.Id).SequenceEqual(new[] { ("turtle_shell", "defense", "shell"), ("finishing_blow", "power", "execute"), ("opening_strike", "power", "opener"), ("running_start", "speed", "momentum"), ("tailwind", "speed", "landingRush") }.OrderBy(r => r.Item2).ThenBy(r => r.Item1))
-            && data.RareChance == 0.15, "Shipped rare cards: Turtle shell; Opening strike and Finishing blow; Running start and Tailwind (15 %)");
+        check(rares.Select(u => (u.Id, Group: u.Group ?? "", u.Effect)).OrderBy(r => r.Group).ThenBy(r => r.Id).SequenceEqual(new[] { ("turtle_shell", "defense", "shell"), ("finishing_blow", "power", "execute"), ("opening_strike", "power", "opener"), ("running_start", "speed", "momentum"), ("tailwind", "speed", "landingRush"), ("ground_quake", "trick", "landingQuake"), ("sleight", "trick", "skillRefund") }.OrderBy(r => r.Item2).ThenBy(r => r.Item1))
+            && data.RareChance == 0.15, "Shipped rare cards: Turtle shell; Opening strike and Finishing blow; Running start and Tailwind; Ground quake and Sleight of paw (15 %)");
         var stages = data.Campaign!.Chapters[0].Stages;
         check(stages.Take(4).All(s => s.EliteChance == 0) && stages[4].EliteChance > 0, "Random elites only in stage 5 (stage 4 sets its own, the Adventure Guide shows them)");
         // The code's own defaults match the shipped file (used when the file is broken and by tests).

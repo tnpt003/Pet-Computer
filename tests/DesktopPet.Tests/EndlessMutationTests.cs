@@ -8,8 +8,8 @@ internal static class EndlessMutationTests
     public static void Run(Action<bool, string> check)
     {
         var spec = BattleData.Settings.Endless!;
-        check(spec.RulesVersion == 6 && spec.LateBossFrom == 40 && spec.Bosses is { Length: 3 },
-            "Built-in Infinity is rules 6: three bosses in turn, the plain King beside them from wave 40");
+        check(spec.RulesVersion == 7 && spec.LateBossFrom == 40 && spec.Bosses is { Length: 3 },
+            "Built-in Infinity is rules 7 (1.5 M25 Trickery; 6: M24): three bosses in turn, the plain King beside them from wave 40");
         string Bosses(int wave) => string.Join("+", spec.Wave(wave).Groups.Select(g => g.Enemy));
         check(Bosses(10) == "king_c1" && Bosses(20) == "zip" && Bosses(30) == "mutant_king" && Bosses(40) == "king_c1+king" && Bosses(50) == "zip+king" && Bosses(60) == "mutant_king+king",
             $"Boss waves take turns: King, Slime Zip, Mutant King, round again ({Bosses(10)}, {Bosses(20)}, {Bosses(30)}, {Bosses(40)}, {Bosses(50)})");

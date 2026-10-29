@@ -311,7 +311,8 @@ public sealed partial class BattleSim
         PhaseRemaining = settings.FirstWaveDelay;
     }
 
-    public int Alive { get { int n = 0; foreach (var s in slimes) if (s.State != SlimeState.Defeated) n++; return n; } }
+    // A mirage's copies (PetBattle.Tricks.cs) are not counted: they are not really there.
+    public int Alive { get { int n = 0; foreach (var s in slimes) if (s.State != SlimeState.Defeated && !s.Decoy) n++; return n; } }
     public Slime? Find(int id) { foreach (var s in slimes) if (s.Id == id) return s; return null; }
     public void ClearEvents() => events.Clear();
     public double Cooldown(BattleSkill skill) => cooldowns[(int)skill];
@@ -403,6 +404,8 @@ public sealed partial class BattleSim
         StepSlimes(dt, floorX, catHeld);
         if (Over) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
         StepTools(dt, catHeld);
+        if (Over) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
+        StepTricks(dt);
         if (Over) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
         StepGrabber(dt, catHeld);
         if (Over) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
@@ -669,7 +672,7 @@ public sealed partial class BattleSim
         blasting = true;
         foreach (var other in slimes.ToArray())
         {
-            if (other == target || !other.Targetable || other.Airborne || Math.Abs(other.X - target.X) - other.HitWidth / 2 - target.HitWidth / 2 > Settings.ComboSplashRadius) continue;
+            if (other == target || !other.Targetable || other.Airborne || other.Faded || Math.Abs(other.X - target.X) - other.HitWidth / 2 - target.HitWidth / 2 > Settings.ComboSplashRadius) continue;
             if ((other.X - catX) * swingFacing <= 0 ||Math.Abs(other.X - catX) - other.HitWidth / 2 > arms.Range + 14) continue;
             SplashHits++;
             AddEffect(BattleEffectKind.Spark, other.X, other.Height * 0.6);
@@ -686,6 +689,8 @@ public sealed partial class BattleSim
     private HitResult Damage(Slime slime, double amount, DamageSource source)
     {
         if (!slime.Targetable || amount <= 0) return HitResult.Landed;
+        // A faded ghost, a bubble, a mirage's copy, a sulky slime (1.5 M13, PetBattle.Tricks.cs).
+        if (TrickHit(slime, source)) return HitResult.Immune;
         if (slime.Shielded)
         {
             // A boss in its shield phase: nothing gets through (not even the bomb).
@@ -727,23 +732,7 @@ public sealed partial class BattleSim
         }
         if (slime.Hp <= 0)
         {
-            slime.Set(SlimeState.Defeated);
-            slime.KnockVelocity = 0;
-            ClearStatus(slime);
-            Defeated++;
-            if (slime.IsBoss) { BossDefeated = true; DefeatedBoss = slime.Type; }
-            if (SelectedId == slime.Id) SelectedId = null;
-            // A defeated healer's guard ends with it (after the whole blast for a bomb, which hits
-            // everything in it at once).
-            if (slime.MendingId != 0) { slime.MendingId = 0; if (!blasting) RefreshGuards(); }
-            AddEffect(BattleEffectKind.Poof, slime.X, slime.Altitude + slime.Height / 2, slime.IsBoss ? 2 : 1);
-            effects[^1].Tint = slime.Enraged ? slime.Type.AngryColor : slime.Type.Color;
-            events.Add(new(BattleEventKind.SlimeDefeated, slime.X, slime.IsBoss ? 1 : 0));
-            LinkFallen(slime, true);
-            AppsEnemyDefeated(slime);
-            // A bomb slime defeated while lit blows up there; a splitting one breaks apart (1.5 M11).
-            if (slime.Lit) Blast(slime, false);
-            SplitApart(slime);
+            Defeat(slime);
             return HitResult.Landed;
         }
         SpringStruck(slime, source);
@@ -783,6 +772,31 @@ public sealed partial class BattleSim
                 }
             }
         return HitResult.Landed;
+    }
+
+    // An enemy defeated by the cat (its HP gone, or a sulky slime soothed: no puff of smoke then).
+    private void Defeat(Slime slime, bool poof = true)
+    {
+        slime.Set(SlimeState.Defeated);
+        slime.KnockVelocity = 0;
+        ClearStatus(slime);
+        Defeated++;
+        if (slime.IsBoss) { BossDefeated = true; DefeatedBoss = slime.Type; }
+        if (SelectedId == slime.Id) SelectedId = null;
+        // A defeated healer's guard ends with it (after the whole blast for a bomb, which hits
+        // everything in it at once).
+        if (slime.MendingId != 0) { slime.MendingId = 0; if (!blasting) RefreshGuards(); }
+        if (poof)
+        {
+            AddEffect(BattleEffectKind.Poof, slime.X, slime.Altitude + slime.Height / 2, slime.IsBoss ? 2 : 1);
+            effects[^1].Tint = slime.Enraged ? slime.Type.AngryColor : slime.Type.Color;
+        }
+        events.Add(new(BattleEventKind.SlimeDefeated, slime.X, slime.IsBoss ? 1 : 0));
+        LinkFallen(slime, true);
+        AppsEnemyDefeated(slime);
+        // A bomb slime defeated while lit blows up there; a splitting one breaks apart (1.5 M11).
+        if (slime.Lit) Blast(slime, false);
+        SplitApart(slime);
     }
 
     // A stony enemy's block roll for one hit (rolled once per hit, never per frame).
@@ -859,6 +873,7 @@ public sealed partial class BattleSim
             s.RunAwayLeft = 0;
             s.PanicRemaining = 0;
             s.FuseLeft = 0;
+            s.Faded = false;
             if (s.Spring == SpringState.Squeezing) s.Spring = SpringState.Ready;
         }
         events.Add(new(phase == BattlePhase.Won ? BattleEventKind.Won : BattleEventKind.Lost, 0));
@@ -867,7 +882,7 @@ public sealed partial class BattleSim
     // Click on a slime: the cat goes for it first. Never deals damage by itself.
     public bool Select(int id)
     {
-        if (Over || Paused || Find(id) is not { Targetable: true, Riding: false, Airborne: false }) return false;
+        if (Over || Paused || Find(id) is not { Targetable: true, Riding: false, Airborne: false, Faded: false }) return false;
         SelectedId = id;
         return true;
     }
@@ -916,8 +931,10 @@ public sealed partial class BattleSim
     public bool Use(BattleSkill skill, int id, double catX, int? direction = null)
     {
         var slime = Find(id);
-        if (BattleSkills.Get(skill).Aim != SkillAim.Slime || !Ready(skill) || slime is not { Targetable: true }) return false;
-        if (skill == BattleSkill.Push && slime.Elite is { PushImmune: true })
+        if (BattleSkills.Get(skill).Aim != SkillAim.Slime || !Ready(skill) || slime is not { Targetable: true, Faded: false }) return false;
+        // A mirage's copy pushed: it vanishes (the skill is spent).
+        if (skill == BattleSkill.Push && slime.Decoy) { Dispel(slime); AddEffect(BattleEffectKind.Push, slime.X, slime.Height / 2); }
+        else if (skill == BattleSkill.Push && slime.Elite is { PushImmune: true })
         {
             // It stands firm: no knock back, no stun, its windup goes on; the skill is still spent.
             AddEffect(BattleEffectKind.Block, slime.X, slime.Height / 2);

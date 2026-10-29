@@ -134,6 +134,16 @@ internal static class BattleChecks
         CursorAt(gameHud.PointToScreen(new Point(20, 20)));
         CursorAt(new Point(-30000, -30000));
         check(!window.BattleHudDodging && !HudClickThrough() && gameHud.Opacity == 1, "Away from the HUD it looks and works as before");
+        // 1.5 M13: the battle reads the cursor only over its strip (battle x, height over the floor).
+        var pointerStrip = Field<BattleFieldView>(window, "battleView");
+        var stripPoint = pointerStrip.PointToScreen(new Point(300, pointerStrip.ActualHeight - 22));
+        cursorProbe.SetValue(window, (Func<Point>)(() => stripPoint));
+        var overStrip = ((double X, double Height)?)Call(window, "BattlePointer");
+        cursorProbe.SetValue(window, (Func<Point>)(() => new Point(-30000, -30000)));
+        var offStrip = ((double X, double Height)?)Call(window, "BattlePointer");
+        cursorProbe.SetValue(window, usualCursor);
+        check(overStrip is (double stripX, double stripH) && Math.Abs(stripX - (pointerStrip.OriginX + 300)) < 1.5 && Math.Abs(stripH - 20) < 1.5 && offStrip == null,
+            $"The cursor counts for the battle over its strip only ({overStrip}, elsewhere {offStrip?.ToString() ?? "nothing"})");
         // Moving the HUD by its grip (2026-10-22): it follows the cursor inside the work area above the
         // field, is remembered per monitor, and a double click puts it back at the top centre.
         var hudArea = Field<Area>(window, "battleArea");

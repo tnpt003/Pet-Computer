@@ -1,0 +1,16 @@
+{
+  // 1.5 M13 try-out (1 of 2): the ghost slime (S1) and the bubble slime (S2). They are in the built-in
+  // data but no battle uses them yet (chapter 2 and Infinity bring them in). Copy this file to
+  // %LOCALAPPDATA%\DesktopPet\battle.json (keep a copy of yours first), then Battle Mode → Start battle
+  // (the free battle). Custom data: no records, no rewards. Delete the file to get the usual free battle
+  // back. At most two kinds the cursor beats in one battle: the mirage and the sulky slime are in
+  // battle-m13b.json.
+  "schemaVersion": 1,
+  "maxAlive": 5,
+  "waves": [
+    { "groups": [ { "enemy": "phantom", "count": 2 }, { "enemy": "slime", "count": 1 } ] },
+    { "groups": [ { "enemy": "bubble", "count": 2 }, { "enemy": "slime", "count": 1 } ] },
+    { "groups": [ { "enemy": "phantom", "count": 1 }, { "enemy": "bubble", "count": 1 }, { "enemy": "runner", "count": 2 } ] },
+    { "groups": [ { "enemy": "phantom", "count": 2, "elite": true }, { "enemy": "bubble", "count": 2, "elite": true } ] }
+  ]
+}

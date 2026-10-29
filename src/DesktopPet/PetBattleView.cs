@@ -141,9 +141,9 @@ public sealed partial class BattleFieldView : FrameworkElement
         {
             var slime = sim.Slimes[i];
             if (!slime.Targetable || slime.Riding) continue; // A rider: the cat goes for its mount.
-            double dx = Math.Abs(point.X - (slime.X - OriginX));
-            if (dx > slime.Width / 2 + 10 || point.Y < Floor - slime.Height - 24 || point.Y > Floor + 4) continue;
-            int rank = dx <= slime.Width / 2 ? Layer(slime) : -1;
+            double dx = Math.Abs(point.X - (slime.X - OriginX)), half = slime.Width * slime.Puff / 2;
+            if (dx > half + 10 || point.Y < Floor - slime.Height * slime.Puff - BattleSim.BubbleLift(slime) - 24 || point.Y > Floor + 4) continue;
+            int rank = dx <= half ? Layer(slime) : -1;
             if (rank > bestRank || (rank == bestRank && dx < bestDistance)) { bestRank = rank; bestDistance = dx; best = slime.Id; }
         }
         return best;
@@ -216,18 +216,24 @@ public sealed partial class BattleFieldView : FrameworkElement
             {
                 var slime = sim.Slimes[i];
                 if (Layer(slime) != layer || slime.Exploded) continue; // A bomb that blew up: only its blast shows.
-                double x = slime.X - OriginX;
+                double x = slime.X - OriginX + TrickDrift(slime);
+                double bubble = BattleSim.BubbleLift(slime);
                 // A leaping boss: its shadow stays on the floor, shrinking as it rises.
-                if (slime.LeapHeight + slime.Lift > 0)
+                if (slime.LeapHeight + slime.Lift + bubble > 0)
                 {
-                    double k = 1 - Math.Clamp((slime.LeapHeight + slime.Lift) / 100, 0, 0.6);
+                    double k = 1 - Math.Clamp((slime.LeapHeight + slime.Lift + bubble) / 100, 0, 0.6);
                     dc.DrawEllipse(LeapShadow, ShadowRim, new Point(x, floor - 2), slime.Width / 2 * k, 6 * k); // A pale rim: seen on dark desktops too.
                 }
                 // A contact shadow grounds a slime on any wallpaper (the cat has none: its own window sits
                 // above this strip, so a shadow here never lines up with its paws; 2026-10-26 user's screenshot).
-                else if (slime.State != SlimeState.Defeated && !slime.Riding)
-                    dc.DrawEllipse(FootShadow, FootRim, new Point(x, floor - 2), slime.Width * 0.4, 4);
-                DrawSlime(dc, slime, x, floor - slime.LeapHeight - slime.RideHeight - slime.Lift, sim.Settings, time);
+                else if (slime.State != SlimeState.Defeated && !slime.Riding && CastsShadow(slime))
+                {
+                    // A mirage's real one, given away by the cursor: a darker, wider shadow than usual, out past
+                    // its sides (1.5 M13).
+                    bool found = slime.Type.Mirage != null;
+                    dc.DrawEllipse(found ? LeapShadow : FootShadow, FootRim, new Point(x, floor - 2), slime.Width * (found ? 0.68 : 0.4), found ? 5 : 4);
+                }
+                DrawSlime(dc, slime, x, floor - slime.LeapHeight - slime.RideHeight - slime.Lift - bubble, sim.Settings, time);
                 if (sim.AppRules != null && sim.IsInfector(slime.Id) && slime.State != SlimeState.Defeated) DrawVirusMark(dc, slime, x, floor, time);
             }
         for (int i = 0; i < sim.Slimes.Count; i++)
@@ -353,6 +359,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         // Soaked by the spray: a little smaller; hanging from the Grabber: stretched.
         if (slime.Wet) { sx *= 0.86; sy *= 0.86; }
         if (slime.Grabbed) { sx *= 0.9; sy *= 1.12; }
+        TrickLook(slime, time, ref sx, ref sy, ref opacity, ref jitter);
         // A boss crouching before its leap.
         if (slime.Crouch > 0) { sx *= 1 + 0.18 * slime.Crouch; sy *= 1 - 0.25 * slime.Crouch; }
         // A stony body is wide and low (its hitScale is wider to match).
@@ -425,6 +432,7 @@ public sealed partial class BattleFieldView : FrameworkElement
                     dc.DrawEllipse(null, i == 1 ? AfterimageNear : AfterimageFar, new Point(x - slime.Facing * w * 0.55 * i, floor - h / 2), w / 2, h / 2);
         }
         DrawStatusUnder(dc, slime, x, floor, w);
+        DrawTrickBehind(dc, slime, x, floor, w * sx, h * sy, time);
         dc.PushOpacity(opacity);
         dc.PushTransform(new MatrixTransform(sx * size, 0, 0, sy * size, x + jitter, floor));
         double bw = s.SlimeWidth, bh = s.SlimeHeight;
@@ -493,6 +501,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         if (slime.Type.Marks == "chain") DrawChainLinks(dc);
         if (slime.Type.Marks == "flag") DrawFlag(dc, slime, time);
         DrawSwarmMarks(dc, slime, time);
+        DrawTrickMarks(dc, slime, time);
         // An older support mark: a white "+" on its body.
         if (slime.Type.Marks == "cross") dc.DrawGeometry(Brushes.White, Outline, CrossMark);
         if (slime.Elite != null)
@@ -517,6 +526,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         if (slime.IsBoss) dc.DrawGeometry(Gold, Outline, Crown);
         dc.Pop();
         dc.Pop();
+        DrawBubbleShell(dc, slime, x, floor, w, h, time);
         if (slime.Shielded && slime.State != SlimeState.Defeated)
         {
             // The shield phase: a gently pulsing bubble around the boss and a shine on it.
@@ -613,7 +623,9 @@ public sealed partial class BattleFieldView : FrameworkElement
             }
         }
         // The boss's HP is on the HUD; small bars only over ordinary slimes.
-        if (targetable && !slime.IsBoss && (slime.Hp < slime.MaxHp || sim.SelectedId == slime.Id || sim.TargetId == slime.Id))
+        // A sulky slime's bar is how soothed it is; a faded ghost shows none.
+        DrawCalmBar(dc, slime, x, top, size);
+        if (targetable && !slime.IsBoss && slime.Type.Sulk == null && !slime.Faded && (slime.Hp < slime.MaxHp || sim.SelectedId == slime.Id || sim.TargetId == slime.Id))
         {
             double barY = top - 9, barW = 36 * size, hpWidth = barW * Math.Clamp(slime.Hp / Math.Max(1, slime.MaxHp), 0, 1);
             dc.DrawRoundedRectangle(BarBack, null, new Rect(x - barW / 2 - 1, barY - 1, barW + 2, 7), 3, 3);
@@ -959,6 +971,9 @@ public sealed partial class BattleFieldView : FrameworkElement
                 dc.DrawEllipse(null, Halo, new Point(x, y), wx, wx * 0.8);
                 dc.DrawEllipse(null, WardPen, new Point(x, y), wx, wx * 0.8);
                 DrawWord(dc, PetText.Pick(Language, "MIỄN", "IMMUNE"), HealGreen, x, y - wx * 0.8 - 6 - 18 * k);
+                break;
+            case BattleEffectKind.Miss or BattleEffectKind.Heart:
+                DrawTrickEffect(dc, effect, x, y, k);
                 break;
             case BattleEffectKind.Bell or BattleEffectKind.EndTask or BattleEffectKind.Rewind:
                 DrawAppEffect(dc, effect, x, y, k);

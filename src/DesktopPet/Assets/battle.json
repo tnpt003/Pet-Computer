@@ -436,6 +436,50 @@
       "elite": { "hp": 1.2, "cost": 1, "descVi": "hào quang tăng tốc mạnh hơn", "descEn": "its aura speeds allies up more" }
     },
     {
+      // 1.5 S1 (M13): seen ghost.visible s, faded out ghost.hidden s: then nothing hits it, it attacks
+      // nothing and drifts through the cat. The cursor over it (or the laser within laserRange) brings it
+      // out and keeps it out reveal s. Elite: only eliteVisible s at a time.
+      "id": "phantom", "nameVi": "Slime bóng ma", "nameEn": "Ghost slime",
+      "maxHp": 40, "speed": 38, "damage": 10, "range": 55,
+      "windup": 0.8, "attackCooldown": 2.0, "recover": 0.4,
+      "scale": 0.95, "color": "#C9D6F2", "marks": "ghost", "cost": 2, "binSpit": false,
+      "ghost": { "visible": 2.5, "hidden": 2.5, "reveal": 2, "laserRange": 160, "eliteVisible": 1.5 },
+      "elite": { "hp": 1.2, "cost": 1, "descVi": "hiện ra ngắn hơn", "descEn": "shows itself for less time" }
+    },
+    {
+      // 1.5 S2 (M13): floats in a bubble that takes every hit (it still attacks). bubble.pops clicks on it
+      // (elitePops for an elite) or a Scissors stroke pop it: it drops, stunned `stun` s; the bubble grows
+      // back `regrow` s later.
+      "id": "bubble", "nameVi": "Slime bong bóng", "nameEn": "Bubble slime",
+      "maxHp": 34, "speed": 34, "damage": 9, "range": 55,
+      "windup": 0.8, "attackCooldown": 2.0, "recover": 0.4,
+      "scale": 0.9, "color": "#7FC8EA", "marks": "bubble", "cost": 2, "binSpit": false,
+      "bubble": { "pops": 3, "elitePops": 5, "regrow": 6, "stun": 1.5, "lift": 12 },
+      "elite": { "hp": 1.2, "cost": 1, "descVi": "cần chọc 5 lần", "descEn": "takes 5 clicks to pop" }
+    },
+    {
+      // 1.5 S3 (M13): comes with mirage.copies look-alikes (eliteCopies for an elite): a copy's hits hurt
+      // nothing and any hit makes it vanish (not the cat's kill). The cursor over one (or the laser within
+      // laserRange) shows it for what it is `reveal` s: a copy blurs, the real one gets its shadow.
+      "id": "mirage", "nameVi": "Slime ảo ảnh", "nameEn": "Mirage slime",
+      "maxHp": 36, "speed": 36, "damage": 11, "range": 55,
+      "windup": 0.8, "attackCooldown": 2.0, "recover": 0.4,
+      "scale": 0.95, "color": "#B89CF0", "marks": "mirage", "cost": 2, "binSpit": false,
+      "mirage": { "copies": 2, "eliteCopies": 3, "reveal": 2, "laserRange": 160 },
+      "elite": { "hp": 1.2, "cost": 1, "descVi": "thêm một bản giả", "descEn": "one more copy" }
+    },
+    {
+      // 1.5 S4 (M13): hits take no HP and puff it up by sulk.grow (up to maxGrow ×; its hits grow with it).
+      // Stroking it with the cursor soothes it: `calm` DIPs of strokes (eliteCalm for an elite) and it
+      // waves goodbye and leaves, counted as the cat's. Left alone `idle` s it sulks again by `fade` a second.
+      "id": "sulky", "nameVi": "Slime dỗi", "nameEn": "Sulky slime",
+      "maxHp": 40, "speed": 30, "damage": 8, "range": 55,
+      "windup": 0.9, "attackCooldown": 2.2, "recover": 0.4,
+      "scale": 0.95, "color": "#F2A7A0", "marks": "sulk", "cost": 2, "binSpit": false,
+      "sulk": { "calm": 1800, "eliteCalm": 2800, "idle": 1, "fade": 0.15, "grow": 0.1, "maxGrow": 1.6 },
+      "elite": { "hp": 1.2, "cost": 1, "descVi": "khó dỗ hơn", "descEn": "harder to cheer up" }
+    },
+    {
       // The chapter 1 boss (Adventure stage 5): the free battle keeps "king" below. Phases fire once
       // each at their HP fraction; at most summonCap helpers alive at once. A shield phase stops a
       // hit at its line, runs to the far edge (retreatSpeed, at most retreatSeconds), calls its

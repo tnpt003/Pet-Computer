@@ -411,7 +411,7 @@ public sealed partial class PetWindow
         SyncBattleCatState();
         bool done = battle.Armed is BattleSkill skill
             ? battle.Use(skill, id, pet.X + settings.Width / 2, skill == BattleSkill.Push ? BattleSim.PushDirection(offset) : null)
-            : battle.Select(id);
+            : battle.Poke(id) || battle.Select(id); // A bubble takes the click first (1.5 M13).
         RequestBattleRedraw();
         UpdateBattleHud();
         battleView?.InvalidateVisual();
@@ -533,6 +533,20 @@ public sealed partial class PetWindow
     private CatPose BattleCatPose() => new(pet.X + settings.Width / 2, bounds.Bottom - (pet.Y + settings.Height / 2), pet.VX, pet.VY,
         InHand: dragging, Flying: !dragging && pet.Action != PetAction.Climbing && (!pet.Grounded || pet.Action == PetAction.Thrown || PetActionRules.IsInFlight(pet.Action)));
 
+    // 1.5 M13: the cursor over the battle strip (battle x, height over its floor) for the slimes the cursor
+    // beats; null anywhere else. Only its position, and only inside the strip's window.
+    private (double X, double Height)? BattlePointer()
+    {
+        if (battleFieldWindow is not { IsVisible: true } || battleView == null) return null;
+        var handle = new WindowInteropHelper(battleFieldWindow).Handle;
+        if (handle == IntPtr.Zero || !GetWindowRect(handle, out var rect)) return null;
+        var cursor = ScreenCursor();
+        if (cursor.X < rect.Left || cursor.X >= rect.Right || cursor.Y < rect.Top || cursor.Y >= rect.Bottom) return null;
+        if (PresentationSource.FromVisual(battleView) == null) return null;
+        var local = battleView.PointFromScreen(cursor);
+        return (local.X + battleView.OriginX, battleView.ActualHeight - 2 - local.Y);
+    }
+
     // A real drag just began: a chosen skill is dropped and the HUD shows it at once.
     private void BattleCatLifted()
     {
@@ -554,6 +568,7 @@ public sealed partial class PetWindow
         if (battleMonitorClock >= 1) { battleMonitorClock = 0; RecoverLostBattleMonitor(); }
         bool held = BattleHoldsOff;
         if (!held) KeepBattleOnItsMonitor();
+        battle.SetPointer(BattlePointer());
         // The Adventure Guide holds the battle still while a step shows (PetWindow.BattleGuide.cs).
         var order = battle.Step(BattleGuideFreezes ? 0 : dt, pet.X + settings.Width / 2, held, BattleLifted, held ? BattleCatPose() : null);
         PlayBattleSound();

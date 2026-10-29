@@ -197,7 +197,7 @@ public sealed partial class BattleSim
     {
         double cost = 0;
         foreach (var s in slimes)
-            if (s.State != SlimeState.Defeated && s.SummonedBy == 0) cost += s.Type.Cost + (s.Elite?.Cost ?? 0);
+            if (s.State != SlimeState.Defeated && s.SummonedBy == 0 && !s.Decoy) cost += s.Type.Cost + (s.Elite?.Cost ?? 0);
         return cost;
     }
 
@@ -207,7 +207,7 @@ public sealed partial class BattleSim
     {
         if (Stage is not { EliteChance: > 0 } stage || Difficulty == BattleDifficulty.Easy || slime.Type.Elite is not EliteSpec elite) return;
         int elites = 0;
-        foreach (var s in slimes) if (s.Elite != null && !s.Rallied && !s.Spat && s.State != SlimeState.Defeated) elites++;
+        foreach (var s in slimes) if (s.Elite != null && !s.Rallied && !s.Spat && !s.Decoy && s.State != SlimeState.Defeated) elites++;
         // Infinity: more elites as the waves go on (EliteChancePerWave, MoreElitesEvery).
         int most = Settings.MaxElites + (stage.MoreElitesEvery > 0 ? Math.Min(stage.MoreElitesMax, Wave / stage.MoreElitesEvery) : 0);
         if (elites >= most) return;
@@ -298,6 +298,9 @@ public sealed partial class BattleSim
         slime.HealLeft = hpFactor != 1 ? Math.Round(type.HealBudget * hpFactor) : type.HealBudget;
         slime.Altitude = type.Hover;
         slime.SpitCooldown = (type.Spit?.Cooldown ?? 0) / 2;
+        // 1.5 M13: a ghost starts seen, a bubble slime in its bubble.
+        slime.GhostClock = type.Ghost?.Visible ?? 0;
+        slime.Bubbled = type.Bubble != null;
         var (minX, maxX) = Bounds(slime);
         slime.X = Math.Clamp(x, minX, maxX);
         slime.Set(SlimeState.Spawning);

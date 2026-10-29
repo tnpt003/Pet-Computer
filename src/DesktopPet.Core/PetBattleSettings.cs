@@ -577,6 +577,23 @@ public sealed class Slime
     public double FuseLeft, FuseTotal;
     public bool Exploded, Healed;
     public bool Lit => FuseLeft > 0;
+    // 1.5 M13 (PetBattle.Tricks.cs). A ghost: faded out (nothing hits it), the time left in its turn seen
+    // or hidden, the side of the cat it faded on, and the seconds the cursor or the laser keeps it out.
+    public bool Faded;
+    public double GhostClock, Revealed;
+    public int FadeSide;
+    // A bubble: up (it takes every hit), the clicks on it so far, the time until it grows back.
+    public bool Bubbled;
+    public int Pokes;
+    public double BubbleClock;
+    // A mirage: the real one this copy imitates (0: not a copy); copies already made; a copy gone.
+    public int DecoyOf;
+    public bool Cast, Dispelled;
+    public bool Decoy => DecoyOf != 0;
+    // A sulk: how puffed up it is (1: not; its hits grow with it), how soothed (0–1), the time since the
+    // last stroke; soothed and leaving (drawn waving goodbye).
+    public double Puff = 1, Calm, CalmIdle;
+    public bool Calmed;
     public bool Targetable => State is not (SlimeState.Spawning or SlimeState.Defeated);
     public void Set(SlimeState state)
     {
@@ -642,7 +659,13 @@ public enum BattleEventKind
     // splitting slime broke apart.
     FuseLit, Blasted, SlimeSplit,
     // 1.5 M12: a formation's first part came (Value: its index in BattleSettings.FormationList).
-    FormationArrived
+    FormationArrived,
+    // 1.5 M13 (Value: the enemy's id): a ghost faded out, the cursor or the laser brought it out, a hit
+    // went through it; a bubble took a hit, was clicked, popped, grew back; a mirage's copies came, a copy
+    // vanished; a sulky slime puffed up from a hit, was stroked (its first stroke since it sulked again),
+    // was soothed and left.
+    GhostFaded, GhostRevealed, GhostMissed, BubbleBlocked, BubblePoked, BubblePopped, BubbleRegrown,
+    MirageCast, MirageDispelled, SulkPuffed, SulkPetted, SulkCalmed
 }
 // A spring trap (PetBattle.Spring.cs): set and waiting, squeezing before it springs, resting after, flattened.
 public enum SpringState { Ready, Squeezing, Resting, Flat }
@@ -668,7 +691,9 @@ public readonly record struct BattleEvent(BattleEventKind Kind, double X, double
 // enemy guarded by a heal. Apps: Bell (a notification bell dropping on an enemy), EndTask (a
 // "not responding" window over the enemy it ends; Value: its width), Rewind (an undo arrow
 // circling the cat). Splat (1.5 M09): a spitter's drop of goo landing (Tint: its colour).
-public enum BattleEffectKind { Spark, Poof, Push, Explosion, Slam, Number, Combo, Thud, Mend, Block, Immune, Warded, Bell, EndTask, Rewind, Splat }
+// Miss (1.5 M13): a hit that did nothing to a ghost or a bubble (Value 0), or to a sulky slime (Value 1);
+// Heart: a sulky slime soothed.
+public enum BattleEffectKind { Spark, Poof, Push, Explosion, Slam, Number, Combo, Thud, Mend, Block, Immune, Warded, Bell, EndTask, Rewind, Splat, Miss, Heart }
 // How a damage Number reads (display only): a plain hit, a combo hit, a critical (Claws) hit, or poison's tick.
 public enum NumberTone { Plain, Combo, Crit, Poison }
 public sealed class BattleEffect

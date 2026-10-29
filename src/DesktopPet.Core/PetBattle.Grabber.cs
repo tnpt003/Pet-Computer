@@ -26,13 +26,15 @@ public sealed partial class BattleSim
     public bool GrabberBusy { get { if (GrabbedId != 0) return true; foreach (var s in slimes) if (s.Tossed && !s.Launched) return true; return false; } }
 
     public bool Grabbable(Slime s) => s.Targetable && !s.IsBoss && !s.Type.Blocker && s.Type.Scale <= Settings.GrabberMaxScale + 1e-9
-        && !s.Handled && !s.Airborne && s.LeapHeight <= 0 && !s.Shielded;
+        && !s.Handled && !s.Airborne && s.LeapHeight <= 0 && !s.Shielded && !s.Faded && !s.Bubbled;
 
     // A press on an enemy (battle x, height over the floor) with the Grabber chosen.
     public bool Grab(int id, double x, double height)
     {
         if (Armed != BattleSkill.Grabber || !Ready(BattleSkill.Grabber) || GrabbedId != 0 || !double.IsFinite(x) || !double.IsFinite(height)
             || Find(id) is not Slime slime || !Grabbable(slime)) return false;
+        // A mirage's copy vanishes in the claw (the Grabber is spent; 1.5 M13).
+        if (slime.Decoy) { Dispel(slime); Spend(BattleSkill.Grabber); return true; }
         if (slime.Riding) Fall(slime, 0);
         foreach (var s in slimes)
             if (s.Riding && s.LinkedTo == slime.Id) Fall(s, 0);

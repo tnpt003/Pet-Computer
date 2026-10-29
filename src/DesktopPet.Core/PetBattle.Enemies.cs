@@ -17,7 +17,7 @@ public sealed partial class BattleSim
         {
             var chosen = Find(selected);
             // A shielded boss stays chosen; the cat goes for the others until its shield drops.
-            if (chosen != null && chosen.Targetable && !chosen.Shielded && !chosen.Mended && !chosen.Riding && !chosen.Airborne && !chosen.Handled) return chosen;
+            if (chosen != null && chosen.Targetable && !chosen.Shielded && !chosen.Mended && !chosen.Riding && !chosen.Airborne && !chosen.Handled && !chosen.Faded) return chosen;
             if (chosen == null || !chosen.Targetable) SelectedId = null;
         }
         // Never a shielded boss: the cat cannot hurt it (with nothing else to hit it waits).
@@ -29,13 +29,15 @@ public sealed partial class BattleSim
             if (s.Riding) continue; // A rider: the cat goes for its mount.
             if (s.Airborne) continue; // Out of reach from the floor (PetBattle.Held.cs).
             if (s.Handled) continue; // In the Grabber's claw or flying from it (PetBattle.Grabber.cs).
-            if (s.Mended) { if (guarded == null || Math.Abs(s.X - catX) < Math.Abs(guarded.X - catX)) guarded = s; continue; }
+            if (s.Faded) continue; // A faded ghost cannot be hit (PetBattle.Tricks.cs).
+            // One in a bubble or sulking takes no HP from the cat's blows: left alone while there is another.
+            if (s.Mended || s.Bubbled || s.Type.Sulk != null) { if (guarded == null || Math.Abs(s.X - catX) < Math.Abs(guarded.X - catX)) guarded = s; continue; }
             if (nearest == null || Math.Abs(s.X - catX) < Math.Abs(nearest.X - catX)) nearest = s;
         }
         nearest ??= guarded;
         // Keep the current choice unless another slime is clearly closer (no dithering).
         var current = Find(autoTargetId);
-        if (current != null && current.Targetable && !current.Shielded && (!current.Mended || nearest == current) && nearest != null &&
+        if (current != null && current.Targetable && !current.Shielded && !current.Faded && (!(current.Mended || current.Bubbled || current.Type.Sulk != null) || nearest == current) && nearest != null &&
             Math.Abs(current.X - catX) <= Math.Abs(nearest.X - catX) + 40) nearest = current;
         autoTargetId = nearest?.Id ?? 0;
         return nearest;
@@ -170,6 +172,8 @@ public sealed partial class BattleSim
                     if (Panic(slime, dt, catX, minX, maxX)) break;
                     // Chasing the laser's dot (PetBattle.Tools.cs): nothing else.
                     if (slime.Lured && LaserX is double dot) { Lure(slime, dot, dt, minX, maxX); break; }
+                    // A faded ghost attacks nothing: it drifts through the cat (PetBattle.Tricks.cs).
+                    if (slime.Faded) { Drift(slime, dt, catX, minX, maxX); break; }
                     // A spring trap never attacks: it lies still, or slides up to a cat far away (PetBattle.Spring.cs).
                     if (slime.Type.Spring != null) { Creep(slime, dt, catX, minX, maxX); break; }
                     // A spitter spits from afar before anything else (even from behind its allies).
@@ -276,7 +280,7 @@ public sealed partial class BattleSim
         if (type.FarHealBelow <= 0 || healer.FarHealCooldown > 0) return null;
         Slime? hurt = null;
         foreach (var s in slimes)
-            if (s != healer && s.Targetable && !s.Type.Support && !s.Shielded && s.Hp < s.MaxHp * type.FarHealBelow &&
+            if (s != healer && s.Targetable && !s.Type.Support && !s.Shielded && !s.Decoy && s.Hp < s.MaxHp * type.FarHealBelow &&
                 (hurt == null || s.Hp / s.MaxHp < hurt.Hp / hurt.MaxHp)) hurt = s;
         return hurt;
     }
@@ -287,7 +291,7 @@ public sealed partial class BattleSim
         Slime? best = null;
         foreach (var s in slimes)
         {
-            if (s == healer || !s.Targetable || s.Shielded || s.Hp >= s.MaxHp || Math.Abs(s.X - healer.X) > healer.Type.HealRange) continue;
+            if (s == healer || !s.Targetable || s.Shielded || s.Decoy || s.Hp >= s.MaxHp || Math.Abs(s.X - healer.X) > healer.Type.HealRange) continue;
             if (best == null || s.MaxHp - s.Hp > best.MaxHp - best.Hp) best = s;
         }
         return best;
@@ -461,7 +465,9 @@ public sealed partial class BattleSim
     // still immune after its last stun. stunSeconds: how long (negative: the battle's StunDurationSeconds).
     private void HurtCat(Slime from, double catX, bool stun, double share = 1, double stunSeconds = -1)
     {
-        if (!LandHit(from.Damage * share, catX, out double hurt)) return;
+        // A mirage's copy: its blow is only an illusion (1.5 M13). A sulky slime hits as hard as it is puffed up.
+        if (from.Decoy) { AddEffect(BattleEffectKind.Miss, catX, 60); return; }
+        if (!LandHit(from.Damage * share * from.Puff, catX, out double hurt)) return;
         // Thorns: part of what the cat really took goes back to the attacker.
         if (Active("thorns") is SynergySpec thorns && hurt > 0 && from.Targetable && !from.Shielded)
         {

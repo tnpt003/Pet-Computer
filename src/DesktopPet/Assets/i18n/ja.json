@@ -954,5 +954,21 @@
   "Bomb the pack while it huddles": "群れが集まった瞬間に毛糸ボムを",
   "{0} formation! {1}": "陣形「{0}」！{1}",
   "A flag slime! Enemies in the gold ring run faster. Take it down first": "はたスライム！金色の輪の中の敵は速くなる。先に倒そう",
-  "The flag fell! They all panic": "旗が倒れた！みんなパニック"
+  "The flag fell! They all panic": "旗が倒れた！みんなパニック",
+  "Ghost slime": "おばけスライム",
+  "Bubble slime": "あわスライム",
+  "Mirage slime": "まぼろしスライム",
+  "Sulky slime": "すねスライム",
+  "shows itself for less time": "姿を見せる時間が短い",
+  "takes 5 clicks to pop": "割るのに5回クリック",
+  "one more copy": "分身がもう1体",
+  "harder to cheer up": "なだめにくい",
+  "The ghost slime faded out! Hover the cursor over it to light it up": "おばけスライムが消えた！カーソルを重ねて照らそう",
+  "The bubble takes every hit! Click it a few times to pop it": "あわがすべての攻撃を防ぐ！何回かクリックして割ろう",
+  "Bubble popped! It dropped dazed, hit it now": "あわが割れた！落ちて気絶している、今のうちに攻撃",
+  "The mirage slime brought copies! Hover them: the real one has a shadow": "まぼろしスライムの分身！カーソルを重ねると本物には影がある",
+  "The sulky slime takes no damage! Stroke it with the cursor to cheer it up": "すねスライムはダメージを受けない！カーソルで左右になでて機嫌を直そう",
+  "Cheered up! It waves goodbye and leaves": "機嫌が直った！手を振って帰っていく",
+  "MISS": "ミス",
+  "SULK!": "ぷんっ！"
 }

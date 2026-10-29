@@ -265,7 +265,7 @@ public sealed partial class BattleSim
     {
         foreach (var slime in slimes)
         {
-            if (!slime.Targetable || slime.Elite is not { VirusEvery: > 0 } elite) continue;
+            if (!slime.Targetable || slime.Decoy || slime.Elite is not { VirusEvery: > 0 } elite) continue;
             slime.VirusClock -= dt;
             if (slime.VirusClock > 0) continue;
             if (eliteShots >= rules.EliteVirusPerWave) { slime.VirusClock = elite.VirusEvery; continue; }
@@ -604,7 +604,7 @@ public sealed partial class BattleSim
                 // The enemy with the smallest share of its HP left gets some back.
                 Slime? hurt = null;
                 foreach (var s in slimes)
-                    if (s.Targetable && s.Hp < s.MaxHp && (hurt == null || s.Hp / s.MaxHp < hurt.Hp / hurt.MaxHp)) hurt = s;
+                    if (s.Targetable && !s.Decoy && s.Hp < s.MaxHp && (hurt == null || s.Hp / s.MaxHp < hurt.Hp / hurt.MaxHp)) hurt = s;
                 if (hurt == null) return;
                 var mend = Launch(LaunchKind.Mend, app, hurt.X, hurt.Height, AttackSeconds);
                 mend.Targets = new[] { hurt.Id };

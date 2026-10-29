@@ -60,7 +60,7 @@ public sealed partial class BattleSim
         blasting = true;
         foreach (var other in slimes.ToArray())
         {
-            if (other == target || !other.Targetable || other.Shielded || other.Handled) continue;
+            if (other == target || !other.Targetable || other.Shielded || other.Handled || other.Faded) continue;
             if (held is CatPose cat)
             {
                 if (!other.Airborne || Gap(cat, other) > HeldReach + 14) continue;

@@ -212,6 +212,8 @@ public sealed partial class BattleSim
             if (!s.Targetable || s.Shielded) continue;
             var (left, bottom, right, top) = Body(s);
             if (!Crosses(x0, h0, x1, h1, left - 4, bottom - 4, right + 4, top + 4)) continue;
+            // A bubble the stroke goes through bursts (no hurt; 1.5 M13).
+            if (s.Bubbled) { PopBubble(s); done++; continue; }
             AddEffect(BattleEffectKind.Spark, s.X, bottom + s.Height / 2);
             ToolHit(s, Settings.ScissorsDamage);
             done++;

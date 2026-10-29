@@ -156,6 +156,13 @@ public sealed class EnemyType
     // or breaks into smaller ones when defeated (Q7). Null: neither.
     public FuseSpec? Fuse { get; init; }
     public SplitSpec? Split { get; init; }
+    // 1.5 M13 (PetBattle.Tricks.cs), the slimes the cursor beats: it fades in and out (S1), hides in a
+    // bubble (S2), comes with copies of itself (S3), or sulks and swells when hit (S4). Null: none.
+    public GhostSpec? Ghost { get; init; }
+    public BubbleSpec? Bubble { get; init; }
+    public MirageSpec? Mirage { get; init; }
+    public SulkSpec? Sulk { get; init; }
+    [JsonIgnore] public bool UsesMouse => Ghost != null || Bubble != null || Mirage != null || Sulk != null;
     // An infected bin may spit one of this kind (with an elite affix). False keeps a kind out of battles
     // that never list it (the 1.5 enemies until their chapter brings them in).
     public bool BinSpit { get; init; } = true;
@@ -231,6 +238,57 @@ public sealed class SplitSpec
     public int Count { get; init; } = 2;
     public int EliteCount { get; init; } = 3;
     public double Health { get; init; } = 0.6;
+}
+
+// S1 (1.5 M13): Visible s seen, then Hidden s faded out: nothing hits it then (the cat does not go for
+// it, blows and bombs pass through), it attacks nothing and drifts through the cat to its other side.
+// The cursor over it (or the laser's dot within LaserRange) brings it out and keeps it out Reveal s
+// longer. An elite shows itself only EliteVisible s at a time.
+public sealed class GhostSpec
+{
+    public double Visible { get; init; } = 2.5;
+    public double Hidden { get; init; } = 2.5;
+    public double Reveal { get; init; } = 2;
+    public double LaserRange { get; init; } = 160;
+    public double EliteVisible { get; init; } = 1.5;
+}
+
+// S2 (1.5 M13): it floats in a bubble Lift DIPs up that takes every hit for it (it still attacks). Pops
+// clicks on it (an elite's ElitePops), or a Scissors stroke through it, pop the bubble: it drops, stunned
+// Stun s, and the bubble grows back Regrow s later.
+public sealed class BubbleSpec
+{
+    public int Pops { get; init; } = 3;
+    public int ElitePops { get; init; } = 5;
+    public double Regrow { get; init; } = 6;
+    public double Stun { get; init; } = 1.5;
+    public double Lift { get; init; } = 12;
+}
+
+// S3 (1.5 M13): it comes with Copies look-alikes (an elite with EliteCopies). A copy's hits hurt nothing
+// and any hit on it makes it vanish (never the cat's kill); the real one defeated, its copies vanish too.
+// The cursor over one (or the laser's dot within LaserRange) shows it for what it is Reveal s: a copy
+// blurs, the real one gets its shadow.
+public sealed class MirageSpec
+{
+    public int Copies { get; init; } = 2;
+    public int EliteCopies { get; init; } = 3;
+    public double Reveal { get; init; } = 2;
+    public double LaserRange { get; init; } = 160;
+}
+
+// S4 (1.5 M13): hits take no HP; each puffs it up by Grow (up to MaxGrow ×; its own hits grow with it).
+// Stroking it with the cursor (moving back and forth over it) soothes it: Calm DIPs of strokes (an
+// elite's EliteCalm) and it waves goodbye and leaves, counted as the cat's. Left alone Idle s, it sulks
+// again by Fade of the way a second.
+public sealed class SulkSpec
+{
+    public double Calm { get; init; } = 1800;
+    public double EliteCalm { get; init; } = 2800;
+    public double Idle { get; init; } = 1;
+    public double Fade { get; init; } = 0.15;
+    public double Grow { get; init; } = 0.1;
+    public double MaxGrow { get; init; } = 1.6;
 }
 
 // The thrown cat flying through an enemy at MinSpeed DIPs/s or more: Damage (as is, never blocked)
@@ -756,8 +814,10 @@ public static class BattleData
     public static readonly string[] WeaponStyles = { "sword", "hammer", "yarn", "glove" };
     public static readonly string[] WeaponHitEffects = { "spark", "thud" };
     public static readonly string[] EnemyRenderers = { "slime" };
-    public static readonly string[] EnemyMarks = { "none", "speed", "cracks", "leaf", "cross", "spout", "spring", "drum", "chain", "swarm", "giant", "bomb", "split", "half", "flag" };
+    public static readonly string[] EnemyMarks = { "none", "speed", "cracks", "leaf", "cross", "spout", "spring", "drum", "chain", "swarm", "giant", "bomb", "split", "half", "flag", "ghost", "bubble", "mirage", "sulk" };
     public static readonly string[] GroupSides = { "a", "b" };
+    // Kinds the cursor beats (ghost, bubble, mirage, sulk) that one battle may bring (docs/UPDATE-1.5.md).
+    public const int MaxMouseKinds = 2;
 
     // Throws on any mistake, so a half-valid file is never used.
     public static BattleSettings Parse(Stream stream)
@@ -997,7 +1057,7 @@ public static class BattleData
                 if ((elite.HealCooldown < 1 || elite.HealBudget > 1) && e.HealAmount <= 0) throw new InvalidDataException(at + ".elite: healCooldown/healBudget are for an enemy that heals");
                 if (elite.WindupAdd <= 0 && elite.DashSpeed <= 1 && elite.SureBlocks == 0 && elite.FirstHeal <= 1 && elite.Hp <= 1 && elite.Damage <= 1
                     && elite.AttackCooldown >= 1 && elite.HealCooldown >= 1 && elite.HealBudget <= 1 && !elite.PushImmune && elite.VirusEvery <= 0
-                    && e.Spit == null && e.Spring == null && e.Fuse == null && e.Split == null) throw new InvalidDataException(at + ".elite changes nothing");
+                    && e.Spit == null && e.Spring == null && e.Fuse == null && e.Split == null && !e.UsesMouse) throw new InvalidDataException(at + ".elite changes nothing");
                 if (elite.DescVi == null || elite.DescEn == null || elite.DescVi.Length > 60 || elite.DescEn.Length > 60) throw new InvalidDataException(at + ".elite descriptions must be at most 60 characters");
             }
             if (e.Link is LinkSpec link)
@@ -1070,6 +1130,38 @@ public static class BattleData
                 if (e.Boss) throw new InvalidDataException(at + ".split is not for a boss");
                 if (split.Count is < 2 or > 4 || split.EliteCount is < 2 or > 4) throw new InvalidDataException(at + ".split.count/eliteCount must be 2–4");
                 Within(split.Health, 0.1, 1, at + ".split.health");
+            }
+            // 1.5 M13: one cursor trick per kind, never on a boss.
+            if (e.UsesMouse)
+            {
+                if ((e.Ghost != null ? 1 : 0) + (e.Bubble != null ? 1 : 0) + (e.Mirage != null ? 1 : 0) + (e.Sulk != null ? 1 : 0) > 1)
+                    throw new InvalidDataException(at + " may have only one of ghost, bubble, mirage and sulk");
+                if (e.Boss || e.Blocker || e.Hover > 0 || e.Spring != null || e.Fuse != null || e.Split != null || e.Link != null)
+                    throw new InvalidDataException(at + ": ghost, bubble, mirage and sulk are not for a boss, blocker, hovering, spring, bomb, splitting or linked enemy");
+            }
+            if (e.Ghost is GhostSpec ghost)
+            {
+                Within(ghost.Visible, 0.5, 10, at + ".ghost.visible"); Within(ghost.Hidden, 0.5, 10, at + ".ghost.hidden");
+                Within(ghost.Reveal, 0.5, 10, at + ".ghost.reveal"); Within(ghost.LaserRange, 0, 600, at + ".ghost.laserRange");
+                Within(ghost.EliteVisible, 0.5, 10, at + ".ghost.eliteVisible");
+            }
+            if (e.Bubble is BubbleSpec bubble)
+            {
+                if (bubble.Pops is < 1 or > 10 || bubble.ElitePops is < 1 or > 10) throw new InvalidDataException(at + ".bubble.pops/elitePops must be 1–10");
+                Within(bubble.Regrow, 1, 60, at + ".bubble.regrow"); Within(bubble.Stun, 0, 5, at + ".bubble.stun"); Within(bubble.Lift, 0, 40, at + ".bubble.lift");
+            }
+            if (e.Mirage is MirageSpec mirage)
+            {
+                if (e.Support || e.HealAmount > 0) throw new InvalidDataException(at + ".mirage is not for a support or healing enemy");
+                if (mirage.Copies is < 1 or > 4 || mirage.EliteCopies is < 1 or > 4) throw new InvalidDataException(at + ".mirage.copies/eliteCopies must be 1–4");
+                Within(mirage.Reveal, 0.5, 10, at + ".mirage.reveal"); Within(mirage.LaserRange, 0, 600, at + ".mirage.laserRange");
+            }
+            if (e.Sulk is SulkSpec sulk)
+            {
+                if (e.HealAmount > 0) throw new InvalidDataException(at + ".sulk is not for a healing enemy");
+                Within(sulk.Calm, 50, 10000, at + ".sulk.calm"); Within(sulk.EliteCalm, 50, 10000, at + ".sulk.eliteCalm");
+                Within(sulk.Idle, 0, 10, at + ".sulk.idle"); Within(sulk.Fade, 0, 2, at + ".sulk.fade");
+                Within(sulk.Grow, 0, 1, at + ".sulk.grow"); Within(sulk.MaxGrow, 1, 2.5, at + ".sulk.maxGrow");
             }
             if (e.Phases is { } phases)
             {
@@ -1233,11 +1325,13 @@ public static class BattleData
             }
             var met = new HashSet<string>();
             var links = new HashSet<string>();
+            var mouse = new HashSet<string>();
             while (reach.Count > 0)
             {
                 string kind = reach.Pop();
                 if (!ids.Contains(kind) || !met.Add(kind)) continue;
                 var e = s.Enemy(kind);
+                if (e.UsesMouse) mouse.Add(kind);
                 if (e.ActiveLink is LinkSpec link)
                 {
                     links.Add(link.Kind);
@@ -1250,6 +1344,9 @@ public static class BattleData
             }
             if (links.Count > EnemyLinks.MaxKinds)
                 throw new InvalidDataException($"{at} brings {links.Count} kinds of link ({string.Join(", ", links)}): at most {EnemyLinks.MaxKinds} in one battle");
+            // The cursor is not overworked: at most two kinds the cursor beats (1.5 M13) in one battle.
+            if (mouse.Count > MaxMouseKinds)
+                throw new InvalidDataException($"{at} brings {mouse.Count} kinds the cursor beats ({string.Join(", ", mouse)}): at most {MaxMouseKinds} in one battle");
         }
         Waves(s.WavePlan, "waves", s.MaxAlive, false);
         if (s.Upgrades is { Length: 0 }) throw new InvalidDataException("upgrades must list at least one upgrade");

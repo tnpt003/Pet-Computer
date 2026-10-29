@@ -1,0 +1,12 @@
+{
+  // 1.5 M13 try-out (2 of 2): the mirage slime (S3) and the sulky slime (S4). Use it like
+  // battle-m13.json (copy to %LOCALAPPDATA%\DesktopPet\battle.json, free battle, delete to go back).
+  "schemaVersion": 1,
+  "maxAlive": 5,
+  "waves": [
+    { "groups": [ { "enemy": "mirage", "count": 1 }, { "enemy": "slime", "count": 1 } ] },
+    { "groups": [ { "enemy": "sulky", "count": 1 }, { "enemy": "slime", "count": 2 } ] },
+    { "groups": [ { "enemy": "mirage", "count": 1 }, { "enemy": "sulky", "count": 1 }, { "enemy": "runner", "count": 1 } ] },
+    { "groups": [ { "enemy": "mirage", "count": 1, "elite": true }, { "enemy": "sulky", "count": 1, "elite": true } ] }
+  ]
+}

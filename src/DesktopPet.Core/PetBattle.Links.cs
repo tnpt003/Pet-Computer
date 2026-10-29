@@ -80,7 +80,7 @@ public sealed partial class BattleSim
                 int bestRopes = 0;
                 foreach (var s in slimes)
                 {
-                    if (s == slime || !s.Targetable || s.IsBoss || s.Handled || Is(s, EnemyLinks.Tether) || s.Riding || Math.Abs(s.X - slime.X) > link.Range) continue;
+                    if (s == slime || !s.Targetable || s.IsBoss || s.Handled || s.Decoy || Is(s, EnemyLinks.Tether) || s.Riding || Math.Abs(s.X - slime.X) > link.Range) continue;
                     int ropes = Tethers(s);
                     if (ropes >= EnemyLinks.MaxTethers) continue;
                     if (best == null || ropes < bestRopes || ropes == bestRopes && Math.Abs(s.X - slime.X) < Math.Abs(best.X - slime.X)) { best = s; bestRopes = ropes; }
@@ -91,7 +91,7 @@ public sealed partial class BattleSim
                 // Never mounting right next to the cat (it would hop off at once).
                 if (Math.Abs(slime.X - catX) <= link.DropRange * 1.5) continue;
                 foreach (var s in slimes)
-                    if (s != slime && s.Targetable && !s.Handled && s.Type.Id == link.Mount && !s.Riding && !Ridden(s) &&
+                    if (s != slime && s.Targetable && !s.Handled && !s.Decoy && s.Type.Id == link.Mount && !s.Riding && !Ridden(s) &&
                         Math.Abs(s.X - slime.X) <= link.Range && (best == null || Math.Abs(s.X - slime.X) < Math.Abs(best.X - slime.X))) best = s;
             }
             if (best == null) continue;
@@ -169,7 +169,7 @@ public sealed partial class BattleSim
         if (!catHeld && Grace <= 0)
             foreach (var s in slimes)
             {
-                if (!s.Targetable || s.State != SlimeState.Moving || s.IsBoss || s.Type.Support || s.Type.Spring != null || s.Type.Fuse != null || s.Riding || s.PanicRemaining > 0 || s.Shielded) continue;
+                if (!s.Targetable || s.State != SlimeState.Moving || s.IsBoss || s.Type.Support || s.Type.Spring != null || s.Type.Fuse != null || s.Riding || s.PanicRemaining > 0 || s.Shielded || s.Faded) continue;
                 if (Math.Abs(s.X - holder.X) > link.Range) continue;
                 double dx = catX - s.X, reach = s.Type.Dash ? s.Type.DashRange : s.Range;
                 if (Math.Abs(dx) > reach || WallBetween(s.X, catX) != null) continue;

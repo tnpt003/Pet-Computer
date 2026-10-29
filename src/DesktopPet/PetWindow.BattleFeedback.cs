@@ -57,6 +57,11 @@ public sealed partial class PetWindow
         [BattleEventKind.Blasted] = ("pop", 6), [BattleEventKind.SlimeSplit] = ("squish", 4),
         // 1.5 M12: the flag fell (its team panics), a formation came.
         [BattleEventKind.Panicked] = ("surprised", 5), [BattleEventKind.FormationArrived] = ("sparkle", 4),
+        // 1.5 M13: the ghost, the bubble, the mirage and the sulky slime.
+        [BattleEventKind.GhostFaded] = ("swoosh", 2), [BattleEventKind.GhostRevealed] = ("sparkle", 3), [BattleEventKind.GhostMissed] = ("swoosh", 2),
+        [BattleEventKind.BubbleBlocked] = ("ball_tap", 3), [BattleEventKind.BubblePoked] = ("ball_tap", 3), [BattleEventKind.BubblePopped] = ("pop", 5),
+        [BattleEventKind.BubbleRegrown] = ("squish", 2), [BattleEventKind.MirageCast] = ("sparkle", 3), [BattleEventKind.MirageDispelled] = ("pop", 3),
+        [BattleEventKind.SulkPuffed] = ("squish", 3), [BattleEventKind.SulkPetted] = ("sparkle", 2), [BattleEventKind.SulkCalmed] = ("satisfied", 5),
     };
 
     private void PlayBattleSound()
@@ -91,6 +96,16 @@ public sealed partial class PetWindow
         foreach (var s in battle.Slimes) if (s.Id == (int)e.Value) return s;
         return null;
     }
+    private string? TrickBanner(BattleEventKind kind) => kind switch
+    {
+        BattleEventKind.GhostFaded => L("Slime bóng ma tàng hình! Rê chuột lên nó để soi", "The ghost slime faded out! Hover the cursor over it to light it up"),
+        BattleEventKind.BubbleBlocked => L("Bong bóng chặn mọi đòn! Click vào nó vài lần để chọc vỡ", "The bubble takes every hit! Click it a few times to pop it"),
+        BattleEventKind.BubblePopped => L("Vỡ bong bóng! Nó rơi xuống choáng, đánh ngay", "Bubble popped! It dropped dazed, hit it now"),
+        BattleEventKind.MirageCast => L("Slime ảo ảnh có bản giả! Rê chuột: bản thật có bóng", "The mirage slime brought copies! Hover them: the real one has a shadow"),
+        BattleEventKind.SulkPuffed => L("Slime dỗi không mất máu! Rê chuột qua lại trên nó để dỗ", "The sulky slime takes no damage! Stroke it with the cursor to cheer it up"),
+        BattleEventKind.SulkCalmed => L("Hết dỗi rồi! Nó vẫy tay bỏ đi", "Cheered up! It waves goodbye and leaves"),
+        _ => null
+    };
     private bool IsUpdate(BattleEvent e) => battle?.FindHazard((int)e.Value) is { Kind: HazardKind.Update };
 
     private string BossName() => battle?.Boss?.Type.Name(preferences.Language) ?? "Boss";
@@ -100,10 +115,13 @@ public sealed partial class PetWindow
     // of each kind; every helper a rally makes elite is named.
     private bool healerExplained, farHealExplained, rallyExplained, behindExplained, wardExplained, pushResistExplained, appExplained, popupExplained, virusExplained, loadingExplained, updateExplained, virusExeExplained, lockExplained, rageExplained, spitExplained, puddleExplained, springExplained, flatExplained, beatExplained, ropeExplained, cutExplained, mergeExplained, remergeExplained, rideExplained, fuseExplained, splitExplained, flagExplained, panicExplained;
     private readonly HashSet<string> elitesExplained = new();
+    // 1.5 M13: the events of the slimes the cursor beats already explained in this battle.
+    private readonly HashSet<BattleEventKind> trickExplained = new();
     private readonly HashSet<string> formationsExplained = new();
     private void ShowBattleBanners()
     {
         if (battle == null || battleHud == null) return;
+        if (battle.Time < 0.05) trickExplained.Clear();
         if (battle.Time < 0.05) { healerExplained = farHealExplained = rallyExplained = behindExplained = wardExplained = pushResistExplained = appExplained = popupExplained = virusExplained = loadingExplained = updateExplained = virusExeExplained = lockExplained = rageExplained = spitExplained = puddleExplained = springExplained = flatExplained = beatExplained = ropeExplained = cutExplained = mergeExplained = remergeExplained = rideExplained = fuseExplained = splitExplained = flagExplained = panicExplained = false; elitesExplained.Clear(); formationsExplained.Clear(); }
         var rules = battle.AppRules;
         for (int i = 0; i < battle.Events.Count; i++)
@@ -174,6 +192,9 @@ public sealed partial class PetWindow
                 BattleEventKind.Panicked when !panicExplained => L("Mất cờ! Cả đội hoảng loạn", "The flag fell! They all panic"),
                 BattleEventKind.FormationArrived when FormationOf(e) is FormationSpec team && formationsExplained.Add(team.Id) =>
                     LF($"Đội hình {team.Name(PetLanguage.Vietnamese)}! {team.Tip(PetLanguage.Vietnamese)}", $"{team.Name(preferences.Language)} formation! {team.Tip(preferences.Language)}").TrimEnd(),
+                // 1.5 M13: the slimes the cursor beats, once each per battle.
+                BattleEventKind.GhostFaded or BattleEventKind.BubbleBlocked or BattleEventKind.BubblePopped or BattleEventKind.MirageCast or BattleEventKind.SulkPuffed
+                    or BattleEventKind.SulkCalmed when trickExplained.Add(e.Kind) => TrickBanner(e.Kind),
                 BattleEventKind.Won => L("CHIẾN THẮNG!", "VICTORY!"),
                 BattleEventKind.Lost => L("THUA RỒI…", "DEFEATED…"),
                 _ => null

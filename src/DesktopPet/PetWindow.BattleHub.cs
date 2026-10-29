@@ -250,11 +250,13 @@ public sealed partial class PetWindow
                 if (Expedition is not Expedition x) return (title, about, L("Dữ liệu chưa có viễn chinh", "No Expedition in the data"), null, false, L("Chưa có", "Not available"));
                 if (!x.IsUnlocked(AdventureProgress)) return (title, about, L("Thắng Vua Slime ở Phiêu lưu để mở", "Win the Slime King in the Adventure to open"), null, false, L("Đang khóa", "Locked"));
                 if (x.Run is ExpeditionRun run)
-                    return (title, about, L("Đang có chuyến · ", "Run under way · ") + StepTitle(Math.Min(run.Step, run.Map.Count - 1), run.Map.Count) + $" · HP {Math.Ceiling(run.Hp)}/{x.MaxHp(run):0}",
+                    return (title, about, L("Đang có chuyến · ", "Run under way · ") + (BattleTuning.Expedition!.All.Count > 1 ? x.Spec.Name(preferences.Language) + " · " : "") + StepTitle(Math.Min(run.Step, run.Map.Count - 1), run.Map.Count) + $" · HP {Math.Ceiling(run.Hp)}/{x.MaxHp(run):0}",
                         run.Map.Count == 0 ? 0 : (double)run.Step / run.Map.Count, true, null);
-                int had = x.Spec.Keepsakes.Count(k => x.Progress.Keepsakes.Contains(k.Id));
-                return (title, about, x.Spec.Keepsakes.Length == 0 ? L("Sẵn sàng lên đường", "Ready to set out") : LF($"Kỷ vật {had}/{x.Spec.Keepsakes.Length}", $"Keepsakes {had}/{x.Spec.Keepsakes.Length}"),
-                    x.Spec.Keepsakes.Length == 0 ? null : (double)had / x.Spec.Keepsakes.Length, true, null);
+                // The keepsakes are the first route's (1.5 M23: the others give none).
+                var keepsakes = BattleTuning.Expedition!.Keepsakes;
+                int had = keepsakes.Count(k => x.Progress.Keepsakes.Contains(k.Id));
+                return (title, about, keepsakes.Length == 0 ? L("Sẵn sàng lên đường", "Ready to set out") : LF($"Kỷ vật {had}/{keepsakes.Length}", $"Keepsakes {had}/{keepsakes.Length}"),
+                    keepsakes.Length == 0 ? null : (double)had / keepsakes.Length, true, null);
             }
             default:
                 return EndlessCard(); // PetWindow.Endless.cs

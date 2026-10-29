@@ -770,3 +770,15 @@ Dữ liệu gốc, không cần file tùy chỉnh. Ảnh đã xem qua render UiC
 - [ ] Thú bông có physics như các kỷ vật khác: cầm (kéo quá ~6 DIPs), lắc, ném, rơi, nảy; thả trúng đầu mèo thì mèo choáng (Bonk); đứng trên gờ cửa sổ; Pause đóng băng; mèo đôi lúc ra ngắm/đẩy. Không có ngủ/nảy như đệm slime.
 - [ ] Sảnh → Phần thưởng: mục "Kỷ vật Phiêu lưu" có ô Thú bông Slime Nén (chưa thắng: mờ có khóa, rê chuột "Thắng Màn 5 · Slime Nén để nhận."); Mũ thư mục trong "Phụ kiện Phiêu lưu". Chữ vi/en/ja đúng.
 - [ ] DPI 100/150/200%, đổi DPI giữa trận, màn hình phụ: phông trận khớp đúng dải trận (không lệch, không đè lên HUD/icon app).
+
+## Viễn chinh tuyến 2 và cửa hàng mèo 1.5 M23a (2026-10-29)
+Dữ liệu gốc, không cần file tùy chỉnh. Ảnh bản đồ chọn tuyến và cửa hàng đã xem qua render UiChecks (dữ liệu thử), **chưa chơi thật**, chưa xem trên màn hình thật.
+- [ ] Bản đồ Viễn chinh khi chưa có chuyến: dưới dòng trạng thái có hai chip "Đường mòn Slime" và "Lối Bãi rác". Chưa thắng màn 5 chương 2 thì chip Lối Bãi rác mờ, rê chuột "Thắng màn Slime Nén ở Phiêu lưu để mở.", bấm không đổi. Đã thắng: bấm sang Lối Bãi rác, tiêu đề đổi, bản đồ còn 7 cột (6 bậc + trùm), dòng "Vùng: Đầm nhầy → Kho cá → Mê cung thư mục".
+- [ ] Chuẩn bị và lên đường ở Lối Bãi rác: dòng trạng thái ghi tên vùng ("Bậc 1/7 · Đầm nhầy · HP…"); không đổi được tuyến khi đang có chuyến; Sảnh ghi "Đang có chuyến · Lối Bãi rác · Bậc…". Tắt app rồi mở lại: bản đồ mở đúng tuyến của chuyến.
+- [ ] Trận ở Lối Bãi rác có phông đống thư mục như chương 2; trận Kho cá có giỏ cá (mất hết cá là thua, thắng khi hạ hết quái); trận ở tuyến 1 không có phông.
+- [ ] Ô cửa hàng (hình thùng hàng) xuất hiện từ bậc 2, không ở bậc 1, mỗi bậc tối đa một. Chọn ô: chi tiết ghi "Tiêu xu của chuyến… Chuyến có N xu." Đi tới đây: bảng "Cửa hàng mèo" có bữa cá, 2 thẻ, 1 thẻ hiếm ◆, 1 di vật ◈ (khi còn chỗ), mỗi món có giá vàng bên phải.
+- [ ] Mua món đủ xu: ghi "Đã mua … (−N xu)", tiếng pop, món đổi thành "✓ Đã mua", xu trên dòng trạng thái giảm; món không đủ xu mờ (rê chuột "Chưa đủ xu."); bữa cá mờ khi đầy máu. "Đi tiếp" qua bậc. Túi đồ → nhật ký có dòng "¤ Cửa hàng mèo: mua … (−N xu)".
+- [ ] Tắt app khi đang trong cửa hàng rồi mở lại: hàng giống hệt, món đã mua vẫn ghi đã mua, xu giữ nguyên.
+- [ ] Nếu đang có chuyến Đường mòn Slime từ bản trước (luật 6): mở bản đồ vẫn đi tiếp, không bị kết thúc; các bậc quay sau không ra cửa hàng.
+- [ ] Cảm giác giá cửa hàng (ghi vào Nhật ký chơi thử): tới cửa hàng đầu tiên thường có bao nhiêu xu, mua được mấy món (giá 2/3/5/6 là ước lượng). Độ khó Lối Bãi rác so với Đường mòn Slime.
+- [ ] Chữ vi/en/ja đúng, không tràn; DPI 100/150/200%: chip tuyến và bảng cửa hàng không bị cắt, cuộn được khi màn hình thấp.

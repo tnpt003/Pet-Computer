@@ -172,7 +172,7 @@ internal static class ExpeditionTests
         string Exp(string steps = "[ [ \"fight\" ] ]", string fights = null!, string elites = "[]", string? boss = null, string extra = "") =>
             $"{{ \"id\": \"trail\", \"nameVi\": \"T\", \"nameEn\": \"T\"{extra}, \"steps\": {steps}, \"fights\": {fights ?? "[ " + Enc("f1") + " ]"}, \"elites\": {elites}, \"boss\": {boss ?? Enc("b", enemy: "king")} }}";
         check(Error(Exp()) == "", "A small valid expedition is accepted");
-        check(Error(Exp(steps: "[ [ \"shop\" ] ]")).Contains("kinds"), "An unknown node kind is rejected");
+        check(Error(Exp(steps: "[ [ \"market\" ] ]")).Contains("kinds"), "An unknown node kind is rejected");
         check(Error(Exp(steps: "[ [ \"fight\", \"fight\" ] ]")).Contains("more fight nodes"), "A step with more nodes of a kind than its pool has is rejected");
         check(Error(Exp(fights: "[ " + Enc("a") + " ]")).Contains("used twice"), "An encounter with an Adventure stage's id is rejected");
         check(Error(Exp(boss: Enc("b"))).Contains("boss needs"), "A boss encounter without a boss is rejected");
@@ -185,6 +185,7 @@ internal static class ExpeditionTests
         check(Error(Exp(extra: ", \"shop\": 1")) != "", "A misspelt expedition key is rejected");
 
         Balance(check, BattleData.Settings); // The real data: the step gacha and capsules.
+        Balance(check, BattleData.Settings, "dump_trail"); // 1.5 M23: the second route.
     }
 
     // The whole run in simulation (NOT real play): each weapon × difficulty × player (simple: the
@@ -243,14 +244,14 @@ internal static class ExpeditionTests
         }
     }
 
-    private static void Balance(Action<bool, string> check, BattleSettings data)
+    private static void Balance(Action<bool, string> check, BattleSettings data, string? route = null)
     {
         var levels = new[] { BattleDifficulty.Easy, BattleDifficulty.Normal, BattleDifficulty.Hard };
         var weapons = new[] { BattleWeapon.Sword, BattleWeapon.Hammer };
         var players = new[] { AdventureBalanceTests.Player.Simple, AdventureBalanceTests.Player.Casual };
         // A run is a chain of fights, so it varies more than one stage: twice the Adventure's seeds.
         const int seeds = AdventureBalanceTests.Seeds * 2;
-        Console.WriteLine($"Expedition balance (simulation, not real play): weapon | level | player | route | runs won/{seeds} | avg steps passed | avg fight s (won runs) | battles/run | elites/run | relics at the end | HP % before the boss | HP % left (won runs)");
+        Console.WriteLine($"Expedition balance{(route == null ? "" : " · " + route)} (simulation, not real play): weapon | level | player | route | runs won/{seeds} | avg steps passed | avg fight s (won runs) | battles/run | elites/run | relics at the end | HP % before the boss | HP % left (won runs)");
         var results = new Dictionary<(string, BattleDifficulty, AdventureBalanceTests.Player, Policy), (int Wins, double Steps, double Seconds)>();
         foreach (var weapon in weapons)
             foreach (var level in levels)
@@ -260,7 +261,7 @@ internal static class ExpeditionTests
                         int wins = 0, reachedBoss = 0; double steps = 0, seconds = 0, battles = 0, elites = 0, relics = 0, beforeBoss = 0, left = 0;
                         for (int seed = 1; seed <= seeds; seed++)
                         {
-                            var expedition = new Expedition(data, new ExpeditionProgress());
+                            var expedition = new Expedition(data, new ExpeditionProgress(), route);
                             var run = expedition.Start(weapon, level, seed);
                             double fought = 0;
                             while (expedition.Run != null)
@@ -299,9 +300,9 @@ internal static class ExpeditionTests
                 // route still wins half its runs; the safe one (fewer relics) is only required to stay winnable.
                 int won = results[(weapon, BattleDifficulty.Normal, AdventureBalanceTests.Player.Simple, policy)].Wins;
                 int least = policy == Policy.Greedy ? seeds / 2 : seeds / 10;
-                check(won >= least, $"Expedition balance: {weapon}, Normal, the simple player with the {policy.ToString().ToLowerInvariant()} route wins at least {least}/{seeds} ({won}/{seeds})");
+                check(won >= least, $"Expedition balance{(route == null ? "" : " (" + route + ")")}: {weapon}, Normal, the simple player with the {policy.ToString().ToLowerInvariant()} route wins at least {least}/{seeds} ({won}/{seeds})");
             }
         double longest = results.Values.Where(r => r.Wins > 0).Max(r => r.Seconds);
-        check(longest <= 15 * 60, $"Expedition balance: a won run's fights take at most 15 minutes in simulation (longest {longest / 60:0.0} min)");
+        check(longest <= 15 * 60, $"Expedition balance{(route == null ? "" : " (" + route + ")")}: a won run's fights take at most 15 minutes in simulation (longest {longest / 60:0.0} min)");
     }
 }

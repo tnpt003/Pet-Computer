@@ -29,7 +29,10 @@ public sealed partial class PetWindow
         : expeditionProgress ??= ExpeditionProgressFile != null ? ExpeditionProgress.Load(ExpeditionProgressFile) : new();
     // For checks: read the file again (like a restart).
     public void ReloadExpeditionProgress() => expeditionProgress = null;
-    public Expedition? Expedition => BattleTuning.Expedition != null ? new Expedition(BattleTuning, ExpeditionProgress) { GrantKeepsakes = !BattleDataCustom } : null;
+    // 1.5 M23: the route chosen on the map before a run (null: the first); a run under way is on its own.
+    private string? expeditionRoute;
+    public string? ExpeditionRouteId => Expedition?.Spec.Id;
+    public Expedition? Expedition => BattleTuning.Expedition != null ? new Expedition(BattleTuning, ExpeditionProgress, expeditionRoute) { GrantKeepsakes = !BattleDataCustom } : null;
     private bool expeditionSaveFailed;
 
     // The running battle is this Expedition's step (null: a free battle or an Adventure stage).
@@ -70,6 +73,9 @@ public sealed partial class PetWindow
     private System.Windows.Threading.DispatcherTimer? xRevealTimer;
     public bool ExpeditionRevealing => xRevealTimer != null;
     private StackPanel? xSetup, xMap;
+    // 1.5 M23: the route chips (built again when what they show changes) and the route the map row was built for.
+    private WrapPanel? xRoutes;
+    private string? xRoutesKey, xMapRoute;
 
     public bool ExpeditionMapOpen => expeditionMapOpen;
     public bool ExpeditionMapVisible => expeditionMapWindow?.IsVisible == true;
@@ -92,17 +98,17 @@ public sealed partial class PetWindow
     private static PetMotif KindMotif(string kind) => kind switch
     {
         ExpeditionSpec.Elite => PetMotif.Spark, DesktopPet.Expedition.BossKind => PetMotif.Crown, ExpeditionSpec.Rest => PetMotif.Campfire,
-        ExpeditionSpec.Event => PetMotif.Scroll, "" => PetMotif.Question, _ => PetMotif.Sword
+        ExpeditionSpec.Event => PetMotif.Scroll, ExpeditionSpec.Shop => PetMotif.Box, "" => PetMotif.Question, _ => PetMotif.Sword
     };
 
     private string KindName(string kind) => kind switch
     {
         ExpeditionSpec.Elite => L("Tinh anh", "Elite"), DesktopPet.Expedition.BossKind => L("Trùm", "Boss"),
-        ExpeditionSpec.Rest => L("Nghỉ chân", "Rest"), ExpeditionSpec.Event => L("Sự kiện", "Event"), _ => L("Giao tranh", "Fight")
+        ExpeditionSpec.Rest => L("Nghỉ chân", "Rest"), ExpeditionSpec.Event => L("Sự kiện", "Event"), ExpeditionSpec.Shop => L("Cửa hàng mèo", "Cat shop"), _ => L("Giao tranh", "Fight")
     };
     private static string KindGlyph(string kind) => kind switch
     {
-        ExpeditionSpec.Elite => "★", DesktopPet.Expedition.BossKind => "♛", ExpeditionSpec.Rest => "♨", ExpeditionSpec.Event => "!", "" => "?", _ => "⚔"
+        ExpeditionSpec.Elite => "★", DesktopPet.Expedition.BossKind => "♛", ExpeditionSpec.Rest => "♨", ExpeditionSpec.Event => "!", ExpeditionSpec.Shop => "¤", "" => "?", _ => "⚔"
     };
     private static bool IsFightKind(string kind) => ExpeditionSpec.IsBattle(kind) || kind == DesktopPet.Expedition.BossKind;
     // A node of the step to go now that can be chosen (no choice open, no battle under way).
@@ -131,6 +137,8 @@ public sealed partial class PetWindow
     {
         if (BattlePrepRefusal() is string reason) return reason;
         ReloadBattleData();
+        // 1.5 M23: a locked route chosen before (the data changed) goes back to the first.
+        if (Expedition is Expedition chosen && chosen.Run == null && !chosen.IsUnlocked(AdventureProgress)) expeditionRoute = null;
         if (Expedition is not Expedition expedition) return L("Dữ liệu trận không có viễn chinh.", "The battle data has no Expedition.");
         if (!expedition.IsUnlocked(AdventureProgress))
             return L("Thắng màn Vua Slime ở Phiêu lưu để mở Viễn chinh.", "Win the Slime King in the Adventure to open the Expedition.");
@@ -153,6 +161,8 @@ public sealed partial class PetWindow
                 System.Diagnostics.Trace.WriteLine($"Expedition run {saved.RunId}: the battle of step {saved.Step + 1} was left earlier.");
             }
         }
+        // A run's route stays chosen after it ends.
+        if (expedition.Run is ExpeditionRun going) expeditionRoute = going.Expedition;
         expeditionWeapon = BattleTuning.Weapon(expedition.Run?.Weapon ?? preferences.BattleWeapon).Id;
         expeditionLevel = expedition.Run?.Level ?? BattleDifficultyChoice;
         expeditionConfirmAbandon = false;
@@ -182,6 +192,18 @@ public sealed partial class PetWindow
         if (!expeditionMapOpen || Expedition is not Expedition x || !LaneOpen(x, lane)) return false;
         expeditionLane = lane;
         expeditionConfirmAbandon = false;
+        UpdateExpeditionMap();
+        return true;
+    }
+
+    // 1.5 M23: before a run, the route to set out on (an open one). False: no such open route, or a run is under way.
+    public bool ExpeditionChooseRoute(string id)
+    {
+        if (!expeditionMapOpen || Expedition?.Run != null || BattleTuning.Expedition?.Route(id) is not ExpeditionSpec route
+            || !DesktopPet.Expedition.IsUnlocked(BattleTuning, route, AdventureProgress)) return false;
+        expeditionRoute = route.Id;
+        expeditionConfirmAbandon = false;
+        expeditionLane = 0;
         UpdateExpeditionMap();
         return true;
     }
@@ -230,7 +252,7 @@ public sealed partial class PetWindow
         SaveExpedition(expedition.Progress);
         expeditionLane = 0;
         expeditionNote = null;
-        System.Diagnostics.Trace.WriteLine($"Expedition run {run.RunId} started: {run.Weapon}, {run.Difficulty}, seed {run.Seed}.");
+        System.Diagnostics.Trace.WriteLine($"Expedition run {run.RunId} started: {run.Expedition}, {run.Weapon}, {run.Difficulty}, seed {run.Seed}.");
         UpdateExpeditionMap();
         return null;
     }
@@ -357,6 +379,32 @@ public sealed partial class PetWindow
                 DesktopPet.Expedition.Prize(done.Prize).Kind is DesktopPet.Expedition.PrizeRare or DesktopPet.Expedition.PrizeRelic);
             return null;
         }
+        UpdateExpeditionMap();
+        return null;
+    }
+
+    // 1.5 M23: buy one ware of the open cat shop (it stays open; Move on leaves it). Null on success.
+    public string? ExpeditionBuy(string ware)
+    {
+        if (!expeditionMapOpen || Expedition is not Expedition expedition || expedition.Run is not ExpeditionRun run || run.Pending is not { Kind: ExpeditionChoice.ShopKind })
+            return L("Không có cửa hàng nào đang mở.", "No shop is open.");
+        switch (expedition.BuyRefusal(ware))
+        {
+            case null: break;
+            case "too poor": return L("Chưa đủ xu.", "Not enough coins.");
+            case "sold": return L("Món này đã bán.", "Already sold.");
+            case "full": return L("Mèo đang đầy máu.", "The cat's HP is full.");
+            case "no relic": return LF($"Đã đủ {expedition.Spec.MaxRelics} di vật.", $"The run already holds {expedition.Spec.MaxRelics} relics.");
+            default: return L("Không mua được.", "That cannot be bought.");
+        }
+        int price = expedition.Price(ware);
+        var done = expedition.Buy(ware);
+        if (!done.Done) return L("Không mua được.", "That cannot be bought.");
+        SaveExpedition(expedition.Progress);
+        string hp = done.Hp >= 0.5 ? $" +{Math.Round(done.Hp)} HP" : "";
+        expeditionNote = LF($"Đã mua {PrizeText(expedition, ware)} (−{price} xu).", $"Bought {PrizeText(expedition, ware)} (−{price} coins).") + hp;
+        PlayPetSound("pop");
+        System.Diagnostics.Trace.WriteLine($"Expedition run {run.RunId}: step {run.Step + 1} bought {ware} for {price}.");
         UpdateExpeditionMap();
         return null;
     }
@@ -498,6 +546,7 @@ public sealed partial class PetWindow
         FinishExpeditionReveal(update: false);
         xSpinArt = null;
         xSetup = xMap = xChoice = null;
+        xRoutes = null; xRoutesKey = xMapRoute = null;
         xChoiceKey = null; xChoiceTexts.Clear(); xChoiceButtons.Clear();
         expeditionNodes.Clear(); expeditionLinks.Clear();
         if (was) ApplyQuiet();
@@ -526,40 +575,11 @@ public sealed partial class PetWindow
         xNote = Line(PetUi.SmallSize, true); xNote.Foreground = PrepWarning; xNote.Margin = new Thickness(0, 6, 0, 0);
         // Before a run: the weapon and difficulty are chosen on the usual setup panel (Prepare).
         xSetupLabel = Line(PetUi.SmallSize); xSetupLabel.Foreground = PetUi.Game.Soft; xSetupLabel.Margin = new Thickness(0, 8, 0, 0);
-        xSetup = new StackPanel { Children = { xSetupLabel } };
+        // 1.5 M23: the routes to set out on (only when the data has more than one).
+        xRoutes = new WrapPanel { Margin = new Thickness(0, 6, 0, 0) };
+        xSetup = new StackPanel { Children = { xRoutes, xSetupLabel } };
 
-        // The steps left to right, each with its nodes stacked; the boss last. Gold: the path won;
-        // blue: the step to fight now (white rim: chosen); faint: steps ahead; dim: nodes passed by.
-        var row = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 12, 0, 0), HorizontalAlignment = HorizontalAlignment.Center };
-        expeditionNodes.Clear(); expeditionLinks.Clear();
-        for (int step = 0; step < spec.StepCount; step++)
-        {
-            if (step > 0)
-            {
-                var link = new Rectangle { Width = 18, Height = 4, RadiusX = 2, RadiusY = 2, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 0, 14) };
-                row.Children.Add(link);
-                expeditionLinks.Add(link);
-            }
-            var column = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
-            // With the kind gacha every step has room for the most nodes it may draw (the unused hidden).
-            int lanes = step >= spec.PathSteps ? 1 : spec.KindGacha?.MaxLanes ?? spec.Steps[step].Length;
-            for (int lane = 0; lane < lanes; lane++)
-            {
-                int at = lane;
-                var glyph = new PetIllustration(PetMotif.Question, 30) { Backdrop = false, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
-                var node = new Border { Width = 38, Height = 38, CornerRadius = new CornerRadius(19), Margin = new Thickness(0, 2, 0, 2), HorizontalAlignment = HorizontalAlignment.Center,
-                    Cursor = System.Windows.Input.Cursors.Hand, Child = glyph };
-                node.MouseLeftButtonDown += (_, e) => { ExpeditionSelect(at); e.Handled = true; };
-                column.Children.Add(node);
-                expeditionNodes.Add((step, lane, node, glyph));
-            }
-            var number = new TextBlock { Foreground = Brushes.White, Opacity = 0.7, FontSize = PetUi.CaptionSize, HorizontalAlignment = HorizontalAlignment.Center,
-                Text = (step + 1).ToString() };
-            if (step >= spec.PathSteps) xBossLabel = number; // Named in the pet's language by UpdateExpeditionMap.
-            column.Children.Add(number);
-            row.Children.Add(column);
-        }
-        xMap = new StackPanel { Children = { row } };
+        xMap = new StackPanel { Children = { BuildExpeditionRow(spec) } };
         xNodeName = Line(PetUi.TitleSize, true);
         xNodeGoal = Line(PetUi.BodySize); xNodeGoal.Margin = new Thickness(0, 3, 0, 0);
         // The capsule on the left of the details while a step waits for its spin or opens.
@@ -602,6 +622,44 @@ public sealed partial class PetWindow
         PlaceExpeditionMap();
     }
 
+    // The steps left to right, each with its nodes stacked; the boss last. Gold: the path won;
+    // blue: the step to fight now (white rim: chosen); faint: steps ahead; dim: nodes passed by.
+    // 1.5 M23: built for the route shown (UpdateExpeditionMap builds it again when the route changes).
+    private StackPanel BuildExpeditionRow(ExpeditionSpec spec)
+    {
+        var row = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 12, 0, 0), HorizontalAlignment = HorizontalAlignment.Center };
+        expeditionNodes.Clear(); expeditionLinks.Clear();
+        xMapRoute = spec.Id;
+        for (int step = 0; step < spec.StepCount; step++)
+        {
+            if (step > 0)
+            {
+                var link = new Rectangle { Width = 18, Height = 4, RadiusX = 2, RadiusY = 2, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 0, 14) };
+                row.Children.Add(link);
+                expeditionLinks.Add(link);
+            }
+            var column = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
+            // With the kind gacha every step has room for the most nodes it may draw (the unused hidden).
+            int lanes = step >= spec.PathSteps ? 1 : spec.KindGacha?.MaxLanes ?? spec.Steps[step].Length;
+            for (int lane = 0; lane < lanes; lane++)
+            {
+                int at = lane;
+                var glyph = new PetIllustration(PetMotif.Question, 30) { Backdrop = false, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
+                var node = new Border { Width = 38, Height = 38, CornerRadius = new CornerRadius(19), Margin = new Thickness(0, 2, 0, 2), HorizontalAlignment = HorizontalAlignment.Center,
+                    Cursor = System.Windows.Input.Cursors.Hand, Child = glyph };
+                node.MouseLeftButtonDown += (_, e) => { ExpeditionSelect(at); e.Handled = true; };
+                column.Children.Add(node);
+                expeditionNodes.Add((step, lane, node, glyph));
+            }
+            var number = new TextBlock { Foreground = Brushes.White, Opacity = 0.7, FontSize = PetUi.CaptionSize, HorizontalAlignment = HorizontalAlignment.Center,
+                Text = (step + 1).ToString() };
+            if (step >= spec.PathSteps) xBossLabel = number; // Named in the pet's language by UpdateExpeditionMap.
+            column.Children.Add(number);
+            row.Children.Add(column);
+        }
+        return row;
+    }
+
     private void PlaceExpeditionMap() => PlaceGamePanel(expeditionMapWindow);
 
     private void UpdateExpeditionMap()
@@ -616,6 +674,9 @@ public sealed partial class PetWindow
         }
         var spec = expedition.Spec;
         var run = expedition.Run;
+        // 1.5 M23: another route's map has other steps.
+        if (xMapRoute != spec.Id && xMap.Children.Count > 0) { xMap.Children.RemoveAt(0); xMap.Children.Insert(0, BuildExpeditionRow(spec)); }
+        UpdateExpeditionRoutes(expedition);
         xTitle.Text = L("Viễn chinh — ", "Expedition — ") + spec.Name(preferences.Language);
         if (xBossLabel != null) xBossLabel.Text = L("Trùm", "Boss");
         string? dataNote = BattleDataError != null
@@ -628,7 +689,8 @@ public sealed partial class PetWindow
         if (run == null)
         {
             Show(xStatus, LF($"Chưa có chuyến đi · {spec.StepCount} bậc, bậc cuối là trùm. HP và build giữ suốt chuyến.",
-                $"No run yet · {spec.StepCount} steps, the last one a boss. HP and build carry through the run."));
+                $"No run yet · {spec.StepCount} steps, the last one a boss. HP and build carry through the run.")
+                + (spec.Zones.Length > 0 ? "\n" + L("Vùng: ", "Zones: ") + string.Join(" → ", spec.Zones.Select(z => z.Name(preferences.Language))) : ""));
             Show(xBuild, null);
             xSetupLabel!.Text = LF($"Chuẩn bị chuyến để chọn cách đánh và độ khó cho cả chuyến (lần trước: {weaponName} · {levelName}).",
                 $"Prepare the run to choose the weapon and difficulty for all of it (last time: {weaponName} · {levelName}).");
@@ -636,7 +698,8 @@ public sealed partial class PetWindow
         else
         {
             double max = expedition.MaxHp(run);
-            Show(xStatus, $"{StepTitle(run.Step, run.Map.Count)} · HP {Math.Ceiling(run.Hp)}/{max:0}{(run.Coins > 0 ? LF($" · {run.Coins} xu", $" · {run.Coins} coin{(run.Coins == 1 ? "" : "s")}") : "")} · {weaponName} · {levelName}");
+            string zone = spec.Zone(run.Step) is ExpeditionZoneSpec z ? " · " + z.Name(preferences.Language) : "";
+            Show(xStatus, $"{StepTitle(run.Step, run.Map.Count)}{zone} · HP {Math.Ceiling(run.Hp)}/{max:0}{(run.Coins > 0 ? LF($" · {run.Coins} xu", $" · {run.Coins} coin{(run.Coins == 1 ? "" : "s")}") : "")} · {weaponName} · {levelName}");
             var parts = BuildParts(run.Build);
             Show(xBuild, L("Build: ", "Build: ") + (parts.Count == 0 ? L("chưa có thẻ", "no cards yet") : string.Join(" · ", parts))
                 + "\n" + L("Di vật: ", "Relics: ") + (run.Relics.Count == 0 ? L("chưa có", "none yet") : string.Join(" · ", run.Relics.Select(id => "◈ " + RelicName(expedition, id))))
@@ -704,12 +767,14 @@ public sealed partial class PetWindow
             xDetails!.Visibility = Visibility.Visible;
             var e = spec.FindEvent(run.Map[run.Step][expeditionLane]);
             xNodeName!.Text = $"{StepTitle(run.Step, run.Map.Count)} · {KindName(other)}" + (e != null ? " — " + e.Name(preferences.Language) : "");
-            Show(xNodeGoal, e?.Describe(preferences.Language) ?? LF($"Hồi {spec.RestHeal:P0} HP tối đa, hoặc lấy một thẻ nâng cấp thay vì hồi máu.", $"Get {spec.RestHeal:P0} of the max HP back, or take an upgrade card instead."));
+            Show(xNodeGoal, e?.Describe(preferences.Language) ?? (other == ExpeditionSpec.Shop
+                ? LF($"Tiêu xu của chuyến: thẻ, hồi máu, di vật; mỗi món bán một lần. Chuyến có {run.Coins} xu.", $"Spend the run's coins on cards, HP and relics; each sells once. The run has {run.Coins} coins.")
+                : LF($"Hồi {spec.RestHeal:P0} HP tối đa, hoặc lấy một thẻ nâng cấp thay vì hồi máu.", $"Get {spec.RestHeal:P0} of the max HP back, or take an upgrade card instead.")));
         }
         else xDetails!.Visibility = Visibility.Collapsed;
         UpdateExpeditionChoice(expedition);
 
-        var record = expedition.Record(run?.Weapon ?? expeditionWeapon, run?.Level ?? expeditionLevel, run?.NoApps ?? !preferences.BattleApps);
+        var record = expedition.Record(run?.Weapon ?? expeditionWeapon, run?.Level ?? expeditionLevel, run?.NoApps ?? !preferences.BattleApps, run?.RulesVersion);
         int keepsakesHad = spec.Keepsakes.Count(k => expedition.Progress.Keepsakes.Contains(k.Id));
         string keepsakeLine = spec.Keepsakes.Length == 0 ? "" : (record.Runs == 0 ? "" : "\n") + LF($"Kỷ vật: {keepsakesHad}/{spec.Keepsakes.Length}", $"Keepsakes: {keepsakesHad}/{spec.Keepsakes.Length}")
             + (keepsakesHad < spec.Keepsakes.Length ? L(" · thắng cả chuyến ở mỗi độ khó để nhận", " · win a run at each difficulty to earn them") : "");
@@ -739,6 +804,37 @@ public sealed partial class PetWindow
         if (xMain.IsEnabled != can) { xMain.IsEnabled = can; xMain.Opacity = can ? 1 : 0.5; }
     }
 
+    // 1.5 M23: before a run, one chip per route (the chosen one ticked; a locked one dimmed, saying how
+    // it opens). Hidden when the data has one route. Built again only when what it shows changes.
+    private void UpdateExpeditionRoutes(Expedition expedition)
+    {
+        if (xRoutes == null || BattleTuning.Expedition is not ExpeditionSpec main) return;
+        var routes = main.All;
+        string key = string.Join("|", English, preferences.Language, expedition.Spec.Id, string.Join(",", routes.Select(r => r.Id + DesktopPet.Expedition.IsUnlocked(BattleTuning, r, AdventureProgress))));
+        xRoutes.Visibility = routes.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
+        if (key == xRoutesKey) return;
+        xRoutesKey = key;
+        xRoutes.Children.Clear();
+        foreach (var route in routes)
+        {
+            string id = route.Id;
+            bool open = DesktopPet.Expedition.IsUnlocked(BattleTuning, route, AdventureProgress), picked = route.Id == expedition.Spec.Id;
+            string zones = route.Zones.Length > 0 ? " · " + string.Join(" → ", route.Zones.Select(z => z.Name(preferences.Language))) : "";
+            string unlock = AdventureOf(BattleTuning)?.Campaign.Chapters.SelectMany(c => c.Stages).FirstOrDefault(s => s.Id == route.UnlockAfter)?.Name(preferences.Language) ?? "";
+            var name = new TextBlock { Text = (picked ? "✓ " : "") + route.Name(preferences.Language), Foreground = Brushes.White, FontSize = PetUi.SmallSize, FontWeight = picked ? FontWeights.Bold : FontWeights.Normal };
+            var chip = new Border
+            {
+                Background = picked ? PetUi.Game.ChosenCard : PrepCardBack, BorderBrush = picked ? PetUi.Game.ChosenRim : PrepCardRim, BorderThickness = new Thickness(picked ? 2 : 1),
+                CornerRadius = new CornerRadius(8), Padding = new Thickness(9, 4, 9, 5), Margin = new Thickness(0, 0, 6, 4), Opacity = open ? 1 : 0.5,
+                Cursor = open && !picked ? System.Windows.Input.Cursors.Hand : null, Child = name,
+                ToolTip = open ? LF($"{route.StepCount} bậc, trùm {route.Boss?.Name(preferences.Language)}", $"{route.StepCount} steps, the boss: {route.Boss?.Name(preferences.Language)}") + zones
+                    : LF($"Thắng màn {unlock} ở Phiêu lưu để mở.", $"Win {unlock} in the Adventure to open it.")
+            };
+            chip.MouseLeftButtonDown += (_, e) => { ExpeditionChooseRoute(id); e.Handled = true; };
+            xRoutes.Children.Add(chip);
+        }
+    }
+
     // The open choice (rest, event, a won elite's relics): what it offers, with each option's price
     // said before choosing. Built again only when what it shows changes (not every refresh).
     private void UpdateExpeditionChoice(Expedition expedition)
@@ -754,7 +850,8 @@ public sealed partial class PetWindow
         }
         string key = string.Join("|", open.Kind, open.Lane, open.Event, string.Join(",", open.Cards), string.Join(",", open.Relics), expeditionPickCard, expeditionDropCard, expeditionPickRelic,
             English, Math.Round(run.Hp), string.Join(",", run.Build.Select(c => c.Key + c.Value)), run.Relics.Count,
-            string.Join(",", run.Loadout), expeditionSkillPick == null ? "-" : string.Join(",", ExpeditionSkillPick), ExpeditionCanChangeSkills);
+            string.Join(",", run.Loadout), expeditionSkillPick == null ? "-" : string.Join(",", ExpeditionSkillPick), ExpeditionCanChangeSkills,
+            run.Coins, string.Join(",", open.Wares), string.Join(",", open.Sold));
         xChoice.Visibility = Visibility.Visible;
         if (key == xChoiceKey) return;
         xChoiceKey = key;
@@ -786,11 +883,13 @@ public sealed partial class PetWindow
             ExpeditionChoice.RestKind => L("Nghỉ chân — chọn một", "Rest — choose one"),
             ExpeditionChoice.RewardKind => L("Phần thưởng tinh anh", "Elite reward"),
             ExpeditionChoice.CapsuleKind => L("Máy viên nang", "Capsule machine"),
+            ExpeditionChoice.ShopKind => KindName(ExpeditionSpec.Shop),
             _ => e?.Name(preferences.Language) ?? KindName(ExpeditionSpec.Event)
         };
         var head = Text(title, PetUi.TitleSize, true, brush: open.Kind is ExpeditionChoice.RewardKind or ExpeditionChoice.CapsuleKind ? RecordGold : null);
         xChoice.Children.Add(head);
         if (open.Kind == ExpeditionChoice.CapsuleKind) AddCapsules(expedition, run, Text);
+        else if (open.Kind == ExpeditionChoice.ShopKind) AddShop(expedition, run, open, Text);
         else if (open.Kind == ExpeditionChoice.RewardKind) xChoice.Children.Add(Text(L("Chọn một di vật mang theo đến hết chuyến, hoặc bỏ qua.", "Pick a relic to keep for the rest of the run, or leave them."), PetUi.SmallSize, opacity: 0.85));
         else if (e != null) xChoice.Children.Add(Text(e.Describe(preferences.Language), PetUi.SmallSize, opacity: 0.85));
         if (run.Relics.Count >= spec.MaxRelics && open.Kind is not (ExpeditionChoice.RestKind or ExpeditionChoice.CapsuleKind) && e?.Kind != ExpeditionEventSpec.Swap)
@@ -958,6 +1057,60 @@ public sealed partial class PetWindow
             xChoiceButtons[option] = card;
         }
         xChoice.Children.Add(row);
+    }
+
+    // 1.5 M23: the cat shop's wares, one card each: what it is, what it does and its price; a click buys
+    // it (the shop stays open). Sold ones are ticked; ones the run cannot pay for are dimmed.
+    private void AddShop(Expedition expedition, ExpeditionRun run, ExpeditionChoice open, Func<string, double, bool, double, Brush?, TextBlock> text)
+    {
+        var spec = expedition.Spec;
+        xChoice!.Children.Add(text(LF($"Chuyến có {run.Coins} xu (nhặt trong trận). Mỗi món bán một lần; mua xong thì đi tiếp.",
+            $"The run has {run.Coins} coins (picked up in battles). Each ware sells once; move on when done."), PetUi.SmallSize, false, 0.85, null));
+        foreach (var ware in open.Wares)
+        {
+            string chosen = ware;
+            var (kind, id) = DesktopPet.Expedition.Prize(ware);
+            var card = id == null ? null : BattleTuning.UpgradeList.FirstOrDefault(u => u.Id == id);
+            var relic = kind == DesktopPet.Expedition.PrizeRelic ? spec.Relic(id) : null;
+            string name = kind switch
+            {
+                DesktopPet.Expedition.Heal => LF($"Bữa cá: +{Percent(spec.Store?.Heal ?? 0)} HP", $"A fish meal: +{Percent(spec.Store?.Heal ?? 0)} HP"),
+                DesktopPet.Expedition.PrizeRelic => "◈ " + (relic?.Name(preferences.Language) ?? id),
+                _ => CardName(id!) + (kind == DesktopPet.Expedition.PrizeRare ? " ◆" : "")
+            };
+            string desc = kind switch
+            {
+                DesktopPet.Expedition.Heal => LF($"Hồi {Math.Round(expedition.ShopHeal())} HP ngay.", $"{Math.Round(expedition.ShopHeal())} HP back now."),
+                DesktopPet.Expedition.PrizeRelic => relic?.Describe(preferences.Language) ?? "",
+                _ => card?.Describe(preferences.Language) ?? ""
+            };
+            string? why = expedition.BuyRefusal(ware);
+            bool sold = why == "sold", can = why == null;
+            string price = sold ? L("✓ Đã mua", "✓ Bought") : LF($"{expedition.Price(ware)} xu", $"{expedition.Price(ware)} coins");
+            var priceText = text(price, PetUi.BodySize, true, 1, sold ? null : RecordGold);
+            priceText.TextWrapping = TextWrapping.NoWrap;
+            priceText.Margin = new Thickness(10, 0, 0, 0);
+            priceText.VerticalAlignment = VerticalAlignment.Center;
+            var about = new StackPanel { Children = { text(name, PetUi.BodySize, true, 1, null), text(desc, PetUi.SmallSize, false, 0.85, null) } };
+            var row = new DockPanel { Children = { priceText, about } };
+            DockPanel.SetDock(priceText, Dock.Right);
+            var box = new Border
+            {
+                Background = sold ? PetUi.Game.ChosenCard : PrepCardBack, BorderBrush = PrepCardRim, BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(8),
+                Padding = new Thickness(9, 5, 9, 6), Margin = new Thickness(0, 4, 0, 0), Child = row, IsEnabled = can, Opacity = can || sold ? 1 : 0.5,
+                Cursor = can ? System.Windows.Input.Cursors.Hand : null,
+                ToolTip = why switch
+                {
+                    "too poor" => L("Chưa đủ xu.", "Not enough coins."), "full" => L("Mèo đang đầy máu.", "The cat's HP is full."),
+                    "no relic" => LF($"Đã đủ {spec.MaxRelics} di vật.", $"The run already holds {spec.MaxRelics} relics."), _ => null
+                }
+            };
+            box.MouseEnter += (_, _) => { if (box.IsEnabled) box.BorderBrush = Brushes.White; };
+            box.MouseLeave += (_, _) => box.BorderBrush = PrepCardRim;
+            box.MouseLeftButtonDown += (_, e) => { if (box.IsEnabled && ExpeditionBuy(chosen) is string reason) ShowBattleNotice(reason); e.Handled = true; };
+            xChoice.Children.Add(box);
+            xChoiceButtons["ware:" + ware] = box;
+        }
     }
 
     // Measurement only (perf.ps1 -Battle expedition): the last elite encounter at the last step's

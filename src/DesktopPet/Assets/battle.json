@@ -1021,7 +1021,8 @@
   },
   "expedition": {
     "id": "slime_trail", "nameVi": "Đường mòn Slime", "nameEn": "The Slime Trail",
-    "rulesVersion": 6, "unlockAfter": "c1_slime_king", "retreatCost": 0, "winHeal": 0.05, "stepThreat": 0.1,
+    // 1.5 M23: rules 7 brought the cat shop; a run started under rules 6 goes on to its end (keepRuns).
+    "rulesVersion": 7, "keepRuns": [ 6 ], "unlockAfter": "c1_slime_king", "retreatCost": 0, "winHeal": 0.05, "stepThreat": 0.1,
     "restHeal": 0.3, "maxRelics": 3, "eliteRelics": 2,
     "keepsakes": [
       { "id": "cup_bronze", "kind": "cup", "tier": "bronze", "difficulty": "Easy", "exact": true, "nameVi": "Cúp đồng viễn chinh", "nameEn": "Bronze Expedition cup" },
@@ -1030,7 +1031,10 @@
       { "id": "expedition_scarf", "kind": "accessory", "accessory": "ExpeditionScarf", "difficulty": "Easy", "nameVi": "Khăn viễn chinh", "nameEn": "Expedition scarf" },
       { "id": "slime_cushion", "kind": "cushion", "difficulty": "Normal", "nameVi": "Đệm slime", "nameEn": "Slime cushion" }
     ],
-    "kindGacha": { "steps": 5, "minLanes": 2, "maxLanes": 3, "weights": { "fight": 45, "event": 20, "elite": 20, "rest": 15 }, "rerollCost": 0.08 },
+    "kindGacha": { "steps": 5, "minLanes": 2, "maxLanes": 3, "weights": { "fight": 45, "event": 20, "elite": 20, "rest": 15, "shop": 12 }, "rerollCost": 0.08 },
+    // 1.5 M23: the cat shop (a "shop" node, never at step 1, one a step at most): the run's coins buy
+    // each ware once. Wares drawn when it is visited and kept; prices in coins. Shared by every route.
+    "shop": { "heal": 0.2, "healPrice": 2, "cardPrice": 3, "rarePrice": 5, "relicPrice": 6, "cards": 2, "rares": 1, "relics": 1 },
     "capsules": { "freeHeal": 0.1, "freeCard": 0.5, "goldCost": 0.12, "goldHeal": 0.1, "relic": 40, "rare": 30, "cardHeal": 30 },
     "events": [
       { "id": "cat_trader", "kind": "swap", "nameVi": "Lữ khách mèo", "nameEn": "Travelling cat",
@@ -1128,6 +1132,158 @@
         { "budget": 6, "groups": [ { "enemy": "rock", "count": 1, "side": "a" }, { "enemy": "slime", "count": 1, "side": "a" }, { "enemy": "runner", "count": 2, "side": "b" } ] },
         { "groups": [ { "enemy": "king_c1", "count": 1 } ] }
       ]
-    }
+    },
+    // 1.5 M23 (docs/UPDATE-1.5.md X1): more routes. A route has its own id, names, rules version, unlock,
+    // map, encounters (ids unique over every route), zones and scene; the HP rules, events, relics,
+    // capsules and shop are the Expedition's above. zones: in order over the steps before the boss, each
+    // step drawing its fights and elites only from its zone's. Each route keeps its own records.
+    "routes": [
+      {
+        "id": "dump_trail", "nameVi": "Lối Bãi rác", "nameEn": "The Dump Trail",
+        "rulesVersion": 1, "unlockAfter": "c2_zip_slime", "scene": "dump",
+        "kindGacha": { "steps": 6, "minLanes": 2, "maxLanes": 3, "weights": { "fight": 45, "event": 18, "elite": 20, "rest": 12, "shop": 14 }, "rerollCost": 0.08 },
+        "zones": [
+          { "id": "swamp", "nameVi": "Đầm nhầy", "nameEn": "Slime swamp", "steps": 2, "fights": [ "y_puddles", "y_ice_pond", "y_split_bog" ], "elites": [ "y_mother_nest" ] },
+          { "id": "fish_store", "nameVi": "Kho cá", "nameEn": "Fish store", "steps": 2, "fights": [ "y_fish_crates", "y_fish_raid", "y_fish_tunnel" ], "elites": [ "y_fish_heist" ] },
+          { "id": "folder_maze", "nameVi": "Mê cung thư mục", "nameEn": "Folder maze", "steps": 2, "fights": [ "y_ghost_dirs", "y_drum_hall", "y_wall_maze" ], "elites": [ "y_folder_fort", "y_ghost_parade" ] }
+        ],
+        "fights": [
+          {
+            "id": "y_puddles", "nameVi": "Vũng nhầy", "nameEn": "Slime puddles",
+            "goalVi": "Slime phun để lại vũng, slime lò xo nằm chờ.", "goalEn": "Spitters leave puddles, spring slimes lie in wait.",
+            "upgrades": true, "maxAlive": 5, "threat": 1.6, "maxMalware": 4,
+            "waves": [
+              { "groups": [ { "enemy": "spitter", "count": 1 }, { "pick": { "slime": 2, "runner": 1 }, "count": 2 } ] },
+              { "groups": [ { "enemy": "springer", "count": 1 }, { "enemy": "spitter", "count": 1 }, { "pick": { "slime": 1, "runner": 1 }, "count": 2 } ] }
+            ]
+          },
+          {
+            "id": "y_ice_pond", "nameVi": "Ao băng", "nameEn": "Ice pond",
+            "goalVi": "Slime băng và slime nhím giữa đám slime thường.", "goalEn": "Ice slimes and hedgehogs among plain slimes.",
+            "upgrades": true, "maxAlive": 5, "threat": 1.6, "maxMalware": 4,
+            "waves": [
+              { "groups": [ { "enemy": "hedgehog", "count": 1 }, { "pick": { "slime": 2, "runner": 1 }, "count": 2 } ] },
+              { "groups": [ { "enemy": "icy", "count": 1 }, { "enemy": "slime", "count": 1 }, { "enemy": "runner", "count": 1 } ] }
+            ]
+          },
+          {
+            "id": "y_split_bog", "nameVi": "Bùn tách đôi", "nameEn": "Splitting bog",
+            "goalVi": "Slime tách đôi được slime thảo dược hồi máu.", "goalEn": "Splitting slimes, healed by a herb slime.",
+            "upgrades": true, "maxAlive": 5, "threat": 1.55, "maxMalware": 4,
+            "waves": [
+              { "groups": [ { "enemy": "splitter", "count": 1 }, { "pick": { "slime": 1, "runner": 1 }, "count": 2 } ] },
+              { "budget": 8, "groups": [ { "squad": [ { "enemy": "splitter", "count": 1 }, { "enemy": "mender", "count": 1 }, { "enemy": "slime", "count": 1 } ] } ] }
+            ]
+          },
+          {
+            "id": "y_fish_crates", "nameVi": "Thùng cá", "nameEn": "Fish crates",
+            "goalVi": "Giữ giỏ cá: slime tha cá ra mép, slime trộm lẻn vào.", "goalEn": "Keep the basket: slimes carry fish off, a thief sneaks in.",
+            "upgrades": true, "maxAlive": 5, "threat": 1.6, "maxMalware": 4,
+            "basket": { "fish": 5, "every": 3, "at": 0.5 },
+            "waves": [
+              { "groups": [ { "pick": { "slime": 2, "runner": 1 }, "count": 3 } ] },
+              { "groups": [ { "enemy": "thief", "count": 1 }, { "pick": { "slime": 1, "runner": 1 }, "count": 3 } ] }
+            ]
+          },
+          {
+            "id": "y_fish_raid", "nameVi": "Cướp cá", "nameEn": "Fish raid",
+            "goalVi": "Giữ giỏ cá trước bom cưỡi slime và slime bay.", "goalEn": "Keep the basket from riding bombs and flyers.",
+            "upgrades": true, "maxAlive": 5, "threat": 1.6, "maxMalware": 4,
+            "basket": { "fish": 5, "every": 3, "at": 0.5 },
+            "waves": [
+              { "groups": [ { "enemy": "bomber", "count": 1 }, { "pick": { "slime": 1, "runner": 1 }, "count": 2 } ] },
+              { "groups": [ { "enemy": "flyer", "count": 1 }, { "pick": { "slime": 2, "runner": 1 }, "count": 3 } ] }
+            ]
+          },
+          {
+            "id": "y_fish_tunnel", "nameVi": "Đường hầm cá", "nameEn": "Fish tunnel",
+            "goalVi": "Slime đào hang trồi dưới chân, bầy hợp thể nhập lại.", "goalEn": "Burrowers pop up underfoot, a swarm fuses.",
+            "upgrades": true, "maxAlive": 5, "threat": 1.6, "maxMalware": 4,
+            "waves": [
+              { "groups": [ { "enemy": "burrower", "count": 1 }, { "pick": { "slime": 2, "runner": 1 }, "count": 2 } ] },
+              { "groups": [ { "enemy": "fuser", "count": 3 }, { "enemy": "runner", "count": 1 } ] }
+            ]
+          },
+          {
+            "id": "y_ghost_dirs", "nameVi": "Thư mục ẩn", "nameEn": "Hidden folders",
+            "goalVi": "Slime bóng ma và slime ảo ảnh lúc ẩn lúc hiện.", "goalEn": "Ghost and mirage slimes fade in and out.",
+            "upgrades": true, "maxAlive": 5, "threat": 1.65, "maxMalware": 4,
+            "waves": [
+              { "groups": [ { "enemy": "phantom", "count": 1 }, { "pick": { "slime": 2, "runner": 1 }, "count": 2 } ] },
+              { "groups": [ { "enemy": "mirage", "count": 1 }, { "pick": { "slime": 1, "runner": 1 }, "count": 3 } ] }
+            ]
+          },
+          {
+            "id": "y_drum_hall", "nameVi": "Sảnh trống", "nameEn": "Drum hall",
+            "goalVi": "Nhạc trưởng gõ nhịp, slime xích nối dây.", "goalEn": "A drummer keeps time, chain slimes tie up.",
+            "upgrades": true, "maxAlive": 5, "threat": 1.6, "maxMalware": 4,
+            "waves": [
+              { "groups": [ { "enemy": "drummer", "count": 1 }, { "pick": { "slime": 2, "runner": 1 }, "count": 2 } ] },
+              { "groups": [ { "enemy": "chain", "count": 1 }, { "enemy": "rock", "count": 1 }, { "pick": { "slime": 1, "runner": 1 }, "count": 2 } ] }
+            ]
+          },
+          {
+            "id": "y_wall_maze", "nameVi": "Tường thư mục", "nameEn": "Folder walls",
+            "goalVi": "Slime bám tường, slime bong bóng và slime đá.", "goalEn": "Wall slimes, bubble slimes and rock slimes.",
+            "upgrades": true, "maxAlive": 5, "threat": 1.6, "maxMalware": 4,
+            "waves": [
+              { "groups": [ { "enemy": "bubble", "count": 1 }, { "enemy": "rock", "count": 1 }, { "enemy": "slime", "count": 1 } ] },
+              { "groups": [ { "enemy": "clinger", "count": 1 }, { "pick": { "slime": 1, "runner": 1 }, "count": 3 } ] }
+            ]
+          }
+        ],
+        "elites": [
+          {
+            "id": "y_mother_nest", "nameVi": "Tổ Slime Mẹ", "nameEn": "Mother's nest",
+            "goalVi": "Tinh anh: slime phun canh tổ, cuối là Slime Mẹ.", "goalEn": "Elite: spitters guard the nest, then the Slime Mother.",
+            "upgrades": true, "maxAlive": 6, "threat": 1.45, "eliteChance": 0.5, "maxMalware": 4,
+            "waves": [
+              { "groups": [ { "enemy": "spitter", "count": 1 }, { "enemy": "hedgehog", "count": 1 }, { "pick": { "slime": 1, "runner": 1 }, "count": 2 } ] },
+              { "groups": [ { "enemy": "mother", "count": 1 } ] }
+            ]
+          },
+          {
+            "id": "y_fish_heist", "nameVi": "Vụ trộm cá", "nameEn": "The fish heist",
+            "goalVi": "Tinh anh: giữ giỏ cá trước cả một băng slime.", "goalEn": "Elite: keep the basket from a whole slime gang.",
+            "upgrades": true, "maxAlive": 6, "threat": 1.7, "eliteChance": 0.5, "maxMalware": 4,
+            "basket": { "fish": 6, "every": 3, "at": 0.5 },
+            "waves": [
+              { "groups": [ { "enemy": "thief", "count": 1 }, { "pick": { "slime": 2, "runner": 1 }, "count": 3 } ] },
+              { "groups": [ { "enemy": "bomber", "count": 1 }, { "enemy": "burrower", "count": 1 }, { "enemy": "runner", "count": 2 } ] },
+              { "groups": [ { "enemy": "flyer", "count": 1 }, { "pick": { "slime": 1, "runner": 1 }, "count": 3 } ] }
+            ]
+          },
+          {
+            "id": "y_folder_fort", "nameVi": "Pháo đài thư mục", "nameEn": "Folder fort",
+            "goalVi": "Tinh anh: đội hình Pháo đài rồi Kỵ binh.", "goalEn": "Elite: a Fortress squad, then the Cavalry.",
+            "upgrades": true, "maxAlive": 6, "threat": 1.7, "eliteChance": 0.5, "maxMalware": 4,
+            "waves": [
+              { "groups": [ { "enemy": "drummer", "count": 1 }, { "pick": { "slime": 1, "runner": 1 }, "count": 2 } ] },
+              { "groups": [ { "formation": { "fortress": 1 } } ] },
+              { "groups": [ { "formation": { "cavalry": 1 } } ] }
+            ]
+          },
+          {
+            "id": "y_ghost_parade", "nameVi": "Diễu hành bóng ma", "nameEn": "Ghost parade",
+            "goalVi": "Tinh anh: cờ hiệu dẫn slime bóng ma và ảo ảnh.", "goalEn": "Elite: a flag slime leads ghosts and mirages.",
+            "upgrades": true, "maxAlive": 6, "threat": 1.7, "eliteChance": 0.5, "maxMalware": 4,
+            "waves": [
+              { "groups": [ { "enemy": "phantom", "count": 1 }, { "pick": { "slime": 2, "runner": 1 }, "count": 3 } ] },
+              { "groups": [ { "enemy": "flagbearer", "count": 1 }, { "enemy": "mirage", "count": 1 }, { "enemy": "runner", "count": 2 } ] },
+              { "groups": [ { "enemy": "phantom", "count": 1 }, { "enemy": "chain", "count": 1 }, { "enemy": "slime", "count": 2 } ] }
+            ]
+          }
+        ],
+        "boss": {
+          "id": "y_zip", "nameVi": "Slime Nén trở lại", "nameEn": "The Zip Slime returns",
+          "goalVi": "Trận cuối tuyến: Slime Nén lăn đè, giải nén đội hình nối dây, tự nén thành khiên.", "goalEn": "The route's last battle: the Zip Slime rolls, unpacks roped squads and packs into a shield.",
+          "upgrades": true, "maxAlive": 6, "threat": 1.2, "eliteChance": 0.3, "maxMalware": 4,
+          "waves": [
+            { "budget": 7, "groups": [ { "enemy": "bubble", "count": 1, "side": "a" }, { "enemy": "clinger", "count": 1, "side": "b" }, { "enemy": "runner", "count": 2, "side": "b" } ] },
+            { "groups": [ { "enemy": "zip", "count": 1 } ] }
+          ]
+        }
+      }
+    ]
   }
 }

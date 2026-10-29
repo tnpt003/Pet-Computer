@@ -803,6 +803,10 @@ public sealed partial class PetWindow
                 return "! " + name + ": " + what;
             }
             case ExpeditionChoice.RewardKind: return "★ " + L("Thưởng tinh anh: ", "Elite reward: ") + (e.Relic != null ? Relic(e.Relic) : L("bỏ qua", "left it"));
+            // 1.5 M23: the cat shop.
+            case ExpeditionChoice.ShopKind:
+                return KindGlyph(ExpeditionSpec.Shop) + " " + KindName(ExpeditionSpec.Shop) + ": " + (e.Option == ExpeditionLogEntry.Buy
+                    ? LF($"mua {PrizeText(x, e.Prize)} (−{e.Coins} xu)", $"bought {PrizeText(x, e.Prize)} (−{e.Coins} coins)") : L("đi tiếp", "moved on"));
             case ExpeditionChoice.CapsuleKind:
                 return "◉ " + (e.Option switch
                 {

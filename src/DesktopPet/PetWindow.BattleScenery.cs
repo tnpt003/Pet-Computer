@@ -16,9 +16,11 @@ public sealed partial class PetWindow
     private Window? battleSceneryWindow;
     private BattleSceneryView? battleScenery;
 
-    // The scene behind this battle's stage, if its chapter has one (null: no backdrop).
+    // The scene behind this battle's stage, if its chapter has one (null: no backdrop); 1.5 M23: an
+    // Expedition step's, its route's.
     private string? BattleSceneFor(BattleSim b) =>
-        b.Stage is { Endless: false } stage && battleExpedition == null ? AdventureOf(BattleTuning)?.SceneOf(stage) : null;
+        battleExpedition is ExpeditionBattle x ? x.Expedition.Spec.Scene
+        : b.Stage is { Endless: false } stage ? AdventureOf(BattleTuning)?.SceneOf(stage) : null;
 
     public bool BattleSceneryShown => battleSceneryWindow?.IsVisible == true;
     public string? BattleSceneryKind => battleScenery?.Scene;

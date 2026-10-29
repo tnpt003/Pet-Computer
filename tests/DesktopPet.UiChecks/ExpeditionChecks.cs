@@ -935,6 +935,69 @@ internal static class ExpeditionChecks
             window.ExpeditionAbandon(); window.ExpeditionAbandon();
             window.Reset();
 
+            // 1.5 M23: two routes (the second locked until st_far is won, with zones and the dump backdrop)
+            // and the cat shop on the first one's step 2.
+            var twoChapters = new CampaignSpec { Chapters = new[] { new ChapterSpec { Id = "test", NameVi = "Chương thử", NameEn = "Test chapter", Stages = new[] { Stage("st_gate", "Gate"), Stage("st_far", "Far gate") } } } };
+            var marketTrail = new ExpeditionSpec
+            {
+                Id = "market_trail", NameVi = "Đường chợ", NameEn = "Market trail", UnlockAfter = "st_gate", RetreatCost = 0.25, WinHeal = 0, StepThreat = 0,
+                Steps = new[] { new[] { ExpeditionSpec.Fight }, new[] { ExpeditionSpec.Shop, ExpeditionSpec.Fight } },
+                Fights = new[] { Stage("m_field", "Field"), Stage("m_hill", "Hill") }, Boss = Stage("m_throne", "Throne"), Store = new ShopSpec(),
+                RouteData = new[]
+                {
+                    new ExpeditionSpec
+                    {
+                        Id = "far_trail", NameVi = "Đường xa", NameEn = "Far trail", UnlockAfter = "st_far", Scene = ChapterSpec.Dump,
+                        Steps = new[] { new[] { ExpeditionSpec.Fight }, new[] { ExpeditionSpec.Fight }, new[] { ExpeditionSpec.Fight } },
+                        Fights = new[] { Stage("f_field", "Far field") }, Boss = Stage("f_throne", "Far throne"),
+                        Zones = new[] { new ExpeditionZoneSpec { Id = "z1", NameVi = "Vùng một", NameEn = "Zone one", Steps = 3, Fights = new[] { "f_field" } } }
+                    }
+                }
+            };
+            window.BattleTuning = new BattleSettings { FirstWaveDelay = 0, SlimeMaxHp = 1, SlimeDamage = 1, OutroSeconds = 0.5, Campaign = twoChapters, Expedition = marketTrail };
+            check(window.OpenExpeditionMap() == null && window.ExpeditionRouteId == "market_trail" && window.ExpeditionMapText.Contains("Market trail") && !window.ExpeditionChooseRoute("far_trail")
+                  && window.ExpeditionRouteId == "market_trail", "Two routes: the map opens on the first; the second cannot be chosen while its stage is not won");
+            Shot("Pet expedition", "expedition-routes-en.png");
+            window.AdventureProgress.Completed.Add("st_far");
+            Tick(0.3);
+            check(window.ExpeditionChooseRoute("far_trail") && window.ExpeditionRouteId == "far_trail" && window.ExpeditionMapText.Contains("Far trail") && window.ExpeditionMapText.Contains("Zones: Zone one")
+                  && window.ExpeditionMapText.Contains("4 steps"), $"Once won, the second route can be chosen: its own map and zones ({window.ExpeditionMapText.Replace('\n', '|')})");
+            check(window.ExpeditionStart(5) == null && window.Expedition!.Run!.Expedition == "far_trail" && Saved()?.Expedition == "far_trail" && !window.ExpeditionChooseRoute("market_trail")
+                  && window.ExpeditionMapText.Contains("Step 1/4 · Zone one"), "A run sets out on the chosen route (saved); the route cannot change during it; the status names the zone");
+            check(window.ExpeditionFight() == null && window.BattleActive && window.BattleSceneryShown && window.BattleSceneryKind == ChapterSpec.Dump, "The route's battles have its backdrop (the dump)");
+            window.Reset();
+            check(window.OpenExpeditionMap() == null && window.ExpeditionRouteId == "far_trail" && window.ExpeditionAbandon() && window.ExpeditionAbandon() is var _ && window.Expedition!.Run == null,
+                "(setup) reopened on the run's route, then given up");
+            check(window.ExpeditionChooseRoute("market_trail") && window.ExpeditionStart(3) == null && window.ExpeditionFight() == null && !window.BattleSceneryShown,
+                "(setup) a run of the first route: its first fight (no backdrop)");
+            Finish();
+            await Task.Delay(30);
+            Click(Button(Find("Pet result")!.Content as DependencyObject ?? new Border(), "Continue")!);
+            Tick(0.3);
+            var shopRun = window.Expedition!.Run!;
+            int shopLane = Enumerable.Range(0, shopRun.Map[1].Length).First(l => window.Expedition!.Kind(1, l) == ExpeditionSpec.Shop);
+            shopRun.Coins = 10; shopRun.Hp = 50;
+            check(shopRun.Step == 1 && window.ExpeditionSelect(shopLane) && window.ExpeditionMapText.Contains("Cat shop") && window.ExpeditionMapText.Contains("The run has 10 coins"),
+                $"Step 2 has the cat shop: chosen, it says what it sells and the run's coins ({window.ExpeditionMapText.Replace('\n', '|')})");
+            check(window.ExpeditionVisit() == null && window.ExpeditionHasChoice && window.ExpeditionMapText.Contains("A fish meal: +20% HP") && window.ExpeditionMapText.Contains("2 coins")
+                  && window.ExpeditionOptionEnabled("ware:" + Expedition.Heal) && window.ExpeditionOptionEnabled(Expedition.Leave),
+                $"In the shop: the wares with their prices, Move on ({window.ExpeditionMapText.Replace('\n', '|')})");
+            Shot("Pet expedition", "expedition-shop-en.png");
+            check(window.ExpeditionBuy(Expedition.Heal) == null && Saved() is { Coins: 8, Hp: > 50 } bought && bought.Pending?.Sold.Contains(Expedition.Heal) == true
+                  && window.ExpeditionMapText.Contains("✓ Bought") && window.ExpeditionMapText.Contains("(−2 coins)") && !window.ExpeditionOptionEnabled("ware:" + Expedition.Heal)
+                  && window.ExpeditionBuy(Expedition.Heal) is string soldOut && soldOut.Contains("Already sold"),
+                "Buying the heal: paid and saved at once, ticked as bought, not sold twice");
+            if (shopRun.Pending!.Wares.FirstOrDefault(w => w.StartsWith(Expedition.PrizeCard + ":")) is string cardWare)
+            {
+                shopRun.Coins = 2;
+                Tick(0.3);
+                check(!window.ExpeditionOptionEnabled("ware:" + cardWare) && window.ExpeditionBuy(cardWare) is string poor && poor.Contains("Not enough coins"), "A ware the run cannot pay for is dimmed and refused");
+            }
+            check(window.ExpeditionChoose(Expedition.Leave) == null && !window.ExpeditionHasChoice && window.ExpeditionMapText.Contains("Step 3/3") && Saved()?.Step == 2,
+                "Move on leaves the shop and passes its step");
+            window.ExpeditionAbandon(); window.ExpeditionAbandon();
+            window.Reset();
+
             // Data without an Expedition: the menu hides it, opening explains.
             window.BattleTuning = new BattleSettings { Campaign = campaign };
             check(window.OpenExpeditionMap() is string none && none.Contains("no Expedition") && !window.ExpeditionMapOpen, "Battle data without an Expedition: it explains and opens nothing");

@@ -18,20 +18,22 @@ internal static class ExpeditionReleaseTests
             var seen = new HashSet<string>();
             bool same = true, doubled = true, ended = true;
             string firstDiff = "";
+            // 1.5 M23: both routes.
+            foreach (var route in data.Expedition!.All.Select(r => r.Id))
             foreach (var level in new[] { BattleDifficulty.Easy, BattleDifficulty.Normal, BattleDifficulty.Hard })
                 for (int seed = 1; seed <= 6; seed++)
                 {
-                    var straight = Play(data, level, seed, Mode.Straight, Path.Combine(dir, "s.json"), seen, out _);
-                    var reopened = Play(data, level, seed, Mode.Reopen, Path.Combine(dir, "r.json"), seen, out _);
-                    var twice = Play(data, level, seed, Mode.DoubleClick, Path.Combine(dir, "d.json"), seen, out bool secondsRefused);
-                    if (!straight.SequenceEqual(reopened) && firstDiff == "") firstDiff = $"{level} seed {seed}: " + string.Join(" | ", straight.Zip(reopened).FirstOrDefault(p => p.First != p.Second));
+                    var straight = Play(data, route, level, seed, Mode.Straight, Path.Combine(dir, "s.json"), seen, out _);
+                    var reopened = Play(data, route, level, seed, Mode.Reopen, Path.Combine(dir, "r.json"), seen, out _);
+                    var twice = Play(data, route, level, seed, Mode.DoubleClick, Path.Combine(dir, "d.json"), seen, out bool secondsRefused);
+                    if (!straight.SequenceEqual(reopened) && firstDiff == "") firstDiff = $"{route} {level} seed {seed}: " + string.Join(" | ", straight.Zip(reopened).FirstOrDefault(p => p.First != p.Second));
                     same &= straight.SequenceEqual(reopened);
                     doubled &= straight.SequenceEqual(twice) && secondsRefused;
                     ended &= straight[^1].StartsWith("end won", StringComparison.Ordinal);
                 }
-            check(ended, "18 whole runs (3 difficulties × 6 seeds) end at the won boss");
-            check(new[] { "spin", "rest heal", "rest card", "event swap", "event chest", "event shrine", "elite relic", "capsule free", "capsule gold", "retreat" }.All(seen.Contains),
-                $"The runs pass spins, rests (heal and card), all three events, an elite's relic, both capsules and a battle left after a crash ({string.Join(", ", seen.OrderBy(s => s))})");
+            check(ended, "36 whole runs (2 routes × 3 difficulties × 6 seeds) end at the won boss");
+            check(new[] { "spin", "rest heal", "rest card", "event swap", "event chest", "event shrine", "elite relic", "capsule free", "capsule gold", "retreat", "shop buy", "shop leave" }.All(seen.Contains),
+                $"The runs pass spins, rests (heal and card), all three events, an elite's relic, both capsules, shops (bought from, left) and a battle left after a crash ({string.Join(", ", seen.OrderBy(s => s))})");
             check(same, "Closing the app after any action and reading the file back changes nothing: same map, offers, HP, build, relics, records, keepsakes" + (firstDiff == "" ? "" : $" ({firstDiff})"));
             check(doubled, "Every action clicked twice: the second click is refused and changes nothing");
 
@@ -68,10 +70,10 @@ internal static class ExpeditionReleaseTests
     }
 
     // Plays one run with a fixed policy and returns what it saw at each action.
-    private static List<string> Play(BattleSettings data, BattleDifficulty level, int seed, Mode mode, string file, HashSet<string> seen, out bool secondsRefused)
+    private static List<string> Play(BattleSettings data, string route, BattleDifficulty level, int seed, Mode mode, string file, HashSet<string> seen, out bool secondsRefused)
     {
         var trace = new List<string>();
-        var x = new Expedition(data, new ExpeditionProgress());
+        var x = new Expedition(data, new ExpeditionProgress(), route);
         x.Start(BattleWeapon.Sword, level, seed, $"release-{level}-{seed}");
         trace.Add("map " + string.Join("/", x.Run!.Map.Select(row => string.Join(",", row))));
         bool refused = true, crashed = false;
@@ -105,6 +107,22 @@ internal static class ExpeditionReleaseTests
                 trace.Add($"spin {step} {string.Join(",", x.Run!.Kinds![step])} {string.Join(",", x.Run.Map[step])} | {State(x)}");
                 continue;
             }
+            if (run.Pending is ExpeditionChoice { Kind: ExpeditionChoice.ShopKind } shop)
+            {
+                // 1.5 M23: buy the first ware the run can pay for, then leave.
+                trace.Add($"shop wares={string.Join(",", shop.Wares)} coins={run.Coins}");
+                if (shop.Wares.FirstOrDefault(w => x.BuyRefusal(w) == null) is string ware)
+                {
+                    var bought = Act(e => e.Buy(ware), o => o.Done);
+                    seen.Add("shop buy");
+                    trace.Add($"bought {bought.Prize} hp{bought.Hp:+0.000;-0.000} | {State(x)}");
+                    continue;
+                }
+                Act(e => e.Choose(Expedition.Leave), o => o.Done);
+                seen.Add("shop leave");
+                trace.Add($"left the shop | {State(x)}");
+                continue;
+            }
             if (run.Pending is ExpeditionChoice open)
             {
                 string kind = open.Kind == ExpeditionChoice.EventKind ? x.Spec.FindEvent(open.Event)!.Kind : open.Kind;
@@ -130,7 +148,7 @@ internal static class ExpeditionReleaseTests
                 continue;
             }
             // Even seeds go to events, most seeds rest; otherwise prefer the elite, so the runs pass every kind.
-            string[] order = seed % 2 == 0 ? new[] { ExpeditionSpec.Event, ExpeditionSpec.Rest, ExpeditionSpec.Elite, ExpeditionSpec.Fight }
+            string[] order = seed % 2 == 0 ? new[] { ExpeditionSpec.Shop, ExpeditionSpec.Event, ExpeditionSpec.Rest, ExpeditionSpec.Elite, ExpeditionSpec.Fight }
                 : seed % 3 != 0 ? new[] { ExpeditionSpec.Rest, ExpeditionSpec.Elite, ExpeditionSpec.Event, ExpeditionSpec.Fight }
                 : new[] { ExpeditionSpec.Elite, ExpeditionSpec.Fight, ExpeditionSpec.Event, ExpeditionSpec.Rest };
             int lanes = run.Map[run.Step].Length;
@@ -159,7 +177,7 @@ internal static class ExpeditionReleaseTests
             string card = data.UpgradeList[(run.Step + seed) % data.UpgradeList.Count].Id;
             build[card] = build.GetValueOrDefault(card) + 1;
             double hp = x.Run.Hp * 0.8;
-            var done = Act(e => e.Finish(true, hp, build, 30 + run.Step, 3), o => o.Counted);
+            var done = Act(e => e.Finish(true, hp, build, 30 + run.Step, 3, coins: 3), o => o.Counted);
             trace.Add(done.RunOver
                 ? $"end {(done.RunWon ? "won" : "lost")} keepsakes={string.Join(",", done.Keepsakes ?? Array.Empty<string>())} best={done.BestSteps} fastest={done.Fastest} records={Records(x)}"
                 : $"won hp={done.Hp:0.000} healed={done.Healed:0.000} reward={done.Reward} | {State(x)}");
@@ -172,7 +190,7 @@ internal static class ExpeditionReleaseTests
     private static string State(Expedition x) => x.Run is not ExpeditionRun run ? "no run" :
         $"step={run.Step} path={string.Join(",", run.Path)} hp={run.Hp:0.000} fighting={run.Fighting} retreats={run.Retreats} build={string.Join(",", run.Build.OrderBy(c => c.Key).Select(c => c.Key + "×" + c.Value))} "
         + $"relics={string.Join(",", run.Relics)} pending={run.Pending?.Kind}:{string.Join(",", run.Pending?.Cards ?? Array.Empty<string>())}:{string.Join(",", run.Pending?.Relics ?? Array.Empty<string>())}:{run.Pending?.Free}:{run.Pending?.Gold} "
-        + $"kinds={string.Join("/", (run.Kinds ?? new()).Select(k => string.Join(",", k)))}";
+        + $"kinds={string.Join("/", (run.Kinds ?? new()).Select(k => string.Join(",", k)))} coins={run.Coins} sold={string.Join(",", run.Pending?.Sold ?? new())}";
 
     private static string Records(Expedition x) =>
         string.Join(";", x.Progress.Records.OrderBy(r => r.Key).Select(r => $"{r.Key}={r.Value.Runs}/{r.Value.Wins}/{r.Value.BestSteps}/{r.Value.BestSeconds}")) + " kept=" + string.Join(",", x.Progress.Keepsakes);

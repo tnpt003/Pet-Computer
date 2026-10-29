@@ -28,8 +28,8 @@ internal static class ExpeditionGachaTests
     {
         var data = BattleData.Settings;
         var spec = data.Expedition!;
-        check(spec.KindGacha is { Steps: 5, MinLanes: 2, MaxLanes: 3 } && spec.Steps.Length == 0 && spec.StepCount == 6 && spec.Capsules != null && spec.RulesVersion == 6,
-            "Built-in Expedition: 5 steps drawn by the step gacha (2–3 nodes), then the boss; the capsule machine; rules version 5");
+        check(spec.KindGacha is { Steps: 5, MinLanes: 2, MaxLanes: 3 } && spec.Steps.Length == 0 && spec.StepCount == 6 && spec.Capsules != null && spec.RulesVersion == 7 && spec.KeepRuns.SequenceEqual(new[] { 6 }),
+            "Built-in Expedition: 5 steps drawn by the step gacha (2–3 nodes), then the boss; the capsule machine; rules version 7 (1.5 M23 shop), runs of 6 go on");
 
         // A new run: only the boss is known; nothing can be fought or visited before the spin.
         var x = new Expedition(data, new ExpeditionProgress());
@@ -256,7 +256,7 @@ internal static class ExpeditionGachaTests
         check(Error("{ \"kindGacha\": { \"steps\": 3, \"weights\": { \"fight\": 1 } } }") == "", "A user battle.json can set its own step gacha");
         check(Error("{ \"kindGacha\": { \"weights\": { \"fight\": 0, \"rest\": 5 } } }").Contains("fight"), "A step gacha without fights is rejected");
         check(Error("{ \"kindGacha\": { \"minLanes\": 3, \"maxLanes\": 2 } }").Contains("lanes"), "minLanes above maxLanes is rejected");
-        check(Error("{ \"kindGacha\": { \"weights\": { \"shop\": 3, \"fight\": 1 } } }").Contains("kinds"), "An unknown node kind in the weights is rejected");
+        check(Error("{ \"kindGacha\": { \"weights\": { \"market\": 3, \"fight\": 1 } } }").Contains("kinds"), "An unknown node kind in the weights is rejected");
         check(Error("{ \"capsules\": { \"goldCost\": 1 } }").Contains("goldCost"), "A gold capsule costing all the HP is rejected");
         check(Error("{ \"kindGacha\": { \"weights\": { \"fight\": 1 }, \"rerollCost\": 0.9 } }").Contains("rerollCost"), "A second spin costing most of the HP is rejected");
         check(Error("{ \"capsules\": { \"relic\": 0, \"rare\": 0, \"cardHeal\": 0 } }").Contains("gold weight"), "A gold capsule with nothing in it is rejected");

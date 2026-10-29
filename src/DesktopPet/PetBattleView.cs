@@ -491,6 +491,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         if (slime.Type.Marks == "spring") DrawSpringCoil(dc, slime);
         if (slime.Type.Marks == "drum") DrawDrum(dc, slime);
         if (slime.Type.Marks == "chain") DrawChainLinks(dc);
+        if (slime.Type.Marks == "flag") DrawFlag(dc, slime, time);
         DrawSwarmMarks(dc, slime, time);
         // An older support mark: a white "+" on its body.
         if (slime.Type.Marks == "cross") dc.DrawGeometry(Brushes.White, Outline, CrossMark);

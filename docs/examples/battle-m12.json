@@ -1,0 +1,18 @@
+{
+  // 1.5 M12 try-out: the flag slime (Q8) and three of the six formations the Enemy Director draws
+  // (Fortress, Trampoline, Drum band). They are in the built-in data but no battle uses them yet (chapter 2
+  // and Infinity bring them in). Copy this file to %LOCALAPPDATA%\DesktopPet\battle.json (keep a copy of
+  // yours first), then Battle Mode → Start battle (the free battle). Custom data: no records, no rewards.
+  // Delete the file to get the usual free battle back. At most two kinds of link in one battle: the flag's
+  // aura and the drummer's rhythm here; to try "assembly" (rope), "cavalry" (ride) or "swarms" (merge),
+  // swap "drums" and the flag slime out for one of them.
+  "schemaVersion": 1,
+  "maxAlive": 5,
+  "waves": [
+    { "groups": [ { "squad": [ { "enemy": "flagbearer", "count": 1 }, { "enemy": "slime", "count": 2 }, { "enemy": "runner", "count": 1 } ] } ] },
+    { "groups": [ { "formation": { "fortress": 1 } } ] },
+    { "groups": [ { "formation": { "trampoline": 1 } } ] },
+    { "groups": [ { "formation": { "drums": 1 } }, { "enemy": "flagbearer", "count": 1 } ] },
+    { "groups": [ { "formation": { "fortress": 1, "trampoline": 1, "drums": 1 }, "count": 2 } ] }
+  ]
+}

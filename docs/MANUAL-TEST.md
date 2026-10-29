@@ -654,3 +654,14 @@ Chưa trận gốc nào có các quái này (chương 2 mới có). Muốn thử
 - [ ] Đợt 3: Slime tách đôi (nâu, đường nứt zigzag) đi cùng slime thảo dược. Hạ nó: vỡ thành 2 slime nửa có băng dán, banner "Slime tách đôi!". Hạ hết 2 nửa: đợt kết thúc. Để thảo dược hồi cho cả 2 nửa đứng gần nhau: chúng nhập lại thành con mẹ, banner "Hai nửa nhập lại!". Nửa bị hạ không tách tiếp.
 - [ ] Tinh anh (viền vàng, sao): bom ngòi ngắn hơn, vòng đỏ rộng hơn; slime tách đôi vỡ thành 3. Pause/menu khi ngòi đang cháy hoặc thanh nhập đang đầy: dừng; tiếp tục thì chạy tiếp.
 - [ ] Click chỗ trống trên vòng đỏ vẫn xuyên xuống desktop; DPI 100/150/200% vòng và hình đúng chỗ; âm thanh nổ không quá ồn, không chồng nhau; banner vi/en/ja đúng chữ.
+
+## Slime cờ hiệu và đội hình phối hợp 1.5 M12 (2026-10-29) — file tùy chỉnh
+Chưa trận gốc nào có slime cờ hiệu hay đội hình (chương 2 và Vô tận mới có). Muốn thử: cất file `%LOCALAPPDATA%\DesktopPet\battle.json` của bạn (nếu có), chép `docs/examples/battle-m12.json` vào chỗ đó, mở Trận tự do; xong thì xóa file (hoặc trả file cũ). Ảnh cờ đã xem qua render UiChecks nền sáng/tối, chưa xem trong trận thật, chưa thử DPI thật.
+- [ ] Không có file: Trận tự do, Phiêu lưu chương 1, Vô tận, Viễn chinh như cũ, không thấy slime xanh dương cầm cờ, không có banner "Đội hình…".
+- [ ] Đợt 1: slime cờ hiệu (xanh dương, cán cờ sau lưng, cờ đuôi nheo vàng bay về phía lưng) đứng sau đồng đội, vòng vàng đứt nét dưới sàn; banner "Slime cờ hiệu!…" lần đầu. Slime trong vòng có hai vạch vàng sau lưng và đi nhanh hơn; ra khỏi vòng thì hết.
+- [ ] Hạ slime cờ hiệu: banner "Mất cờ! Cả đội hoảng loạn", mọi slime khác đổ mồ hôi xanh, chạy ra xa mèo ~2 s và không đánh, rồi quay lại đánh tiếp. Đèn laser dụ slime ra khỏi vòng vàng: chúng đi chậm lại.
+- [ ] Đợt 2 "Pháo đài": banner "Đội hình Pháo đài! Nhấc mèo qua đá, hạ slime phun trước"; slime phun đứng xa nhất, thảo dược giữa, đá phía mèo. Nhấc mèo thả ra sau đá được.
+- [ ] Đợt 3 "Bạt nhún": slime + slime nhanh từ phía trước; mũi tên đỏ ở mép sau lưng mèo rồi lò xo xuất hiện ở đó và trượt lại gần. Banner đội hình chỉ một lần.
+- [ ] Đợt 4 "Đội trống" + một slime cờ hiệu: nhạc trưởng đứng sau 3 slime; slime trong vòng vàng chạy nhanh hơn, nhịp 4 cả bọn đánh cùng lúc. Đợt 5: hai đội hình bốc ngẫu nhiên trong 3 loại; đội hình đã gặp không hiện lại banner.
+- [ ] Thử "Dây chuyền" (trong file thay `drums` bằng `assembly` và bỏ slime cờ hiệu): 2 slime xích cùng nối dây vào một slime đá tinh anh (viền vàng); đánh đá thì số trên đá nhỏ (~1/4), hai slime xích cùng mất máu; cắt một dây thì đá choáng, dây còn lại vẫn gánh.
+- [ ] Pause/menu khi đội hình đang chờ chỗ hoặc mũi tên đang báo: dừng; tiếp tục thì chạy tiếp. Âm thanh banner đội hình/hoảng ngắn, không chồng nhau; banner vi/en/ja đúng chữ; DPI 100/150/200% cờ và vòng đúng chỗ; click chỗ trống trong vòng vàng vẫn xuyên xuống desktop.

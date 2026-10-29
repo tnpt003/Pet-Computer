@@ -114,6 +114,7 @@ public sealed partial class BattleFieldView
             var slime = sim.Slimes[i];
             if (!slime.Targetable) continue;
             double x = slime.X - OriginX, top = Top(slime, floor);
+            DrawAuraTrail(dc, slime, x, top);
             if (slime.PanicRemaining > 0)
                 for (int k = -1; k <= 1; k += 2)
                 {

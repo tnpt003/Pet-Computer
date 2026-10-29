@@ -43,7 +43,7 @@ public sealed partial class BattleSim
             farEdge = Far(catX); streamEdge = 0;
             var wave = WavePlan[Math.Min(Wave, WaveCount) - 1]; // A survive stage repeats its last wave.
             stream = wave.Stream;
-            if (stream == null) pending.AddRange(SpawnDirector.Units(wave, spawnRandom, Cost));
+            if (stream == null) pending.AddRange(SpawnDirector.Units(wave, spawnRandom, Cost, Settings.Formation, Threat));
             eliteBudget = SpawnDirector.BudgetLeft(wave, pending, Cost);
             Phase = BattlePhase.Fighting;
             spawnTimer = 0;
@@ -100,6 +100,13 @@ public sealed partial class BattleSim
         if (pendingNext < pending.Count && Alive + pending[pendingNext].Kinds.Length <= maxAlive && spawnTimer <= 0)
         {
             var unit = pending[pendingNext++];
+            // A formation's first part: its banner (Value: its index in the data).
+            if (unit.Formation != null)
+            {
+                int index = Settings.FormationList.ToList().FindIndex(f => f.Id == unit.Formation);
+                FormationsMet++;
+                events.Add(new(BattleEventKind.FormationArrived, catX, index));
+            }
             if (unit.Side == "b") Announce(catX, unit.Kinds, -farEdge, unit.Elite);
             else { SpawnUnit(catX, unit.Kinds, unit.Side == "a" ? farEdge : 0, unit.Elite); spawnTimer = NextSpawnIn(); }
         }
@@ -118,6 +125,9 @@ public sealed partial class BattleSim
         // A cleared boss wave in Infinity: a second card after the first.
         if (ChoosingUpgrade && Stage is { BossBonusPick: true } && IsBossWave(Wave)) bonusPicks = 1;
     }
+
+    // Formations sent so far this battle (1.5 M12).
+    public int FormationsMet { get; private set; }
 
     // The edge further from the cat: -1 left, +1 right.
     private int Far(double catX) => catX - Left >= Right - catX ? -1 : 1;

@@ -703,13 +703,18 @@ public sealed partial class BattleSim
             return HitResult.Immune;
         }
         if (Blocks(slime, source)) return HitResult.Blocked;
-        // A tether's holder takes its share of every hit on its ally (never passed on again).
+        // A tether's holder takes its share of every hit on its ally (never passed on again); a second
+        // rope's holder its share of what is left (1.5 M12).
         if (source != DamageSource.Link && TetherHolder(slime) is Slime holder)
         {
-            double share = amount * Share(holder);
-            amount -= share;
-            Damage(holder, share, DamageSource.Link);
-            if (!slime.Targetable) return HitResult.Landed;
+            var second = TetherHolder(slime, holder);
+            foreach (var h in second != null ? new[] { holder, second } : new[] { holder })
+            {
+                double share = amount * Share(h);
+                amount -= share;
+                Damage(h, share, DamageSource.Link);
+                if (!slime.Targetable) return HitResult.Landed;
+            }
         }
         // A hit never takes a boss past its next shield phase: it stops there, the rest is lost.
         slime.Hp = Math.Max(ShieldFloor(slime), slime.Hp - amount);

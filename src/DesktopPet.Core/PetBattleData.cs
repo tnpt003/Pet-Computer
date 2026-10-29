@@ -245,7 +245,8 @@ public sealed class ThrowHitSpec
 // A link between an enemy and its allies (1.5 "Slime phản công", PetBattle.Links.cs): always
 // drawn, always breakable, breaking it is rewarded. Enabled false switches it off (a user file's
 // "link": { "enabled": false }). At most two kinds of link in one battle. Kinds:
-// tether: a rope to the nearest ally within Range (never a boss, never another holder); the holder
+// tether: a rope to the nearest ally within Range (never a boss, never another holder; one without a
+//   rope first, else one with room for a second, 1.5 M12: a second holder takes its share of what is left); the holder
 //   takes Share of every hit on that ally and keeps behind it. Cut (CutLink) or the holder defeated:
 //   the ally is dazed BreakStun s; a rope stretched past Range × 1.5 snaps with no reward. Relink s
 //   later it may tie itself to an ally again. The cat held (past the drag threshold) or thrown through
@@ -259,8 +260,8 @@ public sealed class ThrowHitSpec
 // merge: Count of its kind within Range of each other for MergeSeconds (a bar counts down) become one
 //   Into enemy with their HP added up. A push or a stun on one starts its clock again. AfterHeal (1.5
 //   M11, Q7): only ones a healer has healed since they came count (split halves made whole again).
-// aura: allies within Range move Speed × faster; defeated, every other enemy (never a boss) panics
-//   BreakStun s: runs away from the cat and does not attack.
+// aura: allies within Range move Speed × faster (an elite: EliteSpeed, 0: Speed); defeated, every other
+//   enemy (never a boss) panics BreakStun s: runs away from the cat and does not attack.
 public sealed class LinkSpec
 {
     public string Kind { get; init; } = "";
@@ -281,6 +282,28 @@ public sealed class LinkSpec
     public string? Into { get; init; }
     public bool AfterHeal { get; init; }
     public double Speed { get; init; } = 1.3;
+    public double EliteSpeed { get; init; }
+}
+
+// A formation (1.5 M12, Enemy Director): a named team the Director draws for a wave's "formation"
+// group by weight, among those whose MinThreat the battle's threat reaches and whose cost fits what is
+// left of the wave's budget (none: the cheapest). Parts are squads (or single enemies) that come one
+// after the other, each from the group's edge, or the other edge after a warning arrow (Side "b").
+// The first time one comes in a battle a banner names it with its tip.
+public sealed class FormationSpec
+{
+    public string Id { get; init; } = "";
+    public string NameVi { get; init; } = "";
+    public string NameEn { get; init; } = "";
+    public string? TipVi { get; init; }
+    public string? TipEn { get; init; }
+    public double MinThreat { get; init; }
+    public WaveGroup[] Parts { get; init; } = Array.Empty<WaveGroup>();
+    // Every enemy of it, in spawn order.
+    [JsonIgnore] public IEnumerable<string> Members => Parts.SelectMany(p =>
+        p.Squad == null ? Enumerable.Repeat(p.Enemy, Math.Max(0, p.Count)) : p.Squad.SelectMany(m => Enumerable.Repeat(m.Enemy, Math.Max(0, m.Count))));
+    public string Name(string language) => PetText.Data(language, NameVi, NameEn);
+    public string Tip(string language) => PetText.Data(language, TipVi ?? "", TipEn ?? "");
 }
 
 public static class EnemyLinks
@@ -288,6 +311,8 @@ public static class EnemyLinks
     public const string Tether = "tether", Rhythm = "rhythm", Ride = "ride", Merge = "merge", Aura = "aura";
     public static readonly string[] All = { Tether, Rhythm, Ride, Merge, Aura };
     public const int MaxKinds = 2;
+    // Ropes one ally may take (1.5 M12: the "Assembly line" formation's two chains on one rock).
+    public const int MaxTethers = 2;
 }
 
 // An elite affix (Enemy Director): rolled once when a wave or stream spawns the enemy, never for a
@@ -353,7 +378,8 @@ public sealed class BossPhase
 // Pick: each of the Count spawns is a kind drawn from these weights when the wave starts (Enemy is
 // then unused); AtLeast: that many of a kind among them whatever the draw. Squad: Count times these
 // members together, side by side (fighters toward the cat, supports behind them), only once there is
-// room on the floor for the whole squad (nothing after it spawns before it).
+// room on the floor for the whole squad (nothing after it spawns before it). Formation (1.5 M12): Count
+// times one of these formations (BattleSettings.Formations, by weight), drawn when the wave starts.
 public sealed class WaveGroup
 {
     public string Enemy { get; init; } = "slime";
@@ -367,7 +393,10 @@ public sealed class WaveGroup
     // Every enemy of this group (or squad member) comes elite, whatever the stage's chance or the
     // difficulty (the Adventure Guide shows each kind's elite this way); its kind needs an affix.
     public bool Elite { get; init; }
-    [JsonIgnore] public bool Fixed => Pick == null && Squad == null;
+    public Dictionary<string, double>? Formation { get; init; }
+    [JsonIgnore] public bool Fixed => Pick == null && Squad == null && Formation == null;
+    // Its kinds are only known once the wave starts (a pick or a formation).
+    [JsonIgnore] public bool Drawn => Pick != null || Formation != null;
     [JsonIgnore] public int SquadSize => Squad?.Sum(m => Math.Max(0, m.Count)) ?? 1;
 }
 
@@ -396,7 +425,7 @@ public sealed class WaveSpec
     public double Budget { get; init; }
     public StreamSpec? Stream { get; init; }
     // The fixed kinds in spawn order (drawn kinds are not known before the wave starts).
-    public IEnumerable<string> Spawns() => Groups.Where(g => g.Pick == null).SelectMany(g =>
+    public IEnumerable<string> Spawns() => Groups.Where(g => !g.Drawn).SelectMany(g =>
         g.Squad == null ? Enumerable.Repeat(g.Enemy, Math.Max(0, g.Count))
             : Enumerable.Range(0, Math.Max(0, g.Count)).SelectMany(_ => g.Squad.SelectMany(m => Enumerable.Repeat(m.Enemy, Math.Max(0, m.Count)))));
 }
@@ -580,7 +609,7 @@ public static class BuildGroups
 // Assets/battle.json (embedded) is the built-in battle: its numbers, weapons, enemy kinds and
 // waves. The user may add battle.json to the app's data folder (%LOCALAPPDATA%\DesktopPet,
 // docs/BATTLE-DATA.md) with only what it changes: it is merged over the built-in file
-// ("enemies"/"weapons"/"upgrades"/"synergies"/"skills" entries by id, other objects key by key, anything else replaced) and the
+// ("enemies"/"weapons"/"upgrades"/"synergies"/"skills"/"formations" entries by id, other objects key by key, anything else replaced) and the
 // result is validated as a whole. A broken file never stops the pet and is never used in part:
 // it is logged, the built-in battle is used and the battle setup panel says why.
 public sealed record BattleDataLoad(BattleSettings Settings, bool Custom, string? Error);
@@ -690,7 +719,7 @@ public static class BattleData
             if (value is JsonObject part && current is JsonObject whole) { Merge(whole, part, path + key + "."); continue; }
             bool byId = key.Equals("enemies", StringComparison.OrdinalIgnoreCase) || key.Equals("weapons", StringComparison.OrdinalIgnoreCase) ||
                 key.Equals("upgrades", StringComparison.OrdinalIgnoreCase) || key.Equals("synergies", StringComparison.OrdinalIgnoreCase) ||
-                key.Equals("skills", StringComparison.OrdinalIgnoreCase);
+                key.Equals("skills", StringComparison.OrdinalIgnoreCase) || key.Equals("formations", StringComparison.OrdinalIgnoreCase);
             if (byId && value is JsonArray entries && current is JsonArray list) { MergeById(list, entries, path + key); continue; }
             if (existing != null) target.Remove(existing);
             target[key] = value?.DeepClone();
@@ -727,7 +756,7 @@ public static class BattleData
     public static readonly string[] WeaponStyles = { "sword", "hammer", "yarn", "glove" };
     public static readonly string[] WeaponHitEffects = { "spark", "thud" };
     public static readonly string[] EnemyRenderers = { "slime" };
-    public static readonly string[] EnemyMarks = { "none", "speed", "cracks", "leaf", "cross", "spout", "spring", "drum", "chain", "swarm", "giant", "bomb", "split", "half" };
+    public static readonly string[] EnemyMarks = { "none", "speed", "cracks", "leaf", "cross", "spout", "spring", "drum", "chain", "swarm", "giant", "bomb", "split", "half", "flag" };
     public static readonly string[] GroupSides = { "a", "b" };
 
     // Throws on any mistake, so a half-valid file is never used.
@@ -995,6 +1024,7 @@ public static class BattleData
                 }
                 if (link.AfterHeal && link.Kind != EnemyLinks.Merge) throw new InvalidDataException(at + ".link.afterHeal is for a merge link");
                 if (link.Kind == EnemyLinks.Aura) Within(link.Speed, 1, 3, at + ".link.speed");
+                if (link.EliteSpeed != 0 && (link.Kind != EnemyLinks.Aura || link.EliteSpeed is < 1 or > 3)) throw new InvalidDataException(at + ".link.eliteSpeed is 1–3, for an aura link");
             }
             Within(e.Hover, 0, 2000, at + ".hover");
             if (e.Hover > 0 && (e.Boss || e.Blocker || e.Dash || e.Slam || e.Link != null)) throw new InvalidDataException(at + ".hover is not for a boss, blocker, dash, slam or linked enemy");
@@ -1093,6 +1123,33 @@ public static class BattleData
             }
             if (weights.Values.Sum() <= 0) throw new InvalidDataException($"{at} needs some weight above 0");
         }
+        // Formations (1.5 M12): named teams of 1–4 parts, each a plain group or a squad of known non-boss enemies.
+        var formationIds = new HashSet<string>();
+        foreach (var f in s.FormationList)
+        {
+            if (f == null) throw new InvalidDataException("formations has an empty entry");
+            string at = $"formations[{(string.IsNullOrEmpty(f.Id) ? "?" : f.Id)}]";
+            Id(f.Id, at + ".id");
+            if (!formationIds.Add(f.Id)) throw new InvalidDataException($"formation id \"{f.Id}\" is used twice");
+            Text(f.NameVi, at + ".nameVi"); Text(f.NameEn, at + ".nameEn");
+            if (f.TipVi?.Length > 80 || f.TipEn?.Length > 80 || (f.TipVi == null) != (f.TipEn == null)) throw new InvalidDataException(at + ": tipVi and tipEn go together, at most 80 characters");
+            Within(f.MinThreat, 0, 3, at + ".minThreat");
+            if (f.Parts == null || f.Parts.Length is 0 or > 4) throw new InvalidDataException(at + ".parts must list 1–4 parts");
+            foreach (var part in f.Parts)
+            {
+                if (part == null || part.Drawn) throw new InvalidDataException(at + ".parts: a part is a plain group or a squad (no pick, no formation)");
+                if (part.Side != null && Array.IndexOf(GroupSides, part.Side) < 0) throw new InvalidDataException(at + ".parts: side must be \"a\" or \"b\"");
+                if (part.Squad != null)
+                {
+                    if (part.Count != 1 || part.Squad.Length is 0 or > 4 || part.Squad.Any(m => m == null || !m.Fixed || !ids.Contains(m.Enemy) || s.Enemy(m.Enemy).Boss || m.Count is < 1 or > 6) || part.SquadSize is < 2 or > 8)
+                        throw new InvalidDataException(at + ".parts: a squad lists 1–4 known, non-boss enemies (2–8 in all, counts 1–6) and comes once");
+                }
+                else if (!ids.Contains(part.Enemy) || s.Enemy(part.Enemy).Boss || part.Count is < 1 or > 6) throw new InvalidDataException(at + ".parts: a plain part names a known, non-boss enemy, count 1–6");
+                foreach (var kind in part.Squad?.Where(m => m.Elite || part.Elite).Select(m => m.Enemy) ?? (part.Elite ? new[] { part.Enemy } : Array.Empty<string>()))
+                    if (s.Enemy(kind).Elite == null) throw new InvalidDataException($"{at}.parts.elite: \"{kind}\" has no elite affix");
+            }
+            if (f.Members.Count() > 12) throw new InvalidDataException(at + " has more than 12 enemies");
+        }
         // maxAlive: what the battle allows on the floor (a squad must fit); survival: a survive stage.
         void Waves(IReadOnlyList<WaveSpec>? waves, string at, int maxAlive, bool survival)
         {
@@ -1125,6 +1182,21 @@ public static class BattleData
                     if (g.Count is < 1 or > 50) throw new InvalidDataException($"{at}[{i}] {g.Enemy}: count must be 1–50");
                     if (g.Side != null && Array.IndexOf(GroupSides, g.Side) < 0) throw new InvalidDataException($"{at}[{i}].side must be \"a\" or \"b\"");
                     if (g.Pick != null && g.Squad != null) throw new InvalidDataException($"{at}[{i}]: a group is a pick or a squad, not both");
+                    if (g.Formation != null)
+                    {
+                        if (g.Pick != null || g.Squad != null || g.AtLeast != null || g.Elite) throw new InvalidDataException($"{at}[{i}]: a formation group has no pick, squad, atLeast or elite");
+                        if (g.Count > 4) throw new InvalidDataException($"{at}[{i}].formation: count must be 1–4");
+                        if (g.Formation.Count is 0 or > 8) throw new InvalidDataException($"{at}[{i}].formation must list 1–8 formations");
+                        foreach (var (id, weight) in g.Formation)
+                        {
+                            if (s.Formation(id) is not FormationSpec f) throw new InvalidDataException($"{at}[{i}].formation names an unknown formation \"{id}\"");
+                            Within(weight, 0, 100, $"{at}[{i}].formation.{id}");
+                            // A part that never fits would hold the wave for ever.
+                            if (f.Parts.Any(p => p.SquadSize > maxAlive)) throw new InvalidDataException($"{at}[{i}].formation \"{id}\" has a part bigger than maxAlive ({maxAlive})");
+                        }
+                        if (g.Formation.Values.Sum() <= 0) throw new InvalidDataException($"{at}[{i}].formation needs some weight above 0");
+                        continue;
+                    }
                     foreach (var kind in g.Squad?.Where(m => m is { Elite: true }).Select(m => m.Enemy) ?? (g.Elite ? g.Pick?.Keys ?? (IEnumerable<string>)new[] { g.Enemy } : Array.Empty<string>()))
                         if (ids.Contains(kind) && s.Enemy(kind).Elite == null) throw new InvalidDataException($"{at}[{i}].elite: \"{kind}\" has no elite affix");
                     if (g.Pick != null)
@@ -1155,6 +1227,7 @@ public static class BattleData
                 foreach (var kind in wave.Stream?.Weights.Keys ?? Enumerable.Empty<string>()) reach.Push(kind);
                 foreach (var g in wave.Groups ?? Array.Empty<WaveGroup>())
                     if (g.Pick != null) foreach (var kind in g.Pick.Keys) reach.Push(kind);
+                    else if (g.Formation != null) { foreach (var id in g.Formation.Keys) foreach (var kind in s.Formation(id)?.Members ?? Enumerable.Empty<string>()) reach.Push(kind); }
                     else if (g.Squad != null) foreach (var m in g.Squad) reach.Push(m.Enemy);
                     else reach.Push(g.Enemy);
             }

@@ -424,6 +424,18 @@
       "link": { "kind": "merge", "range": 120, "count": 2, "mergeSeconds": 1.5, "into": "splitter", "afterHeal": true }
     },
     {
+      // 1.5 Q8 (M12): a support carrying a flag. link aura: allies within `range` move `speed` × faster
+      // (an elite: eliteSpeed); defeated, every other enemy panics breakStun s (runs off, no attack).
+      // It keeps behind its allies like the other supports (the Laser lures them out of its ring).
+      "id": "flagbearer", "nameVi": "Slime cờ hiệu", "nameEn": "Flag slime",
+      "maxHp": 50, "speed": 30, "damage": 6, "range": 52,
+      "windup": 0.8, "attackCooldown": 2.0, "recover": 0.4,
+      "scale": 0.95, "color": "#5B8DEF", "marks": "flag",
+      "support": true, "keepBack": 120, "fleeSpeed": 1.6, "cost": 2, "binSpit": false,
+      "link": { "kind": "aura", "range": 180, "speed": 1.3, "eliteSpeed": 1.45, "breakStun": 2 },
+      "elite": { "hp": 1.2, "cost": 1, "descVi": "hào quang tăng tốc mạnh hơn", "descEn": "its aura speeds allies up more" }
+    },
+    {
       // The chapter 1 boss (Adventure stage 5): the free battle keeps "king" below. Phases fire once
       // each at their HP fraction; at most summonCap helpers alive at once. A shield phase stops a
       // hit at its line, runs to the far edge (retreatSpeed, at most retreatSeconds), calls its
@@ -456,6 +468,27 @@
       "summonAt": 0.5, "summonCount": 2, "summonType": "slime",
       "enrageAt": 0.3, "enragedSpeed": 32, "enragedWindup": 0.8
     }
+  ],
+
+  // 1.5 M12: formations the Enemy Director draws for a wave's "formation": { id: weight } group (count
+  // times), among those whose minThreat the battle's threat reaches and whose members' cost fits what
+  // is left of the wave's budget (none fits: the cheapest). parts come one after the other from one edge
+  // ("side": "b": from the other edge, after a warning arrow); a squad part comes together (supports
+  // behind the fighters). The first time each comes in a battle a banner names it with its tip. No
+  // built-in battle uses them yet (chapter 2 and Infinity bring them in).
+  "formations": [
+    { "id": "fortress", "nameVi": "Pháo đài", "nameEn": "Fortress", "tipVi": "Nhấc mèo qua đá, hạ slime phun trước", "tipEn": "Lift the cat past the rock, take the spitter first",
+      "parts": [ { "squad": [ { "enemy": "spitter", "count": 1 }, { "enemy": "mender", "count": 1 }, { "enemy": "rock", "count": 1 } ] } ] },
+    { "id": "cavalry", "nameVi": "Kỵ binh", "nameEn": "Cavalry", "tipVi": "Hạ ngựa giữa đường", "tipEn": "Take the mounts down on the way", "minThreat": 1.4,
+      "parts": [ { "squad": [ { "enemy": "bomber", "count": 2 }, { "enemy": "runner", "count": 2 } ] }, { "enemy": "spitter", "count": 1 } ] },
+    { "id": "drums", "nameVi": "Đội trống", "nameEn": "Drum band", "tipVi": "Đẩy nhạc trưởng trước nhịp cuối", "tipEn": "Push the drummer before the last beat",
+      "parts": [ { "squad": [ { "enemy": "drummer", "count": 1 }, { "enemy": "slime", "count": 3 } ] } ] },
+    { "id": "assembly", "nameVi": "Dây chuyền", "nameEn": "Assembly line", "tipVi": "Cắt dây trước rồi đánh đá", "tipEn": "Cut the ropes, then hit the rock", "minThreat": 1.2,
+      "parts": [ { "squad": [ { "enemy": "chain", "count": 2 }, { "enemy": "rock", "count": 1, "elite": true } ] } ] },
+    { "id": "trampoline", "nameVi": "Bạt nhún", "nameEn": "Trampoline", "tipVi": "Đánh bẹp lò xo, hoặc nhấc mèo khỏi vòng", "tipEn": "Flatten the spring, or lift the cat out of its ring",
+      "parts": [ { "squad": [ { "enemy": "slime", "count": 1 }, { "enemy": "runner", "count": 1 } ] }, { "enemy": "springer", "count": 1, "side": "b" } ] },
+    { "id": "swarms", "nameVi": "Bầy nhập", "nameEn": "Merging swarms", "tipVi": "Bom len đúng lúc cả bầy chụm lại", "tipEn": "Bomb the pack while it huddles", "minThreat": 1.6,
+      "parts": [ { "squad": [ { "enemy": "mender", "count": 1 }, { "enemy": "fuser", "count": 3 } ] }, { "squad": [ { "enemy": "fuser", "count": 3 } ] } ] }
   ],
 
   // Waves in order; each wave's groups spawn in order. A group is "enemy" × "count", or "pick":

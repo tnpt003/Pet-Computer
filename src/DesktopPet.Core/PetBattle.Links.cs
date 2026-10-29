@@ -31,14 +31,30 @@ public sealed partial class BattleSim
 
     // A rhythm's count up to its strike, a tether's share of its ally's hits: an elite's own when it has one (1.5 M10).
     public static int Beats(Slime slime) => slime.Link is not LinkSpec link ? 0 : slime.Elite != null && link.EliteBeats > 0 ? link.EliteBeats : link.Beats;
+    // An aura's speed-up: an elite's own when it has one (1.5 M12).
+    public static double AuraBoost(Slime slime) => slime.Link is not LinkSpec link ? 1 : slime.Elite != null && link.EliteSpeed > 0 ? link.EliteSpeed : link.Speed;
     public static double Share(Slime holder) => holder.Link is not LinkSpec link ? 0 : holder.Elite != null && link.EliteShare > 0 ? link.EliteShare : link.Share;
 
-    // The holder of the tether on this ally (null: none).
-    public Slime? TetherHolder(Slime ally)
+    // The holder of the tether on this ally (null: none); `after`: the next holder after that one
+    // (an ally takes up to EnemyLinks.MaxTethers ropes, 1.5 M12).
+    public Slime? TetherHolder(Slime ally, Slime? after = null)
     {
         if (!HasLink(EnemyLinks.Tether)) return null;
-        foreach (var s in slimes) if (s.LinkedTo == ally.Id && Is(s, EnemyLinks.Tether) && s.Targetable) return s;
+        bool past = after == null;
+        foreach (var s in slimes)
+        {
+            if (s.LinkedTo != ally.Id || !Is(s, EnemyLinks.Tether) || !s.Targetable) continue;
+            if (past) return s;
+            past = s == after;
+        }
         return null;
+    }
+
+    private int Tethers(Slime ally)
+    {
+        int n = 0;
+        for (var h = TetherHolder(ally); h != null; h = TetherHolder(ally, h)) n++;
+        return n;
     }
 
     // The ally a tether holder is tied to, or the mount a rider is on (null: none).
@@ -60,9 +76,15 @@ public sealed partial class BattleSim
             Slime? best = null;
             if (link.Kind == EnemyLinks.Tether)
             {
+                // The nearest ally without a rope; none: the nearest with room for one more (1.5 M12).
+                int bestRopes = 0;
                 foreach (var s in slimes)
-                    if (s != slime && s.Targetable && !s.IsBoss && !s.Handled && !Is(s, EnemyLinks.Tether) && !s.Riding && TetherHolder(s) == null &&
-                        Math.Abs(s.X - slime.X) <= link.Range && (best == null || Math.Abs(s.X - slime.X) < Math.Abs(best.X - slime.X))) best = s;
+                {
+                    if (s == slime || !s.Targetable || s.IsBoss || s.Handled || Is(s, EnemyLinks.Tether) || s.Riding || Math.Abs(s.X - slime.X) > link.Range) continue;
+                    int ropes = Tethers(s);
+                    if (ropes >= EnemyLinks.MaxTethers) continue;
+                    if (best == null || ropes < bestRopes || ropes == bestRopes && Math.Abs(s.X - slime.X) < Math.Abs(best.X - slime.X)) { best = s; bestRopes = ropes; }
+                }
             }
             else if (link.Kind == EnemyLinks.Ride)
             {
@@ -90,8 +112,9 @@ public sealed partial class BattleSim
             switch (link.Kind)
             {
                 case EnemyLinks.Aura:
+                    double speed = AuraBoost(slime);
                     foreach (var s in slimes)
-                        if (s != slime && s.Targetable && Math.Abs(s.X - slime.X) <= link.Range) s.AuraSpeed = Math.Max(s.AuraSpeed, link.Speed);
+                        if (s != slime && s.Targetable && Math.Abs(s.X - slime.X) <= link.Range) s.AuraSpeed = Math.Max(s.AuraSpeed, speed);
                     break;
                 case EnemyLinks.Tether:
                     if (slime.LinkedTo == 0) break;
@@ -289,6 +312,8 @@ public sealed partial class BattleSim
     {
         if (!Is(holder, EnemyLinks.Tether) || LinkPartner(holder) is not Slime ally) return null;
         int side = ally.X >= decisionCatX ? 1 : -1;
-        return ally.X + side * (ally.Width / 2 + holder.Width / 2 + 6);
+        // A second rope's holder keeps behind the first.
+        double behind = TetherHolder(ally) is Slime first && first != holder ? first.Width + 6 : 0;
+        return ally.X + side * (ally.Width / 2 + holder.Width / 2 + 6 + behind);
     }
 }

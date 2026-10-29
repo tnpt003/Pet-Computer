@@ -247,6 +247,15 @@ public sealed class BattleSettings
     }
     [JsonIgnore] public double LargestScale => EnemyTypes.Max(e => e.Scale);
 
+    // From battle.json "formations" (1.5 M12): the teams a wave's "formation" group draws from.
+    [JsonPropertyName("formations")] public FormationSpec[]? Formations { get; init; }
+    [JsonIgnore] public IReadOnlyList<FormationSpec> FormationList => Formations ?? Array.Empty<FormationSpec>();
+    public FormationSpec? Formation(string id)
+    {
+        foreach (var f in FormationList) if (f.Id == id) return f;
+        return null;
+    }
+
     // From battle.json "upgrades": the Adventure's between-wave upgrades (null: the built-in seven).
     [JsonPropertyName("upgrades")] public UpgradeSpec[]? Upgrades { get; init; }
     private IReadOnlyList<UpgradeSpec>? upgradeList;
@@ -631,7 +640,9 @@ public enum BattleEventKind
     SpitAimed, GooLanded, PuddleBoost, PuddleDried, SpringSqueezed, SpringBounced, SpringFlattened,
     // 1.5 M11 (Value: the enemy's id): a bomb slime lit its fuse; it blew up (Value 1: on the cat); a
     // splitting slime broke apart.
-    FuseLit, Blasted, SlimeSplit
+    FuseLit, Blasted, SlimeSplit,
+    // 1.5 M12: a formation's first part came (Value: its index in BattleSettings.FormationList).
+    FormationArrived
 }
 // A spring trap (PetBattle.Spring.cs): set and waiting, squeezing before it springs, resting after, flattened.
 public enum SpringState { Ready, Squeezing, Resting, Flat }

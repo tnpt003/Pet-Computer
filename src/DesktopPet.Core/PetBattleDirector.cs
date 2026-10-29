@@ -23,8 +23,9 @@ public static class BattleRandom
 }
 
 // One spawn: a single enemy or a whole squad, from the side its group asks for ("a", "b" or either).
-// Elite: which of Kinds come elite whatever the chance (WaveGroup.Elite; null: none).
-public readonly record struct SpawnUnit(string[] Kinds, string? Side = null, bool[]? Elite = null);
+// Elite: which of Kinds come elite whatever the chance (WaveGroup.Elite; null: none). Formation: the
+// formation whose first part this is (1.5 M12; its banner shows when it comes).
+public readonly record struct SpawnUnit(string[] Kinds, string? Side = null, bool[]? Elite = null, string? Formation = null);
 
 // What a wave sends and how strong (no WPF, no state of its own: BattleSim keeps the queue).
 public static class SpawnDirector
@@ -44,25 +45,77 @@ public static class SpawnDirector
 
     // The wave's spawns in order, drawn once when it starts. Each unit comes as one: a single enemy
     // or a whole squad. cost: what a kind weighs against the wave's Budget (needed when it has one).
-    public static List<SpawnUnit> Units(WaveSpec wave, Random random, Func<string, double>? cost = null)
+    // formation: the data's formations by id, threat: the battle's now (for "formation" groups).
+    public static List<SpawnUnit> Units(WaveSpec wave, Random random, Func<string, double>? cost = null, Func<string, FormationSpec?>? formation = null, double threat = 1)
     {
         var units = new List<SpawnUnit>();
-        // A budget: the fixed groups and squads always come; drawn kinds share what is left.
+        // A budget: the fixed groups and squads always come; formations take what fits of the rest,
+        // then drawn kinds share what is left.
         double left = double.PositiveInfinity;
         if (wave.Budget > 0 && cost != null)
-            left = wave.Budget - wave.Groups.Where(g => g.Pick == null).Sum(g => g.Count * (g.Squad?.Sum(m => m.Count * cost(m.Enemy)) ?? cost(g.Enemy)));
+            left = wave.Budget - wave.Groups.Where(g => !g.Drawn).Sum(g => g.Count * (g.Squad?.Sum(m => m.Count * cost(m.Enemy)) ?? cost(g.Enemy)));
+        var teams = new Dictionary<WaveGroup, List<FormationSpec>>();
         foreach (var g in wave.Groups)
         {
-            if (g.Squad != null)
+            if (g.Formation == null || formation == null) continue;
+            var drawn = teams[g] = new List<FormationSpec>();
+            for (int i = 0; i < g.Count; i++) drawn.Add(DrawFormation(g.Formation, formation, random, threat, cost, ref left));
+        }
+        foreach (var g in wave.Groups)
+        {
+            if (g.Squad != null) Squads(units, g, g.Count, g.Side);
+            else if (g.Formation != null)
             {
-                var members = g.Squad.SelectMany(m => Enumerable.Repeat(m.Enemy, m.Count)).ToArray();
-                var elite = g.Squad.SelectMany(m => Enumerable.Repeat(m.Elite || g.Elite, m.Count)).ToArray();
-                for (int i = 0; i < g.Count; i++) units.Add(new(members, g.Side, elite.Any(e => e) ? elite : null));
+                // Its parts from one edge (the group's, else the far one), a "b" part from the other.
+                foreach (var f in teams.GetValueOrDefault(g) ?? new())
+                {
+                    int first = units.Count;
+                    foreach (var part in f.Parts)
+                    {
+                        string side = g.Side ?? "a";
+                        if (part.Side == "b") side = side == "a" ? "b" : "a";
+                        if (part.Squad != null) Squads(units, part, 1, side);
+                        else for (int i = 0; i < part.Count; i++) units.Add(new(new[] { part.Enemy }, side, part.Elite ? new[] { true } : null));
+                    }
+                    if (units.Count > first) units[first] = units[first] with { Formation = f.Id };
+                }
             }
             else if (g.Pick != null) foreach (var kind in Draw(g, random, cost, ref left)) units.Add(new(new[] { kind }, g.Side, g.Elite ? new[] { true } : null));
             else for (int i = 0; i < g.Count; i++) units.Add(new(new[] { g.Enemy }, g.Side, g.Elite ? new[] { true } : null));
         }
         return units;
+    }
+
+    private static void Squads(List<SpawnUnit> units, WaveGroup g, int count, string? side)
+    {
+        var members = g.Squad!.SelectMany(m => Enumerable.Repeat(m.Enemy, m.Count)).ToArray();
+        var elite = g.Squad!.SelectMany(m => Enumerable.Repeat(m.Elite || g.Elite, m.Count)).ToArray();
+        for (int i = 0; i < count; i++) units.Add(new(members, side, elite.Any(e => e) ? elite : null));
+    }
+
+    // What a formation weighs against a budget: its members' costs added up.
+    public static double FormationCost(FormationSpec f, Func<string, double> cost) => f.Members.Sum(cost);
+
+    // One formation of these weights (1.5 M12): among those the threat reaches (none: those asking
+    // the least threat), the ones that fit the budget left, drawn by weight; none fits: the cheapest.
+    // One roll of the spawn stream each, whatever is left to choose from.
+    private static FormationSpec DrawFormation(Dictionary<string, double> weights, Func<string, FormationSpec?> formation, Random random,
+        double threat, Func<string, double>? cost, ref double left)
+    {
+        var known = weights.Where(w => w.Value > 0 && formation(w.Key) != null).ToDictionary(w => w.Key, w => w.Value);
+        var reached = known.Where(w => formation(w.Key)!.MinThreat <= threat + 1e-9).ToDictionary(w => w.Key, w => w.Value);
+        if (reached.Count == 0)
+        {
+            double least = known.Keys.Min(k => formation(k)!.MinThreat);
+            reached = known.Where(w => formation(w.Key)!.MinThreat == least).ToDictionary(w => w.Key, w => w.Value);
+        }
+        double Weight(string id) => cost != null ? FormationCost(formation(id)!, cost) : 0;
+        double room = left;
+        var fits = reached.Where(w => Weight(w.Key) <= room + 1e-9).ToDictionary(w => w.Key, w => w.Value);
+        string pick = Pick(fits.Count > 0 ? fits : reached, random);
+        if (fits.Count == 0) pick = reached.Keys.OrderBy(Weight).ThenBy(k => k, StringComparer.Ordinal).First();
+        left -= Weight(pick);
+        return formation(pick)!;
     }
 
     // What a wave's budget leaves for elites once its kinds are drawn (infinite without a budget).

@@ -568,6 +568,7 @@ internal static class Program
         TrapVisualChecks.Run(Check);
         BandVisualChecks.Run(Check);
         SwarmVisualChecks.Run(Check);
+        FlagVisualChecks.Run(Check);
         window.SetPaused(false);
         window.Reset();
         void AttentionClick() => window.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Right)

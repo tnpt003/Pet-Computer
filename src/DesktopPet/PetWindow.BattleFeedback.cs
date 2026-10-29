@@ -55,6 +55,8 @@ public sealed partial class PetWindow
         // 1.5 M11: the fusing slimes, the bomb slime, the splitting slime.
         [BattleEventKind.Merged] = ("squish", 4), [BattleEventKind.Dismounted] = ("swoosh", 2), [BattleEventKind.FuseLit] = ("clank", 4),
         [BattleEventKind.Blasted] = ("pop", 6), [BattleEventKind.SlimeSplit] = ("squish", 4),
+        // 1.5 M12: the flag fell (its team panics), a formation came.
+        [BattleEventKind.Panicked] = ("surprised", 5), [BattleEventKind.FormationArrived] = ("sparkle", 4),
     };
 
     private void PlayBattleSound()
@@ -74,6 +76,15 @@ public sealed partial class PetWindow
     // A link made by a tether's holder (a rider mounting makes one too).
     private bool IsRope(BattleEvent e) => EventSlime(e)?.Link?.Kind == EnemyLinks.Tether;
     private bool IsRide(BattleEvent e) => EventSlime(e)?.Link?.Kind == EnemyLinks.Ride;
+    private bool FlagOnField()
+    {
+        if (battle == null) return false;
+        foreach (var s in battle.Slimes) if (s.Link?.Kind == EnemyLinks.Aura && s.State != SlimeState.Defeated) return true;
+        return false;
+    }
+    // The formation a FormationArrived event names (null: none).
+    private FormationSpec? FormationOf(BattleEvent e) =>
+        battle != null && (int)e.Value >= 0 && (int)e.Value < battle.Settings.FormationList.Count ? battle.Settings.FormationList[(int)e.Value] : null;
     private Slime? EventSlime(BattleEvent e)
     {
         if (battle == null) return null;
@@ -87,12 +98,13 @@ public sealed partial class PetWindow
     // Big moments get a banner across the HUD's centre. The first heal, far heal, rally call and attack
     // from behind of a battle say what is going on (once each per battle), and so does the first elite
     // of each kind; every helper a rally makes elite is named.
-    private bool healerExplained, farHealExplained, rallyExplained, behindExplained, wardExplained, pushResistExplained, appExplained, popupExplained, virusExplained, loadingExplained, updateExplained, virusExeExplained, lockExplained, rageExplained, spitExplained, puddleExplained, springExplained, flatExplained, beatExplained, ropeExplained, cutExplained, mergeExplained, remergeExplained, rideExplained, fuseExplained, splitExplained;
+    private bool healerExplained, farHealExplained, rallyExplained, behindExplained, wardExplained, pushResistExplained, appExplained, popupExplained, virusExplained, loadingExplained, updateExplained, virusExeExplained, lockExplained, rageExplained, spitExplained, puddleExplained, springExplained, flatExplained, beatExplained, ropeExplained, cutExplained, mergeExplained, remergeExplained, rideExplained, fuseExplained, splitExplained, flagExplained, panicExplained;
     private readonly HashSet<string> elitesExplained = new();
+    private readonly HashSet<string> formationsExplained = new();
     private void ShowBattleBanners()
     {
         if (battle == null || battleHud == null) return;
-        if (battle.Time < 0.05) { healerExplained = farHealExplained = rallyExplained = behindExplained = wardExplained = pushResistExplained = appExplained = popupExplained = virusExplained = loadingExplained = updateExplained = virusExeExplained = lockExplained = rageExplained = spitExplained = puddleExplained = springExplained = flatExplained = beatExplained = ropeExplained = cutExplained = mergeExplained = remergeExplained = rideExplained = fuseExplained = splitExplained = false; elitesExplained.Clear(); }
+        if (battle.Time < 0.05) { healerExplained = farHealExplained = rallyExplained = behindExplained = wardExplained = pushResistExplained = appExplained = popupExplained = virusExplained = loadingExplained = updateExplained = virusExeExplained = lockExplained = rageExplained = spitExplained = puddleExplained = springExplained = flatExplained = beatExplained = ropeExplained = cutExplained = mergeExplained = remergeExplained = rideExplained = fuseExplained = splitExplained = flagExplained = panicExplained = false; elitesExplained.Clear(); formationsExplained.Clear(); }
         var rules = battle.AppRules;
         for (int i = 0; i < battle.Events.Count; i++)
         {
@@ -157,6 +169,11 @@ public sealed partial class PetWindow
                 BattleEventKind.LinkFormed when !rideExplained && IsRide(e) => L("Slime bom cưỡi slime nhanh! Hạ con ngựa giữa đường", "A bomb rides a quick slime! Take the mount down on the way"),
                 BattleEventKind.FuseLit when !fuseExplained => L("Bom châm ngòi! Nhấc mèo ra khỏi vòng đỏ", "The fuse is lit! Lift the cat out of the red ring"),
                 BattleEventKind.SlimeSplit when !splitExplained => L("Slime tách đôi! Đừng để thảo dược hồi cho hai nửa", "It split in two! Don't let a herb slime heal the halves"),
+                // 1.5 M12: the flag slime and its panic, once each per battle; each formation the first time it comes.
+                BattleEventKind.SlimeSpawned when !flagExplained && FlagOnField() => L("Slime cờ hiệu! Quái trong vòng vàng chạy nhanh hơn. Hạ nó trước", "A flag slime! Enemies in the gold ring run faster. Take it down first"),
+                BattleEventKind.Panicked when !panicExplained => L("Mất cờ! Cả đội hoảng loạn", "The flag fell! They all panic"),
+                BattleEventKind.FormationArrived when FormationOf(e) is FormationSpec team && formationsExplained.Add(team.Id) =>
+                    LF($"Đội hình {team.Name(PetLanguage.Vietnamese)}! {team.Tip(PetLanguage.Vietnamese)}", $"{team.Name(preferences.Language)} formation! {team.Tip(preferences.Language)}").TrimEnd(),
                 BattleEventKind.Won => L("CHIẾN THẮNG!", "VICTORY!"),
                 BattleEventKind.Lost => L("THUA RỒI…", "DEFEATED…"),
                 _ => null
@@ -184,6 +201,8 @@ public sealed partial class PetWindow
             if (e.Kind == BattleEventKind.LinkFormed && IsRide(e)) rideExplained = true;
             if (e.Kind == BattleEventKind.FuseLit) fuseExplained = true;
             if (e.Kind == BattleEventKind.SlimeSplit) splitExplained = true;
+            if (e.Kind == BattleEventKind.SlimeSpawned && FlagOnField()) flagExplained = true;
+            if (e.Kind == BattleEventKind.Panicked) panicExplained = true;
             if (e.Kind == BattleEventKind.VirusFileAdded) virusExeExplained = true;
             if (e.Kind == BattleEventKind.HazardOpened && IsUpdate(e)) updateExplained = true;
             else if (e.Kind == BattleEventKind.HazardOpened) loadingExplained = true;

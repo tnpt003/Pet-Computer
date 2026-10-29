@@ -21,7 +21,7 @@ Chỉ cần ghi những gì muốn đổi. File của người dùng được g�
 - `"schemaVersion": 1` là **bắt buộc**. Thiếu hoặc khác 1 thì cả file bị bỏ qua.
 - Số và chuỗi ở cấp trên cùng (ví dụ `"catMaxHp": 120`) thay giá trị gốc.
 - Object (`easy`, `hard`) gộp theo từng khóa; ví dụ `"easy": { "enemyHp": 0.5 }` chỉ đổi đúng một số đó.
-- `enemies`, `weapons`, `upgrades`, `synergies` và `skills` gộp **theo `id`**:
+- `enemies`, `weapons`, `upgrades`, `synergies`, `skills` và `formations` gộp **theo `id`**:
   - `id` đã có: chỉ đổi các khóa được ghi (ví dụ `{ "id": "slime", "maxHp": 60 }`).
   - `id` mới: thêm vào cuối danh sách.
   - Mỗi mục phải có `id`, không được trùng trong file.
@@ -422,11 +422,11 @@ Mỗi quái có tối đa một `link`. Khóa chung: `kind`, `enabled` (mặc đ
 
 | `kind` | Tác dụng | Khóa riêng | Cách phá / thưởng |
 |---|---|---|---|
-| `tether` (dây, Q4) | Tự buộc dây vào đồng minh gần nhất trong `range` (không phải boss, không phải con giữ dây khác, chưa bị ai buộc); gánh `share` (0.05–0.95, mặc định 0.5; tinh anh `eliteShare` nếu có) mọi sát thương đồng minh nhận; đi sát ngay sau đồng minh, phía xa mèo | `share`, `eliteShare`, `cutSpeed` | `CutLink` (mèo đang cầm/ném xuyên dây nhanh ≥ `cutSpeed`: M10; Kéo cắt: M06) hoặc hạ con giữ dây: đồng minh choáng `breakStun` s. Dây giãn quá `range` × 1,5 thì tự đứt, không thưởng. Sau `relink` s mới buộc lại |
+| `tether` (dây, Q4) | Tự buộc dây vào đồng minh gần nhất trong `range` (không phải boss, không phải con giữ dây khác; ưu tiên con chưa bị ai buộc, từ M12 không còn thì con mới có 1 dây, dây thứ hai gánh phần của nó trên phần còn lại); gánh `share` (0.05–0.95, mặc định 0.5; tinh anh `eliteShare` nếu có) mọi sát thương đồng minh nhận; đi sát ngay sau đồng minh, phía xa mèo | `share`, `eliteShare`, `cutSpeed` | `CutLink` (mèo đang cầm/ném xuyên dây nhanh ≥ `cutSpeed`: M10; Kéo cắt: M06) hoặc hạ con giữ dây: đồng minh choáng `breakStun` s. Dây giãn quá `range` × 1,5 thì tự đứt, không thưởng. Sau `relink` s mới buộc lại |
 | `rhythm` (nhịp, Q3) | Mỗi `beat` s (0.2–3, mặc định 0.8) một nhịp; nhịp thứ `beats` (2–8, mặc định 4; tinh anh `eliteBeats` nếu có) mọi quái trong `range` (cả nó) đang đánh tới mèo được thì **gồng cùng lúc**, bỏ qua lượt ra đòn và hồi chiêu | `beat`, `beats`, `eliteBeats` | Bị choáng (Đẩy, búa…) thì đếm lại từ 0. Không gồng khi mèo đang được cầm hay đang `landingGrace`; không áp dụng cho boss, quái hỗ trợ, con đang cưỡi, con đang hoảng |
 | `ride` (cưỡi, Q6) | Cưỡi lên quái loại `mount` (bắt buộc, quái đã biết, không phải boss, không tự cưỡi) trong `range`, chưa bị ai cưỡi; được chở đi, vẽ trên lưng; mèo không nhắm và không click chọn được con đang cưỡi (đánh con bị cưỡi). Cách mèo `dropRange` (20–400, mặc định 90) thì nhảy xuống, không choáng | `mount`, `dropRange` | Hạ con bị cưỡi hoặc `CutLink`: con cưỡi rơi tại chỗ, choáng `breakStun` s |
 | `merge` (nhập, Q5/Q7) | `count` (2–6, mặc định 3) con cùng loại đứng trong `range` của nhau liên tục `mergeSeconds` (0.5–10, mặc định 2) s thì nhập thành một quái `into` (bắt buộc, quái đã biết, không phải boss, không tự nhập), máu = tổng máu hiện tại, máu tối đa = tổng máu tối đa. Không tính là hạ quái, không kết thúc đợt | `count`, `mergeSeconds`, `into` | Bị choáng (Đẩy…) thì đồng hồ của con đó về 0; tách xa nhau cũng vậy |
-| `aura` (hào quang, Q8) | Đồng minh trong `range` đi nhanh ×`speed` (1–3, mặc định 1.3); lao (dash) không nhanh thêm | `speed` | Hạ nó: mọi quái khác (trừ boss) **hoảng** `breakStun` s: chạy ra xa mèo, không đánh |
+| `aura` (hào quang, Q8) | Đồng minh trong `range` đi nhanh ×`speed` (1–3, mặc định 1.3; tinh anh `eliteSpeed` nếu có, M12); lao (dash) không nhanh thêm | `speed`, `eliteSpeed` | Hạ nó: mọi quái khác (trừ boss) **hoảng** `breakStun` s: chạy ra xa mèo, không đánh |
 
 - **Tối đa 2 loại liên kết mỗi trận** (`EnemyLinks.MaxKinds`): lúc nạp dữ liệu, mỗi danh sách đợt (trận tự do, màn Phiêu lưu, Viễn chinh) mà tính cả quái bốc ngẫu nhiên, quân boss gọi, quái được gọi, `mount`, `into` có hơn 2 loại `link` thì file bị từ chối. Lúc chạy (đợt sinh tự động như Vô tận) hai loại đến trước được dùng, quái mang loại thứ 3 đánh như quái thường.
 - **Tắt** một liên kết trong battle.json của người dùng: `"enemies": [ { "id": "chain_slime", "link": { "enabled": false } } ]` (gộp với file gốc, phần còn lại giữ nguyên).
@@ -642,6 +642,38 @@ Q5, Q6, Q7 của docs/UPDATE-1.5.md, dùng liên kết `merge` và `ride` của 
 - Banner lần đầu mỗi trận (vi/en/ja): "Slime nhập thành khổng lồ! Lần sau Đẩy hoặc Quạt tách bầy ra", "Slime bom cưỡi slime nhanh! Hạ con ngựa giữa đường", "Bom châm ngòi! Nhấc mèo ra khỏi vòng đỏ", "Slime tách đôi! Đừng để thảo dược hồi cho hai nửa", "Hai nửa nhập lại! Hạ slime thảo dược trước". Âm thanh dùng cue có sẵn: `Merged` bóp, `Dismounted` vút, `FuseLit` keng, `Blasted` bụp to, `SlimeSplit` bóp. Sự kiện mới: `FuseLit`, `Blasted`, `SlimeSplit`.
 - Đo perf: `scripts/perf.ps1 -Battle crowd-new` giữ sàn đầy 16 quái 1.5 (hợp thể, bom cưỡi, tách đôi, phun, lò xo, thảo dược) bằng số liệu gốc.
 - Bước hướng dẫn đứng hình (chương 2) và trang Sổ tay quái làm ở M21/M27. Python không tham gia.
+
+## Slime cờ hiệu và đội hình phối hợp (`flagbearer`, `formations`) (bản 1.5, mốc M12, 2026-10-29)
+
+Q8 và 6 đội hình phối hợp của docs/UPDATE-1.5.md. Code: `src/DesktopPet.Core/PetBattleDirector.cs` (bốc đội hình), `src/DesktopPet.Core/PetBattle.Waves.cs` (sự kiện `FormationArrived`), `src/DesktopPet.Core/PetBattle.Links.cs` (hào quang tinh anh, 2 dây trên một đồng minh), `src/DesktopPet/PetBattleView.Flag.cs` (vẽ), test `tests/DesktopPet.Tests/BattleFormationTests.cs` và ảnh UiChecks (`FlagVisualChecks`, `enemy-flag.png`). **Slime cờ hiệu và 6 đội hình có trong battle.json gốc nhưng chưa trận nào dùng** (`binSpit: false`): chương 1, trận tự do, Viễn chinh, Vô tận không đổi (bảng mô phỏng cân bằng giống hệt bản trước từng dòng). Chương 2 (M21) và Vô tận (M24) sẽ đưa vào. Muốn thử ngay: chép `docs/examples/battle-m12.json` thành `%LOCALAPPDATA%\DesktopPet\battle.json` rồi mở Trận tự do (dữ liệu tùy chỉnh: không kỷ lục, không thưởng).
+
+```json
+{ "id": "flagbearer", "support": true, "keepBack": 120, "link": { "kind": "aura", "range": 180, "speed": 1.3, "eliteSpeed": 1.45, "breakStun": 2 } }
+"formations": [ { "id": "fortress", "nameVi": "Pháo đài", "nameEn": "Fortress", "tipVi": "…", "tipEn": "…", "minThreat": 0,
+  "parts": [ { "squad": [ { "enemy": "spitter", "count": 1 }, { "enemy": "mender", "count": 1 }, { "enemy": "rock", "count": 1 } ] } ] } ]
+{ "groups": [ { "formation": { "fortress": 2, "drums": 1 }, "count": 1 } ] }
+```
+
+- **Slime cờ hiệu** (`flagbearer`, 50 HP, xanh dương, cán cờ sau lưng, cờ đuôi nheo vàng sọc đỏ bay về phía lưng): quái hỗ trợ (đứng `keepBack` sau đồng đội, không đánh khi còn đồng đội biết đánh; Cuộn len kéo được). Hào quang vòng 180 (vòng vàng đứt nét): đồng minh trong vòng đi nhanh ×1,3 và có hai vạch vàng sau lưng; tinh anh (`elite.hp` 1,2) ×1,45 (`eliteSpeed`, 1–3, chỉ cho `aura`). Hạ nó: mọi quái khác (trừ boss) hoảng 2 s (chạy ra xa mèo, không đánh, giọt mồ hôi xanh). Cách phá: hạ nó trước; Đèn laser dụ quái ra khỏi vòng.
+- **Đội hình** (`formations`, gộp theo `id`): `id`, `nameVi`/`nameEn` (≤ 32 ký tự), `tipVi`/`tipEn` (đi cùng nhau, ≤ 80), `minThreat` (0–3), `parts` (1–4 phần; mỗi phần là nhóm thường `enemy`/`count` 1–6 hoặc `squad` 2–8 con như ở đợt, có `elite`, `side`). Tối đa 12 quái mỗi đội hình, không boss.
+- **Nhóm đội hình trong đợt**: `{ "formation": { id: trọng số }, "count": 1–4, "side"? }` (không đi cùng `pick`, `squad`, `atLeast`, `elite`). Lúc đợt bắt đầu, Director bốc `count` lần, mỗi lần một đội hình theo trọng số trong số đội hình có `minThreat` ≤ threat hiện tại (không có: các đội hình có `minThreat` nhỏ nhất) và vừa phần ngân sách còn lại của đợt (giá = tổng `cost` thành viên, chưa tính phụ phí tinh anh); không đội hình nào vừa thì lấy đội hình rẻ nhất. Nhóm cố định và đội luôn trừ ngân sách trước, đội hình trừ tiếp, quái bốc `pick` chia phần còn lại. Mỗi lần bốc dùng một lượt luồng spawn, chỉ ở đợt có nhóm đội hình (seed cũ cho đúng trận cũ).
+- Các phần của một đội hình ra lần lượt (mỗi phần chờ sàn đủ chỗ như đội): từ mép xa mèo (hoặc mép của `side` nhóm), phần `"side": "b"` ra ở mép còn lại sau mũi tên đỏ. Phần đầu tiên ra thì banner "Đội hình <tên>! <gợi ý>" (lần đầu mỗi đội hình mỗi trận, vi/en/ja) và cue lấp lánh.
+- Kiểm tra lúc nạp: phần nào lớn hơn `maxAlive` của trận/màn thì bị từ chối; luật tối đa 2 loại liên kết mỗi trận tính cả mọi thành viên của mọi đội hình có thể bốc.
+- 6 đội hình gốc:
+
+| `id` | Tên | Thành phần | `minThreat` | Giá |
+|---|---|---|---|---|
+| `fortress` | Pháo đài | slime phun (sau cùng), thảo dược, đá (phía mèo) | 0 | 6 |
+| `cavalry` | Kỵ binh | 2 slime bom cưỡi 2 slime nhanh; rồi 1 slime phun | 1,4 | 8 |
+| `drums` | Đội trống | nhạc trưởng (sau) + 3 slime | 0 | 5 |
+| `assembly` | Dây chuyền | 2 slime xích + 1 slime đá **tinh anh**; cả hai dây nối vào đá, đá chỉ nhận 25% sát thương khi đủ 2 dây | 1,2 | 6 |
+| `trampoline` | Bạt nhún | slime + slime nhanh từ phía trước; lò xo từ mép sau lưng mèo (`side: "b"`) | 0 | 4 |
+| `swarms` | Bầy nhập | (thảo dược + 3 hợp thể) rồi (3 hợp thể) | 1,6 | 8 |
+
+- Liên kết: Kỵ binh `ride`, Đội trống `rhythm`, Dây chuyền `tether`, Bầy nhập `merge`; một trận chỉ trộn được tối đa 2 loại (kể cả slime cờ hiệu `aura`).
+- **Hai dây trên một đồng minh** (người dùng chọn 2026-10-29, cho Dây chuyền): slime xích ưu tiên đồng minh chưa có dây; không còn thì nối vào con mới có 1 dây (tối đa 2, `EnemyLinks.MaxTethers`). Dây thứ hai đứng sau dây thứ nhất và gánh phần của nó trên phần còn lại (50% rồi 50% của nửa còn lại: đồng minh nhận 25%). Cắt dây nào thì đồng minh choáng như cũ.
+- Banner slime cờ hiệu lần đầu: "Slime cờ hiệu! Quái trong vòng vàng chạy nhanh hơn. Hạ nó trước"; hoảng: "Mất cờ! Cả đội hoảng loạn" (cue ngạc nhiên). Trang Sổ tay quái cho đội hình làm ở M27. Python không tham gia.
+- Perf: chưa đo riêng (kịch bản `crowd-new` đã dùng 2 loại liên kết nên không thêm được hào quang); phần vẽ mới là vài nét mỗi slime.
 
 ## Viễn chinh (`expedition`) (2026-10-21)
 

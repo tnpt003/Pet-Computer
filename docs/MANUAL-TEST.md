@@ -724,3 +724,14 @@ Chưa trận gốc nào có hai boss này. Muốn thử: cất file `%LOCALAPPDA
 - [ ] Pha khiên (75/50/25%): nhảy về mép, gọi quân có slime phun, vương miện sáng rồi phong tinh anh; lần đầu nối dây xích từ một quân khác vào tinh anh (banner "Vương miện nối dây xích cho tinh anh!…"; Kéo cắt hoặc kéo/ném mèo xuyên dây làm đứt), lần sau trao trống (banner "… trao trống…"; vòng nhịp trên đầu tinh anh, nhịp 4 cả vùng cùng gồng; Đẩy nó để đếm lại). Trong khiên: không mưa.
 - [ ] Pause/menu: vòng báo đẻ, con khổng lồ đang bú, giọt mưa đang rơi đều đứng yên.
 - [ ] DPI 100/150/200%, đổi DPI giữa trận, màn hình phụ: vòng tím, giọt mưa, đường bú không bị cắt; âm thanh ngắn, không chồng nhau; banner vi/en/ja đúng chữ.
+
+## Đồ rơi và xu 1.5 M19 (2026-10-29)
+Có sẵn trong Viễn chinh (cá, xu, bình) và Vô tận (cá, bình); không cần file tùy chỉnh. Ảnh đã xem qua render UiChecks nền sáng/tối, chưa xem trong trận thật.
+- [ ] Phiêu lưu chương 1 và Trận tự do: hạ slime không rơi gì, như cũ.
+- [ ] Viễn chinh: hạ slime thỉnh thoảng rơi cá cam, đồng xu vàng xoay, bình hồng, nảy lên rồi nằm trên sàn. Click trúng: cá hồi máu (số xanh trên mèo), bình làm một ô kỹ năng đang hồi sáng lại ngay, xu tăng "Xu N" trên HUD. Có tiếng nhặt ngắn, không chồng.
+- [ ] Để yên khoảng 8 giây: món đó mờ dần, nhấp nháy rồi biến mất. Pause (hoặc mở menu, chọn thẻ) giữa lúc đó: món đứng yên, không mờ thêm, không nhặt được; bỏ Pause thì tiếp tục.
+- [ ] Click giữa quái và món đồ: món đồ được nhặt trước; đang chọn kỹ năng dùng chuột (laser, quạt…) thì click dùng kỹ năng. Click thẳng vào mèo vẫn là nhấc mèo. Chỗ trống bên cạnh món đồ vẫn click xuyên xuống desktop.
+- [ ] Thắng trận còn xu nằm trên sàn: xu đó vẫn được tính. Kết quả trận ghi "Nhặt được N xu · chuyến có M xu"; bản đồ ghi "· M xu". Thua hoặc rời trận: xu của trận đó không cộng. Chuyến mới bắt đầu 0 xu.
+- [ ] Vô tận: chỉ rơi cá và bình, không có xu, HUD không hiện xu.
+- [ ] Đóng app giữa chuyến rồi mở lại: số xu của chuyến còn nguyên.
+- [ ] DPI 100/150/200%, đổi DPI giữa trận, màn hình phụ: món đồ nằm đúng sàn, click trúng; chữ vi/en/ja đúng.

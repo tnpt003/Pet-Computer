@@ -270,7 +270,8 @@ public sealed partial class BattleSim
 
     public BattleSim(BattleSettings settings, double left, double right, Random? random = null, BattleDifficulty difficulty = BattleDifficulty.Normal,
         string weapon = BattleWeapon.Sword, StageSpec? stage = null, IReadOnlyDictionary<string, int>? build = null, int? seed = null,
-        double? startHp = null, double threat = 1, IReadOnlyList<string>? relics = null, bool apps = true, IEnumerable<BattleSkill>? skills = null)
+        double? startHp = null, double threat = 1, IReadOnlyList<string>? relics = null, bool apps = true, IEnumerable<BattleSkill>? skills = null,
+        BattleLoot loot = BattleLoot.None)
     {
         carried = skills != null ? BattleSkills.Order(skills) ?? BattleSkills.Default : BattleSkills.Default;
         // A given seed wins; otherwise one drawn from the given random (tests), else a fresh one.
@@ -285,6 +286,8 @@ public sealed partial class BattleSim
         rallyRandom = BattleRandom.Stream(Seed, BattleRandom.Rally);
         utilityRandom = BattleRandom.Stream(Seed, BattleRandom.Utility);
         statusRandom = BattleRandom.Stream(Seed, BattleRandom.Status);
+        dropRandom = BattleRandom.Stream(Seed, BattleRandom.Drops);
+        Loot = loot;
         Settings = settings;
         Stage = stage;
         AppsOn = apps;
@@ -348,6 +351,7 @@ public sealed partial class BattleSim
         lastCatX = floorX;
         catPose = catHeld ? pose : null;
         StepEffects(dt);
+        StepDrops(dt);
         HurtFlash = Math.Max(0, HurtFlash - dt);
         // The stun runs on battle time, held or not (lifting neither ends nor stretches it).
         if (CatStunRemaining > 0)
@@ -811,6 +815,7 @@ public sealed partial class BattleSim
         // A bomb slime defeated while lit blows up there; a splitting one breaks apart (1.5 M11).
         if (slime.Lit) Blast(slime, false);
         SplitApart(slime);
+        DropLoot(slime); // 1.5 M19: a fish, a coin or a potion, sometimes.
     }
 
     // A stony enemy's block roll for one hit (rolled once per hit, never per frame).
@@ -869,6 +874,7 @@ public sealed partial class BattleSim
         ClearSky();
         ClearTools();
         ClearApps();
+        ClearDrops(phase == BattlePhase.Won);
         incoming = null;
         IncomingRemaining = 0;
         ClearCalls();
@@ -1015,6 +1021,7 @@ public sealed partial class BattleSim
         MapTools(left, oldWidth, newWidth);
         MapSpit(left, oldWidth, newWidth);
         MapSky(left, oldWidth, newWidth);
+        MapDrops(left, oldWidth, newWidth);
         foreach (var p in popups) p.X = left + (p.X - Left) / oldWidth * newWidth;
         foreach (var l in launches) { l.FloorX = left + (l.FloorX - Left) / oldWidth * newWidth; for (int i = 0; i < l.TargetX.Length; i++) l.TargetX[i] = left + (l.TargetX[i] - Left) / oldWidth * newWidth; }
         Left = left; Right = right;

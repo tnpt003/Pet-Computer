@@ -80,6 +80,8 @@ public sealed partial class BattleFieldView : FrameworkElement
                     CaptureMouse();
                 }
             }
+            // A drop on the floor before the slimes (1.5 M19: cat, chosen skill, drop, slime, icon).
+            else if (!OnPopup(point) && DropAt(point) is int drop) DropClicked?.Invoke(drop);
             else if (!OnPopup(point) && !OnWall(point) && SlimeAt(point) is int id && sim.Find(id) is { } slime) SlimeClicked?.Invoke(id, point.X - (slime.X - OriginX));
             e.Handled = true;
         };
@@ -261,6 +263,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         DrawGoos(dc, floor);
         DrawTools(dc, floor, time);
         if (sim.TabsRemaining > 0) DrawTabs(dc, sim.CatX - OriginX, floor, time);
+        DrawDrops(dc, floor, time); // 1.5 M19
         for (int i = 0; i < sim.Effects.Count; i++) DrawEffect(dc, sim.Effects[i], sim.Effects[i].X - OriginX, floor - sim.Effects[i].Height, floor);
         if (sim.Incoming) DrawIncoming(dc, sim.IncomingX - OriginX, floor, time);
         DrawPopups(dc, floor, time);

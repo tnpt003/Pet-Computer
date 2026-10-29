@@ -9,7 +9,7 @@ namespace DesktopPet;
 // what the others draw.
 public static class BattleRandom
 {
-    public const int Spawn = 1, Offer = 2, Block = 3, Affix = 4, Rarity = 5, Apps = 6, Strike = 7, Rally = 8, Utility = 9, Status = 10, Sky = 11;
+    public const int Spawn = 1, Offer = 2, Block = 3, Affix = 4, Rarity = 5, Apps = 6, Strike = 7, Rally = 8, Utility = 9, Status = 10, Sky = 11, Drops = 12;
 
     // The same seed and stream always give the same numbers, on every machine (no string hashing).
     public static Random Stream(int seed, int stream)

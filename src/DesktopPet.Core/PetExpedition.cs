@@ -326,6 +326,9 @@ public sealed class ExpeditionRun
     public const int LogKept = 60;
     // Steps spun a second time (each at most once).
     public List<int> Rerolled { get; set; } = new();
+    // 1.5 M19: the coins the run's won battles picked up (BattleSim.Coins), for its shop; they end with
+    // the run (never kept past it). A file without it reads as 0.
+    public int Coins { get; set; }
 
     [JsonIgnore] public int Step => Path.Count;
     [JsonIgnore] public BattleDifficulty Level => Enum.TryParse<BattleDifficulty>(Difficulty, out var level) && Enum.IsDefined(level) ? level : BattleDifficulty.Normal;
@@ -434,7 +437,7 @@ public sealed class ExpeditionProgress
 // Keepsakes: the ones this won run gave (each only ever once).
 // Capsule: a won fight left the capsule machine on the map.
 public readonly record struct ExpeditionStepOutcome(bool Counted, int Step, bool Won, bool RunOver, bool RunWon, double Hp, double MaxHp, double Healed = 0, bool BestSteps = false, bool Fastest = false, bool Reward = false,
-    IReadOnlyList<string>? Keepsakes = null, bool Capsule = false);
+    IReadOnlyList<string>? Keepsakes = null, bool Capsule = false, int Coins = 0, int CoinsGained = 0);
 
 // One battle node the user can fight now: its encounter, its kind, and the battle it starts.
 public readonly record struct ExpeditionNode(int Step, int Lane, string Kind, StageSpec Stage, int Seed, double Threat);
@@ -659,11 +662,12 @@ public sealed class Expedition
     }
 
     // The step's battle ended in a win or a loss. A win moves the run on (HP and build kept, WinHeal
-    // given back); a won boss or any loss ends the run and counts it once.
-    public ExpeditionStepOutcome Finish(bool won, double hp, IReadOnlyDictionary<string, int> build, double seconds, int defeated)
+    // given back, its coins added); a won boss or any loss ends the run and counts it once.
+    public ExpeditionStepOutcome Finish(bool won, double hp, IReadOnlyDictionary<string, int> build, double seconds, int defeated, int coins = 0)
     {
         if (Run is not ExpeditionRun run || run.Fighting is not int lane) return default;
         run.Fighting = null;
+        if (won) run.Coins += Math.Max(0, coins);
         run.Seconds += double.IsFinite(seconds) && seconds > 0 ? seconds : 0;
         run.Defeated += Math.Max(0, defeated);
         int step = run.Step;
@@ -688,7 +692,7 @@ public sealed class Expedition
             run.Pending = DrawCapsules(run, c, BattleRandom.Stream(run.Seed, 5000 + step * 8 + lane), lane);
             capsule = true;
         }
-        return new(true, step, true, false, false, run.Hp, max, run.Hp - before, Reward: reward, Capsule: capsule);
+        return new(true, step, true, false, false, run.Hp, max, run.Hp - before, Reward: reward, Capsule: capsule, Coins: run.Coins, CoinsGained: Math.Max(0, coins));
     }
 
     public const string PrizeCard = "card", PrizeRare = "rare", PrizeRelic = "relic";

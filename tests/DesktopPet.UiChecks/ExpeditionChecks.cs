@@ -88,7 +88,8 @@ internal static class ExpeditionChecks
             Fights = new[] { Stage("x_field", "Field"), Stage("x_hill", "Hill") }, Elites = new[] { Stage("x_fort", "Fort") }, Boss = Stage("x_throne", "Throne")
         };
         // One weak slime per encounter that barely hurts (a quick win), or a cat that falls at the first hit.
-        var easy = new BattleSettings { FirstWaveDelay = 0, SlimeMaxHp = 1, SlimeDamage = 1, OutroSeconds = 0.5, Campaign = campaign, Expedition = trail };
+        // Drops on, none by chance (1.5 M19: the check below puts a coin down itself).
+        var easy = new BattleSettings { FirstWaveDelay = 0, SlimeMaxHp = 1, SlimeDamage = 1, OutroSeconds = 0.5, Campaign = campaign, Expedition = trail, Drops = new DropSpec { Chance = 0, EliteChance = 0, BossDrops = 0 } };
         var deadly = new BattleSettings { FirstWaveDelay = 0, SlimeMaxHp = 100000, SlimeDamage = 50, CatMaxHp = 1, LandingGraceSeconds = 0, OutroSeconds = 0.5, Campaign = campaign, Expedition = trail };
         string dir = Path.Combine(Path.GetTempPath(), "pet-expedition-ui-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(dir);
@@ -203,9 +204,22 @@ internal static class ExpeditionChecks
             check(hud.BannerShownWidth > 0 && hud.BannerShownWidth <= BattleHud.CentreWidth + 0.5 && Math.Abs(hud.ActualWidth - hudWidth) < 0.5,
                 $"A long banner shrinks to the HUD's centre and the HUD keeps its width ({hud.BannerShownWidth:0} DIPs, HUD {hudWidth:0} → {hud.ActualWidth:0})");
             Shot("Pet battle HUD", "expedition-hud-banner.png");
+            // 1.5 M19: a step's battle has coins; a click picks one up (not while paused); the HUD counts them.
+            var battleNow = window.Battle!;
+            battleNow.AddDrop(BattleDropKind.Coin, battleNow.Left + 300, 1);
+            int coinId = battleNow.Drops.Count > 0 ? battleNow.Drops[^1].Id : 0;
+            window.SetBattlePaused(true);
+            bool pausedRefused = !window.BattlePickUp(coinId);
+            window.SetBattlePaused(false);
+            Call(window, "CloseBattleNotice");
+            check(battleNow.Loot == BattleLoot.Coins && pausedRefused && window.BattlePickUp(coinId) && battleNow.Coins == 1,
+                "An Expedition step's battle has coin drops: refused while paused, picked up by a click");
+            hud.Update(battleNow, false, false, false, false);
+            check(Text(hud).Contains("Coins 1"), $"The HUD shows the run's coins ({Text(hud)})");
             Finish();
             await Task.Delay(30);
             string panel = ResultText();
+            check(run.Coins == 1 && Saved()?.Coins == 1 && panel.Contains("Picked up 1 coin · the run has 1"), $"A won step adds its coins to the run (saved) and says so ({panel})");
             check(window.LastBattleSummary is { Won: true, Expedition.RunOver: false } && run.Path.SequenceEqual(new[] { 1 }) && Saved()?.Path.Count == 1 && Saved()?.Fighting == null,
                 "A won step moves the run on and is saved");
             check(panel.Contains("Expedition · Step 1/3 · Fort") && panel.Contains("Step 1/3 done") && panel.Contains("Continue") && panel.Contains("the run is saved") && !panel.Contains("Play again"),

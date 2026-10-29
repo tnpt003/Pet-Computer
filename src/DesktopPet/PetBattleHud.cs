@@ -39,7 +39,7 @@ public sealed class BattleHud : Border
     private double trail = 1, lastTime = -1, bannerUntil = -1;
     private int dotsFor = -1, dotsWave = -1;
     private (double Hp, double Max) shownHp = (-1, -1);
-    private (BattlePhase, int, int, bool, bool, double, int, int) shownStatus;
+    private (BattlePhase, int, int, bool, bool, double, int, int, int) shownStatus;
     private int shownUpgrades = -1;
     private (double, bool, bool) shownBoss = (-1, false, false);
     private (bool, BattleSkill?, bool, int, bool, int) shownHint;
@@ -239,6 +239,9 @@ public sealed class BattleHud : Border
 
     // held: the cat is really lifted (dragged or in the air), not just pressed, so a click on the
     // cat never flickers the HUD.
+    // The Expedition run's coins before this battle (1.5 M19; 0 elsewhere).
+    public int RunCoins { get; set; }
+
     public void Update(BattleSim b, bool userPaused, bool fullscreen, bool held, bool away = false)
     {
         double dt = lastTime < 0 ? 0 : Math.Max(0, b.Time - lastTime);
@@ -273,7 +276,7 @@ public sealed class BattleHud : Border
         statusColumn.Visibility = showBanner ? Visibility.Hidden : Visibility.Visible;
         int left = b.Alive + b.ToSpawn;
         int clock = b.Survival ? (int)Math.Ceiling(b.SurviveRemaining) : -1;
-        var statusKey = (b.Phase, b.Wave, left, b.Paused, fullscreen, Math.Round(b.LastHeal), (b.IsBossWave(b.Wave) ? 1 : 0) + (away ? 2 : 0) + (b.ChoosingUpgrade ? 4 : 0), clock);
+        var statusKey = (b.Phase, b.Wave, left, b.Paused, fullscreen, Math.Round(b.LastHeal), (b.IsBossWave(b.Wave) ? 1 : 0) + (away ? 2 : 0) + (b.ChoosingUpgrade ? 4 : 0), clock, RunCoins + b.Coins);
         if (statusKey != shownStatus)
         {
         shownStatus = statusKey;
@@ -289,6 +292,8 @@ public sealed class BattleHud : Border
         };
         // A survive stage: the time left is the goal, so it leads.
         if (b.Survival && !b.Over) text = LF($"Sống sót: còn {clock / 60}:{clock % 60:00}", $"Survive: {clock / 60}:{clock % 60:00} left") + (b.Phase == BattlePhase.Fighting ? LF($" · {left} slime", $" · {left} slime{(left == 1 ? "" : "s")}") : "");
+        // 1.5 M19: an Expedition step shows the run's coins (those before it and this battle's).
+        if (b.Loot == BattleLoot.Coins) text += LF($" · Xu {RunCoins + b.Coins}", $" · Coins {RunCoins + b.Coins}");
         if (b.ChoosingUpgrade && !b.Over) text += L(" · Chọn nâng cấp", " · Pick an upgrade");
         else if (b.Paused && !b.Over) text += away ? L(" · Chờ mèo về màn hình này", " · Waiting for the cat to come back")
             : fullscreen ? L(" · Tạm dừng (toàn màn hình)", " · Paused (fullscreen)") : L(" · Tạm dừng", " · Paused");

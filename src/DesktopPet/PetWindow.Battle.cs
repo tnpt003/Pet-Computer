@@ -297,7 +297,9 @@ public sealed partial class PetWindow
             seed: expedition?.Node.Seed, startHp: expedition?.Expedition.Run?.Hp, threat: expedition?.Node.Threat ?? 1, relics: expedition?.Expedition.Run?.Relics,
             // The app icons: as the Expedition run set out, else the setup panel's choice.
             apps: expedition?.Expedition.Run is ExpeditionRun run ? !run.NoApps : preferences.BattleApps,
-            skills: BattleLoadoutFor(stage, expedition));
+            skills: BattleLoadoutFor(stage, expedition),
+            // 1.5 M19: drops in an Expedition step (with coins) and in Infinity (fish and potions only).
+            loot: expedition != null ? BattleLoot.Coins : stage is { Endless: true } ? BattleLoot.Items : BattleLoot.None);
         battleExpedition = expedition;
         battleRunId = Guid.NewGuid().ToString("N");
         battleCustomData = BattleDataCustom;
@@ -416,6 +418,17 @@ public sealed partial class PetWindow
         RequestBattleRedraw();
         UpdateBattleHud();
         battleView?.InvalidateVisual();
+        return done;
+    }
+
+    // A click on a drop on the floor (1.5 M19): it is picked up (not while the guide holds the battle
+    // still: then only what it teaches works).
+    public bool BattlePickUp(int id)
+    {
+        if (battle == null || battle.Paused || BattleGuideFreezes) return false;
+        bool done = battle.PickUp(id);
+        RequestBattleRedraw();
+        UpdateBattleHud();
         return done;
     }
 
@@ -700,6 +713,7 @@ public sealed partial class PetWindow
         battleView = new BattleFieldView(battle) { Language = preferences.Language };
         battleView.SlimeClicked += (id, offset) => BattleClickSlime(id, offset);
         battleView.PopupClicked += id => BattleClosePopup(id);
+        battleView.DropClicked += id => BattlePickUp(id);
         battleView.HazardClicked += id => BattleCloseHazard(id);
         battleView.HazardReleased += () => { battle?.ReleaseHazard(); RequestBattleRedraw(); };
         battleView.RightClicked += () => { battle?.Arm(null); RequestBattleRedraw(); UpdateBattleHud(); }; // Right-click on the field cancels the skill.
@@ -810,6 +824,7 @@ public sealed partial class PetWindow
             : battle?.Endless == true ? L(" · Vô tận", " · Infinity")
             : battle?.Stage is StageSpec stage ? LF($" · Màn {StageNumber(stage)}", $" · Stage {StageNumber(stage)}") : "";
         battleHud = new BattleHud($"{preferences.Name} · {(battle != null ? WeaponName(battle.Weapon) : "")}{stagePart}", portrait, () => preferences.Language, battle?.Skills);
+        battleHud.RunCoins = battleExpedition?.Expedition.Run?.Coins ?? 0;
         battleHud.SkillClicked += skill => UseBattleSkill(skill);
         battleHud.RageClicked += () => UseBattleRage();
         battleHud.PauseClicked += () => { if (battle != null) SetBattlePaused(!BattleUserPaused); };

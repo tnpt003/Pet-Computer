@@ -28,6 +28,8 @@ public sealed partial class PetWindow
         [BattleEventKind.BossLeaping] = ("swoosh", 3), [BattleEventKind.BossLanded] = ("pop", 5), [BattleEventKind.BossSummoning] = ("surprised", 4),
         [BattleEventKind.Pushed] = ("swoosh", 2), [BattleEventKind.BombThrown] = ("swoosh", 2), [BattleEventKind.Shielded] = ("swoosh", 2),
         [BattleEventKind.Swing] = ("swoosh", 1),
+        // 1.5 M19: a drop picked up.
+        [BattleEventKind.DropPicked] = ("sparkle", 5),
         [BattleEventKind.AppUsed] = ("sparkle", 6), [BattleEventKind.AppInfected] = ("surprised", 6), [BattleEventKind.AppCleaned] = ("excited", 6),
         [BattleEventKind.PopupOpened] = ("surprised", 5), [BattleEventKind.PopupSpawned] = ("surprised", 5),
         [BattleEventKind.GooShot] = ("squish", 4), [BattleEventKind.PopupClosed] = ("pop", 4), [BattleEventKind.AppScrubbed] = ("ball_tap", 3),

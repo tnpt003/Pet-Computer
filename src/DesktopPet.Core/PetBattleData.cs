@@ -1747,6 +1747,7 @@ public static class BattleData
         Within(s.AttackStagger, 0, 3, "attackStagger"); Within(s.IncomingWarning, 0, 5, "incomingWarning");
         if (s.Campaign is CampaignSpec campaign) ValidateCampaign(campaign, (waves, at, alive, survival) => Waves(waves, at, alive ?? s.MaxAlive, survival), Id, Text);
         if (s.Endless is EndlessSpec endless) EndlessSpec.Validate(endless, s);
+        if (s.Drops is DropSpec drops) DropSpec.Validate(drops);
         if (s.Expedition is ExpeditionSpec expedition) ExpeditionSpec.Validate(expedition, s, (waves, at, alive, survival) => Waves(waves, at, alive ?? s.MaxAlive, survival), Id, Text);
     }
 

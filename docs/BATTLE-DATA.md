@@ -798,6 +798,29 @@ Vua biến dị giữ pha khiên, nhảy về mép, vòng tím, phong tinh anh n
 - Sự kiện mới: `BroodWarned`, `BroodLaid` (Value: số con), `NurseHeading`, `NurseFed` (Value: HP đã cho), `CrownLinked` (Value: id quân cầm liên kết), `RainCalled`; giọt mưa rơi là `GooLanded`. Cue có sẵn. Banner (vi/en/ja): lần đẻ đầu "… sắp đẻ bầy!…", con đầu tiên về bú "Slime khổng lồ về cho … bú!…", mỗi lần bú xong "… được hồi N máu", mỗi lần vương miện nối dây hoặc trao trống, lần mưa đầu "… gọi mưa nhầy!…".
 - Chưa làm: đưa vào chương 2 (M21), Viễn chinh tuyến 2 (M23), vòng boss Vô tận Vua → Slime Nén → Vua biến dị (M24); Sổ tay quái (M27). Số liệu (HP 650/1000, bú 20 HP/s, mưa 14) là ước lượng, chốt bằng mô phỏng ở M21/M29.
 
+## Đồ rơi và xu (`drops`) (bản 1.5, mốc M19, 2026-10-29)
+
+M4, M5 của docs/UPDATE-1.5.md. Code: `src/DesktopPet.Core/PetBattle.Drops.cs` (luật), móc vào `Defeat`/`Finish`/`SetArea` ở `PetBattle.cs`, xu của chuyến ở `PetExpedition.cs` (`ExpeditionRun.Coins`); vẽ và bắt click `src/DesktopPet/PetBattleView.Drops.cs`; test `tests/DesktopPet.Tests/BattleDropTests.cs`, UiChecks `DropVisualChecks` (ảnh `drops.png`) và phần xu trong `ExpeditionChecks`.
+
+```json
+"drops": {
+  "chance": 0.2, "eliteChance": 0.6, "bossDrops": 3, "life": 8, "fade": 1.5, "maxOnFloor": 6,
+  "weights": { "fish": 3, "coin": 5, "potion": 2 },
+  "fishHeal": 10, "coin": 1, "eliteCoin": 2, "bossCoin": 3
+}
+```
+
+- **Chế độ nào có đồ rơi** (tham số `loot` của `BattleSim`, cửa sổ chọn lúc bắt đầu trận): Viễn chinh: cá, xu, bình. Vô tận: cá và bình (không xu). **Chương 1 Phiêu lưu và Trận tự do: không có gì** (chương 1 và rulesVersion của nó giữ nguyên). Chương 2 sẽ bật khi làm M21. Không có khóa `drops` trong dữ liệu thì không trận nào có đồ rơi.
+- **Rơi:** slime bị mèo hạ (qua `Defeat`, kể cả hạ bằng độc/bom/app) rơi một món với xác suất `chance` (tinh anh: `eliteChance`), loại bốc theo `weights` (xu bị bỏ ở chỗ không có xu). Boss rơi `bossDrops` đồng xu, mỗi đồng `bossCoin` (chỉ ở Viễn chinh). Bản giả của ảo ảnh, bom tự nổ, trộm trốn, Slime khổng lồ bú xong không rơi (không phải mèo hạ). Tối đa `maxOnFloor` món trên sàn, món mới thay món cũ nhất.
+- **Ngẫu nhiên riêng:** đồ rơi dùng luồng `BattleRandom.Drops` (12) của seed trận, nên trận không ai nhặt đồ chơi y hệt trận không có đồ rơi (bảng mô phỏng cân bằng không đổi, 240/240 dòng so với HEAD cũ).
+- **Nhặt:** click trúng món (vùng nhận chuột rộng hơn hình một chút). Thứ tự click trong dải trận: mèo → kỹ năng đang chọn → **đồ rơi** → quái → icon app; quảng cáo che thì không nhặt được món phía sau. Cá: +`fishHeal` HP (không quá máu tối đa). Bình: kỹ năng mang theo đang hồi lâu nhất sẵn sàng ngay (không kỹ năng nào đang hồi thì không có tác dụng). Xu: +`coin` (tinh anh `eliteCoin`) vào xu của trận. Không nhặt được khi Pause, đang chọn thẻ, Hướng dẫn phiêu lưu đang đứng hình, hay trận đã kết thúc.
+- **Tan:** món nằm `life` giây thời gian trận rồi biến mất; `fade` giây cuối mờ dần, 0,6 s cuối nhấp nháy. Đồng hồ chỉ chạy trong `Step`: Pause, chọn thẻ, hướng dẫn đứng hình đóng băng nó.
+- **Kết thúc trận:** thắng thì gom luôn xu còn nằm trên sàn; mọi món còn lại biến mất. Thua thì xu của trận không được tính.
+- **Xu trong chuyến (M5):** trận Viễn chinh thắng cộng `BattleSim.Coins` vào `ExpeditionRun.Coins` (lưu trong expedition.json; file cũ không có thì là 0). Rời trận hoặc thua thì không cộng; chuyến kết thúc là hết xu, không thành tiền tệ vĩnh viễn. HUD trận Viễn chinh hiện "Xu N" (xu chuyến + trận này), bản đồ hiện "N xu", kết quả trận hiện "Nhặt được N xu · chuyến có M xu". **Chưa tiêu được:** cửa hàng mèo (X3) làm ở M23.
+- Kiểm tra lúc nạp: `chance`, `eliteChance` 0–1; `bossDrops` 0–10; `life` 2–60; `fade` 0–`life`; `maxOnFloor` 1–20; `fishHeal` 0–200; `coin`, `eliteCoin`, `bossCoin` 1–100; `weights` ít nhất một loại, chỉ `fish`/`coin`/`potion`, mỗi trọng số 0–100.
+- Sự kiện mới: `DropAppeared`, `DropFaded` (Value: id món), `DropPicked` (Value: loại); nhặt dùng cue `sparkle` có sẵn.
+- Chưa làm: rulesVersion của Viễn chinh và Vô tận **chưa tăng** (tăng một lần khi M23/M24 đổi nội dung hai chế độ, để chuyến đang đi không bị kết thúc giữa chừng vì đổi luật); cửa hàng (M23); thẻ Mưu mẹo về đồ rơi (M25); số liệu là ước lượng, chốt khi chơi thật/M29.
+
 ## Viễn chinh (`expedition`) (2026-10-21)
 
 Một chuyến đi gồm nhiều bậc, mỗi bậc chọn một điểm, bậc cuối là trùm. HP và build của mèo đi tiếp từ bậc này sang bậc sau; chuyến mới bắt đầu lại từ đầu. Code: `src/DesktopPet.Core/PetExpedition.cs` (luật, không WPF), `PetWindow.Expedition.cs` (bản đồ, kết quả).

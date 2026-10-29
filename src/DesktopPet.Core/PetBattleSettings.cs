@@ -321,6 +321,8 @@ public sealed class BattleSettings
     // From battle.json "apps": the desktop apps of Adventure, Expedition and Infinity battles
     // (null: none). PetBattle.Apps.cs.
     [JsonPropertyName("apps")] public AppsSpec? Apps { get; init; }
+    // From battle.json "drops" (1.5 M19): what defeated slimes leave (null: nothing). PetBattle.Drops.cs.
+    [JsonPropertyName("drops")] public DropSpec? Drops { get; init; }
 
     private EnemyType BuiltInSlime() => new()
     {
@@ -744,7 +746,10 @@ public enum BattleEventKind
     // clutch merged into heads back to it (Value: that one's id), has fed it all its HP (Value: the HP given);
     // a crowned boss tied a link between its helpers (Value: the holder's id), a goo rain began
     // (Value: the boss's id; a drop landing is a GooLanded).
-    BroodWarned, BroodLaid, NurseHeading, NurseFed, CrownLinked, RainCalled
+    BroodWarned, BroodLaid, NurseHeading, NurseFed, CrownLinked, RainCalled,
+    // 1.5 M19 (PetBattle.Drops.cs): a drop fell on the floor, faded away (Value: its id), was picked up
+    // (Value: its BattleDropKind).
+    DropAppeared, DropFaded, DropPicked
 }
 // 1.5 M14: a flyer's round (PetBattle.Fly.cs) and a burrower's (PetBattle.Burrow.cs).
 public enum FlyPhase { Aloft, Falling, Downed, Rising }

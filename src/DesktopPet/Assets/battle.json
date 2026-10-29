@@ -785,6 +785,18 @@
       "descVi": "Cứ 3 đòn trúng, thêm một đòn 75%", "descEn": "Every 3rd hit strikes again for 75%" }
   ],
 
+  // 1.5 M19 drops (Expedition: fish, coins, potions; Infinity: fish and potions; none in Adventure
+  // chapter 1 or the free battle): a defeated slime leaves one with "chance" ("eliteChance" for an
+  // elite), of a kind drawn by "weights"; a boss leaves "bossDrops" coins. A click picks it up; it
+  // fades after "life" s (the last "fade" s fading), at most "maxOnFloor" at once. Fish: "fishHeal" HP;
+  // potion: the carried skill with the longest cooldown left is ready; coin: "coin" ("eliteCoin",
+  // "bossCoin") to the Expedition run, spent in its shop. A won battle gathers the coins left lying.
+  "drops": {
+    "chance": 0.2, "eliteChance": 0.6, "bossDrops": 3, "life": 8, "fade": 1.5, "maxOnFloor": 6,
+    "weights": { "fish": 3, "coin": 5, "potion": 2 },
+    "fishHeal": 10, "coin": 1, "eliteCoin": 2, "bossCoin": 3
+  },
+
   // Adventure: chapters of stages played in order (winning a stage opens the next one). Stage ids
   // are stable: saved progress uses them. objective: "clear" (defeat every wave) or "survive" (stay
   // alive surviveSeconds; the last wave comes again while time is left). upgrades: offer upgrade

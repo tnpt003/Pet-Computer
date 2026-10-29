@@ -636,7 +636,7 @@ public sealed partial class PetWindow
         else
         {
             double max = expedition.MaxHp(run);
-            Show(xStatus, $"{StepTitle(run.Step, run.Map.Count)} · HP {Math.Ceiling(run.Hp)}/{max:0} · {weaponName} · {levelName}");
+            Show(xStatus, $"{StepTitle(run.Step, run.Map.Count)} · HP {Math.Ceiling(run.Hp)}/{max:0}{(run.Coins > 0 ? LF($" · {run.Coins} xu", $" · {run.Coins} coin{(run.Coins == 1 ? "" : "s")}") : "")} · {weaponName} · {levelName}");
             var parts = BuildParts(run.Build);
             Show(xBuild, L("Build: ", "Build: ") + (parts.Count == 0 ? L("chưa có thẻ", "no cards yet") : string.Join(" · ", parts))
                 + "\n" + L("Di vật: ", "Relics: ") + (run.Relics.Count == 0 ? L("chưa có", "none yet") : string.Join(" · ", run.Relics.Select(id => "◈ " + RelicName(expedition, id))))
@@ -980,7 +980,7 @@ public sealed partial class PetWindow
     private ExpeditionStepOutcome CountExpeditionStep(BattleSim finished, bool won)
     {
         if (battleExpedition is not ExpeditionBattle x) return default;
-        var outcome = x.Expedition.Finish(won, finished.CatHp, finished.Build(), finished.FightSeconds, finished.Defeated);
+        var outcome = x.Expedition.Finish(won, finished.CatHp, finished.Build(), finished.FightSeconds, finished.Defeated, finished.Coins);
         if (outcome.Counted)
         {
             SaveExpedition(x.Expedition.Progress);
@@ -1017,6 +1017,7 @@ public sealed partial class PetWindow
         {
             Add(LF($"Qua bậc {step.Step + 1}/{steps} · HP mang tiếp {Math.Ceiling(step.Hp)}/{step.MaxHp:0}", $"Step {step.Step + 1}/{steps} done · HP carried on {Math.Ceiling(step.Hp)}/{step.MaxHp:0}"), PetUi.BodySize, bold: true);
             if (step.Healed >= 0.5) Add(LF($"Nghỉ chân: +{Math.Round(step.Healed)} HP", $"A short rest: +{Math.Round(step.Healed)} HP"), PetUi.SmallSize, opacity: 0.85);
+            if (step.CoinsGained > 0) Add(LF($"Nhặt được {step.CoinsGained} xu · chuyến có {step.Coins} xu", $"Picked up {step.CoinsGained} coin{(step.CoinsGained == 1 ? "" : "s")} · the run has {step.Coins}"), PetUi.SmallSize, opacity: 0.85);
             if (step.Reward) Add(L("Tinh anh để lại di vật: chọn trên bản đồ viễn chinh.", "The elite left relics: pick one on the Expedition map."), PetUi.BodySize, RecordGold, true);
             if (step.Capsule) Add(L("Máy viên nang đang chờ trên bản đồ viễn chinh.", "The capsule machine waits on the Expedition map."), PetUi.BodySize, RecordGold, true);
         }

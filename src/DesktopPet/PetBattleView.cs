@@ -82,6 +82,8 @@ public sealed partial class BattleFieldView : FrameworkElement
             }
             // A drop on the floor before the slimes (1.5 M19: cat, chosen skill, drop, slime, icon).
             else if (!OnPopup(point) && DropAt(point) is int drop) DropClicked?.Invoke(drop);
+            // A fish a slime dropped (1.5 M20), like a drop.
+            else if (!OnPopup(point) && FishAt(point) is int fish) FishClicked?.Invoke(fish);
             else if (!OnPopup(point) && !OnWall(point) && SlimeAt(point) is int id && sim.Find(id) is { } slime) SlimeClicked?.Invoke(id, point.X - (slime.X - OriginX));
             e.Handled = true;
         };
@@ -220,6 +222,7 @@ public sealed partial class BattleFieldView : FrameworkElement
             // 1.5 M18: a mother's clutch is announced the same way.
             if (boss.BroodSpots is { } clutch) DrawCallSpots(dc, clutch, boss.Type.Brood is { Warning: > 0 } brood ? 1 - boss.BroodWarn / brood.Warning : 1, floor, time);
         }
+        DrawBasket(dc, floor, time); // 1.5 M20
         DrawLinksBehind(dc, floor, time);
         DrawBossRopes(dc, floor, time);
         for (int layer = 0; layer <= 3; layer++)
@@ -259,6 +262,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         for (int i = 0; i < sim.Slimes.Count; i++)
             if (sim.Slimes[i].IsBoss && sim.RallyTarget(sim.Slimes[i]) is Slime rallied) DrawRallyLink(dc, sim.Slimes[i], rallied, floor, time);
         DrawLinkMarks(dc, floor, time);
+        DrawCarriedFish(dc, floor, time);
         DrawNursing(dc, floor, time);
         DrawGoos(dc, floor);
         DrawTools(dc, floor, time);

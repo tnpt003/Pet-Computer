@@ -39,7 +39,7 @@ public sealed class BattleHud : Border
     private double trail = 1, lastTime = -1, bannerUntil = -1;
     private int dotsFor = -1, dotsWave = -1;
     private (double Hp, double Max) shownHp = (-1, -1);
-    private (BattlePhase, int, int, bool, bool, double, int, int, int) shownStatus;
+    private (BattlePhase, int, int, bool, bool, double, int, int, int, int) shownStatus;
     private int shownUpgrades = -1;
     private (double, bool, bool) shownBoss = (-1, false, false);
     private (bool, BattleSkill?, bool, int, bool, int) shownHint;
@@ -276,7 +276,7 @@ public sealed class BattleHud : Border
         statusColumn.Visibility = showBanner ? Visibility.Hidden : Visibility.Visible;
         int left = b.Alive + b.ToSpawn;
         int clock = b.Survival ? (int)Math.Ceiling(b.SurviveRemaining) : -1;
-        var statusKey = (b.Phase, b.Wave, left, b.Paused, fullscreen, Math.Round(b.LastHeal), (b.IsBossWave(b.Wave) ? 1 : 0) + (away ? 2 : 0) + (b.ChoosingUpgrade ? 4 : 0), clock, RunCoins + b.Coins);
+        var statusKey = (b.Phase, b.Wave, left, b.Paused, fullscreen, Math.Round(b.LastHeal), (b.IsBossWave(b.Wave) ? 1 : 0) + (away ? 2 : 0) + (b.ChoosingUpgrade ? 4 : 0), clock, RunCoins + b.Coins, b.FishLeft);
         if (statusKey != shownStatus)
         {
         shownStatus = statusKey;
@@ -294,6 +294,8 @@ public sealed class BattleHud : Border
         if (b.Survival && !b.Over) text = LF($"Sống sót: còn {clock / 60}:{clock % 60:00}", $"Survive: {clock / 60}:{clock % 60:00} left") + (b.Phase == BattlePhase.Fighting ? LF($" · {left} slime", $" · {left} slime{(left == 1 ? "" : "s")}") : "");
         // 1.5 M19: an Expedition step shows the run's coins (those before it and this battle's).
         if (b.Loot == BattleLoot.Coins) text += LF($" · Xu {RunCoins + b.Coins}", $" · Coins {RunCoins + b.Coins}");
+        // 1.5 M20: a basket stage's fish still the cat's.
+        if (b.FishTotal > 0) text += LF($" · Cá {b.FishLeft}/{b.FishTotal}", $" · Fish {b.FishLeft}/{b.FishTotal}");
         if (b.ChoosingUpgrade && !b.Over) text += L(" · Chọn nâng cấp", " · Pick an upgrade");
         else if (b.Paused && !b.Over) text += away ? L(" · Chờ mèo về màn hình này", " · Waiting for the cat to come back")
             : fullscreen ? L(" · Tạm dừng (toàn màn hình)", " · Paused (fullscreen)") : L(" · Tạm dừng", " · Paused");

@@ -777,6 +777,8 @@ public sealed class StageSpec
     public string? Reward { get; init; }
     // A skill id: winning this stage opens that skill for the setup panel's choice (Adventure.SkillOpen).
     public string? UnlocksSkill { get; init; }
+    // 1.5 M20: a fish basket to keep (PetBattle.Basket.cs); every fish carried off loses the stage.
+    public BasketSpec? Basket { get; init; }
     // A short tip shown once when the stage first starts (and again from its setup panel).
     public string? TipVi { get; init; }
     public string? TipEn { get; init; }
@@ -1834,6 +1836,7 @@ public static class BattleData
             throw new InvalidDataException($"{where} tips need both languages, at most 400 characters each");
         if (stage.UnlocksSkill != null && BattleSkills.Parse(stage.UnlocksSkill) == null)
             throw new InvalidDataException($"{where}.unlocksSkill must be a skill id: {BattleData.KnownSkills}");
+        if (stage.Basket is BasketSpec basket) BasketSpec.Validate(basket, where);
         if (stage.Reward != null && PetAccessories.Find(stage.Reward) is not { Reward: not null })
             throw new InvalidDataException($"{where}.reward \"{stage.Reward}\" is not a reward accessory in accessories.json");
     }

@@ -821,6 +821,27 @@ M4, M5 của docs/UPDATE-1.5.md. Code: `src/DesktopPet.Core/PetBattle.Drops.cs` 
 - Sự kiện mới: `DropAppeared`, `DropFaded` (Value: id món), `DropPicked` (Value: loại); nhặt dùng cue `sparkle` có sẵn.
 - Chưa làm: rulesVersion của Viễn chinh và Vô tận **chưa tăng** (tăng một lần khi M23/M24 đổi nội dung hai chế độ, để chuyến đang đi không bị kết thúc giữa chừng vì đổi luật); cửa hàng (M23); thẻ Mưu mẹo về đồ rơi (M25); số liệu là ước lượng, chốt khi chơi thật/M29.
 
+## Bảo vệ giỏ cá (`basket` của màn) (bản 1.5, mốc M20, 2026-10-29)
+
+T1 của docs/UPDATE-1.5.md. Code: `src/DesktopPet.Core/PetBattle.Basket.cs` (luật), móc vào `AddSlime` (`MarkTaker`), bước `Moving` của quái (`TakeFish`), `PickTarget` (ưu tiên con tha cá), `Defeat`/`Finish`/`SetArea` ở `PetBattle.cs`; kỷ lục ở `PetBattleRecords.cs` (`MostFish`) và `PetAdventure.cs` (`Apply(..., fishKept)`); vẽ và bắt click `src/DesktopPet/PetBattleView.Basket.cs`; test `tests/DesktopPet.Tests/BattleBasketTests.cs`, UiChecks `BasketVisualChecks` (ảnh `basket.png`).
+
+```json
+"basket": { "fish": 5, "at": 0.5, "every": 2, "grab": 1.2, "carry": 0.8, "back": 5 }
+```
+
+- Khóa của **màn** (`StageSpec`, cùng chỗ `objective`), dùng được với màn `clear` và `survive`. Không có khóa thì màn chơi y như trước. **Chưa màn gốc nào dùng** (chương 2 ở M21); thử bằng `docs/examples/battle-m20.json` (một chương thay chương 1 khi file còn đó: màn 5 cá ba đợt, màn sống sót 60 giây 4 cá).
+- **Giỏ:** đứng ở `at` (0–1 bề ngang dải trận; mặc định giữa) với `fish` con cá. HUD hiện "Cá N/M" (cá chưa bị mang đi hẳn / tổng); bản đồ và bảng chuẩn bị ghi "· giữ giỏ M cá".
+- **Slime tha cá:** cứ `every` con slime "thường" ra trận (đếm theo thứ tự ra, cả quân gọi thêm) thì một con là slime tha cá. Chỉ slime không có việc riêng mới tha: không boss, hỗ trợ (thảo dược), đá, mảnh file, quái bay/trên không, quái có liên kết, phun, lò xo, bom, đào hang, bám tường, trộm, bóng ma, bong bóng, ảo ảnh, dỗi, băng, nhím, hẹn giờ (`BattleSim.MayTakeFish`). Trong luật hiện có: slime thường, slime nhanh, slime tách đôi và nửa của nó, slime khổng lồ.
+- Slime tha cá bỏ qua mèo: đi tới con cá rơi gần nhất trên sàn, không có thì tới giỏ (còn cá); đứng `grab` giây (cá rơi: một nửa; vòng vàng đầy dần) thì lấy một con, giơ cá trên đầu và chạy ×`carry` về mép xa phía bên kia mèo. Tới mép thì biến mất cùng con cá: **mất một cá**, không tính là mèo hạ (như trộm trốn). Không còn cá để lấy thì nó đánh mèo như slime thường. Đang tha cá thì không chen chỗ với slime khác.
+- **Làm rơi cá:** slime đang tha bị hạ, choáng (Đẩy, búa, kỹ năng…) hoặc bị Kẹp gắp thì cá rơi tại chỗ. Cá rơi nằm trên sàn có vòng trắng đếm ngược: click (thứ tự click: mèo → kỹ năng đang chọn → đồ rơi → **cá rơi** → quái → icon) thì về giỏ ngay; để yên `back` giây thì tự về giỏ; slime tha cá khác có thể nhặt nó trước (nhanh hơn lấy từ giỏ). Pause/chọn thẻ/hướng dẫn đứng hình: đồng hồ cá rơi đứng yên, không click được.
+- **Mèo ưu tiên** con đang tha cá (gần mèo nhất trong số đó), trừ khi người dùng đã chọn quái khác.
+- **Thua khi mất hết cá**, dù mèo còn máu (`FishGone`); mèo đang được cầm thì slime vẫn tha cá. Thua vì hết máu thì như cũ. **Thắng:** cá đang rơi trên sàn hoặc còn trên tay slime (màn sống sót hết giờ) được tính là giữ được.
+- **Kết quả/kỷ lục:** kết quả trận ghi "giữ được N/M cá" (thắng) hoặc "mất N/M cá" (thua); thua vì mất cá có tiêu đề "Thua rồi… slime tha hết cá". Kỷ lục màn (`BattleRecord.MostFish`, theo khóa kỷ lục của màn: rulesVersion, vũ khí, độ khó, không app) giữ **số cá nhiều nhất trong một trận thắng**; thua không bao giờ ghi cá, không tính thắng, không có "thắng nhanh nhất". Tin "Kỷ lục mới của màn: giữ được nhiều cá nhất!" khi vượt; bản đồ ghi "· giữ nhiều nhất N cá". File kỷ lục cũ không có trường này đọc là 0.
+- Kiểm tra lúc nạp: `fish` 1–20, `at` 0,15–0,85, `every` 1–6, `grab` 0,2–5, `carry` 0,3–2, `back` 1–30.
+- Sự kiện mới: `FishTaken` (Value: id slime), `FishDropped` (Value: id cá), `FishReturned` (Value: 1 click, 0 tự về), `FishLost` (Value: cá còn lại). Cue có sẵn (`swoosh`, `pop`, `satisfied`, `annoyed`). Banner (vi/en/ja): lần đầu mỗi trận "Slime tha cá!…", "Cá rơi! Click vào cá để trả về giỏ"; mỗi lần mất cá "Mất một con cá! Còn N".
+- Không dùng luồng ngẫu nhiên nào; bảng mô phỏng cân bằng giống hệt HEAD cũ (240/240 dòng).
+- Chưa làm: đưa vào chương 2 (M21, kèm bước hướng dẫn đứng hình), Viễn chinh tuyến 2 (M23). Số liệu là ước lượng.
+
 ## Viễn chinh (`expedition`) (2026-10-21)
 
 Một chuyến đi gồm nhiều bậc, mỗi bậc chọn một điểm, bậc cuối là trùm. HP và build của mèo đi tiếp từ bậc này sang bậc sau; chuyến mới bắt đầu lại từ đầu. Code: `src/DesktopPet.Core/PetExpedition.cs` (luật, không WPF), `PetWindow.Expedition.cs` (bản đồ, kết quả).

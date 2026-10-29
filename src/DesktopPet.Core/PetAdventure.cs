@@ -142,19 +142,21 @@ public sealed class Adventure
 
     // A run that ended in a win or a loss (never one the user ended). Each run id counts once;
     // a loss never takes back what was opened before. A win keeps its build for the next stage
-    // (replacing the one this stage was won with before); a loss changes no build.
+    // (replacing the one this stage was won with before); a loss changes no build. fishKept: a basket
+    // stage's fish at the end of a win (-1: no basket); a loss (every fish gone too) never counts it.
     public AdventureOutcome Apply(string runId, StageSpec stage, bool ranked, bool won, string weapon, BattleDifficulty difficulty, int defeated, double seconds,
-        IReadOnlyDictionary<string, int>? build = null, bool noApps = false)
+        IReadOnlyDictionary<string, int>? build = null, bool noApps = false, int fishKept = -1)
     {
         if (!ranked || string.IsNullOrEmpty(runId) || Progress.Runs.Contains(runId) || Locate(stage.Id) == null) return default;
         Progress.Runs.Add(runId);
         if (Progress.Runs.Count > AdventureProgress.RunsKept) Progress.Runs.RemoveAt(0);
         string key = AdventureProgress.RecordKey(stage, weapon, difficulty, noApps);
         if (!Progress.Records.TryGetValue(key, out var record)) Progress.Records[key] = record = new();
-        bool fastest = false, most = false;
+        bool fastest = false, most = false, fish = false;
         if (won)
         {
             record.Wins++;
+            if (stage.Basket != null && fishKept > record.MostFish) { record.MostFish = fishKept; fish = true; }
             // A survive stage always lasts its time: no "fastest win" there.
             if (!stage.Survival && double.IsFinite(seconds) && seconds > 0 && (record.BestSeconds is not double best || seconds < best - 0.05)) { record.BestSeconds = seconds; fastest = true; }
         }
@@ -170,7 +172,7 @@ public sealed class Adventure
             first = true;
             if (next != null && !wasOpen) unlocked = next;
         }
-        return new(true, first, unlocked, new(fastest, most), won ? GrantRewards() : null);
+        return new(true, first, unlocked, new(fastest, most, MostFish: fish), won ? GrantRewards() : null);
     }
 
     // Gives every reward of a won stage not given yet (also one added to a stage won before it

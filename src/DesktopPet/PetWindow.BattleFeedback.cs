@@ -30,6 +30,9 @@ public sealed partial class PetWindow
         [BattleEventKind.Swing] = ("swoosh", 1),
         // 1.5 M19: a drop picked up.
         [BattleEventKind.DropPicked] = ("sparkle", 5),
+        // 1.5 M20: the fish basket.
+        [BattleEventKind.FishTaken] = ("swoosh", 4), [BattleEventKind.FishDropped] = ("pop", 4), [BattleEventKind.FishReturned] = ("satisfied", 4),
+        [BattleEventKind.FishLost] = ("annoyed", 6),
         [BattleEventKind.AppUsed] = ("sparkle", 6), [BattleEventKind.AppInfected] = ("surprised", 6), [BattleEventKind.AppCleaned] = ("excited", 6),
         [BattleEventKind.PopupOpened] = ("surprised", 5), [BattleEventKind.PopupSpawned] = ("surprised", 5),
         [BattleEventKind.GooShot] = ("squish", 4), [BattleEventKind.PopupClosed] = ("pop", 4), [BattleEventKind.AppScrubbed] = ("ball_tap", 3),
@@ -270,6 +273,10 @@ public sealed partial class PetWindow
                     or BattleEventKind.ClockRang when trickExplained.Add(e.Kind) => TrickBanner(e),
                 // 1.5 M16: the thief's news shows every time (what it took matters).
                 BattleEventKind.ThiefStole or BattleEventKind.ThiefReturned or BattleEventKind.ThiefEscaped => TrickBanner(e),
+                // 1.5 M20: the first fish taken and dropped of a battle say what to do; every fish lost counts down.
+                BattleEventKind.FishTaken when trickExplained.Add(e.Kind) => L("Slime tha cá! Hạ nó trước khi nó chạy khỏi màn", "A slime is taking a fish! Beat it before it gets off the screen"),
+                BattleEventKind.FishDropped when trickExplained.Add(e.Kind) => L("Cá rơi! Click vào cá để trả về giỏ", "Fish dropped! Click it to put it back in the basket"),
+                BattleEventKind.FishLost when e.Value > 0 => LF($"Mất một con cá! Còn {(int)e.Value}", $"A fish is gone! {(int)e.Value} left"),
                 BattleEventKind.Won => L("CHIẾN THẮNG!", "VICTORY!"),
                 BattleEventKind.Lost => L("THUA RỒI…", "DEFEATED…"),
                 _ => null

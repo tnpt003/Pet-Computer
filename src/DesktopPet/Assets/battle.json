@@ -809,7 +809,9 @@
   // "threatGrowth" (threat added per minute held out) and "upgradeAt" (card offers at those seconds
   // of the clock instead of after waves). eliteChance: an enemy a wave or stream sends with an "elite"
   // affix is elite with this chance (not on Easy; maxElites alive at once). budget (a wave's or a
-  // stream's): the most its enemies may cost ("cost"), elites included. See docs/BATTLE-DATA.md.
+  // stream's): the most its enemies may cost ("cost"), elites included. basket (1.5 M20): a fish basket
+  // to keep, { "fish", "at", "every", "grab", "carry", "back" } (every fish carried off loses the stage).
+  // See docs/BATTLE-DATA.md.
   "campaign": {
     "chapters": [
       {

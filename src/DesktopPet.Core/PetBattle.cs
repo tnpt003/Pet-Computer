@@ -312,6 +312,7 @@ public sealed partial class BattleSim
         CatHp = startHp is double hp && double.IsFinite(hp) ? Math.Clamp(hp, 1, CatMaxHp) : CatMaxHp;
         if (stage != null && double.IsFinite(threat) && threat > 0) threatScale = threat;
         PhaseRemaining = settings.FirstWaveDelay;
+        PlaceBasket(); // 1.5 M20: a stage's fish basket (PetBattle.Basket.cs).
     }
 
     // A mirage's copies (PetBattle.Tricks.cs) are not counted: they are not really there.
@@ -412,6 +413,7 @@ public sealed partial class BattleSim
         if (Over) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
         StepSlimes(dt, floorX, catHeld);
         if (Over) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
+        StepBasket(dt);
         StepTools(dt, catHeld);
         if (Over) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
         StepTricks(dt);
@@ -816,6 +818,7 @@ public sealed partial class BattleSim
         if (slime.Lit) Blast(slime, false);
         SplitApart(slime);
         DropLoot(slime); // 1.5 M19: a fish, a coin or a potion, sometimes.
+        DropFish(slime); // 1.5 M20: the basket's fish it carried falls there.
     }
 
     // A stony enemy's block roll for one hit (rolled once per hit, never per frame).
@@ -875,6 +878,7 @@ public sealed partial class BattleSim
         ClearTools();
         ClearApps();
         ClearDrops(phase == BattlePhase.Won);
+        ClearBasket(phase == BattlePhase.Won);
         incoming = null;
         IncomingRemaining = 0;
         ClearCalls();
@@ -1022,6 +1026,7 @@ public sealed partial class BattleSim
         MapSpit(left, oldWidth, newWidth);
         MapSky(left, oldWidth, newWidth);
         MapDrops(left, oldWidth, newWidth);
+        MapBasket(left, oldWidth, newWidth);
         foreach (var p in popups) p.X = left + (p.X - Left) / oldWidth * newWidth;
         foreach (var l in launches) { l.FloorX = left + (l.FloorX - Left) / oldWidth * newWidth; for (int i = 0; i < l.TargetX.Length; i++) l.TargetX[i] = left + (l.TargetX[i] - Left) / oldWidth * newWidth; }
         Left = left; Right = right;

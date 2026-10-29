@@ -79,7 +79,8 @@ public sealed partial class PetWindow
     public readonly record struct BattleSummary(bool Won, int Defeated, double Seconds, double Hp, double MaxHp, bool Boss = false, string? BossName = null,
         BattleDifficulty Difficulty = BattleDifficulty.Normal, BattleRecordNews News = default, string Weapon = BattleWeapon.Sword, string WeaponLabel = "",
         bool Custom = false, string WeaponStyle = "sword", StageSpec? Stage = null, AdventureOutcome Outcome = default, bool Ranked = true, string Upgrades = "",
-        ExpeditionStepOutcome? Expedition = null, int EndlessWave = 0, IReadOnlyList<KeepsakeSpec>? EndlessUnlocked = null, bool NoApps = false);
+        ExpeditionStepOutcome? Expedition = null, int EndlessWave = 0, IReadOnlyList<KeepsakeSpec>? EndlessUnlocked = null, bool NoApps = false,
+        int FishKept = -1, int FishTotal = 0, bool FishGone = false);
     private static readonly Brush RecordGold = PetUi.Game.Gold;
     private static readonly Brush ResultMain = PetUi.Game.Chosen;
     private static string Clock(double seconds)
@@ -94,8 +95,10 @@ public sealed partial class PetWindow
     private string RecordLine(BattleRecord best)
     {
         string fastest = best.BestSeconds is double s ? LF($"nhanh nhất {Clock(s)} · ", $"fastest {Clock(s)} · ") : "";
+        // 1.5 M20: a basket stage's most fish kept in a win.
+        string fish = best.MostFish > 0 ? LF($" · giữ nhiều nhất {best.MostFish} cá", $" · most fish kept {best.MostFish}") : "";
         return LF($"{fastest}nhiều nhất {best.MostDefeated} slime · thắng {best.Wins} lần",
-                 $"{fastest}most {best.MostDefeated} slime{(best.MostDefeated == 1 ? "" : "s")} · {best.Wins} win{(best.Wins == 1 ? "" : "s")}");
+                 $"{fastest}most {best.MostDefeated} slime{(best.MostDefeated == 1 ? "" : "s")} · {best.Wins} win{(best.Wins == 1 ? "" : "s")}") + fish;
     }
 
     private void ShowBattleSummary(BattleSummary result)
@@ -111,6 +114,8 @@ public sealed partial class PetWindow
         var title = Line(PetUi.HeadingSize, bold: true);
         title.Text = result.Won ? (result.Boss ? LF($"Chiến thắng! Đã hạ {result.BossName ?? "boss"}", $"Victory! The {result.BossName ?? "boss"} is down") : L("Chiến thắng!", "Victory!"))
             : result.Stage is { Endless: true } ? L("Hết lượt Vô tận", "Infinity run over")
+            // 1.5 M20: lost with HP left, every fish carried off.
+            : result.FishGone ? L("Thua rồi… slime tha hết cá", "Defeated… the slimes took every fish")
             : L("Thua rồi… mèo choáng váng", "Defeated… the cat sees stars");
         string level = DifficultyName(result.Difficulty), arms = result.WeaponLabel.Length > 0 ? result.WeaponLabel : result.Weapon;
         string place = result.Stage is not StageSpec played ? ""
@@ -119,6 +124,8 @@ public sealed partial class PetWindow
         var loadout = Line(PetUi.BodySize, bold: true); loadout.Text = place + $"{arms} · {level}";
         var main = Line(PetUi.BodySize);
         main.Text = LF($"Hạ {result.Defeated} slime · {Clock(result.Seconds)}", $"{result.Defeated} slime{(result.Defeated == 1 ? "" : "s")} defeated · {Clock(result.Seconds)}");
+        if (result.FishTotal > 0) main.Text += result.Won ? LF($" · giữ được {result.FishKept}/{result.FishTotal} cá", $" · {result.FishKept}/{result.FishTotal} fish kept")
+            : LF($" · mất {result.FishTotal - result.FishKept}/{result.FishTotal} cá", $" · {result.FishTotal - result.FishKept}/{result.FishTotal} fish lost");
         var hp = Line(PetUi.SmallSize, opacity: 0.75); hp.Text = LF($"HP còn {Math.Ceiling(result.Hp)}/{result.MaxHp}", $"HP {Math.Ceiling(result.Hp)}/{result.MaxHp} left");
         var info = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Children = { title, loadout, main, hp } };
         Window? window = null;

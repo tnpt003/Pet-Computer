@@ -21,7 +21,9 @@ public sealed class BattleRecord
     public int MostWaves { get; set; }
     // Infinity: the most waves cleared in one run (records before 2026-10-22 have 0: MostWaves − 1 stands in).
     public int MostCleared { get; set; }
-    [JsonIgnore] public bool Empty => Wins == 0 && BestSeconds == null && MostDefeated == 0 && MostWaves == 0 && MostCleared == 0;
+    // A stage with a fish basket (1.5 M20): the most fish kept in a win (0: none yet; only in its stage records).
+    public int MostFish { get; set; }
+    [JsonIgnore] public bool Empty => Wins == 0 && BestSeconds == null && MostDefeated == 0 && MostWaves == 0 && MostCleared == 0 && MostFish == 0;
 
     internal void Normalize()
     {
@@ -29,14 +31,16 @@ public sealed class BattleRecord
         MostDefeated = Math.Max(0, MostDefeated);
         MostWaves = Math.Max(0, MostWaves);
         MostCleared = Math.Clamp(MostCleared, 0, MostWaves);
+        MostFish = Math.Max(0, MostFish);
         if (BestSeconds is double s && (!double.IsFinite(s) || s <= 0)) BestSeconds = null;
     }
 }
 
-// What a finished battle changed: a new fastest win and/or a new most-slimes count.
-public readonly record struct BattleRecordNews(bool Fastest, bool MostDefeated, bool FurthestWave = false)
+// What a finished battle changed: a new fastest win and/or a new most-slimes count (a basket stage: the
+// most fish kept in a win).
+public readonly record struct BattleRecordNews(bool Fastest, bool MostDefeated, bool FurthestWave = false, bool MostFish = false)
 {
-    public bool Any => Fastest || MostDefeated || FurthestWave;
+    public bool Any => Fastest || MostDefeated || FurthestWave || MostFish;
 }
 
 // Version 2 (2026-10-19): records per loadout, keyed by the weapon's stable id and the

@@ -735,3 +735,13 @@ Có sẵn trong Viễn chinh (cá, xu, bình) và Vô tận (cá, bình); không
 - [ ] Vô tận: chỉ rơi cá và bình, không có xu, HUD không hiện xu.
 - [ ] Đóng app giữa chuyến rồi mở lại: số xu của chuyến còn nguyên.
 - [ ] DPI 100/150/200%, đổi DPI giữa trận, màn hình phụ: món đồ nằm đúng sàn, click trúng; chữ vi/en/ja đúng.
+
+## Bảo vệ giỏ cá 1.5 M20 (2026-10-29) — file tùy chỉnh
+Chưa màn gốc nào có giỏ cá. Muốn thử: cất file `%LOCALAPPDATA%\DesktopPet\battle.json` của bạn (nếu có), chép `docs/examples/battle-m20.json` vào chỗ đó, mở Phiêu lưu (chương "Thử giỏ cá" thay chương 1 khi file còn đó; không lưu tiến trình/kỷ lục); xong thì xóa file (hoặc trả file cũ). Ảnh đã xem qua render UiChecks nền sáng/tối; chưa xem trong trận thật, chưa thử chuột thật, DPI thật.
+- [ ] Không có file: Phiêu lưu chương 1, Trận tự do, Vô tận, Viễn chinh như cũ (không có giỏ, HUD không có "Cá").
+- [ ] Màn "Giữ giỏ cá": giỏ mây giữa dải trận, cá đứng trong giỏ; HUD "Cá 5/5"; bản đồ ghi "· giữ giỏ 5 cá". Cứ con slime thứ hai đi thẳng tới giỏ, vòng vàng đầy rồi giơ cá trên đầu chạy ra mép xa (banner "Slime tha cá!…"); mèo tự đuổi con đó trước.
+- [ ] Hạ hoặc Đẩy con đang tha: cá rơi xuống sàn có vòng trắng đếm ngược (banner "Cá rơi!…"). Click con cá: về giỏ ngay. Để yên ~5 giây: tự về giỏ. Slime tha cá khác đi ngang có thể nhặt nó.
+- [ ] Để slime tha cá ra tới mép: con slime biến mất, banner "Mất một con cá! Còn N", HUD giảm. Mất hết cá: thua ngay dù mèo còn đầy máu, kết quả "Thua rồi… slime tha hết cá · mất 5/5 cá". Nhấc mèo lên giữ lâu: slime vẫn tha cá.
+- [ ] Thắng màn: kết quả ghi "giữ được N/5 cá". Màn sống sót 60 giây: hết giờ khi còn slime đang tha cá thì con cá đó vẫn được tính.
+- [ ] Pause/menu: slime, vòng vàng và vòng trắng đứng yên; click cá rơi không có tác dụng.
+- [ ] DPI 100/150/200%, đổi DPI giữa trận, màn hình phụ: giỏ ở đúng giữa dải trận, cá rơi click trúng, chỗ trống cạnh cá vẫn click xuyên; âm thanh ngắn, không chồng; chữ vi/en/ja đúng.

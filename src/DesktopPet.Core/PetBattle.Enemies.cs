@@ -22,7 +22,7 @@ public sealed partial class BattleSim
         }
         // Never a shielded boss: the cat cannot hurt it (with nothing else to hit it waits).
         // One guarded by a heal is left alone too while there is another to hit.
-        Slime? nearest = null, guarded = null;
+        Slime? nearest = null, guarded = null, carrier = null;
         foreach (var s in slimes)
         {
             if (!s.Targetable || s.Shielded) continue;
@@ -31,12 +31,15 @@ public sealed partial class BattleSim
             if (s.Handled) continue; // In the Grabber's claw or flying from it (PetBattle.Grabber.cs).
             if (s.Faded) continue; // A faded ghost cannot be hit (PetBattle.Tricks.cs).
             if (s.Burrowed) continue; // Under the floor (PetBattle.Burrow.cs).
+            // One running off with a fish of the basket comes first (1.5 M20, PetBattle.Basket.cs).
+            if (s.CarriesFish && (carrier == null || Math.Abs(s.X - catX) < Math.Abs(carrier.X - catX))) carrier = s;
             // One in a bubble or sulking takes no HP from the cat's blows, one in its ice shell only scratches
             // (1.5 M15): left alone while there is another.
             if (s.Mended || s.Bubbled || s.Type.Sulk != null || s.Iced || s.Puffed) { if (guarded == null || Math.Abs(s.X - catX) < Math.Abs(guarded.X - catX)) guarded = s; continue; }
             if (nearest == null || Math.Abs(s.X - catX) < Math.Abs(nearest.X - catX)) nearest = s;
         }
         nearest ??= guarded;
+        if (carrier != null) { autoTargetId = carrier.Id; return carrier; }
         // Keep the current choice unless another slime is clearly closer (no dithering).
         var current = Find(autoTargetId);
         if (current != null && current.Targetable && !current.Shielded && !current.Faded && !current.Burrowed && !current.Airborne && (!(current.Mended || current.Bubbled || current.Type.Sulk != null || current.Iced || current.Puffed) || nearest == current) && nearest != null &&
@@ -197,6 +200,8 @@ public sealed partial class BattleSim
                     if (slime.Faded) { Drift(slime, dt, catX, minX, maxX); break; }
                     // A thief runs off with its loot, or trails a cat with nothing to steal (PetBattle.Quills.cs).
                     if (slime.Type.Steal is StealSpec steal && Sneak(slime, steal, dt, catX, minX, maxX)) break;
+                    // A fish taker goes for the basket, and runs off with a fish (PetBattle.Basket.cs).
+                    if (slime.FishTaker && TakeFish(slime, dt, minX, maxX)) break;
                     // A spring trap never attacks: it lies still, or slides up to a cat far away (PetBattle.Spring.cs).
                     if (slime.Type.Spring != null) { Creep(slime, dt, catX, minX, maxX); break; }
                     // A spitter spits from afar before anything else (even from behind its allies).
@@ -429,7 +434,7 @@ public sealed partial class BattleSim
         var live = scratch;
         live.Clear();
         // A leaping boss flies over the others.
-        foreach (var slime in slimes) if (slime.State != SlimeState.Defeated && !slime.KeepingBack && slime.LeapHeight <= 0 && !slime.Riding && !slime.Airborne && !slime.Handled && !slime.Burrowed && slime.Type.Spring == null && slime.Loot == StolenKind.None && !slime.Type.Still && slime.Type.Blocker == blockers) live.Add(slime);
+        foreach (var slime in slimes) if (slime.State != SlimeState.Defeated && !slime.KeepingBack && slime.LeapHeight <= 0 && !slime.Riding && !slime.Airborne && !slime.Handled && !slime.Burrowed && slime.Type.Spring == null && slime.Loot == StolenKind.None && !slime.CarriesFish && slime.FishClock <= 0 && !slime.Type.Still && slime.Type.Blocker == blockers) live.Add(slime);
         live.Sort(ByX);
         for (int i = 1; i < live.Count; i++)
         {

@@ -323,6 +323,7 @@ public sealed partial class BattleSim
         slime.RainClock = (type.Rain?.Every ?? 0) / 2;
         slime.Set(SlimeState.Spawning);
         JoinLinks(slime);
+        MarkTaker(slime); // 1.5 M20: every n-th plain slime goes for the fish basket.
         slimes.Add(slime);
         return slime;
     }

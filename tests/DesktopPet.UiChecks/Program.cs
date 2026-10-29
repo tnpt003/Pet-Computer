@@ -576,6 +576,7 @@ internal static class Program
         ZipVisualChecks.Run(Check);
         BroodVisualChecks.Run(Check);
         DropVisualChecks.Run(Check);
+        BasketVisualChecks.Run(Check);
         window.SetPaused(false);
         window.Reset();
         void AttentionClick() => window.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Right)

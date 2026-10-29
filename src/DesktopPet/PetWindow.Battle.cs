@@ -432,6 +432,16 @@ public sealed partial class PetWindow
         return done;
     }
 
+    // A click on a fish a slime dropped (1.5 M20): back in the basket (not while the guide holds the battle still).
+    public bool BattleReturnFish(int id)
+    {
+        if (battle == null || battle.Paused || BattleGuideFreezes) return false;
+        bool done = battle.PickUpFish(id);
+        RequestBattleRedraw();
+        UpdateBattleHud();
+        return done;
+    }
+
     // The Laser chosen: a click on a spot of the field (battle x) puts its dot there.
     public bool BattleClickSpot(double x)
     {
@@ -612,7 +622,9 @@ public sealed partial class PetWindow
                 battle.DefeatedBoss?.Name(preferences.Language), battle.Difficulty, news, battle.Weapon.Id, WeaponName(battle.Weapon), battleCustomData, battle.Weapon.Style,
                 battle.Stage, outcome, !battleCustomData, UpgradeSummary(battle), step, endless ? battle.Wave : 0,
                 endless && EndlessRewards is EndlessSpec given ? given.EarnedBy(BattleRecords.EndlessCleared(given)).Where(m => m.Wave > clearedBefore).ToList() : null,
-                NoApps: battle.Stage != null && !battle.AppsOn);
+                NoApps: battle.Stage != null && !battle.AppsOn,
+                // 1.5 M20: a basket stage's fish (kept in a win; still the cat's in a loss).
+                FishKept: battle.Basket != null ? (won ? battle.FishInBasket : battle.FishLeft) : -1, FishTotal: battle.FishTotal, FishGone: battle.FishGone);
             EndBattle();
             ShowBattleSummary(result);
             return;
@@ -714,6 +726,7 @@ public sealed partial class PetWindow
         battleView.SlimeClicked += (id, offset) => BattleClickSlime(id, offset);
         battleView.PopupClicked += id => BattleClosePopup(id);
         battleView.DropClicked += id => BattlePickUp(id);
+        battleView.FishClicked += id => BattleReturnFish(id);
         battleView.HazardClicked += id => BattleCloseHazard(id);
         battleView.HazardReleased += () => { battle?.ReleaseHazard(); RequestBattleRedraw(); };
         battleView.RightClicked += () => { battle?.Arm(null); RequestBattleRedraw(); UpdateBattleHud(); }; // Right-click on the field cancels the skill.

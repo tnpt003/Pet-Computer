@@ -316,6 +316,8 @@ public sealed partial class BattleSim
         slime.Iced = type.Ice != null;
         // 1.5 M16: a hedgehog comes in with its quills flat.
         slime.QuillClock = type.Quills?.Flat ?? 0;
+        // 1.5 M17: a rolling boss's first roll comes after half its wait.
+        slime.RollCooldown = (type.Roll?.Every ?? 0) / 2;
         slime.Set(SlimeState.Spawning);
         JoinLinks(slime);
         slimes.Add(slime);

@@ -16,11 +16,13 @@ public sealed partial class BattleSim
         boss.RetreatSide = RetreatEdge(boss.X, lastCatX);
         boss.Crouch = boss.LeapHeight = 0;
         boss.LeapFromX = boss.X;
-        boss.PendingCalls = phase.Calls().ToList();
+        boss.PendingCalls = Settings.PhaseCalls(phase).ToList();
         boss.RallyCooldown = boss.Type.RallyEvery / 2;
         boss.RallyCharge = 0;
         if (boss.State is SlimeState.Windup or SlimeState.Dashing or SlimeState.Casting) boss.Set(SlimeState.Moving);
         events.Add(new(BattleEventKind.BossShielded, boss.X));
+        // 1.5 M17: a pack phase stays where it is, its shards around it (PetBattle.Zip.cs).
+        if (phase.Pack) Pack(boss);
     }
 
     // The edge a shield phase goes to (+1 right, -1 left): the one opposite the boss's half of the
@@ -65,21 +67,31 @@ public sealed partial class BattleSim
     }
 
     // The helpers appear at their spots (still within the SummonCap), never on top of the cat: at
-    // least SquadCatGap away, on the boss's side of it.
+    // least SquadCatGap away, on the boss's side of it. 1.5 M17: a packed boss's shards come all of them,
+    // right at their spots (they never move or attack); a roped phase's helpers come on their ropes; a
+    // formation's name shows as its banner.
     private int SpawnHelpers(Slime boss, List<(string Kind, double X)> spots, int tag)
     {
         int alive = 0;
         foreach (var s in slimes) if (s.SummonedBy == boss.Id && s.State != SlimeState.Defeated) alive++;
-        int count = Math.Min(spots.Count, Math.Max(0, boss.Type.SummonCap - alive));
+        int count = boss.Packed ? spots.Count : Math.Min(spots.Count, Math.Max(0, boss.Type.SummonCap - alive));
+        var phase = PhaseOf(boss, tag);
         for (int k = 0; k < count; k++)
         {
             double x = spots[k].X;
-            if (Math.Abs(x - lastCatX) < SquadCatGap) x = lastCatX + (boss.X >= lastCatX ? 1 : -1) * SquadCatGap;
+            if (!boss.Packed && Math.Abs(x - lastCatX) < SquadCatGap) x = lastCatX + (boss.X >= lastCatX ? 1 : -1) * SquadCatGap;
             var helper = AddSlime(x, Settings.Enemy(spots[k].Kind));
             helper.SummonedBy = boss.Id;
             helper.PhaseTag = tag;
             helper.Facing = lastCatX < helper.X ? -1 : 1;
+            if (phase is { Roped: true }) helper.RopedTo = boss.Id;
         }
+        if (count > 0 && phase?.Formation is string id)
+        {
+            FormationsMet++;
+            events.Add(new(BattleEventKind.FormationArrived, boss.X, Settings.FormationList.ToList().FindIndex(f => f.Id == id)));
+        }
+        if (count > 0 && phase is { Roped: true }) events.Add(new(BattleEventKind.BossRoped, boss.X, boss.Id));
         return count;
     }
 
@@ -159,16 +171,19 @@ public sealed partial class BattleSim
         }
         // While this phase's helpers stand, the boss may rally one of them that is not elite yet, drawn at
         // random (2026-10-24: supports too; it used to be the fighter nearest the cat).
-        bool helpers = false;
+        // A roped phase holds only while a rope is left (1.5 M17): its helpers off their ropes fight on.
+        bool helpers = false, roped = PhaseOf(boss, boss.ShieldTag) is { Roped: true };
         rallyable.Clear();
         foreach (var s in slimes)
         {
             if (s.SummonedBy != boss.Id || s.PhaseTag != boss.ShieldTag || s.State == SlimeState.Defeated) continue;
+            if (roped && s.RopedTo != boss.Id) continue; // Still appearing counts (RopeBoss waits for it).
             helpers = true;
             if (s.Elite == null && s.Targetable) rallyable.Add(s);
         }
         if (helpers) { StepRally(boss, dt); return; }
-        boss.Shielded = false;
+        if (roped) events.Add(new(BattleEventKind.BossRopesGone, boss.X, boss.Id));
+        boss.Shielded = boss.Packed = false;
         boss.ShieldTag = 0;
         boss.RallyCharge = 0;
         events.Add(new(BattleEventKind.BossShieldDown, boss.X));

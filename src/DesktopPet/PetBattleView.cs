@@ -213,6 +213,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         DrawSpitBehind(dc, floor, time);
         for (int i = 0; i < sim.Slimes.Count; i++) if (sim.Slimes[i].CallSpots is { } spots) DrawCallSpots(dc, sim.Slimes[i], spots, floor, time);
         DrawLinksBehind(dc, floor, time);
+        DrawBossRopes(dc, floor, time);
         for (int layer = 0; layer <= 3; layer++)
             for (int i = 0; i < sim.Slimes.Count; i++)
             {
@@ -239,8 +240,9 @@ public sealed partial class BattleFieldView : FrameworkElement
                     bool found = slime.Type.Mirage != null;
                     dc.DrawEllipse(found ? LeapShadow : FootShadow, FootRim, new Point(x, floor - 2), slime.Width * (found ? 0.68 : 0.4), found ? 5 : 4);
                 }
-                // A wall climber up its edge leans into it (1.5 M15).
-                double lean = WallLean(slime), foot = floor - slime.LeapHeight - slime.RideHeight - slime.Lift - bubble - wall;
+                // A wall climber up its edge leans into it (1.5 M15); a rolling boss turns over (1.5 M17).
+                double turn = BattleSim.RollTurn(slime), lean = WallLean(slime) + turn;
+                double foot = floor - slime.LeapHeight - slime.RideHeight - slime.Lift - bubble - wall - RollLift(slime, turn);
                 if (lean != 0) dc.PushTransform(new RotateTransform(lean, x, foot - slime.Height / 2));
                 DrawSlime(dc, slime, x, foot, sim.Settings, time);
                 if (lean != 0) dc.Pop();
@@ -355,7 +357,7 @@ public sealed partial class BattleFieldView : FrameworkElement
                 sx = 1.12; sy = 0.86;
                 break;
             case SlimeState.Dashing:
-                sx = 1.25; sy = 0.8;
+                if (!slime.Rolling) { sx = 1.25; sy = 0.8; }
                 break;
             case SlimeState.Casting:
                 double hum = Math.Sin(t * 14);
@@ -372,6 +374,8 @@ public sealed partial class BattleFieldView : FrameworkElement
         TrickLook(slime, time, ref sx, ref sy, ref opacity, ref jitter);
         // A boss crouching before its leap.
         if (slime.Crouch > 0) { sx *= 1 + 0.18 * slime.Crouch; sy *= 1 - 0.25 * slime.Crouch; }
+        // A packed boss: squeezed small behind its shards (1.5 M17).
+        if (slime.Packed) { sx *= BattleSim.PackedScale; sy *= BattleSim.PackedScale * 0.92; }
         // A stony body is wide and low (its hitScale is wider to match).
         if (slime.Type.Marks == "cracks") { sx *= 1.12; sy *= 0.9; }
         SpringShape(slime, ref sx, ref sy);
@@ -385,7 +389,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         }
         DrawSpringRing(dc, slime, x, floor);
         DrawBlastRing(dc, slime, x, floor);
-        if (slime.Type.Slam && slime.State == SlimeState.Windup)
+        if (slime.Type.Slam && slime.State == SlimeState.Windup && !slime.Rolling)
         {
             // The slam's reach on the floor, filling up as it comes: get out (or push, shield, lift).
             // Outlines only: a filled zone would catch clicks meant for the apps below.
@@ -393,11 +397,12 @@ public sealed partial class BattleFieldView : FrameworkElement
             dc.DrawEllipse(null, WarningFill, new Point(x, floor - 4), Math.Max(1, slime.Range * k), Math.Max(1, 9 * k));
             dc.DrawEllipse(null, WarningEdge, new Point(x, floor - 4), slime.Range, 9);
         }
-        if (slime.Type.Dash && slime.State == SlimeState.Windup)
+        if ((slime.Type.Dash || slime.Rolling) && slime.State == SlimeState.Windup)
         {
-            // The dash's lane on the floor, growing as it comes, with an arrowhead at its end.
+            // The dash's lane on the floor (a boss's roll too), growing as it comes, with an arrowhead at its end.
             double k = Math.Clamp(t / windup, 0, 1), dir = slime.DashDirection == 0 ? slime.Facing : slime.DashDirection;
-            double end = x + dir * (w / 2 + slime.Type.DashDistance * (0.35 + 0.65 * k));
+            double distance = slime.Rolling && slime.Type.Roll is RollSpec roll ? roll.Distance : slime.Type.DashDistance;
+            double end = x + dir * (w / 2 + distance * (0.35 + 0.65 * k));
             var lane = new Point(end, floor - 4);
             dc.DrawLine(Halo, new Point(x + dir * w / 2, floor - 4), lane);
             dc.DrawLine(WarningEdge, new Point(x + dir * w / 2, floor - 4), lane);
@@ -515,6 +520,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         DrawSkyMarks(dc, slime, bw, bh, time);
         DrawWallMarks(dc, slime, bw, bh, time);
         DrawQuillMarks(dc, slime, bw, bh, time);
+        DrawZipMarks(dc, slime, bw, bh);
         // An older support mark: a white "+" on its body.
         if (slime.Type.Marks == "cross") dc.DrawGeometry(Brushes.White, Outline, CrossMark);
         if (slime.Elite != null)
@@ -545,7 +551,9 @@ public sealed partial class BattleFieldView : FrameworkElement
             // The shield phase: a gently pulsing bubble around the boss and a shine on it.
             double pulse = 1 + 0.03 * Math.Sin(time * 4);
             // From the floor to just over the crown, so nothing of it is cut off below the floor.
-            double rx = (w / 2 + 12) * pulse, ry = (h + (slime.IsBoss ? 9 * size : 0) + 10) / 2;
+            // A packed boss's shield hugs its squeezed body (1.5 M17).
+            double pack = slime.Packed ? BattleSim.PackedScale : 1;
+            double rx = (w * pack / 2 + 12) * pulse, ry = ((h + (slime.IsBoss ? 9 * size : 0)) * pack + 10) / 2;
             var centre = new Point(x, floor - ry - 1);
             dc.DrawEllipse(null, Halo, centre, rx, ry);
             dc.DrawEllipse(null, BubblePen, centre, rx, ry);
@@ -587,7 +595,7 @@ public sealed partial class BattleFieldView : FrameworkElement
                 // "!" says so, and a dashed ring on the floor shows where it still reaches (the hit
                 // misses beyond Range + 12, see BattleSim.Strike): put the cat down outside it.
                 dc.DrawEllipse(null, WarningEdge, new Point(x, y + 1), 9 + 2 * Math.Sin(time * 8), 9 + 2 * Math.Sin(time * 8));
-                if (!slime.Type.Dash && !slime.Spitting) // A dash shows its lane instead, a spit its landing ring.
+                if (!slime.Type.Dash && !slime.Spitting && !slime.Rolling) // A dash or a roll shows its lane instead, a spit its landing ring.
                 {
                     dc.DrawEllipse(null, Halo, new Point(x, floor - 4), slime.Range + 12, 10);
                     dc.DrawEllipse(null, WarningEdge, new Point(x, floor - 4), slime.Range + 12, 10);

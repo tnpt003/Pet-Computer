@@ -149,8 +149,11 @@ public sealed partial class BattleSim
     {
         var from = lastRopePose ?? cat;
         lastRopePose = cat;
-        if (!HasLink(EnemyLinks.Tether) || from == cat) return;
+        if (from == cat) return;
         double speed = Math.Sqrt(cat.VX * cat.VX + cat.VY * cat.VY);
+        // A boss's ropes to its helpers (1.5 M17, PetBattle.Zip.cs).
+        CatThroughBossRopes(from, cat, speed);
+        if (!HasLink(EnemyLinks.Tether) || Over) return;
         foreach (var holder in slimes.ToArray())
         {
             if (!Is(holder, EnemyLinks.Tether) || speed < holder.Link!.CutSpeed || LinkPartner(holder) is not Slime ally) continue;

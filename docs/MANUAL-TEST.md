@@ -703,3 +703,13 @@ Chưa trận gốc nào có ba quái này. Muốn thử: cất file `%LOCALAPPDA
 - [ ] Slime trộm (đợt 3): đi tới cạnh mèo, gồng rồi lấy một kỹ năng (banner "Slime trộm lấy mất một kỹ năng!…"; ô kỹ năng phải hồi lại), đeo túi sao xanh, chạy về mép xa. Đánh hạ nó trước khi trốn: "Lấy lại rồi!", ô kỹ năng dùng được ngay. Để nó đứng ở mép ~6 s: vòng đỏ đầy trên túi, nó biến mất ("Slime trộm chạy mất…"), đợt vẫn xong được. Đẩy lúc nó gồng: không lấy được gì. Mèo không bao giờ mất máu vì nó.
 - [ ] Tinh anh (đợt 4): nhím xù lâu hơn, đồng hồ 15 s, trộm chạy nhanh hơn. Pause/menu: gai, đồng hồ, thời gian trốn đều đứng yên.
 - [ ] DPI 100/150/200%, đổi DPI giữa trận, màn hình phụ: gai, đồng hồ, túi không bị cắt; âm thanh ngắn, không chồng nhau; banner vi/en/ja đúng chữ.
+
+## Slime Nén 1.5 M17 (2026-10-29) — file tùy chỉnh
+Chưa trận gốc nào có boss này. Muốn thử: cất file `%LOCALAPPDATA%\DesktopPet\battle.json` của bạn (nếu có), chép `docs/examples/battle-m17.json` vào chỗ đó, mở Trận tự do và chọn mang Kéo cắt; xong thì xóa file (hoặc trả file cũ). Ảnh đã xem qua render UiChecks nền sáng/tối; chưa xem trong trận thật, chưa thử chuột thật, DPI thật.
+- [ ] Không có file: Trận tự do, Phiêu lưu chương 1 (Vua Slime), Vô tận, Viễn chinh như cũ.
+- [ ] Pha 1: Slime Nén vàng có khóa kéo trước bụng. Đứng xa nó: nó gồng, dải đỏ trên sàn (banner "Slime Nén sắp lăn!…"), rồi lăn xoay qua sàn; mèo trên đường lăn mất máu và choáng; nhấc mèo lên lúc nó gồng/lăn thì né. Đứng sát: nó nện như Vua Slime.
+- [ ] Pha 2 (70%): nhảy về mép xa, bung Pháo đài (banner "… bung file!…", rồi "Đội hình Pháo đài!…"); mỗi quân có dây nhầy nối về boss; đánh boss chỉ thấy khiên. Kéo nhanh mèo xuyên một dây, ném mèo xuyên dây, hoặc Kéo cắt vuốt qua dây: dây đứt, quân đó choáng, banner "Đứt dây! Còn N dây". Kéo chậm qua dây: không đứt. Hết dây: "KHIÊN VỠ!", boss choáng, quân còn lại vẫn đánh. Hạ một quân cũng làm mất dây của nó.
+- [ ] Pha 2 tiếp (50%): bung Kỵ binh (bom cưỡi slime nhanh, có dây về boss), cắt dây như trên. Dây từ con bom đang cưỡi nối đúng chỗ con bom.
+- [ ] Pha 3 (25%): boss nhỏ lại tại chỗ, hai đai quanh thân, khiên vàng sát thân, 4 mảnh file (tờ giấy gấp góc) hai bên (banner "… tự nén lại!…"). Mảnh file đứng yên, không đánh. Phá hết mảnh: khiên vỡ, boss to lại, nổi giận, lăn dày hơn; hạ được boss.
+- [ ] Pause/menu: boss đang lăn, dây, mảnh file đều đứng yên; mèo đang cầm lúc Pause không cắt được dây.
+- [ ] DPI 100/150/200%, đổi DPI giữa trận, màn hình phụ: dây, boss lăn không bị cắt mất; kéo/ném mèo xuyên dây vẫn đứt; âm thanh ngắn, không chồng nhau; banner vi/en/ja đúng chữ.

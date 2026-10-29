@@ -1,0 +1,16 @@
+{
+  // 1.5 M17 try-out: the Zip Slime (B1, chapter 2's boss). It is in the built-in data but no battle uses it
+  // yet (chapter 2 brings it in). Copy this file to %LOCALAPPDATA%\DesktopPet\battle.json (keep a copy of
+  // yours first), then Battle Mode → Start battle (the free battle) and carry the Scissors in the loadout.
+  // Custom data: no records, no rewards. Delete the file to get the usual free battle back.
+  // Phase 1: it rolls at a cat far off: lift the cat out of the lane. Phase 2 (70% and 50%): it unpacks the
+  // Fortress, then the Cavalry, each slime tied to it by a goo rope; while a rope is left it takes no damage:
+  // drag or throw the cat fast through the ropes, or use the Scissors. Phase 3 (25%): it packs itself small
+  // behind four file shards; break them to bring its shield down.
+  "schemaVersion": 1,
+  "maxAlive": 6,
+  "waves": [
+    { "groups": [ { "enemy": "slime", "count": 2 }, { "enemy": "runner", "count": 1 } ] },
+    { "groups": [ { "enemy": "zip", "count": 1 } ] }
+  ]
+}

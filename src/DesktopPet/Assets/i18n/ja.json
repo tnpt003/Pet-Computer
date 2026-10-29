@@ -1000,5 +1000,11 @@
   "The thief slime stole a skill! Beat it before it gets away to take it back": "どろぼうスライムがスキルを盗んだ！逃げられる前に倒して取り返そう",
   "The thief slime stole an app's charge! Beat it before it gets away to take it back": "どろぼうスライムがアプリのチャージを盗んだ！逃げられる前に倒して取り返そう",
   "Got it back!": "取り返した！",
-  "The thief slime got away…": "どろぼうスライムに逃げられた…"
+  "The thief slime got away…": "どろぼうスライムに逃げられた…",
+  "Zip Slime": "あっしゅくスライム",
+  "File shard": "ファイルのかけら",
+  "The {0} unpacks! While a rope is left it takes no damage: drag or throw the cat through the ropes, or use the Scissors": "{0}が解凍した！ロープが残っているあいだはダメージを受けない：猫をドラッグか投げてロープを通すか、ハサミを使おう",
+  "The {0} packs itself! Break the file shards around it": "{0}が自分を圧縮した！まわりのファイルのかけらを壊そう",
+  "Rope cut! {0} left": "ロープが切れた！残り{0}本",
+  "The {0} is about to roll! Lift the cat out of its way": "{0}が転がってくる！猫を持ち上げてよけよう"
 }

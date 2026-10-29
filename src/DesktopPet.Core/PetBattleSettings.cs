@@ -255,6 +255,9 @@ public sealed class BattleSettings
         foreach (var f in FormationList) if (f.Id == id) return f;
         return null;
     }
+    // Every helper a boss phase calls: its own, then its formation's members (1.5 M17).
+    public IEnumerable<string> PhaseCalls(BossPhase phase) =>
+        phase.Formation != null && Formation(phase.Formation) is FormationSpec team ? phase.Calls().Concat(team.Members) : phase.Calls();
 
     // From battle.json "upgrades": the Adventure's between-wave upgrades (null: the built-in seven).
     [JsonPropertyName("upgrades")] public UpgradeSpec[]? Upgrades { get; init; }
@@ -633,11 +636,18 @@ public sealed class Slime
     public double LootCharge, LingerClock;
     public BattleSkill LootSkill;
     public bool Escaped;
+    // 1.5 M17 (PetBattle.Zip.cs). A rolling boss: its windup is a roll (then Dashing is the roll itself),
+    // the time to its next roll, and whether this roll already ran over the cat. Packed small in its pack
+    // phase. A helper tied to its boss by a rope (the boss's id; 0: none).
+    public bool Rolling, RollHit, Packed;
+    public double RollCooldown;
+    public int RopedTo;
     public bool Targetable => State is not (SlimeState.Spawning or SlimeState.Defeated);
     public void Set(SlimeState state)
     {
         if (state == SlimeState.Stunned && State == SlimeState.Windup && Type.Dash) Defanged = true;
         if (state != SlimeState.Windup) Spitting = false;
+        if (state is not (SlimeState.Windup or SlimeState.Dashing)) Rolling = false;
         State = state; StateTime = 0;
     }
 }
@@ -717,7 +727,11 @@ public enum BattleEventKind
     // 1.5 M16 (Value: the enemy's id): a hedgehog's quills rose, stood up, lay flat (soaked: the spray did
     // it), pricked the cat hitting it; a timer's clock started, ran out (it called), its call came in; a
     // thief stole (Value: 1 a skill, 0 an app), gave it back on its defeat, got away with it.
-    QuillsRising, QuillsUp, QuillsDown, QuillsSoaked, QuillsPricked, ClockStarted, ClockRang, ClockCalled, ThiefStole, ThiefReturned, ThiefEscaped
+    QuillsRising, QuillsUp, QuillsDown, QuillsSoaked, QuillsPricked, ClockStarted, ClockRang, ClockCalled, ThiefStole, ThiefReturned, ThiefEscaped,
+    // 1.5 M17 (Value: the boss's id; for a rope, the helper's): the boss wound up a roll, rolled, ran over the
+    // cat; its helpers came tied to it by ropes, a rope was cut (Value: the helper's id), the last rope
+    // was gone; it packed itself small behind its file shards.
+    RollAimed, Rolled, RollHit, BossRoped, BossRopeCut, BossRopesGone, BossPacked
 }
 // 1.5 M14: a flyer's round (PetBattle.Fly.cs) and a burrower's (PetBattle.Burrow.cs).
 public enum FlyPhase { Aloft, Falling, Downed, Rising }

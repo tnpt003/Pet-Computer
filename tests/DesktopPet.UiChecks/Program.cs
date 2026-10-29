@@ -573,6 +573,7 @@ internal static class Program
         SkyVisualChecks.Run(Check);
         WallVisualChecks.Run(Check);
         QuillsVisualChecks.Run(Check);
+        ZipVisualChecks.Run(Check);
         window.SetPaused(false);
         window.Reset();
         void AttentionClick() => window.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Right)

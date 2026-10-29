@@ -691,7 +691,7 @@ public sealed partial class BattleSim
     private NumberTone hitTone;
 
     // Every hit on an enemy goes through here: Landed, or why it did nothing.
-    private HitResult Damage(Slime slime, double amount, DamageSource source)
+    internal HitResult Damage(Slime slime, double amount, DamageSource source)
     {
         if (!slime.Targetable || amount <= 0) return HitResult.Landed;
         // A faded ghost, a bubble, a mirage's copy, a sulky slime (1.5 M13, PetBattle.Tricks.cs).
@@ -777,7 +777,7 @@ public sealed partial class BattleSim
                     if (phase.Enrage && !slime.Enraged) { slime.Enraged = true; events.Add(new(BattleEventKind.BossEnraged, slime.X)); }
                     break; // Later phases wait for the shield to drop.
                 }
-                if (CallHelpers(slime, phase.Calls().ToList(), 0, 0) > 0) events.Add(new(BattleEventKind.BossSummoned, slime.X));
+                if (CallHelpers(slime, Settings.PhaseCalls(phase).ToList(), 0, 0) > 0) events.Add(new(BattleEventKind.BossSummoned, slime.X));
                 if (phase.Enrage && !slime.Enraged)
                 {
                     slime.Enraged = true;

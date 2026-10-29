@@ -207,6 +207,9 @@ public sealed partial class BattleSim
         // Ropes first (the cut below may defeat a holder, and its rope with it).
         foreach (var holder in slimes.ToArray())
             if (Is(holder, EnemyLinks.Tether) && LinkPartner(holder) is Slime ally && RopeCrossed(holder, ally, x0, h0, x1, h1) && CutLink(holder.Id)) { RopesCut++; done++; }
+        // A boss's ropes to its helpers (1.5 M17).
+        int bossRopes = SnipBossRopes(x0, h0, x1, h1);
+        RopesCut += bossRopes; done += bossRopes;
         foreach (var s in slimes.ToArray())
         {
             if (!s.Targetable || s.Shielded) continue;

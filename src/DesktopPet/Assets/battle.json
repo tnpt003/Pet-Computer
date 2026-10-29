@@ -601,6 +601,37 @@
       ]
     },
     {
+      // 1.5 M17, B1: the chapter 2 boss (no battle uses it yet; chapter 2 brings it in, docs/examples/battle-m17.json
+      // tries it). Phase 1: "roll" — with the cat on the floor between minRange and range away and every s since
+      // its last roll (enragedEvery once angry), it winds up (a lane on the floor) and rolls distance DIPs over the
+      // floor: the cat on the floor in its way takes damage and a stun (lift the cat to dodge). Phase 2: two
+      // "roped" shield phases unpack a "formation" (Fortress, then Cavalry) whose helpers come tied to the boss by
+      // ropes; the shield holds while any rope is left: cut them by going through with the cat at ropeCutSpeed
+      // DIPs/s or more (held or thrown) or with the Scissors (the helper is dazed ropeCutStun s), or defeat the
+      // helper. Phase 3: "pack" — it squeezes itself small where it stands, its file shards around it (still: they
+      // never move or attack); the shield drops once they are broken.
+      "id": "zip", "nameVi": "Slime Nén", "nameEn": "Zip Slime",
+      "maxHp": 900, "speed": 24, "damage": 28, "range": 110,
+      "windup": 1.2, "attackCooldown": 2.6, "recover": 0.7,
+      "scale": 2, "color": "#E8B84A", "angryColor": "#E86A6A", "marks": "zip", "binSpit": false,
+      "boss": true, "slam": true, "slamDamage": 20, "pushFactor": 0.35, "stunFactor": 0.4,
+      "enragedSpeed": 34, "enragedWindup": 0.8, "summonCap": 10, "shieldBreakStun": 2,
+      "retreatLeap": true, "leapCrouch": 0.35, "leapSeconds": 0.9, "summonWarning": 0.6,
+      "ropeCutSpeed": 300, "ropeCutStun": 1,
+      "roll": { "every": 7, "enragedEvery": 4.5, "minRange": 140, "range": 520, "windup": 1.1, "speed": 360, "distance": 460, "damage": 24, "stun": 0.9 },
+      "phases": [
+        { "at": 0.7, "shield": true, "roped": true, "formation": "fortress" },
+        { "at": 0.5, "shield": true, "roped": true, "formation": "cavalry" },
+        { "at": 0.25, "shield": true, "pack": true, "enrage": true, "summons": [ { "enemy": "zipshard", "count": 4 } ] }
+      ]
+    },
+    {
+      // 1.5 M17: the Zip Slime's file shards in its pack phase: they never move or attack ("still").
+      "id": "zipshard", "nameVi": "Mảnh file", "nameEn": "File shard",
+      "maxHp": 40, "speed": 0, "damage": 0, "range": 40,
+      "scale": 0.6, "color": "#F2D88A", "marks": "shard", "still": true, "cost": 1, "binSpit": false
+    },
+    {
       "id": "king", "nameVi": "Vua Slime", "nameEn": "Slime King",
       "maxHp": 480, "speed": 22, "damage": 30, "range": 110,
       "windup": 1.2, "attackCooldown": 2.6, "recover": 0.7,

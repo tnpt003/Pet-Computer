@@ -60,8 +60,8 @@ public sealed partial class BattleFieldView
     // one rests on the floor line instead of sinking under it (as the Scissors and the cat cut it).
     private void DrawRope(DrawingContext dc, Slime holder, Slime ally, double floor, double time)
     {
-        var a = new Point(holder.X - OriginX, floor - holder.LeapHeight - holder.Lift - holder.Height * 0.45);
-        var b = new Point(ally.X - OriginX, floor - ally.LeapHeight - ally.Lift - ally.Height * 0.45);
+        var a = new Point(holder.X - OriginX, floor - holder.LeapHeight - holder.RideHeight - holder.Lift - holder.Height * 0.45);
+        var b = new Point(ally.X - OriginX, floor - ally.LeapHeight - ally.RideHeight - ally.Lift - ally.Height * 0.45);
         double sag = Math.Min(28, Math.Abs(b.X - a.X) * 0.18) + 3 * Math.Sin(time * 3 + holder.Id);
         for (int pass = 0; pass < 2; pass++)
         {

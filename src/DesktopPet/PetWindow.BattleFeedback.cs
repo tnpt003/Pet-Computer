@@ -75,6 +75,10 @@ public sealed partial class PetWindow
         [BattleEventKind.QuillsUp] = ("clank", 3), [BattleEventKind.QuillsDown] = ("squish", 2), [BattleEventKind.QuillsSoaked] = ("squish", 3),
         [BattleEventKind.QuillsPricked] = ("clank", 4), [BattleEventKind.ClockRang] = ("clank", 5), [BattleEventKind.ClockCalled] = ("swoosh", 3),
         [BattleEventKind.ThiefStole] = ("swoosh", 4), [BattleEventKind.ThiefReturned] = ("satisfied", 5), [BattleEventKind.ThiefEscaped] = ("pop", 3),
+        // 1.5 M17: the Zip Slime's roll, its ropes and its pack phase.
+        [BattleEventKind.RollAimed] = ("clank", 4), [BattleEventKind.Rolled] = ("swoosh", 4), [BattleEventKind.RollHit] = ("ball_tap", 5),
+        [BattleEventKind.BossRoped] = ("squish", 3), [BattleEventKind.BossRopeCut] = ("pop", 4), [BattleEventKind.BossRopesGone] = ("excited", 5),
+        [BattleEventKind.BossPacked] = ("squish", 5),
     };
 
     private void PlayBattleSound()
@@ -147,6 +151,8 @@ public sealed partial class PetWindow
     private bool IsUpdate(BattleEvent e) => battle?.FindHazard((int)e.Value) is { Kind: HazardKind.Update };
 
     private string BossName() => battle?.Boss?.Type.Name(preferences.Language) ?? "Boss";
+    // The shield phase the boss is in now (1.5 M17: roped or packing; null: none).
+    private BossPhase? BossShieldPhase() => battle?.Boss is Slime boss ? battle.ShieldPhase(boss) : null;
 
     // Big moments get a banner across the HUD's centre. The first heal, far heal, rally call and attack
     // from behind of a battle say what is going on (once each per battle), and so does the first elite
@@ -169,8 +175,18 @@ public sealed partial class PetWindow
             {
                 BattleEventKind.WaveStarted when battle.IsBossWave((int)e.Value) => L("BOSS!", "BOSS!"),
                 BattleEventKind.WaveStarted => LF($"ĐỢT {(int)e.Value}", $"WAVE {(int)e.Value}"),
+                // 1.5 M17: a roped phase names its formation instead; a packing boss already said what to do.
+                BattleEventKind.BossSummoned when BossShieldPhase() is { Roped: true } or { Pack: true } => null,
                 BattleEventKind.BossSummoned => LF($"{BossName()} gọi quân!", $"The {BossName()} calls for help!"),
+                BattleEventKind.BossShielded when BossShieldPhase() is { Roped: true } =>
+                    LF($"{BossName()} bung file! Còn dây thì nó không mất máu: kéo hoặc ném mèo xuyên dây, hay dùng Kéo cắt",
+                        $"The {BossName()} unpacks! While a rope is left it takes no damage: drag or throw the cat through the ropes, or use the Scissors"),
+                BattleEventKind.BossShielded when BossShieldPhase() is { Pack: true } =>
+                    LF($"{BossName()} tự nén lại! Phá hết mảnh file quanh nó", $"The {BossName()} packs itself! Break the file shards around it"),
                 BattleEventKind.BossShielded => LF($"{BossName()} bật khiên! Hạ hết quân", $"The {BossName()} shields up! Defeat its helpers"),
+                BattleEventKind.BossRopeCut when battle.Boss is Slime roped && battle.RopesLeft(roped) is int left && left > 0 =>
+                    LF($"Đứt dây! Còn {left} dây", $"Rope cut! {left} left"),
+                BattleEventKind.RollAimed when trickExplained.Add(e.Kind) => LF($"{BossName()} sắp lăn! Nhấc mèo lên để né", $"The {BossName()} is about to roll! Lift the cat out of its way"),
                 BattleEventKind.BossShieldDown => L("KHIÊN VỠ!", "SHIELD DOWN!"),
                 BattleEventKind.BossEnraged =>LF($"{BossName()} nổi giận!", $"The {BossName()} is angry!"),
                 BattleEventKind.SynergyUnlocked when (int)e.Value >= 0 && (int)e.Value < battle.Settings.SynergyList.Count =>

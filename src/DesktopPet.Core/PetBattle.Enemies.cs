@@ -107,6 +107,7 @@ public sealed partial class BattleSim
             // 1.5 M16: a hedgehog's quills, a timer's clock (PetBattle.Quills.cs).
             StepQuills(slime, dt);
             StepClock(slime, dt);
+            TickRoll(slime, dt); // 1.5 M17: a rolling boss's wait for its next roll (PetBattle.Zip.cs).
             // A lit bomb burns on whatever it does (in the Grabber's claw too).
             if (slime.Lit && BurnFuse(slime, dt)) { if (Over) break; continue; }
             if (slime.Handled) continue; // In the Grabber's claw or flying from it (PetBattle.Grabber.cs).
@@ -146,12 +147,14 @@ public sealed partial class BattleSim
                     if (slime.StateTime >= Windup(slime))
                     {
                         if (slime.Spitting) Spit(slime);
+                        else if (slime.Rolling) BeginRoll(slime);
                         else if (slime.Type.Dash) { slime.DashLeft = slime.Type.DashDistance; slime.DashHit = false; slime.DashBoost = 1; slime.Set(SlimeState.Dashing); }
                         else Strike(slime, catX);
                     }
                     break;
                 case SlimeState.Dashing:
-                    StepDash(slime, dt, catX, minX, maxX);
+                    if (slime.Rolling) StepRoll(slime, dt, catX, minX, maxX);
+                    else StepDash(slime, dt, catX, minX, maxX);
                     break;
                 case SlimeState.Casting:
                     if (slime.StateTime >= HealWindup(slime)) FinishHeal(slime);
@@ -178,8 +181,9 @@ public sealed partial class BattleSim
                         }
                         break;
                     }
-                    // A lit bomb stands still while its fuse burns (PetBattle.Fuse.cs).
-                    if (slime.Lit) break;
+                    // A lit bomb stands still while its fuse burns (PetBattle.Fuse.cs); a boss's file shard never
+                    // moves or attacks (1.5 M17).
+                    if (slime.Lit || slime.Type.Still) break;
                     // Panicking (its aura holder fell): away from the cat, no attack.
                     if (Panic(slime, dt, catX, minX, maxX)) break;
                     // Chasing the laser's dot (PetBattle.Tools.cs): nothing else.
@@ -198,6 +202,8 @@ public sealed partial class BattleSim
                     if (slime.Type.Support && (slime.KeepingBack = KeepBack(slime, dt, catX, minX, maxX))) break;
                     // A dasher runs off after its lunge.
                     if (RunAway(slime, dt, catX, minX, maxX)) break;
+                    // A rolling boss rolls at a cat further off (PetBattle.Zip.cs).
+                    if (slime.Type.Roll is RollSpec roll && StartRoll(slime, roll, dx, catHeld)) break;
                     // While the user carries the cat the slimes follow it along the floor, but never
                     // wind up: a lifted cat cannot be hit. A slow-turning kind faces the cat only after
                     // its turn, and neither walks nor winds up meanwhile.
@@ -206,6 +212,7 @@ public sealed partial class BattleSim
                     double reach = slime.Type.Dash ? slime.Type.DashRange : slime.Range;
                     if (!catHeld && !slime.Airborne && slime.Type.Fuse == null && facingCat && Math.Abs(dx) <= reach && slime.Cooldown <= 0 && Grace <= 0 && MayAttack(slime) && (slime.IsBoss || WallBetween(slime.X, catX) == null))
                     {
+                        slime.Rolling = false;
                         slime.DashDirection = slime.Facing;
                         slime.Set(SlimeState.Windup);
                         lastWindup = Time;
@@ -230,7 +237,7 @@ public sealed partial class BattleSim
         CarryRiders();
     }
 
-    public double Windup(Slime slime) => slime.Spitting && slime.Type.Spit is SpitSpec spit ? spit.Windup : (slime.Enraged ? slime.Type.EnragedWindup : slime.Type.Windup) + (slime.Elite?.WindupAdd ?? 0);
+    public double Windup(Slime slime) => slime.Spitting && slime.Type.Spit is SpitSpec spit ? spit.Windup : slime.Rolling && slime.Type.Roll is RollSpec roll ? roll.Windup : (slime.Enraged ? slime.Type.EnragedWindup : slime.Type.Windup) + (slime.Elite?.WindupAdd ?? 0);
     // A far heal winds up longer than one in reach.
     public static double HealWindup(Slime healer) => healer.FarHeal ? healer.Type.FarHealWindup : healer.Type.HealWindup;
 
@@ -417,7 +424,7 @@ public sealed partial class BattleSim
         var live = scratch;
         live.Clear();
         // A leaping boss flies over the others.
-        foreach (var slime in slimes) if (slime.State != SlimeState.Defeated && !slime.KeepingBack && slime.LeapHeight <= 0 && !slime.Riding && !slime.Airborne && !slime.Handled && !slime.Burrowed && slime.Type.Spring == null && slime.Loot == StolenKind.None && slime.Type.Blocker == blockers) live.Add(slime);
+        foreach (var slime in slimes) if (slime.State != SlimeState.Defeated && !slime.KeepingBack && slime.LeapHeight <= 0 && !slime.Riding && !slime.Airborne && !slime.Handled && !slime.Burrowed && slime.Type.Spring == null && slime.Loot == StolenKind.None && !slime.Type.Still && slime.Type.Blocker == blockers) live.Add(slime);
         live.Sort(ByX);
         for (int i = 1; i < live.Count; i++)
         {

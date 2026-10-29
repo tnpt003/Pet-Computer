@@ -751,6 +751,28 @@ S9, S10, S11 của docs/UPDATE-1.5.md. Code: `src/DesktopPet.Core/PetBattle.Quil
 - Sự kiện mới: `QuillsRising`, `QuillsUp`, `QuillsDown`, `QuillsSoaked`, `QuillsPricked`, `ClockStarted`, `ClockRang`, `ClockCalled`, `ThiefStole` (Value 1: kỹ năng, 0: app), `ThiefReturned`, `ThiefEscaped`. Cue có sẵn. Banner (vi/en/ja): nhím xù gai và bị gai đâm, slime hẹn giờ ra trận và reng (lần đầu mỗi trận); trộm lấy đồ, lấy lại, trốn mất (mỗi lần).
 - Chưa làm: Sổ tay quái và hướng dẫn chương 2 cho ba quái ở M21/M27; kiểu màn Đuổi trộm (T2) để sau 1.5. Số liệu (`prick`, thời gian xù, 20 s, `linger`) là ước lượng, chỉnh sau khi chơi thật.
 
+## Slime Nén (boss `zip`: `roll`, pha `roped`/`pack`, `still`) (bản 1.5, mốc M17, 2026-10-29)
+
+B1 của docs/UPDATE-1.5.md, trùm chương 2. Code: `src/DesktopPet.Core/PetBattle.Zip.cs` (luật), nối vào pha khiên có sẵn ở `PetBattle.Boss.cs`; vẽ `src/DesktopPet/PetBattleView.Zip.cs`; test `tests/DesktopPet.Tests/BattleZipTests.cs`, ảnh UiChecks (`ZipVisualChecks`: `enemy-zip.png`, `enemy-zip-roll.png`). **Boss và mảnh file có trong battle.json gốc nhưng chưa trận nào dùng** (`binSpit: false`; chương 2 ở M21, Viễn chinh tuyến 2 ở M23, Vô tận ở M24 đưa vào): chương 1, trận tự do, Viễn chinh, Vô tận không đổi (bảng mô phỏng cân bằng giống hệt bản trước từng dòng, 217/217). Muốn thử: chép `docs/examples/battle-m17.json` thành `%LOCALAPPDATA%\DesktopPet\battle.json`, mở Trận tự do và mang Kéo cắt.
+
+```json
+{ "id": "zip", "boss": true, "maxHp": 900, "summonCap": 10, "ropeCutSpeed": 300, "ropeCutStun": 1,
+  "roll": { "every": 7, "enragedEvery": 4.5, "minRange": 140, "range": 520, "windup": 1.1, "speed": 360, "distance": 460, "damage": 24, "stun": 0.9 },
+  "phases": [
+    { "at": 0.7, "shield": true, "roped": true, "formation": "fortress" },
+    { "at": 0.5, "shield": true, "roped": true, "formation": "cavalry" },
+    { "at": 0.25, "shield": true, "pack": true, "enrage": true, "summons": [ { "enemy": "zipshard", "count": 4 } ] } ] }
+{ "id": "zipshard", "maxHp": 40, "speed": 0, "damage": 0, "scale": 0.6, "still": true }
+```
+
+- **Pha 1, lăn đè** (`roll`, chỉ cho boss): mèo dưới sàn cách `minRange`–`range` (tâm tới tâm), đã qua `every` s từ lần lăn trước (nổi giận: `enragedEvery`; lần đầu sau nửa `every`) và hết hồi đòn thường thì boss gồng `windup` s (dải đỏ trên sàn chỉ hướng lăn, "!" trên đầu, không có vòng nện), rồi lăn `distance` DIPs với tốc độ `speed` theo hướng đã khóa, mặc mèo làm gì. Mèo dưới sàn nằm trên đường lăn (xét cả đoạn đường trong khung hình như cú lao) mất `damage` (tính theo hệ số như đòn thường của nó) và choáng `stun` s, mỗi lần lăn tối đa một lần; nhấc mèo lên (đã kéo quá ngưỡng) thì né; `landingGrace`, Khiên, Mai rùa như đòn thường. Gần hơn `minRange` thì nện như Vua Slime. Không lăn khi đang bật khiên (cả lúc nén). Hình: thân lăn xoay quanh tâm, nâng lên vừa đủ để không lún xuống sàn.
+- **Pha 2, giải nén** (`roped` + `formation`): pha khiên như Vua Slime (dừng đòn ở vạch, bật khiên, nhảy về mép xa mèo, vòng tím báo chỗ ra), quân là thành viên của đội hình đã đặt tên (sau các quân `summon`/`summons` nếu có), banner "Đội hình …!" như đội hình của M12. Mỗi quân ra trận nối **dây nhầy về boss** (`Slime.RopedTo`). Còn dây nào thì boss không mất máu (kể cả Bom). Cắt dây: mèo đang cầm (quá ngưỡng kéo) hoặc đang bay sau cú ném đi xuyên dây với tốc độ ≥ `ropeCutSpeed` (xét theo đoạn đường giữa hai khung hình, như dây Slime xích), hoặc một nét Kéo cắt đi qua dây; quân đó choáng `ropeCutStun` s. Hạ quân thì dây của nó cũng mất. Hết dây thì khiên vỡ (choáng `shieldBreakStun` s), các quân đã đứt dây vẫn đánh tiếp. Kéo chậm, mới nhấn chưa kéo, Pause không cắt. Dây về boss không tính vào giới hạn 2 loại liên kết mỗi trận và không chia sát thương. `summonCap` 10 để đội hình sau vẫn ra đủ khi quân đội hình trước còn sống.
+- **Pha 3, tự nén** (`pack`): boss bật khiên **tại chỗ** (không chạy về mép), vẽ nhỏ lại ×0,72 với hai đai quanh thân, các quân của pha (mảnh file) ra hai bên sát nó (bên nào hết sàn thì dồn sang bên kia), không tính `summonCap`. Khiên vỡ khi phá hết mảnh. Lúc nén boss không đi, không lăn, nhưng vẫn nện mèo đứng sát. Pha này có `enrage`: sau khi vỡ khiên boss nhanh hơn và lăn dày hơn.
+- **`still`** (mảnh file): không đi, không đánh, không bị dồn chỗ (`Separate` bỏ qua); vẫn bị đẩy lùi, Đẩy, Kẹp gắp như slime thường. Chỉ cho quái thường (không boss, không đòn đặc biệt, không liên kết, không khóa 1.5 nào).
+- Kiểm tra lúc nạp: `roll` chỉ cho boss, `minRange` < `range`, số liệu trong giới hạn; `formation` phải là đội hình đã biết; `roped`/`pack` chỉ cho pha khiên, không cùng lúc; tổng quân một pha (kể cả thành viên đội hình) tối đa 8; `ropeCutSpeed` 100–5000, `ropeCutStun` 0–5. Thành viên đội hình của pha boss tính vào luật "quái được gọi không gọi tiếp", giới hạn liên kết và quái dùng chuột như mọi quân gọi.
+- Sự kiện mới: `RollAimed`, `Rolled`, `RollHit`, `BossRoped`, `BossRopeCut` (Value: id quân), `BossRopesGone`, `BossPacked`; đội hình của pha boss phát `FormationArrived`. Cue có sẵn. Banner (vi/en/ja): pha giải nén "… bung file! Còn dây thì nó không mất máu…", pha nén "… tự nén lại! Phá hết mảnh file…", mỗi lần cắt dây "Đứt dây! Còn N dây", lần lăn đầu mỗi trận "… sắp lăn! Nhấc mèo lên để né".
+- Chưa làm: tranh/bản đồ chương 2 (M22), Sổ tay quái (M27), hướng dẫn chương 2 cho boss (M21). Số liệu (HP 900, lăn 24 + choáng 0,9 s, 4 mảnh 40 HP) là ước lượng, chốt bằng mô phỏng cân bằng chương 2 ở M21.
+
 ## Viễn chinh (`expedition`) (2026-10-21)
 
 Một chuyến đi gồm nhiều bậc, mỗi bậc chọn một điểm, bậc cuối là trùm. HP và build của mèo đi tiếp từ bậc này sang bậc sau; chuyến mới bắt đầu lại từ đầu. Code: `src/DesktopPet.Core/PetExpedition.cs` (luật, không WPF), `PetWindow.Expedition.cs` (bản đồ, kết quả).

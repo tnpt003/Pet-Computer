@@ -178,6 +178,15 @@ public sealed class EnemyType
     public QuillsSpec? Quills { get; init; }
     public ClockSpec? Clock { get; init; }
     public StealSpec? Steal { get; init; }
+    // 1.5 M17 (PetBattle.Zip.cs), the chapter 2 boss's own moves. Roll (a boss only): from afar it winds up
+    // and rolls across the floor over the cat. Still: it never moves or attacks (a boss's file shards).
+    // RopeCutSpeed/RopeCutStun: a roped shield phase's ropes (BossPhase.Roped) are cut by the cat going
+    // through one at RopeCutSpeed DIPs/s or more (held or thrown) or by the Scissors; the helper is dazed
+    // RopeCutStun s.
+    public RollSpec? Roll { get; init; }
+    public bool Still { get; init; }
+    public double RopeCutSpeed { get; init; } = 300;
+    public double RopeCutStun { get; init; } = 1;
     // An infected bin may spit one of this kind (with an elite affix). False keeps a kind out of battles
     // that never list it (the 1.5 enemies until their chapter brings them in).
     public bool BinSpit { get; init; } = true;
@@ -429,6 +438,24 @@ public sealed class StealSpec
     public double Linger { get; init; } = 6;
 }
 
+// B1 (1.5 M17): with the cat on the floor between MinRange and Range DIPs away (centre to centre) and
+// Every s since its last roll (EnragedEvery once it is angry), the boss winds up Windup s (a lane on the
+// floor shows the way), then rolls Distance DIPs at Speed over the floor, whatever the cat does. The cat on
+// the floor in its way takes Damage (scaled like its other hits) and a stun of Stun s, once per roll;
+// lifting the cat out of the way dodges it. Never while its shield is up.
+public sealed class RollSpec
+{
+    public double Every { get; init; } = 7;
+    public double EnragedEvery { get; init; } = 4.5;
+    public double MinRange { get; init; } = 140;
+    public double Range { get; init; } = 520;
+    public double Windup { get; init; } = 1.1;
+    public double Speed { get; init; } = 360;
+    public double Distance { get; init; } = 460;
+    public double Damage { get; init; } = 24;
+    public double Stun { get; init; } = 0.9;
+}
+
 // The thrown cat flying through an enemy at MinSpeed DIPs/s or more: Damage (as is, never blocked)
 // and a daze of Stun s; once per enemy per throw. The cat itself is not hurt.
 public sealed class ThrowHitSpec
@@ -562,7 +589,14 @@ public sealed class BossPhase
     // (takes no damage), runs to the edge far from the cat, calls its helpers there and keeps the
     // shield until every helper of this phase is defeated. Later phases wait for the shield to drop.
     public bool Shield { get; init; }
-    // Every helper this phase calls, in order.
+    // 1.5 M17 (PetBattle.Zip.cs). Formation: its helpers are also this formation's members (after the
+    // others). Roped (a shield phase): every helper comes tied to the boss by a rope and the shield holds
+    // while any rope is left (cut it, or defeat its helper). Pack (a shield phase): the boss stays where it
+    // is, squeezed small, its helpers (file shards) around it; the shield holds until they are gone.
+    public string? Formation { get; init; }
+    public bool Roped { get; init; }
+    public bool Pack { get; init; }
+    // Every helper this phase calls, in order (a formation's members: BattleSettings.PhaseCalls).
     public IEnumerable<string> Calls()
     {
         if (Summon != null) for (int i = 0; i < Count; i++) yield return Summon;
@@ -952,7 +986,7 @@ public static class BattleData
     public static readonly string[] WeaponStyles = { "sword", "hammer", "yarn", "glove" };
     public static readonly string[] WeaponHitEffects = { "spark", "thud" };
     public static readonly string[] EnemyRenderers = { "slime" };
-    public static readonly string[] EnemyMarks = { "none", "speed", "cracks", "leaf", "cross", "spout", "spring", "drum", "chain", "swarm", "giant", "bomb", "split", "half", "flag", "ghost", "bubble", "mirage", "sulk", "wings", "mole", "ice", "spikes", "quills", "clock", "thief" };
+    public static readonly string[] EnemyMarks = { "none", "speed", "cracks", "leaf", "cross", "spout", "spring", "drum", "chain", "swarm", "giant", "bomb", "split", "half", "flag", "ghost", "bubble", "mirage", "sulk", "wings", "mole", "ice", "spikes", "quills", "clock", "thief", "zip", "shard" };
     public static readonly string[] GroupSides = { "a", "b" };
     // Kinds the cursor beats (ghost, bubble, mirage, sulk) that one battle may bring (docs/UPDATE-1.5.md).
     public const int MaxMouseKinds = 2;
@@ -1383,15 +1417,33 @@ public static class BattleData
                 foreach (var p in phases)
                 {
                     if (p == null || !(p.At > 0 && p.At < 1)) throw new InvalidDataException(at + ".phases: each \"at\" must be between 0 and 1");
-                    if (p.Summon == null && p.Summons == null && !p.Enrage) throw new InvalidDataException(at + ".phases: a phase must summon or enrage");
+                    if (p.Summon == null && p.Summons == null && p.Formation == null && !p.Enrage) throw new InvalidDataException(at + ".phases: a phase must summon or enrage");
                     if (p.Summon != null && p.Count is < 1 or > 6) throw new InvalidDataException(at + ".phases: count must be 1–6");
                     if (p.Summons != null && (p.Summons.Length is 0 or > 4 || p.Summons.Any(g => g == null || !g.Fixed || g.Count is < 1 or > 6)))
                         throw new InvalidDataException(at + ".phases: summons must list 1–4 plain groups of 1–6");
-                    if (p.Calls().Count() > 8) throw new InvalidDataException(at + ".phases: a phase calls at most 8 helpers");
+                    // 1.5 M17: a formation it unpacks, ropes to its helpers, packing itself small.
+                    if (p.Formation != null && s.Formation(p.Formation) == null) throw new InvalidDataException($"{at}.phases names an unknown formation \"{p.Formation}\"");
+                    if ((p.Roped || p.Pack) && !p.Shield) throw new InvalidDataException(at + ".phases: roped and pack are for a shield phase");
+                    if (p.Roped && p.Pack) throw new InvalidDataException(at + ".phases: a phase is roped or packs, not both");
+                    if (s.PhaseCalls(p).Count() > 8) throw new InvalidDataException(at + ".phases: a phase calls at most 8 helpers");
                     // A shield only drops when its helpers are gone: it needs some.
-                    if (p.Shield && !p.Calls().Any()) throw new InvalidDataException(at + ".phases: a shield phase must summon");
+                    if (p.Shield && !s.PhaseCalls(p).Any()) throw new InvalidDataException(at + ".phases: a shield phase must summon");
                 }
             }
+            if (e.Roll is RollSpec roll)
+            {
+                if (!e.Boss) throw new InvalidDataException(at + ".roll is for a boss");
+                Within(roll.Every, 1, 60, at + ".roll.every"); Within(roll.EnragedEvery, 1, 60, at + ".roll.enragedEvery");
+                Within(roll.MinRange, 0, 800, at + ".roll.minRange"); Within(roll.Range, 50, 1500, at + ".roll.range");
+                if (roll.MinRange >= roll.Range) throw new InvalidDataException(at + ".roll.minRange must be below its range");
+                Within(roll.Windup, 0.3, 5, at + ".roll.windup"); Within(roll.Speed, 50, 1500, at + ".roll.speed");
+                Within(roll.Distance, 50, 1500, at + ".roll.distance"); Within(roll.Damage, 0, 1000, at + ".roll.damage"); Within(roll.Stun, 0, 5, at + ".roll.stun");
+            }
+            Within(e.RopeCutSpeed, 100, 5000, at + ".ropeCutSpeed"); Within(e.RopeCutStun, 0, 5, at + ".ropeCutStun");
+            if (e.Still && (e.Boss || e.Blocker || e.Dash || e.Slam || e.Hover > 0 || e.Support || e.HealAmount > 0 || e.Link != null || e.Spit != null || e.Spring != null
+                || e.Fuse != null || e.Split != null || e.UsesMouse || e.Fly != null || e.Burrow != null || e.Ice != null || e.Cling != null || e.Quills != null
+                || e.Clock != null || e.Steal != null || e.SummonAt > 0 || e.Phases != null))
+                throw new InvalidDataException(at + ": still is only for a plain enemy (no boss, attack, link or 1.5 trick)");
         }
         // A rider's mount and a merge's result: known enemies without a link of that kind (no chains).
         foreach (var e in s.EnemyTypes)
@@ -1415,10 +1467,10 @@ public static class BattleData
                     if (call == null || !ids.Contains(call) || s.Enemy(call) is { Boss: true } or { Clock: not null })
                         throw new InvalidDataException($"enemies[{e.Id}].clock.call names \"{call}\": an unknown enemy, a boss or another timer");
         // A summoned helper may not summon in turn (no chains of calls).
-        static bool Summons(EnemyType e) => e.SummonAt > 0 || e.Phases?.Any(p => p.Calls().Any()) == true;
+        bool Summons(EnemyType e) => e.SummonAt > 0 || e.Phases?.Any(p => s.PhaseCalls(p).Any()) == true;
         foreach (var e in s.EnemyTypes)
             foreach (var p in e.Phases ?? Array.Empty<BossPhase>())
-                foreach (var call in p.Calls().Distinct())
+                foreach (var call in s.PhaseCalls(p).Distinct())
                     if (!ids.Contains(call) || Summons(s.Enemy(call)))
                         throw new InvalidDataException($"enemies[{e.Id}] phase summons \"{call}\": an unknown enemy (or one that summons too)");
         foreach (var e in s.EnemyTypes)
@@ -1560,7 +1612,7 @@ public static class BattleData
                 }
                 if (e.SummonAt > 0) reach.Push(e.SummonType);
                 if (e.Split != null) reach.Push(e.Split.Into);
-                foreach (var p in e.Phases ?? Array.Empty<BossPhase>()) foreach (var call in p.Calls()) reach.Push(call);
+                foreach (var p in e.Phases ?? Array.Empty<BossPhase>()) foreach (var call in s.PhaseCalls(p)) reach.Push(call);
             }
             if (links.Count > EnemyLinks.MaxKinds)
                 throw new InvalidDataException($"{at} brings {links.Count} kinds of link ({string.Join(", ", links)}): at most {EnemyLinks.MaxKinds} in one battle");

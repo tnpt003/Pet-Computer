@@ -315,6 +315,7 @@ public sealed partial class PetWindow
     private (UpgradeSpec Card, BattleSim Before, BattleSim After)? BagPreview(BagView view)
     {
         if (!view.Live || BattleUpgradePreview is not string id || view.Sim.UpgradeOffer?.FirstOrDefault(u => u.Id == id) is not UpgradeSpec card) return null;
+        if (card.Effect == MutationSpec.CardEffect) return null; // 1.5 M24: a mutation is no card of the build.
         var build = view.Sim.UpgradesTaken.Where(t => t.Value > 0).ToDictionary(t => t.Key, t => t.Value);
         var relics = view.Sim.Relics.Select(r => r.Id).ToList();
         var before = new BattleSim(view.Sim.Settings, 0, 1000, weapon: view.Sim.Weapon.Id, build: build, seed: 0, relics: relics, weaponBonus: view.Sim.WeaponBonus);

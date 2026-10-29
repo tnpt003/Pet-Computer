@@ -93,7 +93,7 @@ public sealed partial class BattleSim
 
     // The Healing fish's heal and each skill's cooldown in this battle (the relics' changes included).
     public double HealAmount => Settings.HealAmount * (1 + fishBonus);
-    public double SkillCooldown(BattleSkill skill) => Math.Max(0.5, 1 - skillCut) * Math.Max(0.3, 1 - batteryCut) * skill switch
+    public double SkillCooldown(BattleSkill skill) => Math.Max(0.5, 1 - skillCut) * Math.Max(0.3, 1 - batteryCut) * MutationCooldown * skill switch
     {
         BattleSkill.Shield => Settings.SkillCooldown(skill) + shieldDelay,
         BattleSkill.Heal => Settings.SkillCooldown(skill) * (1 + fishDelay),
@@ -108,11 +108,16 @@ public sealed partial class BattleSim
         foreach (var u in UpgradeOffer) if (u.Id == id) pick = u;
         if (pick == null) return false;
         UpgradeOffer = null;
-        Picks++;
-        Take(pick, catX, true);
+        // 1.5 M24: an Infinity mutation is picked the same way, but is no card of the build.
+        if (pick.Effect == MutationSpec.CardEffect) StartMutation(pick.Id, catX);
+        else
+        {
+            Picks++;
+            Take(pick, catX, true);
+        }
         events.Add(new(BattleEventKind.UpgradeChosen, catX));
-        // A pick still owed (a cleared boss wave in Infinity): the next offer at once.
-        if (bonusPicks > 0 && !Over) { bonusPicks--; OfferUpgrades(); }
+        // A pick still owed (a cleared boss wave in Infinity; a mutation's reward, then the next mutation): the next offer at once.
+        NextOffer();
         return true;
     }
 

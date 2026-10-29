@@ -44,6 +44,7 @@ public sealed partial class BattleSim
             farEdge = Far(catX); streamEdge = 0;
             var wave = WavePlan[Math.Min(Wave, WaveCount) - 1]; // A survive stage repeats its last wave.
             stream = wave.Stream;
+            wave = Crowded(wave); // 1.5 M24: a crowd mutation.
             if (stream == null) pending.AddRange(SpawnDirector.Units(wave, spawnRandom, Cost, Settings.Formation, Threat));
             eliteBudget = SpawnDirector.BudgetLeft(wave, pending, Cost);
             Phase = BattlePhase.Fighting;
@@ -51,6 +52,7 @@ public sealed partial class BattleSim
             AppsWaveStarted();
             lastStandSpent = false;
             events.Add(new(BattleEventKind.WaveStarted, catX, Wave));
+            EndlessWaveStarted(catX);
             // Infinity's safety net: from AllSynergiesAt every synergy is on, whatever the build.
             if (Endless && Stage?.AllSynergiesAt is int all && Wave >= all)
                 for (int i = 0; i < Settings.SynergyList.Count; i++)
@@ -123,13 +125,16 @@ public sealed partial class BattleSim
         if (last) { Finish(BattlePhase.Won); return; }
         Phase = BattlePhase.WaveBreak;
         PhaseRemaining = Settings.WaveBreakSeconds;
-        LastHeal = Math.Max(0, Math.Min(Settings.WaveHeal, CatMaxHp - CatHp));
+        LastHeal = Hungry ? 0 : Math.Max(0, Math.Min(Settings.WaveHeal, CatMaxHp - CatHp)); // 1.5 M24: none while hungry.
         CatHp += LastHeal;
         if (LastHeal > 0) AddEffect(BattleEffectKind.Number, catX, 115, -Math.Round(LastHeal));
         events.Add(new(BattleEventKind.WaveCleared, catX));
         if (Stage is { Upgrades: true, UpgradeAt: null } && (Stage.UpgradeEvery is not int every || every <= 1 || Wave % every == 0)) OfferUpgrades();
         // A cleared boss wave in Infinity: a second card after the first.
         if (ChoosingUpgrade && Stage is { BossBonusPick: true } && IsBossWave(Wave)) bonusPicks = 1;
+        // 1.5 M24: the mutation in force pays, a new one is owed after the cards.
+        MutationWaveCleared(catX);
+        if (UpgradeOffer == null) NextOffer();
     }
 
     // Formations sent so far this battle (1.5 M12).
@@ -212,7 +217,7 @@ public sealed partial class BattleSim
     private void RollElite(Slime slime)
     {
         // 1.5 M23b: an Expedition curse (eliteBonus) adds to the stage's chance.
-        if (Stage is not StageSpec stage || stage.EliteChance + eliteBonus <= 0 || Difficulty == BattleDifficulty.Easy || slime.Type.Elite is not EliteSpec elite) return;
+        if (Stage is not StageSpec stage || stage.EliteChance + eliteBonus + MutationElite <= 0 || Difficulty == BattleDifficulty.Easy || slime.Type.Elite is not EliteSpec elite) return;
         int elites = 0;
         foreach (var s in slimes) if (s.Elite != null && !s.Rallied && !s.Spat && !s.Decoy && s.State != SlimeState.Defeated) elites++;
         // Infinity: more elites as the waves go on (EliteChancePerWave, MoreElitesEvery).
@@ -220,7 +225,7 @@ public sealed partial class BattleSim
         if (elites >= most) return;
         double chance = stage.EliteChance + stage.EliteChancePerWave * Math.Max(0, Wave - 1);
         if (stage.EliteChanceMax > 0) chance = Math.Min(chance, stage.EliteChanceMax);
-        chance += eliteBonus;
+        chance += eliteBonus + MutationElite; // 1.5 M24: and an elite mutation.
         if (stream is { Budget: > 0 } flow ? AliveCost() + elite.Cost > flow.Budget : elite.Cost > eliteBudget) return;
         if (affixRandom.NextDouble() >= chance) return;
         if (stream == null) eliteBudget -= elite.Cost;

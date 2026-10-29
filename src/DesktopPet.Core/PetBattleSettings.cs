@@ -756,7 +756,10 @@ public enum BattleEventKind
     DropAppeared, DropFaded, DropPicked,
     // 1.5 M20 (PetBattle.Basket.cs): a slime took a fish (Value: its id), dropped one (Value: the fish's id),
     // a fish went back to the basket (Value: 1 clicked, 0 by itself), a fish was carried away (Value: fish left).
-    FishTaken, FishDropped, FishReturned, FishLost
+    FishTaken, FishDropped, FishReturned, FishLost,
+    // 1.5 M24 (PetBattle.Mutations.cs): an Infinity stretch began (Value: its index in EndlessSpec.Eras); a
+    // mutation was picked, was seen through and paid (Value: its index in MutationRules.List).
+    EraStarted, MutationStarted, MutationEnded
 }
 // 1.5 M14: a flyer's round (PetBattle.Fly.cs) and a burrower's (PetBattle.Burrow.cs).
 public enum FlyPhase { Aloft, Falling, Downed, Rising }

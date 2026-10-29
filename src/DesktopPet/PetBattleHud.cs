@@ -39,7 +39,7 @@ public sealed class BattleHud : Border
     private double trail = 1, lastTime = -1, bannerUntil = -1;
     private int dotsFor = -1, dotsWave = -1;
     private (double Hp, double Max) shownHp = (-1, -1);
-    private (BattlePhase, int, int, bool, bool, double, int, int, int, int) shownStatus;
+    private (BattlePhase, int, int, bool, bool, double, int, int, int, int, string?, int) shownStatus;
     private int shownUpgrades = -1;
     private (double, bool, bool) shownBoss = (-1, false, false);
     private (bool, BattleSkill?, bool, int, bool, int) shownHint;
@@ -276,7 +276,7 @@ public sealed class BattleHud : Border
         statusColumn.Visibility = showBanner ? Visibility.Hidden : Visibility.Visible;
         int left = b.Alive + b.ToSpawn;
         int clock = b.Survival ? (int)Math.Ceiling(b.SurviveRemaining) : -1;
-        var statusKey = (b.Phase, b.Wave, left, b.Paused, fullscreen, Math.Round(b.LastHeal), (b.IsBossWave(b.Wave) ? 1 : 0) + (away ? 2 : 0) + (b.ChoosingUpgrade ? 4 : 0), clock, RunCoins + b.Coins, b.FishLeft);
+        var statusKey = (b.Phase, b.Wave, left, b.Paused, fullscreen, Math.Round(b.LastHeal), (b.IsBossWave(b.Wave) ? 1 : 0) + (away ? 2 : 0) + (b.ChoosingUpgrade ? 4 : 0) + (b.ChoosingMutation ? 8 : 0), clock, RunCoins + b.Coins, b.FishLeft, b.Mutation?.Id, b.MutationWavesLeft);
         if (statusKey != shownStatus)
         {
         shownStatus = statusKey;
@@ -296,7 +296,11 @@ public sealed class BattleHud : Border
         if (b.Loot == BattleLoot.Coins) text += LF($" · Xu {RunCoins + b.Coins}", $" · Coins {RunCoins + b.Coins}");
         // 1.5 M20: a basket stage's fish still the cat's.
         if (b.FishTotal > 0) text += LF($" · Cá {b.FishLeft}/{b.FishTotal}", $" · Fish {b.FishLeft}/{b.FishTotal}");
-        if (b.ChoosingUpgrade && !b.Over) text += L(" · Chọn nâng cấp", " · Pick an upgrade");
+        // 1.5 M24: Infinity's mutation in force and the waves it still holds.
+        if (b.Mutation is MutationSpec rule && !b.Over)
+            text += LF($" · Đột biến {rule.Name(PetLanguage.Vietnamese)}: còn {b.MutationWavesLeft} đợt", $" · Mutation {rule.Name(language())}: {b.MutationWavesLeft} wave{(b.MutationWavesLeft == 1 ? "" : "s")} left");
+        if (b.ChoosingMutation && !b.Over) text += L(" · Chọn đột biến", " · Pick a mutation");
+        else if (b.ChoosingUpgrade && !b.Over) text += L(" · Chọn nâng cấp", " · Pick an upgrade");
         else if (b.Paused && !b.Over) text += away ? L(" · Chờ mèo về màn hình này", " · Waiting for the cat to come back")
             : fullscreen ? L(" · Tạm dừng (toàn màn hình)", " · Paused (fullscreen)") : L(" · Tạm dừng", " · Paused");
         SetText(status, text);

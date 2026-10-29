@@ -187,6 +187,41 @@ internal static class EndlessChecks
             window.BattleRecords.Loadouts.Remove(clearedKey);
             FieldOf("endlessEarned").SetValue(window, null);
             window.AdventureProgress.RewardsSeen.Clear(); window.AdventureProgress.RewardsSeen.AddRange(seenBefore);
+
+            // 1.5 M24 "Mutations": a boss every 2 waves; after its cards the panel offers three odd rules
+            // (drawback, reward in gold); the pick holds and the HUD says how long.
+            var mutating = new EndlessSpec { UpgradeEvery = 2, BossEvery = 2, Boss = "king", FirstCount = 1, CountPerWave = 0, Kinds = new[] { new EndlessKind { Enemy = "slime", Weight = 1 } },
+                Mutations = builtIn.Mutations };
+            window.BattleTuning = new BattleSettings { FirstWaveDelay = 0, SpawnInterval = 0, SlimeMaxHp = 1, BossMaxHp = 1, SlimeDamage = 0, WaveBreakSeconds = 0.3, OutroSeconds = 0.5, Campaign = campaign, Endless = mutating };
+            check(window.OpenBattlePrep(forEndless: true) == null, "Infinity's setup opens again");
+            if (window.BattleTutorialOpen) window.CloseBattleTutorial(finished: true);
+            check(window.BattlePrepReady() == null && window.Battle is { Endless: true }, "A run with mutations starts");
+            hud = Field<BattleHud>(window, "battleHud"); // This run's HUD.
+            for (int i = 0; i < 600 && window.BattleActive && !(window.Battle!.ChoosingMutation && window.BattleUpgradeOpen); i++)
+            {
+                if (window.Battle!.ChoosingUpgrade && !window.Battle.ChoosingMutation) { window.PickBattleUpgrade(window.Battle.UpgradeOffer![0].Id); window.ConfirmBattleUpgrade(); }
+                Fight(0.05);
+                if (window.Battle?.Slimes.Count > 0) window.Battle.Slimes[0].X = pet.X + 56 + 50;
+            }
+            var rules = window.Battle?.UpgradeOffer;
+            string panel = window.BattleUpgradeText;
+            check(window.Battle is { ChoosingMutation: true, Wave: 2 } && rules is { Count: 3 } && panel.Contains("Mutation! Pick an odd rule") && panel.Contains("★ ") && panel.Contains("Until the next boss is beaten")
+                  && hud.StatusText.Contains("Pick a mutation"), $"After the boss wave's cards: three mutations with their rewards ({panel.Replace('\n', '|')}; {hud.StatusText})");
+            foreach (string lang in new[] { "vi", "ja", "en" })
+            {
+                prefs.Language = lang;
+                Call(window, "CloseBattleUpgrade");
+                Fight(0.02);
+                Shot("Pet upgrade", $"endless-mutation-{lang}.png");
+            }
+            string ruleId = rules![1].Id;
+            check(window.PickBattleUpgrade(ruleId) && window.ConfirmBattleUpgrade() && window.Battle!.Mutation?.Id == ruleId && window.Battle.Picks == 1 && !window.BattleUpgradeOpen,
+                $"Confirming one puts it in force (no card of the build) ({window.Battle?.Mutation?.Id})");
+            Fight(0.5);
+            check(hud.StatusText.Contains("Mutation ") && (hud.StatusText.Contains("waves left") || hud.StatusText.Contains("wave left")), $"The HUD names the mutation and the waves it holds ({hud.StatusText})");
+            window.EndBattleByUser();
+            Fight(1);
+            Call(window, "CloseBattleSummary");
         }
         finally
         {

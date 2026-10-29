@@ -414,7 +414,7 @@ public sealed partial class BattleSim
 
     // The ally a support enemy is healing right now (null when it is not casting).
     public Slime? Healing(Slime healer) => healer.State == SlimeState.Casting ? Find(healer.HealTargetId) : null;
-    private double Speed(Slime slime) => (slime.Enraged ? slime.Type.EnragedSpeed : slime.Type.Speed) * level.EnemySpeed * slime.AuraSpeed * slime.ChillFactor;
+    private double Speed(Slime slime) => (slime.Enraged ? slime.Type.EnragedSpeed : slime.Type.Speed) * level.EnemySpeed * slime.AuraSpeed * slime.ChillFactor * MutationSpeed;
 
     private readonly List<Slime> scratch = new();
     private static readonly Comparison<Slime> ByX = (a, b) => a.X.CompareTo(b.X);
@@ -544,7 +544,7 @@ public sealed partial class BattleSim
             events.Add(new(BattleEventKind.ShellBlocked, catX));
             return false;
         }
-        hurt = damage * ArmorFactor * (1 + recklessHurt);
+        hurt = damage * HurtFactor;
         CatHp = Math.Max(0, CatHp - hurt);
         NoteHurt(hurt);
         GainRage(hurt * Settings.RageHurtGain);

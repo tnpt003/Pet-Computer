@@ -763,6 +763,8 @@ public sealed class StageSpec
     [JsonIgnore] public int MoreElitesMax { get; init; }
     [JsonIgnore] public int? AllSynergiesAt { get; init; }
     [JsonIgnore] public bool BossBonusPick { get; init; }
+    // 1.5 M24: the Infinity rules this stage was made from (stretches, mutations); null elsewhere.
+    [JsonIgnore] public EndlessSpec? Infinity { get; init; }
     // Survive stages: a card offer at each of these points of the clock (seconds held out) instead of
     // after cleared waves.
     public double[]? UpgradeAt { get; init; }
@@ -1671,8 +1673,12 @@ public static class BattleData
                     if (!ids.Contains(g.Enemy)) throw new InvalidDataException($"{at}[{i}] names an unknown enemy \"{g.Enemy}\"");
                 }
             }
-            // At most two kinds of link in one battle: every kind its waves can bring (drawn ones,
-            // helpers a boss or an enemy calls, mounts, merged results) counts.
+            Limits(waves, at);
+        }
+        // At most two kinds of link in one battle: every kind its waves can bring (drawn ones,
+        // helpers a boss or an enemy calls, mounts, merged results) counts. 1.5 M24: Infinity checks each stretch.
+        void Limits(IEnumerable<WaveSpec> waves, string at)
+        {
             var reach = new Stack<string>();
             foreach (var wave in waves)
             {
@@ -1764,7 +1770,7 @@ public static class BattleData
         if (s.MaxAttackers is < 0 or > 10) throw new InvalidDataException("maxAttackers must be 0–10 (0: no limit)");
         Within(s.AttackStagger, 0, 3, "attackStagger"); Within(s.IncomingWarning, 0, 5, "incomingWarning");
         if (s.Campaign is CampaignSpec campaign) ValidateCampaign(campaign, (waves, at, alive, survival) => Waves(waves, at, alive ?? s.MaxAlive, survival), Id, Text);
-        if (s.Endless is EndlessSpec endless) EndlessSpec.Validate(endless, s);
+        if (s.Endless is EndlessSpec endless) EndlessSpec.Validate(endless, s, Limits);
         if (s.Drops is DropSpec drops) DropSpec.Validate(drops);
         if (s.Expedition is ExpeditionSpec expedition) ExpeditionSpec.Validate(expedition, s, (waves, at, alive, survival) => Waves(waves, at, alive ?? s.MaxAlive, survival), Id, Text);
         // 1.5 M22: one id per keepsake over the Adventure, the Expedition and Infinity (the display corner finds it by id).

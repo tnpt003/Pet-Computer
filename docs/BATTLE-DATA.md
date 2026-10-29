@@ -691,7 +691,7 @@ S1–S4 của docs/UPDATE-1.5.md. Code: `src/DesktopPet.Core/PetBattle.Tricks.cs
 - **Slime bong bóng** (`bubble`, 34 HP, xanh da trời): lơ lửng trong bong bóng cao `lift` DIPs; bong bóng chặn mọi đòn (kể cả độc), nó vẫn đánh bình thường. Click vào nó (không chọn skill nào) là chọc: mỗi lần một vết nứt; đủ `pops` lần (tinh anh `elitePops`) thì vỡ: rơi xuống choáng `stun` s (× `stunFactor`), đánh được. Một nét Kéo cắt qua nó cũng làm vỡ (không mất máu). Bong bóng mọc lại sau `regrow` s. Mèo bỏ qua nó khi còn quái khác để đánh. Có skill nhắm quái đang chọn (Đẩy, Bom…) thì click dùng skill như cũ (ưu tiên: mèo → skill → quái).
 - **Slime ảo ảnh** (`mirage`, 36 HP, tím, viên đá tím trên trán): ra kèm `copies` bản giả (tinh anh `eliteCopies`, cũng có viền vàng). Bản giả giống hệt, hiện máu của bản thật, đi và gồng đòn như thật nhưng đòn của nó không gây gì (chữ "TRƯỢT" ở mèo). Bất kỳ đòn nào trúng bản giả (kể cả Đẩy, Kẹp gắp) thì nó tan, không tính là mèo hạ, không vào kỷ lục; bản thật bị hạ thì mọi bản giả tan. Bản giả không tính vào số quái trên sàn (`maxAlive`), ngân sách đợt, số tinh anh, không bị thảo dược hồi, không được dây xích/cưỡi chọn, không bắn virus. Bình thường không bản nào có bóng; rê chuột lên một bản (hoặc laser trong `laserRange`) thì `reveal` s: bản giả nhòe tím, trong suốt; bản thật có bóng đậm rộng dưới chân.
 - **Slime dỗi** (`sulky`, hồng, chau mày, má hồng, bĩu môi): mọi đòn không trừ máu, mỗi đòn làm nó phồng thêm `grow` (tối đa ×`maxGrow`, chữ hồng "DỖI!"), đòn của nó mạnh theo độ phồng; mỗi đòn cũng làm tụt 10% độ dỗ. Rê chuột qua lại trên nó: quãng đường chuột đi trên nó cộng dồn (mỗi khung tối đa 80 DIPs, nhảy chuột không tính), đủ `calm` DIPs (tinh anh `eliteCalm`) thì hết dỗi: cười, vẫy tay, đi khỏi và mờ dần, tim bay lên; **tính là mèo hạ**. Đang dỗ thì vừa xẹp lại. Thanh hồng trên đầu là độ dỗ (thay thanh máu). Không dỗ quá `idle` s thì dỗi lại `fade` mỗi giây. Mèo bỏ qua nó khi còn quái khác.
-- Kiểm tra lúc nạp: mỗi loại quái tối đa một trong bốn khóa; không cho boss, đá chắn, quái bay, lò xo, bom, tách đôi, có liên kết; ảo ảnh không cho quái hỗ trợ/hồi máu; dỗi không cho quái hồi máu. **Mỗi trận tối đa 2 loại quái dùng chuột** (`BattleData.MaxMouseKinds`, tính mọi loại các đợt có thể đưa ra như luật liên kết; áp cho mọi trận, Vô tận xét lại ở M24).
+- Kiểm tra lúc nạp: mỗi loại quái tối đa một trong bốn khóa; không cho boss, đá chắn, quái bay, lò xo, bom, tách đôi, có liên kết; ảo ảnh không cho quái hỗ trợ/hồi máu; dỗi không cho quái hồi máu. **Mỗi trận tối đa 2 loại quái dùng chuột** (`BattleData.MaxMouseKinds`, tính mọi loại các đợt có thể đưa ra như luật liên kết; áp cho mọi trận; từ M24 Vô tận xét theo từng chặng và từng đợt trùm).
 - Sự kiện mới: `GhostFaded`, `GhostRevealed`, `GhostMissed`, `BubbleBlocked`, `BubblePoked`, `BubblePopped`, `BubbleRegrown`, `MirageCast`, `MirageDispelled`, `SulkPuffed`, `SulkPetted`, `SulkCalmed` (cue có sẵn); hiệu ứng `Miss`, `Heart`. Banner lần đầu mỗi trận (vi/en/ja): bóng ma ẩn, bong bóng chặn đòn, bong bóng vỡ, ảo ảnh có bản giả, slime dỗi không mất máu, hết dỗi.
 - Số liệu là ước lượng, chỉnh sau khi chơi thật (nhất là `calm`: người dùng rê nhanh thì ~1–2 s).
 
@@ -796,7 +796,7 @@ Vua biến dị giữ pha khiên, nhảy về mép, vòng tím, phong tinh anh n
 - **Mưa nhầy** (`rain`, chỉ cho boss): cứ `every` s (lần đầu sau nửa `every`), khi khiên tắt, không choáng, `drops` giọt rơi thẳng từ `height` DIPs xuống quanh mèo (giọt đầu đúng chỗ mèo, các giọt sau cách `spacing` lần lượt hai bên), mỗi giọt có vòng cam trên sàn `warning` s trước. Giọt rơi như giọt Slime phun: mèo dưới sàn trong `radius` mất `damage` (tính theo hệ số như đòn của boss), không choáng; nhấc mèo, `landingGrace`, Khiên bong bóng thì không trúng. `puddleSeconds` > 0: để lại vũng tăng tốc như Slime phun (cỡ `radius` × 1,3, Quạt làm khô).
 - Kiểm tra lúc nạp: `brood`/`crownLinks`/`rain` chỉ cho boss; `brood.count` 1–6, `every` 2–60, `warning` 0–3, `feedRate` 0–500; `crownLinks` 1–4 mục, chỉ `tether`/`rhythm`, số liệu như liên kết thường; `rain.drops` 1–8, `warning` 0,3–5, `radius` 10–200, `height` 40–400, `puddleSeconds` 0–30. Dấu vẽ mới `marks`: `mother`, `mutant`.
 - Sự kiện mới: `BroodWarned`, `BroodLaid` (Value: số con), `NurseHeading`, `NurseFed` (Value: HP đã cho), `CrownLinked` (Value: id quân cầm liên kết), `RainCalled`; giọt mưa rơi là `GooLanded`. Cue có sẵn. Banner (vi/en/ja): lần đẻ đầu "… sắp đẻ bầy!…", con đầu tiên về bú "Slime khổng lồ về cho … bú!…", mỗi lần bú xong "… được hồi N máu", mỗi lần vương miện nối dây hoặc trao trống, lần mưa đầu "… gọi mưa nhầy!…".
-- Slime Mẹ có trong chương 2 từ M21 (cuối màn 4); Vua biến dị chưa vào trận gốc nào. Từ M23a Slime Mẹ có ở tinh anh "Tổ Slime Mẹ" của Viễn chinh tuyến 2. Chưa làm: vòng boss Vô tận Vua → Slime Nén → Vua biến dị (M24); Sổ tay quái (M27). Số liệu (HP 650/1000, bú 20 HP/s, mưa 14) là ước lượng, chốt bằng mô phỏng ở M21/M29.
+- Slime Mẹ có trong chương 2 từ M21 (cuối màn 4); Vua biến dị chưa vào trận gốc nào. Từ M23a Slime Mẹ có ở tinh anh "Tổ Slime Mẹ" của Viễn chinh tuyến 2. Từ M24 Slime Nén và Vua biến dị có trong vòng trùm Vô tận. Chưa làm: Sổ tay quái (M27). Số liệu (HP 650/1000, bú 20 HP/s, mưa 14) là ước lượng, chốt bằng mô phỏng ở M21/M29.
 
 ## Đồ rơi và xu (`drops`) (bản 1.5, mốc M19, 2026-10-29)
 
@@ -819,7 +819,7 @@ M4, M5 của docs/UPDATE-1.5.md. Code: `src/DesktopPet.Core/PetBattle.Drops.cs` 
 - **Xu trong chuyến (M5):** trận Viễn chinh thắng cộng `BattleSim.Coins` vào `ExpeditionRun.Coins` (lưu trong expedition.json; file cũ không có thì là 0). Rời trận hoặc thua thì không cộng; chuyến kết thúc là hết xu, không thành tiền tệ vĩnh viễn. HUD trận Viễn chinh hiện "Xu N" (xu chuyến + trận này), bản đồ hiện "N xu", kết quả trận hiện "Nhặt được N xu · chuyến có M xu". Tiêu ở cửa hàng mèo (từ M23a, xem "Tuyến Viễn chinh và cửa hàng mèo").
 - Kiểm tra lúc nạp: `chance`, `eliteChance` 0–1; `bossDrops` 0–10; `life` 2–60; `fade` 0–`life`; `maxOnFloor` 1–20; `fishHeal` 0–200; `coin`, `eliteCoin`, `bossCoin` 1–100; `weights` ít nhất một loại, chỉ `fish`/`coin`/`potion`, mỗi trọng số 0–100.
 - Sự kiện mới: `DropAppeared`, `DropFaded` (Value: id món), `DropPicked` (Value: loại); nhặt dùng cue `sparkle` có sẵn.
-- rulesVersion của Viễn chinh tăng 6 → 7 ở M23a (cửa hàng; chuyến r6 đang đi vẫn đi tiếp); của Vô tận tăng ở M24. Chưa làm: thẻ Mưu mẹo về đồ rơi (M25); số liệu là ước lượng, chốt khi chơi thật/M29.
+- rulesVersion của Viễn chinh tăng 6 → 7 ở M23a (cửa hàng; chuyến r6 đang đi vẫn đi tiếp); của Vô tận tăng 5 → 6 ở M24. Chưa làm: thẻ Mưu mẹo về đồ rơi (M25); số liệu là ước lượng, chốt khi chơi thật/M29.
 
 ## Bảo vệ giỏ cá (`basket` của màn) (bản 1.5, mốc M20, 2026-10-29)
 
@@ -975,8 +975,8 @@ Một chuyến đi gồm nhiều bậc, mỗi bậc chọn một điểm, bậc 
 
 ```jsonc
 "endless": {
-  "id": "endless", "rulesVersion": 4, "unlockAfter": "c1_slime_king", "upgradeEvery": 2, "bossEvery": 10, "boss": "king_c1",
-  "lateBoss": "king", "lateBossFrom": 30, "bossBonusPick": true, "allSynergiesAt": 48,
+  "id": "endless", "rulesVersion": 6, "unlockAfter": "c1_slime_king", "upgradeEvery": 2, "bossEvery": 10, "boss": "king_c1",
+  "bosses": [ "king_c1", "zip", "mutant_king" ], "lateBoss": "king", "lateBossFrom": 40, "bossBonusPick": true, "allSynergiesAt": 48,
   "eliteChancePerWave": 0.007, "eliteChanceMax": 0.45, "moreElitesEvery": 20, "moreElitesMax": 2,
   "firstCount": 3, "countPerWave": 0.35, "maxCount": 14, "threatPerWave": 0.06, "maxAlive": 5, "eliteChance": 0.12,
   "kinds": [ { "enemy": "slime", "weight": 50 }, { "enemy": "runner", "weight": 25, "from": 3 }, { "enemy": "mender", "weight": 15, "from": 5 }, { "enemy": "rock", "weight": 15, "from": 7 } ]
@@ -984,13 +984,40 @@ Một chuyến đi gồm nhiều bậc, mỗi bậc chọn một điểm, bậc 
 ```
 
 - Một trận không bao giờ thắng. Đợt n có `firstCount` + `countPerWave` × (n − 1) quái (làm tròn xuống, 1 đến `maxCount`), bốc theo `kinds` (mỗi loại có từ đợt `from`, theo `weight`; phải có ít nhất một loại từ đợt 1; không được là trùm), threat 1 + `threatPerWave` × (n − 1).
-- Mỗi đợt thứ `bossEvery` (0 = không có) chỉ có `boss` (phải là quái trùm); từ đợt `lateBossFrom` (1–500, gốc 30) có thêm `lateBoss` (trùm, tùy chọn) cùng đợt. Sau mỗi `upgradeEvery` đợt dọn xong (0 = không có thẻ) người chơi chọn 1 thẻ, giữ tới hết lượt; `bossBonusPick` true: dọn xong đợt trùm thì chọn liền 2 thẻ.
+- Mỗi đợt thứ `bossEvery` (0 = không có) chỉ có `boss` (phải là quái trùm; từ M24 có `bosses` thì theo vòng, xem mục Chặng, vòng trùm và Đột biến); từ đợt `lateBossFrom` (1–500, gốc 30) có thêm `lateBoss` (trùm, tùy chọn) cùng đợt. Sau mỗi `upgradeEvery` đợt dọn xong (0 = không có thẻ) người chơi chọn 1 thẻ, giữ tới hết lượt; `bossBonusPick` true: dọn xong đợt trùm thì chọn liền 2 thẻ.
 - (2026-10-24) Tinh anh tăng dần: tỉ lệ = `eliteChance` + `eliteChancePerWave` (0–0.2) × (n − 1), tối đa `eliteChanceMax` (0–1, 0 = không trần); cứ `moreElitesEvery` đợt (0–200, 0 = không) được thêm một tinh anh sống cùng lúc so với `maxElites`, thêm tối đa `moreElitesMax` (0–4). `allSynergiesAt` (1–500, tùy chọn): từ đợt này mọi synergy (cả tầng chỉ Vô tận) tự bật, kể cả build lệch nhóm.
 - Bản gốc từ 2026-10-24 (rulesVersion 4): `upgradeEvery` 2, `boss` `king_c1` (Vua chương 1, có khiên và phong tinh anh), `lateBoss` `king` từ đợt 30, `bossBonusPick` true, `allSynergiesAt` 48, tinh anh 12% + 0,7%/đợt tối đa 45%, thêm một tinh anh sống mỗi 20 đợt (tối đa 3 con). Tới đợt 48 có 24 lượt thẻ thường + 4 lượt thưởng sau trùm = 28 lượt, đủ 27 điểm cho ba nhóm × 9 nếu chia đều; không đều thì lưới an toàn ở đợt 48 bật nốt.
 - Hết lượt khi mèo thua hoặc người chơi bấm Kết thúc (cả hai đều có bảng kết quả và tính kỷ lục). Đóng app giữa chừng thì mất lượt, không lưu gì.
 - Kỷ lục: đợt xa nhất và số slime hạ nhiều nhất, theo vũ khí + độ khó, trong battle-records.json (khóa `endless|r<rulesVersion>|<vũ khí>|<độ khó>`, thêm `|custom` khi dùng battle.json riêng). Đổi luật nhiều thì tăng `rulesVersion` để kỷ lục cũ đứng riêng.
 - `unlockAfter`: màn Phiêu lưu phải thắng trước (không có màn đó trong dữ liệu thì mở luôn). `maxAlive`, `eliteChance`: như của màn.
 - `milestones` (2026-10-22): phần thưởng khi **vượt qua** đợt `wave` (bất kỳ vũ khí/độ khó; dữ liệu tùy chỉnh không tính), nhận một lần và giữ mãi. Mỗi mục: `id` (dùng chung không gian id với kỷ vật Viễn chinh, không được trùng), `wave` (tăng dần, tối đa 500), `kind` = `accessory` (kèm `accessory`: phụ kiện có `reward` trong accessories.json) hoặc kỷ vật trưng bày `hourglass`, `orb`, `cushion`; `nameVi`/`nameEn` 1–32 ký tự; tối đa 12 mục. Gốc: đợt 10 Vòng cổ ∞, 20 Đồng hồ cát vô tận, 30 Vành sao, 40 Quả cầu tinh vân, 50 Áo choàng thiên hà. Đã nhận hay chưa tính từ kỷ lục (`MostCleared`, kỷ lục cũ dùng đợt xa nhất − 1) của mọi `rulesVersion`.
+
+## Chặng, vòng trùm và Đột biến của Vô tận (`bosses`, `eras`, `mutations`) (bản 1.5, mốc M24, 2026-10-29)
+
+E1, E2 của docs/UPDATE-1.5.md. Code: `src/DesktopPet.Core/PetEndless.cs` (dữ liệu, kiểm tra lúc nạp), `src/DesktopPet.Core/PetBattle.Mutations.cs` (luật trong trận); bảng chọn dùng chung bảng thẻ (`PetWindow.BattleUpgrade.cs`), dòng HUD ở `PetBattleHud.cs`, banner ở `PetWindow.BattleFeedback.cs`. Test `tests/DesktopPet.Tests/EndlessMutationTests.cs`, UiChecks cuối `EndlessChecks` (ảnh `endless-mutation-vi/en/ja.png`).
+
+```jsonc
+"endless": {
+  "rulesVersion": 6, "boss": "king_c1", "bosses": [ "king_c1", "zip", "mutant_king" ], "lateBoss": "king", "lateBossFrom": 40,
+  "erasFrom": 15,
+  "eras": [ { "nameVi": "Đầm nhầy", "nameEn": "Goo marsh", "kinds": [ { "enemy": "spitter", "weight": 20 }, … ] }, … ],
+  "mutations": { "offer": 3, "list": [
+    { "id": "glass_cat", "effect": "glass", "amount": 0.3, "reward": "damage", "rewardAmount": 0.3,
+      "nameVi": "…", "nameEn": "…", "descVi": "…", "descEn": "…", "rewardVi": "…", "rewardEn": "…" }, … ] }
+}
+```
+
+- **Vòng trùm** (`bosses`, 1–6 boss, tùy chọn; không có thì `boss` mọi lần): đợt trùm thứ k dùng boss thứ k theo vòng. Gốc: đợt 10 Vua chương 1, 20 Slime Nén, 30 Vua biến dị, 40 lại Vua chương 1… `lateBossFrom` gốc dời 30 → 40, nên vòng đầu mỗi trùm đánh một mình.
+- **Chặng** (`eras`, tối đa 12, mỗi chặng 1–8 quái không phải boss, không có `from`, tên vi/en 1–32 ký tự): chặng đầu bắt đầu ở đợt `erasFrom` (gốc 15), các chặng sau bắt đầu ngay sau mỗi đợt trùm (dài `bossEvery` đợt), hết danh sách thì quay lại chặng đầu. Trong chặng, quái của chặng **thêm vào** bốc thăm của `kinds` (cộng trọng số nếu trùng); đợt trùm vẫn chỉ có boss. Chặng mới có banner "Chặng mới: … Slime lạ kéo tới" ở đợt đầu. Gốc (quái mới ~38–40% trọng số mỗi chặng): Đầm nhầy 15–20 (phun, lò xo, băng, tách đôi), Ban nhạc slime 21–30 (nhạc trưởng, xích, nhím, bóng ma, bay), Bãi rác 31–40 (hợp thể, bom, đào hang, bong bóng, bám tường, hẹn giờ), Mê cung ảo ảnh 41–50 (cờ hiệu, ảo ảnh, dỗi, trộm, phun, nhím), từ 51 lặp lại.
+- **Giới hạn 2 loại liên kết, 2 loại quái chuột** (như mọi trận) xét lúc nạp cho: bốc thăm `kinds` riêng, từng chặng cộng `kinds`, từng boss của vòng (kèm `lateBoss`). Lúc chạy, đầu mỗi đợt Vô tận sàn trống nên trận quên các loại liên kết đã gặp (mỗi chặng có 2 loại của nó; luật "đến trước được trước" vẫn áp trong một đợt).
+- **Đột biến** (`mutations`, cần `bossEvery` > 0): dọn xong mỗi đợt trùm, sau các thẻ của đợt đó, bảng thẻ hiện `offer` (1–3) luật lạ bốc ngẫu nhiên (luồng ngẫu nhiên riêng, không đổi thẻ/quái), không có luật vừa xong; **bắt buộc chọn một** (như thẻ, không có Bỏ qua). Luật giữ tới khi dọn xong đợt trùm kế tiếp, rồi trả thưởng (banner "★ Vượt đột biến …"); thua hoặc Kết thúc giữa chừng thì không có thưởng. Luật không phải thẻ của build (không tính nhóm, không vào Túi đồ thẻ). HUD ghi "Đột biến …: còn N đợt".
+  - `effect` (bất lợi, `amount`): `swift` quái nhanh hơn (0,05–1), `crowd` thêm quái mỗi đợt (0–1, làm tròn lên) và `extra` con trên sàn (0–4, chỉ cho crowd), `elite` cộng tỉ lệ tinh anh (0,05–1, vẫn theo trần số tinh anh sống), `glass` mèo nhận thêm sát thương (0,05–1), `hungry` không rơi cá và không hồi máu giữa đợt (không có amount), `lazy` kỹ năng hồi chậm hơn (0,05–2).
+  - `reward` (`rewardAmount`): `drops` đồ rơi nhiều hơn trong lúc giữ luật (0,1–3), `damage` mèo gây thêm sát thương trong lúc giữ (0,05–1), `maxHp` HP tối đa đến hết lượt khi xong (5–60, hồi luôn phần đó), `rare` một bảng 3 thẻ hiếm khi xong (hết thẻ hiếm thì bảng thường), `heal` hồi đầy khi xong, `none`. `cards` 0–3: thêm lượt thẻ khi xong. Thứ tự sau đợt trùm: thẻ của đợt (và thẻ thưởng trùm) → thẻ hiếm → thẻ thêm → đột biến mới.
+  - Kiểm tra lúc nạp: `id` chữ thường 1–32, không trùng nhau hay trùng id thẻ; tên 1–32, mô tả/thưởng 1–80 ký tự; danh sách có ít nhất `offer` + 1 luật, tối đa 12; `none` phải có `cards`.
+  - Gốc: Slime tăng tốc (+25% → đồ rơi ×2 trong lúc đó), Đông nghẹt (+30% quái, +2 trên sàn → +1 lượt thẻ), Toàn tinh anh (+25% → chọn 1 thẻ hiếm), Mèo thủy tinh (nhận +30% → gây +30% trong lúc đó), Nhịn đói (→ +20 HP tối đa), Kỹ năng lười (hồi chậm 40% → hồi đầy + 1 lượt thẻ).
+- Sự kiện mới: `EraStarted` (Value: chỉ số chặng), `MutationStarted`, `MutationEnded` (Value: chỉ số luật). Bảng đột biến dùng `UpgradeOffered`/`UpgradeChosen` như thẻ.
+- rulesVersion Vô tận 5 → 6: kỷ lục cũ đứng riêng (khóa `endless|r5|…`); mốc phần thưởng vẫn tính kỷ lục của mọi phiên bản.
+- Mô phỏng (không phải chơi thật; bot "simple" của AdventureBalanceTests, Normal, kiếm, 8 lượt, tối đa 20 phút): luật cũ đợt 30 30 30 30 30 33 38 38 (trung vị 30), luật mới 20 30 30 31 31 32 34 35 (trung vị 31). Số liệu chặng và đột biến là ước lượng, chốt khi chơi thật/M29.
 
 ## App trên màn hình (`apps`) (2026-10-23)
 

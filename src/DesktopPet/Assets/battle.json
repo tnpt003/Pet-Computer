@@ -997,9 +997,14 @@
   // "eliteChanceMax") and every "moreElitesEvery" waves one more elite may be alive (at most "moreElitesMax"). It ends
   // when the cat falls or the user presses End; the record is the furthest wave per weapon and
   // difficulty. "unlockAfter": the Adventure stage to win first. "rulesVersion" keeps old records apart.
+  // 1.5 M24 (rules 6): "bosses" take turns on the boss waves; "eras" add newer kinds to the draw, the
+  // first from wave "erasFrom", the next after each boss wave, round again after the last (each with the
+  // older kinds: at most two kinds of link and two the cursor beats); "mutations": after each cleared boss
+  // wave pick one of "offer" odd rules, held until the next boss wave is cleared, then its reward.
   "endless": {
-    "id": "endless", "rulesVersion": 5, "unlockAfter": "c1_slime_king", "upgradeEvery": 2, "bossEvery": 10, "boss": "king_c1",
-    "lateBoss": "king", "lateBossFrom": 30, "bossBonusPick": true, "allSynergiesAt": 48,
+    "id": "endless", "rulesVersion": 6, "unlockAfter": "c1_slime_king", "upgradeEvery": 2, "bossEvery": 10, "boss": "king_c1",
+    "bosses": [ "king_c1", "zip", "mutant_king" ],
+    "lateBoss": "king", "lateBossFrom": 40, "bossBonusPick": true, "allSynergiesAt": 48,
     "eliteChancePerWave": 0.007, "eliteChanceMax": 0.45, "moreElitesEvery": 20, "moreElitesMax": 2,
     "firstCount": 3, "countPerWave": 0.35, "maxCount": 14, "threatPerWave": 0.06, "maxAlive": 5, "eliteChance": 0.12,
     "kinds": [
@@ -1008,6 +1013,42 @@
       { "enemy": "mender", "weight": 15, "from": 5 },
       { "enemy": "rock", "weight": 15, "from": 7 }
     ],
+    "erasFrom": 15,
+    "eras": [
+      { "nameVi": "Đầm nhầy", "nameEn": "Goo marsh", "kinds": [
+        { "enemy": "spitter", "weight": 20 }, { "enemy": "springer", "weight": 15 }, { "enemy": "icy", "weight": 15 }, { "enemy": "splitter", "weight": 15 } ] },
+      { "nameVi": "Ban nhạc slime", "nameEn": "Slime band", "kinds": [
+        { "enemy": "drummer", "weight": 15 }, { "enemy": "chain", "weight": 15 }, { "enemy": "hedgehog", "weight": 15 }, { "enemy": "phantom", "weight": 12 }, { "enemy": "flyer", "weight": 12 } ] },
+      { "nameVi": "Bãi rác", "nameEn": "Junkyard", "kinds": [
+        { "enemy": "fuser", "weight": 12 }, { "enemy": "bomber", "weight": 12 }, { "enemy": "burrower", "weight": 12 }, { "enemy": "bubble", "weight": 10 },
+        { "enemy": "clinger", "weight": 12 }, { "enemy": "timer", "weight": 10 } ] },
+      { "nameVi": "Mê cung ảo ảnh", "nameEn": "Mirage maze", "kinds": [
+        { "enemy": "flagbearer", "weight": 14 }, { "enemy": "mirage", "weight": 12 }, { "enemy": "sulky", "weight": 12 }, { "enemy": "thief", "weight": 12 },
+        { "enemy": "spitter", "weight": 10 }, { "enemy": "hedgehog", "weight": 10 } ] }
+    ],
+    "mutations": {
+      "offer": 3,
+      "list": [
+        { "id": "swift", "effect": "swift", "amount": 0.25, "reward": "drops", "rewardAmount": 1,
+          "nameVi": "Slime tăng tốc", "nameEn": "Speedy slimes", "descVi": "Quái nhanh hơn 25%", "descEn": "Enemies are 25% faster",
+          "rewardVi": "Đồ rơi gấp đôi trong lúc này", "rewardEn": "Twice the drops meanwhile" },
+        { "id": "crowd", "effect": "crowd", "amount": 0.3, "extra": 2, "reward": "none", "cards": 1,
+          "nameVi": "Đông nghẹt", "nameEn": "Packed floor", "descVi": "Thêm 30% quái mỗi đợt, thêm 2 con trên sàn", "descEn": "30% more enemies a wave, 2 more on the floor",
+          "rewardVi": "Thêm 1 lượt thẻ khi qua trùm kế", "rewardEn": "One more card after the next boss" },
+        { "id": "elite_parade", "effect": "elite", "amount": 0.25, "reward": "rare",
+          "nameVi": "Toàn tinh anh", "nameEn": "Elite parade", "descVi": "Tinh anh dễ ra hơn 25%", "descEn": "Elites are 25% likelier",
+          "rewardVi": "Chọn 1 thẻ hiếm khi qua trùm kế", "rewardEn": "Pick a rare card after the next boss" },
+        { "id": "glass_cat", "effect": "glass", "amount": 0.3, "reward": "damage", "rewardAmount": 0.3,
+          "nameVi": "Mèo thủy tinh", "nameEn": "Glass cat", "descVi": "Mèo nhận thêm 30% sát thương", "descEn": "The cat takes 30% more damage",
+          "rewardVi": "Mèo gây thêm 30% sát thương trong lúc này", "rewardEn": "The cat deals 30% more damage meanwhile" },
+        { "id": "fasting", "effect": "hungry", "reward": "maxHp", "rewardAmount": 20,
+          "nameVi": "Nhịn đói", "nameEn": "Fasting", "descVi": "Không rơi cá, không hồi máu giữa đợt", "descEn": "No fish drops, no heal between waves",
+          "rewardVi": "+20 HP tối đa khi qua trùm kế", "rewardEn": "+20 max HP after the next boss" },
+        { "id": "lazy_skills", "effect": "lazy", "amount": 0.4, "reward": "heal", "cards": 1,
+          "nameVi": "Kỹ năng lười", "nameEn": "Lazy skills", "descVi": "Kỹ năng hồi chậm hơn 40%", "descEn": "Skills recharge 40% slower",
+          "rewardVi": "Hồi đầy máu và thêm 1 lượt thẻ khi qua trùm kế", "rewardEn": "Full heal and one more card after the next boss" }
+      ]
+    },
     // Rewards for clearing a wave (any weapon or difficulty, never with custom data), each given
     // once and kept: "accessory" (a reward accessory of accessories.json) or a keepsake shown on the
     // screen ("hourglass", "orb", "cushion"). Waves must grow; ids are shared with the Expedition's keepsakes.

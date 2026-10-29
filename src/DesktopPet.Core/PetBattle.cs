@@ -37,7 +37,9 @@ public sealed partial class BattleSim
     public StageSpec? Stage { get; }
     // The app icons are on (the setup panel's choice; a free battle never has them).
     public bool AppsOn { get; }
-    private readonly int maxAlive;
+    private readonly int aliveCap;
+    // On the floor at once: the stage's, more while a crowd mutation holds (1.5 M24).
+    private int maxAlive => aliveCap + MutationAlive;
     // Survive stages: seconds still to hold out (counts only while the battle runs and the cat is
     // on the ground, like the waves). NaN for any other battle.
     public bool Survival => Stage?.Survival == true;
@@ -141,7 +143,7 @@ public sealed partial class BattleSim
     // Multipliers the upgrades give (1 without any). Cuts never go below 30 % of the original;
     // armor (cards and synergies together) takes at most MaxArmor off.
     public const double MaxArmor = 0.6;
-    public double DamageFactor => 1 + damageBonus;
+    public double DamageFactor => 1 + damageBonus + MutationDamage;
     public double MoveFactor => (1 + moveBonus) * (ComboRushRemaining > 0 ? 1 + comboRushBonus : 1);
     // Attacks a second against the usual: the rushes (Tailwind, Gale).
     public double RushFactor => 1 + (LandingRushRemaining > 0 ? landingRushBonus : 0) + (ComboRushRemaining > 0 ? comboRushBonus : 0);
@@ -155,7 +157,7 @@ public sealed partial class BattleSim
     public double SwingDamage => arms.Damage * DamageFactor * ArmsFactor;
     public double SwingsPerSecond => 1 / Math.Max(arms.AttackCooldown * CooldownFactor, arms.SwingDuration);
     public double Knock => arms.Knock + knockBonus;
-    public double HurtFactor => ArmorFactor * (1 + recklessHurt);
+    public double HurtFactor => ArmorFactor * (1 + recklessHurt + MutationHurt);
     public bool IsBossWave(int wave)
     {
         if (wave < 1 || wave > WaveCount) return false;
@@ -298,12 +300,13 @@ public sealed partial class BattleSim
         utilityRandom = BattleRandom.Stream(Seed, BattleRandom.Utility);
         statusRandom = BattleRandom.Stream(Seed, BattleRandom.Status);
         dropRandom = BattleRandom.Stream(Seed, BattleRandom.Drops);
+        mutationRandom = BattleRandom.Stream(Seed, BattleRandom.Mutations);
         Loot = loot;
         Settings = settings;
         Stage = stage;
         AppsOn = apps;
         WavePlan = stage?.Waves is { Length: > 0 } waves ? waves : settings.WavePlan;
-        maxAlive = stage?.MaxAlive ?? settings.MaxAlive;
+        aliveCap = stage?.MaxAlive ?? settings.MaxAlive;
         if (stage is { Survival: true, SurviveSeconds: double hold }) SurviveRemaining = hold;
         Difficulty = difficulty;
         Weapon = arms = settings.Weapon(weapon);

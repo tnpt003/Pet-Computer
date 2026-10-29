@@ -147,7 +147,9 @@ public sealed partial class PetWindow
     private void UpdateBattleUpgrade()
     {
         if (upgradeTitle == null || upgradeConfirm == null || battle == null) return;
-        upgradeTitle.Text = battleExpedition != null
+        upgradeTitle.Text = battle.ChoosingMutation
+            ? L("Đột biến! Chọn một luật lạ (giữ tới khi qua trùm kế, qua được thì có thưởng)", "Mutation! Pick an odd rule (it holds until the next boss is beaten, then it pays)")
+            : battleExpedition != null
             ? L("Chọn một nâng cấp (giữ suốt chuyến viễn chinh khi thắng bậc này)", "Pick an upgrade (kept for the rest of the Expedition when you win this step)")
             : battle.Endless ? L("Chọn một nâng cấp (giữ tới hết lượt Vô tận)", "Pick an upgrade (kept for the rest of this Infinity run)")
             : battle.Stage != null
@@ -155,9 +157,24 @@ public sealed partial class PetWindow
             : L("Chọn một nâng cấp cho lượt này", "Pick an upgrade for this run");
         foreach (var (id, card, name, desc, count, build) in upgradeCards)
         {
+            bool chosen = id == upgradePick;
+            // 1.5 M24: an Infinity mutation: its drawback, then its reward in gold.
+            if (battle.Stage?.Infinity?.Mutations?.Find(id) is MutationSpec rule && battle.ChoosingMutation)
+            {
+                name.Text = (chosen ? "✓ " : "") + rule.Name(preferences.Language);
+                desc.Text = rule.Describe(preferences.Language);
+                build.Text = "★ " + rule.RewardText(preferences.Language);
+                build.Foreground = RareGold;
+                count.Text = L("Tới khi qua trùm kế", "Until the next boss is beaten");
+                count.Foreground = Brushes.White;
+                count.Opacity = 0.65;
+                card.Background = chosen ? PetUi.Game.ChosenCard : PrepCardBack;
+                card.BorderBrush = chosen ? PetUi.Game.ChosenRim : PetUi.Lilac;
+                card.BorderThickness = new Thickness(chosen ? 2.5 : 2);
+                continue;
+            }
             var spec = battle.Settings.UpgradeList.FirstOrDefault(u => u.Id == id);
             if (spec == null) continue;
-            bool chosen = id == upgradePick;
             name.Text = (chosen ? "✓ " : "") + spec.Name(preferences.Language); // Chosen: a tick, not only a colour.
             desc.Text = spec.Describe(preferences.Language);
             int have = battle.Stacks(id);
@@ -303,6 +320,12 @@ public sealed class UpgradeIcon : FrameworkElement
                 dc.DrawEllipse(Pink, Ink, new Point(cx, cy + 1), 13, 13);
                 dc.DrawLine(Line, new Point(cx - 9, cy - 5), new Point(cx + 6, cy + 10));
                 dc.DrawLine(Line, new Point(cx - 10, cy + 5), new Point(cx + 3, cy - 10));
+                break;
+            case MutationSpec.CardEffect: // 1.5 M24: an odd slime drop with a sparkle.
+                dc.DrawGeometry(Green, Ink, Shape($"M {cx - 2},{cy - 15} C {cx + 8},{cy - 3} {cx + 12},{cy + 3} {cx + 10},{cy + 8} C {cx + 7},{cy + 16} {cx - 11},{cy + 16} {cx - 13},{cy + 8} C {cx - 15},{cy + 2} {cx - 10},{cy - 4} {cx - 2},{cy - 15} Z"));
+                dc.DrawEllipse(Ink.Brush, null, new Point(cx - 6, cy + 5), 1.8, 1.8);
+                dc.DrawEllipse(Ink.Brush, null, new Point(cx + 3, cy + 5), 1.8, 1.8);
+                dc.DrawGeometry(Gold, Ink, Shape($"M {cx + 12},{cy - 16} L {cx + 14},{cy - 11} L {cx + 19},{cy - 9} L {cx + 14},{cy - 7} L {cx + 12},{cy - 2} L {cx + 10},{cy - 7} L {cx + 5},{cy - 9} L {cx + 10},{cy - 11} Z"));
                 break;
             case "shieldTime": // A bubble with a plus.
                 dc.DrawEllipse(Blue, Ink, new Point(cx - 2, cy + 1), 12, 12);

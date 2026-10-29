@@ -105,6 +105,8 @@ public sealed partial class PetWindow
     // A malware event about a forced update (Value: its id).
     // A link made by a tether's holder (a rider mounting makes one too).
     private bool IsRope(BattleEvent e) => EventSlime(e)?.Link?.Kind == EnemyLinks.Tether;
+    // 1.5 M24: the mutation an event is about (Value: its index in the list).
+    private MutationSpec? MutationOf(BattleEvent e) => battle?.Stage?.Infinity?.Mutations?.List is { } list && (int)e.Value >= 0 && (int)e.Value < list.Length ? list[(int)e.Value] : null;
     private bool IsRide(BattleEvent e) => EventSlime(e)?.Link?.Kind == EnemyLinks.Ride;
     private bool FlagOnField()
     {
@@ -206,6 +208,15 @@ public sealed partial class PetWindow
                 BattleEventKind.CrownLinked => L("Vương miện trao trống cho tinh anh! Đẩy nó trước nhịp cuối", "The crown hands the elite a drum! Push it before the last beat"),
                 BattleEventKind.RainCalled when trickExplained.Add(e.Kind) =>
                     LF($"{BossName()} gọi mưa nhầy! Nhấc mèo khỏi các vòng hoặc bật Khiên bong bóng", $"The {BossName()} calls a goo rain! Lift the cat out of the rings or use the Bubble shield"),
+                // 1.5 M24: Infinity's stretches and mutations.
+                BattleEventKind.EraStarted when battle.Stage?.Infinity?.Eras is { } eras && (int)e.Value >= 0 && (int)e.Value < eras.Length =>
+                    LF($"Chặng mới: {eras[(int)e.Value].Name(PetLanguage.Vietnamese)}! Slime lạ kéo tới", $"New stretch: {eras[(int)e.Value].Name(preferences.Language)}! Strange slimes are coming"),
+                BattleEventKind.MutationStarted when MutationOf(e) is MutationSpec started =>
+                    LF($"Đột biến: {started.Name(PetLanguage.Vietnamese)}! Qua trùm kế để nhận thưởng", $"Mutation: {started.Name(preferences.Language)}! Beat the next boss for the reward"),
+                BattleEventKind.MutationEnded when MutationOf(e) is MutationSpec ended =>
+                    ended.Reward is MutationSpec.DropsReward or MutationSpec.DamageReward && ended.Cards == 0
+                        ? LF($"★ Vượt đột biến {ended.Name(PetLanguage.Vietnamese)}!", $"★ {ended.Name(preferences.Language)} beaten!")
+                        : LF($"★ Vượt đột biến {ended.Name(PetLanguage.Vietnamese)}! {ended.RewardText(PetLanguage.Vietnamese)}", $"★ {ended.Name(preferences.Language)} beaten! {ended.RewardText(preferences.Language)}"),
                 BattleEventKind.BossShieldDown => L("KHIÊN VỠ!", "SHIELD DOWN!"),
                 BattleEventKind.BossEnraged =>LF($"{BossName()} nổi giận!", $"The {BossName()} is angry!"),
                 BattleEventKind.SynergyUnlocked when (int)e.Value >= 0 && (int)e.Value < battle.Settings.SynergyList.Count =>

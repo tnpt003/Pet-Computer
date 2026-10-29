@@ -88,6 +88,35 @@ internal static class AdventureBalanceTests
             sim.WardedHits, healsCast, healsLanded, fighting > 0 ? quiet / fighting : 0, sim.FightSeconds > 0 ? switches * 60 / sim.FightSeconds : 0, chains, sim.SweepHits, sim.WeaponLaunches, sim.Basket != null ? sim.FishInBasket : -1);
     }
 
+    // 1.5 M24: an Infinity run (fish and potions drop) with the same player, cards picked the same way and
+    // the first mutation offered taken: the wave it reached when the cat fell, or after `seconds`.
+    public static int PlayEndless(BattleSettings data, EndlessSpec spec, string weapon, BattleDifficulty level, int seed, Player player, double seconds = 1200)
+    {
+        const double dt = 1.0 / 30;
+        var sim = new BattleSim(data, 0, 1600, new Random(seed), level, weapon, spec.Stage(), loot: BattleLoot.Items);
+        var reflex = new Reflex(player, seed);
+        var hands = new Hands();
+        double cat = 800;
+        for (double t = 0; t < seconds && !sim.Over; t += dt)
+        {
+            if (sim.ChoosingUpgrade)
+            {
+                var offer = sim.UpgradeOffer!;
+                var fish = offer.FirstOrDefault(u => u.Effect == "heal");
+                var pick = sim.ChoosingMutation ? offer[0] : fish != null && sim.CatHp < sim.CatMaxHp * 0.6 ? fish
+                    : offer.OrderByDescending(u => u.Group != null ? sim.GroupPoints(u.Group) : -1)
+                        .ThenBy(u => Array.IndexOf(Preference, u.Id) is int i && i >= 0 ? i : 99).First();
+                sim.ChooseUpgrade(pick.Id, cat);
+            }
+            if (player != Player.Idle) { UseSkills(sim, cat, data, reflex, t); UseTricks(sim, cat, reflex, t, hands); }
+            var order = sim.Step(dt, cat, false);
+            double run = 72 * data.CatRunScale * sim.MoveFactor;
+            if (order.Command == CatCommand.Move) cat += Math.Clamp(order.X - cat, -run * dt, run * dt);
+            sim.ClearEvents();
+        }
+        return sim.Wave;
+    }
+
     // 1.5 M21: what the bot's mouse is doing (the Fan or the Spray held until, the last bubble click).
     private sealed class Hands { public double FanUntil, SprayUntil, LastPoke = double.NegativeInfinity; }
 

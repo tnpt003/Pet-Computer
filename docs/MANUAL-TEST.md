@@ -792,3 +792,15 @@ Dữ liệu gốc, không cần file tùy chỉnh. Ảnh bảng Lò rèn/Lời n
 - [ ] Tắt app khi đang mở một sự kiện mới hoặc khi đang bị nguyền rồi mở lại: lựa chọn giữ nguyên, số trận nguyền và cấp rèn giữ nguyên.
 - [ ] Cảm giác (ghi vào Nhật ký chơi thử): Lò rèn 4 xu có rẻ quá không; Lời nguyền có đáng không; di vật nào thấy yếu/mạnh rõ.
 - [ ] Chữ vi/en/ja đúng, không tràn; DPI 100/150/200%: bảng sự kiện không bị cắt.
+
+## Vô tận: chặng, vòng trùm và Đột biến 1.5 M24 (2026-10-29)
+Dữ liệu gốc, không cần file tùy chỉnh. Bảng đột biến đã xem qua render UiChecks (dữ liệu thử, vi/en/ja), **chưa chơi thật**, chưa xem trên màn hình thật; độ khó chỉ đo bằng mô phỏng.
+- [ ] Sảnh → Vô tận: kỷ lục cũ không hiện là kỷ lục mới (luật 6 bắt đầu "Chưa chơi"); phần thưởng mốc đã nhận trước đó vẫn còn.
+- [ ] Đợt 10 là Vua chương 1, đợt 20 là Slime Nén (lăn, giải nén, tự nén), đợt 30 là Vua biến dị (vương miện, mưa nhầy); đợt 40 Vua chương 1 cùng Vua thường.
+- [ ] Đợt 15: banner "Chặng mới: Đầm nhầy! Slime lạ kéo tới", có slime phun/lò xo/băng/tách đôi lẫn với quái cũ. Đợt 21, 31, 41 có banner chặng mới, quái đổi theo chặng; không có quá 2 loại liên kết hay quá 2 loại quái dùng chuột cùng lúc.
+- [ ] Dọn xong đợt 10: chọn 2 thẻ như cũ, rồi bảng "Đột biến!" có 3 luật, mỗi luật có dòng thưởng ★ vàng và "Tới khi qua trùm kế"; nút Xác nhận chỉ sáng khi đã chọn. Túi đồ không xem trước luật như thẻ.
+- [ ] Sau khi chọn: banner "Đột biến: …", HUD ghi "Đột biến …: còn N đợt" đếm lùi tới đợt trùm kế. Thử từng luật: Slime tăng tốc (quái chạy nhanh rõ, đồ rơi nhiều), Đông nghẹt (đợt đông hơn, sàn nhiều con hơn), Toàn tinh anh (nhiều ★), Mèo thủy tinh (mất máu nhanh, đánh mạnh), Nhịn đói (không có cá rơi, "Xong đợt" không cộng HP), Kỹ năng lười (vòng hồi kỹ năng lâu hơn).
+- [ ] Dọn xong đợt trùm kế: banner "★ Vượt đột biến …", nhận thưởng đúng (thêm lượt thẻ / bảng thẻ hiếm / +20 HP tối đa / hồi đầy), rồi bảng đột biến mới không có luật vừa xong. Bấm Kết thúc giữa chừng một luật: không có thưởng.
+- [ ] Pause, menu, toàn màn hình khi đang mở bảng đột biến: bảng ẩn/hiện như bảng thẻ, trận đứng yên.
+- [ ] Cảm giác (ghi vào Nhật ký chơi thử): đợt 15–20 có khó vọt không; Slime Nén ở đợt 20 có quá mạnh không; luật nào luôn chọn/không bao giờ chọn.
+- [ ] Chữ vi/en/ja đúng, không tràn; DPI 100/150/200%: bảng đột biến không bị cắt.

@@ -356,6 +356,7 @@ public sealed partial class PetWindow
         battleFieldWindow = battleHudWindow = null;
         CloseBattleApps();
         CloseBattleSky();
+        CloseBattleCaptcha();
         CloseBattleScenery();
         battleView = null;
         battleHud = null;
@@ -534,6 +535,7 @@ public sealed partial class PetWindow
             ShowBattleNotice(!app.Ready ? LF($"{name} đang sạc: {Math.Floor(app.Charge * 100)}%.", $"{name} is charging: {Math.Floor(app.Charge * 100)}%.")
                 : battle.SkillsLocked ? L("Đặt mèo xuống rồi hãy dùng app.", "Put the cat down to use an app.")
                 : app.Kind == BattleAppKind.Undo ? L("Mèo chưa mất máu trong mấy giây vừa qua.", "The cat lost no HP in the last few seconds.")
+                : app.Kind == BattleAppKind.Screenshot ? L("Chưa có slime nào để chụp đứng hình.", "No slime to freeze yet.")
                 : L("Chưa có slime nào để dùng app này.", "No slime to use this app on yet."));
         }
         RequestBattleRedraw();
@@ -778,6 +780,7 @@ public sealed partial class PetWindow
             if (battleFieldWindow.IsVisible) { battleFieldWindow.Hide(); battleHudWindow.Hide(); SetBattleSceneryVisible(false); }
             HideBattleApps();
             HideBattleSky();
+            HideBattleCaptcha();
             return;
         }
         if (!battleFieldWindow.IsVisible) { SetBattleSceneryVisible(true); battleFieldWindow.Show(); battleHudWindow.Show(); ShowBattleApps(); ShowBattleSky(); battlePlacedScale = 0; RequestBattleRedraw(); }
@@ -797,6 +800,7 @@ public sealed partial class PetWindow
             // The pet stays above its battlefield, so clicks on the cat still reach the cat.
             const uint NoMove = 0x0002, NoSize = 0x0001;
             SetWindowPos(new WindowInteropHelper(this).Handle, new IntPtr(-1), 0, 0, 0, 0, NoMove | NoSize | NoActivate);
+            RaiseBattleCaptcha(); // 1.5 M26: a captcha stays over the cat.
         }
         // Paused, or nothing on the floor (wave breaks): the strip is drawn once and left alone.
         var b = battle;
@@ -817,6 +821,7 @@ public sealed partial class PetWindow
         UpdateBattleHudDodge();
         UpdateBattleApps(dt, drawApps);
         UpdateBattleSky(drawApps);
+        UpdateBattleCaptcha(dt, drawApps); // 1.5 M26 (PetWindow.BattleCaptcha.cs)
     }
 
     // The HUD steps aside for the cursor: over its information part (portrait, HP, status, hint)
@@ -861,6 +866,8 @@ public sealed partial class PetWindow
         battleHud.RunCoins = battleExpedition?.Expedition.Run?.Coins ?? 0;
         battleHud.SkillClicked += skill => UseBattleSkill(skill);
         battleHud.RageClicked += () => UseBattleRage();
+        battleHud.PlugClicked += () => BattlePlugIn(); // 1.5 M26
+        battleHud.ContinueClicked += () => BattleResumeCursor();
         battleHud.PauseClicked += () => { if (battle != null) SetBattlePaused(!BattleUserPaused); };
         battleHud.EndClicked += EndBattleByUser;
         battleHud.BagClicked += () => { if (battle != null) { if (BattleBagOpen) CloseBattleBag(); else if (OpenBattleBag() is string reason) ShowBattleNotice(reason); } };

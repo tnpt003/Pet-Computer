@@ -276,9 +276,9 @@ internal static class AppTests
 
         // The shipped data: every app named and described (helper and infected) in both languages.
         var shipped = BattleData.Settings.Apps;
-        check(shipped != null && shipped.AppList.Count == 6 && shipped.AppList.All(a => a.NameVi.Length > 0 && a.NameEn.Length > 0 && a.DescVi.Length > 0 && a.DescEn.Length > 0)
+        check(shipped != null && shipped.AppList.Count == 7 && shipped.AppList.All(a => a.NameVi.Length > 0 && a.NameEn.Length > 0 && a.DescVi.Length > 0 && a.DescEn.Length > 0)
               && shipped.AppList.Where(a => a.Id != "popup").All(a => a.BadVi.Length > 0 && a.BadEn.Length > 0 && a.Charge > 0),
-            "battle.json \"apps\": all six apps named and described in both languages; the five icons say what they do infected and how long they charge");
+            "battle.json \"apps\": all seven apps named and described in both languages; the six icons say what they do infected and how long they charge");
         var shippedSim = new BattleSim(BattleData.Settings, 0, 1600, stage: stage, seed: 2);
         shippedSim.Step(dt, 800, false);
         double ChargeOf(BattleAppKind kind) => shippedSim.Desktop.Single(a => a.Kind == kind).Charge;

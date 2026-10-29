@@ -15,7 +15,7 @@ namespace DesktopPet;
 public sealed class BattleHud : Border
 {
     public event Action<BattleSkill>? SkillClicked;
-    public event Action? PauseClicked, EndClicked, BagClicked, RageClicked;
+    public event Action? PauseClicked, EndClicked, BagClicked, RageClicked, PlugClicked, ContinueClicked;
     // One slot per skill the battle carries (BattleSim.Skills, in HUD order).
     public IReadOnlyList<BattleSkill> SkillOrder { get; }
     private const double HpWidth = 170, BossWidth = 200;
@@ -31,6 +31,8 @@ public sealed class BattleHud : Border
     private readonly TextBlock hpText, status, hint, banner, comboText, upgradesText;
     internal readonly TextBlock bossName;
     private readonly Border hpFill, hpTrail, bossFill, bossBar, pauseButton, endButton, bagButton, grip, rageBar, rageFill;
+    private readonly Border batteryStrip, plugButton, cursorCover, continueButton;
+    private readonly TextBlock batteryText, cursorText;
     // The portrait with HP, the status column and the skill slots (the Adventure Guide lights them).
     private readonly FrameworkElement hpBlock, statusBlock, skillBar;
     private readonly HudGlyph pauseGlyph;
@@ -176,7 +178,27 @@ public sealed class BattleHud : Border
         grip.MouseEnter += (_, _) => HoverControl(L("Kéo để dời HUD · bấm đúp: về chỗ cũ", "Drag to move the HUD · double click: back to its place"));
         grip.MouseLeave += (_, _) => HoverControl(null);
 
-        var top = new StackPanel { Orientation = Orientation.Horizontal, Children = { left, centre, bar, bagButton, controls, grip } };
+        // 1.5 M26 (PetBattle.Malware2.cs): over the slots, the low battery's "Plug in" strip and the frozen
+        // cursor's cover with "Continue".
+        plugButton = TextButton(L("Cắm sạc", "Plug in"), () => PlugClicked?.Invoke());
+        batteryText = new TextBlock { Foreground = Brushes.White, FontSize = PetUi.CaptionSize, FontWeight = FontWeights.Bold, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(4, 0, 6, 0) };
+        batteryStrip = new Border
+        {
+            Background = PetUi.Frozen(0xE0, 0xA8, 0x32, 0x2E), CornerRadius = new CornerRadius(6), Padding = new Thickness(5, 2, 3, 2),
+            HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Bottom, Margin = new Thickness(0, 0, 0, -6), Visibility = Visibility.Collapsed,
+            Child = new StackPanel { Orientation = Orientation.Horizontal, Children = { new HudGlyph(HudGlyphKind.Battery) { Width = 18, Height = 18 }, batteryText, plugButton } }
+        };
+        continueButton = TextButton(L("Tiếp tục", "Continue"), () => ContinueClicked?.Invoke());
+        cursorText = new TextBlock { Foreground = Brushes.White, FontSize = PetUi.SmallSize, FontWeight = FontWeights.Bold, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(5, 0, 8, 0) };
+        cursorCover = new Border
+        {
+            Background = PetUi.Frozen(0xD8, 0x3A, 0x34, 0x4E), CornerRadius = new CornerRadius(8), Visibility = Visibility.Collapsed, Cursor = Cursors.Wait,
+            Child = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center,
+                Children = { new HudGlyph(HudGlyphKind.Hourglass) { Width = 22, Height = 22 }, cursorText, continueButton } }
+        };
+        cursorCover.MouseLeftButtonDown += (_, e) => e.Handled = true; // The slots under it take no click.
+        var skillArea = new Grid { VerticalAlignment = VerticalAlignment.Center, Children = { bar, cursorCover, batteryStrip } };
+        var top = new StackPanel { Orientation = Orientation.Horizontal, Children = { left, centre, skillArea, bagButton, controls, grip } };
         hpBlock = left; statusBlock = centre; skillBar = bar;
         // As wide as the row above (never wider): a long description wraps instead of widening the
         // HUD, which would re-centre it and slide the slots out from under the mouse.
@@ -198,6 +220,11 @@ public sealed class BattleHud : Border
     public FrameworkElement SkillBar => skillBar;
     public Border Grip => grip;
     public Border RageBar => rageBar;
+    // 1.5 M26: the low battery's strip and its button; the frozen cursor's cover and its button.
+    public Border BatteryStrip => batteryStrip;
+    public Border PlugButton => plugButton;
+    public Border CursorCover => cursorCover;
+    public Border ContinueButton => continueButton;
     public double RageShown => rageFill.Width / HpWidth;
 
     // For the HUD stepping aside (PetWindow.Battle.cs): points in this panel's coordinates.
@@ -212,7 +239,7 @@ public sealed class BattleHud : Border
             return at.X >= 0 && at.Y >= 0 && at.X < element.ActualWidth && at.Y < element.ActualHeight;
         }
         foreach (var slot in slots) if (Over(slot)) return true;
-        return Over(pauseButton) || Over(endButton) || Over(bagButton) || Over(grip) || Over(rageBar);
+        return Over(pauseButton) || Over(endButton) || Over(bagButton) || Over(grip) || Over(rageBar) || Over(batteryStrip) || Over(cursorCover);
     }
     public string HintText => hint.Text;
     // For checks: the status line and how many wave marks show.
@@ -361,6 +388,7 @@ public sealed class BattleHud : Border
             double gauge = skill == BattleSkill.Fan ? 1 - b.FanSteam : skill == BattleSkill.Spray ? 1 - b.SprayTank : 0;
             slot.Show(cooldown / Math.Max(0.01, total), cooldown, b.Armed == skill, !b.Over && !b.Paused && !held, active, gauge);
         }
+        UpdateMalware(b);
         pauseGlyph.Kind = userPaused ? HudGlyphKind.Play : HudGlyphKind.Pause;
         pauseButton.IsEnabled = !b.Over && !(b.Paused && fullscreen);
         pauseButton.Opacity = pauseButton.IsEnabled ? 1 : 0.45;
@@ -495,6 +523,39 @@ public sealed class BattleHud : Border
         }
     }
 
+    // 1.5 M26: the low battery and the frozen cursor over the slots (their words follow the language).
+    private void UpdateMalware(BattleSim b)
+    {
+        bool low = b.BatteryLow && !b.Over, frozen = b.CursorFrozen && !b.Over;
+        var lowShown = low ? Visibility.Visible : Visibility.Collapsed;
+        if (batteryStrip.Visibility != lowShown) batteryStrip.Visibility = lowShown;
+        if (low)
+        {
+            SetText(batteryText, L("Pin yếu: kỹ năng hồi chậm", "Low battery: skills recharge slowly"));
+            SetText((TextBlock)plugButton.Child, L("Cắm sạc", "Plug in"));
+        }
+        var frozenShown = frozen ? Visibility.Visible : Visibility.Collapsed;
+        if (cursorCover.Visibility != frozenShown) cursorCover.Visibility = frozenShown;
+        if (frozen)
+        {
+            SetText(cursorText, LF($"Không phản hồi… {Math.Ceiling(b.CursorFrozenRemaining)}", $"Not responding… {Math.Ceiling(b.CursorFrozenRemaining)}"));
+            SetText((TextBlock)continueButton.Child, L("Tiếp tục", "Continue"));
+        }
+    }
+
+    // A small gold button with a word on it.
+    private static Border TextButton(string text, Action click)
+    {
+        var button = new Border
+        {
+            Background = PetUi.Frozen(255, 0xFF, 0xD2, 0x3F), CornerRadius = new CornerRadius(5), Padding = new Thickness(7, 1, 7, 2), Cursor = Cursors.Hand,
+            VerticalAlignment = VerticalAlignment.Center,
+            Child = new TextBlock { Text = text, Foreground = PetUi.ArtInk, FontSize = PetUi.CaptionSize, FontWeight = FontWeights.Bold }
+        };
+        button.MouseLeftButtonDown += (_, e) => { click(); e.Handled = true; };
+        return button;
+    }
+
     private static Border SmallButton(UIElement content, Action click)
     {
         var button = new Border { Width = 28, Height = 24, CornerRadius = new CornerRadius(6), Background = PetUi.Frozen(0x50, 255, 255, 255), Cursor = Cursors.Hand, Child = content };
@@ -605,7 +666,7 @@ public sealed class CooldownWipe : FrameworkElement
 }
 
 // Small vector icons for the HUD, in the cat's flat cartoon style (no font glyphs, no files).
-public enum HudGlyphKind { Push, Heal, Cheer, Bomb, Shield, Pause, Play, End, Crown, Bag, Laser, Grabber, Scissors, Fan, Spray, Lock }
+public enum HudGlyphKind { Push, Heal, Cheer, Bomb, Shield, Pause, Play, End, Crown, Bag, Laser, Grabber, Scissors, Fan, Spray, Lock, Battery, Hourglass }
 
 public sealed class HudGlyph : FrameworkElement
 {
@@ -651,6 +712,9 @@ public sealed class HudGlyph : FrameworkElement
     private static readonly Geometry Bottle = G("M 7,10 L 15,10 L 16,21 L 6,21 Z");
     private static readonly Geometry Nozzle = G("M 9,10 L 9,6 L 15,6 L 15,8 L 12,8 L 12,10");
     private static readonly Geometry Shackle = G("M 8,11 L 8,8 C 8,3 16,3 16,8 L 16,11");
+    // 1.5 M26: the low battery and the frozen cursor's hourglass.
+    private static readonly Geometry Glass = G("M 7,3 L 17,3 L 17,5 C 17,9 13,10.5 13,12 C 13,13.5 17,15 17,19 L 17,21 L 7,21 L 7,19 C 7,15 11,13.5 11,12 C 11,10.5 7,9 7,5 Z");
+    private static readonly Geometry Sand = G("M 9,19.5 L 15,19.5 C 15,17 13,16 12,15 C 11,16 9,17 9,19.5 Z M 9.5,6 L 14.5,6 C 14,8 12.5,9 12,9.5 C 11.5,9 10,8 9.5,6 Z");
 
     protected override void OnRender(DrawingContext dc)
     {
@@ -713,6 +777,15 @@ public sealed class HudGlyph : FrameworkElement
                 dc.DrawGeometry(null, InkBold, Shackle);
                 dc.DrawRectangle(GoldFill, InkPen, new Rect(6, 11, 12, 9));
                 dc.DrawEllipse(PetUi.ArtInk, null, new Point(12, 15.5), 1.4, 1.4);
+                break;
+            case HudGlyphKind.Battery:
+                dc.DrawRoundedRectangle(PetUi.Frozen(Color.FromRgb(0xF6, 0xEE, 0xE2)), InkPen, new Rect(2.5, 7, 17, 10), 2, 2);
+                dc.DrawRectangle(PetUi.ArtInk, null, new Rect(19.5, 10, 2.5, 4));
+                dc.DrawRectangle(Red, null, new Rect(4.5, 9, 4, 6));
+                break;
+            case HudGlyphKind.Hourglass:
+                dc.DrawGeometry(Water, InkPen, Glass);
+                dc.DrawGeometry(GoldFill, null, Sand);
                 break;
             case HudGlyphKind.Bag:
                 dc.DrawGeometry(null, WhiteThin, BagHandle);

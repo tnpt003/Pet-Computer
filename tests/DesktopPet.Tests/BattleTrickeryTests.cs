@@ -84,8 +84,8 @@ internal static class BattleTrickeryTests
         var tiers = data.SynergyList.Where(y => y.Group == BuildGroups.Trick).OrderBy(y => y.At).ToList();
         check(tiers.Select(y => (y.Id, y.At, y.Effect, y.EndlessOnly)).SequenceEqual(new[] { ("teamwork", 3, "skillRush", false), ("quick_reload", 6, "killRecharge", true), ("skill_feast", 9, "skillFeast", true) }),
             "Synergies: Teamwork at 3 everywhere, Quick reload at 6 and Skill feast at 9 in Infinity");
-        check(data.Endless!.RulesVersion == 7 && data.Expedition!.RulesVersion == 8 && data.Expedition.Route("dump_trail")!.RulesVersion == 2,
-            "New rules versions: Infinity 7, Expedition 8, the Dump Trail 2");
+        check(data.Endless!.RulesVersion >= 7 && data.Expedition!.RulesVersion == 8 && data.Expedition.Route("dump_trail")!.RulesVersion >= 2,
+            "New rules versions: Infinity 7, Expedition 8, the Dump Trail 2 (or later: 1.5 M26 raised Infinity and the Dump Trail)");
         // An old saved build with the utility cards now counts toward Trickery.
         var old = new BattleSim(data, 0, 1600, seed: 1, stage: data.Campaign!.Chapters[0].Stages[1], build: new Dictionary<string, int> { ["quick_hands"] = 2, ["big_bomb"] = 1 });
         check(old.GroupPoints(BuildGroups.Trick) == 3 && old.Synergies.Any(y => y.Id == "teamwork"), "A build carried in with 3 of the old utility cards switches Teamwork on");

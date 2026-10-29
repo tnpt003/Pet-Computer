@@ -780,7 +780,13 @@ public enum BattleEventKind
     EraStarted, MutationStarted, MutationEnded,
     // 1.5 M25 (PetBattle.Trickery.cs): Ground quake shook the floor where the cat landed (Value: enemies hit);
     // Sleight of paw halved a skill's cooldown, Skill feast made one ready (Value: the BattleSkill).
-    Quaked, SkillRefunded, SkillFeast
+    Quaked, SkillRefunded, SkillFeast,
+    // 1.5 M26 (PetBattle.Malware2.cs): the Screenshot's flash froze every enemy; an infected one dazzled
+    // the cat (its swings miss a moment); a captcha opened (Value: its id), a cat tile was picked, a wrong
+    // tile shuffled it, it was solved (Value 1) or ran out (0); the battery ran low, was plugged in; the
+    // cursor froze, went again (Value 1: the click, 0: it ran out).
+    EnemiesFrozen, CatDazzled, CaptchaOpened, CaptchaPicked, CaptchaShuffled, CaptchaClosed,
+    BatteryLow, BatteryCharged, CursorFrozen, CursorResumed
 }
 // 1.5 M14: a flyer's round (PetBattle.Fly.cs) and a burrower's (PetBattle.Burrow.cs).
 public enum FlyPhase { Aloft, Falling, Downed, Rising }
@@ -849,8 +855,9 @@ public sealed class BattleBomb
 
 // The desktop apps: made-up shortcuts the game draws itself (no real app's name, logo or colours),
 // standing on a grid of desktop cells above the battle strip. The first five help the cat once
-// charged; Popup is the ad an infected Tabs opens on the strip.
-public enum BattleAppKind { Tabs, Ping, EndTask, Undo, Trash, Popup }
+// charged; Popup is the ad an infected Tabs opens on the strip. 1.5 M26: Screenshot, a sixth icon only
+// in battles whose stage has newAppsFrom (StageSpec.NewAppsFrom); last, so the older ones keep their place.
+public enum BattleAppKind { Tabs, Ping, EndTask, Undo, Trash, Popup, Screenshot }
 
 // One icon of the battle's desktop: its grid cell (column from the left, row up from the strip),
 // its charge (0–1, ready at 1) and, while a slime's virus holds it, the slime and the clicks left
@@ -906,10 +913,27 @@ public sealed class VirusFile
     public double BornAt;
 }
 
+// 1.5 M26: the captcha a slime threw (PetBattle.Malware2.cs): a fake "I am not a robot" window standing
+// on the floor around X (Width DIPs wide, BattleSim.CaptchaHeight high), over the cat and the slimes.
+// Tiles: its nine pictures (Cat, or something else: Pictures kinds in all); Picked: the cat tiles
+// clicked so far. A wrong click shuffles it (ShuffledAt: battle time); it closes once every cat is
+// picked, or after Life s.
+public sealed class BattleCaptcha
+{
+    public int Id;
+    public double X, Width, Age, Life;
+    public int[] Tiles = new int[9];
+    public bool[] Picked = new bool[9];
+    public double ShuffledAt = -1;
+    public const int Cat = 0, Pictures = 6;
+    public bool Solved { get { for (int i = 0; i < Tiles.Length; i++) if (Tiles[i] == Cat && !Picked[i]) return false; return true; } }
+}
+
 // Something on its way between an icon and the floor: what an app sends (ToIcon false) or what goes
 // into an icon (a slime's virus, the slimes the bin takes). It acts when it lands (Age = Duration).
 // FloorX/Height: the floor end (DIPs; Height above the floor). Targets: the slimes it goes for.
-public enum LaunchKind { Tabs, Bell, EndTask, Undo, Trash, Goo, BadBell, Freeze, Mend, Spit, Popup }
+// 1.5 M26: Flash (the Screenshot's, at the field), Dazzle (an infected Screenshot's, at the cat).
+public enum LaunchKind { Tabs, Bell, EndTask, Undo, Trash, Goo, BadBell, Freeze, Mend, Spit, Popup, Flash, Dazzle }
 public sealed class AppLaunch
 {
     public int Id, AppId, SlimeId;
@@ -1002,6 +1026,25 @@ public sealed record AppsSpec
     public double VirusExeWeight { get; init; }
     public double VirusExeEvery { get; init; } = 6;
     public int VirusExeCopies { get; init; } = 4;
+    // 1.5 M26 (docs/UPDATE-1.5.md A1–A4), only in battles whose stage has newAppsFrom: the Screenshot's
+    // flash freezes every enemy (bosses too) ShotFreeze s; infected, it dazzles the cat every DazzleEvery s
+    // (its swings miss for DazzleSeconds). Three more malware: a captcha (CaptchaShare of the floor's
+    // width around the cat, CaptchaCatsMin–CaptchaCatsMax of its nine tiles show a cat, gone after
+    // CaptchaSeconds; never while a flyer is out), a low battery (the skills recover at BatteryRate of
+    // their speed until it is plugged in) and a frozen cursor (no skill for CursorSeconds, or until
+    // Continue is clicked).
+    public double ShotFreeze { get; init; } = 2;
+    public double DazzleEvery { get; init; } = 11;
+    public double DazzleSeconds { get; init; } = 1.5;
+    public double CaptchaWeight { get; init; }
+    public double CaptchaSeconds { get; init; } = 15;
+    public double CaptchaShare { get; init; } = 1 / 3.0;
+    public int CaptchaCatsMin { get; init; } = 2;
+    public int CaptchaCatsMax { get; init; } = 4;
+    public double BatteryWeight { get; init; }
+    public double BatteryRate { get; init; } = 0.4;
+    public double CursorWeight { get; init; }
+    public double CursorSeconds { get; init; } = 5;
     [JsonPropertyName("list")] public AppSpec[]? List { get; init; }
     [JsonIgnore] public IReadOnlyList<AppSpec> AppList => List ?? BuiltIn;
 
@@ -1015,7 +1058,7 @@ public sealed record AppsSpec
     public double AttackEvery(BattleAppKind kind) => kind switch
     {
         BattleAppKind.Tabs => PopupEvery, BattleAppKind.Ping => BellEvery, BattleAppKind.EndTask => FreezeEvery,
-        BattleAppKind.Undo => MendEvery, _ => SpitEvery
+        BattleAppKind.Undo => MendEvery, BattleAppKind.Screenshot => DazzleEvery, _ => SpitEvery
     };
 
     // The texts when "apps" has no "list" (the shipped file has the descriptions too).
@@ -1026,7 +1069,8 @@ public sealed record AppsSpec
         new() { Id = "endtask", NameVi = "End Task", NameEn = "End Task", Charge = 80 },
         new() { Id = "undo", NameVi = "Ctrl+Z", NameEn = "Ctrl+Z", Charge = 90 },
         new() { Id = "trash", NameVi = "Thùng Rác", NameEn = "Bin", Charge = 70 },
-        new() { Id = "popup", NameVi = "Quảng cáo", NameEn = "Ad popup" }
+        new() { Id = "popup", NameVi = "Quảng cáo", NameEn = "Ad popup" },
+        new() { Id = "screenshot", NameVi = "Chụp Màn Hình", NameEn = "Screenshot", Charge = 75 }
     };
 }
 

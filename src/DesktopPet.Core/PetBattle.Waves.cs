@@ -64,6 +64,8 @@ public sealed partial class BattleSim
                     events.Add(new(BattleEventKind.SynergyUnlocked, catX, i));
                 }
         }
+        // Frozen by the Screenshot (1.5 M26): nothing new comes meanwhile.
+        if (EnemiesFrozen) return;
         spawnTimer = Math.Max(0, spawnTimer - dt);
         // An announced spawn comes once its arrow has run out and the floor has room; nothing else
         // spawns before it.

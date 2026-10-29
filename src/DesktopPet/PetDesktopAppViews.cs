@@ -382,7 +382,7 @@ public sealed class AppFlightView : FrameworkElement
     // Where the floor end is now: the cat for what lands on it, the slime for what goes to one.
     private double TargetX(AppLaunch launch) => launch.Kind switch
     {
-        LaunchKind.Tabs or LaunchKind.Undo or LaunchKind.BadBell or LaunchKind.Freeze => sim.CatX,
+        LaunchKind.Tabs or LaunchKind.Undo or LaunchKind.BadBell or LaunchKind.Freeze or LaunchKind.Flash or LaunchKind.Dazzle => sim.CatX,
         LaunchKind.Goo => sim.Find(launch.SlimeId)?.X ?? launch.FloorX,
         LaunchKind.EndTask or LaunchKind.Mend when launch.Targets.Length > 0 => sim.Find(launch.Targets[0])?.X ?? launch.FloorX,
         _ => launch.FloorX
@@ -441,6 +441,13 @@ public sealed class AppFlightView : FrameworkElement
                 dc.PushTransform(new RotateTransform(e * 360, p.X, p.Y));
                 AppArt.DrawBlob(dc, p, 8 + 6 * e, AppArt.Tint(color), 1 + 0.3 * Math.Sin(e * Math.PI * 3));
                 dc.Pop();
+                break;
+            case LaunchKind.Flash:
+            case LaunchKind.Dazzle:
+                // 1.5 M26: the Screenshot's flash (an infected one's is red-trailed, at the cat).
+                Trail(dc, start, end, e, launch.Kind == LaunchKind.Dazzle ? TrailRed : TrailGold);
+                AppArt.DrawFlash(dc, p, 14 + 8 * e, 0);
+                AppArt.DrawCamera(dc, p, 0.8);
                 break;
             case LaunchKind.Popup:
                 double w = BattleSim.PopupWidth * (0.3 + 0.7 * e), h = BattleSim.PopupHeight * (0.3 + 0.7 * e);

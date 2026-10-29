@@ -1053,6 +1053,27 @@ J1 của docs/UPDATE-1.5.md. Code: `src/DesktopPet.Core/PetBattle.Trickery.cs` (
 - rulesVersion: Vô tận 6 → 7; Viễn chinh tuyến 1 7 → 8 (`keepRuns: [6, 7]`, khóa mới `shopFrom: 7` = phiên bản đầu có cửa hàng, chuyến r7 đang đi vẫn có cửa hàng, r6 thì không), tuyến 2 1 → 2 (`keepRuns: [1]`). Chương Phiêu lưu không đổi.
 - Bot mô phỏng (AdventureBalanceTests) xếp thẻ Mưu mẹo như thẻ tiện ích cũ (cuối cùng) nên bảng đo như trước; check "không màn nào quá 4 phút" từ M25 không tính bot đứng yên (màn 5, búa, Dễ: trước 1/20 trận thắng trong 277 s, sau 2/20 trong 252 s). Mô phỏng sau M25: Vô tận trung vị đợt 31 (như trước); Viễn chinh Normal bot simple thắng 39/35/38/32 trên 40 (trước 39/34/39/32). Số liệu thẻ là ước lượng, chốt khi chơi thật/M29.
 
+## App mới: Chụp màn hình, Captcha, Pin yếu, Con trỏ đơ (`newAppsFrom`) (bản 1.5, mốc M26, 2026-10-30)
+
+A1–A4 của docs/UPDATE-1.5.md, theo ngoại lệ "App trong trận" (docs/APPROVED-EXCEPTIONS.md). Code: `src/DesktopPet.Core/PetBattle.Malware2.cs` (logic), `PetBattle.Apps.cs` (icon thứ 6, rút thăm), cửa sổ Captcha `src/DesktopPet/PetWindow.BattleCaptcha.cs`, lớp phủ HUD trong `PetBattleHud.cs`, hình trên dải trận `PetBattleView.Snap.cs`. Test `tests/DesktopPet.Tests/NewAppTests.cs`, UiChecks `NewAppVisualChecks.cs` và khối "1.5 M26" trong `BattleChecks.cs`.
+
+- **Chỉ ở trận có `"newAppsFrom"`** (khóa của màn/trận; 0–1000, 0 = không bao giờ; Vô tận: `endless.newAppsFrom`, 0–100). Gốc: 5 màn chương 2 và 14 trận Lối Bãi rác = 1, Vô tận = 15. Chương 1, tuyến Viễn chinh đầu và trận tự do không có: ở đó trọng số app độc mới coi là 0 nên rút thăm y như trước (bảng mô phỏng chương 1 và tuyến 1 giống hệt từng dòng bản M25).
+- **Chụp Màn Hình (icon thứ 6, `screenshot` trong `apps.list`):** sạc 75 s, bắt đầu 30%. Bấm khi đầy (và có slime) thì tia chớp bay xuống; tới nơi mọi quái (cả trùm) **đứng hình `shotFreeze` s**: không đi, không đánh, đòn đang gồng dừng giữa chừng, đạn/goo đang bay dừng, đợt chưa sinh quái mới, slime không ném app độc/virus. Mèo vẫn đánh, bom/kỹ năng vẫn trúng, độc vẫn ngấm, quái vẫn bị hạ. Dải trận chớp trắng 0,35 s, quái đứng hình giữ nguyên dáng lúc chớp, có 4 góc khung ngắm. Nhiễm virus: cứ `dazzleEvery` s chớp vào mắt mèo, mèo **lóa `dazzleSeconds` s** (vuốt trượt, hiện MISS; mèo đang bế, đang được bảo vệ sau khi thả thì không trúng; Khiên chặn).
+- **Captcha (`captchaWeight`):** cửa sổ giả "Xác minh bạn không phải robot" rộng `captchaShare` bề ngang sàn (190–520 DIPs), cao 150 DIPs, đứng trên sàn ở chỗ mèo lúc nó bật ra (không đi theo). Là cửa sổ topmost riêng, được đưa lên trên cửa sổ mèo (trừ lúc đang cầm/ném mèo: mèo đang cầm ở phía trước, thả xuống rồi Captcha lại đè lên): chỗ nó che thì không bấm được mèo/slime; mèo ra khỏi chỗ che thì nhấc bình thường; slime sau nó vẫn đánh. Lưới 3×3 hình tự vẽ (mèo, slime, cá, cuộn len, file, chuông), `captchaCatsMin`–`captchaCatsMax` ô có mèo. Bấm ô mèo: ô xanh có dấu tích; đủ hết thì đóng. Bấm ô khác: xáo lại (mất các ô đã chọn). Tự đóng sau `captchaSeconds` s (đồng hồ dừng khi đang cầm mèo). **Không bật ra khi đang có slime bay** (lịch màn chờ). Pause/menu/fullscreen ẩn nó.
+- **Pin yếu (`batteryWeight`):** dải đỏ "Pin yếu" trên dải ô kỹ năng HUD; kỹ năng hồi chiêu bằng `batteryRate` tốc độ thường tới khi bấm **Cắm sạc**.
+- **Con trỏ đơ (`cursorWeight`):** lớp phủ đồng hồ cát "Không phản hồi… N" che 5 ô kỹ năng: không dùng, không chọn được kỹ năng (kỹ năng đang chọn bị cất, quạt/bình xịt dừng) trong `cursorSeconds` s hoặc tới khi bấm **Tiếp tục**. App và thanh nộ vẫn dùng được.
+- Như app độc khác: tính trong `maxMalware` (chương 2: 4 loại cùng lúc), chờ khi đang cầm mèo, dọn xong đợt thì hết; bấm được cả khi đang cầm mèo. Lịch `malwarePlan` có thêm `captcha`, `battery`, `cursor`. Danh sách `apps.list` của file tự sửa cũ thiếu `screenshot` vẫn hợp lệ (dùng tên gốc).
+- rulesVersion: màn chương 2 → 2, Lối Bãi rác → 3 (`keepRuns` [1, 2]: chuyến cũ đi tiếp), Vô tận → 8 (kỷ lục cũ đứng riêng).
+
+| Khóa (`apps`) | Khoảng | Gốc |
+| --- | --- | --- |
+| `shotFreeze`, `dazzleEvery`, `dazzleSeconds` | 0,2–10 s, 1–120 s, 0–5 s | 2, 11, 1.5 |
+| `captchaWeight`, `captchaSeconds`, `captchaShare`, `captchaCatsMin`, `captchaCatsMax` | 0–100, 3–60 s, 0,15–0,6, 1–8, ≥ min và ≤ 8 | 1, 15, 0.33, 2, 4 |
+| `batteryWeight`, `batteryRate` | 0–100, 0,1–1 | 1, 0.4 |
+| `cursorWeight`, `cursorSeconds` | 0–100, 1–30 s | 1, 5 |
+
+- Mô phỏng (2026-10-30, so với M25; bot không bấm Captcha/Cắm sạc/Tiếp tục): chương 2 và Lối Bãi rác khó hơn chút (vd. Lối Bãi rác kiếm Thường simple safe 33 → 31/40 chuyến thắng), Vô tận trung vị giữ 31 đợt.
+
 ## App trên màn hình (`apps`) (2026-10-23)
 
 Một "desktop giả" trong trận Phiêu lưu, Viễn chinh và Vô tận (trận tự do không có): 5 icon app do game tự vẽ (không dùng tên, logo hay màu của app thật) đứng trên các ô lưới kiểu desktop phía trên dải chiến trường, ở vị trí ngẫu nhiên theo seed. Logic ở `PetBattle.Apps.cs`; hình ở `PetBattleAppArt.cs`, `PetDesktopAppViews.cs` (icon, đường bay), `PetBattleView.Apps.cs` (dải chiến trường); cửa sổ ở `PetWindow.BattleApps.cs`. Python không tham gia.

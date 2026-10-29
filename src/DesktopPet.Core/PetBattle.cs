@@ -336,7 +336,7 @@ public sealed partial class BattleSim
     public void ClearEvents() => events.Clear();
     public double Cooldown(BattleSkill skill) => cooldowns[(int)skill];
     public static bool IsAimed(BattleSkill skill) => BattleSkills.Get(skill).Aimed;
-    public bool Ready(BattleSkill skill) => !Over && !Paused && !ChoosingUpgrade && !SkillsLocked && Carries(skill) && BattleSkills.Get(skill).Working && cooldowns[(int)skill] <= 0;
+    public bool Ready(BattleSkill skill) => !Over && !Paused && !ChoosingUpgrade && !SkillsLocked && !CursorFrozen && Carries(skill) && BattleSkills.Get(skill).Working && cooldowns[(int)skill] <= 0;
 
     // The one description of the user's hold on the cat, shared by Step, the skills and the HUD.
     // A real lift cancels a chosen skill at once, so a later click cannot use it by mistake;
@@ -367,6 +367,7 @@ public sealed partial class BattleSim
         lastCatX = floorX;
         catPose = catHeld ? pose : null;
         StepEffects(dt);
+        StepFreeze(dt); // 1.5 M26: the Screenshot's freeze, a dazzle (PetBattle.Malware2.cs).
         StepDrops(dt);
         HurtFlash = Math.Max(0, HurtFlash - dt);
         // The stun runs on battle time, held or not (lifting neither ends nor stretches it).
@@ -380,7 +381,9 @@ public sealed partial class BattleSim
         // So does the Turtle shell; Momentum counts only the cat's own run on the floor.
         if (!catHeld)
         {
-            for (int i = 0; i < cooldowns.Length; i++) cooldowns[i] = Math.Max(0, cooldowns[i] - dt);
+            // A low battery (1.5 M26, PetBattle.Malware2.cs) slows them.
+            double recovered = dt * SkillRecovery;
+            for (int i = 0; i < cooldowns.Length; i++) cooldowns[i] = Math.Max(0, cooldowns[i] - recovered);
             ShellCooldown = Math.Max(0, ShellCooldown - dt);
             if (!double.IsNaN(runFromX)) runDistance += Math.Abs(catX - runFromX);
             runFromX = catX;
@@ -425,16 +428,17 @@ public sealed partial class BattleSim
         StepBuild(dt, catHeld);
         StepTrickery(dt, catHeld);
         StepBombs(dt);
-        StepSpit(dt);
+        // Frozen by the Screenshot (1.5 M26): the enemies' goo and drops in flight wait too.
+        if (!EnemiesFrozen) StepSpit(dt);
         if (Over) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
-        StepShots(dt);
+        if (!EnemiesFrozen) StepShots(dt);
         if (Over) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
         StepSlimes(dt, floorX, catHeld);
         if (Over) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
         StepBasket(dt);
         StepTools(dt, catHeld);
         if (Over) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
-        StepTricks(dt);
+        if (!EnemiesFrozen) StepTricks(dt);
         if (Over) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
         StepGrabber(dt, catHeld);
         if (Over) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
@@ -600,6 +604,8 @@ public sealed partial class BattleSim
         }
         var slime = Find(swingTargetId);
         if (slime == null || !slime.Targetable || Math.Abs(slime.X - catX) > Reach(slime) + 14) { Combo = 0; return; } // A miss ends the chain.
+        // Dazzled by an infected Screenshot (1.5 M26): the swing misses.
+        if (CatDazzled) { AddEffect(BattleEffectKind.Miss, slime.X, slime.Height / 2); Combo = 0; return; }
         Combo = LiveCombo + 1;
         comboClock = 0;
         bool combo = Combo >= ComboHits;
@@ -1048,6 +1054,7 @@ public sealed partial class BattleSim
         MapSky(left, oldWidth, newWidth);
         MapDrops(left, oldWidth, newWidth);
         MapBasket(left, oldWidth, newWidth);
+        MapNewMalware(left, right, oldWidth, newWidth);
         foreach (var p in popups) p.X = left + (p.X - Left) / oldWidth * newWidth;
         foreach (var l in launches) { l.FloorX = left + (l.FloorX - Left) / oldWidth * newWidth; for (int i = 0; i < l.TargetX.Length; i++) l.TargetX[i] = left + (l.TargetX[i] - Left) / oldWidth * newWidth; }
         Left = left; Right = right;

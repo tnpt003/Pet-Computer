@@ -234,7 +234,7 @@ public sealed partial class BattleFieldView : FrameworkElement
                 // 1.5 M14: a flyer up in the air is drawn by its own window (only its shadow here); a
                 // burrower under the floor or going in/out of it has its own drawing.
                 if (BattleSim.InSky(slime)) { if (slime.State != SlimeState.Defeated) DrawSkyShadow(dc, slime, x, floor); continue; }
-                if (DrawBurrower(dc, slime, x, floor, time)) continue;
+                if (DrawBurrower(dc, slime, x, floor, SlimeTime(time))) continue;
                 double bubble = BattleSim.BubbleLift(slime), wall = WallLift(slime);
                 // A leaping boss (or a wall climber up the edge): its shadow stays on the floor, shrinking as it rises.
                 if (slime.LeapHeight + slime.Lift + bubble + wall > 0)
@@ -255,7 +255,7 @@ public sealed partial class BattleFieldView : FrameworkElement
                 double turn = BattleSim.RollTurn(slime), lean = WallLean(slime) + turn;
                 double foot = floor - slime.LeapHeight - slime.RideHeight - slime.Lift - bubble - wall - RollLift(slime, turn);
                 if (lean != 0) dc.PushTransform(new RotateTransform(lean, x, foot - slime.Height / 2));
-                DrawSlime(dc, slime, x, foot, sim.Settings, time);
+                DrawSlime(dc, slime, x, foot, sim.Settings, SlimeTime(time)); // 1.5 M26: frozen, the pose of the flash.
                 if (lean != 0) dc.Pop();
                 if (sim.AppRules != null && sim.IsInfector(slime.Id) && slime.State != SlimeState.Defeated) DrawVirusMark(dc, slime, x, floor, time);
             }
@@ -272,6 +272,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         if (sim.Incoming) DrawIncoming(dc, sim.IncomingX - OriginX, floor, time);
         DrawPopups(dc, floor, time);
         DrawHazards(dc, floor, time);
+        DrawSnap(dc, floor, time); // 1.5 M26 (PetBattleView.Snap.cs)
     }
 
     // A spawn from behind is coming at this edge: a pulsing red arrow pointing into the field and a "!".

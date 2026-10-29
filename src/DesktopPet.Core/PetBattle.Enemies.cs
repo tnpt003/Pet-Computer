@@ -68,8 +68,11 @@ public sealed partial class BattleSim
         var s = Settings;
         // Who guards whom is decided a few times a second, from where the cat was then (a reaction
         // delay, never where it will be); the slimes still move every frame.
-        decisionClock -= dt;
-        if (decisionClock <= 0 && !Over)
+        // Frozen by the Screenshot (1.5 M26): every enemy stands still; hits on them, their poison and
+        // their defeat go on as usual.
+        bool frozen = EnemiesFrozen && !Over;
+        if (!frozen) decisionClock -= dt;
+        if (decisionClock <= 0 && !Over && !frozen)
         {
             decisionClock = DecisionInterval;
             decisionCatX = catX;
@@ -77,7 +80,7 @@ public sealed partial class BattleSim
             FormLinks(catX);
         }
         RefreshGuards();
-        if (linkKinds.Count > 0 && !Over) StepLinks(dt, catX, catHeld);
+        if (linkKinds.Count > 0 && !Over && !frozen) StepLinks(dt, catX, catHeld);
         // By index over the slimes there were at the start: a hit on the cat can send damage back
         // (Thorns) and make a boss call helpers, which join the list and move from the next frame.
         int count = slimes.Count;
@@ -85,6 +88,13 @@ public sealed partial class BattleSim
         {
             var slime = slimes[index];
             var (minX, maxX) = Bounds(slime);
+            if (frozen && slime.State != SlimeState.Defeated)
+            {
+                slime.HitFlash = Math.Max(0, slime.HitFlash - dt);
+                StepStatus(slime, dt);
+                if (Over) break;
+                continue;
+            }
             // A chill slows what it does: its windup, recovery and heal, and the waits after them.
             double act = dt * slime.ChillFactor;
             slime.StateTime += slime.State is SlimeState.Windup or SlimeState.Recover or SlimeState.Casting ? act : dt;

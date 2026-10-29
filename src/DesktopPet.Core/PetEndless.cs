@@ -51,6 +51,8 @@ public sealed class EndlessSpec
     // 1.5 M24: stretches of the run, each with newer kinds added to the draw. The first starts at
     // wave ErasFrom; the next ones right after each boss wave; past the last one they come round again.
     public int ErasFrom { get; init; } = 15;
+    // 1.5 M26: from this wave the run has the Screenshot icon and the newer malware (0: never).
+    public int NewAppsFrom { get; init; }
     public EndlessEra[] Eras { get; init; } = Array.Empty<EndlessEra>();
     // 1.5 M24 "Mutations": after each cleared boss wave the user picks one of a few odd rules; it holds
     // until the next boss wave is cleared, then its reward comes.
@@ -98,7 +100,7 @@ public sealed class EndlessSpec
         Id = Id, NameVi = "Vô tận", NameEn = "Infinity", Objective = StageSpec.EndlessObjective, Upgrades = UpgradeEvery > 0,
         UpgradeEvery = UpgradeEvery, RulesVersion = RulesVersion, MaxAlive = MaxAlive, EliteChance = EliteChance,
         EliteChancePerWave = EliteChancePerWave, EliteChanceMax = EliteChanceMax, MoreElitesEvery = MoreElitesEvery, MoreElitesMax = MoreElitesMax,
-        AllSynergiesAt = AllSynergiesAt, BossBonusPick = BossBonusPick, Infinity = this,
+        AllSynergiesAt = AllSynergiesAt, BossBonusPick = BossBonusPick, Infinity = this, NewAppsFrom = NewAppsFrom,
         Waves = Enumerable.Range(1, PlannedWaves).Select(Wave).ToArray()
     };
 
@@ -142,6 +144,7 @@ public sealed class EndlessSpec
             if (e.Bosses.Any(b => s.EnemyTypes.FirstOrDefault(t => t.Id == b) is not { Boss: true })) throw new InvalidDataException(at + ".bosses must name boss enemies");
         }
         if (e.ErasFrom is < 1 or > PlannedWaves) throw new InvalidDataException(at + ".erasFrom must be 1–" + PlannedWaves);
+        if (e.NewAppsFrom is < 0 or > PlannedWaves) throw new InvalidDataException(at + ".newAppsFrom must be 0–" + PlannedWaves + " (0: never)");
         if (e.Eras == null || e.Eras.Length > 12) throw new InvalidDataException(at + ".eras must list at most 12 stretches");
         for (int i = 0; i < e.Eras.Length; i++)
         {

@@ -71,7 +71,7 @@ internal static class ExpeditionRouteTests
         var reopened = new Expedition(data, progress);
         check(reopened.Spec.Id == "dump_trail" && reopened.Mismatch(reopened.Run!) == null, "A saved run is read back on its own route, whatever route is asked for");
         reopened.Abandon();
-        check(progress.Records.Keys.Single().StartsWith("dump_trail|r2|", StringComparison.Ordinal) && new Expedition(data, progress).Record(BattleWeapon.Sword, BattleDifficulty.Normal).Runs == 0
+        check(progress.Records.Keys.Single().StartsWith("dump_trail|r3|", StringComparison.Ordinal) && new Expedition(data, progress).Record(BattleWeapon.Sword, BattleDifficulty.Normal).Runs == 0
               && new Expedition(data, progress, "dump_trail").Record(BattleWeapon.Sword, BattleDifficulty.Normal).Runs == 1,
             "Each route keeps its own records");
         var lost = new ExpeditionProgress { Active = new ExpeditionRun { RunId = "gone", Expedition = "old_route", RulesVersion = 1 } };

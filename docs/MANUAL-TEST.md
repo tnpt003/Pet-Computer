@@ -815,3 +815,17 @@ Dữ liệu gốc, không cần file tùy chỉnh. Bảng chọn thẻ có thẻ
 - [ ] 3 thẻ Mưu mẹo: banner "★ PHỐI HỢP!"; dùng kỹ năng xong mèo đánh mạnh hơn một lúc. Vô tận 6/9 điểm: Nạp nhanh (hạ quái làm kỹ năng hồi nhanh), Đại tiệc (~40 s một kỹ năng sẵn sàng, tiếng lấp lánh). Túi đồ Vô tận hiện hàng Mưu mẹo với 3 huy hiệu có hình.
 - [ ] Đang có chuyến Viễn chinh từ bản trước (luật 7): mở bản đồ vẫn đi tiếp, các bậc quay sau vẫn ra cửa hàng. Kỷ lục Vô tận cũ không hiện là kỷ lục mới (luật 7 bắt đầu "Chưa chơi").
 - [ ] Chữ vi/en/ja đúng, không tràn (tên thẻ dài "Cú đáp địa chấn"); DPI 100/150/200%: bảng chọn thẻ, túi đồ 4 cột không bị cắt.
+
+## App mới: Chụp Màn Hình, Captcha, Pin yếu, Con trỏ đơ 1.5 M26 (2026-10-30)
+Dữ liệu gốc, không cần file tùy chỉnh (chương 2, Lối Bãi rác, Vô tận từ đợt 15). Icon máy ảnh, khung đứng hình, Captcha và lớp phủ HUD đã xem qua render UiChecks; cửa sổ Captcha thật đã kiểm bằng UiChecks (đúng chỗ, nằm trên cửa sổ mèo, Pause ẩn). **Chưa chơi thật**, chưa thử chuột thật, DPI thật và màn hình phụ.
+- [ ] Chương 1 và tuyến Viễn chinh đầu: vẫn 5 icon, không có Captcha/Pin yếu/Con trỏ đơ.
+- [ ] Chương 2 / Lối Bãi rác: có icon thứ 6 màu xanh trời hình máy ảnh; rê chuột thấy "Chụp Màn Hình" và mô tả. Sạc đầy bấm: tia chớp bay xuống, dải trận chớp trắng, banner "ĐỨNG HÌNH!", mọi slime (cả trùm) đứng im 2 s trong 4 góc khung ngắm, mèo vẫn đánh trúng. Không có slime thì bấm hiện "Chưa có slime nào để chụp đứng hình."
+- [ ] Vô tận: đợt 15 icon máy ảnh mới hiện ra; kỷ lục Vô tận cũ không hiện là kỷ lục mới (luật 8).
+- [ ] Icon máy ảnh bị nhiễm: thỉnh thoảng mèo bị chớp, có sao vàng trước mắt và vuốt hiện MISS khoảng 1,5 s; Khiên chặn được; quét icon thì hết.
+- [ ] **Captcha:** cửa sổ "Xác minh bạn không phải robot" đứng trên sàn ở chỗ mèo, che mèo; bấm vào chỗ che không nhấc được mèo, mèo đi ra ngoài thì nhấc/kéo/ném bình thường. Bấm ô mèo: ô xanh có tích; bấm ô khác: lắc và xáo lại. Chọn hết mèo thì đóng; bỏ mặc 15 s thì tự đóng. Không bao giờ ra khi có slime bay. Pause/menu/app toàn màn hình: Captcha ẩn rồi hiện lại đúng chỗ. Bấm vào mèo (chỗ không che) xong Captcha vẫn nằm trên mèo.
+- [ ] **Pin yếu:** dải đỏ "Pin yếu: kỹ năng hồi chậm" dưới các ô kỹ năng, ô kỹ năng hồi chậm thấy rõ; bấm "Cắm sạc" thì hết.
+- [ ] **Con trỏ đơ:** lớp phủ đồng hồ cát "Không phản hồi… 5" che ô kỹ năng, bấm ô không được, kỹ năng đang chọn (Đẩy, Laser…) bị hủy; app và thanh nộ vẫn dùng được; bấm "Tiếp tục" hoặc đợi 5 s thì hết.
+- [ ] Dọn xong đợt: Captcha, Pin yếu, Con trỏ đơ đều biến mất. Tắt ô "App trong trận": không có gì trong số này.
+- [ ] Chuyến Lối Bãi rác đang đi từ bản trước (luật 2): mở bản đồ vẫn đi tiếp.
+- [ ] Cảm giác (ghi vào Nhật ký chơi thử): 4 loại app độc cùng lúc ở chương 2 có quá rối không; Captcha 15 s và Con trỏ đơ 5 s có quá khó chịu không; Chụp Màn Hình 75 s có quá mạnh/yếu không.
+- [ ] Chữ vi/en/ja đúng, không tràn (HUD tiếng Nhật, Captcha); DPI 100/150/200% và màn hình phụ: Captcha đúng chỗ trên sàn, không bị cắt.

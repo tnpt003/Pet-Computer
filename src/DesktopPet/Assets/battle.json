@@ -228,6 +228,15 @@
     "updateWeight": 1, "updateSeconds": 8, "updateHitSeconds": 1.2, "updateClicks": 4,
     // virus.exe: a file on the desktop that copies itself; with 4 copies it infects an icon. Click to delete.
     "virusExeWeight": 1, "virusExeEvery": 6, "virusExeCopies": 4,
+    // 1.5 M26, only where a stage has "newAppsFrom" (chapter 2, the Dump Trail, Infinity from wave 15):
+    // the Screenshot icon (its flash freezes every enemy shotFreeze s; infected, it dazzles the cat every
+    // dazzleEvery s: its swings miss for dazzleSeconds) and three more malware: a captcha (captchaShare of
+    // the floor's width around the cat, captchaCatsMin–captchaCatsMax cat tiles of nine, gone after
+    // captchaSeconds; never while a flying slime is out), a low battery (skills recover at batteryRate
+    // until "Plug in") and a frozen cursor (no skills for cursorSeconds or until "Continue").
+    "shotFreeze": 2, "dazzleEvery": 11, "dazzleSeconds": 1.5,
+    "captchaWeight": 1, "captchaSeconds": 15, "captchaShare": 0.33, "captchaCatsMin": 2, "captchaCatsMax": 4,
+    "batteryWeight": 1, "batteryRate": 0.4, "cursorWeight": 1, "cursorSeconds": 5,
     "list": [
       { "id": "tabs", "nameVi": "Tab Lốc Xoáy", "nameEn": "Tab Tornado", "charge": 40, "start": 0.6,
         "descVi": "Ba thẻ tab bay xuống xoay quanh mèo 6 giây, chém slime ở gần.", "descEn": "Three tabs fly down and circle the cat for 6 s, cutting nearby slimes.",
@@ -245,7 +254,10 @@
         "descVi": "Hút 2 slime thường gần mèo nhất vào thùng.", "descEn": "Sucks the 2 plain slimes nearest the cat into the bin.",
         "badVi": "Nhiễm virus: nhả một slime tinh anh ra sàn.", "badEn": "Infected: spits an elite slime onto the floor." },
       { "id": "popup", "nameVi": "Quảng cáo", "nameEn": "Ad popup",
-        "descVi": "Ba quảng cáo che slime phía sau. Bấm × để tắt (Tab nhiễm thì gỡ Tab trước); để lâu sẽ thả slime ra.", "descEn": "Three ads cover the slimes behind them. Click × to close (clean an infected Tabs first), or one lets a slime out." }
+        "descVi": "Ba quảng cáo che slime phía sau. Bấm × để tắt (Tab nhiễm thì gỡ Tab trước); để lâu sẽ thả slime ra.", "descEn": "Three ads cover the slimes behind them. Click × to close (clean an infected Tabs first), or one lets a slime out." },
+      { "id": "screenshot", "nameVi": "Chụp Màn Hình", "nameEn": "Screenshot", "charge": 75, "start": 0.3,
+        "descVi": "Chớp sáng: mọi slime, cả trùm, đứng hình 2 giây; mèo vẫn đánh được.", "descEn": "A flash: every slime, bosses too, freezes for 2 s while the cat keeps hitting.",
+        "badVi": "Nhiễm virus: chớp vào mắt mèo, mèo đánh trượt 1,5 giây.", "badEn": "Infected: flashes in the cat's eyes; its swings miss for 1.5 s." }
     ]
   },
 
@@ -916,6 +928,7 @@
         // fish and potions (drops); up to four malware kinds at once (maxMalware). 1.5 M22: its look (scene
         // "dump": the map's banner, a backdrop of files and folders behind its battles), the Folder hat
         // (stage 3) and the Zip Slime plush keepsake (stage 5, "keepsake": shown on the display corner).
+        // 1.5 M26 (rules 2): the newer apps from the first wave ("newAppsFrom", apps above).
         "id": "download_dump", "nameVi": "Bãi rác Tải về", "nameEn": "The Download Dump",
         "skillChoice": true, "unlockAfter": "c1_slime_king", "drops": true, "scene": "dump",
         "stages": [
@@ -925,7 +938,7 @@
             "goalEn": "Spitters leave speed puddles, spring slimes lie in wait, fusing swarms merge into a giant. This stage lends the Fan.",
             "tipVi": "Bạn sẽ học: Quạt (giữ chuột thổi slime ra xa, làm khô vũng, tách bầy); né vòng vàng của slime lò xo (nhấc mèo ra khi nó nén) hoặc đánh 2 đòn cho nó bẹp; hạ slime phun đứng xa trước; tách bầy hợp thể trước khi thanh nhập đầy. Từ chương này slime rơi cá và bình: click để nhặt.",
             "tipEn": "You learn: the Fan (hold the mouse to blow slimes away, dry puddles, split swarms); to dodge a spring slime's gold ring (lift the cat while it squeezes) or flatten it with two hits; to take the far spitter first; to split a fusing swarm before its bar fills. From this chapter slimes drop fish and potions: click to pick them up.",
-            "objective": "clear", "upgrades": true, "maxAlive": 5, "threat": 1.9, "eliteChance": 0.15, "maxMalware": 4, "rulesVersion": 1,
+            "objective": "clear", "upgrades": true, "maxAlive": 5, "threat": 1.9, "eliteChance": 0.15, "maxMalware": 4, "newAppsFrom": 1, "rulesVersion": 2,
             "unlocksSkill": "fan", "suggestSkills": [ "fan", "push", "bomb" ],
             "waves": [
               { "groups": [ { "enemy": "slime", "count": 2 }, { "enemy": "spitter", "count": 1 } ] },
@@ -939,7 +952,7 @@
             "goalEn": "Ghost slimes fade in and out, mirage slimes bring fakes, a drummer keeps the band in time, a flag speeds friends up. This stage lends the Laser.",
             "tipVi": "Bạn sẽ học: rê chuột lên slime bóng ma để nó hiện ra (đang ẩn thì không đánh trúng); rê chuột tìm bản thật của slime ảo ảnh (bản thật có bóng); Đèn laser dụ slime ra khỏi vùng cờ và soi lộ cả hai; Đẩy nhạc trưởng trước nhịp 4 để cả đội lệch nhịp; hạ slime cờ hiệu thì cả đội hoảng.",
             "tipEn": "You learn: to point at a ghost slime so it shows (a hidden one cannot be hit); to point at a mirage to find the real one (it has a shadow); the Laser pulls slimes out of the flag's ring and reveals both; to Push the drummer before beat 4 so the band falls out of time; beating the flag slime scares the whole band.",
-            "objective": "clear", "upgrades": true, "maxAlive": 5, "threat": 2.2, "eliteChance": 0.2, "maxMalware": 4, "rulesVersion": 1,
+            "objective": "clear", "upgrades": true, "maxAlive": 5, "threat": 2.2, "eliteChance": 0.2, "maxMalware": 4, "newAppsFrom": 1, "rulesVersion": 2,
             "unlocksSkill": "laser", "suggestSkills": [ "laser", "push", "shield" ],
             "waves": [
               { "groups": [ { "enemy": "phantom", "count": 1 }, { "enemy": "slime", "count": 2 }, { "enemy": "runner", "count": 1 } ] },
@@ -954,7 +967,7 @@
             "tipVi": "Bạn sẽ học: hạ slime đang tha cá trước, click cá rơi để trả về giỏ (mất hết cá là thua); Kẹp gắp nhấn giữ một slime nhỏ rồi vung chuột ném vào slime khác (kéo được slime bay xuống, lôi slime đào hang lên); hạ ngựa của slime bom giữa đường; nhấc mèo khi vòng nứt hiện dưới chân. Slime trộm lấy năng lượng icon: hạ nó trước khi nó trốn.",
             "tipEn": "You learn: to beat a fish carrier first and click a dropped fish back into the basket (lose every fish and the stage is lost); the Grabber: press a small slime and fling the mouse to throw it at another (it pulls a flyer down and a burrower up); to take a bomb's mount down on the way; to lift the cat when a crack shows under it. A thief slime takes an icon's charge: beat it before it gets away.",
             "objective": "survive", "surviveSeconds": 75, "maxAlive": 6, "upgrades": true, "maxUpgrades": 3, "upgradeAt": [ 20, 40, 60 ],
-            "threatGrowth": 0.5, "threat": 2.2, "eliteChance": 0.15, "maxMalware": 4, "rulesVersion": 1, "reward": "FolderHat",
+            "threatGrowth": 0.5, "threat": 2.2, "eliteChance": 0.15, "maxMalware": 4, "newAppsFrom": 1, "rulesVersion": 2, "reward": "FolderHat",
             "unlocksSkill": "grabber", "suggestSkills": [ "grabber", "push", "heal" ],
             "basket": { "fish": 5, "every": 3, "at": 0.3 },
             "waves": [
@@ -969,7 +982,7 @@
             "goalEn": "Ice slimes, hedgehogs, splitting slimes and chain slimes; at the end the Slime Mother lays fusing swarms. This stage lends the Water spray.",
             "tipVi": "Bạn sẽ học: Bình xịt (giữ chuột: slime ướt chậm lại, băng mềm, gai nhím cụp); ném mèo xuyên slime băng thật mạnh để vỡ vỏ; đánh slime nhím lúc gai nằm; cắt dây slime xích (kéo mèo xuyên dây) vì nó gánh sát thương cho đồng đội; hạ thảo dược trước để hai nửa slime tách đôi không nhập lại; hạ Slime khổng lồ trước khi nó về bú cho Slime Mẹ.",
             "tipEn": "You learn: the Water spray (hold the mouse: wet slimes slow down, ice softens, quills drop); to throw the cat hard through an ice slime to crack its shell; to hit a hedgehog while its quills are down; to cut a chain slime's rope (drag the cat through it): it takes hits for a friend; to beat the herb slime first so split halves cannot rejoin; to beat a giant before it feeds the Mother.",
-            "objective": "clear", "upgrades": true, "maxAlive": 6, "threat": 1.95, "eliteChance": 0.2, "maxMalware": 4, "rulesVersion": 1,
+            "objective": "clear", "upgrades": true, "maxAlive": 6, "threat": 1.95, "eliteChance": 0.2, "maxMalware": 4, "newAppsFrom": 1, "rulesVersion": 2,
             "unlocksSkill": "spray", "suggestSkills": [ "spray", "bomb", "push" ],
             "waves": [
               { "groups": [ { "enemy": "hedgehog", "count": 1 }, { "enemy": "slime", "count": 2 } ] },
@@ -984,7 +997,7 @@
             "goalEn": "Chapter 2's last battle: bubble and wall slimes, then the Zip Slime rolls, unpacks squads tied to it and packs into a shield. This stage lends the Scissors.",
             "tipVi": "Bạn sẽ học: Kéo cắt (kéo chuột thành một nét: cắt dây nhầy, chọc vỡ bong bóng); click 3 lần chọc vỡ bong bóng; ném mèo vào slime bám tường hoặc Đẩy cho nó rơi; nhấc mèo khỏi dải đỏ khi Slime Nén sắp lăn; cắt dây nối quân về Slime Nén để phá khiên; phá các mảnh file quanh nó ở pha cuối.",
             "tipEn": "You learn: the Scissors (drag one stroke: cuts slime ropes, pops bubbles); to pop a bubble with three clicks; to throw the cat at a wall slime or Push it down; to lift the cat off the red strip before the Zip Slime rolls; to cut the ropes tying its squads to it to break its shield; to break the file shards around it at the end.",
-            "objective": "clear", "upgrades": true, "maxAlive": 6, "threat": 1.45, "eliteChance": 0.25, "maxMalware": 4, "rulesVersion": 1,
+            "objective": "clear", "upgrades": true, "maxAlive": 6, "threat": 1.45, "eliteChance": 0.25, "maxMalware": 4, "newAppsFrom": 1, "rulesVersion": 2,
             "unlocksSkill": "scissors", "suggestSkills": [ "scissors", "shield", "push" ],
             "keepsake": { "id": "zip_plush", "kind": "plush", "nameVi": "Thú bông Slime Nén", "nameEn": "Zip Slime plush" },
             "waves": [
@@ -1027,7 +1040,7 @@
   // older kinds: at most two kinds of link and two the cursor beats); "mutations": after each cleared boss
   // wave pick one of "offer" odd rules, held until the next boss wave is cleared, then its reward.
   "endless": {
-    "id": "endless", "rulesVersion": 7, "unlockAfter": "c1_slime_king", "upgradeEvery": 2, "bossEvery": 10, "boss": "king_c1",
+    "id": "endless", "rulesVersion": 8, "unlockAfter": "c1_slime_king", "upgradeEvery": 2, "bossEvery": 10, "boss": "king_c1",
     "bosses": [ "king_c1", "zip", "mutant_king" ],
     "lateBoss": "king", "lateBossFrom": 40, "bossBonusPick": true, "allSynergiesAt": 48,
     "eliteChancePerWave": 0.007, "eliteChanceMax": 0.45, "moreElitesEvery": 20, "moreElitesMax": 2,
@@ -1039,6 +1052,8 @@
       { "enemy": "rock", "weight": 15, "from": 7 }
     ],
     "erasFrom": 15,
+    // 1.5 M26 (rules 8): from this wave the Screenshot icon and the newer malware (captcha, low battery, frozen cursor).
+    "newAppsFrom": 15,
     "eras": [
       { "nameVi": "Đầm nhầy", "nameEn": "Goo marsh", "kinds": [
         { "enemy": "spitter", "weight": 20 }, { "enemy": "springer", "weight": 15 }, { "enemy": "icy", "weight": 15 }, { "enemy": "splitter", "weight": 15 } ] },
@@ -1233,10 +1248,11 @@
     // map, encounters (ids unique over every route), zones and scene; the HP rules, events, relics,
     // capsules and shop are the Expedition's above. zones: in order over the steps before the boss, each
     // step drawing its fights and elites only from its zone's. Each route keeps its own records.
+    // 1.5 M26: the Dump Trail's rules 3 brought the newer apps ("newAppsFrom"); a rules 1 or 2 run goes on.
     "routes": [
       {
         "id": "dump_trail", "nameVi": "Lối Bãi rác", "nameEn": "The Dump Trail",
-        "rulesVersion": 2, "keepRuns": [ 1 ], "unlockAfter": "c2_zip_slime", "scene": "dump",
+        "rulesVersion": 3, "keepRuns": [ 1, 2 ], "unlockAfter": "c2_zip_slime", "scene": "dump",
         "kindGacha": { "steps": 6, "minLanes": 2, "maxLanes": 3, "weights": { "fight": 45, "event": 18, "elite": 20, "rest": 12, "shop": 14 }, "rerollCost": 0.08 },
         "zones": [
           { "id": "swamp", "nameVi": "Đầm nhầy", "nameEn": "Slime swamp", "steps": 2, "fights": [ "y_puddles", "y_ice_pond", "y_split_bog" ], "elites": [ "y_mother_nest" ] },
@@ -1247,7 +1263,7 @@
           {
             "id": "y_puddles", "nameVi": "Vũng nhầy", "nameEn": "Slime puddles",
             "goalVi": "Slime phun để lại vũng, slime lò xo nằm chờ.", "goalEn": "Spitters leave puddles, spring slimes lie in wait.",
-            "upgrades": true, "maxAlive": 5, "threat": 1.6, "maxMalware": 4,
+            "upgrades": true, "maxAlive": 5, "threat": 1.6, "maxMalware": 4, "newAppsFrom": 1,
             "waves": [
               { "groups": [ { "enemy": "spitter", "count": 1 }, { "pick": { "slime": 2, "runner": 1 }, "count": 2 } ] },
               { "groups": [ { "enemy": "springer", "count": 1 }, { "enemy": "spitter", "count": 1 }, { "pick": { "slime": 1, "runner": 1 }, "count": 2 } ] }
@@ -1256,7 +1272,7 @@
           {
             "id": "y_ice_pond", "nameVi": "Ao băng", "nameEn": "Ice pond",
             "goalVi": "Slime băng và slime nhím giữa đám slime thường.", "goalEn": "Ice slimes and hedgehogs among plain slimes.",
-            "upgrades": true, "maxAlive": 5, "threat": 1.6, "maxMalware": 4,
+            "upgrades": true, "maxAlive": 5, "threat": 1.6, "maxMalware": 4, "newAppsFrom": 1,
             "waves": [
               { "groups": [ { "enemy": "hedgehog", "count": 1 }, { "pick": { "slime": 2, "runner": 1 }, "count": 2 } ] },
               { "groups": [ { "enemy": "icy", "count": 1 }, { "enemy": "slime", "count": 1 }, { "enemy": "runner", "count": 1 } ] }
@@ -1265,7 +1281,7 @@
           {
             "id": "y_split_bog", "nameVi": "Bùn tách đôi", "nameEn": "Splitting bog",
             "goalVi": "Slime tách đôi được slime thảo dược hồi máu.", "goalEn": "Splitting slimes, healed by a herb slime.",
-            "upgrades": true, "maxAlive": 5, "threat": 1.55, "maxMalware": 4,
+            "upgrades": true, "maxAlive": 5, "threat": 1.55, "maxMalware": 4, "newAppsFrom": 1,
             "waves": [
               { "groups": [ { "enemy": "splitter", "count": 1 }, { "pick": { "slime": 1, "runner": 1 }, "count": 2 } ] },
               { "budget": 8, "groups": [ { "squad": [ { "enemy": "splitter", "count": 1 }, { "enemy": "mender", "count": 1 }, { "enemy": "slime", "count": 1 } ] } ] }
@@ -1274,7 +1290,7 @@
           {
             "id": "y_fish_crates", "nameVi": "Thùng cá", "nameEn": "Fish crates",
             "goalVi": "Giữ giỏ cá: slime tha cá ra mép, slime trộm lẻn vào.", "goalEn": "Keep the basket: slimes carry fish off, a thief sneaks in.",
-            "upgrades": true, "maxAlive": 5, "threat": 1.6, "maxMalware": 4,
+            "upgrades": true, "maxAlive": 5, "threat": 1.6, "maxMalware": 4, "newAppsFrom": 1,
             "basket": { "fish": 5, "every": 3, "at": 0.5 },
             "waves": [
               { "groups": [ { "pick": { "slime": 2, "runner": 1 }, "count": 3 } ] },
@@ -1284,7 +1300,7 @@
           {
             "id": "y_fish_raid", "nameVi": "Cướp cá", "nameEn": "Fish raid",
             "goalVi": "Giữ giỏ cá trước bom cưỡi slime và slime bay.", "goalEn": "Keep the basket from riding bombs and flyers.",
-            "upgrades": true, "maxAlive": 5, "threat": 1.6, "maxMalware": 4,
+            "upgrades": true, "maxAlive": 5, "threat": 1.6, "maxMalware": 4, "newAppsFrom": 1,
             "basket": { "fish": 5, "every": 3, "at": 0.5 },
             "waves": [
               { "groups": [ { "enemy": "bomber", "count": 1 }, { "pick": { "slime": 1, "runner": 1 }, "count": 2 } ] },
@@ -1294,7 +1310,7 @@
           {
             "id": "y_fish_tunnel", "nameVi": "Đường hầm cá", "nameEn": "Fish tunnel",
             "goalVi": "Slime đào hang trồi dưới chân, bầy hợp thể nhập lại.", "goalEn": "Burrowers pop up underfoot, a swarm fuses.",
-            "upgrades": true, "maxAlive": 5, "threat": 1.6, "maxMalware": 4,
+            "upgrades": true, "maxAlive": 5, "threat": 1.6, "maxMalware": 4, "newAppsFrom": 1,
             "waves": [
               { "groups": [ { "enemy": "burrower", "count": 1 }, { "pick": { "slime": 2, "runner": 1 }, "count": 2 } ] },
               { "groups": [ { "enemy": "fuser", "count": 3 }, { "enemy": "runner", "count": 1 } ] }
@@ -1303,7 +1319,7 @@
           {
             "id": "y_ghost_dirs", "nameVi": "Thư mục ẩn", "nameEn": "Hidden folders",
             "goalVi": "Slime bóng ma và slime ảo ảnh lúc ẩn lúc hiện.", "goalEn": "Ghost and mirage slimes fade in and out.",
-            "upgrades": true, "maxAlive": 5, "threat": 1.65, "maxMalware": 4,
+            "upgrades": true, "maxAlive": 5, "threat": 1.65, "maxMalware": 4, "newAppsFrom": 1,
             "waves": [
               { "groups": [ { "enemy": "phantom", "count": 1 }, { "pick": { "slime": 2, "runner": 1 }, "count": 2 } ] },
               { "groups": [ { "enemy": "mirage", "count": 1 }, { "pick": { "slime": 1, "runner": 1 }, "count": 3 } ] }
@@ -1312,7 +1328,7 @@
           {
             "id": "y_drum_hall", "nameVi": "Sảnh trống", "nameEn": "Drum hall",
             "goalVi": "Nhạc trưởng gõ nhịp, slime xích nối dây.", "goalEn": "A drummer keeps time, chain slimes tie up.",
-            "upgrades": true, "maxAlive": 5, "threat": 1.6, "maxMalware": 4,
+            "upgrades": true, "maxAlive": 5, "threat": 1.6, "maxMalware": 4, "newAppsFrom": 1,
             "waves": [
               { "groups": [ { "enemy": "drummer", "count": 1 }, { "pick": { "slime": 2, "runner": 1 }, "count": 2 } ] },
               { "groups": [ { "enemy": "chain", "count": 1 }, { "enemy": "rock", "count": 1 }, { "pick": { "slime": 1, "runner": 1 }, "count": 2 } ] }
@@ -1321,7 +1337,7 @@
           {
             "id": "y_wall_maze", "nameVi": "Tường thư mục", "nameEn": "Folder walls",
             "goalVi": "Slime bám tường, slime bong bóng và slime đá.", "goalEn": "Wall slimes, bubble slimes and rock slimes.",
-            "upgrades": true, "maxAlive": 5, "threat": 1.6, "maxMalware": 4,
+            "upgrades": true, "maxAlive": 5, "threat": 1.6, "maxMalware": 4, "newAppsFrom": 1,
             "waves": [
               { "groups": [ { "enemy": "bubble", "count": 1 }, { "enemy": "rock", "count": 1 }, { "enemy": "slime", "count": 1 } ] },
               { "groups": [ { "enemy": "clinger", "count": 1 }, { "pick": { "slime": 1, "runner": 1 }, "count": 3 } ] }
@@ -1332,7 +1348,7 @@
           {
             "id": "y_mother_nest", "nameVi": "Tổ Slime Mẹ", "nameEn": "Mother's nest",
             "goalVi": "Tinh anh: slime phun canh tổ, cuối là Slime Mẹ.", "goalEn": "Elite: spitters guard the nest, then the Slime Mother.",
-            "upgrades": true, "maxAlive": 6, "threat": 1.45, "eliteChance": 0.5, "maxMalware": 4,
+            "upgrades": true, "maxAlive": 6, "threat": 1.45, "eliteChance": 0.5, "maxMalware": 4, "newAppsFrom": 1,
             "waves": [
               { "groups": [ { "enemy": "spitter", "count": 1 }, { "enemy": "hedgehog", "count": 1 }, { "pick": { "slime": 1, "runner": 1 }, "count": 2 } ] },
               { "groups": [ { "enemy": "mother", "count": 1 } ] }
@@ -1341,7 +1357,7 @@
           {
             "id": "y_fish_heist", "nameVi": "Vụ trộm cá", "nameEn": "The fish heist",
             "goalVi": "Tinh anh: giữ giỏ cá trước cả một băng slime.", "goalEn": "Elite: keep the basket from a whole slime gang.",
-            "upgrades": true, "maxAlive": 6, "threat": 1.7, "eliteChance": 0.5, "maxMalware": 4,
+            "upgrades": true, "maxAlive": 6, "threat": 1.7, "eliteChance": 0.5, "maxMalware": 4, "newAppsFrom": 1,
             "basket": { "fish": 6, "every": 3, "at": 0.5 },
             "waves": [
               { "groups": [ { "enemy": "thief", "count": 1 }, { "pick": { "slime": 2, "runner": 1 }, "count": 3 } ] },
@@ -1352,7 +1368,7 @@
           {
             "id": "y_folder_fort", "nameVi": "Pháo đài thư mục", "nameEn": "Folder fort",
             "goalVi": "Tinh anh: đội hình Pháo đài rồi Kỵ binh.", "goalEn": "Elite: a Fortress squad, then the Cavalry.",
-            "upgrades": true, "maxAlive": 6, "threat": 1.7, "eliteChance": 0.5, "maxMalware": 4,
+            "upgrades": true, "maxAlive": 6, "threat": 1.7, "eliteChance": 0.5, "maxMalware": 4, "newAppsFrom": 1,
             "waves": [
               { "groups": [ { "enemy": "drummer", "count": 1 }, { "pick": { "slime": 1, "runner": 1 }, "count": 2 } ] },
               { "groups": [ { "formation": { "fortress": 1 } } ] },
@@ -1362,7 +1378,7 @@
           {
             "id": "y_ghost_parade", "nameVi": "Diễu hành bóng ma", "nameEn": "Ghost parade",
             "goalVi": "Tinh anh: cờ hiệu dẫn slime bóng ma và ảo ảnh.", "goalEn": "Elite: a flag slime leads ghosts and mirages.",
-            "upgrades": true, "maxAlive": 6, "threat": 1.7, "eliteChance": 0.5, "maxMalware": 4,
+            "upgrades": true, "maxAlive": 6, "threat": 1.7, "eliteChance": 0.5, "maxMalware": 4, "newAppsFrom": 1,
             "waves": [
               { "groups": [ { "enemy": "phantom", "count": 1 }, { "pick": { "slime": 2, "runner": 1 }, "count": 3 } ] },
               { "groups": [ { "enemy": "flagbearer", "count": 1 }, { "enemy": "mirage", "count": 1 }, { "enemy": "runner", "count": 2 } ] },
@@ -1373,7 +1389,7 @@
         "boss": {
           "id": "y_zip", "nameVi": "Slime Nén trở lại", "nameEn": "The Zip Slime returns",
           "goalVi": "Trận cuối tuyến: Slime Nén lăn đè, giải nén đội hình nối dây, tự nén thành khiên.", "goalEn": "The route's last battle: the Zip Slime rolls, unpacks roped squads and packs into a shield.",
-          "upgrades": true, "maxAlive": 6, "threat": 1.2, "eliteChance": 0.3, "maxMalware": 4,
+          "upgrades": true, "maxAlive": 6, "threat": 1.2, "eliteChance": 0.3, "maxMalware": 4, "newAppsFrom": 1,
           "waves": [
             { "budget": 7, "groups": [ { "enemy": "bubble", "count": 1, "side": "a" }, { "enemy": "clinger", "count": 1, "side": "b" }, { "enemy": "runner", "count": 2, "side": "b" } ] },
             { "groups": [ { "enemy": "zip", "count": 1 } ] }

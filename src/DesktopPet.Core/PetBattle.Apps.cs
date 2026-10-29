@@ -115,15 +115,20 @@ public sealed partial class BattleSim
         return open.Count == 0 ? null : open[appRandom.Next(open.Count)];
     }
 
-    // The five icons pop up on random cells, partly charged (each its own start, or the rules').
+    // The five icons pop up on random cells, partly charged (each its own start, or the rules'); 1.5 M26:
+    // the Screenshot joins them once the battle's newer apps are on (Infinity: at its wave).
     private void EnsureDesktop()
     {
-        if (desktop.Count > 0 || AppRules is not AppsSpec rules) return;
-        foreach (var kind in IconKinds)
-        {
-            var (col, row) = FreeCell(null) ?? (0, 0);
-            desktop.Add(new DesktopApp { Id = nextAppId++, Kind = kind, Col = col, Row = row, FromCol = col, FromRow = row, Charge = Math.Clamp(rules.App(kind).Start ?? rules.StartCharge, 0, 1), BornAt = Time });
-        }
+        if (AppRules is not AppsSpec rules) return;
+        if (desktop.Count == 0)
+            foreach (var kind in IconKinds) AddIcon(kind, rules);
+        if (NewApps && !desktop.Any(a => a.Kind == BattleAppKind.Screenshot)) AddIcon(BattleAppKind.Screenshot, rules);
+    }
+
+    private void AddIcon(BattleAppKind kind, AppsSpec rules)
+    {
+        var (col, row) = FreeCell(null) ?? (0, 0);
+        desktop.Add(new DesktopApp { Id = nextAppId++, Kind = kind, Col = col, Row = row, FromCol = col, FromRow = row, Charge = Math.Clamp(rules.App(kind).Start ?? rules.StartCharge, 0, 1), BornAt = Time });
     }
 
     private void StepApps(double dt, double catX, bool catHeld)
@@ -180,6 +185,9 @@ public sealed partial class BattleSim
             app.CrawlClock -= dt;
             if (app.CrawlClock <= 0) { app.CrawlClock = rules.CrawlEvery; Crawl(app); }
         }
+        StepNewMalware(dt, rules); // 1.5 M26 (PetBattle.Malware2.cs).
+        // Frozen by the Screenshot (1.5 M26): the slimes throw nothing meanwhile.
+        if (EnemiesFrozen) return;
         if (!double.IsNaN(infectTimer) && Phase == BattlePhase.Fighting)
         {
             infectTimer -= dt;
@@ -223,17 +231,24 @@ public sealed partial class BattleSim
             case "loading": ThrowLoading(rules); sent = MalwareOut(0); break;
             case "update": ThrowUpdate(rules, orLoading: false); sent = MalwareOut(1); break;
             case "virus": DropVirusExe(rules); sent = MalwareOut(2); break;
+            case "captcha": OpenCaptcha(rules); sent = MalwareOut(4); break;
+            case "battery": DrainBattery(); sent = MalwareOut(5); break;
+            case "cursor": FreezeCursor(rules); sent = MalwareOut(6); break;
             default: OpenAds(rules, null); sent = MalwareOut(3); break;
         }
         if (sent || kind < 0) malwareCued++;
     }
 
-    // The kinds of malware out now: a loading ring, a forced update, virus.exe, the ads.
+    // The kinds of malware out now: a loading ring, a forced update, virus.exe, the ads; 1.5 M26: the
+    // captcha, the low battery, the frozen cursor.
     private bool MalwareOut(int kind) => kind switch
     {
         0 => hazards.Any(h => h.Kind == HazardKind.Loading),
         1 => hazards.Any(h => h.Kind == HazardKind.Update),
         2 => virusFiles.Count > 0,
+        4 => Captcha != null,
+        5 => BatteryLow,
+        6 => CursorFrozen,
         _ => popups.Count > 0 || launches.Any(l => l.Kind == LaunchKind.Popup)
     };
 
@@ -241,21 +256,30 @@ public sealed partial class BattleSim
     private void ThrowMalware(AppsSpec rules)
     {
         if (!slimes.Any(s => s.Targetable)) return;
-        double[] weights = { rules.LoadingWeight, rules.UpdateWeight, rules.VirusExeWeight, rules.AdWeight };
+        // 1.5 M26: the newer three only where the battle's newer apps are on (elsewhere 0: the draw is as before).
+        bool newer = NewApps;
+        double[] weights = { rules.LoadingWeight, rules.UpdateWeight, rules.VirusExeWeight, rules.AdWeight,
+            newer ? rules.CaptchaWeight : 0, newer ? rules.BatteryWeight : 0, newer ? rules.CursorWeight : 0 };
         int outNow = Enumerable.Range(0, weights.Length).Count(MalwareOut);
         if (outNow >= (Stage?.MaxMalware ?? rules.MaxMalware)) return; // 1.5 M21: a stage may allow more (chapter 2: 4).
         for (int i = 0; i < weights.Length; i++) if (MalwareOut(i) || weights[i] < 0) weights[i] = 0;
         if (!desktop.Any(a => !a.Infected)) weights[2] = 0; // virus.exe needs a clean icon to go for.
+        if (FlyerOut) weights[4] = 0; // The captcha never comes while a flyer is up (both over the cat).
         double total = weights.Sum();
         if (total <= 0) return;
         double roll = appRandom.NextDouble() * total;
         int pick = 0;
         while (pick < weights.Length - 1 && (weights[pick] <= 0 || roll >= weights[pick])) { roll -= weights[pick]; pick++; }
+        // A hair of rounding past the last kind drawn lands on it (never on a kind of weight 0).
+        while (pick > 0 && weights[pick] <= 0) pick--;
         switch (pick)
         {
             case 0: ThrowLoading(rules); break;
             case 1: ThrowUpdate(rules); break;
             case 2: DropVirusExe(rules); break;
+            case 4: OpenCaptcha(rules); break;
+            case 5: DrainBattery(); break;
+            case 6: FreezeCursor(rules); break;
             default: OpenAds(rules, null); break;
         }
     }
@@ -371,6 +395,7 @@ public sealed partial class BattleSim
         foreach (var hazard in hazards) AddEffect(BattleEffectKind.Poof, hazard.X, 20);
         hazards.Clear();
         RemoveVirusFiles();
+        ClearNewMalware();
     }
 
     // A defeated enemy: every clean icon charges a little; an icon it infected is clean again and a
@@ -610,6 +635,10 @@ public sealed partial class BattleSim
                 var mend = Launch(LaunchKind.Mend, app, hurt.X, hurt.Height, AttackSeconds);
                 mend.Targets = new[] { hurt.Id };
                 break;
+            case BattleAppKind.Screenshot:
+                // 1.5 M26: a flash in the cat's eyes.
+                Launch(LaunchKind.Dazzle, app, lastCatX, 110, AttackSeconds);
+                break;
             default:
                 // One spat enemy alive at a time.
                 if (Alive >= maxAlive || SpitKinds(rules).Count == 0 || slimes.Any(s => s.Spat && s.State != SlimeState.Defeated)) return;
@@ -715,6 +744,12 @@ public sealed partial class BattleSim
                 popups.Add(popup);
                 events.Add(new(BattleEventKind.PopupOpened, popup.X, popup.Id));
                 break;
+            case LaunchKind.Flash:
+                FreezeEnemies(rules);
+                break;
+            case LaunchKind.Dazzle:
+                Dazzle(rules);
+                break;
         }
     }
 
@@ -783,6 +818,11 @@ public sealed partial class BattleSim
                 foreach (var (time, hp) in hurts) if (Time - time <= rules.UndoSeconds) lost += hp;
                 if (lost <= 0 || CatHp >= CatMaxHp) return false;
                 Launch(LaunchKind.Undo, app, catX, 60, LaunchSeconds);
+                break;
+            case BattleAppKind.Screenshot:
+                // 1.5 M26: its flash freezes every enemy (nothing to freeze: kept for later).
+                if (!slimes.Any(s => s.Targetable && !s.Decoy)) return false;
+                Launch(LaunchKind.Flash, app, catX, 80, LaunchSeconds);
                 break;
             default:
                 // The plain enemies nearest the cat are taken at once; the flight shows them going in.
@@ -862,6 +902,8 @@ public sealed partial class BattleSim
         infectTimer = double.NaN;
         HoldingHazardId = 0;
         hurts.Clear();
+        ClearNewMalware();
+        FrozenRemaining = DazzleRemaining = 0;
         foreach (var app in desktop) { app.InfectedBy = 0; app.ScrubsLeft = 0; }
     }
 }

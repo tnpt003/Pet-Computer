@@ -34,11 +34,14 @@ public static class AppArt
     public static readonly Pen UndoPen = FrozenPen(Frozen(255, 0x3F, 0xB0, 0x9A), 4);
     private static readonly Typeface Bold = new(new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.Black, FontStretches.Normal);
 
-    // Each app's tile colour: tabs coral, bell amber, power slate purple, undo teal, bin sage.
+    // Each app's tile colour: tabs coral, bell amber, power slate purple, undo teal, bin sage; 1.5 M26:
+    // the Screenshot sky blue.
     public static Brush Back(BattleAppKind kind) => kind switch
     {
-        BattleAppKind.Tabs => TabsBack, BattleAppKind.Ping => PingBack, BattleAppKind.EndTask => EndTaskBack, BattleAppKind.Undo => UndoBack, _ => TrashBack
+        BattleAppKind.Tabs => TabsBack, BattleAppKind.Ping => PingBack, BattleAppKind.EndTask => EndTaskBack, BattleAppKind.Undo => UndoBack,
+        BattleAppKind.Screenshot => ShotBack, _ => TrashBack
     };
+    private static readonly Brush ShotBack = Frozen(255, 0x5F, 0xA8, 0xD8);
     private static readonly Brush TabsBack = Frozen(255, 0xF2, 0x89, 0x6B);
     private static readonly Brush PingBack = Frozen(255, 0xF2, 0xB2, 0x3E);
     private static readonly Brush EndTaskBack = Frozen(255, 0x6E, 0x5E, 0xA8);
@@ -90,12 +93,41 @@ public static class AppArt
             case BattleAppKind.Undo:
                 DrawUndo(dc, c, 9 * k, PaperPen);
                 break;
+            case BattleAppKind.Screenshot:
+                DrawCamera(dc, c, k);
+                break;
             default:
                 DrawBin(dc, c, k, lid);
                 break;
         }
     }
     private static readonly Geometry PowerRing = Parse("M -6,-6 A 9,9 0 1 0 6,-6");
+
+    // 1.5 M26: a little camera centred on c (about 22 × 16 at k 1): body, flash bump, lens.
+    public static void DrawCamera(DrawingContext dc, Point c, double k)
+    {
+        dc.PushTransform(new MatrixTransform(k, 0, 0, k, c.X, c.Y));
+        dc.DrawGeometry(Paper, ThinInk, CameraBody);
+        dc.DrawEllipse(ShotBack, ThinInk, new Point(0, 1.5), 5.2, 5.2);
+        dc.DrawEllipse(Shine, null, new Point(-1.6, 0), 1.6, 1.6);
+        dc.DrawRectangle(Gold, null, new Rect(5.5, -5, 3, 2));
+        dc.Pop();
+    }
+    private static readonly Geometry CameraBody = Parse("M -10,-4 L -4,-4 L -2.5,-7 L 2.5,-7 L 4,-4 L 10,-4 L 10,8 L -10,8 Z");
+
+    // 1.5 M26: a camera flash burst around c (r: its reach; k 0–1: how far it has faded).
+    public static void DrawFlash(DrawingContext dc, Point c, double r, double k)
+    {
+        dc.PushOpacity(Math.Clamp(1 - k, 0, 1));
+        for (int i = 0; i < 8; i++)
+        {
+            double a = i * Math.PI / 4, inner = r * 0.35, outer = r * (i % 2 == 0 ? 1 : 0.65);
+            dc.DrawLine(FlashPen, new Point(c.X + Math.Cos(a) * inner, c.Y + Math.Sin(a) * inner), new Point(c.X + Math.Cos(a) * outer, c.Y + Math.Sin(a) * outer));
+        }
+        dc.DrawEllipse(Brushes.White, null, c, r * 0.28, r * 0.28);
+        dc.Pop();
+    }
+    private static readonly Pen FlashPen = FrozenPen(Frozen(235, 0xFF, 0xD2, 0x3F), 3);
 
     // A page tab centred on c: a body with a raised tab on its top-left.
     public static void DrawTab(DrawingContext dc, Point c, double k)

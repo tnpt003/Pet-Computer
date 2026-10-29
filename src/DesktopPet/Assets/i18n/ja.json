@@ -1233,5 +1233,20 @@
   "+20 max HP after the next boss": "次のボスの後に最大 HP +20",
   "Lazy skills": "怠けスキル",
   "Skills recharge 40% slower": "スキルの回復が 40% 遅い",
-  "Full heal and one more card after the next boss": "次のボスの後に全回復とカード 1 回追加"
+  "Full heal and one more card after the next boss": "次のボスの後に全回復とカード 1 回追加",
+  "Plug in": "充電する",
+  "Low battery: skills recharge slowly": "バッテリー低下：スキルの回復が遅い",
+  "Not responding… {0}": "応答なし… {0}",
+  "No slime to freeze yet.": "まだ止めるスライムがいません。",
+  "Verify you are not a robot": "ロボットでないことを確認",
+  "Select every tile with a cat": "猫の写っているマスをすべて選択",
+  "FREEZE FRAME!": "静止画！",
+  "The infected Screenshot dazzles the cat! Click its icon to scrub it": "感染したスクリーンショットが猫の目をくらませる！アイコンをクリックして駆除",
+  "A captcha covers the cat! Click every tile with a cat": "キャプチャが猫を隠した！猫のマスをすべてクリック",
+  "Wrong tile! The captcha shuffles": "違うマス！キャプチャが入れ替わる",
+  "Low battery! Skills recharge slowly. Click Plug in on the HUD": "バッテリー低下！スキルの回復が遅い。HUD の「充電する」をクリック",
+  "Frozen cursor! Skills are locked. Click Continue on the HUD": "カーソルが固まった！スキルが使えない。HUD の「続ける」をクリック",
+  "Screenshot": "スクリーンショット",
+  "A flash: every slime, bosses too, freezes for 2 s while the cat keeps hitting.": "フラッシュ：ボスも含めすべてのスライムが 2 秒止まり、猫は攻撃を続けられる。",
+  "Infected: flashes in the cat's eyes; its swings miss for 1.5 s.": "感染：猫の目の前で光り、1.5 秒間攻撃が外れる。"
 }

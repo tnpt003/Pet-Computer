@@ -1073,6 +1073,44 @@ internal static class BattleChecks
             Tick(0.05);
             check(exeSim.VirusFiles.Count == 0 && window.BattleVirusWindows.Count == 0, "Its window closes with it");
             window.EndBattle();
+            // 1.5 M26: the Screenshot's icon window; the captcha in its own window over the cat (Pause hides it, a
+            // tile click picks, solved it closes); the HUD's Plug in and Continue.
+            window.BattleTuning = new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 1 }, SlimeMaxHp = 1000, SlimeDamage = 0, SlimeSpeed = 0,
+                Apps = new AppsSpec { InfectChance = 0, MalwareMinThreat = 0 } };
+            check(window.StartBattle(stage: new StageSpec { Id = "ui_new_apps", NewAppsFrom = 1, MalwarePlan = new[]
+                { new MalwareCue { At = 0.5, Kind = "captcha" }, new MalwareCue { At = 0.6, Kind = "battery" }, new MalwareCue { At = 0.7, Kind = "cursor" } } }) == null,
+                "(setup) a stage battle with the newer apps");
+            for (int i = 0; i < 600 && !(Sim().Captcha != null && Sim().BatteryLow && Sim().CursorFrozen); i++) Tick(1.0 / 60);
+            Tick(0.05);
+            var newSim = Sim();
+            check(newSim.Desktop.Count == 6 && window.BattleAppWindows.Count == 6, "Six icon windows: the Screenshot has its own");
+            var captchaWindow = Field<Window?>(window, "captchaWindow");
+            var captchaSpot = newSim.Captcha is BattleCaptcha shown ? window.CaptchaSpot(shown) : Rect.Empty;
+            check(window.BattleCaptchaShown && captchaWindow != null && Math.Abs(captchaWindow.Left - captchaSpot.Left) < 2 && Math.Abs(captchaWindow.Top - captchaSpot.Top) < 2
+                && Math.Abs(captchaWindow.ActualWidth - captchaSpot.Width) < 2,
+                $"The captcha has its own window standing on the strip where it is ({captchaWindow?.Left:0},{captchaWindow?.Top:0} / {captchaSpot.Left:0},{captchaSpot.Top:0})");
+            var catHandle = new System.Windows.Interop.WindowInteropHelper(window).Handle;
+            check(captchaWindow != null && NewAppVisualChecks.IsAbove(new System.Windows.Interop.WindowInteropHelper(captchaWindow).Handle, catHandle),
+                "The captcha's window is above the cat's (it covers the cat)");
+            window.SetBattlePaused(true);
+            Tick(0.05);
+            check(!window.BattleCaptchaShown && !window.BattleClickCaptcha(0), "Pause hides the captcha (no click on it then)");
+            window.SetBattlePaused(false);
+            Tick(0.05);
+            check(window.BattleCaptchaShown, "Resumed, it shows again");
+            var newHud = Field<BattleHud>(window, "battleHud");
+            check(newHud.BatteryStrip.IsVisible && newHud.CursorCover.IsVisible, "The HUD shows the low battery and the frozen cursor");
+            newHud.UpdateLayout();
+            Point Middle(FrameworkElement e) => e.TranslatePoint(new Point(e.ActualWidth / 2, e.ActualHeight / 2), newHud);
+            check(newHud.IsInteractiveAt(Middle(newHud.PlugButton)) && newHud.IsInteractiveAt(Middle(newHud.ContinueButton)), "Their buttons take clicks (the HUD does not step aside there)");
+            check(window.BattlePlugIn() && window.BattleResumeCursor() && !newSim.BatteryLow && !newSim.CursorFrozen, "Plug in and Continue clear them");
+            Tick(0.05);
+            check(!newHud.BatteryStrip.IsVisible && !newHud.CursorCover.IsVisible, "...and the HUD hides them");
+            if (newSim.Captcha is BattleCaptcha solve)
+                for (int i = 0; i < 9; i++) if (solve.Tiles[i] == BattleCaptcha.Cat) window.BattleClickCaptcha(i);
+            Tick(0.05);
+            check(newSim.Captcha == null && !window.BattleCaptchaShown && Field<Window?>(window, "captchaWindow") == null, "Every cat picked: the captcha and its window close");
+            window.EndBattle();
 
             // The strip: an ad's × and body (an ad placed on a lone slime).
             var data = BattleData.Settings;

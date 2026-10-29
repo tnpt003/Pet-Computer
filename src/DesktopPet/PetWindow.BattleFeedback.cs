@@ -41,6 +41,11 @@ public sealed partial class PetWindow
         [BattleEventKind.HazardOpened] = ("surprised", 5), [BattleEventKind.HazardClosed] = ("pop", 4),
         [BattleEventKind.HazardTapped] = ("ball_tap", 3), [BattleEventKind.WallHit] = ("clank", 3), [BattleEventKind.PopupLocked] = ("clank", 3),
         [BattleEventKind.VirusFileAdded] = ("squish", 4), [BattleEventKind.VirusFileDeleted] = ("pop", 4),
+        // 1.5 M26: the Screenshot, the captcha, the low battery and the frozen cursor (the shared cartoon cues).
+        [BattleEventKind.EnemiesFrozen] = ("sparkle", 6), [BattleEventKind.CatDazzled] = ("surprised", 5),
+        [BattleEventKind.CaptchaOpened] = ("surprised", 5), [BattleEventKind.CaptchaPicked] = ("ball_tap", 3), [BattleEventKind.CaptchaShuffled] = ("clank", 3),
+        [BattleEventKind.CaptchaClosed] = ("pop", 4), [BattleEventKind.BatteryLow] = ("annoyed", 5), [BattleEventKind.BatteryCharged] = ("satisfied", 4),
+        [BattleEventKind.CursorFrozen] = ("surprised", 5), [BattleEventKind.CursorResumed] = ("pop", 3),
         [BattleEventKind.AppAttack] = ("swoosh", 3), [BattleEventKind.AppReady] = ("ball_tap", 2), [BattleEventKind.AppMoved] = ("swoosh", 1),
         // 1.5 M05: the Laser and the Fan (no cue of their own yet: the shared cartoon cues).
         [BattleEventKind.LaserOn] = ("sparkle", 3), [BattleEventKind.FanOn] = ("swoosh", 2), [BattleEventKind.FanBump] = ("ball_tap", 3),
@@ -256,6 +261,13 @@ public sealed partial class PetWindow
                     LF($"⟳ Vòng loading! Mèo trong vòng bị chậm. Giữ chuột trên vòng xoay {hold.LoadingHold:0.#} giây để tắt", $"⟳ A loading ring! The cat is slow inside it. Hold the spinner {hold.LoadingHold:0.#} s to close it"),
                 BattleEventKind.HazardOpened when !loadingExplained => L("⟳ Vòng loading! Mèo trong vòng bị chậm. Bấm vòng xoay để tắt", "⟳ A loading ring! The cat is slow inside it. Click the spinner to close it"),
                 BattleEventKind.HazardOpened => L("⟳ Đang tải…", "⟳ Loading…"),
+                // 1.5 M26: the newer malware says what to do the first time in a battle; the freeze shouts every time.
+                BattleEventKind.EnemiesFrozen => L("ĐỨNG HÌNH!", "FREEZE FRAME!"),
+                BattleEventKind.CatDazzled when trickExplained.Add(e.Kind) => L("Chụp Màn Hình nhiễm virus làm mèo lóa mắt! Bấm icon để quét", "The infected Screenshot dazzles the cat! Click its icon to scrub it"),
+                BattleEventKind.CaptchaOpened when trickExplained.Add(e.Kind) => L("Captcha che mèo! Bấm mọi ô có hình mèo", "A captcha covers the cat! Click every tile with a cat"),
+                BattleEventKind.CaptchaShuffled when trickExplained.Add(e.Kind) => L("Sai ô! Captcha xáo lại", "Wrong tile! The captcha shuffles"),
+                BattleEventKind.BatteryLow when trickExplained.Add(e.Kind) => L("Pin yếu! Kỹ năng hồi chậm. Bấm Cắm sạc trên HUD", "Low battery! Skills recharge slowly. Click Plug in on the HUD"),
+                BattleEventKind.CursorFrozen when trickExplained.Add(e.Kind) => L("Con trỏ đơ! Kỹ năng bị khóa. Bấm Tiếp tục trên HUD", "Frozen cursor! Skills are locked. Click Continue on the HUD"),
                 BattleEventKind.RageFull when !rageExplained => L("Thanh nộ đầy! Bấm vào thanh để mèo nổi giận", "The rage bar is full! Click it to make the cat rage"),
                 BattleEventKind.Raged => L("MÈO NỔI GIẬN!", "THE CAT RAGES!"),
                 // 1.5 M09: the spitter and the spring trap, once each per battle.

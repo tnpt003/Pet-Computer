@@ -787,6 +787,10 @@ public sealed class StageSpec
     public double MalwareFrom { get; init; }
     // 1.5 M21: at most this many malware kinds out at once in this stage (unset: apps.maxMalware).
     public int? MaxMalware { get; init; }
+    // 1.5 M26: from this wave on (0: never) the battle has the Screenshot icon and draws the captcha, the
+    // low battery and the frozen cursor among its random malware (chapter 2, the Dump Trail; Infinity
+    // sets it from EndlessSpec.NewAppsFrom).
+    public int NewAppsFrom { get; init; }
     // 1.5 M21: skill ids the map and the setup panel suggest carrying ("Suggested: …").
     public string[]? SuggestSkills { get; init; }
     // An accessory id (Assets/accessories.json) given once, the first time the stage is won.
@@ -811,7 +815,8 @@ public sealed class MalwareCue
 {
     public double At { get; init; }
     public string Kind { get; init; } = "";
-    public static readonly string[] Kinds = { "ads", "loading", "update", "virus", "infect" };
+    // 1.5 M26: "captcha", "battery" (low battery), "cursor" (frozen cursor).
+    public static readonly string[] Kinds = { "ads", "loading", "update", "virus", "infect", "captcha", "battery", "cursor" };
 }
 
 // An upgrade offered between the waves of an Adventure stage. A run keeps what it took; in the
@@ -1172,6 +1177,14 @@ public static class BattleData
             if (apps.UpdateClicks is < 1 or > 10) throw new InvalidDataException("apps.updateClicks must be 1–10");
             Within(apps.VirusExeWeight, 0, 100, "apps.virusExeWeight"); Within(apps.VirusExeEvery, 1, 60, "apps.virusExeEvery");
             if (apps.VirusExeCopies is < 2 or > 8) throw new InvalidDataException("apps.virusExeCopies must be 2–8");
+            Within(apps.ShotFreeze, 0.2, 10, "apps.shotFreeze"); Within(apps.DazzleEvery, 1, 120, "apps.dazzleEvery");
+            Within(apps.DazzleSeconds, 0, 5, "apps.dazzleSeconds");
+            Within(apps.CaptchaWeight, 0, 100, "apps.captchaWeight"); Within(apps.CaptchaSeconds, 3, 60, "apps.captchaSeconds");
+            Within(apps.CaptchaShare, 0.15, 0.6, "apps.captchaShare");
+            if (apps.CaptchaCatsMin is < 1 or > 8 || apps.CaptchaCatsMax < apps.CaptchaCatsMin || apps.CaptchaCatsMax > 8)
+                throw new InvalidDataException("apps.captchaCatsMin and captchaCatsMax must be 1–8 (min ≤ max)");
+            Within(apps.BatteryWeight, 0, 100, "apps.batteryWeight"); Within(apps.BatteryRate, 0.1, 1, "apps.batteryRate");
+            Within(apps.CursorWeight, 0, 100, "apps.cursorWeight"); Within(apps.CursorSeconds, 1, 30, "apps.cursorSeconds");
             if (!s.EnemyTypes.Any(e => e?.Id == apps.PopupSpawn)) throw new InvalidDataException($"apps.popupSpawn \"{apps.PopupSpawn}\" is not an enemy id");
             if (apps.List != null)
             {
@@ -1192,7 +1205,8 @@ public static class BattleData
                     else if (a.Charge != 0) throw new InvalidDataException($"{at}.charge must be 0 (the popup is never an icon)");
                     if (a.Start is double start) Within(start, 0, 1, at + ".start");
                 }
-                if (seen.Count != kinds.Length) throw new InvalidDataException($"apps.list must list every app: {string.Join(", ", kinds.Select(k => k.ToLowerInvariant()))}");
+                // 1.5 M26: a list from before the Screenshot may leave it out (its built-in texts are used).
+                if (kinds.Any(k => k != nameof(BattleAppKind.Screenshot) && !seen.Contains(k))) throw new InvalidDataException($"apps.list must list every app: {string.Join(", ", kinds.Select(k => k.ToLowerInvariant()))}");
             }
         }
         Positive(s.HealAmount, "healAmount"); Positive(s.CheerSeconds, "cheerSeconds"); Positive(s.CheerSpeed, "cheerSpeed");
@@ -1896,6 +1910,7 @@ public static class BattleData
         if (stage.UnlocksSkill != null && BattleSkills.Parse(stage.UnlocksSkill) == null)
             throw new InvalidDataException($"{where}.unlocksSkill must be a skill id: {BattleData.KnownSkills}");
         if (stage.MaxMalware is int malware && (malware is < 1 or > 4 || !stage.Malware)) throw new InvalidDataException($"{where}.maxMalware must be 1–4, in a stage with malware");
+        if (stage.NewAppsFrom is < 0 or > 1000) throw new InvalidDataException($"{where}.newAppsFrom must be 0–1000 (0: never)");
         if (stage.SuggestSkills is { } suggest && (suggest.Length is 0 or > BattleSkills.Carry || suggest.Any(k => BattleSkills.Parse(k) == null) || suggest.Distinct().Count() != suggest.Length))
             throw new InvalidDataException($"{where}.suggestSkills must list 1–{BattleSkills.Carry} different skill ids: {BattleData.KnownSkills}");
         if (stage.Basket is BasketSpec basket) BasketSpec.Validate(basket, where);

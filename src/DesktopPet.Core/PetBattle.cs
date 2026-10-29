@@ -145,12 +145,14 @@ public sealed partial class BattleSim
     public double MoveFactor => (1 + moveBonus) * (ComboRushRemaining > 0 ? 1 + comboRushBonus : 1);
     // Attacks a second against the usual: the rushes (Tailwind, Gale).
     public double RushFactor => 1 + (LandingRushRemaining > 0 ? landingRushBonus : 0) + (ComboRushRemaining > 0 ? comboRushBonus : 0);
-    public double CooldownFactor => Math.Max(0.3, 1 - cooldownCut);
+    public double CooldownFactor => Math.Max(0.3, 1 - cooldownCut) * (1 + swingDelay);
     public double ArmorFactor => Math.Max(1 - MaxArmor, 1 - armorCut);
     public double KnockBonus => knockBonus;
+    // 1.5 M23b: what the weapon's swings deal on top of the cards: the forge's bonus, less the relics' cuts.
+    public double ArmsFactor => (1 + weaponBonus) * Math.Max(0.1, 1 - swingCut);
     // The cat's numbers with this build and these relics, before anything that only happens in a
     // fight (Cheer, combo, Momentum, Reckless's bonus): what the inventory shows.
-    public double SwingDamage => arms.Damage * DamageFactor;
+    public double SwingDamage => arms.Damage * DamageFactor * ArmsFactor;
     public double SwingsPerSecond => 1 / Math.Max(arms.AttackCooldown * CooldownFactor, arms.SwingDuration);
     public double Knock => arms.Knock + knockBonus;
     public double HurtFactor => ArmorFactor * (1 + recklessHurt);
@@ -183,6 +185,12 @@ public sealed partial class BattleSim
     private readonly List<RelicSpec> relics = new();
     public IReadOnlyList<RelicSpec> Relics => relics;
     private double counterBonus, shieldDelay, fishBonus, fishDelay, recklessBonus, recklessBelow, recklessHurt;
+    // 1.5 M23b: the newer relics (magnet, thorns, venom, frost, battery, helmet) and the run's forge and curse.
+    private double magnetBonus, magnetLife, thornsShare, swingCut, swingDelay, batteryCut;
+    private readonly double weaponBonus, eliteBonus;
+    public double WeaponBonus => weaponBonus;
+    public bool NoPotions { get; private set; }
+    public bool CrushProof { get; private set; }
     // Counter bell: the Shield or the Turtle shell stopped a hit, the next landed swing hits harder.
     public bool CounterReady { get; private set; }
     public int CounterHits { get; private set; }
@@ -271,8 +279,11 @@ public sealed partial class BattleSim
     public BattleSim(BattleSettings settings, double left, double right, Random? random = null, BattleDifficulty difficulty = BattleDifficulty.Normal,
         string weapon = BattleWeapon.Sword, StageSpec? stage = null, IReadOnlyDictionary<string, int>? build = null, int? seed = null,
         double? startHp = null, double threat = 1, IReadOnlyList<string>? relics = null, bool apps = true, IEnumerable<BattleSkill>? skills = null,
-        BattleLoot loot = BattleLoot.None)
+        BattleLoot loot = BattleLoot.None, double weaponBonus = 0, double eliteBonus = 0)
     {
+        // 1.5 M23b: an Expedition run's forge (more weapon damage) and curse (likelier elites).
+        this.weaponBonus = double.IsFinite(weaponBonus) ? Math.Clamp(weaponBonus, 0, 5) : 0;
+        this.eliteBonus = double.IsFinite(eliteBonus) ? Math.Clamp(eliteBonus, 0, 1) : 0;
         carried = skills != null ? BattleSkills.Order(skills) ?? BattleSkills.Default : BattleSkills.Default;
         // A given seed wins; otherwise one drawn from the given random (tests), else a fresh one.
         Seed = seed ?? random?.Next() ?? Random.Shared.Next();
@@ -585,7 +596,7 @@ public sealed partial class BattleSim
         Combo = LiveCombo + 1;
         comboClock = 0;
         bool combo = Combo >= ComboHits;
-        double damage = arms.Damage * DamageFactor * (CheerRemaining > 0 ? Settings.CheerDamage : 1) * (combo ? Settings.ComboDamage : 1);
+        double damage = arms.Damage * DamageFactor * ArmsFactor * (CheerRemaining > 0 ? Settings.CheerDamage : 1) * (combo ? Settings.ComboDamage : 1);
         // Armor break: combo hits hit harder.
         if (combo && Active("armorBreak") is SynergySpec breaker) damage *= 1 + breaker.Amount;
         // Rare cards: the first landed hit on each enemy (Opener) and a swing after a run (Momentum)

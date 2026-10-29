@@ -120,6 +120,12 @@ public sealed partial class BattleSim
         statusCards.Add((hit, Math.Min(1, card.Amount), card.Id));
     }
 
+    // 1.5 M23b: a venom or frost relic's status, rolled with each landed swing like a card's.
+    private void TakeStatusRelic(RelicSpec relic)
+    {
+        if (relic.OnHit is StatusHit hit) statusCards.Add((hit, hit.Chance, "relic:" + relic.Id));
+    }
+
     // The statuses' clocks and the poison's damage for one step (the battle still going).
     private void StepStatus(Slime slime, double dt)
     {

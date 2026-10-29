@@ -897,7 +897,34 @@ Code: `ChapterSpec.Scene`, `StageSpec.Keepsake`, `Adventure.Keepsakes`/`GrantRew
 - **Chuyến cũ (`keepRuns`):** tuyến 1 lên rulesVersion 7 (`keepRuns: [6]`): chuyến bắt đầu dưới luật 6 vẫn đi tiếp tới hết, các bậc chưa quay của nó không ra cửa hàng, kết thúc tính vào kỷ lục r6. Chuyến luật 5 trở xuống vẫn kết thúc như cũ. `keepRuns` chỉ nhận số nhỏ hơn `rulesVersion`.
 - **File:** expedition.json lên version 5 (lựa chọn đang mở có `Wares`/`Sold`, nhật ký có `Coins`); bản cũ đọc file mới ở chế độ chỉ đọc. Chuyến ở tuyến mà dữ liệu không còn thì kết thúc khi mở bản đồ.
 - **Mô phỏng cân bằng (không phải chơi thật, ExpeditionTests):** tuyến 2, Normal, người chơi đơn giản thắng 29–33/40 (tuyến 1: 34–39/40); Hard 9–12/40. Số liệu trận, giá và trọng số `shop` (tuyến 1: 12, tuyến 2: 14) là ước lượng; xu thật phụ thuộc người chơi click nhặt, chốt khi chơi thật/M29.
-- Chưa làm (M23b): sự kiện Lò rèn, Lời nguyền, Mèo bị lạc; 6 di vật mới.
+- Sự kiện và di vật mới: mốc M23b (mục kế tiếp).
+
+## Sự kiện và di vật mới của Viễn chinh (bản 1.5, mốc M23b, 2026-10-29)
+
+Có ở cả hai tuyến (tuyến lấy chung `events`/`relics` của `expedition`). `rulesVersion` không đổi (M23a và M23b là một đợt đổi luật của bản 1.5 chưa phát hành, kỷ lục vẫn r7 / tuyến 2 r1). expedition.json lên version 6 (`Forged`, `WeaponBonus`, `Cursed`, `CurseThreat`, `CurseElite` của chuyến; bản trước đọc file mới ở chế độ chỉ đọc).
+
+**Sự kiện** (`events`, loại mới, không cần `relics`):
+- `forge` **Lò rèn** (`coins` 4, `cost` 0.15, `amount` 0.15, `levels` 2): trả `coins` xu **hoặc** `cost` HP tối đa để vũ khí chém mạnh hơn `amount` đến hết chuyến; tối đa `levels` lần mỗi chuyến (lần sau bị từ chối "đã rèn tối đa"); đã rèn đủ thì máy quay không bốc Lò rèn nữa (trừ khi không còn sự kiện nào khác). Thưởng chỉ nhân vào nhát chém của vũ khí (cả khi mèo bị cầm), không nhân app, độc hay kỹ năng.
+- `curse` **Lời nguyền** (`cards` 2, `amount` 0.25, `battles` 2, `eliteChance` 0.15): chọn 1 trong `cards` thẻ hiếm còn lấy được (thẻ có `skill` chỉ khi mang kỹ năng đó) hoặc đi tiếp; lấy thì `battles` trận kế (giao tranh, tinh anh hay trùm) quái mạnh hơn `amount` (nhân vào threat) và tỉ lệ tinh anh +`eliteChance` (cả trận vốn không có tinh anh; độ khó Dễ vẫn không có tinh anh). Mỗi trận thắng trừ một; rời trận không trừ. Bị nguyền thêm lần nữa thì lấy số lớn hơn, không cộng dồn.
+- `lost` **Mèo bị lạc** (`cost` 0.1, `coins` 3, `cards` 3): mất `cost` HP tối đa, nhận `coins` xu và chọn 1 trong tối đa `cards` thẻ (lượt đưa thẻ như ở điểm nghỉ), hoặc đi tiếp. Không đủ máu (phải còn ≥ 1 HP) thì nút bị khóa.
+- Kiểm tra lúc nạp: `coins` 1–99 chỉ cho forge/lost, `amount` (0, 1] chỉ cho forge/curse, `levels` 1–5 chỉ forge, `battles` 1–5 chỉ curse, `eliteChance` 0–1 chỉ curse, `cards` 1–3 chỉ curse/lost, forge/lost cần `cost` > 0.
+- Bản đồ: Lò rèn có hai nút "Rèn: −4 xu" / "Rèn: −N HP" và dòng "Đã rèn x/2 lần · chuyến có N xu"; Lời nguyền liệt kê thẻ hiếm, nút "Lấy thẻ, chịu lời nguyền"; Mèo bị lạc liệt kê thẻ, nút "Giúp: −N HP, +3 xu, lấy thẻ đã chọn". Dòng di vật ghi "⚒ Rèn ×n: +X% chém" và "☠ Lời nguyền: còn n trận"; chi tiết trận bị nguyền ghi "☠ lời nguyền: dễ ra tinh anh hơn". Túi đồ có dòng cảnh báo lời nguyền/lò rèn, nhật ký chuyến ghi từng lựa chọn (nhật ký `Coins`: xu đã trả, số âm là xu nhận).
+
+**Di vật** (`relics`, `effect` mới; tối đa 12 di vật, gốc có 10):
+
+| `effect` | Gốc | Được | Giá |
+|---|---|---|---|
+| `magnet` Nam châm xu | `amount` 0.5, `penalty` 5 | tỉ lệ rơi đồ ×(1 + `amount`) | đồ rơi nằm sàn tối đa `penalty` giây (2–30; 0 = không đổi; không ngắn hơn `fade`) |
+| `thorns` Vòng gai | `amount` 0.3, `penalty` 0.1 | slime **đánh gần hoặc lao** trúng mèo chịu lại `amount` phần máu mèo thật sự mất (cộng với cộng hưởng Gai nếu có) | nhát chém −`penalty` |
+| `venom` Răng nanh độc | `onHit` độc 3 s, 3 máu/s, `penalty` 0.1 | mỗi nhát chém trúng gây `onHit` (luật độc M04) | thời gian hồi đòn ×(1 + `penalty`) |
+| `frost` Viên đá lạnh | `onHit` chậm 30% 2 s, `penalty` 0.15 | mỗi nhát chém trúng gây `onHit` (đóng băng) | nhát chém −`penalty` |
+| `battery` Pin dự phòng | `amount` 0.2 | thời gian hồi kỹ năng ×(1 − `amount`) (nhân riêng, sau thẻ) | không rơi bình |
+| `helmet` Mũ bảo hiểm | `penalty` 0.1 | không bị choáng bởi cú lăn (Slime Nén), lò xo bật, slime đào hang trồi lên (vẫn mất máu); lao, bom, chuông app vẫn choáng | tốc chạy −`penalty` |
+
+- `onHit` chỉ cho `venom` (phải là `poison`) và `frost` (phải là `chill`), kiểm tra như `onHit` của vũ khí. `amount` của thorns/battery ≤ 0.9; `penalty` của thorns/venom/frost/helmet ≤ 0.9, magnet ≤ 30.
+- Cắt sát thương chém của thorns/frost nhân riêng với thẻ (tối thiểu ×0,1), không đổi sát thương app/độc.
+
+**Mô phỏng (ExpeditionEventTests, ExpeditionTests; không phải chơi thật):** mỗi di vật mới giữ từ đầu chuyến, kiếm + búa, Normal, người chơi đơn giản, đường tham: tuyến 1 không di vật thắng 22/24, các di vật 19–22/24 (Mũ bảo hiểm thấp nhất vì tuyến 1 ít đòn lăn/lò xo/đào hang); tuyến 2 không di vật 20/24, di vật 20–23/24. Bảng cân bằng chung sau khi thêm sự kiện: tuyến 1 Normal đơn giản an toàn 39/40, tham 32–34/40; tuyến 2 Normal 31–35/40, Hard 11–13/40. Số liệu là ước lượng, chốt sau khi chơi thật/M29.
 
 ## Viễn chinh (`expedition`) (2026-10-21)
 

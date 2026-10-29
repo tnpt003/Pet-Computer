@@ -104,7 +104,7 @@ public sealed partial class BattleSim
     {
         var slime = Find(heldTargetId);
         if (slime == null || !slime.Targetable || !slime.Airborne || Gap(cat, slime) > HeldReach + 14) return;
-        double damage = arms.Damage * DamageFactor * (CheerRemaining > 0 ? Settings.CheerDamage : 1);
+        double damage = arms.Damage * DamageFactor * ArmsFactor * (CheerRemaining > 0 ? Settings.CheerDamage : 1);
         if (Reckless) damage *= 1 + recklessBonus;
         bool crit = critChance > 0 && strikeRandom.NextDouble() < critChance;
         if (crit) { damage *= 2; Crits++; }

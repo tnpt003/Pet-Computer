@@ -461,7 +461,7 @@ public sealed partial class BattleSim
         if (CatLifted || Math.Abs(catX - slime.X) > slime.Range + 12 || Grace > 0) return;
         // A thief's windup steals instead of hurting (1.5 M16).
         if (slime.Type.Steal != null) { Steal(slime, catX); return; }
-        HurtCat(slime, catX, false, slime.Type.SlamShare);
+        HurtCat(slime, catX, false, slime.Type.SlamShare, melee: true);
     }
 
     // Half the cat's width on the floor: a dash that passes over this hits it.
@@ -483,7 +483,7 @@ public sealed partial class BattleSim
         if (!slime.DashHit && !CatLifted && Grace <= 0 && catX >= Math.Min(before, slime.X) - reach && catX <= Math.Max(before, slime.X) + reach)
         {
             slime.DashHit = true;
-            HurtCat(slime, catX, true);
+            HurtCat(slime, catX, true, melee: true);
         }
         if (slime.DashLeft <= 0 && !Over)
         {
@@ -496,20 +496,24 @@ public sealed partial class BattleSim
     // Every hit on the cat: the Shield takes all of it (no damage, no stun), otherwise armor
     // lessens it. stun: also stun the cat, unless it is in the user's hands, already stunned or
     // still immune after its last stun. stunSeconds: how long (negative: the battle's StunDurationSeconds).
-    private void HurtCat(Slime from, double catX, bool stun, double share = 1, double stunSeconds = -1)
+    // melee (1.5 M23b): the slime's own strike or dash (a thorns relic answers it); crush: a roll, a
+    // spring or a burrower coming up (a helmet relic stops its stun).
+    private void HurtCat(Slime from, double catX, bool stun, double share = 1, double stunSeconds = -1, bool melee = false, bool crush = false)
     {
         // A mirage's copy: its blow is only an illusion (1.5 M13). A sulky slime hits as hard as it is puffed up.
         if (from.Decoy) { AddEffect(BattleEffectKind.Miss, catX, 60); return; }
         if (!LandHit(from.Damage * share * from.Puff, catX, out double hurt)) return;
-        // Thorns: part of what the cat really took goes back to the attacker.
-        if (Active("thorns") is SynergySpec thorns && hurt > 0 && from.Targetable && !from.Shielded)
+        // Thorns (the synergy; 1.5 M23b: and the relic, for a melee blow): part of what the cat really took goes back to the attacker.
+        double back = (Active("thorns") is SynergySpec thorns ? thorns.Amount : 0) + (melee ? thornsShare : 0);
+        if (back > 0 && hurt > 0 && from.Targetable && !from.Shielded)
         {
             Reflects++;
             events.Add(new(BattleEventKind.Reflected, from.X));
-            Damage(from, hurt * thorns.Amount, DamageSource.Reflect);
+            Damage(from, hurt * back, DamageSource.Reflect);
             if (Over) return;
         }
         double seconds = stunSeconds >= 0 ? stunSeconds : Settings.StunDurationSeconds;
+        if (crush && CrushProof) stun = false;
         if (stun && !from.Defanged && !CatHeld && !CatStunned && !Raging && StunImmunity <= 0 && seconds > 0)
         {
             CatStunRemaining = StunFor(seconds);

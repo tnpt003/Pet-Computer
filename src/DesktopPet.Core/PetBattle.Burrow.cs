@@ -82,7 +82,7 @@ public sealed partial class BattleSim
         events.Add(new(BattleEventKind.BurrowEmerged, s.CrackX, hit ? 1 : 0));
         if (!hit) return;
         BurrowHits++;
-        HurtCat(s, lastCatX, true, 1, b.Stun);
+        HurtCat(s, lastCatX, true, 1, b.Stun, crush: true);
     }
 
     // The cat let go after a real lift has just landed at x (PetBattle.cs): a burrower whose cracks show

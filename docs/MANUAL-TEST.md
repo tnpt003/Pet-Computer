@@ -782,3 +782,13 @@ Dữ liệu gốc, không cần file tùy chỉnh. Ảnh bản đồ chọn tuy�
 - [ ] Nếu đang có chuyến Đường mòn Slime từ bản trước (luật 6): mở bản đồ vẫn đi tiếp, không bị kết thúc; các bậc quay sau không ra cửa hàng.
 - [ ] Cảm giác giá cửa hàng (ghi vào Nhật ký chơi thử): tới cửa hàng đầu tiên thường có bao nhiêu xu, mua được mấy món (giá 2/3/5/6 là ước lượng). Độ khó Lối Bãi rác so với Đường mòn Slime.
 - [ ] Chữ vi/en/ja đúng, không tràn; DPI 100/150/200%: chip tuyến và bảng cửa hàng không bị cắt, cuộn được khi màn hình thấp.
+
+## Sự kiện và di vật mới Viễn chinh 1.5 M23b (2026-10-29)
+Dữ liệu gốc, không cần file tùy chỉnh. Ảnh bảng Lò rèn/Lời nguyền/Mèo bị lạc đã xem qua render UiChecks (dữ liệu thử, tiếng Anh), **chưa chơi thật**, chưa xem trên màn hình thật.
+- [ ] Gặp **Lò rèn** (ô sự kiện "!"): bảng có "Rèn: −4 xu", "Rèn: −N HP", "Đi tiếp" và dòng "Đã rèn 0/2 lần · chuyến có N xu". Thiếu xu thì nút xu mờ (rê chuột "Chưa đủ xu."). Rèn xong: ghi "Đã rèn vũ khí: +15% sát thương chém", dòng di vật có "⚒ Rèn ×1: +15% chém"; trận sau số sát thương mỗi nhát lớn hơn rõ. Rèn lần 2 được, lần 3 bị mờ "Vũ khí đã rèn tối đa"; sau đó máy quay không ra Lò rèn nữa.
+- [ ] Gặp **Lời nguyền**: hai thẻ hiếm ◆, nút "Lấy thẻ, chịu lời nguyền" chỉ sáng khi đã chọn thẻ. Lấy: dòng di vật có "☠ Lời nguyền: còn 2 trận", chi tiết trận kế ghi "quái mạnh ×…" và "☠ lời nguyền: dễ ra tinh anh hơn"; sau 2 trận thắng thì hết. Túi đồ có dòng cảnh báo lời nguyền.
+- [ ] Gặp **Mèo bị lạc**: tối đa ba thẻ, nút "Giúp: −N HP, +3 xu, lấy thẻ đã chọn"; máu quá thấp thì nút khóa. Giúp xong: xu +3, thẻ vào build. Nhật ký trong Túi đồ ghi đúng từng sự kiện.
+- [ ] Di vật mới (lấy ở tinh anh/đền/rương/cửa hàng): Túi đồ ghi đúng tác dụng ▲ và giá ▼. Nam châm xu: đồ rơi nhiều hơn, biến mất sau ~5 s. Vòng gai: slime đánh gần/lao trúng mèo bị trừ máu lại. Răng nanh độc: slime trúng chém có bọt tím. Viên đá lạnh: slime trúng chém có tinh thể xanh, đi chậm. Pin dự phòng: kỹ năng hồi nhanh hơn, không còn bình rơi. Mũ bảo hiểm (Lối Bãi rác): Slime Nén lăn trúng, lò xo bật, slime đào hang trồi lên chỉ mất máu, không choáng; mèo chạy chậm hơn chút.
+- [ ] Tắt app khi đang mở một sự kiện mới hoặc khi đang bị nguyền rồi mở lại: lựa chọn giữ nguyên, số trận nguyền và cấp rèn giữ nguyên.
+- [ ] Cảm giác (ghi vào Nhật ký chơi thử): Lò rèn 4 xu có rẻ quá không; Lời nguyền có đáng không; di vật nào thấy yếu/mạnh rõ.
+- [ ] Chữ vi/en/ja đúng, không tràn; DPI 100/150/200%: bảng sự kiện không bị cắt.

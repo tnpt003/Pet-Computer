@@ -1042,7 +1042,17 @@
       { "id": "slime_chest", "kind": "chest", "heal": 0.1, "cost": 0.15, "nameVi": "Rương slime", "nameEn": "Slime chest",
         "descVi": "An toàn: hồi 10% HP. Liều: mất 15% HP, nhận một di vật ngẫu nhiên.", "descEn": "Safe: 10% HP back. Risky: lose 15% HP for a random relic." },
       { "id": "old_shrine", "kind": "shrine", "cost": 0.2, "nameVi": "Đền cũ", "nameEn": "Old shrine",
-        "descVi": "Mất 20% HP để chọn một trong hai di vật, hoặc đi tiếp.", "descEn": "Lose 20% HP to pick one of two relics, or move on." }
+        "descVi": "Mất 20% HP để chọn một trong hai di vật, hoặc đi tiếp.", "descEn": "Lose 20% HP to pick one of two relics, or move on." },
+      // 1.5 M23b: "forge" (the weapon deals "amount" more for the rest of the run, for "coins" coins or
+      // "cost" of the max HP, at most "levels" times a run), "curse" (one of "cards" rare cards; the next
+      // "battles" battles' enemies are "amount" stronger and "eliteChance" likelier elite), "lost" (lose
+      // "cost" of the max HP for "coins" coins and one of "cards" cards).
+      { "id": "cat_forge", "kind": "forge", "coins": 4, "cost": 0.15, "amount": 0.15, "levels": 2, "nameVi": "Lò rèn", "nameEn": "Forge",
+        "descVi": "Rèn vũ khí: +15% sát thương chém đến hết chuyến (tối đa 2 lần). Trả 4 xu hoặc 15% HP.", "descEn": "Forge the weapon: +15% swing damage for the rest of the run (twice at most). Pay 4 coins or 15% HP." },
+      { "id": "slime_curse", "kind": "curse", "cards": 2, "amount": 0.25, "battles": 2, "eliteChance": 0.15, "nameVi": "Lời nguyền", "nameEn": "Curse",
+        "descVi": "Chọn một trong hai thẻ hiếm: 2 trận kế, quái mạnh hơn 25% và dễ ra tinh anh hơn.", "descEn": "Pick one of two rare cards: in the next 2 battles enemies are 25% stronger and likelier elite." },
+      { "id": "lost_kitten", "kind": "lost", "cost": 0.1, "coins": 3, "cards": 3, "nameVi": "Mèo bị lạc", "nameEn": "Lost kitten",
+        "descVi": "Đưa mèo con về nhà: mất 10% HP, nhận 3 xu và chọn một trong ba thẻ. Hoặc đi tiếp.", "descEn": "Walk the kitten home: lose 10% HP for 3 coins and one of three cards. Or move on." }
     ],
     "relics": [
       { "id": "counter_bell", "skill": "shield", "effect": "counter", "amount": 0.6, "penalty": 3, "nameVi": "Chuông phản đòn", "nameEn": "Counter bell",
@@ -1052,7 +1062,26 @@
       { "id": "reckless_charm", "effect": "reckless", "amount": 0.4, "below": 0.4, "penalty": 0.1, "nameVi": "Bùa liều lĩnh", "nameEn": "Reckless charm",
         "descVi": "HP dưới 40%: +40% sát thương. Luôn nhận thêm 10% sát thương.", "descEn": "Below 40% HP: +40% damage. Always take 10% more damage." },
       { "id": "light_feather", "effect": "light", "amount": 0.15, "extra": 0.1, "penalty": 15, "nameVi": "Lông vũ nhẹ", "nameEn": "Light feather",
-        "descVi": "+15% tốc chạy, −10% thời gian hồi đòn. −15 HP tối đa.", "descEn": "+15% running speed, −10% time between swings. −15 max HP." }
+        "descVi": "+15% tốc chạy, −10% thời gian hồi đòn. −15 HP tối đa.", "descEn": "+15% running speed, −10% time between swings. −15 max HP." },
+      // 1.5 M23b: "magnet" (drops "amount" likelier, on the floor "penalty" s), "thorns" ("amount" of a
+      // slime's own strike or dash sent back, swings deal "penalty" less), "venom"/"frost" (every landed
+      // swing leaves "onHit"; venom: "penalty" more time between swings, frost: "penalty" less swing
+      // damage), "battery" (skills recharge "amount" faster, no potions drop), "helmet" (rolls, springs
+      // and burrowers coming up never stun; "penalty" less running speed).
+      { "id": "coin_magnet", "effect": "magnet", "amount": 0.5, "penalty": 5, "nameVi": "Nam châm xu", "nameEn": "Coin magnet",
+        "descVi": "Đồ rơi ra nhiều hơn 50%. Đồ rơi chỉ nằm sàn 5 giây.", "descEn": "Drops are 50% likelier. A drop stays on the floor only 5 s." },
+      { "id": "thorn_collar", "effect": "thorns", "amount": 0.3, "penalty": 0.1, "nameVi": "Vòng gai", "nameEn": "Thorn collar",
+        "descVi": "Slime đánh gần hoặc lao trúng mèo: chịu lại 30% sát thương. Chém −10%.", "descEn": "A slime that strikes or dashes into the cat takes 30% of it back. Swings −10%." },
+      { "id": "venom_fang", "effect": "venom", "penalty": 0.1, "onHit": { "status": "poison", "chance": 1, "seconds": 3, "power": 3 },
+        "nameVi": "Răng nanh độc", "nameEn": "Venom fang",
+        "descVi": "Mỗi nhát chém trúng gây độc 3 giây. Hồi đòn lâu hơn 10%.", "descEn": "Every landed swing poisons for 3 s. 10% more time between swings." },
+      { "id": "frost_stone", "effect": "frost", "penalty": 0.15, "onHit": { "status": "chill", "chance": 1, "seconds": 2, "power": 0.3 },
+        "nameVi": "Viên đá lạnh", "nameEn": "Frost stone",
+        "descVi": "Mỗi nhát chém trúng làm quái chậm 30% trong 2 giây. Chém −15%.", "descEn": "Every landed swing slows the enemy 30% for 2 s. Swings −15%." },
+      { "id": "spare_battery", "effect": "battery", "amount": 0.2, "nameVi": "Pin dự phòng", "nameEn": "Spare battery",
+        "descVi": "Kỹ năng hồi nhanh hơn 20%. Không còn rơi bình.", "descEn": "Skills recharge 20% faster. No more potions drop." },
+      { "id": "slime_helmet", "effect": "helmet", "penalty": 0.1, "nameVi": "Mũ bảo hiểm", "nameEn": "Helmet",
+        "descVi": "Không bị choáng khi bị lăn đè, lò xo bật hay slime trồi lên. Chạy chậm 10%.", "descEn": "Rolls, springs and slimes coming up never stun the cat. 10% slower running." }
     ],
     "fights": [
       {

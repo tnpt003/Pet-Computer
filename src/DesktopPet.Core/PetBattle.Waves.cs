@@ -211,7 +211,8 @@ public sealed partial class BattleSim
     // a kind with an affix, fewer than MaxElites alive, budget for it; then one roll of its own stream.
     private void RollElite(Slime slime)
     {
-        if (Stage is not { EliteChance: > 0 } stage || Difficulty == BattleDifficulty.Easy || slime.Type.Elite is not EliteSpec elite) return;
+        // 1.5 M23b: an Expedition curse (eliteBonus) adds to the stage's chance.
+        if (Stage is not StageSpec stage || stage.EliteChance + eliteBonus <= 0 || Difficulty == BattleDifficulty.Easy || slime.Type.Elite is not EliteSpec elite) return;
         int elites = 0;
         foreach (var s in slimes) if (s.Elite != null && !s.Rallied && !s.Spat && !s.Decoy && s.State != SlimeState.Defeated) elites++;
         // Infinity: more elites as the waves go on (EliteChancePerWave, MoreElitesEvery).
@@ -219,6 +220,7 @@ public sealed partial class BattleSim
         if (elites >= most) return;
         double chance = stage.EliteChance + stage.EliteChancePerWave * Math.Max(0, Wave - 1);
         if (stage.EliteChanceMax > 0) chance = Math.Min(chance, stage.EliteChanceMax);
+        chance += eliteBonus;
         if (stream is { Budget: > 0 } flow ? AliveCost() + elite.Cost > flow.Budget : elite.Cost > eliteBudget) return;
         if (affixRandom.NextDouble() >= chance) return;
         if (stream == null) eliteBudget -= elite.Cost;

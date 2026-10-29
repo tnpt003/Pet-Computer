@@ -32,10 +32,11 @@ internal static class AdventureBalanceTests
     // startHp, threat, battleSeed: an Expedition step's (ExpeditionTests); unset for the Adventure.
     public static Outcome Play(BattleSettings data, StageSpec stage, string weapon, BattleDifficulty level, int seed, Player player, IReadOnlyDictionary<string, int>? build = null,
         double? startHp = null, double threat = 1, int? battleSeed = null, IReadOnlyList<string>? relics = null,
-        IEnumerable<BattleSkill>? skills = null, BattleLoot loot = BattleLoot.None)
+        IEnumerable<BattleSkill>? skills = null, BattleLoot loot = BattleLoot.None, double weaponBonus = 0, double eliteBonus = 0)
     {
         const double dt = 1.0 / 30;
-        var sim = new BattleSim(data, 0, 1600, new Random(seed), level, weapon, stage, build, battleSeed, startHp, threat, relics, skills: skills, loot: loot);
+        var sim = new BattleSim(data, 0, 1600, new Random(seed), level, weapon, stage, build, battleSeed, startHp, threat, relics, skills: skills, loot: loot,
+            weaponBonus: weaponBonus, eliteBonus: eliteBonus);
         var reflex = new Reflex(player, seed);
         var hands = new Hands();
         double cat = 800;

@@ -107,7 +107,8 @@ public sealed partial class BattleSim
         }
         // One roll for whether, one for which (both always drawn, so the stream never depends on the result).
         double roll = dropRandom.NextDouble(), pick = dropRandom.NextDouble();
-        if (roll >= (slime.Elite != null ? d.EliteChance : d.Chance)) return;
+        // 1.5 M23b: a coin magnet makes a drop likelier.
+        if (roll >= Math.Min(1, (slime.Elite != null ? d.EliteChance : d.Chance) * (1 + magnetBonus))) return;
         if (PickDrop(d, pick) is not BattleDropKind kind) return;
         AddDrop(kind, slime.X, kind == BattleDropKind.Coin ? (slime.Elite != null ? d.EliteCoin : d.Coin) : 0);
     }
@@ -129,14 +130,18 @@ public sealed partial class BattleSim
         return null;
     }
 
+    // 1.5 M23b: no potions with a spare battery.
     private double DropWeight(DropSpec d, string id) =>
-        id == "coin" && Loot != BattleLoot.Coins ? 0 : d.Weights.TryGetValue(id, out double w) ? w : 0;
+        id == "coin" && Loot != BattleLoot.Coins || id == "potion" && NoPotions ? 0 : d.Weights.TryGetValue(id, out double w) ? w : 0;
+
+    // How long a drop lies on the floor (1.5 M23b: shorter with a coin magnet, never under the fade).
+    public double DropLife => Settings.Drops is not DropSpec d ? 0 : magnetLife > 0 ? Math.Max(d.Fade, Math.Min(d.Life, magnetLife)) : d.Life;
 
     internal void AddDrop(BattleDropKind kind, double x, int value)
     {
         if (DropRules is not DropSpec d) return;
         if (drops.Count >= d.MaxOnFloor) drops.RemoveAt(0);
-        var drop = new BattleDrop { Id = nextDropId++, Kind = kind, X = Math.Clamp(x, Left + DropHalfWidth, Right - DropHalfWidth), Life = d.Life, Value = value };
+        var drop = new BattleDrop { Id = nextDropId++, Kind = kind, X = Math.Clamp(x, Left + DropHalfWidth, Right - DropHalfWidth), Life = DropLife, Value = value };
         drops.Add(drop);
         events.Add(new(BattleEventKind.DropAppeared, drop.X, drop.Id));
     }

@@ -238,6 +238,17 @@ internal static class ExpeditionTests
             case ExpeditionEventSpec.Chest:
                 if (policy == Policy.Safe || share < 0.5 || !Try(Expedition.Risk)) Try(Expedition.Safe);
                 break;
+            // 1.5 M23b: the forge with coins whenever it can (greedy also with HP while healthy); the curse's
+            // rare card and the lost cat only for greedy while healthy.
+            case ExpeditionEventSpec.Forge:
+                if (!Try(Expedition.PayCoins) && (policy == Policy.Safe || share < 0.6 || !Try(Expedition.PayHp))) Try(Expedition.Leave);
+                break;
+            case ExpeditionEventSpec.Curse:
+                if (policy == Policy.Safe || share < 0.6 || !Try(Expedition.Card, open.Cards.FirstOrDefault())) Try(Expedition.Leave);
+                break;
+            case ExpeditionEventSpec.Lost:
+                if (policy == Policy.Safe || share < 0.5 || !Try(Expedition.Card, best)) Try(Expedition.Leave);
+                break;
             default:
                 if (policy == Policy.Safe || share < 0.5 || !Try(Expedition.Take, relic: open.Relics.FirstOrDefault())) Try(Expedition.Leave);
                 break;
@@ -278,7 +289,8 @@ internal static class ExpeditionTests
                                 if (node.Kind == ExpeditionSpec.Elite) elites++;
                                 if (node.Kind == Expedition.BossKind) { reachedBoss++; beforeBoss += run.Hp / expedition.MaxHp(run); }
                                 expedition.Enter(lane);
-                                var outcome = AdventureBalanceTests.Play(data, node.Stage, weapon, level, seed * 100 + run.Step, player, run.Build, run.Hp, node.Threat, node.Seed, run.Relics);
+                                var outcome = AdventureBalanceTests.Play(data, node.Stage, weapon, level, seed * 100 + run.Step, player, run.Build, run.Hp, node.Threat, node.Seed, run.Relics,
+                                    weaponBonus: node.WeaponBonus, eliteBonus: node.EliteBonus);
                                 fought += outcome.Seconds;
                                 int held = run.Relics.Count;
                                 var step = expedition.Finish(outcome.Won, outcome.Hp, outcome.Build, outcome.Seconds, 0);

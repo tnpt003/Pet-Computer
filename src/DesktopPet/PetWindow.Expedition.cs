@@ -351,7 +351,14 @@ public sealed partial class PetWindow
         if (!expeditionMapOpen || Expedition is not Expedition expedition || expedition.Run is not ExpeditionRun run || run.Pending == null)
             return L("Không có lựa chọn nào đang mở.", "No choice is open.");
         if (expedition.Refusal(option, expeditionPickCard, expeditionDropCard, expeditionPickRelic) is string why)
-            return why == "too weak" ? L("Mèo quá yếu để trả giá này.", "The cat is too weak to pay this.") : L("Hãy chọn trước.", "Choose first.");
+            return why switch
+            {
+                "too weak" => L("Mèo quá yếu để trả giá này.", "The cat is too weak to pay this."),
+                "too poor" => L("Chưa đủ xu.", "Not enough coins."),
+                "maxed" => L("Vũ khí đã rèn tối đa.", "The weapon is forged as far as it goes."),
+                _ => L("Hãy chọn trước.", "Choose first.")
+            };
+        var openEvent = expedition.Spec.FindEvent(run.Pending.Event);
         int step = run.Step;
         var done = expedition.Choose(option, expeditionPickCard, expeditionDropCard, expeditionPickRelic);
         if (!done.Done) return L("Không chọn được.", "That cannot be chosen.");
@@ -359,7 +366,13 @@ public sealed partial class PetWindow
         string hp = done.Hp >= 0.5 ? $" +{Math.Round(done.Hp)} HP" : done.Hp <= -0.5 ? $" −{Math.Round(-done.Hp)} HP" : "";
         expeditionNote = (done.Option switch
         {
+            DesktopPet.Expedition.Card when openEvent?.Kind == ExpeditionEventSpec.Curse
+                => LF($"Đã lấy thẻ {CardName(done.Card!)}. Lời nguyền: {run.Cursed} trận tới quái mạnh hơn.", $"Took the {CardName(done.Card!)} card. Cursed: the next {run.Cursed} battle(s) are harder."),
+            DesktopPet.Expedition.Card when openEvent?.Kind == ExpeditionEventSpec.Lost
+                => LF($"Mèo con đã về nhà: +{done.Coins} xu, thẻ {CardName(done.Card!)}.", $"The kitten is home: +{done.Coins} coins, the {CardName(done.Card!)} card."),
             DesktopPet.Expedition.Card => LF($"Đã lấy thẻ {CardName(done.Card!)}.", $"Took the {CardName(done.Card!)} card."),
+            DesktopPet.Expedition.PayCoins or DesktopPet.Expedition.PayHp
+                => LF($"Đã rèn vũ khí: +{Percent(run.WeaponBonus)} sát thương chém.", $"Weapon forged: +{Percent(run.WeaponBonus)} swing damage.") + (done.Coins < 0 ? LF($" (−{-done.Coins} xu)", $" (−{-done.Coins} coins)") : ""),
             DesktopPet.Expedition.SwapOption => LF($"Đã đổi {CardName(done.Dropped!)} lấy {CardName(done.Card!)}.", $"Traded {CardName(done.Dropped!)} for {CardName(done.Card!)}."),
             DesktopPet.Expedition.Risk or DesktopPet.Expedition.Take => LF($"Nhận di vật {RelicName(expedition, done.Relic!)}.", $"Got the {RelicName(expedition, done.Relic!)} relic."),
             DesktopPet.Expedition.Free or DesktopPet.Expedition.Gold => (done.Option == DesktopPet.Expedition.Free ? L("Viên thường: ", "Plain capsule: ") : L("Viên vàng: ", "Gold capsule: "))
@@ -703,7 +716,10 @@ public sealed partial class PetWindow
             var parts = BuildParts(run.Build);
             Show(xBuild, L("Build: ", "Build: ") + (parts.Count == 0 ? L("chưa có thẻ", "no cards yet") : string.Join(" · ", parts))
                 + "\n" + L("Di vật: ", "Relics: ") + (run.Relics.Count == 0 ? L("chưa có", "none yet") : string.Join(" · ", run.Relics.Select(id => "◈ " + RelicName(expedition, id))))
-                + $" ({run.Relics.Count}/{spec.MaxRelics})");
+                + $" ({run.Relics.Count}/{spec.MaxRelics})"
+                // 1.5 M23b: the forge and a curse on the battles ahead.
+                + (run.Forged > 0 ? LF($" · ⚒ Rèn ×{run.Forged}: +{Percent(run.WeaponBonus)} chém", $" · ⚒ Forged ×{run.Forged}: +{Percent(run.WeaponBonus)} swings") : "")
+                + (run.Cursed > 0 ? LF($" · ☠ Lời nguyền: còn {run.Cursed} trận", $" · ☠ Cursed: {run.Cursed} battle(s) left") : ""));
         }
         xSetup.Visibility = run == null ? Visibility.Visible : Visibility.Collapsed;
 
@@ -757,7 +773,8 @@ public sealed partial class PetWindow
         {
             xDetails!.Visibility = Visibility.Visible;
             xNodeName!.Text = $"{StepTitle(chosen.Step, run.Map.Count)} · {KindName(chosen.Kind)} — {chosen.Stage.Name(preferences.Language)}";
-            string threat = chosen.Threat > 1.001 ? LF($" · quái mạnh ×{chosen.Threat:0.00}", $" · enemies ×{chosen.Threat:0.00}") : "";
+            string threat = (chosen.Threat > 1.001 ? LF($" · quái mạnh ×{chosen.Threat:0.00}", $" · enemies ×{chosen.Threat:0.00}") : "")
+                + (chosen.Cursed ? L(" · ☠ lời nguyền: dễ ra tinh anh hơn", " · ☠ cursed: likelier elites") : "");
             string reward = chosen.Kind == ExpeditionSpec.Elite && spec.EliteRelics > 0 && run.Relics.Count < spec.MaxRelics
                 ? "\n" + LF($"Thắng: chọn 1 trong {spec.EliteRelics} di vật.", $"Win: pick one of {spec.EliteRelics} relics.") : "";
             Show(xNodeGoal, chosen.Stage.Goal(preferences.Language) + "\n" + ObjectiveText(chosen.Stage) + StageRules(chosen.Stage) + threat + reward);
@@ -892,7 +909,8 @@ public sealed partial class PetWindow
         else if (open.Kind == ExpeditionChoice.ShopKind) AddShop(expedition, run, open, Text);
         else if (open.Kind == ExpeditionChoice.RewardKind) xChoice.Children.Add(Text(L("Chọn một di vật mang theo đến hết chuyến, hoặc bỏ qua.", "Pick a relic to keep for the rest of the run, or leave them."), PetUi.SmallSize, opacity: 0.85));
         else if (e != null) xChoice.Children.Add(Text(e.Describe(preferences.Language), PetUi.SmallSize, opacity: 0.85));
-        if (run.Relics.Count >= spec.MaxRelics && open.Kind is not (ExpeditionChoice.RestKind or ExpeditionChoice.CapsuleKind) && e?.Kind != ExpeditionEventSpec.Swap)
+        if (run.Relics.Count >= spec.MaxRelics && open.Kind is not (ExpeditionChoice.RestKind or ExpeditionChoice.CapsuleKind)
+            && e?.Kind is not (ExpeditionEventSpec.Swap or ExpeditionEventSpec.Forge or ExpeditionEventSpec.Curse or ExpeditionEventSpec.Lost))
             xChoice.Children.Add(Text(LF($"Đã đủ {spec.MaxRelics} di vật.", $"The run already holds {spec.MaxRelics} relics."), PetUi.SmallSize, brush: PrepWarning));
 
         if (e?.Kind == ExpeditionEventSpec.Swap && run.Build.Count > 0)
@@ -905,7 +923,7 @@ public sealed partial class PetWindow
                 xChoice.Children.Add(Option(CardName(id) + (n > 1 ? $" ×{n}" : ""), u?.Describe(preferences.Language) ?? "", expeditionDropCard == id, () => ExpeditionPick(drop: card)));
             }
         }
-        if (open.Cards.Length > 0 && (e == null || e.Kind == ExpeditionEventSpec.Swap && run.Build.Count > 0))
+        if (open.Cards.Length > 0 && (e == null || e.Kind == ExpeditionEventSpec.Swap && run.Build.Count > 0 || e.Kind is ExpeditionEventSpec.Curse or ExpeditionEventSpec.Lost))
         {
             Label(L("Lấy thẻ:", "Take:"));
             foreach (var id in open.Cards)
@@ -927,6 +945,9 @@ public sealed partial class PetWindow
             }
         }
 
+        if (e?.Kind == ExpeditionEventSpec.Forge)
+            xChoice.Children.Add(Text(run.Forged >= e.Levels ? LF($"Vũ khí đã rèn đủ {e.Levels} lần.", $"The weapon is forged {e.Levels} times already.")
+                : LF($"Đã rèn {run.Forged}/{e.Levels} lần · chuyến có {run.Coins} xu.", $"Forged {run.Forged}/{e.Levels} times · the run has {run.Coins} coins."), PetUi.SmallSize, brush: run.Forged >= e.Levels ? PrepWarning : null));
         if (open.Kind == ExpeditionChoice.RestKind && expeditionSkillPick is HashSet<BattleSkill> pick) AddSkillPick(pick, Text);
 
         var buttons = new WrapPanel { Margin = new Thickness(0, 10, 0, 0) };
@@ -946,7 +967,11 @@ public sealed partial class PetWindow
             string label = option switch
             {
                 DesktopPet.Expedition.Heal => LF($"Nghỉ: +{gain} HP", $"Rest: +{gain} HP"),
+                DesktopPet.Expedition.Card when e?.Kind == ExpeditionEventSpec.Curse => L("Lấy thẻ, chịu lời nguyền", "Take it, cursed"),
+                DesktopPet.Expedition.Card when e?.Kind == ExpeditionEventSpec.Lost => LF($"Giúp: −{cost} HP, +{e.Coins} xu, lấy thẻ đã chọn", $"Help: −{cost} HP, +{e.Coins} coins, the chosen card"),
                 DesktopPet.Expedition.Card => L("Lấy thẻ đã chọn", "Take the chosen card"),
+                DesktopPet.Expedition.PayCoins => LF($"Rèn: −{expedition.CoinCost(option)} xu", $"Forge: −{expedition.CoinCost(option)} coins"),
+                DesktopPet.Expedition.PayHp => LF($"Rèn: −{cost} HP", $"Forge: −{cost} HP"),
                 DesktopPet.Expedition.SwapOption => L("Đổi thẻ", "Trade"),
                 DesktopPet.Expedition.Safe => LF($"An toàn: +{gain} HP", $"Safe: +{gain} HP"),
                 DesktopPet.Expedition.Risk => LF($"Liều: −{cost} HP, 1 di vật ngẫu nhiên", $"Risk it: −{cost} HP, a random relic"),
@@ -964,6 +989,8 @@ public sealed partial class PetWindow
             button.IsEnabled = can; button.Opacity = can ? 1 : 0.5;
             string? why = expedition.Refusal(option, expeditionPickCard, expeditionDropCard, expeditionPickRelic);
             if (why == "too weak") button.ToolTip = L("Mèo quá yếu để trả giá này.", "The cat is too weak to pay this.");
+            else if (why == "too poor") button.ToolTip = L("Chưa đủ xu.", "Not enough coins.");
+            else if (why == "maxed") button.ToolTip = L("Vũ khí đã rèn tối đa.", "The weapon is forged as far as it goes.");
             buttons.Children.Add(button);
             xChoiceButtons[option] = button;
         }

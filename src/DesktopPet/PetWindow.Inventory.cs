@@ -243,7 +243,7 @@ public sealed partial class PetWindow
         {
             if (expedition.Run is ExpeditionRun run)
             {
-                var sim = new BattleSim(settings, 0, 1000, weapon: run.Weapon, build: run.Build, seed: 0, relics: run.Relics, skills: run.Loadout);
+                var sim = new BattleSim(settings, 0, 1000, weapon: run.Weapon, build: run.Build, seed: 0, relics: run.Relics, skills: run.Loadout, weaponBonus: run.WeaponBonus);
                 return new(BagExpedition, sim, Plain(settings, sim.Weapon.Id), run.Hp,
                     StepTitle(Math.Min(run.Step, Math.Max(0, run.Map.Count - 1)), run.Map.Count) + " · " + DifficultyName(run.Level), expedition, run, false);
             }
@@ -317,9 +317,9 @@ public sealed partial class PetWindow
         if (!view.Live || BattleUpgradePreview is not string id || view.Sim.UpgradeOffer?.FirstOrDefault(u => u.Id == id) is not UpgradeSpec card) return null;
         var build = view.Sim.UpgradesTaken.Where(t => t.Value > 0).ToDictionary(t => t.Key, t => t.Value);
         var relics = view.Sim.Relics.Select(r => r.Id).ToList();
-        var before = new BattleSim(view.Sim.Settings, 0, 1000, weapon: view.Sim.Weapon.Id, build: build, seed: 0, relics: relics);
+        var before = new BattleSim(view.Sim.Settings, 0, 1000, weapon: view.Sim.Weapon.Id, build: build, seed: 0, relics: relics, weaponBonus: view.Sim.WeaponBonus);
         build[card.Id] = build.GetValueOrDefault(card.Id) + 1;
-        return (card, before, new BattleSim(view.Sim.Settings, 0, 1000, weapon: view.Sim.Weapon.Id, build: build, seed: 0, relics: relics));
+        return (card, before, new BattleSim(view.Sim.Settings, 0, 1000, weapon: view.Sim.Weapon.Id, build: build, seed: 0, relics: relics, weaponBonus: view.Sim.WeaponBonus));
     }
 
     // "If you take Sharp edge": what it does, the synergy it would switch on, how to read the arrows
@@ -369,6 +369,11 @@ public sealed partial class PetWindow
         if (view.Live && sim.Reckless && sim.Relics.FirstOrDefault(r => r.Effect == RelicSpec.Reckless) is RelicSpec reckless)
             warnings.Add((LF($"{reckless.Name(preferences.Language)} đang kích hoạt: +{Percent(reckless.Amount)} sát thương.", $"{reckless.Name(preferences.Language)} is on: +{Percent(reckless.Amount)} damage."), false));
         foreach (var relic in sim.Relics) warnings.Add((relic.Name(preferences.Language) + ": " + RelicPrice(relic), true));
+        // 1.5 M23b: the run's forge and a curse still on the battles ahead.
+        if (view.Run is ExpeditionRun forged && forged.Forged > 0)
+            warnings.Add((LF($"Lò rèn ×{forged.Forged}: vũ khí +{Percent(forged.WeaponBonus)} sát thương chém.", $"Forge ×{forged.Forged}: +{Percent(forged.WeaponBonus)} swing damage."), false));
+        if (view.Run is ExpeditionRun cursed && cursed.Cursed > 0)
+            warnings.Add((LF($"Lời nguyền: {cursed.Cursed} trận tới quái mạnh hơn {Percent(cursed.CurseThreat)}, dễ ra tinh anh hơn.", $"Curse: in the next {cursed.Cursed} battle(s) enemies are {Percent(cursed.CurseThreat)} stronger and likelier elite."), true));
         if (warnings.Count > 0)
         {
             var list = new StackPanel();
@@ -798,6 +803,11 @@ public sealed partial class PetWindow
                     DesktopPet.Expedition.SwapOption when e.Dropped != null && e.Card != null => LF($"đổi {CardName(e.Dropped)} lấy {CardName(e.Card)}", $"traded {CardName(e.Dropped)} for {CardName(e.Card)}"),
                     DesktopPet.Expedition.Safe => L("chọn an toàn", "played safe"),
                     DesktopPet.Expedition.Risk or DesktopPet.Expedition.Take => Relic(e.Relic),
+                    // 1.5 M23b: the forge, the curse, the lost cat.
+                    DesktopPet.Expedition.PayCoins => LF($"rèn vũ khí (−{e.Coins} xu)", $"forged the weapon (−{e.Coins} coins)"),
+                    DesktopPet.Expedition.PayHp => L("rèn vũ khí bằng máu", "forged the weapon with HP"),
+                    DesktopPet.Expedition.Card when e.Card != null && e.Coins < 0 => LF($"+{-e.Coins} xu, lấy thẻ {CardName(e.Card)}", $"+{-e.Coins} coins, took {CardName(e.Card)}"),
+                    DesktopPet.Expedition.Card when e.Card != null => LF($"lấy thẻ {CardName(e.Card)}, bị nguyền", $"took {CardName(e.Card)}, cursed"),
                     _ => L("đi tiếp", "moved on")
                 };
                 return "! " + name + ": " + what;
@@ -824,6 +834,13 @@ public sealed partial class PetWindow
         RelicSpec.Counter => LF($"Sau khi Khiên hoặc Mai rùa đỡ đòn, nhát trúng kế tiếp +{Percent(r.Amount)} sát thương", $"After the Shield or Turtle shell stops a hit, the next landed swing deals +{Percent(r.Amount)}"),
         RelicSpec.Relief => LF($"{BattleSkills.Get(BattleSkill.Heal).Name(PetLanguage.Vietnamese)} hồi thêm {Percent(r.Amount)}", $"The {BattleSkills.Get(BattleSkill.Heal).Name(preferences.Language)} heals {Percent(r.Amount)} more"),
         RelicSpec.Reckless => LF($"+{Percent(r.Amount)} sát thương khi HP dưới {Percent(r.Below)}", $"+{Percent(r.Amount)} damage while HP is under {Percent(r.Below)}"),
+        // 1.5 M23b.
+        RelicSpec.Magnet => LF($"đồ rơi ra nhiều hơn {Percent(r.Amount)}", $"drops {Percent(r.Amount)} likelier"),
+        RelicSpec.Thorns => LF($"slime đánh gần hoặc lao trúng mèo chịu lại {Percent(r.Amount)} sát thương", $"a slime that strikes or dashes into the cat takes {Percent(r.Amount)} of it back"),
+        RelicSpec.Venom => LF($"mỗi nhát chém trúng gây độc {Number(r.OnHit?.Seconds ?? 0, "0.#")} giây", $"every landed swing poisons for {Number(r.OnHit?.Seconds ?? 0, "0.#")} s"),
+        RelicSpec.Frost => LF($"mỗi nhát chém trúng làm quái chậm {Percent(r.OnHit?.Power ?? 0)} trong {Number(r.OnHit?.Seconds ?? 0, "0.#")} giây", $"every landed swing slows the enemy {Percent(r.OnHit?.Power ?? 0)} for {Number(r.OnHit?.Seconds ?? 0, "0.#")} s"),
+        RelicSpec.Battery => LF($"kỹ năng hồi nhanh hơn {Percent(r.Amount)}", $"skills recharge {Percent(r.Amount)} faster"),
+        RelicSpec.Helmet => L("không bị choáng khi bị lăn đè, lò xo bật hay slime trồi lên", "rolls, springs and slimes coming up never stun"),
         _ => LF($"+{Percent(r.Amount)} tốc độ chạy, −{Percent(r.Extra)} thời gian hồi đòn", $"+{Percent(r.Amount)} running speed, −{Percent(r.Extra)} time between swings")
     };
 
@@ -832,6 +849,12 @@ public sealed partial class PetWindow
         RelicSpec.Counter => LF($"{BattleSkills.Get(BattleSkill.Shield).Name(PetLanguage.Vietnamese)} hồi chiêu lâu thêm {Number(r.Penalty, "0.#")} giây", $"The {BattleSkills.Get(BattleSkill.Shield).Name(preferences.Language)} takes {Number(r.Penalty, "0.#")} s longer to recharge"),
         RelicSpec.Relief => LF($"{BattleSkills.Get(BattleSkill.Heal).Name(PetLanguage.Vietnamese)} hồi chiêu lâu thêm {Percent(r.Penalty)}", $"The {BattleSkills.Get(BattleSkill.Heal).Name(preferences.Language)} takes {Percent(r.Penalty)} longer to recharge"),
         RelicSpec.Reckless => LF($"luôn nhận thêm {Percent(r.Penalty)} sát thương", $"always {Percent(r.Penalty)} more damage taken"),
+        // 1.5 M23b.
+        RelicSpec.Magnet => LF($"đồ rơi chỉ nằm sàn {Number(r.Penalty, "0.#")} giây", $"a drop stays on the floor only {Number(r.Penalty, "0.#")} s"),
+        RelicSpec.Thorns or RelicSpec.Frost => LF($"sát thương chém −{Percent(r.Penalty)}", $"swings deal {Percent(r.Penalty)} less"),
+        RelicSpec.Venom => LF($"thời gian hồi đòn +{Percent(r.Penalty)}", $"{Percent(r.Penalty)} more time between swings"),
+        RelicSpec.Battery => L("không còn rơi bình", "no more potions drop"),
+        RelicSpec.Helmet => LF($"chạy chậm {Percent(r.Penalty)}", $"{Percent(r.Penalty)} slower running"),
         _ => LF($"−{Number(r.Penalty, "0")} HP tối đa", $"−{Number(r.Penalty, "0")} max HP")
     };
 

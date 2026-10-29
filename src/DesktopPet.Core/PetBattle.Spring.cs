@@ -64,7 +64,7 @@ public sealed partial class BattleSim
         events.Add(new(BattleEventKind.SpringBounced, slime.X, hit ? 1 : 0));
         if (!hit) return;
         SpringHitsOnCat++;
-        HurtCat(slime, lastCatX, true, 1, spring.Stun);
+        HurtCat(slime, lastCatX, true, 1, spring.Stun, crush: true);
     }
 
     // A hit from the cat's weapon or a bomb (PetBattle.cs Damage): enough of them flatten it.

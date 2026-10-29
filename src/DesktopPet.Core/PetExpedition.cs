@@ -172,8 +172,14 @@ public sealed class ExpeditionSpec
             text(r.NameVi, where + ".nameVi"); text(r.NameEn, where + ".nameEn"); Desc(r.DescVi, r.DescEn, where);
             if (Array.IndexOf(RelicSpec.Effects, r.Effect) < 0) throw new InvalidDataException($"{where}.effect must be one of: {string.Join(", ", RelicSpec.Effects)}");
             if (r.Skill != null && BattleSkills.Parse(r.Skill) == null) throw new InvalidDataException($"{where}.skill must be a skill id: {BattleData.KnownSkills}");
-            foreach (var (value, name, max) in new[] { (r.Amount, "amount", 2.0), (r.Extra, "extra", 0.5), (r.Penalty, "penalty", r.Effect switch { RelicSpec.Light => 50.0, RelicSpec.Counter => 30.0, _ => 2.0 }), (r.Below, "below", 1.0) })
+            foreach (var (value, name, max) in new[] { (r.Amount, "amount", r.Effect is RelicSpec.Thorns or RelicSpec.Battery ? 0.9 : 2.0), (r.Extra, "extra", 0.5),
+                (r.Penalty, "penalty", r.Effect switch { RelicSpec.Light => 50.0, RelicSpec.Counter or RelicSpec.Magnet => 30.0, RelicSpec.Thorns or RelicSpec.Venom or RelicSpec.Frost or RelicSpec.Helmet => 0.9, _ => 2.0 }), (r.Below, "below", 1.0) })
                 if (!double.IsFinite(value) || value < 0 || value > max) throw new InvalidDataException($"{where}.{name} must be 0–{max}");
+            // 1.5 M23b: a magnet's floor time is at least 2 s (0: unchanged); venom poisons, frost chills, the others leave nothing.
+            if (r.Effect == RelicSpec.Magnet && r.Penalty is > 0 and < 2) throw new InvalidDataException(where + ".penalty (seconds on the floor) must be 0 or 2–30");
+            string? status = r.Effect switch { RelicSpec.Venom => "poison", RelicSpec.Frost => "chill", _ => null };
+            if (status == null ? r.OnHit != null : r.OnHit?.Status != status) throw new InvalidDataException(where + ".onHit " + (status == null ? "is only for venom and frost" : "must be a \"" + status + "\" status"));
+            if (r.OnHit != null) StatusHit.Validate(r.OnHit, where + ".onHit");
         }
         if (x.Events == null || x.Events.Length > 12) throw new InvalidDataException(at + ".events must list at most 12 events");
         var eventIds = new HashSet<string>();
@@ -187,7 +193,16 @@ public sealed class ExpeditionSpec
             if (Array.IndexOf(ExpeditionEventSpec.Kinds, e.Kind) < 0) throw new InvalidDataException($"{where}.kind must be one of: {string.Join(", ", ExpeditionEventSpec.Kinds)}");
             if (!double.IsFinite(e.Heal) || e.Heal is < 0 or > 1) throw new InvalidDataException(where + ".heal must be 0–1");
             if (!double.IsFinite(e.Cost) || e.Cost is < 0 or > 0.9) throw new InvalidDataException(where + ".cost must be 0–0.9");
-            if (e.Kind != ExpeditionEventSpec.Swap && x.Relics.Length == 0) throw new InvalidDataException(where + ": a " + e.Kind + " event needs relics");
+            if (e.Kind is ExpeditionEventSpec.Chest or ExpeditionEventSpec.Shrine && x.Relics.Length == 0) throw new InvalidDataException(where + ": a " + e.Kind + " event needs relics");
+            // 1.5 M23b: the forge, the curse and the lost cat.
+            bool forge = e.Kind == ExpeditionEventSpec.Forge, curse = e.Kind == ExpeditionEventSpec.Curse, lost = e.Kind == ExpeditionEventSpec.Lost;
+            if (e.Coins is < 0 or > 99 || (forge || lost) != e.Coins > 0) throw new InvalidDataException(where + ".coins must be 1–99 for a forge or a lost cat (none otherwise)");
+            if (!double.IsFinite(e.Amount) || e.Amount is < 0 or > 1 || (forge || curse) != e.Amount > 0) throw new InvalidDataException(where + ".amount must be above 0, at most 1, for a forge or a curse (none otherwise)");
+            if (e.Levels is < 0 or > 5 || forge != e.Levels > 0) throw new InvalidDataException(where + ".levels must be 1–5 for a forge (none otherwise)");
+            if (e.Battles is < 0 or > 5 || curse != e.Battles > 0) throw new InvalidDataException(where + ".battles must be 1–5 for a curse (none otherwise)");
+            if (!double.IsFinite(e.EliteChance) || e.EliteChance is < 0 or > 1 || !curse && e.EliteChance > 0) throw new InvalidDataException(where + ".eliteChance must be 0–1, for a curse only");
+            if (e.Cards is < 0 or > 3 || (curse || lost) != e.Cards > 0) throw new InvalidDataException(where + ".cards must be 1–3 for a curse or a lost cat (none otherwise)");
+            if ((forge || lost) && e.Cost <= 0) throw new InvalidDataException(where + ".cost must be above 0 for a " + e.Kind);
         }
         if (x.Keepsakes == null || x.Keepsakes.Length > 12) throw new InvalidDataException(at + ".keepsakes must list at most 12 keepsakes");
         var keepIds = new HashSet<string>();
@@ -362,10 +377,14 @@ public sealed class KeepsakeSpec
 // swap: give up one card of the build for one of three new ones (or leave).
 // chest: safe (Heal of the max HP back) or risky (Cost of the max HP for one relic drawn at random).
 // shrine: one of two relics shown, for Cost of the max HP (or leave).
+// 1.5 M23b: forge: the weapon deals Amount more for the rest of the run, for Coins coins or Cost of
+//   the max HP (at most Levels times a run). curse: one of Cards rare cards; the next Battles battles'
+//   enemies are Amount stronger and EliteChance likelier to be elite (or leave). lost: Cost of the max
+//   HP for Coins coins and one of Cards cards (or leave).
 public sealed class ExpeditionEventSpec
 {
-    public const string Swap = "swap", Chest = "chest", Shrine = "shrine";
-    public static readonly string[] Kinds = { Swap, Chest, Shrine };
+    public const string Swap = "swap", Chest = "chest", Shrine = "shrine", Forge = "forge", Curse = "curse", Lost = "lost";
+    public static readonly string[] Kinds = { Swap, Chest, Shrine, Forge, Curse, Lost };
     public string Id { get; init; } = "";
     public string Kind { get; init; } = Swap;
     public string NameVi { get; init; } = "";
@@ -374,6 +393,12 @@ public sealed class ExpeditionEventSpec
     public string DescEn { get; init; } = "";
     public double Heal { get; init; }
     public double Cost { get; init; }
+    public int Coins { get; init; }
+    public double Amount { get; init; }
+    public int Levels { get; init; }
+    public int Battles { get; init; }
+    public double EliteChance { get; init; }
+    public int Cards { get; init; }
     public string Name(string language) => PetText.Data(language, NameVi, NameEn);
     public string Describe(string language) => PetText.Data(language, DescVi, DescEn);
 }
@@ -385,10 +410,20 @@ public sealed class ExpeditionEventSpec
 // relief: the Healing fish heals Amount more; its cooldown is Penalty longer (a share).
 // reckless: Amount more damage while HP is below Below of the max; Penalty more damage taken always.
 // light: Amount more running speed and Extra less time between swings; Penalty less max HP.
+// 1.5 M23b:
+// magnet: Amount likelier drops; a drop lies on the floor at most Penalty seconds.
+// thorns: Amount of the HP a slime's own blow (its strike or dash) took goes back to it; Penalty less swing damage.
+// venom, frost: every landed swing leaves OnHit (poison, chill); venom: Penalty more time between
+//   swings; frost: Penalty less swing damage.
+// battery: the skills recharge Amount faster; no potions drop.
+// helmet: a roll, a spring or a burrower coming up never stuns the cat; Penalty less running speed.
 public sealed class RelicSpec
 {
-    public const string Counter = "counter", Relief = "relief", Reckless = "reckless", Light = "light";
-    public static readonly string[] Effects = { Counter, Relief, Reckless, Light };
+    public const string Counter = "counter", Relief = "relief", Reckless = "reckless", Light = "light",
+        Magnet = "magnet", Thorns = "thorns", Venom = "venom", Frost = "frost", Battery = "battery", Helmet = "helmet";
+    public static readonly string[] Effects = { Counter, Relief, Reckless, Light, Magnet, Thorns, Venom, Frost, Battery, Helmet };
+    // venom and frost: the status every landed swing leaves (poison, chill).
+    public StatusHit? OnHit { get; init; }
     public string Id { get; init; } = "";
     public string NameVi { get; init; } = "";
     public string NameEn { get; init; } = "";
@@ -446,6 +481,13 @@ public sealed class ExpeditionRun
     // 1.5 M19: the coins the run's won battles picked up (BattleSim.Coins), for its shop; they end with
     // the run (never kept past it). A file without it reads as 0.
     public int Coins { get; set; }
+    // 1.5 M23b: the forge's levels and the weapon damage they add (a share) for the rest of the run;
+    // a curse: battles still cursed, and how much stronger (a share) and likelier elite their enemies are.
+    public int Forged { get; set; }
+    public double WeaponBonus { get; set; }
+    public int Cursed { get; set; }
+    public double CurseThreat { get; set; }
+    public double CurseElite { get; set; }
 
     [JsonIgnore] public int Step => Path.Count;
     [JsonIgnore] public BattleDifficulty Level => Enum.TryParse<BattleDifficulty>(Difficulty, out var level) && Enum.IsDefined(level) ? level : BattleDifficulty.Normal;
@@ -478,7 +520,7 @@ public sealed class ExpeditionLogEntry
 {
     public const string Retreat = "retreat", Reroll = "reroll", Buy = "buy";
     public int Step { get; set; }
-    // 1.5 M23: coins a shop purchase cost.
+    // 1.5 M23: coins a shop purchase (1.5 M23b: or the forge) cost; negative: given (the lost cat).
     public int Coins { get; set; }
     public string Kind { get; set; } = "";
     public string? Option { get; set; }
@@ -492,7 +534,8 @@ public sealed class ExpeditionLogEntry
 
 // What resolving a choice did: HP gained (or lost), the card taken and dropped, the relic gained,
 // and for a capsule the prize it held.
-public readonly record struct ExpeditionChoiceOutcome(bool Done, string Option, double Hp = 0, string? Card = null, string? Dropped = null, string? Relic = null, string? Prize = null);
+// Coins (1.5 M23b): what the run's coins changed by.
+public readonly record struct ExpeditionChoiceOutcome(bool Done, string Option, double Hp = 0, string? Card = null, string? Dropped = null, string? Relic = null, string? Prize = null, int Coins = 0);
 
 // Best results per "expedition|r<rulesVersion>|weapon|difficulty": runs ended, runs won, the most
 // steps won in one run, the fastest won run (fight time only).
@@ -514,7 +557,8 @@ public sealed class ExpeditionProgress
     // capsules (run Kinds, choice Free/Gold). An older file is read as is (an older run ends when the
     // map opens: the rules changed); an older app reads this one without overwriting it.
     // 5 (1.5 M23): routes (a run's Expedition is its route's id) and the shop (choice Wares/Sold).
-    public const int CurrentVersion = 5;
+    // 6 (1.5 M23b): the forge and the curse (run Forged/WeaponBonus, Cursed/CurseThreat/CurseElite).
+    public const int CurrentVersion = 6;
     public int Version { get; set; } = CurrentVersion;
     public ExpeditionRun? Active { get; set; }
     public Dictionary<string, ExpeditionRecord> Records { get; set; } = new();
@@ -540,6 +584,12 @@ public sealed class ExpeditionProgress
         {
             run.Map ??= new(); run.Path ??= new(); run.Build ??= new(); run.Relics ??= new(); run.Rerolled ??= new();
             run.Log = (run.Log ?? new()).Where(e => e != null).TakeLast(ExpeditionRun.LogKept).ToList();
+            // A hand-edited file never makes the forge or the curse more than the data allows.
+            run.Forged = Math.Clamp(run.Forged, 0, 5);
+            run.WeaponBonus = double.IsFinite(run.WeaponBonus) ? Math.Clamp(run.WeaponBonus, 0, 5) : 0;
+            run.Cursed = Math.Clamp(run.Cursed, 0, 5);
+            run.CurseThreat = double.IsFinite(run.CurseThreat) ? Math.Clamp(run.CurseThreat, 0, 1) : 0;
+            run.CurseElite = double.IsFinite(run.CurseElite) ? Math.Clamp(run.CurseElite, 0, 1) : 0;
             if (run.Pending != null)
             {
                 run.Pending.Cards ??= Array.Empty<string>(); run.Pending.Relics ??= Array.Empty<string>();
@@ -568,7 +618,8 @@ public readonly record struct ExpeditionStepOutcome(bool Counted, int Step, bool
     IReadOnlyList<string>? Keepsakes = null, bool Capsule = false, int Coins = 0, int CoinsGained = 0);
 
 // One battle node the user can fight now: its encounter, its kind, and the battle it starts.
-public readonly record struct ExpeditionNode(int Step, int Lane, string Kind, StageSpec Stage, int Seed, double Threat);
+// 1.5 M23b: Threat has a curse in it; EliteBonus: the curse's elite chance; WeaponBonus: the forge's.
+public readonly record struct ExpeditionNode(int Step, int Lane, string Kind, StageSpec Stage, int Seed, double Threat, double EliteBonus = 0, double WeaponBonus = 0, bool Cursed = false);
 
 // The Expedition's rules over its data and the saved progress (no WPF, no files: the caller saves).
 public sealed class Expedition
@@ -635,7 +686,7 @@ public sealed class Expedition
 
     // A step's content for its node kinds: an encounter or event each (never one the step already
     // has; among the rest, one the run has used least so far), "rest" for a rest.
-    private string[] DrawEncounters(IReadOnlyList<string> kinds, int step, IEnumerable<string[]> before, Random random)
+    private string[] DrawEncounters(IReadOnlyList<string> kinds, int step, IEnumerable<string[]> before, Random random, ExpeditionRun? run = null)
     {
         var uses = new Dictionary<string, int>();
         foreach (var id in before.SelectMany(row => row)) uses[id] = uses.GetValueOrDefault(id) + 1;
@@ -644,6 +695,8 @@ public sealed class Expedition
         {
             if (kinds[lane] is ExpeditionSpec.Rest or ExpeditionSpec.Shop) { row[lane] = kinds[lane]; continue; }
             var options = (kinds[lane] == ExpeditionSpec.Event ? Spec.Events.Select(e => e.Id) : Spec.Pool(kinds[lane], step).Select(s => s.Id)).Where(id => !row.Contains(id)).ToList();
+            // 1.5 M23b: no forge the run can no longer use (unless nothing else is left).
+            if (run != null && options.Where(id => Spec.FindEvent(id) is not { Kind: ExpeditionEventSpec.Forge } f || run.Forged < f.Levels).ToList() is { Count: > 0 } useful) options = useful;
             int least = options.Min(id => uses.GetValueOrDefault(id));
             options = options.Where(id => uses.GetValueOrDefault(id) == least).ToList();
             var pick = options[random.Next(options.Count)];
@@ -719,7 +772,7 @@ public sealed class Expedition
         if (kinds.All(k => k == ExpeditionSpec.Elite)) kinds[^1] = ExpeditionSpec.Fight;
         // Shuffled, so the rest before the boss is not always on top.
         for (int i = kinds.Count - 1; i > 0; i--) { int j = random.Next(i + 1); (kinds[i], kinds[j]) = (kinds[j], kinds[i]); }
-        run.Map[step] = DrawEncounters(kinds, step, run.Map.Take(step), random);
+        run.Map[step] = DrawEncounters(kinds, step, run.Map.Take(step), random, run);
         run.Kinds![step] = kinds.ToArray();
     }
 
@@ -788,7 +841,10 @@ public sealed class Expedition
         if (Spec.Encounter(run.Map[run.Step][lane]) is not StageSpec stage) return null;
         // Each node's battle has its own seed: fighting it again (after leaving it) plays the same.
         int seed = BattleRandom.Stream(run.Seed, 1000 + run.Step * 8 + lane).Next();
-        return new(run.Step, lane, Kind(run.Step, lane), stage, seed, Spec.Threat(run.Step));
+        // 1.5 M23b: a curse makes the battle's enemies stronger and likelier elite; the forge's bonus goes along.
+        bool cursed = run.Cursed > 0;
+        return new(run.Step, lane, Kind(run.Step, lane), stage, seed, Spec.Threat(run.Step) * (cursed ? 1 + run.CurseThreat : 1),
+            cursed ? run.CurseElite : 0, run.WeaponBonus, cursed);
     }
 
     // The node's battle has started: from now on leaving it costs RetreatCost.
@@ -811,6 +867,8 @@ public sealed class Expedition
         int step = run.Step;
         if (!won) return End(run, false, step, 0, MaxHp(run));
         run.Path.Add(lane);
+        // 1.5 M23b: a won battle is one cursed battle less.
+        if (run.Cursed > 0 && --run.Cursed == 0) run.CurseThreat = run.CurseElite = 0;
         run.Build = build.Where(card => card.Value > 0).ToDictionary(card => card.Key, card => card.Value);
         double max = MaxHp(run);
         if (run.Step >= run.Map.Count) return End(run, true, step, Math.Clamp(hp, 0, max), max);
@@ -891,7 +949,10 @@ public sealed class Expedition
             var e = Spec.FindEvent(run.Map[run.Step][lane])!;
             choice.Event = e.Id;
             if (e.Kind == ExpeditionEventSpec.Swap) choice.Cards = DrawCards(run, random.Next());
-            else choice.Relics = DrawRelics(run, e.Kind == ExpeditionEventSpec.Chest ? 1 : 2, random);
+            // 1.5 M23b: the curse's rare cards, the lost cat's cards; the forge offers nothing to pick.
+            else if (e.Kind == ExpeditionEventSpec.Curse) choice.Cards = DrawRares(run, e.Cards, random);
+            else if (e.Kind == ExpeditionEventSpec.Lost) choice.Cards = DrawCards(run, random.Next()).Take(e.Cards).ToArray();
+            else if (e.Kind != ExpeditionEventSpec.Forge) choice.Relics = DrawRelics(run, e.Kind == ExpeditionEventSpec.Chest ? 1 : 2, random);
         }
         run.Pending = choice;
         return true;
@@ -926,9 +987,16 @@ public sealed class Expedition
         {
             ExpeditionEventSpec.Swap => new[] { SwapOption, Leave },
             ExpeditionEventSpec.Chest => new[] { Safe, Risk },
+            // 1.5 M23b: the forge (pay in coins or in HP), the curse and the lost cat (a card from the offer).
+            ExpeditionEventSpec.Forge => new[] { PayCoins, PayHp, Leave },
+            ExpeditionEventSpec.Curse or ExpeditionEventSpec.Lost => new[] { Card, Leave },
             _ => new[] { Take, Leave }
         };
     }
+
+    public const string PayCoins = "coins", PayHp = "hp";
+    // The open event (null: none open, or not an event).
+    private ExpeditionEventSpec? OpenEvent => Run?.Pending is { Kind: ExpeditionChoice.EventKind } open ? Spec.FindEvent(open.Event) : null;
 
     // HP an option costs (a share of the max HP; 0: free).
     public double Cost(string option)
@@ -937,8 +1005,17 @@ public sealed class Expedition
         if (open.Kind == ExpeditionChoice.CapsuleKind) return option == Gold ? (Spec.Capsules?.GoldCost ?? 0) * MaxHp(run) : 0;
         if (open.Kind != ExpeditionChoice.EventKind) return 0;
         var e = Spec.FindEvent(open.Event);
-        return e != null && (option == Risk && e.Kind == ExpeditionEventSpec.Chest || option == Take && e.Kind == ExpeditionEventSpec.Shrine) ? e.Cost * MaxHp(run) : 0;
+        return e != null && (option == Risk && e.Kind == ExpeditionEventSpec.Chest || option == Take && e.Kind == ExpeditionEventSpec.Shrine
+            || option == PayHp && e.Kind == ExpeditionEventSpec.Forge || option == Card && e.Kind == ExpeditionEventSpec.Lost) ? e.Cost * MaxHp(run) : 0;
     }
+
+    // 1.5 M23b: coins an option costs (negative: gives).
+    public int CoinCost(string option) => OpenEvent switch
+    {
+        { Kind: ExpeditionEventSpec.Forge } e when option == PayCoins => e.Coins,
+        { Kind: ExpeditionEventSpec.Lost } e when option == Card => -e.Coins,
+        _ => 0
+    };
 
     // HP an option gives back now.
     public double Gain(string option)
@@ -959,7 +1036,14 @@ public sealed class Expedition
         switch (option)
         {
             case Card:
-                return open.Cards.Contains(card) ? null : open.Cards.Length == 0 ? "no cards" : "pick a card";
+                if (open.Cards.Length == 0) return "no cards";
+                if (Cost(option) > 0 && run.Hp - Cost(option) < 1) return "too weak";
+                return open.Cards.Contains(card) ? null : "pick a card";
+            case PayCoins:
+            case PayHp:
+                if (OpenEvent is not { } forge || run.Forged >= forge.Levels) return "maxed";
+                if (option == PayCoins) return run.Coins < forge.Coins ? "too poor" : null;
+                return run.Hp - Cost(option) < 1 ? "too weak" : null;
             case SwapOption:
                 if (run.Build.Count == 0) return "no card to give up";
                 if (drop == null || !run.Build.ContainsKey(drop)) return "pick a card to give up";
@@ -1000,6 +1084,19 @@ public sealed class Expedition
             gained = option == Risk ? open.Relics[0] : relic;
             run.Relics.Add(gained!);
         }
+        // 1.5 M23b: the forge's level, the curse on the battles ahead, the coins paid or given.
+        int coins = CoinCost(option);
+        run.Coins -= coins;
+        if (OpenEvent is ExpeditionEventSpec e)
+        {
+            if (option is PayCoins or PayHp) { run.Forged++; run.WeaponBonus += e.Amount; }
+            if (option == Card && e.Kind == ExpeditionEventSpec.Curse)
+            {
+                run.Cursed = Math.Max(run.Cursed, e.Battles);
+                run.CurseThreat = Math.Max(run.CurseThreat, e.Amount);
+                run.CurseElite = Math.Max(run.CurseElite, e.EliteChance);
+            }
+        }
         // A capsule: its prize (a heal came with Gain above; a gold card also brings GoldHeal).
         string? prize = open.Kind == ExpeditionChoice.CapsuleKind && option is Free or Gold ? (option == Free ? open.Free : open.Gold) : null;
         var (prizeCard, prizeRelic) = GivePrize(run, prize);
@@ -1007,10 +1104,10 @@ public sealed class Expedition
         run.Hp = Math.Min(run.Hp, MaxHp(run));
         // The step the choice belongs to: a node's is the step to go now, a won battle's the one passed.
         int at = open.Kind is ExpeditionChoice.RewardKind or ExpeditionChoice.CapsuleKind ? run.Step - 1 : run.Step;
-        AddLog(run, new() { Step = Math.Max(0, at), Kind = open.Kind, Option = option, Event = open.Event, Card = taken, Dropped = dropped, Relic = gained, Prize = prize, Hp = run.Hp - before });
+        AddLog(run, new() { Step = Math.Max(0, at), Kind = open.Kind, Option = option, Event = open.Event, Card = taken, Dropped = dropped, Relic = gained, Prize = prize, Hp = run.Hp - before, Coins = coins });
         if (open.Kind is not (ExpeditionChoice.RewardKind or ExpeditionChoice.CapsuleKind)) run.Path.Add(open.Lane);
         run.Pending = null;
-        return new(true, option, run.Hp - before, taken, dropped, gained, prize);
+        return new(true, option, run.Hp - before, taken, dropped, gained, prize, -coins);
     }
 
     // A capsule's or shop's card or relic, given to the run (a heal is the caller's): the card and relic gained.
@@ -1038,12 +1135,20 @@ public sealed class Expedition
         var commons = DrawCards(run, random.Next()).Where(id => Settings.UpgradeList.FirstOrDefault(u => u.Id == id)?.Rare != true).ToList();
         if (commons.Count < shop.Cards) commons = commons.Union(DrawCards(run, random.Next()).Where(id => Settings.UpgradeList.FirstOrDefault(u => u.Id == id)?.Rare != true)).ToList();
         wares.AddRange(commons.Take(shop.Cards).Select(id => PrizeCard + ":" + id));
+        wares.AddRange(DrawRares(run, shop.Rares, random).Select(id => PrizeRare + ":" + id));
+        wares.AddRange(DrawRelics(run, shop.Relics, random).Select(id => PrizeRelic + ":" + id));
+        return wares.ToArray();
+    }
+
+    // Up to count different rare cards the build can still take (a skill's only when it is carried).
+    private string[] DrawRares(ExpeditionRun run, int count, Random random)
+    {
         var carried = run.Loadout;
         var rares = Settings.UpgradeList.Where(u => u.Rare && (u.MaxStacks == 0 || run.Build.GetValueOrDefault(u.Id) < u.MaxStacks)
             && (u.Skill == null || BattleSkills.Parse(u.Skill) is BattleSkill skill && Array.IndexOf(carried, skill) >= 0)).Select(u => u.Id).ToList();
-        for (int i = 0; i < shop.Rares && rares.Count > 0; i++) { int at = random.Next(rares.Count); wares.Add(PrizeRare + ":" + rares[at]); rares.RemoveAt(at); }
-        wares.AddRange(DrawRelics(run, shop.Relics, random).Select(id => PrizeRelic + ":" + id));
-        return wares.ToArray();
+        var drawn = new List<string>();
+        for (int i = 0; i < count && rares.Count > 0; i++) { int at = random.Next(rares.Count); drawn.Add(rares[at]); rares.RemoveAt(at); }
+        return drawn.ToArray();
     }
 
     // A shop ware's price in coins (0: not a ware of this data's shop).

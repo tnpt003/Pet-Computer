@@ -77,12 +77,23 @@ public sealed partial class BattleSim
             case RelicSpec.Relief: fishBonus += relic.Amount; fishDelay += relic.Penalty; break;
             case RelicSpec.Reckless: recklessBonus += relic.Amount; recklessBelow = Math.Max(recklessBelow, relic.Below); recklessHurt += relic.Penalty; break;
             case RelicSpec.Light: moveBonus += relic.Amount; cooldownCut += relic.Extra; maxHpBonus -= relic.Penalty; break;
+            // 1.5 M23b.
+            case RelicSpec.Magnet: magnetBonus += relic.Amount; if (relic.Penalty > 0) magnetLife = magnetLife > 0 ? Math.Min(magnetLife, relic.Penalty) : relic.Penalty; break;
+            case RelicSpec.Thorns: thornsShare += relic.Amount; swingCut += relic.Penalty; break;
+            case RelicSpec.Venom: TakeStatusRelic(relic); swingDelay += relic.Penalty; break;
+            case RelicSpec.Frost: TakeStatusRelic(relic); swingCut += relic.Penalty; break;
+            case RelicSpec.Battery: batteryCut += relic.Amount; NoPotions = true; break;
+            case RelicSpec.Helmet: CrushProof = true; moveBonus -= relic.Penalty; break;
         }
     }
 
+    // 1.5 M23b: thorns' share of a slime's own blow sent back, and the skills' recharge with a battery.
+    public double ThornsShare => thornsShare;
+    public double BatteryCut => batteryCut;
+
     // The Healing fish's heal and each skill's cooldown in this battle (the relics' changes included).
     public double HealAmount => Settings.HealAmount * (1 + fishBonus);
-    public double SkillCooldown(BattleSkill skill) => Math.Max(0.5, 1 - skillCut) * skill switch
+    public double SkillCooldown(BattleSkill skill) => Math.Max(0.5, 1 - skillCut) * Math.Max(0.3, 1 - batteryCut) * skill switch
     {
         BattleSkill.Shield => Settings.SkillCooldown(skill) + shieldDelay,
         BattleSkill.Heal => Settings.SkillCooldown(skill) * (1 + fishDelay),

@@ -72,7 +72,7 @@ public sealed partial class BattleSim
             RollHits++;
             events.Add(new(BattleEventKind.RollHit, catX, boss.Id));
             AddEffect(BattleEffectKind.Thud, catX, 0);
-            HurtCat(boss, catX, true, boss.Type.Damage > 0 ? roll.Damage / boss.Type.Damage : 0, roll.Stun);
+            HurtCat(boss, catX, true, boss.Type.Damage > 0 ? roll.Damage / boss.Type.Damage : 0, roll.Stun, crush: true);
         }
         if (boss.DashLeft <= 0 && !Over)
         {

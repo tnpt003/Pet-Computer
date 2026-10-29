@@ -21,7 +21,7 @@ internal static class ExpeditionReleaseTests
             // 1.5 M23: both routes.
             foreach (var route in data.Expedition!.All.Select(r => r.Id))
             foreach (var level in new[] { BattleDifficulty.Easy, BattleDifficulty.Normal, BattleDifficulty.Hard })
-                for (int seed = 1; seed <= 6; seed++)
+                for (int seed = 1; seed <= 8; seed++)
                 {
                     var straight = Play(data, route, level, seed, Mode.Straight, Path.Combine(dir, "s.json"), seen, out _);
                     var reopened = Play(data, route, level, seed, Mode.Reopen, Path.Combine(dir, "r.json"), seen, out _);
@@ -31,9 +31,9 @@ internal static class ExpeditionReleaseTests
                     doubled &= straight.SequenceEqual(twice) && secondsRefused;
                     ended &= straight[^1].StartsWith("end won", StringComparison.Ordinal);
                 }
-            check(ended, "36 whole runs (2 routes × 3 difficulties × 6 seeds) end at the won boss");
-            check(new[] { "spin", "rest heal", "rest card", "event swap", "event chest", "event shrine", "elite relic", "capsule free", "capsule gold", "retreat", "shop buy", "shop leave" }.All(seen.Contains),
-                $"The runs pass spins, rests (heal and card), all three events, an elite's relic, both capsules, shops (bought from, left) and a battle left after a crash ({string.Join(", ", seen.OrderBy(s => s))})");
+            check(ended, "48 whole runs (2 routes × 3 difficulties × 8 seeds) end at the won boss");
+            check(new[] { "spin", "rest heal", "rest card", "event swap", "event chest", "event shrine", "event forge", "event curse", "event lost", "elite relic", "capsule free", "capsule gold", "retreat", "shop buy", "shop leave" }.All(seen.Contains),
+                $"The runs pass spins, rests (heal and card), all six events (1.5 M23b: forge, curse, lost kitten), an elite's relic, both capsules, shops (bought from, left) and a battle left after a crash ({string.Join(", ", seen.OrderBy(s => s))})");
             check(same, "Closing the app after any action and reading the file back changes nothing: same map, offers, HP, build, relics, records, keepsakes" + (firstDiff == "" ? "" : $" ({firstDiff})"));
             check(doubled, "Every action clicked twice: the second click is refused and changes nothing");
 
@@ -138,6 +138,12 @@ internal static class ExpeditionReleaseTests
                     ExpeditionEventSpec.Swap => (Expedition.Leave, null, null, null, "event leave"),
                     ExpeditionEventSpec.Chest when x.Refusal(Expedition.Risk) == null => (Expedition.Risk, null, null, null, "event chest"),
                     ExpeditionEventSpec.Chest => (Expedition.Safe, null, null, null, "event chest"),
+                    // 1.5 M23b: the forge (coins, else HP), the curse's first rare card, the lost cat's first card.
+                    ExpeditionEventSpec.Forge when x.Refusal(Expedition.PayCoins) == null => (Expedition.PayCoins, null, null, null, "event forge"),
+                    ExpeditionEventSpec.Forge when x.Refusal(Expedition.PayHp) == null => (Expedition.PayHp, null, null, null, "event forge"),
+                    ExpeditionEventSpec.Curse when x.Refusal(Expedition.Card, open.Cards.FirstOrDefault()) == null => (Expedition.Card, open.Cards[0], null, null, "event curse"),
+                    ExpeditionEventSpec.Lost when x.Refusal(Expedition.Card, open.Cards.FirstOrDefault()) == null => (Expedition.Card, open.Cards[0], null, null, "event lost"),
+                    ExpeditionEventSpec.Forge or ExpeditionEventSpec.Curse or ExpeditionEventSpec.Lost => (Expedition.Leave, null, null, null, "event leave"),
                     _ when x.Refusal(Expedition.Take, relic: open.Relics.FirstOrDefault()) == null =>
                         (Expedition.Take, null, null, open.Relics[0], kind == ExpeditionChoice.RewardKind ? "elite relic" : "event shrine"),
                     _ => (Expedition.Leave, null, null, null, kind == ExpeditionChoice.RewardKind ? "elite leave" : "event leave")
@@ -190,7 +196,8 @@ internal static class ExpeditionReleaseTests
     private static string State(Expedition x) => x.Run is not ExpeditionRun run ? "no run" :
         $"step={run.Step} path={string.Join(",", run.Path)} hp={run.Hp:0.000} fighting={run.Fighting} retreats={run.Retreats} build={string.Join(",", run.Build.OrderBy(c => c.Key).Select(c => c.Key + "×" + c.Value))} "
         + $"relics={string.Join(",", run.Relics)} pending={run.Pending?.Kind}:{string.Join(",", run.Pending?.Cards ?? Array.Empty<string>())}:{string.Join(",", run.Pending?.Relics ?? Array.Empty<string>())}:{run.Pending?.Free}:{run.Pending?.Gold} "
-        + $"kinds={string.Join("/", (run.Kinds ?? new()).Select(k => string.Join(",", k)))} coins={run.Coins} sold={string.Join(",", run.Pending?.Sold ?? new())}";
+        + $"kinds={string.Join("/", (run.Kinds ?? new()).Select(k => string.Join(",", k)))} coins={run.Coins} sold={string.Join(",", run.Pending?.Sold ?? new())} "
+        + $"forged={run.Forged}:{run.WeaponBonus:0.00} cursed={run.Cursed}:{run.CurseThreat:0.00}:{run.CurseElite:0.00}";
 
     private static string Records(Expedition x) =>
         string.Join(";", x.Progress.Records.OrderBy(r => r.Key).Select(r => $"{r.Key}={r.Value.Runs}/{r.Value.Wins}/{r.Value.BestSteps}/{r.Value.BestSeconds}")) + " kept=" + string.Join(",", x.Progress.Keepsakes);

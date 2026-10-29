@@ -36,8 +36,9 @@ internal static class ExpeditionChoiceTests
         var data = ExpeditionFixture.Fixed;
         var spec = data.Expedition!;
         check(spec.RulesVersion >= 2 && ExpeditionProgress.CurrentVersion >= 2, "Milestone 3 raises the Expedition's rules (2 or later) and its file version (2 or later)");
-        check(spec.Events.Select(e => e.Kind).OrderBy(k => k).SequenceEqual(new[] { "chest", "shrine", "swap" }) && spec.Relics.Select(r => r.Effect).Distinct().Count() == 4 && spec.MaxRelics == 3,
-            "battle.json: three events (swap, chest, shrine), four relics with different effects, at most 3 held");
+        // 1.5 M23b added the forge, the curse, the lost kitten and six relics (ExpeditionEventTests).
+        check(spec.Events.Select(e => e.Kind).OrderBy(k => k).SequenceEqual(new[] { "chest", "curse", "forge", "lost", "shrine", "swap" }) && spec.Relics.Select(r => r.Effect).Distinct().Count() == 10 && spec.MaxRelics == 3,
+            "battle.json: six events (swap, chest, shrine; 1.5: forge, curse, lost kitten), ten relics with different effects, at most 3 held");
         check(spec.Steps.Any(step => step.Contains(ExpeditionSpec.Rest) && step.Contains(ExpeditionSpec.Elite)) && spec.Steps.Count(step => step.Contains(ExpeditionSpec.Event)) >= 2 && spec.Steps[0].All(ExpeditionSpec.IsBattle),
             "The map has a step where resting competes with an elite, events on two steps, and a first step of battles only");
 

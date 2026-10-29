@@ -314,7 +314,9 @@ public sealed partial class PetWindow
             // 1.5 M19: drops in an Expedition step (with coins) and in Infinity (fish and potions only);
             // 1.5 M21: and in a chapter with "drops" (chapter 2, fish and potions).
             loot: expedition != null ? BattleLoot.Coins
-                : stage is { Endless: true } || (stage != null && AdventureOf(BattleTuning)?.Drops(stage) == true) ? BattleLoot.Items : BattleLoot.None);
+                : stage is { Endless: true } || (stage != null && AdventureOf(BattleTuning)?.Drops(stage) == true) ? BattleLoot.Items : BattleLoot.None,
+            // 1.5 M23b: the run's forge and a curse on this battle.
+            weaponBonus: expedition?.Node.WeaponBonus ?? 0, eliteBonus: expedition?.Node.EliteBonus ?? 0);
         battleExpedition = expedition;
         battleRunId = Guid.NewGuid().ToString("N");
         battleCustomData = BattleDataCustom;

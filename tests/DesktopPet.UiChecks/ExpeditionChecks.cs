@@ -998,6 +998,58 @@ internal static class ExpeditionChecks
             window.ExpeditionAbandon(); window.ExpeditionAbandon();
             window.Reset();
 
+            // 1.5 M23b: the forge, the curse and the lost kitten, one event step each after a first fight.
+            string[] three = { ExpeditionSpec.Event, ExpeditionSpec.Event, ExpeditionSpec.Event };
+            var eventTrail = new ExpeditionSpec
+            {
+                Id = "event_trail", NameVi = "Đường sự kiện", NameEn = "Event trail", RetreatCost = 0.25, WinHeal = 0, StepThreat = 0,
+                Steps = new[] { new[] { ExpeditionSpec.Fight }, three, three, three },
+                Fights = new[] { Stage("v_field", "Field") }, Boss = Stage("v_throne", "Throne"),
+                Events = new[]
+                {
+                    new ExpeditionEventSpec { Id = "cat_forge", Kind = ExpeditionEventSpec.Forge, Coins = 4, Cost = 0.15, Amount = 0.15, Levels = 2, NameVi = "Lò rèn", NameEn = "Forge", DescVi = "Rèn.", DescEn = "Forge the weapon." },
+                    new ExpeditionEventSpec { Id = "slime_curse", Kind = ExpeditionEventSpec.Curse, Cards = 2, Amount = 0.25, Battles = 2, EliteChance = 0.15, NameVi = "Lời nguyền", NameEn = "Curse", DescVi = "Nguyền.", DescEn = "A curse." },
+                    new ExpeditionEventSpec { Id = "lost_kitten", Kind = ExpeditionEventSpec.Lost, Cost = 0.1, Coins = 3, Cards = 3, NameVi = "Mèo bị lạc", NameEn = "Lost kitten", DescVi = "Mèo con.", DescEn = "A kitten." }
+                }
+            };
+            window.BattleTuning = new BattleSettings { FirstWaveDelay = 0, SlimeMaxHp = 1, SlimeDamage = 1, OutroSeconds = 0.5, Campaign = campaign, Expedition = eventTrail };
+            check(window.OpenExpeditionMap() == null && window.ExpeditionStart(7) == null && window.ExpeditionFight() == null, "(setup) an event trail: its first fight");
+            Finish();
+            await Task.Delay(30);
+            Click(Button(Find("Pet result")!.Content as DependencyObject ?? new Border(), "Continue")!);
+            Tick(0.3);
+            var eventRun = window.Expedition!.Run!;
+            int Lane(string id) => Array.IndexOf(eventRun.Map[eventRun.Step], id);
+            eventRun.Coins = 5;
+            check(eventRun.Step == 1 && window.ExpeditionSelect(Lane("cat_forge")) && window.ExpeditionVisit() == null && window.ExpeditionHasChoice
+                  && window.ExpeditionMapText.Contains("Forge: −4 coins") && window.ExpeditionMapText.Contains("Forge: −15 HP") && window.ExpeditionMapText.Contains("Forged 0/2 times · the run has 5 coins")
+                  && window.ExpeditionOptionEnabled(Expedition.PayCoins) && window.ExpeditionOptionEnabled(Expedition.PayHp) && window.ExpeditionOptionEnabled(Expedition.Leave),
+                $"The forge: pay 4 coins or 15 HP, its level and the run's coins said ({window.ExpeditionMapText.Replace('\n', '|')})");
+            Shot("Pet expedition", "expedition-forge-en.png");
+            check(window.ExpeditionChoose(Expedition.PayCoins) == null && Saved() is { Forged: 1, Coins: 1, WeaponBonus: 0.15 } && window.ExpeditionMapText.Contains("Weapon forged: +15% swing damage. (−4 coins)")
+                  && window.ExpeditionMapText.Contains("⚒ Forged ×1: +15% swings"),
+                $"Forging with coins: saved at once, said, and shown with the relics ({window.ExpeditionMapText.Replace('\n', '|')})");
+
+            check(window.ExpeditionSelect(Lane("slime_curse")) && window.ExpeditionVisit() == null && eventRun.Pending!.Cards.Length > 0 && window.ExpeditionMapText.Contains("Take it, cursed")
+                  && !window.ExpeditionOptionEnabled(Expedition.Card),
+                $"The curse: its rare cards to pick, Take it waiting for a pick ({window.ExpeditionMapText.Replace('\n', '|')})");
+            string rare = eventRun.Pending.Cards[0];
+            check(window.ExpeditionPick(card: rare) && window.ExpeditionOptionEnabled(Expedition.Card), "Picking a rare card enables Take it");
+            Shot("Pet expedition", "expedition-curse-en.png");
+            check(window.ExpeditionChoose(Expedition.Card) == null && Saved() is { Cursed: 2 } cursedRun && cursedRun.Build.ContainsKey(rare) && window.ExpeditionMapText.Contains("☠ Cursed: 2 battle(s) left"),
+                $"Taking it: the card in the build, the run cursed for 2 battles (saved, shown) ({window.ExpeditionMapText.Replace('\n', '|')})");
+
+            eventRun.Hp = 60;
+            check(window.ExpeditionSelect(Lane("lost_kitten")) && window.ExpeditionVisit() == null && window.ExpeditionMapText.Contains("Help: −") && window.ExpeditionMapText.Contains("+3 coins, the chosen card"),
+                $"The lost kitten: help for HP, coins and a card ({window.ExpeditionMapText.Replace('\n', '|')})");
+            Shot("Pet expedition", "expedition-lost-en.png");
+            string kittenCard = eventRun.Pending!.Cards[0];
+            check(window.ExpeditionPick(card: kittenCard) && window.ExpeditionChoose(Expedition.Card) == null && Saved() is { Coins: 4, Hp: < 60 } && window.ExpeditionMapText.Contains("The kitten is home: +3 coins"),
+                "Helping: −HP, +3 coins and the card (saved, said)");
+            check(window.ExpeditionSelect(0) && window.ExpeditionMapText.Contains("cursed: likelier elites"), $"The boss battle ahead says it is cursed ({window.ExpeditionMapText.Replace('\n', '|')})");
+            window.ExpeditionAbandon(); window.ExpeditionAbandon();
+            window.Reset();
+
             // Data without an Expedition: the menu hides it, opening explains.
             window.BattleTuning = new BattleSettings { Campaign = campaign };
             check(window.OpenExpeditionMap() is string none && none.Contains("no Expedition") && !window.ExpeditionMapOpen, "Battle data without an Expedition: it explains and opens nothing");

@@ -642,6 +642,14 @@ public sealed class Slime
     public bool Rolling, RollHit, Packed;
     public double RollCooldown;
     public int RopedTo;
+    // 1.5 M18 (PetBattle.Brood.cs, PetBattle.Mutant.cs). A brooding boss: the time to its next clutch, the
+    // clutch announced (its spots) and the warning left. Nursing: what its clutch merged into, going back to
+    // feed it (Feeding: next to it now; FedHp: what it has given so far). A crowned boss's next crown link (an index into CrownLinks) and the
+    // time to its next goo rain.
+    public double BroodClock, BroodWarn, RainClock, FedHp;
+    public List<(string Kind, double X)>? BroodSpots;
+    public bool Nursing, Feeding;
+    public int CrownTurn;
     public bool Targetable => State is not (SlimeState.Spawning or SlimeState.Defeated);
     public void Set(SlimeState state)
     {
@@ -731,7 +739,12 @@ public enum BattleEventKind
     // 1.5 M17 (Value: the boss's id; for a rope, the helper's): the boss wound up a roll, rolled, ran over the
     // cat; its helpers came tied to it by ropes, a rope was cut (Value: the helper's id), the last rope
     // was gone; it packed itself small behind its file shards.
-    RollAimed, Rolled, RollHit, BossRoped, BossRopeCut, BossRopesGone, BossPacked
+    RollAimed, Rolled, RollHit, BossRoped, BossRopeCut, BossRopesGone, BossPacked,
+    // 1.5 M18: a brooding boss announced a clutch (Value: the boss's id), laid it (Value: how many); what its
+    // clutch merged into heads back to it (Value: that one's id), has fed it all its HP (Value: the HP given);
+    // a crowned boss tied a link between its helpers (Value: the holder's id), a goo rain began
+    // (Value: the boss's id; a drop landing is a GooLanded).
+    BroodWarned, BroodLaid, NurseHeading, NurseFed, CrownLinked, RainCalled
 }
 // 1.5 M14: a flyer's round (PetBattle.Fly.cs) and a burrower's (PetBattle.Burrow.cs).
 public enum FlyPhase { Aloft, Falling, Downed, Rising }
@@ -753,6 +766,8 @@ public sealed class BattleGoo
     // A wall climber's spike (1.5 M15): straight down from FromHeight over the floor, no puddle.
     public bool Spike;
     public double FromHeight;
+    // A boss's goo rain (1.5 M18): straight down from FromHeight over the floor, as a spike falls.
+    public bool Rain;
     // How far along its flight it is (0–1).
     public double Progress => Flight > 0 ? Math.Clamp(1 - Remaining / Flight, 0, 1) : 1;
 }

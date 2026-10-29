@@ -773,6 +773,31 @@ B1 của docs/UPDATE-1.5.md, trùm chương 2. Code: `src/DesktopPet.Core/PetBat
 - Sự kiện mới: `RollAimed`, `Rolled`, `RollHit`, `BossRoped`, `BossRopeCut` (Value: id quân), `BossRopesGone`, `BossPacked`; đội hình của pha boss phát `FormationArrived`. Cue có sẵn. Banner (vi/en/ja): pha giải nén "… bung file! Còn dây thì nó không mất máu…", pha nén "… tự nén lại! Phá hết mảnh file…", mỗi lần cắt dây "Đứt dây! Còn N dây", lần lăn đầu mỗi trận "… sắp lăn! Nhấc mèo lên để né".
 - Chưa làm: tranh/bản đồ chương 2 (M22), Sổ tay quái (M27), hướng dẫn chương 2 cho boss (M21). Số liệu (HP 900, lăn 24 + choáng 0,9 s, 4 mảnh 40 HP) là ước lượng, chốt bằng mô phỏng cân bằng chương 2 ở M21.
 
+## Slime Mẹ và Vua Slime biến dị (boss `mother`: `brood`; boss `mutant_king`: `crownLinks`, `rain`) (bản 1.5, mốc M18, 2026-10-29)
+
+B2 (boss phụ chương 2) và B3 (Vô tận, Viễn chinh) của docs/UPDATE-1.5.md. Code: `src/DesktopPet.Core/PetBattle.Brood.cs`, `src/DesktopPet.Core/PetBattle.Mutant.cs` (luật; móc vào hợp thể ở `PetBattle.Links.cs`, phong tinh anh ở `PetBattle.Boss.cs`, giọt nhầy ở `PetBattle.Spit.cs`); vẽ `src/DesktopPet/PetBattleView.Brood.cs`; test `tests/DesktopPet.Tests/BattleBossM18Tests.cs`, ảnh UiChecks (`BroodVisualChecks`: `enemy-brood.png`, `enemy-rain.png`). **Hai boss có trong battle.json gốc nhưng chưa trận nào dùng** (`binSpit: false`; chương 2 ở M21, Viễn chinh tuyến 2 ở M23, vòng boss Vô tận ở M24): mọi trận hiện có không đổi (bảng mô phỏng cân bằng giống hệt bản trước từng dòng, 335/335). Muốn thử: chép `docs/examples/battle-m18.json` (Slime Mẹ) hoặc `docs/examples/battle-m18b.json` (Vua biến dị) thành `%LOCALAPPDATA%\DesktopPet\battle.json` rồi mở Trận tự do. Hai boss không chung một trận được: hợp thể + dây xích + nhịp trống là 3 loại liên kết, vượt giới hạn 2.
+
+```json
+{ "id": "mother", "boss": true, "maxHp": 650, "summonCap": 6,
+  "brood": { "enemy": "fuser", "count": 3, "every": 10, "enragedEvery": 6.5, "warning": 0.6, "feedRate": 20 },
+  "phases": [ { "at": 0.3, "enrage": true } ] }
+{ "id": "mutant_king", "boss": true, "maxHp": 1000, "summonCap": 5, "rallyEvery": 9,
+  "crownLinks": [ { "kind": "tether", "range": 220, "share": 0.5, "breakStun": 1, "relink": 6, "cutSpeed": 300 },
+                  { "kind": "rhythm", "range": 220, "beat": 0.8, "beats": 4 } ],
+  "rain": { "every": 12, "drops": 4, "spacing": 90, "warning": 1, "radius": 32, "damage": 14, "height": 150, "puddleSeconds": 5 },
+  "phases": [ … ] }
+```
+
+Vua biến dị giữ pha khiên, nhảy về mép, vòng tím, phong tinh anh như Vua Slime chương 1: 3 pha khiên ở 75% / 50% / 25% (pha cuối nổi giận), mỗi pha gọi 3–4 quân trong đó có 1 slime phun.
+
+- **Đẻ bầy** (`brood`, chỉ cho boss): cứ `every` s (nổi giận: `enragedEvery`; lần đầu sau 40% `every`), khi khiên tắt, không choáng, không đang nhảy, boss báo bằng vòng tím trên sàn `warning` s rồi đẻ `count` con `enemy` xếp sát nhau **ở phía mèo** (nên chụm ngay: cơ hội cho Bom len, Đẩy, Quạt). Tối đa `summonCap` quân của boss còn sống; hết chỗ thì 1 s sau thử lại. `enemy` phải là quái có liên kết `merge`, không phải boss, không gọi quân.
+- **Về cho bú:** bầy của boss nhập lại theo luật hợp thể (M11); con nhập thành (Slime khổng lồ) là quân của boss (`SummonedBy`) và có `Slime.Nursing`: **không đánh mèo**, đi về chỗ boss (tim hồng trên đầu). Tới sát boss thì chuyển `feedRate` HP/s từ máu của nó sang boss (không quá máu tối đa; đường nét đứt hồng, tim bay), tới khi cạn máu thì biến mất (`Escaped`, không tính là mèo hạ, sự kiện `NurseFed` một lần với tổng HP đã cho). Bị đẩy ra xa thì đi lại bú tiếp. Mèo hạ nó giữa đường hoặc lúc đang bú thì boss không nhận phần còn lại (tính là mèo hạ). Đẩy, choáng, đèn laser, hoảng loạn giữ chân nó như mọi quái. Boss mất thì nó thôi bú và đánh như thường. Slime hợp thể không do boss đẻ (đợt thường, đội hình) không bú.
+- **Liên kết vương miện** (`crownLinks`, cần `rallyEvery`): mỗi lần phong tinh anh, boss nối thêm một liên kết cho quân vừa thành tinh anh, lần lượt theo danh sách: `tether` (một quân khác của boss, gần nhất trong `range`, chưa có liên kết, cầm dây nối vào tinh anh và gánh `share` sát thương của nó; cắt như dây Slime xích) hoặc `rhythm` (tinh anh thành nhạc trưởng: nhịp `beats` thì mọi quái trong `range` cùng gồng). Trận đã đủ 2 loại liên kết khác thì bỏ qua loại đó, thử loại kế; không loại nào vừa thì không nối. Hai loại của vương miện tính vào giới hạn 2 loại mỗi trận khi nạp dữ liệu.
+- **Mưa nhầy** (`rain`, chỉ cho boss): cứ `every` s (lần đầu sau nửa `every`), khi khiên tắt, không choáng, `drops` giọt rơi thẳng từ `height` DIPs xuống quanh mèo (giọt đầu đúng chỗ mèo, các giọt sau cách `spacing` lần lượt hai bên), mỗi giọt có vòng cam trên sàn `warning` s trước. Giọt rơi như giọt Slime phun: mèo dưới sàn trong `radius` mất `damage` (tính theo hệ số như đòn của boss), không choáng; nhấc mèo, `landingGrace`, Khiên bong bóng thì không trúng. `puddleSeconds` > 0: để lại vũng tăng tốc như Slime phun (cỡ `radius` × 1,3, Quạt làm khô).
+- Kiểm tra lúc nạp: `brood`/`crownLinks`/`rain` chỉ cho boss; `brood.count` 1–6, `every` 2–60, `warning` 0–3, `feedRate` 0–500; `crownLinks` 1–4 mục, chỉ `tether`/`rhythm`, số liệu như liên kết thường; `rain.drops` 1–8, `warning` 0,3–5, `radius` 10–200, `height` 40–400, `puddleSeconds` 0–30. Dấu vẽ mới `marks`: `mother`, `mutant`.
+- Sự kiện mới: `BroodWarned`, `BroodLaid` (Value: số con), `NurseHeading`, `NurseFed` (Value: HP đã cho), `CrownLinked` (Value: id quân cầm liên kết), `RainCalled`; giọt mưa rơi là `GooLanded`. Cue có sẵn. Banner (vi/en/ja): lần đẻ đầu "… sắp đẻ bầy!…", con đầu tiên về bú "Slime khổng lồ về cho … bú!…", mỗi lần bú xong "… được hồi N máu", mỗi lần vương miện nối dây hoặc trao trống, lần mưa đầu "… gọi mưa nhầy!…".
+- Chưa làm: đưa vào chương 2 (M21), Viễn chinh tuyến 2 (M23), vòng boss Vô tận Vua → Slime Nén → Vua biến dị (M24); Sổ tay quái (M27). Số liệu (HP 650/1000, bú 20 HP/s, mưa 14) là ước lượng, chốt bằng mô phỏng ở M21/M29.
+
 ## Viễn chinh (`expedition`) (2026-10-21)
 
 Một chuyến đi gồm nhiều bậc, mỗi bậc chọn một điểm, bậc cuối là trùm. HP và build của mèo đi tiếp từ bậc này sang bậc sau; chuyến mới bắt đầu lại từ đầu. Code: `src/DesktopPet.Core/PetExpedition.cs` (luật, không WPF), `PetWindow.Expedition.cs` (bản đồ, kết quả).

@@ -213,6 +213,7 @@ public sealed partial class BattleSim
         merged.Hp = hp; merged.MaxHp = maxHp;
         merged.Facing = lastCatX < x ? -1 : 1;
         merged.Set(SlimeState.Moving);
+        Hatched(merged, group); // 1.5 M18: a mother's clutch merged heads back to her (PetBattle.Brood.cs).
         AddEffect(BattleEffectKind.Poof, x, merged.Height / 2, 1);
         effects[^1].Tint = slime.Type.Color;
         events.Add(new(BattleEventKind.Merged, x, merged.Id));

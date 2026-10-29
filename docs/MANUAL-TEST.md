@@ -713,3 +713,14 @@ Chưa trận gốc nào có boss này. Muốn thử: cất file `%LOCALAPPDATA%\
 - [ ] Pha 3 (25%): boss nhỏ lại tại chỗ, hai đai quanh thân, khiên vàng sát thân, 4 mảnh file (tờ giấy gấp góc) hai bên (banner "… tự nén lại!…"). Mảnh file đứng yên, không đánh. Phá hết mảnh: khiên vỡ, boss to lại, nổi giận, lăn dày hơn; hạ được boss.
 - [ ] Pause/menu: boss đang lăn, dây, mảnh file đều đứng yên; mèo đang cầm lúc Pause không cắt được dây.
 - [ ] DPI 100/150/200%, đổi DPI giữa trận, màn hình phụ: dây, boss lăn không bị cắt mất; kéo/ném mèo xuyên dây vẫn đứt; âm thanh ngắn, không chồng nhau; banner vi/en/ja đúng chữ.
+
+## Slime Mẹ và Vua Slime biến dị 1.5 M18 (2026-10-29) — file tùy chỉnh
+Chưa trận gốc nào có hai boss này. Muốn thử: cất file `%LOCALAPPDATA%\DesktopPet\battle.json` của bạn (nếu có), chép `docs/examples/battle-m18.json` (Slime Mẹ; nên mang Bom len, Quạt) hoặc `docs/examples/battle-m18b.json` (Vua biến dị; nên mang Kéo cắt, Khiên bong bóng) vào chỗ đó, mở Trận tự do; xong thì xóa file (hoặc trả file cũ). Ảnh đã xem qua render UiChecks nền sáng/tối; chưa xem trong trận thật, chưa thử chuột thật, DPI thật.
+- [ ] Không có file: Trận tự do, Phiêu lưu chương 1 (Vua Slime), Vô tận, Viễn chinh như cũ.
+- [ ] Slime Mẹ: hồng, nơ hồng cạnh vương miện, tim trên bụng. Vài giây sau khi ra: vòng tím phía mèo (banner "Slime Mẹ sắp đẻ bầy!…"), rồi 3 slime hợp thể xếp sát nhau. Bom len lúc chúng chụm: hạ cả bầy. Để yên: nhập thành Slime khổng lồ có tim hồng trên đầu (banner "Slime khổng lồ về cho Slime Mẹ bú!…"), nó đi về chỗ mẹ, không đánh mèo.
+- [ ] Con khổng lồ sát mẹ: đường nét đứt hồng, tim bay sang mẹ, thanh máu mẹ tăng dần; bú hết thì nó biến mất (banner "Slime Mẹ được hồi N máu"), không tính là mèo hạ. Đánh hạ nó giữa đường: mẹ không được hồi. Đẩy nó ra lúc đang bú: nó quay lại bú tiếp.
+- [ ] Mẹ còn 30%: nổi giận, đẻ dày hơn. Hạ mẹ khi con khổng lồ còn: nó thôi bú và đánh mèo như thường. Mẹ bị choáng: không đẻ.
+- [ ] Vua biến dị: xanh, nhầy chảy hai bên thân, vương miện vàng nhạt bị lệch. Đứng xa khi khiên tắt: 4 vòng cam quanh mèo, giọt nhầy rơi thẳng xuống (banner "… gọi mưa nhầy!…"); mèo đứng dưới vòng mất máu, không choáng; nhấc mèo lên hoặc bật Khiên thì không sao; chỗ giọt rơi còn vũng.
+- [ ] Pha khiên (75/50/25%): nhảy về mép, gọi quân có slime phun, vương miện sáng rồi phong tinh anh; lần đầu nối dây xích từ một quân khác vào tinh anh (banner "Vương miện nối dây xích cho tinh anh!…"; Kéo cắt hoặc kéo/ném mèo xuyên dây làm đứt), lần sau trao trống (banner "… trao trống…"; vòng nhịp trên đầu tinh anh, nhịp 4 cả vùng cùng gồng; Đẩy nó để đếm lại). Trong khiên: không mưa.
+- [ ] Pause/menu: vòng báo đẻ, con khổng lồ đang bú, giọt mưa đang rơi đều đứng yên.
+- [ ] DPI 100/150/200%, đổi DPI giữa trận, màn hình phụ: vòng tím, giọt mưa, đường bú không bị cắt; âm thanh ngắn, không chồng nhau; banner vi/en/ja đúng chữ.

@@ -1,0 +1,15 @@
+{
+  // 1.5 M18 try-out: the Slime Mother (B2, chapter 2's side boss). It is in the built-in data but no battle
+  // uses it yet (chapter 2 brings it in). Copy this file to %LOCALAPPDATA%\DesktopPet\battle.json (keep a copy
+  // of yours first), then Battle Mode → Start battle (the free battle); the Yarn bomb and the Fan help.
+  // Custom data: no records, no rewards. Delete the file to get the usual free battle back.
+  // Now and then she lays three fusing slimes side by side next to her (purple rings first): bomb them while
+  // they huddle, or push or fan them apart. If they merge, the giant slime walks back to her and feeds her its
+  // HP (a heart over its head, hearts flowing to her): beat it on the way.
+  "schemaVersion": 1,
+  "maxAlive": 6,
+  "waves": [
+    { "groups": [ { "enemy": "slime", "count": 2 }, { "enemy": "runner", "count": 1 } ] },
+    { "groups": [ { "enemy": "mother", "count": 1 } ] }
+  ]
+}

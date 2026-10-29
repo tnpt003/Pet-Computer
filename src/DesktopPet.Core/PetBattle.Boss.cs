@@ -217,6 +217,7 @@ public sealed partial class BattleSim
             if (helper == null) return;
             MakeElite(helper, type);
             events.Add(new(BattleEventKind.BossRallied, helper.X, helper.Id));
+            CrownLink(boss, helper); // 1.5 M18: a crowned boss ties a link to it too (PetBattle.Mutant.cs).
             return;
         }
         boss.RallyCooldown -= dt;

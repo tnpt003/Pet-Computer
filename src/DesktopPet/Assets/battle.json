@@ -632,6 +632,50 @@
       "scale": 0.6, "color": "#F2D88A", "marks": "shard", "still": true, "cost": 1, "binSpit": false
     },
     {
+      // 1.5 M18, B2: chapter 2's side boss (no battle uses it yet; docs/examples/battle-m18.json tries it).
+      // "brood": every `every` s (enragedEvery once angry), shield down and not stunned, it lays `count` of
+      // `enemy` (a merging slime) side by side on the cat's side of it, rings on the floor `warning` s first,
+      // at most summonCap of its helpers alive. What its clutch merges into walks back to it instead of
+      // fighting and, next to it, feeds it feedRate HP/s of its own HP until none is left (gone, not the cat's
+      // kill). Bomb the clutch while it huddles, push or fan it apart, or beat the big one on its way back.
+      "id": "mother", "nameVi": "Slime Mẹ", "nameEn": "Slime Mother",
+      "maxHp": 650, "speed": 20, "damage": 26, "range": 110,
+      "windup": 1.3, "attackCooldown": 2.8, "recover": 0.7,
+      "scale": 2, "color": "#F2A3C7", "angryColor": "#E86A6A", "marks": "mother", "binSpit": false,
+      "boss": true, "slam": true, "slamDamage": 18, "pushFactor": 0.35, "stunFactor": 0.4,
+      "enragedSpeed": 28, "enragedWindup": 0.9, "summonCap": 6,
+      "brood": { "enemy": "fuser", "count": 3, "every": 10, "enragedEvery": 6.5, "warning": 0.6, "feedRate": 20 },
+      "phases": [ { "at": 0.3, "enrage": true } ]
+    },
+    {
+      // 1.5 M18, B3: the Slime King mutated, for Infinity and the Expedition (no battle uses it yet;
+      // docs/examples/battle-m18.json tries it). Shield phases and rally calls as the chapter 1 King's, with
+      // spitters among its helpers. "crownLinks": each rally also ties a link to the helper it made elite,
+      // these kinds in turn: a tether (another of its helpers takes `share` of the elite's hits: cut the rope)
+      // or a rhythm (the elite drums: every `beats`-th beat everyone in `range` strikes at once). "rain": every
+      // `every` s with its shield down, `drops` goo drops fall around the cat (`spacing` apart, the first on
+      // it), each ring on the floor `warning` s first: a cat on the floor in `radius` takes `damage` (scaled
+      // as its hits, no stun); a puddle stays puddleSeconds s. Lift the cat or use the Bubble shield.
+      "id": "mutant_king", "nameVi": "Vua Slime biến dị", "nameEn": "Mutant Slime King",
+      "maxHp": 1000, "speed": 24, "damage": 32, "range": 110,
+      "windup": 1.2, "attackCooldown": 2.6, "recover": 0.7,
+      "scale": 2, "color": "#7FBF5A", "angryColor": "#E86A6A", "marks": "mutant", "binSpit": false,
+      "boss": true, "slam": true, "slamDamage": 24, "pushFactor": 0.35, "stunFactor": 0.4,
+      "enragedSpeed": 34, "enragedWindup": 0.8, "summonCap": 5, "retreatSpeed": 240, "retreatSeconds": 3,
+      "rallyEvery": 9, "rallyCharge": 0.8, "rallyHp": 0.5, "rallyDamage": 1.25, "shieldBreakStun": 2,
+      "retreatLeap": true, "leapCrouch": 0.35, "leapSeconds": 0.9, "summonWarning": 0.6,
+      "crownLinks": [
+        { "kind": "tether", "range": 220, "share": 0.5, "breakStun": 1, "relink": 6, "cutSpeed": 300 },
+        { "kind": "rhythm", "range": 220, "beat": 0.8, "beats": 4 }
+      ],
+      "rain": { "every": 12, "drops": 4, "spacing": 90, "warning": 1, "radius": 32, "damage": 14, "height": 150, "puddleSeconds": 5 },
+      "phases": [
+        { "at": 0.75, "shield": true, "summons": [ { "enemy": "slime", "count": 1 }, { "enemy": "runner", "count": 1 }, { "enemy": "spitter", "count": 1 } ] },
+        { "at": 0.5, "shield": true, "summons": [ { "enemy": "mender", "count": 1 }, { "enemy": "rock", "count": 1 }, { "enemy": "spitter", "count": 1 } ] },
+        { "at": 0.25, "shield": true, "enrage": true, "summons": [ { "enemy": "rock", "count": 1 }, { "enemy": "spitter", "count": 1 }, { "enemy": "slime", "count": 2 } ] }
+      ]
+    },
+    {
       "id": "king", "nameVi": "Vua Slime", "nameEn": "Slime King",
       "maxHp": 480, "speed": 22, "damage": 30, "range": 110,
       "windup": 1.2, "attackCooldown": 2.6, "recover": 0.7,

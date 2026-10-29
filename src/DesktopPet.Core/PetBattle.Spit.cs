@@ -89,7 +89,7 @@ public sealed partial class BattleSim
         if (goo.PuddleSeconds > 0) AddPuddle(goo);
         events.Add(new(BattleEventKind.GooLanded, goo.X, hit ? 1 : 0));
         if (!hit) return;
-        if (goo.Spike) SpikeHits++; else SpitHits++;
+        if (goo.Spike) SpikeHits++; else if (goo.Rain) RainHits++; else SpitHits++;
         // Its spitter still there: a hit like its own (Thorns sends some back); gone, the goo still lands.
         if (Find(goo.OwnerId) is { Targetable: true, Damage: > 0 } owner) HurtCat(owner, lastCatX, false, goo.Damage / owner.Damage);
         else LandHit(goo.Damage, lastCatX, out _);

@@ -211,7 +211,13 @@ public sealed partial class BattleFieldView : FrameworkElement
         // Index loops: foreach over IReadOnlyList boxes an enumerator every frame.
         for (int i = 0; i < sim.Bombs.Count; i++) DrawBomb(dc, sim.Bombs[i], sim.Bombs[i].X - OriginX, floor);
         DrawSpitBehind(dc, floor, time);
-        for (int i = 0; i < sim.Slimes.Count; i++) if (sim.Slimes[i].CallSpots is { } spots) DrawCallSpots(dc, sim.Slimes[i], spots, floor, time);
+        for (int i = 0; i < sim.Slimes.Count; i++)
+        {
+            var boss = sim.Slimes[i];
+            if (boss.CallSpots is { } spots) DrawCallSpots(dc, spots, boss.Type.SummonWarning > 0 ? 1 - boss.SummonWarn / boss.Type.SummonWarning : 1, floor, time);
+            // 1.5 M18: a mother's clutch is announced the same way.
+            if (boss.BroodSpots is { } clutch) DrawCallSpots(dc, clutch, boss.Type.Brood is { Warning: > 0 } brood ? 1 - boss.BroodWarn / brood.Warning : 1, floor, time);
+        }
         DrawLinksBehind(dc, floor, time);
         DrawBossRopes(dc, floor, time);
         for (int layer = 0; layer <= 3; layer++)
@@ -251,6 +257,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         for (int i = 0; i < sim.Slimes.Count; i++)
             if (sim.Slimes[i].IsBoss && sim.RallyTarget(sim.Slimes[i]) is Slime rallied) DrawRallyLink(dc, sim.Slimes[i], rallied, floor, time);
         DrawLinkMarks(dc, floor, time);
+        DrawNursing(dc, floor, time);
         DrawGoos(dc, floor);
         DrawTools(dc, floor, time);
         if (sim.TabsRemaining > 0) DrawTabs(dc, sim.CatX - OriginX, floor, time);
@@ -277,9 +284,9 @@ public sealed partial class BattleFieldView : FrameworkElement
     }
 
     // Where a boss's helpers will appear: purple rings on the floor filling up as they come, a "!" over each.
-    private void DrawCallSpots(DrawingContext dc, Slime boss, System.Collections.Generic.List<(string Kind, double X)> spots, double floor, double time)
+    private void DrawCallSpots(DrawingContext dc, System.Collections.Generic.List<(string Kind, double X)> spots, double filled, double floor, double time)
     {
-        double k = boss.Type.SummonWarning > 0 ? Math.Clamp(1 - boss.SummonWarn / boss.Type.SummonWarning, 0, 1) : 1;
+        double k = Math.Clamp(filled, 0, 1);
         foreach (var (kind, spotX) in spots)
         {
             double x = spotX - OriginX, r = sim.Settings.SlimeWidth * sim.Settings.Enemy(kind).Scale / 2 + 6;
@@ -521,6 +528,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         DrawWallMarks(dc, slime, bw, bh, time);
         DrawQuillMarks(dc, slime, bw, bh, time);
         DrawZipMarks(dc, slime, bw, bh);
+        DrawBroodMarks(dc, slime, bw, bh);
         // An older support mark: a white "+" on its body.
         if (slime.Type.Marks == "cross") dc.DrawGeometry(Brushes.White, Outline, CrossMark);
         if (slime.Elite != null)
@@ -542,7 +550,7 @@ public sealed partial class BattleFieldView : FrameworkElement
             dc.DrawEllipse(null, Halo, new Point(0, -37), 15 * ring, 10 * ring);
             dc.DrawEllipse(null, RallyPen, new Point(0, -37), 15 * ring, 10 * ring);
         }
-        if (slime.IsBoss) dc.DrawGeometry(Gold, Outline, Crown);
+        if (slime.IsBoss) DrawBossCrown(dc, slime); // 1.5 M18: the Mutant King's sits crooked (PetBattleView.Brood.cs).
         dc.Pop();
         dc.Pop();
         DrawBubbleShell(dc, slime, x, floor, w, h, time);

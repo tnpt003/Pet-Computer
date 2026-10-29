@@ -574,6 +574,7 @@ internal static class Program
         WallVisualChecks.Run(Check);
         QuillsVisualChecks.Run(Check);
         ZipVisualChecks.Run(Check);
+        BroodVisualChecks.Run(Check);
         window.SetPaused(false);
         window.Reset();
         void AttentionClick() => window.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Right)

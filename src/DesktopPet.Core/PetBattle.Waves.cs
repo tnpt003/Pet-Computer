@@ -318,6 +318,9 @@ public sealed partial class BattleSim
         slime.QuillClock = type.Quills?.Flat ?? 0;
         // 1.5 M17: a rolling boss's first roll comes after half its wait.
         slime.RollCooldown = (type.Roll?.Every ?? 0) / 2;
+        // 1.5 M18: a brooding boss's first clutch and a raining boss's first rain come after part of their wait.
+        slime.BroodClock = (type.Brood?.Every ?? 0) * 0.4;
+        slime.RainClock = (type.Rain?.Every ?? 0) / 2;
         slime.Set(SlimeState.Spawning);
         JoinLinks(slime);
         slimes.Add(slime);

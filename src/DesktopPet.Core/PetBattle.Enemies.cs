@@ -108,6 +108,9 @@ public sealed partial class BattleSim
             StepQuills(slime, dt);
             StepClock(slime, dt);
             TickRoll(slime, dt); // 1.5 M17: a rolling boss's wait for its next roll (PetBattle.Zip.cs).
+            // 1.5 M18: a brooding boss's clutches, a raining boss's goo rain (PetBattle.Brood.cs, PetBattle.Mutant.cs).
+            StepBrood(slime, dt);
+            StepRain(slime, dt);
             // A lit bomb burns on whatever it does (in the Grabber's claw too).
             if (slime.Lit && BurnFuse(slime, dt)) { if (Over) break; continue; }
             if (slime.Handled) continue; // In the Grabber's claw or flying from it (PetBattle.Grabber.cs).
@@ -188,6 +191,8 @@ public sealed partial class BattleSim
                     if (Panic(slime, dt, catX, minX, maxX)) break;
                     // Chasing the laser's dot (PetBattle.Tools.cs): nothing else.
                     if (slime.Lured && LaserX is double dot) { Lure(slime, dot, dt, minX, maxX); break; }
+                    // What a mother's clutch merged into goes back to feed her (PetBattle.Brood.cs).
+                    if (slime.Nursing && Nurse(slime, dt, minX, maxX)) break;
                     // A faded ghost attacks nothing: it drifts through the cat (PetBattle.Tricks.cs).
                     if (slime.Faded) { Drift(slime, dt, catX, minX, maxX); break; }
                     // A thief runs off with its loot, or trails a cat with nothing to steal (PetBattle.Quills.cs).

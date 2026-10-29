@@ -884,6 +884,8 @@ public sealed partial class BattleSim
             // A leap in the air comes down where it is; announced helpers never come.
             s.Crouch = s.LeapHeight = 0;
             s.CallSpots = null;
+            s.BroodSpots = null;
+            s.Feeding = false;
             s.Mended = false;
             s.MendingId = 0;
             s.RunAwayLeft = 0;
@@ -1005,6 +1007,7 @@ public sealed partial class BattleSim
             s.X = left + (s.X - Left) / oldWidth * newWidth;
             s.LeapFromX = left + (s.LeapFromX - Left) / oldWidth * newWidth;
             if (s.CallSpots is { } spots) for (int i = 0; i < spots.Count; i++) spots[i] = (spots[i].Kind, left + (spots[i].X - Left) / oldWidth * newWidth);
+            if (s.BroodSpots is { } laid) for (int i = 0; i < laid.Count; i++) laid[i] = (laid[i].Kind, left + (laid[i].X - Left) / oldWidth * newWidth);
         }
         IncomingX = left + (IncomingX - Left) / oldWidth * newWidth;
         foreach (var e in effects) e.X = left + (e.X - Left) / oldWidth * newWidth;

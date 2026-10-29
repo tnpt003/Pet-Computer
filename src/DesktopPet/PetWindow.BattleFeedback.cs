@@ -79,6 +79,9 @@ public sealed partial class PetWindow
         [BattleEventKind.RollAimed] = ("clank", 4), [BattleEventKind.Rolled] = ("swoosh", 4), [BattleEventKind.RollHit] = ("ball_tap", 5),
         [BattleEventKind.BossRoped] = ("squish", 3), [BattleEventKind.BossRopeCut] = ("pop", 4), [BattleEventKind.BossRopesGone] = ("excited", 5),
         [BattleEventKind.BossPacked] = ("squish", 5),
+        // 1.5 M18: the Slime Mother's clutches and feeding, the Mutant King's crown links and rain.
+        [BattleEventKind.BroodWarned] = ("surprised", 4), [BattleEventKind.BroodLaid] = ("squish", 4), [BattleEventKind.NurseHeading] = ("surprised", 4),
+        [BattleEventKind.NurseFed] = ("satisfied", 4), [BattleEventKind.CrownLinked] = ("sparkle", 5), [BattleEventKind.RainCalled] = ("swoosh", 4),
     };
 
     private void PlayBattleSound()
@@ -187,6 +190,17 @@ public sealed partial class PetWindow
                 BattleEventKind.BossRopeCut when battle.Boss is Slime roped && battle.RopesLeft(roped) is int left && left > 0 =>
                     LF($"Đứt dây! Còn {left} dây", $"Rope cut! {left} left"),
                 BattleEventKind.RollAimed when trickExplained.Add(e.Kind) => LF($"{BossName()} sắp lăn! Nhấc mèo lên để né", $"The {BossName()} is about to roll! Lift the cat out of its way"),
+                // 1.5 M18: the Slime Mother (her first clutch, the first one heading back, every feed), the Mutant King
+                // (every crown link: which kind matters; its first rain).
+                BattleEventKind.BroodWarned when trickExplained.Add(e.Kind) =>
+                    LF($"{BossName()} sắp đẻ bầy! Bom len khi cả bầy chụm lại, hoặc Đẩy/Quạt tách ra", $"The {BossName()} is laying a clutch! Bomb it while it huddles, or push or fan it apart"),
+                BattleEventKind.NurseHeading when trickExplained.Add(e.Kind) =>
+                    LF($"Slime khổng lồ về cho {BossName()} bú! Hạ nó trước khi tới nơi", $"The giant slime is heading back to feed the {BossName()}! Beat it before it gets there"),
+                BattleEventKind.NurseFed => LF($"{BossName()} được hồi {(int)e.Value} máu", $"The {BossName()} got {(int)e.Value} HP back"),
+                BattleEventKind.CrownLinked when IsRope(e) => L("Vương miện nối dây xích cho tinh anh! Cắt dây đi", "The crown ties a chain to the elite! Cut the rope"),
+                BattleEventKind.CrownLinked => L("Vương miện trao trống cho tinh anh! Đẩy nó trước nhịp cuối", "The crown hands the elite a drum! Push it before the last beat"),
+                BattleEventKind.RainCalled when trickExplained.Add(e.Kind) =>
+                    LF($"{BossName()} gọi mưa nhầy! Nhấc mèo khỏi các vòng hoặc bật Khiên bong bóng", $"The {BossName()} calls a goo rain! Lift the cat out of the rings or use the Bubble shield"),
                 BattleEventKind.BossShieldDown => L("KHIÊN VỠ!", "SHIELD DOWN!"),
                 BattleEventKind.BossEnraged =>LF($"{BossName()} nổi giận!", $"The {BossName()} is angry!"),
                 BattleEventKind.SynergyUnlocked when (int)e.Value >= 0 && (int)e.Value < battle.Settings.SynergyList.Count =>

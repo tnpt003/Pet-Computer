@@ -1006,5 +1006,13 @@
   "The {0} unpacks! While a rope is left it takes no damage: drag or throw the cat through the ropes, or use the Scissors": "{0}が解凍した！ロープが残っているあいだはダメージを受けない：猫をドラッグか投げてロープを通すか、ハサミを使おう",
   "The {0} packs itself! Break the file shards around it": "{0}が自分を圧縮した！まわりのファイルのかけらを壊そう",
   "Rope cut! {0} left": "ロープが切れた！残り{0}本",
-  "The {0} is about to roll! Lift the cat out of its way": "{0}が転がってくる！猫を持ち上げてよけよう"
+  "The {0} is about to roll! Lift the cat out of its way": "{0}が転がってくる！猫を持ち上げてよけよう",
+  "Slime Mother": "ママスライム",
+  "Mutant Slime King": "へんいスライムキング",
+  "The {0} is laying a clutch! Bomb it while it huddles, or push or fan it apart": "{0}が子どもを産む！かたまったところを毛糸ボムで、または押すか扇風機でばらそう",
+  "The giant slime is heading back to feed the {0}! Beat it before it gets there": "巨大スライムが{0}に栄養を届けに戻っていく！着く前に倒そう",
+  "The {0} got {1} HP back": "{0}のHPが{1}回復した",
+  "The crown ties a chain to the elite! Cut the rope": "王冠がエリートに鎖をつないだ！ロープを切ろう",
+  "The crown hands the elite a drum! Push it before the last beat": "王冠がエリートに太鼓を渡した！最後の拍の前に押そう",
+  "The {0} calls a goo rain! Lift the cat out of the rings or use the Bubble shield": "{0}がネバネバの雨を降らせる！猫を輪から持ち上げるか、バブルシールドを使おう"
 }

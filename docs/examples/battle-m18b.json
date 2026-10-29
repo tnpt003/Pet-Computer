@@ -1,0 +1,16 @@
+{
+  // 1.5 M18 try-out: the Mutant Slime King (B3, for Infinity and the Expedition). It is in the built-in data but
+  // no battle uses it yet. Copy this file to %LOCALAPPDATA%\DesktopPet\battle.json (keep a copy of yours first),
+  // then Battle Mode → Start battle (the free battle); the Scissors and the Bubble shield help.
+  // Custom data: no records, no rewards. Delete the file to get the usual free battle back.
+  // Like the chapter 1 King it shields itself and calls helpers (spitters among them) and its crown makes one
+  // elite; each time its crown also ties a link to that elite, in turn: a chain rope (cut it) or a drum (push
+  // it before the last beat). With its shield down it calls a goo rain around the cat: lift the cat out of the
+  // rings or use the Bubble shield.
+  "schemaVersion": 1,
+  "maxAlive": 6,
+  "waves": [
+    { "groups": [ { "enemy": "slime", "count": 2 }, { "enemy": "runner", "count": 1 } ] },
+    { "groups": [ { "enemy": "mutant_king", "count": 1 } ] }
+  ]
+}

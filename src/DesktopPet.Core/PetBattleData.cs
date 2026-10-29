@@ -187,6 +187,13 @@ public sealed class EnemyType
     public bool Still { get; init; }
     public double RopeCutSpeed { get; init; } = 300;
     public double RopeCutStun { get; init; } = 1;
+    // 1.5 M18 (PetBattle.Brood.cs, PetBattle.Mutant.cs), bosses only. Brood (B2, the Slime Mother): it lays
+    // a clutch of merging slimes now and then; the big one they merge into goes back to it and feeds it HP.
+    // CrownLinks (B3, the Mutant King): its rally call also ties a link between its helpers, these kinds in
+    // turn (tether or rhythm). Rain: goo drops fall from the sky around the cat now and then. Null: none.
+    public BroodSpec? Brood { get; init; }
+    public LinkSpec[]? CrownLinks { get; init; }
+    public RainSpec? Rain { get; init; }
     // An infected bin may spit one of this kind (with an elite affix). False keeps a kind out of battles
     // that never list it (the 1.5 enemies until their chapter brings them in).
     public bool BinSpit { get; init; } = true;
@@ -454,6 +461,38 @@ public sealed class RollSpec
     public double Distance { get; init; } = 460;
     public double Damage { get; init; } = 24;
     public double Stun { get; init; } = 0.9;
+}
+
+// B2 (1.5 M18): every Every s (EnragedEvery once it is angry), while its shield is down and it is not
+// stunned, the boss lays Count of Enemy (a kind with a merge link) next to it, announced Warning s before by
+// rings on the floor; at most its SummonCap of its helpers alive. What its clutch merges into walks back to
+// it instead of fighting and, next to it, feeds it FeedRate HP/s out of its own HP until it has none left
+// (gone then, not the cat's kill). Defeating it on the way, or while it feeds, keeps the rest from the boss.
+public sealed class BroodSpec
+{
+    public string Enemy { get; init; } = "fuser";
+    public int Count { get; init; } = 3;
+    public double Every { get; init; } = 10;
+    public double EnragedEvery { get; init; } = 6.5;
+    public double Warning { get; init; } = 0.6;
+    public double FeedRate { get; init; } = 20;
+}
+
+// B3 (1.5 M18): every Every s while its shield is down, the boss calls Drops goo drops from the sky: a ring
+// on the floor marks each Warning s before it lands, the first on the cat's spot and the others Spacing
+// apart on both sides in turn. A cat on the floor within Radius takes Damage (scaled like its other hits,
+// no stun); lifting it or the Bubble shield dodges them. PuddleSeconds: a puddle stays that long where each
+// lands (a spitter's, with SpitSpec's default boost; 0: none).
+public sealed class RainSpec
+{
+    public double Every { get; init; } = 12;
+    public int Drops { get; init; } = 4;
+    public double Spacing { get; init; } = 90;
+    public double Warning { get; init; } = 1;
+    public double Radius { get; init; } = 32;
+    public double Damage { get; init; } = 14;
+    public double Height { get; init; } = 150;
+    public double PuddleSeconds { get; init; }
 }
 
 // The thrown cat flying through an enemy at MinSpeed DIPs/s or more: Damage (as is, never blocked)
@@ -986,7 +1025,7 @@ public static class BattleData
     public static readonly string[] WeaponStyles = { "sword", "hammer", "yarn", "glove" };
     public static readonly string[] WeaponHitEffects = { "spark", "thud" };
     public static readonly string[] EnemyRenderers = { "slime" };
-    public static readonly string[] EnemyMarks = { "none", "speed", "cracks", "leaf", "cross", "spout", "spring", "drum", "chain", "swarm", "giant", "bomb", "split", "half", "flag", "ghost", "bubble", "mirage", "sulk", "wings", "mole", "ice", "spikes", "quills", "clock", "thief", "zip", "shard" };
+    public static readonly string[] EnemyMarks = { "none", "speed", "cracks", "leaf", "cross", "spout", "spring", "drum", "chain", "swarm", "giant", "bomb", "split", "half", "flag", "ghost", "bubble", "mirage", "sulk", "wings", "mole", "ice", "spikes", "quills", "clock", "thief", "zip", "shard", "mother", "mutant" };
     public static readonly string[] GroupSides = { "a", "b" };
     // Kinds the cursor beats (ghost, bubble, mirage, sulk) that one battle may bring (docs/UPDATE-1.5.md).
     public const int MaxMouseKinds = 2;
@@ -1439,6 +1478,33 @@ public static class BattleData
                 Within(roll.Windup, 0.3, 5, at + ".roll.windup"); Within(roll.Speed, 50, 1500, at + ".roll.speed");
                 Within(roll.Distance, 50, 1500, at + ".roll.distance"); Within(roll.Damage, 0, 1000, at + ".roll.damage"); Within(roll.Stun, 0, 5, at + ".roll.stun");
             }
+            // 1.5 M18: a brood, crown links, a goo rain (bosses only).
+            if ((e.Brood != null || e.CrownLinks != null || e.Rain != null) && !e.Boss) throw new InvalidDataException(at + ".brood/crownLinks/rain are for a boss");
+            if (e.Brood is BroodSpec brood)
+            {
+                if (brood.Count is < 1 or > 6) throw new InvalidDataException(at + ".brood.count must be 1–6");
+                Within(brood.Every, 2, 60, at + ".brood.every"); Within(brood.EnragedEvery, 2, 60, at + ".brood.enragedEvery");
+                Within(brood.Warning, 0, 3, at + ".brood.warning"); Within(brood.FeedRate, 0, 500, at + ".brood.feedRate");
+            }
+            if (e.CrownLinks is { } crown)
+            {
+                if (e.RallyEvery <= 0) throw new InvalidDataException(at + ".crownLinks need a rally call (rallyEvery)");
+                if (crown.Length is 0 or > 4 || crown.Any(l => l == null || l.Kind is not (EnemyLinks.Tether or EnemyLinks.Rhythm)))
+                    throw new InvalidDataException(at + ".crownLinks must list 1–4 tether or rhythm links");
+                foreach (var l in crown)
+                {
+                    Within(l.Range, 20, 800, at + ".crownLinks.range"); Within(l.BreakStun, 0, 5, at + ".crownLinks.breakStun"); Within(l.Relink, 0, 60, at + ".crownLinks.relink");
+                    if (l.Kind == EnemyLinks.Tether) { Within(l.Share, 0.05, 0.95, at + ".crownLinks.share"); Within(l.CutSpeed, 100, 5000, at + ".crownLinks.cutSpeed"); }
+                    else { Within(l.Beat, 0.2, 3, at + ".crownLinks.beat"); if (l.Beats is < 2 or > 8) throw new InvalidDataException(at + ".crownLinks.beats must be 2–8"); }
+                }
+            }
+            if (e.Rain is RainSpec rain)
+            {
+                if (rain.Drops is < 1 or > 8) throw new InvalidDataException(at + ".rain.drops must be 1–8");
+                Within(rain.Every, 2, 60, at + ".rain.every"); Within(rain.Spacing, 20, 400, at + ".rain.spacing"); Within(rain.Warning, 0.3, 5, at + ".rain.warning");
+                Within(rain.Radius, 10, 200, at + ".rain.radius"); Within(rain.Damage, 0, 1000, at + ".rain.damage"); Within(rain.Height, 40, 400, at + ".rain.height");
+                Within(rain.PuddleSeconds, 0, 30, at + ".rain.puddleSeconds");
+            }
             Within(e.RopeCutSpeed, 100, 5000, at + ".ropeCutSpeed"); Within(e.RopeCutStun, 0, 5, at + ".ropeCutStun");
             if (e.Still && (e.Boss || e.Blocker || e.Dash || e.Slam || e.Hover > 0 || e.Support || e.HealAmount > 0 || e.Link != null || e.Spit != null || e.Spring != null
                 || e.Fuse != null || e.Split != null || e.UsesMouse || e.Fly != null || e.Burrow != null || e.Ice != null || e.Cling != null || e.Quills != null
@@ -1456,6 +1522,10 @@ public static class BattleData
             if (link.Kind is not EnemyLinks.Ride && link.Mount != null) throw new InvalidDataException($"enemies[{e.Id}].link.mount is for a ride link");
             if (link.Kind is not EnemyLinks.Merge && link.Into != null) throw new InvalidDataException($"enemies[{e.Id}].link.into is for a merge link");
         }
+        // What a boss's brood lays (1.5 M18): a known enemy with a merge link, not a boss, that summons nobody.
+        foreach (var e in s.EnemyTypes)
+            if (e.Brood is BroodSpec brood && (!ids.Contains(brood.Enemy) || s.Enemy(brood.Enemy) is { Boss: true } or not { Link.Kind: EnemyLinks.Merge } or { SummonAt: > 0 } or { Phases: not null }))
+                throw new InvalidDataException($"enemies[{e.Id}].brood.enemy must name a known enemy with a merge link that is not a boss");
         // What a splitting enemy breaks into: a known enemy that is not a boss and does not split (no chains).
         foreach (var e in s.EnemyTypes)
             if (e.Split is SplitSpec split && (!ids.Contains(split.Into) || s.Enemy(split.Into) is { Boss: true } or { Split: not null }))
@@ -1613,6 +1683,9 @@ public static class BattleData
                 if (e.SummonAt > 0) reach.Push(e.SummonType);
                 if (e.Split != null) reach.Push(e.Split.Into);
                 foreach (var p in e.Phases ?? Array.Empty<BossPhase>()) foreach (var call in s.PhaseCalls(p)) reach.Push(call);
+                // 1.5 M18: what a brood lays, the links a crown ties.
+                if (e.Brood != null) reach.Push(e.Brood.Enemy);
+                foreach (var l in e.CrownLinks ?? Array.Empty<LinkSpec>()) if (l.Enabled) links.Add(l.Kind);
             }
             if (links.Count > EnemyLinks.MaxKinds)
                 throw new InvalidDataException($"{at} brings {links.Count} kinds of link ({string.Join(", ", links)}): at most {EnemyLinks.MaxKinds} in one battle");

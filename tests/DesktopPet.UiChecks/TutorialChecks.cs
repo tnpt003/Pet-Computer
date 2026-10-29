@@ -430,6 +430,62 @@ internal static class TutorialChecks
         window.EndBattle();
         progress.Completed.Remove(PetWindow.StageSlimeKing);
         progress.Completed.Remove(PetWindow.StageDownloadGate);
+
+        // 1.5 M26 apps: a stage with the newer apps (chapter 2's) teaches each the first time it comes,
+        // whichever stage that is; the battle stands still meanwhile (the captcha's and the cursor's clocks too).
+        window.Reset();
+        window.BattleTuning = new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 1 }, SlimeMaxHp = 1000, SlimeDamage = 0, SlimeSpeed = 0,
+            Apps = new AppsSpec { InfectChance = 0, MalwareMinThreat = 0 } };
+        ToGround();
+        check(window.StartBattle(stage: new StageSpec { Id = "ui_guide_new_apps", NewAppsFrom = 1, MalwarePlan = new[]
+            { new MalwareCue { At = 0.8, Kind = "captcha" }, new MalwareCue { At = 2.5, Kind = "battery" }, new MalwareCue { At = 4, Kind = "cursor" } } }) == null
+            && window.BattleGuideOn, "(setup) a guided stage with the newer apps");
+        void TickUntil(string step, int frames = 600)
+        {
+            for (int i = 0; i < frames && window.BattleGuideStep != step && window.BattleActive; i++) { ToGround(); Call(window, "TickBattle", 1.0 / 60); }
+        }
+        TickUntil(PetWindow.GuideCaptcha);
+        var captcha = Sim().Captcha;
+        var lit = window.BattleGuideSpots;
+        check(window.BattleGuideStep == PetWindow.GuideCaptcha && captcha != null && lit.Count == 1 && lit[0].Contains(window.BattleCaptchaSpot) && window.BattleGuideText.Contains("captcha"),
+            $"The captcha's step lights its window ({window.BattleGuideStep}: {window.BattleGuideText})");
+        double captchaAge = captcha?.Age ?? 0;
+        TickBattle(1);
+        check(Sim().Captcha == captcha && captcha?.Age == captchaAge && window.BattleCaptchaShown, "While it shows the captcha's clock stands still");
+        if (captcha != null) for (int i = 0; i < 9; i++) if (captcha.Tiles[i] == BattleCaptcha.Cat) window.BattleClickCaptcha(i);
+        TickBattle(1.0 / 60);
+        check(Sim().Captcha == null && window.BattleGuideStep != PetWindow.GuideCaptcha && GuideTimesShown(PetWindow.GuideCaptcha) == 1, "Every cat picked: the step ends");
+        TickUntil(PetWindow.GuideBattery);
+        check(window.BattleGuideStep == PetWindow.GuideBattery && window.BattleGuideSpots.Count == 1 && window.BattleGuideText.Contains("Plug in"), $"The low battery's step ({window.BattleGuideStep})");
+        window.BattlePlugIn();
+        TickBattle(1.0 / 60);
+        check(!Sim().BatteryLow && window.BattleGuideStep != PetWindow.GuideBattery, "Plug in ends it");
+        TickUntil(PetWindow.GuideCursor);
+        double cursorLeft = Sim().CursorFrozenRemaining;
+        TickBattle(1);
+        check(window.BattleGuideStep == PetWindow.GuideCursor && window.BattleGuideSpots.Count == 1 && Sim().CursorFrozenRemaining == cursorLeft && cursorLeft > 0,
+            $"The frozen cursor's step; its clock stands still ({window.BattleGuideStep}, {cursorLeft:0.0})");
+        window.BattleResumeCursor();
+        TickBattle(1.0 / 60);
+        check(!Sim().CursorFrozen && window.BattleGuideStep != PetWindow.GuideCursor, "Continue ends it");
+        var shotIcon = Sim().Desktop.First(a => a.Kind == BattleAppKind.Screenshot);
+        shotIcon.Charge = 1;
+        TickUntil(PetWindow.GuideScreenshot, 30);
+        check(window.BattleGuideStep == PetWindow.GuideScreenshot && window.BattleGuideSpots.Count == 1 && window.BattleGuideText.Contains("Screenshot"),
+            $"A charged Screenshot: its step lights the icon ({window.BattleGuideStep})");
+        window.BattleClickApp(shotIcon.Id);
+        TickBattle(1.0 / 60);
+        check(shotIcon.Charge < 1 && window.BattleGuideStep != PetWindow.GuideScreenshot, "Clicking it ends the step");
+        shotIcon.InfectedBy = 1; shotIcon.ScrubsLeft = 5;
+        Sim().DazzleRemaining = 1.5;
+        TickUntil(PetWindow.GuideDazzle, 5);
+        check(window.BattleGuideStep == PetWindow.GuideDazzle && window.BattleGuideSpots.Count == 2, $"A dazzle from the infected Screenshot: the cat and the icon lit ({window.BattleGuideStep})");
+        window.BattleGuideOk();
+        TickBattle(1.0 / 60);
+        check(window.BattleGuideStep == null && new[] { PetWindow.GuideScreenshot, PetWindow.GuideDazzle, PetWindow.GuideCaptcha, PetWindow.GuideBattery, PetWindow.GuideCursor }
+            .All(id => GuideTimesShown(id) == 1), "Each of the five comes once a run");
+        window.EndBattle();
+        window.BattleTuning = new BattleSettings();
         window.BattleGuideEnabled = false;
 
         prefs.Language = language;

@@ -15,7 +15,8 @@ namespace DesktopPet;
 // and cooldowns — the screen goes dark around the spot, the spot is lit and a short line says what
 // to do. A "do" step waits until the user does it (lifting the cat stays possible: the battle is
 // frozen, not paused); a "see" step waits for Got it. Every line has Skip the guide (for this run).
-// Only in an Adventure stage (chapter 1; chapter 2 from 1.5 M21: its new slimes, skills and boss), each step in its own stage, as often as its Times in one run;
+// Only in an Adventure stage (chapter 1; chapter 2 from 1.5 M21: its new slimes, skills and boss; from M26 also its newer apps,
+// in whichever of its stages each comes first), each step in its own stage, as often as its Times in one run;
 // it is on by default (preferences.AdventureGuide, the stage setup's Guide chip, kept from its last
 // Ready), so a won stage teaches again until the user unticks it. Never in a free battle, the Expedition or Infinity. Pause, the menu
 // and a fullscreen app hide it like the rest of the battle.
@@ -37,6 +38,9 @@ public sealed partial class PetWindow
         GuideBasket = "basket", GuideFishBack = "fish_back", GuideBomber = "bomber", GuideCrack = "crack", GuideFlyer = "flyer", GuideThief = "thief",
         GuideHedgehog = "hedgehog", GuideIcy = "icy", GuideChain = "chain", GuideSplitter = "splitter", GuideMother = "mother",
         GuideBubble = "bubble", GuideClinger = "clinger", GuideZip = "zip", GuideRoll = "roll", GuideRopes = "ropes", GuidePack = "pack";
+    // 1.5 M26 apps: steps for any guided stage that has the newer apps (newAppsFrom: chapter 2).
+    public const string GuideScreenshot = "screenshot", GuideDazzle = "dazzle", GuideCaptcha = "captcha", GuideBattery = "battery", GuideCursor = "cursor";
+    public const string GuideNewApps = "new_apps";
     // A step for the stage that teaches a skill (its unlocksSkill; chapter 2 from M21), not a stage id.
     public const string GuideTeaches = "teaches:";
     public const int GuideLifts = 5, GuideCutHeals = 4;
@@ -75,7 +79,8 @@ public sealed partial class PetWindow
     // A stage the guide teaches (chapter 1).
     public bool StageHasGuide(StageSpec? stage) => stage != null && GuideSteps.Any(g => GuideFor(g, stage));
     private static bool GuideFor(GuideStep step, StageSpec stage) => step.Stage == stage.Id
-        || (stage.UnlocksSkill is string skill && step.Stage == GuideTeaches + skill.ToLowerInvariant());
+        || (stage.UnlocksSkill is string skill && step.Stage == GuideTeaches + skill.ToLowerInvariant())
+        || (step.Stage == GuideNewApps && stage.NewAppsFrom > 0);
 
     private GuideStep[] GuideSteps => guideSteps ??= new GuideStep[]
     {
@@ -316,7 +321,41 @@ public sealed partial class PetWindow
         See(GuidePack, StageZipSlime, () => battle!.Slimes.Any(s => s.Type.Still && s.Targetable),
             () => Spots(battle!.Slimes.Where(s => s.Type.Still && s.Targetable).Select(SlimeSpot).ToArray()),
             () => L("Slime Nén tự nén thành khiên giữa các mảnh file. Phá hết mảnh file để vỡ khiên.", "The Zip Slime packs itself into a shield among file shards. Break every shard to crack the shield.")),
+
+        // 1.5 M26 · the newer apps, in whichever stage of chapter 2 each comes first (malware comes at random).
+        new(GuideScreenshot, GuideNewApps, true, true, 1,
+            () => { var shot = ScreenshotIcon(); guideRef = shot?.Id ?? 0; return shot is { Infected: false, Charge: >= 1 } && TourDue() && !BattleHoldsOff && battle!.Slimes.Any(s => s.Targetable); },
+            () => battle!.FindApp(guideRef) is not { Infected: false, Charge: >= 1 },
+            () => battle!.FindApp(guideRef) is DesktopApp app ? new List<Rect> { AppSpot(app) } : new(),
+            () => LF($"Icon mới: Chụp Màn Hình đã sạc đầy. Bấm nó: tia chớp làm mọi quái đứng hình {Number(battle?.AppRules?.ShotFreeze ?? 2, "0.#")} giây.",
+                     $"A new icon: the Screenshot is charged. Click it: its flash freezes every enemy for {Number(battle?.AppRules?.ShotFreeze ?? 2, "0.#")} s.")),
+        new(GuideDazzle, GuideNewApps, false, true, 1,
+            () => { var shot = ScreenshotIcon(); guideRef = shot?.Id ?? 0; return battle!.CatDazzled && shot is { Infected: true }; },
+            () => false, () => battle!.FindApp(guideRef) is DesktopApp app ? Spots(CatSpot(), AppSpot(app)) : new(),
+            () => L("Chụp Màn Hình bị nhiễm chớp vào mắt mèo: mèo lóa, vuốt trượt một lúc. Bấm icon vài lần để gỡ, hoặc hạ con slime đeo dấu virus.",
+                    "The infected Screenshot flashed in the cat's eyes: dazzled, its swipes miss for a moment. Click the icon a few times to clean it, or defeat the slime with the virus mark.")),
+        new(GuideCaptcha, GuideNewApps, true, true, 1,
+            () => { var captcha = battle!.Captcha; guideRef = captcha?.Id ?? 0; return captcha != null && captcha.Age >= CaptchaShown && BattleCaptchaShown; },
+            () => battle!.Captcha?.Id != guideRef,
+            () => battle!.Captcha is BattleCaptcha captcha && captcha.Id == guideRef && BattleCaptchaShown ? Spots(CaptchaGuideSpot(captcha)) : new(),
+            () => L("App độc: Captcha đè lên mèo, che cả mèo lẫn slime phía sau. Bấm hết ô có hình mèo để đóng; bấm nhầm ô khác là bị xáo lại.",
+                    "Malware: a captcha stands over the cat and hides it and the slimes behind. Click every tile with a cat to close it; a wrong tile shuffles it.")),
+        new(GuideBattery, GuideNewApps, true, true, 1,
+            () => battle!.BatteryLow && battleHud?.BatteryStrip.IsVisible == true,
+            () => !battle!.BatteryLow, () => Spots(HudPart(battleHud?.BatteryStrip)),
+            () => L("App độc: Pin yếu làm kỹ năng hồi chiêu chậm hẳn tới khi sạc. Bấm Cắm sạc.",
+                    "Malware: a low battery makes the skills recover much slower until it is charged. Click Plug in.")),
+        new(GuideCursor, GuideNewApps, true, true, 1,
+            () => battle!.CursorFrozen && battleHud?.CursorCover.IsVisible == true,
+            () => !battle!.CursorFrozen, () => Spots(HudPart(battleHud?.CursorCover)),
+            () => L("App độc: Con trỏ đơ khóa mọi ô kỹ năng. Bấm Tiếp tục để dùng lại ngay, hoặc chờ nó tự hết.",
+                    "Malware: a frozen cursor locks every skill slot. Click Continue to use them again now, or wait it out.")),
     };
+
+    private DesktopApp? ScreenshotIcon() => battle!.Desktop.FirstOrDefault(a => a.Kind == BattleAppKind.Screenshot);
+    // The captcha's window as placed (DIPs on the battle's monitor), padded like every spot.
+    private const double CaptchaShown = 0.2;
+    private Rect CaptchaGuideSpot(BattleCaptcha captcha) { var spot = CaptchaSpot(captcha); spot.Inflate(GuidePad, GuidePad); return spot; }
 
     // A skill to teach: carried, ready (or chosen) and slimes on the floor to use it on.
     private bool ToolDue(BattleSkill skill) => battle!.Carries(skill) && TourDue() && !BattleHoldsOff

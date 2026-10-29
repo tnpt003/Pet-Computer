@@ -829,3 +829,8 @@ Dữ liệu gốc, không cần file tùy chỉnh (chương 2, Lối Bãi rác, 
 - [ ] Chuyến Lối Bãi rác đang đi từ bản trước (luật 2): mở bản đồ vẫn đi tiếp.
 - [ ] Cảm giác (ghi vào Nhật ký chơi thử): 4 loại app độc cùng lúc ở chương 2 có quá rối không; Captcha 15 s và Con trỏ đơ 5 s có quá khó chịu không; Chụp Màn Hình 75 s có quá mạnh/yếu không.
 - [ ] Chữ vi/en/ja đúng, không tràn (HUD tiếng Nhật, Captcha); DPI 100/150/200% và màn hình phụ: Captcha đúng chỗ trên sàn, không bị cắt.
+
+### Hướng dẫn phiêu lưu: 4 app mới ở chương 2 (2026-10-30)
+- [ ] Màn chương 2 (Hướng dẫn bật): lần đầu icon Chụp Màn Hình sạc đầy, trận đứng hình, sáng icon; bấm icon thì hết bước và tia chớp vẫn bay xuống.
+- [ ] Lần đầu Captcha bật: trận đứng hình, sáng đúng cửa sổ Captcha (thanh thời gian không chạy); bấm hết ô mèo thì hết bước. Lần đầu Pin yếu / Con trỏ đơ: sáng dải đỏ / lớp đồng hồ cát; bấm Cắm sạc / Tiếp tục thì hết bước (đếm ngược "Không phản hồi" không chạy khi đang đứng hình).
+- [ ] Icon Chụp Màn Hình bị nhiễm chớp vào mèo lần đầu: sáng mèo và icon, Hiểu rồi để tiếp. Mỗi bước chỉ một lần mỗi lượt; "Bỏ qua hướng dẫn" tắt hết.

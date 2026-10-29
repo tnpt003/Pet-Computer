@@ -619,6 +619,20 @@ public sealed class Slime
     public double ClingTo, ClingClock;
     // Up its edge (climbing or clinging): out of reach from the floor (Altitude > 0).
     public bool OnWall => Cling is ClingPhase.Climbing or ClingPhase.Clinging;
+    // 1.5 M16 (PetBattle.Quills.cs). A hedgehog: where its quills are in their round and the time left in it.
+    public QuillPhase Quill;
+    public double QuillClock;
+    public bool Puffed => Quill == QuillPhase.Up;
+    // A timer: its clock's time left, its whole length, and the calls it has made.
+    public double ClockLeft, ClockTotal;
+    public int ClockCalls;
+    // A thief: what it carries (an app's id and its charge, or a skill), the edge it runs to (-1 left, 1 right),
+    // the time it has waited there; got away with it (gone, not drawn as defeated).
+    public StolenKind Loot;
+    public int LootApp, FleeSide;
+    public double LootCharge, LingerClock;
+    public BattleSkill LootSkill;
+    public bool Escaped;
     public bool Targetable => State is not (SlimeState.Spawning or SlimeState.Defeated);
     public void Set(SlimeState state)
     {
@@ -699,7 +713,11 @@ public enum BattleEventKind
     // 1.5 M15 (Value: the enemy's id): the cat's weapon only scratched an ice shell, the thrown cat broke
     // it, it grew back; a wall climber reached its spot up the edge, aimed, dropped a spike, was knocked
     // off (Value: 1 by the Grabber), landed on the floor. A spike landing is a GooLanded (Value: 1 hit).
-    IceScratched, IceShattered, IceRegrown, ClingClimbed, ClingAimed, ClingShot, ClingKnocked, ClingLanded
+    IceScratched, IceShattered, IceRegrown, ClingClimbed, ClingAimed, ClingShot, ClingKnocked, ClingLanded,
+    // 1.5 M16 (Value: the enemy's id): a hedgehog's quills rose, stood up, lay flat (soaked: the spray did
+    // it), pricked the cat hitting it; a timer's clock started, ran out (it called), its call came in; a
+    // thief stole (Value: 1 a skill, 0 an app), gave it back on its defeat, got away with it.
+    QuillsRising, QuillsUp, QuillsDown, QuillsSoaked, QuillsPricked, ClockStarted, ClockRang, ClockCalled, ThiefStole, ThiefReturned, ThiefEscaped
 }
 // 1.5 M14: a flyer's round (PetBattle.Fly.cs) and a burrower's (PetBattle.Burrow.cs).
 public enum FlyPhase { Aloft, Falling, Downed, Rising }
@@ -707,6 +725,9 @@ public enum BurrowPhase { Above, Digging, Under, Cracking, Emerging }
 // 1.5 M15: a wall climber's round (PetBattle.Wall.cs): on the floor (fighting, then going to its edge),
 // climbing, up on its edge, falling off.
 public enum ClingPhase { Ground, Climbing, Clinging, Falling }
+// 1.5 M16: a hedgehog's quills (PetBattle.Quills.cs): lying flat, rising (a warning), standing up; what a thief carries.
+public enum QuillPhase { Flat, Rising, Up }
+public enum StolenKind { None, App, Skill }
 // A spring trap (PetBattle.Spring.cs): set and waiting, squeezing before it springs, resting after, flattened.
 public enum SpringState { Ready, Squeezing, Resting, Flat }
 // A drop of goo in flight from a spitter (PetBattle.Spit.cs) and the puddle it leaves.

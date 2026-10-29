@@ -1,0 +1,17 @@
+{
+  // 1.5 M16 try-out: the hedgehog slime (S9), the timer slime (S10) and the thief slime (S11). They are in
+  // the built-in data but no battle uses them yet (chapter 2 and Infinity bring them in). Copy this file
+  // to %LOCALAPPDATA%\DesktopPet\battle.json (keep a copy of yours first), then Battle Mode → Start battle
+  // (the free battle). Custom data: no records, no rewards. Delete the file to get the usual free battle
+  // back. Hedgehog: hit it while its quills lie flat (up, they prick the cat), or use the Bomb; the Spray
+  // flattens them. Timer: beat it before its clock runs out, or more slimes come (dazing it slows the
+  // clock). Thief: it steals a ready skill and runs for the edge; beat it there to get the skill back.
+  "schemaVersion": 1,
+  "maxAlive": 6,
+  "waves": [
+    { "groups": [ { "enemy": "hedgehog", "count": 1 }, { "enemy": "slime", "count": 2 } ] },
+    { "groups": [ { "enemy": "timer", "count": 1 }, { "enemy": "slime", "count": 1 } ] },
+    { "groups": [ { "enemy": "thief", "count": 1 }, { "enemy": "hedgehog", "count": 1 }, { "enemy": "runner", "count": 1 } ] },
+    { "groups": [ { "enemy": "hedgehog", "count": 1, "elite": true }, { "enemy": "timer", "count": 1, "elite": true }, { "enemy": "thief", "count": 1, "elite": true } ] }
+  ]
+}

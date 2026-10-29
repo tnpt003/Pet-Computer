@@ -166,7 +166,7 @@ public sealed partial class BattleSim
     private int pendingNext;
     private StreamSpec? stream;
     public bool Streaming => stream != null;
-    public int ToSpawn { get { int n = incoming?.Length ?? 0; for (int i = pendingNext; i < pending.Count; i++) n += pending[i].Kinds.Length; return n; } }
+    public int ToSpawn { get { int n = (incoming?.Length ?? 0) + CallsWaiting; for (int i = pendingNext; i < pending.Count; i++) n += pending[i].Kinds.Length; return n; } }
     // Two-sided waves: the edge far from the cat when the wave began (-1 left, +1 right), the edge a
     // stream used last, and a spawn announced by an arrow at IncomingX (IncomingEdge) that comes in
     // IncomingRemaining s.
@@ -719,6 +719,8 @@ public sealed partial class BattleSim
         if (Blocks(slime, source)) return HitResult.Blocked;
         // An ice shell: the cat's weapon only scratches it (1.5 M15, PetBattle.Wall.cs).
         amount = IceShell(slime, amount, source);
+        // A hedgehog's quills up: the cat's weapon half hurts it and pricks the cat (1.5 M16, PetBattle.Quills.cs).
+        amount = QuillHit(slime, amount, source);
         // A tether's holder takes its share of every hit on its ally (never passed on again); a second
         // rope's holder its share of what is left (1.5 M12).
         if (source != DamageSource.Link && TetherHolder(slime) is Slime holder)
@@ -804,6 +806,7 @@ public sealed partial class BattleSim
         }
         events.Add(new(BattleEventKind.SlimeDefeated, slime.X, slime.IsBoss ? 1 : 0));
         LinkFallen(slime, true);
+        GiveBack(slime); // A thief gives back what it took (1.5 M16).
         AppsEnemyDefeated(slime);
         // A bomb slime defeated while lit blows up there; a splitting one breaks apart (1.5 M11).
         if (slime.Lit) Blast(slime, false);
@@ -868,6 +871,7 @@ public sealed partial class BattleSim
         ClearApps();
         incoming = null;
         IncomingRemaining = 0;
+        ClearCalls();
         CancelSwing();
         Combo = 0;
         CatStunRemaining = StunImmunity = 0;

@@ -217,7 +217,7 @@ public sealed partial class BattleFieldView : FrameworkElement
             for (int i = 0; i < sim.Slimes.Count; i++)
             {
                 var slime = sim.Slimes[i];
-                if (Layer(slime) != layer || slime.Exploded) continue; // A bomb that blew up: only its blast shows.
+                if (Layer(slime) != layer || slime.Exploded || slime.Escaped) continue; // A bomb that blew up: only its blast shows; a thief away: its puff.
                 double x = slime.X - OriginX + TrickDrift(slime);
                 // 1.5 M14: a flyer up in the air is drawn by its own window (only its shadow here); a
                 // burrower under the floor or going in/out of it has its own drawing.
@@ -514,6 +514,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         DrawTrickMarks(dc, slime, time);
         DrawSkyMarks(dc, slime, bw, bh, time);
         DrawWallMarks(dc, slime, bw, bh, time);
+        DrawQuillMarks(dc, slime, bw, bh, time);
         // An older support mark: a white "+" on its body.
         if (slime.Type.Marks == "cross") dc.DrawGeometry(Brushes.White, Outline, CrossMark);
         if (slime.Elite != null)

@@ -40,6 +40,7 @@ public sealed partial class BattleSim
             if (PhaseRemaining > 0) return;
             Wave++;
             pending.Clear(); pendingNext = 0;
+            ClearCalls();
             farEdge = Far(catX); streamEdge = 0;
             var wave = WavePlan[Math.Min(Wave, WaveCount) - 1]; // A survive stage repeats its last wave.
             stream = wave.Stream;
@@ -68,11 +69,16 @@ public sealed partial class BattleSim
         {
             IncomingRemaining = Math.Max(0, IncomingRemaining - dt);
             if (IncomingRemaining > 0 || Alive + incoming.Length > maxAlive) return;
+            int before = slimes.Count;
             SpawnUnit(catX, incoming, IncomingEdge, incomingElite);
+            if (incomingCalled) TagCalled(before); // A timer's call (1.5 M16).
+            incomingCalled = false;
             incoming = null; incomingElite = null;
             spawnTimer = NextSpawnIn();
             return;
         }
+        // A timer's call goes out before anything else (1.5 M16, PetBattle.Quills.cs).
+        if (SendCall(catX)) return;
         if (stream != null)
         {
             // Never more than maxAlive at once, however long the stream runs.
@@ -308,6 +314,8 @@ public sealed partial class BattleSim
         if (type.Burrow != null) slime.BurrowClock = 1;
         // 1.5 M15: an ice slime comes in with its shell on.
         slime.Iced = type.Ice != null;
+        // 1.5 M16: a hedgehog comes in with its quills flat.
+        slime.QuillClock = type.Quills?.Flat ?? 0;
         slime.Set(SlimeState.Spawning);
         JoinLinks(slime);
         slimes.Add(slime);

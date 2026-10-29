@@ -986,5 +986,19 @@
   "Ice slime: weapons only scratch it! Throw the cat hard into it to break the ice (the Spray softens it)": "こおりスライム：武器ではかすり傷だけ！猫を強く投げつけて氷を割ろう（スプレーで氷がやわらかくなる）",
   "The ice broke! Hit it now, before the ice grows back": "氷が割れた！氷が戻る前に今のうちに攻撃",
   "The wall slime climbed the edge! Throw the cat into it, or Push or Grab it down": "かべスライムが端をのぼった！猫を投げつけるか、プッシュかつかみ取りで落とそう",
-  "The wall slime fell! Hit it before it climbs back": "かべスライムが落ちた！またのぼる前に攻撃"
+  "The wall slime fell! Hit it before it climbs back": "かべスライムが落ちた！またのぼる前に攻撃",
+  "Hedgehog slime": "ハリネズミスライム",
+  "Timer slime": "タイマースライム",
+  "Thief slime": "どろぼうスライム",
+  "keeps its quills up longer": "トゲを長く立てる",
+  "its clock is shorter": "時計が短い",
+  "runs off faster": "逃げ足が速い",
+  "The hedgehog slime puffs up its quills! Hit it when they lie flat, or use the Bomb; the Spray flattens them": "ハリネズミスライムがトゲを立てた！トゲが寝ているときに攻撃するか、ボムを使おう（スプレーでトゲが寝る）",
+  "Pricked! Wait for the quills to lie flat": "トゲが刺さった！トゲが寝るまで待とう",
+  "Timer slime: when its clock runs out, it calls more slimes! Beat it first; dazing it slows the clock": "タイマースライム：時間切れで仲間を呼ぶ！先に倒そう（ふらふらにすると時計が遅くなる）",
+  "Ring! The timer slime called more slimes": "ジリリ！タイマースライムが仲間を呼んだ",
+  "The thief slime stole a skill! Beat it before it gets away to take it back": "どろぼうスライムがスキルを盗んだ！逃げられる前に倒して取り返そう",
+  "The thief slime stole an app's charge! Beat it before it gets away to take it back": "どろぼうスライムがアプリのチャージを盗んだ！逃げられる前に倒して取り返そう",
+  "Got it back!": "取り返した！",
+  "The thief slime got away…": "どろぼうスライムに逃げられた…"
 }

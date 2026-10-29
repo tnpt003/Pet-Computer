@@ -172,6 +172,12 @@ public sealed class EnemyType
     // need a throwHit (the thrown cat is their answer).
     public IceSpec? Ice { get; init; }
     public ClingSpec? Cling { get; init; }
+    // 1.5 M16 (PetBattle.Quills.cs): it puffs up its quills now and then and pricks the cat hitting it (S9),
+    // calls more enemies when its clock runs out (S10), or steals an app's charge or a ready skill and runs
+    // off with it (S11). Null: none.
+    public QuillsSpec? Quills { get; init; }
+    public ClockSpec? Clock { get; init; }
+    public StealSpec? Steal { get; init; }
     // An infected bin may spit one of this kind (with an elite affix). False keeps a kind out of battles
     // that never list it (the 1.5 enemies until their chapter brings them in).
     public bool BinSpit { get; init; } = true;
@@ -381,6 +387,46 @@ public sealed class ClingSpec
     public double EliteSpread { get; init; } = 60;
     public double Downed { get; init; } = 2.5;
     public double Ground { get; init; } = 4;
+}
+
+// S9 (1.5 M16): its quills lie flat Flat s, rise Warn s (seen coming), then stand Puffed s (an elite's
+// ElitePuffed). Puffed, a hit of the cat's weapon (swing, combo, splash; not its echo) takes only Armor × its
+// damage and pricks the cat for Prick (no stun; the Shield and the Turtle shell stop it). Bombs, skills,
+// apps and poison go through. Wet from the spray, its quills lie flat until it is dry.
+public sealed class QuillsSpec
+{
+    public double Flat { get; init; } = 3;
+    public double Warn { get; init; } = 0.5;
+    public double Puffed { get; init; } = 2.5;
+    public double ElitePuffed { get; init; } = 4;
+    public double Armor { get; init; } = 0.5;
+    public double Prick { get; init; } = 5;
+}
+
+// S10 (1.5 M16): its clock runs Seconds (an elite's EliteSeconds) from when it comes in, Stunned × as fast
+// while it is dazed. Run out, it calls the enemies of Call (announced at the edge behind the cat, coming
+// once the floor has room; the wave waits for them) and starts again, Calls times at most. Defeated, it
+// calls no more.
+public sealed class ClockSpec
+{
+    public double Seconds { get; init; } = 20;
+    public double EliteSeconds { get; init; } = 15;
+    public double Stunned { get; init; } = 0.3;
+    public int Calls { get; init; } = 2;
+    public string[] Call { get; init; } = { "slime", "slime", "runner" };
+}
+
+// S11 (1.5 M16): it never hurts the cat. Its windup next to the cat steals instead: the clean app icon with
+// the most charge (at least MinCharge; battles with apps), otherwise the ready skill with the longest
+// cooldown. Then it runs Flee × its speed (an elite's EliteFlee) to the field's edge away from the cat and,
+// after Linger s there (dazed or lured, the time waits), gets away with it: gone, not a defeat of the cat's.
+// Defeated first, it gives back what it took (the charge to its icon, the skill ready again).
+public sealed class StealSpec
+{
+    public double MinCharge { get; init; } = 0.3;
+    public double Flee { get; init; } = 1.5;
+    public double EliteFlee { get; init; } = 1.9;
+    public double Linger { get; init; } = 6;
 }
 
 // The thrown cat flying through an enemy at MinSpeed DIPs/s or more: Damage (as is, never blocked)
@@ -906,7 +952,7 @@ public static class BattleData
     public static readonly string[] WeaponStyles = { "sword", "hammer", "yarn", "glove" };
     public static readonly string[] WeaponHitEffects = { "spark", "thud" };
     public static readonly string[] EnemyRenderers = { "slime" };
-    public static readonly string[] EnemyMarks = { "none", "speed", "cracks", "leaf", "cross", "spout", "spring", "drum", "chain", "swarm", "giant", "bomb", "split", "half", "flag", "ghost", "bubble", "mirage", "sulk", "wings", "mole", "ice", "spikes" };
+    public static readonly string[] EnemyMarks = { "none", "speed", "cracks", "leaf", "cross", "spout", "spring", "drum", "chain", "swarm", "giant", "bomb", "split", "half", "flag", "ghost", "bubble", "mirage", "sulk", "wings", "mole", "ice", "spikes", "quills", "clock", "thief" };
     public static readonly string[] GroupSides = { "a", "b" };
     // Kinds the cursor beats (ghost, bubble, mirage, sulk) that one battle may bring (docs/UPDATE-1.5.md).
     public const int MaxMouseKinds = 2;
@@ -1150,7 +1196,7 @@ public static class BattleData
                 if (elite.WindupAdd <= 0 && elite.DashSpeed <= 1 && elite.SureBlocks == 0 && elite.FirstHeal <= 1 && elite.Hp <= 1 && elite.Damage <= 1
                     && elite.AttackCooldown >= 1 && elite.HealCooldown >= 1 && elite.HealBudget <= 1 && !elite.PushImmune && elite.VirusEvery <= 0
                     && e.Spit == null && e.Spring == null && e.Fuse == null && e.Split == null && !e.UsesMouse && e.Fly == null && e.Burrow == null
-                    && e.Ice == null && e.Cling == null) throw new InvalidDataException(at + ".elite changes nothing");
+                    && e.Ice == null && e.Cling == null && e.Quills == null && e.Clock == null && e.Steal == null) throw new InvalidDataException(at + ".elite changes nothing");
                 if (elite.DescVi == null || elite.DescEn == null || elite.DescVi.Length > 60 || elite.DescEn.Length > 60) throw new InvalidDataException(at + ".elite descriptions must be at most 60 characters");
             }
             if (e.Link is LinkSpec link)
@@ -1273,6 +1319,32 @@ public static class BattleData
                 if (cling.EliteSpikes is < 1 or > 4) throw new InvalidDataException(at + ".cling.eliteSpikes must be 1–4");
                 Within(cling.EliteSpread, 0, 300, at + ".cling.eliteSpread"); Within(cling.Downed, 0.5, 15, at + ".cling.downed"); Within(cling.Ground, 0, 30, at + ".cling.ground");
             }
+            // 1.5 M16: a hedgehog, a timer or a thief is nothing else besides.
+            if (e.Quills != null || e.Clock != null || e.Steal != null)
+            {
+                if ((e.Quills != null ? 1 : 0) + (e.Clock != null ? 1 : 0) + (e.Steal != null ? 1 : 0) > 1) throw new InvalidDataException(at + " may have only one of quills, clock and steal");
+                if (e.Boss || e.Blocker || e.Dash || e.Slam || e.Hover > 0 || e.Support || e.HealAmount > 0 || e.Link != null || e.Spit != null || e.Spring != null
+                    || e.Fuse != null || e.Split != null || e.UsesMouse || e.Fly != null || e.Burrow != null || e.Ice != null || e.Cling != null || e.SummonAt > 0 || e.Phases != null)
+                    throw new InvalidDataException(at + ": quills, clock and steal are not for a boss, blocker, dash, slam, hovering, support, healing, linked, spitting, spring, bomb, splitting, cursor, flying, burrowing, ice, climbing or summoning enemy");
+            }
+            if (e.Quills is QuillsSpec quills)
+            {
+                Within(quills.Flat, 0.5, 30, at + ".quills.flat"); Within(quills.Warn, 0, 3, at + ".quills.warn");
+                Within(quills.Puffed, 0.5, 30, at + ".quills.puffed"); Within(quills.ElitePuffed, 0.5, 30, at + ".quills.elitePuffed");
+                Within(quills.Armor, 0, 1, at + ".quills.armor"); Within(quills.Prick, 0, 100, at + ".quills.prick");
+            }
+            if (e.Clock is ClockSpec clock)
+            {
+                Within(clock.Seconds, 3, 120, at + ".clock.seconds"); Within(clock.EliteSeconds, 3, 120, at + ".clock.eliteSeconds");
+                Within(clock.Stunned, 0, 1, at + ".clock.stunned");
+                if (clock.Calls is < 1 or > 5) throw new InvalidDataException(at + ".clock.calls must be 1–5");
+                if (clock.Call is not { Length: >= 1 and <= 4 }) throw new InvalidDataException(at + ".clock.call must name 1–4 enemies");
+            }
+            if (e.Steal is StealSpec steal)
+            {
+                Within(steal.MinCharge, 0.05, 1, at + ".steal.minCharge"); Within(steal.Flee, 0.5, 4, at + ".steal.flee");
+                Within(steal.EliteFlee, 0.5, 4, at + ".steal.eliteFlee"); Within(steal.Linger, 0.5, 30, at + ".steal.linger");
+            }
             // 1.5 M13: one cursor trick per kind, never on a boss.
             if (e.UsesMouse)
             {
@@ -1336,6 +1408,12 @@ public static class BattleData
         foreach (var e in s.EnemyTypes)
             if (e.Split is SplitSpec split && (!ids.Contains(split.Into) || s.Enemy(split.Into) is { Boss: true } or { Split: not null }))
                 throw new InvalidDataException($"enemies[{e.Id}].split.into must name a known enemy that is not a boss and does not split");
+        // What a timer calls: known enemies that are not bosses and call nobody in turn (1.5 M16).
+        foreach (var e in s.EnemyTypes)
+            if (e.Clock is ClockSpec clock)
+                foreach (var call in clock.Call)
+                    if (call == null || !ids.Contains(call) || s.Enemy(call) is { Boss: true } or { Clock: not null })
+                        throw new InvalidDataException($"enemies[{e.Id}].clock.call names \"{call}\": an unknown enemy, a boss or another timer");
         // A summoned helper may not summon in turn (no chains of calls).
         static bool Summons(EnemyType e) => e.SummonAt > 0 || e.Phases?.Any(p => p.Calls().Any()) == true;
         foreach (var e in s.EnemyTypes)

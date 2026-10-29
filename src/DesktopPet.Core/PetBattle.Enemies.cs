@@ -33,13 +33,13 @@ public sealed partial class BattleSim
             if (s.Burrowed) continue; // Under the floor (PetBattle.Burrow.cs).
             // One in a bubble or sulking takes no HP from the cat's blows, one in its ice shell only scratches
             // (1.5 M15): left alone while there is another.
-            if (s.Mended || s.Bubbled || s.Type.Sulk != null || s.Iced) { if (guarded == null || Math.Abs(s.X - catX) < Math.Abs(guarded.X - catX)) guarded = s; continue; }
+            if (s.Mended || s.Bubbled || s.Type.Sulk != null || s.Iced || s.Puffed) { if (guarded == null || Math.Abs(s.X - catX) < Math.Abs(guarded.X - catX)) guarded = s; continue; }
             if (nearest == null || Math.Abs(s.X - catX) < Math.Abs(nearest.X - catX)) nearest = s;
         }
         nearest ??= guarded;
         // Keep the current choice unless another slime is clearly closer (no dithering).
         var current = Find(autoTargetId);
-        if (current != null && current.Targetable && !current.Shielded && !current.Faded && !current.Burrowed && !current.Airborne && (!(current.Mended || current.Bubbled || current.Type.Sulk != null || current.Iced) || nearest == current) && nearest != null &&
+        if (current != null && current.Targetable && !current.Shielded && !current.Faded && !current.Burrowed && !current.Airborne && (!(current.Mended || current.Bubbled || current.Type.Sulk != null || current.Iced || current.Puffed) || nearest == current) && nearest != null &&
             Math.Abs(current.X - catX) <= Math.Abs(nearest.X - catX) + 40) nearest = current;
         autoTargetId = nearest?.Id ?? 0;
         return nearest;
@@ -104,6 +104,9 @@ public sealed partial class BattleSim
             if (Over) break;
             if (slime.State == SlimeState.Defeated) continue;
             StepIce(slime, dt); // 1.5 M15: a broken ice shell grows back (PetBattle.Wall.cs).
+            // 1.5 M16: a hedgehog's quills, a timer's clock (PetBattle.Quills.cs).
+            StepQuills(slime, dt);
+            StepClock(slime, dt);
             // A lit bomb burns on whatever it does (in the Grabber's claw too).
             if (slime.Lit && BurnFuse(slime, dt)) { if (Over) break; continue; }
             if (slime.Handled) continue; // In the Grabber's claw or flying from it (PetBattle.Grabber.cs).
@@ -183,6 +186,8 @@ public sealed partial class BattleSim
                     if (slime.Lured && LaserX is double dot) { Lure(slime, dot, dt, minX, maxX); break; }
                     // A faded ghost attacks nothing: it drifts through the cat (PetBattle.Tricks.cs).
                     if (slime.Faded) { Drift(slime, dt, catX, minX, maxX); break; }
+                    // A thief runs off with its loot, or trails a cat with nothing to steal (PetBattle.Quills.cs).
+                    if (slime.Type.Steal is StealSpec steal && Sneak(slime, steal, dt, catX, minX, maxX)) break;
                     // A spring trap never attacks: it lies still, or slides up to a cat far away (PetBattle.Spring.cs).
                     if (slime.Type.Spring != null) { Creep(slime, dt, catX, minX, maxX); break; }
                     // A spitter spits from afar before anything else (even from behind its allies).
@@ -412,7 +417,7 @@ public sealed partial class BattleSim
         var live = scratch;
         live.Clear();
         // A leaping boss flies over the others.
-        foreach (var slime in slimes) if (slime.State != SlimeState.Defeated && !slime.KeepingBack && slime.LeapHeight <= 0 && !slime.Riding && !slime.Airborne && !slime.Handled && !slime.Burrowed && slime.Type.Spring == null && slime.Type.Blocker == blockers) live.Add(slime);
+        foreach (var slime in slimes) if (slime.State != SlimeState.Defeated && !slime.KeepingBack && slime.LeapHeight <= 0 && !slime.Riding && !slime.Airborne && !slime.Handled && !slime.Burrowed && slime.Type.Spring == null && slime.Loot == StolenKind.None && slime.Type.Blocker == blockers) live.Add(slime);
         live.Sort(ByX);
         for (int i = 1; i < live.Count; i++)
         {
@@ -437,6 +442,8 @@ public sealed partial class BattleSim
         if (slime.Type.Slam) AddEffect(BattleEffectKind.Slam, slime.X, 0, slime.Range);
         // Missed: the cat moved away, is protected, or is off the floor right now.
         if (CatLifted || Math.Abs(catX - slime.X) > slime.Range + 12 || Grace > 0) return;
+        // A thief's windup steals instead of hurting (1.5 M16).
+        if (slime.Type.Steal != null) { Steal(slime, catX); return; }
         HurtCat(slime, catX, false, slime.Type.SlamShare);
     }
 

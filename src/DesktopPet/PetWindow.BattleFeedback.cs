@@ -71,6 +71,10 @@ public sealed partial class PetWindow
         [BattleEventKind.IceScratched] = ("clank", 2), [BattleEventKind.IceShattered] = ("pop", 5), [BattleEventKind.IceRegrown] = ("squish", 2),
         [BattleEventKind.ClingClimbed] = ("swoosh", 2), [BattleEventKind.ClingAimed] = ("clank", 2), [BattleEventKind.ClingShot] = ("swoosh", 3),
         [BattleEventKind.ClingKnocked] = ("pop", 4), [BattleEventKind.ClingLanded] = ("ball_tap", 4),
+        // 1.5 M16: the hedgehog, the timer and the thief.
+        [BattleEventKind.QuillsUp] = ("clank", 3), [BattleEventKind.QuillsDown] = ("squish", 2), [BattleEventKind.QuillsSoaked] = ("squish", 3),
+        [BattleEventKind.QuillsPricked] = ("clank", 4), [BattleEventKind.ClockRang] = ("clank", 5), [BattleEventKind.ClockCalled] = ("swoosh", 3),
+        [BattleEventKind.ThiefStole] = ("swoosh", 4), [BattleEventKind.ThiefReturned] = ("satisfied", 5), [BattleEventKind.ThiefEscaped] = ("pop", 3),
     };
 
     private void PlayBattleSound()
@@ -105,7 +109,7 @@ public sealed partial class PetWindow
         foreach (var s in battle.Slimes) if (s.Id == (int)e.Value) return s;
         return null;
     }
-    private string? TrickBanner(BattleEventKind kind) => kind switch
+    private string? TrickBanner(BattleEvent e) => e.Kind switch
     {
         BattleEventKind.GhostFaded => L("Slime bóng ma tàng hình! Rê chuột lên nó để soi", "The ghost slime faded out! Hover the cursor over it to light it up"),
         BattleEventKind.BubbleBlocked => L("Bong bóng chặn mọi đòn! Click vào nó vài lần để chọc vỡ", "The bubble takes every hit! Click it a few times to pop it"),
@@ -126,6 +130,18 @@ public sealed partial class PetWindow
         BattleEventKind.ClingClimbed => L("Slime bám tường leo lên mép! Ném mèo vào nó, Đẩy hoặc Kẹp gắp kéo xuống",
             "The wall slime climbed the edge! Throw the cat into it, or Push or Grab it down"),
         BattleEventKind.ClingLanded => L("Slime bám tường rơi xuống! Đánh ngay trước khi nó leo lại", "The wall slime fell! Hit it before it climbs back"),
+        // 1.5 M16.
+        BattleEventKind.QuillsUp => L("Slime nhím xù gai! Đánh lúc gai xẹp, hoặc dùng Bom, Bình xịt làm xẹp gai",
+            "The hedgehog slime puffs up its quills! Hit it when they lie flat, or use the Bomb; the Spray flattens them"),
+        BattleEventKind.QuillsPricked => L("Bị gai đâm! Chờ gai xẹp rồi hãy đánh", "Pricked! Wait for the quills to lie flat"),
+        BattleEventKind.ClockStarted => L("Slime hẹn giờ: hết giờ nó gọi thêm quân! Hạ nó trước; choáng làm đồng hồ chậm",
+            "Timer slime: when its clock runs out, it calls more slimes! Beat it first; dazing it slows the clock"),
+        BattleEventKind.ClockRang => L("Reng! Slime hẹn giờ gọi thêm quân", "Ring! The timer slime called more slimes"),
+        BattleEventKind.ThiefStole => e.Value > 0
+            ? L("Slime trộm lấy mất một kỹ năng! Hạ nó trước khi nó chạy khỏi màn để lấy lại", "The thief slime stole a skill! Beat it before it gets away to take it back")
+            : L("Slime trộm hút năng lượng một app! Hạ nó trước khi nó chạy khỏi màn để lấy lại", "The thief slime stole an app's charge! Beat it before it gets away to take it back"),
+        BattleEventKind.ThiefReturned => L("Lấy lại rồi!", "Got it back!"),
+        BattleEventKind.ThiefEscaped => L("Slime trộm chạy mất…", "The thief slime got away…"),
         _ => null
     };
     private bool IsUpdate(BattleEvent e) => battle?.FindHazard((int)e.Value) is { Kind: HazardKind.Update };
@@ -218,7 +234,10 @@ public sealed partial class PetWindow
                 BattleEventKind.GhostFaded or BattleEventKind.BubbleBlocked or BattleEventKind.BubblePopped or BattleEventKind.MirageCast or BattleEventKind.SulkPuffed
                     or BattleEventKind.SulkCalmed or BattleEventKind.FlyAimed or BattleEventKind.FlyerDowned or BattleEventKind.BurrowCracked
                     or BattleEventKind.BurrowPinned or BattleEventKind.IceScratched or BattleEventKind.IceShattered or BattleEventKind.ClingClimbed
-                    or BattleEventKind.ClingLanded when trickExplained.Add(e.Kind) => TrickBanner(e.Kind),
+                    or BattleEventKind.ClingLanded or BattleEventKind.QuillsUp or BattleEventKind.QuillsPricked or BattleEventKind.ClockStarted
+                    or BattleEventKind.ClockRang when trickExplained.Add(e.Kind) => TrickBanner(e),
+                // 1.5 M16: the thief's news shows every time (what it took matters).
+                BattleEventKind.ThiefStole or BattleEventKind.ThiefReturned or BattleEventKind.ThiefEscaped => TrickBanner(e),
                 BattleEventKind.Won => L("CHIẾN THẮNG!", "VICTORY!"),
                 BattleEventKind.Lost => L("THUA RỒI…", "DEFEATED…"),
                 _ => null

@@ -715,6 +715,25 @@ S5 và S6 của docs/UPDATE-1.5.md, theo ngoại lệ Battle Mode đã duyệt 2
 - Sự kiện mới: `FlyAimed`, `FlyShot`, `FlyShotHit` (Value 1: mèo đang cầm), `FlyerKnocked` (Value 1: Kẹp gắp), `FlyerDowned`, `FlyerRose`, `BurrowCracked`, `BurrowEmerged` (Value 1: trúng mèo), `BurrowPinned`, `BurrowPulled`, `BurrowDug` (cue có sẵn). Banner lần đầu mỗi trận (vi/en/ja): slime bay ngắm mèo, slime bay rơi, sàn nứt, đè trúng.
 - Chưa làm: Captcha (A2) chưa có nên luật "Captcha không ra khi có slime bay" để làm cùng A2; Sổ tay quái và hướng dẫn chương 2 cho hai quái ở M21/M27. Số liệu là ước lượng, chỉnh sau khi chơi thật. Perf: chưa đo; canvas đạn phủ cả vùng làm việc chỉ hiện khi có đạn/đang ngắm.
 
+## Slime băng và slime bám tường (`ice`, `cling`) (bản 1.5, mốc M15, 2026-10-29)
+
+S7 và S8 của docs/UPDATE-1.5.md, dùng khóa `throwHit` của M03 (cú ném chỉ tác động quái có tương tác ném riêng, ngoại lệ Battle Mode đã duyệt 2026-10-26). Code: `src/DesktopPet.Core/PetBattle.Wall.cs` (luật), `src/DesktopPet/PetBattleView.Wall.cs` (vẽ), test `tests/DesktopPet.Tests/BattleWallTests.cs`, ảnh UiChecks (`WallVisualChecks`: `enemy-wall.png`). **Hai quái có trong battle.json gốc nhưng chưa trận nào dùng** (`binSpit: false`): chương 1, trận tự do, Viễn chinh, Vô tận không đổi (bảng mô phỏng cân bằng giống hệt bản trước từng dòng, 232/232). Muốn thử: chép `docs/examples/battle-m15.json` thành `%LOCALAPPDATA%\DesktopPet\battle.json` rồi mở Trận tự do.
+
+```json
+{ "id": "icy", "throwHit": { "minSpeed": 650, "damage": 12, "stun": 1.5 },
+  "ice": { "armor": 0.15, "wetSpeed": 400, "regrow": 10, "eliteRegrow": 6 } }
+{ "id": "clinger", "throwHit": { "minSpeed": 450, "damage": 8 },
+  "cling": { "height": 60, "spacing": 46, "climb": 90, "cooldown": 3, "aim": 0.9, "flight": 0.5, "radius": 36,
+             "eliteSpikes": 2, "eliteSpread": 60, "downed": 2.5, "ground": 4 } }
+```
+
+- **Slime băng** (`icy`, 50 HP, xanh băng, vỏ băng trong suốt có viền xanh): vào trận có vỏ băng. Còn vỏ thì đòn vũ khí của mèo (vung thường, combo, lan, dư ảnh; cả khi đang cầm) chỉ còn ×`armor` ("xước"); Bom, kỹ năng, app, độc, cú ném không bị vỏ giảm. Còn vỏ thì mèo ưu tiên đánh slime khác (như bong bóng/dỗi). Mèo **đang bay sau cú ném** đi xuyên nó với tốc độ ≥ `throwHit.minSpeed` thì vỡ vỏ, rồi `throwHit` tác động như thường (mất 12, choáng 1,5 s). Đang ướt vì Bình xịt (vỏ vẽ đứt nét, có giọt nhỏ) thì chỉ cần ≥ `wetSpeed`. Vỡ rồi chỉ còn vài mảnh băng trên đầu, lớn dần; sau `regrow` s (tinh anh `eliteRegrow`; 0: không mọc lại) vỏ mọc lại. Pause đóng băng.
+- **Slime bám tường** (`clinger`, 40 HP, xanh ô liu, hàng gai trên lưng, chân có vuốt): ra trận thì đi tới mép trái/phải gần nhất của dải trận (không đánh dọc đường) rồi leo lên (`climb` DIPs/s) tới khi chân cao `height` DIPs (con thứ hai cùng mép cao thêm `spacing`, tối đa 110). Trên mép nó nghiêng vào tường, có bóng dưới sàn, là quái trên không: mèo dưới sàn không nhắm/chọn, Quạt/Laser/đòn lan không tới; mèo đang cầm đưa lại gần thì tự vung vuốt (như `hover`). Mỗi `cooldown` s nó ngắm `aim` s (vòng đỏ đầy dần ở chỗ mèo trên sàn) rồi ném gai theo đường cong tới đó, rơi sau `flight` s: mèo **dưới sàn** trong `radius` mất máu như đòn của nó, không choáng; nhấc mèo, `landingGrace`, Khiên, Mai rùa né/chặn như giọt của slime phun. Tinh anh ném `eliteSpikes` gai cách nhau `eliteSpread` quanh chỗ mèo.
+- **Làm rơi:** mèo đang bay sau cú ném đi xuyên nó với tốc độ ≥ `throwHit.minSpeed` (ném mèo vào mép tường chỗ nó bám; nó còn mất `throwHit.damage`), Đẩy (click vào nó khi chọn Đẩy), Kẹp gắp (click vào nó: **giật xuống ngay**, không treo theo con trỏ, tiêu Kẹp gắp) hoặc bất kỳ cú choáng nào. Nó rơi, nằm choáng `downed` s dưới sàn, đánh nhau dưới sàn như slime thường `ground` s rồi đi leo lại. Bom rơi sát mép vẫn trúng nó (Bom tính theo chiều ngang).
+- Kiểm tra lúc nạp: một loại không vừa băng vừa bám tường; hai khóa này phải có `throwHit`; không cho boss, đá chắn, lao, nện, `hover`, hỗ trợ, hồi máu, liên kết, phun, lò xo, bom, tách đôi, quái dùng chuột, bay, đào hang; `wetSpeed` ≤ `throwHit.minSpeed`; `cling.height` 20–110; số liệu trong giới hạn.
+- Sự kiện mới: `IceScratched`, `IceShattered`, `IceRegrown`, `ClingClimbed`, `ClingAimed`, `ClingShot`, `ClingKnocked` (Value 1: Kẹp gắp), `ClingLanded`; gai rơi là `GooLanded` (Value 1: trúng mèo). Cue có sẵn. Banner lần đầu mỗi trận (vi/en/ja): vũ khí chỉ xước, vỡ băng, slime bám tường leo lên mép, slime bám tường rơi.
+- Chưa làm: Sổ tay quái và hướng dẫn chương 2 cho hai quái ở M21/M27. Số liệu (`armor`, ngưỡng tốc độ ném, độ cao bám) là ước lượng, chỉnh sau khi chơi thật: chưa đo tốc độ ném thực tế của người dùng khi nhắm vào mép màn hình.
+
 ## Viễn chinh (`expedition`) (2026-10-21)
 
 Một chuyến đi gồm nhiều bậc, mỗi bậc chọn một điểm, bậc cuối là trùm. HP và build của mèo đi tiếp từ bậc này sang bậc sau; chuyến mới bắt đầu lại từ đầu. Code: `src/DesktopPet.Core/PetExpedition.cs` (luật, không WPF), `PetWindow.Expedition.cs` (bản đồ, kết quả).

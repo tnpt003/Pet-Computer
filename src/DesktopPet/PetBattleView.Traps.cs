@@ -142,6 +142,7 @@ public sealed partial class BattleFieldView
             dc.DrawEllipse(null, SpitEdge, at, r, 8);
             dc.DrawEllipse(null, DropShadow, at, 5 + 9 * k, 2 + 2 * k);
         }
+        DrawSpikeAims(dc, floor);
     }
 
     // Over the slimes: the drops in flight, an arc from the spitter's head to where they land.
@@ -150,6 +151,7 @@ public sealed partial class BattleFieldView
         for (int i = 0; i < sim.Goos.Count; i++)
         {
             var g = sim.Goos[i];
+            if (g.Spike) { DrawSpike(dc, g, floor); continue; } // A wall climber's (1.5 M15).
             double k = g.Progress, x = g.FromX + (g.X - g.FromX) * k - OriginX;
             double y = floor - (40 * (1 - k) + 4 * k) - 4 * 70 * k * (1 - k);
             var fill = KindBrush(g.Tint ?? "#C38BE8");

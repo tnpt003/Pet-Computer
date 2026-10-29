@@ -130,13 +130,14 @@ public sealed partial class BattleSim
         double speed = Math.Sqrt(cat.VX * cat.VX + cat.VY * cat.VY);
         foreach (var s in slimes.ToArray())
         {
-            if (s.Type.ThrowHit is not ThrowHitSpec rule || !s.Targetable || speed < rule.MinSpeed || thrownInto.Contains(s.Id)) continue;
+            if (s.Type.ThrowHit is not ThrowHitSpec rule || !s.Targetable || speed < ThrowSpeed(s, rule) || thrownInto.Contains(s.Id)) continue;
             double pad = CatHalfWidth;
             if (!Crosses(from.X, from.Height, cat.X, cat.Height, s.X - s.HitWidth / 2 - pad, s.Altitude - pad, s.X + s.HitWidth / 2 + pad, s.Altitude + s.Height + pad)) continue;
             thrownInto.Add(s.Id);
             ThrowHits++;
             events.Add(new(BattleEventKind.ThrowHit, s.X, s.Id));
             AddEffect(BattleEffectKind.Combo, s.X, s.Altitude + s.Height / 2);
+            Thrown(s); // An ice shell breaks, a wall climber falls off (1.5 M15, PetBattle.Wall.cs).
             if (rule.Damage > 0) Damage(s, rule.Damage, DamageSource.Throw);
             if (rule.Stun > 0 && s.Targetable) Daze(s, rule.Stun);
         }

@@ -201,6 +201,8 @@ internal static class BattleHeldTests
             "A throw rule that changes nothing or has a minSpeed out of its limits is refused");
         var parsed = BattleData.Parse("{\"enemies\":[{\"id\":\"slime\"},{\"id\":\"ice\",\"hover\":80,\"throwHit\":{\"minSpeed\":700,\"damage\":30,\"stun\":1.5}},{\"id\":\"king\",\"boss\":true}]}").Enemy("ice");
         check(parsed is { Hover: 80, ThrowHit: { MinSpeed: 700, Damage: 30, Stun: 1.5 } }, "battle.json reads hover and throwHit");
-        check(BattleData.Settings.EnemyTypes.All(e => e.Hover == 0 && e.ThrowHit == null), "No built-in enemy flies or reacts to a throw yet");
+        // 1.5 M15: only the ice slime and the wall climber react to a throw (BattleWallTests).
+        check(BattleData.Settings.EnemyTypes.All(e => e.Hover == 0 && (e.ThrowHit == null) == (e.Ice == null && e.Cling == null)),
+            "No built-in enemy hovers; only the ice slime and the wall climber react to a throw");
     }
 }

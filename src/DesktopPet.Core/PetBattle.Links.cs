@@ -80,7 +80,7 @@ public sealed partial class BattleSim
                 int bestRopes = 0;
                 foreach (var s in slimes)
                 {
-                    if (s == slime || !s.Targetable || s.IsBoss || s.Handled || s.Decoy || s.Burrowed || s.Type.Fly != null || Is(s, EnemyLinks.Tether) || s.Riding || Math.Abs(s.X - slime.X) > link.Range) continue;
+                    if (s == slime || !s.Targetable || s.IsBoss || s.Handled || s.Decoy || s.Burrowed || s.Type.Fly != null || s.Type.Cling != null || Is(s, EnemyLinks.Tether) || s.Riding || Math.Abs(s.X - slime.X) > link.Range) continue;
                     int ropes = Tethers(s);
                     if (ropes >= EnemyLinks.MaxTethers) continue;
                     if (best == null || ropes < bestRopes || ropes == bestRopes && Math.Abs(s.X - slime.X) < Math.Abs(best.X - slime.X)) { best = s; bestRopes = ropes; }

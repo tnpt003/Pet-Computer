@@ -608,6 +608,17 @@ public sealed class Slime
     public double BurrowClock, BurrowRest, CrackX;
     // Under the floor (only its mound shows): nothing hits it and it attacks nothing.
     public bool Burrowed => Burrow is BurrowPhase.Under or BurrowPhase.Cracking;
+    // 1.5 M15 (PetBattle.Wall.cs). An ice slime: its shell is on, and the time until it grows back.
+    public bool Iced;
+    public double IceClock;
+    // A wall climber: where it is in its round, the edge it goes to (-1 left, 1 right), the height its
+    // bottom climbs to there, and the time left on the floor before it goes back (it shares the flyer's
+    // ShotClock, AimLeft, ShotsLeft and FallSpeed; SpitAt is where its spikes will land).
+    public ClingPhase Cling;
+    public int WallSide;
+    public double ClingTo, ClingClock;
+    // Up its edge (climbing or clinging): out of reach from the floor (Altitude > 0).
+    public bool OnWall => Cling is ClingPhase.Climbing or ClingPhase.Clinging;
     public bool Targetable => State is not (SlimeState.Spawning or SlimeState.Defeated);
     public void Set(SlimeState state)
     {
@@ -684,11 +695,18 @@ public enum BattleEventKind
     // it was knocked down (Value: 1 by the Grabber), landed, flew up again; a burrower's cracks showed, it
     // came up (Value: 1 it hit the cat), was pinned by the cat let go on it, pulled up by the Grabber, dug in.
     FlyAimed, FlyShot, FlyShotHit, FlyerKnocked, FlyerDowned, FlyerRose,
-    BurrowCracked, BurrowEmerged, BurrowPinned, BurrowPulled, BurrowDug
+    BurrowCracked, BurrowEmerged, BurrowPinned, BurrowPulled, BurrowDug,
+    // 1.5 M15 (Value: the enemy's id): the cat's weapon only scratched an ice shell, the thrown cat broke
+    // it, it grew back; a wall climber reached its spot up the edge, aimed, dropped a spike, was knocked
+    // off (Value: 1 by the Grabber), landed on the floor. A spike landing is a GooLanded (Value: 1 hit).
+    IceScratched, IceShattered, IceRegrown, ClingClimbed, ClingAimed, ClingShot, ClingKnocked, ClingLanded
 }
 // 1.5 M14: a flyer's round (PetBattle.Fly.cs) and a burrower's (PetBattle.Burrow.cs).
 public enum FlyPhase { Aloft, Falling, Downed, Rising }
 public enum BurrowPhase { Above, Digging, Under, Cracking, Emerging }
+// 1.5 M15: a wall climber's round (PetBattle.Wall.cs): on the floor (fighting, then going to its edge),
+// climbing, up on its edge, falling off.
+public enum ClingPhase { Ground, Climbing, Clinging, Falling }
 // A spring trap (PetBattle.Spring.cs): set and waiting, squeezing before it springs, resting after, flattened.
 public enum SpringState { Ready, Squeezing, Resting, Flat }
 // A drop of goo in flight from a spitter (PetBattle.Spit.cs) and the puddle it leaves.
@@ -697,6 +715,9 @@ public sealed class BattleGoo
     public int OwnerId;
     public double FromX, X, Flight, Remaining, Damage, Radius, PuddleSeconds, PuddleRadius, DashDistance, DashSpeed;
     public string? Tint;
+    // A wall climber's spike (1.5 M15): straight down from FromHeight over the floor, no puddle.
+    public bool Spike;
+    public double FromHeight;
     // How far along its flight it is (0–1).
     public double Progress => Flight > 0 ? Math.Clamp(1 - Remaining / Flight, 0, 1) : 1;
 }

@@ -717,6 +717,8 @@ public sealed partial class BattleSim
             return HitResult.Immune;
         }
         if (Blocks(slime, source)) return HitResult.Blocked;
+        // An ice shell: the cat's weapon only scratches it (1.5 M15, PetBattle.Wall.cs).
+        amount = IceShell(slime, amount, source);
         // A tether's holder takes its share of every hit on its ally (never passed on again); a second
         // rope's holder its share of what is left (1.5 M12).
         if (source != DamageSource.Link && TetherHolder(slime) is Slime holder)

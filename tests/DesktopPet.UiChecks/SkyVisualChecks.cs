@@ -13,7 +13,7 @@ internal static class SkyVisualChecks
 {
     const double Width = 1200;
 
-    private static byte[] Render(FrameworkElement view, int w, int h, string? save = null)
+    internal static byte[] Render(FrameworkElement view, int w, int h, string? save = null)
     {
         view.Measure(new Size(w, h));
         view.Arrange(new Rect(0, 0, w, h));
@@ -43,7 +43,7 @@ internal static class SkyVisualChecks
     }
 
     // Pixels near this colour inside a box, at least this opaque (premultiplied colours divided back).
-    private static int Count(byte[] px, int w, int h, Color c, int x0, int x1, int y0, int y1, int tolerance = 24, int alpha = 200)
+    internal static int Count(byte[] px, int w, int h, Color c, int x0, int x1, int y0, int y1, int tolerance = 24, int alpha = 200)
     {
         int n = 0;
         for (int y = Math.Max(0, y0); y < Math.Min(h, y1); y++)

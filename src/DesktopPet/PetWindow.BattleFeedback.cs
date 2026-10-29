@@ -67,6 +67,10 @@ public sealed partial class PetWindow
         [BattleEventKind.FlyerKnocked] = ("pop", 4), [BattleEventKind.FlyerDowned] = ("ball_tap", 4), [BattleEventKind.FlyerRose] = ("swoosh", 2),
         [BattleEventKind.BurrowCracked] = ("clank", 4), [BattleEventKind.BurrowEmerged] = ("ball_tap", 5), [BattleEventKind.BurrowPinned] = ("pop", 5),
         [BattleEventKind.BurrowPulled] = ("pop", 4), [BattleEventKind.BurrowDug] = ("squish", 2),
+        // 1.5 M15: the ice slime and the wall climber.
+        [BattleEventKind.IceScratched] = ("clank", 2), [BattleEventKind.IceShattered] = ("pop", 5), [BattleEventKind.IceRegrown] = ("squish", 2),
+        [BattleEventKind.ClingClimbed] = ("swoosh", 2), [BattleEventKind.ClingAimed] = ("clank", 2), [BattleEventKind.ClingShot] = ("swoosh", 3),
+        [BattleEventKind.ClingKnocked] = ("pop", 4), [BattleEventKind.ClingLanded] = ("ball_tap", 4),
     };
 
     private void PlayBattleSound()
@@ -115,6 +119,13 @@ public sealed partial class PetWindow
         BattleEventKind.FlyerDowned => L("Slime bay rơi xuống! Đánh ngay, nó mất máu gấp rưỡi", "The flying slime is down! Hit it now, it takes extra damage"),
         BattleEventKind.BurrowCracked => L("Sàn nứt! Nhấc mèo lên rồi thả xuống vòng nứt để đè nó", "The floor cracks! Lift the cat, then drop it on the cracks to pin it"),
         BattleEventKind.BurrowPinned => L("Đè trúng! Slime đào hang kẹt ngoài, đánh ngay", "Pinned! The burrowing slime is stuck out, hit it now"),
+        // 1.5 M15.
+        BattleEventKind.IceScratched => L("Slime băng: vũ khí chỉ làm xước! Ném mèo thật mạnh vào nó để phá băng (Bình xịt làm mềm băng)",
+            "Ice slime: weapons only scratch it! Throw the cat hard into it to break the ice (the Spray softens it)"),
+        BattleEventKind.IceShattered => L("Vỡ băng! Đánh ngay trước khi băng mọc lại", "The ice broke! Hit it now, before the ice grows back"),
+        BattleEventKind.ClingClimbed => L("Slime bám tường leo lên mép! Ném mèo vào nó, Đẩy hoặc Kẹp gắp kéo xuống",
+            "The wall slime climbed the edge! Throw the cat into it, or Push or Grab it down"),
+        BattleEventKind.ClingLanded => L("Slime bám tường rơi xuống! Đánh ngay trước khi nó leo lại", "The wall slime fell! Hit it before it climbs back"),
         _ => null
     };
     private bool IsUpdate(BattleEvent e) => battle?.FindHazard((int)e.Value) is { Kind: HazardKind.Update };
@@ -206,7 +217,8 @@ public sealed partial class PetWindow
                 // 1.5 M13: the slimes the cursor beats, once each per battle.
                 BattleEventKind.GhostFaded or BattleEventKind.BubbleBlocked or BattleEventKind.BubblePopped or BattleEventKind.MirageCast or BattleEventKind.SulkPuffed
                     or BattleEventKind.SulkCalmed or BattleEventKind.FlyAimed or BattleEventKind.FlyerDowned or BattleEventKind.BurrowCracked
-                    or BattleEventKind.BurrowPinned when trickExplained.Add(e.Kind) => TrickBanner(e.Kind),
+                    or BattleEventKind.BurrowPinned or BattleEventKind.IceScratched or BattleEventKind.IceShattered or BattleEventKind.ClingClimbed
+                    or BattleEventKind.ClingLanded when trickExplained.Add(e.Kind) => TrickBanner(e.Kind),
                 BattleEventKind.Won => L("CHIẾN THẮNG!", "VICTORY!"),
                 BattleEventKind.Lost => L("THUA RỒI…", "DEFEATED…"),
                 _ => null

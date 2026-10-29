@@ -512,6 +512,35 @@
       "elite": { "hp": 1.2, "cost": 1, "descVi": "nứt nhanh hơn", "descEn": "cracks the floor faster" }
     },
     {
+      // 1.5 S7 (M15): comes in with an ice shell. While it is on, the cat's weapon (swing, combo, splash,
+      // echo; held too) takes only `armor` × its damage. The thrown cat flying into it at throwHit.minSpeed
+      // DIPs/s or more breaks the shell (and does its throwHit); wet from the spray, ice.wetSpeed is enough.
+      // The shell grows back `regrow` s later (eliteRegrow for an elite; 0: never).
+      "id": "icy", "nameVi": "Slime băng", "nameEn": "Ice slime",
+      "maxHp": 50, "speed": 34, "damage": 10, "range": 55,
+      "windup": 0.8, "attackCooldown": 2.0, "recover": 0.4,
+      "scale": 1.0, "color": "#A6E3F2", "marks": "ice", "cost": 2, "binSpit": false,
+      "throwHit": { "minSpeed": 650, "damage": 12, "stun": 1.5 },
+      "ice": { "armor": 0.15, "wetSpeed": 400, "regrow": 10, "eliteRegrow": 6 },
+      "elite": { "hp": 1.2, "cost": 1, "descVi": "băng mọc lại nhanh hơn", "descEn": "its ice grows back faster" }
+    },
+    {
+      // 1.5 S8 (M15): goes to the nearest edge of the field and climbs it (`climb` DIPs/s) until its bottom
+      // is `height` DIPs over the floor (a second one on that edge `spacing` higher, at most 110). Every
+      // `cooldown` s it aims `aim` s at the cat's spot on the floor, then a spike lands there `flight` s
+      // later: the cat on the floor within `radius` takes its damage (no stun); an elite drops eliteSpikes
+      // spikes eliteSpread apart. The thrown cat flying into it (throwHit), Push, the Grabber or any daze
+      // knock it off: it lies dazed `downed` s, fights on the floor `ground` s, then climbs again.
+      "id": "clinger", "nameVi": "Slime bám tường", "nameEn": "Wall slime",
+      "maxHp": 40, "speed": 46, "damage": 9, "range": 55,
+      "windup": 0.8, "attackCooldown": 2.0, "recover": 0.4,
+      "scale": 0.85, "color": "#B5B84A", "marks": "spikes", "cost": 2, "binSpit": false,
+      "throwHit": { "minSpeed": 450, "damage": 8 },
+      "cling": { "height": 60, "spacing": 46, "climb": 90, "cooldown": 3, "aim": 0.9, "flight": 0.5, "radius": 36,
+                 "eliteSpikes": 2, "eliteSpread": 60, "downed": 2.5, "ground": 4 },
+      "elite": { "hp": 1.2, "cost": 1, "descVi": "thả 2 gai mỗi lần", "descEn": "drops 2 spikes at a time" }
+    },
+    {
       // The chapter 1 boss (Adventure stage 5): the free battle keeps "king" below. Phases fire once
       // each at their HP fraction; at most summonCap helpers alive at once. A shield phase stops a
       // hit at its line, runs to the far edge (retreatSpeed, at most retreatSeconds), calls its

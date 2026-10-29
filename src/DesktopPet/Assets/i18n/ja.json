@@ -978,5 +978,13 @@
   "The flying slime takes aim! Its goo hits even a held cat: carry the cat up to it, or Push or Grab it": "とびスライムがねらっている！ねばねば弾は持ち上げた猫にも当たる：猫を近づけて引っかくか、プッシュかつかみ取りで",
   "The flying slime is down! Hit it now, it takes extra damage": "とびスライムが落ちた！今のうちに攻撃、ダメージ増加",
   "The floor cracks! Lift the cat, then drop it on the cracks to pin it": "床がひび割れた！猫を持ち上げて、ひびの上に落として押さえよう",
-  "Pinned! The burrowing slime is stuck out, hit it now": "押さえた！もぐらスライムが出たまま動けない、今のうちに攻撃"
+  "Pinned! The burrowing slime is stuck out, hit it now": "押さえた！もぐらスライムが出たまま動けない、今のうちに攻撃",
+  "Ice slime": "こおりスライム",
+  "Wall slime": "かべスライム",
+  "its ice grows back faster": "氷が早く戻る",
+  "drops 2 spikes at a time": "一度にトゲを2本落とす",
+  "Ice slime: weapons only scratch it! Throw the cat hard into it to break the ice (the Spray softens it)": "こおりスライム：武器ではかすり傷だけ！猫を強く投げつけて氷を割ろう（スプレーで氷がやわらかくなる）",
+  "The ice broke! Hit it now, before the ice grows back": "氷が割れた！氷が戻る前に今のうちに攻撃",
+  "The wall slime climbed the edge! Throw the cat into it, or Push or Grab it down": "かべスライムが端をのぼった！猫を投げつけるか、プッシュかつかみ取りで落とそう",
+  "The wall slime fell! Hit it before it climbs back": "かべスライムが落ちた！またのぼる前に攻撃"
 }

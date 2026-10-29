@@ -31,14 +31,15 @@ public sealed partial class BattleSim
             if (s.Handled) continue; // In the Grabber's claw or flying from it (PetBattle.Grabber.cs).
             if (s.Faded) continue; // A faded ghost cannot be hit (PetBattle.Tricks.cs).
             if (s.Burrowed) continue; // Under the floor (PetBattle.Burrow.cs).
-            // One in a bubble or sulking takes no HP from the cat's blows: left alone while there is another.
-            if (s.Mended || s.Bubbled || s.Type.Sulk != null) { if (guarded == null || Math.Abs(s.X - catX) < Math.Abs(guarded.X - catX)) guarded = s; continue; }
+            // One in a bubble or sulking takes no HP from the cat's blows, one in its ice shell only scratches
+            // (1.5 M15): left alone while there is another.
+            if (s.Mended || s.Bubbled || s.Type.Sulk != null || s.Iced) { if (guarded == null || Math.Abs(s.X - catX) < Math.Abs(guarded.X - catX)) guarded = s; continue; }
             if (nearest == null || Math.Abs(s.X - catX) < Math.Abs(nearest.X - catX)) nearest = s;
         }
         nearest ??= guarded;
         // Keep the current choice unless another slime is clearly closer (no dithering).
         var current = Find(autoTargetId);
-        if (current != null && current.Targetable && !current.Shielded && !current.Faded && !current.Burrowed && !current.Airborne && (!(current.Mended || current.Bubbled || current.Type.Sulk != null) || nearest == current) && nearest != null &&
+        if (current != null && current.Targetable && !current.Shielded && !current.Faded && !current.Burrowed && !current.Airborne && (!(current.Mended || current.Bubbled || current.Type.Sulk != null || current.Iced) || nearest == current) && nearest != null &&
             Math.Abs(current.X - catX) <= Math.Abs(nearest.X - catX) + 40) nearest = current;
         autoTargetId = nearest?.Id ?? 0;
         return nearest;
@@ -102,6 +103,7 @@ public sealed partial class BattleSim
             StepStatus(slime, dt);
             if (Over) break;
             if (slime.State == SlimeState.Defeated) continue;
+            StepIce(slime, dt); // 1.5 M15: a broken ice shell grows back (PetBattle.Wall.cs).
             // A lit bomb burns on whatever it does (in the Grabber's claw too).
             if (slime.Lit && BurnFuse(slime, dt)) { if (Over) break; continue; }
             if (slime.Handled) continue; // In the Grabber's claw or flying from it (PetBattle.Grabber.cs).
@@ -109,6 +111,8 @@ public sealed partial class BattleSim
             // 1.5 M14: a flyer up in the air, a burrower under the floor (PetBattle.Fly.cs, PetBattle.Burrow.cs).
             if (slime.Type.Fly is FlySpec fly && StepFlyer(slime, fly, dt)) { if (Over) break; continue; }
             if (slime.Type.Burrow is BurrowSpec burrow && StepBurrow(slime, burrow, dt, catX, catHeld, minX, maxX)) { if (Over) break; continue; }
+            // 1.5 M15: a wall climber going to its edge, up it or falling off (PetBattle.Wall.cs).
+            if (slime.Type.Cling is ClingSpec cling && StepClinger(slime, cling, dt, catX, minX, maxX)) { if (Over) break; continue; }
             if (slime.Type.Spring != null) { StepSpring(slime, dt, catX, catHeld); if (Over) break; }
             if (slime.Shielded && slime.State != SlimeState.Defeated)
             {

@@ -143,7 +143,8 @@ public sealed partial class BattleFieldView : FrameworkElement
             if (!slime.Targetable || slime.Riding) continue; // A rider: the cat goes for its mount.
             if (BattleSim.InSky(slime)) continue; // Up in the air: its own window takes its clicks (1.5 M14).
             double dx = Math.Abs(point.X - (slime.X - OriginX)), half = slime.Width * slime.Puff / 2;
-            if (dx > half + 10 || point.Y < Floor - slime.Height * slime.Puff - BattleSim.BubbleLift(slime) - 24 || point.Y > Floor + 4) continue;
+            double floor = Floor - WallLift(slime); // A wall climber up the edge (1.5 M15).
+            if (dx > half + 10 || point.Y < floor - slime.Height * slime.Puff - BattleSim.BubbleLift(slime) - 24 || point.Y > floor + 4) continue;
             int rank = dx <= half ? Layer(slime) : -1;
             if (rank > bestRank || (rank == bestRank && dx < bestDistance)) { bestRank = rank; bestDistance = dx; best = slime.Id; }
         }
@@ -222,11 +223,11 @@ public sealed partial class BattleFieldView : FrameworkElement
                 // burrower under the floor or going in/out of it has its own drawing.
                 if (BattleSim.InSky(slime)) { if (slime.State != SlimeState.Defeated) DrawSkyShadow(dc, slime, x, floor); continue; }
                 if (DrawBurrower(dc, slime, x, floor, time)) continue;
-                double bubble = BattleSim.BubbleLift(slime);
-                // A leaping boss: its shadow stays on the floor, shrinking as it rises.
-                if (slime.LeapHeight + slime.Lift + bubble > 0)
+                double bubble = BattleSim.BubbleLift(slime), wall = WallLift(slime);
+                // A leaping boss (or a wall climber up the edge): its shadow stays on the floor, shrinking as it rises.
+                if (slime.LeapHeight + slime.Lift + bubble + wall > 0)
                 {
-                    double k = 1 - Math.Clamp((slime.LeapHeight + slime.Lift + bubble) / 100, 0, 0.6);
+                    double k = 1 - Math.Clamp((slime.LeapHeight + slime.Lift + bubble + wall) / 100, 0, 0.6);
                     dc.DrawEllipse(LeapShadow, ShadowRim, new Point(x, floor - 2), slime.Width / 2 * k, 6 * k); // A pale rim: seen on dark desktops too.
                 }
                 // A contact shadow grounds a slime on any wallpaper (the cat has none: its own window sits
@@ -238,7 +239,11 @@ public sealed partial class BattleFieldView : FrameworkElement
                     bool found = slime.Type.Mirage != null;
                     dc.DrawEllipse(found ? LeapShadow : FootShadow, FootRim, new Point(x, floor - 2), slime.Width * (found ? 0.68 : 0.4), found ? 5 : 4);
                 }
-                DrawSlime(dc, slime, x, floor - slime.LeapHeight - slime.RideHeight - slime.Lift - bubble, sim.Settings, time);
+                // A wall climber up its edge leans into it (1.5 M15).
+                double lean = WallLean(slime), foot = floor - slime.LeapHeight - slime.RideHeight - slime.Lift - bubble - wall;
+                if (lean != 0) dc.PushTransform(new RotateTransform(lean, x, foot - slime.Height / 2));
+                DrawSlime(dc, slime, x, foot, sim.Settings, time);
+                if (lean != 0) dc.Pop();
                 if (sim.AppRules != null && sim.IsInfector(slime.Id) && slime.State != SlimeState.Defeated) DrawVirusMark(dc, slime, x, floor, time);
             }
         for (int i = 0; i < sim.Slimes.Count; i++)
@@ -508,6 +513,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         DrawSwarmMarks(dc, slime, time);
         DrawTrickMarks(dc, slime, time);
         DrawSkyMarks(dc, slime, bw, bh, time);
+        DrawWallMarks(dc, slime, bw, bh, time);
         // An older support mark: a white "+" on its body.
         if (slime.Type.Marks == "cross") dc.DrawGeometry(Brushes.White, Outline, CrossMark);
         if (slime.Elite != null)

@@ -39,6 +39,13 @@ public sealed partial class BattleSim
             Spend(BattleSkill.Grabber);
             return true;
         }
+        // A wall climber up its edge is yanked off it at once (the Grabber is spent; 1.5 M15).
+        if (Find(id) is { OnWall: true, Type.Cling: not null } clinger && clinger.State != SlimeState.Spawning)
+        {
+            if (!KnockOff(clinger, true)) return false;
+            Spend(BattleSkill.Grabber);
+            return true;
+        }
         if (Find(id) is not Slime slime || !Grabbable(slime)) return false;
         // A burrower is pulled up from under the floor (1.5 M14).
         PullUp(slime);

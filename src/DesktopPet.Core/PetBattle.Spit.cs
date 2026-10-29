@@ -82,13 +82,14 @@ public sealed partial class BattleSim
 
     private void Land(BattleGoo goo)
     {
-        AddEffect(BattleEffectKind.Splat, goo.X, 4);
+        // A wall climber's spike (1.5 M15) sparks on the floor instead.
+        AddEffect(goo.Spike ? BattleEffectKind.Spark : BattleEffectKind.Splat, goo.X, 4);
         effects[^1].Tint = goo.Tint;
         bool hit = !CatLifted && Grace <= 0 && Math.Abs(lastCatX - goo.X) <= goo.Radius;
         if (goo.PuddleSeconds > 0) AddPuddle(goo);
         events.Add(new(BattleEventKind.GooLanded, goo.X, hit ? 1 : 0));
         if (!hit) return;
-        SpitHits++;
+        if (goo.Spike) SpikeHits++; else SpitHits++;
         // Its spitter still there: a hit like its own (Thorns sends some back); gone, the goo still lands.
         if (Find(goo.OwnerId) is { Targetable: true, Damage: > 0 } owner) HurtCat(owner, lastCatX, false, goo.Damage / owner.Damage);
         else LandHit(goo.Damage, lastCatX, out _);

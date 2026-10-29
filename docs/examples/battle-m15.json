@@ -1,0 +1,17 @@
+{
+  // 1.5 M15 try-out: the ice slime (S7) and the wall slime (S8). They are in the built-in data but no
+  // battle uses them yet (chapter 2 and Infinity bring them in). Copy this file to
+  // %LOCALAPPDATA%\DesktopPet\battle.json (keep a copy of yours first), then Battle Mode → Start battle
+  // (the free battle). Custom data: no records, no rewards. Delete the file to get the usual free battle
+  // back. Ice slime: the cat's weapon only scratches it; throw the cat hard into it to break the ice (wet
+  // from the Spray, a softer throw does). Wall slime: it climbs the edge of the field and drops spikes;
+  // throw the cat into it, Push it or yank it down with the Grabber, then hit it on the floor.
+  "schemaVersion": 1,
+  "maxAlive": 5,
+  "waves": [
+    { "groups": [ { "enemy": "icy", "count": 1 }, { "enemy": "slime", "count": 2 } ] },
+    { "groups": [ { "enemy": "clinger", "count": 2 }, { "enemy": "slime", "count": 1 } ] },
+    { "groups": [ { "enemy": "icy", "count": 1 }, { "enemy": "clinger", "count": 1 }, { "enemy": "runner", "count": 2 } ] },
+    { "groups": [ { "enemy": "icy", "count": 1, "elite": true }, { "enemy": "clinger", "count": 2, "elite": true } ] }
+  ]
+}

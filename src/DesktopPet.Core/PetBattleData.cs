@@ -167,6 +167,11 @@ public sealed class EnemyType
     // shoots sticky goo (S5), or digs under the floor and comes up under the cat (S6). Null: neither.
     public FlySpec? Fly { get; init; }
     public BurrowSpec? Burrow { get; init; }
+    // 1.5 M15 (PetBattle.Wall.cs): an ice shell the cat's weapon only scratches, broken by the thrown cat
+    // (S7), or it climbs the field's left/right edge and drops spikes on the cat (S8). Null: neither. Both
+    // need a throwHit (the thrown cat is their answer).
+    public IceSpec? Ice { get; init; }
+    public ClingSpec? Cling { get; init; }
     // An infected bin may spit one of this kind (with an elite affix). False keeps a kind out of battles
     // that never list it (the 1.5 enemies until their chapter brings them in).
     public bool BinSpit { get; init; } = true;
@@ -342,6 +347,40 @@ public sealed class BurrowSpec
     public double Dig { get; init; } = 0.6;
     public double Rest { get; init; } = 4;
     public double Pinned { get; init; } = 3;
+}
+
+// S7 (1.5 M15): it comes in with an ice shell. While the shell is on, a hit of the cat's weapon (its swing,
+// combo, splash, echo; held or not) takes only Armor × its damage. The thrown cat flying into it at its
+// throwHit.minSpeed or more (WetSpeed while the spray has it wet) breaks the shell (and does its throwHit);
+// the shell grows back Regrow s later (an elite's EliteRegrow; 0: never).
+public sealed class IceSpec
+{
+    public double Armor { get; init; } = 0.15;
+    public double WetSpeed { get; init; } = 400;
+    public double Regrow { get; init; } = 10;
+    public double EliteRegrow { get; init; } = 6;
+}
+
+// S8 (1.5 M15): it goes to the nearest edge of the field and climbs it (Climb DIPs/s) until its bottom is
+// Height DIPs over the floor (a second one on the same edge Spacing higher, never over 120). On the edge,
+// every Cooldown s it aims Aim s at the cat's spot on the floor (a ring there), then drops a spike that
+// lands Flight s later: the cat on the floor within Radius takes its damage (no stun). An elite drops
+// EliteSpikes spikes, EliteSpread DIPs apart. The thrown cat flying into it (its throwHit), Push, the
+// Grabber or any daze knock it off: it falls, lies dazed Downed s, fights on the floor Ground s and
+// goes back up.
+public sealed class ClingSpec
+{
+    public double Height { get; init; } = 60;
+    public double Spacing { get; init; } = 46;
+    public double Climb { get; init; } = 90;
+    public double Cooldown { get; init; } = 3;
+    public double Aim { get; init; } = 0.9;
+    public double Flight { get; init; } = 0.5;
+    public double Radius { get; init; } = 36;
+    public int EliteSpikes { get; init; } = 2;
+    public double EliteSpread { get; init; } = 60;
+    public double Downed { get; init; } = 2.5;
+    public double Ground { get; init; } = 4;
 }
 
 // The thrown cat flying through an enemy at MinSpeed DIPs/s or more: Damage (as is, never blocked)
@@ -867,7 +906,7 @@ public static class BattleData
     public static readonly string[] WeaponStyles = { "sword", "hammer", "yarn", "glove" };
     public static readonly string[] WeaponHitEffects = { "spark", "thud" };
     public static readonly string[] EnemyRenderers = { "slime" };
-    public static readonly string[] EnemyMarks = { "none", "speed", "cracks", "leaf", "cross", "spout", "spring", "drum", "chain", "swarm", "giant", "bomb", "split", "half", "flag", "ghost", "bubble", "mirage", "sulk", "wings", "mole" };
+    public static readonly string[] EnemyMarks = { "none", "speed", "cracks", "leaf", "cross", "spout", "spring", "drum", "chain", "swarm", "giant", "bomb", "split", "half", "flag", "ghost", "bubble", "mirage", "sulk", "wings", "mole", "ice", "spikes" };
     public static readonly string[] GroupSides = { "a", "b" };
     // Kinds the cursor beats (ghost, bubble, mirage, sulk) that one battle may bring (docs/UPDATE-1.5.md).
     public const int MaxMouseKinds = 2;
@@ -1110,7 +1149,8 @@ public static class BattleData
                 if ((elite.HealCooldown < 1 || elite.HealBudget > 1) && e.HealAmount <= 0) throw new InvalidDataException(at + ".elite: healCooldown/healBudget are for an enemy that heals");
                 if (elite.WindupAdd <= 0 && elite.DashSpeed <= 1 && elite.SureBlocks == 0 && elite.FirstHeal <= 1 && elite.Hp <= 1 && elite.Damage <= 1
                     && elite.AttackCooldown >= 1 && elite.HealCooldown >= 1 && elite.HealBudget <= 1 && !elite.PushImmune && elite.VirusEvery <= 0
-                    && e.Spit == null && e.Spring == null && e.Fuse == null && e.Split == null && !e.UsesMouse && e.Fly == null && e.Burrow == null) throw new InvalidDataException(at + ".elite changes nothing");
+                    && e.Spit == null && e.Spring == null && e.Fuse == null && e.Split == null && !e.UsesMouse && e.Fly == null && e.Burrow == null
+                    && e.Ice == null && e.Cling == null) throw new InvalidDataException(at + ".elite changes nothing");
                 if (elite.DescVi == null || elite.DescEn == null || elite.DescVi.Length > 60 || elite.DescEn.Length > 60) throw new InvalidDataException(at + ".elite descriptions must be at most 60 characters");
             }
             if (e.Link is LinkSpec link)
@@ -1209,6 +1249,29 @@ public static class BattleData
                 Within(burrow.Radius, 20, 200, at + ".burrow.radius"); Within(burrow.Emerge, 0.1, 3, at + ".burrow.emerge"); Within(burrow.Stun, 0, 5, at + ".burrow.stun");
                 Within(burrow.Above, 0.5, 20, at + ".burrow.above"); Within(burrow.EliteAbove, 0.5, 20, at + ".burrow.eliteAbove");
                 Within(burrow.Dig, 0.1, 3, at + ".burrow.dig"); Within(burrow.Rest, 0, 30, at + ".burrow.rest"); Within(burrow.Pinned, 0.5, 10, at + ".burrow.pinned");
+            }
+            // 1.5 M15: an ice shell or a wall climber is nothing else besides, and the thrown cat beats it.
+            if (e.Ice != null || e.Cling != null)
+            {
+                if (e.Ice != null && e.Cling != null) throw new InvalidDataException(at + " may have only one of ice and cling");
+                if (e.Boss || e.Blocker || e.Dash || e.Slam || e.Hover > 0 || e.Support || e.HealAmount > 0 || e.Link != null || e.Spit != null || e.Spring != null
+                    || e.Fuse != null || e.Split != null || e.UsesMouse || e.Fly != null || e.Burrow != null)
+                    throw new InvalidDataException(at + ": ice and cling are not for a boss, blocker, dash, slam, hovering, support, healing, linked, spitting, spring, bomb, splitting, cursor, flying or burrowing enemy");
+                if (e.ThrowHit == null) throw new InvalidDataException(at + ": ice and cling need a throwHit");
+            }
+            if (e.Ice is IceSpec ice)
+            {
+                Within(ice.Armor, 0, 0.9, at + ".ice.armor"); Within(ice.WetSpeed, 100, 5000, at + ".ice.wetSpeed");
+                if (ice.WetSpeed > e.ThrowHit!.MinSpeed) throw new InvalidDataException(at + ".ice.wetSpeed must be at most throwHit.minSpeed");
+                Within(ice.Regrow, 0, 60, at + ".ice.regrow"); Within(ice.EliteRegrow, 0, 60, at + ".ice.eliteRegrow");
+            }
+            if (e.Cling is ClingSpec cling)
+            {
+                Within(cling.Height, 20, BattleSim.ClingTop, at + ".cling.height"); Within(cling.Spacing, 0, 100, at + ".cling.spacing");
+                Within(cling.Climb, 10, 1000, at + ".cling.climb"); Within(cling.Cooldown, 0.5, 30, at + ".cling.cooldown");
+                Within(cling.Aim, 0.2, 5, at + ".cling.aim"); Within(cling.Flight, 0.1, 3, at + ".cling.flight"); Within(cling.Radius, 10, 150, at + ".cling.radius");
+                if (cling.EliteSpikes is < 1 or > 4) throw new InvalidDataException(at + ".cling.eliteSpikes must be 1–4");
+                Within(cling.EliteSpread, 0, 300, at + ".cling.eliteSpread"); Within(cling.Downed, 0.5, 15, at + ".cling.downed"); Within(cling.Ground, 0, 30, at + ".cling.ground");
             }
             // 1.5 M13: one cursor trick per kind, never on a boss.
             if (e.UsesMouse)

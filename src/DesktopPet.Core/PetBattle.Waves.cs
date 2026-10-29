@@ -306,6 +306,8 @@ public sealed partial class BattleSim
         // 1.5 M14: a flyer comes in at a height in its sky; a burrower comes out a moment, then digs in.
         if (type.Fly is FlySpec fly) JoinSky(slime, fly);
         if (type.Burrow != null) slime.BurrowClock = 1;
+        // 1.5 M15: an ice slime comes in with its shell on.
+        slime.Iced = type.Ice != null;
         slime.Set(SlimeState.Spawning);
         JoinLinks(slime);
         slimes.Add(slime);

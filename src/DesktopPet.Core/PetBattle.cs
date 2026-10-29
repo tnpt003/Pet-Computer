@@ -346,6 +346,7 @@ public sealed partial class BattleSim
         if (!CatLifted || !double.IsFinite(groundX)) groundX = catX;
         double floorX = groundX;
         lastCatX = floorX;
+        catPose = catHeld ? pose : null;
         StepEffects(dt);
         HurtFlash = Math.Max(0, HurtFlash - dt);
         // The stun runs on battle time, held or not (lifting neither ends nor stretches it).
@@ -391,6 +392,8 @@ public sealed partial class BattleSim
             }
             // Tailwind: put down after a real lift, the cat attacks faster a moment.
             if (wasLifted && liftedFor >= Settings.RescueGraceMinLiftSeconds && landingRushBonus > 0) LandingRushRemaining = LandingRushSeconds;
+            // Let go onto a burrower coming up: it is pinned (1.5 M14).
+            if (wasLifted) CatLanded(catX);
             wasLifted = false;
             liftedFor = 0;
             Grace = Math.Max(0, Grace - dt);
@@ -400,6 +403,8 @@ public sealed partial class BattleSim
         StepBuild(dt, catHeld);
         StepBombs(dt);
         StepSpit(dt);
+        if (Over) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
+        StepShots(dt);
         if (Over) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
         StepSlimes(dt, floorX, catHeld);
         if (Over) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
@@ -652,7 +657,7 @@ public sealed partial class BattleSim
     // A daze of `seconds` × the enemy's stunFactor (see StrikeStun); true when it took.
     private bool Daze(Slime slime, double seconds)
     {
-        if (slime.IsBoss || slime.LeapHeight > 0 || slime.Elite is { PushImmune: true }) return false;
+        if (slime.IsBoss || slime.LeapHeight > 0 || slime.Burrowed || slime.Elite is { PushImmune: true }) return false;
         if (slime.State is not (SlimeState.Moving or SlimeState.Windup or SlimeState.Recover)) return false;
         double stun = seconds * slime.Type.StunFactor;
         if (stun <= 0) return false;
@@ -672,7 +677,7 @@ public sealed partial class BattleSim
         blasting = true;
         foreach (var other in slimes.ToArray())
         {
-            if (other == target || !other.Targetable || other.Airborne || other.Faded || Math.Abs(other.X - target.X) - other.HitWidth / 2 - target.HitWidth / 2 > Settings.ComboSplashRadius) continue;
+            if (other == target || !other.Targetable || other.Airborne || other.Faded || other.Burrowed || Math.Abs(other.X - target.X) - other.HitWidth / 2 - target.HitWidth / 2 > Settings.ComboSplashRadius) continue;
             if ((other.X - catX) * swingFacing <= 0 ||Math.Abs(other.X - catX) - other.HitWidth / 2 > arms.Range + 14) continue;
             SplashHits++;
             AddEffect(BattleEffectKind.Spark, other.X, other.Height * 0.6);
@@ -691,6 +696,10 @@ public sealed partial class BattleSim
         if (!slime.Targetable || amount <= 0) return HitResult.Landed;
         // A faded ghost, a bubble, a mirage's copy, a sulky slime (1.5 M13, PetBattle.Tricks.cs).
         if (TrickHit(slime, source)) return HitResult.Immune;
+        // 1.5 M14: under the floor nothing reaches a burrower (poison already in it still works); a flyer
+        // knocked down to the floor takes more from every hit.
+        if (slime.Burrowed && source != DamageSource.Poison) { AddEffect(BattleEffectKind.Miss, slime.X, 10); return HitResult.Immune; }
+        amount *= DownedFactor(slime);
         if (slime.Shielded)
         {
             // A boss in its shield phase: nothing gets through (not even the bomb).
@@ -852,6 +861,7 @@ public sealed partial class BattleSim
         BlockedById = 0;
         bombs.Clear();
         ClearSpit();
+        ClearSky();
         ClearTools();
         ClearApps();
         incoming = null;
@@ -882,7 +892,7 @@ public sealed partial class BattleSim
     // Click on a slime: the cat goes for it first. Never deals damage by itself.
     public bool Select(int id)
     {
-        if (Over || Paused || Find(id) is not { Targetable: true, Riding: false, Airborne: false, Faded: false }) return false;
+        if (Over || Paused || Find(id) is not { Targetable: true, Riding: false, Airborne: false, Faded: false, Burrowed: false }) return false;
         SelectedId = id;
         return true;
     }
@@ -931,7 +941,7 @@ public sealed partial class BattleSim
     public bool Use(BattleSkill skill, int id, double catX, int? direction = null)
     {
         var slime = Find(id);
-        if (BattleSkills.Get(skill).Aim != SkillAim.Slime || !Ready(skill) || slime is not { Targetable: true, Faded: false }) return false;
+        if (BattleSkills.Get(skill).Aim != SkillAim.Slime || !Ready(skill) || slime is not { Targetable: true, Faded: false, Burrowed: false }) return false;
         // A mirage's copy pushed: it vanishes (the skill is spent).
         if (skill == BattleSkill.Push && slime.Decoy) { Dispel(slime); AddEffect(BattleEffectKind.Push, slime.X, slime.Height / 2); }
         else if (skill == BattleSkill.Push && slime.Elite is { PushImmune: true })
@@ -953,7 +963,9 @@ public sealed partial class BattleSim
                 slime.MendingId = 0; // Its guard ends with it (RefreshGuards below).
             }
             slime.KnockVelocity = push * Settings.PushSpeed * slime.Type.PushFactor;
-            slime.StunRemaining = Settings.PushStunSeconds * slime.Type.StunFactor;
+            // A flyer already down keeps the rest of its daze (a push never shortens it; 1.5 M14).
+            double downed = slime.Type.Fly != null && slime.State == SlimeState.Stunned ? slime.StunRemaining : 0;
+            slime.StunRemaining = Math.Max(downed, Settings.PushStunSeconds * slime.Type.StunFactor);
             slime.Set(SlimeState.Stunned);
             RefreshGuards();
             AddEffect(BattleEffectKind.Push, slime.X, slime.Height / 2);
@@ -993,6 +1005,7 @@ public sealed partial class BattleSim
         foreach (var b in bombs) b.X = left + (b.X - Left) / oldWidth * newWidth;
         MapTools(left, oldWidth, newWidth);
         MapSpit(left, oldWidth, newWidth);
+        MapSky(left, oldWidth, newWidth);
         foreach (var p in popups) p.X = left + (p.X - Left) / oldWidth * newWidth;
         foreach (var l in launches) { l.FloorX = left + (l.FloorX - Left) / oldWidth * newWidth; for (int i = 0; i < l.TargetX.Length; i++) l.TargetX[i] = left + (l.TargetX[i] - Left) / oldWidth * newWidth; }
         Left = left; Right = right;

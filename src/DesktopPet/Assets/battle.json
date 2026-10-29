@@ -480,6 +480,38 @@
       "elite": { "hp": 1.2, "cost": 1, "descVi": "khó dỗ hơn", "descEn": "harder to cheer up" }
     },
     {
+      // 1.5 S5 (M14): flies anywhere over the battle's screen (its bottom minHeight DIPs over the floor or
+      // higher, a new spot every `move` s at flySpeed DIPs/s), drawn in its own small topmost window. Every
+      // `cooldown` s it aims `aim` s, then shoots sticky goo at the cat (shotSpeed DIPs/s, `radius` round
+      // the cat's centre): it hurts even the cat in the user's hand (never a stun, never out of the hand),
+      // on the floor it slows the cat to `slow` × for slowSeconds; an elite shoots eliteShots drops.
+      // Stunned (Push, a Grabber yank, heldHits held hits within heldWindow s) it falls, lies `downed` s
+      // on the floor taking downedDamage × hits, crouches `rise` s and flies up again.
+      "id": "flyer", "nameVi": "Slime bay", "nameEn": "Flying slime",
+      "maxHp": 44, "speed": 40, "damage": 8, "range": 55,
+      "windup": 0.8, "attackCooldown": 2.0, "recover": 0.4,
+      "scale": 0.9, "color": "#8FD3C8", "marks": "wings", "cost": 2, "binSpit": false,
+      "fly": { "flySpeed": 150, "move": 5, "minHeight": 220, "cooldown": 3.5, "aim": 0.8, "shotSpeed": 520, "radius": 30,
+               "slow": 0.6, "slowSeconds": 2, "eliteShots": 2, "heldHits": 3, "eliteHeldHits": 4, "heldWindow": 4,
+               "downed": 3, "downedDamage": 1.5, "rise": 1 },
+      "elite": { "hp": 1.2, "cost": 1, "descVi": "bắn 2 giọt mỗi lần", "descEn": "shoots 2 drops at a time" }
+    },
+    {
+      // 1.5 S6 (M14): digs under the floor (only its mound shows) and goes to the cat at burrow.speed × its
+      // speed; a ring of cracks (`radius`) shows `crack` s (eliteCrack for an elite) where the cat stands,
+      // then it comes up there: the cat on the floor in the ring is hurt and stunned `stun` s. Out, it
+      // fights `above` s (eliteAbove), digs `dig` s and stays under at least `rest` s. The cat let go onto
+      // the ring (cracks showing, or `emerge` s into coming up) pins it, dazed `pinned` s; the Grabber
+      // pulls it up and it stays out `pinned` s.
+      "id": "burrower", "nameVi": "Slime đào hang", "nameEn": "Burrowing slime",
+      "maxHp": 46, "speed": 42, "damage": 11, "range": 55,
+      "windup": 0.8, "attackCooldown": 2.0, "recover": 0.4,
+      "scale": 0.95, "color": "#C49A6C", "marks": "mole", "cost": 2, "binSpit": false,
+      "burrow": { "speed": 1.4, "crack": 1, "eliteCrack": 0.7, "radius": 55, "emerge": 0.5, "stun": 0.8,
+                  "above": 3, "eliteAbove": 2, "dig": 0.6, "rest": 4, "pinned": 3 },
+      "elite": { "hp": 1.2, "cost": 1, "descVi": "nứt nhanh hơn", "descEn": "cracks the floor faster" }
+    },
+    {
       // The chapter 1 boss (Adventure stage 5): the free battle keeps "king" below. Phases fire once
       // each at their HP fraction; at most summonCap helpers alive at once. A shield phase stops a
       // hit at its line, runs to the far edge (retreatSpeed, at most retreatSeconds), calls its

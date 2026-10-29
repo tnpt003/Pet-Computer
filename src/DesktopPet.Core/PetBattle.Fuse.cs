@@ -75,7 +75,7 @@ public sealed partial class BattleSim
         bool was = blasting;
         blasting = true;
         foreach (var other in slimes.ToArray())
-            if (other != bomb && other.Targetable && !other.Airborne && Math.Abs(other.X - x) <= radius + other.HitWidth / 2)
+            if (other != bomb && other.Targetable && !other.Airborne && !other.Burrowed && Math.Abs(other.X - x) <= radius + other.HitWidth / 2)
             {
                 Damage(other, fuse.EnemyDamage, DamageSource.Bomb);
                 if (Over) break;

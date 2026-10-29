@@ -17,7 +17,7 @@ public sealed partial class BattleSim
         {
             var chosen = Find(selected);
             // A shielded boss stays chosen; the cat goes for the others until its shield drops.
-            if (chosen != null && chosen.Targetable && !chosen.Shielded && !chosen.Mended && !chosen.Riding && !chosen.Airborne && !chosen.Handled && !chosen.Faded) return chosen;
+            if (chosen != null && chosen.Targetable && !chosen.Shielded && !chosen.Mended && !chosen.Riding && !chosen.Airborne && !chosen.Handled && !chosen.Faded && !chosen.Burrowed) return chosen;
             if (chosen == null || !chosen.Targetable) SelectedId = null;
         }
         // Never a shielded boss: the cat cannot hurt it (with nothing else to hit it waits).
@@ -30,6 +30,7 @@ public sealed partial class BattleSim
             if (s.Airborne) continue; // Out of reach from the floor (PetBattle.Held.cs).
             if (s.Handled) continue; // In the Grabber's claw or flying from it (PetBattle.Grabber.cs).
             if (s.Faded) continue; // A faded ghost cannot be hit (PetBattle.Tricks.cs).
+            if (s.Burrowed) continue; // Under the floor (PetBattle.Burrow.cs).
             // One in a bubble or sulking takes no HP from the cat's blows: left alone while there is another.
             if (s.Mended || s.Bubbled || s.Type.Sulk != null) { if (guarded == null || Math.Abs(s.X - catX) < Math.Abs(guarded.X - catX)) guarded = s; continue; }
             if (nearest == null || Math.Abs(s.X - catX) < Math.Abs(nearest.X - catX)) nearest = s;
@@ -37,7 +38,7 @@ public sealed partial class BattleSim
         nearest ??= guarded;
         // Keep the current choice unless another slime is clearly closer (no dithering).
         var current = Find(autoTargetId);
-        if (current != null && current.Targetable && !current.Shielded && !current.Faded && (!(current.Mended || current.Bubbled || current.Type.Sulk != null) || nearest == current) && nearest != null &&
+        if (current != null && current.Targetable && !current.Shielded && !current.Faded && !current.Burrowed && !current.Airborne && (!(current.Mended || current.Bubbled || current.Type.Sulk != null) || nearest == current) && nearest != null &&
             Math.Abs(current.X - catX) <= Math.Abs(nearest.X - catX) + 40) nearest = current;
         autoTargetId = nearest?.Id ?? 0;
         return nearest;
@@ -47,7 +48,8 @@ public sealed partial class BattleSim
     private (double Min, double Max) Bounds(Slime slime)
     {
         double min = Left + slime.Width / 2, max = Right - slime.Width / 2;
-        if (!slime.IsBoss)
+        // A wall stands on the floor: nothing in the air bumps into it.
+        if (!slime.IsBoss && !slime.Airborne)
             foreach (var h in hazards)
             {
                 if (h.Kind != HazardKind.Update) continue;
@@ -104,6 +106,9 @@ public sealed partial class BattleSim
             if (slime.Lit && BurnFuse(slime, dt)) { if (Over) break; continue; }
             if (slime.Handled) continue; // In the Grabber's claw or flying from it (PetBattle.Grabber.cs).
             if (slime.Riding && slime.State == SlimeState.Moving) continue; // Carried by its mount (StepLinks).
+            // 1.5 M14: a flyer up in the air, a burrower under the floor (PetBattle.Fly.cs, PetBattle.Burrow.cs).
+            if (slime.Type.Fly is FlySpec fly && StepFlyer(slime, fly, dt)) { if (Over) break; continue; }
+            if (slime.Type.Burrow is BurrowSpec burrow && StepBurrow(slime, burrow, dt, catX, catHeld, minX, maxX)) { if (Over) break; continue; }
             if (slime.Type.Spring != null) { StepSpring(slime, dt, catX, catHeld); if (Over) break; }
             if (slime.Shielded && slime.State != SlimeState.Defeated)
             {
@@ -403,7 +408,7 @@ public sealed partial class BattleSim
         var live = scratch;
         live.Clear();
         // A leaping boss flies over the others.
-        foreach (var slime in slimes) if (slime.State != SlimeState.Defeated && !slime.KeepingBack && slime.LeapHeight <= 0 && !slime.Riding && !slime.Airborne && !slime.Handled && slime.Type.Spring == null && slime.Type.Blocker == blockers) live.Add(slime);
+        foreach (var slime in slimes) if (slime.State != SlimeState.Defeated && !slime.KeepingBack && slime.LeapHeight <= 0 && !slime.Riding && !slime.Airborne && !slime.Handled && !slime.Burrowed && slime.Type.Spring == null && slime.Type.Blocker == blockers) live.Add(slime);
         live.Sort(ByX);
         for (int i = 1; i < live.Count; i++)
         {

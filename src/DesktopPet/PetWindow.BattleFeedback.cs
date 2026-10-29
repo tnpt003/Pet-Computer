@@ -62,6 +62,11 @@ public sealed partial class PetWindow
         [BattleEventKind.BubbleBlocked] = ("ball_tap", 3), [BattleEventKind.BubblePoked] = ("ball_tap", 3), [BattleEventKind.BubblePopped] = ("pop", 5),
         [BattleEventKind.BubbleRegrown] = ("squish", 2), [BattleEventKind.MirageCast] = ("sparkle", 3), [BattleEventKind.MirageDispelled] = ("pop", 3),
         [BattleEventKind.SulkPuffed] = ("squish", 3), [BattleEventKind.SulkPetted] = ("sparkle", 2), [BattleEventKind.SulkCalmed] = ("satisfied", 5),
+        // 1.5 M14: the flying slime and the burrowing slime.
+        [BattleEventKind.FlyAimed] = ("clank", 2), [BattleEventKind.FlyShot] = ("swoosh", 3), [BattleEventKind.FlyShotHit] = ("squish", 4),
+        [BattleEventKind.FlyerKnocked] = ("pop", 4), [BattleEventKind.FlyerDowned] = ("ball_tap", 4), [BattleEventKind.FlyerRose] = ("swoosh", 2),
+        [BattleEventKind.BurrowCracked] = ("clank", 4), [BattleEventKind.BurrowEmerged] = ("ball_tap", 5), [BattleEventKind.BurrowPinned] = ("pop", 5),
+        [BattleEventKind.BurrowPulled] = ("pop", 4), [BattleEventKind.BurrowDug] = ("squish", 2),
     };
 
     private void PlayBattleSound()
@@ -104,6 +109,12 @@ public sealed partial class PetWindow
         BattleEventKind.MirageCast => L("Slime ảo ảnh có bản giả! Rê chuột: bản thật có bóng", "The mirage slime brought copies! Hover them: the real one has a shadow"),
         BattleEventKind.SulkPuffed => L("Slime dỗi không mất máu! Rê chuột qua lại trên nó để dỗ", "The sulky slime takes no damage! Stroke it with the cursor to cheer it up"),
         BattleEventKind.SulkCalmed => L("Hết dỗi rồi! Nó vẫy tay bỏ đi", "Cheered up! It waves goodbye and leaves"),
+        // 1.5 M14.
+        BattleEventKind.FlyAimed => L("Slime bay ngắm mèo! Đạn dính trúng cả mèo đang cầm: cầm mèo lại gần để vuốt, hoặc Đẩy/Kẹp gắp",
+            "The flying slime takes aim! Its goo hits even a held cat: carry the cat up to it, or Push or Grab it"),
+        BattleEventKind.FlyerDowned => L("Slime bay rơi xuống! Đánh ngay, nó mất máu gấp rưỡi", "The flying slime is down! Hit it now, it takes extra damage"),
+        BattleEventKind.BurrowCracked => L("Sàn nứt! Nhấc mèo lên rồi thả xuống vòng nứt để đè nó", "The floor cracks! Lift the cat, then drop it on the cracks to pin it"),
+        BattleEventKind.BurrowPinned => L("Đè trúng! Slime đào hang kẹt ngoài, đánh ngay", "Pinned! The burrowing slime is stuck out, hit it now"),
         _ => null
     };
     private bool IsUpdate(BattleEvent e) => battle?.FindHazard((int)e.Value) is { Kind: HazardKind.Update };
@@ -194,7 +205,8 @@ public sealed partial class PetWindow
                     LF($"Đội hình {team.Name(PetLanguage.Vietnamese)}! {team.Tip(PetLanguage.Vietnamese)}", $"{team.Name(preferences.Language)} formation! {team.Tip(preferences.Language)}").TrimEnd(),
                 // 1.5 M13: the slimes the cursor beats, once each per battle.
                 BattleEventKind.GhostFaded or BattleEventKind.BubbleBlocked or BattleEventKind.BubblePopped or BattleEventKind.MirageCast or BattleEventKind.SulkPuffed
-                    or BattleEventKind.SulkCalmed when trickExplained.Add(e.Kind) => TrickBanner(e.Kind),
+                    or BattleEventKind.SulkCalmed or BattleEventKind.FlyAimed or BattleEventKind.FlyerDowned or BattleEventKind.BurrowCracked
+                    or BattleEventKind.BurrowPinned when trickExplained.Add(e.Kind) => TrickBanner(e.Kind),
                 BattleEventKind.Won => L("CHIẾN THẮNG!", "VICTORY!"),
                 BattleEventKind.Lost => L("THUA RỒI…", "DEFEATED…"),
                 _ => null

@@ -100,7 +100,7 @@ public sealed partial class BattleSim
                 double run = laserClock;
                 laserClock = 0;
                 foreach (var s in slimes.ToArray())
-                    if (s.Targetable && !s.Airborne && Math.Abs(s.X - dot) <= s.HitWidth / 2 + 6) ToolHit(s, Settings.LaserDps * run);
+                    if (s.Targetable && !s.Airborne && !s.Burrowed && Math.Abs(s.X - dot) <= s.HitWidth / 2 + 6) ToolHit(s, Settings.LaserDps * run);
             }
             if (ended)
             {
@@ -267,7 +267,7 @@ public sealed partial class BattleSim
         if (Math.Abs(gap) > 4) slime.X = Math.Clamp(slime.X + Math.Sign(gap) * Math.Min(Math.Abs(gap), Speed(slime) * dt), minX, maxX);
     }
 
-    private static bool Lurable(Slime s) => s.Targetable && !s.IsBoss && !s.Riding && !s.Airborne && !s.Handled && !s.Stuck && s.LeapHeight <= 0
+    private static bool Lurable(Slime s) => s.Targetable && !s.IsBoss && !s.Riding && !s.Airborne && !s.Handled && !s.Stuck && !s.Burrowed && s.LeapHeight <= 0
         && s.State is not (SlimeState.Casting or SlimeState.Spawning) && !s.Shielded;
 
     private void Blow(double from, double dt)
@@ -275,7 +275,7 @@ public sealed partial class BattleSim
         double range = Settings.FanRange;
         foreach (var s in slimes)
         {
-            if (!s.Targetable || s.IsBoss || s.Stuck || s.Riding || s.Airborne || s.Handled || s.LeapHeight > 0 || s.Shielded) continue;
+            if (!s.Targetable || s.IsBoss || s.Stuck || s.Riding || s.Airborne || s.Handled || s.Burrowed || s.LeapHeight > 0 || s.Shielded) continue;
             double d = s.X - from;
             if (Math.Abs(d) > range + s.Width / 2) continue;
             int away = Math.Abs(d) >= 1 ? Math.Sign(d) : s.X >= lastCatX ? 1 : -1;
@@ -302,7 +302,7 @@ public sealed partial class BattleSim
             Slime? into = null;
             foreach (var o in slimes)
             {
-                if (o == s || !o.Targetable || o.Airborne || o.Riding || o.Handled) continue;
+                if (o == s || !o.Targetable || o.Airborne || o.Riding || o.Handled || o.Burrowed) continue;
                 double ahead = (o.X - s.X) * way;
                 // Not one going along with it as fast (two blown the same way do not bump).
                 if (ahead > 0 && ahead <= (o.Width + s.Width) / 2 * 0.7 + 4 && (s.KnockVelocity - o.KnockVelocity) * way >= BumpSpeed) { into = o; break; }

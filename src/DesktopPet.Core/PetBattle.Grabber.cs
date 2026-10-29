@@ -31,8 +31,17 @@ public sealed partial class BattleSim
     // A press on an enemy (battle x, height over the floor) with the Grabber chosen.
     public bool Grab(int id, double x, double height)
     {
-        if (Armed != BattleSkill.Grabber || !Ready(BattleSkill.Grabber) || GrabbedId != 0 || !double.IsFinite(x) || !double.IsFinite(height)
-            || Find(id) is not Slime slime || !Grabbable(slime)) return false;
+        if (Armed != BattleSkill.Grabber || !Ready(BattleSkill.Grabber) || GrabbedId != 0 || !double.IsFinite(x) || !double.IsFinite(height)) return false;
+        // A flyer up in the air is yanked down at once (the Grabber is spent; 1.5 M14).
+        if (Find(id) is { Fly: FlyPhase.Aloft, Type.Fly: not null } flyer && flyer.State != SlimeState.Spawning)
+        {
+            if (!KnockDown(flyer, true)) return false;
+            Spend(BattleSkill.Grabber);
+            return true;
+        }
+        if (Find(id) is not Slime slime || !Grabbable(slime)) return false;
+        // A burrower is pulled up from under the floor (1.5 M14).
+        PullUp(slime);
         // A mirage's copy vanishes in the claw (the Grabber is spent; 1.5 M13).
         if (slime.Decoy) { Dispel(slime); Spend(BattleSkill.Grabber); return true; }
         if (slime.Riding) Fall(slime, 0);

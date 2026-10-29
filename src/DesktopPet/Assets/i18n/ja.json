@@ -970,5 +970,13 @@
   "The sulky slime takes no damage! Stroke it with the cursor to cheer it up": "すねスライムはダメージを受けない！カーソルで左右になでて機嫌を直そう",
   "Cheered up! It waves goodbye and leaves": "機嫌が直った！手を振って帰っていく",
   "MISS": "ミス",
-  "SULK!": "ぷんっ！"
+  "SULK!": "ぷんっ！",
+  "Flying slime": "とびスライム",
+  "Burrowing slime": "もぐらスライム",
+  "shoots 2 drops at a time": "一度に2発うつ",
+  "cracks the floor faster": "床が早くひび割れる",
+  "The flying slime takes aim! Its goo hits even a held cat: carry the cat up to it, or Push or Grab it": "とびスライムがねらっている！ねばねば弾は持ち上げた猫にも当たる：猫を近づけて引っかくか、プッシュかつかみ取りで",
+  "The flying slime is down! Hit it now, it takes extra damage": "とびスライムが落ちた！今のうちに攻撃、ダメージ増加",
+  "The floor cracks! Lift the cat, then drop it on the cracks to pin it": "床がひび割れた！猫を持ち上げて、ひびの上に落として押さえよう",
+  "Pinned! The burrowing slime is stuck out, hit it now": "押さえた！もぐらスライムが出たまま動けない、今のうちに攻撃"
 }

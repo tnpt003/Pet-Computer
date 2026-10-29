@@ -115,7 +115,7 @@ public sealed partial class BattleSim
         AddEffect(crit ? BattleEffectKind.Combo : BattleEffectKind.Spark, slime.X, slime.Altitude + slime.Height / 2);
         hitTone = crit ? NumberTone.Crit : NumberTone.Plain;
         double plain = damage;
-        if (Damage(slime, damage, DamageSource.Weapon) == HitResult.Landed) { slime.Opened = true; HitStatuses(slime); GainRage(Settings.RageHitGain); }
+        if (Damage(slime, damage, DamageSource.Weapon) == HitResult.Landed) { slime.Opened = true; HitStatuses(slime); GainRage(Settings.RageHitGain); FlyerHeldHit(slime); }
         hitTone = NumberTone.Plain;
         // Raging or a sweeping weapon: every other enemy in the air within reach too (PetBattle.Rage.cs).
         if ((Raging || arms.Sweep) && !Over) Sweep(slime, plain, cat.X, HeldFacing, cat);

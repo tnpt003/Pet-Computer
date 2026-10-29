@@ -163,6 +163,10 @@ public sealed class EnemyType
     public MirageSpec? Mirage { get; init; }
     public SulkSpec? Sulk { get; init; }
     [JsonIgnore] public bool UsesMouse => Ghost != null || Bubble != null || Mirage != null || Sulk != null;
+    // 1.5 M14 (PetBattle.Fly.cs, PetBattle.Burrow.cs): it flies anywhere over the battle's screen and
+    // shoots sticky goo (S5), or digs under the floor and comes up under the cat (S6). Null: neither.
+    public FlySpec? Fly { get; init; }
+    public BurrowSpec? Burrow { get; init; }
     // An infected bin may spit one of this kind (with an elite affix). False keeps a kind out of battles
     // that never list it (the 1.5 enemies until their chapter brings them in).
     public bool BinSpit { get; init; } = true;
@@ -289,6 +293,55 @@ public sealed class SulkSpec
     public double Fade { get; init; } = 0.15;
     public double Grow { get; init; } = 0.1;
     public double MaxGrow { get; init; } = 1.6;
+}
+
+// S5 (1.5 M14): it flies from spot to spot over the battle's screen (FlySpeed DIPs/s, a new spot every
+// Move s, its bottom MinHeight DIPs over the floor or higher), out of reach from the floor. Every
+// Cooldown s it aims Aim s at the cat, then shoots a drop of sticky goo (ShotSpeed DIPs/s, Radius DIPs
+// round the cat's centre) that hurts the cat even in the user's hand or under landing protection (the
+// Shield takes it; never a stun, never out of the hand); on the floor the cat is slowed to Slow × its
+// speed for SlowSeconds. An elite shoots EliteShots drops. Stunned (Push, a Grabber yank, HeldHits held
+// hits within HeldWindow s, any daze) it falls, lies Downed s on the floor taking DownedDamage × hits,
+// crouches Rise s and flies up again.
+public sealed class FlySpec
+{
+    public double FlySpeed { get; init; } = 150;
+    public double Move { get; init; } = 5;
+    public double MinHeight { get; init; } = 220;
+    public double Cooldown { get; init; } = 3.5;
+    public double Aim { get; init; } = 0.8;
+    public double ShotSpeed { get; init; } = 520;
+    public double Radius { get; init; } = 30;
+    public double Slow { get; init; } = 0.6;
+    public double SlowSeconds { get; init; } = 2;
+    public int EliteShots { get; init; } = 2;
+    public int HeldHits { get; init; } = 3;
+    public int EliteHeldHits { get; init; } = 4;
+    public double HeldWindow { get; init; } = 4;
+    public double Downed { get; init; } = 3;
+    public double DownedDamage { get; init; } = 1.5;
+    public double Rise { get; init; } = 1;
+}
+
+// S6 (1.5 M14): under the floor (only its mound shows: nothing hits it, it attacks nothing) it goes to
+// the cat at Speed × its speed, then a ring of cracks (Radius DIPs) shows Crack s (an elite's EliteCrack)
+// where the cat was, and it comes up there: the cat on the floor in the ring is hurt and stunned Stun s.
+// Out, it fights Above s (an elite's EliteAbove), digs Dig s and stays under at least Rest s. The cat
+// let go onto the ring (cracks showing, or Emerge s into coming up) pins it: dazed Pinned s. The
+// Grabber pulls it up from under the floor; it then stays out Pinned s.
+public sealed class BurrowSpec
+{
+    public double Speed { get; init; } = 1.4;
+    public double Crack { get; init; } = 1;
+    public double EliteCrack { get; init; } = 0.7;
+    public double Radius { get; init; } = 55;
+    public double Emerge { get; init; } = 0.5;
+    public double Stun { get; init; } = 0.8;
+    public double Above { get; init; } = 3;
+    public double EliteAbove { get; init; } = 2;
+    public double Dig { get; init; } = 0.6;
+    public double Rest { get; init; } = 4;
+    public double Pinned { get; init; } = 3;
 }
 
 // The thrown cat flying through an enemy at MinSpeed DIPs/s or more: Damage (as is, never blocked)
@@ -814,7 +867,7 @@ public static class BattleData
     public static readonly string[] WeaponStyles = { "sword", "hammer", "yarn", "glove" };
     public static readonly string[] WeaponHitEffects = { "spark", "thud" };
     public static readonly string[] EnemyRenderers = { "slime" };
-    public static readonly string[] EnemyMarks = { "none", "speed", "cracks", "leaf", "cross", "spout", "spring", "drum", "chain", "swarm", "giant", "bomb", "split", "half", "flag", "ghost", "bubble", "mirage", "sulk" };
+    public static readonly string[] EnemyMarks = { "none", "speed", "cracks", "leaf", "cross", "spout", "spring", "drum", "chain", "swarm", "giant", "bomb", "split", "half", "flag", "ghost", "bubble", "mirage", "sulk", "wings", "mole" };
     public static readonly string[] GroupSides = { "a", "b" };
     // Kinds the cursor beats (ghost, bubble, mirage, sulk) that one battle may bring (docs/UPDATE-1.5.md).
     public const int MaxMouseKinds = 2;
@@ -1057,7 +1110,7 @@ public static class BattleData
                 if ((elite.HealCooldown < 1 || elite.HealBudget > 1) && e.HealAmount <= 0) throw new InvalidDataException(at + ".elite: healCooldown/healBudget are for an enemy that heals");
                 if (elite.WindupAdd <= 0 && elite.DashSpeed <= 1 && elite.SureBlocks == 0 && elite.FirstHeal <= 1 && elite.Hp <= 1 && elite.Damage <= 1
                     && elite.AttackCooldown >= 1 && elite.HealCooldown >= 1 && elite.HealBudget <= 1 && !elite.PushImmune && elite.VirusEvery <= 0
-                    && e.Spit == null && e.Spring == null && e.Fuse == null && e.Split == null && !e.UsesMouse) throw new InvalidDataException(at + ".elite changes nothing");
+                    && e.Spit == null && e.Spring == null && e.Fuse == null && e.Split == null && !e.UsesMouse && e.Fly == null && e.Burrow == null) throw new InvalidDataException(at + ".elite changes nothing");
                 if (elite.DescVi == null || elite.DescEn == null || elite.DescVi.Length > 60 || elite.DescEn.Length > 60) throw new InvalidDataException(at + ".elite descriptions must be at most 60 characters");
             }
             if (e.Link is LinkSpec link)
@@ -1130,6 +1183,32 @@ public static class BattleData
                 if (e.Boss) throw new InvalidDataException(at + ".split is not for a boss");
                 if (split.Count is < 2 or > 4 || split.EliteCount is < 2 or > 4) throw new InvalidDataException(at + ".split.count/eliteCount must be 2–4");
                 Within(split.Health, 0.1, 1, at + ".split.health");
+            }
+            // 1.5 M14: a flyer or a burrower is nothing else besides.
+            if (e.Fly != null || e.Burrow != null)
+            {
+                if (e.Fly != null && e.Burrow != null) throw new InvalidDataException(at + " may have only one of fly and burrow");
+                if (e.Boss || e.Blocker || e.Dash || e.Slam || e.Hover > 0 || e.Support || e.HealAmount > 0 || e.Link != null || e.Spit != null || e.Spring != null
+                    || e.Fuse != null || e.Split != null || e.UsesMouse)
+                    throw new InvalidDataException(at + ": fly and burrow are not for a boss, blocker, dash, slam, hovering, support, healing, linked, spitting, spring, bomb, splitting or cursor enemy");
+            }
+            if (e.Fly is FlySpec fly)
+            {
+                Within(fly.FlySpeed, 20, 1000, at + ".fly.flySpeed"); Within(fly.Move, 1, 30, at + ".fly.move");
+                Within(fly.MinHeight, 60, 1500, at + ".fly.minHeight"); Within(fly.Cooldown, 0.5, 30, at + ".fly.cooldown");
+                Within(fly.Aim, 0.2, 5, at + ".fly.aim"); Within(fly.ShotSpeed, 100, 3000, at + ".fly.shotSpeed");
+                Within(fly.Radius, 5, 120, at + ".fly.radius"); Within(fly.Slow, 0.1, 1, at + ".fly.slow"); Within(fly.SlowSeconds, 0, 10, at + ".fly.slowSeconds");
+                if (fly.EliteShots is < 1 or > 4) throw new InvalidDataException(at + ".fly.eliteShots must be 1–4");
+                if (fly.HeldHits is < 1 or > 10 || fly.EliteHeldHits is < 1 or > 10) throw new InvalidDataException(at + ".fly.heldHits/eliteHeldHits must be 1–10");
+                Within(fly.HeldWindow, 0.5, 20, at + ".fly.heldWindow"); Within(fly.Downed, 0.5, 15, at + ".fly.downed");
+                Within(fly.DownedDamage, 1, 4, at + ".fly.downedDamage"); Within(fly.Rise, 0.2, 5, at + ".fly.rise");
+            }
+            if (e.Burrow is BurrowSpec burrow)
+            {
+                Within(burrow.Speed, 0.2, 5, at + ".burrow.speed"); Within(burrow.Crack, 0.2, 5, at + ".burrow.crack"); Within(burrow.EliteCrack, 0.2, 5, at + ".burrow.eliteCrack");
+                Within(burrow.Radius, 20, 200, at + ".burrow.radius"); Within(burrow.Emerge, 0.1, 3, at + ".burrow.emerge"); Within(burrow.Stun, 0, 5, at + ".burrow.stun");
+                Within(burrow.Above, 0.5, 20, at + ".burrow.above"); Within(burrow.EliteAbove, 0.5, 20, at + ".burrow.eliteAbove");
+                Within(burrow.Dig, 0.1, 3, at + ".burrow.dig"); Within(burrow.Rest, 0, 30, at + ".burrow.rest"); Within(burrow.Pinned, 0.5, 10, at + ".burrow.pinned");
             }
             // 1.5 M13: one cursor trick per kind, never on a boss.
             if (e.UsesMouse)

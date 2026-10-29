@@ -336,6 +336,7 @@ public sealed partial class PetWindow
         battleFieldWindow?.Close(); battleHudWindow?.Close();
         battleFieldWindow = battleHudWindow = null;
         CloseBattleApps();
+        CloseBattleSky();
         battleView = null;
         battleHud = null;
         battleHudGrab = null;
@@ -730,9 +731,10 @@ public sealed partial class PetWindow
         {
             if (battleFieldWindow.IsVisible) { battleFieldWindow.Hide(); battleHudWindow.Hide(); }
             HideBattleApps();
+            HideBattleSky();
             return;
         }
-        if (!battleFieldWindow.IsVisible) { battleFieldWindow.Show(); battleHudWindow.Show(); ShowBattleApps(); battlePlacedScale = 0; RequestBattleRedraw(); }
+        if (!battleFieldWindow.IsVisible) { battleFieldWindow.Show(); battleHudWindow.Show(); ShowBattleApps(); ShowBattleSky(); battlePlacedScale = 0; RequestBattleRedraw(); }
         var area = battleArea;
         double fieldScale = battleScale;
         if (battlePlacedScale != fieldScale || battlePlacedArea != area)
@@ -766,6 +768,7 @@ public sealed partial class PetWindow
         PlaceBattleHud();
         UpdateBattleHudDodge();
         UpdateBattleApps(dt, drawApps);
+        UpdateBattleSky(drawApps);
     }
 
     // The HUD steps aside for the cursor: over its information part (portrait, HP, status, hint)

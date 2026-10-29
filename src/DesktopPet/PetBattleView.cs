@@ -141,6 +141,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         {
             var slime = sim.Slimes[i];
             if (!slime.Targetable || slime.Riding) continue; // A rider: the cat goes for its mount.
+            if (BattleSim.InSky(slime)) continue; // Up in the air: its own window takes its clicks (1.5 M14).
             double dx = Math.Abs(point.X - (slime.X - OriginX)), half = slime.Width * slime.Puff / 2;
             if (dx > half + 10 || point.Y < Floor - slime.Height * slime.Puff - BattleSim.BubbleLift(slime) - 24 || point.Y > Floor + 4) continue;
             int rank = dx <= half ? Layer(slime) : -1;
@@ -217,6 +218,10 @@ public sealed partial class BattleFieldView : FrameworkElement
                 var slime = sim.Slimes[i];
                 if (Layer(slime) != layer || slime.Exploded) continue; // A bomb that blew up: only its blast shows.
                 double x = slime.X - OriginX + TrickDrift(slime);
+                // 1.5 M14: a flyer up in the air is drawn by its own window (only its shadow here); a
+                // burrower under the floor or going in/out of it has its own drawing.
+                if (BattleSim.InSky(slime)) { if (slime.State != SlimeState.Defeated) DrawSkyShadow(dc, slime, x, floor); continue; }
+                if (DrawBurrower(dc, slime, x, floor, time)) continue;
                 double bubble = BattleSim.BubbleLift(slime);
                 // A leaping boss: its shadow stays on the floor, shrinking as it rises.
                 if (slime.LeapHeight + slime.Lift + bubble > 0)
@@ -502,6 +507,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         if (slime.Type.Marks == "flag") DrawFlag(dc, slime, time);
         DrawSwarmMarks(dc, slime, time);
         DrawTrickMarks(dc, slime, time);
+        DrawSkyMarks(dc, slime, bw, bh, time);
         // An older support mark: a white "+" on its body.
         if (slime.Type.Marks == "cross") dc.DrawGeometry(Brushes.White, Outline, CrossMark);
         if (slime.Elite != null)

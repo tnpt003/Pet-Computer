@@ -908,6 +908,56 @@ internal static class BattleChecks
             handSim.ReleaseGrab();
         }
 
+        // 1.5 M14 (PetWindow.BattleSky.cs): a flying slime up in the air in its own small window on the
+        // battle's monitor, placed in its pixels (DPI), hidden by Pause, knocked down by a Push click on
+        // it (then drawn on the strip again, its window closed); its drops on a click-through canvas;
+        // everything closed with the battle.
+        {
+            window.Reset();
+            window.BattleTuning = new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 1 }, SlimeMaxHp = 1000, SlimeDamage = 0 };
+            check(window.StartBattle() == null, "(setup) a battle for the flying slime");
+            Tick(0.3);
+            var sim = Sim();
+            var skyArea = Field<Area>(window, "battleArea");
+            check(Math.Abs(sim.SkyHeight - (skyArea.Bottom - 2 - skyArea.Top)) < 1, $"The battle knows how high its screen goes ({sim.SkyHeight:0})");
+            var flyer = sim.AddSlime(600, BattleData.Settings.Enemy("flyer"));
+            flyer.Set(SlimeState.Moving);
+            flyer.FlyToX = flyer.X; flyer.FlyToHeight = flyer.Altitude; flyer.FlyClock = 99; flyer.ShotClock = 99;
+            Tick(0.1);
+            var flyers = Field<System.Collections.IDictionary>(window, "flyerWindows");
+            var entry = flyers[flyer.Id];
+            var flyerWindow = entry == null ? null : (Window)entry.GetType().GetField("Window")!.GetValue(entry)!;
+            var flyerSpot = window.BattleFlyerSpot(flyer);
+            check(flyerWindow is { IsVisible: true } && Math.Abs(flyerWindow.Left - flyerSpot.Left) < 2 && Math.Abs(flyerWindow.Top - flyerSpot.Top) < 2
+                && flyerSpot.Bottom > skyArea.Top && flyerSpot.Top < skyArea.Bottom - BattleFieldView.FieldHeight,
+                $"A flyer up in the air has its own window over the strip, where it is ({flyerWindow?.Left:0},{flyerWindow?.Top:0} / {flyerSpot.Left:0},{flyerSpot.Top:0})");
+            var skyScale = FieldOf("battleScale");
+            double skyScaleBefore = (double)skyScale.GetValue(window)!, flyerWidth = flyerWindow!.ActualWidth;
+            skyScale.SetValue(window, skyScaleBefore * 1.5);
+            Tick(0.05); flyerWindow.UpdateLayout();
+            double flyerScaled = flyerWindow.ActualWidth;
+            skyScale.SetValue(window, skyScaleBefore);
+            Tick(0.05); flyerWindow.UpdateLayout();
+            check(Math.Abs(flyerScaled - flyerWidth * 1.5) < 2 && Math.Abs(flyerWindow.ActualWidth - flyerWidth) < 2,
+                $"A DPI change places its window again in the new pixels ({flyerWidth:0} → {flyerScaled:0})");
+            flyer.AimLeft = 0.05;
+            Tick(0.2);
+            check(sim.Shots.Count == 1 && window.BattleSkyShotsShown, "Its drop flies on the click-through canvas");
+            window.SetBattlePaused(true);
+            Tick(0.05);
+            check(!flyerWindow.IsVisible && !window.BattleSkyShotsShown, "Pause hides the flyer and its drops");
+            window.SetBattlePaused(false);
+            Tick(0.05);
+            check(flyerWindow.IsVisible, "Resumed, it shows again");
+            check(!window.BattleClickFlyer(flyer.Id) && flyer.Fly == FlyPhase.Aloft, "A click on it with no skill chosen does nothing");
+            sim.Arm(BattleSkill.Push);
+            check(window.BattleClickFlyer(flyer.Id, -5) && flyer.State == SlimeState.Stunned, "With Push chosen a click on it knocks it down");
+            Tick(2);
+            check(flyer.Fly == FlyPhase.Downed && !window.BattleFlyerWindows.Contains(flyer.Id), "Down on the floor it leaves its window (the strip draws it)");
+            window.EndBattle();
+            check(window.BattleFlyerWindows.Count == 0 && Field<Window?>(window, "skyShotWindow") == null, "Ending the battle closes the flyers' windows");
+        }
+
         // The battle's desktop apps (PetWindow.BattleApps.cs): five icon windows on the grid above the
         // strip, faded while the cursor is far; an ad's × on the strip takes the click and the rest of
         // it covers the slime behind. With PET_RENDER_REVIEW, pictures of the icons, flights and strip.

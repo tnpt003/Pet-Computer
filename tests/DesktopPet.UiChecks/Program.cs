@@ -570,6 +570,7 @@ internal static class Program
         SwarmVisualChecks.Run(Check);
         FlagVisualChecks.Run(Check);
         TrickVisualChecks.Run(Check);
+        SkyVisualChecks.Run(Check);
         window.SetPaused(false);
         window.Reset();
         void AttentionClick() => window.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Right)

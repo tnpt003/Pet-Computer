@@ -25,7 +25,7 @@ public sealed partial class BattleSim
             // whichever comes first in the list.
             blasting = true;
             foreach (var slime in slimes.ToArray())
-                if (slime.Targetable && Math.Abs(slime.X - bomb.X) <= radius + slime.HitWidth / 2)
+                if (slime.Targetable && !InSky(slime) && !slime.Burrowed && Math.Abs(slime.X - bomb.X) <= radius + slime.HitWidth / 2)
                     Damage(slime, Settings.BombDamage * (1 + bombBonus), DamageSource.Bomb);
             blasting = false;
             RefreshGuards();
@@ -303,6 +303,9 @@ public sealed partial class BattleSim
         slime.Bubbled = type.Bubble != null;
         var (minX, maxX) = Bounds(slime);
         slime.X = Math.Clamp(x, minX, maxX);
+        // 1.5 M14: a flyer comes in at a height in its sky; a burrower comes out a moment, then digs in.
+        if (type.Fly is FlySpec fly) JoinSky(slime, fly);
+        if (type.Burrow != null) slime.BurrowClock = 1;
         slime.Set(SlimeState.Spawning);
         JoinLinks(slime);
         slimes.Add(slime);

@@ -594,6 +594,20 @@ public sealed class Slime
     // last stroke; soothed and leaving (drawn waving goodbye).
     public double Puff = 1, Calm, CalmIdle;
     public bool Calmed;
+    // 1.5 M14 (PetBattle.Fly.cs). A flyer: where it is in its round (aloft, falling, down, crouching to
+    // rise), the spot it flies to (battle x, height of its bottom over the floor), the time to its next
+    // spot, to its next shot and left of its aim (0: not aiming), drops still to shoot, its fall's
+    // speed, the held hits on it lately and the time since the first of them.
+    public FlyPhase Fly;
+    public double FlyToX, FlyToHeight, FlyClock, ShotClock, AimLeft, FallSpeed, HeldHitClock;
+    public int ShotsLeft, HeldHitCount;
+    public bool Aiming => AimLeft > 0;
+    // 1.5 M14 (PetBattle.Burrow.cs). A burrower: where it is in its round, the time left in it, the time
+    // it must still stay under, and where its ring of cracks is.
+    public BurrowPhase Burrow;
+    public double BurrowClock, BurrowRest, CrackX;
+    // Under the floor (only its mound shows): nothing hits it and it attacks nothing.
+    public bool Burrowed => Burrow is BurrowPhase.Under or BurrowPhase.Cracking;
     public bool Targetable => State is not (SlimeState.Spawning or SlimeState.Defeated);
     public void Set(SlimeState state)
     {
@@ -665,8 +679,16 @@ public enum BattleEventKind
     // vanished; a sulky slime puffed up from a hit, was stroked (its first stroke since it sulked again),
     // was soothed and left.
     GhostFaded, GhostRevealed, GhostMissed, BubbleBlocked, BubblePoked, BubblePopped, BubbleRegrown,
-    MirageCast, MirageDispelled, SulkPuffed, SulkPetted, SulkCalmed
+    MirageCast, MirageDispelled, SulkPuffed, SulkPetted, SulkCalmed,
+    // 1.5 M14 (Value: the enemy's id): a flyer aimed, shot a drop, its drop hit the cat (Value: 1 held),
+    // it was knocked down (Value: 1 by the Grabber), landed, flew up again; a burrower's cracks showed, it
+    // came up (Value: 1 it hit the cat), was pinned by the cat let go on it, pulled up by the Grabber, dug in.
+    FlyAimed, FlyShot, FlyShotHit, FlyerKnocked, FlyerDowned, FlyerRose,
+    BurrowCracked, BurrowEmerged, BurrowPinned, BurrowPulled, BurrowDug
 }
+// 1.5 M14: a flyer's round (PetBattle.Fly.cs) and a burrower's (PetBattle.Burrow.cs).
+public enum FlyPhase { Aloft, Falling, Downed, Rising }
+public enum BurrowPhase { Above, Digging, Under, Cracking, Emerging }
 // A spring trap (PetBattle.Spring.cs): set and waiting, squeezing before it springs, resting after, flattened.
 public enum SpringState { Ready, Squeezing, Resting, Flat }
 // A drop of goo in flight from a spitter (PetBattle.Spit.cs) and the puddle it leaves.
@@ -677,6 +699,14 @@ public sealed class BattleGoo
     public string? Tint;
     // How far along its flight it is (0–1).
     public double Progress => Flight > 0 ? Math.Clamp(1 - Remaining / Flight, 0, 1) : 1;
+}
+// A flyer's drop of sticky goo in flight (1.5 M14): where it is (battle x, height over the floor), its
+// velocity (DIPs/s, VY up), its life left, what it does to the cat.
+public sealed class BattleShot
+{
+    public int OwnerId;
+    public double X, Height, VX, VY, Remaining, Damage, Radius, Slow, SlowSeconds;
+    public string? Tint;
 }
 public sealed class BattlePuddle
 {

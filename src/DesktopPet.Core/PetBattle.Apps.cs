@@ -65,10 +65,11 @@ public sealed partial class BattleSim
     {
         get
         {
-            if (AppRules is not AppsSpec rules || CatLifted) return 1;
+            // A flyer's sticky goo (1.5 M14, PetBattle.Fly.cs) slows it too.
+            if (AppRules is not AppsSpec rules || CatLifted) return GooSlow;
             foreach (var h in hazards)
-                if (h.Kind == HazardKind.Loading && Math.Abs(lastCatX - h.X) <= rules.LoadingRadius) return rules.LoadingSlow;
-            return 1;
+                if (h.Kind == HazardKind.Loading && Math.Abs(lastCatX - h.X) <= rules.LoadingRadius) return rules.LoadingSlow * GooSlow;
+            return GooSlow;
         }
     }
     public BattlePopup? FindPopup(int id) { foreach (var p in popups) if (p.Id == id) return p; return null; }

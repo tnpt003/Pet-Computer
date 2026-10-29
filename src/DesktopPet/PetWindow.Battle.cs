@@ -230,8 +230,21 @@ public sealed partial class PetWindow
     }
     // A stage of a chapter without the choice (chapter 1) always has the five first skills.
     private bool StageSkillChoice(StageSpec? stage) => stage is not { Endless: false } || AdventureOf(BattleTuning)?.SkillChoice(stage) == true;
-    private IReadOnlyList<BattleSkill> BattleLoadoutFor(StageSpec? stage, ExpeditionBattle? expedition) =>
-        expedition?.Expedition.Run is ExpeditionRun run ? run.Loadout : StageSkillChoice(stage) ? LoadoutChoice(stage == null) : BattleSkills.Default;
+    // 1.5 M21: the setup panel's loadout with a lent skill (not kept as the choice), for the battle it starts.
+    private BattleSkill[]? lentLoadout;
+    private IReadOnlyList<BattleSkill> BattleLoadoutFor(StageSpec? stage, ExpeditionBattle? expedition)
+    {
+        if (expedition?.Expedition.Run is ExpeditionRun run) return run.Loadout;
+        var prepared = lentLoadout;
+        lentLoadout = null;
+        if (!StageSkillChoice(stage)) return BattleSkills.Default;
+        // A stage that lends a skill carries it (Play again too, which skips the setup panel).
+        var lent = stage is { Endless: false } ? AdventureOf(BattleTuning)?.Lent(stage) : null;
+        return global::DesktopPet.Adventure.WithLent(prepared != null && lent != null && prepared.Contains(lent.Value) ? prepared : LoadoutChoice(stage == null), lent);
+    }
+    // "Suggested: Fan, Push" (1.5 M21: a chapter 2 stage's suggestSkills).
+    private string SuggestLine(IEnumerable<string> ids) => L("Gợi ý mang: ", "Suggested: ")
+        + string.Join(", ", ids.Select(BattleSkills.Parse).OfType<BattleSkill>().Select(SkillName)) + ".";
 
     private string DifficultyName(BattleDifficulty level) => level switch
     {
@@ -298,8 +311,10 @@ public sealed partial class PetWindow
             // The app icons: as the Expedition run set out, else the setup panel's choice.
             apps: expedition?.Expedition.Run is ExpeditionRun run ? !run.NoApps : preferences.BattleApps,
             skills: BattleLoadoutFor(stage, expedition),
-            // 1.5 M19: drops in an Expedition step (with coins) and in Infinity (fish and potions only).
-            loot: expedition != null ? BattleLoot.Coins : stage is { Endless: true } ? BattleLoot.Items : BattleLoot.None);
+            // 1.5 M19: drops in an Expedition step (with coins) and in Infinity (fish and potions only);
+            // 1.5 M21: and in a chapter with "drops" (chapter 2, fish and potions).
+            loot: expedition != null ? BattleLoot.Coins
+                : stage is { Endless: true } || (stage != null && AdventureOf(BattleTuning)?.Drops(stage) == true) ? BattleLoot.Items : BattleLoot.None);
         battleExpedition = expedition;
         battleRunId = Guid.NewGuid().ToString("N");
         battleCustomData = BattleDataCustom;

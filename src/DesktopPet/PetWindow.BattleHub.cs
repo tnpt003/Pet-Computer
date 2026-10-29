@@ -232,10 +232,12 @@ public sealed partial class PetWindow
             {
                 string title = L("Hướng dẫn phiêu lưu", "Adventure Guide");
                 string about = L("Học chơi qua từng màn của chương, mang build theo và hạ trùm.", "Learn to play stage by stage, carry your build and beat the boss.");
-                if (Adventure is not Adventure adventure || adventure.Chapter() is not ChapterSpec chapter)
+                if (Adventure is not Adventure adventure || adventure.CurrentChapter is not ChapterSpec chapter)
                     return (title, about, L("Dữ liệu chưa có chương", "No chapter in the data"), null, false, L("Chưa có", "Not available"));
                 int won = chapter.Stages.Count(s => adventure.IsCompleted(s.Id));
-                string line = (won == chapter.Stages.Length ? "✓ " : "") + chapter.Name(preferences.Language) + LF($" · {won}/{chapter.Stages.Length} màn", $" · {won}/{chapter.Stages.Length} stages");
+                // 1.5 M21: the latest open chapter, with its number when there is more than one.
+                string number = adventure.Campaign.Chapters.Length > 1 ? LF($"Chương {adventure.ChapterIndex(chapter) + 1}: ", $"Chapter {adventure.ChapterIndex(chapter) + 1}: ") : "";
+                string line = (won == chapter.Stages.Length ? "✓ " : "") + number + chapter.Name(preferences.Language) + LF($" · {won}/{chapter.Stages.Length} màn", $" · {won}/{chapter.Stages.Length} stages");
                 return (title, about, line, chapter.Stages.Length == 0 ? 0 : (double)won / chapter.Stages.Length, true, null);
             }
             case HubExpedition:

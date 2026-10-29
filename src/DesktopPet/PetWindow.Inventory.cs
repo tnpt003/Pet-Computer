@@ -252,7 +252,7 @@ public sealed partial class PetWindow
         }
         IReadOnlyDictionary<string, int> build = new Dictionary<string, int>();
         string line = "";
-        if (Adventure is Adventure adventure && adventure.Chapter() is ChapterSpec chapter)
+        if (Adventure is Adventure adventure && adventure.CurrentChapter is ChapterSpec chapter)
         {
             var stage = adventure.Stage(mapStageId) ?? chapter.Stages.FirstOrDefault(s => !adventure.IsCompleted(s.Id)) ?? chapter.Stages.LastOrDefault();
             if (stage != null)
@@ -717,7 +717,8 @@ public sealed partial class PetWindow
             ((TextBlock)info.Children[1]).TextAlignment = TextAlignment.Center;
             bagBody!.Children.Add(BagCard(info, bottom: 8));
             // The chapter's progress instead.
-            if (Adventure is Adventure adventure && adventure.Chapter() is ChapterSpec chapter)
+            // The chapter of the stage chosen on the map (1.5 M21), else the latest open one.
+            if (Adventure is Adventure adventure && (adventure.Stage(mapStageId) is StageSpec chosen ? adventure.Locate(chosen.Id)!.Value.Chapter : adventure.CurrentChapter) is ChapterSpec chapter)
             {
                 var list = new StackPanel { Children = { BagLine(chapter.Name(preferences.Language), PetUi.SmallSize, Brushes.White, bold: true) } };
                 foreach (var stage in chapter.Stages)

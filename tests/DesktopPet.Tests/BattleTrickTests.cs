@@ -333,8 +333,8 @@ internal static class BattleTrickTests
             "The four shipped kinds, each with an elite, never spat by a bin");
         var tricks = new[] { "phantom", "bubble", "mirage", "sulky" };
         bool Uses(WaveGroup g) => tricks.Contains(g.Enemy) || g.Pick?.Keys.Any(tricks.Contains) == true || g.Squad?.Any(m => tricks.Contains(m.Enemy)) == true;
-        var all = s.WavePlan.Concat(s.Campaign?.Chapters.SelectMany(c => c.Stages).SelectMany(st => st.Waves) ?? Enumerable.Empty<WaveSpec>());
-        check(!all.SelectMany(w => w.Groups).Any(Uses) && !s.FormationList.SelectMany(f => f.Members).Any(tricks.Contains), "No built-in battle uses them yet");
+        var all = s.WavePlan.Concat(s.Campaign?.Chapters.Take(1).SelectMany(c => c.Stages).SelectMany(st => st.Waves) ?? Enumerable.Empty<WaveSpec>());
+        check(!all.SelectMany(w => w.Groups).Any(Uses) && !s.FormationList.SelectMany(f => f.Members).Any(tricks.Contains), "No built-in battle uses them yet outside chapter 2 (1.5 M21 brings it in)");
 
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
         while (dir != null && !File.Exists(Path.Combine(dir.FullName, "docs", "examples", "battle-m13.json"))) dir = dir.Parent;

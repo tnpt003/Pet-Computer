@@ -9,7 +9,7 @@ internal static class AdventureTests
     {
         var data = BattleData.Settings;
         var campaign = data.Campaign;
-        check(campaign is { Chapters.Length: 1 } && campaign.Chapters[0].Stages.Length == 5, "Built-in battle.json has Adventure chapter 1 with 5 stages");
+        check(campaign is { Chapters.Length: 2 } && campaign.Chapters[0].Stages.Length == 5, "Built-in battle.json has Adventure chapter 1 with 5 stages (and chapter 2 since 1.5 M21)");
         var stages = campaign!.Chapters[0].Stages;
         check(stages.Select(s => s.Id).Distinct().Count() == 5 && stages.All(s => (s.Objective == "clear" || s.Survival) && s.Waves.Length > 0 && s.GoalVi.Length > 0 && s.GoalEn.Length > 0),
             "Every stage has its own id, a goal in both languages and waves");
@@ -84,7 +84,7 @@ internal static class AdventureTests
         var all = new Adventure(campaign, new AdventureProgress());
         StageSpec? opened = null;
         for (int i = 0; i < stages.Length; i++) opened = all.Apply("s" + i, stages[i], true, true, "hammer", BattleDifficulty.Easy, 3, 60).Unlocked;
-        check(opened == null && stages.All(s => all.IsCompleted(s.Id)), "Winning all 5 stages in order completes the chapter");
+        check(opened == campaign.Chapters[1].Stages[0] && stages.All(s => all.IsCompleted(s.Id)), "Winning all 5 stages in order completes the chapter (the last one opens chapter 2, 1.5 M21)");
         for (int i = 0; i < 60; i++) all.Apply("extra" + i, stages[0], true, false, "sword", BattleDifficulty.Normal, 0, 1);
         check(all.Progress.Runs.Count == AdventureProgress.RunsKept, "Only the last 50 run ids are kept");
 

@@ -243,7 +243,7 @@ public sealed partial class BattleSim
         if (!slimes.Any(s => s.Targetable)) return;
         double[] weights = { rules.LoadingWeight, rules.UpdateWeight, rules.VirusExeWeight, rules.AdWeight };
         int outNow = Enumerable.Range(0, weights.Length).Count(MalwareOut);
-        if (outNow >= rules.MaxMalware) return;
+        if (outNow >= (Stage?.MaxMalware ?? rules.MaxMalware)) return; // 1.5 M21: a stage may allow more (chapter 2: 4).
         for (int i = 0; i < weights.Length; i++) if (MalwareOut(i) || weights[i] < 0) weights[i] = 0;
         if (!desktop.Any(a => !a.Infected)) weights[2] = 0; // virus.exe needs a clean icon to go for.
         double total = weights.Sum();

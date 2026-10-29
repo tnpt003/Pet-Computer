@@ -35,6 +35,10 @@ public sealed partial class BattleFieldView
         return null;
     }
 
+    // 1.5 M21 (the guide): the basket, and a dropped fish (this view's DIPs).
+    public Rect? BasketBounds() => sim.Basket != null && double.IsFinite(sim.BasketX) ? new Rect(sim.BasketX - OriginX - 30, Floor - 34, 60, 36) : null;
+    public Rect? FishBounds(int id) => sim.FindFish(id) is StrayFish f ? new Rect(f.X - OriginX - BattleSim.FishHalfWidth - 4, Floor - BattleSim.FishPickHeight, BattleSim.FishHalfWidth * 2 + 8, BattleSim.FishPickHeight + 4) : null;
+
     // Behind the slimes: the basket and the fish lying on the floor.
     private void DrawBasket(DrawingContext dc, double floor, double time)
     {

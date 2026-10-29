@@ -717,6 +717,11 @@ public sealed class ChapterSpec
     // The setup panel lets the user choose the five skills for this chapter's stages (1.5). Unset
     // (chapter 1): its stages always have the five first skills (BattleSkills.Default).
     public bool SkillChoice { get; init; }
+    // 1.5 M21: a stage id (of another chapter); this chapter's first stage opens once it is won
+    // (unset: open from the start, as chapter 1).
+    public string? UnlockAfter { get; init; }
+    // 1.5 M21: slimes drop fish and potions in this chapter's stages (no coins; battle.json "drops").
+    public bool Drops { get; init; }
     public string Name(string language) => PetText.Data(language, NameVi, NameEn);
 }
 
@@ -773,6 +778,10 @@ public sealed class StageSpec
     // random malware and infections wait until MalwareFrom s.
     public MalwareCue[]? MalwarePlan { get; init; }
     public double MalwareFrom { get; init; }
+    // 1.5 M21: at most this many malware kinds out at once in this stage (unset: apps.maxMalware).
+    public int? MaxMalware { get; init; }
+    // 1.5 M21: skill ids the map and the setup panel suggest carrying ("Suggested: …").
+    public string[]? SuggestSkills { get; init; }
     // An accessory id (Assets/accessories.json) given once, the first time the stage is won.
     public string? Reward { get; init; }
     // A skill id: winning this stage opens that skill for the setup panel's choice (Adventure.SkillOpen).
@@ -1797,6 +1806,11 @@ public static class BattleData
                 ValidateStage(stage, where, waves, text);
             }
         }
+        // 1.5 M21: a chapter opens after a stage of an earlier chapter (no loops, nothing unknown).
+        for (int c = 0; c < campaign.Chapters.Length; c++)
+            if (campaign.Chapters[c].UnlockAfter is string after
+                && !campaign.Chapters.Take(c).Any(earlier => earlier.Stages.Any(s => s.Id == after)))
+                throw new InvalidDataException($"campaign.chapters[{campaign.Chapters[c].Id}].unlockAfter must name a stage of an earlier chapter");
     }
 
     // One stage's own rules (an Adventure stage or an Expedition encounter); its id is checked by the caller.
@@ -1836,6 +1850,9 @@ public static class BattleData
             throw new InvalidDataException($"{where} tips need both languages, at most 400 characters each");
         if (stage.UnlocksSkill != null && BattleSkills.Parse(stage.UnlocksSkill) == null)
             throw new InvalidDataException($"{where}.unlocksSkill must be a skill id: {BattleData.KnownSkills}");
+        if (stage.MaxMalware is int malware && (malware is < 1 or > 4 || !stage.Malware)) throw new InvalidDataException($"{where}.maxMalware must be 1–4, in a stage with malware");
+        if (stage.SuggestSkills is { } suggest && (suggest.Length is 0 or > BattleSkills.Carry || suggest.Any(k => BattleSkills.Parse(k) == null) || suggest.Distinct().Count() != suggest.Length))
+            throw new InvalidDataException($"{where}.suggestSkills must list 1–{BattleSkills.Carry} different skill ids: {BattleData.KnownSkills}");
         if (stage.Basket is BasketSpec basket) BasketSpec.Validate(basket, where);
         if (stage.Reward != null && PetAccessories.Find(stage.Reward) is not { Reward: not null })
             throw new InvalidDataException($"{where}.reward \"{stage.Reward}\" is not a reward accessory in accessories.json");

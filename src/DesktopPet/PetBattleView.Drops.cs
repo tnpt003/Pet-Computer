@@ -41,6 +41,9 @@ public sealed partial class BattleFieldView
         return null;
     }
 
+    // 1.5 M21 (the guide): where a drop lies (this view's DIPs).
+    public Rect? DropBounds(int id) => sim.FindDrop(id) is BattleDrop d ? new Rect(d.X - OriginX - BattleSim.DropHalfWidth - 4, Floor - BattleSim.DropPickHeight, BattleSim.DropHalfWidth * 2 + 8, BattleSim.DropPickHeight + 4) : null;
+
     private void DrawDrops(DrawingContext dc, double floor, double time)
     {
         double fade = sim.Settings.Drops?.Fade ?? 0;

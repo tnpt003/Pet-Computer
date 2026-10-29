@@ -745,3 +745,17 @@ Chưa màn gốc nào có giỏ cá. Muốn thử: cất file `%LOCALAPPDATA%\De
 - [ ] Thắng màn: kết quả ghi "giữ được N/5 cá". Màn sống sót 60 giây: hết giờ khi còn slime đang tha cá thì con cá đó vẫn được tính.
 - [ ] Pause/menu: slime, vòng vàng và vòng trắng đứng yên; click cá rơi không có tác dụng.
 - [ ] DPI 100/150/200%, đổi DPI giữa trận, màn hình phụ: giỏ ở đúng giữa dải trận, cá rơi click trúng, chỗ trống cạnh cá vẫn click xuyên; âm thanh ngắn, không chồng; chữ vi/en/ja đúng.
+
+## Chương 2 "Bãi rác Tải về" 1.5 M21 (2026-10-29)
+Có sẵn trong dữ liệu gốc, không cần file tùy chỉnh. Mở bằng Sảnh → Phiêu lưu. Số liệu chốt bằng mô phỏng (bot không nhấc mèo, không dùng Kẹp gắp), **chưa chơi thật**; ảnh bản đồ hai chương và bảng chuẩn bị mới chỉ kiểm qua UiChecks (đọc chữ), chưa xem bằng mắt, chưa thử DPI thật.
+- [ ] Chưa thắng Vua Slime: bản đồ mở ở chương 1; nút › cạnh tiêu đề sang "Chương 2: Bãi rác Tải về", các màn có ổ khóa, màn 1 ghi "Chưa mở — thắng Vua Slime (chương 1) để mở chương này", nút Vào màn mờ. Nút ‹ về chương 1. Chương 1, Trận tự do, Vô tận, Viễn chinh như cũ.
+- [ ] Thắng Vua Slime (lần đầu): kết quả ghi "Hoàn thành chương! Đã mở chương 2: Bãi rác Tải về", nút chính "Chương tiếp" mở bảng chuẩn bị màn 1 chương 2. Mở lại Sảnh: dòng Phiêu lưu ghi "Chương 2: Bãi rác Tải về · 0/5 màn". Đóng/mở app: chương 2 vẫn mở.
+- [ ] Bảng chuẩn bị màn 1 chương 2: có mục chọn 5 kỹ năng; Quạt đã được chọn thay Khiên, không bỏ được (rê chuột: "(Mượn trong màn này.)"); 4 ô kia đổi được; dòng gợi ý "Màn này cho mượn Quạt… Gợi ý mang: Quạt, Đẩy quái, Bom len." Bộ có kỹ năng mượn không được nhớ: mở Vô tận thấy bộ cũ.
+- [ ] Trong màn: HUD có Quạt; hướng dẫn đứng hình dạy Quạt và giới thiệu slime phun, lò xo, hợp thể lần đầu chúng ra (sáng đúng con slime, nút Hiểu rồi); món đồ rơi đầu tiên có bước "Slime vừa rơi đồ…". Click cá/bình nhặt được. Có thể có tới 4 loại app độc cùng lúc.
+- [ ] Thắng màn 1: Quạt mở hẳn (Vô tận/Viễn chinh chọn được); màn 2 mượn Đèn laser, bản đồ ghi "Màn này cho mượn Đèn laser…". Tương tự màn 3 Kẹp gắp, màn 4 Bình xịt, màn 5 Kéo cắt. Sau khi mở thêm kỹ năng, điểm nghỉ Viễn chinh có nút "Đổi kỹ năng".
+- [ ] Màn 2 Thư mục ma: bước giới thiệu bóng ma (rê chuột làm nó hiện), ảo ảnh, nhạc trưởng, cờ hiệu. Rê chuột lên bóng ma thấy nó hiện; laser dụ slime.
+- [ ] Màn 3 Giữ giỏ cá (sống sót 75 s): giỏ ở khoảng 1/3 dải trận (không ở giữa); bước giới thiệu giỏ; cá rơi lần đầu có bước "Cá rơi rồi! Click con cá…" chỉ xong khi click cá; vòng nứt dưới mèo có bước "Kéo mèo lên ngay!" xong khi nhấc mèo; slime bay được sáng đúng chỗ trên màn hình (cửa sổ riêng); slime trộm, bom cưỡi có bước giới thiệu. Mất hết cá thì thua.
+- [ ] Màn 4 Đầm nhầy: bước giới thiệu nhím, băng, xích, tách đôi, Slime Mẹ (đợt cuối). Ném mèo xuyên slime băng làm vỡ vỏ.
+- [ ] Màn 5 Slime Nén: bong bóng có bước "Click bong bóng vài lần…" (xong khi vỡ, có Hiểu rồi để bỏ qua); slime bám tường sáng đúng chỗ trên cao; Slime Nén có bước giới thiệu, bước "sắp lăn: Kéo mèo lên!", bước dây nối quân, bước mảnh file. Thắng: "Hoàn thành chương!", không có nút Chương tiếp.
+- [ ] Cảm giác độ khó (ghi vào Nhật ký chơi thử): màn 2 có quá dễ không (bot mô phỏng còn ~93% máu); Slime Nén mức Khó với búa có quá khó không (mô phỏng búa thắng ~50% so với kiếm ~85%).
+- [ ] Pause/menu/fullscreen ẩn hướng dẫn; bỏ tick "Hướng dẫn trong trận" thì không có bước nào. DPI 100/150/200%, màn hình phụ: chỗ sáng của bước hướng dẫn trùng slime/giỏ/cá; chữ vi/en/ja đúng, không bị cắt (bản đồ có thêm ‹ ›).

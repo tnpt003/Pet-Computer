@@ -225,9 +225,9 @@ internal static class BattleBasketTests
 
     private static void DataChecks(Action<bool, string> check)
     {
-        var all = Shipped.Campaign?.Chapters.SelectMany(c => c.Stages) ?? Enumerable.Empty<StageSpec>();
+        var all = Shipped.Campaign?.Chapters.Take(1).SelectMany(c => c.Stages) ?? Enumerable.Empty<StageSpec>();
         check(!all.Any(s => s.Basket != null) && (Shipped.Expedition is not ExpeditionSpec x || x.Fights.Concat(x.Elites).Append(x.Boss).All(e => e?.Basket == null)),
-            "No built-in stage has a basket yet (chapter 2 brings it)");
+            "No built-in stage outside chapter 2 has a basket (chapter 2 brings it, 1.5 M21)");
         var d = new BasketSpec();
         check(d is { Fish: 5, At: 0.5, Every: 2, Grab: 1.2, Carry: 0.8, Back: 5 }, "Basket defaults: 5 fish, middle of the strip, every 2nd slime, 1.2 s, ×0.8, 5 s");
         string Stage(string basket) => "{ \"schemaVersion\": 1, \"campaign\": { \"chapters\": [ { \"id\": \"t\", \"nameVi\": \"T\", \"nameEn\": \"T\", \"stages\": [ { \"id\": \"t1\", \"nameVi\": \"T\", \"nameEn\": \"T\", "

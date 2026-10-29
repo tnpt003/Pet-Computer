@@ -119,7 +119,7 @@ Tên và mô tả của 10 kỹ năng (HUD, túi đồ, bảng chuẩn bị). G�
 - Mỗi trận mang **5 trong 10** kỹ năng; HUD có đúng 5 ô theo thứ tự cố định ở bảng trên (5 kỹ năng cũ trước, rồi `laser`, `grabber`, `scissors`, `fan`, `spray`). Mặc định là 5 kỹ năng cũ.
 - Bảng chuẩn bị có mục "Kỹ năng mang theo (n/5)": 10 ô icon, bấm ô đã chọn để bỏ, bấm ô còn mở để thêm khi chưa đủ 5; Sẵn sàng chỉ chạy khi đủ 5. Lựa chọn lưu trong preferences (`BattleLoadout`, null = mặc định); id không còn hợp lệ hoặc kỹ năng chưa mở thì đọc như mặc định.
 - Có mục chọn ở trận tự do, Vô tận, chuẩn bị chuyến Viễn chinh (bộ kỹ năng giữ suốt chuyến, lưu trong chuyến: `Skills`, null = mặc định) và màn thuộc chương có `"skillChoice": true`. **Chương 1 không có `skillChoice`**: luôn 5 kỹ năng cũ, mục chọn ẩn.
-- Cả 5 kỹ năng mới đã có tác dụng: Đèn laser, Quạt từ M05 (mục "Đèn laser và Quạt"); Kẹp gắp, Kéo cắt, Bình xịt nước từ M06 (mục "Kẹp gắp, Kéo cắt, Bình xịt nước"). Một kỹ năng mới mở khi đã thắng màn có `"unlocksSkill": "<id>"` (dữ liệu gốc chưa màn nào có; chương 2 thêm ở M21); chưa mở thì hiện ô khóa, không chọn được. Riêng **trận tự do** mang được cả 10 kỹ năng (người dùng chốt 2026-10-28, tới khi có chương 2). Cờ `Working` trong code vẫn còn cho kỹ năng sau này chưa có tác dụng.
+- Cả 5 kỹ năng mới đã có tác dụng: Đèn laser, Quạt từ M05 (mục "Đèn laser và Quạt"); Kẹp gắp, Kéo cắt, Bình xịt nước từ M06 (mục "Kẹp gắp, Kéo cắt, Bình xịt nước"). Một kỹ năng mới mở khi đã thắng màn có `"unlocksSkill": "<id>"` (từ M21: 5 màn chương 2, mục "Chương 2"); chưa mở thì hiện ô khóa, không chọn được, trừ ở chính màn mở nó (màn đó **cho mượn**, xem "Chương 2"). Riêng **trận tự do** mang được cả 10 kỹ năng (người dùng chốt 2026-10-28; giữ nguyên sau M21). Cờ `Working` trong code vẫn còn cho kỹ năng sau này chưa có tác dụng.
 - Kỹ năng không mang theo: ô không có trên HUD, không dùng được. Thẻ có `"skill": "<id>"` (gốc: Bom to → `bomb`, Khiên dày → `shield`) và di vật có `"skill"` (gốc: Chuông phản đòn → `shield`, Túi cứu trợ → `heal`) chỉ được đưa khi bộ mang theo có kỹ năng đó. Thẻ/di vật đã có từ trước vẫn giữ.
 - Kỷ lục không tách theo bộ kỹ năng.
 - **Đổi kỹ năng ở điểm nghỉ Viễn chinh (M06):** khi điểm nghỉ đang mở và số kỹ năng đã mở nhiều hơn 5, khung lựa chọn có nút "Đổi kỹ năng": hiện các kỹ năng đã mở (đang mang có dấu ✓), bỏ/chọn cho đủ 5 rồi "Giữ bộ này" (hoặc "Hủy"). Miễn phí, đổi bao nhiêu lần cũng được, **không thay** lựa chọn hồi máu/lấy thẻ của điểm nghỉ (vẫn phải chọn một trong hai). Thẻ đang được điểm nghỉ đưa mà gắn với kỹ năng vừa bỏ thì rút khỏi lựa chọn (không bốc lại thẻ khác). Chuyến lưu bộ mới (`Skills`); trận sau mang bộ mới. Chỉ có 5 kỹ năng cũ mở (hiện tại, tới khi có chương 2) thì nút không hiện.
@@ -195,7 +195,7 @@ Kỷ lục của file cũ (trước khi tách theo vũ khí) được giữ nguy
 
 ## Phiêu lưu (`campaign`)
 
-Từ 2026-10-20 battle.json có khóa tùy chọn `campaign`: các chương, mỗi chương là danh sách màn chơi theo thứ tự. Thắng một màn thì mở màn kế tiếp trong chương; màn đầu luôn mở.
+Từ 2026-10-20 battle.json có khóa tùy chọn `campaign`: các chương, mỗi chương là danh sách màn chơi theo thứ tự. Thắng một màn thì mở màn kế tiếp trong chương; màn đầu luôn mở, trừ chương có `unlockAfter` (mục "Chương 2").
 
 ```jsonc
 "campaign": {
@@ -488,8 +488,8 @@ Code: `src/DesktopPet.Core/PetBattle.Tools.cs` (luật), `src/DesktopPet/PetBatt
 - **Quạt** (chọn ô rồi **giữ chuột** trên dải trận): gió thổi quái trong `fanRange` ra xa con trỏ, càng gần càng mạnh (ở mép tầm còn 25%), nhân `pushFactor`; tinh anh miễn Đẩy chỉ bị 20%; boss, quái dính, quái cưỡi, quái bay không bị thổi. Quái bị thổi đủ nhanh va vào quái khác (không cùng bay theo) hoặc vào mép/tường "Cập nhật" thì cả hai mất `fanBumpDamage`, mỗi con tối đa một lần mỗi giây. Quái có nhịp trống (liên kết `rhythm`) bị gió thổi thì mất đếm nhịp. Rê chuột khi giữ thì gió đi theo. Thả chuột thì ngừng nhưng **Quạt vẫn được chọn**; cạn hơi thì tự cất và chờ `fanRefillSeconds`. Vòng quét trên ô Quạt là phần hơi đã dùng. Làm khô vũng/tách bầy sẽ có cùng quái thật (M09/M11).
 - **Sát thương** của cả hai là sát thương kỹ năng: không bị đá chặn, có Kết liễu, quái chết tính là mèo hạ; boss nhận 50%. Không kích hoạt thẻ cộng thêm khác.
 - **Luật chung như kỹ năng cũ:** đang cầm mèo thì kỹ năng chờ (Quạt ngừng, hơi không hồi; chấm laser đã đặt vẫn chạy hết giờ như Cổ vũ); nhấc mèo thật thì bỏ chọn. Pause, menu, chọn thẻ, túi đồ, hướng dẫn đứng hình đóng băng chấm và hơi. Kết thúc trận xóa chấm và gió. Trên dải trận: dấu × quảng cáo và app độc nhận click trước; quảng cáo che phần sau nó. Click trúng mèo luôn là nhấc mèo (mèo là cửa sổ riêng).
-- **Được mang ở đâu:** theo người dùng chốt 2026-10-28, **trận tự do** mang được mọi kỹ năng đã chạy (Laser, Quạt) ngay; Phiêu lưu, Viễn chinh, Vô tận vẫn chỉ mở bằng `unlocksSkill` (chương 2, M21). Lựa chọn lưu chung `BattleLoadout`: chế độ khác đọc bộ có Laser/Quạt chưa mở thành 5 kỹ năng cũ.
-- **Hướng dẫn đứng hình:** bước `laser` và `fan` (kiểu "làm") chỉ chạy trong màn có `unlocksSkill` đúng kỹ năng đó và khi trận mang kỹ năng ấy: sáng ô, chọn xong thì sáng khoảng sàn quanh mèo; dùng xong là hết bước. Chương 1 không có màn như vậy nên không đổi. Màn dạy tự cho mượn kỹ năng: làm cùng chương 2 (M21).
+- **Được mang ở đâu:** theo người dùng chốt 2026-10-28, **trận tự do** mang được mọi kỹ năng đã chạy (Laser, Quạt) ngay; Phiêu lưu, Viễn chinh, Vô tận mở bằng `unlocksSkill` (chương 2 từ M21; màn mở thì cho mượn). Lựa chọn lưu chung `BattleLoadout`: chế độ khác đọc bộ có Laser/Quạt chưa mở thành 5 kỹ năng cũ.
+- **Hướng dẫn đứng hình:** bước `laser` và `fan` (kiểu "làm") chỉ chạy trong màn có `unlocksSkill` đúng kỹ năng đó và khi trận mang kỹ năng ấy: sáng ô, chọn xong thì sáng khoảng sàn quanh mèo; dùng xong là hết bước. Chương 1 không có màn như vậy nên không đổi. Từ M21 màn dạy tự cho mượn kỹ năng (mục "Chương 2").
 - Hình: chấm đỏ có quầng sáng và vòng đếm ngược, đốm đỏ nhấp nhô trên đầu quái bị dụ; Quạt là cánh quạt xanh quay ở chỗ con trỏ và vệt gió chạy ra hai bên. Âm thanh dùng cue có sẵn (`LaserOn` lấp lánh, `FanOn` vút, `FanBump` cộc, `FanSpent` keng). Icon ô giữ bản vẽ từ M02.
 
 ## Kẹp gắp, Kéo cắt, Bình xịt nước (bản 1.5, mốc M06, 2026-10-28)
@@ -518,7 +518,7 @@ Code: `src/DesktopPet.Core/PetBattle.Grabber.cs` (Kẹp gắp), `src/DesktopPet.
 - **Kéo cắt** (chọn ô rồi **kéo chuột thành một nét** trên dải trận, thả chuột là cắt): nét dài ít nhất `scissorsMinLength` DIPs; mọi dây nhầy (`tether`) nét đi qua bị cắt (như `CutLink`: đồng minh choáng `breakStun`, có thưởng); mọi slime có thân nằm trên nét mất `scissorsDamage` một lần. Nét ngắn hơn không làm gì và Kéo cắt vẫn được chọn. Dây được coi như hình vẽ (từ thân tới thân, võng ở giữa, không thấp hơn mặt sàn), nét chỉ cần đi gần dây vài DIPs. Chọc vỡ bong bóng S2 làm cùng quái đó (M13).
 - **Bình xịt nước** (chọn ô rồi **giữ chuột**, như Quạt): slime trong `sprayRange` quanh con trỏ bị **ướt** (vẽ nhỏ lại ~14%, giọt nước chảy trên thân), bị đóng băng `sprayChill` (hiệu ứng M04, boss một nửa) và mất `sprayDps` máu/giây; hết xịt thì khô sau `spraySoakSeconds`. Rê chuột khi giữ thì vòi đi theo, kể cả lên cao (tầm tính theo cả chiều dọc). Thả chuột thì ngừng nhưng vẫn được chọn; cạn nước thì tự cất và chờ `sprayRefillSeconds`; vòng quét trên ô là nước đã dùng. "Ướt" (`Wet`) là móc cho băng mềm (S7, M15) và gai nhím xẹp (S9, M16).
 - **Luật chung** như Đèn laser và Quạt: sát thương kỹ năng (không bị đá chặn, có Kết liễu, quái chết tính là mèo hạ, boss 50%); đang cầm mèo thì kỹ năng chờ (Kẹp gắp thả slime ra không tính ném, Bình xịt ngừng); nhấc mèo thật thì bỏ chọn; Pause, menu, chọn thẻ, túi đồ, hướng dẫn đứng hình đóng băng (slime đang gắp đứng yên giữa không trung). Kết thúc trận hoặc dải trận đổi chỗ thì thả mọi slime xuống. Click trúng mèo luôn là nhấc mèo (mèo là cửa sổ riêng); thứ tự trên dải trận như cũ: dấu × quảng cáo, app độc, rồi kỹ năng.
-- **Được mang ở đâu:** như Laser/Quạt: trận tự do mang ngay; Phiêu lưu, Viễn chinh, Vô tận chờ `unlocksSkill` (chương 2, M21).
+- **Được mang ở đâu:** như Laser/Quạt: trận tự do mang ngay; Phiêu lưu, Viễn chinh, Vô tận mở bằng `unlocksSkill` (chương 2 từ M21).
 - **Hướng dẫn đứng hình:** bước `grabber`, `scissors`, `spray` chỉ chạy ở màn có `unlocksSkill` đúng kỹ năng đó và khi trận mang nó (như `laser`/`fan`).
 - Hình: càng kẹp kim loại trên dây thả từ mép trên dải trận, slime bị gắp hơi kéo dài, bóng dưới sàn nhỏ dần theo độ cao; nét cắt là đường đứt nét trắng viền tối với cây kéo mở ở đầu con trỏ; Bình xịt là bình xanh vòi vàng, vòng chấm xanh là tầm xịt, giọt nước bắn ra. Âm thanh dùng cue có sẵn (`Grabbed` bóp, `GrabReleased` vút, `GrabHit` cộc, `Snipped` vút, `SprayOn` bóp, `SpraySpent` keng). Icon ô giữ bản vẽ từ M02.
 
@@ -588,7 +588,7 @@ Q1 và Q2 của docs/UPDATE-1.5.md. Code: `src/DesktopPet.Core/PetBattle.Spit.cs
 - Pause, menu, chọn thẻ, túi đồ, hướng dẫn đứng hình đóng băng giọt đang bay, vũng, đồng hồ nén/nghỉ/bẹp. Kết thúc trận xóa giọt và vũng. Đổi vùng trận (DPI, màn hình) giữ đúng vị trí tương đối.
 - Hình: slime phun màu tím nhạt có vòi trên đầu, gồng thì má phồng và miệng vòi cam; vòng cam đứt nét trên sàn đầy dần; giọt bay vòng cung với bóng tròn lớn dần ở chỗ rơi; vũng là viền tím bóng có mũi tên chạy hai chiều, mờ dần khi sắp khô. Lò xo là tấm thảm vàng có cuộn lò xo và đệm đỏ trên lưng; vòng vàng đứt nét (sẵn sàng), đỏ đầy dần (đang nén), xám chấm (nghỉ/bẹp); bật thì thân giãn cao lên. Chỉ vẽ nét viền trên sàn, nên click chỗ trống vẫn xuyên xuống desktop.
 - Banner lần đầu mỗi trận: "Slime phun! Nhấc mèo khỏi vòng cam", "Vũng nhầy làm slime lao xa hơn! Dùng Quạt làm khô", "Lò xo đang nén! Nhấc mèo ra khỏi vòng", "Lò xo bẹp rồi! Nó nằm im một lúc"; tinh anh có banner tinh anh sẵn có. Âm thanh dùng cue có sẵn (`SpitAimed`/`GooLanded` bóp, `PuddleBoost` vút, `PuddleDried` bụp, `SpringSqueezed` keng, `SpringBounced` cộc, `SpringFlattened` bóp). Sự kiện mới: `SpitAimed`, `GooLanded`, `PuddleBoost`, `PuddleDried`, `SpringSqueezed`, `SpringBounced`, `SpringFlattened`; hiệu ứng `Splat`.
-- Bước hướng dẫn đứng hình (chương 2) và trang Sổ tay quái làm ở M21/M27. Python không tham gia.
+- Bước hướng dẫn đứng hình chương 2 có từ M21 (mục "Chương 2"); trang Sổ tay quái ở M27. Python không tham gia.
 
 ## Slime nhạc trưởng và Slime xích (`drummer`, `chain`) (bản 1.5, mốc M10, 2026-10-28)
 
@@ -604,7 +604,7 @@ Q3 và Q4 của docs/UPDATE-1.5.md, dùng khung liên kết M01 (mục Liên k�
 - Cắt dây bằng mèo: xét đoạn đường của tâm mèo giữa hai khung hình (ném nhanh không lọt qua) với dây như được vẽ, tâm mèo cách dây ≤ 12 DIPs; mỗi dây đứt một lần; mèo chỉ nhấn (chưa kéo quá ngưỡng), kéo chậm hay bay cao qua dây thì không cắt. Physics kéo/ném không đổi (chỉ đọc vị trí/vận tốc), mèo vẫn không nhận sát thương khi đang cầm/bay. Pause/menu/chọn thẻ/hướng dẫn đứng hình: không cắt. Đếm riêng `CatRopeCuts` (Kéo cắt vẫn đếm `RopesCut`).
 - Dây dài nằm trên vạch sàn thay vì võng xuống dưới sàn (sửa hình M01; vùng cắt của Kéo cắt và mèo vốn đã tính như vậy).
 - Banner lần đầu mỗi trận: "Nhạc trưởng đếm nhịp! Đẩy nó trước nhịp cuối", "Dây nhầy! Ném hoặc kéo mèo xuyên dây, hay dùng Kéo cắt", "Đứt dây! Đồng đội choáng" (vi/en/ja). Âm thanh dùng cue có sẵn: `LinkBeat` gõ nhẹ (`ball_tap`, hạng thấp nhất), `LinkStrike` keng, `LinkFormed` bóp, `LinkCut` bụp, `LinkSnapped` bụp nhỏ.
-- Bước hướng dẫn đứng hình (chương 2) và trang Sổ tay quái làm ở M21/M27. Python không tham gia.
+- Bước hướng dẫn đứng hình chương 2 có từ M21 (mục "Chương 2"); trang Sổ tay quái ở M27. Python không tham gia.
 
 ## Slime hợp thể, Slime bom, Slime tách đôi (`fuser`, `bomber`, `splitter`) (bản 1.5, mốc M11, 2026-10-28)
 
@@ -641,7 +641,7 @@ Q5, Q6, Q7 của docs/UPDATE-1.5.md, dùng liên kết `merge` và `ride` của 
 - Pause, menu, chọn thẻ, túi đồ, hướng dẫn đứng hình đóng băng ngòi, đồng hồ nhập. Kết thúc trận tắt mọi ngòi. Không dùng luồng ngẫu nhiên mới, nên seed cũ cho đúng trận cũ.
 - Banner lần đầu mỗi trận (vi/en/ja): "Slime nhập thành khổng lồ! Lần sau Đẩy hoặc Quạt tách bầy ra", "Slime bom cưỡi slime nhanh! Hạ con ngựa giữa đường", "Bom châm ngòi! Nhấc mèo ra khỏi vòng đỏ", "Slime tách đôi! Đừng để thảo dược hồi cho hai nửa", "Hai nửa nhập lại! Hạ slime thảo dược trước". Âm thanh dùng cue có sẵn: `Merged` bóp, `Dismounted` vút, `FuseLit` keng, `Blasted` bụp to, `SlimeSplit` bóp. Sự kiện mới: `FuseLit`, `Blasted`, `SlimeSplit`.
 - Đo perf: `scripts/perf.ps1 -Battle crowd-new` giữ sàn đầy 16 quái 1.5 (hợp thể, bom cưỡi, tách đôi, phun, lò xo, thảo dược) bằng số liệu gốc.
-- Bước hướng dẫn đứng hình (chương 2) và trang Sổ tay quái làm ở M21/M27. Python không tham gia.
+- Bước hướng dẫn đứng hình chương 2 có từ M21 (mục "Chương 2"); trang Sổ tay quái ở M27. Python không tham gia.
 
 ## Slime cờ hiệu và đội hình phối hợp (`flagbearer`, `formations`) (bản 1.5, mốc M12, 2026-10-29)
 
@@ -713,7 +713,7 @@ S5 và S6 của docs/UPDATE-1.5.md, theo ngoại lệ Battle Mode đã duyệt 2
 - **Thả đè:** mèo được thả sau khi nhấc thật mà đáp trong vòng nứt lúc vòng còn hiện hoặc trong `emerge` s nó đang trồi thì nó kẹt ngoài: choáng `pinned` s, mèo không bị trúng. Chỉ slime đào hang phản ứng với mèo rơi. **Kẹp gắp** bấm vào ụ đất thì lôi nó lên và gắp như slime nhỏ; sau đó nó ở ngoài thêm `pinned` s.
 - Kiểm tra lúc nạp: một loại không vừa bay vừa đào; không cho boss, đá chắn, lao, nện, `hover`, hỗ trợ, hồi máu, liên kết, phun, lò xo, bom, tách đôi, quái dùng chuột; số liệu trong giới hạn.
 - Sự kiện mới: `FlyAimed`, `FlyShot`, `FlyShotHit` (Value 1: mèo đang cầm), `FlyerKnocked` (Value 1: Kẹp gắp), `FlyerDowned`, `FlyerRose`, `BurrowCracked`, `BurrowEmerged` (Value 1: trúng mèo), `BurrowPinned`, `BurrowPulled`, `BurrowDug` (cue có sẵn). Banner lần đầu mỗi trận (vi/en/ja): slime bay ngắm mèo, slime bay rơi, sàn nứt, đè trúng.
-- Chưa làm: Captcha (A2) chưa có nên luật "Captcha không ra khi có slime bay" để làm cùng A2; Sổ tay quái và hướng dẫn chương 2 cho hai quái ở M21/M27. Số liệu là ước lượng, chỉnh sau khi chơi thật. Perf: chưa đo; canvas đạn phủ cả vùng làm việc chỉ hiện khi có đạn/đang ngắm.
+- Chưa làm: Captcha (A2) chưa có nên luật "Captcha không ra khi có slime bay" để làm cùng A2; Sổ tay quái cho hai quái ở M27 (hướng dẫn chương 2 có từ M21). Số liệu là ước lượng, chỉnh sau khi chơi thật. Perf: chưa đo; canvas đạn phủ cả vùng làm việc chỉ hiện khi có đạn/đang ngắm.
 
 ## Slime băng và slime bám tường (`ice`, `cling`) (bản 1.5, mốc M15, 2026-10-29)
 
@@ -732,7 +732,7 @@ S7 và S8 của docs/UPDATE-1.5.md, dùng khóa `throwHit` của M03 (cú ném c
 - **Làm rơi:** mèo đang bay sau cú ném đi xuyên nó với tốc độ ≥ `throwHit.minSpeed` (ném mèo vào mép tường chỗ nó bám; nó còn mất `throwHit.damage`), Đẩy (click vào nó khi chọn Đẩy), Kẹp gắp (click vào nó: **giật xuống ngay**, không treo theo con trỏ, tiêu Kẹp gắp) hoặc bất kỳ cú choáng nào. Nó rơi, nằm choáng `downed` s dưới sàn, đánh nhau dưới sàn như slime thường `ground` s rồi đi leo lại. Bom rơi sát mép vẫn trúng nó (Bom tính theo chiều ngang).
 - Kiểm tra lúc nạp: một loại không vừa băng vừa bám tường; hai khóa này phải có `throwHit`; không cho boss, đá chắn, lao, nện, `hover`, hỗ trợ, hồi máu, liên kết, phun, lò xo, bom, tách đôi, quái dùng chuột, bay, đào hang; `wetSpeed` ≤ `throwHit.minSpeed`; `cling.height` 20–110; số liệu trong giới hạn.
 - Sự kiện mới: `IceScratched`, `IceShattered`, `IceRegrown`, `ClingClimbed`, `ClingAimed`, `ClingShot`, `ClingKnocked` (Value 1: Kẹp gắp), `ClingLanded`; gai rơi là `GooLanded` (Value 1: trúng mèo). Cue có sẵn. Banner lần đầu mỗi trận (vi/en/ja): vũ khí chỉ xước, vỡ băng, slime bám tường leo lên mép, slime bám tường rơi.
-- Chưa làm: Sổ tay quái và hướng dẫn chương 2 cho hai quái ở M21/M27. Số liệu (`armor`, ngưỡng tốc độ ném, độ cao bám) là ước lượng, chỉnh sau khi chơi thật: chưa đo tốc độ ném thực tế của người dùng khi nhắm vào mép màn hình.
+- Chưa làm: Sổ tay quái cho hai quái ở M27 (hướng dẫn chương 2 có từ M21). Số liệu (`armor`, ngưỡng tốc độ ném, độ cao bám) là ước lượng, chỉnh sau khi chơi thật: chưa đo tốc độ ném thực tế của người dùng khi nhắm vào mép màn hình.
 
 ## Slime nhím, Slime hẹn giờ, Slime trộm (`quills`, `clock`, `steal`) (bản 1.5, mốc M16, 2026-10-29)
 
@@ -749,7 +749,7 @@ S9, S10, S11 của docs/UPDATE-1.5.md. Code: `src/DesktopPet.Core/PetBattle.Quil
 - **Slime trộm** (`thief`, 35 HP, tím xám, mặt nạ đen): không bao giờ làm mèo mất máu (`damage` 0). Lượt gồng cạnh mèo là móc túi: lấy năng lượng của icon app sạch nhiều năng lượng nhất (≥ `minCharge`, chỉ trận có app), không thì lấy kỹ năng đang sẵn có thời gian hồi dài nhất (ô kỹ năng phải hồi lại từ đầu). Không có gì để lấy thì nó chỉ đi theo mèo, không gồng. Lấy xong thì đeo túi trên lưng (tia sét vàng: năng lượng app; sao xanh: kỹ năng), chạy ×`flee` tốc độ (tinh anh `eliteFlee`) về mép xa mèo, đi xuyên qua slime khác; tới mép thì đứng `linger` s (vòng đỏ đầy dần trên túi; đang choáng hoặc chạy theo Laser thì không đếm) rồi trốn mất: biến khỏi trận, không tính là mèo hạ, thứ bị lấy mất luôn. Hạ nó trước thì trả lại: icon được cộng lại phần năng lượng (icon bị nhiễm trong lúc đó thì không), ô kỹ năng hết thời gian hồi. Đẩy hoặc choáng lúc nó gồng thì không lấy được gì; Laser dụ, Bình xịt làm chậm như mọi slime.
 - Kiểm tra lúc nạp: một loại chỉ có một trong ba khóa; không cho boss, đá chắn, lao, nện, `hover`, hỗ trợ, hồi máu, liên kết, phun, lò xo, bom, tách đôi, quái dùng chuột, bay, đào hang, băng, bám tường, gọi quân (`summonAt`, `phases`); `clock.call` chỉ gồm quái đã biết, không boss, không slime hẹn giờ; số liệu trong giới hạn.
 - Sự kiện mới: `QuillsRising`, `QuillsUp`, `QuillsDown`, `QuillsSoaked`, `QuillsPricked`, `ClockStarted`, `ClockRang`, `ClockCalled`, `ThiefStole` (Value 1: kỹ năng, 0: app), `ThiefReturned`, `ThiefEscaped`. Cue có sẵn. Banner (vi/en/ja): nhím xù gai và bị gai đâm, slime hẹn giờ ra trận và reng (lần đầu mỗi trận); trộm lấy đồ, lấy lại, trốn mất (mỗi lần).
-- Chưa làm: Sổ tay quái và hướng dẫn chương 2 cho ba quái ở M21/M27; kiểu màn Đuổi trộm (T2) để sau 1.5. Số liệu (`prick`, thời gian xù, 20 s, `linger`) là ước lượng, chỉnh sau khi chơi thật.
+- Chưa làm: Sổ tay quái cho ba quái ở M27 (hướng dẫn chương 2 có từ M21, trừ slime hẹn giờ chưa vào chương nào); kiểu màn Đuổi trộm (T2) để sau 1.5. Số liệu (`prick`, thời gian xù, 20 s, `linger`) là ước lượng, chỉnh sau khi chơi thật.
 
 ## Slime Nén (boss `zip`: `roll`, pha `roped`/`pack`, `still`) (bản 1.5, mốc M17, 2026-10-29)
 
@@ -771,7 +771,7 @@ B1 của docs/UPDATE-1.5.md, trùm chương 2. Code: `src/DesktopPet.Core/PetBat
 - **`still`** (mảnh file): không đi, không đánh, không bị dồn chỗ (`Separate` bỏ qua); vẫn bị đẩy lùi, Đẩy, Kẹp gắp như slime thường. Chỉ cho quái thường (không boss, không đòn đặc biệt, không liên kết, không khóa 1.5 nào).
 - Kiểm tra lúc nạp: `roll` chỉ cho boss, `minRange` < `range`, số liệu trong giới hạn; `formation` phải là đội hình đã biết; `roped`/`pack` chỉ cho pha khiên, không cùng lúc; tổng quân một pha (kể cả thành viên đội hình) tối đa 8; `ropeCutSpeed` 100–5000, `ropeCutStun` 0–5. Thành viên đội hình của pha boss tính vào luật "quái được gọi không gọi tiếp", giới hạn liên kết và quái dùng chuột như mọi quân gọi.
 - Sự kiện mới: `RollAimed`, `Rolled`, `RollHit`, `BossRoped`, `BossRopeCut` (Value: id quân), `BossRopesGone`, `BossPacked`; đội hình của pha boss phát `FormationArrived`. Cue có sẵn. Banner (vi/en/ja): pha giải nén "… bung file! Còn dây thì nó không mất máu…", pha nén "… tự nén lại! Phá hết mảnh file…", mỗi lần cắt dây "Đứt dây! Còn N dây", lần lăn đầu mỗi trận "… sắp lăn! Nhấc mèo lên để né".
-- Chưa làm: tranh/bản đồ chương 2 (M22), Sổ tay quái (M27), hướng dẫn chương 2 cho boss (M21). Số liệu (HP 900, lăn 24 + choáng 0,9 s, 4 mảnh 40 HP) là ước lượng, chốt bằng mô phỏng cân bằng chương 2 ở M21.
+- Chưa làm: tranh/bản đồ chương 2 (M22), Sổ tay quái (M27), (chương 2 và hướng dẫn cho boss có từ M21). Số liệu (HP 900, lăn 24 + choáng 0,9 s, 4 mảnh 40 HP) là ước lượng, chốt bằng mô phỏng cân bằng chương 2 ở M21.
 
 ## Slime Mẹ và Vua Slime biến dị (boss `mother`: `brood`; boss `mutant_king`: `crownLinks`, `rain`) (bản 1.5, mốc M18, 2026-10-29)
 
@@ -796,7 +796,7 @@ Vua biến dị giữ pha khiên, nhảy về mép, vòng tím, phong tinh anh n
 - **Mưa nhầy** (`rain`, chỉ cho boss): cứ `every` s (lần đầu sau nửa `every`), khi khiên tắt, không choáng, `drops` giọt rơi thẳng từ `height` DIPs xuống quanh mèo (giọt đầu đúng chỗ mèo, các giọt sau cách `spacing` lần lượt hai bên), mỗi giọt có vòng cam trên sàn `warning` s trước. Giọt rơi như giọt Slime phun: mèo dưới sàn trong `radius` mất `damage` (tính theo hệ số như đòn của boss), không choáng; nhấc mèo, `landingGrace`, Khiên bong bóng thì không trúng. `puddleSeconds` > 0: để lại vũng tăng tốc như Slime phun (cỡ `radius` × 1,3, Quạt làm khô).
 - Kiểm tra lúc nạp: `brood`/`crownLinks`/`rain` chỉ cho boss; `brood.count` 1–6, `every` 2–60, `warning` 0–3, `feedRate` 0–500; `crownLinks` 1–4 mục, chỉ `tether`/`rhythm`, số liệu như liên kết thường; `rain.drops` 1–8, `warning` 0,3–5, `radius` 10–200, `height` 40–400, `puddleSeconds` 0–30. Dấu vẽ mới `marks`: `mother`, `mutant`.
 - Sự kiện mới: `BroodWarned`, `BroodLaid` (Value: số con), `NurseHeading`, `NurseFed` (Value: HP đã cho), `CrownLinked` (Value: id quân cầm liên kết), `RainCalled`; giọt mưa rơi là `GooLanded`. Cue có sẵn. Banner (vi/en/ja): lần đẻ đầu "… sắp đẻ bầy!…", con đầu tiên về bú "Slime khổng lồ về cho … bú!…", mỗi lần bú xong "… được hồi N máu", mỗi lần vương miện nối dây hoặc trao trống, lần mưa đầu "… gọi mưa nhầy!…".
-- Chưa làm: đưa vào chương 2 (M21), Viễn chinh tuyến 2 (M23), vòng boss Vô tận Vua → Slime Nén → Vua biến dị (M24); Sổ tay quái (M27). Số liệu (HP 650/1000, bú 20 HP/s, mưa 14) là ước lượng, chốt bằng mô phỏng ở M21/M29.
+- Slime Mẹ có trong chương 2 từ M21 (cuối màn 4); Vua biến dị chưa vào trận gốc nào. Chưa làm: Viễn chinh tuyến 2 (M23), vòng boss Vô tận Vua → Slime Nén → Vua biến dị (M24); Sổ tay quái (M27). Số liệu (HP 650/1000, bú 20 HP/s, mưa 14) là ước lượng, chốt bằng mô phỏng ở M21/M29.
 
 ## Đồ rơi và xu (`drops`) (bản 1.5, mốc M19, 2026-10-29)
 
@@ -810,7 +810,7 @@ M4, M5 của docs/UPDATE-1.5.md. Code: `src/DesktopPet.Core/PetBattle.Drops.cs` 
 }
 ```
 
-- **Chế độ nào có đồ rơi** (tham số `loot` của `BattleSim`, cửa sổ chọn lúc bắt đầu trận): Viễn chinh: cá, xu, bình. Vô tận: cá và bình (không xu). **Chương 1 Phiêu lưu và Trận tự do: không có gì** (chương 1 và rulesVersion của nó giữ nguyên). Chương 2 sẽ bật khi làm M21. Không có khóa `drops` trong dữ liệu thì không trận nào có đồ rơi.
+- **Chế độ nào có đồ rơi** (tham số `loot` của `BattleSim`, cửa sổ chọn lúc bắt đầu trận): Viễn chinh: cá, xu, bình. Vô tận: cá và bình (không xu). **Chương 1 Phiêu lưu và Trận tự do: không có gì** (chương 1 và rulesVersion của nó giữ nguyên). Chương 2 (từ M21, chương có `"drops": true`): cá và bình. Không có khóa `drops` trong dữ liệu thì không trận nào có đồ rơi.
 - **Rơi:** slime bị mèo hạ (qua `Defeat`, kể cả hạ bằng độc/bom/app) rơi một món với xác suất `chance` (tinh anh: `eliteChance`), loại bốc theo `weights` (xu bị bỏ ở chỗ không có xu). Boss rơi `bossDrops` đồng xu, mỗi đồng `bossCoin` (chỉ ở Viễn chinh). Bản giả của ảo ảnh, bom tự nổ, trộm trốn, Slime khổng lồ bú xong không rơi (không phải mèo hạ). Tối đa `maxOnFloor` món trên sàn, món mới thay món cũ nhất.
 - **Ngẫu nhiên riêng:** đồ rơi dùng luồng `BattleRandom.Drops` (12) của seed trận, nên trận không ai nhặt đồ chơi y hệt trận không có đồ rơi (bảng mô phỏng cân bằng không đổi, 240/240 dòng so với HEAD cũ).
 - **Nhặt:** click trúng món (vùng nhận chuột rộng hơn hình một chút). Thứ tự click trong dải trận: mèo → kỹ năng đang chọn → **đồ rơi** → quái → icon app; quảng cáo che thì không nhặt được món phía sau. Cá: +`fishHeal` HP (không quá máu tối đa). Bình: kỹ năng mang theo đang hồi lâu nhất sẵn sàng ngay (không kỹ năng nào đang hồi thì không có tác dụng). Xu: +`coin` (tinh anh `eliteCoin`) vào xu của trận. Không nhặt được khi Pause, đang chọn thẻ, Hướng dẫn phiêu lưu đang đứng hình, hay trận đã kết thúc.
@@ -840,7 +840,36 @@ T1 của docs/UPDATE-1.5.md. Code: `src/DesktopPet.Core/PetBattle.Basket.cs` (lu
 - Kiểm tra lúc nạp: `fish` 1–20, `at` 0,15–0,85, `every` 1–6, `grab` 0,2–5, `carry` 0,3–2, `back` 1–30.
 - Sự kiện mới: `FishTaken` (Value: id slime), `FishDropped` (Value: id cá), `FishReturned` (Value: 1 click, 0 tự về), `FishLost` (Value: cá còn lại). Cue có sẵn (`swoosh`, `pop`, `satisfied`, `annoyed`). Banner (vi/en/ja): lần đầu mỗi trận "Slime tha cá!…", "Cá rơi! Click vào cá để trả về giỏ"; mỗi lần mất cá "Mất một con cá! Còn N".
 - Không dùng luồng ngẫu nhiên nào; bảng mô phỏng cân bằng giống hệt HEAD cũ (240/240 dòng).
-- Chưa làm: đưa vào chương 2 (M21, kèm bước hướng dẫn đứng hình), Viễn chinh tuyến 2 (M23). Số liệu là ước lượng.
+- Từ M21 có trong chương 2 (màn 3 "Giữ giỏ cá", kèm bước hướng dẫn). Chưa làm: Viễn chinh tuyến 2 (M23). Số liệu là ước lượng.
+
+## Chương 2 "Bãi rác Tải về" (bản 1.5, mốc M21, 2026-10-29)
+
+C1 của docs/UPDATE-1.5.md. Dữ liệu: chương `download_dump` trong `campaign` của battle.json. Luật: `src/DesktopPet.Core/PetAdventure.cs` (khóa chương, mượn kỹ năng, đồ rơi theo chương), `PetBattleData.cs` (khóa mới), `PetBattle.Apps.cs` (`maxMalware` của màn). Giao diện: `PetWindow.Adventure.cs` (bản đồ nhiều chương), `PetWindow.BattlePrep.cs` (kỹ năng mượn, gợi ý mang), `PetWindow.Battle.cs` (bộ kỹ năng và đồ rơi lúc vào trận), `PetWindow.BattleGuide.cs` (bước hướng dẫn chương 2). Test: `tests/DesktopPet.Tests/ChapterTwoTests.cs`, `AdventureBalanceTests.RunChapter2`, UiChecks trong `TutorialChecks`.
+
+**Khóa mới**
+- Chương: `"unlockAfter": "<id màn>"`: màn đầu của chương chỉ mở khi đã thắng màn đó (phải là màn của chương **trước**; sai thì cả file bị bỏ). `"drops": true`: slime trong chương rơi cá và bình (không có xu; số liệu ở khóa `drops` chung).
+- Màn: `"maxMalware": 1–4` (chỉ màn có malware): số loại app độc cùng lúc thay cho `apps.maxMalware` (chương 2: 4, chương 1 giữ 2). `"suggestSkills": [ … ]` (1–5 id khác nhau): dòng "Gợi ý mang: …" trên bản đồ và bảng chuẩn bị.
+
+**Luật**
+- Thắng Vua Slime (`c1_slime_king`) thì mở chương 2; khung kết quả ghi "Hoàn thành chương! Đã mở chương 2: …", nút chính thành "Chương tiếp". Màn đã thắng thì luôn mở. Chương 2 bắt đầu build rỗng (build chỉ mang trong một chương).
+- **Mượn kỹ năng:** màn có `unlocksSkill` mà kỹ năng đó chưa mở thì cho mượn: trận luôn mang nó; bộ đang chọn chưa có thì nó thay **ô cuối** (theo thứ tự HUD; với 5 kỹ năng cũ là Khiên). Ở bảng chuẩn bị ô mượn không bỏ được, 4 ô kia đổi tự do; bộ có kỹ năng mượn **không lưu** thành lựa chọn (Chơi lại cũng mượn lại). Thắng màn thì kỹ năng mở hẳn cho Phiêu lưu, Viễn chinh, Vô tận.
+- Bản đồ mở ở chương mở mới nhất (hoặc chương của màn được chọn); nút ‹ › cạnh tiêu đề đổi chương (xem được chương còn khóa; màn đầu ghi "Chưa mở — thắng Vua Slime (chương 1) để mở chương này"). Sảnh và túi đồ theo chương mở mới nhất; trang Phần thưởng liệt kê kỷ lục của mọi chương đã mở.
+
+**5 màn** (`rulesVersion` 1; số liệu chốt bằng mô phỏng, chưa chơi thật)
+
+| Màn | id | Kiểu | Quái mới | Cho mượn / mở | threat |
+|---|---|---|---|---|---|
+| 1 Cổng tải về | `c2_download_gate` | dọn 3 đợt | phun, lò xo, hợp thể | Quạt | 1,9 |
+| 2 Thư mục ma | `c2_ghost_folder` | dọn 3 đợt | bóng ma, ảo ảnh, nhạc trưởng, cờ hiệu | Đèn laser | 2,2 |
+| 3 Giữ giỏ cá | `c2_fish_basket` | sống sót 75 s, giỏ 5 cá (`every` 3, `at` 0,3) | bom cưỡi, đào hang, bay, trộm | Kẹp gắp | 2,2 (+0,5/phút) |
+| 4 Đầm nhầy | `c2_slime_swamp` | dọn 4 đợt, cuối là Slime Mẹ | nhím, băng, xích, tách đôi | Bình xịt nước | 1,95 |
+| 5 Slime Nén | `c2_zip_slime` | dọn 3 đợt, cuối là Slime Nén | bong bóng, bám tường | Kéo cắt | 1,45 |
+
+Mỗi trận ≤ 2 loại liên kết và ≤ 2 loại quái dùng chuột (kiểm tra lúc nạp). Slime dỗi, hẹn giờ, Vua biến dị không vào chương 2 (để Viễn chinh tuyến 2 / Vô tận). Tranh, bản đồ, phông riêng và phần thưởng chương 2 làm ở M22.
+
+**Hướng dẫn đứng hình** (như chương 1, mặc định bật): 5 bước kỹ năng có sẵn (`fan`, `laser`, `grabber`, `spray`, `scissors`) chạy ở màn cho mượn; thêm bước "gặp" (xem, Hiểu rồi) lần đầu mỗi loại quái mới lộ ra, sáng đúng chỗ vẽ (slime bay trong cửa sổ riêng, slime bám tường/bong bóng ở trên cao): `spitter`, `springer`, `fuser`, `drops` (món rơi đầu tiên), `phantom`, `mirage`, `drummer`, `flag`, `basket`, `bomber`, `flyer`, `thief`, `hedgehog`, `icy`, `chain`, `splitter`, `mother`, `clinger`, `zip`, `ropes`, `pack`; và bước "làm": `fish_back` (click cá rơi về giỏ), `crack` (nhấc mèo khi có vòng nứt), `bubble` (chọc vỡ bong bóng), `roll` (nhấc mèo trước cú lăn).
+
+**Mô phỏng cân bằng** (`AdventureBalanceTests.RunChapter2`, 20 seed, chơi cả chương theo thứ tự, mang build, bot mang theo "Gợi ý mang" và nhặt đồ rơi; bot "simple"/"casual" còn biết rê chuột lên bóng ma/ảo ảnh, chọc bong bóng, trả cá về giỏ, dùng Laser/Quạt/Xịt/Kéo cắt theo luật đơn giản, Đẩy slime bay/bám tường; không dùng Kẹp gắp, không nhấc mèo). Đạt: Thường, simple ≥ 80% mọi màn (19–20/20); trung bình ≤ 4 phút (dài nhất ~104 s); bot đứng im ≤ 30% ở màn 2–5 mức Thường; simple còn ≤ 90% máu ở màn 3–5 (màn 2 cho tới 95%: bot soi bóng ma và đặt laser tức thì, tăng threat chỉ làm bot đứng im về 0%; casual còn ~82%); kiếm và búa chênh ≤ 30 điểm, **trừ Slime Nén mức Khó cho tới 40 điểm** (búa luôn kém ~35 điểm ở mọi threat đã thử 1,7 → 1,45; xem lại sau khi chơi thật). Bảng chương 1 giống hệt HEAD cũ (195/195 dòng).
 
 ## Viễn chinh (`expedition`) (2026-10-21)
 

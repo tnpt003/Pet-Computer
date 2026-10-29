@@ -370,6 +370,66 @@ internal static class TutorialChecks
         window.EndBattle();
         foreach (var stage in new[] { teachGrabber, teachScissors, teachSpray }) window.AdventureProgress.Completed.Remove(stage.Id);
         prefs.BattleLoadout = null;
+
+        // 1.5 M21: a stage that opens a skill lends it until it is won: carried in the last slot (the
+        // Shield of the first five) and taught, though the user never chose it.
+        ToGround();
+        check(window.StartBattle(stage: teachLaser) == null && Sim().Carries(BattleSkill.Laser) && !Sim().Carries(BattleSkill.Shield) && !window.BattleSkillOpen(BattleSkill.Laser),
+            "A stage not won yet lends its skill in the last slot (not opened for other battles)");
+        RunToStep(4);
+        check(window.BattleGuideStep == PetWindow.GuideLaser, $"and teaches it ({window.BattleGuideStep})");
+        window.EndBattle();
+
+        // The built-in chapter 2: the map shows the latest open chapter, ‹ › turns chapters, a locked one
+        // says what opens it; the setup panel lends the stage's skill; a new slime's first showing is a step.
+        window.BattleTuning = BattleData.Settings;
+        var progress = window.AdventureProgress;
+        progress.Completed.Add(PetWindow.StageSlimeKing);
+        check(window.OpenAdventureMap() == null && window.AdventureMapChapter == "download_dump" && window.AdventureSelectedStage == PetWindow.StageDownloadGate,
+            $"With the Slime King beaten the map opens on chapter 2, its first stage chosen ({window.AdventureMapChapter}, {window.AdventureSelectedStage})");
+        Call(window, "UpdateAdventureMap");
+        string mapText = window.AdventureMapText;
+        check(mapText.Contains("Chapter 2: The Download Dump") && mapText.Contains("Suggested: Fan") && mapText.Contains("This stage lends Fan") && window.AdventureEnterEnabled,
+            $"The map names chapter 2 and what its stage lends and suggests ({mapText.Replace('\n', '|')})");
+        check(window.AdventureShowChapter(-1) && window.AdventureMapChapter == "slime_invasion" && !window.AdventureShowChapter(-1) && window.AdventureShowChapter(1),
+            "‹ › turn between the chapters (and stop at the ends)");
+        check(window.AdventureEnterStage() == null && window.BattlePreparing && window.BattlePrepLent == BattleSkill.Fan && window.BattlePrepSkills.Contains(BattleSkill.Fan)
+            && !window.BattlePrepSkills.Contains(BattleSkill.Shield) && !window.BattlePrepToggleSkill(BattleSkill.Fan) && window.BattlePrepSkills.Contains(BattleSkill.Fan),
+            "The stage's setup carries the lent Fan in the Shield's slot, and it cannot be put back");
+        check(window.BattlePrepText.Contains("(Lent for this stage.)"), $"The setup panel says the Fan is lent ({window.BattlePrepText.Replace('\n', '|')})");
+        check(window.BattlePrepToggleSkill(BattleSkill.Heal) && window.BattlePrepToggleSkill(BattleSkill.Shield) && window.BattlePrepReady() == null
+            && Sim().Carries(BattleSkill.Fan) && Sim().Carries(BattleSkill.Shield) && !Sim().Carries(BattleSkill.Heal) && Sim().Loot == BattleLoot.Items && prefs.BattleLoadout == null,
+            "The other four may be changed: the battle carries that choice with the Fan, drops items, and the lent loadout is not kept as the choice");
+        window.EndBattle();
+        window.Reset();
+        progress.Completed.Remove(PetWindow.StageSlimeKing);
+        window.Reset();
+        check(window.OpenAdventureMap(PetWindow.StageGhostFolder) == null && window.AdventureMapChapter == "download_dump" && !window.AdventureEnterEnabled
+            && window.AdventureMapText.Contains("beat The Slime King (chapter 1) to open this chapter") == false && window.AdventureMapText.Contains("Locked"),
+            $"Before the Slime King, chapter 2's stages are locked ({window.AdventureMapText.Replace('\n', '|')})");
+        window.AdventureSelectStage(PetWindow.StageDownloadGate);
+        Call(window, "UpdateAdventureMap");
+        check(window.AdventureMapText.Contains("Locked — beat The Slime King (chapter 1) to open this chapter"), $"Its first stage says what opens the chapter ({window.AdventureMapText.Replace('\n', '|')})");
+        window.Reset();
+        progress.Completed.Add(PetWindow.StageSlimeKing);
+        progress.Completed.Add(PetWindow.StageDownloadGate);
+        ToGround();
+        check(window.StartBattle(stage: window.Adventure!.Stage(PetWindow.StageGhostFolder)) == null && Sim().Carries(BattleSkill.Laser) && Sim().Carries(BattleSkill.Fan) == false,
+            "(setup) chapter 2 stage 2 with the lent Laser");
+        for (int i = 0; i < 900 && window.BattleGuideStep != PetWindow.GuidePhantom && window.BattleActive; i++)
+        {
+            if (window.BattleGuideStep != null) window.BattleGuideOk();
+            ToGround();
+            Call(window, "TickBattle", 1.0 / 60);
+        }
+        check(window.BattleGuideStep == PetWindow.GuidePhantom && window.BattleGuideFreezes && window.BattleGuideSpots.Count == 1 && window.BattleGuideText.Contains("ghost slime"),
+            $"A ghost slime's first showing is a guide step lighting it ({window.BattleGuideStep}: {window.BattleGuideText})");
+        window.BattleGuideOk();
+        TickBattle(1.0 / 60);
+        check(window.BattleGuideStep != PetWindow.GuidePhantom && GuideTimesShown(PetWindow.GuidePhantom) == 1, "Got it ends it, once a run");
+        window.EndBattle();
+        progress.Completed.Remove(PetWindow.StageSlimeKing);
+        progress.Completed.Remove(PetWindow.StageDownloadGate);
         window.BattleGuideEnabled = false;
 
         prefs.Language = language;

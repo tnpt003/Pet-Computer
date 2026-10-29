@@ -85,7 +85,8 @@ public readonly record struct AdventureOutcome(bool Counted, bool FirstClear, St
 
 // The Adventure's rules over the stage data and the progress: which stages are open, and what a
 // finished run changes. Stages open in order inside a chapter: the first is always open, each
-// other one once the stage before it is won (a won stage stays open even if the data changes).
+// other one once the stage before it is won (a won stage stays open even if the data changes). A chapter
+// with unlockAfter (1.5 M21: chapter 2) opens its first stage once that stage of an earlier chapter is won.
 public sealed class Adventure
 {
     public CampaignSpec Campaign { get; }
@@ -113,7 +114,27 @@ public sealed class Adventure
     public bool IsUnlocked(string stageId)
     {
         if (Locate(stageId) is not { } at) return false;
-        return at.Index == 0 || IsCompleted(stageId) || IsCompleted(at.Chapter.Stages[at.Index - 1].Id);
+        return at.Index == 0 ? ChapterOpen(at.Chapter) || IsCompleted(stageId) : IsCompleted(stageId) || IsCompleted(at.Chapter.Stages[at.Index - 1].Id);
+    }
+
+    // 1.5 M21: a chapter with unlockAfter opens once that stage (of an earlier chapter) is won.
+    public bool ChapterOpen(ChapterSpec chapter) => chapter.UnlockAfter is not string after || IsCompleted(after);
+    public int ChapterIndex(ChapterSpec chapter) => Array.IndexOf(Campaign.Chapters, chapter);
+    // The latest open chapter (the first one when none has opened another): where the hub and the bag look.
+    public ChapterSpec? CurrentChapter => Campaign.Chapters.LastOrDefault(ChapterOpen) ?? Campaign.Chapters.FirstOrDefault();
+    // The chapter a won stage opens (its first stage), if any.
+    public ChapterSpec? ChapterAfter(string stageId) => Campaign.Chapters.FirstOrDefault(c => c.UnlockAfter == stageId);
+    // The chapter a stage's run drops fish and potions in (BattleLoot.Items).
+    public bool Drops(StageSpec stage) => Locate(stage.Id) is { } at && at.Chapter.Drops;
+
+    // 1.5 M21: the stage that opens a skill lends it until it is won: carried even when not chosen.
+    public BattleSkill? Lent(StageSpec? stage) => stage != null && BattleSkills.Parse(stage.UnlocksSkill) is BattleSkill skill
+        && BattleSkills.Get(skill).Working && !SkillOpen(skill) && Locate(stage.Id) != null ? skill : null;
+    // A loadout with the lent skill in it: it takes the last slot (HUD order) when it is not there yet.
+    public static IReadOnlyList<BattleSkill> WithLent(IReadOnlyList<BattleSkill> loadout, BattleSkill? lent)
+    {
+        if (lent is not BattleSkill skill || loadout.Contains(skill) || loadout.Count == 0) return loadout;
+        return BattleSkills.Order(loadout.Take(loadout.Count - 1).Append(skill)) ?? loadout;
     }
 
     // The setup panel's skill choice for this stage: only in a chapter that allows it (chapter 1 keeps
@@ -166,7 +187,8 @@ public sealed class Adventure
         StageSpec? unlocked = null;
         if (won && !IsCompleted(stage.Id))
         {
-            var next = Next(stage.Id);
+            // The next stage of the chapter, or after the last one the first stage of the chapter it opens.
+            var next = Next(stage.Id) ?? ChapterAfter(stage.Id)?.Stages.FirstOrDefault();
             bool wasOpen = next != null && IsUnlocked(next.Id);
             Progress.Completed.Add(stage.Id);
             first = true;

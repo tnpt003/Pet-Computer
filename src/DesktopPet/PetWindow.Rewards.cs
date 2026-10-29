@@ -159,12 +159,13 @@ public sealed partial class PetWindow
         var weapons = BattleTuning.WeaponList;
         var levels = new[] { BattleDifficulty.Easy, BattleDifficulty.Normal, BattleDifficulty.Hard };
         var records = new StackPanel();
-        if (adventure?.Chapter() is ChapterSpec chapter)
+        // 1.5 M21: every open chapter, each under its name.
+        foreach (var chapter in adventure is Adventure open ? open.Campaign.Chapters.Where(open.ChapterOpen) : Enumerable.Empty<ChapterSpec>())
         {
             records.Children.Add(BagLine(chapter.Name(preferences.Language), PetUi.SmallSize, Brushes.White, bold: true));
             foreach (var stage in chapter.Stages)
             {
-                var all = weapons.SelectMany(w => levels.Select(l => adventure.Record(stage, w.Id, l))).ToList();
+                var all = weapons.SelectMany(w => levels.Select(l => adventure!.Record(stage, w.Id, l))).ToList();
                 int wins = all.Sum(r => r.Wins);
                 double? best = all.Where(r => r.BestSeconds is double).Select(r => r.BestSeconds!.Value).DefaultIfEmpty().Min() is double s && s > 0 ? s : null;
                 records.Children.Add(RecordLine(StageTitle(stage), wins == 0 ? L("chưa thắng", "not won yet")

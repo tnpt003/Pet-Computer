@@ -883,6 +883,89 @@
             ]
           }
         ]
+      },
+      {
+        // 1.5 M21: chapter 2 (docs/UPDATE-1.5.md C1). Opens once the Slime King is beaten. Each stage
+        // brings new slimes and lends a new skill (unlocksSkill: carried in that stage, opened for
+        // good by winning it); the setup panel chooses the five skills (skillChoice). Slimes drop
+        // fish and potions (drops); up to four malware kinds at once (maxMalware).
+        "id": "download_dump", "nameVi": "Bãi rác Tải về", "nameEn": "The Download Dump",
+        "skillChoice": true, "unlockAfter": "c1_slime_king", "drops": true,
+        "stages": [
+          {
+            "id": "c2_download_gate", "nameVi": "Cổng tải về", "nameEn": "Download gate",
+            "goalVi": "Slime phun để lại vũng tăng tốc, slime lò xo nằm chờ, bầy hợp thể nhập thành khổng lồ. Màn này cho mượn Quạt.",
+            "goalEn": "Spitters leave speed puddles, spring slimes lie in wait, fusing swarms merge into a giant. This stage lends the Fan.",
+            "tipVi": "Bạn sẽ học: Quạt (giữ chuột thổi slime ra xa, làm khô vũng, tách bầy); né vòng vàng của slime lò xo (nhấc mèo ra khi nó nén) hoặc đánh 2 đòn cho nó bẹp; hạ slime phun đứng xa trước; tách bầy hợp thể trước khi thanh nhập đầy. Từ chương này slime rơi cá và bình: click để nhặt.",
+            "tipEn": "You learn: the Fan (hold the mouse to blow slimes away, dry puddles, split swarms); to dodge a spring slime's gold ring (lift the cat while it squeezes) or flatten it with two hits; to take the far spitter first; to split a fusing swarm before its bar fills. From this chapter slimes drop fish and potions: click to pick them up.",
+            "objective": "clear", "upgrades": true, "maxAlive": 5, "threat": 1.9, "eliteChance": 0.15, "maxMalware": 4, "rulesVersion": 1,
+            "unlocksSkill": "fan", "suggestSkills": [ "fan", "push", "bomb" ],
+            "waves": [
+              { "groups": [ { "enemy": "slime", "count": 2 }, { "enemy": "spitter", "count": 1 } ] },
+              { "groups": [ { "enemy": "springer", "count": 1 }, { "enemy": "slime", "count": 1 }, { "enemy": "runner", "count": 1 }, { "enemy": "spitter", "count": 1 } ] },
+              { "groups": [ { "enemy": "fuser", "count": 3 }, { "pick": { "slime": 1, "runner": 1 }, "count": 2 } ] }
+            ]
+          },
+          {
+            "id": "c2_ghost_folder", "nameVi": "Thư mục ma", "nameEn": "Ghost folder",
+            "goalVi": "Slime bóng ma lúc ẩn lúc hiện, slime ảo ảnh có bản giả, nhạc trưởng gõ nhịp cho cả đội, cờ hiệu tăng tốc đồng đội. Màn này cho mượn Đèn laser.",
+            "goalEn": "Ghost slimes fade in and out, mirage slimes bring fakes, a drummer keeps the band in time, a flag speeds friends up. This stage lends the Laser.",
+            "tipVi": "Bạn sẽ học: rê chuột lên slime bóng ma để nó hiện ra (đang ẩn thì không đánh trúng); rê chuột tìm bản thật của slime ảo ảnh (bản thật có bóng); Đèn laser dụ slime ra khỏi vùng cờ và soi lộ cả hai; Đẩy nhạc trưởng trước nhịp 4 để cả đội lệch nhịp; hạ slime cờ hiệu thì cả đội hoảng.",
+            "tipEn": "You learn: to point at a ghost slime so it shows (a hidden one cannot be hit); to point at a mirage to find the real one (it has a shadow); the Laser pulls slimes out of the flag's ring and reveals both; to Push the drummer before beat 4 so the band falls out of time; beating the flag slime scares the whole band.",
+            "objective": "clear", "upgrades": true, "maxAlive": 5, "threat": 2.2, "eliteChance": 0.2, "maxMalware": 4, "rulesVersion": 1,
+            "unlocksSkill": "laser", "suggestSkills": [ "laser", "push", "shield" ],
+            "waves": [
+              { "groups": [ { "enemy": "phantom", "count": 1 }, { "enemy": "slime", "count": 2 }, { "enemy": "runner", "count": 1 } ] },
+              { "groups": [ { "enemy": "mirage", "count": 1 }, { "enemy": "drummer", "count": 1 }, { "enemy": "slime", "count": 2 }, { "enemy": "runner", "count": 1 } ] },
+              { "groups": [ { "enemy": "flagbearer", "count": 1 }, { "enemy": "phantom", "count": 1 }, { "enemy": "runner", "count": 2 }, { "enemy": "slime", "count": 2 } ] }
+            ]
+          },
+          {
+            "id": "c2_fish_basket", "nameVi": "Giữ giỏ cá", "nameEn": "Keep the fish basket",
+            "goalVi": "Giữ giỏ cá 75 giây: slime tha cá ra mép màn hình, bom cưỡi slime nhanh, slime đào hang trồi dưới chân, slime bay bắn đạn dính. Màn này cho mượn Kẹp gắp.",
+            "goalEn": "Keep the basket 75 s: slimes carry fish off, bombs ride quick slimes, burrowers pop up underfoot, flyers shoot sticky drops. This stage lends the Grabber.",
+            "tipVi": "Bạn sẽ học: hạ slime đang tha cá trước, click cá rơi để trả về giỏ (mất hết cá là thua); Kẹp gắp nhấn giữ một slime nhỏ rồi vung chuột ném vào slime khác (kéo được slime bay xuống, lôi slime đào hang lên); hạ ngựa của slime bom giữa đường; nhấc mèo khi vòng nứt hiện dưới chân. Slime trộm lấy năng lượng icon: hạ nó trước khi nó trốn.",
+            "tipEn": "You learn: to beat a fish carrier first and click a dropped fish back into the basket (lose every fish and the stage is lost); the Grabber: press a small slime and fling the mouse to throw it at another (it pulls a flyer down and a burrower up); to take a bomb's mount down on the way; to lift the cat when a crack shows under it. A thief slime takes an icon's charge: beat it before it gets away.",
+            "objective": "survive", "surviveSeconds": 75, "maxAlive": 6, "upgrades": true, "maxUpgrades": 3, "upgradeAt": [ 20, 40, 60 ],
+            "threatGrowth": 0.5, "threat": 2.2, "eliteChance": 0.15, "maxMalware": 4, "rulesVersion": 1,
+            "unlocksSkill": "grabber", "suggestSkills": [ "grabber", "push", "heal" ],
+            "basket": { "fish": 5, "every": 3, "at": 0.3 },
+            "waves": [
+              { "groups": [ { "enemy": "slime", "count": 3 }, { "enemy": "runner", "count": 1 } ] },
+              { "groups": [ { "enemy": "burrower", "count": 1 }, { "enemy": "slime", "count": 2 }, { "enemy": "thief", "count": 1 } ] },
+              { "stream": { "weights": { "slime": 3, "runner": 2, "bomber": 1, "flyer": 1, "burrower": 1 }, "interval": 2.2, "intervalEnd": 1.2, "pincerAfter": 45, "budget": 9 } }
+            ]
+          },
+          {
+            "id": "c2_slime_swamp", "nameVi": "Đầm nhầy", "nameEn": "Slime swamp",
+            "goalVi": "Slime băng, slime nhím, slime tách đôi và slime xích; cuối màn Slime Mẹ đẻ bầy hợp thể. Màn này cho mượn Bình xịt nước.",
+            "goalEn": "Ice slimes, hedgehogs, splitting slimes and chain slimes; at the end the Slime Mother lays fusing swarms. This stage lends the Water spray.",
+            "tipVi": "Bạn sẽ học: Bình xịt (giữ chuột: slime ướt chậm lại, băng mềm, gai nhím cụp); ném mèo xuyên slime băng thật mạnh để vỡ vỏ; đánh slime nhím lúc gai nằm; cắt dây slime xích (kéo mèo xuyên dây) vì nó gánh sát thương cho đồng đội; hạ thảo dược trước để hai nửa slime tách đôi không nhập lại; hạ Slime khổng lồ trước khi nó về bú cho Slime Mẹ.",
+            "tipEn": "You learn: the Water spray (hold the mouse: wet slimes slow down, ice softens, quills drop); to throw the cat hard through an ice slime to crack its shell; to hit a hedgehog while its quills are down; to cut a chain slime's rope (drag the cat through it): it takes hits for a friend; to beat the herb slime first so split halves cannot rejoin; to beat a giant before it feeds the Mother.",
+            "objective": "clear", "upgrades": true, "maxAlive": 6, "threat": 1.95, "eliteChance": 0.2, "maxMalware": 4, "rulesVersion": 1,
+            "unlocksSkill": "spray", "suggestSkills": [ "spray", "bomb", "push" ],
+            "waves": [
+              { "groups": [ { "enemy": "hedgehog", "count": 1 }, { "enemy": "slime", "count": 2 } ] },
+              { "groups": [ { "enemy": "icy", "count": 1 }, { "enemy": "chain", "count": 1 }, { "enemy": "slime", "count": 1 }, { "enemy": "runner", "count": 1 } ] },
+              { "budget": 8, "groups": [ { "squad": [ { "enemy": "splitter", "count": 1 }, { "enemy": "mender", "count": 1 }, { "enemy": "slime", "count": 1 } ] } ] },
+              { "groups": [ { "enemy": "mother", "count": 1 } ] }
+            ]
+          },
+          {
+            "id": "c2_zip_slime", "nameVi": "Slime Nén", "nameEn": "The Zip Slime",
+            "goalVi": "Trận cuối chương 2: slime bong bóng, slime bám tường, rồi Slime Nén lăn đè, giải nén ra đội hình nối dây và tự nén thành khiên. Màn này cho mượn Kéo cắt.",
+            "goalEn": "Chapter 2's last battle: bubble and wall slimes, then the Zip Slime rolls, unpacks squads tied to it and packs into a shield. This stage lends the Scissors.",
+            "tipVi": "Bạn sẽ học: Kéo cắt (kéo chuột thành một nét: cắt dây nhầy, chọc vỡ bong bóng); click 3 lần chọc vỡ bong bóng; ném mèo vào slime bám tường hoặc Đẩy cho nó rơi; nhấc mèo khỏi dải đỏ khi Slime Nén sắp lăn; cắt dây nối quân về Slime Nén để phá khiên; phá các mảnh file quanh nó ở pha cuối.",
+            "tipEn": "You learn: the Scissors (drag one stroke: cuts slime ropes, pops bubbles); to pop a bubble with three clicks; to throw the cat at a wall slime or Push it down; to lift the cat off the red strip before the Zip Slime rolls; to cut the ropes tying its squads to it to break its shield; to break the file shards around it at the end.",
+            "objective": "clear", "upgrades": true, "maxAlive": 6, "threat": 1.45, "eliteChance": 0.25, "maxMalware": 4, "rulesVersion": 1,
+            "unlocksSkill": "scissors", "suggestSkills": [ "scissors", "shield", "push" ],
+            "waves": [
+              { "groups": [ { "enemy": "bubble", "count": 1 }, { "enemy": "slime", "count": 2 }, { "enemy": "rock", "count": 1 } ] },
+              { "groups": [ { "enemy": "clinger", "count": 1 }, { "enemy": "chain", "count": 1 }, { "enemy": "rock", "count": 1 }, { "enemy": "runner", "count": 1 } ] },
+              { "groups": [ { "enemy": "zip", "count": 1 } ] }
+            ]
+          }
+        ]
       }
     ]
   },

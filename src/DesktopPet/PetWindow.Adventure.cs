@@ -46,6 +46,10 @@ public sealed partial class PetWindow
     private readonly List<(string Id, Border Node, TextBlock Number, Path Mark, TextBlock Label, Rectangle? Link)> mapNodes = new();
     private TextBlock? mapTitle, mapData, mapStageName, mapGoal, mapStatus, mapRecord, mapEnterText, mapCloseText, mapBagText;
     private Border? mapEnter;
+    // 1.5 M21: the chapter the map shows, its row of stages and the ‹ › chapter buttons.
+    private string? mapChapterId;
+    private StackPanel? mapRow;
+    private Border? mapPrevChapter, mapNextChapter;
     private static readonly Brush MapDone = PetUi.Game.Gold;
     private static readonly Brush MapDoneInk = PetUi.Game.GoldInk;
     private static readonly Brush MapLocked = PetUi.Game.Locked;
@@ -54,6 +58,7 @@ public sealed partial class PetWindow
     public bool AdventureMapOpen => adventureMapOpen;
     public bool AdventureMapVisible => adventureMapWindow?.IsVisible == true;
     public string? AdventureSelectedStage => mapStageId;
+    public string? AdventureMapChapter => adventureMapOpen ? mapChapterId : null;
     public bool AdventureEnterEnabled => mapEnter?.IsEnabled == true;
     public string AdventureMapText => string.Join("\n", new[] { mapTitle, mapData, mapStageName, mapGoal, mapStatus, mapRecord, mapEnterText, mapCloseText }
         .Where(t => t is { Visibility: Visibility.Visible }).Select(t => t!.Text).Concat(mapNodes.Select(n => n.Label.Text)));
@@ -67,14 +72,17 @@ public sealed partial class PetWindow
     {
         if (BattlePrepRefusal() is string reason) return reason;
         ReloadBattleData();
-        if (Adventure is not Adventure adventure || adventure.Chapter() is not ChapterSpec chapter)
+        if (Adventure is not Adventure adventure || adventure.Chapter() is null)
             return L("Dữ liệu trận không có chương phiêu lưu.", "The battle data has no Adventure chapter.");
+        // The chapter of the stage asked for, else the one shown last (still open), else the latest open one.
+        var chapter = adventure.Stage(select) is StageSpec asked ? adventure.Locate(asked.Id)!.Value.Chapter
+            : adventure.Chapter(mapChapterId) is ChapterSpec shown && mapChapterId != null && adventure.ChapterOpen(shown) ? shown
+            : adventure.Campaign.Chapters.Last(c => adventure.ChapterOpen(c) || c == adventure.Campaign.Chapters[0]);
         if (battlePreparing) { CloseBattlePrep(); CloseBattleTutorial(); }
         CloseBattleHub(); CloseExpeditionMap(); CloseBattleSummary(); CloseBattleNotice();
         // A reward added to a stage won before it existed is given now (only with official data).
         if (!BattleDataCustom && adventure.GrantRewards().Count > 0 && AdventureProgressFile != null) adventureSaveFailed = !AdventureProgress.Save(AdventureProgressFile);
-        mapStageId = adventure.Stage(select) is StageSpec chosen ? chosen.Id
-            : (chapter.Stages.FirstOrDefault(s => adventure.IsUnlocked(s.Id) && !adventure.IsCompleted(s.Id)) ?? chapter.Stages.Last(s => adventure.IsUnlocked(s.Id))).Id;
+        mapStageId = adventure.Stage(select) is StageSpec chosen ? chosen.Id : FirstStageToPlay(adventure, chapter).Id;
         if (!adventureMapOpen)
         {
             adventureMapOpen = true;
@@ -82,16 +90,40 @@ public sealed partial class PetWindow
             revision++; // An AI reply chosen before the map must not move the cat now.
             pet.Speech.Hide(); pet.Thought.Clear();
             ApplyQuiet();
+            mapChapterId = chapter.Id;
             ShowAdventureMapWindow(chapter);
             System.Diagnostics.Trace.WriteLine("Adventure map opened.");
         }
+        else if (mapChapterId != chapter.Id) { mapChapterId = chapter.Id; BuildMapNodes(chapter); }
         UpdateAdventureMap();
         return null;
     }
 
+    // The stage a chapter's map starts on: the first open one not won yet, else the last open one
+    // (a locked chapter: its first stage).
+    private static StageSpec FirstStageToPlay(Adventure adventure, ChapterSpec chapter) =>
+        chapter.Stages.FirstOrDefault(s => adventure.IsUnlocked(s.Id) && !adventure.IsCompleted(s.Id))
+        ?? chapter.Stages.LastOrDefault(s => adventure.IsUnlocked(s.Id)) ?? chapter.Stages[0];
+
+    // 1.5 M21: ‹ › on the map: the chapter before or after (a locked one may be looked at, not played).
+    public bool AdventureShowChapter(int step)
+    {
+        if (!adventureMapOpen || Adventure is not Adventure adventure || adventure.Chapter(mapChapterId) is not ChapterSpec now) return false;
+        int to = adventure.ChapterIndex(now) + step;
+        if (to < 0 || to >= adventure.Campaign.Chapters.Length) return false;
+        var chapter = adventure.Campaign.Chapters[to];
+        mapChapterId = chapter.Id;
+        mapStageId = FirstStageToPlay(adventure, chapter).Id;
+        BuildMapNodes(chapter);
+        UpdateAdventureMap();
+        return true;
+    }
+
     public bool AdventureSelectStage(string id)
     {
-        if (!adventureMapOpen || Adventure?.Stage(id) == null) return false;
+        if (!adventureMapOpen || Adventure is not Adventure adventure || adventure.Stage(id) == null) return false;
+        // A stage of another chapter shows that chapter.
+        if (adventure.Locate(id)!.Value.Chapter is { } chapter && chapter.Id != mapChapterId) { mapChapterId = chapter.Id; BuildMapNodes(chapter); }
         mapStageId = id;
         UpdateAdventureMap();
         return true;
@@ -124,6 +156,7 @@ public sealed partial class PetWindow
         adventureMapWindow?.Close();
         adventureMapWindow = null;
         mapEnter = null;
+        mapRow = null; mapPrevChapter = mapNextChapter = null;
         mapNodes.Clear();
         if (was) ApplyQuiet();
     }
@@ -145,30 +178,8 @@ public sealed partial class PetWindow
         static TextBlock Line(double size, bool bold = false) => PanelLine(size, bold, 420);
         mapTitle = Line(PetUi.HeadingSize, true);
         mapData = Line(PetUi.SmallSize); mapData.Foreground = PrepWarning; mapData.Margin = new Thickness(0, 6, 0, 0);
-        // The stages in order, joined by a path: gold when won, orange when open, faint with a lock when not yet.
-        var row = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 12, 0, 0), HorizontalAlignment = HorizontalAlignment.Center };
-        mapNodes.Clear();
-        for (int i = 0; i < chapter.Stages.Length; i++)
-        {
-            string id = chapter.Stages[i].Id;
-            Rectangle? link = null;
-            if (i > 0)
-            {
-                link = new Rectangle { Width = 24, Height = 4, RadiusX = 2, RadiusY = 2, VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(0, 19, 0, 0) };
-                row.Children.Add(link);
-            }
-            var number = new TextBlock { FontSize = PetUi.HeadingSize, FontWeight = FontWeights.Bold, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
-            var mark = new Path { StrokeThickness = 2.2, StrokeStartLineCap = PenLineCap.Round, StrokeEndLineCap = PenLineCap.Round, StrokeLineJoin = PenLineJoin.Round,
-                Width = 15, Height = 15, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
-            var node = new Border { Width = 42, Height = 42, CornerRadius = new CornerRadius(21), HorizontalAlignment = HorizontalAlignment.Center,
-                Cursor = System.Windows.Input.Cursors.Hand, Child = new Grid { Children = { number, mark } } };
-            var label = new TextBlock { Foreground = Brushes.White, FontSize = PetUi.CaptionSize, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center,
-                Width = 76, Margin = new Thickness(0, 4, 0, 0) };
-            var column = new StackPanel { Width = 76, Background = Brushes.Transparent, Cursor = System.Windows.Input.Cursors.Hand, Children = { node, label, new PetIllustration(StageLandmark(i, chapter.Stages.Length), 40) { Margin = new Thickness(0,6,0,0), HorizontalAlignment = HorizontalAlignment.Center } } };
-            column.MouseLeftButtonDown += (_, e) => { AdventureSelectStage(id); e.Handled = true; };
-            row.Children.Add(column);
-            mapNodes.Add((id, node, number, mark, label, link));
-        }
+        mapRow = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 12, 0, 0), HorizontalAlignment = HorizontalAlignment.Center };
+        BuildMapNodes(chapter);
         mapStageName = Line(PetUi.TitleSize, true); mapStageName.Margin = new Thickness(0, 12, 0, 0);
         mapGoal = Line(PetUi.BodySize); mapGoal.Margin = new Thickness(0, 3, 0, 0);
         mapStatus = Line(PetUi.SmallSize, true); mapStatus.Margin = new Thickness(0, 5, 0, 0);
@@ -180,7 +191,16 @@ public sealed partial class PetWindow
         mapBagText = bagText;
         var (enter, enterText) = PrimaryButton(() => { if (AdventureEnterStage() is string reason) ShowBattleNotice(reason); });
         mapEnter = enter; mapEnterText = enterText; mapCloseText = closeText;
-        var window = CreateGamePanel(new StackPanel { Children = { PanelTitle(mapTitle), mapData, row, details } },
+        // 1.5 M21: ‹ › beside the title when the campaign has more than one chapter.
+        var (prev, prevText, _) = HudButton(() => AdventureShowChapter(-1), plain: true);
+        var (next, nextText, _) = HudButton(() => AdventureShowChapter(1), plain: true);
+        prevText.Text = "‹"; nextText.Text = "›";
+        prev.Margin = new Thickness(8, 0, 0, 0); next.Margin = new Thickness(4, 0, 0, 0);
+        mapPrevChapter = prev; mapNextChapter = next;
+        var heading = new DockPanel { LastChildFill = true };
+        DockPanel.SetDock(next, Dock.Right); DockPanel.SetDock(prev, Dock.Right);
+        heading.Children.Add(next); heading.Children.Add(prev); heading.Children.Add(PanelTitle(mapTitle));
+        var window = CreateGamePanel(new StackPanel { Children = { heading, mapData, mapRow, details } },
             PanelActions(new UIElement[] { close, bag }, new UIElement[] { enter }), "Pet adventure", minWidth: 440);
         window.Closed += (_, _) => { if (adventureMapWindow == window) adventureMapWindow = null; };
         adventureMapWindow = window;
@@ -191,6 +211,35 @@ public sealed partial class PetWindow
 
     private void PlaceAdventureMap() => PlaceGamePanel(adventureMapWindow);
 
+    // The stages in order, joined by a path: gold when won, orange when open, faint with a lock when not yet.
+    private void BuildMapNodes(ChapterSpec chapter)
+    {
+        if (mapRow == null) return;
+        mapRow.Children.Clear();
+        mapNodes.Clear();
+        for (int i = 0; i < chapter.Stages.Length; i++)
+        {
+            string id = chapter.Stages[i].Id;
+            Rectangle? link = null;
+            if (i > 0)
+            {
+                link = new Rectangle { Width = 24, Height = 4, RadiusX = 2, RadiusY = 2, VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(0, 19, 0, 0) };
+                mapRow.Children.Add(link);
+            }
+            var number = new TextBlock { FontSize = PetUi.HeadingSize, FontWeight = FontWeights.Bold, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
+            var mark = new Path { StrokeThickness = 2.2, StrokeStartLineCap = PenLineCap.Round, StrokeEndLineCap = PenLineCap.Round, StrokeLineJoin = PenLineJoin.Round,
+                Width = 15, Height = 15, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
+            var node = new Border { Width = 42, Height = 42, CornerRadius = new CornerRadius(21), HorizontalAlignment = HorizontalAlignment.Center,
+                Cursor = System.Windows.Input.Cursors.Hand, Child = new Grid { Children = { number, mark } } };
+            var label = new TextBlock { Foreground = Brushes.White, FontSize = PetUi.CaptionSize, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center,
+                Width = 76, Margin = new Thickness(0, 4, 0, 0) };
+            var column = new StackPanel { Width = 76, Background = Brushes.Transparent, Cursor = System.Windows.Input.Cursors.Hand, Children = { node, label, new PetIllustration(StageLandmark(i, chapter.Stages.Length), 40) { Margin = new Thickness(0,6,0,0), HorizontalAlignment = HorizontalAlignment.Center } } };
+            column.MouseLeftButtonDown += (_, e) => { AdventureSelectStage(id); e.Handled = true; };
+            mapRow.Children.Add(column);
+            mapNodes.Add((id, node, number, mark, label, link));
+        }
+    }
+
     // A landmark under each stage of the map: a flag at the start, the boss's crown at the end, and
     // the road between (for chapter 1: break through, hold on, cut the support).
     internal static PetMotif StageLandmark(int index, int count) =>
@@ -200,14 +249,22 @@ public sealed partial class PetWindow
     {
         if (!adventureMapOpen || mapTitle == null || mapEnter == null) return;
         var adventure = Adventure;
-        if (adventure?.Chapter() is not ChapterSpec chapter) return;
+        if ((adventure?.Chapter(mapChapterId) ?? adventure?.Chapter()) is not ChapterSpec chapter) return;
+        int chapterAt = adventure!.ChapterIndex(chapter), chapters = adventure.Campaign.Chapters.Length;
+        foreach (var (arrow, may) in new[] { (mapPrevChapter, chapterAt > 0), (mapNextChapter, chapterAt + 1 < chapters) })
+            if (arrow != null)
+            {
+                arrow.Visibility = chapters > 1 ? Visibility.Visible : Visibility.Collapsed;
+                if (arrow.IsEnabled != may) { arrow.IsEnabled = may; arrow.Opacity = may ? 1 : 0.4; }
+            }
         static void Show(TextBlock? text, string? value)
         {
             if (text == null) return;
             if (text.Text != (value ?? "")) text.Text = value ?? "";
             text.Visibility = string.IsNullOrEmpty(value) ? Visibility.Collapsed : Visibility.Visible;
         }
-        mapTitle.Text = L("Hướng dẫn phiêu lưu — ", "Adventure Guide — ") + chapter.Name(preferences.Language);
+        mapTitle.Text = L("Hướng dẫn phiêu lưu — ", "Adventure Guide — ")
+            + (chapters > 1 ? LF($"Chương {chapterAt + 1}: ", $"Chapter {chapterAt + 1}: ") : "") + chapter.Name(preferences.Language);
         string? dataNote = BattleDataError != null
             ? L("File battle.json của bạn có lỗi nên dùng dữ liệu gốc: ", "Your battle.json has a mistake, so the built-in battle is used: ") + BattleDataError
             : BattleDataCustom ? L("Đang dùng battle.json tùy chỉnh: chơi được nhưng không lưu tiến trình và kỷ lục.", "Using your custom battle.json: you can play, but progress and records are not saved.") : null;
@@ -241,14 +298,23 @@ public sealed partial class PetWindow
         mapStageName!.Text = StageTitle(chosen);
         Show(mapGoal, chosen.Goal(preferences.Language));
         var previous = adventure.Locate(chosen.Id) is { Index: > 0 } where ? where.Chapter.Stages[where.Index - 1] : null;
+        // A locked chapter's first stage waits for the stage that opens the chapter (another chapter's).
+        var opener = previous == null && chapter.UnlockAfter is string after ? adventure.Stage(after) : null;
+        int openerChapter = opener != null ? adventure.ChapterIndex(adventure.Locate(opener.Id)!.Value.Chapter) + 1 : 0;
         Show(mapStatus, adventure.IsCompleted(chosen.Id) ? L("Đã hoàn thành", "Completed") + StageRules(chosen)
             : unlocked ? L("Đã mở · ", "Open · ") + ObjectiveText(chosen) + StageRules(chosen)
-            : LF($"Chưa mở — thắng màn {StageNumber(previous!)} ({previous!.Name(PetLanguage.Vietnamese)}) trước", $"Locked — win stage {StageNumber(previous!)} ({previous!.Name(preferences.Language)}) first"));
+            : opener != null ? LF($"Chưa mở — thắng {opener.Name(PetLanguage.Vietnamese)} (chương {openerChapter}) để mở chương này", $"Locked — beat {opener.Name(preferences.Language)} (chapter {openerChapter}) to open this chapter")
+            : previous != null ? LF($"Chưa mở — thắng màn {StageNumber(previous)} ({previous.Name(PetLanguage.Vietnamese)}) trước", $"Locked — win stage {StageNumber(previous)} ({previous.Name(preferences.Language)}) first")
+            : L("Chưa mở", "Locked"));
         mapStatus!.Foreground = unlocked ? Brushes.White : PrepWarning;
         string? record = StageRecordLine(adventure, chosen);
         string? prize = chosen.Reward is string reward && PetAccessories.Find(reward) is { } item
             ? L("Phần thưởng: ", "Reward: ") + item.Name(preferences.Language) + (adventure.HasReward(reward) ? L(" ✓ đã nhận", " ✓ received") : "") : null;
-        Show(mapRecord, string.Join("\n", new[] { record, prize }.Where(t => t != null)));
+        // 1.5 M21: what the stage lends and suggests carrying.
+        string? skills = adventure.Lent(chosen) is BattleSkill lent ? LF($"Màn này cho mượn {SkillName(lent)}: thắng là mở hẳn.", $"This stage lends {SkillName(lent)}: win it to keep it.")
+            : BattleSkills.Parse(chosen.UnlocksSkill) is BattleSkill opens && adventure.IsCompleted(chosen.Id) ? LF($"Đã mở kỹ năng {SkillName(opens)}.", $"Skill opened: {SkillName(opens)}.") : null;
+        string? suggest = chosen.SuggestSkills is { Length: > 0 } ids ? SuggestLine(ids) : null;
+        Show(mapRecord, string.Join("\n", new[] { suggest, skills, record, prize }.Where(t => t != null)));
         mapEnterText!.Text = L("Vào màn", "Play stage");
         mapCloseText!.Text = L("‹ Sảnh", "‹ Hub");
         if (mapBagText != null) mapBagText.Text = L("Túi đồ", "Bag");
@@ -327,7 +393,9 @@ public sealed partial class PetWindow
             TextWrapping = TextWrapping.Wrap, MaxWidth = 300, Margin = new Thickness(0, 2, 0, 0)
         };
         var lines = new StackPanel();
-        var next = adventure?.Next(stage.Id);
+        // After a chapter's last stage: the first stage of the chapter it opens (1.5 M21).
+        bool lastOfChapter = adventure?.Next(stage.Id) == null;
+        var next = adventure?.Next(stage.Id) ?? adventure?.ChapterAfter(stage.Id)?.Stages.FirstOrDefault();
         if (result.Ranked && ProgressWarning() is string warning)
         {
             var unsaved = Line(PetUi.SmallSize, PrepWarning); unsaved.Text = warning;
@@ -338,12 +406,19 @@ public sealed partial class PetWindow
             var note = Line(PetUi.SmallSize, PrepWarning); note.Text = L("Dữ liệu tùy chỉnh: lượt này không lưu tiến trình và kỷ lục.", "Custom data: this run saves no progress or records.");
             lines.Children.Add(note);
         }
-        else if (result.Outcome.Unlocked is StageSpec opened)
+        else if (result.Outcome.Unlocked is StageSpec opened && lastOfChapter && adventure!.Locate(opened.Id) is { } newChapter)
         {
-            var open = Line(PetUi.BodySize, RecordGold, true); open.Text = LF($"Đã mở: {StageTitle(opened)}", $"Unlocked: {StageTitle(opened)}");
+            var open = Line(PetUi.BodySize, RecordGold, true);
+            open.Text = LF($"Hoàn thành chương! Đã mở chương {adventure.ChapterIndex(newChapter.Chapter) + 1}: {newChapter.Chapter.Name(PetLanguage.Vietnamese)}",
+                $"Chapter complete! Chapter {adventure.ChapterIndex(newChapter.Chapter) + 1} is open: {newChapter.Chapter.Name(preferences.Language)}");
             lines.Children.Add(open);
         }
-        else if (result.Won && result.Outcome.FirstClear && next == null)
+        else if (result.Outcome.Unlocked is StageSpec opened2)
+        {
+            var open = Line(PetUi.BodySize, RecordGold, true); open.Text = LF($"Đã mở: {StageTitle(opened2)}", $"Unlocked: {StageTitle(opened2)}");
+            lines.Children.Add(open);
+        }
+        else if (result.Won && result.Outcome.FirstClear && lastOfChapter)
         {
             var done = Line(PetUi.BodySize, RecordGold, true); done.Text = L("Hoàn thành chương!", "Chapter complete!");
             lines.Children.Add(done);
@@ -382,7 +457,8 @@ public sealed partial class PetWindow
             if (reason != null) ShowBattleNotice(reason);
         }), plain: true);
         main.Background = ResultMain; main.Padding = new Thickness(16, 6, 16, 5); main.Margin = new Thickness(0); main.HorizontalAlignment = HorizontalAlignment.Right;
-        mainText.FontSize = PetUi.TitleSize; mainText.FontWeight = FontWeights.Bold; mainText.Text = canNext ? L("Màn tiếp", "Next stage") : L("Chơi lại", "Play again");
+        mainText.FontSize = PetUi.TitleSize; mainText.FontWeight = FontWeights.Bold;
+        mainText.Text = !canNext ? L("Chơi lại", "Play again") : lastOfChapter ? L("Chương tiếp", "Next chapter") : L("Màn tiếp", "Next stage");
         var others = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 8, 0, 0) };
         if (canNext)
         {

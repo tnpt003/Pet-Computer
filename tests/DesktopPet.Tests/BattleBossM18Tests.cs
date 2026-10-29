@@ -269,9 +269,9 @@ internal static class BattleBossM18Tests
             "The shipped Mutant King: shield phases calling spitters, a chain and a drum in turn, a goo rain");
         var kinds = new[] { "mother", "mutant_king" };
         bool Uses(WaveGroup g) => kinds.Contains(g.Enemy) || g.Pick?.Keys.Any(kinds.Contains) == true || g.Squad?.Any(m => kinds.Contains(m.Enemy)) == true;
-        var all = s.WavePlan.Concat(s.Campaign?.Chapters.SelectMany(ch => ch.Stages).SelectMany(st => st.Waves) ?? Enumerable.Empty<WaveSpec>())
+        var all = s.WavePlan.Concat(s.Campaign?.Chapters.Take(1).SelectMany(ch => ch.Stages).SelectMany(st => st.Waves) ?? Enumerable.Empty<WaveSpec>())
             .Concat(s.Expedition is { } x ? x.Fights.Concat(x.Elites).Concat(x.Boss is { } b ? new[] { b } : Array.Empty<StageSpec>()).SelectMany(st => st.Waves) : Enumerable.Empty<WaveSpec>());
-        check(!all.SelectMany(w => w.Groups).Any(Uses) && !kinds.Contains(s.Endless?.Boss) && !kinds.Contains(s.Endless?.LateBoss), "No built-in battle uses them yet");
+        check(!all.SelectMany(w => w.Groups).Any(Uses) && !kinds.Contains(s.Endless?.Boss) && !kinds.Contains(s.Endless?.LateBoss), "No built-in battle uses them yet outside chapter 2 (1.5 M21 brings it in)");
 
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
         while (dir != null && !File.Exists(Path.Combine(dir.FullName, "docs", "examples", "battle-m18.json"))) dir = dir.Parent;

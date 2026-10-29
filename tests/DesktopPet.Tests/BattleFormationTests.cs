@@ -223,8 +223,8 @@ internal static class BattleFormationTests
               && s.Formation("trampoline")!.Parts[1].Side == "b" && Team("swarms") == "mender,fuser,fuser,fuser,fuser,fuser,fuser",
             "Their members as designed (an elite rock on the assembly line, the spring from behind)");
         bool Uses(WaveGroup g) => g.Formation != null || g.Enemy == "flagbearer" || g.Pick?.ContainsKey("flagbearer") == true || g.Squad?.Any(m => m.Enemy == "flagbearer") == true;
-        var all = s.WavePlan.Concat(s.Campaign?.Chapters.SelectMany(c => c.Stages).SelectMany(st => st.Waves) ?? Enumerable.Empty<WaveSpec>());
-        check(!all.SelectMany(w => w.Groups).Any(Uses), "No built-in battle uses them yet");
+        var all = s.WavePlan.Concat(s.Campaign?.Chapters.Take(1).SelectMany(c => c.Stages).SelectMany(st => st.Waves) ?? Enumerable.Empty<WaveSpec>());
+        check(!all.SelectMany(w => w.Groups).Any(Uses), "No built-in battle uses them yet outside chapter 2 (1.5 M21 brings it in)");
 
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
         while (dir != null && !File.Exists(Path.Combine(dir.FullName, "docs", "examples", "battle-m12.json"))) dir = dir.Parent;

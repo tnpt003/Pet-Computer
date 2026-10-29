@@ -105,8 +105,9 @@ internal static class BattleLoadoutTests
         check(adventure.SkillOpen(BattleSkill.Grabber), "Winning the stage that opens the Grabber opens it (it works since M06)");
         check(!adventure.SkillChoice(campaign.Chapters[0].Stages[0]) && adventure.SkillChoice(campaign.Chapters[1].Stages[0]),
             "Only a chapter with skillChoice lets the user choose (chapter 1 keeps the five first skills)");
-        check(!data.Campaign!.Chapters[0].SkillChoice && data.Campaign.Chapters.SelectMany(c => c.Stages).All(s => s.UnlocksSkill == null),
-            "The shipped chapter 1 has no skill choice and no stage opens a skill yet");
+        check(!data.Campaign!.Chapters[0].SkillChoice && data.Campaign.Chapters[0].Stages.All(s => s.UnlocksSkill == null)
+              && data.Campaign.Chapters[1] is { SkillChoice: true } two && two.Stages.All(s => s.UnlocksSkill != null),
+            "The shipped chapter 1 has no skill choice and opens no skill; chapter 2 has the choice and each stage opens one (1.5 M21)");
 
         // An Expedition run keeps the loadout it set out with.
         var expedition = new Expedition(data, new ExpeditionProgress());

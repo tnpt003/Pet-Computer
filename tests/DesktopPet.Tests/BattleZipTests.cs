@@ -299,8 +299,8 @@ internal static class BattleZipTests
         check(p.All(ph => s.PhaseCalls(ph).Count() <= zip.SummonCap), "Each of its phases fits its summon cap");
         var kinds = new[] { "zip", "zipshard" };
         bool Uses(WaveGroup g) => kinds.Contains(g.Enemy) || g.Pick?.Keys.Any(kinds.Contains) == true || g.Squad?.Any(m => kinds.Contains(m.Enemy)) == true;
-        var all = s.WavePlan.Concat(s.Campaign?.Chapters.SelectMany(ch => ch.Stages).SelectMany(st => st.Waves) ?? Enumerable.Empty<WaveSpec>());
-        check(!all.SelectMany(w => w.Groups).Any(Uses) && s.Endless?.Boss != "zip", "No built-in battle uses it yet");
+        var all = s.WavePlan.Concat(s.Campaign?.Chapters.Take(1).SelectMany(ch => ch.Stages).SelectMany(st => st.Waves) ?? Enumerable.Empty<WaveSpec>());
+        check(!all.SelectMany(w => w.Groups).Any(Uses) && s.Endless?.Boss != "zip", "No built-in battle uses it yet outside chapter 2 (1.5 M21 brings it in)");
 
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
         while (dir != null && !File.Exists(Path.Combine(dir.FullName, "docs", "examples", "battle-m17.json"))) dir = dir.Parent;

@@ -294,8 +294,8 @@ internal static class BattleQuillsTests
             "The three shipped kinds, each with an elite, never spat by a bin (the thief never hurts)");
         var kinds = new[] { "hedgehog", "timer", "thief" };
         bool Uses(WaveGroup g) => kinds.Contains(g.Enemy) || g.Pick?.Keys.Any(kinds.Contains) == true || g.Squad?.Any(m => kinds.Contains(m.Enemy)) == true;
-        var all = s.WavePlan.Concat(s.Campaign?.Chapters.SelectMany(ch => ch.Stages).SelectMany(st => st.Waves) ?? Enumerable.Empty<WaveSpec>());
-        check(!all.SelectMany(w => w.Groups).Any(Uses) && !s.FormationList.SelectMany(f => f.Members).Any(kinds.Contains), "No built-in battle uses them yet");
+        var all = s.WavePlan.Concat(s.Campaign?.Chapters.Take(1).SelectMany(ch => ch.Stages).SelectMany(st => st.Waves) ?? Enumerable.Empty<WaveSpec>());
+        check(!all.SelectMany(w => w.Groups).Any(Uses) && !s.FormationList.SelectMany(f => f.Members).Any(kinds.Contains), "No built-in battle uses them yet outside chapter 2 (1.5 M21 brings it in)");
 
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
         while (dir != null && !File.Exists(Path.Combine(dir.FullName, "docs", "examples", "battle-m16.json"))) dir = dir.Parent;

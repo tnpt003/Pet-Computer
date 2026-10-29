@@ -15,7 +15,7 @@ namespace DesktopPet;
 // and cooldowns — the screen goes dark around the spot, the spot is lit and a short line says what
 // to do. A "do" step waits until the user does it (lifting the cat stays possible: the battle is
 // frozen, not paused); a "see" step waits for Got it. Every line has Skip the guide (for this run).
-// Only in a chapter 1 Adventure stage, each step in its own stage, as often as its Times in one run;
+// Only in an Adventure stage (chapter 1; chapter 2 from 1.5 M21: its new slimes, skills and boss), each step in its own stage, as often as its Times in one run;
 // it is on by default (preferences.AdventureGuide, the stage setup's Guide chip, kept from its last
 // Ready), so a won stage teaches again until the user unticks it. Never in a free battle, the Expedition or Infinity. Pause, the menu
 // and a fullscreen app hide it like the rest of the battle.
@@ -29,6 +29,14 @@ public sealed partial class PetWindow
         GuideVirus = "virus", GuideInfected = "infected", GuidePushRole = "push_role", GuideCutHeal = "cut_heal", GuideElite = "elite",
         GuideKing = "king", GuideSlam = "slam", GuideKingShield = "king_shield", GuideRally = "rally",
         GuideLaser = "laser", GuideFan = "fan", GuideGrabber = "grabber", GuideScissors = "scissors", GuideSpray = "spray";
+    // 1.5 M21: chapter 2's stages and the steps that meet its slimes.
+    public const string StageDownloadGate = "c2_download_gate", StageGhostFolder = "c2_ghost_folder", StageFishBasket = "c2_fish_basket",
+        StageSlimeSwamp = "c2_slime_swamp", StageZipSlime = "c2_zip_slime";
+    public const string GuideSpitter = "spitter", GuideSpringer = "springer", GuideFuser = "fuser", GuideDrops = "drops",
+        GuidePhantom = "phantom", GuideMirage = "mirage", GuideDrummer = "drummer", GuideFlag = "flag",
+        GuideBasket = "basket", GuideFishBack = "fish_back", GuideBomber = "bomber", GuideCrack = "crack", GuideFlyer = "flyer", GuideThief = "thief",
+        GuideHedgehog = "hedgehog", GuideIcy = "icy", GuideChain = "chain", GuideSplitter = "splitter", GuideMother = "mother",
+        GuideBubble = "bubble", GuideClinger = "clinger", GuideZip = "zip", GuideRoll = "roll", GuideRopes = "ropes", GuidePack = "pack";
     // A step for the stage that teaches a skill (its unlocksSkill; chapter 2 from M21), not a stage id.
     public const string GuideTeaches = "teaches:";
     public const int GuideLifts = 5, GuideCutHeals = 4;
@@ -213,6 +221,101 @@ public sealed partial class PetWindow
             () => battle?.Armed == BattleSkill.Spray
                 ? L("Giờ giữ chuột cạnh đám slime: slime ướt sẽ chậm lại. Vòng trên ô là nước đã dùng.", "Now hold the mouse next to the slimes: wet ones slow down. The sweep on the slot is the water used.")
                 : LF($"Kỹ năng mới: {SkillName(BattleSkill.Spray)}. Bấm ô này, rồi giữ chuột trên sàn.", $"A new skill: {SkillName(BattleSkill.Spray)}. Click this slot, then hold the mouse on the floor.")),
+
+        // 1.5 M21 · chapter 2: each new slime the first time it shows, and what to do about the ones that ask for it.
+        // 1 · Download gate.
+        Meet(GuideSpitter, StageDownloadGate, s => s.Type.Spit != null,
+            () => L("Slime phun đứng xa phun giọt nhầy vào vòng cam dưới chân mèo; giọt để lại vũng làm slime khác lao nhanh hơn. Hạ nó trước, hoặc dùng Quạt làm khô vũng.",
+                    "A spitter slime stands back and spits slime at the orange ring under the cat; the puddle it leaves speeds other slimes up. Take it first, or dry the puddle with the Fan.")),
+        Meet(GuideSpringer, StageDownloadGate, s => s.Type.Spring != null,
+            () => L("Slime lò xo nằm im như tấm thảm. Mèo vào vòng vàng thì nó nén rồi bật: nhấc mèo ra khi vòng chuyển đỏ, hoặc đánh 2 đòn cho nó bẹp.",
+                    "A spring slime lies flat like a mat. When the cat steps into its gold ring it squeezes, then springs: lift the cat out when the ring turns red, or flatten it with two hits.")),
+        Meet(GuideFuser, StageDownloadGate, s => s.Type.Link?.Kind == EnemyLinks.Merge && !s.Type.Link.AfterHeal,
+            () => L("Slime hợp thể đi bầy 3 con. Chụm lại đủ lâu là nhập thành Slime khổng lồ (thanh trên đầu): tách bầy bằng Quạt hoặc Đẩy, hoặc thả Bom len khi chúng chụm.",
+                    "Fusing slimes come in threes. Bunched up long enough they merge into a giant (the bar over them): split them with the Fan or Push, or drop the Yarn bomb while they bunch.")),
+        new(GuideDrops, StageDownloadGate, false, true, 1,
+            () => { var drop = battle!.Drops.FirstOrDefault(d => d.Age >= 0.3); guideRef = drop?.Id ?? 0; return drop != null && TourDue(); },
+            () => battle!.FindDrop(guideRef) == null, () => Spots(FieldSpot(battleView?.DropBounds(guideRef), 4)),
+            () => L("Slime vừa rơi đồ: cá hồi máu, bình làm một kỹ năng sẵn sàng ngay. Click để nhặt trước khi nó tan.",
+                    "A slime dropped something: a fish gives HP back, a potion makes a skill ready at once. Click it before it fades.")),
+        // 2 · Ghost folder.
+        Meet(GuidePhantom, StageGhostFolder, s => s.Type.Ghost != null,
+            () => L("Slime bóng ma lúc ẩn lúc hiện; đang ẩn thì không đánh trúng. Rê chuột lên nó (hoặc chiếu Đèn laser) để nó hiện ra.",
+                    "A ghost slime fades in and out; while hidden it cannot be hit. Point the mouse at it (or shine the Laser) to make it show.")),
+        Meet(GuideMirage, StageGhostFolder, s => s.Type.Mirage != null && !s.Decoy,
+            () => L("Slime ảo ảnh có bản giả. Rê chuột lên: bản giả nhòe đi, bản thật có bóng dưới chân. Đánh trúng bản giả thì nó tan.",
+                    "A mirage slime brings fakes. Point the mouse at them: a fake blurs, the real one has a shadow. A fake that is hit melts away.")),
+        Meet(GuideDrummer, StageGhostFolder, s => s.Type.Link?.Kind == EnemyLinks.Rhythm,
+            () => L("Slime nhạc trưởng gõ nhịp: tới nhịp 4 mọi slime trong vòng cùng đánh. Đẩy hoặc làm choáng nó để cả đội lệch nhịp.",
+                    "A drummer slime keeps time: on beat 4 every slime in its ring strikes at once. Push or stun it and the band falls out of time.")),
+        Meet(GuideFlag, StageGhostFolder, s => s.Type.Link?.Kind == EnemyLinks.Aura,
+            () => L("Slime cờ hiệu cắm cờ: slime trong vòng chạy nhanh hơn. Hạ nó trước thì cả đội hoảng một lúc; Đèn laser dụ slime ra khỏi vòng.",
+                    "A flag slime plants its flag: slimes in the ring move faster. Beat it first and the band panics for a moment; the Laser pulls slimes out of the ring.")),
+        // 3 · The fish basket.
+        See(GuideBasket, StageFishBasket, () => TourDue(), () => Spots(FieldSpot(battleView?.BasketBounds())),
+            () => L("Giỏ cá của mèo. Slime sẽ tha cá chạy ra mép màn hình; mất hết cá là thua dù mèo còn máu.",
+                    "The cat's fish basket. Slimes will carry fish off to the screen's edge; lose every fish and the stage is lost, HP or not.")),
+        new(GuideFishBack, StageFishBasket, true, true, 1,
+            () => { var fish = battle!.StrayFish.FirstOrDefault(f => f.Age >= 0.3); guideRef = fish?.Id ?? 0; return fish != null && !BattleHoldsOff; },
+            () => battle!.FindFish(guideRef) == null, () => Spots(FieldSpot(battleView?.FishBounds(guideRef), 4)),
+            () => L("Cá rơi rồi! Click con cá để trả về giỏ trước khi slime khác nhặt.", "A fish was dropped! Click it to put it back in the basket before another slime grabs it.")),
+        Meet(GuideBomber, StageFishBasket, s => s.Type.Fuse != null,
+            () => L("Slime bom cưỡi slime nhanh lao tới, tới gần mèo thì châm ngòi rồi nổ. Hạ con ngựa giữa đường để bom rơi xuống nổ tại chỗ.",
+                    "A bomb slime rides a quick slime in, lights its fuse near the cat and blows up. Take the mount down on the way and the bomb drops and goes off there.")),
+        new(GuideCrack, StageFishBasket, true, false, 1,
+            () => { var digger = battle!.Slimes.FirstOrDefault(s => s.Burrow == BurrowPhase.Cracking && s.Targetable); guideRef = digger?.Id ?? 0; return digger != null && !BattleHoldsOff && !battle.CatStunned; },
+            () => BattleLifted, () => battle!.Find(guideRef) is { Burrow: BurrowPhase.Cracking } ? Spots(CatSpot(), FieldSpot(battleView?.FloorBounds(CatX(), 60), 2)) : new(),
+            () => L("Vòng nứt dưới chân mèo: slime đào hang sắp trồi lên. Kéo mèo lên ngay! Thả mèo đè lên lúc nó trồi là nó kẹt ngoài.",
+                    "A crack under the cat: a burrowing slime is about to come up. Lift the cat now! Drop the cat on it as it comes up and it is stuck outside.")),
+        new(GuideFlyer, StageFishBasket, false, true, 1,
+            () => { var flyer = battle!.Slimes.FirstOrDefault(s => s.Type.Fly != null && s.Targetable && s.State != SlimeState.Spawning); guideRef = flyer?.Id ?? 0; return flyer != null && TourDue(); },
+            () => false, () => battle!.Find(guideRef) is { Targetable: true } flyer ? Spots(AirSlimeSpot(flyer)) : new(),
+            () => L("Slime bay lơ lửng trên màn hình và bắn đạn dính, trúng cả khi mèo đang được bế. Đưa mèo lại gần để mèo vung vuốt, hoặc Đẩy, Kẹp gắp cho nó rơi xuống.",
+                    "A flying slime floats over the screen and shoots sticky drops that hit even a carried cat. Bring the cat close so it swipes, or Push or grab it down.")),
+        Meet(GuideThief, StageFishBasket, s => s.Type.Steal != null,
+            () => L("Slime trộm không đánh mèo mà hút năng lượng icon hoặc một kỹ năng rồi chạy trốn. Hạ nó trước khi nó thoát để lấy lại.",
+                    "A thief slime never hits the cat: it drains an icon or a skill, then runs. Beat it before it gets away to get it back.")),
+        // 4 · Slime swamp.
+        Meet(GuideHedgehog, StageSlimeSwamp, s => s.Type.Quills != null,
+            () => L("Slime nhím xù gai theo chu kỳ: đánh lúc gai dựng thì mèo bị đâm. Đánh lúc gai nằm, hoặc xịt nước cho gai cụp.",
+                    "A hedgehog slime puts its quills up now and then: hitting it then pricks the cat. Hit it while they lie flat, or spray it so they drop.")),
+        Meet(GuideIcy, StageSlimeSwamp, s => s.Type.Ice != null,
+            () => L("Slime băng có vỏ: vũ khí chỉ làm xước. Ném mèo xuyên qua nó thật mạnh để vỡ vỏ; Bình xịt làm băng mềm.",
+                    "An ice slime wears a shell: weapons only scratch it. Throw the cat hard through it to crack it; the Water spray softens the ice.")),
+        Meet(GuideChain, StageSlimeSwamp, s => s.Type.Link?.Kind == EnemyLinks.Tether,
+            () => L("Slime xích nối dây nhầy vào một đồng đội và gánh một nửa sát thương cho nó. Kéo mèo xuyên dây hoặc dùng Kéo cắt để cắt.",
+                    "A chain slime ties a slime rope to a friend and takes half its hits. Drag the cat through the rope or use the Scissors to cut it.")),
+        Meet(GuideSplitter, StageSlimeSwamp, s => s.Type.Split != null,
+            () => L("Slime tách đôi bị hạ thì vỡ thành 2 con nhỏ; slime thảo dược hồi cho chúng thì chúng nhập lại. Hạ thảo dược trước.",
+                    "A splitting slime breaks into two halves when beaten; healed by a herb slime they join up again. Take the herb slime first.")),
+        Meet(GuideMother, StageSlimeSwamp, s => s.Type.Brood != null,
+            () => L("Slime Mẹ, boss phụ: đẻ bầy hợp thể. Slime khổng lồ do bầy nhập thành sẽ về bú máu cho mẹ: hạ nó giữa đường.",
+                    "The Slime Mother, a side boss, lays fusing swarms. A giant they merge into goes back to feed her HP: beat it on the way.")),
+        // 5 · The Zip Slime.
+        new(GuideBubble, StageZipSlime, true, true, 1,
+            () => { var bubble = battle!.Slimes.FirstOrDefault(s => s.Bubbled && s.Targetable && s.State != SlimeState.Spawning); guideRef = bubble?.Id ?? 0; return bubble != null && TourDue() && !BattleHoldsOff; },
+            () => battle!.Find(guideRef) is not { Bubbled: true }, () => battle!.Find(guideRef) is { Bubbled: true } bubble ? Spots(AirSlimeSpot(bubble)) : new(),
+            () => L("Slime trong bong bóng không bị đánh. Click bong bóng vài lần để chọc vỡ (hoặc dùng Kéo cắt).",
+                    "A slime in a bubble cannot be hit. Click the bubble a few times to pop it (or use the Scissors).")),
+        new(GuideClinger, StageZipSlime, false, true, 1,
+            () => { var wall = battle!.Slimes.FirstOrDefault(s => s.Type.Cling != null && s.Targetable && s.Altitude > 20); guideRef = wall?.Id ?? 0; return wall != null && TourDue(); },
+            () => false, () => battle!.Find(guideRef) is { Targetable: true } wall ? Spots(AirSlimeSpot(wall)) : new(),
+            () => L("Slime bám tường leo lên mép và ném gai xuống chỗ mèo. Ném mèo vào nó, hoặc Đẩy, Kẹp gắp cho nó rơi rồi đánh dưới sàn.",
+                    "A wall slime climbs the edge and drops spikes where the cat stands. Throw the cat at it, or Push or grab it down and fight it on the floor.")),
+        See(GuideZip, StageZipSlime, () => King() is { State: not SlimeState.Spawning } boss && boss.Type.Roll != null, () => King() is Slime boss ? Spots(SlimeSpot(boss)) : new(),
+            () => L("Slime Nén, trùm chương 2: lăn đè cả dải sàn, rồi giải nén ra đội hình nối dây và tự nén thành khiên. Hạ nó là xong chương.",
+                    "The Zip Slime, chapter 2's boss: it rolls over the floor, unpacks squads tied to it and packs itself into a shield. Beat it to finish the chapter.")),
+        new(GuideRoll, StageZipSlime, true, false, 1,
+            () => King() is { Rolling: true, State: SlimeState.Windup } && !BattleHoldsOff && !battle!.CatStunned,
+            () => BattleLifted, () => King() is { Rolling: true, State: SlimeState.Windup } boss ? Spots(CatSpot(), SlimeSpot(boss)) : new(),
+            () => L("Slime Nén sắp lăn: dải đỏ trên sàn trúng hết. Kéo mèo lên!", "The Zip Slime is about to roll: the red strip on the floor hits everything. Lift the cat!")),
+        See(GuideRopes, StageZipSlime, () => King() is { Shielded: true } boss && battle!.RopesLeft(boss) > 0,
+            () => King() is Slime boss ? Spots(new[] { SlimeSpot(boss) }.Concat(battle!.Slimes.Where(s => battle.RopeBoss(s) == boss).Select(SlimeSpot)).ToArray()) : new(),
+            () => L("Còn dây nối quân về Slime Nén thì nó không mất máu. Cắt dây (kéo mèo xuyên dây, Kéo cắt) hoặc hạ quân để phá khiên.",
+                    "While ropes tie its squad to it, the Zip Slime takes no damage. Cut them (drag the cat through, the Scissors) or beat the squad to break the shield.")),
+        See(GuidePack, StageZipSlime, () => battle!.Slimes.Any(s => s.Type.Still && s.Targetable),
+            () => Spots(battle!.Slimes.Where(s => s.Type.Still && s.Targetable).Select(SlimeSpot).ToArray()),
+            () => L("Slime Nén tự nén thành khiên giữa các mảnh file. Phá hết mảnh file để vỡ khiên.", "The Zip Slime packs itself into a shield among file shards. Break every shard to crack the shield.")),
     };
 
     // A skill to teach: carried, ready (or chosen) and slimes on the floor to use it on.
@@ -223,6 +326,20 @@ public sealed partial class PetWindow
 
     private GuideStep See(string id, string stage, Func<bool> due, Func<List<Rect>> spots, Func<string> words) =>
         new(id, stage, false, true, 1, due, () => false, spots, words);
+    // 1.5 M21: a see step for the first slime of a kind on the floor (lit where it is drawn).
+    private GuideStep Meet(string id, string stage, Func<Slime, bool> kind, Func<string> words) =>
+        new(id, stage, false, true, 1,
+            () => { var met = battle!.Slimes.FirstOrDefault(s => kind(s) && s.State is not (SlimeState.Spawning or SlimeState.Defeated)); guideRef = met?.Id ?? 0; return met != null && TourDue(); },
+            () => false, () => battle!.Find(guideRef) is Slime met && met.State != SlimeState.Defeated ? Spots(AirSlimeSpot(met)) : new(), words);
+    // A slime as drawn: a flyer in its own window over the screen, one on a wall or in a bubble up off the floor.
+    private Rect? AirSlimeSpot(Slime s)
+    {
+        if (s.Type.Fly != null && s.Altitude > 0) { var spot = BattleFlyerSpot(s); spot.Inflate(GuidePad, GuidePad); return spot; }
+        if (battleView == null) return null;
+        var bounds = battleView.SlimeBounds(s);
+        bounds.Offset(0, -(s.Altitude + BattleSim.BubbleLift(s)));
+        return FieldSpot(bounds);
+    }
     // A skill of the HUD tour: its name and the data's own description.
     private GuideStep SkillSee(string id, BattleSkill skill) => See(id, StageBreakThrough, () => TourDue(), () => Spots(SkillSpot(skill)),
         () => SkillName(skill) + ": " + BattleSkills.Get(skill).Describe(battle?.Settings ?? BattleTuning, preferences.Language));

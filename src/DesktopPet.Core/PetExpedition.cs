@@ -85,7 +85,7 @@ public sealed class ExpeditionSpec
             if (stageIds.Contains(stage.Id) || !own.Add(stage.Id)) throw new InvalidDataException($"encounter id \"{stage.Id}\" is used twice (or is an Adventure stage's)");
             BattleData.ValidateStage(stage, where, waves, text);
             if (stage.Survival) throw new InvalidDataException(where + ": an encounter is a clear stage");
-            if (stage.Reward != null || stage.TipVi != null) throw new InvalidDataException(where + ": an encounter has no reward or tip");
+            if (stage.Reward != null || stage.Keepsake != null || stage.TipVi != null) throw new InvalidDataException(where + ": an encounter has no reward or tip");
         }
         if (x.Fights == null || x.Fights.Length is < 1 or > 20) throw new InvalidDataException(at + ".fights must list 1–20 encounters");
         if (x.Elites == null || x.Elites.Length > 20) throw new InvalidDataException(at + ".elites must list at most 20 encounters");
@@ -219,11 +219,12 @@ public sealed class CapsuleSpec
 // A keepsake (Expedition milestone 4): given once, the first time a run is won at Difficulty or
 // harder (only at it when Exact). cup: a trophy (Tier bronze, silver, gold) on the display corner;
 // cushion: a slime cushion there; accessory: a reward accessory (accessories.json) the cat can wear;
-// hourglass, orb: Infinity's displayed keepsakes (EndlessSpec.Milestones, given for Wave instead).
+// hourglass, orb: Infinity's displayed keepsakes (EndlessSpec.Milestones, given for Wave instead);
+// plush (1.5 M22): the Zip Slime plush, an Adventure stage's keepsake (StageSpec.Keepsake).
 public sealed class KeepsakeSpec
 {
-    public const string Cup = "cup", Cushion = "cushion", AccessoryKind = "accessory", Hourglass = "hourglass", Orb = "orb";
-    public static readonly string[] Kinds = { Cup, Cushion, AccessoryKind, Hourglass, Orb };
+    public const string Cup = "cup", Cushion = "cushion", AccessoryKind = "accessory", Hourglass = "hourglass", Orb = "orb", Plush = "plush";
+    public static readonly string[] Kinds = { Cup, Cushion, AccessoryKind, Hourglass, Orb, Plush };
     // Infinity's milestones only: the wave to clear (0 in the Expedition).
     public int Wave { get; init; }
     public static readonly string[] Tiers = { "bronze", "silver", "gold" };
@@ -236,7 +237,7 @@ public sealed class KeepsakeSpec
     public string NameVi { get; init; } = "";
     public string NameEn { get; init; } = "";
     public string Name(string language) => PetText.Data(language, NameVi, NameEn);
-    [JsonIgnore] public bool Shown => Kind is Cup or Cushion or Hourglass or Orb;
+    [JsonIgnore] public bool Shown => Kind is Cup or Cushion or Hourglass or Orb or Plush;
     public bool EarnedAt(BattleDifficulty level) =>
         Enum.TryParse<BattleDifficulty>(Difficulty, out var at) && (Exact ? level == at : level >= at);
 }

@@ -5,14 +5,23 @@ using System.Windows.Media;
 
 namespace DesktopPet;
 
-public enum PetSceneKind { Home, Adventure, Expedition, Infinity, Workshop, Diary, Speech, Sound, Settings, Treasure, Victory, Rest }
+// Dump (1.5 M22): chapter 2's Download Dump (ChapterSpec.Scene "dump"), the map's banner and the hub's Adventure card.
+public enum PetSceneKind { Home, Adventure, Expedition, Infinity, Workshop, Diary, Speech, Sound, Settings, Treasure, Victory, Rest, Dump }
 
 // Shared, frozen scenes: built once per kind and coat, not once per frame or per window.
 // Decoration only. Height belongs to the scrollable content, never to an overlay above controls.
 public sealed class PetScene : FrameworkElement
 {
     private static readonly Dictionary<(PetSceneKind, CoatPalette, string), DrawingGroup> Scenes = new();
-    private readonly PetSceneKind kind;
+    private PetSceneKind kind;
+    // The picture can change in place (the Adventure map's banner follows the chapter shown).
+    public PetSceneKind Kind
+    {
+        get => kind;
+        set { if (kind == value) return; kind = value; InvalidateVisual(); }
+    }
+    // A chapter's scene (ChapterSpec.Scene): its own picture, else the meadow of the Adventure.
+    public static PetSceneKind ForChapter(string? scene) => scene == ChapterSpec.Dump ? PetSceneKind.Dump : PetSceneKind.Adventure;
     private static readonly Brush Ink = PetUi.Ink, Cream = PetUi.Surface, Orange = PetUi.AccentBright,
         Gold = PetUi.Game.Gold, Mint = PetUi.Mint, Rose = PetUi.Rose, Lilac = PetUi.Lilac,
         Wood = PetUi.Hex("#B4815E"), DarkWood = PetUi.Hex("#6D4E40"), Steel = PetUi.Hex("#E4E2EC"), Glow = PetUi.Hex("#55FFE7A6");
@@ -178,6 +187,46 @@ public sealed class PetScene : FrameworkElement
         }
         Path(d,path.Append('Z').ToString(),fill,Rim);d.DrawEllipse(Cream,Fine,new Point(x,y),r*0.3,r*0.3);
     }
+    // 1.5 M22, the Download Dump's pieces: a folder (back with its tab, a page peeking out, the front),
+    // a loose page with a folded corner, the Zip Slime (folder yellow, a zipper down its front) and a
+    // wicker fish basket. Generic shapes only: no real app's icon.
+    private static readonly Brush FolderFront = PetUi.Hex("#F2C65C"), FolderBack = PetUi.Hex("#D9A441"), Page = PetUi.Hex("#FFFBF2"),
+        Heap = PetUi.Hex("#B9A6DC"), HeapFar = PetUi.Hex("#D6C8EE"), Dirt = PetUi.Hex("#E6D2B0"), Zip = PetUi.Hex("#E8B84A"), Wicker = PetUi.Hex("#C98F4F");
+    internal static void Folder(DrawingContext d,double x,double y,double w,double h,double tilt) {
+        d.PushTransform(new RotateTransform(tilt,x+w/2,y+h/2));
+        Path(d,FormattableString.Invariant($"M{x},{y+h} L{x},{y+3} Q{x},{y} {x+3},{y} L{x+w*0.32},{y} L{x+w*0.4},{y+h*0.16} L{x+w},{y+h*0.16} L{x+w},{y+h}Z"),FolderBack,Rim);
+        d.DrawRectangle(Page,Fine,new Rect(x+w*0.12,y+h*0.1,w*0.76,h*0.4));
+        Path(d,FormattableString.Invariant($"M{x-2},{y+h*0.34} L{x+w+2},{y+h*0.34} L{x+w},{y+h} L{x},{y+h}Z"),FolderFront,Rim);
+        d.Pop();
+    }
+    internal static void LoosePage(DrawingContext d,double x,double y,double w,double h,double tilt) {
+        d.PushTransform(new RotateTransform(tilt,x+w/2,y+h/2));
+        double f=w*0.32;
+        Path(d,FormattableString.Invariant($"M{x},{y} L{x+w-f},{y} L{x+w},{y+f} L{x+w},{y+h} L{x},{y+h}Z"),Page,Rim);
+        Path(d,FormattableString.Invariant($"M{x+w-f},{y} L{x+w-f},{y+f} L{x+w},{y+f}Z"),Steel,Fine);
+        for(int i=0;i<3;i++) d.DrawLine(Fine,new Point(x+w*0.18,y+h*(0.42+i*0.17)),new Point(x+w*(i==2?0.55:0.8),y+h*(0.42+i*0.17)));
+        d.Pop();
+    }
+    private static void ZipSlime(DrawingContext d,double x,double y) {
+        d.DrawEllipse(PetUi.Hex("#25000000"),null,new Point(x,y+17),26,4);
+        Path(d,FormattableString.Invariant($"M{x-26},{y+17} C{x-28},{y-6} {x-14},{y-20} {x},{y-20} C{x+14},{y-20} {x+28},{y-6} {x+26},{y+17}Z"),Zip,Rim);
+        d.DrawEllipse(Cream,null,new Point(x-12,y-11),5,2.6);
+        d.DrawEllipse(Ink,null,new Point(x-8,y-5),2,2.8);d.DrawEllipse(Ink,null,new Point(x+8,y-5),2,2.8);
+        var teeth=PetUi.FrozenPen(PetUi.Hex("#8C6A2E"),1.6);
+        d.DrawLine(teeth,new Point(x,y+1),new Point(x,y+16));
+        for(int i=0;i<5;i++){double ty=y+3+i*3;d.DrawLine(teeth,new Point(x,ty),new Point(x+(i%2==0?-3:3),ty));}
+        Box(d,x-2.5,y-1,5,6,FolderBack,1.5);
+    }
+    private static void Basket(DrawingContext d,double x,double floor) {
+        // Two fish in it, heads up.
+        Path(d,FormattableString.Invariant($"M{x-12},{floor-22} C{x-16},{floor-34} {x-6},{floor-40} {x-4},{floor-30}Z"),PetUi.Hex("#9FD3E8"),Rim);
+        Path(d,FormattableString.Invariant($"M{x+6},{floor-22} C{x+4},{floor-36} {x+14},{floor-38} {x+14},{floor-26}Z"),PetUi.Hex("#9FD3E8"),Rim);
+        Path(d,FormattableString.Invariant($"M{x-22},{floor-24} L{x+22},{floor-24} L{x+17},{floor} L{x-17},{floor}Z"),Wicker,Rim);
+        var weave=PetUi.FrozenPen(PetUi.Hex("#8E5F2E"),1.2);
+        for(int i=0;i<2;i++) d.DrawLine(weave,new Point(x-20+i*2,floor-16+i*8),new Point(x+20-i*2,floor-16+i*8));
+        for(int i=-1;i<=1;i++) d.DrawLine(weave,new Point(x+i*10,floor-24),new Point(x+i*8,floor));
+        Box(d,x-23,floor-27,46,5,Wood,2.5);
+    }
     private static DrawingGroup Build(PetSceneKind k,CoatPalette coat,string wear)
     {
         var g=new DrawingGroup();using(var d=g.Open()) {
@@ -223,6 +272,28 @@ public sealed class PetScene : FrameworkElement
                     d.DrawLine(Rim,new Point(372,60),new Point(372,24));Path(d,"M372,24 L402,32 L372,40Z",Orange,Rim);
                     // Slime, cat and chest sit inside x 152–328, the part a mode card keeps.
                     Cat(d,coat,wear,222,67);Slime(d,170,99,Mint);Chest(d,272,83);
+                    break;
+                case PetSceneKind.Dump:
+                    // The Download Dump: a lilac dusk over heaps of folders and pages, download arrows drifting
+                    // down, a progress bar in the sky; the cat between a slime and the Zip Slime, a fish basket.
+                    Sky(d,Color.FromRgb(201,186,236),Color.FromRgb(255,236,214));
+                    Box(d,370,14,84,14,Cream,7);d.DrawRoundedRectangle(Mint,null,new Rect(373,17,52,8),4,4);
+                    for(int i=0;i<4;i++){double ax=34+i*92+(i%2)*20,ay=12+(i%2)*14;
+                        Path(d,FormattableString.Invariant($"M{ax-3},{ay} L{ax+3},{ay} L{ax+3},{ay+7} L{ax+7},{ay+7} L{ax},{ay+14} L{ax-7},{ay+7} L{ax-3},{ay+7}Z"),PetUi.Hex("#9FE3C8"),Fine);}
+                    Path(d,"M0,70 Q60,38 128,62 Q200,30 262,60 Q340,34 410,58 Q450,44 480,54 L480,120 L0,120Z",HeapFar);
+                    Path(d,"M0,92 Q70,58 150,86 Q230,66 300,88 Q380,60 480,84 L480,120 L0,120Z",Heap);
+                    Path(d,"M0,104 Q120,92 240,102 Q360,92 480,102 L480,120 L0,120Z",Dirt,Rim);
+                    // Heaps: folders and pages, left and right, the middle kept clear for the cat.
+                    Folder(d,18,56,40,30,-8);Folder(d,52,66,34,26,10);LoosePage(d,92,72,18,24,-14);Folder(d,4,80,30,22,4);
+                    Folder(d,396,60,42,30,9);Folder(d,438,72,34,26,-6);LoosePage(d,352,74,18,24,12);LoosePage(d,456,52,16,22,-18);
+                    LoosePage(d,140,40,14,19,-20);LoosePage(d,320,42,14,19,16);
+                    // The download sign on its post.
+                    d.DrawLine(Round(DarkWood,4),new Point(120,103),new Point(120,58));
+                    Box(d,104,40,32,22,Cream,5);
+                    Path(d,"M117,44 L123,44 L123,51 L128,51 L120,58 L112,51 L117,51Z",Mint,Fine);
+                    // Slime, cat, Zip Slime and the basket inside x 152–328 (what a mode card keeps), the basket beside.
+                    Slime(d,172,99,Mint);Cat(d,coat,wear,226,67);ZipSlime(d,296,86);Basket(d,370,104);
+                    Star(d,190,30,3);Star(d,262,22,4);
                     break;
                 case PetSceneKind.Workshop:
                     Sky(d,Color.FromRgb(242,211,179),Color.FromRgb(253,235,216));

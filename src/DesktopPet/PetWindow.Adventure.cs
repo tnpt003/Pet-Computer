@@ -57,6 +57,8 @@ public sealed partial class PetWindow
 
     public bool AdventureMapOpen => adventureMapOpen;
     public bool AdventureMapVisible => adventureMapWindow?.IsVisible == true;
+    // 1.5 M22, for checks: the map banner's scene (the chapter shown's).
+    public PetSceneKind? AdventureMapScene => adventureMapWindow?.Resources[BannerKey] is PetScene banner ? banner.Kind : null;
     public string? AdventureSelectedStage => mapStageId;
     public string? AdventureMapChapter => adventureMapOpen ? mapChapterId : null;
     public bool AdventureEnterEnabled => mapEnter?.IsEnabled == true;
@@ -233,7 +235,7 @@ public sealed partial class PetWindow
                 Cursor = System.Windows.Input.Cursors.Hand, Child = new Grid { Children = { number, mark } } };
             var label = new TextBlock { Foreground = Brushes.White, FontSize = PetUi.CaptionSize, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center,
                 Width = 76, Margin = new Thickness(0, 4, 0, 0) };
-            var column = new StackPanel { Width = 76, Background = Brushes.Transparent, Cursor = System.Windows.Input.Cursors.Hand, Children = { node, label, new PetIllustration(StageLandmark(i, chapter.Stages.Length), 40) { Margin = new Thickness(0,6,0,0), HorizontalAlignment = HorizontalAlignment.Center } } };
+            var column = new StackPanel { Width = 76, Background = Brushes.Transparent, Cursor = System.Windows.Input.Cursors.Hand, Children = { node, label, new PetIllustration(StageLandmark(i, chapter.Stages.Length, chapter.Scene), 40) { Margin = new Thickness(0,6,0,0), HorizontalAlignment = HorizontalAlignment.Center } } };
             column.MouseLeftButtonDown += (_, e) => { AdventureSelectStage(id); e.Handled = true; };
             mapRow.Children.Add(column);
             mapNodes.Add((id, node, number, mark, label, link));
@@ -241,9 +243,13 @@ public sealed partial class PetWindow
     }
 
     // A landmark under each stage of the map: a flag at the start, the boss's crown at the end, and
-    // the road between (for chapter 1: break through, hold on, cut the support).
-    internal static PetMotif StageLandmark(int index, int count) =>
-        index == count - 1 ? PetMotif.Crown : index == 0 ? PetMotif.Flag : ((index - 1) % 3) switch { 0 => PetMotif.Sword, 1 => PetMotif.Shield, _ => PetMotif.Mushroom };
+    // the road between (for chapter 1: break through, hold on, cut the support). 1.5 M22: the Download
+    // Dump (scene "dump") has its own: the download gate, the ghost folder, the fish basket, the swamp
+    // of loose pages, the boss's crown.
+    internal static PetMotif StageLandmark(int index, int count, string? scene = null) =>
+        index == count - 1 ? PetMotif.Crown
+        : scene == ChapterSpec.Dump ? ((index - 1) % 4) switch { -1 => PetMotif.Download, 0 => PetMotif.Folder, 1 => PetMotif.Fish, _ => PetMotif.File }
+        : index == 0 ? PetMotif.Flag : ((index - 1) % 3) switch { 0 => PetMotif.Sword, 1 => PetMotif.Shield, _ => PetMotif.Mushroom };
 
     private void UpdateAdventureMap()
     {
@@ -263,6 +269,8 @@ public sealed partial class PetWindow
             if (text.Text != (value ?? "")) text.Text = value ?? "";
             text.Visibility = string.IsNullOrEmpty(value) ? Visibility.Collapsed : Visibility.Visible;
         }
+        // 1.5 M22: the banner shows the chapter's scene.
+        if (adventureMapWindow?.Resources[BannerKey] is PetScene banner) banner.Kind = PetScene.ForChapter(chapter.Scene);
         mapTitle.Text = L("Hướng dẫn phiêu lưu — ", "Adventure Guide — ")
             + (chapters > 1 ? LF($"Chương {chapterAt + 1}: ", $"Chapter {chapterAt + 1}: ") : "") + chapter.Name(preferences.Language);
         string? dataNote = BattleDataError != null
@@ -428,6 +436,14 @@ public sealed partial class PetWindow
             {
                 var prize = Line(PetUi.BodySize, RecordGold, true);
                 prize.Text = LF($"Phần thưởng mới: {item.Name(PetLanguage.Vietnamese)} — đội trong Tùy chỉnh", $"New reward: {item.Name(preferences.Language)} — wear it in Customize");
+                lines.Children.Add(prize);
+            }
+            // 1.5 M22: a stage's keepsake (the Zip Slime plush): where it shows.
+            else if (adventure?.Keepsake(reward) is KeepsakeSpec k)
+            {
+                var prize = Line(PetUi.BodySize, RecordGold, true);
+                prize.Text = L("Kỷ vật mới: ", "New keepsake: ") + k.Name(preferences.Language)
+                    + (preferences.ShowTrophies ? L(" (ở góc trưng bày)", " (in the display corner)") : L(" (bật góc trưng bày trong Cài đặt)", " (turn the display corner on in Settings)"));
                 lines.Children.Add(prize);
             }
         if (result.Upgrades.Length > 0)

@@ -32,6 +32,8 @@ public sealed partial class PetWindow
     public bool BattleHubVisible => battleHubWindow?.IsVisible == true;
     public bool BattleHubModeEnabled(string mode) => hubCards.FirstOrDefault(c => c.Mode == mode).Card is { IsEnabled: true };
     // For checks: the texts shown now.
+    // 1.5 M22, for checks: the scene on the hub's Adventure card (the latest open chapter's).
+    public PetSceneKind? BattleHubAdventureScene => hubCards.FirstOrDefault(c => c.Mode == HubAdventure).Art?.Scene;
     public string BattleHubText => string.Join("\n", new[] { hubTitle, hubSubtitle, hubStatus, hubCloseText }
         .Where(t => t is { Visibility: Visibility.Visible } && t.Text.Length > 0).Select(t => t!.Text)
         .Concat(hubCards.SelectMany(c => new[] { c.Name.Text, c.Desc.Text, c.State.Text }.Concat(c.Ribbon.Visibility == Visibility.Visible ? new[] { c.RibbonText.Text } : Array.Empty<string>()))));
@@ -218,6 +220,7 @@ public sealed partial class PetWindow
             card.Cursor = can ? System.Windows.Input.Cursors.Hand : null;
             card.Opacity = can ? 1 : open ? 0.6 : 0.85;
             art.Opacity = open ? 1 : 0.45;
+            if (mode == HubAdventure) art.Scene = PetScene.ForChapter(Adventure?.CurrentChapter?.Scene);
             if (!can) card.BorderBrush = PrepCardRim;
         }
     }

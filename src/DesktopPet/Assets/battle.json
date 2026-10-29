@@ -888,9 +888,11 @@
         // 1.5 M21: chapter 2 (docs/UPDATE-1.5.md C1). Opens once the Slime King is beaten. Each stage
         // brings new slimes and lends a new skill (unlocksSkill: carried in that stage, opened for
         // good by winning it); the setup panel chooses the five skills (skillChoice). Slimes drop
-        // fish and potions (drops); up to four malware kinds at once (maxMalware).
+        // fish and potions (drops); up to four malware kinds at once (maxMalware). 1.5 M22: its look (scene
+        // "dump": the map's banner, a backdrop of files and folders behind its battles), the Folder hat
+        // (stage 3) and the Zip Slime plush keepsake (stage 5, "keepsake": shown on the display corner).
         "id": "download_dump", "nameVi": "Bãi rác Tải về", "nameEn": "The Download Dump",
-        "skillChoice": true, "unlockAfter": "c1_slime_king", "drops": true,
+        "skillChoice": true, "unlockAfter": "c1_slime_king", "drops": true, "scene": "dump",
         "stages": [
           {
             "id": "c2_download_gate", "nameVi": "Cổng tải về", "nameEn": "Download gate",
@@ -927,7 +929,7 @@
             "tipVi": "Bạn sẽ học: hạ slime đang tha cá trước, click cá rơi để trả về giỏ (mất hết cá là thua); Kẹp gắp nhấn giữ một slime nhỏ rồi vung chuột ném vào slime khác (kéo được slime bay xuống, lôi slime đào hang lên); hạ ngựa của slime bom giữa đường; nhấc mèo khi vòng nứt hiện dưới chân. Slime trộm lấy năng lượng icon: hạ nó trước khi nó trốn.",
             "tipEn": "You learn: to beat a fish carrier first and click a dropped fish back into the basket (lose every fish and the stage is lost); the Grabber: press a small slime and fling the mouse to throw it at another (it pulls a flyer down and a burrower up); to take a bomb's mount down on the way; to lift the cat when a crack shows under it. A thief slime takes an icon's charge: beat it before it gets away.",
             "objective": "survive", "surviveSeconds": 75, "maxAlive": 6, "upgrades": true, "maxUpgrades": 3, "upgradeAt": [ 20, 40, 60 ],
-            "threatGrowth": 0.5, "threat": 2.2, "eliteChance": 0.15, "maxMalware": 4, "rulesVersion": 1,
+            "threatGrowth": 0.5, "threat": 2.2, "eliteChance": 0.15, "maxMalware": 4, "rulesVersion": 1, "reward": "FolderHat",
             "unlocksSkill": "grabber", "suggestSkills": [ "grabber", "push", "heal" ],
             "basket": { "fish": 5, "every": 3, "at": 0.3 },
             "waves": [
@@ -959,6 +961,7 @@
             "tipEn": "You learn: the Scissors (drag one stroke: cuts slime ropes, pops bubbles); to pop a bubble with three clicks; to throw the cat at a wall slime or Push it down; to lift the cat off the red strip before the Zip Slime rolls; to cut the ropes tying its squads to it to break its shield; to break the file shards around it at the end.",
             "objective": "clear", "upgrades": true, "maxAlive": 6, "threat": 1.45, "eliteChance": 0.25, "maxMalware": 4, "rulesVersion": 1,
             "unlocksSkill": "scissors", "suggestSkills": [ "scissors", "shield", "push" ],
+            "keepsake": { "id": "zip_plush", "kind": "plush", "nameVi": "Thú bông Slime Nén", "nameEn": "Zip Slime plush" },
             "waves": [
               { "groups": [ { "enemy": "bubble", "count": 1 }, { "enemy": "slime", "count": 2 }, { "enemy": "rock", "count": 1 } ] },
               { "groups": [ { "enemy": "clinger", "count": 1 }, { "enemy": "chain", "count": 1 }, { "enemy": "rock", "count": 1 }, { "enemy": "runner", "count": 1 } ] },

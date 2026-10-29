@@ -865,11 +865,27 @@ C1 của docs/UPDATE-1.5.md. Dữ liệu: chương `download_dump` trong `campai
 | 4 Đầm nhầy | `c2_slime_swamp` | dọn 4 đợt, cuối là Slime Mẹ | nhím, băng, xích, tách đôi | Bình xịt nước | 1,95 |
 | 5 Slime Nén | `c2_zip_slime` | dọn 3 đợt, cuối là Slime Nén | bong bóng, bám tường | Kéo cắt | 1,45 |
 
-Mỗi trận ≤ 2 loại liên kết và ≤ 2 loại quái dùng chuột (kiểm tra lúc nạp). Slime dỗi, hẹn giờ, Vua biến dị không vào chương 2 (để Viễn chinh tuyến 2 / Vô tận). Tranh, bản đồ, phông riêng và phần thưởng chương 2 làm ở M22.
+Mỗi trận ≤ 2 loại liên kết và ≤ 2 loại quái dùng chuột (kiểm tra lúc nạp). Slime dỗi, hẹn giờ, Vua biến dị không vào chương 2 (để Viễn chinh tuyến 2 / Vô tận). Tranh, bản đồ, phông riêng và phần thưởng chương 2: mục "Hình và phần thưởng chương 2" (M22).
 
 **Hướng dẫn đứng hình** (như chương 1, mặc định bật): 5 bước kỹ năng có sẵn (`fan`, `laser`, `grabber`, `spray`, `scissors`) chạy ở màn cho mượn; thêm bước "gặp" (xem, Hiểu rồi) lần đầu mỗi loại quái mới lộ ra, sáng đúng chỗ vẽ (slime bay trong cửa sổ riêng, slime bám tường/bong bóng ở trên cao): `spitter`, `springer`, `fuser`, `drops` (món rơi đầu tiên), `phantom`, `mirage`, `drummer`, `flag`, `basket`, `bomber`, `flyer`, `thief`, `hedgehog`, `icy`, `chain`, `splitter`, `mother`, `clinger`, `zip`, `ropes`, `pack`; và bước "làm": `fish_back` (click cá rơi về giỏ), `crack` (nhấc mèo khi có vòng nứt), `bubble` (chọc vỡ bong bóng), `roll` (nhấc mèo trước cú lăn).
 
 **Mô phỏng cân bằng** (`AdventureBalanceTests.RunChapter2`, 20 seed, chơi cả chương theo thứ tự, mang build, bot mang theo "Gợi ý mang" và nhặt đồ rơi; bot "simple"/"casual" còn biết rê chuột lên bóng ma/ảo ảnh, chọc bong bóng, trả cá về giỏ, dùng Laser/Quạt/Xịt/Kéo cắt theo luật đơn giản, Đẩy slime bay/bám tường; không dùng Kẹp gắp, không nhấc mèo). Đạt: Thường, simple ≥ 80% mọi màn (19–20/20); trung bình ≤ 4 phút (dài nhất ~104 s); bot đứng im ≤ 30% ở màn 2–5 mức Thường; simple còn ≤ 90% máu ở màn 3–5 (màn 2 cho tới 95%: bot soi bóng ma và đặt laser tức thì, tăng threat chỉ làm bot đứng im về 0%; casual còn ~82%); kiếm và búa chênh ≤ 30 điểm, **trừ Slime Nén mức Khó cho tới 40 điểm** (búa luôn kém ~35 điểm ở mọi threat đã thử 1,7 → 1,45; xem lại sau khi chơi thật). Bảng chương 1 giống hệt HEAD cũ (195/195 dòng).
+
+## Hình và phần thưởng chương 2 (bản 1.5, mốc M22, 2026-10-29)
+
+C2, C3 của docs/UPDATE-1.5.md. Chỉ là hình và phần thưởng: luật trận, quái, số liệu, `rulesVersion` và kỷ lục không đổi (bảng mô phỏng cân bằng không bị ảnh hưởng).
+
+**Khóa mới**
+- Chương: `"scene": "dump"` (chỉ có giá trị này; khác thì cả file bị bỏ): hình riêng của chương. Không có (chương 1): đồng cỏ như cũ, không phông trận.
+- Màn: `"keepsake": { "id", "kind", "nameVi", "nameEn" }` (tùy chọn, `tier` nếu `kind` là `cup`): một kỷ vật trưng bày được (`plush`, `cushion`, `cup`, `hourglass`, `orb`; không `accessory`), trao **một lần** lần đầu thắng màn, cùng lúc với `reward`, lưu chung danh sách `rewards` của adventure-progress.json. id theo luật id của battle.json (chữ thường), không trùng kỷ vật khác của Phiêu lưu, Viễn chinh, Vô tận. Màn của Viễn chinh không có `keepsake`.
+- `kind` kỷ vật mới `plush`: thú bông Slime Nén (vẽ trong PetKeepsakeArt.cs, rộng 36).
+
+**Chương 2 (`download_dump`) dùng**
+- `"scene": "dump"`: bản đồ (banner tranh "Bãi rác Tải về": đống thư mục, trang giấy, mũi tên tải về, thanh tiến trình trên trời, mèo giữa slime xanh và Slime Nén, giỏ cá; đổi chương bằng ‹ › thì banner đổi theo), mốc dưới mỗi màn (tải về, thư mục, cá, trang giấy, vương miện; chương 1 giữ cờ, kiếm, khiên, nấm, vương miện), thẻ Phiêu lưu ở Sảnh (tranh của chương mở mới nhất), và **phông trận**: trận của màn chương 2 có một cửa sổ riêng xuyên chuột nằm ngay dưới dải trận (cùng chỗ, cùng kích thước): hai đống thư mục + trang giấy ở hai đầu, biển tải về cạnh đống trái, vài trang giấy rải trên sàn; giữa dải không có gì ngoài trang giấy sát sàn. Mọi click đi xuyên xuống cửa sổ bên dưới; slime vẽ đè lên phông; mèo vẫn ở trên cùng. Vẽ một lần, ẩn cùng dải trận khi có app fullscreen, đóng khi hết trận. Chương 1, Viễn chinh, Vô tận, trận tự do không có phông.
+- Màn 3 Giữ giỏ cá: `"reward": "FolderHat"` — phụ kiện **Mũ thư mục** (accessories.json, `reward: "download_dump"`, lớp đầu): đội trong Tùy chỉnh → Phụ kiện.
+- Màn 5 Slime Nén: `"keepsake": { "id": "zip_plush", "kind": "plush", ... }` — **Thú bông Slime Nén**: kỷ vật trên góc trưng bày như các món khác (cầm, lắc, ném, rơi, nảy, đứng trên gờ cửa sổ, choáng Bonk khi rơi trúng mèo — luật kệ kỷ vật có physics, docs/APPROVED-EXCEPTIONS.md; không có ngủ/nảy như đệm slime). Chọn trong Tùy chỉnh hoặc menu chuột phải món đồ; kết quả trận ghi "Kỷ vật mới: Thú bông Slime Nén (ở góc trưng bày)". Trang Phần thưởng có mục mới "Kỷ vật Phiêu lưu".
+
+Code: `ChapterSpec.Scene`, `StageSpec.Keepsake`, `Adventure.Keepsakes`/`GrantRewards` (PetAdventure.cs), `PetScene.cs` (`PetSceneKind.Dump`), `PetIllustration.cs` (`Folder`, `Download`, `File`), `PetWindow.BattleScenery.cs` (phông trận), `PetKeepsakeArt.cs` (thú bông), `PetWindow.Keepsake.cs`/`PetWindow.Rewards.cs`. Test: `tests/DesktopPet.Tests/ChapterRewardTests.cs`, UiChecks `ChapterArtChecks` (ảnh `scene-dump.png`, `landmarks-dump.png`, `keepsake-plush.png`, `accessory-folder-hat.png`, `battle-scenery-dump.png`, `trophies-plush.png`).
 
 ## Viễn chinh (`expedition`) (2026-10-21)
 

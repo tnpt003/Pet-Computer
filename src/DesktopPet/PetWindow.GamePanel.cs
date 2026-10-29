@@ -179,10 +179,17 @@ public sealed class CapsuleArt : FrameworkElement
 public sealed class ModeArt : FrameworkElement
 {
     public string Mode { get; init; } = "adventure";
+    // 1.5 M22: the Adventure card shows the latest open chapter's scene.
+    private PetSceneKind? scene;
+    public PetSceneKind? Scene
+    {
+        get => scene;
+        set { if (scene == value) return; scene = value; InvalidateVisual(); }
+    }
 
     protected override void OnRender(DrawingContext dc)
     {
         if (ActualWidth <= 0 || ActualHeight <= 0) return;
-        PetScene.Draw(dc, Mode == "expedition" ? PetSceneKind.Expedition : Mode == "infinity" ? PetSceneKind.Infinity : PetSceneKind.Adventure, ActualWidth, ActualHeight);
+        PetScene.Draw(dc, Mode == "expedition" ? PetSceneKind.Expedition : Mode == "infinity" ? PetSceneKind.Infinity : scene ?? PetSceneKind.Adventure, ActualWidth, ActualHeight);
     }
 }

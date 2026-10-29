@@ -11,7 +11,9 @@ public enum PetMotif
 {
     Cat, Book, Heart, Leaf, Spark, Trophy, Fish, Ball, Clock,
     // 2026-10-26: icons for settings cards, reward sections, the two battle maps, empty states and dialogs.
-    Palette, Bubble, Note, Speaker, Gear, Gift, Cup, Gem, Moon, Sword, Shield, Crown, Campfire, Scroll, Mushroom, Box, Flag, Question, Warning
+    Palette, Bubble, Note, Speaker, Gear, Gift, Cup, Gem, Moon, Sword, Shield, Crown, Campfire, Scroll, Mushroom, Box, Flag, Question, Warning,
+    // 1.5 M22: chapter 2's map landmarks (the Download Dump): a folder, a download into a tray, a page.
+    Folder, Download, File
 }
 public sealed class PetIllustration : FrameworkElement
 {
@@ -19,7 +21,7 @@ public sealed class PetIllustration : FrameworkElement
     private Brush color;
     private readonly bool ownColor;
     private static readonly Brush Rose = PetUi.Rose, Mint = PetUi.Mint, Lilac = PetUi.Lilac, Gold = PetUi.Game.Gold;
-    private static readonly Brush Wood = PetUi.Hex("#B4815E"), Card = PetUi.Hex("#E8C9A0"), Paper = PetUi.Hex("#FFF3E2");
+    private static readonly Brush Wood = PetUi.Hex("#B4815E"), Card = PetUi.Hex("#E8C9A0"), Paper = PetUi.Hex("#FFF3E2"), FolderYellow = PetUi.Hex("#F2C65C"), FolderBack = PetUi.Hex("#D9A441");
     private static readonly Pen Outline = PetUi.FrozenPen(PetUi.Ink, 2), Bold = PetUi.FrozenPen(PetUi.Ink, 4.5), QuestionInk = PetUi.FrozenPen(PetUi.Ink, 9);
     public PetIllustration(PetMotif motif, double size = 40, Brush? color = null)
     {
@@ -40,7 +42,8 @@ public sealed class PetIllustration : FrameworkElement
         PetMotif.Leaf or PetMotif.Fish or PetMotif.Clock or PetMotif.Cup or PetMotif.Shield or PetMotif.Flag => Mint,
         PetMotif.Book or PetMotif.Ball or PetMotif.Note or PetMotif.Gem or PetMotif.Question => Lilac,
         PetMotif.Spark or PetMotif.Trophy or PetMotif.Moon or PetMotif.Crown => Gold,
-        PetMotif.Palette or PetMotif.Box => Card, PetMotif.Bubble or PetMotif.Sword or PetMotif.Scroll => Paper,
+        PetMotif.Palette or PetMotif.Box => Card, PetMotif.Bubble or PetMotif.Sword or PetMotif.Scroll or PetMotif.File => Paper,
+        PetMotif.Folder => FolderYellow, PetMotif.Download => Mint,
         _ => PetUi.AccentBright
     };
     private static Geometry Shape(string path) { var g = Geometry.Parse(path); g.Freeze(); return g; }
@@ -77,6 +80,12 @@ public sealed class PetIllustration : FrameworkElement
     private static readonly Geometry Pennant = Shape("M21,14 C30,10 38,20 48,16 L48,32 C38,36 30,26 21,30 Z");
     private static readonly Geometry QuestionHook = Shape("M24,24 C24,16 29,13 33,13 C39,13 42,17 42,22 C42,28 33,30 33,37");
     private static readonly Geometry Triangle = Shape("M32,11 C34,11 35,12 36,14 L54,47 C55,50 53,52 50,52 L14,52 C11,52 9,50 10,47 L28,14 C29,12 30,11 32,11 Z");
+    private static readonly Geometry FolderTab = Shape("M12,20 C12,17 14,15 17,15 L27,15 L31,19 L47,19 C50,19 52,21 52,24 L52,48 L12,48 Z");
+    private static readonly Geometry FolderFront = Shape("M9,27 L55,27 L52,50 L12,50 Z");
+    private static readonly Geometry DownArrow = Shape("M27,11 L37,11 L37,27 L45,27 L32,40 L19,27 L27,27 Z");
+    private static readonly Geometry Tray = Shape("M11,37 L19,37 L22,43 L42,43 L45,37 L53,37 L53,52 L11,52 Z");
+    private static readonly Geometry Page = Shape("M17,10 L39,10 L49,20 L49,54 L17,54 Z");
+    private static readonly Geometry PageFold = Shape("M39,10 L39,20 L49,20 Z");
     private static readonly Dictionary<Brush, Pen> ColorPens = new();
 
     // Eight square teeth round a wheel.
@@ -244,6 +253,21 @@ public sealed class PetIllustration : FrameworkElement
                 dc.DrawGeometry(null,QuestionInk,QuestionHook);
                 dc.DrawGeometry(null,PenFor(color),QuestionHook);
                 dc.DrawEllipse(color,Outline,new Point(33,47),4.5,4.5);
+                break;
+            case PetMotif.Folder: // A folder with a page peeking out.
+                dc.DrawGeometry(FolderBack,Outline,FolderTab);
+                dc.DrawRectangle(PetUi.Surface,Outline,new Rect(17,21,30,12));
+                dc.DrawGeometry(color,Outline,FolderFront);
+                dc.DrawLine(Outline,new Point(25,38),new Point(39,38));
+                break;
+            case PetMotif.Download: // An arrow down into a tray.
+                dc.DrawGeometry(Card,Outline,Tray);
+                dc.DrawGeometry(color,Outline,DownArrow);
+                break;
+            case PetMotif.File: // A page with a folded corner and lines.
+                dc.DrawGeometry(color,Outline,Page);
+                dc.DrawGeometry(Card,Outline,PageFold);
+                for (int i = 0; i < 3; i++) dc.DrawLine(Outline,new Point(23,30 + i * 7),new Point(i == 2 ? 35 : 43,30 + i * 7));
                 break;
             case PetMotif.Warning:
                 dc.DrawGeometry(color,Outline,Triangle);

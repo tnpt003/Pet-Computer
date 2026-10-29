@@ -38,7 +38,8 @@ public sealed partial class PetWindow
         var held = new List<string>();
         if (Adventure is Adventure adventure)
             foreach (var stage in adventure.Campaign.Chapters.SelectMany(c => c.Stages))
-                if (stage.Reward is string id && adventure.HasReward(id) && !held.Contains(id)) held.Add(id);
+                foreach (var id in new[] { stage.Reward, stage.Keepsake?.Id })
+                    if (id != null && adventure.HasReward(id) && !held.Contains(id)) held.Add(id);
         if (Expedition is Expedition x)
             foreach (var k in x.Spec.Keepsakes)
                 if (x.Progress.Keepsakes.Contains(k.Id) && !held.Contains(k.Id)) held.Add(k.Id);
@@ -87,6 +88,10 @@ public sealed partial class PetWindow
         if (hubRewardsShown && hubRewardsLanguage != preferences.Language) FillRewards();
     }
 
+    // A displayed keepsake as it stands on the display corner, in a tile's room.
+    private static FrameworkElement KeepsakeTileArt(KeepsakeSpec k) =>
+        new Viewbox { Width = 64, Height = 56, Child = new KeepsakeArt { Items = new[] { k }, Width = KeepsakeArt.WidthFor(new[] { k }), Height = KeepsakeArt.ArtHeight } };
+
     private void FillRewards()
     {
         if (hubRewards == null) return;
@@ -110,6 +115,17 @@ public sealed partial class PetWindow
                             : LF($"Thắng {StageTitle(stage)} để nhận.", $"Win {StageTitle(stage)} to get it.")));
                 }
             if (tiles.Children.Count > 0) RewardsSection(L("Phụ kiện Phiêu lưu", "Adventure accessories"), PetMotif.Crown, tiles);
+            // 1.5 M22: the stages' keepsakes (the Zip Slime plush), as on the display corner.
+            var keepsakes = new WrapPanel();
+            foreach (var stage in adventure.Campaign.Chapters.SelectMany(c => c.Stages))
+                if (stage.Keepsake is KeepsakeSpec k)
+                {
+                    bool won = adventure.HasReward(k.Id);
+                    keepsakes.Children.Add(RewardTile(KeepsakeTileArt(k), k.Name(preferences.Language), won, rewardsFresh.Contains(k.Id),
+                        won ? L("Kỷ vật: trưng bày trên màn hình (chọn trong Tùy chỉnh).", "Keepsake: displayed on the screen (choose it in Customize).")
+                            : LF($"Thắng {StageTitle(stage)} để nhận.", $"Win {StageTitle(stage)} to get it.")));
+                }
+            if (keepsakes.Children.Count > 0) RewardsSection(L("Kỷ vật Phiêu lưu", "Adventure keepsakes"), PetMotif.Gem, keepsakes);
         }
 
         // The Expedition's keepsakes: a cup or cushion as on the keepsake, an accessory on the cat.
@@ -119,8 +135,7 @@ public sealed partial class PetWindow
             foreach (var k in expedition.Spec.Keepsakes)
             {
                 bool won = expedition.Progress.Keepsakes.Contains(k.Id);
-                FrameworkElement art = k.Kind == KeepsakeSpec.AccessoryKind && k.Accessory != null ? WearingCat(k.Accessory)
-                    : new Viewbox { Width = 64, Height = 56, Child = new KeepsakeArt { Items = new[] { k }, Width = KeepsakeArt.WidthFor(new[] { k }), Height = KeepsakeArt.ArtHeight } };
+                FrameworkElement art = k.Kind == KeepsakeSpec.AccessoryKind && k.Accessory != null ? WearingCat(k.Accessory) : KeepsakeTileArt(k);
                 string level = Enum.TryParse<BattleDifficulty>(k.Difficulty, out var at) ? DifficultyName(at) : k.Difficulty;
                 string where = k.Kind switch
                 {
@@ -143,8 +158,7 @@ public sealed partial class PetWindow
             foreach (var m in infinity.Milestones)
             {
                 bool won = earned.Contains(m);
-                FrameworkElement art = m.Kind == KeepsakeSpec.AccessoryKind && m.Accessory != null ? WearingCat(m.Accessory)
-                    : new Viewbox { Width = 64, Height = 56, Child = new KeepsakeArt { Items = new[] { m }, Width = KeepsakeArt.WidthFor(new[] { m }), Height = KeepsakeArt.ArtHeight } };
+                FrameworkElement art = m.Kind == KeepsakeSpec.AccessoryKind && m.Accessory != null ? WearingCat(m.Accessory) : KeepsakeTileArt(m);
                 string where = m.Kind == KeepsakeSpec.AccessoryKind
                     ? L("Phụ kiện: đeo trong Tùy chỉnh → Phụ kiện.", "Accessory: wear it from Customize → Accessory.")
                     : L("Kỷ vật: trưng bày trên màn hình (chọn trong Tùy chỉnh).", "Keepsake: displayed on the screen (choose it in Customize).");

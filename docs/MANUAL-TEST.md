@@ -759,3 +759,14 @@ Có sẵn trong dữ liệu gốc, không cần file tùy chỉnh. Mở bằng S
 - [ ] Màn 5 Slime Nén: bong bóng có bước "Click bong bóng vài lần…" (xong khi vỡ, có Hiểu rồi để bỏ qua); slime bám tường sáng đúng chỗ trên cao; Slime Nén có bước giới thiệu, bước "sắp lăn: Kéo mèo lên!", bước dây nối quân, bước mảnh file. Thắng: "Hoàn thành chương!", không có nút Chương tiếp.
 - [ ] Cảm giác độ khó (ghi vào Nhật ký chơi thử): màn 2 có quá dễ không (bot mô phỏng còn ~93% máu); Slime Nén mức Khó với búa có quá khó không (mô phỏng búa thắng ~50% so với kiếm ~85%).
 - [ ] Pause/menu/fullscreen ẩn hướng dẫn; bỏ tick "Hướng dẫn trong trận" thì không có bước nào. DPI 100/150/200%, màn hình phụ: chỗ sáng của bước hướng dẫn trùng slime/giỏ/cá; chữ vi/en/ja đúng, không bị cắt (bản đồ có thêm ‹ ›).
+
+## Hình và phần thưởng chương 2 1.5 M22 (2026-10-29)
+Dữ liệu gốc, không cần file tùy chỉnh. Ảnh đã xem qua render UiChecks (nền sáng/tối), chưa xem trên màn hình thật.
+- [ ] Bản đồ Phiêu lưu: chương 1 vẫn banner đồng cỏ, mốc cờ/kiếm/khiên/nấm/vương miện. Bấm › sang chương 2: banner đổi thành "Bãi rác Tải về" (đống thư mục, trang giấy, mũi tên tải về, Slime Nén, giỏ cá), mốc dưới màn là tải về, thư mục, cá, trang giấy, vương miện. Bấm ‹: về lại đồng cỏ.
+- [ ] Sảnh: đã mở chương 2 thì thẻ Phiêu lưu vẽ tranh "Bãi rác Tải về"; chưa mở thì vẫn đồng cỏ.
+- [ ] Trận ở màn chương 2: hai đống thư mục + trang giấy ở hai đầu dải trận, biển tải về cạnh đống trái, vài trang giấy trên sàn; slime đi đè lên phông. Click vào đống thư mục/trang giấy rơi xuống cửa sổ hay desktop bên dưới (không chặn chuột); nhấc mèo, click slime, icon app như cũ. Trận chương 1, Viễn chinh, Vô tận, Trận tự do không có phông. Mở app fullscreen giữa trận: phông ẩn cùng dải trận, thoát fullscreen thì hiện lại. Hết trận: phông biến mất.
+- [ ] Thắng màn 3 "Giữ giỏ cá" lần đầu: kết quả ghi "Phần thưởng mới: Mũ thư mục — đội trong Tùy chỉnh"; Tùy chỉnh → Phụ kiện có Mũ thư mục, đội lên đầu nhìn vừa (thư mục vàng có trang giấy, mũi tên tím).
+- [ ] Thắng màn 5 "Slime Nén" lần đầu: kết quả ghi "Kỷ vật mới: Thú bông Slime Nén (ở góc trưng bày)". Tùy chỉnh → Kỷ vật và menu chuột phải món trưng bày có Thú bông Slime Nén; chọn nó: thú bông vàng có khóa kéo, mắt nút, thẻ vải đứng trên tấm gỗ.
+- [ ] Thú bông có physics như các kỷ vật khác: cầm (kéo quá ~6 DIPs), lắc, ném, rơi, nảy; thả trúng đầu mèo thì mèo choáng (Bonk); đứng trên gờ cửa sổ; Pause đóng băng; mèo đôi lúc ra ngắm/đẩy. Không có ngủ/nảy như đệm slime.
+- [ ] Sảnh → Phần thưởng: mục "Kỷ vật Phiêu lưu" có ô Thú bông Slime Nén (chưa thắng: mờ có khóa, rê chuột "Thắng Màn 5 · Slime Nén để nhận."); Mũ thư mục trong "Phụ kiện Phiêu lưu". Chữ vi/en/ja đúng.
+- [ ] DPI 100/150/200%, đổi DPI giữa trận, màn hình phụ: phông trận khớp đúng dải trận (không lệch, không đè lên HUD/icon app).

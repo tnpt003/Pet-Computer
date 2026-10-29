@@ -577,6 +577,7 @@ internal static class Program
         BroodVisualChecks.Run(Check);
         DropVisualChecks.Run(Check);
         BasketVisualChecks.Run(Check);
+        ChapterArtChecks.Run(Check);
         window.SetPaused(false);
         window.Reset();
         void AttentionClick() => window.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Right)
@@ -983,6 +984,7 @@ internal static class Program
         await AdventureChecks.Run(window, pet, behavior, preferences, Check);
         await ExpeditionChecks.Run(window, pet, behavior, preferences, Check);
         await EndlessChecks.Run(window, pet, behavior, preferences, Check);
+        await ChapterArtChecks.RunWindow(window, pet, preferences, Check);
         await UpgradeChecks.Run(window, pet, behavior, preferences, Check);
         await PanelHeightChecks.Run(window, pet, preferences, Check);
         await BagChecks.Run(window, pet, behavior, preferences, Check);

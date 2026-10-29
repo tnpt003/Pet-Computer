@@ -6,11 +6,12 @@ using System.Windows.Media;
 namespace DesktopPet;
 
 // The display corner's art (Expedition milestone 4): the keepsakes the run gave that are shown
-// (a slime cushion, then the cups bronze → gold) standing on a low wooden keepsake. Vector only,
+// (a slime cushion, then the cups bronze → gold; Infinity's hourglass and orb; 1.5 M22 the Zip
+// Slime plush) standing on a low wooden keepsake. Vector only,
 // drawn again only when the list or the pose (squash, tilt, the puff and dust effects) changes.
 public sealed class KeepsakeArt : FrameworkElement
 {
-    public const double StandHeight = 6, Pad = 6, Gap = 4, CupWidth = 26, CupHeight = 36, CushionWidth = 46, CushionHeight = 20;
+    public const double StandHeight = 6, Pad = 6, Gap = 4, CupWidth = 26, CupHeight = 36, CushionWidth = 46, CushionHeight = 20, PlushWidth = 36;
     public static readonly double ArtHeight = CupHeight + StandHeight + 4;
 
     private static Brush B(byte r, byte g, byte b) => PetUi.Frozen(Color.FromRgb(r, g, b));
@@ -71,10 +72,12 @@ public sealed class KeepsakeArt : FrameworkElement
         InvalidateVisual();
     }
 
+    private static double ItemWidth(KeepsakeSpec item) => item.Kind switch { KeepsakeSpec.Cushion => CushionWidth, KeepsakeSpec.Plush => PlushWidth, _ => CupWidth };
+
     public static double WidthFor(IReadOnlyList<KeepsakeSpec> shown)
     {
         double width = Pad * 2;
-        for (int i = 0; i < shown.Count; i++) width += (shown[i].Kind == KeepsakeSpec.Cushion ? CushionWidth : CupWidth) + (i > 0 ? Gap : 0);
+        for (int i = 0; i < shown.Count; i++) width += ItemWidth(shown[i]) + (i > 0 ? Gap : 0);
         return width;
     }
 
@@ -147,6 +150,7 @@ public sealed class KeepsakeArt : FrameworkElement
         foreach (var item in items)
         {
             if (item.Kind == KeepsakeSpec.Cushion) { Cushion(dc, x, floor); x += CushionWidth + Gap; continue; }
+            if (item.Kind == KeepsakeSpec.Plush) { Plush(dc, x, floor); x += PlushWidth + Gap; continue; }
             if (item.Kind == KeepsakeSpec.Hourglass) Hourglass(dc, x, floor, sand, flip);
             else if (item.Kind == KeepsakeSpec.Orb) Orb(dc, x, floor);
             else Cup(dc, x, floor, item.Tier);
@@ -170,6 +174,57 @@ public sealed class KeepsakeArt : FrameworkElement
         dc.DrawEllipse(Shine, null, new Point(cx - 11, top + 6), 4, 2.2);
         dc.DrawEllipse(Eye, null, new Point(cx - 4.5, top + 10), 1.6, 2.2);
         dc.DrawEllipse(Eye, null, new Point(cx + 4.5, top + 10), 1.6, 2.2);
+    }
+
+    // 1.5 M22: the Zip Slime plush (chapter 2's keepsake), PlushWidth × CupHeight: a soft folder-yellow
+    // slime sitting on the plank, the boss's zipper down its front with a pull tab, felt cheeks, button
+    // eyes, stitches round its edge and a little white tag on its side.
+    private static readonly Brush Felt = B(0xF2, 0xC6, 0x5C), FeltDark = B(0xC9, 0x93, 0x34), Cheek = B(0xF4, 0x9A, 0x8E), PlushTag = B(0xFF, 0xFB, 0xF2);
+    private static readonly Pen Stitch = Freeze(new Pen(FeltDark, 0.9) { DashStyle = new DashStyle(new[] { 2.0, 1.6 }, 0), StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round }),
+        ZipTrack = Freeze(new Pen(B(0x8C, 0x6A, 0x2E), 1.1)), ZipTooth = Freeze(new Pen(B(0x8C, 0x6A, 0x2E), 1.2)), Smile = Freeze(new Pen(PetUi.ArtInk, 1.1) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round });
+
+    private static void Plush(DrawingContext dc, double left, double floor)
+    {
+        double cx = left + PlushWidth / 2, top = floor - 30, right = left + PlushWidth;
+        var body = new StreamGeometry();
+        using (var g = body.Open())
+        {
+            g.BeginFigure(new Point(left + 2, floor), true, true);
+            g.BezierTo(new Point(left - 1, floor - 14), new Point(left + 5, top), new Point(cx, top), true, true);
+            g.BezierTo(new Point(right - 5, top), new Point(right + 1, floor - 14), new Point(right - 2, floor), true, true);
+        }
+        body.Freeze();
+        dc.DrawGeometry(Felt, Outline, body);
+        // Stitches just inside the edge.
+        var seam = new StreamGeometry();
+        using (var g = seam.Open())
+        {
+            g.BeginFigure(new Point(left + 4.5, floor - 2), false, false);
+            g.BezierTo(new Point(left + 2.5, floor - 14), new Point(left + 7, top + 3), new Point(cx, top + 3), true, true);
+            g.BezierTo(new Point(right - 7, top + 3), new Point(right - 2.5, floor - 14), new Point(right - 4.5, floor - 2), true, true);
+        }
+        seam.Freeze();
+        dc.DrawGeometry(null, Stitch, seam);
+        dc.DrawEllipse(Shine, null, new Point(cx - 9, top + 7), 3.4, 2);
+        // Button eyes, felt cheeks, a small smile.
+        foreach (int side in new[] { -1, 1 })
+        {
+            dc.DrawEllipse(Eye, null, new Point(cx + side * 6, top + 12), 2.4, 2.4);
+            dc.DrawEllipse(Shine, null, new Point(cx + side * 6 + 0.8, top + 11.2), 0.8, 0.8);
+            dc.DrawEllipse(Cheek, null, new Point(cx + side * 11, top + 16), 2.6, 1.6);
+        }
+        dc.DrawLine(Smile, new Point(cx - 2, top + 16), new Point(cx, top + 17.2));
+        dc.DrawLine(Smile, new Point(cx, top + 17.2), new Point(cx + 2, top + 16));
+        // The zipper: track, teeth left and right in turn, the pull tab at the top.
+        dc.DrawLine(ZipTrack, new Point(cx, top + 19.5), new Point(cx, floor - 2));
+        for (int i = 0; i < 4; i++)
+        {
+            double y = top + 21 + i * 2.1, side = i % 2 == 0 ? -1 : 1;
+            dc.DrawLine(ZipTooth, new Point(cx, y), new Point(cx + side * 2.2, y));
+        }
+        dc.DrawRoundedRectangle(FeltDark, Outline, new Rect(cx - 1.8, top + 18, 3.6, 4.6), 1, 1);
+        // The tag, sewn into its side seam.
+        dc.DrawRoundedRectangle(PlushTag, Outline, new Rect(right - 5, floor - 10, 5.5, 4.2), 0.8, 0.8);
     }
 
     // Infinity's keepsakes (2026-10-22), in a cup's room (CupWidth × CupHeight).

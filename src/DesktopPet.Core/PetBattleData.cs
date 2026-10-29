@@ -722,6 +722,11 @@ public sealed class ChapterSpec
     public string? UnlockAfter { get; init; }
     // 1.5 M21: slimes drop fish and potions in this chapter's stages (no coins; battle.json "drops").
     public bool Drops { get; init; }
+    // 1.5 M22: the chapter's look (the map's banner and landmarks, a backdrop behind its battles):
+    // "dump" (the Download Dump: heaps of files and folders). Unset (chapter 1): the meadow, no backdrop.
+    public string? Scene { get; init; }
+    public const string Dump = "dump";
+    public static readonly string[] Scenes = { Dump };
     public string Name(string language) => PetText.Data(language, NameVi, NameEn);
 }
 
@@ -784,6 +789,8 @@ public sealed class StageSpec
     public string[]? SuggestSkills { get; init; }
     // An accessory id (Assets/accessories.json) given once, the first time the stage is won.
     public string? Reward { get; init; }
+    // 1.5 M22: a keepsake for the display corner (kind "plush" for chapter 2), given with the reward.
+    public KeepsakeSpec? Keepsake { get; init; }
     // A skill id: winning this stage opens that skill for the setup panel's choice (Adventure.SkillOpen).
     public string? UnlocksSkill { get; init; }
     // 1.5 M20: a fish basket to keep (PetBattle.Basket.cs); every fish carried off loses the stage.
@@ -1760,6 +1767,11 @@ public static class BattleData
         if (s.Endless is EndlessSpec endless) EndlessSpec.Validate(endless, s);
         if (s.Drops is DropSpec drops) DropSpec.Validate(drops);
         if (s.Expedition is ExpeditionSpec expedition) ExpeditionSpec.Validate(expedition, s, (waves, at, alive, survival) => Waves(waves, at, alive ?? s.MaxAlive, survival), Id, Text);
+        // 1.5 M22: one id per keepsake over the Adventure, the Expedition and Infinity (the display corner finds it by id).
+        if (s.Campaign is CampaignSpec stages)
+            foreach (var k in stages.Chapters.SelectMany(c => c.Stages).Select(st => st.Keepsake).OfType<KeepsakeSpec>())
+                if ((s.Expedition?.Keepsakes ?? Array.Empty<KeepsakeSpec>()).Concat(s.Endless?.Milestones ?? Array.Empty<KeepsakeSpec>()).Any(o => o.Id == k.Id))
+                    throw new InvalidDataException($"keepsake id \"{k.Id}\" is used twice");
     }
 
     public static readonly string[] StageObjectives = { "clear", "survive" };
@@ -1789,6 +1801,7 @@ public static class BattleData
         var chapterIds = new HashSet<string>();
         // Stage ids are unique across the whole campaign: progress is saved by them alone.
         var stageIds = new HashSet<string>();
+        var keepsakeIds = new HashSet<string>();
         for (int c = 0; c < campaign.Chapters.Length; c++)
         {
             var chapter = campaign.Chapters[c] ?? throw new InvalidDataException($"campaign.chapters[{c}] is empty");
@@ -1804,7 +1817,19 @@ public static class BattleData
                 id(stage.Id, where + ".id");
                 if (!stageIds.Add(stage.Id)) throw new InvalidDataException($"stage id \"{stage.Id}\" is used twice");
                 ValidateStage(stage, where, waves, text);
+                // 1.5 M22: a keepsake for the display corner, given like the reward (saved with the rewards: an id
+                // no accessory has).
+                if (stage.Keepsake is KeepsakeSpec k)
+                {
+                    id(k.Id, where + ".keepsake.id");
+                    text(k.NameVi, where + ".keepsake.nameVi"); text(k.NameEn, where + ".keepsake.nameEn");
+                    if (!k.Shown) throw new InvalidDataException($"{where}.keepsake.kind must be one shown on the display corner: plush, cushion, cup, hourglass or orb");
+                    if (k.Kind == KeepsakeSpec.Cup && Array.IndexOf(KeepsakeSpec.Tiers, k.Tier) < 0) throw new InvalidDataException($"{where}.keepsake.tier must be one of: {string.Join(", ", KeepsakeSpec.Tiers)}");
+                    if (PetAccessories.Find(k.Id) != null || !keepsakeIds.Add(k.Id)) throw new InvalidDataException($"keepsake id \"{k.Id}\" is used twice");
+                }
             }
+            if (chapter.Scene != null && Array.IndexOf(ChapterSpec.Scenes, chapter.Scene) < 0)
+                throw new InvalidDataException($"{at}.scene must be one of: {string.Join(", ", ChapterSpec.Scenes)}");
         }
         // 1.5 M21: a chapter opens after a stage of an earlier chapter (no loops, nothing unknown).
         for (int c = 0; c < campaign.Chapters.Length; c++)

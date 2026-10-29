@@ -204,13 +204,20 @@ public sealed class Adventure
         var given = new List<string>();
         foreach (var chapter in Campaign.Chapters)
             foreach (var stage in chapter.Stages)
-                if (stage.Reward is string reward && IsCompleted(stage.Id) && !Progress.Rewards.Contains(reward))
-                {
-                    Progress.Rewards.Add(reward);
-                    given.Add(reward);
-                }
+                foreach (var reward in new[] { stage.Reward, stage.Keepsake?.Id })
+                    if (reward != null && IsCompleted(stage.Id) && !Progress.Rewards.Contains(reward))
+                    {
+                        Progress.Rewards.Add(reward);
+                        given.Add(reward);
+                    }
         return given;
     }
 
-    public bool HasReward(string accessory) => Progress.Rewards.Contains(accessory);
+    // An accessory id, or (1.5 M22) a stage keepsake's id.
+    public bool HasReward(string id) => Progress.Rewards.Contains(id);
+    // 1.5 M22: the stages' keepsakes (display corner), in campaign order.
+    public IEnumerable<KeepsakeSpec> Keepsakes => Campaign.Chapters.SelectMany(c => c.Stages).Select(s => s.Keepsake).OfType<KeepsakeSpec>();
+    public KeepsakeSpec? Keepsake(string id) => Keepsakes.FirstOrDefault(k => k.Id == id);
+    // 1.5 M22: the chapter's scene (ChapterSpec.Scene) a stage belongs to.
+    public string? SceneOf(StageSpec stage) => Locate(stage.Id)?.Chapter.Scene;
 }

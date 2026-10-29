@@ -354,6 +354,7 @@ public sealed partial class PetWindow
         battleFieldWindow = battleHudWindow = null;
         CloseBattleApps();
         CloseBattleSky();
+        CloseBattleScenery();
         battleView = null;
         battleHud = null;
         battleHudGrab = null;
@@ -753,6 +754,7 @@ public sealed partial class PetWindow
         battleView.GrabMoved += (x, h) => battle?.MoveGrab(x, h);
         battleView.GrabReleased += () => BattleReleaseGrab();
         battleView.Swiped += (x0, h0, x1, h1) => BattleSnip(x0, h0, x1, h1);
+        ShowBattleScenery(battle); // 1.5 M22: a chapter's backdrop, under the strip.
         battleFieldWindow = CreateOverlayWindow(battleView, "Pet battle");
         battleFieldWindow.DpiChanged += (_, _) => battlePlacedScale = 0; // Re-place in pixels next frame.
         battleHudWindow = CreateOverlayWindow(BuildBattleHud(), "Pet battle HUD");
@@ -771,12 +773,12 @@ public sealed partial class PetWindow
         // A fullscreen app (game, video) gets a clean screen; the paused battle comes back after.
         if (context.Fullscreen)
         {
-            if (battleFieldWindow.IsVisible) { battleFieldWindow.Hide(); battleHudWindow.Hide(); }
+            if (battleFieldWindow.IsVisible) { battleFieldWindow.Hide(); battleHudWindow.Hide(); SetBattleSceneryVisible(false); }
             HideBattleApps();
             HideBattleSky();
             return;
         }
-        if (!battleFieldWindow.IsVisible) { battleFieldWindow.Show(); battleHudWindow.Show(); ShowBattleApps(); ShowBattleSky(); battlePlacedScale = 0; RequestBattleRedraw(); }
+        if (!battleFieldWindow.IsVisible) { SetBattleSceneryVisible(true); battleFieldWindow.Show(); battleHudWindow.Show(); ShowBattleApps(); ShowBattleSky(); battlePlacedScale = 0; RequestBattleRedraw(); }
         var area = battleArea;
         double fieldScale = battleScale;
         if (battlePlacedScale != fieldScale || battlePlacedArea != area)
@@ -786,8 +788,10 @@ public sealed partial class PetWindow
             battleView.OriginX = area.Left;
             var handle = new WindowInteropHelper(battleFieldWindow).Handle;
             const uint NoZOrder = 0x0004, NoActivate = 0x0010;
-            SetWindowPos(handle, IntPtr.Zero, (int)Math.Round(area.Left * fieldScale), (int)Math.Round((area.Bottom - BattleFieldView.FieldHeight) * fieldScale),
-                (int)Math.Round((area.Right - area.Left) * fieldScale), (int)Math.Round(BattleFieldView.FieldHeight * fieldScale), NoZOrder | NoActivate);
+            int fieldX = (int)Math.Round(area.Left * fieldScale), fieldY = (int)Math.Round((area.Bottom - BattleFieldView.FieldHeight) * fieldScale),
+                fieldWidth = (int)Math.Round((area.Right - area.Left) * fieldScale), fieldHeight = (int)Math.Round(BattleFieldView.FieldHeight * fieldScale);
+            SetWindowPos(handle, IntPtr.Zero, fieldX, fieldY, fieldWidth, fieldHeight, NoZOrder | NoActivate);
+            PlaceBattleScenery(handle, fieldX, fieldY, fieldWidth, fieldHeight);
             // The pet stays above its battlefield, so clicks on the cat still reach the cat.
             const uint NoMove = 0x0002, NoSize = 0x0001;
             SetWindowPos(new WindowInteropHelper(this).Handle, new IntPtr(-1), 0, 0, 0, 0, NoMove | NoSize | NoActivate);

@@ -108,18 +108,21 @@ internal static class BagChecks
             await Task.Delay(30);
             check(!window.BattleRewardsShown && window.BattleHubModeEnabled(PetWindow.HubAdventure), "‹ Hub brings the mode cards back");
 
-            // The whole chapter won: two accessories are new, the button counts them, the page marks them.
+            // The whole chapter won: two accessories are new, the button counts them, the page marks them
+            // (chapter 2's hat and plush stay locked, 1.5 M22).
             var adventure = window.Adventure!;
+            var chapterOne = adventure.Chapter()!.Stages.Where(s => s.Reward != null).Select(s => PetAccessories.Find(s.Reward)!.Name("en")).ToList();
             var build = new Dictionary<string, int> { ["sharp"] = 2, ["thick_fur"] = 2, ["big_heart"] = 1 };
             int n = 0;
             foreach (var stage in adventure.Chapter()!.Stages) adventure.Apply("bag-" + n++, stage, true, true, BattleWeapon.Sword, BattleDifficulty.Normal, 10, 61, build);
             window.Expedition!.Progress.Keepsakes.Add(data.Expedition!.Keepsakes[0].Id);
             Call(window, "TickBattleHub", 0.3);
             int fresh = window.BattleRewardsNew;
-            check(fresh == accessories.Count + 1 && Button(hub, $"Rewards · {fresh} new") != null, $"The button counts new rewards ({fresh})");
+            check(fresh == chapterOne.Count + 1 && Button(hub, $"Rewards · {fresh} new") != null, $"The button counts new rewards ({fresh})");
             window.ShowBattleRewards(true);
             text = window.BattleRewardsText;
-            check(accessories.All(a => text.Contains("✓ " + a)) && text.Contains("✓ " + data.Expedition.Keepsakes[0].Name("en")) && text.Split('\n').Count(l => l == "New") == fresh
+            check(chapterOne.All(a => text.Contains("✓ " + a)) && text.Contains("✓ " + data.Expedition.Keepsakes[0].Name("en")) && text.Split('\n').Count(l => l == "New") == fresh
+                && text.Contains("Adventure keepsakes") && text.Contains("Zip Slime plush") && !text.Contains("✓ Zip Slime plush") && !text.Contains("✓ Folder hat")
                 && text.Contains("1:01") && text.Contains("1 win"),
                 $"Won rewards are marked, each new one has a badge; records show the fastest win ({text.Replace('\n', '|')})");
             check(window.BattleRewardsNew == 0 && AdventureProgress.Load(adventureFile).RewardsSeen.Count == fresh, "Showing them saves them as seen");

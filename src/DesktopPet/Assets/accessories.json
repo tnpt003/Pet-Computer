@@ -135,6 +135,17 @@
       ]
     },
     {
+      "id": "FolderHat", "name": {"vi": "Mũ thư mục", "en": "Folder hat"}, "layer": "head", "reward": "download_dump",
+      "shapes": [
+        {"path": "M 39,27 L 40,10 Q 40,8 42,8 L 50,8 L 53,11 L 69,11 Q 71,11 71,13 L 71,27 Q 55,30.5 39,27 Z", "fill": "#E0A93A", "stroke": "outline"},
+        {"path": "M 44,16 L 45,9.5 L 66,9.5 L 66,16 Z", "fill": "#FFFBF2", "stroke": "outline"},
+        {"line": [48, 12.5, 62, 12.5], "stroke": {"color": "#9C92B0", "width": 1, "round": true}},
+        {"path": "M 37.5,27 L 40.5,15.5 L 73,15.5 L 72.5,27 Q 55,30.5 37.5,27 Z", "fill": "#FFD873", "stroke": "outline"},
+        {"line": [55.5, 18.5, 55.5, 24.5], "stroke": {"color": "#7A5AC8", "width": 1.8, "round": true}},
+        {"path": "M 52.5,22 L 55.5,25 L 58.5,22", "stroke": {"color": "#7A5AC8", "width": 1.8, "round": true}}
+      ]
+    },
+    {
       "id": "ExpeditionScarf", "name": {"vi": "Khăn viễn chinh", "en": "Expedition scarf"}, "layer": "neck", "reward": "slime_trail",
       "shapes": [
         {"path": "M 33,67 Q 55,80 77,67 L 78,74 Q 55,88 32,74 Z", "fill": "#7A5AC8", "stroke": "outline"},

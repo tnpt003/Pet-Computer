@@ -72,13 +72,17 @@ public sealed partial class PetWindow
     // with the built-in definitions.
     private ExpeditionProgress SavedExpeditionProgress =>
         expeditionProgress ??= ExpeditionProgressFile != null ? ExpeditionProgress.Load(ExpeditionProgressFile) : new();
-    // The Expedition's keepsakes, then Infinity's milestone rewards (earned from the battle records).
+    // The Expedition's keepsakes, then Infinity's milestone rewards (earned from the battle records),
+    // then (1.5 M22) the Adventure stages' (given with the stage's reward, in the saved progress).
+    private static IEnumerable<KeepsakeSpec> AdventureKeepsakes =>
+        BattleData.Settings.Campaign?.Chapters.SelectMany(c => c.Stages).Select(s => s.Keepsake).OfType<KeepsakeSpec>() ?? Enumerable.Empty<KeepsakeSpec>();
     private static IReadOnlyList<KeepsakeSpec> KeepsakeList =>
-        (BattleData.Settings.Expedition?.Keepsakes ?? Array.Empty<KeepsakeSpec>()).Concat(EndlessRewards?.Milestones ?? Array.Empty<KeepsakeSpec>()).ToList();
-    public IReadOnlyList<string> Keepsakes => SavedExpeditionProgress.Keepsakes.Concat(EndlessEarned.Select(m => m.Id)).ToList();
-    // Shown on the keepsake: the cushion first, then the cups bronze → gold, then Infinity's (by wave).
+        (BattleData.Settings.Expedition?.Keepsakes ?? Array.Empty<KeepsakeSpec>()).Concat(EndlessRewards?.Milestones ?? Array.Empty<KeepsakeSpec>()).Concat(AdventureKeepsakes).ToList();
+    public IReadOnlyList<string> Keepsakes => SavedExpeditionProgress.Keepsakes.Concat(EndlessEarned.Select(m => m.Id))
+        .Concat(AdventureKeepsakes.Where(k => AdventureProgress.Rewards.Contains(k.Id)).Select(k => k.Id)).ToList();
+    // Shown on the keepsake: the cushion first, then the cups bronze → gold, the Adventure's plush, then Infinity's (by wave).
     public IReadOnlyList<KeepsakeSpec> ShownKeepsakes => KeepsakeList.Where(k => k.Shown && Keepsakes.Contains(k.Id))
-        .OrderBy(k => k.Kind == KeepsakeSpec.Cushion ? -1 : k.Wave > 0 ? 10 + k.Wave : Array.IndexOf(KeepsakeSpec.Tiers, k.Tier)).ToList();
+        .OrderBy(k => k.Kind == KeepsakeSpec.Cushion ? -1 : k.Wave > 0 ? 10 + k.Wave : k.Kind == KeepsakeSpec.Plush ? 5 : Array.IndexOf(KeepsakeSpec.Tiers, k.Tier)).ToList();
     // The one on display: the chosen one if owned, else the best (gold → silver → bronze → cushion).
     public KeepsakeSpec? DisplayedKeepsake
     {

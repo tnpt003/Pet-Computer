@@ -71,7 +71,7 @@ public sealed partial class PetWindow
 
     // The frame and window of a game panel. The content scrolls when it is taller than the cat's
     // monitor (PlaceGamePanel caps the height); the actions stay in view. Not shown yet.
-    private Window CreateGamePanel(UIElement content, UIElement actions, string title, double minWidth = 0, PetSceneKind? scene = null, bool compactSetup = false)
+    private Window CreateGamePanel(UIElement content, UIElement actions, string title, double minWidth = 0, PetSceneKind? scene = null, bool compactSetup = false, FrameworkElement? fixedHeader = null)
     {
         var banner = new PetScene(scene ?? (title switch { "Pet adventure" => PetSceneKind.Adventure, "Pet expedition" => PetSceneKind.Expedition,
             "Pet setup" => PetSceneKind.Workshop, _ => PetSceneKind.Home }), BannerHeight);
@@ -86,7 +86,9 @@ public sealed partial class PetWindow
         body.Children.Add(actions);
         var crest = new Border { Height = 3, CornerRadius = new CornerRadius(1.5), Margin = new Thickness(0,0,0,8),
             Background = PetUi.Game.Gold, Opacity = 0.65, IsHitTestVisible = false };
-        DockPanel.SetDock(crest, Dock.Top); body.Children.Add(crest); body.Children.Add(scroll);
+        DockPanel.SetDock(crest, Dock.Top); body.Children.Add(crest);
+        if (fixedHeader != null) { DockPanel.SetDock(fixedHeader, Dock.Top); body.Children.Add(fixedHeader); }
+        body.Children.Add(scroll);
         var panel = new Border
         {
             Background = HudBack, BorderBrush = PetUi.Game.Rim, BorderThickness = new Thickness(1.5), CornerRadius = new CornerRadius(12),
@@ -98,6 +100,12 @@ public sealed partial class PetWindow
         var window = CreateOverlayWindow(panel, title);
         window.Resources[BannerKey] = banner;
         window.Resources[CompactSetupKey] = compactSetup;
+        if (compactSetup)
+        {
+            window.Resources["PrepContent"] = content;
+            window.Resources["PrepActions"] = actions;
+            if (fixedHeader != null) window.Resources["PrepHeader"] = fixedHeader;
+        }
         window.SizeToContent = compactSetup ? SizeToContent.Manual : SizeToContent.WidthAndHeight;
         if (compactSetup) SizeCompactSetup(window);
         return window;
@@ -107,7 +115,15 @@ public sealed partial class PetWindow
     {
         double room = Math.Max(240, bounds.Bottom - bounds.Top - 24);
         window.Width = Math.Min(760, Math.Max(360, bounds.Right - bounds.Left - 24));
-        window.Height = Math.Min(room, Math.Clamp((bounds.Bottom - bounds.Top) * 0.5, 400, 560));
+        double target = Math.Clamp((bounds.Bottom - bounds.Top) * 0.5, 400, 560);
+        double required = 48; // Frame padding, crest and margins.
+        foreach (string key in new[] { "PrepContent", "PrepHeader", "PrepActions" })
+            if (window.Resources[key] is UIElement part)
+            {
+                part.Measure(new Size(Math.Max(1, window.Width - 48), double.PositiveInfinity));
+                required += part.DesiredSize.Height;
+            }
+        window.Height = Math.Min(room, Math.Max(target, Math.Ceiling(required)));
     }
 
     // At the top of the cat's screen, centred (where the HUD and the result panel appear), at most
@@ -125,6 +141,12 @@ public sealed partial class PetWindow
             banner.Visibility = room < TinyScreen ? Visibility.Collapsed : Visibility.Visible;
         }
         window.UpdateLayout();
+        if (window.Resources[CompactSetupKey] is true)
+        {
+            // Width changes can switch the setup to one column; measure that final arrangement too.
+            SizeCompactSetup(window);
+            window.UpdateLayout();
+        }
         double width = window.ActualWidth;
         MoveWindow(window, Math.Clamp((bounds.Left + bounds.Right - width) / 2, bounds.Left, Math.Max(bounds.Left, bounds.Right - width)), bounds.Top + 12);
     }

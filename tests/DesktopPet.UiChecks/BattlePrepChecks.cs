@@ -322,9 +322,20 @@ internal static class BattlePrepChecks
             Shot("battle-setup-four-weapons-preset-vi.png");
             SetField(window, "bounds", savedBounds with { Bottom = savedBounds.Top + 480 });
             Call(window, "PlaceBattlePrep"); setup.UpdateLayout();
-            check(setup.ActualHeight <= 400.5 && mainScroll.ScrollableHeight < 160 && Field<Border>(window, "prepReady").IsVisible,
+            check(setup.ActualHeight <= 456.5 && mainScroll.ScrollableHeight < 160 && Field<Border>(window, "prepReady").IsVisible,
                 $"On a 480-DIP screen Ready stays visible with limited scrolling ({mainScroll.ScrollableHeight:0} DIPs)");
             Shot("battle-setup-four-weapons-low-screen.png");
+            mainScroll.ScrollToEnd(); setup.UpdateLayout();
+            var heading = Field<TextBlock>(window, "prepTitle");
+            check(heading.PointToScreen(new Point()).Y >= setup.Top + 12 && heading.PointToScreen(new Point()).Y < setup.Top + 80,
+                "Scrolling the middle to the end never hides the setup heading");
+            Shot("battle-setup-low-scrolled.png");
+            SetField(window, "bounds", savedBounds with { Right = savedBounds.Left + 560, Bottom = savedBounds.Top + 720 });
+            Call(window, "PlaceBattlePrep"); setup.UpdateLayout();
+            check(setup.ActualWidth <= 536.5 && setup.ActualHeight <= 696.5 && mainScroll.ScrollableHeight < 100 && mainScroll.ExtentWidth <= mainScroll.ViewportWidth + 1,
+                "A narrow working area reflows without horizontal overflow and stays inside the screen");
+            mainScroll.ScrollToTop(); setup.UpdateLayout();
+            Shot("battle-setup-narrow.png");
         }
         finally
         {

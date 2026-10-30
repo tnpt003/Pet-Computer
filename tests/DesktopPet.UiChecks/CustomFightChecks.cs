@@ -85,7 +85,7 @@ internal static class CustomFightChecks
             await Task.Delay(30);
             Prep(0.3);
             check(window.BattlePreparing && !window.BattleHubOpen && window.BattlePrepText.Contains("Get ready to battle") && window.ChosenFight == null
-                  && Text(Find("Pet setup")!).Contains("Custom Fight|Default|The old free battle") && Text(Find("Pet setup")!).Contains("Build a fight…"),
+                  && Text(Find("Pet setup")!).Contains("Custom Fight|Default|Build a fight…|The old free battle"),
                 $"It opens the setup panel: Default chosen, what it is, Build a fight ({Text(Find("Pet setup")!)})");
             Shot("Pet setup", "custom-fight-setup-en.png");
 
@@ -136,8 +136,11 @@ internal static class CustomFightChecks
             Shot("Pet setup", "custom-fight-preset-setup-en.png");
             var presetRow = Field<WrapPanel>(window, "prepFightRow");
             check(presetRow.HorizontalAlignment == HorizontalAlignment.Left && double.IsNaN(presetRow.Width)
-                && presetRow.Children.OfType<Border>().All(c => c.MinWidth == 72 && c.Height == 28),
+                && presetRow.Children.OfType<Border>().Where(c => c != Field<Border>(window, "prepFightButton")).All(c => c.MinWidth == 72 && c.Height == 28)
+                && presetRow.Children[^1] == Field<Border>(window, "prepFightButton"),
                 "Default and Set 1 are equal-height presets aligned to the left of their own section");
+            check(presetRow.Children.OfType<Border>().Select(c => Math.Round(c.PointToScreen(new Point()).Y)).Distinct().Count() == 1,
+                "Build a fight sits on the same row as Default and Set 1");
 
             // A preset's battle: a Custom stage; no records, no achievements, no Adventure progress.
             records = Records();

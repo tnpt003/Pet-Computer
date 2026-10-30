@@ -269,15 +269,15 @@ public sealed partial class PetWindow
     private StackPanel BuildPrepFight()
     {
         prepFightLabel = PanelLine(PetUi.SmallSize); prepFightLabel.Opacity = 0.75; prepFightLabel.VerticalAlignment = VerticalAlignment.Center;
+        prepFightLabel.HorizontalAlignment = HorizontalAlignment.Left;
         prepFightRow = new WrapPanel { HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 4, 0, 0) };
         prepFightHint = PanelLine(PetUi.CaptionSize); prepFightHint.Opacity = 0.85; prepFightHint.HorizontalAlignment = HorizontalAlignment.Left;
         var (button, text, _) = HudButton(() => { if (OpenFightBuilder() is string reason) ShowBattleNotice(reason); }, plain: true);
-        button.HorizontalAlignment = HorizontalAlignment.Right; button.Margin = new Thickness(8, 0, 0, 0);
+        button.HorizontalAlignment = HorizontalAlignment.Left; button.Margin = new Thickness(0, 0, 5, 5);
         button.Height = 28;
         prepFightButton = button; prepFightButtonText = text;
-        DockPanel.SetDock(button, Dock.Right);
         prepFightBlock = new StackPanel { Margin = new Thickness(0, 8, 0, 0), Children = {
-            new DockPanel { Children = { button, prepFightLabel } }, prepFightRow,
+            prepFightLabel, prepFightRow,
             new ScrollViewer { Content = prepFightHint, Height = 30, Focusable = false, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled } } };
         return prepFightBlock;
     }
@@ -291,6 +291,7 @@ public sealed partial class PetWindow
         if (!PrepFree) return;
         prepFightLabel.Text = L("Trận tự chọn", "Custom Fight");
         FillPresetChips(prepFightRow, prepFightChips);
+        if (!prepFightRow.Children.Contains(prepFightButton)) prepFightRow.Children.Add(prepFightButton);
         foreach (var (_, chip) in prepFightChips) { chip.MinWidth = 72; chip.Height = 28; }
         prepFightHint.Text = FightSummary(ChosenFight);
         prepFightButtonText!.Text = L("Dựng trận…", "Build a fight…");

@@ -564,8 +564,8 @@ public sealed partial class PetWindow
         prepAbout = Line(PetUi.SmallSize, maxWidth: 700);
         prepDetails = new Border { Visibility = Visibility.Collapsed, Background = PrepStage, CornerRadius = new CornerRadius(8), Padding = new Thickness(8),
             Margin = new Thickness(0, 8, 0, 0), Child = LocalScroll(new StackPanel { Children = { prepAbout, prepBuild, prepGuideHint } }, 96) };
-        var window = CreateGamePanel(new StackPanel { Children = { new DockPanel { Height = 48, Children = { stage, title } }, columns,
-            prepDetails, prepData, prepStatus } }, actions, "Pet setup", compactSetup: true);
+        var window = CreateGamePanel(new StackPanel { Children = { columns, prepDetails, prepData, prepStatus } }, actions, "Pet setup", compactSetup: true,
+            fixedHeader: new DockPanel { Height = 48, Children = { stage, title } });
         void FitColumns()
         {
             bool narrow = window.Width < 640;

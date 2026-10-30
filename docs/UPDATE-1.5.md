@@ -2,6 +2,8 @@
 
 ### Sửa sau chơi thử, đã chốt 2026-10-30
 
+Bổ sung responsive sau test thật: ghim tiêu đề/Xem thử ngoài vùng cuộn; cho chiều cao tăng theo nội dung khi vùng làm việc hẹp/thấp, đo lại sau đổi số cột; Dựng trận đứng cạnh Mặc định/Set 1 trong cùng hàng có wrap. Không đổi luật chọn/lưu/combat.
+
 Bổ sung cùng ngày: thiết kế lại bảng chuẩn bị thành hai cột, cao khoảng nửa màn hình; app dùng icon gọn như kỹ năng, mô tả/chỉ số ở vùng cố định để hover/chọn không làm dịch HUD; Mặc định/Set 1 bám trái cùng cao, Dựng trận nằm cùng khối, nút Chi tiết ở thanh đáy. Luật chọn/lưu/trận đấu giữ nguyên. Chi tiết bố cục: docs/DESIGN-SYSTEM.md; test tay: docs/MANUAL-TEST.md → Bảng chuẩn bị gọn.
 
 Đợt sửa gồm xuyên hàng khi lui/hội tụ; ảnh slime bay trong sổ tay; bảng chuẩn bị gọn và chọn tối đa 5 app; nút đổi chương nhỏ, tiêu đề chỉ “Chương N: …”; slime phun toàn map với thời gian bay theo khoảng cách và dọn vũng/đạn cũ khi sang wave; lò xo vòng 100/nén 0,6 s; bám tường gồng rõ; bóng ma ẩn hoàn toàn; hợp thể giữa/hai rìa ưu tiên nhập; khổng lồ 3 lớp chắn hồi 10 s; vật phẩm rơi ×1,6 và quầng sáng. Chi tiết thực thi: docs/BATTLE-DATA.md → Sửa sau chơi thử 1.5; test tay: docs/MANUAL-TEST.md cùng mục. Đây là chỉnh sửa sau M29, không đổi phạm vi các mốc M01–M29 đã hoàn tất.

@@ -1,8 +1,15 @@
 # Checklist test thủ công
 
+## Responsive và vị trí Dựng trận — 2026-10-30
+
+- Mở chuẩn bị trận và cuộn vùng giữa xuống cuối: tiêu đề/Xem thử vẫn ghim trên, Chi tiết/Đóng/Sẵn sàng vẫn ghim dưới, không bị che/cắt như ảnh lỗi.
+- Mặc định, Set 1 và Dựng trận nằm cùng hàng, cùng cao; thêm nhiều preset/nhãn dài thì xuống hàng trong cùng khối, không trôi nút Dựng trận lên cạnh độ khó.
+- Thử vùng làm việc thường, cao 480 DIP và hẹp 560×720 DIP; cửa sổ nằm trong màn, tăng chiều cao khi cần, một/hai cột theo chỗ trống, không cuộn ngang. DPI thật và đổi màn hình vẫn cần kiểm tra tay.
+- Hover kỹ năng/app/đổi vũ khí vẫn không dịch cửa sổ hay Sẵn sàng. Mở/đóng Chi tiết, chọn preset, Dựng trận rồi quay lại, Hủy/Sẵn sàng giữ luật cũ. Rà vi/en/ja và bộ preset có tên dài.
+
 ## Bảng chuẩn bị gọn — 2026-10-30
 
-- Mở trận tự chọn với đủ 4 vũ khí và Mặc định/Set 1: khung ngang khoảng nửa chiều cao màn hình, các nút preset bám trái/cùng cao, Dựng trận ở đầu khối. Trên màn thường không cần cuộn trang để chọn trang bị và bấm Sẵn sàng.
+- Mở trận tự chọn với đủ 4 vũ khí và Mặc định/Set 1: khung ngang khoảng nửa chiều cao màn hình, các nút preset bám trái/cùng cao, Dựng trận cùng hàng preset. Trên màn thường không cần cuộn trang để chọn trang bị và bấm Sẵn sàng.
 - Rê lần lượt 10 kỹ năng, cả ô khóa và mô tả dài; rời chuột: cửa sổ và nút Sẵn sàng giữ vị trí, mô tả vừa xem còn lại. Đổi cả 4 vũ khí: chỉ vùng chỉ số thay nội dung, không thay kích thước thẻ/cửa sổ.
 - Viễn chinh/Vô tận/màn có app: 6 icon app cùng cỡ ô kỹ năng, tối đa 5 được chọn, dấu chọn/khóa rõ; hover xem tác dụng và tác dụng khi nhiễm trong vùng mô tả, không làm nhảy bảng. Tắt app/đổi preset/Hủy/Sẵn sàng vẫn giữ luật lưu trước đây.
 - Chi tiết ở thanh đáy mở được mục tiêu màn, thông tin chuyến, build và giải thích hướng dẫn; thông tin dài cuộn được. Xem thử vẫn vung vũ khí, chỉ trên mèo xem trước.

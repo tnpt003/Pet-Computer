@@ -9,3 +9,6 @@ artifacts/
 
 # Generated test logs
 *.log
+
+# graphify knowledge graph (local, rebuilt by git hooks)
+graphify-out/

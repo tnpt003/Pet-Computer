@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -69,6 +70,13 @@ internal static class WeaponChecks
             visual.Measure(new Size(size, size)); visual.Arrange(new Rect(0, 0, size, size));
             var bmp = new RenderTargetBitmap(size, size, 96, 96, PixelFormats.Pbgra32); bmp.Render(visual);
             var px = new byte[size * size * 4]; bmp.CopyPixels(px, size * 4, 0);
+            if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string heldReview && model.Action == PetAction.Dragging
+                && (Math.Abs(model.SwordSwing - 0.3) < 0.001 || Math.Abs(model.SwordSwing - 0.6) < 0.001))
+            {
+                var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bmp));
+                using var stream = File.Create(Path.Combine(heldReview, $"held-{model.WeaponStyle}-{model.Facing}-{model.Pickup.Angle:0}-{model.SwordSwing:F1}.png"));
+                encoder.Save(stream);
+            }
             for (int i = 0; i < size; i++)
                 edgesClear &= px[i * size * 4 + 3] == 0 && px[(i * size + size - 1) * 4 + 3] == 0 && px[i * 4 + 3] == 0 && px[((size - 1) * size + i) * 4 + 3] == 0;
             if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string review && (Math.Abs(model.SwordSwing - 0.5) < 0.01 || Math.Abs(model.SwordSwing - 0.4) < 0.01 || Math.Abs(model.SwordSwing - 0.7) < 0.01 || model.SwordSwing < 0) && model.Action == PetAction.Idle)
@@ -98,7 +106,31 @@ internal static class WeaponChecks
             var cheer = Model(facing, true); cheer.BattleCheer = true; cheer.Action = PetAction.Sitting; Render(cheer);
             var walking = Model(facing, true); walking.Action = PetAction.Walking; walking.VX = 130 * facing; Render(walking);
         }
-        check(edgesClear, "The hammer stays inside the window in every pose and swing, both ways");
+        bool heldFaces = true, heldMoves = true;
+        var poseMethod = typeof(PetRenderer).GetMethod("ComputePose", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
+        foreach (string style in new[] { "sword", "hammer", "yarn", "glove" })
+            foreach (int facing in new[] { -1, 1 })
+                foreach (double tilt in new[] { -PickupAnimation.MaxAngle, 0, PickupAnimation.MaxAngle })
+                {
+                    var m = Model(-facing, false); m.Action = PetAction.Dragging; m.Grounded = false; m.WeaponStyle = style;
+                    m.SwordHitAt = BattleData.Settings.Weapon(style).HitFraction;
+                    m.Motion.Reset(m); m.Facing = facing; m.Pickup.Begin(0, 0);
+                    for (int i = 0; i < 120; i++) m.Pickup.Step(0, 0, 1.0 / 120);
+                    typeof(PickupAnimation).GetProperty(nameof(PickupAnimation.Angle))!.SetValue(m.Pickup, tilt);
+                    var angles = new List<double>();
+                    for (int i = 0; i <= 10; i++)
+                    {
+                        m.SwordSwing = i / 10.0;
+                        var pose = poseMethod.Invoke(new PetRenderer(m), null)!;
+                        angles.Add((double)pose.GetType().GetField("SwordAngle")!.GetValue(pose)!);
+                        heldFaces &= Math.Sign((double)pose.GetType().GetField("FacingScale")!.GetValue(pose)!) == facing;
+                        Render(m);
+                    }
+                    heldMoves &= angles.Max() - angles.Min() > 20;
+                }
+        check(heldFaces, "Held attacks face the target even when the normal motion pose faces the other way");
+        check(heldMoves, "All four held weapons actually change angle after the pickup pose has fully settled");
+        check(edgesClear, "Every held weapon and swing stays inside the window, facing both ways at maximum pendulum angles");
 
         prefs.BattleWeapon = savedWeapon;
         prefs.Language = language;

@@ -146,9 +146,10 @@ public sealed partial class BattleFieldView : FrameworkElement
             var slime = sim.Slimes[i];
             if (!slime.Targetable || slime.Riding) continue; // A rider: the cat goes for its mount.
             if (BattleSim.InSky(slime)) continue; // Up in the air: its own window takes its clicks (1.5 M14).
-            double dx = Math.Abs(point.X - (slime.X - OriginX)), half = slime.Width * slime.Puff / 2;
-            double floor = Floor - WallLift(slime); // A wall climber up the edge (1.5 M15).
-            if (dx > half + 10 || point.Y < floor - slime.Height * slime.Puff - BattleSim.BubbleLift(slime) - 24 || point.Y > floor + 4) continue;
+            double dx = Math.Abs(point.X - (slime.BodyX - OriginX)), half = (slime.OnWall ? slime.Height : slime.Width * slime.Puff) / 2;
+            double floor = Floor - (slime.OnWall ? slime.BodyBottom : WallLift(slime));
+            double height = slime.OnWall ? slime.Width : slime.Height * slime.Puff;
+            if (dx > half + 10 || point.Y < floor - height - BattleSim.BubbleLift(slime) - 24 || point.Y > floor + 4) continue;
             int rank = dx <= half ? Layer(slime) : -1;
             if (rank > bestRank || (rank == bestRank && dx < bestDistance)) { bestRank = rank; bestDistance = dx; best = slime.Id; }
         }
@@ -230,7 +231,7 @@ public sealed partial class BattleFieldView : FrameworkElement
             {
                 var slime = sim.Slimes[i];
                 if (Layer(slime) != layer || slime.Exploded || slime.Escaped) continue; // A bomb that blew up: only its blast shows; a thief away: its puff.
-                double x = slime.X - OriginX + TrickDrift(slime);
+                double x = slime.BodyX - OriginX + TrickDrift(slime);
                 // 1.5 M14: a flyer up in the air is drawn by its own window (only its shadow here); a
                 // burrower under the floor or going in/out of it has its own drawing.
                 if (slime.Faded) continue;
@@ -351,7 +352,6 @@ public sealed partial class BattleFieldView : FrameworkElement
     {
         double w = slime.Width, h = slime.Height, t = slime.StateTime, size = slime.Width / s.SlimeWidth;
         double sx = 1, sy = 1, opacity = 1, jitter = 0;
-        if (slime.OnWall && slime.Aiming) { sx *= 1.12; sy *= 0.88; }
         bool targetable = slime.Targetable;
         double windup = sim.Windup(slime);
         switch (slime.State)
@@ -385,6 +385,7 @@ public sealed partial class BattleFieldView : FrameworkElement
                 sx = 1 + 0.5 * fade; sy = Math.Max(0.05, 1 - fade); opacity = 1 - fade;
                 break;
         }
+        if (slime.OnWall && slime.Aiming) { sx *= 1.12; sy *= 0.88; }
         // Soaked by the spray: a little smaller; hanging from the Grabber: stretched.
         if (slime.Wet) { sx *= 0.86; sy *= 0.86; }
         if (slime.Grabbed) { sx *= 0.9; sy *= 1.12; }
@@ -583,6 +584,15 @@ public sealed partial class BattleFieldView : FrameworkElement
             }
             dc.DrawGeometry(null, BubbleShine, shine);
         }
+        if (slime.OnWall)
+        {
+            // Keep health/status labels horizontal and inside the field, independent of the body turn.
+            dc.PushTransform(new RotateTransform(-WallLean(slime), x, floor - h / 2));
+            floor += (w - h) / 2;
+            (w, h) = (h, w);
+            double inset = Math.Min(ActualWidth / 2, 20 * size + 2);
+            x = Math.Clamp(x, inset, Math.Max(inset, ActualWidth - inset));
+        }
         double top = floor - h * sy - (slime.IsBoss ? 9 * size : 0);
         // Status badges over the head push the elite's tag and the selection arrow up.
         double lift = DrawStatusOver(dc, slime, x, floor, top, w, h, time);
@@ -690,6 +700,7 @@ public sealed partial class BattleFieldView : FrameworkElement
             dc.DrawGeometry(Marker, Ink, Arrow);
             dc.Pop();
         }
+        if (slime.OnWall) dc.Pop();
     }
 
     // A herbal healer (body coordinates): a leaf cap with a short stem and a small herb pouch on

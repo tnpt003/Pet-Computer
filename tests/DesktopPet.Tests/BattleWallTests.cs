@@ -161,6 +161,8 @@ internal static class BattleWallTests
         var s = sim.Slimes.Single();
         bool up = Run(sim, 30, catX: 100, kind: BattleEventKind.ClingClimbed);
         bool edge = Math.Abs(s.X - (s.WallSide < 0 ? sim.Left + s.Width * 0.35 : sim.Right - s.Width * 0.35)) < 1e-6;
+        check(Math.Abs(s.BodyX + s.WallSide * s.Height / 2 - (s.WallSide < 0 ? sim.Left + BattleSim.WallInset : sim.Right - BattleSim.WallInset)) < 0.01,
+            "The rotated body's flat base meets the wall without moving its simulation anchor");
         check(up && s.OnWall && s.Cling == ClingPhase.Clinging && edge && Math.Abs(s.Altitude - c.Height) < 1e-6,
             $"It goes to the nearest edge and climbs it (side {s.WallSide}, x {s.X:0}, height {s.Altitude:0})");
         check(s.Airborne && sim.TargetId != s.Id && !sim.Select(s.Id), "Up its edge the cat on the floor neither goes for it nor can choose it");

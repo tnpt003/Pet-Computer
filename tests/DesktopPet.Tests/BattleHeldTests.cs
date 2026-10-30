@@ -58,6 +58,29 @@ internal static class BattleHeldTests
 
     private static void HeldChecks(Action<bool, string> check)
     {
+        var turning = Sim(Kind("flyer", hover: 200));
+        turning.Slimes[0].X = 800;
+        Hold(turning, 780, 200, dt);
+        bool facedRight = turning.HeldSwinging && turning.HeldFacing == 1;
+        Hold(turning, 820, 200, dt);
+        check(facedRight && turning.HeldSwinging && turning.HeldFacing == -1,
+            "Carried mid-swing past its target, the cat turns to the new attack side");
+        foreach (int side in new[] { -1, 1 })
+        {
+            var wall = new BattleSim(BattleData.Settings, 0, 1600, seed: 2);
+            var clinger = wall.AddSlime(100, BattleData.Settings.Enemy("clinger"));
+            clinger.Set(SlimeState.Moving); clinger.Cling = ClingPhase.Clinging; clinger.WallSide = side; clinger.Altitude = 80;
+            clinger.X = side < 0 ? clinger.Width * 0.35 : 1600 - clinger.Width * 0.35;
+            double reach = wall.Weapon.Range - wall.Settings.SlimeWidth / 2;
+            Hold(wall, clinger.BodyX - side * (clinger.BodyHalfWidth + reach - 0.1), clinger.BodyTop - 0.1, dt);
+            check(wall.HeldSwinging && Math.Abs(clinger.BodyTop - clinger.BodyBottom - clinger.Width) < 0.01,
+                $"The rotated wall body is reachable at its upper corner, on side {side}");
+            double edgeX = side < 0 ? PetSettings.CenterX : 1600 - PetSettings.CenterX;
+            double height = (clinger.BodyBottom + clinger.BodyTop) / 2;
+            Fly(wall, new CatPose(edgeX - side * 50, height, side * 700, 0, false, true), new CatPose(edgeX, height, side * 700, 0, false, true));
+            check(wall.ThrowHits == 1 && !clinger.OnWall,
+                $"A thrown cat constrained by its window edge can still knock the wall slime down ({side})");
+        }
         var sim = Sim(Kind("flyer", hover: 200), Kind("slime"));
         var flyer = sim.Slimes.Single(s => s.Type.Id == "flyer");
         var ground = sim.Slimes.Single(s => s.Type.Id == "slime");

@@ -27,7 +27,7 @@ public sealed partial class BattleFieldView
 
     // How far up the wall climber is drawn (its bottom over the floor), and its lean into its edge.
     private static double WallLift(Slime slime) => slime.Type.Cling != null ? slime.Altitude : 0;
-    private static double WallLean(Slime slime) => slime.OnWall ? slime.WallSide * 24 : 0;
+    private static double WallLean(Slime slime) => slime.OnWall ? -slime.WallSide * 90 : 0;
 
     // Marks in body coordinates (from DrawSlime): the ice shell or its shards; the climber's spikes and paws.
     private static void DrawWallMarks(DrawingContext dc, Slime slime, double bw, double bh, double time)
@@ -68,14 +68,13 @@ public sealed partial class BattleFieldView
                 dc.DrawGeometry(slime.Aiming ? SparkCore : SpikeFill, ThinInk, BackSpike);
                 dc.Pop();
             }
-            int grip = slime.OnWall ? slime.WallSide : 0;
+            // The whole body rotates: its ordinary feet are the wall contact plane.
             foreach (int side in new[] { -1, 1 })
             {
-                var paw = grip != 0 ? new Point(grip * bw * 0.5, -bh * (side < 0 ? 0.25 : 0.7)) : new Point(side * bw * 0.32, -2);
+                var paw = new Point(side * bw * 0.32, slime.OnWall ? -3 : -2);
                 dc.DrawEllipse(SpikeTip, ThinInk, paw, 4.5, 3.4);
                 for (int c = -1; c <= 1; c++)
-                    if (grip != 0) dc.DrawLine(ThinInk, new Point(paw.X + grip * 2, paw.Y + c * 2.2), new Point(paw.X + grip * 5, paw.Y + c * 2.6));
-                    else dc.DrawLine(ThinInk, new Point(paw.X + c * 2.2, paw.Y + 2), new Point(paw.X + c * 2.6, paw.Y + 5));
+                    dc.DrawLine(ThinInk, new Point(paw.X + c * 2.2, paw.Y + 2), new Point(paw.X + c * 2.6, paw.Y + (slime.OnWall ? 3 : 5)));
             }
         }
     }

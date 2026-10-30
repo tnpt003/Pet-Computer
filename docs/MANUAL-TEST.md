@@ -1,5 +1,14 @@
 # Checklist test thủ công
 
+## Bám tường 90° và mèo đánh khi được cầm — 2026-10-30
+
+- Slime bám ở mép trái/phải: thân xoay 90°, mặt đáy/chân áp vào mép, không chỉ nghiêng; gai hướng vào trận, thanh máu/trạng thái vẫn ngang và nằm trong khung. Khi gồng thân co/gai sáng, khi rơi trở lại tư thế thường.
+- Đưa mèo được cầm lại gần thân slime bám tường (cả góc trên/dưới) hoặc slime bay: mèo quay đúng phía mục tiêu, vung vũ khí/chân trước rõ sau khi đã giữ yên ≥1 s; kéo mèo qua phía bên kia mục tiêu trong cú đánh thì quay theo phía mới.
+- Thử Kiếm/Búa/Cuộn len/Găng đấm, mục tiêu hai bên và khi mèo đang đung đưa. Điểm cầm ở gáy/vị trí cửa sổ không giật, hình vũ khí không cắt mép, hồi chiêu/sát thương không đổi. Cầm không đánh slime dưới sàn, mèo đang bay sau ném không tự đánh.
+- Ném mèo/Đẩy/Kẹp gắp vẫn làm slime bám tường rơi; vùng trúng và chọn chuột theo thân đã xoay. Pause/hướng dẫn đứng hình khóa tiến trình đòn đúng luật; thả mèo vẫn dùng physics cũ. Rà DPI thật/màn phụ và ngủ/wake/fallback ngoài trận.
+
+Render tự động kiểm tra pixel/biên không thay thao tác chuột và nhiều màn hình thật.
+
 ## Responsive và vị trí Dựng trận — 2026-10-30
 
 - Mở chuẩn bị trận và cuộn vùng giữa xuống cuối: tiêu đề/Xem thử vẫn ghim trên, Chi tiết/Đóng/Sẵn sàng vẫn ghim dưới, không bị che/cắt như ảnh lỗi.

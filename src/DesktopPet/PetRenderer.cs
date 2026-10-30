@@ -238,6 +238,8 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         if (p.Emotion == PetEmotion.Happy) p.Bob -= Math.Abs(Math.Sin(p.EmotionTime * 5)) * 3 * p.EmotionStrength;
         p.Shake = p.Emotion == PetEmotion.Angry ? Math.Sin(p.EmotionTime * 24) * 1.4 * p.EmotionStrength : 0;
         p.FacingScale = pet.Motion.Ready ? pet.Motion.FacingScale : pet.Facing;
+        // Motion intentionally freezes while held; combat still turns the cat around its neck anchor.
+        if (p.PickedUp && pet.SwordOut) p.FacingScale = pet.Facing;
         p.AngryBlend = p.Emotion == PetEmotion.Angry ? p.EmotionStrength : 0;
         if (p.Gesture == PetAction.ChasingTail)
         {
@@ -335,7 +337,9 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         {
             // Dangling forward from the paw, inside the window margin at any swing angle.
             double blend = p.PickupBlend;
-            angle += (100 - angle) * blend; gripX += (72 - gripX) * blend; gripY += (92 - gripY) * blend;
+            double stroke = swing >= 0 ? Math.Sin(Math.PI * Math.Clamp(swing, 0, 1)) : 0;
+            double heldAngle = 100 + (Math.Clamp(angle, -75, 115) - 100) * stroke;
+            angle += (heldAngle - angle) * blend; gripX += (72 - gripX) * blend; gripY += (92 - 12 * stroke - gripY) * blend;
         }
         p.SwordAngle = angle; p.GripX = gripX; p.GripY = gripY;
     }

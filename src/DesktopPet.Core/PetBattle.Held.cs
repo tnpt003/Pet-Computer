@@ -65,6 +65,7 @@ public sealed partial class BattleSim
     {
         if (heldSwingTime >= 0)
         {
+            if (Find(heldTargetId) is Slime aimed && Math.Abs(aimed.BodyX - cat.X) > 1) HeldFacing = aimed.BodyX < cat.X ? -1 : 1;
             heldSwingTime += dt;
             if (!heldHit && heldSwingTime >= arms.HitTime) { heldHit = true; ResolveHeldHit(cat); }
             if (heldSwingTime >= arms.SwingDuration) CancelHeldSwing();
@@ -72,7 +73,7 @@ public sealed partial class BattleSim
         }
         if (heldCooldown > 0 || AirTarget(cat, 0) is not Slime target) return;
         heldSwingTime = 0; heldHit = false; heldTargetId = target.Id;
-        HeldFacing = target.X < cat.X ? -1 : 1;
+        HeldFacing = target.BodyX < cat.X ? -1 : 1;
         heldCooldown = Math.Max(arms.AttackCooldown * CooldownFactor / (CheerRemaining > 0 ? Settings.CheerSpeed : 1) / LagFactor, arms.SwingDuration);
         events.Add(new(BattleEventKind.Swing, cat.X));
     }
@@ -94,8 +95,8 @@ public sealed partial class BattleSim
     // From the cat's centre to the nearest point of the enemy's body (0: inside it).
     private static double Gap(CatPose cat, Slime s)
     {
-        double dx = Math.Max(0, Math.Abs(cat.X - s.X) - s.HitWidth / 2);
-        double dy = cat.Height < s.Altitude ? s.Altitude - cat.Height : Math.Max(0, cat.Height - (s.Altitude + s.Height));
+        double dx = Math.Max(0, Math.Abs(cat.X - s.BodyX) - s.BodyHalfWidth);
+        double dy = cat.Height < s.BodyBottom ? s.BodyBottom - cat.Height : Math.Max(0, cat.Height - s.BodyTop);
         return Math.Sqrt(dx * dx + dy * dy);
     }
 
@@ -131,8 +132,13 @@ public sealed partial class BattleSim
         foreach (var s in slimes.ToArray())
         {
             if (s.Type.ThrowHit is not ThrowHitSpec rule || !s.Targetable || speed < ThrowSpeed(s, rule) || thrownInto.Contains(s.Id)) continue;
-            double pad = CatHalfWidth;
-            if (!Crosses(from.X, from.Height, cat.X, cat.Height, s.X - s.HitWidth / 2 - pad, s.Altitude - pad, s.X + s.HitWidth / 2 + pad, s.Altitude + s.Height + pad)) continue;
+            // At a screen edge the window cannot move farther: include the visible body's contact
+            // width (rather than the narrower floor hurtbox) when knocking a wall slime down.
+            double pad = s.OnWall ? CatHalfWidth + 6 : CatHalfWidth;
+            bool contact = Crosses(from.X, from.Height, cat.X, cat.Height, s.BodyX - s.BodyHalfWidth - pad, s.BodyBottom - pad, s.BodyX + s.BodyHalfWidth + pad, s.BodyTop + pad);
+            // Preserve the old wall throw margin: the cat's window stops at the screen edge, so
+            // narrowing the rotated body must not make a previously reachable wall impossible to hit.
+            if (!contact && !(s.OnWall && Crosses(from.X, from.Height, cat.X, cat.Height, s.X - s.HitWidth / 2 - pad, s.Altitude - pad, s.X + s.HitWidth / 2 + pad, s.Altitude + s.Height + pad))) continue;
             thrownInto.Add(s.Id);
             ThrowHits++;
             events.Add(new(BattleEventKind.ThrowHit, s.X, s.Id));

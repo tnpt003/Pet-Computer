@@ -69,6 +69,7 @@ public sealed partial class BattleSim
     }
 
     // Where a climber on its edge is (battle x of its centre).
+    public const double WallInset = 4;
     private double WallX(Slime s) => s.WallSide < 0 ? Left + s.Width * 0.35 : Right - s.Width * 0.35;
 
     // The height its bottom climbs to: a second one on the same edge goes higher.

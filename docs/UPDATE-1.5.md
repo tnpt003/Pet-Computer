@@ -2,6 +2,8 @@
 
 ### Sửa sau chơi thử, đã chốt 2026-10-30
 
+Bổ sung bám tường/cầm đánh: thân slime xoay 90°, đáy áp mép trái/phải, nhãn máu/trạng thái giữ ngang; giữ neo di chuyển cũ, vùng vẽ/cầm đánh/ném/chọn chuột theo thân xoay. Mèo cầm có stroke vũ khí riêng và quay theo mục tiêu kể cả khi hướng motion thường đang đóng băng; giữ điểm cầm và physics kéo/ném. Không đổi chỉ số, hồi chiêu hay loại mục tiêu được đánh.
+
 Bổ sung responsive sau test thật: ghim tiêu đề/Xem thử ngoài vùng cuộn; cho chiều cao tăng theo nội dung khi vùng làm việc hẹp/thấp, đo lại sau đổi số cột; Dựng trận đứng cạnh Mặc định/Set 1 trong cùng hàng có wrap. Không đổi luật chọn/lưu/combat.
 
 Bổ sung cùng ngày: thiết kế lại bảng chuẩn bị thành hai cột, cao khoảng nửa màn hình; app dùng icon gọn như kỹ năng, mô tả/chỉ số ở vùng cố định để hover/chọn không làm dịch HUD; Mặc định/Set 1 bám trái cùng cao, Dựng trận nằm cùng khối, nút Chi tiết ở thanh đáy. Luật chọn/lưu/trận đấu giữ nguyên. Chi tiết bố cục: docs/DESIGN-SYSTEM.md; test tay: docs/MANUAL-TEST.md → Bảng chuẩn bị gọn.

@@ -645,6 +645,11 @@ public sealed class Slime
     public double ClingTo, ClingClock;
     // Up its edge (climbing or clinging): out of reach from the floor (Altitude > 0).
     public bool OnWall => Cling is ClingPhase.Climbing or ClingPhase.Clinging;
+    // Keep X's established locomotion anchor; drawing and airborne contacts use the rotated body.
+    public double BodyX => OnWall ? X + WallSide * (Width * 0.35 - Height / 2 - BattleSim.WallInset) : X;
+    public double BodyHalfWidth => OnWall ? Height / 2 : HitWidth / 2;
+    public double BodyBottom => Altitude + (OnWall ? (Height - Width) / 2 : 0);
+    public double BodyTop => Altitude + Height + (OnWall ? (Width - Height) / 2 : 0);
     // 1.5 M16 (PetBattle.Quills.cs). A hedgehog: where its quills are in their round and the time left in it.
     public QuillPhase Quill;
     public double QuillClock;

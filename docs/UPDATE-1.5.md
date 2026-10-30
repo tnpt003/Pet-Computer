@@ -1,7 +1,7 @@
 # Bản 1.5 — Slime phản công (thiết kế đã chốt)
 
 Ngày chốt hướng: 2026-10-26 (Asia/Saigon). Người dùng chọn "bản rất lớn", rồi chỉnh lại phần quái và kỹ năng qua trao đổi cùng ngày.
-Trạng thái: **đang code** — xong M01 tới M22, M23a, M23b, M24 (2026-10-29), M25, M26, M27 và M28 (2026-10-30). Mỗi mốc bên dưới làm trong một phiên chat; trước mỗi mốc vẫn theo quy trình AGENTS.md (đọc → giải thích → chờ "ok" → làm → test → ghi nhớ).
+Trạng thái: **đang code** — xong M01 tới M22, M23a, M23b, M24 (2026-10-29), M25, M26, M27, M28, M29a và M29 (2026-10-30). Mỗi mốc bên dưới làm trong một phiên chat; trước mỗi mốc vẫn theo quy trình AGENTS.md (đọc → giải thích → chờ "ok" → làm → test → ghi nhớ).
 
 Ngoài danh sách này thì ý tưởng mới vào mục "Backlog sau 1.5" cuối file, không làm trong 1.5.
 
@@ -200,7 +200,7 @@ Mỗi mốc: build + `scripts/test.ps1 -Ui` đạt, test mới cho phần thêm 
 | M28 ✅ | L2 thành tựu, L3 lông/phụ kiện | **Xong 2026-10-30:** achievements.json riêng (nhúng, 20 thành tựu, `scope` total/battle), sổ achievements.json (.tmp + .bak), ghi khi hết/rời trận ở mọi chế độ (không với dữ liệu tự sửa); 3 bộ lông (Bạc hà, Nửa đêm, Vàng kim) và 3 phụ kiện (Khăn buộc trán, Huy chương anh hùng, Vòng cổ cá nhỏ) có `"reward": "achievement"`, Tùy chỉnh chỉ hiện khi đã nhận; mục Thành tựu đầu trang Phần thưởng, dòng "★ Thành tựu" ở kết quả trận. Phần thưởng chương 2 vẫn là Mũ thư mục + Thú bông (M22). Bảng mô phỏng không đổi (chỉ thêm `HurtTaken`). Chi tiết: docs/BATTLE-DATA.md → Thành tựu |
 | **Chốt** | | |
 | M29a ✅ | F1 Trận tự chọn: bảng dựng trận, preset, dựng đợt từ lựa chọn bằng cấu trúc `waves` có sẵn | **Xong 2026-10-30:** nút "Trận tự chọn" ở Sảnh; bảng chuẩn bị trận tự do có chip bộ + "Dựng trận…"; bộ Mặc định là đúng trận tự do cũ (không stage, giữ kỷ lục, UiChecks); tối đa 6 bộ trong custom-fights.json (.tmp + .bak); quái/trùm/app chưa gặp (Sổ tay, thêm danh sách app) bị khóa; giới hạn 2 liên kết/2 quái chuột; mỗi đợt một nhóm `pick`; trận tự chọn không kỷ lục, không thành tựu. CustomFightTests + CustomFightChecks; bảng mô phỏng giống hệt M28 (358/358). Người dùng chọn mặc định (30/10). Chưa có: đổi tên bộ (bảng không nhận bàn phím). Chi tiết: docs/BATTLE-DATA.md → Trận tự chọn |
-| M29 | Cân bằng mô phỏng toàn bản, perf, rà ja, CHANGELOG vi/en/ja, MANUAL-TEST | Toàn bộ test đạt; người dùng test tay phần mới |
+| M29 ✅ | Cân bằng mô phỏng toàn bản, perf, rà ja, CHANGELOG vi/en/ja, MANUAL-TEST | **Xong 2026-10-30** (phương án (a): chỉ đo và đề xuất, không đổi số liệu): mô phỏng Cuộn len/Găng đấm ở chương 2, Viễn chinh hai tuyến, Vô tận 4 vũ khí, mọi ngưỡng đạt; perf `crowd-late` 48,9 fps (dưới ~57, kịch bản nặng hơn trận thật); ja thống nhất thuật ngữ 44 câu; CHANGELOG 1.5.0 vi/en/ja; MANUAL-TEST smoke ngắn + thứ tự test tay 1.5. Báo cáo và đề xuất: docs/BALANCE-1.5.md. Còn: người dùng test tay và quyết đề xuất |
 | M30 | Release 1.5.0 | Theo docs/RELEASE.md |
 
 Thứ tự có thể đổi trong một nhóm; nhóm Nền làm trước.

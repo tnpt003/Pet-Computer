@@ -6,6 +6,20 @@ Tick `[x]` khi đạt; ghi lỗi ngay dưới mục kèm ngày. Mục mới chư
 
 > 2026-10-22: người dùng báo đã test tay toàn bộ các mục bên dưới (đến bản 1.3.0-beta+b5fa2eb), **passed**. Mục thêm sau ngày này để `[ ]`.
 
+## Smoke ngắn mỗi release (~10 phút, thêm 1.5 M29)
+
+Chạy trước mỗi lần phát hành, trên bản publish. Không thay các mục chi tiết bên dưới; mục mới của bản thì xem ở cuối file.
+- [ ] Mở EXE: mèo hiện, không có nút taskbar, có icon khay. Mở EXE lần hai: hiện bảng điều khiển của mèo đang chạy.
+- [ ] Kéo quá ~6 DIPs mới nhấc lên, có đung đưa; ném thì bay, rơi, nảy. Lắc nhẹ không Chóng mặt.
+- [ ] Ngủ: rê chuột không đánh thức; tự thức sau ~10 s. Click trái thức và vẫn kéo được; chuột phải thức và mở menu.
+- [ ] Click dồn tới Giận; Pause đóng băng (cả lúc ngủ), Resume chạy tiếp.
+- [ ] Tắt "Mèo thông minh (AI)" ở khay: mèo vẫn đi, ngồi, ngủ; bật lại thì chạy tiếp.
+- [ ] Thả mèo lên mép một cửa sổ: đáp, đi theo khi kéo cửa sổ, rơi khi thu nhỏ.
+- [ ] Âm thanh: một cue khi click/ném; Xem trước trong Cài đặt kêu dù tắt âm tự động.
+- [ ] Đổi ngôn ngữ vi → en → ja: menu, khay, Cài đặt đổi theo, không tràn chữ.
+- [ ] Battle Mode: bật, vào một trận Hướng dẫn phiêu lưu chương 1 và một Trận tự chọn Mặc định; Pause/menu đóng băng trận; thắng hoặc thua có kết quả; thoát trận thì mèo về bình thường.
+- [ ] Thoát từ menu khay: mèo và Python đều đóng (Task Manager không còn DesktopPet/python của project).
+
 ## Ưu tiên 1 — Bất biến (hỏng là lỗi nặng)
 
 ### Kéo, ném, nhấc lên
@@ -857,3 +871,17 @@ Dữ liệu gốc, không cần file tùy chỉnh (chương 2, Lối Bãi rác, 
 - [ ] Xóa bộ đang chọn: chọn bộ kế bên (hết bộ thì về Mặc định). Tối đa 6 bộ ("+ Bộ mới" mờ).
 - [ ] Bảng dựng trận vừa màn hình thấp (cuộn được), DPI 150/200%, màn phụ; app toàn màn hình thì ẩn, đóng app thì hiện lại; chữ vi/en/ja không tràn.
 - [ ] Cảm giác (ghi vào Nhật ký chơi thử): mức Ít/Vừa/Nhiều của app độc và virus có hợp lý không; có cần đổi tên bộ không.
+
+## Bản 1.5 — thứ tự test tay (1.5 M29, 2026-10-30)
+
+Các mục 1.5 phía trên viết theo từng mốc; đây là thứ tự chơi để test hết bằng dữ liệu gốc (không cần file tùy chỉnh). Các mục "file tùy chỉnh" (M01, M03, M04, M09–M18, M20) đã có trong dữ liệu gốc qua chương 2, tuyến 2 và Vô tận, nên chỉ cần mở file khi muốn xem riêng một loại quái.
+1. **Smoke ngắn** ở đầu file, rồi **Trận tự chọn** bộ Mặc định (giống trận tự do cũ: kỷ lục, kéo/ném trong trận như trước — M03 bắt buộc).
+2. **Bảng chuẩn bị:** chọn kỹ năng (M02), Cuộn len/Găng đấm (M08), Mèo nổi giận ở mọi trận (M07).
+3. **Chương 2** từ màn 1 tới Slime Nén (M21, M22, M26 và hướng dẫn app mới, M27): mỗi màn cho mượn đúng kỹ năng; hướng dẫn đứng hình dạy quái/kỹ năng mới; giỏ cá ở màn 3; phần thưởng Mũ thư mục, Thú bông Slime Nén.
+4. **Trận tự chọn** một bộ mới với quái vừa gặp (M29a); giới hạn 2 liên kết, 2 quái chuột.
+5. **Viễn chinh tuyến 2** (M23a, M23b, M19): cửa hàng, Lò rèn/Lời nguyền/Mèo bị lạc, xu và đồ rơi; một chuyến tuyến 1 để xem cửa hàng và luật mới.
+6. **Vô tận** tới ít nhất đợt 20 (M24, M25): chặng đầu ở đợt 15, chọn Đột biến sau đợt trùm, thẻ Mưu mẹo.
+7. **Sổ tay quái, Thành tựu, lông/phụ kiện mới** (M27, M28) sau khi đã chơi các bước trên.
+8. **Tiếng Nhật** (thêm M29): đổi sang 日本語 và xem lướt bảng chuẩn bị, Sổ tay quái, Thành tựu, bảng dựng trận, câu hướng dẫn chương 2. Bản dịch mới đã thống nhất thuật ngữ (猫, はさみ, クレーンアーム, 押し出し, 気絶, 霧吹き, エリート); báo câu nào đọc lạ hoặc tràn ô.
+- [ ] Đã chơi hết 8 bước trên mà không có lỗi nặng (ghi lỗi dưới mục của mốc tương ứng).
+- [ ] Cảm giác cân bằng so với mô phỏng (docs/BALANCE-1.5.md): tuyến 2 có quá khó không, Cuộn len có quá mạnh không, đầu chặng Vô tận đợt 20 có quá gắt không.

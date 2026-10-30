@@ -1,5 +1,166 @@
 # Nhật ký thay đổi
 
+## 1.5.0 — Slime phản công (chưa phát hành)
+
+### Tiếng Việt
+
+Mọi thay đổi chỉ ở Battle Mode (mặc định vẫn tắt). Ngoài trận mèo không đổi gì. Chương 1 giữ nguyên cả luật lẫn kỷ lục.
+
+- **Chọn 5 trong 10 kỹ năng** ở bảng chuẩn bị. Có thêm 5 kỹ năng dùng chuột:
+  - **Đèn laser:** click một chỗ, slime đuổi theo chấm đỏ.
+  - **Quạt:** giữ chuột để thổi slime đi.
+  - **Kẹp gắp:** nắm slime nhỏ rồi ném vào con khác.
+  - **Kéo cắt:** vuốt một nét để cắt dây nhầy.
+  - **Bình xịt nước:** slime bị ướt thì chậm lại, nhỏ đi.
+  - Kỹ năng mới mở dần ở chương 2. Trận tự chọn mang được ngay cả 10.
+- **Mèo nổi giận:** thanh nộ đầy dần khi đánh trúng và khi mất máu. Đầy rồi thì click để bật: 6 giây mèo to ra, đánh trúng mọi slime trong tầm, không bị choáng.
+- **Hai vũ khí mới:**
+  - **Cuộn len:** quét rộng, kéo slime ở xa lại gần.
+  - **Găng đấm:** chuỗi đấm, hất slime lên không.
+- **20 loại slime mới**, mỗi loại có cách khắc chế riêng:
+  - Slime phun, lò xo, nhạc trưởng, xích, hợp thể (nhập thành Slime khổng lồ), bom (cưỡi slime nhanh), tách đôi, cờ hiệu.
+  - Slime bóng ma, bong bóng, ảo ảnh, dỗi: các loại này tương tác với con trỏ.
+  - Slime bay (bay khắp màn hình, đạn dính trúng cả mèo đang được cầm), đào hang.
+  - Slime băng (ném mèo vào để làm vỡ băng), bám tường, nhím, hẹn giờ, trộm.
+  - Slime có thể nối dây, nhịp trống hoặc vòng hào quang với nhau. Có 6 đội hình phối hợp.
+- **Ba trùm mới:** Slime Nén, Slime Mẹ, Vua Slime biến dị.
+- **Mèo đang được cầm** tự vung vuốt vào slime trên không. **Cú ném** làm vỡ băng, hất slime bám tường xuống và cắt dây nhầy. Kéo/ném vẫn như cũ, mèo vẫn không mất máu khi đang được cầm hay đang bay (trừ đạn của slime bay).
+- **Hiệu ứng trên quái:** độc, đóng băng, dính, có ở thẻ và di vật.
+- **Đồ rơi:** slime bị hạ đôi khi rơi cá (hồi máu), bình (kỹ năng sẵn sàng ngay) hoặc xu. Click để nhặt.
+- **Chương 2 "Bãi rác Tải về"**, mở sau khi thắng Vua Slime:
+  - 5 màn: Cổng tải về, Thư mục ma, Giữ giỏ cá (bảo vệ giỏ cá trong 75 giây), Đầm nhầy, Slime Nén.
+  - Mỗi màn cho mượn một kỹ năng mới, thắng thì được giữ luôn. Hướng dẫn phiêu lưu dạy cả quái lẫn kỹ năng mới.
+  - Có tranh, bản đồ và phông trận riêng.
+  - Phần thưởng: phụ kiện Mũ thư mục và kỷ vật Thú bông Slime Nén (có physics như kệ kỷ vật).
+- **Viễn chinh:**
+  - Tuyến 2 "Lối Bãi rác" qua ba vùng Đầm nhầy, Kho cá, Mê cung thư mục, trùm là Slime Nén. Kỷ lục tính riêng.
+  - **Cửa hàng mèo** ở cả hai tuyến: dùng xu mua thẻ, hồi máu, di vật.
+  - Sự kiện mới: Lò rèn, Lời nguyền, Mèo bị lạc.
+  - 6 di vật mới: Nam châm xu, Vòng gai, Răng nanh độc, Viên đá lạnh, Pin dự phòng, Mũ bảo hiểm.
+  - Chuyến đang đi theo luật cũ vẫn đi tiếp được.
+- **Vô tận:**
+  - Từ đợt 15 có các chặng quái mới.
+  - Trùm xoay vòng: Vua Slime → Slime Nén → Vua Slime biến dị.
+  - Sau mỗi đợt trùm phải chọn 1 trong 3 **Đột biến**. Đột biến là luật lạ (slime nhanh hơn, sàn đông hơn, Mèo thủy tinh…), thắng trùm kế tiếp thì có thưởng.
+- **Nhóm thẻ thứ 4 "Mưu mẹo"** (14 thẻ: kỹ năng, bom, app, đồ rơi) có cộng hưởng riêng. Có thêm thẻ hiếm Cú đáp địa chấn: thả mèo rơi xuống sàn thì gây chấn động.
+- **App trong trận** (chương 2, tuyến 2, Vô tận từ đợt 15):
+  - Icon mới Chụp Màn Hình: chớp sáng làm mọi quái đứng 2 giây.
+  - App độc mới: Captcha che lên mèo, Pin yếu làm kỹ năng hồi chậm, Con trỏ đơ khóa ô kỹ năng.
+  - Có thể có tối đa 4 loại app độc cùng lúc.
+- **Sổ tay quái** trong Sảnh: hình thường và hình tinh anh, cách khắc chế, kỹ năng hợp, số đã hạ, trang đội hình.
+- **20 thành tựu.** Thưởng 3 bộ lông (Bạc hà, Nửa đêm, Vàng kim) và 3 phụ kiện (Khăn buộc trán, Huy chương anh hùng, Vòng cổ cá nhỏ).
+- **Trận tự chọn** thay Trận tự do:
+  - Tự chọn slime, trùm và app đã gặp. Lưu được tối đa 6 bộ.
+  - Bộ Mặc định chính là trận tự do cũ và giữ kỷ lục cũ.
+  - Trận tự chọn khác không tính kỷ lục và thành tựu.
+- Kỷ lục Vô tận và Viễn chinh tuyến 1 được tách theo luật mới (kỷ lục cũ vẫn giữ). Chương 1 không đổi.
+
+### English
+
+Everything here is in Battle Mode (still off by default). Outside a battle the pet is unchanged. Chapter 1 keeps its rules and records.
+
+- **Pick 5 of 10 skills** in the setup panel. Five new mouse skills:
+  - **Laser pointer:** click a spot and slimes chase the red dot.
+  - **Fan:** hold the mouse to blow slimes away.
+  - **Grabber:** grab a small slime and fling it at another.
+  - **Scissors:** swipe a stroke to cut goo ropes.
+  - **Water spray:** soaked slimes slow down and shrink.
+  - The new skills open through chapter 2. A Custom Fight can take all ten at once.
+- **Cat fury:** a bar fills as the cat hits and gets hurt. Once full, click it: for 6 s the cat grows, hits every slime in reach and cannot be stunned.
+- **Two new weapons:**
+  - **Yarn:** wide sweeps that pull far slimes in.
+  - **Glove:** punch combos that launch slimes into the air.
+- **20 new slimes**, each with its own counter:
+  - Spitter, spring, drummer, chain, fusing (merges into a Giant), bomb (rides a quick slime), splitting, flag.
+  - Ghost, bubble, mirage and sulky slimes: these react to the cursor.
+  - The flying slime (flies over the whole screen; its goo hits even a held cat) and the burrowing slime.
+  - Ice (throw the cat through to crack it), wall, hedgehog, timer and thief slimes.
+  - Slimes can tie themselves together with ropes, drumbeats or auras. There are 6 team formations.
+- **Three new bosses:** the Zip Slime, the Slime Mother, the Mutant Slime King.
+- **A held cat** swipes at slimes in the air. **A throw** cracks ice, knocks wall slimes down and cuts goo ropes. Dragging and throwing feel as before, and a held or flying cat still takes no damage (except from the flying slime's goo).
+- **Effects on enemies:** poison, freeze and sticky, from cards and relics.
+- **Drops:** defeated slimes sometimes drop a fish (heals), a potion (a skill is ready at once) or coins. Click to pick them up.
+- **Chapter 2, "The Download Dump"**, opens after the Slime King:
+  - Five stages: Download gate, Ghost folder, Keep the fish basket (guard the basket for 75 s), Slime swamp, The Zip Slime.
+  - Each stage lends a new skill, kept for good once the stage is won. The Adventure Guide teaches the new slimes and skills.
+  - Its own art, map and battle backdrop.
+  - Rewards: the Folder hat accessory and a Zip Slime plush keepsake (with physics, like the shelf).
+- **Expedition:**
+  - A second route, "The Dump Trail", through Slime swamp, Fish store and Folder maze to the Zip Slime. It keeps its own records.
+  - **Cat shop** on both routes: spend coins on cards, healing and relics.
+  - New events: Forge, Curse, Lost kitten.
+  - Six new relics: Coin magnet, Thorn collar, Venom fang, Frost stone, Spare battery, Helmet.
+  - A run under way on the old rules goes on.
+- **Infinity:**
+  - New stretches of slimes from wave 15.
+  - A rotating boss: Slime King → Zip Slime → Mutant Slime King.
+  - After each boss wave you pick one of three **Mutations**. A Mutation is an odd rule (Speedy slimes, Packed floor, Glass cat…) that pays off when the next boss is beaten.
+- **A fourth card group, Trickery** (14 cards: skills, bombs, apps, drops), with its own synergies. Also the rare Ground quake card: dropping the cat to the floor sends out a quake.
+- **Battle apps** (chapter 2, the second route, Infinity from wave 15):
+  - A new Screenshot icon: its flash stops every enemy for 2 s.
+  - New malware: a captcha over the cat, a low battery that slows skills, a frozen cursor that locks the skill slots.
+  - Up to four kinds of malware at once.
+- **Monster Book** in the hub: each slime's plain and elite look, how to beat it, the skills that help, how many were defeated, and formation pages.
+- **20 achievements.** They reward 3 coats (Mint, Midnight, Golden) and 3 accessories (Bandana, Hero medal, Fish charm).
+- **Custom Fight** replaces the free battle:
+  - Pick the slimes, boss and apps you have met. Keep up to 6 sets.
+  - The Default set is the old free battle and keeps its records.
+  - Other sets keep no records and earn no achievements.
+- Infinity and the first Expedition route keep their records apart under the new rules (old records stay). Chapter 1 is unchanged.
+
+### 日本語
+
+すべてバトルモード（初期設定はオフのまま）の変更です。バトル以外では猫は変わりません。第1章はルールも記録もそのままです。
+
+- **10 のスキルから 5 つ選べる**ようになりました（準備画面）。マウスで使う新スキルが 5 つあります：
+  - **レーザーポインター**：場所をクリックすると、スライムが赤い点を追いかける。
+  - **扇風機**：マウスを押し続けてスライムを吹き飛ばす。
+  - **クレーンアーム**：小さなスライムをつかんで別のスライムに投げる。
+  - **はさみ**：線を引いてねばねばロープを切る。
+  - **霧吹き**：濡れたスライムは遅くなり、小さくなる。
+  - 新スキルは第2章で順に解放されます。カスタムバトルでは最初から 10 個すべて使えます。
+- **ねこの怒り**：攻撃を当てたり、ダメージを受けたりするとゲージがたまります。満タンでクリックすると、6 秒間猫が大きくなり、範囲内のすべてのスライムを攻撃し、気絶しなくなります。
+- **新しい武器 2 つ**：
+  - **毛糸玉**：広くなぎ払い、遠くのスライムを引き寄せる。
+  - **グローブ**：連続パンチでスライムを打ち上げる。
+- **新しいスライム 20 種**。それぞれに対策があります：
+  - 吐き出し、バネ、ドラム、くさり、がったい（巨大スライムに合体）、ばくだん（素早いスライムに乗る）、ぶんれつ、はたスライム。
+  - おばけ、あわ、まぼろし、すねスライム：カーソルに反応する。
+  - とびスライム（画面中を飛び、ねばねば弾は持ち上げた猫にも当たる）、もぐらスライム。
+  - こおり（猫を投げ当てると割れる）、かべ、ハリネズミ、タイマー、どろぼうスライム。
+  - スライム同士がロープ・リズム・オーラでつながることがあります。連携隊列は 6 種類です。
+- **新しいボス 3 体**：あっしゅくスライム、ママスライム、へんいスライムキング。
+- **持ち上げた猫**は空中のスライムをひっかきます。**猫を投げる**と、氷が割れ、かべスライムが落ち、ねばねばロープが切れます。ドラッグと投げの感触はこれまでどおりで、持ち上げ中・飛行中の猫はダメージを受けません（とびスライムの弾だけは例外）。
+- **敵への状態異常**：毒・凍結・ねばねば。カードと遺物で付けられます。
+- **ドロップ**：倒したスライムが魚（回復）、ポーション（スキルがすぐ使える）、コインを落とすことがあります。クリックして拾います。
+- **第2章「ダウンロードのゴミ捨て場」**：スライムキングを倒すと開きます。
+  - 5 ステージ：ダウンロードの門、おばけフォルダー、魚かごを守れ（75 秒間かごを守る）、ねばねば沼、あっしゅくスライム。
+  - 各ステージで新スキルを借りられ、クリアするとそのまま解放されます。冒険ガイドが新しいスライムとスキルを教えます。
+  - 専用のイラスト、マップ、バトル背景があります。
+  - 報酬：アクセサリー「フォルダー帽」と、記念品「あっしゅくスライムのぬいぐるみ」（棚と同じく物理あり）。
+- **遠征**：
+  - 2 本目のルート「ゴミ捨て場の道」：ねばねば沼・魚の倉庫・フォルダー迷宮を通り、ボスはあっしゅくスライムです。記録は別に残ります。
+  - **ねこショップ**（両ルート）：コインでカード・回復・遺物を買えます。
+  - 新イベント：鍛冶場、呪い、迷子の子ねこ。
+  - 新しい遺物 6 つ：コイン磁石、とげの首輪、毒の牙、冷たい石、予備バッテリー、ヘルメット。
+  - 旧ルールで進行中の旅はそのまま続けられます。
+- **エンドレス**：
+  - ウェーブ 15 から新しいスライムの区間が始まります。
+  - ボスは交代制：スライムキング → あっしゅくスライム → へんいスライムキング。
+  - ボスウェーブの後に 3 つの**変異**から 1 つ選びます。変異は変わったルール（スライム加速、満員の床、ガラスの猫…）で、次のボスを倒すと報酬があります。
+- **4 つ目のカード系統「トリック」**（14 枚：スキル・ボム・アプリ・ドロップ）。専用のシナジーがあります。レアカード「地響き着地」も追加：猫を床に落とすと衝撃が出ます。
+- **バトル中のアプリ**（第2章、2 本目のルート、エンドレスのウェーブ 15 から）：
+  - 新アイコン「スクリーンショット」：フラッシュで敵が全員 2 秒止まる。
+  - 新しい悪質アプリ：猫を隠すキャプチャ、スキルの回復が遅くなるバッテリー低下、スキルスロットを止める固まったカーソル。
+  - 悪質アプリは同時に最大 4 種類まで出ます。
+- **モンスター図鑑**（ホール）：通常とエリートの姿、倒し方、相性のよいスキル、倒した数、隊列のページ。
+- **実績 20 個**。報酬は毛色 3 つ（ミント、ミッドナイト、ゴールド）とアクセサリー 3 つ（はちまき、ヒーローメダル、おさかなチャーム）。
+- **カスタムバトル**（フリーバトルに代わる）：
+  - 出会ったスライム・ボス・アプリを選んでバトルを作れます。セットは 6 個まで保存できます。
+  - 「デフォルト」セットは以前のフリーバトルと同じで、記録も引き継ぎます。
+  - ほかのセットは記録も実績も残りません。
+- エンドレスと遠征の 1 本目のルートは新ルールで記録を分けます（以前の記録も残ります）。第1章は変わりません。
+
 ## 1.4.4 — App độc trong trận, cân bằng trận, Hướng dẫn phiêu lưu, giao diện mới (2026-10-26)
 
 ### Tiếng Việt

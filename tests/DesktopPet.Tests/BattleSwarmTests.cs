@@ -26,7 +26,7 @@ internal static class BattleSwarmTests
 
     // A field with these kinds and counts (elite: the first kind elite) and the cat at 100.
     private static BattleSim Field(EnemyType[] kinds, int[] counts, bool elite = false, int maxAlive = 8, IEnumerable<BattleSkill>? skills = null,
-        EnemyType[]? extra = null)
+        EnemyType[]? extra = null, bool place = true)
     {
         var arms = BattleData.Settings.Weapon("sword") with { Range = 5, StunChance = 0 };
         var settings = new BattleSettings
@@ -39,7 +39,7 @@ internal static class BattleSwarmTests
         var sim = new BattleSim(settings, 0, 1600, seed: 4, skills: skills);
         int total = counts.Sum();
         for (int i = 0; i < 600 && sim.Slimes.Count(s => s.Targetable) < total; i++) sim.Step(dt, 100, false);
-        foreach (var s in sim.Slimes) s.X = 1500;
+        if (place) foreach (var s in sim.Slimes) s.X = 1500;
         sim.ClearEvents();
         return sim;
     }
@@ -181,6 +181,10 @@ internal static class BattleSwarmTests
         var shipped = BattleData.Settings.Enemy("fuser").Link!;
         var giant = Kind("giant", hp: 78, scale: 1.6);
         var fuser = Kind("fuser", hp: 26, scale: 0.7, link: shipped);
+        // They come one in the middle and two side by side at the edge away from the cat (at 100: the right).
+        var arrived = Field(new[] { fuser }, new[] { 3 }, extra: new[] { giant }, place: false).Slimes.Select(s => s.X).OrderBy(x => x).ToArray();
+        check(arrived.Length == 3 && Math.Abs(arrived[0] - 800) < 1 && arrived[1] > 1450 && arrived[2] > 1500 && arrived[2] - arrived[1] > 20,
+            $"A fusing trio: one in the middle, two together at the edge away from the cat ({string.Join(", ", arrived.Select(x => x.ToString("0")))})");
         var sim = Field(new[] { fuser }, new[] { 3 }, extra: new[] { giant });
         double x = 1200;
         foreach (var s in sim.Slimes) s.X = x += 20;

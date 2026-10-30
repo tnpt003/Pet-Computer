@@ -547,14 +547,16 @@
       // 1.5 S7 (M15): comes in with an ice shell. While it is on, the cat's weapon (swing, combo, splash,
       // echo; held too) takes only `armor` × its damage. The thrown cat flying into it at throwHit.minSpeed
       // DIPs/s or more breaks the shell (and does its throwHit); wet from the spray, ice.wetSpeed is enough.
+      // A throw at half that or more only cracks it (seen and heard); each crack (at most 2) takes 15% off
+      // the speed the next throw needs.
       // The shell grows back `regrow` s later (eliteRegrow for an elite; 0: never).
       "id": "icy", "nameVi": "Slime băng", "nameEn": "Ice slime",
       "tipVi": "Vỏ băng làm vũ khí chỉ xước. Ném mèo xuyên qua thật mạnh để vỡ vỏ; Bình xịt làm băng mềm, Bom vẫn đau.", "tipEn": "Its ice shell turns weapon hits into scratches. Throw the cat hard through it to crack it; the Spray softens it, the Bomb still hurts.", "counters": ["spray", "bomb"],
       "maxHp": 50, "speed": 34, "damage": 10, "range": 55,
       "windup": 0.8, "attackCooldown": 2.0, "recover": 0.4,
       "scale": 1.0, "color": "#A6E3F2", "marks": "ice", "cost": 2, "binSpit": false,
-      "throwHit": { "minSpeed": 650, "damage": 12, "stun": 1.5 },
-      "ice": { "armor": 0.15, "wetSpeed": 400, "regrow": 10, "eliteRegrow": 6 },
+      "throwHit": { "minSpeed": 480, "damage": 12, "stun": 1.5 },
+      "ice": { "armor": 0.15, "wetSpeed": 340, "regrow": 10, "eliteRegrow": 6 },
       "elite": { "hp": 1.2, "cost": 1, "descVi": "băng mọc lại nhanh hơn", "descEn": "its ice grows back faster" }
     },
     {
@@ -1002,6 +1004,7 @@
             "waves": [
               { "groups": [ { "enemy": "slime", "count": 3 }, { "enemy": "runner", "count": 1 } ] },
               { "groups": [ { "enemy": "burrower", "count": 1 }, { "enemy": "slime", "count": 2 }, { "enemy": "thief", "count": 1 } ] },
+              { "groups": [ { "enemy": "flyer", "count": 1 }, { "enemy": "bomber", "count": 1 }, { "enemy": "slime", "count": 2 } ] },
               { "stream": { "weights": { "slime": 3, "runner": 2, "bomber": 1, "flyer": 1, "burrower": 1 }, "interval": 2.2, "intervalEnd": 1.2, "pincerAfter": 45, "budget": 9 } }
             ]
           },

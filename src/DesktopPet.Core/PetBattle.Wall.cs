@@ -37,9 +37,25 @@ public sealed partial class BattleSim
     }
 
     // How fast the thrown cat must fly into it for its throwHit: an ice shell wet from the spray gives way
-    // to a slower throw.
+    // to a slower throw, and each crack in it to a slower one still (CrackEase less a crack, MaxCracks).
     public static double ThrowSpeed(Slime s, ThrowHitSpec rule) =>
-        s.Type.Ice is IceSpec ice && s.Iced && s.Wet ? Math.Min(rule.MinSpeed, ice.WetSpeed) : rule.MinSpeed;
+        (s.Type.Ice is IceSpec ice && s.Iced && s.Wet ? Math.Min(rule.MinSpeed, ice.WetSpeed) : rule.MinSpeed)
+        * (s.Iced ? 1 - CrackEase * Math.Min(s.IceCracks, MaxCracks) : 1);
+
+    // A throw into an ice shell at CrackSpeed × what breaks it or more (but not enough) cracks it.
+    public const double CrackSpeed = 0.5, CrackEase = 0.15;
+    public const int MaxCracks = 2;
+    public int IceCrackHits { get; private set; }
+
+    // The thrown cat hit an ice shell too slowly to break it: a crack (seen and heard), so the user knows to
+    // throw harder, and the next throw needs a little less.
+    private void CrackIce(Slime s)
+    {
+        s.IceCracks = Math.Min(MaxCracks, s.IceCracks + 1);
+        IceCrackHits++;
+        AddEffect(BattleEffectKind.Spark, s.X, s.Altitude + s.Height / 2);
+        events.Add(new(BattleEventKind.IceCracked, s.X, s.Id));
+    }
 
     public static double IceRegrowTime(Slime s) => s.Type.Ice is not IceSpec ice ? 0 : s.Elite != null ? ice.EliteRegrow : ice.Regrow;
 
@@ -50,6 +66,7 @@ public sealed partial class BattleSim
         if (s.Iced)
         {
             s.Iced = false;
+            s.IceCracks = 0;
             s.IceClock = IceRegrowTime(s);
             IceBreaks++;
             AddEffect(BattleEffectKind.Poof, s.X, s.Altitude + s.Height / 2);

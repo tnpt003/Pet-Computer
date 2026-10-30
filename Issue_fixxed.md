@@ -8,6 +8,38 @@ Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm 
 
 ---
 
+## #31 — Hợp thể ra hai hướng, đạn phun bay phẳng, trận tự chọn không có tinh anh, ném mèo vào slime băng không có gì (2026-10-31, commit chưa có)
+- **Triệu chứng (người dùng, sau khi test):** (1) bầy 3 slime hợp thể: hai con ngoài rìa ra ở hai mép khác nhau; (2) đạn slime phun bay ở cùng độ cao dù xa hay gần; (3) trận tự chọn như không bật được tinh anh; (4) ném mèo vào slime băng không thấy gì xảy ra.
+- **Nguyên nhân:** (1) PetBattle.Waves.cs `PlaceMergeArrival` đặt cố định giữa / mép trái / mép phải. (2) PetBattleView.Traps.cs: đỉnh đường bay cố định 70 DIPs. (3) `RollElite` bỏ qua mọi tinh anh ở mức Dễ (ảnh người dùng đang chọn Dễ) và chỉ cho `maxElites` = 1 tinh anh cùng lúc; thanh chỉ có 0/10/25/50%. (4) Cần mèo bay ≥ 650 DIPs/s (bám tường chỉ 450), chậm hơn thì không có phản hồi gì.
+- **Sửa:** (1) con đầu ở giữa, hai con sau cạnh nhau ở cùng mép xa mèo hơn. (2) `BattleSim.SpitArc`: đỉnh = khoảng cách × 0,28, trong 22–110 DIPs. (3) Trận tự chọn (`stage.Custom`): tinh anh cả ở mức Dễ, không giới hạn số cùng lúc; thanh 0–100% bước 10 (file cũ làm tròn về bội 10); bỏ dòng "Mức Dễ không có tinh anh". (4) `minSpeed` 480, `wetSpeed` 340; ném trúng ≥ nửa mức cần thì vỏ nứt (tia lóe, tiếng "keng", gợi ý một lần mỗi trận, không mất máu), mỗi vết nứt (tối đa 2) giảm 15% tốc độ cần.
+- **Kiểm chứng:** test mới: trật tự xuất hiện của bầy hợp thể (BattleSwarmTests), độ cao đường bay đạn (BattleFeedbackFixTests), tinh anh 100% ở mức Dễ vượt `maxElites` (CustomFightTests), ném chưa đủ nhanh / nứt / nứt hai lần thì 75% đủ vỡ (BattleWallTests). `scripts/test.ps1 -Ui`: Python 58, i18n 5, C# 2858, WPF 1386/1386 (`artifacts/groupA-tests.log`, ảnh `artifacts/render-groupA`: bảng dựng trận không còn dòng "Mức Dễ không có tinh anh"). Chưa chơi thử trong trận thật (cảm giác ném 480, độ cao đường bay đạn).
+
+---
+
+## #30 — Sổ tay quái dư khoảng trống bên phải (2026-10-30, commit a452422)
+- **Triệu chứng:** ảnh người dùng: lưới ô Sổ tay quái mỗi hàng 5 ô, bên phải (trước thanh cuộn) trống một dải rộng gần một ô.
+- **Nguyên nhân:** ô là Border rộng cố định 82 DIP trong WrapPanel; vùng 526 DIP chỉ vừa 5 ô (5 × 88), phần dư không ai lấp. Cùng kiểu lỗi #25/#26.
+- **Sửa:** PetWindow.MonsterBook.cs: UniformGrid 5 cột đều, ô giãn theo cột (bỏ Width 82 và MaxWidth tên), khoảng hở cột cuối kéo về để ô chạm sát làn thanh cuộn.
+- **Kiểm chứng:** check WPF mới: mọi hàng đầy chạm mép phải vùng cuộn (526/526 DIP). `scripts/test.ps1 -Ui` source sạch: Python 58, i18n 5, C# 2852, WPF 1386/1386. Xem ảnh render battle-book-en. Publish 1.4.4+a452422, smoke 3/3. Chưa xem trên màn hình thật.
+
+---
+
+## #29 — Vũ khí cuộn len không giống cuộn len, đánh không giống quất roi (2026-10-30, commit 24046c6)
+- **Triệu chứng:** cuộn len trong tay mèo trông như cây que với một chấm hồng nhỏ; đòn đánh vung cứng như kiếm, không ra cú quất roi.
+- **Nguyên nhân:** cuộn len vẽ như một hình cứng (cán + sợi len uốn cố định + hình tròn r 6,5 với hai nét chéo), xoay nguyên khối theo góc vung giống kiếm, nên sợi len không bao giờ cong hay trễ sau cán.
+- **Sửa:** PetRenderer.cs: cuộn len to hơn (r 8,5) có sợi quấn, chấm sáng, xoay theo đường vung; cán có núm; sợi len là đường cong nối núm với cuộn len theo góc riêng (YarnAngle). Đứng yên cuộn len rủ xuống, đung đưa; đòn đánh: nhấc lên, nạp ra sau đầu (vẽ sau đầu), quất vụt ra trước đúng lúc trúng với vệt hồng theo đường cuộn len và tia "chát", vượt nhẹ rồi rủ lại. Cổ vũ: quay vòng quanh cán; cầm trên tay: vung theo cú hất. Không đổi tầm, sát thương hay luật.
+- **Kiểm chứng:** `scripts/test.ps1 -Ui` trên source sạch: Python 58, i18n 5, C# 2852, WPF 1385/1385 (gồm 4 vũ khí × 2 hướng × 3 góc treo × 11 thời điểm không cắt mép khung). Đã xem ảnh render 12 thời điểm vung + icon thẻ. Publish 1.4.4+24046c6, smoke 3/3. Chưa xem trong trận thật.
+
+---
+
+## #28 — Chương 2 như chưa có slime bay (2026-10-30, commit chưa có)
+- **Triệu chứng:** chơi chương 2 không gặp slime bay, dù mục tiêu và mẹo màn Giữ giỏ cá hứa có "slime bay bắn đạn dính".
+- **Nguyên nhân:** slime bay và slime bom chỉ có trong dòng quái ngẫu nhiên đợt 3 của c2_fish_basket (mỗi loại ~1/8 mỗi lượt), và khi sàn gần đủ budget 9 thì lượt tốn 2 điểm bị đổi sang slime thường, nên một ván có thể không gặp con nào.
+- **Sửa:** battle.json, c2_fish_basket: thêm một đợt cố định (1 slime bay, 1 slime bom, 2 slime) trước dòng quái ngẫu nhiên; dòng quái giữ nguyên. (2026-10-31: ban đầu 1 slime; với code sau đó check "Chapter 2 balance: stage 3, hammer, Normal, ≤ 90% HP" trượt 91%, xác nhận trên worktree HEAD sạch + chỉ diff battle.json. Đã thử: slime → slime nhanh (màn 5 găng 75% < 80%), đưa bay + bom vào đợt 2 (màn 5 găng 70%); chốt 2 slime: màn 3 búa 88% HP, màn 5 găng 80% vì build được mang sang các màn sau.)
+- **Kiểm chứng:** C# 2809 PASS. Mô phỏng màn 3 chương 2 (thắng/20, trước → sau): Normal simple 19→20 (kiếm), 20→20 (búa); Hard simple 15→18, 16→18; Hard casual 16→19, 16→19; dễ hơn một chút vì dòng quái bắt đầu muộn hơn. Bản 2 slime: commit cùng #31. Chưa chơi thử trong trận thật.
+
+---
+
 ## #27 — Bóng chân của mèo trong trận trông như mảng tối (2026-10-26, commit bacde5a)
 - **Triệu chứng:** ảnh người dùng (bản 7cd2bf5, nền tối): dưới chân mèo có một mảng tối lộ quanh chân và đuôi, không đọc ra là bóng.
 - **Nguyên nhân:** bóng mèo vẽ trên dải chiến trường, dưới cửa sổ riêng của mèo; chân mèo trong cửa sổ cao hơn sàn dải vài DIP nên bóng không khớp bàn chân, và trên nền tối bóng nâu đen thành một khối.

@@ -9,7 +9,7 @@ public sealed partial class BattleSim
 {
     // True while one bomb's blast is dealt (see StepBombs).
     private bool blasting;
-    private int mergeArrival;
+    private int mergeArrival, mergeSide = 1;
 
     private void StepBombs(double dt)
     {
@@ -201,8 +201,8 @@ public sealed partial class BattleSim
             }
         }
         var slime = AddSlime(x, type);
-        PlaceMergeArrival(slime);
-        slime.Facing = catX < x ? -1 : 1;
+        PlaceMergeArrival(slime, catX);
+        slime.Facing = catX < slime.X ? -1 : 1;
         events.Add(new(type.Boss ? BattleEventKind.BossAppeared : BattleEventKind.SlimeSpawned, x));
         if (elite) ForceElite(slime); else RollElite(slime);
     }
@@ -221,15 +221,16 @@ public sealed partial class BattleSim
 
     // An enemy a wave or stream just sent may turn elite: a stage with an elite chance, not on Easy,
     // a kind with an affix, fewer than MaxElites alive, budget for it; then one roll of its own stream.
+    // A Custom Fight's chance is the user's own: on Easy too, with no cap on how many are alive.
     private void RollElite(Slime slime)
     {
         // 1.5 M23b: an Expedition curse (eliteBonus) adds to the stage's chance.
-        if (Stage is not StageSpec stage || stage.EliteChance + eliteBonus + MutationElite <= 0 || Difficulty == BattleDifficulty.Easy || slime.Type.Elite is not EliteSpec elite) return;
+        if (Stage is not StageSpec stage || stage.EliteChance + eliteBonus + MutationElite <= 0 || Difficulty == BattleDifficulty.Easy && !stage.Custom || slime.Type.Elite is not EliteSpec elite) return;
         int elites = 0;
         foreach (var s in slimes) if (s.Elite != null && !s.Rallied && !s.Spat && !s.Decoy && s.State != SlimeState.Defeated) elites++;
         // Infinity: more elites as the waves go on (EliteChancePerWave, MoreElitesEvery).
         int most = Settings.MaxElites + (stage.MoreElitesEvery > 0 ? Math.Min(stage.MoreElitesMax, Wave / stage.MoreElitesEvery) : 0);
-        if (elites >= most) return;
+        if (elites >= most && !stage.Custom) return;
         double chance = stage.EliteChance + stage.EliteChancePerWave * Math.Max(0, Wave - 1);
         if (stage.EliteChanceMax > 0) chance = Math.Min(chance, stage.EliteChanceMax);
         chance += eliteBonus + MutationElite; // 1.5 M24: and an elite mutation.
@@ -293,19 +294,23 @@ public sealed partial class BattleSim
         {
             x += toward * gaps[i] * squeeze;
             var slime = AddSlime(x, order[i]);
-            PlaceMergeArrival(slime);
+            PlaceMergeArrival(slime, catX);
             slime.Facing = catX < slime.X ? -1 : 1;
             if (flags[i]) ForceElite(slime); else RollElite(slime);
         }
         events.Add(new(BattleEventKind.SlimeSpawned, back));
     }
 
-    private void PlaceMergeArrival(Slime slime)
+    // A fusing trio: the first in the middle, the other two side by side at the same edge (the one further
+    // from the cat), so they come in from one way.
+    private void PlaceMergeArrival(Slime slime, double catX)
     {
         if (slime.Link?.Kind != EnemyLinks.Merge || slime.Link.AfterHeal) return;
         int at = mergeArrival++ % 3;
         slime.MergeRunner = at == 0;
-        slime.X = at == 0 ? (Left + Right) / 2 : at == 1 ? Left + slime.Width / 2 : Right - slime.Width / 2;
+        if (at == 1) mergeSide = catX >= (Left + Right) / 2 ? -1 : 1;
+        double edge = mergeSide < 0 ? Left + slime.Width / 2 : Right - slime.Width / 2;
+        slime.X = at == 0 ? (Left + Right) / 2 : edge - mergeSide * (at == 2 ? slime.Width * 1.1 : 0);
     }
 
     internal Slime AddSlime(double x, EnemyType type)

@@ -67,6 +67,10 @@ public sealed partial class BattleSim
     // Flight is proportional to distance; the old range/flight pair defines projectile speed.
     public static double SpitFlight(SpitSpec spit, double distance) => Math.Max(0.25, distance / spit.Range * spit.Flight);
 
+    // How high a drop's arc rises over its straight way (DIPs): low for a near spit, higher the further it
+    // goes, never past what the 170-DIP field strip shows.
+    public static double SpitArc(double distance) => Math.Clamp(distance * 0.28, 22, 110);
+
     // Before the slimes move: drops in flight land, puddles dry up.
     private void StepSpit(double dt)
     {

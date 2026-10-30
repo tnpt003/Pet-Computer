@@ -39,6 +39,13 @@ internal static class CustomFightTests
         stage = CustomFights.Build(data, fight, all)!;
         check(stage.Upgrades && stage.EliteChance == 0.25 && Math.Abs(stage.Threat - 1.4) < 1e-9 && stage.MaxAlive == 6
               && stage.Waves.Select(w => w.Groups.Single().Count).SequenceEqual(new[] { 5, 6 }), "Cards, elites, strength, floor and waves go into the stage");
+        // 100% elites: every enemy with an affix is elite, on Easy too, however many are on the floor.
+        fight.Elites = 100; fight.Cards = false;
+        var all100 = new BattleSim(data, 0, 1600, difficulty: BattleDifficulty.Easy, stage: CustomFights.Build(data, fight, all)!, seed: 4, skills: BattleSkills.Default);
+        for (int i = 0; i < 900 && all100.Slimes.Count(s => s.Targetable) < 5; i++) all100.Step(1.0 / 60, 100, false);
+        var rolled = all100.Slimes.Where(s => s.Targetable && s.Type.Elite != null).ToArray();
+        check(rolled.Length >= 4 && rolled.All(s => s.Elite != null),
+            $"A Custom Fight at 100% elites: all elite on Easy, past maxElites ({rolled.Count(s => s.Elite != null)}/{rolled.Length})");
         check(CustomFights.Build(data, new CustomFight { Id = "e", Name = "E" }, all) == null, "Nothing chosen: no battle");
         var bossOnly = CustomFights.Build(data, new CustomFight { Id = "b", Name = "B", Boss = "zip" }, all)!;
         check(bossOnly.Waves.Length == 1 && bossOnly.Waves[0].Groups[0].Enemy == "zip", "A boss alone: one wave with it");
@@ -47,7 +54,7 @@ internal static class CustomFightTests
         var wild = new CustomFight { Id = "w", Name = "  ", Waves = 99, PerWave = 0, MaxAlive = 20, Elites = 33, Threat = 9, Enemies = new() { ["slime"] = 7, ["runner"] = 0 },
             Icons = new() { "tabs", "tabs", "nope" }, Malware = new() { ["ads"] = 5, ["boom"] = 2 } };
         wild.Normalize();
-        check(wild is { Waves: 10, PerWave: 2, MaxAlive: 8, Elites: 25, Name: "?" } && wild.Threat == 2 && wild.Enemies.Count == 1 && wild.Enemies["slime"] == 3
+        check(wild is { Waves: 10, PerWave: 2, MaxAlive: 8, Elites: 30, Name: "?" } && wild.Threat == 2 && wild.Enemies.Count == 1 && wild.Enemies["slime"] == 3
               && wild.Icons.SequenceEqual(new[] { "tabs" }) && wild.Malware.Count == 1 && wild.Malware["ads"] == 3, "Normalize clamps every number and drops unknown ids");
 
         // Only what the book has met: locked kinds, bosses and apps are left out.

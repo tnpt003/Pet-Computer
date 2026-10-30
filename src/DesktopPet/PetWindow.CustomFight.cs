@@ -182,8 +182,7 @@ public sealed partial class PetWindow
             case FightPerWave: fight.PerWave += dir; break;
             case FightAlive: fight.MaxAlive += dir; break;
             case FightElites:
-                int at = Math.Max(0, Array.IndexOf(CustomFight.EliteSteps, fight.Elites));
-                fight.Elites = CustomFight.EliteSteps[Math.Clamp(at + dir, 0, CustomFight.EliteSteps.Length - 1)];
+                fight.Elites = Math.Clamp(fight.Elites + dir * CustomFight.EliteStep, 0, CustomFight.MaxElites);
                 break;
             case FightThreat: fight.Threat += dir * CustomFight.ThreatStep; break;
             default: return false;
@@ -403,7 +402,6 @@ public sealed partial class PetWindow
         cards.MouseLeftButtonDown += (_, e) => { FightToggleCards(); e.Handled = true; };
         numbers.Children.Add(cards);
         body.Children.Add(numbers);
-        if (fight.Elites > 0) body.Children.Add(Caption(L("Mức Dễ không có tinh anh.", "Easy has no elites."), PetUi.CaptionSize, PetUi.Game.Soft));
 
         // The apps: icons on or off, malware Off → Few → Some → Many (needs at least one icon).
         body.Children.Add(Heading(L("App trong trận", "Battle apps")));

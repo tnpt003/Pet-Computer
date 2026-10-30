@@ -30,6 +30,9 @@ internal static class BattleFeedbackFixTests
         check(spit.Spitting, "Spitter aims across the map beyond its former range");
         check(BattleSim.SpitFlight(spit.Type.Spit!, 1200) > BattleSim.SpitFlight(spit.Type.Spit!, 300) * 3.9,
             "Spitter flight grows with distance instead of using the same arrival time");
+        check(BattleSim.SpitArc(90) < 30 && BattleSim.SpitArc(380) > BattleSim.SpitArc(200) && BattleSim.SpitArc(200) > BattleSim.SpitArc(90)
+              && BattleSim.SpitArc(1200) == 110,
+            $"Spitter arc rises with distance, low when near, capped in the strip ({BattleSim.SpitArc(90):0}/{BattleSim.SpitArc(200):0}/{BattleSim.SpitArc(380):0})");
 
         var stage = new StageSpec { Id = "loadout", NewAppsFrom = 1 };
         var selected = new[] { BattleAppKind.Ping, BattleAppKind.Screenshot };

@@ -154,7 +154,7 @@ public sealed partial class BattleFieldView
             if (g.Spike) { DrawSpike(dc, g, floor); continue; } // A wall climber's (1.5 M15).
             if (g.Rain) { DrawRainDrop(dc, g, floor); continue; } // A boss's goo rain (1.5 M18).
             double k = g.Progress, x = g.FromX + (g.X - g.FromX) * k - OriginX;
-            double y = floor - (40 * (1 - k) + 4 * k) - 4 * 70 * k * (1 - k);
+            double y = floor - (40 * (1 - k) + 4 * k) - 4 * BattleSim.SpitArc(Math.Abs(g.X - g.FromX)) * k * (1 - k);
             var fill = KindBrush(g.Tint ?? "#C38BE8");
             dc.DrawEllipse(null, Halo, new Point(x, y), 6.5, 7.5);
             dc.DrawEllipse(fill, Outline, new Point(x, y), 6, 7);

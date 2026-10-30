@@ -25,7 +25,8 @@ public sealed class CustomFight
     public int MaxAlive { get; set; } = 3;
     // A boss page (king, zip, mother, mutant_king) for the last wave; null: none.
     public string? Boss { get; set; }
-    // Percent: 0, 10, 25 or 50 (never on Easy, as everywhere).
+    // Percent, 0–100 in steps of 10: every enemy of a kind with an affix rolls it, on every difficulty and
+    // with no cap on how many are alive at once (unlike the Adventure).
     public int Elites { get; set; }
     public double Threat { get; set; } = 1;
     public bool Cards { get; set; }
@@ -36,7 +37,7 @@ public sealed class CustomFight
     public const string DefaultId = "default";
     public const int MinWaves = 1, MaxWaves = 10, MinPerWave = 2, MaxPerWave = 12, MinAlive = 2, MaxAliveCap = 8, MaxLevel = 3;
     public const double MinThreat = 0.6, MaxThreat = 2, ThreatStep = 0.2;
-    public static readonly int[] EliteSteps = { 0, 10, 25, 50 };
+    public const int EliteStep = 10, MaxElites = 100;
     public static readonly BattleAppKind[] IconOrder = { BattleAppKind.Tabs, BattleAppKind.Ping, BattleAppKind.EndTask, BattleAppKind.Undo, BattleAppKind.Trash, BattleAppKind.Screenshot };
 
     public CustomFight Copy(string id, string name) => new()
@@ -55,7 +56,7 @@ public sealed class CustomFight
         Waves = Math.Clamp(Waves, MinWaves, MaxWaves);
         PerWave = Math.Clamp(PerWave, MinPerWave, MaxPerWave);
         MaxAlive = Math.Clamp(MaxAlive, MinAlive, MaxAliveCap);
-        Elites = EliteSteps.OrderBy(step => Math.Abs(step - Elites)).First();
+        Elites = Math.Clamp((int)Math.Round(Elites / (double)EliteStep, MidpointRounding.AwayFromZero) * EliteStep, 0, MaxElites);
         Threat = double.IsFinite(Threat) ? Math.Round(Math.Clamp(Threat, MinThreat, MaxThreat) / ThreatStep) * ThreatStep : 1;
         if (string.IsNullOrWhiteSpace(Boss)) Boss = null;
     }

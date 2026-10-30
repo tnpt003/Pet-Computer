@@ -634,9 +634,11 @@ public sealed class Slime
     public double BurrowClock, BurrowRest, CrackX;
     // Under the floor (only its mound shows): nothing hits it and it attacks nothing.
     public bool Burrowed => Burrow is BurrowPhase.Under or BurrowPhase.Cracking;
-    // 1.5 M15 (PetBattle.Wall.cs). An ice slime: its shell is on, and the time until it grows back.
+    // 1.5 M15 (PetBattle.Wall.cs). An ice slime: its shell is on, and the time until it grows back;
+    // the cracks too-slow throws left in this shell (each lets a slower throw break it).
     public bool Iced;
     public double IceClock;
+    public int IceCracks;
     // A wall climber: where it is in its round, the edge it goes to (-1 left, 1 right), the height its
     // bottom climbs to there, and the time left on the floor before it goes back (it shares the flyer's
     // ShotClock, AimLeft, ShotsLeft and FallSpeed; SpitAt is where its spikes will land).
@@ -761,9 +763,9 @@ public enum BattleEventKind
     FlyAimed, FlyShot, FlyShotHit, FlyerKnocked, FlyerDowned, FlyerRose,
     BurrowCracked, BurrowEmerged, BurrowPinned, BurrowPulled, BurrowDug,
     // 1.5 M15 (Value: the enemy's id): the cat's weapon only scratched an ice shell, the thrown cat broke
-    // it, it grew back; a wall climber reached its spot up the edge, aimed, dropped a spike, was knocked
+    // it, it grew back, a too-slow throw cracked it; a wall climber reached its spot up the edge, aimed, dropped a spike, was knocked
     // off (Value: 1 by the Grabber), landed on the floor. A spike landing is a GooLanded (Value: 1 hit).
-    IceScratched, IceShattered, IceRegrown, ClingClimbed, ClingAimed, ClingShot, ClingKnocked, ClingLanded,
+    IceScratched, IceShattered, IceRegrown, IceCracked, ClingClimbed, ClingAimed, ClingShot, ClingKnocked, ClingLanded,
     // 1.5 M16 (Value: the enemy's id): a hedgehog's quills rose, stood up, lay flat (soaked: the spray did
     // it), pricked the cat hitting it; a timer's clock started, ran out (it called), its call came in; a
     // thief stole (Value: 1 a skill, 0 an app), gave it back on its defeat, got away with it.

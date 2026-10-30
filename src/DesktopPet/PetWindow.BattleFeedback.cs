@@ -80,7 +80,7 @@ public sealed partial class PetWindow
         [BattleEventKind.BurrowCracked] = ("clank", 4), [BattleEventKind.BurrowEmerged] = ("ball_tap", 5), [BattleEventKind.BurrowPinned] = ("pop", 5),
         [BattleEventKind.BurrowPulled] = ("pop", 4), [BattleEventKind.BurrowDug] = ("squish", 2),
         // 1.5 M15: the ice slime and the wall climber.
-        [BattleEventKind.IceScratched] = ("clank", 2), [BattleEventKind.IceShattered] = ("pop", 5), [BattleEventKind.IceRegrown] = ("squish", 2),
+        [BattleEventKind.IceScratched] = ("clank", 2), [BattleEventKind.IceShattered] = ("pop", 5), [BattleEventKind.IceRegrown] = ("squish", 2), [BattleEventKind.IceCracked] = ("clank", 3),
         [BattleEventKind.ClingClimbed] = ("swoosh", 2), [BattleEventKind.ClingAimed] = ("clank", 2), [BattleEventKind.ClingShot] = ("swoosh", 3),
         [BattleEventKind.ClingKnocked] = ("pop", 4), [BattleEventKind.ClingLanded] = ("ball_tap", 4),
         // 1.5 M16: the hedgehog, the timer and the thief.
@@ -148,6 +148,7 @@ public sealed partial class PetWindow
         BattleEventKind.IceScratched => L("Slime băng: vũ khí chỉ làm xước! Ném mèo thật mạnh vào nó để phá băng (Bình xịt làm mềm băng)",
             "Ice slime: weapons only scratch it! Throw the cat hard into it to break the ice (the Spray softens it)"),
         BattleEventKind.IceShattered => L("Vỡ băng! Đánh ngay trước khi băng mọc lại", "The ice broke! Hit it now, before the ice grows back"),
+        BattleEventKind.IceCracked => L("Băng nứt nhưng chưa vỡ! Ném mèo mạnh hơn, lần sau dễ vỡ hơn", "The ice cracked but held! Throw the cat harder, it breaks easier now"),
         BattleEventKind.ClingClimbed => L("Slime bám tường leo lên mép! Ném mèo vào nó, Đẩy hoặc Kẹp gắp kéo xuống",
             "The wall slime climbed the edge! Throw the cat into it, or Push or Grab it down"),
         BattleEventKind.ClingLanded => L("Slime bám tường rơi xuống! Đánh ngay trước khi nó leo lại", "The wall slime fell! Hit it before it climbs back"),
@@ -293,7 +294,7 @@ public sealed partial class PetWindow
                 // 1.5 M13: the slimes the cursor beats, once each per battle.
                 BattleEventKind.GhostFaded or BattleEventKind.BubbleBlocked or BattleEventKind.BubblePopped or BattleEventKind.MirageCast or BattleEventKind.SulkPuffed
                     or BattleEventKind.SulkCalmed or BattleEventKind.FlyAimed or BattleEventKind.FlyerDowned or BattleEventKind.BurrowCracked
-                    or BattleEventKind.BurrowPinned or BattleEventKind.IceScratched or BattleEventKind.IceShattered or BattleEventKind.ClingClimbed
+                    or BattleEventKind.BurrowPinned or BattleEventKind.IceScratched or BattleEventKind.IceShattered or BattleEventKind.IceCracked or BattleEventKind.ClingClimbed
                     or BattleEventKind.ClingLanded or BattleEventKind.QuillsUp or BattleEventKind.QuillsPricked or BattleEventKind.ClockStarted
                     or BattleEventKind.ClockRang when trickExplained.Add(e.Kind) => TrickBanner(e),
                 // 1.5 M16: the thief's news shows every time (what it took matters).

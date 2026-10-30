@@ -131,7 +131,10 @@ public sealed partial class BattleSim
         double speed = Math.Sqrt(cat.VX * cat.VX + cat.VY * cat.VY);
         foreach (var s in slimes.ToArray())
         {
-            if (s.Type.ThrowHit is not ThrowHitSpec rule || !s.Targetable || speed < ThrowSpeed(s, rule) || thrownInto.Contains(s.Id)) continue;
+            if (s.Type.ThrowHit is not ThrowHitSpec rule || !s.Targetable || thrownInto.Contains(s.Id)) continue;
+            double needed = ThrowSpeed(s, rule);
+            // Too slow for anything: only an ice shell takes a crack from it (below).
+            if (speed < needed && !(s.Iced && speed >= needed * CrackSpeed)) continue;
             // At a screen edge the window cannot move farther: include the visible body's contact
             // width (rather than the narrower floor hurtbox) when knocking a wall slime down.
             double pad = s.OnWall ? CatHalfWidth + 6 : CatHalfWidth;
@@ -140,6 +143,7 @@ public sealed partial class BattleSim
             // narrowing the rotated body must not make a previously reachable wall impossible to hit.
             if (!contact && !(s.OnWall && Crosses(from.X, from.Height, cat.X, cat.Height, s.X - s.HitWidth / 2 - pad, s.Altitude - pad, s.X + s.HitWidth / 2 + pad, s.Altitude + s.Height + pad))) continue;
             thrownInto.Add(s.Id);
+            if (speed < needed) { CrackIce(s); continue; }
             ThrowHits++;
             events.Add(new(BattleEventKind.ThrowHit, s.X, s.Id));
             AddEffect(BattleEffectKind.Combo, s.X, s.Altitude + s.Height / 2);

@@ -106,13 +106,27 @@ internal static class BattleWallTests
         Run(sim, 0.5, catX: 1500);
         check(Math.Abs(before - s.Hp - 10) < 1e-6, $"A yarn bomb goes through the shell (lost {before - s.Hp:0.#})");
 
-        // A slow throw: nothing; a fast one breaks it (its throwHit too).
+        // A throw too slow for anything: nothing at all.
         sim = Field(Icy());
         s = sim.Slimes.Single();
         s.X = 800;
         before = s.Hp;
+        ThrowThrough(sim, 800, rule.MinSpeed * BattleSim.CrackSpeed * 0.8);
+        check(s.Iced && s.Hp == before && sim.IceBreaks == 0 && s.IceCracks == 0, "A throw far below its minSpeed does nothing");
+        // A slowish throw cracks the shell (no hurt), and each crack lets a slower throw break it.
+        var cracked = new HashSet<BattleEventKind>();
+        ThrowThrough(sim, 800, rule.MinSpeed * 0.8, cracked);
+        check(s.Iced && s.Hp == before && sim.IceBreaks == 0 && s.IceCracks == 1 && cracked.Contains(BattleEventKind.IceCracked)
+              && !cracked.Contains(BattleEventKind.ThrowHit) && Math.Abs(BattleSim.ThrowSpeed(s, rule) - rule.MinSpeed * (1 - BattleSim.CrackEase)) < 1e-9,
+            "A throw below its minSpeed only cracks the shell, and the next needs less");
         ThrowThrough(sim, 800, rule.MinSpeed * 0.8);
-        check(s.Iced && s.Hp == before && sim.IceBreaks == 0, "A throw below its minSpeed does nothing");
+        check(s.Iced && s.IceCracks == 2 && sim.IceBreaks == 0, "A second crack, still holding");
+        ThrowThrough(sim, 800, rule.MinSpeed * 0.75);
+        check(!s.Iced && s.IceCracks == 0 && sim.IceBreaks == 1, "Twice cracked, a throw at 75% of its minSpeed breaks it");
+        sim = Field(Icy());
+        s = sim.Slimes.Single();
+        s.X = 800;
+        before = s.Hp;
         var seen = new HashSet<BattleEventKind>();
         ThrowThrough(sim, 800, rule.MinSpeed * 1.2, seen);
         check(!s.Iced && sim.IceBreaks == 1 && seen.Contains(BattleEventKind.IceShattered) && before - s.Hp == rule.Damage && s.State == SlimeState.Stunned,

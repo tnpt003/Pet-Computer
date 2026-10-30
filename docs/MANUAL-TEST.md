@@ -675,6 +675,7 @@ Thanh nộ mỏng dưới thanh HP trên HUD. Ảnh mèo nổi giận (đứng, 
 ## Cuộn len và Găng đấm 1.5 M08 (2026-10-28) — mọi bảng chuẩn bị
 Bảng chuẩn bị có 4 vũ khí: Kiếm, Búa, Cuộn len, Găng đấm (icon riêng, thanh chỉ số). Ảnh mèo cầm cuộn len/găng ở mọi pha vung đã xem qua render UiChecks, chưa xem trong trận thật, chưa thử DPI thật.
 - [ ] Bảng chuẩn bị (trận tự do, Phiêu lưu, Vô tận, Viễn chinh): 4 thẻ vũ khí không tràn khung, chọn được, lựa chọn được nhớ; vi/en/ja đúng tên và gợi ý. Sảnh/túi đồ/bảng kết quả vẽ đúng vũ khí đang dùng.
+- [ ] Cuộn len vẽ lại (2026-10-30, Issue #29): cán gỗ có núm, sợi len mềm, cuộn len to có sợi quấn và chấm sáng. Đứng yên thì cuộn len rủ xuống và đung đưa; đòn đánh là cú quất roi: nhấc lên, vòng ra sau đầu (khuất sau đầu, không che mặt), quất vụt ra trước với vệt hồng và tia "chát" ở cuộn len đúng lúc trúng, rồi rủ xuống lại. Cổ vũ: cuộn len quay vòng quanh cán. Cầm trên tay mà đánh: sợi len vung theo, không cắt mép cửa sổ.
 - [ ] Cuộn len: mèo đánh từ xa hơn kiếm; một nhát làm mấy slime đứng gần nhau phía trước cùng hiện số; slime thảo dược đứng sau bị kéo về sát mèo; không có sao choáng trên slime.
 - [ ] Găng đấm: mèo đấm rất nhanh, số ×1…×4 trên HUD, ×4 màu vàng; nhát thứ 5 hất slime bay lên (có bóng dưới sàn), slime rơi xuống thì choáng; Vua/slime đá không bị hất. Đang hất mà Pause: slime đứng yên giữa không trung.
 - [ ] Kỷ lục trận tự do/Phiêu lưu tách theo vũ khí (dòng "this gear"/"vũ khí này"); bảng kết quả ghi đúng tên vũ khí.

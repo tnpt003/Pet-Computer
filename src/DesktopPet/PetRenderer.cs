@@ -111,6 +111,8 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         // Battle Mode: the wooden sword's grip (front paw) and angle (degrees from upright, toward the front).
         public bool Sword;
         public double SwordAngle, GripX, GripY;
+        // The yarn's strand: the direction (degrees, same convention) from the handle's tip to the ball.
+        public double YarnAngle;
     }
 
     protected override void OnRender(DrawingContext dc)
@@ -282,15 +284,15 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
 
     // Swing keyframes (progress, angle), timed so the weapon reaches its target at the hit moment
     // (pet.SwordHitAt). Sword: a quick wind-up over the head and a slash down in front. Hammer:
-    // raised higher, held there (the heavy wind-up), then a short slam and a slow recovery. Yarn: a wider
-    // lash. Glove: a short jab straight ahead and back.
+    // raised higher, held there (the heavy wind-up), then a short slam and a slow recovery. Yarn: the
+    // handle leads a whip (YarnKeys swings the strand). Glove: a short jab straight ahead and back.
     private (double At, double Angle)[] SwingKeys()
     {
         double h = Math.Clamp(pet.SwordHitAt, 0.2, 0.85);
         if (swingKeys != null && swingKeysFor == (h, pet.WeaponStyle)) return swingKeys;
         swingKeysFor = (h, pet.WeaponStyle);
         if (pet.WeaponStyle == "yarn")
-            return swingKeys = new[] { (0.0, 30.0), (Math.Max(0.1, h - 0.12), -35.0), (h + 0.05, 135.0), (Math.Min(0.95, h + 0.17), 128.0), (1.0, 30.0) };
+            return swingKeys = new[] { (0.0, 30.0), (Math.Max(0.08, h - 0.16), -45.0), (Math.Max(0.12, h - 0.05), -30.0), (h, 95.0), (Math.Min(0.95, h + 0.18), 90.0), (1.0, 30.0) };
         if (pet.WeaponStyle == "glove")
             return swingKeys = new[] { (0.0, 40.0), (Math.Max(0.1, h - 0.08), 20.0), (h + 0.02, 95.0), (Math.Min(0.95, h + 0.25), 90.0), (1.0, 40.0) };
         if (pet.Hammer)
@@ -303,24 +305,44 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
     private (double At, double Angle)[]? swingKeys;
     private (double, string) swingKeysFor;
 
+    // The yarn's strand over a swing, like an overhand whip: it hangs, is lifted up in front by the
+    // wind-up, trails the handle back over the head (loaded behind it), then cracks straight out in
+    // front at the hit, overshoots a little and drops back to hanging.
+    private static (double At, double Angle)[] YarnKeys(double h)
+    {
+        double lifted = Math.Max(0.1, h - 0.12), loaded = Math.Max(lifted + 0.02, h - 0.05);
+        return new[] { (0.0, 175.0), (lifted, 15.0), (loaded, -55.0), (h, 102.0), (h + 0.05, 118.0), (Math.Min(0.95, h + 0.2), 135.0), (1.0, 175.0) };
+    }
+
+    // Eased between keys; a rise of more than 100° (a slam, the whip's crack) accelerates into its end.
+    private static double KeyedAngle((double At, double Angle)[] keys, double t, bool slam)
+    {
+        for (int i = 1; i < keys.Length; i++)
+        {
+            if (t > keys[i].At && i < keys.Length - 1) continue;
+            double k = Math.Clamp((t - keys[i - 1].At) / (keys[i].At - keys[i - 1].At), 0, 1);
+            k = slam && keys[i].Angle > keys[i - 1].Angle + 100 ? k * k : k * k * (3 - 2 * k);
+            return keys[i - 1].Angle + (keys[i].Angle - keys[i - 1].Angle) * k;
+        }
+        return keys[^1].Angle;
+    }
+
     private void PoseSword(ref Pose p)
     {
         p.Sword = true;
         double angle = 30 + p.Stride * 0.7, gripX = 80, gripY = 88 + 6 * p.RestBlend;
         if (p.Airborne) angle = 10;
         double swing = pet.SwordSwing;
+        bool yarn = pet.WeaponStyle == "yarn";
+        // The strand hangs from the handle's tip, swaying a little (a walk swings it more).
+        double sway = Math.Sin(p.Time * 2.4) * 5 + (p.Walking ? Math.Sin(p.Time * 9) * 8 : 0);
+        double yarnAngle = (p.Airborne ? 205 : 178) + sway;
         if (swing >= 0)
         {
             var keys = SwingKeys();
-            for (int i = 1; i < keys.Length; i++)
-            {
-                if (swing > keys[i].At && i < keys.Length - 1) continue;
-                double k = Math.Clamp((swing - keys[i - 1].At) / (keys[i].At - keys[i - 1].At), 0, 1);
-                // The hammer's slam accelerates into the hit instead of easing out.
-                k = pet.Hammer && keys[i].Angle > keys[i - 1].Angle + 100 ? k * k : k * k * (3 - 2 * k);
-                angle = keys[i - 1].Angle + (keys[i].Angle - keys[i - 1].Angle) * k;
-                break;
-            }
+            // The hammer's slam accelerates into the hit instead of easing out.
+            angle = KeyedAngle(keys, swing, pet.Hammer);
+            if (yarn) yarnAngle = KeyedAngle(YarnKeys(Math.Clamp(pet.SwordHitAt, 0.2, 0.85)), swing, true) + sway * (1 - Math.Sin(Math.PI * swing));
             // The hammer's held wind-up reads as straining: the cat crouches a little and trembles.
             if (pet.Hammer && keys.Length > 3 && swing > keys[1].At && swing < keys[3].At)
             {
@@ -330,8 +352,9 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
                 angle += Math.Sin(p.Time * 40) * 3 * strain;
             }
         }
-        if (pet.BattleCheer) { angle = -5 + Math.Sin(p.Time * 6) * 6; gripX = 84; gripY = 68; p.Bob -= Math.Abs(Math.Sin(p.Time * 6)) * 4; }
-        if (pet.BattleDazed) { angle = 115; gripY = 97; p.Dizzy = 0.7; }
+        // Cheering twirls the ball round the raised handle like a lasso; dazed, it just hangs.
+        if (pet.BattleCheer) { angle = -5 + Math.Sin(p.Time * 6) * 6; gripX = 84; gripY = 68; p.Bob -= Math.Abs(Math.Sin(p.Time * 6)) * 4; yarnAngle = p.Time * 540; }
+        if (pet.BattleDazed) { angle = 115; gripY = 97; p.Dizzy = 0.7; yarnAngle = 180; }
         if (pet.BattleHurt > 0 && !p.PickedUp) p.Shake += Math.Sin(p.Time * 45) * 2.2 * Math.Min(1, pet.BattleHurt / 0.35);
         if (p.PickedUp)
         {
@@ -340,8 +363,11 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
             double stroke = swing >= 0 ? Math.Sin(Math.PI * Math.Clamp(swing, 0, 1)) : 0;
             double heldAngle = 100 + (Math.Clamp(angle, -75, 115) - 100) * stroke;
             angle += (heldAngle - angle) * blend; gripX += (72 - gripX) * blend; gripY += (92 - 12 * stroke - gripY) * blend;
+            // Held, the strand trails the paw's flick: behind it on the way out, flung past it on the way back.
+            double heldYarn = swing >= 0 ? angle + 50 * Math.Cos(Math.PI * Math.Clamp(swing, 0, 1)) * stroke + 40 * stroke : 180 + sway;
+            yarnAngle = heldYarn + Math.IEEERemainder(yarnAngle - heldYarn, 360) * (1 - blend);
         }
-        p.SwordAngle = angle; p.GripX = gripX; p.GripY = gripY;
+        p.SwordAngle = angle; p.GripX = gripX; p.GripY = gripY; p.YarnAngle = yarnAngle;
     }
 
     private static readonly Brush SwordWood = PetUi.Hex("#E8C48A");
@@ -357,13 +383,16 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
     private static readonly Geometry HammerHandle = CachedGeometry("M -2.2,-29 L 2.2,-29 L 2.2,6 L -2.2,6 Z");
     private static readonly Geometry HammerHead = CachedGeometry("M -9,-39 L 9,-39 L 9,-27 L -9,-27 Z");
     private static readonly Pen HammerSwooshPen = FrozenPen(PetUi.Hex("#B0FFFFFF"), 7, PenLineJoin.Round, true);
-    // 1.5 M08: the yarn (a wooden handle, a strand of wool and its ball) and the boxing glove.
-    private static readonly Brush YarnWool = PetUi.Hex("#F28AB2"), GloveRed = PetUi.Hex("#E2483C"), GloveCuff = PetUi.Hex("#FFF3E2");
-    private static readonly Pen YarnStrandPen = FrozenPen(PetUi.Hex("#D9608F"), 2.4, PenLineJoin.Round, true);
-    private static readonly Pen YarnLinePen = FrozenPen(PetUi.Hex("#C04F7C"), 1.1, PenLineJoin.Round, true);
+    // 1.5 M08: the yarn (a wooden handle, a soft strand of wool and its wound ball) and the boxing glove.
+    private static readonly Brush YarnWool = PetUi.Hex("#F28AB2"), YarnShine = PetUi.Hex("#B0FFFFFF"), GloveRed = PetUi.Hex("#E2483C"), GloveCuff = PetUi.Hex("#FFF3E2");
+    private static readonly Pen YarnStrandPen = FrozenPen(PetUi.Hex("#D9608F"), 2.2, PenLineJoin.Round, true);
+    private static readonly Pen YarnLinePen = FrozenPen(PetUi.Hex("#C04F7C"), 1.2, PenLineJoin.Round, true);
     private static readonly Pen YarnSwooshPen = FrozenPen(PetUi.Hex("#B0FFC8DC"), 4, PenLineJoin.Round, true);
+    private static readonly Pen YarnCrackPen = FrozenPen(PetUi.Hex("#FFFFF3E2"), 2, PenLineJoin.Round, true);
     private static readonly Geometry YarnHandle = CachedGeometry("M -2.2,-12 L 2.2,-12 L 2.2,6 L -2.2,6 Z");
-    private static readonly Geometry YarnStrand = CachedGeometry("M 0,-12 C 4,-17 -4,-22 0,-27 C 3,-30 -1,-31 1,-32");
+    private const double YarnHandleLength = 12, YarnStrandLength = 27, YarnBallRadius = 8.5;
+    private static Point Along(Point from, double degrees, double length) =>
+        new(from.X + Math.Sin(degrees * Math.PI / 180) * length, from.Y - Math.Cos(degrees * Math.PI / 180) * length);
     private static readonly Geometry GloveBody = CachedGeometry("M -7,-3 C -11,-9 -10,-20 -2,-22 C 6,-24 11,-17 9,-9 C 8,-5 6,-3 5,-3 Z");
     private static readonly Geometry GloveThumb = CachedGeometry("M -7,-6 C -12,-8 -12,-14 -8,-15");
     private static readonly Geometry GloveBand = CachedGeometry("M -7,-3 L 5,-3 L 5,4 L -7,4 Z");
@@ -416,14 +445,7 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
 
     private static void DrawWeaponShape(DrawingContext dc, string style)
     {
-        if (style == "yarn")
-        {
-            dc.DrawGeometry(SwordHandle, SwordPen, YarnHandle);
-            dc.DrawGeometry(null, YarnStrandPen, YarnStrand);
-            dc.DrawEllipse(YarnWool, SwordPen, new Point(1, -37), 6.5, 6.5);
-            dc.DrawLine(YarnLinePen, new Point(-4, -40), new Point(5, -35));
-            dc.DrawLine(YarnLinePen, new Point(-3, -34), new Point(4, -41));
-        }
+        if (style == "yarn") DrawYarn(dc, 0, 40); // At rest on a card: the strand bending forward.
         else if (style == "glove")
         {
             dc.DrawGeometry(GloveRed, SwordPen, GloveBody);
@@ -446,12 +468,74 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         }
     }
 
+    // The yarn around its grip at (0, 0): the handle at handleAngle, the strand leaving its tip and
+    // curving round to the ball at ballAngle from there (both in degrees from upright, toward the front).
+    private static void DrawYarn(DrawingContext dc, double handleAngle, double ballAngle)
+    {
+        dc.PushTransform(new RotateTransform(handleAngle));
+        dc.DrawGeometry(SwordHandle, SwordPen, YarnHandle);
+        dc.DrawEllipse(SwordHandle, SwordPen, new Point(0, -YarnHandleLength), 2.8, 2.8); // The knob the strand is tied to.
+        dc.Pop();
+        Point tip = Along(new Point(0, 0), handleAngle, YarnHandleLength), ball = Along(tip, ballAngle, YarnStrandLength);
+        // Leaving the knob along the handle and reaching the ball along its own direction: the more the
+        // ball trails the handle, the more the strand bends, like a whip.
+        var strand = new StreamGeometry();
+        using (var context = strand.Open())
+        {
+            context.BeginFigure(tip, false, false);
+            context.BezierTo(Along(tip, handleAngle, 10), Along(ball, ballAngle + 180, 12), ball, true, true);
+        }
+        strand.Freeze();
+        dc.DrawGeometry(null, YarnStrandPen, strand);
+        // The ball: wound strands across it (turned with the strand, so it rolls as it swings) and a shine.
+        double r = YarnBallRadius;
+        dc.DrawEllipse(YarnWool, SwordPen, ball, r, r);
+        dc.PushClip(new EllipseGeometry(ball, r - 0.8, r - 0.8));
+        dc.PushTransform(new RotateTransform(ballAngle, ball.X, ball.Y));
+        for (int i = -1; i <= 1; i++)
+            dc.DrawEllipse(null, YarnLinePen, new Point(ball.X + i * r * 0.55, ball.Y), r * 0.4, r * 1.1);
+        dc.DrawLine(YarnLinePen, new Point(ball.X - r, ball.Y - r * 0.4), new Point(ball.X + r, ball.Y + r * 0.1));
+        dc.DrawLine(YarnLinePen, new Point(ball.X - r, ball.Y + r * 0.3), new Point(ball.X + r, ball.Y + r * 0.8));
+        dc.Pop(); dc.Pop();
+        dc.DrawEllipse(YarnShine, null, new Point(ball.X - r * 0.4, ball.Y - r * 0.45), r * 0.24, r * 0.15);
+    }
+
     // A toy wooden sword (or hammer) held in the front paw (inside the facing flip, so it turns with the cat).
     private void DrawSword(DrawingContext dc, in Pose p)
     {
         double swing = pet.SwordSwing, hitAt = Math.Clamp(pet.SwordHitAt, 0.2, 0.85);
+        bool yarn = pet.WeaponStyle == "yarn";
+        if (yarn && swing > hitAt - 0.04 && swing < hitAt + 0.26)
+        {
+            // The whip's lash: a swoosh along the ball's path round the cat, and a crack where it snaps.
+            Point grip = new(p.GripX, p.GripY), tip = Along(grip, p.SwordAngle, YarnHandleLength), ball = Along(tip, p.YarnAngle, YarnStrandLength);
+            double reach = (ball - grip).Length, end = Math.Clamp(Math.Atan2(ball.X - grip.X, grip.Y - ball.Y) * 180 / Math.PI, 25, 165);
+            if (end > 45)
+            {
+                var arc = new StreamGeometry();
+                using (var context = arc.Open())
+                {
+                    context.BeginFigure(Along(grip, 25, reach), false, false);
+                    context.ArcTo(Along(grip, end, reach), new Size(reach, reach), 0, false, SweepDirection.Clockwise, true, false);
+                }
+                dc.PushOpacity(Math.Clamp(1 - Math.Abs(swing - (hitAt + 0.04)) / 0.22, 0, 1));
+                dc.DrawGeometry(null, pet.SwordCombo ? ComboSwooshPen : YarnSwooshPen, arc);
+                dc.Pop();
+            }
+            double crack = 1 - Math.Abs(swing - (hitAt + 0.02)) / 0.045;
+            if (crack > 0)
+            {
+                dc.PushOpacity(crack);
+                for (int i = 0; i < 5; i++)
+                {
+                    double a = p.YarnAngle - 70 + i * 35;
+                    dc.DrawLine(YarnCrackPen, Along(ball, a, YarnBallRadius + 3), Along(ball, a, YarnBallRadius + 3 + 6 * crack));
+                }
+                dc.Pop();
+            }
+        }
         // A punch has no slash arc (the glove's jab reads by itself).
-        if (pet.WeaponStyle != "glove" && swing > hitAt - 0.08 && swing < hitAt + 0.26)
+        else if (!yarn && pet.WeaponStyle != "glove" && swing > hitAt - 0.08 && swing < hitAt + 0.26)
         {
             // A soft swoosh along the slash (the hammer's is wider), brightest just after the hit.
             double fade = 1 - Math.Abs(swing - (hitAt + 0.06)) / 0.2;
@@ -463,16 +547,21 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
                 context.ArcTo(new Point(p.GripX + Math.Sin(a1) * 34, p.GripY - Math.Cos(a1) * 34), new Size(34, 34), 0, false, SweepDirection.Clockwise, true, false);
             }
             dc.PushOpacity(Math.Clamp(fade, 0, 1));
-            dc.DrawGeometry(null, pet.SwordCombo ? ComboSwooshPen : pet.Hammer ? HammerSwooshPen : pet.WeaponStyle == "yarn" ? YarnSwooshPen : SwooshPen, arc);
+            dc.DrawGeometry(null, pet.SwordCombo ? ComboSwooshPen : pet.Hammer ? HammerSwooshPen : SwooshPen, arc);
             dc.Pop();
         }
         // The glove is worn: the paw goes in first, the glove over it.
         bool glove = pet.WeaponStyle == "glove";
         if (glove) Oval(dc, Fur, p.GripX, p.GripY, 5.5, 5);
         dc.PushTransform(new TranslateTransform(p.GripX, p.GripY));
-        dc.PushTransform(new RotateTransform(p.SwordAngle));
-        DrawWeaponShape(dc, pet.WeaponStyle);
-        dc.Pop(); dc.Pop();
+        if (yarn) DrawYarn(dc, p.SwordAngle, p.YarnAngle);
+        else
+        {
+            dc.PushTransform(new RotateTransform(p.SwordAngle));
+            DrawWeaponShape(dc, pet.WeaponStyle);
+            dc.Pop();
+        }
+        dc.Pop();
         if (!glove) Oval(dc, Fur, p.GripX, p.GripY, 5.5, 5); // The paw around the grip.
     }
 
@@ -495,7 +584,8 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         if (p.Climbing) dc.PushTransform(ClimbLean);
         DrawBody(dc, p);
         // Raised high (wind-up, cheering) the sword passes behind the head instead of over the face.
-        bool swordBehind = p.Sword && p.SwordAngle < 15;
+        // So does the yarn's ball while it is flung up over the head (the whip's wind-up).
+        bool swordBehind = p.Sword && (p.SwordAngle < 15 || pet.WeaponStyle == "yarn" && Math.Cos(p.YarnAngle * Math.PI / 180) > 0.2);
         if (swordBehind) DrawSword(dc, p);
         DrawHead(dc, p);
         if (p.Sword && !swordBehind) DrawSword(dc, p);

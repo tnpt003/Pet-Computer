@@ -814,8 +814,28 @@ public sealed class StageSpec
     public string? TipEn { get; init; }
     public string? Tip(string language) => language == PetLanguage.Vietnamese || TipEn == null ? (PetLanguage.UsesEnglish(language) ? TipEn : TipVi) : PetText.Data(language, TipVi ?? "", TipEn);
     public WaveSpec[] Waves { get; init; } = Array.Empty<WaveSpec>();
+    // 1.5 M29a: a Custom Fight the user built (CustomFights.Build, never from battle.json): no Adventure
+    // progress, records or achievements; its own app icons and malware (null: no apps at all).
+    [JsonIgnore] public bool Custom { get; init; }
+    [JsonIgnore] public CustomAppRules? CustomApps { get; init; }
     public string Name(string language) => PetText.Data(language, NameVi, NameEn);
     public string Goal(string language) => PetText.Data(language, GoalVi, GoalEn);
+}
+
+// 1.5 M29a: a Custom Fight's desktop: the icons it has and how often each malware comes (by
+// MalwareCue.Kinds: 0 never, 1–3 few/some/many). Malware ignores apps.malwareMinThreat there.
+public sealed class CustomAppRules
+{
+    public BattleAppKind[] Icons { get; init; } = Array.Empty<BattleAppKind>();
+    public int[] Malware { get; init; } = new int[MalwareCue.Kinds.Length];
+    public int Level(string kind) => Array.IndexOf(MalwareCue.Kinds, kind) is int i and >= 0 && i < Malware.Length ? Math.Clamp(Malware[i], 0, 3) : 0;
+    // The random draw's weights in its own order: loading, update, virus.exe, ads, captcha, battery, cursor.
+    public double[] Weights() => new double[] { Level("loading"), Level("update"), Level("virus"), Level("ads"), Level("captcha"), Level("battery"), Level("cursor") };
+    // The wait between malware × this, by the most chosen: few 1.5, some 1, many 0.6.
+    public double WaitScale => Weights().Max() switch { >= 3 => 0.6, >= 2 => 1, _ => 1.5 };
+    // The chance a wave brings a slime's virus into an icon.
+    public double InfectChance => Level("infect") switch { 3 => 1, 2 => 0.75, 1 => 0.35, _ => 0 };
+    public bool AnyMalware => Malware.Any(level => level > 0);
 }
 
 // One cue of a stage's malware plan (StageSpec.MalwarePlan).
@@ -925,6 +945,52 @@ public sealed record BattleDataLoad(BattleSettings Settings, bool Custom, string
 
 public static class BattleData
 {
+    // The kinds waves can bring as written (picks, formations' members, squads, streams).
+    public static IEnumerable<string> WaveKinds(BattleSettings s, IEnumerable<WaveSpec> waves)
+    {
+        foreach (var wave in waves)
+        {
+            foreach (var kind in wave.Stream?.Weights.Keys ?? Enumerable.Empty<string>()) yield return kind;
+            foreach (var g in wave.Groups ?? Array.Empty<WaveGroup>())
+                if (g.Pick != null) { foreach (var kind in g.Pick.Keys) yield return kind; }
+                else if (g.Formation != null) { foreach (var id in g.Formation.Keys) foreach (var kind in s.Formation(id)?.Members ?? Enumerable.Empty<string>()) yield return kind; }
+                else if (g.Squad != null) { foreach (var m in g.Squad) yield return m.Enemy; }
+                else yield return g.Enemy;
+        }
+    }
+
+    // Every kind these can lead to (helpers a boss or an enemy calls, mounts, merged results, halves,
+    // a brood), with the kinds of link and the kinds the cursor beats among them: at most two of each
+    // in one battle (the data's check, and 1.5 M29a's Custom Fight).
+    public static (HashSet<string> Links, HashSet<string> Mouse) Reach(BattleSettings s, IEnumerable<string> kinds)
+    {
+        var ids = s.EnemyTypes.Select(e => e.Id).ToHashSet();
+        var reach = new Stack<string>(kinds);
+        var met = new HashSet<string>();
+        var links = new HashSet<string>();
+        var mouse = new HashSet<string>();
+        while (reach.Count > 0)
+        {
+            string kind = reach.Pop();
+            if (!ids.Contains(kind) || !met.Add(kind)) continue;
+            var e = s.Enemy(kind);
+            if (e.UsesMouse) mouse.Add(kind);
+            if (e.ActiveLink is LinkSpec link)
+            {
+                links.Add(link.Kind);
+                if (link.Mount != null) reach.Push(link.Mount);
+                if (link.Into != null) reach.Push(link.Into);
+            }
+            if (e.SummonAt > 0) reach.Push(e.SummonType);
+            if (e.Split != null) reach.Push(e.Split.Into);
+            foreach (var p in e.Phases ?? Array.Empty<BossPhase>()) foreach (var call in s.PhaseCalls(p)) reach.Push(call);
+            // 1.5 M18: what a brood lays, the links a crown ties.
+            if (e.Brood != null) reach.Push(e.Brood.Enemy);
+            foreach (var l in e.CrownLinks ?? Array.Empty<LinkSpec>()) if (l.Enabled) links.Add(l.Kind);
+        }
+        return (links, mouse);
+    }
+
     // The skill ids a "skill" field may name, for error messages.
     public static string KnownSkills => string.Join(", ", BattleSkills.All.Select(info => BattleSkills.Id(info.Skill)));
     public const int SchemaVersion = 1;
@@ -1716,38 +1782,7 @@ public static class BattleData
         // helpers a boss or an enemy calls, mounts, merged results) counts. 1.5 M24: Infinity checks each stretch.
         void Limits(IEnumerable<WaveSpec> waves, string at)
         {
-            var reach = new Stack<string>();
-            foreach (var wave in waves)
-            {
-                foreach (var kind in wave.Stream?.Weights.Keys ?? Enumerable.Empty<string>()) reach.Push(kind);
-                foreach (var g in wave.Groups ?? Array.Empty<WaveGroup>())
-                    if (g.Pick != null) foreach (var kind in g.Pick.Keys) reach.Push(kind);
-                    else if (g.Formation != null) { foreach (var id in g.Formation.Keys) foreach (var kind in s.Formation(id)?.Members ?? Enumerable.Empty<string>()) reach.Push(kind); }
-                    else if (g.Squad != null) foreach (var m in g.Squad) reach.Push(m.Enemy);
-                    else reach.Push(g.Enemy);
-            }
-            var met = new HashSet<string>();
-            var links = new HashSet<string>();
-            var mouse = new HashSet<string>();
-            while (reach.Count > 0)
-            {
-                string kind = reach.Pop();
-                if (!ids.Contains(kind) || !met.Add(kind)) continue;
-                var e = s.Enemy(kind);
-                if (e.UsesMouse) mouse.Add(kind);
-                if (e.ActiveLink is LinkSpec link)
-                {
-                    links.Add(link.Kind);
-                    if (link.Mount != null) reach.Push(link.Mount);
-                    if (link.Into != null) reach.Push(link.Into);
-                }
-                if (e.SummonAt > 0) reach.Push(e.SummonType);
-                if (e.Split != null) reach.Push(e.Split.Into);
-                foreach (var p in e.Phases ?? Array.Empty<BossPhase>()) foreach (var call in s.PhaseCalls(p)) reach.Push(call);
-                // 1.5 M18: what a brood lays, the links a crown ties.
-                if (e.Brood != null) reach.Push(e.Brood.Enemy);
-                foreach (var l in e.CrownLinks ?? Array.Empty<LinkSpec>()) if (l.Enabled) links.Add(l.Kind);
-            }
+            var (links, mouse) = Reach(s, WaveKinds(s, waves));
             if (links.Count > EnemyLinks.MaxKinds)
                 throw new InvalidDataException($"{at} brings {links.Count} kinds of link ({string.Join(", ", links)}): at most {EnemyLinks.MaxKinds} in one battle");
             // The cursor is not overworked: at most two kinds the cursor beats (1.5 M13) in one battle.

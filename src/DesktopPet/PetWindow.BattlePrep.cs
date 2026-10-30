@@ -218,6 +218,8 @@ public sealed partial class PetWindow
         // A run's loadout starts no battle yet: only what keeps the panel open is checked.
         if ((prepForExpedition ? BattlePrepRefusal() : BattleRefusal()) is string reason) { UpdateBattlePrep(); return reason; }
         if (PrepSkillsRefusal() is string skills) { UpdateBattlePrep(); return skills; }
+        if (PrepFightRefusal() is string fight) { UpdateBattlePrep(); return fight; }
+        if (fightBuilderWindow != null) CloseFightBuilder();
         SetBattleWeapon(prepWeapon);
         // A loadout with a lent skill is not kept as the choice (that skill is not open yet): it goes
         // to this battle only.
@@ -233,7 +235,8 @@ public sealed partial class PetWindow
             guideChoice = prepGuide;
             if (preferences.AdventureGuide != prepGuide) { preferences.AdventureGuide = prepGuide; SavePreferences(); }
         }
-        return StartBattle(stage: prepStage);
+        // 1.5 M29a: the free battle is the chosen Custom Fight (Default: the old free battle, no stage).
+        return StartBattle(stage: PrepFree ? ChosenFightStage() : prepStage);
     }
 
     // Close: no battle, no win or loss, no record; the pet goes back to its own life. For an
@@ -258,6 +261,8 @@ public sealed partial class PetWindow
     {
         bool was = battlePreparing;
         battlePreparing = false;
+        CloseFightBuilder();
+        prepFightChips.Clear(); prepFightRow = null; prepFightLabel = prepFightHint = prepFightButtonText = null; prepFightButton = null;
         StopPreviewSwing();
         battlePrepWindow?.Close();
         battlePrepWindow = null;
@@ -277,6 +282,7 @@ public sealed partial class PetWindow
     private void TickBattlePrep(double dt)
     {
         if (!battlePreparing || battlePrepWindow == null) return;
+        if (TickFightBuilder()) return; // 1.5 M29a: the builder stands in the panel's place.
         if (context.Fullscreen) { StopPreviewSwing(); if (battlePrepWindow.IsVisible) battlePrepWindow.Hide(); return; }
         if (!battlePrepWindow.IsVisible) { battlePrepWindow.Show(); PlaceBattlePrep(); }
         prepRefresh += dt;
@@ -482,7 +488,7 @@ public sealed partial class PetWindow
         prepReady = ready; prepReadyText = readyText; prepCancelText = cancelText;
         var actions = PanelActions(new UIElement[] { prepTipText }, new UIElement[] { ready, cancel });
 
-        var choices = new StackPanel { Width = 300, Children = { prepWeaponLabel, cards, prepLevelLabel, levels, prepSkillsLabel, skillRows, prepSkillsHint, prepAppsLabel, prepAppsChip, prepAppsHint, prepGuideLabel, prepGuideChip, prepGuideHint } };
+        var choices = new StackPanel { Width = 300, Children = { prepWeaponLabel, cards, prepLevelLabel, levels, BuildPrepFight(), prepSkillsLabel, skillRows, prepSkillsHint, prepAppsLabel, prepAppsChip, prepAppsHint, prepGuideLabel, prepGuideChip, prepGuideHint } };
         var title = PanelTitle(prepTitle);
         var window = CreateGamePanel(new StackPanel { Children = { title, new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 10, 0, 0), Children = { stage, choices } },
             prepBuild, prepData, prepStatus } }, actions, "Pet setup");
@@ -580,7 +586,8 @@ public sealed partial class PetWindow
         Show(prepData, BattleDataError != null
             ? L("File battle.json của bạn có lỗi nên dùng dữ liệu gốc: ", "Your battle.json has a mistake, so the built-in battle is used: ") + BattleDataError
             : BattleDataCustom ? L("Đang dùng dữ liệu trận tùy chỉnh (battle.json).", "Using your custom battle data (battle.json).") : null);
-        string? waiting = (prepForExpedition ? BattlePrepRefusal() : BattleRefusal()) ?? PrepSkillsRefusal();
+        UpdatePrepFight();
+        string? waiting = (prepForExpedition ? BattlePrepRefusal() : BattleRefusal()) ?? PrepSkillsRefusal() ?? PrepFightRefusal();
         Show(prepStatus, waiting != null ? L("Chưa thể bắt đầu: ", "Not yet: ") + waiting : null);
         prepReadyText!.Text = prepForExpedition ? L("Lên đường", "Set out") : L("Sẵn sàng", "Ready");
         prepCancelText!.Text = prepStage != null || prepForExpedition ? L("‹ Bản đồ", "‹ Map") : prepForEndless ? L("‹ Sảnh", "‹ Hub") : L("Đóng", "Close");

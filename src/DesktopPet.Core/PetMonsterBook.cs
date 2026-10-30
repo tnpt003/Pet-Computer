@@ -24,12 +24,17 @@ public sealed class MonsterBook
     // Pages shown: kind ids and FormationPage ids.
     public List<string> Seen { get; set; } = new();
     public bool Seeded { get; set; }
+    // 1.5 M29a: the app icons and malware met (BattleSim.MetApps ids), for the Custom Fight's locks;
+    // AppsSeeded: filled once from the Adventure stages already won.
+    public List<string> Apps { get; set; } = new();
+    public bool AppsSeeded { get; set; }
     [JsonIgnore] public bool ReadOnly { get; private set; }
 
     public static string DefaultPath => Path.Combine(PetPreferences.DataDirectory, "monster-book.json");
     public static string FormationPage(string id) => "f:" + id;
 
     public bool Knows(string kind) => Met.Contains(kind);
+    public bool KnowsApp(string id) => Apps.Contains(id);
     public bool KnowsFormation(string id) => Formations.Contains(id);
     public int DefeatedOf(string kind) => Defeated.GetValueOrDefault(kind);
 
@@ -46,7 +51,7 @@ public sealed class MonsterBook
     private void Normalize()
     {
         static List<string> Clean(List<string>? list) => (list ?? new()).Where(id => !string.IsNullOrWhiteSpace(id)).Distinct().ToList();
-        Met = Clean(Met); Formations = Clean(Formations); Seen = Clean(Seen);
+        Met = Clean(Met); Formations = Clean(Formations); Seen = Clean(Seen); Apps = Clean(Apps);
         Defeated = (Defeated ?? new()).Where(pair => !string.IsNullOrWhiteSpace(pair.Key) && pair.Value > 0).ToDictionary(pair => pair.Key, pair => pair.Value);
     }
 
@@ -85,6 +90,35 @@ public sealed class MonsterBook
                 opened.Add(FormationPage(id));
             }
         return opened;
+    }
+
+    // 1.5 M29a: a battle's apps (changed: anything new).
+    public void AddApps(IEnumerable<string> apps, out bool changed)
+    {
+        changed = false;
+        foreach (var id in apps)
+            if (!string.IsNullOrWhiteSpace(id) && !Apps.Contains(id)) { Apps.Add(id); changed = true; }
+    }
+
+    // Once: what the Adventure stages already won surely showed: the five first icons in a stage with
+    // malware on, the malware its plan sends, the random malware and viruses its threat allows, and the
+    // Screenshot with the three newer malware where a stage has newer apps (chapter 2).
+    public bool SeedApps(CampaignSpec? campaign, BattleSettings data, AdventureProgress progress)
+    {
+        if (AppsSeeded) return false;
+        AppsSeeded = true;
+        var rules = data.Apps;
+        foreach (var stage in campaign?.Chapters.SelectMany(c => c.Stages) ?? Enumerable.Empty<StageSpec>())
+        {
+            if (!progress.Completed.Contains(stage.Id) || !stage.Malware || rules == null) continue;
+            AddApps(new[] { "tabs", "ping", "endtask", "undo", "trash" }, out _);
+            AddApps(stage.MalwarePlan?.Select(c => c.Kind) ?? Enumerable.Empty<string>(), out _);
+            double threat = stage.Threat * (stage.Waves.Length == 0 ? 1 : stage.Waves.Max(w => w.Threat));
+            if (stage.MalwarePlan == null && threat >= rules.MalwareMinThreat) AddApps(new[] { "loading", "update", "virus", "ads" }, out _);
+            if (stage.MalwarePlan == null && threat >= rules.InfectMinThreat) AddApps(new[] { "infect" }, out _);
+            if (stage.NewAppsFrom > 0) AddApps(new[] { "screenshot", "captcha", "battery", "cursor" }, out _);
+        }
+        return true;
     }
 
     // The page a kind is shown on: its own, or the one it shares (EnemyType.Page).

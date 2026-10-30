@@ -39,7 +39,8 @@ public sealed partial class PetWindow
     {
         if (achievementsCounted == b) return new();
         achievementsCounted = b;
-        if (battleCustomData) return new();
+        // 1.5 M29a: nor a Custom Fight (it gives no rewards; the Default one is the old free battle).
+        if (battleCustomData || b.Stage is { Custom: true }) return new();
         var earned = AchievementBook.Add(PetAchievements.All, AchievementStats.From(b), out bool changed);
         if (changed) SaveAchievements();
         if (earned.Count > 0) System.Diagnostics.Trace.WriteLine($"Achievements earned: {string.Join(", ", earned.Select(a => a.Id))}.");

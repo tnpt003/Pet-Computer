@@ -18,7 +18,9 @@ namespace DesktopPet;
 // boredom), hides while a fullscreen app runs and starts nothing by itself.
 public sealed partial class PetWindow
 {
-    public const string HubAdventure = "adventure", HubExpedition = "expedition", HubInfinity = "infinity";
+    public const string HubAdventure = "adventure", HubExpedition = "expedition", HubInfinity = "infinity", HubCustom = "custom";
+    private Border? hubFightButton;
+    private TextBlock? hubFightText;
     private static readonly string[] HubModes = { HubAdventure, HubExpedition, HubInfinity };
 
     private bool battleHubOpen;
@@ -69,6 +71,7 @@ public sealed partial class PetWindow
             HubAdventure => OpenAdventureMap(),
             HubExpedition => OpenExpeditionMap(),
             HubInfinity => EndlessRefusal() ?? OpenBattlePrep(forEndless: true),
+            HubCustom => OpenBattlePrep(),
             _ => L("Không có chế độ này.", "There is no such mode.")
         };
     }
@@ -101,6 +104,7 @@ public sealed partial class PetWindow
         hubCards.Clear();
         hubRewardsShown = false; hubRewards = null; hubCardsRow = null; hubRewardsText = null;
         hubBookShown = false; hubBook = null; hubBookText = null; hubBookButton = null; bookDetail = null;
+        hubFightButton = null; hubFightText = null;
         if (was) ApplyQuiet();
     }
 
@@ -184,11 +188,15 @@ public sealed partial class PetWindow
         var (book, bookText, _) = HudButton(() => ShowMonsterBook(!hubBookShown), plain: true);
         book.Margin = new Thickness(8, 0, 0, 0);
         hubBookButton = book; hubBookText = bookText; hubRewardsButton = rewards;
+        // 1.5 M29a: the Custom Fight (the free battle's setup panel with its presets).
+        var (fight, fightText, _) = HudButton(() => { if (BattleHubChoose(HubCustom) is string reason) ShowBattleNotice(reason); }, plain: true);
+        fight.Margin = new Thickness(8, 0, 0, 0);
+        hubFightButton = fight; hubFightText = fightText;
 
         var (close, closeText, _) = HudButton(CancelBattleHub, plain: true);
         close.Margin = new Thickness(0);
         hubCloseText = closeText;
-        var window = CreateGamePanel(new StackPanel { Children = { header, cards, hubRewards, hubBook, hubStatus } }, PanelActions(new UIElement[] { rewards, book }, new UIElement[] { close }), "Pet battle hub");
+        var window = CreateGamePanel(new StackPanel { Children = { header, cards, hubRewards, hubBook, hubStatus } }, PanelActions(new UIElement[] { rewards, book, fight }, new UIElement[] { close }), "Pet battle hub");
         window.Closed += (_, _) => { if (battleHubWindow == window) battleHubWindow = null; };
         battleHubWindow = window;
         UpdateBattleHub();
@@ -216,6 +224,8 @@ public sealed partial class PetWindow
         // One page at a time: the other page's button steps aside.
         if (hubRewardsButton != null) hubRewardsButton.Visibility = hubBookShown ? Visibility.Collapsed : Visibility.Visible;
         if (hubBookButton != null) hubBookButton.Visibility = hubRewardsShown ? Visibility.Collapsed : Visibility.Visible;
+        if (hubFightText != null) hubFightText.Text = L("Trận tự chọn", "Custom Fight");
+        if (hubFightButton != null) hubFightButton.Visibility = hubRewardsShown || hubBookShown ? Visibility.Collapsed : Visibility.Visible;
         RefreshRewards();
         RefreshMonsterBook();
         foreach (var (mode, card, art, ribbon, ribbonText, name, desc, state, bar, fill) in hubCards)

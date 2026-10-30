@@ -229,7 +229,7 @@ public sealed partial class PetWindow
         return true;
     }
     // A stage of a chapter without the choice (chapter 1) always has the five first skills.
-    private bool StageSkillChoice(StageSpec? stage) => stage is not { Endless: false } || AdventureOf(BattleTuning)?.SkillChoice(stage) == true;
+    private bool StageSkillChoice(StageSpec? stage) => stage is not { Endless: false } || stage.Custom || AdventureOf(BattleTuning)?.SkillChoice(stage) == true;
     // 1.5 M21: the setup panel's loadout with a lent skill (not kept as the choice), for the battle it starts.
     private BattleSkill[]? lentLoadout;
     private IReadOnlyList<BattleSkill> BattleLoadoutFor(StageSpec? stage, ExpeditionBattle? expedition)
@@ -239,8 +239,9 @@ public sealed partial class PetWindow
         lentLoadout = null;
         if (!StageSkillChoice(stage)) return BattleSkills.Default;
         // A stage that lends a skill carries it (Play again too, which skips the setup panel).
-        var lent = stage is { Endless: false } ? AdventureOf(BattleTuning)?.Lent(stage) : null;
-        return global::DesktopPet.Adventure.WithLent(prepared != null && lent != null && prepared.Contains(lent.Value) ? prepared : LoadoutChoice(stage == null), lent);
+        var lent = stage is { Endless: false, Custom: false } ? AdventureOf(BattleTuning)?.Lent(stage) : null;
+        // A Custom Fight carries the free battle's choice (1.5 M29a).
+        return global::DesktopPet.Adventure.WithLent(prepared != null && lent != null && prepared.Contains(lent.Value) ? prepared : LoadoutChoice(stage is null or { Custom: true }), lent);
     }
     // "Suggested: Fan, Push" (1.5 M21: a chapter 2 stage's suggestSkills).
     private string SuggestLine(IEnumerable<string> ids) => L("Gợi ý mang: ", "Suggested: ")
@@ -306,15 +307,16 @@ public sealed partial class PetWindow
         battle = new BattleSim(BattleTuning, battleArea.Left, battleArea.Right, difficulty: level is BattleDifficulty chosen && Enum.IsDefined(chosen) ? chosen : BattleDifficultyChoice,
             weapon: BattleTuning.Weapon(weapon ?? preferences.BattleWeapon).Id, stage: stage,
             // The build the stage before was won with, or the Expedition run's.
-            build: expedition?.Expedition.Run?.Build ?? (stage is { Endless: false } ? AdventureOf(BattleTuning)?.StartBuild(stage) : null),
+            build: expedition?.Expedition.Run?.Build ?? (stage is { Endless: false, Custom: false } ? AdventureOf(BattleTuning)?.StartBuild(stage) : null),
             seed: expedition?.Node.Seed, startHp: expedition?.Expedition.Run?.Hp, threat: expedition?.Node.Threat ?? 1, relics: expedition?.Expedition.Run?.Relics,
             // The app icons: as the Expedition run set out, else the setup panel's choice.
-            apps: expedition?.Expedition.Run is ExpeditionRun run ? !run.NoApps : preferences.BattleApps,
+            // 1.5 M29a: a Custom Fight has apps when it was built with icons.
+            apps: expedition?.Expedition.Run is ExpeditionRun run ? !run.NoApps : stage is { Custom: true } ? stage.CustomApps != null : preferences.BattleApps,
             skills: BattleLoadoutFor(stage, expedition),
             // 1.5 M19: drops in an Expedition step (with coins) and in Infinity (fish and potions only);
             // 1.5 M21: and in a chapter with "drops" (chapter 2, fish and potions).
             loot: expedition != null ? BattleLoot.Coins
-                : stage is { Endless: true } || (stage != null && AdventureOf(BattleTuning)?.Drops(stage) == true) ? BattleLoot.Items : BattleLoot.None,
+                : stage is { Endless: true } || (stage is { Custom: false } && AdventureOf(BattleTuning)?.Drops(stage) == true) ? BattleLoot.Items : BattleLoot.None,
             // 1.5 M23b: the run's forge and a curse on this battle.
             weaponBonus: expedition?.Node.WeaponBonus ?? 0, eliteBonus: expedition?.Node.EliteBonus ?? 0);
         battleExpedition = expedition;
@@ -334,6 +336,7 @@ public sealed partial class PetWindow
         if (stage != null) StageBattleStarted(stage);
         // The seed and rules let a run be replayed (BattleSim's seed parameter).
         System.Diagnostics.Trace.WriteLine((expedition != null ? $"Battle started: Expedition step {expedition.Node.Step + 1} {stage!.Id}, threat ×{expedition.Node.Threat:0.00}"
+            : stage is { Custom: true } ? $"Battle started: Custom Fight {stage.Id}, {stage.Waves.Length} waves"
             : stage != null ? $"Battle started: Adventure stage {stage.Id} r{stage.RulesVersion}" : "Battle started")
             + $", {battle.Difficulty}, {battle.Weapon.Id}, seed {battle.Seed}"
             + (BattleSkills.IsDefault(battle.Skills) ? "." : $", skills {string.Join("/", battle.Skills.Select(BattleSkills.Id))}."));
@@ -627,12 +630,13 @@ public sealed partial class PetWindow
             // only; an Expedition step to its run only; Infinity to its own records (the wave reached).
             bool endless = battle.Endless;
             ExpeditionStepOutcome? step = battleExpedition != null ? CountExpeditionStep(battle, won) : null;
-            var outcome = step == null && !endless ? CountStageRun(battle, won) : default;
+            bool customFight = battle.Stage is { Custom: true }; // 1.5 M29a: no records, progress or achievements.
+            var outcome = step == null && !endless && !customFight ? CountStageRun(battle, won) : default;
             // Infinity's milestone rewards this run earned (none with custom data: they come from the records).
             int clearedBefore = endless && EndlessRewards is EndlessSpec rewards ? BattleRecords.EndlessCleared(rewards) : 0;
             var news = endless && BattleTuning.Endless is EndlessSpec infinity
                 ? BattleRecords.AddEndless(infinity, battle.Weapon.Id, battle.Difficulty, battleCustomData, battle.Wave, battle.Defeated, battle.WavesCleared, noApps: !battle.AppsOn)
-                : battle.Stage != null ? outcome.News : BattleRecords.Add(battle.Weapon.Id, battle.Difficulty, battleCustomData, won, battle.Defeated, battle.FightSeconds);
+                : battle.Stage != null || customFight ? outcome.News : BattleRecords.Add(battle.Weapon.Id, battle.Difficulty, battleCustomData, won, battle.Defeated, battle.FightSeconds);
             if ((battle.Stage == null || endless) && persistPreferences) BattleRecords.Save();
             if (endless) endlessEarned = null;
             var bookPages = CountMonsterBook(battle); // 1.5 M27 (PetWindow.MonsterBook.cs)
@@ -865,6 +869,7 @@ public sealed partial class PetWindow
         // The weapon of this battle next to the cat's name.
         string stagePart = battleExpedition is ExpeditionBattle x ? LF($" · Viễn chinh {x.Node.Step + 1}/{x.Expedition.Spec.StepCount}", $" · Expedition {x.Node.Step + 1}/{x.Expedition.Spec.StepCount}")
             : battle?.Endless == true ? L(" · Vô tận", " · Infinity")
+            : battle?.Stage is { Custom: true } custom ? " · " + custom.Name(preferences.Language)
             : battle?.Stage is StageSpec stage ? LF($" · Màn {StageNumber(stage)}", $" · Stage {StageNumber(stage)}") : "";
         battleHud = new BattleHud($"{preferences.Name} · {(battle != null ? WeaponName(battle.Weapon) : "")}{stagePart}", portrait, () => preferences.Language, battle?.Skills);
         battleHud.RunCoins = battleExpedition?.Expedition.Run?.Coins ?? 0;

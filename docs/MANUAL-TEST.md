@@ -847,3 +847,13 @@ Dữ liệu gốc, không cần file tùy chỉnh (chương 2, Lối Bãi rác, 
 - [ ] Rời trận giữa chừng: số slime đã hạ vẫn cộng vào "Thợ săn slime". Trận chạy bằng battle.json tự sửa: không cộng gì.
 - [ ] Ba bộ lông và ba phụ kiện mới nhìn ổn khi đi, ngủ, bị kéo, ném, trèo, trong trận (vũ khí, nổi giận đỏ lông); chữ vi/en/ja không tràn; DPI 150/200%.
 - [ ] Cảm giác (ghi vào Nhật ký chơi thử): mốc 500/3000 slime, 50 trận, 10 trùm có quá dễ/khó không.
+
+### Trận tự chọn (1.5 M29a, 2026-10-30)
+- [ ] Sảnh chiến đấu: nút "Trận tự chọn" cạnh "Sổ tay quái"; bấm mở bảng chuẩn bị có mục "Trận tự chọn" (chip "Mặc định", dòng tóm tắt, nút "Dựng trận…"). "Đóng" về desktop như trước.
+- [ ] Bộ Mặc định: Sẵn sàng ra đúng trận tự do cũ (3 đợt slime rồi Vua Slime, không app); kỷ lục trận tự do và thành tựu vẫn cộng như trước.
+- [ ] "Dựng trận…": bảng dựng trận thay chỗ bảng chuẩn bị. Bộ Mặc định không sửa được; "+ Bộ mới" tạo "Bộ 1" (chỉ có quái đã gặp). Ô quái chưa gặp là bóng đen "???"; bấm ô đã gặp đổi Tắt → Ít → Vừa → Nhiều. Trùm, số đợt, quái đợt đầu, tối đa trên sàn, tinh anh, sức mạnh, thẻ giữa đợt, icon app, app độc đổi được và nhớ sau khi tắt/mở lại app.
+- [ ] Chọn quá 2 loại liên kết (ví dụ slime xích + nhạc trưởng + hợp thể) hoặc quá 2 quái dùng chuột: bị từ chối, có dòng lý do màu cam.
+- [ ] Trận của một bộ: đúng quái/trùm/app đã chọn; app độc ra cả khi sức mạnh ×1,0; có thẻ giữa đợt nếu bật. Kết quả ghi "Trận tự chọn · Bộ 1", "không lưu kỷ lục"; kỷ lục trận tự do và thành tựu không đổi. "Chơi lại" ra đúng bộ đó; "Kết thúc" về desktop.
+- [ ] Xóa bộ đang chọn: chọn bộ kế bên (hết bộ thì về Mặc định). Tối đa 6 bộ ("+ Bộ mới" mờ).
+- [ ] Bảng dựng trận vừa màn hình thấp (cuộn được), DPI 150/200%, màn phụ; app toàn màn hình thì ẩn, đóng app thì hiện lại; chữ vi/en/ja không tràn.
+- [ ] Cảm giác (ghi vào Nhật ký chơi thử): mức Ít/Vừa/Nhiều của app độc và virus có hợp lý không; có cần đổi tên bộ không.

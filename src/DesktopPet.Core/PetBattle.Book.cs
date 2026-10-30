@@ -31,4 +31,13 @@ public sealed partial class BattleSim
     }
 
     private void NoteFormation(string id) => metFormations.Add(id);
+
+    // 1.5 M29a: the app icons on this battle's desktop and the malware thrown at it (MalwareCue.Kinds;
+    // "infect": a slime's virus shot at an icon), for the Custom Fight's locks.
+    private readonly HashSet<string> metApps = new();
+    public IReadOnlyCollection<string> MetApps => metApps;
+    private void NoteApp(string id) => metApps.Add(id);
+    public static string AppId(BattleAppKind kind) => kind.ToString().ToLowerInvariant();
+    // ThrowMalware's draw order (CustomAppRules.Weights).
+    private static readonly string[] MalwareIds = { "loading", "update", "virus", "ads", "captcha", "battery", "cursor" };
 }

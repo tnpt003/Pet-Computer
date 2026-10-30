@@ -358,6 +358,7 @@ public sealed partial class PetWindow
         // Expedition; encounters have no tips).
         if (battleExpedition is ExpeditionBattle x) { battleHud?.ShowBanner(StepTitle(x.Node.Step, x.Expedition.Spec.StepCount) + " · " + stage.Name(preferences.Language), 0, 1.4); return; }
         if (stage.Endless) { battleHud?.ShowBanner(stage.Name(preferences.Language), 0, 1.4); return; }
+        if (stage.Custom) { battleHud?.ShowBanner(CustomFightTitle(stage), 0, 1.4); return; } // 1.5 M29a
         battleHud?.ShowBanner(StageTitle(stage), 0, 1.4);
     }
 
@@ -372,7 +373,7 @@ public sealed partial class PetWindow
         var expedition = battleExpedition;
         EndBattle();
         if (expedition != null) { LeaveExpeditionBattle(expedition); return; }
-        if (stage != null && OpenAdventureMap(stage.Id) is string reason) ShowBattleNotice(reason);
+        if (stage is { Custom: false } && OpenAdventureMap(stage.Id) is string reason) ShowBattleNotice(reason);
     }
 
     // Reward accessories offered in Settings: the received ones (and one already worn).

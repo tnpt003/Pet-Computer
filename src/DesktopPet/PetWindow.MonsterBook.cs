@@ -38,7 +38,10 @@ public sealed partial class PetWindow
             if (monsterBook != null) return monsterBook;
             monsterBook = persistPreferences ? MonsterBook.Load(MonsterBook.DefaultPath) : new();
             // A book started after chapters were already won: those stages' enemies count as met.
-            if (!BattleDataCustom && monsterBook.Seed(Adventure?.Campaign, BattleTuning, AdventureProgress)) SaveMonsterBook();
+            bool seeded = !BattleDataCustom && monsterBook.Seed(Adventure?.Campaign, BattleTuning, AdventureProgress);
+            // 1.5 M29a: and their apps (for the Custom Fight's locks).
+            seeded |= !BattleDataCustom && monsterBook.SeedApps(Adventure?.Campaign, BattleTuning, AdventureProgress);
+            if (seeded) SaveMonsterBook();
             return monsterBook;
         }
     }
@@ -56,7 +59,8 @@ public sealed partial class PetWindow
         bookCounted = b;
         if (battleCustomData) return new();
         var opened = MonsterBook.Add(BattleTuning, b.MetKinds, b.DefeatedKinds, b.MetFormations, out bool changed);
-        if (changed) SaveMonsterBook();
+        MonsterBook.AddApps(b.MetApps, out bool apps); // 1.5 M29a
+        if (changed || apps) SaveMonsterBook();
         if (opened.Count > 0) System.Diagnostics.Trace.WriteLine($"Monster book: new pages {string.Join(", ", opened)}.");
         return opened;
     }

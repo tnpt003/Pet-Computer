@@ -120,14 +120,17 @@ public sealed partial class BattleSim
     private void EnsureDesktop()
     {
         if (AppRules is not AppsSpec rules) return;
+        // 1.5 M29a: a Custom Fight has the icons it was built with (the Screenshot among them or not).
+        var custom = Stage?.CustomApps;
         if (desktop.Count == 0)
-            foreach (var kind in IconKinds) AddIcon(kind, rules);
-        if (NewApps && !desktop.Any(a => a.Kind == BattleAppKind.Screenshot)) AddIcon(BattleAppKind.Screenshot, rules);
+            foreach (var kind in custom?.Icons ?? IconKinds) AddIcon(kind, rules);
+        if (custom == null && NewApps && !desktop.Any(a => a.Kind == BattleAppKind.Screenshot)) AddIcon(BattleAppKind.Screenshot, rules);
     }
 
     private void AddIcon(BattleAppKind kind, AppsSpec rules)
     {
         var (col, row) = FreeCell(null) ?? (0, 0);
+        NoteApp(AppId(kind)); // 1.5 M29a: the Monster Book's apps (PetBattle.Book.cs).
         desktop.Add(new DesktopApp { Id = nextAppId++, Kind = kind, Col = col, Row = row, FromCol = col, FromRow = row, Charge = Math.Clamp(rules.App(kind).Start ?? rules.StartCharge, 0, 1), BornAt = Time });
     }
 
@@ -203,8 +206,9 @@ public sealed partial class BattleSim
     // usual wait, then every MalwareEveryMin–MalwareEveryMax s.
     private void StepMalware(double dt, AppsSpec rules)
     {
-        if (Threat < rules.MalwareMinThreat || MalwareSeconds < (Stage?.MalwareFrom ?? 0)) return;
-        double Wait() => rules.MalwareEveryMin + appRandom.NextDouble() * (rules.MalwareEveryMax - rules.MalwareEveryMin);
+        var custom = Stage?.CustomApps; // 1.5 M29a: chosen malware comes at any threat, as often as chosen.
+        if ((custom == null && Threat < rules.MalwareMinThreat) || MalwareSeconds < (Stage?.MalwareFrom ?? 0)) return;
+        double Wait() => (rules.MalwareEveryMin + appRandom.NextDouble() * (rules.MalwareEveryMax - rules.MalwareEveryMin)) * (custom?.WaitScale ?? 1);
         if (double.IsNaN(malwareClock)) malwareClock = Wait() * 0.5;
         malwareClock -= dt;
         if (malwareClock > 0) return;
@@ -236,6 +240,7 @@ public sealed partial class BattleSim
             case "cursor": FreezeCursor(rules); sent = MalwareOut(6); break;
             default: OpenAds(rules, null); sent = MalwareOut(3); break;
         }
+        if (sent) NoteApp(cue.Kind);
         if (sent || kind < 0) malwareCued++;
     }
 
@@ -258,7 +263,7 @@ public sealed partial class BattleSim
         if (!slimes.Any(s => s.Targetable)) return;
         // 1.5 M26: the newer three only where the battle's newer apps are on (elsewhere 0: the draw is as before).
         bool newer = NewApps;
-        double[] weights = { rules.LoadingWeight, rules.UpdateWeight, rules.VirusExeWeight, rules.AdWeight,
+        double[] weights = Stage?.CustomApps is CustomAppRules custom ? custom.Weights() : new[] { rules.LoadingWeight, rules.UpdateWeight, rules.VirusExeWeight, rules.AdWeight,
             newer ? rules.CaptchaWeight : 0, newer ? rules.BatteryWeight : 0, newer ? rules.CursorWeight : 0 };
         int outNow = Enumerable.Range(0, weights.Length).Count(MalwareOut);
         if (outNow >= (Stage?.MaxMalware ?? rules.MaxMalware)) return; // 1.5 M21: a stage may allow more (chapter 2: 4).
@@ -272,6 +277,7 @@ public sealed partial class BattleSim
         while (pick < weights.Length - 1 && (weights[pick] <= 0 || roll >= weights[pick])) { roll -= weights[pick]; pick++; }
         // A hair of rounding past the last kind drawn lands on it (never on a kind of weight 0).
         while (pick > 0 && weights[pick] <= 0) pick--;
+        NoteApp(MalwareIds[pick]);
         switch (pick)
         {
             case 0: ThrowLoading(rules); break;
@@ -288,6 +294,7 @@ public sealed partial class BattleSim
     // wave; with no icon to take it tries again a second later).
     private void StepEliteViruses(double dt, AppsSpec rules)
     {
+        if (Stage?.CustomApps is { } custom && custom.Level("infect") == 0) return; // 1.5 M29a: no viruses chosen.
         foreach (var slime in slimes)
         {
             if (!slime.Targetable || slime.Decoy || slime.Elite is not { VirusEvery: > 0 } elite) continue;
@@ -363,6 +370,11 @@ public sealed partial class BattleSim
         }
         // A stage without malware, or one with a plan (it sends the infection itself), draws none.
         if (Stage is { Malware: false } or { MalwarePlan: not null }) return;
+        if (Stage?.CustomApps is CustomAppRules custom)
+        {
+            if (custom.InfectChance > 0 && appRandom.NextDouble() < custom.InfectChance) infectTimer = 3 + appRandom.NextDouble() * 5;
+            return;
+        }
         if (Threat >= rules.InfectMinThreat && appRandom.NextDouble() < rules.InfectChance) infectTimer = 3 + appRandom.NextDouble() * 5;
     }
 
@@ -600,6 +612,7 @@ public sealed partial class BattleSim
         var app = clean[appRandom.Next(clean.Count)];
         Launch(LaunchKind.Goo, app, slime.X, slime.Height * 0.8, GooSeconds, toIcon: true).SlimeId = slime.Id;
         events.Add(new(BattleEventKind.GooShot, slime.X, slime.Id));
+        NoteApp("infect");
         return true;
     }
 

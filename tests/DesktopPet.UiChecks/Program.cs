@@ -989,6 +989,7 @@ internal static class Program
         await UpgradeChecks.Run(window, pet, behavior, preferences, Check);
         await PanelHeightChecks.Run(window, pet, preferences, Check);
         await BagChecks.Run(window, pet, behavior, preferences, Check);
+        await CustomFightChecks.Run(window, pet, behavior, preferences, Check);
         await ContentChecks.Run(window, pet, behavior, preferences, Check);
         await AcceptanceChecks.Run(window, pet, behavior, preferences, Check);
         if (reviewLanguage != null)

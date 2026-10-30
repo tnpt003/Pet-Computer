@@ -237,8 +237,8 @@ public sealed partial class PetWindow
             if (battleExpedition is ExpeditionBattle x)
                 return new(BagExpedition, b, plain, b.CatHp, StepTitle(x.Node.Step, x.Expedition.Spec.StepCount) + " · " + DifficultyName(b.Difficulty), x.Expedition, x.Expedition.Run, true);
             if (b.Endless) return new(BagEndless, b, plain, b.CatHp, LF($"Đợt {b.Wave}", $"Wave {b.Wave}") + " · " + DifficultyName(b.Difficulty), null, null, true);
-            string where = (b.Stage is StageSpec stage ? StageTitle(stage) : L("Trận", "Battle")) + " · " + DifficultyName(b.Difficulty);
-            return new(b.Stage != null ? BagAdventure : BagBattle, b, plain, b.CatHp, where, null, null, true);
+            string where = (b.Stage is { Custom: true } custom ? CustomFightTitle(custom) : b.Stage is StageSpec stage ? StageTitle(stage) : L("Trận", "Battle")) + " · " + DifficultyName(b.Difficulty);
+            return new(b.Stage is { Custom: false } ? BagAdventure : BagBattle, b, plain, b.CatHp, where, null, null, true);
         }
         string weaponId = settings.Weapon(preferences.BattleWeapon).Id;
         if (bagContext == BagExpedition && Expedition is Expedition expedition)

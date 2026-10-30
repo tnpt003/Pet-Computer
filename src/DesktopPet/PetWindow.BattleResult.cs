@@ -121,6 +121,7 @@ public sealed partial class PetWindow
             : L("Thua rồi… mèo choáng váng", "Defeated… the cat sees stars");
         string level = DifficultyName(result.Difficulty), arms = result.WeaponLabel.Length > 0 ? result.WeaponLabel : result.Weapon;
         string place = result.Stage is not StageSpec played ? ""
+            : played.Custom ? CustomFightTitle(played) + " · "
             : played.Endless ? played.Name(preferences.Language) + " · "
             : result.Expedition is ExpeditionStepOutcome at ? ExpeditionStageTitle(at.Step, Expedition?.Spec.StepCount ?? at.Step + 1, played) + " · " : StageTitle(played) + " · ";
         var loadout = Line(PetUi.BodySize, bold: true); loadout.Text = place + $"{arms} · {level}";
@@ -141,7 +142,7 @@ public sealed partial class PetWindow
             actions = stepActions;
         }
         else if (result.Stage is { Endless: true }) actions = EndlessResult(result, info, arms, level, Choose);
-        else if (result.Stage is StageSpec stage)
+        else if (result.Stage is StageSpec stage && !stage.Custom)
         {
             var (lines, stageActions) = StageResult(result, stage, Choose);
             info.Children.Add(lines);
@@ -190,6 +191,14 @@ public sealed partial class PetWindow
             TextWrapping = TextWrapping.Wrap, MaxWidth = 300, Margin = new Thickness(0, 2, 0, 0)
         };
         // Records of this loadout (weapon id + difficulty; custom data kept apart), and what this battle beat.
+        // 1.5 M29a: a Custom Fight keeps none (the Default one is the old free battle, with them).
+        bool custom = result.Stage is { Custom: true };
+        if (custom)
+        {
+            var none = Line(PetUi.SmallSize, opacity: 0.75);
+            none.Text = L("Trận tự chọn: không lưu kỷ lục, không tính thành tựu.", "Custom Fight: no records, no achievements.");
+            info.Children.Add(none);
+        }
         if (result.News.Any)
         {
             var news = Line(PetUi.BodySize, RecordGold, true);
@@ -198,14 +207,14 @@ public sealed partial class PetWindow
             info.Children.Add(news);
         }
         var best = BattleRecords.For(result.Weapon, result.Difficulty, result.Custom);
-        if (!best.Empty)
+        if (!best.Empty && !custom)
         {
             var records = Line(PetUi.SmallSize, opacity: 0.85);
             records.Text = LF($"Kỷ lục ({arms} · {level}{(result.Custom ? ", dữ liệu tùy chỉnh" : "")}): ", $"Records ({arms} · {level}{(result.Custom ? ", custom data" : "")}): ") + RecordLine(best);
             info.Children.Add(records);
         }
         var legacy = BattleRecords.Legacy(result.Difficulty);
-        if (!legacy.Empty)
+        if (!legacy.Empty && !custom)
         {
             var old = Line(PetUi.CaptionSize, opacity: 0.6);
             old.Text = LF($"Trước phân loại trang bị ({level}): ", $"Before weapons were told apart ({level}): ") + RecordLine(legacy);
@@ -234,10 +243,12 @@ public sealed partial class PetWindow
         if (BattleRefusal() is string reason)
         {
             // The panel shows the reason itself; paused or fullscreen keep even the panel away.
-            return OpenBattlePrep(last.Weapon, last.Difficulty, last.Stage) is string refused ? refused : null;
+            return OpenBattlePrep(last.Weapon, last.Difficulty, last.Stage is { Custom: true } ? null : last.Stage) is string refused ? refused : null;
         }
         ReloadBattleData();
         if (last.Stage == null) return StartBattle(last.Weapon, last.Difficulty);
+        // 1.5 M29a: the same preset again, built anew (gone or empty now: the setup panel).
+        if (last.Stage.Custom) return CustomFightStage(last.Stage.Id) is StageSpec again ? StartBattle(last.Weapon, last.Difficulty, again) : OpenBattlePrep(last.Weapon, last.Difficulty);
         if (last.Stage.Endless) return EndlessRefusal() ?? StartBattle(last.Weapon, last.Difficulty, BattleTuning.Endless!.Stage());
         if (Adventure?.Stage(last.Stage.Id) is not StageSpec stage || !Adventure!.IsUnlocked(stage.Id)) return OpenAdventureMap();
         return StartBattle(last.Weapon, last.Difficulty, stage);

@@ -8,7 +8,7 @@ Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm 
 
 ---
 
-## #32 — Slime bám tường rơi xuống thì đuổi mèo, bám tường thì đứng yên một chỗ (2026-10-31, commit chưa có)
+## #32 — Slime bám tường rơi xuống thì đuổi mèo, bám tường thì đứng yên một chỗ (2026-10-31, commit 22cf959)
 - **Triệu chứng (góp ý người dùng):** bị choáng rơi xuống, slime bám tường chạy lại đánh mèo thay vì bám lên tường; trên tường nó chỉ đứng một độ cao mà bắn mãi.
 - **Nguyên nhân:** thiết kế M15: sau khi rơi nó nằm choáng `downed` 2,5 s rồi đánh dưới sàn `ground` 4 s mới leo lại; trên mép không có bước di chuyển nào.
 - **Sửa:** `ground` 0 (hết choáng đi thẳng về mép leo lên); khóa mới `cling.shift` (30): sau mỗi loạt gai trượt lên/xuống mép tới độ cao mới cách ít nhất 30 DIPs trong 60–110, tránh con khác cùng mép, bốc từ luồng random riêng `BattleRandom.Wall` (không đổi các luồng khác). Bù cân bằng: `downed` 2,5 → 3. Leo theo cả chiều cao màn hình: làm ở đợt B9 (cửa sổ riêng, người dùng duyệt 31/10).

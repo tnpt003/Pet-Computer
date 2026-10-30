@@ -257,12 +257,20 @@ internal static class ExpeditionTests
 
     private static void Balance(Action<bool, string> check, BattleSettings data, string? route = null)
     {
-        var levels = new[] { BattleDifficulty.Easy, BattleDifficulty.Normal, BattleDifficulty.Hard };
-        var weapons = new[] { BattleWeapon.Sword, BattleWeapon.Hammer };
-        var players = new[] { AdventureBalanceTests.Player.Simple, AdventureBalanceTests.Player.Casual };
+        Balance(check, data, route, new[] { BattleWeapon.Sword, BattleWeapon.Hammer }, new[] { BattleDifficulty.Easy, BattleDifficulty.Normal, BattleDifficulty.Hard },
+            new[] { AdventureBalanceTests.Player.Simple, AdventureBalanceTests.Player.Casual });
+        // 1.5 M29: the yarn and the glove (their own table so the one above stays comparable): Normal and
+        // Hard, the simple player, held to the same targets as the sword and hammer.
+        var newer = new[] { "yarn", "glove" }.Where(w => data.FindWeapon(w) != null).ToArray();
+        if (newer.Length > 0)
+            Balance(check, data, route, newer, new[] { BattleDifficulty.Normal, BattleDifficulty.Hard }, new[] { AdventureBalanceTests.Player.Simple }, ", 1.5 weapons");
+    }
+
+    private static void Balance(Action<bool, string> check, BattleSettings data, string? route, string[] weapons, BattleDifficulty[] levels, AdventureBalanceTests.Player[] players, string table = "")
+    {
         // A run is a chain of fights, so it varies more than one stage: twice the Adventure's seeds.
         const int seeds = AdventureBalanceTests.Seeds * 2;
-        Console.WriteLine($"Expedition balance{(route == null ? "" : " · " + route)} (simulation, not real play): weapon | level | player | route | runs won/{seeds} | avg steps passed | avg fight s (won runs) | battles/run | elites/run | relics at the end | HP % before the boss | HP % left (won runs)");
+        Console.WriteLine($"Expedition balance{table}{(route == null ? "" : " · " + route)} (simulation, not real play): weapon | level | player | route | runs won/{seeds} | avg steps passed | avg fight s (won runs) | battles/run | elites/run | relics at the end | HP % before the boss | HP % left (won runs)");
         var results = new Dictionary<(string, BattleDifficulty, AdventureBalanceTests.Player, Policy), (int Wins, double Steps, double Seconds)>();
         foreach (var weapon in weapons)
             foreach (var level in levels)

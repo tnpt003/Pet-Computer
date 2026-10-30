@@ -312,6 +312,42 @@ internal static class AdventureBalanceTests
         check(Wins(Player.Casual) <= Wins(Player.Simple), $"Chapter 2 balance: the casual player wins no more than the simple one ({Wins(Player.Casual):P0} vs {Wins(Player.Simple):P0})");
         check(table[(5, BattleWeapon.Sword, BattleDifficulty.Normal, Player.Idle)].Wins <= 0.3,
             $"Chapter 2 balance: the Zip Slime is not beaten by an idle player on Normal ({table[(5, BattleWeapon.Sword, BattleDifficulty.Normal, Player.Idle)].Wins:P0})");
+        // 1.5 M29: the yarn and the glove in chapter 2, as in chapter 1 (their own table): the simple player
+        // ≥ 80 % on Normal and within 30 points of the sword (the Zip Slime on Hard: 40, as the hammer).
+        Console.WriteLine($"Adventure chapter 2 balance, 1.5 weapons (simulation): stage | weapon | level | player | wins/{Seeds} | avg s (wins) | HP % left (wins) | sweep hits/run | launches/run");
+        foreach (var weapon in new[] { "yarn", "glove" })
+        {
+            if (data.FindWeapon(weapon) == null) continue;
+            var newRuns = new Dictionary<(int Stage, BattleDifficulty Level, Player Player), List<Outcome>>();
+            foreach (var level in levels)
+                foreach (var player in new[] { Player.Idle, Player.Simple })
+                    for (int seed = 1; seed <= Seeds; seed++)
+                    {
+                        var carried = new Dictionary<string, int>();
+                        for (int i = 0; i < stages.Length; i++)
+                        {
+                            var run = Play(data, stages[i], weapon, level, seed, player, carried, skills: HintedLoadout(stages[i]), loot: BattleLoot.Items);
+                            if (run.Won) carried = run.Build;
+                            if (!newRuns.TryGetValue((i + 1, level, player), out var list)) newRuns[(i + 1, level, player)] = list = new();
+                            list.Add(run);
+                        }
+                    }
+            for (int i = 1; i <= stages.Length; i++)
+                foreach (var level in levels)
+                    foreach (var player in new[] { Player.Idle, Player.Simple })
+                    {
+                        var runs = newRuns[(i, level, player)];
+                        var wins = runs.Where(r => r.Won).ToList();
+                        double share = (double)wins.Count / Seeds;
+                        Console.WriteLine($"  {i} | {weapon,-6} | {level,-6} | {Name(player),-6} | {wins.Count,2}/{Seeds} | {(wins.Count > 0 ? wins.Average(r => r.Seconds) : 0),6:0} | {(wins.Count > 0 ? wins.Average(r => r.HpShare) : 0),4:P0} | {runs.Average(r => r.SweepHits),5:0.0} | {runs.Average(r => r.Launches),4:0.0}");
+                        if (player != Player.Simple) continue;
+                        double sword = table[(i, BattleWeapon.Sword, level, Player.Simple)].Wins;
+                        int gap = i == stages.Length && level == BattleDifficulty.Hard ? 40 : 30;
+                        check(Math.Round(Math.Abs(sword - share) * 100) <= gap, $"Chapter 2 balance: stage {i}, {level}: {weapon} within {gap} points of the sword ({share:P0} vs {sword:P0})");
+                        if (level == BattleDifficulty.Normal) check(share >= 0.8, $"Chapter 2 balance: stage {i}, {weapon}, Normal, simple player wins ≥ 80 % ({share:P0})");
+                        if (wins.Count >= 2) check(wins.Average(r => r.Seconds) <= 240, $"Chapter 2 balance: stage {i}, {weapon}, {level}: a win takes at most 4 minutes on average ({wins.Average(r => r.Seconds):0} s)");
+                    }
+        }
 
         // The whole chapter after chapter 1, saved and read back after every stage: locked until the
         // Slime King is beaten, each stage lends its skill until won, then the skill is open for good.

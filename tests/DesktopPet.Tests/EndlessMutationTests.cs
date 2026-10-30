@@ -174,6 +174,16 @@ internal static class EndlessMutationTests
         int Median(int[] w) => w[w.Length / 2];
         Console.WriteLine($"Infinity simulation (simple, Normal, sword, {runs} runs, 20 min cap): old rules waves {string.Join(" ", oldWaves)} (median {Median(oldWaves)}), new rules {string.Join(" ", newWaves)} (median {Median(newWaves)})");
         check(Median(newWaves) >= 15 && Median(newWaves) >= Median(oldWaves) * 0.6, $"Simulated Infinity: the new rules still reach the newer kinds and at least 60% of the old median ({Median(newWaves)} vs {Median(oldWaves)})");
+        // 1.5 M29: the other weapons under the new rules (measured; each still reaches the stretches).
+        foreach (var weapon in new[] { BattleWeapon.Hammer, "yarn", "glove" })
+        {
+            if (settings.FindWeapon(weapon) == null) continue;
+            var reached = new int[runs];
+            Parallel.For(0, runs, i => reached[i] = AdventureBalanceTests.PlayEndless(settings, spec, weapon, BattleDifficulty.Normal, 100 + i, AdventureBalanceTests.Player.Simple));
+            Array.Sort(reached);
+            Console.WriteLine($"Infinity simulation (simple, Normal, {weapon}, {runs} runs, 20 min cap): new rules waves {string.Join(" ", reached)} (median {Median(reached)})");
+            check(Median(reached) >= 15, $"Simulated Infinity: with the {weapon} the new rules reach the stretches (median wave {Median(reached)})");
+        }
 
         // The built-in run: rare offers and the mutation come in order after a boss wave; picks always find an offer.
         var real = new BattleSim(settings, 0, 1600, new Random(2), stage: spec.Stage());

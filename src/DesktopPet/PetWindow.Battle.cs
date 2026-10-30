@@ -92,9 +92,10 @@ public sealed partial class PetWindow
     // (a new one after each end), =paused keeps a paused one open, =expedition keeps the
     // Expedition's heaviest kind of battle going (StartMeasuredExpeditionBattle), =crowd keeps the
     // floor full (CrowdTuning: up to 16 tough slimes at once), =crowd-new keeps it full of the 1.5 slimes
-    // (CrowdNewTuning: merging, riding, splitting, spitting, springs). While measuring, the frame numbers go
+    // (CrowdNewTuning: merging, riding, splitting, spitting, springs), =crowd-late with the later ones
+    // (CrowdLateTuning). While measuring, the frame numbers go
     // to the log once a second. Unset in normal use, where a battle never starts by itself.
-    private readonly string? battleAutostart = Environment.GetEnvironmentVariable("PET_BATTLE_AUTOSTART") is "run" or "paused" or "expedition" or "crowd" or "crowd-new"
+    private readonly string? battleAutostart = Environment.GetEnvironmentVariable("PET_BATTLE_AUTOSTART") is "run" or "paused" or "expedition" or "crowd" or "crowd-new" or "crowd-late"
         ? Environment.GetEnvironmentVariable("PET_BATTLE_AUTOSTART") : null;
 
     // The crowded fight to measure: plain slimes that take long to beat, a cat that does not fall,
@@ -120,6 +121,24 @@ public sealed partial class PetWindow
             };
         }
     }
+    // The later 1.5 slimes (1.5 M29: M12–M16) the same way: ropes and auras (the two link kinds a battle
+    // lets in), flyers in their own windows, ghosts, bubbles, mirages, ice, wall climbers, quills, timers, thieves.
+    public static BattleSettings CrowdLateTuning
+    {
+        get
+        {
+            var shipped = BattleData.Settings;
+            return new()
+            {
+                MaxAlive = 16, SpawnInterval = 0.15, FirstWaveDelay = 0.5, CatMaxHp = 100000, Enemies = shipped.EnemyTypes.ToArray(), Weapons = shipped.Weapons,
+                Plan = new[] { new WaveSpec { Stream = new StreamSpec { Interval = 0.15, IntervalEnd = 0.15, Weights = new()
+                {
+                    ["chain"] = 2, ["flagbearer"] = 2, ["flyer"] = 2, ["phantom"] = 1, ["bubble"] = 1, ["mirage"] = 1, ["sulky"] = 1, ["burrower"] = 1,
+                    ["icy"] = 1, ["clinger"] = 1, ["hedgehog"] = 1, ["timer"] = 1, ["thief"] = 1, ["slime"] = 1
+                } } } }
+            };
+        }
+    }
     private double battleAutostartTimer;
 
     private void TickBattleAutostart(double dt)
@@ -131,6 +150,7 @@ public sealed partial class PetWindow
         if (battleAutostart == "expedition") { StartMeasuredExpeditionBattle(); return; }
         if (battleAutostart == "crowd") BattleTuning = CrowdTuning;
         if (battleAutostart == "crowd-new") BattleTuning = CrowdNewTuning;
+        if (battleAutostart == "crowd-late") BattleTuning = CrowdLateTuning;
         if (StartBattle() == null && battleAutostart == "paused") SetBattlePaused(true);
     }
 

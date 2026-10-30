@@ -137,7 +137,9 @@ public sealed partial class PetWindow
             heading.Text = $"{title} · {open}/{pages.Count}"; heading.VerticalAlignment = VerticalAlignment.Center;
             var titled = PetIllustration.Beside(heading, motif, 22);
             titled.Margin = new Thickness(0, sections.Children.Count == 0 ? 0 : 8, 0, 4);
-            var tiles = new WrapPanel();
+            // Even columns across the whole width (fixed tiles in a WrapPanel left an empty strip on the
+            // right); the last column's gap is pulled back so its tiles reach the edge.
+            var tiles = new System.Windows.Controls.Primitives.UniformGrid { Columns = BookColumns, Margin = new Thickness(0, 0, -BookTileGap, 0) };
             foreach (var page in pages) tiles.Children.Add(BookTile(page));
             sections.Children.Add(titled);
             sections.Children.Add(tiles);
@@ -184,6 +186,9 @@ public sealed partial class PetWindow
         return row;
     }
 
+    private const int BookColumns = 5;
+    private const double BookTileGap = 6;
+
     // One tile: the picture (a dark shape until met), the name (or ???), the count; "New" when fresh.
     private Border BookTile(string page)
     {
@@ -207,7 +212,7 @@ public sealed partial class PetWindow
         }
         picture.HorizontalAlignment = HorizontalAlignment.Center;
         var label = new TextBlock { Text = name, Foreground = open ? Brushes.White : PetUi.Game.Soft, FontSize = PetUi.CaptionSize, FontWeight = FontWeights.SemiBold,
-            TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center, MaxWidth = 76, Margin = new Thickness(0, 2, 0, 0) };
+            TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center, Margin = new Thickness(0, 2, 0, 0) };
         var stack = new StackPanel { Children = { new Grid { Height = 46, Children = { picture } }, label } };
         if (open && !formation)
             stack.Children.Add(new TextBlock { Text = "× " + MonsterBook.DefeatedOf(page), Foreground = PetUi.Game.Gold, FontSize = PetUi.CaptionSize, HorizontalAlignment = HorizontalAlignment.Center });
@@ -218,7 +223,7 @@ public sealed partial class PetWindow
         bool chosen = page == bookSelected;
         var tile = new Border
         {
-            Width = 82, MinHeight = 86, Margin = new Thickness(0, 0, 6, 6), Padding = new Thickness(3), CornerRadius = new CornerRadius(9),
+            MinHeight = 86, Margin = new Thickness(0, 0, BookTileGap, BookTileGap), Padding = new Thickness(3), CornerRadius = new CornerRadius(9),
             Background = open ? PetUi.Game.CardBack : Brushes.Transparent, BorderBrush = chosen ? PetUi.Game.Gold : PetUi.Game.CardRim,
             BorderThickness = new Thickness(chosen ? 2 : 1.2), Child = face, Cursor = open ? System.Windows.Input.Cursors.Hand : null
         };

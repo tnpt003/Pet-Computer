@@ -162,6 +162,20 @@ internal static class BagChecks
                 $"Met pages drawn with their count and New; the first new one is open with its tip ({text.Replace('\n', '|')})");
             check(window.BattleBookNew == 0 && book.Seen.Count == 3, "Opening the book marks them seen");
             Shot("Pet battle hub", "battle-book-en.png");
+            // 2026-10-30 (user's screenshot): the tiles fill the book's width, no empty strip on the right.
+            if (Find("Pet battle hub")?.Content is FrameworkElement hubContent)
+            {
+                hubContent.UpdateLayout();
+                var rows = Descendants(hubContent).OfType<System.Windows.Controls.Primitives.UniformGrid>().Where(g => g.Children.Count >= g.Columns).ToList();
+                // Up to the book's own scroll bar lane (the nearest scroll content around the tiles).
+                DependencyObject presenter = rows.Count > 0 ? rows[0] : hubContent;
+                while (presenter is not ScrollContentPresenter && VisualTreeHelper.GetParent(presenter) is DependencyObject outer) presenter = outer;
+                var lane = (FrameworkElement)presenter;
+                var ends = rows.Select(g => { var last = (FrameworkElement)g.Children[g.Columns - 1]; return last.TranslatePoint(new Point(last.ActualWidth, 0), lane).X; }).ToList();
+                check(rows.Count > 0 && ends.All(x => Math.Abs(x - lane.ActualWidth) < 1.5) && lane.ActualWidth > 536 - 14,
+                    $"Monster Book tiles reach the right edge, beside the scroll bar ({string.Join(", ", ends.Select(x => x.ToString("F0")))} of {lane.ActualWidth:F0} DIPs)");
+            }
+            else check(false, "Monster Book tiles reach the right edge (no hub window)");
             check(!window.SelectBookPage("rock") && window.BattleBookSelected == "slime", "A page not met cannot be opened");
             check(window.SelectBookPage(MonsterBook.FormationPage("fortress")) && window.BattleBookText.Contains("Members: ") && window.BattleBookText.Contains(data.Formation("fortress")!.TipEn!),
                 "A formation's page: its members and its tip");

@@ -26,6 +26,7 @@ public sealed partial class PetWindow
     private WrapPanel? prepFightRow;
     private TextBlock? prepFightLabel, prepFightHint, prepFightButtonText;
     private Border? prepFightButton;
+    private StackPanel? prepFightBlock;
     private const string CustomPrefix = "custom:";
 
     public CustomFightBook FightBook
@@ -267,23 +268,30 @@ public sealed partial class PetWindow
     // The setup panel's part (free battle only): a label, the preset chips, the summary and Build a fight.
     private StackPanel BuildPrepFight()
     {
-        prepFightLabel = PanelLine(PetUi.SmallSize); prepFightLabel.Opacity = 0.75; prepFightLabel.Margin = new Thickness(0, 8, 0, 4);
-        prepFightRow = new WrapPanel { Width = 300 };
-        prepFightHint = PanelLine(PetUi.CaptionSize, maxWidth: 300); prepFightHint.Opacity = 0.85;
+        prepFightLabel = PanelLine(PetUi.SmallSize); prepFightLabel.Opacity = 0.75; prepFightLabel.VerticalAlignment = VerticalAlignment.Center;
+        prepFightRow = new WrapPanel { HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 4, 0, 0) };
+        prepFightHint = PanelLine(PetUi.CaptionSize); prepFightHint.Opacity = 0.85; prepFightHint.HorizontalAlignment = HorizontalAlignment.Left;
         var (button, text, _) = HudButton(() => { if (OpenFightBuilder() is string reason) ShowBattleNotice(reason); }, plain: true);
-        button.HorizontalAlignment = HorizontalAlignment.Left; button.Margin = new Thickness(0, 5, 0, 0);
+        button.HorizontalAlignment = HorizontalAlignment.Right; button.Margin = new Thickness(8, 0, 0, 0);
+        button.Height = 28;
         prepFightButton = button; prepFightButtonText = text;
-        return new StackPanel { Children = { prepFightLabel, prepFightRow, prepFightHint, button } };
+        DockPanel.SetDock(button, Dock.Right);
+        prepFightBlock = new StackPanel { Margin = new Thickness(0, 8, 0, 0), Children = {
+            new DockPanel { Children = { button, prepFightLabel } }, prepFightRow,
+            new ScrollViewer { Content = prepFightHint, Height = 30, Focusable = false, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled } } };
+        return prepFightBlock;
     }
 
     private void UpdatePrepFight()
     {
         if (prepFightRow == null || prepFightLabel == null || prepFightHint == null || prepFightButton == null) return;
         var shown = PrepFree ? Visibility.Visible : Visibility.Collapsed;
+        if (prepFightBlock != null) prepFightBlock.Visibility = shown;
         prepFightLabel.Visibility = prepFightRow.Visibility = prepFightHint.Visibility = prepFightButton.Visibility = shown;
         if (!PrepFree) return;
         prepFightLabel.Text = L("Trận tự chọn", "Custom Fight");
         FillPresetChips(prepFightRow, prepFightChips);
+        foreach (var (_, chip) in prepFightChips) { chip.MinWidth = 72; chip.Height = 28; }
         prepFightHint.Text = FightSummary(ChosenFight);
         prepFightButtonText!.Text = L("Dựng trận…", "Build a fight…");
     }

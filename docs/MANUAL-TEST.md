@@ -1,5 +1,15 @@
 # Checklist test thủ công
 
+## Bảng chuẩn bị gọn — 2026-10-30
+
+- Mở trận tự chọn với đủ 4 vũ khí và Mặc định/Set 1: khung ngang khoảng nửa chiều cao màn hình, các nút preset bám trái/cùng cao, Dựng trận ở đầu khối. Trên màn thường không cần cuộn trang để chọn trang bị và bấm Sẵn sàng.
+- Rê lần lượt 10 kỹ năng, cả ô khóa và mô tả dài; rời chuột: cửa sổ và nút Sẵn sàng giữ vị trí, mô tả vừa xem còn lại. Đổi cả 4 vũ khí: chỉ vùng chỉ số thay nội dung, không thay kích thước thẻ/cửa sổ.
+- Viễn chinh/Vô tận/màn có app: 6 icon app cùng cỡ ô kỹ năng, tối đa 5 được chọn, dấu chọn/khóa rõ; hover xem tác dụng và tác dụng khi nhiễm trong vùng mô tả, không làm nhảy bảng. Tắt app/đổi preset/Hủy/Sẵn sàng vẫn giữ luật lưu trước đây.
+- Chi tiết ở thanh đáy mở được mục tiêu màn, thông tin chuyến, build và giải thích hướng dẫn; thông tin dài cuộn được. Xem thử vẫn vung vũ khí, chỉ trên mèo xem trước.
+- Rà vi/en/ja, màn thấp 480 DIP, DPI thật và màn hẹp: chữ không chồng/cắt, nút đáy luôn bấm được; cuộn dự phòng khi thiếu chỗ. Rà Pause/fullscreen, mèo ngủ/kéo/ném khi mở bảng vẫn giữ hành vi cũ.
+
+Ảnh render và kiểm tra tọa độ tự động không thay cho thao tác chuột/DPI/nhiều màn hình thật.
+
 ## Sửa sau chơi thử 1.5 — 2026-10-30
 
 - Cho slime xích/thảo dược và slime chạy thoát đứng trước hàng slime khác: lúc rút về phải xuyên hàng, không kéo cả hàng lùi. Khi không rút, va chạm thông thường vẫn hoạt động.

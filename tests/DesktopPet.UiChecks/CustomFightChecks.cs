@@ -133,6 +133,11 @@ internal static class CustomFightChecks
             Prep(0.2);
             check(!window.FightBuilderOpen && window.BattlePrepVisible && Text(Find("Pet setup")!).Contains("2 waves · 5 enemies (1 kind)"),
                 $"Done: back to the setup panel, the set's summary under its chip ({Text(Find("Pet setup")!)})");
+            Shot("Pet setup", "custom-fight-preset-setup-en.png");
+            var presetRow = Field<WrapPanel>(window, "prepFightRow");
+            check(presetRow.HorizontalAlignment == HorizontalAlignment.Left && double.IsNaN(presetRow.Width)
+                && presetRow.Children.OfType<Border>().All(c => c.MinWidth == 72 && c.Height == 28),
+                "Default and Set 1 are equal-height presets aligned to the left of their own section");
 
             // A preset's battle: a Custom stage; no records, no achievements, no Adventure progress.
             records = Records();

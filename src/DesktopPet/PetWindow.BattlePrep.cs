@@ -49,6 +49,11 @@ public sealed partial class PetWindow
     // Hidden for a chapter 1 stage (always the five first skills); Ready needs exactly five.
     private readonly HashSet<BattleSkill> prepSkills = new();
     private BattleSkill? prepSkillHover;
+    private BattleAppKind? prepAppHover;
+    private TextBlock? prepInspectText, prepAbout;
+    private StackPanel? prepWeaponDetails;
+    private Border? prepDetails;
+    private TextBlock? prepDetailsText;
     private readonly List<(BattleSkill Skill, Border Chip, UIElement Lock)> prepSkillChips = new();
     private TextBlock? prepSkillsLabel, prepSkillsHint;
     private FrameworkElement? prepSkillsGrid;
@@ -100,7 +105,7 @@ public sealed partial class PetWindow
     // For checks: the preview's own model, and whether Try it is running.
     public PetModel? BattlePrepPreview => prepPreview;
     public bool BattlePrepPreviewPlaying => prepPreviewTimer != null;
-    public string BattlePrepText => string.Join("\n", new[] { prepTitle, prepBuild, prepData, prepStatus, prepTryText, prepGuideText, prepTipText, prepCancelText, prepReadyText }
+    public string BattlePrepText => string.Join("\n", new[] { prepTitle, prepAbout, prepBuild, prepData, prepStatus, prepTryText, prepGuideText, prepTipText, prepCancelText, prepReadyText }
         .Where(t => t is { Visibility: Visibility.Visible }).Select(t => t!.Text)
         .Concat(prepCards.SelectMany(c => new[] { c.Name.Text, c.Hint.Text }.Concat(c.StatValues.Select(v => v.Text))))
         .Concat(prepLevelChips.Select(c => c.Text.Text))
@@ -156,6 +161,7 @@ public sealed partial class PetWindow
         // 1.5 M21: the stage that opens a skill lends it (it takes the last slot when not chosen).
         if (PrepLent is BattleSkill lent) { var with = global::DesktopPet.Adventure.WithLent(LoadoutChoice(PrepFree), lent); prepSkills.Clear(); prepSkills.UnionWith(with); }
         prepSkillHover = null;
+        prepAppHover = null;
         battlePreparing = true;
         CloseBattleSummary(); CloseBattleNotice();
         queuedCommand = null;
@@ -206,6 +212,7 @@ public sealed partial class PetWindow
     {
         if (!BattlePrepHasSkillChoice) return false;
         prepSkillHover = skill;
+        prepAppHover = null;
         if (skill == PrepLent) { UpdateBattlePrep(); return false; } // A lent skill stays for its stage.
         bool changed = prepSkills.Remove(skill) || (BattleSkillOpen(skill, PrepFree) && prepSkills.Count < BattleSkills.Carry && prepSkills.Add(skill));
         UpdateBattlePrep();
@@ -283,6 +290,8 @@ public sealed partial class PetWindow
         prepSkillsLabel = prepSkillsHint = null; prepSkillsGrid = null;
         prepAppsChip = null; prepAppsCheck = null; prepAppsLabel = prepAppsText = prepAppsHint = null;
         prepAppChoices = null; prepAppChips.Clear();
+        prepInspectText = prepAbout = prepDetailsText = null; prepWeaponDetails = null; prepDetails = null;
+        prepFightBlock = null;
         prepGuideChip = null; prepGuideCheck = null; prepGuideLabel = prepGuideText = prepGuideHint = null;
         prepStage = null;
         prepForExpedition = prepForEndless = false;
@@ -359,6 +368,9 @@ public sealed partial class PetWindow
             StrokeStartLineCap = PenLineCap.Round, StrokeLineJoin = PenLineJoin.Round, Width = 15, Height = 13, Margin = new Thickness(0, 0, 5, 0),
             VerticalAlignment = VerticalAlignment.Center };
         prepTitle = Line(PetUi.HeadingSize, true);
+        prepTitle.VerticalAlignment = VerticalAlignment.Center;
+        prepTitle.MaxHeight = 44;
+        prepTitle.TextTrimming = TextTrimming.CharacterEllipsis;
         prepWeaponLabel = Line(PetUi.SmallSize); prepWeaponLabel.Opacity = 0.75; prepWeaponLabel.Margin = new Thickness(0, 0, 0, 4);
         prepLevelLabel = Line(PetUi.SmallSize); prepLevelLabel.Opacity = 0.75; prepLevelLabel.Margin = new Thickness(0, 8, 0, 4);
         prepData = Line(PetUi.SmallSize, maxWidth: 470); prepData.Foreground = PrepWarning; prepData.Margin = new Thickness(0, 8, 0, 0);
@@ -384,14 +396,15 @@ public sealed partial class PetWindow
         };
 
         // One card per weapon in the data (nothing hard-coded per id).
-        var cards = new WrapPanel { Width = 456 };
+        var cards = new System.Windows.Controls.Primitives.UniformGrid { Columns = 2 };
+        prepWeaponDetails = new StackPanel();
         prepCards.Clear();
         foreach (var weapon in BattleTuning.WeaponList)
         {
             string id = weapon.Id;
             var check = Check();
-            var name = Line(PetUi.TitleSize, true, 140);
-            var hint = Line(PetUi.SmallSize, maxWidth: 196); hint.Opacity = 0.85;
+            var name = Line(PetUi.BodySize, true, 140);
+            var hint = Line(PetUi.SmallSize, maxWidth: 340); hint.Opacity = 0.85;
             var stats = new Grid { Margin = new Thickness(0, 5, 0, 0) };
             stats.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             stats.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(64) });
@@ -414,12 +427,14 @@ public sealed partial class PetWindow
                 Grid.SetColumn(bar, 1); Grid.SetColumn(statValues[i], 2);
                 stats.Children.Add(statNames[i]); stats.Children.Add(bar); stats.Children.Add(statValues[i]);
             }
-            var icon = new WeaponIcon { Style = weapon.Style, Width = 30, Height = 36, Margin = new Thickness(0, 0, 8, 0), VerticalAlignment = VerticalAlignment.Top };
+            var icon = new WeaponIcon { Style = weapon.Style, Width = 24, Height = 28, Margin = new Thickness(0, 0, 6, 0), VerticalAlignment = VerticalAlignment.Center };
+            var weaponDetails = new StackPanel { Children = { hint, stats } };
+            prepWeaponDetails.Children.Add(weaponDetails);
             var card = new Border
             {
-                Width = 222, MinHeight = 88, Tag = stats,
-                CornerRadius = new CornerRadius(12), Padding = new Thickness(8), Margin = new Thickness(0, 0, 6, 8), Cursor = System.Windows.Input.Cursors.Hand,
-                Child = new StackPanel { Children = { new DockPanel { Children = { icon, new StackPanel { Orientation = Orientation.Horizontal, Children = { check, name } } } }, hint, stats } }
+                Height = 42, Tag = weaponDetails, BorderThickness = new Thickness(1.5),
+                CornerRadius = new CornerRadius(8), Padding = new Thickness(6), Margin = new Thickness(0, 0, 6, 4), Cursor = System.Windows.Input.Cursors.Hand,
+                Child = new DockPanel { Children = { icon, new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center, Children = { check, name } } } }
             };
             DockPanel.SetDock(icon, Dock.Left);
             card.MouseLeftButtonDown += (_, e) => { BattlePrepChooseWeapon(id); e.Handled = true; };
@@ -458,20 +473,22 @@ public sealed partial class PetWindow
         };
         prepAppsChip.MouseLeftButtonDown += (_, e) => { BattlePrepChooseApps(!prepApps); e.Handled = true; };
         prepAppsHint = Line(PetUi.CaptionSize, maxWidth: 300); prepAppsHint.Opacity = 0.8; prepAppsHint.Margin = new Thickness(0, 4, 0, 0);
-        prepAppChoices = new WrapPanel { Width = 456, Margin = new Thickness(0, 8, 0, 0) };
+        prepAppChoices = new WrapPanel { HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 4, 0, 0) };
         prepAppChips.Clear();
         foreach (var kind in BattleSim.DefaultApps.Concat(new[] { BattleAppKind.Screenshot }))
         {
             var mark = Check();
-            var label = Line(PetUi.SmallSize, maxWidth: 100);
-            label.Text = BattleTuning.Apps?.App(kind).Name(preferences.Language) ?? kind.ToString();
-            var chip = new Border { Width = 146, Padding = new Thickness(8), Margin = new Thickness(0, 0, 6, 6), CornerRadius = new CornerRadius(8), BorderThickness = new Thickness(1.5),
-                Cursor = System.Windows.Input.Cursors.Hand, Child = new StackPanel { Orientation = Orientation.Horizontal, Children = { mark, new PrepAppIcon(kind) { Width = 24, Height = 24, Margin = new Thickness(0, 0, 4, 0) }, label } } };
+            mark.Width = 12; mark.Height = 10; mark.Margin = new Thickness(0, 0, -4, -4);
+            mark.HorizontalAlignment = HorizontalAlignment.Right; mark.VerticalAlignment = VerticalAlignment.Bottom;
+            var locked = new HudGlyph(HudGlyphKind.Lock) { Width = 14, Height = 14, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Bottom, Margin = new Thickness(0, 0, -4, -4) };
+            var chip = new Border { Width = 36, Height = 36, Padding = new Thickness(5), Margin = new Thickness(0, 0, 6, 6), CornerRadius = new CornerRadius(8), BorderThickness = new Thickness(1.5), Tag = locked,
+                Cursor = System.Windows.Input.Cursors.Hand, Child = new Grid { Children = { new PrepAppIcon(kind), mark, locked } } };
             chip.MouseLeftButtonDown += (_, e) =>
             {
                 BattlePrepToggleApp(kind);
                 e.Handled = true;
             };
+            chip.MouseEnter += (_, _) => { prepAppHover = kind; prepSkillHover = null; UpdateBattlePrep(); };
             prepAppChoices.Children.Add(chip);
             prepAppChips.Add((kind, chip, mark));
         }
@@ -491,8 +508,7 @@ public sealed partial class PetWindow
                 Cursor = System.Windows.Input.Cursors.Hand, Child = new Grid { Children = { new HudGlyph(HudGlyph.For(skill)), mark } }
             };
             chip.MouseLeftButtonDown += (_, e) => { BattlePrepToggleSkill(skill); e.Handled = true; };
-            chip.MouseEnter += (_, _) => { prepSkillHover = skill; UpdateBattlePrep(); };
-            chip.MouseLeave += (_, _) => { if (prepSkillHover == skill) { prepSkillHover = null; UpdateBattlePrep(); } };
+            chip.MouseEnter += (_, _) => { prepAppHover = null; prepSkillHover = skill; UpdateBattlePrep(); };
             skillRows.Children.Add(chip);
             prepSkillChips.Add((skill, chip, mark));
         }
@@ -518,15 +534,52 @@ public sealed partial class PetWindow
         var (cancel, cancelText, _) = HudButton(CancelBattlePrep, plain: true);
         var (ready, readyText) = PrimaryButton(() => BattlePrepReady());
         prepReady = ready; prepReadyText = readyText; prepCancelText = cancelText;
-        var actions = PanelActions(new UIElement[] { prepTipText }, new UIElement[] { ready, cancel });
+        var (detailsButton, detailsText, _) = HudButton(() =>
+        {
+            if (prepDetails == null) return;
+            prepDetails.Visibility = prepDetails.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
+        }, plain: true);
+        detailsButton.Margin = new Thickness(0, 0, 12, 0);
+        prepDetailsText = detailsText;
+        var actions = PanelActions(new UIElement[] { detailsButton, prepTipText }, new UIElement[] { ready, cancel });
 
-        var choices = new StackPanel { Width = 456, Children = { prepWeaponLabel, cards, prepLevelLabel, levels, BuildPrepFight(), prepSkillsLabel, skillRows, prepSkillsHint, prepAppsLabel, prepAppsChip, prepAppChoices, prepAppsHint, prepGuideLabel, prepGuideChip, prepGuideHint } };
-        stage.Width = 96;
-        stage.HorizontalAlignment = HorizontalAlignment.Right;
-        if (stage.Children[0] is Border portrait) { portrait.Width = 96; portrait.Height = 96; }
+        ScrollViewer LocalScroll(UIElement child, double height) => new() { Content = child, Height = height,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled, Focusable = false };
+        var left = new StackPanel { Margin = new Thickness(0, 0, 16, 0), Children = { prepWeaponLabel, cards,
+            new Border { Background = PrepStage, CornerRadius = new CornerRadius(8), Padding = new Thickness(8),
+                Child = LocalScroll(prepWeaponDetails, 80) }, prepLevelLabel, levels, BuildPrepFight() } };
+        prepInspectText = new TextBlock { Foreground = PetUi.Game.Soft, FontSize = PetUi.BodySize, TextWrapping = TextWrapping.Wrap };
+        var right = new StackPanel { Children = { prepSkillsLabel, skillRows, prepAppsChip, prepAppChoices,
+            new Border { Background = PrepStage, CornerRadius = new CornerRadius(8), Padding = new Thickness(8), Margin = new Thickness(0, 4, 0, 8),
+                Child = LocalScroll(prepInspectText, 88) }, prepGuideChip } };
+        var columns = new Grid { Margin = new Thickness(0, 8, 0, 0) };
+        columns.ColumnDefinitions.Add(new ColumnDefinition()); columns.ColumnDefinitions.Add(new ColumnDefinition());
+        Grid.SetColumn(right, 1); columns.Children.Add(left); columns.Children.Add(right);
+        stage.Width = 136; stage.Orientation = Orientation.Horizontal;
+        stage.Margin = new Thickness(12, 0, 0, 0);
+        tryButton.Margin = new Thickness(8, 0, 0, 0); tryButton.VerticalAlignment = VerticalAlignment.Center;
+        if (stage.Children[0] is Border portrait) { portrait.Width = 48; portrait.Height = 48; }
+        DockPanel.SetDock(stage, Dock.Right);
         var title = PanelTitle(prepTitle);
-        var window = CreateGamePanel(new StackPanel { Children = { new DockPanel { Children = { stage, title } }, choices,
-            prepBuild, prepData, prepStatus } }, actions, "Pet setup");
+        prepAbout = Line(PetUi.SmallSize, maxWidth: 700);
+        prepDetails = new Border { Visibility = Visibility.Collapsed, Background = PrepStage, CornerRadius = new CornerRadius(8), Padding = new Thickness(8),
+            Margin = new Thickness(0, 8, 0, 0), Child = LocalScroll(new StackPanel { Children = { prepAbout, prepBuild, prepGuideHint } }, 96) };
+        var window = CreateGamePanel(new StackPanel { Children = { new DockPanel { Height = 48, Children = { stage, title } }, columns,
+            prepDetails, prepData, prepStatus } }, actions, "Pet setup", compactSetup: true);
+        void FitColumns()
+        {
+            bool narrow = window.Width < 640;
+            if (columns.RowDefinitions.Count == 0)
+            {
+                columns.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+                columns.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            }
+            columns.ColumnDefinitions[1].Width = narrow ? new GridLength(0) : new GridLength(1, GridUnitType.Star);
+            Grid.SetColumn(right, narrow ? 0 : 1); Grid.SetRow(right, narrow ? 1 : 0);
+            left.Margin = new Thickness(0, 0, narrow ? 0 : 16, narrow ? 8 : 0);
+        }
+        window.SizeChanged += (_, _) => FitColumns();
+        FitColumns();
         window.Closed += (_, _) => { if (battlePrepWindow == window) { StopPreviewSwing(); battlePrepWindow = null; } };
         battlePrepWindow = window;
         UpdateBattlePrep();
@@ -540,6 +593,7 @@ public sealed partial class PetWindow
     {
         if (!battlePreparing || !PrepHasApps || !PrepAppAvailable(kind) || kind == BattleAppKind.Popup || !Enum.IsDefined(kind)) return false;
         bool changed = prepAppLoadout.Remove(kind) || prepAppLoadout.Count < 5 && prepAppLoadout.Add(kind);
+        prepAppHover = kind; prepSkillHover = null;
         if (changed) UpdateBattlePrep();
         return changed;
     }
@@ -561,11 +615,16 @@ public sealed partial class PetWindow
             text.Visibility = string.IsNullOrEmpty(value) ? Visibility.Collapsed : Visibility.Visible;
         }
         var chosen = BattleTuning.Weapon(prepWeapon);
-        prepTitle.Text = prepStage is StageSpec stage ? StageTitle(stage) + (stage.Goal(preferences.Language) is { Length: > 0 } goal ? "\n" + goal : "")
+        prepAbout!.Text = prepStage is StageSpec stage ? StageTitle(stage) + (stage.Goal(preferences.Language) is { Length: > 0 } goal ? "\n" + goal : "")
             : prepForExpedition && Expedition is Expedition x ? L("Viễn chinh — chuẩn bị chuyến", "Expedition — prepare the run") + "\n"
                 + LF($"{x.Spec.StepCount} bậc, bậc cuối là trùm. Vũ khí, độ khó, HP và build giữ suốt chuyến.", $"{x.Spec.StepCount} steps, the last one a boss. Weapon, difficulty, HP and build carry through the run.")
             : prepForEndless && BattleTuning.Endless is EndlessSpec infinity ? L("Vô tận — chuẩn bị", "Infinity — get ready") + "\n" + EndlessAbout(infinity) + EndlessRecordLine(infinity, prepWeapon, prepDifficulty)
             : L("Chuẩn bị trận", "Get ready to battle");
+        prepTitle.Text = prepStage is StageSpec namedStage ? StageTitle(namedStage)
+            : prepForExpedition ? L("Viễn chinh — chuẩn bị chuyến", "Expedition — prepare the run")
+            : prepForEndless ? L("Vô tận — chuẩn bị", "Infinity — get ready") : L("Chuẩn bị trận", "Get ready to battle");
+        prepTitle.ToolTip = prepAbout.Text;
+        prepDetailsText!.Text = L("Chi tiết", "Details");
         prepWeaponLabel!.Text = prepForExpedition ? L("Chọn cách đánh cho cả chuyến", "Choose how to fight for the whole run") : L("Chọn cách đánh", "Choose how to fight");
         prepLevelLabel!.Text = L("Độ khó", "Difficulty");
         foreach (var (id, card, check, name, hint, statNames, _) in prepCards)
@@ -574,31 +633,34 @@ public sealed partial class PetWindow
             name.Text = weapon.Name(preferences.Language);
             hint.Text = weapon.Hint(preferences.Language);
             for (int i = 0; i < statNames.Length; i++) statNames[i].Text = L(WeaponStatScales[i].Vi, WeaponStatScales[i].En);
-            ShowChosen(card, id == prepWeapon, check, rim: (2.5, 1), card: true);
-            if (card.Tag is Grid stats) stats.Visibility = id == prepWeapon ? Visibility.Visible : Visibility.Collapsed;
+            ShowChosen(card, id == prepWeapon, check, card: true);
+            if (id != prepWeapon) check.Visibility = Visibility.Hidden;
+            if (card.Tag is FrameworkElement details) details.Visibility = id == prepWeapon ? Visibility.Visible : Visibility.Collapsed;
         }
         foreach (var (level, chip, check, text) in prepLevelChips)
         {
             text.Text = DifficultyName(level);
             ShowChosen(chip, level == prepDifficulty, check);
+            if (level != prepDifficulty) check.Visibility = Visibility.Hidden;
         }
         if (prepAppsChip != null)
         {
             var shown = PrepHasApps ? Visibility.Visible : Visibility.Collapsed;
             prepAppsLabel!.Visibility = prepAppsChip.Visibility = prepAppsHint!.Visibility = shown;
             prepAppsLabel.Text = prepForExpedition ? L("Trên màn hình (cả chuyến)", "On the screen (whole run)") : L("Trên màn hình", "On the screen");
-            prepAppsText!.Text = L("App trong trận", "Battle apps");
+            prepAppsText!.Text = L("App trong trận", "Battle apps") + $" ({prepAppLoadout.Count}/5)";
             prepAppsHint.Text = prepApps ? L("5 icon app giúp mèo; slime có thể nhiễm virus vào icon.", "Five app icons help the cat; slimes may infect them with viruses.")
                 : L("Không có icon app hay virus. Kỷ lục lưu riêng.", "No app icons or viruses. Records are kept apart.");
             ShowChosen(prepAppsChip, prepApps, prepAppsCheck!);
             if (prepAppChoices != null) prepAppChoices.Visibility = PrepHasApps && prepApps ? Visibility.Visible : Visibility.Collapsed;
             foreach (var (kind, chip, mark) in prepAppChips)
             {
-                if (chip.Child is StackPanel row && row.Children[^1] is TextBlock label) label.Text = IconName(kind);
                 bool available = PrepAppAvailable(kind);
-                chip.IsEnabled = available && (prepAppLoadout.Contains(kind) || prepAppLoadout.Count < 5);
-                chip.Opacity = chip.IsEnabled ? 1 : 0.45;
+                chip.ToolTip = IconName(kind);
+                chip.Opacity = available ? 1 : 0.45;
+                chip.Cursor = available ? System.Windows.Input.Cursors.Hand : null;
                 ShowChosen(chip, prepAppLoadout.Contains(kind), mark);
+                if (chip.Tag is HudGlyph locked) locked.Visibility = available ? Visibility.Collapsed : Visibility.Visible;
             }
             if (prepApps) prepAppsHint.Text = LF($"Đã chọn {prepAppLoadout.Count}/5 app, chọn tối đa 5. App độc theo luật màn.", $"{prepAppLoadout.Count}/5 apps selected, choose up to 5. Malware follows stage rules.");
         }
@@ -647,6 +709,16 @@ public sealed partial class PetWindow
         Show(prepData, BattleDataError != null
             ? L("File battle.json của bạn có lỗi nên dùng dữ liệu gốc: ", "Your battle.json has a mistake, so the built-in battle is used: ") + BattleDataError
             : BattleDataCustom ? L("Đang dùng dữ liệu trận tùy chỉnh (battle.json).", "Using your custom battle data (battle.json).") : null);
+        if (prepInspectText != null)
+        {
+            if (prepAppHover is BattleAppKind app && PrepHasApps)
+            {
+                var spec = (BattleTuning.Apps ?? new AppsSpec()).App(app);
+                prepInspectText.Text = spec.Name(preferences.Language) + "\n" + spec.Desc(preferences.Language) + "\n" + spec.Bad(preferences.Language)
+                    + (!PrepAppAvailable(app) ? " " + L("(Chưa mở.)", "(Not open yet.)") : "");
+            }
+            else prepInspectText.Text = prepSkillsHint!.Text;
+        }
         UpdatePrepFight();
         string? waiting = (prepForExpedition ? BattlePrepRefusal() : BattleRefusal()) ?? PrepSkillsRefusal() ?? PrepFightRefusal();
         Show(prepStatus, waiting != null ? L("Chưa thể bắt đầu: ", "Not yet: ") + waiting : null);

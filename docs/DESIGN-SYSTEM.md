@@ -103,6 +103,8 @@ Bo góc control/thẻ: Small 6, Card 12, Pill 16, `Game.ButtonRadius` 12. Art v�
 
 Không tự thêm confirm, màn trung gian hoặc đổi navigation chỉ để hợp theme.
 
+Bảng chuẩn bị trận (duyệt 2026-10-30) dùng `compactSetup: true`: khung rộng tối đa 760 DIP, cao mục tiêu 50% vùng làm việc (400–560 DIP, chặn theo chiều cao màn hình). Không có banner lớn. Hai cột: vũ khí/chỉ số/độ khó/preset bên trái, kỹ năng/app/mô tả bên phải; màn hẹp dưới 640 DIP chuyển một cột và cho cuộn. Kỹ năng/app là ô 36×36; mô tả cố định và giữ nội dung sau khi rời chuột, không thay kích thước cửa sổ. Chỉ số vũ khí cuộn cục bộ trong vùng cố định. Mặc định/preset bám trái, cùng cao 28 DIP; Dựng trận nằm ở đầu khối. Chi tiết, Đóng và Sẵn sàng ở thanh cố định ngoài vùng cuộn. Chi tiết chỉ mở theo thao tác người dùng; không tự đẩy giao diện khi hover.
+
 ## Art và minh họa
 
 - Giữ vector/procedural WPF: silhouette tròn rõ ở kích thước thật, nét nâu đậm, bóng nhẹ, chi tiết vừa đủ. Không đổi sang sprite hoặc engine khác.

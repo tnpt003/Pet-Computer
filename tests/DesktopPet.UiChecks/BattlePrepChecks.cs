@@ -49,6 +49,35 @@ internal static class BattlePrepChecks
             $"It offers the data's weapons and the difficulties, with the remembered choice ({window.BattlePrepText.Replace('\n', '|')})");
         check(behavior.Quiet && window.BattleOwnsPet, "While it is open the cat's free time belongs to it (no random actions, AI, games or chatter)");
 
+        setup!.UpdateLayout();
+        var panelRect = new Rect(setup.Left, setup.Top, setup.ActualWidth, setup.ActualHeight);
+        var readyAt = Field<Border>(window, "prepReady").PointToScreen(new Point());
+        var skillChips = Field<List<(BattleSkill Skill, Border Chip, UIElement Lock)>>(window, "prepSkillChips");
+        bool stable = true, retained = true;
+        foreach (var (_, chip, _) in skillChips)
+        {
+            chip.RaiseEvent(new MouseEventArgs(Mouse.PrimaryDevice, Environment.TickCount) { RoutedEvent = Mouse.MouseEnterEvent });
+            setup.UpdateLayout();
+            string hint = Field<TextBlock>(window, "prepInspectText").Text;
+            stable &= panelRect == new Rect(setup.Left, setup.Top, setup.ActualWidth, setup.ActualHeight)
+                && readyAt == Field<Border>(window, "prepReady").PointToScreen(new Point());
+            chip.RaiseEvent(new MouseEventArgs(Mouse.PrimaryDevice, Environment.TickCount) { RoutedEvent = Mouse.MouseLeaveEvent });
+            setup.UpdateLayout();
+            retained &= Field<TextBlock>(window, "prepInspectText").Text == hint;
+        }
+        check(stable && retained, "Hovering every skill keeps the panel and Ready still; leaving keeps the last description");
+        foreach (var arm in window.BattleTuning.WeaponList)
+        {
+            window.BattlePrepChooseWeapon(arm.Id); setup.UpdateLayout();
+            stable &= panelRect == new Rect(setup.Left, setup.Top, setup.ActualWidth, setup.ActualHeight)
+                && readyAt == Field<Border>(window, "prepReady").PointToScreen(new Point());
+        }
+        check(stable, "Changing weapons uses a fixed detail area without moving the panel or Ready");
+        window.BattlePrepChooseWeapon(BattleWeapon.Sword);
+        var screen = Field<Area>(window, "bounds");
+        check(setup.ActualHeight <= Math.Clamp((screen.Bottom - screen.Top) * 0.5, 400, 560) + 1,
+            "The setup targets half the working area's height rather than filling the screen");
+
         // Cards come from the data; each shows the weapon's real numbers.
         var tuning = window.BattleTuning;
         var hammerStats = PetWindow.WeaponStats(tuning.Weapon(BattleWeapon.Hammer));
@@ -206,6 +235,19 @@ internal static class BattlePrepChecks
         check(expeditionPrep == null && window.BattlePrepApps == appsBefore && Field<TextBlock>(window, "prepAppsHint").Visibility == Visibility.Visible
               && Field<TextBlock>(window, "prepAppsLabel").Text == "On the screen (whole run)", $"A new Expedition run's setup has the app chip, for the whole run ({expeditionPrep ?? Field<TextBlock>(window, "prepAppsLabel").Text})");
         var selectedApp = window.BattlePrepAppLoadout.First();
+        setup = SetupWindow()!; setup.UpdateLayout();
+        panelRect = new Rect(setup.Left, setup.Top, setup.ActualWidth, setup.ActualHeight);
+        readyAt = Field<Border>(window, "prepReady").PointToScreen(new Point());
+        bool appsStable = true;
+        foreach (var (_, chip, _) in Field<List<(BattleAppKind Kind, Border Chip, System.Windows.Shapes.Path Check)>>(window, "prepAppChips"))
+        {
+            chip.RaiseEvent(new MouseEventArgs(Mouse.PrimaryDevice, Environment.TickCount) { RoutedEvent = Mouse.MouseEnterEvent });
+            setup.UpdateLayout();
+            appsStable &= chip.Width == 36 && chip.Height == 36
+                && panelRect == new Rect(setup.Left, setup.Top, setup.ActualWidth, setup.ActualHeight)
+                && readyAt == Field<Border>(window, "prepReady").PointToScreen(new Point());
+        }
+        check(appsStable, "Every app is a skill-sized icon; hovering its description cannot move the setup");
         check(window.BattlePrepToggleApp(selectedApp) && window.BattlePrepAppLoadout.Count == 4
             && window.BattlePrepToggleApp(selectedApp) && window.BattlePrepAppLoadout.Count == 5,
             "App selection removes and restores an icon while staying within five slots");
@@ -252,6 +294,41 @@ internal static class BattlePrepChecks
         {
             window.BattleDataFile = null;
             try { Directory.Delete(dir, true); } catch (IOException) { }
+        }
+
+        // The shipped four weapons and a real preset, not just the two-weapon test fixture.
+        var savedFightBook = Field<CustomFightBook?>(window, "customFights");
+        var previewBook = new CustomFightBook();
+        previewBook.Add(null, n => $"Set {n}");
+        SetField(window, "customFights", previewBook);
+        var savedBounds = Field<Area>(window, "bounds");
+        try
+        {
+            window.BattleTuning = BattleData.Settings; prefs.Language = "vi";
+            window.OpenBattlePrep(); Prep(0.3); setup = SetupWindow()!; setup.UpdateLayout();
+            static IEnumerable<DependencyObject> All(DependencyObject node) => LogicalTreeHelper.GetChildren(node).OfType<DependencyObject>().SelectMany(All).Prepend(node);
+            var mainScroll = All((DependencyObject)setup.Content).OfType<ScrollViewer>().First();
+            check(window.BattlePrepCards == 4 && mainScroll.ScrollableHeight < 1,
+                $"All four shipped weapons, Set 1 and the skills fit without page scrolling ({mainScroll.ScrollableHeight:0} DIPs overflow)");
+            void Shot(string name)
+            {
+                if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is not string folder) return;
+                var content = (FrameworkElement)setup.Content; content.UpdateLayout();
+                var bitmap = new System.Windows.Media.Imaging.RenderTargetBitmap((int)Math.Ceiling(content.ActualWidth + 12), (int)Math.Ceiling(content.ActualHeight + 12), 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
+                bitmap.Render(content);
+                var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder(); encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bitmap));
+                using var stream = File.Create(Path.Combine(folder, name)); encoder.Save(stream);
+            }
+            Shot("battle-setup-four-weapons-preset-vi.png");
+            SetField(window, "bounds", savedBounds with { Bottom = savedBounds.Top + 480 });
+            Call(window, "PlaceBattlePrep"); setup.UpdateLayout();
+            check(setup.ActualHeight <= 400.5 && mainScroll.ScrollableHeight < 160 && Field<Border>(window, "prepReady").IsVisible,
+                $"On a 480-DIP screen Ready stays visible with limited scrolling ({mainScroll.ScrollableHeight:0} DIPs)");
+            Shot("battle-setup-four-weapons-low-screen.png");
+        }
+        finally
+        {
+            window.CancelBattlePrep(); SetField(window, "bounds", savedBounds); SetField(window, "customFights", savedFightBook);
         }
 
         prefs.Language = language; prefs.BattleWeapon = weapon; prefs.BattleDifficulty = level;

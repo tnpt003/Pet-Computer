@@ -1402,5 +1402,6 @@
   "Not met in a battle yet.": "まだバトルで出会っていません。",
   "With no icon the fight has no apps and no malware.": "アイコンがないとアプリも悪質アプリも出ません。",
   "Previous chapter": "前の章",
+  "Details": "詳細",
   "{0}/5 apps selected, choose up to 5. Malware follows stage rules.": "アプリ {0}/5 個を選択中（最大5個）。妨害アプリはステージのルールに従います。"
 }

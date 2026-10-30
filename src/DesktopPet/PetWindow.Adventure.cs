@@ -377,7 +377,7 @@ public sealed partial class PetWindow
 
     // Reward accessories offered in Settings: the received ones (and one already worn).
     public bool AccessoryAvailable(string id) =>
-        PetAccessories.Find(id) is not { Reward: not null } || AdventureProgress.Rewards.Contains(id) || preferences.Accessory == id || KeepsakeAccessory(id);
+        PetAccessories.Find(id) is not { Reward: not null } || AdventureProgress.Rewards.Contains(id) || preferences.Accessory == id || KeepsakeAccessory(id) || AchievementReward(id);
 
     // A finished stage run: counted once in the progress (saved at once), never with custom data.
     private AdventureOutcome CountStageRun(BattleSim finished, bool won)

@@ -1,5 +1,5 @@
 """The UI text keys: the English text of every L("vi", "en") / LF($"vi", $"en") call in src,
-and of the data files (battle.json, coats.json, accessories.json: nameEn, descEn, ... and "en" names).
+and of the data files (battle.json, coats.json, accessories.json, achievements.json: nameEn, descEn, ... and "en" names).
 
 Other languages translate that English text (src/DesktopPet/Assets/i18n/<language>.json, read by
 PetText.cs); interpolated text is keyed by its format, $"Wave {b.Wave} cleared!" -> "Wave {0} cleared!".
@@ -128,7 +128,7 @@ def code_keys(root=ROOT):
     return extract(files)
 
 
-DATA_FILES = ("battle.json", "coats.json", "accessories.json")
+DATA_FILES = ("battle.json", "coats.json", "accessories.json", "achievements.json")
 
 
 def strip_comments(text):

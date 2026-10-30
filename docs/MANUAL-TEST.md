@@ -840,3 +840,10 @@ Dữ liệu gốc, không cần file tùy chỉnh (chương 2, Lối Bãi rác, 
 - [ ] Bấm một ô đã mở: trang trên cùng đổi, có hình thường và tinh anh, cách khắc chế, kỹ năng hợp, "Đã hạ". Bấm ô "???" không làm gì. Cuộn chuột trong vùng ô được. "‹ Sảnh" trở lại thẻ chế độ; nút Phần thưởng ẩn khi đang mở sổ.
 - [ ] Đánh một màn chương 2 (hoặc trận có quái mới): kết quả có dòng "Sổ tay quái, trang mới: …"; Sảnh ghi "Sổ tay quái · N mới"; mở sổ thì ô có "Mới", mở lại lần sau thì hết. Rời trận giữa chừng: quái đã gặp vẫn vào sổ. Đội hình (Pháo đài…) có trang riêng với các thành viên.
 - [ ] Hình slime trong sổ rõ, không bị cắt (trùm to, slime bay, bong bóng); chữ vi/en/ja không tràn; DPI 150/200%.
+
+### Thành tựu, lông và phụ kiện mới (1.5 M28, 2026-10-30)
+- [ ] Sảnh → Phần thưởng: mục đầu "Thành tựu · 0/20" (máy chưa có file achievements.json), 20 ô hai cột có tiến độ; 6 ô có hình mèo mặc phần thưởng (mờ khi chưa đạt). Tùy chỉnh chưa có Bạc hà/Nửa đêm/Vàng kim, Khăn buộc trán/Huy chương anh hùng/Vòng cổ cá nhỏ.
+- [ ] Thắng một trận bất kỳ: kết quả có "★ Thành tựu: Trận thắng đầu tiên"; Sảnh ghi "Phần thưởng · N mới"; mở ra thì ô có ✓ và "Mới", mở lại thì hết "Mới". Thắng không mất máu (Dễ, trận tự do) → "Không trầy xước · mở khóa Bộ lông Bạc hà", Tùy chỉnh có Bạc hà; chọn, Lưu, mèo đổi màu đúng.
+- [ ] Rời trận giữa chừng: số slime đã hạ vẫn cộng vào "Thợ săn slime". Trận chạy bằng battle.json tự sửa: không cộng gì.
+- [ ] Ba bộ lông và ba phụ kiện mới nhìn ổn khi đi, ngủ, bị kéo, ném, trèo, trong trận (vũ khí, nổi giận đỏ lông); chữ vi/en/ja không tràn; DPI 150/200%.
+- [ ] Cảm giác (ghi vào Nhật ký chơi thử): mốc 500/3000 slime, 50 trận, 10 trùm có quá dễ/khó không.

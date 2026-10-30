@@ -91,6 +91,8 @@ internal static class BagChecks
         try
         {
             // ── Rewards on the hub ──────────────────────────────────────────────────────────
+            // Earlier checks fought battles in this window: start with no achievements (1.5 M28).
+            FieldOf("achievementBook").SetValue(window, new AchievementBook());
             check(window.OpenBattleHub() == null, "The hub opens");
             await Task.Delay(30);
             var hub = Find("Pet battle hub")!;
@@ -173,6 +175,48 @@ internal static class BagChecks
             var pages = (List<string>)PetPrivate.Call(window, "CountMonsterBook", met)!;
             var again = (List<string>)PetPrivate.Call(window, "CountMonsterBook", met)!;
             check(pages.SequenceEqual(new[] { "rock" }) && again.Count == 0 && book.Knows("rock"), $"A battle's meetings go in the book once ({string.Join(",", pages)})");
+
+            // ── 1.5 M28: achievements on the Rewards page, the result panel, Customize ─────────
+            var trophies = new AchievementBook();
+            FieldOf("achievementBook").SetValue(window, trophies);
+            window.ShowBattleRewards(true);
+            text = window.BattleRewardsText;
+            check(text.Contains("Achievements · 0/20") && text.Contains("First victory") && text.Contains("0/500 · reward: Accessory Bandana") && text.Contains("reward: Coat Mint")
+                && !text.Split('\n').Contains("New") && !window.CoatAvailable("Mint") && window.CoatAvailable("Gray") && !window.AccessoryAvailable("Bandana"),
+                $"Achievements head the Rewards page with their progress and rewards; their coats and accessories are locked ({text.Replace('\n', '|')})");
+            window.ShowBattleRewards(false);
+            var clean = new BattleSim(new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 2 }, Boss = false, SlimeMaxHp = 1, SlimeDamage = 0, CatMaxHp = 1000 }, 0, 1600, seed: 3);
+            for (double t = 0; t < 60 && !clean.Over; t += 1.0 / 60) clean.Step(1.0 / 60, 800, false);
+            FieldOf("battleCustomData").SetValue(window, true);
+            var custom = (List<AchievementSpec>)PetPrivate.Call(window, "CountAchievements", clean)!;
+            check(custom.Count == 0 && trophies.Earned.Count == 0 && trophies.Totals.Count == 0, "Custom battle data counts nothing");
+            FieldOf("battleCustomData").SetValue(window, false);
+            var otherBattle = new BattleSim(new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 2 }, Boss = false, SlimeMaxHp = 1, SlimeDamage = 0, CatMaxHp = 1000 }, 0, 1600, seed: 3);
+            for (double t = 0; t < 60 && !otherBattle.Over; t += 1.0 / 60) otherBattle.Step(1.0 / 60, 800, false);
+            var earned = (List<AchievementSpec>)PetPrivate.Call(window, "CountAchievements", otherBattle)!;
+            var earnedAgain = (List<AchievementSpec>)PetPrivate.Call(window, "CountAchievements", otherBattle)!;
+            check(earned.Select(a => a.Id).Take(2).SequenceEqual(new[] { "first_win", "flawless" }) && earnedAgain.Count == 0 && trophies.Totals["defeated"] == 2
+                && window.CoatAvailable("Mint") && window.AchievementReward("Mint") && !window.CoatAvailable("Golden"),
+                $"A clean win earns First victory and Not a scratch once, and its Mint coat ({string.Join(",", earned.Select(a => a.Id))})");
+            Call(window, "TickBattleHub", 0.3);
+            check(window.BattleRewardsNew == earned.Count && Button(hub, $"Rewards · {earned.Count} new") != null, $"The Rewards button counts the new achievements ({window.BattleRewardsNew})");
+            window.ShowBattleRewards(true);
+            text = window.BattleRewardsText;
+            check(text.Contains($"Achievements · {earned.Count}/20") && text.Contains("✓ Not a scratch") && text.Contains("Done · reward: Coat Mint") && text.Split('\n').Count(l => l == "New") == earned.Count,
+                $"Earned ones are marked with New ({text.Replace('\n', '|')})");
+            Shot("Pet battle hub", "battle-achievements-en.png");
+            window.ShowBattleRewards(false);
+            check(window.BattleRewardsNew == 0, "Seen once, they are no longer new");
+            Call(window, "ShowBattleSummary", new PetWindow.BattleSummary(true, 2, 30, 1000, 1000, Achieved: earned));
+            await Task.Delay(10);
+            string resultText = Find("Pet result")?.Content is DependencyObject resultContent ? string.Join("|", Descendants(resultContent).OfType<TextBlock>().Select(t => t.Text)) : "";
+            check(resultText.Contains("★ Achievement: First victory") && resultText.Contains("★ Achievement: Not a scratch · unlocked Coat Mint"), $"The result panel names each achievement and what it unlocked ({resultText})");
+            Shot("Pet result", "battle-result-achievement-en.png");
+            Call(window, "CloseBattleSummary");
+            window.ShowCustomize();
+            var looks = PetPrivate.Field<PetSettingsForm>(window, "customizeForm");
+            check(looks.CoatIds.Contains("Mint") && !looks.CoatIds.Contains("Golden") && looks.Coat.Items.Count == 11, $"Customize offers the earned Mint coat only ({string.Join(",", looks.CoatIds)})");
+            PetPrivate.Field<Window>(window, "customizeWindow").Close();
             window.CancelBattleHub();
 
             // ── The Bag from the Adventure map ──────────────────────────────────────────────

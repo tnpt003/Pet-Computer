@@ -81,7 +81,8 @@ public sealed partial class PetWindow
         BattleDifficulty Difficulty = BattleDifficulty.Normal, BattleRecordNews News = default, string Weapon = BattleWeapon.Sword, string WeaponLabel = "",
         bool Custom = false, string WeaponStyle = "sword", StageSpec? Stage = null, AdventureOutcome Outcome = default, bool Ranked = true, string Upgrades = "",
         ExpeditionStepOutcome? Expedition = null, int EndlessWave = 0, IReadOnlyList<KeepsakeSpec>? EndlessUnlocked = null, bool NoApps = false,
-        int FishKept = -1, int FishTotal = 0, bool FishGone = false, IReadOnlyList<string>? BookPages = null);
+        int FishKept = -1, int FishTotal = 0, bool FishGone = false, IReadOnlyList<string>? BookPages = null,
+        IReadOnlyList<AchievementSpec>? Achieved = null);
     private static readonly Brush RecordGold = PetUi.Game.Gold;
     private static readonly Brush ResultMain = PetUi.Game.Chosen;
     private static string Clock(double seconds)
@@ -153,6 +154,14 @@ public sealed partial class PetWindow
             var book = Line(PetUi.SmallSize, RecordGold, true);
             book.Text = L("Sổ tay quái, trang mới: ", "Monster Book, new pages: ") + string.Join(", ", pages.Select(BookPageName));
             info.Children.Add(book);
+        }
+        // 1.5 M28: the achievements this battle earned, each with its coat or accessory.
+        foreach (var a in result.Achieved ?? Array.Empty<AchievementSpec>())
+        {
+            var earned = Line(PetUi.SmallSize, RecordGold, true);
+            string prize = AchievementPrize(a);
+            earned.Text = L("★ Thành tựu: ", "★ Achievement: ") + a.Name(preferences.Language) + (prize.Length > 0 ? L(" · mở khóa ", " · unlocked ") + prize : "");
+            info.Children.Add(earned);
         }
         // This cat, as the battle ended: cheering with its weapon, or sitting dazed.
         var model = new PetModel { Action = PetAction.Sitting, Grounded = true, Facing = 1, AnimationTime = 1, ActionTime = 1, SwordOut = true,

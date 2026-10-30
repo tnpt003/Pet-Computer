@@ -556,6 +556,7 @@ public sealed partial class BattleSim
         }
         hurt = damage * HurtFactor;
         CatHp = Math.Max(0, CatHp - hurt);
+        HurtTaken += hurt;
         NoteHurt(hurt);
         GainRage(hurt * Settings.RageHurtGain);
         HurtFlash = Settings.HurtFlashSeconds;

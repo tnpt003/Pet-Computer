@@ -347,6 +347,7 @@ public sealed partial class PetWindow
     {
         if (battle == null) return;
         CountMonsterBook(battle); // A battle left early still met what it met (once per battle).
+        CountAchievements(battle); // And still did what it did (1.5 M28).
         battle = null;
         battleExpedition = null; // A step still marked as fought is left (RetreatCost) when the map opens again.
         CloseBattleUpgrade();
@@ -635,6 +636,7 @@ public sealed partial class PetWindow
             if ((battle.Stage == null || endless) && persistPreferences) BattleRecords.Save();
             if (endless) endlessEarned = null;
             var bookPages = CountMonsterBook(battle); // 1.5 M27 (PetWindow.MonsterBook.cs)
+            var achieved = CountAchievements(battle); // 1.5 M28 (PetWindow.Achievements.cs)
             BattleReport = BattleReport with
             {
                 Won = BattleReport.Won + (won ? 1 : 0), Lost = BattleReport.Lost + (won ? 0 : 1),
@@ -646,7 +648,7 @@ public sealed partial class PetWindow
                 endless && EndlessRewards is EndlessSpec given ? given.EarnedBy(BattleRecords.EndlessCleared(given)).Where(m => m.Wave > clearedBefore).ToList() : null,
                 NoApps: battle.Stage != null && !battle.AppsOn,
                 // 1.5 M20: a basket stage's fish (kept in a win; still the cat's in a loss).
-                FishKept: battle.Basket != null ? (won ? battle.FishInBasket : battle.FishLeft) : -1, FishTotal: battle.FishTotal, FishGone: battle.FishGone, BookPages: bookPages);
+                FishKept: battle.Basket != null ? (won ? battle.FishInBasket : battle.FishLeft) : -1, FishTotal: battle.FishTotal, FishGone: battle.FishGone, BookPages: bookPages, Achieved: achieved);
             EndBattle();
             ShowBattleSummary(result);
             return;

@@ -1087,6 +1087,19 @@ L1 của docs/UPDATE-1.5.md. Code: `src/DesktopPet.Core/PetMonsterBook.cs` (sổ
 - **Kết quả trận:** trận mở trang mới thì có dòng vàng "Sổ tay quái, trang mới: …".
 - Luật trận, rulesVersion, kỷ lục và bảng mô phỏng không đổi (chỉ thêm ghi nhận).
 
+## Thành tựu, lông và phụ kiện thưởng (`achievements.json`) (bản 1.5, mốc M28, 2026-10-30)
+
+L2, L3 của docs/UPDATE-1.5.md. Dữ liệu `src/DesktopPet/Assets/achievements.json` (nhúng vào app như coats.json, không nằm trong battle.json nên battle.json tự sửa không đổi được). Code: `src/DesktopPet.Core/PetAchievements.cs` (đọc file, số liệu từ trận `AchievementStats`, sổ `AchievementBook`), cửa sổ `src/DesktopPet/PetWindow.Achievements.cs`. Test `tests/DesktopPet.Tests/AchievementTests.cs`, UiChecks khối "1.5 M28" trong `BagChecks.cs`. Python không tham gia; không cần ngoại lệ mới.
+
+- **Một thành tựu:** `id`, `name`/`desc` (`vi`, `en`; ja tra theo chữ tiếng Anh), `stat`, `goal` (1–1.000.000), `scope` (`total`: cộng dồn mọi trận; `battle`: đạt trong một trận), `reward` tùy chọn. File sai (stat lạ, goal 0, scope lạ, id trùng, thiếu mô tả, reward không hợp lệ) thì bỏ cả file, app vẫn chạy (không có thành tựu).
+- **Số liệu trận** (đọc lúc trận hết hoặc bị rời giữa chừng): `wins` (thắng), `defeated` (số hạ), `bosses` (hạ trùm), `combos`, `flawless` (thắng mà `HurtTaken` = 0: chưa mất máu lần nào, khiên/mai rùa chặn thì không tính là mất), `clutch` (thắng khi máu ≤ 15%), `hardWin` (thắng ở Khó), `quickWin` (thắng trong ≤ 120 s đánh), `heldHits`, `throwHits`, `ropesCut` (cắt dây bằng mèo + kéo + dây trùm), `rages`, `bubbles`, `ghosts`, `iceBreaks`, `fullBasket` (thắng màn giỏ cá còn đủ cá), `coins`, `endlessWaves` (đợt vượt trong một lượt Vô tận), `popups`, `quakeHits`. Bộ đếm mới duy nhất trong trận là `BattleSim.HurtTaken` (cộng ở LandHit), không đổi luật trận.
+- **20 thành tựu gốc**, 6 cái có thưởng: Thợ săn slime (500 slime) → phụ kiện Khăn buộc trán; Huyền thoại slime (3000) → lông Vàng kim; Mèo chiến binh (50 trận thắng) → lông Nửa đêm; Khắc tinh của trùm (hạ trùm 10 trận) → Huy chương anh hùng; Không trầy xước → lông Bạc hà; Giỏ cá đầy ắp → Vòng cổ cá nhỏ. 14 cái còn lại chỉ có huy hiệu.
+- **Lông/phụ kiện thưởng:** coats.json và accessories.json có `"reward": "achievement"`; mỗi món chỉ một thành tựu trao (kiểm khi đọc file). Cài đặt → Tùy chỉnh chỉ hiện món đã nhận (hoặc đang mặc sẵn). Bộ lông đầu tiên (Cam, mặc định) không được là phần thưởng. Mười bộ lông cũ và phụ kiện cũ không đổi.
+- **Ghi nhận:** mọi chế độ (Phiêu lưu, Viễn chinh, Vô tận, trận tự do), mỗi trận một lần; trận rời giữa chừng vẫn cộng số liệu (không có thắng). Trận chạy bằng battle.json tự sửa không ghi gì. Không tính ngược trận cũ (bắt đầu từ 0 ở bản này).
+- **File:** `%LOCALAPPDATA%\DesktopPet\achievements.json` (version 1): `Totals`, `Best` (trận tốt nhất từng stat), `Earned`. Ghi .tmp + .bak như monster-book; file hỏng đọc .bak hoặc bắt đầu lại; số âm/không hữu hạn bị bỏ; file của bản mới hơn chỉ đọc, không ghi đè. Chỉ ghi khi có gì thay đổi.
+- **Hiển thị:** Sảnh → Phần thưởng có mục đầu "Thành tựu · đạt/tổng", ô hai cột: hình phần thưởng trên mèo (lông hoặc phụ kiện) hoặc cúp, tên, mô tả, tiến độ "x/goal" hoặc "Đã đạt", phần thưởng; mới đạt có nhãn "Mới" và được đếm vào nút "Phần thưởng · N mới" (đánh dấu đã xem trong `RewardsSeen` của adventure-progress dưới dạng `a:<id>`). Kết quả trận có dòng vàng "★ Thành tựu: … · mở khóa …".
+- Luật trận, rulesVersion, kỷ lục và bảng mô phỏng không đổi.
+
 ## App trên màn hình (`apps`) (2026-10-23)
 
 Một "desktop giả" trong trận Phiêu lưu, Viễn chinh và Vô tận (trận tự do không có): 5 icon app do game tự vẽ (không dùng tên, logo hay màu của app thật) đứng trên các ô lưới kiểu desktop phía trên dải chiến trường, ở vị trí ngẫu nhiên theo seed. Logic ở `PetBattle.Apps.cs`; hình ở `PetBattleAppArt.cs`, `PetDesktopAppViews.cs` (icon, đường bay), `PetBattleView.Apps.cs` (dải chiến trường); cửa sổ ở `PetWindow.BattleApps.cs`. Python không tham gia.

@@ -12,9 +12,10 @@ public enum CoatMarkings { None, Calico, Tabby }
 
 // One coat from Assets/coats.json: id stored in preferences, settings names and #RRGGBB colors.
 // Plain data (no WPF) so preferences and tests can use it; CoatPalette turns it into brushes.
+// Reward names what earns it ("achievement", 1.5 M28): until then it is not offered in Settings.
 public sealed record CoatSpec(string Id, string NameVi, string NameEn, string Fur, string Cream, string Pink,
     string Ink = "#49372E", string? Iris = null, CoatMarkings Markings = CoatMarkings.None,
-    string? PatchA = null, string? PatchB = null, string? Points = null, string? Paw = null);
+    string? PatchA = null, string? PatchB = null, string? Points = null, string? Paw = null, string? Reward = null);
 
 public static class PetCoats
 {
@@ -74,6 +75,10 @@ public static class PetCoats
                 Color("ink") ?? "#49372E", Color("iris"), markings, Color("patchA"), Color("patchB"), Color("points"), Color("paw"));
             if (markings != CoatMarkings.None && spec.PatchA == null || markings == CoatMarkings.Calico && spec.PatchB == null)
                 throw new InvalidDataException($"{id} is missing patch colors for its markings");
+            string? reward = Text(item, "reward");
+            if (reward != null && !Regex.IsMatch(reward, "^[a-z0-9_-]{1,32}$")) throw new InvalidDataException(id + " has a bad reward");
+            if (reward != null && list.Count == 0) throw new InvalidDataException("The first (default) coat cannot be a reward");
+            spec = spec with { Reward = reward };
             if (item.TryGetProperty("name", out var names) && names.ValueKind == JsonValueKind.Object)
                 spec = spec with { NameVi = Text(names, "vi") ?? id, NameEn = Text(names, "en") ?? id };
             list.Add(spec);

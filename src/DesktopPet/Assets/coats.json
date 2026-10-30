@@ -1,5 +1,5 @@
 {
-  "_comment": "Coats in settings order; the first is the default. Colors are #RRGGBB. Optional: ink (outline, default #49372E), iris (colored eyes), markings (Calico or Tabby, with patchA and patchB), points (ears, mask, tail and paws), paw (mitten color). Rebuild the app after editing.",
+  "_comment": "Coats in settings order; the first is the default. Colors are #RRGGBB. Optional: ink (outline, default #49372E), iris (colored eyes), markings (Calico or Tabby, with patchA and patchB), points (ears, mask, tail and paws), paw (mitten color), reward (achievement: offered once an achievement in achievements.json gives it). Rebuild the app after editing.",
   "coats": [
     { "id": "Orange", "name": { "vi": "Cam", "en": "Orange" }, "fur": "#E9AE65", "cream": "#FFE4B5", "pink": "#E98990" },
     { "id": "Gray", "name": { "vi": "Xám", "en": "Gray" }, "fur": "#A9ACB8", "cream": "#E8E9EE", "pink": "#E9989E" },
@@ -10,6 +10,9 @@
     { "id": "GingerTabby", "name": { "vi": "Mướp cam", "en": "Ginger tabby" }, "fur": "#E9AE65", "cream": "#FFE4B5", "pink": "#E98990", "markings": "Tabby", "patchA": "#C26E2E" },
     { "id": "Tuxedo", "name": { "vi": "Mun cổ trắng (tuxedo)", "en": "Tuxedo" }, "fur": "#3F3E4B", "cream": "#FFFFFF", "pink": "#E79AA2", "ink": "#16151B", "iris": "#B9D66A", "paw": "#FFFFFF" },
     { "id": "RussianBlue", "name": { "vi": "Xám xanh (mèo Nga)", "en": "Russian blue" }, "fur": "#8E9CB2", "cream": "#CBD4E1", "pink": "#D98F99", "ink": "#323446", "iris": "#7CC67F" },
-    { "id": "Siamese", "name": { "vi": "Xiêm", "en": "Siamese" }, "fur": "#F3E6D0", "cream": "#FFF8EC", "pink": "#E9A0A6", "ink": "#3B2B24", "iris": "#6FB3F2", "points": "#8A6A55" }
+    { "id": "Siamese", "name": { "vi": "Xiêm", "en": "Siamese" }, "fur": "#F3E6D0", "cream": "#FFF8EC", "pink": "#E9A0A6", "ink": "#3B2B24", "iris": "#6FB3F2", "points": "#8A6A55" },
+    { "id": "Mint", "name": { "vi": "Bạc hà", "en": "Mint" }, "reward": "achievement", "fur": "#9FD9C0", "cream": "#E6FAF1", "pink": "#EE9BA6", "ink": "#2E4A40", "iris": "#F2B84E" },
+    { "id": "Midnight", "name": { "vi": "Nửa đêm", "en": "Midnight" }, "reward": "achievement", "fur": "#45558A", "cream": "#9AA8D8", "pink": "#E39AB0", "ink": "#161B33", "iris": "#FFE36E", "markings": "Tabby", "patchA": "#2C3866" },
+    { "id": "Golden", "name": { "vi": "Vàng kim", "en": "Golden" }, "reward": "achievement", "fur": "#F2C94C", "cream": "#FFF1BF", "pink": "#EE9A8E", "ink": "#5A3E12", "iris": "#4FA3E0", "paw": "#FFF1BF" }
   ]
 }

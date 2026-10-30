@@ -252,6 +252,8 @@ public sealed partial class BattleSim
     public double StunImmunity { get; private set; }
     public bool CatStunned => CatStunRemaining > 0;
     public int StunsTaken { get; private set; }
+    // HP the cat lost this battle, before heals (1.5 M28: the Flawless achievement).
+    public double HurtTaken { get; private set; }
     // Simulation clock (stops while paused); animations read it instead of wall time.
     public double Time { get; internal set; }
     // HP given back after the last cleared wave, and the battle's length (for the result panel).

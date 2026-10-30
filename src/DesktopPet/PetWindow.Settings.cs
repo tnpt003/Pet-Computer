@@ -16,6 +16,7 @@ public sealed class PetSettingsForm
     public TextBox Name = null!;
     public ComboBox Language = null!, Personality = null!, Coat = null!, Accessory = null!, Chattiness = null!, BreakInterval = null!, PreviewCue = null!, BirthDay = null!, BirthMonth = null!;
     public string[] AccessoryIds = Array.Empty<string>();
+    public string[] CoatIds = Array.Empty<string>();
     public string[] LanguageIds = Array.Empty<string>();
     // The keepsakes that can be on display (owned cups best first, then the cushion); empty: none yet.
     public ComboBox Trophy = null!;
@@ -67,12 +68,14 @@ public sealed partial class PetWindow
         form.Name = new TextBox { Text = preferences.Name, MaxLength = 24 };
         form.Personality = new ComboBox { ItemsSource = new[] { L("Cân bằng", "Balanced"), L("Ham chơi", "Playful"), L("Tò mò", "Curious"), L("Điềm tĩnh", "Calm") },
             SelectedIndex = Math.Max(0, Array.IndexOf(personalities, preferences.Personality)) };
-        // Coats and their names come from Assets/coats.json, in PetPreferences.Coats order.
+        // Coats and their names come from Assets/coats.json, in PetPreferences.Coats order; achievement
+        // coats only once earned (or already worn, 1.5 M28). The list maps back by id.
+        form.CoatIds = PetPreferences.Coats.Where(CoatAvailable).ToArray();
         form.Coat = new ComboBox { ItemTemplate = CoatTemplate,
-            ItemsSource = PetCoats.All.Select(coat => new CoatChoice(L(coat.NameVi, coat.NameEn), CoatPalette.For(coat.Id))).ToArray(),
-            SelectedIndex = Math.Max(0, Array.IndexOf(PetPreferences.Coats, preferences.Coat)) };
+            ItemsSource = form.CoatIds.Select(id => PetCoats.All.First(coat => coat.Id == id)).Select(coat => new CoatChoice(L(coat.NameVi, coat.NameEn), CoatPalette.For(coat.Id))).ToArray(),
+            SelectedIndex = Math.Max(0, Array.IndexOf(form.CoatIds, preferences.Coat)) };
         // Accessory names come from Assets/accessories.json, in PetPreferences.Accessories order;
-        // Adventure rewards only once received (or already worn). The list maps back by id.
+        // Adventure and achievement rewards only once received (or already worn). The list maps back by id.
         form.AccessoryIds = PetPreferences.Accessories.Where(id => id == PetAccessories.None || AccessoryAvailable(id)).ToArray();
         form.Accessory = new ComboBox { ItemsSource = form.AccessoryIds.Select(id => PetAccessories.Find(id) is { } item ? L(item.NameVi, item.NameEn) : L("Không", "None")).ToArray(),
             SelectedIndex = Math.Max(0, Array.IndexOf(form.AccessoryIds, preferences.Accessory)) };
@@ -93,7 +96,7 @@ public sealed partial class PetWindow
         var previewPet = new PetModel { Action = PetAction.Idle, Grounded = true, Facing = 1, AnimationTime = 1, ActionTime = 1 };
         form.PreviewPet = previewPet;
         form.PetPreview = new PetRenderer(previewPet) { Coat = preferences.Coat, Accessory = preferences.Accessory, Width = 192, Height = 192, Margin = new Thickness(-30) };
-        form.Coat.SelectionChanged += (_, _) => form.PetPreview.Coat = PetPreferences.Coats[Math.Max(0, form.Coat.SelectedIndex)];
+        form.Coat.SelectionChanged += (_, _) => form.PetPreview.Coat = form.CoatIds[Math.Max(0, form.Coat.SelectedIndex)];
         form.Accessory.SelectionChanged += (_, _) => form.PetPreview.Accessory = form.AccessoryIds[Math.Max(0, form.Accessory.SelectedIndex)];
         var stage = new Grid { Width = 132, Height = 132, ClipToBounds = true }; // Crops the window's transparent margin.
         stage.Children.Add(form.PetPreview);
@@ -154,7 +157,7 @@ public sealed partial class PetWindow
             preferences.Name = string.IsNullOrWhiteSpace(form.Name.Text) ? "Mochi" : form.Name.Text.Trim();
             preferences.Personality = personalities[Math.Max(0, form.Personality.SelectedIndex)]; Title = preferences.Name + " — Desktop Pet";
             behavior.Personality = preferences.Personality;
-            preferences.Coat = PetPreferences.Coats[Math.Max(0, form.Coat.SelectedIndex)];
+            preferences.Coat = form.CoatIds[Math.Max(0, form.Coat.SelectedIndex)];
             preferences.Accessory = form.AccessoryIds[Math.Max(0, form.Accessory.SelectedIndex)];
             // A day past the month's end (31 February) becomes its last day; both parts are needed.
             int birthMonth = Math.Max(0, form.BirthMonth.SelectedIndex), birthDay = Math.Max(0, form.BirthDay.SelectedIndex);

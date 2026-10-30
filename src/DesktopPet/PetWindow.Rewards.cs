@@ -32,7 +32,7 @@ public sealed partial class PetWindow
     public string BattleRewardsText => hubRewards is null || !hubRewardsShown ? "" : string.Join("\n", BagTexts(hubRewards));
     public int BattleRewardsNew => NewRewards().Count;
 
-    // Every reward held: accessories won in the Adventure, keepsakes won in the Expedition.
+    // Every reward held: accessories won in the Adventure, keepsakes won in the Expedition, achievements.
     private List<string> HeldRewards()
     {
         var held = new List<string>();
@@ -45,6 +45,9 @@ public sealed partial class PetWindow
                 if (x.Progress.Keepsakes.Contains(k.Id) && !held.Contains(k.Id)) held.Add(k.Id);
         foreach (var m in EndlessEarned)
             if (!held.Contains(m.Id)) held.Add(m.Id);
+        // 1.5 M28: earned achievements (PetWindow.Achievements.cs).
+        foreach (var a in PetAchievements.All)
+            if (AchievementBook.Has(a.Id)) held.Add(AchievementKey(a));
         return held;
     }
 
@@ -101,6 +104,7 @@ public sealed partial class PetWindow
         var expedition = Expedition;
         rewardsDetail = BagLine(L("Rê chuột lên một ô để xem cách nhận hoặc nơi dùng.", "Hover a tile to see how to win it or where it shows."), PetUi.CaptionSize, PetUi.Game.Soft);
         rewardsDetail.Margin = new Thickness(2, 2, 0, 0); rewardsDetail.MinHeight = 18;
+        AchievementsSection(); // 1.5 M28
 
         // The Adventure's accessories, by the stage that gives each.
         if (adventure != null)
@@ -233,13 +237,13 @@ public sealed partial class PetWindow
         return line;
     }
 
-    // This cat wearing an accessory, as a small picture.
-    private FrameworkElement WearingCat(string accessory)
+    // This cat wearing an accessory (in another coat, 1.5 M28), as a small picture.
+    private FrameworkElement WearingCat(string accessory, string? coat = null, double size = 64)
     {
         var view = new PetRenderer(new PetModel { Action = PetAction.Idle, Grounded = true, Facing = 1, AnimationTime = 1, ActionTime = 1 })
-            { Coat = renderer.Coat, Accessory = accessory, Width = 192, Height = 192 };
+            { Coat = coat ?? renderer.Coat, Accessory = accessory, Width = 192, Height = 192 };
         var picture = CatPicture(new Grid { Width = 192, Height = 192, Children = { view } });
-        picture.Width = 64; picture.Height = 64;
+        picture.Width = size; picture.Height = size;
         return picture;
     }
 

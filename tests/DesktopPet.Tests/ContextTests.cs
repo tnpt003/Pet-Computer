@@ -32,8 +32,8 @@ internal static class ContextTests
         finally { Directory.Delete(folder, true); }
 
         // Coats come from the embedded coats.json: same ids, order and colors as the old built-in list.
-        check(PetPreferences.Coats.SequenceEqual(new[] { "Orange", "Gray", "Black", "White", "Calico", "Tabby", "GingerTabby", "Tuxedo", "RussianBlue", "Siamese" }),
-            "coats.json lists the 10 original coats in the original settings order");
+        check(PetPreferences.Coats.SequenceEqual(new[] { "Orange", "Gray", "Black", "White", "Calico", "Tabby", "GingerTabby", "Tuxedo", "RussianBlue", "Siamese", "Mint", "Midnight", "Golden" }),
+            "coats.json lists the 10 original coats in the original settings order, then the three achievement coats (1.5 M28)");
         var siamese = PetCoats.All.Single(coat => coat.Id == "Siamese");
         check(PetCoats.All[0] == PetCoats.Fallback && siamese is { Points: "#8A6A55", Iris: "#6FB3F2", Ink: "#3B2B24", NameVi: "Xiêm" } &&
               PetCoats.All.Single(coat => coat.Id == "Calico") is { Markings: CoatMarkings.Calico, PatchB: "#45403F" } &&
@@ -50,8 +50,8 @@ internal static class ContextTests
 
         // Accessories come from the embedded accessories.json; the original seven keep their ids and order.
         check(PetPreferences.Accessories.SequenceEqual(new[] { "None", "Bell", "Bow", "Hat", "Scarf", "Glasses", "Flower", "Crown",
-                "SantaHat", "WitchHat", "Apricot", "Lantern", "SlimeHat", "SlimeKingCrown", "FolderHat", "ExpeditionScarf", "InfinityCollar", "StarHalo", "GalaxyCape" }),
-            "accessories.json lists None, the seven original accessories, four holiday ones, two Adventure rewards, chapter 2's Folder hat, the Expedition scarf and Infinity's three in order");
+                "SantaHat", "WitchHat", "Apricot", "Lantern", "SlimeHat", "SlimeKingCrown", "FolderHat", "ExpeditionScarf", "InfinityCollar", "StarHalo", "GalaxyCape", "Bandana", "HeroMedal", "FishCharm" }),
+            "accessories.json lists None, the seven original accessories, four holiday ones, two Adventure rewards, chapter 2's Folder hat, the Expedition scarf, Infinity's three and the three achievement ones in order");
         check(PetAccessories.ForEvent("christmas")?.Id == "SantaHat" && PetAccessories.ForEvent("halloween")?.Id == "WitchHat" &&
               PetAccessories.ForEvent("tet")?.Id == "Apricot" && PetAccessories.ForEvent("mid_autumn")?.Id == "Lantern" &&
               PetAccessories.ForEvent("birthday")?.Id == "Hat" && PetAccessories.ForEvent("anniversary") == null && PetAccessories.ForEvent(null) == null,

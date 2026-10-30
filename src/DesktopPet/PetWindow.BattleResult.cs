@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -80,7 +81,7 @@ public sealed partial class PetWindow
         BattleDifficulty Difficulty = BattleDifficulty.Normal, BattleRecordNews News = default, string Weapon = BattleWeapon.Sword, string WeaponLabel = "",
         bool Custom = false, string WeaponStyle = "sword", StageSpec? Stage = null, AdventureOutcome Outcome = default, bool Ranked = true, string Upgrades = "",
         ExpeditionStepOutcome? Expedition = null, int EndlessWave = 0, IReadOnlyList<KeepsakeSpec>? EndlessUnlocked = null, bool NoApps = false,
-        int FishKept = -1, int FishTotal = 0, bool FishGone = false);
+        int FishKept = -1, int FishTotal = 0, bool FishGone = false, IReadOnlyList<string>? BookPages = null);
     private static readonly Brush RecordGold = PetUi.Game.Gold;
     private static readonly Brush ResultMain = PetUi.Game.Chosen;
     private static string Clock(double seconds)
@@ -146,6 +147,13 @@ public sealed partial class PetWindow
             actions = stageActions;
         }
         else actions = FreeBattleResult(result, info, arms, level, Choose);
+        // 1.5 M27: the Monster Book's pages this battle opened.
+        if (result.BookPages is { Count: > 0 } pages)
+        {
+            var book = Line(PetUi.SmallSize, RecordGold, true);
+            book.Text = L("Sổ tay quái, trang mới: ", "Monster Book, new pages: ") + string.Join(", ", pages.Select(BookPageName));
+            info.Children.Add(book);
+        }
         // This cat, as the battle ended: cheering with its weapon, or sitting dazed.
         var model = new PetModel { Action = PetAction.Sitting, Grounded = true, Facing = 1, AnimationTime = 1, ActionTime = 1, SwordOut = true,
             WeaponStyle = result.WeaponStyle ?? "sword", BattleCheer = result.Won, BattleDazed = !result.Won };

@@ -100,6 +100,7 @@ public sealed partial class PetWindow
         battleHubWindow = null;
         hubCards.Clear();
         hubRewardsShown = false; hubRewards = null; hubCardsRow = null; hubRewardsText = null;
+        hubBookShown = false; hubBook = null; hubBookText = null; hubBookButton = null; bookDetail = null;
         if (was) ApplyQuiet();
     }
 
@@ -177,11 +178,17 @@ public sealed partial class PetWindow
         hubRewards = new StackPanel { Width = RewardsWidth, Margin = new Thickness(0, 14, 0, 0), Visibility = Visibility.Collapsed };
         var (rewards, rewardsText, _) = HudButton(() => ShowBattleRewards(!hubRewardsShown), plain: true);
         hubRewardsText = rewardsText;
+        // 1.5 M27: the Monster Book (PetWindow.MonsterBook.cs) takes the cards' place the same way.
+        hubBookShown = false; hubBookLanguage = null;
+        hubBook = new StackPanel { Width = RewardsWidth, Margin = new Thickness(0, 14, 0, 0), Visibility = Visibility.Collapsed };
+        var (book, bookText, _) = HudButton(() => ShowMonsterBook(!hubBookShown), plain: true);
+        book.Margin = new Thickness(8, 0, 0, 0);
+        hubBookButton = book; hubBookText = bookText; hubRewardsButton = rewards;
 
         var (close, closeText, _) = HudButton(CancelBattleHub, plain: true);
         close.Margin = new Thickness(0);
         hubCloseText = closeText;
-        var window = CreateGamePanel(new StackPanel { Children = { header, cards, hubRewards, hubStatus } }, PanelActions(new UIElement[] { rewards }, new UIElement[] { close }), "Pet battle hub");
+        var window = CreateGamePanel(new StackPanel { Children = { header, cards, hubRewards, hubBook, hubStatus } }, PanelActions(new UIElement[] { rewards, book }, new UIElement[] { close }), "Pet battle hub");
         window.Closed += (_, _) => { if (battleHubWindow == window) battleHubWindow = null; };
         battleHubWindow = window;
         UpdateBattleHub();
@@ -197,14 +204,20 @@ public sealed partial class PetWindow
             if (text.Text != (value ?? "")) text.Text = value ?? "";
             text.Visibility = string.IsNullOrEmpty(value) ? Visibility.Collapsed : Visibility.Visible;
         }
-        hubTitle.Text = hubRewardsShown ? L("Phần thưởng", "Rewards") : L("Chế độ chiến đấu", "Battle Mode");
+        hubTitle.Text = hubRewardsShown ? L("Phần thưởng", "Rewards") : hubBookShown ? L("Sổ tay quái", "Monster Book") : L("Chế độ chiến đấu", "Battle Mode");
         hubSubtitle.Text = hubRewardsShown ? LF($"Những gì {preferences.Name} đã giành được", $"What {preferences.Name} has won")
+            : hubBookShown ? LF($"Những quái {preferences.Name} đã gặp và cách hạ chúng", $"The enemies {preferences.Name} has met and how to beat them")
             : LF($"Hôm nay {preferences.Name} ra trận theo cách nào?", $"How will {preferences.Name} fight today?");
         string? refusal = BattlePrepRefusal();
-        Show(hubStatus, refusal != null && !hubRewardsShown ? L("Chưa thể vào: ", "Not yet: ") + refusal : null);
+        Show(hubStatus, refusal != null && !hubRewardsShown && !hubBookShown ? L("Chưa thể vào: ", "Not yet: ") + refusal : null);
         hubCloseText!.Text = L("Đóng", "Close");
         if (hubRewardsText != null) hubRewardsText.Text = hubRewardsShown ? L("‹ Sảnh", "‹ Hub") : RewardsButtonText();
+        if (hubBookText != null) hubBookText.Text = hubBookShown ? L("‹ Sảnh", "‹ Hub") : BookButtonText();
+        // One page at a time: the other page's button steps aside.
+        if (hubRewardsButton != null) hubRewardsButton.Visibility = hubBookShown ? Visibility.Collapsed : Visibility.Visible;
+        if (hubBookButton != null) hubBookButton.Visibility = hubRewardsShown ? Visibility.Collapsed : Visibility.Visible;
         RefreshRewards();
+        RefreshMonsterBook();
         foreach (var (mode, card, art, ribbon, ribbonText, name, desc, state, bar, fill) in hubCards)
         {
             var (title, about, line, progress, open, ribbonLabel) = HubCard(mode);

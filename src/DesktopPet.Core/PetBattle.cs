@@ -368,6 +368,7 @@ public sealed partial class BattleSim
         catPose = catHeld ? pose : null;
         StepEffects(dt);
         StepFreeze(dt); // 1.5 M26: the Screenshot's freeze, a dazzle (PetBattle.Malware2.cs).
+        NoteMet(); // 1.5 M27: the Monster Book (PetBattle.Book.cs).
         StepDrops(dt);
         HurtFlash = Math.Max(0, HurtFlash - dt);
         // The stun runs on battle time, held or not (lifting neither ends nor stretches it).
@@ -824,6 +825,7 @@ public sealed partial class BattleSim
         slime.KnockVelocity = 0;
         ClearStatus(slime);
         Defeated++;
+        NoteDefeated(slime);
         if (slime.IsBoss) { BossDefeated = true; DefeatedBoss = slime.Type; }
         if (SelectedId == slime.Id) SelectedId = null;
         // A defeated healer's guard ends with it (after the whole blast for a bomb, which hits

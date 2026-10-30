@@ -32,6 +32,8 @@ internal static class BattleDataTests
         differences.RemoveAll(d => buffed.Keys.Any(k => d.StartsWith(k + ".MaxHp:") || d.StartsWith(k + ".Damage:")));
         // 2026-10-24: the shipped King's slam deals less than its damage (slamDamage 22).
         differences.RemoveAll(d => d == "king.SlamDamage: 22 vs 0");
+        // 1.5 M27: the Monster Book's tips are words in battle.json only, not battle numbers.
+        differences.RemoveAll(d => d.Contains(".TipVi:") || d.Contains(".TipEn:"));
         foreach (var (id, (hp, damage)) in buffed)
             if (shipped.Enemy(id) is var kind && builtIn.Enemy(id) is var plain && (Math.Abs(kind.MaxHp - plain.MaxHp * hp) > 0.5001 || Math.Abs(kind.Damage - plain.Damage * damage) > 0.5001))
                 differences.Add($"{id}: {kind.MaxHp}/{kind.Damage} is not the built-in {plain.MaxHp}/{plain.Damage} buffed");

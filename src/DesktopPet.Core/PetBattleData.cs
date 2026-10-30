@@ -139,6 +139,14 @@ public sealed class EnemyType
     public double Cost { get; init; } = 1;
     // The one elite affix this kind may roll when it spawns (null: never elite).
     public EliteSpec? Elite { get; init; }
+    // 1.5 M27: its Monster Book page: how to beat it (tipVi/tipEn together, ≤ 200 characters) and the
+    // skills that suit it (skill ids, at most 3). A kind without a tip has no page of its own.
+    public string? TipVi { get; init; }
+    public string? TipEn { get; init; }
+    public string[]? Counters { get; init; }
+    // Its page is another kind's (the chapter 1 Slime King shares the Slime King's); it has no tip of its own then.
+    public string? Page { get; init; }
+    public string Tip(string language) => PetText.Data(language, TipVi ?? "", TipEn ?? "");
     // Its one link with its allies (1.5, PetBattle.Links.cs; null: none).
     public LinkSpec? Link { get; init; }
     [JsonIgnore] public LinkSpec? ActiveLink => Link is { Enabled: true } link ? link : null;
@@ -1238,6 +1246,10 @@ public static class BattleData
             Id(e.Family, at + ".family");
             if (Array.IndexOf(EnemyRenderers, e.Renderer) < 0) throw new InvalidDataException($"{at}.renderer must be one of: {string.Join(", ", EnemyRenderers)}");
             Text(e.NameVi, at + ".nameVi"); Text(e.NameEn, at + ".nameEn");
+            if ((e.TipVi == null) != (e.TipEn == null) || e.TipVi?.Trim().Length is 0 or > 200 || e.TipEn?.Trim().Length is 0 or > 200)
+                throw new InvalidDataException(at + ": tipVi and tipEn go together, 1–200 characters");
+            if (e.Counters is { } counters && (counters.Length > 3 || counters.Any(k => BattleSkills.Parse(k) == null) || counters.Distinct().Count() != counters.Length))
+                throw new InvalidDataException(at + ".counters: up to 3 different skill ids");
             Within(e.MaxHp, 1, 100000, at + ".maxHp"); Within(e.Speed, 0, 400, at + ".speed"); Within(e.Damage, 0, 1000, at + ".damage");
             Within(e.Range, 10, 400, at + ".range"); Within(e.Windup, 0.1, 10, at + ".windup"); Within(e.AttackCooldown, 0.1, 30, at + ".attackCooldown");
             Within(e.Recover, 0, 10, at + ".recover");
@@ -1552,6 +1564,10 @@ public static class BattleData
                 || e.Clock != null || e.Steal != null || e.SummonAt > 0 || e.Phases != null))
                 throw new InvalidDataException(at + ": still is only for a plain enemy (no boss, attack, link or 1.5 trick)");
         }
+        // 1.5 M27: a shared Monster Book page is a known kind's with a tip of its own (no chains).
+        foreach (var e in s.EnemyTypes)
+            if (e.Page != null && (e.TipVi != null || e.Page == e.Id || !ids.Contains(e.Page) || s.Enemy(e.Page) is { TipVi: null } or { Page: not null }))
+                throw new InvalidDataException($"enemies[{e.Id}].page must name another known enemy with a tip (and then it has no tip itself)");
         // A rider's mount and a merge's result: known enemies without a link of that kind (no chains).
         foreach (var e in s.EnemyTypes)
         {

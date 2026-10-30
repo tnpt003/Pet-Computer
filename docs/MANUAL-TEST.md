@@ -834,3 +834,9 @@ Dữ liệu gốc, không cần file tùy chỉnh (chương 2, Lối Bãi rác, 
 - [ ] Màn chương 2 (Hướng dẫn bật): lần đầu icon Chụp Màn Hình sạc đầy, trận đứng hình, sáng icon; bấm icon thì hết bước và tia chớp vẫn bay xuống.
 - [ ] Lần đầu Captcha bật: trận đứng hình, sáng đúng cửa sổ Captcha (thanh thời gian không chạy); bấm hết ô mèo thì hết bước. Lần đầu Pin yếu / Con trỏ đơ: sáng dải đỏ / lớp đồng hồ cát; bấm Cắm sạc / Tiếp tục thì hết bước (đếm ngược "Không phản hồi" không chạy khi đang đứng hình).
 - [ ] Icon Chụp Màn Hình bị nhiễm chớp vào mèo lần đầu: sáng mèo và icon, Hiểu rồi để tiếp. Mỗi bước chỉ một lần mỗi lượt; "Bỏ qua hướng dẫn" tắt hết.
+
+### Sổ tay quái (1.5 M27, 2026-10-30)
+- [ ] Sảnh chiến đấu: nút "Sổ tay quái" cạnh "Phần thưởng". Máy đã thắng chương 1: Slime, Slime nhanh, Slime đá, Slime thảo dược, Vua Slime đã mở (không có nhãn "Mới"), phần còn lại là bóng đen "???".
+- [ ] Bấm một ô đã mở: trang trên cùng đổi, có hình thường và tinh anh, cách khắc chế, kỹ năng hợp, "Đã hạ". Bấm ô "???" không làm gì. Cuộn chuột trong vùng ô được. "‹ Sảnh" trở lại thẻ chế độ; nút Phần thưởng ẩn khi đang mở sổ.
+- [ ] Đánh một màn chương 2 (hoặc trận có quái mới): kết quả có dòng "Sổ tay quái, trang mới: …"; Sảnh ghi "Sổ tay quái · N mới"; mở sổ thì ô có "Mới", mở lại lần sau thì hết. Rời trận giữa chừng: quái đã gặp vẫn vào sổ. Đội hình (Pháo đài…) có trang riêng với các thành viên.
+- [ ] Hình slime trong sổ rõ, không bị cắt (trùm to, slime bay, bong bóng); chữ vi/en/ja không tràn; DPI 150/200%.

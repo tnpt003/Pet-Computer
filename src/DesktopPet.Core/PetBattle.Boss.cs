@@ -89,6 +89,7 @@ public sealed partial class BattleSim
         if (count > 0 && phase?.Formation is string id)
         {
             FormationsMet++;
+            NoteFormation(id);
             events.Add(new(BattleEventKind.FormationArrived, boss.X, Settings.FormationList.ToList().FindIndex(f => f.Id == id)));
         }
         if (count > 0 && phase is { Roped: true }) events.Add(new(BattleEventKind.BossRoped, boss.X, boss.Id));

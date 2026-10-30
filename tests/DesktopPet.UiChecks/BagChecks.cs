@@ -132,6 +132,47 @@ internal static class BagChecks
             window.ShowBattleRewards(false);
             Call(window, "TickBattleHub", 0.3);
             check(Button(hub, "Rewards") != null, "With nothing new the button is plain again");
+
+            // ── 1.5 M27: the Monster Book on the hub ────────────────────────────────────────
+            var book = new MonsterBook { Seeded = true };
+            FieldOf("monsterBook").SetValue(window, book);
+            Call(window, "TickBattleHub", 0.3);
+            check(Button(hub, "Monster Book") != null && window.BattleBookNew == 0, "The hub has a Monster Book button, nothing new in an empty book");
+            Click(Button(hub, "Monster Book")!);
+            await Task.Delay(30);
+            text = window.BattleBookText;
+            int slimes = data.EnemyTypes.Count(e => e.TipVi != null && !e.Boss);
+            check(window.BattleBookShown && window.BattleHubText.StartsWith("Monster Book") && Button(hub, "‹ Hub") != null && Button(hub, "Rewards") is not { IsVisible: true }
+                && text.Contains($"Slimes · 0/{slimes}") && text.Contains("Bosses · 0/4") && text.Contains($"Formations · 0/{data.FormationList.Count}")
+                && text.Contains("No enemy met yet") && text.Split('\n').Count(l => l == "???") == slimes + 4 + data.FormationList.Count,
+                $"An empty book: every page a ??? shape, in place of the cards ({text.Replace('\n', '|')})");
+            Click(Button(hub, "‹ Hub")!);
+            await Task.Delay(30);
+            check(!window.BattleBookShown && Button(hub, "Rewards") is { IsVisible: true } && window.BattleHubModeEnabled(PetWindow.HubAdventure), "‹ Hub brings the cards and the Rewards button back");
+            book.Add(data, new[] { "slime", "spitter", "zipshard" }, new Dictionary<string, int> { ["slime"] = 4 }, new[] { "fortress" }, out _);
+            Call(window, "TickBattleHub", 0.3);
+            check(window.BattleBookNew == 3 && Button(hub, "Monster Book · 3 new") != null, $"Three new pages counted on the button ({window.BattleBookNew})");
+            window.ShowMonsterBook(true);
+            text = window.BattleBookText;
+            var plainSlime = data.Enemy("slime");
+            check(text.Contains($"Slimes · 2/{slimes}") && text.Contains("Formations · 1/") && text.Split('\n').Count(l => l == "New") == 3 && text.Contains("× 4")
+                && window.BattleBookSelected == "slime" && text.Contains(plainSlime.TipEn!) && text.Contains("Defeated: 4") && text.Contains("Good skills: ") && text.Contains("Elite: "),
+                $"Met pages drawn with their count and New; the first new one is open with its tip ({text.Replace('\n', '|')})");
+            check(window.BattleBookNew == 0 && book.Seen.Count == 3, "Opening the book marks them seen");
+            Shot("Pet battle hub", "battle-book-en.png");
+            check(!window.SelectBookPage("rock") && window.BattleBookSelected == "slime", "A page not met cannot be opened");
+            check(window.SelectBookPage(MonsterBook.FormationPage("fortress")) && window.BattleBookText.Contains("Members: ") && window.BattleBookText.Contains(data.Formation("fortress")!.TipEn!),
+                "A formation's page: its members and its tip");
+            Shot("Pet battle hub", "battle-book-formation-en.png");
+            window.ShowMonsterBook(false);
+            // Counted once per battle; custom battle data counts nothing.
+            var met = new BattleSim(data, 0, 1000, seed: 1);
+            var rock = met.AddSlime(500, data.Enemy("rock"));
+            rock.Set(SlimeState.Moving);
+            met.Step(1.0 / 60, 200, true);
+            var pages = (List<string>)PetPrivate.Call(window, "CountMonsterBook", met)!;
+            var again = (List<string>)PetPrivate.Call(window, "CountMonsterBook", met)!;
+            check(pages.SequenceEqual(new[] { "rock" }) && again.Count == 0 && book.Knows("rock"), $"A battle's meetings go in the book once ({string.Join(",", pages)})");
             window.CancelBattleHub();
 
             // ── The Bag from the Adventure map ──────────────────────────────────────────────

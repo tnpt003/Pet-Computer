@@ -115,6 +115,7 @@ public sealed partial class BattleSim
             {
                 int index = Settings.FormationList.ToList().FindIndex(f => f.Id == unit.Formation);
                 FormationsMet++;
+                NoteFormation(unit.Formation);
                 events.Add(new(BattleEventKind.FormationArrived, catX, index));
             }
             if (unit.Side == "b") Announce(catX, unit.Kinds, -farEdge, unit.Elite);

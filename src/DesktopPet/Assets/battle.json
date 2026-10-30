@@ -272,6 +272,7 @@
   "enemies": [
     {
       "id": "slime", "nameVi": "Slime", "nameEn": "Slime",
+      "tipVi": "Đánh gần sau khi phồng lên với dấu ! đỏ. Kéo mèo lên để né, rồi thả xuống đánh tiếp.", "tipEn": "Hits up close after swelling with a red !. Lift the cat to dodge, then put it down to fight on.", "counters": ["shield", "cheer"],
       "maxHp": 58, "speed": 34, "damage": 12, "range": 64,
       "windup": 0.8, "attackCooldown": 1.8, "recover": 0.35,
       "scale": 1, "color": "#7CD36A", "cost": 1,
@@ -283,6 +284,7 @@
       // Small and quick, falls fast. dash: within dashRange it winds up (its lane shows on the
       // floor), then lunges dashDistance at dashSpeed; running into the cat hits once and stuns it.
       "id": "runner", "nameVi": "Slime nhanh", "nameEn": "Quick slime",
+      "tipVi": "Gồng rồi lao rất nhanh theo đường trên sàn, trúng là choáng. Nhấc mèo khỏi đường lao hoặc Đẩy khi nó gồng.", "tipEn": "Winds up, then dashes fast along its lane; a hit stuns. Lift the cat out of the lane, or Push it while it winds up.", "counters": ["push", "shield"],
       "maxHp": 28, "speed": 70, "damage": 7, "range": 54,
       "windup": 0.7, "attackCooldown": 2.6, "recover": 0.4,
       "scale": 0.75, "color": "#5CC8FF", "marks": "speed",
@@ -300,6 +302,7 @@
       // floor cannot walk past it (it must defeat it, or be lifted over). Drawn wide and low, so its
       // hitScale is wider than its scale.
       "id": "rock", "nameVi": "Slime đá", "nameEn": "Rock slime",
+      "tipVi": "Đá chặn đòn đánh từ phía trước. Nhấc mèo qua đầu nó để đánh sau lưng; Bom và kỹ năng đi xuyên đá.", "tipEn": "Its rock blocks hits from the front. Lift the cat over it to hit its back; the Bomb and skills go through.", "counters": ["bomb", "grabber"],
       "maxHp": 188, "speed": 20, "damage": 18, "range": 72,
       "windup": 1.0, "attackCooldown": 2.4, "recover": 0.5,
       "scale": 1.35, "hitScale": 1.5, "color": "#A8A095", "marks": "cracks",
@@ -314,6 +317,7 @@
       // farHealBelow: with no hurt ally in reach, an ally below that share of its HP anywhere on the field
       // gets a heal all the same (farHealWindup s of windup, once per farHealCooldown s; a push cancels it).
       "id": "mender", "nameVi": "Slime thảo dược", "nameEn": "Herb slime",
+      "tipVi": "Đứng sau hồi máu cho đồng đội. Đẩy khi nó gồng để cắt hồi máu, hoặc hạ nó trước.", "tipEn": "Stays back and heals its friends. Push it while it winds up to cut the heal, or take it first.", "counters": ["push", "laser"],
       "maxHp": 46, "speed": 28, "damage": 5, "range": 56,
       "windup": 0.8, "attackCooldown": 2.0, "recover": 0.35,
       "scale": 0.9, "color": "#4FC9A8", "marks": "leaf",
@@ -333,6 +337,7 @@
       // eliteDrops drops (eliteSpread DIPs apart) and its puddles last elitePuddle × longer. binSpit false:
       // an infected bin never spits it (it only comes where a wave names it).
       "id": "spitter", "nameVi": "Slime phun", "nameEn": "Spitter slime",
+      "tipVi": "Đứng xa phun giọt vào vòng cam; vũng nhầy làm slime khác lao nhanh. Nhấc mèo khỏi vòng; Quạt làm khô vũng.", "tipEn": "Spits from afar at the orange ring; its puddles speed other slimes up. Lift the cat out of the ring; the Fan dries the puddles.", "counters": ["fan", "push"],
       "maxHp": 40, "speed": 30, "damage": 9, "range": 56,
       "windup": 0.8, "attackCooldown": 2.0, "recover": 0.5,
       "scale": 0.9, "color": "#C38BE8", "marks": "spout",
@@ -348,6 +353,7 @@
       // (weapon or bomb) flatten it for flatSeconds. It never attacks otherwise; with the cat further than
       // creepRange it slides up. Elite: eliteRadius × the ring, eliteRest s of rest, eliteHits to flatten.
       "id": "springer", "nameVi": "Slime lò xo", "nameEn": "Spring slime",
+      "tipVi": "Bẫy nằm im; mèo vào vòng vàng thì nó nén rồi bật. Nhấc mèo ra khi vòng đỏ, hoặc đánh 2 đòn cho nó bẹp.", "tipEn": "A trap lying flat; it springs when the cat steps in its gold ring. Lift the cat out when it turns red, or flatten it with two hits.", "counters": ["grabber", "bomb"],
       "maxHp": 70, "speed": 26, "damage": 14, "range": 40,
       "windup": 0.8, "attackCooldown": 2.0, "recover": 0.4,
       "scale": 1.1, "hitScale": 1.3, "color": "#F2C14E", "marks": "spring",
@@ -362,6 +368,7 @@
       // A push, a stun or the Fan on it starts the count again; the Shield takes the strike. Elite: it
       // strikes every eliteBeats beats. binSpit false: an infected bin never spits it.
       "id": "drummer", "nameVi": "Slime nhạc trưởng", "nameEn": "Drummer slime",
+      "tipVi": "Gõ nhịp: tới nhịp 4 mọi slime trong vòng cùng đánh. Đẩy hoặc làm choáng nó để cả đội lệch nhịp.", "tipEn": "Keeps time: on beat 4 every slime in its ring strikes at once. Push or stun it and the band falls out of time.", "counters": ["push", "shield"],
       "maxHp": 60, "speed": 32, "damage": 9, "range": 56,
       "windup": 0.8, "attackCooldown": 2.0, "recover": 0.4,
       "scale": 1.0, "color": "#E8825A", "marks": "drum", "cost": 2, "binSpit": false,
@@ -374,6 +381,7 @@
       // or the cat held or thrown through it at cutSpeed DIPs/s or more) or defeat it: the ally is dazed
       // breakStun s; it ties itself again `relink` s later. Elite: it takes eliteShare instead.
       "id": "chain", "nameVi": "Slime xích", "nameEn": "Chain slime",
+      "tipVi": "Nối dây nhầy vào đồng đội và gánh nửa sát thương cho nó. Kéo mèo xuyên dây hoặc dùng Kéo cắt để cắt.", "tipEn": "Ties a slime rope to a friend and takes half its hits. Drag the cat through the rope or cut it with the Scissors.", "counters": ["scissors"],
       "maxHp": 36, "speed": 44, "damage": 6, "range": 52,
       "windup": 0.7, "attackCooldown": 2.2, "recover": 0.4,
       "scale": 0.8, "color": "#9AD17A", "marks": "chain", "cost": 2, "binSpit": false,
@@ -385,6 +393,7 @@
       // other for mergeSeconds s (a bar counts down) become one `into` (a giant slime) with their HP
       // added up. A push, a stun or the Grabber starts the clock again; the Fan blows them apart.
       "id": "fuser", "nameVi": "Slime hợp thể", "nameEn": "Fusing slime",
+      "tipVi": "Đi bầy 3 con; chụm lại đủ lâu là nhập thành Slime khổng lồ. Tách bầy bằng Quạt, Đẩy, hoặc thả Bom khi chúng chụm.", "tipEn": "Comes in threes; bunched long enough they merge into a giant. Split them with the Fan or Push, or bomb the bunch.", "counters": ["fan", "bomb", "push"],
       "maxHp": 26, "speed": 40, "damage": 6, "range": 50,
       "windup": 0.7, "attackCooldown": 2.0, "recover": 0.4,
       "scale": 0.7, "color": "#F29BC4", "marks": "swarm", "cost": 1, "binSpit": false,
@@ -395,6 +404,7 @@
       // 1.5 Q5 (M11): what three fusing slimes become (maxHp here only for a giant a wave names itself;
       // a merged one has their HP added up). Too big for the Grabber.
       "id": "giant", "nameVi": "Slime khổng lồ", "nameEn": "Giant slime",
+      "tipVi": "Ba slime hợp thể nhập lại: to, máu bằng cả bầy. Nhấc mèo né đòn; dồn sát thương bằng Cổ vũ và Bom.", "tipEn": "Three fusing slimes merged: big, with the whole swarm's HP. Lift the cat out of its hits; pile on with Cheer and the Bomb.", "counters": ["cheer", "bomb"],
       "maxHp": 78, "speed": 22, "damage": 20, "range": 80,
       "windup": 1.1, "attackCooldown": 2.4, "recover": 0.5,
       "scale": 1.6, "color": "#E07AAE", "marks": "giant",
@@ -409,6 +419,7 @@
       // and lights a dropFuse s fuse; thrown by the Grabber it blows up where it hits or lands.
       // Elite: eliteSeconds of fuse, eliteRadius × the blast.
       "id": "bomber", "nameVi": "Slime bom", "nameEn": "Bomb slime",
+      "tipVi": "Cưỡi slime nhanh lao tới, gần mèo thì châm ngòi rồi nổ. Hạ con ngựa giữa đường, hoặc nhấc mèo khỏi vòng nổ.", "tipEn": "Rides a quick slime in, lights its fuse near the cat and blows up. Down the mount on the way, or lift the cat out of the blast.", "counters": ["push", "grabber"],
       "maxHp": 30, "speed": 36, "damage": 22, "range": 50,
       "windup": 0.8, "attackCooldown": 2.0, "recover": 0.4,
       "scale": 0.85, "color": "#6E7B9C", "marks": "bomb", "cost": 2, "binSpit": false,
@@ -421,6 +432,7 @@
       // 1.5 Q7 (M11): defeated, it breaks into split.count halves (`into`; an elite into eliteCount),
       // each with split.health of its own max HP. The halves never split again.
       "id": "splitter", "nameVi": "Slime tách đôi", "nameEn": "Splitting slime",
+      "tipVi": "Bị hạ thì vỡ thành 2 slime nửa; thảo dược hồi cho chúng thì nhập lại. Hạ thảo dược trước; Bom dọn các nửa.", "tipEn": "Breaks into two halves when beaten; healed by a herb slime they join again. Take the herb slime first; the Bomb clears the halves.", "counters": ["bomb", "push"],
       "maxHp": 70, "speed": 30, "damage": 12, "range": 62,
       "windup": 0.8, "attackCooldown": 2.0, "recover": 0.4,
       "scale": 1.05, "color": "#C9A27E", "marks": "split", "cost": 2, "binSpit": false,
@@ -441,6 +453,7 @@
       // (an elite: eliteSpeed); defeated, every other enemy panics breakStun s (runs off, no attack).
       // It keeps behind its allies like the other supports (the Laser lures them out of its ring).
       "id": "flagbearer", "nameVi": "Slime cờ hiệu", "nameEn": "Flag slime",
+      "tipVi": "Cầm cờ: slime trong vòng vàng chạy nhanh hơn. Hạ nó trước thì cả đội hoảng; Đèn laser dụ slime ra khỏi vòng.", "tipEn": "Carries a flag: slimes in its gold ring move faster. Beat it first and the band panics; the Laser lures slimes out of the ring.", "counters": ["laser", "push"],
       "maxHp": 50, "speed": 30, "damage": 6, "range": 52,
       "windup": 0.8, "attackCooldown": 2.0, "recover": 0.4,
       "scale": 0.95, "color": "#5B8DEF", "marks": "flag",
@@ -453,6 +466,7 @@
       // nothing and drifts through the cat. The cursor over it (or the laser within laserRange) brings it
       // out and keeps it out reveal s. Elite: only eliteVisible s at a time.
       "id": "phantom", "nameVi": "Slime bóng ma", "nameEn": "Ghost slime",
+      "tipVi": "Lúc ẩn lúc hiện; đang ẩn thì không đánh trúng. Rê chuột lên nó hoặc chiếu Đèn laser để nó hiện ra.", "tipEn": "Fades in and out; hidden, it cannot be hit. Point the mouse at it or shine the Laser to make it show.", "counters": ["laser"],
       "maxHp": 40, "speed": 38, "damage": 10, "range": 55,
       "windup": 0.8, "attackCooldown": 2.0, "recover": 0.4,
       "scale": 0.95, "color": "#C9D6F2", "marks": "ghost", "cost": 2, "binSpit": false,
@@ -464,6 +478,7 @@
       // (elitePops for an elite) or a Scissors stroke pop it: it drops, stunned `stun` s; the bubble grows
       // back `regrow` s later.
       "id": "bubble", "nameVi": "Slime bong bóng", "nameEn": "Bubble slime",
+      "tipVi": "Bong bóng chặn mọi đòn. Click bong bóng vài lần hoặc dùng Kéo cắt để chọc vỡ; slime rơi xuống choáng.", "tipEn": "Its bubble stops every hit. Click it a few times or slice it with the Scissors; the slime drops, stunned.", "counters": ["scissors"],
       "maxHp": 34, "speed": 34, "damage": 9, "range": 55,
       "windup": 0.8, "attackCooldown": 2.0, "recover": 0.4,
       "scale": 0.9, "color": "#7FC8EA", "marks": "bubble", "cost": 2, "binSpit": false,
@@ -475,6 +490,7 @@
       // nothing and any hit makes it vanish (not the cat's kill). The cursor over one (or the laser within
       // laserRange) shows it for what it is `reveal` s: a copy blurs, the real one gets its shadow.
       "id": "mirage", "nameVi": "Slime ảo ảnh", "nameEn": "Mirage slime",
+      "tipVi": "Có bản giả giống hệt. Rê chuột lên: bản giả nhòe, bản thật có bóng đậm. Hạ bản thật thì bản giả tan.", "tipEn": "Brings look-alike fakes. Point the mouse at them: fakes blur, the real one has a dark shadow. Beat it and the fakes melt.", "counters": ["laser"],
       "maxHp": 36, "speed": 36, "damage": 11, "range": 55,
       "windup": 0.8, "attackCooldown": 2.0, "recover": 0.4,
       "scale": 0.95, "color": "#B89CF0", "marks": "mirage", "cost": 2, "binSpit": false,
@@ -486,6 +502,7 @@
       // Stroking it with the cursor soothes it: `calm` DIPs of strokes (eliteCalm for an elite) and it
       // waves goodbye and leaves, counted as the cat's. Left alone `idle` s it sulks again by `fade` a second.
       "id": "sulky", "nameVi": "Slime dỗi", "nameEn": "Sulky slime",
+      "tipVi": "Đánh nó chỉ làm nó phồng và đánh đau hơn. Rê chuột qua lại trên nó để dỗ: nó cười rồi bỏ đi.", "tipEn": "Hitting it only makes it swell and hit harder. Rub the mouse back and forth over it to soothe it: it smiles and leaves.",
       "maxHp": 40, "speed": 30, "damage": 8, "range": 55,
       "windup": 0.9, "attackCooldown": 2.2, "recover": 0.4,
       "scale": 0.95, "color": "#F2A7A0", "marks": "sulk", "cost": 2, "binSpit": false,
@@ -501,6 +518,7 @@
       // Stunned (Push, a Grabber yank, heldHits held hits within heldWindow s) it falls, lies `downed` s
       // on the floor taking downedDamage × hits, crouches `rise` s and flies up again.
       "id": "flyer", "nameVi": "Slime bay", "nameEn": "Flying slime",
+      "tipVi": "Bay khắp màn hình, bắn đạn dính trúng cả mèo đang được bế. Đưa mèo lại gần để vuốt, hoặc Đẩy, Kẹp gắp cho nó rơi.", "tipEn": "Flies over the screen and shoots sticky drops that hit even a carried cat. Bring the cat close to swipe, or Push or grab it down.", "counters": ["push", "grabber", "shield"],
       "maxHp": 44, "speed": 40, "damage": 8, "range": 55,
       "windup": 0.8, "attackCooldown": 2.0, "recover": 0.4,
       "scale": 0.9, "color": "#8FD3C8", "marks": "wings", "cost": 2, "binSpit": false,
@@ -517,6 +535,7 @@
       // the ring (cracks showing, or `emerge` s into coming up) pins it, dazed `pinned` s; the Grabber
       // pulls it up and it stays out `pinned` s.
       "id": "burrower", "nameVi": "Slime đào hang", "nameEn": "Burrowing slime",
+      "tipVi": "Đào dưới đất, trồi lên dưới chân mèo sau vòng nứt. Nhấc mèo khi thấy vòng nứt; thả mèo đè lên lúc nó trồi là nó kẹt.", "tipEn": "Digs under the floor and comes up under the cat after a ring of cracks. Lift the cat then; drop it on the slime as it comes up and it is stuck.", "counters": ["grabber"],
       "maxHp": 46, "speed": 42, "damage": 11, "range": 55,
       "windup": 0.8, "attackCooldown": 2.0, "recover": 0.4,
       "scale": 0.95, "color": "#C49A6C", "marks": "mole", "cost": 2, "binSpit": false,
@@ -530,6 +549,7 @@
       // DIPs/s or more breaks the shell (and does its throwHit); wet from the spray, ice.wetSpeed is enough.
       // The shell grows back `regrow` s later (eliteRegrow for an elite; 0: never).
       "id": "icy", "nameVi": "Slime băng", "nameEn": "Ice slime",
+      "tipVi": "Vỏ băng làm vũ khí chỉ xước. Ném mèo xuyên qua thật mạnh để vỡ vỏ; Bình xịt làm băng mềm, Bom vẫn đau.", "tipEn": "Its ice shell turns weapon hits into scratches. Throw the cat hard through it to crack it; the Spray softens it, the Bomb still hurts.", "counters": ["spray", "bomb"],
       "maxHp": 50, "speed": 34, "damage": 10, "range": 55,
       "windup": 0.8, "attackCooldown": 2.0, "recover": 0.4,
       "scale": 1.0, "color": "#A6E3F2", "marks": "ice", "cost": 2, "binSpit": false,
@@ -545,6 +565,7 @@
       // spikes eliteSpread apart. The thrown cat flying into it (throwHit), Push, the Grabber or any daze
       // knock it off: it lies dazed `downed` s, fights on the floor `ground` s, then climbs again.
       "id": "clinger", "nameVi": "Slime bám tường", "nameEn": "Wall slime",
+      "tipVi": "Leo lên mép và ném gai xuống chỗ mèo. Ném mèo vào nó, hoặc Đẩy, Kẹp gắp cho nó rơi rồi đánh dưới sàn.", "tipEn": "Climbs the edge and drops spikes where the cat stands. Throw the cat at it, or Push or grab it down and fight it on the floor.", "counters": ["push", "grabber"],
       "maxHp": 40, "speed": 46, "damage": 9, "range": 55,
       "windup": 0.8, "attackCooldown": 2.0, "recover": 0.4,
       "scale": 0.85, "color": "#B5B84A", "marks": "spikes", "cost": 2, "binSpit": false,
@@ -559,6 +580,7 @@
       // damage and pricks the cat for `prick` (no stun; the Shield and the Turtle shell stop it). Bombs,
       // skills, apps and poison go through; wet from the spray, its quills lie flat until it is dry.
       "id": "hedgehog", "nameVi": "Slime nhím", "nameEn": "Hedgehog slime",
+      "tipVi": "Xù gai theo chu kỳ: đánh lúc gai dựng là mèo bị đâm. Đánh lúc gai nằm, xịt nước cho gai cụp, hoặc dùng Bom.", "tipEn": "Puts its quills up now and then: hit it then and the cat is pricked. Hit it while they lie flat, spray it, or use the Bomb.", "counters": ["spray", "bomb"],
       "maxHp": 55, "speed": 36, "damage": 10, "range": 55,
       "windup": 0.8, "attackCooldown": 2.0, "recover": 0.4,
       "scale": 1.0, "color": "#B07A5A", "marks": "quills", "cost": 2, "binSpit": false,
@@ -570,6 +592,7 @@
       // × as fast while it is dazed. Run out, it calls the enemies of `call` (announced at the edge behind
       // the cat; the wave waits for them) and starts again, `calls` times at most. Defeated, it calls no more.
       "id": "timer", "nameVi": "Slime hẹn giờ", "nameEn": "Timer slime",
+      "tipVi": "Đồng hồ trên đầu đếm ngược; hết giờ nó gọi thêm quân. Hạ nó sớm; làm choáng thì đồng hồ chạy chậm lại.", "tipEn": "The clock over it counts down; at zero it calls more slimes. Beat it early; stunned, its clock runs slower.", "counters": ["push", "cheer"],
       "maxHp": 45, "speed": 40, "damage": 8, "range": 55,
       "windup": 0.8, "attackCooldown": 2.0, "recover": 0.4,
       "scale": 0.9, "color": "#7CC6A4", "marks": "clock", "cost": 2, "binSpit": false,
@@ -583,6 +606,7 @@
       // `linger` s there (dazed or lured, the time waits), gets away with it (gone, not a defeat of the
       // cat's). Defeated first, it gives back what it took.
       "id": "thief", "nameVi": "Slime trộm", "nameEn": "Thief slime",
+      "tipVi": "Không đánh mèo mà hút năng lượng icon hoặc một kỹ năng rồi chạy trốn. Hạ nó trước khi thoát để lấy lại.", "tipEn": "Never hits the cat: it drains an icon or a skill, then runs. Beat it before it gets away to get it back.", "counters": ["push", "laser", "grabber"],
       "maxHp": 35, "speed": 52, "damage": 0, "range": 50,
       "windup": 0.7, "attackCooldown": 2.0, "recover": 0.3,
       "scale": 0.85, "color": "#8C86B4", "marks": "thief", "cost": 2, "binSpit": false,
@@ -600,6 +624,7 @@
       // (leapCrouch s) and leaps (leapSeconds) to the edge opposite its half of the floor (the other one if
       // the cat is in that half); summonWarning: purple rings show where its helpers appear, that long before.
       "id": "king_c1", "nameVi": "Vua Slime", "nameEn": "Slime King",
+      "page": "king",
       "maxHp": 720, "speed": 22, "damage": 30, "range": 110,
       "windup": 1.2, "attackCooldown": 2.6, "recover": 0.7,
       "scale": 2, "color": "#9B7BE0", "angryColor": "#E86A6A",
@@ -624,6 +649,7 @@
       // helper. Phase 3: "pack" — it squeezes itself small where it stands, its file shards around it (still: they
       // never move or attack); the shield drops once they are broken.
       "id": "zip", "nameVi": "Slime Nén", "nameEn": "Zip Slime",
+      "tipVi": "Trùm chương 2: lăn đè dải sàn, bung đội hình nối dây và tự nén thành khiên. Nhấc mèo khi lăn, cắt dây, phá mảnh file.", "tipEn": "Chapter 2's boss: rolls over the floor, unpacks squads tied to it and packs itself into a shield. Lift the cat as it rolls, cut ropes, break shards.", "counters": ["scissors", "shield"],
       "maxHp": 900, "speed": 24, "damage": 28, "range": 110,
       "windup": 1.2, "attackCooldown": 2.6, "recover": 0.7,
       "scale": 2, "color": "#E8B84A", "angryColor": "#E86A6A", "marks": "zip", "binSpit": false,
@@ -652,6 +678,7 @@
       // fighting and, next to it, feeds it feedRate HP/s of its own HP until none is left (gone, not the cat's
       // kill). Bomb the clutch while it huddles, push or fan it apart, or beat the big one on its way back.
       "id": "mother", "nameVi": "Slime Mẹ", "nameEn": "Slime Mother",
+      "tipVi": "Đẻ bầy hợp thể; Slime khổng lồ do bầy nhập thành về bú máu cho mẹ. Tách bầy sớm và hạ con khổng lồ giữa đường.", "tipEn": "Lays fusing swarms; a giant they merge into goes back to feed her. Split the swarms early and beat the giant on the way.", "counters": ["fan", "bomb"],
       "maxHp": 650, "speed": 20, "damage": 26, "range": 110,
       "windup": 1.3, "attackCooldown": 2.8, "recover": 0.7,
       "scale": 2, "color": "#F2A3C7", "angryColor": "#E86A6A", "marks": "mother", "binSpit": false,
@@ -670,6 +697,7 @@
       // it), each ring on the floor `warning` s first: a cat on the floor in `radius` takes `damage` (scaled
       // as its hits, no stun); a puddle stays puddleSeconds s. Lift the cat or use the Bubble shield.
       "id": "mutant_king", "nameVi": "Vua Slime biến dị", "nameEn": "Mutant Slime King",
+      "tipVi": "Bật khiên, phong tinh anh rồi nối xích hoặc trống, mưa nhầy rơi quanh mèo. Nhấc mèo khỏi vòng cam, cắt dây xích.", "tipEn": "Shields itself, crowns elites tied by chains or drums, and rains slime around the cat. Lift the cat off the orange rings; cut the chains.", "counters": ["scissors", "push", "shield"],
       "maxHp": 1000, "speed": 24, "damage": 32, "range": 110,
       "windup": 1.2, "attackCooldown": 2.6, "recover": 0.7,
       "scale": 2, "color": "#7FBF5A", "angryColor": "#E86A6A", "marks": "mutant", "binSpit": false,
@@ -690,6 +718,7 @@
     },
     {
       "id": "king", "nameVi": "Vua Slime", "nameEn": "Slime King",
+      "tipVi": "Trùm chương 1: dậm đất trúng cả vùng, lui về bật khiên và gọi quân. Nhấc mèo khỏi vùng đỏ; hạ quân để phá khiên.", "tipEn": "Chapter 1's boss: slams a whole area, backs off behind a shield and calls help. Lift the cat out of the red zone; beat his help to break the shield.", "counters": ["push", "shield"],
       "maxHp": 480, "speed": 22, "damage": 30, "range": 110,
       "windup": 1.2, "attackCooldown": 2.6, "recover": 0.7,
       "scale": 2, "color": "#9B7BE0", "angryColor": "#E86A6A",

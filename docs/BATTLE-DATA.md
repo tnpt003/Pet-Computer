@@ -1075,6 +1075,18 @@ A1–A4 của docs/UPDATE-1.5.md, theo ngoại lệ "App trong trận" (docs/APP
 - Hướng dẫn phiêu lưu: 5 bước `screenshot`, `dazzle`, `captcha`, `battery`, `cursor` ở mọi màn có `newAppsFrom` (mục "Chương 2").
 - Mô phỏng (2026-10-30, so với M25; bot không bấm Captcha/Cắm sạc/Tiếp tục): chương 2 và Lối Bãi rác khó hơn chút (vd. Lối Bãi rác kiếm Thường simple safe 33 → 31/40 chuyến thắng), Vô tận trung vị giữ 31 đợt.
 
+## Sổ tay quái (`tipVi`/`tipEn`/`counters`/`page` của quái) (bản 1.5, mốc M27, 2026-10-30)
+
+L1 của docs/UPDATE-1.5.md. Code: `src/DesktopPet.Core/PetMonsterBook.cs` (sổ, file), `PetBattle.Book.cs` (trận ghi gì), trang trong Sảnh `src/DesktopPet/PetWindow.MonsterBook.cs`. Test `tests/DesktopPet.Tests/MonsterBookTests.cs`, UiChecks khối "1.5 M27" trong `BagChecks.cs`. Python không tham gia; không cần ngoại lệ mới (chỉ là trang xem trong Sảnh).
+
+- **Trang:** mỗi loại quái có `tipVi`/`tipEn` (cần cả hai, 1–200 ký tự) có một trang; `counters` (tối đa 3 id kỹ năng khác nhau) là "Kỹ năng hợp". `page`: dùng chung trang của loại khác (có tip, không có `page`); khi đó loại này không có tip riêng. Gốc: 24 slime + 4 trùm (Vua Slime, Slime Nén, Slime Mẹ, Vua biến dị); `king_c1` (Vua chương 1) dùng trang `king`; Slime nửa và Mảnh file không có trang (chỉ ra từ quái khác). 6 đội hình (`formations`) mỗi cái một trang, dùng `tipVi`/`tipEn` có sẵn của đội hình.
+- **Gặp:** trận ghi loại quái khi có một con đứng trên sàn (sinh xong, không tính bản giả của slime ảo ảnh), số con mèo hạ theo loại (như bộ đếm hạ của trận: tự nổ, trộm trốn, quái tha cá thoát không tính), đội hình khi nó tới (cả đội hình của boss). Lúc hết trận (thắng, thua, hoặc rời trận giữa chừng) cửa sổ cộng vào sổ một lần; mọi chế độ (Phiêu lưu, Viễn chinh, Vô tận, trận tự do). Trận chạy bằng battle.json tự sửa không ghi gì. Số hạ cộng vào trang (Vua chương 1 cộng vào trang Vua Slime).
+- **File:** `%LOCALAPPDATA%\DesktopPet\monster-book.json` (version 1): `met`, `formations`, `defeated`, `seen` (trang Sảnh đã hiện), `seeded`. Ghi kiểu .tmp + .bak như adventure-progress; file hỏng thì đọc .bak hoặc bắt đầu lại; file của bản mới hơn chỉ đọc, không ghi đè. Chỉ ghi khi có gì thay đổi.
+- **Dữ liệu cũ:** lần đầu mở sổ (chưa có file), các màn Phiêu lưu đã thắng tính là đã gặp quái của màn đó (quái ghi trực tiếp trong đợt và thành viên đội hình; số hạ 0), coi như đã xem (không hiện "Mới").
+- **Sảnh:** nút "Sổ tay quái" (kèm "· N mới") cạnh "Phần thưởng"; bấm thì sổ thế chỗ các thẻ chế độ, nút thành "‹ Sảnh" và nút Phần thưởng ẩn (một trang mỗi lúc). Trên cùng là trang đang chọn: hình thường và tinh anh (vẽ bằng chính hàm vẽ của dải trận, chụp một lần rồi giữ), tên, "Trùm", cách khắc chế, "Tinh anh: …" (mô tả affix), "Kỹ năng hợp: …", "Đã hạ: N"; trang đội hình: hình các thành viên, gợi ý, "Thành viên: …". Dưới là ba nhóm ô Slime / Trùm / Đội hình phối hợp có "đã mở/tổng", cuộn khi dài. Ô chưa gặp là bóng đen có "?" và tên "???", không bấm được; ô đã gặp có tên, "× N" (số đã hạ), nhãn "Mới" nếu chưa xem. Mở sổ là đánh dấu đã xem các trang mới.
+- **Kết quả trận:** trận mở trang mới thì có dòng vàng "Sổ tay quái, trang mới: …".
+- Luật trận, rulesVersion, kỷ lục và bảng mô phỏng không đổi (chỉ thêm ghi nhận).
+
 ## App trên màn hình (`apps`) (2026-10-23)
 
 Một "desktop giả" trong trận Phiêu lưu, Viễn chinh và Vô tận (trận tự do không có): 5 icon app do game tự vẽ (không dùng tên, logo hay màu của app thật) đứng trên các ô lưới kiểu desktop phía trên dải chiến trường, ở vị trí ngẫu nhiên theo seed. Logic ở `PetBattle.Apps.cs`; hình ở `PetBattleAppArt.cs`, `PetDesktopAppViews.cs` (icon, đường bay), `PetBattleView.Apps.cs` (dải chiến trường); cửa sổ ở `PetWindow.BattleApps.cs`. Python không tham gia.

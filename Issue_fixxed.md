@@ -8,7 +8,7 @@ Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm 
 
 ---
 
-## #31 — Hợp thể ra hai hướng, đạn phun bay phẳng, trận tự chọn không có tinh anh, ném mèo vào slime băng không có gì (2026-10-31, commit chưa có)
+## #31 — Hợp thể ra hai hướng, đạn phun bay phẳng, trận tự chọn không có tinh anh, ném mèo vào slime băng không có gì (2026-10-31, commit 33c1337)
 - **Triệu chứng (người dùng, sau khi test):** (1) bầy 3 slime hợp thể: hai con ngoài rìa ra ở hai mép khác nhau; (2) đạn slime phun bay ở cùng độ cao dù xa hay gần; (3) trận tự chọn như không bật được tinh anh; (4) ném mèo vào slime băng không thấy gì xảy ra.
 - **Nguyên nhân:** (1) PetBattle.Waves.cs `PlaceMergeArrival` đặt cố định giữa / mép trái / mép phải. (2) PetBattleView.Traps.cs: đỉnh đường bay cố định 70 DIPs. (3) `RollElite` bỏ qua mọi tinh anh ở mức Dễ (ảnh người dùng đang chọn Dễ) và chỉ cho `maxElites` = 1 tinh anh cùng lúc; thanh chỉ có 0/10/25/50%. (4) Cần mèo bay ≥ 650 DIPs/s (bám tường chỉ 450), chậm hơn thì không có phản hồi gì.
 - **Sửa:** (1) con đầu ở giữa, hai con sau cạnh nhau ở cùng mép xa mèo hơn. (2) `BattleSim.SpitArc`: đỉnh = khoảng cách × 0,28, trong 22–110 DIPs. (3) Trận tự chọn (`stage.Custom`): tinh anh cả ở mức Dễ, không giới hạn số cùng lúc; thanh 0–100% bước 10 (file cũ làm tròn về bội 10); bỏ dòng "Mức Dễ không có tinh anh". (4) `minSpeed` 480, `wetSpeed` 340; ném trúng ≥ nửa mức cần thì vỏ nứt (tia lóe, tiếng "keng", gợi ý một lần mỗi trận, không mất máu), mỗi vết nứt (tối đa 2) giảm 15% tốc độ cần.
@@ -32,11 +32,11 @@ Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm 
 
 ---
 
-## #28 — Chương 2 như chưa có slime bay (2026-10-30, commit chưa có)
+## #28 — Chương 2 như chưa có slime bay (2026-10-30, commit 33c1337)
 - **Triệu chứng:** chơi chương 2 không gặp slime bay, dù mục tiêu và mẹo màn Giữ giỏ cá hứa có "slime bay bắn đạn dính".
 - **Nguyên nhân:** slime bay và slime bom chỉ có trong dòng quái ngẫu nhiên đợt 3 của c2_fish_basket (mỗi loại ~1/8 mỗi lượt), và khi sàn gần đủ budget 9 thì lượt tốn 2 điểm bị đổi sang slime thường, nên một ván có thể không gặp con nào.
 - **Sửa:** battle.json, c2_fish_basket: thêm một đợt cố định (1 slime bay, 1 slime bom, 2 slime) trước dòng quái ngẫu nhiên; dòng quái giữ nguyên. (2026-10-31: ban đầu 1 slime; với code sau đó check "Chapter 2 balance: stage 3, hammer, Normal, ≤ 90% HP" trượt 91%, xác nhận trên worktree HEAD sạch + chỉ diff battle.json. Đã thử: slime → slime nhanh (màn 5 găng 75% < 80%), đưa bay + bom vào đợt 2 (màn 5 găng 70%); chốt 2 slime: màn 3 búa 88% HP, màn 5 găng 80% vì build được mang sang các màn sau.)
-- **Kiểm chứng:** C# 2809 PASS. Mô phỏng màn 3 chương 2 (thắng/20, trước → sau): Normal simple 19→20 (kiếm), 20→20 (búa); Hard simple 15→18, 16→18; Hard casual 16→19, 16→19; dễ hơn một chút vì dòng quái bắt đầu muộn hơn. Bản 2 slime: commit cùng #31. Chưa chơi thử trong trận thật.
+- **Kiểm chứng:** C# 2809 PASS. Mô phỏng màn 3 chương 2 (thắng/20, trước → sau): Normal simple 19→20 (kiếm), 20→20 (búa); Hard simple 15→18, 16→18; Hard casual 16→19, 16→19; dễ hơn một chút vì dòng quái bắt đầu muộn hơn. Bản 2 slime: commit 33c1337 (cùng #31). Chưa chơi thử trong trận thật.
 
 ---
 

@@ -57,6 +57,7 @@ Ngoại lệ nào có link tới docs/APPROVED-EXCEPTIONS.md: trước khi sửa
 - Ngoại lệ đã duyệt (2026-10-24): "Hướng dẫn phiêu lưu" (chương 1 Phiêu lưu, từ 1.5 cả chương 2; C# PetWindow.BattleGuide.cs): trận ĐỨNG HÌNH nhưng KHÔNG phải Pause, vẫn nhấc/kéo mèo, bấm kỹ năng/icon/app độc được; Pause/menu/fullscreen ẩn hướng dẫn. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Hướng dẫn phiêu lưu.
 
 - Bổ sung đã duyệt (2026-10-30): bộ app hỗ trợ tối đa 5, giữ cả chuyến; slime lui/hội tụ được xuyên hàng, bóng ma ẩn hoàn toàn và khổng lồ có 3 lớp chắn hồi 10 s. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Sửa sau chơi thử 1.5.
+- Bổ sung đã duyệt (2026-10-31): slime lò xo bật trúng thì đẩy mèo trượt ra ~80 DIPs (trận điều khiển vị trí, không phải cú ném physics, không Dizzy); slime bám tường leo theo chiều cao màn hình trong cửa sổ topmost riêng như slime bay. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Battle Mode.
 
 ## File quan trọng
 README.md, docs/AI.md, docs/WINDOWS.md, src/DesktopPet/ (App.xaml.cs, PetWindow*.cs, PetModel.cs, PetRenderer.cs, PetPreferences.cs, PetSounds.cs, AI/), ai/, tests/DesktopPet.Tests/, tests/DesktopPet.UiChecks/, scripts/.

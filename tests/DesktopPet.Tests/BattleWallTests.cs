@@ -17,17 +17,18 @@ internal static class BattleWallTests
         Id = "icy", MaxHp = 300, Speed = 40, Damage = damage, Range = 50, Windup = 0.6, AttackCooldown = 1.5, Recover = 0.3,
         Elite = new EliteSpec { Hp = 1.2 }, Ice = Shipped.Enemy("icy").Ice, ThrowHit = Shipped.Enemy("icy").ThrowHit
     };
-    private static EnemyType Clinger(double damage = 10) => new()
+    // Still on its edge between volleys unless `shift` (the shipped slide is checked on its own).
+    private static EnemyType Clinger(double damage = 10, bool shift = false) => new()
     {
         Id = "clinger", MaxHp = 300, Speed = 40, Damage = damage, Range = 50, Windup = 0.6, AttackCooldown = 1.5, Recover = 0.3,
-        Elite = new EliteSpec { Hp = 1.2 }, Cling = Shipped.Enemy("clinger").Cling, ThrowHit = Shipped.Enemy("clinger").ThrowHit
+        Elite = new EliteSpec { Hp = 1.2 }, Cling = Shipped.Enemy("clinger").Cling! with { Shift = shift ? Shipped.Enemy("clinger").Cling!.Shift : 0 }, ThrowHit = Shipped.Enemy("clinger").ThrowHit
     };
     private static EnemyType Plain() => new() { Id = "slime", MaxHp = 300, Speed = 40, Damage = 0, Range = 50, Windup = 0.6, AttackCooldown = 1.5, Recover = 0.3 };
 
     private static readonly BattleSkill[] Tools = { BattleSkill.Bomb, BattleSkill.Shield, BattleSkill.Push, BattleSkill.Grabber, BattleSkill.Heal };
 
     // `count` enemies of each kind on a 1600-wide field, the cat at 100 (weapon damage `hit`, reach 60).
-    private static BattleSim Field(EnemyType[] kinds, double hit = 0, int count = 1, bool elite = false)
+    private static BattleSim Field(EnemyType[] kinds, double hit = 0, int count = 1, bool elite = false, int seed = 4)
     {
         var arms = Shipped.Weapon("sword") with { Range = 60, StunChance = 0, Damage = hit };
         var settings = new BattleSettings
@@ -38,13 +39,13 @@ internal static class BattleWallTests
             Plan = new[] { new WaveSpec { Groups = kinds.Select(k => new WaveGroup { Enemy = k.Id, Count = count, Elite = elite }).ToArray() },
                 new WaveSpec { Groups = new[] { new WaveGroup { Enemy = kinds[0].Id, Count = 1 } } } }
         };
-        var sim = new BattleSim(settings, 0, 1600, seed: 4, skills: Tools);
+        var sim = new BattleSim(settings, 0, 1600, seed: seed, skills: Tools);
         int all = kinds.Length * count;
         for (int i = 0; i < 600 && sim.Slimes.Count(s => s.Targetable) < all; i++) sim.Step(dt, 100, false);
         sim.ClearEvents();
         return sim;
     }
-    private static BattleSim Field(EnemyType kind, double hit = 0, int count = 1, bool elite = false) => Field(new[] { kind }, hit, count, elite);
+    private static BattleSim Field(EnemyType kind, double hit = 0, int count = 1, bool elite = false, int seed = 4) => Field(new[] { kind }, hit, count, elite, seed);
 
     // Steps `seconds` with the cat at catX (or up to the step an event of `kind` came: then true).
     private static bool Run(BattleSim sim, double seconds, double catX = 100, BattleEventKind? kind = null, bool held = false, CatPose? pose = null, Action? each = null)
@@ -227,6 +228,28 @@ internal static class BattleWallTests
         sim.Paused = false;
         for (int i = 0; i < 30; i++) sim.Step(0, 100, false);
         check(still && !s.Aiming, "Pause and the frozen guide hold it still");
+
+        // The shipped one slides up or down its edge after each volley (at least `shift`, within its range),
+        // then aims again from there; the same seed slides the same way.
+        double[] Heights(int seed)
+        {
+            var field = Field(Clinger(shift: true), seed: seed);
+            var one = field.Slimes.Single();
+            Run(field, 30, kind: BattleEventKind.ClingClimbed);
+            var seen = new List<double> { one.Altitude };
+            for (int volley = 0; volley < 4; volley++)
+            {
+                Run(field, 20, catX: 700, kind: BattleEventKind.ClingShot);
+                Run(field, 1, catX: 700);
+                if (one.Cling != ClingPhase.Clinging) return Array.Empty<double>();
+                seen.Add(one.Altitude);
+            }
+            return seen.ToArray();
+        }
+        var heights = Heights(4);
+        bool apart = heights.Zip(heights.Skip(1)).All(p => Math.Abs(p.First - p.Second) >= c.Shift - 1e-6);
+        check(c.Shift > 0 && heights.Length == 5 && apart && heights.All(h => h >= c.Height - 1e-6 && h <= BattleSim.ClingTop + 1e-6) && heights.SequenceEqual(Heights(4)),
+            $"After each volley it slides at least {c.Shift} up or down its edge, within its range, the same for a seed ({string.Join(", ", heights.Select(h => h.ToString("0")))})");
     }
 
     // A clinger up its edge, ready to be knocked off.
@@ -255,8 +278,14 @@ internal static class BattleWallTests
         check(landed && !s.Airborne && s.State == SlimeState.Stunned && s.StunRemaining >= c.Downed - 0.05, "It lands on the floor dazed");
         Run(sim, 0.1, catX: 800);
         check(sim.TargetId == s.Id, "On the floor the cat goes for it");
-        bool back = Run(sim, c.Downed + c.Ground + 30, catX: 800, kind: BattleEventKind.ClingClimbed);
-        check(back && s.OnWall, "After a while on the floor it climbs again");
+        // No fighting on the floor (ground 0): once the daze is over it heads straight back to its edge.
+        double dazed = s.StunRemaining, toWall = 0;
+        Run(sim, dazed + 0.05, catX: 800);
+        bool walking = false;
+        Run(sim, 0.5, catX: 800, each: () => { walking |= s.State == SlimeState.Moving && !s.OnWall && s.Cling == ClingPhase.Ground; toWall = s.X; });
+        bool back = Run(sim, 30, catX: 800, kind: BattleEventKind.ClingClimbed);
+        check(c.Ground == 0 && walking && back && s.OnWall,
+            $"Its daze over, it goes straight back up its edge (no fight on the floor; x {toWall:0} on the way)");
 
         // Too slow, or high over it: nothing.
         (sim, s) = OnEdge();

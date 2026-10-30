@@ -645,6 +645,8 @@ public sealed class Slime
     public ClingPhase Cling;
     public int WallSide;
     public double ClingTo, ClingClock;
+    // Sliding to a new height up its edge after a volley (not its first climb).
+    public bool ClingShifting;
     // Up its edge (climbing or clinging): out of reach from the floor (Altitude > 0).
     public bool OnWall => Cling is ClingPhase.Climbing or ClingPhase.Clinging;
     // Keep X's established locomotion anchor; drawing and airborne contacts use the rotated body.

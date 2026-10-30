@@ -565,7 +565,8 @@
       // `cooldown` s it aims `aim` s at the cat's spot on the floor, then a spike lands there `flight` s
       // later: the cat on the floor within `radius` takes its damage (no stun); an elite drops eliteSpikes
       // spikes eliteSpread apart. The thrown cat flying into it (throwHit), Push, the Grabber or any daze
-      // knock it off: it lies dazed `downed` s, fights on the floor `ground` s, then climbs again.
+      // knock it off: it lies dazed `downed` s, fights on the floor `ground` s (0: none, 2026-10-31), then
+      // climbs again. After each volley it slides up or down its edge, at least `shift` DIPs (0: stays).
       "id": "clinger", "nameVi": "Slime bám tường", "nameEn": "Wall slime",
       "tipVi": "Leo lên mép và ném gai xuống chỗ mèo. Ném mèo vào nó, hoặc Đẩy, Kẹp gắp cho nó rơi rồi đánh dưới sàn.", "tipEn": "Climbs the edge and drops spikes where the cat stands. Throw the cat at it, or Push or grab it down and fight it on the floor.", "counters": ["push", "grabber"],
       "maxHp": 40, "speed": 46, "damage": 9, "range": 55,
@@ -573,7 +574,7 @@
       "scale": 0.85, "color": "#B5B84A", "marks": "spikes", "cost": 2, "binSpit": false,
       "throwHit": { "minSpeed": 450, "damage": 8 },
       "cling": { "height": 60, "spacing": 46, "climb": 90, "cooldown": 3, "aim": 0.8, "flight": 0.5, "radius": 36,
-                 "eliteSpikes": 2, "eliteSpread": 60, "downed": 2.5, "ground": 4 },
+                 "eliteSpikes": 2, "eliteSpread": 60, "downed": 3, "ground": 0, "shift": 30 },
       "elite": { "hp": 1.2, "cost": 1, "descVi": "thả 2 gai mỗi lần", "descEn": "drops 2 spikes at a time" }
     },
     {

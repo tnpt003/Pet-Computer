@@ -132,9 +132,13 @@ public sealed partial class BattleSim
                 double act = dt * s.ChillFactor;
                 if (s.Cling == ClingPhase.Climbing)
                 {
-                    s.Altitude = Math.Min(s.ClingTo, Math.Max(1, s.Altitude + c.Climb * act));
-                    if (s.Altitude < s.ClingTo) return true;
+                    // Up from the floor, or up or down to its next height after a volley (its clock runs on).
+                    double to = s.ClingTo - s.Altitude;
+                    s.Altitude = Math.Max(1, s.Altitude + Math.Sign(to) * Math.Min(Math.Abs(to), c.Climb * act));
+                    if (s.ClingShifting) s.ShotClock -= act;
+                    if (Math.Abs(s.ClingTo - s.Altitude) > 1e-9) return true;
                     s.Cling = ClingPhase.Clinging;
+                    if (s.ClingShifting) { s.ClingShifting = false; return true; }
                     s.ShotClock = c.Cooldown / 2;
                     events.Add(new(BattleEventKind.ClingClimbed, s.X, s.Id));
                     return true;
@@ -158,6 +162,30 @@ public sealed partial class BattleSim
         }
     }
 
+    private Random? wallRandom;
+
+    // After a volley: off up or down its edge to a new height between Height and ClingTop, at least Shift
+    // away (a second climber on that edge is never met: it keeps Spacing from it).
+    private void Shift(Slime s, ClingSpec c)
+    {
+        if (c.Shift <= 0 || ClingTop - c.Height < c.Shift) return;
+        wallRandom ??= BattleRandom.Stream(Seed, BattleRandom.Wall);
+        double to = s.Altitude;
+        for (int tries = 0; tries < 8 && (Math.Abs(to - s.Altitude) < c.Shift || Crowded(s, to, c)); tries++)
+            to = c.Height + wallRandom.NextDouble() * (ClingTop - c.Height);
+        if (Math.Abs(to - s.Altitude) < c.Shift || Crowded(s, to, c)) return;
+        s.ClingTo = to;
+        s.Cling = ClingPhase.Climbing;
+        s.ClingShifting = true;
+    }
+
+    private bool Crowded(Slime s, double height, ClingSpec c)
+    {
+        foreach (var o in slimes)
+            if (o != s && o.Targetable && o.OnWall && o.WallSide == s.WallSide && Math.Abs((o.Cling == ClingPhase.Climbing ? o.ClingTo : o.Altitude) - height) < c.Spacing) return true;
+        return false;
+    }
+
     // Up its edge: a wait, an aim at the cat's spot on the floor, then its spikes drop there.
     private void Spike(Slime s, ClingSpec c, double act, double catX)
     {
@@ -173,6 +201,7 @@ public sealed partial class BattleSim
                 });
             s.ShotClock = c.Cooldown;
             events.Add(new(BattleEventKind.ClingShot, s.X, s.Id));
+            Shift(s, c);
             return;
         }
         s.ShotClock -= act;
@@ -197,6 +226,7 @@ public sealed partial class BattleSim
     {
         if (s.Type.Cling == null || !s.OnWall || !s.Targetable) return false;
         s.Cling = ClingPhase.Falling;
+        s.ClingShifting = false;
         s.FallSpeed = 0;
         s.AimLeft = 0;
         if (s.State != SlimeState.Stunned) s.Set(SlimeState.Stunned);

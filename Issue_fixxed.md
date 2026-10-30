@@ -8,6 +8,14 @@ Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm 
 
 ---
 
+## #32 — Slime bám tường rơi xuống thì đuổi mèo, bám tường thì đứng yên một chỗ (2026-10-31, commit chưa có)
+- **Triệu chứng (góp ý người dùng):** bị choáng rơi xuống, slime bám tường chạy lại đánh mèo thay vì bám lên tường; trên tường nó chỉ đứng một độ cao mà bắn mãi.
+- **Nguyên nhân:** thiết kế M15: sau khi rơi nó nằm choáng `downed` 2,5 s rồi đánh dưới sàn `ground` 4 s mới leo lại; trên mép không có bước di chuyển nào.
+- **Sửa:** `ground` 0 (hết choáng đi thẳng về mép leo lên); khóa mới `cling.shift` (30): sau mỗi loạt gai trượt lên/xuống mép tới độ cao mới cách ít nhất 30 DIPs trong 60–110, tránh con khác cùng mép, bốc từ luồng random riêng `BattleRandom.Wall` (không đổi các luồng khác). Bù cân bằng: `downed` 2,5 → 3. Leo theo cả chiều cao màn hình: làm ở đợt B9 (cửa sổ riêng, người dùng duyệt 31/10).
+- **Kiểm chứng:** test mới: hết choáng đi thẳng về mép và leo lại; trượt ≥ 30 sau mỗi loạt, trong khoảng, cùng seed ra cùng độ cao. Cân bằng: chỉ `ground` 0 thì chương 2 màn 5 găng 75% (< 80%); `downed` 4 hoặc máu 30 hay nhịp 3,5 s đều trượt (nhiễu ±1 ván/20); chốt `downed` 3 + `shift` 30: kiếm 80%, búa 85%, găng 80% (sát ngưỡng, nên rà lại cân bằng chương 2).
+
+---
+
 ## #31 — Hợp thể ra hai hướng, đạn phun bay phẳng, trận tự chọn không có tinh anh, ném mèo vào slime băng không có gì (2026-10-31, commit 33c1337)
 - **Triệu chứng (người dùng, sau khi test):** (1) bầy 3 slime hợp thể: hai con ngoài rìa ra ở hai mép khác nhau; (2) đạn slime phun bay ở cùng độ cao dù xa hay gần; (3) trận tự chọn như không bật được tinh anh; (4) ném mèo vào slime băng không thấy gì xảy ra.
 - **Nguyên nhân:** (1) PetBattle.Waves.cs `PlaceMergeArrival` đặt cố định giữa / mép trái / mép phải. (2) PetBattleView.Traps.cs: đỉnh đường bay cố định 70 DIPs. (3) `RollElite` bỏ qua mọi tinh anh ở mức Dễ (ảnh người dùng đang chọn Dễ) và chỉ cho `maxElites` = 1 tinh anh cùng lúc; thanh chỉ có 0/10/25/50%. (4) Cần mèo bay ≥ 650 DIPs/s (bám tường chỉ 450), chậm hơn thì không có phản hồi gì.

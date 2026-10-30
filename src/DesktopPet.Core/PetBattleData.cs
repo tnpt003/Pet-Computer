@@ -398,7 +398,7 @@ public sealed class IceSpec
 // EliteSpikes spikes, EliteSpread DIPs apart. The thrown cat flying into it (its throwHit), Push, the
 // Grabber or any daze knock it off: it falls, lies dazed Downed s, fights on the floor Ground s and
 // goes back up.
-public sealed class ClingSpec
+public sealed record ClingSpec
 {
     public double Height { get; init; } = 60;
     public double Spacing { get; init; } = 46;
@@ -411,6 +411,9 @@ public sealed class ClingSpec
     public double EliteSpread { get; init; } = 60;
     public double Downed { get; init; } = 2.5;
     public double Ground { get; init; } = 4;
+    // 2026-10-31: after each volley it slides up or down its edge to a new height, at least Shift DIPs away
+    // (drawn between Height and ClingTop from its own random stream; 0: it stays where it is).
+    public double Shift { get; init; }
 }
 
 // S9 (1.5 M16): its quills lie flat Flat s, rise Warn s (seen coming), then stand Puffed s (an elite's
@@ -1510,6 +1513,7 @@ public static class BattleData
                 Within(cling.Aim, 0.2, 5, at + ".cling.aim"); Within(cling.Flight, 0.1, 3, at + ".cling.flight"); Within(cling.Radius, 10, 150, at + ".cling.radius");
                 if (cling.EliteSpikes is < 1 or > 4) throw new InvalidDataException(at + ".cling.eliteSpikes must be 1–4");
                 Within(cling.EliteSpread, 0, 300, at + ".cling.eliteSpread"); Within(cling.Downed, 0.5, 15, at + ".cling.downed"); Within(cling.Ground, 0, 30, at + ".cling.ground");
+                Within(cling.Shift, 0, BattleSim.ClingTop, at + ".cling.shift");
             }
             // 1.5 M16: a hedgehog, a timer or a thief is nothing else besides.
             if (e.Quills != null || e.Clock != null || e.Steal != null)

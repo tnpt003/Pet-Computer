@@ -109,7 +109,7 @@ internal static class TrickVisualChecks
 
         int seenBody = Count(px, ghostBlue, 60, 100, floor - 30, floor - 4, 20), fadedBody = Count(px, ghostBlue, 180, 220, floor - 30, floor - 4, 20);
         check(seenBody > 300 && fadedBody < seenBody / 10, $"A faded ghost is barely there ({seenBody} → {fadedBody} body pixels)");
-        check(Inked(px, 170, 230, floor - 40, floor, 60) > 40, "A faint wobbling outline still shows where it is");
+        check(Inked(px, 170, 230, floor - 40, floor, 60) == 0, "A hidden ghost has no body, outline or shadow");
         check(Count(px, glow, 290, 350, floor - 50, floor, 30, 60) > 40 && Count(before, glow, 290, 350, floor - 50, floor, 30, 60) < 10,
             "Brought out by the cursor it glows softly");
         check(Count(px, bubbleEdge, 440, 500, floor - 70, floor, 20) > 80, "The bubble slime floats in a pale blue bubble");

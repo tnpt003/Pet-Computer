@@ -23,6 +23,13 @@ public sealed partial class BattleFieldView
     private static readonly Brush PotionGlass = Frozen(170, 0xFF, 0xFF, 0xFF);
     private static readonly Brush CorkFill = Frozen(255, 0xC9, 0x9A, 0x5E);
     private static readonly Brush LootShadow = Frozen(70, 0x2A, 0x1F, 0x16);
+    private static readonly Brush LootGlow = MakeLootGlow();
+    private static Brush MakeLootGlow()
+    {
+        var brush = new RadialGradientBrush(Color.FromArgb(190, 255, 230, 130), Colors.Transparent);
+        brush.Freeze();
+        return brush;
+    }
     private static readonly Pen DropInk = FrozenPen(PetUi.ArtInk, 1.8);
     private static readonly Geometry FishTail = PetUi.FrozenGeometry("M 0,0 L 7,-6 L 6,0 L 7,6 Z");
     private static readonly Geometry CoinMark = PetUi.FrozenGeometry("M 0,-4.5 L 1.3,-1.3 L 4.5,-1.3 L 1.9,0.7 L 2.8,4 L 0,2.1 L -2.8,4 L -1.9,0.7 L -4.5,-1.3 L -1.3,-1.3 Z");
@@ -54,16 +61,20 @@ public sealed partial class BattleFieldView
             // Out of the slime in an arc, then a small bob.
             double pop = Math.Clamp(d.Age / PopSeconds, 0, 1);
             double lift = pop < 1 ? Math.Sin(pop * Math.PI) * 26 : 1.5 + Math.Sin(time * 4 + d.Id) * 1.5;
-            double y = floor - 10 - lift;
+            double y = floor - 20 - lift;
             dc.PushOpacity(d.Opacity(fade));
             dc.DrawEllipse(HitHalo, null, new Point(x, floor - 12), BattleSim.DropHalfWidth + 4, 16);
             dc.DrawEllipse(LootShadow, null, new Point(x, floor - 2), 9 * (1 - lift / 60), 2.5);
+            double glow = 1 + 0.08 * Math.Sin(time * 3 + d.Id);
+            dc.DrawEllipse(LootGlow, null, new Point(x, y), 30 * glow, 26 * glow);
+            dc.PushTransform(new ScaleTransform(1.6, 1.6, x, y));
             switch (d.Kind)
             {
                 case BattleDropKind.Fish: DrawFishDrop(dc, x, y); break;
                 case BattleDropKind.Coin: DrawCoinDrop(dc, x, y, time + d.Id); break;
                 default: DrawPotionDrop(dc, x, y); break;
             }
+            dc.Pop();
             dc.Pop();
         }
     }

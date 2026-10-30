@@ -76,6 +76,7 @@ public sealed class PetPreferences
     // The app icons above the battlefield (Adventure, Expedition, Infinity), chosen in the setup
     // panel. Off: no icons and no viruses; such runs keep their records apart.
     public bool BattleApps { get; set; } = true;
+    public List<BattleAppKind>? BattleAppLoadout { get; set; }
     // The five skills chosen in the setup panel (skill ids; null: the five first ones, BattleSkills.Default).
     // Read through BattleSkills.Loadout, so ids that no longer fit fall back to the default.
     public List<string>? BattleLoadout { get; set; }

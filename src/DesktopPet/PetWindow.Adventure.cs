@@ -197,6 +197,13 @@ public sealed partial class PetWindow
         var (prev, prevText, _) = HudButton(() => AdventureShowChapter(-1), plain: true);
         var (next, nextText, _) = HudButton(() => AdventureShowChapter(1), plain: true);
         prevText.Text = "‹"; nextText.Text = "›";
+        foreach (var arrow in new[] { prev, next })
+        {
+            arrow.Width = 32; arrow.Height = 32;
+            arrow.Padding = new Thickness(0);
+            arrow.VerticalAlignment = VerticalAlignment.Center;
+        }
+        prev.ToolTip = L("Chương trước", "Previous chapter"); next.ToolTip = L("Chương tiếp", "Next chapter");
         prev.Margin = new Thickness(8, 0, 0, 0); next.Margin = new Thickness(4, 0, 0, 0);
         mapPrevChapter = prev; mapNextChapter = next;
         var heading = new DockPanel { LastChildFill = true };
@@ -271,8 +278,7 @@ public sealed partial class PetWindow
         }
         // 1.5 M22: the banner shows the chapter's scene.
         if (adventureMapWindow?.Resources[BannerKey] is PetScene banner) banner.Kind = PetScene.ForChapter(chapter.Scene);
-        mapTitle.Text = L("Hướng dẫn phiêu lưu — ", "Adventure Guide — ")
-            + (chapters > 1 ? LF($"Chương {chapterAt + 1}: ", $"Chapter {chapterAt + 1}: ") : "") + chapter.Name(preferences.Language);
+        mapTitle.Text = LF($"Chương {chapterAt + 1}: ", $"Chapter {chapterAt + 1}: ") + chapter.Name(preferences.Language);
         string? dataNote = BattleDataError != null
             ? L("File battle.json của bạn có lỗi nên dùng dữ liệu gốc: ", "Your battle.json has a mistake, so the built-in battle is used: ") + BattleDataError
             : BattleDataCustom ? L("Đang dùng battle.json tùy chỉnh: chơi được nhưng không lưu tiến trình và kỷ lục.", "Using your custom battle.json: you can play, but progress and records are not saved.") : null;

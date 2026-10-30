@@ -36,7 +36,7 @@ public sealed partial class BattleSim
     {
         if (slime.Type.Spit is not SpitSpec spit || slime.SpitCooldown > 0 || catHeld || Grace > 0 || slime.Airborne || slime.Handled) return false;
         double distance = Math.Abs(catX - slime.X);
-        if (distance < spit.MinRange || distance > spit.Range) return false;
+        if (distance < spit.MinRange) return false;
         slime.Facing = catX < slime.X ? -1 : 1;
         slime.Set(SlimeState.Windup);
         slime.Spitting = true;
@@ -54,12 +54,18 @@ public sealed partial class BattleSim
         slime.SpitCooldown = spit.Cooldown;
         double puddle = spit.PuddleSeconds * (slime.Elite != null ? spit.ElitePuddle : 1);
         foreach (double x in targets)
+        {
+            double flight = SpitFlight(spit, Math.Abs(x - slime.X));
             goos.Add(new BattleGoo
             {
-                OwnerId = slime.Id, FromX = slime.X, X = x, Flight = spit.Flight, Remaining = spit.Flight, Damage = slime.Damage, Radius = spit.Radius,
+                OwnerId = slime.Id, FromX = slime.X, X = x, Flight = flight, Remaining = flight, Damage = slime.Damage, Radius = spit.Radius,
                 PuddleSeconds = puddle, PuddleRadius = spit.PuddleRadius, DashDistance = spit.DashDistance, DashSpeed = spit.DashSpeed, Tint = slime.Type.Color
             });
+        }
     }
+
+    // Flight is proportional to distance; the old range/flight pair defines projectile speed.
+    public static double SpitFlight(SpitSpec spit, double distance) => Math.Max(0.25, distance / spit.Range * spit.Flight);
 
     // Before the slimes move: drops in flight land, puddles dry up.
     private void StepSpit(double dt)

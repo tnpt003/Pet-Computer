@@ -199,16 +199,24 @@ internal static class BattlePrepChecks
             "A free battle's setup has no app chip (it never has apps)");
         window.CancelBattlePrep();
         bool appsBefore = prefs.BattleApps;
+        var appSetBefore = prefs.BattleAppLoadout;
         var prepTuning = window.BattleTuning;
         window.BattleTuning = BattleData.Settings; // The test data has no Expedition.
         string? expeditionPrep = window.OpenBattlePrep(forExpedition: true);
         check(expeditionPrep == null && window.BattlePrepApps == appsBefore && Field<TextBlock>(window, "prepAppsHint").Visibility == Visibility.Visible
               && Field<TextBlock>(window, "prepAppsLabel").Text == "On the screen (whole run)", $"A new Expedition run's setup has the app chip, for the whole run ({expeditionPrep ?? Field<TextBlock>(window, "prepAppsLabel").Text})");
+        var selectedApp = window.BattlePrepAppLoadout.First();
+        check(window.BattlePrepToggleApp(selectedApp) && window.BattlePrepAppLoadout.Count == 4
+            && window.BattlePrepToggleApp(selectedApp) && window.BattlePrepAppLoadout.Count == 5,
+            "App selection removes and restores an icon while staying within five slots");
+        check(!window.BattlePrepToggleApp(BattleAppKind.Popup) && window.BattlePrepAppLoadout.Count == 5,
+            "An ad cannot be chosen as a helper app");
         check(window.BattlePrepChooseApps(false) && !window.BattlePrepApps && Field<TextBlock>(window, "prepAppsHint").Text.Contains("Records are kept apart"),
             "Clicking the chip turns the apps off and says the records are kept apart");
         window.Reset();
         window.BattleTuning = prepTuning;
         check(prefs.BattleApps == appsBefore, "Leaving the panel without Ready keeps the remembered choice");
+        check(prefs.BattleAppLoadout == appSetBefore, "Cancelling setup does not save the edited app selection");
 
         // The user's battle.json: read when the panel opens, used if valid, shown if not.
         string dir = Path.Combine(Path.GetTempPath(), "pet-prep-" + Guid.NewGuid().ToString("N"));

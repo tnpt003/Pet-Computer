@@ -333,6 +333,7 @@ public sealed partial class PetWindow
             // 1.5 M29a: a Custom Fight has apps when it was built with icons.
             apps: expedition?.Expedition.Run is ExpeditionRun run ? !run.NoApps : stage is { Custom: true } ? stage.CustomApps != null : preferences.BattleApps,
             skills: BattleLoadoutFor(stage, expedition),
+            appLoadout: expedition?.Expedition.Run is ExpeditionRun appRun ? appRun.AppLoadout : preferences.BattleAppLoadout,
             // 1.5 M19: drops in an Expedition step (with coins) and in Infinity (fish and potions only);
             // 1.5 M21: and in a chapter with "drops" (chapter 2, fish and potions).
             loot: expedition != null ? BattleLoot.Coins

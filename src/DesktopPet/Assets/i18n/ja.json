@@ -868,7 +868,6 @@
   "A slime swelling with a red ! is about to hit. Drag the cat up: a carried cat cannot be hit.": "赤い ! を出して膨らむスライムは攻撃寸前。猫をドラッグして持ち上げよう：持ち上げている猫は攻撃されない。",
   "A wave is cleared: pick 1 of 3 cards, then Confirm. Cards stay for the stage, and a win carries the build to the next one.": "ウェーブクリア：3 枚から 1 枚選んで決定。カードはステージ中ずっと有効で、勝てばビルドは次のステージへ。",
   "Adventure Guide": "アドベンチャーガイド",
-  "Adventure Guide — ": "アドベンチャーガイド — ",
   "An elite slime: a gold rim and a star, stronger than the plain one with a trait of its own (the word over its head). Every kind of slime has elites.": "エリートスライム：金のふちと星印。通常より強く、固有の能力を持つ（頭上の文字）。どの種類のスライムにもエリートがいる。",
   "Another hit is coming: lift the cat! Put it down outside the red ring and the hit misses. ({0}/{1})": "また攻撃が来る：猫を持ち上げて！赤い輪の外に降ろせば攻撃は外れる。（{0}/{1}）",
   "Each card belongs to a group. Enough cards of one group switch on a synergy, an extra power (see the bag).": "カードはそれぞれグループに属する。同じグループを集めるとシナジーが発動し、特別な力が加わる（バッグで確認）。",
@@ -1113,7 +1112,7 @@
   "Keeps time: on beat 4 every slime in its ring strikes at once. Push or stun it and the band falls out of time.": "リズムを刻み、4拍目で輪の中のスライムが一斉に攻撃する。押し出すか気絶させるとリズムが乱れる。",
   "Ties a slime rope to a friend and takes half its hits. Drag the cat through the rope or cut it with the Scissors.": "仲間とねばねばロープでつながり、ダメージを半分肩代わりする。猫をロープに通すかはさみで切ろう。",
   "Comes in threes; bunched long enough they merge into a giant. Split them with the Fan or Push, or bomb the bunch.": "3匹で来て、しばらく固まると巨大スライムに合体する。扇風機や押し出しで引き離すか、固まった所にボムを。",
-  "Three fusing slimes merged: big, with the whole swarm's HP. Lift the cat out of its hits; pile on with Cheer and the Bomb.": "がったいスライム3匹が合体した姿。大きく、群れ全部のHPを持つ。猫を持ち上げてよけ、応援とボムで一気に削ろう。",
+  "The swarm's combined HP; three shields block three direct hits and recharge 10 seconds after breaking. Break them before bombing; poison bypasses them. Lift the cat to dodge.": "群れ全体のHPを持つ。3枚の盾が直接攻撃を3回防ぎ、全部壊れると10秒後に回復する。盾を壊してからボムを使おう。毒は盾を貫通する。猫を持ち上げてよけよう。",
   "Rides a quick slime in, lights its fuse near the cat and blows up. Down the mount on the way, or lift the cat out of the blast.": "素早いスライムに乗って来て、猫の近くで導火線に火をつけて爆発する。途中で乗り物を倒すか、爆発の輪から猫を持ち上げよう。",
   "Breaks into two halves when beaten; healed by a herb slime they join again. Take the herb slime first; the Bomb clears the halves.": "倒すとはんぶんスライム2匹に分かれ、薬草スライムに回復されると合体し直す。薬草を先に倒し、ボムで半分を片付けよう。",
   "Carries a flag: slimes in its gold ring move faster. Beat it first and the band panics; the Laser lures slimes out of the ring.": "旗を持ち、金の輪の中のスライムが速くなる。先に倒すと群れがあわてる。レーザーで輪の外へ誘い出せる。",
@@ -1401,5 +1400,7 @@
   "Cards between waves": "ウェーブ間のカード",
   "Easy has no elites.": "やさしいではエリートは出ません。",
   "Not met in a battle yet.": "まだバトルで出会っていません。",
-  "With no icon the fight has no apps and no malware.": "アイコンがないとアプリも悪質アプリも出ません。"
+  "With no icon the fight has no apps and no malware.": "アイコンがないとアプリも悪質アプリも出ません。",
+  "Previous chapter": "前の章",
+  "{0}/5 apps selected, choose up to 5. Malware follows stage rules.": "アプリ {0}/5 個を選択中（最大5個）。妨害アプリはステージのルールに従います。"
 }

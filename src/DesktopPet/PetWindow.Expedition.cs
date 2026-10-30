@@ -249,6 +249,7 @@ public sealed partial class PetWindow
         SetBattleWeapon(expeditionWeapon);
         SetBattleDifficulty(expeditionLevel);
         var run = expedition.Start(expeditionWeapon, expeditionLevel, seed ?? Random.Shared.Next(), noApps: !preferences.BattleApps, skills: BattleLoadoutChoice);
+        run.AppLoadout = preferences.BattleAppLoadout?.ToList();
         SaveExpedition(expedition.Progress);
         expeditionLane = 0;
         expeditionNote = null;

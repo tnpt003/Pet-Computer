@@ -1083,7 +1083,7 @@ internal static class BattleChecks
             for (int i = 0; i < 600 && !(Sim().Captcha != null && Sim().BatteryLow && Sim().CursorFrozen); i++) Tick(1.0 / 60);
             Tick(0.05);
             var newSim = Sim();
-            check(newSim.Desktop.Count == 6 && window.BattleAppWindows.Count == 6, "Six icon windows: the Screenshot has its own");
+            check(newSim.Desktop.Count == 5 && window.BattleAppWindows.Count == 5, "Five selected apps have their own icon windows");
             var captchaWindow = Field<Window?>(window, "captchaWindow");
             var captchaSpot = newSim.Captcha is BattleCaptcha shown ? window.CaptchaSpot(shown) : Rect.Empty;
             check(window.BattleCaptchaShown && captchaWindow != null && Math.Abs(captchaWindow.Left - captchaSpot.Left) < 2 && Math.Abs(captchaWindow.Top - captchaSpot.Top) < 2

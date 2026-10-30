@@ -181,6 +181,24 @@ public sealed partial class BattleSim
         events.Add(new(BattleEventKind.LinkStrike, holder.X, strikers));
     }
 
+    private bool SeekMerge(Slime slime, double dt, double min, double max)
+    {
+        if (slime.Link is not { Kind: EnemyLinks.Merge } link || (link.AfterHeal && !slime.Healed)) return false;
+        double center = slime.X; int count = 1;
+        foreach (var other in slimes)
+            if (other != slime && other.Type == slime.Type && other.Targetable && !other.Handled && other.Link?.Kind == EnemyLinks.Merge
+                && (!link.AfterHeal || other.Healed)) { center += other.X; count++; }
+        if (count < 2) return false;
+        slime.KeepingBack = true; // Pass allies only while actively gathering; stun/push still interrupt it.
+        double gap = center / count - slime.X;
+        if (Math.Abs(gap) > link.Range * 0.3)
+        {
+            slime.Facing = gap < 0 ? -1 : 1;
+            slime.X = Math.Clamp(slime.X + Math.Sign(gap) * Math.Min(Math.Abs(gap), Speed(slime) * (slime.MergeRunner ? 1.6 : 1) * dt), min, max);
+        }
+        return true;
+    }
+
     // One of a merging slime's kind ready to merge with it (healed since it came, for AfterHeal).
     private static bool Merging(Slime s, Slime slime, LinkSpec link) =>
         s.Type == slime.Type && s.Link != null && s.Targetable && s.State != SlimeState.Stunned && !s.Riding && !s.Handled

@@ -134,6 +134,7 @@ internal static class BattleBossM18Tests
         mother.BroodClock = 0;
         Run(sim, 6, catX: 300, kind: BattleEventKind.NurseHeading);
         giant = sim.Slimes.Single(s => s.Type.Id == "giant");
+        for (int i = 0; i < 3; i++) sim.Damage(giant, 1, DamageSource.Weapon);
         sim.Damage(giant, giant.Hp + 1, DamageSource.App);
         Run(sim, 4, catX: 300);
         check(mother.Hp == 500 && sim.Nursed == 0 && sim.Defeated == 1, "Beaten on its way it gives her nothing (and is the cat's kill)");
@@ -151,7 +152,7 @@ internal static class BattleBossM18Tests
         var wave = Settings(Plain("dummy", 0), "fuser", 3);
         var free = new BattleSim(wave, 0, 1600, seed: 4, startHp: 900);
         bool merged = false;
-        for (int i = 0; i < 1200 && !merged; i++)
+        for (int i = 0; i < 3600 && !merged; i++)
         {
             free.Step(dt, 100, false);
             merged = free.Events.Any(e => e.Kind == BattleEventKind.Merged);

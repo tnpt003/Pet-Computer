@@ -238,8 +238,8 @@ public sealed class SpitSpec
 // towards it. An elite: EliteRadius × the ring, EliteRest s of rest, EliteHits hits to flatten.
 public sealed class SpringSpec
 {
-    public double Radius { get; init; } = 60;
-    public double Compress { get; init; } = 0.8;
+    public double Radius { get; init; } = 100;
+    public double Compress { get; init; } = 0.6;
     public double Stun { get; init; } = 0.8;
     public double Rest { get; init; } = 4;
     public int FlattenHits { get; init; } = 2;
@@ -404,7 +404,7 @@ public sealed class ClingSpec
     public double Spacing { get; init; } = 46;
     public double Climb { get; init; } = 90;
     public double Cooldown { get; init; } = 3;
-    public double Aim { get; init; } = 0.9;
+    public double Aim { get; init; } = 0.8;
     public double Flight { get; init; } = 0.5;
     public double Radius { get; init; } = 36;
     public int EliteSpikes { get; init; } = 2;

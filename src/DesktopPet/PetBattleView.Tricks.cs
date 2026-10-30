@@ -38,7 +38,7 @@ public sealed partial class BattleFieldView
     private static void TrickLook(Slime slime, double time, ref double sx, ref double sy, ref double opacity, ref double jitter)
     {
         if (!slime.Type.UsesMouse) return;
-        if (slime.Faded) { opacity *= 0.16; jitter += Math.Sin(time * 3 + slime.Id) * 2; }
+        if (slime.Faded) opacity = 0;
         else if (slime.Type.Ghost != null) opacity *= 0.88;
         if (slime.Type.Sulk != null && slime.State != SlimeState.Defeated) { sx *= slime.Puff; sy *= slime.Puff; }
         // A soothed one leaves whole, waving (no squash of a defeat); a copy that vanished smears sideways.
@@ -63,7 +63,6 @@ public sealed partial class BattleFieldView
             double breath = 1 + 0.06 * Math.Sin(time * 6);
             dc.DrawEllipse(GhostGlow, null, new Point(x, floor - h / 2), (w / 2 + 14) * breath, (h / 2 + 12) * breath);
         }
-        if (slime.Faded) dc.DrawEllipse(null, FadedEdge, new Point(x + Math.Sin(time * 3 + slime.Id) * 2, floor - h / 2), w / 2 + 2, h / 2 + 2);
         if (slime.Decoy && slime.Revealed > 0)
             foreach (int side in new[] { -1, 1 })
                 dc.DrawEllipse(BlurFill, null, new Point(x + side * (5 + Math.Sin(time * 9) * 1.5), floor - h / 2), w / 2, h / 2);

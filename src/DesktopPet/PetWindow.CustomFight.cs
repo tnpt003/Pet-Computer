@@ -200,7 +200,11 @@ public sealed partial class PetWindow
     public bool FightToggleIcon(string id)
     {
         if (EditedFight is not CustomFight fight || !MonsterBook.KnowsApp(id) || !CustomFight.IconOrder.Any(k => BattleSim.AppId(k) == id)) return false;
-        if (!fight.Icons.Remove(id)) fight.Icons.Add(id);
+        if (!fight.Icons.Remove(id))
+        {
+            if (fight.Icons.Count >= 5) return false;
+            fight.Icons.Add(id);
+        }
         return Edited(fight);
     }
 

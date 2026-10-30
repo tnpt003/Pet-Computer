@@ -47,11 +47,11 @@ internal static class NewAppTests
         Run(off, 20, 1500);
         check(off.Captcha == null && !off.BatteryLow && !off.CursorFrozen, "Without newAppsFrom the newer malware never comes, whatever its weight");
 
-        // The Screenshot: a sixth icon; its flash freezes every enemy ShotFreeze s.
+        // The Screenshot: one of five icons; its flash freezes every enemy ShotFreeze s.
         var sim = Out(Data(Rules()), Stage(1));
         var shot = sim.Desktop.SingleOrDefault(a => a.Kind == BattleAppKind.Screenshot);
-        check(sim.NewApps && sim.Desktop.Count == 6 && shot != null && sim.Desktop.Select(a => (a.Col, a.Row)).Distinct().Count() == 6,
-            "With newAppsFrom 1: six icons on distinct cells, the Screenshot among them");
+        check(sim.NewApps && sim.Desktop.Count == 5 && shot != null && sim.Desktop.Select(a => (a.Col, a.Row)).Distinct().Count() == 5,
+            "With newAppsFrom 1: five icons on distinct cells, the Screenshot among them");
         Run(sim, 1, 1500);
         var slime = sim.Slimes.First(s => s.Targetable);
         check(sim.UseApp(shot!.Id, 1500) && sim.Launches.Any(l => l.Kind == LaunchKind.Flash) && shot.Charge == 0, "A charged Screenshot sends its flash");
@@ -82,7 +82,7 @@ internal static class NewAppTests
         foreach (var s in late.Slimes.Where(s => s.Targetable).ToList()) late.Use(BattleSkill.Bomb, s.Id, s.X);
         Until(late, () => late.Wave == 2, 12);
         Run(late, 0.1);
-        check(late.Wave == 2 && late.NewApps && late.Desktop.Count == 6, "...and the Screenshot joins once wave 2 starts");
+        check(late.Wave == 2 && late.NewApps && late.Desktop.Count == 5, "...and the Screenshot joins once wave 2 starts");
 
         // An infected Screenshot dazzles the cat: its swings miss.
         AppsSpec Virus() => Rules() with { InfectMinThreat = 0, InfectChance = 1, MaxInfected = 3, DazzleEvery = 1.5, CrawlEvery = 60 };

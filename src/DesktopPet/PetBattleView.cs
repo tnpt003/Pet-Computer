@@ -233,6 +233,7 @@ public sealed partial class BattleFieldView : FrameworkElement
                 double x = slime.X - OriginX + TrickDrift(slime);
                 // 1.5 M14: a flyer up in the air is drawn by its own window (only its shadow here); a
                 // burrower under the floor or going in/out of it has its own drawing.
+                if (slime.Faded) continue;
                 if (BattleSim.InSky(slime)) { if (slime.State != SlimeState.Defeated) DrawSkyShadow(dc, slime, x, floor); continue; }
                 if (DrawBurrower(dc, slime, x, floor, SlimeTime(time))) continue;
                 double bubble = BattleSim.BubbleLift(slime), wall = WallLift(slime);
@@ -350,6 +351,7 @@ public sealed partial class BattleFieldView : FrameworkElement
     {
         double w = slime.Width, h = slime.Height, t = slime.StateTime, size = slime.Width / s.SlimeWidth;
         double sx = 1, sy = 1, opacity = 1, jitter = 0;
+        if (slime.OnWall && slime.Aiming) { sx *= 1.12; sy *= 0.88; }
         bool targetable = slime.Targetable;
         double windup = sim.Windup(slime);
         switch (slime.State)

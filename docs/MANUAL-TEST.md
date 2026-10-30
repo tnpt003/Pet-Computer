@@ -1,5 +1,21 @@
 # Checklist test thủ công
 
+## Sửa sau chơi thử 1.5 — 2026-10-30
+
+- Cho slime xích/thảo dược và slime chạy thoát đứng trước hàng slime khác: lúc rút về phải xuyên hàng, không kéo cả hàng lùi. Khi không rút, va chạm thông thường vẫn hoạt động.
+- Sổ tay: mở slime bay thường/tinh anh, thấy thân và cánh. Chuẩn bị trận: 4 vũ khí theo lưới, chỉ vũ khí chọn hiện chỉ số; thử xem trước, cuộn màn hình thấp, vi/en/ja và DPI thật.
+- Chọn/bỏ app, tối đa 5; không chọn Popup; Screenshot khóa ở chương 1. Hủy không lưu; Sẵn sàng lưu, tắt/mở app giữ bộ chọn. Viễn chinh giữ bộ từ lúc lên đường kể cả sau khi mở lại app. Screenshot mang vào Vô tận chỉ hiện từ wave 15; app độc vẫn theo luật màn.
+- Bản đồ: tiêu đề bắt đầu “Chương 1: Cuộc xâm nhập của slime”/“Chương 2: …”, nút trước/sau nhỏ nhưng dễ bấm, trạng thái khóa rõ.
+- Slime phun ở hai đầu map: vẫn phun; gần bay nhanh, xa bay lâu; đạn rơi đúng vòng cam. Sang wave mới không còn giọt/vũng wave trước. Quạt vẫn làm khô, Khiên/nhấc mèo vẫn né được.
+- Lò xo: vòng 100 DIP giúp kích trước khi bị mèo giết; nén 0,6 s vẫn đủ nhận biết để nhấc mèo; Đẩy/đánh bẹp vẫn dùng được.
+- Slime bám tường áp sát mép, leo đủ cao mới ngắm; thân co/gai sáng 0,8 s trước bắn. Ném mèo/Kẹp/Đẩy vẫn kéo rơi được.
+- Bóng ma ẩn hoàn toàn; rà chuột/Laser soi được; hiện lại phải chờ rồi gồng, không đánh ngay từ vô hình.
+- Hợp thể wave: lần lượt giữa và hai rìa, không tăng số lượng; tụ về nhau, đi xuyên slime/mèo; con giữa chạy nhanh hơn khi tụ. Quạt/Đẩy/choáng vẫn tách được. Bầy Slime Mẹ không bị đổi vị trí sinh.
+- Khổng lồ: ba chấm sáng, ba đòn đầu không mất HP, đòn tiếp theo gây sát thương; hết lớp chờ 10 s mới hồi. Pause đóng băng; độc không ăn lớp theo tick.
+- Cá/xu/bình rơi to hơn, có quầng sáng mềm cả nền sáng/tối, bấm vùng hình và sát cạnh đều nhặt được; không chắn thao tác mèo/kỹ năng ngoài vùng vật phẩm. Nhịp sáng không gây chói khi nhiều vật phẩm.
+
+Các kiểm tra tự động không thay cho chơi thật, chuột thật, DPI thật và nhiều màn hình.
+
 Dùng cho những gì test tự động không thay được: cảm giác chuyển động, âm thanh, giọng văn, nhiều màn hình.
 Chạy bản publish (`artifacts\win-x64\DesktopPet.exe`). Mở **Behavior debug view** (menu chuột phải → Khác) để xem trạng thái.
 Tick `[x]` khi đạt; ghi lỗi ngay dưới mục kèm ngày. Mục mới chưa test thì thêm vào đúng nhóm.

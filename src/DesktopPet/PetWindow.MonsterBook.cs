@@ -255,7 +255,13 @@ public sealed partial class PetWindow
         view.Measure(new Size(W, h));
         view.Arrange(new Rect(0, 0, W, h));
         var bitmap = new RenderTargetBitmap(W * 2, h * 2, 192, 192, PixelFormats.Pbgra32);
-        bitmap.Render(view);
+        if (type.Fly != null)
+        {
+            var picture = new DrawingVisual();
+            using (var dc = picture.RenderOpen()) view.DrawFlyer(dc, slime, W / 2.0, h - 2);
+            bitmap.Render(picture);
+        }
+        else bitmap.Render(view);
         // Cut close around it by its size (room over its head for an elite's word), plain and elite alike.
         double scale = type.Scale;
         int cw = (int)Math.Clamp(BattleTuning.SlimeWidth * scale * 1.6 + 24, 56, W), ch = (int)Math.Clamp(BattleTuning.SlimeHeight * scale * 1.8 + 34, 48, h - Top);

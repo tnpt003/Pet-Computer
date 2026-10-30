@@ -9,6 +9,7 @@ public sealed partial class BattleSim
 {
     // True while one bomb's blast is dealt (see StepBombs).
     private bool blasting;
+    private int mergeArrival;
 
     private void StepBombs(double dt)
     {
@@ -39,6 +40,8 @@ public sealed partial class BattleSim
             PhaseRemaining = Math.Max(0, PhaseRemaining - dt);
             if (PhaseRemaining > 0) return;
             Wave++;
+            mergeArrival = 0;
+            ClearSpit(); // Nothing from the preceding wave can leave a fresh puddle.
             pending.Clear(); pendingNext = 0;
             ClearCalls();
             farEdge = Far(catX); streamEdge = 0;
@@ -198,6 +201,7 @@ public sealed partial class BattleSim
             }
         }
         var slime = AddSlime(x, type);
+        PlaceMergeArrival(slime);
         slime.Facing = catX < x ? -1 : 1;
         events.Add(new(type.Boss ? BattleEventKind.BossAppeared : BattleEventKind.SlimeSpawned, x));
         if (elite) ForceElite(slime); else RollElite(slime);
@@ -289,10 +293,19 @@ public sealed partial class BattleSim
         {
             x += toward * gaps[i] * squeeze;
             var slime = AddSlime(x, order[i]);
+            PlaceMergeArrival(slime);
             slime.Facing = catX < slime.X ? -1 : 1;
             if (flags[i]) ForceElite(slime); else RollElite(slime);
         }
         events.Add(new(BattleEventKind.SlimeSpawned, back));
+    }
+
+    private void PlaceMergeArrival(Slime slime)
+    {
+        if (slime.Link?.Kind != EnemyLinks.Merge || slime.Link.AfterHeal) return;
+        int at = mergeArrival++ % 3;
+        slime.MergeRunner = at == 0;
+        slime.X = at == 0 ? (Left + Right) / 2 : at == 1 ? Left + slime.Width / 2 : Right - slime.Width / 2;
     }
 
     internal Slime AddSlime(double x, EnemyType type)
@@ -310,6 +323,7 @@ public sealed partial class BattleSim
         // A support enemy starts with half its heal cooldown and its whole budget; its heals (and the
         // budget) grow with the same factor as enemy HP, so healing keeps up on later stages.
         slime.HealCooldown = type.HealCooldown / 2;
+        slime.GiantShields = type.Marks == "giant" ? 3 : 0;
         slime.HealPower = hpFactor;
         slime.HealLeft = hpFactor != 1 ? Math.Round(type.HealBudget * hpFactor) : type.HealBudget;
         slime.Altitude = type.Hover;

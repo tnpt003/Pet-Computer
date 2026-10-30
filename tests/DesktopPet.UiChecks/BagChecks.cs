@@ -166,6 +166,17 @@ internal static class BagChecks
             check(window.SelectBookPage(MonsterBook.FormationPage("fortress")) && window.BattleBookText.Contains("Members: ") && window.BattleBookText.Contains(data.Formation("fortress")!.TipEn!),
                 "A formation's page: its members and its tip");
             Shot("Pet battle hub", "battle-book-formation-en.png");
+            var flyerPortrait = (System.Windows.Media.Imaging.BitmapSource)Call(window, "BookPortrait", data.Enemy("flyer"), false)!;
+            var flyerPixels = new byte[flyerPortrait.PixelWidth * flyerPortrait.PixelHeight * 4];
+            flyerPortrait.CopyPixels(flyerPixels, flyerPortrait.PixelWidth * 4, 0);
+            check(Enumerable.Range(0, flyerPixels.Length / 4).Count(i => flyerPixels[i * 4 + 3] > 100) > 200,
+                "The flying slime's Monster Book portrait contains visible artwork");
+            if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string portraitFolder)
+            {
+                var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder();
+                encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(flyerPortrait));
+                using var file = File.Create(Path.Combine(portraitFolder, "book-flyer.png")); encoder.Save(file);
+            }
             window.ShowMonsterBook(false);
             // Counted once per battle; custom battle data counts nothing.
             var met = new BattleSim(data, 0, 1000, seed: 1);

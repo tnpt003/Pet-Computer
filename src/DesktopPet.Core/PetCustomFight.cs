@@ -51,7 +51,7 @@ public sealed class CustomFight
         Name = string.IsNullOrWhiteSpace(Name) ? "?" : Name.Trim()[..Math.Min(Name.Trim().Length, 40)];
         Enemies = (Enemies ?? new()).Where(p => !string.IsNullOrWhiteSpace(p.Key) && p.Value > 0).ToDictionary(p => p.Key, p => Math.Min(p.Value, MaxLevel));
         Malware = (Malware ?? new()).Where(p => MalwareCue.Kinds.Contains(p.Key) && p.Value > 0).ToDictionary(p => p.Key, p => Math.Min(p.Value, MaxLevel));
-        Icons = (Icons ?? new()).Where(id => IconOrder.Any(k => BattleSim.AppId(k) == id)).Distinct().ToList();
+        Icons = (Icons ?? new()).Where(id => IconOrder.Any(k => BattleSim.AppId(k) == id)).Distinct().Take(5).ToList();
         Waves = Math.Clamp(Waves, MinWaves, MaxWaves);
         PerWave = Math.Clamp(PerWave, MinPerWave, MaxPerWave);
         MaxAlive = Math.Clamp(MaxAlive, MinAlive, MaxAliveCap);

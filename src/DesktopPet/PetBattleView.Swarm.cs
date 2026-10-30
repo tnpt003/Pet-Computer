@@ -49,6 +49,8 @@ public sealed partial class BattleFieldView
                 DrawFeeler(dc, 0, Math.Sin(time * 6 + slime.Id) * 2);
                 break;
             case "giant":
+                for (int i = 0; i < 3; i++)
+                    dc.DrawEllipse(i < slime.GiantShields ? SparkCore : CapSteel, ThinInk, new Point((i - 1) * 10, -53), 3.5, 3.5);
                 for (int i = -1; i <= 1; i++) DrawFeeler(dc, i * 12, Math.Sin(time * 4 + slime.Id + i) * 1.5);
                 double look = slime.Facing * 3;
                 dc.DrawLine(Ink, new Point(-12 + look, -bhBrow), new Point(-3 + look, -bhBrow + 3));

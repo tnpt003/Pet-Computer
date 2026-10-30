@@ -1,5 +1,9 @@
 # Bản 1.5 — Slime phản công (thiết kế đã chốt)
 
+### Sửa sau chơi thử, đã chốt 2026-10-30
+
+Đợt sửa gồm xuyên hàng khi lui/hội tụ; ảnh slime bay trong sổ tay; bảng chuẩn bị gọn và chọn tối đa 5 app; nút đổi chương nhỏ, tiêu đề chỉ “Chương N: …”; slime phun toàn map với thời gian bay theo khoảng cách và dọn vũng/đạn cũ khi sang wave; lò xo vòng 100/nén 0,6 s; bám tường gồng rõ; bóng ma ẩn hoàn toàn; hợp thể giữa/hai rìa ưu tiên nhập; khổng lồ 3 lớp chắn hồi 10 s; vật phẩm rơi ×1,6 và quầng sáng. Chi tiết thực thi: docs/BATTLE-DATA.md → Sửa sau chơi thử 1.5; test tay: docs/MANUAL-TEST.md cùng mục. Đây là chỉnh sửa sau M29, không đổi phạm vi các mốc M01–M29 đã hoàn tất.
+
 Ngày chốt hướng: 2026-10-26 (Asia/Saigon). Người dùng chọn "bản rất lớn", rồi chỉnh lại phần quái và kỹ năng qua trao đổi cùng ngày.
 Trạng thái: **đang code** — xong M01 tới M22, M23a, M23b, M24 (2026-10-29), M25, M26, M27, M28, M29a và M29 (2026-10-30). Mỗi mốc bên dưới làm trong một phiên chat; trước mỗi mốc vẫn theo quy trình AGENTS.md (đọc → giải thích → chờ "ok" → làm → test → ghi nhớ).
 

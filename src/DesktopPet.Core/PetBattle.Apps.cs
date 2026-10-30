@@ -15,6 +15,8 @@ namespace DesktopPet;
 public sealed partial class BattleSim
 {
     private readonly List<DesktopApp> desktop = new();
+    private readonly BattleAppKind[]? chosenApps;
+    public static IReadOnlyList<BattleAppKind> DefaultApps => IconKinds;
     internal readonly List<BattlePopup> popups = new();
     internal readonly List<AppLaunch> launches = new();
     internal readonly List<BattleHazard> hazards = new();
@@ -123,8 +125,15 @@ public sealed partial class BattleSim
         // 1.5 M29a: a Custom Fight has the icons it was built with (the Screenshot among them or not).
         var custom = Stage?.CustomApps;
         if (desktop.Count == 0)
-            foreach (var kind in custom?.Icons ?? IconKinds) AddIcon(kind, rules);
-        if (custom == null && NewApps && !desktop.Any(a => a.Kind == BattleAppKind.Screenshot)) AddIcon(BattleAppKind.Screenshot, rules);
+            foreach (var kind in (custom?.Icons ?? chosenApps ?? IconKinds).Take(5))
+                if (kind != BattleAppKind.Screenshot || NewApps || custom != null) AddIcon(kind, rules);
+        if (custom == null && chosenApps == null && NewApps && !desktop.Any(a => a.Kind == BattleAppKind.Screenshot))
+        {
+            // Older saves have no explicit loadout: replace the fifth default icon, never add a sixth.
+            desktop.RemoveAll(a => a.Kind == BattleAppKind.Trash);
+            if (desktop.Count < 5) AddIcon(BattleAppKind.Screenshot, rules);
+        }
+        if (custom == null && chosenApps != null && NewApps && chosenApps.Contains(BattleAppKind.Screenshot) && desktop.Count < 5 && !desktop.Any(a => a.Kind == BattleAppKind.Screenshot)) AddIcon(BattleAppKind.Screenshot, rules);
     }
 
     private void AddIcon(BattleAppKind kind, AppsSpec rules)

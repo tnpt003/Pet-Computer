@@ -1,5 +1,15 @@
 # Tùy chỉnh dữ liệu Battle Mode (battle.json)
 
+## Sửa sau chơi thử 1.5 — 2026-10-30
+
+- `spit.range` nay là **khoảng cách tham chiếu tốc độ đạn**, không phải giới hạn tầm bắn. Slime phun nhắm toàn chiều ngang khung trận, vẫn giữ `minRange`. Thời gian bay = `max(0,25 s, khoảng cách / range × flight)`; dữ liệu gốc tương đương 475 DIP/s. Điểm rơi khóa lúc bắt đầu gồng, vòng cam báo đúng điểm đó; không thêm độ lệch ngẫu nhiên. Khi bắt đầu wave mới, xóa giọt đang bay và bãi nhầy wave trước.
+- Slime lò xo: `spring.radius` mặc định/gốc 100 DIP, `compress` 0,6 s; các cách vô hiệu hóa giữ nguyên. Slime bám tường: áp mép ở 0,35 lần chiều rộng thân, nghiêng 24°, leo xong mới ngắm; `cling.aim` 0,8 s, gai sáng và thân co khi gồng.
+- Slime xích về sau đồng minh trước khi cân nhắc đánh; lúc rút lui không chen đẩy hàng. Các nhánh giữ sau của support và chạy thoát sau cú lao cũng được xuyên hàng. Slime hợp thể từ wave lần lượt xuất hiện giữa/trái/phải (không tăng số lượng), con giữa ×1,6 tốc độ khi hội tụ; ưu tiên điểm tụ trung bình các bạn cùng loại, xuyên hàng khi đang tụ. Choáng, đẩy, dính, kẹp gắp vẫn chặn hành vi; bầy do Slime Mẹ sinh giữ điểm sinh riêng.
+- Slime khổng lồ: 3 lớp chắn khi xuất hiện, mỗi đòn trực tiếp mất một lớp, đòn thứ tư gây sát thương. Khi hết lớp, hồi 10 s thời gian trận rồi nhận 3 lớp mới (không tích lũy). Độc/Link/Reflect đi qua, không ăn lớp. Pause và đóng băng quái dừng đồng hồ hồi lớp. Ba chấm trên đầu báo lớp còn lại.
+- Bóng ma ẩn không vẽ thân, bóng, thanh máu hay dấu chọn. Rê chuột/Laser vẫn soi được; sau khi hiện chờ tối thiểu 0,7 s rồi mới được bắt đầu gồng đòn.
+- Bộ app: `PetPreferences.BattleAppLoadout`, `ExpeditionRun.AppLoadout` lưu tối đa 5 loại helper; `null` tương thích save cũ, danh sách rỗng là không chọn helper nào. Bộ Viễn chinh cố định lúc lên đường, không lấy lại preference giữa chuyến. Screenshot vẫn theo `newAppsFrom`; bộ chọn chỉ cho chọn ở chế độ phù hợp. Save cũ chưa có bộ chọn đổi Thùng Rác thành Screenshot khi tới wave mở nó, luôn tối đa 5 icon. App độc không thuộc 5 ô. Trận tự chọn cũng giới hạn 5 helper, preset cũ vượt giới hạn được rút còn 5.
+- Vật phẩm rơi: hình ×1,6, quầng sáng vàng mềm nhịp chậm; vùng nhặt nửa rộng 24 DIP, cao 48 DIP. Không đổi tỉ lệ rơi, giá trị, tuổi thọ hay hiệu ứng nam châm.
+
 Áp dụng từ 2026-10-19, `schemaVersion` 1. Không cần sửa code hay build lại exe để thêm biến thể quái, vũ khí hoặc đổi các đợt quái.
 
 ## File nằm ở đâu

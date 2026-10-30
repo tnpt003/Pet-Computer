@@ -486,6 +486,9 @@ public sealed class Slime
     public double Cooldown, StunRemaining, KnockVelocity, HitFlash;
     public int Facing = -1;
     public bool Enraged, Summoned;
+    public int GiantShields;
+    public double GiantShieldClock;
+    public bool MergeRunner;
     // Support: its own heal cooldown, what it may still heal, and the ally it is healing.
     public double HealCooldown, HealLeft;
     public int HealTargetId;

@@ -27,7 +27,7 @@ public sealed partial class BattleFieldView
 
     // How far up the wall climber is drawn (its bottom over the floor), and its lean into its edge.
     private static double WallLift(Slime slime) => slime.Type.Cling != null ? slime.Altitude : 0;
-    private static double WallLean(Slime slime) => slime.OnWall ? slime.WallSide * 8 : 0;
+    private static double WallLean(Slime slime) => slime.OnWall ? slime.WallSide * 24 : 0;
 
     // Marks in body coordinates (from DrawSlime): the ice shell or its shards; the climber's spikes and paws.
     private static void DrawWallMarks(DrawingContext dc, Slime slime, double bw, double bh, double time)
@@ -65,7 +65,7 @@ public sealed partial class BattleFieldView
             {
                 double a = i * 0.42, r = bh * 0.86;
                 dc.PushTransform(new MatrixTransform(Math.Cos(a), Math.Sin(a), -Math.Sin(a), Math.Cos(a), Math.Sin(a) * bw * 0.48, -bh * 0.08 - Math.Cos(a) * r));
-                dc.DrawGeometry(SpikeFill, ThinInk, BackSpike);
+                dc.DrawGeometry(slime.Aiming ? SparkCore : SpikeFill, ThinInk, BackSpike);
                 dc.Pop();
             }
             int grip = slime.OnWall ? slime.WallSide : 0;

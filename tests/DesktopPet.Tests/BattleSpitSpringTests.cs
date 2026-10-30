@@ -82,7 +82,7 @@ internal static class BattleSpitSpringTests
         bool hit = Run(sim, 1.9, 100, BattleEventKind.GooLanded, 1);
         check(hit && sim.CatHp == hp - 9 && !sim.CatStunned && sim.SpitHits == 1, "The drop lands on the cat still there: its damage, no stun");
         check(sim.Puddles.Count == 1 && sim.Puddles[0].X == 100 && sim.Puddles[0].Remaining > 5, "It leaves a puddle where it landed");
-        check(!Run(sim, 6, 1000, BattleEventKind.SpitAimed), "A cat beyond its range (600 DIPs off) is not spat at");
+        check(Run(sim, 6, 1000, BattleEventKind.SpitAimed), "A cat beyond the former range (600 DIPs off) is spat at");
         check(!Run(sim, 6, 380, BattleEventKind.SpitAimed), "Nor one closer than its least range (20 DIPs off)");
 
         // The cat walks off the ring, or is lifted out of it: a miss.

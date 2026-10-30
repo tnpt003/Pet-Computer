@@ -1,5 +1,7 @@
 # Cân bằng và hiệu năng bản 1.5 (mốc M29, 2026-10-30)
 
+Đợt sửa sau chơi thử (cùng ngày, người dùng chốt): thay cơ chế lui xuyên hàng, hợp thể, phun, lò xo, lớp chắn khổng lồ và giới hạn app tối đa 5. Bảng M29 bên dưới là số liệu lịch sử, không còn đại diện đầy đủ cho đợt này. Test mô phỏng vẫn giữ các ngưỡng thắng/thời gian; riêng bot búa chương 1 màn 4 cho phép còn tối đa 92% HP (trước 91%, thay đổi do slime chạy thoát không còn đẩy cả hàng). Không tăng/giảm chỉ số khác chỉ để đạt test. Kiểm tra trên source riêng phải loại wave chưa commit của người dùng: wave đó làm bot búa chương 2 màn 3 còn ~91% HP, trong khi source thuộc đợt sửa vẫn đạt ngưỡng 90% cũ. Chưa đo lại FPS đông quái hoặc chơi thật; quầng sáng loot dùng brush đã freeze, không thêm effect blur trên mỗi frame.
+
 Báo cáo **mô phỏng** (không phải chơi thật) trên dữ liệu gốc battle.json ở commit 0f01d1b, kèm đo hiệu năng ở cuối file. Người dùng chọn phương án (a) ngày 30/10: chỉ đo và đề xuất, **không đổi số liệu**, không đổi rulesVersion. Mọi ngưỡng kiểm tra trong test đều đạt.
 
 Cách chạy lại: `scripts/test.ps1` (bảng in ra trong đầu ra của DesktopPet.Tests). Mỗi dòng 20 seed (Viễn chinh 40 chuyến). Các loại người chơi:

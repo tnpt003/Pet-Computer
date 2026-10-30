@@ -91,7 +91,7 @@ public sealed partial class BattleSim
     // Coins picked up this battle (a won one also gathers the coins still on the floor).
     public int Coins { get; private set; }
     public int DropsPicked { get; private set; }
-    public const double DropHalfWidth = 14, DropPickHeight = 34;
+    public const double DropHalfWidth = 24, DropPickHeight = 48;
 
     private DropSpec? DropRules => Loot != BattleLoot.None ? Settings.Drops : null;
 

@@ -51,7 +51,8 @@ public sealed partial class BattleSim
     // The floor a slime may stand on: the strip, up to a forced update on either side (a boss leaps over).
     private (double Min, double Max) Bounds(Slime slime)
     {
-        double min = Left + slime.Width / 2, max = Right - slime.Width / 2;
+        double edge = slime.Width * (slime.Type.Cling != null ? 0.35 : 0.5);
+        double min = Left + edge, max = Right - edge;
         // A wall stands on the floor: nothing in the air bumps into it.
         if (!slime.IsBoss && !slime.Airborne)
             foreach (var h in hazards)
@@ -87,6 +88,7 @@ public sealed partial class BattleSim
         for (int index = 0; index < count; index++)
         {
             var slime = slimes[index];
+            if (!slime.Type.Support) slime.KeepingBack = false;
             var (minX, maxX) = Bounds(slime);
             if (frozen && slime.State != SlimeState.Defeated)
             {
@@ -104,6 +106,11 @@ public sealed partial class BattleSim
             slime.FarHealCooldown = Math.Max(0, slime.FarHealCooldown - act);
             slime.SpitCooldown = Math.Max(0, slime.SpitCooldown - act);
             slime.PanicRemaining = Math.Max(0, slime.PanicRemaining - dt);
+            if (slime.Type.Marks == "giant" && slime.GiantShields == 0 && slime.GiantShieldClock > 0)
+            {
+                slime.GiantShieldClock = Math.Max(0, slime.GiantShieldClock - dt);
+                if (slime.GiantShieldClock == 0) slime.GiantShields = 3;
+            }
             if (slime.Stuck) slime.KnockVelocity = 0; // Stuck: no knock back either.
             if (slime.KnockVelocity != 0)
             {
@@ -214,6 +221,13 @@ public sealed partial class BattleSim
                     if (slime.FishTaker && TakeFish(slime, dt, minX, maxX)) break;
                     // A spring trap never attacks: it lies still, or slides up to a cat far away (PetBattle.Spring.cs).
                     if (slime.Type.Spring != null) { Creep(slime, dt, catX, minX, maxX); break; }
+                    if (SeekMerge(slime, dt, minX, maxX)) break;
+                    if (TetherPost(slime) is double behind && Math.Abs(behind - catX) > Math.Abs(slime.X - catX) && Math.Abs(behind - slime.X) > 6)
+                    {
+                        slime.KeepingBack = true;
+                        slime.X = Math.Clamp(slime.X + Math.Sign(behind - slime.X) * Math.Min(Math.Abs(behind - slime.X), Speed(slime) * dt), minX, maxX);
+                        break;
+                    }
                     // A spitter spits from afar before anything else (even from behind its allies).
                     if (slime.Type.Spit != null && StartSpit(slime, catX, catHeld)) break;
                     // A bomb lights its fuse next to the cat rather than attacking.
@@ -240,6 +254,7 @@ public sealed partial class BattleSim
                     // A guard holds its post between the cat and its support (it still hits a cat in reach).
                     else if (facingCat && (GuardPost(slime) ?? TetherPost(slime)) is double post)
                     {
+                        slime.KeepingBack = Math.Abs(post - catX) > Math.Abs(slime.X - catX);
                         if (Math.Abs(post - slime.X) > 6) slime.X = Math.Clamp(slime.X + Math.Sign(post - slime.X) * Math.Min(Math.Abs(post - slime.X), Speed(slime) * dt), minX, maxX);
                     }
                     // A shielded boss guards its edge: it slams a cat that comes close but never walks up.
@@ -444,7 +459,7 @@ public sealed partial class BattleSim
         var live = scratch;
         live.Clear();
         // A leaping boss flies over the others.
-        foreach (var slime in slimes) if (slime.State != SlimeState.Defeated && !slime.KeepingBack && slime.LeapHeight <= 0 && !slime.Riding && !slime.Airborne && !slime.Handled && !slime.Burrowed && slime.Type.Spring == null && slime.Loot == StolenKind.None && !slime.CarriesFish && slime.FishClock <= 0 && !slime.Type.Still && slime.Type.Blocker == blockers) live.Add(slime);
+        foreach (var slime in slimes) if (slime.State != SlimeState.Defeated && !slime.KeepingBack && slime.RunAwayLeft <= 0 && !slime.Faded && slime.LeapHeight <= 0 && !slime.Riding && !slime.Airborne && !slime.Handled && !slime.Burrowed && slime.Type.Spring == null && slime.Loot == StolenKind.None && !slime.CarriesFish && slime.FishClock <= 0 && !slime.Type.Still && slime.Type.Blocker == blockers) live.Add(slime);
         live.Sort(ByX);
         for (int i = 1; i < live.Count; i++)
         {

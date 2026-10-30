@@ -283,12 +283,13 @@ public sealed partial class BattleSim
     public BattleSim(BattleSettings settings, double left, double right, Random? random = null, BattleDifficulty difficulty = BattleDifficulty.Normal,
         string weapon = BattleWeapon.Sword, StageSpec? stage = null, IReadOnlyDictionary<string, int>? build = null, int? seed = null,
         double? startHp = null, double threat = 1, IReadOnlyList<string>? relics = null, bool apps = true, IEnumerable<BattleSkill>? skills = null,
-        BattleLoot loot = BattleLoot.None, double weaponBonus = 0, double eliteBonus = 0)
+        BattleLoot loot = BattleLoot.None, double weaponBonus = 0, double eliteBonus = 0, IEnumerable<BattleAppKind>? appLoadout = null)
     {
         // 1.5 M23b: an Expedition run's forge (more weapon damage) and curse (likelier elites).
         this.weaponBonus = double.IsFinite(weaponBonus) ? Math.Clamp(weaponBonus, 0, 5) : 0;
         this.eliteBonus = double.IsFinite(eliteBonus) ? Math.Clamp(eliteBonus, 0, 1) : 0;
         carried = skills != null ? BattleSkills.Order(skills) ?? BattleSkills.Default : BattleSkills.Default;
+        chosenApps = appLoadout?.Where(k => k != BattleAppKind.Popup && Enum.IsDefined(k)).Distinct().Take(5).ToArray();
         // A given seed wins; otherwise one drawn from the given random (tests), else a fresh one.
         Seed = seed ?? random?.Next() ?? Random.Shared.Next();
         spawnRandom = BattleRandom.Stream(Seed, BattleRandom.Spawn);
@@ -750,6 +751,14 @@ public sealed partial class BattleSim
             return HitResult.Immune;
         }
         if (Blocks(slime, source)) return HitResult.Blocked;
+        if (slime.GiantShields > 0 && source is not (DamageSource.Poison or DamageSource.Link or DamageSource.Reflect))
+        {
+            slime.GiantShields--;
+            if (slime.GiantShields == 0) slime.GiantShieldClock = 10;
+            slime.HitFlash = 0.18;
+            AddEffect(BattleEffectKind.Warded, slime.X, slime.Height / 2, slime.Width);
+            return HitResult.Immune;
+        }
         // An ice shell: the cat's weapon only scratches it (1.5 M15, PetBattle.Wall.cs).
         amount = IceShell(slime, amount, source);
         // A hedgehog's quills up: the cat's weapon half hurts it and pricks the cat (1.5 M16, PetBattle.Quills.cs).

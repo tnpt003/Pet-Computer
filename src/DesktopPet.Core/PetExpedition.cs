@@ -456,6 +456,7 @@ public sealed class ExpeditionRun
     public string Difficulty { get; set; } = nameof(BattleDifficulty.Normal);
     // The app icons were turned off when the run set out: none in its battles, its records kept apart.
     public bool NoApps { get; set; }
+    public List<BattleAppKind>? AppLoadout { get; set; }
     // The five skills the run set out with (null: BattleSkills.Default; read through BattleSkills.Loadout).
     public List<string>? Skills { get; set; }
     [JsonIgnore] public BattleSkill[] Loadout => BattleSkills.Loadout(Skills);

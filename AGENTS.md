@@ -56,6 +56,8 @@ Ngoại lệ nào có link tới docs/APPROVED-EXCEPTIONS.md: trước khi sửa
 - Ngoại lệ đã duyệt (2026-10-23, bổ sung 24/10): app trong trận (không trận tự do): icon app GIẢ tự vẽ (không dùng tên/logo/màu app thật, không đọc hay nhận diện app thật), mỗi icon một cửa sổ nhỏ topmost; virus và app độc (vòng loading, Cập nhật bắt buộc, virus.exe; từ 1.5 M26 ở chương 2/tuyến 2/Vô tận: icon Chụp Màn Hình, Captcha là cửa sổ đè lên mèo, Pin yếu, Con trỏ đơ); tắt được bằng ô "App trong trận"; logic C# PetBattle.Apps.cs, số liệu battle.json `apps`; Python không tham gia. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → App trong trận.
 - Ngoại lệ đã duyệt (2026-10-24): "Hướng dẫn phiêu lưu" (chương 1 Phiêu lưu, từ 1.5 cả chương 2; C# PetWindow.BattleGuide.cs): trận ĐỨNG HÌNH nhưng KHÔNG phải Pause, vẫn nhấc/kéo mèo, bấm kỹ năng/icon/app độc được; Pause/menu/fullscreen ẩn hướng dẫn. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Hướng dẫn phiêu lưu.
 
+- Bổ sung đã duyệt (2026-10-30): bộ app hỗ trợ tối đa 5, giữ cả chuyến; slime lui/hội tụ được xuyên hàng, bóng ma ẩn hoàn toàn và khổng lồ có 3 lớp chắn hồi 10 s. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Sửa sau chơi thử 1.5.
+
 ## File quan trọng
 README.md, docs/AI.md, docs/WINDOWS.md, src/DesktopPet/ (App.xaml.cs, PetWindow*.cs, PetModel.cs, PetRenderer.cs, PetPreferences.cs, PetSounds.cs, AI/), ai/, tests/DesktopPet.Tests/, tests/DesktopPet.UiChecks/, scripts/.
 

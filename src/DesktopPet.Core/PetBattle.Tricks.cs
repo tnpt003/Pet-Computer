@@ -81,6 +81,7 @@ public sealed partial class BattleSim
             if (s.Faded)
             {
                 s.Faded = false;
+                s.Cooldown = Math.Max(s.Cooldown, 0.7);
                 s.GhostClock = 0;
                 GhostsRevealed++;
                 events.Add(new(BattleEventKind.GhostRevealed, s.X, s.Id));
@@ -88,7 +89,7 @@ public sealed partial class BattleSim
         }
         s.GhostClock -= dt;
         if (s.GhostClock > 0) return;
-        if (s.Faded) { s.Faded = false; s.GhostClock = s.Elite != null ? ghost.EliteVisible : ghost.Visible; return; }
+        if (s.Faded) { s.Faded = false; s.Cooldown = Math.Max(s.Cooldown, 0.7); s.GhostClock = s.Elite != null ? ghost.EliteVisible : ghost.Visible; return; }
         // Kept out by the cursor or the laser, or in the middle of an attack (or the Grabber): not yet.
         if (s.Revealed > 0 || s.Handled || s.State is SlimeState.Windup or SlimeState.Dashing) return;
         s.Faded = true;

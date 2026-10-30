@@ -433,6 +433,8 @@ internal static class TutorialChecks
 
         // 1.5 M26 apps: a stage with the newer apps (chapter 2's) teaches each the first time it comes,
         // whichever stage that is; the battle stands still meanwhile (the captcha's and the cursor's clocks too).
+        var appLoadoutBefore = prefs.BattleAppLoadout;
+        prefs.BattleAppLoadout = BattleSim.DefaultApps.Take(4).Append(BattleAppKind.Screenshot).ToList();
         window.Reset();
         window.BattleTuning = new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 1 }, SlimeMaxHp = 1000, SlimeDamage = 0, SlimeSpeed = 0,
             Apps = new AppsSpec { InfectChance = 0, MalwareMinThreat = 0 } };
@@ -488,6 +490,7 @@ internal static class TutorialChecks
         window.BattleTuning = new BattleSettings();
         window.BattleGuideEnabled = false;
 
+        prefs.BattleAppLoadout = appLoadoutBefore;
         prefs.Language = language;
         window.Reset();
         window.BattleTuning = new BattleSettings();

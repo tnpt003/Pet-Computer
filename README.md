@@ -2,6 +2,8 @@
 
 ### A small world on your desktop.
 
+**[Visit the Chilo website · Giới thiệu & tải game](https://tnpt003.github.io/Pet-Computer/)**
+
 An animated cat to keep you company while you work — and a little adventure when you take a break. Pick it up, play together, dress it up, or help it face a slime invasion across your desktop.
 
 [![Watch the Desktop Pet demo: a real battle on the Windows desktop](docs/media/battle-preview.gif)](docs/media/desktop-pet-intro.mp4)

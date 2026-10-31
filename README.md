@@ -1,18 +1,28 @@
-﻿# Desktop Pet for Windows
+# Desktop Pet for Windows
 
 ### A small world on your desktop.
 
 An animated cat to keep you company while you work — and a little adventure when you take a break. Pick it up, play together, dress it up, or help it face a slime invasion across your desktop.
 
-<p align="center">
-  <img src="src/DesktopPet/Assets/Splash.gif" alt="Animated Desktop Pet cat from the installer splash illustration" width="360" />
-</p>
+[![Watch the Desktop Pet demo: a real battle on the Windows desktop](docs/media/battle-preview.gif)](docs/media/desktop-pet-intro.mp4)
 
-<p align="center"><em>Animated illustration used by the installer; not a desktop screenshot.</em></p>
+**[Watch the 32-second introduction (MP4)](docs/media/desktop-pet-intro.mp4)** — real screen recording, with a short screenshot introduction. No audio.
+
+*Development preview for 1.5. The latest published release may differ. The screenshots and recording below come from the running app, not mockups.*
 
 **[Download for Windows](https://github.com/tnpt003/Pet-Computer/releases/latest/download/PetComputer-win-Setup.exe)** · [All releases & portable ZIP](https://github.com/tnpt003/Pet-Computer/releases) · [What's new](CHANGELOG.md) · [Report a problem](https://github.com/tnpt003/Pet-Computer/issues)
 
 Windows 10/11 · x64 · Free and open source · English / Tiếng Việt / 日本語
+
+## See it on your desktop
+
+| Your everyday companion | Pick an adventure |
+| --- | --- |
+| ![Chilo wearing a wizard hat beside a slime keepsake on the desktop](docs/media/desktop-companion.png) | ![Battle Mode hub with Adventure, Expedition, and Infinity](docs/media/battle-hub.png) |
+| Choose your gear | Face the Slime King |
+| ![Custom fight preparation with weapons, skills, and difficulty](docs/media/battle-setup.png) | ![The cat fighting the Slime King on the desktop](docs/media/boss-fight.png) |
+
+Click an image to view it at full size. [Media details and preview version](docs/media/README.md).
 
 ## Meet your desktop companion
 
@@ -107,4 +117,4 @@ Found a bug? [Open an issue](https://github.com/tnpt003/Pet-Computer/issues) wit
 
 ## License
 
-Project code and artwork are under the [MIT License](LICENSE). Sounds are derived from CC0 recordings; see [sound credits](src/DesktopPet/Assets/Sounds/CREDITS.md). Bundled .NET, Python, and other dependencies retain their respective licenses; the release includes the Python license in `python\LICENSE.txt`.
+Project code and original artwork are under the [MIT License](LICENSE). Screenshots and video also show the Windows desktop background, which is not project artwork; see [media notes](docs/media/README.md). Sounds are derived from CC0 recordings; see [sound credits](src/DesktopPet/Assets/Sounds/CREDITS.md). Bundled .NET, Python, and other dependencies retain their respective licenses; the release includes the Python license in `python\LICENSE.txt`.

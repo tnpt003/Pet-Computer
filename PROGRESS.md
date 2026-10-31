@@ -79,3 +79,10 @@ Quy ước file này: chỉ giữ trạng thái hiện tại, các đợt đang 
 - Đã viết lại README theo hướng người dùng: giới thiệu mèo desktop, tương tác, Battle Mode tùy chọn, tải/cài, controls, cập nhật/dữ liệu và liên kết tài liệu phát triển. Dùng GIF splash có sẵn, ghi rõ minh họa installer, không giả làm ảnh desktop thực tế. Không tuyên bố đã được SignPath duyệt/ký.
 - Chỉ sửa tài liệu; không build/publish binary. Kiểm tra link local và git diff trước commit. Không sửa/stage code BattlePrep/PetMalwareIcon đang dở của công việc khác.
 - Đang dở: bổ sung ảnh chụp thực tế do người dùng chọn (desktop, battle, tùy chỉnh; tránh thông tin riêng tư). Chưa kiểm tra render README trực tiếp trên GitHub. Không push cả nhánh: tại lúc kiểm tra local hơn origin/main 92 commit, cần chọn phạm vi đồng bộ riêng nếu muốn cập nhật remote.
+
+## Media README thật (2026-10-31)
+- Đã chụp mới từ app đang chạy: desktop, sảnh, chuẩn bị trận tự do và đánh Slime King; không truy cập được file gốc ảnh đính kèm trong chat. Chỉ lấy monitor có mèo, bỏ taskbar/trình duyệt monitor khác. Không dùng ảnh AI/mockup.
+- Video 32 giây 1280×720/24 fps H.264 không âm thanh: 8 giây ảnh mở đầu + 24 giây quay thật chuẩn bị/trận tự do. Có nhãn development preview 1.5; GIF 7 giây làm preview. Chưa có đoạn kéo/thả. Trận tự do không lưu record/tiến trình, đã đóng kết quả và trả mèo về desktop; không ghi đè preferences.
+- README đã gắn GIF, link MP4 và gallery 4 ảnh. docs/media/README.md ghi nguồn, định dạng, phạm vi và wallpaper Windows không thuộc MIT project.
+- Kiểm tra thật: đã xem 4 ảnh chụp và frame video ở giây 17; FFmpeg giải mã toàn bộ MP4 thành công; kiểm tra link local và diff trước commit. Script quay tạm báo lỗi vì ExitCode của Start-Process rỗng sau WaitForExit, nhưng log encoder hoàn tất và kiểm tra giải mã độc lập đạt. Không sửa code, không build/publish binary.
+- Còn: người dùng xem trọn clip/chọn nhịp dựng; kiểm tra layout/phát video trực tiếp GitHub sau khi đồng bộ remote. Không push cả nhánh có nhiều commit ngoài README chưa đồng bộ. Giữ nguyên thay đổi code đang dở.

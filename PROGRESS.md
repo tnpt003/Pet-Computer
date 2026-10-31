@@ -74,3 +74,8 @@ Quy ước file này: chỉ giữ trạng thái hiện tại, các đợt đang 
 - 1.5 M21 Chương 2: mục gần cuối docs/MANUAL-TEST.md (dữ liệu gốc, không cần file; chưa chơi thật, chưa xem bản đồ hai chương/bảng chuẩn bị/bước hướng dẫn bằng mắt, chưa thử DPI thật; độ khó chỉ chốt bằng mô phỏng).
 - 1.5 M20 giỏ cá: mục cuối docs/MANUAL-TEST.md (chỉ xem được bằng docs/examples/battle-m20.json; ảnh giỏ/cá trên đầu slime/cá rơi đã xem qua render UiChecks nền sáng/tối, chưa xem trong trận thật, chưa thử chuột thật và DPI thật; số liệu `basket` là ước lượng, chốt ở M21).
 - 1.5 M19 đồ rơi và xu: mục cuối docs/MANUAL-TEST.md (Viễn chinh và Vô tận thật, không cần file tùy chỉnh; ảnh cá/xu/bình đã xem qua render UiChecks nền sáng/tối, chưa xem trong trận thật, chưa thử chuột thật và DPI thật; số liệu `drops` là ước lượng).
+
+## README giới thiệu project (2026-10-31)
+- Đã viết lại README theo hướng người dùng: giới thiệu mèo desktop, tương tác, Battle Mode tùy chọn, tải/cài, controls, cập nhật/dữ liệu và liên kết tài liệu phát triển. Dùng GIF splash có sẵn, ghi rõ minh họa installer, không giả làm ảnh desktop thực tế. Không tuyên bố đã được SignPath duyệt/ký.
+- Chỉ sửa tài liệu; không build/publish binary. Kiểm tra link local và git diff trước commit. Không sửa/stage code BattlePrep/PetMalwareIcon đang dở của công việc khác.
+- Đang dở: bổ sung ảnh chụp thực tế do người dùng chọn (desktop, battle, tùy chỉnh; tránh thông tin riêng tư). Chưa kiểm tra render README trực tiếp trên GitHub. Không push cả nhánh: tại lúc kiểm tra local hơn origin/main 92 commit, cần chọn phạm vi đồng bộ riêng nếu muốn cập nhật remote.

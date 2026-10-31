@@ -86,3 +86,8 @@ Quy ước file này: chỉ giữ trạng thái hiện tại, các đợt đang 
 - README đã gắn GIF, link MP4 và gallery 4 ảnh. docs/media/README.md ghi nguồn, định dạng, phạm vi và wallpaper Windows không thuộc MIT project.
 - Kiểm tra thật: đã xem 4 ảnh chụp và frame video ở giây 17; FFmpeg giải mã toàn bộ MP4 thành công; kiểm tra link local và diff trước commit. Script quay tạm báo lỗi vì ExitCode của Start-Process rỗng sau WaitForExit, nhưng log encoder hoàn tất và kiểm tra giải mã độc lập đạt. Không sửa code, không build/publish binary.
 - Còn: người dùng xem trọn clip/chọn nhịp dựng; kiểm tra layout/phát video trực tiếp GitHub sau khi đồng bộ remote. Không push cả nhánh có nhiều commit ngoài README chưa đồng bộ. Giữ nguyên thay đổi code đang dở.
+
+## Đồng bộ main lên GitHub (2026-10-31)
+- Người dùng duyệt push toàn bộ main, không tạo/push tag, không phát hành binary mới. Fetch origin thành công; remote không có commit mới, local đi trước 94 commit trước mốc tài liệu này. Repo chỉ có release.yml kích hoạt bằng tag v*.
+- README, 4 ảnh thật, GIF và MP4 nằm trong các commit d28f23a/919bb29. Giữ nguyên hai file code chưa commit PetWindow.BattlePrep.cs và PetMalwareIcon.cs; không đưa vào lần đồng bộ này. Không build lại vì thao tác chỉ đồng bộ commit hiện có và bổ sung ghi chú tài liệu.
+- Tiến hành git push origin main; kết quả xác minh remote HEAD báo trong phiên. Không yêu cầu cập nhật bộ cài hay thay đổi latest Release.

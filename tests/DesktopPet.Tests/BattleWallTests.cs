@@ -240,7 +240,7 @@ internal static class BattleWallTests
             for (int volley = 0; volley < 4; volley++)
             {
                 Run(field, 20, catX: 700, kind: BattleEventKind.ClingShot);
-                Run(field, 1, catX: 700);
+                for (int i = 0; i < 600 && (one.Cling != ClingPhase.Clinging || one.ClingShifting); i++) { field.Step(dt, 700, false); field.ClearEvents(); }
                 if (one.Cling != ClingPhase.Clinging) return Array.Empty<double>();
                 seen.Add(one.Altitude);
             }
@@ -248,8 +248,8 @@ internal static class BattleWallTests
         }
         var heights = Heights(4);
         bool apart = heights.Zip(heights.Skip(1)).All(p => Math.Abs(p.First - p.Second) >= c.Shift - 1e-6);
-        check(c.Shift > 0 && heights.Length == 5 && apart && heights.All(h => h >= c.Height - 1e-6 && h <= BattleSim.ClingTop + 1e-6) && heights.SequenceEqual(Heights(4)),
-            $"After each volley it slides at least {c.Shift} up or down its edge, within its range, the same for a seed ({string.Join(", ", heights.Select(h => h.ToString("0")))})");
+        check(c.Shift > 0 && heights.Length == 5 && apart && heights.All(h => h >= c.Height - 1e-6 && h <= c.Top + 1e-6) && heights.Any(h => h > BattleSim.ClingTop) && heights.SequenceEqual(Heights(4)),
+            $"After each volley it slides at least {c.Shift} up or down its edge, up the screen (to {c.Top:0}), the same for a seed ({string.Join(", ", heights.Select(h => h.ToString("0")))})");
     }
 
     // A clinger up its edge, ready to be knocked off.

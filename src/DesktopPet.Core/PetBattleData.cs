@@ -438,6 +438,10 @@ public sealed record ClingSpec
     // 2026-10-31: after each volley it slides up or down its edge to a new height, at least Shift DIPs away
     // (drawn between Height and ClingTop from its own random stream; 0: it stays where it is).
     public double Shift { get; init; }
+    // 2026-10-31 (B9, approved): how high up the screen its edge it may go (DIPs over the floor; kept under the
+    // screen's top, SkyHeight). Above the strip (ClingTop) it is drawn in its own topmost window like a flyer.
+    // 0: no higher than ClingTop.
+    public double Top { get; init; }
 }
 
 // S9 (1.5 M16): its quills lie flat Flat s, rise Warn s (seen coming), then stand Puffed s (an elite's
@@ -1578,7 +1582,8 @@ public static class BattleData
                 Within(cling.Aim, 0.2, 5, at + ".cling.aim"); Within(cling.Flight, 0.1, 3, at + ".cling.flight"); Within(cling.Radius, 10, 150, at + ".cling.radius");
                 if (cling.EliteSpikes is < 1 or > 4) throw new InvalidDataException(at + ".cling.eliteSpikes must be 1–4");
                 Within(cling.EliteSpread, 0, 300, at + ".cling.eliteSpread"); Within(cling.Downed, 0.5, 15, at + ".cling.downed"); Within(cling.Ground, 0, 30, at + ".cling.ground");
-                Within(cling.Shift, 0, BattleSim.ClingTop, at + ".cling.shift");
+                Within(cling.Shift, 0, 1000, at + ".cling.shift"); Within(cling.Top, 0, 3000, at + ".cling.top");
+                if (cling.Top > 0 && cling.Top < BattleSim.ClingTop) throw new InvalidDataException(at + ".cling.top must be 0 or at least 110");
             }
             // 1.5 M16: a hedgehog, a timer or a thief is nothing else besides.
             if (e.Quills != null || e.Clock != null || e.Steal != null)

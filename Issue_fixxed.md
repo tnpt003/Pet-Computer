@@ -8,6 +8,14 @@ Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm 
 
 ---
 
+## #40 — Slime bám tường chỉ bám dưới mép màn hình (2026-10-31, commit chưa có)
+- **Triệu chứng (góp ý người dùng):** slime bám tường chỉ leo trong dải trận ở đáy màn hình; muốn nó leo theo chiều cao màn hình.
+- **Nguyên nhân:** chiến trường là một dải cao 170 DIPs nên độ cao bị chặn ở `ClingTop` 110.
+- **Sửa (người dùng duyệt cửa sổ riêng 31/10):** khóa `cling.top` 520: trượt sau mỗi loạt gai chọn độ cao trong 60–trần (trần = `top`, dưới đỉnh màn hình), trượt nhanh ×2,5; cao hơn 110 thì `InSky` (qua `HighOnWall`) → vẽ trong cửa sổ topmost riêng như slime bay (đặt theo `BodyX`, xoay áp tường), click Đẩy/Kẹp gắp như slime bay; gai ném từ trên cao bay lâu hơn và vẽ trên canvas trên trời (`SpikeInSky`; dải trận chỉ vẽ gai thấp). `DrawSpike` tách thành `DrawSpikeAt` dùng chung.
+- **Kiểm chứng:** test C#: 5 độ cao liên tiếp cách nhau ≥ 30, trong 60–520, có lần vượt dải trận, cùng seed ra cùng kết quả. Check WPF mới: ở cao thì vẽ trong cửa sổ riêng, dải trận không vẽ; gai từ trên cao hiện trên canvas trên trời. `scripts/test.ps1 -Ui`: C# 2890, WPF 1389/1389; đã xem ảnh enemy-wall-high, enemy-wall-spike (`artifacts/render-b9`). Chưa chơi thử trên màn hình thật (vị trí cửa sổ sát mép, DPI).
+
+---
+
 ## #39 — Thảo dược không tự nối lại slime tách đôi (2026-10-31, commit 4a5ce08)
 - **Triệu chứng (góp ý người dùng):** muốn slime thảo dược tự hồi cho slime tách đôi ngay khi nó tách, hai nửa có animation hợp lại làm một; lần hồi này riêng, không tính vào ngân sách hồi, và xảy ra được cùng lúc khi đang hồi con khác.
 - **Nguyên nhân:** M11: hai nửa chỉ hợp lại khi thảo dược đã hồi từng nửa bằng lượt hồi thường (trong tầm, trừ ngân sách, mỗi lượt một con).

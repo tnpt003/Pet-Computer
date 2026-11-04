@@ -40,7 +40,7 @@ public sealed partial class PetWindow
     // Where a flyer's window goes on the screen (DIPs): its body's bottom FlyerFoot over the window's.
     public Rect BattleFlyerSpot(Slime s)
     {
-        var foot = BattleSkyPoint(s.X, s.Altitude);
+        var foot = BattleSkyPoint(s.BodyX, s.Altitude); // A wall slime's body sits off its anchor (2026-10-31).
         return new Rect(foot.X - FlyerViewSize / 2, foot.Y - (FlyerViewSize - FlyerFoot), FlyerViewSize, FlyerViewSize);
     }
 
@@ -113,7 +113,8 @@ public sealed partial class PetWindow
     private void UpdateSkyShots(BattleSim b, bool draw, bool hide)
     {
         bool busy = b.Shots.Count > 0;
-        if (!busy) foreach (var s in b.Slimes) if (s.Aiming && BattleSim.InSky(s)) { busy = true; break; }
+        if (!busy) foreach (var s in b.Slimes) if (s.Aiming && BattleSim.InSky(s) && s.Type.Fly != null) { busy = true; break; }
+        if (!busy) foreach (var g in b.Goos) if (BattleFieldView.SpikeInSky(g)) { busy = true; break; }
         if (hide) busy = false;
         if (!busy && !skyShotShown) return;
         if (skyShotWindow == null)
@@ -202,5 +203,7 @@ public sealed class SkyShotView : FrameworkElement
             BattleFieldView.DrawAim(dc, ToScreen(mx, mh), cat, fly.Radius, Math.Clamp(1 - s.AimLeft / fly.Aim, 0, 1), sim.Time);
         }
         foreach (var shot in sim.Shots) BattleFieldView.DrawShot(dc, shot, ToScreen(shot.X, shot.Height));
+        // A wall slime's spikes thrown from high up the screen (2026-10-31).
+        foreach (var g in sim.Goos) if (BattleFieldView.SpikeInSky(g)) BattleFieldView.DrawSpikeAt(dc, g, ToScreen, 30);
     }
 }

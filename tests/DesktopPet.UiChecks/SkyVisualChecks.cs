@@ -127,5 +127,24 @@ internal static class SkyVisualChecks
         var drawn = Render(sky, 600, 500, "enemy-sky-shots");
         check(Count(drawn, 600, 500, red, 0, 600, 0, 500, 30, 120) > 60 && Count(empty, 600, 500, red, 0, 600, 0, 500, 30, 120) == 0, "The aim line and ring show on the sky's canvas");
         check(Count(drawn, 600, 500, mint, 430, 470, 280, 320) > 40, "A drop of goo shows where it flies");
+
+        // 2026-10-31 (B9): a wall slime high up its edge leaves the strip for its own window, leaning on the
+        // wall; its spikes thrown from up there fall on the sky's canvas.
+        var clinger = Add("clinger", 0);
+        clinger.Cling = ClingPhase.Clinging; clinger.WallSide = -1; clinger.Altitude = 400; clinger.X = sim.Left + clinger.Width * 0.35;
+        var olive = Color.FromRgb(0xB5, 0xB8, 0x4A);
+        var stripNow = Render(view, w, h);
+        var wallWindow = Render(new FlyerView(sim, clinger.Id, () => view), size, size, "enemy-wall-high");
+        check(BattleSim.InSky(clinger) && Count(wallWindow, size, size, olive, 0, size, 0, size) > 200 && Count(stripNow, w, h, olive, 0, 80, 0, h) < 20,
+            "High up its edge a wall slime is drawn in its own window, not on the strip");
+        var goos = (List<BattleGoo>)typeof(BattleSim).GetField("goos", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.GetValue(sim)!;
+        shots.Clear();
+        aloft.AimLeft = 0;
+        var noSpike = Render(sky, 600, 500);
+        goos.Add(new BattleGoo { Spike = true, FromX = 20, FromHeight = 420, X = 300, Flight = 1, Remaining = 0.5, Tint = "#B5B84A" });
+        var spike = Render(sky, 600, 500, "enemy-wall-spike");
+        check(BattleFieldView.SpikeInSky(goos[^1]) && Inked(spike, 600, 500, 0, 600, 0, 500, 200) > Inked(noSpike, 600, 500, 0, 600, 0, 500, 200) + 40,
+            "Its spike from up there falls on the sky's canvas");
+        goos.Clear();
     }
 }

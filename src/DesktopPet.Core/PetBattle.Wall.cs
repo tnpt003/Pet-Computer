@@ -134,7 +134,7 @@ public sealed partial class BattleSim
                 {
                     // Up from the floor, or up or down to its next height after a volley (its clock runs on).
                     double to = s.ClingTo - s.Altitude;
-                    s.Altitude = Math.Max(1, s.Altitude + Math.Sign(to) * Math.Min(Math.Abs(to), c.Climb * act));
+                    s.Altitude = Math.Max(1, s.Altitude + Math.Sign(to) * Math.Min(Math.Abs(to), c.Climb * (s.ClingShifting ? ShiftPace : 1) * act));
                     if (s.ClingShifting) s.ShotClock -= act;
                     if (Math.Abs(s.ClingTo - s.Altitude) > 1e-9) return true;
                     s.Cling = ClingPhase.Clinging;
@@ -163,16 +163,27 @@ public sealed partial class BattleSim
     }
 
     private Random? wallRandom;
+    // How much faster than its climb it slides between heights (a slide can cross the whole screen).
+    public const double ShiftPace = 2.5;
 
-    // After a volley: off up or down its edge to a new height between Height and ClingTop, at least Shift
+    // The highest its bottom may go up its edge: ClingTop, or (Top, 2026-10-31) up the screen to Top, kept under
+    // the screen's top (SkyHeight, its rotated body and a margin).
+    public double ClingCeiling(Slime s, ClingSpec c) =>
+        c.Top > 0 ? Math.Max(ClingTop, Math.Min(c.Top, SkyHeight - s.Width - SkyMargin)) : ClingTop;
+
+    // Above the strip up its edge (2026-10-31): drawn in its own window over the screen like a flyer.
+    public static bool HighOnWall(Slime s) => s.Type.Cling != null && s.OnWall && s.Altitude > ClingTop;
+
+    // After a volley: off up or down its edge to a new height between Height and its ceiling, at least Shift
     // away (a second climber on that edge is never met: it keeps Spacing from it).
     private void Shift(Slime s, ClingSpec c)
     {
-        if (c.Shift <= 0 || ClingTop - c.Height < c.Shift) return;
+        double ceiling = ClingCeiling(s, c);
+        if (c.Shift <= 0 || ceiling - c.Height < c.Shift) return;
         wallRandom ??= BattleRandom.Stream(Seed, BattleRandom.Wall);
         double to = s.Altitude;
         for (int tries = 0; tries < 8 && (Math.Abs(to - s.Altitude) < c.Shift || Crowded(s, to, c)); tries++)
-            to = c.Height + wallRandom.NextDouble() * (ClingTop - c.Height);
+            to = c.Height + wallRandom.NextDouble() * (ceiling - c.Height);
         if (Math.Abs(to - s.Altitude) < c.Shift || Crowded(s, to, c)) return;
         s.ClingTo = to;
         s.Cling = ClingPhase.Climbing;
@@ -196,7 +207,8 @@ public sealed partial class BattleSim
             foreach (double x in Spots(s, c))
                 goos.Add(new BattleGoo
                 {
-                    OwnerId = s.Id, FromX = s.X, FromHeight = s.Altitude + s.Width / 2, X = x, Flight = c.Flight, Remaining = c.Flight,
+                    // From high up the screen (2026-10-31) it falls a little longer.
+                    OwnerId = s.Id, FromX = s.X, FromHeight = s.Altitude + s.Width / 2, X = x, Flight = SpikeFlight(s, c), Remaining = SpikeFlight(s, c),
                     Damage = s.Damage, Radius = c.Radius, Spike = true, Tint = s.Type.Color
                 });
             s.ShotClock = c.Cooldown;
@@ -210,6 +222,8 @@ public sealed partial class BattleSim
         s.AimLeft = c.Aim;
         events.Add(new(BattleEventKind.ClingAimed, s.SpitAt, s.Id));
     }
+
+    public static double SpikeFlight(Slime s, ClingSpec c) => c.Flight * Math.Sqrt(Math.Max(1, (s.Altitude + s.Width / 2) / 130));
 
     // Where a climber aiming will drop its spikes: the cat's spot then (an elite's spread round it).
     public IEnumerable<double> SpikeTargets(Slime s) =>

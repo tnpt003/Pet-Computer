@@ -101,10 +101,26 @@ public sealed partial class BattleFieldView
     // pointing the way it goes (up off the wall, tipping down as it falls).
     private void DrawSpike(DrawingContext dc, BattleGoo g, double floor)
     {
-        double k = g.Progress, fromY = floor - g.FromHeight, toY = floor - 4, arc = Math.Min(50, floor - g.FromHeight - 12);
-        double x = g.FromX + (g.X - g.FromX) * k - OriginX, y = fromY + (toY - fromY) * k - 4 * arc * k * (1 - k);
-        double angle = Math.Atan2(g.X - g.FromX, toY - fromY - 4 * arc * (1 - 2 * k)) * 180 / Math.PI;
-        dc.PushTransform(new TranslateTransform(x, y));
+        // Thrown from high up the screen (2026-10-31): drawn over the screen by the sky's canvas instead.
+        if (SpikeInSky(g)) return;
+        DrawSpikeAt(dc, g, (x, h) => new Point(x - OriginX, floor - h), Math.Min(50, floor - g.FromHeight - 12));
+    }
+
+    // A spike thrown from higher than the strip shows.
+    public static bool SpikeInSky(BattleGoo g) => g.Spike && g.FromHeight > BattleSim.ClingTop + 40;
+
+    // A spike in flight, its spot given by map (battle x, height over the floor → the canvas), rising arc DIPs
+    // over its straight way.
+    public static void DrawSpikeAt(DrawingContext dc, BattleGoo g, Func<double, double, Point> map, double arc)
+    {
+        double k = g.Progress;
+        double H(double t) => g.FromHeight + (4 - g.FromHeight) * t + 4 * arc * t * (1 - t);
+        double X(double t) => g.FromX + (g.X - g.FromX) * t;
+        var p = map(X(k), H(k));
+        var ahead = map(X(Math.Min(1, k + 0.02)), H(Math.Min(1, k + 0.02)));
+        var behind = map(X(Math.Max(0, k - 0.02)), H(Math.Max(0, k - 0.02)));
+        double angle = Math.Atan2(ahead.X - behind.X, ahead.Y - behind.Y) * 180 / Math.PI;
+        dc.PushTransform(new TranslateTransform(p.X, p.Y));
         dc.PushTransform(new RotateTransform(-angle));
         dc.DrawGeometry(null, Halo, FallingSpike);
         dc.DrawGeometry(SpikeFill, Outline, FallingSpike);

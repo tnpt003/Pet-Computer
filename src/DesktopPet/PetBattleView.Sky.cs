@@ -37,7 +37,11 @@ public sealed partial class BattleFieldView
             dc.DrawEllipse(null, WarningEdge, centre, (slime.Width / 2 + 10) * pulse, (slime.Height / 2 + 10) * pulse);
             dc.DrawEllipse(null, WarningFill, centre, Math.Max(1, (slime.Width / 2 + 10) * k), Math.Max(1, (slime.Height / 2 + 10) * k));
         }
+        // A wall slime high up its edge (2026-10-31): leaning into the wall as in the strip.
+        double lean = WallLean(slime);
+        if (lean != 0) dc.PushTransform(new RotateTransform(lean, x, bottom - slime.Height / 2));
         DrawSlime(dc, slime, x, bottom, sim.Settings, time);
+        if (lean != 0) dc.Pop();
     }
 
     // Its marks (body coordinates): a flyer's wings, a burrower's nose and paws.

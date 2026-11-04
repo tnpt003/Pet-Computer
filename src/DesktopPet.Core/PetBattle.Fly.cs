@@ -280,7 +280,8 @@ public sealed partial class BattleSim
     private static double DownedFactor(Slime s) => s.Type.Fly is FlySpec fly && s.Fly == FlyPhase.Downed ? fly.DownedDamage : 1;
 
     // A flyer up in the air (or falling): out of the floor's reach and of everything on it.
-    public static bool InSky(Slime s) => s.Type.Fly != null && s.Fly is FlyPhase.Aloft or FlyPhase.Falling;
+    // 2026-10-31: a wall slime high up its edge too (PetBattle.Wall.cs, HighOnWall).
+    public static bool InSky(Slime s) => s.Type.Fly != null && s.Fly is FlyPhase.Aloft or FlyPhase.Falling || HighOnWall(s);
 
     private void ClearSky() { shots.Clear(); CatSlowRemaining = 0; }
 

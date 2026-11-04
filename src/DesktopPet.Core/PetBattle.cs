@@ -767,6 +767,8 @@ public sealed partial class BattleSim
         amount = QuillHit(slime, amount, source);
         // A chain slime with its rope on takes only part of any hit (2026-10-31, PetBattle.Links.cs).
         amount = ChainArmor(slime, amount);
+        // A merging pack splits a hit evenly among its kind near it (2026-10-31, PetBattle.Links.cs).
+        if (source != DamageSource.Link) { amount = PackShare(slime, amount); if (Over || !slime.Targetable) return HitResult.Landed; }
         // A tether's holder takes its share of every hit on its ally (never passed on again); a second
         // rope's holder its share of what is left (1.5 M12).
         if (source != DamageSource.Link && TetherHolder(slime) is Slime holder)
@@ -854,6 +856,7 @@ public sealed partial class BattleSim
         }
         events.Add(new(BattleEventKind.SlimeDefeated, slime.X, slime.IsBoss ? 1 : 0));
         LinkFallen(slime, true);
+        PackFallen(slime); // 2026-10-31: its merging pack rages (PetBattle.Links.cs).
         GiveBack(slime); // A thief gives back what it took (1.5 M16).
         AppsEnemyDefeated(slime);
         // A bomb slime defeated while lit fizzles out (2026-10-31: it no longer blows up there, a dud); a

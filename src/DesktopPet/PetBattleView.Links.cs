@@ -52,6 +52,17 @@ public sealed partial class BattleFieldView
                 case EnemyLinks.Rhythm:
                     dc.DrawEllipse(null, RhythmArea, new Point(x, floor - 3), link.Range, 8);
                     break;
+                case EnemyLinks.Merge when link.Pack:
+                    // 2026-10-31: a pack shares its hits: a dotted pink thread to the next of its kind on its right
+                    // (in reach), bright while a shared hit runs through it.
+                    Slime? next = null;
+                    foreach (var o in sim.Slimes)
+                        if (o != slime && o.Type == slime.Type && o.Targetable && o.X > slime.X && o.X - slime.X <= link.PackRange && (next == null || o.X < next.X)) next = o;
+                    if (next == null) break;
+                    var from = new Point(x, Top(slime, floor) + slime.Height * 0.55);
+                    var to = new Point(next.X - OriginX, Top(next, floor) + next.Height * 0.55);
+                    dc.DrawLine(slime.LinkPulse > 0 || next.LinkPulse > 0 ? PackLit : PackThread, from, to);
+                    break;
             }
         }
     }
@@ -87,6 +98,8 @@ public sealed partial class BattleFieldView
     private static readonly Brush FlashCore = Frozen(255, 0xFF, 0xF6, 0xC8);
     private static readonly Brush FlashGlow = Frozen(110, 0xFF, 0xD2, 0x3F);
     private static readonly Brush BadgeBack = Frozen(150, 0x2A, 0x1F, 0x16);
+    private static readonly Pen PackThread = FrozenPen(Frozen(170, 0xF2, 0x9B, 0xC4), 2, new DashStyle(new double[] { 1, 2 }, 0));
+    private static readonly Pen PackLit = FrozenPen(Frozen(255, 0xFF, 0xD2, 0x3F), 3);
 
     private void DrawChain(DrawingContext dc, Slime holder, Slime ally, double floor, double time)
     {

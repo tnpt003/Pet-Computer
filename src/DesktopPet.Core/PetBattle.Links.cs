@@ -181,9 +181,10 @@ public sealed partial class BattleSim
                     StrikeTogether(slime, link, catX, catHeld);
                     break;
                 case EnemyLinks.Merge:
-                    if (slime.State == SlimeState.Stunned || slime.Riding || Huddle(slime, link) < link.Count) { slime.MergeClock = 0; break; }
+                    int need = MergeNeed(slime, link);
+                    if (slime.State == SlimeState.Stunned || slime.Riding || Huddle(slime, link) < need) { slime.MergeClock = 0; break; }
                     slime.MergeClock += dt;
-                    if (slime.MergeClock >= link.MergeSeconds && MergeAround(slime, link)) i = -1; // The list changed: from the start.
+                    if (slime.MergeClock >= link.MergeSeconds && MergeAround(slime, link, need)) i = -1; // The list changed: from the start.
                     break;
             }
         }
@@ -250,15 +251,60 @@ public sealed partial class BattleSim
     }
 
     // The merge: this one and its kind's nearest Count - 1 become one Into enemy, their HP added up.
-    private bool MergeAround(Slime slime, LinkSpec link)
+    // How many must huddle to merge: Count, or (MinCount, 2026-10-31) as many of its kind as are left.
+    private int MergeNeed(Slime slime, LinkSpec link)
+    {
+        if (link.MinCount <= 0 || link.AfterHeal) return link.Count;
+        int left = 0;
+        foreach (var s in slimes) if (s.Type == slime.Type && s.Targetable && s.Link?.Kind == EnemyLinks.Merge) left++;
+        return Math.Clamp(left, link.MinCount, link.Count);
+    }
+
+    public int PackShares { get; private set; }
+    public int PackRages { get; private set; }
+    public int MergeSlams { get; private set; }
+
+    // A pack (2026-10-31): a hit on one of a merging kind is split evenly with its kind within PackRange
+    // (they take theirs as a link's share, never passed on). Returns what this one still takes.
+    private double PackShare(Slime slime, double amount)
+    {
+        if (slime.Link is not { Kind: EnemyLinks.Merge, Pack: true } link || amount <= 0) return amount;
+        var mates = new List<Slime>();
+        foreach (var s in slimes)
+            if (s != slime && s.Type == slime.Type && s.Targetable && !s.Handled && Math.Abs(s.X - slime.X) <= link.PackRange) mates.Add(s);
+        if (mates.Count == 0) return amount;
+        double each = amount / (mates.Count + 1);
+        PackShares++;
+        foreach (var m in mates)
+        {
+            m.LinkPulse = LinkPulseSeconds;
+            Damage(m, each, DamageSource.Link);
+            if (Over) break;
+        }
+        return each;
+    }
+
+    // One of a pack defeated: the rest of its kind rage for the rest of the battle.
+    private void PackFallen(Slime slime)
+    {
+        if (slime.Link is not { Kind: EnemyLinks.Merge } link || link.PackRage <= 1) return;
+        bool any = false;
+        foreach (var s in slimes)
+            if (s != slime && s.Type == slime.Type && s.Targetable && !s.PackRaged) { s.PackRaged = true; any = true; }
+        if (!any) return;
+        PackRages++;
+        events.Add(new(BattleEventKind.PackRaged, slime.X, slime.Id));
+    }
+
+    private bool MergeAround(Slime slime, LinkSpec link, int need)
     {
         var group = linkScratch;
         group.Clear();
         foreach (var s in slimes)
             if (Merging(s, slime, link)) group.Add(s);
-        if (group.Count < link.Count) return false;
+        if (group.Count < need) return false;
         group.Sort((a, b) => Math.Abs(a.X - slime.X).CompareTo(Math.Abs(b.X - slime.X)));
-        group.RemoveRange(link.Count, group.Count - link.Count);
+        group.RemoveRange(need, group.Count - need);
         double x = 0, hp = 0, maxHp = 0;
         foreach (var s in group) { x += s.X; hp += s.Hp; maxHp += s.MaxHp; }
         x /= group.Count;
@@ -272,6 +318,15 @@ public sealed partial class BattleSim
         effects[^1].Tint = slime.Type.Color;
         events.Add(new(BattleEventKind.Merged, x, merged.Id));
         group.Clear();
+        // It lands with a slam (2026-10-31): a cat on the floor in the ring is hurt and dazed a moment.
+        if (link.SlamRadius > 0 && !Over)
+        {
+            MergeSlams++;
+            AddEffect(BattleEffectKind.Slam, x, 0, link.SlamRadius);
+            bool hit = !CatLifted && Grace <= 0 && Math.Abs(lastCatX - x) <= link.SlamRadius;
+            events.Add(new(BattleEventKind.MergeSlam, x, hit ? 1 : 0));
+            if (hit && merged.Damage > 0) HurtCat(merged, lastCatX, true, link.SlamShare, 0.5, crush: true);
+        }
         return true;
     }
 

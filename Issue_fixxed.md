@@ -8,6 +8,14 @@ Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm 
 
 ---
 
+## #38 — Slime hợp thể quá yếu (2026-10-31, commit chưa có)
+- **Triệu chứng (góp ý người dùng):** slime hợp thể dễ bị mèo hạ dù khổng lồ có 3 lớp chắn; muốn buff gắn với việc "3 con".
+- **Nguyên nhân:** mỗi con 26 HP đi riêng lẻ, mèo hạ từng con trước khi chúng kịp chụm đủ 3; thiếu 1 con là cả bầy không bao giờ hợp thể.
+- **Sửa:** khóa mới trong `link` của hợp thể: `pack` (đòn chia đều cho các con cùng loại trong 260 DIPs, sợi chấm hồng nối bầy sáng lên khi chia), `packRage` 1,35 (một con bị hạ, các con còn lại nhanh hơn tới hết trận, lông mày giận), `minCount` 2 (còn ít hơn 3 thì 2 con vẫn hợp thể), `slamRadius` 140 / `slamShare` 0,6 (khổng lồ vừa hợp thể dậm đất, trúng mèo dưới sàn trong vòng + choáng 0,5 s). Gợi ý + âm thanh mới, lời mẹo đổi.
+- **Kiểm chứng:** test mới: đòn 30 vào một con thì cả 3 mất 10; một con bị hạ thì 2 con kia nổi giận; 2 con còn lại hợp thể (máu = tổng 2 con) và dậm đất trúng chỗ mèo. C# đạt cả mô phỏng cân bằng.
+
+---
+
 ## #37 — Vũng nhầy không hại mèo; slime nhanh chỉ được buff khi lao qua; slime phun không ưu tiên buff (2026-10-31, commit c7242cd)
 - **Triệu chứng (góp ý người dùng):** bãi nhầy của slime phun phải gây sát thương và làm chậm khi mèo đứng vào; slime nhanh chỉ cần chạm vũng là được buff cả trận (lao xa ×1,5, nhanh ×1,4) và có hiệu ứng buff; slime phun nên ưu tiên buff slime nhanh rồi mới bắn mèo.
 - **Nguyên nhân:** thiết kế M09: vũng chỉ kéo dài **cú lao đang đi qua nó**; không ảnh hưởng mèo; slime phun luôn ngắm chỗ mèo.

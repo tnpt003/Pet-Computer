@@ -236,6 +236,26 @@ internal static class BattleSwarmTests
         check(merged && big != null && Math.Abs(big.Hp - sum) < 0.01 && sim.Slimes.Count(s => s.Type.Id == "fuser") == 0,
             $"Three fusing slimes together {shipped.MergeSeconds} s become one giant with their HP added up");
         check(big != null && !sim.Grabbable(big) == (big.Type.Scale > sim.Settings.GrabberMaxScale), "The giant is too big for the Grabber");
+
+        // 2026-10-31, the pack: a hit on one is split evenly among the three.
+        sim = Field(new[] { fuser }, new[] { 3 }, extra: new[] { giant });
+        x = 1100;
+        foreach (var s in sim.Slimes) { s.X = x += 100; s.Hp = s.MaxHp = 1000; }
+        var trio = sim.Slimes.ToArray();
+        sim.Damage(trio[0], 30, DamageSource.Weapon);
+        check(shipped.Pack && trio.All(s => Math.Abs(s.Hp - 990) < 0.01) && sim.PackShares == 1, $"A hit on one of the pack is shared by all three ({string.Join("/", trio.Select(s => (1000 - s.Hp).ToString("0")))})");
+        // One falls: the others rage (faster for good) and, two left, two merge into a smaller giant that lands with a slam.
+        trio[0].Hp = 1;
+        sim.Damage(trio[0], 3, DamageSource.Weapon);
+        check(trio[0].State == SlimeState.Defeated && trio[1].PackRaged && trio[2].PackRaged && sim.PackRages == 1,
+            $"One of the pack defeated: the other two rage (×{shipped.PackRage} speed)");
+        trio[1].X = 1300; trio[2].X = 1330;
+        double pair = trio[1].Hp + trio[2].Hp;
+        var slamSim = sim;
+        merged = Run(slamSim, shipped.MergeSeconds + 0.3, 1330, BattleEventKind.MergeSlam, 1);
+        big = slamSim.Slimes.SingleOrDefault(s => s.Type.Id == "giant");
+        check(merged && shipped.MinCount == 2 && big != null && big.Hp <= pair + 0.01 && big.Hp > pair - 60 && Math.Abs(big.MaxHp - 2000) < 0.01 && slamSim.MergeSlams == 1,
+            $"With two of the pack left, two merge (HP {pair:0}) and land with a slam (the cat's blows aside; giant {big?.Hp:0})");
     }
 
     private static (BattleSim Sim, EnemyType Half) Splitting(bool elite = false, int maxAlive = 8, EnemyType[]? more = null, int[]? counts = null)

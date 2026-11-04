@@ -58,6 +58,12 @@ public sealed partial class BattleFieldView
         {
             case "swarm":
                 DrawFeeler(dc, 0, Math.Sin(time * 6 + slime.Id) * 2);
+                if (slime.PackRaged) // 2026-10-31: its pack lost one: angry brows.
+                {
+                    double turn = slime.Facing * 2;
+                    dc.DrawLine(Ink, new Point(-9 + turn, -bhBrow + 6), new Point(-2 + turn, -bhBrow + 9));
+                    dc.DrawLine(Ink, new Point(9 + turn, -bhBrow + 6), new Point(2 + turn, -bhBrow + 9));
+                }
                 break;
             case "giant":
                 for (int i = 0; i < 3; i++)

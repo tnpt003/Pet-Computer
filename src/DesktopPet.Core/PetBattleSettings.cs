@@ -601,6 +601,8 @@ public sealed class Slime
     // 2026-10-31: a dasher that touched a spitter's puddle: boosted for the rest of the battle (its dashes
     // GooDistance × as far, GooSpeed × as fast); a spitter already laid a puddle in its way.
     public bool GooBoosted, LaneAimed;
+    // 2026-10-31: one of its merging pack was defeated: it moves faster for the rest of the battle.
+    public bool PackRaged;
     public double GooDistance = 1, GooSpeed = 1;
     // 1.5 M09 (PetBattle.Spring.cs): the trap's state, the time left in it and the hits towards flattening it.
     public SpringState Spring;
@@ -740,6 +742,9 @@ public enum BattleEventKind
     // itself; a rhythm's beat and its strike together; a merge done (Value: the new enemy's id); a
     // rider hopped off or fell; an enemy panicked (an aura holder fell).
     LinkFormed, LinkCut, LinkSnapped, LinkBeat, LinkStrike, Merged, Dismounted, Panicked,
+    // 2026-10-31: a merging pack raged after one of it fell (Value: the fallen one's id); a merge landed with a
+    // slam (Value 1: on the cat).
+    PackRaged, MergeSlam,
     // The cat in the user's hand hit an enemy in the air; the thrown cat flew into an enemy that
     // reacts to it (Value: the enemy's id).
     HeldHit, ThrowHit,

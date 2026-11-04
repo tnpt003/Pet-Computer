@@ -589,6 +589,17 @@ public sealed class LinkSpec
     // tether, 2026-10-31: while its rope holds the holder takes only Armor × any hit (its share of its ally's
     // hits too); 1: no armor.
     public double Armor { get; init; } = 1;
+    // merge, 2026-10-31. Pack: a hit on one is split evenly between it and its kind within PackRange.
+    // PackRage: one of its kind defeated, the others move PackRage × faster for the rest of the battle (1:
+    // never). MinCount: with fewer than Count of its kind left on the field, as few as MinCount merge (0:
+    // always Count). SlamRadius: the merged enemy lands with a slam; a cat on the floor within it takes
+    // SlamShare × its damage and a short stun (0: no slam).
+    public bool Pack { get; init; }
+    public double PackRange { get; init; } = 260;
+    public double PackRage { get; init; } = 1;
+    public int MinCount { get; init; }
+    public double SlamRadius { get; init; }
+    public double SlamShare { get; init; } = 0.6;
 }
 
 // A formation (1.5 M12, Enemy Director): a named team the Director draws for a wave's "formation"
@@ -1455,6 +1466,9 @@ public static class BattleData
                 {
                     if (link.Count is < 2 or > 6) throw new InvalidDataException(at + ".link.count must be 2–6");
                     Within(link.MergeSeconds, 0.5, 10, at + ".link.mergeSeconds");
+                    Within(link.PackRange, 0, 800, at + ".link.packRange"); Within(link.PackRage, 1, 2, at + ".link.packRage");
+                    Within(link.SlamRadius, 0, 300, at + ".link.slamRadius"); Within(link.SlamShare, 0, 2, at + ".link.slamShare");
+                    if (link.MinCount != 0 && (link.MinCount < 2 || link.MinCount > link.Count)) throw new InvalidDataException(at + ".link.minCount must be 2–count");
                 }
                 if (link.AfterHeal && link.Kind != EnemyLinks.Merge) throw new InvalidDataException(at + ".link.afterHeal is for a merge link");
                 if (link.Kind == EnemyLinks.Aura) Within(link.Speed, 1, 3, at + ".link.speed");

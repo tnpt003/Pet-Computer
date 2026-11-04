@@ -561,6 +561,9 @@ public sealed class Slime
     public double RelinkAt, BeatClock, MergeClock, RideHeight, PanicRemaining;
     public double AuraSpeed = 1;
     public bool Riding => LinkedTo != 0 && Link?.Kind == EnemyLinks.Ride;
+    // 2026-10-31, a ride's throw (PetBattle.Links.cs). The rider: its mount's windup left and where it will
+    // land; thrown, its flight left (of BombFlightTotal), from and to. The mount: how long it stands still.
+    public double ThrowClock, ThrowToX, BombFlight, BombFlightTotal, BombFromX, BombStartHeight, ThrowHold;
     // In the air (its kind's Hover): the bottom of its body this many DIPs over the floor (0: on the floor).
     public double Altitude;
     public bool Airborne => Altitude > 0;
@@ -757,6 +760,9 @@ public enum BattleEventKind
     // 1.5 M11 (Value: the enemy's id): a bomb slime lit its fuse; it blew up (Value 1: on the cat); a
     // splitting slime broke apart.
     FuseLit, Blasted, SlimeSplit,
+    // 2026-10-31 (Value: the rider's id): a mount began a throw (X: where it will land); it threw its rider;
+    // a bomb defeated while lit fizzled out.
+    ThrowAimed, RiderThrown, BombFizzled,
     // 1.5 M12: a formation's first part came (Value: its index in BattleSettings.FormationList).
     FormationArrived,
     // 1.5 M13 (Value: the enemy's id): a ghost faded out, the cursor or the laser brought it out, a hit

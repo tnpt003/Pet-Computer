@@ -105,6 +105,7 @@ public sealed partial class BattleSim
             slime.HealCooldown = Math.Max(0, slime.HealCooldown - act);
             slime.FarHealCooldown = Math.Max(0, slime.FarHealCooldown - act);
             slime.SpitCooldown = Math.Max(0, slime.SpitCooldown - act);
+            slime.ThrowHold = Math.Max(0, slime.ThrowHold - act);
             slime.PanicRemaining = Math.Max(0, slime.PanicRemaining - dt);
             if (slime.Type.Marks == "giant" && slime.GiantShields == 0 && slime.GiantShieldClock > 0)
             {
@@ -131,6 +132,8 @@ public sealed partial class BattleSim
             // 1.5 M18: a brooding boss's clutches, a raining boss's goo rain (PetBattle.Brood.cs, PetBattle.Mutant.cs).
             StepBrood(slime, dt);
             StepRain(slime, dt);
+            // A rider thrown by its mount flies to its spot (PetBattle.Links.cs), nothing else.
+            if (slime.BombFlight > 0) { FlyRider(slime, dt); if (Over) break; continue; }
             // A lit bomb burns on whatever it does (in the Grabber's claw too).
             if (slime.Lit && BurnFuse(slime, dt)) { if (Over) break; continue; }
             if (slime.Handled) continue; // In the Grabber's claw or flying from it (PetBattle.Grabber.cs).
@@ -206,7 +209,8 @@ public sealed partial class BattleSim
                     }
                     // A lit bomb stands still while its fuse burns (PetBattle.Fuse.cs); a boss's file shard never
                     // moves or attacks (1.5 M17).
-                    if (slime.Lit || slime.Type.Still) break;
+                    // A mount that just threw its rider stands still a while (ThrowHold).
+                    if (slime.Lit || slime.Type.Still || slime.ThrowHold > 0) break;
                     // Panicking (its aura holder fell): away from the cat, no attack.
                     if (Panic(slime, dt, catX, minX, maxX)) break;
                     // Chasing the laser's dot (PetBattle.Tools.cs): nothing else.

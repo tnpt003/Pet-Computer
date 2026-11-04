@@ -132,7 +132,36 @@ public sealed partial class BattleSim
                     slime.Facing = mount.Facing;
                     slime.KnockVelocity = 0;
                     slime.RideHeight = mount.Height * 0.8;
-                    if (Math.Abs(mount.X - catX) <= link.DropRange) Fall(slime, 0);
+                    double gap = Math.Abs(mount.X - catX);
+                    // Winding up a throw (2026-10-31): the rider rises over the mount; spoiled, it falls.
+                    if (slime.ThrowClock > 0)
+                    {
+                        if (mount.State != SlimeState.Moving || mount.Handled || mount.Stuck)
+                        {
+                            mount.ThrowHold = 0; mount.Crouch = 0;
+                            Fall(slime, link.BreakStun);
+                            ThrowsSpoiled++;
+                            break;
+                        }
+                        slime.ThrowClock = Math.Max(0, slime.ThrowClock - dt * mount.ChillFactor);
+                        // The ring follows the cat while it winds up and is fixed when it throws.
+                        double half = slime.Width / 2;
+                        if (!catHeld) slime.ThrowToX = Math.Clamp(catX, Left + half, Math.Max(Left + half, Right - half));
+                        mount.Facing = slime.ThrowToX < mount.X ? -1 : 1;
+                        double k = 1 - slime.ThrowClock / link.ThrowWindup;
+                        slime.RideHeight += 16 * k;
+                        mount.Crouch = 0.5 * k;
+                        if (slime.ThrowClock <= 0) ThrowRider(slime, mount, link);
+                        break;
+                    }
+                    // Far enough for a throw (not too close: then it hops off as before).
+                    if (link.ThrowRange > 0 && slime.Type.Fuse != null && gap <= link.ThrowRange && gap > link.DropRange && !catHeld && Grace <= 0
+                        && mount.State == SlimeState.Moving && !mount.Handled && !mount.Stuck && mount.ThrowHold <= 0)
+                    {
+                        StartThrow(slime, mount, link, catX);
+                        break;
+                    }
+                    if (gap <= link.DropRange) Fall(slime, 0);
                     break;
                 case EnemyLinks.Rhythm:
                     // Stunned (a push, a daze): the count starts again.
@@ -256,10 +285,67 @@ public sealed partial class BattleSim
         slime.RelinkAt = Time + (slime.Link?.Relink ?? 0);
     }
 
+    public int RidersThrown { get; private set; }
+    public int ThrowsSpoiled { get; private set; }
+
+    // The mount stops, faces the cat and winds up; the landing spot is the cat's spot now.
+    private void StartThrow(Slime rider, Slime mount, LinkSpec link, double catX)
+    {
+        double half = rider.Width / 2;
+        rider.ThrowClock = link.ThrowWindup;
+        rider.ThrowToX = Math.Clamp(catX, Left + half, Math.Max(Left + half, Right - half));
+        mount.ThrowHold = link.ThrowWindup + link.ThrowRest;
+        mount.Facing = catX < mount.X ? -1 : 1;
+        mount.KnockVelocity = 0;
+        events.Add(new(BattleEventKind.ThrowAimed, rider.ThrowToX, rider.Id));
+    }
+
+    // Off it goes in an arc; the mount straightens up and keeps still a while (ThrowHold).
+    private void ThrowRider(Slime rider, Slime mount, LinkSpec link)
+    {
+        double from = rider.RideHeight;
+        Unlink(rider);
+        mount.Crouch = 0;
+        rider.BombFlight = rider.BombFlightTotal = link.ThrowFlight;
+        rider.BombFromX = rider.X;
+        rider.BombStartHeight = from;
+        rider.LeapHeight = from;
+        RidersThrown++;
+        events.Add(new(BattleEventKind.RiderThrown, rider.X, rider.Id));
+    }
+
+    // Every frame of a thrown rider's flight (from StepSlimes); landing, a bomb blows up there.
+    private void FlyRider(Slime rider, double dt)
+    {
+        var link = rider.Link;
+        rider.BombFlight = Math.Max(0, rider.BombFlight - dt);
+        double k = 1 - rider.BombFlight / rider.BombFlightTotal;
+        rider.X = rider.BombFromX + (rider.ThrowToX - rider.BombFromX) * k;
+        rider.LeapHeight = rider.BombStartHeight * (1 - k) + 4 * (link?.ThrowHeight ?? 60) * k * (1 - k);
+        rider.KnockVelocity = 0;
+        if (rider.BombFlight > 0) return;
+        rider.LeapHeight = 0;
+        rider.X = rider.ThrowToX;
+        if (rider.Type.Fuse != null) Blast(rider, true);
+    }
+
+    // Where a rider being thrown will land (null: none).
+    public static double? ThrowLanding(Slime s) => s.ThrowClock > 0 || s.BombFlight > 0 ? s.ThrowToX : null;
+
+    // How far along a throw is, wind-up and flight together (0–1).
+    public static double ThrowProgress(Slime s)
+    {
+        if (s.Link is not LinkSpec link) return 0;
+        double all = link.ThrowWindup + link.ThrowFlight;
+        double done = s.ThrowClock > 0 ? link.ThrowWindup - s.ThrowClock : link.ThrowWindup + s.BombFlightTotal - s.BombFlight;
+        return all > 0 ? Math.Clamp(done / all, 0, 1) : 1;
+    }
+
     // A rider off its mount: hopping off near the cat (no stun) or falling (dazed `stun` s; a bomb's
     // short fuse lights as it falls, 1.5 M11).
     private void Fall(Slime rider, double stun)
     {
+        rider.ThrowClock = 0;
         Unlink(rider);
         events.Add(new(BattleEventKind.Dismounted, rider.X, rider.Id));
         if (stun > 0 && rider.Type.Fuse is FuseSpec fuse) Light(rider, fuse.DropFuse);

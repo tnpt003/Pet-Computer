@@ -68,6 +68,7 @@ public sealed partial class PetWindow
         // 1.5 M11: the fusing slimes, the bomb slime, the splitting slime.
         [BattleEventKind.Merged] = ("squish", 4), [BattleEventKind.Dismounted] = ("swoosh", 2), [BattleEventKind.FuseLit] = ("clank", 4),
         [BattleEventKind.Blasted] = ("pop", 6), [BattleEventKind.SlimeSplit] = ("squish", 4),
+        [BattleEventKind.ThrowAimed] = ("clank", 4), [BattleEventKind.RiderThrown] = ("swoosh", 4), [BattleEventKind.BombFizzled] = ("pop", 2),
         // 1.5 M12: the flag fell (its team panics), a formation came.
         [BattleEventKind.Panicked] = ("surprised", 5), [BattleEventKind.FormationArrived] = ("sparkle", 4),
         // 1.5 M13: the ghost, the bubble, the mirage and the sulky slime.
@@ -287,6 +288,8 @@ public sealed partial class PetWindow
                 BattleEventKind.Merged when !mergeExplained && EventSlime(e)?.Type.Split == null => L("Slime nhập thành khổng lồ! Lần sau Đẩy hoặc Quạt tách bầy ra", "The slimes merged into a giant! Push or fan the pack apart next time"),
                 BattleEventKind.LinkFormed when !rideExplained && IsRide(e) => L("Slime bom cưỡi slime nhanh! Hạ con ngựa giữa đường", "A bomb rides a quick slime! Take the mount down on the way"),
                 BattleEventKind.FuseLit when !fuseExplained => L("Bom châm ngòi! Nhấc mèo ra khỏi vòng đỏ", "The fuse is lit! Lift the cat out of the red ring"),
+                BattleEventKind.ThrowAimed when trickExplained.Add(e.Kind) => L("Slime nhanh sắp quăng bom! Chạy khỏi vòng đỏ hoặc nhấc mèo, đánh nó để bom rơi", "A quick slime is about to throw its bomb! Run out of the red ring or lift the cat; hit it to make it drop the bomb"),
+                BattleEventKind.BombFizzled when trickExplained.Add(e.Kind) => L("Bom xịt! Hạ bom khi ngòi đang cháy thì nó tắt", "A dud! A lit bomb beaten in time just goes out"),
                 BattleEventKind.SlimeSplit when !splitExplained => L("Slime tách đôi! Đừng để thảo dược hồi cho hai nửa", "It split in two! Don't let a herb slime heal the halves"),
                 // 1.5 M12: the flag slime and its panic, once each per battle; each formation the first time it comes.
                 BattleEventKind.SlimeSpawned when !flagExplained && FlagOnField() => L("Slime cờ hiệu! Quái trong vòng vàng chạy nhanh hơn. Hạ nó trước", "A flag slime! Enemies in the gold ring run faster. Take it down first"),

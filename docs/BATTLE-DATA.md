@@ -627,15 +627,16 @@ Q5, Q6, Q7 của docs/UPDATE-1.5.md, dùng liên kết `merge` và `ride` của 
 
 ```json
 { "id": "fuser", "link": { "kind": "merge", "range": 70, "count": 3, "mergeSeconds": 2, "into": "giant" } }
-{ "id": "bomber", "link": { "kind": "ride", "mount": "runner", "range": 160, "dropRange": 120, "breakStun": 1 },
-  "fuse": { "range": 70, "seconds": 1.5, "radius": 90, "stun": 0.6, "enemyDamage": 20, "dropFuse": 0.8, "eliteSeconds": 1.1, "eliteRadius": 1.3 } }
+{ "id": "bomber", "link": { "kind": "ride", "mount": "runner", "range": 160, "dropRange": 120, "breakStun": 1,
+  "throwRange": 210, "throwWindup": 0.5, "throwFlight": 0.55, "throwHeight": 70, "throwRest": 2 },
+  "fuse": { "range": 70, "seconds": 1.1, "radius": 90, "stun": 0.6, "enemyDamage": 20, "dropFuse": 0.8, "eliteSeconds": 0.8, "eliteRadius": 1.3 } }
 { "id": "splitter", "split": { "into": "splitling", "count": 2, "eliteCount": 3, "health": 0.6 } }
 { "id": "splitling", "link": { "kind": "merge", "range": 120, "count": 2, "mergeSeconds": 1.5, "into": "splitter", "afterHeal": true } }
 ```
 
 - **Slime hợp thể** (`fuser`, 26 HP, nhỏ 0,7, hồng, một râu trên đầu; ra theo bầy 3 con bằng `squad`): 3 con đứng trong 70 DIPs của nhau liên tục 2 s (thanh tím đếm ngược) thì thành **Slime khổng lồ** (`giant`: to 1,6, chậm 22, đánh 20, ba râu và lông mày nặng), máu bằng tổng máu hiện tại, máu tối đa bằng tổng. Đẩy, choáng hay Kẹp gắp làm đồng hồ con đó về 0; Quạt thổi tách bầy; Bom len khi đang chụm. Khổng lồ quá to cho Kẹp gắp (`scale` > 1,3). Tinh anh hợp thể: máu ×1,3.
-- **Slime bom** (`bomber`, 30 HP, xám xanh, nắp thép và ngòi trên đầu): cưỡi slime nhanh (`runner`) ở xa mèo, cách mèo 120 thì nhảy xuống. Cách mèo dưới sàn ≤ `fuse.range` thì dừng, châm ngòi `seconds` (tia lửa chạy dọc ngòi, vòng nổ trên sàn đỏ dần), rồi nổ: mèo dưới sàn trong `radius` mất `damage` của nó (22, nhân độ khó/threat như đòn thường) và choáng `stun` s; mọi slime khác trong vòng (không tính slime trên không) mất `enemyDamage` (không bị đá chặn, tính là mèo hạ). Bom tự nổ thì biến mất, **không tính là mèo hạ**. Không đánh gần, không vào nhịp trống.
-  - Hạ bom trước khi châm: xì, không nổ (tính là mèo hạ). Hạ bom khi ngòi đang cháy: nổ tại chỗ.
+- **Slime bom** (`bomber`, 45 HP từ 2026-10-31 (trước 30), xám xanh, nắp thép và ngòi trên đầu): cưỡi slime nhanh (`runner`) ở xa mèo, cách mèo 120 thì nhảy xuống. **Quăng bom** (2026-10-31, `link.throwRange` 210 …): mèo dưới sàn cách con ngựa trong khoảng 120–210 thì con ngựa đứng lại, gồng `throwWindup` s (cúi người, bom nhấc cao lên; vòng đỏ bám theo mèo, khóa lại lúc quăng), quăng bom theo đường cong `throwFlight` s cao `throwHeight`, bom chạm đất là nổ như ngòi cháy hết; con ngựa đứng yên `throwRest` s rồi chạy tiếp. Đánh, Đẩy, choáng hay Kẹp gắp con ngựa lúc gồng thì bom rơi xuống, châm ngòi ngắn `dropFuse`. **Bom xịt** (2026-10-31): bom bị hạ khi đang cháy ngòi thì tắt, không nổ (trước đây nổ tại chỗ). Bù cân bằng: máu 30 → 45, sát thương 22 → 24, ngòi 1,5 → 1,1 s (tinh anh 1,1 → 0,8 s); chương 2 màn 3 kiếm 90% HP, màn 5 búa 80% (sát ngưỡng). Cách mèo dưới sàn ≤ `fuse.range` thì dừng, châm ngòi `seconds` (tia lửa chạy dọc ngòi, vòng nổ trên sàn đỏ dần), rồi nổ: mèo dưới sàn trong `radius` mất `damage` của nó (24, nhân độ khó/threat như đòn thường) và choáng `stun` s; mọi slime khác trong vòng (không tính slime trên không) mất `enemyDamage` (không bị đá chặn, tính là mèo hạ). Bom tự nổ thì biến mất, **không tính là mèo hạ**. Không đánh gần, không vào nhịp trống.
+  - Hạ bom trước khi châm: xì, không nổ (tính là mèo hạ). Hạ bom khi ngòi đang cháy: tắt, không nổ (bom xịt, từ 2026-10-31; trước đây nổ tại chỗ).
   - Hạ con ngựa giữa đường (hoặc cắt dây cưỡi): bom rơi, choáng `breakStun` s, châm ngòi ngắn `dropFuse` s và nổ tại chỗ rơi.
   - Đẩy bom đang cháy ngòi: bom văng đi, nổ ở chỗ dừng. Kẹp gắp ném bom (đủ nhanh): nổ ở chỗ trúng slime khác/mép hoặc chỗ đáp.
   - Mèo đang được cầm, đang trong `landingGrace`: không bị nổ trúng; Khiên bong bóng, Mai rùa chặn như đòn khác. Không châm ngòi khi người dùng đang cầm mèo hay trong `landingGrace`.

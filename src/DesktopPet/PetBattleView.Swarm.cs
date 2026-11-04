@@ -30,8 +30,19 @@ public sealed partial class BattleFieldView
     // not lit, filling red as the fuse burns.
     private void DrawBlastRing(DrawingContext dc, Slime slime, double x, double floor)
     {
-        if (slime.Type.Fuse == null || !slime.Targetable || slime.Riding) return;
+        if (slime.Type.Fuse == null || !slime.Targetable) return;
         double r = BattleSim.FuseRadius(slime);
+        // Being thrown by its mount (2026-10-31): the ring waits where it will land, filling red.
+        if (BattleSim.ThrowLanding(slime) is double land)
+        {
+            var spot = new Point(land - OriginX, floor - 3);
+            double f = BattleSim.ThrowProgress(slime);
+            dc.DrawEllipse(null, Halo, spot, r, 8);
+            dc.DrawEllipse(null, WarningFill, spot, Math.Max(1, r * f), Math.Max(1, 8 * f));
+            dc.DrawEllipse(null, WarningEdge, spot, r, 8);
+            return;
+        }
+        if (slime.Riding) return;
         var at = new Point(x, floor - 3);
         dc.DrawEllipse(null, Halo, at, r, 8);
         if (!slime.Lit) { dc.DrawEllipse(null, BlastIdle, at, r, 8); return; }

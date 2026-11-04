@@ -853,8 +853,9 @@ public sealed partial class BattleSim
         LinkFallen(slime, true);
         GiveBack(slime); // A thief gives back what it took (1.5 M16).
         AppsEnemyDefeated(slime);
-        // A bomb slime defeated while lit blows up there; a splitting one breaks apart (1.5 M11).
-        if (slime.Lit) Blast(slime, false);
+        // A bomb slime defeated while lit fizzles out (2026-10-31: it no longer blows up there, a dud); a
+        // splitting one breaks apart (1.5 M11).
+        if (slime.Lit) Fizzle(slime);
         SplitApart(slime);
         DropLoot(slime); // 1.5 M19: a fish, a coin or a potion, sometimes.
         DefeatRecharge(); // 1.5 M25: Quick reload.

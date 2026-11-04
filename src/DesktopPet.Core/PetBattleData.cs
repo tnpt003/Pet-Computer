@@ -569,6 +569,16 @@ public sealed class LinkSpec
     public bool AfterHeal { get; init; }
     public double Speed { get; init; } = 1.3;
     public double EliteSpeed { get; init; }
+    // ride, 2026-10-31: with the cat on the floor within ThrowRange (0: never; it hops off at DropRange as
+    // before) the mount stops and winds up ThrowWindup s (a red ring follows the cat, fixed at the throw), throws its
+    // rider there in an arc (ThrowFlight s, ThrowHeight high) and stands still ThrowRest s. A thrown bomb
+    // blows up where it lands. The mount pushed, dazed, grabbed or defeated while it winds up: the rider
+    // falls (BreakStun; a bomb lights its short fuse).
+    public double ThrowRange { get; init; }
+    public double ThrowWindup { get; init; } = 0.5;
+    public double ThrowFlight { get; init; } = 0.7;
+    public double ThrowHeight { get; init; } = 70;
+    public double ThrowRest { get; init; } = 2;
 }
 
 // A formation (1.5 M12, Enemy Director): a named team the Director draws for a wave's "formation"
@@ -1423,7 +1433,12 @@ public static class BattleData
                     if (link.Beats is < 2 or > 8) throw new InvalidDataException(at + ".link.beats must be 2–8");
                     if (link.EliteBeats is not 0 and (< 2 or > 8)) throw new InvalidDataException(at + ".link.eliteBeats must be 2–8");
                 }
-                if (link.Kind == EnemyLinks.Ride) Within(link.DropRange, 20, 400, at + ".link.dropRange");
+                if (link.Kind == EnemyLinks.Ride)
+                {
+                    Within(link.DropRange, 20, 400, at + ".link.dropRange"); Within(link.ThrowRange, 0, 500, at + ".link.throwRange");
+                    Within(link.ThrowWindup, 0.1, 3, at + ".link.throwWindup"); Within(link.ThrowFlight, 0.2, 3, at + ".link.throwFlight");
+                    Within(link.ThrowHeight, 0, 150, at + ".link.throwHeight"); Within(link.ThrowRest, 0, 10, at + ".link.throwRest");
+                }
                 if (link.Kind == EnemyLinks.Merge)
                 {
                     if (link.Count is < 2 or > 6) throw new InvalidDataException(at + ".link.count must be 2–6");

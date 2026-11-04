@@ -134,7 +134,7 @@ internal static class BattleSwarmTests
         Run(sim, dt, 100);
         otherHp = other.Hp;
         Defeat(sim, bomb);
-        check(sim.Blasts == 1 && other.Hp < otherHp, "Defeated while lit, it blows up on the spot");
+        check(sim.Blasts == 0 && sim.Fizzles == 1 && other.Hp == otherHp && !bomb.Exploded, "Defeated while lit, it fizzles out: a dud, nothing hurt (2026-10-31)");
 
         sim = Field(new[] { Bomb() }, new[] { 1 }, elite: true);
         bomb = sim.Slimes[0];
@@ -174,6 +174,48 @@ internal static class BattleSwarmTests
         double where = bomb.X, hp = sim.CatHp;
         bool blasted = Run(sim, fuse.DropFuse + 0.1, 100, BattleEventKind.Blasted, 0);
         check(blasted && bomb.Exploded && Math.Abs(bomb.X - where) < 1 && sim.CatHp == hp, "and blows up where it fell, far from the cat");
+
+        // 2026-10-31: within its throw range the mount stops, winds up and throws the bomb at the cat's spot.
+        var ride = BattleData.Settings.Enemy("bomber").Link!;
+        (BattleSim, Slime, Slime) Mounted()
+        {
+            var field = Field(new[] { Bomb(), mount }, new[] { 1, 1 });
+            var b = field.Slimes.Single(s => s.Type.Id == "bomber");
+            var h = field.Slimes.Single(s => s.Type.Id == "runner");
+            b.X = 1000; h.X = 1040;
+            Run(field, 0.5, 1600 - 100, BattleEventKind.LinkFormed);
+            b.Hp = b.MaxHp = 1e6;
+            h.X = 100 + (ride.DropRange + ride.ThrowRange) / 2;
+            return (field, b, h);
+        }
+        (sim, bomb, horse) = Mounted();
+        hp = sim.CatHp;
+        bool aimed = Run(sim, 0.1, 100, BattleEventKind.ThrowAimed);
+        check(bomb.Riding && aimed && BattleSim.ThrowLanding(bomb) is double spot && Math.Abs(spot - 100) < 1 && horse.ThrowHold > 0,
+            $"Between {ride.DropRange:0} and {ride.ThrowRange:0} DIPs of the cat the mount stops and winds up a throw at the cat's spot");
+        bool thrown = Run(sim, ride.ThrowWindup + 0.05, 100, BattleEventKind.RiderThrown);
+        bool high = false;
+        blasted = Run(sim, ride.ThrowFlight + 0.1, 100, BattleEventKind.Blasted, 1, each: () => high |= bomb.LeapHeight > 30);
+        check(thrown && high && blasted && bomb.Exploded && Math.Abs(bomb.X - 100) < 1 && sim.CatHp < hp && sim.RidersThrown == 1,
+            "It throws the bomb in an arc; it blows up where it lands, on the cat");
+        double still = horse.X;
+        Run(sim, 0.4, 100);
+        check(horse.ThrowHold > 0 && horse.X == still && sim.Slimes.Count(s => s.Targetable) == 1, $"Then the mount keeps still a while ({ride.ThrowRest:0} s after the throw)");
+        // The ring follows the cat while the mount winds up; once thrown, a cat that gets out of it is missed.
+        (sim, bomb, horse) = Mounted();
+        Run(sim, 0.1, 100);
+        Run(sim, ride.ThrowWindup - 0.2, 60);
+        check(BattleSim.ThrowLanding(bomb) is double follow && Math.Abs(follow - 60) < 1, "While it winds up the ring follows the cat");
+        hp = sim.CatHp;
+        Run(sim, 0.25, 60);
+        blasted = Run(sim, ride.ThrowFlight + 0.2, 60 + fuse.Radius + 60, BattleEventKind.Blasted, 0);
+        check(blasted && sim.CatHp == hp && Math.Abs(bomb.X - 60) < 1, "Thrown, it lands where the ring was fixed: a cat that got out of it is missed");
+        // Pushed while it winds up: the bomb falls with its short fuse.
+        (sim, bomb, horse) = Mounted();
+        Run(sim, 0.1, 100);
+        bool pushed = sim.UsePush(horse.Id, 100);
+        Run(sim, dt * 2, 100);
+        check(pushed && !bomb.Riding && bomb.Lit && sim.ThrowsSpoiled == 1 && bomb.BombFlight == 0, "Pushing the mount while it winds up drops the bomb (short fuse)");
     }
 
     private static void MergeChecks(Action<bool, string> check)

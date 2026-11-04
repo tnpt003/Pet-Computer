@@ -8,6 +8,14 @@ Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm 
 
 ---
 
+## #35 — Slime nhanh không quăng bom; hạ slime bom thì nó nổ luôn (OP) (2026-10-31, commit chưa có)
+- **Triệu chứng (góp ý người dùng):** muốn slime nhanh cõng bom tới gần thì quăng bom vào mèo (có animation, đứng yên ~2 s sau khi quăng, bom chạm đất là nổ); hạ slime bom đang cháy ngòi thì nó nổ ngay, quá mạnh.
+- **Nguyên nhân:** thiết kế M11: bom chỉ nhảy xuống cách mèo 120 rồi tự đi tới châm ngòi; `Defeat` gọi `Blast` cho bom đang cháy ngòi.
+- **Sửa:** khóa mới `link.throwRange` 210 (+ `throwWindup` 0,5, `throwFlight` 0,55, `throwHeight` 70, `throwRest` 2): mèo dưới sàn cách con ngựa 120–210 thì nó đứng lại, cúi người gồng (bom nhấc cao), vòng đỏ **bám theo mèo trong lúc gồng, khóa khi quăng** (lần đầu khóa ngay lúc bắt đầu gồng thì mèo tự đi luôn ra khỏi vòng, hầu như không trúng), bom bay vòng cung, chạm đất là nổ; ngựa đứng yên 2 s. Đánh/Đẩy/choáng/Kẹp gắp ngựa lúc gồng: bom rơi, châm ngòi ngắn. Bom bị hạ khi đang cháy ngòi: **bom xịt** (phương án (a), không nổ). Gợi ý + âm thanh mới. Bù cân bằng: máu bom 30 → 45, sát thương 22 → 24, ngòi 1,5 → 1,1 s (tinh anh 0,8 s).
+- **Kiểm chứng:** test mới: quăng trong khoảng 120–210, vòng theo mèo khi gồng, nổ đúng chỗ khóa và trúng mèo, ngựa đứng yên; mèo ra khỏi vòng sau khi bom bay thì trượt; Đẩy ngựa lúc gồng thì bom rơi; hạ bom đang cháy thì xịt, không ai mất máu. Cân bằng: chỉ đổi luật thì chương 2 màn 3 kiếm 92%/búa 91% HP (quá dễ, ngưỡng ≤ 90%); thử sát thương 26/30, thêm slime nhanh vào đợt cố định, ngân sách 10 đều không đạt hoặc làm màn 5 tụt; chốt bộ trên: màn 3 kiếm 90%, búa 88%; màn 5 búa 80% (sát ngưỡng).
+
+---
+
 ## #34 — Slime lò xo chỉ làm choáng, không đẩy lùi; vô dụng trước cuộn len (2026-10-31, commit 96ee6be)
 - **Triệu chứng (góp ý người dùng):** lò xo bật trúng chỉ làm choáng, không hất mèo như lò xo; mèo cầm cuộn len (tầm 114) đứng ngoài vòng 100 đánh nó mà không bao giờ bị bật.
 - **Nguyên nhân:** thiết kế M09 "không đổi physics mèo": chỉ mất máu + choáng; lò xo chỉ trượt chậm tới cách mèo 120 rồi nằm im, không có cách với tới mèo đứng ngoài vòng.

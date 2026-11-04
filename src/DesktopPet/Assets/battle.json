@@ -419,17 +419,21 @@
       // the cat. fuse: within fuse.range of a cat on the floor it stops and lights its fuse; `seconds`
       // later it blows up: a cat on the floor in `radius` takes its damage and a stun of `stun` s, every
       // other enemy there loses enemyDamage; it is gone (not the cat's kill). Defeated before it is lit
-      // it fizzles, defeated while lit it blows up there; its mount defeated (or the ride cut) it falls
-      // and lights a dropFuse s fuse; thrown by the Grabber it blows up where it hits or lands.
+      // it fizzles, defeated while lit it fizzles too (2026-10-31: a dud); its mount defeated (or the ride
+      // cut) it falls and lights a dropFuse s fuse; thrown by the Grabber it blows up where it hits or lands.
+      // 2026-10-31: between dropRange and throwRange of a cat on the floor the mount stops, winds up
+      // throwWindup s (a red ring follows the cat, fixed when it throws), throws it (throwFlight s) and stands still throwRest s;
+      // it blows up where it lands. Hitting, pushing or grabbing the mount while it winds up drops it.
       // Elite: eliteSeconds of fuse, eliteRadius × the blast.
       "id": "bomber", "nameVi": "Slime bom", "nameEn": "Bomb slime",
-      "tipVi": "Cưỡi slime nhanh lao tới, gần mèo thì châm ngòi rồi nổ. Hạ con ngựa giữa đường, hoặc nhấc mèo khỏi vòng nổ.", "tipEn": "Rides a quick slime in, lights its fuse near the cat and blows up. Down the mount on the way, or lift the cat out of the blast.", "counters": ["push", "grabber"],
-      "maxHp": 30, "speed": 36, "damage": 22, "range": 50,
+      "tipVi": "Cưỡi slime nhanh; con này quăng nó vào chỗ mèo, chạm đất là nổ. Chạy khỏi vòng đỏ hoặc nhấc mèo; đánh con ngựa lúc nó gồng thì bom rơi.", "tipEn": "Rides a quick slime that throws it at the cat; it blows up where it lands. Run out of the red ring or lift the cat; hit the mount as it winds up to drop the bomb.", "counters": ["push", "grabber"],
+      "maxHp": 45, "speed": 36, "damage": 24, "range": 50,
       "windup": 0.8, "attackCooldown": 2.0, "recover": 0.4,
       "scale": 0.85, "color": "#6E7B9C", "marks": "bomb", "cost": 2, "binSpit": false,
-      "link": { "kind": "ride", "mount": "runner", "range": 160, "dropRange": 120, "breakStun": 1 },
-      "fuse": { "range": 70, "seconds": 1.5, "radius": 90, "stun": 0.6, "enemyDamage": 20, "dropFuse": 0.8,
-        "eliteSeconds": 1.1, "eliteRadius": 1.3 },
+      "link": { "kind": "ride", "mount": "runner", "range": 160, "dropRange": 120, "breakStun": 1,
+        "throwRange": 210, "throwWindup": 0.5, "throwFlight": 0.55, "throwHeight": 70, "throwRest": 2 },
+      "fuse": { "range": 70, "seconds": 1.1, "radius": 90, "stun": 0.6, "enemyDamage": 20, "dropFuse": 0.8,
+        "eliteSeconds": 0.8, "eliteRadius": 1.3 },
       "elite": { "hp": 1.2, "cost": 1, "descVi": "ngòi ngắn hơn, nổ rộng hơn", "descEn": "shorter fuse, wider blast" }
     },
     {

@@ -2,12 +2,13 @@ using System;
 
 namespace DesktopPet;
 
-// 1.5 M11, Q6 the bomb slime (EnemyType.Fuse): it rides a quick slime up (a "ride" link) and hops off
+// 1.5 M11, Q6 the bomb slime (EnemyType.Fuse): it rides a quick slime up (a "ride" link; 2026-10-31: the
+// quick slime throws it at the cat from link.throwRange, PetBattle.Links.cs, and it blows up where it lands) and hops off
 // near the cat, walks up and lights its fuse next to a cat on the floor; it stands still while the fuse
 // burns, a red ring showing the blast all along. The blast hurts and stuns a cat on the floor in the ring
 // (the Shield, the Turtle shell, landing protection and a lifted cat dodge it like any hit) and every
 // other enemy in it (never one in the air); the bomb is gone then, not the cat's kill. Defeated before it
-// is lit it fizzles; defeated while lit it blows up on the spot; knocked off its mount it lights a short
+// is lit it fizzles; defeated while lit it fizzles too (2026-10-31, a dud: no blast); knocked off its mount it lights a short
 // fuse where it falls; thrown by the Grabber it blows up where it hits or lands. A push moves a lit bomb
 // (it blows up where it ends up). Pause freezes the fuse (time runs only in Step).
 public sealed partial class BattleSim
@@ -33,6 +34,18 @@ public sealed partial class BattleSim
         if (Math.Abs(catX - slime.X) > 1) slime.Facing = catX < slime.X ? -1 : 1;
         Light(slime, slime.Elite != null ? fuse.EliteSeconds : fuse.Seconds);
         return true;
+    }
+
+    public int Fizzles { get; private set; }
+
+    // Defeated while lit (2026-10-31): a dud. The fuse goes out in a puff, nothing is hurt.
+    private void Fizzle(Slime bomb)
+    {
+        bomb.FuseLeft = 0;
+        Fizzles++;
+        AddEffect(BattleEffectKind.Poof, bomb.X, bomb.Height / 2, 1);
+        effects[^1].Tint = "#8A8F99";
+        events.Add(new(BattleEventKind.BombFizzled, bomb.X, bomb.Id));
     }
 
     // Every frame while lit, whatever it is doing. True: it blew up.

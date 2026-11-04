@@ -116,9 +116,11 @@ internal static class BattleDropTests
         var potion = Field(BattleLoot.Items, Only("potion"));
         check(potion.Use(BattleSkill.Shield, 100) && potion.Use(BattleSkill.Cheer, 100), "Two skills used (cooling down)");
         Until(potion, BattleEventKind.DropAppeared);
-        double cheer = potion.Cooldown(BattleSkill.Cheer);
-        check(potion.PickUp(potion.Drops[0].Id) && potion.Cooldown(BattleSkill.Shield) == 0 && Math.Abs(potion.Cooldown(BattleSkill.Cheer) - cheer) < 1e-9,
-            "A potion: the carried skill with the longest cooldown left is ready at once (the other keeps its time)");
+        double cheer = potion.Cooldown(BattleSkill.Cheer), shield = potion.Cooldown(BattleSkill.Shield);
+        double longest = Math.Max(cheer, shield), other = Math.Min(cheer, shield);
+        BattleSkill longSkill = shield >= cheer ? BattleSkill.Shield : BattleSkill.Cheer, otherSkill = longSkill == BattleSkill.Shield ? BattleSkill.Cheer : BattleSkill.Shield;
+        check(potion.PickUp(potion.Drops[0].Id) && Math.Abs(potion.Cooldown(longSkill) - Math.Max(0, longest - 2)) < 1e-9 && Math.Abs(potion.Cooldown(otherSkill) - other) < 1e-9,
+            "A potion (2026-11-04): 2 s off the carried skill with the longest cooldown left (the other keeps its time)");
         var idle = Field(BattleLoot.Items, Only("potion"));
         Until(idle, BattleEventKind.DropAppeared);
         check(idle.PickUp(idle.Drops[0].Id) && Tools.All(s => idle.Cooldown(s) == 0), "A potion with nothing cooling down: picked up, nothing else changes");

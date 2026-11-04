@@ -338,6 +338,11 @@ public sealed class MirageSpec
     public int EliteCopies { get; init; } = 3;
     public double Reveal { get; init; } = 2;
     public double LaserRange { get; init; } = 160;
+    // 2026-11-04: every Shuffle s (EliteShuffle for an elite) a roll: with SwapChance the real one trades
+    // places with one of its copies (smoke over both), otherwise only smoke over the whole group.
+    public double Shuffle { get; init; } = 3;
+    public double EliteShuffle { get; init; } = 2.5;
+    public double SwapChance { get; init; } = 0.6;
 }
 
 // S4 (1.5 M13): hits take no HP; each puffs it up by Grow (up to MaxGrow ×; its own hits grow with it).
@@ -352,6 +357,14 @@ public sealed class SulkSpec
     public double Fade { get; init; } = 0.15;
     public double Grow { get; init; } = 0.1;
     public double MaxGrow { get; init; } = 1.6;
+    // 2026-11-04: a direct hit of the cat's takes HitCalm off its calm; Tantrum more direct hits once fully
+    // puffed (EliteTantrum for an elite) and it bursts into tears, stamps (the cat takes its hit) and runs
+    // off; soothed, it cheers up the other sulky ones within Spread by SpreadCalm (an elite gets half).
+    public double HitCalm { get; init; } = 0.15;
+    public int Tantrum { get; init; } = 3;
+    public int EliteTantrum { get; init; } = 5;
+    public double Spread { get; init; } = 200;
+    public double SpreadCalm { get; init; } = 0.3;
 }
 
 // S5 (1.5 M14): it flies from spot to spot over the battle's screen (FlySpeed DIPs/s, a new spot every
@@ -1315,6 +1328,9 @@ public static class BattleData
             Within(apps.BatteryWeight, 0, 100, "apps.batteryWeight"); Within(apps.BatteryRate, 0.1, 1, "apps.batteryRate");
             Within(apps.CursorWeight, 0, 100, "apps.cursorWeight"); Within(apps.CursorSeconds, 1, 30, "apps.cursorSeconds");
             if (!s.EnemyTypes.Any(e => e?.Id == apps.PopupSpawn)) throw new InvalidDataException($"apps.popupSpawn \"{apps.PopupSpawn}\" is not an enemy id");
+            foreach (var kind in apps.PopupKinds ?? Array.Empty<string>())
+                if (s.EnemyTypes.FirstOrDefault(e => e?.Id == kind) is not EnemyType popped || popped.Boss || popped.Link != null || popped.Mirage != null || popped.Clock != null || popped.Split != null)
+                    throw new InvalidDataException($"apps.popupKinds \"{kind}\" must be an enemy that comes alone (no boss, link, mirage, clock or split)");
             if (apps.List != null)
             {
                 var kinds = Enum.GetNames<BattleAppKind>();
@@ -1349,6 +1365,7 @@ public static class BattleData
         Within(s.GrabberStun, 0, 5, "grabberStun"); Within(s.GrabberThrowSpeed, 50, 1500, "grabberThrowSpeed");
         Within(s.ScissorsCooldown, 1, 120, "scissorsCooldown"); Within(s.ScissorsDamage, 0, 100, "scissorsDamage"); Within(s.ScissorsMinLength, 10, 400, "scissorsMinLength");
         Within(s.SprayTankSeconds, 0.5, 30, "sprayTankSeconds"); Within(s.SprayRefillSeconds, 1, 120, "sprayRefillSeconds");
+        Within(s.SprayKillSeconds, 0, 30, "sprayKillSeconds"); Within(s.SprayTankMax, 1, 3, "sprayTankMax"); Within(s.SprayMeltSeconds, 0.2, 60, "sprayMeltSeconds");
         Within(s.SprayRange, 10, 500, "sprayRange"); Within(s.SprayDps, 0, 100, "sprayDps");
         Within(s.SprayChill, 0.05, 0.9, "sprayChill"); Within(s.SpraySoakSeconds, 0.5, 10, "spraySoakSeconds");
         Within(s.RageSeconds, 1, 30, "rageSeconds"); Within(s.RageHitGain, 0, 1, "rageHitGain"); Within(s.RageHurtGain, 0, 1, "rageHurtGain");
@@ -1635,6 +1652,7 @@ public static class BattleData
                 if (e.Support || e.HealAmount > 0) throw new InvalidDataException(at + ".mirage is not for a support or healing enemy");
                 if (mirage.Copies is < 1 or > 4 || mirage.EliteCopies is < 1 or > 4) throw new InvalidDataException(at + ".mirage.copies/eliteCopies must be 1–4");
                 Within(mirage.Reveal, 0.5, 10, at + ".mirage.reveal"); Within(mirage.LaserRange, 0, 600, at + ".mirage.laserRange");
+                Within(mirage.Shuffle, 0, 60, at + ".mirage.shuffle"); Within(mirage.EliteShuffle, 0, 60, at + ".mirage.eliteShuffle"); Within(mirage.SwapChance, 0, 1, at + ".mirage.swapChance");
             }
             if (e.Sulk is SulkSpec sulk)
             {
@@ -1642,6 +1660,8 @@ public static class BattleData
                 Within(sulk.Calm, 50, 10000, at + ".sulk.calm"); Within(sulk.EliteCalm, 50, 10000, at + ".sulk.eliteCalm");
                 Within(sulk.Idle, 0, 10, at + ".sulk.idle"); Within(sulk.Fade, 0, 2, at + ".sulk.fade");
                 Within(sulk.Grow, 0, 1, at + ".sulk.grow"); Within(sulk.MaxGrow, 1, 2.5, at + ".sulk.maxGrow");
+                Within(sulk.HitCalm, 0, 1, at + ".sulk.hitCalm"); Within(sulk.Spread, 0, 2000, at + ".sulk.spread"); Within(sulk.SpreadCalm, 0, 1, at + ".sulk.spreadCalm");
+                if (sulk.Tantrum is < 1 or > 20 || sulk.EliteTantrum is < 1 or > 20) throw new InvalidDataException(at + ".sulk.tantrum/eliteTantrum must be 1–20");
             }
             if (e.Phases is { } phases)
             {
@@ -2141,9 +2161,9 @@ public static class BattleSkills
         new() { Id = "fan", NameVi = "Quạt", NameEn = "Fan",
             DescVi = "Quạt — chọn rồi giữ chuột: thổi slime ra xa con trỏ, va nhau hoặc va mép mất {fanBumpDamage} máu. Hơi đủ {fanSteamSeconds} giây; cạn thì chờ {fanRefillSeconds} giây.",
             DescEn = "Fan — choose, then hold the mouse: blows slimes away from the cursor; one blown into another or the edge loses {fanBumpDamage} HP. {fanSteamSeconds} s of air; empty, it refills in {fanRefillSeconds} s." },
-        new() { Id = "spray", NameVi = "Bình xịt nước", NameEn = "Water spray",
-            DescVi = "Bình xịt nước — chọn rồi giữ chuột: slime bị xịt ướt sũng, chậm lại, co nhỏ và mất {sprayDps} máu/giây. Nước đủ {sprayTankSeconds} giây; cạn thì chờ {sprayRefillSeconds} giây.",
-            DescEn = "Water spray — choose, then hold the mouse: soaked slimes slow down, shrink and lose {sprayDps} HP/s. {sprayTankSeconds} s of water; empty, it refills in {sprayRefillSeconds} s." },
+        new() { Id = "spray", NameVi = "Bình xịt nước nóng", NameEn = "Hot water spray",
+            DescVi = "Bình xịt nước nóng — chọn rồi click một slime: tự xịt nó tới hết nước, −{sprayDps} máu/giây, làm chậm; {sprayMeltSeconds} giây tan băng; slime ngã khi bị xịt: +{sprayKillSeconds} giây nước. Hồi {sprayRefillSeconds} giây.",
+            DescEn = "Hot water spray — choose, then click a slime: sprays it until empty, {sprayDps} HP/s, slowed; {sprayMeltSeconds} s melts ice; a slime falling to it adds {sprayKillSeconds} s of water. {sprayRefillSeconds} s cooldown." },
     };
 
     // {key}: any top-level number of battle.json (case ignored).

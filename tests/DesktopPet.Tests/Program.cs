@@ -60,7 +60,9 @@ Console.WriteLine($"Physics checks done ({checks} passed so far).");
 // Every class with a public static Run(Action<bool, string> check, optional...) is a test
 // suite. Found by reflection (by name) so a new suite cannot be left out of this list.
 int suites = 0;
-foreach (var run in typeof(Program).Assembly.GetTypes().OrderBy(type => type.Name, StringComparer.Ordinal)
+// PET_TEST_SUITES=BattleTrickTests,BattleWallTests: only those suites (a quick check while editing).
+var only = (Environment.GetEnvironmentVariable("PET_TEST_SUITES") ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+foreach (var run in typeof(Program).Assembly.GetTypes().Where(type => only.Length == 0 || only.Contains(type.Name)).OrderBy(type => type.Name, StringComparer.Ordinal)
     .SelectMany(type => type.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly))
     .Where(method => method.Name == "Run" && method.GetParameters() is { Length: > 0 } parameters
         && parameters[0].ParameterType == typeof(Action<bool, string>) && parameters.Skip(1).All(p => p.IsOptional)))

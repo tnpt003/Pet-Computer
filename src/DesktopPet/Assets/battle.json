@@ -44,7 +44,7 @@
     },
     {
       "id": "glove", "nameVi": "Găng đấm", "nameEn": "Glove", "style": "glove", "hitEffect": "spark",
-      "hintVi": "rất nhanh, combo 5 nhát, nhát cuối hất tung slime", "hintEn": "very fast, 5-hit combo, the last hit launches the slime",
+      "hintVi": "rất nhanh, combo ở nhát 3 và nhát 5; nhát 5 hất tung slime, phá vỏ băng", "hintEn": "very fast, combos on hit 3 and hit 5; hit 5 launches the slime and cracks ice",
       "damage": 14, "range": 70, "attackCooldown": 0.38, "swingDuration": 0.22, "hitTime": 0.09, "knock": 0, "stunChance": 0,
       "comboHits": 5, "launch": 560, "launchStun": 0.8
     }
@@ -192,9 +192,9 @@
       "descEn": "Fan — choose, then hold the mouse: blows slimes away from the cursor; one blown into another or the edge loses {fanBumpDamage} HP. {fanSteamSeconds} s of air; empty, it refills in {fanRefillSeconds} s."
     },
     {
-      "id": "spray", "nameVi": "Bình xịt nước", "nameEn": "Water spray",
-      "descVi": "Bình xịt nước — chọn rồi giữ chuột: slime bị xịt ướt sũng, chậm lại, co nhỏ và mất {sprayDps} máu/giây. Nước đủ {sprayTankSeconds} giây; cạn thì chờ {sprayRefillSeconds} giây.",
-      "descEn": "Water spray — choose, then hold the mouse: soaked slimes slow down, shrink and lose {sprayDps} HP/s. {sprayTankSeconds} s of water; empty, it refills in {sprayRefillSeconds} s."
+      "id": "spray", "nameVi": "Bình xịt nước nóng", "nameEn": "Hot water spray",
+      "descVi": "Bình xịt nước nóng — chọn rồi click một slime: tự xịt nó tới hết nước, −{sprayDps} máu/giây, làm chậm; {sprayMeltSeconds} giây tan băng; slime ngã khi bị xịt: +{sprayKillSeconds} giây nước. Hồi {sprayRefillSeconds} giây.",
+      "descEn": "Hot water spray — choose, then click a slime: sprays it until empty, {sprayDps} HP/s, slowed; {sprayMeltSeconds} s melts ice; a slime falling to it adds {sprayKillSeconds} s of water. {sprayRefillSeconds} s cooldown."
     }
   ],
 
@@ -215,7 +215,10 @@
     "tabSeconds": 6, "tabRadius": 70, "tabDamage": 14, "tabEvery": 0.5,
     "pingDamage": 14, "pingStun": 1.5, "pingTargets": 4, "endTaskShare": 0.25, "undoSeconds": 4, "trashCount": 2,
     "infectMinThreat": 1.3, "infectChance": 0.75, "maxInfected": 3, "scrubClicks": 5, "crawlEvery": 9, "eliteVirusPerWave": 2,
+    // 2026-11-04: an ad runs out even while an infected Tabs keeps it open, and lets out one of popupKinds
+    // this battle's waves can bring, at random (none: popupSpawn).
     "popupEvery": 8, "popupSeconds": 8, "popupSpawn": "slime", "adCount": 3,
+    "popupKinds": [ "slime", "runner", "rock", "spitter", "springer", "phantom", "bubble", "flyer", "burrower", "icy", "hedgehog", "thief", "clinger" ],
     "bellEvery": 10, "bellDamage": 6, "bellStun": 1, "freezeEvery": 12, "freezeSeconds": 1.2,
     "mendEvery": 7, "mendShare": 0.15, "mendGuard": 2, "spitEvery": 15, "spitElite": true,
     // Malware at random times (from a threat of malwareMinThreat, every malwareEveryMin–malwareEveryMax s
@@ -509,24 +512,32 @@
       // 1.5 S3 (M13): comes with mirage.copies look-alikes (eliteCopies for an elite): a copy's hits hurt
       // nothing and any hit makes it vanish (not the cat's kill). The cursor over one (or the laser within
       // laserRange) shows it for what it is `reveal` s: a copy blurs, the real one gets its shadow.
+      // 2026-11-04: the copies come on the cat's other side; every `shuffle` s (eliteShuffle) smoke covers the
+      // group and with swapChance the real one trades places with a copy (what the cursor showed is forgotten).
       "id": "mirage", "nameVi": "Slime ảo ảnh", "nameEn": "Mirage slime",
       "tipVi": "Có bản giả giống hệt. Rê chuột lên: bản giả nhòe, bản thật có bóng đậm. Hạ bản thật thì bản giả tan.", "tipEn": "Brings look-alike fakes. Point the mouse at them: fakes blur, the real one has a dark shadow. Beat it and the fakes melt.", "counters": ["laser"],
       "maxHp": 36, "speed": 36, "damage": 11, "range": 55,
       "windup": 0.8, "attackCooldown": 2.0, "recover": 0.4,
       "scale": 0.95, "color": "#B89CF0", "marks": "mirage", "cost": 2, "binSpit": false,
-      "mirage": { "copies": 2, "eliteCopies": 3, "reveal": 2, "laserRange": 160 },
+      "mirage": { "copies": 2, "eliteCopies": 3, "reveal": 2, "laserRange": 160, "shuffle": 3, "eliteShuffle": 2.5, "swapChance": 0.6 },
       "elite": { "hp": 1.2, "cost": 1, "descVi": "thêm một bản giả", "descEn": "one more copy" }
     },
     {
       // 1.5 S4 (M13): hits take no HP and puff it up by sulk.grow (up to maxGrow ×; its hits grow with it).
       // Stroking it with the cursor soothes it: `calm` DIPs of strokes (eliteCalm for an elite) and it
-      // waves goodbye and leaves, counted as the cat's. Left alone `idle` s it sulks again by `fade` a second.
+      // waves goodbye and leaves, counted as the cat's. Left alone `idle` s it sulks again by `fade` a second
+      // (never while the cat is carried or thrown). 2026-11-04: only the cat's own blow on it counts (no splash,
+      // sweep, skill, app, bomb); the cat goes for it only once only sulky ones are left (or the user picks it),
+      // never while it is being stroked; a blow takes hitCalm off its calm; fully puffed, `tantrum` more blows
+      // (eliteTantrum) and it bursts into tears, stamps and runs off (no loot); soothed, the sulky ones within
+      // `spread` get spreadCalm of calm (an elite half).
       "id": "sulky", "nameVi": "Slime dỗi", "nameEn": "Sulky slime",
-      "tipVi": "Đánh nó chỉ làm nó phồng và đánh đau hơn. Rê chuột qua lại trên nó để dỗ: nó cười rồi bỏ đi.", "tipEn": "Hitting it only makes it swell and hit harder. Rub the mouse back and forth over it to soothe it: it smiles and leaves.",
+      "tipVi": "Đánh nó chỉ làm nó phồng và đánh đau hơn; đánh quá tay thì nó òa khóc dậm chân bỏ chạy, không để lại gì. Rê chuột qua lại trên nó để dỗ: nó cười rồi bỏ đi.", "tipEn": "Hitting it only makes it swell and hit harder; overdo it and it stamps off in tears, leaving nothing. Rub the mouse back and forth over it to soothe it: it smiles and leaves.",
       "maxHp": 40, "speed": 30, "damage": 8, "range": 55,
       "windup": 0.9, "attackCooldown": 2.2, "recover": 0.4,
       "scale": 0.95, "color": "#F2A7A0", "marks": "sulk", "cost": 2, "binSpit": false,
-      "sulk": { "calm": 1800, "eliteCalm": 2800, "idle": 1, "fade": 0.15, "grow": 0.1, "maxGrow": 1.6 },
+      "sulk": { "calm": 1400, "eliteCalm": 2200, "idle": 1, "fade": 0.15, "grow": 0.1, "maxGrow": 1.6,
+                "hitCalm": 0.15, "tantrum": 3, "eliteTantrum": 5, "spread": 200, "spreadCalm": 0.3 },
       "elite": { "hp": 1.2, "cost": 1, "descVi": "khó dỗ hơn", "descEn": "harder to cheer up" }
     },
     {
@@ -571,7 +582,7 @@
       // the speed the next throw needs.
       // The shell grows back `regrow` s later (eliteRegrow for an elite; 0: never).
       "id": "icy", "nameVi": "Slime băng", "nameEn": "Ice slime",
-      "tipVi": "Vỏ băng làm vũ khí chỉ xước. Ném mèo xuyên qua thật mạnh để vỡ vỏ; Bình xịt làm băng mềm, Bom vẫn đau.", "tipEn": "Its ice shell turns weapon hits into scratches. Throw the cat hard through it to crack it; the Spray softens it, the Bomb still hurts.", "counters": ["spray", "bomb"],
+      "tipVi": "Vỏ băng làm vũ khí chỉ xước. Ném mèo xuyên qua thật mạnh để vỡ vỏ; nhát 5 của Găng đấm cũng phá được; Bình xịt làm băng mềm, Bom vẫn đau.", "tipEn": "Its ice shell turns weapon hits into scratches. Throw the cat hard through it to crack it; the Glove's fifth hit breaks it too; the Spray softens it, the Bomb still hurts.", "counters": ["spray", "bomb"],
       "maxHp": 50, "speed": 34, "damage": 10, "range": 55,
       "windup": 0.8, "attackCooldown": 2.0, "recover": 0.4,
       "scale": 1.0, "color": "#A6E3F2", "marks": "ice", "cost": 2, "binSpit": false,
@@ -884,7 +895,7 @@
   "drops": {
     "chance": 0.2, "eliteChance": 0.6, "bossDrops": 3, "life": 8, "fade": 1.5, "maxOnFloor": 6,
     "weights": { "fish": 3, "coin": 5, "potion": 2 },
-    "fishHeal": 10, "coin": 1, "eliteCoin": 2, "bossCoin": 3
+    "fishHeal": 10, "potionSeconds": 2, "coin": 1, "eliteCoin": 2, "bossCoin": 3
   },
 
   // Adventure: chapters of stages played in order (winning a stage opens the next one). Stage ids
@@ -1005,7 +1016,7 @@
             "goalEn": "Ghost slimes fade in and out, mirage slimes bring fakes, a drummer keeps the band in time, a flag speeds friends up. This stage lends the Laser.",
             "tipVi": "Bạn sẽ học: rê chuột lên slime bóng ma để nó hiện ra (đang ẩn thì không đánh trúng); rê chuột tìm bản thật của slime ảo ảnh (bản thật có bóng); Đèn laser dụ slime ra khỏi vùng cờ và soi lộ cả hai; Đẩy nhạc trưởng trước nhịp 4 để cả đội lệch nhịp; hạ slime cờ hiệu thì cả đội hoảng.",
             "tipEn": "You learn: to point at a ghost slime so it shows (a hidden one cannot be hit); to point at a mirage to find the real one (it has a shadow); the Laser pulls slimes out of the flag's ring and reveals both; to Push the drummer before beat 4 so the band falls out of time; beating the flag slime scares the whole band.",
-            "objective": "clear", "upgrades": true, "maxAlive": 5, "threat": 2.2, "eliteChance": 0.2, "maxMalware": 4, "newAppsFrom": 1, "rulesVersion": 2,
+            "objective": "clear", "upgrades": true, "maxAlive": 5, "threat": 2.3, "eliteChance": 0.2, "maxMalware": 4, "newAppsFrom": 1, "rulesVersion": 2,
             "unlocksSkill": "laser", "suggestSkills": [ "laser", "push", "shield" ],
             "waves": [
               { "groups": [ { "enemy": "phantom", "count": 1 }, { "enemy": "slime", "count": 2 }, { "enemy": "runner", "count": 1 } ] },
@@ -1020,7 +1031,7 @@
             "tipVi": "Bạn sẽ học: hạ slime đang tha cá trước, click cá rơi để trả về giỏ (mất hết cá là thua); Kẹp gắp nhấn giữ một slime nhỏ rồi vung chuột ném vào slime khác (kéo được slime bay xuống, lôi slime đào hang lên); hạ ngựa của slime bom giữa đường; nhấc mèo khi vòng nứt hiện dưới chân. Slime trộm lấy năng lượng icon: hạ nó trước khi nó trốn.",
             "tipEn": "You learn: to beat a fish carrier first and click a dropped fish back into the basket (lose every fish and the stage is lost); the Grabber: press a small slime and fling the mouse to throw it at another (it pulls a flyer down and a burrower up); to take a bomb's mount down on the way; to lift the cat when a crack shows under it. A thief slime takes an icon's charge: beat it before it gets away.",
             "objective": "survive", "surviveSeconds": 75, "maxAlive": 6, "upgrades": true, "maxUpgrades": 3, "upgradeAt": [ 20, 40, 60 ],
-            "threatGrowth": 0.5, "threat": 2.2, "eliteChance": 0.15, "maxMalware": 4, "newAppsFrom": 1, "rulesVersion": 2, "reward": "FolderHat",
+            "threatGrowth": 0.8, "threat": 2.2, "eliteChance": 0.15, "maxMalware": 4, "newAppsFrom": 1, "rulesVersion": 2, "reward": "FolderHat",
             "unlocksSkill": "grabber", "suggestSkills": [ "grabber", "push", "heal" ],
             "basket": { "fish": 5, "every": 3, "at": 0.3 },
             "waves": [
@@ -1032,10 +1043,10 @@
           },
           {
             "id": "c2_slime_swamp", "nameVi": "Đầm nhầy", "nameEn": "Slime swamp",
-            "goalVi": "Slime băng, slime nhím, slime tách đôi và slime xích; cuối màn Slime Mẹ đẻ bầy hợp thể. Màn này cho mượn Bình xịt nước.",
-            "goalEn": "Ice slimes, hedgehogs, splitting slimes and chain slimes; at the end the Slime Mother lays fusing swarms. This stage lends the Water spray.",
-            "tipVi": "Bạn sẽ học: Bình xịt (giữ chuột: slime ướt chậm lại, băng mềm, gai nhím cụp); ném mèo xuyên slime băng thật mạnh để vỡ vỏ; đánh slime nhím lúc gai nằm; cắt dây slime xích (kéo mèo xuyên dây) vì nó gánh sát thương cho đồng đội; hạ thảo dược trước để hai nửa slime tách đôi không nhập lại; hạ Slime khổng lồ trước khi nó về bú cho Slime Mẹ.",
-            "tipEn": "You learn: the Water spray (hold the mouse: wet slimes slow down, ice softens, quills drop); to throw the cat hard through an ice slime to crack its shell; to hit a hedgehog while its quills are down; to cut a chain slime's rope (drag the cat through it): it takes hits for a friend; to beat the herb slime first so split halves cannot rejoin; to beat a giant before it feeds the Mother.",
+            "goalVi": "Slime băng, slime nhím, slime tách đôi và slime xích; cuối màn Slime Mẹ đẻ bầy hợp thể. Màn này cho mượn Bình xịt nước nóng.",
+            "goalEn": "Ice slimes, hedgehogs, splitting slimes and chain slimes; at the end the Slime Mother lays fusing swarms. This stage lends the Hot water spray.",
+            "tipVi": "Bạn sẽ học: Bình xịt nước nóng (click một slime: bình tự xịt, slime ướt chậm lại, băng tan, gai nhím cụp); ném mèo xuyên slime băng thật mạnh để vỡ vỏ; đánh slime nhím lúc gai nằm; cắt dây slime xích (kéo mèo xuyên dây) vì nó gánh sát thương cho đồng đội; hạ thảo dược trước để hai nửa slime tách đôi không nhập lại; hạ Slime khổng lồ trước khi nó về bú cho Slime Mẹ.",
+            "tipEn": "You learn: the Hot water spray (click a slime: wet slimes slow, ice melts, quills drop); to throw the cat hard through an ice slime to crack its shell; to hit a hedgehog while its quills are down; to cut a chain slime's rope (drag the cat through it): it takes hits for a friend; to beat the herb slime first so split halves cannot rejoin; to beat a giant before it feeds the Mother.",
             "objective": "clear", "upgrades": true, "maxAlive": 6, "threat": 1.95, "eliteChance": 0.2, "maxMalware": 4, "newAppsFrom": 1, "rulesVersion": 2,
             "unlocksSkill": "spray", "suggestSkills": [ "spray", "bomb", "push" ],
             "waves": [
@@ -1051,7 +1062,7 @@
             "goalEn": "Chapter 2's last battle: bubble and wall slimes, then the Zip Slime rolls, unpacks squads tied to it and packs into a shield. This stage lends the Scissors.",
             "tipVi": "Bạn sẽ học: Kéo cắt (kéo chuột thành một nét: cắt dây nhầy, chọc vỡ bong bóng); click 3 lần chọc vỡ bong bóng; ném mèo vào slime bám tường hoặc Đẩy cho nó rơi; nhấc mèo khỏi dải đỏ khi Slime Nén sắp lăn; cắt dây nối quân về Slime Nén để phá khiên; phá các mảnh file quanh nó ở pha cuối.",
             "tipEn": "You learn: the Scissors (drag one stroke: cuts slime ropes, pops bubbles); to pop a bubble with three clicks; to throw the cat at a wall slime or Push it down; to lift the cat off the red strip before the Zip Slime rolls; to cut the ropes tying its squads to it to break its shield; to break the file shards around it at the end.",
-            "objective": "clear", "upgrades": true, "maxAlive": 6, "threat": 1.4, "eliteChance": 0.25, "maxMalware": 4, "newAppsFrom": 1, "rulesVersion": 2,
+            "objective": "clear", "upgrades": true, "maxAlive": 6, "threat": 1.25, "eliteChance": 0.25, "maxMalware": 4, "newAppsFrom": 1, "rulesVersion": 2,
             "unlocksSkill": "scissors", "suggestSkills": [ "scissors", "shield", "push" ],
             "keepsake": { "id": "zip_plush", "kind": "plush", "nameVi": "Thú bông Slime Nén", "nameEn": "Zip Slime plush" },
             "waves": [

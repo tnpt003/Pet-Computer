@@ -11,18 +11,22 @@ public sealed partial class BattleSim
     private static double AttackCooldown(Slime slime) => slime.Type.AttackCooldown * (slime.Elite?.AttackCooldown ?? 1);
     private static double HealCooldown(Slime slime) => slime.Type.HealCooldown * (slime.Elite?.HealCooldown ?? 1);
 
+    private readonly List<Slime> sulkyLeft = new();
+
     private Slime? PickTarget(double catX)
     {
         if (SelectedId is int selected)
         {
             var chosen = Find(selected);
             // A shielded boss stays chosen; the cat goes for the others until its shield drops.
-            if (chosen != null && chosen.Targetable && !chosen.Shielded && !chosen.Mended && !chosen.Riding && !chosen.Airborne && !chosen.Handled && !chosen.Faded && !chosen.Burrowed) return chosen;
+            if (chosen != null && chosen.Targetable && !chosen.Shielded && !chosen.Mended && !chosen.Riding && !chosen.Airborne && !chosen.Handled && !chosen.Faded && !chosen.Burrowed && !BeingSoothed(chosen)) return chosen;
             if (chosen == null || !chosen.Targetable) SelectedId = null;
         }
         // Never a shielded boss: the cat cannot hurt it (with nothing else to hit it waits).
         // One guarded by a heal is left alone too while there is another to hit.
+        // A sulky one (2026-11-04) only once nothing else is left, and never the one being soothed.
         Slime? nearest = null, guarded = null, carrier = null;
+        sulkyLeft.Clear();
         foreach (var s in slimes)
         {
             if (!s.Targetable || s.Shielded) continue;
@@ -35,10 +39,12 @@ public sealed partial class BattleSim
             if (s.CarriesFish && (carrier == null || Math.Abs(s.X - catX) < Math.Abs(carrier.X - catX))) carrier = s;
             // One in a bubble or sulking takes no HP from the cat's blows, one in its ice shell only scratches
             // (1.5 M15): left alone while there is another.
-            if (s.Mended || s.Bubbled || s.Type.Sulk != null || s.Iced || s.Puffed) { if (guarded == null || Math.Abs(s.X - catX) < Math.Abs(guarded.X - catX)) guarded = s; continue; }
+            if (s.Type.Sulk != null) { sulkyLeft.Add(s); continue; }
+            if (s.Mended || s.Bubbled || s.Iced || s.Puffed) { if (guarded == null || Math.Abs(s.X - catX) < Math.Abs(guarded.X - catX)) guarded = s; continue; }
             if (nearest == null || Math.Abs(s.X - catX) < Math.Abs(nearest.X - catX)) nearest = s;
         }
         nearest ??= guarded;
+        nearest ??= SulkyTarget(sulkyLeft, catX);
         if (carrier != null) { autoTargetId = carrier.Id; return carrier; }
         // Keep the current choice unless another slime is clearly closer (no dithering).
         var current = Find(autoTargetId);

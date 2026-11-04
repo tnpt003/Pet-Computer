@@ -30,9 +30,9 @@ internal static class BattleTrickTests
     private static readonly BattleSkill[] Tools = { BattleSkill.Bomb, BattleSkill.Laser, BattleSkill.Scissors, BattleSkill.Push, BattleSkill.Grabber };
 
     // A field with these kinds and counts (elite: the first kind elite), the enemies at 1000 and the cat at 100.
-    private static BattleSim Field(EnemyType[] kinds, int[] counts, bool elite = false, double catHp = 1000)
+    private static BattleSim Field(EnemyType[] kinds, int[] counts, bool elite = false, double catHp = 1000, WeaponSpec? weapon = null, bool spread = true)
     {
-        var arms = Shipped.Weapon("sword") with { Range = 5, StunChance = 0, Damage = 0 };
+        var arms = weapon ?? Shipped.Weapon("sword") with { Range = 5, StunChance = 0, Damage = 0 };
         var settings = new BattleSettings
         {
             Weapons = new[] { arms }, FirstWaveDelay = 0, SpawnInterval = 0.05, CatMaxHp = catHp, MaxAlive = 8, MaxElites = 8,
@@ -45,7 +45,7 @@ internal static class BattleTrickTests
         for (int i = 0; i < 600 && sim.Slimes.Count(s => s.Targetable && !s.Decoy) < counts.Sum(); i++) sim.Step(dt, 100, false);
         for (int i = 0; i < 30; i++) sim.Step(dt, 100, false); // Copies appear and finish appearing too.
         // Apart, so a bomb on one does not reach another (a mirage's copies too); a ghost's clock starts now.
-        for (int i = 0; i < sim.Slimes.Count; i++) { sim.Slimes[i].X = 1000 - 160 * i; sim.Slimes[i].GhostClock = sim.Slimes[i].Type.Ghost?.Visible ?? 0; }
+        for (int i = 0; spread && i < sim.Slimes.Count; i++) { sim.Slimes[i].X = 1000 - 160 * i; sim.Slimes[i].GhostClock = sim.Slimes[i].Type.Ghost?.Visible ?? 0; }
         sim.ClearEvents();
         return sim;
     }
@@ -147,6 +147,23 @@ internal static class BattleTrickTests
     private static void BubbleChecks(Action<bool, string> check)
     {
         var spec = Shipped.Enemy("bubble").Bubble!;
+        // 2026-11-04: the cat's combo blow counts as one poke; plain blows only bounce off.
+        {
+            var paw = Shipped.Weapon("sword") with { Range = 5, StunChance = 0, Damage = 1 };
+            var field = Field(new[] { Bubble() }, new[] { 1 }, weapon: paw);
+            var one = field.Slimes.Single();
+            one.X = 100;
+            int pokes = 0, blocked = 0;
+            for (int i = 0; i < 600 && one.Bubbled; i++)
+            {
+                field.Step(dt, 100, false);
+                pokes += field.Events.Count(e => e.Kind == BattleEventKind.BubblePoked);
+                blocked += field.Events.Count(e => e.Kind == BattleEventKind.BubbleBlocked);
+                field.ClearEvents();
+            }
+            check(!one.Bubbled && pokes == spec.Pops && blocked >= pokes * (field.ComboHits - 1),
+                $"Only the cat's combo blows poke a bubble, one poke each ({pokes} pokes, {blocked} plain blows bounced)");
+        }
         var sim = Field(new[] { Bubble() }, new[] { 1 });
         var bubble = sim.Slimes.Single();
         double hp = bubble.Hp;
@@ -190,6 +207,26 @@ internal static class BattleTrickTests
     private static void MirageChecks(Action<bool, string> check)
     {
         var spec = Shipped.Enemy("mirage").Mirage!;
+        // 2026-11-04: the copies come on the cat's other side; the gacha now and then swaps the real one with a copy.
+        {
+            var field = Field(new[] { Mirage() }, new[] { 1 }, spread: false);
+            var one = field.Slimes.Single(x => !x.Decoy);
+            var fakes = field.Slimes.Where(x => x.Decoy).ToList();
+            int side = Math.Sign(one.X - 100);
+            check(fakes.Count == spec.Copies && fakes.All(c => Math.Sign(c.X - 100) == -side),
+                $"The copies come on the cat's other side (real at {one.X:0}, copies at {string.Join(", ", fakes.Select(c => c.X.ToString("0")))})");
+            int swaps = 0, smokes = 0;
+            double startX = one.X;
+            var spots = field.Slimes.Where(x => x.Targetable).Select(x => x.X).OrderBy(x => x).ToList();
+            for (int i = 0; i < Math.Round(spec.Shuffle * 20 / dt); i++)
+            {
+                foreach (var x in field.Slimes) { x.Cooldown = 9; x.KnockVelocity = 0; } // Standing still: only the gacha moves them.
+                field.Step(dt, 100, false);
+                foreach (var e in field.Events.Where(e => e.Kind == BattleEventKind.MirageShuffled)) { smokes++; if (e.Value > 0) swaps++; }
+                field.ClearEvents();
+            }
+            check(smokes >= 15 && swaps > 0 && swaps < smokes, $"Every {spec.Shuffle} s the gacha smokes the group, sometimes swapping ({swaps}/{smokes})");
+        }
         var sim = Field(new[] { Mirage(damage: 10) }, new[] { 1 });
         var real = sim.Slimes.Single(s => !s.Decoy);
         var copies = sim.Slimes.Where(s => s.Decoy).ToList();
@@ -249,17 +286,71 @@ internal static class BattleTrickTests
     private static void SulkChecks(Action<bool, string> check)
     {
         var spec = Shipped.Enemy("sulky").Sulk!;
-        var sim = Field(new[] { Sulk(damage: 10) }, new[] { 1 });
+        // A weapon that lands (1 damage): a 0-damage blow never reaches the sulky slime's own rule.
+        var paw = Shipped.Weapon("sword") with { Range = 5, StunChance = 0, Damage = 1 };
+        var sim = Field(new[] { Sulk(damage: 10) }, new[] { 1 }, weapon: paw);
         var sulky = sim.Slimes.Single();
         double hp = sulky.Hp;
+        // 2026-11-04: only the cat's own blow on it counts; a bomb (any skill, app, splash) does nothing.
         Bomb(sim, sulky);
-        check(Run(sim, 0.5, kind: BattleEventKind.SulkPuffed) && sulky.Hp == hp && Math.Abs(sulky.Puff - (1 + spec.Grow)) < 1e-9, "A hit takes no HP from a sulky slime and puffs it up");
-        for (int i = 0; i < 20; i++) { Bomb(sim, sulky); Run(sim, 0.4); }
-        check(Math.Abs(sulky.Puff - spec.MaxGrow) < 1e-9, $"It puffs up to {spec.MaxGrow} × at most");
+        check(!Run(sim, 0.5, kind: BattleEventKind.SulkPuffed) && sulky.Hp == hp && sulky.Puff == 1, "A bomb neither hurts nor puffs up a sulky slime");
+        sulky.X = 100; // Under the cat: the only enemy left, so the cat swings at it.
+        check(Run(sim, 1.2, kind: BattleEventKind.SulkPuffed) && sulky.Hp == hp && sulky.Puff > 1, "The cat's own hit takes no HP from a sulky slime and puffs it up");
+        sulky.Puff = spec.MaxGrow;
         sulky.X = 140;
         double before = sim.CatHp;
-        Run(sim, 1.5);
+        for (int i = 0; i < 400 && sim.CatHp == before; i++) sim.Step(dt, 100, false); // Its next blow.
         check(Math.Abs(before - sim.CatHp - 10 * spec.MaxGrow) < 0.01, $"Its hits grow with it ({before - sim.CatHp:0.#} for 10 × {spec.MaxGrow})");
+
+        // Hit on and on: fully puffed, a few more blows and it stamps off in tears (the cat's defeat, no loot, not a soothing).
+        sim = Field(new[] { Sulk(damage: 10) }, new[] { 1 }, weapon: paw);
+        sulky = sim.Slimes.Single();
+        sulky.X = 100;
+        int down = sim.Defeated;
+        before = sim.CatHp;
+        bool burst = Run(sim, 30, kind: BattleEventKind.SulkTantrum);
+        check(burst && sulky.Tantrumed && sulky.State == SlimeState.Defeated && sim.Defeated == down + 1 && sim.SulksCalmed == 0 && sim.CatHp < before,
+            $"Fully puffed and hit {spec.Tantrum} more times it stamps off in tears (cat {before - sim.CatHp:0.#} HP)");
+        check(sulky.Puff >= spec.MaxGrow - 1e-9 && sulky.Tantrum == spec.Tantrum, "It burst only once fully puffed, after its tantrum count");
+
+        // The cat holds back from the one being stroked.
+        sim = Field(new[] { Sulk() }, new[] { 1 });
+        sulky = sim.Slimes.Single();
+        sulky.X = 100;
+        int beat = 0;
+        bool puffed = Run(sim, 1.5, kind: BattleEventKind.SulkPuffed, each: () => sim.SetPointer((sulky.X + (beat++ % 2 == 0 ? -3 : 3), 10)));
+        check(!puffed && sulky.Puff == 1 && sulky.Calm > 0, "While the user strokes it the cat does not hit it");
+
+        // The thrown cat flying or bouncing leaves the cursor free; the calm waits meanwhile.
+        sim = Field(new[] { Sulk() }, new[] { 1 });
+        sulky = sim.Slimes.Single();
+        var flying = new CatPose(100, 80, 300, 0, false, true);
+        for (int i = 0; i < 30; i++) { sim.SetPointer((sulky.X + (i % 2 == 0 ? -3 : 3), 10)); sim.Step(dt, 100, true, false, flying); }
+        double soothed = sulky.Calm;
+        check(soothed > 0, "Strokes count while the thrown cat is in the air");
+        sim.SetPointer(null);
+        for (int i = 0; i < 240; i++) sim.Step(dt, 100, true, false, flying);
+        check(sulky.Calm == soothed, "The calm does not fade while the cat is thrown or bouncing");
+
+        // Two sulky ones left: the cat goes for the one not being stroked; soothing one cheers up the other.
+        sim = Field(new[] { Sulk() }, new[] { 2 }, weapon: paw);
+        var a = sim.Slimes[0];
+        var b = sim.Slimes[1];
+        a.X = 300; b.X = 420;
+        int beat2 = 0;
+        Run(sim, 0.3, each: () => sim.SetPointer((a.X + (beat2++ % 2 == 0 ? -3 : 3), 10)));
+        check(sim.TargetId == b.Id, "With only sulky ones left the cat goes for the one not being stroked");
+        for (int i = 0; i < 1200 && !a.Calmed; i++) { sim.SetPointer((a.X + (beat2++ % 2 == 0 ? -3 : 3), 10)); sim.Step(dt, 100, false); }
+        bool done = a.Calmed;
+        check(done && a.Calmed && b.Calm >= spec.SpreadCalm - 0.05, $"Soothing one cheers up a sulky one nearby ({b.Calm:0.##})");
+
+        // The yarn's sweep (a splash) does not touch a sulky slime next to its target.
+        var yarn = Shipped.Weapon("yarn") with { Damage = 1, StunChance = 0 };
+        sim = Field(new[] { Kind("slime"), Sulk() }, new[] { 1, 1 }, weapon: yarn);
+        var plainOne = sim.Slimes.Single(s => s.Type.Id == "slime");
+        sulky = sim.Slimes.Single(s => s.Type.Id == "sulky");
+        plainOne.X = 140; sulky.X = 170;
+        check(!Run(sim, 2, kind: BattleEventKind.SulkPuffed) && sulky.Puff == 1 && plainOne.Hp < plainOne.MaxHp, "The yarn's sweep leaves a sulky slime be");
 
         // Strokes soothe it.
         sim = Field(new[] { Sulk() }, new[] { 1 });
@@ -279,7 +370,7 @@ internal static class BattleTrickTests
         sim.SetPointer((sulky.X, 10));
         sim.Step(dt, 100, false);
         check(sulky.Calm <= calm, "A jump of the cursor onto it is not a stroke");
-        Run(sim, 0.5, held: true, each: Stroke);
+        for (int i = 0; i < 30; i++) { Stroke(); sim.Step(dt, 100, true, true, new CatPose(100, 80, 0, 0, true, false)); sim.ClearEvents(); }
         check(sulky.Calm <= calm, "With the cat in the user's hand strokes do nothing");
         int defeated = sim.Defeated;
         bool calmed = Run(sim, 20, kind: BattleEventKind.SulkCalmed, each: Stroke);

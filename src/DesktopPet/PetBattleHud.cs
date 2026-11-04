@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -15,7 +16,7 @@ namespace DesktopPet;
 public sealed class BattleHud : Border
 {
     public event Action<BattleSkill>? SkillClicked;
-    public event Action? PauseClicked, EndClicked, BagClicked, RageClicked, PlugClicked, ContinueClicked;
+    public event Action? PauseClicked, EndClicked, BagClicked, RageClicked, PlugClicked, ContinueClicked, HubClicked;
     // One slot per skill the battle carries (BattleSim.Skills, in HUD order).
     public IReadOnlyList<BattleSkill> SkillOrder { get; }
     private const double HpWidth = 170, BossWidth = 200;
@@ -30,7 +31,7 @@ public sealed class BattleHud : Border
     private string LF(FormattableString vietnamese, FormattableString english) => PetText.PickFormat(language(), vietnamese, english);
     private readonly TextBlock hpText, status, hint, banner, comboText, upgradesText;
     internal readonly TextBlock bossName;
-    private readonly Border hpFill, hpTrail, bossFill, bossBar, pauseButton, endButton, bagButton, grip, rageBar, rageFill;
+    private readonly Border hpFill, hpTrail, bossFill, bossBar, pauseButton, endButton, bagButton, hubButton, grip, rageBar, rageFill;
     private readonly Border batteryStrip, plugButton, cursorCover, continueButton;
     private readonly TextBlock batteryText, cursorText;
     // The portrait with HP, the status column and the skill slots (the Adventure Guide lights them).
@@ -115,9 +116,11 @@ public sealed class BattleHud : Border
         rageBar.MouseLeave += (_, _) => HoverControl(null);
 
         // Centre: the banner, or the status with wave dots / the boss's HP.
+        // 2026-11-04: a long banner or status wraps onto a second line instead of shrinking to tiny text.
         banner = new TextBlock { Foreground = Gold, FontWeight = FontWeights.Black, FontSize = PetUi.DisplaySize, HorizontalAlignment = HorizontalAlignment.Center,
-            Visibility = Visibility.Collapsed };
-        status = new TextBlock { Foreground = Brushes.White, FontWeight = FontWeights.SemiBold, FontSize = PetUi.BodySize, HorizontalAlignment = HorizontalAlignment.Center, TextAlignment = TextAlignment.Center };
+            TextAlignment = TextAlignment.Center, TextWrapping = TextWrapping.Wrap, Width = CentreWidth, Visibility = Visibility.Collapsed };
+        status = new TextBlock { Foreground = Brushes.White, FontWeight = FontWeights.SemiBold, FontSize = PetUi.BodySize, HorizontalAlignment = HorizontalAlignment.Center, TextAlignment = TextAlignment.Center,
+            TextWrapping = TextWrapping.Wrap, TextTrimming = TextTrimming.CharacterEllipsis, MaxHeight = Math.Ceiling(PetUi.BodySize * 1.34 * 2) + 1 };
         waveDots = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 5, 0, 0) };
         bossName = new TextBlock { Foreground = Brushes.White, FontWeight = FontWeights.Bold, FontSize = PetUi.SmallSize, HorizontalAlignment = HorizontalAlignment.Center };
         bossFill = new Border { Background = BossColor, CornerRadius = new CornerRadius(4), HorizontalAlignment = HorizontalAlignment.Left, Width = BossWidth };
@@ -127,9 +130,13 @@ public sealed class BattleHud : Border
             Padding = new Thickness(1), Margin = new Thickness(0, 2, 0, 0), Child = bossFill
         };
         var bossPanel = new StackPanel { Children = { bossName, bossBar }, Margin = new Thickness(0, 3, 0, 0) };
-        // This run's upgrades (Adventure), one small line; collapsed when there are none.
+        // This run's build: at most two short lines (each group's points, how many synergies ★, rare cards ◆
+        // and relics ◈); hovering it lists them all in the hint line (2026-11-04). Collapsed when there is none.
         upgradesText = new TextBlock { Foreground = Gold, FontSize = PetUi.CaptionSize, FontWeight = FontWeights.SemiBold, HorizontalAlignment = HorizontalAlignment.Center,
-            TextAlignment = TextAlignment.Center, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 3, 0, 0), Visibility = Visibility.Collapsed };
+            TextAlignment = TextAlignment.Center, TextWrapping = TextWrapping.Wrap, TextTrimming = TextTrimming.CharacterEllipsis, MaxHeight = Math.Ceiling(PetUi.CaptionSize * 1.34 * 2) + 1,
+            Margin = new Thickness(0, 3, 0, 0), Visibility = Visibility.Collapsed, Background = Brushes.Transparent };
+        upgradesText.MouseEnter += (_, _) => HoverControl(buildList);
+        upgradesText.MouseLeave += (_, _) => HoverControl(null);
         bossPanel.SetBinding(VisibilityProperty, new System.Windows.Data.Binding(nameof(Visibility)) { Source = bossBar });
         // A banner wider than the centre (a long stage or enemy name) is shrunk to fit it, so it never
         // spills over the HP bar or the skills and the HUD keeps its size.
@@ -162,6 +169,13 @@ public sealed class BattleHud : Border
         bagButton.Height = 52; bagButton.Margin = new Thickness(6, 0, 0, 0); bagButton.VerticalAlignment = VerticalAlignment.Center;
         bagButton.MouseEnter += (_, _) => HoverControl(L("Túi đồ: chỉ số, thẻ, di vật (tạm dừng trận khi mở)", "Bag: stats, cards, relics (pauses the battle while open)"));
         bagButton.MouseLeave += (_, _) => HoverControl(null);
+        // 2026-11-04: a free battle's way back to the hub (the mode choice); hidden in every other battle.
+        hubButton = SmallButton(new HudGlyph(HudGlyphKind.Home) { Width = 24, Height = 24 }, () => HubClicked?.Invoke());
+        // Under the Bag, the two sharing its height, so the HUD keeps its width (2026-11-04).
+        hubButton.Height = 24; hubButton.Margin = new Thickness(6, 4, 0, 0);
+        hubButton.Visibility = Visibility.Collapsed;
+        hubButton.MouseEnter += (_, _) => HoverControl(L("Về Sảnh chọn chế độ (kết thúc trận này)", "Back to the hub to pick a mode (ends this battle)"));
+        hubButton.MouseLeave += (_, _) => HoverControl(null);
 
         // The grip (PetWindow.Battle.cs): drag it to move the HUD, double click for its usual place.
         var dots = new Canvas { Width = 6, Height = 16 };
@@ -198,7 +212,8 @@ public sealed class BattleHud : Border
         };
         cursorCover.MouseLeftButtonDown += (_, e) => e.Handled = true; // The slots under it take no click.
         var skillArea = new Grid { VerticalAlignment = VerticalAlignment.Center, Children = { bar, cursorCover, batteryStrip } };
-        var top = new StackPanel { Orientation = Orientation.Horizontal, Children = { left, centre, skillArea, bagButton, controls, grip } };
+        var bagColumn = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Children = { bagButton, hubButton } };
+        var top = new StackPanel { Orientation = Orientation.Horizontal, Children = { left, centre, skillArea, bagColumn, controls, grip } };
         hpBlock = left; statusBlock = centre; skillBar = bar;
         // As wide as the row above (never wider): a long description wraps instead of widening the
         // HUD, which would re-centre it and slide the slots out from under the mouse.
@@ -215,6 +230,12 @@ public sealed class BattleHud : Border
     public Border PauseButton => pauseButton;
     public Border EndButton => endButton;
     public Border BagButton => bagButton;
+    public Border HubButton => hubButton;
+    public bool HubShown
+    {
+        get => hubButton.Visibility == Visibility.Visible;
+        set { hubButton.Visibility = value ? Visibility.Visible : Visibility.Collapsed; bagButton.Height = value ? 24 : 52; }
+    }
     public FrameworkElement HpBlock => hpBlock;
     public FrameworkElement StatusBlock => statusBlock;
     public FrameworkElement SkillBar => skillBar;
@@ -239,7 +260,7 @@ public sealed class BattleHud : Border
             return at.X >= 0 && at.Y >= 0 && at.X < element.ActualWidth && at.Y < element.ActualHeight;
         }
         foreach (var slot in slots) if (Over(slot)) return true;
-        return Over(pauseButton) || Over(endButton) || Over(bagButton) || Over(grip) || Over(rageBar) || Over(batteryStrip) || Over(cursorCover);
+        return Over(pauseButton) || Over(endButton) || Over(bagButton) || Over(hubButton) || Over(grip) || Over(rageBar) || Over(batteryStrip) || Over(cursorCover) || Over(upgradesText);
     }
     public string HintText => hint.Text;
     // For checks: the status line and how many wave marks show.
@@ -261,8 +282,13 @@ public sealed class BattleHud : Border
     public void ShowBanner(string text, double now, double seconds = 1.6)
     {
         banner.Text = text;
-        bannerUntil = now + seconds;
+        // A long one stays a little longer so it can be read (2026-11-04).
+        bannerUntil = now + seconds + Math.Clamp((text.Length - 28) * 0.04, 0, 2);
     }
+
+    // The whole build, for the hint line while the cursor is on the build's summary.
+    private string buildList = "";
+    public string BuildList => buildList;
 
     // held: the cat is really lifted (dragged or in the air), not just pressed, so a click on the
     // cat never flickers the HUD.
@@ -324,8 +350,9 @@ public sealed class BattleHud : Border
         // 1.5 M20: a basket stage's fish still the cat's.
         if (b.FishTotal > 0) text += LF($" · Cá {b.FishLeft}/{b.FishTotal}", $" · Fish {b.FishLeft}/{b.FishTotal}");
         // 1.5 M24: Infinity's mutation in force and the waves it still holds.
+        // On a line of its own (2026-11-04: it no longer runs off the end of the wave's line).
         if (b.Mutation is MutationSpec rule && !b.Over)
-            text += LF($" · Đột biến {rule.Name(PetLanguage.Vietnamese)}: còn {b.MutationWavesLeft} đợt", $" · Mutation {rule.Name(language())}: {b.MutationWavesLeft} wave{(b.MutationWavesLeft == 1 ? "" : "s")} left");
+            text += "\n" + LF($"Đột biến {rule.Name(PetLanguage.Vietnamese)}: còn {b.MutationWavesLeft} đợt", $"Mutation {rule.Name(language())}: {b.MutationWavesLeft} wave{(b.MutationWavesLeft == 1 ? "" : "s")} left");
         if (b.ChoosingMutation && !b.Over) text += L(" · Chọn đột biến", " · Pick a mutation");
         else if (b.ChoosingUpgrade && !b.Over) text += L(" · Chọn nâng cấp", " · Pick an upgrade");
         else if (b.Paused && !b.Over) text += away ? L(" · Chờ mèo về màn hình này", " · Waiting for the cat to come back")
@@ -338,8 +365,10 @@ public sealed class BattleHud : Border
         if (upgradeCount != shownUpgrades)
         {
             shownUpgrades = upgradeCount;
-            // The build: each group's points toward its synergy, then the synergies switched on.
+            // The build: each group's points toward its synergy, then how many synergies, rare cards and
+            // relics (the names in full on hover).
             var parts = new System.Collections.Generic.List<string>();
+            var names = new System.Collections.Generic.List<string>();
             foreach (var group in BuildGroups.All)
             {
                 int points = b.GroupPoints(group), goal = 0;
@@ -348,12 +377,23 @@ public sealed class BattleHud : Border
                 if (goal == 0) foreach (var y in b.Settings.SynergyList) if (y.Group == group && b.CanUnlock(y)) goal = Math.Max(goal, y.At);
                 if (points > 0) parts.Add(goal > 0 ? $"{BuildGroups.Name(group, language())} {Math.Min(points, goal)}/{goal}" : $"{BuildGroups.Name(group, language())} {points}");
             }
-            foreach (var y in b.Synergies) parts.Add("★ " + y.Name(language()));
-            foreach (var u in b.Settings.UpgradeList) if (u.Rare && b.Stacks(u.Id) > 0) parts.Add("◆ " + u.Name(language()));
+            int groups = parts.Count;
+            foreach (var y in b.Synergies) names.Add("★ " + y.Name(language()));
+            int stars = names.Count;
+            foreach (var u in b.Settings.UpgradeList) if (u.Rare && b.Stacks(u.Id) > 0) names.Add("◆ " + u.Name(language()));
+            int rares = names.Count - stars;
             // An Expedition run's relics (fixed for the battle).
-            foreach (var r in b.Relics) parts.Add("◈ " + r.Name(language()));
+            foreach (var r in b.Relics) names.Add("◈ " + r.Name(language()));
+            int relics = names.Count - stars - rares;
+            var counts = new System.Collections.Generic.List<string>();
+            if (stars > 0) counts.Add($"★{stars}");
+            if (rares > 0) counts.Add($"◆{rares}");
+            if (relics > 0) counts.Add($"◈{relics}");
+            if (counts.Count > 0) parts.Add(string.Join(" ", counts));
             upgradesText.Text = string.Join(" · ", parts);
             upgradesText.Visibility = parts.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+            buildList = string.Join(" · ", parts.GetRange(0, groups).Concat(names));
+            if (names.Count > 0) buildList = L("Bộ thẻ: ", "Build: ") + buildList;
         }
         UpdateDots(b);
         var boss = b.Boss;
@@ -423,8 +463,8 @@ public sealed class BattleHud : Border
                                                 "Press a small slime and fling the mouse to throw it · not a rock or a boss · click the slot again or right-click to cancel")
             : b.Armed == BattleSkill.Scissors ? L("Kéo chuột thành một nét trên dải trận: cắt dây nhầy và slime nằm trên nét · bấm lại ô hoặc chuột phải để hủy",
                                                  "Drag a stroke across the field: it cuts ropes and the slimes on it · click the slot again or right-click to cancel")
-            : b.Armed == BattleSkill.Spray ? L("Giữ chuột trên dải trận để xịt ướt slime gần con trỏ · bấm lại ô hoặc chuột phải để cất bình xịt",
-                                              "Hold the mouse on the field to soak the slimes near the cursor · click the slot again or right-click to put the spray away")
+            : b.Armed == BattleSkill.Spray ? L("Click một slime: bình tự xịt nước nóng vào nó tới hết nước · bấm lại ô hoặc chuột phải để cất bình",
+                                              "Click a slime: the hot water sprays it by itself until empty · click the slot again or right-click to put it away")
             : b.Armed is BattleSkill armed ? LF($"Click một slime để dùng {SkillName(armed)} · bấm lại ô hoặc chuột phải chiến trường để hủy",
                                                $"Click a slime to use {SkillName(armed)} · click the slot again or right-click the field to cancel")
             : !b.Over && b.Grace > 0 ? LF($"Được bảo vệ sau khi tiếp đất: còn {ProtectedFor(b)} giây", $"Protected after landing: {ProtectedFor(b)} s left")
@@ -666,7 +706,7 @@ public sealed class CooldownWipe : FrameworkElement
 }
 
 // Small vector icons for the HUD, in the cat's flat cartoon style (no font glyphs, no files).
-public enum HudGlyphKind { Push, Heal, Cheer, Bomb, Shield, Pause, Play, End, Crown, Bag, Laser, Grabber, Scissors, Fan, Spray, Lock, Battery, Hourglass }
+public enum HudGlyphKind { Push, Heal, Cheer, Bomb, Shield, Pause, Play, End, Crown, Bag, Laser, Grabber, Scissors, Fan, Spray, Lock, Battery, Hourglass, Home }
 
 public sealed class HudGlyph : FrameworkElement
 {
@@ -700,6 +740,9 @@ public sealed class HudGlyph : FrameworkElement
     private static readonly Geometry BagBody = G("M 4,10 L 20,10 L 18.5,21 L 5.5,21 Z");
     private static readonly Geometry BagHandle = G("M 8.5,10 C 8.5,4 15.5,4 15.5,10");
     private static readonly Geometry BagFlap = G("M 4,10 L 20,10 L 19.3,14.5 L 4.7,14.5 Z");
+    // The hub's way home (2026-11-04): a little house.
+    private static readonly Geometry HouseRoof = G("M 2.5,12 L 12,3.5 L 21.5,12 Z");
+    private static readonly Geometry HouseBody = G("M 5,11 L 19,11 L 19,21 L 5,21 Z");
     // 1.5 skills (simple first drawings; milestones M05/M06 may refine them) and the setup panel's lock.
     private static readonly Brush Red = PetUi.Frozen(Color.FromRgb(0xF2, 0x5C, 0x54)), Steel = PetUi.Frozen(Color.FromRgb(0xC9, 0xD3, 0xDE));
     private static readonly Brush Leaf = PetUi.Frozen(Color.FromRgb(0x6F, 0xC9, 0x8A)), Water = PetUi.Frozen(Color.FromRgb(0x62, 0xB8, 0xF0));
@@ -707,7 +750,10 @@ public sealed class HudGlyph : FrameworkElement
     private static readonly Pen InkBold = P(PetUi.ArtInk, 2.2), SteelLine = P(Steel, 1.2);
     private static readonly Geometry PointerBody = G("M 3,17 L 13,7 L 17,11 L 7,21 Z");
     private static readonly Geometry ClawArm = G("M 12,2 L 12,9 M 12,9 C 7,10 6,15 8,19 M 12,9 C 17,10 18,15 16,19");
-    private static readonly Geometry Blades = G("M 6,4 L 16,16 M 18,4 L 8,16");
+    // 2026-11-04: a real pair of scissors: two steel blades crossing at a screw, two finger rings below.
+    private static readonly Geometry BladeLeft = G("M 15.4,17 L 11.2,12.6 C 8.4,9.4 6.2,5.6 5.2,2.4 C 8.8,5.2 11.8,8.4 13.6,11.4 Z");
+    private static readonly Geometry BladeRight = G("M 8.6,17 L 12.8,12.6 C 15.6,9.4 17.8,5.6 18.8,2.4 C 15.2,5.2 12.2,8.4 10.4,11.4 Z");
+    private static readonly Pen RingInk = P(PetUi.ArtInk, 3.8), RingColor = P(PetUi.Frozen(Color.FromRgb(0xFA, 0x80, 0x72)), 2.2);
     private static readonly Geometry FanBlades = G("M 12,12 C 8,4 14,2 15,6 Z M 12,12 C 20,10 21,16 17,16 Z M 12,12 C 8,18 3,15 5,12 Z");
     private static readonly Geometry Bottle = G("M 7,10 L 15,10 L 16,21 L 6,21 Z");
     private static readonly Geometry Nozzle = G("M 9,10 L 9,6 L 15,6 L 15,8 L 12,8 L 12,10");
@@ -759,9 +805,14 @@ public sealed class HudGlyph : FrameworkElement
                 dc.DrawEllipse(Leaf, InkPen, new Point(12, 19), 4, 3);
                 break;
             case HudGlyphKind.Scissors:
-                dc.DrawGeometry(null, InkBold, Blades);
-                dc.DrawEllipse(Salmon, InkPen, new Point(6, 18.5), 3, 3);
-                dc.DrawEllipse(Salmon, InkPen, new Point(18, 18.5), 3, 3);
+                dc.DrawGeometry(Steel, InkPen, BladeRight);
+                dc.DrawGeometry(Steel, InkPen, BladeLeft);
+                foreach (double x in new[] { 6.8, 17.2 })
+                {
+                    dc.DrawEllipse(null, RingInk, new Point(x, 19.4), 3.4, 2.7);
+                    dc.DrawEllipse(null, RingColor, new Point(x, 19.4), 3.4, 2.7);
+                }
+                dc.DrawEllipse(GoldFill, InkPen, new Point(12, 12.4), 1.5, 1.5);
                 break;
             case HudGlyphKind.Fan:
                 dc.DrawGeometry(Water, InkPen, FanBlades);
@@ -786,6 +837,11 @@ public sealed class HudGlyph : FrameworkElement
             case HudGlyphKind.Hourglass:
                 dc.DrawGeometry(Water, InkPen, Glass);
                 dc.DrawGeometry(GoldFill, null, Sand);
+                break;
+            case HudGlyphKind.Home:
+                dc.DrawGeometry(PetUi.Frozen(Color.FromRgb(0xF6, 0xEE, 0xE2)), InkPen, HouseBody);
+                dc.DrawGeometry(Salmon, InkPen, HouseRoof);
+                dc.DrawRectangle(GoldFill, InkPen, new Rect(10, 15, 4, 6));
                 break;
             case HudGlyphKind.Bag:
                 dc.DrawGeometry(null, WhiteThin, BagHandle);

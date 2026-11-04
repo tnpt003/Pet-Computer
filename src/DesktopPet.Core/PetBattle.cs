@@ -305,6 +305,8 @@ public sealed partial class BattleSim
         dropRandom = BattleRandom.Stream(Seed, BattleRandom.Drops);
         mutationRandom = BattleRandom.Stream(Seed, BattleRandom.Mutations);
         trickRandom = BattleRandom.Stream(Seed, BattleRandom.Tricks);
+        mirageRandom = BattleRandom.Stream(Seed, BattleRandom.Mirage);
+        popupRandom = BattleRandom.Stream(Seed, BattleRandom.Popup);
         Loot = loot;
         Settings = settings;
         Stage = stage;
@@ -468,6 +470,9 @@ public sealed partial class BattleSim
         return CatTurn(dt, catX);
     }
 
+    // The plain combo inside a longer chain: the battle's ComboHits-th hit of a weapon whose chain is longer.
+    private bool MidCombo(int hit) => ComboHits > Settings.ComboHits && hit == Settings.ComboHits;
+
     private void CancelSwing() { SwingTime = -1; swingHit = false; ComboSwing = false; chargedSwing = false; swingWallId = 0; }
 
     public const double LandingRushSeconds = 2, ComboRushSeconds = 3, AutoShieldBelow = 0.3, ExecuteBelow = 0.3;
@@ -513,9 +518,20 @@ public sealed partial class BattleSim
             return new(CatCommand.Stand, catX, swingFacing);
         }
         BlockedById = 0;
+        WatchedWallId = 0;
         if (CatStunned) return new(CatCommand.Stand, catX);
         // Put down on top of a blocker: a few steps off it to the nearest free side.
         if (Unstick(catX) is double free) return new(CatCommand.Move, free, free < catX ? -1 : 1);
+        // A wall climber up its edge (chosen, or the only ones left): the cat goes near that edge and looks
+        // up at it, never pressed against the edge (2026-11-04, docs/GOPY-C-2026-11-04.md D5).
+        if (WallToWatch(target, catX) is Slime up)
+        {
+            WatchedWallId = up.Id;
+            if (watchedWallShown != up.Id) { watchedWallShown = up.Id; events.Add(new(BattleEventKind.WallWatched, up.X, up.Id)); }
+            double spot = Math.Clamp(up.WallSide < 0 ? Left + WallWatchGap : Right - WallWatchGap, Left + CatHalfWidth, Right - CatHalfWidth);
+            if (Math.Abs(spot - catX) > 8) return new(CatCommand.Move, spot, spot < catX ? -1 : 1);
+            return new(CatCommand.Stand, catX, up.WallSide);
+        }
         if (target == null) return new(CatCommand.Stand, catX);
         // A forced update: put down in it, the cat steps out; between the cat and its target, the cat
         // walks up to it and hits it (each hit brings the update closer to done).
@@ -550,7 +566,7 @@ public sealed partial class BattleSim
             if (CatCooldown <= 0)
             {
                 SwingTime = 0; swingHit = false; swingTargetId = target.Id; swingFacing = facing;
-                ComboSwing = LiveCombo == ComboHits - 1;
+                ComboSwing = LiveCombo == ComboHits - 1 || MidCombo(LiveCombo + 1);
                 // Momentum: a swing after a run is a charged one (the run starts again either way).
                 chargedSwing = MomentumReady;
                 runDistance = 0;
@@ -561,6 +577,24 @@ public sealed partial class BattleSim
             return new(CatCommand.Stand, catX, facing);
         }
         return new(CatCommand.Move, target.X - facing * reach * 0.7, facing);
+    }
+
+    // The wall climber the cat stands looking up at (0: none); how far from the edge it stands.
+    public int WatchedWallId { get; private set; }
+    public const double WallWatchGap = 90;
+    private int watchedWallShown;
+
+    // Chosen and up its edge: that one, unless an enemy on the floor is already within reach (the cat hits
+    // it first). Otherwise only once nothing on the floor is left: the nearest one up an edge.
+    private Slime? WallToWatch(Slime? target, double catX)
+    {
+        if (SelectedId is int id && Find(id) is { Targetable: true, OnWall: true } chosen)
+            return target != null && Math.Abs(target.X - catX) <= Reach(target) ? null : chosen;
+        if (target != null) return null;
+        Slime? best = null;
+        foreach (var s in slimes)
+            if (s.Targetable && s.OnWall && !s.Handled && (best == null || Math.Abs(s.X - catX) < Math.Abs(best.X - catX))) best = s;
+        return best;
     }
 
     // The blocker standing in the cat's way to its target (null: the way is clear).
@@ -614,7 +648,8 @@ public sealed partial class BattleSim
         if (CatDazzled) { AddEffect(BattleEffectKind.Miss, slime.X, slime.Height / 2); Combo = 0; return; }
         Combo = LiveCombo + 1;
         comboClock = 0;
-        bool combo = Combo >= ComboHits;
+        // A long chain (the glove) has a plain combo on the battle's ComboHits on the way (2026-11-04).
+        bool mid = MidCombo(Combo), combo = Combo >= ComboHits || mid;
         double damage = arms.Damage * DamageFactor * ArmsFactor * SkillRushFactor * (CheerRemaining > 0 ? Settings.CheerDamage : 1) * (combo ? Settings.ComboDamage : 1);
         // Armor break: combo hits hit harder.
         if (combo && Active("armorBreak") is SynergySpec breaker) damage *= 1 + breaker.Amount;
@@ -635,7 +670,9 @@ public sealed partial class BattleSim
         double knock = arms.Knock + knockBonus;
         events.Add(new(combo ? BattleEventKind.ComboHit : BattleEventKind.SlimeHit, slime.X));
         AddEffect(combo || charged || countered || crit ? BattleEffectKind.Combo : arms.Effect == "thud" ? BattleEffectKind.Thud : BattleEffectKind.Spark, slime.X, slime.Height / 2);
-        if (combo) { Combo = 0; CombosLanded++; }
+        if (combo) { if (!mid) Combo = 0; CombosLanded++; }
+        // The glove's last blow (its own chain's end) cracks an ice shell open (2026-11-04).
+        if (combo && !mid && arms.Launch > 0 && slime.Iced) BreakIce(slime);
         // A blocked or shrugged-off hit (or the last one) moves nothing.
         hitTone = crit ? NumberTone.Crit : combo ? NumberTone.Combo : NumberTone.Plain;
         var result = Damage(slime, damage, combo ? DamageSource.Combo : DamageSource.Weapon);
@@ -658,7 +695,7 @@ public sealed partial class BattleSim
             slime.KnockVelocity = (slime.X < catX ? -1 : 1) * RageKnockOf(combo ? Math.Max(Settings.ComboKnock, knock) : knock) * slime.Type.PushFactor;
         // The yarn draws a slime that keeps its distance in; the glove's combo tosses its enemy up (PetBattle.Weapons.cs).
         if (landed) PullIn(slime, catX);
-        if (landed && combo) LaunchUp(slime, catX);
+        if (landed && combo && !mid) LaunchUp(slime, catX);
         // Raging or a sweeping weapon: the swing also hits every other enemy in its reach.
         if ((Raging || arms.Sweep) && !Over) Sweep(slime, plain, catX, swingFacing);
         // A weapon that stuns (the hammer): now and then a landed hit dazes the enemy and cuts its windup.
@@ -858,6 +895,7 @@ public sealed partial class BattleSim
         LinkFallen(slime, true);
         PackFallen(slime); // 2026-10-31: its merging pack rages (PetBattle.Links.cs).
         GiveBack(slime); // A thief gives back what it took (1.5 M16).
+        SprayKill(slime); // 2026-11-04: the hot-water spray gets more water.
         AppsEnemyDefeated(slime);
         // A bomb slime defeated while lit fizzles out (2026-10-31: it no longer blows up there, a dud); a
         // splitting one breaks apart (1.5 M11).
@@ -957,7 +995,8 @@ public sealed partial class BattleSim
     // Click on a slime: the cat goes for it first. Never deals damage by itself.
     public bool Select(int id)
     {
-        if (Over || Paused || Find(id) is not { Targetable: true, Riding: false, Airborne: false, Faded: false, Burrowed: false }) return false;
+        // A wall climber up its edge can be chosen too: the cat goes to watch it (2026-11-04).
+        if (Over || Paused || Find(id) is not { Targetable: true, Riding: false, Faded: false, Burrowed: false } s || (s.Airborne && !s.OnWall)) return false;
         SelectedId = id;
         return true;
     }

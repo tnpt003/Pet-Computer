@@ -167,11 +167,10 @@ public sealed partial class BattleSim
         StepHold(dt, rules);
         if (catHeld) return;
         StepVirusFiles(dt, rules);
-        bool locked = PopupsLocked;
+        // 2026-11-04: an ad an infected Tabs keeps open still runs out (it cannot be closed meanwhile).
         for (int i = popups.Count - 1; i >= 0; i--)
         {
             var popup = popups[i];
-            if (locked) continue;
             popup.Age += dt;
             if (popup.Age < popup.Life) continue;
             popups.RemoveAt(i);
@@ -362,9 +361,12 @@ public sealed partial class BattleSim
     }
 
     // A new wave: one clean icon moves house (from the second wave on), and maybe a virus some seconds in.
+    private int popupSpawns;
+
     private void AppsWaveStarted()
     {
         infectTimer = double.NaN;
+        popupSpawns = 0;
         eliteShots = 0;
         if (AppRules is not AppsSpec rules) return;
         EnsureDesktop();
@@ -784,10 +786,28 @@ public sealed partial class BattleSim
     private void PopupRanOut(BattlePopup popup, AppsSpec rules)
     {
         AddEffect(BattleEffectKind.Poof, popup.X, 40);
-        if (Alive >= maxAlive || Settings.EnemyTypes.All(e => e.Id != rules.PopupSpawn)) return;
-        var slime = AddSlime(popup.X, Settings.Enemy(rules.PopupSpawn));
+        // 2026-11-04: at most AdCount slimes out of ads a wave (an infected Tabs keeps opening them).
+        if (Alive >= maxAlive || popupSpawns >= rules.AdCount || PopupKind(rules) is not EnemyType kind) return;
+        popupSpawns++;
+        var slime = AddSlime(popup.X, kind);
         slime.Facing = lastCatX < slime.X ? -1 : 1;
         events.Add(new(BattleEventKind.PopupSpawned, slime.X, slime.Id));
+    }
+
+    private List<EnemyType>? popupPool;
+    private readonly Random popupRandom;
+
+    // What an ad lets out (2026-11-04): one of PopupKinds this battle's waves can bring, drawn on the apps'
+    // own stream (never the apps' one); none: PopupSpawn as before.
+    private EnemyType? PopupKind(AppsSpec rules)
+    {
+        if (popupPool == null)
+        {
+            var here = BattleData.WaveKinds(Settings, WavePlan).ToHashSet();
+            popupPool = (rules.PopupKinds ?? Array.Empty<string>()).Where(here.Contains).Distinct().Select(Settings.Enemy).ToList();
+        }
+        if (popupPool.Count > 0) return popupPool[popupRandom.Next(popupPool.Count)];
+        return Settings.EnemyTypes.FirstOrDefault(e => e.Id == rules.PopupSpawn);
     }
 
     // The ad's ×: it closes (whatever the cat is doing).

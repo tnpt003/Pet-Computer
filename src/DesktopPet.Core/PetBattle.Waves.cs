@@ -48,7 +48,7 @@ public sealed partial class BattleSim
             var wave = WavePlan[Math.Min(Wave, WaveCount) - 1]; // A survive stage repeats its last wave.
             stream = wave.Stream;
             wave = Crowded(wave); // 1.5 M24: a crowd mutation.
-            if (stream == null) pending.AddRange(SpawnDirector.Units(wave, spawnRandom, Cost, Settings.Formation, Threat));
+            if (stream == null) { pending.AddRange(SpawnDirector.Units(wave, spawnRandom, Cost, Settings.Formation, Threat)); PackMergers(pending); }
             eliteBudget = SpawnDirector.BudgetLeft(wave, pending, Cost);
             Phase = BattlePhase.Fighting;
             spawnTimer = 0;
@@ -75,7 +75,7 @@ public sealed partial class BattleSim
         if (incoming != null)
         {
             IncomingRemaining = Math.Max(0, IncomingRemaining - dt);
-            if (IncomingRemaining > 0 || Alive + incoming.Length > maxAlive) return;
+            if (IncomingRemaining > 0 || Alive + UnitRoom(incoming) > maxAlive) return;
             int before = slimes.Count;
             SpawnUnit(catX, incoming, IncomingEdge, incomingElite);
             if (incomingCalled) TagCalled(before); // A timer's call (1.5 M16).
@@ -110,7 +110,7 @@ public sealed partial class BattleSim
         }
         // A unit waits until the floor has room for all of it (later ones wait behind it). Side "a"
         // comes from the edge far from the cat, "b" from the other one after a warning arrow.
-        if (pendingNext < pending.Count && Alive + pending[pendingNext].Kinds.Length <= maxAlive && spawnTimer <= 0)
+        if (pendingNext < pending.Count && Alive + UnitRoom(pending[pendingNext].Kinds) <= maxAlive && spawnTimer <= 0)
         {
             var unit = pending[pendingNext++];
             // A formation's first part: its banner (Value: its index in the data).
@@ -178,6 +178,7 @@ public sealed partial class BattleSim
 
     private void SpawnUnit(double catX, string[] kinds, int edge, bool[]? elite = null)
     {
+        if (kinds.Length > 1 && UnitRoom(kinds) == 1) mergeArrival = 0; // A whole pack: middle one first.
         if (kinds.Length == 1) Spawn(catX, Settings.Enemy(kinds[0]), edge, elite?[0] == true);
         else SpawnSquad(catX, kinds.Select(Settings.Enemy).ToArray(), edge, elite);
     }
@@ -299,6 +300,33 @@ public sealed partial class BattleSim
             if (flags[i]) ForceElite(slime); else RollElite(slime);
         }
         events.Add(new(BattleEventKind.SlimeSpawned, back));
+    }
+
+    // A pack of merging slimes (2026-11-04): a wave's lone ones of such a kind come as one unit of up to the
+    // pack's count (taken from later in the queue, so they arrive at once), and the pack takes one place on
+    // the floor (Alive may go over maxAlive while it is in).
+    private static bool PackKind(EnemyType t) => t.Link is { Kind: EnemyLinks.Merge, AfterHeal: false, Count: > 1 };
+
+    private int UnitRoom(string[] kinds) => kinds.Length > 1 && kinds.All(k => PackKind(Settings.Enemy(k))) ? 1 : kinds.Length;
+
+    private void PackMergers(List<SpawnUnit> units)
+    {
+        for (int i = 0; i < units.Count; i++)
+        {
+            var unit = units[i];
+            if (unit.Kinds.Length != 1 || unit.Formation != null || Settings.Enemy(unit.Kinds[0]) is not { } kind || !PackKind(kind)) continue;
+            var kinds = new List<string> { unit.Kinds[0] };
+            var elite = new List<bool> { unit.Elite?[0] == true };
+            for (int j = i + 1; j < units.Count && kinds.Count < kind.Link!.Count; j++)
+            {
+                var later = units[j];
+                if (later.Kinds.Length != 1 || later.Kinds[0] != unit.Kinds[0] || later.Formation != null || later.Side != unit.Side) continue;
+                kinds.Add(later.Kinds[0]);
+                elite.Add(later.Elite?[0] == true);
+                units.RemoveAt(j--);
+            }
+            if (kinds.Count > 1) units[i] = unit with { Kinds = kinds.ToArray(), Elite = elite.Any(e => e) ? elite.ToArray() : null };
+        }
     }
 
     // A fusing trio: the first in the middle, the other two side by side at the same edge (the one further

@@ -33,6 +33,26 @@ public sealed partial class PetWindow
     public const string BagStatsTab = "stats", BagCardsTab = "cards", BagRelicsTab = "relics";
     public const string BagBattle = "battle", BagAdventure = "adventure", BagExpedition = "expedition", BagEndless = "endless";
     public const double BagWidth = 440, BagMaxHeight = 540;
+    // 2026-11-04: a fixed column on the Bag's left says what the card, synergy or relic under the mouse does,
+    // so a description never scrolls out of sight (the guide line while the mouse is on none).
+    public const double BagAboutWidth = 240;
+    private TextBlock? bagAbout;
+    public string BattleBagAbout => bagAbout?.Text ?? "";
+
+    private string BagAboutGuide() => bagTab switch
+    {
+        BagCardsTab => L("Rê chuột lên một thẻ hoặc cộng hưởng để xem mô tả ở đây.", "Hover a card or a synergy to see what it does here."),
+        BagRelicsTab => L("Rê chuột lên một di vật để xem mô tả ở đây.", "Hover a relic to see what it does here."),
+        _ => L("Mở tab Thẻ hoặc Di vật rồi rê chuột lên một ô để xem mô tả ở đây.", "Open Cards or Relics and hover one to see what it does here.")
+    };
+
+    // Shows a description in the left column (null: back to the guide line).
+    private void BagAbout(string? text)
+    {
+        if (bagAbout == null) return;
+        bagAbout.Text = text ?? BagAboutGuide();
+        bagAbout.Foreground = text == null ? PetUi.Game.Soft : Brushes.White;
+    }
     // Card tiles per row in the Bag, in line with the three synergy medals above (relic slots: up to this many share a row).
     private const int BagCardColumns = 3;
     private static readonly string[] BagTabs = { BagStatsTab, BagCardsTab, BagRelicsTab };
@@ -196,8 +216,17 @@ public sealed partial class PetWindow
             Padding = new Thickness(14, 12, 14, 12), Margin = new Thickness(6), Width = BagWidth, Child = body,
             Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 6, ShadowDepth = 1, Opacity = 0.4 }
         };
-        panel.SetValue(TextBlock.FontFamilyProperty, PetUi.TextFont);
-        var window = CreateOverlayWindow(panel, "Pet bag");
+        bagAbout = new TextBlock { FontSize = PetUi.SmallSize, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 6, 0, 0) };
+        var aboutPane = new Border
+        {
+            Background = HudBack, BorderBrush = PetUi.Game.Rim, BorderThickness = new Thickness(1.5), CornerRadius = new CornerRadius(12),
+            Padding = new Thickness(12, 12, 12, 12), Margin = new Thickness(6, 6, 0, 6), Width = BagAboutWidth,
+            Child = new StackPanel { Children = { new TextBlock { Text = L("Mô tả", "Details"), Foreground = PetUi.Game.Gold, FontSize = PetUi.SmallSize, FontWeight = FontWeights.Bold }, bagAbout } },
+            Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 6, ShadowDepth = 1, Opacity = 0.4 }
+        };
+        var both = new StackPanel { Orientation = Orientation.Horizontal, Children = { aboutPane, panel } };
+        both.SetValue(TextBlock.FontFamilyProperty, PetUi.TextFont);
+        var window = CreateOverlayWindow(both, "Pet bag");
         window.SizeToContent = SizeToContent.WidthAndHeight;
         window.LocationChanged += (_, _) => { if (!bagPlacing && window.IsVisible && window == bagWindow) bagPlace = new Point(window.Left, window.Top); };
         window.Closed += (_, _) => { if (bagWindow == window) bagWindow = null; };
@@ -300,6 +329,7 @@ public sealed partial class PetWindow
             ShowChosen(button, tab == bagTab);
         }
         bagBody.Children.Clear();
+        BagAbout(null);
         switch (bagTab)
         {
             case BagCardsTab: FillBagCards(view); break;
@@ -585,7 +615,8 @@ public sealed partial class PetWindow
         }
         string desc = y.Describe(preferences.Language);
         string what = $"★ {y.Name(preferences.Language)} · {BuildGroups.Name(group, preferences.Language)} {y.At}" + (desc.Length > 0 ? " — " + desc : "");
-        medal.MouseEnter += (_, _) => { about.Text = what; about.Foreground = Brushes.White; };
+        medal.MouseEnter += (_, _) => BagAbout(what);
+        medal.MouseLeave += (_, _) => BagAbout(null);
         return medal;
     }
 
@@ -597,8 +628,7 @@ public sealed partial class PetWindow
         // Each group: a bar cut at its synergies' thresholds, then one medal per synergy (picture,
         // name, state) in equal columns, so no text runs out of the Bag. Hovering one says what it does.
         var progress = new StackPanel();
-        var synergyAbout = BagLine(L("Rê chuột lên một cộng hưởng để xem nó làm gì.", "Hover a synergy to see what it does."), PetUi.CaptionSize, PetUi.Game.Soft);
-        synergyAbout.Margin = new Thickness(2, 6, 0, 0); synergyAbout.MinHeight = 30;
+        var synergyAbout = new TextBlock(); // Kept for SynergyMedal's signature; the left column shows the text.
         // The switched-on medals shine once when they are first shown (opening the tab, a new one).
         var on = settings.SynergyList.Where(y => sim.CanUnlock(y) && sim.GroupPoints(y.Group) >= y.At).Select(y => y.Id).ToList();
         string shineKey = bagTab + ":" + string.Join(",", on);
@@ -658,15 +688,9 @@ public sealed partial class PetWindow
             }
         }
         if (sideBySide) progress.Children.Add(columns);
-        if (groups.Count > 0)
-        {
-            progress.Children.Add(synergyAbout);
-            bagBody!.Children.Add(BagCard(progress, bottom: 8));
-        }
+        if (groups.Count > 0) bagBody!.Children.Add(BagCard(progress, bottom: 8));
 
         var cards = settings.UpgradeList.Where(u => sim.Stacks(u.Id) > 0).OrderBy(u => Array.IndexOf(BuildGroups.All, u.Group ?? "")).ToList();
-        var detail = BagLine(L("Rê chuột lên một thẻ để xem nó làm gì.", "Hover a card to see what it does."), PetUi.CaptionSize, PetUi.Game.Soft);
-        detail.Margin = new Thickness(2, 6, 0, 0); detail.MinHeight = 30;
         if (cards.Count == 0)
         {
             var empty = new StackPanel { HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 6, 0, 6), Children =
@@ -703,10 +727,11 @@ public sealed partial class PetWindow
                 Child = face
             };
             string about = u.Name(preferences.Language) + (n > 1 ? $" ×{n}" : "") + " — " + u.Describe(preferences.Language) + (u.Rare ? L(" (thẻ hiếm)", " (rare card)") : "");
-            tile.MouseEnter += (_, _) => { detail.Text = about; detail.Foreground = Brushes.White; };
+            tile.MouseEnter += (_, _) => BagAbout(about);
+            tile.MouseLeave += (_, _) => BagAbout(null);
             tiles.Children.Add(tile);
         }
-        bagBody!.Children.Add(BagCard(new StackPanel { Children = { tiles, detail } }));
+        bagBody!.Children.Add(BagCard(new StackPanel { Children = { tiles } }));
     }
 
     // ── Relics and the run's log ─────────────────────────────────────────────────────────────
@@ -749,12 +774,19 @@ public sealed partial class PetWindow
                 FontWeight = FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center, Margin = new Thickness(0, 4, 0, 0), MaxWidth = 100 };
             UIElement picture = relic != null ? new BagIcon { Kind = relic.Effect, Width = 44, Height = 44 }
                 : (UIElement)new TextBlock { Text = "?", FontSize = 26, FontWeight = FontWeights.Bold, Foreground = PetUi.Game.Soft, HorizontalAlignment = HorizontalAlignment.Center, Height = 44 };
-            slots.Children.Add(new Border
+            var slot = new Border
             {
                 MinHeight = 86, Margin = new Thickness(3, 0, 3, 6), Padding = new Thickness(6), CornerRadius = new CornerRadius(9),
                 Background = relic != null ? PetUi.Game.CardBack : Brushes.Transparent, BorderBrush = relic != null ? PetUi.Game.Gold : PetUi.Game.CardRim,
                 BorderThickness = new Thickness(1.5), Child = new StackPanel { Children = { picture, name } }
-            });
+            };
+            if (relic != null)
+            {
+                string about = "◈ " + relic.Name(preferences.Language) + " — " + relic.Describe(preferences.Language);
+                slot.MouseEnter += (_, _) => BagAbout(about);
+                slot.MouseLeave += (_, _) => BagAbout(null);
+            }
+            slots.Children.Add(slot);
         }
         var top = new StackPanel { Children = { BagLine(LF($"Di vật {sim.Relics.Count}/{x.Spec.MaxRelics}", $"Relics {sim.Relics.Count}/{x.Spec.MaxRelics}"), PetUi.SmallSize, Brushes.White, bold: true), slots } };
         ((TextBlock)top.Children[0]).Margin = new Thickness(0, 0, 0, 6);

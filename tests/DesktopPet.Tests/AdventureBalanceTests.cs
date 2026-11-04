@@ -296,8 +296,10 @@ internal static class AdventureBalanceTests
                 double most = i == 2 ? 0.95 : 0.9;
                 check(simple.HpShare <= most, $"Chapter 2 balance: stage {i}, {weapon}, Normal, the simple player ends with ≤ {most:P0} HP ({simple.HpShare:P0})");
             }
-        double longest = table.Where(r => r.Value.Wins * Seeds >= 2).Max(r => r.Value.Seconds);
-        check(longest <= 240, $"Chapter 2 balance: no stage takes longer than 4 minutes on average (longest {longest:0} s)");
+        // The idle player is left out as in chapter 1 (2026-11-04: the cat's combos now pop a bubble by
+        // themselves, so an idle cat sometimes wins stage 5 — slowly, by nature).
+        double longest = table.Where(r => r.Key.Item4 != Player.Idle && r.Value.Wins * Seeds >= 2).Max(r => r.Value.Seconds);
+        check(longest <= 240, $"Chapter 2 balance: no stage takes longer than 4 minutes on average for a player who fights (longest {longest:0} s)");
         foreach (var level in levels)
             for (int i = 1; i <= stages.Length; i++)
             {

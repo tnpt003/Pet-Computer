@@ -161,9 +161,10 @@ public sealed partial class PetWindow
             // 1.5 M24: an Infinity mutation: its drawback, then its reward in gold.
             if (battle.Stage?.Infinity?.Mutations?.Find(id) is MutationSpec rule && battle.ChoosingMutation)
             {
+                // 2026-11-04: labelled lines (what it does, what it pays), wrapped whole, never cut.
                 name.Text = (chosen ? "✓ " : "") + rule.Name(preferences.Language);
-                desc.Text = rule.Describe(preferences.Language);
-                build.Text = "★ " + rule.RewardText(preferences.Language);
+                desc.Text = L("Hiệu ứng: ", "Effect: ") + rule.Describe(preferences.Language);
+                build.Text = "★ " + L("Thưởng: ", "Reward: ") + rule.RewardText(preferences.Language);
                 build.Foreground = RareGold;
                 count.Text = L("Tới khi qua trùm kế", "Until the next boss is beaten");
                 count.Foreground = Brushes.White;

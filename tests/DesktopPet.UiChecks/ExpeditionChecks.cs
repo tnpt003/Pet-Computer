@@ -400,7 +400,7 @@ internal static class ExpeditionChecks
                 "The step's battle has the run's relic");
             hud = (BattleHud)FieldOf("battleHud").GetValue(window)!;
             hud.Update(window.Battle!, false, false, false, false);
-            check(hud.UpgradesText.Contains("◈ Bell"), $"The HUD lists the relic ({hud.UpgradesText})");
+            check(hud.BuildList.Contains("◈ Bell") && hud.UpgradesText.Contains("◈1"), $"The HUD lists the relic ({hud.UpgradesText})");
             window.EndBattle();
             window.Reset();
             check(new BattleSim(window.BattleTuning, 0, 1600).Relics.Count == 0, "A free battle has no relics");

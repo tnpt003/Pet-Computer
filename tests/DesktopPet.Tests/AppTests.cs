@@ -197,16 +197,22 @@ internal static class AppTests
             $"Infected Tabs opens three ads spread over the floor ({string.Join(", ", xs.Select(x => x.ToString("0")))})");
         var ad = sim.Popups[0];
         double adAge = ad.Age;
-        Run(sim, 4);
-        check(sim.PopupsLocked && !sim.ClosePopup(ad.Id) && sim.Popups.Count == 3 && sim.Events.Any(e => e.Kind == BattleEventKind.PopupLocked) && ad.Age == adAge,
-            "While Tabs is infected its ads cannot be closed (a PopupLocked event) and do not run out");
+        Run(sim, 2);
+        // 2026-11-04: locked, they still run out (and let a slime out when the floor has room).
+        check(sim.PopupsLocked && !sim.ClosePopup(ad.Id) && sim.Popups.Count == 3 && sim.Events.Any(e => e.Kind == BattleEventKind.PopupLocked) && ad.Age > adAge,
+            "While Tabs is infected its ads cannot be closed (a PopupLocked event), but their clock runs on");
         var tabsIcon = App(sim, BattleAppKind.Tabs);
         while (tabsIcon.Infected) sim.UseApp(tabsIcon.Id, 800);
         sim.SetCatState(true, true);
         check(!sim.PopupsLocked && sim.ClosePopup(ad.Id) && sim.Popups.Count == 2 && sim.PopupsClosed == 1, "Once Tabs is clean the ad's × closes it, even with the cat in the user's hands");
         sim.SetCatState(false, false);
         int alive = sim.Alive, room = Math.Min(2, sim.Settings.MaxAlive - alive);
+        int ranBefore = sim.Slimes.Count;
         int spawned = Until(sim, () => sim.Popups.Count == 0, 4, BattleEventKind.PopupSpawned);
+        var here = BattleData.WaveKinds(sim.Settings, sim.WavePlan).ToHashSet();
+        var allowed = sim.Settings.Apps!.PopupKinds.Where(here.Contains).ToHashSet();
+        if (allowed.Count == 0) allowed.Add(sim.Settings.Apps.PopupSpawn);
+        check(sim.Slimes.Skip(ranBefore).All(x => allowed.Contains(x.Type.Id)), $"An ad lets out one of the safe kinds this battle brings ({string.Join(", ", sim.Slimes.Skip(ranBefore).Select(x => x.Type.Id))})");
         check(room > 0 && spawned == room && sim.Alive == alive + room && sim.Popups.Count == 0, $"Left alone, each ad goes and lets a slime out while the floor has room ({alive} → {sim.Alive})");
 
         sim = Sick(BattleAppKind.Ping);

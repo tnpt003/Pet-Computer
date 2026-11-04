@@ -907,6 +907,9 @@ public sealed partial class PetWindow
         battleHud.ContinueClicked += () => BattleResumeCursor();
         battleHud.PauseClicked += () => { if (battle != null) SetBattlePaused(!BattleUserPaused); };
         battleHud.EndClicked += EndBattleByUser;
+        // 2026-11-04: a free battle (no stage of a mode) shows the way back to the hub.
+        battleHud.HubShown = battle != null && (battle.Stage == null || battle.Stage.Custom) && battleExpedition == null && !battle.Endless;
+        battleHud.HubClicked += BackToHubByUser;
         battleHud.BagClicked += () => { if (battle != null) { if (BattleBagOpen) CloseBattleBag(); else if (OpenBattleBag() is string reason) ShowBattleNotice(reason); } };
         var grip = battleHud.Grip;
         grip.MouseLeftButtonDown += (_, e) => { e.Handled = true; if (e.ClickCount >= 2) ResetBattleHudSpot(); else StartBattleHudDrag(); };

@@ -78,13 +78,25 @@ internal static class BattleNewWeaponTests
         void Pin() { if (!a.Handled) { a.X = 150; a.KnockVelocity = 0; } }
         var combos = new List<bool?>();
         for (int i = 0; i < 5; i++) combos.Add(Swing(sim, Pin));
-        check(combos.Take(4).All(c => c == false) && combos[4] == true, $"Four plain punches, then the combo ({string.Join(",", combos)})");
+        // 2026-11-04: a plain combo on the battle's third hit on the way, then the glove's own on the fifth.
+        check(combos[0] == false && combos[1] == false && combos[2] == true && combos[3] == false && combos[4] == true,
+            $"Combos on the third and the fifth punch ({string.Join(",", combos)})");
         sim.Step(dt, 100, false); sim.ClearEvents();
         check(a.Tossed && a.Launched && a.Handled && a.Lift > 0 && sim.WeaponLaunches == 1 && sim.TargetId != a.Id, "The combo tosses the slime up; in the air it is out of the fight");
         double top = 0;
         for (int i = 0; i < 120 && a.Tossed; i++) { sim.Step(dt, 100, false); top = Math.Max(top, a.Lift); }
         check(!a.Tossed && !a.Launched && a.Lift == 0 && a.State == SlimeState.Stunned && top > 60, $"It lands dazed ({top:0} DIPs high)");
         check(!sim.GrabberBusy, "A launch is not the Grabber at work");
+
+        // The third punch's combo does not launch; the fifth cracks an ice shell open.
+        var cold = Field("glove", new EnemyType { Id = "icy", MaxHp = 1000, Speed = 0, Damage = 0, Range = 64, Windup = 0.4, AttackCooldown = 1, Recover = 0.2,
+            Ice = BattleData.Settings.Enemy("icy").Ice, ThrowHit = BattleData.Settings.Enemy("icy").ThrowHit });
+        var ice = cold.Slimes[0];
+        void PinIce() { if (!ice.Handled) { ice.X = 150; ice.KnockVelocity = 0; } }
+        for (int i = 0; i < 3; i++) Swing(cold, PinIce);
+        check(ice.Iced && cold.WeaponLaunches == 0, "The third punch's combo neither launches nor breaks the ice");
+        for (int i = 0; i < 2; i++) Swing(cold, PinIce);
+        check(!ice.Iced && cold.IceBreaks == 1, "The glove's fifth punch cracks an ice shell open");
 
         var boss = Field("glove", Dummy("king", boss: true));
         var king = boss.Slimes[0];

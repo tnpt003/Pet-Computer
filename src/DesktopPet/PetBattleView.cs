@@ -272,6 +272,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         DrawDrops(dc, floor, time); // 1.5 M19
         for (int i = 0; i < sim.Effects.Count; i++) DrawEffect(dc, sim.Effects[i], sim.Effects[i].X - OriginX, floor - sim.Effects[i].Height, floor);
         if (sim.Incoming) DrawIncoming(dc, sim.IncomingX - OriginX, floor, time);
+        if (sim.WatchedWallId != 0 && sim.Find(sim.WatchedWallId) is { WallSide: int side }) DrawWallWatch(dc, side, floor, time);
         DrawPopups(dc, floor, time);
         DrawHazards(dc, floor, time);
         DrawSnap(dc, floor, time); // 1.5 M26 (PetBattleView.Snap.cs)
@@ -291,6 +292,22 @@ public sealed partial class BattleFieldView : FrameworkElement
         dc.DrawLine(WarningPen, new Point(x, ey - 9), new Point(x, ey + 1));
         dc.DrawEllipse(Warning, Halo, new Point(x, ey + 7), 2.4, 2.4);
         dc.DrawEllipse(Warning, null, new Point(x, ey + 7), 2.4, 2.4);
+    }
+
+    // The cat looks up at a wall climber it cannot reach (2026-11-04): a gold "!" just clear of the cat on the
+    // wall's side, bobbing, with a small arrow pointing up the wall.
+    private void DrawWallWatch(DrawingContext dc, int side, double floor, double time)
+    {
+        double x = ClearOfCat(sim.CatX - OriginX + side * 30, 14, floor - 60), y = floor - 74 + 3 * Math.Sin(time * 6);
+        dc.DrawLine(Halo, new Point(x, y - 9), new Point(x, y + 1));
+        dc.DrawLine(WarningPen, new Point(x, y - 9), new Point(x, y + 1));
+        dc.DrawEllipse(Warning, Halo, new Point(x, y + 7), 2.4, 2.4);
+        dc.DrawEllipse(Warning, null, new Point(x, y + 7), 2.4, 2.4);
+        double ax = x + side * 12, ay = y - 2;
+        dc.DrawLine(Halo, new Point(ax, ay + 8), new Point(ax, ay - 8));
+        dc.DrawLine(WarningPen, new Point(ax, ay + 8), new Point(ax, ay - 8));
+        dc.DrawLine(WarningPen, new Point(ax - 4, ay - 4), new Point(ax, ay - 8));
+        dc.DrawLine(WarningPen, new Point(ax + 4, ay - 4), new Point(ax, ay - 8));
     }
 
     // Where a boss's helpers will appear: purple rings on the floor filling up as they come, a "!" over each.

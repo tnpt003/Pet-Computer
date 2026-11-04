@@ -140,6 +140,11 @@ public sealed class BattleSettings
     public double ScissorsMinLength { get; init; } = 40;
     public double SprayTankSeconds { get; init; } = 4;
     public double SprayRefillSeconds { get; init; } = 8;
+    // 2026-11-04, the hot-water spray: a slime falling while it is sprayed gives the tank this many seconds
+    // more (up to SprayTankMax x a full one); an ice shell sprayed this long melts away.
+    public double SprayKillSeconds { get; init; } = 1.5;
+    public double SprayTankMax { get; init; } = 1.5;
+    public double SprayMeltSeconds { get; init; } = 3;
     public double SprayRange { get; init; } = 70;
     public double SprayDps { get; init; } = 2;
     public double SprayChill { get; init; } = 0.35;
@@ -632,11 +637,20 @@ public sealed class Slime
     // A mirage: the real one this copy imitates (0: not a copy); copies already made; a copy gone.
     public int DecoyOf;
     public bool Cast, Dispelled;
+    // The real one's time to its next shuffle roll (2026-11-04).
+    public double ShuffleClock;
+    // How long the hot-water spray has been on its ice shell (2026-11-04).
+    public double MeltClock;
     public bool Decoy => DecoyOf != 0;
     // A sulk: how puffed up it is (1: not; its hits grow with it), how soothed (0–1), the time since the
     // last stroke; soothed and leaving (drawn waving goodbye).
     public double Puff = 1, Calm, CalmIdle;
     public bool Calmed;
+    // 2026-11-04 (docs/GOPY-C-2026-11-04.md D5): when the cursor last stroked it (battle time), the cat's
+    // direct hits on it while fully puffed up, and whether it burst into tears and ran off (no loot).
+    public double StrokedAt = -10;
+    public int Tantrum;
+    public bool Tantrumed;
     // 1.5 M14 (PetBattle.Fly.cs). A flyer: where it is in its round (aloft, falling, down, crouching to
     // rise), the spot it flies to (battle x, height of its bottom over the floor), the time to its next
     // spot, to its next shot and left of its aim (0: not aiming), drops still to shoot, its fall's
@@ -789,7 +803,7 @@ public enum BattleEventKind
     // vanished; a sulky slime puffed up from a hit, was stroked (its first stroke since it sulked again),
     // was soothed and left.
     GhostFaded, GhostRevealed, GhostMissed, BubbleBlocked, BubblePoked, BubblePopped, BubbleRegrown,
-    MirageCast, MirageDispelled, SulkPuffed, SulkPetted, SulkCalmed,
+    MirageCast, MirageDispelled, SulkPuffed, SulkPetted, SulkCalmed, SulkTantrum, MirageShuffled, SprayRefilled,
     // 1.5 M14 (Value: the enemy's id): a flyer aimed, shot a drop, its drop hit the cat (Value: 1 held),
     // it was knocked down (Value: 1 by the Grabber), landed, flew up again; a burrower's cracks showed, it
     // came up (Value: 1 it hit the cat), was pinned by the cat let go on it, pulled up by the Grabber, dug in.
@@ -798,7 +812,7 @@ public enum BattleEventKind
     // 1.5 M15 (Value: the enemy's id): the cat's weapon only scratched an ice shell, the thrown cat broke
     // it, it grew back, a too-slow throw cracked it; a wall climber reached its spot up the edge, aimed, dropped a spike, was knocked
     // off (Value: 1 by the Grabber), landed on the floor. A spike landing is a GooLanded (Value: 1 hit).
-    IceScratched, IceShattered, IceRegrown, IceCracked, ClingClimbed, ClingAimed, ClingShot, ClingKnocked, ClingLanded,
+    IceScratched, IceShattered, IceRegrown, IceCracked, ClingClimbed, ClingAimed, ClingShot, ClingKnocked, ClingLanded, WallWatched,
     // 1.5 M16 (Value: the enemy's id): a hedgehog's quills rose, stood up, lay flat (soaked: the spray did
     // it), pricked the cat hitting it; a timer's clock started, ran out (it called), its call came in; a
     // thief stole (Value: 1 a skill, 0 an app), gave it back on its defeat, got away with it.
@@ -1034,6 +1048,10 @@ public sealed record AppsSpec
     public double PopupEvery { get; init; } = 8;
     public double PopupSeconds { get; init; } = 8;
     public string PopupSpawn { get; init; } = "slime";
+    // 2026-11-04: the kinds an ad running out may let out, one drawn at random among those this battle's
+    // waves can bring (none of them: PopupSpawn). Kinds with arrival rules of their own (a pack, copies,
+    // a mount, a partner, a timer's calls, halves, bosses) are left out of the shipped list.
+    public string[] PopupKinds { get; init; } = { "slime", "runner", "rock", "spitter", "springer", "phantom", "bubble", "flyer", "burrower", "icy", "hedgehog", "thief", "clinger" };
     public int AdCount { get; init; } = 3;
     public double BellEvery { get; init; } = 10;
     public double BellDamage { get; init; } = 6;

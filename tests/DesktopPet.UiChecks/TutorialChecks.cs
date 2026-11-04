@@ -364,9 +364,10 @@ internal static class TutorialChecks
         TickBattle(1.0 / 60);
         check(window.BattlePressHold(Sim().CatX + 120, 20) && Sim().Spraying && !Sim().FanBlowing, "Held on the floor, the Spray sprays (not the Fan)");
         TickBattle(1.0 / 60);
-        check(window.BattleGuideStep == null && Sim().Spraying, "Spraying ends the step; it goes on while held");
+        check(window.BattleGuideStep == null && Sim().Spraying, "Spraying ends the step");
         window.BattleReleaseFan();
-        check(!Sim().Spraying && Sim().Armed == BattleSkill.Spray, "Let go, it stops and stays chosen");
+        // 2026-11-04, the hot-water spray: one click, then it sprays by itself until empty.
+        check(Sim().Spraying && Sim().Armed == BattleSkill.Spray, "Let go, it keeps spraying by itself (hot water)");
         window.EndBattle();
         foreach (var stage in new[] { teachGrabber, teachScissors, teachSpray }) window.AdventureProgress.Completed.Remove(stage.Id);
         prefs.BattleLoadout = null;

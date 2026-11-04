@@ -63,16 +63,19 @@ public sealed partial class BattleSim
     // falls off its edge.
     private void Thrown(Slime s)
     {
-        if (s.Iced)
-        {
-            s.Iced = false;
-            s.IceCracks = 0;
-            s.IceClock = IceRegrowTime(s);
-            IceBreaks++;
-            AddEffect(BattleEffectKind.Poof, s.X, s.Altitude + s.Height / 2);
-            events.Add(new(BattleEventKind.IceShattered, s.X, s.Id));
-        }
+        if (s.Iced) BreakIce(s);
         if (s.OnWall) KnockOff(s, false);
+    }
+
+    // The shell breaks (a throw, the glove's last blow): it grows back later.
+    private void BreakIce(Slime s)
+    {
+        s.Iced = false;
+        s.IceCracks = 0;
+        s.IceClock = IceRegrowTime(s);
+        IceBreaks++;
+        AddEffect(BattleEffectKind.Poof, s.X, s.Altitude + s.Height / 2);
+        events.Add(new(BattleEventKind.IceShattered, s.X, s.Id));
     }
 
     // Every step of an ice slime still in the battle: a broken shell grows back.

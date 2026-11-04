@@ -158,7 +158,7 @@ internal static class UpgradeChecks
             // 2026-10-24: Regrowth and Steady joined Defense, so the card is any Defense card but Thick fur.
             check(heart is { Rare: false } && heart.Id != "thick_fur" && window.BattleUpgradeText.Contains("Defense 2 → 3/3 · Thorns!"), $"The Defense card says it completes Thorns (Thick fur is at its limit; {heart?.Id})");
             window.PickBattleUpgrade(heart!.Id); window.ConfirmBattleUpgrade();
-            check(window.Battle.Synergies.Any(y => y.Id == "thorns") && Text(hud).Contains("★ THORNS!") && hud.UpgradesText.Contains("★ Thorns") && window.Battle.CatMaxHp == (heart.Id == "big_heart" ? 120 : 100),
+            check(window.Battle.Synergies.Any(y => y.Id == "thorns") && Text(hud).Contains("★ THORNS!") && hud.BuildList.Contains("★ Thorns") && window.Battle.CatMaxHp == (heart.Id == "big_heart" ? 120 : 100),
                 $"Taking it switches Thorns on with a banner; the HUD keeps a star for it ({hud.UpgradesText})");
             window.Reset();
             // The rare Defense card (Turtle shell) in its place completes the group just the same.
@@ -170,7 +170,7 @@ internal static class UpgradeChecks
             var shell = window.Battle!.UpgradeOffer?.FirstOrDefault(u => u.Group == "defense");
             check(shell?.Id == "turtle_shell" && window.BattleUpgradeText.Contains("Defense 2 → 3/3 · Thorns!"), "The rare Defense card also says it completes Thorns");
             window.PickBattleUpgrade(shell!.Id); window.ConfirmBattleUpgrade();
-            check(window.Battle.Synergies.Any(y => y.Id == "thorns") && Text(hud).Contains("★ THORNS!") && hud.UpgradesText.Contains("★ Thorns") && hud.UpgradesText.Contains("◆ Turtle shell") && window.Battle.CatMaxHp == 100,
+            check(window.Battle.Synergies.Any(y => y.Id == "thorns") && Text(hud).Contains("★ THORNS!") && hud.BuildList.Contains("★ Thorns") && hud.BuildList.Contains("◆ Turtle shell") && window.Battle.CatMaxHp == 100,
                 $"Taking it switches Thorns on too; the HUD shows the star and the rare card ({hud.UpgradesText})");
             window.Reset();
             // 1.5 M25: a Trickery card in the utility place, its ring and progress like the other groups'.

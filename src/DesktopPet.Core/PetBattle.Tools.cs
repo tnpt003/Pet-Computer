@@ -124,8 +124,10 @@ public sealed partial class BattleSim
             }
         }
         else { FanX = null; Refill(BattleSkill.Fan, ref fanSteam, dt); }
-        if (SprayX is double at && Holding(BattleSkill.Spray))
+        if (SprayX is double && Holding(BattleSkill.Spray))
         {
+            FollowSprayTarget();
+            double at = SprayX!.Value;
             sprayTank = Math.Max(0, sprayTank - dt / SprayTankSeconds);
             Soak(at, SprayHeight, dt);
             if (Over) return;
@@ -136,7 +138,7 @@ public sealed partial class BattleSim
                 events.Add(new(BattleEventKind.SpraySpent, at));
             }
         }
-        else { SprayX = null; sprayClock = 0; Refill(BattleSkill.Spray, ref sprayTank, dt); }
+        else { SprayX = null; SprayTargetId = 0; sprayClock = 0; Refill(BattleSkill.Spray, ref sprayTank, dt); }
         Bumps();
     }
 
@@ -151,24 +153,70 @@ public sealed partial class BattleSim
         tank = left > 0 ? 1 - left / refill : Math.Min(1, tank + dt / refill);
     }
 
-    // The mouse pressed (or moved) on the field with the Spray chosen: it sprays at (x, height).
+    // 2026-11-04, the hot-water spray: one click on the field starts it; it locks on the slime there (or the
+    // nearest one within SprayRange x 2 of the click) and keeps spraying it by itself until the tank is dry,
+    // the mouse free. Its slime gone, it moves to the nearest other one (none: it keeps to that spot).
+    // The skill put away (another chosen, Pause, the cat lifted) stops it.
+    public int SprayTargetId { get; private set; }
+    public int SprayMelts { get; private set; }
+    public int SprayKills { get; private set; }
+
     public bool StartSpray(double x, double height = 20)
     {
         if (Armed != BattleSkill.Spray || !Ready(BattleSkill.Spray) || !double.IsFinite(x) || !double.IsFinite(height)) return false;
-        bool fresh = SprayX == null;
+        if (SprayX != null) return true; // Already spraying: the click changes nothing.
         SprayX = Math.Clamp(x, Left, Right);
         SprayHeight = Math.Max(0, height);
-        if (fresh) { events.Add(new(BattleEventKind.SprayOn, SprayX.Value)); SkillUsed(); }
+        SprayTargetId = SprayCandidate(SprayX.Value, SprayHeight, Settings.SprayRange * 2)?.Id ?? 0;
+        FollowSprayTarget();
+        events.Add(new(BattleEventKind.SprayOn, SprayX.Value));
+        SkillUsed();
         return true;
     }
-    public void MoveSpray(double x, double height)
-    {
-        if (SprayX == null || !double.IsFinite(x) || !double.IsFinite(height)) return;
-        SprayX = Math.Clamp(x, Left, Right);
-        SprayHeight = Math.Max(0, height);
-    }
-    public void StopSpray() => SprayX = null;
+    // The mouse no longer steers it, and letting go does not stop it (kept for the window's calls).
+    public void MoveSpray(double x, double height) { }
+    public void StopSpray() { }
     public bool Spraying => SprayX != null;
+
+    // The slime nearest (x, height) a spray can lock on (within `within`; none: null).
+    private Slime? SprayCandidate(double x, double height, double within)
+    {
+        Slime? best = null;
+        double bestGap = within * within;
+        foreach (var s in slimes)
+        {
+            if (!s.Targetable || s.Shielded || InSky(s) || s.Burrowed) continue;
+            var (left, bottom, right, top) = Body(s);
+            double dx = Math.Max(0, Math.Max(left - x, x - right)), dy = Math.Max(0, Math.Max(bottom - height, height - top));
+            if (dx * dx + dy * dy <= bestGap) { best = s; bestGap = dx * dx + dy * dy; }
+        }
+        return best;
+    }
+
+    // The spray stays on its slime (the middle of its body); gone, on the nearest other one.
+    private void FollowSprayTarget()
+    {
+        if (SprayX is not double x) return;
+        if (SprayTargetId != 0 && Find(SprayTargetId) is not { Targetable: true })
+            SprayTargetId = SprayCandidate(x, SprayHeight, double.PositiveInfinity)?.Id ?? 0;
+        if (SprayTargetId == 0 || Find(SprayTargetId) is not Slime s) return;
+        var (_, bottom, _, top) = Body(s);
+        SprayX = Math.Clamp(s.X, Left, Right);
+        SprayHeight = (bottom + top) / 2;
+    }
+
+    // An enemy defeated within the spray's reach while it sprays: more water (2026-11-04).
+    private void SprayKill(Slime s)
+    {
+        if (SprayX is not double x || Settings.SprayKillSeconds <= 0) return;
+        var (left, bottom, right, top) = Body(s);
+        double dx = Math.Max(0, Math.Max(left - x, x - right)), dy = Math.Max(0, Math.Max(bottom - SprayHeight, SprayHeight - top));
+        double range = Settings.SprayRange;
+        if (s.Id != SprayTargetId && dx * dx + dy * dy > range * range) return;
+        sprayTank = Math.Min(Settings.SprayTankMax, sprayTank + Settings.SprayKillSeconds / SprayTankSeconds);
+        SprayKills++;
+        events.Add(new(BattleEventKind.SprayRefilled, s.X, s.Id));
+    }
 
     // Where an enemy's body is: its edges (battle x) and its bottom and top over the floor.
     private static (double Left, double Bottom, double Right, double Top) Body(Slime s)
@@ -193,6 +241,12 @@ public sealed partial class BattleSim
             if (dx * dx + dy * dy > range * range) continue;
             bool fresh = !s.Wet;
             s.WetRemaining = Settings.SpraySoakSeconds;
+            // Hot water: an ice shell sprayed long enough melts away (2026-11-04).
+            if (s.Iced)
+            {
+                s.MeltClock += dt;
+                if (s.MeltClock >= Settings.SprayMeltSeconds) { s.MeltClock = 0; SprayMelts++; BreakIce(s); }
+            }
             if (fresh || tick) ApplyStatus(s, SlimeStatus.Chill, Settings.SpraySoakSeconds, Settings.SprayChill);
             if (tick) ToolHit(s, Settings.SprayDps * run);
             if (Over) return;

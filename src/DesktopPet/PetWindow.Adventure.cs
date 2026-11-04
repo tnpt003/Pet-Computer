@@ -382,6 +382,13 @@ public sealed partial class PetWindow
         if (stage is { Custom: false } && OpenAdventureMap(stage.Id) is string reason) ShowBattleNotice(reason);
     }
 
+    // A free battle's hub button: the battle ends (no result panel), the hub opens to pick a mode.
+    public void BackToHubByUser()
+    {
+        EndBattle();
+        if (OpenBattleHub() is string reason) ShowBattleNotice(reason);
+    }
+
     // Reward accessories offered in Settings: the received ones (and one already worn).
     public bool AccessoryAvailable(string id) =>
         PetAccessories.Find(id) is not { Reward: not null } || AdventureProgress.Rewards.Contains(id) || preferences.Accessory == id || KeepsakeAccessory(id) || AchievementReward(id);

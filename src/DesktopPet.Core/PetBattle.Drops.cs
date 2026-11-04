@@ -5,7 +5,7 @@ namespace DesktopPet;
 
 // 1.5 M19 (docs/UPDATE-1.5.md M4, M5; docs/BATTLE-DATA.md → Đồ rơi và xu): what a defeated slime may
 // leave on the floor. Fish: some HP back; coin: the Expedition run's coins (only there); potion: the
-// carried skill with the longest cooldown left is ready at once. A click picks one up; left alone it
+// carried skill with the longest cooldown left gets potionSeconds back (2026-11-04). A click picks one up; left alone it
 // fades and is gone. Its clock runs only in Step: Pause, a card offer and the frozen guide freeze it.
 public enum BattleDropKind { Fish, Coin, Potion }
 
@@ -45,6 +45,8 @@ public sealed class DropSpec
     public int MaxOnFloor { get; init; } = 6;
     public Dictionary<string, double> Weights { get; init; } = new() { ["fish"] = 3, ["coin"] = 5, ["potion"] = 2 };
     public double FishHeal { get; init; } = 10;
+    // A potion: seconds off the cooldown of the carried skill with the most left (2026-11-04).
+    public double PotionSeconds { get; init; } = 2;
     public int Coin { get; init; } = 1;
     public int EliteCoin { get; init; } = 2;
     public int BossCoin { get; init; } = 3;
@@ -70,7 +72,7 @@ public sealed class DropSpec
         Within(d.BossDrops, 0, 10, "bossDrops");
         Within(d.Life, 2, 60, "life"); Within(d.Fade, 0, d.Life, "fade");
         Within(d.MaxOnFloor, 1, 20, "maxOnFloor");
-        Within(d.FishHeal, 0, 200, "fishHeal");
+        Within(d.FishHeal, 0, 200, "fishHeal"); Within(d.PotionSeconds, 0.1, 60, "potionSeconds");
         Within(d.Coin, 1, 100, "coin"); Within(d.EliteCoin, 1, 100, "eliteCoin"); Within(d.BossCoin, 1, 100, "bossCoin");
         if (d.Weights == null || d.Weights.Count == 0) throw new System.IO.InvalidDataException("drops.weights must name at least one kind");
         foreach (var (kind, weight) in d.Weights)
@@ -98,7 +100,7 @@ public sealed partial class BattleSim
     // A defeated enemy's drop (if the roll says so). A boss: its coins, where there are coins.
     private void DropLoot(Slime slime)
     {
-        if (DropRules is not DropSpec d || slime.Decoy) return;
+        if (DropRules is not DropSpec d || slime.Decoy || slime.Tantrumed) return;
         if (slime.IsBoss)
         {
             if (Loot != BattleLoot.Coins) return;
@@ -180,11 +182,12 @@ public sealed partial class BattleSim
                 Coins += drop.Value;
                 break;
             case BattleDropKind.Potion:
-                // The carried skill with the longest cooldown left (none cooling down: nothing to do).
+                // The carried skill with the longest cooldown left gets PotionSeconds back (2026-11-04: not a full
+                // refill any more; none cooling down: nothing to do).
                 int longest = -1;
                 foreach (var skill in carried)
                     if (cooldowns[(int)skill] > 0 && (longest < 0 || cooldowns[(int)skill] > cooldowns[longest])) longest = (int)skill;
-                if (longest >= 0) cooldowns[longest] = 0;
+                if (longest >= 0) cooldowns[longest] = Math.Max(0, cooldowns[longest] - d.PotionSeconds);
                 break;
         }
         events.Add(new(BattleEventKind.DropPicked, drop.X, (int)drop.Kind));

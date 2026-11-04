@@ -84,7 +84,46 @@ internal static class BattleWallTests
         IceChecks(check);
         ClingChecks(check);
         KnockChecks(check);
+        WatchChecks(check);
         DataChecks(check);
+    }
+
+    // 2026-11-04: with only a wall climber up its edge left (or one chosen), the cat walks near that edge and
+    // stands looking up, WallWatchGap from it, never against the edge.
+    private static void WatchChecks(Action<bool, string> check)
+    {
+        var sim = Field(Clinger(damage: 0));
+        var s = sim.Slimes.Single();
+        bool told = false;
+        for (int i = 0; i < 1200 && !(s.OnWall && s.Airborne); i++) { sim.Step(dt, 100, false); told |= sim.Events.Any(e => e.Kind == BattleEventKind.WallWatched); sim.ClearEvents(); }
+        double spot = s.WallSide < 0 ? sim.Left + BattleSim.WallWatchGap : sim.Right - BattleSim.WallWatchGap;
+        var order = sim.Step(dt, 800, false);
+        told |= sim.Events.Any(e => e.Kind == BattleEventKind.WallWatched);
+        sim.ClearEvents();
+        check(s.OnWall && order.Command == CatCommand.Move && Math.Abs(order.X - spot) < 1 && sim.WatchedWallId == s.Id && told,
+            $"Only a wall climber left: the cat walks to {BattleSim.WallWatchGap} DIPs from its edge ({order.Command} to {order.X:0})");
+        order = sim.Step(dt, spot, false);
+        check(order.Command == CatCommand.Stand && order.Facing == s.WallSide, "There it stands and looks up at the climber");
+        order = sim.Step(dt, spot, false);
+        check(!sim.Events.Any(e => e.Kind == BattleEventKind.WallWatched), "The hint comes once per climber");
+        sim.ClearEvents();
+
+        // A floor enemy too: the cat goes for it; the climber chosen: the cat goes to watch it instead
+        // (unless the floor enemy is already within reach).
+        sim = Field(new[] { Clinger(damage: 0), Plain() });
+        var up = sim.Slimes.Single(x => x.Type.Id == "clinger");
+        var floor = sim.Slimes.Single(x => x.Type.Id == "slime");
+        for (int i = 0; i < 1200 && !(up.OnWall && up.Airborne); i++) { floor.X = 800; sim.Step(dt, 400, false); sim.ClearEvents(); }
+        floor.X = 800;
+        sim.Step(dt, 400, false);
+        check(sim.WatchedWallId == 0 && sim.TargetId == floor.Id, "With a floor enemy left the cat fights it, not the wall");
+        sim.Select(up.Id);
+        floor.X = 800;
+        order = sim.Step(dt, 400, false);
+        check(sim.WatchedWallId == up.Id && order.Command == CatCommand.Move, "The climber chosen: the cat goes to watch it");
+        floor.X = 410;
+        order = sim.Step(dt, 400, false);
+        check(sim.WatchedWallId == 0, "A floor enemy within reach is hit first");
     }
 
     private static void IceChecks(Action<bool, string> check)
@@ -180,7 +219,8 @@ internal static class BattleWallTests
             "The rotated body's flat base meets the wall without moving its simulation anchor");
         check(up && s.OnWall && s.Cling == ClingPhase.Clinging && edge && Math.Abs(s.Altitude - c.Height) < 1e-6,
             $"It goes to the nearest edge and climbs it (side {s.WallSide}, x {s.X:0}, height {s.Altitude:0})");
-        check(s.Airborne && sim.TargetId != s.Id && !sim.Select(s.Id), "Up its edge the cat on the floor neither goes for it nor can choose it");
+        // 2026-11-04: it can be chosen (the cat then goes to watch it), never swung at from the floor.
+        check(s.Airborne && sim.TargetId != s.Id, "Up its edge the cat on the floor never goes for it (choosing it only sends the cat to watch: WatchChecks)");
 
         // It aims at the cat's spot, then a spike hurts the cat on the floor (no stun).
         double hp = sim.CatHp;

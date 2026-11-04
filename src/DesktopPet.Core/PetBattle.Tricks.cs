@@ -40,8 +40,15 @@ public sealed partial class BattleSim
         else PointerX = null;
     }
 
+    // The user's hand is busy with the cat: pressed on it or carrying it (2026-11-04, D1g: the thrown cat
+    // flying or bouncing leaves the cursor free again).
+    public bool HandBusy => CatHeld && catPose is not { InHand: false, Flying: true };
+    // How long after its last stroke a sulky slime still counts as being soothed (the cat holds back).
+    public const double StrokeHold = 0.6;
+    public bool BeingSoothed(Slime s) => s.Type.Sulk != null && Time - s.StrokedAt <= StrokeHold;
+
     // The cursor is on this enemy (its body as drawn, with the field's click margin round it).
-    public bool PointerOn(Slime s) => !CatHeld && PointerX is double x && Math.Abs(x - s.X) <= s.Width * s.Puff / 2 + 10
+    public bool PointerOn(Slime s) => !HandBusy && PointerX is double x && Math.Abs(x - s.X) <= s.Width * s.Puff / 2 + 10
         && PointerHeight >= -4 && PointerHeight <= s.Altitude + BubbleLift(s) + s.Height * s.Puff + 24;
 
     // How high a bubble floats its enemy (0: no bubble up).
@@ -53,7 +60,7 @@ public sealed partial class BattleSim
     // Every frame (not paused), after the tools: the laser's dot is where it is now.
     private void StepTricks(double dt)
     {
-        bool over = !CatHeld && PointerX != null;
+        bool over = !HandBusy && PointerX != null;
         double stroke = over && !double.IsNaN(strokeX) ? Math.Min(MaxStroke, Math.Abs(PointerX!.Value - strokeX) + Math.Abs(PointerHeight - strokeHeight)) : 0;
         if (over) { strokeX = PointerX!.Value; strokeHeight = PointerHeight; } else strokeX = double.NaN;
         // By index over the enemies there were at the start: a mirage's copies join the list.
@@ -66,7 +73,7 @@ public sealed partial class BattleSim
             if (s.State == SlimeState.Defeated) continue;
             if (s.Type.Ghost is GhostSpec ghost) StepGhost(s, ghost, dt);
             else if (s.Type.Bubble is BubbleSpec) StepBubble(s, dt);
-            else if (s.Type.Mirage is MirageSpec mirage) StepMirage(s, mirage);
+            else if (s.Type.Mirage is MirageSpec mirage) StepMirage(s, mirage, dt);
             else if (s.Type.Sulk is SulkSpec sulk) StepSulk(s, sulk, dt, stroke);
             if (Over) return;
         }
@@ -147,7 +154,10 @@ public sealed partial class BattleSim
         events.Add(new(BattleEventKind.BubblePopped, s.X, s.Id));
     }
 
-    private void StepMirage(Slime s, MirageSpec mirage)
+    private readonly Random mirageRandom;
+    public int MirageShuffles { get; private set; }
+
+    private void StepMirage(Slime s, MirageSpec mirage, double dt)
     {
         if (PointerOn(s) || LaserNear(s, mirage.LaserRange)) s.Revealed = mirage.Reveal;
         if (s.Decoy)
@@ -158,14 +168,19 @@ public sealed partial class BattleSim
             s.Hp = real.Hp; s.MaxHp = real.MaxHp;
             return;
         }
-        if (s.Cast) return;
-        // Its copies come with it, one on each side in turn, looking just like it (an elite's too).
+        if (s.Cast) { StepShuffle(s, mirage, dt); return; }
+        // Its copies come with it on the cat's other side (2026-11-04: never the real one's side), spread out
+        // from the spot mirroring the real one, looking just like it (an elite's too).
         s.Cast = true;
+        s.ShuffleClock = ShuffleEvery(s, mirage);
         int copies = s.Elite != null ? mirage.EliteCopies : mirage.Copies;
         double gap = Math.Max(44, s.Width * 1.15);
+        int side = s.X >= lastCatX ? 1 : -1;
+        double mirror = lastCatX - side * Math.Max(Math.Abs(s.X - lastCatX), s.Width + CatHalfWidth);
         for (int k = 0; k < copies; k++)
         {
-            var copy = AddSlime(s.X + (k % 2 == 0 ? 1 : -1) * (k / 2 + 1) * gap, s.Type);
+            double at = Math.Clamp(mirror - side * k * gap, Left + s.Width / 2, Right - s.Width / 2);
+            var copy = AddSlime(at, s.Type);
             copy.DecoyOf = s.Id;
             copy.Cast = true;
             copy.Elite = s.Elite;
@@ -174,6 +189,38 @@ public sealed partial class BattleSim
             if (s.State == SlimeState.Spawning) copy.StateTime = s.StateTime; else copy.Set(SlimeState.Moving);
         }
         events.Add(new(BattleEventKind.MirageCast, s.X, s.Id));
+    }
+
+    private static double ShuffleEvery(Slime s, MirageSpec mirage) => s.Elite != null ? mirage.EliteShuffle : mirage.Shuffle;
+
+    // The real one's gacha (2026-11-04): every few seconds, smoke; with SwapChance it trades places with one
+    // of its copies, otherwise nobody moves. What the cursor showed is forgotten either way.
+    private void StepShuffle(Slime s, MirageSpec mirage, double dt)
+    {
+        double every = ShuffleEvery(s, mirage);
+        if (every <= 0 || !s.Targetable || s.Handled) return;
+        s.ShuffleClock -= dt;
+        if (s.ShuffleClock > 0) return;
+        s.ShuffleClock = every;
+        var group = new System.Collections.Generic.List<Slime>();
+        foreach (var o in slimes)
+            if (o.DecoyOf == s.Id && o.Targetable && !o.Handled) group.Add(o);
+        if (group.Count == 0) return;
+        MirageShuffles++;
+        bool swap = mirageRandom.NextDouble() < mirage.SwapChance;
+        if (swap)
+        {
+            var other = group[mirageRandom.Next(group.Count)];
+            (s.X, other.X) = (other.X, s.X);
+            (s.Facing, other.Facing) = (other.Facing, s.Facing);
+        }
+        group.Add(s);
+        foreach (var o in group)
+        {
+            o.Revealed = 0;
+            AddEffect(BattleEffectKind.Poof, o.X, o.Height / 2, 1);
+        }
+        events.Add(new(BattleEventKind.MirageShuffled, s.X, swap ? 1 : 0));
     }
 
     // A copy is gone (hit, grabbed, pushed, or its real one defeated): not a defeat of the cat's.
@@ -196,6 +243,7 @@ public sealed partial class BattleSim
         if (stroke > 0 && PointerOn(s))
         {
             if (s.Calm <= 0) events.Add(new(BattleEventKind.SulkPetted, s.X, s.Id));
+            s.StrokedAt = Time;
             double part = stroke / CalmNeeded(s);
             s.Calm += part;
             s.Puff = Math.Max(1, s.Puff - part * (sulk.MaxGrow - 1));
@@ -203,8 +251,25 @@ public sealed partial class BattleSim
             if (s.Calm >= 1) Soothe(s);
             return;
         }
+        // The cat thrown or carried: the calm waits (the user is busy); it fades only with the cat on the floor.
+        if (CatHeld) { s.CalmIdle = 0; return; }
         s.CalmIdle += dt;
         if (s.CalmIdle > sulk.Idle) s.Calm = Math.Max(0, s.Calm - sulk.Fade * dt);
+    }
+
+    // The sulky one the cat goes for once only sulky ones are left: one not being soothed, the farthest
+    // from the cursor (the nearest to the cat without a cursor on the strip).
+    private Slime? SulkyTarget(System.Collections.Generic.List<Slime> sulky, double catX)
+    {
+        Slime? best = null;
+        double bestScore = double.NegativeInfinity;
+        foreach (var s in sulky)
+        {
+            if (BeingSoothed(s)) continue;
+            double score = PointerX is double px && !HandBusy ? Math.Abs(s.X - px) : -Math.Abs(s.X - catX);
+            if (score > bestScore) { best = s; bestScore = score; }
+        }
+        return best;
     }
 
     // Soothed: it waves goodbye and leaves, a defeat of the cat's (no puff of smoke: hearts instead).
@@ -216,6 +281,27 @@ public sealed partial class BattleSim
         AddEffect(BattleEffectKind.Heart, s.X, s.Height);
         events.Add(new(BattleEventKind.SulkCalmed, s.X, s.Id));
         Defeat(s, false);
+        // Its good mood spreads to the other sulky ones nearby (never all the way: each still wants a stroke).
+        if (s.Type.Sulk is not SulkSpec sulk || sulk.SpreadCalm <= 0) return;
+        foreach (var o in slimes)
+        {
+            if (o == s || o.Type.Sulk == null || !o.Targetable || o.Calmed || Math.Abs(o.X - s.X) > sulk.Spread) continue;
+            o.Calm = Math.Min(0.95, o.Calm + sulk.SpreadCalm * (o.Elite != null ? 0.5 : 1));
+            o.Puff = Math.Max(1, o.Puff - sulk.SpreadCalm * (sulk.MaxGrow - 1));
+            AddEffect(BattleEffectKind.Heart, o.X, o.Height);
+        }
+    }
+
+    // Hit too often while fully puffed: it bursts into tears, stamps (the cat in reach takes its hit) and
+    // runs off, the cat's defeat but no loot and not a soothing.
+    private void Tantrum(Slime s)
+    {
+        s.Tantrumed = true;
+        events.Add(new(BattleEventKind.SulkTantrum, s.X, s.Id));
+        AddEffect(BattleEffectKind.Slam, s.X, 0, s.Range);
+        if (!CatHeld && Math.Abs(lastCatX - s.X) <= s.Range + CatHalfWidth) HurtCat(s, lastCatX, false);
+        if (Over) return;
+        Defeat(s);
     }
 
     // Before a hit lands (PetBattle.cs Damage): a faded ghost, a bubble, a copy or a sulky slime takes it
@@ -234,15 +320,31 @@ public sealed partial class BattleSim
         if (slime.Bubbled)
         {
             if (source == DamageSource.Poison) return true;
+            // 2026-11-04: the cat's combo blow counts as one poke (a click's worth).
+            if (source == DamageSource.Combo)
+            {
+                slime.Pokes++;
+                slime.HitFlash = 0.12;
+                events.Add(new(BattleEventKind.BubblePoked, slime.X, slime.Id));
+                if (slime.Pokes >= PopsNeeded(slime)) PopBubble(slime);
+                return true;
+            }
             AddEffect(BattleEffectKind.Miss, slime.X, slime.Height / 2 + BubbleLift(slime));
             events.Add(new(BattleEventKind.BubbleBlocked, slime.X, slime.Id));
             return true;
         }
         if (slime.Type.Sulk is SulkSpec sulk)
         {
-            if (source == DamageSource.Poison) return true;
+            // 2026-11-04: only the cat's own blow on it counts (no splash, sweep, echo, skill, app, bomb or
+            // poison), and not while the user is soothing it (the cat holds back).
+            if (source is not (DamageSource.Weapon or DamageSource.Combo) || BeingSoothed(slime)) return true;
+            if (slime.Puff >= sulk.MaxGrow - 1e-9 && ++slime.Tantrum >= (slime.Elite != null ? sulk.EliteTantrum : sulk.Tantrum))
+            {
+                Tantrum(slime);
+                return true;
+            }
             slime.Puff = Math.Min(sulk.MaxGrow, slime.Puff + sulk.Grow);
-            slime.Calm = Math.Max(0, slime.Calm - 0.1);
+            slime.Calm = Math.Max(0, slime.Calm - sulk.HitCalm);
             slime.HitFlash = 0.18;
             AddEffect(BattleEffectKind.Miss, slime.X, slime.Height * slime.Puff / 2, 1);
             events.Add(new(BattleEventKind.SulkPuffed, slime.X, slime.Id));

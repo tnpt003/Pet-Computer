@@ -929,3 +929,20 @@ Các mục 1.5 phía trên viết theo từng mốc; đây là thứ tự chơi 
 8. **Tiếng Nhật** (thêm M29): đổi sang 日本語 và xem lướt bảng chuẩn bị, Sổ tay quái, Thành tựu, bảng dựng trận, câu hướng dẫn chương 2. Bản dịch mới đã thống nhất thuật ngữ (猫, はさみ, クレーンアーム, 押し出し, 気絶, 霧吹き, エリート); báo câu nào đọc lạ hoặc tràn ô.
 - [ ] Đã chơi hết 8 bước trên mà không có lỗi nặng (ghi lỗi dưới mục của mốc tương ứng).
 - [ ] Cảm giác cân bằng so với mô phỏng (docs/BALANCE-1.5.md): tuyến 2 có quá khó không, Cuộn len có quá mạnh không, đầu chặng Vô tận đợt 20 có quá gắt không.
+
+### Đợt C1 góp ý 04/11 (2026-11-04, Issue #41)
+- [ ] Slime dỗi: khi còn quái khác mèo không đánh nó; chỉ còn nó thì mèo đánh, rê chuột qua lại lên nó thì mèo dừng đánh; ném mèo ra xa rồi rê chuột vẫn dỗ được, thanh dỗ không tụt khi mèo đang bay/nảy; đánh quá tay thì nó òa khóc dậm chân bỏ chạy, không rơi đồ; hai con dỗi: dỗ xong một con thì con gần được vui lây.
+- [ ] Cuộn len quét/kéo, bom, app không làm slime dỗi phồng.
+- [ ] Slime bám tường: chỉ còn nó (hoặc click chọn nó) thì mèo đi tới gần mép đó (không dí sát), đứng ngó, có dấu "!" + mũi tên vàng và gợi ý một lần.
+- [ ] Bong bóng: đòn combo của mèo làm bong bóng nhấp nháy, tính một lần chọc.
+- [ ] Ảo ảnh: bản giả ra phía bên kia mèo; mỗi ~3 s cả nhóm phụt khói, đôi khi bản thật đổi chỗ với một bản giả; rê chuột lại để tìm.
+- [ ] Hợp thể: cả bầy 3 con ra cùng lúc (1 giữa sàn, 2 cùng một mép), kể cả khi sân đang đông.
+- [ ] Bình rớt (Vô tận/chương 2): nhặt bình thì kỹ năng đang hồi lâu nhất giảm 2 s.
+- [ ] Găng đấm: combo ở nhát 3 (không hất) và nhát 5 (hất tung); nhát 5 vào slime băng làm vỡ vỏ.
+- [ ] Icon Kéo cắt trên HUD/bảng chuẩn bị giống chiếc kéo.
+- [ ] HUD: banner dài xuống 2 dòng, đọc được; Vô tận lâu: dòng trạng thái tối đa 2 dòng (đột biến dòng riêng), dòng thẻ chỉ 1–2 dòng tóm tắt, rê chuột lên hiện đủ tên ở dòng gợi ý dưới HUD.
+- [ ] Bảng chọn đột biến: thẻ có "Hiệu ứng:" và "★ Thưởng:", chữ không bị cắt (vi/en/ja).
+- [ ] Túi đồ: cột "Mô tả" bên trái; rê thẻ/cộng hưởng/di vật thì hiện mô tả ở đó dù đang cuộn; rời chuột thì hiện câu hướng dẫn.
+- [ ] Bình xịt nước nóng: click một slime → tự xịt theo nó tới hết nước, buông/di chuột không ảnh hưởng; con đó ngã thì chuyển sang con gần nhất và bình được thêm nước; xịt slime băng ~3 s thì vỏ tan.
+- [ ] Tab nhiễm: 3 quảng cáo không tắt được vẫn đếm, hết giờ thả một slime ngẫu nhiên có trong trận (không ra hợp thể/ảo ảnh/bom/xích…).
+- [ ] Trận tự chọn: HUD có nút ngôi nhà, bấm thì kết thúc trận và mở Sảnh.

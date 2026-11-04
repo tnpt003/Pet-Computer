@@ -178,24 +178,41 @@ internal static class BattleHandToolsTests
         double nearLost = nearHp - near.Hp;
         check(near.Wet && near.Chilled && !far.Wet && far.Hp == farHp && Math.Abs(nearLost - sim.Settings.SprayDps) < 0.6,
             $"A slime near the cursor is soaked, chilled and loses {sim.Settings.SprayDps} HP a second ({nearLost:0.##}); a far one is not touched");
+        // 2026-11-04, the hot-water spray: locked on its slime, the mouse neither steers nor stops it.
         sim.MoveSpray(640, 20);
-        nearHp = near.Hp;
+        sim.StopSpray();
+        check(sim.Spraying && sim.SprayTargetId == near.Id && Math.Abs(sim.SprayX!.Value - near.X) < 1, "Locked on the clicked slime: moving or letting go of the mouse changes nothing");
+        near.X = 700;
+        Run(sim, 0.1);
+        check(Math.Abs(sim.SprayX!.Value - near.X) < 1 && near.X < 710, "It follows its slime");
+        check(sim.SprayTank < 0.75 && sim.SprayTank > 0.6, $"Spraying uses its water ({sim.SprayTank:0.00})");
+        // Its slime falls while sprayed: more water, and it moves to the nearest other slime (the king here).
+        double before = sim.SprayTank;
+        var refilled = new List<BattleEvent>();
+        near.Hp = 0.5;
+        for (int i = 0; i < 120 && near.State != SlimeState.Defeated; i++) { sim.Step(dt, 100, false); refilled.AddRange(sim.Events); sim.ClearEvents(); }
+        Run(sim, dt);
+        check(near.State == SlimeState.Defeated && refilled.Any(e => e.Kind == BattleEventKind.SprayRefilled) && sim.SprayTank > before && sim.SprayTargetId == king.Id,
+            $"A slime falling to it adds water ({before:0.00} → {sim.SprayTank:0.00}) and the spray moves to the nearest other slime");
+        kingHp = king.Hp;
         Run(sim, 1);
         check(Math.Abs(kingHp - king.Hp - sim.Settings.SprayDps * BattleSim.BossToolShare) < 0.6, $"A boss takes half ({kingHp - king.Hp:0.##})");
-        check(sim.SprayTank < 0.6 && sim.SprayTank > 0.4, $"Spraying uses its water ({sim.SprayTank:0.00})");
-        sim.StopSpray();
-        double tank = sim.SprayTank;
-        Run(sim, 0.5);
-        check(!sim.Spraying && sim.SprayTank > tank && sim.Armed == BattleSkill.Spray, "Let go, it stops, its water comes back and it stays chosen");
-        Run(sim, sim.Settings.SpraySoakSeconds + 0.1);
-        check(!near.Wet, "A soaking dries after its time");
-        sim.StartSpray(800, 20);
         var seen = new List<BattleEvent>();
-        for (int i = 0; i < 600 && sim.Spraying; i++) { sim.Step(dt, 100, false); seen.AddRange(sim.Events); sim.ClearEvents(); }
+        for (int i = 0; i < 900 && sim.Spraying; i++) { sim.Step(dt, 100, false); seen.AddRange(sim.Events); sim.ClearEvents(); }
         check(!sim.Spraying && sim.Armed == null && sim.SprayTank == 0 && seen.Any(e => e.Kind == BattleEventKind.SpraySpent)
               && Math.Abs(sim.Cooldown(BattleSkill.Spray) - sim.Settings.SprayRefillSeconds) < 0.01, "Out of water it is put away and waits its refill");
         Run(sim, sim.Settings.SprayRefillSeconds + 0.1);
         check(sim.Ready(BattleSkill.Spray) && sim.SprayTank > 0.999, "Refilled, it is ready again");
+        check(!far.Wet || far.Hp < farHp, "(the far slime only ever got wet once the spray came to it)");
+
+        // Hot water melts an ice shell.
+        var cold = Sim(new EnemyType { Id = "icy", MaxHp = 300, Speed = 0, Damage = 0, Range = 50, Windup = 0.6, AttackCooldown = 1.5, Recover = 0.3,
+            Ice = BattleData.Settings.Enemy("icy").Ice, ThrowHit = BattleData.Settings.Enemy("icy").ThrowHit });
+        var ice = cold.Slimes[0];
+        ice.X = 800;
+        cold.Arm(BattleSkill.Spray); cold.StartSpray(800, 20);
+        Run(cold, cold.Settings.SprayMeltSeconds + 0.2);
+        check(!ice.Iced && cold.SprayMelts == 1, $"Sprayed {cold.Settings.SprayMeltSeconds} s, an ice shell melts");
 
         // Lifting the cat stops it and puts it away; the Fan and the Spray are one choice at a time.
         sim.Arm(BattleSkill.Spray); sim.StartSpray(800, 20);

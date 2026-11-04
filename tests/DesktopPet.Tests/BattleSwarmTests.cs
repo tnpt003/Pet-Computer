@@ -227,6 +227,20 @@ internal static class BattleSwarmTests
         var arrived = Field(new[] { fuser }, new[] { 3 }, extra: new[] { giant }, place: false).Slimes.Select(s => s.X).OrderBy(x => x).ToArray();
         check(arrived.Length == 3 && Math.Abs(arrived[0] - 800) < 1 && arrived[1] > 1450 && arrived[2] > 1500 && arrived[2] - arrived[1] > 20,
             $"A fusing trio: one in the middle, two together at the edge away from the cat ({string.Join(", ", arrived.Select(x => x.ToString("0")))})");
+        // 2026-11-04: the trio arrives at once (one spawn, one place on the floor), even with room for one.
+        {
+            var settings = new BattleSettings
+            {
+                Weapons = new[] { BattleData.Settings.Weapon("sword") with { Range = 5, StunChance = 0 } }, FirstWaveDelay = 0, SpawnInterval = 1.6, CatMaxHp = 1000, MaxAlive = 1,
+                Enemies = new[] { fuser, giant }, CatDamage = 0, RageHitGain = 0,
+                Plan = new[] { new WaveSpec { Groups = new[] { new WaveGroup { Enemy = "fuser", Count = 3 } } } }
+            };
+            var field = new BattleSim(settings, 0, 1600, seed: 4);
+            int atFirst = 0;
+            for (int i = 0; i < 120 && atFirst == 0; i++) { field.Step(dt, 100, false); atFirst = field.Slimes.Count; }
+            check(atFirst == 3 && field.Slimes.Count(s => s.MergeRunner) == 1,
+                $"The fusing trio comes in at once, one spawn even with room for one ({field.Slimes.Count} on the floor)");
+        }
         var sim = Field(new[] { fuser }, new[] { 3 }, extra: new[] { giant });
         double x = 1200;
         foreach (var s in sim.Slimes) s.X = x += 20;

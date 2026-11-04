@@ -85,7 +85,7 @@ internal static class BattleWeaponTests
         {
             var order = sim.Step(dt, cat, false);
             const double run = 72 * 1.8; // Walking speed × CatRunScale.
-            if (order.Command == CatCommand.Move) cat += Math.Clamp(order.X - cat, -run * dt, run * dt);
+            if (order.Command == CatCommand.Shove) cat = order.X; else if (order.Command == CatCommand.Move) cat += Math.Clamp(order.X - cat, -run * dt, run * dt);
         }
         foreach (var level in new[] { BattleDifficulty.Easy, BattleDifficulty.Normal, BattleDifficulty.Hard })
             foreach (var enemy in new[] { "slime", "king" })

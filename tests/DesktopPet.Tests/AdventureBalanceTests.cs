@@ -61,7 +61,7 @@ internal static class AdventureBalanceTests
             if (player != Player.Idle) { UseSkills(sim, cat, data, reflex, t); UseTricks(sim, cat, reflex, t, hands); }
             var order = sim.Step(dt, cat, false);
             double run = 72 * data.CatRunScale * sim.MoveFactor; // Walking speed × CatRunScale × upgrades.
-            if (order.Command == CatCommand.Move) cat += Math.Clamp(order.X - cat, -run * dt, run * dt);
+            if (order.Command == CatCommand.Shove) cat = order.X; else if (order.Command == CatCommand.Move) cat += Math.Clamp(order.X - cat, -run * dt, run * dt);
             foreach (var e in sim.Events)
             {
                 if (e.Kind == BattleEventKind.EnemyHealing) healsCast++;
@@ -111,7 +111,7 @@ internal static class AdventureBalanceTests
             if (player != Player.Idle) { UseSkills(sim, cat, data, reflex, t); UseTricks(sim, cat, reflex, t, hands); }
             var order = sim.Step(dt, cat, false);
             double run = 72 * data.CatRunScale * sim.MoveFactor;
-            if (order.Command == CatCommand.Move) cat += Math.Clamp(order.X - cat, -run * dt, run * dt);
+            if (order.Command == CatCommand.Shove) cat = order.X; else if (order.Command == CatCommand.Move) cat += Math.Clamp(order.X - cat, -run * dt, run * dt);
             sim.ClearEvents();
         }
         return sim.Wave;

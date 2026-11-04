@@ -18,10 +18,11 @@ internal static class BattleSpitSpringTests
         Spit = BattleData.Settings.Enemy("spitter").Spit, Elite = new EliteSpec { Hp = 1.2 }
     };
 
-    private static EnemyType Spring() => new()
+    // No leap unless `leap` (the shipped leap is checked on its own; its push is always on).
+    private static EnemyType Spring(bool leap = false) => new()
     {
         Id = "spring", MaxHp = 1000, Speed = 30, Damage = 14, Range = 40, Windup = 0.8, AttackCooldown = 2, Recover = 0.3, Scale = 1.1, HitScale = 1.3,
-        Spring = BattleData.Settings.Enemy("springer").Spring, Elite = new EliteSpec { Hp = 1.2 }
+        Spring = BattleData.Settings.Enemy("springer").Spring! with { LeapRange = leap ? BattleData.Settings.Enemy("springer").Spring!.LeapRange : 0 }, Elite = new EliteSpec { Hp = 1.2 }
     };
 
     private static EnemyType Runner() => new()
@@ -238,6 +239,58 @@ internal static class BattleSpitSpringTests
         // An elite's ring is bigger.
         sim = Field(new[] { Spring() }, elite: true);
         check(sim.Slimes[0].Elite != null && BattleSim.SpringRadius(sim.Slimes[0]) == spec.Radius * spec.EliteRadius, "An elite's ring is bigger");
+
+        // 2026-10-31. Its spring slides the cat away (the battle moves it: a Shove order, facing the spring).
+        sim = Field(new[] { Spring() });
+        spring = sim.Slimes[0];
+        spring.X = 400;
+        for (int i = 0; i < 120 && sim.CatShoves == 0; i++) { sim.Step(dt, 370, false); sim.ClearEvents(); }
+        check(sim.CatShoves == 1 && sim.ShoveSide == -1 && sim.ShoveLeft > 0, "A spring that hits the cat shoves it away from it");
+        // (The frame it sprang already slid it one step.)
+        double catAt = 370, pushed = 0;
+        int facing = 0;
+        for (int i = 0; i < 30; i++)
+        {
+            var order = sim.Step(dt, catAt, false);
+            if (order.Command != CatCommand.Shove) break;
+            if (i == 0) facing = order.Facing;
+            pushed += catAt - order.X; catAt = order.X;
+        }
+        check(facing == 1 && pushed > spec.Push - 12 && pushed <= spec.Push + 0.5, $"It is slid about {spec.Push:0} DIPs over {spec.PushSeconds:0.##} s, facing the spring ({pushed:0})");
+        // The Shield takes the spring: no shove.
+        sim = Field(new[] { Spring() }, skills: new[] { BattleSkill.Shield });
+        spring = sim.Slimes[0];
+        spring.X = 400;
+        check(sim.Use(BattleSkill.Shield, 370), "(The Shield is up)");
+        Run(sim, spec.Compress + 0.1, 370);
+        check(sim.SpringHitsOnCat == 1 && sim.CatShoves == 0, "The Shield takes its spring: no shove");
+
+        // Just out of its ring long enough: it crouches (its landing ring on the cat's spot), leaps and springs there.
+        sim = Field(new[] { Spring(leap: true) });
+        spring = sim.Slimes[0];
+        spring.X = 400;
+        double off = 400 - (spec.Radius + spec.LeapRange) / 2;
+        check(!Run(sim, spec.LeapWait - 0.2, off, BattleEventKind.SpringCrouched) && Run(sim, 0.4, off, BattleEventKind.SpringCrouched)
+              && BattleSim.SpringLanding(spring) is double land && Math.Abs(land - off) < 1, $"The cat {400 - off:0} DIPs off for {spec.LeapWait:0.#} s: it crouches to leap at its spot");
+        hp = sim.CatHp;
+        bool flew = false;
+        bool sprang = Run(sim, spec.LeapCrouch + spec.LeapSeconds + 0.1, off, BattleEventKind.SpringBounced, 1, each: () => flew |= spring.LeapHeight > 10);
+        check(flew && sprang && Math.Abs(spring.X - off) < 1 && sim.CatHp < hp && sim.SpringLeaps == 1, "It leaps there and springs on the cat");
+        check(!Run(sim, spec.Rest + 0.5, off - 150, BattleEventKind.SpringCrouched), "Then it does not leap again for a while");
+        // Lifted out before it lands: missed.
+        sim = Field(new[] { Spring(leap: true) });
+        spring = sim.Slimes[0];
+        spring.X = 400;
+        Run(sim, spec.LeapWait + 0.05, off);
+        hp = sim.CatHp;
+        check(spring.Spring == SpringState.Crouching && Run(sim, spec.LeapCrouch + spec.LeapSeconds + 0.1, off, BattleEventKind.SpringBounced, 0, held: true) && sim.CatHp == hp,
+            "A cat lifted before it lands is missed");
+        // Hit from out of its ring (a long reach): it leaps at once.
+        sim = Field(new[] { Spring(leap: true) }, reach: 140);
+        spring = sim.Slimes[0];
+        spring.X = 400;
+        bool quick = Run(sim, 1.2, 400 - 130, BattleEventKind.SpringCrouched, each: () => { if (spring.Spring == SpringState.Ready) { spring.X = 400; spring.KnockVelocity = 0; } });
+        check(quick && sim.SpringLeaps == 1 && spring.Spring != SpringState.Flat, $"Hit from out of its ring, it leaps at the cat at once, not flattened (state {spring.Spring}, hits {spring.SpringHits})");
     }
 
     private static void DataChecks(Action<bool, string> check)

@@ -39,7 +39,7 @@ internal static class EndlessBuildTests
         for (double t = 0; t < seconds && !sim.Over && done?.Invoke() != true; t += dt)
         {
             var order = sim.Step(dt, cat, false);
-            if (order.Command == CatCommand.Move) cat += Math.Clamp(order.X - cat, -130 * dt, 130 * dt);
+            if (order.Command == CatCommand.Shove) cat = order.X; else if (order.Command == CatCommand.Move) cat += Math.Clamp(order.X - cat, -130 * dt, 130 * dt);
         }
         return cat;
     }

@@ -236,7 +236,7 @@ public sealed class SpitSpec
 // enemy's damage and is stunned Stun s. Then it rests Rest s. FlattenHits hits (weapon or bomb) flatten
 // it for FlatSeconds (no trap meanwhile). With the cat further than CreepRange (0: never) it slides
 // towards it. An elite: EliteRadius × the ring, EliteRest s of rest, EliteHits hits to flatten.
-public sealed class SpringSpec
+public sealed record SpringSpec
 {
     public double Radius { get; init; } = 100;
     public double Compress { get; init; } = 0.6;
@@ -248,6 +248,19 @@ public sealed class SpringSpec
     public double EliteRadius { get; init; } = 1.35;
     public double EliteRest { get; init; } = 2.5;
     public int EliteHits { get; init; } = 3;
+    // 2026-10-31. Push: a spring that hits the cat also slides it Push DIPs away over PushSeconds (the
+    // battle moves it, no throw; 0: none). Leap: the cat standing just out of the ring (within LeapRange)
+    // LeapWait s, or hitting it from out of the ring, makes it crouch LeapCrouch s (a ring shows where it
+    // will land: the cat's spot then), fly LeapSeconds (LeapHeight high) and spring on landing; then not
+    // again for LeapCooldown s. LeapRange 0: it never leaps.
+    public double Push { get; init; }
+    public double PushSeconds { get; init; } = 0.25;
+    public double LeapRange { get; init; }
+    public double LeapWait { get; init; } = 1.5;
+    public double LeapCrouch { get; init; } = 0.45;
+    public double LeapSeconds { get; init; } = 0.55;
+    public double LeapHeight { get; init; } = 60;
+    public double LeapCooldown { get; init; } = 5;
 }
 
 // Q6 (1.5 M11): with the cat on the floor within Range DIPs (centre to centre) it stops and lights its fuse:
@@ -1449,6 +1462,11 @@ public static class BattleData
                 if (spring.FlattenHits is < 1 or > 10 || spring.EliteHits is < 1 or > 10) throw new InvalidDataException(at + ".spring.flattenHits/eliteHits must be 1–10");
                 Within(spring.FlatSeconds, 0.5, 15, at + ".spring.flatSeconds"); Within(spring.CreepRange, 0, 1500, at + ".spring.creepRange");
                 Within(spring.EliteRadius, 1, 2, at + ".spring.eliteRadius"); Within(spring.EliteRest, 0.5, 20, at + ".spring.eliteRest");
+                Within(spring.Push, 0, 200, at + ".spring.push"); Within(spring.PushSeconds, 0.05, 1, at + ".spring.pushSeconds");
+                Within(spring.LeapRange, 0, 400, at + ".spring.leapRange"); Within(spring.LeapWait, 0.2, 10, at + ".spring.leapWait");
+                Within(spring.LeapCrouch, 0.1, 2, at + ".spring.leapCrouch"); Within(spring.LeapSeconds, 0.2, 2, at + ".spring.leapSeconds");
+                Within(spring.LeapHeight, 0, 120, at + ".spring.leapHeight"); Within(spring.LeapCooldown, 0.5, 30, at + ".spring.leapCooldown");
+                if (spring.LeapRange > 0 && spring.LeapRange <= spring.Radius) throw new InvalidDataException(at + ".spring.leapRange must be past its radius");
             }
             if (e.Fuse is FuseSpec fuse)
             {

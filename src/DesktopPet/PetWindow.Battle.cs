@@ -701,7 +701,14 @@ public sealed partial class PetWindow
         {
             if (order.Facing != 0) pet.Facing = order.Facing;
             double target = Math.Clamp(order.X - settings.Width / 2, bounds.Left, Math.Max(bounds.Left, bounds.Right - settings.Width));
-            if (order.Command == CatCommand.Move && !battle.Paused && Math.Abs(target - pet.X) >= 6) WalkToward(target);
+            // A spring's push (2026-10-31): the battle slides the cat there itself, standing (no walk, no throw).
+            if (order.Command == CatCommand.Shove && !battle.Paused)
+            {
+                pet.X = target;
+                pet.Action = PetAction.Idle;
+                pet.VX = pet.SmoothedWalkVelocity = 0;
+            }
+            else if (order.Command == CatCommand.Move && !battle.Paused && Math.Abs(target - pet.X) >= 6) WalkToward(target);
             else
             {
                 pet.Action = battle.Over ? PetAction.Sitting : PetAction.Idle;

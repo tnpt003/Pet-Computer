@@ -352,14 +352,18 @@
       // in the ring takes its damage and a stun of `stun` s; then it rests `rest` s. flattenHits hits
       // (weapon or bomb) flatten it for flatSeconds. It never attacks otherwise; with the cat further than
       // creepRange it slides up. Elite: eliteRadius × the ring, eliteRest s of rest, eliteHits to flatten.
+      // 2026-10-31: a spring that hits also slides the cat `push` DIPs away (pushSeconds). The cat just
+      // out of the ring (within leapRange) leapWait s, or hitting it from out of the ring, makes it crouch
+      // leapCrouch s (a red ring where it lands), fly leapSeconds and spring on landing; leapCooldown s apart.
       "id": "springer", "nameVi": "Slime lò xo", "nameEn": "Spring slime",
-      "tipVi": "Bẫy nằm im; mèo vào vòng vàng thì nó nén rồi bật. Nhấc mèo ra khi vòng đỏ, hoặc đánh 2 đòn cho nó bẹp.", "tipEn": "A trap lying flat; it springs when the cat steps in its gold ring. Lift the cat out when it turns red, or flatten it with two hits.", "counters": ["grabber", "bomb"],
+      "tipVi": "Bẫy: mèo vào vòng vàng thì nó bật, hất mèo ra. Đứng sát vòng lâu hay đánh từ xa thì nó nhảy tới. Nhấc mèo khi vòng đỏ, hoặc đánh 2 đòn cho bẹp.", "tipEn": "A trap: step in its gold ring and it springs, knocking the cat back. Linger by it or hit it from afar and it leaps at you. Lift the cat when the ring turns red, or flatten it with two hits.", "counters": ["grabber", "bomb"],
       "maxHp": 70, "speed": 26, "damage": 14, "range": 40,
       "windup": 0.8, "attackCooldown": 2.0, "recover": 0.4,
       "scale": 1.1, "hitScale": 1.3, "color": "#F2C14E", "marks": "spring",
       "pushFactor": 0.8, "cost": 2, "binSpit": false,
       "spring": { "radius": 100, "compress": 0.6, "stun": 0.8, "rest": 4, "flattenHits": 2, "flatSeconds": 3, "creepRange": 120,
-        "eliteRadius": 1.35, "eliteRest": 2.5, "eliteHits": 3 },
+        "eliteRadius": 1.35, "eliteRest": 2.5, "eliteHits": 3, "push": 80, "pushSeconds": 0.25,
+        "leapRange": 170, "leapWait": 1.5, "leapCrouch": 0.45, "leapSeconds": 0.55, "leapHeight": 60, "leapCooldown": 5 },
       "elite": { "hp": 1.2, "cost": 1, "descVi": "vòng to hơn, bật lại nhanh, 3 đòn mới bẹp", "descEn": "bigger ring, springs back sooner, 3 hits to flatten" }
     },
     {

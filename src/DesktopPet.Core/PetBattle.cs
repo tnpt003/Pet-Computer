@@ -407,7 +407,7 @@ public sealed partial class BattleSim
         }
         comboClock += dt;
         if (CatLifted) liftedFor += dt; // How long this rescue has lasted (battle time).
-        if (catHeld) { CancelSwing(); Combo = 0; }
+        if (catHeld) { CancelSwing(); Combo = 0; ShoveLeft = 0; }
         else
         {
             // Landing after a real lift: protection, unless it was given too recently (then the
@@ -503,6 +503,8 @@ public sealed partial class BattleSim
     {
         var target = Over ? null : PickTarget(catX);
         TargetId = target?.Id;
+        // Slid away by a spring (PetBattle.Spring.cs): nothing else meanwhile, facing the spring.
+        if (ShoveCat(dt, catX) is double slid) return new(CatCommand.Shove, slid, -ShoveSide);
         if (SwingTime >= 0)
         {
             SwingTime += dt;
@@ -940,7 +942,7 @@ public sealed partial class BattleSim
             s.PanicRemaining = 0;
             s.FuseLeft = 0;
             s.Faded = false;
-            if (s.Spring == SpringState.Squeezing) s.Spring = SpringState.Ready;
+            if (s.Spring is SpringState.Squeezing or SpringState.Crouching or SpringState.Leaping) s.Spring = SpringState.Ready;
         }
         events.Add(new(phase == BattlePhase.Won ? BattleEventKind.Won : BattleEventKind.Lost, 0));
     }

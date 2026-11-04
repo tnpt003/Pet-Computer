@@ -28,7 +28,7 @@ internal static class AdventureTests
         {
             var order = first.Step(1.0 / 60, cat, false);
             most = Math.Max(most, first.Alive);
-            if (order.Command == CatCommand.Move) cat += Math.Clamp(order.X - cat, -72 * 1.8 / 60, 72 * 1.8 / 60); // Walking speed × CatRunScale.
+            if (order.Command == CatCommand.Shove) cat = order.X; else if (order.Command == CatCommand.Move) cat += Math.Clamp(order.X - cat, -72 * 1.8 / 60, 72 * 1.8 / 60); // Walking speed × CatRunScale.
         }
         check(first.Phase == BattlePhase.Won && first.Defeated == 5 && most <= 2, $"Stage 1 is won in the simulation with at most 2 slimes at once (won {first.Phase}, {first.Defeated} defeated, max {most})");
 

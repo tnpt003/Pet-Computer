@@ -523,11 +523,12 @@ public sealed partial class BattleSim
     // still immune after its last stun. stunSeconds: how long (negative: the battle's StunDurationSeconds).
     // melee (1.5 M23b): the slime's own strike or dash (a thorns relic answers it); crush: a roll, a
     // spring or a burrower coming up (a helmet relic stops its stun).
-    private void HurtCat(Slime from, double catX, bool stun, double share = 1, double stunSeconds = -1, bool melee = false, bool crush = false)
+    // True when the hit got through (not a decoy's, not taken by the Shield or the Turtle shell).
+    private bool HurtCat(Slime from, double catX, bool stun, double share = 1, double stunSeconds = -1, bool melee = false, bool crush = false)
     {
         // A mirage's copy: its blow is only an illusion (1.5 M13). A sulky slime hits as hard as it is puffed up.
-        if (from.Decoy) { AddEffect(BattleEffectKind.Miss, catX, 60); return; }
-        if (!LandHit(from.Damage * share * from.Puff, catX, out double hurt)) return;
+        if (from.Decoy) { AddEffect(BattleEffectKind.Miss, catX, 60); return false; }
+        if (!LandHit(from.Damage * share * from.Puff, catX, out double hurt)) return false;
         // Thorns (the synergy; 1.5 M23b: and the relic, for a melee blow): part of what the cat really took goes back to the attacker.
         double back = (Active("thorns") is SynergySpec thorns ? thorns.Amount : 0) + (melee ? thornsShare : 0);
         if (back > 0 && hurt > 0 && from.Targetable && !from.Shielded)
@@ -535,7 +536,7 @@ public sealed partial class BattleSim
             Reflects++;
             events.Add(new(BattleEventKind.Reflected, from.X));
             Damage(from, hurt * back, DamageSource.Reflect);
-            if (Over) return;
+            if (Over) return true;
         }
         double seconds = stunSeconds >= 0 ? stunSeconds : Settings.StunDurationSeconds;
         if (crush && CrushProof) stun = false;
@@ -546,6 +547,7 @@ public sealed partial class BattleSim
             CancelSwing();
             events.Add(new(BattleEventKind.CatStunned, catX));
         }
+        return true;
     }
 
     // A hit of `damage` on the cat (a slime's, or an infected app's bell): the Shield takes all of it,

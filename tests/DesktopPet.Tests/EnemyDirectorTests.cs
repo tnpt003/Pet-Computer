@@ -247,7 +247,7 @@ internal static class EnemyDirectorTests
                     {
                         if (sim.ChoosingUpgrade) sim.ChooseUpgrade(sim.UpgradeOffer![0].Id, cat);
                         var order = sim.Step(1.0 / 30, cat, false);
-                        if (order.Command == CatCommand.Move) cat += Math.Clamp(order.X - cat, -4.3, 4.3);
+                        if (order.Command == CatCommand.Shove) cat = order.X; else if (order.Command == CatCommand.Move) cat += Math.Clamp(order.X - cat, -4.3, 4.3);
                     }
                     ended &= sim.Over;
                 }

@@ -8,6 +8,14 @@ Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm 
 
 ---
 
+## #34 — Slime lò xo chỉ làm choáng, không đẩy lùi; vô dụng trước cuộn len (2026-10-31, commit chưa có)
+- **Triệu chứng (góp ý người dùng):** lò xo bật trúng chỉ làm choáng, không hất mèo như lò xo; mèo cầm cuộn len (tầm 114) đứng ngoài vòng 100 đánh nó mà không bao giờ bị bật.
+- **Nguyên nhân:** thiết kế M09 "không đổi physics mèo": chỉ mất máu + choáng; lò xo chỉ trượt chậm tới cách mèo 120 rồi nằm im, không có cách với tới mèo đứng ngoài vòng.
+- **Sửa (người dùng duyệt đẩy lùi 31/10):** `spring.push` 80 / `pushSeconds` 0,25: đòn lọt qua Khiên/Mai rùa thì trận trượt mèo ra xa (lệnh mới `CatCommand.Shove`, cửa sổ đặt vị trí mèo, không phải cú ném; nhấc mèo là dừng). **Bật nhảy:** mèo đứng ngoài vòng trong 170 DIPs suốt 1,5 s, hoặc vũ khí đánh trúng từ ngoài vòng, thì nó nén 0,45 s (vòng đỏ đầy dần ở chỗ mèo lúc đó), bay 0,55 s, chạm đất bật ngay; 5 s mới nhảy lại; Đẩy/choáng/Kẹp gắp lúc nén thì hủy. Gợi ý một lần mỗi trận, tiếng mới. `HurtCat` trả về đòn có lọt không.
+- **Kiểm chứng:** test mới: bật trúng thì đẩy ~80 DIPs, quay mặt về lò xo; Khiên chặn thì không đẩy; đứng ngoài vòng 1,5 s thì nén nhảy tới đúng chỗ mèo và bật trúng; không nhảy lại ngay; nhấc mèo trước khi đáp thì né; đánh từ ngoài vòng (tầm 140) thì nhảy ngay. C# đạt cả mô phỏng cân bằng. Lỗi phát hiện khi làm: lời mẹo dài > 200 ký tự làm battle.json không nạp được (mọi test dùng dữ liệu gốc hỏng), đã rút gọn.
+
+---
+
 ## #33 — Vũ khí trên bảng chuẩn bị tràn khỏi nút; app trong bảng dựng trận chỉ là nút chữ (2026-10-31, commit c82f605)
 - **Triệu chứng (ảnh người dùng):** bảng "Chuẩn bị trận": hình kiếm/búa/cuộn len/găng thò ra mép trái nút, dấu ✓ chen giữa hình và tên. Bảng "Dựng trận" phần "App trong trận": toàn nút chữ ("Quảng cáo: Tắt"…), xấu.
 - **Nguyên nhân:** `WeaponIcon` dịch cố định rồi vẽ vũ khí dài ~46 DIPs (xoay 35°) vào ô 24×28 nên tràn; ✓ nằm trong hàng cùng tên. Phần app dùng `Chip` chữ.

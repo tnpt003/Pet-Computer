@@ -46,6 +46,9 @@ public sealed partial class BattleFieldView
             case SpringState.Flat:
                 sx *= 1.15; sy *= 0.55;
                 break;
+            case SpringState.Leaping: // Stretched up in the air (its crouch is the shared Crouch squash).
+                sx *= 0.88; sy *= 1.35;
+                break;
         }
     }
 
@@ -54,6 +57,18 @@ public sealed partial class BattleFieldView
     {
         if (slime.Type.Spring is not SpringSpec spring || !slime.Targetable) return;
         double r = BattleSim.SpringRadius(slime);
+        // Crouching to leap or in the air: its ring waits where it will land, filling red as it comes.
+        if (BattleSim.SpringLanding(slime) is double land)
+        {
+            double crouch = spring.LeapCrouch, all = crouch + spring.LeapSeconds;
+            double done = slime.Spring == SpringState.Crouching ? crouch - slime.SpringClock : crouch + spring.LeapSeconds - slime.SpringClock;
+            double f = Math.Clamp(done / all, 0, 1);
+            var spot = new Point(land - OriginX, floor - 3);
+            dc.DrawEllipse(null, Halo, spot, r, 8);
+            dc.DrawEllipse(null, WarningFill, spot, Math.Max(1, r * f), Math.Max(1, 8 * f));
+            dc.DrawEllipse(null, WarningEdge, spot, r, 8);
+            return;
+        }
         var at = new Point(x, floor - 3);
         dc.DrawEllipse(null, Halo, at, r, 8);
         if (slime.Spring == SpringState.Squeezing)

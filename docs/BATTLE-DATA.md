@@ -592,6 +592,9 @@ Q1 và Q2 của docs/UPDATE-1.5.md. Code: `src/DesktopPet.Core/PetBattle.Spit.cs
 | `flattenHits`, `flatSeconds` | 1–10, 0,5–15 s | 2, 3 | Trúng chừng này đòn vũ khí/bom (thường, combo, lan, Dư ảnh, bom; không tính độc, kỹ năng, app) thì bẹp, nằm im không bật |
 | `creepRange` | 0–1500 DIPs (0: không trượt) | 120 | Mèo xa hơn chừng này thì trượt chậm (`speed`) lại gần, tới đó thì nằm im; đang nén hay bẹp thì không trượt |
 | `eliteRadius`, `eliteRest`, `eliteHits` | 1–2, 0,5–20 s, 1–10 | 1,35, 2,5, 3 | Tinh anh: vòng to ×, nghỉ ngắn hơn, cần nhiều đòn hơn mới bẹp |
+| `push`, `pushSeconds` | 0–200 DIPs, 0,05–1 s | 80, 0,25 | (2026-10-31, người dùng duyệt) Bật trúng mèo (đòn lọt qua Khiên/Mai rùa) thì trận trượt mèo ra xa lò xo chừng này DIPs trong chừng này giây (lệnh `CatCommand.Shove`: cửa sổ đặt vị trí mèo, đứng yên quay mặt về lò xo; không phải cú ném, không Dizzy; nhấc mèo là dừng) |
+| `leapRange`, `leapWait` | 0–400 DIPs (> `radius`; 0: không nhảy), 0,2–10 s | 170, 1,5 | (2026-10-31) Mèo đứng ngoài vòng nhưng trong `leapRange` liên tục `leapWait` s, **hoặc** vũ khí đánh trúng nó từ ngoài vòng (cuộn len tầm 114 > vòng 100): nó nhảy tới |
+| `leapCrouch`, `leapSeconds`, `leapHeight`, `leapCooldown` | 0,1–2 s, 0,2–2 s, 0–120 DIPs, 0,5–30 s | 0,45, 0,55, 60, 5 | Nén người `leapCrouch` s (vòng đỏ đầy dần ở **chỗ mèo đứng lúc bắt đầu nén**), bay `leapSeconds` s theo đường cong cao `leapHeight`, chạm đất thì bật ngay (trúng mèo trong vòng như thường, rồi nghỉ `rest`); `leapCooldown` s mới nhảy lại. Đẩy/choáng/Kẹp gắp lúc nén thì hủy cú nhảy |
 
 - Mèo đang được cầm không bao giờ kích bẫy và không bị bật trúng; nhấc mèo ra trong lúc nén là né được (thả lại vào vòng thì có `landingGrace` như thường). Đẩy/choáng/Kẹp gắp trong lúc nén: lò xo xả hơi, chuyển sang nghỉ. Physics kéo/ném của mèo không đổi.
 - Không chen chỗ với quái khác (quái khác đứng lên được "tấm thảm"), nên mạnh khi đi cùng đội hình dồn mèo vào vòng.

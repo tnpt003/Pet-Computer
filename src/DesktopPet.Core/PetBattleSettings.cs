@@ -596,6 +596,9 @@ public sealed class Slime
     // 1.5 M09 (PetBattle.Spring.cs): the trap's state, the time left in it and the hits towards flattening it.
     public SpringState Spring;
     public double SpringClock;
+    // 2026-10-31: how long the cat has stood just out of its ring (towards a leap), where a leap lands, and
+    // the time before it may leap again.
+    public double SpringWait, LeapToX, LeapCooldown;
     public int SpringHits;
     // 1.5 M11 (PetBattle.Fuse.cs, PetBattle.Split.cs): a lit fuse's seconds left and its whole length
     // (0: not lit); blown up by its own fuse (gone, not drawn as defeated); healed by a healer since it
@@ -748,6 +751,9 @@ public enum BattleEventKind
     // landed (Value 1: on the cat); a puddle made a dash longer; the fan dried a puddle. A spring trap
     // started to squeeze; it sprang (Value 1: on the cat); it was flattened.
     SpitAimed, GooLanded, PuddleBoost, PuddleDried, SpringSqueezed, SpringBounced, SpringFlattened,
+    // 2026-10-31: a spring crouched to leap (X: where it will land; Value: its id), left the floor; the cat
+    // was slid by a spring (Value: the side, -1 or 1).
+    SpringCrouched, SpringLeapt, CatShoved,
     // 1.5 M11 (Value: the enemy's id): a bomb slime lit its fuse; it blew up (Value 1: on the cat); a
     // splitting slime broke apart.
     FuseLit, Blasted, SlimeSplit,
@@ -810,7 +816,7 @@ public enum ClingPhase { Ground, Climbing, Clinging, Falling }
 public enum QuillPhase { Flat, Rising, Up }
 public enum StolenKind { None, App, Skill }
 // A spring trap (PetBattle.Spring.cs): set and waiting, squeezing before it springs, resting after, flattened.
-public enum SpringState { Ready, Squeezing, Resting, Flat }
+public enum SpringState { Ready, Squeezing, Resting, Flat, Crouching, Leaping }
 // A drop of goo in flight from a spitter (PetBattle.Spit.cs) and the puddle it leaves.
 public sealed class BattleGoo
 {
@@ -1107,5 +1113,6 @@ public sealed record AppSpec
 
 // What the battle wants the cat to do this frame. Hold: the user has the cat (or it is in
 // the air), so the battle leaves it to input and physics.
-public enum CatCommand { Hold, Stand, Move }
+// Shove (2026-10-31): the battle slides the cat to X this frame (a spring's push back), not a walk or a throw.
+public enum CatCommand { Hold, Stand, Move, Shove }
 public readonly record struct CatOrder(CatCommand Command, double X = 0, int Facing = 0);

@@ -91,7 +91,7 @@ internal static class EndlessMutationTests
                     continue;
                 }
                 var order = sim.Step(dt, cat, false);
-                if (order.Command == CatCommand.Move) cat += Math.Clamp(order.X - cat, -72 * 1.8 * dt, 72 * 1.8 * dt);
+                if (order.Command == CatCommand.Shove) cat = order.X; else if (order.Command == CatCommand.Move) cat += Math.Clamp(order.X - cat, -72 * 1.8 * dt, 72 * 1.8 * dt);
             }
             return (sim, offers);
         }

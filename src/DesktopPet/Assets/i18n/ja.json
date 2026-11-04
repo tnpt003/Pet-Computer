@@ -1391,6 +1391,7 @@
   "Delete this set": "このセットを削除",
   "The Default set cannot be changed. Click \"+ New set\" to build your own from it.": "デフォルトのセットは変更できません。「+ 新しいセット」を押すと、これをもとに自分のセットを作れます。",
   "Slimes · click: Off → Few → Some → Many": "スライム · クリックで切り替え：なし → 少し → ふつう → たくさん",
+  "Malware · click: Off → Few → Some → Many": "マルウェア · クリックで切り替え：なし → 少し → ふつう → たくさん",
   "Last boss": "最後のボス",
   "No boss": "ボスなし",
   "Waves": "ウェーブ数",

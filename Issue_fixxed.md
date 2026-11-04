@@ -8,6 +8,14 @@ Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm 
 
 ---
 
+## #33 — Vũ khí trên bảng chuẩn bị tràn khỏi nút; app trong bảng dựng trận chỉ là nút chữ (2026-10-31, commit chưa có)
+- **Triệu chứng (ảnh người dùng):** bảng "Chuẩn bị trận": hình kiếm/búa/cuộn len/găng thò ra mép trái nút, dấu ✓ chen giữa hình và tên. Bảng "Dựng trận" phần "App trong trận": toàn nút chữ ("Quảng cáo: Tắt"…), xấu.
+- **Nguyên nhân:** `WeaponIcon` dịch cố định rồi vẽ vũ khí dài ~46 DIPs (xoay 35°) vào ô 24×28 nên tràn; ✓ nằm trong hàng cùng tên. Phần app dùng `Chip` chữ.
+- **Sửa:** `WeaponIcon` đo khung thật của hình (DrawingGroup.Bounds, cache theo kiểu) rồi co cho vừa ô, căn giữa; thẻ vũ khí: ô vuông 32 tối màu bên trái chứa vũ khí, tên bên phải, ✓ thành huy hiệu tròn ở góc phải trên. Bảng dựng trận: app và app độc là ô như ô quái (icon, tên, trạng thái Bật/Tắt hoặc Tắt/Ít/Vừa/Nhiều, ô cam khi bật), chưa gặp là ô "?"; thêm tiêu đề "App độc · bấm để đổi"; icon app độc vẽ mới (PetMalwareIcon.cs: quảng cáo, vòng loading, cập nhật bắt buộc, virus.exe, virus vào icon, Captcha, pin yếu, con trỏ đơ).
+- **Kiểm chứng:** `scripts/test.ps1 -Ui`: C# 2859, WPF 1387/1387 (check mới: mọi app/app độc đã gặp hiện thành ô); ảnh `artifacts/render-b2` (custom-fight-setup-en, custom-fight-builder-en, custom-fight-builder-apps-en) đã xem. Chưa xem trên DPI thật.
+
+---
+
 ## #32 — Slime bám tường rơi xuống thì đuổi mèo, bám tường thì đứng yên một chỗ (2026-10-31, commit 22cf959)
 - **Triệu chứng (góp ý người dùng):** bị choáng rơi xuống, slime bám tường chạy lại đánh mèo thay vì bám lên tường; trên tường nó chỉ đứng một độ cao mà bắn mãi.
 - **Nguyên nhân:** thiết kế M15: sau khi rơi nó nằm choáng `downed` 2,5 s rồi đánh dưới sàn `ground` 4 s mới leo lại; trên mép không có bước di chuyển nào.

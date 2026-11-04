@@ -410,21 +410,18 @@ public sealed partial class PetWindow
         {
             string id = BattleSim.AppId(kind);
             bool open = MonsterBook.KnowsApp(id), on = open && fight.Icons.Contains(id);
-            var chip = Chip(new TextBlock { Text = open ? (on ? "✓ " : "") + IconName(kind) : "???", Foreground = Brushes.White, FontSize = PetUi.SmallSize, FontWeight = FontWeights.SemiBold }, open);
-            ShowChosen(chip, on);
-            chip.MouseLeftButtonDown += (_, e) => { if (open) FightToggleIcon(id); else { fightNote = L("Chưa gặp app này trong trận.", "Not met in a battle yet."); FillFightBuilder(); } e.Handled = true; };
-            icons.Children.Add(chip);
+            icons.Children.Add(AppTile(new PrepAppIcon(kind), open, IconName(kind), on ? L("Bật", "On") : L("Tắt", "Off"), on, () => FightToggleIcon(id),
+                L("Chưa gặp app này trong trận.", "Not met in a battle yet.")));
         }
         body.Children.Add(icons);
+        body.Children.Add(Heading(L("App độc · bấm để đổi: Tắt → Ít → Vừa → Nhiều", "Malware · click: Off → Few → Some → Many")));
         var malware = new WrapPanel();
         foreach (var kind in MalwareCue.Kinds)
         {
             bool open = MonsterBook.KnowsApp(kind);
             int level = open ? fight.Malware.GetValueOrDefault(kind) : 0;
-            var chip = Chip(new TextBlock { Text = open ? MalwareName(kind) + ": " + LevelName(level) : "???", Foreground = Brushes.White, FontSize = PetUi.SmallSize }, open);
-            ShowChosen(chip, level > 0);
-            chip.MouseLeftButtonDown += (_, e) => { if (open) FightCycleMalware(kind); else { fightNote = L("Chưa gặp app độc này trong trận.", "Not met in a battle yet."); FillFightBuilder(); } e.Handled = true; };
-            malware.Children.Add(chip);
+            malware.Children.Add(AppTile(new MalwareIcon(kind), open, MalwareName(kind), LevelName(level), level > 0, () => FightCycleMalware(kind),
+                L("Chưa gặp app độc này trong trận.", "Not met in a battle yet.")));
         }
         body.Children.Add(malware);
         if (fight.Icons.Count == 0) body.Children.Add(Caption(L("Không có icon nào thì trận không có app và app độc.", "With no icon the fight has no apps and no malware."), PetUi.CaptionSize, PetUi.Game.Soft));
@@ -463,14 +460,30 @@ public sealed partial class PetWindow
     {
         bool open = MonsterBook.Knows(type.Id);
         var picture = BookPicture(type, false, open, 46, 38);
-        picture.HorizontalAlignment = HorizontalAlignment.Center;
-        var name = new TextBlock { Text = open ? type.Name(preferences.Language) : "???", Foreground = open ? Brushes.White : PetUi.Game.Soft, FontSize = PetUi.CaptionSize,
+        return PickTile(picture, open, open ? type.Name(preferences.Language) : "???", open && level >= 0 ? LevelName(level) : null, level > 0, level != 0, click,
+            () => BlockText(CustomFightBlock.Locked, ChosenFight!));
+    }
+
+    // 2026-10-31: an app or malware as a tile like the enemies' (its picture, name and state), not a bare
+    // button. Not met yet: a dim "?" tile.
+    private Border AppTile(UIElement art, bool open, string name, string state, bool lit, Action click, string lockedNote)
+    {
+        UIElement picture = open ? art : new TextBlock { Text = "?", Foreground = PetUi.Game.Soft, FontSize = 22, FontWeight = FontWeights.Bold,
+            HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
+        if (open && art is FrameworkElement element) { element.Width = 36; element.Height = 36; }
+        return PickTile(picture, open, open ? name : "???", open ? state : null, lit, lit, click, () => lockedNote);
+    }
+
+    // A tile of the builder: picture (38 high), name, a state line (gold when lit); chosen tiles are orange.
+    private Border PickTile(UIElement picture, bool open, string name, string? state, bool lit, bool chosen, Action click, Func<string> lockedNote)
+    {
+        if (picture is FrameworkElement element) element.HorizontalAlignment = HorizontalAlignment.Center;
+        var label = new TextBlock { Text = name, Foreground = open ? Brushes.White : PetUi.Game.Soft, FontSize = PetUi.CaptionSize,
             FontWeight = FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center, MaxWidth = 66 };
-        var stack = new StackPanel { Children = { new Grid { Height = 38, Children = { picture } }, name } };
-        if (open && level >= 0)
-            stack.Children.Add(new TextBlock { Text = LevelName(level), Foreground = level > 0 ? PetUi.Game.Gold : PetUi.Game.Soft, FontSize = PetUi.CaptionSize,
+        var stack = new StackPanel { Children = { new Grid { Height = 38, Children = { picture } }, label } };
+        if (state != null)
+            stack.Children.Add(new TextBlock { Text = state, Foreground = lit ? PetUi.Game.Gold : PetUi.Game.Soft, FontSize = PetUi.CaptionSize,
                 FontWeight = FontWeights.Bold, HorizontalAlignment = HorizontalAlignment.Center });
-        bool chosen = level != 0;
         var tile = new Border
         {
             Width = 72, MinHeight = 74, Margin = new Thickness(0, 0, 5, 5), Padding = new Thickness(2), CornerRadius = new CornerRadius(8),
@@ -480,7 +493,7 @@ public sealed partial class PetWindow
         tile.MouseLeftButtonDown += (_, e) =>
         {
             if (open) click();
-            else { fightNote = BlockText(CustomFightBlock.Locked, ChosenFight!); FillFightBuilder(); }
+            else { fightNote = lockedNote(); FillFightBuilder(); }
             e.Handled = true;
         };
         return tile;

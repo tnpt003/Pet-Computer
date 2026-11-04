@@ -120,9 +120,14 @@ internal static class CustomFightChecks
                 "The numbers step within their limits; cards turn on");
             check(!window.FightToggleIcon("tabs") && !set.Icons.Contains("tabs"), "An app not met cannot be chosen");
             book.AddApps(new[] { "tabs", "ads" }, out _);
-            check(window.FightToggleIcon("tabs") && window.FightCycleMalware("ads") && set.Malware["ads"] == 1 && window.FightBuilderText.Contains("Ads: Few"), "Met apps can be chosen");
+            check(window.FightToggleIcon("tabs") && window.FightCycleMalware("ads") && set.Malware["ads"] == 1 && window.FightBuilderText.Contains("Ads\nFew") && window.FightBuilderText.Contains("Tab Tornado\nOn"), "Met apps can be chosen (tiles: name, then state)");
             window.FightToggleIcon("tabs"); window.FightCycleMalware("ads"); window.FightCycleMalware("ads"); window.FightCycleMalware("ads");
             Shot("Pet custom fight", "custom-fight-builder-en.png");
+            // Every app and malware met: each its own drawn tile (one picture to look over).
+            book.AddApps(CustomFight.IconOrder.Select(BattleSim.AppId).Concat(MalwareCue.Kinds), out _);
+            window.FightToggleCards(); window.FightToggleCards();
+            check(window.FightBuilderText.Contains("Captcha") && window.FightBuilderText.Contains("Screenshot"), "Every met app and malware shows as a tile");
+            Shot("Pet custom fight", "custom-fight-builder-apps-en.png");
 
             // Fullscreen hides the builder; it comes back after.
             SetContext(window, true, 0); Call(window, "TickContext", 1.1); Prep(0.2);

@@ -75,6 +75,8 @@ public sealed partial class PetWindow
     private static readonly Brush PrepBarBack = PetUi.Game.BarBack;
     private static readonly Brush PrepBarFill = PetUi.Game.Gold;
     private static readonly Brush PrepStage = PetUi.Game.Stage;
+    // The square a weapon card shows its weapon in (a darker well, chosen or not).
+    private static readonly Brush WeaponSlotBack = PetUi.Frozen(0x50, 0x00, 0x00, 0x00);
     private static readonly Geometry CheckMark = PetUi.FrozenGeometry("M 1,6.5 L 5,10.5 L 13,2");
     private static readonly Geometry DifficultyStar = PetUi.FrozenGeometry("M 5,0 L 6.2,3.4 L 9.8,3.5 L 7,5.7 L 8,9.2 L 5,7.1 L 2,9.2 L 3,5.7 L 0.2,3.5 L 3.8,3.4 Z");
     public const double BattlePrepRefreshSeconds = 0.2;
@@ -427,16 +429,31 @@ public sealed partial class PetWindow
                 Grid.SetColumn(bar, 1); Grid.SetColumn(statValues[i], 2);
                 stats.Children.Add(statNames[i]); stats.Children.Add(bar); stats.Children.Add(statValues[i]);
             }
-            var icon = new WeaponIcon { Style = weapon.Style, Width = 24, Height = 28, Margin = new Thickness(0, 0, 6, 0), VerticalAlignment = VerticalAlignment.Center };
+            // The weapon fitted in a square slot on the left, its name next to it, the tick as a round
+            // badge in the card's corner (it no longer pushes the name about).
+            var slot = new Border
+            {
+                Width = 32, Height = 32, CornerRadius = new CornerRadius(7), Background = WeaponSlotBack, Margin = new Thickness(0, 0, 8, 0),
+                VerticalAlignment = VerticalAlignment.Center, Child = new WeaponIcon { Style = weapon.Style, Inset = 3 }
+            };
+            check.Width = 9; check.Height = 8; check.StrokeThickness = 2; check.Margin = new Thickness(0);
+            check.HorizontalAlignment = HorizontalAlignment.Center; check.VerticalAlignment = VerticalAlignment.Center; check.Stretch = Stretch.Uniform;
+            var badgeDot = new Ellipse { Width = 16, Height = 16, Fill = PetUi.Game.ChosenRim };
+            badgeDot.SetBinding(VisibilityProperty, new System.Windows.Data.Binding(nameof(Visibility)) { Source = check });
+            var badge = new Grid { Width = 16, Height = 16, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(0, -3, -3, 0),
+                Children = { badgeDot, check } };
+            name.VerticalAlignment = VerticalAlignment.Center;
+            name.TextTrimming = TextTrimming.CharacterEllipsis;
+            var row = new DockPanel { LastChildFill = true, Children = { slot, name } };
+            DockPanel.SetDock(slot, Dock.Left);
             var weaponDetails = new StackPanel { Children = { hint, stats } };
             prepWeaponDetails.Children.Add(weaponDetails);
             var card = new Border
             {
-                Height = 42, Tag = weaponDetails, BorderThickness = new Thickness(1.5),
-                CornerRadius = new CornerRadius(8), Padding = new Thickness(6), Margin = new Thickness(0, 0, 6, 4), Cursor = System.Windows.Input.Cursors.Hand,
-                Child = new DockPanel { Children = { icon, new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center, Children = { check, name } } } }
+                Height = 46, Tag = weaponDetails, BorderThickness = new Thickness(1.5),
+                CornerRadius = new CornerRadius(8), Padding = new Thickness(6, 5, 6, 5), Margin = new Thickness(0, 0, 6, 4), Cursor = System.Windows.Input.Cursors.Hand,
+                Child = new Grid { Children = { row, badge } }
             };
-            DockPanel.SetDock(icon, Dock.Left);
             card.MouseLeftButtonDown += (_, e) => { BattlePrepChooseWeapon(id); e.Handled = true; };
             cards.Children.Add(card);
             prepCards.Add((id, card, check, name, hint, statNames, statValues));
@@ -760,14 +777,33 @@ public sealed class PrepAppIcon(BattleAppKind kind) : FrameworkElement
     protected override void OnRender(DrawingContext dc) => AppArt.DrawTile(dc, kind, new Point(ActualWidth / 2, ActualHeight / 2), Math.Min(ActualWidth, ActualHeight));
 }
 
+// Scaled to fit its box whatever the weapon's shape (its drawn bounds, pen included), centred.
 public sealed class WeaponIcon : FrameworkElement
 {
+    private static readonly Dictionary<string, DrawingGroup> Art = new();
     public string Style { get; init; } = "sword";
+    public double Inset { get; init; } = 2;
+
+    private static DrawingGroup For(string style)
+    {
+        if (Art.TryGetValue(style, out var art)) return art;
+        art = new DrawingGroup();
+        using (var dc = art.Open()) PetRenderer.DrawWeaponIcon(dc, style);
+        art.Freeze();
+        return Art[style] = art;
+    }
+
     protected override void OnRender(DrawingContext dc)
     {
-        dc.PushTransform(new TranslateTransform(ActualWidth / 2 - 10, ActualHeight / 2 + 17));
-        PetRenderer.DrawWeaponIcon(dc, Style);
-        dc.Pop();
+        var art = For(Style);
+        var b = art.Bounds;
+        if (b.IsEmpty || b.Width <= 0 || b.Height <= 0) return;
+        double s = Math.Min((ActualWidth - 2 * Inset) / b.Width, (ActualHeight - 2 * Inset) / b.Height);
+        dc.PushTransform(new TranslateTransform(ActualWidth / 2, ActualHeight / 2));
+        dc.PushTransform(new ScaleTransform(s, s));
+        dc.PushTransform(new TranslateTransform(-(b.X + b.Width / 2), -(b.Y + b.Height / 2)));
+        dc.DrawDrawing(art);
+        dc.Pop(); dc.Pop(); dc.Pop();
     }
 }
 

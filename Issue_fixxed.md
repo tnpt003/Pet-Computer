@@ -8,7 +8,7 @@ Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm 
 
 ---
 
-## #36 — Dây của slime xích khó thấy; slime xích chết quá nhanh (2026-10-31, commit chưa có)
+## #36 — Dây của slime xích khó thấy; slime xích chết quá nhanh (2026-10-31, commit 05c44bf)
 - **Triệu chứng (góp ý người dùng):** dây nối của slime xích chưa đẹp, khó để ý; mèo vung kiếm vài cái là slime xích chết dù đang nối dây.
 - **Nguyên nhân:** dây vẽ là hai nét cong mảnh màu nhầy; slime xích (36 HP) gánh 50% mọi đòn vào đồng minh mà không giảm gì, nên mỗi đòn vào đồng minh là nửa đòn vào nó.
 - **Sửa:** khóa mới `link.armor` (chỉ cho `tether`, gốc 0,5): còn xích thì mọi sát thương slime xích nhận (cả phần gánh) ×0,5; cắt xích thì nhận đủ. Dây vẽ thành chuỗi mắt xích thép (mắt xen kẽ quay nghiêng), mỗi lần gánh có chớp vàng chạy dọc xích từ đồng minh về nó (`LinkPulse` 0,35 s), đồng minh có huy hiệu mắt xích cạnh đầu. Lời mẹo đổi theo ("còn xích thì nó cứng gấp đôi").

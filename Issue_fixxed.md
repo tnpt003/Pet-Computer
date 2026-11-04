@@ -8,7 +8,7 @@ Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm 
 
 ---
 
-## #37 — Vũng nhầy không hại mèo; slime nhanh chỉ được buff khi lao qua; slime phun không ưu tiên buff (2026-10-31, commit chưa có)
+## #37 — Vũng nhầy không hại mèo; slime nhanh chỉ được buff khi lao qua; slime phun không ưu tiên buff (2026-10-31, commit c7242cd)
 - **Triệu chứng (góp ý người dùng):** bãi nhầy của slime phun phải gây sát thương và làm chậm khi mèo đứng vào; slime nhanh chỉ cần chạm vũng là được buff cả trận (lao xa ×1,5, nhanh ×1,4) và có hiệu ứng buff; slime phun nên ưu tiên buff slime nhanh rồi mới bắn mèo.
 - **Nguyên nhân:** thiết kế M09: vũng chỉ kéo dài **cú lao đang đi qua nó**; không ảnh hưởng mèo; slime phun luôn ngắm chỗ mèo.
 - **Sửa:** `spit.puddleDamage` 2 HP/s (mỗi 0,5 s, Khiên chặn, không khi nhấc hay `landingGrace`) và `puddleSlow` 0,7 (`MoveFactor`); slime lao **chạm** vũng là `GooBoosted` cả trận (mọi cú lao ×1,5 quãng, ×1,4 tốc độ), hình quầng tím + giọt nhầy rơi sau + thân bóng tím + dấu "+"; `spit.lane`: có slime nhanh chưa buff thì lần phun tới rơi trước mặt nó (tối đa 70 DIPs về phía mèo), mỗi con một lần. Gợi ý mới (vũng bỏng/chậm; buff cả trận). Bù cân bằng: nhịp phun 4 → 4,5 s; chương 2 màn 5 `threat` 1,45 → 1,4.

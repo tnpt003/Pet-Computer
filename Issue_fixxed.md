@@ -8,7 +8,7 @@ Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm 
 
 ---
 
-## #34 — Slime lò xo chỉ làm choáng, không đẩy lùi; vô dụng trước cuộn len (2026-10-31, commit chưa có)
+## #34 — Slime lò xo chỉ làm choáng, không đẩy lùi; vô dụng trước cuộn len (2026-10-31, commit 96ee6be)
 - **Triệu chứng (góp ý người dùng):** lò xo bật trúng chỉ làm choáng, không hất mèo như lò xo; mèo cầm cuộn len (tầm 114) đứng ngoài vòng 100 đánh nó mà không bao giờ bị bật.
 - **Nguyên nhân:** thiết kế M09 "không đổi physics mèo": chỉ mất máu + choáng; lò xo chỉ trượt chậm tới cách mèo 120 rồi nằm im, không có cách với tới mèo đứng ngoài vòng.
 - **Sửa (người dùng duyệt đẩy lùi 31/10):** `spring.push` 80 / `pushSeconds` 0,25: đòn lọt qua Khiên/Mai rùa thì trận trượt mèo ra xa (lệnh mới `CatCommand.Shove`, cửa sổ đặt vị trí mèo, không phải cú ném; nhấc mèo là dừng). **Bật nhảy:** mèo đứng ngoài vòng trong 170 DIPs suốt 1,5 s, hoặc vũ khí đánh trúng từ ngoài vòng, thì nó nén 0,45 s (vòng đỏ đầy dần ở chỗ mèo lúc đó), bay 0,55 s, chạm đất bật ngay; 5 s mới nhảy lại; Đẩy/choáng/Kẹp gắp lúc nén thì hủy. Gợi ý một lần mỗi trận, tiếng mới. `HurtCat` trả về đòn có lọt không.

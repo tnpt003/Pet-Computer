@@ -83,6 +83,9 @@ public sealed partial class BattleSim
         }
     }
 
+    // A timer's last seconds (2026-11-04): its clock swells and rings an alarm (seen and heard).
+    public const double ClockAlarm = 3;
+
     // Every step of a timer still in the battle: its clock (slower while dazed); run out, it calls.
     private void StepClock(Slime s, double dt)
     {
@@ -92,12 +95,16 @@ public sealed partial class BattleSim
             s.ClockTotal = s.ClockLeft = s.Elite != null ? c.EliteSeconds : c.Seconds;
             events.Add(new(BattleEventKind.ClockStarted, s.X, s.Id));
         }
+        double was = s.ClockLeft;
         s.ClockLeft -= dt * (s.State == SlimeState.Stunned ? c.Stunned : 1);
+        if (was > ClockAlarm && s.ClockLeft <= ClockAlarm && s.ClockLeft > 0) events.Add(new(BattleEventKind.ClockAlarm, s.X, s.Id));
         if (s.ClockLeft > 0) return;
         s.ClockCalls++;
         ClockRings++;
         calls.Add(c.Call);
         AddEffect(BattleEffectKind.Bell, s.X, s.Height + 14);
+        // 2026-11-04: a big ring of sound out of it, so the call cannot be missed.
+        AddEffect(BattleEffectKind.Slam, s.X, 0, 220);
         events.Add(new(BattleEventKind.ClockRang, s.X, s.Id));
         s.ClockLeft = s.ClockCalls < c.Calls ? s.ClockTotal : 0;
     }
@@ -181,21 +188,9 @@ public sealed partial class BattleSim
     private void Steal(Slime s, double catX)
     {
         if (s.Type.Steal is not StealSpec steal || s.Loot != StolenKind.None) return;
-        if (StealableApp(steal) is DesktopApp app)
-        {
-            s.Loot = StolenKind.App;
-            s.LootApp = app.Id;
-            s.LootCharge = app.Charge;
-            app.Charge = 0;
-        }
-        else if (StealableSkill() is BattleSkill skill)
-        {
-            s.Loot = StolenKind.Skill;
-            s.LootSkill = skill;
-            cooldowns[(int)skill] = SkillCooldown(skill);
-            if (Armed == skill) Arm(null);
-        }
-        else return;
+        if (!TakeOne(steal, out s.Loot, out s.LootApp, out s.LootCharge, out s.LootSkill)) return;
+        // 2026-11-04: an elite takes a second thing (another icon's charge or another ready skill).
+        if (s.Elite != null) TakeOne(steal, out s.Loot2, out s.LootApp2, out s.LootCharge2, out s.LootSkill2);
         Thefts++;
         s.FleeSide = s.X >= catX ? 1 : -1;
         s.LingerClock = 0;
@@ -203,13 +198,41 @@ public sealed partial class BattleSim
         events.Add(new(BattleEventKind.ThiefStole, s.X, s.Loot == StolenKind.Skill ? 1 : 0));
     }
 
+    // One take: the fullest clean icon's charge, otherwise the ready skill with the longest cooldown.
+    private bool TakeOne(StealSpec steal, out StolenKind kind, out int appId, out double charge, out BattleSkill skill)
+    {
+        kind = StolenKind.None; appId = 0; charge = 0; skill = default;
+        if (StealableApp(steal) is DesktopApp app)
+        {
+            kind = StolenKind.App;
+            appId = app.Id;
+            charge = app.Charge;
+            app.Charge = 0;
+            return true;
+        }
+        if (StealableSkill() is BattleSkill ready)
+        {
+            kind = StolenKind.Skill;
+            skill = ready;
+            cooldowns[(int)ready] = SkillCooldown(ready);
+            if (Armed == ready) Arm(null);
+            return true;
+        }
+        return false;
+    }
+
     // A thief defeated (from Defeat): what it carried goes back (an icon infected meanwhile gets nothing).
     private void GiveBack(Slime s)
     {
         if (s.Loot == StolenKind.None) return;
-        if (s.Loot == StolenKind.Skill) cooldowns[(int)s.LootSkill] = 0;
-        else foreach (var app in desktop) if (app.Id == s.LootApp) Charge(app, s.LootCharge);
-        s.Loot = StolenKind.None;
+        void Return(StolenKind kind, BattleSkill skill, int appId, double charge)
+        {
+            if (kind == StolenKind.Skill) cooldowns[(int)skill] = 0;
+            else if (kind == StolenKind.App) foreach (var app in desktop) if (app.Id == appId) Charge(app, charge);
+        }
+        Return(s.Loot, s.LootSkill, s.LootApp, s.LootCharge);
+        Return(s.Loot2, s.LootSkill2, s.LootApp2, s.LootCharge2);
+        s.Loot = s.Loot2 = StolenKind.None;
         TheftsReturned++;
         AddEffect(BattleEffectKind.Heart, s.X, s.Height);
         events.Add(new(BattleEventKind.ThiefReturned, s.X, s.Id));

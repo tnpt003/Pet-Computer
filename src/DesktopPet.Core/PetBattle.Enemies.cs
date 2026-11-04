@@ -554,7 +554,7 @@ public sealed partial class BattleSim
         }
         double seconds = stunSeconds >= 0 ? stunSeconds : Settings.StunDurationSeconds;
         if (crush && CrushProof) stun = false;
-        if (stun && !from.Defanged && !CatHeld && !CatStunned && !Raging && StunImmunity <= 0 && seconds > 0)
+        if (stun && !from.Defanged && !CatHeld && !CatStunned && !Raging && StunImmunity <= 0 && seconds > 0 && !AutoRage())
         {
             CatStunRemaining = StunFor(seconds);
             StunsTaken++;

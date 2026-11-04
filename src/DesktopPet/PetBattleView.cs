@@ -213,6 +213,18 @@ public sealed partial class BattleFieldView : FrameworkElement
     protected override void OnRender(DrawingContext dc)
     {
         double floor = Floor, time = sim.Time;
+        // A Ground quake shakes the whole strip for its first moments (2026-11-04).
+        double shake = 0;
+        for (int i = 0; i < sim.Effects.Count; i++)
+            if (sim.Effects[i] is { Kind: BattleEffectKind.Quake, Age: < 0.4 } quake) shake = Math.Max(shake, 1 - quake.Age / 0.4);
+        dc.PushTransform(new TranslateTransform(Math.Sin(time * 95) * 4 * shake, Math.Cos(time * 70) * 2 * shake));
+        DrawStrip(dc, floor, time);
+        dc.Pop();
+        DrawQuakeCooldown(dc, floor, time);
+    }
+
+    private void DrawStrip(DrawingContext dc, double floor, double time)
+    {
         // Index loops: foreach over IReadOnlyList boxes an enumerator every frame.
         for (int i = 0; i < sim.Bombs.Count; i++) DrawBomb(dc, sim.Bombs[i], sim.Bombs[i].X - OriginX, floor);
         DrawSpitBehind(dc, floor, time);
@@ -264,6 +276,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         for (int i = 0; i < sim.Slimes.Count; i++)
             if (sim.Slimes[i].IsBoss && sim.RallyTarget(sim.Slimes[i]) is Slime rallied) DrawRallyLink(dc, sim.Slimes[i], rallied, floor, time);
         DrawLinkMarks(dc, floor, time);
+        DrawThiefBeams(dc, floor, time);
         DrawCarriedFish(dc, floor, time);
         DrawNursing(dc, floor, time);
         DrawGoos(dc, floor);
@@ -292,6 +305,90 @@ public sealed partial class BattleFieldView : FrameworkElement
         dc.DrawLine(WarningPen, new Point(x, ey - 9), new Point(x, ey + 1));
         dc.DrawEllipse(Warning, Halo, new Point(x, ey + 7), 2.4, 2.4);
         dc.DrawEllipse(Warning, null, new Point(x, ey + 7), 2.4, 2.4);
+    }
+
+    private static readonly Pen QuakeCrack = FrozenPen(Frozen(255, 0x5A, 0x3A, 0x1E), 3.2), QuakeGlow = FrozenPen(Frozen(200, 0xFF, 0xC8, 0x5A), 7);
+    private static readonly Brush QuakeDust = Frozen(170, 0xC9, 0xA8, 0x7E), QuakeDial = Frozen(150, 0x2A, 0x1F, 0x16);
+
+    // The Ground quake (2026-11-04): two jagged cracks running out along the floor to both sides with a glow
+    // and dust at their fronts, a ring of dust where the cat landed and "RẦM!" rising.
+    private void DrawQuake(DrawingContext dc, BattleEffect effect, double x, double floor)
+    {
+        double grow = Math.Min(1, effect.Age / BattleSim.QuakeTravel), reach = effect.Value * grow;
+        foreach (int side in new[] { -1, 1 })
+        {
+            var crack = new StreamGeometry();
+            using (var g = crack.Open())
+            {
+                g.BeginFigure(new Point(x, floor - 2), false, false);
+                for (double d = 10; d <= reach; d += 10)
+                    g.LineTo(new Point(x + side * d, floor - 2 - ((int)(d / 10) % 2 == 0 ? 0 : 5)), true, true);
+            }
+            crack.Freeze();
+            dc.DrawGeometry(null, QuakeGlow, crack);
+            dc.DrawGeometry(null, QuakeCrack, crack);
+            double front = x + side * reach;
+            for (int i = 0; i < 3; i++)
+                dc.DrawEllipse(QuakeDust, null, new Point(front - side * i * 7, floor - 8 - i * 5 - 10 * grow), 7 - i, 5 - i);
+        }
+        dc.DrawEllipse(null, QuakeGlow, new Point(x, floor - 3), 30 + 40 * grow, 6 + 4 * grow);
+        double rise = Math.Min(1, effect.Age / 0.5);
+        dc.PushTransform(new ScaleTransform(1.9, 1.9, x, floor - 70 - 20 * rise));
+        DrawWord(dc, PetText.Pick(Language, "RẦM!", "QUAKE!"), ComboGold, x, floor - 70 - 20 * rise);
+        dc.Pop();
+    }
+
+    // The Ground quake's card carried: a small ring by the cat fills while it recharges, gold once ready.
+    private void DrawQuakeCooldown(DrawingContext dc, double floor, double time)
+    {
+        if (!sim.QuakeCarried || sim.Over) return;
+        double left = sim.QuakeRemaining / BattleSim.QuakeCooldown;
+        double x = ClearOfCat(sim.CatX - OriginX - 30, 16, floor - 30), y = floor - 92;
+        dc.DrawEllipse(QuakeDial, null, new Point(x, y), 8, 8);
+        if (left <= 0) { dc.DrawEllipse(null, QuakeGlow, new Point(x, y), 7, 7); dc.DrawEllipse(null, QuakeCrack, new Point(x, y), 7, 7); return; }
+        double angle = (1 - left) * 2 * Math.PI;
+        var arc = new StreamGeometry();
+        using (var g = arc.Open())
+        {
+            g.BeginFigure(new Point(x, y - 7), false, false);
+            g.ArcTo(new Point(x + 7 * Math.Sin(angle), y - 7 * Math.Cos(angle)), new Size(7, 7), 0, angle > Math.PI, SweepDirection.Clockwise, true, false);
+        }
+        arc.Freeze();
+        dc.DrawGeometry(null, QuakeCrack, arc);
+    }
+
+    private static readonly Pen BeamPen = FrozenPen(Frozen(200, 0x9B, 0x7B, 0xE0), 3), BeamCore = FrozenPen(Frozen(230, 0xFF, 0xF4, 0xFF), 1.2);
+    private static readonly Brush BeamSpark = Frozen(255, 0xFF, 0xD2, 0x3F);
+
+    // A thief winding up from afar (2026-11-04): a wavy violet beam from the cat to it, sparks of energy
+    // running along it toward the thief.
+    private void DrawThiefBeams(DrawingContext dc, double floor, double time)
+    {
+        for (int i = 0; i < sim.Slimes.Count; i++)
+        {
+            var s = sim.Slimes[i];
+            if (s.Type.Steal == null || s.State != SlimeState.Windup || s.Loot != StolenKind.None) continue;
+            var from = new Point(sim.CatX - OriginX, floor - 50);
+            var to = new Point(s.X - OriginX, floor - s.Height * 0.6);
+            var wave = new StreamGeometry();
+            using (var g = wave.Open())
+            {
+                g.BeginFigure(from, false, false);
+                for (int k = 1; k <= 12; k++)
+                {
+                    double t = k / 12.0;
+                    g.LineTo(new Point(from.X + (to.X - from.X) * t, from.Y + (to.Y - from.Y) * t + Math.Sin(t * 12 + time * 18) * 4 * (1 - Math.Abs(2 * t - 1))), true, true);
+                }
+            }
+            wave.Freeze();
+            dc.DrawGeometry(null, BeamPen, wave);
+            dc.DrawGeometry(null, BeamCore, wave);
+            for (int k = 0; k < 3; k++)
+            {
+                double t = (time * 1.6 + k / 3.0) % 1;
+                dc.DrawEllipse(BeamSpark, null, new Point(from.X + (to.X - from.X) * t, from.Y + (to.Y - from.Y) * t), 2.2, 2.2);
+            }
+        }
     }
 
     // The cat looks up at a wall climber it cannot reach (2026-11-04): a gold "!" just clear of the cat on the
@@ -988,6 +1085,9 @@ public sealed partial class BattleFieldView : FrameworkElement
                     double reach = (10 + 6 * (i / 2)) + 16 * k;
                     dc.DrawEllipse(Brushes.White, Outline, new Point(x + side * reach, floor - 6 - 10 * k * (1 + i / 2)), 4.5 * (1 - k) + 2, 4.5 * (1 - k) + 2);
                 }
+                break;
+            case BattleEffectKind.Quake:
+                DrawQuake(dc, effect, x, floor);
                 break;
             case BattleEffectKind.Slam:
                 // Shock waves running out along the floor from the boss.

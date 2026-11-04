@@ -543,13 +543,15 @@ Tư thế trận, **không phải** cảm xúc Angry (cảm xúc vẫn bị khó
 
 | Khóa | Giới hạn | Gốc | Ý nghĩa |
 | --- | --- | --- | --- |
-| `rageSeconds` | 1–30 s | 6 | Nổi giận bao lâu (thời gian trận) |
-| `rageHitGain` | 0–1 | 0,05 | Thanh nộ tăng mỗi nhát mèo tự đánh trúng (cả nhát khi đang cầm); 20 nhát là đầy |
-| `rageHurtGain` | 0–1 | 0,012 | Thanh nộ tăng mỗi HP mèo mất (Khiên/Mai rùa chặn thì không tính) |
+| `rageSeconds` | 1–30 s | 5 | Nổi giận bao lâu (thời gian trận; 6 → 5 từ 2026-11-04) |
+| `rageAuto` | true/false | true | 2026-11-04: thanh đầy thì tự nộ ở nhát đánh trúng kế tiếp, hoặc thay cho cú choáng sắp dính |
+| `rageHitGain` | 0–1 | 0,02 | Thanh nộ tăng mỗi nhát mèo tự đánh trúng (cả nhát khi đang cầm); 50 nhát là đầy (0,05 trước 2026-11-04) |
+| `rageHurtGain` | 0–1 | 0,006 | Thanh nộ tăng mỗi HP mèo mất (Khiên/Mai rùa chặn thì không tính) |
 | `rageScale` | 1–1,4 | 1,3 | Hình mèo to bao nhiêu (chỉ hình vẽ) |
 | `rageKnock` | 0–1000 DIPs/s | 220 | Đẩy lùi ít nhất của mỗi nhát khi nổi giận (× `pushFactor` của quái) |
 | `rageKnockFactor` | 1–5 | 1,5 | Đẩy lùi thường (combo, búa) nhân bao nhiêu khi nổi giận |
 
+- **2026-11-04 (Issue #42):** thanh nộ là **vòng quanh avatar mèo** (click avatar để nộ); `rageAuto` tự nộ; nộ dùng được cả khi đang choáng, kích hoạt thì giải choáng/đạn dính/chói mắt, trong lúc nộ không bị làm chậm hay chói mắt. Các dòng dưới mô tả bản trước.
 - **Thanh nộ** nằm dưới thanh HP trên HUD, mỗi trận bắt đầu rỗng (Viễn chinh: mỗi bước một trận mới). Đầy dần khi mèo đánh trúng và khi mèo mất máu; không tăng khi đang nổi giận. Bom, kỹ năng, app, nhát vọng, đòn lan không cộng. `rageHitGain` và `rageHurtGain` cùng 0 thì thanh không bao giờ đầy.
 - **Đầy thì sáng lên** (viền vàng, nhấp nháy), lần đầu mỗi trận có banner "Thanh nộ đầy! Bấm vào thanh để mèo nổi giận". **Không bao giờ tự bật**: người dùng click vào thanh. Click chỉ có tác dụng khi trận đang chạy, mèo đang ở dưới sàn (không bị cầm) và **không đang choáng** (đang choáng thì thanh vẫn đầy, chờ hết choáng; nổi giận không cắt ngắn cú choáng đang có). Pause, menu, chọn thẻ, túi đồ đều chặn click.
 - **Trong `rageSeconds` giây:** mỗi nhát mèo tự đánh trúng còn trúng **mọi slime khác trong tầm** vũ khí (+14 DIPs) ở phía mèo đang vung hoặc chồng lên mèo, mỗi con nhận nguyên đòn thường (không thêm chí mạng/Mở màn/Đà chạy), bị đá chặn như đòn lan của combo; combo lúc này không lan thêm. Mọi nhát trúng đều đẩy lùi (`rageKnock`, mạnh hơn ×`rageKnockFactor`), tinh anh miễn Đẩy vẫn đứng yên. **Không quái hay app nào làm mèo choáng** (vẫn mất máu bình thường). Mèo đang cầm vẫn chỉ đánh quái trên không; nổi giận thì nhát đó trúng mọi quái trên không trong tầm.

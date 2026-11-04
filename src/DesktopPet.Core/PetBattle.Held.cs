@@ -43,6 +43,7 @@ public sealed partial class BattleSim
     // Every battle step that goes on (not paused, not over), held or not.
     private void StepHeld(double dt, CatPose? pose)
     {
+        CatBounce = null; // A bounce not taken right after its step is stale.
         heldCooldown = Math.Max(0, heldCooldown - dt);
         if (pose is not CatPose cat)
         {
@@ -122,8 +123,17 @@ public sealed partial class BattleSim
         if ((Raging || arms.Sweep) && !Over) Sweep(slime, plain, cat.X, HeldFacing, cat);
     }
 
+    // From the cat's centre (its window's middle) down to its feet and up to its head (2026-11-04: the
+    // throw's box used the half width up and down too, so a cat skimming the floor, its centre 56 DIPs up,
+    // flew over a 34-DIP ice slime without touching it).
+    public const double CatFeetBelow = 50, CatHeadAbove = 38;
+    // The thrown cat's bounce off an ice shell (2026-11-04, D1a): the window gives the cat this velocity.
+    public (double VX, double VY)? CatBounce { get; private set; }
+    public (double VX, double VY)? TakeCatBounce() { var bounce = CatBounce; CatBounce = null; return bounce; }
+    public int IceBonks { get; private set; }
+
     // The flight since the last step (a segment, so a fast throw cannot skip over an enemy) against
-    // every enemy that reacts to a throw, its body grown by the cat's half width.
+    // every enemy that reacts to a throw, its body grown by the cat's half width (and its feet and head).
     private void ThrowContact(CatPose cat)
     {
         var from = lastFlight ?? cat;
@@ -133,17 +143,19 @@ public sealed partial class BattleSim
         {
             if (s.Type.ThrowHit is not ThrowHitSpec rule || !s.Targetable || thrownInto.Contains(s.Id)) continue;
             double needed = ThrowSpeed(s, rule);
-            // Too slow for anything: only an ice shell takes a crack from it (below).
-            if (speed < needed && !(s.Iced && speed >= needed * CrackSpeed)) continue;
+            // Too slow for anything: only an ice shell answers it (a bonk, a crack; below).
+            if (speed < needed && !s.Iced) continue;
             // At a screen edge the window cannot move farther: include the visible body's contact
             // width (rather than the narrower floor hurtbox) when knocking a wall slime down.
             double pad = s.OnWall ? CatHalfWidth + 6 : CatHalfWidth;
-            bool contact = Crosses(from.X, from.Height, cat.X, cat.Height, s.BodyX - s.BodyHalfWidth - pad, s.BodyBottom - pad, s.BodyX + s.BodyHalfWidth + pad, s.BodyTop + pad);
+            bool contact = Crosses(from.X, from.Height, cat.X, cat.Height, s.BodyX - s.BodyHalfWidth - pad, s.BodyBottom - CatHeadAbove, s.BodyX + s.BodyHalfWidth + pad, s.BodyTop + CatFeetBelow);
             // Preserve the old wall throw margin: the cat's window stops at the screen edge, so
             // narrowing the rotated body must not make a previously reachable wall impossible to hit.
             if (!contact && !(s.OnWall && Crosses(from.X, from.Height, cat.X, cat.Height, s.X - s.HitWidth / 2 - pad, s.Altitude - pad, s.X + s.HitWidth / 2 + pad, s.Altitude + s.Height + pad))) continue;
             thrownInto.Add(s.Id);
-            if (speed < needed) { CrackIce(s); continue; }
+            // An ice shell: "bonk", the cat bounces back off it (whatever the speed; 2026-11-04).
+            if (s.Iced) BounceOffIce(s, cat, speed);
+            if (speed < needed) { if (s.Iced && speed >= needed * CrackSpeed) CrackIce(s); continue; }
             ThrowHits++;
             events.Add(new(BattleEventKind.ThrowHit, s.X, s.Id));
             AddEffect(BattleEffectKind.Combo, s.X, s.Altitude + s.Height / 2);
@@ -151,6 +163,17 @@ public sealed partial class BattleSim
             if (rule.Damage > 0) Damage(s, rule.Damage, DamageSource.Throw);
             if (rule.Stun > 0 && s.Targetable) Daze(s, rule.Stun);
         }
+    }
+
+    // Back the way it came, slower, and a little up: at least BounceMin DIPs/s across, BounceUp up.
+    public const double BounceShare = 0.45, BounceMin = 220, BounceMax = 700, BounceUp = 260;
+    private void BounceOffIce(Slime s, CatPose cat, double speed)
+    {
+        int back = Math.Abs(cat.VX) > 1 ? -Math.Sign(cat.VX) : (cat.X < s.BodyX ? -1 : 1);
+        CatBounce = (back * Math.Clamp(Math.Abs(cat.VX) * BounceShare, BounceMin, BounceMax), -Math.Max(BounceUp, Math.Abs(cat.VY) * 0.3));
+        IceBonks++;
+        AddEffect(BattleEffectKind.Thud, s.X, s.Altitude + s.Height / 2);
+        events.Add(new(BattleEventKind.IceBonked, s.X, s.Id));
     }
 
     // The cat's way since the last step (a segment, as for a throw) against every tether's rope, its

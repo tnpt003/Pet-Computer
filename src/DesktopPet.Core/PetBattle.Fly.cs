@@ -246,7 +246,7 @@ public sealed partial class BattleSim
         // Its flyer still there: a hit like its own (Thorns sends some back), never a stun; gone, the drop still hurts.
         if (Find(shot.OwnerId) is { Targetable: true, Damage: > 0 } owner) HurtCat(owner, catX, false, shot.Damage / owner.Damage);
         else LandHit(shot.Damage, catX, out _);
-        if (through && !held && shot.SlowSeconds > 0) { CatSlowRemaining = Math.Max(CatSlowRemaining, shot.SlowSeconds); catSlow = shot.Slow; }
+        if (through && !held && !Raging && shot.SlowSeconds > 0) { CatSlowRemaining = Math.Max(CatSlowRemaining, shot.SlowSeconds); catSlow = shot.Slow; }
     }
 
     // The cat's speed factor from the goo (1: not slowed; never while lifted).

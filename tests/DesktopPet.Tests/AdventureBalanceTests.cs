@@ -293,7 +293,10 @@ internal static class AdventureBalanceTests
                 // Stage 2 allows 95 % (M21, 2026-10-29): this bot points at every ghost and mirage and lays the
                 // laser the moment two slimes close in; raising the threat to 2.45 only took the idle player
                 // to 0 % while it stayed at 95 % (the casual bot ends at ~82 %).
-                double most = i == 2 ? 0.95 : 0.9;
+                // Stage 3 allows 95 % too (2026-11-04, docs/GOPY-C-2026-11-04.md D2/D3): the cat now rages by
+                // itself (this bot never clicked the rage) and the Ground quake dazes; its threat moved 2.2 → 2.6
+                // only swung Hard to 45 % for the sword while Normal stayed at 90–94 %.
+                double most = i is 2 or 3 ? 0.95 : 0.9;
                 check(simple.HpShare <= most, $"Chapter 2 balance: stage {i}, {weapon}, Normal, the simple player ends with ≤ {most:P0} HP ({simple.HpShare:P0})");
             }
         // The idle player is left out as in chapter 1 (2026-11-04: the cat's combos now pop a bubble by
@@ -492,6 +495,9 @@ internal static class AdventureBalanceTests
                 // Retreating runners now pass allies rather than shoving the line toward the cat.
                 // The hammer bot's stage 4 finish moves just above 91%; retain a 92% ceiling for this row.
                 if (s == 4 && weapon == BattleWeapon.Hammer) most = 0.92;
+                // 2026-11-04: the cat rages by itself now (this bot never clicked the rage): the sword's stage 4
+                // finish moves to ~93 %.
+                if (s == 4 && weapon == BattleWeapon.Sword) most = 0.93;
                 check(table[(s, weapon, BattleDifficulty.Normal, Player.Simple)].HpShare <= most,
                     $"Balance: stage {s}, {weapon}, Normal, the simple player ends with ≤ {most:P0} HP ({table[(s, weapon, BattleDifficulty.Normal, Player.Simple)].HpShare:P0})");
             }

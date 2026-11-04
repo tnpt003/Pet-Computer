@@ -32,6 +32,10 @@ public sealed class BattleHud : Border
     private readonly TextBlock hpText, status, hint, banner, comboText, upgradesText;
     internal readonly TextBlock bossName;
     private readonly Border hpFill, hpTrail, bossFill, bossBar, pauseButton, endButton, bagButton, hubButton, grip, rageBar, rageFill;
+    private readonly RageRing rageRing;
+    private readonly Grid avatar;
+    public Grid RageAvatar => avatar;
+    public RageRing RageGauge => rageRing;
     private readonly Border batteryStrip, plugButton, cursorCover, continueButton;
     private readonly TextBlock batteryText, cursorText;
     // The portrait with HP, the status column and the skill slots (the Adventure Guide lights them).
@@ -87,6 +91,13 @@ public sealed class BattleHud : Border
             Child = new Canvas { Children = { portrait }, ClipToBounds = true }
         };
         face.Clip = new EllipseGeometry(new Point(27, 27), 25, 25);
+        // 2026-11-04: the rage gauge is a ring round the portrait; a click on it makes the cat rage.
+        face.Margin = new Thickness(6, 6, 0, 0); face.HorizontalAlignment = HorizontalAlignment.Left; face.VerticalAlignment = VerticalAlignment.Top;
+        rageRing = new RageRing { Width = 66, Height = 76, IsHitTestVisible = false };
+        avatar = new Grid { Width = 66, Height = 76, Background = Brushes.Transparent, VerticalAlignment = VerticalAlignment.Center, Children = { rageRing, face } };
+        avatar.MouseLeftButtonDown += (_, e) => { RageClicked?.Invoke(); e.Handled = true; };
+        avatar.MouseEnter += (_, _) => HoverControl(RageTip());
+        avatar.MouseLeave += (_, _) => HoverControl(null);
         var name = new TextBlock { Text = petName, Foreground = Brushes.White, FontWeight = FontWeights.Bold, FontSize = PetUi.TitleSize };
         // The current hit chain (×1, ×2…), gold when the next hit is the combo. Its space is always
         // kept (Hidden, fixed width) so the HUD never changes width and re-centres mid-fight.
@@ -107,10 +118,11 @@ public sealed class BattleHud : Border
         rageBar = new Border
         {
             Width = HpWidth + 4, Height = 10, CornerRadius = new CornerRadius(4), Background = BarBack, BorderBrush = Dim, BorderThickness = new Thickness(1),
-            Padding = new Thickness(1), Margin = new Thickness(0, 3, 0, 0), Child = rageFill
+            Padding = new Thickness(1), Margin = new Thickness(0, 3, 0, 0), Child = rageFill,
+            Visibility = Visibility.Collapsed // 2026-11-04: kept for its numbers; the ring round the portrait shows it.
         };
         var left = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center,
-            Children = { face, new StackPanel { Margin = new Thickness(8, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center, Children = { new StackPanel { Orientation = Orientation.Horizontal, Children = { name, comboText } }, hpBar, rageBar } } } };
+            Children = { avatar, new StackPanel { Margin = new Thickness(6, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center, Children = { new StackPanel { Orientation = Orientation.Horizontal, Children = { name, comboText } }, hpBar, rageBar } } } };
         rageBar.MouseLeftButtonDown += (_, e) => { RageClicked?.Invoke(); e.Handled = true; };
         rageBar.MouseEnter += (_, _) => HoverControl(RageTip());
         rageBar.MouseLeave += (_, _) => HoverControl(null);
@@ -260,7 +272,7 @@ public sealed class BattleHud : Border
             return at.X >= 0 && at.Y >= 0 && at.X < element.ActualWidth && at.Y < element.ActualHeight;
         }
         foreach (var slot in slots) if (Over(slot)) return true;
-        return Over(pauseButton) || Over(endButton) || Over(bagButton) || Over(hubButton) || Over(grip) || Over(rageBar) || Over(batteryStrip) || Over(cursorCover) || Over(upgradesText);
+        return Over(pauseButton) || Over(endButton) || Over(bagButton) || Over(hubButton) || Over(grip) || Over(rageBar) || Over(avatar) || Over(batteryStrip) || Over(cursorCover) || Over(upgradesText);
     }
     public string HintText => hint.Text;
     // For checks: the status line and how many wave marks show.
@@ -486,14 +498,24 @@ public sealed class BattleHud : Border
         rageFill.Opacity = ready ? 0.7 + 0.3 * Math.Sin(b.Time * 8) : 1;
         var cursor = ready ? Cursors.Hand : null;
         if (rageBar.Cursor != cursor) rageBar.Cursor = cursor;
+        if (avatar.Cursor != cursor) avatar.Cursor = cursor;
+        rageRing.Fraction = fraction;
+        rageRing.Full = b.RageFull && !b.Raging && !b.Over;
+        rageRing.Raging = b.Raging;
+        rageRing.Time = b.Time;
+        rageRing.Label = L("NỘ!", "RAGE!");
+        rageRing.InvalidateVisual();
+        // Raging: the whole HUD's rim glows red.
+        var hudRim = b.Raging ? RagingColor : Rim;
+        if (BorderBrush != hudRim) BorderBrush = hudRim;
     }
 
     private string RageTip()
     {
         var s = last?.Settings ?? BattleData.Settings;
         string seconds = s.RageSeconds.ToString("0.#", CultureInfo.InvariantCulture);
-        return LF($"Thanh nộ: đầy dần khi mèo đánh trúng và bị đánh · đầy thì bấm vào để mèo nổi giận {seconds} giây: to lên, mỗi nhát trúng mọi slime trong tầm, đẩy lùi mạnh hơn, không bị choáng",
-                  $"Rage: fills as the cat lands hits and takes them · once full, click it to make the cat rage for {seconds} s: bigger, every swing hits every slime in reach, stronger knock back, no stuns");
+        return LF($"Vòng nộ: đầy dần khi mèo đánh trúng và bị đánh · đầy thì bấm vào mèo (hoặc tự nộ ở nhát trúng kế tiếp / khi sắp bị choáng) {seconds} giây: to lên, mỗi nhát trúng mọi slime trong tầm, không dính hiệu ứng xấu nào",
+                  $"Rage ring: fills as the cat lands hits and takes them · full, click the cat (or it rages by itself on its next hit / a stun about to land) for {seconds} s: bigger, every swing hits every slime in reach, no harm takes hold");
     }
 
     // Whole seconds until putting the cat down protects it again (0: ready). Frozen while the cat is

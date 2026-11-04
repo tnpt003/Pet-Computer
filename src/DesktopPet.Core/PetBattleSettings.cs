@@ -152,9 +152,11 @@ public sealed class BattleSettings
     // 1.5 M07 (PetBattle.Rage.cs): the rage stance's time, the bar gained by each landed swing of the cat
     // and by each HP it loses (0 and 0: it never fills), how much bigger the cat is drawn, and a raging
     // hit's knock back (× the usual, at least RageKnock DIPs/s).
-    public double RageSeconds { get; init; } = 6;
-    public double RageHitGain { get; init; } = 0.05;
-    public double RageHurtGain { get; init; } = 0.012;
+    public double RageSeconds { get; init; } = 5;
+    // 2026-11-04: the full bar starts the rage by itself (first landed swing, or a stun about to land).
+    public bool RageAuto { get; init; } = true;
+    public double RageHitGain { get; init; } = 0.02;
+    public double RageHurtGain { get; init; } = 0.006;
     public double RageScale { get; init; } = 1.3;
     public double RageKnock { get; init; } = 220;
     public double RageKnockFactor { get; init; } = 1.5;
@@ -299,7 +301,7 @@ public sealed class BattleSettings
         new UpgradeSpec { Id = "big_tank", Group = BuildGroups.Trick, Skill = "spray", NameVi = "Bình to", NameEn = "Big tank", DescVi = "Bình xịt thêm 1,5 giây nước", DescEn = "The spray holds 1.5 s more water", Effect = "sprayTime", Amount = 1.5, MaxStacks = 2 },
         new UpgradeSpec { Id = "keen_nose", Group = BuildGroups.Trick, NameVi = "Mũi thính", NameEn = "Keen nose", DescVi = "Quái rơi đồ nhiều hơn 30%", DescEn = "Enemies leave 30% more drops", Effect = "dropChance", Amount = 0.3, MaxStacks = 2 },
         new UpgradeSpec { Id = "fat_fish", Group = BuildGroups.Trick, NameVi = "Cá béo", NameEn = "Fat fish", DescVi = "Cá rơi ra hồi thêm 10 HP", DescEn = "Dropped fish heal 10 HP more", Effect = "fishHeal", Amount = 10, MaxStacks = 2 },
-        new UpgradeSpec { Id = "ground_quake", Group = BuildGroups.Trick, Rare = true, NameVi = "Cú đáp địa chấn", NameEn = "Ground quake", DescVi = "Thả mèo xuống: sóng 12 sát thương quái trên sàn (hồi 6 giây)", DescEn = "Put down: a 12-damage wave on floor enemies (6 s cooldown)", Effect = "landingQuake", Amount = 12, MaxStacks = 1 },
+        new UpgradeSpec { Id = "ground_quake", Group = BuildGroups.Trick, Rare = true, NameVi = "Cú đáp địa chấn", NameEn = "Ground quake", DescVi = "Thả mèo: đáp không nảy, sóng nứt 2 bên: 12 sát thương, đẩy, choáng (hồi 6 giây)", DescEn = "Put down: lands flat, cracks run both ways: 12 damage, push, daze (6 s cooldown)", Effect = "landingQuake", Amount = 12, MaxStacks = 1 },
         new UpgradeSpec { Id = "sleight", Group = BuildGroups.Trick, Rare = true, NameVi = "Ảo thuật", NameEn = "Sleight of paw", DescVi = "25% lần dùng kỹ năng chỉ hồi một nửa", DescEn = "25% of skill uses cool down only half", Effect = "skillRefund", Amount = 0.25, MaxStacks = 1 },
     };
 
@@ -698,6 +700,11 @@ public sealed class Slime
     public int LootApp, FleeSide;
     public double LootCharge, LingerClock;
     public BattleSkill LootSkill;
+    // 2026-11-04: an elite thief's second take (None: none).
+    public StolenKind Loot2;
+    public int LootApp2;
+    public double LootCharge2;
+    public BattleSkill LootSkill2;
     public bool Escaped;
     // 1.5 M17 (PetBattle.Zip.cs). A rolling boss: its windup is a roll (then Dashing is the roll itself),
     // the time to its next roll, and whether this roll already ran over the cat. Packed small in its pack
@@ -812,7 +819,7 @@ public enum BattleEventKind
     // 1.5 M15 (Value: the enemy's id): the cat's weapon only scratched an ice shell, the thrown cat broke
     // it, it grew back, a too-slow throw cracked it; a wall climber reached its spot up the edge, aimed, dropped a spike, was knocked
     // off (Value: 1 by the Grabber), landed on the floor. A spike landing is a GooLanded (Value: 1 hit).
-    IceScratched, IceShattered, IceRegrown, IceCracked, ClingClimbed, ClingAimed, ClingShot, ClingKnocked, ClingLanded, WallWatched,
+    IceScratched, IceShattered, IceRegrown, IceCracked, IceBonked, ClockAlarm, ClingClimbed, ClingAimed, ClingShot, ClingKnocked, ClingLanded, WallWatched,
     // 1.5 M16 (Value: the enemy's id): a hedgehog's quills rose, stood up, lay flat (soaked: the spray did
     // it), pricked the cat hitting it; a timer's clock started, ran out (it called), its call came in; a
     // thief stole (Value: 1 a skill, 0 an app), gave it back on its defeat, got away with it.
@@ -895,7 +902,7 @@ public readonly record struct BattleEvent(BattleEventKind Kind, double X, double
 // circling the cat). Splat (1.5 M09): a spitter's drop of goo landing (Tint: its colour).
 // Miss (1.5 M13): a hit that did nothing to a ghost or a bubble (Value 0), or to a sulky slime (Value 1);
 // Heart: a sulky slime soothed.
-public enum BattleEffectKind { Spark, Poof, Push, Explosion, Slam, Number, Combo, Thud, Mend, Block, Immune, Warded, Bell, EndTask, Rewind, Splat, Miss, Heart }
+public enum BattleEffectKind { Spark, Poof, Push, Explosion, Slam, Number, Combo, Thud, Mend, Block, Immune, Warded, Bell, EndTask, Rewind, Splat, Miss, Heart, Quake }
 // How a damage Number reads (display only): a plain hit, a combo hit, a critical (Claws) hit, or poison's tick.
 public enum NumberTone { Plain, Combo, Crit, Poison }
 public sealed class BattleEffect

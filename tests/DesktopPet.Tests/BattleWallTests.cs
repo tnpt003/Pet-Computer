@@ -146,13 +146,23 @@ internal static class BattleWallTests
         Run(sim, 0.5, catX: 1500);
         check(Math.Abs(before - s.Hp - 10) < 1e-6, $"A yarn bomb goes through the shell (lost {before - s.Hp:0.#})");
 
-        // A throw too slow for anything: nothing at all.
+        // 2026-11-04: a throw skimming the floor (the cat's centre 56 DIPs up, as on the screen) touches it,
+        // and any throw into the shell bonks: the cat bounces back. Too slow to crack: only the bonk.
         sim = Field(Icy());
         s = sim.Slimes.Single();
         s.X = 800;
         before = s.Hp;
-        ThrowThrough(sim, 800, rule.MinSpeed * BattleSim.CrackSpeed * 0.8);
-        check(s.Iced && s.Hp == before && sim.IceBreaks == 0 && s.IceCracks == 0, "A throw far below its minSpeed does nothing");
+        double slow = rule.MinSpeed * BattleSim.CrackSpeed * 0.8;
+        sim.Step(dt, 700, true, true, new CatPose(700, 56, slow, 0, false, true));
+        sim.ClearEvents();
+        sim.Step(dt, 900, true, true, new CatPose(900, 56, slow, 0, false, true));
+        bool bonked = sim.Events.Any(e => e.Kind == BattleEventKind.IceBonked);
+        var bounce = sim.TakeCatBounce();
+        check(s.Iced && s.Hp == before && sim.IceBreaks == 0 && s.IceCracks == 0 && bonked && sim.IceBonks == 1,
+            "A slow throw skimming the floor bonks the shell (no crack, no break)");
+        check(bounce is var (bx, by) && bx < 0 && by < 0 && sim.TakeCatBounce() == null, "The cat bounces back the way it came, a little up (taken once)");
+        sim.Step(dt, 900, false, false, null);
+        sim.ClearEvents();
         // A slowish throw cracks the shell (no hurt), and each crack lets a slower throw break it.
         var cracked = new HashSet<BattleEventKind>();
         ThrowThrough(sim, 800, rule.MinSpeed * 0.8, cracked);

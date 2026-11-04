@@ -15,6 +15,10 @@ public sealed partial class BattleFieldView
 {
     private static readonly Brush QuillFill = Frozen(255, 0x6E, 0x4B, 0x34);
     private static readonly Brush QuillTip = Frozen(255, 0xF6, 0xEB, 0xD9);
+    // 2026-11-04: quills up are red-orange with a red glow, so the user sees when not to let the cat hit.
+    private static readonly Brush QuillHot = Frozen(255, 0xF0, 0x5A, 0x2A);
+    private static readonly Pen QuillGlow = FrozenPen(Frozen(150, 0xFF, 0x3E, 0x2E), 5);
+    private static readonly Brush WarnRed = Frozen(255, 0xE5, 0x3E, 0x3E);
     private static readonly Brush ClockFace = Frozen(255, 0xFF, 0xFB, 0xF2);
     private static readonly Pen ClockRing = FrozenPen(Frozen(255, 0x3E, 0x9C, 0x74), 3);
     private static readonly Pen ClockLate = FrozenPen(Frozen(255, 0xE5, 0x3E, 0x3E), 3);
@@ -48,9 +52,11 @@ public sealed partial class BattleFieldView
             QuillPhase.Rising => BattleSim.QuillRise(slime),
             _ => 0
         };
-        double length = 5 + 8 * rise, lay = (1 - rise) * 0.9 * -slime.Facing;
+        // 2026-11-04: up, half as long again (5 → 17) and red-orange; rising, a strong shiver and a "!" over it.
+        double length = 5 + 12 * rise, lay = (1 - rise) * 0.9 * -slime.Facing;
         if (slime.Wet) { length = 4; lay = 0; }
-        double shiver = slime.Quill == QuillPhase.Rising ? Math.Sin(time * 50) * 0.06 : 0;
+        double shiver = slime.Quill == QuillPhase.Rising ? Math.Sin(time * 50) * 0.14 : 0;
+        bool hot = rise > 0.5 && !slime.Wet;
         for (int i = -3; i <= 3; i++)
         {
             double a = i * 0.38, ex = Math.Sin(a) * bw * 0.48, ey = -bh * 0.5 - Math.Cos(a) * bh * 0.5;
@@ -67,26 +73,42 @@ public sealed partial class BattleFieldView
                 ctx.LineTo(new Point(ex, ey) - side - new Vector(dx, dy) * 2, true, false);
             }
             g.Freeze();
-            dc.DrawGeometry(QuillFill, ThinInk, g);
-            if (rise > 0.5 && !slime.Wet) dc.DrawEllipse(QuillTip, null, tip - new Vector(dx, dy) * 1.5, 1.3, 1.3);
+            if (hot) dc.DrawGeometry(null, QuillGlow, g);
+            dc.DrawGeometry(hot ? QuillHot : QuillFill, ThinInk, g);
+            if (hot) dc.DrawEllipse(QuillTip, null, tip - new Vector(dx, dy) * 1.5, 1.5, 1.5);
+        }
+        if (slime.Quill == QuillPhase.Rising && !slime.Wet && slime.State != SlimeState.Defeated)
+        {
+            // A red "!" bobbing over it: the quills are about to stand up.
+            var at = new Point(0, -bh - 24 - Math.Abs(Math.Sin(time * 14)) * 3);
+            dc.DrawEllipse(Brushes.White, ThinInk, at, 7, 7);
+            dc.DrawRectangle(WarnRed, null, new Rect(at.X - 1.2, at.Y - 4.5, 2.4, 6));
+            dc.DrawEllipse(WarnRed, null, new Point(at.X, at.Y + 3.4), 1.3, 1.3);
         }
     }
 
     private static void DrawClock(DrawingContext dc, Slime slime, double bh)
     {
         if (slime.Type.Clock is not ClockSpec c || slime.ClockCalls >= c.Calls && slime.ClockLeft <= 0 || slime.State == SlimeState.Defeated) return;
-        var at = new Point(0, -bh - 13);
         double total = slime.ClockTotal > 0 ? slime.ClockTotal : slime.Elite != null ? c.EliteSeconds : c.Seconds;
         double left = slime.ClockTotal > 0 ? slime.ClockLeft : total, k = Math.Clamp(left / total, 0, 1);
+        // 2026-11-04: half as big again; its last ClockAlarm s it swells, shakes and its face flashes red.
+        bool alarm = left <= BattleSim.ClockAlarm && slime.State != SlimeState.Stunned;
+        double phase = slime.ClockLeft * 12, scale = alarm ? 1.25 + 0.15 * Math.Abs(Math.Sin(phase)) : 1;
+        var at = new Point(alarm ? Math.Sin(phase * 3) * 1.5 : 0, -bh - 19 * scale);
+        dc.PushTransform(new ScaleTransform(1.5 * scale, 1.5 * scale, at.X, at.Y));
         dc.DrawEllipse(null, Halo, at, 9, 9);
-        dc.DrawEllipse(ClockFace, Outline, at, 8, 8);
+        dc.DrawEllipse(alarm && Math.Sin(phase) > 0 ? ClockAlarmFace : ClockFace, Outline, at, 8, 8);
         var ring = slime.State == SlimeState.Stunned ? ClockSlow : left <= 5 ? ClockLate : ClockRing;
         DrawArc(dc, ring, at, 5.2, k);
         double hand = (1 - k) * 2 * Math.PI;
         dc.DrawLine(ClockHand, at, new Point(at.X + Math.Sin(hand) * 4.5, at.Y - Math.Cos(hand) * 4.5));
         // The two knobs of an alarm clock.
         foreach (int side in new[] { -1, 1 }) dc.DrawEllipse(ClockFace, ThinInk, new Point(at.X + side * 6, at.Y - 7), 2.4, 2);
+        dc.Pop();
     }
+
+    private static readonly Brush ClockAlarmFace = Frozen(255, 0xFF, 0xB0, 0xA0);
 
     private static void DrawThief(DrawingContext dc, Slime slime, double bw, double bh, double time)
     {

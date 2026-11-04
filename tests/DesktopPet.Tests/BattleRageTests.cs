@@ -15,12 +15,13 @@ internal static class BattleRageTests
         Id = id, MaxHp = 1000, Speed = 0, Damage = 0, Range = 64, Windup = 0.4, AttackCooldown = 1, Recover = 0.2
     };
 
-    private static BattleSim Field(double hitGain, double hurtGain = 0, int count = 4)
+    // auto: RageAuto (2026-11-04, the shipped default); off for the checks of the click alone.
+    private static BattleSim Field(double hitGain, double hurtGain = 0, int count = 4, bool auto = false)
     {
         var kinds = Enumerable.Range(0, count).Select(i => Dummy("d" + i)).ToArray();
         var settings = new BattleSettings
         {
-            FirstWaveDelay = 0, SpawnInterval = 0.05, CatMaxHp = 1000, MaxAlive = 8, Enemies = kinds, RageHitGain = hitGain, RageHurtGain = hurtGain,
+            FirstWaveDelay = 0, SpawnInterval = 0.05, CatMaxHp = 1000, MaxAlive = 8, Enemies = kinds, RageHitGain = hitGain, RageHurtGain = hurtGain, RageAuto = auto,
             Weapons = new[] { new WeaponSpec { Id = "sword", Damage = 10, Knock = 0, StunChance = 0 } },
             Plan = new[] { new WaveSpec { Groups = kinds.Select(k => new WaveGroup { Enemy = k.Id, Count = 1 }).ToArray() } }
         };
@@ -50,6 +51,7 @@ internal static class BattleRageTests
         ClickChecks(check);
         SweepChecks(check);
         StunChecks(check);
+        AutoChecks(check);
         DataChecks(check);
     }
 
@@ -166,18 +168,50 @@ internal static class BattleRageTests
         var settings = new BattleSettings
         {
             FirstWaveDelay = 0, SpawnInterval = 0, MaxAlive = 1, CatDamage = 0, StunDurationSeconds = 1.5, StunImmunitySeconds = 3,
-            RageHitGain = 0, RageHurtGain = 1, RageSeconds = 30,
+            RageHitGain = 0, RageHurtGain = 1, RageSeconds = 30, RageAuto = false,
             Enemies = new[] { dasher }, Plan = new[] { new WaveSpec { Groups = new[] { new WaveGroup { Enemy = "runner", Count = 1 } } } }
         };
         var sim = new BattleSim(settings, 0, 1600, new Random(3));
         for (double t = 0; t < 15 && !sim.CatStunned; t += dt) sim.Step(dt, 800, false);
-        check(sim.CatStunned && sim.RageFull && !sim.RageReady && !sim.StartRage(), "Stunned, the full bar waits (a stun under way is not cut short)");
-        for (double t = 0; t < 5 && (sim.CatStunned || sim.StunImmunity > 0); t += dt) sim.Step(dt, 800, false);
-        check(sim.StartRage(), "Once the stun is over the cat rages");
+        // 2026-11-04 (D1f): stunned, the full bar still works, and starting it ends the stun.
+        check(sim.CatStunned && sim.RageFull && sim.RageReady && sim.StartRage() && !sim.CatStunned && sim.RageCleansed == 1, "Stunned, the click still rages and ends the stun");
         double hp = sim.CatHp;
         for (double t = 0; t < 15 && sim.CatHp == hp; t += dt) sim.Step(dt, 800, false);
         Run(sim, 0.2, 800);
         check(sim.CatHp < hp && !sim.CatStunned && sim.StunsTaken == 1, "Raging, a dash still hurts but stuns no more");
+    }
+
+    // 2026-11-04 (D3): RageAuto starts it on the first landed swing once full, or instead of a stun; while it
+    // lasts no harm takes hold.
+    private static void AutoChecks(Action<bool, string> check)
+    {
+        var sim = Field(hitGain: 0.05, auto: true);
+        var target = sim.Slimes[0];
+        var seen = new List<BattleEvent>();
+        for (int i = 0; i < 4000 && !sim.RageFull; i++) { target.X = 150; target.KnockVelocity = 0; sim.Step(dt, 100, false); seen.AddRange(sim.Events); sim.ClearEvents(); }
+        check(sim.RageFull && !sim.Raging, "Full after its last hit, it does not rage at once");
+        Run(sim, 2, seen: seen, pin: target);
+        check(sim.Raging && sim.AutoRages == 1 && seen.Any(e => e.Kind == BattleEventKind.Raged && e.Value == 1), "The next landed swing starts the rage by itself");
+
+        var dasher = new EnemyType
+        {
+            Id = "runner", MaxHp = 1000, Speed = 70, Damage = 6, Range = 54, Windup = 0.7, AttackCooldown = 2.6, Recover = 0.4, Scale = 0.75,
+            Dash = true, DashRange = 170, DashDistance = 230, DashSpeed = 420
+        };
+        var settings = new BattleSettings
+        {
+            FirstWaveDelay = 0, SpawnInterval = 0, MaxAlive = 1, CatDamage = 0, StunDurationSeconds = 1.5, StunImmunitySeconds = 3,
+            RageHitGain = 0, RageHurtGain = 0, RageSeconds = 30, RageAuto = true,
+            Enemies = new[] { dasher }, Plan = new[] { new WaveSpec { Groups = new[] { new WaveGroup { Enemy = "runner", Count = 1 } } } }
+        };
+        var stunned = new BattleSim(settings, 0, 1600, new Random(3));
+        stunned.Step(dt, 800, false);
+        typeof(BattleSim).GetProperty("Rage")!.SetValue(stunned, 1.0);
+        double hp = stunned.CatHp;
+        for (double t = 0; t < 15 && stunned.CatHp == hp; t += dt) stunned.Step(dt, 800, false);
+        check(stunned.CatHp < hp && stunned.Raging && !stunned.CatStunned && stunned.StunsTaken == 0 && stunned.AutoRages == 1,
+            "Full when a stunning dash lands: the rage starts instead and the stun never happens");
+        check(stunned.MoveFactor >= 1 - 1e-9 && stunned.LagFactor >= 1 - 1e-9, "Raging, nothing slows the cat");
     }
 
     private static void DataChecks(Action<bool, string> check)
@@ -192,7 +226,7 @@ internal static class BattleRageTests
         check(!Rejects("{\"rageSeconds\":8,\"rageHitGain\":0,\"rageHurtGain\":0,\"rageScale\":1}"), "In-range ones are accepted (both gains 0: the bar never fills)");
         var d = new BattleSettings();
         var s = BattleData.Settings;
-        check(s.RageSeconds == 6 && s.RageScale == 1.3 && s.RageSeconds == d.RageSeconds && s.RageHitGain == d.RageHitGain && s.RageHurtGain == d.RageHurtGain
-              && s.RageScale == d.RageScale && s.RageKnock == d.RageKnock && s.RageKnockFactor == d.RageKnockFactor, "The shipped battle.json has the built-in rage numbers (6 s, ×1.3)");
+        check(s.RageSeconds == 5 && s.RageAuto && s.RageAuto == d.RageAuto && s.RageScale == 1.3 && s.RageSeconds == d.RageSeconds && s.RageHitGain == d.RageHitGain && s.RageHurtGain == d.RageHurtGain
+              && s.RageScale == d.RageScale && s.RageKnock == d.RageKnock && s.RageKnockFactor == d.RageKnockFactor, "The shipped battle.json has the built-in rage numbers (5 s, ×1.3, by itself; 2026-11-04)");
     }
 }

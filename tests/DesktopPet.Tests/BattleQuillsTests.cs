@@ -157,6 +157,12 @@ internal static class BattleQuillsTests
     private static void ClockChecks(Action<bool, string> check)
     {
         var c = ShippedClock;
+        // 2026-11-04: its last seconds ring an alarm (before it calls).
+        var alarmed = Field(new[] { Timer() }, extra: new[] { Plain() });
+        alarmed.Slimes.Single().X = 1200;
+        double at = 0;
+        bool alarm = Run(alarmed, c.Seconds, catX: 100, kind: BattleEventKind.ClockAlarm, each: () => at += dt);
+        check(alarm && Math.Abs(at - (c.Seconds - BattleSim.ClockAlarm)) < 0.5, $"Its last {BattleSim.ClockAlarm} s ring an alarm ({at:0.0} s)");
         var sim = Field(new[] { Timer() }, extra: new[] { Plain() });
         var s = sim.Slimes.Single();
         s.X = 1200;
@@ -219,6 +225,21 @@ internal static class BattleQuillsTests
         bool gone = Run(sim, 60, kind: BattleEventKind.ThiefEscaped, each: () => t += dt);
         check(gone && s.Escaped && s.State == SlimeState.Defeated && sim.Defeated == defeated && s.X > 1500 && t >= steal.Linger,
             $"It runs to the far edge and, {steal.Linger} s there, gets away (not a defeat of the cat's; {t:0.0} s)");
+
+        // 2026-11-04: an elite takes two ready skills and, defeated, gives both back; the shipped thief
+        // steals from afar (range 160) and the timer stands still.
+        sim = Field(new[] { Thief() }, cooldown: 30, elite: true);
+        s = sim.Slimes.Single();
+        s.X = 300;
+        Run(sim, 20, kind: BattleEventKind.ThiefStole);
+        var first = s.LootSkill; var second = s.LootSkill2;
+        check(s.Loot == StolenKind.Skill && s.Loot2 == StolenKind.Skill && first != second && sim.Cooldown(first) > 0 && sim.Cooldown(second) > 0, $"An elite takes two skills ({first}, {second})");
+        s.Hp = 1;
+        sim.Use(BattleSkill.Bomb, s.Id, 100);
+        Run(sim, 2, kind: BattleEventKind.ThiefReturned);
+        check(sim.Cooldown(first) == 0 && sim.Cooldown(second) == 0, "Defeated, it gives both back");
+        check(Shipped.Enemy("thief").Range >= 160 && Shipped.Enemy("timer").Speed == 0 && Shipped.Enemy("timer").Clock!.Calls == 3,
+            "Shipped: the thief steals from 160 DIPs, the timer stands still and calls up to three times");
 
         // Defeated first, it gives the skill back.
         sim = Field(new[] { Thief() }, cooldown: 30);

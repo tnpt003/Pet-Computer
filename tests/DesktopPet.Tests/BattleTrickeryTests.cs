@@ -160,11 +160,25 @@ internal static class BattleTrickeryTests
         double[] before = near.Select(s => s.Hp).ToArray();
         Lift(sim, 0.1);
         check(sim.Quakes == 0 && near[0].Hp == before[0], "A short press-and-drop (under the lift time) shakes nothing");
-        Lift(sim, 0.5);
-        check(sim.Quakes == 1 && sim.QuakeHits == 2 && Math.Abs(before[0] - near[0].Hp - 12) < 1e-6 && Math.Abs(before[1] - near[1].Hp - 12) < 1e-6 && near[2].Hp == before[2]
-              && sim.Events.Any(e => e.Kind == BattleEventKind.Quaked && e.Value == 2),
-            "Put down after a real lift: 12 damage to the enemies near the landing, none to one far away");
-        check(near[0].KnockVelocity > 0 && near[1].KnockVelocity < 0, "They are knocked a little away from the landing");
+        // 2026-11-04: ready while lifted long enough (the window lands the cat flat then).
+        sim.SetCatState(true, true);
+        Steps(sim, 0.5, held: true);
+        bool ready = sim.QuakeReady;
+        sim.SetCatState(false, false);
+        var order = sim.Step(dt, 800, false);
+        bool quaked = sim.Events.Any(e => e.Kind == BattleEventKind.Quaked);
+        check(ready && quaked && sim.Quakes == 1 && sim.QuakeStandRemaining > 0 && order.Command == CatCommand.Stand, "Put down after a real lift (ready, so it lands flat): the floor shakes and the cat stands still");
+        check(near[1].Hp == before[1], "The waves take a moment to reach an enemy 40 DIPs away");
+        sim.ClearEvents();
+        for (int i = 0; i < Math.Round(BattleSim.QuakeTravel / dt) + 2; i++)
+        {
+            sim.Step(dt, 800, false);
+            check(i * dt > BattleSim.QuakeStand || sim.Step(0, 800, false).Command == CatCommand.Stand, "(the cat stands still)");
+        }
+        check(sim.QuakeHits == 2 && Math.Abs(before[0] - near[0].Hp - 12) < 1e-6 && Math.Abs(before[1] - near[1].Hp - 12) < 1e-6 && near[2].Hp == before[2],
+            "Two waves run out to both sides: 12 damage to the enemies they reach, none to one far away");
+        check(near[0].KnockVelocity > 0 && near[1].KnockVelocity < 0 && near[0].State == SlimeState.Stunned && near[1].State == SlimeState.Stunned,
+            "They are knocked away from the landing and dazed");
         double hp0 = near[0].Hp;
         Lift(sim, 0.5);
         check(sim.Quakes == 1 && near[0].Hp == hp0 && sim.QuakeRemaining > 0, "Within its 6 s cooldown a second landing shakes nothing");
@@ -175,6 +189,15 @@ internal static class BattleTrickeryTests
         double air = near[1].Hp;
         Lift(sim, 0.5, () => near[1].Altitude = 40);
         check(sim.Quakes == 2 && near[0].Hp < hp0 && near[1].Hp == air, "Once ready again it shakes; an enemy in the air is not hit");
+        // The window's part (D1b): a landing marked to stick does not bounce; the next one bounces as ever.
+        var physics = new PetPhysics(new PetSettings());
+        var floorArea = new Area(0, 0, 1600, 900);
+        var cat = new PetModel { X = 400, Y = 900 - 112 - 2, VX = 300, VY = 900, Action = PetAction.Thrown, StickLanding = true };
+        physics.Step(cat, floorArea, 1.0 / 60);
+        check(cat.Grounded && cat.VY == 0 && cat.VX == 0 && !cat.StickLanding, "A sticking landing stops dead on the floor (no bounce)");
+        var bouncy = new PetModel { X = 400, Y = 900 - 112 - 2, VX = 300, VY = 900, Action = PetAction.Thrown };
+        physics.Step(bouncy, floorArea, 1.0 / 60);
+        check(!bouncy.Grounded && bouncy.VY < 0, "Without it the cat bounces as before");
         var plain = Field(Array.Empty<UpgradeSpec>(), new(), count: 1);
         var s0 = plain.Slimes.First(s => s.Targetable);
         s0.X = 820;

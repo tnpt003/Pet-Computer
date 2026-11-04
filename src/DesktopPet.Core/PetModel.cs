@@ -140,6 +140,8 @@ public sealed class PetModel
     public const double TreatDuration = 4.2;
     public int Facing = 1;
     public bool Grounded;
+    // The next floor landing sticks (no bounce): a battle's Ground quake ready (2026-11-04).
+    public bool StickLanding;
     // The window the pet stands on (0: the screen floor) and, while Climbing, the window
     // and side (+1 right edge, -1 left edge) it climbs.
     public long LedgeId, ClimbId;
@@ -315,8 +317,16 @@ public sealed class PetPhysics(PetSettings settings)
         {
             pet.Y = floor;
             if (!pet.Grounded) pet.Motion.Contact(pet.VY, pet);
+            // A battle's Ground quake (2026-11-04): this landing sticks, no bounce.
+            if (pet.StickLanding && !pet.Grounded)
+            {
+                pet.StickLanding = false;
+                pet.VY = 0;
+                pet.VX = 0;
+                pet.Grounded = true;
+            }
             // A sleeping pet (its window vanished) lands softly and keeps sleeping.
-            if (pet.VY > 130 && pet.Action != PetAction.Sleeping)
+            else if (pet.VY > 130 && pet.Action != PetAction.Sleeping)
             {
                 pet.VY = -pet.VY * settings.Bounce;
                 pet.VX *= 0.82;

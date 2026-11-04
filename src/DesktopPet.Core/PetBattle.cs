@@ -144,7 +144,7 @@ public sealed partial class BattleSim
     // armor (cards and synergies together) takes at most MaxArmor off.
     public const double MaxArmor = 0.6;
     public double DamageFactor => 1 + damageBonus + MutationDamage;
-    public double MoveFactor => (1 + moveBonus) * (ComboRushRemaining > 0 ? 1 + comboRushBonus : 1) * PuddleSlowNow; // A puddle slows it (PetBattle.Spit.cs).
+    public double MoveFactor => (1 + moveBonus) * (ComboRushRemaining > 0 ? 1 + comboRushBonus : 1) * (Raging ? 1 : PuddleSlowNow); // A puddle slows it (PetBattle.Spit.cs), never a raging cat.
     // Attacks a second against the usual: the rushes (Tailwind, Gale).
     public double RushFactor => 1 + (LandingRushRemaining > 0 ? landingRushBonus : 0) + (ComboRushRemaining > 0 ? comboRushBonus : 0);
     public double CooldownFactor => Math.Max(0.3, 1 - cooldownCut) * (1 + swingDelay);
@@ -520,6 +520,8 @@ public sealed partial class BattleSim
         BlockedById = 0;
         WatchedWallId = 0;
         if (CatStunned) return new(CatCommand.Stand, catX);
+        // Just landed with the Ground quake: the cat stands its ground a moment (2026-11-04).
+        if (QuakeStandRemaining > 0) return new(CatCommand.Stand, catX);
         // Put down on top of a blocker: a few steps off it to the nearest free side.
         if (Unstick(catX) is double free) return new(CatCommand.Move, free, free < catX ? -1 : 1);
         // A wall climber up its edge (chosen, or the only ones left): the cat goes near that edge and looks
@@ -680,6 +682,8 @@ public sealed partial class BattleSim
         // Only a hit that lands opens an enemy (a blocked one leaves the Opener bonus for the next).
         if (result == HitResult.Landed)
         {
+            // RageAuto: full before this swing, it starts now (2026-11-04).
+            if (RageFull && !Raging) AutoRage();
             slime.Opened = true;
             HitStatuses(slime);
             if (opening) OpenerHits++;
@@ -1128,7 +1132,7 @@ public sealed partial class BattleSim
         double life = kind switch
         {
             BattleEffectKind.Poof => 0.6 * Math.Max(1, value), BattleEffectKind.Number => 0.9, BattleEffectKind.Combo => 0.7, BattleEffectKind.Mend => 0.8,
-            BattleEffectKind.Explosion or BattleEffectKind.Slam => 0.5, BattleEffectKind.Warded => 0.6,
+            BattleEffectKind.Explosion or BattleEffectKind.Slam => 0.5, BattleEffectKind.Warded => 0.6, BattleEffectKind.Quake => 0.9,
             BattleEffectKind.Bell => 0.9, BattleEffectKind.EndTask => 1.0, BattleEffectKind.Rewind => 0.8, BattleEffectKind.Splat => 0.5, _ => 0.35
         };
         effects.Add(new BattleEffect { Kind = kind, X = x, Height = height, Life = life, Value = value });

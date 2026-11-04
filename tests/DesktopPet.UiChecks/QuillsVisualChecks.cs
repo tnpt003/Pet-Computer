@@ -22,6 +22,7 @@ internal static class QuillsVisualChecks
         int w = (int)Width, h = (int)BattleFieldView.FieldHeight, floor = h - 2;
         var view = new BattleFieldView(sim) { OriginX = 0 };
         var quill = Color.FromRgb(0x6E, 0x4B, 0x34);
+        var hotQuill = Color.FromRgb(0xF0, 0x5A, 0x2A); // 2026-11-04: quills up are red-orange.
         var ring = Color.FromRgb(0x3E, 0x9C, 0x74);
         var slow = Color.FromRgb(0x7F, 0xB8, 0xE8);
         var sack = Color.FromRgb(0xC9, 0x9A, 0x5E);
@@ -43,8 +44,8 @@ internal static class QuillsVisualChecks
         Add("thief", 1020);
         var px = SkyVisualChecks.Render(view, w, h, "enemy-quills");
 
-        int tall = SkyVisualChecks.Count(px, w, h, quill, 60, 180, floor - 80, floor - 20), low = SkyVisualChecks.Count(px, w, h, quill, 200, 320, floor - 80, floor - 20);
-        check(tall > 40 && low > 0 && tall > low * 1.3, $"A hedgehog's quills stand out long when up, short when flat ({tall} vs {low} quill pixels)");
+        int tall = SkyVisualChecks.Count(px, w, h, hotQuill, 60, 180, floor - 90, floor - 20), low = SkyVisualChecks.Count(px, w, h, quill, 200, 320, floor - 80, floor - 20);
+        check(tall > 40 && low > 0 && tall > low * 1.3, $"A hedgehog's quills stand out long and red-orange when up, short and brown when flat ({tall} vs {low} quill pixels)");
         check(SkyVisualChecks.Count(px, w, h, quill, 340, 460, floor - 60, floor) > 0, "A soaked hedgehog still shows its drooping quills");
         check(SkyVisualChecks.Count(px, w, h, ring, 530, 590, floor - 90, floor - 20) > 10, "A timer shows its clock over its head, a green ring");
         check(SkyVisualChecks.Count(px, w, h, slow, 670, 730, floor - 90, floor - 20) > 10 && SkyVisualChecks.Count(px, w, h, ring, 670, 730, floor - 90, floor - 20) == 0,

@@ -123,8 +123,9 @@ internal static class BattleChecks
         var hudHandle = new WindowInteropHelper(Field<Window>(window, "battleHudWindow")).Handle;
         bool HudClickThrough() => (GetWindowLongPtr(hudHandle, -20).ToInt64() & Transparent) != 0;
         void CursorAt(Point screen) { cursorProbe.SetValue(window, (Func<Point>)(() => screen)); Call(window, "UpdateBattleHudDodge"); }
-        CursorAt(gameHud.PointToScreen(new Point(20, 20)));
-        check(window.BattleHudDodging && HudClickThrough() && gameHud.Opacity < 0.5, "Over the HUD's portrait the HUD fades and lets clicks through");
+        // 2026-11-04: the portrait is the rage ring's button now; the status in the middle is information.
+        CursorAt(gameHud.StatusBlock.PointToScreen(new Point(gameHud.StatusBlock.ActualWidth / 2, 4)));
+        check(window.BattleHudDodging && HudClickThrough() && gameHud.Opacity < 0.5, "Over the HUD's status the HUD fades and lets clicks through");
         var slotCentre = gameHud.Slot(BattleSkill.Heal)!;
         CursorAt(slotCentre.PointToScreen(new Point(slotCentre.ActualWidth / 2, slotCentre.ActualHeight / 2)));
         check(!window.BattleHudDodging && !HudClickThrough() && gameHud.Opacity == 1, "Over a skill slot it is solid and clickable again");
@@ -384,13 +385,13 @@ internal static class BattleChecks
         window.SetBattlePaused(false);
         monitorProbe.SetValue(window, null);
 
-        // 1.5 M07: the rage bar under the HP. Not full, a click does nothing; full, it lights up and a
+        // 1.5 M07: the rage ring round the portrait (2026-11-04; was a bar under the HP). Not full, a click does nothing; full, it lights up and a
         // click makes the cat rage (drawn bigger); while raging it drains with the time left.
-        Press(gameHud.RageBar);
+        Press(gameHud.RageAvatar);
         check(!Sim().Raging && Sim().Rages == 0, "A click on a rage bar that is not full does nothing");
         typeof(BattleSim).GetProperty(nameof(BattleSim.Rage))!.SetValue(Sim(), 1.0);
         Tick(1.0 / 60);
-        check(gameHud.RageShown > 0.99 && gameHud.RageBar.Cursor == Cursors.Hand && gameHud.IsInteractiveAt(gameHud.RageBar.TranslatePoint(new Point(20, 4), gameHud)),
+        check(gameHud.RageShown > 0.99 && gameHud.RageAvatar.Cursor == Cursors.Hand && gameHud.IsInteractiveAt(gameHud.RageAvatar.TranslatePoint(new Point(33, 33), gameHud)),
             "Full, the bar is lit and clickable (the HUD never lets that click through)");
         if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string rageReview)
         {
@@ -400,7 +401,7 @@ internal static class BattleChecks
             var rageEncoder = new PngBitmapEncoder(); rageEncoder.Frames.Add(BitmapFrame.Create(rageShot));
             using var rageStream = System.IO.File.Create(System.IO.Path.Combine(rageReview, "battle-hud-rage-full.png")); rageEncoder.Save(rageStream);
         }
-        Press(gameHud.RageBar);
+        Press(gameHud.RageAvatar);
         Tick(1.0);
         check(Sim().Raging && Sim().Rage == 0 && pet.BattleRage == 1 && pet.BattleRageScale == Sim().Settings.RageScale && gameHud.RageShown < 0.9 && gameHud.RageShown > 0.7,
             $"The click makes the cat rage: drawn bigger, the bar drains with its time ({gameHud.RageShown:0.00})");

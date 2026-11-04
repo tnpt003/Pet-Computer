@@ -370,6 +370,7 @@ public sealed partial class PetWindow
     public void EndBattle()
     {
         if (battle == null) return;
+        pet.StickLanding = false;
         CountMonsterBook(battle); // A battle left early still met what it met (once per battle).
         CountAchievements(battle); // And still did what it did (1.5 M28).
         battle = null;
@@ -641,6 +642,14 @@ public sealed partial class PetWindow
         battle.SetPointer(BattlePointer());
         // The Adventure Guide holds the battle still while a step shows (PetWindow.BattleGuide.cs).
         var order = battle.Step(BattleGuideFreezes ? 0 : dt, pet.X + settings.Width / 2, held, BattleLifted, held ? BattleCatPose() : null);
+        // Ground quake ready: the next floor landing sticks, no bounce (2026-11-04, D1b).
+        pet.StickLanding = !dragging && battle.QuakeReady;
+        // The thrown cat bonked an ice shell: it bounces back (2026-11-04, docs/APPROVED-EXCEPTIONS.md D1a).
+        if (battle.TakeCatBounce() is var (bounceX, bounceY) && !dragging && !pet.Grounded)
+        {
+            pet.VX = bounceX;
+            pet.VY = bounceY;
+        }
         PlayBattleSound();
         ShowBattleBanners();
         battle.ClearEvents();

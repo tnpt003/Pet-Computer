@@ -5,8 +5,11 @@ namespace DesktopPet;
 // 1.5 M07, docs/UPDATE-1.5.md K5 "Mèo nổi giận": a battle stance, not the Angry emotion.
 // - The rage bar fills as the cat lands its own swings (RageHitGain each, held swings too) and as it
 //   loses HP (RageHurtGain a point); never while raging. It starts empty in every battle.
-// - Full, it waits for the user's click on the bar (never by itself). The click works while the battle
-//   runs and the cat is on the floor and not stunned (a stun already under way is never cut short).
+// - Full, it waits for the user's click (the HUD's avatar ring). 2026-11-04 (docs/GOPY-C-2026-11-04.md D3,
+//   D1f): with RageAuto it also starts by itself on the cat's first landed swing once full, or instead of
+//   the first stun that would land on it then (that stun never happens). It works while the battle runs and
+//   the cat is not in the user's hands, stunned or not: starting it clears every harm on the cat (stun,
+//   sticky goo, dazzle), and while it lasts none of them takes hold (puddles and loading rings no slow).
 // - For RageSeconds of battle time (Pause, the guide and the card choice stop it; held or not it runs
 //   on): every landed swing also hits every other enemy in the weapon's reach (RageSweep), its knock
 //   back is stronger, and nothing stuns the cat. The cat is drawn RageScale bigger (drawing only: its
@@ -17,22 +20,35 @@ public sealed partial class BattleSim
     public double RageRemaining { get; private set; }
     public bool Raging => RageRemaining > 0;
     public bool RageFull => Rage >= 1;
-    public bool RageReady => RageFull && !Raging && !Over && !Paused && !ChoosingUpgrade && !SkillsLocked && !CatStunned;
+    public bool RageReady => RageFull && !Raging && !Over && !Paused && !ChoosingUpgrade && !SkillsLocked;
+    public int AutoRages { get; private set; }
+    public int RageCleansed { get; private set; }
     public int Rages { get; private set; }
     public int RageHits { get; private set; }
     // How much of the stance shows (0..1): it swells over its first RageEase s and shrinks over its last.
     public const double RageEase = 0.25;
     public double RageLook => Raging ? Math.Clamp(Math.Min(Settings.RageSeconds - RageRemaining, RageRemaining) / RageEase, 0, 1) : 0;
 
-    public bool StartRage()
+    public bool StartRage() => StartRage(false);
+
+    private bool StartRage(bool auto)
     {
         if (!RageReady) return false;
         Rage = 0;
         RageRemaining = Settings.RageSeconds;
         Rages++;
-        events.Add(new(BattleEventKind.Raged, lastCatX));
+        if (auto) AutoRages++;
+        // Every harm on the cat is gone at once.
+        if (CatStunRemaining > 0 || DazzleRemaining > 0 || CatSlowRemaining > 0) RageCleansed++;
+        CatStunRemaining = 0;
+        DazzleRemaining = 0;
+        CatSlowRemaining = 0;
+        events.Add(new(BattleEventKind.Raged, lastCatX, auto ? 1 : 0));
         return true;
     }
+
+    // RageAuto: the first landed swing once full, or a stun about to land, starts it. True: it started.
+    private bool AutoRage() => Settings.RageAuto && RageFull && StartRage(true);
 
     private void GainRage(double amount)
     {

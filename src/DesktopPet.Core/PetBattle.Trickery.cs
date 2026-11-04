@@ -1,21 +1,33 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace DesktopPet;
 
 // 1.5 M25 (docs/UPDATE-1.5.md J1; docs/BATTLE-DATA.md → Nhóm Mưu mẹo): the Trickery group's cards and
 // synergies. Its cards make the skills, the apps and the drops better; its rare cards:
 // - Ground quake (landingQuake): the cat put down after a real lift (RescueGraceMinLiftSeconds, a throw
-//   too) shakes the floor: every enemy on the ground within QuakeRadius takes Amount damage (a boss half,
-//   like a tool's hit) and is knocked a little away. Not an enemy in the air, on a wall, dug in or in
-//   the Grabber. Once per QuakeCooldown s.
+//   too) shakes the floor. 2026-11-04 (docs/GOPY-C-2026-11-04.md D2): the cat lands without bouncing
+//   (QuakeReady tells the window) and stands still QuakeStand s; two waves of cracks run out to both sides
+//   (QuakeReach DIPs in QuakeTravel s): every enemy on the ground they reach takes Amount damage (a boss
+//   half, like a tool's hit), is knocked away from the cat and dazed QuakeStun s. Not an enemy in the air,
+//   on a wall, dug in or in the Grabber. Once per QuakeCooldown s.
 // - Sleight of paw (skillRefund): a skill used costs only half its cooldown with chance Amount.
 // Synergies: Teamwork (skillRush: a skill used gives SkillRushSeconds of Amount more swing damage),
 // Quick reload (killRecharge: each enemy defeated takes Amount s off every carried skill's cooldown),
 // Skill feast (skillFeast: every Amount s of fighting the carried skill with the most cooldown left is ready).
 public sealed partial class BattleSim
 {
-    public const double QuakeRadius = 110, QuakeCooldown = 6, QuakeKnock = 160, SkillRushSeconds = 3;
+    public const double QuakeRadius = 110, QuakeCooldown = 6, QuakeKnock = 260, SkillRushSeconds = 3;
+    public const double QuakeReach = 170, QuakeTravel = 0.35, QuakeStun = 0.8, QuakeStand = 0.6;
+    // The waves running out (-1: none), from where, and who they already hit; the cat's stand after landing.
+    private double quakeAge = -1, quakeX;
+    private readonly HashSet<int> quakeHit = new();
+    public double QuakeStandRemaining { get; private set; }
+    // The card is carried and ready: a landing now would shake the floor (the window lands the cat flat).
+    public bool QuakeCarried => quakeDamage > 0;
+    public bool QuakeReady => quakeDamage > 0 && QuakeRemaining <= 0 && !Over && !Paused && CatLifted && liftedFor >= Settings.RescueGraceMinLiftSeconds;
+    public double QuakeWaveFront => quakeAge < 0 ? -1 : QuakeReach * Math.Min(1, quakeAge / QuakeTravel);
     private readonly Random trickRandom;
     private double laserBonus, fanBonus, grabberBonus, scissorsBonus, sprayBonus, dropBonus, fishCardHeal, quakeDamage, refundChance;
     private double skillRushBonus, feastClock;
@@ -82,6 +94,8 @@ public sealed partial class BattleSim
     private void StepTrickery(double dt, bool catHeld)
     {
         QuakeRemaining = Math.Max(0, QuakeRemaining - dt);
+        QuakeStandRemaining = Math.Max(0, QuakeStandRemaining - dt);
+        StepQuake(dt);
         SkillRushRemaining = Math.Max(0, SkillRushRemaining - dt);
         if (Active("skillFeast") is not SynergySpec feast || Phase != BattlePhase.Fighting || catHeld) return;
         feastClock += dt;
@@ -104,29 +118,45 @@ public sealed partial class BattleSim
         foreach (var skill in carried) cooldowns[(int)skill] = Math.Max(0, cooldowns[(int)skill] - reload.Amount);
     }
 
-    // The cat put down after a real lift (Step checks the lift's time): Ground quake.
+    // The cat put down after a real lift (Step checks the lift's time): Ground quake. The cat stands still
+    // a moment; the waves start running out.
     private void Quake(double x)
     {
         if (quakeDamage <= 0 || QuakeRemaining > 0 || Over) return;
         QuakeRemaining = QuakeCooldown;
+        QuakeStandRemaining = QuakeStand;
         Quakes++;
-        int hit = 0;
-        AddEffect(BattleEffectKind.Slam, x, 0, QuakeRadius);
+        quakeAge = 0;
+        quakeX = x;
+        quakeHit.Clear();
+        AddEffect(BattleEffectKind.Quake, x, 0, QuakeReach);
+        events.Add(new(BattleEventKind.Quaked, x));
+        StepQuake(0);
+    }
+
+    // The two waves run out along the floor; each enemy on the ground they reach is hit once.
+    private void StepQuake(double dt)
+    {
+        if (quakeAge < 0 || Over) return;
+        quakeAge += dt;
+        double front = QuakeWaveFront;
         foreach (var s in slimes.ToArray())
         {
-            if (!s.Targetable || s.Airborne || s.OnWall || s.Burrowed || s.Handled || s.LeapHeight > 0 || s.Lift > 0) continue;
-            if (Math.Abs(s.X - x) > QuakeRadius + s.HitWidth / 2) continue;
-            hit++;
+            if (quakeHit.Contains(s.Id) || !s.Targetable || s.Airborne || s.OnWall || s.Burrowed || s.Handled || s.LeapHeight > 0 || s.Lift > 0) continue;
+            if (Math.Abs(s.X - quakeX) > front + s.HitWidth / 2) continue;
+            quakeHit.Add(s.Id);
+            QuakeHits++;
             if (!s.IsBoss && s.Elite is not { PushImmune: true })
             {
-                int away = Math.Abs(s.X - x) >= 1 ? Math.Sign(s.X - x) : 1;
+                int away = Math.Abs(s.X - quakeX) >= 1 ? Math.Sign(s.X - quakeX) : 1;
                 double push = QuakeKnock * s.Type.PushFactor;
                 if (s.KnockVelocity * away < push) s.KnockVelocity = away * push;
             }
+            AddEffect(BattleEffectKind.Thud, s.X, s.Height / 2);
             ToolHit(s, quakeDamage);
-            if (Over) break;
+            if (Over) return;
+            if (s.Targetable && !s.IsBoss) Daze(s, QuakeStun);
         }
-        QuakeHits += hit;
-        events.Add(new(BattleEventKind.Quaked, x, hit));
+        if (quakeAge >= QuakeTravel) quakeAge = -1;
     }
 }

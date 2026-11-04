@@ -946,3 +946,11 @@ Các mục 1.5 phía trên viết theo từng mốc; đây là thứ tự chơi 
 - [ ] Bình xịt nước nóng: click một slime → tự xịt theo nó tới hết nước, buông/di chuột không ảnh hưởng; con đó ngã thì chuyển sang con gần nhất và bình được thêm nước; xịt slime băng ~3 s thì vỏ tan.
 - [ ] Tab nhiễm: 3 quảng cáo không tắt được vẫn đếm, hết giờ thả một slime ngẫu nhiên có trong trận (không ra hợp thể/ảo ảnh/bom/xích…).
 - [ ] Trận tự chọn: HUD có nút ngôi nhà, bấm thì kết thúc trận và mở Sảnh.
+
+### Đợt C2 góp ý 04/11 (2026-11-04, Issue #42)
+- [ ] Ném mèo (kể cả nhẹ, sát sàn) vào slime băng: tiếng "cộp", mèo bật ngược lại; ném vừa thì nứt, mạnh thì vỡ; nhát 5 găng đấm cũng vỡ.
+- [ ] Thẻ Cú đáp địa chấn: nhấc rồi thả/ném, lần chạm sàn đó mèo không nảy, đứng yên một chút; vết nứt sáng chạy ra hai bên, bụi, chữ "RẦM!", khung trận rung; slime trúng bị đẩy văng và choáng; vòng nhỏ cạnh mèo đầy dần trong 6 s rồi sáng vàng.
+- [ ] Vòng nộ quanh avatar: đầy dần; đầy thì phát sáng, lửa, huy hiệu "NỘ!"; bấm avatar thì nộ; không bấm thì tự nộ ở nhát trúng kế tiếp hoặc khi sắp bị choáng (không bị choáng); đang choáng bấm vẫn được và hết choáng; đang nộ viền HUD đỏ, không bị chậm/chói mắt.
+- [ ] Slime nhím: gai dựng to, đỏ cam, viền đỏ; trước khi dựng rung mạnh và có "!" đỏ.
+- [ ] Slime hẹn giờ: đứng yên chỗ xuất hiện; đồng hồ to; 3 s cuối phóng to, rung, nháy đỏ, có tiếng; khi gọi có vòng sóng lớn + mũi tên ở mép; gọi tối đa 3 lần.
+- [ ] Slime trộm: đứng xa (~160 DIP) mà vẫn hút được, có tia tím nối với mèo; tinh anh lấy 2 thứ, hạ nó thì trả lại cả 2.

@@ -8,7 +8,7 @@ Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm 
 
 ---
 
-## #38 — Slime hợp thể quá yếu (2026-10-31, commit chưa có)
+## #38 — Slime hợp thể quá yếu (2026-10-31, commit 5a1aa21)
 - **Triệu chứng (góp ý người dùng):** slime hợp thể dễ bị mèo hạ dù khổng lồ có 3 lớp chắn; muốn buff gắn với việc "3 con".
 - **Nguyên nhân:** mỗi con 26 HP đi riêng lẻ, mèo hạ từng con trước khi chúng kịp chụm đủ 3; thiếu 1 con là cả bầy không bao giờ hợp thể.
 - **Sửa:** khóa mới trong `link` của hợp thể: `pack` (đòn chia đều cho các con cùng loại trong 260 DIPs, sợi chấm hồng nối bầy sáng lên khi chia), `packRage` 1,35 (một con bị hạ, các con còn lại nhanh hơn tới hết trận, lông mày giận), `minCount` 2 (còn ít hơn 3 thì 2 con vẫn hợp thể), `slamRadius` 140 / `slamShare` 0,6 (khổng lồ vừa hợp thể dậm đất, trúng mèo dưới sàn trong vòng + choáng 0,5 s). Gợi ý + âm thanh mới, lời mẹo đổi.

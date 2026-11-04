@@ -8,7 +8,7 @@ Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm 
 
 ---
 
-## #40 — Slime bám tường chỉ bám dưới mép màn hình (2026-10-31, commit chưa có)
+## #40 — Slime bám tường chỉ bám dưới mép màn hình (2026-10-31, commit 1d7cd8a)
 - **Triệu chứng (góp ý người dùng):** slime bám tường chỉ leo trong dải trận ở đáy màn hình; muốn nó leo theo chiều cao màn hình.
 - **Nguyên nhân:** chiến trường là một dải cao 170 DIPs nên độ cao bị chặn ở `ClingTop` 110.
 - **Sửa (người dùng duyệt cửa sổ riêng 31/10):** khóa `cling.top` 520: trượt sau mỗi loạt gai chọn độ cao trong 60–trần (trần = `top`, dưới đỉnh màn hình), trượt nhanh ×2,5; cao hơn 110 thì `InSky` (qua `HighOnWall`) → vẽ trong cửa sổ topmost riêng như slime bay (đặt theo `BodyX`, xoay áp tường), click Đẩy/Kẹp gắp như slime bay; gai ném từ trên cao bay lâu hơn và vẽ trên canvas trên trời (`SpikeInSky`; dải trận chỉ vẽ gai thấp). `DrawSpike` tách thành `DrawSpikeAt` dùng chung.

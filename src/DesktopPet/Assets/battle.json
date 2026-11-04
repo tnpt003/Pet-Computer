@@ -335,15 +335,19 @@
       // still on the floor within radius (its damage, no stun). It leaves a puddle for puddleSeconds: a dash
       // through it goes dashDistance × further and dashSpeed × faster; the fan dries it. An elite spits
       // eliteDrops drops (eliteSpread DIPs apart) and its puddles last elitePuddle × longer. binSpit false:
-      // an infected bin never spits it (it only comes where a wave names it).
+      // an infected bin never spits it (it only comes where a wave names it). 2026-10-31: a cat on the floor
+      // in a puddle loses puddleDamage HP a second and runs puddleSlow × as fast; a quick slime touching a
+      // puddle is boosted for the rest of the battle; lane: it first spits just ahead of a quick slime not yet
+      // boosted, on its way to the cat (once each), then at the cat.
       "id": "spitter", "nameVi": "Slime phun", "nameEn": "Spitter slime",
-      "tipVi": "Đứng xa phun giọt vào vòng cam; vũng nhầy làm slime khác lao nhanh. Nhấc mèo khỏi vòng; Quạt làm khô vũng.", "tipEn": "Spits from afar at the orange ring; its puddles speed other slimes up. Lift the cat out of the ring; the Fan dries the puddles.", "counters": ["fan", "push"],
+      "tipVi": "Đứng xa phun giọt vào vòng cam; vũng nhầy làm bỏng, chậm mèo và buff slime nhanh cả trận. Nhấc mèo khỏi vòng; Quạt làm khô vũng.", "tipEn": "Spits from afar at the orange ring; its puddles burn and slow the cat and boost quick slimes for good. Lift the cat out of the ring; the Fan dries the puddles.", "counters": ["fan", "push"],
       "maxHp": 40, "speed": 30, "damage": 9, "range": 56,
       "windup": 0.8, "attackCooldown": 2.0, "recover": 0.5,
       "scale": 0.9, "color": "#C38BE8", "marks": "spout",
       "support": true, "keepBack": 160, "fleeSpeed": 1.8, "cost": 2, "binSpit": false,
-      "spit": { "range": 380, "minRange": 90, "windup": 1.0, "flight": 0.8, "radius": 42, "cooldown": 4,
-        "puddleSeconds": 6, "puddleRadius": 48, "dashDistance": 1.5, "dashSpeed": 1.4, "eliteDrops": 2, "eliteSpread": 70, "elitePuddle": 1.5 },
+      "spit": { "range": 380, "minRange": 90, "windup": 1.0, "flight": 0.8, "radius": 42, "cooldown": 4.5,
+        "puddleSeconds": 6, "puddleRadius": 48, "dashDistance": 1.5, "dashSpeed": 1.4, "eliteDrops": 2, "eliteSpread": 70, "elitePuddle": 1.5,
+        "puddleDamage": 2, "puddleSlow": 0.7, "lane": true },
       "elite": { "hp": 1.2, "cost": 1, "descVi": "phun 2 giọt, vũng lâu hơn", "descEn": "spits two drops, longer puddles" }
     },
     {
@@ -1039,7 +1043,7 @@
             "goalEn": "Chapter 2's last battle: bubble and wall slimes, then the Zip Slime rolls, unpacks squads tied to it and packs into a shield. This stage lends the Scissors.",
             "tipVi": "Bạn sẽ học: Kéo cắt (kéo chuột thành một nét: cắt dây nhầy, chọc vỡ bong bóng); click 3 lần chọc vỡ bong bóng; ném mèo vào slime bám tường hoặc Đẩy cho nó rơi; nhấc mèo khỏi dải đỏ khi Slime Nén sắp lăn; cắt dây nối quân về Slime Nén để phá khiên; phá các mảnh file quanh nó ở pha cuối.",
             "tipEn": "You learn: the Scissors (drag one stroke: cuts slime ropes, pops bubbles); to pop a bubble with three clicks; to throw the cat at a wall slime or Push it down; to lift the cat off the red strip before the Zip Slime rolls; to cut the ropes tying its squads to it to break its shield; to break the file shards around it at the end.",
-            "objective": "clear", "upgrades": true, "maxAlive": 6, "threat": 1.45, "eliteChance": 0.25, "maxMalware": 4, "newAppsFrom": 1, "rulesVersion": 2,
+            "objective": "clear", "upgrades": true, "maxAlive": 6, "threat": 1.4, "eliteChance": 0.25, "maxMalware": 4, "newAppsFrom": 1, "rulesVersion": 2,
             "unlocksSkill": "scissors", "suggestSkills": [ "scissors", "shield", "push" ],
             "keepsake": { "id": "zip_plush", "kind": "plush", "nameVi": "Thú bông Slime Nén", "nameEn": "Zip Slime plush" },
             "waves": [

@@ -144,7 +144,7 @@ public sealed partial class BattleSim
     // armor (cards and synergies together) takes at most MaxArmor off.
     public const double MaxArmor = 0.6;
     public double DamageFactor => 1 + damageBonus + MutationDamage;
-    public double MoveFactor => (1 + moveBonus) * (ComboRushRemaining > 0 ? 1 + comboRushBonus : 1);
+    public double MoveFactor => (1 + moveBonus) * (ComboRushRemaining > 0 ? 1 + comboRushBonus : 1) * PuddleSlowNow; // A puddle slows it (PetBattle.Spit.cs).
     // Attacks a second against the usual: the rushes (Tailwind, Gale).
     public double RushFactor => 1 + (LandingRushRemaining > 0 ? landingRushBonus : 0) + (ComboRushRemaining > 0 ? comboRushBonus : 0);
     public double CooldownFactor => Math.Max(0.3, 1 - cooldownCut) * (1 + swingDelay);

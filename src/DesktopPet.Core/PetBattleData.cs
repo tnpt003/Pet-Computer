@@ -214,7 +214,7 @@ public sealed class EnemyType
 // PuddleSeconds (0: none) with PuddleRadius: a dashing enemy going through it lunges DashDistance ×
 // further and DashSpeed × faster. Once per Cooldown s. An elite spits EliteDrops drops (the others
 // EliteSpread DIPs further on) and its puddles last ElitePuddle × longer.
-public sealed class SpitSpec
+public sealed record SpitSpec
 {
     public double Range { get; init; } = 380;
     public double MinRange { get; init; } = 90;
@@ -229,6 +229,13 @@ public sealed class SpitSpec
     public int EliteDrops { get; init; } = 2;
     public double EliteSpread { get; init; } = 70;
     public double ElitePuddle { get; init; } = 1.5;
+    // 2026-10-31: a cat on the floor in one of its puddles loses PuddleDamage HP a second (0: none; the
+    // Shield takes it) and runs PuddleSlow × as fast (1: no slowing). Lane: with a quick slime (a dasher)
+    // not yet boosted on the field, its next spit lands just ahead of it on its way to the cat (once per
+    // dasher) rather than on the cat.
+    public double PuddleDamage { get; init; }
+    public double PuddleSlow { get; init; } = 1;
+    public bool Lane { get; init; }
 }
 
 // Q2 (1.5 M09): a trap lying on the floor with a ring of Radius. The cat on the floor stepping in sets
@@ -1472,6 +1479,7 @@ public static class BattleData
                 Within(spit.DashDistance, 1, 3, at + ".spit.dashDistance"); Within(spit.DashSpeed, 1, 3, at + ".spit.dashSpeed");
                 if (spit.EliteDrops is < 1 or > 3) throw new InvalidDataException(at + ".spit.eliteDrops must be 1–3");
                 Within(spit.EliteSpread, 0, 300, at + ".spit.eliteSpread"); Within(spit.ElitePuddle, 1, 3, at + ".spit.elitePuddle");
+                Within(spit.PuddleDamage, 0, 30, at + ".spit.puddleDamage"); Within(spit.PuddleSlow, 0.3, 1, at + ".spit.puddleSlow");
             }
             if (e.Spring is SpringSpec spring)
             {

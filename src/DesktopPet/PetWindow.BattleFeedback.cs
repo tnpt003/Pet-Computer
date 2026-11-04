@@ -60,6 +60,7 @@ public sealed partial class PetWindow
         // 1.5 M09: the spitter and the spring trap (the shared cartoon cues).
         [BattleEventKind.SpitAimed] = ("squish", 2), [BattleEventKind.GooLanded] = ("squish", 3), [BattleEventKind.PuddleBoost] = ("swoosh", 3),
         [BattleEventKind.PuddleDried] = ("pop", 2), [BattleEventKind.SpringSqueezed] = ("clank", 4), [BattleEventKind.SpringBounced] = ("ball_tap", 5),
+        [BattleEventKind.PuddleBurned] = ("squish", 2),
         [BattleEventKind.SpringFlattened] = ("squish", 4),
         [BattleEventKind.SpringCrouched] = ("clank", 4), [BattleEventKind.SpringLeapt] = ("swoosh", 3), [BattleEventKind.CatShoved] = ("ball_tap", 4),
         // 1.5 M10: the drummer's beats and strike, the chain slime's rope.
@@ -275,7 +276,8 @@ public sealed partial class PetWindow
                 BattleEventKind.Raged => L("MÈO NỔI GIẬN!", "THE CAT RAGES!"),
                 // 1.5 M09: the spitter and the spring trap, once each per battle.
                 BattleEventKind.SpitAimed when !spitExplained => L("Slime phun! Nhấc mèo khỏi vòng cam", "A spitter! Lift the cat out of the orange ring"),
-                BattleEventKind.PuddleBoost when !puddleExplained => L("Vũng nhầy làm slime lao xa hơn! Dùng Quạt làm khô", "Goo puddles make dashes longer! Dry them with the Fan"),
+                BattleEventKind.PuddleBoost when !puddleExplained => L("Slime nhanh dính vũng nhầy: lao xa và nhanh hơn cả trận! Dùng Quạt làm khô vũng", "A quick slime touched a goo puddle: longer, faster dashes all battle! Dry puddles with the Fan"),
+                BattleEventKind.PuddleBurned when trickExplained.Add(e.Kind) => L("Vũng nhầy làm bỏng và chậm mèo! Ra khỏi vũng hoặc dùng Quạt", "Goo puddles burn and slow the cat! Step out or use the Fan"),
                 BattleEventKind.SpringSqueezed when !springExplained => L("Lò xo đang nén! Nhấc mèo ra khỏi vòng", "The spring is squeezing! Lift the cat out of the ring"),
                 BattleEventKind.SpringCrouched when trickExplained.Add(e.Kind) => L("Lò xo sắp bật nhảy tới! Chạy khỏi vòng đỏ hoặc nhấc mèo lên", "The spring is about to leap! Run out of the red ring or lift the cat"),
                 BattleEventKind.SpringFlattened when !flatExplained => L("Lò xo bẹp rồi! Nó nằm im một lúc", "The spring is flattened! It lies still a while"),

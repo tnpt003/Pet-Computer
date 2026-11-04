@@ -8,6 +8,14 @@ Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm 
 
 ---
 
+## #37 — Vũng nhầy không hại mèo; slime nhanh chỉ được buff khi lao qua; slime phun không ưu tiên buff (2026-10-31, commit chưa có)
+- **Triệu chứng (góp ý người dùng):** bãi nhầy của slime phun phải gây sát thương và làm chậm khi mèo đứng vào; slime nhanh chỉ cần chạm vũng là được buff cả trận (lao xa ×1,5, nhanh ×1,4) và có hiệu ứng buff; slime phun nên ưu tiên buff slime nhanh rồi mới bắn mèo.
+- **Nguyên nhân:** thiết kế M09: vũng chỉ kéo dài **cú lao đang đi qua nó**; không ảnh hưởng mèo; slime phun luôn ngắm chỗ mèo.
+- **Sửa:** `spit.puddleDamage` 2 HP/s (mỗi 0,5 s, Khiên chặn, không khi nhấc hay `landingGrace`) và `puddleSlow` 0,7 (`MoveFactor`); slime lao **chạm** vũng là `GooBoosted` cả trận (mọi cú lao ×1,5 quãng, ×1,4 tốc độ), hình quầng tím + giọt nhầy rơi sau + thân bóng tím + dấu "+"; `spit.lane`: có slime nhanh chưa buff thì lần phun tới rơi trước mặt nó (tối đa 70 DIPs về phía mèo), mỗi con một lần. Gợi ý mới (vũng bỏng/chậm; buff cả trận). Bù cân bằng: nhịp phun 4 → 4,5 s; chương 2 màn 5 `threat` 1,45 → 1,4.
+- **Kiểm chứng:** test mới: chạm vũng thì lần lao sau (vũng đã khô) vẫn xa hơn ×1,3; mèo đứng trong vũng mất ~2 HP/s và chậm ×0,7, nhấc mèo thì không; phát chặn rơi đúng 70 DIPs trước slime nhanh, chỉ một lần. Cân bằng: tắt bỏng và `lane` vẫn làm màn 5 búa 75% (do buff cả trận); 3 lần thử khác làm lần lượt búa/cuộn len 75%; chốt bộ trên: màn 5 kiếm 80%, búa 80%, cuộn len 85%, găng 85% (vẫn sát ngưỡng: nên rà cân bằng chương 2).
+
+---
+
 ## #36 — Dây của slime xích khó thấy; slime xích chết quá nhanh (2026-10-31, commit 05c44bf)
 - **Triệu chứng (góp ý người dùng):** dây nối của slime xích chưa đẹp, khó để ý; mèo vung kiếm vài cái là slime xích chết dù đang nối dây.
 - **Nguyên nhân:** dây vẽ là hai nét cong mảnh màu nhầy; slime xích (36 HP) gánh 50% mọi đòn vào đồng minh mà không giảm gì, nên mỗi đòn vào đồng minh là nửa đòn vào nó.

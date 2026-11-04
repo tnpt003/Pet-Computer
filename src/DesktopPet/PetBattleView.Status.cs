@@ -27,9 +27,30 @@ public sealed partial class BattleFieldView
 
     private static bool HasStatus(Slime slime) => slime.Targetable && (slime.Poisoned || slime.Chilled || slime.Stuck);
 
-    // Under the body (world coordinates): the stick's puddle.
-    private static void DrawStatusUnder(DrawingContext dc, Slime slime, double x, double floor, double w)
+    // 2026-10-31: a quick slime boosted by a spitter's puddle for the rest of the battle: a purple glow under
+    // it, goo drops left behind it, a glossy purple sheen on its body.
+    private static readonly Brush GooGlow = Frozen(70, 0xB5, 0x7B, 0xE8);
+    private static readonly Brush GooDrop = Frozen(230, 0xC3, 0x8B, 0xE8);
+    private static readonly Pen GooDropInk = FrozenPen(Frozen(200, 0x6E, 0x3E, 0x9A), 1.1);
+    private static readonly Brush GooSheen = Frozen(60, 0xB5, 0x7B, 0xE8);
+    private static readonly Pen GooRim = FrozenPen(Frozen(200, 0xB5, 0x7B, 0xE8), 2);
+
+    // Under the body (world coordinates): the stick's puddle; a boosted dasher's glow and drops.
+    private static void DrawStatusUnder(DrawingContext dc, Slime slime, double x, double floor, double w, double time)
     {
+        if (slime.GooBoosted && slime.Targetable)
+        {
+            dc.DrawEllipse(GooGlow, null, new Point(x, floor - 2), w / 2 + 10, 7);
+            double behind = -slime.Facing, speed = slime.State == SlimeState.Dashing ? 1 : 0.4;
+            for (int i = 0; i < 3; i++)
+            {
+                double f = (slime.Id * 0.21 + i / 3.0 + time * speed) % 1;
+                var at = new Point(x + behind * (w / 2 + 4 + 16 * f + 6 * i), floor - 3 - 2 * Math.Sin(f * Math.PI));
+                dc.PushOpacity(1 - f);
+                dc.DrawEllipse(GooDrop, GooDropInk, at, 2.6 - i * 0.4, 2 - i * 0.3);
+                dc.Pop();
+            }
+        }
         if (!slime.Stuck || !slime.Targetable) return;
         dc.DrawEllipse(GooFill, GooInk, new Point(x, floor - 1), w / 2 + 8, 5);
     }
@@ -38,6 +59,7 @@ public sealed partial class BattleFieldView
     private static void DrawStatusTint(DrawingContext dc, Slime slime, Geometry body, double bw, double bh, double time)
     {
         if (!slime.Targetable) return;
+        if (slime.GooBoosted) dc.DrawGeometry(GooSheen, GooRim, body);
         if (slime.Chilled)
         {
             dc.DrawGeometry(FrostTint, FrostRim, body);

@@ -464,7 +464,7 @@ public sealed partial class BattleFieldView : FrameworkElement
                 for (int i = 1; i <= 2; i++)
                     dc.DrawEllipse(null, i == 1 ? AfterimageNear : AfterimageFar, new Point(x - slime.Facing * w * 0.55 * i, floor - h / 2), w / 2, h / 2);
         }
-        DrawStatusUnder(dc, slime, x, floor, w);
+        DrawStatusUnder(dc, slime, x, floor, w, time);
         DrawTrickBehind(dc, slime, x, floor, w * sx, h * sy, time);
         dc.PushOpacity(opacity);
         dc.PushTransform(new MatrixTransform(sx * size, 0, 0, sy * size, x + jitter, floor));

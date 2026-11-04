@@ -133,6 +133,7 @@ public sealed partial class BattleSim
             // 1.5 M18: a brooding boss's clutches, a raining boss's goo rain (PetBattle.Brood.cs, PetBattle.Mutant.cs).
             StepBrood(slime, dt);
             StepRain(slime, dt);
+            TouchPuddle(slime); // 2026-10-31: a dasher touching a puddle is boosted for the rest of the battle.
             // A rider thrown by its mount flies to its spot (PetBattle.Links.cs), nothing else.
             if (slime.BombFlight > 0) { FlyRider(slime, dt); if (Over) break; continue; }
             // A lit bomb burns on whatever it does (in the Grabber's claw too).
@@ -175,7 +176,8 @@ public sealed partial class BattleSim
                     {
                         if (slime.Spitting) Spit(slime);
                         else if (slime.Rolling) BeginRoll(slime);
-                        else if (slime.Type.Dash) { slime.DashLeft = slime.Type.DashDistance; slime.DashHit = false; slime.DashBoost = 1; slime.Set(SlimeState.Dashing); }
+                        // A dasher boosted by a puddle for good (PetBattle.Spit.cs) dashes further and faster.
+                        else if (slime.Type.Dash) { slime.DashLeft = slime.Type.DashDistance * slime.GooDistance; slime.DashHit = false; slime.DashBoost = slime.GooSpeed; slime.Set(SlimeState.Dashing); }
                         else Strike(slime, catX);
                     }
                     break;
@@ -505,7 +507,7 @@ public sealed partial class BattleSim
     {
         double before = slime.X;
         // Through a spitter's puddle: the rest of the dash goes further and faster (once per dash).
-        if (slime.DashBoost == 1 && puddles.Count > 0 && PuddleAt(slime.X) is BattlePuddle puddle) BoostDash(slime, puddle);
+        TouchPuddle(slime); // A puddle on its way boosts it for good (and the rest of this dash).
         double step = slime.Stuck ? 0 : Math.Min(slime.DashLeft, slime.Type.DashSpeed * slime.DashBoost * (slime.Elite?.DashSpeed ?? 1) * level.EnemySpeed * slime.ChillFactor * dt);
         slime.X = Math.Clamp(slime.X + slime.DashDirection * step, minX, maxX);
         slime.DashLeft = slime.X == before ? 0 : slime.DashLeft - step; // Stopped by the field's edge.

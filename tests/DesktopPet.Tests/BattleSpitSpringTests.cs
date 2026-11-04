@@ -12,10 +12,11 @@ internal static class BattleSpitSpringTests
 {
     const double dt = 1.0 / 60;
 
-    private static EnemyType Spitter() => new()
+    // Spits at the cat unless `lane` (its lane shot ahead of a quick slime is checked on its own).
+    private static EnemyType Spitter(bool lane = false) => new()
     {
         Id = "spit", MaxHp = 1000, Speed = 0, Damage = 9, Range = 56, Windup = 0.8, AttackCooldown = 2, Recover = 0.3, Support = true,
-        Spit = BattleData.Settings.Enemy("spitter").Spit, Elite = new EliteSpec { Hp = 1.2 }
+        Spit = BattleData.Settings.Enemy("spitter").Spit! with { Lane = lane }, Elite = new EliteSpec { Hp = 1.2 }
     };
 
     // No leap unless `leap` (the shipped leap is checked on its own; its push is always on).
@@ -165,6 +166,66 @@ internal static class BattleSpitSpringTests
         }
         double plain = Dash(false, out _), boosted = Dash(true, out var withPuddle);
         check(withPuddle.PuddleBoosts == 1 && boosted > plain * 1.3, $"A dash through a puddle goes further ({boosted:0} DIPs against {plain:0})");
+
+        // 2026-10-31: a dasher that touched a puddle stays boosted: a later dash far from any puddle still goes further.
+        {
+            var field = Field(new[] { Spitter(), Runner() });
+            var spitter = field.Slimes.Single(s => s.Type.Spit != null);
+            var runner = field.Slimes.Single(s => s.Type.Dash);
+            spitter.X = 1300; runner.X = 1500;
+            Run(field, 3, 600);
+            spitter.X = 1590;
+            check(field.PuddleAt(600) != null && !runner.GooBoosted, "(A puddle lies at 600)");
+            runner.X = 600;
+            Run(field, dt * 2, 100);
+            bool boostedNow = runner.GooBoosted;
+            Run(field, 7, 100); // The puddle dries up.
+            runner.X = 1150;
+            double start = 1150;
+            for (int i = 0; i < 300 && runner.State != SlimeState.Recover; i++) { field.Step(dt, 1000, false); if (runner.State is SlimeState.Moving or SlimeState.Windup) start = runner.X; }
+            double later = start - runner.X;
+            check(boostedNow && field.PuddleAt(600) == null && field.PuddleAt(1100) == null && later > plain * 1.3, $"Touching a puddle boosts a quick slime for the battle: later dashes go further ({later:0} against {plain:0})");
+        }
+
+        // A cat standing in a puddle is burnt now and then and slowed; lifted it is neither.
+        {
+            var spec = BattleData.Settings.Enemy("spitter").Spit!;
+            var field = Field(new[] { Spitter() });
+            var spitter = field.Slimes[0];
+            spitter.X = 600;
+            Run(field, 3, 100);
+            spitter.X = 1590;
+            double before = field.CatHp;
+            int burns = field.PuddleBurns;
+            Run(field, 2, 100);
+            double lost = before - field.CatHp;
+            check(field.PuddleAt(100) != null && field.PuddleBurns - burns >= 3 && Math.Abs(lost - (field.PuddleBurns - burns) * spec.PuddleDamage * BattleSim.PuddleBurnEvery) < 0.5,
+                $"Standing in a puddle burns the cat ({lost:0.#} HP in 2 s, {spec.PuddleDamage:0.#} a second)");
+            check(Math.Abs(field.PuddleSlowNow - spec.PuddleSlow) < 1e-9 && field.MoveFactor < 1, $"and slows it (× {field.PuddleSlowNow:0.##})");
+            before = field.CatHp;
+            Run(field, 1, 100, held: true);
+            check(field.CatHp == before && field.PuddleSlowNow == 1, "A lifted cat is neither burnt nor slowed");
+        }
+
+        // Lane: with a quick slime not yet boosted, the spitter first lays a puddle just ahead of it on its way to the cat.
+        {
+            var field = Field(new[] { Spitter(lane: true), Runner() });
+            var spitter = field.Slimes.Single(s => s.Type.Spit != null);
+            var runner = field.Slimes.Single(s => s.Type.Dash);
+            spitter.X = 1500; runner.X = 1100;
+            double aimedAt = double.NaN;
+            for (int i = 0; i < 120 && double.IsNaN(aimedAt); i++)
+            {
+                field.Step(dt, 300, false);
+                foreach (var e in field.Events) if (e.Kind == BattleEventKind.SpitAimed) aimedAt = e.X;
+                field.ClearEvents();
+                runner.X = 1100;
+            }
+            check(Math.Abs(aimedAt - (1100 - 70)) < 1 && runner.LaneAimed && field.LaneShots == 1, $"It spits just ahead of the quick slime, towards the cat ({aimedAt:0})");
+            spitter.SpitCooldown = 0;
+            Run(field, 2.5, 300, each: () => { runner.X = 1100; spitter.SpitCooldown = Math.Min(spitter.SpitCooldown, 0.01); });
+            check(field.LaneShots == 1, "Once per quick slime: then it spits at the cat again");
+        }
 
         // The fan dries the puddle.
         var sim = Field(new[] { Spitter() }, skills: new[] { BattleSkill.Push, BattleSkill.Fan, BattleSkill.Heal, BattleSkill.Shield, BattleSkill.Bomb });

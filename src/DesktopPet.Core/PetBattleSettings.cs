@@ -598,6 +598,10 @@ public sealed class Slime
     // dash's factor from a puddle it went through (1: none yet this dash).
     public bool Spitting;
     public double SpitAt, SpitCooldown, DashBoost = 1;
+    // 2026-10-31: a dasher that touched a spitter's puddle: boosted for the rest of the battle (its dashes
+    // GooDistance × as far, GooSpeed × as fast); a spitter already laid a puddle in its way.
+    public bool GooBoosted, LaneAimed;
+    public double GooDistance = 1, GooSpeed = 1;
     // 1.5 M09 (PetBattle.Spring.cs): the trap's state, the time left in it and the hits towards flattening it.
     public SpringState Spring;
     public double SpringClock;
@@ -756,6 +760,8 @@ public enum BattleEventKind
     // landed (Value 1: on the cat); a puddle made a dash longer; the fan dried a puddle. A spring trap
     // started to squeeze; it sprang (Value 1: on the cat); it was flattened.
     SpitAimed, GooLanded, PuddleBoost, PuddleDried, SpringSqueezed, SpringBounced, SpringFlattened,
+    // 2026-10-31: a puddle burnt the cat standing in it (every PuddleBurnEvery s).
+    PuddleBurned,
     // 2026-10-31: a spring crouched to leap (X: where it will land; Value: its id), left the floor; the cat
     // was slid by a spring (Value: the side, -1 or 1).
     SpringCrouched, SpringLeapt, CatShoved,
@@ -830,6 +836,8 @@ public sealed class BattleGoo
 {
     public int OwnerId;
     public double FromX, X, Flight, Remaining, Damage, Radius, PuddleSeconds, PuddleRadius, DashDistance, DashSpeed;
+    // 2026-10-31: what its puddle does to a cat standing in it (HP a second; speed ×).
+    public double PuddleDamage, PuddleSlow = 1;
     public string? Tint;
     // A wall climber's spike (1.5 M15): straight down from FromHeight over the floor, no puddle.
     public bool Spike;
@@ -849,7 +857,7 @@ public sealed class BattleShot
 }
 public sealed class BattlePuddle
 {
-    public double X, Radius, Remaining, Life, DashDistance, DashSpeed;
+    public double X, Radius, Remaining, Life, DashDistance, DashSpeed, Damage, Slow = 1;
 }
 public readonly record struct BattleEvent(BattleEventKind Kind, double X, double Value = 0);
 // Number: a floating damage (Value > 0) or heal (Value < 0, shown as +HP above the cat).

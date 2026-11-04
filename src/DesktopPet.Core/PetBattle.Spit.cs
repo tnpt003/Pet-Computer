@@ -35,14 +35,71 @@ public sealed partial class BattleSim
     private bool StartSpit(Slime slime, double catX, bool catHeld)
     {
         if (slime.Type.Spit is not SpitSpec spit || slime.SpitCooldown > 0 || catHeld || Grace > 0 || slime.Airborne || slime.Handled) return false;
-        double distance = Math.Abs(catX - slime.X);
+        // A quick slime to boost first (2026-10-31): a puddle just ahead of it on its way to the cat.
+        double target = spit.Lane && LaneSpot(slime, spit, catX) is (double lane, Slime dasher) ? lane : catX;
+        double distance = Math.Abs(target - slime.X);
         if (distance < spit.MinRange) return false;
-        slime.Facing = catX < slime.X ? -1 : 1;
+        if (target != catX)
+        {
+            LaneShots++;
+            foreach (var s in slimes) if (s.Type.Dash && !s.GooBoosted && Math.Abs(s.X - target) < 200) s.LaneAimed = true;
+        }
+        slime.Facing = target < slime.X ? -1 : 1;
         slime.Set(SlimeState.Windup);
         slime.Spitting = true;
-        slime.SpitAt = catX;
-        events.Add(new(BattleEventKind.SpitAimed, catX, slime.Id));
+        slime.SpitAt = target;
+        events.Add(new(BattleEventKind.SpitAimed, target, slime.Id));
         return true;
+    }
+
+    public int LaneShots { get; private set; }
+    public int PuddleBurns { get; private set; }
+    // The cat's speed × in a puddle now (1: none), for MoveFactor.
+    public double PuddleSlowNow { get; private set; } = 1;
+    private double puddleBurnClock;
+
+    // The spot just ahead of a dasher not yet boosted (nor aimed at), on the floor, on its way to the cat
+    // with no puddle already between them; null: none.
+    private (double, Slime)? LaneSpot(Slime spitter, SpitSpec spit, double catX)
+    {
+        Slime? best = null;
+        foreach (var s in slimes)
+            if (s.Type.Dash && !s.GooBoosted && !s.LaneAimed && s.Targetable && !s.Handled && !s.Airborne && s.LeapHeight <= 0 && Math.Abs(catX - s.X) > 90
+                && (best == null || Math.Abs(catX - s.X) > Math.Abs(catX - best.X))) best = s;
+        if (best == null) return null;
+        foreach (var p in puddles)
+            if (Math.Min(best.X, catX) - p.Radius <= p.X && p.X <= Math.Max(best.X, catX) + p.Radius) return null;
+        double ahead = Math.Sign(catX - best.X) * Math.Min(70, Math.Abs(catX - best.X) / 2);
+        return (Math.Clamp(best.X + ahead, Left, Right), best);
+    }
+
+    // Each Step, after the puddles: a cat on the floor in one is burnt now and then and slowed.
+    private void PuddleOnCat(double dt)
+    {
+        var p = !CatLifted && !Over ? PuddleAt(lastCatX) : null;
+        PuddleSlowNow = p?.Slow ?? 1;
+        if (p == null || p.Damage <= 0 || Grace > 0) { puddleBurnClock = 0; return; }
+        puddleBurnClock += dt;
+        if (puddleBurnClock < PuddleBurnEvery) return;
+        puddleBurnClock -= PuddleBurnEvery;
+        PuddleBurns++;
+        events.Add(new(BattleEventKind.PuddleBurned, lastCatX));
+        LandHit(p.Damage * PuddleBurnEvery, lastCatX, out _);
+    }
+    public const double PuddleBurnEvery = 0.5;
+
+    // A dasher touching a puddle: boosted for the rest of the battle (its dash now too, if it is dashing).
+    private void TouchPuddle(Slime s)
+    {
+        if (!s.Type.Dash || s.GooBoosted || puddles.Count == 0 || s.Airborne || s.LeapHeight > 0 || !s.Targetable || PuddleAt(s.X) is not BattlePuddle p) return;
+        s.GooBoosted = true;
+        s.GooDistance = p.DashDistance;
+        s.GooSpeed = p.DashSpeed;
+        PuddleBoosts++;
+        AddEffect(BattleEffectKind.Mend, s.X, s.Height / 2);
+        effects[^1].Tint = "#B57BE8";
+        events.Add(new(BattleEventKind.PuddleBoost, s.X, s.Id));
+        if (s.State == SlimeState.Dashing && s.DashBoost == 1) BoostDash(s, p);
     }
 
     // The windup is over: its drops fly.
@@ -59,7 +116,8 @@ public sealed partial class BattleSim
             goos.Add(new BattleGoo
             {
                 OwnerId = slime.Id, FromX = slime.X, X = x, Flight = flight, Remaining = flight, Damage = slime.Damage, Radius = spit.Radius,
-                PuddleSeconds = puddle, PuddleRadius = spit.PuddleRadius, DashDistance = spit.DashDistance, DashSpeed = spit.DashSpeed, Tint = slime.Type.Color
+                PuddleSeconds = puddle, PuddleRadius = spit.PuddleRadius, DashDistance = spit.DashDistance, DashSpeed = spit.DashSpeed, Tint = slime.Type.Color,
+                PuddleDamage = spit.PuddleDamage, PuddleSlow = spit.PuddleSlow
             });
         }
     }
@@ -79,6 +137,8 @@ public sealed partial class BattleSim
             puddles[i].Remaining -= dt;
             if (puddles[i].Remaining <= 0) puddles.RemoveAt(i);
         }
+        PuddleOnCat(dt);
+        if (Over) return;
         for (int i = 0; i < goos.Count; i++)
         {
             var goo = goos[i];
@@ -112,10 +172,12 @@ public sealed partial class BattleSim
             if (Math.Abs(p.X - goo.X) < p.Radius / 2)
             {
                 p.Remaining = p.Life = Math.Max(p.Remaining, goo.PuddleSeconds);
+                p.Damage = Math.Max(p.Damage, goo.PuddleDamage); p.Slow = Math.Min(p.Slow, goo.PuddleSlow);
                 return;
             }
         if (puddles.Count >= MaxPuddles) puddles.RemoveAt(0);
-        puddles.Add(new BattlePuddle { X = goo.X, Radius = goo.PuddleRadius, Remaining = goo.PuddleSeconds, Life = goo.PuddleSeconds, DashDistance = goo.DashDistance, DashSpeed = goo.DashSpeed });
+        puddles.Add(new BattlePuddle { X = goo.X, Radius = goo.PuddleRadius, Remaining = goo.PuddleSeconds, Life = goo.PuddleSeconds, DashDistance = goo.DashDistance, DashSpeed = goo.DashSpeed,
+            Damage = goo.PuddleDamage, Slow = goo.PuddleSlow });
     }
 
     public BattlePuddle? PuddleAt(double x)
@@ -124,13 +186,11 @@ public sealed partial class BattleSim
         return null;
     }
 
-    // A dasher in a puddle: the rest of its dash goes DashDistance × as far in all and DashSpeed × faster.
-    private void BoostDash(Slime slime, BattlePuddle puddle)
+    // A dasher boosted mid-dash: the rest of its dash goes DashDistance × as far in all and DashSpeed × faster.
+    private static void BoostDash(Slime slime, BattlePuddle puddle)
     {
         slime.DashBoost = puddle.DashSpeed;
         slime.DashLeft += slime.Type.DashDistance * (puddle.DashDistance - 1);
-        PuddleBoosts++;
-        events.Add(new(BattleEventKind.PuddleBoost, slime.X, slime.Id));
     }
 
     // The fan's wind dries every puddle it reaches.

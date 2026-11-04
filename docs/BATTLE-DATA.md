@@ -559,7 +559,7 @@ Tư thế trận, **không phải** cảm xúc Angry (cảm xúc vẫn bị khó
 Q1 và Q2 của docs/UPDATE-1.5.md. Code: `src/DesktopPet.Core/PetBattle.Spit.cs`, `src/DesktopPet.Core/PetBattle.Spring.cs` (luật), `src/DesktopPet/PetBattleView.Traps.cs` (vẽ), test `tests/DesktopPet.Tests/BattleSpitSpringTests.cs` và ảnh UiChecks (`TrapVisualChecks`, `enemy-spit-spring.png`). **Hai quái có trong battle.json gốc (`spitter`, `springer`) nhưng chưa trận nào dùng**: chương 1, trận tự do, Viễn chinh, Vô tận không đổi (bảng mô phỏng cân bằng giống hệt bản trước từng dòng), Thùng Rác không nhả chúng (`binSpit: false`). Chương 2 (M21) và Vô tận (M24) sẽ đưa vào. Muốn thử ngay: chép `docs/examples/battle-m09.json` thành `%LOCALAPPDATA%\DesktopPet\battle.json` rồi mở Trận tự do (dữ liệu tùy chỉnh: không kỷ lục, không thưởng).
 
 ```json
-{ "id": "spitter", "support": true, "spit": { "range": 380, "minRange": 90, "windup": 1.0, "flight": 0.8, "radius": 42, "cooldown": 4, "puddleSeconds": 6, "puddleRadius": 48, "dashDistance": 1.5, "dashSpeed": 1.4 } }
+{ "id": "spitter", "support": true, "spit": { "range": 380, "minRange": 90, "windup": 1.0, "flight": 0.8, "radius": 42, "cooldown": 4.5, "puddleSeconds": 6, "puddleRadius": 48, "dashDistance": 1.5, "dashSpeed": 1.4 } }
 { "id": "springer", "spring": { "radius": 60, "compress": 0.8, "stun": 0.8, "rest": 4, "flattenHits": 2, "flatSeconds": 3, "creepRange": 120 } }
 ```
 
@@ -571,10 +571,12 @@ Q1 và Q2 của docs/UPDATE-1.5.md. Code: `src/DesktopPet.Core/PetBattle.Spit.cs
 | `windup` | 0,3–5 s | 1 | Gồng trước khi phun; vòng cam hiện ngay ở **chỗ mèo đứng lúc bắt đầu gồng** |
 | `flight` | 0,2–3 s | 0,8 | Giọt bay vòng cung bao lâu |
 | `radius` | 10–200 DIPs | 42 | Giọt rơi trúng mèo nếu tâm mèo trong khoảng này |
-| `cooldown` | 0,5–30 s | 4 | Hồi giữa hai lần phun (con mới ra sân chờ một nửa) |
+| `cooldown` | 0,5–30 s | 4,5 (trước 4, đổi 2026-10-31 để bù vũng bỏng và buff cả trận) | Hồi giữa hai lần phun (con mới ra sân chờ một nửa) |
 | `puddleSeconds`, `puddleRadius` | 0–30 s, 10–200 DIPs | 6, 48 | Vũng nằm bao lâu (0: không có vũng), rộng bao nhiêu |
-| `dashDistance`, `dashSpeed` | 1–3 | 1,5, 1,4 | Quái lao đi qua vũng: quãng lao ×, tốc độ lao × (mỗi cú lao một lần) |
+| `dashDistance`, `dashSpeed` | 1–3 | 1,5, 1,4 | Slime lao (`dash`) **chạm vào vũng** (2026-10-31, trước đây chỉ khi lao qua): được buff **cả trận**, mọi cú lao về sau xa ×, nhanh × (đang lao thì áp ngay cho phần còn lại); hình: quầng tím dưới chân, giọt nhầy rơi lại phía sau, thân bóng tím; dấu "+" tím khi vừa được buff |
 | `eliteDrops`, `eliteSpread`, `elitePuddle` | 1–3, 0–300 DIPs, 1–3 | 2, 70, 1,5 | Tinh anh: phun mấy giọt (giọt sau xa hơn về phía bên kia mèo), vũng lâu × |
+| `puddleDamage`, `puddleSlow` | 0–30 HP/s, 0,3–1 | 2, 0,7 | (2026-10-31) Mèo **dưới sàn** đứng trong vũng: mỗi 0,5 s mất `puddleDamage` × 0,5 (Khiên chặn; không trong `landingGrace`), chạy chậm × `puddleSlow` (`MoveFactor`); nhấc mèo thì hết. Vũng mưa của trùm không bỏng |
+| `lane` | true/false | true | (2026-10-31) Trên sân có slime nhanh (`dash`) **chưa được buff** mà giữa nó và mèo chưa có vũng: lần phun tới rơi **trước mặt nó** (cách nó tối đa 70 DIPs về phía mèo), mỗi slime nhanh một lần, rồi mới phun vào mèo |
 
 - Giọt rơi trúng mèo **đang ở dưới sàn** (không bị nhấc, không trong `landingGrace`): mất máu bằng `damage` của slime phun (nhân độ khó/threat như đòn thường; Gai phản lại một phần nếu slime phun còn sống), **không choáng**. Khiên bong bóng và Mai rùa chặn. Mèo đã đi khỏi vòng hoặc đang được nhấc: trượt, vũng vẫn thành.
 - Không bắt đầu phun khi người dùng đang cầm mèo, trong `landingGrace`, khi bị Đèn laser dụ hay đang hoảng. Đẩy hoặc choáng trong lúc gồng thì hủy cú phun. Gồng phun không chiếm lượt ra đòn (`maxAttackers`) của quái khác.
@@ -879,7 +881,7 @@ C1 của docs/UPDATE-1.5.md. Dữ liệu: chương `download_dump` trong `campai
 | 2 Thư mục ma | `c2_ghost_folder` | dọn 3 đợt | bóng ma, ảo ảnh, nhạc trưởng, cờ hiệu | Đèn laser | 2,2 |
 | 3 Giữ giỏ cá | `c2_fish_basket` | sống sót 75 s, giỏ 5 cá (`every` 3, `at` 0,3) | bom cưỡi, đào hang, bay, trộm | Kẹp gắp | 2,2 (+0,5/phút) |
 | 4 Đầm nhầy | `c2_slime_swamp` | dọn 4 đợt, cuối là Slime Mẹ | nhím, băng, xích, tách đôi | Bình xịt nước | 1,95 |
-| 5 Slime Nén | `c2_zip_slime` | dọn 3 đợt, cuối là Slime Nén | bong bóng, bám tường | Kéo cắt | 1,45 |
+| 5 Slime Nén | `c2_zip_slime` | dọn 3 đợt, cuối là Slime Nén | bong bóng, bám tường | Kéo cắt | 1,4 (1,45 tới 2026-10-31: hạ để bù slime nhanh được buff cả trận) |
 
 Mỗi trận ≤ 2 loại liên kết và ≤ 2 loại quái dùng chuột (kiểm tra lúc nạp). Slime dỗi, hẹn giờ, Vua biến dị không vào chương 2 (để Viễn chinh tuyến 2 / Vô tận). Tranh, bản đồ, phông riêng và phần thưởng chương 2: mục "Hình và phần thưởng chương 2" (M22).
 

@@ -579,6 +579,9 @@ public sealed class LinkSpec
     public double ThrowFlight { get; init; } = 0.7;
     public double ThrowHeight { get; init; } = 70;
     public double ThrowRest { get; init; } = 2;
+    // tether, 2026-10-31: while its rope holds the holder takes only Armor × any hit (its share of its ally's
+    // hits too); 1: no armor.
+    public double Armor { get; init; } = 1;
 }
 
 // A formation (1.5 M12, Enemy Director): a named team the Director draws for a wave's "formation"
@@ -1433,6 +1436,8 @@ public static class BattleData
                     if (link.Beats is < 2 or > 8) throw new InvalidDataException(at + ".link.beats must be 2–8");
                     if (link.EliteBeats is not 0 and (< 2 or > 8)) throw new InvalidDataException(at + ".link.eliteBeats must be 2–8");
                 }
+                Within(link.Armor, 0.1, 1, at + ".link.armor");
+                if (link.Kind != EnemyLinks.Tether && link.Armor != 1) throw new InvalidDataException(at + ".link.armor is for a tether");
                 if (link.Kind == EnemyLinks.Ride)
                 {
                     Within(link.DropRange, 20, 400, at + ".link.dropRange"); Within(link.ThrowRange, 0, 500, at + ".link.throwRange");

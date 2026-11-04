@@ -175,7 +175,7 @@ internal static class BattleFormationTests
         var hp = holders.Select(h => h.Hp).ToArray();
         Bomb(sim, ally);
         double taken = allyHp - ally.Hp, shared = hp[0] - holders[0].Hp + hp[1] - holders[1].Hp;
-        check(Math.Abs(taken - 40 * (1 - link.Share) * (1 - link.Share)) < 0.01 && Math.Abs(shared + taken - 40) < 0.01,
+        check(Math.Abs(taken - 40 * (1 - link.Share) * (1 - link.Share)) < 0.01 && Math.Abs(shared / link.Armor + taken - 40) < 0.01,
             $"The second rope takes its share of what is left: the ally takes {(1 - link.Share) * (1 - link.Share):P0} ({taken})");
 
         // A free ally comes first: with two allies, one rope each.

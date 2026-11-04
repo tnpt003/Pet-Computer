@@ -92,6 +92,24 @@ internal static class BattleLinkTests
         Bomb(sim, ally, 200);
         check(Math.Abs(allyHp - ally.Hp - 20) < 0.01 && Math.Abs(holderHp - holder.Hp - 20) < 0.01, $"The holder takes half of a hit on its ally ({allyHp - ally.Hp} / {holderHp - holder.Hp})");
 
+        // 2026-10-31, armor: chained, the holder takes only that much of its share and of hits on itself;
+        // a flash runs down the chain. Cut, it takes hits in full again.
+        var armored = TetherSim(new LinkSpec { Kind = EnemyLinks.Tether, Range = 300, Share = 0.5, BreakStun = 1, Relink = 2, Armor = 0.5 });
+        var chainer = armored.Slimes.Single(s => s.Type.Id == "chain");
+        var friend = armored.Slimes.Single(s => s.Type.Id == "slime");
+        Run(armored, 200, 0.3);
+        double friendHp = friend.Hp, chainerHp = chainer.Hp;
+        Bomb(armored, friend, 200);
+        check(chainer.LinkedTo == friend.Id && Math.Abs(friendHp - friend.Hp - 20) < 0.01 && Math.Abs(chainerHp - chainer.Hp - 10) < 0.01 && chainer.LinkPulse > 0,
+            $"Chained, the holder takes half of its share ({chainerHp - chainer.Hp:0.#} of 20; the ally still {friendHp - friend.Hp:0.#})");
+        chainerHp = chainer.Hp;
+        armored.Damage(chainer, 20, DamageSource.Bomb);
+        check(Math.Abs(chainerHp - chainer.Hp - 10) < 0.01, "and half of a hit on itself");
+        armored.CutLink(chainer.Id);
+        chainerHp = chainer.Hp;
+        armored.Damage(chainer, 20, DamageSource.Bomb);
+        check(Math.Abs(chainerHp - chainer.Hp - 20) < 0.01, "Cut, it takes hits in full");
+
         seen.Clear();
         check(sim.CutLink(holder.Id) && holder.LinkedTo == 0 && ally.State == SlimeState.Stunned, "Cutting the rope dazes the ally");
         foreach (var e in sim.Events) seen.Add(e.Kind);

@@ -765,6 +765,8 @@ public sealed partial class BattleSim
         amount = IceShell(slime, amount, source);
         // A hedgehog's quills up: the cat's weapon half hurts it and pricks the cat (1.5 M16, PetBattle.Quills.cs).
         amount = QuillHit(slime, amount, source);
+        // A chain slime with its rope on takes only part of any hit (2026-10-31, PetBattle.Links.cs).
+        amount = ChainArmor(slime, amount);
         // A tether's holder takes its share of every hit on its ally (never passed on again); a second
         // rope's holder its share of what is left (1.5 M12).
         if (source != DamageSource.Link && TetherHolder(slime) is Slime holder)
@@ -774,6 +776,7 @@ public sealed partial class BattleSim
             {
                 double share = amount * Share(h);
                 amount -= share;
+                h.LinkPulse = LinkPulseSeconds; // A flash runs along the rope to it (the view).
                 Damage(h, share, DamageSource.Link);
                 if (!slime.Targetable) return HitResult.Landed;
             }

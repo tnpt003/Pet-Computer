@@ -383,13 +383,14 @@
       // 1.5 Q4 (M10): a weak chain slime. link tether: a rope of goo to the nearest ally within `range`;
       // it takes `share` of every hit on that ally and keeps just behind it. Cut the rope (the Scissors,
       // or the cat held or thrown through it at cutSpeed DIPs/s or more) or defeat it: the ally is dazed
-      // breakStun s; it ties itself again `relink` s later. Elite: it takes eliteShare instead.
+      // breakStun s; it ties itself again `relink` s later. Elite: it takes eliteShare instead. 2026-10-31:
+      // while its chain holds it takes only `armor` × any hit (its share too); a gold flash runs down the chain.
       "id": "chain", "nameVi": "Slime xích", "nameEn": "Chain slime",
-      "tipVi": "Nối dây nhầy vào đồng đội và gánh nửa sát thương cho nó. Kéo mèo xuyên dây hoặc dùng Kéo cắt để cắt.", "tipEn": "Ties a slime rope to a friend and takes half its hits. Drag the cat through the rope or cut it with the Scissors.", "counters": ["scissors"],
+      "tipVi": "Xích vào đồng đội, gánh nửa sát thương cho nó; còn xích thì nó cứng gấp đôi. Kéo mèo xuyên xích hoặc dùng Kéo cắt để cắt.", "tipEn": "Chains itself to a friend and takes half its hits; chained, it is twice as tough. Drag the cat through the chain or cut it with the Scissors.", "counters": ["scissors"],
       "maxHp": 36, "speed": 44, "damage": 6, "range": 52,
       "windup": 0.7, "attackCooldown": 2.2, "recover": 0.4,
       "scale": 0.8, "color": "#9AD17A", "marks": "chain", "cost": 2, "binSpit": false,
-      "link": { "kind": "tether", "range": 200, "share": 0.5, "breakStun": 1, "relink": 6, "cutSpeed": 300, "eliteShare": 0.7 },
+      "link": { "kind": "tether", "range": 200, "share": 0.5, "breakStun": 1, "relink": 6, "cutSpeed": 300, "eliteShare": 0.7, "armor": 0.5 },
       "elite": { "hp": 1.3, "cost": 1, "descVi": "gánh 70% sát thương cho đồng đội", "descEn": "takes 70% of its ally's hits" }
     },
     {

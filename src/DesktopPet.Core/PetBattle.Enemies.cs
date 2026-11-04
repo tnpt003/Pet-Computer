@@ -106,6 +106,7 @@ public sealed partial class BattleSim
             slime.FarHealCooldown = Math.Max(0, slime.FarHealCooldown - act);
             slime.SpitCooldown = Math.Max(0, slime.SpitCooldown - act);
             slime.ThrowHold = Math.Max(0, slime.ThrowHold - act);
+            slime.LinkPulse = Math.Max(0, slime.LinkPulse - dt);
             slime.PanicRemaining = Math.Max(0, slime.PanicRemaining - dt);
             if (slime.Type.Marks == "giant" && slime.GiantShields == 0 && slime.GiantShieldClock > 0)
             {

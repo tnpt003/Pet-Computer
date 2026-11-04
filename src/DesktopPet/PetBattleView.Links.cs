@@ -42,7 +42,7 @@ public sealed partial class BattleFieldView
             switch (link.Kind)
             {
                 case EnemyLinks.Tether when sim.LinkPartner(slime) is Slime ally:
-                    DrawRope(dc, slime, ally, floor, time);
+                    DrawChain(dc, slime, ally, floor, time);
                     break;
                 case EnemyLinks.Aura:
                     double pulse = 1 + 0.03 * Math.Sin(time * 4);
@@ -74,6 +74,59 @@ public sealed partial class BattleFieldView
                 dc.DrawLine(pen, last, p);
                 last = p;
             }
+        }
+    }
+
+    // 2026-10-31: a chain slime's tether as a sagging chain of steel links (hollow, every other one turned
+    // edge-on, so they read as linked), swaying a little; when its holder takes a share of a hit a gold flash
+    // runs down the chain from the ally to the holder, lighting the links it passes. A long one rests on the
+    // floor line like the rope.
+    private static readonly Pen LinkInk = FrozenPen(PetUi.ArtInk, 3.6);
+    private static readonly Pen LinkSteel = FrozenPen(Frozen(255, 0xC9, 0xC3, 0xB8), 1.8);
+    private static readonly Pen LinkLit = FrozenPen(Frozen(255, 0xFF, 0xD2, 0x3F), 2.2);
+    private static readonly Brush FlashCore = Frozen(255, 0xFF, 0xF6, 0xC8);
+    private static readonly Brush FlashGlow = Frozen(110, 0xFF, 0xD2, 0x3F);
+    private static readonly Brush BadgeBack = Frozen(150, 0x2A, 0x1F, 0x16);
+
+    private void DrawChain(DrawingContext dc, Slime holder, Slime ally, double floor, double time)
+    {
+        var a = new Point(holder.X - OriginX, floor - holder.LeapHeight - holder.RideHeight - holder.Lift - holder.Height * 0.45);
+        var b = new Point(ally.X - OriginX, floor - ally.LeapHeight - ally.RideHeight - ally.Lift - ally.Height * 0.45);
+        double length = Math.Abs(b.X - a.X) + Math.Abs(b.Y - a.Y);
+        double sag = Math.Min(28, Math.Abs(b.X - a.X) * 0.18) + 3 * Math.Sin(time * 3 + holder.Id);
+        Point At(double t) => new(a.X + (b.X - a.X) * t, Math.Min(floor - 2, a.Y + (b.Y - a.Y) * t + sag * 4 * t * (1 - t)));
+        int links = Math.Clamp((int)(length / 9), 4, 60);
+        // The flash: from the ally (t = 1) to the holder (t = 0) over LinkPulseSeconds.
+        double flash = holder.LinkPulse > 0 ? holder.LinkPulse / BattleSim.LinkPulseSeconds : -1;
+        for (int i = 0; i <= links; i++)
+        {
+            double t = (double)i / links;
+            var p = At(t);
+            var next = At(Math.Min(1, t + 0.02));
+            var prev = At(Math.Max(0, t - 0.02));
+            double angle = Math.Atan2(next.Y - prev.Y, next.X - prev.X) * 180 / Math.PI;
+            bool edge = i % 2 == 1;
+            bool lit = flash >= 0 && Math.Abs(t - flash) < 0.12;
+            dc.PushTransform(new RotateTransform(angle, p.X, p.Y));
+            dc.DrawEllipse(null, LinkInk, p, 5, edge ? 1.4 : 3.2);
+            dc.DrawEllipse(null, lit ? LinkLit : LinkSteel, p, 5, edge ? 1.4 : 3.2);
+            dc.Pop();
+        }
+        if (flash < 0) return;
+        var bead = At(flash);
+        dc.DrawEllipse(FlashGlow, null, bead, 9, 9);
+        dc.DrawEllipse(FlashCore, null, bead, 4, 4);
+    }
+
+    // Over a chained ally (body-free, screen coordinates): a small chain-link badge, so it is clear the chain
+    // slime takes part of its hits.
+    private static void DrawChainBadge(DrawingContext dc, Point c)
+    {
+        dc.DrawEllipse(BadgeBack, null, c, 9, 9);
+        foreach (var pen in new[] { ChainInk, ChainSteel })
+        {
+            dc.DrawEllipse(null, pen, new Point(c.X - 3, c.Y), 4, 2.6);
+            dc.DrawEllipse(null, pen, new Point(c.X + 3, c.Y), 2.6, 4);
         }
     }
 
@@ -122,6 +175,8 @@ public sealed partial class BattleFieldView
                     dc.DrawEllipse(SweatBlue, Halo, new Point(x + k * (slime.Width / 2 - 2), top + 4 + bob), 2.6, 3.6);
                     dc.DrawEllipse(SweatBlue, null, new Point(x + k * (slime.Width / 2 - 2), top + 4 + bob), 2.6, 3.6);
                 }
+            // A chained ally: the badge by its head (2026-10-31).
+            if (sim.TetherHolder(slime) != null) DrawChainBadge(dc, new Point(x - slime.Width / 2 + 2, top + 2));
             if (slime.Link is not LinkSpec link) continue;
             if (link.Kind == EnemyLinks.Rhythm)
             {

@@ -67,7 +67,7 @@ internal static class BandVisualChecks
         view.Arrange(new Rect(0, 0, Width, BattleFieldView.FieldHeight));
         int floor = (int)BattleFieldView.FieldHeight - 2;
         var drum = Color.FromRgb(0xD6, 0x45, 0x45);
-        var rope = Color.FromRgb(0x8E, 0xD8, 0x6E);
+        var rope = Color.FromRgb(0xC9, 0xC3, 0xB8); // 2026-10-31: the tether is a chain of steel links.
         var steel = Color.FromRgb(0xB8, 0xB2, 0xA8);
         var beat = Color.FromRgb(0xFF, 0x9F, 0x4A);
 
@@ -87,6 +87,6 @@ internal static class BandVisualChecks
         check(ring > 40, $"The orange ring of its band lies on the floor ({ring} pixels)");
         check(Count(px, steel, 800, 840, floor - 45, floor - 20) > 15, "The chain slime wears its steel links on its head");
         int ropeNow = Count(px, rope, 640, 790, floor - 40, floor + 2), ropeBefore = Count(before, rope, 640, 790, floor - 40, floor + 2);
-        check(ropeNow > 60 && ropeBefore < 5, $"Tied, a green rope of goo runs from it to its ally ({ropeBefore} -> {ropeNow} pixels)");
+        check(ropeNow > 60 && ropeBefore < 5, $"Tied, a chain of steel links runs from it to its ally ({ropeBefore} -> {ropeNow} pixels)");
     }
 }

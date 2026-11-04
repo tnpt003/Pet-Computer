@@ -100,13 +100,13 @@ internal static class BattleBandTests
         check(holder.LinkedTo == ally.Id && sim.TetherHolder(ally) == holder, "A chain slime ties its rope to the ally in range");
         double allyHp = ally.Hp, holderHp = holder.Hp;
         Bomb(sim, ally);
-        check(Math.Abs(holderHp - holder.Hp - 40 * link.Share) < 0.01 && Math.Abs(allyHp - ally.Hp - 40 * (1 - link.Share)) < 0.01,
-            $"It takes {link.Share:P0} of a hit on its ally ({holderHp - holder.Hp} / {allyHp - ally.Hp})");
+        check(Math.Abs(holderHp - holder.Hp - 40 * link.Share * link.Armor) < 0.01 && Math.Abs(allyHp - ally.Hp - 40 * (1 - link.Share)) < 0.01,
+            $"It takes {link.Share:P0} of a hit on its ally, {link.Armor:P0} of that through its chain ({holderHp - holder.Hp} / {allyHp - ally.Hp})");
 
         (sim, holder, ally) = Rope(elite: true);
         allyHp = ally.Hp; holderHp = holder.Hp;
         Bomb(sim, ally);
-        check(holder.Elite != null && Math.Abs(holderHp - holder.Hp - 40 * link.EliteShare) < 0.01, $"An elite takes {link.EliteShare:P0} ({holderHp - holder.Hp})");
+        check(holder.Elite != null && Math.Abs(holderHp - holder.Hp - 40 * link.EliteShare * link.Armor) < 0.01, $"An elite takes {link.EliteShare:P0} ({holderHp - holder.Hp})");
     }
 
     private static void Bomb(BattleSim sim, Slime slime)

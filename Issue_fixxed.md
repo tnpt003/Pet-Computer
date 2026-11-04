@@ -8,6 +8,14 @@ Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm 
 
 ---
 
+## #36 — Dây của slime xích khó thấy; slime xích chết quá nhanh (2026-10-31, commit chưa có)
+- **Triệu chứng (góp ý người dùng):** dây nối của slime xích chưa đẹp, khó để ý; mèo vung kiếm vài cái là slime xích chết dù đang nối dây.
+- **Nguyên nhân:** dây vẽ là hai nét cong mảnh màu nhầy; slime xích (36 HP) gánh 50% mọi đòn vào đồng minh mà không giảm gì, nên mỗi đòn vào đồng minh là nửa đòn vào nó.
+- **Sửa:** khóa mới `link.armor` (chỉ cho `tether`, gốc 0,5): còn xích thì mọi sát thương slime xích nhận (cả phần gánh) ×0,5; cắt xích thì nhận đủ. Dây vẽ thành chuỗi mắt xích thép (mắt xen kẽ quay nghiêng), mỗi lần gánh có chớp vàng chạy dọc xích từ đồng minh về nó (`LinkPulse` 0,35 s), đồng minh có huy hiệu mắt xích cạnh đầu. Lời mẹo đổi theo ("còn xích thì nó cứng gấp đôi").
+- **Kiểm chứng:** test mới: còn xích thì nhận 10/20 phần gánh và 10/20 đòn thẳng, có chớp; cắt xích nhận đủ 20. Sửa kỳ vọng 3 test cũ (phần gánh × armor). C# đạt cả mô phỏng cân bằng.
+
+---
+
 ## #35 — Slime nhanh không quăng bom; hạ slime bom thì nó nổ luôn (OP) (2026-10-31, commit a23b799)
 - **Triệu chứng (góp ý người dùng):** muốn slime nhanh cõng bom tới gần thì quăng bom vào mèo (có animation, đứng yên ~2 s sau khi quăng, bom chạm đất là nổ); hạ slime bom đang cháy ngòi thì nó nổ ngay, quá mạnh.
 - **Nguyên nhân:** thiết kế M11: bom chỉ nhảy xuống cách mèo 120 rồi tự đi tới châm ngòi; `Defeat` gọi `Blast` cho bom đang cháy ngòi.

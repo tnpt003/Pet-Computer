@@ -58,6 +58,13 @@ public sealed partial class BattleSim
     }
 
     // The ally a tether holder is tied to, or the mount a rider is on (null: none).
+    // 2026-10-31: a tether holder with its rope on takes only link.Armor × any hit (the share passed along the
+    // rope too); how long the flash of a passed share runs along the rope (the view).
+    public const double LinkPulseSeconds = 0.35;
+    private double ChainArmor(Slime s, double amount) =>
+        s.Link is { Kind: EnemyLinks.Tether, Armor: < 1 } link && LinkPartner(s) != null ? amount * link.Armor : amount;
+    public static bool ChainGuards(Slime s) => s.Link is { Kind: EnemyLinks.Tether, Armor: < 1 } && s.LinkedTo != 0;
+
     public Slime? LinkPartner(Slime slime) => slime.LinkedTo != 0 && Find(slime.LinkedTo) is { Targetable: true } partner ? partner : null;
 
     private bool Ridden(Slime mount)

@@ -564,6 +564,8 @@ public sealed class Slime
     // 2026-10-31, a ride's throw (PetBattle.Links.cs). The rider: its mount's windup left and where it will
     // land; thrown, its flight left (of BombFlightTotal), from and to. The mount: how long it stands still.
     public double ThrowClock, ThrowToX, BombFlight, BombFlightTotal, BombFromX, BombStartHeight, ThrowHold;
+    // A tether holder: the flash of a share passed along its rope still running (s; the view).
+    public double LinkPulse;
     // In the air (its kind's Hover): the bottom of its body this many DIPs over the floor (0: on the floor).
     public double Altitude;
     public bool Airborne => Altitude > 0;

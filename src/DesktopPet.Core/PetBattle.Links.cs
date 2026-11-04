@@ -313,6 +313,7 @@ public sealed partial class BattleSim
         merged.Hp = hp; merged.MaxHp = maxHp;
         merged.Facing = lastCatX < x ? -1 : 1;
         merged.Set(SlimeState.Moving);
+        merged.Rejoined = group.Exists(s => s.Rejoin); // Halves a herb slime rejoined: no second time (PetBattle.Split.cs).
         Hatched(merged, group); // 1.5 M18: a mother's clutch merged heads back to her (PetBattle.Brood.cs).
         AddEffect(BattleEffectKind.Poof, x, merged.Height / 2, 1);
         effects[^1].Tint = slime.Type.Color;

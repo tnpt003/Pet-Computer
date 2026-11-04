@@ -70,6 +70,10 @@ public sealed class EnemyType
     public double HealCooldown { get; init; } = 4;
     public double HealWindup { get; init; } = 1;
     public double HealBudget { get; init; } = 100;
+    // 2026-10-31, a support: a splitting slime breaking apart anywhere on the field, it at once heals each
+    // half (half its HealAmount, on top of its budget and while it heals another) so they gather and merge back;
+    // the one they merge back into does not split again.
+    public bool RejoinSplits { get; init; }
     // Dash: within DashRange of the cat it winds up (the lane is shown on the floor), then lunges
     // DashDistance DIPs at DashSpeed. Running into the cat hits it once (Damage) and stuns it
     // (BattleSettings.StunDurationSeconds). It replaces the kind's plain attack.
@@ -1383,6 +1387,7 @@ public static class BattleData
                 Within(e.HealRange, 10, 600, at + ".healRange"); Within(e.HealCooldown, 0.5, 60, at + ".healCooldown");
                 Within(e.HealWindup, 0.2, 5, at + ".healWindup"); Within(e.HealBudget, 1, 100000, at + ".healBudget");
             }
+            if (e.RejoinSplits && (e.HealAmount <= 0 || !e.Support)) throw new InvalidDataException(at + ".rejoinSplits is for a healing support");
             if (e.SummonCap is < 1 or > 10) throw new InvalidDataException(at + ".summonCap must be 1–10");
             Within(e.BlockChance, 0, 0.9, at + ".blockChance");
             if (e.BlockMaxStreak is < 1 or > 10) throw new InvalidDataException(at + ".blockMaxStreak must be 1–10");

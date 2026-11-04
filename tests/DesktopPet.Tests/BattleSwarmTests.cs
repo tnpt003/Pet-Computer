@@ -15,11 +15,11 @@ internal static class BattleSwarmTests
 
     // Stand-ins named like the shipped kinds, so the shipped links' mount/into names fit.
     private static EnemyType Kind(string id, double damage = 0, double hp = 1000, double scale = 1, LinkSpec? link = null, FuseSpec? fuse = null,
-        SplitSpec? split = null, double heal = 0) => new()
+        SplitSpec? split = null, double heal = 0, bool rejoin = false) => new()
     {
         Id = id, MaxHp = hp, Speed = 0, Damage = damage, Range = 50, Windup = 0.8, AttackCooldown = 2, Recover = 0.3, Scale = scale,
         Elite = new EliteSpec { Hp = 1.2 }, Link = link, Fuse = fuse, Split = split,
-        HealAmount = heal, HealRange = 300, HealCooldown = 0.2, HealWindup = 0.2, HealBudget = 1000
+        HealAmount = heal, HealRange = 300, HealCooldown = 0.2, HealWindup = 0.2, HealBudget = 1000, RejoinSplits = rejoin, Support = rejoin
     };
 
     private static EnemyType Bomb() => Kind("bomber", 22, 30, 0.85, BattleData.Settings.Enemy("bomber").Link, BattleData.Settings.Enemy("bomber").Fuse);
@@ -307,6 +307,25 @@ internal static class BattleSwarmTests
         var whole = sim.Slimes.LastOrDefault(s => s.Type.Id == "splitter" && s.Targetable);
         check(merged && halves.All(h => h.Healed) && whole != null && Math.Abs(whole.MaxHp - 70) < 0.01 && whole.Hp > 2 * Math.Round(35 * split.Health),
             "Healed by a healer, the halves merge back into the splitting slime");
+
+        // 2026-10-31: a herb slime (rejoinSplits) heals fresh halves at once, from afar, not from its budget and
+        // not as a cast; they merge back; the one they become breaks apart for good next time.
+        var herb = Kind("herb", heal: 10, rejoin: true);
+        (sim, _) = Splitting(more: new[] { herb }, counts: new[] { 1, 1 });
+        mother = sim.Slimes.Single(s => s.Type.Id == "splitter");
+        var herbSlime = sim.Slimes.Single(s => s.Type.Id == "herb");
+        mother.X = 1000; herbSlime.X = 1580;
+        double budget = herbSlime.HealLeft;
+        Defeat(sim, mother);
+        halves = sim.Slimes.Where(s => s.Type.Id == "splitling").ToList();
+        check(sim.Rejoins == 1 && halves.All(h => h.Healed && h.Rejoin && h.Hp > Math.Round(h.MaxHp * split.Health)) && herbSlime.HealLeft == budget && herbSlime.State != SlimeState.Casting,
+            "A herb slime heals the fresh halves at once, from afar, outside its budget and its own heals");
+        merged = Run(sim, 6, 100, BattleEventKind.Merged, each: () => { foreach (var h in halves) if (h.Targetable) h.X = 1000; });
+        whole = sim.Slimes.LastOrDefault(s => s.Type.Id == "splitter" && s.Targetable);
+        check(merged && whole != null && whole.Rejoined, "They gather and merge back");
+        int splitsBefore = sim.Splits;
+        Defeat(sim, whole!);
+        check(sim.Splits == splitsBefore && !sim.Slimes.Any(s => s.Type.Id == "splitling" && s.Targetable) && sim.Rejoins == 1, "Merged back by a herb slime, beaten again it does not split: gone for good");
     }
 
     private static void DataChecks(Action<bool, string> check)

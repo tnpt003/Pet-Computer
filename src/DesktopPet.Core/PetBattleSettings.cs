@@ -616,6 +616,9 @@ public sealed class Slime
     // came (a split half's merge waits for it).
     public double FuseLeft, FuseTotal;
     public bool Exploded, Healed;
+    // 2026-10-31: a half healed by a herb slime as it split (Rejoin); the whole one merged back from such halves
+    // (Rejoined: no herb rejoins it again).
+    public bool Rejoin, Rejoined;
     public bool Lit => FuseLeft > 0;
     // 1.5 M13 (PetBattle.Tricks.cs). A ghost: faded out (nothing hits it), the time left in its turn seen
     // or hidden, the side of the cat it faded on, and the seconds the cursor or the laser keeps it out.
@@ -745,6 +748,9 @@ public enum BattleEventKind
     // 2026-10-31: a merging pack raged after one of it fell (Value: the fallen one's id); a merge landed with a
     // slam (Value 1: on the cat).
     PackRaged, MergeSlam,
+    // 2026-10-31: a herb slime healed a splitting slime's fresh halves to merge back (X: the herb; Value: the
+    // halves' x).
+    HalvesRejoined,
     // The cat in the user's hand hit an enemy in the air; the thrown cat flew into an enemy that
     // reacts to it (Value: the enemy's id).
     HeldHit, ThrowHit,

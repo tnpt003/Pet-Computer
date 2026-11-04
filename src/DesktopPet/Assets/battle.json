@@ -327,6 +327,9 @@
       // healGuardRepeat s); fleeSpeed: up to this × faster backing off from a close cat; hideBehindGuard: it
       // keeps behind its guard rock.
       "healGuard": true, "healGuardRepeat": 2, "fleeSpeed": 2.5, "hideBehindGuard": true,
+      // 2026-10-31, rejoinSplits: a splitting slime breaking apart, it heals the halves at once (half its healAmount each, not
+      // from its budget) so they merge back; the one they become does not split again.
+      "rejoinSplits": true,
       "elite": { "firstHeal": 2, "healCooldown": 0.85, "healBudget": 1.3, "cost": 1, "descVi": "hồi đầu gấp đôi, hồi nhanh và nhiều hơn", "descEn": "first heal doubled, heals sooner and longer" }
     },
     {

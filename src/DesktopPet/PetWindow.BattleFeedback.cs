@@ -70,7 +70,7 @@ public sealed partial class PetWindow
         [BattleEventKind.Merged] = ("squish", 4), [BattleEventKind.Dismounted] = ("swoosh", 2), [BattleEventKind.FuseLit] = ("clank", 4),
         [BattleEventKind.Blasted] = ("pop", 6), [BattleEventKind.SlimeSplit] = ("squish", 4),
         [BattleEventKind.ThrowAimed] = ("clank", 4), [BattleEventKind.RiderThrown] = ("swoosh", 4), [BattleEventKind.BombFizzled] = ("pop", 2),
-        [BattleEventKind.PackRaged] = ("annoyed", 5), [BattleEventKind.MergeSlam] = ("ball_tap", 5),
+        [BattleEventKind.PackRaged] = ("annoyed", 5), [BattleEventKind.MergeSlam] = ("ball_tap", 5), [BattleEventKind.HalvesRejoined] = ("sparkle", 4),
         // 1.5 M12: the flag fell (its team panics), a formation came.
         [BattleEventKind.Panicked] = ("surprised", 5), [BattleEventKind.FormationArrived] = ("sparkle", 4),
         // 1.5 M13: the ghost, the bubble, the mirage and the sulky slime.
@@ -296,6 +296,7 @@ public sealed partial class PetWindow
                 BattleEventKind.PackRaged when trickExplained.Add(e.Kind) => L("Bầy hợp thể nổi giận! Con còn lại nhanh hơn, hai con vẫn hợp thể được", "The fusing pack is enraged! The rest move faster, and two can still merge"),
                 BattleEventKind.MergeSlam when trickExplained.Add(e.Kind) => L("Slime khổng lồ dậm đất khi hợp thể! Nhấc mèo hoặc đứng xa vòng", "The giant lands with a slam as it merges! Lift the cat or keep out of the ring"),
                 BattleEventKind.SlimeSplit when !splitExplained => L("Slime tách đôi! Đừng để thảo dược hồi cho hai nửa", "It split in two! Don't let a herb slime heal the halves"),
+                BattleEventKind.HalvesRejoined when trickExplained.Add(e.Kind) => L("Thảo dược nối lại hai nửa! Hạ một nửa trước khi chúng chụm lại", "The herb slime mends the halves! Beat one before they gather and merge"),
                 // 1.5 M12: the flag slime and its panic, once each per battle; each formation the first time it comes.
                 BattleEventKind.SlimeSpawned when !flagExplained && FlagOnField() => L("Slime cờ hiệu! Quái trong vòng vàng chạy nhanh hơn. Hạ nó trước", "A flag slime! Enemies in the gold ring run faster. Take it down first"),
                 BattleEventKind.Panicked when !panicExplained => L("Mất cờ! Cả đội hoảng loạn", "The flag fell! They all panic"),

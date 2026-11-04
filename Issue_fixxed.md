@@ -8,7 +8,7 @@ Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm 
 
 ---
 
-## #39 — Thảo dược không tự nối lại slime tách đôi (2026-10-31, commit chưa có)
+## #39 — Thảo dược không tự nối lại slime tách đôi (2026-10-31, commit 4a5ce08)
 - **Triệu chứng (góp ý người dùng):** muốn slime thảo dược tự hồi cho slime tách đôi ngay khi nó tách, hai nửa có animation hợp lại làm một; lần hồi này riêng, không tính vào ngân sách hồi, và xảy ra được cùng lúc khi đang hồi con khác.
 - **Nguyên nhân:** M11: hai nửa chỉ hợp lại khi thảo dược đã hồi từng nửa bằng lượt hồi thường (trong tầm, trừ ngân sách, mỗi lượt một con).
 - **Sửa:** khóa mới `rejoinSplits` cho thảo dược: lúc tách, thảo dược gần nhất (ở đâu cũng được) hồi ngay mỗi nửa 0,5 × lượng hồi, không trừ ngân sách, không chiếm lượt gồng; hai nửa đánh dấu đã hồi nên chụm lại và hợp lại (thanh đếm + hiệu ứng hợp thể sẵn có). Lần đầu thử hồi đủ lượng và cho con hợp lại tách tiếp: tổng máu phải đánh ~250 thay vì ~112, chương 2 màn 5 Khó búa tụt 25% (kiếm 70%, lệch > 40 điểm); chốt: hồi 0,5 × và con hợp lại bị hạ thì không tách nữa (~140). Gợi ý + âm thanh mới.

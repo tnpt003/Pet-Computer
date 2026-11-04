@@ -8,7 +8,7 @@ Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm 
 
 ---
 
-## #33 — Vũ khí trên bảng chuẩn bị tràn khỏi nút; app trong bảng dựng trận chỉ là nút chữ (2026-10-31, commit chưa có)
+## #33 — Vũ khí trên bảng chuẩn bị tràn khỏi nút; app trong bảng dựng trận chỉ là nút chữ (2026-10-31, commit c82f605)
 - **Triệu chứng (ảnh người dùng):** bảng "Chuẩn bị trận": hình kiếm/búa/cuộn len/găng thò ra mép trái nút, dấu ✓ chen giữa hình và tên. Bảng "Dựng trận" phần "App trong trận": toàn nút chữ ("Quảng cáo: Tắt"…), xấu.
 - **Nguyên nhân:** `WeaponIcon` dịch cố định rồi vẽ vũ khí dài ~46 DIPs (xoay 35°) vào ô 24×28 nên tràn; ✓ nằm trong hàng cùng tên. Phần app dùng `Chip` chữ.
 - **Sửa:** `WeaponIcon` đo khung thật của hình (DrawingGroup.Bounds, cache theo kiểu) rồi co cho vừa ô, căn giữa; thẻ vũ khí: ô vuông 32 tối màu bên trái chứa vũ khí, tên bên phải, ✓ thành huy hiệu tròn ở góc phải trên. Bảng dựng trận: app và app độc là ô như ô quái (icon, tên, trạng thái Bật/Tắt hoặc Tắt/Ít/Vừa/Nhiều, ô cam khi bật), chưa gặp là ô "?"; thêm tiêu đề "App độc · bấm để đổi"; icon app độc vẽ mới (PetMalwareIcon.cs: quảng cáo, vòng loading, cập nhật bắt buộc, virus.exe, virus vào icon, Captcha, pin yếu, con trỏ đơ).

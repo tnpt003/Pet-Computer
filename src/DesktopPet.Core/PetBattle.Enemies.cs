@@ -452,7 +452,7 @@ public sealed partial class BattleSim
 
     // The ally a support enemy is healing right now (null when it is not casting).
     public Slime? Healing(Slime healer) => healer.State == SlimeState.Casting ? Find(healer.HealTargetId) : null;
-    private double Speed(Slime slime) => (slime.Enraged ? slime.Type.EnragedSpeed : slime.Type.Speed) * level.EnemySpeed * slime.AuraSpeed * slime.ChillFactor * MutationSpeed
+    private double Speed(Slime slime) => slime.Rooted ? 0 : (slime.Enraged ? slime.Type.EnragedSpeed : slime.Type.Speed) * level.EnemySpeed * slime.AuraSpeed * slime.ChillFactor * MutationSpeed
         * (slime.PackRaged && slime.Link is LinkSpec pack ? pack.PackRage : 1);
 
     private readonly List<Slime> scratch = new();
@@ -542,6 +542,8 @@ public sealed partial class BattleSim
     {
         // A mirage's copy: its blow is only an illusion (1.5 M13). A sulky slime hits as hard as it is puffed up.
         if (from.Decoy) { AddEffect(BattleEffectKind.Miss, catX, 60); return false; }
+        // In the Fan's column its blows land lighter (2026-11-04).
+        if (from.Rooted) share *= 1 - Settings.FanColumnCut;
         if (!LandHit(from.Damage * share * from.Puff, catX, out double hurt)) return false;
         // Thorns (the synergy; 1.5 M23b: and the relic, for a melee blow): part of what the cat really took goes back to the attacker.
         double back = (Active("thorns") is SynergySpec thorns ? thorns.Amount : 0) + (melee ? thornsShare : 0);

@@ -380,6 +380,8 @@ public sealed partial class PetWindow : Window
         {
             pressPending = false;
             ReleaseMouseCapture();
+            // 2026-11-04: clicks on a "not responding" cat in a battle wake it.
+            if (battle?.PokeCat() == true) { PlayBattleSound(); ShowBattleBanners(); battle.ClearEvents(); }
             return; // A click never enters thrown physics.
         }
         if (!dragging) return;

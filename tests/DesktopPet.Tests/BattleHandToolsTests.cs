@@ -42,124 +42,113 @@ internal static class BattleHandToolsTests
     }
 
     // The cursor carrying the held enemy from x to x + by over these frames, then let go.
-    private static void Fling(BattleSim sim, double x, double height, double by, int frames)
-    {
-        for (int i = 1; i <= frames; i++) { sim.MoveGrab(x + by * i / frames, height); sim.Step(dt, 100, false); sim.ClearEvents(); }
-        sim.ReleaseGrab();
-    }
-
     public static void Run(Action<bool, string> check)
     {
         GrabberChecks(check);
-        ThrowChecks(check);
         ScissorsChecks(check);
         SprayChecks(check);
         DataChecks(check);
         RestChecks(check);
     }
 
+    // 2026-11-04 (docs/GOPY-C-2026-11-04.md D4): grab – hold – slam.
     private static void GrabberChecks(Action<bool, string> check)
     {
-        var sim = Sim(Kind("small"), Kind("rock", blocker: true, scale: 1.35), Kind("king", boss: true, scale: 2), Kind("big", scale: 1.5));
-        Slime small = sim.Slimes[0], rock = sim.Slimes[1], king = sim.Slimes[2], big = sim.Slimes[3];
-        small.X = 600; rock.X = 900; king.X = 1200; big.X = 1450;
+        var sim = Sim(Kind("small"), Kind("rock", blocker: true, scale: 1.35), Kind("king", boss: true, scale: 2), Kind("big", scale: 1.5), Kind("near"));
+        Slime small = sim.Slimes[0], rock = sim.Slimes[1], king = sim.Slimes[2], big = sim.Slimes[3], near = sim.Slimes[4];
+        small.X = 600; rock.X = 900; king.X = 1200; big.X = 1450; near.X = 300;
         check(!sim.Grab(small.Id, 600, 10), "The Grabber lifts only once chosen");
         check(sim.Arm(BattleSkill.Grabber) && !sim.Grab(rock.Id, 900, 10) && !sim.Grab(king.Id, 1200, 10) && !sim.Grab(big.Id, 1450, 10) && sim.Armed == BattleSkill.Grabber,
             "Never a rock, a boss or a big enemy (still chosen)");
-        check(sim.Grab(small.Id, 600, 10) && sim.Grabbing && small.Grabbed && sim.Armed == null && sim.GrabberBusy, "A small one is lifted");
-        for (int i = 0; i < 20; i++) { sim.MoveGrab(600, 10 + i * 3); sim.Step(dt, 100, false); sim.ClearEvents(); }
-        check(small.Lift > 40 && Math.Abs(small.X - 600) < 1, $"It hangs where the cursor holds it ({small.Lift:0} DIPs up)");
-        // Next to the cat, held, it never winds up and the cat does not go for it.
+        check(sim.Grab(small.Id, 600, 10) && sim.Grabbing && small.Grabbed && sim.Armed == null && sim.GrabberBusy, "A small one is grabbed");
+        sim.Select(small.Id);
         bool woundUp = false, targeted = false;
-        for (int i = 0; i < 90; i++) { sim.MoveGrab(140, 50); sim.Step(dt, 100, false); sim.ClearEvents(); woundUp |= small.State == SlimeState.Windup; targeted |= sim.TargetId == small.Id; }
-        check(!woundUp && !targeted, "Held next to the cat it does not attack, nor is it the cat's target");
-        Run(sim, sim.Settings.GrabberHoldSeconds);
-        check(!sim.Grabbing && !small.Grabbed && sim.Cooldown(BattleSkill.Grabber) > sim.Settings.GrabberCooldown - sim.Settings.GrabberHoldSeconds - 0.2,
-            "Held too long it slips free and the cooldown starts");
-        Run(sim, 1);
-        check(small.Lift == 0 && !small.Tossed && small.State != SlimeState.Stunned, "Dropped (not thrown) it lands without a daze");
+        for (int i = 0; i < 60; i++) { sim.Step(dt, 580, false); sim.ClearEvents(); woundUp |= small.State == SlimeState.Windup; targeted |= sim.TargetId == small.Id; }
+        check(small.Lift > BattleSim.GrabLift - 1 && Math.Abs(small.X - 600) < 1 && !woundUp && !targeted, $"Lifted out of the fight ({small.Lift:0} DIPs up): it does not attack and the cat does not go for it, even chosen");
+        // A click carries it there and slams it: it loses the slam's damage, is dazed; the one near loses the splash.
+        double smallHp = small.Hp, nearHp = near.Hp;
+        check(sim.GrabDrop(310) && !sim.GrabDrop(500), "A click says where to slam it (once)");
+        var seen = new List<BattleEvent>();
+        for (int i = 0; i < 120 && (sim.Grabbing || small.Lift > 0); i++) { sim.Step(dt, 100, false); seen.AddRange(sim.Events); sim.ClearEvents(); }
+        check(!sim.Grabbing && Math.Abs(small.X - 310) < 1 && small.Lift == 0 && Math.Abs(smallHp - small.Hp - sim.Settings.GrabberSlamDamage) < 1e-6 && small.State == SlimeState.Stunned,
+            $"Carried and slammed: {sim.Settings.GrabberSlamDamage} damage and dazed ({smallHp - small.Hp:0})");
+        check(Math.Abs(nearHp - near.Hp - sim.Settings.GrabberHitDamage) < 1e-6 && seen.Any(e => e.Kind == BattleEventKind.GrabHit) && sim.Cooldown(BattleSkill.Grabber) > 0,
+            $"An enemy beside the spot loses {sim.Settings.GrabberHitDamage}; the cooldown starts once it is put down");
 
-        // Lifting the cat drops it, no throw; Pause freezes it.
+        // Held to the end without a click: put down away from the cat, dazed, no damage.
+        sim = Sim(Kind("small"));
+        small = sim.Slimes[0];
+        small.X = 600;
+        sim.Arm(BattleSkill.Grabber); sim.Grab(small.Id, 600, 10);
+        smallHp = small.Hp;
+        Run(sim, sim.Settings.GrabberHoldSeconds + 0.8);
+        check(!sim.Grabbing && small.Lift == 0 && small.X > 600 && small.Hp == smallHp, "Held to the end it is set down away from the cat, unhurt");
+
+        // Lifting the cat drops it, no slam; Pause freezes it.
         sim = Sim(Kind("small"));
         small = sim.Slimes[0];
         small.X = 600;
         sim.Arm(BattleSkill.Grabber); sim.Grab(small.Id, 600, 10);
         sim.Paused = true;
-        sim.MoveGrab(900, 80);
         Run(sim, 0.5);
         check(small.X == 600 && small.Lift == 0 && sim.Grabbing, "Pause freezes the claw");
         sim.Paused = false;
         Run(sim, 0.1, held: true);
-        check(!sim.Grabbing && !small.Grabbed && !small.Thrown, "Lifting the cat drops the held enemy without a throw");
-    }
+        check(!sim.Grabbing && !small.Grabbed && !small.Slammed, "Lifting the cat drops the held enemy without a slam");
 
-    private static void ThrowChecks(Action<bool, string> check)
-    {
-        var sim = Sim(Kind("small"), Kind("target"), Kind("king", boss: true, scale: 2));
-        Slime small = sim.Slimes[0], target = sim.Slimes[1], king = sim.Slimes[2];
-        small.X = 500; target.X = 760; king.X = 1400;
-        double hp = small.Hp, targetHp = target.Hp, dmg = sim.Settings.GrabberHitDamage;
-        var seen = new List<BattleEvent>();
-        sim.Arm(BattleSkill.Grabber); sim.Grab(small.Id, 500, 20);
-        Fling(sim, 500, 20, 90, 6); // ~900 DIPs/s
-        check(small.Thrown && small.Tossed && !sim.Grabbing && Math.Abs(sim.Cooldown(BattleSkill.Grabber) - sim.Settings.GrabberCooldown) < 0.01,
-            "A fast let-go throws it; the cooldown starts");
-        Run(sim, 1.2, seen: seen);
-        check(Math.Abs(hp - small.Hp - dmg) < 0.01 && Math.Abs(targetHp - target.Hp - dmg) < 0.01 && sim.GrabberHits == 1 && seen.Any(e => e.Kind == BattleEventKind.GrabHit),
-            $"Thrown into another, both lose {dmg} ({hp - small.Hp}, {targetHp - target.Hp})");
-        check(!small.Tossed && small.Lift == 0, "It falls to the floor after the hit");
-
-        // Into a boss: half. Into the edge: hurt alone.
-        sim = Sim(Kind("small"), Kind("king", boss: true, scale: 2));
-        small = sim.Slimes[0]; king = sim.Slimes[1];
-        small.X = 900; king.X = 1250;
-        double kingHp = king.Hp;
-        sim.Arm(BattleSkill.Grabber); sim.Grab(small.Id, 900, 20);
-        Fling(sim, 900, 20, 90, 6);
-        Run(sim, 1.2);
-        check(Math.Abs(kingHp - king.Hp - dmg * BattleSim.BossToolShare) < 0.01, $"A boss hit by a thrown one takes half ({kingHp - king.Hp})");
-        sim = Sim(Kind("small"));
-        small = sim.Slimes[0];
-        small.X = 1450;
-        hp = small.Hp;
-        sim.Arm(BattleSkill.Grabber); sim.Grab(small.Id, 1450, 20);
-        Fling(sim, 1450, 20, 90, 6);
-        Run(sim, 1.2);
-        check(Math.Abs(hp - small.Hp - dmg) < 0.01 && small.State == SlimeState.Stunned, $"Thrown into the edge it is hurt ({hp - small.Hp}) and lands dazed");
-
-        // A slow let-go just drops it: no damage to anyone.
-        sim = Sim(Kind("small"), Kind("target"));
-        small = sim.Slimes[0]; target = sim.Slimes[1];
-        small.X = 700; target.X = 760;
-        hp = small.Hp; targetHp = target.Hp;
-        sim.Arm(BattleSkill.Grabber); sim.Grab(small.Id, 700, 20);
-        Fling(sim, 700, 20, 4, 6);
-        Run(sim, 1);
-        check(!small.Thrown && small.Hp == hp && target.Hp == targetHp && small.State != SlimeState.Stunned, "A slow let-go drops it with no hit");
+        // A thief is never slammed: held to the end, it gives back what it stole and is gone.
+        var thiefKind = new EnemyType { Id = "thief", MaxHp = 300, Speed = 0, Damage = 0, Range = 50, Windup = 0.6, AttackCooldown = 1.5, Recover = 0.3, Steal = BattleData.Settings.Enemy("thief").Steal };
+        sim = Sim(thiefKind);
+        var thief = sim.Slimes[0];
+        thief.X = 600;
+        thief.Loot = StolenKind.Skill; thief.LootSkill = BattleSkill.Heal;
+        sim.Use(BattleSkill.Heal, 100);
+        thief.LootSkill = BattleSkill.Heal;
+        sim.Arm(BattleSkill.Grabber); sim.Grab(thief.Id, 600, 10);
+        check(!sim.GrabDrop(300), "A thief cannot be slammed");
+        int down = sim.Defeated;
+        seen.Clear();
+        Run(sim, sim.Settings.GrabberHoldSeconds + 0.2, seen: seen);
+        check(thief.State == SlimeState.Defeated && sim.Defeated == down + 1 && sim.Cooldown(BattleSkill.Heal) == 0 && seen.Any(e => e.Kind == BattleEventKind.ThiefShaken),
+            "Held to the end, the thief shakes out the skill it stole and is gone (the cat's)");
     }
 
     private static void ScissorsChecks(Action<bool, string> check)
     {
+        // 2026-11-04 (D4): a click anywhere: a dashed line first, then the blades run along it; each enemy in the
+        // band loses the cut's damage once; a bubble bursts; enemies off the band are untouched.
+        {
+            var cutSim = Sim(Kind("a"), Kind("b"), Kind("off"));
+            Slime a = cutSim.Slimes[0], b = cutSim.Slimes[1], off = cutSim.Slimes[2];
+            a.X = 700; b.X = 820; off.X = 1300;
+            double ah = a.Hp, bh = b.Hp, oh = off.Hp;
+            check(cutSim.Arm(BattleSkill.Scissors) && cutSim.UseOnScreen(BattleSkill.Scissors, 760, 15) && cutSim.Cut != null && cutSim.Armed == null, "Chosen, a click anywhere starts a cut across");
+            Run(cutSim, cutSim.Settings.ScissorsPreview * 0.8);
+            check(a.Hp == ah && b.Hp == bh, "Nothing is cut while the dashed line shows");
+            Run(cutSim, cutSim.Settings.ScissorsSweep + 0.3);
+            check(cutSim.Cut == null && Math.Abs(ah - a.Hp - cutSim.Settings.ScissorsDamage) < 1e-6 && Math.Abs(bh - b.Hp - cutSim.Settings.ScissorsDamage) < 1e-6 && off.Hp == oh,
+                $"The blades run along the band: both in it lose {cutSim.Settings.ScissorsDamage} once, the far one nothing");
+            var high = Sim(Kind("low"));
+            var low = high.Slimes[0];
+            low.X = 760;
+            double lh = low.Hp;
+            high.Arm(BattleSkill.Scissors); high.UseOnScreen(BattleSkill.Scissors, 760, 300);
+            Run(high, 1.2);
+            check(low.Hp == lh, "A cut high up the screen misses a slime on the floor");
+        }
         var tether = new LinkSpec { Kind = EnemyLinks.Tether, Range = 300, Share = 0.5, BreakStun = 1, Relink = 30 };
         var sim = Sim(Kind("chain", link: tether), Kind("slime"));
         Slime holder = sim.Slimes[0], ally = sim.Slimes[1];
         holder.X = 1100; ally.X = 900;
         Run(sim, 0.4);
         check(holder.LinkedTo == ally.Id, "(the rope is tied)");
-        check(!sim.Snip(1000, 60, 1000, 0), "The Scissors cut only once chosen");
-        check(sim.Arm(BattleSkill.Scissors) && !sim.Snip(1000, 30, 1000, 10) && sim.Armed == BattleSkill.Scissors, "A stroke too short does nothing (still chosen)");
+        check(!sim.UseOnScreen(BattleSkill.Scissors, 1000, 18), "The Scissors cut only once chosen");
         double holderHp = holder.Hp, allyHp = ally.Hp;
-        var seen = new List<BattleEvent>();
-        check(sim.Snip(1000, 60, 1000, 0) && holder.LinkedTo == 0 && sim.RopesCut == 1 && ally.State == SlimeState.Stunned,
-            "A stroke across the rope cuts it (the ally is dazed)");
-        check(holder.Hp == holderHp && ally.Hp == allyHp && sim.Armed == null && Math.Abs(sim.Cooldown(BattleSkill.Scissors) - sim.Settings.ScissorsCooldown) < 0.01,
-            "Between the bodies it hurts no one; the cooldown starts");
-        Run(sim, sim.Settings.ScissorsCooldown + 0.1);
-        sim.Arm(BattleSkill.Scissors);
-        holderHp = holder.Hp; allyHp = ally.Hp;
-        check(sim.Snip(850, 20, 1150, 20), "A long stroke along the floor");
+        check(sim.Arm(BattleSkill.Scissors) && sim.UseOnScreen(BattleSkill.Scissors, 1000, 18) && sim.Armed == null && sim.Cooldown(BattleSkill.Scissors) > 0, "A click cuts; the cooldown starts");
+        Run(sim, sim.Settings.ScissorsPreview + sim.Settings.ScissorsSweep + 0.1);
+        check(holder.LinkedTo == 0 && sim.RopesCut >= 1, "The cut across the rope ends it");
         check(Math.Abs(holderHp - holder.Hp - sim.Settings.ScissorsDamage) < 0.01 && Math.Abs(allyHp - ally.Hp - sim.Settings.ScissorsDamage) < 0.01,
-            $"Each slime it crosses loses {sim.Settings.ScissorsDamage} once ({holderHp - holder.Hp}, {allyHp - ally.Hp})");
+            $"Each slime in the band loses {sim.Settings.ScissorsDamage} once ({holderHp - holder.Hp}, {allyHp - ally.Hp})");
         sim.Paused = true;
         Run(sim, sim.Settings.ScissorsCooldown + 0.1);
         sim.Paused = false;
@@ -179,9 +168,7 @@ internal static class BattleHandToolsTests
         check(near.Wet && near.Chilled && !far.Wet && far.Hp == farHp && Math.Abs(nearLost - sim.Settings.SprayDps) < 0.6,
             $"A slime near the cursor is soaked, chilled and loses {sim.Settings.SprayDps} HP a second ({nearLost:0.##}); a far one is not touched");
         // 2026-11-04, the hot-water spray: locked on its slime, the mouse neither steers nor stops it.
-        sim.MoveSpray(640, 20);
-        sim.StopSpray();
-        check(sim.Spraying && sim.SprayTargetId == near.Id && Math.Abs(sim.SprayX!.Value - near.X) < 1, "Locked on the clicked slime: moving or letting go of the mouse changes nothing");
+        check(sim.Spraying && sim.SprayTargetId == near.Id && Math.Abs(sim.SprayX!.Value - near.X) < 1, "Locked on the clicked slime, the mouse free");
         near.X = 700;
         Run(sim, 0.1);
         check(Math.Abs(sim.SprayX!.Value - near.X) < 1 && near.X < 710, "It follows its slime");
@@ -227,18 +214,18 @@ internal static class BattleHandToolsTests
             try { BattleData.Parse(json); return false; }
             catch (InvalidDataException) { return true; }
         }
-        check(Rejects("{\"grabberCooldown\":0}") && Rejects("{\"grabberMaxScale\":5}") && Rejects("{\"scissorsMinLength\":1}") && Rejects("{\"sprayChill\":1}") && Rejects("{\"sprayDps\":-1}"),
+        check(Rejects("{\"grabberCooldown\":0}") && Rejects("{\"grabberMaxScale\":5}") && Rejects("{\"scissorsLength\":1}") && Rejects("{\"sprayChill\":1}") && Rejects("{\"sprayDps\":-1}"),
             "Out-of-range Grabber, Scissors and Spray numbers are refused");
         check(!Rejects("{\"grabberHitDamage\":12,\"scissorsDamage\":0,\"sprayRange\":120}"), "In-range ones are accepted");
         var d = new BattleSettings();
         var s = BattleData.Settings;
         check(s.GrabberCooldown == d.GrabberCooldown && s.GrabberHoldSeconds == d.GrabberHoldSeconds && s.GrabberMaxScale == d.GrabberMaxScale && s.GrabberHitDamage == d.GrabberHitDamage
-              && s.GrabberStun == d.GrabberStun && s.GrabberThrowSpeed == d.GrabberThrowSpeed && s.ScissorsCooldown == d.ScissorsCooldown && s.ScissorsDamage == d.ScissorsDamage
-              && s.ScissorsMinLength == d.ScissorsMinLength && s.SprayTankSeconds == d.SprayTankSeconds && s.SprayRefillSeconds == d.SprayRefillSeconds && s.SprayRange == d.SprayRange
+              && s.GrabberStun == d.GrabberStun && s.ScissorsCooldown == d.ScissorsCooldown && s.ScissorsDamage == d.ScissorsDamage
+              && s.ScissorsLength == d.ScissorsLength && s.SprayTankSeconds == d.SprayTankSeconds && s.SprayRefillSeconds == d.SprayRefillSeconds && s.SprayRange == d.SprayRange
               && s.SprayDps == d.SprayDps && s.SprayChill == d.SprayChill && s.SpraySoakSeconds == d.SpraySoakSeconds, "The shipped battle.json has the built-in Grabber, Scissors and Spray numbers");
-        check(BattleSkills.Get(BattleSkill.Grabber).Aim == SkillAim.Drag && BattleSkills.Get(BattleSkill.Scissors).Aim == SkillAim.Swipe && BattleSkills.Get(BattleSkill.Spray).Aim == SkillAim.Hold,
-            "The Grabber drags a slime, the Scissors swipe, the Spray is held");
-        check(BattleSkills.Get(BattleSkill.Grabber).Describe(s, "en").Contains("8 HP") && BattleSkills.Get(BattleSkill.Spray).Describe(s, "vi").Contains("2 máu/giây")
+        check(BattleSkills.Get(BattleSkill.Grabber).Aim == SkillAim.Drag && BattleSkills.Get(BattleSkill.Scissors).Aim == SkillAim.Screen && BattleSkills.Get(BattleSkill.Spray).Aim == SkillAim.Hold,
+            "The Grabber takes a slime, the Scissors are aimed anywhere on the screen, the Spray starts on a press");
+        check(BattleSkills.Get(BattleSkill.Grabber).Describe(s, "en").Contains("20 HP") && BattleSkills.Get(BattleSkill.Spray).Describe(s, "vi").Contains("2 máu/giây")
               && !s.Skill(BattleSkill.Scissors).Desc("en").Contains("chapter 2"), "The descriptions show the battle's numbers");
     }
 

@@ -82,6 +82,7 @@ public sealed partial class PetWindow
             if (draw) flyer.View.InvalidateVisual();
         }
         UpdateSkyShots(b, draw, hide);
+        UpdateBattleAim(hide);
     }
 
     private FlyerWindow CreateFlyerWindow(BattleSim b, int id)
@@ -115,6 +116,7 @@ public sealed partial class PetWindow
         bool busy = b.Shots.Count > 0;
         if (!busy) foreach (var s in b.Slimes) if (s.Aiming && BattleSim.InSky(s) && s.Type.Fly != null) { busy = true; break; }
         if (!busy) foreach (var g in b.Goos) if (BattleFieldView.SpikeInSky(g)) { busy = true; break; }
+        if (b.Cut != null || b.ColumnX != null || b.FlashRemaining > 0) busy = true; // 2026-11-04: the cut, the fan's column, the flash.
         if (hide) busy = false;
         if (!busy && !skyShotShown) return;
         if (skyShotWindow == null)
@@ -138,6 +140,7 @@ public sealed partial class PetWindow
     {
         foreach (var f in flyerWindows.Values) if (f.Window.IsVisible) f.Window.Hide();
         skyShotWindow?.Hide();
+        aimWindow?.Hide();
         skyShotShown = false;
         skyHidden = true;
     }
@@ -156,6 +159,7 @@ public sealed partial class PetWindow
         skyShotWindow?.Close();
         skyShotWindow = null; skyShotView = null; skyShotShown = false; skyShotScale = 0; skyShotPlaced = Rect.Empty;
         skySeen = false; skyHidden = false;
+        CloseBattleAim();
     }
 }
 
@@ -205,5 +209,18 @@ public sealed class SkyShotView : FrameworkElement
         foreach (var shot in sim.Shots) BattleFieldView.DrawShot(dc, shot, ToScreen(shot.X, shot.Height));
         // A wall slime's spikes thrown from high up the screen (2026-10-31).
         foreach (var g in sim.Goos) if (BattleFieldView.SpikeInSky(g)) BattleFieldView.DrawSpikeAt(dc, g, ToScreen, 30);
+        // 2026-11-04: the Fan's column and the Scissors' cut over the screen (the strip draws its own part),
+        // and the Screenshot's flash over all of it.
+        double stripTop = ToScreen(0, BattleFieldView.FieldHeight).Y;
+        dc.PushClip(new RectangleGeometry(new Rect(0, 0, ActualWidth, Math.Max(0, stripTop))));
+        if (sim.ColumnX is double column)
+        {
+            double cx = ToScreen(column, 0).X;
+            BattleFieldView.DrawColumn(dc, cx, sim.ColumnWidth, 0, stripTop, sim.Time, sim.ColumnRemaining);
+            BattleFieldView.DrawCeilingFan(dc, cx, 26, sim.Time);
+        }
+        if (sim.Cut is { } cut) BattleFieldView.DrawCut(dc, cut, (x, h) => ToScreen(x, h), sim.Settings);
+        dc.Pop();
+        if (sim.FlashRemaining > 0) BattleFieldView.DrawFlash(dc, new Rect(0, 0, ActualWidth, ActualHeight), sim.FlashRemaining);
     }
 }

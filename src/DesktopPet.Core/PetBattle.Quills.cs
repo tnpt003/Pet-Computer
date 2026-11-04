@@ -89,7 +89,7 @@ public sealed partial class BattleSim
     // Every step of a timer still in the battle: its clock (slower while dazed); run out, it calls.
     private void StepClock(Slime s, double dt)
     {
-        if (s.Type.Clock is not ClockSpec c || !s.Targetable || s.ClockCalls >= c.Calls) return;
+        if (s.Type.Clock is not ClockSpec c || !s.Targetable || s.Grabbed || s.ClockCalls >= c.Calls) return; // In the claw its clock waits (2026-11-04).
         if (s.ClockTotal <= 0)
         {
             s.ClockTotal = s.ClockLeft = s.Elite != null ? c.EliteSeconds : c.Seconds;

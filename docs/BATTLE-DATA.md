@@ -482,6 +482,8 @@ Code: `src/DesktopPet.Core/PetBattle.Status.cs` (luật), `src/DesktopPet/PetBat
 
 ## Đèn laser và Quạt (bản 1.5, mốc M05, 2026-10-28)
 
+> **2026-11-04 (Issue #43):** Quạt, Kéo cắt, Kẹp gắp đã đổi cơ chế: xem docs/GOPY-C-2026-11-04.md D4. Quạt: click chỗ bất kỳ, cột gió từ trên xuống. Kéo cắt: click chỗ bất kỳ, dải cắt ngang có báo trước. Kẹp gắp: click gắp, click chỗ đập. Các đoạn mô tả giữ chuột/kéo nét/vung ném bên dưới là bản cũ. Khóa `fanSteamSeconds`, `fanRange`, `fanSpeed`, `fanBumpDamage`, `grabberThrowSpeed`, `scissorsMinLength` đã bỏ.
+
 Code: `src/DesktopPet.Core/PetBattle.Tools.cs` (luật), `src/DesktopPet/PetBattleView.Tools.cs` (vẽ), test `tests/DesktopPet.Tests/BattleToolsTests.cs` (quái giả), ảnh UiChecks và bước hướng dẫn trong TutorialChecks. Số liệu ở cấp trên cùng của battle.json:
 
 | Khóa | Giới hạn | Gốc | Ý nghĩa |
@@ -490,11 +492,10 @@ Code: `src/DesktopPet.Core/PetBattle.Tools.cs` (luật), `src/DesktopPet/PetBatt
 | `laserSeconds` | 0,5–15 s | 4 | Chấm đỏ nằm bao lâu |
 | `laserLureRange` | 20–2000 DIPs | 300 | Quái cách chấm trong khoảng này thì bị dụ |
 | `laserDps` | 0–100 | 3 | Máu/giây quái đứng trên chấm mất |
-| `fanSteamSeconds` | 0,5–30 s | 3 | Thổi liên tục được bao lâu (thanh hơi) |
 | `fanRefillSeconds` | 1–120 s | 6 | Cạn hơi thì chờ bao lâu (là hồi chiêu của Quạt); khi chưa cạn, hơi cũng hồi với nhịp này |
-| `fanRange` | 20–1000 DIPs | 200 | Tầm gió quanh con trỏ |
-| `fanSpeed` | 0–1500 DIPs/s | 220 | Tốc độ gió đẩy (× `pushFactor` của quái) |
-| `fanBumpDamage` | 0–100 | 4 | Sát thương khi quái bị thổi va quái khác hoặc va mép |
+| `fanColumnWidth` | 40–600 DIPs | 150 | Bề rộng cột gió (2026-11-04) |
+| `fanColumnSeconds` | 0,5–15 s | 4 | Cột gió thổi bao lâu |
+| `fanColumnCut` | 0–0,9 | 0,3 | Đòn của slime trong cột nhẹ đi bao nhiêu |
 
 - **Đèn laser** (chọn ô rồi click **một chỗ** trên dải trận, kể cả trúng slime): chấm đỏ đứng yên `laserSeconds`. Quái trong `laserLureRange` mà tự đi được (không phải boss, không cưỡi, không bay, không bị dính, không đang gồng hồi máu, không trong pha khiên) đi về chấm thay vì về mèo và **không gồng đòn mới**; đòn đã gồng vẫn đánh. Quái đứng trên chấm mất `laserDps` máu mỗi giây (trừ mỗi 0,5 s). Có `LaserShows(x, nửa rộng)` cho slime bóng ma/ảo ảnh (M13).
 - **Quạt** (chọn ô rồi **giữ chuột** trên dải trận): gió thổi quái trong `fanRange` ra xa con trỏ, càng gần càng mạnh (ở mép tầm còn 25%), nhân `pushFactor`; tinh anh miễn Đẩy chỉ bị 20%; boss, quái dính, quái cưỡi, quái bay không bị thổi. Quái bị thổi đủ nhanh va vào quái khác (không cùng bay theo) hoặc vào mép/tường "Cập nhật" thì cả hai mất `fanBumpDamage`, mỗi con tối đa một lần mỗi giây. Quái có nhịp trống (liên kết `rhythm`) bị gió thổi thì mất đếm nhịp. Rê chuột khi giữ thì gió đi theo. Thả chuột thì ngừng nhưng **Quạt vẫn được chọn**; cạn hơi thì tự cất và chờ `fanRefillSeconds`. Vòng quét trên ô Quạt là phần hơi đã dùng. Làm khô vũng/tách bầy sẽ có cùng quái thật (M09/M11).
@@ -511,14 +512,17 @@ Code: `src/DesktopPet.Core/PetBattle.Grabber.cs` (Kẹp gắp), `src/DesktopPet.
 | Khóa | Giới hạn | Gốc | Ý nghĩa |
 | --- | --- | --- | --- |
 | `grabberCooldown` | 1–120 s | 12 | Hồi chiêu Kẹp gắp (tính từ lúc thả) |
-| `grabberHoldSeconds` | 0,5–15 s | 3 | Giữ slime lâu nhất; quá thì slime tự tuột (rơi, không tính ném) |
+| `grabberHoldSeconds` | 0,5–15 s | 5 | Giữ slime lâu nhất; hết giờ thì đặt xuống phía xa mèo (slime trộm: nhả đồ rồi biến mất) |
+| `grabberSlamDamage` | 0–200 | 20 | Sát thương của slime bị đập xuống (slime xung quanh mất `grabberHitDamage`) |
+| `grabberThiefCharge` | 0–1 | 0,2 | Slime trộm chưa trộm gì: năng lượng rơi cho icon thấp nhất (có xu thì +1 xu) |
 | `grabberMaxScale` | 0,5–2,3 | 1,3 | Loại quái có `scale` lớn hơn thì không gắp được |
 | `grabberHitDamage` | 0–100 | 8 | Sát thương khi slime bị ném trúng slime khác (cả hai) hoặc trúng mép (nó) |
 | `grabberStun` | 0–5 s | 1 | Choáng của con bị trúng, và của con bị ném khi đáp |
-| `grabberThrowSpeed` | 50–1500 DIPs/s | 300 | Tốc độ con trỏ lúc thả để tính là "ném"; chậm hơn thì chỉ thả rơi |
-| `scissorsCooldown` | 1–120 s | 8 | Hồi chiêu Kéo cắt |
+| `scissorsCooldown` | 1–120 s | 14 | Hồi chiêu Kéo cắt |
 | `scissorsDamage` | 0–100 | 6 | Sát thương mỗi slime nằm trên nét cắt |
-| `scissorsMinLength` | 10–400 DIPs | 40 | Nét ngắn hơn thì không tính (kỹ năng vẫn được chọn) |
+| `scissorsLength` | 80–1200 DIPs | 360 | Chiều dài dải cắt |
+| `scissorsBand` | 10–200 DIPs | 40 | Độ dày dải cắt |
+| `scissorsPreview`, `scissorsSweep` | 0–3 s, 0,1–3 s | 0,4, 0,5 | Nét đứt báo trước, thời gian kéo chạy hết dải |
 | `sprayTankSeconds` | 0,5–30 s | 4 | Xịt liên tục được bao lâu (thanh nước) |
 | `sprayKillSeconds` | 0–30 s | 1,5 | 2026-11-04 Bình xịt nước nóng: slime ngã trong tầm xịt thì bình thêm chừng ấy giây nước |
 | `sprayTankMax` | 1–3 | 1,5 | Nước tối đa (× một bình đầy) khi được thêm |

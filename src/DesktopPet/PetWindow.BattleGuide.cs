@@ -202,30 +202,30 @@ public sealed partial class PetWindow
                 ? L("Giờ click một chỗ trên sàn, xa mèo một chút: slime quanh đó chạy theo chấm đỏ.", "Now click a spot of the floor a little away from the cat: the slimes around it chase the red dot.")
                 : LF($"Kỹ năng mới: {SkillName(BattleSkill.Laser)}. Bấm ô này, rồi click một chỗ trên sàn.", $"A new skill: {SkillName(BattleSkill.Laser)}. Click this slot, then click a spot of the floor.")),
         new(GuideFan, GuideTeaches + "fan", true, true, 1,
-            () => ToolDue(BattleSkill.Fan), () => battle!.FanBlowing,
+            () => ToolDue(BattleSkill.Fan), () => battle!.ColumnX != null || battle.Cooldown(BattleSkill.Fan) > 0,
             () => battle!.Armed == BattleSkill.Fan ? Spots(FloorSpot()) : Spots(SkillSpot(BattleSkill.Fan)),
             () => battle?.Armed == BattleSkill.Fan
-                ? L("Giờ giữ chuột trên sàn cạnh đám slime: gió thổi chúng ra xa con trỏ. Vòng trên ô là hơi còn lại.", "Now hold the mouse on the floor next to the slimes: the wind blows them away from the cursor. The sweep on the slot is the air used.")
-                : LF($"Kỹ năng mới: {SkillName(BattleSkill.Fan)}. Bấm ô này, rồi giữ chuột trên sàn.", $"A new skill: {SkillName(BattleSkill.Fan)}. Click this slot, then hold the mouse on the floor.")),
+                ? L("Giờ click chỗ có slime (hoặc slime bay, slime trên tường): quạt trần thổi cột gió xuống, giữ chân chúng.", "Now click where the slimes are (flyers and wall slimes too): a ceiling fan blows a column of wind down and holds them.")
+                : LF($"Kỹ năng mới: {SkillName(BattleSkill.Fan)}. Bấm ô này, rồi click chỗ bất kỳ trên màn hình.", $"A new skill: {SkillName(BattleSkill.Fan)}. Click this slot, then click anywhere on the screen.")),
         // 1.5 M06 · the same for the Grabber, the Scissors and the Spray.
         new(GuideGrabber, GuideTeaches + "grabber", true, true, 1,
             () => ToolDue(BattleSkill.Grabber), () => battle!.GrabberBusy || battle.Cooldown(BattleSkill.Grabber) > 0,
             () => battle!.Armed == BattleSkill.Grabber ? Spots(FloorSpot()) : Spots(SkillSpot(BattleSkill.Grabber)),
             () => battle?.Armed == BattleSkill.Grabber
-                ? L("Giờ nhấn giữ một slime, vung chuột về phía slime khác rồi thả ra.", "Now press a slime and fling the mouse toward another slime, then let go.")
-                : LF($"Kỹ năng mới: {SkillName(BattleSkill.Grabber)}. Bấm ô này, rồi nhấn giữ một slime nhỏ.", $"A new skill: {SkillName(BattleSkill.Grabber)}. Click this slot, then press a small slime.")),
+                ? L("Giờ click một slime để gắp, rồi click chỗ muốn đập nó xuống (cạnh slime khác càng tốt).", "Now click a slime to grab it, then click where to slam it down (next to other slimes is best).")
+                : LF($"Kỹ năng mới: {SkillName(BattleSkill.Grabber)}. Bấm ô này, rồi click một slime nhỏ.", $"A new skill: {SkillName(BattleSkill.Grabber)}. Click this slot, then click a small slime.")),
         new(GuideScissors, GuideTeaches + "scissors", true, true, 1,
             () => ToolDue(BattleSkill.Scissors), () => battle!.Cooldown(BattleSkill.Scissors) > 0,
             () => battle!.Armed == BattleSkill.Scissors ? Spots(FloorSpot()) : Spots(SkillSpot(BattleSkill.Scissors)),
             () => battle?.Armed == BattleSkill.Scissors
-                ? L("Giờ kéo chuột thành một nét cắt ngang đám slime (hoặc sợi dây giữa chúng).", "Now drag a stroke across the slimes (or the rope between them).")
-                : LF($"Kỹ năng mới: {SkillName(BattleSkill.Scissors)}. Bấm ô này, rồi kéo chuột thành một nét trên sàn.", $"A new skill: {SkillName(BattleSkill.Scissors)}. Click this slot, then drag a stroke across the floor.")),
+                ? L("Giờ click ngang đám slime (hoặc sợi dây giữa chúng): kéo cắt một dải ngang ở độ cao đó.", "Now click level with the slimes (or the rope between them): the scissors cut a band across at that height.")
+                : LF($"Kỹ năng mới: {SkillName(BattleSkill.Scissors)}. Bấm ô này, rồi click chỗ muốn cắt.", $"A new skill: {SkillName(BattleSkill.Scissors)}. Click this slot, then click where to cut.")),
         new(GuideSpray, GuideTeaches + "spray", true, true, 1,
-            () => ToolDue(BattleSkill.Spray), () => battle!.Spraying,
+            () => ToolDue(BattleSkill.Spray), () => battle!.Spraying || battle.Cooldown(BattleSkill.Spray) > 0,
             () => battle!.Armed == BattleSkill.Spray ? Spots(FloorSpot()) : Spots(SkillSpot(BattleSkill.Spray)),
             () => battle?.Armed == BattleSkill.Spray
-                ? L("Giờ giữ chuột cạnh đám slime: slime ướt sẽ chậm lại. Vòng trên ô là nước đã dùng.", "Now hold the mouse next to the slimes: wet ones slow down. The sweep on the slot is the water used.")
-                : LF($"Kỹ năng mới: {SkillName(BattleSkill.Spray)}. Bấm ô này, rồi giữ chuột trên sàn.", $"A new skill: {SkillName(BattleSkill.Spray)}. Click this slot, then hold the mouse on the floor.")),
+                ? L("Giờ click một slime: bình tự xịt nước nóng vào nó tới hết nước; slime ướt chậm lại.", "Now click a slime: the hot water sprays it by itself until empty; wet slimes slow down.")
+                : LF($"Kỹ năng mới: {SkillName(BattleSkill.Spray)}. Bấm ô này, rồi click chỗ bất kỳ trên màn hình.", $"A new skill: {SkillName(BattleSkill.Spray)}. Click this slot, then click anywhere on the screen.")),
 
         // 1.5 M21 · chapter 2: each new slime the first time it shows, and what to do about the ones that ask for it.
         // 1 · Download gate.
@@ -236,8 +236,8 @@ public sealed partial class PetWindow
             () => L("Slime lò xo nằm im như tấm thảm. Mèo vào vòng vàng thì nó nén rồi bật: nhấc mèo ra khi vòng chuyển đỏ, hoặc đánh 2 đòn cho nó bẹp.",
                     "A spring slime lies flat like a mat. When the cat steps into its gold ring it squeezes, then springs: lift the cat out when the ring turns red, or flatten it with two hits.")),
         Meet(GuideFuser, StageDownloadGate, s => s.Type.Link?.Kind == EnemyLinks.Merge && !s.Type.Link.AfterHeal,
-            () => L("Slime hợp thể đi bầy 3 con. Chụm lại đủ lâu là nhập thành Slime khổng lồ (thanh trên đầu): tách bầy bằng Quạt hoặc Đẩy, hoặc thả Bom len khi chúng chụm.",
-                    "Fusing slimes come in threes. Bunched up long enough they merge into a giant (the bar over them): split them with the Fan or Push, or drop the Yarn bomb while they bunch.")),
+            () => L("Slime hợp thể đi bầy 3 con. Chụm lại đủ lâu là nhập thành Slime khổng lồ (thanh trên đầu): Đẩy tách bầy, Quạt giữ chân, hoặc thả Bom len khi chúng chụm.",
+                    "Fusing slimes come in threes. Bunched up long enough they merge into a giant (the bar over them): push them apart, hold them with the Fan, or drop the Yarn bomb while they bunch.")),
         new(GuideDrops, StageDownloadGate, false, true, 1,
             () => { var drop = battle!.Drops.FirstOrDefault(d => d.Age >= 0.3); guideRef = drop?.Id ?? 0; return drop != null && TourDue(); },
             () => battle!.FindDrop(guideRef) == null, () => Spots(FieldSpot(battleView?.DropBounds(guideRef), 4)),

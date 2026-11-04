@@ -117,8 +117,8 @@ internal static class AdventureBalanceTests
         return sim.Wave;
     }
 
-    // 1.5 M21: what the bot's mouse is doing (the Fan or the Spray held until, the last bubble click).
-    private sealed class Hands { public double FanUntil, SprayUntil, LastPoke = double.NegativeInfinity; }
+    // 1.5 M21: what the bot's mouse is doing (the last bubble click).
+    private sealed class Hands { public double LastPoke = double.NegativeInfinity; }
 
     // 1.5 M21 (chapter 2): the cursor and the new skills, by plain rules. Each rule acts only on what
     // chapter 2 brings (cursor enemies, a basket, drops, the new skills), so chapter 1 plays as before.
@@ -139,20 +139,22 @@ internal static class AdventureBalanceTests
         // Laser: two or more slimes close in: the dot well away from the cat, on the side with more room.
         if (sim.Carries(BattleSkill.Laser) && near.Count >= 2 && sim.Ready(BattleSkill.Laser) && sim.Arm(BattleSkill.Laser))
             sim.UseAt(BattleSkill.Laser, cat - sim.Left > sim.Right - cat ? cat - 260 : cat + 260);
-        // Fan: held on the cat for a second when two or more slimes crowd it (blows them both ways).
-        if (sim.Carries(BattleSkill.Fan))
+        // Fan (2026-11-04): its column on the cat's crowd when two or more slimes close in, or on a flyer or a
+        // wall slime in the air.
+        if (sim.Carries(BattleSkill.Fan) && sim.Ready(BattleSkill.Fan))
         {
-            if (sim.FanBlowing && now >= hands.FanUntil) { sim.StopFan(); sim.Arm(null); }
-            else if (!sim.FanBlowing && near.Count >= 2 && sim.Ready(BattleSkill.Fan) && sim.Arm(BattleSkill.Fan) && sim.StartFan(cat)) hands.FanUntil = now + 1;
+            var up = sim.Slimes.FirstOrDefault(s => s.Targetable && (s.Type.Fly != null || s.Type.Cling != null) && s.Altitude > 0 && reflex.Notices(s, now));
+            double? at = up != null ? up.BodyX : near.Count >= 2 ? near.Average(s => s.X) : null;
+            if (at is double spot && sim.Arm(BattleSkill.Fan) && !sim.UseOnScreen(BattleSkill.Fan, spot, 100)) sim.Arm(null);
         }
-        // Spray: held on the nearest slime for 1.5 s (a hedgehog or an ice slime first).
-        if (sim.Carries(BattleSkill.Spray))
+        // Spray (2026-11-04): one click on the nearest slime (a hedgehog or an ice slime first); it sprays by
+        // itself until the tank is dry.
+        if (sim.Carries(BattleSkill.Spray) && !sim.Spraying && sim.Ready(BattleSkill.Spray))
         {
             var wet = sim.Slimes.Where(s => s.Targetable && Math.Abs(s.X - cat) <= 160).OrderByDescending(s => s.Type.Quills != null || s.Type.Ice != null).ThenBy(s => Math.Abs(s.X - cat)).FirstOrDefault();
-            if (sim.Spraying) { if (now >= hands.SprayUntil || wet == null) { sim.StopSpray(); sim.Arm(null); } else sim.MoveSpray(wet.X, 15); }
-            else if (wet != null && sim.Ready(BattleSkill.Spray) && sim.Arm(BattleSkill.Spray) && sim.StartSpray(wet.X, 15)) hands.SprayUntil = now + 1.5;
+            if (wet != null && sim.Arm(BattleSkill.Spray)) sim.StartSpray(wet.X, 15);
         }
-        // Scissors: a stroke down through a rope's middle (a chain slime's, a boss's) or a bubble.
+        // Scissors: a click at the height of a bubble or a rope (a chain slime's, a boss's).
         if (sim.Carries(BattleSkill.Scissors) && sim.Ready(BattleSkill.Scissors))
         {
             double? at = null;
@@ -163,7 +165,7 @@ internal static class AdventureBalanceTests
                 if (sim.LinkPartner(s) is Slime ally && s.Type.Link?.Kind == EnemyLinks.Tether) { at = (s.X + ally.X) / 2; break; }
                 if (sim.RopeBoss(s) is Slime boss) { at = (s.X + boss.X) / 2; break; }
             }
-            if (at is double x && sim.Arm(BattleSkill.Scissors)) { if (!sim.Snip(x, 70, x + 2, 0)) sim.Arm(null); }
+            if (at is double x && sim.Arm(BattleSkill.Scissors) && !sim.UseOnScreen(BattleSkill.Scissors, x, 18)) sim.Arm(null);
         }
         // Flyers and wall slimes are Pushed down when the Push is free.
         if (sim.Ready(BattleSkill.Push) && sim.Slimes.FirstOrDefault(s => s.Targetable && (s.Type.Fly != null || s.Type.Cling != null) && s.Altitude > 0 && reflex.Notices(s, now)) is Slime high)

@@ -229,7 +229,10 @@ internal static class AppTests
         sim = Sick(BattleAppKind.EndTask);
         foreach (var s in sim.Slimes) s.X = 1500;
         Until(sim, () => sim.CatStunned, 4);
-        check(sim.CatStunned && sim.CatStunRemaining <= 1.2 && sim.Effects.Any(e => e.Kind == BattleEffectKind.EndTask), "Infected End task leaves the cat \"Not responding\" (stunned 1.2 s)");
+        check(sim.CatStunned && sim.CatStunRemaining <= 3 && sim.NotRespondingRemaining > 0 && sim.CatHp < sim.CatMaxHp && sim.Effects.Any(e => e.Kind == BattleEffectKind.EndTask),
+            $"Infected End task leaves the cat \"Not responding\" (stunned up to 3 s) and takes some HP ({sim.CatMaxHp - sim.CatHp:0})");
+        // 2026-11-04: three clicks on the cat wake it.
+        check(sim.PokeCat() && sim.PokeCat() && sim.CatStunned && sim.PokeCat() && !sim.CatStunned && sim.NotRespondingRemaining == 0, "Three clicks on the cat wake it early");
 
         sim = Sick(BattleAppKind.Undo);
         foreach (var s in sim.Slimes.Where(s => s.Targetable)) s.Hp = s.MaxHp;

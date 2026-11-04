@@ -186,7 +186,9 @@ internal static class BattleTrickTests
         // The Scissors cut through it.
         sim.Arm(BattleSkill.Scissors);
         hp = bubble.Hp;
-        check(sim.Snip(bubble.X - 40, 20, bubble.X + 40, 20) && !bubble.Bubbled && bubble.Hp == hp, "A Scissors stroke through it pops the bubble (and hurts nothing)");
+        bool snipped = sim.UseOnScreen(BattleSkill.Scissors, bubble.X, 20);
+        for (int i = 0; i < 120 && sim.Cut != null; i++) { sim.Step(1.0 / 60, 100, false); sim.ClearEvents(); }
+        check(snipped && !bubble.Bubbled && bubble.Hp == hp, "A Scissors cut through it pops the bubble (and hurts nothing)");
 
         sim = Field(new[] { Bubble() }, new[] { 1 }, elite: true);
         bubble = sim.Slimes.Single();

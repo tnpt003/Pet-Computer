@@ -1,26 +1,35 @@
 using System;
+using System.Linq;
 
 namespace DesktopPet;
 
-// 1.5 M06, docs/UPDATE-1.5.md (K) and docs/BATTLE-DATA.md → Kẹp gắp, Kéo cắt, Bình xịt nước: the Grabber
-// (SkillAim.Drag). Chosen, then pressed on a small enemy (never a boss or a rock; a kind's scale at most
-// GrabberMaxScale) it lifts it: the enemy hangs where the cursor holds it, does nothing (a windup is
-// lost), is no target of the cat and shoves no one. A rider is taken off its mount, a mount's rider
-// falls off. Let go (or held GrabberHoldSeconds) it flies on with the cursor's speed, under gravity,
-// down to the floor. Let go fast enough (GrabberThrowSpeed) it is thrown: the first enemy it flies
-// into and itself lose GrabberHitDamage (a boss half), the other is dazed GrabberStun s and it drops;
-// into the edge or a wall it is hurt alone; landing, it is dazed GrabberStun s. The cooldown starts
-// when it is let go. Lifting the cat drops it (no throw); Pause and the frozen guide freeze it (time
-// runs only in Step); the battle ending or the field moving puts it down.
+// 1.5 M06 (docs/BATTLE-DATA.md → Kẹp gắp), redone 2026-11-04 (docs/GOPY-C-2026-11-04.md D4, "grab – hold – slam"):
+// chosen, a click on a small enemy (never a boss or a rock; a kind's scale at most GrabberMaxScale) and the
+// claw lifts it out of the fight (GrabLift DIPs up over GrabRise s): it does nothing (a windup is lost), is
+// no target of the cat even chosen, shoves no one, its links break and a timer's clock waits. The next
+// click on the field carries it there (GrabCarrySpeed) and slams it down: it loses GrabberSlamDamage and
+// is dazed GrabberStun s; every other enemy on the floor within GrabberSplash loses GrabberHitDamage. A bomb
+// slime in the claw is the user's bomb: it blows up where it lands, hurting enemies only. Held
+// GrabberHoldSeconds without a click, it is put down on the side away from the cat, dazed. A thief is never
+// slammed: held to the end it shakes out what it stole (the skill's cooldown, the icon's charge; nothing
+// stolen: a coin in a run with coins, else GrabberThiefCharge on the emptiest icon) and is gone, the cat's
+// defeat. A flyer up in the air or a climber up its edge is yanked down at once (1.5 M14, M15). The
+// cooldown starts when it is put down. Lifting the cat lets it drop (no slam); Pause and the frozen guide
+// freeze it; the battle ending or the field moving puts it down.
 public sealed partial class BattleSim
 {
     public const double Gravity = 1800, GrabTopSpeed = 1600, GrabMaxLift = 100, ThrowHop = 260;
-    // The enemy in the claw (0: none) and the throws that hit something.
+    public const double GrabLift = 90, GrabRise = 0.35, GrabCarrySpeed = 1100, SlamSpeed = 900, GrabSplash = 75;
+    // Where the claw carries the held enemy (NaN: it hangs where it was lifted), and slams that hit.
+    private double grabTo = double.NaN;
+    public int GrabSlams { get; private set; }
+    public int ThievesShaken { get; private set; }
+    public bool GrabCarrying => GrabbedId != 0 && !double.IsNaN(grabTo);
+    public double GrabHeldSeconds => grabHeld;
+    // The enemy in the claw (0: none).
     public int GrabbedId { get; private set; }
-    public int GrabberHits { get; private set; }
-    // Where the cursor is (battle x, height over the floor), the grip on the enemy (from the cursor to
-    // its centre and its bottom), the time held and the cursor's speed (smoothed).
-    private double grabX, grabHeight, gripX, gripY, grabHeld, grabVX, grabVY;
+    // The time held.
+    private double grabHeld;
     public bool Grabbing => GrabbedId != 0;
     // The Grabber is in use: an enemy in the claw or one of its throws still flying.
     public bool GrabberBusy { get { if (GrabbedId != 0) return true; foreach (var s in slimes) if (s.Tossed && !s.Launched) return true; return false; } }
@@ -54,49 +63,69 @@ public sealed partial class BattleSim
         if (slime.Riding) Fall(slime, 0);
         foreach (var s in slimes)
             if (s.Riding && s.LinkedTo == slime.Id) Fall(s, 0);
+        // Its links break (a tether's rope, 2026-11-04).
+        if (Is(slime, EnemyLinks.Tether)) CutLink(slime.Id);
         // Its windup, heal or dash is lost; it hangs still.
         if (slime.State is not (SlimeState.Moving or SlimeState.Stunned)) slime.Set(SlimeState.Moving);
         if (slime.MendingId != 0 && Find(slime.MendingId) is Slime mended) mended.Mended = false;
         slime.MendingId = 0;
-        slime.KnockVelocity = 0; slime.Blown = 0; slime.Lured = false;
+        slime.KnockVelocity = 0; slime.Lured = false;
         slime.Grabbed = true;
         GrabbedId = slime.Id;
         Armed = null;
-        grabX = x; grabHeight = Math.Max(0, height);
-        gripX = slime.X - x; gripY = slime.Lift - grabHeight;
-        grabHeld = 0; grabVX = grabVY = 0;
+        grabTo = double.NaN;
+        grabHeld = 0;
         if (swingTargetId == slime.Id) CancelSwing();
         events.Add(new(BattleEventKind.Grabbed, slime.X, slime.Id));
         SkillUsed();
         return true;
     }
 
-    public void MoveGrab(double x, double height)
+    // A click on the field while an enemy hangs in the claw: carried there and slammed down. A thief is
+    // never slammed (false).
+    public bool GrabDrop(double x)
     {
-        if (GrabbedId == 0 || Paused || !double.IsFinite(x) || !double.IsFinite(height)) return;
-        grabX = x; grabHeight = Math.Max(0, height);
+        if (GrabbedId == 0 || Paused || Over || !double.IsFinite(x) || !double.IsNaN(grabTo) || Find(GrabbedId) is not Slime slime) return false;
+        if (slime.Type.Steal != null) { events.Add(new(BattleEventKind.GrabRefused, slime.X, slime.Id)); return false; }
+        var (minX, maxX) = Bounds(slime);
+        grabTo = Math.Clamp(x, minX, maxX);
+        return true;
     }
 
-    // The mouse let go: thrown with the cursor's speed (or just dropped when slow).
-    public void ReleaseGrab() => LetGo(true);
-
-    private void LetGo(bool fling)
+    // Put down: slammed (from a click, a bomb is the user's), or set down dazed (the hold ran out).
+    private void LetGo(bool slam)
     {
         if (GrabbedId == 0) return;
         var slime = Find(GrabbedId);
         GrabbedId = 0;
+        grabTo = double.NaN;
         Recharge(BattleSkill.Grabber);
         if (slime == null) return;
         slime.Grabbed = false;
         if (!slime.Targetable) { slime.Lift = 0; return; }
-        double vx = fling ? Math.Clamp(grabVX, -GrabTopSpeed, GrabTopSpeed) : 0, vy = fling ? Math.Clamp(grabVY, -GrabTopSpeed, GrabTopSpeed) : 0;
-        slime.Thrown = Math.Sqrt(vx * vx + vy * vy) >= Settings.GrabberThrowSpeed;
-        // Too slow: just dropped. Thrown: always a little hop, so one flung along the floor flies an arc.
-        if (!slime.Thrown) { vx = 0; vy = Math.Min(0, vy); }
-        else vy = Math.Max(vy, ThrowHop);
+        slime.Slammed = slam;
         slime.Tossed = true;
-        slime.TossVX = vx; slime.TossVY = vy;
-        events.Add(new(BattleEventKind.GrabReleased, slime.X, slime.Thrown ? 1 : 0));
+        slime.TossVX = 0; slime.TossVY = slam ? -SlamSpeed : 0;
+        events.Add(new(BattleEventKind.GrabReleased, slime.X, slam ? 1 : 0));
+    }
+
+    // The hold ran out on a thief: what it stole falls out of it and it is gone (the cat's defeat).
+    private void ShakeThief(Slime thief)
+    {
+        GrabbedId = 0;
+        grabTo = double.NaN;
+        Recharge(BattleSkill.Grabber);
+        thief.Grabbed = false;
+        if (thief.Loot == StolenKind.None)
+        {
+            // Nothing stolen yet: a little something still drops out.
+            if (Loot == BattleLoot.Coins) Coins++;
+            else if (AppRules != null && desktop.Where(a => !a.Infected).OrderBy(a => a.Charge).FirstOrDefault() is DesktopApp app) Charge(app, Settings.GrabberThiefCharge);
+        }
+        ThievesShaken++;
+        events.Add(new(BattleEventKind.ThiefShaken, thief.X, thief.Id));
+        thief.Lift = 0;
+        Defeat(thief); // GiveBack in Defeat returns what it carried.
     }
 
     // Every step that goes on: the held enemy follows the cursor, the tossed ones fly.
@@ -109,16 +138,30 @@ public sealed partial class BattleSim
             else if (catHeld) LetGo(false);
             else
             {
-                var (minX, maxX) = Bounds(slime);
-                double x = Math.Clamp(grabX + gripX, minX, maxX), lift = Math.Clamp(grabHeight + gripY, 0, GrabMaxLift);
-                // The cursor's speed over the last few frames (a throw is the last flick, not one frame).
-                double k = Math.Min(1, dt / 0.06);
-                grabVX += ((x - slime.X) / dt - grabVX) * k;
-                grabVY += ((lift - slime.Lift) / dt - grabVY) * k;
-                slime.X = x; slime.Lift = lift;
+                // Up it goes; carried to the spot clicked, then slammed down.
+                slime.Lift = Math.Min(GrabLift, slime.Lift + GrabLift / GrabRise * dt);
                 slime.KnockVelocity = 0;
-                grabHeld += dt;
-                if (grabHeld >= Settings.GrabberHoldSeconds) LetGo(false);
+                if (!double.IsNaN(grabTo))
+                {
+                    double gap = grabTo - slime.X;
+                    slime.X += Math.Sign(gap) * Math.Min(Math.Abs(gap), GrabCarrySpeed * dt);
+                    if (Math.Abs(grabTo - slime.X) < 0.5 && slime.Lift >= GrabLift - 0.5) LetGo(true);
+                }
+                else
+                {
+                    grabHeld += dt;
+                    if (grabHeld >= Settings.GrabberHoldSeconds)
+                    {
+                        if (slime.Type.Steal != null) ShakeThief(slime);
+                        else
+                        {
+                            // Put down on the side away from the cat.
+                            var (minX, maxX) = Bounds(slime);
+                            slime.X = Math.Clamp(slime.X + (slime.X >= lastCatX ? 1 : -1) * 120, minX, maxX);
+                            LetGo(false);
+                        }
+                    }
+                }
             }
         }
         int count = slimes.Count;
@@ -128,7 +171,7 @@ public sealed partial class BattleSim
 
     private void Fly(Slime slime, double dt)
     {
-        if (!slime.Targetable) { slime.Tossed = slime.Thrown = slime.Launched = false; slime.Lift = 0; return; }
+        if (!slime.Targetable) { slime.Tossed = slime.Launched = slime.Slammed = false; slime.Lift = 0; return; }
         var (minX, maxX) = Bounds(slime);
         slime.TossVY -= Gravity * dt;
         slime.X += slime.TossVX * dt;
@@ -136,59 +179,45 @@ public sealed partial class BattleSim
         if (slime.X <= minX || slime.X >= maxX)
         {
             slime.X = Math.Clamp(slime.X, minX, maxX);
-            if (slime.Thrown && Math.Abs(slime.TossVX) >= Settings.GrabberThrowSpeed * 0.5) GrabHit(slime, null);
             slime.TossVX = 0;
         }
-        else if (slime.Thrown && slime.TossVX != 0 && Into(slime) is Slime other) GrabHit(slime, other);
         if (slime.Lift > 0 || !slime.Targetable) return;
         slime.Lift = 0;
         slime.Tossed = false;
-        // A thrown bomb slime blows up where it lands (1.5 M11).
-        if (slime.Thrown && slime.Type.Fuse != null) { slime.Thrown = false; Blast(slime, true); return; }
-        if (slime.Thrown) Daze(slime, GrabberStun);
+        // Slammed down by the claw (2026-11-04).
+        if (slime.Slammed) { slime.Slammed = false; Slam(slime); return; }
         if (slime.Launched) { slime.Launched = false; if (arms.LaunchStun > 0) Daze(slime, arms.LaunchStun); }
-        slime.Thrown = false;
+        // Put down when the hold ran out: dazed on landing.
+        else Daze(slime, GrabberStun);
     }
 
-    // The first enemy a thrown one flies into (bodies overlapping, the way it goes).
-    private Slime? Into(Slime thrown)
+    // The claw's slam: a bomb slime is the user's bomb; anything else is hurt and dazed, and so is the floor
+    // round it (the others lose the splash).
+    private void Slam(Slime slime)
     {
-        int way = Math.Sign(thrown.TossVX);
-        foreach (var o in slimes)
+        GrabSlams++;
+        AddEffect(BattleEffectKind.Slam, slime.X, 0, GrabSplash);
+        events.Add(new(BattleEventKind.GrabHit, slime.X, slime.Id));
+        if (slime.Type.Fuse != null) { Blast(slime, true); return; }
+        foreach (var o in slimes.ToArray())
         {
-            if (o == thrown || !o.Targetable || o.Handled || o.Riding) continue;
-            double ahead = (o.X - thrown.X) * way;
-            double bottom = o.Altitude + o.LeapHeight, top = bottom + o.Height;
-            if (ahead > -o.HitWidth / 4 && ahead <= (o.HitWidth + thrown.HitWidth) / 2 * 0.8 && thrown.Lift < top && thrown.Lift + thrown.Height > bottom) return o;
+            if (o == slime || !o.Targetable || o.Airborne || o.OnWall || o.Burrowed || o.Handled || Math.Abs(o.X - slime.X) > GrabSplash + o.HitWidth / 2) continue;
+            ToolHit(o, GrabberHitDamage);
+            if (Over) return;
         }
-        return null;
-    }
-
-    private void GrabHit(Slime thrown, Slime? other)
-    {
-        GrabberHits++;
-        double x = other != null ? (thrown.X + other.X) / 2 : thrown.X + Math.Sign(thrown.TossVX) * thrown.Width / 2;
-        AddEffect(BattleEffectKind.Combo, x, thrown.Lift + thrown.Height / 2);
-        events.Add(new(BattleEventKind.GrabHit, x, thrown.Id));
-        thrown.TossVX = 0;
-        if (other != null)
-        {
-            ToolHit(other, GrabberHitDamage);
-            if (other.Targetable) Daze(other, GrabberStun);
-        }
-        // A thrown bomb slime blows up where it hits (1.5 M11).
-        if (thrown.Type.Fuse != null && thrown.Targetable) { thrown.Tossed = thrown.Thrown = false; thrown.Lift = 0; Blast(thrown, true); return; }
-        ToolHit(thrown, GrabberHitDamage);
+        ToolHit(slime, GrabberSlamDamage);
+        if (!Over && slime.Targetable) Daze(slime, GrabberStun);
     }
 
     private void MapGrab(double left, double oldWidth, double newWidth)
     {
-        if (GrabbedId != 0) grabX = left + (grabX - Left) / oldWidth * newWidth;
+        if (!double.IsNaN(grabTo)) grabTo = left + (grabTo - Left) / oldWidth * newWidth;
     }
 
     private void ClearGrabber()
     {
         GrabbedId = 0;
-        foreach (var s in slimes) { s.Grabbed = s.Tossed = s.Thrown = s.Launched = false; s.Lift = 0; s.TossVX = s.TossVY = 0; }
+        grabTo = double.NaN;
+        foreach (var s in slimes) { s.Grabbed = s.Tossed = s.Launched = s.Slammed = false; s.Lift = 0; s.TossVX = s.TossVY = 0; }
     }
 }

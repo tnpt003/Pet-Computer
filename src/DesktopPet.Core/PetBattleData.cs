@@ -1309,7 +1309,8 @@ public static class BattleData
             Within(apps.CrawlEvery, 1, 120, "apps.crawlEvery");
             foreach (var (value, key) in new[] { (apps.PopupEvery, "popupEvery"), (apps.BellEvery, "bellEvery"), (apps.FreezeEvery, "freezeEvery"), (apps.MendEvery, "mendEvery"), (apps.SpitEvery, "spitEvery") })
                 Within(value, 1, 120, "apps." + key);
-            Within(apps.PopupSeconds, 2, 60, "apps.popupSeconds"); Within(apps.BellDamage, 0, 1000, "apps.bellDamage");
+            Within(apps.PopupSeconds, 2, 60, "apps.popupSeconds"); Within(apps.FreezeShare, 0, 0.5, "apps.freezeShare");
+            if (apps.FreezeClicks is < 1 or > 20) throw new InvalidDataException("apps.freezeClicks must be 1–20"); Within(apps.BellDamage, 0, 1000, "apps.bellDamage");
             Within(apps.FreezeSeconds, 0, 5, "apps.freezeSeconds"); Within(apps.MendShare, 0, 1, "apps.mendShare");
             Within(apps.LoadingWeight, 0, 100, "apps.loadingWeight");
             Within(apps.LoadingSeconds, 1, 30, "apps.loadingSeconds"); Within(apps.LoadingRadius, 20, 200, "apps.loadingRadius");
@@ -1358,12 +1359,13 @@ public static class BattleData
         Positive(s.BombRadius, "bombRadius"); NotNegative(s.BombDamage, "bombDamage"); Positive(s.ShieldSeconds, "shieldSeconds");
         Within(s.LaserCooldown, 1, 120, "laserCooldown"); Within(s.LaserSeconds, 0.5, 15, "laserSeconds");
         Within(s.LaserLureRange, 20, 2000, "laserLureRange"); Within(s.LaserDps, 0, 100, "laserDps");
-        Within(s.FanSteamSeconds, 0.5, 30, "fanSteamSeconds"); Within(s.FanRefillSeconds, 1, 120, "fanRefillSeconds");
-        Within(s.FanRange, 20, 1000, "fanRange"); Within(s.FanSpeed, 0, 1500, "fanSpeed"); Within(s.FanBumpDamage, 0, 100, "fanBumpDamage");
+        Within(s.FanRefillSeconds, 1, 120, "fanRefillSeconds");
+        Within(s.FanColumnWidth, 40, 600, "fanColumnWidth"); Within(s.FanColumnSeconds, 0.5, 15, "fanColumnSeconds"); Within(s.FanColumnCut, 0, 0.9, "fanColumnCut");
+        Within(s.ScissorsLength, 80, 1200, "scissorsLength"); Within(s.ScissorsBand, 10, 200, "scissorsBand"); Within(s.ScissorsPreview, 0, 3, "scissorsPreview"); Within(s.ScissorsSweep, 0.1, 3, "scissorsSweep");
         Within(s.GrabberCooldown, 1, 120, "grabberCooldown"); Within(s.GrabberHoldSeconds, 0.5, 15, "grabberHoldSeconds");
-        Within(s.GrabberMaxScale, 0.5, 2.3, "grabberMaxScale"); Within(s.GrabberHitDamage, 0, 100, "grabberHitDamage");
-        Within(s.GrabberStun, 0, 5, "grabberStun"); Within(s.GrabberThrowSpeed, 50, 1500, "grabberThrowSpeed");
-        Within(s.ScissorsCooldown, 1, 120, "scissorsCooldown"); Within(s.ScissorsDamage, 0, 100, "scissorsDamage"); Within(s.ScissorsMinLength, 10, 400, "scissorsMinLength");
+        Within(s.GrabberMaxScale, 0.5, 2.3, "grabberMaxScale"); Within(s.GrabberHitDamage, 0, 100, "grabberHitDamage"); Within(s.GrabberSlamDamage, 0, 200, "grabberSlamDamage"); Within(s.GrabberThiefCharge, 0, 1, "grabberThiefCharge");
+        Within(s.GrabberStun, 0, 5, "grabberStun");
+        Within(s.ScissorsCooldown, 1, 120, "scissorsCooldown"); Within(s.ScissorsDamage, 0, 100, "scissorsDamage");
         Within(s.SprayTankSeconds, 0.5, 30, "sprayTankSeconds"); Within(s.SprayRefillSeconds, 1, 120, "sprayRefillSeconds");
         Within(s.SprayKillSeconds, 0, 30, "sprayKillSeconds"); Within(s.SprayTankMax, 1, 3, "sprayTankMax"); Within(s.SprayMeltSeconds, 0.2, 60, "sprayMeltSeconds");
         Within(s.SprayRange, 10, 500, "sprayRange"); Within(s.SprayDps, 0, 100, "sprayDps");
@@ -2094,8 +2096,8 @@ public static class BattleSkills
         // tank's refill once spent.
         new(BattleSkill.Laser, SkillAim.Point, s => s.LaserCooldown),
         new(BattleSkill.Grabber, SkillAim.Drag, s => s.GrabberCooldown),
-        new(BattleSkill.Scissors, SkillAim.Swipe, s => s.ScissorsCooldown),
-        new(BattleSkill.Fan, SkillAim.Hold, s => s.FanRefillSeconds),
+        new(BattleSkill.Scissors, SkillAim.Screen, s => s.ScissorsCooldown),
+        new(BattleSkill.Fan, SkillAim.Screen, s => s.FanRefillSeconds),
         new(BattleSkill.Spray, SkillAim.Hold, s => s.SprayRefillSeconds),
     };
 
@@ -2153,14 +2155,14 @@ public static class BattleSkills
             DescVi = "Đèn laser — chọn rồi click một chỗ: {laserSeconds} giây slime gần đó chạy theo chấm đỏ, không đánh mèo; con trên chấm mất {laserDps} máu/giây. Hồi {laserCooldown} giây.",
             DescEn = "Laser pointer — choose, then click a spot: for {laserSeconds} s nearby slimes chase the red dot, not the cat; one on the dot loses {laserDps} HP/s. {laserCooldown} s cooldown." },
         new() { Id = "grabber", NameVi = "Kẹp gắp", NameEn = "Grabber",
-            DescVi = "Kẹp gắp — chọn rồi nhấn giữ một slime nhỏ (không phải đá hay boss) và vung chuột để ném: trúng slime khác thì cả hai mất {grabberHitDamage} máu, con kia choáng. Hồi {grabberCooldown} giây.",
-            DescEn = "Grabber — choose, then press a small slime (not a rock or a boss) and fling the mouse: thrown into another, both lose {grabberHitDamage} HP and the other is dazed. {grabberCooldown} s cooldown." },
+            DescVi = "Kẹp gắp — chọn rồi click một slime nhỏ: gắp ra khỏi trận tối đa {grabberHoldSeconds} giây; click chỗ khác để đập xuống: −{grabberSlamDamage} máu, choáng, slime quanh đó −{grabberHitDamage}. Hồi {grabberCooldown} giây.",
+            DescEn = "Grabber — choose, then click a small slime: lifted out of the fight up to {grabberHoldSeconds} s; click a spot to slam it: −{grabberSlamDamage} HP, dazed, −{grabberHitDamage} round it. {grabberCooldown} s cooldown." },
         new() { Id = "scissors", NameVi = "Kéo cắt", NameEn = "Scissors",
-            DescVi = "Kéo cắt — chọn rồi kéo chuột thành một nét: cắt đứt dây nhầy, slime nằm trên nét mất {scissorsDamage} máu. Hồi {scissorsCooldown} giây.",
-            DescEn = "Scissors — choose, then drag a stroke: it cuts slime ropes, and each slime on it loses {scissorsDamage} HP. {scissorsCooldown} s cooldown." },
+            DescVi = "Kéo cắt — chọn rồi click chỗ bất kỳ trên màn hình: kéo cắt ngang một dải {scissorsLength} DIP; mỗi slime trúng mất {scissorsDamage} máu và đứt dây, dây cưỡi, bong bóng. Hồi {scissorsCooldown} giây.",
+            DescEn = "Scissors — choose, then click anywhere on the screen: they cut across a {scissorsLength}-DIP band; each slime in it loses {scissorsDamage} HP and its ropes, rides and bubbles are cut. {scissorsCooldown} s cooldown." },
         new() { Id = "fan", NameVi = "Quạt", NameEn = "Fan",
-            DescVi = "Quạt — chọn rồi giữ chuột: thổi slime ra xa con trỏ, va nhau hoặc va mép mất {fanBumpDamage} máu. Hơi đủ {fanSteamSeconds} giây; cạn thì chờ {fanRefillSeconds} giây.",
-            DescEn = "Fan — choose, then hold the mouse: blows slimes away from the cursor; one blown into another or the edge loses {fanBumpDamage} HP. {fanSteamSeconds} s of air; empty, it refills in {fanRefillSeconds} s." },
+            DescVi = "Quạt — chọn rồi click chỗ bất kỳ: quạt trần thổi cột gió rộng {fanColumnWidth} DIP trong {fanColumnSeconds} giây; slime dưới sàn đứng yên, đánh mèo nhẹ hơn; slime bay, bám tường bị thổi rơi. Hồi {fanRefillSeconds} giây.",
+            DescEn = "Fan — choose, then click anywhere: a ceiling fan blows a {fanColumnWidth}-DIP column for {fanColumnSeconds} s; floor slimes in it are held and hit softer; flyers, wall slimes fall. {fanRefillSeconds} s cooldown." },
         new() { Id = "spray", NameVi = "Bình xịt nước nóng", NameEn = "Hot water spray",
             DescVi = "Bình xịt nước nóng — chọn rồi click một slime: tự xịt nó tới hết nước, −{sprayDps} máu/giây, làm chậm; {sprayMeltSeconds} giây tan băng; slime ngã khi bị xịt: +{sprayKillSeconds} giây nước. Hồi {sprayRefillSeconds} giây.",
             DescEn = "Hot water spray — choose, then click a slime: sprays it until empty, {sprayDps} HP/s, slowed; {sprayMeltSeconds} s melts ice; a slime falling to it adds {sprayKillSeconds} s of water. {sprayRefillSeconds} s cooldown." },

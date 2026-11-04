@@ -182,7 +182,7 @@ public sealed partial class BattleSim
                     break;
                 case EnemyLinks.Merge:
                     int need = MergeNeed(slime, link);
-                    if (slime.State == SlimeState.Stunned || slime.Riding || Huddle(slime, link) < need) { slime.MergeClock = 0; break; }
+                    if (slime.State == SlimeState.Stunned || slime.Riding || slime.Rooted || Huddle(slime, link) < need) { slime.MergeClock = 0; break; } // Held by the Fan's column it cannot merge (2026-11-04).
                     slime.MergeClock += dt;
                     if (slime.MergeClock >= link.MergeSeconds && MergeAround(slime, link, need)) i = -1; // The list changed: from the start.
                     break;

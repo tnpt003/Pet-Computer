@@ -155,7 +155,9 @@ internal static class BattleBandTests
 
         (sim, holder, ally) = Rope(skills: new[] { BattleSkill.Push, BattleSkill.Heal, BattleSkill.Bomb, BattleSkill.Scissors, BattleSkill.Shield });
         sim.Arm(BattleSkill.Scissors);
-        check(sim.Snip(1000, 60, 1000, 0) && holder.LinkedTo == 0 && sim.RopesCut == 1 && sim.CatRopeCuts == 0, "The Scissors cut its rope as well");
+        bool snipped = sim.UseOnScreen(BattleSkill.Scissors, 1000, 18);
+        for (int i = 0; i < 120 && sim.Cut != null; i++) { sim.Step(1.0 / 60, 100, false); sim.ClearEvents(); }
+        check(snipped && holder.LinkedTo == 0 && sim.RopesCut >= 1 && sim.CatRopeCuts == 0, "The Scissors cut its rope as well");
     }
 
     private static void DataChecks(Action<bool, string> check)

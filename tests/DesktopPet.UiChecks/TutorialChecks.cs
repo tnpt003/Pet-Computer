@@ -318,11 +318,9 @@ internal static class TutorialChecks
         check(window.BattleGuideStep == PetWindow.GuideFan, $"The Fan's stage teaches the Fan ({window.BattleGuideStep})");
         window.UseBattleSkill(BattleSkill.Fan);
         TickBattle(1.0 / 60);
-        check(window.BattlePressFan(Sim().CatX + 120) && Sim().FanBlowing, "Held on the floor, the Fan blows");
+        check(window.BattleUseOnScreen(Sim().CatX + 120, 60) && Sim().ColumnX != null && Sim().Armed == null, "A click puts the Fan's column there");
         TickBattle(1.0 / 60);
-        check(window.BattleGuideStep == null && Sim().FanBlowing, "Blowing ends the step; the fan goes on while held");
-        window.BattleReleaseFan();
-        check(!Sim().FanBlowing && Sim().Armed == BattleSkill.Fan, "Let go, it stops and stays chosen");
+        check(window.BattleGuideStep == null && Sim().ColumnX != null, "The column ends the step");
         window.EndBattle();
         window.AdventureProgress.Completed.Remove(teachLaser.Id);
         window.AdventureProgress.Completed.Remove(teachFan.Id);
@@ -336,13 +334,14 @@ internal static class TutorialChecks
         check(window.BattleGuideStep == PetWindow.GuideGrabber && window.BattleGuideSpots.Count == 1, $"The Grabber's stage teaches it ({window.BattleGuideStep})");
         window.UseBattleSkill(BattleSkill.Grabber);
         TickBattle(1.0 / 60);
-        check(Sim().Armed == BattleSkill.Grabber && window.BattleGuideText.Contains("press a slime"), $"Chosen, the step says to press a slime ({window.BattleGuideText})");
+        check(Sim().Armed == BattleSkill.Grabber && window.BattleGuideText.Contains("click a slime"), $"Chosen, the step says to click a slime ({window.BattleGuideText})");
         var grabbed = Sim().Slimes.First(s => s.Targetable);
-        check(window.BattleGrab(grabbed.Id, grabbed.X, 10) && Sim().Grabbing, "A press on a slime lifts it (the battle frozen, not paused)");
+        check(window.BattleGrab(grabbed.Id, grabbed.X, 10) && Sim().Grabbing, "A click on a slime lifts it (the battle frozen, not paused)");
         TickBattle(1.0 / 60);
         check(window.BattleGuideStep == null && GuideTimesShown(PetWindow.GuideGrabber) == 1, "Lifting one ends the step");
-        window.BattleReleaseGrab();
-        check(!Sim().Grabbing && Sim().Cooldown(BattleSkill.Grabber) > 0, "Let go, the Grabber cools down");
+        check(Sim().GrabDrop(grabbed.X + 100), "A click on the field says where to slam it");
+        for (int i = 0; i < 90 && Sim().Grabbing; i++) TickBattle(1.0 / 60);
+        check(!Sim().Grabbing && Sim().Cooldown(BattleSkill.Grabber) > 0, "Put down, the Grabber cools down");
         window.EndBattle();
         ToGround();
         window.StartBattle(stage: teachScissors);
@@ -351,8 +350,7 @@ internal static class TutorialChecks
         window.UseBattleSkill(BattleSkill.Scissors);
         TickBattle(1.0 / 60);
         double cx = Sim().CatX;
-        check(!window.BattleSnip(cx + 100, 20, cx + 110, 20) && Sim().Armed == BattleSkill.Scissors, "A stroke too short does nothing");
-        check(window.BattleSnip(cx + 60, 20, cx + 400, 20) && Sim().Snips == 1, "A long stroke is a cut");
+        check(window.BattleUseOnScreen(cx + 200, 20) && Sim().Cut != null, "A click starts the cut");
         TickBattle(1.0 / 60);
         check(window.BattleGuideStep == null && GuideTimesShown(PetWindow.GuideScissors) == 1, "Cutting ends the step");
         window.EndBattle();
@@ -362,12 +360,11 @@ internal static class TutorialChecks
         check(window.BattleGuideStep == PetWindow.GuideSpray, $"The Spray's stage teaches it ({window.BattleGuideStep})");
         window.UseBattleSkill(BattleSkill.Spray);
         TickBattle(1.0 / 60);
-        check(window.BattlePressHold(Sim().CatX + 120, 20) && Sim().Spraying && !Sim().FanBlowing, "Held on the floor, the Spray sprays (not the Fan)");
+        check(window.BattlePressHold(Sim().CatX + 120, 20) && Sim().Spraying, "A press on the floor, the Spray sprays");
         TickBattle(1.0 / 60);
         check(window.BattleGuideStep == null && Sim().Spraying, "Spraying ends the step");
-        window.BattleReleaseFan();
         // 2026-11-04, the hot-water spray: one click, then it sprays by itself until empty.
-        check(Sim().Spraying && Sim().Armed == BattleSkill.Spray, "Let go, it keeps spraying by itself (hot water)");
+        check(Sim().Spraying && Sim().Armed == BattleSkill.Spray, "It keeps spraying by itself (hot water)");
         window.EndBattle();
         foreach (var stage in new[] { teachGrabber, teachScissors, teachSpray }) window.AdventureProgress.Completed.Remove(stage.Id);
         prefs.BattleLoadout = null;

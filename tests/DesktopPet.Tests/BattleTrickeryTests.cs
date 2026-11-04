@@ -126,12 +126,14 @@ internal static class BattleTrickeryTests
         check(laser.UseAt(BattleSkill.Laser, 600) && Math.Abs(laser.LaserRemaining - (laser.Settings.LaserSeconds + 1.5)) < 1e-9 && laser.LaserSeconds == laser.Settings.LaserSeconds + 1.5,
             "Lasting laser: the dot stays 1.5 s longer");
         var fan = Field(new[] { Card("f", "fanPower", 0.25) }, new() { ["f"] = 1 });
-        check(Math.Abs(fan.FanRange - fan.Settings.FanRange * 1.25) < 1e-9, "Turbo fan: 25 % more reach");
+        check(Math.Abs(fan.ColumnWidth - fan.Settings.FanColumnWidth * 1.25) < 1e-9, "Turbo fan: a column 25 % wider");
         var cut = Field(new[] { Card("s", "scissorsDamage", 0.4) }, new() { ["s"] = 1 }, skills: new[] { BattleSkill.Scissors, BattleSkill.Push, BattleSkill.Heal, BattleSkill.Cheer, BattleSkill.Shield });
         var slime = cut.Slimes.First(s => s.Targetable);
         double before = slime.Hp;
         cut.Arm(BattleSkill.Scissors);
-        check(cut.Snip(slime.X - 40, 10, slime.X + 40, 10) && Math.Abs(before - slime.Hp - cut.Settings.ScissorsDamage * 1.4) < 1e-6, $"Sharp scissors: a cut deals 40 % more ({before - slime.Hp:0.#})");
+        bool snipped = cut.UseOnScreen(BattleSkill.Scissors, slime.X, 10);
+        for (int i = 0; i < 120 && cut.Cut != null; i++) { cut.Step(1.0 / 60, 800, false); cut.ClearEvents(); }
+        check(snipped && Math.Abs(before - slime.Hp - cut.Settings.ScissorsDamage * 1.4) < 1e-6, $"Sharp scissors: a cut deals 40 % more ({before - slime.Hp:0.#})");
 
         // Fat fish: a dropped fish heals 10 HP more.
         var drops = new DropSpec { Chance = 1, EliteChance = 1, Life = 8, Fade = 1.5, MaxOnFloor = 6, Weights = new() { ["fish"] = 1 }, FishHeal = 10 };

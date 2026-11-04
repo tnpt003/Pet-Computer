@@ -198,7 +198,7 @@ public sealed partial class BattleSim
     {
         for (int i = puddles.Count - 1; i >= 0; i--)
         {
-            if (Math.Abs(puddles[i].X - from) > FanRange + puddles[i].Radius) continue;
+            if (Math.Abs(puddles[i].X - from) > ColumnWidth / 2 + puddles[i].Radius) continue;
             PuddlesDried++;
             events.Add(new(BattleEventKind.PuddleDried, puddles[i].X));
             puddles.RemoveAt(i);

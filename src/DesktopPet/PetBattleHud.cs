@@ -433,11 +433,11 @@ public sealed class BattleHud : Border
             bool active = skill switch
             {
                 BattleSkill.Cheer => b.CheerRemaining > 0, BattleSkill.Shield => b.ShieldRemaining > 0,
-                BattleSkill.Laser => b.LaserX != null, BattleSkill.Fan => b.FanBlowing,
+                BattleSkill.Laser => b.LaserX != null, BattleSkill.Fan => b.ColumnX != null, BattleSkill.Scissors => b.Cut != null,
                 BattleSkill.Spray => b.Spraying, BattleSkill.Grabber => b.GrabberBusy, _ => false
             };
             // A hold skill's air or water used so far shows as the same wipe while it is still usable.
-            double gauge = skill == BattleSkill.Fan ? 1 - b.FanSteam : skill == BattleSkill.Spray ? 1 - b.SprayTank : 0;
+            double gauge = skill == BattleSkill.Spray ? 1 - b.SprayTank : 0;
             slot.Show(cooldown / Math.Max(0.01, total), cooldown, b.Armed == skill, !b.Over && !b.Paused && !held, active, gauge);
         }
         UpdateMalware(b);
@@ -469,12 +469,12 @@ public sealed class BattleHud : Border
                                              "Click a slime's left half to push it right, its right half to push it left · click the slot again or right-click to cancel")
             : b.Armed == BattleSkill.Laser ? L("Click một chỗ trên dải trận để đặt chấm laser · bấm lại ô hoặc chuột phải để hủy",
                                               "Click a spot of the field to put the laser dot there · click the slot again or right-click to cancel")
-            : b.Armed == BattleSkill.Fan ? L("Giữ chuột trên dải trận để thổi slime ra xa con trỏ · bấm lại ô hoặc chuột phải để cất quạt",
-                                            "Hold the mouse on the field to blow slimes away from the cursor · click the slot again or right-click to put the fan away")
-            : b.Armed == BattleSkill.Grabber ? L("Nhấn giữ một slime nhỏ rồi vung chuột để ném · không gắp được đá và boss · bấm lại ô hoặc chuột phải để hủy",
-                                                "Press a small slime and fling the mouse to throw it · not a rock or a boss · click the slot again or right-click to cancel")
-            : b.Armed == BattleSkill.Scissors ? L("Kéo chuột thành một nét trên dải trận: cắt dây nhầy và slime nằm trên nét · bấm lại ô hoặc chuột phải để hủy",
-                                                 "Drag a stroke across the field: it cuts ropes and the slimes on it · click the slot again or right-click to cancel")
+            : b.Armed == BattleSkill.Fan ? L("Click chỗ bất kỳ trên màn hình: quạt trần thổi cột gió xuống đó · bấm lại ô hoặc chuột phải để cất quạt",
+                                            "Click anywhere on the screen: a ceiling fan blows a column of wind down there · click the slot again or right-click to put the fan away")
+            : b.Armed == BattleSkill.Grabber ? L("Click một slime nhỏ để gắp, rồi click chỗ muốn đập nó xuống · không gắp được đá và boss · bấm lại ô hoặc chuột phải để hủy",
+                                                "Click a small slime to grab it, then click where to slam it down · not a rock or a boss · click the slot again or right-click to cancel")
+            : b.Armed == BattleSkill.Scissors ? L("Click chỗ bất kỳ trên màn hình: kéo cắt ngang một dải ở độ cao đó · bấm lại ô hoặc chuột phải để hủy",
+                                                 "Click anywhere on the screen: the scissors cut a band across at that height · click the slot again or right-click to cancel")
             : b.Armed == BattleSkill.Spray ? L("Click một slime: bình tự xịt nước nóng vào nó tới hết nước · bấm lại ô hoặc chuột phải để cất bình",
                                               "Click a slime: the hot water sprays it by itself until empty · click the slot again or right-click to put it away")
             : b.Armed is BattleSkill armed ? LF($"Click một slime để dùng {SkillName(armed)} · bấm lại ô hoặc chuột phải chiến trường để hủy",

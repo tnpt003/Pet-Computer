@@ -234,7 +234,7 @@ internal static class BattleSpitSpringTests
         sim.Slimes[0].X = 1590;
         check(sim.Puddles.Count == 1, "A puddle lies on the floor");
         sim.Arm(BattleSkill.Fan);
-        check(sim.StartFan(150) && Run(sim, 0.1, 100, BattleEventKind.PuddleDried) && sim.Puddles.Count == 0 && sim.PuddlesDried == 1, "The Fan's wind dries it");
+        check(sim.UseOnScreen(BattleSkill.Fan, 150, 100) && Run(sim, 0.1, 100, BattleEventKind.PuddleDried) && sim.Puddles.Count == 0 && sim.PuddlesDried == 1, "The Fan's wind dries it");
     }
 
     private static void SpringChecks(Action<bool, string> check)

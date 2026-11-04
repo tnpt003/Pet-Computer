@@ -156,12 +156,12 @@ public sealed partial class BattleSim
         }
     }
 
-    // A Scissors stroke: every rope to a boss it crosses; how many it cut.
-    private int SnipBossRopes(double x0, double h0, double x1, double h1)
+    // A Scissors cut: every rope to a boss it crosses (within pad of its way); how many it cut.
+    private int SnipBossRopes(double x0, double h0, double x1, double h1, double pad)
     {
         int cut = 0;
         foreach (var helper in slimes.ToArray())
-            if (RopeBoss(helper) is Slime boss && RopeCrossed(helper, boss, x0, h0, x1, h1) && CutBossRope(helper)) cut++;
+            if (RopeBoss(helper) is Slime boss && RopeCrossed(helper, boss, x0, h0, x1, h1, pad) && CutBossRope(helper)) cut++;
         return cut;
     }
 

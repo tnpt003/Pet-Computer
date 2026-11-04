@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace DesktopPet;
 
@@ -9,33 +11,21 @@ namespace DesktopPet;
 //   in the air, stuck or healing) goes for the dot instead of the cat and starts no attack meanwhile
 //   (one already wound up still lands). One standing on the dot loses LaserDps HP a second, dealt every
 //   ToolTick s. Then the usual cooldown.
-// - Fan (SkillAim.Hold): chosen, then held on the field it blows every enemy within FanRange away from
-//   the cursor (stronger near it; its pushFactor; an elite that ignores Push barely moves; never a boss,
-//   a stuck, riding or flying one). One blown into another or the edge (a wall too) loses FanBumpDamage
-//   (each at most once a BumpSeconds); a rhythm's beat count is lost in the wind. Its air lasts
-//   FanSteamSeconds of blowing and comes back while it is not; spent, it waits FanRefillSeconds (its
-//   cooldown) before blowing again. It stays chosen after the mouse is let go.
+// - Fan and Scissors (SkillAim.Screen, 2026-11-04): aimed anywhere on the battle's screen, see below.
 // 1.5 M06 (docs/BATTLE-DATA.md → Kẹp gắp, Kéo cắt, Bình xịt nước; the Grabber: PetBattle.Grabber.cs):
-// - Scissors (SkillAim.Swipe): chosen, then a stroke across the field (at least ScissorsMinLength DIPs)
-//   cuts every tether rope it crosses (CutLink: the ally is dazed) and hurts every enemy whose body it
-//   crosses by ScissorsDamage, once each. A shorter stroke does nothing (still chosen). Then the cooldown.
-// - Spray (SkillAim.Hold, like the Fan): held on the field it soaks every enemy within SprayRange of the
-//   cursor: wet for SpraySoakSeconds (drawn smaller; ice and spikes go soft with it from M15/M16),
+// - Spray (SkillAim.Hold): one press starts it, see StartSpray: it soaks every enemy within SprayRange of
+//   its spot: wet for SpraySoakSeconds (drawn smaller; ice and spikes go soft with it from M15/M16),
 //   chilled by SprayChill and SprayDps HP a second, both every ToolTick s. Its water lasts
-//   SprayTankSeconds and refills like the Fan's air (SprayRefillSeconds once spent).
+//   SprayTankSeconds, then SprayRefillSeconds.
 // Their damage is a skill's (DamageSource.Tool): never blocked by a rock, Execute applies, a defeat is
 // the cat's; a boss takes BossToolShare. Like every skill they wait while the cat is in the user's hands
 // (no air comes back, no wind); Pause and the frozen guide freeze them (time runs only in Step).
 public sealed partial class BattleSim
 {
-    public const double ToolTick = 0.5, BumpSeconds = 1, BossToolShare = 0.5, FanImmuneShare = 0.2, BumpSpeed = 60;
-    // The laser's dot (null: none) and its time left; the fan's cursor while blowing (null: not blowing)
-    // and its air (1: full, 0: spent).
+    public const double ToolTick = 0.5, BossToolShare = 0.5;
+    // The laser's dot (null: none) and its time left.
     public double? LaserX { get; private set; }
     public double LaserRemaining { get; private set; }
-    public double? FanX { get; private set; }
-    public double FanSteam => fanSteam;
-    private double fanSteam = 1;
     // The spray's cursor while spraying (battle x and height over the floor; null: not spraying) and its
     // water (1: full); the strokes of the Scissors and the ropes they cut.
     public double? SprayX { get; private set; }
@@ -45,7 +35,6 @@ public sealed partial class BattleSim
     public int Snips { get; private set; }
     public int RopesCut { get; private set; }
     public double ToolDamage { get; private set; }
-    public int FanBumps { get; private set; }
     private double laserClock;
 
     // A spot skill (the Laser, chosen first) at x on the floor.
@@ -67,27 +56,116 @@ public sealed partial class BattleSim
     // The laser's dot lights up a spot this wide around x (for enemies that hide: M13).
     public bool LaserShows(double x, double halfWidth) => LaserX is double dot && Math.Abs(dot - x) <= halfWidth;
 
-    // The mouse pressed (or moved) on the field with the Fan chosen: it blows from x.
-    public bool StartFan(double x)
+    // ── 2026-11-04 (docs/GOPY-C-2026-11-04.md D4): the Scissors and the Fan aimed anywhere on the screen ──
+
+    // A cut across the screen: at height Y, from From to To (the scissors' way), Age since the click.
+    public sealed class ScissorCut { public double Y, From, To, Age; }
+    public ScissorCut? Cut { get; private set; }
+    private readonly HashSet<int> cutHit = new();
+    private readonly Random cutRandom;
+    public int Cuts { get; private set; }
+    // The Fan's column: its middle (battle x; null: none) and its time left.
+    public double? ColumnX { get; private set; }
+    public double ColumnRemaining { get; private set; }
+    public double ColumnWidth => Settings.FanColumnWidth * (1 + fanBonus);
+    public int ColumnKnocks { get; private set; }
+
+    // A click anywhere on the battle's screen (battle x, height over the floor) with the Scissors or the
+    // Fan chosen.
+    public bool UseOnScreen(BattleSkill skill, double x, double height)
     {
-        if (Armed != BattleSkill.Fan || !Ready(BattleSkill.Fan) || !double.IsFinite(x)) return false;
-        bool fresh = FanX == null;
-        FanX = Math.Clamp(x, Left, Right);
-        if (fresh) { events.Add(new(BattleEventKind.FanOn, FanX.Value)); SkillUsed(); }
+        if (Armed != skill || !Ready(skill) || !double.IsFinite(x) || !double.IsFinite(height)) return false;
+        if (skill == BattleSkill.Scissors)
+        {
+            double half = Settings.ScissorsLength / 2, mid = Math.Clamp(x, Left + half, Math.Max(Left + half, Right - half));
+            bool fromLeft = cutRandom.Next(2) == 0;
+            Cut = new ScissorCut { Y = Math.Max(0, height), From = fromLeft ? mid - half : mid + half, To = fromLeft ? mid + half : mid - half };
+            cutHit.Clear();
+            events.Add(new(BattleEventKind.CutStarted, mid));
+        }
+        else if (skill == BattleSkill.Fan)
+        {
+            ColumnX = Math.Clamp(x, Left, Right);
+            ColumnRemaining = Settings.FanColumnSeconds;
+            events.Add(new(BattleEventKind.FanOn, ColumnX.Value));
+        }
+        else return false;
+        Recharge(skill);
+        Armed = null;
+        SkillUsed();
         return true;
     }
-    public void MoveFan(double x) { if (FanX != null && double.IsFinite(x)) FanX = Math.Clamp(x, Left, Right); }
-    public void StopFan() => FanX = null;
-    public bool FanBlowing => FanX != null;
+
+    // The cut's scissors run along it; each enemy whose body meets the band behind them is hit once: it
+    // loses ScissorsDamage and everything tied to it is cut (a rope, a ride, a bubble, a drum's count).
+    private void StepCut(double dt)
+    {
+        if (Cut is not ScissorCut cut) return;
+        cut.Age += dt;
+        if (cut.Age < Settings.ScissorsPreview) return;
+        double t = Math.Clamp((cut.Age - Settings.ScissorsPreview) / Settings.ScissorsSweep, 0, 1), at = cut.From + (cut.To - cut.From) * t;
+        double lo = Math.Min(cut.From, at), hi = Math.Max(cut.From, at), band = Settings.ScissorsBand / 2;
+        // Ropes the blade has crossed (between two enemies, or to a boss).
+        foreach (var holder in slimes.ToArray())
+            if (Is(holder, EnemyLinks.Tether) && LinkPartner(holder) is Slime ally && RopeCrossed(holder, ally, lo, cut.Y, hi, cut.Y, band) && CutLink(holder.Id)) RopesCut++;
+        RopesCut += SnipBossRopes(lo, cut.Y, hi, cut.Y, band);
+        foreach (var s in slimes.ToArray())
+        {
+            if (cutHit.Contains(s.Id) || !s.Targetable || s.Shielded || s.Burrowed) continue;
+            var (left, bottom, right, top) = Body(s);
+            if (right < lo || left > hi || top < cut.Y - band || bottom > cut.Y + band) continue;
+            cutHit.Add(s.Id);
+            if (s.Bubbled) { PopBubble(s); continue; }
+            if (s.LinkedTo != 0 || slimes.Any(o => o.LinkedTo == s.Id)) { if (CutLink(s.Id)) RopesCut++; }
+            if (s.RopedTo != 0 && CutBossRope(s)) RopesCut++;
+            if (Is(s, EnemyLinks.Rhythm)) { s.BeatCount = 0; s.BeatClock = 0; }
+            AddEffect(BattleEffectKind.Spark, s.X, bottom + s.Height / 2);
+            ToolHit(s, ScissorsDamage);
+            if (Over) return;
+        }
+        if (t < 1) return;
+        Cuts++;
+        Snips++;
+        events.Add(new(BattleEventKind.Snipped, (cut.From + cut.To) / 2, cutHit.Count));
+        Cut = null;
+    }
+
+    // The column of wind: slimes on the floor in it stand still (their blows lighter, HurtCat); a climber
+    // up its edge or a flyer in the air in it is blown down; puddles under it dry.
+    private void StepColumn(double dt)
+    {
+        foreach (var s in slimes) s.Rooted = false;
+        if (ColumnX is not double x) return;
+        ColumnRemaining = Math.Max(0, ColumnRemaining - dt);
+        double half = ColumnWidth / 2;
+        foreach (var s in slimes.ToArray())
+        {
+            if (!s.Targetable || s.IsBoss || s.Handled || s.Burrowed || Math.Abs(s.BodyX - x) > half + s.HitWidth / 2) continue;
+            if (s.OnWall && s.Type.Cling != null && s.State != SlimeState.Spawning) { if (KnockOff(s, false)) ColumnKnocks++; continue; }
+            if (s.Type.Fly != null && s.Fly == FlyPhase.Aloft && s.State != SlimeState.Spawning) { if (KnockDown(s, false)) ColumnKnocks++; continue; }
+            if (s.Airborne) continue;
+            s.Rooted = true;
+            s.KnockVelocity = 0;
+            // The wind throws a drummer off its count.
+            if (Is(s, EnemyLinks.Rhythm)) { s.BeatCount = 0; s.BeatClock = 0; }
+        }
+        if (puddles.Count > 0) DryPuddles(x);
+        if (ColumnRemaining > 0) return;
+        ColumnX = null;
+        foreach (var s in slimes) s.Rooted = false;
+        events.Add(new(BattleEventKind.FanSpent, x));
+    }
 
     // Every frame (not paused): the dot's time, the lure flags, the wind and the air.
     private void StepTools(double dt, bool catHeld)
     {
+        StepCut(dt);
+        if (Over) return;
+        StepColumn(dt);
+        if (Over) return;
         foreach (var s in slimes)
         {
             s.Lured = false;
-            s.Blown = Math.Max(0, s.Blown - dt);
-            s.BumpCooldown = Math.Max(0, s.BumpCooldown - dt);
             s.WetRemaining = Math.Max(0, s.WetRemaining - dt);
         }
         if (LaserX is double dot)
@@ -110,20 +188,7 @@ public sealed partial class BattleSim
                 events.Add(new(BattleEventKind.LaserOff, dot));
             }
         }
-        if (catHeld) { FanX = null; SprayX = null; return; }
-        if (FanX is double from && Holding(BattleSkill.Fan))
-        {
-            fanSteam = Math.Max(0, fanSteam - dt / Settings.FanSteamSeconds);
-            Blow(from, dt);
-            if (puddles.Count > 0) DryPuddles(from);
-            if (fanSteam <= 0)
-            {
-                FanX = null;
-                Spend(BattleSkill.Fan);
-                events.Add(new(BattleEventKind.FanSpent, from));
-            }
-        }
-        else { FanX = null; Refill(BattleSkill.Fan, ref fanSteam, dt); }
+        if (catHeld) { SprayX = null; SprayTargetId = 0; return; }
         if (SprayX is double && Holding(BattleSkill.Spray))
         {
             FollowSprayTarget();
@@ -139,10 +204,9 @@ public sealed partial class BattleSim
             }
         }
         else { SprayX = null; SprayTargetId = 0; sprayClock = 0; Refill(BattleSkill.Spray, ref sprayTank, dt); }
-        Bumps();
     }
 
-    // A hold skill (Fan, Spray) works this step: pressed on the field, still chosen, not cooling down.
+    // The Spray works this step: pressed on the field, still chosen, not cooling down.
     private bool Holding(BattleSkill skill) => Armed == skill && cooldowns[(int)skill] <= 0;
     // Used up: put away and cooling down (its tank refills with the cooldown).
     private void Spend(BattleSkill skill) { Armed = null; Recharge(skill); }
@@ -173,9 +237,6 @@ public sealed partial class BattleSim
         SkillUsed();
         return true;
     }
-    // The mouse no longer steers it, and letting go does not stop it (kept for the window's calls).
-    public void MoveSpray(double x, double height) { }
-    public void StopSpray() { }
     public bool Spraying => SprayX != null;
 
     // The slime nearest (x, height) a spray can lock on (within `within`; none: null).
@@ -253,37 +314,6 @@ public sealed partial class BattleSim
         }
     }
 
-    // A stroke of the Scissors from (x0, h0) to (x1, h1) (battle x, height over the floor).
-    public bool Snip(double x0, double h0, double x1, double h1)
-    {
-        if (Armed != BattleSkill.Scissors || !Ready(BattleSkill.Scissors) || !double.IsFinite(x0) || !double.IsFinite(h0) || !double.IsFinite(x1) || !double.IsFinite(h1)) return false;
-        if (Math.Sqrt((x1 - x0) * (x1 - x0) + (h1 - h0) * (h1 - h0)) < Settings.ScissorsMinLength) return false;
-        int done = 0;
-        // Ropes first (the cut below may defeat a holder, and its rope with it).
-        foreach (var holder in slimes.ToArray())
-            if (Is(holder, EnemyLinks.Tether) && LinkPartner(holder) is Slime ally && RopeCrossed(holder, ally, x0, h0, x1, h1) && CutLink(holder.Id)) { RopesCut++; done++; }
-        // A boss's ropes to its helpers (1.5 M17).
-        int bossRopes = SnipBossRopes(x0, h0, x1, h1);
-        RopesCut += bossRopes; done += bossRopes;
-        foreach (var s in slimes.ToArray())
-        {
-            if (!s.Targetable || s.Shielded) continue;
-            var (left, bottom, right, top) = Body(s);
-            if (!Crosses(x0, h0, x1, h1, left - 4, bottom - 4, right + 4, top + 4)) continue;
-            // A bubble the stroke goes through bursts (no hurt; 1.5 M13).
-            if (s.Bubbled) { PopBubble(s); done++; continue; }
-            AddEffect(BattleEffectKind.Spark, s.X, bottom + s.Height / 2);
-            ToolHit(s, ScissorsDamage);
-            done++;
-            if (Over) break;
-        }
-        Snips++;
-        Spend(BattleSkill.Scissors);
-        SkillUsed();
-        events.Add(new(BattleEventKind.Snipped, (x0 + x1) / 2, done));
-        return true;
-    }
-
     // The rope as drawn (PetBattleView.Links.cs, without its sway): from body to body at 45% of their
     // height, sagging in the middle (never below the floor line: a stroke along the floor still meets
     // it); crossed when the stroke comes within `pad` DIPs of it.
@@ -329,63 +359,6 @@ public sealed partial class BattleSim
     private static bool Lurable(Slime s) => s.Targetable && !s.IsBoss && !s.Riding && !s.Airborne && !s.Handled && !s.Stuck && !s.Burrowed && s.LeapHeight <= 0
         && s.State is not (SlimeState.Casting or SlimeState.Spawning) && !s.Shielded;
 
-    private void Blow(double from, double dt)
-    {
-        double range = FanRange;
-        foreach (var s in slimes)
-        {
-            if (!s.Targetable || s.IsBoss || s.Stuck || s.Riding || s.Airborne || s.Handled || s.Burrowed || s.LeapHeight > 0 || s.Shielded) continue;
-            double d = s.X - from;
-            if (Math.Abs(d) > range + s.Width / 2) continue;
-            int away = Math.Abs(d) >= 1 ? Math.Sign(d) : s.X >= lastCatX ? 1 : -1;
-            double strength = Math.Clamp(1 - Math.Max(0, Math.Abs(d) - s.Width / 2) / range, 0.25, 1);
-            double push = FanSpeed * strength * s.Type.PushFactor * (s.Elite is { PushImmune: true } ? FanImmuneShare : 1);
-            if (push <= 0) continue;
-            if (s.KnockVelocity * away < push) s.KnockVelocity = away * push;
-            s.Blown = 0.3;
-            // The wind throws a drummer off its count.
-            if (Is(s, EnemyLinks.Rhythm)) { s.BeatCount = 0; s.BeatClock = 0; }
-        }
-    }
-
-    // A blown enemy going fast into another or the edge (a wall counts) is hurt, and so is the other.
-    private void Bumps()
-    {
-        int count = slimes.Count;
-        for (int i = 0; i < count; i++)
-        {
-            var s = slimes[i];
-            if (s.Blown <= 0 || !s.Targetable || s.Handled || Math.Abs(s.KnockVelocity) < BumpSpeed) continue;
-            int way = Math.Sign(s.KnockVelocity);
-            var (minX, maxX) = Bounds(s);
-            Slime? into = null;
-            foreach (var o in slimes)
-            {
-                if (o == s || !o.Targetable || o.Airborne || o.Riding || o.Handled || o.Burrowed) continue;
-                double ahead = (o.X - s.X) * way;
-                // Not one going along with it as fast (two blown the same way do not bump).
-                if (ahead > 0 && ahead <= (o.Width + s.Width) / 2 * 0.7 + 4 && (s.KnockVelocity - o.KnockVelocity) * way >= BumpSpeed) { into = o; break; }
-            }
-            bool edge = way > 0 ? s.X >= maxX - 0.5 : s.X <= minX + 0.5;
-            if (into == null && !edge) continue;
-            if (s.BumpCooldown <= 0)
-            {
-                s.BumpCooldown = BumpSeconds;
-                FanBumps++;
-                AddEffect(BattleEffectKind.Spark, s.X + way * s.Width / 2, s.Height * 0.5);
-                events.Add(new(BattleEventKind.FanBump, s.X, s.Id));
-                ToolHit(s, Settings.FanBumpDamage);
-            }
-            if (into is { Targetable: true, BumpCooldown: <= 0 })
-            {
-                into.BumpCooldown = BumpSeconds;
-                ToolHit(into, Settings.FanBumpDamage);
-            }
-            s.KnockVelocity = 0;
-            if (Over) return;
-        }
-    }
-
     private void ToolHit(Slime s, double amount)
     {
         if (amount <= 0 || !s.Targetable || Over) return;
@@ -399,16 +372,16 @@ public sealed partial class BattleSim
     private void ClearTools()
     {
         LaserX = null; LaserRemaining = 0; laserClock = 0;
-        FanX = null;
+        ColumnX = null; ColumnRemaining = 0; Cut = null;
         SprayX = null; sprayClock = 0;
-        foreach (var s in slimes) { s.Lured = false; s.Blown = 0; s.WetRemaining = 0; }
+        foreach (var s in slimes) { s.Lured = false; s.Rooted = false; s.WetRemaining = 0; }
         ClearGrabber();
     }
 
     private void MapTools(double left, double oldWidth, double newWidth)
     {
         if (LaserX is double dot) LaserX = left + (dot - Left) / oldWidth * newWidth;
-        if (FanX is double fan) FanX = left + (fan - Left) / oldWidth * newWidth;
+        if (ColumnX is double column) ColumnX = left + (column - Left) / oldWidth * newWidth;
         if (SprayX is double spray) SprayX = left + (spray - Left) / oldWidth * newWidth;
         MapGrab(left, oldWidth, newWidth);
     }

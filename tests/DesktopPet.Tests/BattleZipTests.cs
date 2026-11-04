@@ -183,8 +183,12 @@ internal static class BattleZipTests
         Run(sim, 0.1); // The cat put down: the mouse skills wait while it is held.
         (x, top, bottom) = Across(helpers[0], zip);
         sim.Arm(BattleSkill.Scissors);
-        check(sim.Snip(x, top, x, bottom) && helpers[0].RopedTo == 0 && helpers[0].State == SlimeState.Stunned && sim.RopesCut == 1 && sim.BossRopesCut == 1,
-            "A Scissors stroke through a rope cuts it and dazes its helper");
+        // (2026-11-04: a cut across at the rope's height; the blades stop short of the other rope.)
+        helpers[1].X = helpers[0].X > zip.X ? zip.X - 300 : zip.X + 300;
+        bool snipped = sim.UseOnScreen(BattleSkill.Scissors, x + (helpers[0].X > zip.X ? 180 : -180), (top + bottom) / 2);
+        for (int i = 0; i < 120 && sim.Cut != null; i++) { sim.Step(1.0 / 60, 100, false); sim.ClearEvents(); }
+        check(snipped && helpers[0].RopedTo == 0 && helpers[0].State == SlimeState.Stunned && sim.BossRopesCut == 1,
+            "A Scissors cut through a rope cuts it and dazes its helper");
         Run(sim, 0.3);
         check(zip.Shielded && sim.RopesLeft(zip) == 1, "One rope left: the shield holds");
 

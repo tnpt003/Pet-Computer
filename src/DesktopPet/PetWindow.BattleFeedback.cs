@@ -77,7 +77,7 @@ public sealed partial class PetWindow
         [BattleEventKind.GhostFaded] = ("swoosh", 2), [BattleEventKind.GhostRevealed] = ("sparkle", 3), [BattleEventKind.GhostMissed] = ("swoosh", 2),
         [BattleEventKind.BubbleBlocked] = ("ball_tap", 3), [BattleEventKind.BubblePoked] = ("ball_tap", 3), [BattleEventKind.BubblePopped] = ("pop", 5),
         [BattleEventKind.BubbleRegrown] = ("squish", 2), [BattleEventKind.MirageCast] = ("sparkle", 3), [BattleEventKind.MirageDispelled] = ("pop", 3),
-        [BattleEventKind.SulkPuffed] = ("squish", 3), [BattleEventKind.SulkPetted] = ("sparkle", 2), [BattleEventKind.SulkCalmed] = ("satisfied", 5), [BattleEventKind.SulkTantrum] = ("squish", 4), [BattleEventKind.MirageShuffled] = ("swoosh", 3), [BattleEventKind.SprayRefilled] = ("sparkle", 2),
+        [BattleEventKind.SulkPuffed] = ("squish", 3), [BattleEventKind.SulkPetted] = ("sparkle", 2), [BattleEventKind.SulkCalmed] = ("satisfied", 5), [BattleEventKind.SulkTantrum] = ("squish", 4), [BattleEventKind.MirageShuffled] = ("swoosh", 3), [BattleEventKind.SprayRefilled] = ("sparkle", 2), [BattleEventKind.ThiefShaken] = ("satisfied", 5),
         // 1.5 M14: the flying slime and the burrowing slime.
         [BattleEventKind.FlyAimed] = ("clank", 2), [BattleEventKind.FlyShot] = ("swoosh", 3), [BattleEventKind.FlyShotHit] = ("squish", 4),
         [BattleEventKind.FlyerKnocked] = ("pop", 4), [BattleEventKind.FlyerDowned] = ("ball_tap", 4), [BattleEventKind.FlyerRose] = ("swoosh", 2),
@@ -142,6 +142,10 @@ public sealed partial class PetWindow
         BattleEventKind.MirageCast => L("Slime ảo ảnh có bản giả! Rê chuột: bản thật có bóng", "The mirage slime brought copies! Hover them: the real one has a shadow"),
         BattleEventKind.SulkPuffed => L("Slime dỗi không mất máu! Rê chuột qua lại trên nó để dỗ", "The sulky slime takes no damage! Stroke it with the cursor to cheer it up"),
         BattleEventKind.SulkCalmed => L("Hết dỗi rồi! Nó vẫy tay bỏ đi", "Cheered up! It waves goodbye and leaves"),
+        BattleEventKind.Grabbed => L("Đã gắp! Click một chỗ trên sân để đập nó xuống (5 giây)", "Grabbed! Click a spot on the field to slam it down (5 s)"),
+        BattleEventKind.GrabRefused => L("Slime trộm không đập được: giữ đủ 5 giây để nó nhả đồ ra", "The thief can't be slammed: hold it 5 s and it shakes out what it stole"),
+        BattleEventKind.ThiefShaken => L("Lắc ra rồi! Slime trộm nhả đồ và biến mất", "Shaken out! The thief drops its loot and is gone"),
+        BattleEventKind.CatResponding => L("Mèo tỉnh lại rồi!", "The cat responds again!"),
         BattleEventKind.SprayRefilled => L("Slime ngã dưới nước nóng: bình được thêm nước!", "A slime fell to the hot water: the spray gets more water!"),
         BattleEventKind.MirageShuffled => L("Khói ảo ảnh! Bản thật có thể đã đổi chỗ, rê chuột kiểm tra lại", "Mirage smoke! The real one may have swapped places; check again with the mouse"),
         BattleEventKind.SulkTantrum => L("Quá tay rồi! Slime dỗi òa khóc dậm chân bỏ chạy, không để lại gì", "Too much! The sulky slime stamps off in tears, leaving nothing"),
@@ -218,7 +222,7 @@ public sealed partial class PetWindow
                 // 1.5 M18: the Slime Mother (her first clutch, the first one heading back, every feed), the Mutant King
                 // (every crown link: which kind matters; its first rain).
                 BattleEventKind.BroodWarned when trickExplained.Add(e.Kind) =>
-                    LF($"{BossName()} sắp đẻ bầy! Bom len khi cả bầy chụm lại, hoặc Đẩy/Quạt tách ra", $"The {BossName()} is laying a clutch! Bomb it while it huddles, or push or fan it apart"),
+                    LF($"{BossName()} sắp đẻ bầy! Bom len khi cả bầy chụm lại, Đẩy tách ra hoặc Quạt giữ chân", $"The {BossName()} is laying a clutch! Bomb it while it huddles, push it apart or hold it with the Fan"),
                 BattleEventKind.NurseHeading when trickExplained.Add(e.Kind) =>
                     LF($"Slime khổng lồ về cho {BossName()} bú! Hạ nó trước khi tới nơi", $"The giant slime is heading back to feed the {BossName()}! Beat it before it gets there"),
                 BattleEventKind.NurseFed => LF($"{BossName()} được hồi {(int)e.Value} máu", $"The {BossName()} got {(int)e.Value} HP back"),
@@ -294,7 +298,7 @@ public sealed partial class PetWindow
                 BattleEventKind.LinkCut when !cutExplained => L("Đứt dây! Đồng đội choáng", "Rope cut! Its ally is dazed"),
                 // 1.5 M11: the fusing slimes, the bomb slime, the splitting slime, once each per battle.
                 BattleEventKind.Merged when !remergeExplained && EventSlime(e)?.Type.Split != null => L("Hai nửa nhập lại! Hạ slime thảo dược trước", "The halves merged back! Take down the herb slime first"),
-                BattleEventKind.Merged when !mergeExplained && EventSlime(e)?.Type.Split == null => L("Slime nhập thành khổng lồ! Lần sau Đẩy hoặc Quạt tách bầy ra", "The slimes merged into a giant! Push or fan the pack apart next time"),
+                BattleEventKind.Merged when !mergeExplained && EventSlime(e)?.Type.Split == null => L("Slime nhập thành khổng lồ! Lần sau Đẩy tách bầy hoặc Quạt giữ chân", "The slimes merged into a giant! Next time push the pack apart or hold it with the Fan"),
                 BattleEventKind.LinkFormed when !rideExplained && IsRide(e) => L("Slime bom cưỡi slime nhanh! Hạ con ngựa giữa đường", "A bomb rides a quick slime! Take the mount down on the way"),
                 BattleEventKind.FuseLit when !fuseExplained => L("Bom châm ngòi! Nhấc mèo ra khỏi vòng đỏ", "The fuse is lit! Lift the cat out of the red ring"),
                 BattleEventKind.ThrowAimed when trickExplained.Add(e.Kind) => L("Slime nhanh sắp quăng bom! Chạy khỏi vòng đỏ hoặc nhấc mèo, đánh nó để bom rơi", "A quick slime is about to throw its bomb! Run out of the red ring or lift the cat; hit it to make it drop the bomb"),
@@ -310,12 +314,12 @@ public sealed partial class PetWindow
                     LF($"Đội hình {team.Name(PetLanguage.Vietnamese)}! {team.Tip(PetLanguage.Vietnamese)}", $"{team.Name(preferences.Language)} formation! {team.Tip(preferences.Language)}").TrimEnd(),
                 // 1.5 M13: the slimes the cursor beats, once each per battle.
                 BattleEventKind.GhostFaded or BattleEventKind.BubbleBlocked or BattleEventKind.BubblePopped or BattleEventKind.MirageCast or BattleEventKind.SulkPuffed
-                    or BattleEventKind.SulkCalmed or BattleEventKind.SulkTantrum or BattleEventKind.MirageShuffled or BattleEventKind.SprayRefilled or BattleEventKind.FlyAimed or BattleEventKind.FlyerDowned or BattleEventKind.BurrowCracked
+                    or BattleEventKind.SulkCalmed or BattleEventKind.SulkTantrum or BattleEventKind.MirageShuffled or BattleEventKind.SprayRefilled or BattleEventKind.CatResponding or BattleEventKind.Grabbed or BattleEventKind.GrabRefused or BattleEventKind.FlyAimed or BattleEventKind.FlyerDowned or BattleEventKind.BurrowCracked
                     or BattleEventKind.BurrowPinned or BattleEventKind.IceScratched or BattleEventKind.IceShattered or BattleEventKind.IceCracked or BattleEventKind.IceBonked or BattleEventKind.ClingClimbed
                     or BattleEventKind.ClingLanded or BattleEventKind.WallWatched or BattleEventKind.QuillsUp or BattleEventKind.QuillsPricked or BattleEventKind.ClockStarted
                     or BattleEventKind.ClockRang when trickExplained.Add(e.Kind) => TrickBanner(e),
                 // 1.5 M16: the thief's news shows every time (what it took matters).
-                BattleEventKind.ThiefStole or BattleEventKind.ThiefReturned or BattleEventKind.ThiefEscaped => TrickBanner(e),
+                BattleEventKind.ThiefStole or BattleEventKind.ThiefReturned or BattleEventKind.ThiefEscaped or BattleEventKind.ThiefShaken => TrickBanner(e),
                 // 1.5 M20: the first fish taken and dropped of a battle say what to do; every fish lost counts down.
                 BattleEventKind.FishTaken when trickExplained.Add(e.Kind) => L("Slime tha cá! Hạ nó trước khi nó chạy khỏi màn", "A slime is taking a fish! Beat it before it gets off the screen"),
                 BattleEventKind.FishDropped when trickExplained.Add(e.Kind) => L("Cá rơi! Click vào cá để trả về giỏ", "Fish dropped! Click it to put it back in the basket"),

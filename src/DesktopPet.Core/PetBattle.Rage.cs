@@ -41,6 +41,7 @@ public sealed partial class BattleSim
         // Every harm on the cat is gone at once.
         if (CatStunRemaining > 0 || DazzleRemaining > 0 || CatSlowRemaining > 0) RageCleansed++;
         CatStunRemaining = 0;
+        NotRespondingRemaining = 0;
         DazzleRemaining = 0;
         CatSlowRemaining = 0;
         events.Add(new(BattleEventKind.Raged, lastCatX, auto ? 1 : 0));

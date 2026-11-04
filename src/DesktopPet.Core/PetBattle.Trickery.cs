@@ -63,9 +63,8 @@ public sealed partial class BattleSim
 
     // The skills' numbers with the Trickery cards.
     public double LaserSeconds => Settings.LaserSeconds + laserBonus;
-    public double FanRange => Settings.FanRange * (1 + fanBonus);
-    private double FanSpeed => Settings.FanSpeed * (1 + fanBonus);
     private double GrabberHitDamage => Settings.GrabberHitDamage * (1 + grabberBonus);
+    private double GrabberSlamDamage => Settings.GrabberSlamDamage * (1 + grabberBonus);
     private double GrabberStun => Settings.GrabberStun * (1 + grabberBonus);
     private double ScissorsDamage => Settings.ScissorsDamage * (1 + scissorsBonus);
     private double SprayTankSeconds => Settings.SprayTankSeconds + sprayBonus;

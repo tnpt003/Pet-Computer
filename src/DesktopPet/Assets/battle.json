@@ -108,24 +108,30 @@
   "laserSeconds": 4,
   "laserLureRange": 300,
   "laserDps": 3,
-  "fanSteamSeconds": 3,
-  "fanRefillSeconds": 6,
-  "fanRange": 200,
-  "fanSpeed": 220,
-  "fanBumpDamage": 4,
+  "fanRefillSeconds": 14,
+  // 2026-11-04: the Fan's column of wind (width, seconds, how much lighter the blows in it).
+  "fanColumnWidth": 150,
+  "fanColumnSeconds": 4,
+  "fanColumnCut": 0.3,
   // 1.5 Grabber: cooldown, the longest hold (s), the largest kind it lifts (scale), a throw's hit damage,
   // its daze (s), the cursor speed a let-go needs to be a throw (DIPs/s). Scissors: cooldown, a cut's
   // damage, the shortest stroke (DIPs). Spray: seconds of water, the refill once spent, its reach
   // around the cursor (DIPs), HP a second, how much slower (0–0.9), how long a slime stays wet (s).
   "grabberCooldown": 12,
-  "grabberHoldSeconds": 3,
+  "grabberHoldSeconds": 5,
   "grabberMaxScale": 1.3,
   "grabberHitDamage": 8,
+  // 2026-11-04 (grab – hold – slam): the slammed slime's damage; a thief that stole nothing drops this much charge.
+  "grabberSlamDamage": 20,
+  "grabberThiefCharge": 0.2,
   "grabberStun": 1,
-  "grabberThrowSpeed": 300,
-  "scissorsCooldown": 8,
-  "scissorsDamage": 6,
-  "scissorsMinLength": 40,
+  "scissorsCooldown": 14,
+  "scissorsDamage": 15,
+  // 2026-11-04: the cut across the screen (length, band, the dashed preview and the run of the blades).
+  "scissorsLength": 360,
+  "scissorsBand": 40,
+  "scissorsPreview": 0.4,
+  "scissorsSweep": 0.5,
   "sprayTankSeconds": 4,
   "sprayRefillSeconds": 8,
   "sprayRange": 70,
@@ -180,18 +186,18 @@
     },
     {
       "id": "grabber", "nameVi": "Kẹp gắp", "nameEn": "Grabber",
-      "descVi": "Kẹp gắp — chọn rồi nhấn giữ một slime nhỏ (không phải đá hay boss) và vung chuột để ném: trúng slime khác thì cả hai mất {grabberHitDamage} máu, con kia choáng. Hồi {grabberCooldown} giây.",
-      "descEn": "Grabber — choose, then press a small slime (not a rock or a boss) and fling the mouse: thrown into another, both lose {grabberHitDamage} HP and the other is dazed. {grabberCooldown} s cooldown."
+      "descVi": "Kẹp gắp — chọn rồi click một slime nhỏ: gắp ra khỏi trận tối đa {grabberHoldSeconds} giây; click chỗ khác để đập xuống: −{grabberSlamDamage} máu, choáng, slime quanh đó −{grabberHitDamage}. Hồi {grabberCooldown} giây.",
+      "descEn": "Grabber — choose, then click a small slime: lifted out of the fight up to {grabberHoldSeconds} s; click a spot to slam it: −{grabberSlamDamage} HP, dazed, −{grabberHitDamage} round it. {grabberCooldown} s cooldown."
     },
     {
       "id": "scissors", "nameVi": "Kéo cắt", "nameEn": "Scissors",
-      "descVi": "Kéo cắt — chọn rồi kéo chuột thành một nét: cắt đứt dây nhầy, slime nằm trên nét mất {scissorsDamage} máu. Hồi {scissorsCooldown} giây.",
-      "descEn": "Scissors — choose, then drag a stroke: it cuts slime ropes, and each slime on it loses {scissorsDamage} HP. {scissorsCooldown} s cooldown."
+      "descVi": "Kéo cắt — chọn rồi click chỗ bất kỳ trên màn hình: kéo cắt ngang một dải {scissorsLength} DIP; mỗi slime trúng mất {scissorsDamage} máu và đứt dây, dây cưỡi, bong bóng. Hồi {scissorsCooldown} giây.",
+      "descEn": "Scissors — choose, then click anywhere on the screen: they cut across a {scissorsLength}-DIP band; each slime in it loses {scissorsDamage} HP and its ropes, rides and bubbles are cut. {scissorsCooldown} s cooldown."
     },
     {
       "id": "fan", "nameVi": "Quạt", "nameEn": "Fan",
-      "descVi": "Quạt — chọn rồi giữ chuột: thổi slime ra xa con trỏ, va nhau hoặc va mép mất {fanBumpDamage} máu. Hơi đủ {fanSteamSeconds} giây; cạn thì chờ {fanRefillSeconds} giây.",
-      "descEn": "Fan — choose, then hold the mouse: blows slimes away from the cursor; one blown into another or the edge loses {fanBumpDamage} HP. {fanSteamSeconds} s of air; empty, it refills in {fanRefillSeconds} s."
+      "descVi": "Quạt — chọn rồi click chỗ bất kỳ: quạt trần thổi cột gió rộng {fanColumnWidth} DIP trong {fanColumnSeconds} giây; slime dưới sàn đứng yên, đánh mèo nhẹ hơn; slime bay, bám tường bị thổi rơi. Hồi {fanRefillSeconds} giây.",
+      "descEn": "Fan — choose, then click anywhere: a ceiling fan blows a {fanColumnWidth}-DIP column for {fanColumnSeconds} s; floor slimes in it are held and hit softer; flyers, wall slimes fall. {fanRefillSeconds} s cooldown."
     },
     {
       "id": "spray", "nameVi": "Bình xịt nước nóng", "nameEn": "Hot water spray",
@@ -221,7 +227,7 @@
     // this battle's waves can bring, at random (none: popupSpawn).
     "popupEvery": 8, "popupSeconds": 8, "popupSpawn": "slime", "adCount": 3,
     "popupKinds": [ "slime", "runner", "rock", "spitter", "springer", "phantom", "bubble", "flyer", "burrower", "icy", "hedgehog", "thief", "clinger" ],
-    "bellEvery": 10, "bellDamage": 6, "bellStun": 1, "freezeEvery": 12, "freezeSeconds": 1.2,
+    "bellEvery": 10, "bellDamage": 6, "bellStun": 1, "freezeEvery": 15, "freezeSeconds": 3, "freezeShare": 0.1, "freezeClicks": 3,
     "mendEvery": 7, "mendShare": 0.15, "mendGuard": 2, "spitEvery": 15, "spitElite": true,
     // Malware at random times (from a threat of malwareMinThreat, every malwareEveryMin–malwareEveryMax s
     // of fighting, one kind by weight among those not out yet, at most maxMalware kinds at once).
@@ -251,7 +257,7 @@
         "badVi": "Nhiễm virus: thả chuông lên đầu mèo, làm mèo choáng 1 giây.", "badEn": "Infected: drops bells on the cat's head that stun it for 1 s." },
       { "id": "endtask", "nameVi": "End Task", "nameEn": "End Task", "charge": 80,
         "descVi": "Tắt slime nhiều máu nhất. Trùm, tinh anh: mất 25% máu.", "descEn": "Ends the slime with the most HP. Bosses, elites: lose 25% HP.",
-        "badVi": "Nhiễm virus: làm mèo \"Không phản hồi\" một lúc.", "badEn": "Infected: leaves the cat \"Not responding\" for a moment." },
+        "badVi": "Nhiễm virus: mèo \"Không phản hồi\" 3 giây và mất 10% máu (click mèo 3 lần để tỉnh sớm).", "badEn": "Infected: the cat is \"Not responding\" for 3 s and loses 10% HP (click it 3 times to wake it)." },
       { "id": "undo", "nameVi": "Ctrl+Z", "nameEn": "Ctrl+Z", "charge": 90,
         "descVi": "Hoàn lại máu mèo mất trong 4 giây vừa qua.", "descEn": "Gives back the HP the cat lost in the last 4 s.",
         "badVi": "Nhiễm virus: hồi máu cho slime yếu nhất và che chắn nó 2 giây.", "badEn": "Infected: heals the weakest slime and guards it for 2 s." },
@@ -413,7 +419,7 @@
       // faster for good; with fewer than count left, minCount of them merge; the giant lands with a slam
       // (slamRadius; a cat on the floor in it takes slamShare × the giant's damage and a short stun).
       "id": "fuser", "nameVi": "Slime hợp thể", "nameEn": "Fusing slime",
-      "tipVi": "Bầy 3 con chia nhau đòn đánh; mất một con thì cả bầy nổi giận. Chụm lại là nhập thành Slime khổng lồ dậm đất. Tách bầy bằng Quạt, Đẩy, hoặc Bom.", "tipEn": "A pack of three sharing every hit; lose one and the rest rage. Bunched, they merge into a giant that lands with a slam. Split them with the Fan or Push, or bomb them.", "counters": ["fan", "bomb", "push"],
+      "tipVi": "Bầy 3 con chia nhau đòn đánh; mất một con thì cả bầy nổi giận. Chụm lại là nhập thành Slime khổng lồ dậm đất. Đẩy tách bầy, Quạt giữ chân, hoặc Bom.", "tipEn": "A pack of three sharing every hit; lose one and the rest rage. Bunched, they merge into a giant that lands with a slam. Push them apart, hold them with the Fan, or bomb them.", "counters": ["fan", "bomb", "push"],
       "maxHp": 26, "speed": 40, "damage": 6, "range": 50,
       "windup": 0.7, "attackCooldown": 2.0, "recover": 0.4,
       "scale": 0.7, "color": "#F29BC4", "marks": "swarm", "cost": 1, "binSpit": false,
@@ -845,8 +851,8 @@
     // cat put down after a real lift, a throw too: amount damage to enemies on the
     // floor near it, a little knock back; once per 6 s) and skillRefund (the chance a skill costs half its cooldown).
     { "id": "long_laser", "group": "trick", "skill": "laser", "nameVi": "Laser bền", "nameEn": "Lasting laser", "descVi": "Chấm laser sáng thêm 1,5 giây", "descEn": "The laser dot lasts 1.5 s longer", "effect": "laserTime", "amount": 1.5, "maxStacks": 2 },
-    { "id": "turbo_fan", "group": "trick", "skill": "fan", "nameVi": "Quạt turbo", "nameEn": "Turbo fan", "descVi": "Quạt thổi xa và mạnh hơn 25%", "descEn": "The fan reaches and blows 25% further", "effect": "fanPower", "amount": 0.25, "maxStacks": 2 },
-    { "id": "firm_grip", "group": "trick", "skill": "grabber", "nameVi": "Kẹp chắc", "nameEn": "Firm grip", "descVi": "Cú ném của Kẹp gắp: +50% sát thương và choáng", "descEn": "Grabber throws: +50% damage and daze", "effect": "grabberThrow", "amount": 0.5, "maxStacks": 2 },
+    { "id": "turbo_fan", "group": "trick", "skill": "fan", "nameVi": "Quạt turbo", "nameEn": "Turbo fan", "descVi": "Cột gió của Quạt rộng hơn 25%", "descEn": "The Fan's column is 25% wider", "effect": "fanPower", "amount": 0.25, "maxStacks": 2 },
+    { "id": "firm_grip", "group": "trick", "skill": "grabber", "nameVi": "Kẹp chắc", "nameEn": "Firm grip", "descVi": "Cú đập của Kẹp gắp: +50% sát thương", "descEn": "Grabber slams: +50% damage", "effect": "grabberThrow", "amount": 0.5, "maxStacks": 2 },
     { "id": "sharp_scissors", "group": "trick", "skill": "scissors", "nameVi": "Kéo sắc", "nameEn": "Sharp scissors", "descVi": "Kéo cắt mạnh hơn 40%", "descEn": "Scissors cut 40% harder", "effect": "scissorsDamage", "amount": 0.4, "maxStacks": 2 },
     { "id": "big_tank", "group": "trick", "skill": "spray", "nameVi": "Bình to", "nameEn": "Big tank", "descVi": "Bình xịt thêm 1,5 giây nước", "descEn": "The spray holds 1.5 s more water", "effect": "sprayTime", "amount": 1.5, "maxStacks": 2 },
     { "id": "keen_nose", "group": "trick", "nameVi": "Mũi thính", "nameEn": "Keen nose", "descVi": "Quái rơi đồ nhiều hơn 30%", "descEn": "Enemies leave 30% more drops", "effect": "dropChance", "amount": 0.3, "maxStacks": 2 },
@@ -1005,8 +1011,8 @@
             "id": "c2_download_gate", "nameVi": "Cổng tải về", "nameEn": "Download gate",
             "goalVi": "Slime phun để lại vũng tăng tốc, slime lò xo nằm chờ, bầy hợp thể nhập thành khổng lồ. Màn này cho mượn Quạt.",
             "goalEn": "Spitters leave speed puddles, spring slimes lie in wait, fusing swarms merge into a giant. This stage lends the Fan.",
-            "tipVi": "Bạn sẽ học: Quạt (giữ chuột thổi slime ra xa, làm khô vũng, tách bầy); né vòng vàng của slime lò xo (nhấc mèo ra khi nó nén) hoặc đánh 2 đòn cho nó bẹp; hạ slime phun đứng xa trước; tách bầy hợp thể trước khi thanh nhập đầy. Từ chương này slime rơi cá và bình: click để nhặt.",
-            "tipEn": "You learn: the Fan (hold the mouse to blow slimes away, dry puddles, split swarms); to dodge a spring slime's gold ring (lift the cat while it squeezes) or flatten it with two hits; to take the far spitter first; to split a fusing swarm before its bar fills. From this chapter slimes drop fish and potions: click to pick them up.",
+            "tipVi": "Bạn sẽ học: Quạt (click một chỗ: cột gió giữ chân slime, làm khô vũng, thổi rơi slime bay); né vòng vàng của slime lò xo (nhấc mèo ra khi nó nén) hoặc đánh 2 đòn cho nó bẹp; hạ slime phun đứng xa trước; giữ chân bầy hợp thể trước khi thanh nhập đầy. Từ chương này slime rơi cá và bình: click để nhặt.",
+            "tipEn": "You learn: the Fan (click a spot: its column holds slimes, dries puddles, blows flyers down); to dodge a spring slime's gold ring (lift the cat while it squeezes) or flatten it with two hits; to take the far spitter first; to stop a fusing swarm before its bar fills. From this chapter slimes drop fish and potions: click to pick them up.",
             "objective": "clear", "upgrades": true, "maxAlive": 5, "threat": 1.9, "eliteChance": 0.15, "maxMalware": 4, "newAppsFrom": 1, "rulesVersion": 2,
             "unlocksSkill": "fan", "suggestSkills": [ "fan", "push", "bomb" ],
             "waves": [
@@ -1033,8 +1039,8 @@
             "id": "c2_fish_basket", "nameVi": "Giữ giỏ cá", "nameEn": "Keep the fish basket",
             "goalVi": "Giữ giỏ cá 75 giây: slime tha cá ra mép màn hình, bom cưỡi slime nhanh, slime đào hang trồi dưới chân, slime bay bắn đạn dính. Màn này cho mượn Kẹp gắp.",
             "goalEn": "Keep the basket 75 s: slimes carry fish off, bombs ride quick slimes, burrowers pop up underfoot, flyers shoot sticky drops. This stage lends the Grabber.",
-            "tipVi": "Bạn sẽ học: hạ slime đang tha cá trước, click cá rơi để trả về giỏ (mất hết cá là thua); Kẹp gắp nhấn giữ một slime nhỏ rồi vung chuột ném vào slime khác (kéo được slime bay xuống, lôi slime đào hang lên); hạ ngựa của slime bom giữa đường; nhấc mèo khi vòng nứt hiện dưới chân. Slime trộm lấy năng lượng icon: hạ nó trước khi nó trốn.",
-            "tipEn": "You learn: to beat a fish carrier first and click a dropped fish back into the basket (lose every fish and the stage is lost); the Grabber: press a small slime and fling the mouse to throw it at another (it pulls a flyer down and a burrower up); to take a bomb's mount down on the way; to lift the cat when a crack shows under it. A thief slime takes an icon's charge: beat it before it gets away.",
+            "tipVi": "Bạn sẽ học: hạ slime đang tha cá trước, click cá rơi để trả về giỏ (mất hết cá là thua); Kẹp gắp click một slime nhỏ rồi click chỗ đập nó xuống (kéo được slime bay xuống, lôi slime đào hang lên); hạ ngựa của slime bom giữa đường; nhấc mèo khi vòng nứt hiện dưới chân. Slime trộm lấy năng lượng icon: hạ nó trước khi nó trốn.",
+            "tipEn": "You learn: to beat a fish carrier first and click a dropped fish back into the basket (lose every fish and the stage is lost); the Grabber: click a small slime, then click where to slam it (it pulls a flyer down and a burrower up); to take a bomb's mount down on the way; to lift the cat when a crack shows under it. A thief slime takes an icon's charge: beat it before it gets away.",
             "objective": "survive", "surviveSeconds": 75, "maxAlive": 6, "upgrades": true, "maxUpgrades": 3, "upgradeAt": [ 20, 40, 60 ],
             "threatGrowth": 0.8, "threat": 2.2, "eliteChance": 0.15, "maxMalware": 4, "newAppsFrom": 1, "rulesVersion": 2, "reward": "FolderHat",
             "unlocksSkill": "grabber", "suggestSkills": [ "grabber", "push", "heal" ],
@@ -1065,9 +1071,9 @@
             "id": "c2_zip_slime", "nameVi": "Slime Nén", "nameEn": "The Zip Slime",
             "goalVi": "Trận cuối chương 2: slime bong bóng, slime bám tường, rồi Slime Nén lăn đè, giải nén ra đội hình nối dây và tự nén thành khiên. Màn này cho mượn Kéo cắt.",
             "goalEn": "Chapter 2's last battle: bubble and wall slimes, then the Zip Slime rolls, unpacks squads tied to it and packs into a shield. This stage lends the Scissors.",
-            "tipVi": "Bạn sẽ học: Kéo cắt (kéo chuột thành một nét: cắt dây nhầy, chọc vỡ bong bóng); click 3 lần chọc vỡ bong bóng; ném mèo vào slime bám tường hoặc Đẩy cho nó rơi; nhấc mèo khỏi dải đỏ khi Slime Nén sắp lăn; cắt dây nối quân về Slime Nén để phá khiên; phá các mảnh file quanh nó ở pha cuối.",
-            "tipEn": "You learn: the Scissors (drag one stroke: cuts slime ropes, pops bubbles); to pop a bubble with three clicks; to throw the cat at a wall slime or Push it down; to lift the cat off the red strip before the Zip Slime rolls; to cut the ropes tying its squads to it to break its shield; to break the file shards around it at the end.",
-            "objective": "clear", "upgrades": true, "maxAlive": 6, "threat": 1.25, "eliteChance": 0.25, "maxMalware": 4, "newAppsFrom": 1, "rulesVersion": 2,
+            "tipVi": "Bạn sẽ học: Kéo cắt (click một chỗ: cắt ngang một dải, đứt dây nhầy, vỡ bong bóng); click 3 lần chọc vỡ bong bóng; ném mèo vào slime bám tường hoặc Đẩy cho nó rơi; nhấc mèo khỏi dải đỏ khi Slime Nén sắp lăn; cắt dây nối quân về Slime Nén để phá khiên; phá các mảnh file quanh nó ở pha cuối.",
+            "tipEn": "You learn: the Scissors (click a spot: they cut a band across, ropes and bubbles too); to pop a bubble with three clicks; to throw the cat at a wall slime or Push it down; to lift the cat off the red strip before the Zip Slime rolls; to cut the ropes tying its squads to it to break its shield; to break the file shards around it at the end.",
+            "objective": "clear", "upgrades": true, "maxAlive": 6, "threat": 1.4, "eliteChance": 0.25, "maxMalware": 4, "newAppsFrom": 1, "rulesVersion": 2,
             "unlocksSkill": "scissors", "suggestSkills": [ "scissors", "shield", "push" ],
             "keepsake": { "id": "zip_plush", "kind": "plush", "nameVi": "Thú bông Slime Nén", "nameEn": "Zip Slime plush" },
             "waves": [

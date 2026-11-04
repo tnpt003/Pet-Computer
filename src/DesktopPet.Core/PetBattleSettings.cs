@@ -120,24 +120,34 @@ public sealed class BattleSettings
     public double LaserSeconds { get; init; } = 4;
     public double LaserLureRange { get; init; } = 300;
     public double LaserDps { get; init; } = 3;
-    public double FanSteamSeconds { get; init; } = 3;
-    public double FanRefillSeconds { get; init; } = 6;
-    public double FanRange { get; init; } = 200;
-    public double FanSpeed { get; init; } = 220;
-    public double FanBumpDamage { get; init; } = 4;
+    public double FanRefillSeconds { get; init; } = 14;
+    // 2026-11-04 (docs/GOPY-C-2026-11-04.md D4): the Fan blows down a column (FanColumnWidth DIPs wide,
+    // FanColumnSeconds long) from a ceiling fan; slimes on the floor in it are held in place and hit the cat
+    // FanColumnCut less; climbers and flyers in it are blown down. Its cooldown: FanRefillSeconds.
+    public double FanColumnWidth { get; init; } = 150;
+    public double FanColumnSeconds { get; init; } = 4;
+    public double FanColumnCut { get; init; } = 0.3;
     // 1.5 M06 (PetBattle.Grabber.cs, PetBattle.Tools.cs). Grabber: the longest hold, the largest kind
     // it lifts (scale), a hit's damage, the daze of a throw, the speed a let-go needs to be a throw.
     // Scissors: a cut's damage, the shortest swipe (DIPs). Spray: seconds of water, the refill once
     // spent, its reach around the cursor, HP a second, how much slower it makes a slime, a soaking's time.
     public double GrabberCooldown { get; init; } = 12;
-    public double GrabberHoldSeconds { get; init; } = 3;
+    public double GrabberHoldSeconds { get; init; } = 5;
     public double GrabberMaxScale { get; init; } = 1.3;
     public double GrabberHitDamage { get; init; } = 8;
     public double GrabberStun { get; init; } = 1;
-    public double GrabberThrowSpeed { get; init; } = 300;
-    public double ScissorsCooldown { get; init; } = 8;
-    public double ScissorsDamage { get; init; } = 6;
-    public double ScissorsMinLength { get; init; } = 40;
+    // 2026-11-04, the claw's slam: what the slammed enemy loses (the others round it: GrabberHitDamage), and a
+    // thief that stole nothing: the charge it still drops on the emptiest icon.
+    public double GrabberSlamDamage { get; init; } = 20;
+    public double GrabberThiefCharge { get; init; } = 0.2;
+    public double ScissorsCooldown { get; init; } = 14;
+    public double ScissorsDamage { get; init; } = 15;
+    // 2026-11-04: a cut across the screen: ScissorsLength DIPs long, ScissorsBand DIPs thick, shown
+    // ScissorsPreview s as a dashed line, then the scissors run along it in ScissorsSweep s.
+    public double ScissorsLength { get; init; } = 360;
+    public double ScissorsBand { get; init; } = 40;
+    public double ScissorsPreview { get; init; } = 0.4;
+    public double ScissorsSweep { get; init; } = 0.5;
     public double SprayTankSeconds { get; init; } = 4;
     public double SprayRefillSeconds { get; init; } = 8;
     // 2026-11-04, the hot-water spray: a slime falling while it is sprayed gives the tank this many seconds
@@ -295,8 +305,8 @@ public sealed class BattleSettings
         new UpgradeSpec { Id = "thick_bubble", Group = BuildGroups.Trick, Skill = "shield", NameVi = "Khiên dày", NameEn = "Thick bubble", DescVi = "Khiên bong bóng kéo dài thêm 1 giây", DescEn = "Bubble shield lasts 1 s longer", Effect = "shieldTime", Amount = 1, MaxStacks = 2 },
         // 1.5 M25: Trickery cards for the new skills and the drops, and its two rare cards.
         new UpgradeSpec { Id = "long_laser", Group = BuildGroups.Trick, Skill = "laser", NameVi = "Laser bền", NameEn = "Lasting laser", DescVi = "Chấm laser sáng thêm 1,5 giây", DescEn = "The laser dot lasts 1.5 s longer", Effect = "laserTime", Amount = 1.5, MaxStacks = 2 },
-        new UpgradeSpec { Id = "turbo_fan", Group = BuildGroups.Trick, Skill = "fan", NameVi = "Quạt turbo", NameEn = "Turbo fan", DescVi = "Quạt thổi xa và mạnh hơn 25%", DescEn = "The fan reaches and blows 25% further", Effect = "fanPower", Amount = 0.25, MaxStacks = 2 },
-        new UpgradeSpec { Id = "firm_grip", Group = BuildGroups.Trick, Skill = "grabber", NameVi = "Kẹp chắc", NameEn = "Firm grip", DescVi = "Cú ném của Kẹp gắp: +50% sát thương và choáng", DescEn = "Grabber throws: +50% damage and daze", Effect = "grabberThrow", Amount = 0.5, MaxStacks = 2 },
+        new UpgradeSpec { Id = "turbo_fan", Group = BuildGroups.Trick, Skill = "fan", NameVi = "Quạt turbo", NameEn = "Turbo fan", DescVi = "Cột gió của Quạt rộng hơn 25%", DescEn = "The Fan's column is 25% wider", Effect = "fanPower", Amount = 0.25, MaxStacks = 2 },
+        new UpgradeSpec { Id = "firm_grip", Group = BuildGroups.Trick, Skill = "grabber", NameVi = "Kẹp chắc", NameEn = "Firm grip", DescVi = "Cú đập của Kẹp gắp: +50% sát thương", DescEn = "Grabber slams: +50% damage", Effect = "grabberThrow", Amount = 0.5, MaxStacks = 2 },
         new UpgradeSpec { Id = "sharp_scissors", Group = BuildGroups.Trick, Skill = "scissors", NameVi = "Kéo sắc", NameEn = "Sharp scissors", DescVi = "Kéo cắt mạnh hơn 40%", DescEn = "Scissors cut 40% harder", Effect = "scissorsDamage", Amount = 0.4, MaxStacks = 2 },
         new UpgradeSpec { Id = "big_tank", Group = BuildGroups.Trick, Skill = "spray", NameVi = "Bình to", NameEn = "Big tank", DescVi = "Bình xịt thêm 1,5 giây nước", DescEn = "The spray holds 1.5 s more water", Effect = "sprayTime", Amount = 1.5, MaxStacks = 2 },
         new UpgradeSpec { Id = "keen_nose", Group = BuildGroups.Trick, NameVi = "Mũi thính", NameEn = "Keen nose", DescVi = "Quái rơi đồ nhiều hơn 30%", DescEn = "Enemies leave 30% more drops", Effect = "dropChance", Amount = 0.3, MaxStacks = 2 },
@@ -454,7 +464,7 @@ public enum BattleSkill { Push, Heal, Cheer, Bomb, Shield, Laser, Grabber, Sciss
 // How a chosen skill is used: at once (None), on a clicked slime (Push, Bomb), on a clicked spot of
 // the field (Laser), while the mouse is held on the field (Fan, Spray), a slime pressed and dragged
 // (Grabber) or a stroke across the field (Scissors).
-public enum SkillAim { None, Slime, Point, Hold, Drag, Swipe }
+public enum SkillAim { None, Slime, Point, Hold, Drag, Screen }
 
 // Casting: a support enemy winds up a heal (a green "+"), near or far; a push or stun cancels it.
 // Dashing: a dash enemy's lunge after its windup (it hits the cat once at most).
@@ -590,10 +600,11 @@ public sealed class Slime
     // Tools (PetBattle.Tools.cs): it is chasing the laser's dot this frame; the wind has it (s left);
     // it may be hurt by a bump again once BumpCooldown is 0.
     public bool Lured;
-    public double Blown, BumpCooldown;
     // 1.5 M06: in the Grabber's claw, or flying after it let go (Thrown: fast enough to hurt); how high
     // its bottom is over the floor (DIPs) and its flight's speed (VY up); seconds of the spray's soaking left.
-    public bool Grabbed, Tossed, Thrown;
+    public bool Grabbed, Tossed, Slammed;
+    // In the Fan's column (2026-11-04): held in place, its hits on the cat lighter.
+    public bool Rooted;
     // Tossed up by a combo of a weapon that launches (PetBattle.Weapons.cs): dazed on landing.
     public bool Launched;
     public double Lift, TossVX, TossVY, WetRemaining;
@@ -810,7 +821,7 @@ public enum BattleEventKind
     // vanished; a sulky slime puffed up from a hit, was stroked (its first stroke since it sulked again),
     // was soothed and left.
     GhostFaded, GhostRevealed, GhostMissed, BubbleBlocked, BubblePoked, BubblePopped, BubbleRegrown,
-    MirageCast, MirageDispelled, SulkPuffed, SulkPetted, SulkCalmed, SulkTantrum, MirageShuffled, SprayRefilled,
+    MirageCast, MirageDispelled, SulkPuffed, SulkPetted, SulkCalmed, SulkTantrum, MirageShuffled, SprayRefilled, GrabRefused, ThiefShaken, CutStarted, CatResponding,
     // 1.5 M14 (Value: the enemy's id): a flyer aimed, shot a drop, its drop hit the cat (Value: 1 held),
     // it was knocked down (Value: 1 by the Grabber), landed, flew up again; a burrower's cracks showed, it
     // came up (Value: 1 it hit the cat), was pinned by the cat let go on it, pulled up by the Grabber, dug in.
@@ -1063,8 +1074,12 @@ public sealed record AppsSpec
     public double BellEvery { get; init; } = 10;
     public double BellDamage { get; init; } = 6;
     public double BellStun { get; init; } = 1;
-    public double FreezeEvery { get; init; } = 12;
-    public double FreezeSeconds { get; init; } = 1.2;
+    public double FreezeEvery { get; init; } = 15;
+    public double FreezeSeconds { get; init; } = 3;
+    // 2026-11-04: what the infected End Task's "Not responding" takes (a share of the cat's max HP, never
+    // its last point), and the clicks on the cat that end it early.
+    public double FreezeShare { get; init; } = 0.1;
+    public int FreezeClicks { get; init; } = 3;
     public double MendEvery { get; init; } = 7;
     public double MendShare { get; init; } = 0.15;
     public double MendGuard { get; init; } = 2;

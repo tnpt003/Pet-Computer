@@ -30,13 +30,13 @@ public sealed partial class BattleFieldView : FrameworkElement
     // Grabber's press on a slime (its id) and the moves after them (battle x, height over the floor);
     // the mouse let go; a Scissors stroke (from x, height to x, height).
     public event Action<double>? SpotClicked;
-    public event Action<double, double>? HoldPressed, HoldMoved, GrabMoved;
+    public event Action<double, double>? HoldPressed;
     public event Action<int, double, double>? GrabPressed;
-    public event Action? HoldReleased, GrabReleased;
-    public event Action<double, double, double, double>? Swiped;
+    // 2026-11-04: a click on the field while an enemy hangs in the claw (battle x): it is slammed there.
+    public event Action<double>? GrabDropClicked;
+    // 2026-11-04: a click on the strip with the Scissors or the Fan chosen (battle x, height over the floor).
+    public event Action<double, double>? ScreenClicked;
     // A Scissors stroke being drawn (view DIPs: where it started, where the cursor is).
-    private Point? strokeFrom;
-    private Point strokeTo;
     // The slime under the mouse while Push is chosen, and the side the cursor is on: the
     // arrow shows which way it will fly.
     private int? hoverId;
@@ -49,8 +49,10 @@ public sealed partial class BattleFieldView : FrameworkElement
         MouseLeftButtonDown += (_, e) =>
         {
             var point = e.GetPosition(this);
+            // An enemy in the claw: this click says where to slam it.
+            if (sim.Grabbing && !sim.GrabCarrying) GrabDropClicked?.Invoke(point.X + OriginX);
             // An ad's × first; the rest of an ad hides the slimes behind it.
-            if (PopupCloseAt(point) is int popup) PopupClicked?.Invoke(popup);
+            else if (PopupCloseAt(point) is int popup) PopupClicked?.Invoke(popup);
             else if (HazardAt(point) is int hazard)
             {
                 HazardClicked?.Invoke(hazard);
@@ -58,27 +60,15 @@ public sealed partial class BattleFieldView : FrameworkElement
                 if (sim.HoldingHazardId == hazard) CaptureMouse();
             }
             // A mouse skill chosen: anywhere on the field, a slime too (an ad still hides what is behind it).
-            else if (sim.Armed is BattleSkill armed && BattleSkills.Get(armed).Aim is SkillAim.Point or SkillAim.Hold or SkillAim.Drag or SkillAim.Swipe)
+            else if (sim.Armed is BattleSkill armed && BattleSkills.Get(armed).Aim is SkillAim.Point or SkillAim.Hold or SkillAim.Drag or SkillAim.Screen)
             {
                 var aim = BattleSkills.Get(armed).Aim;
                 double bx = point.X + OriginX, height = Floor - point.Y;
                 if (OnPopup(point)) { }
+                else if (aim == SkillAim.Screen) ScreenClicked?.Invoke(bx, height);
                 else if (aim == SkillAim.Point) SpotClicked?.Invoke(bx);
-                else if (aim == SkillAim.Hold)
-                {
-                    HoldPressed?.Invoke(bx, height);
-                    if (sim.FanBlowing || sim.Spraying) CaptureMouse();
-                }
-                else if (aim == SkillAim.Drag)
-                {
-                    if (!OnWall(point) && SlimeAt(point) is int grabbed) GrabPressed?.Invoke(grabbed, bx, height);
-                    if (sim.Grabbing) CaptureMouse();
-                }
-                else
-                {
-                    strokeFrom = strokeTo = point;
-                    CaptureMouse();
-                }
+                else if (aim == SkillAim.Hold) HoldPressed?.Invoke(bx, height);
+                else if (!OnWall(point) && SlimeAt(point) is int grabbed) GrabPressed?.Invoke(grabbed, bx, height);
             }
             // A drop on the floor before the slimes (1.5 M19: cat, chosen skill, drop, slime, icon).
             else if (!OnPopup(point) && DropAt(point) is int drop) DropClicked?.Invoke(drop);
@@ -100,31 +90,18 @@ public sealed partial class BattleFieldView : FrameworkElement
     private void EndHold()
     {
         if (sim.HoldingHazardId != 0) HazardReleased?.Invoke();
-        if (sim.FanBlowing || sim.Spraying) HoldReleased?.Invoke();
-        if (sim.Grabbing) GrabReleased?.Invoke();
-        if (strokeFrom is Point from)
-        {
-            strokeFrom = null;
-            Swiped?.Invoke(from.X + OriginX, Floor - from.Y, strokeTo.X + OriginX, Floor - strokeTo.Y);
-            InvalidateVisual();
-        }
         if (IsMouseCaptured) ReleaseMouseCapture();
     }
 
     // Each battle frame: no ring held any more (it closed under the mouse) but the mouse still kept: give it back.
     public void DropStaleHold()
     {
-        if (sim.HoldingHazardId == 0 && !sim.FanBlowing && !sim.Spraying && !sim.Grabbing && strokeFrom == null && IsMouseCaptured) ReleaseMouseCapture();
-        // A stroke cut short (the skill put away: Pause, the cat lifted): nothing to cut.
-        if (strokeFrom != null && sim.Armed != BattleSkill.Scissors) { strokeFrom = null; if (IsMouseCaptured) ReleaseMouseCapture(); }
+        if (sim.HoldingHazardId == 0 && IsMouseCaptured) ReleaseMouseCapture();
     }
 
     private void Hover(Point point)
     {
         if (sim.HoldingHazardId != 0 && HazardAt(point) != sim.HoldingHazardId) EndHold();
-        if (sim.FanBlowing || sim.Spraying) HoldMoved?.Invoke(point.X + OriginX, Floor - point.Y);
-        if (sim.Grabbing) GrabMoved?.Invoke(point.X + OriginX, Floor - point.Y);
-        if (strokeFrom != null) { strokeTo = point; InvalidateVisual(); }
         int? id = sim.PushArmed && !OnPopup(point) ? SlimeAt(point) : null;
         double offset = id is int found && sim.Find(found) is { } slime ? point.X - (slime.X - OriginX) : 0;
         if (id == hoverId && Math.Sign(offset) == Math.Sign(hoverOffset)) return;
@@ -267,6 +244,8 @@ public sealed partial class BattleFieldView : FrameworkElement
                 }
                 // A wall climber up its edge leans into it (1.5 M15); a rolling boss turns over (1.5 M17).
                 double turn = BattleSim.RollTurn(slime), lean = WallLean(slime) + turn;
+                // A thief in the claw is held upside down and shaken (2026-11-04).
+                if (slime.Grabbed && slime.Type.Steal != null) lean += 180 + 16 * Math.Sin(time * 24);
                 double foot = floor - slime.LeapHeight - slime.RideHeight - slime.Lift - bubble - wall - RollLift(slime, turn);
                 if (lean != 0) dc.PushTransform(new RotateTransform(lean, x, foot - slime.Height / 2));
                 DrawSlime(dc, slime, x, foot, sim.Settings, SlimeTime(time)); // 1.5 M26: frozen, the pose of the flash.
@@ -596,7 +575,17 @@ public sealed partial class BattleFieldView : FrameworkElement
         DrawStatusTint(dc, slime, body, bw, bh, time);
         dc.DrawEllipse(Shine, null, new Point(-bw * 0.2, -bh * 0.68), 5, 3.5);
         double look = slime.Facing * 3;
-        if (slime.State == SlimeState.Stunned || slime.State == SlimeState.Defeated)
+        if (slime.Grabbed || slime.Slammed)
+        {
+            // In the claw (2026-11-04): squeezed "> <" eyes.
+            foreach (int side in new[] { -1, 1 })
+            {
+                double ex = side * 7 + look, ey = -bh * 0.55;
+                dc.DrawLine(Ink, new Point(ex + side * 3, ey - 3), new Point(ex - side * 2, ey));
+                dc.DrawLine(Ink, new Point(ex - side * 2, ey), new Point(ex + side * 3, ey + 3));
+            }
+        }
+        else if (slime.State == SlimeState.Stunned || slime.State == SlimeState.Defeated)
         {
             // Dazed "x x" eyes.
             foreach (double ex in new[] { -7.0, 7.0 })

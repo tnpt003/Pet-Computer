@@ -44,8 +44,32 @@ internal static class BattleToolsTests
     {
         LaserChecks(check);
         FanChecks(check);
+        ColumnChecks(check);
         WaitChecks(check);
         DataChecks(check);
+    }
+
+    // 2026-11-04 (D4): a click anywhere puts the Fan's column there: floor slimes in it stand still and hit
+    // the cat softer; a flyer in the air in it is blown down; then the cooldown.
+    private static void ColumnChecks(Action<bool, string> check)
+    {
+        var flyer = new EnemyType { Id = "flyer", MaxHp = 1000, Speed = 40, Damage = 0, Range = 55, Windup = 0.8, AttackCooldown = 2, Recover = 0.4, Fly = BattleData.Settings.Enemy("flyer").Fly };
+        var sim = Sim(Kind("walker", speed: 80), Kind("far", speed: 0), flyer);
+        Slime walker = sim.Slimes[0], far = sim.Slimes[1], fly = sim.Slimes[2];
+        walker.X = 700; far.X = 1400;
+        check(!sim.UseOnScreen(BattleSkill.Fan, 700, 400), "The Fan works only once chosen");
+        for (int i = 0; i < 600 && !(fly.Fly == FlyPhase.Aloft && fly.State != SlimeState.Spawning); i++) { sim.Step(dt, 100, false); sim.ClearEvents(); }
+        fly.X = 645;
+        walker.X = 755; // Apart: the flyer blown down must not shove it.
+        check(sim.Arm(BattleSkill.Fan) && sim.UseOnScreen(BattleSkill.Fan, 700, 400) && sim.ColumnX == 700 && sim.Armed == null && sim.Cooldown(BattleSkill.Fan) > 0,
+            "Chosen, a click anywhere puts the column there; the cooldown starts");
+        var seen = new List<BattleEvent>();
+        double before = walker.X;
+        for (int i = 0; i < 60; i++) { sim.Step(dt, 100, false); seen.AddRange(sim.Events); sim.ClearEvents(); }
+        check(Math.Abs(walker.X - before) < 2 && walker.Rooted && !far.Rooted, $"A slime on the floor in the column stands still ({before:0} → {walker.X:0}); one far away does not");
+        check(fly.Fly != FlyPhase.Aloft && sim.ColumnKnocks >= 1, "A flyer in the air in the column is blown down");
+        for (int i = 0; i < 300 && sim.ColumnX != null; i++) { sim.Step(dt, 100, false); sim.ClearEvents(); }
+        check(sim.ColumnX == null && !walker.Rooted, $"After {sim.Settings.FanColumnSeconds} s the column is gone");
     }
 
     private static void LaserChecks(Action<bool, string> check)
@@ -88,71 +112,36 @@ internal static class BattleToolsTests
 
     private static void FanChecks(Action<bool, string> check)
     {
-        var sim = Sim(Kind("a", speed: 0), Kind("king", speed: 0, boss: true), Kind("glued", speed: 0), Kind("rock", speed: 0));
-        Slime a = sim.Slimes[0], king = sim.Slimes[1], glued = sim.Slimes[2], rock = sim.Slimes[3];
-        a.X = 620; king.X = 400; glued.X = 560; rock.X = 1300;
-        sim.ApplyStatus(glued, SlimeStatus.Stick, 5);
-        check(!sim.StartFan(500), "The Fan blows only once chosen");
-        check(sim.Arm(BattleSkill.Fan) && sim.StartFan(500) && sim.FanBlowing, "Chosen, a press on the field starts it");
-        double kingAt = king.X, gluedAt = glued.X;
+        var sim = Sim(Kind("a", speed: 80), Kind("king", speed: 22, boss: true));
+        Slime a = sim.Slimes[0], king = sim.Slimes[1];
+        a.X = 500; king.X = 540;
+        sim.Arm(BattleSkill.Fan);
+        check(sim.UseOnScreen(BattleSkill.Fan, 520, 300), "(setup) the column over a slime and a boss");
         Run(sim, 0.5);
-        check(a.X > 640 && king.X == kingAt && glued.X == gluedAt, $"It blows a slime away from the cursor, never a boss or a stuck one ({a.X:0})");
-        check(sim.FanSteam < 1 && sim.FanSteam > 0.7 && sim.Armed == BattleSkill.Fan, $"Blowing uses its air ({sim.FanSteam:0.00})");
-        sim.StopFan();
-        double steam = sim.FanSteam;
-        Run(sim, 0.5);
-        check(!sim.FanBlowing && sim.FanSteam > steam && sim.Armed == BattleSkill.Fan, "Let go, it stops, its air comes back and it stays chosen");
-        sim.StartFan(500);
-        var seen = new List<BattleEvent>();
-        for (int i = 0; i < 300 && sim.FanBlowing; i++) { sim.Step(dt, 100, false); seen.AddRange(sim.Events); sim.ClearEvents(); }
-        check(!sim.FanBlowing && sim.Armed == null && sim.FanSteam == 0 && !sim.Ready(BattleSkill.Fan) && seen.Any(e => e.Kind == BattleEventKind.FanSpent),
-            "Out of air it stops and is put away");
-        check(Math.Abs(sim.Cooldown(BattleSkill.Fan) - sim.Settings.FanRefillSeconds) < 0.01 && !sim.Arm(BattleSkill.Fan), "Spent, it waits its refill");
-        Run(sim, sim.Settings.FanRefillSeconds + 0.1);
-        check(sim.Ready(BattleSkill.Fan) && sim.FanSteam > 0.999, $"Refilled, it is ready again ({sim.FanSteam}, {sim.Cooldown(BattleSkill.Fan)})");
-
-        // Bumps: into a slime that stands, and into the edge; each slime at most once a second.
-        sim = Sim(Kind("a", speed: 0), Kind("b", speed: 0), Kind("c", speed: 0));
-        Slime first = sim.Slimes[0], wall = sim.Slimes[1], edge = sim.Slimes[2];
-        first.X = 540; wall.X = 640; edge.X = 1560;
-        sim.ApplyStatus(wall, SlimeStatus.Stick, 5);
-        double hp = first.Hp, wallHp = wall.Hp;
-        sim.Arm(BattleSkill.Fan); sim.StartFan(500);
-        Run(sim, 0.9);
-        check(first.Hp == hp - sim.Settings.FanBumpDamage && wall.Hp == wallHp - sim.Settings.FanBumpDamage && sim.FanBumps >= 1,
-            $"Blown into another slime, both lose {sim.Settings.FanBumpDamage} once ({hp - first.Hp}, {wallHp - wall.Hp})");
-        sim.StopFan();
-        sim.MoveFan(0);
-        double edgeHp = edge.Hp;
-        sim.StartFan(1450);
-        Run(sim, 0.5);
-        check(edge.Hp == edgeHp - sim.Settings.FanBumpDamage, $"Blown into the edge it loses {sim.Settings.FanBumpDamage} ({edgeHp - edge.Hp})");
-        sim.StopFan();
-
-        // An elite that ignores Push: the wind barely moves it.
-        sim = Sim(Kind("plain", speed: 0), Kind("stubborn", speed: 0));
-        Slime plain = sim.Slimes[0], stubborn = sim.Slimes[1];
-        plain.X = 560; stubborn.X = 1060;
-        stubborn.Elite = new EliteSpec { PushImmune = true };
-        sim.Arm(BattleSkill.Fan); sim.StartFan(500);
-        Run(sim, 0.2);
-        sim.StopFan(); sim.StartFan(1000);
-        Run(sim, 0.2);
-        check(plain.X - 560 > 3 * (stubborn.X - 1060) && stubborn.X > 1060, $"An elite that ignores Push moves far less ({plain.X - 560:0} vs {stubborn.X - 1060:0})");
+        check(a.Rooted && !king.Rooted, "It holds a slime, never a boss");
+        Run(sim, sim.Settings.FanColumnSeconds);
+        check(sim.ColumnX == null && !sim.Ready(BattleSkill.Fan), "The column ends before its cooldown does");
+        Run(sim, sim.Settings.FanRefillSeconds);
+        check(sim.Ready(BattleSkill.Fan), "After its cooldown it is ready again");
+        // Its blows land lighter in the column.
+        var soft = Sim(Kind("hitter", speed: 0));
+        var hitter = soft.Slimes[0];
+        hitter.X = 130;
+        soft.Arm(BattleSkill.Fan); soft.UseOnScreen(BattleSkill.Fan, 130, 300);
+        double hp = soft.CatHp;
+        for (int i = 0; i < 180 && soft.CatHp == hp; i++) { soft.Step(dt, 100, false); soft.ClearEvents(); }
+        check(Math.Abs(hp - soft.CatHp - 5 * (1 - soft.Settings.FanColumnCut)) < 1e-6, $"A blow from inside the column lands {soft.Settings.FanColumnCut:P0} lighter ({hp - soft.CatHp:0.##} of 5)");
     }
 
     private static void WaitChecks(Action<bool, string> check)
     {
         var sim = Sim(Kind("a", speed: 0));
         sim.Slimes[0].X = 600;
-        sim.Arm(BattleSkill.Fan); sim.StartFan(500);
+        sim.Arm(BattleSkill.Fan);
         sim.UseAt(BattleSkill.Laser, 800); // The Fan is chosen: no Laser now.
         check(sim.LaserX == null, "One skill chosen at a time");
         Run(sim, 0.2, held: true);
-        double steam = sim.FanSteam;
-        check(!sim.FanBlowing && sim.Armed == null, "Lifting the cat stops the Fan and puts it away");
-        Run(sim, 1, held: true);
-        check(sim.FanSteam == steam, "While the cat is held its air does not come back");
+        check(sim.Armed == null, "Lifting the cat puts the Fan away");
         Run(sim, 0.1);
         check(sim.Arm(BattleSkill.Laser) && sim.UseAt(BattleSkill.Laser, 800), "Put down, the Laser is used");
         double left = sim.LaserRemaining;
@@ -171,17 +160,17 @@ internal static class BattleToolsTests
             try { BattleData.Parse(json); return false; }
             catch (InvalidDataException) { return true; }
         }
-        check(Rejects("{\"laserSeconds\":0}") && Rejects("{\"fanSteamSeconds\":0}") && Rejects("{\"fanRange\":5000}") && Rejects("{\"laserDps\":-1}"),
+        check(Rejects("{\"laserSeconds\":0}") && Rejects("{\"fanColumnSeconds\":0}") && Rejects("{\"fanColumnWidth\":5000}") && Rejects("{\"laserDps\":-1}"),
             "Out-of-range Laser and Fan numbers are refused");
-        check(!Rejects("{\"laserSeconds\":6,\"fanBumpDamage\":0}"), "In-range ones are accepted");
+        check(!Rejects("{\"laserSeconds\":6,\"fanColumnCut\":0}"), "In-range ones are accepted");
         var d = new BattleSettings();
         var s = BattleData.Settings;
         check(s.LaserCooldown == d.LaserCooldown && s.LaserSeconds == d.LaserSeconds && s.LaserLureRange == d.LaserLureRange && s.LaserDps == d.LaserDps
-              && s.FanSteamSeconds == d.FanSteamSeconds && s.FanRefillSeconds == d.FanRefillSeconds && s.FanRange == d.FanRange && s.FanSpeed == d.FanSpeed
-              && s.FanBumpDamage == d.FanBumpDamage, "The shipped battle.json has the built-in Laser and Fan numbers");
-        check(BattleSkills.Get(BattleSkill.Laser).Aim == SkillAim.Point && BattleSkills.Get(BattleSkill.Fan).Aim == SkillAim.Hold
-              && BattleSkills.Get(BattleSkill.Laser).Working && BattleSkills.Get(BattleSkill.Fan).Working, "The Laser is used on a spot, the Fan by holding");
-        check(s.Skill(BattleSkill.Laser).Desc("en").Contains("{laserDps}") && BattleSkills.Get(BattleSkill.Fan).Describe(s, "en").Contains("4 HP"),
+              && s.FanRefillSeconds == d.FanRefillSeconds && s.FanColumnWidth == d.FanColumnWidth && s.FanColumnSeconds == d.FanColumnSeconds
+              && s.FanColumnCut == d.FanColumnCut, "The shipped battle.json has the built-in Laser and Fan numbers");
+        check(BattleSkills.Get(BattleSkill.Laser).Aim == SkillAim.Point && BattleSkills.Get(BattleSkill.Fan).Aim == SkillAim.Screen
+              && BattleSkills.Get(BattleSkill.Laser).Working && BattleSkills.Get(BattleSkill.Fan).Working, "The Laser is used on a spot, the Fan anywhere on the screen (2026-11-04)");
+        check(s.Skill(BattleSkill.Laser).Desc("en").Contains("{laserDps}") && BattleSkills.Get(BattleSkill.Fan).Describe(s, "en").Contains("150-DIP column for 4 s"),
             "The descriptions show the battle's numbers");
     }
 }

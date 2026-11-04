@@ -150,10 +150,9 @@ internal static class BattleSwarmTests
         bomb.X = 900;
         sim.Arm(BattleSkill.Grabber);
         bool grabbed = sim.Grab(bomb.Id, 900, 20);
-        for (int i = 0; i < 6; i++) { sim.MoveGrab(900 + 40 * (i + 1), 40 + 10 * i); sim.Step(dt, 100, false); }
-        sim.ReleaseGrab();
+        sim.GrabDrop(1100); // 2026-11-04: grab, then click where to slam it.
         blasted = Run(sim, 2, 100, BattleEventKind.Blasted);
-        check(grabbed && blasted && bomb.Exploded && bomb.X > 900, "Thrown by the Grabber, a bomb blows up where it lands");
+        check(grabbed && blasted && bomb.Exploded && bomb.X > 900, "Slammed by the Grabber, a bomb blows up where it lands");
     }
 
     private static void RideChecks(Action<bool, string> check)

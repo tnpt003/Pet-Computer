@@ -71,8 +71,20 @@ internal static class BattleSkyTests
     {
         FlyChecks(check);
         KnockChecks(check);
+        AppKnockChecks(check);
         BurrowChecks(check);
         DataChecks(check);
+    }
+
+    // 2026-11-04 (D10): an app's hit brings a flyer in the air down to the floor.
+    private static void AppKnockChecks(Action<bool, string> check)
+    {
+        var sim = Field(Flyer());
+        var s = sim.Slimes.Single();
+        for (int i = 0; i < 900 && !(s.Fly == FlyPhase.Aloft && s.State != SlimeState.Spawning); i++) { sim.Step(1.0 / 60, 100, false); sim.ClearEvents(); }
+        bool up = s.Fly == FlyPhase.Aloft;
+        sim.Damage(s, 5, DamageSource.App);
+        check(up && s.Fly != FlyPhase.Aloft, "An app's hit brings a flyer in the air down");
     }
 
     private static void FlyChecks(Action<bool, string> check)

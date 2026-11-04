@@ -954,3 +954,12 @@ Các mục 1.5 phía trên viết theo từng mốc; đây là thứ tự chơi 
 - [ ] Slime nhím: gai dựng to, đỏ cam, viền đỏ; trước khi dựng rung mạnh và có "!" đỏ.
 - [ ] Slime hẹn giờ: đứng yên chỗ xuất hiện; đồng hồ to; 3 s cuối phóng to, rung, nháy đỏ, có tiếng; khi gọi có vòng sóng lớn + mũi tên ở mép; gọi tối đa 3 lần.
 - [ ] Slime trộm: đứng xa (~160 DIP) mà vẫn hút được, có tia tím nối với mèo; tinh anh lấy 2 thứ, hạ nó thì trả lại cả 2.
+
+### Đợt C3 góp ý 04/11 (2026-11-05, Issue #43)
+- [ ] Kẹp gắp: click slime thì càng nhấc lên, mặt "><"; click chỗ khác thì đập xuống (bụi, slime quanh đó mất máu); không click thì 5 giây sau đặt xuống phía xa mèo; mèo không đánh con đang bị giữ.
+- [ ] Kẹp gắp slime trộm: click chỗ khác không đập được; 5 giây sau nhả đồ rồi biến mất. Kẹp gắp slime bom: đập xuống thì nổ, chỉ hại quái.
+- [ ] Kéo cắt: chọn rồi click cả trên trời lẫn trên sàn; nét đứt hiện trước, kéo chạy từ trái hoặc phải; cắt được slime bay, dây xích, bong bóng; chuột phải hủy.
+- [ ] Quạt: click một chỗ; quạt trần ở đỉnh màn hình, cột gió suốt chiều cao; slime sàn đứng yên, slime bay/bám tường đi vào cột thì rơi.
+- [ ] Khi đang chọn Kéo cắt/Quạt: vẫn kéo được mèo, bấm được HUD, dải trận vẫn nhận click; DPI 150/200%, màn phụ.
+- [ ] App: chuông, tab, End Task trúng slime bay/bám tường thì nó rơi; Chụp Màn Hình chớp trắng toàn màn hình có 4 góc khung.
+- [ ] End Task nhiễm: mèo mờ trắng, "(Không phản hồi)", vòng xoay, mất 10% máu; click 3 lần tỉnh sớm; không làm mèo chết.

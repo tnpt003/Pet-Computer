@@ -42,9 +42,8 @@ public sealed partial class BattleSim
         if (slime.State is not (SlimeState.Moving or SlimeState.Stunned)) slime.Set(SlimeState.Moving);
         if (slime.MendingId != 0 && Find(slime.MendingId) is Slime mended) mended.Mended = false;
         slime.MendingId = 0;
-        slime.KnockVelocity = 0; slime.Blown = 0; slime.Lured = false;
+        slime.KnockVelocity = 0; slime.Lured = false;
         slime.Tossed = slime.Launched = true;
-        slime.Thrown = false;
         slime.TossVX = (slime.X < catX ? -1 : 1) * 90;
         slime.TossVY = arms.Launch;
         WeaponLaunches++;

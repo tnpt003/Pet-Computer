@@ -75,6 +75,22 @@ public sealed partial class BattleSim
             return GooSlow;
         }
     }
+    // The cat "not responding" (an infected End Task; its stun's time) and the clicks on it so far.
+    public double NotRespondingRemaining { get; private set; }
+    private int notRespondingClicks;
+
+    // A click on the cat (the window, a press without a drag): enough of them wake it from "not responding".
+    public bool PokeCat()
+    {
+        if (NotRespondingRemaining <= 0 || Over || Paused || AppRules is not AppsSpec rules) return false;
+        if (++notRespondingClicks < rules.FreezeClicks) return true;
+        NotRespondingRemaining = 0;
+        CatStunRemaining = 0;
+        StunImmunity = Settings.StunImmunitySeconds;
+        events.Add(new(BattleEventKind.CatResponding, lastCatX));
+        return true;
+    }
+
     public BattlePopup? FindPopup(int id) { foreach (var p in popups) if (p.Id == id) return p; return null; }
     // The floor X under an icon's column (the grid spans the floor's width).
     public double IconX(DesktopApp app) => Left + (app.Col + 0.5) * (Right - Left) / GridCols;
@@ -729,12 +745,17 @@ public sealed partial class BattleSim
                 events.Add(new(BattleEventKind.CatStunned, lastCatX));
                 break;
             case LaunchKind.Freeze:
-                // "Not responding" over the cat: a short stun (the Shield stops it; no stun again too soon).
+                // "Not responding" over the cat: a share of its max HP (never its last point) and a stun the
+                // user can click away (2026-11-04; the Shield stops it; no stun again too soon).
                 if (CatLifted || Grace > 0) break;
                 if (ShieldRemaining > 0) { events.Add(new(BattleEventKind.Blocked, lastCatX)); break; }
                 AddEffect(BattleEffectKind.EndTask, lastCatX, 125);
+                double taken = Math.Min(CatMaxHp * rules.FreezeShare, CatHp - 1);
+                if (taken > 0 && !LandHit(taken, lastCatX, out _)) break;
                 if (CatHeld || CatStunned || Raging || StunImmunity > 0 || AutoRage()) break;
                 CatStunRemaining = StunFor(rules.FreezeSeconds);
+                NotRespondingRemaining = CatStunRemaining;
+                notRespondingClicks = 0;
                 StunsTaken++;
                 CancelSwing();
                 events.Add(new(BattleEventKind.CatStunned, lastCatX));

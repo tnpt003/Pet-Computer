@@ -499,51 +499,23 @@ public sealed partial class PetWindow
         return done;
     }
 
-    // The Fan or the Spray chosen: pressed on the field (battle x, height over the floor) it works from
-    // there until let go (or out of air or water).
+    // The Spray chosen: a press on the field (battle x, height over the floor) starts it.
     public bool BattlePressHold(double x, double height = 20)
     {
         if (battle == null || battle.Paused) return false;
         SyncBattleCatState();
-        bool done = battle.Armed == BattleSkill.Spray ? battle.StartSpray(x, height) : battle.StartFan(x);
+        bool done = battle.StartSpray(x, height);
         RequestBattleRedraw();
         UpdateBattleHud();
         return done;
     }
-    public bool BattlePressFan(double x) => BattlePressHold(x);
 
-    public void BattleReleaseFan()
-    {
-        battle?.StopFan();
-        battle?.StopSpray();
-        RequestBattleRedraw();
-        UpdateBattleHud();
-    }
-
-    // The Grabber chosen: pressed on a small slime it lifts it; let go, it is thrown (1.5 M06).
+    // The Grabber chosen: a click on a small slime lifts it (a click on the field then slams it).
     public bool BattleGrab(int id, double x, double height)
     {
         if (battle == null || battle.Paused) return false;
         SyncBattleCatState();
         bool done = battle.Grab(id, x, height);
-        RequestBattleRedraw();
-        UpdateBattleHud();
-        return done;
-    }
-
-    public void BattleReleaseGrab()
-    {
-        battle?.ReleaseGrab();
-        RequestBattleRedraw();
-        UpdateBattleHud();
-    }
-
-    // The Scissors chosen: a stroke across the field (battle x, height over the floor) cuts what it crosses.
-    public bool BattleSnip(double x0, double h0, double x1, double h1)
-    {
-        if (battle == null || battle.Paused) return false;
-        SyncBattleCatState();
-        bool done = battle.Snip(x0, h0, x1, h1);
         RequestBattleRedraw();
         UpdateBattleHud();
         return done;
@@ -699,6 +671,8 @@ public sealed partial class PetWindow
         pet.BattleCheer = battle.Phase == BattlePhase.Won;
         pet.BattleDazed = battle.Phase == BattlePhase.Lost;
         pet.BattleStun = battle.CatStunRemaining;
+        pet.BattleNotResponding = battle.NotRespondingRemaining;
+        pet.BattleNotRespondingText = L("(Không phản hồi)", "(Not responding)");
         pet.BattleShield = battle.ShieldRemaining > 0;
         pet.BattleBuff = battle.CheerRemaining > 0;
         pet.BattleRage = battle.RageLook;
@@ -797,12 +771,9 @@ public sealed partial class PetWindow
         battleView.RightClicked += () => { battle?.Arm(null); RequestBattleRedraw(); UpdateBattleHud(); }; // Right-click on the field cancels the skill.
         battleView.SpotClicked += x => BattleClickSpot(x);
         battleView.HoldPressed += (x, h) => BattlePressHold(x, h);
-        battleView.HoldMoved += (x, h) => { battle?.MoveFan(x); battle?.MoveSpray(x, h); };
-        battleView.HoldReleased += () => BattleReleaseFan();
         battleView.GrabPressed += (id, x, h) => BattleGrab(id, x, h);
-        battleView.GrabMoved += (x, h) => battle?.MoveGrab(x, h);
-        battleView.GrabReleased += () => BattleReleaseGrab();
-        battleView.Swiped += (x0, h0, x1, h1) => BattleSnip(x0, h0, x1, h1);
+        battleView.ScreenClicked += (x, h) => BattleUseOnScreen(x, h);
+        battleView.GrabDropClicked += x => { if (battle?.GrabDrop(x) == true) { RequestBattleRedraw(); UpdateBattleHud(); } };
         ShowBattleScenery(battle); // 1.5 M22: a chapter's backdrop, under the strip.
         battleFieldWindow = CreateOverlayWindow(battleView, "Pet battle");
         battleFieldWindow.DpiChanged += (_, _) => battlePlacedScale = 0; // Re-place in pixels next frame.

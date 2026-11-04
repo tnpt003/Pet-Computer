@@ -307,6 +307,7 @@ public sealed partial class BattleSim
         trickRandom = BattleRandom.Stream(Seed, BattleRandom.Tricks);
         mirageRandom = BattleRandom.Stream(Seed, BattleRandom.Mirage);
         popupRandom = BattleRandom.Stream(Seed, BattleRandom.Popup);
+        cutRandom = BattleRandom.Stream(Seed, BattleRandom.Cut);
         Loot = loot;
         Settings = settings;
         Stage = stage;
@@ -353,7 +354,6 @@ public sealed partial class BattleSim
         if (!CatLifted) return;
         wasLifted = true;
         Armed = null;
-        FanX = null;
         SprayX = null;
     }
 
@@ -380,6 +380,7 @@ public sealed partial class BattleSim
         if (CatStunRemaining > 0)
         {
             CatStunRemaining = Math.Max(0, CatStunRemaining - dt);
+            NotRespondingRemaining = Math.Min(NotRespondingRemaining, CatStunRemaining);
             if (CatStunRemaining <= 0) StunImmunity = Settings.StunImmunitySeconds;
         }
         else StunImmunity = Math.Max(0, StunImmunity - dt);
@@ -771,6 +772,8 @@ public sealed partial class BattleSim
     internal HitResult Damage(Slime slime, double amount, DamageSource source)
     {
         if (!slime.Targetable || amount <= 0) return HitResult.Landed;
+        // 2026-11-04: an app's hit brings a flyer or a wall climber down to the floor.
+        if (source == DamageSource.App) KnockFromSky(slime);
         // A faded ghost, a bubble, a mirage's copy, a sulky slime (1.5 M13, PetBattle.Tricks.cs).
         if (TrickHit(slime, source)) return HitResult.Immune;
         // 1.5 M14: under the floor nothing reaches a burrower (poison already in it still works); a flyer
@@ -1009,7 +1012,6 @@ public sealed partial class BattleSim
     public bool Arm(BattleSkill? skill)
     {
         if (skill is BattleSkill chosen && (!IsAimed(chosen) || !Ready(chosen))) return false;
-        if (skill != BattleSkill.Fan) FanX = null;
         if (skill != BattleSkill.Spray) SprayX = null;
         Armed = skill;
         return true;

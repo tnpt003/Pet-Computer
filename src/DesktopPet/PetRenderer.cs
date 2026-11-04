@@ -159,6 +159,7 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         DrawOverlays(dc, p);
         if (pet.BattleBuff) DrawCheerSparkles(dc, pet.BattleTime);
         if (pet.BattleShield) DrawShieldBubble(dc, pet.BattleTime);
+        if (pet.BattleNotResponding > 0) DrawNotResponding(dc, pet.BattleTime);
         if (rage) { dc.Pop(); palette = calm; }
         if (hop) { dc.Pop(); dc.Pop(); }
         // The tab tornado's near half, over the cat (the far half is on the battle strip below this
@@ -921,6 +922,35 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
     }
 
     // Drawn inside the pickup rotation, above the head.
+    private static readonly Brush HungWhite = Freeze(new SolidColorBrush(Color.FromArgb(150, 0xFF, 0xFF, 0xFF)));
+    private static readonly Brush HungBar = Freeze(new SolidColorBrush(Color.FromArgb(235, 0xF4, 0xF4, 0xF4)));
+    private static readonly Pen HungEdge = FreezePen(new Pen(new SolidColorBrush(Color.FromArgb(200, 0x6A, 0x6A, 0x6A)), 1));
+    private static readonly Pen HungSpin = FreezePen(new Pen(new SolidColorBrush(Color.FromRgb(0x3E, 0x7F, 0xB0)), 3) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round });
+    private static readonly Typeface HungFace = new(new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.SemiBold, FontStretches.Normal);
+    private static Brush Freeze(Brush b) { b.Freeze(); return b; }
+    private static Pen FreezePen(Pen p) { p.Freeze(); return p; }
+
+    // An infected End Task (2026-11-04): the cat greyed out like a hung app, a title bar saying it is not
+    // responding and a spinning wait cursor.
+    private void DrawNotResponding(DrawingContext dc, double time)
+    {
+        dc.DrawRoundedRectangle(HungWhite, HungEdge, new Rect(6, 16, 100, 94), 6, 6);
+        dc.DrawRectangle(HungBar, HungEdge, new Rect(6, 16, 100, 14));
+        var text = new FormattedText(pet.BattleNotRespondingText, System.Globalization.CultureInfo.CurrentCulture, FlowDirection.LeftToRight, HungFace, 8, Brushes.Black, 1);
+        text.MaxTextWidth = 96; text.MaxLineCount = 1; text.Trimming = TextTrimming.CharacterEllipsis;
+        dc.DrawText(text, new Point(56 - Math.Min(96, text.Width) / 2, 17.5));
+        var c = new Point(56, 66);
+        double a = time * 6;
+        var arc = new StreamGeometry();
+        using (var g = arc.Open())
+        {
+            g.BeginFigure(new Point(c.X + 9 * Math.Cos(a), c.Y + 9 * Math.Sin(a)), false, false);
+            g.ArcTo(new Point(c.X + 9 * Math.Cos(a + 4.4), c.Y + 9 * Math.Sin(a + 4.4)), new Size(9, 9), 0, true, SweepDirection.Clockwise, true, false);
+        }
+        arc.Freeze();
+        dc.DrawGeometry(null, HungSpin, arc);
+    }
+
     private void DrawDizzyOrbit(DrawingContext dc, in Pose p)
     {
         double dizzy = p.Dizzy;

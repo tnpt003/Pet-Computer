@@ -122,6 +122,9 @@ public sealed class PetModel
     public bool BattleDazed, BattleCheer;
     // Seconds of a battle stun still to go (stars over the head; 0: not stunned).
     public double BattleStun;
+    // 2026-11-04: an infected End Task's "Not responding" (seconds left, 0: none) and its label.
+    public double BattleNotResponding;
+    public string BattleNotRespondingText = "(Not responding)";
     // Seconds of the bonk from a keepsake dropped on the head still to go (stars, dazed eyes).
     public double Bonk;
     public const double BonkDuration = 2.2;

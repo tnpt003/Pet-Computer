@@ -8,7 +8,7 @@ Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm 
 
 ---
 
-## #35 — Slime nhanh không quăng bom; hạ slime bom thì nó nổ luôn (OP) (2026-10-31, commit chưa có)
+## #35 — Slime nhanh không quăng bom; hạ slime bom thì nó nổ luôn (OP) (2026-10-31, commit a23b799)
 - **Triệu chứng (góp ý người dùng):** muốn slime nhanh cõng bom tới gần thì quăng bom vào mèo (có animation, đứng yên ~2 s sau khi quăng, bom chạm đất là nổ); hạ slime bom đang cháy ngòi thì nó nổ ngay, quá mạnh.
 - **Nguyên nhân:** thiết kế M11: bom chỉ nhảy xuống cách mèo 120 rồi tự đi tới châm ngòi; `Defeat` gọi `Blast` cho bom đang cháy ngòi.
 - **Sửa:** khóa mới `link.throwRange` 210 (+ `throwWindup` 0,5, `throwFlight` 0,55, `throwHeight` 70, `throwRest` 2): mèo dưới sàn cách con ngựa 120–210 thì nó đứng lại, cúi người gồng (bom nhấc cao), vòng đỏ **bám theo mèo trong lúc gồng, khóa khi quăng** (lần đầu khóa ngay lúc bắt đầu gồng thì mèo tự đi luôn ra khỏi vòng, hầu như không trúng), bom bay vòng cung, chạm đất là nổ; ngựa đứng yên 2 s. Đánh/Đẩy/choáng/Kẹp gắp ngựa lúc gồng: bom rơi, châm ngòi ngắn. Bom bị hạ khi đang cháy ngòi: **bom xịt** (phương án (a), không nổ). Gợi ý + âm thanh mới. Bù cân bằng: máu bom 30 → 45, sát thương 22 → 24, ngòi 1,5 → 1,1 s (tinh anh 0,8 s).

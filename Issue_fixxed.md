@@ -10,7 +10,7 @@ Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm 
 - **Sửa:** luật đầy đủ ở docs/ZIP-SLIME.md. Thêm `PetBattle.ZipMoves.cs`, `PetBattle.ZipDebuff.cs`, `PetBattleView.ZipMoves.cs`, quái `zip_packet`; va chạm có chiều cao cho riêng boss này; `maxHp` 900 → 1100; rulesVersion c2_zip_slime 5, Vô tận 13, Lối Bãi rác 6.
 - **Tìm ra khi đo:** khoảng ×1,5 sau mech khiến build mạnh bỏ qua gần hết giai đoạn 2 (một cú 234 sát thương); thêm giới hạn `opening` 6% HP tối đa.
 - **Quyết định người dùng duyệt:** áp dụng riêng Slime Nén; mèo bay dùng cùng luật va chạm; đòn trên cao vẽ ở lớp phủ màn hình; gói dữ liệu là quái mới; bỏ "3 nhát thoát Nén sớm"; boss không mở đòn mới trong lúc Khóa.
-- **Kiểm chứng:** BattleZipMoveTests mới (88 check), BattleZipTests sửa, ZipVisualChecks thêm ảnh 4 dải đòn và 3 trạng thái mèo; Python 58 + 5, C# 3260, WPF 1430 đạt. ZipProbeTests báo số vòng đòn theo giai đoạn.
+- **Kiểm chứng:** BattleZipMoveTests mới (88 check), BattleZipTests sửa, ZipVisualChecks thêm ảnh 4 dải đòn và 3 trạng thái mèo; Python 58 + 5, C# 3260, WPF 1430 đạt; publish aa627fd, smoke 3/3 PASS. ZipProbeTests báo số vòng đòn theo giai đoạn.
 - **Còn lại:** giai đoạn 2 chưa đạt 1–2 vòng với build vừa và mạnh ở Normal (docs/ZIP-SLIME.md); chưa chơi tay, chưa thử DPI/nhiều màn hình thật.
 - **Cần test tay:** docs/MANUAL-TEST.md, mục Slime Nén thiết kế lại 06/11.
 

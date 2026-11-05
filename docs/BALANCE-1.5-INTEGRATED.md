@@ -45,3 +45,5 @@ Dãy búa có thay đổi dù trung vị giữ 27; không coi trung vị bằng 
 ## Kiểm tra tích hợp và nghiệm thu
 
 Kết quả full test, artifact, smoke và perf chốt ghi ở PROGRESS.md và STANDARDIZATION-1.5.md. Không dùng kết quả nhánh riêng làm chứng cứ cho main mới. Còn chơi tay ba boss, đủ bốn vũ khí, cửa sổ/DPI/màn phụ và nhịp khựng trong trận đông; chưa nghiệm thu release 1.5.0.
+
+Bản chốt ac93f41: Python 58 + 5, C# 3170, WPF 1418 đạt, publish sạch và smoke 3/3 PASS. Perf crowd-late 34 s: FPS trung vị 51,8, thấp nhất 44,7, gap p95 62 ms/max 128 ms, tối đa 20 quái. Dưới mục tiêu ~57; cần profile/đo dài hơn trước M30. Không so trực tiếp với 59,5 FPS của nhánh riêng (khác source và lượng quái).

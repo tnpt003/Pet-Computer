@@ -73,3 +73,10 @@ Bảng đo cùng phương pháp trước/sau, hàng sát ngưỡng và giới h�
 - Mốc chỉ hoàn tất kỹ thuật khi build/test thích hợp đạt, commit trước publish, smoke artifact tích hợp đạt; ghi riêng FPS trung vị/thấp nhất và khoảng khựng. Không dùng số perf của nhánh riêng để đại diện bản tích hợp.
 
 Chưa nghiệm thu chơi tay, DPI/multi-monitor, cài đặt/cập nhật từ 1.4.4. Các điểm này tiếp tục là điều kiện trước M30; chưa có tag, push hay release mới.
+
+## Kết quả chốt kỹ thuật
+
+- Merge commit **ac93f41** trên main, có cả Slime Nén 6739762 và nhánh hai boss 91a49e9. Python 58 + 5, C# 3170, WPF 1418 đạt. Đã xem ảnh `enemy-boss-configured-zones.png` và `enemy-boss-tactics.png` nền sáng/tối; chưa thay nghiệm thu desktop/DPI thật.
+- Publish sạch **1.4.4+ac93f41**; ZIP `artifacts/DesktopPet-1.4.4-ac93f41-win-x64.zip`. Smoke 3/3 PASS: dùng .NET/Python đi kèm từ thư mục không liên quan, single-instance, đóng sạch app và Python của nó. Đã thoát đúng pet project bình thường trước publish và mở lại bản tích hợp sau smoke/perf. Dữ liệu smoke/perf riêng, không ghi đè preferences.
+- `crowd-late -Minutes 0.5`: 34 giây frame stats; FPS trung vị **51,8**, thấp nhất **44,7**, gap p95 **62 ms**, lớn nhất **128 ms**; trung bình 16,4/tối đa 20 quái. **Chưa đạt mục tiêu ~57 FPS**, cần đo dài hơn/profile trước M30. Không coi publish/smoke đạt là hiệu năng hay release đã được nghiệm thu.
+- Log: `artifacts/standardize-final-tests.log`, `standardize-publish.log`, `standardize-smoke.log`, `standardize-perf.log`; CSV `artifacts/perf/20261106-010242-integrated-1.5.csv`. Các phép thử gợi ý Bom đã bỏ; gợi ý kỹ năng và ngưỡng cân bằng cũ giữ nguyên.

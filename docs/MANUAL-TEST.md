@@ -1008,4 +1008,5 @@ Các mục 1.5 phía trên viết theo từng mốc; đây là thứ tự chơi 
 - [ ] Slime nhạc trưởng: nhịp cuối chỉ có trống lớn, mèo trong vòng mất máu và loạn nhịp; slime quanh đó không đánh theo. Nhấc mèo đúng nhịp vẫn tránh được. Vua Slime biến dị vẫn cho quân đánh đồng loạt.
 - [ ] Slime xích: đứng cách xa đồng minh, combo vào đồng minh không lan sang nó; dây dài vẫn đẹp, kéo mèo xuyên vẫn cắt được; đồng minh sát mép màn hình thì không kẹt.
 - [ ] Bình xịt: đang xịt slime bay/bám tường/dưới sàn, bế mèo lên thì vòi vẫn xịt và nước vẫn giảm; thả mèo vẫn tiếp tục. Mới chọn ô chưa xịt mà nhấc mèo thì bỏ chọn.
+- [ ] Chụp Màn Hình: slime bay và slime bám tường đứng yên tại chỗ 2 giây, mắt không thành "x x", không rơi; hết giờ hoạt động tiếp. Bốn app khác vẫn kéo chúng xuống, riêng Tab không tới chúng.
 - [ ] Kẹp gắp lên slime bay và slime bám tường: càng kẹp và dây hiện tới tận chỗ, kéo nó xuống, treo trong kẹp, click chỗ đập được; hết giờ thì đặt xuống. Bế mèo giữa lúc kéo thì nó rơi. Sau khi đập, nó lại bay/leo lên bình thường.

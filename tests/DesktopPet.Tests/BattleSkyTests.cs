@@ -111,6 +111,18 @@ internal static class BattleSkyTests
         });
         check(high_bell && s.Fly != FlyPhase.Aloft, "A Ping's bell rings over the flyer, up where it is, and brings it down");
 
+        // 2026-11-05: the Screenshot's flash only stills a flyer: it stays up, undazed, and flies on after it.
+        sim = Field(Flyer(), apps: new AppsSpec());
+        s = sim.Slimes.Single();
+        for (int i = 0; i < 900 && !(s.Fly == FlyPhase.Aloft && s.State != SlimeState.Spawning); i++) { sim.Step(dt, 100, false); sim.ClearEvents(); }
+        Hold(s, 800, high);
+        sim.FreezeEnemies(new AppsSpec());
+        double stillAt = s.Altitude;
+        Run(sim, 1);
+        check(sim.EnemiesFrozen && s.Fly == FlyPhase.Aloft && s.Altitude == stillAt && s.State != SlimeState.Stunned, "The flash stills a flyer in the air, no daze, no fall");
+        Run(sim, 2);
+        check(!sim.EnemiesFrozen && s.Fly == FlyPhase.Aloft && s.Altitude > 0 && s.State != SlimeState.Stunned, "After the flash it flies on");
+
         // 2026-11-05: the Spray locks on a flyer high up and soaks it.
         sim = Field(Flyer());
         s = sim.Slimes.Single();

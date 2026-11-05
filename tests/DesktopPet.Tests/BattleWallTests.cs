@@ -264,6 +264,13 @@ internal static class BattleWallTests
         // 2026-11-04: it can be chosen (the cat then goes to watch it), never swung at from the floor.
         check(s.Airborne && sim.TargetId != s.Id, "Up its edge the cat on the floor never goes for it (choosing it only sends the cat to watch: WatchChecks)");
 
+        // 2026-11-05: the Screenshot's flash only stills it: it stays on its edge.
+        {
+            sim.FreezeEnemies(new AppsSpec());
+            Run(sim, new AppsSpec().ShotFreeze + 0.5, catX: 100);
+            check(s.OnWall && s.Altitude > 0 && s.State != SlimeState.Stunned, "The flash leaves a wall climber on its edge, undazed");
+        }
+
         // 2026-11-05: the Spray reaches it however high it climbed.
         {
             double height = s.Altitude;

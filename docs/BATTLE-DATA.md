@@ -1111,6 +1111,8 @@ A1–A4 của docs/UPDATE-1.5.md, theo ngoại lệ "App trong trận" (docs/APP
 | Khóa (`apps`) | Khoảng | Gốc |
 | --- | --- | --- |
 | `shotFreeze`, `dazzleEvery`, `dazzleSeconds` | 0,2–10 s, 1–120 s, 0–5 s | 2, 11, 1.5 |
+
+**2026-11-05 (Issue #51):** Chụp Màn Hình chỉ làm đứng hình. Slime bay và slime bám tường đứng yên tại chỗ, không choáng, không rơi, hết `shotFreeze` thì hoạt động tiếp. Thay luật 04/11 (docs/GOPY-C-2026-11-04.md D10).
 | `captchaWeight`, `captchaSeconds`, `captchaShare`, `captchaCatsMin`, `captchaCatsMax` | 0–100, 3–60 s, 0,15–0,6, 1–8, ≥ min và ≤ 8 | 1, 15, 0.33, 2, 4 |
 | `batteryWeight`, `batteryRate` | 0–100, 0,1–1 | 1, 0.4 |
 | `cursorWeight`, `cursorSeconds` | 0–100, 1–30 s | 1, 5 |

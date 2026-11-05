@@ -5,6 +5,14 @@ Sổ ghi các lỗi đã sửa của Desktop Pet. Phần A: lỗi người dùng
 Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm lỗi mới: tạo mục số tiếp theo ở đầu phần A (hoặc một dòng ở phần B).
 
 # A. Lỗi người dùng phát hiện
+## #51 — Chụp Màn Hình chỉ làm đứng yên, không làm slime bay/bám tường rơi (2026-11-05, commit COMMIT)
+- **Yêu cầu (người dùng):** app Chụp Màn Hình chỉ làm quái đứng yên, không choáng slime bay và slime bám tường khiến chúng rơi. Thay luật 04/11 (GOPY-C D10).
+- **Nguyên nhân:** `FreezeEnemies` gọi `KnockFromSky` với mọi quái, nên chúng choáng, treo giữa không trung trong lúc đứng hình rồi rơi.
+- **Sửa:** bỏ lời gọi đó. Hàm `KnockFromSky` vẫn dùng cho đòn gây sát thương của app.
+- **Cân bằng (mô phỏng, không phải chơi thật):** xem kết quả trong PROGRESS.md; bot chỉ dùng app ở mức đơn giản.
+- **Kiểm chứng:** BattleSkyTests, BattleWallTests. Kết quả test: xem PROGRESS.md.
+- **Cần test tay:** docs/MANUAL-TEST.md, mục Góp ý sau chơi thử 05/11, đợt 2.
+
 ## #50 — Góp ý chơi thử đợt 2: slime hẹn giờ, nhạc trưởng, slime xích, Bình xịt khi bế mèo, Kẹp gắp lên slime trên cao (2026-11-05, commit 32f049c)
 - **Yêu cầu (người dùng):** (1) hết giờ gọi đội hình ngẫu nhiên, được ngoại lệ vì do triệu hồi và được vượt số slime trong trận; (2) bỏ việc mọi slime trong 220 với tới mèo cùng đánh; (3) slime xích đứng xa con đang xích để tránh sát thương lan; (4) hiệu ứng Bình xịt trên slime bay/bám tường tự mất khi bế mèo; (5) chọn slime bay/bám tường bằng Kẹp gắp thì chúng bị đẩy, không có hoạt cảnh gắp.
 - **Nguyên nhân:** (1) chỉ 2 đội, có cổng `minThreat`, chờ chỗ theo `maxAlive`; (2) `StrikeTogether`; (3) `TetherPost` cách mép 6 trong khi lan 60; (4) nhấc mèo tắt Bình xịt theo luật cũ; (5) `Grab` gọi `KnockDown`/`KnockOff` thay vì giữ.

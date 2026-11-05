@@ -5,7 +5,7 @@ Sổ ghi các lỗi đã sửa của Desktop Pet. Phần A: lỗi người dùng
 Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm lỗi mới: tạo mục số tiếp theo ở đầu phần A (hoặc một dòng ở phần B).
 
 # A. Lỗi người dùng phát hiện
-## #50 — Góp ý chơi thử đợt 2: slime hẹn giờ, nhạc trưởng, slime xích, Bình xịt khi bế mèo, Kẹp gắp lên slime trên cao (2026-11-05, commit COMMIT)
+## #50 — Góp ý chơi thử đợt 2: slime hẹn giờ, nhạc trưởng, slime xích, Bình xịt khi bế mèo, Kẹp gắp lên slime trên cao (2026-11-05, commit 32f049c)
 - **Yêu cầu (người dùng):** (1) hết giờ gọi đội hình ngẫu nhiên, được ngoại lệ vì do triệu hồi và được vượt số slime trong trận; (2) bỏ việc mọi slime trong 220 với tới mèo cùng đánh; (3) slime xích đứng xa con đang xích để tránh sát thương lan; (4) hiệu ứng Bình xịt trên slime bay/bám tường tự mất khi bế mèo; (5) chọn slime bay/bám tường bằng Kẹp gắp thì chúng bị đẩy, không có hoạt cảnh gắp.
 - **Nguyên nhân:** (1) chỉ 2 đội, có cổng `minThreat`, chờ chỗ theo `maxAlive`; (2) `StrikeTogether`; (3) `TetherPost` cách mép 6 trong khi lan 60; (4) nhấc mèo tắt Bình xịt theo luật cũ; (5) `Grab` gọi `KnockDown`/`KnockOff` thay vì giữ.
 - **Sửa:** (1) 8 đội, không xét threat, không chờ chỗ, `calledOut` cho liên kết vượt giới hạn, bỏ `callFormations` khỏi `Reach`, lúc nạp từ chối đội có slime hẹn giờ/boss; (2) có trống lớn thì chỉ trống lớn; (3) `comboSplashRadius` + 8; (4) đang xịt thì nhấc mèo không dừng; (5) `OutOfHand`, `Reeling`, `Reeled`: gắp tại chỗ, kéo xuống, vẽ càng kẹp trên lớp phủ.

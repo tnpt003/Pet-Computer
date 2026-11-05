@@ -791,39 +791,32 @@ S9, S10, S11 của docs/UPDATE-1.5.md. Code: `src/DesktopPet.Core/PetBattle.Quil
 - Sự kiện mới: `QuillsRising`, `QuillsUp`, `QuillsDown`, `QuillsSoaked`, `QuillsPricked`, `ClockStarted`, `ClockRang`, `ClockCalled`, `ThiefStole` (Value 1: kỹ năng, 0: app), `ThiefReturned`, `ThiefEscaped`. Cue có sẵn. Banner (vi/en/ja): nhím xù gai và bị gai đâm, slime hẹn giờ ra trận và reng (lần đầu mỗi trận); trộm lấy đồ, lấy lại, trốn mất (mỗi lần).
 - Kiểu màn Đuổi trộm (T2) để sau 1.5. Số liệu (`prick`, thời gian xù, 20 s, `linger`) là ước lượng, chỉnh sau khi chơi thật.
 
-## Slime Nén (boss `zip`: `zip`, `roll`, pha `press`/`roped`/`bomb`) (bản 1.5, mốc M17; thiết kế lại 2026-11-05, Issue #53)
+## Slime Nén (boss `zip`: `zip`, `roll`, pha `press`/`roped`/`bomb`, quái `zip_packet`) (bản 1.5, mốc M17; thiết kế lại 2026-11-05, 2026-11-06)
 
-B1 của docs/UPDATE-1.5.md, trùm chương 2, trùm tuyến 2, trùm đợt 20 Vô tận. Code: `src/DesktopPet.Core/PetBattle.Zip.cs` (luật), nối vào pha khiên ở `PetBattle.Boss.cs`; vẽ `src/DesktopPet/PetBattleView.Zip.cs`; test `tests/DesktopPet.Tests/BattleZipTests.cs`, ảnh UiChecks (`ZipVisualChecks`: `enemy-zip.png`, `enemy-zip-roll.png`). Muốn thử: chép `docs/examples/battle-m17.json` thành `%LOCALAPPDATA%\DesktopPet\battle.json`, mở Trận tự do và mang Kéo cắt.
-
-Ý tưởng: file nén lúc đầu nhỏ và nhanh, càng mất máu càng bung ra to, đánh ít đi mà đau hơn. Mỗi giai đoạn có một câu đố; giải được thì boss choáng lâu và mất máu thêm, không giải chỉ mất phần thưởng và ăn đòn, **trận không bao giờ kẹt ở câu đố**.
+Luật, bảng đòn và số đo: docs/ZIP-SLIME.md. Mục này chỉ mô tả khóa dữ liệu. Code: `PetBattle.Zip.cs`, `PetBattle.ZipMoves.cs`, `PetBattle.ZipDebuff.cs`.
 
 ```json
-{ "id": "zip", "boss": true, "maxHp": 900, "summonCap": 10, "ropeCutSpeed": 300, "ropeCutStun": 1, "shieldBreakStun": 2,
-  "roll": { "minRange": 140, "range": 520, "windup": 1.1, "speed": 360, "distance": 460, "damage": 20, "stun": 0.9 },
+{ "id": "zip", "boss": true, "maxHp": 1100, "summonCap": 10, "ropeCutSpeed": 300, "ropeCutStun": 1, "shieldBreakStun": 2,
+  "roll": { "windup": 1.1, "speed": 360, "distance": 460, "damage": 12, "stun": 0.7 },
   "zip": {
     "grow": 0.9, "ropeComboWindow": 0.5, "ropeComboStun": 1.5,
-    "stages": [
-      { "scale": 1.1, "speed": 70, "range": 62, "reach": 300, "hits": 3, "damage": 9, "windup": 0.6, "gap": 0.35, "cooldown": 3.2, "hop": 260 },
-      { "scale": 2, "speed": 32, "range": 110, "reach": 110, "hits": 2, "damage": 20, "windup": 1, "gap": 1, "cooldown": 4.6, "hop": 320, "roll": true },
-      { "scale": 2.9, "speed": 15, "range": 170, "reach": 170, "hits": 1, "damage": 40, "windup": 1.7, "cooldown": 7 } ],
-    "press": { "rolls": 4, "pins": 2, "reach": 46, "window": 1.6, "pinStun": 0.7, "stun": 3, "bonus": 1.5,
-               "roll": { "windup": 1, "speed": 380, "distance": 420, "damage": 12, "stun": 0.6 } },
-    "bomb": { "charge": 14, "pulls": 3, "tabRadius": 34, "damage": 40, "radius": 900, "catStun": 1.2, "rearm": 14, "flight": 1.6, "stun": 4, "bonus": 1.5 } },
+    "stages": [ { "scale": 1.1, "speed": 70, "range": 62, "damage": 9, "windup": 0.6, "cooldown": 0.5, "moves": ["clamp", "bolt", "tumble"] } ],
+    "moves": [ { "id": "bolt", "warn": 0.7, "lock": 0.4, "strike": 0.6, "recover": 1.6, "minRange": 60, "maxRange": 760, "air": true, "damage": 10, "radius": 22 } ],
+    "debuff": { "first": 8, "gapMin": 10, "gapMax": 16, "seconds": 5, "scale": 0.75, "damage": 0.75, "speed": 0.8, "lockSeconds": 6, "lockClicks": 3, "lockSwings": 5, "guard": 0.8 },
+    "press": { "rolls": 4, "pins": 2, "reach": 46, "window": 2.2, "pinStun": 0.7, "stun": 2.2, "bonus": 1.5, "opening": 0.06, "roll": { } },
+    "bomb": { "charge": 14, "pulls": 3, "tabRadius": 34, "damage": 40, "radius": 900, "catStun": 1.2, "rearm": 14, "flight": 1.6, "stun": 3, "bonus": 1.5, "opening": 0.06 } },
   "phases": [
     { "at": 0.66, "shield": true, "press": true },
-    { "at": 0.33, "shield": true, "roped": true, "formation": "fortress" },
+    { "at": 0.33, "shield": true, "roped": true, "summons": [ { "enemy": "zip_packet", "count": 3 } ] },
     { "at": 0.2, "shield": true, "bomb": true } ] }
 ```
 
-- **Giai đoạn** (`zip.stages`, 1–4): kích thước thật (`scale`, cả hitbox và tầm đánh `range`), tốc độ đi `speed`. Mèo trong `reach` thì boss bắt đầu một đợt `hits` đòn, cách nhau `gap` s, xong nghỉ `cooldown` s. Mỗi đòn gồng `windup` s, gây `damage` (nhân hệ số màn như đòn thường, thay `slamShare`) trong `range`. `hop` > 0: trước đòn nó nhảy tới chỗ mèo (xa nhất `hop` DIPs, chỗ đáp khóa lúc bắt đầu cúi, vòng đỏ vẽ ở chỗ đáp). `roll`: đợt mở đầu bằng cú lăn `roll` nếu mèo đủ xa, không thì nện luôn. Chuyển giai đoạn khi xong câu đố của giai đoạn trước; kích thước tăng dần trong `grow` s, có banner. `scale` trong JSON của loại quái (2) chỉ dùng cho Sổ tay. Gốc: 1,1/3 đòn 9, 2/2 đòn 20, 2,9/1 đòn 40.
-- **Giai đoạn 1, câu đố khóa vỏ** (`press`, ở 66%): boss bật khiên tại chỗ (có ổ khóa), lăn `rolls` lần về phía mèo, kể cả khi mèo đang cầm; `press.roll` là số liệu của cú lăn này, điểm dừng có vòng và mũi tên vàng. Mèo được thả sau khi nhấc (như thả đè slime đào hang), đáp trong `HitWidth/2 + reach` lúc boss đang lăn hoặc trong `window` s sau khi dừng, thì boss bị đè: dừng lăn, choáng `pinStun` s. Đủ `pins` lần: bung khóa, choáng `stun` s, nhận ×`bonus` sát thương trong lúc đó, sang giai đoạn sau. Hết `rolls` mà chưa đủ: vỏ tự mở, sang giai đoạn sau, không thưởng, không có banner "KHIÊN VỠ".
-- **Giai đoạn 2, bung file** (`roped` + `formation`, ở 33%): pha khiên như Vua Slime (dừng đòn ở vạch, bật khiên, nhảy về mép xa mèo, vòng tím báo chỗ ra), quân là thành viên đội hình, banner "Đội hình …!". Mỗi quân ra trận nối **dây nhầy về boss** (`Slime.RopedTo`). Còn dây nào thì boss không mất máu (kể cả Bom). Cắt dây: mèo đang cầm (quá ngưỡng kéo) hoặc đang bay sau cú ném đi xuyên dây với tốc độ ≥ `ropeCutSpeed`, hoặc một nét Kéo cắt; quân đó choáng `ropeCutStun` s. Hạ quân thì dây của nó cũng mất. Hết dây thì khiên vỡ (choáng `shieldBreakStun` s), sang giai đoạn sau, các quân đã đứt dây vẫn đánh tiếp. **Hai dây đứt trong vòng `ropeComboWindow` s**: boss choáng thêm `ropeComboStun` s khi vỡ khiên. Kéo chậm, mới nhấn chưa kéo, Pause không cắt. Dây về boss không tính vào giới hạn 2 loại liên kết mỗi trận và không chia sát thương.
-- **Giai đoạn 3, bom nén** (`bomb`, ở 20%): boss bật khiên tại chỗ, phình dần, thanh % chạy `charge` s, tay kéo khóa treo ngoài thân (đổi bên và độ cao sau mỗi nấc, seed trận, luồng `BattleRandom.Zip`). Mèo đang cầm hoặc đang bay xuyên tay kéo (trong `tabRadius`) với tốc độ ≥ `ropeCutSpeed`, hoặc một nét Kéo cắt trúng tay kéo, là một nấc. Đủ `pulls` nấc: boss xì hơi bay vèo hai đầu sàn `flight` s (vô hại), rồi nằm choáng `stun` s, nhận ×`bonus`, co nhỏ ×0,62 trong lúc đó, không bao giờ nổ nữa. Hết giờ: nổ, mèo dưới sàn trong `radius` mất `damage` và choáng `catStun` s (Khiên, Mai rùa, nộ, Mũ bảo hiểm như đòn đè); **mèo đang cầm né được** vì luật mèo cầm không mất máu giữ nguyên; boss hạ khiên, đánh tiếp và nạp lại sau `rearm` s.
-- Lúc câu đố chạy boss không mất máu. `roll` chung chỉ dùng cho boss; `every`/`enragedEvery` không có tác dụng với Slime Nén (đợt do `stages` quyết).
-- Kiểm tra lúc nạp: `zip` chỉ cho boss, 1–4 `stages`, `scale` 0,5–3,2, `hits` 1–5; `stages.roll` cần `roll`; `press.pins` ≤ `press.rolls`; `pulls` 1–8; pha `press`/`bomb` cần `zip` và `shield`, không gọi quân, mỗi pha tối đa một trong `roped`/`press`/`bomb`; `formation` phải là đội hình đã biết; tổng quân một pha tối đa 8.
-- Sự kiện: `RollAimed`, `Rolled`, `RollHit`, `BossRoped`, `BossRopeCut`, `BossRopesGone`, mới `ZipGrew` (Value: giai đoạn), `ZipPressed`, `ZipPinned` (Value: số lần đè), `ZipUnlocked` (Value 1: người chơi phá), `ZipRopeCombo`, `ZipBombArmed`, `ZipTabPulled` (Value: số nấc), `ZipDeflated`, `ZipBurst` (Value 1: trúng mèo). Cue có sẵn. Banner vi/en/ja cho từng sự kiện.
-- Hình: không vương miện. GĐ1 khối hộp nhỏ, hai đai có khóa cài, khóa kéo đóng kín, nhãn `4 KB`; GĐ2 thư mục mập, đai đứt, khóa hé chân, tờ giấy thò ra, `2 MB`; GĐ3 túi phình, khóa toác thành miệng răng cưa, giấy trào ra, `9 GB`.
-- Bỏ so với M17: pha `pack` (`BossPhase.Pack`, `Slime.Packed`, sự kiện `BossPacked`), quái `zipshard`; `still` giữ lại cho cờ cắm. Chưa làm: mô phỏng cân bằng không tự giải câu đố đè và kéo tay kéo bằng mèo (chỉ Kéo cắt), nên bảng mô phỏng là trường hợp xấu cho người chơi không giải đố; số liệu là ước lượng, chỉnh sau khi chơi thật.
+- `zip.stages` (1–4): `scale`, `speed`, `range`; `moves` là id đòn (tối đa 4), `cooldown` là thời gian nghỉ sau mỗi đòn; `windup` và `damage` là cú nện thường lúc pha nối luồng. Đổi so với 05/11: bỏ `reach`, `hits`, `gap`, `hop`, `roll`.
+- `zip.moves`: `id` (clamp, bolt, tumble, tree, chase, faulty, overflow, overwrite, tear), `warn`, `lock`, `strike`, `recover`, `minRange`, `maxRange`, `air`, `damage`, `stun`, `radius`, `height`, `count`, `spacing`, `delay`, `speed`, `life`, `burstHeight`. `tumble` dùng thêm khối `roll`; `tree` cần `radius × 2 < spacing`.
+- `zip.debuff`: tùy chọn, thiếu thì không có debuff. `on: false` để tắt.
+- `opening` (`press`, `bomb`): phần HP tối đa khoảng phản công sau mech gây được (0,01–1).
+- `zip_packet`: `packet: true`, `still: true`, `cost: 0`, có trang Sổ tay, không có trong Trận tự chọn. Gói biến mất không tính hạ quái.
+- Sự kiện mới: `ZipMoveWarned`, `ZipMoveLanded` (Value: `ZipAct`), `ZipMarked`, `ZipBlowLanded`, `ZipFileLocked`, `ZipPacketBurst`, `ZipDebuffed`, `ZipDebuffEnded` (Value: `ZipDebuff`), `ZipLockTapped`.
 
 ## Slime Mẹ và Vua Slime biến dị (boss `mother`: `brood`; boss `mutant_king`: `crownLinks`, `rain`) (bản 1.5, mốc M18, 2026-10-29)
 

@@ -47,3 +47,7 @@ Dãy búa có thay đổi dù trung vị giữ 27; không coi trung vị bằng 
 Kết quả full test, artifact, smoke và perf chốt ghi ở PROGRESS.md và STANDARDIZATION-1.5.md. Không dùng kết quả nhánh riêng làm chứng cứ cho main mới. Còn chơi tay ba boss, đủ bốn vũ khí, cửa sổ/DPI/màn phụ và nhịp khựng trong trận đông; chưa nghiệm thu release 1.5.0.
 
 Bản chốt ac93f41: Python 58 + 5, C# 3170, WPF 1418 đạt, publish sạch và smoke 3/3 PASS. Perf crowd-late 34 s: FPS trung vị 51,8, thấp nhất 44,7, gap p95 62 ms/max 128 ms, tối đa 20 quái. Dưới mục tiêu ~57; cần profile/đo dài hơn trước M30. Không so trực tiếp với 59,5 FPS của nhánh riêng (khác source và lượng quái).
+
+## Slime Nén 06/11
+
+Sau bản tích hợp, Slime Nén đổi luật và HP 900 → 1100. Mô phỏng 60 seed chương 2 màn cuối (bot không tự né): Normal simple Kiếm 55, Búa 56, Cuộn len 57, Găng 57/60; Hard simple 39, 38, 36, 43/60. Số đo từng giai đoạn và giới hạn: docs/ZIP-SLIME.md.

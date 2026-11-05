@@ -4,6 +4,7 @@
 
 ### Tiếng Việt
 
+- Slime Nén làm lại: ba giai đoạn, mỗi giai đoạn ba đòn riêng; ba mech Bung đai, Giải nén kẹt, Bom nén; hai hiệu ứng bất ngờ Nén và Khóa ZIP; đòn của boss trúng cả mèo đang bế nếu thực sự chạm. Điểm vàng trên sàn không còn quay theo thân boss.
 - Tích hợp Slime Nén thiết kế lại và hai boss nâng cấp; chuẩn hóa luật, cảnh báo/vùng trúng và ghi nhận app độc. Sửa lứa cuối Slime Mẹ tốn máu khi hết chỗ; Nộ chặn/giải đẩy lùi; giữ luật gộp vũng của quái thường. Banner Nộ hướng dẫn avatar và tự kích hoạt.
 
 - Slime Mẹ: ổ ủ phá được, đường hồi máu/cứu con cắt được, bầy nhảy, giận lao và lứa cuối. Vua biến dị: tay quét, phình nổ, mưa hai nhịp, sóng sát sàn, hút nhầy thành giáp hữu hạn, quá tải và chuỗi cuối. Vi/en/ja, hướng dẫn và ảnh render đi cùng. Chi tiết luật: docs/BOSS-TACTICS.md. Chưa merge main; không có mầm hay slime con biến dị.
@@ -62,6 +63,7 @@ Mọi thay đổi chỉ ở Battle Mode (mặc định vẫn tắt). Ngoài tr�
 
 ### English
 
+- The Zip Slime is rebuilt: three stages with three blows each; three HP mechanics (Burst the belts, Stuck unpacking, Zip bomb); two sudden debuffs, Squeezed and ZIP-locked; its blows now reach a held cat if they really touch it. The gold floor marks no longer spin with its body.
 - Integrated the redesigned Zip Slime and upgraded bosses. Shared boss warning/collision geometry and malware discovery order; fixed the mother's final clutch spending HP without space, rage knockback immunity/cleansing, and ordinary puddle merging. Updated rage instructions for the avatar and automatic activation.
 
 - Slime Mother: breakable nests, returning children, cuttable rescue cords, brood jumps, angry charges and a final clutch. Mutant King: arm sweeps, bursts, two-beat rain, floor waves, cuttable goo absorption and overload openings. No mutation seeds or mutated offspring. Implemented on the separate boss branch; see docs/BOSS-TACTICS.md.
@@ -119,6 +121,7 @@ Everything here is in Battle Mode (still off by default). Outside a battle the p
 
 ### 日本語
 
+- あっしゅくスライムを作り直しました。3段階それぞれに3つの技、3つのHPギミック（ベルト破り、解凍詰まり、圧縮爆弾）、2つの突然の状態異常（圧縮、ZIPロック）があります。持ち上げたネコにも、実際に触れれば攻撃が当たります。床の金色の印はボスと一緒に回らなくなりました。
 - 再設計した圧縮スライムと強化ボスを統合。警告と当たり判定、悪性アプリの記録順を共通化。巣の空きがない時の母スライムのHP消費、怒り中の押し戻しと解除、通常のねばねば溜まりの結合を修正。アバターと怒りの自動発動の案内を更新。
 
 - 母スライムに破壊できる巣、子の呼び戻し、切断できる救助のひも、子の跳躍、怒りの突進と最後の産卵を追加。変異王に腕のなぎ払い、破裂、二段の雨、床の波、切断できる吸収と過負荷の隙を追加。変異の種や変異した子はありません。ボス専用の別ブランチで実装。

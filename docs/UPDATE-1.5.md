@@ -96,7 +96,7 @@ Trong trận cảm xúc tự động vẫn bị chặn: S1, S4 không gây cảm
 
 | Mã | Boss | Luật |
 |---|---|---|
-| B1 | Slime Nén, trùm chương 2 (900 HP; thiết kế lại 2026-11-05, Issue #53) | Nhỏ và nhanh, càng mất máu càng phình to, đánh ít đi mà đau hơn. GĐ1 (×1,1) 3 cú nhảy; ở 66% khóa vỏ và lăn, thả mèo đè đúng điểm vàng 2 lần thì bung khóa. GĐ2 (×2) lăn rồi nện; ở 33% bung Pháo đài nối dây, cắt 2 dây một lúc thì choáng lâu hơn. GĐ3 (×2,9) 1 cú đập; ở 20% thành bom nén, kéo mèo xuyên tay kéo 3 lần (hoặc Kéo cắt) để xì hơi, hết giờ thì nổ cả sàn rồi nạp lại |
+| B1 | Slime Nén, trùm chương 2 (1100 HP; thiết kế lại 05/11, 06/11; Issue #53, #55) | Luật đầy đủ: docs/ZIP-SLIME.md. Ba giai đoạn, mỗi giai đoạn ba đòn chọn từ túi theo seed; mech 66% Bung đai, 33% Giải nén kẹt, 20% Bom nén; hai debuff Nén và Khóa ZIP; đòn trúng mèo đang cầm/bay khi thực sự chạm. | |
 | B2 | Slime Mẹ, boss phụ chương 2 (650 HP) | Ổ ủ phá được, gọi con yếu về, dây cứu con cắt được, con che thân, bầy nhảy, giận lao và lứa cuối đổi máu; hồi 20 HP/s. Luật chi tiết: [BOSS-TACTICS](BOSS-TACTICS.md) |
 | B3 | Vua Slime biến dị, Vô tận (1000 HP) | Giữ tinh anh/xích/trống; thêm tay quét, phình nổ, mưa hai nhịp, sóng sàn, hút nhầy thành giáp cắt được và quá tải; cuối trận ghép hai chiêu. Không có mầm/slime con biến dị. [BOSS-TACTICS](BOSS-TACTICS.md) |
 
@@ -209,6 +209,7 @@ Nhật ký chi tiết và kết quả test từng mốc: docs/archive/UPDATE-1.5
 | M29a, M29 | Trận tự chọn; đo cân bằng, perf, CHANGELOG | 30/10 |
 | Sau M29 | Sửa sau chơi thử 30/10, đợt B (#32–#40), đợt C (#41–#44), góp ý 05/11 (#45–#52) | 05/11 |
 | Hợp nhất/chuẩn hóa | Slime Nén mới (#53), hai boss nâng cấp; sửa lứa cuối, đồng bộ vùng báo/trúng, Nộ chống đẩy, giữ luật vũng cũ; bảng luật và tiêu chí xong | 06/11; Python 58 + 5, C# 3170, WPF 1418 đạt; còn nghiệm thu tay |
+| Slime Nén 06/11 | Thiết kế lại đòn, mech, debuff, luật bế mèo, HP (Issue #54, #55) | 06/11; Python 58 + 5, C# 3260, WPF 1430 đạt; còn nghiệm thu tay |
 | **M30** | **Release 1.5.0 theo docs/RELEASE.md** | Chưa |
 
 ### Việc trước M30

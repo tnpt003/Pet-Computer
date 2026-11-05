@@ -5,7 +5,16 @@ Sổ ghi các lỗi đã sửa của Desktop Pet. Phần A: lỗi người dùng
 Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm lỗi mới: tạo mục số tiếp theo ở đầu phần A (hoặc một dòng ở phần B).
 
 # A. Lỗi người dùng phát hiện
-## #54 — Điểm vàng và mũi tên trên sàn quay theo thân Slime Nén (2026-11-06)
+## #55 — Thiết kế lại Slime Nén: túi đòn, mech, debuff, boss đánh mèo đang bế (2026-11-06, commit 01a11ad)
+- **Yêu cầu (người dùng):** mỗi phase 3 đòn ngẫu nhiên và 1 mech theo HP; hai debuff Nén và Khóa ZIP; bế mèo là cách né chứ không còn miễn sát thương; chốt HP theo DPS đo được.
+- **Sửa:** luật đầy đủ ở docs/ZIP-SLIME.md. Thêm `PetBattle.ZipMoves.cs`, `PetBattle.ZipDebuff.cs`, `PetBattleView.ZipMoves.cs`, quái `zip_packet`; va chạm có chiều cao cho riêng boss này; `maxHp` 900 → 1100; rulesVersion c2_zip_slime 5, Vô tận 13, Lối Bãi rác 6.
+- **Tìm ra khi đo:** khoảng ×1,5 sau mech khiến build mạnh bỏ qua gần hết giai đoạn 2 (một cú 234 sát thương); thêm giới hạn `opening` 6% HP tối đa.
+- **Quyết định người dùng duyệt:** áp dụng riêng Slime Nén; mèo bay dùng cùng luật va chạm; đòn trên cao vẽ ở lớp phủ màn hình; gói dữ liệu là quái mới; bỏ "3 nhát thoát Nén sớm"; boss không mở đòn mới trong lúc Khóa.
+- **Kiểm chứng:** BattleZipMoveTests mới (88 check), BattleZipTests sửa, ZipVisualChecks thêm ảnh 4 dải đòn và 3 trạng thái mèo; Python 58 + 5, C# 3260, WPF 1430 đạt. ZipProbeTests báo số vòng đòn theo giai đoạn.
+- **Còn lại:** giai đoạn 2 chưa đạt 1–2 vòng với build vừa và mạnh ở Normal (docs/ZIP-SLIME.md); chưa chơi tay, chưa thử DPI/nhiều màn hình thật.
+- **Cần test tay:** docs/MANUAL-TEST.md, mục Slime Nén thiết kế lại 06/11.
+
+## #54 — Điểm vàng và mũi tên trên sàn quay theo thân Slime Nén (2026-11-06, commit e6b7a44)
 - **Triệu chứng (người dùng):** boss lăn thì điểm vàng và mũi tên chỉ chỗ thả mèo quay theo thân thay vì đứng yên tại vị trí đã chốt.
 - **Nguyên nhân:** `DrawSlime` chạy bên trong transform xoay của boss đang lăn; mọi thứ nó vẽ, kể cả dấu trên sàn, nhãn dung lượng và chấm tiến trình, đều quay theo.
 - **Sửa:** `PushUnturned` xoay ngược đúng tâm cho phần không phải thân, nên chỉ thân boss quay; thêm bù `RollLift` để dấu nằm đúng mặt sàn.

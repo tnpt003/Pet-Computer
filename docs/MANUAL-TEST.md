@@ -764,6 +764,27 @@ Chưa trận gốc nào có ba quái này. Muốn thử: cất file `%LOCALAPPDA
 - [ ] Tinh anh (đợt 4): nhím xù lâu hơn, đồng hồ 15 s, trộm chạy nhanh hơn. Pause/menu: gai, đồng hồ, thời gian trốn đều đứng yên.
 - [ ] DPI 100/150/200%, đổi DPI giữa trận, màn hình phụ: gai, đồng hồ, túi không bị cắt; âm thanh ngắn, không chồng nhau; banner vi/en/ja đúng chữ.
 
+## Slime Nén thiết kế lại 06/11 (Issue #54, #55) — màn 5 chương 2 hoặc file tùy chỉnh
+
+Thay cho mục 05/11 ngay dưới ở phần đòn, câu đố đầu và pha nối dây. Xem docs/ZIP-SLIME.md để biết đòn nào né thế nào.
+
+- [ ] Boss lăn: điểm vàng, mũi tên, nhãn dung lượng và chấm tiến trình đứng yên, chỉ thân quay.
+- [ ] Đủ 9 đòn: mỗi đòn có báo trước rõ, đọc được hướng; đòn đã khóa không đổi hướng. Không thấy lặp ngay một đòn.
+- [ ] Bắn khóa kéo, Tệp truy đuổi, Ghi đè: bế mèo lên cao vẫn thấy đường ngắm, điểm đánh dấu và tệp bay ở đúng chỗ mèo (lớp vẽ trên màn hình).
+- [ ] Bế mèo trúng đòn: mất máu, không tuột tay, không sao choáng. Ném mèo trúng đòn: quỹ đạo không đổi.
+- [ ] Đòn sát sàn: nâng mèo qua vùng đỏ thì né được; cao bao nhiêu là đủ có tự nhiên không.
+- [ ] Giải nén lỗi: thấy rõ gói đỏ rung; đánh vỡ thì hai gói kia tan; để yên thì nổ đúng vòng.
+- [ ] Tràn bộ nhớ: khoảng vàng dễ thấy, kịp đưa mèo vào; Xé archive: hai nửa nối khóa kéo quét ra rồi nhập lại.
+- [ ] 66%: boss trượt không lăn, dừng trên điểm vàng; thả đè đúng lúc dừng thì bung một đai, đủ 2 đai có banner "BUNG ĐAI!". Thả lúc còn trượt không tính.
+- [ ] 33%: ba gói dữ liệu nối luồng, không còn đội Pháo đài; cắt luồng hoặc đánh vỡ đều được; cắt đôi có "Cắt đôi!".
+- [ ] 20%: bom nén có mặt đồng hồ, tay kéo nổi bật; nổ khi hết giờ, nhấc cao thì né được.
+- [ ] Nén: bất ngờ, không báo trước; hiệu ứng lúc áp thấy rõ, mèo nhỏ lại, vùng click vẫn dễ bấm, nhãn "Nén!" không che mặt.
+- [ ] Khóa ZIP: vỏ, khóa kéo, ổ khóa to trên đầu; 3 chấm vàng cho click và 5 ô xanh cho nhát đánh tách biệt. Click 3 lần, hoặc để mèo đánh 5 nhát, hoặc chờ 6 giây đều mở; ổ bật tung.
+- [ ] Trong lúc Khóa boss không mở đòn mới; mở xong có một nhịp kịp bế mèo.
+- [ ] Khiên chặn được debuff, Nộ giải được, Pause giữ nguyên, Chụp Màn Hình và hướng dẫn đứng hình không làm kẹt.
+- [ ] Nhiều màn hình và DPI khác nhau: lớp vẽ trên cao khớp vị trí mèo.
+- [ ] Cảm giác: boss có đủ áp lực không, giai đoạn 2 có quá ngắn không (mô phỏng đo 0,6–0,8 vòng đòn với build vừa), Hard có quá khó không.
+
 ## Slime Nén thiết kế lại 05/11 (Issue #53) — file tùy chỉnh hoặc màn 5 chương 2
 
 Chép docs/examples/battle-m17.json thành %LOCALAPPDATA%\DesktopPet\battle.json (giữ bản cũ), mở Trận tự do, mang Kéo cắt; hoặc chơi màn 5 chương 2.

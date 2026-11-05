@@ -52,6 +52,7 @@ Ngoại lệ nào có link tới docs/APPROVED-EXCEPTIONS.md: trước khi sửa
 - Ngoại lệ đã duyệt: "đi trên cửa sổ" (chỉ đọc hình chữ nhật/kiểu/z-order cửa sổ, không đọc nội dung; physics ở C#). Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Hành vi mèo.
 - Ngoại lệ đã duyệt: Battle Mode (tùy chọn, mặc định tắt, không tự bật lại): trong trận C# sở hữu mèo, Python không tham gia; có luật riêng về cầm/ném/sát thương/choáng/Pause. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Battle Mode.
 - Bổ sung đã duyệt 05/11: Slime Mẹ lao và Vua biến dị phình nổ đẩy mèo dưới sàn; dây cứu con/dòng hút nhầy cắt được. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Battle Mode; luật: docs/BOSS-TACTICS.md.
+- Bổ sung đã duyệt 06/11, chỉ Slime Nén: đòn trúng mèo đang cầm/bay khi thực sự chạm (không tuột tay, không choáng); Khóa ZIP không nhấc được mèo. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Battle Mode; luật: docs/ZIP-SLIME.md.
 - Ngoại lệ đã duyệt: kệ kỷ vật có physics; rơi/ném trúng mèo gây choáng Bonk, KHÔNG phải Dizzy. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Kệ kỷ vật có physics.
 - Âm thanh: giữ cue phong cách hoạt hình (assets CC0 đã xử lý, không thay bằng beep hay tiếng mèo thật); auto sound có cooldown, không overlap; preview chạy dù auto bị mute, volume 0 thì im; không sửa trực tiếp buffer dùng chung.
 - DPI/monitor: PerMonitorV2; đổi DPI phải đồng bộ position/velocity/drag offset và bỏ throw samples cũ; vị trí lưu theo monitor-relative, fallback primary screen.

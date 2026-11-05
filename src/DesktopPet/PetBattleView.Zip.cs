@@ -83,13 +83,16 @@ public sealed partial class BattleFieldView
     // Marks in body coordinates (from DrawSlime; the origin at the middle of its bottom, up is negative).
     private void DrawZipMarks(DrawingContext dc, Slime slime)
     {
+        if (slime.Type.Marks == "packet") DrawPacket(dc, slime, slime.StateTime);
         if (slime.Type.Marks != "zip") return;
         switch (Math.Clamp(slime.ZipStage, 0, 2))
         {
             case 0:
                 DrawZipperLine(dc, -30, -1);
                 DrawZipTab(dc, -31);
-                foreach (double y in new[] { -9.0, -26.0 }) DrawBelt(dc, y, 19);
+                // One belt bursts with each pin of the press riddle.
+                double[] belts = { -26.0, -9.0 };
+                for (int i = Math.Min(slime.Pins, belts.Length); i < belts.Length; i++) DrawBelt(dc, belts[i], 19);
                 break;
             case 1:
                 DrawZipperLine(dc, -33, -15);
@@ -195,6 +198,11 @@ public sealed partial class BattleFieldView
         if (BattleSim.BombFill(slime) is not double fill) return;
         const double barWidth = 104, barHeight = 13;
         var bar = new Rect(x - barWidth / 2, y - 10, barWidth, barHeight);
+        // Its clock, the time running out in its hand.
+        var face = new Point(bar.Left - 14, bar.Y + barHeight / 2);
+        dc.DrawEllipse(PageFill, Outline, face, 10, 10);
+        double hand = fill * Math.PI * 2;
+        dc.DrawLine(Shackle, face, new Point(face.X + Math.Sin(hand) * 7, face.Y - Math.Cos(hand) * 7));
         dc.DrawRoundedRectangle(BombTrack, Halo, bar, 4, 4);
         dc.DrawRoundedRectangle(BombRed, null, new Rect(bar.X + 2, bar.Y + 2, (barWidth - 4) * fill, barHeight - 4), 2.5, 2.5);
         var (shape, width, height) = NumberShape($"{(int)(fill * 100)}%", 10);

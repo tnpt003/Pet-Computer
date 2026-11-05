@@ -266,6 +266,7 @@ public sealed partial class BattleFieldView : FrameworkElement
                     dc.PushTransform(new ScaleTransform(wide, tall, x, foot));
                 }
                 if (slime.BroodNest) DrawBroodNest(dc, slime, x, foot, SlimeTime(time));
+                else if (slime.ZipAct == ZipAct.Tear && slime.ZipBeat == ZipBeat.Strike && BattleSim.MoveSpec(slime, ZipAct.Tear) is ZipMoveSpec tear) DrawTornBody(dc, slime, tear, x, foot, sim.Settings);
                 else if (slime.Type.Marks == "post") DrawPost(dc, slime, x, foot, time); // The planted flag has no body.
                 else DrawSlime(dc, slime, x, foot, sim.Settings, SlimeTime(time)); // 1.5 M26: frozen, the pose of the flash.
                 if (tacticPose) dc.Pop();
@@ -280,6 +281,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         DrawCarriedFish(dc, floor, time);
         DrawNursing(dc, floor, time);
         DrawBossTactics(dc, floor, SlimeTime(time));
+        DrawZipActs(dc, floor, SlimeTime(time));
         DrawGoos(dc, floor);
         DrawTools(dc, floor, time);
         if (sim.TabsRemaining > 0) DrawTabs(dc, sim.CatX - OriginX, floor, time);
@@ -529,8 +531,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         {
             // The slam's reach on the floor, filling up as it comes: get out (or push, shield, lift).
             // Outlines only: a filled zone would catch clicks meant for the apps below.
-            // (The Zip Slime's leap: the ring is where it will land.)
-            double k = Math.Clamp(t / windup, 0, 1), ringX = slime.Hopping ? slime.HopTo - OriginX : x, ringY = floor + slime.LeapHeight - 4;
+            double k = Math.Clamp(t / windup, 0, 1), ringX = x, ringY = floor + slime.LeapHeight - 4;
             dc.DrawEllipse(null, WarningFill, new Point(ringX, ringY), Math.Max(1, slime.Range * k), Math.Max(1, 9 * k));
             dc.DrawEllipse(null, WarningEdge, new Point(ringX, ringY), slime.Range, 9);
         }

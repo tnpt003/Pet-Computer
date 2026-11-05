@@ -21,6 +21,8 @@ public sealed partial class BattleSim
         boss.RallyCharge = 0;
         if (boss.State is SlimeState.Windup or SlimeState.Dashing or SlimeState.Casting) boss.Set(SlimeState.Moving);
         events.Add(new(BattleEventKind.BossShielded, boss.X));
+        // 2026-11-06: every riddle needs the hand, so the ZIP shell opens as one starts.
+        if (boss.Type.Zip != null && CatLocked) ClearZipDebuff(true);
         // 2026-11-05: the Zip Slime's riddles stay where they are, no helpers (PetBattle.Zip.cs).
         if (phase.Press) StartPress(boss);
         if (phase.Bomb) { boss.BombTag = tag; ArmBomb(boss); }

@@ -130,6 +130,8 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         // The battle's rage stance (1.5 M07): drawn bigger around its feet (around the scruff while
         // held, the same point the dangle turns around, and only 30 % as much more, so a shaken cat's
         // swing stays inside the window), a red glow behind, the fur reddened.
+        bool squeezed = pet.BattleSqueeze < 1;
+        if (squeezed) dc.PushTransform(p.PickedUp ? new ScaleTransform(pet.BattleSqueeze, pet.BattleSqueeze, PickupAnimation.AnchorX, PickupAnimation.AnchorY) : new ScaleTransform(pet.BattleSqueeze, pet.BattleSqueeze, 56, 107));
         bool rage = pet.BattleRage > 0;
         var calm = palette;
         if (rage)
@@ -162,6 +164,9 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         if (pet.BattleNotResponding > 0) DrawNotResponding(dc, pet.BattleTime);
         if (pet.BattleOffBeat) DrawOffBeat(dc, pet.BattleTime);
         if (rage) { dc.Pop(); palette = calm; }
+        if (squeezed) dc.Pop();
+        if (pet.BattleZip == (int)ZipDebuff.Squeezed) DrawZipSqueeze(dc, pet);
+        else if (pet.BattleZip == (int)ZipDebuff.Locked) DrawZipShell(dc, pet);
         if (hop) { dc.Pop(); dc.Pop(); }
         // The tab tornado's near half, over the cat (the far half is on the battle strip below this
         // window): the same ring, on the floor 2 DIPs under the window's bottom edge like the strip's.
@@ -438,6 +443,51 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
 
     // The weapon alone, for the battle setup cards: the same wooden art as in the paw, tilted,
     // about 46 DIPs long with its grip end at (0, 0).
+    // 2026-11-06, the Zip Slime's debuffs on the cat: outlines round it, clear of its face.
+    private static readonly Pen ZipPen = FrozenZipPen(0x8C, 0x6A, 0x2E, 3.2), ZipGold = FrozenZipPen(0xFF, 0xC8, 0x3A, 3), ZipShellEdge = FrozenZipPen(0xFF, 0xC8, 0x3A, 2.2), ZipInk = FrozenZipPen(0x4A, 0x36, 0x1C, 1.4);
+    private static readonly SolidColorBrush ZipShellFill = FrozenZipBrush(46, 0xFF, 0xE0, 0x90), ZipLockBody = FrozenZipBrush(255, 0xFF, 0xC8, 0x3A), ZipPipEmpty = FrozenZipBrush(255, 0xFF, 0xFB, 0xF2), ZipPaw = FrozenZipBrush(255, 0x5B, 0x8D, 0xEF);
+    private static Pen FrozenZipPen(byte r, byte g, byte b, double width) { var pen = new Pen(FrozenZipBrush(255, r, g, b), width) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round }; pen.Freeze(); return pen; }
+    private static SolidColorBrush FrozenZipBrush(byte a, byte r, byte g, byte b) { var brush = new SolidColorBrush(Color.FromArgb(a, r, g, b)); brush.Freeze(); return brush; }
+
+    private static void DrawZipSqueeze(DrawingContext dc, PetModel pet)
+    {
+        double inset = 26 * pet.BattleZipLook + 4, top = 42, bottom = 110;
+        foreach (int side in new[] { -1, 1 })
+        {
+            double x = 56 + side * (56 - inset);
+            dc.DrawLine(ZipPen, new Point(x, top), new Point(x, bottom));
+            dc.DrawLine(ZipPen, new Point(x, top), new Point(x - side * 10, top));
+            dc.DrawLine(ZipPen, new Point(x, bottom), new Point(x - side * 10, bottom));
+            for (int i = 0; i < 3; i++)
+                dc.DrawLine(ZipInk, new Point(x + side * 6, 58 + i * 18), new Point(x + side * 16, 58 + i * 18));
+        }
+        var text = new FormattedText(pet.BattleZipText, System.Globalization.CultureInfo.CurrentCulture, FlowDirection.LeftToRight, new Typeface("Segoe UI Black"), 13, Brushes.White, 1.25);
+        var pen = new Pen(ZipPen.Brush, 3) { LineJoin = PenLineJoin.Round };
+        var shape = text.BuildGeometry(new Point(56 - text.Width / 2, 20));
+        dc.DrawGeometry(null, pen, shape);
+        dc.DrawGeometry(Brushes.White, null, shape);
+    }
+
+    private static void DrawZipShell(DrawingContext dc, PetModel pet)
+    {
+        double shut = pet.BattleZipLook;
+        var box = new Rect(8, 24, 96, 88);
+        dc.DrawRoundedRectangle(ZipShellFill, ZipShellEdge, box, 16, 16);
+        // The zipper closes along the foot of the shell, teeth first, tab last.
+        double end = box.Left + 10 + (box.Width - 20) * shut;
+        dc.DrawLine(ZipPen, new Point(box.Left + 10, box.Bottom), new Point(end, box.Bottom));
+        for (double x = box.Left + 12; x < end; x += 7) dc.DrawLine(ZipInk, new Point(x, box.Bottom - 4), new Point(x, box.Bottom + 3));
+        dc.DrawRoundedRectangle(ZipLockBody, ZipInk, new Rect(end - 4, box.Bottom - 7, 8, 14), 2, 2);
+        // The padlock over its head, and each way out shown apart: gold clicks, blue swings.
+        dc.DrawRoundedRectangle(null, ZipPen, new Rect(49, 3, 14, 15), 6, 6);
+        dc.DrawRoundedRectangle(ZipLockBody, ZipInk, new Rect(44, 11, 24, 16), 3, 3);
+        dc.DrawEllipse(ZipInk.Brush, null, new Point(56, 19), 2.4, 2.4);
+        for (int i = 0; i < pet.BattleZipClicksAll; i++)
+            dc.DrawEllipse(i < pet.BattleZipClicks ? ZipLockBody : ZipPipEmpty, ZipInk, new Point(38 - i * 12, 18), 4.5, 4.5);
+        for (int i = 0; i < pet.BattleZipSwingsAll; i++)
+            dc.DrawRectangle(i < pet.BattleZipSwings ? ZipPaw : ZipPipEmpty, ZipInk, new Rect(73 + i * 9, 14, 7, 8));
+    }
+
     public static void DrawWeaponIcon(DrawingContext dc, string style)
     {
         dc.PushTransform(new RotateTransform(35));

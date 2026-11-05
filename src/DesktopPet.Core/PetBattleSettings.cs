@@ -744,11 +744,23 @@ public sealed class Slime
     // The bomb: time left, pulls so far, the tab's spot (a short lock after a pull), time to arming again, the
     // time left of its flight. A reward: taking ×MechBonus for MechBonusClock s. Ropes: the last cut and the
     // extra stun two cuts together earned.
-    public int ZipStage, ComboLeft, PressLeft, Pins, BombPulls, BombTag;
-    public double ZipScale, HopFrom, HopTo, RollGoal, RollDistance, PressWindow;
+    public int ZipStage, PressLeft, Pins, BombPulls, BombTag;
+    public double ZipScale, RollGoal, RollDistance, PressWindow;
     public double BombClock, TabX, TabHeight, TabLock, BombRearm, Deflating, DeflateVelocity;
     public double MechBonus = 1, MechBonusClock, RopeBonusStun, RopeCutAt = double.NegativeInfinity;
-    public bool Hopping, PressRolling, BombDone;
+    public bool PressRolling, BombDone;
+    // 2026-11-06 (PetBattle.ZipMoves.cs). The move under way, its beat, the time left of it and that beat's whole
+    // length; the bag and the last one drawn; where it started, its fixed aim, its zipper head, what it already
+    // hit, marks so far, how far the tear or the spill has gone (0–1). A roll about to come back, and coming back.
+    // A packet's time left and fuse. The next debuff's clock and kind.
+    public ZipAct ZipAct, ZipLast;
+    public ZipBeat ZipBeat;
+    public double ZipLeft, ZipSeconds, ZipIdle, ZipFrom, ZipAimX, ZipAimHeight, ZipHeadX, ZipHeadHeight, ZipTear, PacketLeft;
+    public double ZipDebuffClock = -1, ZipOpenFloor;
+    public ZipDebuff ZipDebuffNext;
+    public int ZipHitMask, ZipCount;
+    public bool RollBack, RollBounce, PacketFuse;
+    public readonly List<ZipAct> ZipBag = new();
     // 1.5 M18 (PetBattle.Brood.cs, PetBattle.Mutant.cs). A brooding boss: the time to its next clutch, the
     // clutch announced (its spots) and the warning left. Nursing: what its clutch merged into, going back to
     // feed it (Feeding: next to it now; FedHp: what it has given so far). A crowned boss's next crown link (an index into CrownLinks) and the
@@ -875,6 +887,7 @@ public enum BattleEventKind
     // lock open (Value 1: broken by the player); two ropes cut together; the bomb armed, a pull (Value: pulls so
     // far), its air let out, the burst (Value 1: it hit the cat).
     ZipGrew, ZipPressed, ZipPinned, ZipUnlocked, ZipRopeCombo, ZipBombArmed, ZipTabPulled, ZipDeflated, ZipBurst,
+    ZipMoveWarned, ZipMoveLanded, ZipMarked, ZipBlowLanded, ZipFileLocked, ZipPacketBurst, ZipDebuffed, ZipDebuffEnded, ZipLockTapped,
     // 1.5 M18: a brooding boss announced a clutch (Value: the boss's id), laid it (Value: how many); what its
     // clutch merged into heads back to it (Value: that one's id), has fed it all its HP (Value: the HP given);
     // a crowned boss tied a link between its helpers (Value: the holder's id), a goo rain began
@@ -934,6 +947,9 @@ public sealed class BattleShot
     public int OwnerId;
     public double X, Height, VX, VY, Remaining, Damage, Radius, Slow, SlowSeconds;
     public string? Tint;
+    // 2026-11-06: a Zip Slime's file: curves until LockIn s are out, then its one aim at the cat, at Speed.
+    public bool Paper;
+    public double LockIn, Speed;
 }
 public sealed class BattlePuddle
 {

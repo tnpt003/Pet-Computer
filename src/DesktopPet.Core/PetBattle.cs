@@ -144,7 +144,7 @@ public sealed partial class BattleSim
     // armor (cards and synergies together) takes at most MaxArmor off.
     public const double MaxArmor = 0.6;
     public double DamageFactor => 1 + damageBonus + MutationDamage;
-    public double MoveFactor => (1 + moveBonus) * (ComboRushRemaining > 0 ? 1 + comboRushBonus : 1) * (Raging ? 1 : PuddleSlowNow); // A puddle slows it (PetBattle.Spit.cs), never a raging cat.
+    public double MoveFactor => (1 + moveBonus) * (ComboRushRemaining > 0 ? 1 + comboRushBonus : 1) * (Raging ? 1 : PuddleSlowNow * SqueezeSpeed); // A puddle slows it (PetBattle.Spit.cs), never a raging cat.
     // Attacks a second against the usual: the rushes (Tailwind, Gale).
     public double RushFactor => 1 + (LandingRushRemaining > 0 ? landingRushBonus : 0) + (ComboRushRemaining > 0 ? comboRushBonus : 0);
     public double CooldownFactor => Math.Max(0.3, 1 - cooldownCut) * (1 + swingDelay);
@@ -403,6 +403,7 @@ public sealed partial class BattleSim
         LandingRushRemaining = Math.Max(0, LandingRushRemaining - dt);
         ComboRushRemaining = Math.Max(0, ComboRushRemaining - dt);
         StepRage(dt);
+        StepZipDebuff(dt);
         autoShieldClock = Math.Max(0, autoShieldClock - dt);
         if (Over)
         {
@@ -441,6 +442,8 @@ public sealed partial class BattleSim
         if (!EnemiesFrozen) StepSpit(dt);
         if (Over) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
         if (!EnemiesFrozen) StepShots(dt);
+        if (Over) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
+        if (!EnemiesFrozen) StepZipBlows(dt);
         if (Over) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
         StepSlimes(dt, floorX, catHeld);
         if (Over) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
@@ -586,6 +589,7 @@ public sealed partial class BattleSim
                 double cooldown = arms.AttackCooldown * CooldownFactor / (CheerRemaining > 0 ? Settings.CheerSpeed : 1) / LagFactor / RushFactor;
                 CatCooldown = Math.Max(cooldown, arms.SwingDuration);
                 events.Add(new(BattleEventKind.Swing, catX));
+                ZipSwing(); // 2026-11-06: a swing counts against the ZIP shell, hit or miss.
             }
             return new(CatCommand.Stand, catX, facing);
         }
@@ -672,7 +676,7 @@ public sealed partial class BattleSim
         comboClock = 0;
         // A long chain (the glove) has a plain combo on the battle's ComboHits on the way (2026-11-04).
         bool mid = MidCombo(Combo), combo = Combo >= ComboHits || mid;
-        double damage = arms.Damage * DamageFactor * ArmsFactor * SkillRushFactor * (CheerRemaining > 0 ? Settings.CheerDamage : 1) * (combo ? Settings.ComboDamage : 1);
+        double damage = arms.Damage * SqueezeDamage * DamageFactor * ArmsFactor * SkillRushFactor * (CheerRemaining > 0 ? Settings.CheerDamage : 1) * (combo ? Settings.ComboDamage : 1);
         // Armor break: combo hits hit harder.
         if (combo && Active("armorBreak") is SynergySpec breaker) damage *= 1 + breaker.Amount;
         // Rare cards: the first landed hit on each enemy (Opener) and a swing after a run (Momentum)
@@ -931,6 +935,7 @@ public sealed partial class BattleSim
         }
         events.Add(new(BattleEventKind.SlimeDefeated, slime.X, slime.IsBoss ? 1 : 0));
         TacticDefeated(slime);
+        ZipFallen(slime);
         LinkFallen(slime, true);
         FlagOwnerFell(slime);
         PackFallen(slime); // 2026-10-31: its merging pack rages (PetBattle.Links.cs).
@@ -970,7 +975,7 @@ public sealed partial class BattleSim
     // The lowest HP a hit may leave: the line of the first shield phase still to come (0: none).
     private static double ShieldFloor(Slime slime)
     {
-        double floor = 0;
+        double floor = slime.MechBonusClock > 0 ? slime.ZipOpenFloor : 0;
         if (slime.Type.Phases is { } phases)
             for (int i = 0; i < phases.Length && i < 31; i++)
             {

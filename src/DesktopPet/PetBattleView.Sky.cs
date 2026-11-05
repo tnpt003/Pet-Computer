@@ -155,6 +155,7 @@ public sealed partial class BattleFieldView
     // A drop of sticky goo in flight (the sky's canvas): a blob and two drips trailing it.
     public static void DrawShot(DrawingContext dc, BattleShot shot, Point at)
     {
+        if (shot.Paper) { DrawPaperShot(dc, shot, at); return; }
         var fill = KindBrush(shot.Tint ?? "#8FD3C8");
         double speed = Math.Max(1, Math.Sqrt(shot.VX * shot.VX + shot.VY * shot.VY));
         double bx = -shot.VX / speed, by = shot.VY / speed; // Backwards along its flight (screen y down).

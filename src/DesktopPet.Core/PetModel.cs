@@ -135,6 +135,11 @@ public sealed class PetModel
     // The rage stance (1.5 M07): how much of it shows (0..1, BattleSim.RageLook) and the size it grows
     // to (drawing only; the window and its hit box stay the same).
     public double BattleRage, BattleRageScale = 1.3;
+    // 2026-11-06: the Zip Slime's debuffs (1 squeezed, 2 locked; 0 none), how far they have taken hold, how small the
+    // cat is drawn and the shell's clicks and swings so far.
+    public int BattleZip, BattleZipClicks, BattleZipSwings, BattleZipClicksAll = 3, BattleZipSwingsAll = 5;
+    public double BattleZipLook, BattleSqueeze = 1;
+    public string BattleZipText = "";
     // The tab tornado's near half, drawn over the cat standing on the floor: seconds left (0: none
     // or the cat is lifted) and the ring's drawn radius.
     public double BattleTabs, BattleTabRing;

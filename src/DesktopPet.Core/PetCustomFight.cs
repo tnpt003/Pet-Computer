@@ -74,7 +74,7 @@ public enum CustomFightBlock { None, Locked, Links, Mouse }
 public static class CustomFights
 {
     // The kinds a preset can bring: those with a Monster Book page; slimes, then bosses.
-    public static List<EnemyType> Kinds(BattleSettings s) => s.EnemyTypes.Where(e => e.TipVi != null && !e.Boss).ToList();
+    public static List<EnemyType> Kinds(BattleSettings s) => s.EnemyTypes.Where(e => e.TipVi != null && !e.Boss && !e.Packet).ToList();
     public static List<EnemyType> Bosses(BattleSettings s) => s.EnemyTypes.Where(e => e.TipVi != null && e.Boss).ToList();
     // The kind a page spawns: the one sharing it (the chapter 1 King, with its shield phases, for the King's page), else itself.
     public static string SpawnOf(BattleSettings s, string page) => s.EnemyTypes.FirstOrDefault(e => e.Page == page)?.Id ?? page;

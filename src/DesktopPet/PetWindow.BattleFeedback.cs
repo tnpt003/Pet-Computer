@@ -110,6 +110,9 @@ public sealed partial class PetWindow
         [BattleEventKind.BossRoped] = ("squish", 3), [BattleEventKind.BossRopeCut] = ("pop", 4), [BattleEventKind.BossRopesGone] = ("excited", 5),
         [BattleEventKind.ZipGrew] = ("squish", 5), [BattleEventKind.ZipPressed] = ("clank", 5), [BattleEventKind.ZipPinned] = ("pop", 5), [BattleEventKind.ZipUnlocked] = ("excited", 5),
         [BattleEventKind.ZipRopeCombo] = ("sparkle", 5), [BattleEventKind.ZipBombArmed] = ("clank", 5), [BattleEventKind.ZipTabPulled] = ("pop", 5), [BattleEventKind.ZipDeflated] = ("swoosh", 6), [BattleEventKind.ZipBurst] = ("ball_tap", 6),
+        // 2026-11-06: its blows and debuffs.
+        [BattleEventKind.ZipMoveWarned] = ("clank", 3), [BattleEventKind.ZipMoveLanded] = ("ball_tap", 3), [BattleEventKind.ZipMarked] = ("pop", 2), [BattleEventKind.ZipBlowLanded] = ("ball_tap", 2),
+        [BattleEventKind.ZipFileLocked] = ("surprised", 3), [BattleEventKind.ZipPacketBurst] = ("ball_tap", 5), [BattleEventKind.ZipDebuffed] = ("pop", 6), [BattleEventKind.ZipDebuffEnded] = ("sparkle", 5), [BattleEventKind.ZipLockTapped] = ("clank", 4),
         // 1.5 M18: the Slime Mother's clutches and feeding, the Mutant King's crown links and rain.
         [BattleEventKind.BroodWarned] = ("surprised", 4), [BattleEventKind.BroodLaid] = ("squish", 4), [BattleEventKind.NurseHeading] = ("surprised", 4),
         [BattleEventKind.NurseFed] = ("satisfied", 4), [BattleEventKind.CrownLinked] = ("sparkle", 5), [BattleEventKind.RainCalled] = ("swoosh", 4),
@@ -231,14 +234,17 @@ public sealed partial class PetWindow
                 BattleEventKind.BossSummoned when BossShieldPhase() is { Roped: true } => null,
                 BattleEventKind.BossSummoned => LF($"{BossName()} gọi quân!", $"The {BossName()} calls for help!"),
                 BattleEventKind.BossShielded when BossShieldPhase() is { Roped: true } =>
-                    LF($"{BossName()} bung file! Còn dây thì nó không mất máu: kéo hoặc ném mèo xuyên dây, hay dùng Kéo cắt",
-                        $"The {BossName()} unpacks! While a rope is left it takes no damage: drag or throw the cat through the ropes, or use the Scissors"),
+                    LF($"{BossName()} giải nén kẹt! Còn luồng thì nó không mất máu: kéo hoặc ném mèo xuyên luồng, dùng Kéo cắt, hoặc đánh vỡ gói",
+                        $"The {BossName()} is stuck unpacking! While a stream is left it takes no damage: drag or throw the cat through, use the Scissors, or break the packets"),
                 // 2026-11-05: the Zip Slime's riddles say it themselves.
                 BattleEventKind.BossShielded when BossShieldPhase() is { Press: true } or { Bomb: true } => null,
-                BattleEventKind.ZipPressed => LF($"{BossName()} khóa vỏ! Nhấc mèo né cú lăn rồi thả đè đúng điểm vàng", $"The {BossName()} locks its shell! Lift the cat off its roll, then drop it on the gold spot"),
+                BattleEventKind.ZipDebuffed when (int)e.Value == (int)ZipDebuff.Squeezed => L("Mèo bị NÉN! Nhỏ lại, đánh nhẹ và chạy chậm hơn", "The cat is SQUEEZED! Smaller, weaker and slower"),
+                BattleEventKind.ZipDebuffed => L("Mèo bị KHÓA ZIP! Click 3 lần hoặc đánh 5 nhát để mở", "The cat is ZIP-LOCKED! Click it 3 times or swing 5 times to open"),
+                BattleEventKind.ZipDebuffEnded when (int)e.Value == (int)ZipDebuff.Locked => L("Bung khóa ZIP!", "The ZIP lock pops!"),
+                BattleEventKind.ZipPressed => LF($"{BossName()} kẹt khóa! Thả mèo đè lúc nó dừng trên điểm vàng để bung đai", $"The {BossName()}'s zipper jams! Drop the cat on it when it stops on the gold spot to burst its belts"),
                 BattleEventKind.ZipPinned when battle.Boss?.Type.Zip is ZipSpec pinned => LF($"Đè trúng! {(int)e.Value}/{pinned.Press.Pins}", $"Pinned! {(int)e.Value}/{pinned.Press.Pins}"),
-                BattleEventKind.ZipUnlocked when e.Value > 0 => L("BUNG KHÓA! Nó choáng và đau gấp rưỡi", "LOCK BROKEN! It is dazed and takes half as much again"),
-                BattleEventKind.ZipUnlocked => L("Vỏ khóa tự mở", "The lock opens by itself"),
+                BattleEventKind.ZipUnlocked when e.Value > 0 => L("BUNG ĐAI! Nó choáng và đau gấp rưỡi", "BELTS BURST! It is dazed and takes half as much again"),
+                BattleEventKind.ZipUnlocked => L("Khóa kéo tự tuột", "The zipper slips free by itself"),
                 BattleEventKind.ZipGrew => LF($"{BossName()} phình to! Đánh chậm hơn mà đau hơn", $"The {BossName()} swells! Slower blows, heavier ones"),
                 BattleEventKind.ZipRopeCombo => L("Cắt đôi! Trùm sẽ choáng lâu hơn", "Two at once! The boss will be dazed for longer"),
                 BattleEventKind.ZipBombArmed => LF($"{BossName()} thành bom nén! Kéo mèo xuyên tay kéo hoặc dùng Kéo cắt trước khi nó nổ", $"The {BossName()} turns into a zip bomb! Drag the cat through its zipper tab or use the Scissors before it bursts"),
@@ -247,7 +253,7 @@ public sealed partial class PetWindow
                 BattleEventKind.ZipBurst => L("BÙM! Bom nén nổ, nó sẽ nạp lại", "BOOM! The zip bomb burst; it will charge again"),
                 BattleEventKind.BossShielded => LF($"{BossName()} bật khiên! Hạ hết quân", $"The {BossName()} shields up! Defeat its helpers"),
                 BattleEventKind.BossRopeCut when battle.Boss is Slime roped && battle.RopesLeft(roped) is int left && left > 0 =>
-                    LF($"Đứt dây! Còn {left} dây", $"Rope cut! {left} left"),
+                    LF($"Đứt luồng! Còn {left}", $"Stream cut! {left} left"),
                 BattleEventKind.RollAimed when trickExplained.Add(e.Kind) => LF($"{BossName()} sắp lăn! Nhấc mèo lên để né", $"The {BossName()} is about to roll! Lift the cat out of its way"),
                 // 1.5 M18: the Slime Mother (her first clutch, the first one heading back, every feed), the Mutant King
                 // (every crown link: which kind matters; its first rain).

@@ -198,6 +198,8 @@ public sealed class EnemyType
     // RopeCutStun s.
     public RollSpec? Roll { get; init; }
     public bool Still { get; init; }
+    // 2026-11-06: one of the Zip Slime's data packets (PetBattle.ZipMoves.cs): no kill counted when it just goes.
+    public bool Packet { get; init; }
     public double RopeCutSpeed { get; init; } = 300;
     public double RopeCutStun { get; init; } = 1;
     // 2026-11-05: the Zip Slime's own fight (PetBattle.Zip.cs): its stages, press and bomb. Null: none.
@@ -523,29 +525,73 @@ public sealed class RollSpec
 }
 
 // 2026-11-05, the Zip Slime's stages (PetBattle.Zip.cs). One stage of its fight: drawn and hit at Scale, it
-// walks at Speed; a cat within Reach starts a round of Hits blows, Gap s apart, then Cooldown s of rest.
-// Each blow winds up Windup s and lands Damage (scaled like its other hits) within Range. Hop > 0: it
-// leaps at the cat first (at most Hop DIPs, the spot locked as it crouches). Roll: the round opens with its
-// RollSpec roll when the cat is far enough for one.
+// walks at Speed and keeps within Range. Moves: the ids of its three blows (ZipSpec.Moves), drawn from a bag;
+// Cooldown s of rest after each. Windup and Damage: its plain slam at a cat next to it during a roped phase.
 public sealed class ZipStage
 {
     public double Scale { get; init; } = 2;
     public double Speed { get; init; } = 30;
     public double Range { get; init; } = 110;
-    public double Reach { get; init; } = 110;
-    public int Hits { get; init; } = 1;
     public double Damage { get; init; } = 20;
     public double Windup { get; init; } = 1;
-    public double Gap { get; init; } = 1;
-    public double Cooldown { get; init; } = 4;
-    public double Hop { get; init; }
-    public bool Roll { get; init; }
+    public double Cooldown { get; init; } = 1;
+    public string[] Moves { get; init; } = Array.Empty<string>();
+    public ZipAct[] Acts => acts ??= Moves.Select(ZipMoveSpec.ActOf).ToArray();
+    private ZipAct[]? acts;
 }
 
-// The first stage's riddle: behind a locked shell it rolls Roll.Distance DIPs Rolls times, its stop shown on
-// the floor. The cat let go after a lift (a burrower's pin) within Reach of its body, while it rolls or
-// within Window s of stopping, pins it for PinStun s; Pins of them break the lock: stunned Stun s, taking
-// ×Bonus. Out of rolls: the lock opens by itself, no reward.
+// 2026-11-06, one of the Zip Slime's blows (PetBattle.ZipMoves.cs): Warn s of warning, Lock s more with the aim
+// fixed, the strike over Strike s, Recover s open to a counter. MinRange–MaxRange: how far off the cat may be
+// for it; Air: it is also used on a cat off the floor. Damage is scaled like its other hits, Stun its stun
+// (s, 0: none). Radius, Height: the box it hits. Count, Spacing, Delay (s between them), Speed, Life and
+// BurstHeight: as each move reads them.
+public sealed class ZipMoveSpec
+{
+    public string Id { get; init; } = "";
+    public ZipAct Act => ActOf(Id);
+    public static ZipAct ActOf(string id) => Enum.TryParse<ZipAct>(id, true, out var act) ? act : ZipAct.None;
+    public double Warn { get; init; } = 1;
+    public double Lock { get; init; }
+    public double Strike { get; init; } = 0.2;
+    public double Recover { get; init; } = 1.5;
+    public double MinRange { get; init; }
+    public double MaxRange { get; init; } = 2000;
+    public bool Air { get; init; }
+    public double Damage { get; init; } = 10;
+    public double Stun { get; init; }
+    public double Radius { get; init; } = 60;
+    public double Height { get; init; } = 90;
+    public int Count { get; init; } = 3;
+    public double Spacing { get; init; } = 120;
+    public double Delay { get; init; } = 0.25;
+    public double Speed { get; init; } = 320;
+    public double Life { get; init; } = 2.5;
+    public double BurstHeight { get; init; } = 170;
+}
+
+// 2026-11-06, the two debuffs (PetBattle.ZipDebuff.cs). First: s into the fight before the first; GapMin–GapMax:
+// s to the next. Squeezed: Seconds s, drawn ×Scale, weapon ×Damage, running ×Speed. Locked: at most LockSeconds s,
+// opened by LockClicks clicks or LockSwings swings; Guard s of quiet after it opens.
+public sealed class ZipDebuffSpec
+{
+    public bool On { get; init; } = true;
+    public double First { get; init; } = 8;
+    public double GapMin { get; init; } = 10;
+    public double GapMax { get; init; } = 16;
+    public double Seconds { get; init; } = 5;
+    public double Scale { get; init; } = 0.75;
+    public double Damage { get; init; } = 0.75;
+    public double Speed { get; init; } = 0.8;
+    public double LockSeconds { get; init; } = 6;
+    public int LockClicks { get; init; } = 3;
+    public int LockSwings { get; init; } = 5;
+    public double Guard { get; init; } = 0.8;
+}
+
+// The first stage's riddle, "Burst the belts": its zipper jammed it slides (no tumbling) Roll.Distance DIPs to a
+// stop shown on the floor and fixed from the start, Rolls times. The cat let go after a lift (a burrower's pin)
+// within Reach of its body within Window s of stopping pins it for PinStun s, and a belt bursts; Pins of them
+// open it: stunned Stun s, taking ×Bonus. Out of slides: the lock opens by itself, no reward.
 public sealed class ZipPressSpec
 {
     public int Rolls { get; init; } = 4;
@@ -555,6 +601,8 @@ public sealed class ZipPressSpec
     public double PinStun { get; init; } = 0.7;
     public double Stun { get; init; } = 3;
     public double Bonus { get; init; } = 1.5;
+    // The most of its whole HP the opening after it can take.
+    public double Opening { get; init; } = 0.1;
     public RollSpec Roll { get; init; } = new();
 }
 
@@ -575,6 +623,7 @@ public sealed class ZipBombSpec
     public double Flight { get; init; } = 1.6;
     public double Stun { get; init; } = 4;
     public double Bonus { get; init; } = 1.5;
+    public double Opening { get; init; } = 0.1;
 }
 
 // Grow: seconds its size takes to reach a new stage's. RopeCombo*: two ropes cut within RopeComboWindow s
@@ -587,6 +636,13 @@ public sealed class ZipSpec
     public ZipBombSpec Bomb { get; init; } = new();
     public double RopeComboWindow { get; init; } = 0.5;
     public double RopeComboStun { get; init; } = 1.5;
+    public ZipMoveSpec[] Moves { get; init; } = Array.Empty<ZipMoveSpec>();
+    public ZipDebuffSpec? Debuff { get; init; }
+    public ZipMoveSpec? Move(ZipAct act)
+    {
+        foreach (var m in Moves) if (m.Act == act) return m;
+        return null;
+    }
 }
 
 // B2 (1.5 M18): every Every s (EnragedEvery once it is angry), while its shield is down and it is not
@@ -1324,7 +1380,7 @@ public static class BattleData
     public static readonly string[] WeaponStyles = { "sword", "hammer", "yarn", "glove" };
     public static readonly string[] WeaponHitEffects = { "spark", "thud" };
     public static readonly string[] EnemyRenderers = { "slime" };
-    public static readonly string[] EnemyMarks = { "none", "speed", "cracks", "leaf", "cross", "spout", "spring", "drum", "chain", "swarm", "giant", "bomb", "split", "half", "flag", "ghost", "bubble", "mirage", "sulk", "wings", "mole", "ice", "spikes", "quills", "clock", "thief", "zip", "shard", "mother", "mutant", "post" };
+    public static readonly string[] EnemyMarks = { "none", "packet", "speed", "cracks", "leaf", "cross", "spout", "spring", "drum", "chain", "swarm", "giant", "bomb", "split", "half", "flag", "ghost", "bubble", "mirage", "sulk", "wings", "mole", "ice", "spikes", "quills", "clock", "thief", "zip", "shard", "mother", "mutant", "post" };
     public static readonly string[] GroupSides = { "a", "b" };
     // Kinds the cursor beats (ghost, bubble, mirage, sulk) that one battle may bring (docs/UPDATE-1.5.md).
     public const int MaxMouseKinds = 2;
@@ -1843,16 +1899,39 @@ public static class BattleData
                 foreach (var st in zip.Stages)
                 {
                     Within(st.Scale, 0.5, 3.2, at + ".zip.stages.scale"); Within(st.Speed, 0, 400, at + ".zip.stages.speed");
-                    Within(st.Range, 20, 400, at + ".zip.stages.range"); Within(st.Reach, 20, 800, at + ".zip.stages.reach");
-                    if (st.Hits is < 1 or > 5) throw new InvalidDataException(at + ".zip.stages.hits must be 1–5");
+                    Within(st.Range, 20, 400, at + ".zip.stages.range");
                     Within(st.Damage, 0, 1000, at + ".zip.stages.damage"); Within(st.Windup, 0.2, 5, at + ".zip.stages.windup");
-                    Within(st.Gap, 0, 5, at + ".zip.stages.gap"); Within(st.Cooldown, 0.2, 30, at + ".zip.stages.cooldown"); Within(st.Hop, 0, 800, at + ".zip.stages.hop");
-                    if (st.Roll && e.Roll == null) throw new InvalidDataException(at + ".zip.stages: a rolling stage needs \"roll\"");
+                    Within(st.Cooldown, 0, 30, at + ".zip.stages.cooldown");
+                    if (st.Moves is not { Length: <= 4 }) throw new InvalidDataException(at + ".zip.stages.moves lists at most 4 moves");
+                    foreach (var id in st.Moves)
+                    {
+                        if (zip.Moves.All(m => m.Id != id)) throw new InvalidDataException($"{at}.zip.stages names an unknown move \"{id}\"");
+                        if (ZipMoveSpec.ActOf(id) == ZipAct.Tumble && e.Roll == null) throw new InvalidDataException(at + ".zip: tumble needs \"roll\"");
+                    }
+                }
+                foreach (var m in zip.Moves)
+                {
+                    if (m.Act == ZipAct.None) throw new InvalidDataException($"{at}.zip.moves: unknown move \"{m.Id}\"");
+                    Within(m.Warn, 0.2, 5, at + ".zip.moves.warn"); Within(m.Lock, 0, 5, at + ".zip.moves.lock"); Within(m.Strike, 0, 6, at + ".zip.moves.strike");
+                    Within(m.Recover, 0, 10, at + ".zip.moves.recover"); Within(m.MinRange, 0, 3000, at + ".zip.moves.minRange"); Within(m.MaxRange, 20, 5000, at + ".zip.moves.maxRange");
+                    Within(m.Damage, 0, 1000, at + ".zip.moves.damage"); Within(m.Stun, 0, 5, at + ".zip.moves.stun"); Within(m.Radius, 5, 600, at + ".zip.moves.radius");
+                    Within(m.Height, 10, 800, at + ".zip.moves.height"); Within(m.Spacing, 10, 800, at + ".zip.moves.spacing"); Within(m.Delay, 0, 3, at + ".zip.moves.delay");
+                    Within(m.Speed, 10, 2000, at + ".zip.moves.speed"); Within(m.Life, 0.2, 15, at + ".zip.moves.life"); Within(m.BurstHeight, 10, 800, at + ".zip.moves.burstHeight");
+                    if (m.Count is < 1 or > 9) throw new InvalidDataException(at + ".zip.moves.count must be 1–9");
+                    // Tree: a gap always left between branches.
+                    if (m.Act == ZipAct.Tree && m.Radius * 2 >= m.Spacing) throw new InvalidDataException(at + ".zip.moves: tree needs radius × 2 below its spacing");
+                }
+                if (zip.Debuff is ZipDebuffSpec dz)
+                {
+                    Within(dz.First, 0, 120, at + ".zip.debuff.first"); Within(dz.GapMin, 0.5, 120, at + ".zip.debuff.gapMin"); Within(dz.GapMax, dz.GapMin, 240, at + ".zip.debuff.gapMax");
+                    Within(dz.Seconds, 0.5, 30, at + ".zip.debuff.seconds"); Within(dz.Scale, 0.3, 1, at + ".zip.debuff.scale"); Within(dz.Damage, 0.1, 1, at + ".zip.debuff.damage");
+                    Within(dz.Speed, 0.1, 1, at + ".zip.debuff.speed"); Within(dz.LockSeconds, 0.5, 30, at + ".zip.debuff.lockSeconds"); Within(dz.Guard, 0, 5, at + ".zip.debuff.guard");
+                    if (dz.LockClicks is < 1 or > 20 || dz.LockSwings is < 1 or > 30) throw new InvalidDataException(at + ".zip.debuff: lockClicks 1–20, lockSwings 1–30");
                 }
                 var press = zip.Press; var bomb = zip.Bomb;
                 if (press.Rolls is < 1 or > 12 || press.Pins < 1 || press.Pins > press.Rolls) throw new InvalidDataException(at + ".zip.press: rolls must be 1–12, pins 1–rolls");
                 Within(press.Reach, 0, 300, at + ".zip.press.reach"); Within(press.Window, 0.2, 10, at + ".zip.press.window"); Within(press.PinStun, 0, 5, at + ".zip.press.pinStun");
-                Within(press.Stun, 0, 15, at + ".zip.press.stun"); Within(press.Bonus, 1, 5, at + ".zip.press.bonus");
+                Within(press.Stun, 0, 15, at + ".zip.press.stun"); Within(press.Bonus, 1, 5, at + ".zip.press.bonus"); Within(press.Opening, 0.01, 1, at + ".zip.press.opening"); Within(bomb.Opening, 0.01, 1, at + ".zip.bomb.opening");
                 Within(press.Roll.Windup, 0.3, 5, at + ".zip.press.roll.windup"); Within(press.Roll.Speed, 50, 1500, at + ".zip.press.roll.speed");
                 Within(press.Roll.Distance, 50, 1500, at + ".zip.press.roll.distance"); Within(press.Roll.Damage, 0, 1000, at + ".zip.press.roll.damage"); Within(press.Roll.Stun, 0, 5, at + ".zip.press.roll.stun");
                 if (bomb.Pulls is < 1 or > 8) throw new InvalidDataException(at + ".zip.bomb.pulls must be 1–8");

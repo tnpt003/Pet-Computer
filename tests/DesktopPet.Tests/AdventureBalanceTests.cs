@@ -215,7 +215,7 @@ internal static class AdventureBalanceTests
         // (shown on the floor) runs over the cat.
         bool Threat(Slime s) => s.State == SlimeState.Windup && reflex.Notices(s, now) && (s.Type.Dash
             ? (cat - s.X) * s.DashDirection >= -BattleSim.CatHalfWidth && Math.Abs(cat - s.X) <= s.Type.DashDistance + s.HitWidth / 2 + BattleSim.CatHalfWidth
-            : Math.Abs((s.Hopping ? s.HopTo : s.X) - cat) <= s.Range + 12);
+            : Math.Abs(s.X - cat) <= s.Range + 12);
         // The Shield (long cooldown) is kept for plain and slam hits; a dash is Pushed away instead.
         bool danger = sim.Slimes.Any(s => Threat(s) && !s.Type.Dash && s.StateTime > sim.Windup(s) * 0.5);
         // Advanced bosses keep their own move state. React to their actual announced geometry,
@@ -223,6 +223,9 @@ internal static class AdventureBalanceTests
         danger |= sim.Slimes.Any(s => sim.BossThreatens(s, cat)
             && s.SpecialDuration - s.SpecialLeft >= s.SpecialDuration * 0.5
             && reflex.NoticesAge(s.SpecialDuration - s.SpecialLeft));
+        // The Zip Slime: its announced shapes, and the ZIP shell clicked open (2026-11-06).
+        danger |= sim.Slimes.Any(s => sim.ZipThreatens(s, cat) && reflex.NoticesAge(s.ZipSeconds - s.ZipLeft));
+        if (sim.CatLocked && reflex.NoticesAge(sim.ZipDebuffSeconds - sim.ZipDebuffLeft)) sim.ClickZipLock();
         danger |= sim.Goos.Any(g => g.Rain && g.Remaining <= 0.5 && Math.Abs(g.X - cat) <= g.Radius
             && sim.Find(g.OwnerId)?.Type.BossTactics != null && reflex.NoticesAge(g.Flight - g.Remaining));
         if (danger) sim.Use(BattleSkill.Shield, cat);

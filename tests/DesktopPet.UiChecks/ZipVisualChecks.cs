@@ -57,7 +57,7 @@ internal static class ZipVisualChecks
 
         var moves = new BattleSim(data, 0, Width, new Random(1));
         var hopping = Add(moves, "zip", 90);
-        hopping.Set(SlimeState.Windup); hopping.Hopping = true; hopping.HopFrom = 90; hopping.HopTo = 240; hopping.StateTime = 0.1;
+        hopping.Set(SlimeState.Windup); hopping.StateTime = 0.1;
         var windup = Add(moves, "zip", 420, 1);
         windup.Set(SlimeState.Windup); windup.Rolling = true; windup.DashDirection = 1; windup.Facing = 1; windup.StateTime = 0.9; windup.RollDistance = data.Enemy("zip").Roll!.Distance;
         var pressed = Add(moves, "zip", 800);
@@ -65,8 +65,6 @@ internal static class ZipVisualChecks
         var bomb = Add(moves, "zip", 1060, 2);
         bomb.Shielded = true; bomb.ShieldTag = 3; bomb.BombClock = data.Enemy("zip").Zip!.Bomb.Charge * 0.4; bomb.BombPulls = 1; bomb.TabX = 960; bomb.TabHeight = 60;
         var lane = SkyVisualChecks.Render(new BattleFieldView(moves) { OriginX = 0 }, w, h, "enemy-zip-roll");
-        int landing = SkyVisualChecks.Count(lane, w, h, warning, 190, 300, floor - 16, floor);
-        check(landing > 15, $"A leap shows its landing ring where it will land ({landing} pixels)");
         int ahead = SkyVisualChecks.Count(lane, w, h, warning, 560, 760, floor - 16, floor);
         check(ahead > 30, $"A roll winding up shows its lane ahead on the floor ({ahead} pixels)");
         int spot = SkyVisualChecks.Count(lane, w, h, gold, 720, 880, floor - 60, floor);
@@ -93,5 +91,72 @@ internal static class ZipVisualChecks
         }
         int goal = SkyVisualChecks.Count(level!, w, h, gold, 830, 970, floor - 70, floor);
         check(goal > 30 && worst == 0, $"The gold spot does not turn with the rolling body ({goal} pixels, {worst} changed)");
+        Moves(check, data, warning, gold, floor, w, h, Add);
+        Debuffs(check);
+    }
+
+    // 2026-11-06: each blow's warning, one strip a stage, and the cat's two debuffs (PET_RENDER_REVIEW: enemy-zip-moves-*.png, cat-zip-*.png).
+    private static void Moves(Action<bool, string> check, BattleSettings data, Color warning, Color gold, int floor, int w, int h, Func<BattleSim, string, double, int, Slime> add)
+    {
+        var zip = data.Enemy("zip").Zip!;
+        var one = new BattleSim(data, 0, Width, new Random(1));
+        var clamp = add(one, "zip", 300, 0);
+        clamp.ZipAct = ZipAct.Clamp; clamp.ZipBeat = ZipBeat.Warn; clamp.ZipSeconds = 1; clamp.ZipLeft = 0.4; clamp.ZipAimX = 300;
+        var tumble = add(one, "zip", 800, 0);
+        tumble.Set(SlimeState.Windup); tumble.Rolling = tumble.RollBack = true; tumble.ZipAct = ZipAct.Tumble; tumble.ZipBeat = ZipBeat.Strike; tumble.DashDirection = 1; tumble.Facing = 1;
+        tumble.StateTime = 0.9; tumble.RollDistance = 300; tumble.RollGoal = 1100;
+        var px = SkyVisualChecks.Render(new BattleFieldView(one) { OriginX = 0 }, w, h, "enemy-zip-moves-1");
+        var unmarked = new BattleSim(data, 0, Width, new Random(1));
+        add(unmarked, "zip", 300, 0);
+        check(!SkyVisualChecks.Render(new BattleFieldView(unmarked) { OriginX = 0 }, w, h).SequenceEqual(px), "The clamp marks its gap on the floor");
+        check(SkyVisualChecks.Count(px, w, h, Color.FromRgb(0xE8, 0xB8, 0x4A), 200, 260, floor - 90, floor) > 100, "And opens its two flaps round it");
+        check(SkyVisualChecks.Count(px, w, h, warning, 840, 1100, floor - 22, floor - 10) > 40, "The tumble shows its way back too");
+
+        var two = new BattleSim(data, 0, Width, new Random(1), seed: 3);
+        var tree = add(two, "zip", 600, 1);
+        tree.Set(SlimeState.Moving);
+        var packet = two.AddSlime(240, data.Enemy("zip_packet"));
+        packet.Set(SlimeState.Moving); packet.PacketFuse = true; packet.PacketLeft = 1.3; packet.SummonedBy = tree.Id;
+        var plain = two.AddSlime(120, data.Enemy("zip_packet"));
+        plain.Set(SlimeState.Moving);
+        // The tree's numbered branches, through a real step of the sim.
+        tree.ZipBag.Add(ZipAct.Tree);
+        tree.Cooldown = 0;
+        for (int i = 0; i < 4 && tree.ZipAct == ZipAct.None; i++) { two.Step(1.0 / 60, 600, false); }
+        var px2 = SkyVisualChecks.Render(new BattleFieldView(two) { OriginX = 0 }, w, h, "enemy-zip-moves-2");
+        check(tree.ZipAct != ZipAct.Tree || two.ZipBlows.Count >= 3, $"The tree marks its branches ({two.ZipBlows.Count})");
+        check(SkyVisualChecks.Count(px2, w, h, Color.FromRgb(0xE5, 0x3E, 0x3E), 215, 265, floor - 40, floor) > 15, "The live packet is red and tied up");
+        check(SkyVisualChecks.Count(px2, w, h, Color.FromRgb(0xFF, 0xFB, 0xF2), 95, 145, floor - 40, floor) > 60, "A plain one is a bundle of pages");
+
+        var three = new BattleSim(data, 0, Width, new Random(1));
+        var flow = add(three, "zip", 600, 2);
+        flow.ZipAct = ZipAct.Overflow; flow.ZipBeat = ZipBeat.Strike; flow.ZipSeconds = 2; flow.ZipLeft = 1; flow.ZipAimX = 600; flow.ZipTear = 0.5;
+        var px3 = SkyVisualChecks.Render(new BattleFieldView(three) { OriginX = 0 }, w, h, "enemy-zip-moves-3");
+        check(SkyVisualChecks.Count(px3, w, h, Color.FromRgb(0xFF, 0xFB, 0xF2), 0, 200, floor - 60, floor, 24, 100) > 200, "The overflow spills in from the edges");
+        check(SkyVisualChecks.Count(px3, w, h, gold, 460, 740, floor - 60, floor) > 30, "Its safe gap shows in gold");
+
+        var four = new BattleSim(data, 0, Width, new Random(1));
+        var tear = add(four, "zip", 600, 2);
+        tear.ZipAct = ZipAct.Tear; tear.ZipBeat = ZipBeat.Strike; tear.ZipSeconds = 1.4; tear.ZipLeft = 0.7; tear.ZipTear = 0.7;
+        var px4 = SkyVisualChecks.Render(new BattleFieldView(four) { OriginX = 0 }, w, h, "enemy-zip-moves-4");
+        double reach = zip.Move(ZipAct.Tear)!.Spacing * 0.7;
+        int left = SkyVisualChecks.Count(px4, w, h, Color.FromRgb(0xE8, 0xB8, 0x4A), (int)(600 - reach - 70), (int)(600 - reach + 10), floor - 110, floor);
+        check(left > 300, $"The torn body flies out in two halves ({left} pixels)");
+        check(SkyVisualChecks.Count(px4, w, h, Color.FromRgb(0xE8, 0xB8, 0x4A), 570, 630, floor - 110, floor) < 30, "Leaving only its zipper in the middle");
+    }
+
+    private static void Debuffs(Action<bool, string> check)
+    {
+        static byte[] Cat(int zip, double squeeze, string name, int clicks = 0, int swings = 0)
+        {
+            var pet = new PetModel { Action = PetAction.Idle, Grounded = true, Facing = 1, AnimationTime = 1, ActionTime = 1, BattleZip = zip, BattleSqueeze = squeeze, BattleZipLook = 1, BattleZipClicks = clicks, BattleZipSwings = swings, BattleZipText = "Nén!" };
+            return SkyVisualChecks.Render(new PetRenderer(pet), 192, 192, name);
+        }
+        var plain = Cat(0, 1, "cat-zip-plain");
+        var squeezed = Cat(1, 0.75, "cat-zip-squeezed");
+        var locked = Cat(2, 1, "cat-zip-locked", 1, 2);
+        var gold = Color.FromRgb(0xFF, 0xC8, 0x3A);
+        check(!plain.SequenceEqual(squeezed), "Squeezed, the cat looks different");
+        check(SkyVisualChecks.Count(locked, 192, 192, gold, 0, 192, 0, 192) > SkyVisualChecks.Count(plain, 192, 192, gold, 0, 192, 0, 192) + 100, "Locked, it wears the gold shell and padlock");
     }
 }

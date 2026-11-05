@@ -45,6 +45,7 @@ public sealed partial class BattleSim
         NotRespondingRemaining = 0;
         DazzleRemaining = 0;
         CatSlowRemaining = 0;
+        ClearZipDebuff(false);
         events.Add(new(BattleEventKind.Raged, lastCatX, auto ? 1 : 0));
         return true;
     }

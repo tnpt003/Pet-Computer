@@ -133,6 +133,9 @@ public sealed partial class BattleSim
             if (slime.State == SlimeState.Defeated) continue;
             if (StepNest(slime, dt)) continue;
             if (StepBossTactics(slime, dt)) { if (Over) break; continue; }
+            // 2026-11-06: the Zip Slime's blows and packets (PetBattle.ZipMoves.cs).
+            if (slime.Type.Packet) StepPacket(slime, dt);
+            if (Over) break;
             StepIce(slime, dt); // 1.5 M15: a broken ice shell grows back (PetBattle.Wall.cs).
             // 1.5 M16: a hedgehog's quills, a timer's clock (PetBattle.Quills.cs).
             StepQuills(slime, dt);
@@ -140,6 +143,7 @@ public sealed partial class BattleSim
             StepPlant(slime, dt, catX);
             TickRoll(slime, dt); // 1.5 M17: a rolling boss's wait for its next roll (PetBattle.Zip.cs).
             TickZip(slime, dt); // 2026-11-05: the Zip Slime's size, rewards and bomb (PetBattle.Zip.cs).
+            if (slime.Type.Zip is ZipSpec moves && StepZipAct(slime, moves, dt)) { if (Over) break; continue; }
             // 1.5 M18: a brooding boss's clutches, a raining boss's goo rain (PetBattle.Brood.cs, PetBattle.Mutant.cs).
             StepBrood(slime, dt);
             StepRain(slime, dt);
@@ -183,7 +187,6 @@ public sealed partial class BattleSim
                     // misses; once the cat is down again it lands as usual (in reach, no landing
                     // protection), so lifting and dropping on the spot cannot cancel every hit. A cat
                     // only pressed (not lifted) is on the floor and is hit too.
-                    if (slime.Hopping) StepHop(slime); // 2026-11-05: the Zip Slime's leap at the cat.
                     if (slime.StateTime >= Windup(slime))
                     {
                         if (slime.Spitting) Spit(slime);

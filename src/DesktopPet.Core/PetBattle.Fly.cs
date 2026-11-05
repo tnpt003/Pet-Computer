@@ -206,6 +206,7 @@ public sealed partial class BattleSim
         {
             var shot = shots[i];
             double x0 = shot.X, h0 = shot.Height;
+            if (shot.Paper) StepPaper(shot, dt);
             shot.X += shot.VX * dt; shot.Height += shot.VY * dt;
             shot.Remaining -= dt;
             if (Near(x0, h0, shot.X, shot.Height, catX, catH) <= shot.Radius)

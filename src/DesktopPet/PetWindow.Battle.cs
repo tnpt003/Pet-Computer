@@ -63,7 +63,7 @@ public sealed partial class PetWindow
     // after). Away does not: the cat has to be able to fall and be carried back.
     private bool BattleFreezesPet => battle != null && (battlePause & ~BattlePause.Away) != 0;
     // A stunned cat (a dash, an infected bell, "Not responding") cannot be picked up until the stun ends.
-    private bool BattleStunHolds => battle is { CatStunned: true, Over: false };
+    private bool BattleStunHolds => battle is { CatStunned: true, Over: false } or { CatLocked: true, Over: false };
     // Replaceable for UI checks; the default asks Windows which monitor the cat is on.
     private Func<string>? battleMonitorProbe;
     private string CatMonitor() => (battleMonitorProbe ??= () => CurrentMonitor().DeviceName)();
@@ -394,6 +394,8 @@ public sealed partial class PetWindow
         battleHudDodging = false;
         pet.BattleDazed = pet.BattleCheer = pet.BattleShield = pet.BattleBuff = false;
         pet.BattleStun = pet.BattleTabs = pet.BattleRage = 0;
+        pet.BattleZip = 0;
+        pet.BattleSqueeze = 1;
         pet.Emotions.SetSuspended(false);
         revision++; // Nothing requested during the battle may run late.
         behavior.Reset(pet);
@@ -680,6 +682,14 @@ public sealed partial class PetWindow
         pet.BattleBuff = battle.CheerRemaining > 0;
         pet.BattleRage = battle.RageLook;
         pet.BattleRageScale = battle.Settings.RageScale;
+        pet.BattleZip = (int)(battle.CatLocked ? ZipDebuff.Locked : battle.CatSqueezed ? ZipDebuff.Squeezed : ZipDebuff.None);
+        pet.BattleZipLook = battle.ZipDebuffLook;
+        pet.BattleSqueeze = battle.SqueezeScale;
+        pet.BattleZipClicks = battle.ZipLockClicks;
+        pet.BattleZipSwings = battle.ZipLockSwings;
+        pet.BattleZipClicksAll = battle.ZipDebuffRules?.LockClicks ?? 3;
+        pet.BattleZipSwingsAll = battle.ZipDebuffRules?.LockSwings ?? 5;
+        pet.BattleZipText = L("Nén!", "Squeezed!");
         pet.BattleTabs = battle.CatLifted ? 0 : battle.TabsRemaining;
         pet.BattleTabRing = AppArt.TabRingRadius(battle.AppRules?.TabRadius ?? 70);
         pet.BattleTime = battle.Time;

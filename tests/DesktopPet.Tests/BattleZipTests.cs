@@ -1,19 +1,23 @@
 using DesktopPet;
 
-// 1.5 M17, B1 the Zip Slime (PetBattle.Zip.cs), stages and riddles redone 2026-11-05, on the shipped numbers.
-// Stages: it comes in small, three quick leaps a round, then a roll and a slam, then one huge blow; it is bigger
-// at each stage. The press riddle: the rolls, a lift dodging them, a drop on it pinning it, two pins breaking the
-// lock (stun, more damage), missing it opening the lock with no reward. The roped phase: its formation comes tied
-// to it, no damage while a rope is left, the Scissors and the cat (held or thrown, fast enough) cut ropes, a slow
-// drag and a paused battle do not, two cuts together stun it longer. The bomb: the clock, pulls by the cat and the
-// Scissors, the flight and reward, the burst sparing a lifted cat and arming again. The data limits.
+// 1.5 M17, B1 the Zip Slime (PetBattle.Zip.cs), redone 2026-11-05 and 2026-11-06, on the shipped numbers. Its size
+// and stages. The press riddle: the slides, a lift dodging them, a drop after it stops pinning it, two pins opening
+// it (stun, more damage), missing it opening it with no reward. The roped phase: its helpers come tied to it, no
+// damage while a rope is left, the Scissors and the cat (held or thrown, fast enough) cut ropes, a slow drag and a
+// paused battle do not, two cuts together stun it longer. The bomb: the clock, pulls by the cat and the Scissors,
+// the flight and reward, the burst sparing a cat lifted over it and arming again. The data limits. Its blows and
+// debuffs: BattleZipMoveTests.
 internal static class BattleZipTests
 {
     const double dt = 1.0 / 60;
 
     private static readonly BattleSettings Shipped = BattleData.Settings;
     private static readonly EnemyType ShippedZip = Shipped.Enemy("zip");
-    private static readonly ZipSpec Spec = ShippedZip.Zip!;
+    private static readonly ZipSpec Spec = new()
+    {
+        Grow = ShippedZip.Zip!.Grow, RopeComboWindow = ShippedZip.Zip.RopeComboWindow, RopeComboStun = ShippedZip.Zip.RopeComboStun, Stages = ShippedZip.Zip.Stages,
+        Press = ShippedZip.Zip.Press, Bomb = ShippedZip.Zip.Bomb, Moves = ShippedZip.Zip.Moves, Debuff = null
+    };
 
     private static EnemyType Plain(string id = "slime") => new() { Id = id, MaxHp = 300, Speed = 40, Damage = 0, Range = 50, Windup = 0.6, AttackCooldown = 1.5, Recover = 0.3 };
     private static readonly FormationSpec Duo = new()
@@ -38,7 +42,7 @@ internal static class BattleZipTests
     {
         Weapons = new[] { Shipped.Weapon("sword") with { Range = 60, StunChance = 0, Damage = 0 } }, FirstWaveDelay = 0, SpawnInterval = 0.05,
         CatMaxHp = 1000, MaxAlive = 8, RageHitGain = 0, ScissorsCooldown = 0.1,
-        Enemies = new[] { boss, Plain() }, Formations = new[] { Duo },
+        Enemies = new[] { boss, Plain(), Shipped.Enemy("zip_packet") }, Formations = new[] { Duo },
         Plan = new[] { new WaveSpec { Groups = new[] { new WaveGroup { Enemy = "zip", Count = 1 } } } }
     };
 
@@ -96,61 +100,7 @@ internal static class BattleZipTests
         check(zip.ZipStage == 0 && Math.Abs(zip.Width - sim.Settings.SlimeWidth * stages[0].Scale) < 1e-6 && zip.Range == stages[0].Range, "It comes in small, at its first stage's size");
         check(stages[0].Scale < stages[1].Scale && stages[1].Scale < stages[2].Scale, "Each stage is bigger than the last");
         check(stages[0].Speed > stages[1].Speed && stages[1].Speed > stages[2].Speed, "And slower");
-        check(stages[0].Hits > stages[1].Hits && stages[1].Hits > stages[2].Hits, "With fewer blows a round");
-        check(stages[0].Damage < stages[1].Damage && stages[1].Damage < stages[2].Damage, "And heavier ones");
-
-        // A round of three leaps: each lands on the cat, then the rest.
-        (sim, zip) = Field(Zip(), bossX: 300, catX: 500);
-        double hp = sim.CatHp;
-        int leaps = 0;
-        bool hopped = false, wasWindup = false;
-        double top = 0;
-        for (int i = 0; i < 300; i++)
-        {
-            sim.Step(dt, 500, false);
-            sim.ClearEvents();
-            hopped |= zip.Hopping;
-            top = Math.Max(top, zip.LeapHeight);
-            bool windup = zip.State == SlimeState.Windup;
-            if (windup && !wasWindup) leaps++;
-            wasWindup = windup;
-            if (leaps == stages[0].Hits && !windup) break;
-        }
-        double taken = hp - sim.CatHp;
-        check(leaps == 3 && hopped && top > 10, $"The first stage leaps at the cat, three times a round ({leaps}, up {top:0})");
-        check(taken > 0 && taken <= 3 * stages[0].Damage * 1.2, $"Each leap lands a light hit ({taken:0})");
-        check(zip.ComboLeft == 0 && zip.Cooldown > stages[0].Gap, "Then it rests");
-
-        // A cat lifted during a leap is not hit, and a leap never lands off the field.
-        (sim, zip) = Field(Zip(), bossX: 300, catX: 500);
-        hp = sim.CatHp;
-        Run(sim, 3, 500, held: true);
-        check(sim.CatHp == hp, "A lifted cat takes none of its blows");
-
-        // The second stage: a roll then a slam. Its size eases up, not in one jump.
-        (sim, zip) = Field(Zip(damage: 0));
-        zip.PhasesDone = 1;
-        zip.ZipStage = 1;
-        zip.Range = stages[1].Range;
-        check(!Run(sim, 0.1, 100, BattleEventKind.ZipGrew), "No new stage on its own");
-        check(Run(sim, 3, catX: 900, kind: BattleEventKind.RollAimed) && zip.Rolling && zip.DashDirection == -1 && zip.RollDistance == ShippedZip.Roll!.Distance, "The second stage opens with a roll at a far cat");
-        check(zip.ComboLeft == stages[1].Hits - 1, "One more blow left in the round");
-        var seen = new HashSet<BattleEventKind>();
-        Run(sim, ShippedZip.Roll!.Windup + ShippedZip.Roll.Distance / ShippedZip.Roll.Speed + 0.3, catX: 900, seen: seen);
-        check(seen.Contains(BattleEventKind.Rolled) && seen.Contains(BattleEventKind.RollHit) && sim.RollHits == 1, "It rolls over the cat");
-        bool slam = false;
-        for (int i = 0; i < 300 && !slam; i++) { sim.Step(dt, 900, false); sim.ClearEvents(); slam = zip.State == SlimeState.Windup && !zip.Rolling; }
-        check(slam, "Then the round's slam");
-
-        // The last stage: no leap, one blow in place, its share of the stage's damage.
-        (sim, zip) = Field(Zip());
-        zip.PhasesDone = 3;
-        zip.ZipStage = 2;
-        zip.Range = stages[2].Range;
-        hp = sim.CatHp;
-        double bossX = zip.X;
-        Run(sim, stages[2].Windup + 0.2, bossX - 100);
-        check(zip.X == bossX && !zip.Hopping && Math.Abs(hp - sim.CatHp - stages[2].Damage) < stages[2].Damage * 0.3, $"The last stage's one blow lands where it stands ({hp - sim.CatHp:0})");
+        check(Spec.Moves.Select(m => m.Damage).Max() > stages[0].Damage, "Its blows carry their own numbers");
     }
 
     // At the press riddle, the boss's first roll under way or about to be.
@@ -180,7 +130,8 @@ internal static class BattleZipTests
         check(zip.ZipStage == 0, "Still small");
 
         // It rolls even with the cat in the air: the lift is how the riddle is solved.
-        check(ToStop(sim, zip, 300) && zip.PressLeft == press.Rolls - 1, "It rolls at a lifted cat too, and stops");
+        check(ToStop(sim, zip, 300) && zip.PressLeft == press.Rolls - 1, "It slides at a lifted cat too, and stops");
+        check(BattleSim.RollTurn(zip) == 0, "Sliding, it does not tumble");
         check(BattleSim.PressSpot(zip) == zip.X, "The spot to drop on is where it stopped");
 
         // A drop far off does nothing; a drop on it pins it, not a shot at the shield.
@@ -204,11 +155,12 @@ internal static class BattleZipTests
         Run(sim, press.Stun + Spec.Grow);
         check(Math.Abs(zip.Width - sim.Settings.SlimeWidth * Spec.Stages[1].Scale) < 1e-6 && zip.MechBonusClock == 0, "To its new size, the reward over");
 
-        // A drop onto it as it rolls stops the roll short.
+        // Only once it has stopped: a drop on it mid-slide pins nothing.
         (sim, zip, seen) = Pressing();
         for (int i = 0; i < 600 && zip.State != SlimeState.Dashing; i++) { sim.Step(dt, 300, true, true, new CatPose(300, 200, 0, 0, true, false)); sim.ClearEvents(); }
+        double goal = zip.RollGoal;
         Drop(sim, zip.X);
-        check(sim.ZipPins == 1 && !zip.Rolling, "A drop on it mid-roll pins it too");
+        check(sim.ZipPins == 0 && zip.RollGoal == goal, "A drop on it mid-slide pins nothing, and its stop stays where it was shown");
 
         // A roll over the cat on the floor hurts; missing every chance opens the lock, no reward.
         (sim, zip, seen) = Pressing(damage: 20);
@@ -462,7 +414,7 @@ internal static class BattleZipTests
               && Rejects(Enemy("a", boss + zip1 + "\"phases\":[{\"at\":0.5,\"shield\":true,\"bomb\":true,\"summon\":\"slime\",\"count\":1}]")),
             "A riddle needs a zip block and a shield, and calls no helpers");
         check(Rejects(Enemy("a", zip1 + "\"damage\":1")) && Rejects(Enemy("a", boss + "\"zip\":{\"stages\":[]}")) && Rejects(Enemy("a", boss + "\"zip\":{\"stages\":[{\"scale\":9}]}"))
-              && Rejects(Enemy("a", boss + "\"zip\":{\"stages\":[{\"roll\":true}]}")) && Rejects(Enemy("a", boss + "\"zip\":{\"stages\":[{}],\"press\":{\"rolls\":1,\"pins\":2}}")) && Rejects(Enemy("a", boss + "\"zip\":{\"stages\":[{}],\"bomb\":{\"charge\":1}}")),
+              && Rejects(Enemy("a", boss + "\"zip\":{\"stages\":[{\"moves\":[\"nobody\"]}]}")) && Rejects(Enemy("a", boss + "\"zip\":{\"stages\":[{}],\"press\":{\"rolls\":1,\"pins\":2}}")) && Rejects(Enemy("a", boss + "\"zip\":{\"stages\":[{}],\"bomb\":{\"charge\":1}}")),
             "Stages on a plain enemy, or out of range, or a riddle's numbers out of range, are refused");
         check(Rejects(Enemy("a", boss + "\"still\":true")) && Rejects(Enemy("a", "\"still\":true,\"dash\":true")) && Rejects(Enemy("a", boss + "\"ropeCutSpeed\":10")),
             "Still on a boss or an attacker, a rope cut speed out of range, are refused");
@@ -470,8 +422,8 @@ internal static class BattleZipTests
         var s = Shipped;
         var zip = s.Enemy("zip");
         var p = zip.Phases ?? Array.Empty<BossPhase>();
-        check(zip is { Boss: true, Roll: not null, BinSpit: false, Zip.Stages.Length: 3 } && p.Length == 3 && p[0] is { Press: true } && p[1] is { Roped: true, Formation: "fortress" } && p[2] is { Bomb: true },
-            "The shipped Zip Slime: three stages, the press, Fortress on ropes, then the bomb");
+        check(zip is { Boss: true, Roll: not null, BinSpit: false, Zip.Stages.Length: 3 } && p.Length == 3 && p[0] is { Press: true } && p[1] is { Roped: true } && p[2] is { Bomb: true },
+            "The shipped Zip Slime: three stages, the press, its packets on streams, then the bomb");
         check(p.All(ph => s.PhaseCalls(ph).Count() <= zip.SummonCap), "Each of its phases fits its summon cap");
         check(s.Enemies.All(e => e.Id != "zipshard"), "No more file shards");
         check(Spec.Stages.All(st => s.SlimeHeight * st.Scale * 1.15 <= 130), "Even swollen it fits under the field's top");

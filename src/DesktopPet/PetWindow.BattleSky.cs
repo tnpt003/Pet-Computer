@@ -117,7 +117,7 @@ public sealed partial class PetWindow
     // The canvas for drops and aims: over the battle's work area, shown while there is any.
     private void UpdateSkyShots(BattleSim b, bool draw, bool hide)
     {
-        bool busy = b.Shots.Count > 0;
+        bool busy = b.Shots.Count > 0 || BattleFieldView.ZipAirBusy(b);
         if (!busy) foreach (var s in b.Slimes) if (s.Aiming && BattleSim.InSky(s) && s.Type.Fly != null) { busy = true; break; }
         if (!busy) foreach (var g in b.Goos) if (BattleFieldView.SpikeInSky(g)) { busy = true; break; }
         if (b.Cut != null || b.ColumnX != null || b.FlashRemaining > 0) busy = true; // 2026-11-04: the cut, the fan's column, the flash.
@@ -215,6 +215,7 @@ public sealed class SkyShotView : FrameworkElement
             BattleFieldView.DrawAim(dc, ToScreen(mx, mh), cat, fly.Radius, Math.Clamp(1 - s.AimLeft / fly.Aim, 0, 1), sim.Time);
         }
         foreach (var shot in sim.Shots) BattleFieldView.DrawShot(dc, shot, ToScreen(shot.X, shot.Height));
+        BattleFieldView.DrawZipAir(dc, sim, ToScreen, cat, sim.Time); // 2026-11-06: the Zip Slime's blows at a cat anywhere.
         // A wall slime's spikes thrown from high up the screen (2026-10-31).
         foreach (var g in sim.Goos) if (BattleFieldView.SpikeInSky(g)) BattleFieldView.DrawSpikeAt(dc, g, ToScreen, 30);
         // 2026-11-04: the Fan's column and the Scissors' cut over the screen (the strip draws its own part),

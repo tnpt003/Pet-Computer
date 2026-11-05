@@ -309,6 +309,8 @@ public sealed partial class PetWindow : Window
         // A held battle (paused, menu, card pick, bag...) freezes the cat: it cannot be picked up.
         // Nor while it is being brought to the main screen (a puff, under a second), nor while a
         // battle's stun holds it (2026-10-24: the stars over its head; it can be lifted again after).
+        // 2026-11-06: in the Zip Slime's shell a press on the cat is one of the clicks that open it.
+        if (!BattleFreezesPet && battle?.ClickZipLock() == true) { PlayBattleSound(); ShowBattleBanners(); battle.ClearEvents(); e.Handled = true; return; }
         if (BattleFreezesPet || CatTeleporting || BattleStunHolds) { e.Handled = true; return; }
         CancelFeatureActivity();
         behavior.WakeByClick(pet);

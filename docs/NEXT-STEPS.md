@@ -1,6 +1,6 @@
 # Trạng thái hiện tại và việc tiếp theo
 
-Cập nhật: 2026-10-23 (Asia/Saigon). Bản đang chạy: 1.4.1 (installer + tự cập nhật + chào mừng sau khi cài, xem docs/RELEASE.md). Release 1.4.0 và 1.4.1 đã có trên GitHub; bản sau nâng lên 1.4.2. Máy dev chạy bản copy `artifacts\win-x64` (không cài Setup).
+Cập nhật: 2026-11-05 (Asia/Saigon). Bản phát hành mới nhất: 1.4.4; bản 1.5 code xong, chưa phát hành. Việc hằng ngày xem PROGRESS.md; việc trước khi phát hành 1.5.0 xem docs/UPDATE-1.5.md → Việc trước M30. File này giữ làm bản ghi kế hoạch cũ và thiết kế "mèo nói tiếng người". Máy dev chạy bản copy `artifacts\win-x64` (không cài Setup).
 
 > **Quy tắc 20/10:** luôn commit và publish sau mỗi mốc code hoàn chỉnh, kiểm thử đạt; chạy smoke và báo artifact. Không cần hỏi lại. Mốc tài liệu-only commit, không publish binary. Xem AGENTS.md. Không tự push/upload.
 
@@ -30,9 +30,9 @@ Cập nhật: 2026-10-23 (Asia/Saigon). Bản đang chạy: 1.4.1 (installer + t
 | M7 | HUD trận kéo được (nhớ theo màn hình, double-click về chỗ cũ); đo frame time trận đông quái | xong (a35c582; đông quái 61 fps, p95 33 ms — chưa cần tối ưu) |
 | M8 | Chế độ Vô tận: đợt mạnh dần, 3 đợt chọn 1 thẻ, Vua mỗi 10 đợt, kỷ lục đợt cao nhất theo độ khó, đóng app là hết lượt, túi đồ chế độ Vô tận | xong (88da9f7) |
 
-## Bản 1.5 (đã chốt thiết kế 2026-10-26)
+## Bản 1.5
 
-Xem docs/UPDATE-1.5.md. Ý tưởng mới ngoài danh sách đó vào "Backlog sau 1.5" của file ấy.
+Xem docs/UPDATE-1.5.md (bản chốt luật hiện tại). Thêm nội dung mới theo docs/EXTENDING.md. Ý tưởng mới vào "Backlog sau 1.5" của file ấy; kho ý tưởng bản sau ở docs/UPDATE-1.5.1.md.
 
 ## Backlog (chưa chọn)
 

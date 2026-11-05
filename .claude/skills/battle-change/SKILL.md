@@ -13,7 +13,7 @@ Lỗi đắt nhất ở đây là sửa một chỗ làm lệch chỗ khác: m�
 - **Có đụng mèo đang cầm/bay/ném, sát thương lên mèo, choáng, Pause, cửa sổ app:** đọc `docs/APPROVED-EXCEPTIONS.md` → Battle Mode trước. Hành vi ngoài các ngoại lệ đó cần người dùng duyệt, kể cả khi họ giao việc gần giống.
 
 ## 2. Đọc đúng đoạn
-`docs/BATTLE-DATA.md` rất lớn: tìm heading `## ` theo tên khóa hoặc tên quái rồi chỉ đọc mục đó. Mục "Ánh xạ sang code" chỉ ra kiểu dữ liệu tương ứng. Thiết kế đã chốt ở `docs/UPDATE-1.5.md` và `docs/GOPY-C-2026-11-04.md`; số đo cân bằng ở `docs/BALANCE-1.5.md`.
+`docs/BATTLE-DATA.md` rất lớn: tìm heading `## ` theo tên khóa hoặc tên quái rồi chỉ đọc mục đó. Mục "Ánh xạ sang code" chỉ ra kiểu dữ liệu tương ứng. Thêm quái, kỹ năng, app, chương hay chế độ mới: đọc `docs/EXTENDING.md` trước. Luật hiện tại của 1.5 ở `docs/UPDATE-1.5.md`; lịch sử đợt C ở `docs/GOPY-C-2026-11-04.md`; số đo cân bằng ở `docs/BALANCE-1.5.md`.
 
 ## 3. Sửa
 - Thêm khóa mới thì cập nhật cả kiểu dữ liệu, `Validate` và fallback C#. `BattleData` bỏ cả file nếu có một lỗi, và `BattleDataTests` sẽ fail nếu `battle.json` lệch số mặc định trong C#.

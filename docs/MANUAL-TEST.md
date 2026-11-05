@@ -650,28 +650,28 @@ Trận gốc chưa có vũ khí/thẻ gây hiệu ứng (Bình xịt, thẻ Mưu
 Mở Trận tự do → bảng chuẩn bị: bỏ một kỹ năng cũ, chọn Đèn laser và/hoặc Quạt (Kẹp gắp, Kéo cắt, Bình xịt vẫn khóa). Ảnh chấm laser/gió đã xem qua render UiChecks nền sáng/tối, chưa xem trong trận thật.
 - [ ] Vô tận / chuẩn bị Viễn chinh: Laser và Quạt vẫn hiện khóa; chương 1 không đổi.
 - [ ] Laser: bấm ô (con trỏ thành chữ thập, dòng gợi ý đổi), click một chỗ trên sàn: chấm đỏ có vòng đếm, slime gần đó chạy tới và đứng quanh chấm, không đánh mèo; con trên chấm mất máu dần; ~4 s thì chấm tắt và slime quay lại đánh. Boss không bị dụ.
-- [ ] Quạt: bấm ô, giữ chuột trên sàn cạnh đám slime: cánh quạt quay, vệt gió, slime bị đẩy ra xa con trỏ; va nhau/va mép hiện số 4. Rê chuột khi giữ thì gió đi theo. Thả chuột: ngừng, vòng tối trên ô cho thấy hơi đã dùng và hồi dần; giữ tới cạn thì Quạt tự cất, ô chờ ~6 s.
-- [ ] Sau khi thả chuột (cả khi cạn hơi giữa chừng): click slime, icon app, thẻ giữa đợt, nút HUD vẫn bình thường (dải trận không giữ chuột).
-- [ ] Đang chọn Laser/Quạt: kéo mèo vẫn nhấc mèo, bỏ chọn kỹ năng; mèo đang cầm thì Quạt không thổi. Chuột phải dải trận thì bỏ chọn. Pause/menu giữa lúc có chấm hoặc đang thổi: đứng yên; tiếp tục thì chạy tiếp.
-- [ ] Âm thanh: đặt chấm, bật quạt, va chạm có tiếng hoạt hình ngắn, không chồng nhau; DPI 100/150/200% chấm và gió đúng chỗ con trỏ.
+- [ ] Quạt: bấm ô, click chỗ bất kỳ trên màn hình: quạt trần ở đỉnh, cột gió 150 DIP trong 4 s; slime sàn trong cột đứng yên, đánh nhẹ hơn; slime bay và bám tường trong cột rơi xuống; hồi 14 s (xem thêm Đợt C3).
+- [ ] Sau khi dùng Quạt: click slime, icon app, thẻ giữa đợt, nút HUD vẫn bình thường.
+- [ ] Đang chọn Laser/Quạt: kéo mèo vẫn nhấc mèo, bỏ chọn kỹ năng; chấm và cột gió đã đặt vẫn chạy khi mèo đang cầm. Chuột phải thì bỏ chọn. Pause/menu giữa lúc có chấm hoặc cột gió: đứng yên, tiếp tục thì chạy tiếp.
+- [ ] Âm thanh: đặt chấm, bật quạt có tiếng hoạt hình ngắn, không chồng nhau; DPI 100/150/200% chấm và cột gió đúng chỗ click.
 
 ## Kẹp gắp, Kéo cắt, Bình xịt nước 1.5 M06 (2026-10-28) — trận tự do
 Mở Trận tự do → bảng chuẩn bị: bỏ vài kỹ năng cũ, chọn Kẹp gắp, Kéo cắt, Bình xịt (cả 10 kỹ năng đều chọn được ở trận tự do). Ảnh càng kẹp/nét cắt/tia nước đã xem qua render UiChecks nền sáng/tối, chưa xem trong trận thật, chưa thử chuột thật và DPI thật.
 - [ ] Vô tận / chuẩn bị Viễn chinh: 5 kỹ năng mới vẫn hiện khóa; chương 1 không đổi.
-- [ ] Kẹp gắp: bấm ô, nhấn giữ một slime thường/slime nhanh/slime thảo dược: nó bị nhấc theo con trỏ (càng kẹp trên dây từ mép trên dải trận), không đánh mèo. Nhấn vào slime đá hoặc Vua: không gắp được. Vung chuột về phía slime khác rồi thả: slime bay vòng cung, trúng con kia thì cả hai hiện số 8, con kia choáng; ném vào mép thì nó mất 8 và choáng khi đáp. Thả nhẹ: chỉ rơi xuống. Giữ quá ~3 s thì slime tự tuột. Ô hồi ~12 s tính từ lúc thả.
-- [ ] Kéo cắt: bấm ô, kéo chuột thành một nét qua đám slime: thấy đường đứt nét và cây kéo ở đầu con trỏ; thả chuột thì mỗi slime trên nét hiện số 6, ô hồi ~8 s. Nét rất ngắn (như một click) không làm gì, Kéo cắt vẫn được chọn. (Cắt dây nhầy chỉ thử được bằng battle.json có liên kết `tether`, không bắt buộc.)
-- [ ] Bình xịt: bấm ô, giữ chuột cạnh slime: bình xanh và vòng chấm xanh theo con trỏ, slime trong vòng nhỏ lại, có giọt nước và tinh thể băng, đi chậm, mất máu dần (số nhỏ). Thả: ngừng, vòng tối trên ô là nước đã dùng và hồi dần; giữ tới cạn thì tự cất, ô chờ ~8 s.
-- [ ] Sau mỗi lần dùng (cả khi slime tự tuột hay cạn nước giữa chừng): click slime, icon app, thẻ giữa đợt, nút HUD vẫn bình thường (dải trận không giữ chuột).
-- [ ] Đang chọn một trong ba: kéo mèo vẫn nhấc mèo và bỏ chọn; đang gắp slime mà nhấc mèo (nếu với được) thì slime rơi xuống. Chuột phải dải trận thì bỏ chọn. Pause/menu giữa lúc đang gắp/xịt: đứng yên; tiếp tục thì chạy tiếp.
-- [ ] Âm thanh gắp/thả/va chạm/cắt/xịt là cue hoạt hình ngắn, không chồng nhau; DPI 100/150/200% càng kẹp, nét cắt, vòi xịt đúng chỗ con trỏ.
+- [ ] Kẹp gắp: bấm ô, click một slime nhỏ: càng nhấc nó lên (mặt "><"), không đánh mèo, mèo không nhắm nó. Click chỗ khác: càng mang tới, đập xuống −20 máu, choáng, quanh đó −8. Không click: 5 s sau đặt xuống phía xa mèo. Đá và trùm không gắp được (xem thêm Đợt C3).
+- [ ] Kéo cắt: bấm ô, click chỗ bất kỳ: dải ngang 560 DIP, nét đứt 0,4 s rồi cây kéo lớn lướt qua; mỗi slime chạm dải −15 máu, đứt dây, bong bóng, lá chắn; hồi 14 s (xem thêm Đợt C3).
+- [ ] Bình xịt nước nóng: bấm ô, click một slime: tự khóa và xịt tới hết nước, chuột rảnh; con đó ngã thì chuyển con gần nhất và bình được thêm nước; xịt vỏ băng 3 s thì tan (xem thêm Đợt C1).
+- [ ] Sau mỗi lần dùng (cả khi cạn nước giữa chừng): click slime, icon app, thẻ giữa đợt, nút HUD vẫn bình thường.
+- [ ] Đang chọn một trong ba: kéo mèo vẫn nhấc mèo và bỏ chọn; đang gắp slime mà nhấc mèo thì slime rơi xuống, không tính cú đập; đang xịt mà bế mèo thì vẫn xịt. Chuột phải bỏ chọn. Pause/menu: đứng yên, tiếp tục thì chạy tiếp.
+- [ ] Âm thanh gắp/đập/cắt/xịt là cue hoạt hình ngắn, không chồng nhau; DPI 100/150/200% càng kẹp, dải cắt, vòi xịt đúng chỗ.
 - [ ] Viễn chinh, điểm nghỉ: hiện tại chỉ 5 kỹ năng cũ mở nên **không có** nút "Đổi kỹ năng" (đúng thiết kế). Nút hiện khi chương 2 mở thêm kỹ năng (M21); khi đó kiểm tra: đổi miễn phí, vẫn phải chọn Nghỉ hoặc Lấy thẻ, trận sau mang bộ mới. Ảnh khung đổi kỹ năng đã xem qua render UiChecks (en).
 
 ## Mèo nổi giận 1.5 M07 (2026-10-28) — mọi trận
-Thanh nộ mỏng dưới thanh HP trên HUD. Ảnh mèo nổi giận (đứng, vung kiếm, bị cầm, bay, có Khiên) và HUD thanh đầy đã xem qua render UiChecks, chưa xem trong trận thật, chưa thử DPI thật.
-- [ ] Đầu trận thanh rỗng; mèo đánh trúng hoặc bị đánh thì thanh đỏ cam dài dần (~20 nhát là đầy). Đầy: viền vàng, nhấp nháy, con trỏ thành bàn tay, banner "Thanh nộ đầy!…" một lần, tiếng lấp lánh. Để yên thì mèo **không** tự nổi giận.
-- [ ] Click thanh đầy: banner "MÈO NỔI GIẬN!", mèo to dần lên (~1,3 lần) quanh chân, lông ánh đỏ, quầng đỏ sau lưng; thanh đỏ tươi rút dần trong ~6 s rồi mèo nhỏ lại như cũ. Không phải mặt giận (cảm xúc Angry).
+Vòng nộ quanh avatar mèo trên HUD (từ Đợt C2, 2026-11-04). Ảnh đã xem qua render UiChecks, chưa xem trong trận thật, chưa thử DPI thật.
+- [ ] Đầu trận vòng rỗng; mèo đánh trúng hoặc bị đánh thì vòng đỏ cam đầy dần (~50 nhát). Đầy: vòng lửa phập phồng, mặt giận, huy hiệu "NỘ!", con trỏ thành bàn tay.
+- [ ] Click avatar khi đầy, hoặc để mèo tự nộ ở nhát trúng kế tiếp: banner "MÈO NỔI GIẬN!", mèo to dần lên (~1,3 lần) quanh chân, lông ánh đỏ, viền HUD đỏ; vòng rút dần trong ~5 s rồi mèo nhỏ lại.
 - [ ] Khi nổi giận: một nhát trúng cả mấy slime đứng sát nhau phía trước mèo (mỗi con hiện số), slime bị đẩy lùi rõ; slime nhanh lao vào chỉ trừ máu, mèo không choáng (không có sao quay).
-- [ ] Đang choáng mà thanh đầy: click không làm gì, hết choáng click lại được. Đang cầm mèo: click không làm gì. Pause/menu/túi đồ: click không làm gì, đang nổi giận thì thời gian đứng yên.
+- [ ] Đang choáng mà vòng đầy: click vẫn nộ và hết choáng; cú choáng sắp dính thì thành tự nộ. Đang cầm mèo: click không làm gì. Pause/menu/túi đồ: click không làm gì, đang nổi giận thì thời gian dừng.
 - [ ] Nhấc mèo khi đang nổi giận: kéo/lắc/ném/thả như thường (mèo to hơn một chút khi bị cầm, kiếm không bị cắt mép); thả xuống vẫn còn nổi giận nếu chưa hết giờ.
 - [ ] Kết thúc trận (nút End, thắng, thua) giữa lúc nổi giận: mèo về cỡ và màu cũ. Đổi bộ lông (Cài đặt) rồi vào trận: lông đỏ theo màu bộ lông đó. Rê chuột lên thanh: dòng gợi ý mô tả (vi/en/ja). DPI 100/150/200%: thanh không lệch, mèo to không bị cắt.
 

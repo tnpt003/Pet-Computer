@@ -5,12 +5,12 @@ Sổ ghi các lỗi đã sửa của Desktop Pet. Phần A: lỗi người dùng
 Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm lỗi mới: tạo mục số tiếp theo ở đầu phần A (hoặc một dòng ở phần B).
 
 # A. Lỗi người dùng phát hiện
-## #53 — Slime Nén chưa đúng chủ đề file nén: thiết kế lại boss (2026-11-06, commit @@HASH@@)
+## #53 — Slime Nén chưa đúng chủ đề file nén: thiết kế lại boss (2026-11-06, commit 6739762)
 - **Yêu cầu (người dùng):** hình boss chưa ra file nén; boss phải nhỏ lúc đầu, càng ít máu càng to; đầu nhiều đợt nhanh, giữa ít đợt hơn và đau hơn, cuối ít nhất và đau nhất; mỗi giai đoạn có một đợt mech cần giải; đánh boss phải thích thú, mưu mẹo.
 - **Nguyên nhân:** thân vàng kèm vương miện chép từ Vua Slime, khóa kéo bé; kích thước cố định ×2, đòn giống nhau suốt trận; pha cuối còn co nhỏ lại, ngược chủ đề.
 - **Sửa:** dữ liệu `zip` mới trong battle.json (3 giai đoạn: ×1,1/3 đòn 9, ×2/2 đòn 20, ×2,9/1 đòn 40). Mech: khóa vỏ (66%, thả mèo đè 2 lần), bung file (33%, giữ cắt dây, thêm thưởng cắt đôi), bom nén (20%, kéo tay kéo 3 nấc thì xì hơi, hết giờ thì nổ rồi nạp lại). Không giải chỉ mất thưởng, trận không kẹt. Vẽ lại 3 dạng thân, nhãn dung lượng, điểm vàng, thanh bom, tay kéo; tranh Bãi rác và thú bông khớp hình mới. Bỏ pha `pack` và quái `zipshard`. Tăng `rulesVersion`: `c2_zip_slime` 4, `dump_trail` 4 (giữ chuyến cũ), Vô tận 11. Ngoại lệ mới ở docs/APPROVED-EXCEPTIONS.md → Battle Mode.
 - **Cân bằng (mô phỏng, không phải chơi thật; bot không tự đè và không kéo tay kéo bằng mèo, nên là trường hợp xấu):** chỉ các dòng màn 5 chương 2 đổi. Normal: Kiếm 20/20, Búa 19 → 16/20, Cuộn len 19/20, Găng 20/20. Hard: Kiếm 13 → 8/20, Búa 11 → 9/20, Cuộn len 10 → 11/20, Găng 16 → 13/20. Trung vị Vô tận: búa 27, len 25, găng 29 (trước 27, 23, 30).
-- **Kiểm chứng:** BattleZipTests viết lại (94 check), ZipVisualChecks; số liệu test đầy đủ: xem PROGRESS.md.
+- **Kiểm chứng:** BattleZipTests viết lại (94 check), ZipVisualChecks; Python 58 + 5, 3106 check C#, 1415 check WPF đạt; đã publish, smoke PASS.
 - **Cần test tay:** docs/MANUAL-TEST.md, mục Slime Nén thiết kế lại 05/11.
 
 ## #52 — Slime xích đứng xa 200; mèo tự rớt khỏi tay khi đánh slime bay (chưa rõ nguyên nhân) (2026-11-05, commit 296dfc4)

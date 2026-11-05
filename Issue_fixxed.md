@@ -5,7 +5,7 @@ Sổ ghi các lỗi đã sửa của Desktop Pet. Phần A: lỗi người dùng
 Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm lỗi mới: tạo mục số tiếp theo ở đầu phần A (hoặc một dòng ở phần B).
 
 # A. Lỗi người dùng phát hiện
-## #52 — Slime xích đứng xa 200; mèo tự rớt khỏi tay khi đánh slime bay (chưa rõ nguyên nhân) (2026-11-05, commit COMMIT)
+## #52 — Slime xích đứng xa 200; mèo tự rớt khỏi tay khi đánh slime bay (chưa rõ nguyên nhân) (2026-11-05, commit 296dfc4)
 - **Yêu cầu (người dùng):** slime xích vẫn quá gần, cho cách xa bằng khoảng nối dây (200). Mèo tự rớt khi đang cầm đánh slime bay gần cuối trận, kiểm tra xem có phải lỗi.
 - **Slime xích:** `TetherPost` đặt ở `link.Range` tính từ tâm đồng minh, bỏ `TetherClear` của #50.
 - **Mèo rớt, đã kiểm tra:** không có luật trận nào thả mèo; log trận 21:38 và 21:39 không có lỗi; cửa sổ tạm đóng, bật, tắt dưới con trỏ không làm mất capture (không giữ chuột thật). `EndDrag` chỉ chạy khi nhả chuột, mất capture, Pause hoặc đặt lại. **Chưa tái hiện, chưa xác định nguyên nhân, chưa sửa.** Thêm dòng log "Cat let go in battle" (lý do, nút chuột, ai giữ capture, thời gian cầm, số quái) để lần sau biết.

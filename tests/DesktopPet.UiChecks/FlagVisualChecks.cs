@@ -71,10 +71,12 @@ internal static class FlagVisualChecks
         var gold = Color.FromRgb(0xFF, 0xC8, 0x2E);
         var pole = Color.FromRgb(0x6B, 0x4A, 0x2E);
 
-        Add("flagbearer", 300, -1);
-        Add("flagbearer", 950, 1);
+        // The flag on its back: seen without the bubble of a flag slime that has yet to plant.
+        Slime Bare(double x, int facing) { var s = Add("flagbearer", x, facing); s.Shielded = s.FlagGuard = false; return s; }
+        Bare(300, -1);
+        Bare(950, 1);
         Add("flagpost", 620, -1);
-        var planted = Add("flagbearer", 1120, -1);
+        var planted = Bare(1120, -1);
         planted.Planted = true;
         var px = Shot(view, "enemy-flag");
 
@@ -85,5 +87,28 @@ internal static class FlagVisualChecks
         check(Count(px, pole, 1120, 1136, floor - 58, floor - 30, 20) == 0 && Count(px, gold, 1130, 1160, floor - 66, floor - 40) == 0, "Planted, its back is bare");
         int ring = Count(px, gold, 400, 560, floor - 16, floor + 2, 60, 100);
         check(ring > 40, $"The planted flag's gold ring lies on the floor ({ring} pixels)");
+
+        // 2026-11-05: the guard: the gold bubble on a flag slime before its first flag and on a flag whose slime
+        // lives, a dashed line from the flag to it; none of that once its slime is down.
+        sim = new BattleSim(data, 0, Width, new Random(1));
+        view = new BattleFieldView(sim) { OriginX = 0 };
+        view.Measure(new Size(Width, BattleFieldView.FieldHeight));
+        view.Arrange(new Rect(0, 0, Width, BattleFieldView.FieldHeight));
+        var bubble = Color.FromRgb(0xFF, 0xD8, 0x5A);
+        Add("flagbearer", 150, 1);
+        var owner = Add("flagbearer", 300, 1);
+        owner.Shielded = owner.FlagGuard = false;
+        var flag = Add("flagpost", 620, -1);
+        flag.FlagOf = owner.Id;
+        flag.Shielded = flag.FlagGuard = true;
+        var loose = Add("flagpost", 1000, -1);
+        loose.Shielded = loose.FlagGuard = false;
+        px = Shot(view, "enemy-flag-guarded");
+        int guardBubble = Count(px, bubble, 590, 665, floor - 90, floor - 10, 24, 120);
+        int freeBubble = Count(px, bubble, 970, 1045, floor - 90, floor - 10, 24, 120);
+        check(guardBubble > freeBubble + 60, $"A guarded flag wears the gold bubble, a free one does not ({guardBubble} against {freeBubble} pixels)");
+        check(Count(px, bubble, 115, 190, floor - 90, floor - 10, 24, 120) > 60, "A flag slime with no flag down wears it too");
+        int tie = Count(px, gold, 400, 520, floor - 50, floor - 22, 60, 100);
+        check(tie > 15, $"A dashed line ties the flag to its slime ({tie} pixels)");
     }
 }

@@ -5,6 +5,16 @@ Sổ ghi các lỗi đã sửa của Desktop Pet. Phần A: lỗi người dùng
 Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm lỗi mới: tạo mục số tiếp theo ở đầu phần A (hoặc một dòng ở phần B).
 
 # A. Lỗi người dùng phát hiện
+## #48 — Slime cờ hiệu: bất tử tới khi cắm cờ, cờ bất tử khi chủ sống, cờ thứ hai, né mèo (2026-11-05, commit COMMIT_HASH)
+- **Yêu cầu (người dùng):** con mang cờ bất tử tới khi cắm cờ đầu; cắm thêm cờ thứ hai và ưu tiên né mèo để kịp cắm; cờ bất tử tới khi chủ chết, chủ chết thì cờ đổ được và gây hoảng; Kéo cắt nhổ một nhát cờ bất tử; áp dụng mọi chế độ, tính cả tinh anh.
+- **Làm:** `PetBattle.Quills.cs` (`PlantFlag`, `DodgeCat`, `FlagOwnerFell`); dùng lại `Shielded` để mèo không nhắm, hiệu ứng không dính, thêm `FlagGuard` để tách khỏi khiên boss; `plant.count` 2, `every` 12, `dodge` 220, `dodgeSpeed` 2; vòng vàng và dây nét đứt tới chủ; banner mới vi/en/ja; tăng `rulesVersion` Thư mục ma (4) và Vô tận (10); Viễn chinh giữ 8 vì số này còn quyết định giữ chuyến đang dở.
+- **Quyết định thêm khi làm:** Kéo một nhát cả cờ đã hết bất tử (nếu không thì cờ thường lại bền hơn cờ bất tử); cờ mất không được bù; cờ thứ hai không cắm chồng dù hết giờ; đang bị len kéo thì không né.
+- **Cân bằng (mô phỏng, không phải chơi thật):** bot được dạy chọn con mang cờ khi đã đánh được và dùng Kéo vào cờ bất tử. Màn 2 chương 2, người chơi simple, thắng/20: Normal Kiếm 18, Búa 19, Cuộn len 13, Găng 20; Hard Kiếm 16, Búa 12, Cuộn len 6, Găng 13. Cuộn len tụt vì luật bất tử trước khi cắm: nó không còn kéo và giết con mang cờ sớm (tắt riêng luật đó thì về 18/20, không check nào fail). Người dùng giữ luật và duyệt nới: Cuộn len màn 2 Normal 80% → 65%, Hard lệch Kiếm 45 → 50 điểm.
+- **Kiểm chứng:** BattleFormationTests.GuardChecks, FlagVisualChecks (ảnh render, nền sáng và tối). Kết quả test: xem PROGRESS.md.
+- **Cần test tay:** docs/MANUAL-TEST.md, mục Slime cờ hiệu bất tử 05/11. Giới hạn đã biết: bị dồn vào mép mà không đủ khoảng cách thì nó không cắm được, không chạy vòng qua mèo.
+
+---
+
 ## #47 — Slime cờ hiệu đặt cờ chồng nhau, không tận dụng được vùng cờ (2026-11-05, commit dd24428)
 - **Triệu chứng (người dùng):** hai slime cờ hiệu có thể đặt cờ chồng lên nhau, hiệu ứng không được dùng hết.
 - **Nguyên nhân:** cắm ngay sau 1,5 s tại chỗ đứng, không xét cờ khác. Vòng không cộng dồn (`AuraCut` lấy `Math.Max`) nên cờ thứ hai gần như vô dụng; hai con lại xuất hiện cạnh cùng một đồng minh nên dễ trùng chỗ. Nặng hơn: 1,5 s chỉ đi ~45 DIP nên cờ thường nằm sau đội hình, quân rời vòng trước khi giao tranh.

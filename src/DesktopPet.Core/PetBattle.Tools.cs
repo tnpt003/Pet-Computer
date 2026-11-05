@@ -114,7 +114,7 @@ public sealed partial class BattleSim
         RopesCut += SnipBossRopes(lo, cut.Y, hi, cut.Y, band);
         foreach (var s in slimes.ToArray())
         {
-            if (cutHit.Contains(s.Id) || !s.Targetable || s.Shielded || s.Burrowed) continue;
+            if (cutHit.Contains(s.Id) || !s.Targetable || (s.Shielded && !IsFlagPost(s)) || s.Burrowed) continue;
             var (left, bottom, right, top) = Body(s);
             if (right < lo || left > hi || top < under || bottom > cut.Y + band) continue;
             cutHit.Add(s.Id);
@@ -126,7 +126,9 @@ public sealed partial class BattleSim
             if (s.RopedTo != 0 && CutBossRope(s)) RopesCut++;
             if (Is(s, EnemyLinks.Rhythm)) { s.BeatCount = 0; s.BeatClock = 0; }
             AddEffect(BattleEffectKind.Spark, s.X, bottom + s.Height / 2);
-            ToolHit(s, ScissorsDamage);
+            // One cut takes a flag down, guarded or not (the user, 2026-11-05).
+            if (IsFlagPost(s)) { FreeFlag(s); ToolHit(s, s.Hp / (1 - s.AuraCut) + 1); }
+            else ToolHit(s, ScissorsDamage);
             if (Over) return;
         }
         if (t < 1) return;

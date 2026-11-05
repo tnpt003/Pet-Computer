@@ -254,8 +254,8 @@ public sealed partial class PetWindow
             () => L("Slime nhạc trưởng gõ nhịp: tới nhịp 4 mọi slime trong vòng cùng đánh. Đẩy hoặc làm choáng nó để cả đội lệch nhịp.",
                     "A drummer slime keeps time: on beat 4 every slime in its ring strikes at once. Push or stun it and the band falls out of time.")),
         Meet(GuideFlag, StageGhostFolder, s => s.Type.Link?.Kind == EnemyLinks.Aura,
-            () => L("Slime cờ hiệu cắm cờ: slime trong vòng chạy nhanh hơn. Hạ nó trước thì cả đội hoảng một lúc; Đèn laser dụ slime ra khỏi vòng.",
-                    "A flag slime plants its flag: slimes in the ring move faster. Beat it first and the band panics for a moment; the Laser pulls slimes out of the ring.")),
+            () => L("Slime cờ hiệu bất tử tới khi cắm cờ đầu, rồi cắm thêm cờ thứ hai. Trong vòng cờ slime bớt đau, không bị choáng. Cờ bất tử khi nó còn sống: hạ nó trước, đánh đổ cờ để cả đội hoảng, hoặc dùng Kéo cắt.",
+                    "A flag slime cannot be hurt until its first flag is down, then it plants a second. In the ring slimes take less and cannot be dazed. Its flags stand while it lives: beat it, knock them down to panic the band, or use the Scissors.")),
         // 3 · The fish basket.
         See(GuideBasket, StageFishBasket, () => TourDue(), () => Spots(FieldSpot(battleView?.BasketBounds())),
             () => L("Giỏ cá của mèo. Slime sẽ tha cá chạy ra mép màn hình; mất hết cá là thua dù mèo còn máu.",

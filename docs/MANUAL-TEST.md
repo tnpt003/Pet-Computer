@@ -982,3 +982,14 @@ Các mục 1.5 phía trên viết theo từng mốc; đây là thứ tự chơi 
 - [ ] Mèo đứng yên giữa màn: tối đa ~10 s là cờ được cắm; không có con nào mang cờ mãi; banner giải thích cờ hiện đúng một lần lúc cờ cắm.
 - [ ] Đánh chết con mang cờ trước khi cắm: không có cờ, không lỗi. Nhổ một trong hai cờ: cả đội hoảng 2 s, cờ còn lại vẫn che.
 - [ ] Độ khó màn 2 chương 2 Hard theo cảm giác: Kiếm có quá dễ, Búa có quá khó so với trước không (mô phỏng cho thấy lệch).
+
+### Slime cờ hiệu bất tử 05/11 (Issue #48)
+- [ ] Con mang cờ chưa cắm có vòng vàng, đánh không mất máu, mèo không nhắm vào nó; cắm cờ đầu xong thì hết vòng và đánh được. Bị bom, app, Kéo cắt trúng lúc chưa cắm vẫn không sao.
+- [ ] Cờ có vòng vàng và dây nét đứt nối tới đúng chủ (xem cả trên nền desktop sáng: dây hơi nhạt, có đủ nhìn không). Đánh trúng cờ hiện "Cờ đang được bảo vệ!" một lần, không mất máu.
+- [ ] Kéo cắt trúng cờ bất tử: đổ một nhát, cả đội hoảng, chủ vẫn sống. Bộ test dùng cờ thường và cờ tinh anh; xem thêm cờ đã hết bất tử.
+- [ ] Giết chủ: mọi cờ của nó hết vòng và dây, đánh đổ được, mỗi cờ đổ cả đội hoảng 2 s. Hai slime cờ hiệu: giết con nào chỉ cờ của con đó hết bất tử.
+- [ ] Cờ thứ hai cắm ~12 s sau, cách cờ đầu, nơi có đồng minh chưa được che; không có cờ thứ ba; cờ bị nhổ không được bù.
+- [ ] Chạy mèo tới gần khi nó còn cờ chưa cắm: nó chạy trước, đủ thời gian thì cắm ngay; dồn vào mép thì cắm sớm. Bế mèo, ném mèo, Pause, Chụp Màn Hình không làm kẹt nó.
+- [ ] Tinh anh: như trên, cờ màu vàng, vòng rộng hơn, 45 HP sau khi chủ chết.
+- [ ] Cuộn len ở Thư mục ma: có quá khó so với vũ khí khác không (mô phỏng cho thấy yếu đi rõ).
+- [ ] Vô tận/Viễn chinh: trận có cờ không bị kẹt ở cuối đợt khi chỉ còn con mang cờ và cờ.

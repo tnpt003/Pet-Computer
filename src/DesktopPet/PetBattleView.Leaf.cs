@@ -41,6 +41,12 @@ public sealed partial class BattleFieldView
         double k = Math.Clamp(post.Hp / Math.Max(1, post.MaxHp), 0, 1);
         dc.DrawRectangle(PostBarBack, null, new Rect(x - 16, top - 9, 32, 5));
         dc.DrawRectangle(PostBarFill, null, new Rect(x - 15, top - 8, 30 * k, 3));
+        if (!post.FlagGuard) return;
+        // Its flag slime still lives: the same gold bubble as a shielded boss.
+        double pulse = 1 + 0.03 * Math.Sin(time * 4);
+        var centre = new Point(x + 8, floor - 38);
+        dc.DrawEllipse(null, Halo, centre, 32 * pulse, 40);
+        dc.DrawEllipse(null, BubblePen, centre, 32 * pulse, 40);
     }
 
     // Everything of the herb and the bomb (over the slimes).

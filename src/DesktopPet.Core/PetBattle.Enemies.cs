@@ -154,7 +154,7 @@ public sealed partial class BattleSim
             // 1.5 M15: a wall climber going to its edge, up it or falling off (PetBattle.Wall.cs).
             if (slime.Type.Cling is ClingSpec cling && StepClinger(slime, cling, dt, catX, minX, maxX)) { if (Over) break; continue; }
             if (slime.Type.Spring != null) { StepSpring(slime, dt, catX, catHeld); if (Over) break; }
-            if (slime.Shielded && slime.State != SlimeState.Defeated)
+            if (slime.Shielded && !slime.FlagGuard && slime.State != SlimeState.Defeated)
             {
                 StepShield(slime, dt, minX, maxX);
                 if (slime.Retreating && slime.State == SlimeState.Moving) continue; // Running for the edge: nothing else.
@@ -248,7 +248,7 @@ public sealed partial class BattleSim
                     // A bomb lights its fuse next to the cat rather than attacking.
                     if (slime.Type.Fuse != null && StartFuse(slime, catX, catHeld)) break;
                     // A support keeps behind its fighting allies and leaves the cat to them.
-                    if (slime.Type.Support && (slime.KeepingBack = WalkToPlant(slime, dt, minX, maxX) || KeepBack(slime, dt, catX, minX, maxX))) break;
+                    if (slime.Type.Support && (slime.KeepingBack = DodgeCat(slime, dt, catX, minX, maxX) || WalkToPlant(slime, dt, minX, maxX) || KeepBack(slime, dt, catX, minX, maxX))) break;
                     // A dasher runs off after its lunge.
                     if (RunAway(slime, dt, catX, minX, maxX)) break;
                     // A rolling boss rolls at a cat further off (PetBattle.Zip.cs).

@@ -483,18 +483,22 @@
       // 1.5 Q8 (M12), 2026-11-04: a support with a flag: it plants plant.post (the post holds the ring) and keeps
       // behind its allies like the other supports. 2026-11-05: not before `after` s, and once the nearest ally on
       // its side is within `near` of the cat and in the ring, or at `by` s; `spacing` rings from any other flag.
+      // Nothing hurts it before its first flag, nothing but the Scissors hurts a flag while it lives. `count`
+      // flags, the next `every` s after the last; with one to plant it runs from a cat within `dodge` at
+      // `dodgeSpeed` × its speed. An elite's flags are all elite.
       "id": "flagbearer", "nameVi": "Slime cờ hiệu", "nameEn": "Flag slime",
-      "tipVi": "Cắm cờ xuống đất: slime trong vòng vàng bớt đau, không bị choáng. Đánh đổ cờ hoặc dùng Kéo cắt; cờ đổ thì cả đội hoảng.", "tipEn": "Plants a flag: slimes in its gold ring take less and cannot be dazed. Knock the flag down or use the Scissors; when it falls the band panics.", "counters": ["laser", "push"],
+      "tipVi": "Bất tử tới khi cắm cờ đầu, sau đó cắm thêm cờ thứ hai. Cờ bất tử khi nó còn sống: hạ nó trước rồi nhổ cờ, hoặc dùng Kéo cắt. Vòng vàng che slime; cờ đổ thì cả đội hoảng.", "tipEn": "Cannot be hurt until its first flag is down, then plants a second. Flags stand while it lives: beat it, then knock them down, or use the Scissors. The gold ring guards slimes; a flag down panics them.", "counters": ["laser", "push"],
       "maxHp": 50, "speed": 30, "damage": 6, "range": 52,
       "windup": 0.8, "attackCooldown": 2.0, "recover": 0.4,
       "scale": 0.95, "color": "#5B8DEF", "marks": "flag",
       "support": true, "keepBack": 120, "fleeSpeed": 1.6, "cost": 2, "binSpit": false,
-      "plant": { "post": "flagpost", "after": 1.5, "near": 300, "spacing": 1.5, "by": 10 },
+      "plant": { "post": "flagpost", "after": 1.5, "near": 300, "spacing": 1.5, "by": 10, "count": 2, "every": 12, "dodge": 220, "dodgeSpeed": 2 },
       "elite": { "hp": 1.2, "cost": 1, "descVi": "cờ bền hơn, vùng cờ rộng hơn", "descEn": "a tougher flag with a wider ring" }
     },
     {
       // 2026-11-04: the planted flag: it stands still and holds the ring: allies in it take link.guard less and
-      // cannot be dazed; down, every other enemy panics breakStun s. Beat it or cut it (the cat goes for it).
+      // cannot be dazed; down, every other enemy panics breakStun s. 2026-11-05: it cannot be hurt while its flag
+      // slime lives; then beat it (the cat goes for it). One Scissors cut takes it down either way.
       "id": "flagpost", "nameVi": "Cờ hiệu", "nameEn": "Flag",
       "maxHp": 30, "speed": 0, "damage": 0, "range": 40,
       "windup": 0.8, "attackCooldown": 2.0, "recover": 0.4,
@@ -1043,7 +1047,7 @@
             "goalEn": "Ghost slimes fade in and out, mirage slimes bring fakes, a drummer beats a big drum, a flag slime plants a flag that guards friends. This stage lends the Laser.",
             "tipVi": "Bạn sẽ học: rê chuột lên slime bóng ma để nó hiện ra (đang ẩn thì không đánh trúng); rê chuột tìm bản thật của slime ảo ảnh (bản thật có bóng); Đèn laser dụ slime ra khỏi vùng cờ và soi lộ cả hai; nhấc mèo đúng nhịp cuối để né trống lớn, đánh hoặc Đẩy nhạc trưởng thì nó đếm lại; đánh đổ cờ thì cả đội hoảng.",
             "tipEn": "You learn: to point at a ghost slime so it shows (a hidden one cannot be hit); to point at a mirage to find the real one (it has a shadow); the Laser pulls slimes out of the flag's ring and reveals both; to lift the cat on the last beat to dodge the big drum, and to hit or Push the drummer to reset its count; knocking the flag down scares the whole band.",
-            "objective": "clear", "upgrades": true, "maxAlive": 5, "threat": 2.2, "eliteChance": 0.2, "maxMalware": 4, "newAppsFrom": 1, "rulesVersion": 3,
+            "objective": "clear", "upgrades": true, "maxAlive": 5, "threat": 2.2, "eliteChance": 0.2, "maxMalware": 4, "newAppsFrom": 1, "rulesVersion": 4,
             "unlocksSkill": "laser", "suggestSkills": [ "laser", "push", "shield" ],
             "waves": [
               { "groups": [ { "enemy": "phantom", "count": 1 }, { "enemy": "slime", "count": 2 }, { "enemy": "runner", "count": 1 } ] },
@@ -1132,7 +1136,7 @@
   // older kinds: at most two kinds of link and two the cursor beats); "mutations": after each cleared boss
   // wave pick one of "offer" odd rules, held until the next boss wave is cleared, then its reward.
   "endless": {
-    "id": "endless", "rulesVersion": 9, "unlockAfter": "c1_slime_king", "upgradeEvery": 2, "bossEvery": 10, "boss": "king_c1",
+    "id": "endless", "rulesVersion": 10, "unlockAfter": "c1_slime_king", "upgradeEvery": 2, "bossEvery": 10, "boss": "king_c1",
     "bosses": [ "king_c1", "zip", "mutant_king" ],
     "lateBoss": "king", "lateBossFrom": 40, "bossBonusPick": true, "allSynergiesAt": 48,
     "eliteChancePerWave": 0.007, "eliteChanceMax": 0.45, "moreElitesEvery": 20, "moreElitesMax": 2,

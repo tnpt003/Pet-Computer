@@ -135,6 +135,8 @@ internal static class AdventureBalanceTests
         // A dropped fish goes back to the basket, a drop is picked up (once noticed).
         foreach (var fish in sim.StrayFish.ToList()) if (reflex.NoticesAge(fish.Age)) sim.PickUpFish(fish.Id);
         foreach (var drop in sim.Drops.ToList()) if (reflex.NoticesAge(drop.Age)) sim.PickUp(drop.Id);
+        // A flag slime with a flag down (2026-11-05): beaten first, as the banner says (its flags stand till then).
+        if (sim.SelectedId == null && sim.Slimes.FirstOrDefault(s => s.Type.Plant != null && s.Targetable && !s.FlagGuard && reflex.Notices(s, now)) is Slime bearer) sim.Select(bearer.Id);
         var near = sim.Slimes.Where(s => s.Targetable && !s.IsBoss && Math.Abs(s.X - cat) <= 110).ToList();
         // Laser: two or more slimes close in: the dot well away from the cat, on the side with more room.
         if (sim.Carries(BattleSkill.Laser) && near.Count >= 2 && sim.Ready(BattleSkill.Laser) && sim.Arm(BattleSkill.Laser))
@@ -161,7 +163,7 @@ internal static class AdventureBalanceTests
             foreach (var s in sim.Slimes)
             {
                 if (!s.Targetable) continue;
-                if (s.Bubbled) { at = s.X; break; }
+                if (s.Bubbled || (s.FlagGuard && BattleSim.IsFlagPost(s))) { at = s.X; break; } // A guarded flag: one cut fells it.
                 if (sim.LinkPartner(s) is Slime ally && s.Type.Link?.Kind == EnemyLinks.Tether) { at = (s.X + ally.X) / 2; break; }
                 if (sim.RopeBoss(s) is Slime boss) { at = (s.X + boss.X) / 2; break; }
             }
@@ -350,11 +352,14 @@ internal static class AdventureBalanceTests
                         if (player != Player.Simple) continue;
                         double sword = table[(i, BattleWeapon.Sword, level, Player.Simple)].Wins;
                         int gap = i == stages.Length && level == BattleDifficulty.Hard ? 40 : 30;
-                        // The Ghost Folder on Hard, yarn (user, 2026-11-05): the flag waits for the front now; the
-                        // sword gained on it (60 to 70 %), the yarn stayed (30 to 25 %), it stood on the old limit.
-                        if (i == 2 && level == BattleDifficulty.Hard && weapon == "yarn") gap = 45;
+                        // The Ghost Folder, yarn (user, 2026-11-05): a flag slime cannot be hurt before its first flag,
+                        // so the yarn no longer pulls it in and beats it unplanted (measured: 18 to 13/20 on Normal,
+                        // nothing else fails with that one rule off). The user kept the rule and eased these two limits.
+                        bool ghostYarn = i == 2 && weapon == "yarn";
+                        if (ghostYarn && level == BattleDifficulty.Hard) gap = 50;
                         check(Math.Round(Math.Abs(sword - share) * 100) <= gap, $"Chapter 2 balance: stage {i}, {level}: {weapon} within {gap} points of the sword ({share:P0} vs {sword:P0})");
-                        if (level == BattleDifficulty.Normal) check(share >= 0.8, $"Chapter 2 balance: stage {i}, {weapon}, Normal, simple player wins ≥ 80 % ({share:P0})");
+                        double least = ghostYarn ? 0.65 : 0.8;
+                        if (level == BattleDifficulty.Normal) check(share >= least, $"Chapter 2 balance: stage {i}, {weapon}, Normal, simple player wins ≥ {least:P0} ({share:P0})");
                         if (wins.Count >= 2) check(wins.Average(r => r.Seconds) <= 240, $"Chapter 2 balance: stage {i}, {weapon}, {level}: a win takes at most 4 minutes on average ({wins.Average(r => r.Seconds):0} s)");
                     }
         }

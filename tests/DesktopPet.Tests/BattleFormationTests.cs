@@ -17,16 +17,16 @@ internal static class BattleFormationTests
         Support = support, Elite = new EliteSpec { Hp = 1.2 }
     };
 
-    private static BattleSim Field(EnemyType[] kinds, int[] counts, bool elite = false, int maxAlive = 8, int seed = 5)
+    private static BattleSim Field(EnemyType[] kinds, int[] counts, bool elite = false, int maxAlive = 8, int seed = 5, IEnumerable<BattleSkill>? skills = null)
     {
         var arms = BattleData.Settings.Weapon("sword") with { Range = 5, StunChance = 0 };
         var settings = new BattleSettings
         {
             Weapons = new[] { arms }, FirstWaveDelay = 0, SpawnInterval = 0.05, CatMaxHp = 1_000_000, MaxAlive = maxAlive, MaxElites = 8, Enemies = kinds,
             CatDamage = 0, RageHitGain = 0, BombDamage = 40, BombCooldown = 0.1, BombDelay = 0.01, BombRadius = 40,
-            Plan = new[] { new WaveSpec { Groups = kinds.Select((k, i) => new WaveGroup { Enemy = k.Id, Count = counts[i], Elite = elite && k.Link != null }).ToArray() } }
+            Plan = new[] { new WaveSpec { Groups = kinds.Select((k, i) => new WaveGroup { Enemy = k.Id, Count = counts[i], Elite = elite && (k.Link != null || k.Plant != null) }).ToArray() } }
         };
-        var sim = new BattleSim(settings, 0, 1600, seed: seed);
+        var sim = new BattleSim(settings, 0, 1600, seed: seed, skills: skills);
         int total = counts.Sum();
         for (int i = 0; i < 600 && sim.Slimes.Count(s => s.Targetable) < total; i++) sim.Step(dt, 100, false);
         sim.ClearEvents();
@@ -65,7 +65,7 @@ internal static class BattleFormationTests
             Id = shipped.Id, MaxHp = shipped.MaxHp, Speed = shipped.Speed, Damage = 0, Range = shipped.Range, Windup = 0.8, AttackCooldown = 2, Recover = 0.3,
             Support = true, KeepBack = shipped.KeepBack, Plant = spec
         };
-        var sim = Field(new[] { bearer, BattleData.Settings.Enemy("flagpost"), Kind("slime", speed: 0) }, new[] { bearers, posts, fighters }, elite);
+        var sim = Field(new[] { bearer, BattleData.Settings.Enemy("flagpost"), Kind("slime", speed: 0) }, new[] { bearers, posts, fighters }, elite, skills: new[] { BattleSkill.Push, BattleSkill.Heal, BattleSkill.Grabber, BattleSkill.Scissors, BattleSkill.Spray });
         return sim;
     }
 
@@ -77,6 +77,8 @@ internal static class BattleFormationTests
         var plant = BattleData.Settings.Enemy("flagbearer").Plant!;
         var link = BattleData.Settings.Enemy("flagpost").Link!;
         double gap = plant.Spacing * link.Range;
+        var one = new PlantSpec { Post = "flagpost", After = plant.After, Near = plant.Near, Spacing = plant.Spacing, By = plant.By, Count = 1 };
+        GuardChecks(check, plant, link, gap);
         check(plant is { Near: 300, Spacing: 1.5, By: 10 } && gap == 270, "The shipped flag slime waits for a front within 300 of the cat, 10 s at most, and keeps 270 from another flag");
 
         // It holds its flag while the fight is far off, and plants once the front has come.
@@ -109,7 +111,7 @@ internal static class BattleFormationTests
         check(Posts(sim).Length == 1, "plant.by s on the field it plants anyway");
 
         // Two side by side: the second walks clear of the first.
-        sim = Planters(2, 0, 1);
+        sim = Planters(2, 0, 1, spec: one);
         front = Of(sim, "slime")[0];
         var two = Of(sim, "flagbearer");
         front.X = 380; two[0].X = 500; two[1].X = 500;
@@ -120,7 +122,7 @@ internal static class BattleFormationTests
         check(Posts(sim).Length == 2 && Math.Abs(Posts(sim)[0].X - Posts(sim)[1].X) >= gap - 2, $"Two flags stand {gap} apart, not on each other ({(Posts(sim).Length == 2 ? Math.Abs(Posts(sim)[0].X - Posts(sim)[1].X) : 0):0})");
 
         // The side with an ally no ring covers beats the nearer side.
-        sim = Planters(1, 1, 2);
+        sim = Planters(1, 1, 2, spec: one);
         var post = Posts(sim)[0];
         bearer = Of(sim, "flagbearer")[0];
         var fighters = Of(sim, "slime");
@@ -131,7 +133,7 @@ internal static class BattleFormationTests
         check(fighters[0].AuraCut > 0 && fighters[1].AuraCut > 0, "Between them the flags cover both allies");
 
         // An elite flag's wider ring sets the gap.
-        sim = Planters(1, 1, 1, elite: true);
+        sim = Planters(1, 1, 1, elite: true, spec: one);
         post = Posts(sim)[0];
         bearer = Of(sim, "flagbearer")[0];
         front = Of(sim, "slime")[0];
@@ -151,6 +153,140 @@ internal static class BattleFormationTests
         sim = Planters(1, 0, 1);
         bearer = Of(sim, "flagbearer")[0];
         check(double.IsNaN(bearer.PlantAt), "A flag slime with free ground has nowhere to walk to");
+    }
+
+    // 2026-11-05: the flag slime cannot be hurt before its first flag, its flags not while it lives (but for the
+    // Scissors); it plants a second one 12 s on and runs from the cat until then.
+    private static void GuardChecks(Action<bool, string> check, PlantSpec plant, LinkSpec link, double gap)
+    {
+        check(plant is { Count: 2, Every: 12, Dodge: 220, DodgeSpeed: 2 }, "The shipped flag slime plants two flags, 12 s apart, and runs from a cat within 220");
+
+        // Before its first flag nothing hurts it; the first flag ends that.
+        var sim = Planters(1, 0, 1);
+        var bearer = Of(sim, "flagbearer")[0];
+        var front = Of(sim, "slime")[0];
+        front.X = 1200; bearer.X = 1320;
+        double hp = bearer.Hp;
+        check(sim.Damage(bearer, 500, DamageSource.Bomb) == HitResult.Immune && bearer.Hp == hp && bearer.State != SlimeState.Defeated, "Nothing hurts a flag slime before its first flag");
+        front.X = 400; bearer.X = 520;
+        Steps(sim, plant.After + 0.1);
+        var flag = Posts(sim).Single();
+        Steps(sim, 1);
+        check(!bearer.FlagGuard && !bearer.Shielded && sim.Damage(bearer, 1, DamageSource.Bomb) == HitResult.Landed && bearer.Hp < hp, "The first flag down, it can be hurt");
+        check(flag.FlagGuard && flag.FlagOf == bearer.Id, "Its flag is tied to it");
+
+        // While it lives a flag takes nothing but the Scissors; the cat leaves it alone.
+        hp = flag.Hp;
+        sim.ClearEvents();
+        check(sim.Damage(flag, 500, DamageSource.Bomb) == HitResult.Immune && flag.Hp == hp && sim.Events.Any(e => e.Kind == BattleEventKind.FlagGuarded), "A guarded flag takes no hit, and says so");
+        check(sim.Damage(flag, 500, DamageSource.Weapon) == HitResult.Immune && sim.Damage(flag, 500, DamageSource.App) == HitResult.Immune && sim.Damage(flag, 500, DamageSource.Tool) == HitResult.Immune, "Neither weapon, app nor tool");
+
+        // Its flag slime down: the flag can fall, and its fall panics the others.
+        sim.Damage(bearer, 100000, DamageSource.Bomb);
+        check(bearer.State == SlimeState.Defeated && !flag.FlagGuard && !flag.Shielded && flag.FlagOf == 0, "Its flag slime down, a flag's guard ends");
+        check(flag.State != SlimeState.Defeated, "That alone does not fell the flag");
+        sim.ClearEvents();
+        check(sim.Damage(flag, 100000, DamageSource.Bomb) == HitResult.Landed && flag.State == SlimeState.Defeated && front.PanicRemaining > 0, "Then it falls and the others panic");
+
+        // The Scissors: one cut takes a guarded flag down, and it panics them too.
+        foreach (bool elite in new[] { false, true })
+        {
+            sim = Planters(1, 0, 1, elite);
+            bearer = Of(sim, "flagbearer")[0];
+            front = Of(sim, "slime")[0];
+            front.X = 400; bearer.X = 520;
+            Steps(sim, plant.After + 0.1);
+            flag = Posts(sim).Single();
+            Steps(sim, 1);
+            check(flag.FlagGuard && flag.Elite == null == !elite, $"A flag (elite: {elite}) stands guarded");
+            for (int i = 0; i < 1200 && !sim.Ready(BattleSkill.Scissors); i++) sim.Step(dt, 200, false);
+            sim.Arm(BattleSkill.Scissors);
+            check(sim.UseOnScreen(BattleSkill.Scissors, flag.X, 18), "The Scissors can be used on a flag");
+            for (int i = 0; i < 240 && flag.State != SlimeState.Defeated; i++) { sim.Step(dt, 200, false); sim.ClearEvents(); }
+            check(flag.State == SlimeState.Defeated && bearer.State != SlimeState.Defeated, $"One cut fells a guarded flag (elite: {elite}), its slime lives");
+            check(front.PanicRemaining > 0, "Cutting it panics the band");
+        }
+
+        // Nor do the Scissors touch the flag slime before its first flag.
+        sim = Planters(1, 0, 1);
+        bearer = Of(sim, "flagbearer")[0];
+        front = Of(sim, "slime")[0];
+        front.X = 1300; bearer.X = 1000;
+        hp = bearer.Hp;
+        for (int i = 0; i < 600 && !sim.Ready(BattleSkill.Scissors); i++) sim.Step(dt, 200, false);
+        sim.Arm(BattleSkill.Scissors);
+        sim.UseOnScreen(BattleSkill.Scissors, bearer.X, 18);
+        Steps(sim, 3);
+        check(bearer.Hp == hp && bearer.FlagGuard, "The Scissors do not hurt it either before its first flag");
+
+        // The second flag: plant.every s on, clear of the first, and no third.
+        sim = Planters(1, 0, 2);
+        bearer = Of(sim, "flagbearer")[0];
+        var fighters = Of(sim, "slime");
+        fighters[0].X = 400; fighters[1].X = 800; bearer.X = 520;
+        Steps(sim, plant.After + 0.1);
+        Steps(sim, plant.Every - 1);
+        check(Posts(sim).Length == 1 && bearer.FlagsPlanted == 1 && !bearer.Planted, "Not its second flag before plant.every s");
+        Steps(sim, plant.Every);
+        check(Posts(sim).Length == 2 && bearer.Planted && Math.Abs(Posts(sim)[0].X - Posts(sim)[1].X) >= gap - 2 && Posts(sim).All(p => p.FlagOf == bearer.Id),
+            $"Its second flag stands {gap} from the first, where an ally had no ring ({Posts(sim).Length})");
+        Steps(sim, plant.Every * 3);
+        check(Posts(sim).Length == 2 && bearer.FlagsPlanted == 2, "No third flag");
+        var both = Posts(sim);
+        sim.Damage(bearer, 100000, DamageSource.Bomb);
+        check(both.All(p => !p.FlagGuard), "Its slime down, both flags' guards end");
+
+        // A second flag only where an ally has no ring: all covered, none, and it does not run for ever.
+        sim = Planters(1, 0, 1);
+        bearer = Of(sim, "flagbearer")[0];
+        front = Of(sim, "slime")[0];
+        front.X = 400; bearer.X = 520;
+        Steps(sim, plant.After + 0.1);
+        Steps(sim, plant.Every + 2);
+        check(Posts(sim).Length == 1, "With every ally in a ring there is no second flag yet");
+        Steps(sim, plant.By * 4);
+        check(bearer.Planted && Posts(sim).Length <= 2, "In the end it plants or gives up: it never waits for ever");
+
+        // The cat close: it runs, harder than it backs off, and stays free to plant.
+        sim = Planters(1, 0, 1);
+        bearer = Of(sim, "flagbearer")[0];
+        front = Of(sim, "slime")[0];
+        front.X = 400; bearer.X = 520;
+        Steps(sim, plant.After + 0.1);
+        bearer.PlantClock = 0;
+        bearer.X = 900;
+        double from = bearer.X;
+        for (int i = 0; i < 60; i++) { sim.Step(dt, bearer.X - 100, false); sim.ClearEvents(); } // The cat on its heels.
+        check(bearer.X - from >= bearer.Type.Speed * plant.DodgeSpeed * 0.9, $"With its second flag to plant it runs from the cat ({bearer.X - from:0} DIPs in 1 s)");
+        check(Posts(sim).Length == 1, "Before plant.every s it only runs");
+        bearer.PlantClock = plant.Every;
+        Steps(sim, 0.1, bearer.X - plant.Dodge + 30);
+        check(Posts(sim).Length == 2 && bearer.Planted, "Its time come with the cat on it, it plants at once");
+
+        // Cornered at the edge it plants early rather than die with its flag unplanted.
+        sim = Planters(1, 0, 1);
+        bearer = Of(sim, "flagbearer")[0];
+        front = Of(sim, "slime")[0];
+        front.X = 400; bearer.X = 520;
+        Steps(sim, plant.After + 0.1);
+        bearer.PlantClock = plant.After;
+        bearer.X = 1590;
+        Steps(sim, 0.2, 1500);
+        check(Posts(sim).Length == 2, "Cornered at the edge with the cat on it, it plants early");
+
+        // An elite: guarded the same, both flags elite (wider ring, a tougher fall).
+        sim = Planters(1, 0, 2, elite: true);
+        bearer = Of(sim, "flagbearer")[0];
+        fighters = Of(sim, "slime");
+        fighters[0].X = 400; fighters[1].X = 860; bearer.X = 520;
+        check(bearer.Elite != null && sim.Damage(bearer, 100000, DamageSource.Bomb) == HitResult.Immune, "An elite flag slime is as guarded");
+        Steps(sim, plant.After + 0.1 + plant.Every * 2 + 1);
+        both = Posts(sim);
+        check(both.Length == 2 && both.All(p => p.Elite != null && BattleSim.AuraRange(p) == link.EliteRange && p.MaxHp == 45) && Math.Abs(both[0].X - both[1].X) >= plant.Spacing * link.EliteRange - 2,
+            $"An elite plants two elite flags, {plant.Spacing * link.EliteRange} apart, 45 HP each ({both.Length})");
+        sim.Damage(bearer, 100000, DamageSource.Bomb);
+        sim.Damage(both[0], 30, DamageSource.Bomb);
+        check(both[0].State != SlimeState.Defeated && both[0].Hp == 15, $"An elite flag, its slime down, still takes 45 ({both[0].Hp})");
     }
 
     private static void FlagChecks(Action<bool, string> check)

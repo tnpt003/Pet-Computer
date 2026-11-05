@@ -801,6 +801,13 @@ public sealed partial class BattleSim
         // 1.5 M14: under the floor nothing reaches a burrower (poison already in it still works); a flyer
         // knocked down to the floor takes more from every hit.
         if (slime.Burrowed && source != DamageSource.Poison) { AddEffect(BattleEffectKind.Miss, slime.X, 10); return HitResult.Immune; }
+        // A flag slime before its first flag, a flag while its slime lives (2026-11-05).
+        if (slime.FlagGuard)
+        {
+            AddEffect(BattleEffectKind.Immune, slime.X, slime.Height / 2, slime.Width);
+            events.Add(new(BattleEventKind.FlagGuarded, slime.X));
+            return HitResult.Immune;
+        }
         amount *= DownedFactor(slime) * (1 - slime.AuraCut); // A flag's ring takes some off (2026-11-04).
         if (slime.Shielded)
         {
@@ -922,6 +929,7 @@ public sealed partial class BattleSim
         }
         events.Add(new(BattleEventKind.SlimeDefeated, slime.X, slime.IsBoss ? 1 : 0));
         LinkFallen(slime, true);
+        FlagOwnerFell(slime);
         PackFallen(slime); // 2026-10-31: its merging pack rages (PetBattle.Links.cs).
         GiveBack(slime); // A thief gives back what it took (1.5 M16).
         SprayKill(slime); // 2026-11-04: the hot-water spray gets more water.

@@ -591,6 +591,12 @@ public sealed class PlantSpec
     public double Near { get; init; } = 300;
     public double Spacing { get; init; } = 1.5;
     public double By { get; init; } = 10;
+    // Flags in all; the next one Every s after the last. With one still to plant it runs from a cat within
+    // Dodge DIPs at DodgeSpeed × its speed.
+    public int Count { get; init; } = 2;
+    public double Every { get; init; } = 12;
+    public double Dodge { get; init; } = 220;
+    public double DodgeSpeed { get; init; } = 2;
 }
 
 public sealed class LinkSpec
@@ -1537,6 +1543,10 @@ public static class BattleData
                 Within(plant.Near, 0, 2000, at + ".plant.near");
                 Within(plant.Spacing, 0, 4, at + ".plant.spacing");
                 Within(plant.By, 0, 60, at + ".plant.by");
+                Within(plant.Count, 1, 5, at + ".plant.count");
+                Within(plant.Every, 0, 60, at + ".plant.every");
+                Within(plant.Dodge, 0, 2000, at + ".plant.dodge");
+                Within(plant.DodgeSpeed, 1, 4, at + ".plant.dodgeSpeed");
             }
             Within(e.Hover, 0, 2000, at + ".hover");
             if (e.Hover > 0 && (e.Boss || e.Blocker || e.Dash || e.Slam || e.Link != null)) throw new InvalidDataException(at + ".hover is not for a boss, blocker, dash, slam or linked enemy");

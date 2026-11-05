@@ -51,6 +51,8 @@ public sealed partial class BattleFieldView
                     double ring = BattleSim.AuraRange(slime);
                     dc.DrawEllipse(null, Halo, new Point(x, floor - 3), ring * pulse, 9);
                     dc.DrawEllipse(null, AuraPen, new Point(x, floor - 3), ring * pulse, 9);
+                    // Whose flag it is: the one to beat.
+                    if (slime.FlagOf != 0 && sim.Find(slime.FlagOf) is Slime owner) dc.DrawLine(AuraPen, new Point(x, floor - 44), new Point(owner.X - OriginX, floor - 30));
                     break;
                 case EnemyLinks.Rhythm:
                     dc.DrawEllipse(null, RhythmArea, new Point(x, floor - 3), link.Range, 8);

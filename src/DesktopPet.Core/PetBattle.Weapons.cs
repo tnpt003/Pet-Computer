@@ -20,7 +20,7 @@ public sealed partial class BattleSim
 
     private void PullIn(Slime slime, double catX)
     {
-        if (arms.Pull <= 0 || !slime.Type.Support || slime.IsBoss || !slime.Targetable || slime.Handled || slime.Stuck || slime.Elite is { PushImmune: true }) return;
+        if (arms.Pull <= 0 || !slime.Type.Support || slime.IsBoss || !slime.Targetable || slime.Shielded || slime.Handled || slime.Stuck || slime.Elite is { PushImmune: true }) return;
         double dx = slime.X - catX;
         // Knock back fades as exp(-6 t): a speed of 6 × the distance covers it, so it stops beside the cat.
         double gap = Math.Max(0, Math.Abs(dx) - CatHalfWidth - slime.HitWidth / 2 - 8);

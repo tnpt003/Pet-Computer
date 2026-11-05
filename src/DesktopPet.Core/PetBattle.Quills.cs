@@ -246,31 +246,87 @@ public sealed partial class BattleSim
         return false;
     }
 
-    // A flag slime (2026-11-04): it plants its flag, a post with the ring (it counts as the wave's: beat it or
-    // cut it down; an elite's is the elite post). From 2026-11-05 it picks its moment and its ground: it walks
-    // behind its allies until the front of them is near the cat and in its ring (plant.near), or plant.by s
-    // have gone, and plants clear of the other flags (rings do not add up): the ground being taken it walks to
-    // the free ground covering the most allies no ring covers. No ally left: at once. Twice plant.by s: anywhere.
+    // A flag slime (2026-11-04): it plants its flags, posts with the ring (they count as the wave's). From
+    // 2026-11-05 it picks its moment and its ground: it walks behind its allies until the front of them is
+    // near the cat and in its ring (plant.near), or plant.by s have gone, and plants clear of the other flags
+    // (rings do not add up): the ground being taken it walks to the free ground covering the most allies no
+    // ring covers. No ally left: at once. Nothing hurts it before its first flag, nothing hurts its flags
+    // while it lives but the Scissors. Its next flag comes plant.every s later, where an ally has no ring
+    // (plant.count in all, a lost one is not replaced); with the cat near it runs first and plants as soon
+    // as it may, or wherever it is cornered, so as not to die with its flag unplanted.
     private void StepPlant(Slime s, double dt, double catX)
     {
         if (s.Type.Plant is not PlantSpec plant || s.Planted || !s.Targetable || s.Handled || s.Decoy) return;
         s.PlantClock += dt;
-        if (s.PlantClock < plant.After || s.State != SlimeState.Moving) return;
+        bool first = s.FlagsPlanted == 0;
+        double wait = first ? plant.After : plant.Every, by = first ? plant.By : plant.Every + plant.By;
+        if (s.State != SlimeState.Moving) return;
         var type = Settings.Enemy(plant.Post);
         double ring = s.Elite != null && type.Elite != null && type.Link is { EliteRange: > 0 } link ? link.EliteRange : type.Link?.Range ?? 0;
-        bool late = s.PlantClock >= plant.By;
-        if (!late && double.IsNaN(s.PlantAt) && !FrontInRing(s, plant, ring, catX)) return; // Once on its way it goes on.
-        if (!FlagRoom(s.X, ring, plant) && s.PlantClock < plant.By * 2)
+        if (CatPresses(s, plant, catX))
         {
-            s.PlantAt = PlantSpot(s, plant, ring, catX);
+            var (minX, maxX) = Bounds(s);
+            bool cornered = s.X <= minX + 1 || s.X >= maxX - 1;
+            s.PlantAt = double.NaN;
+            if (s.PlantClock >= (cornered ? plant.After : wait) && FlagRoom(s.X, ring, plant)) PlantFlag(s, plant, type);
+            return;
+        }
+        if (s.PlantClock < wait) return;
+        bool late = s.PlantClock >= by;
+        if (!late && double.IsNaN(s.PlantAt) && !FrontInRing(s, plant, ring, catX)) return; // Once on its way it goes on.
+        bool room = FlagRoom(s.X, ring, plant);
+        if ((!room || (!first && !late && BareAllies(s, s.X, ring) == 0)) && s.PlantClock < by * 2)
+        {
+            s.PlantAt = PlantSpot(s, plant, ring, catX, first || late);
             if (!double.IsNaN(s.PlantAt) || !late) return;
         }
+        // The first flag is planted at the last anywhere (it ends the slime's guard), a later one only on free ground.
+        if (first || room) PlantFlag(s, plant, type);
+        else { s.Planted = true; s.PlantAt = double.NaN; }
+    }
+
+    private void PlantFlag(Slime s, PlantSpec plant, EnemyType type)
+    {
+        s.FlagsPlanted++;
+        s.Planted = s.FlagsPlanted >= plant.Count;
+        s.PlantClock = 0;
         s.PlantAt = double.NaN;
-        s.Planted = true;
+        s.Shielded = s.FlagGuard = false;
         var post = AddSlime(s.X, type);
         post.SummonedBy = CalledBy;
+        post.FlagOf = s.Id;
+        post.Shielded = post.FlagGuard = true;
         if (s.Elite != null && type.Elite is EliteSpec elite) ApplyElite(post, elite);
         events.Add(new(BattleEventKind.FlagPlanted, s.X, post.Id));
+    }
+
+    // Its flag slime down: its flags can be knocked down (a fall panics the others as ever).
+    private void FlagOwnerFell(Slime owner)
+    {
+        if (owner.Type.Plant == null) return;
+        foreach (var f in slimes)
+        {
+            if (f.FlagOf != owner.Id) continue;
+            FreeFlag(f);
+            if (f.State != SlimeState.Defeated) AddEffect(BattleEffectKind.Spark, f.X, f.Height / 2);
+        }
+    }
+
+    private static void FreeFlag(Slime flag) { flag.FlagOf = 0; flag.Shielded = flag.FlagGuard = false; }
+    public static bool IsFlagPost(Slime s) => s.Type.Still && (s.FlagOf != 0 || s.Link?.Kind == EnemyLinks.Aura);
+
+    // The cat close to a flag slime with a flag still to plant.
+    private static bool CatPresses(Slime s, PlantSpec plant, double catX) =>
+        s.FlagsPlanted > 0 && !s.Planted && Math.Abs(s.X - catX) < plant.Dodge;
+
+    // Running from the cat comes before walking to free ground or keeping behind its allies.
+    private bool DodgeCat(Slime s, double dt, double catX, double minX, double maxX)
+    {
+        if (s.Type.Plant is not PlantSpec plant || !CatPresses(s, plant, catX) || Math.Abs(s.KnockVelocity) > 1) return false; // Pulled or knocked: it goes where it is sent.
+        int away = s.X >= catX ? 1 : -1;
+        s.Facing = away;
+        s.X = Math.Clamp(s.X + away * Speed(s) * plant.DodgeSpeed * dt, minX, maxX);
+        return true;
     }
 
     // Who a flag is for: the enemies that fight (not a support, a decoy or another post).
@@ -307,7 +363,7 @@ public sealed partial class BattleSim
 
     // The free ground beside the planted flags on its side of the cat, no nearer the cat than it keeps: where
     // its ring takes in the most allies no ring has yet, the nearest such. NaN: none on this field.
-    private double PlantSpot(Slime bearer, PlantSpec plant, double ring, double catX)
+    private double PlantSpot(Slime bearer, PlantSpec plant, double ring, double catX, bool anywhere)
     {
         int side = bearer.X >= catX ? 1 : -1;
         var (minX, maxX) = Bounds(bearer);
@@ -320,14 +376,21 @@ public sealed partial class BattleSim
             {
                 double x = f.X + way * FlagGap(f, ring, plant);
                 if (x < minX || x > maxX || (x - catX) * side < bearer.Type.KeepBack || !FlagRoom(x, ring, plant)) continue;
-                int allies = 0;
-                foreach (var s in slimes)
-                    if (FlagCovers(bearer, s) && s.AuraCut <= 0 && Math.Abs(s.X - x) <= ring) allies++;
+                int allies = BareAllies(bearer, x, ring);
                 double walk = Math.Abs(x - bearer.X);
                 if (allies > bestAllies || (allies == bestAllies && walk < bestWalk)) (best, bestWalk, bestAllies) = (x, walk, allies);
             }
         }
-        return best;
+        return bestAllies > 0 || anywhere ? best : double.NaN;
+    }
+
+    // The allies a flag at x would cover that no ring covers yet.
+    private int BareAllies(Slime bearer, double x, double ring)
+    {
+        int allies = 0;
+        foreach (var s in slimes)
+            if (FlagCovers(bearer, s) && s.AuraCut <= 0 && Math.Abs(s.X - x) <= ring) allies++;
+        return allies;
     }
 
     // On its way to free ground it does that rather than keep behind its allies.

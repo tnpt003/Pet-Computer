@@ -24,7 +24,7 @@ public sealed partial class PetWindow
         [BattleEventKind.SlimeHit] = ("squish", 3), [BattleEventKind.EnemyHealed] = ("ball_tap", 3), [BattleEventKind.HitBlocked] = ("ball_tap", 3), [BattleEventKind.BossImmune] = ("ball_tap", 3),
         [BattleEventKind.Incoming] = ("surprised", 5), [BattleEventKind.BossRallying] = ("surprised", 4),
         [BattleEventKind.EliteAppeared] = ("sparkle", 5), [BattleEventKind.ShellBlocked] = ("ball_tap", 5),
-        [BattleEventKind.HitWarded] = ("ball_tap", 3), [BattleEventKind.PushResisted] = ("clank", 3), [BattleEventKind.BossRallied] = ("sparkle", 5),
+        [BattleEventKind.HitWarded] = ("ball_tap", 3), [BattleEventKind.PushResisted] = ("clank", 3), [BattleEventKind.FlagGuarded] = ("clank", 3), [BattleEventKind.BossRallied] = ("sparkle", 5),
         [BattleEventKind.BossLeaping] = ("swoosh", 3), [BattleEventKind.BossLanded] = ("pop", 5), [BattleEventKind.BossSummoning] = ("surprised", 4),
         [BattleEventKind.Pushed] = ("swoosh", 2), [BattleEventKind.BombThrown] = ("swoosh", 2), [BattleEventKind.Shielded] = ("swoosh", 2),
         [BattleEventKind.Swing] = ("swoosh", 1),
@@ -313,7 +313,8 @@ public sealed partial class PetWindow
                 BattleEventKind.SlimeSplit when !splitExplained => L("Slime tách đôi! Đừng để thảo dược hồi cho hai nửa", "It split in two! Don't let a herb slime heal the halves"),
                 BattleEventKind.HalvesRejoined when trickExplained.Add(e.Kind) => L("Thảo dược nối lại hai nửa! Hạ một nửa trước khi chúng chụm lại", "The herb slime mends the halves! Beat one before they gather and merge"),
                 // 1.5 M12: the flag slime and its panic, once each per battle; each formation the first time it comes.
-                BattleEventKind.SlimeSpawned or BattleEventKind.FlagPlanted when !flagExplained && FlagOnField() => L("Slime cờ hiệu! Nó sẽ cắm cờ: slime trong vòng vàng bớt đau, không bị choáng. Đánh đổ cờ", "A flag slime! It plants a flag: slimes in the gold ring take less and cannot be dazed. Knock the flag down"),
+                BattleEventKind.SlimeSpawned or BattleEventKind.FlagPlanted when !flagExplained && FlagOnField() => L("Slime cờ hiệu! Trong vòng vàng slime bớt đau, không bị choáng. Cờ bất tử khi nó còn sống: hạ nó trước, hoặc dùng Kéo cắt", "A flag slime! In the gold ring slimes take less and cannot be dazed. Its flags stand while it lives: beat it first, or use the Scissors"),
+                BattleEventKind.FlagGuarded when trickExplained.Add(e.Kind) => L("Cờ đang được bảo vệ! Hạ slime cờ hiệu trước, hoặc dùng Kéo cắt", "That flag is guarded! Beat the flag slime first, or use the Scissors"),
                 BattleEventKind.Panicked when !panicExplained => L("Mất cờ! Cả đội hoảng loạn", "The flag fell! They all panic"),
                 BattleEventKind.FormationArrived when FormationOf(e) is FormationSpec team && formationsExplained.Add(team.Id) =>
                     LF($"Đội hình {team.Name(PetLanguage.Vietnamese)}! {team.Tip(PetLanguage.Vietnamese)}", $"{team.Name(preferences.Language)} formation! {team.Tip(preferences.Language)}").TrimEnd(),

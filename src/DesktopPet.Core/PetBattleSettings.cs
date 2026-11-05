@@ -658,6 +658,10 @@ public sealed class Slime
     // none, 2026-11-05). In an aura: what it takes less, 0 none.
     public double PlantClock, AuraCut, PlantAt = double.NaN;
     public bool Planted;
+    // 2026-11-05. A flag slime: its flags so far. A flag: its flag slime while that lives (0: none).
+    // FlagGuard: Shielded by that rule, not a boss's shield.
+    public int FlagsPlanted, FlagOf;
+    public bool FlagGuard;
     // A bomb slime: its herb's leaf shield on (no damage), had one, the herb; the quick slime that threw it;
     // burnt by a shielded blast; the blast sending it back: flight left of total, from, to. The user's bomb
     // (slammed by the Grabber: hurts enemies only). When the leaf was cast (for the view).
@@ -831,7 +835,7 @@ public enum BattleEventKind
     // vanished; a sulky slime puffed up from a hit, was stroked (its first stroke since it sulked again),
     // was soothed and left.
     GhostFaded, GhostRevealed, GhostMissed, BubbleBlocked, BubblePoked, BubblePopped, BubbleRegrown,
-    MirageCast, MirageDispelled, SulkPuffed, SulkPetted, SulkCalmed, SulkTantrum, MirageShuffled, SprayRefilled, GrabRefused, ThiefShaken, CutStarted, CatResponding, BigDrum, CatOffBeat, FlagPlanted, LeafShielded, LeafLost, LeafBurst, BombCaught, FlyerWatched,
+    MirageCast, MirageDispelled, SulkPuffed, SulkPetted, SulkCalmed, SulkTantrum, MirageShuffled, SprayRefilled, GrabRefused, ThiefShaken, CutStarted, CatResponding, BigDrum, CatOffBeat, FlagPlanted, FlagGuarded, LeafShielded, LeafLost, LeafBurst, BombCaught, FlyerWatched,
     // 1.5 M14 (Value: the enemy's id): a flyer aimed, shot a drop, its drop hit the cat (Value: 1 held),
     // it was knocked down (Value: 1 by the Grabber), landed, flew up again; a burrower's cracks showed, it
     // came up (Value: 1 it hit the cat), was pinned by the cat let go on it, pulled up by the Grabber, dug in.

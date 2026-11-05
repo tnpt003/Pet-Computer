@@ -371,6 +371,8 @@ public sealed partial class PetWindow
     {
         if (battle == null) return;
         pet.StickLanding = false;
+        pet.BattleOffBeat = false;
+        pet.BattleNotResponding = 0;
         CountMonsterBook(battle); // A battle left early still met what it met (once per battle).
         CountAchievements(battle); // And still did what it did (1.5 M28).
         battle = null;
@@ -671,6 +673,7 @@ public sealed partial class PetWindow
         pet.BattleCheer = battle.Phase == BattlePhase.Won;
         pet.BattleDazed = battle.Phase == BattlePhase.Lost;
         pet.BattleStun = battle.CatStunRemaining;
+        pet.BattleOffBeat = battle.CatOffBeat;
         pet.BattleNotResponding = battle.NotRespondingRemaining;
         pet.BattleNotRespondingText = L("(Không phản hồi)", "(Not responding)");
         pet.BattleShield = battle.ShieldRemaining > 0;

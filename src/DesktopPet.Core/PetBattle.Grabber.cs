@@ -35,7 +35,7 @@ public sealed partial class BattleSim
     public bool GrabberBusy { get { if (GrabbedId != 0) return true; foreach (var s in slimes) if (s.Tossed && !s.Launched) return true; return false; } }
 
     public bool Grabbable(Slime s) => s.Targetable && !s.IsBoss && !s.Type.Blocker && s.Type.Scale <= Settings.GrabberMaxScale + 1e-9
-        && !s.Handled && !s.Airborne && s.LeapHeight <= 0 && !s.Shielded && !s.Faded && !s.Bubbled;
+        && !s.Handled && !s.Airborne && (s.LeapHeight <= 0 || s.RecoilLeft > 0) && !s.Shielded && !s.Faded && !s.Bubbled;
 
     // A press on an enemy (battle x, height over the floor) with the Grabber chosen.
     public bool Grab(int id, double x, double height)
@@ -56,6 +56,8 @@ public sealed partial class BattleSim
             return true;
         }
         if (Find(id) is not Slime slime || !Grabbable(slime)) return false;
+        // A bomb flying back to its mount is caught in the air (2026-11-04).
+        if (slime.RecoilLeft > 0) { slime.RecoilLeft = 0; slime.Lift = slime.LeapHeight; slime.LeapHeight = 0; }
         // A burrower is pulled up from under the floor (1.5 M14).
         PullUp(slime);
         // A mirage's copy vanishes in the claw (the Grabber is spent; 1.5 M13).
@@ -198,7 +200,14 @@ public sealed partial class BattleSim
         GrabSlams++;
         AddEffect(BattleEffectKind.Slam, slime.X, 0, GrabSplash);
         events.Add(new(BattleEventKind.GrabHit, slime.X, slime.Id));
-        if (slime.Type.Fuse != null) { Blast(slime, true); return; }
+        if (slime.Type.Fuse != null)
+        {
+            // In the user's hands it is the user's bomb: it hurts enemies only, shield or no shield.
+            slime.LeafShield = false;
+            slime.ByUser = true;
+            Blast(slime, true);
+            return;
+        }
         foreach (var o in slimes.ToArray())
         {
             if (o == slime || !o.Targetable || o.Airborne || o.OnWall || o.Burrowed || o.Handled || Math.Abs(o.X - slime.X) > GrabSplash + o.HitWidth / 2) continue;

@@ -125,6 +125,8 @@ public sealed class PetModel
     // 2026-11-04: an infected End Task's "Not responding" (seconds left, 0: none) and its label.
     public double BattleNotResponding;
     public string BattleNotRespondingText = "(Not responding)";
+    // 2026-11-04: off the beat from a big drum (its swings miss).
+    public bool BattleOffBeat;
     // Seconds of the bonk from a keepsake dropped on the head still to go (stars, dazed eyes).
     public double Bonk;
     public const double BonkDuration = 2.2;

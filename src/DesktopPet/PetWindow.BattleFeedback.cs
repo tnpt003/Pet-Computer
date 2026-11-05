@@ -77,7 +77,7 @@ public sealed partial class PetWindow
         [BattleEventKind.GhostFaded] = ("swoosh", 2), [BattleEventKind.GhostRevealed] = ("sparkle", 3), [BattleEventKind.GhostMissed] = ("swoosh", 2),
         [BattleEventKind.BubbleBlocked] = ("ball_tap", 3), [BattleEventKind.BubblePoked] = ("ball_tap", 3), [BattleEventKind.BubblePopped] = ("pop", 5),
         [BattleEventKind.BubbleRegrown] = ("squish", 2), [BattleEventKind.MirageCast] = ("sparkle", 3), [BattleEventKind.MirageDispelled] = ("pop", 3),
-        [BattleEventKind.SulkPuffed] = ("squish", 3), [BattleEventKind.SulkPetted] = ("sparkle", 2), [BattleEventKind.SulkCalmed] = ("satisfied", 5), [BattleEventKind.SulkTantrum] = ("squish", 4), [BattleEventKind.MirageShuffled] = ("swoosh", 3), [BattleEventKind.SprayRefilled] = ("sparkle", 2), [BattleEventKind.ThiefShaken] = ("satisfied", 5),
+        [BattleEventKind.SulkPuffed] = ("squish", 3), [BattleEventKind.SulkPetted] = ("sparkle", 2), [BattleEventKind.SulkCalmed] = ("satisfied", 5), [BattleEventKind.SulkTantrum] = ("squish", 4), [BattleEventKind.MirageShuffled] = ("swoosh", 3), [BattleEventKind.SprayRefilled] = ("sparkle", 2), [BattleEventKind.BigDrum] = ("clank", 5), [BattleEventKind.LeafShielded] = ("sparkle", 3), [BattleEventKind.LeafBurst] = ("pop", 4), [BattleEventKind.BombCaught] = ("ball_tap", 3), [BattleEventKind.FlagPlanted] = ("ball_tap", 3), [BattleEventKind.ThiefShaken] = ("satisfied", 5),
         // 1.5 M14: the flying slime and the burrowing slime.
         [BattleEventKind.FlyAimed] = ("clank", 2), [BattleEventKind.FlyShot] = ("swoosh", 3), [BattleEventKind.FlyShotHit] = ("squish", 4),
         [BattleEventKind.FlyerKnocked] = ("pop", 4), [BattleEventKind.FlyerDowned] = ("ball_tap", 4), [BattleEventKind.FlyerRose] = ("swoosh", 2),
@@ -146,6 +146,11 @@ public sealed partial class PetWindow
         BattleEventKind.GrabRefused => L("Slime trộm không đập được: giữ đủ 5 giây để nó nhả đồ ra", "The thief can't be slammed: hold it 5 s and it shakes out what it stole"),
         BattleEventKind.ThiefShaken => L("Lắc ra rồi! Slime trộm nhả đồ và biến mất", "Shaken out! The thief drops its loot and is gone"),
         BattleEventKind.CatResponding => L("Mèo tỉnh lại rồi!", "The cat responds again!"),
+        BattleEventKind.BigDrum => L("Trống lớn! Nhấc mèo đúng nhịp cuối; đánh hoặc Đẩy nhạc trưởng thì nó đếm lại", "The big drum! Lift the cat on the last beat; hit or Push the drummer to reset its count"),
+        BattleEventKind.CatOffBeat => L("Mèo loạn nhịp: đánh trượt một lúc!", "The cat is off the beat: its swings miss for a while!"),
+        BattleEventKind.LeafShielded => L("Lá chắn lá! Slime bom không mất máu. Hạ thảo dược hoặc dùng Kéo cắt để phá", "A leaf shield! The bomb slime takes no damage. Beat the herb slime or use the Scissors"),
+        BattleEventKind.LeafBurst => L("Bom sống sót nhờ lá chắn và bay về tay slime nhanh! Đánh con đó lúc nó chờ", "The shield saved the bomb and it flies back to the quick slime! Hit that one as it waits"),
+        BattleEventKind.FlyerWatched => L("Trên sàn hết quái: bế mèo lên gần slime bay để vuốt", "The floor is clear: carry the cat up to the flyer to swipe it"),
         BattleEventKind.SprayRefilled => L("Slime ngã dưới nước nóng: bình được thêm nước!", "A slime fell to the hot water: the spray gets more water!"),
         BattleEventKind.MirageShuffled => L("Khói ảo ảnh! Bản thật có thể đã đổi chỗ, rê chuột kiểm tra lại", "Mirage smoke! The real one may have swapped places; check again with the mouse"),
         BattleEventKind.SulkTantrum => L("Quá tay rồi! Slime dỗi òa khóc dậm chân bỏ chạy, không để lại gì", "Too much! The sulky slime stamps off in tears, leaving nothing"),
@@ -308,13 +313,13 @@ public sealed partial class PetWindow
                 BattleEventKind.SlimeSplit when !splitExplained => L("Slime tách đôi! Đừng để thảo dược hồi cho hai nửa", "It split in two! Don't let a herb slime heal the halves"),
                 BattleEventKind.HalvesRejoined when trickExplained.Add(e.Kind) => L("Thảo dược nối lại hai nửa! Hạ một nửa trước khi chúng chụm lại", "The herb slime mends the halves! Beat one before they gather and merge"),
                 // 1.5 M12: the flag slime and its panic, once each per battle; each formation the first time it comes.
-                BattleEventKind.SlimeSpawned when !flagExplained && FlagOnField() => L("Slime cờ hiệu! Quái trong vòng vàng chạy nhanh hơn. Hạ nó trước", "A flag slime! Enemies in the gold ring run faster. Take it down first"),
+                BattleEventKind.SlimeSpawned when !flagExplained && FlagOnField() => L("Slime cờ hiệu! Nó sẽ cắm cờ: slime trong vòng vàng bớt đau, không bị choáng. Đánh đổ cờ", "A flag slime! It plants a flag: slimes in the gold ring take less and cannot be dazed. Knock the flag down"),
                 BattleEventKind.Panicked when !panicExplained => L("Mất cờ! Cả đội hoảng loạn", "The flag fell! They all panic"),
                 BattleEventKind.FormationArrived when FormationOf(e) is FormationSpec team && formationsExplained.Add(team.Id) =>
                     LF($"Đội hình {team.Name(PetLanguage.Vietnamese)}! {team.Tip(PetLanguage.Vietnamese)}", $"{team.Name(preferences.Language)} formation! {team.Tip(preferences.Language)}").TrimEnd(),
                 // 1.5 M13: the slimes the cursor beats, once each per battle.
                 BattleEventKind.GhostFaded or BattleEventKind.BubbleBlocked or BattleEventKind.BubblePopped or BattleEventKind.MirageCast or BattleEventKind.SulkPuffed
-                    or BattleEventKind.SulkCalmed or BattleEventKind.SulkTantrum or BattleEventKind.MirageShuffled or BattleEventKind.SprayRefilled or BattleEventKind.CatResponding or BattleEventKind.Grabbed or BattleEventKind.GrabRefused or BattleEventKind.FlyAimed or BattleEventKind.FlyerDowned or BattleEventKind.BurrowCracked
+                    or BattleEventKind.SulkCalmed or BattleEventKind.SulkTantrum or BattleEventKind.MirageShuffled or BattleEventKind.SprayRefilled or BattleEventKind.BigDrum or BattleEventKind.CatOffBeat or BattleEventKind.LeafShielded or BattleEventKind.LeafBurst or BattleEventKind.FlyerWatched or BattleEventKind.CatResponding or BattleEventKind.Grabbed or BattleEventKind.GrabRefused or BattleEventKind.FlyAimed or BattleEventKind.FlyerDowned or BattleEventKind.BurrowCracked
                     or BattleEventKind.BurrowPinned or BattleEventKind.IceScratched or BattleEventKind.IceShattered or BattleEventKind.IceCracked or BattleEventKind.IceBonked or BattleEventKind.ClingClimbed
                     or BattleEventKind.ClingLanded or BattleEventKind.WallWatched or BattleEventKind.QuillsUp or BattleEventKind.QuillsPricked or BattleEventKind.ClockStarted
                     or BattleEventKind.ClockRang when trickExplained.Add(e.Kind) => TrickBanner(e),

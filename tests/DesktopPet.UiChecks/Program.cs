@@ -567,6 +567,7 @@ internal static class Program
         EnemyVisualChecks.Run(Check);
         TrapVisualChecks.Run(Check);
         BandVisualChecks.Run(Check);
+        LeafVisualChecks.Run(Check);
         SwarmVisualChecks.Run(Check);
         FlagVisualChecks.Run(Check);
         NewAppVisualChecks.Run(Check);

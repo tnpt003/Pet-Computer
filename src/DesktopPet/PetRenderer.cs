@@ -160,6 +160,7 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         if (pet.BattleBuff) DrawCheerSparkles(dc, pet.BattleTime);
         if (pet.BattleShield) DrawShieldBubble(dc, pet.BattleTime);
         if (pet.BattleNotResponding > 0) DrawNotResponding(dc, pet.BattleTime);
+        if (pet.BattleOffBeat) DrawOffBeat(dc, pet.BattleTime);
         if (rage) { dc.Pop(); palette = calm; }
         if (hop) { dc.Pop(); dc.Pop(); }
         // The tab tornado's near half, over the cat (the far half is on the battle strip below this
@@ -949,6 +950,21 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         }
         arc.Freeze();
         dc.DrawGeometry(null, HungSpin, arc);
+    }
+
+    private static readonly Brush NoteFill = Freeze(new SolidColorBrush(Color.FromRgb(0xF0, 0x6A, 0x3A)));
+    private static readonly Pen NoteStem = FreezePen(new Pen(NoteFill, 1.8));
+
+    // Off the beat (a big drum, 2026-11-04): three notes going round the cat's head, out of step.
+    private static void DrawOffBeat(DrawingContext dc, double time)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+            double a = time * 3.2 + i * 2.1, x = 56 + Math.Cos(a) * 34, y = 12 + Math.Sin(a * 1.7) * 7;
+            dc.DrawEllipse(NoteFill, null, new Point(x, y), 3.2, 2.4);
+            dc.DrawLine(NoteStem, new Point(x + 3, y), new Point(x + 3, y - 9));
+            dc.DrawLine(NoteStem, new Point(x + 3, y - 9), new Point(x + 7, y - 7));
+        }
     }
 
     private void DrawDizzyOrbit(DrawingContext dc, in Pose p)

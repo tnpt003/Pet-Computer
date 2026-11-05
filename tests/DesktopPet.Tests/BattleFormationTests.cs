@@ -56,23 +56,39 @@ internal static class BattleFormationTests
 
     private static void FlagChecks(Action<bool, string> check)
     {
-        var link = BattleData.Settings.Enemy("flagbearer").Link!;
-        var flag = Kind("flagbearer", 2, link, support: true);
+        TogetherChecks(check);
+        // 2026-11-04: the shipped flag slime plants a post that holds the ring.
+        var shippedPlant = BattleData.Settings.Enemy("flagbearer").Plant!;
+        var link = BattleData.Settings.Enemy(shippedPlant.Post).Link!;
+        var flag = Kind("flagpost", 0, link, speed: 0);
+        var carrier = new EnemyType { Id = "carrier", MaxHp = 100, Speed = 0, Damage = 0, Range = 50, Windup = 0.8, AttackCooldown = 2, Recover = 0.3, Plant = new PlantSpec { Post = "flagpost", After = shippedPlant.After } };
+        var planting = Field(new[] { carrier, flag }, new[] { 1, 0 });
+        var bearerSlime = planting.Slimes.Single();
+        bearerSlime.X = 900;
+        Steps(planting, shippedPlant.After + 0.1);
+        check(planting.Slimes.Count(s => s.Type.Id == "flagpost") == 1 && Math.Abs(planting.Slimes.Single(s => s.Type.Id == "flagpost").X - 900) < 60, "A flag slime plants its flag where it stands, once");
         var sim = Field(new[] { flag, Kind("slime") }, new[] { 1, 2 });
         var bearer = sim.Slimes.Single(s => s.Link != null);
         var near = sim.Slimes.First(s => s.Link == null);
         var far = sim.Slimes.Last(s => s.Link == null);
         bearer.X = 1000; near.X = 1000 + link.Range - 20; far.X = 1000 + link.Range + 150;
         sim.Step(dt, 200, false);
-        check(Math.Abs(near.AuraSpeed - link.Speed) < 1e-9 && far.AuraSpeed == 1 && bearer.AuraSpeed == 1,
-            $"An ally in the flag's ring moves ×{link.Speed}, one outside and the flag itself do not ({near.AuraSpeed}, {far.AuraSpeed})");
+        check(Math.Abs(near.AuraCut - link.Guard) < 1e-9 && far.AuraCut == 0 && bearer.AuraCut == 0,
+            $"An ally in the flag's ring takes {link.Guard:P0} less, one outside and the flag itself do not ({near.AuraCut}, {far.AuraCut})");
+        double hpNear = near.Hp;
+        sim.Damage(near, 100, DamageSource.Bomb);
+        sim.Arm(BattleSkill.Push);
+        check(Math.Abs(hpNear - near.Hp - 100 * (1 - link.Guard)) < 1e-6, $"The hit lands {link.Guard:P0} lighter ({hpNear - near.Hp:0})");
+        near.Set(SlimeState.Moving);
+        sim.UsePush(near.Id, 200);
+        check(near.State != SlimeState.Stunned, "In the ring nothing dazes it");
 
         sim = Field(new[] { flag, Kind("slime") }, new[] { 1, 1 }, elite: true);
         bearer = sim.Slimes.Single(s => s.Link != null);
         near = sim.Slimes.Single(s => s.Link == null);
-        bearer.X = 1000; near.X = 1060;
+        bearer.X = 1000; near.X = 1000 + link.EliteRange - 10;
         sim.Step(dt, 200, false);
-        check(bearer.Elite != null && Math.Abs(near.AuraSpeed - link.EliteSpeed) < 1e-9, $"An elite flag speeds allies ×{link.EliteSpeed} ({near.AuraSpeed})");
+        check(bearer.Elite != null && near.AuraCut > 0, $"An elite flag's ring reaches {link.EliteRange} DIPs");
 
         // Defeated: every other enemy panics breakStun s, running away from the cat without attacking.
         sim = Field(new[] { flag, Kind("slime") }, new[] { 1, 2 });
@@ -98,6 +114,34 @@ internal static class BattleFormationTests
         Id = "dear", NameVi = "Đ", NameEn = "D", MinThreat = 1.5,
         Parts = new[] { new WaveGroup { Squad = new[] { new WaveGroup { Enemy = "rock", Count = 1 }, new WaveGroup { Enemy = "mender", Count = 1 } } }, new WaveGroup { Enemy = "runner", Side = "b" } }
     };
+
+    // 2026-11-04 (D6): a formation is one unit: every member together, from one edge, taking one place; a
+    // part marked "b" comes apart from the other edge. A timer's call may be a formation.
+    private static void TogetherChecks(Action<bool, string> check)
+    {
+        var slime = Kind("slime"); var rock = Kind("rock", 2); var mender = Kind("mender", 2); var runner = Kind("runner");
+        var squad = new FormationSpec { Id = "squad", NameVi = "S", NameEn = "S", Parts = new[] {
+            new WaveGroup { Squad = new[] { new WaveGroup { Enemy = "rock", Count = 1 }, new WaveGroup { Enemy = "mender", Count = 1 } } },
+            new WaveGroup { Enemy = "runner", Count = 2 } } };
+        var units = SpawnDirector.Units(new WaveSpec { Groups = new[] { new WaveGroup { Formation = new() { ["squad"] = 1 }, Count = 1 } } }, new Random(1), _ => 1, id => id == "squad" ? squad : null, 1);
+        check(units.Count == 1 && units[0].Kinds.Length == 4 && units[0].Formation == "squad", $"All its parts are one unit ({units.Count} unit, {units[0].Kinds.Length} members)");
+        var split = SpawnDirector.Units(new WaveSpec { Groups = new[] { new WaveGroup { Formation = new() { ["dear"] = 1 }, Count = 1 } } }, new Random(1), _ => 1, id => id == "dear" ? Dear : null, 2);
+        check(split.Count == 2 && split[1].Side == "b", "Only a part marked b comes apart, from the other edge");
+        var settings = new BattleSettings
+        {
+            Weapons = new[] { BattleData.Settings.Weapon("sword") with { Range = 5, StunChance = 0 } }, FirstWaveDelay = 0, SpawnInterval = 1.6, CatMaxHp = 1000, MaxAlive = 1, Enemies = new[] { slime, rock, mender, runner },
+            CatDamage = 0, RageHitGain = 0, Formations = new[] { squad },
+            Plan = new[] { new WaveSpec { Groups = new[] { new WaveGroup { Formation = new() { ["squad"] = 1 }, Count = 1 } } } }
+        };
+        var sim = new BattleSim(settings, 0, 1600, seed: 3);
+        int atFirst = 0;
+        for (int i = 0; i < 300 && atFirst == 0; i++) { sim.Step(dt, 100, false); atFirst = sim.Slimes.Count; sim.ClearEvents(); }
+        check(atFirst == 4, $"The formation comes in at once even with room for one ({atFirst})");
+        check(sim.Slimes.All(s => s.X > 800), $"All on one side, the far one ({string.Join(", ", sim.Slimes.Select(s => s.X.ToString("0")))})");
+        var shipped = BattleData.Settings;
+        check(shipped.Formation("kamikaze") != null && shipped.Formation("artillery") != null && shipped.Formation("alarm") != null, "The three new formations ship");
+        check(shipped.Enemy("timer").Clock!.CallFormations!.Keys.All(k => shipped.Formation(k) != null), "A timer's call names real formations");
+    }
 
     private static void DirectorChecks(Action<bool, string> check)
     {
@@ -212,11 +256,12 @@ internal static class BattleFormationTests
 
         var s = BattleData.Settings;
         var flag = s.Enemy("flagbearer");
-        check(flag is { Id: "flagbearer", Support: true, BinSpit: false, Link: { Kind: EnemyLinks.Aura, BreakStun: 2 } } && flag.Link.EliteSpeed > flag.Link.Speed,
-            "The shipped flag slime: a support with a gold aura, its fall panics the team 2 s, never spat by a bin");
+        var post = s.Enemy("flagpost");
+        check(flag is { Id: "flagbearer", Support: true, BinSpit: false, Plant.Post: "flagpost", Link: null } && post is { Still: true, Link: { Kind: EnemyLinks.Aura, BreakStun: 2, Guard: > 0 } } && post.MaxHp == 30,
+            "The shipped flag slime: a support planting a 30-HP flag; the flag's ring guards its team, its fall panics them 2 s");
         var ids = s.FormationList.Select(f => f.Id).ToArray();
-        check(ids.SequenceEqual(new[] { "fortress", "cavalry", "drums", "assembly", "trampoline", "swarms" }) && s.FormationList.All(f => f.TipVi != null && f.TipEn != null),
-            "The six shipped formations, each with its tip");
+        check(ids.SequenceEqual(new[] { "fortress", "cavalry", "drums", "assembly", "trampoline", "swarms", "kamikaze", "artillery", "alarm" }) && s.FormationList.All(f => f.TipVi != null && f.TipEn != null),
+            "The nine shipped formations, each with its tip");
         string Team(string id) => string.Join(",", s.Formation(id)!.Members);
         check(Team("fortress") == "spitter,mender,rock" && Team("cavalry") == "bomber,bomber,runner,runner,spitter" && Team("drums") == "drummer,slime,slime,slime"
               && Team("assembly") == "chain,chain,rock" && s.Formation("assembly")!.Parts[0].Squad![1].Elite && Team("trampoline") == "slime,runner,springer"

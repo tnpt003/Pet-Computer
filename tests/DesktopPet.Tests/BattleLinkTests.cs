@@ -354,7 +354,7 @@ internal static class BattleLinkTests
         // The built-in battles have no link yet: chapter 1 and every current mode play as before. Only the
         // 1.5 M10 drummer and chain slime, the M11 fusing, bomb and half slimes and the M12 flag slime carry
         // one, and no battle uses them yet (BattleBandTests, BattleSwarmTests, BattleFormationTests).
-        check(BattleData.Settings.EnemyTypes.Where(e => e.Link != null).Select(e => e.Id).OrderBy(id => id).SequenceEqual(new[] { "bomber", "chain", "drummer", "flagbearer", "fuser", "splitling" }),
-            "Only the drummer, chain, fusing, bomb, half and flag slimes have a link");
+        check(BattleData.Settings.EnemyTypes.Where(e => e.Link != null).Select(e => e.Id).OrderBy(id => id).SequenceEqual(new[] { "bomber", "chain", "drummer", "flagpost", "fuser", "splitling" }),
+            "Only the drummer, chain, fusing, bomb, half slimes and the planted flag have a link");
     }
 }

@@ -75,9 +75,12 @@ public sealed partial class BattleSim
         if (incoming != null)
         {
             IncomingRemaining = Math.Max(0, IncomingRemaining - dt);
-            if (IncomingRemaining > 0 || Alive + UnitRoom(incoming) > maxAlive) return;
+            if (IncomingRemaining > 0 || Alive + (callFormation ? 1 : UnitRoom(incoming)) > maxAlive) return;
             int before = slimes.Count;
+            keepTogether = callFormation;
+            callFormation = false;
             SpawnUnit(catX, incoming, IncomingEdge, incomingElite);
+            keepTogether = false;
             if (incomingCalled) TagCalled(before); // A timer's call (1.5 M16).
             incomingCalled = false;
             incoming = null; incomingElite = null;
@@ -110,7 +113,7 @@ public sealed partial class BattleSim
         }
         // A unit waits until the floor has room for all of it (later ones wait behind it). Side "a"
         // comes from the edge far from the cat, "b" from the other one after a warning arrow.
-        if (pendingNext < pending.Count && Alive + UnitRoom(pending[pendingNext].Kinds) <= maxAlive && spawnTimer <= 0)
+        if (pendingNext < pending.Count && Alive + (pending[pendingNext].Formation != null ? 1 : UnitRoom(pending[pendingNext].Kinds)) <= maxAlive && spawnTimer <= 0)
         {
             var unit = pending[pendingNext++];
             // A formation's first part: its banner (Value: its index in the data).
@@ -122,7 +125,13 @@ public sealed partial class BattleSim
                 events.Add(new(BattleEventKind.FormationArrived, catX, index));
             }
             if (unit.Side == "b") Announce(catX, unit.Kinds, -farEdge, unit.Elite);
-            else { SpawnUnit(catX, unit.Kinds, unit.Side == "a" ? farEdge : 0, unit.Elite); spawnTimer = NextSpawnIn(); }
+            else
+            {
+                keepTogether = unit.Formation != null; // A formation's members stand side by side, a pack too.
+                SpawnUnit(catX, unit.Kinds, unit.Side == "a" ? farEdge : 0, unit.Elite);
+                keepTogether = false;
+                spawnTimer = NextSpawnIn();
+            }
         }
         if (ToSpawn > 0 || Alive > 0 || bombs.Count > 0) return;
         WavesCleared++;
@@ -331,9 +340,10 @@ public sealed partial class BattleSim
 
     // A fusing trio: the first in the middle, the other two side by side at the same edge (the one further
     // from the cat), so they come in from one way.
+    private bool keepTogether;
     private void PlaceMergeArrival(Slime slime, double catX)
     {
-        if (slime.Link?.Kind != EnemyLinks.Merge || slime.Link.AfterHeal) return;
+        if (keepTogether || slime.Link?.Kind != EnemyLinks.Merge || slime.Link.AfterHeal) return;
         int at = mergeArrival++ % 3;
         slime.MergeRunner = at == 0;
         if (at == 1) mergeSide = catX >= (Left + Right) / 2 ? -1 : 1;

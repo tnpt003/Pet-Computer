@@ -308,6 +308,7 @@ public sealed partial class BattleSim
         mirageRandom = BattleRandom.Stream(Seed, BattleRandom.Mirage);
         popupRandom = BattleRandom.Stream(Seed, BattleRandom.Popup);
         cutRandom = BattleRandom.Stream(Seed, BattleRandom.Cut);
+        callRandom = BattleRandom.Stream(Seed, BattleRandom.Call);
         Loot = loot;
         Settings = settings;
         Stage = stage;
@@ -365,9 +366,9 @@ public sealed partial class BattleSim
         if (Paused || ChoosingUpgrade || !double.IsFinite(dt) || dt <= 0 || !double.IsFinite(catX)) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
         dt = Math.Min(dt, 0.1);
         Time += dt;
-        // While the cat is lifted the slimes go by where it last stood on the floor, not by the
-        // cursor carrying it.
-        if (!CatLifted || !double.IsFinite(groundX)) groundX = catX;
+        // While the cat is lifted the slimes follow it along the floor at half their speed (Speed;
+        // 2026-11-04, D1c; before, they went on to where it last stood).
+        groundX = CatLifted ? Math.Clamp(catX, Left, Right) : catX;
         double floorX = groundX;
         lastCatX = floorX;
         catPose = catHeld ? pose : null;
@@ -535,6 +536,14 @@ public sealed partial class BattleSim
             if (Math.Abs(spot - catX) > 8) return new(CatCommand.Move, spot, spot < catX ? -1 : 1);
             return new(CatCommand.Stand, catX, up.WallSide);
         }
+        // Nothing on the floor and a flyer up in the air: the cat keeps under it (2026-11-04, D9).
+        if (target == null && FlyerToFollow(catX) is Slime high)
+        {
+            if (watchedFlyerShown != high.Id) { watchedFlyerShown = high.Id; events.Add(new(BattleEventKind.FlyerWatched, high.X, high.Id)); }
+            double under = Math.Clamp(high.BodyX, Left + CatHalfWidth, Right - CatHalfWidth);
+            if (Math.Abs(under - catX) > 30) return new(CatCommand.Move, under, under < catX ? -1 : 1);
+            return new(CatCommand.Stand, catX, high.BodyX < catX ? -1 : 1);
+        }
         if (target == null) return new(CatCommand.Stand, catX);
         // A forced update: put down in it, the cat steps out; between the cat and its target, the cat
         // walks up to it and hits it (each hit brings the update closer to done).
@@ -597,6 +606,15 @@ public sealed partial class BattleSim
         Slime? best = null;
         foreach (var s in slimes)
             if (s.Targetable && s.OnWall && !s.Handled && (best == null || Math.Abs(s.X - catX) < Math.Abs(best.X - catX))) best = s;
+        return best;
+    }
+
+    private int watchedFlyerShown;
+    private Slime? FlyerToFollow(double catX)
+    {
+        Slime? best = null;
+        foreach (var s in slimes)
+            if (s.Targetable && s.Type.Fly != null && s.Fly == FlyPhase.Aloft && !s.Handled && (best == null || Math.Abs(s.BodyX - catX) < Math.Abs(best.BodyX - catX))) best = s;
         return best;
     }
 
@@ -735,7 +753,7 @@ public sealed partial class BattleSim
     // A daze of `seconds` × the enemy's stunFactor (see StrikeStun); true when it took.
     private bool Daze(Slime slime, double seconds)
     {
-        if (slime.IsBoss || slime.LeapHeight > 0 || slime.Burrowed || slime.Elite is { PushImmune: true }) return false;
+        if (slime.IsBoss || slime.LeapHeight > 0 || slime.Burrowed || slime.Elite is { PushImmune: true } || slime.AuraCut > 0) return false;
         if (slime.State is not (SlimeState.Moving or SlimeState.Windup or SlimeState.Recover)) return false;
         double stun = seconds * slime.Type.StunFactor;
         if (stun <= 0) return false;
@@ -774,12 +792,16 @@ public sealed partial class BattleSim
         if (!slime.Targetable || amount <= 0) return HitResult.Landed;
         // 2026-11-04: an app's hit brings a flyer or a wall climber down to the floor.
         if (source == DamageSource.App) KnockFromSky(slime);
+        // A leaf shield, or a bomb flying back to its mount (2026-11-04).
+        if (slime.LeafShield || slime.RecoilLeft > 0) { AddEffect(BattleEffectKind.Block, slime.X, slime.Height / 2); return HitResult.Immune; }
+        // The cat's blow throws a drummer off its count.
+        if (source is DamageSource.Weapon or DamageSource.Combo or DamageSource.Splash && Is(slime, EnemyLinks.Rhythm)) { slime.BeatCount = 0; slime.BeatClock = 0; }
         // A faded ghost, a bubble, a mirage's copy, a sulky slime (1.5 M13, PetBattle.Tricks.cs).
         if (TrickHit(slime, source)) return HitResult.Immune;
         // 1.5 M14: under the floor nothing reaches a burrower (poison already in it still works); a flyer
         // knocked down to the floor takes more from every hit.
         if (slime.Burrowed && source != DamageSource.Poison) { AddEffect(BattleEffectKind.Miss, slime.X, 10); return HitResult.Immune; }
-        amount *= DownedFactor(slime);
+        amount *= DownedFactor(slime) * (1 - slime.AuraCut); // A flag's ring takes some off (2026-11-04).
         if (slime.Shielded)
         {
             // A boss in its shield phase: nothing gets through (not even the bomb).
@@ -903,6 +925,7 @@ public sealed partial class BattleSim
         PackFallen(slime); // 2026-10-31: its merging pack rages (PetBattle.Links.cs).
         GiveBack(slime); // A thief gives back what it took (1.5 M16).
         SprayKill(slime); // 2026-11-04: the hot-water spray gets more water.
+        LeafFallen(slime); // 2026-11-04: a herb slime gone, its leaf shield goes.
         AppsEnemyDefeated(slime);
         // A bomb slime defeated while lit fizzles out (2026-10-31: it no longer blows up there, a dud); a
         // splitting one breaks apart (1.5 M11).
@@ -1076,8 +1099,12 @@ public sealed partial class BattleSim
             slime.KnockVelocity = push * Settings.PushSpeed * slime.Type.PushFactor;
             // A flyer already down keeps the rest of its daze (a push never shortens it; 1.5 M14).
             double downed = slime.Type.Fly != null && slime.State == SlimeState.Stunned ? slime.StunRemaining : 0;
-            slime.StunRemaining = Math.Max(downed, Settings.PushStunSeconds * slime.Type.StunFactor);
-            slime.Set(SlimeState.Stunned);
+            // In a flag's ring it is pushed but not dazed (2026-11-04).
+            if (slime.AuraCut <= 0)
+            {
+                slime.StunRemaining = Math.Max(downed, Settings.PushStunSeconds * slime.Type.StunFactor);
+                slime.Set(SlimeState.Stunned);
+            }
             RefreshGuards();
             AddEffect(BattleEffectKind.Push, slime.X, slime.Height / 2);
             events.Add(new(BattleEventKind.Pushed, slime.X));
@@ -1134,7 +1161,7 @@ public sealed partial class BattleSim
         double life = kind switch
         {
             BattleEffectKind.Poof => 0.6 * Math.Max(1, value), BattleEffectKind.Number => 0.9, BattleEffectKind.Combo => 0.7, BattleEffectKind.Mend => 0.8,
-            BattleEffectKind.Explosion or BattleEffectKind.Slam => 0.5, BattleEffectKind.Warded => 0.6, BattleEffectKind.Quake => 0.9,
+            BattleEffectKind.Explosion or BattleEffectKind.Slam => 0.5, BattleEffectKind.Warded => 0.6, BattleEffectKind.Quake => 0.9, BattleEffectKind.Drum => 0.7,
             BattleEffectKind.Bell => 0.9, BattleEffectKind.EndTask => 1.0, BattleEffectKind.Rewind => 0.8, BattleEffectKind.Splat => 0.5, _ => 0.35
         };
         effects.Add(new BattleEffect { Kind = kind, X = x, Height = height, Life = life, Value = value });

@@ -654,6 +654,15 @@ public sealed class Slime
     public double ShuffleClock;
     // How long the hot-water spray has been on its ice shell (2026-11-04).
     public double MeltClock;
+    // 2026-11-04 (D5). A flag slime: its time to planting, planted. In an aura: what it takes less, 0 none.
+    public double PlantClock, AuraCut;
+    public bool Planted;
+    // A bomb slime: its herb's leaf shield on (no damage), had one, the herb; the quick slime that threw it;
+    // burnt by a shielded blast; the blast sending it back: flight left of total, from, to. The user's bomb
+    // (slammed by the Grabber: hurts enemies only). When the leaf was cast (for the view).
+    public bool LeafShield, LeafUsed, Charred, ByUser;
+    public int LeafBy, ThrownBy;
+    public double RecoilLeft, RecoilTotal, RecoilFrom, RecoilTo, LeafCastAt = -10;
     public bool Decoy => DecoyOf != 0;
     // A sulk: how puffed up it is (1: not; its hits grow with it), how soothed (0–1), the time since the
     // last stroke; soothed and leaving (drawn waving goodbye).
@@ -821,7 +830,7 @@ public enum BattleEventKind
     // vanished; a sulky slime puffed up from a hit, was stroked (its first stroke since it sulked again),
     // was soothed and left.
     GhostFaded, GhostRevealed, GhostMissed, BubbleBlocked, BubblePoked, BubblePopped, BubbleRegrown,
-    MirageCast, MirageDispelled, SulkPuffed, SulkPetted, SulkCalmed, SulkTantrum, MirageShuffled, SprayRefilled, GrabRefused, ThiefShaken, CutStarted, CatResponding,
+    MirageCast, MirageDispelled, SulkPuffed, SulkPetted, SulkCalmed, SulkTantrum, MirageShuffled, SprayRefilled, GrabRefused, ThiefShaken, CutStarted, CatResponding, BigDrum, CatOffBeat, FlagPlanted, LeafShielded, LeafLost, LeafBurst, BombCaught, FlyerWatched,
     // 1.5 M14 (Value: the enemy's id): a flyer aimed, shot a drop, its drop hit the cat (Value: 1 held),
     // it was knocked down (Value: 1 by the Grabber), landed, flew up again; a burrower's cracks showed, it
     // came up (Value: 1 it hit the cat), was pinned by the cat let go on it, pulled up by the Grabber, dug in.
@@ -913,7 +922,7 @@ public readonly record struct BattleEvent(BattleEventKind Kind, double X, double
 // circling the cat). Splat (1.5 M09): a spitter's drop of goo landing (Tint: its colour).
 // Miss (1.5 M13): a hit that did nothing to a ghost or a bubble (Value 0), or to a sulky slime (Value 1);
 // Heart: a sulky slime soothed.
-public enum BattleEffectKind { Spark, Poof, Push, Explosion, Slam, Number, Combo, Thud, Mend, Block, Immune, Warded, Bell, EndTask, Rewind, Splat, Miss, Heart, Quake }
+public enum BattleEffectKind { Spark, Poof, Push, Explosion, Slam, Number, Combo, Thud, Mend, Block, Immune, Warded, Bell, EndTask, Rewind, Splat, Miss, Heart, Quake, Drum }
 // How a damage Number reads (display only): a plain hit, a combo hit, a critical (Claws) hit, or poison's tick.
 public enum NumberTone { Plain, Combo, Crit, Poison }
 public sealed class BattleEffect

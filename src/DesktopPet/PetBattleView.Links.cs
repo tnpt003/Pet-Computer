@@ -46,8 +46,9 @@ public sealed partial class BattleFieldView
                     break;
                 case EnemyLinks.Aura:
                     double pulse = 1 + 0.03 * Math.Sin(time * 4);
-                    dc.DrawEllipse(null, Halo, new Point(x, floor - 3), link.Range * pulse, 9);
-                    dc.DrawEllipse(null, AuraPen, new Point(x, floor - 3), link.Range * pulse, 9);
+                    double ring = BattleSim.AuraRange(slime);
+                    dc.DrawEllipse(null, Halo, new Point(x, floor - 3), ring * pulse, 9);
+                    dc.DrawEllipse(null, AuraPen, new Point(x, floor - 3), ring * pulse, 9);
                     break;
                 case EnemyLinks.Rhythm:
                     dc.DrawEllipse(null, RhythmArea, new Point(x, floor - 3), link.Range, 8);

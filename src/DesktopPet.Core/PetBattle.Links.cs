@@ -77,6 +77,7 @@ public sealed partial class BattleSim
     private void FormLinks(double catX)
     {
         if (linkKinds.Count == 0) return;
+        PairLeaves();
         foreach (var slime in slimes)
         {
             if (slime.Link is not LinkSpec link || slime.LinkedTo != 0 || slime.State != SlimeState.Moving || slime.Handled || Time < slime.RelinkAt) continue;
@@ -111,7 +112,7 @@ public sealed partial class BattleSim
     private void StepLinks(double dt, double catX, bool catHeld)
     {
         bool aura = HasLink(EnemyLinks.Aura);
-        if (aura) foreach (var s in slimes) s.AuraSpeed = 1;
+        if (aura) foreach (var s in slimes) { s.AuraSpeed = 1; s.AuraCut = 0; }
         for (int i = 0; i < slimes.Count; i++)
         {
             var slime = slimes[i];
@@ -119,9 +120,13 @@ public sealed partial class BattleSim
             switch (link.Kind)
             {
                 case EnemyLinks.Aura:
-                    double speed = AuraBoost(slime);
+                    double speed = AuraBoost(slime), reach = AuraRange(slime);
                     foreach (var s in slimes)
-                        if (s != slime && s.Targetable && Math.Abs(s.X - slime.X) <= link.Range) s.AuraSpeed = Math.Max(s.AuraSpeed, speed);
+                        if (s != slime && s.Targetable && !s.Airborne && Math.Abs(s.X - slime.X) <= reach)
+                        {
+                            s.AuraSpeed = Math.Max(s.AuraSpeed, speed);
+                            s.AuraCut = Math.Max(s.AuraCut, link.Guard);
+                        }
                     break;
                 case EnemyLinks.Tether:
                     if (slime.LinkedTo == 0) break;
@@ -198,10 +203,33 @@ public sealed partial class BattleSim
             if (s.Riding && Find(s.LinkedTo) is { } mount) { s.X = mount.X; s.Facing = mount.Facing; }
     }
 
+    // An aura's reach (an elite's own when it has one).
+    public static double AuraRange(Slime slime) => slime.Link is not LinkSpec link ? 0 : slime.Elite != null && link.EliteRange > 0 ? link.EliteRange : link.Range;
+
+    // The cat off the beat (2026-11-04): a big drum's dazzle, its swings miss (notes round its head).
+    public bool CatOffBeat => offBeat && DazzleRemaining > 0;
+    private bool offBeat;
+    public int BigDrums { get; private set; }
+
+    // A rhythm's last beat is a big drum: a ring of sound; the cat on the floor in it is hurt and thrown off
+    // the beat (a lifted or protected cat is missed; the Shield stops it; rage shrugs the dazzle off).
+    private void BigDrum(Slime holder, LinkSpec link, double catX, bool catHeld)
+    {
+        BigDrums++;
+        AddEffect(BattleEffectKind.Drum, holder.X, 0, link.Range);
+        events.Add(new(BattleEventKind.BigDrum, holder.X, holder.Id));
+        if (catHeld || Grace > 0 || Math.Abs(catX - holder.X) > link.Range) return;
+        if (!HurtCat(holder, catX, false) || Over || Raging) return;
+        DazzleRemaining = Math.Max(DazzleRemaining, holder.Elite != null && link.EliteDrumSeconds > 0 ? link.EliteDrumSeconds : link.DrumSeconds);
+        offBeat = true;
+        events.Add(new(BattleEventKind.CatOffBeat, catX, holder.Id));
+    }
+
     // A rhythm's strike: every ally within its range (and itself) that could hit the cat now winds up,
     // attack turns or not (never a support, a spring trap, a boss, a rider or one in a panic).
     private void StrikeTogether(Slime holder, LinkSpec link, double catX, bool catHeld)
     {
+        if (link.DrumSeconds > 0 && !holder.IsBoss) { BigDrum(holder, link, catX, catHeld); if (Over) return; }
         int strikers = 0;
         if (!catHeld && Grace <= 0)
             foreach (var s in slimes)
@@ -370,6 +398,7 @@ public sealed partial class BattleSim
         Unlink(rider);
         mount.Crouch = 0;
         rider.BombFlight = rider.BombFlightTotal = link.ThrowFlight;
+        rider.ThrownBy = mount.Id;
         rider.BombFromX = rider.X;
         rider.BombStartHeight = from;
         rider.LeapHeight = from;

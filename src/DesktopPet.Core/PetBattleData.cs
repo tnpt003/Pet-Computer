@@ -189,6 +189,7 @@ public sealed class EnemyType
     // off with it (S11). Null: none.
     public QuillsSpec? Quills { get; init; }
     public ClockSpec? Clock { get; init; }
+    public PlantSpec? Plant { get; init; }
     public StealSpec? Steal { get; init; }
     // 1.5 M17 (PetBattle.Zip.cs), the chapter 2 boss's own moves. Roll (a boss only): from afar it winds up
     // and rolls across the floor over the cat. Still: it never moves or attacks (a boss's file shards).
@@ -482,6 +483,9 @@ public sealed class ClockSpec
     public double Stunned { get; init; } = 0.3;
     public int Calls { get; init; } = 2;
     public string[] Call { get; init; } = { "slime", "slime", "runner" };
+    // 2026-11-04: formations (id: weight) a call may be instead of Call; those whose MinThreat the battle
+    // reaches, drawn on a stream of its own (none: Call).
+    public Dictionary<string, double>? CallFormations { get; init; }
 }
 
 // S11 (1.5 M16): it never hurts the cat. Its windup next to the cat steals instead: the clean app icon with
@@ -576,8 +580,23 @@ public sealed class ThrowHitSpec
 //   M11, Q7): only ones a healer has healed since they came count (split halves made whole again).
 // aura: allies within Range move Speed × faster (an elite: EliteSpeed, 0: Speed); defeated, every other
 //   enemy (never a boss) panics BreakStun s: runs away from the cat and does not attack.
+// 2026-11-04 (docs/GOPY-C-2026-11-04.md D5): a kind that plants a post (the flag slime): After s on the field
+// it plants Post where it stands.
+public sealed class PlantSpec
+{
+    public string Post { get; init; } = "";
+    public double After { get; init; } = 1.5;
+}
+
 public sealed class LinkSpec
 {
+    // 2026-11-04: a rhythm's last beat is a big drum: the cat on the floor in its ring takes the holder's hit
+    // and is off the beat DrumSeconds s (its swings miss; EliteDrumSeconds for an elite). An aura: the allies
+    // in it take Guard less and cannot be dazed; EliteRange: its reach for an elite (0: Range).
+    public double DrumSeconds { get; init; }
+    public double EliteDrumSeconds { get; init; }
+    public double Guard { get; init; }
+    public double EliteRange { get; init; }
     public string Kind { get; init; } = "";
     public bool Enabled { get; init; } = true;
     public double Range { get; init; } = 200;
@@ -1051,6 +1070,8 @@ public static class BattleData
             }
             if (e.SummonAt > 0) reach.Push(e.SummonType);
             if (e.Split != null) reach.Push(e.Split.Into);
+            if (e.Plant != null) reach.Push(e.Plant.Post);
+            foreach (var id in e.Clock?.CallFormations?.Keys ?? Enumerable.Empty<string>()) foreach (var kind2 in s.Formation(id)?.Members ?? Enumerable.Empty<string>()) reach.Push(kind2);
             foreach (var p in e.Phases ?? Array.Empty<BossPhase>()) foreach (var call in s.PhaseCalls(p)) reach.Push(call);
             // 1.5 M18: what a brood lays, the links a crown ties.
             if (e.Brood != null) reach.Push(e.Brood.Enemy);
@@ -1199,7 +1220,7 @@ public static class BattleData
     public static readonly string[] WeaponStyles = { "sword", "hammer", "yarn", "glove" };
     public static readonly string[] WeaponHitEffects = { "spark", "thud" };
     public static readonly string[] EnemyRenderers = { "slime" };
-    public static readonly string[] EnemyMarks = { "none", "speed", "cracks", "leaf", "cross", "spout", "spring", "drum", "chain", "swarm", "giant", "bomb", "split", "half", "flag", "ghost", "bubble", "mirage", "sulk", "wings", "mole", "ice", "spikes", "quills", "clock", "thief", "zip", "shard", "mother", "mutant" };
+    public static readonly string[] EnemyMarks = { "none", "speed", "cracks", "leaf", "cross", "spout", "spring", "drum", "chain", "swarm", "giant", "bomb", "split", "half", "flag", "ghost", "bubble", "mirage", "sulk", "wings", "mole", "ice", "spikes", "quills", "clock", "thief", "zip", "shard", "mother", "mutant", "post" };
     public static readonly string[] GroupSides = { "a", "b" };
     // Kinds the cursor beats (ghost, bubble, mirage, sulk) that one battle may bring (docs/UPDATE-1.5.md).
     public const int MaxMouseKinds = 2;
@@ -1500,7 +1521,14 @@ public static class BattleData
                 }
                 if (link.AfterHeal && link.Kind != EnemyLinks.Merge) throw new InvalidDataException(at + ".link.afterHeal is for a merge link");
                 if (link.Kind == EnemyLinks.Aura) Within(link.Speed, 1, 3, at + ".link.speed");
+                Within(link.DrumSeconds, 0, 10, at + ".link.drumSeconds"); Within(link.EliteDrumSeconds, 0, 10, at + ".link.eliteDrumSeconds");
+                Within(link.Guard, 0, 0.9, at + ".link.guard"); Within(link.EliteRange, 0, 2000, at + ".link.eliteRange");
                 if (link.EliteSpeed != 0 && (link.Kind != EnemyLinks.Aura || link.EliteSpeed is < 1 or > 3)) throw new InvalidDataException(at + ".link.eliteSpeed is 1–3, for an aura link");
+            }
+            if (e.Plant is PlantSpec plant)
+            {
+                if (!s.EnemyTypes.Any(k => k.Id == plant.Post)) throw new InvalidDataException(at + ".plant.post is not an enemy");
+                Within(plant.After, 0, 30, at + ".plant.after");
             }
             Within(e.Hover, 0, 2000, at + ".hover");
             if (e.Hover > 0 && (e.Boss || e.Blocker || e.Dash || e.Slam || e.Link != null)) throw new InvalidDataException(at + ".hover is not for a boss, blocker, dash, slam or linked enemy");
@@ -1721,10 +1749,10 @@ public static class BattleData
                 Within(rain.PuddleSeconds, 0, 30, at + ".rain.puddleSeconds");
             }
             Within(e.RopeCutSpeed, 100, 5000, at + ".ropeCutSpeed"); Within(e.RopeCutStun, 0, 5, at + ".ropeCutStun");
-            if (e.Still && (e.Boss || e.Blocker || e.Dash || e.Slam || e.Hover > 0 || e.Support || e.HealAmount > 0 || e.Link != null || e.Spit != null || e.Spring != null
+            if (e.Still && (e.Boss || e.Blocker || e.Dash || e.Slam || e.Hover > 0 || e.Support || e.HealAmount > 0 || e.Link is { Kind: not EnemyLinks.Aura } || e.Spit != null || e.Spring != null
                 || e.Fuse != null || e.Split != null || e.UsesMouse || e.Fly != null || e.Burrow != null || e.Ice != null || e.Cling != null || e.Quills != null
                 || e.Clock != null || e.Steal != null || e.SummonAt > 0 || e.Phases != null))
-                throw new InvalidDataException(at + ": still is only for a plain enemy (no boss, attack, link or 1.5 trick)");
+                throw new InvalidDataException(at + ": still is only for a plain enemy (no boss, attack, link but an aura, or 1.5 trick)");
         }
         // 1.5 M27: a shared Monster Book page is a known kind's with a tip of its own (no chains).
         foreach (var e in s.EnemyTypes)

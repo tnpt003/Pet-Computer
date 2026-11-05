@@ -57,14 +57,108 @@ public sealed partial class BattleSim
         return true;
     }
 
+    // ── 2026-11-04 (docs/GOPY-C-2026-11-04.md D5): the herb slime and the bomb slime ──
+
+    public const double RecoilSeconds = 0.6, RecoilHeight = 90, RecoilFallStun = 1;
+    public int LeafShields { get; private set; }
+    public int BombsCaught { get; private set; }
+
+    // Each herb slime (wherever it is) shields one bomb slime that never had a shield: no damage until the
+    // bomb's first blast. Never healed: a bomb slime is not a herb's patient.
+    private void PairLeaves()
+    {
+        foreach (var herb in slimes)
+        {
+            if (herb.Type.HealAmount <= 0 || !herb.Targetable || herb.Decoy) continue;
+            bool busy = false;
+            foreach (var s in slimes) if (s.LeafShield && s.LeafBy == herb.Id) { busy = true; break; }
+            if (busy) continue;
+            foreach (var bomb in slimes)
+            {
+                if (bomb.Type.Fuse == null || !bomb.Targetable || bomb.LeafUsed) continue;
+                bomb.LeafShield = bomb.LeafUsed = true;
+                bomb.LeafBy = herb.Id;
+                bomb.LeafCastAt = Time;
+                LeafShields++;
+                events.Add(new(BattleEventKind.LeafShielded, bomb.X, bomb.Id));
+                break;
+            }
+        }
+    }
+
+    // A herb slime gone: its leaf shield falls.
+    private void LeafFallen(Slime herb)
+    {
+        foreach (var s in slimes)
+            if (s.LeafShield && s.LeafBy == herb.Id) { s.LeafShield = false; events.Add(new(BattleEventKind.LeafLost, s.X, s.Id)); }
+    }
+
+    // A cut or the like takes the shield off.
+    private void LeafCut(Slime bomb)
+    {
+        if (!bomb.LeafShield) return;
+        bomb.LeafShield = false;
+        events.Add(new(BattleEventKind.LeafLost, bomb.X, bomb.Id));
+    }
+
+    // The shield took the blast: leaves burst, the bomb, burnt, is thrown back at the quick slime that threw it
+    // (none: at its herb slime, or it just lands where it is).
+    private void LeafBurst(Slime bomb)
+    {
+        bomb.LeafShield = false;
+        bomb.Charred = true;
+        bomb.KnockVelocity = 0;
+        double to = Find(bomb.ThrownBy) is { Targetable: true, Handled: false } mount ? mount.X : Find(bomb.LeafBy) is { Targetable: true } herb ? herb.X : bomb.X;
+        var (minX, maxX) = Bounds(bomb);
+        bomb.RecoilFrom = bomb.X;
+        bomb.RecoilTo = Math.Clamp(to, minX, maxX);
+        bomb.RecoilLeft = bomb.RecoilTotal = RecoilSeconds;
+        AddEffect(BattleEffectKind.Mend, bomb.X, bomb.Height);
+        events.Add(new(BattleEventKind.LeafBurst, bomb.X, bomb.Id));
+    }
+
+    // Every frame of the flight back: its mount, still free and on its feet, catches it (and soon throws it
+    // again); otherwise it lands dazed.
+    private void FlyRecoil(Slime bomb, double dt)
+    {
+        bomb.RecoilLeft = Math.Max(0, bomb.RecoilLeft - dt);
+        double k = 1 - bomb.RecoilLeft / bomb.RecoilTotal;
+        bomb.X = bomb.RecoilFrom + (bomb.RecoilTo - bomb.RecoilFrom) * k;
+        bomb.LeapHeight = 4 * RecoilHeight * k * (1 - k);
+        bomb.KnockVelocity = 0;
+        if (bomb.RecoilLeft > 0) return;
+        bomb.LeapHeight = 0;
+        if (Find(bomb.ThrownBy) is { Targetable: true, Handled: false, State: SlimeState.Moving } mount && !Ridden(mount) && bomb.Link is { Kind: EnemyLinks.Ride })
+        {
+            bomb.LinkedTo = mount.Id;
+            bomb.X = mount.X;
+            bomb.RideHeight = mount.Height * 0.8;
+            mount.ThrowHold = Math.Min(mount.ThrowHold, 0.5);
+            BombsCaught++;
+            events.Add(new(BattleEventKind.BombCaught, bomb.X, bomb.Id));
+            return;
+        }
+        Daze(bomb, RecoilFallStun);
+    }
+
+    // The mount standing by for its bomb to come back (the view's "!").
+    public bool AwaitingBomb(Slime mount)
+    {
+        foreach (var s in slimes)
+            if (s.ThrownBy == mount.Id && s.Targetable && (s.RecoilLeft > 0 || s.BombFlight > 0 && s.LeafShield)) return true;
+        return false;
+    }
+
     // The blast at the bomb's spot. own: by its fuse or a Grabber's throw (the bomb leaves the field, not
     // counted as defeated); otherwise it was just defeated while lit.
     private void Blast(Slime bomb, bool own)
     {
         var fuse = bomb.Type.Fuse!;
+        // A leaf shield takes the blast for it (2026-11-04): the bomb lives, hurts no friend, flies back.
+        bool leaf = own && bomb.LeafShield && !bomb.ByUser;
         bomb.FuseLeft = 0;
         double x = bomb.X, radius = FuseRadius(bomb);
-        if (own && bomb.State != SlimeState.Defeated)
+        if (own && bomb.State != SlimeState.Defeated && !leaf)
         {
             bomb.Set(SlimeState.Defeated);
             bomb.Exploded = true;
@@ -75,7 +169,7 @@ public sealed partial class BattleSim
         }
         Blasts++;
         AddEffect(BattleEffectKind.Explosion, x, 0, radius);
-        bool hit = !CatLifted && Grace <= 0 && Math.Abs(lastCatX - x) <= radius;
+        bool hit = !bomb.ByUser && !CatLifted && Grace <= 0 && Math.Abs(lastCatX - x) <= radius;
         events.Add(new(BattleEventKind.Blasted, x, hit ? 1 : 0));
         if (hit && bomb.Damage > 0)
         {
@@ -83,6 +177,7 @@ public sealed partial class BattleSim
             HurtCat(bomb, lastCatX, fuse.Stun > 0, 1, fuse.Stun);
             if (Over) return;
         }
+        if (leaf) { LeafBurst(bomb); return; }
         if (fuse.EnemyDamage <= 0) return;
         // One blast hits everything in it at once (a lit bomb in it blows up in turn).
         bool was = blasting;

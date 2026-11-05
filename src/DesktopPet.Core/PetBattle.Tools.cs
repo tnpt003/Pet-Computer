@@ -116,6 +116,9 @@ public sealed partial class BattleSim
             if (right < lo || left > hi || top < cut.Y - band || bottom > cut.Y + band) continue;
             cutHit.Add(s.Id);
             if (s.Bubbled) { PopBubble(s); continue; }
+            LeafCut(s);
+            // A bomb flying back to its mount drops where it is, dazed.
+            if (s.RecoilLeft > 0) { s.RecoilLeft = 0; s.LeapHeight = 0; Daze(s, RecoilFallStun); }
             if (s.LinkedTo != 0 || slimes.Any(o => o.LinkedTo == s.Id)) { if (CutLink(s.Id)) RopesCut++; }
             if (s.RopedTo != 0 && CutBossRope(s)) RopesCut++;
             if (Is(s, EnemyLinks.Rhythm)) { s.BeatCount = 0; s.BeatClock = 0; }

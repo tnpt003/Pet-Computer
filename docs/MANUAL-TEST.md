@@ -955,6 +955,15 @@ Các mục 1.5 phía trên viết theo từng mốc; đây là thứ tự chơi 
 - [ ] Slime hẹn giờ: đứng yên chỗ xuất hiện; đồng hồ to; 3 s cuối phóng to, rung, nháy đỏ, có tiếng; khi gọi có vòng sóng lớn + mũi tên ở mép; gọi tối đa 3 lần.
 - [ ] Slime trộm: đứng xa (~160 DIP) mà vẫn hút được, có tia tím nối với mèo; tinh anh lấy 2 thứ, hạ nó thì trả lại cả 2.
 
+### Đợt C4 góp ý 04/11 (2026-11-05, Issue #44)
+- [ ] Nhạc trưởng (chương 2 màn 2): nhịp cuối có vòng sóng cam; mèo đứng trong vòng mất máu, nốt nhạc quanh đầu, vung trượt khoảng 2 giây; nhấc mèo đúng nhịp thì tránh; đánh/Đẩy nó thì đếm lại. Có quá khó chịu không?
+- [ ] Cờ hiệu: slime mang cờ ra 1,5 giây thì cắm cờ tại chỗ, lưng trống; vòng vàng; slime trong vòng bớt đau, Đẩy không choáng; đánh đổ cờ cả đội hoảng; Kéo cắt chém được cờ; mèo có tự đi đánh cờ không.
+- [ ] Bom + thảo dược: bong bóng lá hiện ngay khi cả hai trên sân; không mất máu; hạ thảo dược thì mất; bom nổ lần đầu thì cháy đen, bay về slime nhanh (dấu "!"), được ném lại không có khoảng trống; hạ slime nhanh lúc bom đang bay thì bom đáp choáng.
+- [ ] Đội hình: ra cùng lúc cùng một phía; Pháo kích, Quân cảm tử, Báo động (Viễn chinh tuyến 2) có đọc được thế trận không; Vô tận từ đợt 8.
+- [ ] Hẹn giờ: reo gọi đội hình (Pháo đài/Pháo kích) ở trận threat đủ cao, vòng sóng rõ; dưới mức đó gọi slime thường.
+- [ ] Bế mèo: slime đi theo chậm hơn (50%), vẫn tới dưới mèo; thả xuống không có giật cảnh.
+- [ ] Trên sàn hết quái, còn slime bay: mèo đi theo dưới nó, thông báo một lần.
+
 ### Đợt C3 góp ý 04/11 (2026-11-05, Issue #43)
 - [ ] Kẹp gắp: click slime thì càng nhấc lên, mặt "><"; click chỗ khác thì đập xuống (bụi, slime quanh đó mất máu); không click thì 5 giây sau đặt xuống phía xa mèo; mèo không đánh con đang bị giữ.
 - [ ] Kẹp gắp slime trộm: click chỗ khác không đập được; 5 giây sau nhả đồ rồi biến mất. Kẹp gắp slime bom: đập xuống thì nổ, chỉ hại quái.

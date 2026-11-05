@@ -51,6 +51,10 @@ public sealed class EndlessSpec
     // 1.5 M24: stretches of the run, each with newer kinds added to the draw. The first starts at
     // wave ErasFrom; the next ones right after each boss wave; past the last one they come round again.
     public int ErasFrom { get; init; } = 15;
+    // 2026-11-04: from wave FormationsFrom, every FormationEvery-th wave one of Formations is one of its enemies.
+    public int FormationsFrom { get; init; }
+    public int FormationEvery { get; init; }
+    public Dictionary<string, double>? Formations { get; init; }
     // 1.5 M26: from this wave the run has the Screenshot icon and the newer malware (0: never).
     public int NewAppsFrom { get; init; }
     public EndlessEra[] Eras { get; init; } = Array.Empty<EndlessEra>();
@@ -91,6 +95,8 @@ public sealed class EndlessSpec
         // 1.5 M24: the stretch's newer kinds join the draw.
         foreach (var k in EraAt(wave)?.Kinds ?? Array.Empty<EndlessKind>())
             if (k.Weight > 0) pick[k.Enemy] = (pick.TryGetValue(k.Enemy, out double w) ? w : 0) + k.Weight;
+        if (Formations is { Count: > 0 } teams && FormationEvery > 0 && wave >= FormationsFrom && wave % FormationEvery == 0)
+            return new() { Threat = Threat(wave), Groups = new[] { new WaveGroup { Pick = pick, Count = Math.Max(1, Count(wave) - 1) }, new WaveGroup { Formation = teams, Count = 1 } } };
         return new() { Threat = Threat(wave), Groups = new[] { new WaveGroup { Pick = pick, Count = Count(wave) } } };
     }
 

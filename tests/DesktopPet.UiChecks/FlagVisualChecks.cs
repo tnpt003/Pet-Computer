@@ -4,9 +4,8 @@ using System.Windows.Media.Imaging;
 using DesktopPet;
 
 // 1.5 M12, drawn for real with the shipped flag slime: a pole on its back with a gold pennant streaming
-// away from the side it faces, its gold aura ring on the floor, two gold speed lines behind an ally the
-// aura speeds up (none behind one outside it). PET_RENDER_REVIEW=<folder> saves the strip on dark and
-// light floors (enemy-flag.png).
+// away from the side it faces; 2026-11-04: planted, the back is bare and the flag in the ground holds the
+// gold ring on the floor. PET_RENDER_REVIEW=<folder> saves the strip on dark and light floors (enemy-flag.png).
 internal static class FlagVisualChecks
 {
     const double Width = 1200;
@@ -73,19 +72,18 @@ internal static class FlagVisualChecks
         var pole = Color.FromRgb(0x6B, 0x4A, 0x2E);
 
         Add("flagbearer", 300, -1);
-        var sped = Add("slime", 420, -1);
-        sped.AuraSpeed = data.Enemy("flagbearer").Link!.Speed;
-        Add("slime", 700, -1);
         Add("flagbearer", 950, 1);
+        Add("flagpost", 620, -1);
+        var planted = Add("flagbearer", 1120, -1);
+        planted.Planted = true;
         var px = Shot(view, "enemy-flag");
 
         // Facing left: the pole at its right (back), the pennant streaming right of it.
         check(Count(px, pole, 300, 316, floor - 58, floor - 30, 20) > 10, "The flag slime carries a pole on its back");
         check(Count(px, gold, 310, 340, floor - 66, floor - 40) > 40, "A gold pennant streams from the pole, away from the side it faces");
         check(Count(px, gold, 920, 945, floor - 66, floor - 40) > 40 && Count(px, gold, 960, 990, floor - 66, floor - 40) < 10, "Turned the other way, the pennant streams the other way");
-        int ring = Count(px, gold, 100, 250, floor - 16, floor + 2, 60, 100);
-        check(ring > 40, $"Its gold aura ring lies on the floor ({ring} pixels)");
-        int lines = Count(px, gold, 445, 470, floor - 22, floor - 14, 30, 120), none = Count(px, gold, 725, 750, floor - 22, floor - 14, 30, 120);
-        check(lines > 6 && none == 0, $"An ally the aura speeds up trails gold speed lines, one outside it none ({lines} / {none})");
+        check(Count(px, pole, 1120, 1136, floor - 58, floor - 30, 20) == 0 && Count(px, gold, 1130, 1160, floor - 66, floor - 40) == 0, "Planted, its back is bare");
+        int ring = Count(px, gold, 400, 560, floor - 16, floor + 2, 60, 100);
+        check(ring > 40, $"The planted flag's gold ring lies on the floor ({ring} pixels)");
     }
 }

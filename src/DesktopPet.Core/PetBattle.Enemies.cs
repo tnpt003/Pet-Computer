@@ -135,6 +135,7 @@ public sealed partial class BattleSim
             // 1.5 M16: a hedgehog's quills, a timer's clock (PetBattle.Quills.cs).
             StepQuills(slime, dt);
             StepClock(slime, dt);
+            StepPlant(slime, dt);
             TickRoll(slime, dt); // 1.5 M17: a rolling boss's wait for its next roll (PetBattle.Zip.cs).
             // 1.5 M18: a brooding boss's clutches, a raining boss's goo rain (PetBattle.Brood.cs, PetBattle.Mutant.cs).
             StepBrood(slime, dt);
@@ -142,6 +143,7 @@ public sealed partial class BattleSim
             TouchPuddle(slime); // 2026-10-31: a dasher touching a puddle is boosted for the rest of the battle.
             // A rider thrown by its mount flies to its spot (PetBattle.Links.cs), nothing else.
             if (slime.BombFlight > 0) { FlyRider(slime, dt); if (Over) break; continue; }
+            if (slime.RecoilLeft > 0) { FlyRecoil(slime, dt); continue; }
             // A lit bomb burns on whatever it does (in the Grabber's claw too).
             if (slime.Lit && BurnFuse(slime, dt)) { if (Over) break; continue; }
             if (slime.Handled) continue; // In the Grabber's claw or flying from it (PetBattle.Grabber.cs).
@@ -272,7 +274,7 @@ public sealed partial class BattleSim
                     }
                     // A shielded boss guards its edge: it slams a cat that comes close but never walks up.
                     else if (facingCat && Math.Abs(dx) > reach * 0.75 && !slime.Shielded)
-                        slime.X =Math.Clamp(slime.X + Math.Sign(dx) * Math.Min(Math.Abs(dx), Speed(slime) * dt), minX, maxX);
+                        slime.X = Math.Clamp(slime.X + Math.Sign(dx) * Math.Min(Math.Abs(dx), Speed(slime) * (CatLifted ? HeldFollow : 1) * dt), minX, maxX);
                     break;
             }
             if (slime.Stuck && slime.State != SlimeState.Defeated) slime.X = stuckAt;
@@ -349,7 +351,7 @@ public sealed partial class BattleSim
         if (type.FarHealBelow <= 0 || healer.FarHealCooldown > 0) return null;
         Slime? hurt = null;
         foreach (var s in slimes)
-            if (s != healer && s.Targetable && !s.Type.Support && !s.Shielded && !s.Decoy && s.Hp < s.MaxHp * type.FarHealBelow &&
+            if (s != healer && s.Targetable && !s.Type.Support && !s.Shielded && !s.Decoy && s.Type.Fuse == null && s.Hp < s.MaxHp * type.FarHealBelow &&
                 (hurt == null || s.Hp / s.MaxHp < hurt.Hp / hurt.MaxHp)) hurt = s;
         return hurt;
     }
@@ -360,7 +362,8 @@ public sealed partial class BattleSim
         Slime? best = null;
         foreach (var s in slimes)
         {
-            if (s == healer || !s.Targetable || s.Shielded || s.Decoy || s.Hp >= s.MaxHp || Math.Abs(s.X - healer.X) > healer.Type.HealRange) continue;
+            // Never a bomb slime: a herb slime shields it instead (2026-11-04).
+            if (s == healer || !s.Targetable || s.Shielded || s.Decoy || s.Type.Fuse != null || s.Hp >= s.MaxHp || Math.Abs(s.X - healer.X) > healer.Type.HealRange) continue;
             if (best == null || s.MaxHp - s.Hp > best.MaxHp - best.Hp) best = s;
         }
         return best;
@@ -452,6 +455,8 @@ public sealed partial class BattleSim
 
     // The ally a support enemy is healing right now (null when it is not casting).
     public Slime? Healing(Slime healer) => healer.State == SlimeState.Casting ? Find(healer.HealTargetId) : null;
+    // With the cat lifted they come after it at half speed (2026-11-04, only on their way to it).
+    public const double HeldFollow = 0.5;
     private double Speed(Slime slime) => slime.Rooted ? 0 : (slime.Enraged ? slime.Type.EnragedSpeed : slime.Type.Speed) * level.EnemySpeed * slime.AuraSpeed * slime.ChillFactor * MutationSpeed
         * (slime.PackRaged && slime.Link is LinkSpec pack ? pack.PackRage : 1);
 

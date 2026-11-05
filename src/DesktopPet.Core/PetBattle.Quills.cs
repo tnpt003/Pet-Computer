@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace DesktopPet;
 
@@ -25,6 +26,10 @@ public sealed partial class BattleSim
     public const int CalledBy = -1;
     // Calls still to come (each waits for room on the floor), and whether the announced spawn is one.
     private readonly List<string[]> calls = new();
+    private readonly Random callRandom;
+    // The call about to go is a formation: one place on the floor, its members side by side.
+    private bool callFormation;
+    private readonly HashSet<string[]> formationCalls = new();
     private bool incomingCalled;
     private int CallsWaiting { get { int n = 0; foreach (var c in calls) n += c.Length; return n; } }
 
@@ -101,7 +106,7 @@ public sealed partial class BattleSim
         if (s.ClockLeft > 0) return;
         s.ClockCalls++;
         ClockRings++;
-        calls.Add(c.Call);
+        calls.Add(CallOf(c));
         AddEffect(BattleEffectKind.Bell, s.X, s.Height + 14);
         // 2026-11-04: a big ring of sound out of it, so the call cannot be missed.
         AddEffect(BattleEffectKind.Slam, s.X, 0, 220);
@@ -109,13 +114,32 @@ public sealed partial class BattleSim
         s.ClockLeft = s.ClockCalls < c.Calls ? s.ClockTotal : 0;
     }
 
+    // What a timer calls (2026-11-04): a formation its battle's threat reaches, else its plain call.
+    private string[] CallOf(ClockSpec c)
+    {
+        if (c.CallFormations == null) return c.Call;
+        var open = c.CallFormations.Where(w => w.Value > 0 && Settings.Formation(w.Key) is { } f && f.MinThreat <= Threat + 1e-9).OrderBy(w => w.Key, StringComparer.Ordinal).ToList();
+        if (open.Count == 0) return c.Call;
+        double roll = callRandom.NextDouble() * open.Sum(w => w.Value);
+        foreach (var w in open)
+        {
+            roll -= w.Value;
+            if (roll > 0) continue;
+            var kinds = Settings.Formation(w.Key)!.Members.ToArray();
+            formationCalls.Add(kinds);
+            return kinds;
+        }
+        return c.Call;
+    }
+
     // From StepWaves (after an announced spawn is out): the next call, once the floor has room for it, is
     // announced at the edge behind the cat. True: one went out this step.
     private bool SendCall(double catX)
     {
-        if (calls.Count == 0 || Alive + calls[0].Length > maxAlive) return false;
+        if (calls.Count == 0 || Alive + (formationCalls.Contains(calls[0]) ? 1 : calls[0].Length) > maxAlive) return false;
         var kinds = calls[0];
         calls.RemoveAt(0);
+        callFormation = formationCalls.Remove(kinds);
         events.Add(new(BattleEventKind.ClockCalled, catX));
         int before = slimes.Count;
         Announce(catX, kinds, -Far(catX));
@@ -134,6 +158,7 @@ public sealed partial class BattleSim
     private void ClearCalls()
     {
         calls.Clear();
+        formationCalls.Clear();
         incomingCalled = false;
     }
 
@@ -219,6 +244,21 @@ public sealed partial class BattleSim
             return true;
         }
         return false;
+    }
+
+    // A flag slime (2026-11-04): a moment on the field and it plants its flag where it stands, a post with
+    // the ring (it counts as the wave's: beat it or cut it down; an elite's is the elite post).
+    private void StepPlant(Slime s, double dt)
+    {
+        if (s.Type.Plant is not PlantSpec plant || s.Planted || !s.Targetable || s.Handled || s.Decoy) return;
+        s.PlantClock += dt;
+        if (s.PlantClock < plant.After || s.State != SlimeState.Moving) return;
+        s.Planted = true;
+        var type = Settings.Enemy(plant.Post);
+        var post = AddSlime(s.X, type);
+        post.SummonedBy = CalledBy;
+        if (s.Elite != null && type.Elite is EliteSpec elite) ApplyElite(post, elite);
+        events.Add(new(BattleEventKind.FlagPlanted, s.X, post.Id));
     }
 
     // A thief defeated (from Defeat): what it carried goes back (an icon infected meanwhile gets nothing).

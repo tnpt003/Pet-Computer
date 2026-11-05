@@ -248,7 +248,8 @@ public sealed partial class BattleFieldView : FrameworkElement
                 if (slime.Grabbed && slime.Type.Steal != null) lean += 180 + 16 * Math.Sin(time * 24);
                 double foot = floor - slime.LeapHeight - slime.RideHeight - slime.Lift - bubble - wall - RollLift(slime, turn);
                 if (lean != 0) dc.PushTransform(new RotateTransform(lean, x, foot - slime.Height / 2));
-                DrawSlime(dc, slime, x, foot, sim.Settings, SlimeTime(time)); // 1.5 M26: frozen, the pose of the flash.
+                if (slime.Type.Marks == "post") DrawPost(dc, slime, x, foot, time); // The planted flag has no body.
+                else DrawSlime(dc, slime, x, foot, sim.Settings, SlimeTime(time)); // 1.5 M26: frozen, the pose of the flash.
                 if (lean != 0) dc.Pop();
                 if (sim.AppRules != null && sim.IsInfector(slime.Id) && slime.State != SlimeState.Defeated) DrawVirusMark(dc, slime, x, floor, time);
             }
@@ -256,6 +257,7 @@ public sealed partial class BattleFieldView : FrameworkElement
             if (sim.Slimes[i].IsBoss && sim.RallyTarget(sim.Slimes[i]) is Slime rallied) DrawRallyLink(dc, sim.Slimes[i], rallied, floor, time);
         DrawLinkMarks(dc, floor, time);
         DrawThiefBeams(dc, floor, time);
+        DrawLeaves(dc, floor, time);
         DrawCarriedFish(dc, floor, time);
         DrawNursing(dc, floor, time);
         DrawGoos(dc, floor);
@@ -635,7 +637,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         if (slime.Type.Marks == "spring") DrawSpringCoil(dc, slime);
         if (slime.Type.Marks == "drum") DrawDrum(dc, slime);
         if (slime.Type.Marks == "chain") DrawChainLinks(dc);
-        if (slime.Type.Marks == "flag") DrawFlag(dc, slime, time);
+        if (slime.Type.Marks == "flag" && !slime.Planted) DrawFlag(dc, slime, time); // Planted: the flag is in the ground.
         DrawSwarmMarks(dc, slime, time);
         DrawTrickMarks(dc, slime, time);
         DrawSkyMarks(dc, slime, bw, bh, time);
@@ -1077,6 +1079,9 @@ public sealed partial class BattleFieldView : FrameworkElement
                 break;
             case BattleEffectKind.Quake:
                 DrawQuake(dc, effect, x, floor);
+                break;
+            case BattleEffectKind.Drum:
+                DrawDrum(dc, effect, x, floor);
                 break;
             case BattleEffectKind.Slam:
                 // Shock waves running out along the floor from the boss.

@@ -9,7 +9,7 @@ namespace DesktopPet;
 // what the others draw.
 public static class BattleRandom
 {
-    public const int Spawn = 1, Offer = 2, Block = 3, Affix = 4, Rarity = 5, Apps = 6, Strike = 7, Rally = 8, Utility = 9, Status = 10, Sky = 11, Drops = 12, Mutations = 13, Tricks = 14, Wall = 15, Mirage = 16, Popup = 17, Cut = 18;
+    public const int Spawn = 1, Offer = 2, Block = 3, Affix = 4, Rarity = 5, Apps = 6, Strike = 7, Rally = 8, Utility = 9, Status = 10, Sky = 11, Drops = 12, Mutations = 13, Tricks = 14, Wall = 15, Mirage = 16, Popup = 17, Cut = 18, Call = 19;
 
     // The same seed and stream always give the same numbers, on every machine (no string hashing).
     public static Random Stream(int seed, int stream)
@@ -69,15 +69,20 @@ public static class SpawnDirector
                 // Its parts from one edge (the group's, else the far one), a "b" part from the other.
                 foreach (var f in teams.GetValueOrDefault(g) ?? new())
                 {
-                    int first = units.Count;
-                    foreach (var part in f.Parts)
+                    // 2026-11-04 (D6): every member together from one edge, one unit (one place on the floor);
+                    // only a part marked "b" comes from the other edge, after a warning arrow.
+                    string side = g.Side ?? "a", other = side == "a" ? "b" : "a";
+                    var kinds = new List<string>();
+                    var flags = new List<bool>();
+                    foreach (var part in f.Parts.Where(p => p.Side != "b"))
+                        foreach (var (kind, elite) in Members(part))
+                        { kinds.Add(kind); flags.Add(elite); }
+                    if (kinds.Count > 0) units.Add(new(kinds.ToArray(), side, flags.Any(e => e) ? flags.ToArray() : null, f.Id));
+                    foreach (var part in f.Parts.Where(p => p.Side == "b"))
                     {
-                        string side = g.Side ?? "a";
-                        if (part.Side == "b") side = side == "a" ? "b" : "a";
-                        if (part.Squad != null) Squads(units, part, 1, side);
-                        else for (int i = 0; i < part.Count; i++) units.Add(new(new[] { part.Enemy }, side, part.Elite ? new[] { true } : null));
+                        var members = Members(part).ToList();
+                        units.Add(new(members.Select(m => m.Kind).ToArray(), other, members.Any(m => m.Elite) ? members.Select(m => m.Elite).ToArray() : null, kinds.Count == 0 ? f.Id : null));
                     }
-                    if (units.Count > first) units[first] = units[first] with { Formation = f.Id };
                 }
             }
             else if (g.Pick != null) foreach (var kind in Draw(g, random, cost, ref left)) units.Add(new(new[] { kind }, g.Side, g.Elite ? new[] { true } : null));
@@ -85,6 +90,11 @@ public static class SpawnDirector
         }
         return units;
     }
+
+    // A formation part's members with their elite marks.
+    private static IEnumerable<(string Kind, bool Elite)> Members(WaveGroup part) => part.Squad != null
+        ? part.Squad.SelectMany(m => Enumerable.Repeat((m.Enemy, m.Elite || part.Elite), m.Count))
+        : Enumerable.Repeat((part.Enemy, part.Elite), part.Count);
 
     private static void Squads(List<SpawnUnit> units, WaveGroup g, int count, string? side)
     {

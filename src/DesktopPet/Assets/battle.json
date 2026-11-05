@@ -328,7 +328,7 @@
       // farHealBelow: with no hurt ally in reach, an ally below that share of its HP anywhere on the field
       // gets a heal all the same (farHealWindup s of windup, once per farHealCooldown s; a push cancels it).
       "id": "mender", "nameVi": "Slime thảo dược", "nameEn": "Herb slime",
-      "tipVi": "Đứng sau hồi máu cho đồng đội. Đẩy khi nó gồng để cắt hồi máu, hoặc hạ nó trước.", "tipEn": "Stays back and heals its friends. Push it while it winds up to cut the heal, or take it first.", "counters": ["push", "laser"],
+      "tipVi": "Đứng sau hồi máu cho đồng đội, đặt Lá chắn lá lên slime bom. Đẩy khi nó gồng để cắt hồi máu, hoặc hạ nó trước.", "tipEn": "Stays back, heals its friends and puts a leaf shield on a bomb slime. Push it while it winds up to cut the heal, or take it first.", "counters": ["push", "laser"],
       "maxHp": 46, "speed": 28, "damage": 5, "range": 56,
       "windup": 0.8, "attackCooldown": 2.0, "recover": 0.35,
       "scale": 0.9, "color": "#4FC9A8", "marks": "leaf",
@@ -390,12 +390,12 @@
       // A push, a stun or the Fan on it starts the count again; the Shield takes the strike. Elite: it
       // strikes every eliteBeats beats. binSpit false: an infected bin never spits it.
       "id": "drummer", "nameVi": "Slime nhạc trưởng", "nameEn": "Drummer slime",
-      "tipVi": "Gõ nhịp: tới nhịp 4 mọi slime trong vòng cùng đánh. Đẩy hoặc làm choáng nó để cả đội lệch nhịp.", "tipEn": "Keeps time: on beat 4 every slime in its ring strikes at once. Push or stun it and the band falls out of time.", "counters": ["push", "shield"],
+      "tipVi": "Nhịp cuối là trống lớn: mèo trong vòng mất máu và loạn nhịp (đánh trượt), slime trong vòng cùng đánh. Nhấc mèo đúng nhịp cuối; đánh hoặc Đẩy nó thì đếm lại.", "tipEn": "Its last beat is a big drum: the cat in the ring is hurt and off the beat (its swings miss), and the band strikes. Lift the cat on that beat; hit or Push it to reset the count.", "counters": ["push", "shield"],
       "maxHp": 60, "speed": 32, "damage": 9, "range": 56,
       "windup": 0.8, "attackCooldown": 2.0, "recover": 0.4,
       "scale": 1.0, "color": "#E8825A", "marks": "drum", "cost": 2, "binSpit": false,
-      "link": { "kind": "rhythm", "range": 220, "beat": 0.8, "beats": 4, "eliteBeats": 3 },
-      "elite": { "hp": 1.2, "cost": 1, "descVi": "3 nhịp là cả đội đánh", "descEn": "the band strikes every 3 beats" }
+      "link": { "kind": "rhythm", "range": 220, "beat": 0.8, "beats": 4, "eliteBeats": 3, "drumSeconds": 2, "eliteDrumSeconds": 2.5 },
+      "elite": { "hp": 1.2, "cost": 1, "descVi": "3 nhịp là trống lớn, loạn nhịp lâu hơn", "descEn": "the big drum every 3 beats, off the beat longer" }
     },
     {
       // 1.5 Q4 (M10): a weak chain slime. link tether: a rope of goo to the nearest ally within `range`;
@@ -449,7 +449,7 @@
       // it blows up where it lands. Hitting, pushing or grabbing the mount while it winds up drops it.
       // Elite: eliteSeconds of fuse, eliteRadius × the blast.
       "id": "bomber", "nameVi": "Slime bom", "nameEn": "Bomb slime",
-      "tipVi": "Cưỡi slime nhanh; con này quăng nó vào chỗ mèo, chạm đất là nổ. Chạy khỏi vòng đỏ hoặc nhấc mèo; đánh con ngựa lúc nó gồng thì bom rơi.", "tipEn": "Rides a quick slime that throws it at the cat; it blows up where it lands. Run out of the red ring or lift the cat; hit the mount as it winds up to drop the bomb.", "counters": ["push", "grabber"],
+      "tipVi": "Slime nhanh quăng nó vào chỗ mèo, chạm đất là nổ; có Lá chắn lá thì sống qua lần nổ đầu. Chạy khỏi vòng đỏ hoặc nhấc mèo; đánh con ngựa lúc nó gồng thì bom rơi.", "tipEn": "A quick slime throws it at the cat; it blows up where it lands (a leaf shield saves it once). Run out of the red ring or lift the cat; hit the mount as it winds up to drop the bomb.", "counters": ["push", "grabber"],
       "maxHp": 45, "speed": 36, "damage": 24, "range": 50,
       "windup": 0.8, "attackCooldown": 2.0, "recover": 0.4,
       "scale": 0.85, "color": "#6E7B9C", "marks": "bomb", "cost": 2, "binSpit": false,
@@ -480,17 +480,26 @@
       "link": { "kind": "merge", "range": 120, "count": 2, "mergeSeconds": 1.5, "into": "splitter", "afterHeal": true }
     },
     {
-      // 1.5 Q8 (M12): a support carrying a flag. link aura: allies within `range` move `speed` × faster
-      // (an elite: eliteSpeed); defeated, every other enemy panics breakStun s (runs off, no attack).
-      // It keeps behind its allies like the other supports (the Laser lures them out of its ring).
+      // 1.5 Q8 (M12), 2026-11-04: a support with a flag: `plant.after` s on the field it plants plant.post where it
+      // stands (the post holds the ring). It keeps behind its allies like the other supports.
       "id": "flagbearer", "nameVi": "Slime cờ hiệu", "nameEn": "Flag slime",
-      "tipVi": "Cầm cờ: slime trong vòng vàng chạy nhanh hơn. Hạ nó trước thì cả đội hoảng; Đèn laser dụ slime ra khỏi vòng.", "tipEn": "Carries a flag: slimes in its gold ring move faster. Beat it first and the band panics; the Laser lures slimes out of the ring.", "counters": ["laser", "push"],
+      "tipVi": "Cắm cờ xuống đất: slime trong vòng vàng bớt đau, không bị choáng. Đánh đổ cờ hoặc dùng Kéo cắt; cờ đổ thì cả đội hoảng.", "tipEn": "Plants a flag: slimes in its gold ring take less and cannot be dazed. Knock the flag down or use the Scissors; when it falls the band panics.", "counters": ["laser", "push"],
       "maxHp": 50, "speed": 30, "damage": 6, "range": 52,
       "windup": 0.8, "attackCooldown": 2.0, "recover": 0.4,
       "scale": 0.95, "color": "#5B8DEF", "marks": "flag",
       "support": true, "keepBack": 120, "fleeSpeed": 1.6, "cost": 2, "binSpit": false,
-      "link": { "kind": "aura", "range": 180, "speed": 1.3, "eliteSpeed": 1.45, "breakStun": 2 },
-      "elite": { "hp": 1.2, "cost": 1, "descVi": "hào quang tăng tốc mạnh hơn", "descEn": "its aura speeds allies up more" }
+      "plant": { "post": "flagpost", "after": 1.5 },
+      "elite": { "hp": 1.2, "cost": 1, "descVi": "cờ bền hơn, vùng cờ rộng hơn", "descEn": "a tougher flag with a wider ring" }
+    },
+    {
+      // 2026-11-04: the planted flag: it stands still and holds the ring: allies in it take link.guard less and
+      // cannot be dazed; down, every other enemy panics breakStun s. Beat it or cut it (the cat goes for it).
+      "id": "flagpost", "nameVi": "Cờ hiệu", "nameEn": "Flag",
+      "maxHp": 30, "speed": 0, "damage": 0, "range": 40,
+      "windup": 0.8, "attackCooldown": 2.0, "recover": 0.4,
+      "scale": 0.9, "color": "#5B8DEF", "marks": "post", "still": true, "cost": 0, "binSpit": false,
+      "link": { "kind": "aura", "range": 180, "speed": 1, "guard": 0.3, "eliteRange": 216, "breakStun": 2 },
+      "elite": { "hp": 1.5, "cost": 0, "descVi": "bền hơn, vùng rộng hơn", "descEn": "tougher, with a wider ring" }
     },
     {
       // 1.5 S1 (M13): seen ghost.visible s, faded out ghost.hidden s: then nothing hits it, it attacks
@@ -640,7 +649,7 @@
       "maxHp": 45, "speed": 0, "damage": 8, "range": 55,
       "windup": 0.8, "attackCooldown": 2.0, "recover": 0.4,
       "scale": 0.9, "color": "#7CC6A4", "marks": "clock", "cost": 2, "binSpit": false,
-      "clock": { "seconds": 20, "eliteSeconds": 15, "stunned": 0.3, "calls": 3, "call": [ "slime", "slime", "runner" ] },
+      "clock": { "seconds": 20, "eliteSeconds": 15, "stunned": 0.3, "calls": 3, "call": [ "slime", "slime", "runner" ], "callFormations": { "fortress": 1, "artillery": 1 } },
       "elite": { "hp": 1.2, "cost": 1, "descVi": "đồng hồ ngắn hơn", "descEn": "its clock is shorter" }
     },
     {
@@ -775,10 +784,10 @@
 
   // 1.5 M12: formations the Enemy Director draws for a wave's "formation": { id: weight } group (count
   // times), among those whose minThreat the battle's threat reaches and whose members' cost fits what
-  // is left of the wave's budget (none fits: the cheapest). parts come one after the other from one edge
-  // ("side": "b": from the other edge, after a warning arrow); a squad part comes together (supports
-  // behind the fighters). The first time each comes in a battle a banner names it with its tip. No
-  // built-in battle uses them yet (chapter 2 and Infinity bring them in).
+  // is left of the wave's budget (none fits: the cheapest). 2026-11-04: every member comes at once from one
+  // edge, one unit taking one place on the floor (supports behind the fighters); only a part with
+  // "side": "b" comes from the other edge, after a warning arrow. The first time each comes in a battle a
+  // banner names it with its tip.
   "formations": [
     { "id": "fortress", "nameVi": "Pháo đài", "nameEn": "Fortress", "tipVi": "Nhấc mèo qua đá, hạ slime phun trước", "tipEn": "Lift the cat past the rock, take the spitter first",
       "parts": [ { "squad": [ { "enemy": "spitter", "count": 1 }, { "enemy": "mender", "count": 1 }, { "enemy": "rock", "count": 1 } ] } ] },
@@ -791,7 +800,13 @@
     { "id": "trampoline", "nameVi": "Bạt nhún", "nameEn": "Trampoline", "tipVi": "Đánh bẹp lò xo, hoặc nhấc mèo khỏi vòng", "tipEn": "Flatten the spring, or lift the cat out of its ring",
       "parts": [ { "squad": [ { "enemy": "slime", "count": 1 }, { "enemy": "runner", "count": 1 } ] }, { "enemy": "springer", "count": 1, "side": "b" } ] },
     { "id": "swarms", "nameVi": "Bầy nhập", "nameEn": "Merging swarms", "tipVi": "Bom len đúng lúc cả bầy chụm lại", "tipEn": "Bomb the pack while it huddles", "minThreat": 1.6,
-      "parts": [ { "squad": [ { "enemy": "mender", "count": 1 }, { "enemy": "fuser", "count": 3 } ] }, { "squad": [ { "enemy": "fuser", "count": 3 } ] } ] }
+      "parts": [ { "squad": [ { "enemy": "mender", "count": 1 }, { "enemy": "fuser", "count": 3 } ] }, { "squad": [ { "enemy": "fuser", "count": 3 } ] } ] },
+    { "id": "kamikaze", "nameVi": "Quân cảm tử", "nameEn": "Suicide squad", "tipVi": "Hạ thảo dược để bom mất lá chắn; đánh slime nhanh khi nó chờ bắt bom", "tipEn": "Beat the herb to strip the shield; hit the quick slime as it waits for the bomb", "minThreat": 1.4,
+      "parts": [ { "squad": [ { "enemy": "mender", "count": 1 }, { "enemy": "bomber", "count": 1 }, { "enemy": "runner", "count": 2 } ] } ] },
+    { "id": "artillery", "nameVi": "Pháo kích", "nameEn": "Artillery", "tipVi": "Quạt thổi rơi slime bám tường, rồi ném mèo phá băng", "tipEn": "Blow the wall slimes down with the Fan, then throw the cat at the ice", "minThreat": 1.3,
+      "parts": [ { "squad": [ { "enemy": "clinger", "count": 2 }, { "enemy": "icy", "count": 1 } ] } ] },
+    { "id": "alarm", "nameVi": "Báo động", "nameEn": "Alarm", "tipVi": "Hạ hẹn giờ trước khi nó gọi thêm; rê chuột tìm bóng ma, chặn trộm", "tipEn": "Beat the timer before it calls; point at the ghost; stop the thief", "minThreat": 1.5,
+      "parts": [ { "squad": [ { "enemy": "timer", "count": 1 }, { "enemy": "thief", "count": 1 }, { "enemy": "phantom", "count": 1 } ] } ] }
   ],
 
   // Waves in order; each wave's groups spawn in order. A group is "enemy" × "count", or "pick":
@@ -1013,26 +1028,26 @@
             "goalEn": "Spitters leave speed puddles, spring slimes lie in wait, fusing swarms merge into a giant. This stage lends the Fan.",
             "tipVi": "Bạn sẽ học: Quạt (click một chỗ: cột gió giữ chân slime, làm khô vũng, thổi rơi slime bay); né vòng vàng của slime lò xo (nhấc mèo ra khi nó nén) hoặc đánh 2 đòn cho nó bẹp; hạ slime phun đứng xa trước; giữ chân bầy hợp thể trước khi thanh nhập đầy. Từ chương này slime rơi cá và bình: click để nhặt.",
             "tipEn": "You learn: the Fan (click a spot: its column holds slimes, dries puddles, blows flyers down); to dodge a spring slime's gold ring (lift the cat while it squeezes) or flatten it with two hits; to take the far spitter first; to stop a fusing swarm before its bar fills. From this chapter slimes drop fish and potions: click to pick them up.",
-            "objective": "clear", "upgrades": true, "maxAlive": 5, "threat": 1.9, "eliteChance": 0.15, "maxMalware": 4, "newAppsFrom": 1, "rulesVersion": 2,
+            "objective": "clear", "upgrades": true, "maxAlive": 5, "threat": 1.9, "eliteChance": 0.15, "maxMalware": 4, "newAppsFrom": 1, "rulesVersion": 3,
             "unlocksSkill": "fan", "suggestSkills": [ "fan", "push", "bomb" ],
             "waves": [
               { "groups": [ { "enemy": "slime", "count": 2 }, { "enemy": "spitter", "count": 1 } ] },
               { "groups": [ { "enemy": "springer", "count": 1 }, { "enemy": "slime", "count": 1 }, { "enemy": "runner", "count": 1 }, { "enemy": "spitter", "count": 1 } ] },
-              { "groups": [ { "enemy": "fuser", "count": 3 }, { "pick": { "slime": 1, "runner": 1 }, "count": 2 } ] }
+              { "groups": [ { "enemy": "fuser", "count": 3 }, { "formation": { "trampoline": 1 } } ] }
             ]
           },
           {
             "id": "c2_ghost_folder", "nameVi": "Thư mục ma", "nameEn": "Ghost folder",
-            "goalVi": "Slime bóng ma lúc ẩn lúc hiện, slime ảo ảnh có bản giả, nhạc trưởng gõ nhịp cho cả đội, cờ hiệu tăng tốc đồng đội. Màn này cho mượn Đèn laser.",
-            "goalEn": "Ghost slimes fade in and out, mirage slimes bring fakes, a drummer keeps the band in time, a flag speeds friends up. This stage lends the Laser.",
-            "tipVi": "Bạn sẽ học: rê chuột lên slime bóng ma để nó hiện ra (đang ẩn thì không đánh trúng); rê chuột tìm bản thật của slime ảo ảnh (bản thật có bóng); Đèn laser dụ slime ra khỏi vùng cờ và soi lộ cả hai; Đẩy nhạc trưởng trước nhịp 4 để cả đội lệch nhịp; hạ slime cờ hiệu thì cả đội hoảng.",
-            "tipEn": "You learn: to point at a ghost slime so it shows (a hidden one cannot be hit); to point at a mirage to find the real one (it has a shadow); the Laser pulls slimes out of the flag's ring and reveals both; to Push the drummer before beat 4 so the band falls out of time; beating the flag slime scares the whole band.",
-            "objective": "clear", "upgrades": true, "maxAlive": 5, "threat": 2.3, "eliteChance": 0.2, "maxMalware": 4, "newAppsFrom": 1, "rulesVersion": 2,
+            "goalVi": "Slime bóng ma lúc ẩn lúc hiện, slime ảo ảnh có bản giả, nhạc trưởng đánh trống lớn, cờ hiệu cắm cờ che chở đồng đội. Màn này cho mượn Đèn laser.",
+            "goalEn": "Ghost slimes fade in and out, mirage slimes bring fakes, a drummer beats a big drum, a flag slime plants a flag that guards friends. This stage lends the Laser.",
+            "tipVi": "Bạn sẽ học: rê chuột lên slime bóng ma để nó hiện ra (đang ẩn thì không đánh trúng); rê chuột tìm bản thật của slime ảo ảnh (bản thật có bóng); Đèn laser dụ slime ra khỏi vùng cờ và soi lộ cả hai; nhấc mèo đúng nhịp cuối để né trống lớn, đánh hoặc Đẩy nhạc trưởng thì nó đếm lại; đánh đổ cờ thì cả đội hoảng.",
+            "tipEn": "You learn: to point at a ghost slime so it shows (a hidden one cannot be hit); to point at a mirage to find the real one (it has a shadow); the Laser pulls slimes out of the flag's ring and reveals both; to lift the cat on the last beat to dodge the big drum, and to hit or Push the drummer to reset its count; knocking the flag down scares the whole band.",
+            "objective": "clear", "upgrades": true, "maxAlive": 5, "threat": 2.2, "eliteChance": 0.2, "maxMalware": 4, "newAppsFrom": 1, "rulesVersion": 3,
             "unlocksSkill": "laser", "suggestSkills": [ "laser", "push", "shield" ],
             "waves": [
               { "groups": [ { "enemy": "phantom", "count": 1 }, { "enemy": "slime", "count": 2 }, { "enemy": "runner", "count": 1 } ] },
               { "groups": [ { "enemy": "mirage", "count": 1 }, { "enemy": "drummer", "count": 1 }, { "enemy": "slime", "count": 2 }, { "enemy": "runner", "count": 1 } ] },
-              { "groups": [ { "enemy": "flagbearer", "count": 1 }, { "enemy": "phantom", "count": 1 }, { "enemy": "runner", "count": 2 }, { "enemy": "slime", "count": 2 } ] }
+              { "groups": [ { "enemy": "flagbearer", "count": 1 }, { "enemy": "phantom", "count": 1 }, { "formation": { "fortress": 1 } }, { "enemy": "runner", "count": 1 } ] }
             ]
           },
           {
@@ -1058,11 +1073,11 @@
             "goalEn": "Ice slimes, hedgehogs, splitting slimes and chain slimes; at the end the Slime Mother lays fusing swarms. This stage lends the Hot water spray.",
             "tipVi": "Bạn sẽ học: Bình xịt nước nóng (click một slime: bình tự xịt, slime ướt chậm lại, băng tan, gai nhím cụp); ném mèo xuyên slime băng thật mạnh để vỡ vỏ; đánh slime nhím lúc gai nằm; cắt dây slime xích (kéo mèo xuyên dây) vì nó gánh sát thương cho đồng đội; hạ thảo dược trước để hai nửa slime tách đôi không nhập lại; hạ Slime khổng lồ trước khi nó về bú cho Slime Mẹ.",
             "tipEn": "You learn: the Hot water spray (click a slime: wet slimes slow, ice melts, quills drop); to throw the cat hard through an ice slime to crack its shell; to hit a hedgehog while its quills are down; to cut a chain slime's rope (drag the cat through it): it takes hits for a friend; to beat the herb slime first so split halves cannot rejoin; to beat a giant before it feeds the Mother.",
-            "objective": "clear", "upgrades": true, "maxAlive": 6, "threat": 1.95, "eliteChance": 0.2, "maxMalware": 4, "newAppsFrom": 1, "rulesVersion": 2,
+            "objective": "clear", "upgrades": true, "maxAlive": 6, "threat": 1.95, "eliteChance": 0.2, "maxMalware": 4, "newAppsFrom": 1, "rulesVersion": 3,
             "unlocksSkill": "spray", "suggestSkills": [ "spray", "bomb", "push" ],
             "waves": [
               { "groups": [ { "enemy": "hedgehog", "count": 1 }, { "enemy": "slime", "count": 2 } ] },
-              { "groups": [ { "enemy": "icy", "count": 1 }, { "enemy": "chain", "count": 1 }, { "enemy": "slime", "count": 1 }, { "enemy": "runner", "count": 1 } ] },
+              { "groups": [ { "formation": { "artillery": 1 } }, { "enemy": "chain", "count": 1 }, { "enemy": "slime", "count": 1 } ] },
               { "budget": 8, "groups": [ { "squad": [ { "enemy": "splitter", "count": 1 }, { "enemy": "mender", "count": 1 }, { "enemy": "slime", "count": 1 } ] } ] },
               { "groups": [ { "enemy": "mother", "count": 1 } ] }
             ]
@@ -1073,12 +1088,12 @@
             "goalEn": "Chapter 2's last battle: bubble and wall slimes, then the Zip Slime rolls, unpacks squads tied to it and packs into a shield. This stage lends the Scissors.",
             "tipVi": "Bạn sẽ học: Kéo cắt (click một chỗ: cắt ngang một dải, đứt dây nhầy, vỡ bong bóng); click 3 lần chọc vỡ bong bóng; ném mèo vào slime bám tường hoặc Đẩy cho nó rơi; nhấc mèo khỏi dải đỏ khi Slime Nén sắp lăn; cắt dây nối quân về Slime Nén để phá khiên; phá các mảnh file quanh nó ở pha cuối.",
             "tipEn": "You learn: the Scissors (click a spot: they cut a band across, ropes and bubbles too); to pop a bubble with three clicks; to throw the cat at a wall slime or Push it down; to lift the cat off the red strip before the Zip Slime rolls; to cut the ropes tying its squads to it to break its shield; to break the file shards around it at the end.",
-            "objective": "clear", "upgrades": true, "maxAlive": 6, "threat": 1.4, "eliteChance": 0.25, "maxMalware": 4, "newAppsFrom": 1, "rulesVersion": 2,
+            "objective": "clear", "upgrades": true, "maxAlive": 6, "threat": 1.4, "eliteChance": 0.25, "maxMalware": 4, "newAppsFrom": 1, "rulesVersion": 3,
             "unlocksSkill": "scissors", "suggestSkills": [ "scissors", "shield", "push" ],
             "keepsake": { "id": "zip_plush", "kind": "plush", "nameVi": "Thú bông Slime Nén", "nameEn": "Zip Slime plush" },
             "waves": [
               { "groups": [ { "enemy": "bubble", "count": 1 }, { "enemy": "slime", "count": 2 }, { "enemy": "rock", "count": 1 } ] },
-              { "groups": [ { "enemy": "clinger", "count": 1 }, { "enemy": "chain", "count": 1 }, { "enemy": "rock", "count": 1 }, { "enemy": "runner", "count": 1 } ] },
+              { "groups": [ { "formation": { "artillery": 1 } }, { "enemy": "chain", "count": 1 }, { "enemy": "rock", "count": 1 } ] },
               { "groups": [ { "enemy": "zip", "count": 1 } ] }
             ]
           }
@@ -1116,7 +1131,7 @@
   // older kinds: at most two kinds of link and two the cursor beats); "mutations": after each cleared boss
   // wave pick one of "offer" odd rules, held until the next boss wave is cleared, then its reward.
   "endless": {
-    "id": "endless", "rulesVersion": 8, "unlockAfter": "c1_slime_king", "upgradeEvery": 2, "bossEvery": 10, "boss": "king_c1",
+    "id": "endless", "rulesVersion": 9, "unlockAfter": "c1_slime_king", "upgradeEvery": 2, "bossEvery": 10, "boss": "king_c1",
     "bosses": [ "king_c1", "zip", "mutant_king" ],
     "lateBoss": "king", "lateBossFrom": 40, "bossBonusPick": true, "allSynergiesAt": 48,
     "eliteChancePerWave": 0.007, "eliteChanceMax": 0.45, "moreElitesEvery": 20, "moreElitesMax": 2,
@@ -1127,6 +1142,8 @@
       { "enemy": "mender", "weight": 15, "from": 5 },
       { "enemy": "rock", "weight": 15, "from": 7 }
     ],
+    // 2026-11-04: from formationsFrom, every formationEvery-th wave one of these comes as one of the wave's enemies.
+    "formationsFrom": 8, "formationEvery": 3, "formations": { "fortress": 2, "trampoline": 2, "artillery": 2, "drums": 1 },
     "erasFrom": 15,
     // 1.5 M26 (rules 8): from this wave the Screenshot icon and the newer malware (captcha, low battery, frozen cursor).
     "newAppsFrom": 15,
@@ -1370,7 +1387,7 @@
             "basket": { "fish": 5, "every": 3, "at": 0.5 },
             "waves": [
               { "groups": [ { "pick": { "slime": 2, "runner": 1 }, "count": 3 } ] },
-              { "groups": [ { "enemy": "thief", "count": 1 }, { "pick": { "slime": 1, "runner": 1 }, "count": 3 } ] }
+              { "groups": [ { "formation": { "alarm": 1 } }, { "pick": { "slime": 1, "runner": 1 }, "count": 2 } ] }
             ]
           },
           {
@@ -1416,7 +1433,7 @@
             "upgrades": true, "maxAlive": 5, "threat": 1.6, "maxMalware": 4, "newAppsFrom": 1,
             "waves": [
               { "groups": [ { "enemy": "bubble", "count": 1 }, { "enemy": "rock", "count": 1 }, { "enemy": "slime", "count": 1 } ] },
-              { "groups": [ { "enemy": "clinger", "count": 1 }, { "pick": { "slime": 1, "runner": 1 }, "count": 3 } ] }
+              { "groups": [ { "formation": { "artillery": 1 } }, { "pick": { "slime": 1, "runner": 1 }, "count": 2 } ] }
             ]
           }
         ],
@@ -1437,7 +1454,7 @@
             "basket": { "fish": 6, "every": 3, "at": 0.5 },
             "waves": [
               { "groups": [ { "enemy": "thief", "count": 1 }, { "pick": { "slime": 2, "runner": 1 }, "count": 3 } ] },
-              { "groups": [ { "enemy": "bomber", "count": 1 }, { "enemy": "burrower", "count": 1 }, { "enemy": "runner", "count": 2 } ] },
+              { "groups": [ { "formation": { "kamikaze": 1 } }, { "enemy": "burrower", "count": 1 } ] },
               { "groups": [ { "enemy": "flyer", "count": 1 }, { "pick": { "slime": 1, "runner": 1 }, "count": 3 } ] }
             ]
           },

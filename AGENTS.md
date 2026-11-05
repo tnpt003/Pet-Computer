@@ -5,7 +5,7 @@ C# / WPF (.NET 10) + Python AI service. Nhân vật: mèo hoạt hình.
 Theme chính thức: **Cozy Desktop Adventure — Một thế giới nhỏ trên bàn làm việc**. Khi sửa UI/art/motion/sound, đọc [docs/DESIGN-SYSTEM.md](docs/DESIGN-SYSTEM.md), tái dùng PetUi/style chung; không thay gameplay chỉ để hợp theme.
 
 ## QUY TRÌNH BẮT BUỘC CHO MỖI YÊU CẦU (tự động, không cần tôi nhắc)
-1. ĐỌC: PROGRESS.md, docs và code liên quan. Đối chiếu với code thật vì ghi chú có thể đã cũ.
+1. ĐỌC: hai mục "Trạng thái hiện tại" và "Đang dở và việc tiếp theo" của PROGRESS.md, docs và code liên quan. Đối chiếu với code thật vì ghi chú có thể đã cũ.
 2. GIẢI THÍCH: nêu ngắn gọn nguyên nhân/cách làm, danh sách file sẽ đổi, rủi ro đến hành vi hiện có. KHÔNG code, KHÔNG sửa file ở bước này.
 3. CHỜ: dừng lại, hỏi tôi xác nhận. Chỉ code khi tôi trả lời "ok", "làm đi" hoặc tương tự. Nếu tôi chỉnh kế hoạch thì giải thích lại.
 4. LÀM: thay đổi nhỏ, đúng phạm vi, giữ rõ trách nhiệm C#/Python.
@@ -14,6 +14,9 @@ Theme chính thức: **Cozy Desktop Adventure — Một thế giới nhỏ trên
 7. BÁO CÁO: đã đổi gì, kết quả test, điểm tôi cần test thủ công.
 Ngoại lệ: nếu tôi nói "làm luôn" hoặc "không cần hỏi" thì bỏ qua bước 2-3 cho yêu cầu đó.
 Nếu hội thoại quá dài và bạn bắt đầu quên hoặc lặp lỗi, hãy tự đề nghị tôi mở phiên mới sau khi cập nhật PROGRESS.md.
+
+## Đọc tiết kiệm
+Không đọc cả file lớn (docs/BATTLE-DATA.md, docs/MANUAL-TEST.md, PetBattleData.cs, Issue_fixxed.md, CHANGELOG.md, docs/archive/); dùng graphify hoặc tìm kiếm rồi đọc đúng đoạn. Log test/publish chỉ đọc dòng tổng kết và FAIL. Mỗi mốc nên là một phiên chat. Quy trình và tiêu chuẩn test không giảm vì việc này.
 
 ## Quy tắc commit và publish — người dùng cập nhật 2026-10-20
 
@@ -43,21 +46,20 @@ Ngoại lệ nào có link tới docs/APPROVED-EXCEPTIONS.md: trước khi sửa
 - Dizzy: chỉ khi drag nhanh/mạnh vượt ngưỡng cao; swing nhẹ không gây Dizzy; có hysteresis.
 - Emotion (Happy, Angry, Sad, Surprised, Sleepy, Dizzy): có ưu tiên/cooldown, không chồng trạng thái xung đột, không phá dragging.
 - Sleep: dùng tư thế ngủ; khóa mọi hành vi/emotion tự động; cursor, AI, background không được đánh thức; tự thức sau SleepDurationSeconds (~10s); waking ~1.2s rồi Idle; left-click thức ngay và vẫn drag được; right-click thức ngay và mở menu; Pause đóng băng cả sleep timer; wake cooldown ~30s.
-- Ngoại lệ đã duyệt (2026-10-13): "away nap" khi người dùng không chạm máy ≥5 phút: giữ sleep timer, thức khi có input hệ thống trở lại (waking 1.2s + cooldown 30s). Ngủ thường giữ nguyên quy tắc trên.
-- Ngoại lệ đã duyệt (2026-10-13): menu "Làm ngay" cho động tác chạy ngay (bỏ qua cooldown/bond/xác suất/Quiet, không cắt drag/bay/sleep lock/waking); công tắc "Tự điều khiển cảm xúc" (chỉ trong phiên) tắt cảm xúc tự động + cooldown, giữ cảm xúc người dùng chọn, báo Python là Neutral. Không có Chóng mặt/Buồn ngủ bấm tay.
-- Ngoại lệ đã duyệt (2026-10-15): Quiet không chặn chơi bóng/đèn laser do người dùng bật (Quiet chỉ chặn hành vi tự động); bật Quiet giữa chừng vẫn dừng trò chơi; app fullscreen vẫn chặn. Cooldown cho ăn 20s và cách mờ menu khi mèo chưa rảnh giữ nguyên.
-- Ngoại lệ đã duyệt (2026-10-15): "đi trên cửa sổ" (mặc định bật, tắt trong Cài đặt → Mèo): mép trên cửa sổ app nhìn thấy được là mặt đất; mèo đáp khi rơi từ trên xuống, đi theo khi cửa sổ bị kéo, tự nhảy (gờ thấp) hoặc trèo cạnh (cửa sổ cao chạm sàn), rơi khi cửa sổ mất. Chỉ đọc hình chữ nhật/kiểu/z-order cửa sổ, không đọc nội dung. Ngủ trên gờ mà gờ mất thì rơi trong tư thế ngủ và vẫn ngủ. Physics vẫn ở C#; Python chỉ thêm "Climbing" vào BUSY_STATES.
-- Ngoại lệ đã duyệt (2026-10-16, bổ sung 23–24/10, 26/10): Battle Mode (tùy chọn, mặc định tắt, không tự bật lại): trong trận C# (PetBattle.cs) sở hữu hành vi/di chuyển của mèo, chặn hành vi/cảm xúc tự động, ngủ, away nap, AI, đồ chơi, gờ cửa sổ; drag/throw giữ nguyên, mèo không nhận sát thương khi đang cầm/bay; mèo đang choáng không nhấc được, lắc trong trận không gây Dizzy; trận dừng (Pause/menu/chọn thẻ/túi đồ) đóng băng cả mèo và không nhấc được; (1.5) mèo đang cầm chỉ đánh được quái trên không (slime bay), đạn dính của slime bay (bay khắp màn hình) gây sát thương cả khi mèo đang cầm, mèo đang bay không tự đánh, cú ném chỉ tác động quái có tương tác ném riêng; con trỏ tương tác với slime trong khung trận; Python không tham gia combat. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Battle Mode.
-- Ngoại lệ đã duyệt (2026-10-22): kệ kỷ vật là đồ vật có physics (C#, PetKeepsakeMotion.cs + PetWindow.Keepsake.cs): cầm/lắc/ném/nảy; rơi hoặc ném trúng mèo thì choáng Bonk ~2,2 s (KHÔNG phải Dizzy; mèo ngủ thì bị đánh thức như click rồi choáng); đứng trên gờ cửa sổ; chỉ đệm slime có ngủ/nảy bạt nhún; mèo tự đẩy kệ là hành vi tự động; Pause đóng băng kệ. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Kệ kỷ vật có physics.
+- Ngoại lệ đã duyệt: "away nap" sau ≥5 phút không chạm máy. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Hành vi mèo.
+- Ngoại lệ đã duyệt: menu "Làm ngay" và công tắc "Tự điều khiển cảm xúc". Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Hành vi mèo.
+- Ngoại lệ đã duyệt: Quiet không chặn bóng/laser do người dùng bật. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Hành vi mèo.
+- Ngoại lệ đã duyệt: "đi trên cửa sổ" (chỉ đọc hình chữ nhật/kiểu/z-order cửa sổ, không đọc nội dung; physics ở C#). Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Hành vi mèo.
+- Ngoại lệ đã duyệt: Battle Mode (tùy chọn, mặc định tắt, không tự bật lại): trong trận C# sở hữu mèo, Python không tham gia; có luật riêng về cầm/ném/sát thương/choáng/Pause. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Battle Mode.
+- Ngoại lệ đã duyệt: kệ kỷ vật có physics; rơi/ném trúng mèo gây choáng Bonk, KHÔNG phải Dizzy. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Kệ kỷ vật có physics.
 - Âm thanh: giữ cue phong cách hoạt hình (assets CC0 đã xử lý, không thay bằng beep hay tiếng mèo thật); auto sound có cooldown, không overlap; preview chạy dù auto bị mute, volume 0 thì im; không sửa trực tiếp buffer dùng chung.
 - DPI/monitor: PerMonitorV2; đổi DPI phải đồng bộ position/velocity/drag offset và bỏ throw samples cũ; vị trí lưu theo monitor-relative, fallback primary screen.
 - FPS: active ~60, sleeping ~30, paused ~10.
 - Single-instance: mở EXE lần hai sẽ mở controls của mèo đang chạy.
-- Ngoại lệ đã duyệt (2026-10-23, bổ sung 24/10): app trong trận (không trận tự do): icon app GIẢ tự vẽ (không dùng tên/logo/màu app thật, không đọc hay nhận diện app thật), mỗi icon một cửa sổ nhỏ topmost; virus và app độc (vòng loading, Cập nhật bắt buộc, virus.exe; từ 1.5 M26 ở chương 2/tuyến 2/Vô tận: icon Chụp Màn Hình, Captcha là cửa sổ đè lên mèo, Pin yếu, Con trỏ đơ); tắt được bằng ô "App trong trận"; logic C# PetBattle.Apps.cs, số liệu battle.json `apps`; Python không tham gia. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → App trong trận.
-- Ngoại lệ đã duyệt (2026-10-24): "Hướng dẫn phiêu lưu" (chương 1 Phiêu lưu, từ 1.5 cả chương 2; C# PetWindow.BattleGuide.cs): trận ĐỨNG HÌNH nhưng KHÔNG phải Pause, vẫn nhấc/kéo mèo, bấm kỹ năng/icon/app độc được; Pause/menu/fullscreen ẩn hướng dẫn. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Hướng dẫn phiêu lưu.
+- Ngoại lệ đã duyệt: app trong trận dùng icon GIẢ tự vẽ, không dùng tên/logo/màu app thật, không đọc hay nhận diện app thật. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → App trong trận.
+- Ngoại lệ đã duyệt: "Hướng dẫn phiêu lưu" đứng hình trận nhưng KHÔNG phải Pause. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Hướng dẫn phiêu lưu.
 
-- Bổ sung đã duyệt (2026-10-30): bộ app hỗ trợ tối đa 5, giữ cả chuyến; slime lui/hội tụ được xuyên hàng, bóng ma ẩn hoàn toàn và khổng lồ có 3 lớp chắn hồi 10 s. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Sửa sau chơi thử 1.5.
-- Bổ sung đã duyệt (2026-10-31): slime lò xo bật trúng thì đẩy mèo trượt ra ~80 DIPs (trận điều khiển vị trí, không phải cú ném physics, không Dizzy); slime bám tường leo theo chiều cao màn hình trong cửa sổ topmost riêng như slime bay. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Battle Mode.
+- Bổ sung đã duyệt: sửa sau chơi thử 1.5 (bộ app tối đa 5, slime lui xuyên hàng, bóng ma, khổng lồ). Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Sửa sau chơi thử 1.5.
 
 ## File quan trọng
 README.md, docs/AI.md, docs/WINDOWS.md, src/DesktopPet/ (App.xaml.cs, PetWindow*.cs, PetModel.cs, PetRenderer.cs, PetPreferences.cs, PetSounds.cs, AI/), ai/, tests/DesktopPet.Tests/, tests/DesktopPet.UiChecks/, scripts/.

@@ -338,6 +338,7 @@ public sealed partial class PetWindow : Window
         Interact("drag_started");
         behavior.Reset();
         dragging = true;
+        dragStartedAt = Environment.TickCount64;
         var cursor = CursorPosition();
         dragOffset = new Point(cursor.X - pet.X, cursor.Y - pet.Y);
         pet.VX = pet.VY = 0;
@@ -374,6 +375,7 @@ public sealed partial class PetWindow : Window
         tracker.Add(clock.Elapsed.TotalSeconds, cursor.X, cursor.Y);
     }
 
+    private long dragStartedAt;
     private void EndDrag(bool throwPet)
     {
         if (pressPending)
@@ -385,6 +387,9 @@ public sealed partial class PetWindow : Window
             return; // A click never enters thrown physics.
         }
         if (!dragging) return;
+        // 2026-11-05: why the cat left the hand in a battle (the user lost it once; the log could not tell why).
+        if (battle is BattleSim fight)
+            System.Diagnostics.Trace.WriteLine($"Cat let go in battle: {(throwPet ? "mouse released" : "capture lost")}, button {Mouse.LeftButton}, captured by {Mouse.Captured?.GetType().Name ?? "none"}, held {(Environment.TickCount64 - dragStartedAt) / 1000.0:0.0} s, {fight.Alive} enemies, {(fight.Paused ? "paused" : "running")}.");
         Interact(throwPet ? "released" : "drag_cancelled");
         UpdateDrag();
         dragging = false; // Set before releasing capture; LostMouseCapture is synchronous.

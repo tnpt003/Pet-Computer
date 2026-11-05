@@ -5,6 +5,14 @@ Sổ ghi các lỗi đã sửa của Desktop Pet. Phần A: lỗi người dùng
 Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm lỗi mới: tạo mục số tiếp theo ở đầu phần A (hoặc một dòng ở phần B).
 
 # A. Lỗi người dùng phát hiện
+## #52 — Slime xích đứng xa 200; mèo tự rớt khỏi tay khi đánh slime bay (chưa rõ nguyên nhân) (2026-11-05, commit COMMIT)
+- **Yêu cầu (người dùng):** slime xích vẫn quá gần, cho cách xa bằng khoảng nối dây (200). Mèo tự rớt khi đang cầm đánh slime bay gần cuối trận, kiểm tra xem có phải lỗi.
+- **Slime xích:** `TetherPost` đặt ở `link.Range` tính từ tâm đồng minh, bỏ `TetherClear` của #50.
+- **Mèo rớt, đã kiểm tra:** không có luật trận nào thả mèo; log trận 21:38 và 21:39 không có lỗi; cửa sổ tạm đóng, bật, tắt dưới con trỏ không làm mất capture (không giữ chuột thật). `EndDrag` chỉ chạy khi nhả chuột, mất capture, Pause hoặc đặt lại. **Chưa tái hiện, chưa xác định nguyên nhân, chưa sửa.** Thêm dòng log "Cat let go in battle" (lý do, nút chuột, ai giữ capture, thời gian cầm, số quái) để lần sau biết.
+- **Cân bằng (mô phỏng, không phải chơi thật):** 150 dòng chương 2 đổi 4 số ván thắng, không dòng nào lệch từ 3 ván; Viễn chinh 3 dòng đổi; trung vị Vô tận hammer 27, yarn 23, glove 30 như trước. Bot không đo được việc mèo vượt qua đồng minh khi chơi thật.
+- **Kiểm chứng:** BattleLinkTests. Kết quả test: xem PROGRESS.md.
+- **Cần test tay:** docs/MANUAL-TEST.md, mục Góp ý sau chơi thử 05/11, đợt 2.
+
 ## #51 — Chụp Màn Hình chỉ làm đứng yên, không làm slime bay/bám tường rơi (2026-11-05, commit e59b1f0)
 - **Yêu cầu (người dùng):** app Chụp Màn Hình chỉ làm quái đứng yên, không choáng slime bay và slime bám tường khiến chúng rơi. Thay luật 04/11 (GOPY-C D10).
 - **Nguyên nhân:** `FreezeEnemies` gọi `KnockFromSky` với mọi quái, nên chúng choáng, treo giữa không trung trong lúc đứng hình rồi rơi.

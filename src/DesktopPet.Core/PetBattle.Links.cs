@@ -515,14 +515,13 @@ public sealed partial class BattleSim
     }
 
     // Where a tether holder keeps: just behind its ally, on the side away from the cat (null: no rope).
-    public const double TetherClear = 8;
     private double? TetherPost(Slime holder)
     {
         if (!Is(holder, EnemyLinks.Tether) || LinkPartner(holder) is not Slime ally) return null;
         int side = ally.X >= decisionCatX ? 1 : -1;
         // A second rope's holder keeps behind the first.
         double behind = TetherHolder(ally) is Slime first && first != holder ? first.Width + 6 : 0;
-        // Past a combo's splash round its ally (2026-11-05: its armour is not there to catch every swing).
-        return ally.X + side * (ally.Width / 2 + holder.Width / 2 + Settings.ComboSplashRadius + TetherClear + behind);
+        // As far off as its rope reaches when it ties on (2026-11-05, user: out of a splash round its ally).
+        return ally.X + side * (holder.Link!.Range + behind);
     }
 }

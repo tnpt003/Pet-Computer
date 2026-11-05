@@ -19,7 +19,7 @@ Cách đọc file này:
 - App trong trận vẫn là icon tự vẽ, không đọc app thật.
 - Mọi chữ mới có vi/en/ja. Icon và tranh mới theo docs/DESIGN-SYSTEM.md.
 - **Chương 1:** 5 màn, đợt quái, Hướng dẫn phiêu lưu và rulesVersion giống hệt 1.4.4; bộ kỹ năng luôn là 5 kỹ năng cũ; quái mới không vào chương 1.
-  - Các hệ dùng chung vẫn có mặt ở chương 1: Cuộn len, Găng đấm, Nộ (tự kích hoạt) và lượt mời thẻ (`utilityChance` 0,25 → 0,35, thêm 2 thẻ hiếm Cú đáp địa chấn, Ảo thuật). Mô phỏng chương 1 vì vậy có đổi, kỷ lục cũ vẫn dùng chung rulesVersion. Xem M30.
+  - Các hệ dùng chung vẫn có mặt ở chương 1: Cuộn len, Găng đấm, Nộ (tự kích hoạt) và lượt mời thẻ (`utilityChance` 0,25 → 0,35, thêm 2 thẻ hiếm Cú đáp địa chấn, Ảo thuật). Mô phỏng chương 1 vì vậy có đổi. Người dùng chốt 2026-11-05: **giữ nguyên rulesVersion chương 1**, kỷ lục cũ và mới dùng chung.
 
 ## Ngoại lệ Battle Mode của 1.5
 
@@ -213,10 +213,9 @@ Nhật ký chi tiết và kết quả test từng mốc: docs/archive/UPDATE-1.5
 
 1. Người dùng test tay theo docs/MANUAL-TEST.md → "Bản 1.5 — thứ tự test tay".
 2. Đo lại rồi quyết 5 đề xuất cân bằng và perf (docs/BALANCE-1.5.md, số đo có từ trước đợt B/C).
-3. Người dùng quyết: chương 1 giữ rulesVersion dù Nộ tự bật và lượt mời thẻ đã đổi, hay tăng để tách kỷ lục.
-4. Sửa chữ banner vòng nộ đầy: code còn "Bấm vào thanh" (`PetWindow.BattleFeedback.cs`), kèm en/ja.
-5. Mèo tự rớt khỏi tay khi đánh slime bay: chưa rõ nguyên nhân, chờ log "Cat let go in battle".
-6. Nâng `<Version>` lên 1.5.0, rà README và website, tag theo docs/RELEASE.md.
+3. Sửa chữ banner vòng nộ đầy: code còn "Bấm vào thanh" (`PetWindow.BattleFeedback.cs`), kèm en/ja.
+4. Mèo tự rớt khỏi tay khi đánh slime bay: chưa rõ nguyên nhân, chờ log "Cat let go in battle".
+5. Nâng `<Version>` lên 1.5.0, rà README và website, tag theo docs/RELEASE.md.
 
 rulesVersion hiện tại: chương 1 giữ như 1.4.4; chương 2 là 3, 4, 2, 3, 3; Vô tận 10; Viễn chinh tuyến 1 r8 (`keepRuns` 6, 7), Lối Bãi rác r3 (`keepRuns` 1, 2). Từ sau 1.5.0, đổi luật màn đã phát hành thì mới cần tăng để tách kỷ lục.
 

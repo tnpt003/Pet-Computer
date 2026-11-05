@@ -5,7 +5,7 @@ Sổ ghi các lỗi đã sửa của Desktop Pet. Phần A: lỗi người dùng
 Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm lỗi mới: tạo mục số tiếp theo ở đầu phần A (hoặc một dòng ở phần B).
 
 # A. Lỗi người dùng phát hiện
-## #47 — Slime cờ hiệu đặt cờ chồng nhau, không tận dụng được vùng cờ (2026-11-05, commit COMMIT_HASH)
+## #47 — Slime cờ hiệu đặt cờ chồng nhau, không tận dụng được vùng cờ (2026-11-05, commit dd24428)
 - **Triệu chứng (người dùng):** hai slime cờ hiệu có thể đặt cờ chồng lên nhau, hiệu ứng không được dùng hết.
 - **Nguyên nhân:** cắm ngay sau 1,5 s tại chỗ đứng, không xét cờ khác. Vòng không cộng dồn (`AuraCut` lấy `Math.Max`) nên cờ thứ hai gần như vô dụng; hai con lại xuất hiện cạnh cùng một đồng minh nên dễ trùng chỗ. Nặng hơn: 1,5 s chỉ đi ~45 DIP nên cờ thường nằm sau đội hình, quân rời vòng trước khi giao tranh.
 - **Sửa:** `PetBattle.Quills.cs`: chờ tuyến đầu tới gần mèo và nằm trong vòng (`plant.near` 300) hoặc tới `plant.by` 10 s; giữ cách cờ khác `plant.spacing` 1,5 vòng; chỗ đã có cờ thì đi tới chỗ trống che nhiều đồng minh chưa có vòng; luôn cắm được khi hết giờ. Banner giải thích cờ hiện cả lúc cắm vì cắm muộn hơn dễ không có quái mới xuất hiện sau đó.

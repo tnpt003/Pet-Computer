@@ -5,11 +5,11 @@ Sổ ghi các lỗi đã sửa của Desktop Pet. Phần A: lỗi người dùng
 Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm lỗi mới: tạo mục số tiếp theo ở đầu phần A (hoặc một dòng ở phần B).
 
 # A. Lỗi người dùng phát hiện
-## #51 — Chụp Màn Hình chỉ làm đứng yên, không làm slime bay/bám tường rơi (2026-11-05, commit COMMIT)
+## #51 — Chụp Màn Hình chỉ làm đứng yên, không làm slime bay/bám tường rơi (2026-11-05, commit e59b1f0)
 - **Yêu cầu (người dùng):** app Chụp Màn Hình chỉ làm quái đứng yên, không choáng slime bay và slime bám tường khiến chúng rơi. Thay luật 04/11 (GOPY-C D10).
 - **Nguyên nhân:** `FreezeEnemies` gọi `KnockFromSky` với mọi quái, nên chúng choáng, treo giữa không trung trong lúc đứng hình rồi rơi.
 - **Sửa:** bỏ lời gọi đó. Hàm `KnockFromSky` vẫn dùng cho đòn gây sát thương của app.
-- **Cân bằng (mô phỏng, không phải chơi thật):** xem kết quả trong PROGRESS.md; bot chỉ dùng app ở mức đơn giản.
+- **Cân bằng (mô phỏng, không phải chơi thật):** 150 dòng chương 2 đổi 11 số ván thắng, không dòng nào lệch từ 3 ván trở lên, không ngưỡng nào hỏng; trung vị Vô tận hammer 27, yarn 23, glove 30 như trước.
 - **Kiểm chứng:** BattleSkyTests, BattleWallTests. Kết quả test: xem PROGRESS.md.
 - **Cần test tay:** docs/MANUAL-TEST.md, mục Góp ý sau chơi thử 05/11, đợt 2.
 

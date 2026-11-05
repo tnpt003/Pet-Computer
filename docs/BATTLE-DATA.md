@@ -815,6 +815,8 @@ B1 của docs/UPDATE-1.5.md, trùm chương 2. Code: `src/DesktopPet.Core/PetBat
 
 ## Slime Mẹ và Vua Slime biến dị (boss `mother`: `brood`; boss `mutant_king`: `crownLinks`, `rain`) (bản 1.5, mốc M18, 2026-10-29)
 
+**Nâng cấp 05/11:** dữ liệu phát hành bật thêm `bossTactics` cho hai boss. Luật đang dùng, pha máu, giới hạn, mặc định/validation và cách đối phó ở [BOSS-TACTICS.md](BOSS-TACTICS.md). Mục M18 bên dưới mô tả nền cũ khi không bật `bossTactics`; với opt-in, `brood` tạo ổ ủ, `rain` do chuỗi chiêu điều phối (không dùng `rain.every` để tự gọi mưa). `BattlePuddle.OwnerId` tách nhầy theo chủ để vua không hút nhầy quái khác.
+
 B2 (boss phụ chương 2) và B3 (Vô tận, Viễn chinh) của docs/UPDATE-1.5.md. Code: `src/DesktopPet.Core/PetBattle.Brood.cs`, `src/DesktopPet.Core/PetBattle.Mutant.cs` (luật; móc vào hợp thể ở `PetBattle.Links.cs`, phong tinh anh ở `PetBattle.Boss.cs`, giọt nhầy ở `PetBattle.Spit.cs`); vẽ `src/DesktopPet/PetBattleView.Brood.cs`; test `tests/DesktopPet.Tests/BattleBossM18Tests.cs`, ảnh UiChecks (`BroodVisualChecks`: `enemy-brood.png`, `enemy-rain.png`). Các quái này đã vào nội dung thật (chương 2, tuyến Lối Bãi rác, Vô tận); tra chỗ dùng trong `campaign`, `expedition.routes`, `endless.eras` của battle.json. `binSpit: false`: Thùng Rác không nhả chúng. Muốn thử: chép `docs/examples/battle-m18.json` (Slime Mẹ) hoặc `docs/examples/battle-m18b.json` (Vua biến dị) thành `%LOCALAPPDATA%\DesktopPet\battle.json` rồi mở Trận tự chọn, bộ Mặc định. Hai boss không chung một trận được: hợp thể + dây xích + nhịp trống là 3 loại liên kết, vượt giới hạn 2.
 
 ```json

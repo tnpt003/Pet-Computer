@@ -737,12 +737,13 @@
       // fighting and, next to it, feeds it feedRate HP/s of its own HP until none is left (gone, not the cat's
       // kill). Bomb the clutch while it huddles, push or fan it apart, or beat the big one on its way back.
       "id": "mother", "nameVi": "Slime Mẹ", "nameEn": "Slime Mother",
-      "tipVi": "Đẻ bầy hợp thể; Slime khổng lồ do bầy nhập thành về bú máu cho mẹ. Tách bầy sớm và hạ con khổng lồ giữa đường.", "tipEn": "Lays fusing swarms; a giant they merge into goes back to feed her. Split the swarms early and beat the giant on the way.", "counters": ["fan", "bomb"],
+      "tipVi": "Phá ổ trước khi nở, chặn con về hồi máu. Cắt dây hồng, né bầy nhảy và cú lao; mẹ kiệt sức thì phản công.", "tipEn": "Break nests before they hatch; stop returning children. Cut pink cords, dodge brood jumps and charges, then strike during her recovery.", "counters": ["fan", "bomb", "scissors"],
       "maxHp": 650, "speed": 20, "damage": 26, "range": 110,
       "windup": 1.3, "attackCooldown": 2.8, "recover": 0.7,
       "scale": 2, "color": "#F2A3C7", "angryColor": "#E86A6A", "marks": "mother", "binSpit": false,
       "boss": true, "slam": true, "slamDamage": 18, "pushFactor": 0.35, "stunFactor": 0.4,
       "enragedSpeed": 28, "enragedWindup": 0.9, "summonCap": 6,
+      "bossTactics": { "every": 5, "warning": 1.1, "opening": 3.5, "nestHp": 80, "incubation": 2.5 },
       "brood": { "enemy": "fuser", "count": 3, "every": 10, "enragedEvery": 6.5, "warning": 0.6, "feedRate": 20 },
       "phases": [ { "at": 0.3, "enrage": true } ]
     },
@@ -756,7 +757,7 @@
       // it), each ring on the floor `warning` s first: a cat on the floor in `radius` takes `damage` (scaled
       // as its hits, no stun); a puddle stays puddleSeconds s. Lift the cat or use the Bubble shield.
       "id": "mutant_king", "nameVi": "Vua Slime biến dị", "nameEn": "Mutant Slime King",
-      "tipVi": "Bật khiên, phong tinh anh rồi nối xích hoặc trống, mưa nhầy rơi quanh mèo. Nhấc mèo khỏi vòng cam, cắt dây xích.", "tipEn": "Shields itself, crowns elites tied by chains or drums, and rains slime around the cat. Lift the cat off the orange rings; cut the chains.", "counters": ["scissors", "push", "shield"],
+      "tipVi": "Né tay quét, vòng nổ, mưa hai nhịp và sóng sàn. Cắt dòng vàng ngăn hồi giáp; vua quá tải thì đánh mạnh. Pha khiên phải hạ quân.", "tipEn": "Dodge arm sweeps, burst rings, two-beat rain and floor waves. Cut golden streams to stop armor; strike during overload. Defeat helpers in shield phases.", "counters": ["scissors", "push", "shield"],
       "maxHp": 1000, "speed": 24, "damage": 32, "range": 110,
       "windup": 1.2, "attackCooldown": 2.6, "recover": 0.7,
       "scale": 2, "color": "#7FBF5A", "angryColor": "#E86A6A", "marks": "mutant", "binSpit": false,
@@ -768,6 +769,7 @@
         { "kind": "tether", "range": 220, "share": 0.5, "breakStun": 1, "relink": 6, "cutSpeed": 300 },
         { "kind": "rhythm", "range": 220, "beat": 0.8, "beats": 4 }
       ],
+      "bossTactics": { "every": 5, "warning": 1.1, "opening": 3.5 },
       "rain": { "every": 12, "drops": 4, "spacing": 90, "warning": 1, "radius": 32, "damage": 14, "height": 150, "puddleSeconds": 5 },
       "phases": [
         { "at": 0.75, "shield": true, "summons": [ { "enemy": "slime", "count": 1 }, { "enemy": "runner", "count": 1 }, { "enemy": "spitter", "count": 1 } ] },
@@ -1078,7 +1080,7 @@
             "goalEn": "Ice slimes, hedgehogs, splitting slimes and chain slimes; at the end the Slime Mother lays fusing swarms. This stage lends the Hot water spray.",
             "tipVi": "Bạn sẽ học: Bình xịt nước nóng (click một slime: bình tự xịt, slime ướt chậm lại, băng tan, gai nhím cụp); ném mèo xuyên slime băng thật mạnh để vỡ vỏ; đánh slime nhím lúc gai nằm; cắt dây slime xích (kéo mèo xuyên dây) vì nó gánh sát thương cho đồng đội; hạ thảo dược trước để hai nửa slime tách đôi không nhập lại; hạ Slime khổng lồ trước khi nó về bú cho Slime Mẹ.",
             "tipEn": "You learn: the Hot water spray (click a slime: wet slimes slow, ice melts, quills drop); to throw the cat hard through an ice slime to crack its shell; to hit a hedgehog while its quills are down; to cut a chain slime's rope (drag the cat through it): it takes hits for a friend; to beat the herb slime first so split halves cannot rejoin; to beat a giant before it feeds the Mother.",
-            "objective": "clear", "upgrades": true, "maxAlive": 6, "threat": 1.95, "eliteChance": 0.2, "maxMalware": 4, "newAppsFrom": 1, "rulesVersion": 3,
+            "objective": "clear", "upgrades": true, "maxAlive": 6, "threat": 1.95, "eliteChance": 0.2, "maxMalware": 4, "newAppsFrom": 1, "rulesVersion": 4,
             "unlocksSkill": "spray", "suggestSkills": [ "spray", "bomb", "push" ],
             "waves": [
               { "groups": [ { "enemy": "hedgehog", "count": 1 }, { "enemy": "slime", "count": 2 } ] },
@@ -1136,7 +1138,7 @@
   // older kinds: at most two kinds of link and two the cursor beats); "mutations": after each cleared boss
   // wave pick one of "offer" odd rules, held until the next boss wave is cleared, then its reward.
   "endless": {
-    "id": "endless", "rulesVersion": 10, "unlockAfter": "c1_slime_king", "upgradeEvery": 2, "bossEvery": 10, "boss": "king_c1",
+    "id": "endless", "rulesVersion": 11, "unlockAfter": "c1_slime_king", "upgradeEvery": 2, "bossEvery": 10, "boss": "king_c1",
     "bosses": [ "king_c1", "zip", "mutant_king" ],
     "lateBoss": "king", "lateBossFrom": 40, "bossBonusPick": true, "allSynergiesAt": 48,
     "eliteChancePerWave": 0.007, "eliteChanceMax": 0.45, "moreElitesEvery": 20, "moreElitesMax": 2,
@@ -1350,7 +1352,7 @@
     "routes": [
       {
         "id": "dump_trail", "nameVi": "Lối Bãi rác", "nameEn": "The Dump Trail",
-        "rulesVersion": 3, "keepRuns": [ 1, 2 ], "unlockAfter": "c2_zip_slime", "scene": "dump",
+        "rulesVersion": 4, "keepRuns": [ 1, 2, 3 ], "unlockAfter": "c2_zip_slime", "scene": "dump",
         "kindGacha": { "steps": 6, "minLanes": 2, "maxLanes": 3, "weights": { "fight": 45, "event": 18, "elite": 20, "rest": 12, "shop": 14 }, "rerollCost": 0.08 },
         "zones": [
           { "id": "swamp", "nameVi": "Đầm nhầy", "nameEn": "Slime swamp", "steps": 2, "fights": [ "y_puddles", "y_ice_pond", "y_split_bog" ], "elites": [ "y_mother_nest" ] },

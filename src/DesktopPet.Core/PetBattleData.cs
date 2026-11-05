@@ -207,6 +207,7 @@ public sealed class EnemyType
     public BroodSpec? Brood { get; init; }
     public LinkSpec[]? CrownLinks { get; init; }
     public RainSpec? Rain { get; init; }
+    public BossTacticsSpec? BossTactics { get; init; }
     // An infected bin may spit one of this kind (with an elite affix). False keeps a kind out of battles
     // that never list it (the 1.5 enemies until their chapter brings them in).
     public bool BinSpit { get; init; } = true;
@@ -539,6 +540,15 @@ public sealed class BroodSpec
 // apart on both sides in turn. A cat on the floor within Radius takes Damage (scaled like its other hits,
 // no stun); lifting it or the Bubble shield dodges them. PuddleSeconds: a puddle stays that long where each
 // lands (a spitter's, with SpitSpec's default boost; 0: none).
+public sealed class BossTacticsSpec
+{
+    public double Every { get; init; } = 5;
+    public double Warning { get; init; } = 1.1;
+    public double Opening { get; init; } = 3.5;
+    public double NestHp { get; init; } = 80;
+    public double Incubation { get; init; } = 2.5;
+}
+
 public sealed class RainSpec
 {
     public double Every { get; init; } = 12;
@@ -1737,6 +1747,15 @@ public static class BattleData
                 if (roll.MinRange >= roll.Range) throw new InvalidDataException(at + ".roll.minRange must be below its range");
                 Within(roll.Windup, 0.3, 5, at + ".roll.windup"); Within(roll.Speed, 50, 1500, at + ".roll.speed");
                 Within(roll.Distance, 50, 1500, at + ".roll.distance"); Within(roll.Damage, 0, 1000, at + ".roll.damage"); Within(roll.Stun, 0, 5, at + ".roll.stun");
+            }
+            if (e.BossTactics is BossTacticsSpec tactics)
+            {
+                if (!e.Boss || (e.Brood == null) == (e.Rain == null)) throw new InvalidDataException(at + ".bossTactics needs exactly one of brood/rain on a boss");
+                Within(tactics.Every, 2, 30, at + ".bossTactics.every");
+                Within(tactics.Warning, 0.7, 3, at + ".bossTactics.warning");
+                Within(tactics.Opening, 2, 8, at + ".bossTactics.opening");
+                Within(tactics.NestHp, 10, 200, at + ".bossTactics.nestHp");
+                Within(tactics.Incubation, 2, 10, at + ".bossTactics.incubation");
             }
             // 1.5 M18: a brood, crown links, a goo rain (bosses only).
             if ((e.Brood != null || e.CrownLinks != null || e.Rain != null) && !e.Boss) throw new InvalidDataException(at + ".brood/crownLinks/rain are for a boss");

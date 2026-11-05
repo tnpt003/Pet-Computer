@@ -294,8 +294,8 @@ public sealed partial class PetWindow
             () => L("Slime tách đôi bị hạ thì vỡ thành 2 con nhỏ; slime thảo dược hồi cho chúng thì chúng nhập lại. Hạ thảo dược trước.",
                     "A splitting slime breaks into two halves when beaten; healed by a herb slime they join up again. Take the herb slime first.")),
         Meet(GuideMother, StageSlimeSwamp, s => s.Type.Brood != null,
-            () => L("Slime Mẹ, boss phụ: đẻ bầy hợp thể. Slime khổng lồ do bầy nhập thành sẽ về bú máu cho mẹ: hạ nó giữa đường.",
-                    "The Slime Mother, a side boss, lays fusing swarms. A giant they merge into goes back to feed her HP: beat it on the way.")),
+            () => L("Slime Mẹ ủ trứng: phá ổ trước khi nở. Chặn con quay về hồi máu; cắt dây hồng bằng Kéo hoặc kéo mèo xuyên dây. Né vòng nhảy và làn lao.",
+                    "Break the mother's nests before they hatch. Stop returning children; cut pink cords with Scissors or drag the cat through them. Dodge jump rings and charge lanes.")),
         // 5 · The Zip Slime.
         new(GuideBubble, StageZipSlime, true, true, 1,
             () => { var bubble = battle!.Slimes.FirstOrDefault(s => s.Bubbled && s.Targetable && s.State != SlimeState.Spawning); guideRef = bubble?.Id ?? 0; return bubble != null && TourDue() && !BattleHoldsOff; },

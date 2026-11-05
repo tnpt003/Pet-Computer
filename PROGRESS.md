@@ -14,6 +14,13 @@ Quy ước file này: chỉ giữ trạng thái hiện tại, các đợt đang 
 
 ## Đang dở và việc tiếp theo
 
+- Đã được người dùng duyệt toàn bộ bộ chiêu Slime Mẹ/Vua biến dị, gồm cú lao và phình nổ đẩy mèo dưới sàn; bỏ mầm biến dị/slime con biến dị. Luật chi tiết: docs/BOSS-TACTICS.md; code ở feature/mother-mutant-mechanics, worktree artifacts/mother-mutant-worktree từ 7e423b5, chưa merge main và không chứa nâng cấp Slime Nén của phiên khác.
+- Cơ chế opt-in qua enemy.bossTactics, không đổi boss chương 1. HP giữ 650/1000; giới hạn 2 ổ/6 con, giáp vua tối đa 10% HP. rulesVersion: Đầm nhầy 4, tuyến Bãi rác 4 (giữ chuyến 1/2/3), Vô tận 11.
+- Test: Python 58 + 5, C# 3093, WPF 1412 đạt (boss-full-final.log); đã xem ảnh render sáng/tối. Mô phỏng và giới hạn: docs/BALANCE-BOSS-TACTICS.md; log balance-before.log / boss-balance-final.log. Chưa publish, đang chốt commit.
+- Cần test tay mục Nâng cấp Slime Mẹ và Vua biến dị cuối docs/MANUAL-TEST.md; chưa chơi trận thật, chưa kiểm DPI/multi-monitor thật.
+
+
+
 - **Việc tiếp theo của 1.5:** danh sách ở docs/UPDATE-1.5.md → Việc trước M30: người dùng test tay theo docs/MANUAL-TEST.md → "Bản 1.5 — thứ tự test tay", đo lại và quyết các đề xuất dưới đây, sửa chữ banner vòng nộ, rồi M30 (release 1.5.0).
 - **Chuẩn hóa tài liệu 1.5 (05/11):** UPDATE-1.5.md viết lại thành bản chốt, có bảng luật đã thay; bản cũ lưu nguyên văn ở docs/archive/UPDATE-1.5-design-2026-10.md; BATTLE-DATA, CHANGELOG 1.5.0 (vi/en/ja, chưa ai duyệt lại câu ja mới), MANUAL-TEST, GOPY-C sửa theo luật thật; thêm docs/EXTENDING.md. Chỉ đổi tài liệu, không publish. Test trên HEAD d60c962, trước khi sửa tài liệu: Python 58 + 5, 3063 check C#, 1410 check WPF đạt. Phát hiện khi rà: chương 1 không hoàn toàn như 1.4.4 (Nộ tự bật, `utilityChance` 0,35, 2 thẻ hiếm mới) nhưng người dùng chốt giữ nguyên rulesVersion chương 1 (05/11); banner vòng nộ đầy còn chữ "Bấm vào thanh", chưa sửa, đã ghi ở Việc trước M30.
 - **Góp ý chơi thử 05/11 (Issue_fixxed #49):** khói gacha ảo ảnh, slime băng hết vỏ để mèo bay xuyên, Kẹp gắp vỡ vỏ, slime dỗi òa khóc, Bình xịt tới slime trên cao, hiệu ứng app đúng độ cao, Tab chỉ trúng quái dưới sàn (commit 5f3b12d; Python 58 + 5, 3045 check C#, 1410 check WPF đạt; đã publish, smoke PASS). Còn test tay.

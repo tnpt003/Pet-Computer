@@ -188,6 +188,7 @@ public sealed partial class BattleSim
         double speed = Math.Sqrt(cat.VX * cat.VX + cat.VY * cat.VY);
         // A boss's ropes to its helpers (1.5 M17, PetBattle.Zip.cs).
         CatThroughBossRopes(from, cat, speed);
+        if (speed >= 300) CatRopeCuts += CutTacticCords(from.X, from.Height, cat.X, cat.Height, CatHalfWidth * 2 / 3);
         if (!HasLink(EnemyLinks.Tether) || Over) return;
         foreach (var holder in slimes.ToArray())
         {

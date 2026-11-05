@@ -4,6 +4,9 @@
 
 ### Tiếng Việt
 
+- Slime Mẹ: ổ ủ phá được, đường hồi máu/cứu con cắt được, bầy nhảy, giận lao và lứa cuối. Vua biến dị: tay quét, phình nổ, mưa hai nhịp, sóng sát sàn, hút nhầy thành giáp hữu hạn, quá tải và chuỗi cuối. Vi/en/ja, hướng dẫn và ảnh render đi cùng. Chi tiết luật: docs/BOSS-TACTICS.md. Chưa merge main; không có mầm hay slime con biến dị.
+
+
 Mọi thay đổi chỉ ở Battle Mode (mặc định vẫn tắt). Ngoài trận mèo không đổi gì. 5 màn chương 1 và kỷ lục cũ giữ nguyên; vũ khí mới, Nộ và lượt mời thẻ mới có mặt ở mọi trận.
 
 - **Chọn 5 trong 10 kỹ năng** ở bảng chuẩn bị. Có thêm 5 kỹ năng dùng chuột:
@@ -57,6 +60,8 @@ Mọi thay đổi chỉ ở Battle Mode (mặc định vẫn tắt). Ngoài tr�
 
 ### English
 
+- Slime Mother: breakable nests, returning children, cuttable rescue cords, brood jumps, angry charges and a final clutch. Mutant King: arm sweeps, bursts, two-beat rain, floor waves, cuttable goo absorption and overload openings. No mutation seeds or mutated offspring. Implemented on the separate boss branch; see docs/BOSS-TACTICS.md.
+
 Everything here is in Battle Mode (still off by default). Outside a battle the pet is unchanged. The 5 stages of chapter 1 and your old records stay as they were; the new weapons, Cat fury and the new card offers are in every battle.
 
 - **Pick 5 of 10 skills** in the setup panel. Five new mouse skills:
@@ -109,6 +114,8 @@ Everything here is in Battle Mode (still off by default). Outside a battle the p
 - Infinity and the first Expedition route keep their records apart under the new rules (old records stay).
 
 ### 日本語
+
+- 母スライムに破壊できる巣、子の呼び戻し、切断できる救助のひも、子の跳躍、怒りの突進と最後の産卵を追加。変異王に腕のなぎ払い、破裂、二段の雨、床の波、切断できる吸収と過負荷の隙を追加。変異の種や変異した子はありません。ボス専用の別ブランチで実装。
 
 すべてバトルモード（初期設定はオフのまま）の変更です。バトル以外では猫は変わりません。第1章の 5 ステージと以前の記録はそのままです。新しい武器、ねこの怒り、新しいカードの選択肢はすべてのバトルに入ります。
 

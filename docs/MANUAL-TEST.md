@@ -1011,3 +1011,14 @@ Các mục 1.5 phía trên viết theo từng mốc; đây là thứ tự chơi 
 - [ ] Bình xịt: đang xịt slime bay/bám tường/dưới sàn, bế mèo lên thì vòi vẫn xịt và nước vẫn giảm; thả mèo vẫn tiếp tục. Mới chọn ô chưa xịt mà nhấc mèo thì bỏ chọn.
 - [ ] Chụp Màn Hình: slime bay và slime bám tường đứng yên tại chỗ 2 giây, mắt không thành "x x", không rơi; hết giờ hoạt động tiếp. Bốn app khác vẫn kéo chúng xuống, riêng Tab không tới chúng.
 - [ ] Kẹp gắp lên slime bay và slime bám tường: càng kẹp và dây hiện tới tận chỗ, kéo nó xuống, treo trong kẹp, click chỗ đập được; hết giờ thì đặt xuống. Bế mèo giữa lúc kéo thì nó rơi. Sau khi đập, nó lại bay/leo lên bình thường.
+
+## Nâng cấp Slime Mẹ và Vua biến dị — 05/11
+- [ ] Thử riêng bằng docs/examples/battle-m18.json và battle-m18b.json trong PET_DATA_DIRECTORY riêng, không chép vào preferences thật. Bản worktree không có nâng cấp Slime Nén của phiên khác.
+- [ ] Mẹ: vòng báo đúng chỗ đặt ổ; một ổ khi khỏe, hai ổ hai phía từ 60% HP, đếm nở lệch nhau. Phá ổ không ra con; choáng/Kẹp gắp hoãn nở rồi tiếp tục được. Không vượt 2 ổ/6 con, trận không bế tắc khi sát mép.
+- [ ] Mẹ: con yếu quay về, mẹ đầy máu thì con không hao máu. Khổng lồ có dây hồng nhận ít sát thương; Kéo cắt và kéo/ném mèo xuyên đúng dây đều cắt được, cả hai choáng và mẹ hoãn đẻ. Con sát mẹ che đúng phía, đổi phía đánh vẫn hiệu quả.
+- [ ] Mẹ: bầy nhảy vào vòng cố định, nhấc mèo né, đáp hụt có nhịp phản công. Mất ba con/ổ thì báo làn lao, chạy mượt, đòn chỉ đẩy mèo dưới sàn một lần, Khiên/Nộ chặn được. Lứa cuối đổi máu chỉ một lần.
+- [ ] Vua: quét đúng phía tay, nổ đúng vòng; mưa hai nhịp giữ vị trí báo, không đuổi theo mèo; sóng đi một chiều theo thứ tự vòng. Nhấc mèo né được toàn bộ chiêu mới.
+- [ ] Vua: nhầy của vua nối dòng vàng khi hút, cắt bằng Kéo và kéo mèo chặn giáp; giáp có thanh hữu hạn, không bất tử. Quá tải bỏ giáp, nghỉ và dễ bị đánh. Cuối trận ghép hai chiêu rồi bắt buộc nghỉ, không bỏ qua pha khiên gọi quân.
+- [ ] Pause/menu/chọn thẻ/Hướng dẫn/Chụp Màn Hình đóng băng đúng; choáng ngắt chiêu, hạ boss không còn đạn chờ gây sát thương. Thử mèo đang cầm, bay, choáng và hạ mèo sau né.
+- [ ] Xem trên wallpaper sáng/tối, DPI 100/125/150/200%, đổi màn hình và vùng làm việc: cảnh báo/điểm đáp/dây không lệch. Đây chưa được nghiệm thu desktop/DPI thật.
+- [ ] Chơi Đầm nhầy, tuyến Bãi rác và Vô tận đợt 30 để nhận xét độ khó/nhịp chiêu thật; mô phỏng không thay thế chơi tay. Xem hiệu năng khi nhiều quân và mưa cùng xuất hiện.

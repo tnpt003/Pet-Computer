@@ -96,8 +96,8 @@ Trong trận cảm xúc tự động vẫn bị chặn: S1, S4 không gây cảm
 | Mã | Boss | Luật |
 |---|---|---|
 | B1 | Slime Nén, trùm chương 2 (900 HP) | Pha 1 lăn: dải đỏ báo trước, nhấc mèo để né. Pha 2 (70%, 50%) bung Pháo đài rồi Kỵ binh, mỗi quân nối dây về boss, còn dây thì boss không mất máu. Pha 3 (25%) nén thành khiên, phá 4 mảnh file thì vỡ khiên và nổi giận |
-| B2 | Slime Mẹ, boss phụ chương 2 (650 HP) | Đẻ bầy hợp thể mỗi 10 s; khổng lồ do bầy nhập thành quay về bú, chuyển 20 HP/s sang mẹ; hạ nó giữa đường thì mẹ không được gì |
-| B3 | Vua Slime biến dị, Vô tận (1000 HP) | Phong tinh anh và nối thêm dây xích hoặc nhịp trống; mưa nhầy; đòn đồng loạt theo nhịp vẫn giữ |
+| B2 | Slime Mẹ, boss phụ chương 2 (650 HP) | Ổ ủ phá được, gọi con yếu về, dây cứu con cắt được, con che thân, bầy nhảy, giận lao và lứa cuối đổi máu; hồi 20 HP/s. Luật chi tiết: [BOSS-TACTICS](BOSS-TACTICS.md) |
+| B3 | Vua Slime biến dị, Vô tận (1000 HP) | Giữ tinh anh/xích/trống; thêm tay quét, phình nổ, mưa hai nhịp, sóng sàn, hút nhầy thành giáp cắt được và quá tải; cuối trận ghép hai chiêu. Không có mầm/slime con biến dị. [BOSS-TACTICS](BOSS-TACTICS.md) |
 
 ### Vũ khí (V)
 

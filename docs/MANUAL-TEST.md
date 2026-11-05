@@ -1002,3 +1002,10 @@ Các mục 1.5 phía trên viết theo từng mốc; đây là thứ tự chơi 
 - [ ] Bình xịt nước nóng: click trúng slime bay ở cao và slime bám tường cao đều xịt được; vòi xịt và giọt nước hiện đúng chỗ, tự bám theo khi nó bay; slime bị hạ thì vòi chuyển con gần nhất.
 - [ ] App trên quái ở cao: chuông của Bão Thông Báo, End Task, Thùng Rác, hồi máu của app độc, số sát thương hiện đúng chỗ con quái, không nằm dưới sàn và không bị cắt ở mép dải trận. Xem cả đường bay từ icon lên cao.
 - [ ] Tab Lốc Xoáy: mèo đi ngang dưới slime bay/bám tường thì chúng không choáng, không rơi; slime dưới sàn vẫn trúng.
+
+## Góp ý sau chơi thử 05/11, đợt 2 (Issue #50)
+- [ ] Slime hẹn giờ (Viễn chinh tuyến 2, Vô tận): hết giờ gọi đội hình ngẫu nhiên, đổi giữa các lần reng; đội ra ngay dù sàn đã đầy; không bao giờ gọi thêm slime hẹn giờ. Xem trận có quá đông hoặc tụt khung hình không.
+- [ ] Slime nhạc trưởng: nhịp cuối chỉ có trống lớn, mèo trong vòng mất máu và loạn nhịp; slime quanh đó không đánh theo. Nhấc mèo đúng nhịp vẫn tránh được. Vua Slime biến dị vẫn cho quân đánh đồng loạt.
+- [ ] Slime xích: đứng cách xa đồng minh, combo vào đồng minh không lan sang nó; dây dài vẫn đẹp, kéo mèo xuyên vẫn cắt được; đồng minh sát mép màn hình thì không kẹt.
+- [ ] Bình xịt: đang xịt slime bay/bám tường/dưới sàn, bế mèo lên thì vòi vẫn xịt và nước vẫn giảm; thả mèo vẫn tiếp tục. Mới chọn ô chưa xịt mà nhấc mèo thì bỏ chọn.
+- [ ] Kẹp gắp lên slime bay và slime bám tường: càng kẹp và dây hiện tới tận chỗ, kéo nó xuống, treo trong kẹp, click chỗ đập được; hết giờ thì đặt xuống. Bế mèo giữa lúc kéo thì nó rơi. Sau khi đập, nó lại bay/leo lên bình thường.

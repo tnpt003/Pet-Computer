@@ -54,7 +54,7 @@ public sealed partial class BattleFieldView
         {
             var s = sim.Slimes[i];
             if (s.Wet && s.Targetable && !BattleSim.InSky(s)) DrawWetDrops(dc, s, s.X - OriginX, floor, time); // In the sky: its own window.
-            if (s.Grabbed) DrawClaw(dc, s.X - OriginX, Top(s, floor), s.Width, time);
+            if (s.Grabbed && !BattleSim.InSky(s)) DrawClaw(dc, s.BodyX - OriginX, s.OnWall ? floor - s.BodyTop : Top(s, floor), s.Width, time); // In the sky: its canvas.
             // What a shaken thief stole sparkles down out of it.
             if (s.Grabbed && s.Type.Steal != null)
                 for (int k = 0; k < 4; k++)
@@ -68,7 +68,7 @@ public sealed partial class BattleFieldView
 
     // A crane's claw on its cable: a head block with a gold hub, and two curved arms closed round the
     // slime's sides, tightening and easing as it struggles. Sized to the slime (a slime 44 DIPs wide: scale 1).
-    private static void DrawClaw(DrawingContext dc, double x, double top, double width, double time)
+    public static void DrawClaw(DrawingContext dc, double x, double top, double width, double time)
     {
         double k = Math.Max(1, width / 44), grip = 3 * Math.Sin(time * 9);
         dc.DrawLine(CablePen, new Point(x, 0), new Point(x, top - 24 * k));

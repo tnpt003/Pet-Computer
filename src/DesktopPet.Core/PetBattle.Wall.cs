@@ -241,7 +241,7 @@ public sealed partial class BattleSim
     // Knocked off its edge (the thrown cat, Push, a daze, the Grabber's yank): it falls and lies dazed.
     private bool KnockOff(Slime s, bool yanked)
     {
-        if (s.Type.Cling == null || !s.OnWall || !s.Targetable) return false;
+        if (s.Type.Cling == null || !s.OnWall || !s.Targetable || s.Grabbed) return false;
         s.Cling = ClingPhase.Falling;
         s.ClingShifting = false;
         s.FallSpeed = 0;

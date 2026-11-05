@@ -180,6 +180,25 @@ internal static class BattleQuillsTests
         Run(sim, c.Seconds * 2 + 2);
         check(waits && sim.ClockRings == 1 && sim.Wave == 1, "Defeated, it calls no more, and its called slimes hold the wave");
 
+        // 2026-11-05: what the timer calls from its formations comes at once, past maxAlive, whatever the threat.
+        {
+            var kind = Shipped.Enemy("timer");
+            var settings = new BattleSettings
+            {
+                Weapons = new[] { Shipped.Weapon("sword") with { Range = 5, StunChance = 0, Damage = 0 } }, Formations = Shipped.Formations,
+                FirstWaveDelay = 0, SpawnInterval = 0.05, CatMaxHp = 100000, MaxAlive = 2, Enemies = Shipped.EnemyTypes.ToArray(),
+                Plan = new[] { new WaveSpec { Groups = new[] { new WaveGroup { Enemy = kind.Id, Count = 1 } } } }
+            };
+            var over = new BattleSim(settings, 0, 1600, seed: 4, skills: Tools);
+            for (int i = 0; i < 300 && !over.Slimes.Any(x => x.Targetable); i++) over.Step(dt, 100, false);
+            var timer = over.Slimes.Single();
+            timer.X = 1200;
+            int most = 0;
+            Run(over, kind.Clock!.Seconds + 3, catX: 100, each: () => most = Math.Max(most, over.Alive));
+            check(over.ClockRings == 1 && most > 2 && over.Slimes.Any(x => x.SummonedBy == BattleSim.CalledBy), $"A timer's formation takes the floor past maxAlive 2 ({most} on it)");
+        }
+        check(Shipped.Enemy("timer").Clock!.CallFormations!.Count == 8 && !Shipped.Enemy("timer").Clock!.CallFormations!.ContainsKey("alarm"), "It draws among eight formations, never the one with a timer");
+
         // Calls times at most.
         sim = Field(new[] { Timer() }, extra: new[] { Plain() });
         s = sim.Slimes.Single();

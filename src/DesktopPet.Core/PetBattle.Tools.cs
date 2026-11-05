@@ -196,7 +196,7 @@ public sealed partial class BattleSim
                 events.Add(new(BattleEventKind.LaserOff, dot));
             }
         }
-        if (catHeld) { SprayX = null; SprayTargetId = 0; return; }
+        if (catHeld && SprayX == null) { SprayTargetId = 0; return; }
         if (SprayX is double && Holding(BattleSkill.Spray))
         {
             FollowSprayTarget();
@@ -228,7 +228,7 @@ public sealed partial class BattleSim
     // 2026-11-04, the hot-water spray: one click on the field starts it; it locks on the slime there (or the
     // nearest one within SprayRange x 2 of the click) and keeps spraying it by itself until the tank is dry,
     // the mouse free. Its slime gone, it moves to the nearest other one (none: it keeps to that spot).
-    // The skill put away (another chosen, Pause, the cat lifted) stops it.
+    // The skill put away (another chosen) stops it; the cat lifted does not (2026-11-05); Pause holds it.
     public int SprayTargetId { get; private set; }
     public int SprayMelts { get; private set; }
     public int SprayKills { get; private set; }

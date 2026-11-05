@@ -392,10 +392,15 @@ internal static class BattleWallTests
         // Push knocks it off.
         (sim, s) = OnEdge();
         check(sim.Use(BattleSkill.Push, s.Id, 100) && Run(sim, 2, kind: BattleEventKind.ClingLanded) && !s.Airborne, "Push knocks it off its edge");
-        // The Grabber yanks it off at once and is spent.
+        // 2026-11-05: the claw takes it off its edge, held like any other.
         (sim, s) = OnEdge();
-        check(sim.Arm(BattleSkill.Grabber) && sim.Grab(s.Id, s.X, s.Altitude) && !sim.Grabbing && sim.Cooldown(BattleSkill.Grabber) > 0 && s.Cling == ClingPhase.Falling,
-            "The Grabber yanks it off at once (not held in the claw) and is spent");
+        check(sim.Arm(BattleSkill.Grabber) && sim.Grab(s.Id, s.X, s.Altitude) && sim.Grabbing && s.OnWall && BattleSim.Reeling(s),
+            "The Grabber takes a wall climber on its edge into its claw (not knocked off)");
+        Run(sim, 0.6);
+        check(s.Grabbed && !s.OnWall && s.Cling == ClingPhase.Ground && !s.Airborne && s.WallSide == 0 && sim.ClingKnocks >= 1, "It hangs in the claw off the wall");
+        check(sim.GrabDrop(800), "A click carries it off");
+        Run(sim, 1.2);
+        check(!s.Grabbed && s.Hp < s.MaxHp, "Slammed down, hurt");
         // The held cat swings at it (it is in the air).
         var shipped = Field(Clinger(), hit: 5);
         var t = shipped.Slimes.Single();

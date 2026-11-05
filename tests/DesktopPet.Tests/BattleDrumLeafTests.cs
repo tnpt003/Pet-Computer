@@ -201,6 +201,6 @@ internal static class BattleDrumLeafTests
         }
         string team = Called(Timer(0)), plain = Called(Timer(5));
         check(team == "mender,rock", $"The timer's call brings the whole formation ({team})");
-        check(plain == "slime", $"Below the formation's threat it calls its plain list ({plain})");
+        check(plain == team, $"2026-11-05: whatever the battle's threat it calls the formation ({plain})");
     }
 }

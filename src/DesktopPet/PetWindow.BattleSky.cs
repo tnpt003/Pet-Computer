@@ -121,8 +121,8 @@ public sealed partial class PetWindow
         if (!busy) foreach (var s in b.Slimes) if (s.Aiming && BattleSim.InSky(s) && s.Type.Fly != null) { busy = true; break; }
         if (!busy) foreach (var g in b.Goos) if (BattleFieldView.SpikeInSky(g)) { busy = true; break; }
         if (b.Cut != null || b.ColumnX != null || b.FlashRemaining > 0) busy = true; // 2026-11-04: the cut, the fan's column, the flash.
-        // 2026-11-05: the spray high up, and what shows over enemies high up.
-        if (SprayInSky(b)) busy = true;
+        // 2026-11-05: the spray high up, the claw on an enemy in the sky, and what shows over enemies high up.
+        if (SprayInSky(b) || b.Grabbing && b.Find(b.GrabbedId) is Slime held && BattleSim.InSky(held)) busy = true;
         if (!busy) for (int i = 0; i < b.Effects.Count; i++) if (BattleFieldView.SkyEffect(b.Effects[i])) { busy = true; break; }
         if (hide) busy = false;
         if (!busy && !skyShotShown) return;
@@ -230,6 +230,11 @@ public sealed class SkyShotView : FrameworkElement
         if (sim.Cut is { } cut) BattleFieldView.DrawCut(dc, cut, (x, h) => ToScreen(x, h), sim.Settings);
         if (PetWindow.SprayInSky(sim)) BattleFieldView.DrawSpray(dc, ToScreen(sim.SprayX!.Value, sim.SprayHeight), sim.Settings.SprayRange, sim.Time);
         dc.Pop();
+        if (sim.Grabbing && sim.Find(sim.GrabbedId) is Slime held && BattleSim.InSky(held))
+        {
+            var top = ToScreen(held.BodyX, held.BodyTop);
+            BattleFieldView.DrawClaw(dc, top.X, top.Y, held.Width, sim.Time);
+        }
         Field()?.DrawSkyEffects(dc, ToScreen);
         if (sim.FlashRemaining > 0) BattleFieldView.DrawFlash(dc, new Rect(0, 0, ActualWidth, ActualHeight), sim.FlashRemaining);
     }

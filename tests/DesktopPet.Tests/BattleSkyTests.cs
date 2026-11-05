@@ -239,14 +239,30 @@ internal static class BattleSkyTests
         s = sim.Slimes.Single();
         Hold(s, 600, 400);
         check(sim.Use(BattleSkill.Push, s.Id, 100) && Run(sim, 2, kind: BattleEventKind.FlyerDowned) && s.Fly == FlyPhase.Downed, "Push knocks it down");
-        // The Grabber yanks it down at once and is spent.
+        // 2026-11-05: the claw takes it where it is and draws it down, then it is held like any other.
         sim = Field(Flyer());
         s = sim.Slimes.Single();
         Hold(s, 600, 400);
-        check(sim.Arm(BattleSkill.Grabber) && sim.Grab(s.Id, s.X, s.Altitude) && !sim.Grabbing && sim.Cooldown(BattleSkill.Grabber) > 0 && s.Fly == FlyPhase.Falling,
-            "The Grabber yanks it down at once (not held in the claw) and is spent");
+        check(sim.Arm(BattleSkill.Grabber) && sim.Grab(s.Id, s.X, s.Altitude) && sim.Grabbing && s.Fly == FlyPhase.Aloft && BattleSim.Reeling(s) && s.State != SlimeState.Stunned,
+            "The Grabber takes a flyer in the air into its claw (not knocked down)");
+        double from = s.Altitude;
+        Run(sim, 0.1);
+        check(s.Grabbed && s.Altitude < from - 50 && s.Fly == FlyPhase.Aloft, "The claw draws it down, still in the sky");
+        Run(sim, 1);
+        check(s.Grabbed && s.Fly == FlyPhase.Downed && !s.Airborne && Math.Abs(s.Lift - BattleSim.GrabLift) < 1, "It ends up hanging in the claw like any slime");
+        check(sim.GrabDrop(900), "A click carries it off");
+        Run(sim, 1.2);
+        check(!s.Grabbed && s.Fly == FlyPhase.Downed && s.Hp < s.MaxHp && s.State == SlimeState.Stunned, "Slammed down, hurt and dazed");
+        // The cat lifted while it is still up there: it falls.
+        sim = Field(Flyer());
+        s = sim.Slimes.Single();
+        Hold(s, 600, 400);
+        sim.Arm(BattleSkill.Grabber);
+        sim.Grab(s.Id, s.X, s.Altitude);
+        Run(sim, 0.1, held: true);
+        check(!sim.Grabbing && s.Fly == FlyPhase.Falling, "Lifting the cat drops it; still up there it falls");
         Run(sim, 2);
-        check(s.Fly == FlyPhase.Downed, "Yanked, it lands dazed");
+        check(s.Fly == FlyPhase.Downed, "It lands dazed");
         // A push on it while it is down never shortens its daze.
         double left = s.StunRemaining;
         Run(sim, 0.2);

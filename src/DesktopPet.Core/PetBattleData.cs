@@ -483,8 +483,8 @@ public sealed class ClockSpec
     public double Stunned { get; init; } = 0.3;
     public int Calls { get; init; } = 2;
     public string[] Call { get; init; } = { "slime", "slime", "runner" };
-    // 2026-11-04: formations (id: weight) a call may be instead of Call; those whose MinThreat the battle
-    // reaches, drawn on a stream of its own (none: Call).
+    // 2026-11-04: formations (id: weight) a call may be instead of Call, drawn on a stream of its own (none:
+    // Call). 2026-11-05: summoned, they are the exception: any threat, past maxAlive and the limits on links.
     public Dictionary<string, double>? CallFormations { get; init; }
 }
 
@@ -1082,7 +1082,6 @@ public static class BattleData
             if (e.SummonAt > 0) reach.Push(e.SummonType);
             if (e.Split != null) reach.Push(e.Split.Into);
             if (e.Plant != null) reach.Push(e.Plant.Post);
-            foreach (var id in e.Clock?.CallFormations?.Keys ?? Enumerable.Empty<string>()) foreach (var kind2 in s.Formation(id)?.Members ?? Enumerable.Empty<string>()) reach.Push(kind2);
             foreach (var p in e.Phases ?? Array.Empty<BossPhase>()) foreach (var call in s.PhaseCalls(p)) reach.Push(call);
             // 1.5 M18: what a brood lays, the links a crown ties.
             if (e.Brood != null) reach.Push(e.Brood.Enemy);
@@ -1801,6 +1800,11 @@ public static class BattleData
                 foreach (var call in clock.Call)
                     if (call == null || !ids.Contains(call) || s.Enemy(call) is { Boss: true } or { Clock: not null })
                         throw new InvalidDataException($"enemies[{e.Id}].clock.call names \"{call}\": an unknown enemy, a boss or another timer");
+        // A timer's formation is out of the battle's limits (2026-11-05), but it never calls another timer.
+        foreach (var e in s.EnemyTypes)
+            foreach (var id in e.Clock?.CallFormations?.Keys ?? Enumerable.Empty<string>())
+                if (s.Formation(id) is not { } called || called.Members.Any(m => s.Enemy(m) is { Clock: not null } or { Boss: true }))
+                    throw new InvalidDataException($"enemies[{e.Id}].clock.callFormations names \"{id}\": an unknown formation, or one with a timer or a boss");
         // A summoned helper may not summon in turn (no chains of calls).
         bool Summons(EnemyType e) => e.SummonAt > 0 || e.Phases?.Any(p => s.PhaseCalls(p).Any()) == true;
         foreach (var e in s.EnemyTypes)

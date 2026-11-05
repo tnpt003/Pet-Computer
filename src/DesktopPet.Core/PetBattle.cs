@@ -354,8 +354,9 @@ public sealed partial class BattleSim
         CatLifted = held && lifted;
         if (!CatLifted) return;
         wasLifted = true;
+        // A spray at work keeps at it by itself (2026-11-05): the mouse is free, and lifting the cat is no choice.
+        if (SprayX != null) return;
         Armed = null;
-        SprayX = null;
     }
 
     // catHeld / lifted: see SetCatState. Putting a lifted cat down grants grace (if ready).

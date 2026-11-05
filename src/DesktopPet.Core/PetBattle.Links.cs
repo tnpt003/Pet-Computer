@@ -15,13 +15,15 @@ public sealed partial class BattleSim
     public IReadOnlyList<string> LinkKinds => linkKinds;
     private bool HasLink(string kind) => linkKinds.Contains(kind);
 
-    // At spawn: its kind's link, if this battle still has room for that kind.
+    // At spawn: its kind's link, if this battle still has room for that kind. A timer's formation comes whole,
+    // past the limit (2026-11-05: summoned, it is the exception).
+    private bool calledOut;
     private void JoinLinks(Slime slime)
     {
         if (slime.Type.ActiveLink is not LinkSpec link) return;
         if (!linkKinds.Contains(link.Kind))
         {
-            if (linkKinds.Count >= EnemyLinks.MaxKinds) return;
+            if (linkKinds.Count >= EnemyLinks.MaxKinds && !calledOut) return;
             linkKinds.Add(link.Kind);
         }
         slime.Link = link;
@@ -227,11 +229,17 @@ public sealed partial class BattleSim
         events.Add(new(BattleEventKind.CatOffBeat, catX, holder.Id));
     }
 
-    // A rhythm's strike: every ally within its range (and itself) that could hit the cat now winds up,
-    // attack turns or not (never a support, a spring trap, a boss, a rider or one in a panic).
+    // A rhythm's last beat. With a big drum that is all it is (2026-11-05: the band no longer strikes with it).
+    // Without one (the Mutant King's elite) every ally within its range (and itself) that could hit the cat now
+    // winds up, attack turns or not (never a support, a spring trap, a boss, a rider or one in a panic).
     private void StrikeTogether(Slime holder, LinkSpec link, double catX, bool catHeld)
     {
-        if (link.DrumSeconds > 0 && !holder.IsBoss) { BigDrum(holder, link, catX, catHeld); if (Over) return; }
+        if (link.DrumSeconds > 0 && !holder.IsBoss)
+        {
+            BigDrum(holder, link, catX, catHeld);
+            if (!Over) events.Add(new(BattleEventKind.LinkStrike, holder.X, 0));
+            return;
+        }
         int strikers = 0;
         if (!catHeld && Grace <= 0)
             foreach (var s in slimes)
@@ -507,12 +515,14 @@ public sealed partial class BattleSim
     }
 
     // Where a tether holder keeps: just behind its ally, on the side away from the cat (null: no rope).
+    public const double TetherClear = 8;
     private double? TetherPost(Slime holder)
     {
         if (!Is(holder, EnemyLinks.Tether) || LinkPartner(holder) is not Slime ally) return null;
         int side = ally.X >= decisionCatX ? 1 : -1;
         // A second rope's holder keeps behind the first.
         double behind = TetherHolder(ally) is Slime first && first != holder ? first.Width + 6 : 0;
-        return ally.X + side * (ally.Width / 2 + holder.Width / 2 + 6 + behind);
+        // Past a combo's splash round its ally (2026-11-05: its armour is not there to catch every swing).
+        return ally.X + side * (ally.Width / 2 + holder.Width / 2 + Settings.ComboSplashRadius + TetherClear + behind);
     }
 }

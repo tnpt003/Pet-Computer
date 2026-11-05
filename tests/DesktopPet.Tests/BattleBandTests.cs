@@ -67,8 +67,8 @@ internal static class BattleBandTests
         int k = 0;
         foreach (var s in sim.Slimes) s.X = s == drummer ? 320 : spots[k++];
         var (seconds, windups) = Strike(sim);
-        check(Math.Abs(seconds - link.Beat * link.Beats) < 0.05 && windups == 3,
-            $"On its {link.Beats}th beat ({link.Beat * link.Beats:0.0} s) every ally in its range winds up at once ({seconds:0.00} s, {windups} of 3)");
+        check(Math.Abs(seconds - link.Beat * link.Beats) < 0.05 && windups == 0,
+            $"On its {link.Beats}th beat ({link.Beat * link.Beats:0.0} s) the big drum sounds and no ally strikes with it ({seconds:0.00} s, {windups} of 3 wound up)");
         check(BattleSim.Beats(drummer) == link.Beats, "A plain drummer counts its beats");
 
         sim = Field(new[] { Kind("drummer", 56, link), Kind("slime") }, new[] { 1, 3 }, elite: true);
@@ -76,8 +76,8 @@ internal static class BattleBandTests
         k = 0;
         foreach (var s in sim.Slimes) s.X = s == drummer ? 320 : spots[k++];
         (seconds, windups) = Strike(sim);
-        check(drummer.Elite != null && BattleSim.Beats(drummer) == link.EliteBeats && Math.Abs(seconds - link.Beat * link.EliteBeats) < 0.05 && windups == 3,
-            $"An elite drummer strikes every {link.EliteBeats} beats ({seconds:0.00} s)");
+        check(drummer.Elite != null && BattleSim.Beats(drummer) == link.EliteBeats && Math.Abs(seconds - link.Beat * link.EliteBeats) < 0.05 && windups == 0,
+            $"An elite drummer drums every {link.EliteBeats} beats ({seconds:0.00} s)");
     }
 
     // A chain slime at 1100 tied to a slime at 900, the cat at 200.

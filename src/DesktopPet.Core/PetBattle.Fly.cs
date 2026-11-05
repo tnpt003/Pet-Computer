@@ -255,7 +255,7 @@ public sealed partial class BattleSim
     // Stunned in the air (or yanked down by the Grabber): it falls, and lies dazed where it lands.
     private bool KnockDown(Slime s, bool yanked)
     {
-        if (s.Type.Fly == null || s.Fly != FlyPhase.Aloft || !s.Targetable) return false;
+        if (s.Type.Fly == null || s.Fly != FlyPhase.Aloft || !s.Targetable || s.Grabbed) return false;
         s.Fly = FlyPhase.Falling;
         s.FallSpeed = 0;
         s.AimLeft = 0; s.ShotsLeft = 0;

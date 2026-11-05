@@ -14,13 +14,15 @@ namespace DesktopPet;
 // GrabberHoldSeconds without a click, it is put down on the side away from the cat, dazed. A thief is never
 // slammed: held to the end it shakes out what it stole (the skill's cooldown, the icon's charge; nothing
 // stolen: a coin in a run with coins, else GrabberThiefCharge on the emptiest icon) and is gone, the cat's
-// defeat. A flyer up in the air or a climber up its edge is yanked down at once (1.5 M14, M15). The
-// cooldown starts when it is put down. Lifting the cat lets it drop (no slam); Pause and the frozen guide
+// defeat. A flyer up in the air or a climber on its edge is taken too (2026-11-05, it used to be only knocked
+// down): the claw goes up to it and draws it down at GrabPull to where it holds enemies, and from there it is
+// like any other. The cooldown starts when it is put down. Lifting the cat lets it drop (no slam, a flyer or a
+// climber still up there falls as if knocked down); Pause and the frozen guide
 // freeze it; the battle ending or the field moving puts it down.
 public sealed partial class BattleSim
 {
     public const double Gravity = 1800, GrabTopSpeed = 1600, GrabMaxLift = 100, ThrowHop = 260;
-    public const double GrabLift = 90, GrabRise = 0.35, GrabCarrySpeed = 1100, SlamSpeed = 900, GrabSplash = 75;
+    public const double GrabLift = 90, GrabRise = 0.35, GrabCarrySpeed = 1100, SlamSpeed = 900, GrabSplash = 75, GrabPull = 900;
     // Where the claw carries the held enemy (NaN: it hangs where it was lifted), and slams that hit.
     private double grabTo = double.NaN;
     public int GrabSlams { get; private set; }
@@ -42,21 +44,11 @@ public sealed partial class BattleSim
     public bool Grab(int id, double x, double height)
     {
         if (Armed != BattleSkill.Grabber || !Ready(BattleSkill.Grabber) || GrabbedId != 0 || !double.IsFinite(x) || !double.IsFinite(height)) return false;
-        // A flyer up in the air is yanked down at once (the Grabber is spent; 1.5 M14).
-        if (Find(id) is { Fly: FlyPhase.Aloft, Type.Fly: not null } flyer && flyer.State != SlimeState.Spawning)
-        {
-            if (!KnockDown(flyer, true)) return false;
-            Spend(BattleSkill.Grabber);
-            return true;
-        }
-        // A wall climber up its edge is yanked off it at once (the Grabber is spent; 1.5 M15).
-        if (Find(id) is { OnWall: true, Type.Cling: not null } clinger && clinger.State != SlimeState.Spawning)
-        {
-            if (!KnockOff(clinger, true)) return false;
-            Spend(BattleSkill.Grabber);
-            return true;
-        }
-        if (Find(id) is not Slime slime || !Grabbable(slime)) return false;
+        if (Find(id) is not Slime slime) return false;
+        // A flyer up in the air or a climber on its edge: taken where it is (2026-11-05).
+        bool high = OutOfHand(slime) && slime.State != SlimeState.Spawning;
+        if (!high && !Grabbable(slime)) return false;
+        if (high) { slime.AimLeft = 0; slime.ShotsLeft = 0; slime.ClingShifting = false; slime.FallSpeed = 0; }
         // A bomb flying back to its mount is caught in the air (2026-11-04).
         if (slime.RecoilLeft > 0) { slime.RecoilLeft = 0; slime.Lift = slime.LeapHeight; slime.LeapHeight = 0; }
         // A burrower is pulled up from under the floor (1.5 M14).
@@ -84,6 +76,33 @@ public sealed partial class BattleSim
         return true;
     }
 
+    // Not on the floor yet: a flyer in the air or a climber on its edge, out of the usual hold.
+    public static bool OutOfHand(Slime s) => s.Type.Fly != null && s.Fly == FlyPhase.Aloft || s.Type.Cling != null && s.OnWall;
+    // In the claw and still being drawn down (the sky's canvas draws the claw while it is in the sky).
+    public static bool Reeling(Slime s) => s.Grabbed && OutOfHand(s);
+
+    // Drawn down to the hold's height, it counts as knocked down: on the floor's rules, hanging in the claw.
+    private void Reeled(Slime s)
+    {
+        s.Lift = s.Altitude;
+        s.Altitude = 0;
+        if (s.Type.Fly != null)
+        {
+            s.Fly = FlyPhase.Downed;
+            FlyersKnocked++;
+            events.Add(new(BattleEventKind.FlyerKnocked, s.X, 1));
+            return;
+        }
+        if (s.Type.Cling is not ClingSpec c) return;
+        var (minX, maxX) = Bounds(s);
+        s.X = Math.Clamp(s.X - s.WallSide * s.Width, minX, maxX);
+        s.Cling = ClingPhase.Ground;
+        s.WallSide = 0;
+        s.ClingClock = c.Ground;
+        ClingKnocks++;
+        events.Add(new(BattleEventKind.ClingKnocked, s.X, 1));
+    }
+
     // A click on the field while an enemy hangs in the claw: carried there and slammed down. A thief is
     // never slammed (false).
     public bool GrabDrop(double x)
@@ -106,6 +125,8 @@ public sealed partial class BattleSim
         if (slime == null) return;
         slime.Grabbed = false;
         if (!slime.Targetable) { slime.Lift = 0; return; }
+        // Still up there (the cat lifted, say): it falls as if knocked down.
+        if (OutOfHand(slime)) { if (slime.Type.Fly != null) KnockDown(slime, true); else KnockOff(slime, true); return; }
         slime.Slammed = slam;
         slime.Tossed = true;
         slime.TossVX = 0; slime.TossVY = slam ? -SlamSpeed : 0;
@@ -139,6 +160,12 @@ public sealed partial class BattleSim
             var slime = Find(GrabbedId);
             if (slime is not { Targetable: true }) { LetGo(false); }
             else if (catHeld) LetGo(false);
+            else if (OutOfHand(slime))
+            {
+                slime.KnockVelocity = 0;
+                slime.Altitude = Math.Max(Math.Min(slime.Altitude, GrabLift), slime.Altitude - GrabPull * dt);
+                if (slime.Altitude <= GrabLift) Reeled(slime);
+            }
             else
             {
                 // Up it goes; carried to the spot clicked, then slammed down.

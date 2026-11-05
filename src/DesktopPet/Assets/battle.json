@@ -390,7 +390,7 @@
       // A push, a stun or the Fan on it starts the count again; the Shield takes the strike. Elite: it
       // strikes every eliteBeats beats. binSpit false: an infected bin never spits it.
       "id": "drummer", "nameVi": "Slime nhạc trưởng", "nameEn": "Drummer slime",
-      "tipVi": "Nhịp cuối là trống lớn: mèo trong vòng mất máu và loạn nhịp (đánh trượt), slime trong vòng cùng đánh. Nhấc mèo đúng nhịp cuối; đánh hoặc Đẩy nó thì đếm lại.", "tipEn": "Its last beat is a big drum: the cat in the ring is hurt and off the beat (its swings miss), and the band strikes. Lift the cat on that beat; hit or Push it to reset the count.", "counters": ["push", "shield"],
+      "tipVi": "Nhịp cuối là trống lớn: mèo trong vòng mất máu và loạn nhịp (đánh trượt). Nhấc mèo đúng nhịp cuối; đánh hoặc Đẩy nó thì đếm lại.", "tipEn": "Its last beat is a big drum: the cat in the ring is hurt and off the beat (its swings miss). Lift the cat on that beat; hit or Push it to reset the count.", "counters": ["push", "shield"],
       "maxHp": 60, "speed": 32, "damage": 9, "range": 56,
       "windup": 0.8, "attackCooldown": 2.0, "recover": 0.4,
       "scale": 1.0, "color": "#E8825A", "marks": "drum", "cost": 2, "binSpit": false,
@@ -654,7 +654,7 @@
       "maxHp": 45, "speed": 0, "damage": 8, "range": 55,
       "windup": 0.8, "attackCooldown": 2.0, "recover": 0.4,
       "scale": 0.9, "color": "#7CC6A4", "marks": "clock", "cost": 2, "binSpit": false,
-      "clock": { "seconds": 20, "eliteSeconds": 15, "stunned": 0.3, "calls": 3, "call": [ "slime", "slime", "runner" ], "callFormations": { "fortress": 1, "artillery": 1 } },
+      "clock": { "seconds": 20, "eliteSeconds": 15, "stunned": 0.3, "calls": 3, "call": [ "slime", "slime", "runner" ], "callFormations": { "fortress": 1, "cavalry": 1, "drums": 1, "assembly": 1, "trampoline": 1, "swarms": 1, "kamikaze": 1, "artillery": 1 } },
       "elite": { "hp": 1.2, "cost": 1, "descVi": "đồng hồ ngắn hơn", "descEn": "its clock is shorter" }
     },
     {

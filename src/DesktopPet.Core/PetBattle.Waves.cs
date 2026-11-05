@@ -75,12 +75,12 @@ public sealed partial class BattleSim
         if (incoming != null)
         {
             IncomingRemaining = Math.Max(0, IncomingRemaining - dt);
-            if (IncomingRemaining > 0 || Alive + (callFormation ? 1 : UnitRoom(incoming)) > maxAlive) return;
+            if (IncomingRemaining > 0 || !callFormation && Alive + UnitRoom(incoming) > maxAlive) return;
             int before = slimes.Count;
-            keepTogether = callFormation;
+            calledOut = keepTogether = callFormation;
             callFormation = false;
             SpawnUnit(catX, incoming, IncomingEdge, incomingElite);
-            keepTogether = false;
+            calledOut = keepTogether = false;
             if (incomingCalled) TagCalled(before); // A timer's call (1.5 M16).
             incomingCalled = false;
             incoming = null; incomingElite = null;

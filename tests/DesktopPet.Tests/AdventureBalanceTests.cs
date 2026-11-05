@@ -358,7 +358,7 @@ internal static class AdventureBalanceTests
                         bool ghostYarn = i == 2 && weapon == "yarn";
                         if (ghostYarn && level == BattleDifficulty.Hard) gap = 50;
                         check(Math.Round(Math.Abs(sword - share) * 100) <= gap, $"Chapter 2 balance: stage {i}, {level}: {weapon} within {gap} points of the sword ({share:P0} vs {sword:P0})");
-                        double least = ghostYarn ? 0.65 : 0.8;
+                        double least = ghostYarn ? 0.6 : 0.8; // The user eased it again, 2026-11-05: 13 to 12/20 was 20 seeds' noise (43 to 42/60, about 70%).
                         if (level == BattleDifficulty.Normal) check(share >= least, $"Chapter 2 balance: stage {i}, {weapon}, Normal, simple player wins ≥ {least:P0} ({share:P0})");
                         if (wins.Count >= 2) check(wins.Average(r => r.Seconds) <= 240, $"Chapter 2 balance: stage {i}, {weapon}, {level}: a win takes at most 4 minutes on average ({wins.Average(r => r.Seconds):0} s)");
                     }

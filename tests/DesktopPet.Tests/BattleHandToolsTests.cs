@@ -201,10 +201,18 @@ internal static class BattleHandToolsTests
         Run(cold, cold.Settings.SprayMeltSeconds + 0.2);
         check(!ice.Iced && cold.SprayMelts == 1, $"Sprayed {cold.Settings.SprayMeltSeconds} s, an ice shell melts");
 
-        // Lifting the cat stops it and puts it away; the Fan and the Spray are one choice at a time.
-        sim.Arm(BattleSkill.Spray); sim.StartSpray(800, 20);
+        // 2026-11-05: at work it goes on with the cat lifted; only chosen, lifting the cat puts it away. The Fan and the Spray are one choice at a time.
+        Run(sim, sim.Settings.SprayRefillSeconds + 0.1);
+        check(sim.Arm(BattleSkill.Spray) && sim.StartSpray(800, 20), "The Spray is at work");
+        double tank = sim.SprayTank;
+        Run(sim, 0.5, held: true);
+        check(sim.Spraying && sim.Armed == BattleSkill.Spray && sim.SprayTank < tank, "Lifting the cat does not stop the Spray at work");
+        sim.Arm(null);
+        Run(sim, 0.1);
+        check(!sim.Spraying, "Put away, it stops");
+        check(sim.Arm(BattleSkill.Spray), "Chosen again");
         Run(sim, 0.1, held: true);
-        check(!sim.Spraying && sim.Armed == null, "Lifting the cat stops the Spray and puts it away");
+        check(!sim.Spraying && sim.Armed == null, "Only chosen, lifting the cat puts it away");
     }
 
     private static void DataChecks(Action<bool, string> check)

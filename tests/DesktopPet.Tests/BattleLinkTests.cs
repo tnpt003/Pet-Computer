@@ -143,8 +143,9 @@ internal static class BattleLinkTests
         var wAlly = walker.Slimes.Single(s => s.Type.Id == "slime");
         w.X = 1350;
         Run(walker, 200, 8);
-        double post = wAlly.X + wAlly.Width / 2 + w.Width / 2 + 6;
+        double post = wAlly.X + wAlly.Width / 2 + w.Width / 2 + walker.Settings.ComboSplashRadius + BattleSim.TetherClear;
         check(w.LinkedTo == wAlly.Id && Math.Abs(w.X - post) < 10, $"A tethered holder keeps behind its ally ({w.X:0} for {post:0})");
+        check(w.X - w.HitWidth / 2 - (wAlly.X + wAlly.HitWidth / 2) > walker.Settings.ComboSplashRadius, "...past a combo's splash round its ally (2026-11-05)");
 
         // Switched off: no rope at all.
         var off = TetherSim(Tether(enabled: false));

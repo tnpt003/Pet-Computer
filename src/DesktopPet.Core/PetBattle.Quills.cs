@@ -114,11 +114,12 @@ public sealed partial class BattleSim
         s.ClockLeft = s.ClockCalls < c.Calls ? s.ClockTotal : 0;
     }
 
-    // What a timer calls (2026-11-04): a formation its battle's threat reaches, else its plain call.
+    // What a timer calls (2026-11-04): a formation drawn from its list, whatever the battle's threat
+    // (2026-11-05), else its plain call.
     private string[] CallOf(ClockSpec c)
     {
         if (c.CallFormations == null) return c.Call;
-        var open = c.CallFormations.Where(w => w.Value > 0 && Settings.Formation(w.Key) is { } f && f.MinThreat <= Threat + 1e-9).OrderBy(w => w.Key, StringComparer.Ordinal).ToList();
+        var open = c.CallFormations.Where(w => w.Value > 0 && Settings.Formation(w.Key) != null).OrderBy(w => w.Key, StringComparer.Ordinal).ToList();
         if (open.Count == 0) return c.Call;
         double roll = callRandom.NextDouble() * open.Sum(w => w.Value);
         foreach (var w in open)
@@ -133,16 +134,19 @@ public sealed partial class BattleSim
     }
 
     // From StepWaves (after an announced spawn is out): the next call, once the floor has room for it, is
-    // announced at the edge behind the cat. True: one went out this step.
+    // announced at the edge behind the cat. True: one went out this step. A timer's formation needs no room
+    // (2026-11-05): it may take the floor past maxAlive; what the wave still has to send then waits.
     private bool SendCall(double catX)
     {
-        if (calls.Count == 0 || Alive + (formationCalls.Contains(calls[0]) ? 1 : calls[0].Length) > maxAlive) return false;
+        if (calls.Count == 0 || !formationCalls.Contains(calls[0]) && Alive + calls[0].Length > maxAlive) return false;
         var kinds = calls[0];
         calls.RemoveAt(0);
         callFormation = formationCalls.Remove(kinds);
         events.Add(new(BattleEventKind.ClockCalled, catX));
         int before = slimes.Count;
+        calledOut = callFormation;
         Announce(catX, kinds, -Far(catX));
+        calledOut = false;
         if (incoming == kinds) incomingCalled = true; // It comes after its arrow (StepWaves tags it then).
         else TagCalled(before);
         return true;

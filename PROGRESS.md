@@ -14,9 +14,9 @@ Quy ước file này: chỉ giữ trạng thái hiện tại, các đợt đang 
 
 ## Đang dở và việc tiếp theo
 
-- Đã được người dùng duyệt toàn bộ bộ chiêu Slime Mẹ/Vua biến dị, gồm cú lao và phình nổ đẩy mèo dưới sàn; bỏ mầm biến dị/slime con biến dị. Luật chi tiết: docs/BOSS-TACTICS.md; code ở feature/mother-mutant-mechanics, worktree artifacts/mother-mutant-worktree từ 7e423b5, chưa merge main và không chứa nâng cấp Slime Nén của phiên khác.
+- **Nâng cấp hai boss (commit 9477828):** đã làm bộ chiêu Slime Mẹ/Vua biến dị được người dùng duyệt, gồm cú lao và phình nổ đẩy mèo dưới sàn; bỏ mầm biến dị/slime con biến dị. Luật: docs/BOSS-TACTICS.md. Nhánh feature/mother-mutant-mechanics, worktree artifacts/mother-mutant-worktree từ 7e423b5; chưa merge main, không chứa nâng cấp Slime Nén của phiên khác.
 - Cơ chế opt-in qua enemy.bossTactics, không đổi boss chương 1. HP giữ 650/1000; giới hạn 2 ổ/6 con, giáp vua tối đa 10% HP. rulesVersion: Đầm nhầy 4, tuyến Bãi rác 4 (giữ chuyến 1/2/3), Vô tận 11.
-- Test: Python 58 + 5, C# 3093, WPF 1412 đạt (boss-full-final.log); đã xem ảnh render sáng/tối. Mô phỏng và giới hạn: docs/BALANCE-BOSS-TACTICS.md; log balance-before.log / boss-balance-final.log. Chưa publish, đang chốt commit.
+- Test: Python 58 + 5, C# 3093, WPF 1412 đạt (boss-full-final.log); đã xem ảnh render sáng/tối. Mô phỏng và giới hạn: docs/BALANCE-BOSS-TACTICS.md. Đã publish bản sạch 1.4.4+9477828, smoke 3/3 PASS; ZIP: artifacts/mother-mutant-worktree/artifacts/DesktopPet-1.4.4-9477828-win-x64.zip. crowd-late 34 s: FPS trung vị 59,5, thấp nhất 25,8, tối đa 17 quái; còn khựng (p95 gap 91 ms, max 140 ms). Dữ liệu test riêng, đã mở lại mèo ở thư mục gốc. graphify update hoàn tất (6995 nodes).
 - Cần test tay mục Nâng cấp Slime Mẹ và Vua biến dị cuối docs/MANUAL-TEST.md; chưa chơi trận thật, chưa kiểm DPI/multi-monitor thật.
 
 

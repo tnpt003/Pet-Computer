@@ -75,5 +75,23 @@ internal static class ZipVisualChecks
         check(bar > 100, $"The bomb shows its filling bar ({bar} pixels)");
         int tab = SkyVisualChecks.Count(lane, w, h, gold, 920, 1000, floor - 110, floor - 20);
         check(tab > 20, $"And its zipper tab, ringed gold ({tab} pixels)");
+
+        // The gold spot and the arrow over it stay on the floor however far the rolling body has turned.
+        byte[]? level = null;
+        int worst = 0;
+        foreach (double angle in new[] { 0.0, 30, 75, 120, 180, 245, 300 })
+        {
+            var turning = new BattleSim(data, 0, Width, new Random(1));
+            var rolling = Add(turning, "zip", 600);
+            rolling.Shielded = true; rolling.ShieldTag = 1; rolling.Pins = 1;
+            rolling.Set(SlimeState.Dashing); rolling.Rolling = rolling.PressRolling = true; rolling.DashDirection = 1; rolling.RollGoal = 900;
+            rolling.RollDistance = 300; rolling.DashLeft = 300 - angle * Math.PI / 180 * rolling.Height / 2;
+            var frame = SkyVisualChecks.Render(new BattleFieldView(turning) { OriginX = 0 }, w, h);
+            level ??= frame;
+            int moved = Math.Abs(SkyVisualChecks.Count(frame, w, h, gold, 830, 970, floor - 70, floor) - SkyVisualChecks.Count(level, w, h, gold, 830, 970, floor - 70, floor));
+            worst = Math.Max(worst, moved);
+        }
+        int goal = SkyVisualChecks.Count(level!, w, h, gold, 830, 970, floor - 70, floor);
+        check(goal > 30 && worst == 0, $"The gold spot does not turn with the rolling body ({goal} pixels, {worst} changed)");
     }
 }

@@ -5,6 +5,13 @@ Sổ ghi các lỗi đã sửa của Desktop Pet. Phần A: lỗi người dùng
 Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm lỗi mới: tạo mục số tiếp theo ở đầu phần A (hoặc một dòng ở phần B).
 
 # A. Lỗi người dùng phát hiện
+## #54 — Điểm vàng và mũi tên trên sàn quay theo thân Slime Nén (2026-11-06)
+- **Triệu chứng (người dùng):** boss lăn thì điểm vàng và mũi tên chỉ chỗ thả mèo quay theo thân thay vì đứng yên tại vị trí đã chốt.
+- **Nguyên nhân:** `DrawSlime` chạy bên trong transform xoay của boss đang lăn; mọi thứ nó vẽ, kể cả dấu trên sàn, nhãn dung lượng và chấm tiến trình, đều quay theo.
+- **Sửa:** `PushUnturned` xoay ngược đúng tâm cho phần không phải thân, nên chỉ thân boss quay; thêm bù `RollLift` để dấu nằm đúng mặt sàn.
+- **Kiểm chứng:** ZipVisualChecks render 7 góc quay, số pixel vàng tại điểm chốt không đổi; bỏ phần sửa thì check FAIL (438 pixel lệch). 1419 check WPF đạt.
+- **Cần test tay:** xem boss lăn trong trận thật.
+
 ## #53 — Slime Nén chưa đúng chủ đề file nén: thiết kế lại boss (2026-11-06, commit 6739762)
 - **Yêu cầu (người dùng):** hình boss chưa ra file nén; boss phải nhỏ lúc đầu, càng ít máu càng to; đầu nhiều đợt nhanh, giữa ít đợt hơn và đau hơn, cuối ít nhất và đau nhất; mỗi giai đoạn có một đợt mech cần giải; đánh boss phải thích thú, mưu mẹo.
 - **Nguyên nhân:** thân vàng kèm vương miện chép từ Vua Slime, khóa kéo bé; kích thước cố định ×2, đòn giống nhau suốt trận; pha cuối còn co nhỏ lại, ngược chủ đề.

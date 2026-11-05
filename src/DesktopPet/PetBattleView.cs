@@ -514,6 +514,8 @@ public sealed partial class BattleFieldView : FrameworkElement
         SpringShape(slime, ref sx, ref sy);
         // A blocker in front of a support fades a little, so the support shows through it.
         if (slime.Type.Blocker && CoversSupport(slime)) opacity *= 0.72;
+        // A rolling boss turns (its caller's transform), but only its body: what is drawn round it stays level.
+        bool unturned = PushUnturned(dc, slime, x, floor, h);
         if (sim.BlockedById == slime.Id)
         {
             // In the cat's way: a grey dashed ring at its feet (the cat hits it before its target).
@@ -522,7 +524,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         }
         DrawSpringRing(dc, slime, x, floor);
         DrawBlastRing(dc, slime, x, floor);
-        DrawZipFloor(dc, slime, floor + slime.LeapHeight, time);
+        DrawZipFloor(dc, slime, floor + slime.LeapHeight + RollLift(slime, BattleSim.RollTurn(slime)), time);
         if (slime.Type.Slam && slime.State == SlimeState.Windup && !slime.Rolling)
         {
             // The slam's reach on the floor, filling up as it comes: get out (or push, shield, lift).
@@ -583,6 +585,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         }
         DrawStatusUnder(dc, slime, x, floor, w, time);
         DrawTrickBehind(dc, slime, x, floor, w * sx, h * sy, time);
+        if (unturned) dc.Pop();
         dc.PushOpacity(opacity);
         dc.PushTransform(new MatrixTransform(sx * size, 0, 0, sy * size, x + jitter, floor));
         double bw = s.SlimeWidth, bh = s.SlimeHeight;
@@ -692,6 +695,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         if (slime.IsBoss && slime.Type.Marks != "zip") DrawBossCrown(dc, slime); // 1.5 M18: the Mutant King's sits crooked (PetBattleView.Brood.cs).
         dc.Pop();
         dc.Pop();
+        unturned = PushUnturned(dc, slime, x, floor, h);
         DrawBubbleShell(dc, slime, x, floor, w, h, time);
         if (slime.Shielded && slime.State != SlimeState.Defeated)
         {
@@ -722,7 +726,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         double top = floor - h * sy - (slime.IsBoss ? 9 * size : 0);
         // Status badges over the head push the elite's tag and the selection arrow up.
         double lift = DrawStatusOver(dc, slime, x, floor, top, w, h, time);
-        DrawZipOver(dc, slime, x, floor + slime.LeapHeight, top - lift, time);
+        DrawZipOver(dc, slime, x, floor + slime.LeapHeight + RollLift(slime, BattleSim.RollTurn(slime)), top - lift, time);
         if (slime.Mended && slime.State != SlimeState.Defeated)
         {
             // Guarded by a heal: a green bubble with leaves turning round it (push the healer to end it).
@@ -828,6 +832,16 @@ public sealed partial class BattleFieldView : FrameworkElement
             dc.Pop();
         }
         if (slime.OnWall) dc.Pop();
+        if (unturned) dc.Pop();
+    }
+
+    // Undoes a rolling boss's turn (same centre as in OnRender) for what is not its body; true when pushed.
+    private static bool PushUnturned(DrawingContext dc, Slime slime, double x, double floor, double h)
+    {
+        double turn = BattleSim.RollTurn(slime);
+        if (turn == 0) return false;
+        dc.PushTransform(new RotateTransform(-turn, x, floor - h / 2));
+        return true;
     }
 
     // A herbal healer (body coordinates): a leaf cap with a short stem and a small herb pouch on

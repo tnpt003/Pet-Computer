@@ -173,17 +173,18 @@ public sealed partial class BattleSim
     }
 
     // A drop landing on a puddle freshens it rather than adding another on the same spot.
-    private void AddPuddle(BattleGoo goo)
+    internal void AddPuddle(BattleGoo goo)
     {
+        bool bossOwned = Find(goo.OwnerId)?.Type.BossTactics != null;
         foreach (var p in puddles)
-            if (Math.Abs(p.X - goo.X) < p.Radius / 2)
+            if ((p.OwnerId == goo.OwnerId || !bossOwned && !p.BossOwned) && Math.Abs(p.X - goo.X) < p.Radius / 2)
             {
                 p.Remaining = p.Life = Math.Max(p.Remaining, goo.PuddleSeconds);
                 p.Damage = Math.Max(p.Damage, goo.PuddleDamage); p.Slow = Math.Min(p.Slow, goo.PuddleSlow);
                 return;
             }
         if (puddles.Count >= MaxPuddles) puddles.RemoveAt(0);
-        puddles.Add(new BattlePuddle { X = goo.X, Radius = goo.PuddleRadius, Remaining = goo.PuddleSeconds, Life = goo.PuddleSeconds, DashDistance = goo.DashDistance, DashSpeed = goo.DashSpeed,
+        puddles.Add(new BattlePuddle { OwnerId = goo.OwnerId, BossOwned = bossOwned, X = goo.X, Radius = goo.PuddleRadius, Remaining = goo.PuddleSeconds, Life = goo.PuddleSeconds, DashDistance = goo.DashDistance, DashSpeed = goo.DashSpeed,
             Damage = goo.PuddleDamage, Slow = goo.PuddleSlow });
     }
 

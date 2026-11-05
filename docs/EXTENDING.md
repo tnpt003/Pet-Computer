@@ -21,6 +21,8 @@ Luật không được phá: AGENTS.md, docs/APPROVED-EXCEPTIONS.md. Khóa dữ 
 
 ## Việc chung cho mọi nội dung mới
 
+Mẫu chốt thiết kế: **vai trò/áp lực → dấu báo → cách đối phó → cơ hội phản công → giới hạn/điều kiện ngắt → tiêu chí kiểm tra**. Giữ ID Q/S/B/K… hiện có; ghi rõ đã duyệt, đã code, đã test tự động, đã xem render, đã chơi tay. Bảng luật tương tác và ngân sách quân/hiệu ứng: [STANDARDIZATION-1.5.md](STANDARDIZATION-1.5.md). Hình học cảnh báo lấy từ cùng nguồn với combat; boss nâng cấp dùng `BossZone`/`BossWaveZone`/`BossRainZone`, không chép số sang renderer.
+
 1. **Dữ liệu:** thêm khóa thì sửa kiểu dữ liệu, `Validate` và fallback C#. `BattleData` bỏ cả file nếu có một lỗi; `BattleDataTests` fail khi battle.json lệch fallback. Tên, mẹo và mô tả có giới hạn độ dài, vượt là cả file bị từ chối.
 2. **Chữ:** vi trong code/dữ liệu, `...En`, bản dịch `src/DesktopPet/Assets/i18n/ja.json` (câu tiếng Anh là khóa).
 3. **Trạng thái trận:** mọi thứ mới dừng khi Pause, menu, chọn thẻ, túi đồ, hướng dẫn đứng hình; chịu được mèo đang cầm, đang bay, đang choáng; kết thúc trận thì dọn sạch.

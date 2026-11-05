@@ -39,7 +39,8 @@ public sealed partial class BattleSim
         Rages++;
         if (auto) AutoRages++;
         // Every harm on the cat is gone at once.
-        if (CatStunRemaining > 0 || DazzleRemaining > 0 || CatSlowRemaining > 0) RageCleansed++;
+        if (CatStunRemaining > 0 || DazzleRemaining > 0 || CatSlowRemaining > 0 || ShoveLeft > 0) RageCleansed++;
+        ShoveLeft = 0;
         CatStunRemaining = 0;
         NotRespondingRemaining = 0;
         DazzleRemaining = 0;

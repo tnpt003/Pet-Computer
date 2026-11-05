@@ -8,6 +8,12 @@ internal static class MonsterBookTests
     public static void Run(Action<bool, string> check)
     {
         var data = BattleData.Settings;
+        check(MalwareCue.DrawKinds.SequenceEqual(new[] { "loading", "update", "virus", "ads", "captcha", "battery", "cursor" })
+            && MalwareCue.Kinds.Except(new[] { "infect" }).Order().SequenceEqual(MalwareCue.DrawKinds.Order()),
+            "Malware draw order, cue kinds and book discovery stay aligned; infection has its separate path");
+        var weighted = new CustomAppRules { Malware = Enumerable.Range(0, MalwareCue.Kinds.Length).Select(i => i % 4).ToArray() };
+        check(weighted.Weights().SequenceEqual(MalwareCue.DrawKinds.Select(k => (double)weighted.Level(k))),
+            "Custom malware weights preserve the same order as draw and book IDs");
         const double dt = 1.0 / 60;
 
         // Every kind has a page except the ones that only come out of another (a splitter's halves, a planted flag).

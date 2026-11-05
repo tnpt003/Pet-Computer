@@ -309,7 +309,7 @@ public sealed partial class BattleSim
         if (slime.Link is not { Kind: EnemyLinks.Merge, Pack: true } link || amount <= 0) return amount;
         var mates = new List<Slime>();
         foreach (var s in slimes)
-            if (s != slime && s.Type == slime.Type && s.Targetable && !s.Handled && Math.Abs(s.X - slime.X) <= link.PackRange) mates.Add(s);
+            if (s != slime && s.Type == slime.Type && s.Targetable && !s.BroodNest && !s.Handled && Math.Abs(s.X - slime.X) <= link.PackRange) mates.Add(s);
         if (mates.Count == 0) return amount;
         double each = amount / (mates.Count + 1);
         PackShares++;

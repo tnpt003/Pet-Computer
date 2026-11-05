@@ -45,10 +45,38 @@ internal static class BroodVisualChecks
 
         var rains = new BattleSim(data, 0, Width, new Random(1));
         var king = Add(rains, "mutant_king", 1050);
-        king.RainClock = 0.01;
+        king.Special = BossMove.Rain; king.SpecialAt = 300;
+        king.SpecialLeft = king.SpecialDuration = 0.01;
         for (int i = 0; i < 30; i++) rains.Step(1.0 / 60, 300, false);
         var lane = SkyVisualChecks.Render(new BattleFieldView(rains) { OriginX = 0 }, w, h, "enemy-rain");
         int drops = SkyVisualChecks.Count(lane, w, h, green, 150, 450, 0, floor - 12);
-        check(rains.Goos.Count(g => g.Rain) == data.Enemy("mutant_king").Rain!.Drops && drops > 30, $"Its goo rain falls around the cat ({drops} drop pixels)");
+        check(rains.Goos.Count(g => g.Rain) == data.Enemy("mutant_king").Rain!.Drops * 2 && drops > 30, $"Its two-beat goo rain falls around the cat ({drops} drop pixels)");
+
+        var tactics = new BattleSim(data, 0, Width, new Random(1));
+        var mama = Add(tactics, "mother", 260);
+        var child = Add(tactics, "giant", 490);
+        child.SummonedBy = mama.Id; child.Nursing = true; mama.NurseCord = child.Id;
+        var nest = Add(tactics, "fuser", 110);
+        nest.BroodNest = true; nest.Link = null; nest.NestLeft = 3;
+        var mutant = Add(tactics, "mutant_king", 950);
+        mutant.Special = BossMove.Sweep; mutant.Facing = -1;
+        mutant.SpecialDuration = 1.1; mutant.SpecialLeft = 0.4; mutant.GooArmor = 70;
+        var advanced = SkyVisualChecks.Render(new BattleFieldView(tactics) { OriginX = 0 }, w, h, "enemy-boss-tactics");
+        int eggs = SkyVisualChecks.Count(advanced, w, h, bow, 75, 145, floor - 45, floor);
+        int cord = SkyVisualChecks.Count(advanced, w, h, bow, 280, 470, floor - 70, floor);
+        check(eggs > 30 && cord > 20, $"Advanced mother shows three nest eggs and a cuttable rescue cord ({eggs}/{cord} pixels)");
+        check(SkyVisualChecks.Count(advanced, w, h, Color.FromRgb(0xFF, 0xC8, 0x6A), 650, 950, floor - 50, floor) > 20,
+            "Advanced king warns the exact sweeping side with a floor lane and a reaching arm");
+
+        var configured = new BattleSim(data, 0, Width, new Random(1));
+        var wideWave = configured.AddSlime(950, new EnemyType { Id = "configured_boss", Boss = true, Scale = 2,
+            BossTactics = new BossTacticsSpec { WaveSpacing = 120, WaveRadius = 48 } });
+        wideWave.Set(SlimeState.Moving); wideWave.Facing = -1;
+        wideWave.Special = BossMove.Wave; wideWave.SpecialDuration = 1.1; wideWave.SpecialLeft = 0.5;
+        var wavePixels = SkyVisualChecks.Render(new BattleFieldView(configured) { OriginX = 0 }, w, h, "enemy-boss-configured-zones");
+        var firstWave = BattleSim.BossWaveZone(wideWave, 1);
+        int edge = (int)(firstWave.X - firstWave.Radius);
+        check(SkyVisualChecks.Count(wavePixels, w, h, Color.FromRgb(0xFF, 0xC8, 0x6A), edge - 2, edge + 8, floor - 18, floor) > 2,
+            "Configured wave warning reaches its actual collision radius rather than a hard-coded smaller circle");
     }
 }

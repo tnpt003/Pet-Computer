@@ -131,6 +131,8 @@ public sealed partial class BattleSim
             StepStatus(slime, dt);
             if (Over) break;
             if (slime.State == SlimeState.Defeated) continue;
+            if (StepNest(slime, dt)) continue;
+            if (StepBossTactics(slime, dt)) { if (Over) break; continue; }
             StepIce(slime, dt); // 1.5 M15: a broken ice shell grows back (PetBattle.Wall.cs).
             // 1.5 M16: a hedgehog's quills, a timer's clock (PetBattle.Quills.cs).
             StepQuills(slime, dt);

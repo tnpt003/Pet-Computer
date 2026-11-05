@@ -857,6 +857,7 @@ public sealed partial class BattleSim
                 if (!slime.Targetable) return HitResult.Landed;
             }
         }
+        amount = BossTacticDamage(slime, amount);
         // A hit never takes a boss past its next shield phase: it stops there, the rest is lost.
         slime.Hp = Math.Max(ShieldFloor(slime), slime.Hp - amount);
         slime.HitFlash = 0.18;
@@ -929,6 +930,7 @@ public sealed partial class BattleSim
             effects[^1].Tint = slime.Enraged ? slime.Type.AngryColor : slime.Type.Color;
         }
         events.Add(new(BattleEventKind.SlimeDefeated, slime.X, slime.IsBoss ? 1 : 0));
+        TacticDefeated(slime);
         LinkFallen(slime, true);
         FlagOwnerFell(slime);
         PackFallen(slime); // 2026-10-31: its merging pack rages (PetBattle.Links.cs).
@@ -1013,6 +1015,7 @@ public sealed partial class BattleSim
         foreach (var s in slimes)
         {
             if (s.State is SlimeState.Windup or SlimeState.Casting or SlimeState.Dashing) s.Set(SlimeState.Moving);
+            s.Special = BossMove.None; s.NurseCord = 0; s.BroodJumpLeft = 0;
             s.RallyCharge = 0;
             s.FarHeal = false;
             // A leap in the air comes down where it is; announced helpers never come.
@@ -1145,6 +1148,8 @@ public sealed partial class BattleSim
         foreach (var s in slimes)
         {
             s.X = left + (s.X - Left) / oldWidth * newWidth;
+            s.SpecialAt = left + (s.SpecialAt - Left) / oldWidth * newWidth;
+            s.SpecialFrom = left + (s.SpecialFrom - Left) / oldWidth * newWidth;
             s.LeapFromX = left + (s.LeapFromX - Left) / oldWidth * newWidth;
             if (s.CallSpots is { } spots) for (int i = 0; i < spots.Count; i++) spots[i] = (spots[i].Kind, left + (spots[i].X - Left) / oldWidth * newWidth);
             if (s.BroodSpots is { } laid) for (int i = 0; i < laid.Count; i++) laid[i] = (laid[i].Kind, left + (laid[i].X - Left) / oldWidth * newWidth);

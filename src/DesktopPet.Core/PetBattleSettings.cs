@@ -757,6 +757,12 @@ public sealed class Slime
     public List<(string Kind, double X)>? BroodSpots;
     public bool Nursing, Feeding;
     public int CrownTurn;
+    public BossMove Special;
+    public double SpecialLeft, SpecialDuration, SpecialAt, SpecialFrom, TacticClock = 5;
+    public int TacticTurn, SpecialCount, MotherFury, NurseCord, NestTurn;
+    public double CordLeft, CordCooldown, NestLeft, BroodJumpLeft, GooArmor;
+    public double BroodJumpRadius = 42;
+    public bool BroodNest, LastBrood, SpecialHitOnce;
     // 1.5 M20 (PetBattle.Basket.cs): it goes for the fish basket rather than the cat; it carries a fish
     // (running for its FleeSide edge); seconds it has spent taking one.
     public bool FishTaker, CarriesFish;
@@ -874,6 +880,7 @@ public enum BattleEventKind
     // a crowned boss tied a link between its helpers (Value: the holder's id), a goo rain began
     // (Value: the boss's id; a drop landing is a GooLanded).
     BroodWarned, BroodLaid, NurseHeading, NurseFed, CrownLinked, RainCalled,
+    BossSpecialWarned, BossSpecialLanded,
     // 1.5 M19 (PetBattle.Drops.cs): a drop fell on the floor, faded away (Value: its id), was picked up
     // (Value: its BattleDropKind).
     DropAppeared, DropFaded, DropPicked,
@@ -930,6 +937,9 @@ public sealed class BattleShot
 }
 public sealed class BattlePuddle
 {
+    public int OwnerId;
+    public bool BossOwned;
+    public bool DrainCut;
     public double X, Radius, Remaining, Life, DashDistance, DashSpeed, Damage, Slow = 1;
 }
 public readonly record struct BattleEvent(BattleEventKind Kind, double X, double Value = 0);

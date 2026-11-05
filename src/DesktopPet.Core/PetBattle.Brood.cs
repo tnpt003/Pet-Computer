@@ -36,7 +36,7 @@ public sealed partial class BattleSim
         var calls = new List<string>(brood.Count);
         for (int i = 0; i < brood.Count; i++) calls.Add(brood.Enemy);
         // Side by side on the cat's side of her (they huddle at once: a bomb's chance, or a push's).
-        var spots = HelperSpots(boss, calls, lastCatX < boss.X ? 1 : -1);
+        var spots = boss.Type.BossTactics != null ? NestSpots(boss, brood) : HelperSpots(boss, calls, lastCatX < boss.X ? 1 : -1);
         if (spots.Count == 0) { boss.BroodClock = 1; return; } // No room under her SummonCap: soon again.
         boss.BroodClock = BroodWait(boss, brood);
         if (brood.Warning > 0)
@@ -51,6 +51,13 @@ public sealed partial class BattleSim
 
     private void Lay(Slime boss, BroodSpec brood, List<(string Kind, double X)> spots)
     {
+        if (boss.Type.BossTactics != null)
+        {
+            if (LayNests(boss, brood, spots) == 0) return;
+            Clutches++;
+            events.Add(new(BattleEventKind.BroodLaid, boss.X, boss.Id));
+            return;
+        }
         int laid = SpawnHelpers(boss, spots, 0);
         if (laid == 0) return;
         Clutches++;
@@ -91,6 +98,11 @@ public sealed partial class BattleSim
         slime.Facing = dx < 0 ? -1 : 1;
         slime.Feeding = true;
         double give = Math.Min(slime.Hp, brood.FeedRate * dt);
+        if (mother.Type.BossTactics != null)
+        {
+            give = Math.Min(give, mother.MaxHp - mother.Hp);
+            if (give <= 0) { slime.Feeding = false; return true; }
+        }
         slime.Hp -= give;
         slime.FedHp += give;
         mother.Hp = Math.Min(mother.MaxHp, mother.Hp + give);

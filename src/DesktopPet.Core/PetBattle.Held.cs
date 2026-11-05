@@ -189,6 +189,7 @@ public sealed partial class BattleSim
         // A boss's ropes to its helpers (1.5 M17, PetBattle.Zip.cs), the Zip Slime's bomb tab (2026-11-05).
         CatThroughBossRopes(from, cat, speed);
         if (!Over) CatThroughTab(from, cat, speed);
+        if (!Over && speed >= BossCordCutSpeed) CatRopeCuts += CutTacticCords(from.X, from.Height, cat.X, cat.Height, CatHalfWidth * 2 / 3);
         if (!HasLink(EnemyLinks.Tether) || Over) return;
         foreach (var holder in slimes.ToArray())
         {

@@ -39,5 +39,5 @@ public sealed partial class BattleSim
     private void NoteApp(string id) => metApps.Add(id);
     public static string AppId(BattleAppKind kind) => kind.ToString().ToLowerInvariant();
     // ThrowMalware's draw order (CustomAppRules.Weights).
-    private static readonly string[] MalwareIds = { "loading", "update", "virus", "ads", "captcha", "battery", "cursor" };
+    private static readonly IReadOnlyList<string> MalwareIds = MalwareCue.DrawKinds;
 }

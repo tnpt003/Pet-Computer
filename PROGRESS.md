@@ -1,6 +1,6 @@
 # Tiến độ Desktop Pet
 
-Cập nhật: 2026-11-05 (Asia/Saigon). Lịch sử từng đợt: docs/archive/PROGRESS-2026-10.md (đến 20/10), docs/archive/PROGRESS-2026-10-21-to-26.md (21–26/10, đến bản 1.4.4), docs/archive/PROGRESS-2026-10-27-to-11-05.md (27/10–05/11: 1.5 M01–M29, đợt B, đợt C, website, README; nguyên văn).
+Cập nhật: 2026-11-06 (Asia/Saigon). Lịch sử từng đợt: docs/archive/PROGRESS-2026-10.md (đến 20/10), docs/archive/PROGRESS-2026-10-21-to-26.md (21–26/10, đến bản 1.4.4), docs/archive/PROGRESS-2026-10-27-to-11-05.md (27/10–05/11: 1.5 M01–M29, đợt B, đợt C, website, README; nguyên văn).
 Project: C:\Project VS\Pet Computer. Đã dùng git (nhánh main), mỗi đợt một commit; tác giả cục bộ tnpt003.
 GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit artifacts/, .tools/, bin/obj, *.log.
 Quy ước file này: chỉ giữ trạng thái hiện tại, các đợt đang làm, việc dở và test tay, mỗi mục ngắn. Chi tiết commit/test của từng lỗi ghi ở Issue_fixxed.md. File dưới ~20 KB; vượt thì chuyển mục đã xong sang docs/archive/.
@@ -15,7 +15,14 @@ Quy ước file này: chỉ giữ trạng thái hiện tại, các đợt đang 
 ## Đang dở và việc tiếp theo
 
 - **Slime Nén thiết kế lại (06/11, Issue_fixxed #53):** nhỏ rồi phình theo máu, 3 giai đoạn, 3 câu đố (khóa vỏ, bung file, bom nén), hình file nén mới, bỏ pha tự nén và Mảnh file (commit 6739762; Python 58 + 5, 3106 check C#, 1415 check WPF đạt; đã publish, smoke PASS). Mô phỏng: bot không tự thả đè và không kéo tay kéo bằng mèo, nên Hard giảm (Kiếm 13 → 8/20, Búa 11 → 9/20, Găng 16 → 13/20) là trường hợp xấu. Còn test tay: docs/MANUAL-TEST.md mục Slime Nén thiết kế lại; chỉnh số sau khi chơi thật.
-- **Việc tiếp theo của 1.5:** danh sách ở docs/UPDATE-1.5.md → Việc trước M30: người dùng test tay theo docs/MANUAL-TEST.md → "Bản 1.5 — thứ tự test tay", đo lại và quyết các đề xuất dưới đây, sửa chữ banner vòng nộ, rồi M30 (release 1.5.0).
+- **Hợp nhất và chuẩn hóa 1.5 (06/11):** đang chốt merge feature/mother-mutant-mechanics (code 9477828) với main có Slime Nén mới (6739762). Luật/điểm review: docs/STANDARDIZATION-1.5.md; boss: docs/BOSS-TACTICS.md. Sửa lứa cuối hết chỗ vẫn tốn máu, vùng báo sóng nhỏ hơn hit, Nộ không chặn/giải đẩy; bảo toàn gộp vũng thường. Dùng chung hình học cho combat/render/bot và thứ tự app độc. Banner Nộ vi/en/ja đã đúng avatar/tự bật. Không có mầm/slime con biến dị.
+- **Kỷ lục tích hợp:** chương 1 giữ ngoại lệ đã duyệt; chương 2 r3/4/2/4/4, Vô tận r12, Bãi rác r5 (giữ chuyến 1/2/3/4), tuyến Slime r8. Hai nhánh trước đó cùng dùng Vô tận 11/Bãi rác 4 cho luật khác nên cần số tích hợp mới.
+- **Kiểm tra tích hợp đạt:** Python 58 + 5, C# 3170, WPF 1418 (artifacts/standardize-final-tests.log), đã xem render sáng/tối. Cùng 60 seed toàn chương 2 cho đối chứng 0172091 và tích hợp, không nới tỷ lệ/ngưỡng; len màn 2 Normal 42/60, Hard 14/60 so kiếm 42/60 (chênh 46,7 điểm ≤50). Chi tiết trước/sau và giới hạn bot: docs/BALANCE-1.5-INTEGRATED.md. Đang chốt commit/publish; chưa ghi nghiệm thu chơi tay.
+- **Còn test tay:** mục Bản tích hợp/chuẩn hóa 1.5 cuối MANUAL-TEST, Slime Nén và hai boss; chưa chơi thật hoặc kiểm DPI/multi-monitor thật. Mốc kỹ thuật không đồng nghĩa hoàn tất M30/release 1.5.
+
+
+
+- **Việc tiếp theo của 1.5:** chốt kiểm tra/publish bản tích hợp; người dùng test tay theo MANUAL-TEST, đo lại và quyết các đề xuất chưa duyệt rồi M30 (release 1.5.0). Banner vòng nộ đã sửa trong mốc chuẩn hóa 06/11.
 - **Chuẩn hóa tài liệu 1.5 (05/11):** UPDATE-1.5.md viết lại thành bản chốt, có bảng luật đã thay; bản cũ lưu nguyên văn ở docs/archive/UPDATE-1.5-design-2026-10.md; BATTLE-DATA, CHANGELOG 1.5.0 (vi/en/ja, chưa ai duyệt lại câu ja mới), MANUAL-TEST, GOPY-C sửa theo luật thật; thêm docs/EXTENDING.md. Chỉ đổi tài liệu, không publish. Test trên HEAD d60c962, trước khi sửa tài liệu: Python 58 + 5, 3063 check C#, 1410 check WPF đạt. Phát hiện khi rà: chương 1 không hoàn toàn như 1.4.4 (Nộ tự bật, `utilityChance` 0,35, 2 thẻ hiếm mới) nhưng người dùng chốt giữ nguyên rulesVersion chương 1 (05/11); banner vòng nộ đầy còn chữ "Bấm vào thanh", chưa sửa, đã ghi ở Việc trước M30.
 - **Góp ý chơi thử 05/11 (Issue_fixxed #49):** khói gacha ảo ảnh, slime băng hết vỏ để mèo bay xuyên, Kẹp gắp vỡ vỏ, slime dỗi òa khóc, Bình xịt tới slime trên cao, hiệu ứng app đúng độ cao, Tab chỉ trúng quái dưới sàn (commit 5f3b12d; Python 58 + 5, 3045 check C#, 1410 check WPF đạt; đã publish, smoke PASS). Còn test tay.
 - **Slime xích đứng xa 200; mèo tự rớt (05/11, Issue_fixxed #52):** slime xích cách tâm đồng minh `link.range` (commit 296dfc4; Python 58 + 5, 3063 check C#, 1410 check WPF đạt; đã publish, smoke PASS). Mèo tự rớt khi cầm đánh slime bay: chưa tái hiện, chưa rõ nguyên nhân; đã thêm log "Cat let go in battle", chờ người dùng gặp lại.

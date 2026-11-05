@@ -11,11 +11,25 @@ namespace DesktopPet;
 // event (or a new skill's event) is one line here.
 public sealed partial class PetWindow
 {
+    private string? BossSpecialText(BossMove move) => move switch
+    {
+        BossMove.Recall => L("Mẹ gọi con yếu về! Chặn đường hồi máu", "The mother recalls wounded children! Stop the healing"),
+        BossMove.BroodJump => L("Bầy con sắp nhảy vào vòng! Nhấc mèo để né", "The brood will jump into the ring! Lift the cat to dodge"),
+        BossMove.Charge => L("Mẹ nổi giận lao tới! Né làn nhầy rồi phản công", "The mother charges in anger! Dodge the lane and strike back"),
+        BossMove.Sweep => L("Tay nhầy sắp quét! Tránh phía tay vươn ra", "Goo arm sweep! Avoid the reaching side"),
+        BossMove.Burst => L("Vua sắp phình nổ! Ra khỏi vòng lớn", "The king will swell and burst! Leave the large ring"),
+        BossMove.Wave => L("Sóng nhầy chạy sát sàn! Nhấc mèo qua sóng", "A goo wave runs along the floor! Lift the cat over it"),
+        BossMove.Absorb => L("Vua hút nhầy tạo giáp! Cắt các dòng nhầy vàng", "The king absorbs goo for armor! Cut the golden streams"),
+        BossMove.Rain => L("Mưa nhầy hai nhịp! Né tiếp sau đợt đầu", "Two-beat goo rain! Keep dodging after the first beat"),
+        _ => null
+    };
+
     // Sound per event and its rank: one cue per frame, the highest rank wins (a defeat's pop
     // over its hit's squish); ties keep the earlier event. Rank 0: silent.
     private static readonly Dictionary<BattleEventKind, (string Sound, int Rank)> BattleCues = new()
     {
         [BattleEventKind.Won] = ("excited", 9), [BattleEventKind.Lost] = ("annoyed", 9),
+        [BattleEventKind.BossSpecialWarned] = ("surprised", 5), [BattleEventKind.BossSpecialLanded] = ("pop", 4),
         [BattleEventKind.BossAppeared] = ("surprised", 8), [BattleEventKind.CatHurt] = ("surprised", 7),
         [BattleEventKind.WaveCleared] = ("excited", 6), [BattleEventKind.SynergyUnlocked] = ("excited", 6),
         [BattleEventKind.Healed] = ("satisfied", 5), [BattleEventKind.UpgradeChosen] = ("satisfied", 5), [BattleEventKind.Cheered] = ("excited", 5), [BattleEventKind.Blocked] = ("ball_tap", 5),
@@ -237,6 +251,9 @@ public sealed partial class PetWindow
                 BattleEventKind.RollAimed when trickExplained.Add(e.Kind) => LF($"{BossName()} sắp lăn! Nhấc mèo lên để né", $"The {BossName()} is about to roll! Lift the cat out of its way"),
                 // 1.5 M18: the Slime Mother (her first clutch, the first one heading back, every feed), the Mutant King
                 // (every crown link: which kind matters; its first rain).
+                BattleEventKind.BossSpecialWarned when battle.Find((int)e.Value) is Slime special => BossSpecialText(special.Special),
+                BattleEventKind.BroodWarned when battle.Boss?.Type.BossTactics != null =>
+                    L("Slime Mẹ đặt ổ! Phá ổ trước khi trứng nở", "The mother lays nests! Break them before they hatch"),
                 BattleEventKind.BroodWarned when trickExplained.Add(e.Kind) =>
                     LF($"{BossName()} sắp đẻ bầy! Bom len khi cả bầy chụm lại, Đẩy tách ra hoặc Quạt giữ chân", $"The {BossName()} is laying a clutch! Bomb it while it huddles, push it apart or hold it with the Fan"),
                 BattleEventKind.NurseHeading when trickExplained.Add(e.Kind) =>
@@ -299,7 +316,7 @@ public sealed partial class PetWindow
                 BattleEventKind.CaptchaShuffled when trickExplained.Add(e.Kind) => L("Sai ô! Captcha xáo lại", "Wrong tile! The captcha shuffles"),
                 BattleEventKind.BatteryLow when trickExplained.Add(e.Kind) => L("Pin yếu! Kỹ năng hồi chậm. Bấm Cắm sạc trên HUD", "Low battery! Skills recharge slowly. Click Plug in on the HUD"),
                 BattleEventKind.CursorFrozen when trickExplained.Add(e.Kind) => L("Con trỏ đơ! Kỹ năng bị khóa. Bấm Tiếp tục trên HUD", "Frozen cursor! Skills are locked. Click Continue on the HUD"),
-                BattleEventKind.RageFull when !rageExplained => L("Thanh nộ đầy! Bấm vào thanh để mèo nổi giận", "The rage bar is full! Click it to make the cat rage"),
+                BattleEventKind.RageFull when !rageExplained => L("Nộ đã đầy! Bấm avatar mèo hoặc để mèo tự bật khi đánh trúng hay sắp bị choáng", "Rage is ready! Click the cat avatar, or it activates on a hit or before a stun"),
                 BattleEventKind.Raged => L("MÈO NỔI GIẬN!", "THE CAT RAGES!"),
                 // 1.5 M09: the spitter and the spring trap, once each per battle.
                 BattleEventKind.SpitAimed when !spitExplained => L("Slime phun! Nhấc mèo khỏi vòng cam", "A spitter! Lift the cat out of the orange ring"),

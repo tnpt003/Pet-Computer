@@ -55,6 +55,7 @@ public sealed partial class BattleSim
     // Every frame for a raining boss: its clock (shield down, not stunned), then the drops.
     private void StepRain(Slime boss, double dt)
     {
+        if (boss.Type.BossTactics != null) return; // Advanced sequence owns the rain.
         if (boss.Type.Rain is not RainSpec rain || boss.State is SlimeState.Spawning or SlimeState.Defeated) return;
         if (boss.Shielded || boss.State == SlimeState.Stunned || boss.LeapHeight > 0) return;
         boss.RainClock -= dt * boss.ChillFactor;

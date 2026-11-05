@@ -209,6 +209,7 @@ public sealed class EnemyType
     public BroodSpec? Brood { get; init; }
     public LinkSpec[]? CrownLinks { get; init; }
     public RainSpec? Rain { get; init; }
+    public BossTacticsSpec? BossTactics { get; init; }
     // An infected bin may spit one of this kind (with an elite affix). False keeps a kind out of battles
     // that never list it (the 1.5 enemies until their chapter brings them in).
     public bool BinSpit { get; init; } = true;
@@ -608,6 +609,22 @@ public sealed class BroodSpec
 // apart on both sides in turn. A cat on the floor within Radius takes Damage (scaled like its other hits,
 // no stun); lifting it or the Bubble shield dodges them. PuddleSeconds: a puddle stays that long where each
 // lands (a spitter's, with SpitSpec's default boost; 0: none).
+public sealed class BossTacticsSpec
+{
+    internal static readonly BossTacticsSpec Default = new();
+    public double Every { get; init; } = 5;
+    public double Warning { get; init; } = 1.1;
+    public double Opening { get; init; } = 3.5;
+    public double NestHp { get; init; } = 80;
+    public double Incubation { get; init; } = 2.5;
+    public double SweepReach { get; init; } = 125;
+    public double SweepRadius { get; init; } = 125;
+    public double BurstRadius { get; init; } = 160;
+    public double JumpRadius { get; init; } = 42;
+    public double WaveRadius { get; init; } = 38;
+    public double WaveSpacing { get; init; } = 65;
+}
+
 public sealed class RainSpec
 {
     public double Every { get; init; } = 12;
@@ -998,7 +1015,12 @@ public sealed class CustomAppRules
     public int[] Malware { get; init; } = new int[MalwareCue.Kinds.Length];
     public int Level(string kind) => Array.IndexOf(MalwareCue.Kinds, kind) is int i and >= 0 && i < Malware.Length ? Math.Clamp(Malware[i], 0, 3) : 0;
     // The random draw's weights in its own order: loading, update, virus.exe, ads, captcha, battery, cursor.
-    public double[] Weights() => new double[] { Level("loading"), Level("update"), Level("virus"), Level("ads"), Level("captcha"), Level("battery"), Level("cursor") };
+    public double[] Weights()
+    {
+        var weights = new double[MalwareCue.DrawKinds.Count];
+        for (int i = 0; i < weights.Length; i++) weights[i] = Level(MalwareCue.DrawKinds[i]);
+        return weights;
+    }
     // The wait between malware × this, by the most chosen: few 1.5, some 1, many 0.6.
     public double WaitScale => Weights().Max() switch { >= 3 => 0.6, >= 2 => 1, _ => 1.5 };
     // The chance a wave brings a slime's virus into an icon.
@@ -1013,6 +1035,8 @@ public sealed class MalwareCue
     public string Kind { get; init; } = "";
     // 1.5 M26: "captcha", "battery" (low battery), "cursor" (frozen cursor).
     public static readonly string[] Kinds = { "ads", "loading", "update", "virus", "infect", "captcha", "battery", "cursor" };
+    // Draw order is shared by custom weights and book discovery; infection has its own path.
+    public static IReadOnlyList<string> DrawKinds { get; } = Array.AsReadOnly(new[] { "loading", "update", "virus", "ads", "captcha", "battery", "cursor" });
 }
 
 // An upgrade offered between the waves of an Adventure stage. A run keeps what it took; in the
@@ -1835,6 +1859,21 @@ public static class BattleData
                 Within(bomb.Charge, 3, 60, at + ".zip.bomb.charge"); Within(bomb.TabRadius, 10, 120, at + ".zip.bomb.tabRadius"); Within(bomb.Damage, 0, 1000, at + ".zip.bomb.damage");
                 Within(bomb.Radius, 50, 5000, at + ".zip.bomb.radius"); Within(bomb.CatStun, 0, 5, at + ".zip.bomb.catStun"); Within(bomb.Rearm, 1, 120, at + ".zip.bomb.rearm");
                 Within(bomb.Flight, 0.2, 5, at + ".zip.bomb.flight"); Within(bomb.Stun, 0, 15, at + ".zip.bomb.stun"); Within(bomb.Bonus, 1, 5, at + ".zip.bomb.bonus");
+            }
+            if (e.BossTactics is BossTacticsSpec tactics)
+            {
+                if (!e.Boss || (e.Brood == null) == (e.Rain == null)) throw new InvalidDataException(at + ".bossTactics needs exactly one of brood/rain on a boss");
+                Within(tactics.Every, 2, 30, at + ".bossTactics.every");
+                Within(tactics.Warning, 0.7, 3, at + ".bossTactics.warning");
+                Within(tactics.Opening, 2, 8, at + ".bossTactics.opening");
+                Within(tactics.NestHp, 10, 200, at + ".bossTactics.nestHp");
+                Within(tactics.Incubation, 2, 10, at + ".bossTactics.incubation");
+                Within(tactics.SweepReach, 30, 400, at + ".bossTactics.sweepReach");
+                Within(tactics.SweepRadius, 15, 300, at + ".bossTactics.sweepRadius");
+                Within(tactics.BurstRadius, 30, 400, at + ".bossTactics.burstRadius");
+                Within(tactics.JumpRadius, 15, 100, at + ".bossTactics.jumpRadius");
+                Within(tactics.WaveRadius, 15, 100, at + ".bossTactics.waveRadius");
+                Within(tactics.WaveSpacing, 30, 150, at + ".bossTactics.waveSpacing");
             }
             // 1.5 M18: a brood, crown links, a goo rain (bosses only).
             if ((e.Brood != null || e.CrownLinks != null || e.Rain != null) && !e.Boss) throw new InvalidDataException(at + ".brood/crownLinks/rain are for a boss");

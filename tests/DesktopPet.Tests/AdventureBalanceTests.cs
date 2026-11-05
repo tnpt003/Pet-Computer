@@ -15,6 +15,8 @@ internal static class AdventureBalanceTests
     // Runs per row: 20 since the desktop apps (2026-10-23, user): with 10 a single seed moved a
     // row by 10 points and rows near a target flipped on any change (the targets are shares, unchanged).
     public const int Seeds = 20;
+    // Chapter 2 carries builds between stages; 60 fixed seeds for every weapon/level reduce one-run threshold noise.
+    public const int ChapterTwoSeeds = 60;
     // The casual player's reaction time and the share of windups/heals it never answers.
     public const double CasualReaction = 0.6, CasualMiss = 0.3;
 
@@ -216,6 +218,13 @@ internal static class AdventureBalanceTests
             : Math.Abs((s.Hopping ? s.HopTo : s.X) - cat) <= s.Range + 12);
         // The Shield (long cooldown) is kept for plain and slam hits; a dash is Pushed away instead.
         bool danger = sim.Slimes.Any(s => Threat(s) && !s.Type.Dash && s.StateTime > sim.Windup(s) * 0.5);
+        // Advanced bosses keep their own move state. React to their actual announced geometry,
+        // with the same casual delay, rather than treating them as harmless Moving enemies.
+        danger |= sim.Slimes.Any(s => sim.BossThreatens(s, cat)
+            && s.SpecialDuration - s.SpecialLeft >= s.SpecialDuration * 0.5
+            && reflex.NoticesAge(s.SpecialDuration - s.SpecialLeft));
+        danger |= sim.Goos.Any(g => g.Rain && g.Remaining <= 0.5 && Math.Abs(g.X - cat) <= g.Radius
+            && sim.Find(g.OwnerId)?.Type.BossTactics != null && reflex.NoticesAge(g.Flight - g.Remaining));
         if (danger) sim.Use(BattleSkill.Shield, cat);
         var healer = sim.Slimes.FirstOrDefault(s => s.State == SlimeState.Casting && reflex.Notices(s, now));
         var dasher = sim.Slimes.FirstOrDefault(s => Threat(s) && s.Type.Dash);
@@ -261,7 +270,7 @@ internal static class AdventureBalanceTests
         foreach (var weapon in weapons)
             foreach (var level in levels)
                 foreach (var player in Players)
-                    for (int seed = 1; seed <= Seeds; seed++)
+                    for (int seed = 1; seed <= ChapterTwoSeeds; seed++)
                     {
                         var carried = new Dictionary<string, int>();
                         for (int i = 0; i < stages.Length; i++)
@@ -272,7 +281,7 @@ internal static class AdventureBalanceTests
                             list.Add(run);
                         }
                     }
-        Console.WriteLine($"Adventure chapter 2 balance (simulation, not real play): stage | weapon | level | player | wins/{Seeds} | avg s (wins) | HP % left (wins) | stuns/run | fish kept (wins)");
+        Console.WriteLine($"Adventure chapter 2 balance (simulation, not real play): stage | weapon | level | player | wins/{ChapterTwoSeeds} | avg s (wins) | HP % left (wins) | stuns/run | fish kept (wins)");
         var table = new Dictionary<(int, string, BattleDifficulty, Player), (double Wins, double Seconds, double HpShare)>();
         for (int i = 1; i <= stages.Length; i++)
             foreach (var weapon in weapons)
@@ -281,9 +290,9 @@ internal static class AdventureBalanceTests
                     {
                         var runs = played[(i, weapon, level, player)];
                         var wins = runs.Where(r => r.Won).ToList();
-                        table[(i, weapon, level, player)] = ((double)wins.Count / Seeds, wins.Count > 0 ? wins.Average(r => r.Seconds) : 0, wins.Count > 0 ? wins.Average(r => r.HpShare) : 0);
+                        table[(i, weapon, level, player)] = ((double)wins.Count / ChapterTwoSeeds, wins.Count > 0 ? wins.Average(r => r.Seconds) : 0, wins.Count > 0 ? wins.Average(r => r.HpShare) : 0);
                         string fish = stages[i - 1].Basket != null && wins.Count > 0 ? wins.Average(r => r.Fish).ToString("0.0") : "-";
-                        Console.WriteLine($"  {i} | {weapon,-6} | {level,-6} | {Name(player),-6} | {wins.Count,2}/{Seeds} | {(wins.Count > 0 ? wins.Average(r => r.Seconds) : 0),6:0} | {(wins.Count > 0 ? wins.Average(r => r.HpShare) : 0),4:P0} | {runs.Average(r => r.Stuns),4:0.0} | {fish}");
+                        Console.WriteLine($"  {i} | {weapon,-6} | {level,-6} | {Name(player),-6} | {wins.Count,2}/{ChapterTwoSeeds} | {(wins.Count > 0 ? wins.Average(r => r.Seconds) : 0),6:0} | {(wins.Count > 0 ? wins.Average(r => r.HpShare) : 0),4:P0} | {runs.Average(r => r.Stuns),4:0.0} | {fish}");
                     }
         foreach (var weapon in weapons)
             for (int i = 1; i <= stages.Length; i++)
@@ -308,7 +317,7 @@ internal static class AdventureBalanceTests
             }
         // The idle player is left out as in chapter 1 (2026-11-04: the cat's combos now pop a bubble by
         // themselves, so an idle cat sometimes wins stage 5 — slowly, by nature).
-        double longest = table.Where(r => r.Key.Item4 != Player.Idle && r.Value.Wins * Seeds >= 2).Max(r => r.Value.Seconds);
+        double longest = table.Where(r => r.Key.Item4 != Player.Idle && r.Value.Wins * ChapterTwoSeeds >= 2).Max(r => r.Value.Seconds);
         check(longest <= 240, $"Chapter 2 balance: no stage takes longer than 4 minutes on average for a player who fights (longest {longest:0} s)");
         foreach (var level in levels)
             for (int i = 1; i <= stages.Length; i++)
@@ -326,14 +335,14 @@ internal static class AdventureBalanceTests
             $"Chapter 2 balance: the Zip Slime is not beaten by an idle player on Normal ({table[(5, BattleWeapon.Sword, BattleDifficulty.Normal, Player.Idle)].Wins:P0})");
         // 1.5 M29: the yarn and the glove in chapter 2, as in chapter 1 (their own table): the simple player
         // ≥ 80 % on Normal and within 30 points of the sword (the Zip Slime on Hard: 40, as the hammer).
-        Console.WriteLine($"Adventure chapter 2 balance, 1.5 weapons (simulation): stage | weapon | level | player | wins/{Seeds} | avg s (wins) | HP % left (wins) | sweep hits/run | launches/run");
+        Console.WriteLine($"Adventure chapter 2 balance, 1.5 weapons (simulation): stage | weapon | level | player | wins/{ChapterTwoSeeds} | avg s (wins) | HP % left (wins) | sweep hits/run | launches/run");
         foreach (var weapon in new[] { "yarn", "glove" })
         {
             if (data.FindWeapon(weapon) == null) continue;
             var newRuns = new Dictionary<(int Stage, BattleDifficulty Level, Player Player), List<Outcome>>();
             foreach (var level in levels)
                 foreach (var player in new[] { Player.Idle, Player.Simple })
-                    for (int seed = 1; seed <= Seeds; seed++)
+                    for (int seed = 1; seed <= ChapterTwoSeeds; seed++)
                     {
                         var carried = new Dictionary<string, int>();
                         for (int i = 0; i < stages.Length; i++)
@@ -350,8 +359,8 @@ internal static class AdventureBalanceTests
                     {
                         var runs = newRuns[(i, level, player)];
                         var wins = runs.Where(r => r.Won).ToList();
-                        double share = (double)wins.Count / Seeds;
-                        Console.WriteLine($"  {i} | {weapon,-6} | {level,-6} | {Name(player),-6} | {wins.Count,2}/{Seeds} | {(wins.Count > 0 ? wins.Average(r => r.Seconds) : 0),6:0} | {(wins.Count > 0 ? wins.Average(r => r.HpShare) : 0),4:P0} | {runs.Average(r => r.SweepHits),5:0.0} | {runs.Average(r => r.Launches),4:0.0}");
+                        double share = (double)wins.Count / ChapterTwoSeeds;
+                        Console.WriteLine($"  {i} | {weapon,-6} | {level,-6} | {Name(player),-6} | {wins.Count,2}/{ChapterTwoSeeds} | {(wins.Count > 0 ? wins.Average(r => r.Seconds) : 0),6:0} | {(wins.Count > 0 ? wins.Average(r => r.HpShare) : 0),4:P0} | {runs.Average(r => r.SweepHits),5:0.0} | {runs.Average(r => r.Launches),4:0.0}");
                         if (player != Player.Simple) continue;
                         double sword = table[(i, BattleWeapon.Sword, level, Player.Simple)].Wins;
                         int gap = i == stages.Length && level == BattleDifficulty.Hard ? 40 : 30;

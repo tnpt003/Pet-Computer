@@ -1,6 +1,6 @@
 # Bản 1.5 — Slime phản công (bản chốt)
 
-Cập nhật: 2026-11-05 (Asia/Saigon). Trạng thái: **xong M01–M29, đợt B, đợt C và góp ý 05/11; chưa phát hành.** Còn M30.
+Cập nhật: 2026-11-06 (Asia/Saigon). Trạng thái: **xong M01–M29, đợt B/C, góp ý 05/11; đã hợp nhất Slime Nén thiết kế lại và hai boss nâng cấp, kiểm tra tự động bản tích hợp đạt. Chưa phát hành 1.5.0.** Còn M30 và nghiệm thu tay.
 
 Cách đọc file này:
 
@@ -10,6 +10,7 @@ Cách đọc file này:
 - Lịch sử: thiết kế gốc và nhật ký từng mốc ở docs/archive/UPDATE-1.5-design-2026-10.md; đợt C ở docs/GOPY-C-2026-11-04.md; từng lỗi ở Issue_fixxed.md.
 - Thêm nội dung mới: docs/EXTENDING.md. Ý tưởng mới vào mục "Backlog sau 1.5" cuối file, không làm trong 1.5.
 - "Trận tự do" trong tài liệu cũ nay là bộ Mặc định của **Trận tự chọn**.
+- Chuẩn hóa logic, hình học cảnh báo, giới hạn quân, phương pháp cân bằng và điều kiện hoàn tất: [STANDARDIZATION-1.5.md](STANDARDIZATION-1.5.md). Số đo nhánh riêng có ghi commit, không đại diện bản tích hợp.
 
 ## Giữ nguyên
 
@@ -26,11 +27,11 @@ Cách đọc file này:
 Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Battle Mode, App trong trận, Sửa sau chơi thử 1.5. Tóm tắt:
 
 - **Mèo đang cầm** chỉ đánh được quái trên không (slime bay, slime bám tường), mèo tự vung vuốt. Quái dưới sàn không bị mèo đang cầm đánh.
-- **Mèo đang bay sau cú ném** không tự đánh, chỉ tác động quái có tương tác ném: vỏ băng, slime bám tường, dây nhầy.
+- **Mèo đang bay sau cú ném** không tự đánh, chỉ tác động quái có tương tác ném: vỏ băng, slime bám tường, dây nhầy, tay kéo bom Slime Nén.
 - **Mèo được thả:** chỉ tác động slime đào hang lúc trồi, và thẻ Cú đáp địa chấn.
 - **Đạn dính của slime bay** trúng cả mèo đang cầm và trong `landingGrace`, không làm rơi mèo, không choáng; Khiên chặn. Đây là quái duy nhất làm mèo đang cầm mất máu.
 - **Con trỏ tương tác với slime** trong khung trận và trên cửa sổ riêng của slime bay/bám tường. Click trúng mèo luôn là nhấc mèo. Chỉ chặn khi mèo nằm trong tay; mèo đang bay/nảy vẫn rê chuột được.
-- **Trận được đổi mèo:** lò xo đẩy mèo trượt ~80 DIPs; va vỏ băng thì mèo bật ngược; Cú đáp địa chấn thì mèo không nảy, đứng yên ~0,6 s.
+- **Trận được đổi mèo:** lò xo/Slime Mẹ đẩy mèo dưới sàn ~80 DIPs, Vua biến dị phình nổ đẩy 65; va vỏ băng thì mèo bật ngược; Cú đáp địa chấn thì mèo không nảy, đứng yên ~0,6 s. Nộ chặn và giải đẩy lùi nhưng không miễn sát thương thường.
 - **Cửa sổ:** slime bay và slime bám tường trên cao có cửa sổ topmost riêng; lớp chọn vị trí cho Kéo cắt và Quạt; Chụp Màn Hình chớp không chặn chuột.
 - **Slime đi theo mèo đang bế** với 50% tốc độ.
 - **Hướng dẫn phiêu lưu** mở rộng sang chương 2, luật như chương 1.
@@ -96,8 +97,8 @@ Trong trận cảm xúc tự động vẫn bị chặn: S1, S4 không gây cảm
 | Mã | Boss | Luật |
 |---|---|---|
 | B1 | Slime Nén, trùm chương 2 (900 HP; thiết kế lại 2026-11-05, Issue #53) | Nhỏ và nhanh, càng mất máu càng phình to, đánh ít đi mà đau hơn. GĐ1 (×1,1) 3 cú nhảy; ở 66% khóa vỏ và lăn, thả mèo đè đúng điểm vàng 2 lần thì bung khóa. GĐ2 (×2) lăn rồi nện; ở 33% bung Pháo đài nối dây, cắt 2 dây một lúc thì choáng lâu hơn. GĐ3 (×2,9) 1 cú đập; ở 20% thành bom nén, kéo mèo xuyên tay kéo 3 lần (hoặc Kéo cắt) để xì hơi, hết giờ thì nổ cả sàn rồi nạp lại |
-| B2 | Slime Mẹ, boss phụ chương 2 (650 HP) | Đẻ bầy hợp thể mỗi 10 s; khổng lồ do bầy nhập thành quay về bú, chuyển 20 HP/s sang mẹ; hạ nó giữa đường thì mẹ không được gì |
-| B3 | Vua Slime biến dị, Vô tận (1000 HP) | Phong tinh anh và nối thêm dây xích hoặc nhịp trống; mưa nhầy; đòn đồng loạt theo nhịp vẫn giữ |
+| B2 | Slime Mẹ, boss phụ chương 2 (650 HP) | Ổ ủ phá được, gọi con yếu về, dây cứu con cắt được, con che thân, bầy nhảy, giận lao và lứa cuối đổi máu; hồi 20 HP/s. Luật chi tiết: [BOSS-TACTICS](BOSS-TACTICS.md) |
+| B3 | Vua Slime biến dị, Vô tận (1000 HP) | Giữ tinh anh/xích/trống; thêm tay quét, phình nổ, mưa hai nhịp, sóng sàn, hút nhầy thành giáp cắt được và quá tải; cuối trận ghép hai chiêu. Không có mầm/slime con biến dị. [BOSS-TACTICS](BOSS-TACTICS.md) |
 
 ### Vũ khí (V)
 
@@ -207,17 +208,18 @@ Nhật ký chi tiết và kết quả test từng mốc: docs/archive/UPDATE-1.5
 | M25–M28 | Thẻ Mưu mẹo, app mới, Sổ tay quái, thành tựu | 30/10 |
 | M29a, M29 | Trận tự chọn; đo cân bằng, perf, CHANGELOG | 30/10 |
 | Sau M29 | Sửa sau chơi thử 30/10, đợt B (#32–#40), đợt C (#41–#44), góp ý 05/11 (#45–#52) | 05/11 |
+| Hợp nhất/chuẩn hóa | Slime Nén mới (#53), hai boss nâng cấp; sửa lứa cuối, đồng bộ vùng báo/trúng, Nộ chống đẩy, giữ luật vũng cũ; bảng luật và tiêu chí xong | 06/11; Python 58 + 5, C# 3170, WPF 1418 đạt; còn nghiệm thu tay |
 | **M30** | **Release 1.5.0 theo docs/RELEASE.md** | Chưa |
 
 ### Việc trước M30
 
 1. Người dùng test tay theo docs/MANUAL-TEST.md → "Bản 1.5 — thứ tự test tay".
 2. Đo lại rồi quyết 5 đề xuất cân bằng và perf (docs/BALANCE-1.5.md, số đo có từ trước đợt B/C).
-3. Sửa chữ banner vòng nộ đầy: code còn "Bấm vào thanh" (`PetWindow.BattleFeedback.cs`), kèm en/ja.
+3. Nghiệm thu bản tích hợp theo STANDARDIZATION-1.5.md. Banner Nộ đã đổi sang avatar và giải thích tự kích hoạt, có en/ja; không còn việc sửa chữ "Bấm vào thanh".
 4. Mèo tự rớt khỏi tay khi đánh slime bay: chưa rõ nguyên nhân, chờ log "Cat let go in battle".
 5. Nâng `<Version>` lên 1.5.0, rà README và website, tag theo docs/RELEASE.md.
 
-rulesVersion hiện tại: chương 1 giữ như 1.4.4; chương 2 là 3, 4, 2, 3, 3; Vô tận 10; Viễn chinh tuyến 1 r8 (`keepRuns` 6, 7), Lối Bãi rác r3 (`keepRuns` 1, 2). Từ sau 1.5.0, đổi luật màn đã phát hành thì mới cần tăng để tách kỷ lục.
+rulesVersion bản tích hợp: chương 1 giữ như 1.4.4 theo duyệt 05/11; chương 2 là 3, 4, 2, 4, 4; Vô tận 12; Viễn chinh tuyến 1 r8 (`keepRuns` 6, 7), Lối Bãi rác r5 (`keepRuns` 1, 2, 3, 4). Hai nhánh thử đều từng dùng Vô tận 11/tuyến 2 r4 cho luật khác nhau, nên bản tích hợp dùng số mới. Chuyến cũ được giữ không đồng nghĩa với replay nguyên bản luật cũ. Đổi luật đáng kể phải xét tách kỷ lục cả trước release, giữ ngoại lệ chương 1 đã duyệt.
 
 ## Rủi ro còn lại
 
@@ -244,5 +246,5 @@ Checklist từng loại nội dung: docs/EXTENDING.md.
 - Kiểu màn Đuổi trộm, Cầm cự tính giờ, Dọn nhiễm, Liên hoàn trùm (T2–T5).
 - Mốc thưởng Vô tận đợt 60/75/100 (E3); khoảng 12 thẻ mới chia đều 4 nhóm (J2).
 - Mèo nói tiếng người (docs/NEXT-STEPS.md), cần đổi quy tắc AGENTS.md.
-- **Chuẩn bị code cho mở rộng** (chưa làm trước 1.5.0 để tránh rủi ro): test bắt lệch hai danh sách app độc (`MalwareCue.Kinds` ở `PetBattleData.cs` và `MalwareIds` ở `PetBattle.Book.cs`); test bắt khóa hành vi quái mới thiếu trong `UsesMouse` và các điều kiện loại trừ lúc nạp; xem xét gom `Scenes` thành dữ liệu.
+- **Chuẩn bị code cho mở rộng:** đã dùng chung thứ tự app độc và thêm test bắt lệch tên/trọng số/Sổ tay. Còn sau 1.5: kiểm tra tự động khóa quái mới thiếu trong `UsesMouse`/điều kiện loại trừ, xem xét gom `Scenes` thành dữ liệu; không refactor rộng trước release.
 - Kho ý tưởng bản sau: docs/UPDATE-1.5.1.md (chưa chốt, không phải cam kết).

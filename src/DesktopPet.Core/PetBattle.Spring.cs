@@ -139,6 +139,7 @@ public sealed partial class BattleSim
     // The cat slid `distance` DIPs towards `side` over `seconds` (CatTurn moves it; a lift ends it).
     private void Shove(int side, double distance, double seconds)
     {
+        if (Raging || CatLifted || Over || distance <= 0 || seconds <= 0) return;
         ShoveSide = side;
         ShoveSpeed = distance / seconds;
         ShoveLeft = seconds;

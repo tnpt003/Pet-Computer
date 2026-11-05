@@ -249,8 +249,26 @@ public sealed partial class BattleFieldView : FrameworkElement
                 if (slime.Grabbed && slime.Type.Steal != null) lean += 180 + 16 * Math.Sin(time * 24);
                 double foot = floor - slime.LeapHeight - slime.RideHeight - slime.Lift - bubble - wall - RollLift(slime, turn);
                 if (lean != 0) dc.PushTransform(new RotateTransform(lean, x, foot - slime.Height / 2));
-                if (slime.Type.Marks == "post") DrawPost(dc, slime, x, foot, time); // The planted flag has no body.
+                bool tacticPose = slime.Type.BossTactics != null && slime.Special != BossMove.None;
+                if (tacticPose)
+                {
+                    double pulse = 0.025 * Math.Sin(SlimeTime(time) * 8);
+                    var (wide, tall) = slime.Special switch
+                    {
+                        BossMove.Burst => (0.84 + pulse, 1.12 - pulse),
+                        BossMove.Absorb => (1.08 + pulse, 0.92 - pulse),
+                        BossMove.Charge => (1.16, 0.86),
+                        BossMove.ChargeRun => (1.2, 0.84),
+                        BossMove.Rest when slime.SpecialCount % 4 == 0 => (1.2, 0.78),
+                        BossMove.Recall or BossMove.BroodJump => (1.05 + pulse, 1.04 - pulse),
+                        _ => (1.0, 1.0)
+                    };
+                    dc.PushTransform(new ScaleTransform(wide, tall, x, foot));
+                }
+                if (slime.BroodNest) DrawBroodNest(dc, slime, x, foot, SlimeTime(time));
+                else if (slime.Type.Marks == "post") DrawPost(dc, slime, x, foot, time); // The planted flag has no body.
                 else DrawSlime(dc, slime, x, foot, sim.Settings, SlimeTime(time)); // 1.5 M26: frozen, the pose of the flash.
+                if (tacticPose) dc.Pop();
                 if (lean != 0) dc.Pop();
                 if (sim.AppRules != null && sim.IsInfector(slime.Id) && slime.State != SlimeState.Defeated) DrawVirusMark(dc, slime, x, floor, time);
             }
@@ -261,6 +279,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         DrawLeaves(dc, floor, time);
         DrawCarriedFish(dc, floor, time);
         DrawNursing(dc, floor, time);
+        DrawBossTactics(dc, floor, SlimeTime(time));
         DrawGoos(dc, floor);
         DrawTools(dc, floor, time);
         if (sim.TabsRemaining > 0) DrawTabs(dc, sim.CatX - OriginX, floor, time);

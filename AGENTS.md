@@ -64,6 +64,9 @@ Ngoại lệ nào có link tới docs/APPROVED-EXCEPTIONS.md: trước khi sửa
 ## File quan trọng
 README.md, docs/AI.md, docs/WINDOWS.md, src/DesktopPet/ (App.xaml.cs, PetWindow*.cs, PetModel.cs, PetRenderer.cs, PetPreferences.cs, PetSounds.cs, AI/), ai/, tests/DesktopPet.Tests/, tests/DesktopPet.UiChecks/, scripts/.
 
+## Skill
+Bốn skill quy trình: ship-milestone, cozy-ui, battle-change, run-pet. Bản chuẩn ở .claude/skills/ (Claude Code); .agents/skills/ chỉ trỏ tới đó cho Codex. Sửa nội dung ở .claude/skills/; đổi tên hoặc description thì sửa cả hai nơi.
+
 ## Lệnh (chạy từ C:\Project VS\Pet Computer)
 Build:   & .\.tools\dotnet\dotnet.exe build .\src\DesktopPet\DesktopPet.csproj -c Release
 Test:    powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\test.ps1 -Ui

@@ -10,7 +10,7 @@ Quy ước file này: chỉ giữ trạng thái hiện tại, các đợt đang 
 - **Bản 1.5 "Slime phản công": code xong M01–M29, góp ý đợt B (B1–B9) và đợt C (C1–C4), chưa phát hành.** Thiết kế: docs/UPDATE-1.5.md; đợt C: docs/GOPY-C-2026-11-04.md; đo cân bằng/perf: docs/BALANCE-1.5.md; CHANGELOG có mục 1.5.0 vi/en/ja.
 - Nội dung chính đã có: mèo vector (cảm xúc, ngủ/away nap, kéo/ném/Dizzy, đi trên cửa sổ, đồ chơi, kệ kỷ vật có physics, AI Python có fallback local), Battle Mode (Phiêu lưu chương 1 + Hướng dẫn phiêu lưu, Viễn chinh, Vô tận, trận tự do, app trong trận + app độc, thẻ/di vật/cộng hưởng), giao diện Cozy Desktop Adventure (tranh minh họa, icon), vi/en/ja, bộ cài Velopack tự cập nhật.
 - Ngoại lệ đã duyệt dạng đầy đủ: docs/APPROVED-EXCEPTIONS.md (AGENTS.md chỉ còn tóm tắt).
-- Công cụ AI (chỉ máy này, không đụng app): graphify dựng graph ở graphify-out/ (gitignore); git hook tự cập nhật phần code, docs/ảnh đổi thì chạy `/graphify --update`. CLAUDE.md nạp AGENTS.md (quy tắc chính). Skill dự án ở .claude/skills/: ship-milestone, cozy-ui. Gỡ graphify: `graphify hook uninstall`, `graphify claude uninstall`.
+- Công cụ AI (chỉ máy này, không đụng app): graphify dựng graph ở graphify-out/ (gitignore); git hook tự cập nhật phần code, docs/ảnh đổi thì chạy `/graphify --update`. CLAUDE.md nạp AGENTS.md (quy tắc chính). Skill dự án ở .claude/skills/ (ship-milestone, cozy-ui, battle-change, run-pet), Codex đọc qua .agents/skills/. Gỡ graphify: `graphify hook uninstall`, `graphify claude uninstall`.
 
 ## Đang dở và việc tiếp theo
 

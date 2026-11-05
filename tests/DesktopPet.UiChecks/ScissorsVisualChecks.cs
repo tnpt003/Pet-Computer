@@ -50,10 +50,68 @@ internal static class ScissorsVisualChecks
             }
         check(low == 0, $"Near the floor the scissors stay above it ({low} px on the floor)");
 
-        if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string folder)
+        // The scissors' middle (their gold hub) sits on the line itself.
+        int lineY = (int)(h - 2 - sim.Cut.Y), hub = 0;
+        for (int y = lineY - 2; y <= lineY + 2; y++)
+            for (int x = 0; x < w; x++)
+            {
+                int i = (y * w + x) * 4;
+                if (px[i + 3] > 200 && Math.Abs(px[i + 2] - 0xFF) <= 20 && Math.Abs(px[i + 1] - 0xD2) <= 20 && Math.Abs(px[i] - 0x3F) <= 30) hub++;
+            }
+        check(hub > 8, $"The scissors are centred on the cut ({hub} px of hub on the line)");
+        Save(bitmap, "scissors-cut.png");
+        ClawAndDrum(check);
+    }
+
+    private static void Save(BitmapSource image, string name)
+    {
+        if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is not string folder) return;
+        var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(image));
+        using var stream = File.Create(Path.Combine(folder, name)); encoder.Save(stream);
+    }
+
+    // The claw round a grabbed slime, and the drummer before its last beat (next to one that is not).
+    private static void ClawAndDrum(Action<bool, string> check)
+    {
+        var data = BattleData.Settings;
+        var sim = new BattleSim(data, 0, Width, seed: 2);
+        Slime Add(string kind, double x)
         {
-            var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap));
-            using var stream = File.Create(Path.Combine(folder, "scissors-cut.png")); encoder.Save(stream);
+            var s = sim.AddSlime(x, data.Enemy(kind));
+            s.Set(SlimeState.Moving); s.StateTime = 0.4; s.Facing = -1;
+            return s;
         }
+        var view = new BattleFieldView(sim) { OriginX = 0 };
+        view.Measure(new Size(Width, BattleFieldView.FieldHeight));
+        view.Arrange(new Rect(0, 0, Width, BattleFieldView.FieldHeight));
+        var held = Add("slime", 150);
+        held.Grabbed = true; held.Lift = 40;
+        var calm = Add("drummer", 420);
+        var loud = Add("drummer", 760);
+        loud.BeatCount = data.Enemy("drummer").Link!.Beats - 1;
+        loud.BeatClock = data.Enemy("drummer").Link!.Beat * 0.6;
+
+        view.InvalidateVisual(); view.UpdateLayout();
+        int w = (int)Width, h = (int)BattleFieldView.FieldHeight;
+        var bitmap = new RenderTargetBitmap(w, h, 96, 96, PixelFormats.Pbgra32);
+        bitmap.Render(view);
+        var px = new byte[w * h * 4];
+        bitmap.CopyPixels(px, w * 4, 0);
+        int Count(byte r, byte g, byte b, int x0, int x1)
+        {
+            int n = 0;
+            for (int y = 0; y < h; y++)
+                for (int x = x0; x < x1; x++)
+                {
+                    int i = (y * w + x) * 4;
+                    if (px[i + 3] > 180 && Math.Abs(px[i + 2] - r) <= 24 && Math.Abs(px[i + 1] - g) <= 24 && Math.Abs(px[i] - b) <= 24) n++;
+                }
+            return n;
+        }
+        int claw = Count(0xC9, 0xD3, 0xDC, 90, 210);
+        check(claw > 250, $"A grabbed slime is held by a real claw ({claw} px of metal)");
+        int quiet = Count(0xE5, 0x3E, 0x3E, 400, 560), warned = Count(0xE5, 0x3E, 0x3E, 700, 860);
+        check(warned > quiet * 3 && warned > 120, $"The drummer's last beat stands out ({warned} red px against {quiet})");
+        Save(bitmap, "claw-and-drum.png");
     }
 }

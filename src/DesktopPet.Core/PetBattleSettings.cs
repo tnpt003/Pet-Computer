@@ -144,10 +144,10 @@ public sealed class BattleSettings
     public double ScissorsDamage { get; init; } = 15;
     // 2026-11-04: a cut across the screen: ScissorsLength DIPs long, ScissorsBand DIPs thick, shown
     // ScissorsPreview s as a dashed line, then the scissors run along it in ScissorsSweep s.
-    public double ScissorsLength { get; init; } = 360;
+    public double ScissorsLength { get; init; } = 560;
     public double ScissorsBand { get; init; } = 40;
     public double ScissorsPreview { get; init; } = 0.4;
-    public double ScissorsSweep { get; init; } = 0.5;
+    public double ScissorsSweep { get; init; } = 0.7;
     public double SprayTankSeconds { get; init; } = 4;
     public double SprayRefillSeconds { get; init; } = 8;
     // 2026-11-04, the hot-water spray: a slime falling while it is sprayed gives the tank this many seconds

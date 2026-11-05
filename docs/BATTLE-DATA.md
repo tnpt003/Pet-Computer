@@ -520,9 +520,9 @@ Code: `src/DesktopPet.Core/PetBattle.Grabber.cs` (Kẹp gắp), `src/DesktopPet.
 | `grabberStun` | 0–5 s | 1 | Choáng của con bị trúng, và của con bị ném khi đáp |
 | `scissorsCooldown` | 1–120 s | 14 | Hồi chiêu Kéo cắt |
 | `scissorsDamage` | 0–100 | 6 | Sát thương mỗi slime nằm trên nét cắt |
-| `scissorsLength` | 80–1200 DIPs | 360 | Chiều dài dải cắt |
+| `scissorsLength` | 80–1200 DIPs | 560 | Chiều dài dải cắt |
 | `scissorsBand` | 10–200 DIPs | 40 | Độ dày dải cắt |
-| `scissorsPreview`, `scissorsSweep` | 0–3 s, 0,1–3 s | 0,4, 0,5 | Nét đứt báo trước, thời gian kéo chạy hết dải |
+| `scissorsPreview`, `scissorsSweep` | 0–3 s, 0,1–3 s | 0,4, 0,7 | Nét đứt báo trước, thời gian kéo chạy hết dải |
 | `sprayTankSeconds` | 0,5–30 s | 4 | Xịt liên tục được bao lâu (thanh nước) |
 | `sprayKillSeconds` | 0–30 s | 1,5 | 2026-11-04 Bình xịt nước nóng: slime ngã trong tầm xịt thì bình thêm chừng ấy giây nước |
 | `sprayTankMax` | 1–3 | 1,5 | Nước tối đa (× một bình đầy) khi được thêm |

@@ -18,7 +18,7 @@ public sealed partial class BattleFieldView
     private static readonly Pen CutDone = FrozenPen(Frozen(255, 0xFF, 0x6A, 0x5A), 3);
     private static readonly Pen CutHalo = FrozenPen(Frozen(150, 0x2A, 0x1F, 0x16), 6);
     // The running scissors: about 100 DIPs from tip to rings, ScissorsReach above and below the line.
-    public const double ScissorsScale = 3.2, ScissorsReach = 42;
+    public const double ScissorsScale = 3.2, ScissorsReach = BattleSim.CutFloorHeight;
     private static readonly Geometry ScissorBlade = FrozenGeometry("M -1,-2.2 L 18,-0.2 L 18,0.6 L -1,2.2 Z");
     private static readonly Geometry ScissorShank = FrozenGeometry("M 0,-1.3 L -8,-1 L -8,1 L 0,1.3 Z");
     private static readonly Brush ScissorHandle = Frozen(255, 0xE8, 0x5D, 0x5D);
@@ -76,9 +76,9 @@ public sealed partial class BattleFieldView
         double t = Math.Clamp((cut.Age - s.ScissorsPreview) / s.ScissorsSweep, 0, 1);
         var blade = new Point(from.X + (to.X - from.X) * t, from.Y);
         dc.DrawLine(CutDone, from, blade);
-        // The big scissors themselves, snipping as they go, facing the way they run; never sunk below the floor.
+        // The big scissors themselves, centred on the line, snipping as they go, facing the way they run.
         double open = 6 + 22 * Math.Abs(Math.Sin(cut.Age * 16)), facing = to.X >= from.X ? 0 : 180;
-        dc.PushTransform(new TranslateTransform(blade.X, Math.Min(blade.Y, at(cut.From, 0).Y - ScissorsReach)));
+        dc.PushTransform(new TranslateTransform(blade.X, blade.Y));
         dc.PushTransform(new ScaleTransform(ScissorsScale, ScissorsScale));
         dc.PushTransform(new RotateTransform(facing));
         foreach (int side in new[] { -1, 1 })

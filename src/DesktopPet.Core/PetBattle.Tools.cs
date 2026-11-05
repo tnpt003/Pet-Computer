@@ -60,6 +60,9 @@ public sealed partial class BattleSim
 
     // A cut across the screen: at height Y, from From to To (the scissors' way), Age since the click.
     public sealed class ScissorCut { public double Y, From, To, Age; }
+    // The lowest a cut runs, so the big scissors stay whole over the floor, centred on it. A cut this low
+    // reaches down to the floor: a click at the feet still cuts whatever stands there.
+    public const double CutFloorHeight = 42;
     public ScissorCut? Cut { get; private set; }
     private readonly HashSet<int> cutHit = new();
     private readonly Random cutRandom;
@@ -79,7 +82,7 @@ public sealed partial class BattleSim
         {
             double half = Settings.ScissorsLength / 2, mid = Math.Clamp(x, Left + half, Math.Max(Left + half, Right - half));
             bool fromLeft = cutRandom.Next(2) == 0;
-            Cut = new ScissorCut { Y = Math.Max(0, height), From = fromLeft ? mid - half : mid + half, To = fromLeft ? mid + half : mid - half };
+            Cut = new ScissorCut { Y = Math.Max(CutFloorHeight, height), From = fromLeft ? mid - half : mid + half, To = fromLeft ? mid + half : mid - half };
             cutHit.Clear();
             events.Add(new(BattleEventKind.CutStarted, mid));
         }
@@ -104,7 +107,7 @@ public sealed partial class BattleSim
         cut.Age += dt;
         if (cut.Age < Settings.ScissorsPreview) return;
         double t = Math.Clamp((cut.Age - Settings.ScissorsPreview) / Settings.ScissorsSweep, 0, 1), at = cut.From + (cut.To - cut.From) * t;
-        double lo = Math.Min(cut.From, at), hi = Math.Max(cut.From, at), band = Settings.ScissorsBand / 2;
+        double lo = Math.Min(cut.From, at), hi = Math.Max(cut.From, at), band = Settings.ScissorsBand / 2, under = cut.Y <= CutFloorHeight ? 0 : cut.Y - band;
         // Ropes the blade has crossed (between two enemies, or to a boss).
         foreach (var holder in slimes.ToArray())
             if (Is(holder, EnemyLinks.Tether) && LinkPartner(holder) is Slime ally && RopeCrossed(holder, ally, lo, cut.Y, hi, cut.Y, band) && CutLink(holder.Id)) RopesCut++;
@@ -113,7 +116,7 @@ public sealed partial class BattleSim
         {
             if (cutHit.Contains(s.Id) || !s.Targetable || s.Shielded || s.Burrowed) continue;
             var (left, bottom, right, top) = Body(s);
-            if (right < lo || left > hi || top < cut.Y - band || bottom > cut.Y + band) continue;
+            if (right < lo || left > hi || top < under || bottom > cut.Y + band) continue;
             cutHit.Add(s.Id);
             if (s.Bubbled) { PopBubble(s); continue; }
             LeafCut(s);

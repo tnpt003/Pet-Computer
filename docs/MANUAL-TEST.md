@@ -615,6 +615,7 @@ Tự động đã có: Phần thưởng trên sảnh (ô có hình, khóa, Mới
 
 ## Visual combat 2026-10-26 — cần nghiệm thu trong trận thật
 - [ ] Ô kỹ năng khi hồi chiêu: nhìn ra icon, số giây ở góc dưới phải; vừa hồi xong thì lóe vàng một lần; Pause/tiếp tục không làm lóe.
+- [ ] Kéo cắt: click sát sàn, cây kéo nằm đúng giữa đường cắt; tầm cắt 560 DIP có quá mạnh không. Kẹp gắp: thấy càng cẩu ôm hai bên slime. Nhạc trưởng: trước nhịp cuối có vòng đỏ, trống to và "!", lúc đánh có chữ BÙM!.
 - [ ] Sảnh → Trận tự chọn: nút "‹ Sảnh" quay về sảnh chọn chế độ; từ "Đổi trang bị" ở bảng kết quả cũng vậy.
 - [ ] Vũng nhầy: mèo đi qua vũng hiện số đỏ "-1" trên đầu; Kéo cắt: cây kéo lớn chạy dọc đường cắt, ở sát sàn vẫn thấy đủ cây kéo.
 - [ ] Số sát thương: thường kem, combo cam to hơn, chí mạng (thẻ Móng vuốt) vàng to có "!"; không bị thân mèo che.

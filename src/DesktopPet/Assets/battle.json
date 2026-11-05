@@ -128,10 +128,10 @@
   "scissorsCooldown": 14,
   "scissorsDamage": 15,
   // 2026-11-04: the cut across the screen (length, band, the dashed preview and the run of the blades).
-  "scissorsLength": 360,
+  "scissorsLength": 560,
   "scissorsBand": 40,
   "scissorsPreview": 0.4,
-  "scissorsSweep": 0.5,
+  "scissorsSweep": 0.7,
   "sprayTankSeconds": 4,
   "sprayRefillSeconds": 8,
   "sprayRange": 70,

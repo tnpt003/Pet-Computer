@@ -14,7 +14,8 @@ public sealed partial class BattleFieldView
     private static readonly Pen PostPole = FrozenPen(Frozen(255, 0x7A, 0x56, 0x3A), 4);
     private static readonly Brush PostCloth = Frozen(255, 0x5B, 0x8D, 0xEF), PostClothElite = Frozen(255, 0xFF, 0xD2, 0x3F), PostMound = Frozen(255, 0x8A, 0x6A, 0x4A);
     private static readonly Brush PostBarBack = Frozen(200, 0x2A, 0x1F, 0x16), PostBarFill = Frozen(255, 0x6F, 0xE0, 0x6A);
-    private static readonly Pen DrumRing = FrozenPen(Frozen(230, 0xF0, 0x6A, 0x3A), 3.2), DrumRingSoft = FrozenPen(Frozen(150, 0xFF, 0xD2, 0x3F), 2);
+    private static readonly Pen DrumRing = FrozenPen(Frozen(240, 0xF0, 0x6A, 0x3A), 5.5), DrumRingSoft = FrozenPen(Frozen(190, 0xFF, 0xD2, 0x3F), 3.4);
+    private static readonly Brush DrumBlast = Frozen(120, 0xF0, 0x6A, 0x3A);
     private static readonly Brush ShieldAir = Frozen(70, 0x6F, 0xE0, 0x8A), LeafFill = Frozen(255, 0x4F, 0xC9, 0x6A), Soot = Frozen(170, 0x1E, 0x18, 0x14);
     private static readonly Pen ShieldEdge = FrozenPen(Frozen(220, 0x3E, 0xB0, 0x6A), 2);
     private static readonly Pen LeafLine = FrozenPen(Frozen(220, 0x4F, 0xC9, 0x6A), 2.4, new DashStyle(new double[] { 2, 3 }, 0));
@@ -89,9 +90,13 @@ public sealed partial class BattleFieldView
     }
 
     // The big drum: rings of sound running out to the edge of the band's ring.
-    private static void DrawDrum(DrawingContext dc, BattleEffect effect, double x, double floor)
+    private void DrawDrum(DrawingContext dc, BattleEffect effect, double x, double floor)
     {
         double k = Math.Clamp(effect.Age / effect.Life, 0, 1);
+        // A blast over the floor, and the word for it, as the rings go.
+        double blast = Math.Clamp(k * 2, 0, 1);
+        dc.DrawEllipse(DrumBlast, null, new Point(x, floor - 26), effect.Value * blast, (effect.Value * 0.3 + 12) * blast);
+        DrawWord(dc, PetText.Pick(Language, "BÙM!", "BOOM!"), Warning, x, floor - 92 - 22 * k);
         for (int i = 0; i < 3; i++)
         {
             double ring = Math.Clamp(k * 1.3 - i * 0.15, 0, 1);

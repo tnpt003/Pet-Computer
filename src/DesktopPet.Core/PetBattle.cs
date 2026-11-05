@@ -1161,7 +1161,7 @@ public sealed partial class BattleSim
         double life = kind switch
         {
             BattleEffectKind.Poof => 0.6 * Math.Max(1, value), BattleEffectKind.Number => 0.9, BattleEffectKind.Combo => 0.7, BattleEffectKind.Mend => 0.8,
-            BattleEffectKind.Explosion or BattleEffectKind.Slam => 0.5, BattleEffectKind.Warded => 0.6, BattleEffectKind.Quake => 0.9, BattleEffectKind.Drum => 0.7,
+            BattleEffectKind.Explosion or BattleEffectKind.Slam => 0.5, BattleEffectKind.Warded => 0.6, BattleEffectKind.Quake => 0.9, BattleEffectKind.Drum => 0.9,
             BattleEffectKind.Bell => 0.9, BattleEffectKind.EndTask => 1.0, BattleEffectKind.Rewind => 0.8, BattleEffectKind.Splat => 0.5, _ => 0.35
         };
         effects.Add(new BattleEffect { Kind = kind, X = x, Height = height, Life = life, Value = value });

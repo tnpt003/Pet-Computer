@@ -30,6 +30,8 @@ public sealed partial class BattleSim
     private static bool Is(Slime slime, string kind) => slime.Link?.Kind == kind;
 
     // A rhythm's count up to its strike, a tether's share of its ally's hits: an elite's own when it has one (1.5 M10).
+    // The next beat is a big drum (a show of it in the view, nothing in the rules).
+    public static bool DrumComing(Slime slime) => slime.Link is { DrumSeconds: > 0 } && !slime.IsBoss && slime.BeatCount == Beats(slime) - 1 && slime.State != SlimeState.Stunned;
     public static int Beats(Slime slime) => slime.Link is not LinkSpec link ? 0 : slime.Elite != null && link.EliteBeats > 0 ? link.EliteBeats : link.Beats;
     // An aura's speed-up: an elite's own when it has one (1.5 M12).
     public static double AuraBoost(Slime slime) => slime.Link is not LinkSpec link ? 1 : slime.Elite != null && link.EliteSpeed > 0 ? link.EliteSpeed : link.Speed;

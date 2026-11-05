@@ -8,6 +8,15 @@ Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm 
 
 ---
 
+## #46 — Góp ý sau #45: kéo lệch đường cắt, tầm Kéo ngắn, Kẹp gắp chỉ là chấm nhỏ, nhịp cuối nhạc trưởng không nổi (2026-11-05, commit xem PROGRESS.md)
+- **Triệu chứng (ảnh người dùng):** cắt sát sàn thì cây kéo nằm cao hơn đường cắt; muốn tầm Kéo dài hơn; Kẹp gắp không giống cái kẹp đang gắp slime; nhịp cuối của slime nhạc trưởng chưa nổi bật.
+- **Nguyên nhân:** (1) lỗi do bản sửa #45: chỉ nâng cây kéo khỏi sàn, đường cắt vẫn ở chỗ click. (2) Tầm 360 DIP. (3) Kẹp chỉ là hai đoạn thẳng 9 DIP và chấm tròn trên đỉnh đầu slime. (4) Nhịp cuối chỉ đổi ba chấm nhỏ sang đỏ.
+- **Sửa:** (1) sim đặt đường cắt thấp nhất cao 42 DIP (`CutFloorHeight`), đường, kéo và dải trúng cùng một độ cao; cắt sát sàn vẫn trúng tới sàn. (2) `scissorsLength` 560; `scissorsSweep` 0,7 để tốc độ chạy gần như cũ. (3) Vẽ càng cẩu: đầu kẹp, trục vàng, hai càng cong ôm hai bên thân, theo cỡ slime, siết nhẹ theo thời gian. (4) Trước nhịp cuối: vòng đỏ sáng nhấp nháy, sóng đầy dần tới lúc đánh, trống to gấp 1,8 lần và rung, dùi giơ cao, "!" đỏ lớn. Lúc đánh: vòng dày hơn, mảng nổ và chữ BÙM!. Phần (3), (4) chỉ đổi hình ảnh.
+- **Kiểm chứng:** xem PROGRESS.md. ScissorsVisualChecks vẽ thật (kéo đúng tâm đường cắt, càng kẹp, nhịp cuối).
+- **Cần test tay:** cân bằng Kéo 560 DIP; độ dễ đọc của vòng đỏ khi đông quái; càng kẹp với slime lớn và trùm.
+
+---
+
 ## #45 — Góp ý sau C4: vũng nhầy không hiện số sát thương, Kéo chỉ thấy chấm đỏ, bảng chuẩn bị Trận tự chọn "không có button" (2026-11-05, commit 8188126, d231dc1)
 - **Triệu chứng (góp ý người dùng):** (1) mèo đi qua bãi nhầy của slime phun mất máu nhưng không có số; (2) đường cắt ổn nhưng không có cây kéo lớn đi qua, chỉ thấy chấm đỏ chạy trên đường cắt; (3) bảng chuẩn bị của Trận tự chọn không có nút quay về sảnh chọn chế độ (người dùng làm rõ sau khi hỏi lại).
 - **Nguyên nhân:** (1) `PuddleOnCat` chỉ gọi `LandHit`, không tạo số. (2) Kéo vẽ chỉ khoảng 35 DIP, lưỡi mảnh màu nhạt, nên chỉ thấy hai vòng tay cầm đỏ; với đường cắt sát sàn còn bị cắt mất phần dưới. (3) nút hủy của bảng này chỉ là Đóng, về thẳng desktop; Vô tận thì có "‹ Sảnh". Tìm thêm một lỗi nhỏ: chiều cao panel thiếu 2 DIP nên hiện thanh cuộn.

@@ -22,6 +22,8 @@ public sealed partial class BattleFieldView
     private static readonly Brush MergeFill = Frozen(255, 0x9B, 0x5C, 0xE0);
     private static readonly Brush SweatBlue = Frozen(255, 0x7F, 0xC8, 0xFF);
     private static readonly Brush DrumShell = Frozen(255, 0xD6, 0x45, 0x45);
+    private static readonly Brush DrumDanger = Frozen(90, 0xE5, 0x3E, 0x3E);
+    private static readonly Pen DrumDangerEdge = FrozenPen(Frozen(255, 0xE5, 0x3E, 0x3E), 2.6);
     private static readonly Brush DrumHead = Frozen(255, 0xFF, 0xF4, 0xD6);
     private static readonly Pen StickPen = FrozenPen(PetUi.ArtInk, 2.2);
     private static readonly Pen ChainInk = FrozenPen(PetUi.ArtInk, 4.2);
@@ -52,6 +54,15 @@ public sealed partial class BattleFieldView
                     break;
                 case EnemyLinks.Rhythm:
                     dc.DrawEllipse(null, RhythmArea, new Point(x, floor - 3), link.Range, 8);
+                    // The big drum is coming: its ring burns red and a wave fills it up to the strike.
+                    if (BattleSim.DrumComing(slime))
+                    {
+                        double fill = Math.Clamp(slime.BeatClock / link.Beat, 0, 1), glow = 0.65 + 0.35 * Math.Sin(time * 16);
+                        dc.PushOpacity(glow);
+                        dc.DrawEllipse(DrumDanger, DrumDangerEdge, new Point(x, floor - 5), link.Range, 13);
+                        dc.Pop();
+                        dc.DrawEllipse(null, DrumDangerEdge, new Point(x, floor - 5), link.Range * fill, 13 * fill);
+                    }
                     break;
                 case EnemyLinks.Merge when link.Pack:
                     // 2026-10-31: a pack shares its hits: a dotted pink thread to the next of its kind on its right
@@ -148,17 +159,27 @@ public sealed partial class BattleFieldView
     private static void DrawDrum(DrawingContext dc, Slime slime)
     {
         dc.PushTransform(new ScaleTransform(slime.Facing, 1));
+        // The last beat: the drum swells and shakes, red-hot, the stick held high.
+        bool coming = BattleSim.DrumComing(slime);
+        if (coming)
+        {
+            double shake = 1.2 * Math.Sin(slime.BeatClock * 60);
+            dc.PushTransform(new TranslateTransform(shake, 0));
+            dc.PushTransform(new ScaleTransform(1.8, 1.8, 16.5, -5));
+            dc.DrawEllipse(DrumDanger, null, new Point(16.5, -11), 14, 12);
+        }
         var rect = new Rect(9, -16, 15, 11);
         dc.DrawRoundedRectangle(null, Halo, rect, 2, 2);
         dc.DrawRoundedRectangle(DrumShell, Outline, rect, 2, 2);
         dc.DrawEllipse(DrumHead, Outline, new Point(16.5, -16), 7.5, 2.6);
         // Down just after each beat, up again before the next one.
         double beat = slime.Link?.Beat ?? 0.8, k = Math.Clamp(slime.BeatClock / beat, 0, 1);
-        double lift = slime.State == SlimeState.Stunned ? 0.6 : k < 0.2 ? k / 0.2 * 0.3 : 0.3 + 0.7 * (k - 0.2) / 0.8;
+        double lift = slime.State == SlimeState.Stunned ? 0.6 : coming ? 1 : k < 0.2 ? k / 0.2 * 0.3 : 0.3 + 0.7 * (k - 0.2) / 0.8;
         double angle = -0.2 - 0.9 * lift;
         var hand = new Point(10, -22);
         dc.DrawLine(StickPen, hand, new Point(hand.X + 12 * Math.Cos(angle), hand.Y - 12 * Math.Sin(angle)));
         dc.DrawEllipse(DrumHead, StickPen, new Point(hand.X + 12 * Math.Cos(angle), hand.Y - 12 * Math.Sin(angle)), 1.6, 1.6);
+        if (coming) { dc.Pop(); dc.Pop(); }
         dc.Pop();
     }
 
@@ -203,6 +224,14 @@ public sealed partial class BattleFieldView
                     var fill = k < slime.BeatCount ? (warn ? Warning : BeatOn) : BeatOff;
                     double r = warn && k == beats - 1 ? 3.6 + 0.8 * Math.Sin(time * 18) : 3;
                     dc.DrawEllipse(fill, Ink, new Point(start + k * gap, y), r, r);
+                }
+                if (BattleSim.DrumComing(slime))
+                {
+                    var (mark, markWidth, markHeight) = NumberShape("!", 28 + 3 * Math.Sin(time * 16));
+                    dc.PushTransform(new TranslateTransform(x - markWidth / 2, y - 6 - markHeight));
+                    dc.DrawGeometry(null, TextHalo, mark);
+                    dc.DrawGeometry(Warning, null, mark);
+                    dc.Pop();
                 }
             }
             else if (link.Kind == EnemyLinks.Merge && slime.MergeClock > 0)

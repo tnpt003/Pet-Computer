@@ -24,7 +24,10 @@ public sealed partial class BattleFieldView
     private static readonly Pen FanInk = FrozenPen(PetUi.ArtInk, 1.4);
     private static readonly Pen CablePen = FrozenPen(Frozen(230, 0x6B, 0x5A, 0x4A), 2);
     private static readonly Brush ClawMetal = Frozen(255, 0xC9, 0xD3, 0xDC);
-    private static readonly Pen ClawPen = FrozenPen(Frozen(255, 0x8A, 0x96, 0xA3), 3);
+    private static readonly Brush ClawHead = Frozen(255, 0x6B, 0x7A, 0x8A);
+    private static readonly Pen ClawInk = FrozenPen(PetUi.ArtInk, 1.6);
+    // The right arm (x mirrored for the left), from the hub out and round to a tip holding the body's side.
+    private static readonly Geometry ClawArm = FrozenGeometry("M 3,-14 C 18,-18 31,-6 29,10 C 28,19 24,26 16,30 L 19,21 C 22,15 23,9 22,3 C 20,-5 12,-9 3,-8 Z");
     private static readonly Brush BladeFill = Frozen(255, 0xE6, 0xEC, 0xF2);
     private static readonly Brush HandleFill = Frozen(255, 0xE8, 0x5D, 0x5D);
     private static readonly Brush WaterDrop = Frozen(220, 0x5C, 0xB8, 0xFF);
@@ -51,7 +54,7 @@ public sealed partial class BattleFieldView
         {
             var s = sim.Slimes[i];
             if (s.Wet && s.Targetable) DrawWetDrops(dc, s, s.X - OriginX, floor, time);
-            if (s.Grabbed) DrawClaw(dc, s.X - OriginX, Top(s, floor));
+            if (s.Grabbed) DrawClaw(dc, s.X - OriginX, Top(s, floor), s.Width, time);
             // What a shaken thief stole sparkles down out of it.
             if (s.Grabbed && s.Type.Steal != null)
                 for (int k = 0; k < 4; k++)
@@ -63,13 +66,24 @@ public sealed partial class BattleFieldView
         if (sim.SprayX is double spray) DrawSpray(dc, new Point(spray - OriginX, floor - sim.SprayHeight), sim.Settings.SprayRange, time);
     }
 
-    // A cable from the top of the strip down to two prongs holding the slime's head.
-    private static void DrawClaw(DrawingContext dc, double x, double top)
+    // A crane's claw on its cable: a head block with a gold hub, and two curved arms closed round the
+    // slime's sides, tightening and easing as it struggles. Sized to the slime (a slime 44 DIPs wide: scale 1).
+    private static void DrawClaw(DrawingContext dc, double x, double top, double width, double time)
     {
-        dc.DrawLine(CablePen, new Point(x, 0), new Point(x, top - 8));
-        dc.DrawLine(ClawPen, new Point(x, top - 6), new Point(x - 9, top + 4));
-        dc.DrawLine(ClawPen, new Point(x, top - 6), new Point(x + 9, top + 4));
-        dc.DrawEllipse(ClawMetal, FanInk, new Point(x, top - 8), 5, 4);
+        double k = Math.Max(1, width / 44), grip = 3 * Math.Sin(time * 9);
+        dc.DrawLine(CablePen, new Point(x, 0), new Point(x, top - 24 * k));
+        dc.PushTransform(new TranslateTransform(x, top));
+        dc.PushTransform(new ScaleTransform(k, k));
+        foreach (int side in new[] { -1, 1 })
+        {
+            dc.PushTransform(new ScaleTransform(side, 1));
+            dc.PushTransform(new RotateTransform(-grip, 3, -12));
+            dc.DrawGeometry(ClawMetal, ClawInk, ClawArm);
+            dc.Pop(); dc.Pop();
+        }
+        dc.DrawRoundedRectangle(ClawHead, ClawInk, new Rect(-11, -25, 22, 12), 3, 3);
+        dc.DrawEllipse(FanHub, ClawInk, new Point(0, -12), 5, 5);
+        dc.Pop(); dc.Pop();
     }
 
     // The nozzle, its reach as a dotted ring and drops flying out all around (not a fill: clicks pass).

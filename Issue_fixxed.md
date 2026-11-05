@@ -5,7 +5,7 @@ Sổ ghi các lỗi đã sửa của Desktop Pet. Phần A: lỗi người dùng
 Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm lỗi mới: tạo mục số tiếp theo ở đầu phần A (hoặc một dòng ở phần B).
 
 # A. Lỗi người dùng phát hiện
-## #48 — Slime cờ hiệu: bất tử tới khi cắm cờ, cờ bất tử khi chủ sống, cờ thứ hai, né mèo (2026-11-05, commit COMMIT_HASH)
+## #48 — Slime cờ hiệu: bất tử tới khi cắm cờ, cờ bất tử khi chủ sống, cờ thứ hai, né mèo (2026-11-05, commit 301781a)
 - **Yêu cầu (người dùng):** con mang cờ bất tử tới khi cắm cờ đầu; cắm thêm cờ thứ hai và ưu tiên né mèo để kịp cắm; cờ bất tử tới khi chủ chết, chủ chết thì cờ đổ được và gây hoảng; Kéo cắt nhổ một nhát cờ bất tử; áp dụng mọi chế độ, tính cả tinh anh.
 - **Làm:** `PetBattle.Quills.cs` (`PlantFlag`, `DodgeCat`, `FlagOwnerFell`); dùng lại `Shielded` để mèo không nhắm, hiệu ứng không dính, thêm `FlagGuard` để tách khỏi khiên boss; `plant.count` 2, `every` 12, `dodge` 220, `dodgeSpeed` 2; vòng vàng và dây nét đứt tới chủ; banner mới vi/en/ja; tăng `rulesVersion` Thư mục ma (4) và Vô tận (10); Viễn chinh giữ 8 vì số này còn quyết định giữ chuyến đang dở.
 - **Quyết định thêm khi làm:** Kéo một nhát cả cờ đã hết bất tử (nếu không thì cờ thường lại bền hơn cờ bất tử); cờ mất không được bù; cờ thứ hai không cắm chồng dù hết giờ; đang bị len kéo thì không né.

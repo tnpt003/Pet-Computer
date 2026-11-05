@@ -24,6 +24,13 @@ public sealed partial class BattleFieldView
     private static readonly Brush GemViolet = Frozen(255, 0x9B, 0x6C, 0xF0);
     private static readonly Brush BlurFill = Frozen(90, 0xB8, 0x9C, 0xF0);
     private static readonly Brush CheekPink = Frozen(200, 0xFF, 0x8F, 0xA8);
+    // The mirage's smoke and the shimmer before it; a tantrum's tears and wail.
+    private static readonly Brush SmokeViolet = Frozen(235, 0xB8, 0x94, 0xF5);
+    private static readonly Brush SmokePale = Frozen(235, 0xE6, 0xD9, 0xFF);
+    private static readonly Brush ShimmerViolet = Frozen(135, 0xA8, 0x7C, 0xF2);
+    private static readonly Brush GemShine = Frozen(230, 0xF4, 0xEC, 0xFF);
+    private static readonly Brush TearBlue = Frozen(255, 0x7F, 0xD4, 0xF2);
+    private static readonly Brush WailMouth = Frozen(255, 0x8A, 0x2F, 0x45);
     private static readonly Brush CalmPink = Frozen(255, 0xFF, 0x8F, 0xB8);
     private static readonly Brush MissGrey = Frozen(255, 0xC8, 0xCC, 0xD6);
     private static readonly Brush HeartRed = Frozen(255, 0xFF, 0x6B, 0x8E);
@@ -41,14 +48,23 @@ public sealed partial class BattleFieldView
         if (slime.Faded) opacity = 0;
         else if (slime.Type.Ghost != null) opacity *= 0.88;
         if (slime.Type.Sulk != null && slime.State != SlimeState.Defeated) { sx *= slime.Puff; sy *= slime.Puff; }
+        // A tantrum: still puffed up, stamping, then it fades as it runs off (TrickDrift).
+        if (slime.Tantrumed && slime.State == SlimeState.Defeated)
+        {
+            double t = slime.StateTime, stamp = Math.Abs(Math.Sin(t * 14));
+            sx = slime.Puff * (1 + 0.08 * stamp); sy = slime.Puff * (1 - 0.1 * stamp);
+            opacity = t <= BattleSim.TantrumCry ? 1 : Math.Clamp(1 - (t - BattleSim.TantrumCry) / (BattleSim.TantrumLeave - BattleSim.TantrumCry), 0, 1);
+        }
         // A soothed one leaves whole, waving (no squash of a defeat); a copy that vanished smears sideways.
         if (slime.Calmed && slime.State == SlimeState.Defeated) { sx = 1; sy = 1; }
         if (slime.Dispelled) { sx = 1 + Math.Clamp(slime.StateTime * 3, 0, 1); sy = 1; opacity *= 0.6; }
         if (slime.Decoy && slime.Revealed > 0 && slime.State != SlimeState.Defeated) opacity *= 0.5;
     }
 
-    // A soothed sulky slime walks off as it fades (screen offset).
-    private static double TrickDrift(Slime slime) => slime.Calmed && slime.State == SlimeState.Defeated ? slime.Facing * 50 * slime.StateTime : 0;
+    // A soothed sulky slime walks off as it fades, a crying one turns its back and runs (screen offset).
+    private static double TrickDrift(Slime slime) => slime.State != SlimeState.Defeated ? 0
+        : slime.Calmed ? slime.Facing * 50 * slime.StateTime
+        : slime.Tantrumed ? -slime.Facing * 260 * Math.Max(0, slime.StateTime - BattleSim.TantrumCry) : 0;
 
     // Has a contact shadow: every slime but a faded ghost and a mirage's look-alikes, whose real one shows
     // its shadow only once the cursor gives it away.
@@ -58,6 +74,12 @@ public sealed partial class BattleFieldView
     private void DrawTrickBehind(DrawingContext dc, Slime slime, double x, double floor, double w, double h, double time)
     {
         if (slime.State == SlimeState.Defeated) return;
+        // Smoke is coming: the whole group shimmers alike.
+        if (sim.ShuffleSoon(slime))
+        {
+            double shimmer = 1 + 0.1 * Math.Sin(time * 22);
+            dc.DrawEllipse(ShimmerViolet, null, new Point(x, floor - h / 2), (w / 2 + 16) * shimmer, (h / 2 + 14) * shimmer);
+        }
         if (slime.Type.Ghost != null && !slime.Faded && slime.Revealed > 0)
         {
             double breath = 1 + 0.06 * Math.Sin(time * 6);
@@ -69,7 +91,7 @@ public sealed partial class BattleFieldView
     }
 
     // Its marks (body coordinates).
-    private static void DrawTrickMarks(DrawingContext dc, Slime slime, double time)
+    private void DrawTrickMarks(DrawingContext dc, Slime slime, double time)
     {
         switch (slime.Type.Marks)
         {
@@ -79,9 +101,10 @@ public sealed partial class BattleFieldView
                 dc.DrawEllipse(null, Ink, new Point(slime.Facing * 3, -9), 2.6, 3.2);
                 break;
             case "mirage":
-                dc.DrawGeometry(GemViolet, ThinInk, Gem);
+                dc.DrawGeometry(sim.ShuffleSoon(slime) ? GemShine : GemViolet, ThinInk, Gem);
                 break;
             case "sulk":
+                if (slime.Tantrumed) { DrawCrying(dc, slime.StateTime); break; }
                 double look = slime.Facing * 3;
                 if (slime.Calmed)
                 {
@@ -100,6 +123,23 @@ public sealed partial class BattleFieldView
                 dc.DrawEllipse(CheekPink, null, new Point(13 + look, -12), 4, 2.6);
                 break;
         }
+    }
+
+    // A tantrum's face (body coordinates): eyes screwed shut, wailing, tears flying off both sides.
+    private static void DrawCrying(DrawingContext dc, double t)
+    {
+        foreach (double side in new[] { -1.0, 1.0 })
+        {
+            dc.DrawLine(Ink, new Point(side * 11, -25), new Point(side * 4, -21));
+            dc.DrawLine(Ink, new Point(side * 11, -17), new Point(side * 4, -21));
+            dc.DrawEllipse(CheekPink, null, new Point(side * 14, -11), 4, 2.6);
+            for (int k = 0; k < 4; k++)
+            {
+                double p = (t * 2.2 + k * 0.25) % 1;
+                dc.DrawEllipse(TearBlue, ThinInk, new Point(side * (10 + p * 20), -20 + (p * p * 26 - p * 8)), 2.2, 3);
+            }
+        }
+        dc.DrawEllipse(WailMouth, ThinInk, new Point(0, -9), 6.5, 5 + 1.5 * Math.Sin(t * 18));
     }
 
     // In front of the body (screen coordinates, floor already raised by the bubble): the bubble itself.
@@ -136,6 +176,21 @@ public sealed partial class BattleFieldView
         double barY = top - 9, barW = 36 * size, fill = barW * Math.Clamp(slime.Calm, 0, 1);
         dc.DrawRoundedRectangle(BarBack, null, new Rect(x - barW / 2 - 1, barY - 1, barW + 2, 7), 3, 3);
         if (fill > 0) dc.DrawRoundedRectangle(CalmPink, null, new Rect(x - barW / 2, barY, fill, 5), 2.5, 2.5);
+    }
+
+    // The mirage's gacha: thick violet smoke swirling out over the whole body, a "?" rising from it
+    // (2026-11-05; screen coordinates, already faded by DrawEffect).
+    private void DrawMirageSmoke(DrawingContext dc, double x, double y, double k)
+    {
+        const int puffs = 9;
+        double grow = 1 - (1 - k) * (1 - k), size = 13 + 7 * Math.Sin(k * Math.PI), reach = 14 + 34 * grow;
+        dc.DrawEllipse(SmokePale, null, new Point(x, y), 30 + 12 * grow, 28 + 10 * grow);
+        for (int i = 0; i < puffs; i++)
+        {
+            double a = i * Math.PI * 2 / puffs + k * 2.4;
+            dc.DrawEllipse(i % 2 == 0 ? SmokeViolet : SmokePale, ThinInk, new Point(x + Math.Cos(a) * reach * 1.15, y + Math.Sin(a) * reach * 0.85), size, size);
+        }
+        DrawWord(dc, "?", GemViolet, x, y - 34 - 26 * k);
     }
 
     // The two M13 effects (screen coordinates, already faded by DrawEffect).

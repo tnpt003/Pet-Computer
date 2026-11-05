@@ -993,3 +993,12 @@ Các mục 1.5 phía trên viết theo từng mốc; đây là thứ tự chơi 
 - [ ] Tinh anh: như trên, cờ màu vàng, vòng rộng hơn, 45 HP sau khi chủ chết.
 - [ ] Cuộn len ở Thư mục ma: có quá khó so với vũ khí khác không (mô phỏng cho thấy yếu đi rõ).
 - [ ] Vô tận/Viễn chinh: trận có cờ không bị kẹt ở cuối đợt khi chỉ còn con mang cờ và cờ.
+
+## Góp ý sau chơi thử 05/11 (Issue #49)
+- [ ] Slime ảo ảnh: khói tím lớn phủ cả nhóm, có dấu "?"; khoảng nửa giây trước đó cả nhóm cùng rung quầng tím và viên đá sáng; không phân biệt được bản thật qua hiệu ứng này.
+- [ ] Slime băng còn vỏ: ném vào nghe "cộp", mèo dội lại. Hết vỏ: ném nhanh hay chậm mèo đều bay xuyên, không mất máu, không choáng. Vỏ mọc lại thì lại "cộp".
+- [ ] Kẹp gắp đập slime băng: vỡ vỏ con bị đập và con đứng trong vùng đập. Gắp rồi để hết giờ: đặt xuống, vỏ còn nguyên.
+- [ ] Slime dỗi bị đánh quá tay: mắt nhắm, há miệng, nước mắt, dậm chân, rồi chạy và mờ dần, không có khói; mèo trong tầm vẫn mất máu; không rơi đồ. Thử cả khi nó là con cuối của trận.
+- [ ] Bình xịt nước nóng: click trúng slime bay ở cao và slime bám tường cao đều xịt được; vòi xịt và giọt nước hiện đúng chỗ, tự bám theo khi nó bay; slime bị hạ thì vòi chuyển con gần nhất.
+- [ ] App trên quái ở cao: chuông của Bão Thông Báo, End Task, Thùng Rác, hồi máu của app độc, số sát thương hiện đúng chỗ con quái, không nằm dưới sàn và không bị cắt ở mép dải trận. Xem cả đường bay từ icon lên cao.
+- [ ] Tab Lốc Xoáy: mèo đi ngang dưới slime bay/bám tường thì chúng không choáng, không rơi; slime dưới sàn vẫn trúng.

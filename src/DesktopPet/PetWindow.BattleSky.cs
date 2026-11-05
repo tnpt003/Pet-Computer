@@ -98,7 +98,7 @@ public sealed partial class PetWindow
         return flyer;
     }
 
-    // A click on a flyer's window: Push knocks it down, the Grabber yanks it down; nothing else.
+    // A click on a flyer's window: Push knocks it down, the Grabber yanks it down, the Spray locks on it; nothing else.
     public bool BattleClickFlyer(int id, double offset = 0)
     {
         if (battle == null || battle.Paused || battle.Find(id) is not Slime s || !BattleSim.InSky(s)) return false;
@@ -106,9 +106,13 @@ public sealed partial class PetWindow
         {
             BattleSkill.Grabber => BattleGrab(id, s.X, s.Altitude),
             BattleSkill.Push => BattleClickSlime(id, offset),
+            BattleSkill.Spray => BattlePressHold(s.X, s.BodyBottom + s.Height / 2),
             _ => false
         };
     }
+
+    // The nozzle reaches above the strip (which draws its own part).
+    public static bool SprayInSky(BattleSim b) => b.SprayX != null && b.SprayHeight + b.Settings.SprayRange > BattleFieldView.FieldHeight;
 
     // The canvas for drops and aims: over the battle's work area, shown while there is any.
     private void UpdateSkyShots(BattleSim b, bool draw, bool hide)
@@ -117,11 +121,14 @@ public sealed partial class PetWindow
         if (!busy) foreach (var s in b.Slimes) if (s.Aiming && BattleSim.InSky(s) && s.Type.Fly != null) { busy = true; break; }
         if (!busy) foreach (var g in b.Goos) if (BattleFieldView.SpikeInSky(g)) { busy = true; break; }
         if (b.Cut != null || b.ColumnX != null || b.FlashRemaining > 0) busy = true; // 2026-11-04: the cut, the fan's column, the flash.
+        // 2026-11-05: the spray high up, and what shows over enemies high up.
+        if (SprayInSky(b)) busy = true;
+        if (!busy) for (int i = 0; i < b.Effects.Count; i++) if (BattleFieldView.SkyEffect(b.Effects[i])) { busy = true; break; }
         if (hide) busy = false;
         if (!busy && !skyShotShown) return;
         if (skyShotWindow == null)
         {
-            skyShotView = new SkyShotView(b) { ToScreen = (x, h) => BattleSkyPoint(x, h) - (Vector)skyShotPlaced.TopLeft };
+            skyShotView = new SkyShotView(b) { ToScreen = (x, h) => BattleSkyPoint(x, h) - (Vector)skyShotPlaced.TopLeft, Field = () => battleView };
             skyShotWindow = CreateOverlayWindow(skyShotView, "Pet flying slime shots", clickThrough: true);
             skyShotWindow.DpiChanged += (_, _) => skyShotScale = 0;
             skyShotWindow.Show();
@@ -194,6 +201,7 @@ public sealed class SkyShotView : FrameworkElement
     // A spot of the battle (battle x, height over the floor) in this view.
     public Func<double, double, Point> ToScreen { get; set; } = (x, h) => new Point(x, -h);
     public (double X, double Height) CatAt { get; set; }
+    public Func<BattleFieldView?> Field { get; set; } = () => null;
 
     public SkyShotView(BattleSim sim) { this.sim = sim; IsHitTestVisible = false; }
 
@@ -220,7 +228,9 @@ public sealed class SkyShotView : FrameworkElement
             BattleFieldView.DrawCeilingFan(dc, cx, 26, sim.Time);
         }
         if (sim.Cut is { } cut) BattleFieldView.DrawCut(dc, cut, (x, h) => ToScreen(x, h), sim.Settings);
+        if (PetWindow.SprayInSky(sim)) BattleFieldView.DrawSpray(dc, ToScreen(sim.SprayX!.Value, sim.SprayHeight), sim.Settings.SprayRange, sim.Time);
         dc.Pop();
+        Field()?.DrawSkyEffects(dc, ToScreen);
         if (sim.FlashRemaining > 0) BattleFieldView.DrawFlash(dc, new Rect(0, 0, ActualWidth, ActualHeight), sim.FlashRemaining);
     }
 }

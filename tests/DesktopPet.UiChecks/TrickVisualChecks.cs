@@ -56,6 +56,52 @@ internal static class TrickVisualChecks
         return n;
     }
 
+    // 2026-11-05: the mirage's shimmer before the gacha and its big smoke; a sulky slime's tantrum (enemy-tricks-2.png).
+    private static void SmokeAndTears(Action<bool, string> check)
+    {
+        var data = BattleData.Settings;
+        var sim = new BattleSim(data, 0, Width, new Random(1));
+        Slime Add(string kind, double x)
+        {
+            var s = sim.AddSlime(x, data.Enemy(kind));
+            s.Set(SlimeState.Moving); s.StateTime = 0.4; s.Facing = -1;
+            return s;
+        }
+        var real = Add("mirage", 130);
+        var copy = Add("mirage", 300);
+        real.Cast = copy.Cast = true; copy.DecoyOf = real.Id;
+        var plain = Add("mirage", 470);
+        var view = new BattleFieldView(sim) { OriginX = 0 };
+        view.Measure(new Size(Width, BattleFieldView.FieldHeight));
+        view.Arrange(new Rect(0, 0, Width, BattleFieldView.FieldHeight));
+        int floor = (int)BattleFieldView.FieldHeight - 2;
+        var smoke = Color.FromRgb(0xB8, 0x94, 0xF5);
+        var tear = Color.FromRgb(0x7F, 0xD4, 0xF2);
+        var mouth = Color.FromRgb(0x8A, 0x2F, 0x45);
+
+        real.ShuffleClock = 0.2;
+        var shimmer = Shot(view, "enemy-tricks-shimmer");
+        // Beside the body, where only the shimmer reaches.
+        var violet = Color.FromRgb(0xA8, 0x7C, 0xF2);
+        check(Count(shimmer, violet, 94, 104, floor - 40, floor - 15, 40, 60) > 40 && Count(shimmer, violet, 264, 274, floor - 40, floor - 15, 40, 60) > 40
+              && Count(shimmer, violet, 434, 444, floor - 40, floor - 15, 40, 60) == 0, "Just before the gacha the real one and its copy shimmer alike, an unrelated one does not");
+
+        var sulky = Add("sulky", 700);
+        sulky.Puff = 1.6; sulky.Tantrumed = true; sulky.Set(SlimeState.Defeated); sulky.StateTime = 0.4;
+        var gone = Add("sulky", 900);
+        gone.Puff = 1.6; gone.Tantrumed = true; gone.Set(SlimeState.Defeated); gone.StateTime = 1.3;
+        foreach (var s in new[] { real, copy, plain }) s.Set(SlimeState.Moving);
+        real.ShuffleClock = 0.001;
+        sim.Step(1.0 / 60, 1100, false);
+        foreach (var e in sim.Effects) e.Age = e.Life * 0.25;
+        sulky.StateTime = 0.4; gone.StateTime = 1.3;
+        var px = Shot(view, "enemy-tricks-2");
+        check(Count(px, smoke, 70, 190, floor - 90, floor, 30, 120) > 500 && Count(px, smoke, 240, 360, floor - 90, floor, 30, 120) > 500,
+            "The gacha's violet smoke covers each of them, far bigger than a defeat's puff");
+        check(Count(px, tear, 650, 750, floor - 90, floor, 30) > 10 && Count(px, mouth, 680, 720, floor - 50, floor, 30) > 10, "A tantrum has tears and a wailing mouth");
+        check(Inked(px, 965, 1050, floor - 60, floor, 60) > Inked(px, 860, 940, floor - 60, floor, 60), "Past the crying it has run off the spot it stood on");
+    }
+
     // Pixels at least this opaque in a box (anything drawn there).
     private static int Inked(byte[] px, int x0, int x1, int y0, int y1, int alpha)
     {
@@ -68,6 +114,7 @@ internal static class TrickVisualChecks
 
     public static void Run(Action<bool, string> check)
     {
+        SmokeAndTears(check);
         var data = BattleData.Settings;
         var sim = new BattleSim(data, 0, Width, new Random(1));
         Slime Add(string kind, double x)
@@ -98,6 +145,7 @@ internal static class TrickVisualChecks
         var calm = Add("sulky", 1130);
         copy.DecoyOf = real.Id;
         real.Cast = copy.Cast = true;
+        real.ShuffleClock = 99; // No gacha coming (SmokeAndTears shows that).
         var before = Shot(view);
         faded.Faded = true;
         lit.Revealed = 2;

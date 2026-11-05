@@ -142,6 +142,8 @@ public sealed partial class BattleSim
         foreach (var s in slimes.ToArray())
         {
             if (s.Type.ThrowHit is not ThrowHitSpec rule || !s.Targetable || thrownInto.Contains(s.Id)) continue;
+            // 2026-11-05: what a throw meets on an ice slime is its shell; without one the cat flies through.
+            if (s.Type.Ice != null && !s.Iced) continue;
             double needed = ThrowSpeed(s, rule);
             // Too slow for anything: only an ice shell answers it (a bonk, a crack; below).
             if (speed < needed && !s.Iced) continue;

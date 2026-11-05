@@ -604,7 +604,7 @@
       // the speed the next throw needs. 2026-11-04: any throw into the shell bonks and the cat bounces back.
       // The shell grows back `regrow` s later (eliteRegrow for an elite; 0: never).
       "id": "icy", "nameVi": "Slime băng", "nameEn": "Ice slime",
-      "tipVi": "Vỏ băng làm vũ khí chỉ xước. Ném mèo xuyên qua thật mạnh để vỡ vỏ; nhát 5 của Găng đấm cũng phá được; Bình xịt làm băng mềm, Bom vẫn đau.", "tipEn": "Its ice shell turns weapon hits into scratches. Throw the cat hard through it to crack it; the Glove's fifth hit breaks it too; the Spray softens it, the Bomb still hurts.", "counters": ["spray", "bomb"],
+      "tipVi": "Vỏ băng làm vũ khí chỉ xước. Ném mèo thật mạnh, đập bằng Kẹp gắp hoặc nhát 5 của Găng đấm để vỡ vỏ. Hết vỏ thì mèo ném bay xuyên qua. Bình xịt làm băng mềm, Bom vẫn đau.", "tipEn": "Its shell turns weapon hits into scratches. A hard throw, the Grabber's slam or the Glove's fifth hit breaks it; then a thrown cat flies through. The Spray softens it, the Bomb still hurts.", "counters": ["spray", "bomb"],
       "maxHp": 50, "speed": 34, "damage": 10, "range": 55,
       "windup": 0.8, "attackCooldown": 2.0, "recover": 0.4,
       "scale": 1.0, "color": "#A6E3F2", "marks": "ice", "cost": 2, "binSpit": false,

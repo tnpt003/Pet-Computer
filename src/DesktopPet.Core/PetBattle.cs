@@ -793,7 +793,7 @@ public sealed partial class BattleSim
         // 2026-11-04: an app's hit brings a flyer or a wall climber down to the floor.
         if (source == DamageSource.App) KnockFromSky(slime);
         // A leaf shield, or a bomb flying back to its mount (2026-11-04).
-        if (slime.LeafShield || slime.RecoilLeft > 0) { AddEffect(BattleEffectKind.Block, slime.X, slime.Height / 2); return HitResult.Immune; }
+        if (slime.LeafShield || slime.RecoilLeft > 0) { AddEffect(BattleEffectKind.Block, slime.X, slime.Altitude + slime.Height / 2); return HitResult.Immune; }
         // The cat's blow throws a drummer off its count.
         if (source is DamageSource.Weapon or DamageSource.Combo or DamageSource.Splash && Is(slime, EnemyLinks.Rhythm)) { slime.BeatCount = 0; slime.BeatClock = 0; }
         // A faded ghost, a bubble, a mirage's copy, a sulky slime (1.5 M13, PetBattle.Tricks.cs).
@@ -804,7 +804,7 @@ public sealed partial class BattleSim
         // A flag slime before its first flag, a flag while its slime lives (2026-11-05).
         if (slime.FlagGuard)
         {
-            AddEffect(BattleEffectKind.Immune, slime.X, slime.Height / 2, slime.Width);
+            AddEffect(BattleEffectKind.Immune, slime.X, slime.Altitude + slime.Height / 2, slime.Width);
             events.Add(new(BattleEventKind.FlagGuarded, slime.X));
             return HitResult.Immune;
         }
@@ -813,7 +813,7 @@ public sealed partial class BattleSim
         {
             // A boss in its shield phase: nothing gets through (not even the bomb).
             ImmuneHits++;
-            AddEffect(BattleEffectKind.Immune, slime.X, slime.Height / 2, slime.Width);
+            AddEffect(BattleEffectKind.Immune, slime.X, slime.Altitude + slime.Height / 2, slime.Width);
             events.Add(new(BattleEventKind.BossImmune, slime.X));
             return HitResult.Immune;
         }
@@ -821,7 +821,7 @@ public sealed partial class BattleSim
         {
             // Guarded by a heal winding up on it (push the healer to end it).
             WardedHits++;
-            AddEffect(BattleEffectKind.Warded, slime.X, slime.Height / 2, slime.Width);
+            AddEffect(BattleEffectKind.Warded, slime.X, slime.Altitude + slime.Height / 2, slime.Width);
             events.Add(new(BattleEventKind.HitWarded, slime.X));
             return HitResult.Immune;
         }
@@ -831,7 +831,7 @@ public sealed partial class BattleSim
             slime.GiantShields--;
             if (slime.GiantShields == 0) slime.GiantShieldClock = 10;
             slime.HitFlash = 0.18;
-            AddEffect(BattleEffectKind.Warded, slime.X, slime.Height / 2, slime.Width);
+            AddEffect(BattleEffectKind.Warded, slime.X, slime.Altitude + slime.Height / 2, slime.Width);
             return HitResult.Immune;
         }
         // An ice shell: the cat's weapon only scratches it (1.5 M15, PetBattle.Wall.cs).
@@ -1089,7 +1089,7 @@ public sealed partial class BattleSim
         else if (skill == BattleSkill.Push && slime.Elite is { PushImmune: true })
         {
             // It stands firm: no knock back, no stun, its windup goes on; the skill is still spent.
-            AddEffect(BattleEffectKind.Block, slime.X, slime.Height / 2);
+            AddEffect(BattleEffectKind.Block, slime.X, slime.Altitude + slime.Height / 2);
             events.Add(new(BattleEventKind.PushResisted, slime.X, slime.Id));
         }
         else if (skill == BattleSkill.Push)
@@ -1170,7 +1170,7 @@ public sealed partial class BattleSim
         {
             BattleEffectKind.Poof => 0.6 * Math.Max(1, value), BattleEffectKind.Number => 0.9, BattleEffectKind.Combo => 0.7, BattleEffectKind.Mend => 0.8,
             BattleEffectKind.Explosion or BattleEffectKind.Slam => 0.5, BattleEffectKind.Warded => 0.6, BattleEffectKind.Quake => 0.9, BattleEffectKind.Drum => 0.9,
-            BattleEffectKind.Bell => 0.9, BattleEffectKind.EndTask => 1.0, BattleEffectKind.Rewind => 0.8, BattleEffectKind.Splat => 0.5, _ => 0.35
+            BattleEffectKind.Bell => 0.9, BattleEffectKind.EndTask => 1.0, BattleEffectKind.Rewind => 0.8, BattleEffectKind.Splat => 0.5, BattleEffectKind.MirageSmoke => 0.9, _ => 0.35
         };
         effects.Add(new BattleEffect { Kind = kind, X = x, Height = height, Life = life, Value = value });
     }

@@ -217,6 +217,13 @@ public sealed partial class PetWindow
         if (!flying && !appFlightShown) return;
         var area = battleArea;
         double top = area.Bottom - BattleFieldView.FieldHeight - b.GridRows * AppCellHeight - 80;
+        // A target high up (a flyer, a wall climber): the canvas reaches it (2026-11-05).
+        foreach (var launch in b.Launches)
+        {
+            top = Math.Min(top, area.Bottom - launch.Height - 80);
+            foreach (int id in launch.Targets) if (b.Find(id) is Slime target) top = Math.Min(top, area.Bottom - target.BodyTop - 100);
+            foreach (double height in launch.TargetHeight) top = Math.Min(top, area.Bottom - height - 80);
+        }
         if (appFlightWindow == null)
         {
             appFlightView = new AppFlightView(b) { Language = preferences.Language };

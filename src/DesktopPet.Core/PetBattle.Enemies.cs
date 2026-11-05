@@ -282,7 +282,7 @@ public sealed partial class BattleSim
         }
         // Plain loops here and below: this runs every frame, so no per-call lambdas or lists.
         for (int i = slimes.Count - 1; i >= 0; i--)
-            if (slimes[i].State == SlimeState.Defeated && slimes[i].StateTime >= s.DefeatDuration * (slimes[i].IsBoss ? 1.5 : 1)) slimes.RemoveAt(i);
+            if (slimes[i].State == SlimeState.Defeated && slimes[i].StateTime >= (slimes[i].Tantrumed ? TantrumLeave : s.DefeatDuration * (slimes[i].IsBoss ? 1.5 : 1))) slimes.RemoveAt(i);
         Separate();
         CarryRiders();
     }

@@ -195,6 +195,19 @@ public sealed partial class BattleSim
 
     // The real one's gacha (2026-11-04): every few seconds, smoke; with SwapChance it trades places with one
     // of its copies, otherwise nobody moves. What the cursor showed is forgotten either way.
+    // The moment before the smoke, all of the group alike (the view makes it shimmer; it never tells which one
+    // is real).
+    public const double ShuffleWarn = 0.5;
+    public bool ShuffleSoon(Slime s)
+    {
+        if (s.Type.Mirage is not MirageSpec mirage || s.State == SlimeState.Defeated) return false;
+        var real = s.Decoy ? Find(s.DecoyOf) : s;
+        if (real is not { Cast: true, Targetable: true, Handled: false } || ShuffleEvery(real, mirage) <= 0 || real.ShuffleClock > ShuffleWarn) return false;
+        foreach (var o in slimes)
+            if (o.DecoyOf == real.Id && o.Targetable && !o.Handled) return true;
+        return false;
+    }
+
     private void StepShuffle(Slime s, MirageSpec mirage, double dt)
     {
         double every = ShuffleEvery(s, mirage);
@@ -218,7 +231,7 @@ public sealed partial class BattleSim
         foreach (var o in group)
         {
             o.Revealed = 0;
-            AddEffect(BattleEffectKind.Poof, o.X, o.Height / 2, 1);
+            AddEffect(BattleEffectKind.MirageSmoke, o.X, o.Height / 2 + 20); // Lifted a little: it stays over the floor line.
         }
         events.Add(new(BattleEventKind.MirageShuffled, s.X, swap ? 1 : 0));
     }
@@ -293,7 +306,9 @@ public sealed partial class BattleSim
     }
 
     // Hit too often while fully puffed: it bursts into tears, stamps (the cat in reach takes its hit) and
-    // runs off, the cat's defeat but no loot and not a soothing.
+    // runs off, the cat's defeat but no loot and not a soothing. Seen for TantrumLeave s (no puff of smoke):
+    // crying and stamping for TantrumCry s, then running off as it fades.
+    public const double TantrumCry = 0.9, TantrumLeave = 1.6;
     private void Tantrum(Slime s)
     {
         s.Tantrumed = true;
@@ -301,7 +316,7 @@ public sealed partial class BattleSim
         AddEffect(BattleEffectKind.Slam, s.X, 0, s.Range);
         if (!CatHeld && Math.Abs(lastCatX - s.X) <= s.Range + CatHalfWidth) HurtCat(s, lastCatX, false);
         if (Over) return;
-        Defeat(s);
+        Defeat(s, false);
     }
 
     // Before a hit lands (PetBattle.cs Damage): a faded ghost, a bubble, a copy or a sulky slime takes it

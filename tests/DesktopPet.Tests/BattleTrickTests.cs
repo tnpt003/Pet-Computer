@@ -228,6 +228,19 @@ internal static class BattleTrickTests
                 field.ClearEvents();
             }
             check(smokes >= 15 && swaps > 0 && swaps < smokes, $"Every {spec.Shuffle} s the gacha smokes the group, sometimes swapping ({swaps}/{smokes})");
+            // 2026-11-05: its own big smoke over each of them, and a warning just before, the same on all.
+            var group = field.Slimes.Where(x => x.Targetable).ToList();
+            foreach (var x in field.Slimes) { x.Cooldown = 9; x.KnockVelocity = 0; }
+            one.ShuffleClock = BattleSim.ShuffleWarn + 0.05;
+            bool calm = !group.Any(field.ShuffleSoon);
+            one.ShuffleClock = BattleSim.ShuffleWarn - 0.05;
+            bool warned = group.All(field.ShuffleSoon);
+            one.ShuffleClock = dt / 2;
+            field.ClearEvents();
+            field.Step(dt, 100, false);
+            int fresh = field.Effects.Count(e => e.Kind == BattleEffectKind.MirageSmoke && e.Age < 0.1);
+            check(calm && warned, $"The whole group shimmers just before the gacha, alike ({group.Count} slimes)");
+            check(fresh == group.Count, $"Then each one gets the big smoke ({fresh}/{group.Count})");
         }
         var sim = Field(new[] { Mirage(damage: 10) }, new[] { 1 });
         var real = sim.Slimes.Single(s => !s.Decoy);
@@ -314,6 +327,16 @@ internal static class BattleTrickTests
         check(burst && sulky.Tantrumed && sulky.State == SlimeState.Defeated && sim.Defeated == down + 1 && sim.SulksCalmed == 0 && sim.CatHp < before,
             $"Fully puffed and hit {spec.Tantrum} more times it stamps off in tears (cat {before - sim.CatHp:0.#} HP)");
         check(sulky.Puff >= spec.MaxGrow - 1e-9 && sulky.Tantrum == spec.Tantrum, "It burst only once fully puffed, after its tantrum count");
+        // 2026-11-05: it stays to cry and run off (no puff of smoke), then it is gone.
+        sim = Field(new[] { Sulk(damage: 10) }, new[] { 1 }, weapon: paw);
+        sulky = sim.Slimes.Single();
+        sulky.X = 100;
+        for (int i = 0; i < 30 / dt && !sulky.Tantrumed; i++) { sim.Step(dt, 100, false); sim.ClearEvents(); }
+        check(sulky.Tantrumed && !sim.Effects.Any(e => e.Kind == BattleEffectKind.Poof), "A tantrum ends in tears, no puff of smoke");
+        Run(sim, BattleSim.TantrumLeave - 0.2);
+        check(sim.Slimes.Contains(sulky), $"It is still there crying and running off after {BattleSim.TantrumLeave - 0.2:0.0} s");
+        Run(sim, 0.3);
+        check(!sim.Slimes.Contains(sulky), $"Gone after {BattleSim.TantrumLeave:0.0} s");
 
         // The cat holds back from the one being stroked.
         sim = Field(new[] { Sulk() }, new[] { 1 });

@@ -8,7 +8,8 @@ namespace DesktopPet;
 // claw lifts it out of the fight (GrabLift DIPs up over GrabRise s): it does nothing (a windup is lost), is
 // no target of the cat even chosen, shoves no one, its links break and a timer's clock waits. The next
 // click on the field carries it there (GrabCarrySpeed) and slams it down: it loses GrabberSlamDamage and
-// is dazed GrabberStun s; every other enemy on the floor within GrabberSplash loses GrabberHitDamage. A bomb
+// is dazed GrabberStun s; every other enemy on the floor within GrabberSplash loses GrabberHitDamage; an
+// ice shell on either breaks (2026-11-05; set down when the hold runs out, it stays whole). A bomb
 // slime in the claw is the user's bomb: it blows up where it lands, hurting enemies only. Held
 // GrabberHoldSeconds without a click, it is put down on the side away from the cat, dazed. A thief is never
 // slammed: held to the end it shakes out what it stole (the skill's cooldown, the icon's charge; nothing
@@ -211,9 +212,11 @@ public sealed partial class BattleSim
         foreach (var o in slimes.ToArray())
         {
             if (o == slime || !o.Targetable || o.Airborne || o.OnWall || o.Burrowed || o.Handled || Math.Abs(o.X - slime.X) > GrabSplash + o.HitWidth / 2) continue;
+            if (o.Iced) BreakIce(o);
             ToolHit(o, GrabberHitDamage);
             if (Over) return;
         }
+        if (slime.Iced) BreakIce(slime);
         ToolHit(slime, GrabberSlamDamage);
         if (!Over && slime.Targetable) Daze(slime, GrabberStun);
     }

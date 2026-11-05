@@ -53,7 +53,7 @@ public sealed partial class BattleFieldView
         for (int i = 0; i < sim.Slimes.Count; i++)
         {
             var s = sim.Slimes[i];
-            if (s.Wet && s.Targetable) DrawWetDrops(dc, s, s.X - OriginX, floor, time);
+            if (s.Wet && s.Targetable && !BattleSim.InSky(s)) DrawWetDrops(dc, s, s.X - OriginX, floor, time); // In the sky: its own window.
             if (s.Grabbed) DrawClaw(dc, s.X - OriginX, Top(s, floor), s.Width, time);
             // What a shaken thief stole sparkles down out of it.
             if (s.Grabbed && s.Type.Steal != null)
@@ -87,7 +87,7 @@ public sealed partial class BattleFieldView
     }
 
     // The nozzle, its reach as a dotted ring and drops flying out all around (not a fill: clicks pass).
-    private static void DrawSpray(DrawingContext dc, Point at, double range, double time)
+    public static void DrawSpray(DrawingContext dc, Point at, double range, double time)
     {
         dc.DrawEllipse(null, SprayArea, at, range, range * 0.55);
         for (int k = 0; k < 10; k++)

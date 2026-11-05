@@ -25,7 +25,7 @@ internal static class BattleWallTests
     };
     private static EnemyType Plain() => new() { Id = "slime", MaxHp = 300, Speed = 40, Damage = 0, Range = 50, Windup = 0.6, AttackCooldown = 1.5, Recover = 0.3 };
 
-    private static readonly BattleSkill[] Tools = { BattleSkill.Bomb, BattleSkill.Shield, BattleSkill.Push, BattleSkill.Grabber, BattleSkill.Heal };
+    private static readonly BattleSkill[] Tools = { BattleSkill.Bomb, BattleSkill.Shield, BattleSkill.Push, BattleSkill.Grabber, BattleSkill.Spray };
 
     // `count` enemies of each kind on a 1600-wide field, the cat at 100 (weapon damage `hit`, reach 60).
     private static BattleSim Field(EnemyType[] kinds, double hit = 0, int count = 1, bool elite = false, int seed = 4)
@@ -216,6 +216,38 @@ internal static class BattleWallTests
         sim.Paused = true;
         Run(sim, 3);
         check(!icy.Iced, "Pause holds its regrowth");
+
+        // 2026-11-05: only the shell meets a throw; without it the thrown cat flies through.
+        sim = Field(Icy());
+        s = sim.Slimes.Single();
+        s.X = 800;
+        s.Iced = false; s.IceClock = 99;
+        before = s.Hp;
+        var through = new HashSet<BattleEventKind>();
+        ThrowThrough(sim, 800, rule.MinSpeed * 1.5, through);
+        check(s.Hp == before && s.State != SlimeState.Stunned && sim.ThrowHits == 0 && sim.IceBonks == 0 && sim.TakeCatBounce() == null
+              && !through.Contains(BattleEventKind.ThrowHit) && !through.Contains(BattleEventKind.IceBonked),
+            "Without its shell the thrown cat flies through an ice slime (no hurt, no daze, no bonk)");
+
+        // 2026-11-05: the Grabber's slam breaks the shell of the one slammed and of those it splashes.
+        sim = Field(Icy(), count: 2);
+        Slime slammed = sim.Slimes[0], beside = sim.Slimes[1];
+        slammed.X = 800; beside.X = 840;
+        check(sim.Arm(BattleSkill.Grabber) && sim.Grab(slammed.Id, 800, 10) && slammed.Iced, "The claw lifts an ice slime, shell on");
+        Run(sim, 0.5, catX: 100);
+        beside.X = 840;
+        check(sim.GrabDrop(800), "...and carries it to be slammed");
+        Run(sim, 1.5, catX: 100);
+        check(!slammed.Iced && !beside.Iced && sim.IceBreaks == 2 && slammed.Hp < slammed.MaxHp && beside.Hp < beside.MaxHp,
+            "The Grabber's slam breaks both shells: the slammed slime's and the one in its splash");
+        // Set down when the hold runs out it takes no hit: the shell stays.
+        sim = Field(Icy());
+        s = sim.Slimes.Single();
+        s.X = 800;
+        sim.Arm(BattleSkill.Grabber);
+        sim.Grab(s.Id, 800, 10);
+        Run(sim, sim.Settings.GrabberHoldSeconds + 1.2, catX: 100);
+        check(!s.Grabbed && s.Iced && sim.IceBreaks == 0, "Only set down when the hold runs out, the shell stays whole");
     }
 
     private static void ClingChecks(Action<bool, string> check)
@@ -231,6 +263,18 @@ internal static class BattleWallTests
             $"It goes to the nearest edge and climbs it (side {s.WallSide}, x {s.X:0}, height {s.Altitude:0})");
         // 2026-11-04: it can be chosen (the cat then goes to watch it), never swung at from the floor.
         check(s.Airborne && sim.TargetId != s.Id, "Up its edge the cat on the floor never goes for it (choosing it only sends the cat to watch: WatchChecks)");
+
+        // 2026-11-05: the Spray reaches it however high it climbed.
+        {
+            double height = s.Altitude;
+            s.Altitude = BattleSim.ClingTop + 40;
+            check(BattleSim.InSky(s) && sim.Arm(BattleSkill.Spray) && sim.StartSpray(s.X, s.Altitude + 10) && sim.SprayTargetId == s.Id,
+                "The Spray locks on a wall climber high up its edge");
+            sim.Arm(null);
+            sim.Step(dt, 100, false);
+            s.Altitude = height;
+            sim.ClearEvents();
+        }
 
         // It aims at the cat's spot, then a spike hurts the cat on the floor (no stun).
         double hp = sim.CatHp;

@@ -342,7 +342,7 @@ public sealed class AppFlightView : FrameworkElement
                     for (int i = 0; i < launch.Targets.Length; i++)
                     {
                         double x = sim.Find(launch.Targets[i]) is { } s ? s.X : launch.TargetX[i];
-                        double h = sim.Find(launch.Targets[i]) is { } ss ? ss.Height + 26 : 40;
+                        double h = sim.Find(launch.Targets[i]) is { } ss ? ss.BodyTop + 26 : 40;
                         // Each bell leaves a moment after the one before.
                         double delay = Math.Min(i * 0.06, 0.5), ti = Math.Clamp((t - delay) / (1 - delay), 0, 1);
                         if (ti <= 0) continue;
@@ -357,7 +357,7 @@ public sealed class AppFlightView : FrameworkElement
                 case LaunchKind.Trash:
                     for (int i = 0; i < launch.TargetX.Length; i++)
                     {
-                        var from = FloorPoint(launch.TargetX[i], 18);
+                        var from = FloorPoint(launch.TargetX[i], launch.TargetHeight.Length > i ? launch.TargetHeight[i] : 18);
                         double delay = Math.Min(i * 0.08, 0.4), ti = Math.Clamp((t - delay) / (1 - delay), 0, 1);
                         var at = Arc(from, icon, ti * ti);
                         // Stretched toward the bin, shrinking as it goes in, spinning.
@@ -369,7 +369,7 @@ public sealed class AppFlightView : FrameworkElement
                     }
                     break;
                 default:
-                    var floor = FloorPoint(TargetX(launch), launch.Height);
+                    var floor = FloorPoint(TargetX(launch), TargetHeight(launch));
                     var start = launch.ToIcon ? floor : icon;
                     var end = launch.ToIcon ? icon : floor;
                     var p = Arc(start, end, e);
@@ -386,6 +386,15 @@ public sealed class AppFlightView : FrameworkElement
         LaunchKind.Goo => sim.Find(launch.SlimeId)?.X ?? launch.FloorX,
         LaunchKind.EndTask or LaunchKind.Mend when launch.Targets.Length > 0 => sim.Find(launch.Targets[0])?.X ?? launch.FloorX,
         _ => launch.FloorX
+    };
+
+    // ...and how high: a flyer or a wall climber moves while the flight is on its way.
+    private double TargetHeight(AppLaunch launch) => launch.Kind switch
+    {
+        LaunchKind.Goo when sim.Find(launch.SlimeId) is { } shooter => shooter.BodyBottom + shooter.Height * 0.8,
+        LaunchKind.EndTask when launch.Targets.Length > 0 && sim.Find(launch.Targets[0]) is { } target => target.BodyTop + 30,
+        LaunchKind.Mend when launch.Targets.Length > 0 && sim.Find(launch.Targets[0]) is { } target => target.BodyTop,
+        _ => launch.Height
     };
 
     private void DrawOne(DrawingContext dc, AppLaunch launch, Point start, Point end, Point p, double e, double time)

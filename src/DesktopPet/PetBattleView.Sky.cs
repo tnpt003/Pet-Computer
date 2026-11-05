@@ -42,6 +42,7 @@ public sealed partial class BattleFieldView
         if (lean != 0) dc.PushTransform(new RotateTransform(lean, x, bottom - slime.Height / 2));
         DrawSlime(dc, slime, x, bottom, sim.Settings, time);
         if (lean != 0) dc.Pop();
+        if (slime.Wet && slime.Targetable) DrawWetDrops(dc, slime, x, bottom, time);
     }
 
     // Its marks (body coordinates): a flyer's wings, a burrower's nose and paws.

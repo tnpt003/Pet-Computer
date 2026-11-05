@@ -247,14 +247,15 @@ public sealed partial class BattleSim
     }
     public bool Spraying => SprayX != null;
 
-    // The slime nearest (x, height) a spray can lock on (within `within`; none: null).
+    // The slime nearest (x, height) a spray can lock on (within `within`; none: null). Flyers and wall
+    // climbers count, however high they are (2026-11-05).
     private Slime? SprayCandidate(double x, double height, double within)
     {
         Slime? best = null;
         double bestGap = within * within;
         foreach (var s in slimes)
         {
-            if (!s.Targetable || s.Shielded || InSky(s) || s.Burrowed) continue;
+            if (!s.Targetable || s.Shielded || s.Burrowed) continue;
             var (left, bottom, right, top) = Body(s);
             double dx = Math.Max(0, Math.Max(left - x, x - right)), dy = Math.Max(0, Math.Max(bottom - height, height - top));
             if (dx * dx + dy * dy <= bestGap) { best = s; bestGap = dx * dx + dy * dy; }

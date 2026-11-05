@@ -638,7 +638,7 @@ public sealed partial class BattleSim
         if (shooters.Count == 0 || clean.Count == 0 || from is { LeapHeight: > 0 }) return false;
         var slime = shooters[appRandom.Next(shooters.Count)];
         var app = clean[appRandom.Next(clean.Count)];
-        Launch(LaunchKind.Goo, app, slime.X, slime.Height * 0.8, GooSeconds, toIcon: true).SlimeId = slime.Id;
+        Launch(LaunchKind.Goo, app, slime.X, slime.BodyBottom + slime.Height * 0.8, GooSeconds, toIcon: true).SlimeId = slime.Id;
         events.Add(new(BattleEventKind.GooShot, slime.X, slime.Id));
         NoteApp("infect");
         return true;
@@ -673,7 +673,7 @@ public sealed partial class BattleSim
                 foreach (var s in slimes)
                     if (s.Targetable && !s.Decoy && s.Hp < s.MaxHp && (hurt == null || s.Hp / s.MaxHp < hurt.Hp / hurt.MaxHp)) hurt = s;
                 if (hurt == null) return;
-                var mend = Launch(LaunchKind.Mend, app, hurt.X, hurt.Height, AttackSeconds);
+                var mend = Launch(LaunchKind.Mend, app, hurt.X, hurt.BodyTop, AttackSeconds);
                 mend.Targets = new[] { hurt.Id };
                 break;
             case BattleAppKind.Screenshot:
@@ -709,7 +709,7 @@ public sealed partial class BattleSim
                 // Its target, or (gone meanwhile) the strongest one left.
                 var target = launch.Targets.Length > 0 && Find(launch.Targets[0]) is { Targetable: true, Shielded: false, Mended: false } chosen ? chosen : Strongest();
                 if (target == null) break;
-                AddEffect(BattleEffectKind.EndTask, target.X, target.Height + 30, target.Width);
+                AddEffect(BattleEffectKind.EndTask, target.X, target.BodyTop + 30, target.Width);
                 Damage(target, target.IsBoss || target.Elite != null ? target.MaxHp * rules.EndTaskShare : target.Hp, DamageSource.App);
                 break;
             case LaunchKind.Undo:
@@ -767,8 +767,8 @@ public sealed partial class BattleSim
                 mended.Hp += heal;
                 // ...and guards it a moment (never a boss).
                 if (!mended.IsBoss && rules.MendGuard > 0) mended.WardUntil = Time + rules.MendGuard;
-                AddEffect(BattleEffectKind.Mend, mended.X, mended.Height);
-                AddEffect(BattleEffectKind.Number, mended.X, mended.Height + 10, -Math.Round(heal));
+                AddEffect(BattleEffectKind.Mend, mended.X, mended.BodyTop);
+                AddEffect(BattleEffectKind.Number, mended.X, mended.BodyTop + 10, -Math.Round(heal));
                 break;
             case LaunchKind.Spit:
                 var kinds = SpitKinds(rules);
@@ -875,7 +875,7 @@ public sealed partial class BattleSim
                 break;
             case BattleAppKind.EndTask:
                 if (Strongest() is not Slime strongest) return false;
-                Launch(LaunchKind.EndTask, app, strongest.X, strongest.Height + 30, LaunchSeconds).Targets = new[] { strongest.Id };
+                Launch(LaunchKind.EndTask, app, strongest.X, strongest.BodyTop + 30, LaunchSeconds).Targets = new[] { strongest.Id };
                 break;
             case BattleAppKind.Undo:
                 double lost = 0;
@@ -896,6 +896,7 @@ public sealed partial class BattleSim
                 var bin = Launch(LaunchKind.Trash, app, taken[0].X, 0, LaunchSeconds, toIcon: true);
                 bin.Targets = taken.Select(s => s.Id).ToArray();
                 bin.TargetX = taken.Select(s => s.X).ToArray();
+                bin.TargetHeight = taken.Select(s => s.BodyBottom + s.Height / 2).ToArray();
                 bin.Colors = taken.Select(s => s.Type.Color).ToArray();
                 blasting = true;
                 foreach (var s in taken) Damage(s, s.Hp + 1, DamageSource.App);
@@ -919,13 +920,16 @@ public sealed partial class BattleSim
         return best;
     }
 
+    // The tornado turns round the cat's legs: it reaches enemies on the floor, not a flyer or a wall climber
+    // the cat walks under (an app's hit brings those down; 2026-11-05).
+    public const double TabReach = 30;
     private void TabPulse(double catX, AppsSpec rules)
     {
         blasting = true;
         foreach (var slime in slimes.ToArray())
-            if (slime.Targetable && !slime.Shielded && Math.Abs(slime.X - catX) <= rules.TabRadius + slime.HitWidth / 2)
+            if (slime.Targetable && !slime.Shielded && slime.Altitude <= TabReach && Math.Abs(slime.X - catX) <= rules.TabRadius + slime.HitWidth / 2)
             {
-                AddEffect(BattleEffectKind.Spark, slime.X, slime.Height * 0.6);
+                AddEffect(BattleEffectKind.Spark, slime.X, slime.Altitude + slime.Height * 0.6);
                 events.Add(new(BattleEventKind.SlimeHit, slime.X));
                 Damage(slime, rules.TabDamage * DamageFactor, DamageSource.App);
             }
@@ -937,7 +941,7 @@ public sealed partial class BattleSim
     // cannot stop (a dash, a heal, a leap) or ignores Push.
     private void Ping(Slime slime, AppsSpec rules)
     {
-        AddEffect(BattleEffectKind.Bell, slime.X, slime.Height + 26);
+        AddEffect(BattleEffectKind.Bell, slime.X, slime.BodyTop + 26);
         Damage(slime, rules.PingDamage * DamageFactor, DamageSource.App);
         if (!slime.Targetable || slime.LeapHeight > 0 || slime.Elite is { PushImmune: true }) return;
         if (slime.State is not (SlimeState.Moving or SlimeState.Windup or SlimeState.Recover)) return;

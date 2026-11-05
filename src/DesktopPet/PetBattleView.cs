@@ -265,7 +265,8 @@ public sealed partial class BattleFieldView : FrameworkElement
         DrawTools(dc, floor, time);
         if (sim.TabsRemaining > 0) DrawTabs(dc, sim.CatX - OriginX, floor, time);
         DrawDrops(dc, floor, time); // 1.5 M19
-        for (int i = 0; i < sim.Effects.Count; i++) DrawEffect(dc, sim.Effects[i], sim.Effects[i].X - OriginX, floor - sim.Effects[i].Height, floor);
+        for (int i = 0; i < sim.Effects.Count; i++)
+            if (!SkyEffect(sim.Effects[i])) DrawEffect(dc, sim.Effects[i], sim.Effects[i].X - OriginX, floor - sim.Effects[i].Height, floor);
         if (sim.Incoming) DrawIncoming(dc, sim.IncomingX - OriginX, floor, time);
         if (sim.WatchedWallId != 0 && sim.Find(sim.WatchedWallId) is { WallSide: int side }) DrawWallWatch(dc, side, floor, time);
         DrawPopups(dc, floor, time);
@@ -588,6 +589,7 @@ public sealed partial class BattleFieldView : FrameworkElement
                 dc.DrawLine(Ink, new Point(ex - side * 2, ey), new Point(ex + side * 3, ey + 3));
             }
         }
+        else if (slime.Tantrumed && slime.State == SlimeState.Defeated) { } // Screwed shut: DrawCrying.
         else if (slime.State == SlimeState.Stunned || slime.State == SlimeState.Defeated)
         {
             // Dazed "x x" eyes.
@@ -944,6 +946,7 @@ public sealed partial class BattleFieldView : FrameworkElement
     private double ClearOfCat(double x, double width, double y)
     {
         const double half = 36, height = 104;
+        if (drawingSky) return x; // High over the cat.
         double cat = sim.CatX - OriginX;
         if (y < Floor - height || x + width / 2 < cat - half || x - width / 2 > cat + half) return x;
         return x < cat ? cat - half - width / 2 : cat + half + width / 2;
@@ -981,6 +984,24 @@ public sealed partial class BattleFieldView : FrameworkElement
         dc.Pop();
     }
 
+    // Effects over an enemy high up (a flyer, a wall climber) would be cut off at the top of the strip: the
+    // sky's canvas draws those (2026-11-05).
+    public const double SkyEffectFrom = 130;
+    public static bool SkyEffect(BattleEffect effect) => effect.Height >= SkyEffectFrom;
+    private bool drawingSky;
+    public void DrawSkyEffects(DrawingContext dc, Func<double, double, Point> toScreen)
+    {
+        drawingSky = true;
+        for (int i = 0; i < sim.Effects.Count; i++)
+        {
+            var effect = sim.Effects[i];
+            if (!SkyEffect(effect)) continue;
+            var at = toScreen(effect.X, effect.Height);
+            DrawEffect(dc, effect, at.X, at.Y, at.Y + effect.Height);
+        }
+        drawingSky = false;
+    }
+
     private void DrawEffect(DrawingContext dc, BattleEffect effect, double x, double y, double floor)
     {
         double k = Math.Clamp(effect.Age / effect.Life, 0, 1);
@@ -999,6 +1020,9 @@ public sealed partial class BattleFieldView : FrameworkElement
                 break;
             case BattleEffectKind.Splat:
                 DrawSplat(dc, effect, x, floor, k);
+                break;
+            case BattleEffectKind.MirageSmoke:
+                DrawMirageSmoke(dc, x, y, k);
                 break;
             case BattleEffectKind.Poof:
                 // Soft white puffs as the slime pops; nothing gory. Bigger for the boss.

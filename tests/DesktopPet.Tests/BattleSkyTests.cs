@@ -25,21 +25,21 @@ internal static class BattleSkyTests
         Elite = new EliteSpec { Hp = 1.2 }, Burrow = Shipped.Enemy("burrower").Burrow
     };
 
-    private static readonly BattleSkill[] Tools = { BattleSkill.Bomb, BattleSkill.Shield, BattleSkill.Push, BattleSkill.Grabber, BattleSkill.Heal };
+    private static readonly BattleSkill[] Tools = { BattleSkill.Bomb, BattleSkill.Shield, BattleSkill.Push, BattleSkill.Grabber, BattleSkill.Spray };
 
     // One enemy of this kind on a 1600-wide field, the cat at 100 (weapon damage `hit`, reach 60).
-    private static BattleSim Field(EnemyType kind, double hit = 0, double catHp = 1000)
+    private static BattleSim Field(EnemyType kind, double hit = 0, double catHp = 1000, AppsSpec? apps = null)
     {
         var arms = Shipped.Weapon("sword") with { Range = 60, StunChance = 0, Damage = hit };
         var settings = new BattleSettings
         {
             Weapons = new[] { arms }, FirstWaveDelay = 0, SpawnInterval = 0.05, CatMaxHp = catHp, MaxAlive = 8, MaxElites = 8,
             Enemies = new[] { kind }, RageHitGain = 0, BombDamage = 10, BombCooldown = 0.1, BombDelay = 0.3, BombRadius = 40,
-            PushCooldown = 0.1, GrabberCooldown = 0.1, ShieldCooldown = 0.1,
+            PushCooldown = 0.1, GrabberCooldown = 0.1, ShieldCooldown = 0.1, Apps = apps,
             Plan = new[] { new WaveSpec { Groups = new[] { new WaveGroup { Enemy = kind.Id, Count = 1 } } },
                 new WaveSpec { Groups = new[] { new WaveGroup { Enemy = kind.Id, Count = 1 } } } }
         };
-        var sim = new BattleSim(settings, 0, 1600, seed: 4, skills: Tools);
+        var sim = new BattleSim(settings, 0, 1600, stage: apps != null ? new StageSpec { Id = "sky_apps" } : null, seed: 4, skills: Tools);
         for (int i = 0; i < 600 && !sim.Slimes.Any(s => s.Targetable); i++) sim.Step(dt, 100, false);
         sim.ClearEvents();
         return sim;
@@ -85,6 +85,40 @@ internal static class BattleSkyTests
         bool up = s.Fly == FlyPhase.Aloft;
         sim.Damage(s, 5, DamageSource.App);
         check(up && s.Fly != FlyPhase.Aloft, "An app's hit brings a flyer in the air down");
+
+        // 2026-11-05: the Tab tornado turns round the cat's legs: the cat walking under a flyer leaves it up there.
+        const double high = 320;
+        sim = Field(Flyer(), apps: new AppsSpec());
+        s = sim.Slimes.Single();
+        for (int i = 0; i < 900 && !(s.Fly == FlyPhase.Aloft && s.State != SlimeState.Spawning); i++) { sim.Step(dt, 100, false); sim.ClearEvents(); }
+        Hold(s, 800, high);
+        var tabs = sim.Desktop.Single(a => a.Kind == BattleAppKind.Tabs);
+        tabs.Charge = 1;
+        check(sim.UseApp(tabs.Id, 800), "The tabs are sent");
+        Run(sim, BattleSim.LaunchSeconds + 2, catX: 800, each: () => Hold(s, 800, high));
+        check(sim.TabsRemaining > 0 && s.Fly == FlyPhase.Aloft && s.Hp == s.MaxHp && s.State != SlimeState.Stunned,
+            "The Tab tornado leaves a flyer over the cat's head alone (no hurt, no fall)");
+
+        // The bell of an app shows on the flyer, up where it is.
+        var ping = sim.Desktop.Single(a => a.Kind == BattleAppKind.Ping);
+        ping.Charge = 1;
+        check(sim.UseApp(ping.Id, 800), "The bells are sent");
+        bool high_bell = false;
+        Run(sim, BattleSim.LaunchSeconds + 0.1, catX: 800, each: () =>
+        {
+            if (s.Fly == FlyPhase.Aloft) Hold(s, 800, high);
+            high_bell |= sim.Effects.Any(e => e.Kind == BattleEffectKind.Bell && e.Height > high);
+        });
+        check(high_bell && s.Fly != FlyPhase.Aloft, "A Ping's bell rings over the flyer, up where it is, and brings it down");
+
+        // 2026-11-05: the Spray locks on a flyer high up and soaks it.
+        sim = Field(Flyer());
+        s = sim.Slimes.Single();
+        for (int i = 0; i < 900 && !(s.Fly == FlyPhase.Aloft && s.State != SlimeState.Spawning); i++) { sim.Step(dt, 100, false); sim.ClearEvents(); }
+        Hold(s, 800, high);
+        check(sim.Arm(BattleSkill.Spray) && sim.StartSpray(s.X, s.BodyBottom + s.Height / 2) && sim.SprayTargetId == s.Id, "The Spray locks on a flyer high up");
+        Run(sim, 1, each: () => Hold(s, 800, high));
+        check(s.Wet && s.Hp < s.MaxHp && sim.SprayX == 800, "It soaks the flyer up there");
     }
 
     private static void FlyChecks(Action<bool, string> check)

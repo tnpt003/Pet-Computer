@@ -927,7 +927,7 @@ public readonly record struct BattleEvent(BattleEventKind Kind, double X, double
 // circling the cat). Splat (1.5 M09): a spitter's drop of goo landing (Tint: its colour).
 // Miss (1.5 M13): a hit that did nothing to a ghost or a bubble (Value 0), or to a sulky slime (Value 1);
 // Heart: a sulky slime soothed.
-public enum BattleEffectKind { Spark, Poof, Push, Explosion, Slam, Number, Combo, Thud, Mend, Block, Immune, Warded, Bell, EndTask, Rewind, Splat, Miss, Heart, Quake, Drum }
+public enum BattleEffectKind { Spark, Poof, Push, Explosion, Slam, Number, Combo, Thud, Mend, Block, Immune, Warded, Bell, EndTask, Rewind, Splat, Miss, Heart, Quake, Drum, MirageSmoke }
 // How a damage Number reads (display only): a plain hit, a combo hit, a critical (Claws) hit, poison's tick, or a puddle burning the cat ("-1" over it).
 public enum NumberTone { Plain, Combo, Crit, Poison, Burn }
 public sealed class BattleEffect
@@ -1032,8 +1032,9 @@ public sealed class AppLaunch
     public double FloorX, Height, Age, Duration;
     public bool ToIcon;
     public int[] Targets = Array.Empty<int>();
-    // Where each target stood and its colour when it flew (the bin's slimes), #RRGGBB.
+    // Where each target stood (its height over the floor too) and its colour when it flew (the bin's slimes), #RRGGBB.
     public double[] TargetX = Array.Empty<double>();
+    public double[] TargetHeight = Array.Empty<double>();
     public string[] Colors = Array.Empty<string>();
     public double Progress => Duration > 0 ? Math.Clamp(Age / Duration, 0, 1) : 1;
 }

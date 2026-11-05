@@ -8,7 +8,7 @@ Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm 
 
 ---
 
-## #45 — Góp ý sau C4: vũng nhầy không hiện số sát thương, Kéo chỉ thấy chấm đỏ, bảng chuẩn bị Trận tự chọn "không có button" (2026-11-05, commit 8188126)
+## #45 — Góp ý sau C4: vũng nhầy không hiện số sát thương, Kéo chỉ thấy chấm đỏ, bảng chuẩn bị Trận tự chọn "không có button" (2026-11-05, commit 8188126, d231dc1)
 - **Triệu chứng (góp ý người dùng):** (1) mèo đi qua bãi nhầy của slime phun mất máu nhưng không có số; (2) đường cắt ổn nhưng không có cây kéo lớn đi qua, chỉ thấy chấm đỏ chạy trên đường cắt; (3) bảng chuẩn bị của Trận tự chọn không có nút quay về sảnh chọn chế độ (người dùng làm rõ sau khi hỏi lại).
 - **Nguyên nhân:** (1) `PuddleOnCat` chỉ gọi `LandHit`, không tạo số. (2) Kéo vẽ chỉ khoảng 35 DIP, lưỡi mảnh màu nhạt, nên chỉ thấy hai vòng tay cầm đỏ; với đường cắt sát sàn còn bị cắt mất phần dưới. (3) nút hủy của bảng này chỉ là Đóng, về thẳng desktop; Vô tận thì có "‹ Sảnh". Tìm thêm một lỗi nhỏ: chiều cao panel thiếu 2 DIP nên hiện thanh cuộn.
 - **Sửa:** (1) mỗi lần đốt hiện số đỏ "-1" trên đầu mèo, tính theo máu thật sự mất (giáp làm lần đốt dưới 1 thì cộng dồn đủ 1 mới hiện); các đòn khác vào mèo vẫn không có số như trước. (2) Vẽ lại kéo dài khoảng 100 DIP, hai lưỡi và vòng tay cầm rõ, đóng mở chậm hơn, không chìm xuống sàn. Chỉ đổi phần vẽ. (3) Mở từ sảnh, hoặc từ "Đổi trang bị" ở bảng kết quả, nút đổi thành "‹ Sảnh" và quay về sảnh chọn chế độ. Sửa phần thiếu 2 DIP, thêm check nút nằm trong cửa sổ.

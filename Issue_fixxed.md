@@ -9,11 +9,11 @@ Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm 
 ---
 
 ## #45 — Góp ý sau C4: vũng nhầy không hiện số sát thương, Kéo chỉ thấy chấm đỏ, bảng chuẩn bị Trận tự chọn "không có button" (2026-11-05, commit 8188126)
-- **Triệu chứng (góp ý người dùng):** (1) mèo đi qua bãi nhầy của slime phun mất máu nhưng không có số; (2) đường cắt ổn nhưng không có cây kéo lớn đi qua, chỉ thấy chấm đỏ chạy trên đường cắt; (3) bảng chuẩn bị của Trận tự chọn không có button.
-- **Nguyên nhân:** (1) `PuddleOnCat` chỉ gọi `LandHit`, không tạo số. (2) Kéo vẽ chỉ khoảng 35 DIP, lưỡi mảnh màu nhạt, nên chỉ thấy hai vòng tay cầm đỏ; với đường cắt sát sàn còn bị cắt mất phần dưới. (3) **Chưa tái hiện:** check trong cửa sổ thật ở màn 1536×816 cho thấy Sẵn sàng và Dựng trận nằm trong cửa sổ 760×511, ảnh chụp cửa sổ thật hiện đủ Chi tiết, Dựng trận, Đóng, Sẵn sàng. Tìm được một lỗi nhỏ liên quan: chiều cao panel thiếu 2 DIP nên hiện thanh cuộn.
-- **Sửa:** (1) mỗi lần đốt hiện số đỏ "-1" trên đầu mèo, tính theo máu thật sự mất (giáp làm lần đốt dưới 1 thì cộng dồn đủ 1 mới hiện); các đòn khác vào mèo vẫn không có số như trước. (2) Vẽ lại kéo dài khoảng 100 DIP, hai lưỡi và vòng tay cầm rõ, đóng mở chậm hơn, không chìm xuống sàn. Chỉ đổi phần vẽ. (3) Sửa phần thiếu 2 DIP, thêm check nút nằm trong cửa sổ; **chờ người dùng cho biết thiếu nút nào hoặc gửi ảnh**.
+- **Triệu chứng (góp ý người dùng):** (1) mèo đi qua bãi nhầy của slime phun mất máu nhưng không có số; (2) đường cắt ổn nhưng không có cây kéo lớn đi qua, chỉ thấy chấm đỏ chạy trên đường cắt; (3) bảng chuẩn bị của Trận tự chọn không có nút quay về sảnh chọn chế độ (người dùng làm rõ sau khi hỏi lại).
+- **Nguyên nhân:** (1) `PuddleOnCat` chỉ gọi `LandHit`, không tạo số. (2) Kéo vẽ chỉ khoảng 35 DIP, lưỡi mảnh màu nhạt, nên chỉ thấy hai vòng tay cầm đỏ; với đường cắt sát sàn còn bị cắt mất phần dưới. (3) nút hủy của bảng này chỉ là Đóng, về thẳng desktop; Vô tận thì có "‹ Sảnh". Tìm thêm một lỗi nhỏ: chiều cao panel thiếu 2 DIP nên hiện thanh cuộn.
+- **Sửa:** (1) mỗi lần đốt hiện số đỏ "-1" trên đầu mèo, tính theo máu thật sự mất (giáp làm lần đốt dưới 1 thì cộng dồn đủ 1 mới hiện); các đòn khác vào mèo vẫn không có số như trước. (2) Vẽ lại kéo dài khoảng 100 DIP, hai lưỡi và vòng tay cầm rõ, đóng mở chậm hơn, không chìm xuống sàn. Chỉ đổi phần vẽ. (3) Mở từ sảnh, hoặc từ "Đổi trang bị" ở bảng kết quả, nút đổi thành "‹ Sảnh" và quay về sảnh chọn chế độ. Sửa phần thiếu 2 DIP, thêm check nút nằm trong cửa sổ.
 - **Kiểm chứng:** xem PROGRESS.md. Test mới: BattleSpitSpringTests (số đốt), ScissorsVisualChecks vẽ thật, BattlePrepChecks (nút trong cửa sổ).
-- **Cần test tay:** số đỏ khi đi qua vũng; cây kéo khi cắt ở sát sàn, giữa màn hình và phần giáp ranh dải trận; bảng chuẩn bị Trận tự chọn trên máy người dùng.
+- **Cần test tay:** số đỏ khi đi qua vũng; cây kéo khi cắt ở sát sàn, giữa màn hình và phần giáp ranh dải trận; nút "‹ Sảnh" của bảng chuẩn bị Trận tự chọn.
 
 ---
 

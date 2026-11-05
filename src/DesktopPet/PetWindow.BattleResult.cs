@@ -223,7 +223,7 @@ public sealed partial class PetWindow
         var (again, againText, _) = HudButton(() => Choose(() => { if (BattleReplay(result) is string reason) ShowBattleNotice(reason); }), plain: true);
         again.Background = ResultMain; again.Padding = new Thickness(16, 6, 16, 5); again.Margin = new Thickness(0);
         againText.FontSize = PetUi.TitleSize; againText.FontWeight = FontWeights.Bold; againText.Text = L("Chơi lại", "Play again");
-        var (gear, gearText, _) = HudButton(() => Choose(() => { if (OpenBattlePrep(result.Weapon, result.Difficulty) is string reason) ShowBattleNotice(reason); }), plain: true);
+        var (gear, gearText, _) = HudButton(() => Choose(() => { if (OpenBattlePrep(result.Weapon, result.Difficulty, backToHub: true) is string reason) ShowBattleNotice(reason); }), plain: true);
         gearText.Text = L("Đổi trang bị", "Change gear");
         var (home, homeText, _) = HudButton(() => Choose(() => { }), plain: true);
         homeText.Text = L("Về desktop", "Back to desktop");

@@ -71,7 +71,7 @@ public sealed partial class PetWindow
             HubAdventure => OpenAdventureMap(),
             HubExpedition => OpenExpeditionMap(),
             HubInfinity => EndlessRefusal() ?? OpenBattlePrep(forEndless: true),
-            HubCustom => OpenBattlePrep(),
+            HubCustom => OpenBattlePrep(backToHub: true),
             _ => L("Không có chế độ này.", "There is no such mode.")
         };
     }

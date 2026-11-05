@@ -88,6 +88,14 @@ internal static class CustomFightChecks
                   && Text(Find("Pet setup")!).Contains("Custom Fight|Default|Build a fight…|The old free battle"),
                 $"It opens the setup panel: Default chosen, what it is, Build a fight ({Text(Find("Pet setup")!)})");
             Shot("Pet setup", "custom-fight-setup-en.png");
+            // Its cancel button goes back to the hub, where another mode can be chosen.
+            check(window.BattlePrepText.Contains("‹ Hub") && Button(Find("Pet setup")!, "‹ Hub") is { IsVisible: true }, "From the hub the setup panel has a Hub button");
+            Click(Button(Find("Pet setup")!, "‹ Hub")!);
+            await Task.Delay(30);
+            check(window.BattleHubOpen && !window.BattlePreparing && Count("Pet setup") == 0, "The Hub button goes back to the mode hub");
+            Click(Button(Find("Pet battle hub")!, "Custom Fight")!);
+            await Task.Delay(30);
+            Prep(0.3);
 
             // Default is the old free battle: no stage, its records as before.
             int records = Records();

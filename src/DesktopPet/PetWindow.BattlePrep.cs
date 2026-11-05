@@ -29,6 +29,8 @@ public sealed partial class PetWindow
     // The setup of an Infinity run (from the hub): Ready starts it, the cancel button goes back to the hub.
     private bool prepForEndless;
     public bool BattlePrepForEndless => battlePreparing && prepForEndless;
+    // A Custom Fight's setup reached from the hub (or from its result): the cancel button goes back to the hub.
+    private bool prepBackToHub;
     private Window? battlePrepWindow;
     private string prepWeapon = BattleWeapon.Sword;
     private BattleDifficulty prepDifficulty = BattleDifficulty.Normal;
@@ -132,7 +134,7 @@ public sealed partial class PetWindow
     // stage: an Adventure stage (looked up again in the fresh data; gone from it or locked: refused).
     // forExpedition: the loadout of a new Expedition run (from its map's Prepare): Ready starts the
     // run instead of a battle and goes back to the map, as does the Map button.
-    public string? OpenBattlePrep(string? weapon = null, BattleDifficulty? level = null, StageSpec? stage = null, bool forExpedition = false, bool forEndless = false)
+    public string? OpenBattlePrep(string? weapon = null, BattleDifficulty? level = null, StageSpec? stage = null, bool forExpedition = false, bool forEndless = false, bool backToHub = false)
     {
         if (BattlePrepRefusal() is string reason) return reason;
         if (forExpedition || forEndless || stage?.Endless == true) { forEndless |= stage?.Endless == true; stage = null; }
@@ -151,6 +153,7 @@ public sealed partial class PetWindow
         prepStage = stage;
         prepForExpedition = forExpedition;
         prepForEndless = forEndless;
+        prepBackToHub = backToHub && stage == null && !forExpedition && !forEndless;
         prepWeapon = BattleTuning.Weapon(weapon ?? preferences.BattleWeapon).Id;
         prepDifficulty = level is BattleDifficulty chosen && Enum.IsDefined(chosen) ? chosen : BattleDifficultyChoice;
         prepApps = preferences.BattleApps;
@@ -265,7 +268,7 @@ public sealed partial class PetWindow
     {
         if (!battlePreparing) return;
         var stage = prepStage;
-        bool expedition = prepForExpedition, endless = prepForEndless;
+        bool expedition = prepForExpedition, endless = prepForEndless || prepBackToHub;
         CloseBattlePrep();
         CloseBattleTutorial();
         if (stage != null && OpenAdventureMap(stage.Id) == null) return;
@@ -296,7 +299,7 @@ public sealed partial class PetWindow
         prepFightBlock = null;
         prepGuideChip = null; prepGuideCheck = null; prepGuideLabel = prepGuideText = prepGuideHint = null;
         prepStage = null;
-        prepForExpedition = prepForEndless = false;
+        prepForExpedition = prepForEndless = prepBackToHub = false;
         if (was) ApplyQuiet();
     }
 
@@ -740,7 +743,7 @@ public sealed partial class PetWindow
         string? waiting = (prepForExpedition ? BattlePrepRefusal() : BattleRefusal()) ?? PrepSkillsRefusal() ?? PrepFightRefusal();
         Show(prepStatus, waiting != null ? L("Chưa thể bắt đầu: ", "Not yet: ") + waiting : null);
         prepReadyText!.Text = prepForExpedition ? L("Lên đường", "Set out") : L("Sẵn sàng", "Ready");
-        prepCancelText!.Text = prepStage != null || prepForExpedition ? L("‹ Bản đồ", "‹ Map") : prepForEndless ? L("‹ Sảnh", "‹ Hub") : L("Đóng", "Close");
+        prepCancelText!.Text = prepStage != null || prepForExpedition ? L("‹ Bản đồ", "‹ Map") : prepForEndless || prepBackToHub ? L("‹ Sảnh", "‹ Hub") : L("Đóng", "Close");
         prepTryText!.Text = L("Xem thử", "Try it");
         Show(prepTipText, prepStage?.Tip(preferences.Language) is { Length: > 0 } ? L("Màn này dạy gì", "What you learn here") : null);
         bool can = waiting == null;

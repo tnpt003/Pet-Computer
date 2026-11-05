@@ -201,6 +201,8 @@ internal static class BattleSpitSpringTests
             double lost = before - field.CatHp;
             check(field.PuddleAt(100) != null && field.PuddleBurns - burns >= 3 && Math.Abs(lost - (field.PuddleBurns - burns) * spec.PuddleDamage * BattleSim.PuddleBurnEvery) < 0.5,
                 $"Standing in a puddle burns the cat ({lost:0.#} HP in 2 s, {spec.PuddleDamage:0.#} a second)");
+            check(field.Effects.Any(e => e.Kind == BattleEffectKind.Number && e.Tone == NumberTone.Burn && e.Value >= 1 && e.Height >= 100),
+                "The burn shows its number over the cat");
             check(Math.Abs(field.PuddleSlowNow - spec.PuddleSlow) < 1e-9 && field.MoveFactor < 1, $"and slows it (× {field.PuddleSlowNow:0.##})");
             before = field.CatHp;
             Run(field, 1, 100, held: true);

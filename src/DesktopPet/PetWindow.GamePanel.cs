@@ -116,7 +116,7 @@ public sealed partial class PetWindow
         double room = Math.Max(240, bounds.Bottom - bounds.Top - 24);
         window.Width = Math.Min(760, Math.Max(360, bounds.Right - bounds.Left - 24));
         double target = Math.Clamp((bounds.Bottom - bounds.Top) * 0.5, 400, 560);
-        double required = 48; // Frame padding, crest and margins.
+        double required = 50; // Frame margin, rim and padding, then the crest.
         foreach (string key in new[] { "PrepContent", "PrepHeader", "PrepActions" })
             if (window.Resources[key] is UIElement part)
             {

@@ -17,6 +17,14 @@ public sealed partial class BattleFieldView
     private static readonly Pen CutDash = FrozenPen(Frozen(230, 0xFF, 0xF4, 0xF0), 2.4, new DashStyle(new double[] { 3, 3 }, 0));
     private static readonly Pen CutDone = FrozenPen(Frozen(255, 0xFF, 0x6A, 0x5A), 3);
     private static readonly Pen CutHalo = FrozenPen(Frozen(150, 0x2A, 0x1F, 0x16), 6);
+    // The running scissors: about 100 DIPs from tip to rings, ScissorsReach above and below the line.
+    public const double ScissorsScale = 3.2, ScissorsReach = 42;
+    private static readonly Geometry ScissorBlade = FrozenGeometry("M -1,-2.2 L 18,-0.2 L 18,0.6 L -1,2.2 Z");
+    private static readonly Geometry ScissorShank = FrozenGeometry("M 0,-1.3 L -8,-1 L -8,1 L 0,1.3 Z");
+    private static readonly Brush ScissorHandle = Frozen(255, 0xE8, 0x5D, 0x5D);
+    private static readonly Pen ScissorInk = FrozenPen(PetUi.ArtInk, 0.7);
+    private static readonly Pen ScissorRing = FrozenPen(ScissorHandle, 2);
+    private static readonly Pen ScissorRingInk = FrozenPen(PetUi.ArtInk, 3);
     private static readonly Brush ScreenFlashWhite = Frozen(255, 0xFF, 0xFF, 0xFF);
     private static readonly Pen FinderCorner = FrozenPen(Frozen(255, 0x3E, 0x7F, 0xB0), 6);
 
@@ -68,22 +76,22 @@ public sealed partial class BattleFieldView
         double t = Math.Clamp((cut.Age - s.ScissorsPreview) / s.ScissorsSweep, 0, 1);
         var blade = new Point(from.X + (to.X - from.X) * t, from.Y);
         dc.DrawLine(CutDone, from, blade);
-        // The scissors themselves, snipping as they go (open and shut), facing the way they run.
-        double open = 0.35 + 0.3 * Math.Abs(Math.Sin(cut.Age * 30)), facing = to.X >= from.X ? 0 : 180;
-        dc.PushTransform(new TranslateTransform(blade.X, blade.Y));
-        dc.PushTransform(new ScaleTransform(1.6, 1.6));
+        // The big scissors themselves, snipping as they go, facing the way they run; never sunk below the floor.
+        double open = 6 + 22 * Math.Abs(Math.Sin(cut.Age * 16)), facing = to.X >= from.X ? 0 : 180;
+        dc.PushTransform(new TranslateTransform(blade.X, Math.Min(blade.Y, at(cut.From, 0).Y - ScissorsReach)));
+        dc.PushTransform(new ScaleTransform(ScissorsScale, ScissorsScale));
         dc.PushTransform(new RotateTransform(facing));
         foreach (int side in new[] { -1, 1 })
         {
-            dc.PushTransform(new RotateTransform(side * open * 30));
-            var g = new StreamGeometry();
-            using (var c = g.Open()) { c.BeginFigure(new Point(-2, -1.6), true, true); c.LineTo(new Point(14, 0), true, false); c.LineTo(new Point(-2, 1.6), true, false); }
-            g.Freeze();
-            dc.DrawGeometry(BladeFill, FanInk, g);
-            dc.DrawEllipse(null, FrozenPen(HandleFill, 2), new Point(-7, side * 3), 3.4, 2.6);
+            dc.PushTransform(new RotateTransform(side * open));
+            var ring = new Point(-11.5, -side * 1.5);
+            dc.DrawGeometry(BladeFill, ScissorInk, ScissorBlade);
+            dc.DrawGeometry(ScissorHandle, ScissorInk, ScissorShank);
+            dc.DrawEllipse(null, ScissorRingInk, ring, 4.2, 3);
+            dc.DrawEllipse(null, ScissorRing, ring, 4.2, 3);
             dc.Pop();
         }
-        dc.DrawEllipse(FanHub, FanInk, new Point(0, 0), 1.6, 1.6);
+        dc.DrawEllipse(FanHub, ScissorInk, new Point(0, 0), 1.5, 1.5);
         dc.Pop(); dc.Pop(); dc.Pop();
     }
 
@@ -108,6 +116,6 @@ public sealed partial class BattleFieldView
     private void DrawScreenTools(DrawingContext dc, double floor, double time)
     {
         if (sim.ColumnX is double column) DrawColumn(dc, column - OriginX, sim.ColumnWidth, 0, floor, time, sim.ColumnRemaining);
-        if (sim.Cut is { } cut && cut.Y <= FieldHeight) DrawCut(dc, cut, (x, h) => new Point(x - OriginX, floor - h), sim.Settings);
+        if (sim.Cut is { } cut && cut.Y <= FieldHeight + ScissorsReach) DrawCut(dc, cut, (x, h) => new Point(x - OriginX, floor - h), sim.Settings);
     }
 }

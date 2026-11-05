@@ -320,6 +320,15 @@ internal static class BattlePrepChecks
                 using var stream = File.Create(Path.Combine(folder, name)); encoder.Save(stream);
             }
             Shot("battle-setup-four-weapons-preset-vi.png");
+            // Every button inside the real window, and the window inside the work area.
+            var buttons = new[] { "prepReady", "prepFightButton" }.Select(n => Field<Border>(window, n));
+            bool OnScreen(FrameworkElement b)
+            {
+                var at = b.TransformToAncestor(setup).Transform(new Point());
+                return b.IsVisible && at.X >= 0 && at.Y >= 0 && at.X + b.ActualWidth <= setup.ActualWidth && at.Y + b.ActualHeight <= setup.ActualHeight
+                    && setup.Top + setup.ActualHeight <= savedBounds.Bottom;
+            }
+            check(buttons.All(OnScreen), $"The Custom Fight setup shows its buttons inside the window ({setup.ActualWidth:0}x{setup.ActualHeight:0} at {setup.Top:0}, screen bottom {savedBounds.Bottom:0})");
             SetField(window, "bounds", savedBounds with { Bottom = savedBounds.Top + 480 });
             Call(window, "PlaceBattlePrep"); setup.UpdateLayout();
             check(setup.ActualHeight <= 456.5 && mainScroll.ScrollableHeight < 160 && Field<Border>(window, "prepReady").IsVisible,

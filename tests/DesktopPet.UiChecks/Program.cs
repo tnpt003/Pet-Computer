@@ -568,6 +568,7 @@ internal static class Program
         TrapVisualChecks.Run(Check);
         BandVisualChecks.Run(Check);
         LeafVisualChecks.Run(Check);
+        ScissorsVisualChecks.Run(Check);
         SwarmVisualChecks.Run(Check);
         FlagVisualChecks.Run(Check);
         NewAppVisualChecks.Run(Check);

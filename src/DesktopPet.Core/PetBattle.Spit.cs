@@ -56,7 +56,7 @@ public sealed partial class BattleSim
     public int PuddleBurns { get; private set; }
     // The cat's speed × in a puddle now (1: none), for MoveFactor.
     public double PuddleSlowNow { get; private set; } = 1;
-    private double puddleBurnClock;
+    private double puddleBurnClock, puddleBurnShown;
 
     // The spot just ahead of a dasher not yet boosted (nor aimed at), on the floor, on its way to the cat
     // with no puddle already between them; null: none.
@@ -84,7 +84,14 @@ public sealed partial class BattleSim
         puddleBurnClock -= PuddleBurnEvery;
         PuddleBurns++;
         events.Add(new(BattleEventKind.PuddleBurned, lastCatX));
-        LandHit(p.Damage * PuddleBurnEvery, lastCatX, out _);
+        LandHit(p.Damage * PuddleBurnEvery, lastCatX, out double hurt);
+        // What the cat really lost, over its head once it reads as a whole number (armor can make a tick less than 1).
+        puddleBurnShown += hurt;
+        if (puddleBurnShown < 1) return;
+        double shown = Math.Floor(puddleBurnShown);
+        puddleBurnShown -= shown;
+        AddEffect(BattleEffectKind.Number, lastCatX, 115, shown);
+        effects[^1].Tone = NumberTone.Burn;
     }
     public const double PuddleBurnEvery = 0.5;
 

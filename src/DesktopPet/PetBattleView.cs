@@ -160,6 +160,7 @@ public sealed partial class BattleFieldView : FrameworkElement
     private static readonly Brush Yarn = Frozen(255, 0xE8, 0x7A, 0xB8);
     private static readonly Brush HealGreen = Frozen(255, 0x7C, 0xF0, 0x7A);
     private static readonly Brush DamageWhite = Frozen(255, 0xFF, 0xF4, 0xD6);
+    private static readonly Brush BurnRed = Frozen(255, 0xFF, 0x6A, 0x5A);
     private static readonly Brush ComboGold = Frozen(255, 0xFF, 0xD2, 0x3F);
     // A four-point twinkle on a 16-unit radius (scaled where it is drawn).
     private static readonly Geometry Twinkle = PetUi.FrozenGeometry("M 0,-16 L 4,-4 L 16,0 L 4,4 L 0,16 L -4,4 L -16,0 L -4,-4 Z");
@@ -1145,12 +1146,13 @@ public sealed partial class BattleFieldView : FrameworkElement
                 bool heal = effect.Value < 0;
                 var tone = heal ? NumberTone.Plain : effect.Tone;
                 string text = heal ? "+" + (-effect.Value).ToString("0", CultureInfo.InvariantCulture)
+                    : tone == NumberTone.Burn ? "-" + effect.Value.ToString("0", CultureInfo.InvariantCulture)
                     : effect.Value.ToString("0", CultureInfo.InvariantCulture) + (tone == NumberTone.Crit ? "!" : "");
-                var (shape, width, height) = NumberShape(text, heal ? 18 : tone == NumberTone.Crit ? 22 : tone == NumberTone.Combo ? 19 : tone == NumberTone.Poison ? 14 : 16);
+                var (shape, width, height) = NumberShape(text, heal || tone == NumberTone.Burn ? 18 : tone == NumberTone.Crit ? 22 : tone == NumberTone.Combo ? 19 : tone == NumberTone.Poison ? 14 : 16);
                 double numberBottom = y - 26 * k;
                 dc.PushTransform(new TranslateTransform((heal ? x : ClearOfCat(x, width, numberBottom - height / 2)) - width / 2, numberBottom - height));
                 dc.DrawGeometry(null, TextHalo, shape);
-                dc.DrawGeometry(heal ? HealGreen : tone == NumberTone.Crit ? ComboGold : tone == NumberTone.Combo ? ComboOrange : tone == NumberTone.Poison ? PoisonNumber : DamageWhite, null, shape);
+                dc.DrawGeometry(heal ? HealGreen : tone == NumberTone.Crit ? ComboGold : tone == NumberTone.Combo ? ComboOrange : tone == NumberTone.Poison ? PoisonNumber : tone == NumberTone.Burn ? BurnRed : DamageWhite, null, shape);
                 dc.Pop();
                 break;
         }

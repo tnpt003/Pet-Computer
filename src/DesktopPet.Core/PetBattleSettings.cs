@@ -923,8 +923,8 @@ public readonly record struct BattleEvent(BattleEventKind Kind, double X, double
 // Miss (1.5 M13): a hit that did nothing to a ghost or a bubble (Value 0), or to a sulky slime (Value 1);
 // Heart: a sulky slime soothed.
 public enum BattleEffectKind { Spark, Poof, Push, Explosion, Slam, Number, Combo, Thud, Mend, Block, Immune, Warded, Bell, EndTask, Rewind, Splat, Miss, Heart, Quake, Drum }
-// How a damage Number reads (display only): a plain hit, a combo hit, a critical (Claws) hit, or poison's tick.
-public enum NumberTone { Plain, Combo, Crit, Poison }
+// How a damage Number reads (display only): a plain hit, a combo hit, a critical (Claws) hit, poison's tick, or a puddle burning the cat ("-1" over it).
+public enum NumberTone { Plain, Combo, Crit, Poison, Burn }
 public sealed class BattleEffect
 {
     public BattleEffectKind Kind;

@@ -654,8 +654,9 @@ public sealed class Slime
     public double ShuffleClock;
     // How long the hot-water spray has been on its ice shell (2026-11-04).
     public double MeltClock;
-    // 2026-11-04 (D5). A flag slime: its time to planting, planted. In an aura: what it takes less, 0 none.
-    public double PlantClock, AuraCut;
+    // 2026-11-04 (D5). A flag slime: its time to planting, planted, the free ground it is walking to (NaN:
+    // none, 2026-11-05). In an aura: what it takes less, 0 none.
+    public double PlantClock, AuraCut, PlantAt = double.NaN;
     public bool Planted;
     // A bomb slime: its herb's leaf shield on (no damage), had one, the herb; the quick slime that threw it;
     // burnt by a shielded blast; the blast sending it back: flight left of total, from, to. The user's bomb

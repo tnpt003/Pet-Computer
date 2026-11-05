@@ -36,6 +36,7 @@ internal static class BattleFormationTests
     public static void Run(Action<bool, string> check)
     {
         FlagChecks(check);
+        PlantingChecks(check);
         DirectorChecks(check);
         FieldChecks(check);
         TwoRopeChecks(check);
@@ -52,6 +53,104 @@ internal static class BattleFormationTests
         for (int i = 0; i < 60 && !sim.Ready(BattleSkill.Bomb); i++) { sim.Step(dt, 200, false); sim.ClearEvents(); }
         sim.Use(BattleSkill.Bomb, slime.Id, 200);
         for (int i = 0; i < 3; i++) { sim.Step(dt, 200, false); sim.ClearEvents(); }
+    }
+
+    // 2026-11-05: a flag goes where it covers the fight, clear of the other flags. Fighters that stand still,
+    // the cat at x 200 (allies on its right), the shipped flag slime and flag.
+    private static BattleSim Planters(int bearers, int posts, int fighters, bool elite = false, PlantSpec? spec = null)
+    {
+        var shipped = BattleData.Settings.Enemy("flagbearer");
+        var bearer = spec == null ? shipped : new EnemyType
+        {
+            Id = shipped.Id, MaxHp = shipped.MaxHp, Speed = shipped.Speed, Damage = 0, Range = shipped.Range, Windup = 0.8, AttackCooldown = 2, Recover = 0.3,
+            Support = true, KeepBack = shipped.KeepBack, Plant = spec
+        };
+        var sim = Field(new[] { bearer, BattleData.Settings.Enemy("flagpost"), Kind("slime", speed: 0) }, new[] { bearers, posts, fighters }, elite);
+        return sim;
+    }
+
+    private static Slime[] Of(BattleSim sim, string id) => sim.Slimes.Where(s => s.Type.Id == id && s.State != SlimeState.Defeated).ToArray();
+    private static Slime[] Posts(BattleSim sim) => Of(sim, "flagpost");
+
+    private static void PlantingChecks(Action<bool, string> check)
+    {
+        var plant = BattleData.Settings.Enemy("flagbearer").Plant!;
+        var link = BattleData.Settings.Enemy("flagpost").Link!;
+        double gap = plant.Spacing * link.Range;
+        check(plant is { Near: 300, Spacing: 1.5, By: 10 } && gap == 270, "The shipped flag slime waits for a front within 300 of the cat, 10 s at most, and keeps 270 from another flag");
+
+        // It holds its flag while the fight is far off, and plants once the front has come.
+        var sim = Planters(1, 0, 1);
+        var bearer = Of(sim, "flagbearer")[0];
+        var front = Of(sim, "slime")[0];
+        front.X = 1200; bearer.X = 1320;
+        Steps(sim, plant.After + 1);
+        check(Posts(sim).Length == 0 && !bearer.Planted, "With its allies far from the cat it keeps its flag past plant.after");
+        front.X = 200 + plant.Near - 20; bearer.X = front.X + 120;
+        Steps(sim, 0.1);
+        check(Posts(sim).Length == 1 && Math.Abs(Posts(sim)[0].X - front.X) <= link.Range, $"The front near the cat, it plants with that front in the ring ({Posts(sim).Length})");
+
+        // Not while the front is out of its ring (it has fallen behind them).
+        sim = Planters(1, 0, 1);
+        bearer = Of(sim, "flagbearer")[0];
+        front = Of(sim, "slime")[0];
+        front.X = 300; bearer.X = 300 + link.Range + 300;
+        Steps(sim, plant.After + 1);
+        check(Posts(sim).Length == 0, "It does not plant behind a front it has fallen behind");
+
+        // The deadline: planted at plant.by s whatever its allies do.
+        sim = Planters(1, 0, 1);
+        bearer = Of(sim, "flagbearer")[0];
+        front = Of(sim, "slime")[0];
+        front.X = 1400; bearer.X = 1500;
+        Steps(sim, plant.By - bearer.PlantClock - 0.5);
+        check(Posts(sim).Length == 0, "Not yet half a second before plant.by");
+        Steps(sim, 1);
+        check(Posts(sim).Length == 1, "plant.by s on the field it plants anyway");
+
+        // Two side by side: the second walks clear of the first.
+        sim = Planters(2, 0, 1);
+        front = Of(sim, "slime")[0];
+        var two = Of(sim, "flagbearer");
+        front.X = 380; two[0].X = 500; two[1].X = 500;
+        Steps(sim, plant.After + 0.1);
+        check(Posts(sim).Length == 1, "Two flag slimes on one spot: the first plants, the second does not");
+        check(!double.IsNaN(two[1].PlantAt) || !double.IsNaN(two[0].PlantAt), "The other is walking to free ground");
+        Steps(sim, plant.By + 1);
+        check(Posts(sim).Length == 2 && Math.Abs(Posts(sim)[0].X - Posts(sim)[1].X) >= gap - 2, $"Two flags stand {gap} apart, not on each other ({(Posts(sim).Length == 2 ? Math.Abs(Posts(sim)[0].X - Posts(sim)[1].X) : 0):0})");
+
+        // The side with an ally no ring covers beats the nearer side.
+        sim = Planters(1, 1, 2);
+        var post = Posts(sim)[0];
+        bearer = Of(sim, "flagbearer")[0];
+        var fighters = Of(sim, "slime");
+        post.X = 1000; bearer.X = 970; fighters[0].X = 850; fighters[1].X = 1320;
+        Steps(sim, plant.By * 2);
+        check(Posts(sim).Length == 2 && Math.Abs(Posts(sim).Max(p => p.X) - (1000 + gap)) < 3, $"The second flag goes where an ally has no ring ({Posts(sim).Max(p => p.X):0})");
+        Steps(sim, 2);
+        check(fighters[0].AuraCut > 0 && fighters[1].AuraCut > 0, "Between them the flags cover both allies");
+
+        // An elite flag's wider ring sets the gap.
+        sim = Planters(1, 1, 1, elite: true);
+        post = Posts(sim)[0];
+        bearer = Of(sim, "flagbearer")[0];
+        front = Of(sim, "slime")[0];
+        post.X = 1000; bearer.X = 970; front.X = 850;
+        Steps(sim, plant.By * 2);
+        check(Posts(sim).Length == 2 && Math.Abs(Posts(sim)[0].X - Posts(sim)[1].X) >= plant.Spacing * link.EliteRange - 2, "An elite flag's wider ring keeps the next flag further off");
+
+        // No free ground on this side (the spacing here wider than the field): the deadline still plants it.
+        sim = Planters(1, 1, 1, spec: new PlantSpec { Post = "flagpost", After = plant.After, Near = plant.Near, Spacing = 4, By = plant.By });
+        post = Posts(sim)[0];
+        bearer = Of(sim, "flagbearer")[0];
+        front = Of(sim, "slime")[0];
+        post.X = 1400; bearer.X = 1400; front.X = 1300;
+        Steps(sim, plant.By * 2 + 0.5);
+        check(Posts(sim).Length == 2, "With no free ground it plants where it stands at the deadline: never carried for ever");
+
+        sim = Planters(1, 0, 1);
+        bearer = Of(sim, "flagbearer")[0];
+        check(double.IsNaN(bearer.PlantAt), "A flag slime with free ground has nowhere to walk to");
     }
 
     private static void FlagChecks(Action<bool, string> check)

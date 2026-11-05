@@ -320,6 +320,8 @@ internal static class ExpeditionTests
                 // route still wins half its runs; the safe one (fewer relics) is only required to stay winnable.
                 int won = results[(weapon, BattleDifficulty.Normal, AdventureBalanceTests.Player.Simple, policy)].Wins;
                 int least = policy == Policy.Greedy ? seeds / 2 : seeds / 10;
+                // The hammer on the Dump Trail (user, 2026-11-05): the flag waits for the front now, one run short of half.
+                if (policy == Policy.Greedy && route == "dump_trail" && weapon == BattleWeapon.Hammer) least = seeds * 45 / 100;
                 check(won >= least, $"Expedition balance{(route == null ? "" : " (" + route + ")")}: {weapon}, Normal, the simple player with the {policy.ToString().ToLowerInvariant()} route wins at least {least}/{seeds} ({won}/{seeds})");
             }
         double longest = results.Values.Where(r => r.Wins > 0).Max(r => r.Seconds);

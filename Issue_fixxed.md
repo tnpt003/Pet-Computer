@@ -5,6 +5,16 @@ Sổ ghi các lỗi đã sửa của Desktop Pet. Phần A: lỗi người dùng
 Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm lỗi mới: tạo mục số tiếp theo ở đầu phần A (hoặc một dòng ở phần B).
 
 # A. Lỗi người dùng phát hiện
+## #47 — Slime cờ hiệu đặt cờ chồng nhau, không tận dụng được vùng cờ (2026-11-05, commit COMMIT_HASH)
+- **Triệu chứng (người dùng):** hai slime cờ hiệu có thể đặt cờ chồng lên nhau, hiệu ứng không được dùng hết.
+- **Nguyên nhân:** cắm ngay sau 1,5 s tại chỗ đứng, không xét cờ khác. Vòng không cộng dồn (`AuraCut` lấy `Math.Max`) nên cờ thứ hai gần như vô dụng; hai con lại xuất hiện cạnh cùng một đồng minh nên dễ trùng chỗ. Nặng hơn: 1,5 s chỉ đi ~45 DIP nên cờ thường nằm sau đội hình, quân rời vòng trước khi giao tranh.
+- **Sửa:** `PetBattle.Quills.cs`: chờ tuyến đầu tới gần mèo và nằm trong vòng (`plant.near` 300) hoặc tới `plant.by` 10 s; giữ cách cờ khác `plant.spacing` 1,5 vòng; chỗ đã có cờ thì đi tới chỗ trống che nhiều đồng minh chưa có vòng; luôn cắm được khi hết giờ. Banner giải thích cờ hiện cả lúc cắm vì cắm muộn hơn dễ không có quái mới xuất hiện sau đó.
+- **Cân bằng (mô phỏng, không phải chơi thật):** màn 2 chương 2, người chơi simple, thắng/20 trước → sau: Normal: Kiếm 18 → 19, Búa 19 → 19, Cuộn len 17 → 18; Hard: Kiếm 12 → 14, Búa 14 → 10, Cuộn len 6 → 5. Cờ nhiều HP hơn hay `near`/`by` khác đều không giữ được ngưỡng cũ; chưa rõ vì sao Kiếm mạnh lên. Người dùng duyệt nới 2 ngưỡng: Cuộn len màn 2 Hard 30 → 45 điểm so với Kiếm; Búa `dump_trail` route greedy 20 → 18/40 (đo được 19/40). Giữ nguyên `rulesVersion`.
+- **Kiểm chứng:** BattleFormationTests.PlantingChecks. Kết quả test: xem PROGRESS.md.
+- **Cần test tay:** Vô tận chặng Mê cung ảo ảnh và Thư mục ma (docs/MANUAL-TEST.md, mục Slime cờ hiệu 05/11).
+
+---
+
 
 ---
 

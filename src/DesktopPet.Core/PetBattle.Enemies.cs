@@ -135,7 +135,7 @@ public sealed partial class BattleSim
             // 1.5 M16: a hedgehog's quills, a timer's clock (PetBattle.Quills.cs).
             StepQuills(slime, dt);
             StepClock(slime, dt);
-            StepPlant(slime, dt);
+            StepPlant(slime, dt, catX);
             TickRoll(slime, dt); // 1.5 M17: a rolling boss's wait for its next roll (PetBattle.Zip.cs).
             // 1.5 M18: a brooding boss's clutches, a raining boss's goo rain (PetBattle.Brood.cs, PetBattle.Mutant.cs).
             StepBrood(slime, dt);
@@ -248,7 +248,7 @@ public sealed partial class BattleSim
                     // A bomb lights its fuse next to the cat rather than attacking.
                     if (slime.Type.Fuse != null && StartFuse(slime, catX, catHeld)) break;
                     // A support keeps behind its fighting allies and leaves the cat to them.
-                    if (slime.Type.Support && (slime.KeepingBack = KeepBack(slime, dt, catX, minX, maxX))) break;
+                    if (slime.Type.Support && (slime.KeepingBack = WalkToPlant(slime, dt, minX, maxX) || KeepBack(slime, dt, catX, minX, maxX))) break;
                     // A dasher runs off after its lunge.
                     if (RunAway(slime, dt, catX, minX, maxX)) break;
                     // A rolling boss rolls at a cat further off (PetBattle.Zip.cs).

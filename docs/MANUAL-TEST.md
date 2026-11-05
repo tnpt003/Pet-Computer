@@ -975,3 +975,10 @@ Các mục 1.5 phía trên viết theo từng mốc; đây là thứ tự chơi 
 - [ ] Khi đang chọn Kéo cắt/Quạt: vẫn kéo được mèo, bấm được HUD, dải trận vẫn nhận click; DPI 150/200%, màn phụ.
 - [ ] App: chuông, tab, End Task trúng slime bay/bám tường thì nó rơi; Chụp Màn Hình chớp trắng toàn màn hình có 4 góc khung.
 - [ ] End Task nhiễm: mèo mờ trắng, "(Không phản hồi)", vòng xoay, mất 10% máu; click 3 lần tỉnh sớm; không làm mèo chết.
+
+### Slime cờ hiệu 05/11 (Issue #47)
+- [ ] Thư mục ma (chương 2 màn 2): con mang cờ đi sau đồng đội, cắm khi tuyến đầu tới gần mèo; vòng vàng che được quái đang đánh, không nằm sát mép sân phía sau.
+- [ ] Vô tận chặng Mê cung ảo ảnh hoặc Trận tự chọn có 2 slime cờ hiệu: hai vòng đặt cách nhau, chồng nhẹ ở mép là tối đa; con thứ hai đi sang chỗ trống rồi mới cắm.
+- [ ] Mèo đứng yên giữa màn: tối đa ~10 s là cờ được cắm; không có con nào mang cờ mãi; banner giải thích cờ hiện đúng một lần lúc cờ cắm.
+- [ ] Đánh chết con mang cờ trước khi cắm: không có cờ, không lỗi. Nhổ một trong hai cờ: cả đội hoảng 2 s, cờ còn lại vẫn che.
+- [ ] Độ khó màn 2 chương 2 Hard theo cảm giác: Kiếm có quá dễ, Búa có quá khó so với trước không (mô phỏng cho thấy lệch).

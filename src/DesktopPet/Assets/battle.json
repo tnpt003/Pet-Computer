@@ -480,15 +480,16 @@
       "link": { "kind": "merge", "range": 120, "count": 2, "mergeSeconds": 1.5, "into": "splitter", "afterHeal": true }
     },
     {
-      // 1.5 Q8 (M12), 2026-11-04: a support with a flag: `plant.after` s on the field it plants plant.post where it
-      // stands (the post holds the ring). It keeps behind its allies like the other supports.
+      // 1.5 Q8 (M12), 2026-11-04: a support with a flag: it plants plant.post (the post holds the ring) and keeps
+      // behind its allies like the other supports. 2026-11-05: not before `after` s, and once the nearest ally on
+      // its side is within `near` of the cat and in the ring, or at `by` s; `spacing` rings from any other flag.
       "id": "flagbearer", "nameVi": "Slime cờ hiệu", "nameEn": "Flag slime",
       "tipVi": "Cắm cờ xuống đất: slime trong vòng vàng bớt đau, không bị choáng. Đánh đổ cờ hoặc dùng Kéo cắt; cờ đổ thì cả đội hoảng.", "tipEn": "Plants a flag: slimes in its gold ring take less and cannot be dazed. Knock the flag down or use the Scissors; when it falls the band panics.", "counters": ["laser", "push"],
       "maxHp": 50, "speed": 30, "damage": 6, "range": 52,
       "windup": 0.8, "attackCooldown": 2.0, "recover": 0.4,
       "scale": 0.95, "color": "#5B8DEF", "marks": "flag",
       "support": true, "keepBack": 120, "fleeSpeed": 1.6, "cost": 2, "binSpit": false,
-      "plant": { "post": "flagpost", "after": 1.5 },
+      "plant": { "post": "flagpost", "after": 1.5, "near": 300, "spacing": 1.5, "by": 10 },
       "elite": { "hp": 1.2, "cost": 1, "descVi": "cờ bền hơn, vùng cờ rộng hơn", "descEn": "a tougher flag with a wider ring" }
     },
     {

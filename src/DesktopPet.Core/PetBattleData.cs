@@ -586,6 +586,11 @@ public sealed class PlantSpec
 {
     public string Post { get; init; } = "";
     public double After { get; init; } = 1.5;
+    // 2026-11-05: after After s it plants once the nearest ally on its side is within Near DIPs of the cat and
+    // in the ring, or at By s whatever they do. Spacing: how far from another flag, in rings (the wider one).
+    public double Near { get; init; } = 300;
+    public double Spacing { get; init; } = 1.5;
+    public double By { get; init; } = 10;
 }
 
 public sealed class LinkSpec
@@ -1529,6 +1534,9 @@ public static class BattleData
             {
                 if (!s.EnemyTypes.Any(k => k.Id == plant.Post)) throw new InvalidDataException(at + ".plant.post is not an enemy");
                 Within(plant.After, 0, 30, at + ".plant.after");
+                Within(plant.Near, 0, 2000, at + ".plant.near");
+                Within(plant.Spacing, 0, 4, at + ".plant.spacing");
+                Within(plant.By, 0, 60, at + ".plant.by");
             }
             Within(e.Hover, 0, 2000, at + ".hover");
             if (e.Hover > 0 && (e.Boss || e.Blocker || e.Dash || e.Slam || e.Link != null)) throw new InvalidDataException(at + ".hover is not for a boss, blocker, dash, slam or linked enemy");

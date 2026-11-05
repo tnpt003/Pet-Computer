@@ -764,15 +764,22 @@ Chưa trận gốc nào có ba quái này. Muốn thử: cất file `%LOCALAPPDA
 - [ ] Tinh anh (đợt 4): nhím xù lâu hơn, đồng hồ 15 s, trộm chạy nhanh hơn. Pause/menu: gai, đồng hồ, thời gian trốn đều đứng yên.
 - [ ] DPI 100/150/200%, đổi DPI giữa trận, màn hình phụ: gai, đồng hồ, túi không bị cắt; âm thanh ngắn, không chồng nhau; banner vi/en/ja đúng chữ.
 
-## Slime Nén 1.5 M17 (2026-10-29) — file tùy chỉnh
-Chưa trận gốc nào có boss này. Muốn thử: cất file `%LOCALAPPDATA%\DesktopPet\battle.json` của bạn (nếu có), chép `docs/examples/battle-m17.json` vào chỗ đó, mở Trận tự do và chọn mang Kéo cắt; xong thì xóa file (hoặc trả file cũ). Ảnh đã xem qua render UiChecks nền sáng/tối; chưa xem trong trận thật, chưa thử chuột thật, DPI thật.
-- [ ] Không có file: Trận tự do, Phiêu lưu chương 1 (Vua Slime), Vô tận, Viễn chinh như cũ.
-- [ ] Pha 1: Slime Nén vàng có khóa kéo trước bụng. Đứng xa nó: nó gồng, dải đỏ trên sàn (banner "Slime Nén sắp lăn!…"), rồi lăn xoay qua sàn; mèo trên đường lăn mất máu và choáng; nhấc mèo lên lúc nó gồng/lăn thì né. Đứng sát: nó nện như Vua Slime.
-- [ ] Pha 2 (70%): nhảy về mép xa, bung Pháo đài (banner "… bung file!…", rồi "Đội hình Pháo đài!…"); mỗi quân có dây nhầy nối về boss; đánh boss chỉ thấy khiên. Kéo nhanh mèo xuyên một dây, ném mèo xuyên dây, hoặc Kéo cắt vuốt qua dây: dây đứt, quân đó choáng, banner "Đứt dây! Còn N dây". Kéo chậm qua dây: không đứt. Hết dây: "KHIÊN VỠ!", boss choáng, quân còn lại vẫn đánh. Hạ một quân cũng làm mất dây của nó.
-- [ ] Pha 2 tiếp (50%): bung Kỵ binh (bom cưỡi slime nhanh, có dây về boss), cắt dây như trên. Dây từ con bom đang cưỡi nối đúng chỗ con bom.
-- [ ] Pha 3 (25%): boss nhỏ lại tại chỗ, hai đai quanh thân, khiên vàng sát thân, 4 mảnh file (tờ giấy gấp góc) hai bên (banner "… tự nén lại!…"). Mảnh file đứng yên, không đánh. Phá hết mảnh: khiên vỡ, boss to lại, nổi giận, lăn dày hơn; hạ được boss.
-- [ ] Pause/menu: boss đang lăn, dây, mảnh file đều đứng yên; mèo đang cầm lúc Pause không cắt được dây.
-- [ ] DPI 100/150/200%, đổi DPI giữa trận, màn hình phụ: dây, boss lăn không bị cắt mất; kéo/ném mèo xuyên dây vẫn đứt; âm thanh ngắn, không chồng nhau; banner vi/en/ja đúng chữ.
+## Slime Nén thiết kế lại 05/11 (Issue #53) — file tùy chỉnh hoặc màn 5 chương 2
+
+Chép docs/examples/battle-m17.json thành %LOCALAPPDATA%\DesktopPet\battle.json (giữ bản cũ), mở Trận tự do, mang Kéo cắt; hoặc chơi màn 5 chương 2.
+
+- [ ] Hình: GĐ1 khối hộp nhỏ có đai, nhãn `4 KB`; nhìn ra ngay là file nén, không còn vương miện. Sau mỗi câu đố boss phình lên mượt (không giật), nhãn đổi `2 MB`, `9 GB`, dạng mới rõ khác dạng cũ.
+- [ ] GĐ1: boss nhảy liên tiếp 3 cú vào mèo, mỗi cú có vòng đỏ ở chỗ đáp; nhấc mèo né được; có khoảng nghỉ rõ giữa các đợt. Cảm giác: nhanh, nhiều nhát, không đau lắm.
+- [ ] 66%: boss có ổ khóa, banner "khóa vỏ". Điểm dừng có vòng và mũi tên vàng. Nhấc mèo né cú lăn rồi thả đúng chỗ: "Đè trúng! 1/2", boss choáng ngắn. Đè lần 2: "BUNG KHÓA!", boss phình, choáng ~3 s, số sát thương lớn hơn. Thả xa thì không có gì. Thả có dễ canh không, cửa sổ 1,6 s có đủ không?
+- [ ] Để hết 4 cú lăn không đè: "Vỏ khóa tự mở", boss vẫn phình, không choáng, không có "KHIÊN VỠ".
+- [ ] GĐ2: lăn rồi nện, chậm và đau hơn rõ. 33%: bung Pháo đài nối dây như cũ; cắt 2 dây thật nhanh có "Cắt đôi!", boss choáng lâu hơn.
+- [ ] GĐ3: boss rất to nhưng không bị cắt hình ở mép trên, kể cả lúc gồng; 1 cú đập rộng, gồng lâu, đau.
+- [ ] 20%: thanh % chạy, tay kéo có vòng vàng; kéo hoặc ném mèo thật nhanh xuyên tay kéo: "Kéo khóa! 1/3", tay kéo đổi bên. Đủ 3 nấc: "Xì hơiii!", boss bay vèo rồi nằm choáng, co nhỏ. Kéo chậm không tính. Kéo cắt cũng tính.
+- [ ] Để hết giờ: "BÙM!", mèo dưới sàn mất ~40 và choáng; mèo đang cầm không mất máu; boss đánh tiếp rồi ~14 s sau nạp lại.
+- [ ] Sát mép sàn: boss to không thò ra ngoài, tay kéo vẫn với tới được.
+- [ ] Pause giữa cú lăn, lúc bom chạy, lúc xì hơi: mọi thứ đứng yên; mèo cầm lúc Pause không kéo được nấc nào.
+- [ ] Hướng dẫn đứng hình màn 5 chương 2: bước giới thiệu mới, bước khóa vỏ, bước dây, bước bom nén, sáng đúng boss. Thú bông và tranh Bãi rác khớp hình mới.
+- [ ] Cảm giác chung (ghi vào Nhật ký chơi thử): có vui, có mẹo không; câu đố nào khó hiểu; số nào cần chỉnh.
 
 ## Slime Mẹ và Vua Slime biến dị 1.5 M18 (2026-10-29) — file tùy chỉnh
 Chưa trận gốc nào có hai boss này. Muốn thử: cất file `%LOCALAPPDATA%\DesktopPet\battle.json` của bạn (nếu có), chép `docs/examples/battle-m18.json` (Slime Mẹ; nên mang Bom len, Quạt) hoặc `docs/examples/battle-m18b.json` (Vua biến dị; nên mang Kéo cắt, Khiên bong bóng) vào chỗ đó, mở Trận tự do; xong thì xóa file (hoặc trả file cũ). Ảnh đã xem qua render UiChecks nền sáng/tối; chưa xem trong trận thật, chưa thử chuột thật, DPI thật.
@@ -856,7 +863,7 @@ Dữ liệu gốc, không cần file tùy chỉnh. Ảnh bảng Lò rèn/Lời n
 ## Vô tận: chặng, vòng trùm và Đột biến 1.5 M24 (2026-10-29)
 Dữ liệu gốc, không cần file tùy chỉnh. Bảng đột biến đã xem qua render UiChecks (dữ liệu thử, vi/en/ja), **chưa chơi thật**, chưa xem trên màn hình thật; độ khó chỉ đo bằng mô phỏng.
 - [ ] Sảnh → Vô tận: kỷ lục cũ không hiện là kỷ lục mới (luật 6 bắt đầu "Chưa chơi"); phần thưởng mốc đã nhận trước đó vẫn còn.
-- [ ] Đợt 10 là Vua chương 1, đợt 20 là Slime Nén (lăn, giải nén, tự nén), đợt 30 là Vua biến dị (vương miện, mưa nhầy); đợt 40 Vua chương 1 cùng Vua thường.
+- [ ] Đợt 10 là Vua chương 1, đợt 20 là Slime Nén (phình dần, khóa vỏ, bung file, bom nén), đợt 30 là Vua biến dị (vương miện, mưa nhầy); đợt 40 Vua chương 1 cùng Vua thường.
 - [ ] Đợt 15: banner "Chặng mới: Đầm nhầy! Slime lạ kéo tới", có slime phun/lò xo/băng/tách đôi lẫn với quái cũ. Đợt 21, 31, 41 có banner chặng mới, quái đổi theo chặng; không có quá 2 loại liên kết hay quá 2 loại quái dùng chuột cùng lúc.
 - [ ] Dọn xong đợt 10: chọn 2 thẻ như cũ, rồi bảng "Đột biến!" có 3 luật, mỗi luật có dòng thưởng ★ vàng và "Tới khi qua trùm kế"; nút Xác nhận chỉ sáng khi đã chọn. Túi đồ không xem trước luật như thẻ.
 - [ ] Sau khi chọn: banner "Đột biến: …", HUD ghi "Đột biến …: còn N đợt" đếm lùi tới đợt trùm kế. Thử từng luật: Slime tăng tốc (quái chạy nhanh rõ, đồ rơi nhiều), Đông nghẹt (đợt đông hơn, sàn nhiều con hơn), Toàn tinh anh (nhiều ★), Mèo thủy tinh (mất máu nhanh, đánh mạnh), Nhịn đói (không có cá rơi, "Xong đợt" không cộng HP), Kỹ năng lười (vòng hồi kỹ năng lâu hơn).

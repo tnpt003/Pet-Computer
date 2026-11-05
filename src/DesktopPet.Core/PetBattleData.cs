@@ -192,7 +192,7 @@ public sealed class EnemyType
     public PlantSpec? Plant { get; init; }
     public StealSpec? Steal { get; init; }
     // 1.5 M17 (PetBattle.Zip.cs), the chapter 2 boss's own moves. Roll (a boss only): from afar it winds up
-    // and rolls across the floor over the cat. Still: it never moves or attacks (a boss's file shards).
+    // and rolls across the floor over the cat. Still: it never moves or attacks (a planted flag).
     // RopeCutSpeed/RopeCutStun: a roped shield phase's ropes (BossPhase.Roped) are cut by the cat going
     // through one at RopeCutSpeed DIPs/s or more (held or thrown) or by the Scissors; the helper is dazed
     // RopeCutStun s.
@@ -200,6 +200,8 @@ public sealed class EnemyType
     public bool Still { get; init; }
     public double RopeCutSpeed { get; init; } = 300;
     public double RopeCutStun { get; init; } = 1;
+    // 2026-11-05: the Zip Slime's own fight (PetBattle.Zip.cs): its stages, press and bomb. Null: none.
+    public ZipSpec? Zip { get; init; }
     // 1.5 M18 (PetBattle.Brood.cs, PetBattle.Mutant.cs), bosses only. Brood (B2, the Slime Mother): it lays
     // a clutch of merging slimes now and then; the big one they merge into goes back to it and feeds it HP.
     // CrownLinks (B3, the Mutant King): its rally call also ties a link between its helpers, these kinds in
@@ -519,6 +521,73 @@ public sealed class RollSpec
     public double Stun { get; init; } = 0.9;
 }
 
+// 2026-11-05, the Zip Slime's stages (PetBattle.Zip.cs). One stage of its fight: drawn and hit at Scale, it
+// walks at Speed; a cat within Reach starts a round of Hits blows, Gap s apart, then Cooldown s of rest.
+// Each blow winds up Windup s and lands Damage (scaled like its other hits) within Range. Hop > 0: it
+// leaps at the cat first (at most Hop DIPs, the spot locked as it crouches). Roll: the round opens with its
+// RollSpec roll when the cat is far enough for one.
+public sealed class ZipStage
+{
+    public double Scale { get; init; } = 2;
+    public double Speed { get; init; } = 30;
+    public double Range { get; init; } = 110;
+    public double Reach { get; init; } = 110;
+    public int Hits { get; init; } = 1;
+    public double Damage { get; init; } = 20;
+    public double Windup { get; init; } = 1;
+    public double Gap { get; init; } = 1;
+    public double Cooldown { get; init; } = 4;
+    public double Hop { get; init; }
+    public bool Roll { get; init; }
+}
+
+// The first stage's riddle: behind a locked shell it rolls Roll.Distance DIPs Rolls times, its stop shown on
+// the floor. The cat let go after a lift (a burrower's pin) within Reach of its body, while it rolls or
+// within Window s of stopping, pins it for PinStun s; Pins of them break the lock: stunned Stun s, taking
+// ×Bonus. Out of rolls: the lock opens by itself, no reward.
+public sealed class ZipPressSpec
+{
+    public int Rolls { get; init; } = 4;
+    public int Pins { get; init; } = 2;
+    public double Reach { get; init; } = 46;
+    public double Window { get; init; } = 1.6;
+    public double PinStun { get; init; } = 0.7;
+    public double Stun { get; init; } = 3;
+    public double Bonus { get; init; } = 1.5;
+    public RollSpec Roll { get; init; } = new();
+}
+
+// The last stage's riddle: it swells behind a shield for Charge s, a zipper tab hanging off it. The cat
+// (held or thrown) going through the tab at RopeCutSpeed or more, or a Scissors stroke, pulls it; the tab
+// moves after each of Pulls pulls. All of them: it flies round the field Flight s letting its air out, then lies
+// stunned Stun s, taking ×Bonus (never armed again). Time out: it bursts, the cat on the floor within
+// Radius takes Damage and a CatStun s stun, and it arms again after Rearm s.
+public sealed class ZipBombSpec
+{
+    public double Charge { get; init; } = 14;
+    public int Pulls { get; init; } = 3;
+    public double TabRadius { get; init; } = 34;
+    public double Damage { get; init; } = 40;
+    public double Radius { get; init; } = 900;
+    public double CatStun { get; init; } = 1.2;
+    public double Rearm { get; init; } = 14;
+    public double Flight { get; init; } = 1.6;
+    public double Stun { get; init; } = 4;
+    public double Bonus { get; init; } = 1.5;
+}
+
+// Grow: seconds its size takes to reach a new stage's. RopeCombo*: two ropes cut within RopeComboWindow s
+// stun it RopeComboStun s longer when its shield breaks.
+public sealed class ZipSpec
+{
+    public double Grow { get; init; } = 0.9;
+    public ZipStage[] Stages { get; init; } = Array.Empty<ZipStage>();
+    public ZipPressSpec Press { get; init; } = new();
+    public ZipBombSpec Bomb { get; init; } = new();
+    public double RopeComboWindow { get; init; } = 0.5;
+    public double RopeComboStun { get; init; } = 1.5;
+}
+
 // B2 (1.5 M18): every Every s (EnragedEvery once it is angry), while its shield is down and it is not
 // stunned, the boss lays Count of Enemy (a kind with a merge link) next to it, announced Warning s before by
 // rings on the floor; at most its SummonCap of its helpers alive. What its clutch merges into walks back to
@@ -736,11 +805,12 @@ public sealed class BossPhase
     public bool Shield { get; init; }
     // 1.5 M17 (PetBattle.Zip.cs). Formation: its helpers are also this formation's members (after the
     // others). Roped (a shield phase): every helper comes tied to the boss by a rope and the shield holds
-    // while any rope is left (cut it, or defeat its helper). Pack (a shield phase): the boss stays where it
-    // is, squeezed small, its helpers (file shards) around it; the shield holds until they are gone.
+    // while any rope is left (cut it, or defeat its helper). 2026-11-05, Press and Bomb (a shield phase of a
+    // boss with a ZipSpec, no helpers): the riddles of its first and last stage.
     public string? Formation { get; init; }
     public bool Roped { get; init; }
-    public bool Pack { get; init; }
+    public bool Press { get; init; }
+    public bool Bomb { get; init; }
     // Every helper this phase calls, in order (a formation's members: BattleSettings.PhaseCalls).
     public IEnumerable<string> Calls()
     {
@@ -1716,17 +1786,19 @@ public static class BattleData
                 foreach (var p in phases)
                 {
                     if (p == null || !(p.At > 0 && p.At < 1)) throw new InvalidDataException(at + ".phases: each \"at\" must be between 0 and 1");
-                    if (p.Summon == null && p.Summons == null && p.Formation == null && !p.Enrage) throw new InvalidDataException(at + ".phases: a phase must summon or enrage");
+                    if (p.Summon == null && p.Summons == null && p.Formation == null && !p.Enrage && !p.Press && !p.Bomb) throw new InvalidDataException(at + ".phases: a phase must summon or enrage");
                     if (p.Summon != null && p.Count is < 1 or > 6) throw new InvalidDataException(at + ".phases: count must be 1–6");
                     if (p.Summons != null && (p.Summons.Length is 0 or > 4 || p.Summons.Any(g => g == null || !g.Fixed || g.Count is < 1 or > 6)))
                         throw new InvalidDataException(at + ".phases: summons must list 1–4 plain groups of 1–6");
-                    // 1.5 M17: a formation it unpacks, ropes to its helpers, packing itself small.
+                    // 1.5 M17: a formation it unpacks, ropes to its helpers. 2026-11-05: its riddles.
                     if (p.Formation != null && s.Formation(p.Formation) == null) throw new InvalidDataException($"{at}.phases names an unknown formation \"{p.Formation}\"");
-                    if ((p.Roped || p.Pack) && !p.Shield) throw new InvalidDataException(at + ".phases: roped and pack are for a shield phase");
-                    if (p.Roped && p.Pack) throw new InvalidDataException(at + ".phases: a phase is roped or packs, not both");
+                    if ((p.Roped || p.Press || p.Bomb) && !p.Shield) throw new InvalidDataException(at + ".phases: roped, press and bomb are for a shield phase");
+                    if ((p.Roped ? 1 : 0) + (p.Press ? 1 : 0) + (p.Bomb ? 1 : 0) > 1) throw new InvalidDataException(at + ".phases: a phase is roped, press or bomb, only one");
+                    if ((p.Press || p.Bomb) && e.Zip == null) throw new InvalidDataException(at + ".phases: press and bomb need a \"zip\" block");
+                    if ((p.Press || p.Bomb) && s.PhaseCalls(p).Any()) throw new InvalidDataException(at + ".phases: press and bomb call no helpers");
                     if (s.PhaseCalls(p).Count() > 8) throw new InvalidDataException(at + ".phases: a phase calls at most 8 helpers");
                     // A shield only drops when its helpers are gone: it needs some.
-                    if (p.Shield && !s.PhaseCalls(p).Any()) throw new InvalidDataException(at + ".phases: a shield phase must summon");
+                    if (p.Shield && !p.Press && !p.Bomb && !s.PhaseCalls(p).Any()) throw new InvalidDataException(at + ".phases: a shield phase must summon");
                 }
             }
             if (e.Roll is RollSpec roll)
@@ -1737,6 +1809,32 @@ public static class BattleData
                 if (roll.MinRange >= roll.Range) throw new InvalidDataException(at + ".roll.minRange must be below its range");
                 Within(roll.Windup, 0.3, 5, at + ".roll.windup"); Within(roll.Speed, 50, 1500, at + ".roll.speed");
                 Within(roll.Distance, 50, 1500, at + ".roll.distance"); Within(roll.Damage, 0, 1000, at + ".roll.damage"); Within(roll.Stun, 0, 5, at + ".roll.stun");
+            }
+            // 2026-11-05: the Zip Slime's stages and riddles.
+            if (e.Zip is ZipSpec zip)
+            {
+                if (!e.Boss) throw new InvalidDataException(at + ".zip is for a boss");
+                if (zip.Stages is not { Length: >= 1 and <= 4 } || zip.Stages.Any(st => st == null)) throw new InvalidDataException(at + ".zip.stages must list 1–4 stages");
+                Within(zip.Grow, 0.1, 5, at + ".zip.grow"); Within(zip.RopeComboWindow, 0, 3, at + ".zip.ropeComboWindow"); Within(zip.RopeComboStun, 0, 10, at + ".zip.ropeComboStun");
+                foreach (var st in zip.Stages)
+                {
+                    Within(st.Scale, 0.5, 3.2, at + ".zip.stages.scale"); Within(st.Speed, 0, 400, at + ".zip.stages.speed");
+                    Within(st.Range, 20, 400, at + ".zip.stages.range"); Within(st.Reach, 20, 800, at + ".zip.stages.reach");
+                    if (st.Hits is < 1 or > 5) throw new InvalidDataException(at + ".zip.stages.hits must be 1–5");
+                    Within(st.Damage, 0, 1000, at + ".zip.stages.damage"); Within(st.Windup, 0.2, 5, at + ".zip.stages.windup");
+                    Within(st.Gap, 0, 5, at + ".zip.stages.gap"); Within(st.Cooldown, 0.2, 30, at + ".zip.stages.cooldown"); Within(st.Hop, 0, 800, at + ".zip.stages.hop");
+                    if (st.Roll && e.Roll == null) throw new InvalidDataException(at + ".zip.stages: a rolling stage needs \"roll\"");
+                }
+                var press = zip.Press; var bomb = zip.Bomb;
+                if (press.Rolls is < 1 or > 12 || press.Pins < 1 || press.Pins > press.Rolls) throw new InvalidDataException(at + ".zip.press: rolls must be 1–12, pins 1–rolls");
+                Within(press.Reach, 0, 300, at + ".zip.press.reach"); Within(press.Window, 0.2, 10, at + ".zip.press.window"); Within(press.PinStun, 0, 5, at + ".zip.press.pinStun");
+                Within(press.Stun, 0, 15, at + ".zip.press.stun"); Within(press.Bonus, 1, 5, at + ".zip.press.bonus");
+                Within(press.Roll.Windup, 0.3, 5, at + ".zip.press.roll.windup"); Within(press.Roll.Speed, 50, 1500, at + ".zip.press.roll.speed");
+                Within(press.Roll.Distance, 50, 1500, at + ".zip.press.roll.distance"); Within(press.Roll.Damage, 0, 1000, at + ".zip.press.roll.damage"); Within(press.Roll.Stun, 0, 5, at + ".zip.press.roll.stun");
+                if (bomb.Pulls is < 1 or > 8) throw new InvalidDataException(at + ".zip.bomb.pulls must be 1–8");
+                Within(bomb.Charge, 3, 60, at + ".zip.bomb.charge"); Within(bomb.TabRadius, 10, 120, at + ".zip.bomb.tabRadius"); Within(bomb.Damage, 0, 1000, at + ".zip.bomb.damage");
+                Within(bomb.Radius, 50, 5000, at + ".zip.bomb.radius"); Within(bomb.CatStun, 0, 5, at + ".zip.bomb.catStun"); Within(bomb.Rearm, 1, 120, at + ".zip.bomb.rearm");
+                Within(bomb.Flight, 0.2, 5, at + ".zip.bomb.flight"); Within(bomb.Stun, 0, 15, at + ".zip.bomb.stun"); Within(bomb.Bonus, 1, 5, at + ".zip.bomb.bonus");
             }
             // 1.5 M18: a brood, crown links, a goo rain (bosses only).
             if ((e.Brood != null || e.CrownLinks != null || e.Rain != null) && !e.Boss) throw new InvalidDataException(at + ".brood/crownLinks/rain are for a boss");

@@ -177,7 +177,7 @@ public sealed class KeepsakeArt : FrameworkElement
     }
 
     // 1.5 M22: the Zip Slime plush (chapter 2's keepsake), PlushWidth × CupHeight: a soft folder-yellow
-    // slime sitting on the plank, the boss's zipper down its front with a pull tab, felt cheeks, button
+    // file sitting on the plank, the boss's zipper down its front with a pull tab, felt cheeks, button
     // eyes, stitches round its edge and a little white tag on its side.
     private static readonly Brush Felt = B(0xF2, 0xC6, 0x5C), FeltDark = B(0xC9, 0x93, 0x34), Cheek = B(0xF4, 0x9A, 0x8E), PlushTag = B(0xFF, 0xFB, 0xF2);
     private static readonly Pen Stitch = Freeze(new Pen(FeltDark, 0.9) { DashStyle = new DashStyle(new[] { 2.0, 1.6 }, 0), StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round }),
@@ -190,8 +190,9 @@ public sealed class KeepsakeArt : FrameworkElement
         using (var g = body.Open())
         {
             g.BeginFigure(new Point(left + 2, floor), true, true);
-            g.BezierTo(new Point(left - 1, floor - 14), new Point(left + 5, top), new Point(cx, top), true, true);
-            g.BezierTo(new Point(right - 5, top), new Point(right + 1, floor - 14), new Point(right - 2, floor), true, true);
+            g.BezierTo(new Point(left - 1, floor - 22), new Point(left + 1, top), new Point(left + 11, top), true, true);
+            g.LineTo(new Point(right - 11, top), true, true);
+            g.BezierTo(new Point(right - 1, top), new Point(right + 1, floor - 22), new Point(right - 2, floor), true, true);
         }
         body.Freeze();
         dc.DrawGeometry(Felt, Outline, body);
@@ -200,8 +201,9 @@ public sealed class KeepsakeArt : FrameworkElement
         using (var g = seam.Open())
         {
             g.BeginFigure(new Point(left + 4.5, floor - 2), false, false);
-            g.BezierTo(new Point(left + 2.5, floor - 14), new Point(left + 7, top + 3), new Point(cx, top + 3), true, true);
-            g.BezierTo(new Point(right - 7, top + 3), new Point(right - 2.5, floor - 14), new Point(right - 4.5, floor - 2), true, true);
+            g.BezierTo(new Point(left + 2.5, floor - 21), new Point(left + 4, top + 3), new Point(left + 12, top + 3), true, true);
+            g.LineTo(new Point(right - 12, top + 3), true, true);
+            g.BezierTo(new Point(right - 4, top + 3), new Point(right - 2.5, floor - 21), new Point(right - 4.5, floor - 2), true, true);
         }
         seam.Freeze();
         dc.DrawGeometry(null, Stitch, seam);

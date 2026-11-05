@@ -10,9 +10,9 @@ internal static class MonsterBookTests
         var data = BattleData.Settings;
         const double dt = 1.0 / 60;
 
-        // Every kind has a page except the ones that only come out of another (a splitter's halves, the Zip Slime's shards, a planted flag).
+        // Every kind has a page except the ones that only come out of another (a splitter's halves, a planted flag).
         var pageless = data.EnemyTypes.Where(e => e.TipVi == null && e.Page == null).Select(e => e.Id).OrderBy(id => id).ToList();
-        check(pageless.SequenceEqual(new[] { "flagpost", "splitling", "zipshard" }), $"Every built-in kind has a page but the halves, the shards and the planted flag ({string.Join(", ", pageless)})");
+        check(pageless.SequenceEqual(new[] { "flagpost", "splitling" }), $"Every built-in kind has a page but the halves and the planted flag ({string.Join(", ", pageless)})");
         check(data.EnemyTypes.Where(e => e.TipVi != null).All(e => e.TipEn != null && (e.Counters ?? Array.Empty<string>()).All(k => BattleSkills.Parse(k) != null)),
             "Each page has its tip in both languages and real skills");
         check(data.EnemyTypes.Count(e => e.TipVi != null && e.Boss) == 4, "Four boss pages");
@@ -62,8 +62,8 @@ internal static class MonsterBookTests
 
         // The book: pages open once; counts add up; a pageless kind is met but opens no page.
         var book = new MonsterBook();
-        var opened = book.Add(data, new[] { "slime", "zipshard" }, new Dictionary<string, int> { ["slime"] = 3 }, new[] { "fortress" }, out bool changed);
-        check(changed && opened.SequenceEqual(new[] { "slime", MonsterBook.FormationPage("fortress") }) && book.Knows("zipshard") && book.DefeatedOf("slime") == 3,
+        var opened = book.Add(data, new[] { "slime", "flagpost" }, new Dictionary<string, int> { ["slime"] = 3 }, new[] { "fortress" }, out bool changed);
+        check(changed && opened.SequenceEqual(new[] { "slime", MonsterBook.FormationPage("fortress") }) && book.Knows("flagpost") && book.DefeatedOf("slime") == 3,
             $"First meeting: pages for the slime and the Fortress, the shard met without one ({string.Join(",", opened)})");
         opened = book.Add(data, new[] { "slime" }, new Dictionary<string, int> { ["slime"] = 2 }, new[] { "fortress" }, out changed);
         check(changed && opened.Count == 0 && book.DefeatedOf("slime") == 5, "Met again: no new page, the count goes on");

@@ -21,8 +21,9 @@ public sealed partial class BattleSim
         boss.RallyCharge = 0;
         if (boss.State is SlimeState.Windup or SlimeState.Dashing or SlimeState.Casting) boss.Set(SlimeState.Moving);
         events.Add(new(BattleEventKind.BossShielded, boss.X));
-        // 1.5 M17: a pack phase stays where it is, its shards around it (PetBattle.Zip.cs).
-        if (phase.Pack) Pack(boss);
+        // 2026-11-05: the Zip Slime's riddles stay where they are, no helpers (PetBattle.Zip.cs).
+        if (phase.Press) StartPress(boss);
+        if (phase.Bomb) { boss.BombTag = tag; ArmBomb(boss); }
     }
 
     // The edge a shield phase goes to (+1 right, -1 left): the one opposite the boss's half of the
@@ -67,19 +68,18 @@ public sealed partial class BattleSim
     }
 
     // The helpers appear at their spots (still within the SummonCap), never on top of the cat: at
-    // least SquadCatGap away, on the boss's side of it. 1.5 M17: a packed boss's shards come all of them,
-    // right at their spots (they never move or attack); a roped phase's helpers come on their ropes; a
-    // formation's name shows as its banner.
+    // least SquadCatGap away, on the boss's side of it. 1.5 M17: a roped phase's helpers come on their
+    // ropes; a formation's name shows as its banner.
     private int SpawnHelpers(Slime boss, List<(string Kind, double X)> spots, int tag)
     {
         int alive = 0;
         foreach (var s in slimes) if (s.SummonedBy == boss.Id && s.State != SlimeState.Defeated) alive++;
-        int count = boss.Packed ? spots.Count : Math.Min(spots.Count, Math.Max(0, boss.Type.SummonCap - alive));
+        int count = Math.Min(spots.Count, Math.Max(0, boss.Type.SummonCap - alive));
         var phase = PhaseOf(boss, tag);
         for (int k = 0; k < count; k++)
         {
             double x = spots[k].X;
-            if (!boss.Packed && Math.Abs(x - lastCatX) < SquadCatGap) x = lastCatX + (boss.X >= lastCatX ? 1 : -1) * SquadCatGap;
+            if (Math.Abs(x - lastCatX) < SquadCatGap) x = lastCatX + (boss.X >= lastCatX ? 1 : -1) * SquadCatGap;
             var helper = AddSlime(x, Settings.Enemy(spots[k].Kind));
             helper.SummonedBy = boss.Id;
             helper.PhaseTag = tag;
@@ -133,6 +133,7 @@ public sealed partial class BattleSim
     private void StepShield(Slime boss, double dt, double minX, double maxX)
     {
         BossShieldSeconds += dt;
+        if (StepZipRiddle(boss, dt, minX, maxX)) return; // 2026-11-05 (PetBattle.Zip.cs).
         if (boss.Retreating)
         {
             double goal = boss.RetreatSide > 0 ? maxX : minX;
@@ -184,15 +185,17 @@ public sealed partial class BattleSim
         }
         if (helpers) { StepRally(boss, dt); return; }
         if (roped) events.Add(new(BattleEventKind.BossRopesGone, boss.X, boss.Id));
-        boss.Shielded = boss.Packed = false;
+        boss.Shielded = false;
         boss.ShieldTag = 0;
         boss.RallyCharge = 0;
         events.Add(new(BattleEventKind.BossShieldDown, boss.X));
+        ZipGrow(boss); // 2026-11-05: the ropes gone, the Zip Slime swells to its next stage.
         // An opening: dazed for a moment, taking damage as usual.
         if (boss.Type.ShieldBreakStun > 0)
         {
             boss.KnockVelocity = 0;
-            boss.StunRemaining = boss.Type.ShieldBreakStun;
+            boss.StunRemaining = boss.Type.ShieldBreakStun + boss.RopeBonusStun;
+            boss.RopeBonusStun = 0;
             boss.Set(SlimeState.Stunned);
         }
     }

@@ -363,6 +363,7 @@ public sealed partial class BattleSim
             Id = nextId++, Type = type, Width = Settings.SlimeWidth * type.Scale, HitWidth = Settings.SlimeWidth * type.Hitbox, Height = Settings.SlimeHeight * type.Scale,
             Hp = hp, MaxHp = hp, Damage = damageFactor != 1 ? Math.Round(type.Damage * damageFactor) : type.Damage, Range = type.Range
         };
+        ZipFit(slime); // 2026-11-05: the Zip Slime comes in small (PetBattle.Zip.cs).
         // A support enemy starts with half its heal cooldown and its whole budget; its heals (and the
         // budget) grow with the same factor as enemy HP, so healing keeps up on later stages.
         slime.HealCooldown = type.HealCooldown / 2;

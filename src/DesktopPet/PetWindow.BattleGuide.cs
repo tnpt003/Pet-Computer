@@ -37,7 +37,7 @@ public sealed partial class PetWindow
         GuidePhantom = "phantom", GuideMirage = "mirage", GuideDrummer = "drummer", GuideFlag = "flag",
         GuideBasket = "basket", GuideFishBack = "fish_back", GuideBomber = "bomber", GuideCrack = "crack", GuideFlyer = "flyer", GuideThief = "thief",
         GuideHedgehog = "hedgehog", GuideIcy = "icy", GuideChain = "chain", GuideSplitter = "splitter", GuideMother = "mother",
-        GuideBubble = "bubble", GuideClinger = "clinger", GuideZip = "zip", GuideRoll = "roll", GuideRopes = "ropes", GuidePack = "pack";
+        GuideBubble = "bubble", GuideClinger = "clinger", GuideZip = "zip", GuideRoll = "roll", GuideRopes = "ropes", GuidePress = "press", GuideZipBomb = "zipbomb";
     // 1.5 M26 apps: steps for any guided stage that has the newer apps (newAppsFrom: chapter 2).
     public const string GuideScreenshot = "screenshot", GuideDazzle = "dazzle", GuideCaptcha = "captcha", GuideBattery = "battery", GuideCursor = "cursor";
     public const string GuideNewApps = "new_apps";
@@ -308,19 +308,24 @@ public sealed partial class PetWindow
             () => L("Slime bám tường leo lên mép và ném gai xuống chỗ mèo. Ném mèo vào nó, hoặc Đẩy, Kẹp gắp cho nó rơi rồi đánh dưới sàn.",
                     "A wall slime climbs the edge and drops spikes where the cat stands. Throw the cat at it, or Push or grab it down and fight it on the floor.")),
         See(GuideZip, StageZipSlime, () => King() is { State: not SlimeState.Spawning } boss && boss.Type.Roll != null, () => King() is Slime boss ? Spots(SlimeSpot(boss)) : new(),
-            () => L("Slime Nén, trùm chương 2: lăn đè cả dải sàn, rồi giải nén ra đội hình nối dây và tự nén thành khiên. Hạ nó là xong chương.",
-                    "The Zip Slime, chapter 2's boss: it rolls over the floor, unpacks squads tied to it and packs itself into a shield. Beat it to finish the chapter.")),
+            () => L("Slime Nén, trùm chương 2: lúc đầu nhỏ và nhanh, càng mất máu càng phình to, đánh ít đi mà đau hơn. Mỗi giai đoạn có một trò cần giải. Hạ nó là xong chương.",
+                    "The Zip Slime, chapter 2's boss: small and quick at first, it swells as it loses HP and hits less often but harder. Each stage has a trick to solve. Beat it to finish the chapter.")),
         new(GuideRoll, StageZipSlime, true, false, 1,
             () => King() is { Rolling: true, State: SlimeState.Windup } && !BattleHoldsOff && !battle!.CatStunned,
             () => BattleLifted, () => King() is { Rolling: true, State: SlimeState.Windup } boss ? Spots(CatSpot(), SlimeSpot(boss)) : new(),
             () => L("Slime Nén sắp lăn: dải đỏ trên sàn trúng hết. Kéo mèo lên!", "The Zip Slime is about to roll: the red strip on the floor hits everything. Lift the cat!")),
+        See(GuidePress, StageZipSlime, () => King() is Slime boss && battle!.ShieldPhase(boss) is { Press: true } && BattleSim.PressSpot(boss) != null,
+            () => King() is Slime boss ? Spots(SlimeSpot(boss)) : new(),
+            () => L("Slime Nén khóa vỏ và lăn liên tục. Nhấc mèo để né, rồi thả mèo đúng điểm vàng lúc nó dừng: đè trúng 2 lần là bung khóa, nó choáng và đau gấp rưỡi.",
+                    "The Zip Slime locks its shell and keeps rolling. Lift the cat to dodge, then drop it on the gold spot as it stops: two pins break the lock, and it is dazed and takes half as much again.")),
         See(GuideRopes, StageZipSlime, () => King() is { Shielded: true } boss && battle!.RopesLeft(boss) > 0,
             () => King() is Slime boss ? Spots(new[] { SlimeSpot(boss) }.Concat(battle!.Slimes.Where(s => battle.RopeBoss(s) == boss).Select(SlimeSpot)).ToArray()) : new(),
             () => L("Còn dây nối quân về Slime Nén thì nó không mất máu. Cắt dây (kéo mèo xuyên dây, Kéo cắt) hoặc hạ quân để phá khiên.",
                     "While ropes tie its squad to it, the Zip Slime takes no damage. Cut them (drag the cat through, the Scissors) or beat the squad to break the shield.")),
-        See(GuidePack, StageZipSlime, () => battle!.Slimes.Any(s => s.Type.Still && s.Targetable),
-            () => Spots(battle!.Slimes.Where(s => s.Type.Still && s.Targetable).Select(SlimeSpot).ToArray()),
-            () => L("Slime Nén tự nén thành khiên giữa các mảnh file. Phá hết mảnh file để vỡ khiên.", "The Zip Slime packs itself into a shield among file shards. Break every shard to crack the shield.")),
+        See(GuideZipBomb, StageZipSlime, () => King() is Slime boss && BattleSim.BombFill(boss) != null,
+            () => King() is Slime boss ? Spots(SlimeSpot(boss)) : new(),
+            () => L("Bom nén! Kéo hoặc ném mèo thật nhanh xuyên tay kéo khóa (hoặc dùng Kéo cắt) đủ 3 lần trước khi thanh đầy: nó xì hơi bay vèo rồi nằm choáng. Hết giờ thì nổ cả sàn, nhấc mèo để né.",
+                    "A zip bomb! Drag or throw the cat fast through its zipper tab (or use the Scissors) three times before the bar fills: it lets its air out, flies off and lies dazed. On time out the whole floor blows; lift the cat to dodge.")),
 
         // 1.5 M26 · the newer apps, in whichever stage of chapter 2 each comes first (malware comes at random).
         new(GuideScreenshot, GuideNewApps, true, true, 1,

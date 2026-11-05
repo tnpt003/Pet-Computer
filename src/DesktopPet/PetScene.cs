@@ -188,7 +188,7 @@ public sealed class PetScene : FrameworkElement
         Path(d,path.Append('Z').ToString(),fill,Rim);d.DrawEllipse(Cream,Fine,new Point(x,y),r*0.3,r*0.3);
     }
     // 1.5 M22, the Download Dump's pieces: a folder (back with its tab, a page peeking out, the front),
-    // a loose page with a folded corner, the Zip Slime (folder yellow, a zipper down its front) and a
+    // a loose page with a folded corner, the Zip Slime (a folder-yellow file, a zipper down its whole body) and a
     // wicker fish basket. Generic shapes only: no real app's icon.
     private static readonly Brush FolderFront = PetUi.Hex("#F2C65C"), FolderBack = PetUi.Hex("#D9A441"), Page = PetUi.Hex("#FFFBF2"),
         Heap = PetUi.Hex("#B9A6DC"), HeapFar = PetUi.Hex("#D6C8EE"), Dirt = PetUi.Hex("#E6D2B0"), Zip = PetUi.Hex("#E8B84A"), Wicker = PetUi.Hex("#C98F4F");
@@ -209,13 +209,13 @@ public sealed class PetScene : FrameworkElement
     }
     private static void ZipSlime(DrawingContext d,double x,double y) {
         d.DrawEllipse(PetUi.Hex("#25000000"),null,new Point(x,y+17),26,4);
-        Path(d,FormattableString.Invariant($"M{x-26},{y+17} C{x-28},{y-6} {x-14},{y-20} {x},{y-20} C{x+14},{y-20} {x+28},{y-6} {x+26},{y+17}Z"),Zip,Rim);
+        Path(d,FormattableString.Invariant($"M{x-24},{y+17} L{x-25},{y-10} Q{x-25},{y-16} {x-19},{y-16} L{x-8},{y-16} L{x-4},{y-21} L{x+12},{y-21} L{x+15},{y-16} L{x+19},{y-16} Q{x+25},{y-16} {x+25},{y-10} L{x+24},{y+17}Z"),Zip,Rim);
         d.DrawEllipse(Cream,null,new Point(x-12,y-11),5,2.6);
         d.DrawEllipse(Ink,null,new Point(x-8,y-5),2,2.8);d.DrawEllipse(Ink,null,new Point(x+8,y-5),2,2.8);
         var teeth=PetUi.FrozenPen(PetUi.Hex("#8C6A2E"),1.6);
-        d.DrawLine(teeth,new Point(x,y+1),new Point(x,y+16));
-        for(int i=0;i<5;i++){double ty=y+3+i*3;d.DrawLine(teeth,new Point(x,ty),new Point(x+(i%2==0?-3:3),ty));}
-        Box(d,x-2.5,y-1,5,6,FolderBack,1.5);
+        d.DrawLine(teeth,new Point(x,y-14),new Point(x,y+16));
+        for(int i=0;i<10;i++){double ty=y-12+i*3;d.DrawLine(teeth,new Point(x,ty),new Point(x+(i%2==0?-3:3),ty));}
+        Box(d,x-2.5,y-17,5,7,FolderBack,1.5);
     }
     private static void Basket(DrawingContext d,double x,double floor) {
         // Two fish in it, heads up.

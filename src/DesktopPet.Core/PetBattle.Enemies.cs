@@ -137,6 +137,7 @@ public sealed partial class BattleSim
             StepClock(slime, dt);
             StepPlant(slime, dt, catX);
             TickRoll(slime, dt); // 1.5 M17: a rolling boss's wait for its next roll (PetBattle.Zip.cs).
+            TickZip(slime, dt); // 2026-11-05: the Zip Slime's size, rewards and bomb (PetBattle.Zip.cs).
             // 1.5 M18: a brooding boss's clutches, a raining boss's goo rain (PetBattle.Brood.cs, PetBattle.Mutant.cs).
             StepBrood(slime, dt);
             StepRain(slime, dt);
@@ -180,6 +181,7 @@ public sealed partial class BattleSim
                     // misses; once the cat is down again it lands as usual (in reach, no landing
                     // protection), so lifting and dropping on the spot cannot cancel every hit. A cat
                     // only pressed (not lifted) is on the floor and is hit too.
+                    if (slime.Hopping) StepHop(slime); // 2026-11-05: the Zip Slime's leap at the cat.
                     if (slime.StateTime >= Windup(slime))
                     {
                         if (slime.Spitting) Spit(slime);
@@ -251,6 +253,8 @@ public sealed partial class BattleSim
                     if (slime.Type.Support && (slime.KeepingBack = DodgeCat(slime, dt, catX, minX, maxX) || WalkToPlant(slime, dt, minX, maxX) || KeepBack(slime, dt, catX, minX, maxX))) break;
                     // A dasher runs off after its lunge.
                     if (RunAway(slime, dt, catX, minX, maxX)) break;
+                    // 2026-11-05: the Zip Slime's stages and riddles choose its moves (PetBattle.Zip.cs).
+                    if (slime.Type.Zip is ZipSpec zip && ZipMove(slime, zip, dt, dx, catX, catHeld, minX, maxX)) break;
                     // A rolling boss rolls at a cat further off (PetBattle.Zip.cs).
                     if (slime.Type.Roll is RollSpec roll && StartRoll(slime, roll, dx, catHeld)) break;
                     // While the user carries the cat the slimes follow it along the floor, but never
@@ -287,7 +291,7 @@ public sealed partial class BattleSim
         CarryRiders();
     }
 
-    public double Windup(Slime slime) => slime.Spitting && slime.Type.Spit is SpitSpec spit ? spit.Windup : slime.Rolling && slime.Type.Roll is RollSpec roll ? roll.Windup : (slime.Enraged ? slime.Type.EnragedWindup : slime.Type.Windup) + (slime.Elite?.WindupAdd ?? 0);
+    public double Windup(Slime slime) => slime.Type.Zip != null ? ZipWindup(slime) : slime.Spitting && slime.Type.Spit is SpitSpec spit ? spit.Windup : slime.Rolling && slime.Type.Roll is RollSpec roll ? roll.Windup : (slime.Enraged ? slime.Type.EnragedWindup : slime.Type.Windup) + (slime.Elite?.WindupAdd ?? 0);
     // A far heal winds up longer than one in reach.
     public static double HealWindup(Slime healer) => healer.FarHeal ? healer.Type.FarHealWindup : healer.Type.HealWindup;
 
@@ -500,12 +504,13 @@ public sealed partial class BattleSim
     {
         slime.Set(SlimeState.Recover);
         slime.Cooldown = AttackCooldown(slime);
+        double share = ZipStrike(slime); // 2026-11-05: a stage's blow, the end of its leap (PetBattle.Zip.cs).
         if (slime.Type.Slam) AddEffect(BattleEffectKind.Slam, slime.X, 0, slime.Range);
         // Missed: the cat moved away, is protected, or is off the floor right now.
         if (CatLifted || Math.Abs(catX - slime.X) > slime.Range + 12 || Grace > 0) return;
         // A thief's windup steals instead of hurting (1.5 M16).
         if (slime.Type.Steal != null) { Steal(slime, catX); return; }
-        HurtCat(slime, catX, false, slime.Type.SlamShare, melee: true);
+        HurtCat(slime, catX, false, share, melee: true);
     }
 
     // Half the cat's width on the floor: a dash that passes over this hits it.

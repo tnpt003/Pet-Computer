@@ -160,14 +160,17 @@ internal static class AdventureBalanceTests
         if (sim.Carries(BattleSkill.Scissors) && sim.Ready(BattleSkill.Scissors))
         {
             double? at = null;
+            double height = 18;
             foreach (var s in sim.Slimes)
             {
                 if (!s.Targetable) continue;
                 if (s.Bubbled || (s.FlagGuard && BattleSim.IsFlagPost(s))) { at = s.X; break; } // A guarded flag: one cut fells it.
                 if (sim.LinkPartner(s) is Slime ally && s.Type.Link?.Kind == EnemyLinks.Tether) { at = (s.X + ally.X) / 2; break; }
                 if (sim.RopeBoss(s) is Slime boss) { at = (s.X + boss.X) / 2; break; }
+                // The Zip Slime's bomb: a click at its zipper tab's height (2026-11-05).
+                if (BattleSim.BombTab(s) is (double tabX, double tabHeight)) { at = tabX; height = tabHeight; break; }
             }
-            if (at is double x && sim.Arm(BattleSkill.Scissors) && !sim.UseOnScreen(BattleSkill.Scissors, x, 18)) sim.Arm(null);
+            if (at is double x && sim.Arm(BattleSkill.Scissors) && !sim.UseOnScreen(BattleSkill.Scissors, x, height)) sim.Arm(null);
         }
         // Flyers and wall slimes are Pushed down when the Push is free.
         if (sim.Ready(BattleSkill.Push) && sim.Slimes.FirstOrDefault(s => s.Targetable && (s.Type.Fly != null || s.Type.Cling != null) && s.Altitude > 0 && reflex.Notices(s, now)) is Slime high)
@@ -210,7 +213,7 @@ internal static class AdventureBalanceTests
         // (shown on the floor) runs over the cat.
         bool Threat(Slime s) => s.State == SlimeState.Windup && reflex.Notices(s, now) && (s.Type.Dash
             ? (cat - s.X) * s.DashDirection >= -BattleSim.CatHalfWidth && Math.Abs(cat - s.X) <= s.Type.DashDistance + s.HitWidth / 2 + BattleSim.CatHalfWidth
-            : Math.Abs(s.X - cat) <= s.Range + 12);
+            : Math.Abs((s.Hopping ? s.HopTo : s.X) - cat) <= s.Range + 12);
         // The Shield (long cooldown) is kept for plain and slam hits; a dash is Pushed away instead.
         bool danger = sim.Slimes.Any(s => Threat(s) && !s.Type.Dash && s.StateTime > sim.Windup(s) * 0.5);
         if (danger) sim.Use(BattleSkill.Shield, cat);

@@ -91,10 +91,11 @@ public sealed partial class PetWindow
         [BattleEventKind.QuillsUp] = ("clank", 3), [BattleEventKind.QuillsDown] = ("squish", 2), [BattleEventKind.QuillsSoaked] = ("squish", 3),
         [BattleEventKind.QuillsPricked] = ("clank", 4), [BattleEventKind.ClockRang] = ("clank", 5), [BattleEventKind.ClockCalled] = ("swoosh", 3),
         [BattleEventKind.ThiefStole] = ("swoosh", 4), [BattleEventKind.ThiefReturned] = ("satisfied", 5), [BattleEventKind.ThiefEscaped] = ("pop", 3),
-        // 1.5 M17: the Zip Slime's roll, its ropes and its pack phase.
+        // 1.5 M17: the Zip Slime's roll, its ropes; 2026-11-05: its stages and riddles.
         [BattleEventKind.RollAimed] = ("clank", 4), [BattleEventKind.Rolled] = ("swoosh", 4), [BattleEventKind.RollHit] = ("ball_tap", 5),
         [BattleEventKind.BossRoped] = ("squish", 3), [BattleEventKind.BossRopeCut] = ("pop", 4), [BattleEventKind.BossRopesGone] = ("excited", 5),
-        [BattleEventKind.BossPacked] = ("squish", 5),
+        [BattleEventKind.ZipGrew] = ("squish", 5), [BattleEventKind.ZipPressed] = ("clank", 5), [BattleEventKind.ZipPinned] = ("pop", 5), [BattleEventKind.ZipUnlocked] = ("excited", 5),
+        [BattleEventKind.ZipRopeCombo] = ("sparkle", 5), [BattleEventKind.ZipBombArmed] = ("clank", 5), [BattleEventKind.ZipTabPulled] = ("pop", 5), [BattleEventKind.ZipDeflated] = ("swoosh", 6), [BattleEventKind.ZipBurst] = ("ball_tap", 6),
         // 1.5 M18: the Slime Mother's clutches and feeding, the Mutant King's crown links and rain.
         [BattleEventKind.BroodWarned] = ("surprised", 4), [BattleEventKind.BroodLaid] = ("squish", 4), [BattleEventKind.NurseHeading] = ("surprised", 4),
         [BattleEventKind.NurseFed] = ("satisfied", 4), [BattleEventKind.CrownLinked] = ("sparkle", 5), [BattleEventKind.RainCalled] = ("swoosh", 4),
@@ -188,7 +189,7 @@ public sealed partial class PetWindow
     private bool IsUpdate(BattleEvent e) => battle?.FindHazard((int)e.Value) is { Kind: HazardKind.Update };
 
     private string BossName() => battle?.Boss?.Type.Name(preferences.Language) ?? "Boss";
-    // The shield phase the boss is in now (1.5 M17: roped or packing; null: none).
+    // The shield phase the boss is in now (1.5 M17: roped; 2026-11-05: a riddle; null: none).
     private BossPhase? BossShieldPhase() => battle?.Boss is Slime boss ? battle.ShieldPhase(boss) : null;
 
     // Big moments get a banner across the HUD's centre. The first heal, far heal, rally call and attack
@@ -212,14 +213,24 @@ public sealed partial class PetWindow
             {
                 BattleEventKind.WaveStarted when battle.IsBossWave((int)e.Value) => L("BOSS!", "BOSS!"),
                 BattleEventKind.WaveStarted => LF($"ĐỢT {(int)e.Value}", $"WAVE {(int)e.Value}"),
-                // 1.5 M17: a roped phase names its formation instead; a packing boss already said what to do.
-                BattleEventKind.BossSummoned when BossShieldPhase() is { Roped: true } or { Pack: true } => null,
+                // 1.5 M17: a roped phase names its formation instead.
+                BattleEventKind.BossSummoned when BossShieldPhase() is { Roped: true } => null,
                 BattleEventKind.BossSummoned => LF($"{BossName()} gọi quân!", $"The {BossName()} calls for help!"),
                 BattleEventKind.BossShielded when BossShieldPhase() is { Roped: true } =>
                     LF($"{BossName()} bung file! Còn dây thì nó không mất máu: kéo hoặc ném mèo xuyên dây, hay dùng Kéo cắt",
                         $"The {BossName()} unpacks! While a rope is left it takes no damage: drag or throw the cat through the ropes, or use the Scissors"),
-                BattleEventKind.BossShielded when BossShieldPhase() is { Pack: true } =>
-                    LF($"{BossName()} tự nén lại! Phá hết mảnh file quanh nó", $"The {BossName()} packs itself! Break the file shards around it"),
+                // 2026-11-05: the Zip Slime's riddles say it themselves.
+                BattleEventKind.BossShielded when BossShieldPhase() is { Press: true } or { Bomb: true } => null,
+                BattleEventKind.ZipPressed => LF($"{BossName()} khóa vỏ! Nhấc mèo né cú lăn rồi thả đè đúng điểm vàng", $"The {BossName()} locks its shell! Lift the cat off its roll, then drop it on the gold spot"),
+                BattleEventKind.ZipPinned when battle.Boss?.Type.Zip is ZipSpec pinned => LF($"Đè trúng! {(int)e.Value}/{pinned.Press.Pins}", $"Pinned! {(int)e.Value}/{pinned.Press.Pins}"),
+                BattleEventKind.ZipUnlocked when e.Value > 0 => L("BUNG KHÓA! Nó choáng và đau gấp rưỡi", "LOCK BROKEN! It is dazed and takes half as much again"),
+                BattleEventKind.ZipUnlocked => L("Vỏ khóa tự mở", "The lock opens by itself"),
+                BattleEventKind.ZipGrew => LF($"{BossName()} phình to! Đánh chậm hơn mà đau hơn", $"The {BossName()} swells! Slower blows, heavier ones"),
+                BattleEventKind.ZipRopeCombo => L("Cắt đôi! Trùm sẽ choáng lâu hơn", "Two at once! The boss will be dazed for longer"),
+                BattleEventKind.ZipBombArmed => LF($"{BossName()} thành bom nén! Kéo mèo xuyên tay kéo hoặc dùng Kéo cắt trước khi nó nổ", $"The {BossName()} turns into a zip bomb! Drag the cat through its zipper tab or use the Scissors before it bursts"),
+                BattleEventKind.ZipTabPulled when battle.Boss?.Type.Zip is ZipSpec pulled => LF($"Kéo khóa! {(int)e.Value}/{pulled.Bomb.Pulls}", $"Zip pulled! {(int)e.Value}/{pulled.Bomb.Pulls}"),
+                BattleEventKind.ZipDeflated => L("Xì hơiii!", "Pffffft!"),
+                BattleEventKind.ZipBurst => L("BÙM! Bom nén nổ, nó sẽ nạp lại", "BOOM! The zip bomb burst; it will charge again"),
                 BattleEventKind.BossShielded => LF($"{BossName()} bật khiên! Hạ hết quân", $"The {BossName()} shields up! Defeat its helpers"),
                 BattleEventKind.BossRopeCut when battle.Boss is Slime roped && battle.RopesLeft(roped) is int left && left > 0 =>
                     LF($"Đứt dây! Còn {left} dây", $"Rope cut! {left} left"),

@@ -3,10 +3,10 @@
   // yet (chapter 2 brings it in). Copy this file to %LOCALAPPDATA%\DesktopPet\battle.json (keep a copy of
   // yours first), then Battle Mode → Start battle (the free battle) and carry the Scissors in the loadout.
   // Custom data: no records, no rewards. Delete the file to get the usual free battle back.
-  // Phase 1: it rolls at a cat far off: lift the cat out of the lane. Phase 2 (70% and 50%): it unpacks the
-  // Fortress, then the Cavalry, each slime tied to it by a goo rope; while a rope is left it takes no damage:
-  // drag or throw the cat fast through the ropes, or use the Scissors. Phase 3 (25%): it packs itself small
-  // behind four file shards; break them to bring its shield down.
+  // Stage 1: small and quick, three leaps a round. At 66% it locks itself and rolls: lift the cat out of the way,
+  // then drop it on the gold spot; two pins break the lock. Stage 2: bigger, a roll and a slam. At 33% it unpacks
+  // the Fortress on goo ropes: drag or throw the cat fast through them, or use the Scissors. Stage 3: huge, one
+  // heavy blow. At 20% it turns into a zip bomb: pull its zipper tab three times before the bar fills.
   "schemaVersion": 1,
   "maxAlive": 6,
   "waves": [

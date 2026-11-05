@@ -426,8 +426,8 @@ public sealed partial class BattleSim
             if (wasLifted && liftedFor >= Settings.RescueGraceMinLiftSeconds && landingRushBonus > 0) LandingRushRemaining = LandingRushSeconds;
             // Ground quake (1.5 M25): the same real lift shakes the floor where the cat lands.
             if (wasLifted && liftedFor >= Settings.RescueGraceMinLiftSeconds) Quake(catX);
-            // Let go onto a burrower coming up: it is pinned (1.5 M14).
-            if (wasLifted) CatLanded(catX);
+            // Let go onto a burrower coming up: it is pinned (1.5 M14). 2026-11-05: or onto the Zip Slime's riddle.
+            if (wasLifted) { CatLanded(catX); CatPressed(catX); }
             wasLifted = false;
             liftedFor = 0;
             Grace = Math.Max(0, Grace - dt);
@@ -809,7 +809,7 @@ public sealed partial class BattleSim
             events.Add(new(BattleEventKind.FlagGuarded, slime.X));
             return HitResult.Immune;
         }
-        amount *= DownedFactor(slime) * (1 - slime.AuraCut); // A flag's ring takes some off (2026-11-04).
+        amount *= DownedFactor(slime) * ZipBonus(slime) * (1 - slime.AuraCut); // A flag's ring takes some off (2026-11-04).
         if (slime.Shielded)
         {
             // A boss in its shield phase: nothing gets through (not even the bomb).

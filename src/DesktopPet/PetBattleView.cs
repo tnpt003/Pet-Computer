@@ -489,8 +489,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         TrickLook(slime, time, ref sx, ref sy, ref opacity, ref jitter);
         // A boss crouching before its leap.
         if (slime.Crouch > 0) { sx *= 1 + 0.18 * slime.Crouch; sy *= 1 - 0.25 * slime.Crouch; }
-        // A packed boss: squeezed small behind its shards (1.5 M17).
-        if (slime.Packed) { sx *= BattleSim.PackedScale; sy *= BattleSim.PackedScale * 0.92; }
+        ZipShape(slime, time, ref sx, ref sy); // The Zip Slime's bomb and its air going out.
         // A stony body is wide and low (its hitScale is wider to match).
         if (slime.Type.Marks == "cracks") { sx *= 1.12; sy *= 0.9; }
         SpringShape(slime, ref sx, ref sy);
@@ -504,19 +503,21 @@ public sealed partial class BattleFieldView : FrameworkElement
         }
         DrawSpringRing(dc, slime, x, floor);
         DrawBlastRing(dc, slime, x, floor);
+        DrawZipFloor(dc, slime, floor + slime.LeapHeight, time);
         if (slime.Type.Slam && slime.State == SlimeState.Windup && !slime.Rolling)
         {
             // The slam's reach on the floor, filling up as it comes: get out (or push, shield, lift).
             // Outlines only: a filled zone would catch clicks meant for the apps below.
-            double k = Math.Clamp(t / windup, 0, 1);
-            dc.DrawEllipse(null, WarningFill, new Point(x, floor - 4), Math.Max(1, slime.Range * k), Math.Max(1, 9 * k));
-            dc.DrawEllipse(null, WarningEdge, new Point(x, floor - 4), slime.Range, 9);
+            // (The Zip Slime's leap: the ring is where it will land.)
+            double k = Math.Clamp(t / windup, 0, 1), ringX = slime.Hopping ? slime.HopTo - OriginX : x, ringY = floor + slime.LeapHeight - 4;
+            dc.DrawEllipse(null, WarningFill, new Point(ringX, ringY), Math.Max(1, slime.Range * k), Math.Max(1, 9 * k));
+            dc.DrawEllipse(null, WarningEdge, new Point(ringX, ringY), slime.Range, 9);
         }
         if ((slime.Type.Dash || slime.Rolling) && slime.State == SlimeState.Windup)
         {
             // The dash's lane on the floor (a boss's roll too), growing as it comes, with an arrowhead at its end.
             double k = Math.Clamp(t / windup, 0, 1), dir = slime.DashDirection == 0 ? slime.Facing : slime.DashDirection;
-            double distance = slime.Rolling && slime.Type.Roll is RollSpec roll ? roll.Distance : slime.Type.DashDistance;
+            double distance = slime.Rolling ? slime.RollDistance : slime.Type.DashDistance;
             double end = x + dir * (w / 2 + distance * (0.35 + 0.65 * k));
             var lane = new Point(end, floor - 4);
             dc.DrawLine(Halo, new Point(x + dir * w / 2, floor - 4), lane);
@@ -566,7 +567,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         dc.PushOpacity(opacity);
         dc.PushTransform(new MatrixTransform(sx * size, 0, 0, sy * size, x + jitter, floor));
         double bw = s.SlimeWidth, bh = s.SlimeHeight;
-        var body = Body(bw, bh);
+        var body = slime.Type.Marks == "zip" ? ZipBody(slime) : Body(bw, bh);
         Brush baseFill = KindBrush(slime.Enraged ? slime.Type.AngryColor : slime.Type.Color);
         Brush fill = slime.HitFlash > 0 ? Brushes.White : slime.State == SlimeState.Windup ? Blend(baseFill, t / windup) : baseFill;
         // A thin dark edge outside the white halo: two slimes overlapping still read as two, on light
@@ -646,7 +647,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         DrawSkyMarks(dc, slime, bw, bh, time);
         DrawWallMarks(dc, slime, bw, bh, time);
         DrawQuillMarks(dc, slime, bw, bh, time);
-        DrawZipMarks(dc, slime, bw, bh);
+        DrawZipMarks(dc, slime);
         DrawBroodMarks(dc, slime, bw, bh);
         // An older support mark: a white "+" on its body.
         if (slime.Type.Marks == "cross") dc.DrawGeometry(Brushes.White, Outline, CrossMark);
@@ -669,7 +670,7 @@ public sealed partial class BattleFieldView : FrameworkElement
             dc.DrawEllipse(null, Halo, new Point(0, -37), 15 * ring, 10 * ring);
             dc.DrawEllipse(null, RallyPen, new Point(0, -37), 15 * ring, 10 * ring);
         }
-        if (slime.IsBoss) DrawBossCrown(dc, slime); // 1.5 M18: the Mutant King's sits crooked (PetBattleView.Brood.cs).
+        if (slime.IsBoss && slime.Type.Marks != "zip") DrawBossCrown(dc, slime); // 1.5 M18: the Mutant King's sits crooked (PetBattleView.Brood.cs).
         dc.Pop();
         dc.Pop();
         DrawBubbleShell(dc, slime, x, floor, w, h, time);
@@ -678,9 +679,7 @@ public sealed partial class BattleFieldView : FrameworkElement
             // The shield phase: a gently pulsing bubble around the boss and a shine on it.
             double pulse = 1 + 0.03 * Math.Sin(time * 4);
             // From the floor to just over the crown, so nothing of it is cut off below the floor.
-            // A packed boss's shield hugs its squeezed body (1.5 M17).
-            double pack = slime.Packed ? BattleSim.PackedScale : 1;
-            double rx = (w * pack / 2 + 12) * pulse, ry = ((h + (slime.IsBoss ? 9 * size : 0)) * pack + 10) / 2;
+            double rx = (w / 2 + 12) * pulse, ry = (h + (slime.IsBoss ? 9 * size : 0) + 10) / 2;
             var centre = new Point(x, floor - ry - 1);
             dc.DrawEllipse(null, Halo, centre, rx, ry);
             dc.DrawEllipse(null, BubblePen, centre, rx, ry);
@@ -704,6 +703,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         double top = floor - h * sy - (slime.IsBoss ? 9 * size : 0);
         // Status badges over the head push the elite's tag and the selection arrow up.
         double lift = DrawStatusOver(dc, slime, x, floor, top, w, h, time);
+        DrawZipOver(dc, slime, x, floor + slime.LeapHeight, top - lift, time);
         if (slime.Mended && slime.State != SlimeState.Defeated)
         {
             // Guarded by a heal: a green bubble with leaves turning round it (push the healer to end it).

@@ -492,12 +492,13 @@ public sealed class Slime
     public double X;
     public double Hp, MaxHp;
     // Drawn size (DIPs). The combat hitbox (sword reach, bomb blast) is HitWidth.
-    public double Width { get; init; }
-    public double HitWidth { get; init; }
-    public double Height { get; init; }
+    // Settable: the Zip Slime grows stage by stage (PetBattle.Zip.cs).
+    public double Width { get; set; }
+    public double HitWidth { get; set; }
+    public double Height { get; set; }
     // Settable: a boss's rally call makes a helper elite (more HP, harder hits).
     public double Damage { get; set; }
-    public double Range { get; init; }
+    public double Range { get; set; }
     public SlimeState State { get; private set; }
     public double StateTime;
     public double Cooldown, StunRemaining, KnockVelocity, HitFlash;
@@ -732,11 +733,22 @@ public sealed class Slime
     public BattleSkill LootSkill2;
     public bool Escaped;
     // 1.5 M17 (PetBattle.Zip.cs). A rolling boss: its windup is a roll (then Dashing is the roll itself),
-    // the time to its next roll, and whether this roll already ran over the cat. Packed small in its pack
-    // phase. A helper tied to its boss by a rope (the boss's id; 0: none).
-    public bool Rolling, RollHit, Packed;
+    // the time to its next roll, and whether this roll already ran over the cat. A helper tied to its boss by
+    // a rope (the boss's id; 0: none).
+    public bool Rolling, RollHit;
     public double RollCooldown;
     public int RopedTo;
+    // 2026-11-05, the Zip Slime (PetBattle.Zip.cs). Its stage and size; blows left in this round; a leap at the
+    // cat under way (Hopping, from HopFrom to HopTo). A roll's way (RollDistance) and stop (RollGoal), and
+    // whether it is the press riddle's. The press: rolls left, pins so far, time left to pin it after a stop.
+    // The bomb: time left, pulls so far, the tab's spot (a short lock after a pull), time to arming again, the
+    // time left of its flight. A reward: taking ×MechBonus for MechBonusClock s. Ropes: the last cut and the
+    // extra stun two cuts together earned.
+    public int ZipStage, ComboLeft, PressLeft, Pins, BombPulls, BombTag;
+    public double ZipScale, HopFrom, HopTo, RollGoal, RollDistance, PressWindow;
+    public double BombClock, TabX, TabHeight, TabLock, BombRearm, Deflating, DeflateVelocity;
+    public double MechBonus = 1, MechBonusClock, RopeBonusStun, RopeCutAt = double.NegativeInfinity;
+    public bool Hopping, PressRolling, BombDone;
     // 1.5 M18 (PetBattle.Brood.cs, PetBattle.Mutant.cs). A brooding boss: the time to its next clutch, the
     // clutch announced (its spots) and the warning left. Nursing: what its clutch merged into, going back to
     // feed it (Feeding: next to it now; FedHp: what it has given so far). A crowned boss's next crown link (an index into CrownLinks) and the
@@ -852,7 +864,11 @@ public enum BattleEventKind
     // 1.5 M17 (Value: the boss's id; for a rope, the helper's): the boss wound up a roll, rolled, ran over the
     // cat; its helpers came tied to it by ropes, a rope was cut (Value: the helper's id), the last rope
     // was gone; it packed itself small behind its file shards.
-    RollAimed, Rolled, RollHit, BossRoped, BossRopeCut, BossRopesGone, BossPacked,
+    RollAimed, Rolled, RollHit, BossRoped, BossRopeCut, BossRopesGone,
+    // 2026-11-05, the Zip Slime: a new stage (Value: its index); the press riddle: a pin (Value: pins so far), the
+    // lock open (Value 1: broken by the player); two ropes cut together; the bomb armed, a pull (Value: pulls so
+    // far), its air let out, the burst (Value 1: it hit the cat).
+    ZipGrew, ZipPressed, ZipPinned, ZipUnlocked, ZipRopeCombo, ZipBombArmed, ZipTabPulled, ZipDeflated, ZipBurst,
     // 1.5 M18: a brooding boss announced a clutch (Value: the boss's id), laid it (Value: how many); what its
     // clutch merged into heads back to it (Value: that one's id), has fed it all its HP (Value: the HP given);
     // a crowned boss tied a link between its helpers (Value: the holder's id), a goo rain began

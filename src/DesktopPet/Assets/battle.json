@@ -701,33 +701,44 @@
       // 1.5 M17, B1: the chapter 2 boss (no battle uses it yet; chapter 2 brings it in, docs/examples/battle-m17.json
       // tries it). Phase 1: "roll" — with the cat on the floor between minRange and range away and every s since
       // its last roll (enragedEvery once angry), it winds up (a lane on the floor) and rolls distance DIPs over the
-      // floor: the cat on the floor in its way takes damage and a stun (lift the cat to dodge). Phase 2: two
-      // "roped" shield phases unpack a "formation" (Fortress, then Cavalry) whose helpers come tied to the boss by
-      // ropes; the shield holds while any rope is left: cut them by going through with the cat at ropeCutSpeed
-      // DIPs/s or more (held or thrown) or with the Scissors (the helper is dazed ropeCutStun s), or defeat the
-      // helper. Phase 3: "pack" — it squeezes itself small where it stands, its file shards around it (still: they
-      // never move or attack); the shield drops once they are broken.
+      // floor: the cat on the floor in its way takes damage and a stun (lift the cat to dodge). A "roped" shield
+      // phase unpacks a "formation" whose helpers come tied to the boss by ropes; the shield holds while any rope
+      // is left: cut them by going through with the cat at ropeCutSpeed DIPs/s or more (held or thrown) or with the
+      // Scissors (the helper is dazed ropeCutStun s), or defeat the helper.
+      // 2026-11-05, "zip": small and quick at first, it swells stage by stage. "stages": its size, speed, the round
+      // of hits blows (gap s apart, cooldown s of rest), each of damage within range, a leap of up to hop DIPs first.
+      // "press" (first stage's riddle): locked, it rolls `rolls` times; the cat let go on it pins it, `pins` of them
+      // break the lock (a long stun, ×bonus damage); otherwise it opens by itself. "bomb" (last stage's riddle):
+      // charge s to burst; the cat through its zipper tab, or the Scissors, pulls it; `pulls` of them let its air out
+      // (flight s round the field, then stun, ×bonus); a burst hits the floor and it arms again after rearm s.
       "id": "zip", "nameVi": "Slime Nén", "nameEn": "Zip Slime",
-      "tipVi": "Trùm chương 2: lăn đè dải sàn, bung đội hình nối dây và tự nén thành khiên. Nhấc mèo khi lăn, cắt dây, phá mảnh file.", "tipEn": "Chapter 2's boss: rolls over the floor, unpacks squads tied to it and packs itself into a shield. Lift the cat as it rolls, cut ropes, break shards.", "counters": ["scissors", "shield"],
+      "tipVi": "Trùm chương 2: nhỏ và nhanh, càng mất máu càng phình to, đánh ít mà đau hơn. Thả mèo đè lúc nó lăn, cắt dây nối quân, kéo tay kéo để xì hơi quả bom nén.", "tipEn": "Chapter 2's boss: small and quick, it swells as it loses HP and hits less often but harder. Drop the cat on it as it rolls, cut its ropes, pull the zipper tab to let its bomb's air out.", "counters": ["scissors", "shield"],
       "maxHp": 900, "speed": 24, "damage": 28, "range": 110,
       "windup": 1.2, "attackCooldown": 2.6, "recover": 0.7,
       "scale": 2, "color": "#E8B84A", "angryColor": "#E86A6A", "marks": "zip", "binSpit": false,
       "boss": true, "slam": true, "slamDamage": 20, "pushFactor": 0.35, "stunFactor": 0.4,
-      "enragedSpeed": 34, "enragedWindup": 0.8, "summonCap": 10, "shieldBreakStun": 2,
+      "summonCap": 10, "shieldBreakStun": 2,
       "retreatLeap": true, "leapCrouch": 0.35, "leapSeconds": 0.9, "summonWarning": 0.6,
       "ropeCutSpeed": 300, "ropeCutStun": 1,
-      "roll": { "every": 7, "enragedEvery": 4.5, "minRange": 140, "range": 520, "windup": 1.1, "speed": 360, "distance": 460, "damage": 24, "stun": 0.9 },
+      "roll": { "every": 7, "enragedEvery": 4.5, "minRange": 140, "range": 520, "windup": 1.1, "speed": 360, "distance": 460, "damage": 20, "stun": 0.9 },
+      "zip": {
+        "grow": 0.9, "ropeComboWindow": 0.5, "ropeComboStun": 1.5,
+        "stages": [
+          { "scale": 1.1, "speed": 70, "range": 62, "reach": 300, "hits": 3, "damage": 9, "windup": 0.6, "gap": 0.35, "cooldown": 3.2, "hop": 260 },
+          { "scale": 2, "speed": 32, "range": 110, "reach": 110, "hits": 2, "damage": 20, "windup": 1, "gap": 1, "cooldown": 4.6, "hop": 320, "roll": true },
+          { "scale": 2.9, "speed": 15, "range": 170, "reach": 170, "hits": 1, "damage": 40, "windup": 1.7, "cooldown": 7 }
+        ],
+        "press": {
+          "rolls": 4, "pins": 2, "reach": 46, "window": 1.6, "pinStun": 0.7, "stun": 3, "bonus": 1.5,
+          "roll": { "windup": 1, "speed": 380, "distance": 420, "damage": 12, "stun": 0.6 }
+        },
+        "bomb": { "charge": 14, "pulls": 3, "tabRadius": 34, "damage": 40, "radius": 900, "catStun": 1.2, "rearm": 14, "flight": 1.6, "stun": 4, "bonus": 1.5 }
+      },
       "phases": [
-        { "at": 0.7, "shield": true, "roped": true, "formation": "fortress" },
-        { "at": 0.5, "shield": true, "roped": true, "formation": "cavalry" },
-        { "at": 0.25, "shield": true, "pack": true, "enrage": true, "summons": [ { "enemy": "zipshard", "count": 4 } ] }
+        { "at": 0.66, "shield": true, "press": true },
+        { "at": 0.33, "shield": true, "roped": true, "formation": "fortress" },
+        { "at": 0.2, "shield": true, "bomb": true }
       ]
-    },
-    {
-      // 1.5 M17: the Zip Slime's file shards in its pack phase: they never move or attack ("still").
-      "id": "zipshard", "nameVi": "Mảnh file", "nameEn": "File shard",
-      "maxHp": 40, "speed": 0, "damage": 0, "range": 40,
-      "scale": 0.6, "color": "#F2D88A", "marks": "shard", "still": true, "cost": 1, "binSpit": false
     },
     {
       // 1.5 M18, B2: chapter 2's side boss (no battle uses it yet; docs/examples/battle-m18.json tries it).
@@ -1089,11 +1100,11 @@
           },
           {
             "id": "c2_zip_slime", "nameVi": "Slime Nén", "nameEn": "The Zip Slime",
-            "goalVi": "Trận cuối chương 2: slime bong bóng, slime bám tường, rồi Slime Nén lăn đè, giải nén ra đội hình nối dây và tự nén thành khiên. Màn này cho mượn Kéo cắt.",
-            "goalEn": "Chapter 2's last battle: bubble and wall slimes, then the Zip Slime rolls, unpacks squads tied to it and packs into a shield. This stage lends the Scissors.",
-            "tipVi": "Bạn sẽ học: Kéo cắt (click một chỗ: cắt ngang một dải, đứt dây nhầy, vỡ bong bóng); click 3 lần chọc vỡ bong bóng; ném mèo vào slime bám tường hoặc Đẩy cho nó rơi; nhấc mèo khỏi dải đỏ khi Slime Nén sắp lăn; cắt dây nối quân về Slime Nén để phá khiên; phá các mảnh file quanh nó ở pha cuối.",
-            "tipEn": "You learn: the Scissors (click a spot: they cut a band across, ropes and bubbles too); to pop a bubble with three clicks; to throw the cat at a wall slime or Push it down; to lift the cat off the red strip before the Zip Slime rolls; to cut the ropes tying its squads to it to break its shield; to break the file shards around it at the end.",
-            "objective": "clear", "upgrades": true, "maxAlive": 6, "threat": 1.4, "eliteChance": 0.25, "maxMalware": 4, "newAppsFrom": 1, "rulesVersion": 3,
+            "goalVi": "Trận cuối chương 2: slime bong bóng, slime bám tường, rồi Slime Nén nhỏ mà nhanh, càng mất máu càng phình to. Màn này cho mượn Kéo cắt.",
+            "goalEn": "Chapter 2's last battle: bubble and wall slimes, then the Zip Slime, small and quick, swelling as it loses HP. This stage lends the Scissors.",
+            "tipVi": "Bạn sẽ học: Kéo cắt (click một chỗ: cắt ngang một dải, đứt dây nhầy, vỡ bong bóng); click 3 lần chọc vỡ bong bóng; ném mèo vào slime bám tường hoặc Đẩy cho nó rơi; nhấc mèo khỏi dải đỏ khi Slime Nén sắp lăn rồi thả đè đúng điểm nó dừng; cắt dây nối quân về Slime Nén để phá khiên; kéo mèo xuyên tay kéo để xì hơi quả bom nén.",
+            "tipEn": "You learn: the Scissors (click a spot: they cut a band across, ropes and bubbles too); to pop a bubble with three clicks; to throw the cat at a wall slime or Push it down; to lift the cat off the red strip before the Zip Slime rolls, then drop it where it stops; to cut the ropes tying its squad to it to break its shield; to drag the cat through its zipper tab to let its bomb's air out.",
+            "objective": "clear", "upgrades": true, "maxAlive": 6, "threat": 1.4, "eliteChance": 0.25, "maxMalware": 4, "newAppsFrom": 1, "rulesVersion": 4,
             "unlocksSkill": "scissors", "suggestSkills": [ "scissors", "shield", "push" ],
             "keepsake": { "id": "zip_plush", "kind": "plush", "nameVi": "Thú bông Slime Nén", "nameEn": "Zip Slime plush" },
             "waves": [
@@ -1136,7 +1147,7 @@
   // older kinds: at most two kinds of link and two the cursor beats); "mutations": after each cleared boss
   // wave pick one of "offer" odd rules, held until the next boss wave is cleared, then its reward.
   "endless": {
-    "id": "endless", "rulesVersion": 10, "unlockAfter": "c1_slime_king", "upgradeEvery": 2, "bossEvery": 10, "boss": "king_c1",
+    "id": "endless", "rulesVersion": 11, "unlockAfter": "c1_slime_king", "upgradeEvery": 2, "bossEvery": 10, "boss": "king_c1",
     "bosses": [ "king_c1", "zip", "mutant_king" ],
     "lateBoss": "king", "lateBossFrom": 40, "bossBonusPick": true, "allSynergiesAt": 48,
     "eliteChancePerWave": 0.007, "eliteChanceMax": 0.45, "moreElitesEvery": 20, "moreElitesMax": 2,
@@ -1350,7 +1361,7 @@
     "routes": [
       {
         "id": "dump_trail", "nameVi": "Lối Bãi rác", "nameEn": "The Dump Trail",
-        "rulesVersion": 3, "keepRuns": [ 1, 2 ], "unlockAfter": "c2_zip_slime", "scene": "dump",
+        "rulesVersion": 4, "keepRuns": [ 1, 2, 3 ], "unlockAfter": "c2_zip_slime", "scene": "dump",
         "kindGacha": { "steps": 6, "minLanes": 2, "maxLanes": 3, "weights": { "fight": 45, "event": 18, "elite": 20, "rest": 12, "shop": 14 }, "rerollCost": 0.08 },
         "zones": [
           { "id": "swamp", "nameVi": "Đầm nhầy", "nameEn": "Slime swamp", "steps": 2, "fights": [ "y_puddles", "y_ice_pond", "y_split_bog" ], "elites": [ "y_mother_nest" ] },
@@ -1486,7 +1497,7 @@
         ],
         "boss": {
           "id": "y_zip", "nameVi": "Slime Nén trở lại", "nameEn": "The Zip Slime returns",
-          "goalVi": "Trận cuối tuyến: Slime Nén lăn đè, giải nén đội hình nối dây, tự nén thành khiên.", "goalEn": "The route's last battle: the Zip Slime rolls, unpacks roped squads and packs into a shield.",
+          "goalVi": "Trận cuối tuyến: Slime Nén nhỏ mà nhanh, càng mất máu càng phình to, cuối cùng thành quả bom nén.", "goalEn": "The route's last battle: the Zip Slime, small and quick, swells as it loses HP and ends as a zip bomb.",
           "upgrades": true, "maxAlive": 6, "threat": 1.2, "eliteChance": 0.3, "maxMalware": 4, "newAppsFrom": 1,
           "waves": [
             { "budget": 7, "groups": [ { "enemy": "bubble", "count": 1, "side": "a" }, { "enemy": "clinger", "count": 1, "side": "b" }, { "enemy": "runner", "count": 2, "side": "b" } ] },

@@ -151,7 +151,7 @@ internal static class BagChecks
             Click(Button(hub, "‹ Hub")!);
             await Task.Delay(30);
             check(!window.BattleBookShown && Button(hub, "Rewards") is { IsVisible: true } && window.BattleHubModeEnabled(PetWindow.HubAdventure), "‹ Hub brings the cards and the Rewards button back");
-            book.Add(data, new[] { "slime", "spitter", "zipshard" }, new Dictionary<string, int> { ["slime"] = 4 }, new[] { "fortress" }, out _);
+            book.Add(data, new[] { "slime", "spitter", "flagpost" }, new Dictionary<string, int> { ["slime"] = 4 }, new[] { "fortress" }, out _);
             Call(window, "TickBattleHub", 0.3);
             check(window.BattleBookNew == 3 && Button(hub, "Monster Book · 3 new") != null, $"Three new pages counted on the button ({window.BattleBookNew})");
             window.ShowMonsterBook(true);

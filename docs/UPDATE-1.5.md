@@ -95,7 +95,7 @@ Trong trận cảm xúc tự động vẫn bị chặn: S1, S4 không gây cảm
 
 | Mã | Boss | Luật |
 |---|---|---|
-| B1 | Slime Nén, trùm chương 2 (900 HP) | Pha 1 lăn: dải đỏ báo trước, nhấc mèo để né. Pha 2 (70%, 50%) bung Pháo đài rồi Kỵ binh, mỗi quân nối dây về boss, còn dây thì boss không mất máu. Pha 3 (25%) nén thành khiên, phá 4 mảnh file thì vỡ khiên và nổi giận |
+| B1 | Slime Nén, trùm chương 2 (900 HP; thiết kế lại 2026-11-05, Issue #53) | Nhỏ và nhanh, càng mất máu càng phình to, đánh ít đi mà đau hơn. GĐ1 (×1,1) 3 cú nhảy; ở 66% khóa vỏ và lăn, thả mèo đè đúng điểm vàng 2 lần thì bung khóa. GĐ2 (×2) lăn rồi nện; ở 33% bung Pháo đài nối dây, cắt 2 dây một lúc thì choáng lâu hơn. GĐ3 (×2,9) 1 cú đập; ở 20% thành bom nén, kéo mèo xuyên tay kéo 3 lần (hoặc Kéo cắt) để xì hơi, hết giờ thì nổ cả sàn rồi nạp lại |
 | B2 | Slime Mẹ, boss phụ chương 2 (650 HP) | Đẻ bầy hợp thể mỗi 10 s; khổng lồ do bầy nhập thành quay về bú, chuyển 20 HP/s sang mẹ; hạ nó giữa đường thì mẹ không được gì |
 | B3 | Vua Slime biến dị, Vô tận (1000 HP) | Phong tinh anh và nối thêm dây xích hoặc nhịp trống; mưa nhầy; đòn đồng loạt theo nhịp vẫn giữ |
 

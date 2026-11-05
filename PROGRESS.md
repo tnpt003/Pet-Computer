@@ -24,6 +24,7 @@ Quy ước file này: chỉ giữ trạng thái hiện tại, các đợt đang 
 - **Website (Chilo — Desktop Adventure, https://tnpt003.github.io/Pet-Computer/):** đã deploy. Người dùng còn cần thử bấm tải bộ cài và xem trọn video trên trình duyệt/điện thoại thật.
 - **README/media:** đã có ảnh thật, GIF, MP4 và đã push main (không tag, không release). Còn: người dùng xem trọn clip, chọn nhịp dựng; xem layout/phát video trực tiếp trên GitHub; chưa có đoạn kéo/thả.
 - Chưa làm, chờ người dùng: việc E của visual combat (slime nhún khi đáp/đi, mép dưới có khối); trang "Sổ tay" trong Sảnh (đề xuất, chưa duyệt).
+- **Sổ tay Battle Mode (artifact riêng, không nằm trong repo: https://claude.ai/artifact/PgD1Mxs9Mmw3mc4masGwbs):** đã đối chiếu và cập nhật tới commit 729de3d (05/11). Đổi battle.json hoặc luật trận thì lần sau so từ commit này. Cột "hình slime" vẫn là bản vẽ phỏng theo, không phải renderer thật.
 - Tiếng Nhật: người dùng xác nhận bản dịch ổn (24/10). Trạng thái AI (`LocalizeAiStatus`) vẫn tiếng Anh như debug. Nút/hộp thoại của Velopack không dịch được.
 - App trong trận: chỉnh số liệu `apps` trong battle.json sau khi chơi thật. Ý tưởng chưa duyệt: đổi vùng lưới icon trong Cài đặt, cửa sổ app thật làm bục đứng (cần duyệt ngoại lệ đọc cửa sổ).
 - Cài đặt/cập nhật chưa thử thật: khởi động lại máy, gỡ có xóa dữ liệu, thứ tự thoát trước khi gỡ (01ded63). Có thể sau: bộ cài MSI (`vpk pack --msi`) nếu muốn chọn thư mục cài; ký code (SignPath Foundation) khi muốn chia sẻ rộng, SmartScreen hiện còn cảnh báo.

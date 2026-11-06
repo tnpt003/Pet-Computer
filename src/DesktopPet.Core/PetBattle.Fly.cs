@@ -282,7 +282,7 @@ public sealed partial class BattleSim
 
     // A flyer up in the air (or falling): out of the floor's reach and of everything on it.
     // 2026-10-31: a wall slime high up its edge too (PetBattle.Wall.cs, HighOnWall).
-    public static bool InSky(Slime s) => s.Type.Fly != null && s.Fly is FlyPhase.Aloft or FlyPhase.Falling || HighOnWall(s);
+    public static bool InSky(Slime s) => s.ZipProp == ZipProp.Tab && s.Airborne && s.Targetable || s.Type.Fly != null && s.Fly is FlyPhase.Aloft or FlyPhase.Falling || HighOnWall(s);
 
     private void ClearSky() { shots.Clear(); CatSlowRemaining = 0; }
 

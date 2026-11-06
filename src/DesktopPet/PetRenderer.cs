@@ -478,6 +478,11 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         dc.DrawLine(ZipPen, new Point(box.Left + 10, box.Bottom), new Point(end, box.Bottom));
         for (double x = box.Left + 12; x < end; x += 7) dc.DrawLine(ZipInk, new Point(x, box.Bottom - 4), new Point(x, box.Bottom + 3));
         dc.DrawRoundedRectangle(ZipLockBody, ZipInk, new Rect(end - 4, box.Bottom - 7, 8, 14), 2, 2);
+        dc.DrawLine(ZipPen, new Point(14, 83), new Point(98, 83));
+        dc.DrawRoundedRectangle(null, ZipPen, new Rect(44, 48, 24, 28), 12, 12);
+        dc.DrawRoundedRectangle(ZipLockBody, ZipInk, new Rect(36, 68, 40, 31), 5, 5);
+        dc.DrawEllipse(ZipInk.Brush, null, new Point(56, 80), 4, 4);
+        dc.DrawRectangle(ZipInk.Brush, null, new Rect(54, 80, 4, 10));
         // The padlock over its head, and each way out shown apart: gold clicks, blue swings.
         dc.DrawRoundedRectangle(null, ZipPen, new Rect(49, 3, 14, 15), 6, 6);
         dc.DrawRoundedRectangle(ZipLockBody, ZipInk, new Rect(44, 11, 24, 16), 3, 3);

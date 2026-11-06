@@ -1,14 +1,14 @@
 # Slime Nén — thiết kế lại 06/11
 
-Luật hiện hành của boss `zip`. Người dùng duyệt ngày 2026-11-06 (Issue #54, #55). Code: `PetBattle.Zip.cs` (giai đoạn, mech), `PetBattle.ZipMoves.cs` (đòn), `PetBattle.ZipDebuff.cs` (debuff); vẽ `PetBattleView.Zip.cs`, `PetBattleView.ZipMoves.cs`, `PetRenderer.cs`; test `BattleZipTests`, `BattleZipMoveTests`, `ZipProbeTests`, `ZipVisualChecks`. Số liệu ở `enemies[zip].zip` trong battle.json. Combat thuộc C#, Python không tham gia.
+Luật hiện hành của boss `zip`. Người dùng duyệt ngày 2026-11-06 (Issue #54–#56). Cập nhật sau chơi thử: khóa đứng yên, mech đánh khóa/ghép thư mục/tay kéo. Code: `PetBattle.Zip.cs` (giai đoạn, mech), `PetBattle.ZipMoves.cs` (đòn), `PetBattle.ZipDebuff.cs` (debuff), `PetBattle.ZipPuzzles.cs` (mục tiêu và đòn đẩy riêng); vẽ `PetBattleView.Zip.cs`, `PetBattleView.ZipMoves.cs`, `PetRenderer.cs`; test `BattleZipTests`, `BattleZipMoveTests`, `ZipProbeTests`, `ZipVisualChecks`. Số liệu ở `enemies[zip].zip` trong battle.json. Combat thuộc C#, Python không tham gia.
 
 ## Ba giai đoạn
 
 | Giai đoạn | Thân | Đòn thường | Mech cuối giai đoạn |
 |---|---|---|---|
-| 1. Nén chặt (`4 KB`, ×1,1) | Kiện vuông, hai đai, khóa đóng | Kẹp kiện, Bắn khóa kéo, Cuộn đóng gói | 66%: Bung đai |
-| 2. Giải nén (`2 MB`, ×2) | Khóa hé, giấy bung | Cây thư mục, Tệp truy đuổi, Giải nén lỗi | 33%: Giải nén kẹt |
-| 3. Quá tải (`9 GB`, ×2,9) | Căng phồng, khóa toác | Tràn bộ nhớ, Ghi đè, Xé archive | 20%: Bom nén |
+| 1. Nén chặt (`4 KB`, ×1,1) | Kiện vuông, hai đai, khóa đóng | Kẹp kiện, Bắn khóa kéo, Cuộn đóng gói | 66%: Tháo chốt kiện |
+| 2. Giải nén (`2 MB`, ×2) | Khóa hé, giấy bung | Cây thư mục, Tệp truy đuổi, Giải nén lỗi | 33%: Sắp xếp thư mục |
+| 3. Quá tải (`9 GB`, ×2,9) | Căng phồng, khóa toác | Tràn bộ nhớ, Ghi đè, Xé archive | 1 HP: Bom nén sinh tử |
 
 ## Chọn đòn
 
@@ -24,27 +24,36 @@ Luật hiện hành của boss `zip`. Người dùng duyệt ngày 2026-11-06 (I
 |---|---|---|
 | Kẹp kiện | Trượt tới điểm chốt, hai nửa kiện ép lại | Ra khỏi khe, hoặc nâng mèo cao hơn 90 DIP |
 | Bắn khóa kéo (`air`) | Đường ngắm theo mèo, khóa rồi phóng tới điểm chốt và thu về, trúng tối đa 1 lần | Rời điểm chốt sau khi khóa, tránh đường về |
-| Cuộn đóng gói | Lăn qua, dừng 0,45 giây, lăn ngược về chỗ cũ; dải báo cả hai lượt | Nâng cao hơn thân boss, hoặc ra khỏi dải |
+| Cuộn đóng gói | Lăn qua, dừng 0,45 giây, lăn ngược về chỗ cũ; mỗi lượt chỉ hiện đường cảnh báo tương ứng | Nâng cao hơn thân boss, hoặc ra khỏi dải |
 | Cây thư mục | Tối đa 6 nhánh đánh số, nổ theo thứ tự, bỏ ngẫu nhiên 1 nhánh | Đứng vào khoảng giữa các nhánh, hoặc nâng cao hơn 120 DIP |
-| Tệp truy đuổi (`air`) | Hai tệp bay cong, chỉnh hướng đúng 1 lần lúc vòng khóa hiện | Đổi chỗ sau tín hiệu khóa |
-| Giải nén lỗi | Ba gói ra sân, một gói đỏ rung và có vòng nổ | Đánh vỡ gói đỏ (hai gói còn lại tan), hoặc ra khỏi vòng |
+| Tệp truy đuổi (`air`) | Ba tệp bay cong, chỉnh hướng đúng 1 lần lúc vòng khóa hiện | Đổi chỗ sau tín hiệu khóa |
+| Giải nén lỗi | Ba file giống nhau, một bom ngẫu nhiên; rê chuột mới lộ bom và thời gian còn lại | Soi từng file; bom đã soi giữ hiển thị. Đánh vỡ bom hoặc né vòng; đồng hồ chạy cả khi ẩn |
 | Tràn bộ nhớ | Trượt tới điểm chốt, giấy lan từ hai mép, kết thúc bằng cú bung ngoài khoảng vàng | Ở trong khoảng vàng 190 DIP, hoặc nâng cao hơn 170 DIP |
 | Ghi đè (`air`) | Đánh dấu 3 vị trí liên tiếp của mèo, kể cả trên cao, rồi đánh lần lượt | Rời điểm đã đánh dấu |
 | Xé archive | Thân tách đôi nối bằng khóa kéo, quét ra 380 DIP rồi nhập lại, trúng tối đa 1 lần mỗi lượt | Ra ngoài tầm quét, hoặc nâng cao hơn 120 DIP |
 
-## Ba mech
+## Ba mech — bản người dùng chốt sau chơi thử 06/11
 
-- **66% Bung đai:** khóa kẹt, boss trượt (không lăn) tới điểm vàng đã chốt từ đầu rồi dừng 2,2 giây. Chỉ thả mèo đè lúc đã dừng mới tính; mỗi lần bung một đai, 2 lần thì boss choáng 2,2 giây và nhận ×1,5 sát thương. Hết 4 lượt trượt thì khóa tự tuột, không thưởng.
-- **33% Giải nén kẹt:** ba `zip_packet` nối luồng về boss, boss có khiên. Cắt luồng (kéo/ném mèo ≥300 DIP/giây, Kéo cắt) hoặc đánh vỡ gói. Cắt hai luồng trong 0,5 giây thì boss choáng thêm 1,5 giây. Không còn dùng đội Pháo đài.
-- **20% Bom nén:** giữ cơ chế cũ, thêm mặt đồng hồ. 14 giây, kéo tay kéo 3 lần hoặc Kéo cắt thì boss xì hơi rồi choáng 3 giây, nhận ×1,5. Hết giờ thì nổ sàn, vùng trúng cao 170 DIP, nạp lại sau 14 giây.
-- Khoảng phản công sau Bung đai và Bom nén bị giới hạn (`opening` 6% HP tối đa), để build mạnh không bỏ qua cả giai đoạn sau.
+- **66% Tháo chốt kiện:** boss nhảy ra giữa và giữ khiên. Hai ổ khóa ở hai rìa, cách mép 65 DIP để mèo có chỗ đứng đánh. Đánh khóa sáng **12 lần tổng cộng**, cứ 3 đòn đổi bên (trái → phải → trái → phải). Chỉ nhát vũ khí trực tiếp tính, damage lớn vẫn một lượt; kỹ năng/đòn lan không cộng. Mỗi 2,8 giây báo 0,8 giây rồi quét nửa sàn về khóa đang mở (8 damage cơ sở, choáng 0,5 giây; nhấc cao né được). Đủ 3 đòn đổi khóa thì ngắt cảnh báo đang chuẩn bị. Đủ 12 mở khiên, sang phase 2 và choáng 2,2 giây, nhận ×1,5 trong khoảng phản công giới hạn 6% HP tối đa. Không tự bỏ qua mech.
+- **33% Sắp xếp thư mục:** ba file và ba thư mục đích có ký hiệu tròn/vuông/dấu chéo. Đứng phía đối diện rồi đánh file để đẩy 36 DIP về thư mục cùng ký hiệu; cách đích ≤40 DIP thì ghép xong. File/đích chừa chỗ hai bên, file bị giới hạn trong vùng cách mép tối đa 120 DIP. Kỹ năng/đòn lan không đẩy hoặc phá file. Mỗi 3,5 giây cây thư mục đánh dấu vị trí mèo, chốt ngay, báo 1 giây rồi mọc, gây 12 damage cơ sở và choáng 0,6 giây; cây không chắn hoặc đẩy file. Ghép đủ ba thì hết khiên, sang phase 3, boss choáng 2,2 giây.
+- **1 HP Bom nén sinh tử:** chỉ một lần khi HP xuống ≤1. Tất cả nguồn damage bị chặn ở đúng **1 HP**, kể cả damage vượt ngưỡng và độc; boss lập tức hủy đòn và dựng khiên. Sinh sáu tay kéo độc lập theo seed, ba trên không và ba dưới đất, chừa mép và giới hạn chiều cao theo vùng trận. Mỗi tay chịu đúng một nhát vũ khí trực tiếp; mèo đang cầm đánh tay trên không, mèo dưới sàn đánh tay dưới đất. Kéo/ném xuyên và Kéo cắt không giải thay. Phá đủ sáu: boss xì hơi 1,6 giây rồi bị hạ, không cần gây damage lần cuối. Mỗi 14 giây chưa giải xong thì nổ sàn theo damage/radius cũ, cao 170 DIP; giữ khiên và các tay chưa phá, không tạo lứa mới hoặc mở lại phase thường.
+
+## Đòn đẩy riêng phase 2–3
+
+Tách khỏi túi đòn, hồi 22 giây thời gian hợp lệ, báo 0,9 giây. Chỉ bắt đầu giữa các đòn, không trong mech, Khóa ZIP, khoảng an toàn sau khóa hoặc lúc boss choáng. Đẩy mèo dưới sàn về rìa phía xa boss trong 0,8 giây rồi choáng 1,2 giây; **không gây damage**. Boss nghỉ tới hết đẩy/choáng và thêm 0,8 giây. Khiên/Nộ/miễn đẩy và ân hạn đáp chặn; không tuột tay hoặc đổi cú ném. Nhấc mèo thoát đẩy thì không có choáng trễ. Pause đóng băng cả báo trước và đẩy.
+
+## Hình và tương tác
+
+- Khóa ZIP là ổ khóa lớn có quai, thân và lỗ chìa gắn đai quanh mèo.
+- Cây thư mục có ba mẫu phân cấp (tầng, lệch nhánh, xòe), chọn bằng seed cho mỗi cây; có thư mục gốc/con và đường nối vuông góc. Hình nằm trong vùng trúng đã báo.
+- Giải nén lỗi: đồng hồ bắt đầu ngay khi file ra sân, không chờ soi; soi bom mới hiện màu/rung, vòng nổ và số giây còn lại. Đã soi thì giữ hiện khi chuột rời đi.
 
 ## Hai debuff
 
 Tách khỏi túi đòn, không báo trước, không đồng thời. Lần đầu sau 8 giây, sau đó cách 10–16 giây. Đồng hồ dừng trong mech. Bị Khiên chặn thì vẫn tính lượt.
 
 - **Nén:** hình mèo 75% (cửa sổ và vùng click giữ nguyên), vũ khí ×0,75, chạy ×0,8, kéo dài 5 giây. Kỹ năng và icon app không bị giảm. Không có thoát sớm.
-- **Khóa ZIP:** không bế lên được, vẫn đi và đánh được. Mở bằng 3 click, hoặc 5 nhát vung kể cả trượt, hoặc tự hết sau 6 giây.
+- **Khóa ZIP:** không bế lên hoặc tự di chuyển được, vẫn đánh được. Mở bằng 3 click, hoặc 5 nhát vung kể cả trượt, hoặc tự hết sau 6 giây.
   - Chỉ áp khi mèo dưới sàn và không choáng, boss không ở trong đòn đã báo, không có đạn, điểm chờ hay gói nổ.
   - Boss không mở đòn mới trong lúc Khóa và thêm 0,8 giây sau đó.
   - Mech bắt đầu thì Khóa tự mở, vì mech cần tay.
@@ -58,7 +67,9 @@ Chỉ áp dụng cho Slime Nén. Slime Mẹ và Vua biến dị giữ luật cũ
 - Đòn sát sàn né được bằng cách nâng cao; đòn `air` nhắm vị trí thật của mèo. Ân hạn lúc đáp vẫn bảo vệ.
 - Trúng đòn khi đang bế hoặc bay: mất máu, không tuột tay, không đổi cú ném, không choáng, không Dizzy. Khiên và Pause giữ vai trò cũ.
 
-## Số đo HP
+## Số đo HP trước đổi mech (lịch sử, không đại diện bản #56)
+
+Lưu ý #56: probe cũ chưa tắt app dù mô tả ghi không app; bản này truyền `apps:false`. Không dùng bảng cũ làm đối chứng có kiểm soát cho bản mới. Cân bằng toàn chương/Viễn chinh vẫn chạy với app theo luật màn.
 
 `maxHp` 1100 (trước là 900). Đây là mô phỏng, không phải chơi thật.
 

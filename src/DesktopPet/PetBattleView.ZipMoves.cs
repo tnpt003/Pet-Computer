@@ -27,8 +27,13 @@ public sealed partial class BattleFieldView
             if (b.Bottom <= 0) DrawZipBlow(dc, b, x => new Point(x - OriginX, floor), time);
         foreach (var s in sim.Slimes)
         {
-            if (s.PacketFuse && s.Targetable && s.PacketLeft > 0 && sim.Find(s.SummonedBy) is Slime owner && BattleSim.MoveSpec(owner, ZipAct.Faulty) is ZipMoveSpec faulty)
+            if (s.Type.Zip != null && s.ZipRepulseWarn > 0)
+                TacticRing(dc, sim.CatXForZip, floor, 80, 1 - s.ZipRepulseWarn / 0.9);
+            if (s.PacketFuse && s.PacketRevealed && s.Targetable && s.PacketLeft > 0 && sim.Find(s.SummonedBy) is Slime owner && BattleSim.MoveSpec(owner, ZipAct.Faulty) is ZipMoveSpec faulty)
+            {
                 TacticRing(dc, s.X, floor, faulty.Radius, 1 - s.PacketLeft / faulty.Life);
+                DrawSizeTag(dc, $"{Math.Ceiling(s.PacketLeft)} s", s.X - OriginX, floor - s.Height - 20);
+            }
             if (!s.Targetable || s.Type.Zip is not ZipSpec zip || zip.Move(s.ZipAct) is not ZipMoveSpec m) continue;
             double progress = s.ZipSeconds > 0 ? 1 - s.ZipLeft / s.ZipSeconds : 1;
             switch (s.ZipAct)
@@ -36,7 +41,7 @@ public sealed partial class BattleFieldView
                 case ZipAct.Clamp: DrawClamp(dc, s, m, floor, progress); break;
                 case ZipAct.Overflow: DrawOverflow(dc, s, m, floor, time); break;
                 case ZipAct.Tear: if (s.ZipBeat != ZipBeat.Recover) DrawTearWarning(dc, s, m, floor, progress); break;
-                case ZipAct.Tumble: DrawTumbleBack(dc, s, floor); break;
+                case ZipAct.Tumble: break;
             }
         }
     }
@@ -95,17 +100,6 @@ public sealed partial class BattleFieldView
         }
     }
 
-    // The tumble's lane shows its second way too: an arrow back from its far end.
-    private void DrawTumbleBack(DrawingContext dc, Slime s, double floor)
-    {
-        if (!s.RollBack || s.State != SlimeState.Windup) return;
-        double far = s.RollGoal - OriginX, near = s.X - OriginX, way = Math.Sign(near - far), y = floor - 16;
-        dc.DrawLine(Halo, new Point(far, y), new Point(near, y));
-        dc.DrawLine(WarningEdge, new Point(far, y), new Point(near, y));
-        dc.DrawLine(WarningPen, new Point(near, y), new Point(near - way * 8, y - 6));
-        dc.DrawLine(WarningPen, new Point(near, y), new Point(near - way * 8, y + 6));
-    }
-
     // Instead of its body: the two halves out on their way, the zipper still holding them.
     private void DrawTornBody(DrawingContext dc, Slime s, ZipMoveSpec m, double x, double floor, BattleSettings settings)
     {
@@ -136,11 +130,7 @@ public sealed partial class BattleFieldView
         {
             if (b.Kind == ZipBlowKind.Branch)
             {
-                dc.DrawLine(Halo, new Point(p.X, y), new Point(p.X, y - high));
-                dc.DrawLine(ZipSeam, new Point(p.X, y), new Point(p.X, y - high));
-                foreach (int side in new[] { -1, 1 })
-                    dc.DrawRoundedRectangle(FlapFill, FlapEdge, new Rect(p.X + (side < 0 ? -b.Radius : b.Radius - 22), y - high * 0.7, 22, 16), 3, 3);
-                dc.DrawLine(ZipSeam, new Point(p.X - b.Radius + 11, y - high * 0.62), new Point(p.X + b.Radius - 11, y - high * 0.62));
+                DrawFolderTree(dc, b, p.X, y, high);
             }
             else dc.DrawRoundedRectangle(MarkFill, TacticEdge, new Rect(p.X - b.Radius, y - high, b.Radius * 2, high), 4, 4);
             return;
@@ -223,9 +213,9 @@ public sealed partial class BattleFieldView
     // Over a data packet's plain body: a tied bundle of pages; the live one shakes (drawn in DrawSlime's body space).
     private static void DrawPacket(DrawingContext dc, Slime s, double time)
     {
-        double shake = s.PacketFuse ? 1.8 * Math.Sin(time * 34) : 0;
+        double shake = s.PacketFuse && s.PacketRevealed ? 1.8 * Math.Sin(time * 34) : 0;
         dc.PushTransform(new TranslateTransform(shake, 0));
-        dc.DrawRoundedRectangle(s.PacketFuse ? BombRed : PageFill, Outline, new Rect(-16, -26, 32, 26), 3, 3);
+        dc.DrawRoundedRectangle(s.PacketFuse && s.PacketRevealed ? BombRed : PageFill, Outline, new Rect(-16, -26, 32, 26), 3, 3);
         dc.DrawLine(PageLine, new Point(-11, -19), new Point(11, -19));
         dc.DrawLine(PageLine, new Point(-11, -13), new Point(11, -13));
         dc.DrawLine(StrapPen, new Point(0, -26), new Point(0, 0));

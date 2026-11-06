@@ -4,25 +4,13 @@ using System.Collections.Generic;
 namespace DesktopPet;
 
 // 1.5 M17, B1 "Slime Nén" (the .zip slime, chapter 2's boss); redone 2026-11-05 and 2026-11-06 (docs/ZIP-SLIME.md).
-// It starts small and quick and swells as it unpacks (ZipSpec.Stages). Each stage has three blows drawn from a bag
-// (PetBattle.ZipMoves.cs); two debuffs land apart from them (PetBattle.ZipDebuff.cs). Each stage ends in, or
-// holds, a riddle; solving one earns a long stun and extra damage, missing it only costs that (a battle never
-// hangs on one):
-// - Stage 1, burst the belts (BossPhase.Press): its zipper jammed it slides to a stop shown on the floor; the cat
-//   let go on it there pins it and bursts a belt; two pins open it.
-// - Stage 2, stuck unpacking (BossPhase.Roped): a shield phase whose helpers are data packets, each tied to the
-//   boss; the shield holds while any is left. The cat going through a stream fast enough (held past the drag
-//   threshold, or thrown) or a Scissors stroke cuts it; breaking the packet ends it too. Two cuts together stun
-//   it longer.
-// - Stage 3, the zip bomb (BossPhase.Bomb): it swells behind a shield while a clock runs; the cat through its
-//   zipper tab or a Scissors stroke pulls it. Every pull done: it lets its air out and flies round the field.
-//   Time out: it bursts over the floor (a cat lifted over the blast is not hit) and arms again later.
-// Physics of the cat stay the window's: only its pose is read (PetBattle.Held.cs).
+// Three attack bags, edge-lock/file-matching puzzles, and a final six-pull shield at exactly 1 HP.
+// Puzzle targets and independent repulse are in PetBattle.ZipPuzzles.cs. Physics remain in C#.
 public sealed partial class BattleSim
 {
     // How small a deflated Zip Slime gets, and how fast it flies letting its air out.
     public const double DeflatedSize = 0.62;
-    private const double DeflateSpeed = 980, TabLockSeconds = 0.5, BurstHeight = 170;
+    private const double DeflateSpeed = 980, BurstHeight = 170;
     private Random? zipRandom;
 
     public int BossRopesCut { get; private set; }
@@ -45,9 +33,6 @@ public sealed partial class BattleSim
 
     // What a riddle shows the view: the bomb's filling (0–1; null: none armed) and its tab.
     public static double? BombFill(Slime s) => s.Type.Zip is { } zip && s.BombClock > 0 ? 1 - s.BombClock / zip.Bomb.Charge : null;
-    public static (double X, double Height)? BombTab(Slime s) => s.BombClock > 0 ? (s.TabX, s.TabHeight) : null;
-    // The stop of a riddle's roll, while the cat can still be dropped there (null: none).
-    public static double? PressSpot(Slime s) => s.PressRolling ? s.RollGoal : s.PressWindow > 0 ? s.X : null;
 
     private void ZipSize(Slime boss, double scale)
     {
@@ -85,11 +70,8 @@ public sealed partial class BattleSim
         if (boss.PressRolling && !boss.Rolling) boss.PressRolling = false;
         boss.ZipIdle += dt;
         TickZipDebuff(boss, zip, dt);
-        if (boss.BombRearm > 0 && !boss.Shielded && boss.State != SlimeState.Stunned)
-        {
-            boss.BombRearm = Math.Max(0, boss.BombRearm - dt);
-            if (boss.BombRearm == 0) ArmBomb(boss);
-        }
+        StepZipRepulse(boss, dt);
+
     }
 
     // A new stage: bigger, slower, its blows heavier.
@@ -117,12 +99,12 @@ public sealed partial class BattleSim
         if (boss.Shielded)
         {
             var phase = PhaseOf(boss, boss.ShieldTag);
-            if (phase is { Press: true }) { PressMove(boss, zip.Press, dx, minX, maxX); return true; }
+            if (phase is { Press: true } or { Roped: true }) return true;
             return phase is { Bomb: true };
         }
         var stage = StageOf(boss)!;
         // Locked in its shell the cat cannot be lifted out of the way: nothing starts until it is out and has a moment.
-        if (Grace <= 0 && boss.Cooldown <= 0 && !CatLocked && ZipGuardLeft <= 0)
+        if (Grace <= 0 && boss.Cooldown <= 0 && boss.ZipRepulseWarn <= 0 && !CatLocked && ZipGuardLeft <= 0)
         {
             var act = NextZipAct(boss, stage, zip, dx);
             if (act != ZipAct.None) { BeginZipAct(boss, act, zip.Move(act)!); return true; }
@@ -229,9 +211,9 @@ public sealed partial class BattleSim
     private bool StepZipRiddle(Slime boss, double dt, double minX, double maxX)
     {
         if (boss.Type.Zip is not ZipSpec zip || PhaseOf(boss, boss.ShieldTag) is not BossPhase phase) return false;
-        if (phase.Press)
+        if (phase.Press || phase.Roped)
         {
-            if (boss.PressLeft <= 0 && !boss.PressRolling && boss.PressWindow <= 0 && boss.State != SlimeState.Stunned) EndPress(boss, zip.Press, false);
+            StepZipPuzzle(boss, dt, phase);
             return true;
         }
         if (!phase.Bomb) return false;
@@ -244,51 +226,14 @@ public sealed partial class BattleSim
     private void StartPress(Slime boss)
     {
         var press = boss.Type.Zip!.Press;
-        boss.Retreating = false;
+        boss.Retreating = true;
+        boss.RetreatTime = 0;
+        boss.Set(SlimeState.Moving);
         boss.PendingCalls = null;
         boss.Pins = 0;
         boss.PressLeft = press.Rolls;
         boss.Cooldown = 1;
         events.Add(new(BattleEventKind.ZipPressed, boss.X, boss.Id));
-    }
-
-    // The next slide, at the cat whatever it is doing, its stop fixed now; off an edge too near.
-    private void PressMove(Slime boss, ZipPressSpec press, double dx, double minX, double maxX)
-    {
-        if (boss.Cooldown > 0 || boss.PressLeft <= 0 || boss.PressWindow > 0) return;
-        int way = dx < 0 ? -1 : 1;
-        double room = way < 0 ? boss.X - minX : maxX - boss.X;
-        if (room < press.Roll.Distance * 0.5) way = -way;
-        room = way < 0 ? boss.X - minX : maxX - boss.X;
-        boss.Facing = boss.DashDirection = way;
-        boss.RollDistance = Math.Min(press.Roll.Distance, room);
-        boss.RollGoal = boss.X + way * boss.RollDistance;
-        boss.Set(SlimeState.Windup);
-        boss.Rolling = boss.PressRolling = true;
-        lastWindup = Time;
-        events.Add(new(BattleEventKind.RollAimed, boss.X, boss.Id));
-    }
-
-    // The cat let go after a lift landed at x: a riddle's roll under way or just stopped there is pinned.
-    private void CatPressed(double x)
-    {
-        foreach (var s in slimes.ToArray())
-        {
-            if (s.Type.Zip is not ZipSpec zip || !s.Targetable || PhaseOf(s, s.ShieldTag) is not { Press: true } || !s.Shielded) continue;
-            if (s.PressWindow <= 0) continue; // Only once it has stopped on its gold spot.
-            if (Math.Abs(x - s.X) > s.HitWidth / 2 + zip.Press.Reach) continue;
-            s.Pins++;
-            ZipPins++;
-            s.PressRolling = false;
-            s.PressWindow = 0;
-            s.KnockVelocity = 0;
-            AddEffect(BattleEffectKind.Thud, s.X, 0);
-            events.Add(new(BattleEventKind.ZipPinned, s.X, s.Pins));
-            if (s.Pins >= zip.Press.Pins) { EndPress(s, zip.Press, true); continue; }
-            s.StunRemaining = zip.Press.PinStun;
-            s.Cooldown = 0.3;
-            s.Set(SlimeState.Stunned);
-        }
     }
 
     private void EndPress(Slime boss, ZipPressSpec press, bool broken)
@@ -327,54 +272,14 @@ public sealed partial class BattleSim
         boss.BombPulls = 0;
         boss.BombClock = bomb.Charge;
         if (boss.State is SlimeState.Windup or SlimeState.Dashing or SlimeState.Casting) boss.Set(SlimeState.Moving);
-        MoveTab(boss);
-        events.Add(new(BattleEventKind.ZipBombArmed, boss.X, boss.Id));
-    }
-
-    // The tab swings out to a new spot: the other side from the last, at another height.
-    private void MoveTab(Slime boss)
-    {
+        ClearZipProps(boss);
         zipRandom ??= BattleRandom.Stream(Seed, BattleRandom.Zip);
-        var (minX, maxX) = Bounds(boss);
-        int side = boss.TabX == 0 ? (zipRandom.Next(2) == 0 ? -1 : 1) : boss.TabX > boss.X ? -1 : 1;
-        double out_ = boss.Width / 2 + 44 + zipRandom.NextDouble() * 50;
-        if (boss.X + side * out_ < Left + 30 || boss.X + side * out_ > Right - 30) side = -side;
-        boss.TabX = Math.Clamp(boss.X + side * out_, Left + 30, Right - 30);
-        boss.TabHeight = 34 + zipRandom.NextDouble() * 56;
-    }
-
-    private void PullTab(Slime boss)
-    {
-        var bomb = boss.Type.Zip!.Bomb;
-        if (boss.TabLock > 0 || boss.BombClock <= 0) return;
-        boss.BombPulls++;
-        boss.TabLock = TabLockSeconds;
-        AddEffect(BattleEffectKind.Spark, boss.TabX, boss.TabHeight);
-        events.Add(new(BattleEventKind.ZipTabPulled, boss.TabX, boss.BombPulls));
-        if (boss.BombPulls < bomb.Pulls) { MoveTab(boss); return; }
-        boss.BombClock = 0;
-        boss.BombRearm = 0;
-        boss.BombDone = true;
-        boss.Deflating = bomb.Flight;
-        boss.DeflateVelocity = (boss.X - Left > Right - boss.X ? -1 : 1) * DeflateSpeed;
-        events.Add(new(BattleEventKind.ZipDeflated, boss.X));
-    }
-
-    // The cat's way since the last step against an armed tab, as against a rope.
-    private void CatThroughTab(CatPose from, CatPose cat, double speed)
-    {
-        foreach (var s in slimes)
+        for (int i = 0; i < 6; i++)
         {
-            if (s.BombClock <= 0 || s.Type.Zip is not ZipSpec zip || speed < s.Type.RopeCutSpeed) continue;
-            if (Distance(s.TabX, s.TabHeight, from.X, from.Height, cat.X, cat.Height) <= zip.Bomb.TabRadius) { PullTab(s); return; }
+            double x = Left + (Right - Left) * (0.14 + (i % 3) * 0.32 + (zipRandom.NextDouble() - 0.5) * 0.08);
+            AddZipProp(boss, ZipProp.Tab, x, i, i < 3 ? 0 : Math.Clamp(180 + zipRandom.NextDouble() * 150, 60, Math.Max(60, SkyHeight - 140)));
         }
-    }
-
-    // A Scissors cut across [x0, x1] at height y.
-    private void SnipTab(double x0, double y, double x1, double band)
-    {
-        foreach (var s in slimes)
-            if (s.BombClock > 0 && s.TabX >= x0 - band && s.TabX <= x1 + band && Math.Abs(s.TabHeight - y) <= band) { PullTab(s); return; }
+        events.Add(new(BattleEventKind.ZipBombArmed, boss.X, boss.Id));
     }
 
     // From a point to a segment.
@@ -395,23 +300,19 @@ public sealed partial class BattleSim
         boss.LeapHeight = 24 + 18 * Math.Sin(boss.Deflating * 17);
         if (boss.Deflating > 0) return;
         boss.LeapHeight = 0;
-        boss.Shielded = false;
-        boss.ShieldTag = 0;
-        AddEffect(BattleEffectKind.Thud, boss.X, 0);
-        events.Add(new(BattleEventKind.BossShieldDown, boss.X));
-        boss.KnockVelocity = 0;
-        boss.StunRemaining = bomb.Stun;
-        boss.Set(SlimeState.Stunned);
-        Open(boss, bomb.Bonus, bomb.Stun, bomb.Opening);
+        boss.Hp = 0;
+        Defeat(boss);
+        return;
     }
 
-    // Time out: the blast over the floor; it drops its shield and arms again after a while.
+    // Timeout bursts over the floor; the shield and remaining targets stay until all six are hit.
     private void Burst(Slime boss, ZipBombSpec bomb)
     {
         ZipBursts++;
-        boss.Shielded = false;
-        boss.ShieldTag = 0;
-        boss.BombRearm = bomb.Rearm;
+        boss.BombRearm = 0;
+        boss.BombClock = bomb.Charge;
+        boss.Shielded = true;
+        boss.ShieldTag = boss.BombTag;
         boss.Cooldown = StageOf(boss)!.Cooldown / 2;
         AddEffect(BattleEffectKind.Slam, boss.X, 0, bomb.Radius);
         bool hit = CatInVolume(boss.X - bomb.Radius, boss.X + bomb.Radius, 0, BurstHeight);

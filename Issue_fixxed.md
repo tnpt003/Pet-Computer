@@ -5,6 +5,14 @@ Sổ ghi các lỗi đã sửa của Desktop Pet. Phần A: lỗi người dùng
 Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm lỗi mới: tạo mục số tiếp theo ở đầu phần A (hoặc một dòng ở phần B).
 
 # A. Lỗi người dùng phát hiện
+## #56 — Slime Nén sau chơi thử: khóa đứng yên, mech tương tác và bom sinh tử 1 HP (2026-11-06)
+- **Triệu chứng/yêu cầu:** khóa vẫn đi, hình khóa/cây/tay kéo khó nhận ra; hai line lăn; mech 1 giống đòn lăn, mech cuối lặp ngắt đòn thường. Người dùng chốt tổng 12 nhát khóa, đổi bên mỗi 3; mech ghép thư mục có cây gây damage/choáng, final chỉ ở 1 HP.
+- **Nguyên nhân:** luật cũ cho khóa đi, renderer vẽ đường đi/về cùng lúc; phase cuối dùng tỷ lệ 20% và nạp lại 14 giây; mục tiêu cũ dựa vào thả đè/cắt dây/kéo xuyên.
+- **Sửa:** mục tiêu Belt/File/Tab đi qua nhịp đánh sàn/trên không; chặn skill/đòn lan/physics dịch chuyển mục tiêu. Hai khóa rìa + boss nhảy giữa + đai quét; ba file ghép thư mục chừa mép + cây có cảnh báo. Chặn mọi damage ở 1 HP, sáu tay kéo một nhát, timeout giữ mục tiêu, phá hết xì hơi rồi hạ boss. Hai phase cuối có đẩy riêng 0 damage, choáng sau đẩy; Khiên/Nộ/cầm/bay/Pause đúng luật. Khóa đi/nhấc, ổ khóa lớn; 3 giấy, bom ẩn phải soi, 3 mẫu cây, bỏ line lặp. Hướng dẫn/Sổ tay vi/en/ja và rulesVersion đồng bộ.
+- **Lỗi tìm khi rà:** giữ tích Nộ từ nhát trúng mục tiêu mech; file giả hết giờ không được xóa bom trước lượt nó; không khóa mèo giữa cú đẩy; nhấc/Nộ/mech hủy choáng trễ. Mô phỏng boss đơn trước đây vẫn bật app độc dù ghi không app: sửa `apps:false`; cập nhật bot giải mech bằng nhịp vũ khí và né cây/bom đã soi, không nới test. Mô tả Sổ tay phải ≤200 ký tự.
+- **Kiểm chứng:** build đạt; Python 58 + 5, WPF 1431 đạt. C# đầy đủ 89 suite: 3222 đạt/1 FAIL; mô hình bot cuối chạy lại 3 suite: 290 đạt/3 FAIL cân bằng. Chi tiết/đối chứng aa627fd: docs/BALANCE-ZIP-2026-11-06.md. Chưa publish/smoke, giữ nguyên mèo đang chạy; chờ duyệt thử HP 1000 (chưa áp dụng). Ảnh đã xem trong artifacts/zip-puzzle-review; chưa chơi thật hoặc thử DPI/multi-monitor.
+- **Cần test tay:** docs/MANUAL-TEST.md → Issue #56; đặc biệt file bị đẩy sai về mép, mèo cầm đánh tay kéo cao, cảm giác nhịp quét/đẩy và bom chạy ẩn.
+
 ## #55 — Thiết kế lại Slime Nén: túi đòn, mech, debuff, boss đánh mèo đang bế (2026-11-06, commit 01a11ad)
 - **Yêu cầu (người dùng):** mỗi phase 3 đòn ngẫu nhiên và 1 mech theo HP; hai debuff Nén và Khóa ZIP; bế mèo là cách né chứ không còn miễn sát thương; chốt HP theo DPS đo được.
 - **Sửa:** luật đầy đủ ở docs/ZIP-SLIME.md. Thêm `PetBattle.ZipMoves.cs`, `PetBattle.ZipDebuff.cs`, `PetBattleView.ZipMoves.cs`, quái `zip_packet`; va chạm có chiều cao cho riêng boss này; `maxHp` 900 → 1100; rulesVersion c2_zip_slime 5, Vô tận 13, Lối Bãi rác 6.

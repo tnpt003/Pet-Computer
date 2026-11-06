@@ -25,12 +25,21 @@ internal static class ZipProbeTests
 
     private static (bool Won, double Seconds, double HpLeft, double BossHp, Phase[] Phases) Play(BattleSettings data, string weapon, BattleDifficulty level, double threat, Dictionary<string, int> build, int seed, double weaponBonus = 0)
     {
-        var sim = new BattleSim(data, 0, 1600, new Random(seed), level, weapon, BossOnly(data, threat), build, seed, skills: null, weaponBonus: weaponBonus);
+        var sim = new BattleSim(data, 0, 1600, new Random(seed), level, weapon, BossOnly(data, threat), build, seed, apps: false, skills: null, weaponBonus: weaponBonus);
         var phases = new[] { new Phase(), new Phase(), new Phase() };
-        double cat = 700, hpBefore = 0, nextHand = 0, liftLeft = 0, bossHp = 0, liftX = 0;
+        double cat = 700, hpBefore = 0, nextHand = 0, bossHp = 0;
         int moves = 0;
         for (double t = 0; t < 600 && !sim.Over; t += dt)
         {
+            sim.Use(BattleSkill.Heal, cat);
+            var packets = sim.Slimes.Where(s => s.PacketLeft > 0 && s.Targetable).ToArray();
+            if (packets.Length > 0) sim.SetPointer((packets[(int)(t / 0.25) % packets.Length].X, 10));
+            if (ZipPuzzlePlayer.Step(sim, ref cat, dt, dodge: true))
+            {
+                if (seed == 1 && Environment.GetEnvironmentVariable("PET_ZIP_DIAG") != null && sim.Boss is { BombClock: > 0 } && (int)(t * 30) % 90 == 0)
+                    Console.WriteLine($"ZIP final t={t:0.0} cat={cat:0} hp={sim.CatHp:0} bomb={sim.Boss.BombClock:0.0} target={sim.TargetId} cd={sim.CatCooldown:0.0} stun={sim.CatStunRemaining:0.0} swing={sim.SwingTime:0.0}");
+                sim.ClearEvents(); continue;
+            }
             var boss = sim.Boss;
             CatPose? pose = null;
             bool held = false;
@@ -45,31 +54,9 @@ internal static class ZipProbeTests
                 if (!boss.Shielded) sim.Use(BattleSkill.Bomb, boss.Id, cat);
                 foreach (var drop in sim.Drops.ToList()) sim.PickUp(drop.Id);
                 if (sim.CatLocked) { }
-                else if (liftLeft > 0)
+                else if (boss.ZipRepulseWarn > 0 || sim.Slimes.Any(s => s.PacketFuse && s.PacketRevealed && s.PacketLeft > 0 && Math.Abs(s.X - cat) < 180))
                 {
-                    // Up and over, then let go where it was told.
-                    liftLeft -= dt; held = true; pose = new CatPose(liftX, 240, 0, 0, true, false);
-                    if (liftLeft <= 0) { cat = liftX; held = false; pose = null; }
-                }
-                else if (shield is { Press: true } && boss.PressWindow is > 0 and < 1.9 && t >= nextHand)
-                {
-                    liftLeft = 0.15; liftX = boss.X; nextHand = t + 1;
-                }
-                else if (shield is { Roped: true } && t >= nextHand && sim.Slimes.FirstOrDefault(s => sim.RopeBoss(s) == boss) is Slime tied)
-                {
-                    // A quick drag through the middle of a stream.
-                    double x = (tied.X + boss.X) / 2;
-                    sim.Step(dt, x, true, true, new CatPose(x, 70, 0, -900, true, false));
-                    sim.ClearEvents();
-                    held = true; pose = new CatPose(x, 0, 0, -900, true, false); cat = x;
-                    nextHand = t + 0.7;
-                }
-                else if (BattleSim.BombTab(boss) is (double tabX, double tabHeight) && t >= nextHand)
-                {
-                    sim.Step(dt, tabX - 30, true, true, new CatPose(tabX - 30, tabHeight, 900, 0, true, false));
-                    sim.ClearEvents();
-                    held = true; pose = new CatPose(tabX + 30, tabHeight, 900, 0, true, false); cat = tabX;
-                    nextHand = t + 0.8;
+                    held = true; pose = new CatPose(cat, 260, 0, 0, true, false);
                 }
                 else if (sim.ZipThreatens(boss, cat) && boss.ZipSeconds - boss.ZipLeft >= 0.35)
                 {
@@ -98,6 +85,8 @@ internal static class ZipProbeTests
             phase.Moves += sim.ZipMovesUsed - moves;
             moves = sim.ZipMovesUsed;
         }
+        if (sim.Phase != BattlePhase.Won && Environment.GetEnvironmentVariable("PET_ZIP_DIAG") != null)
+            Console.WriteLine($"ZIP diagnostic seed={seed} phase={sim.Phase} time={sim.Time:0} cat={sim.CatHp:0} boss={sim.Boss?.Hp:0} stage={sim.Boss?.ZipStage} props={string.Join(',', sim.Slimes.Where(s => s.ZipProp != ZipProp.None && s.Targetable).Select(s => $"{s.ZipProp}@{s.X:0}/{s.Altitude:0}"))}");
         return (sim.Phase == BattlePhase.Won, sim.FightSeconds, sim.CatHp, bossHp, phases);
     }
 

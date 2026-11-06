@@ -85,10 +85,8 @@ internal static class BattleZipTests
     public static void Run(Action<bool, string> check)
     {
         StageChecks(check);
-        PressChecks(check);
-        RopeChecks(check);
-        BombChecks(check);
-        WholeFightChecks(check);
+        PuzzleChecks(check);
+        RepulseChecks(check);
         DataChecks(check);
     }
 
@@ -103,293 +101,82 @@ internal static class BattleZipTests
         check(Spec.Moves.Select(m => m.Damage).Max() > stages[0].Damage, "Its blows carry their own numbers");
     }
 
-    // At the press riddle, the boss's first roll under way or about to be.
-    private static (BattleSim Sim, Slime Boss, HashSet<BattleEventKind> Seen) Pressing(double damage = 0)
+    private static void PuzzleChecks(Action<bool, string> check)
     {
-        var (sim, zip) = Field(Zip(damage), bossX: 800, catX: 400);
-        var seen = new HashSet<BattleEventKind>();
-        sim.Damage(zip, zip.MaxHp * 0.5, DamageSource.App);
-        foreach (var e in sim.Events) seen.Add(e.Kind);
-        sim.ClearEvents();
-        return (sim, zip, seen);
-    }
-
-    private static bool ToStop(BattleSim sim, Slime zip, double catX)
-    {
-        for (int i = 0; i < 600 && zip.PressWindow <= 0; i++) { sim.Step(dt, catX, true, true, new CatPose(catX, 200, 0, 0, true, false)); sim.ClearEvents(); }
-        return zip.PressWindow > 0;
-    }
-
-    private static void PressChecks(Action<bool, string> check)
-    {
-        var press = Spec.Press;
-        var (sim, zip, seen) = Pressing();
-        check(zip.Shielded && Math.Abs(zip.Hp - zip.MaxHp * 0.66) < 1e-6 && seen.Contains(BattleEventKind.ZipPressed), "A hit stops at the line and it locks itself");
-        double before = zip.Hp;
-        check(sim.Damage(zip, 50, DamageSource.Weapon) == HitResult.Immune && zip.Hp == before, "Locked, it takes no damage");
-        check(zip.ZipStage == 0, "Still small");
-
-        // It rolls even with the cat in the air: the lift is how the riddle is solved.
-        check(ToStop(sim, zip, 300) && zip.PressLeft == press.Rolls - 1, "It slides at a lifted cat too, and stops");
-        check(BattleSim.RollTurn(zip) == 0, "Sliding, it does not tumble");
-        check(BattleSim.PressSpot(zip) == zip.X, "The spot to drop on is where it stopped");
-
-        // A drop far off does nothing; a drop on it pins it, not a shot at the shield.
-        Drop(sim, zip.X + 400);
-        check(sim.ZipPins == 0, "A drop far from it pins nothing");
-        (sim, zip, seen) = Pressing();
-        ToStop(sim, zip, 300);
-        Drop(sim, zip.X, seen);
-        check(sim.ZipPins == 1 && zip.Pins == 1 && zip.State == SlimeState.Stunned && zip.Shielded && seen.Contains(BattleEventKind.ZipPinned), "A drop on it pins it; the lock holds");
-        double hp = sim.CatHp;
-        check(ToStop(sim, zip, 300), "It rolls again");
-        seen.Clear();
-        Drop(sim, zip.X, seen);
-        check(sim.ZipPins == 2 && !zip.Shielded && seen.Contains(BattleEventKind.ZipUnlocked) && seen.Contains(BattleEventKind.ZipGrew), "The second pin breaks the lock");
-        check(zip.State == SlimeState.Stunned && zip.ZipStage == 1 && zip.MechBonusClock > 0 && zip.Range == Spec.Stages[1].Range, "Dazed, its next stage on");
-        before = zip.Hp;
-        check(sim.Damage(zip, 10, DamageSource.App) == HitResult.Landed && Math.Abs(before - zip.Hp - 10 * press.Bonus) < 1e-6, "Taking more damage for a while");
-        double width = zip.Width;
-        Run(sim, 0.3);
-        check(zip.Width > width && zip.Width <= sim.Settings.SlimeWidth * Spec.Stages[1].Scale + 1e-6, "Swelling up bit by bit");
-        Run(sim, press.Stun + Spec.Grow);
-        check(Math.Abs(zip.Width - sim.Settings.SlimeWidth * Spec.Stages[1].Scale) < 1e-6 && zip.MechBonusClock == 0, "To its new size, the reward over");
-
-        // Only once it has stopped: a drop on it mid-slide pins nothing.
-        (sim, zip, seen) = Pressing();
-        for (int i = 0; i < 600 && zip.State != SlimeState.Dashing; i++) { sim.Step(dt, 300, true, true, new CatPose(300, 200, 0, 0, true, false)); sim.ClearEvents(); }
-        double goal = zip.RollGoal;
-        Drop(sim, zip.X);
-        check(sim.ZipPins == 0 && zip.RollGoal == goal, "A drop on it mid-slide pins nothing, and its stop stays where it was shown");
-
-        // A roll over the cat on the floor hurts; missing every chance opens the lock, no reward.
-        (sim, zip, seen) = Pressing(damage: 20);
-        double start = sim.CatHp;
-        seen.Clear();
-        bool opened = Run(sim, press.Rolls * (press.Roll.Windup + press.Roll.Distance / press.Roll.Speed + press.Window + 1) + 2, catX: 400, kind: BattleEventKind.ZipUnlocked, seen: seen);
-        check(opened && !zip.Shielded && zip.ZipStage == 1 && zip.State != SlimeState.Stunned && zip.MechBonusClock == 0 && !seen.Contains(BattleEventKind.BossShieldDown),
-            "Out of rolls the lock opens by itself: its next stage, no reward");
-        check(sim.CatHp < start && seen.Contains(BattleEventKind.RollHit), "A cat left on the floor is rolled over");
-
-        // A stun cutting a roll short never leaves the riddle hanging.
-        (sim, zip, seen) = Pressing();
-        zip.PressLeft = 1;
-        for (int i = 0; i < 600 && zip.State != SlimeState.Dashing; i++) { sim.Step(dt, 300, true, true, new CatPose(300, 200, 0, 0, true, false)); sim.ClearEvents(); }
-        zip.StunRemaining = 0.5;
-        zip.Set(SlimeState.Stunned);
-        check(Run(sim, 2, 300, BattleEventKind.ZipUnlocked) && !zip.Shielded, "A stunned last roll still ends the riddle");
-
-        // Paused, the riddle waits.
-        (sim, zip, seen) = Pressing();
-        double left = zip.Cooldown;
+        var (sim, boss) = Field(Zip(), bossX: 800, catX: 400);
+        sim.Damage(boss, 100000, DamageSource.App);
+        Run(sim, 2, 400);
+        var belts = sim.Slimes.Where(s => s.ZipProp == ZipProp.Belt).OrderBy(s => s.X).ToArray();
+        check(boss.Shielded && boss.Hp == boss.MaxHp * 0.66 && belts.Length == 2, "Oversized hit starts first puzzle and creates two edge belts");
+        check(Math.Abs(boss.X - 800) < 1 && belts[0].X == 65 && belts[1].X == 1535, "Boss leaps to centre; both locks leave the cat room at map edges");
+        sim.Damage(belts[1], 100000, DamageSource.Weapon);
+        sim.Damage(belts[0], 100000, DamageSource.Splash);
+        check(boss.Pins == 0, "Inactive lock and splash cannot advance the puzzle");
+        for (int i = 0; i < 300 && !sim.ZipBlows.Any(b => !b.Done); i++) Run(sim, dt, 400);
+        check(sim.ZipBlows.Any(b => b.Top == 65 && b.Stun == 0.5), "Belt sweep warns along the active half of the floor");
         sim.Paused = true;
-        Run(sim, 1, 300);
-        sim.Paused = false;
-        check(zip.Cooldown == left && zip.PressLeft == press.Rolls, "A paused battle freezes it");
-    }
-
-    // A rope crossed in the middle by a stroke (or the cat's way) going down through it.
-    private static (double X, double Top, double Bottom) Across(Slime helper, Slime boss) => ((helper.X + boss.X) / 2, 70, 0);
-
-    private static bool Through(BattleSim sim, CatPose from, CatPose to, bool lifted = true)
-    {
-        bool cut = false;
-        foreach (var pose in new[] { from, to })
-        {
-            sim.Step(dt, 100, true, lifted, pose);
-            cut |= sim.Events.Any(e => e.Kind == BattleEventKind.BossRopeCut);
-            sim.ClearEvents();
-        }
-        return cut;
-    }
-
-    // The roped phase begun, its two helpers tied to the boss.
-    private static (BattleSim Sim, Slime Boss, Slime[] Helpers, HashSet<BattleEventKind> Seen) Roped()
-    {
-        var (sim, zip) = Field(Zip(damage: 0));
-        zip.PhasesDone = 1;
-        zip.ZipStage = 1;
-        zip.Range = Spec.Stages[1].Range;
-        var seen = new HashSet<BattleEventKind>();
-        sim.Damage(zip, zip.MaxHp * 0.8, DamageSource.App);
-        foreach (var e in sim.Events) seen.Add(e.Kind);
-        sim.ClearEvents();
-        for (int i = 0; i < 600 && sim.Slimes.Count(s => s.RopedTo == zip.Id && s.Targetable) < 2; i++)
-        {
-            sim.Step(dt, 100, false);
-            foreach (var e in sim.Events) seen.Add(e.Kind);
-            sim.ClearEvents();
-        }
-        // One rope on each side of the boss, so a stroke through one never meets the other.
-        var helpers = sim.Slimes.Where(s => s.RopedTo == zip.Id).ToArray();
-        zip.X = 800;
-        if (helpers.Length == 2) { helpers[0].X = 560; helpers[1].X = 1040; }
-        return (sim, zip, helpers, seen);
-    }
-
-    private static void RopeChecks(Action<bool, string> check)
-    {
-        var (sim, zip, helpers, seen) = Roped();
-        check(zip.Shielded && Math.Abs(zip.Hp - zip.MaxHp * 0.33) < 1e-6, "A hit stops at the roped phase's line and the shield goes up");
-        check(helpers.Length == 2 && helpers.All(h => sim.RopeBoss(h) == zip) && sim.RopesLeft(zip) == 2,
-            "Its formation comes tied to it by ropes, one each");
-        check(seen.Contains(BattleEventKind.BossRoped) && seen.Contains(BattleEventKind.FormationArrived) && sim.FormationsMet == 1,
-            "The ropes and the formation are announced");
-        double before = zip.Hp;
-        check(sim.Damage(zip, 50, DamageSource.Weapon) == HitResult.Immune && zip.Hp == before, "While a rope is left it takes no damage");
-        Run(sim, 0.5);
-        check(zip.Shielded, "The shield holds while the ropes stay");
-
-        // A slow drag, a cat only pressed, a paused battle: the ropes stay.
-        double fast = zip.Type.RopeCutSpeed * 2, slow = zip.Type.RopeCutSpeed * 0.5;
-        var (x, top, bottom) = Across(helpers[0], zip);
-        check(!Through(sim, new CatPose(x, top, 0, -slow, true, false), new CatPose(x, bottom, 0, -slow, true, false)) && sim.RopesLeft(zip) == 2,
-            $"A slow drag (under {zip.Type.RopeCutSpeed} DIPs/s) leaves the rope");
-        check(!Through(sim, new CatPose(x, top, 0, -fast, true, false), new CatPose(x, bottom, 0, -fast, true, false), lifted: false), "A cat only pressed leaves it");
-        sim.Paused = true;
-        bool paused = Through(sim, new CatPose(x, top, 0, -fast, true, false), new CatPose(x, bottom, 0, -fast, true, false));
-        sim.Paused = false;
-        check(!paused && sim.RopesLeft(zip) == 2, "A paused battle cuts nothing");
-
-        // The Scissors cut one: its helper is dazed, the shield holds on the other rope.
-        Run(sim, 0.1); // The cat put down: the mouse skills wait while it is held.
-        (x, top, bottom) = Across(helpers[0], zip);
-        sim.Arm(BattleSkill.Scissors);
-        // (2026-11-04: a cut across at the rope's height; the blades stop short of the other rope.)
-        helpers[1].X = helpers[0].X > zip.X ? zip.X - 300 : zip.X + 300;
-        bool snipped = sim.UseOnScreen(BattleSkill.Scissors, x + (helpers[0].X > zip.X ? 180 : -180), (top + bottom) / 2);
-        for (int i = 0; i < 120 && sim.Cut != null; i++) { sim.Step(1.0 / 60, 100, false); sim.ClearEvents(); }
-        check(snipped && helpers[0].RopedTo == 0 && helpers[0].State == SlimeState.Stunned && sim.BossRopesCut == 1,
-            "A Scissors cut through a rope cuts it and dazes its helper");
-        Run(sim, 0.3);
-        check(zip.Shielded && sim.RopesLeft(zip) == 1, "One rope left: the shield holds");
-
-        // The held cat dragged fast through the last one: the shield drops, the helpers fight on, the last stage on.
-        (x, top, bottom) = Across(helpers[1], zip);
-        check(Through(sim, new CatPose(x, top, 0, -fast, true, false), new CatPose(x, bottom, 0, -fast, true, false)) && sim.CatRopeCuts == 1,
-            "The held cat dragged fast through a rope cuts it");
-        seen.Clear();
-        Run(sim, 0.3, seen: seen);
-        check(!zip.Shielded && seen.Contains(BattleEventKind.BossRopesGone) && seen.Contains(BattleEventKind.BossShieldDown) && helpers.All(h => h.Targetable),
-            "The last rope gone, the shield drops; its helpers fight on");
-        check(zip.ZipStage == 2 && seen.Contains(BattleEventKind.ZipGrew), "And it swells to its last stage");
-        check(!seen.Contains(BattleEventKind.ZipRopeCombo) && zip.StunRemaining <= zip.Type.ShieldBreakStun, "Cuts far apart earn no extra stun");
-
-        // Two ropes cut together stun it longer.
-        (sim, zip, helpers, seen) = Roped();
-        (x, top, bottom) = Across(helpers[0], zip);
-        var (x2, _, _) = Across(helpers[1], zip);
-        seen.Clear();
-        Through(sim, new CatPose(x, top, 0, -fast, true, false), new CatPose(x, bottom, 0, -fast, true, false));
-        Through(sim, new CatPose(x2, top, 0, -fast, true, false), new CatPose(x2, bottom, 0, -fast, true, false));
-        Run(sim, 0.1, seen: seen);
-        check(zip.BossRopesCutTogether(), "Two cuts together earn the extra stun");
-
-        // The thrown cat flying through a rope cuts it too; defeating a helper ends its rope.
-        (sim, zip, helpers, _) = Roped();
-        (x, top, bottom) = Across(helpers[0], zip);
-        check(Through(sim, new CatPose(x - 120, top, fast, -fast / 3, false, true), new CatPose(x + 120, bottom, fast, -fast / 3, false, true)) && helpers[0].RopedTo == 0,
-            "The thrown cat flying through a rope cuts it");
-        sim.Damage(helpers[1], helpers[1].Hp + 1, DamageSource.App);
-        Run(sim, 0.3);
-        check(!zip.Shielded && sim.RopesLeft(zip) == 0, "Defeating the last tied helper ends its rope and drops the shield");
-    }
-
-    private static bool BossRopesCutTogether(this Slime zip) =>
-        Math.Abs(zip.StunRemaining - (zip.Type.ShieldBreakStun + Spec.RopeComboStun)) < 0.2 && zip.State == SlimeState.Stunned;
-
-    // The bomb armed on its boss (the last stage, the first two phases done).
-    private static (BattleSim Sim, Slime Boss) Bomb(double damage = 0)
-    {
-        var (sim, zip) = Field(Zip(damage), bossX: 800, catX: 400);
-        zip.PhasesDone = 3;
-        zip.ZipStage = 2;
-        zip.Range = Spec.Stages[2].Range;
-        sim.Damage(zip, zip.MaxHp * 0.9, DamageSource.App);
-        sim.ClearEvents();
-        return (sim, zip);
-    }
-
-    // The cat flung through the tab; true when it was pulled.
-    private static bool Pull(BattleSim sim, Slime zip, double speed = 900, bool lifted = true)
-    {
-        var (x, h) = BattleSim.BombTab(zip)!.Value;
-        int pulls = zip.BombPulls;
-        sim.Step(dt, x, true, lifted, new CatPose(x - 40, h, speed, 0, true, false));
-        sim.Step(dt, x, true, lifted, new CatPose(x + 40, h, speed, 0, true, false));
-        sim.ClearEvents();
-        Run(sim, 0.6, 400);
-        return zip.BombPulls > pulls || zip.BombClock <= 0;
-    }
-
-    private static void BombChecks(Action<bool, string> check)
-    {
-        var bomb = Spec.Bomb;
-        var (sim, zip) = Bomb();
-        check(zip.Shielded && Math.Abs(zip.Hp - zip.MaxHp * 0.2) < 1e-6 && BattleSim.BombFill(zip) is >= 0 and < 0.1 && BattleSim.BombTab(zip) != null, "At its line the bomb arms: a shield, a clock, a tab");
-        check(sim.Damage(zip, 50, DamageSource.Weapon) == HitResult.Immune, "It takes no damage then");
-        var (tabX, tabHeight) = BattleSim.BombTab(zip)!.Value;
-        check(Math.Abs(tabX - zip.X) > zip.Width / 2 && tabHeight is > 20 and < 110, $"The tab hangs off it within the cat's reach ({tabX - zip.X:0}, {tabHeight:0})");
-        check(!Pull(sim, zip, speed: zip.Type.RopeCutSpeed * 0.5), "A slow drag does not pull it");
-        check(!Pull(sim, zip, lifted: false), "Nor a cat only pressed");
-        double fill = BattleSim.BombFill(zip)!.Value;
-        sim.Paused = true;
+        double timer = boss.ZipPuzzleClock;
         Run(sim, 1, 400);
+        check(boss.ZipPuzzleClock == timer, "Pause freezes puzzle and sweep clocks");
         sim.Paused = false;
-        check(BattleSim.BombFill(zip) == fill, "Paused, its clock stops");
-
-        check(Pull(sim, zip) && zip.BombPulls == 1, "The cat dragged fast through the tab pulls it");
-        var (nextX, _) = BattleSim.BombTab(zip)!.Value;
-        check(Math.Sign(nextX - zip.X) != Math.Sign(tabX - zip.X), "The tab swings to its other side");
-        check(sim.Arm(BattleSkill.Scissors) && sim.UseOnScreen(BattleSkill.Scissors, nextX + 90, BattleSim.BombTab(zip)!.Value.Height), "The Scissors reach it");
-        for (int i = 0; i < 120 && sim.Cut != null; i++) { sim.Step(dt, 400, false); sim.ClearEvents(); }
-        check(zip.BombPulls == 2, "And pull it too");
-        var seen = new HashSet<BattleEventKind>();
-        Run(sim, 0.6, 400);
-        Pull(sim, zip);
-        check(zip.BombDone && zip.Deflating > 0 && BattleSim.BombFill(zip) == null && zip.Shielded, "The last pull lets its air out");
-        double x0 = zip.X, far = 0;
-        bool hopped = false;
-        for (int i = 0; i < 200 && zip.Deflating > 0; i++) { sim.Step(dt, 400, false); sim.ClearEvents(); far = Math.Max(far, Math.Abs(zip.X - x0)); hopped |= zip.LeapHeight > 0; }
-        check(far > 300 && hopped, $"It flies round the field ({far:0})");
-        check(!zip.Shielded && zip.State == SlimeState.Stunned && zip.MechBonusClock > 0, "Then lies dazed, its shield gone");
-        double before = zip.Hp;
-        check(sim.Damage(zip, 10, DamageSource.App) == HitResult.Landed && Math.Abs(before - zip.Hp - 10 * bomb.Bonus) < 1e-6, "Taking more damage");
-        Run(sim, bomb.Rearm + bomb.Stun + 1, 400, seen: seen);
-        check(!seen.Contains(BattleEventKind.ZipBombArmed), "Solved, the bomb never arms again");
-
-        // Time out: the floor blows; a lifted cat is spared; it arms again later.
-        (sim, zip) = Bomb(damage: 20);
-        double hp = sim.CatHp;
-        seen = new HashSet<BattleEventKind>();
-        check(Run(sim, bomb.Charge + 1, 400, BattleEventKind.ZipBurst, seen: seen) && sim.ZipBursts == 1, "Time out: it bursts");
-        check(sim.CatHp < hp && sim.CatStunned && !zip.Shielded && !seen.Contains(BattleEventKind.BossShieldDown), "The cat on the floor takes it, stunned; no shield-break banner");
+        for (int i = 0; i < 12; i++)
+        {
+            var active = belts[(i / 3) % 2];
+            check(sim.ZipPropActive(active), $"Correct belt active for hit {i + 1}");
+            sim.Damage(active, 1, DamageSource.Weapon);
+            check(boss.Pins == i + 1, "Each direct weapon strike counts once");
+        }
+        check(!boss.Shielded && boss.ZipStage == 1 && belts.All(s => !s.Targetable), "Twelve strikes remove belts and open stage two");
+        boss.MechBonusClock = 0;
+        sim.Damage(boss, 100000, DamageSource.Poison);
         Run(sim, 0.1, 400);
-        before = zip.Hp;
-        check(sim.Damage(zip, 5, DamageSource.App) == HitResult.Landed && zip.Hp < before, "It takes damage between bombs");
-        (sim, zip) = Bomb(damage: 20);
-        hp = sim.CatHp;
-        check(Run(sim, bomb.Charge + 1, 400, BattleEventKind.ZipBurst, held: true) && sim.CatHp == hp, "A lifted cat is spared the burst");
-        check(Run(sim, bomb.Rearm + 1, 400, BattleEventKind.ZipBombArmed, held: true) && zip.Shielded && BattleSim.BombFill(zip) != null, "It arms again after a while");
+        var files = sim.Slimes.Where(s => s.ZipProp == ZipProp.File && s.Targetable).ToArray();
+        check(files.Length == 3 && boss.Shielded, "Second HP gate creates three matching files");
+        check(files.All(s => s.X >= 120 && s.X <= 1480 && sim.ZipFileGoal(s) >= 120 && sim.ZipFileGoal(s) <= 1480), "Files and folders leave room to attack from either side");
+        Run(sim, 3.5, 400);
+        check(sim.ZipBlows.Any(b => !b.Done && b.Kind == ZipBlowKind.Branch && b.Stun == 0.6), "Folder puzzle plants a warned damaging tree at the cat");
+        foreach (var file in files)
+        {
+            Run(sim, dt, file.X - 70, held: true);
+            // The cat stands to the left of these initial positions.
+            for (int i = 0; i < 10 && file.Targetable; i++) sim.Damage(file, 1, DamageSource.Weapon);
+        }
+        check(!boss.Shielded && boss.ZipStage == 2, "Matching all three files opens stage three");
+        boss.Hp = 2;
+        sim.Damage(boss, 100000, DamageSource.Poison);
+        check(boss.Hp == 1 && boss.Shielded && boss.BombClock > 0, "Lethal poison is clamped to exactly one HP and immediately starts final puzzle");
+        var tabs = sim.Slimes.Where(s => s.ZipProp == ZipProp.Tab && s.Targetable).ToArray();
+        check(tabs.Length == 6 && tabs.Count(s => s.Airborne) == 3, "Final puzzle has three floor and three air pulls");
+        sim.Damage(boss, 100000, DamageSource.Reflect);
+        check(boss.Hp == 1, "Damage cannot bypass the final puzzle shield");
+        Run(sim, boss.Type.Zip!.Bomb.Charge + 0.2, 400, held: true);
+        check(boss.Shielded && boss.BombClock > 0 && tabs.All(s => s.Targetable), "Timeout keeps remaining pulls and never exposes a killable boss");
+        foreach (var tab in tabs) sim.Damage(tab, 1, DamageSource.Weapon);
+        check(tabs.All(s => !s.Targetable) && boss.Deflating > 0, "Every pull disappears after one direct strike");
+        Run(sim, 2, 400);
+        check(boss.State == SlimeState.Defeated && sim.BossDefeated, "Six pulls deflate and defeat the one HP boss");
     }
 
-    private static void WholeFightChecks(Action<bool, string> check)
+    private static void RepulseChecks(Action<bool, string> check)
     {
-        // The three stages in order, to the end, no riddle solved: nothing hangs.
-        var (sim, zip) = Field(Zip(damage: 0));
-        int shields = 0;
-        double top = zip.Width;
-        for (int step = 0; step < 36000 && !sim.Over; step++)
-        {
-            if (!zip.Shielded) sim.Damage(zip, 4, DamageSource.App);
-            foreach (var s in sim.Slimes.Where(s => !s.IsBoss && s.Targetable).ToArray()) sim.Damage(s, s.Hp + 1, DamageSource.App);
-            sim.Step(dt, 100, false);
-            shields += sim.Events.Count(e => e.Kind == BattleEventKind.BossShielded);
-            top = Math.Max(top, zip.Width);
-            sim.ClearEvents();
-        }
-        check(sim.BossDefeated && shields == 3 && zip.ZipStage == 2 && Math.Abs(top - sim.Settings.SlimeWidth * Spec.Stages[2].Scale) < 1e-6,
-            $"Its stages run in order, it grows to full size and it can be beaten with no riddle solved ({shields} riddles, {sim.Time:0} s)");
+        var (sim, boss) = Field(Zip(), bossX: 800, catX: 400);
+        boss.ZipStage = 1; boss.ZipRepulseClock = 0; boss.Cooldown = 0;
+        double hp = sim.CatHp;
+        Run(sim, 0.5, 400);
+        check(boss.ZipRepulseWarn > 0 && sim.ShoveLeft == 0, "Independent repulse warns before displacing the cat");
+        sim.Paused = true;
+        double warning = boss.ZipRepulseWarn;
+        Run(sim, 1, 400);
+        check(boss.ZipRepulseWarn == warning, "Pause freezes repulse warning");
+        sim.Paused = false;
+        Run(sim, 0.5, 400);
+        check(sim.ShoveLeft > 0 && !sim.CatStunned && sim.CatHp == hp, "Repulse pushes without damage or early stun");
+        Run(sim, 0.9, 400);
+        check(sim.ShoveLeft == 0 && sim.CatStunned && sim.CatHp == hp && boss.ZipRepulseClock > 19, "Repulse stuns only after displacement, with separate cooldown and no damage");
+        (sim, boss) = Field(Zip(), bossX: 800, catX: 400);
+        boss.ZipStage = 2; boss.ZipRepulseClock = 0; boss.Cooldown = 0;
+        Run(sim, 1.5, 400, held: true);
+        check(sim.ShoveLeft == 0 && !sim.CatStunned, "Repulse never drops or stuns a held cat");
     }
 
     private static void DataChecks(Action<bool, string> check)

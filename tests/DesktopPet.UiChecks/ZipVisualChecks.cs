@@ -64,33 +64,28 @@ internal static class ZipVisualChecks
         pressed.Shielded = true; pressed.ShieldTag = 1; pressed.PressWindow = 1; pressed.Pins = 1;
         var bomb = Add(moves, "zip", 1060, 2);
         bomb.Shielded = true; bomb.ShieldTag = 3; bomb.BombClock = data.Enemy("zip").Zip!.Bomb.Charge * 0.4; bomb.BombPulls = 1; bomb.TabX = 960; bomb.TabHeight = 60;
+        var lockProp = Add(moves, "zip_packet", 760);
+        lockProp.ZipProp = ZipProp.Belt; lockProp.SummonedBy = pressed.Id;
+        var pullProp = Add(moves, "zip_packet", 960);
+        pullProp.ZipProp = ZipProp.Tab; pullProp.SummonedBy = bomb.Id;
         var lane = SkyVisualChecks.Render(new BattleFieldView(moves) { OriginX = 0 }, w, h, "enemy-zip-roll");
         int ahead = SkyVisualChecks.Count(lane, w, h, warning, 560, 760, floor - 16, floor);
         check(ahead > 30, $"A roll winding up shows its lane ahead on the floor ({ahead} pixels)");
         int spot = SkyVisualChecks.Count(lane, w, h, gold, 720, 880, floor - 60, floor);
-        check(spot > 30, $"The press riddle shows a gold spot to drop the cat on ({spot} pixels)");
+        check(spot > 30, $"The belt puzzle shows a gold padlock ({spot} pixels)");
         int bar = SkyVisualChecks.Count(lane, w, h, warning, 1000, 1120, 0, floor - 90);
         check(bar > 100, $"The bomb shows its filling bar ({bar} pixels)");
         int tab = SkyVisualChecks.Count(lane, w, h, gold, 920, 1000, floor - 110, floor - 20);
-        check(tab > 20, $"And its zipper tab, ringed gold ({tab} pixels)");
+        check(tab > 20, $"Its zipper pull has a distinct slider and handle ({tab} pixels)");
 
-        // The gold spot and the arrow over it stay on the floor however far the rolling body has turned.
-        byte[]? level = null;
-        int worst = 0;
-        foreach (double angle in new[] { 0.0, 30, 75, 120, 180, 245, 300 })
+        var puzzle = new BattleSim(data, 0, Width, new Random(9));
+        for (int i = 0; i < 3; i++)
         {
-            var turning = new BattleSim(data, 0, Width, new Random(1));
-            var rolling = Add(turning, "zip", 600);
-            rolling.Shielded = true; rolling.ShieldTag = 1; rolling.Pins = 1;
-            rolling.Set(SlimeState.Dashing); rolling.Rolling = rolling.PressRolling = true; rolling.DashDirection = 1; rolling.RollGoal = 900;
-            rolling.RollDistance = 300; rolling.DashLeft = 300 - angle * Math.PI / 180 * rolling.Height / 2;
-            var frame = SkyVisualChecks.Render(new BattleFieldView(turning) { OriginX = 0 }, w, h);
-            level ??= frame;
-            int moved = Math.Abs(SkyVisualChecks.Count(frame, w, h, gold, 830, 970, floor - 70, floor) - SkyVisualChecks.Count(level, w, h, gold, 830, 970, floor - 70, floor));
-            worst = Math.Max(worst, moved);
+            var file = Add(puzzle, "zip_packet", 230 + i * 280);
+            file.ZipProp = ZipProp.File; file.ZipSymbol = i;
         }
-        int goal = SkyVisualChecks.Count(level!, w, h, gold, 830, 970, floor - 70, floor);
-        check(goal > 30 && worst == 0, $"The gold spot does not turn with the rolling body ({goal} pixels, {worst} changed)");
+        var puzzlePixels = SkyVisualChecks.Render(new BattleFieldView(puzzle) { OriginX = 0 }, w, h, "zip-folder-puzzle");
+        check(SkyVisualChecks.Count(puzzlePixels, w, h, page, 200, 250, floor - 34, floor) > 100, "Puzzle files are visible with matching folder symbols");
         Moves(check, data, warning, gold, floor, w, h, Add);
         Debuffs(check);
     }
@@ -110,13 +105,13 @@ internal static class ZipVisualChecks
         add(unmarked, "zip", 300, 0);
         check(!SkyVisualChecks.Render(new BattleFieldView(unmarked) { OriginX = 0 }, w, h).SequenceEqual(px), "The clamp marks its gap on the floor");
         check(SkyVisualChecks.Count(px, w, h, Color.FromRgb(0xE8, 0xB8, 0x4A), 200, 260, floor - 90, floor) > 100, "And opens its two flaps round it");
-        check(SkyVisualChecks.Count(px, w, h, warning, 840, 1100, floor - 22, floor - 10) > 40, "The tumble shows its way back too");
+        check(SkyVisualChecks.Count(px, w, h, warning, 840, 1100, floor - 22, floor - 10) < 10, "The tumble has only its current lane, with no duplicate return line");
 
         var two = new BattleSim(data, 0, Width, new Random(1), seed: 3);
         var tree = add(two, "zip", 600, 1);
         tree.Set(SlimeState.Moving);
         var packet = two.AddSlime(240, data.Enemy("zip_packet"));
-        packet.Set(SlimeState.Moving); packet.PacketFuse = true; packet.PacketLeft = 1.3; packet.SummonedBy = tree.Id;
+        packet.Set(SlimeState.Moving); packet.PacketFuse = true; packet.PacketRevealed = true; packet.PacketLeft = 1.3; packet.SummonedBy = tree.Id;
         var plain = two.AddSlime(120, data.Enemy("zip_packet"));
         plain.Set(SlimeState.Moving);
         // The tree's numbered branches, through a real step of the sim.
@@ -128,6 +123,14 @@ internal static class ZipVisualChecks
         check(SkyVisualChecks.Count(px2, w, h, Color.FromRgb(0xE5, 0x3E, 0x3E), 215, 265, floor - 40, floor) > 15, "The live packet is red and tied up");
         check(SkyVisualChecks.Count(px2, w, h, Color.FromRgb(0xFF, 0xFB, 0xF2), 95, 145, floor - 40, floor) > 60, "A plain one is a bundle of pages");
 
+        int variant = 0;
+        foreach (var branch in two.ZipBlows.Take(3))
+        {
+            branch.Variant = variant; branch.X = 430 + variant++ * 240;
+            branch.Radius = 60; branch.Top = 120; branch.Done = true;
+        }
+        var trees = SkyVisualChecks.Render(new BattleFieldView(two) { OriginX = 0 }, w, h, "zip-folder-tree-variants");
+        check(variant == 3 && !trees.SequenceEqual(px2), "Three directory tree silhouettes render inside their announced volumes");
         var three = new BattleSim(data, 0, Width, new Random(1));
         var flow = add(three, "zip", 600, 2);
         flow.ZipAct = ZipAct.Overflow; flow.ZipBeat = ZipBeat.Strike; flow.ZipSeconds = 2; flow.ZipLeft = 1; flow.ZipAimX = 600; flow.ZipTear = 0.5;

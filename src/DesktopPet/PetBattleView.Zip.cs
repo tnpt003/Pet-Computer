@@ -110,7 +110,7 @@ public sealed partial class BattleFieldView
                 break;
             default:
                 DrawZipperLine(dc, -33, -14);
-                if (BattleSim.BombTab(slime) == null) DrawZipTab(dc, -34);
+                DrawZipTab(dc, -34);
                 DrawZipGap(dc, 1);
                 DrawPage(dc, -7, -1, -24, 0.72);
                 DrawPage(dc, 7, -1, 22, 0.72);
@@ -167,28 +167,13 @@ public sealed partial class BattleFieldView
     }
 
     // On the floor, under it: where to drop the cat on the press riddle's roll (gold: good news, not a warning).
-    private void DrawZipFloor(DrawingContext dc, Slime slime, double ground, double time)
-    {
-        if (slime.Type.Zip is not ZipSpec zip || BattleSim.PressSpot(slime) is not double spot) return;
-        double x = spot - OriginX, rx = slime.HitWidth / 2 + zip.Press.Reach, bob = 3 * Math.Sin(time * 7);
-        dc.DrawEllipse(null, Halo, new Point(x, ground - 4), rx, 9);
-        dc.DrawEllipse(null, SpotPen, new Point(x, ground - 4), rx, 9);
-        var tip = new Point(x, ground - 16 + bob);
-        foreach (var (from, to) in new[] { (new Point(x, ground - 46 + bob), tip), (new Point(x - 8, ground - 24 + bob), tip), (new Point(x + 8, ground - 24 + bob), tip) })
-        {
-            dc.DrawLine(Halo, from, to);
-            dc.DrawLine(SpotPen, from, to);
-        }
-    }
-
-    // Over it: its file size; the pins so far; the bomb's bar, the pulls so far and the zipper tab to go through.
     private void DrawZipOver(DrawingContext dc, Slime slime, double x, double ground, double top, double time)
     {
         if (slime.Type.Zip is not ZipSpec zip || slime.State == SlimeState.Defeated) return;
         // Kept inside the field however big it swells (the bar overlaps its head then).
         double y = Math.Max(12, top - 18);
         if (slime.State != SlimeState.Windup && BattleSim.BombFill(slime) == null) DrawSizeTag(dc, ZipSizes[Math.Clamp(slime.ZipStage, 0, ZipSizes.Length - 1)], x, y);
-        if (sim.ShieldPhase(slime) is { Press: true }) DrawPips(dc, x, y - 13, slime.Pins, zip.Press.Pins);
+        if (sim.ShieldPhase(slime) is { Press: true }) DrawPips(dc, x, y - 13, slime.Pins, 12);
         if (slime.Deflating > 0)
             for (int i = 0; i < 3; i++)
             {
@@ -209,17 +194,7 @@ public sealed partial class BattleFieldView
         dc.PushTransform(new TranslateTransform(x - width / 2, bar.Y + (barHeight - height) / 2));
         dc.DrawGeometry(Brushes.White, null, shape);
         dc.Pop();
-        DrawPips(dc, x, bar.Y + barHeight + 7, slime.BombPulls, zip.Bomb.Pulls);
-        if (BattleSim.BombTab(slime) is not (double tabX, double tabHeight)) return;
-        var tab = new Point(tabX - OriginX, ground - tabHeight);
-        var root = new Point(x + Math.Sign(tab.X - x) * slime.Width * 0.3, ground - slime.Height * 0.7);
-        dc.DrawLine(Halo, root, tab);
-        dc.DrawLine(TabCord, root, tab);
-        double ring = zip.Bomb.TabRadius * 0.62 * (1 + 0.1 * Math.Sin(time * 9));
-        dc.DrawEllipse(null, Halo, tab, ring, ring);
-        dc.DrawEllipse(null, SpotPen, tab, ring, ring);
-        dc.DrawRoundedRectangle(ZipTab, Outline, new Rect(tab.X - 6, tab.Y - 11, 12, 22), 3, 3);
-        dc.DrawEllipse(ZipInside, null, new Point(tab.X, tab.Y - 5), 2.4, 2.4);
+        DrawPips(dc, x, bar.Y + barHeight + 7, slime.BombPulls, 6);
     }
 
     private static void DrawSizeTag(DrawingContext dc, string text, double x, double y)

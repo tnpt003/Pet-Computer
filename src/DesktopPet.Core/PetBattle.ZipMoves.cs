@@ -17,7 +17,7 @@ public enum ZipBlowKind { Branch, Mark }
 // One blow waiting on a marked spot: Left s to go, then it hits once in its box and shows Life s more.
 public sealed class ZipBlow
 {
-    public int OwnerId, Order;
+    public int OwnerId, Order, Variant;
     public double X, Radius, Bottom, Top, Left, Warn, Life, Damage, Stun;
     public ZipBlowKind Kind;
     public bool Done;
@@ -152,7 +152,7 @@ public sealed partial class BattleSim
     }
 
     private void AddZipBlow(Slime boss, double x, double radius, double bottom, double top, double left, ZipMoveSpec m, ZipBlowKind kind, int order) =>
-        zipBlows.Add(new ZipBlow { OwnerId = boss.Id, X = x, Radius = radius, Bottom = bottom, Top = top, Left = left, Warn = left, Life = ShellLife, Damage = m.Damage, Stun = m.Stun, Kind = kind, Order = order });
+        zipBlows.Add(new ZipBlow { OwnerId = boss.Id, X = x, Radius = radius, Bottom = bottom, Top = top, Left = left, Warn = left, Life = kind == ZipBlowKind.Branch ? 0.65 : ShellLife, Damage = m.Damage, Stun = m.Stun, Kind = kind, Order = order, Variant = (zipRandom ??= BattleRandom.Stream(Seed, BattleRandom.Zip)).Next(3) });
 
     // Called once a step for every enemy before its state machine; true: this boss does nothing else now.
     private bool StepZipAct(Slime boss, ZipSpec zip, double dt)
@@ -334,7 +334,7 @@ public sealed partial class BattleSim
     private void ThrowFiles(Slime boss, ZipMoveSpec m)
     {
         double damage = boss.Damage * Share(boss, m.Damage);
-        foreach (int side in new[] { -1, 1 })
+        foreach (int side in new[] { -1, 0, 1 })
             shots.Add(new BattleShot
             {
                 OwnerId = boss.Id, X = boss.X + side * boss.Width * 0.3, Height = boss.Height * 0.8, VX = side * m.Speed * 0.55, VY = m.Speed * 0.75,
@@ -375,9 +375,11 @@ public sealed partial class BattleSim
     // A packet thrown out by Faulty unpacking, on its clock.
     private void StepPacket(Slime s, double dt)
     {
-        if (s.PacketLeft <= 0 || s.State == SlimeState.Spawning) return;
+        if (s.PacketLeft <= 0) return;
+        if (PointerOn(s)) s.PacketRevealed = true;
         s.PacketLeft = Math.Max(0, s.PacketLeft - dt);
         if (s.PacketLeft > 0) return;
+        if (!s.PacketFuse) return; // Decoys must not clear the live bomb before its own turn.
         if (s.PacketFuse && Find(s.SummonedBy) is { Targetable: true } boss && MoveSpec(boss, ZipAct.Faulty) is ZipMoveSpec m)
         {
             ZipPacketBlasts++;
@@ -433,6 +435,7 @@ public sealed partial class BattleSim
         if (s.Type.Packet && s.PacketFuse) { ClearPackets(s.SummonedBy); return; }
         if (s.Type.Zip == null) return;
         EndZipAct(s);
+        ClearZipProps(s);
         foreach (var other in slimes)
             if (other.SummonedBy == s.Id && other.Type.Packet && other.State != SlimeState.Defeated) Unpacked(other);
         ClearZipDebuff(false);

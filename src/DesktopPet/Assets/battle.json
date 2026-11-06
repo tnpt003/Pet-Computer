@@ -698,25 +698,11 @@
       ]
     },
     {
-      // 1.5 M17, B1: the chapter 2 boss (no battle uses it yet; chapter 2 brings it in, docs/examples/battle-m17.json
-      // tries it). Phase 1: "roll" — with the cat on the floor between minRange and range away and every s since
-      // its last roll (enragedEvery once angry), it winds up (a lane on the floor) and rolls distance DIPs over the
-      // floor: the cat on the floor in its way takes damage and a stun (lift the cat to dodge). A "roped" shield
-      // phase unpacks a "formation" whose helpers come tied to the boss by ropes; the shield holds while any rope
-      // is left: cut them by going through with the cat at ropeCutSpeed DIPs/s or more (held or thrown) or with the
-      // Scissors (the helper is dazed ropeCutStun s), or defeat the helper.
-      // 2026-11-05, "zip": small and quick at first, it swells stage by stage (docs/ZIP-SLIME.md). "stages": its size,
-      // speed and three "moves", drawn from a bag; cooldown: s of rest after each; windup and damage: its plain
-      // slam during the roped phase. "moves": warn s of warning, lock s with the aim fixed, strike s, recover s;
-      // minRange–maxRange: how far the cat may be; air: also used on a cat off the floor. "roll": the tumble.
-      // "press" (first stage's riddle): it slides `rolls` times; the cat let go on it after it stops pins it, each
-      // pin bursts a belt, `pins` of them open it (a long stun, ×bonus damage); otherwise it opens by itself. "bomb"
-      // (last stage's riddle): charge s to burst; the cat through its zipper tab, or the Scissors, pulls it; `pulls`
-      // of them let its air out (flight s round the field, then stun, ×bonus); a burst hits the floor and it arms
-      // again after rearm s. "debuff": squeezed (seconds, scale, damage, speed) or locked (lockSeconds, lockClicks,
-      // lockSwings, guard), first s in, then gapMin–gapMax s apart.
+      // ZIP boss: stage-specific attack bags; see docs/ZIP-SLIME.md for the 06/11 puzzle rules.
+      // Legacy press/rope/tab fields are still parsed for custom-data compatibility; the puzzle
+      // runtime uses edge locks, folder matching and six weapon targets at exactly 1 HP.
       "id": "zip", "nameVi": "Slime Nén", "nameEn": "Zip Slime",
-      "tipVi": "Càng mất máu càng phình to, mỗi giai đoạn ba đòn riêng. Bế mèo né đòn sát sàn; thả đè lúc nó dừng trên điểm vàng, cắt luồng gói dữ liệu, kéo tay kéo xì hơi bom nén.", "tipEn": "It swells as it loses HP, three blows a stage. Lift the cat over floor blows; drop it on the boss on the gold spot, cut the packets' streams, pull the zipper tab to deflate its bomb.", "counters": ["scissors", "shield"],
+      "tipVi": "Ba phase, ba đòn mỗi phase. Đánh khóa sáng 12 lần, đổi bên mỗi 3; đẩy file ghép thư mục và né cây. Còn 1 HP, đánh 6 tay kéo (3 cao, 3 đất). Soi file bom bằng chuột; Khóa ZIP cấm đi và nhấc.", "tipEn": "3 stages, 3 attacks each. Hit lit locks 12 times, switch every 3; match files to folders and dodge trees. At 1 HP hit six pulls (3 high, 3 low). Hover to find bombs; ZIP lock stops movement.", "counters": ["scissors", "shield"],
       "maxHp": 1100, "speed": 24, "damage": 28, "range": 110,
       "windup": 1.2, "attackCooldown": 2.6, "recover": 0.7,
       "scale": 2, "color": "#E8B84A", "angryColor": "#E86A6A", "marks": "zip", "binSpit": false,
@@ -760,7 +746,7 @@
       // 2026-11-06: a packet of data the Zip Slime unpacks (docs/ZIP-SLIME.md): on a stream in its stuck phase, or
       // thrown out by "faulty", one of them ready to blow. Comes out of no wave.
       "id": "zip_packet", "nameVi": "Gói dữ liệu", "nameEn": "Data packet",
-      "tipVi": "Gói dữ liệu của Slime Nén. Gói rung báo sắp nổ: đánh vỡ hoặc tránh xa. Gói nối luồng: cắt luồng hoặc đánh vỡ.", "tipEn": "The Zip Slime's data packets. A shaking one is about to blow: break it or keep away. One on a stream: cut the stream or break it.", "counters": ["scissors"],
+      "tipVi": "File của Slime Nén: ba file lỗi giống nhau, rê chuột tìm bom và xem thời gian còn lại. Trong mech, đánh file về thư mục cùng ký hiệu; chừa chỗ đứng phía sau để đẩy.", "tipEn": "Zip Slime files: three identical faulty files hide one bomb; hover to reveal its running fuse. During the puzzle, strike files into matching folders; stand behind a file to push it.", "counters": ["scissors"],
       "maxHp": 45, "speed": 0, "damage": 0, "range": 40, "windup": 1, "attackCooldown": 3, "recover": 0.5,
       "scale": 1.1, "color": "#FFFBF2", "marks": "packet", "still": true, "packet": true, "cost": 0, "binSpit": false
     },
@@ -1128,9 +1114,9 @@
             "id": "c2_zip_slime", "nameVi": "Slime Nén", "nameEn": "The Zip Slime",
             "goalVi": "Trận cuối chương 2: slime bong bóng, slime bám tường, rồi Slime Nén nhỏ mà nhanh, càng mất máu càng phình to. Màn này cho mượn Kéo cắt.",
             "goalEn": "Chapter 2's last battle: bubble and wall slimes, then the Zip Slime, small and quick, swelling as it loses HP. This stage lends the Scissors.",
-            "tipVi": "Bạn sẽ học: Kéo cắt (click một chỗ: cắt ngang một dải, đứt dây nhầy, vỡ bong bóng); click 3 lần chọc vỡ bong bóng; ném mèo vào slime bám tường hoặc Đẩy cho nó rơi; nhấc mèo khỏi dải đỏ khi Slime Nén sắp lăn rồi thả đè đúng điểm nó dừng; cắt dây nối quân về Slime Nén để phá khiên; kéo mèo xuyên tay kéo để xì hơi quả bom nén.",
-            "tipEn": "You learn: the Scissors (click a spot: they cut a band across, ropes and bubbles too); to pop a bubble with three clicks; to throw the cat at a wall slime or Push it down; to lift the cat off the red strip before the Zip Slime rolls, then drop it where it stops; to cut the ropes tying its squad to it to break its shield; to drag the cat through its zipper tab to let its bomb's air out.",
-            "objective": "clear", "upgrades": true, "maxAlive": 6, "threat": 1.4, "eliteChance": 0.25, "maxMalware": 4, "newAppsFrom": 1, "rulesVersion": 5,
+            "tipVi": "Đánh hai khóa đai luân phiên mỗi 3 đòn, tổng 12 đòn; đẩy file vào thư mục cùng ký hiệu và né cây thư mục. Còn 1 HP, đánh 6 tay kéo (3 trên không, 3 dưới đất) để hạ boss. Rê chuột soi file bom; nhấc mèo né đai và đòn sát đất.",
+            "tipEn": "Strike alternating belt locks every 3 hits, 12 hits total; push files into matching folders and dodge folder trees. At 1 HP, strike six pulls (three airborne, three grounded) to defeat the boss. Hover files to reveal the bomb; lift the cat over belts and floor attacks.",
+            "objective": "clear", "upgrades": true, "maxAlive": 6, "threat": 1.4, "eliteChance": 0.25, "maxMalware": 4, "newAppsFrom": 1, "rulesVersion": 6,
             "unlocksSkill": "scissors", "suggestSkills": [ "scissors", "shield", "push" ],
             "keepsake": { "id": "zip_plush", "kind": "plush", "nameVi": "Thú bông Slime Nén", "nameEn": "Zip Slime plush" },
             "waves": [
@@ -1173,7 +1159,7 @@
   // older kinds: at most two kinds of link and two the cursor beats); "mutations": after each cleared boss
   // wave pick one of "offer" odd rules, held until the next boss wave is cleared, then its reward.
   "endless": {
-    "id": "endless", "rulesVersion": 13, "unlockAfter": "c1_slime_king", "upgradeEvery": 2, "bossEvery": 10, "boss": "king_c1",
+    "id": "endless", "rulesVersion": 14, "unlockAfter": "c1_slime_king", "upgradeEvery": 2, "bossEvery": 10, "boss": "king_c1",
     "bosses": [ "king_c1", "zip", "mutant_king" ],
     "lateBoss": "king", "lateBossFrom": 40, "bossBonusPick": true, "allSynergiesAt": 48,
     "eliteChancePerWave": 0.007, "eliteChanceMax": 0.45, "moreElitesEvery": 20, "moreElitesMax": 2,
@@ -1387,7 +1373,7 @@
     "routes": [
       {
         "id": "dump_trail", "nameVi": "Lối Bãi rác", "nameEn": "The Dump Trail",
-        "rulesVersion": 6, "keepRuns": [ 1, 2, 3, 4 ], "unlockAfter": "c2_zip_slime", "scene": "dump",
+        "rulesVersion": 7, "keepRuns": [ 1, 2, 3, 4 ], "unlockAfter": "c2_zip_slime", "scene": "dump",
         "kindGacha": { "steps": 6, "minLanes": 2, "maxLanes": 3, "weights": { "fight": 45, "event": 18, "elite": 20, "rest": 12, "shop": 14 }, "rerollCost": 0.08 },
         "zones": [
           { "id": "swamp", "nameVi": "Đầm nhầy", "nameEn": "Slime swamp", "steps": 2, "fights": [ "y_puddles", "y_ice_pond", "y_split_bog" ], "elites": [ "y_mother_nest" ] },

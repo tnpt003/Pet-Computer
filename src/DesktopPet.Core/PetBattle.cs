@@ -413,7 +413,7 @@ public sealed partial class BattleSim
         }
         comboClock += dt;
         if (CatLifted) liftedFor += dt; // How long this rescue has lasted (battle time).
-        if (catHeld) { CancelSwing(); Combo = 0; ShoveLeft = 0; }
+        if (catHeld) { CancelSwing(); Combo = 0; ShoveLeft = 0; zipShoveStun = false; }
         else
         {
             // Landing after a real lift: protection, unless it was given too recently (then the
@@ -428,7 +428,7 @@ public sealed partial class BattleSim
             // Ground quake (1.5 M25): the same real lift shakes the floor where the cat lands.
             if (wasLifted && liftedFor >= Settings.RescueGraceMinLiftSeconds) Quake(catX);
             // Let go onto a burrower coming up: it is pinned (1.5 M14). 2026-11-05: or onto the Zip Slime's riddle.
-            if (wasLifted) { CatLanded(catX); CatPressed(catX); }
+            if (wasLifted) CatLanded(catX);
             wasLifted = false;
             liftedFor = 0;
             Grace = Math.Max(0, Grace - dt);
@@ -529,7 +529,7 @@ public sealed partial class BattleSim
         // Just landed with the Ground quake: the cat stands its ground a moment (2026-11-04).
         if (QuakeStandRemaining > 0) return new(CatCommand.Stand, catX);
         // Put down on top of a blocker: a few steps off it to the nearest free side.
-        if (Unstick(catX) is double free) return new(CatCommand.Move, free, free < catX ? -1 : 1);
+        if (!CatLocked && Unstick(catX) is double free) return new(CatCommand.Move, free, free < catX ? -1 : 1);
         // A wall climber up its edge (chosen, or the only ones left): the cat goes near that edge and looks
         // up at it, never pressed against the edge (2026-11-04, docs/GOPY-C-2026-11-04.md D5).
         if (WallToWatch(target, catX) is Slime up)
@@ -549,6 +549,7 @@ public sealed partial class BattleSim
             return new(CatCommand.Stand, catX, high.BodyX < catX ? -1 : 1);
         }
         if (target == null) return new(CatCommand.Stand, catX);
+        if (CatLocked && Math.Abs(target.X - catX) > Reach(target)) return new(CatCommand.Stand, catX);
         // A forced update: put down in it, the cat steps out; between the cat and its target, the cat
         // walks up to it and hits it (each hit brings the update closer to done).
         if (WallAt(catX) is BattleHazard inWall)
@@ -703,6 +704,15 @@ public sealed partial class BattleSim
         hitTone = crit ? NumberTone.Crit : combo ? NumberTone.Combo : NumberTone.Plain;
         var result = Damage(slime, damage, combo ? DamageSource.Combo : DamageSource.Weapon);
         hitTone = NumberTone.Plain;
+        if (slime.ZipProp != ZipProp.None)
+        {
+            if (result == HitResult.Landed)
+            {
+                if (RageFull && !Raging) AutoRage();
+                GainRage(Settings.RageHitGain);
+            }
+            return;
+        }
         // Only a hit that lands opens an enemy (a blocked one leaves the Opener bonus for the next).
         if (result == HitResult.Landed)
         {
@@ -795,6 +805,7 @@ public sealed partial class BattleSim
     internal HitResult Damage(Slime slime, double amount, DamageSource source)
     {
         if (!slime.Targetable || amount <= 0) return HitResult.Landed;
+        if (slime.ZipProp != ZipProp.None) return HitZipProp(slime, source);
         // 2026-11-04: an app's hit brings a flyer or a wall climber down to the floor.
         if (source == DamageSource.App) KnockFromSky(slime);
         // A leaf shield, or a bomb flying back to its mount (2026-11-04).
@@ -897,7 +908,7 @@ public sealed partial class BattleSim
             {
                 var phase = phases[i];
                 // The same product as ShieldFloor, so a hit stopped on a shield phase's line starts it.
-                if ((slime.PhasesDone & (1 << i)) != 0 || slime.Hp > phase.At * slime.MaxHp) continue;
+                if ((slime.PhasesDone & (1 << i)) != 0 || slime.Hp > (slime.Type.Zip != null && phase.Bomb ? 1 : phase.At * slime.MaxHp)) continue;
                 slime.PhasesDone |= 1 << i; // Once, even if the call is skipped below.
                 if (phase.Shield)
                 {
@@ -979,8 +990,8 @@ public sealed partial class BattleSim
         if (slime.Type.Phases is { } phases)
             for (int i = 0; i < phases.Length && i < 31; i++)
             {
-                double line = phases[i].At * slime.MaxHp;
-                if (phases[i].Shield && (slime.PhasesDone & (1 << i)) == 0 && line < slime.Hp) floor = Math.Max(floor, line);
+                double line = slime.Type.Zip != null && phases[i].Bomb ? 1 : phases[i].At * slime.MaxHp;
+                if (phases[i].Shield && (slime.PhasesDone & (1 << i)) == 0 && (line < slime.Hp || slime.Type.Zip != null && phases[i].Bomb && line == slime.Hp)) floor = Math.Max(floor, line);
             }
         return floor;
     }
@@ -1092,6 +1103,7 @@ public sealed partial class BattleSim
     public bool Use(BattleSkill skill, int id, double catX, int? direction = null)
     {
         var slime = Find(id);
+        if (slime?.ZipProp != null && slime.ZipProp != ZipProp.None) return false;
         if (BattleSkills.Get(skill).Aim != SkillAim.Slime || !Ready(skill) || slime is not { Targetable: true, Faded: false, Burrowed: false }) return false;
         // A mirage's copy pushed: it vanishes (the skill is spent).
         if (skill == BattleSkill.Push && slime.Decoy) { Dispel(slime); AddEffect(BattleEffectKind.Push, slime.X, slime.Height / 2); }

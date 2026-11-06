@@ -117,6 +117,16 @@ public sealed partial class BattleSim
         AddEffect(crit ? BattleEffectKind.Combo : BattleEffectKind.Spark, slime.X, slime.Altitude + slime.Height / 2);
         hitTone = crit ? NumberTone.Crit : NumberTone.Plain;
         double plain = damage;
+        if (slime.ZipProp != ZipProp.None)
+        {
+            if (Damage(slime, damage, DamageSource.Weapon) == HitResult.Landed)
+            {
+                if (RageFull && !Raging) AutoRage();
+                GainRage(Settings.RageHitGain);
+            }
+            hitTone = NumberTone.Plain;
+            return;
+        }
         if (Damage(slime, damage, DamageSource.Weapon) == HitResult.Landed) { slime.Opened = true; HitStatuses(slime); GainRage(Settings.RageHitGain); FlyerHeldHit(slime); }
         hitTone = NumberTone.Plain;
         // Raging or a sweeping weapon: every other enemy in the air within reach too (PetBattle.Rage.cs).
@@ -188,7 +198,6 @@ public sealed partial class BattleSim
         double speed = Math.Sqrt(cat.VX * cat.VX + cat.VY * cat.VY);
         // A boss's ropes to its helpers (1.5 M17, PetBattle.Zip.cs), the Zip Slime's bomb tab (2026-11-05).
         CatThroughBossRopes(from, cat, speed);
-        if (!Over) CatThroughTab(from, cat, speed);
         if (!Over && speed >= BossCordCutSpeed) CatRopeCuts += CutTacticCords(from.X, from.Height, cat.X, cat.Height, CatHalfWidth * 2 / 3);
         if (!HasLink(EnemyLinks.Tether) || Over) return;
         foreach (var holder in slimes.ToArray())

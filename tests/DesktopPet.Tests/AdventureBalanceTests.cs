@@ -61,6 +61,7 @@ internal static class AdventureBalanceTests
                 sim.ChooseUpgrade(pick.Id, cat);
             }
             if (player != Player.Idle) { UseSkills(sim, cat, data, reflex, t); UseTricks(sim, cat, reflex, t, hands); }
+            if (player != Player.Idle && ZipPuzzlePlayer.Step(sim, ref cat, dt)) { sim.ClearEvents(); continue; }
             var order = sim.Step(dt, cat, false);
             double run = 72 * data.CatRunScale * sim.MoveFactor; // Walking speed × CatRunScale × upgrades.
             if (order.Command == CatCommand.Shove) cat = order.X; else if (order.Command == CatCommand.Move) cat += Math.Clamp(order.X - cat, -run * dt, run * dt);
@@ -111,6 +112,7 @@ internal static class AdventureBalanceTests
                 sim.ChooseUpgrade(pick.Id, cat);
             }
             if (player != Player.Idle) { UseSkills(sim, cat, data, reflex, t); UseTricks(sim, cat, reflex, t, hands); }
+            if (player != Player.Idle && ZipPuzzlePlayer.Step(sim, ref cat, dt)) { sim.ClearEvents(); continue; }
             var order = sim.Step(dt, cat, false);
             double run = 72 * data.CatRunScale * sim.MoveFactor;
             if (order.Command == CatCommand.Shove) cat = order.X; else if (order.Command == CatCommand.Move) cat += Math.Clamp(order.X - cat, -run * dt, run * dt);
@@ -131,6 +133,8 @@ internal static class AdventureBalanceTests
             .OrderBy(s => Math.Abs(s.X - cat)).FirstOrDefault();
         if (hidden != null) sim.SetPointer((hidden.X, 10));
         else if (sim.PointerX != null) sim.SetPointer(null);
+        var packets = sim.Slimes.Where(s => s.PacketLeft > 0 && s.Targetable).ToArray();
+        if (packets.Length > 0) sim.SetPointer((packets[(int)(now / 0.25) % packets.Length].X, 10));
         // A bubble near the cat is clicked about three times a second.
         if (now - hands.LastPoke >= 0.3 && sim.Slimes.FirstOrDefault(s => s.Bubbled && s.Targetable && Math.Abs(s.X - cat) <= 500 && reflex.Notices(s, now)) is Slime bubble)
         { sim.Poke(bubble.Id); hands.LastPoke = now; }
@@ -169,8 +173,6 @@ internal static class AdventureBalanceTests
                 if (s.Bubbled || (s.FlagGuard && BattleSim.IsFlagPost(s))) { at = s.X; break; } // A guarded flag: one cut fells it.
                 if (sim.LinkPartner(s) is Slime ally && s.Type.Link?.Kind == EnemyLinks.Tether) { at = (s.X + ally.X) / 2; break; }
                 if (sim.RopeBoss(s) is Slime boss) { at = (s.X + boss.X) / 2; break; }
-                // The Zip Slime's bomb: a click at its zipper tab's height (2026-11-05).
-                if (BattleSim.BombTab(s) is (double tabX, double tabHeight)) { at = tabX; height = tabHeight; break; }
             }
             if (at is double x && sim.Arm(BattleSkill.Scissors) && !sim.UseOnScreen(BattleSkill.Scissors, x, height)) sim.Arm(null);
         }
@@ -225,6 +227,8 @@ internal static class AdventureBalanceTests
             && reflex.NoticesAge(s.SpecialDuration - s.SpecialLeft));
         // The Zip Slime: its announced shapes, and the ZIP shell clicked open (2026-11-06).
         danger |= sim.Slimes.Any(s => sim.ZipThreatens(s, cat) && reflex.NoticesAge(s.ZipSeconds - s.ZipLeft));
+        danger |= sim.Slimes.Any(s => s.Type.Zip != null && s.ZipRepulseWarn > 0);
+        danger |= sim.Slimes.Any(s => s.PacketFuse && s.PacketRevealed && s.PacketLeft is > 0 and < 0.7 && Math.Abs(s.X - cat) < 180);
         if (sim.CatLocked && reflex.NoticesAge(sim.ZipDebuffSeconds - sim.ZipDebuffLeft)) sim.ClickZipLock();
         danger |= sim.Goos.Any(g => g.Rain && g.Remaining <= 0.5 && Math.Abs(g.X - cat) <= g.Radius
             && sim.Find(g.OwnerId)?.Type.BossTactics != null && reflex.NoticesAge(g.Flight - g.Remaining));

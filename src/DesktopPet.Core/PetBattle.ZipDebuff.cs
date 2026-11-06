@@ -6,7 +6,7 @@ namespace DesktopPet;
 // at a time, drawn at random ZipDebuffSpec.GapMin–GapMax s after the last one landed:
 // - Squeezed: the cat is drawn smaller (its window and clicks stay the same), its weapon hits ×Damage and it runs
 //   ×Speed for Seconds s. Skills and apps are not touched.
-// - Locked: shut in a ZIP shell the cat cannot be lifted; it still walks and fights. LockClicks clicks on it, or
+// - Locked: shut in a ZIP shell the cat cannot be lifted; it stays in place and fights. LockClicks clicks on it, or
 //   LockSwings of its swings (hit or miss), or LockSeconds s open it. Only on a cat on the floor, outside the
 //   riddles and with no announced blow on the way; while it lasts and for Guard s more the boss starts no move,
 //   since the hand is the cat's way of dodging.
@@ -30,7 +30,7 @@ public sealed partial class BattleSim
     // How far it has taken hold (0–1, over its first moments).
     public double ZipDebuffLook => CatZipped == ZipDebuff.None || Over ? 0 : Math.Clamp((ZipDebuffSeconds - ZipDebuffLeft) / 0.3, 0, 1);
     public double SqueezeScale => CatSqueezed ? 1 + ((zipDebuffRules?.Scale ?? 1) - 1) * ZipDebuffLook : 1;
-    private double SqueezeSpeed => CatSqueezed ? zipDebuffRules?.Speed ?? 1 : 1;
+    private double SqueezeSpeed => CatLocked ? 0 : CatSqueezed ? zipDebuffRules?.Speed ?? 1 : 1;
     private double SqueezeDamage => CatSqueezed ? zipDebuffRules?.Damage ?? 1 : 1;
 
     // The debuff's own time: it runs with the battle.
@@ -75,7 +75,7 @@ public sealed partial class BattleSim
 
     private bool LockFits(Slime boss)
     {
-        if (CatHeld || CatStunned || Grace > 0 || boss.State is not (SlimeState.Moving or SlimeState.Recover) || boss.Rolling) return false;
+        if (CatHeld || CatStunned || ShoveLeft > 0 || boss.ZipRepulseWarn > 0 || Grace > 0 || boss.State is not (SlimeState.Moving or SlimeState.Recover) || boss.Rolling) return false;
         if (boss.ZipBeat is not (ZipBeat.None or ZipBeat.Recover) || zipBlows.Count > 0 || shots.Count > 0) return false;
         foreach (var s in slimes) if (s.PacketFuse && s.PacketLeft > 0 && s.State != SlimeState.Defeated) return false; // Its blast could not be dodged.
         return true;

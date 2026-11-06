@@ -19,7 +19,7 @@ public sealed partial class BattleSim
         {
             var chosen = Find(selected);
             // A shielded boss stays chosen; the cat goes for the others until its shield drops.
-            if (chosen != null && chosen.Targetable && !chosen.Shielded && !chosen.Mended && !chosen.Riding && !chosen.Airborne && !chosen.Handled && !chosen.Faded && !chosen.Burrowed && !BeingSoothed(chosen)) return chosen;
+            if (chosen != null && chosen.Targetable && !chosen.Shielded && ZipPropActive(chosen) && !chosen.Mended && !chosen.Riding && !chosen.Airborne && !chosen.Handled && !chosen.Faded && !chosen.Burrowed && !BeingSoothed(chosen)) return chosen;
             if (chosen == null || !chosen.Targetable) SelectedId = null;
         }
         // Never a shielded boss: the cat cannot hurt it (with nothing else to hit it waits).
@@ -29,7 +29,7 @@ public sealed partial class BattleSim
         sulkyLeft.Clear();
         foreach (var s in slimes)
         {
-            if (!s.Targetable || s.Shielded) continue;
+            if (!s.Targetable || s.Shielded || !ZipPropActive(s)) continue;
             if (s.Riding) continue; // A rider: the cat goes for its mount.
             if (s.Airborne) continue; // Out of reach from the floor (PetBattle.Held.cs).
             if (s.Handled) continue; // In the Grabber's claw or flying from it (PetBattle.Grabber.cs).
@@ -120,6 +120,7 @@ public sealed partial class BattleSim
                 if (slime.GiantShieldClock == 0) slime.GiantShields = 3;
             }
             if (slime.Stuck) slime.KnockVelocity = 0; // Stuck: no knock back either.
+            if (slime.ZipProp != ZipProp.None) { slime.KnockVelocity = 0; continue; }
             if (slime.KnockVelocity != 0)
             {
                 slime.X += slime.KnockVelocity * dt;

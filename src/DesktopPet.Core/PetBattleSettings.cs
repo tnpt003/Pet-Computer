@@ -744,6 +744,10 @@ public sealed class Slime
     // The bomb: time left, pulls so far, the tab's spot (a short lock after a pull), time to arming again, the
     // time left of its flight. A reward: taking ×MechBonus for MechBonusClock s. Ropes: the last cut and the
     // extra stun two cuts together earned.
+    public ZipProp ZipProp;
+    public int ZipSymbol;
+    public double ZipPuzzleClock, ZipRepulseClock = 22, ZipRepulseWarn;
+    public bool PacketRevealed;
     public int ZipStage, PressLeft, Pins, BombPulls, BombTag;
     public double ZipScale, RollGoal, RollDistance, PressWindow;
     public double BombClock, TabX, TabHeight, TabLock, BombRearm, Deflating, DeflateVelocity;

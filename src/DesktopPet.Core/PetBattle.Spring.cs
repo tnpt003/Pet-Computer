@@ -26,6 +26,7 @@ public sealed partial class BattleSim
         if (ShoveLeft <= 0) return null;
         double step = ShoveSpeed * Math.Min(dt, ShoveLeft);
         ShoveLeft = Math.Max(0, ShoveLeft - dt);
+        if (zipShoveStun && ShoveLeft <= 0) { zipShoveStun = false; if (!Raging) CatStunRemaining = Math.Max(CatStunRemaining, StunFor(1.2)); }
         return Math.Clamp(catX + ShoveSide * step, Left, Right);
     }
 

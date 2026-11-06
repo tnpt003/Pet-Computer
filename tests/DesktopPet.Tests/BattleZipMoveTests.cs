@@ -83,7 +83,7 @@ internal static class BattleZipMoveTests
         Phase3(check);
         HandChecks(check);
         CutShortChecks(check);
-        MechChecks(check);
+        // New puzzle rules are covered by BattleZipTests.
         DebuffChecks(check);
         DataChecks(check);
     }
@@ -222,7 +222,7 @@ internal static class BattleZipMoveTests
         Start(sim, boss, ZipAct.Chase, 400);
         Run(sim, chase.Warn + 0.05, 400);
         var files = sim.Shots.Where(s => s.Paper).ToArray();
-        check(files.Length == 2, "Two files fly out");
+        check(files.Length == 3, "Three files fly out");
         Run(sim, chase.Delay + 0.05, 400);
         check(files.All(f => f.LockIn <= 0), "They lock on");
         double vx = files[0].VX, vy = files[0].VY;
@@ -246,6 +246,16 @@ internal static class BattleZipMoveTests
         check(packets.Length == 3 && packets.Count(p => p.PacketFuse) == 1 && packets.All(p => p.RopedTo == 0), "Three packets, one of them live");
         int defeated = sim.Defeated;
         var live = packets.Single(p => p.PacketFuse);
+        check(!packets.Any(p => p.PacketRevealed), "All faulty files initially conceal their identity");
+        double fuseBefore = live.PacketLeft;
+        Run(sim, 0.2, 500);
+        check(live.PacketLeft < fuseBefore && !live.PacketRevealed, "Hidden bomb fuse advances before the player inspects it");
+        sim.SetPointer((live.X, 10));
+        Run(sim, 0.05, 500);
+        check(live.PacketRevealed, "Hovering the bomb reveals its running fuse");
+        sim.SetPointer(null);
+        Run(sim, 0.05, 500);
+        check(live.PacketRevealed, "Inspected bomb stays visible after the cursor leaves");
         for (int i = 0; i < 300 && live.State == SlimeState.Spawning; i++) One(sim, 500);
         sim.Damage(live, live.Hp + 1, DamageSource.App);
         One(sim, 500);
@@ -412,23 +422,6 @@ internal static class BattleZipMoveTests
         check(sim.ZipBlows.Count == 0, "Beaten, its marks go with it");
     }
 
-    private static void MechChecks(Action<bool, string> check)
-    {
-        // The stuck phase: data packets on streams, no Fortress.
-        var (sim, boss) = Field(1, bossX: 800, catX: 300);
-        sim.Damage(boss, boss.MaxHp * 0.8, DamageSource.App);
-        for (int i = 0; i < 600 && sim.Slimes.Count(s => s.RopedTo == boss.Id && s.Targetable) < 3; i++) One(sim, 300);
-        var packets = sim.Slimes.Where(s => s.RopedTo == boss.Id).ToArray();
-        check(packets.Length == 3 && packets.All(p => p.Type.Packet), $"The stuck phase ties three data packets to it ({packets.Length})");
-        sim.Damage(packets[0], packets[0].Hp + 1, DamageSource.App);
-        check(sim.RopesLeft(boss) == 2 && boss.Shielded, "Breaking one leaves two streams");
-        var left = packets.Where(p => p.Targetable).ToArray();
-        sim.Damage(left[0], left[0].Hp + 1, DamageSource.App);
-        sim.Damage(left[1], left[1].Hp + 1, DamageSource.App);
-        Run(sim, 0.1, 300);
-        check(!boss.Shielded && boss.ZipStage == 2, "All gone, it bursts into its last stage");
-    }
-
     private static void DebuffChecks(Action<bool, string> check)
     {
         var d = Spec.Debuff!;
@@ -467,7 +460,7 @@ internal static class BattleZipMoveTests
 
         // Locked: on the floor; opened by clicks, by swings, by time; the boss holds off.
         (sim, boss) = Until(ZipDebuff.Locked);
-        check(sim.CatLocked, "It can lock the cat");
+        check(sim.CatLocked && sim.MoveFactor == 0, "ZIP lock prevents all automatic cat movement");
         check(sim.ClickZipLock() && sim.ZipLockClicks == 1 && sim.CatLocked, "A click counts");
         check(sim.ClickZipLock() && sim.CatLocked, "Two clicks do not open it");
         check(sim.ClickZipLock() && !sim.CatLocked && sim.ZipGuardLeft > 0, "The third does, and a moment of quiet follows");

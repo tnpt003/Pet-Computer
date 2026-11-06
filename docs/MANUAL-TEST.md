@@ -1061,3 +1061,17 @@ Các mục 1.5 phía trên viết theo từng mốc; đây là thứ tự chơi 
 - [ ] Nộ đầy hiển thị đúng avatar/tự bật ở vi/en/ja. Sổ tay ghi đúng app độc thực tế; infect vẫn là đường nhiễm riêng.
 - [ ] Chơi lại chương 2 đủ 4 vũ khí, tuyến Bãi rác và Vô tận; nhận xét độ khó và thời gian phản công. Mô phỏng không biết tự thả đè và kéo tay kéo bằng mèo, không thay trải nghiệm thật.
 - [ ] Sau trận tắt Battle Mode: sleep lock, tự thức/wake bằng click, drag/throw/Dizzy, emotion priority và local fallback vẫn như trước. Không ghi nhận kiểm nhiều màn hình/DPI thật nếu chưa thao tác.
+
+
+## Slime Nén sau chơi thử 06/11 — Issue #56 (thay kiểm tra mech cũ)
+
+- [ ] Phase 1: boss nhảy giữa; hai ổ khóa ở rìa có chỗ đứng đánh. Đúng khóa sáng mới tính; 3 trái → 3 phải → 3 trái → 3 phải. Đòn lan/damage lớn/kỹ năng không giải tắt.
+- [ ] Đai báo 0,8 giây rồi quét phía khóa sáng theo nhịp 2,8 giây; nhấc mèo né, dưới sàn mất máu và choáng 0,5 giây. Đủ 3 đòn đổi khóa ngắt cảnh báo.
+- [ ] Khóa ZIP giữ mèo đứng yên, không nhấc được, vẫn đánh; đủ 3 click/5 nhát hoặc 6 giây thì mở. Ổ khóa nhận ra ngay trên wallpaper sáng/tối.
+- [ ] Phase 2: file và đích đúng ký hiệu, có chỗ đứng cả hai phía và không kẹt tường dù đẩy sai nhiều lần. Cây báo đúng vị trí trước 1 giây rồi gây damage/choáng; cây không đẩy hoặc chắn file.
+- [ ] Ba kiểu cây thư mục nhận ra rõ. Tệp truy đuổi sinh 3 giấy và khóa hướng đúng lúc. Ba file Giải nén lỗi giống hệt trước soi; đúng một bom có timer chạy ẩn, soi mới thấy vòng và giây, rời chuột vẫn thấy.
+- [ ] Phase 2 và 3: đòn đẩy riêng báo 0,9 giây, không damage; đẩy tới rìa 0,8 giây xong mới choáng 1,2 giây. Không chồng đòn khác; CD 22 giây; Khiên/Nộ chặn, cầm/bay không bị kéo tuột.
+- [ ] Phase 3 trên 1 HP vẫn ra đòn thường, không bom lặp. Đòn rất mạnh/độc/reflect chặn đúng 1 HP rồi vào mech, không chết xuyên.
+- [ ] Sáu tay kéo: 3 đất, 3 trên cao, ngẫu nhiên nhưng không ra khỏi vùng với tới/đè HUD; cầm mèo đánh tay trên cao đúng 1 đòn. Kéo xuyên/ném/Kéo cắt không giải thay. Phá đủ thì boss xì hơi và chết.
+- [ ] Bom hết 14 giây: nổ sàn, giữ tay chưa phá và khiên, không sinh lứa mới. Pause/menu/fullscreen giữ nguyên các timer; resume không có choáng trễ; Nộ giữa cú đẩy giải hiệu ứng.
+- [ ] Hướng dẫn/feedback vi/en/ja khớp luật; chuột trên cửa sổ tay kéo cao, DPI/multi-monitor cần kiểm tra thật. Ngoài trận: sleep/wake, drag/throw, emotion và Python fallback như trước.

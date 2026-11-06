@@ -112,7 +112,6 @@ public sealed partial class BattleSim
         foreach (var holder in slimes.ToArray())
             if (Is(holder, EnemyLinks.Tether) && LinkPartner(holder) is Slime ally && RopeCrossed(holder, ally, lo, cut.Y, hi, cut.Y, band) && CutLink(holder.Id)) RopesCut++;
         RopesCut += SnipBossRopes(lo, cut.Y, hi, cut.Y, band);
-        SnipTab(lo, cut.Y, hi, band); // 2026-11-05: the Zip Slime's bomb tab.
         RopesCut += CutTacticCords(lo, cut.Y, hi, cut.Y, band);
         foreach (var s in slimes.ToArray())
         {

@@ -468,6 +468,7 @@ public sealed partial class BattleFieldView : FrameworkElement
 
     private void DrawSlime(DrawingContext dc, Slime slime, double x, double floor, BattleSettings s, double time)
     {
+        if (slime.ZipProp != ZipProp.None) { DrawZipProp(dc, slime, x, floor); return; }
         double w = slime.Width, h = slime.Height, t = slime.StateTime, size = slime.Width / s.SlimeWidth;
         double sx = 1, sy = 1, opacity = 1, jitter = 0;
         bool targetable = slime.Targetable;
@@ -526,7 +527,6 @@ public sealed partial class BattleFieldView : FrameworkElement
         }
         DrawSpringRing(dc, slime, x, floor);
         DrawBlastRing(dc, slime, x, floor);
-        DrawZipFloor(dc, slime, floor + slime.LeapHeight + RollLift(slime, BattleSim.RollTurn(slime)), time);
         if (slime.Type.Slam && slime.State == SlimeState.Windup && !slime.Rolling)
         {
             // The slam's reach on the floor, filling up as it comes: get out (or push, shield, lift).

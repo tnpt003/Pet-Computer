@@ -2,6 +2,8 @@
 
 ## Kết quả mới nhất #62 — Tràn bộ nhớ toàn chiều cao, bản chơi thử còn1 FAIL
 
+Publish sạch source `6ce2586`, smoke **3/3 PASS**, mở lại mèo; ZIP `artifacts/DesktopPet-1.4.4-6ce2586-win-x64.zip`. Perf crowd-late19 s median57/min46,8 FPS, gap p95/max141 ms, CPU avg3,27%, 14,8 quái trung bình/max17. Cảnh đo không có Overflow; chưa kết luận chi phí overlay mới hoặc cải thiện so với lượt trước. Logs zip62-publish.log/zip62-smoke.log/zip62-perf.log.
+
 Người dùng yêu cầu sửa rồi publish, sau đó xác nhận thiết kế #62 và nhắc publish; gộp cả source#61 chưa phát hành. Không coi việc publish là nghiệm thu cân bằng. Giữ HP1100, warning1/strike2,2/recover1,6 s, damage26/13; không nới ngưỡng.
 
 Đối chứng sourcebeecc78 (#61, m61-final-balance.log) → #62 (zip62-verified.log), cùng bot cân bằng chính/seed/build/vũ khí/đường đi. Chỉ bot probe dodge=true được cập nhật để bế ngang vào gap thay vì né bằng độ cao; không tác động bảng dưới. Full zip62-full-tests.log: Python58+i18n5, C#3686 đạt/2 FAIL. Sau cập nhật careful bot: probe và logic đạt, đo5 suite780 đạt/1 FAIL (Len16/40). WPF1454 đạt, đã mở ảnh full-warning/filling/peak sáng/tối. Chưa chơi trận thật/DPI/multi-monitor; perf overlay thật còn cần xem.

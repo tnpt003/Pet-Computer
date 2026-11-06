@@ -6,7 +6,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 Quy ước file này: chỉ giữ trạng thái hiện tại, các đợt đang làm, việc dở và test tay, mỗi mục ngắn. Chi tiết commit/test của từng lỗi ghi ở Issue_fixxed.md. File dưới ~20 KB; vượt thì chuyển mục đã xong sang docs/archive/.
 
 ## Trạng thái hiện tại
-- Bản phát hành mới nhất: **1.4.4** (2026-10-26, tag v1.4.4, commit e8f97d4), là Latest trên GitHub. Bản trên máy: artifacts\win-x64 (**1.4.4+9fcbed2**, tích hợp 1.5 đang thử), chạy bản copy, không cài Setup; chưa phát hành 1.5.0.
+- Bản phát hành mới nhất: **1.4.4** (2026-10-26, tag v1.4.4, commit e8f97d4), là Latest trên GitHub. Bản trên máy: artifacts\win-x64 (**1.4.4+6ce2586**, tích hợp 1.5 đang thử), chạy bản copy, không cài Setup; chưa phát hành 1.5.0.
 - **Bản 1.5 "Slime phản công": code xong M01–M29, góp ý đợt B (B1–B9) và đợt C (C1–C4), chưa phát hành.** Luật hiện tại: docs/UPDATE-1.5.md (bản chốt 05/11); thêm nội dung mới: docs/EXTENDING.md; đo cân bằng/perf: docs/BALANCE-1.5.md; CHANGELOG có mục 1.5.0 vi/en/ja.
 - Nội dung chính đã có: mèo vector (cảm xúc, ngủ/away nap, kéo/ném/Dizzy, đi trên cửa sổ, đồ chơi, kệ kỷ vật có physics, AI Python có fallback local), Battle Mode (Phiêu lưu chương 1 + Hướng dẫn phiêu lưu, Viễn chinh, Vô tận, trận tự do, app trong trận + app độc, thẻ/di vật/cộng hưởng), giao diện Cozy Desktop Adventure (tranh minh họa, icon), vi/en/ja, bộ cài Velopack tự cập nhật.
 - Ngoại lệ đã duyệt dạng đầy đủ: docs/APPROVED-EXCEPTIONS.md (AGENTS.md chỉ còn tóm tắt).
@@ -14,9 +14,9 @@ Quy ước file này: chỉ giữ trạng thái hiện tại, các đợt đang 
 
 ## Đang dở và việc tiếp theo
 
-- **Tràn bộ nhớ ZIP (#62):** code theo duyệt, boss rút ngoài gap/tầm vũ khí, gap190 DIP lệch mèo, giấy toàn chiều cao; resize thiếu chỗ hủy, không chỉ bế cao để né. Python58+5, WPF1454 đạt; full C#3686 đạt/2 FAIL, careful bot đã biết bế ngang; kiểm lại780 đạt/1 FAIL Len Bãi rác tham lam16/40 <20. Giữ HP1100/nhịp/damage/ngưỡng; records12/20/13, main8. Đang commit/publish bản chơi thử theo yêu cầu, gộp #61. Chi tiết Issue_fixxed #62/BALANCE-ZIP; test tay MANUAL-TEST #62; chưa chơi thật/DPI/perf bản mới.
+- **Tràn bộ nhớ ZIP (#62):** code theo duyệt, boss rút ngoài gap/tầm vũ khí, gap190 DIP lệch mèo, giấy toàn chiều cao; resize thiếu chỗ hủy, không chỉ bế cao để né. Python58+5, WPF1454 đạt; full C#3686 đạt/2 FAIL, careful bot đã biết bế ngang; kiểm lại780 đạt/1 FAIL Len Bãi rác tham lam16/40 <20. Giữ HP1100/nhịp/damage/ngưỡng; records12/20/13, main8. Publish6ce2586/smoke3/3 PASS, mở lại mèo, gộp #61; crowd-late19 s median57 FPS, chưa đo Overflow thật. Chi tiết Issue_fixxed #62/BALANCE-ZIP; test tay MANUAL-TEST #62; chưa chơi thật/DPI/perf bản mới.
 
-- **ZIP lăn3/Vua đội hình (#61):** codebeecc78, core1013/WPF1450/Python58+5 đạt, cân bằng547 đạt/1 FAIL Len19/40. Người dùng đã yêu cầu gộp publish cùng #62; luật/tài liệu Issue_fixxed #61, test tay MANUAL-TEST #61. king_c1 giữ nguyên; chưa chơi thật/DPI.
+- **ZIP lăn3/Vua đội hình (#61):** codebeecc78, core1013/WPF1450/Python58+5 đạt, cân bằng547 đạt/1 FAIL Len19/40. Đã gộp publish6ce2586 ở #62; luật/tài liệu Issue_fixxed #61, test tay MANUAL-TEST #61. king_c1 giữ nguyên; chưa chơi thật/DPI.
 
 - **Bom cuối ZIP (#60):** publish9fcbed2/smoke3/3; 80%maxHP/rơi không nảy/stun5 sau đáp/reset6 tay. ZIP436/WPF1448/cân bằng cùng bot293 đạt; full3 FAIL cũ đã xử lý. Chi tiết Issue_fixxed #60; crowd-late48,6 FPS cần profile, chưa đo burst thật.
 

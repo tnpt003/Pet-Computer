@@ -35,7 +35,9 @@ public sealed class MutantBoss
     public double Clock = 2, Age, Deadline, ActionAt, NextAttack = 4, AimX, AimH, FromX, FromH, Flight, ProjectileAge;
     public double FadeAt = -1, TransitionFrom;
     public bool Reflected, Projectile, Final, TerrainCleared, Failed, CoreReady;
-    public MutantMode Mode;
+    private MutantMode mode;
+    public MutantMode PreviousMode { get; private set; }
+    public MutantMode Mode { get => mode; set { if (value == mode) return; PreviousMode = mode; mode = value; PoseAge = 0; } }
     public readonly List<MutantZone> Zones = new();
     public readonly List<MutantBump> Bumps = new();
     public readonly List<MutantBump> FailedCores = new();
@@ -47,6 +49,9 @@ public sealed class MutantBoss
     public double CoreX, CoreH;
     public double ReturnLeft;
     public double TravelFrom, TravelTo, TravelAt, TravelDuration, Velocity;
+    public double PoseAge, EdgeWait;
+    public MutantMode PoseMode;
+    public int PatrolSide;
 }
 
 public sealed partial class BattleSim
@@ -155,6 +160,7 @@ public sealed partial class BattleSim
         if (s.Mutant is not { } m) return null;
         if (m.Mode == MutantMode.Core)
         {
+            if (m.PoseAge < 0.35) return HitResult.Immune; // Let the shell visibly open before a queued swing can score.
             if (source is not (DamageSource.Weapon or DamageSource.Combo)) return HitResult.Immune;
             s.HitFlash = 0.2;
             AddEffect(BattleEffectKind.Combo, s.X, s.Height * 0.65);
@@ -167,8 +173,10 @@ public sealed partial class BattleSim
                 m.Mode = MutantMode.AllIn; m.Clock = 1.2; m.Beat = 0;
                 int chosen = m.Random.Next(3); if (chosen == m.AllIn) chosen = (chosen + 1 + m.Random.Next(2)) % 3;
                 m.AllIn = chosen;
-                s.X = Math.Clamp(Left + (Right - Left) * (0.15 + m.Random.NextDouble() * 0.7), Left + s.Width / 2, Right - s.Width / 2);
-                if (chosen == 2) s.X = m.Random.Next(2) == 0 ? Left + s.Width / 2 + 4 : Right - s.Width / 2 - 4;
+                m.TravelFrom = s.X;
+                m.TravelTo = Math.Clamp(Left + (Right - Left) * (0.15 + m.Random.NextDouble() * 0.7), Left + s.Width / 2, Right - s.Width / 2);
+                if (chosen == 2) m.TravelTo = m.Random.Next(2) == 0 ? Left + s.Width / 2 + 4 : Right - s.Width / 2 - 4;
+                m.TravelAt = Time + 0.3; m.TravelDuration = 0.7;
             }
             else if (m.Phase == 1)
             {
@@ -239,6 +247,8 @@ public sealed partial class BattleSim
         var m = s.Mutant;
         if (!s.Targetable || s.State == SlimeState.Spawning) return false;
         m.Age += dt;
+        if (m.PoseMode != m.Mode) { m.PoseMode = m.Mode; m.PoseAge = 0; }
+        else m.PoseAge += dt;
         double previousX = s.X;
         if (m.Mode == MutantMode.Combat && s.State != SlimeState.Stunned)
         {
@@ -247,6 +257,23 @@ public sealed partial class BattleSim
                 double t = Math.Clamp((Time - m.TravelAt) / m.TravelDuration, 0, 1);
                 s.X = m.TravelFrom + (m.TravelTo - m.TravelFrom) * t * t * (3 - 2 * t);
                 if (t >= 1) m.TravelDuration = 0;
+            }
+            else if (m.TravelDuration <= 0 && m.Phase >= 2)
+            {
+                if (m.PatrolSide == 0) m.PatrolSide = s.X < (Left + Right) / 2 ? -1 : 1;
+                if (m.EdgeWait > 0)
+                {
+                    m.EdgeWait = Math.Max(0, m.EdgeWait - dt);
+                    if (m.EdgeWait == 0) m.PatrolSide = -m.PatrolSide;
+                }
+                else if (!m.Zones.Any(z => z.Age < z.Warn))
+                {
+                    double edge = m.PatrolSide < 0 ? Left + s.Width / 2 + 10 : Right - s.Width / 2 - 10;
+                    double step = Math.Max(80, s.Type.Speed * 4) * s.ChillFactor * dt;
+                    s.X += Math.Clamp(edge - s.X, -step, step);
+                    s.Facing = m.PatrolSide;
+                    if (Math.Abs(edge - s.X) < 1) m.EdgeWait = 5;
+                }
             }
             else if (m.TravelDuration <= 0 && m.Zones.Count == 0)
             {
@@ -257,6 +284,12 @@ public sealed partial class BattleSim
                 if (direction != 0) s.Facing = direction;
             }
             s.X = Math.Clamp(s.X, Left + s.Width / 2, Math.Max(Left + s.Width / 2, Right - s.Width / 2));
+        }
+        else if (m.Mode == MutantMode.AllIn && m.TravelDuration > 0)
+        {
+            double t = Math.Clamp((Time - m.TravelAt) / m.TravelDuration, 0, 1);
+            s.X = m.TravelFrom + (m.TravelTo - m.TravelFrom) * t * t * (3 - 2 * t);
+            if (t >= 1) m.TravelDuration = 0;
         }
         else m.TravelDuration = 0;
         m.Velocity = (s.X - previousX) / Math.Max(0.001, dt);
@@ -393,7 +426,7 @@ public sealed partial class BattleSim
                 return;
             }
             m.Throws++; m.Reflected = false; m.Projectile = true; m.ProjectileAge = -1.2;
-            m.FromX = s.X; m.FromH = s.Height * 0.7;
+            m.FromX = s.X; m.FromH = s.Height * 0.36;
             double away = s.X < (Left + Right) / 2 ? 1 : -1;
             m.AimX = Math.Clamp(s.X + away * (240 + m.Random.NextDouble() * Math.Max(0, (Right - Left) * 0.5 - 240)), Left + 45, Right - 45);
             m.Flight = Math.Max(1.6, Math.Abs(m.AimX - s.X) / 270); m.CoreX = m.FromX; m.CoreH = m.FromH;
@@ -479,13 +512,15 @@ public sealed partial class BattleSim
         {
             if (m.Beat == 6) { m.Mode = MutantMode.Dissolve; m.Clock = 1.2; foreach (var z in m.Zones) z.Life = Math.Max(0, z.Age - z.Warn); return; }
             var c = CatCentre(); bool horizontal = m.Random.Next(2) == 0;
-            // Leave a reserved corner untouched so accumulated columns cannot fill the screen.
-            double w = horizontal ? Right - Left : Math.Min(75, (Right - Left) * 0.07);
-            double height = horizontal ? Math.Min(65, SkyHeight * 0.08) : SkyHeight;
-            double x = horizontal ? (Left + Right) / 2 : Math.Clamp(c.X, Left + Math.Min(170, (Right - Left) * 0.4), Right - Math.Min(60, (Right - Left) * 0.15));
-            double h = horizontal ? Math.Clamp(c.Height - height / 2, 120, Math.Max(120, SkyHeight - height)) : 0;
-            MutantZone(m, MutantShape.Column, x, h, w, height, 2.5, 30, true);
-            m.Zones[^1].Horizontal = horizontal;
+            var tracking = MutantTrackingZone(horizontal, c.X, c.Height);
+            if (!MutantHasEscape(m, tracking)) tracking = MutantTrackingZone(!horizontal, c.X, c.Height);
+            if (!MutantHasEscape(m, tracking))
+            {
+                m.Mode = MutantMode.Dissolve; m.Clock = 1.2;
+                foreach (var old in m.Zones) old.Life = Math.Max(0, old.Age - old.Warn);
+                return; // A resized battlefield must never receive an unavoidable late strip.
+            }
+            m.Zones.Add(tracking);
             m.Beat++; m.Clock = m.Beat == 6 ? 4.5 : 2.7;
         }
         else if (m.AllIn == 1)
@@ -508,6 +543,34 @@ public sealed partial class BattleSim
         }
     }
     public static double MutantTerrainClock(MutantBoss m, int index) => (m.Age + index * 3.1) % 13;
+    internal MutantZone MutantTrackingZone(bool horizontal, double x, double height)
+    {
+        double w = horizontal ? Right - Left : Math.Min(75, (Right - Left) * 0.07);
+        double h = horizontal ? Math.Min(65, SkyHeight * 0.08) : SkyHeight;
+        return new MutantZone { Shape = MutantShape.Column, Horizontal = horizontal,
+            X = horizontal ? (Left + Right) / 2 : Math.Clamp(x, Left + w / 2, Right - w / 2),
+            H = horizontal ? Math.Clamp(height - h / 2, 0, Math.Max(0, SkyHeight - h)) : 0,
+            W = w, Height = h, Warn = 2.5, Life = 30, Falling = true, Debuff = true };
+    }
+    private bool MutantHasEscape(MutantBoss m, MutantZone next)
+    {
+        var xs = new List<double> { Left + CatHalfWidth + 4, Right - CatHalfWidth - 4 };
+        var hs = new List<double> { CatFeetBelow + 4, SkyHeight - CatHeadAbove - 4 };
+        foreach (var z in m.Zones.Append(next))
+        {
+            if (z.Horizontal) { hs.Add(z.H - CatHeadAbove - 4); hs.Add(z.H + z.Height + CatFeetBelow + 4); }
+            else { xs.Add(z.X - z.W / 2 - CatHalfWidth - 4); xs.Add(z.X + z.W / 2 + CatHalfWidth + 4); }
+        }
+        foreach (double x in xs) foreach (double h in hs)
+        {
+            if (x < Left + CatHalfWidth || x > Right - CatHalfWidth || h < CatFeetBelow || h > SkyHeight - CatHeadAbove) continue;
+            bool clear = true;
+            foreach (var z in m.Zones.Append(next))
+                if (x + CatHalfWidth >= z.X - z.W / 2 && x - CatHalfWidth <= z.X + z.W / 2 && h + CatHeadAbove >= z.H && h - CatFeetBelow <= z.H + z.Height) { clear = false; break; }
+            if (clear) return true;
+        }
+        return false;
+    }
     private void StepMutantTerrain(Slime s, double dt)
     {
         var m = s.Mutant!;

@@ -30,7 +30,7 @@ internal static class MutantVisualChecks
         sim.Damage(boss, 10000, DamageSource.Weapon);
         for (int i = 0; i < 100; i++) sim.Step(0.016, 550, true, true, new CatPose(550, 600, 0, 0, true, false));
         var bumps = SkyVisualChecks.Render(View(), 1200, 700, "mutant-six-bumps");
-        check(!baseImage.SequenceEqual(bumps), "Mutant bump puzzle renders numbered floor and rotated wall targets with active guidance");
+        check(!baseImage.SequenceEqual(bumps), "Mutant bump puzzle highlights floor and rotated wall targets with side-positioned guidance");
         m.Bumps[0].SolvedAt = sim.Time; m.NextBump = 1;
         var solved = SkyVisualChecks.Render(View(), 1200, 700, "mutant-bump-solved");
         check(!bumps.SequenceEqual(solved), "Solved mutant bump and next active target have distinct visuals");
@@ -44,14 +44,29 @@ internal static class MutantVisualChecks
         m.Final = true; m.TerrainCleared = true; m.FadeAt = sim.Time; m.Mode = MutantMode.Roar;
         var clearing = SkyVisualChecks.Render(View(), 1200, 700, "mutant-final-clearing");
         check(!terrain.SequenceEqual(clearing), "Final roar pulls the old battlefield hazards back into the boss");
+        m.FadeAt = sim.Time - 5;
         m.Bags.Clear(); m.Mode = MutantMode.AllIn; m.CoreHits = 2;
         for (int i = 0; i < 6; i++) m.Zones.Add(new MutantZone { Shape = MutantShape.Column, X = i % 2 == 0 ? 260 + i * 100 : 600, W = i % 2 == 0 ? 65 : 1200,
             H = i % 2 == 0 ? 0 : 120 + i * 55, Height = i % 2 == 0 ? 650 : 50, Warn = 1, Age = i == 5 ? 0.5 : 2, Life = 30 });
         var columns = SkyVisualChecks.Render(View(), 1200, 700, "mutant-final-six-columns");
         check(!clearing.SequenceEqual(columns), "Final attack displays six persistent horizontal and vertical goo strips");
-        m.Zones.Clear(); m.Mode = MutantMode.Core;
+        m.Zones.Clear(); m.Mode = MutantMode.Core; m.PoseAge = 0.7;
         var exposed = SkyVisualChecks.Render(View(), 1200, 700, "mutant-final-core");
         check(!columns.SequenceEqual(exposed), "After the all-in attack all strips disappear and the cracked core is exposed");
+        m.PoseAge = 0.1;
+        var opening = SkyVisualChecks.Render(View(), 1200, 700, "mutant-core-opening");
+        m.PoseAge = 0.7;
+        var opened = SkyVisualChecks.Render(View(), 1200, 700, "mutant-core-in-chamber");
+        check(!opening.SequenceEqual(opened), "Core opening separates the shell and reveals a membrane seed inside the body chamber");
+        m.Mode = MutantMode.AllIn; m.PoseAge = 0.15;
+        var closing = SkyVisualChecks.Render(View(), 1200, 700, "mutant-core-closing");
+        check(!closing.SequenceEqual(opened), "Core hit closes the split body before the next attack");
+        foreach (int side in new[] { -1, 0, 1 })
+        {
+            var guide = BattleFieldView.MutantGuide(new Point(side < 0 ? 18 : side > 0 ? 1182 : 600, 400), side, 0, 1200, 0);
+            double gap = side == 0 ? Math.Abs(guide.Icon.X - guide.Start.X) : Math.Abs(guide.Icon.Y - guide.Start.Y);
+            check(gap >= 30 && (guide.End - guide.Start).Length >= 70, $"Guide {side} places cat icon beside a separate arrow with usable spacing");
+        }
         m.Final = false; m.TerrainCleared = false; m.Phase = 2; m.Mode = MutantMode.Ping;
         for (int i = 0; i < 3; i++) m.FailedCores.Add(new MutantBump { X = 220 + i * 220, BornAt = sim.Time - 1 });
         var sealedBumps = SkyVisualChecks.Render(View(), 1200, 700, "mutant-polish-phase2-bumps");

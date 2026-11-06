@@ -77,6 +77,8 @@ Ngoại lệ nào có link tới docs/APPROVED-EXCEPTIONS.md: trước khi sửa
 
 - Bổ sung đã duyệt #63: Slime biến dị ba phase/sân nhầy, xóa toàn bộ hazard khi vào mech1HP; miễn debuff hai boss trong mech và miễn choáng/đẩy ZIP phase2–3. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Battle Mode; luật: docs/MUTANT-SLIME.md.
 
+- Bổ sung #66 đã duyệt: Slime biến dị tuần tra hai mép/CD5 s phase2–3, Truy sát khóa đúng mèo cả sát biên, mở core0,35 s; luật đầy đủ docs/APPROVED-EXCEPTIONS.md → Battle Mode và docs/MUTANT-SLIME.md.
+
 ## File quan trọng
 README.md, docs/AI.md, docs/WINDOWS.md, src/DesktopPet/ (App.xaml.cs, PetWindow*.cs, PetModel.cs, PetRenderer.cs, PetPreferences.cs, PetSounds.cs, AI/), ai/, tests/DesktopPet.Tests/, tests/DesktopPet.UiChecks/, scripts/.
 

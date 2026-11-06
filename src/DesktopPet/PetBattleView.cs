@@ -525,6 +525,7 @@ public sealed partial class BattleFieldView : FrameworkElement
             if (mutation.Mode is MutantMode.Absorb or MutantMode.Transition) { sx *= 1.1 + pulse * 0.06; sy *= 0.9 - pulse * 0.06; }
             if (mutation.Mode == MutantMode.Core) { sx *= 1.08; sy *= 0.9; }
             if (mutation.Mode == MutantMode.AllIn) { sy *= 1.16; jitter += Math.Sin(time * 28) * 1.5; }
+            MutantAnatomyPose(slime, ref sx, ref sy);
         }
         if (slime.Type.Zip != null)
             foreach (var blow in sim.ZipBlows)

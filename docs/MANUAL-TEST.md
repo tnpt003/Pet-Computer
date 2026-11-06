@@ -1148,3 +1148,12 @@ Các mục 1.5 phía trên viết theo từng mốc; đây là thứ tự chơi 
 - [ ] Xem mắt/tay/vỏ/sóng/quạt/cột/thác/hơi thở và nhầy bắn ở gồng/strike/fade; đòn sinh từ boss hợp vị trí, vùng nguy hiểm còn dễ đọc ở nền sáng/tối/nhiều màu. Đòn phạt20/40% có impact phân biệt; không chớp gây khó chịu.
 - [ ] Ping pong có đường báo cung, lõi bay/trả/đập boss rõ; lõi lộ, gào, đổi sân, hút/xóa sân và boss chết không còn hiệu ứng thừa. Giữ luật damage/bế/bounce/choáng/cứu mèo, Khiên/Nộ và Cú đáp địa chấn.
 - [ ] Xem chuyển động thật trong trận ở DPI100/125/150/200%, màn nhỏ và gốc âm; theo dõi FPS khi bốn túi và nhiều dải tồn tại. Ảnh render tự động không thay việc nghiệm thu này.
+
+## Issue #66 — Core/cơ thể/action, guide và Truy sát sát biên (06/11)
+- [ ] Cả ba phase không còn số trên bướu/vòng/giây/lượt/lõi/phần trăm; thứ tự vẫn đúng bướu sáng, xong có vỏ xẹp/dấu giải. HUD HP và số damage thông thường giữ như trước.
+- [ ] Tường: mèo+kiếm nằm cạnh thân mũi tên ngang, kiếm hướng vào bướu trái/phải; sàn: mèo nằm bên tên xuống, không ở đầu/đuôi tên. Có khoảng trống thực hiện, không che core, không tràn khi ở góc/màn nhỏ/DPI cao.
+- [ ] Core: vỏ mở từ thân, đáy còn nối, seed có màng/cuống trong khoang; mặt dạt sang hai bên, không có huy hiệu tròn che mặt. Mở0,35s rồi nhận một hit; trúng khép vỏ và trượt sang phản công, không teleport khi vỏ còn mở. Mắt xoắn vẫn đọc được kích thước thật.
+- [ ] Xem đủ action/nạp/phát/thu của chín đòn: mắt rời hốc/tay vươn từ vai/miệng phun từ bụng, vật liệu và lõi cùng một kiểu; Bumps/Ping/Absorb/Transition/Roar/Core/AllIn/Defeated nhìn ra trạng thái. Không còn miệng phun vô cớ khi Idle.
+- [ ] Phase2–3 tới mỗi mép chờ5s, hết CD đi qua mép đối diện và lặp; gồng/mech/lộ lõi/choáng/Pause ưu tiên dừng. Đổi màn giữa trượt không nhảy về tọa độ cũ.
+- [ ] Truy sát: bế mèo sát sàn/trần/trái/phải, dải ngang/dọc phải khóa xuyên vị trí mèo lúc ngắm, không khóa trên đầu/lệch sang bên; sau khóa di chuyển né được. Sáu dải tích lũy nhưng còn chỗ cho toàn thân; resize hẹp không sinh đòn không thể né. Trúng vẫn5% và có thời gian rơi/stun/nhấc lại, không bị giao dải khóa tay liên tục.
+- [ ] Trận thật/nền sáng-tối/DPI100–200%/gốc âm; hiệu năng bốn túi/sáu dải và sau khi core mở/khép nhiều lần. Chưa coi ảnh tĩnh hoặc crowd-late là nghiệm thu animation/perf boss thật.

@@ -108,12 +108,13 @@ public sealed partial class BattleFieldView
         {
             dc.PushClip(new RectangleGeometry(r));
             if (!warning) dc.DrawGeometry(GelFill, null, GelMembrane(center, r.Width * 0.58, r.Height * 0.58, time, 7));
-            int lanes = Math.Clamp((int)((z.Shape == MutantShape.Breath ? r.Height : r.Width) / 24), 2, 24);
+            bool sideways = z.Shape == MutantShape.Breath || z.Horizontal;
+            int lanes = Math.Clamp((int)((sideways ? r.Height : r.Width) / 24), 2, 24);
             for (int i = 0; i < lanes; i++)
             {
                 double f = (i + 0.5) / lanes;
-                Point a = z.Shape == MutantShape.Breath ? new(r.Left, r.Top + r.Height * f) : new(r.Left + r.Width * f, r.Top);
-                Point b = z.Shape == MutantShape.Breath ? new(r.Right, a.Y) : new(a.X, r.Bottom);
+                Point a = sideways ? new(r.Left, r.Top + r.Height * f) : new(r.Left + r.Width * f, r.Top);
+                Point b = sideways ? new(r.Right, a.Y) : new(a.X, r.Bottom);
                 if (warning) dc.DrawLine(MutationWarn, a, a + (b - a) * progress);
                 else DrawGelStream(dc, a, b, time * (z.Shape == MutantShape.Waterfall ? 2 : 1), i * 0.13);
             }

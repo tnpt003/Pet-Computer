@@ -62,6 +62,7 @@ internal static class BattleMutantTests
                 else RunFor(sim, 1.2, b.X, b.H);
             }
             check(m.Mode == MutantMode.Core, $"Bump round {round + 1} opens the core after all six contacts");
+            RunFor(sim, 0.5);
             sim.Damage(boss, 10, DamageSource.Weapon);
         }
         check(m.Phase == 2 && m.Mode == MutantMode.Transition, "Three core hits enter phase two transition");
@@ -81,6 +82,7 @@ internal static class BattleMutantTests
         check(sim.CatHp == hp, "Cleared floor cannot hurt a held cat during the roar");
         RunFor(sim, 4.1);
         check(m.Mode == MutantMode.Core && m.Bags.Count == 0, "Five-second roar consumes old bags and opens final core");
+        RunFor(sim, 0.5);
         sim.Damage(boss, 1000, DamageSource.Poison);
         check(m.CoreHits == 0, "Poison cannot consume final core hits");
         sim.Damage(boss, 1000, DamageSource.Weapon);
@@ -125,6 +127,8 @@ internal static class BattleMutantTests
             else RunFor(sim, Dt);
         }
         check(m.Throws == 6 && m.Misses == 0 && m.Mode == MutantMode.Core && !sim.Over, "All six reflected cores visibly return, stagger boss and open its core");
+        check(sim.Damage(boss, 10, DamageSource.Weapon) == HitResult.Immune, "Fresh core opening cannot be consumed by a queued weapon hit before shell separates");
+        RunFor(sim, 0.5);
         sim.Damage(boss, 10, DamageSource.Weapon);
         check(m.Phase == 3 && m.Mode == MutantMode.Transition, "Clean ping pong ends with one core strike and advances to phase three");
 
@@ -143,6 +147,27 @@ internal static class BattleMutantTests
             m.Phase = 3; m.Final = m.TerrainCleared = true; m.Mode = MutantMode.AllIn; m.AllIn = attack; m.Clock = 0; boss.Hp = 1;
             for (int i = 0; i < 1700 && m.Mode != MutantMode.Core && !sim.Over; i++) RunFor(sim, Dt, 65, 800);
             check(m.Mode == MutantMode.Core && m.Zones.Count == 0 && !sim.Over, $"All-in {attack + 1} finishes and removes every hazard before next opening");
+        }
+        foreach (int phase in new[] { 2, 3 })
+        {
+            (sim, boss) = Field(90 + phase); m = boss.Mutant!;
+            m.Phase = phase; m.Clock = 1000; m.Zones.Clear(); m.PatrolSide = -1;
+            boss.X = sim.Left + boss.Width / 2 + 10;
+            RunFor(sim, Dt); double edgeX = boss.X;
+            RunFor(sim, 4.8);
+            check(boss.X == edgeX && m.EdgeWait > 0, $"Phase {phase} waits five seconds after reaching an edge");
+            RunFor(sim, 0.4);
+            check(boss.X > edgeX && m.PatrolSide == 1, $"Phase {phase} crosses toward opposite edge when cooldown expires");
+            RunFor(sim, 17);
+            check(Math.Abs(boss.X - (sim.Right - boss.Width / 2 - 10)) < 1 && m.EdgeWait > 0, $"Phase {phase} reaches opposite edge and starts its next cooldown");
+        }
+        (sim, boss) = Field(100); m = boss.Mutant!;
+        foreach (var corner in new[] { (X: sim.Left + 30, H: 34.0), (sim.Right - 30, 34.0), (sim.Left + 30, sim.SkyHeight - 40), (sim.Right - 30, sim.SkyHeight - 40) })
+        foreach (bool horizontal in new[] { false, true })
+        {
+            var z = sim.MutantTrackingZone(horizontal, corner.Item1, corner.Item2);
+            check(corner.Item1 >= z.X - z.W / 2 && corner.Item1 <= z.X + z.W / 2 && corner.Item2 >= z.H && corner.Item2 <= z.H + z.Height,
+                $"Tracking strip {(horizontal ? "horizontal" : "vertical")} locks on cat at edge ({corner.Item1:0},{corner.Item2:0})");
         }
     }
 }

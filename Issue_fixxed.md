@@ -5,6 +5,12 @@ Sổ ghi các lỗi đã sửa của Desktop Pet. Phần A: lỗi người dùng
 Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm lỗi mới: tạo mục số tiếp theo ở đầu phần A (hoặc một dòng ở phần B).
 
 # A. Lỗi người dùng phát hiện
+## #66 — Core như huy hiệu, action rời rạc; guide chồng; Truy sát lệch mèo sát biên (06/11)
+- **Nguyên nhân:** core chỉ vẽ vòng tròn trên mặt; body/nguồn projectile không cùng pose, state không có tuổi mở/khép. Hướng dẫn dùng chung điểm đầu tên với icon; HUD lặp nhiều nhãn số. Truy sát ép X khỏi góc và H≥120 nên né sàn/mép mà không cần di chuyển.
+- **Sửa:** vỏ mở dần quanh khoang có seed màng/thớ/cuống, đáy thân nối liền; mở0,35s trước hit, trúng khép vỏ rồi tan-trượt trước phản công. Pose theo tuổi trạng thái/nạp/phát/thu, nguồn đòn tại mắt/tay/miệng, chung lõi hữu cơ ở ping pong và bướu kín; gào/hút/hạ khác trạng thái, bớt tia rời. Bỏ nhãn số riêng mech cả3phase; icon lệch bên thân tên, sword quay theo mép. Phase2–3 chờ5s tại mép rồi tuần tra qua mép kia. Truy sát ngang/dọc đi qua tâm mèo cả bốn biên, thử hướng có chỗ né cho toàn thân, không để resize sinh đòn không tránh được; giữ5%/6dải/CD/chống combo. Records Endless23/Dump16, ZIP14 giữ.
+- **Kiểm tra:** fullPython58+i18n5/C#3709/WPF1482 đạt (`artifacts/mutant-cohesion-full.log`); kiểm lại sau metadata/tip/ảnh core: C#331 (`mutant-cohesion-final-core.log`), WPF1482 (`mutant-cohesion-final-ui.log`), i18n5 đạt. Test tái hiện cả8 hướng/biên, CD mép phase2–3, mở core/chưa nhận hit và guide. Đã xem render trước/sau core, guide và Eye strike sáng/tối; chưa chơi thật/DPI/multi-monitor/chưa nghiệm thu độ khó boss.
+- **Đóng gói:** đang chốt commit/publish/smoke/perf, ghi kết quả thật khi xong. Luật docs/MUTANT-SLIME.md #66, test tay MANUAL-TEST #66.
+
 ## #65 — Slime biến dị đứng yên, nhầy/mech/đòn thiếu vật liệu và animation (06/11)
 - **Nguyên nhân:** controller riêng thoát trước AI đi thường nhưng chưa thay locomotion; đòn chỉ tạo zone, Lột xác dịch X ngay. Renderer dùng ellipse ba chấm và chữ nhật cho đa số hiệu ứng, bướu thiếu vòng đời/co-hút.
 - **Sửa:** đi/tiến-lùi lúc rảnh, chuyển lao/trượt nội suy và pose theo vận tốc, map khi resize. Gel membrane cong có nhiều thùy/lớp màu/thớ/bọt/giọt, vật liệu riêng cho chồi sàn/tường và bướu kín phase2; các nhóm mắt/tay/vỏ/sóng/quạt/phun/cột/thác có artwork riêng, impact/fade. Hướng dẫn tường đúng hướng, ping pong báo cung, hút bằng ống mềm và bướu teo. Chuyển/xóa sân co cả phần hình, không làm rộng bán kính khi hút. Không thay damage/ngưỡng/thứ tự mech.

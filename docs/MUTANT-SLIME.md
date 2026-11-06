@@ -4,6 +4,16 @@ Trạng thái: **đã triển khai bản thử, đang nghiệm thu tay**. Giữ 
 
 ## Nhận diện
 
+### Cơ thể/action/core và sửa sau chơi thử #66 — 06/11
+
+- Bỏ toàn bộ nhãn số riêng của boss trong ba phase (số bướu, vòng/giây, lượt ping pong, nhát lõi, phần trăm phạt). Logic thứ tự/thời hạn giữ nguyên; bướu đang mở sáng và có guide, bướu xong xẹp có dấu. Sổ tay vi/en/ja hướng dẫn theo bướu sáng.
+- Icon không nằm trên đầu/đuôi mũi tên: bướu tường dùng mũi tên ngang dài86 DIP, icon mèo+kiếm đặt trên hoặc dưới thân tên cách34 DIP, kiếm hướng về bướu; bướu sàn dùng tên xuống dài~84 DIP, mèo đặt lệch trái/phải thân tên38 DIP. Đầu tên dừng trước bướu, icon có đệm khỏi mép màn hình.
+- Phase2–3 tuần tra hai mép thay vì bám khoảng cách mèo: tới một mép chờ5 s rồi đi tới mép kia và lặp. Tốc độ tuần tra tối thiểu80 DIP/s hoặc4×speed loại boss; chịu Chill. Tạm dừng khi gồng đòn, mech/lộ lõi/choáng/Pause; vùng đã khóa không chạy theo boss. Phase1 giữ tiến/lùi cũ.
+- Truy sát khóa qua tâm mèo lúc ngắm, ngang lẫn dọc ở cả bốn mép, bỏ ép X khỏi góc/ép H tối thiểu120. Tính khoảng trống còn lại cho toàn thân mèo sau mỗi dải, thử hướng kia nếu không còn chỗ né; resize quá hẹp thì tan an toàn, không sinh đòn không né được. Không có góc cố định miễn nguy hiểm. Dải ngang có dòng chảy ngang đúng hướng. Damage5%, sáu nhịp và bảo vệ rơi/choáng giữ nguyên.
+- Cơ thể, action và core dùng chung bộ dáng theo trạng thái/tuổi trạng thái trong simulation: nạp lực, phát lực, thu về. Mắt rời hốc, tay nối từ vai, bụng/miệng gồng và xẹp; mouth không mở vô cớ khi Idle. Dòng nhầy dùng điểm phát tương ứng mắt/tay/miệng, tay bơm xuống sàn; xoắn mắt dùng nét nhỏ để không bít thành chấm.
+- Core: hai phần vỏ tách dần, đáy thân vẫn nối liền; lõi hữu cơ có màng/thớ/cuống nằm trong khoang tối, mắt dạt ra hai bên, không còn vòng tròn đè lên mặt. Có0,35 s mở vỏ trước khi nhận nhát, tránh đòn chờ ăn ngay cửa lõi. Trúng thì lõi rạn và vỏ khép0,32 s trước khi thân tan-trượt sang vị trí phản công. Cùng một lõi được dùng trong ping pong và bướu kín phase2. Gào/hút/hồi/đổi sân/kiệt sức/bị hạ có dáng tương ứng; bỏ tia sao rời che boss khi hút/phạt.
+- Kỷ lục Vô tận23/Bãi rác16 cho tuần tra và Truy sát mới, Slime Nén14/chương1/tuyến Slime giữ nguyên. Cần chơi thật nghiệm thu mỹ thuật/nhịp và cân bằng, ảnh render không thay thao tác người dùng.
+
 ### Chỉnh sau chơi thử #65 — 06/11
 
 - Boss tiến/lùi theo khoảng cách tới mèo khi không còn đòn đang diễn ra, ngừng trong mech/lộ lõi và khi choáng/Pause. Chân bám trước, thân kéo trễ qua pose theo vận tốc. Bước chân đi trước và Lột xác ngược có hành trình nội suy/gồng riêng, không dịch tức thời; đổi vùng màn hình ánh xạ cả đầu/cuối hành trình.

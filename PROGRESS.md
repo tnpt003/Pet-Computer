@@ -14,6 +14,8 @@ Quy ước file này: chỉ giữ trạng thái hiện tại, các đợt đang 
 
 ## Đang dở và việc tiếp theo
 
+- **Slime biến dị polish (#65, 06/11, đang chốt publish):** sửa boss đứng yên, tiến/lùi lúc rảnh và lao/trượt có hành trình/map resize; gel có thùy/gradient/thớ/giọt, nhầy trời dàn ngang; artwork riêng9 nhóm đòn, bướu phase1 mọc/lõm/xẹp và bướu kín phase2 rơi/tụ/hút; mũi tên tường đúng, ping pong báo cung, hút/xóa sân co đúng. FullPython58+i18n5/C#3694/WPF1477 đạt; kiểm lại cuối core310/WPF1477 đạt. Đã xem ảnh sáng/tối trước/sau,37ảnh mutant ở artifacts/mutant-polish-render. Luật docs/MUTANT-SLIME.md; chi tiết Issue_fixxed #65. Chưa chơi tay/DPI/multi-monitor/perf boss thật. Giữ công việc Slime Mẹ/#64 đã có trong HEAD.
+
 - **Slime Mẹ thiết kế mới (06/11, đang làm):** đã chốt với người dùng ở docs/MOTHER-SLIME.md: mẹ nhận nhầm mèo là con, thân thạch có trứng trong bụng, 3 phase/9 đòn, Quấn khăn, Trứng treo, Trả con về nôi, phase 3 đổi máu thành Thanh dỗ ngưỡng 33/66/100 (trượt thì giảm 15% rồi đi tiếp ngưỡng sau, Trứng cuối bắt buộc). Mốc 0 xong (#64); tiếp theo Mốc 1 hình và animation, có ảnh render cho người dùng xem.
 
 - **Chỉ Kéo cắt đứt dây (#64, 06/11, code6d93cf4, CHƯA publish, bản đang chạy chưa có):** mèo không còn cắt dây nào; Đầm nhầy cho mượn Kéo cắt, Slime Nén cho mượn Bình xịt; records Đầm nhầy5/Slime Nén14/Vô tận22/Bãi rác15. Python58+5, C#3692, WPF1467 đạt, ngưỡng cân bằng đạt; chưa so bảng trước/sau vì thiếu log đối chứng, so ở mốc cân bằng Slime Mẹ. Chi tiết Issue_fixxed #64, test tay MANUAL-TEST #64.

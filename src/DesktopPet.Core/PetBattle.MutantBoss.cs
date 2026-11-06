@@ -18,6 +18,7 @@ public sealed class MutantZone
 public sealed class MutantBump
 {
     public double X, H, SolvedAt = -1;
+    public double BornAt;
     public int Side;
     public bool Solved => SolvedAt >= 0;
 }
@@ -45,6 +46,7 @@ public sealed class MutantBoss
     public bool Mech => Mode is MutantMode.Bumps or MutantMode.Core or MutantMode.Ping or MutantMode.Absorb or MutantMode.Roar or MutantMode.AllIn or MutantMode.Dissolve;
     public double CoreX, CoreH;
     public double ReturnLeft;
+    public double TravelFrom, TravelTo, TravelAt, TravelDuration, Velocity;
 }
 
 public sealed partial class BattleSim
@@ -225,6 +227,7 @@ public sealed partial class BattleSim
             m.Bumps.Add(new MutantBump { X = side < 0 ? Left + 18 : Right - 18, H = Math.Max(115, SkyHeight * (0.28 + i * 0.23)), Side = side });
         }
         for (int i = m.Bumps.Count - 1; i > 0; i--) { int j = m.Random.Next(i + 1); (m.Bumps[i], m.Bumps[j]) = (m.Bumps[j], m.Bumps[i]); }
+        foreach (var bump in m.Bumps) bump.BornAt = Time;
     }
     private void MutantZone(MutantBoss m, MutantShape shape, double x, double h, double w, double height, double warn = 1.1, double life = 0.35, bool drop = false)
         => m.Zones.Add(new MutantZone { Shape = shape, X = x, H = h, W = w, Height = height, Warn = warn, Life = life, Falling = drop, Debuff = true });
@@ -236,6 +239,27 @@ public sealed partial class BattleSim
         var m = s.Mutant;
         if (!s.Targetable || s.State == SlimeState.Spawning) return false;
         m.Age += dt;
+        double previousX = s.X;
+        if (m.Mode == MutantMode.Combat && s.State != SlimeState.Stunned)
+        {
+            if (m.TravelDuration > 0 && Time >= m.TravelAt)
+            {
+                double t = Math.Clamp((Time - m.TravelAt) / m.TravelDuration, 0, 1);
+                s.X = m.TravelFrom + (m.TravelTo - m.TravelFrom) * t * t * (3 - 2 * t);
+                if (t >= 1) m.TravelDuration = 0;
+            }
+            else if (m.TravelDuration <= 0 && m.Zones.Count == 0)
+            {
+                double distance = lastCatX - s.X;
+                double preferred = s.Range * 0.9;
+                int direction = Math.Abs(distance) > preferred + 25 ? Math.Sign(distance) : Math.Abs(distance) < preferred * 0.55 ? -Math.Sign(distance) : 0;
+                s.X += direction * s.Type.Speed * (1.4 + m.Phase * 0.2) * s.ChillFactor * dt;
+                if (direction != 0) s.Facing = direction;
+            }
+            s.X = Math.Clamp(s.X, Left + s.Width / 2, Math.Max(Left + s.Width / 2, Right - s.Width / 2));
+        }
+        else m.TravelDuration = 0;
+        m.Velocity = (s.X - previousX) / Math.Max(0.001, dt);
         StepMutantTerrain(s, dt);
         if (Over) return true;
         if (m.Mode == MutantMode.Combat && s.State == SlimeState.Stunned)
@@ -389,7 +413,7 @@ public sealed partial class BattleSim
         }
         else if (t >= 1)
         {
-            m.Misses++; m.FailedCores.Add(new MutantBump { X = m.AimX });
+            m.Misses++; m.FailedCores.Add(new MutantBump { X = m.AimX, BornAt = Time });
             m.Projectile = false; m.Clock = 1.4;
             AddEffect(BattleEffectKind.Splat, m.AimX, 0);
         }
@@ -412,6 +436,8 @@ public sealed partial class BattleSim
             if (m.Move == 0)
             {
                 double end = Math.Clamp(s.X + s.Facing * 260, Left + 45, Right - 45);
+                m.TravelFrom = s.X; m.TravelTo = Math.Clamp(end, Left + s.Width / 2, Right - s.Width / 2);
+                m.TravelAt = Time + 1.1; m.TravelDuration = 0.85;
                 MutantZone(m, MutantShape.Wave, (s.X + end) / 2, 0, Math.Abs(end - s.X) + 60, 70);
                 MutantZone(m, MutantShape.Shell, s.X, 0, s.Width + 70, 100, 2.3);
             }
@@ -424,8 +450,9 @@ public sealed partial class BattleSim
             if (m.Move == 0)
             {
                 MutantZone(m, MutantShape.Shell, s.X, 0, s.Width + 80, s.Height + 55, 1.4);
-                s.X = Math.Clamp(s.X + s.Facing * 170, Left + s.Width / 2, Right - s.Width / 2);
-                MutantZone(m, MutantShape.Hand, s.X + s.Facing * 100, h, 140, 90, 2.6);
+                m.TravelFrom = s.X; m.TravelTo = Math.Clamp(s.X + s.Facing * 170, Left + s.Width / 2, Right - s.Width / 2);
+                m.TravelAt = Time + 0.4; m.TravelDuration = 0.8;
+                MutantZone(m, MutantShape.Hand, m.TravelTo + s.Facing * 100, h, 140, 90, 2.6);
             }
             else if (m.Move == 1)
                 for (int i = 0; i < 2; i++) MutantZone(m, MutantShape.Hand, x, i == 0 ? 0 : Math.Min(SkyHeight - 120, h + 100), 200, 90, 1.3 + i * 1.1);

@@ -5,6 +5,11 @@ Sổ ghi các lỗi đã sửa của Desktop Pet. Phần A: lỗi người dùng
 Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm lỗi mới: tạo mục số tiếp theo ở đầu phần A (hoặc một dòng ở phần B).
 
 # A. Lỗi người dùng phát hiện
+## #65 — Slime biến dị đứng yên, nhầy/mech/đòn thiếu vật liệu và animation (06/11)
+- **Nguyên nhân:** controller riêng thoát trước AI đi thường nhưng chưa thay locomotion; đòn chỉ tạo zone, Lột xác dịch X ngay. Renderer dùng ellipse ba chấm và chữ nhật cho đa số hiệu ứng, bướu thiếu vòng đời/co-hút.
+- **Sửa:** đi/tiến-lùi lúc rảnh, chuyển lao/trượt nội suy và pose theo vận tốc, map khi resize. Gel membrane cong có nhiều thùy/lớp màu/thớ/bọt/giọt, vật liệu riêng cho chồi sàn/tường và bướu kín phase2; các nhóm mắt/tay/vỏ/sóng/quạt/phun/cột/thác có artwork riêng, impact/fade. Hướng dẫn tường đúng hướng, ping pong báo cung, hút bằng ống mềm và bướu teo. Chuyển/xóa sân co cả phần hình, không làm rộng bán kính khi hút. Không thay damage/ngưỡng/thứ tự mech.
+- **Kiểm tra:** tập trung47 đạt; full Python58+i18n5/C#3694/WPF1477 đạt (`artifacts/mutant-polish-full.log`); kiểm lại cuối core310 và WPF1477 đạt (`mutant-polish-final-core.log`, `mutant-polish-final-ui.log`). Có37 ảnh render nhóm mutant ở artifacts/mutant-polish-render; đã xem so trước/sau nhầy trời, bướu phase1, hút bướu phase2, tay và thác sáng/tối. Chưa chơi thật/DPI/multi-monitor; cần người dùng xem animation trong trận. Publish/smoke ghi khi xong.
+
 ## #64 — Mèo cắt được dây khi kéo/ném xuyên qua; chỉ Kéo cắt mới được đứt dây (06/11)
 - **Yêu cầu:** bỏ tương tác kéo/ném mèo xuyên dây ở mọi slime liên quan, dây chỉ đứt bằng Kéo cắt.
 - **Nguyên nhân:** `CatThroughRopes` trong PetBattle.Held.cs cắt mọi loại dây khi mèo đi xuyên đủ nhanh, là luật từ M10.

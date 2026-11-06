@@ -29,6 +29,12 @@ internal static class BattleMutantTests
     public static void Run(Action<bool, string> check)
     {
         var (sim, boss) = Field();
+        double originalX = boss.X;
+        RunFor(sim, 0.6, 100, 800);
+        check(boss.X < originalX - 5 && boss.Mutant!.Velocity < 0, "Mutant advances toward distant cat between attacks instead of standing still");
+        double stoppedX = boss.X;
+        sim.Paused = true; RunFor(sim, 0.4, 100, 800); sim.Paused = false;
+        check(boss.X == stoppedX, "Pause freezes mutant locomotion and its movement pose");
         check(boss.Type.Mutant && boss.Mutant != null && boss.Type.Phases == null, "Mutant owns its state machine without royal phases");
         sim.Damage(boss, 100000, DamageSource.Bomb);
         var m = boss.Mutant!;

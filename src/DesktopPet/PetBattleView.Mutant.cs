@@ -38,6 +38,13 @@ public sealed partial class BattleFieldView
     {
         var m = s.Mutant;
         double phase = m?.Phase ?? 1;
+        double drift = Math.Clamp(-(m?.Velocity ?? 0) / 90, -1, 1);
+        for (int lobe = 0; lobe < phase; lobe++)
+        {
+            double side = lobe % 2 == 0 ? -1 : 1;
+            double y = -bh * (0.62 - lobe * 0.14) + Math.Sin(time * 2.7 + lobe) * 2;
+            DrawGel(dc, new Point(side * (bw * 0.48 + 2) + drift * 2, y), 4 + phase, 4 + Math.Sin(time * 3 + lobe), time, lobe);
+        }
         // Bulges move independently; the default face remains spiral-eyed and crooked.
         for (int i = 0; i < 3 + phase; i++)
         {
@@ -46,8 +53,8 @@ public sealed partial class BattleFieldView
             dc.DrawEllipse(MutationSoft, null, new Point(x, y), 3 + i % 3, 4 + Math.Sin(time + i));
         }
         double eyeY = -bh * (m?.Mode == MutantMode.Roar ? 0.7 : 0.58);
-        MutationSpiral(dc, new Point(-8, eyeY), 5.6, time * 0.5);
-        MutationSpiral(dc, new Point(8, eyeY - 2), 6.2, -time * 0.45);
+        MutationSpiral(dc, new Point(-8 + drift * 2, eyeY + Math.Sin(time * 1.4)), 5.6, time * 0.5);
+        MutationSpiral(dc, new Point(8 + drift * 3, eyeY - 2), 6.2, -time * 0.45);
         var mouth = new StreamGeometry();
         using (var p = mouth.Open())
         {
@@ -56,6 +63,17 @@ public sealed partial class BattleFieldView
             p.BezierTo(new Point(10, -bh * 0.1), new Point(16, -bh * 0.38), new Point(12, -bh * 0.47), true, false);
         }
         dc.DrawGeometry(null, MutationLine, mouth);
+        if (m?.Mode == MutantMode.Ping && m.Projectile && m.ProjectileAge < 0.5)
+        {
+            double swell = 1 + Math.Sin(Math.Clamp(m.ProjectileAge + 1.2, 0, 1.7) / 1.7 * Math.PI);
+            dc.DrawEllipse(MutationInk, GelVein, new Point(4, -bh * 0.32), 5 * swell, 4 * swell);
+        }
+        if (m?.Mode == MutantMode.Absorb)
+            for (int i = 0; i < Math.Max(3, m.Misses); i++)
+            {
+                double a = i * Math.PI * 2 / Math.Max(3, m.Misses);
+                DrawGel(dc, new Point(Math.Cos(a) * bw * 0.3, -bh * 0.4 + Math.Sin(a) * bh * 0.28), 3 + Math.Abs(Math.Sin(time * 5 + i)) * 3, 4, time, i);
+            }
         if (m?.Mode == MutantMode.Roar)
         {
             dc.DrawEllipse(MutationInk, MutationGlow, new Point(0, -bh * 0.3), 8, 7 + 3 * Math.Sin(time * 13));
@@ -91,7 +109,8 @@ public sealed partial class BattleFieldView
                     double x = (i < 2 ? sim.Left + sideW * (i + 0.5) / 2 : sim.Right - sideW * (i - 1.5) / 2) - OriginX;
                     double clock = BattleSim.MutantTerrainClock(m, i);
                     bool live = clock >= 5 && !m.TerrainCleared && m.Mode != MutantMode.Transition;
-                    dc.DrawEllipse(live ? MutationGreen : MutationSoft, clock is >= 3.8 and < 5 ? MutationWarn : MutationLine, new Point(x, floor - 3), sideW / 4, live ? 10 : 4);
+                    DrawGel(dc, new Point(x, floor - 3), sideW / 4, live ? 10 : 4, time, i, live);
+                    if (clock is >= 3.8 and < 5) dc.DrawEllipse(null, MutationWarn, new Point(x, floor - 4), sideW / 4, 12);
                     for (int k = 0; k < 4; k++)
                         dc.DrawEllipse(MutationCore, null, new Point(x + (k - 1.5) * sideW / 11, floor - 5 - (live ? 5 * Math.Abs(Math.Sin(time * 3 + k)) : 0)), 2.5, 2);
                     if (m.Mode == MutantMode.Transition || m.TerrainCleared)
@@ -99,7 +118,7 @@ public sealed partial class BattleFieldView
                         Point origin = new(s.X - OriginX, floor - s.Height * 0.4);
                         double t = (time * 0.7 + i * 0.23) % 1;
                         if (m.TerrainCleared) t = 1 - t;
-                        dc.DrawLine(MutationLine, origin, new Point(x, floor - 4));
+                        DrawGelStream(dc, origin, new Point(x, floor - 4), time, i * 0.2, m.TerrainCleared);
                         dc.DrawEllipse(MutationCore, MutationLine, new Point(origin.X + (x - origin.X) * t, origin.Y + (floor - origin.Y) * t - Math.Sin(t * Math.PI) * 25), 5, 5);
                     }
                 }
@@ -108,13 +127,16 @@ public sealed partial class BattleFieldView
             foreach (var b in m.FailedCores)
             {
                 double x = b.X - OriginX;
-                dc.DrawEllipse(MutationInk, Outline, new Point(x, floor - 12), 24, 14);
-                dc.DrawEllipse(MutationGreen, MutationLine, new Point(x, floor - 17), 17, 12);
-                dc.DrawLine(MutationGlow, new Point(x - 9, floor - 19), new Point(x + 8, floor - 10));
+                double grow = Math.Clamp((time - b.BornAt) / 0.5, 0, 1);
+                double shrink = m.Mode == MutantMode.Absorb ? Math.Clamp(m.Clock / 3, 0.08, 1) : 1;
+                DrawGel(dc, new Point(x, floor - 14 * grow * shrink), 30 * grow * shrink, 22 * grow * shrink, time, b.X);
+                dc.DrawEllipse(MutationInk, GelVein, new Point(x, floor - 17 * shrink), 9 * shrink, 11 * shrink);
+                for (int rib = 0; rib < 3; rib++) dc.DrawLine(GelVein, new Point(x - 17 + rib * 14, floor - 28 * shrink), new Point(x - 11 + rib * 12, floor - 4));
+                if (time - b.BornAt < 0.7) DrawGelBurst(dc, new Point(x, floor - 5), 45, (time - b.BornAt) / 0.7);
                 if (m.Mode == MutantMode.Absorb)
                 {
                     Point end = new(s.X - OriginX, floor - s.Height * 0.5);
-                    dc.DrawLine(MutationLine, new Point(x, floor - 15), end);
+                    DrawGelStream(dc, new Point(x, floor - 15), end, time, x * 0.01);
                     double t = (time * 0.8 + x * 0.01) % 1;
                     dc.DrawEllipse(MutationCore, null, new Point(x + (end.X - x) * t, floor - 15 + (end.Y - floor + 15) * t), 5, 5);
                 }
@@ -155,20 +177,8 @@ public sealed partial class BattleFieldView
                 double fade = z.Age <= z.Warn + z.Life ? 1 : Math.Clamp(1 - (z.Age - z.Warn - z.Life) / 0.8, 0, 1);
                 dc.PushOpacity(fade * (warning ? 0.65 : 0.9));
                 var rect = new Rect(p.X - width / 2, p.Y, width, height);
-                dc.DrawRoundedRectangle(warning ? MutationSoft : MutationGreen, warning ? MutationWarn : MutationGlow, rect, Math.Min(18, width / 4), Math.Min(18, height / 4));
-                int dots = z.Shape is MutantShape.Column or MutantShape.Waterfall or MutantShape.Breath ? 12 : 4;
-                for (int i = 0; i < dots; i++)
-                {
-                    double f = (i * 0.173 + time * (warning ? 0.12 : 0.7)) % 1;
-                    double x = rect.Left + width * ((i * 0.37) % 1), y = rect.Top + height * f;
-                    dc.DrawEllipse(warning ? MutationCore : MutationInk, null, new Point(x, y), 2 + i % 3, 3 + i % 4);
-                }
+                DrawMutantAttackArt(dc, z, rect, at(s.X, s.Height * 0.65), time);
                 Point center = new(rect.Left + width / 2, rect.Top + height / 2);
-                if (z.Shape == MutantShape.Eye) MutationSpiral(dc, center, Math.Min(width, height) * 0.3, time);
-                if (z.Shape == MutantShape.Hand)
-                    for (int i = 0; i < 4; i++) dc.DrawEllipse(MutationCore, MutationLine, new Point(rect.Left + width * (i + 1) / 5, rect.Top + 8), 7, 14);
-                if (z.Shape == MutantShape.Fan)
-                    for (int i = 0; i < 4; i++) dc.DrawLine(MutationLine, new Point(center.X, rect.Bottom), new Point(rect.Left + width * i / 3, rect.Top));
                 if (warning) MutantCaption(dc, "!", new Point(center.X, rect.Top + 4));
                 dc.Pop();
             }
@@ -179,7 +189,14 @@ public sealed partial class BattleFieldView
                 dc.PushOpacity(b.Solved ? 0.4 : active ? 1 : 0.5);
                 dc.PushTransform(new TranslateTransform(p.X, p.Y));
                 if (b.Side != 0) dc.PushTransform(new RotateTransform(b.Side < 0 ? 90 : -90));
-                dc.DrawEllipse(b.Solved ? MutationSoft : MutationGreen, active ? MutationGlow : MutationLine, new Point(0, 0), 30, b.Solved ? 5 : b.Side == 0 ? 15 : 23);
+                double recoil = b.Solved ? Math.Clamp(1 - (time - b.SolvedAt) / 0.6, 0, 1) : 0;
+                double sprout = Math.Clamp((time - b.BornAt) / 0.5, 0.1, 1);
+                DrawGel(dc, new Point(0, 0), (30 + recoil * 8) * sprout, (b.Solved ? 5 + recoil * 9 : b.Side == 0 ? 16 : 24) * sprout, time, i, active);
+                if (recoil > 0) DrawGelBurst(dc, new Point(0, -8), 48, 1 - recoil, i);
+                if (b.Side == 0 && !b.Solved)
+                    for (int ring = 0; ring < 2; ring++) dc.DrawEllipse(null, GelVein, new Point(0, -3 - ring * 3), 20 - ring * 6, 5);
+                else if (!b.Solved)
+                    for (int rib = -1; rib <= 1; rib++) dc.DrawLine(GelVein, new Point(rib * 13, 8), new Point(rib * 8, -17));
                 dc.DrawEllipse(active ? MutationCore : MutationInk, MutationLine, new Point(0, -5), b.Side == 0 ? 13 : 9, b.Solved ? 2 : 7);
                 if (b.Solved)
                 {
@@ -195,8 +212,10 @@ public sealed partial class BattleFieldView
                     MutantCatIcon(dc, icon, b.Side != 0);
                     Point end = b.Side == 0 ? new(p.X, p.Y - 22) : new(p.X - b.Side * 22, p.Y);
                     dc.DrawLine(MutationGlow, icon, end);
-                    dc.DrawLine(MutationGlow, end, new Point(end.X - 5 - (b.Side == 0 ? 0 : b.Side * 3), end.Y - 7));
-                    dc.DrawLine(MutationGlow, end, new Point(end.X + 5 - (b.Side == 0 ? 0 : b.Side * 3), end.Y - 7));
+                    Vector direction = end - icon; direction.Normalize();
+                    Vector wing = new(-direction.Y * 5, direction.X * 5);
+                    dc.DrawLine(MutationGlow, end, end - direction * 9 + wing);
+                    dc.DrawLine(MutationGlow, end, end - direction * 9 - wing);
                 }
                 dc.Pop();
             }
@@ -213,7 +232,7 @@ public sealed partial class BattleFieldView
                 double pulse = bag.Warning ? 1.15 + Math.Sin(time * 12) * 0.05 : 1 + Math.Sin(time * 2 + bag.Lane) * 0.05;
                 if (bag.Warning || bag.Spraying)
                 {
-                    double r = Math.Abs(at(bag.X + 85, bag.H).X - p.X);
+                    double r = Math.Abs(at(bag.X + 85, bag.H).X - at(bag.X, bag.H).X) * fade;
                     dc.DrawEllipse(bag.Spraying && !m.TerrainCleared ? MutationSoft : null, bag.Warning ? MutationWarn : MutationGlow, p, r, r);
                     if (bag.Spraying)
                         for (int i = 0; i < 12; i++)
@@ -222,8 +241,8 @@ public sealed partial class BattleFieldView
                             dc.DrawEllipse(MutationGreen, MutationLine, new Point(p.X + Math.Cos(a) * d, p.Y + Math.Sin(a) * d), 4, 6);
                         }
                 }
-                dc.DrawEllipse(MutationGreen, MutationLine, p, 28 * pulse, 35 / pulse);
-                for (int i = 0; i < 3; i++) dc.DrawEllipse(MutationCore, null, new Point(p.X - 10 + i * 9, p.Y - 12 + i * 8), 4, 6);
+                DrawGel(dc, p, 43 * pulse * fade, 24 / pulse * fade, time, bag.Lane, bag.Spraying && !m.TerrainCleared);
+                if (bag.Warning) DrawGelBurst(dc, p, 45, (time * 0.7) % 1, bag.Lane);
                 dc.Pop();
             }
             if (m.Projectile || m.ReturnLeft > 0)
@@ -232,10 +251,13 @@ public sealed partial class BattleFieldView
                 if (m.Projectile && m.ProjectileAge < 0)
                 {
                     Point end = at(m.AimX, 0), start = at(m.FromX, m.FromH);
-                    dc.DrawLine(MutationWarn, start, end); dc.DrawEllipse(null, MutationGlow, end, 28, 8);
+                    var arc = new StreamGeometry();
+                    using (var g = arc.Open()) { g.BeginFigure(start, false, false); g.QuadraticBezierTo(new Point((start.X + end.X) / 2, Math.Min(start.Y, end.Y) - Math.Min(180, Math.Abs(end.X - start.X) * 0.4)), end, true, false); }
+                    dc.DrawGeometry(null, MutationWarn, arc); dc.DrawEllipse(null, MutationGlow, end, 28, 8);
                     MutantCatIcon(dc, new Point(end.X, end.Y - 60), false);
                 }
-                dc.DrawEllipse(MutationSoft, MutationGlow, p, 28, 28);
+                DrawGel(dc, p, 28, 28, time, 6, m.ReturnLeft > 0);
+                DrawGelBurst(dc, p, 40, (time * 2) % 1, 2);
                 dc.DrawEllipse(MutationCore, MutationLine, p, 13, 17);
                 MutationSpiral(dc, p, 8, time);
             }
@@ -244,6 +266,13 @@ public sealed partial class BattleFieldView
                 Point center = at(s.X, s.Height * 0.5);
                 double k = Math.Clamp(1 - m.Clock / 3, 0, 1);
                 dc.DrawEllipse(null, m.Misses == 6 ? MutationGlow : MutationWarn, center, 30 + k * (sim.Right - sim.Left), 20 + k * sim.SkyHeight);
+                for (int i = 0; i < (m.Misses == 6 ? 12 : 6); i++)
+                {
+                    double a = i * Math.PI * 2 / (m.Misses == 6 ? 12 : 6);
+                    Point tip = new(center.X + Math.Cos(a) * k * (sim.Right - sim.Left), center.Y + Math.Sin(a) * k * sim.SkyHeight);
+                    DrawGelStream(dc, center, tip, time, i * 0.17);
+                    DrawGelBurst(dc, tip, m.Misses == 6 ? 65 : 40, (time * 0.7 + i * 0.11) % 1, i);
+                }
                 MutantCaption(dc, m.Phase == 1 ? "50%" : m.Misses == 6 ? "40%" : m.Misses >= 3 ? "20%" : "+", new Point(center.X, center.Y - 60), 22);
             }
             Point label = at(s.X, s.Height + 45);

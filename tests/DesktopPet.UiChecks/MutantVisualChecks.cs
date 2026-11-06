@@ -52,5 +52,24 @@ internal static class MutantVisualChecks
         m.Zones.Clear(); m.Mode = MutantMode.Core;
         var exposed = SkyVisualChecks.Render(View(), 1200, 700, "mutant-final-core");
         check(!columns.SequenceEqual(exposed), "After the all-in attack all strips disappear and the cracked core is exposed");
+        m.Final = false; m.TerrainCleared = false; m.Phase = 2; m.Mode = MutantMode.Ping;
+        for (int i = 0; i < 3; i++) m.FailedCores.Add(new MutantBump { X = 220 + i * 220, BornAt = sim.Time - 1 });
+        var sealedBumps = SkyVisualChecks.Render(View(), 1200, 700, "mutant-polish-phase2-bumps");
+        m.Mode = MutantMode.Absorb; m.Clock = 1.3; m.Misses = 3;
+        var draining = SkyVisualChecks.Render(View(), 1200, 700, "mutant-polish-phase2-absorb");
+        check(!sealedBumps.SequenceEqual(draining), "Phase-two sealed bumps visibly shrink and stream goo back to the boss");
+        m.FailedCores.Clear(); m.Mode = MutantMode.Combat;
+        foreach (MutantShape shape in Enum.GetValues<MutantShape>())
+        {
+            m.Zones.Clear();
+            var zone = new MutantZone { Shape = shape, X = 450, H = 180, W = 230, Height = 170, Warn = 1.2, Life = 1, Age = 0.6 };
+            m.Zones.Add(zone);
+            var warn = SkyVisualChecks.Render(View(), 1200, 700, "mutant-polish-" + shape + "-warning");
+            zone.Age = 1.6;
+            var strike = SkyVisualChecks.Render(View(), 1200, 700, "mutant-polish-" + shape + "-strike");
+            zone.Age = 2.6;
+            var fading = SkyVisualChecks.Render(View(), 1200, 700, "mutant-polish-" + shape + "-fade");
+            check(!warn.SequenceEqual(strike) && !strike.SequenceEqual(fading), $"Mutant {shape} has distinct windup, impact and dissolve artwork");
+        }
     }
 }

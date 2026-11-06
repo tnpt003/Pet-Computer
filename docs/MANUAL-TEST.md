@@ -1140,3 +1140,11 @@ Các mục 1.5 phía trên viết theo từng mốc; đây là thứ tự chơi 
 - [ ] Slime Nén cho mượn Bình xịt, hướng dẫn kỹ năng chạy đúng; mục tiêu/mẹo hai màn đúng vi/en/ja.
 - [ ] Ném mèo mạnh xuyên Slime băng vẫn vỡ vỏ; Kẹp gắp gắp con giữ xích vẫn đứt xích.
 - [ ] Save đã qua Đầm nhầy mà chưa qua Slime Nén: có Kéo cắt thay vì Bình xịt, không lỗi khi mở bảng chuẩn bị.
+
+## Issue #65 — Slime biến dị: di chuyển và polish toàn bộ nhầy/mech (06/11)
+- [ ] Boss đi tới mèo khi xa, lùi nhẹ khi quá gần, thân kéo trễ và co giãn theo hướng đi. Lao/trượt diễn ra liên tục sau gồng, không teleport; boss ngừng đi trong mech/lộ lõi/choáng/Pause. Đổi màn giữa hành trình không nhảy về tọa độ cũ.
+- [ ] Túi trời là nhầy dàn ngang có thùy, lớp trong/đục/bọt/sợi treo, trạng thái nghỉ/báo/phun rõ; cảnh báo không che đường né. Nền nhầy sôi/co-rút và hút về mềm; vào mech cuối không còn hitbox dù phần hình đang tan.
+- [ ] Bướu phase1 nhú/mở/lõm-bắn giọt/xẹp đúng thứ tự, phân biệt đệm sàn và chồi tường; mũi tên chỉ đúng hướng. Bướu phase2 lõi kín khác hẳn, rơi tụ thành khối, không nhận click/attack, teo theo ống hút và tan sạch.
+- [ ] Xem mắt/tay/vỏ/sóng/quạt/cột/thác/hơi thở và nhầy bắn ở gồng/strike/fade; đòn sinh từ boss hợp vị trí, vùng nguy hiểm còn dễ đọc ở nền sáng/tối/nhiều màu. Đòn phạt20/40% có impact phân biệt; không chớp gây khó chịu.
+- [ ] Ping pong có đường báo cung, lõi bay/trả/đập boss rõ; lõi lộ, gào, đổi sân, hút/xóa sân và boss chết không còn hiệu ứng thừa. Giữ luật damage/bế/bounce/choáng/cứu mèo, Khiên/Nộ và Cú đáp địa chấn.
+- [ ] Xem chuyển động thật trong trận ở DPI100/125/150/200%, màn nhỏ và gốc âm; theo dõi FPS khi bốn túi và nhiều dải tồn tại. Ảnh render tự động không thay việc nghiệm thu này.

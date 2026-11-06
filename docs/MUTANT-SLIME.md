@@ -4,6 +4,15 @@ Trạng thái: **đã triển khai bản thử, đang nghiệm thu tay**. Giữ 
 
 ## Nhận diện
 
+### Chỉnh sau chơi thử #65 — 06/11
+
+- Boss tiến/lùi theo khoảng cách tới mèo khi không còn đòn đang diễn ra, ngừng trong mech/lộ lõi và khi choáng/Pause. Chân bám trước, thân kéo trễ qua pose theo vận tốc. Bước chân đi trước và Lột xác ngược có hành trình nội suy/gồng riêng, không dịch tức thời; đổi vùng màn hình ánh xạ cả đầu/cuối hành trình.
+- Nhầy dùng màng thùy cong, gradient xanh trong/đục, bọt dưới màng, thớ và giọt treo. Vũng trời là khối dàn ngang trôi mềm, không còn hình trứng có ba chấm. Nhịp nghỉ/báo/phun giữ luật đã duyệt; hút về boss thì cả thân và vòng phun thu nhỏ đúng lúc collision đã tắt.
+- Mỗi nhóm đòn có artwork riêng: mắt xoắn bay theo cung trong gồng, tay vươn nối từ thân với ngón nhầy, vỏ phồng/nứt, sóng/thùy quạt, dòng phun/thác/cột được clip đúng biên nguy hiểm. Dấu cảnh báo không phải phần thân đòn. Giọt impact và fade không tăng hitbox.
+- Bướu phase1 nhú mọc, tâm đệm sàn và chồi tường khác hình, mục tiêu mở có màng sáng; va đúng lõm/bắn giọt/xẹp, còn dấu giải. Mũi tên xoay đúng hướng. Bướu phase2 là khối lõi kín có thớ, rơi tụ thành bướu rồi teo và chảy về boss qua ống mềm khi hút. Không thay cách giải/thứ tự/damage.
+- Ping pong báo cung, lõi có màng và vệt giọt khi trả; gồng phun thể hiện trên miệng boss. Hút/phạt có số bướu trên thân và tia nhầy khác mật độ; chuyển sân và xóa sân dùng dòng nhầy mềm thay nét nối thẳng.
+- Test render thêm bướu kín/hút phase2 và đủ9 nhóm hình ở windup/strike/fade. Cần người dùng nghiệm thu nhịp chuyển động thật, DPI/màn nhỏ; ảnh tĩnh không chứng minh toàn bộ animation đẹp trong trận.
+
 Đổi tên hiển thị Vua Slime biến dị thành Slime biến dị; vẫn là trùm. Giữ xanh lá, bỏ vương miện. Ảnh người dùng là mẫu biểu cảm mặc định: hai mắt xoắn, miệng ngoằn ngoèo lệch. Thân thạch bất đối xứng, bướu và bọt chuyển động trong thân; tăng mức biến dạng qua ba phase. Art vector/procedural, không dùng bitmap concept trong game. Biểu cảm giãn/méo khi ra đòn, kiệt sức khi lộ lõi; không tự gây Dizzy.
 
 ## Luật chung

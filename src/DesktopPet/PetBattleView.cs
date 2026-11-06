@@ -518,6 +518,9 @@ public sealed partial class BattleFieldView : FrameworkElement
             double pulse = Math.Sin(time * (mutation.Mode == MutantMode.Roar ? 15 : 3));
             sx *= 1 + (0.03 + mutation.Phase * 0.015) * pulse;
             sy *= 1 - (0.03 + mutation.Phase * 0.015) * pulse;
+            double moving = Math.Min(1, Math.Abs(mutation.Velocity) / 80);
+            sx *= 1 + moving * (0.12 + Math.Sin(time * 9) * 0.07);
+            sy *= 1 - moving * (0.08 + Math.Sin(time * 9) * 0.06);
             if (mutation.Mode == MutantMode.Bumps) { sx *= 1.15; sy *= 0.82; }
             if (mutation.Mode is MutantMode.Absorb or MutantMode.Transition) { sx *= 1.1 + pulse * 0.06; sy *= 0.9 - pulse * 0.06; }
             if (mutation.Mode == MutantMode.Core) { sx *= 1.08; sy *= 0.9; }
@@ -618,7 +621,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         dc.DrawGeometry(null, Halo, body);
         // An elite: a gold rim round the body (and a star, below).
         if (slime.Elite != null) dc.DrawGeometry(null, EliteRim, body);
-        dc.DrawGeometry(fill, Outline, body);
+        dc.DrawGeometry(slime.Type.Mutant && slime.HitFlash <= 0 ? GelFill : fill, Outline, body);
         DrawStatusTint(dc, slime, body, bw, bh, time);
         dc.DrawEllipse(Shine, null, new Point(-bw * 0.2, -bh * 0.68), 5, 3.5);
         double look = slime.Facing * 3;

@@ -1182,6 +1182,8 @@ public sealed partial class BattleSim
                 mutation.FromX = left + (mutation.FromX - Left) / oldWidth * newWidth;
                 mutation.AimX = left + (mutation.AimX - Left) / oldWidth * newWidth;
                 mutation.CoreX = left + (mutation.CoreX - Left) / oldWidth * newWidth;
+                mutation.TravelFrom = left + (mutation.TravelFrom - Left) / oldWidth * newWidth;
+                mutation.TravelTo = left + (mutation.TravelTo - Left) / oldWidth * newWidth;
             }
             s.X = left + (s.X - Left) / oldWidth * newWidth;
             if (s.ZipAct == ZipAct.Overflow)

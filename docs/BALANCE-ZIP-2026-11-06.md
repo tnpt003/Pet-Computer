@@ -30,13 +30,24 @@ Các ngưỡng còn FAIL:
 
 Các ngưỡng khác đạt, gồm chênh vũ khí, thời gian trận, Kiếm Normal ≥80%, HP cuối Kiếm Normal ≤90% (80%), người chơi không thao tác không thắng boss (0%). Kết quả thắng và HP chỉ lấy những lượt thắng nên không suy ra trận đã dễ hơn chỉ từ HP cao.
 
-## Điểm chờ quyết định
+## Thử HP 1000 đã được duyệt
 
-Đã gửi người dùng đề xuất **thử HP 1100 → 1000**, giữ mech và ngưỡng test rồi đo lại. **Chưa được duyệt, chưa áp dụng.** Nếu giữ HP 1100 thì vẫn giữ rõ ba FAIL này; không publish bằng cách bỏ suite hoặc nới ngưỡng.
+Người dùng duyệt thử **1100 → 1000** ngày 06/11. Chỉ đổi `enemies[zip].maxHp`, giữ nguyên mech, bot, seed và ngưỡng. Chạy lại ba suite `AdventureBalanceTests,ExpeditionTests,ZipProbeTests`: **289 check đạt, 4 FAIL**, log `artifacts/zip-hp1000-measure.log`.
+
+| Tiêu chí | HP 1100 | HP 1000 | Ngưỡng |
+|---|---:|---:|---:|
+| Boss Normal, Cuộn len, 60 seed | 43/60 (72%) | 47/60 (78%) | ≥48/60 (80%) |
+| Bãi rác tham lam Normal, Kiếm | 15/40 | 15/40 | ≥20/40 |
+| Bãi rác tham lam Normal, Búa | 19/40 | 17/40 | ≥18/40 |
+| Bãi rác tham lam Normal, Cuộn len | 13/40 | 13/40 | ≥20/40 |
+
+Probe boss riêng Kiếm thường Normal vẫn đạt 4/4. HP thấp hơn không bảo đảm mọi seed tốt hơn: thời điểm đổi phase và dùng kỹ năng thay đổi. Đây vẫn là mô phỏng, chưa phải chơi thật.
+
+**Kết luận lượt thử:** chưa chốt HP 1000 vì vẫn thiếu một thắng ở boss Cuộn len, không cải thiện hai ngưỡng Viễn chinh cũ và thêm một FAIL Búa. Đã trả đúng dòng dữ liệu về **1100**; `git diff -- src/DesktopPet/Assets/battle.json` trống. Không thay ngưỡng, không publish, không thay mèo đang chạy. Việc tiếp theo là phân loại các seed thua ở từng màn/mech của tuyến Bãi rác trước khi đề xuất chỉnh thêm; không suy ra chỉ cần tiếp tục hạ HP boss.
 
 ## Kiểm chứng kỹ thuật
 
 - Python: 58 hành vi + 5 i18n đạt ở lượt đầy đủ; i18n chạy lại sau sửa Sổ tay đạt 5/5.
 - C#: lượt đầy đủ sau sửa code 89 suite, 3222 đạt/1 FAIL (`zip-csharp-verified.log`); các suite tính năng đạt. Sau sửa mô hình bot, chỉ chạy lại ba suite cân bằng: 290 đạt/3 FAIL như trên.
 - WPF: 1431 check đạt (`zip-wpf-verified.log`); đã mở ảnh ổ khóa, ba cây thư mục và cảnh báo lăn trên nền sáng/tối. Chưa chơi trận thật, thử DPI hoặc nhiều màn hình.
-- Bản đang chạy và artifact publish cũ chưa bị thay. Chờ cân bằng/duyệt bổ sung rồi mới commit mốc hoàn chỉnh, publish và smoke.
+- Bản đang chạy và artifact publish cũ chưa bị thay. Code mốc #56 ở checkpoint `29d83ab`, HP vẫn 1100; lượt này chỉ lưu tài liệu kết quả thử. Chờ xử lý cân bằng rồi mới publish và smoke mốc hoàn chỉnh.

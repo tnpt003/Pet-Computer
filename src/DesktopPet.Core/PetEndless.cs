@@ -57,6 +57,7 @@ public sealed class EndlessSpec
     public Dictionary<string, double>? Formations { get; init; }
     // 1.5 M26: from this wave the run has the Screenshot icon and the newer malware (0: never).
     public int NewAppsFrom { get; init; }
+    public int? MaxMalware { get; init; }
     public EndlessEra[] Eras { get; init; } = Array.Empty<EndlessEra>();
     // 1.5 M24 "Mutations": after each cleared boss wave the user picks one of a few odd rules; it holds
     // until the next boss wave is cleared, then its reward comes.
@@ -106,7 +107,7 @@ public sealed class EndlessSpec
         Id = Id, NameVi = "Vô tận", NameEn = "Infinity", Objective = StageSpec.EndlessObjective, Upgrades = UpgradeEvery > 0,
         UpgradeEvery = UpgradeEvery, RulesVersion = RulesVersion, MaxAlive = MaxAlive, EliteChance = EliteChance,
         EliteChancePerWave = EliteChancePerWave, EliteChanceMax = EliteChanceMax, MoreElitesEvery = MoreElitesEvery, MoreElitesMax = MoreElitesMax,
-        AllSynergiesAt = AllSynergiesAt, BossBonusPick = BossBonusPick, Infinity = this, NewAppsFrom = NewAppsFrom,
+        AllSynergiesAt = AllSynergiesAt, BossBonusPick = BossBonusPick, Infinity = this, NewAppsFrom = NewAppsFrom, MaxMalware = MaxMalware,
         Waves = Enumerable.Range(1, PlannedWaves).Select(Wave).ToArray()
     };
 
@@ -134,6 +135,7 @@ public sealed class EndlessSpec
         if (e.MaxCount is < 1 or > 60) throw new InvalidDataException(at + ".maxCount must be 1–60");
         if (!double.IsFinite(e.ThreatPerWave) || e.ThreatPerWave is < 0 or > 1) throw new InvalidDataException(at + ".threatPerWave must be 0–1");
         if (e.MaxAlive is < 1 or > 20) throw new InvalidDataException(at + ".maxAlive must be 1–20");
+        if (e.MaxMalware is < 1 or > 4) throw new InvalidDataException(at + ".maxMalware must be 1–4");
         if (!double.IsFinite(e.EliteChance) || e.EliteChance is < 0 or > 1) throw new InvalidDataException(at + ".eliteChance must be 0–1");
         if (e.Kinds == null || e.Kinds.Length == 0) throw new InvalidDataException(at + ".kinds must list enemies");
         foreach (var k in e.Kinds)

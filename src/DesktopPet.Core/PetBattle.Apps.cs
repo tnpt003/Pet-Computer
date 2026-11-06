@@ -216,12 +216,14 @@ public sealed partial class BattleSim
         StepNewMalware(dt, rules); // 1.5 M26 (PetBattle.Malware2.cs).
         // Frozen by the Screenshot (1.5 M26): the slimes throw nothing meanwhile.
         if (EnemiesFrozen) return;
-        if (!double.IsNaN(infectTimer) && Phase == BattlePhase.Fighting)
+        if (!double.IsNaN(infectTimer) && Phase == BattlePhase.Fighting && !LearningBusy)
         {
             infectTimer -= dt;
             if (infectTimer <= 0) { infectTimer = double.NaN; ShootGoo(rules); }
         }
         if (Phase != BattlePhase.Fighting || Stage is { Malware: false }) return;
+        StepLearningApp(rules);
+        if (LearningBusy) return;
         StepMalwarePlan(rules);
         StepMalware(dt, rules);
         StepEliteViruses(dt, rules);
@@ -291,6 +293,8 @@ public sealed partial class BattleSim
         double[] weights = Stage?.CustomApps is CustomAppRules custom ? custom.Weights() : new[] { rules.LoadingWeight, rules.UpdateWeight, rules.VirusExeWeight, rules.AdWeight,
             newer ? rules.CaptchaWeight : 0, newer ? rules.BatteryWeight : 0, newer ? rules.CursorWeight : 0 };
         int outNow = Enumerable.Range(0, weights.Length).Count(MalwareOut);
+        if (Stage?.MalwareKinds is { } allowed)
+            for (int i = 0; i < weights.Length; i++) if (!allowed.Contains(MalwareCue.DrawKinds[i])) weights[i] = 0;
         if (outNow >= (Stage?.MaxMalware ?? rules.MaxMalware)) return; // 1.5 M21: a stage may allow more (chapter 2: 4).
         for (int i = 0; i < weights.Length; i++) if (MalwareOut(i) || weights[i] < 0) weights[i] = 0;
         if (!desktop.Any(a => !a.Infected)) weights[2] = 0; // virus.exe needs a clean icon to go for.

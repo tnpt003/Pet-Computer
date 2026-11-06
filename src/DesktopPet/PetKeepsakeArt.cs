@@ -189,13 +189,24 @@ public sealed class KeepsakeArt : FrameworkElement
         var body = new StreamGeometry();
         using (var g = body.Open())
         {
-            g.BeginFigure(new Point(left + 2, floor), true, true);
-            g.BezierTo(new Point(left - 1, floor - 22), new Point(left + 1, top), new Point(left + 11, top), true, true);
-            g.LineTo(new Point(right - 11, top), true, true);
-            g.BezierTo(new Point(right - 1, top), new Point(right + 1, floor - 22), new Point(right - 2, floor), true, true);
+            g.BeginFigure(new Point(left + 3, floor), true, true);
+            g.BezierTo(new Point(left - 1, floor - 8), new Point(left, top + 8), new Point(left + 6, top + 3), true, true);
+            g.LineTo(new Point(cx - 8, top + 3), true, true);
+            g.LineTo(new Point(cx - 5, top), true, true);
+            g.LineTo(new Point(cx + 8, top), true, true);
+            g.LineTo(new Point(cx + 11, top + 4), true, true);
+            g.BezierTo(new Point(right + 1, top + 7), new Point(right + 1, floor - 7), new Point(right - 3, floor), true, true);
         }
         body.Freeze();
         dc.DrawGeometry(Felt, Outline, body);
+        // A stuffed archive: side gussets, a stitched belt and two recognizable zipper pulls.
+        dc.DrawRoundedRectangle(FeltDark, Stitch, new Rect(left + 2, top + 19, PlushWidth - 4, 4), 1, 1);
+        foreach (int side in new[] { -1, 1 })
+        {
+            dc.DrawLine(ZipTrack, new Point(cx + side * 12, top + 5), new Point(cx + side * 12, floor - 3));
+            dc.DrawRoundedRectangle(PlushTag, Outline, new Rect(cx + side * 10 - 2, top + 18, 4, 7), 1, 1);
+            dc.DrawEllipse(null, ZipTrack, new Point(cx + side * 10, top + 22), .7, 1.1);
+        }
         // Stitches just inside the edge.
         var seam = new StreamGeometry();
         using (var g = seam.Open())

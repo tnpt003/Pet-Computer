@@ -41,6 +41,15 @@ public sealed partial class PetWindow
         var handle = new WindowInteropHelper(battleSceneryWindow).Handle;
         const uint NoActivate = 0x0010;
         SetWindowPos(handle, field, x, y, width, height, NoActivate);
+        // WPF can reapply Topmost during the first render after Show. Restore the
+        // sibling order once that render has finished, without moving or focusing it.
+        var scenery = battleSceneryWindow;
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.ContextIdle, new Action(() =>
+        {
+            if (battleSceneryWindow != scenery || battleFieldWindow == null || !scenery.IsVisible
+                || new WindowInteropHelper(battleFieldWindow).Handle != field) return;
+            SetWindowPos(handle, field, 0, 0, 0, 0, NoActivate | 0x0001 | 0x0002);
+        }));
         battleScenery?.InvalidateVisual();
     }
 

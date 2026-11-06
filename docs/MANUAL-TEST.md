@@ -1177,3 +1177,10 @@ Các mục 1.5 phía trên viết theo từng mốc; đây là thứ tự chơi 
 - [ ] Thân/nơ/tay theo nhịp trườn/ôm/nhảy/đặt ổ, dừng/choáng/chuyển mech không giật tư thế; cửa bụng mở đúng cửa đánh, tay không che tim; nôi và trứng đung đưa có điểm treo; vỏ vỡ nối sang vũng hồng kem.
 - [ ] Pause/menu/guide/fullscreen đứng hình/ẩn đúng; bế/bay/resize/DPI100/125/150/200%/nhiều màn hình không tách nguồn effect khỏi thân, không có hit trễ. Kiểm tra wallpaper sáng/tối/nhiều màu.
 - [ ] Chơi lại Đầm nhầy và Tổ Slime Mẹ với4vũkhí: luật/máu/damage/thời gian giải như#67. Quan sát độ mượt trong trận thật; snapshot render và crowd-late không thay được nghiệm thu boss thật.
+# #69 — Nơ Mẹ và tiến trình nội dung1.5
+
+- [ ] Nhìn đủ hai mắt Mẹ ở ba phase, cả hai hướng và chín đòn; ruy băng phát đúng nơ; Pause không trôi pose.
+- [ ] Chương2: lần lượt dùng Quạt/Screenshot, Laser/CAPTCHA, Kẹp gắp/Pin yếu, Kéo cắt/Đơ con trỏ, Bình xịt/ZIP. Thử bỏ hướng dẫn và bộ app không mang Screenshot.
+- [ ] Đầm nhầy không có Mẹ; ZIP báo đúng3lượt lăn/bom80% toàn sân/reset6tay; kỷ vật ZIP rõ tab/đai/tay kéo ở hai theme, vẫn cầm/ném như trước.
+- [ ] Viễn chinh tiếp tục lượt cũ17, vào ổ Biến dị ở mê cung cuối; Vô tận mốc10/20/30/40/50 đúng boss và tối đa4app độc. Chơi tay đánh giá nhịp, không chỉ số mô phỏng.
+- [ ] Kiểm tra DPI/nhiều màn hình thật; chưa được xác nhận bằng test tự động.

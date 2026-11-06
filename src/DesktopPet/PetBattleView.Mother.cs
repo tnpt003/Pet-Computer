@@ -86,9 +86,10 @@ public sealed partial class BattleFieldView
             dc.DrawEllipse(MotherGel, Outline, new Point(handX, handY), 6, 3.5);
             dc.DrawLine(MotherCreamLine, new Point(handX - 2, handY - 1), new Point(handX + 2, handY - 1));
         }
-        dc.PushTransform(new TranslateTransform(-s.Facing * 5, -bh * 0.98));
-        dc.PushTransform(new RotateTransform(pose.BowAngle + (phase == 2 ? -8 * s.Facing : 0)));
-        dc.PushTransform(new ScaleTransform(1.5, phase == 3 ? 1.1 : 1.5));
+        var bowCentre = MotherBowCentre(s);
+        dc.PushTransform(new TranslateTransform(bowCentre.X, bowCentre.Y));
+        dc.PushTransform(new RotateTransform(MotherBowAngle(s)));
+        dc.PushTransform(new ScaleTransform(MotherBowScale(s), MotherBowScale(s)));
         foreach (int side in new[] { -1, 1 })
         {
             dc.PushTransform(new TranslateTransform(side * 5, 1));

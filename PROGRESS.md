@@ -13,6 +13,7 @@ Quy ước file này: chỉ giữ trạng thái hiện tại, các đợt đang 
 - Công cụ AI (chỉ máy này, không đụng app): graphify dựng graph ở graphify-out/ (gitignore); git hook tự cập nhật phần code, docs/ảnh đổi thì chạy `/graphify --update`. CLAUDE.md nạp AGENTS.md (quy tắc chính). Skill dự án ở .claude/skills/ (ship-milestone, cozy-ui, battle-change, run-pet), Codex đọc qua .agents/skills/. Gỡ graphify: `graphify hook uninstall`, `graphify claude uninstall`.
 
 ## Đang dở và việc tiếp theo
+- **#69 đã code/test, chờ publish:** nơ Mẹ tránh mắt; chương2 học5skill và app theo thứ tự, bỏ Mẹ; sửa kỷ vật ZIP; bốn boss Vô tận, cap4app, ổ Biến dị Viễn chinh threat0,7. Python58+i18n5 đạt; full C#3778/2fail đã sửa, focused144đạt (bộ3780); WPF1757đạt sau sửa race z-order nền. So409dòng,159đổi đúng chương2/Bãi rác, ngưỡng giữ nguyên. Chi tiết Issue_fixxed#69 và docs/CONTENT-1.5-REVIEW-2026-11-07.md; còn chơi tay/DPI/multi-monitor.
 
 Chi tiết mốc trước Slime Mẹ: [archive 06/11](docs/archive/PROGRESS-2026-11-06-before-mother.md).
 

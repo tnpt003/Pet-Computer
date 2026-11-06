@@ -101,7 +101,7 @@ Trong trận cảm xúc tự động vẫn bị chặn: S1, S4 không gây cảm
 | Mã | Boss | Luật |
 |---|---|---|
 | B1 | Slime Nén, trùm chương 2 (1100 HP; thiết kế lại 05/11, 06/11; Issue #53, #55, #57, #58) | Luật đầy đủ: docs/ZIP-SLIME.md. Ba giai đoạn, mỗi giai đoạn ba đòn chọn từ túi theo seed; mech 66% đánh khóa đai (12 đòn, đổi bên mỗi 3), 33% ghép thư mục + né cây, 1 HP đánh 6 tay kéo; phase 2–3 có đòn đẩy riêng 0 damage; hai debuff Nén và Khóa ZIP (khóa đi/nhấc, tự đánh ổ khóa); đòn trúng mèo đang cầm/bay khi thực sự chạm; giấy bám quét toàn thân, file mech tránh boss và không bị bom thường xóa; visual riêng mỗi đòn; đai quét từ boss và gây damage theo tiếp xúc. | |
-| B2 | Slime Mẹ, boss phụ chương 2 (650 HP) | Ổ ủ phá được, gọi con yếu về, dây cứu con cắt được, con che thân, bầy nhảy, giận lao và lứa cuối đổi máu; hồi 20 HP/s. Luật chi tiết: [BOSS-TACTICS](BOSS-TACTICS.md) |
+| B2 | Slime Mẹ, ổ tùy chọn Viễn chinh và boss Vô tận (600 HP) | Ba phase/chín đòn, trứng treo, trả con về nôi, thanh dỗ. Luật hiện hành: [MOTHER-SLIME](MOTHER-SLIME.md) |
 | B3 | Slime biến dị, Vô tận (1000 HP) | Xanh lá, mắt xoắn/miệng lệch, bỏ vương miện. Ba phase/mỗi phase ba đòn; mech 66% sáu bướu ×3 vòng/60 s; 33% ping pong sáu lõi; 1HP sáu nhát lõi xen đòn all-in. Nền25/50% và bốn túi trời có nhịp riêng, chạm trúng cả bế/bay/bounce. Vào mech cuối xóa hoàn toàn sân nhầy bằng animation hút về boss. Nhiễu nhịp gỡ bằng rê qua lại2 s. [MUTANT-SLIME](MUTANT-SLIME.md) |
 
 ### Vũ khí (V)
@@ -146,7 +146,7 @@ M3 (bục tự vẽ) đã bỏ.
 | Mã | Nội dung |
 |---|---|
 | T1 | Bảo vệ giỏ cá: slime tha cá đi; mất hết cá thì thua dù mèo còn máu |
-| C1 | Chương 2 "Bãi rác Tải về", mở khi thắng Vua Slime: Cổng tải về (Quạt), Thư mục ma (Laser), Giữ giỏ cá (Kẹp gắp, sống sót 75 s), Đầm nhầy (Bình xịt, cuối là Slime Mẹ), Slime Nén (Kéo cắt) |
+| C1 | Chương 2 "Bãi rác Tải về", mở khi thắng Vua Slime: Cổng tải về (Quạt/Screenshot), Thư mục ma (Laser/CAPTCHA), Giữ giỏ cá (Kẹp gắp/Pin yếu, 75 s), Đầm nhầy (Kéo cắt/Đơ con trỏ), Slime Nén (Bình xịt). Không có Slime Mẹ. Chi tiết: [rà nội dung #69](CONTENT-1.5-REVIEW-2026-11-07.md) |
 | C2 | Tranh, bản đồ, phông trận riêng (`scene` "dump") |
 | C3 | Phần thưởng: phụ kiện Mũ thư mục, kỷ vật Thú bông Slime Nén (physics như kệ kỷ vật) |
 | X1 | Viễn chinh tuyến 2 "Lối Bãi rác" (mở khi thắng Slime Nén): 6 bậc qua Đầm nhầy, Kho cá, Mê cung thư mục; trùm Slime Nén; kỷ lục riêng |

@@ -5,6 +5,12 @@ Sổ ghi các lỗi đã sửa của Desktop Pet. Phần A: lỗi người dùng
 Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm lỗi mới: tạo mục số tiếp theo ở đầu phần A (hoặc một dòng ở phần B).
 
 # A. Lỗi người dùng phát hiện
+## #69 — Nơ Mẹ che mắt; tiến trình chương2 và mode1.5 chưa thống nhất (07/11)
+- **Nguyên nhân:** nơ lớn và thấp; chương2 cho app độc mới rút thăm cùng lúc, có Mẹ ngoài mục tiêu học HUD/ZIP; lời dẫn ZIP còn luật cũ; Vô tận không chuyển cap app độc từ cấu hình xuống trận.
+- **Sửa:** nâng/thu nơ, chặn nghiêng; bài học app có thứ tự, pool mở dần, tôn trọng bộ5app và bỏ hướng dẫn; Đầm nhầy đổi thành bài tổng hợp Kéo cắt; ZIP hướng dẫn đúng và kỷ vật có tab/đai/tay kéo. Vô tận bốn boss, Vua phụ từ50, cap4; Viễn chinh thêm ổ Biến dị, tiếp tục lượt17. Chi tiết docs/CONTENT-1.5-REVIEW-2026-11-07.md.
+- **Kiểm chứng:** full Python58+i18n5 đạt; C#full3778đạt/2fail (assertion Mẹ cũ, Búa/Bãi rác17/40); sửa rồi focused144đạt, bao gồm toàn bộ Viễn chinh, ChapterTwo, bài học và bản dịch. Tổng bộ C#3780check. Giữ ngưỡng18/40, ổ Biến dị threat0,7. WPF cuối1757/1757 đạt (`content69-zorder-ui.log`), gồm216check nơ tránh mắt; đã xem render Mẹ và ZIP. Đối chứng409dòng:159đổi, chương1/tuyến cơ bản nguyên; chi tiết docs/BALANCE-CONTENT-2026-11-07.md. Chưa chơi tay/DPI/multi-monitor. Chờ commit/publish/smoke.
+- **Lỗi thêm từ kiểm tra:** WPF reapply Topmost sau frame đầu làm nền che sân (bản mới lỗi2lần, HEAD sạch1541đạt). `PlaceBattleScenery` đặt lại z-order ở ContextIdle, không dịch vị trí/lấy focus; WPF cuối đạt. Bản dịch động được giữ nguyên. Test tay theo MANUAL-TEST #69.
+
 ## #68 — Ngoại hình, effect và animation Slime Mẹ rời rạc, khựng (07/11)
 - **Triệu chứng/nguyên nhân:** thân dùng cùng một độ gồng cho9đòn; tay/nơ và hiệu ứng không chung pose hay điểm phát. Vùng damage tô như hộp effect, hết life thì cắt hình ngay. Chuyển mech/tư thế thiếu envelope; trứng/vỏ/vũng dùng lẫn vật liệu mẹ và quái thường.
 - **Sửa:** `MotherPose` pure dùng chung thân/điểm phát theo actionAge/warn/end, hồi giảm dần, nghiêng theo velocity hình ảnh, modeAge chuyển tư thế và tokenDoneAge cho pop. Giữ clock/RNG/physics/combat. Tay thạch có vai và bàn tay trái/phải riêng; nơ vải có nếp/tua và dải nối knot; trứng phát từ bụng, vỏ bung rồi vũng hồng kem; sóng, nôi rung, tim/core mở dùng cùng chất liệu và thời gian simulation. Cảnh báo giữ footprint thực, giảm hộp tô đặc. Chuyển động trứng khớp góc dây, cửa bụng đẩy tay tránh che tim.

@@ -32,6 +32,21 @@ internal static class MotherMotionChecks
             Step(.016);
             double age=m.ActionAge, hp=s.Hp, clock=m.Clock;
             var pose=BattleFieldView.SampleMother(s);
+            foreach(int facing in new[]{-1,1})
+            {
+                s.Facing=facing;
+                for(int frame=0;frame<12;frame++)
+                {
+                    m.ActionAge=m.ActionEnd*frame/11;
+                    var centre=BattleFieldView.MotherBowCentre(s);
+                    var rotation=new RotateTransform(BattleFieldView.MotherBowAngle(s));
+                    double scale=BattleFieldView.MotherBowScale(s);
+                    // Bow cloth and outward tails stay above the eye line, including their rim.
+                    var bottom=rotation.Transform(new Point(0,10*scale)).Y+centre.Y+2;
+                    check(bottom < -34*.7-4,$"Mother move {move}, facing {facing}, frame {frame}: bow clears both eyes");
+                }
+            }
+            s.Facing=1;m.ActionAge=age;
             for(int i=0;i<50;i++) BattleFieldView.SampleMother(s);
             check(m.ActionAge==age&&s.Hp==hp&&m.Clock==clock,$"Mother move {move}: render sampling never changes combat state");
             var anchor=BattleFieldView.MotherEmission(s,MotherArt.Hand,(x,h)=>new Point(x,-h),-1);

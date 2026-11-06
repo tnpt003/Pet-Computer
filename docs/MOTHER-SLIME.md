@@ -90,6 +90,8 @@ Sau Mech 2, thanh máu đổi thành Thanh dỗ màu hồng 0→100%, có vạch
 
 Đối chứng và bảng cân bằng: [BALANCE-MOTHER-2026-11-06.md](BALANCE-MOTHER-2026-11-06.md).
 
+Polish #69 (07/11): nơ nhỏ hơn, nâng trên đường mắt, nghiêng tối đa12°; điểm phát ruy băng đi theo tâm mới. Slime Mẹ không còn ở chương2, vẫn có ổ tùy chọn Viễn chinh và vòng boss Vô tận. Chi tiết [rà nội dung](CONTENT-1.5-REVIEW-2026-11-07.md).
+
 
 ## Polish hình và motion #68 — 07/11 (code/publish `4557dbd`)
 

@@ -293,16 +293,13 @@ public sealed partial class PetWindow
         Meet(GuideSplitter, StageSlimeSwamp, s => s.Type.Split != null,
             () => L("Slime tách đôi bị hạ thì vỡ thành 2 con nhỏ; slime thảo dược hồi cho chúng thì chúng nhập lại. Hạ thảo dược trước.",
                     "A splitting slime breaks into two halves when beaten; healed by a herb slime they join up again. Take the herb slime first.")),
-        Meet(GuideMother, StageSlimeSwamp, s => s.Type.Brood != null,
-            () => L("Phá ổ và chặn con hồi máu. Bế đánh trứng treo rồi đánh vỡ, đưa con về nôi. Phase 3 tăng Thanh dỗ: chạm nốt tim, mèo đứng vòng tim để vuốt lưng; cuối cùng nhấc né sóng tim rồi vỗ bụng mở đủ 5 nhát.",
-                    "Break nests and stop nursing children. Carry to break hanging eggs, then return children to the cradle. In phase 3 fill Soothe: collect heart notes, stroke her back with the cat in the ring, then lift over heartbeats and tap her open belly five times.")),
         // 5 · The Zip Slime.
-        new(GuideBubble, StageZipSlime, true, true, 1,
+        new(GuideBubble, StageSlimeSwamp, true, true, 1,
             () => { var bubble = battle!.Slimes.FirstOrDefault(s => s.Bubbled && s.Targetable && s.State != SlimeState.Spawning); guideRef = bubble?.Id ?? 0; return bubble != null && TourDue() && !BattleHoldsOff; },
             () => battle!.Find(guideRef) is not { Bubbled: true }, () => battle!.Find(guideRef) is { Bubbled: true } bubble ? Spots(AirSlimeSpot(bubble)) : new(),
             () => L("Slime trong bong bóng không bị đánh. Click bong bóng vài lần để chọc vỡ (hoặc dùng Kéo cắt).",
                     "A slime in a bubble cannot be hit. Click the bubble a few times to pop it (or use the Scissors).")),
-        new(GuideClinger, StageZipSlime, false, true, 1,
+        new(GuideClinger, StageSlimeSwamp, false, true, 1,
             () => { var wall = battle!.Slimes.FirstOrDefault(s => s.Type.Cling != null && s.Targetable && s.Altitude > 20); guideRef = wall?.Id ?? 0; return wall != null && TourDue(); },
             () => false, () => battle!.Find(guideRef) is { Targetable: true } wall ? Spots(AirSlimeSpot(wall)) : new(),
             () => L("Slime bám tường leo lên mép và ném gai xuống chỗ mèo. Ném mèo vào nó, hoặc Đẩy, Kẹp gắp cho nó rơi rồi đánh dưới sàn.",
@@ -313,7 +310,7 @@ public sealed partial class PetWindow
         new(GuideRoll, StageZipSlime, true, false, 1,
             () => King() is { Rolling: true, State: SlimeState.Windup } && !BattleHoldsOff && !battle!.CatStunned,
             () => BattleLifted, () => King() is { Rolling: true, State: SlimeState.Windup } boss ? Spots(CatSpot(), SlimeSpot(boss)) : new(),
-            () => L("Slime Nén sắp lăn qua rồi bật ngược lại: dải đỏ trên sàn trúng cả hai lượt. Kéo mèo lên cao!", "The Zip Slime is about to roll over and bounce back: the red strip on the floor hits both ways. Lift the cat high!")),
+            () => L("Slime Nén lăn ba lượt, nhắm lại giữa các lượt! Theo dõi từng làn báo; nhấc mèo lên cao để né.", "The Zip Slime rolls three times and re-aims between rolls! Watch each warned lane; lift the cat high to dodge.")),
         See(GuidePress, StageZipSlime, () => King() is Slime boss && battle!.ShieldPhase(boss) is { Press: true },
             () => King() is Slime boss ? Spots(battle!.Slimes.Where(s => s.SummonedBy == boss.Id && s.ZipProp == ZipProp.Belt && s.Targetable).Select(SlimeSpot).ToArray()) : new(),
             () => L("Boss nhảy ra giữa, hai khóa đai ở hai rìa! Đánh khóa đang sáng tổng cộng 12 lần; cứ 3 đòn đổi sang khóa bên kia. Nhấc mèo né đai quét sát đất rồi phản công.",
@@ -324,8 +321,8 @@ public sealed partial class PetWindow
                     "Strike files into folders with matching symbols; stand opposite the push direction. Both sides leave room for the cat. Dodge tree warning rings: emerging folders hurt and stun!")),
         See(GuideZipBomb, StageZipSlime, () => King() is Slime boss && BattleSim.BombFill(boss) != null,
             () => King() is Slime boss ? Spots(SlimeSpot(boss)) : new(),
-            () => L("Còn 1 HP, boss thành bom nén! Đánh 6 tay kéo, mỗi cái 1 đòn: 3 trên không và 3 dưới đất. Bế mèo tới tay kéo trên cao để đánh. Phá hết thì boss xì hơi và bị hạ. Hết giờ thì nổ sàn; tay kéo chưa phá vẫn còn.",
-                    "At 1 HP the boss becomes a zip bomb! Strike six zipper pulls once each: three in the air and three on the floor. Carry the cat to the high pulls. Clear all six to deflate and defeat it. On timeout the floor bursts; remaining pulls stay.")),
+            () => L("Còn 1 HP, boss thành bom nén! Đánh 6 tay kéo, mỗi cái 1 đòn: 3 trên không và 3 dưới đất. Bế mèo tới tay kéo trên cao để đánh. Phá hết thì boss xì hơi và bị hạ. Hết giờ nổ toàn sân 80% máu tối đa, nhấc cao không né được; nếu sống, sáu tay kéo được tạo lại để thử tiếp.",
+                    "At 1 HP the boss becomes a zip bomb! Strike six zipper pulls once each: three in the air and three on the floor. Carry the cat to the high pulls. Clear all six to deflate and defeat it. On timeout the whole arena bursts for 80% max HP; lifting cannot dodge it. Survive and all six pulls reset for another attempt.")),
         See(GuideZipLock, StageZipSlime, () => battle!.CatLocked, () => Spots(CatSpot()),
             () => L("Mèo bị Khóa ZIP: không đi hoặc nhấc được, tự đánh ổ khóa để thoát sau 5 nhát dù không có quái gần. Bạn có thể click mèo 3 lần hoặc chờ 6 giây. Boss chờ khóa mở.",
                     "ZIP lock stops walking and lifting. The cat strikes its own lock 5 times to escape, even without an enemy nearby. Click the cat 3 times or wait 6 seconds instead. The boss waits for it to open.")),
@@ -482,6 +479,7 @@ public sealed partial class PetWindow
             guideBattle = battle;
             guideShown.Clear();
             guideOn = GuideFits && (guideChoice ?? preferences.AdventureGuide);
+            battle.SetLearningGuide(guideOn);
             guideChoice = null;
             if (guideOn) System.Diagnostics.Trace.WriteLine($"Adventure Guide on for {battle.Stage!.Id}.");
         }
@@ -534,6 +532,7 @@ public sealed partial class PetWindow
     {
         if (!guideOn) return;
         guideOn = false;
+        battle?.SetLearningGuide(false);
         FinishGuideStep();
         System.Diagnostics.Trace.WriteLine("Adventure Guide skipped.");
     }
@@ -541,6 +540,7 @@ public sealed partial class PetWindow
     // The battle ended or the guide is off: everything goes, nothing is kept.
     private void EndGuide()
     {
+        guideBattle?.SetLearningGuide(false);
         guideStep = null;
         guideOk = false;
         guideShadeWindow?.Close(); guideBubbleWindow?.Close();

@@ -1121,6 +1121,8 @@ J1 của docs/UPDATE-1.5.md. Code: `src/DesktopPet.Core/PetBattle.Trickery.cs` (
 
 ## App mới: Chụp màn hình, Captcha, Pin yếu, Con trỏ đơ (`newAppsFrom`) (bản 1.5, mốc M26, 2026-10-30)
 
+Bổ sung #69: stage có `malwareKinds` (danh sách không rỗng, không trùng, thuộc loading/update/virus/ads/captcha/battery/cursor; null giữ pool cũ), `lesson` (screenshot/captcha/battery/cursor, yêu cầu newAppsFrom1 và malware bật; phải có trong pool nếu là app độc). Bài học chỉ bật bởi hướng dẫn Phiêu lưu, không bật trong mô phỏng thường hay mode khác. `endless.maxMalware` tùy chọn1–4 được chuyển nguyên vào Stage; null giữ fallback cũ. Tiến trình chương2 và boss/records mới: [rà nội dung #69](CONTENT-1.5-REVIEW-2026-11-07.md).
+
 A1–A4 của docs/UPDATE-1.5.md, theo ngoại lệ "App trong trận" (docs/APPROVED-EXCEPTIONS.md). Code: `src/DesktopPet.Core/PetBattle.Malware2.cs` (logic), `PetBattle.Apps.cs` (icon thứ 6, rút thăm), cửa sổ Captcha `src/DesktopPet/PetWindow.BattleCaptcha.cs`, lớp phủ HUD trong `PetBattleHud.cs`, hình trên dải trận `PetBattleView.Snap.cs`. Test `tests/DesktopPet.Tests/NewAppTests.cs`, UiChecks `NewAppVisualChecks.cs` và khối "1.5 M26" trong `BattleChecks.cs`.
 
 - **Chỉ ở trận có `"newAppsFrom"`** (khóa của màn/trận; 0–1000, 0 = không bao giờ; Vô tận: `endless.newAppsFrom`, 0–100). Gốc: 5 màn chương 2 và 14 trận Lối Bãi rác = 1, Vô tận = 15. Chương 1, tuyến Viễn chinh đầu và trận tự do không có: ở đó trọng số app độc mới coi là 0 nên rút thăm y như trước (bảng mô phỏng chương 1 và tuyến 1 giống hệt từng dòng bản M25).

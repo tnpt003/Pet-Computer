@@ -26,8 +26,8 @@ internal static class ChapterTwoTests
             "The built-in data has chapter 2: five stages, opened by the Slime King, with the skill choice and drops");
         check(two != null && two.Stages.Select(s => s.UnlocksSkill).SequenceEqual(new[] { "fan", "laser", "grabber", "scissors", "spray" }),
             "Chapter 2's stages open the Fan, the Laser, the Grabber, the Spray and the Scissors in that order");
-        check(two != null && two.Stages[^1].Waves[^1].Groups!.Any(g => g.Enemy == "zip") && two.Stages[3].Waves.Any(w => w.Groups?.Any(g => g.Enemy == "mother") == true),
-            "The Zip Slime ends chapter 2 and the Slime Mother ends its stage 4");
+        check(two != null && two.Stages[^1].Waves[^1].Groups!.Any(g => g.Enemy == "zip") && !two.Stages[3].Waves.Any(w => w.Groups?.Any(g => g.Enemy == "mother") == true),
+            "The Zip Slime ends chapter 2 and stage 4 focuses on the Scissors exam");
         check(two != null && two.Stages.Count(s => s.Basket != null) == 1 && two.Stages.All(s => s.MaxMalware == 4 && s.SuggestSkills?.Length == 3),
             "Chapter 2 has one fish basket stage; every stage allows four malware kinds and suggests three skills");
         var one = campaign.Chapters[0];
@@ -126,5 +126,10 @@ internal static class ChapterTwoTests
         check(Parse(Chapter("a", "", "s1", "\"suggestSkills\": [ \"fan\", \"push\" ],")) == "" && Parse(Chapter("a", "", "s1", "\"suggestSkills\": [ \"nope\" ],")).Contains("suggestSkills")
             && Parse(Chapter("a", "", "s1", "\"suggestSkills\": [ \"fan\", \"fan\" ],")).Contains("suggestSkills") && Parse(Chapter("a", "", "s1", "\"suggestSkills\": [],")).Contains("suggestSkills"),
             "suggestSkills lists 1–5 different skill ids");
+        check(Parse(Chapter("a", "", "s1", "\"newAppsFrom\":1,\"lesson\":\"battery\",\"malwareKinds\":[\"battery\"],")) == ""
+            && Parse(Chapter("a", "", "s1", "\"lesson\":\"battery\"," )).Contains("lesson")
+            && Parse(Chapter("a", "", "s1", "\"malwareKinds\":[\"battery\",\"battery\"],")).Contains("malwareKinds")
+            && Parse(Chapter("a", "", "s1", "\"malwareKinds\":[\"unknown\"],")).Contains("malwareKinds"),
+            "Lessons require new apps and malware pools reject duplicates or unknown kinds");
     }
 }

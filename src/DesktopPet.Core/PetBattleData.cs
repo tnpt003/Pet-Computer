@@ -1037,6 +1037,9 @@ public sealed class StageSpec
     public double MalwareFrom { get; init; }
     // 1.5 M21: at most this many malware kinds out at once in this stage (unset: apps.maxMalware).
     public int? MaxMalware { get; init; }
+    // Optional learning profile. Null keeps the existing random pool; lessons run only with the guide enabled.
+    public string[]? MalwareKinds { get; init; }
+    public string? Lesson { get; init; }
     // 1.5 M26: from this wave on (0: never) the battle has the Screenshot icon and draws the captcha, the
     // low battery and the frozen cursor among its random malware (chapter 2, the Dump Trail; Infinity
     // sets it from EndlessSpec.NewAppsFrom).
@@ -2308,6 +2311,10 @@ public static class BattleData
         if (stage.MaxUpgrades is int picks && picks is < 1 or > 30) throw new InvalidDataException($"{where}.maxUpgrades must be 1–30");
         if (!double.IsFinite(stage.EliteChance) || stage.EliteChance is < 0 or > 1) throw new InvalidDataException($"{where}.eliteChance must be 0–1");
         if (!double.IsFinite(stage.MalwareFrom) || stage.MalwareFrom is < 0 or > 600) throw new InvalidDataException($"{where}.malwareFrom must be 0–600");
+        if (stage.MalwareKinds is { } allowed && (allowed.Length == 0 || allowed.Distinct().Count() != allowed.Length || allowed.Any(k => !MalwareCue.DrawKinds.Contains(k))))
+            throw new InvalidDataException($"{where}.malwareKinds needs distinct drawable malware ids");
+        if (stage.Lesson != null && (stage.Lesson is not ("screenshot" or "captcha" or "battery" or "cursor") || stage.NewAppsFrom != 1 || !stage.Malware || stage.Lesson != "screenshot" && stage.MalwareKinds != null && !stage.MalwareKinds.Contains(stage.Lesson)))
+            throw new InvalidDataException($"{where}.lesson needs an available new app and newAppsFrom=1");
         if (stage.MalwarePlan is { } plan)
         {
             if (!stage.Malware || plan.Length is 0 or > 12) throw new InvalidDataException($"{where}.malwarePlan must list 1–12 cues, in a stage with malware");

@@ -9,6 +9,9 @@ public sealed partial class BattleFieldView
 {
     internal readonly record struct MotherPose(double SX, double SY, double Lean, Point Left, Point Right, double BowAngle, double Open, double Charge, double Strike);
     private static double MotherEase(double t) { t = Math.Clamp(t, 0, 1); return t * t * (3 - 2 * t); }
+    internal static Point MotherBowCentre(Slime s) => new(-s.Facing * 7, -34 * 1.2);
+    internal static double MotherBowScale(Slime s) => s.Mother?.Phase == 3 ? .95 : 1.03;
+    internal static double MotherBowAngle(Slime s) => Math.Clamp(SampleMother(s).BowAngle + (s.Mother?.Phase == 2 ? -8 * s.Facing : 0), -12, 12);
     // One pure sample for both the body and its emissions. No render-frame accumulation or wall clock.
     internal static MotherPose SampleMother(Slime s)
     {
@@ -73,7 +76,7 @@ public sealed partial class BattleFieldView
     {
         var p = SampleMother(s);
         Point local = art switch { MotherArt.Hand => side < 0 ? p.Left : p.Right,
-            MotherArt.Ribbon => new(-s.Facing * 5, -34 * .98), MotherArt.Flood or MotherArt.Shell => new(side * 15, -4), _ => new(0, -34 * .36) };
+            MotherArt.Ribbon => MotherBowCentre(s), MotherArt.Flood or MotherArt.Shell => new(side * 15, -4), _ => new(0, -34 * .36) };
         double size = s.Width / 46;
         return at(s.X + (local.X * p.SX + p.Lean) * size, s.LeapHeight - local.Y * p.SY * size);
     }

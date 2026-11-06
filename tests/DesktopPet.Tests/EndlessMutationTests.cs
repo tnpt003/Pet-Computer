@@ -8,11 +8,11 @@ internal static class EndlessMutationTests
     public static void Run(Action<bool, string> check)
     {
         var spec = BattleData.Settings.Endless!;
-        check(spec.RulesVersion == 24 && spec.LateBossFrom == 40 && spec.Bosses is { Length: 3 },
-            "Built-in Infinity rules 24 separates redesigned Mother records: three rotating bosses, plain King beside them from wave 40");
+        check(spec.RulesVersion == 25 && spec.LateBossFrom == 50 && spec.Bosses is { Length: 4 },
+            "Built-in Infinity rules 25 introduces four rotating bosses, plain King beside them from wave 50");
         string Bosses(int wave) => string.Join("+", spec.Wave(wave).Groups.Select(g => g.Enemy));
-        check(Bosses(10) == "king_c1" && Bosses(20) == "zip" && Bosses(30) == "mutant_king" && Bosses(40) == "king_c1+king" && Bosses(50) == "zip+king" && Bosses(60) == "mutant_king+king",
-            $"Boss waves take turns: King, Slime Zip, Mutant King, round again ({Bosses(10)}, {Bosses(20)}, {Bosses(30)}, {Bosses(40)}, {Bosses(50)})");
+        check(Bosses(10) == "king_c1" && Bosses(20) == "zip" && Bosses(30) == "mother" && Bosses(40) == "mutant_king" && Bosses(50) == "king_c1+king" && Bosses(60) == "zip+king",
+            $"Boss waves take turns: King, ZIP, Mother, Mutant, then repeat ({Bosses(10)}, {Bosses(20)}, {Bosses(30)}, {Bosses(40)}, {Bosses(50)})");
         check(spec.Eras.Length == 4 && spec.EraIndex(14) == -1 && spec.EraIndex(15) == 0 && spec.EraIndex(20) == 0 && spec.EraIndex(21) == 1
               && spec.EraIndex(31) == 2 && spec.EraIndex(41) == 3 && spec.EraIndex(51) == 0 && spec.EraIndex(91) == 0,
             "Stretches: the first from wave 15, the next after each boss wave, round again after the fourth");

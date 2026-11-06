@@ -24,7 +24,7 @@ public sealed partial class BattleFieldView
     private void DrawZipActs(DrawingContext dc, double floor, double time)
     {
         foreach (var b in sim.ZipBlows)
-            if (b.Bottom <= 0) DrawZipBlow(dc, b, x => new Point(x - OriginX, floor), time);
+            if (b.Bottom <= 0 && b.Kind != ZipBlowKind.Canopy) DrawZipBlow(dc, b, x => new Point(x - OriginX, floor), time);
         foreach (var s in sim.Slimes)
         {
             if (s.Type.Zip != null && s.ZipRepulseWarn > 0)
@@ -126,6 +126,24 @@ public sealed partial class BattleFieldView
     private static void DrawZipBlow(DrawingContext dc, ZipBlow b, Func<double, Point> at, double time)
     {
         var p = at(b.X);
+        if (b.Kind == ZipBlowKind.Canopy)
+        {
+            if (!b.Done)
+                DrawZipTarget(dc, ZipVisual.Tree, p.X, p.Y, b.Radius, b.Top, Math.Clamp(1 - b.Left / b.Warn, 0, 1));
+            else
+            {
+                dc.PushOpacity(Math.Clamp(b.Life / 0.15, 0, 1));
+                DrawFolderTree(dc, b.Variant, b.Radius, p.X, p.Y, b.Top);
+                for (double levelY = 85; levelY < b.Top - 30; levelY += 85)
+                {
+                    double nx = p.X + ((int)(levelY / 85) % 2 == 0 ? -1 : 1) * (b.Radius - 13);
+                    dc.DrawLine(ZipSeam, new Point(p.X, p.Y - levelY), new Point(nx, p.Y - levelY));
+                    DrawFolderNode(dc, nx, p.Y - levelY, 22);
+                }
+                dc.Pop();
+            }
+            return;
+        }
         if (b.Kind == ZipBlowKind.Belt)
         {
             DrawMovingBelt(dc, b, at(b.FromX).X, at(b.ToX).X, p.Y);
@@ -152,7 +170,7 @@ public sealed partial class BattleFieldView
     // The zipper head's line, the marks high up and the ring on the cat as the files lock on (SkyShotView).
     public static bool ZipAirBusy(BattleSim sim)
     {
-        foreach (var b in sim.ZipBlows) if (b.Bottom > 0) return true;
+        foreach (var b in sim.ZipBlows) if (b.Bottom > 0 || b.Kind == ZipBlowKind.Canopy) return true;
         foreach (var s in sim.Slimes) if (s.ZipAct == ZipAct.Bolt) return true;
         return false;
     }
@@ -160,7 +178,7 @@ public sealed partial class BattleFieldView
     public static void DrawZipAir(DrawingContext dc, BattleSim sim, Func<double, double, Point> toScreen, Point cat, double time)
     {
         foreach (var b in sim.ZipBlows)
-            if (b.Bottom > 0) DrawZipBlow(dc, b, x => toScreen(x, 0), time);
+            if (b.Bottom > 0 || b.Kind == ZipBlowKind.Canopy) DrawZipBlow(dc, b, x => toScreen(x, 0), time);
         foreach (var s in sim.Slimes)
         {
             if (s.ZipAct != ZipAct.Bolt || s.ZipBeat == ZipBeat.Recover || !s.Targetable) continue;

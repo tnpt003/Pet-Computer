@@ -12,7 +12,7 @@ namespace DesktopPet;
 // throw (HurtCat). Physics of the cat stay the window's.
 public enum ZipAct { None, Clamp, Bolt, Tumble, Tree, Chase, Faulty, Overflow, Overwrite, Tear }
 public enum ZipBeat { None, Warn, Lock, Strike, Recover }
-public enum ZipBlowKind { Branch, Mark, Belt }
+public enum ZipBlowKind { Branch, Mark, Belt, Canopy }
 public enum ZipVisual { Clamp, Bolt, Tumble, Tree, Chase, Faulty, Overflow, Overwrite, Tear, Repulse, Burst, Belt }
 
 // One blow waiting on a marked spot: Left s to go, then it hits once in its box and shows Life s more.
@@ -432,6 +432,17 @@ public sealed partial class BattleSim
         // In order, oldest first: a hit can end the battle.
         foreach (var b in zipBlows.ToArray())
         {
+            if (b.Kind == ZipBlowKind.Canopy)
+            {
+                if (!b.Done && b.Left <= 0) b.Done = true;
+                if (b.Done && !b.Hit && Find(b.OwnerId) is { Targetable: true } owner && CatInVolume(b.X - b.Radius, b.X + b.Radius, 0, b.Top))
+                {
+                    b.Hit = true;
+                    ZipHit(owner, b.Damage, b.Stun);
+                }
+                if (Over) return;
+                continue;
+            }
             if (b.Kind == ZipBlowKind.Belt)
             {
                 if (!b.Done && b.Left <= 0)

@@ -5,6 +5,13 @@ Sổ ghi các lỗi đã sửa của Desktop Pet. Phần A: lỗi người dùng
 Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm lỗi mới: tạo mục số tiếp theo ở đầu phần A (hoặc một dòng ở phần B).
 
 # A. Lỗi người dùng phát hiện
+## #59 — Mech cuối thiếu cản trở trên cao; đòn đẩy phase 2–3 ít xuất hiện (2026-11-06)
+- **Nguyên nhân:** mech cuối chỉ có sáu tay và bom sàn. Đẩy hồi 22 s hợp lệ, khi ra đòn gặp mèo bế/bay vẫn tiêu hồi chiêu nên ít thấy tác dụng.
+- **Sửa đã duyệt:** cây toàn chiều cao, dải 100 DIP chốt X mèo; lần đầu sau 2 s, chu kỳ 4,5 s, báo 1 s, hoạt động 0,8 s; 10 damage cơ sở một lần/cây, choáng sàn 0,4 s. Bế/bay chỉ mất máu; không chặn chuột, đủ sáu tay dọn cây ngay. Đẩy lần đầu 5 s sau chuyển phase, hồi 12 s, chỉ mở lúc mèo sàn/giữa đòn; ưu tiên trước đòn thường. Giữ né bằng nhấc trong cảnh báo, không damage/đổi physics. HP 1100, records 9/17/10.
+- **Kiểm chứng:** Python 58 + i18n 5 đạt. Lượt đầy đủ zip59-full-tests.log: C# 3484 đạt/6 FAIL (test ưu tiên đẩy chưa tính ân hạn đáp, key record r9 đã đổi r10, bốn check startup bị sandbox chặn). Đã sửa hai test và chạy lại ba suite liên quan: **562 đạt**, ToolingTests ngoài sandbox **24 đạt**, không còn FAIL trong các suite đó. WPF **1439 đạt** ngoài sandbox (zip59-ui-final.log); lượt sandbox 35 FAIL input/màu, sửa màu test và lượt ngoài sandbox đều đạt. Không sửa input/sleep/drag/throw/emotion/fallback ngoài combat; lưới kiểm tra các hành vi này đã chạy. Build qua WPF; xem ảnh cây báo/hoạt động sáng/tối trong artifacts/zip59-render. Không đổi Python/IPC.
+- **Cân bằng:** mọi ngưỡng đạt; đối chứng docs/BALANCE-ZIP-2026-11-06.md. Bãi rác tham lam Normal Kiếm22/Búa20/Len22/Găng28 trên40; Búa/Len còn gần ngưỡng. Đây là mô phỏng, chưa chơi thật/DPI/multi-monitor.
+- **Cần test tay:** docs/MANUAL-TEST.md mục #59; đang commit/publish.
+
 ## #58 — Đai phase 1 gây damage tức thì; Khóa ZIP đứng yên không tự phá (2026-11-06)
 - **Triệu chứng:** đai phủ như tường trên cả nửa sân, không thấy boss đánh ra; mèo bị Khóa ZIP xa quái đứng im tới timeout.
 - **Nguyên nhân:** đai là ZipBlow đánh cả box khi hết 0,8 giây, không có đầu quét/travel; bộ đếm mở khóa chỉ tăng khi bắt đầu đánh quái trong tầm.

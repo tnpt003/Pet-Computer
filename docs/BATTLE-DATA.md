@@ -1221,3 +1221,7 @@ Một "desktop giả" trong trận Phiêu lưu, Viễn chinh và Vô tận (tr�
 - rulesVersion khi thêm app: màn 1–5: 6/12/14/15/15, Vô tận 2 (kỷ lục cũ đứng riêng; phần thưởng mốc Vô tận vẫn tính mọi rulesVersion). Viễn chinh giữ 5 để không bỏ chuyến đang đi dở.
 - rulesVersion sau đợt cân bằng 2026-10-24 (kỹ năng, thẻ, app độc ngẫu nhiên, Vua chương 1 ở mọi chế độ): màn 1–5: 7/14/16/17/17, Vô tận 4. Viễn chinh vẫn giữ 5 (chuyến đang đi không bị kết thúc; kỷ lục Viễn chinh cũ và mới nằm chung).
 - Cân bằng sau đợt 2026-10-24 (mô phỏng, Thường): bot "simple" (đỡ mọi đòn ngay, bấm app ngay khi đầy) kết thúc màn 2 và màn 4 với ~88% HP (ngưỡng nới thành 90%), bot "casual" 61–78% ở màn 2–5.
+
+### Slime Nén bổ sung #59 — 06/11
+
+Cây thư mục mech 1 HP: lần đầu báo sau 2 s, mỗi 4,5 s chốt X mèo, báo 1 s, dải rộng 100 DIP từ sàn tới SkyHeight tồn tại 0,8 s; damage cơ sở 10 tối đa một lần/cây, choáng sàn 0,4 s. Bế/bay chỉ mất máu, không tuột tay/đổi vận tốc/choáng. Không chặn chuột hoặc phá tay kéo; đủ sáu tay dọn cả cây đang chờ. Đẩy riêng phase 2–3 đặt đồng hồ 5 s khi sang phase, hồi 12 s sau khi ra đòn; chỉ mở lúc mèo sàn và boss giữa đòn, ưu tiên trước đòn thường. Nhấc khi báo vẫn né được và tính lượt; giữ 0 damage/báo 0,9 s/đẩy 0,8 s/choáng cuối 1,2 s. Pause đóng băng tất cả. HP 1100, records 9/17/10. `ZipBlowKind.Canopy` tách khỏi Branch: giữ kiểm tra tiếp xúc trong 0,8 s và cờ Hit chống lặp; overlay sky vẽ toàn chiều cao, không có input. Số này là runtime C#, không thêm khóa dữ liệu.

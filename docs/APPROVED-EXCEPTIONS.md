@@ -4,6 +4,8 @@ Chuyển nguyên văn từ AGENTS.md ngày 2026-10-26 để AGENTS.md ngắn l�
 
 ## Battle Mode
 
+- Bổ sung người dùng duyệt #59 (06/11): Cây thư mục mech 1 HP: lần đầu báo sau 2 s, mỗi 4,5 s chốt X mèo, báo 1 s, dải rộng 100 DIP từ sàn tới SkyHeight tồn tại 0,8 s; damage cơ sở 10 tối đa một lần/cây, choáng sàn 0,4 s. Bế/bay chỉ mất máu, không tuột tay/đổi vận tốc/choáng. Không chặn chuột hoặc phá tay kéo; đủ sáu tay dọn cả cây đang chờ. Đẩy riêng phase 2–3 đặt đồng hồ 5 s khi sang phase, hồi 12 s sau khi ra đòn; chỉ mở lúc mèo sàn và boss giữa đòn, ưu tiên trước đòn thường. Nhấc khi báo vẫn né được và tính lượt; giữ 0 damage/báo 0,9 s/đẩy 0,8 s/choáng cuối 1,2 s. Pause đóng băng tất cả. HP 1100, records 9/17/10. Chi tiết docs/ZIP-SLIME.md.
+
 - Bổ sung người dùng duyệt #58 (06/11): mech đai Slime Nén gồng 0,8 giây rồi đầu đai đi từ boss ra rìa trong 0,35 giây, thu về 0,2 giây, nhịp 2,8 giây; chỉ đầu quét chạm mới gây damage/choáng một lần, không đánh cả vùng tức thì. Khóa ZIP giữ mèo đứng/không nhấc nhưng mèo tự đánh ổ khóa dù không có quái gần, đủ 5 nhát chạm thì mở; không gây damage lên quái, tích Nộ hoặc combo. Giữ 3 click/6 giây; Pause đóng băng cả nhịp đánh và đai. Chi tiết docs/ZIP-SLIME.md.
 
 

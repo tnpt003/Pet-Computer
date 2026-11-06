@@ -249,3 +249,7 @@ Checklist từng loại nội dung: docs/EXTENDING.md.
 - Mèo nói tiếng người (docs/NEXT-STEPS.md), cần đổi quy tắc AGENTS.md.
 - **Chuẩn bị code cho mở rộng:** đã dùng chung thứ tự app độc và thêm test bắt lệch tên/trọng số/Sổ tay. Còn sau 1.5: kiểm tra tự động khóa quái mới thiếu trong `UsesMouse`/điều kiện loại trừ, xem xét gom `Scenes` thành dữ liệu; không refactor rộng trước release.
 - Kho ý tưởng bản sau: docs/UPDATE-1.5.1.md (chưa chốt, không phải cam kết).
+
+### B1 bổ sung sau chơi thử #59 (06/11)
+
+Cây thư mục mech 1 HP: lần đầu báo sau 2 s, mỗi 4,5 s chốt X mèo, báo 1 s, dải rộng 100 DIP từ sàn tới SkyHeight tồn tại 0,8 s; damage cơ sở 10 tối đa một lần/cây, choáng sàn 0,4 s. Bế/bay chỉ mất máu, không tuột tay/đổi vận tốc/choáng. Không chặn chuột hoặc phá tay kéo; đủ sáu tay dọn cả cây đang chờ. Đẩy riêng phase 2–3 đặt đồng hồ 5 s khi sang phase, hồi 12 s sau khi ra đòn; chỉ mở lúc mèo sàn và boss giữa đòn, ưu tiên trước đòn thường. Nhấc khi báo vẫn né được và tính lượt; giữ 0 damage/báo 0,9 s/đẩy 0,8 s/choáng cuối 1,2 s. Pause đóng băng tất cả. HP 1100, records 9/17/10.

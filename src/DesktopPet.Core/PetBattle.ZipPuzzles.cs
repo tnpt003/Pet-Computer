@@ -81,6 +81,7 @@ public sealed partial class BattleSim
             if (!slimes.Any(s => s.SummonedBy == boss.Id && s.ZipProp == ZipProp.Tab && s.Targetable))
             {
                 boss.BombClock = 0; boss.BombDone = true;
+                zipBlows.RemoveAll(b => b.OwnerId == boss.Id);
                 boss.Deflating = boss.Type.Zip!.Bomb.Flight;
                 boss.DeflateVelocity = DeflateSpeed;
                 events.Add(new(BattleEventKind.ZipDeflated, boss.X));
@@ -140,7 +141,7 @@ public sealed partial class BattleSim
         {
             boss.ZipRepulseWarn = Math.Max(0, boss.ZipRepulseWarn - dt);
             if (boss.ZipRepulseWarn > 0) return;
-            boss.ZipRepulseClock = 22;
+            boss.ZipRepulseClock = 12;
             AddZipEffect(ZipVisual.Repulse, boss.X, boss.Height / 2, lastCatX < boss.X ? -100 : 100);
             if (CatOffFloor || Raging || CrushProof || ShieldRemaining > 0 || Grace > 0) return;
             int side = lastCatX < boss.X ? -1 : 1;
@@ -156,7 +157,7 @@ public sealed partial class BattleSim
             return;
         }
         boss.ZipRepulseClock -= dt;
-        if (boss.ZipRepulseClock <= 0 && boss.ZipAct == ZipAct.None && boss.State == SlimeState.Moving)
+        if (boss.ZipRepulseClock <= 0 && boss.ZipAct == ZipAct.None && boss.State == SlimeState.Moving && !CatOffFloor && !CatStunned && ShoveLeft <= 0 && Grace <= 0)
         {
             boss.ZipRepulseWarn = 0.9;
             boss.Cooldown = Math.Max(boss.Cooldown, 3.7);

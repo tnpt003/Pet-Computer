@@ -79,6 +79,7 @@ public sealed partial class BattleSim
     {
         if (boss.Type.Zip is not ZipSpec zip || boss.ZipStage >= zip.Stages.Length - 1) return;
         boss.ZipStage++;
+        boss.ZipRepulseClock = 5;
         boss.Range = StageOf(boss)!.Range;
         boss.ZipBag.Clear(); // The new stage's own moves.
         boss.ZipLast = ZipAct.None;
@@ -219,6 +220,15 @@ public sealed partial class BattleSim
         }
         if (!phase.Bomb) return false;
         if (boss.Deflating > 0) { StepDeflate(boss, zip.Bomb, dt, minX, maxX); return true; }
+        boss.ZipPuzzleClock -= dt;
+        if (boss.ZipPuzzleClock <= 0)
+        {
+            boss.ZipPuzzleClock += 4.5;
+            double radius = Math.Min(50, (Right - Left) / 4);
+            AddZipBlow(boss, Math.Clamp(lastCatX, Left + radius, Right - radius), radius, 0, SkyHeight, 1,
+                new ZipMoveSpec { Damage = 10, Stun = 0.4 }, ZipBlowKind.Canopy, 1);
+            zipBlows[^1].Life = 0.8;
+        }
         boss.BombClock = Math.Max(0, boss.BombClock - dt);
         if (boss.BombClock <= 0) Burst(boss, zip.Bomb);
         return true;
@@ -271,6 +281,7 @@ public sealed partial class BattleSim
         boss.Shielded = true;
         boss.ShieldTag = boss.BombTag;
         boss.BombPulls = 0;
+        boss.ZipPuzzleClock = 2;
         boss.BombClock = bomb.Charge;
         if (boss.State is SlimeState.Windup or SlimeState.Dashing or SlimeState.Casting) boss.Set(SlimeState.Moving);
         ClearZipProps(boss);

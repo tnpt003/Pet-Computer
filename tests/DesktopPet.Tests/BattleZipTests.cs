@@ -87,6 +87,7 @@ internal static class BattleZipTests
         StageChecks(check);
         PuzzleChecks(check);
         RepulseChecks(check);
+        CanopyChecks(check);
         PhaseTwoRegression(check);
         BeltContactChecks(check);
         DataChecks(check);
@@ -144,6 +145,7 @@ internal static class BattleZipTests
             for (int i = 0; i < 10 && file.Targetable; i++) sim.Damage(file, 1, DamageSource.Weapon);
         }
         check(!boss.Shielded && boss.ZipStage == 2, "Matching all three files opens stage three");
+        check(boss.ZipRepulseClock == 5, "New stage resets its first independent repulse to five eligible seconds");
         boss.Hp = 2;
         sim.Damage(boss, 100000, DamageSource.Poison);
         check(boss.Hp == 1 && boss.Shielded && boss.BombClock > 0, "Lethal poison is clamped to exactly one HP and immediately starts final puzzle");
@@ -155,6 +157,7 @@ internal static class BattleZipTests
         check(boss.Shielded && boss.BombClock > 0 && tabs.All(s => s.Targetable), "Timeout keeps remaining pulls and never exposes a killable boss");
         foreach (var tab in tabs) sim.Damage(tab, 1, DamageSource.Weapon);
         check(tabs.All(s => !s.Targetable) && boss.Deflating > 0, "Every pull disappears after one direct strike");
+        check(!sim.ZipBlows.Any(b => b.OwnerId == boss.Id), "Solving six pulls clears every final tree and pending hit immediately");
         Run(sim, 2, 400);
         check(boss.State == SlimeState.Defeated && sim.BossDefeated, "Six pulls deflate and defeat the one HP boss");
     }
@@ -240,11 +243,52 @@ internal static class BattleZipTests
         Run(sim, 0.5, 400);
         check(sim.ShoveLeft > 0 && !sim.CatStunned && sim.CatHp == hp, "Repulse pushes without damage or early stun");
         Run(sim, 0.9, 400);
-        check(sim.ShoveLeft == 0 && sim.CatStunned && sim.CatHp == hp && boss.ZipRepulseClock > 19, "Repulse stuns only after displacement, with separate cooldown and no damage");
+        check(sim.ShoveLeft == 0 && sim.CatStunned && sim.CatHp == hp && boss.ZipRepulseClock > 9, "Repulse stuns only after displacement, with separate cooldown and no damage");
         (sim, boss) = Field(Zip(), bossX: 800, catX: 400);
         boss.ZipStage = 2; boss.ZipRepulseClock = 0; boss.Cooldown = 0;
         Run(sim, 1.5, 400, held: true);
         check(sim.ShoveLeft == 0 && !sim.CatStunned, "Repulse never drops or stuns a held cat");
+        check(boss.ZipRepulseWarn == 0 && boss.ZipRepulseClock <= 0, "A held cat does not consume a ready repulse");
+        boss.ZipAct = ZipAct.None; boss.Set(SlimeState.Moving); boss.Cooldown = 0;
+        Run(sim, dt, 400);
+        check(boss.ZipRepulseWarn == 0 && sim.Grace > 0, "Repulse respects landing grace after a held cat is released");
+        for (int i = 0; i < 180 && boss.ZipRepulseWarn <= 0; i++) Run(sim, dt, 400);
+        check(boss.ZipRepulseWarn > 0 && boss.ZipAct == ZipAct.None, "Ready repulse takes priority over the next normal move on the floor");
+        Run(sim, 1, 400, held: true);
+        check(sim.ShoveLeft == 0 && boss.ZipRepulseClock > 11 && boss.ZipRepulseWarn == 0,
+            "Lifting during the warning dodges repulse and consumes its normal cooldown");
+    }
+
+    private static void CanopyChecks(Action<bool, string> check)
+    {
+        for (int state = 0; state < 3; state++)
+        {
+            var (sim, boss) = Field(Zip(), bossX: 1200, catX: 400);
+            boss.ZipStage = 2; boss.Shielded = true; boss.ShieldTag = 3;
+            boss.BombClock = 14; boss.ZipPuzzleClock = 2;
+            void Step(int frames, double x)
+            {
+                for (int i = 0; i < frames; i++) sim.Step(dt, x, state != 0, state == 1,
+                    state == 0 ? null : new CatPose(x, 400, 0, 200, state == 1, state == 2));
+            }
+            Step(119, 400);
+            check(!sim.ZipBlows.Any(b => b.Kind == ZipBlowKind.Canopy), "Final tree waits two seconds before first warning");
+            Step(3, 400);
+            var tree = sim.ZipBlows.Single(b => b.Kind == ZipBlowKind.Canopy);
+            double hp = sim.CatHp, left = tree.Left;
+            sim.Paused = true; Step(60, 400); sim.Paused = false;
+            check(tree.Left == left && sim.CatHp == hp, "Pause freezes full-height tree warning");
+            Step(62, 400);
+            check(tree.Top == sim.SkyHeight && tree.Radius == 50 && tree.Done && tree.Hit && sim.CatHp < hp,
+                $"Full-height tree hits cat pose {state} only after warning");
+            double after = sim.CatHp;
+            Step(12, 400);
+            check(sim.CatHp == after && (state == 0 || !sim.CatStunned), "Tree hits once and never stuns held/flying cat");
+            Step(40, 400);
+            check(!sim.ZipBlows.Any(b => b.Kind == ZipBlowKind.Canopy), "Tree disappears after its active window");
+            Step(160, 700);
+            check(sim.ZipBlows.Any(b => b.Kind == ZipBlowKind.Canopy && Math.Abs(b.X - 700) < 1), "Next tree locks new cat position on independent cadence");
+        }
     }
 
     private static void DataChecks(Action<bool, string> check)

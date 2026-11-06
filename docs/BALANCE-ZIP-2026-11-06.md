@@ -1,6 +1,23 @@
-# Slime Nén sau chơi thử — đối chứng 06/11, Issue #56–#58
+# Slime Nén sau chơi thử — đối chứng 06/11, Issue #56–#59
 
-## Kết quả mới nhất — đai quét/tự phá khóa #58, HP 1100
+## Kết quả mới nhất #59 — cây mech cuối/đẩy riêng, HP 1100
+
+Đối chứng source 3b3682a (`zip58-full-tests.log`) với bản #59 (`zip59-full-tests.log`): giữ HP, bot, seed, đường đi và ngưỡng. Đây là mô phỏng, chưa chơi thật.
+
+| Vũ khí | Độ khó | Thắng trước → sau | Giây trước → sau | HP trước → sau |
+|---|---|---:|---:|---:|
+| sword | Normal | 59/60 → 60/60 | 139 → 141 | 81% → 79% |
+| sword | Hard | 48/60 → 47/60 | 153 → 157 | 74% → 71% |
+| hammer | Normal | 60/60 → 59/60 | 156 → 160 | 77% → 79% |
+| hammer | Hard | 43/60 → 46/60 | 179 → 186 | 77% → 76% |
+| yarn | Normal | 58/60 → 59/60 | 157 → 161 | 79% → 77% |
+| yarn | Hard | 41/60 → 40/60 | 189 → 194 | 72% → 70% |
+| glove | Normal | 60/60 → 60/60 | 132 → 133 | 87% → 85% |
+| glove | Hard | 53/60 → 53/60 | 141 → 142 | 76% → 78% |
+
+Mọi ngưỡng cân bằng đạt. Bãi rác tham lam Normal: Kiếm 20→22/40 (≥20), Búa 22→20/40 (≥18), Cuộn len 23→22/40 (≥20), Găng 29→28/40 (≥20). Búa/Cuộn len còn gần ngưỡng, cần chơi thử. Records màn/Endless/Bãi rác 9/17/10.
+
+## Lịch sử #58 — đai quét/tự phá khóa #58, HP 1100
 
 Đã publish sạch source `3b3682a`, smoke **3/3 PASS**, mở lại mèo; ZIP `artifacts/DesktopPet-1.4.4-3b3682a-win-x64.zip`. Log `artifacts/zip58-publish-final.log`, `artifacts/zip58-smoke.log`.
 

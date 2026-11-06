@@ -1093,3 +1093,9 @@ Các mục 1.5 phía trên viết theo từng mốc; đây là thứ tự chơi 
 - [ ] Khóa ZIP khi đứng xa quái: tự vung vũ khí hướng vào ổ khóa, khóa rung/chớp/nứt theo từng nhát, đủ 5 thì mở. Kiếm/Búa/Cuộn len/Găng đều có chuyển động, không cần quái gần.
 - [ ] Nhát phá khóa không làm mất máu quái hoặc tích Nộ/combo. Ba click vẫn mở ngay và hủy nhát chưa chạm; vũ khí quá chậm hoặc bị gián đoạn vẫn hết sau 6 giây. Pause đóng băng cả tự đánh và timer; mở khóa tiếp tục đi/đánh/nhấc bình thường.
 - [ ] Chưa xác nhận trận thật/DPI/multi-monitor; xem cả nền sáng/tối và lúc dùng Nộ/thoát trận giữa một nhát tự phá khóa.
+
+## Issue #59 — cây mech cuối/đẩy riêng Slime Nén (06/11)
+
+- [ ] Mech 1 HP: báo cây sau 2 s, chốt X/báo 1 s; né sang ngang khi bế/bounce/sàn. Cây phủ toàn chiều cao đúng dải 100 DIP; mỗi cây chỉ trúng một lần, không che hoặc chặn click tay kéo.
+- [ ] Cây kế tiếp mỗi 4,5 s; Pause/menu đóng băng; đủ sáu tay xóa cả cây đang báo/đang mọc. Thử màn thấp và tọa độ monitor âm/DPI.
+- [ ] Phase 2–3 sau mech có đẩy lần đầu 5 s, các lần sau 12 s hợp lệ; đang bế không tiêu lượt, chạm sàn thì báo trước đòn thường. Nhấc trong 0,9 s né được. Sàn đẩy 0,8 s rồi choáng 1,2 s, không mất máu; Khiên/Nộ giữ luật.

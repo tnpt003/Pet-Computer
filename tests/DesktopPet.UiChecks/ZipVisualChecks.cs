@@ -13,6 +13,16 @@ internal static class ZipVisualChecks
     public static void Run(Action<bool, string> check)
     {
         var data = BattleData.Settings;
+        var canopySim = new BattleSim(data, 0, 600, seed: 1);
+        var canopy = new ZipBlow { Kind = ZipBlowKind.Canopy, X = 300, Radius = 50, Top = 600, Warn = 1, Left = 0.5, Life = 0.8 };
+        ((ICollection<ZipBlow>)canopySim.ZipBlows).Add(canopy);
+        var preview = new ZipCanopyPreview(canopySim);
+        var canopyWarning = SkyVisualChecks.Render(preview, 600, 640, "zip-final-tree-warning");
+        canopy.Done = true;
+        var canopyActive = SkyVisualChecks.Render(preview, 600, 640, "zip-final-tree-active");
+        check(BattleFieldView.ZipAirBusy(canopySim) && !canopyWarning.SequenceEqual(canopyActive), "Final tree renders full-height warning and active hierarchy in the sky overlay");
+        check(SkyVisualChecks.Count(canopyActive, 600, 640, Color.FromRgb(0xE8, 0xB8, 0x4A), 250, 350, 30, 200) > 30,
+            "Directory branches remain visible near the top of the screen");
         var teeth = Color.FromRgb(0x8C, 0x6A, 0x2E);
         var crown = Color.FromRgb(0xFF, 0xC8, 0x3A);
         var rope = Color.FromRgb(0x8E, 0xD8, 0x6E);
@@ -199,6 +209,11 @@ internal static class ZipVisualChecks
         check(!plain.SequenceEqual(squeezed), "Squeezed, the cat looks different");
         check(SkyVisualChecks.Count(locked, 192, 192, gold, 0, 192, 0, 192) > SkyVisualChecks.Count(plain, 192, 192, gold, 0, 192, 0, 192) + 100, "Locked, it wears the gold shell and padlock");
     }
+}
+
+internal sealed class ZipCanopyPreview(BattleSim sim) : FrameworkElement
+{
+    protected override void OnRender(DrawingContext dc) => BattleFieldView.DrawZipAir(dc, sim, (x, h) => new Point(x, 620 - h), new Point(100, 400), 0);
 }
 
 internal sealed class ZipImpactPreview : FrameworkElement

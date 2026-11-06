@@ -48,7 +48,7 @@ Luật hiện hành của boss `zip`. Người dùng duyệt ngày 2026-11-06 (I
 
 ## Đòn đẩy riêng phase 2–3
 
-Tách khỏi túi đòn, hồi 22 giây thời gian hợp lệ, báo 0,9 giây. Chỉ bắt đầu giữa các đòn, không trong mech, Khóa ZIP, khoảng an toàn sau khóa hoặc lúc boss choáng. Đẩy mèo dưới sàn về rìa phía xa boss trong 0,8 giây rồi choáng 1,2 giây; **không gây damage**. Boss nghỉ tới hết đẩy/choáng và thêm 0,8 giây. Khiên/Nộ/miễn đẩy và ân hạn đáp chặn; không tuột tay hoặc đổi cú ném. Nhấc mèo thoát đẩy thì không có choáng trễ. Pause đóng băng cả báo trước và đẩy.
+Tách khỏi túi đòn, hồi 12 giây thời gian hợp lệ (lần đầu 5 giây sau chuyển phase), báo 0,9 giây. Chỉ bắt đầu khi mèo dưới sàn và giữa các đòn, không trong mech, Khóa ZIP, khoảng an toàn sau khóa hoặc lúc boss choáng. Đẩy mèo dưới sàn về rìa phía xa boss trong 0,8 giây rồi choáng 1,2 giây; **không gây damage**. Boss nghỉ tới hết đẩy/choáng và thêm 0,8 giây. Khiên/Nộ/miễn đẩy và ân hạn đáp chặn; không tuột tay hoặc đổi cú ném. Nhấc mèo thoát đẩy thì không có choáng trễ. Pause đóng băng cả báo trước và đẩy.
 
 ## Hình và tương tác
 
@@ -108,3 +108,7 @@ Mô phỏng chương 2 màn cuối, bot cũ (không tự né, 60 seed): Normal s
 Damage đai dùng cùng đầu quét với renderer, quét đoạn từ vị trí frame trước tới frame hiện tại (rộng ±12 DIP, cao 65 DIP), không đánh cả nửa sân ngay khi hết báo. Pause và Screenshot giữ đứng cả đầu đai; màn/khóa đổi lượt hủy đai như trước. Boss gồng theo tiến độ báo trước, phần cuộn đai nằm ngoài mặt boss. Khóa ZIP hủy nhát đánh quái đang dở, ưu tiên nhát tự đánh khóa, đếm tại `HitTime`; 3 click/Nộ/kết thúc trận hủy nhát đang chờ để không có hit trễ. Vũ khí quá chậm vẫn có timeout 6 giây. HP 1100; records c2_zip_slime 8, Vô tận 16, Bãi rác 9.
 
 Đổi vùng trận: FromX/ToX/X/Radius của đai và marker được ánh xạ cùng vị trí boss, giữ tiến độ và cờ đã trúng; không dùng đoạn quét từ tọa độ màn cũ. Đã kiểm bằng unit test, chưa xác nhận DPI hoặc nhiều màn hình thật.
+
+## Bổ sung #59 — cây toàn chiều cao và nhịp đẩy (người dùng duyệt 06/11)
+
+Cây thư mục mech 1 HP: lần đầu báo sau 2 s, mỗi 4,5 s chốt X mèo, báo 1 s, dải rộng 100 DIP từ sàn tới SkyHeight tồn tại 0,8 s; damage cơ sở 10 tối đa một lần/cây, choáng sàn 0,4 s. Bế/bay chỉ mất máu, không tuột tay/đổi vận tốc/choáng. Không chặn chuột hoặc phá tay kéo; đủ sáu tay dọn cả cây đang chờ. Đẩy riêng phase 2–3 đặt đồng hồ 5 s khi sang phase, hồi 12 s sau khi ra đòn; chỉ mở lúc mèo sàn và boss giữa đòn, ưu tiên trước đòn thường. Nhấc khi báo vẫn né được và tính lượt; giữ 0 damage/báo 0,9 s/đẩy 0,8 s/choáng cuối 1,2 s. Pause đóng băng tất cả. HP 1100, records 9/17/10.

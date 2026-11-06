@@ -65,6 +65,8 @@ Ngoại lệ nào có link tới docs/APPROVED-EXCEPTIONS.md: trước khi sửa
 
 - Bổ sung đã duyệt: sửa sau chơi thử 1.5 (bộ app tối đa 5, slime lui xuyên hàng, bóng ma, khổng lồ). Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Sửa sau chơi thử 1.5.
 
+- Bổ sung đã duyệt #59: cây thư mục toàn chiều cao trong mech cuối Slime Nén; đẩy riêng phase 2–3 lần đầu 5 s, hồi 12 s. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Battle Mode.
+
 ## File quan trọng
 README.md, docs/AI.md, docs/WINDOWS.md, src/DesktopPet/ (App.xaml.cs, PetWindow*.cs, PetModel.cs, PetRenderer.cs, PetPreferences.cs, PetSounds.cs, AI/), ai/, tests/DesktopPet.Tests/, tests/DesktopPet.UiChecks/, scripts/.
 

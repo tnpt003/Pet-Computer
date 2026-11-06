@@ -51,7 +51,9 @@ Ngoại lệ nào có link tới docs/APPROVED-EXCEPTIONS.md: trước khi sửa
 - Ngoại lệ đã duyệt: Quiet không chặn bóng/laser do người dùng bật. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Hành vi mèo.
 - Ngoại lệ đã duyệt: "đi trên cửa sổ" (chỉ đọc hình chữ nhật/kiểu/z-order cửa sổ, không đọc nội dung; physics ở C#). Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Hành vi mèo.
 - Ngoại lệ đã duyệt: Battle Mode (tùy chọn, mặc định tắt, không tự bật lại): trong trận C# sở hữu mèo, Python không tham gia; có luật riêng về cầm/ném/sát thương/choáng/Pause. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Battle Mode.
-- Bổ sung đã duyệt 05/11: Slime Mẹ lao và Vua biến dị phình nổ đẩy mèo dưới sàn; dây cứu con/dòng hút nhầy cắt được. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Battle Mode; luật: docs/BOSS-TACTICS.md.
+- Bổ sung đã duyệt 05/11: Slime Mẹ lao và Vua biến dị phình nổ đẩy mèo dưới sàn; dây cứu con/dòng hút nhầy chỉ cắt bằng Kéo cắt (#64). Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Battle Mode; luật: docs/BOSS-TACTICS.md.
+
+- Bổ sung đã duyệt #64: mèo không cắt dây nào; dây chỉ đứt bằng Kéo cắt hoặc hạ con giữ dây (Kẹp gắp vẫn đứt xích). Slime Mẹ mới: đòn `air` trúng mèo cầm/bay chỉ mất máu, Quấn khăn kéo trượt mèo sàn, thanh dỗ phase 3. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Battle Mode; luật: docs/MOTHER-SLIME.md.
 - Bổ sung đã duyệt 06/11, chỉ Slime Nén: đòn trúng mèo đang cầm/bay khi thực sự chạm (không tuột tay, không choáng); Khóa ZIP khóa đi/nhấc; mech đánh khóa 12 nhát, ghép thư mục và 6 tay kéo ở 1 HP; phase 2–3 có đẩy riêng 0 damage (bổ sung sau chơi thử 06/11). Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Battle Mode; luật: docs/ZIP-SLIME.md.
 - Bổ sung #58 đã duyệt 06/11: đai Slime Nén đi từ boss và chỉ gây damage khi đầu quét chạm; mèo tự đánh Khóa ZIP đủ 5 nhát để mở, không cần quái gần. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Battle Mode.
 - Bổ sung #57 đã duyệt 06/11: giấy Slime Nén bám có giới hạn quay, quét toàn thân khi bế/rơi/bounce; file mech theo làn tránh boss và không bị bom thường xóa. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Battle Mode; luật: docs/ZIP-SLIME.md.

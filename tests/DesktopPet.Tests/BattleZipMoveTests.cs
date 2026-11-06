@@ -21,7 +21,7 @@ internal static class BattleZipMoveTests
     {
         Id = "zip", MaxHp = 1000, Speed = 20, Damage = damage, Range = 110, Windup = 1.2, AttackCooldown = 2.6, Recover = 0.7, Scale = 2,
         Boss = true, Slam = true, PushFactor = 0.35, StunFactor = 0.4, SummonCap = 10, ShieldBreakStun = 2,
-        RopeCutSpeed = ShippedZip.RopeCutSpeed, RopeCutStun = ShippedZip.RopeCutStun, Roll = ShippedZip.Roll, Zip = zip, Phases = ShippedZip.Phases!.Select((p, i) => i == 1 ? new BossPhase { At = p.At, Shield = true, Roped = true, Summons = p.Summons } : p).ToArray()
+        RopeCutStun = ShippedZip.RopeCutStun, Roll = ShippedZip.Roll, Zip = zip, Phases = ShippedZip.Phases!.Select((p, i) => i == 1 ? new BossPhase { At = p.At, Shield = true, Roped = true, Summons = p.Summons } : p).ToArray()
     };
 
     private static BattleSettings Settings(EnemyType boss, double weapon = 0, double? swingCooldown = null, double rageGain = 0, WeaponSpec? gear = null) => new()

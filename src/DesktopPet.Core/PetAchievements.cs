@@ -125,7 +125,7 @@ public static class AchievementStats
             ["quickWin"] = won && b.FightSeconds <= QuickWinSeconds ? 1 : 0,
             ["heldHits"] = b.HeldHits,
             ["throwHits"] = b.ThrowHits,
-            ["ropesCut"] = b.CatRopeCuts + b.RopesCut + b.BossRopesCut,
+            ["ropesCut"] = b.RopesCut + b.BossRopesCut,
             ["rages"] = b.Rages,
             ["bubbles"] = b.BubblesPopped,
             ["ghosts"] = b.GhostsRevealed,

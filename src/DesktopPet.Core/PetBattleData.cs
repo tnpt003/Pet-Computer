@@ -196,14 +196,12 @@ public sealed class EnemyType
     public StealSpec? Steal { get; init; }
     // 1.5 M17 (PetBattle.Zip.cs), the chapter 2 boss's own moves. Roll (a boss only): from afar it winds up
     // and rolls across the floor over the cat. Still: it never moves or attacks (a planted flag).
-    // RopeCutSpeed/RopeCutStun: a roped shield phase's ropes (BossPhase.Roped) are cut by the cat going
-    // through one at RopeCutSpeed DIPs/s or more (held or thrown) or by the Scissors; the helper is dazed
-    // RopeCutStun s.
+    // RopeCutStun: a roped shield phase's ropes (BossPhase.Roped) are cut by the Scissors only; the helper is
+    // dazed RopeCutStun s.
     public RollSpec? Roll { get; init; }
     public bool Still { get; init; }
     // 2026-11-06: one of the Zip Slime's data packets (PetBattle.ZipMoves.cs): no kill counted when it just goes.
     public bool Packet { get; init; }
-    public double RopeCutSpeed { get; init; } = 300;
     public double RopeCutStun { get; init; } = 1;
     // 2026-11-05: the Zip Slime's own fight (PetBattle.Zip.cs): its stages, press and bomb. Null: none.
     public ZipSpec? Zip { get; init; }
@@ -609,9 +607,8 @@ public sealed class ZipPressSpec
     public RollSpec Roll { get; init; } = new();
 }
 
-// The last stage's riddle: it swells behind a shield for Charge s, a zipper tab hanging off it. The cat
-// (held or thrown) going through the tab at RopeCutSpeed or more, or a Scissors stroke, pulls it; the tab
-// moves after each of Pulls pulls. All of them: it flies round the field Flight s letting its air out, then lies
+// The last stage's riddle: it swells behind a shield for Charge s, a zipper tab hanging off it. A Scissors
+// stroke pulls it; the tab moves after each of Pulls pulls. All of them: it flies round the field Flight s letting its air out, then lies
 // stunned Stun s, taking ×Bonus (never armed again). Time out: it bursts, the cat on the floor within
 // Radius takes Damage and a CatStun s stun, and it arms again after Rearm s.
 public sealed class ZipBombSpec
@@ -713,8 +710,8 @@ public sealed class ThrowHitSpec
 //   rope first, else one with room for a second, 1.5 M12: a second holder takes its share of what is left); the holder
 //   takes Share of every hit on that ally and keeps behind it. Cut (CutLink) or the holder defeated:
 //   the ally is dazed BreakStun s; a rope stretched past Range × 1.5 snaps with no reward. Relink s
-//   later it may tie itself to an ally again. The cat held (past the drag threshold) or thrown through
-//   the rope at CutSpeed DIPs/s or more cuts it too (1.5 M10). An elite takes EliteShare (0: Share).
+//   later it may tie itself to an ally again. Only the Scissors cut a rope; the cat going through it does
+//   nothing (2026-11-06). An elite takes EliteShare (0: Share).
 // rhythm: a beat every Beat s (a ring over its head); on every Beats-th beat each ally within Range
 //   that could attack the cat winds up at once, attack turns or not. A push or a stun on it starts
 //   the count again. An elite strikes on every EliteBeats-th beat (0: Beats).
@@ -761,7 +758,6 @@ public sealed class LinkSpec
     public double Relink { get; init; } = 6;
     public double Share { get; init; } = 0.5;
     public double EliteShare { get; init; }
-    public double CutSpeed { get; init; } = 300;
     public double Beat { get; init; } = 0.8;
     public int Beats { get; init; } = 4;
     public int EliteBeats { get; init; }
@@ -1663,7 +1659,7 @@ public static class BattleData
                 Within(link.Range, 20, 800, at + ".link.range"); Within(link.BreakStun, 0, 5, at + ".link.breakStun"); Within(link.Relink, 0, 60, at + ".link.relink");
                 if (link.Kind == EnemyLinks.Tether)
                 {
-                    Within(link.Share, 0.05, 0.95, at + ".link.share"); Within(link.CutSpeed, 100, 5000, at + ".link.cutSpeed");
+                    Within(link.Share, 0.05, 0.95, at + ".link.share");
                     if (link.EliteShare != 0) Within(link.EliteShare, 0.05, 0.95, at + ".link.eliteShare");
                 }
                 if (link.Kind == EnemyLinks.Rhythm)
@@ -1982,7 +1978,7 @@ public static class BattleData
                 foreach (var l in crown)
                 {
                     Within(l.Range, 20, 800, at + ".crownLinks.range"); Within(l.BreakStun, 0, 5, at + ".crownLinks.breakStun"); Within(l.Relink, 0, 60, at + ".crownLinks.relink");
-                    if (l.Kind == EnemyLinks.Tether) { Within(l.Share, 0.05, 0.95, at + ".crownLinks.share"); Within(l.CutSpeed, 100, 5000, at + ".crownLinks.cutSpeed"); }
+                    if (l.Kind == EnemyLinks.Tether) Within(l.Share, 0.05, 0.95, at + ".crownLinks.share");
                     else { Within(l.Beat, 0.2, 3, at + ".crownLinks.beat"); if (l.Beats is < 2 or > 8) throw new InvalidDataException(at + ".crownLinks.beats must be 2–8"); }
                 }
             }
@@ -1993,7 +1989,7 @@ public static class BattleData
                 Within(rain.Radius, 10, 200, at + ".rain.radius"); Within(rain.Damage, 0, 1000, at + ".rain.damage"); Within(rain.Height, 40, 400, at + ".rain.height");
                 Within(rain.PuddleSeconds, 0, 30, at + ".rain.puddleSeconds");
             }
-            Within(e.RopeCutSpeed, 100, 5000, at + ".ropeCutSpeed"); Within(e.RopeCutStun, 0, 5, at + ".ropeCutStun");
+            Within(e.RopeCutStun, 0, 5, at + ".ropeCutStun");
             if (e.Still && (e.Boss || e.Blocker || e.Dash || e.Slam || e.Hover > 0 || e.Support || e.HealAmount > 0 || e.Link is { Kind: not EnemyLinks.Aura } || e.Spit != null || e.Spring != null
                 || e.Fuse != null || e.Split != null || e.UsesMouse || e.Fly != null || e.Burrow != null || e.Ice != null || e.Cling != null || e.Quills != null
                 || e.Clock != null || e.Steal != null || e.SummonAt > 0 || e.Phases != null))

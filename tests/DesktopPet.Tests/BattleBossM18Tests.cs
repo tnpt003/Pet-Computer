@@ -16,7 +16,7 @@ internal static class BattleBossM18Tests
     private static readonly EnemyType ShippedMother = Shipped.Enemy("mother");
     // Historical opt-in fixture: new mutant gameplay no longer uses royal links/rain.
     private static readonly EnemyType ShippedKing = new() { CrownLinks = new[] {
-        new LinkSpec { Kind = EnemyLinks.Tether, Range = 220, Share = 0.5, BreakStun = 1, Relink = 6, CutSpeed = 300 },
+        new LinkSpec { Kind = EnemyLinks.Tether, Range = 220, Share = 0.5, BreakStun = 1, Relink = 6 },
         new LinkSpec { Kind = EnemyLinks.Rhythm, Range = 220, Beat = 0.8, Beats = 4 }
     }, Rain = new RainSpec { PuddleSeconds = 5 } };
 

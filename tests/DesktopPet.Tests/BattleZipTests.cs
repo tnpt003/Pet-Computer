@@ -35,7 +35,7 @@ internal static class BattleZipTests
     {
         Id = "zip", MaxHp = 1000, Speed = 20, Damage = damage, Range = 110, Windup = 1.2, AttackCooldown = 2.6, Recover = 0.7, Scale = 2,
         Boss = true, Slam = true, PushFactor = 0.35, StunFactor = 0.4, SummonCap = 10, ShieldBreakStun = 2,
-        RopeCutSpeed = ShippedZip.RopeCutSpeed, RopeCutStun = ShippedZip.RopeCutStun, Roll = ShippedZip.Roll, Zip = Spec, Phases = AllPhases
+        RopeCutStun = ShippedZip.RopeCutStun, Roll = ShippedZip.Roll, Zip = Spec, Phases = AllPhases
     };
 
     private static BattleSettings Settings(EnemyType boss) => new()
@@ -357,7 +357,7 @@ internal static class BattleZipTests
         check(Rejects(Enemy("a", zip1 + "\"damage\":1")) && Rejects(Enemy("a", boss + "\"zip\":{\"stages\":[]}")) && Rejects(Enemy("a", boss + "\"zip\":{\"stages\":[{\"scale\":9}]}"))
               && Rejects(Enemy("a", boss + "\"zip\":{\"stages\":[{\"moves\":[\"nobody\"]}]}")) && Rejects(Enemy("a", boss + "\"zip\":{\"stages\":[{}],\"press\":{\"rolls\":1,\"pins\":2}}")) && Rejects(Enemy("a", boss + "\"zip\":{\"stages\":[{}],\"bomb\":{\"charge\":1}}")),
             "Stages on a plain enemy, or out of range, or a riddle's numbers out of range, are refused");
-        check(Rejects(Enemy("a", boss + "\"still\":true")) && Rejects(Enemy("a", "\"still\":true,\"dash\":true")) && Rejects(Enemy("a", boss + "\"ropeCutSpeed\":10")),
+        check(Rejects(Enemy("a", boss + "\"still\":true")) && Rejects(Enemy("a", "\"still\":true,\"dash\":true")) && Rejects(Enemy("a", boss + "\"ropeCutStun\":10")),
             "Still on a boss or an attacker, a rope cut speed out of range, are refused");
 
         var s = Shipped;

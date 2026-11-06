@@ -18,7 +18,7 @@ public sealed partial class BattleSim
     public int NestsBroken { get; private set; }
     public int NurseCordsCut { get; private set; }
     public int BossSpecials { get; private set; }
-    public const double BroodFlightSeconds = 0.7, BroodJumpSpacing = 65, BossChargePadding = 35, BossCordCutSpeed = 300, BossAbsorbRange = 650;
+    public const double BroodFlightSeconds = 0.7, BroodJumpSpacing = 65, BossChargePadding = 35, BossAbsorbRange = 650;
     public const int BossWaveSteps = 7;
 
     public static BossDangerZone BossZone(Slime s, BossMove move)

@@ -5,7 +5,7 @@ internal static class BossTacticsTests
     const double Dt = 1.0 / 60;
     static readonly BattleSettings Data = BattleData.Settings;
 
-    static (BattleSim Sim, Slime Boss) Field(bool mother, BossTacticsSpec? tactics = null)
+    static (BattleSim Sim, Slime Boss) Field(bool mother, BossTacticsSpec? tactics = null, IReadOnlyList<BattleSkill>? skills = null)
     {
         var kind = Data.Enemy(mother ? "mother" : "mutant_king");
         var boss = new EnemyType { Id = kind.Id, Boss = true, MaxHp = 1000, Speed = 0, Damage = 25, Range = 100,
@@ -14,7 +14,7 @@ internal static class BossTacticsTests
             Weapons = new[] { Data.Weapon("sword") with { Damage = 0, StunChance = 0 } }, RageHitGain = 0,
             Enemies = new[] { boss, Data.Enemy("fuser"), Data.Enemy("giant") },
             Plan = new[] { new WaveSpec { Groups = new[] { new WaveGroup { Enemy = boss.Id, Count = 1 } } } } };
-        var sim = new BattleSim(settings, 0, 1600, seed: 17);
+        var sim = new BattleSim(settings, 0, 1600, seed: 17, skills: skills);
         for (int i = 0; i < 200 && !sim.Slimes.Any(s => s.IsBoss && s.Targetable); i++) sim.Step(Dt, 100, false);
         var s = sim.Slimes.Single(s => s.IsBoss);
         s.X = 1000; s.BroodClock = 100; s.TacticClock = 100;
@@ -59,19 +59,23 @@ internal static class BossTacticsTests
         RunFor(sim, 6);
         check(sim.Slimes.Count(s => s.SummonedBy == mother.Id && s.State != SlimeState.Defeated) <= 6, "Hatching both nests respects the mother's summon cap");
 
-        (sim, mother) = Field(true);
+        (sim, mother) = Field(true, skills: new[] { BattleSkill.Push, BattleSkill.Heal, BattleSkill.Bomb, BattleSkill.Scissors, BattleSkill.Shield });
         var giant = sim.AddSlime(900, Data.Enemy("giant")); giant.Set(SlimeState.Moving);
         giant.SummonedBy = mother.Id; giant.Nursing = true; giant.Hp = giant.MaxHp * 0.4;
         double hp = giant.Hp;
         RunFor(sim, 0.5);
         check(giant.Hp == hp && sim.HpFed == 0, "A full-health advanced mother does not consume her nursing child's HP");
         check(mother.NurseCord == giant.Id, "Mother protects a wounded nursing giant with a cord");
-        // A real carried-cat stroke crosses the sagged cord at body height.
+        // A carried-cat stroke across the sagged cord at body height leaves it; only the Scissors cut.
         double middle = (mother.X + giant.X) / 2;
         sim.Step(Dt, middle, true, true, new CatPose(middle, 0, 0, 800, true, false));
         sim.Step(Dt, middle, true, true, new CatPose(middle, 130, 0, -800, true, false));
+        check(sim.NurseCordsCut == 0 && mother.NurseCord == giant.Id, "Dragging the cat through the rescue cord no longer cuts it");
+        sim.Step(Dt, 100, false); // Skills stay locked while the cat is lifted.
+        check(sim.Arm(BattleSkill.Scissors) && sim.UseOnScreen(BattleSkill.Scissors, middle, 30), "The Scissors can stroke across the rescue cord");
+        for (int i = 0; i < 120 && sim.Cut != null; i++) { sim.Step(Dt, 100, false); sim.ClearEvents(); }
         check(sim.NurseCordsCut == 1 && mother.NurseCord == 0 && mother.State == SlimeState.Stunned && !giant.Nursing,
-            "Dragging the cat through the rescue cord cuts it and staggers both ends");
+            "The Scissors cut the rescue cord and stagger both ends");
 
         (sim, mother) = Field(true); mother.Hp = 190;
         RunFor(sim, 0.1); double spent = mother.Hp;
@@ -123,9 +127,9 @@ internal static class BossTacticsTests
         Move(king, BossMove.Absorb); king.SpecialLeft = king.SpecialDuration = 2.4;
         kingSim.Step(Dt, 10, true, true, new CatPose(10, 4, 1200, 0, true, false));
         kingSim.Step(Dt, 1590, true, true, new CatPose(1590, 4, 1200, 0, true, false));
-        check(kingSim.Puddles.Count > 0 && kingSim.Puddles.All(p => p.DrainCut), "Dragging the cat across golden streams interrupts their absorption");
+        check(kingSim.Puddles.Count > 0 && kingSim.Puddles.All(p => !p.DrainCut), "Dragging the cat across golden streams no longer interrupts them");
         RunFor(kingSim, 2.5, 100, true);
-        check(king.GooArmor == 0, "Cut absorption streams give the king no armor");
+        check(king.GooArmor > 0, "Streams the cat dragged through still feed the king armor");
 
         (kingSim, king) = Field(false); Move(king, BossMove.Rain, 500);
         RunFor(kingSim, 0.9);

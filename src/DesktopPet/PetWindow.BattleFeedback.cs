@@ -234,8 +234,8 @@ public sealed partial class PetWindow
                 BattleEventKind.BossSummoned when BossShieldPhase() is { Roped: true } => null,
                 BattleEventKind.BossSummoned => LF($"{BossName()} gọi quân!", $"The {BossName()} calls for help!"),
                 BattleEventKind.BossShielded when BossShieldPhase() is { Roped: true } =>
-                    LF($"{BossName()} giải nén kẹt! Còn luồng thì nó không mất máu: kéo hoặc ném mèo xuyên luồng, dùng Kéo cắt, hoặc đánh vỡ gói",
-                        $"The {BossName()} is stuck unpacking! While a stream is left it takes no damage: drag or throw the cat through, use the Scissors, or break the packets"),
+                    LF($"{BossName()} giải nén kẹt! Còn luồng thì nó không mất máu: dùng Kéo cắt hoặc đánh vỡ gói",
+                        $"The {BossName()} is stuck unpacking! While a stream is left it takes no damage: use the Scissors or break the packets"),
                 // 2026-11-05: the Zip Slime's riddles say it themselves.
                 BattleEventKind.BossShielded when BossShieldPhase() is { Press: true } or { Bomb: true } => null,
                 BattleEventKind.ZipDebuffed when (int)e.Value == (int)ZipDebuff.Squeezed => L("Mèo bị NÉN! Nhỏ lại, đánh nhẹ và chạy chậm hơn", "The cat is SQUEEZED! Smaller, weaker and slower"),
@@ -333,7 +333,7 @@ public sealed partial class PetWindow
                 BattleEventKind.SpringFlattened when !flatExplained => L("Lò xo bẹp rồi! Nó nằm im một lúc", "The spring is flattened! It lies still a while"),
                 // 1.5 M10: the drummer and the chain slime, once each per battle.
                 BattleEventKind.LinkBeat when !beatExplained => L("Nhạc trưởng đếm nhịp! Đẩy nó trước nhịp cuối", "The drummer counts! Push it before the last beat"),
-                BattleEventKind.LinkFormed when !ropeExplained && IsRope(e) => L("Dây nhầy! Ném hoặc kéo mèo xuyên dây, hay dùng Kéo cắt", "A goo rope! Throw or drag the cat through it, or use the Scissors"),
+                BattleEventKind.LinkFormed when !ropeExplained && IsRope(e) => L("Dây nhầy! Dùng Kéo cắt để cắt", "A goo rope! Cut it with the Scissors"),
                 BattleEventKind.LinkCut when !cutExplained => L("Đứt dây! Đồng đội choáng", "Rope cut! Its ally is dazed"),
                 // 1.5 M11: the fusing slimes, the bomb slime, the splitting slime, once each per battle.
                 BattleEventKind.Merged when !remergeExplained && EventSlime(e)?.Type.Split != null => L("Hai nửa nhập lại! Hạ slime thảo dược trước", "The halves merged back! Take down the herb slime first"),

@@ -809,7 +809,7 @@ Chưa trận gốc nào có hai boss này. Muốn thử: cất file `%LOCALAPPDA
 - [ ] Con khổng lồ sát mẹ: đường nét đứt hồng, tim bay sang mẹ, thanh máu mẹ tăng dần; bú hết thì nó biến mất (banner "Slime Mẹ được hồi N máu"), không tính là mèo hạ. Đánh hạ nó giữa đường: mẹ không được hồi. Đẩy nó ra lúc đang bú: nó quay lại bú tiếp.
 - [ ] Mẹ còn 30%: nổi giận, đẻ dày hơn. Hạ mẹ khi con khổng lồ còn: nó thôi bú và đánh mèo như thường. Mẹ bị choáng: không đẻ.
 - [ ] Vua biến dị: xanh, nhầy chảy hai bên thân, vương miện vàng nhạt bị lệch. Đứng xa khi khiên tắt: 4 vòng cam quanh mèo, giọt nhầy rơi thẳng xuống (banner "… gọi mưa nhầy!…"); mèo đứng dưới vòng mất máu, không choáng; nhấc mèo lên hoặc bật Khiên thì không sao; chỗ giọt rơi còn vũng.
-- [ ] Pha khiên (75/50/25%): nhảy về mép, gọi quân có slime phun, vương miện sáng rồi phong tinh anh; lần đầu nối dây xích từ một quân khác vào tinh anh (banner "Vương miện nối dây xích cho tinh anh!…"; Kéo cắt hoặc kéo/ném mèo xuyên dây làm đứt), lần sau trao trống (banner "… trao trống…"; vòng nhịp trên đầu tinh anh, nhịp 4 cả vùng cùng gồng; Đẩy nó để đếm lại). Trong khiên: không mưa.
+- [ ] Pha khiên (75/50/25%): nhảy về mép, gọi quân có slime phun, vương miện sáng rồi phong tinh anh; lần đầu nối dây xích từ một quân khác vào tinh anh (banner "Vương miện nối dây xích cho tinh anh!…"; Kéo cắt làm đứt), lần sau trao trống (banner "… trao trống…"; vòng nhịp trên đầu tinh anh, nhịp 4 cả vùng cùng gồng; Đẩy nó để đếm lại). Trong khiên: không mưa.
 - [ ] Pause/menu: vòng báo đẻ, con khổng lồ đang bú, giọt mưa đang rơi đều đứng yên.
 - [ ] DPI 100/150/200%, đổi DPI giữa trận, màn hình phụ: vòng tím, giọt mưa, đường bú không bị cắt; âm thanh ngắn, không chồng nhau; banner vi/en/ja đúng chữ.
 
@@ -1053,7 +1053,7 @@ Các mục 1.5 phía trên viết theo từng mốc; đây là thứ tự chơi 
 
 ## Bản tích hợp/chuẩn hóa 1.5 — 06/11
 - [ ] Dùng cùng bản build để thử đủ Slime Nén (khóa vỏ/bung file/bom nén), Slime Mẹ và Vua biến dị, không dùng ZIP của hai nhánh riêng làm kết quả bản tích hợp.
-- [ ] Kéo cắt và kéo/ném mèo vẫn kéo tay kéo Slime Nén, cắt dây về boss, dây cứu con và dòng hút nhầy; không mất một tương tác khi merge.
+- [ ] Kéo cắt vẫn cắt dây về boss, dây cứu con và dòng hút nhầy; không mất một tương tác khi merge.
 - [ ] Slime Mẹ ≤20% máu khi đã đầy 2 ổ/6 con: không mất máu vô ích; giải phóng một chỗ thì lứa cuối xuất hiện và chỉ trừ máu một lần.
 - [ ] Đứng sát rìa vòng sóng/tay quét/phình nổ để so warning với vùng trúng. Mưa đang gồng báo cả hai nhịp; đổi vùng màn hình không lệch điểm đáp. Thử cả nền sáng/tối, DPI 100/125/150/200% và màn phụ.
 - [ ] Khiên chặn cả đòn và đẩy. Nộ vẫn nhận sát thương thường nhưng không bị đẩy/choáng; bật Nộ giữa lúc đang trượt thì dừng đẩy. Rà lại lò xo và hai boss.
@@ -1133,3 +1133,10 @@ Các mục 1.5 phía trên viết theo từng mốc; đây là thứ tự chơi 
 - [ ] Con ngươi:6 dải ngang/dọc khóa từng lần, dải cũ giữ,5%maxHP mỗi lần trúng; không ăn nhiều hit giao điểm, ép rơi không nảy/stun1s sau đáp, đủ thời gian nhấc lại. Sáu dải tan xong không còn collision. Thác chừa hành lang; Hơi thở tới2/3 nghỉ2s rồi phun hết sân.
 - [ ] Slime Nén/mutant không nhận debuff trong mech/chuyển phase; ZIPphase2–3 không bị choáng/đẩy bởi vũ khí, thẻ, app/kỹ năng; yếu do mech vẫn nhận đúng.
 - [ ] Pause/menu/fullscreen, kết thúc trận dọn effects, màn hẹp/resize, DPI100–200%/gốc âm và nhiều màn; perf boss có túi và sáu dải. Sleep/wake/drag/throw/emotion/local fallback ngoài trận không đổi.
+
+## Issue #64 — Chỉ Kéo cắt mới đứt dây; đổi chỗ Kéo cắt và Bình xịt (06/11)
+- [ ] Slime xích ở Đầm nhầy: kéo và ném mèo thật nhanh xuyên dây, dây không đứt, đồng minh không choáng; banner chỉ nhắc Kéo cắt.
+- [ ] Đầm nhầy cho mượn Kéo cắt, có bước hướng dẫn kỹ năng mới; một nhát Kéo cắt đứt dây slime xích và dây hồng Slime Mẹ.
+- [ ] Slime Nén cho mượn Bình xịt, hướng dẫn kỹ năng chạy đúng; mục tiêu/mẹo hai màn đúng vi/en/ja.
+- [ ] Ném mèo mạnh xuyên Slime băng vẫn vỡ vỏ; Kẹp gắp gắp con giữ xích vẫn đứt xích.
+- [ ] Save đã qua Đầm nhầy mà chưa qua Slime Nén: có Kéo cắt thay vì Bình xịt, không lỗi khi mở bảng chuẩn bị.

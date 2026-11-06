@@ -406,9 +406,9 @@ internal static class AdventureBalanceTests
                 flow &= run.Won && adventure.Lent(stages[i]) == null && adventure.SkillOpen(lentOrder[^1]) && adventure.Progress.Save(file);
             }
             var done = new Adventure(campaign, AdventureProgress.Load(file));
-            flow &= lentOrder.SequenceEqual(new[] { BattleSkill.Fan, BattleSkill.Laser, BattleSkill.Grabber, BattleSkill.Spray, BattleSkill.Scissors })
+            flow &= lentOrder.SequenceEqual(new[] { BattleSkill.Fan, BattleSkill.Laser, BattleSkill.Grabber, BattleSkill.Scissors, BattleSkill.Spray })
                 && BattleSkills.All.All(info => done.SkillOpen(info.Skill));
-            check(flow, $"Chapter 2 plays in order after the Slime King (simulation, Easy, sword): locked before, each stage lends then opens its skill (Fan, Laser, Grabber, Spray, Scissors), all ten open at the end ({string.Join(", ", lentOrder)})");
+            check(flow, $"Chapter 2 plays in order after the Slime King (simulation, Easy, sword): locked before, each stage lends then opens its skill (Fan, Laser, Grabber, Scissors, Spray), all ten open at the end ({string.Join(", ", lentOrder)})");
         }
         finally { Directory.Delete(dir, true); }
         check(stages.All(st => st.TipVi?.Length > 0 && st.TipEn?.Length > 0 && st.SuggestSkills?.Contains(st.UnlocksSkill) == true && st.MaxMalware == 4),

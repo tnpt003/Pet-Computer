@@ -387,22 +387,6 @@ public sealed partial class BattleSim
         return true;
     }
 
-    // The cat's way since the last step against every rope to a boss (as for a tether's rope).
-    private void CatThroughBossRopes(CatPose from, CatPose cat, double speed)
-    {
-        // Every frame the cat is held: nothing to copy in a battle without ropes.
-        bool any = false;
-        foreach (var s in slimes) if (s.RopedTo != 0) { any = true; break; }
-        if (!any) return;
-        foreach (var helper in slimes.ToArray())
-        {
-            if (RopeBoss(helper) is not Slime boss || speed < boss.Type.RopeCutSpeed) continue;
-            if (!RopeCrossed(helper, boss, from.X, from.Height, cat.X, cat.Height, CatHalfWidth * 2 / 3)) continue;
-            if (CutBossRope(helper)) CatRopeCuts++;
-            if (Over) return;
-        }
-    }
-
     // A Scissors cut: every rope to a boss it crosses (within pad of its way); how many it cut.
     private int SnipBossRopes(double x0, double h0, double x1, double h1, double pad)
     {

@@ -24,7 +24,7 @@ internal static class ChapterTwoTests
         var two = campaign.Chapters.Length > 1 ? campaign.Chapters[1] : null;
         check(two is { Id: "download_dump", SkillChoice: true, Drops: true, UnlockAfter: "c1_slime_king" } && two.Stages.Length == 5,
             "The built-in data has chapter 2: five stages, opened by the Slime King, with the skill choice and drops");
-        check(two != null && two.Stages.Select(s => s.UnlocksSkill).SequenceEqual(new[] { "fan", "laser", "grabber", "spray", "scissors" }),
+        check(two != null && two.Stages.Select(s => s.UnlocksSkill).SequenceEqual(new[] { "fan", "laser", "grabber", "scissors", "spray" }),
             "Chapter 2's stages open the Fan, the Laser, the Grabber, the Spray and the Scissors in that order");
         check(two != null && two.Stages[^1].Waves[^1].Groups!.Any(g => g.Enemy == "zip") && two.Stages[3].Waves.Any(w => w.Groups?.Any(g => g.Enemy == "mother") == true),
             "The Zip Slime ends chapter 2 and the Slime Mother ends its stage 4");

@@ -5,6 +5,14 @@ Sổ ghi các lỗi đã sửa của Desktop Pet. Phần A: lỗi người dùng
 Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm lỗi mới: tạo mục số tiếp theo ở đầu phần A (hoặc một dòng ở phần B).
 
 # A. Lỗi người dùng phát hiện
+## #64 — Mèo cắt được dây khi kéo/ném xuyên qua; chỉ Kéo cắt mới được đứt dây (06/11)
+- **Yêu cầu:** bỏ tương tác kéo/ném mèo xuyên dây ở mọi slime liên quan, dây chỉ đứt bằng Kéo cắt.
+- **Nguyên nhân:** `CatThroughRopes` trong PetBattle.Held.cs cắt mọi loại dây khi mèo đi xuyên đủ nhanh, là luật từ M10.
+- **Cách sửa:** xóa `CatThroughRopes`, `CatThroughBossRopes`, `CatRopeCuts`, `BossCordCutSpeed`, khóa `cutSpeed`/`ropeCutSpeed`; sửa câu hướng dẫn/banner/mẹo vi/en/ja. Kéo cắt vốn chỉ mở ở Slime Nén nên đổi chỗ: Đầm nhầy cho mượn Kéo cắt, Slime Nén cho mượn Bình xịt. Records: Đầm nhầy 5, Slime Nén 14, Vô tận 22, Bãi rác 15. Giữ Kẹp gắp đứt xích và ném mèo vỡ vỏ băng.
+- **Kiểm chứng:** full `artifacts/m0-full.log`: Python58+i18n5, C#3692, WPF1467 đạt (lần đầu 3 FAIL là test ghim thứ tự kỹ năng/rulesVersion, đã sửa kỳ vọng). Ngưỡng cân bằng đạt; chưa so bảng trước/sau vì thiếu log đối chứng. Chưa chơi trận thật/DPI.
+- **Cần test tay:** MANUAL-TEST mục Issue #64; slime xích và dây hồng khó xử lý hơn khi không mang Kéo cắt, cần chơi thật.
+- **Chốt kỹ thuật:** PENDING_COMMIT
+
 ## #63 — Slime biến dị còn giống Vua; thiết kế ba phase và sân nhầy (06/11)
 - **Yêu cầu:** đổi tên/bỏ vương miện, xanh lá/mắt xoắn, 9 đòn/3 mech; hazard đánh cả bế/bounce, gỡ Nhiễu nhịp bằng rê chuột; miễn debuff boss trong mech. Khi vào mech cuối phải xóa toàn bộ nền/túi trời, có visual hút về.
 - **Cách sửa:** opt-in `mutant: true` tách khỏi Vua; state machine core cho 6 bướu ×3 vòng/60 s, ping pong6 và hồi/phạt rồi luôn phase3, chốt1HP/sáu nhát lõi xen ba all-in. Terrain25/50% và túi trời nhịp riêng; quét va chạm, cooldown giao dải, bảo vệ suốt rơi và sau stun để nhấc lại. Bướu tường dùng hit-time vung thật, bướu sàn không phải quái và không kích/tiêu Cú đáp địa chấn. Final entry hủy pending attack/tắt hazard trước animation co/hút2,5 s trong gào5 s. ZIP miễn status trong mech và choáng/đẩy phase2–3. vi/en/ja; records ZIP13/Endless21/Bãi rác14.

@@ -2,10 +2,9 @@ using DesktopPet;
 
 // 1.5 M10, with stand-ins that carry the shipped drummer and chain links. The drummer: its allies in
 // range wind up together on its last beat; an elite counts fewer beats. The chain slime: it ties itself to
-// an ally and takes half of its hits (an elite more); the cat held past the threshold or thrown through the
-// rope fast enough cuts it (the ally is dazed), a slow drag, a cat only pressed, one flying over the rope or
-// a paused battle does not; the Scissors cut it too. The data limits and the shipped kinds (kept out of
-// every battle for now).
+// an ally and takes half of its hits (an elite more); only the Scissors cut its rope (the ally is dazed), the
+// cat dragged or thrown through it never does. The data limits and the shipped kinds (kept out of every
+// battle for now).
 internal static class BattleBandTests
 {
     const double dt = 1.0 / 60;
@@ -131,33 +130,18 @@ internal static class BattleBandTests
 
     private static void CutChecks(Action<bool, string> check)
     {
-        var link = BattleData.Settings.Enemy("chain").Link!;
-        double fast = link.CutSpeed + 600, slow = link.CutSpeed / 2;
+        const double fast = 1200;
         var (sim, holder, ally) = Rope();
         bool cut = Through(sim, new CatPose(1000, 70, 0, -fast, InHand: true, Flying: false), new CatPose(1000, 0, 0, -fast, InHand: true, Flying: false));
-        check(cut && holder.LinkedTo == 0 && ally.State == SlimeState.Stunned && sim.CatRopeCuts == 1, "The held cat dragged down through the rope cuts it and dazes the ally");
-
-        (sim, holder, ally) = Rope();
-        cut = Through(sim, new CatPose(1000, 70, 0, -slow, true, false), new CatPose(1000, 0, 0, -slow, true, false));
-        check(!cut && holder.LinkedTo == ally.Id, $"A slow drag (under {link.CutSpeed} DIPs/s) leaves the rope");
-        cut = Through(sim, new CatPose(1000, 70, 0, -fast, true, false), new CatPose(1000, 0, 0, -fast, true, false), lifted: false);
-        check(!cut && holder.LinkedTo == ally.Id, "A cat only pressed (not past the drag threshold) leaves it");
-        cut = Through(sim, new CatPose(850, 200, fast, 0, false, true), new CatPose(1150, 200, fast, 0, false, true));
-        check(!cut && holder.LinkedTo == ally.Id, "A cat thrown high over the rope leaves it");
-        sim.Paused = true;
-        cut = Through(sim, new CatPose(1000, 70, 0, -fast, true, false), new CatPose(1000, 0, 0, -fast, true, false));
-        sim.Paused = false;
-        check(!cut && holder.LinkedTo == ally.Id, "A paused battle cuts nothing");
-
-        (sim, holder, ally) = Rope();
+        check(!cut && holder.LinkedTo == ally.Id && ally.State != SlimeState.Stunned, "The held cat dragged through the rope no longer cuts it");
         cut = Through(sim, new CatPose(880, 40, fast, -fast / 3, false, true), new CatPose(1120, 0, fast, -fast / 3, false, true));
-        check(cut && holder.LinkedTo == 0 && ally.State == SlimeState.Stunned && sim.CatRopeCuts == 1, "The thrown cat flying through the rope cuts it");
+        check(!cut && holder.LinkedTo == ally.Id && ally.State != SlimeState.Stunned, "The thrown cat flying through the rope no longer cuts it");
 
         (sim, holder, ally) = Rope(skills: new[] { BattleSkill.Push, BattleSkill.Heal, BattleSkill.Bomb, BattleSkill.Scissors, BattleSkill.Shield });
         sim.Arm(BattleSkill.Scissors);
         bool snipped = sim.UseOnScreen(BattleSkill.Scissors, 1000, 18);
         for (int i = 0; i < 120 && sim.Cut != null; i++) { sim.Step(1.0 / 60, 100, false); sim.ClearEvents(); }
-        check(snipped && holder.LinkedTo == 0 && sim.RopesCut >= 1 && sim.CatRopeCuts == 0, "The Scissors cut its rope as well");
+        check(snipped && holder.LinkedTo == 0 && sim.RopesCut >= 1 && ally.State == SlimeState.Stunned, "The Scissors cut its rope and daze the ally");
     }
 
     private static void DataChecks(Action<bool, string> check)
@@ -167,9 +151,9 @@ internal static class BattleBandTests
             try { BattleData.Parse("{\"enemies\":[{\"id\":\"slime\",\"nameVi\":\"S\",\"nameEn\":\"S\",\"link\":" + link + "},{\"id\":\"king\",\"nameVi\":\"K\",\"nameEn\":\"K\",\"boss\":true}]}"); return false; }
             catch (InvalidDataException) { return true; }
         }
-        check(!Rejects("{\"kind\":\"rhythm\",\"eliteBeats\":3}") && !Rejects("{\"kind\":\"tether\",\"cutSpeed\":500,\"eliteShare\":0.7}"), "Elite beats, a cut speed and an elite share within their limits are accepted");
-        check(Rejects("{\"kind\":\"rhythm\",\"eliteBeats\":9}") && Rejects("{\"kind\":\"rhythm\",\"eliteBeats\":1}") && Rejects("{\"kind\":\"tether\",\"cutSpeed\":50}")
-              && Rejects("{\"kind\":\"tether\",\"eliteShare\":1}"), "Out-of-range elite beats, cut speed or elite share is refused");
+        check(!Rejects("{\"kind\":\"rhythm\",\"eliteBeats\":3}") && !Rejects("{\"kind\":\"tether\",\"eliteShare\":0.7}"), "Elite beats and an elite share within their limits are accepted");
+        check(Rejects("{\"kind\":\"rhythm\",\"eliteBeats\":9}") && Rejects("{\"kind\":\"rhythm\",\"eliteBeats\":1}")
+              && Rejects("{\"kind\":\"tether\",\"eliteShare\":1}"), "Out-of-range elite beats or elite share is refused");
         var s = BattleData.Settings;
         check(s.Enemy("drummer") is { Id: "drummer", BinSpit: false, Marks: "drum", Elite: not null, Link: { Kind: EnemyLinks.Rhythm, EliteBeats: > 0 } }
               && s.Enemy("chain") is { Id: "chain", BinSpit: false, Marks: "chain", Elite: not null, Link: { Kind: EnemyLinks.Tether, EliteShare: > 0 } },

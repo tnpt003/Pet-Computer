@@ -5,12 +5,12 @@ Sổ ghi các lỗi đã sửa của Desktop Pet. Phần A: lỗi người dùng
 Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm lỗi mới: tạo mục số tiếp theo ở đầu phần A (hoặc một dòng ở phần B).
 
 # A. Lỗi người dùng phát hiện
-## #57 — File mech bị boss che/bom xóa; giấy xuyên mèo và hiệu ứng boss trùng nhau (2026-11-06)
+## #57 — File mech bị boss che/bom xóa; giấy xuyên mèo và hiệu ứng boss trùng nhau (2026-11-06, commit 57c3055)
 - **Triệu chứng:** file/thư mục mech 2 đè boss khó thấy; nổ Giải nén lỗi làm file mech biến mất; giấy đi xuyên đầu/chân khi bế/bounce; nhiều đòn dùng chung sóng chấn động.
 - **Nguyên nhân:** vị trí file/đích cố định không xét thân boss, `ClearPackets` gom mọi zip_packet cùng chủ; gói/giấy cũ còn sống qua chuyển mech; đạn chỉ kiểm điểm tâm và khóa hướng một lần. Renderer dùng Slam cho nhiều đòn.
 - **Sửa:** làn file/đích random theo seed tránh boss cả đường đẩy, chừa mép; map thiếu chỗ boss né trước khi đặt, boss đứng tại chỗ khi giải. Dọn gói thường lọc `ZipProp.None`, vào mech dọn bom/giấy thường cùng chủ. Giấy homing tối đa 2,8 rad/s, quét hộp thân theo chuyển động tương đối ở mọi tư thế; giữ physics/choáng/Khiên/Nộ/Pause. `ZipVisual` riêng cho chín đòn, đẩy, bom và đai, thay Slam, không đổi hitbox bằng art.
 - **Kiểm chứng:** C# đầy đủ 3451 đạt (artifacts/zip57-full-tests.log), ZIP 374 đạt (zip57-target-final.log), gồm 36 layout trên 480/640/1600 DIP, bom trễ không xóa file, giấy trúng đầu/thân/chân khi đứng/bế/bounce. WPF ban đầu lỗi fixture thiếu RollGoal, đã sửa mẫu cho giống trạng thái thật; lượt cuối 1433 đạt. Python 58 + 5 đạt; ZIP/slime bay cuối 432 đạt, cân bằng chạy lại 293 đạt, không còn ngưỡng FAIL. Đã xem render sáng/tối từng đòn và layout file/boss. Chưa chơi trận thật hoặc DPI/multi-monitor. HP 1100, không nới ngưỡng test; records 7/15/8.
-- **Cần test tay:** docs/MANUAL-TEST.md → Issue #57. Commit/publish/smoke điền khi hoàn tất.
+- **Cần test tay:** docs/MANUAL-TEST.md → Issue #57. Publish sạch 57c3055, smoke 3/3 PASS (artifacts/zip57-smoke.log), đã mở lại mèo. ZIP artifacts/DesktopPet-1.4.4-57c3055-win-x64.zip; không ghi đè dữ liệu người dùng khi smoke.
 
 ## #56 — Slime Nén sau chơi thử: khóa đứng yên, mech tương tác và bom sinh tử 1 HP (2026-11-06)
 - **Triệu chứng/yêu cầu:** khóa vẫn đi, hình khóa/cây/tay kéo khó nhận ra; hai line lăn; mech 1 giống đòn lăn, mech cuối lặp ngắt đòn thường. Người dùng chốt tổng 12 nhát khóa, đổi bên mỗi 3; mech ghép thư mục có cây gây damage/choáng, final chỉ ở 1 HP.

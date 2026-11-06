@@ -2,6 +2,9 @@
 
 ## Kết quả mới nhất — sửa lỗi #57, HP 1100
 
+Đã publish sạch `57c3055`, smoke 3/3 PASS, mở lại mèo; ZIP `artifacts/DesktopPet-1.4.4-57c3055-win-x64.zip`. Đây vẫn là bản 1.5 đang chơi thử trong version 1.4.4, chưa nghiệm thu trận thật/DPI/multi-monitor.
+
+
 Sau sửa file mech/bom còn sót, homing quét toàn thân và visual ZIP riêng: C# đầy đủ **3451 đạt**, WPF **1433 đạt**, Python **58 + 5 đạt**. Chạy lại riêng ZIP/slime bay sau các chỉnh cuối: **432 đạt**; ba suite cân bằng **293 đạt**. Không nới ngưỡng hoặc hạ HP; rulesVersion màn/Endless/Bãi rác = **7/15/8**.
 
 Đối chứng trước là bản đã publish `8cd669f`, log `artifacts/zip-publish-tests.log`; sau là `artifacts/zip57-balance-final.log`. Cùng 60 seed chương 2 và 40 seed Viễn chinh, giữ bot/đường đi/build/ngưỡng. Luật truy đuổi và bố trí theo seed đã đổi, nên đây là kết quả toàn bản sửa, không gán riêng mức cải thiện cho một thay đổi.

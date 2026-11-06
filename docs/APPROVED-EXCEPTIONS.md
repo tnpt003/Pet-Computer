@@ -4,6 +4,9 @@ Chuyển nguyên văn từ AGENTS.md ngày 2026-10-26 để AGENTS.md ngắn l�
 
 ## Battle Mode
 
+- Bổ sung người dùng duyệt #58 (06/11): mech đai Slime Nén gồng 0,8 giây rồi đầu đai đi từ boss ra rìa trong 0,35 giây, thu về 0,2 giây, nhịp 2,8 giây; chỉ đầu quét chạm mới gây damage/choáng một lần, không đánh cả vùng tức thì. Khóa ZIP giữ mèo đứng/không nhấc nhưng mèo tự đánh ổ khóa dù không có quái gần, đủ 5 nhát chạm thì mở; không gây damage lên quái, tích Nộ hoặc combo. Giữ 3 click/6 giây; Pause đóng băng cả nhịp đánh và đai. Chi tiết docs/ZIP-SLIME.md.
+
+
 - Bổ sung người dùng duyệt #57 sau chơi thử 06/11: Tệp truy đuổi của Slime Nén bám vị trí mèo với tốc độ quay giới hạn, va chạm toàn hộp thân cả đứng sàn, bế, rơi/bounce. Giữ Khiên/Nộ/Pause; trúng khi bế/bay chỉ mất máu, không tuột tay, đổi vận tốc hoặc choáng. Mech thư mục đặt file/đích theo seed ngoài thân boss và trong làn không xuyên boss; thiếu chỗ thì boss nhảy né về mép trước khi đặt. Vào mech dọn đạn/bom thường còn lại, không để bom thường xóa file mech. Visual ZIP riêng không thay vùng trúng hoặc luật boss khác. Chi tiết docs/ZIP-SLIME.md.
 
 

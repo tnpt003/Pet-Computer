@@ -90,6 +90,7 @@ internal static class ZipVisualChecks
         check(SkyVisualChecks.Count(puzzlePixels, w, h, page, 200, 250, floor - 34, floor) > 100, "Puzzle files are visible with matching folder symbols");
         Moves(check, data, warning, gold, floor, w, h, Add);
         Debuffs(check);
+        BeltAnimation(check, data);
         var layout = new BattleSim(data, 0, Width, seed: 9);
         var layoutBoss = Add(layout, "zip", 600, 1);
         layoutBoss.PhasesDone = 1; layoutBoss.Hp = layoutBoss.MaxHp * 0.5;
@@ -161,16 +162,38 @@ internal static class ZipVisualChecks
         check(SkyVisualChecks.Count(px4, w, h, Color.FromRgb(0xE8, 0xB8, 0x4A), 570, 630, floor - 110, floor) < 30, "Leaving only its zipper in the middle");
     }
 
+    private static void BeltAnimation(Action<bool, string> check, BattleSettings data)
+    {
+        var sim = new BattleSim(data, 0, Width, seed: 1);
+        var boss = sim.AddSlime(600, data.Enemy("zip"));
+        boss.Set(SlimeState.Moving); boss.Shielded = true; boss.ShieldTag = 1;
+        var belt = new ZipBlow { OwnerId = boss.Id, Kind = ZipBlowKind.Belt, FromX = 600, ToX = 65, X = 332.5, Radius = 267.5, Top = 65, Travel = 0.35, Warn = 0.8, Left = 0.4, Life = 0.55 };
+        ((ICollection<ZipBlow>)sim.ZipBlows).Add(belt);
+        int w = (int)Width, h = (int)BattleFieldView.FieldHeight;
+        var view = new BattleFieldView(sim);
+        SkyVisualChecks.Render(view, w, h, "zip-belt-charge");
+        belt.Done = true; belt.Left = 0; belt.Elapsed = 0.1;
+        var first = SkyVisualChecks.Render(view, w, h, "zip-belt-front-1");
+        belt.Elapsed = 0.2;
+        var second = SkyVisualChecks.Render(view, w, h, "zip-belt-front-2");
+        check(!first.SequenceEqual(second), "The belt front visibly travels from the boss instead of filling its entire lane instantly");
+        check(Math.Abs(belt.Front - (600 - 535 * 0.2 / 0.35)) < 0.01, "Renderer and combat read the same moving belt front");
+        belt.Elapsed = 0.45;
+        SkyVisualChecks.Render(view, w, h, "zip-belt-return");
+    }
+
     private static void Debuffs(Action<bool, string> check)
     {
-        static byte[] Cat(int zip, double squeeze, string name, int clicks = 0, int swings = 0)
+        static byte[] Cat(int zip, double squeeze, string name, int clicks = 0, int swings = 0, double strike = -1, double flash = 0)
         {
-            var pet = new PetModel { Action = PetAction.Idle, Grounded = true, Facing = 1, AnimationTime = 1, ActionTime = 1, BattleZip = zip, BattleSqueeze = squeeze, BattleZipLook = 1, BattleZipClicks = clicks, BattleZipSwings = swings, BattleZipText = "Nén!" };
+            var pet = new PetModel { Action = PetAction.Idle, Grounded = true, Facing = 1, AnimationTime = 1, ActionTime = 1, BattleZip = zip, BattleSqueeze = squeeze, BattleZipLook = 1, BattleZipClicks = clicks, BattleZipSwings = swings, BattleZipStrike = strike, BattleZipHitFlash = flash, BattleZipText = "Nén!" };
             return SkyVisualChecks.Render(new PetRenderer(pet), 192, 192, name);
         }
         var plain = Cat(0, 1, "cat-zip-plain");
         var squeezed = Cat(1, 0.75, "cat-zip-squeezed");
         var locked = Cat(2, 1, "cat-zip-locked", 1, 2);
+        var struck = Cat(2, 1, "cat-zip-self-hit", 1, 3, 0.45, 0.15);
+        check(!locked.SequenceEqual(struck), "Self-directed swing visibly strikes and cracks the padlock");
         var gold = Color.FromRgb(0xFF, 0xC8, 0x3A);
         check(!plain.SequenceEqual(squeezed), "Squeezed, the cat looks different");
         check(SkyVisualChecks.Count(locked, 192, 192, gold, 0, 192, 0, 192) > SkyVisualChecks.Count(plain, 192, 192, gold, 0, 192, 0, 192) + 100, "Locked, it wears the gold shell and padlock");

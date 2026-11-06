@@ -20,8 +20,11 @@ public sealed class ZipBlow
 {
     public int OwnerId, Order, Variant;
     public double X, Radius, Bottom, Top, Left, Warn, Life, Damage, Stun;
+    public double FromX, ToX, Travel, Elapsed;
     public ZipBlowKind Kind;
     public bool Done;
+    public bool Hit;
+    public double Front => FromX + (ToX - FromX) * Math.Clamp(Travel > 0 ? Elapsed / Travel : 1, 0, 1);
 }
 
 public sealed partial class BattleSim
@@ -153,7 +156,7 @@ public sealed partial class BattleSim
     }
 
     private void AddZipBlow(Slime boss, double x, double radius, double bottom, double top, double left, ZipMoveSpec m, ZipBlowKind kind, int order) =>
-        zipBlows.Add(new ZipBlow { OwnerId = boss.Id, X = x, Radius = radius, Bottom = bottom, Top = top, Left = left, Warn = left, Life = kind == ZipBlowKind.Branch ? 0.65 : ShellLife, Damage = m.Damage, Stun = m.Stun, Kind = kind, Order = order, Variant = (zipRandom ??= BattleRandom.Stream(Seed, BattleRandom.Zip)).Next(3) });
+        zipBlows.Add(new ZipBlow { OwnerId = boss.Id, X = x, Radius = radius, Bottom = bottom, Top = top, Left = left, Warn = left, Life = kind == ZipBlowKind.Branch ? 0.65 : ShellLife, Damage = m.Damage, Stun = m.Stun, Kind = kind, Order = order, FromX = boss.X, ToX = 2 * x - boss.X, Travel = kind == ZipBlowKind.Belt ? 0.35 : 0, Variant = (zipRandom ??= BattleRandom.Stream(Seed, BattleRandom.Zip)).Next(3) });
 
     // Called once a step for every enemy before its state machine; true: this boss does nothing else now.
     private bool StepZipAct(Slime boss, ZipSpec zip, double dt)
@@ -421,6 +424,7 @@ public sealed partial class BattleSim
         {
             var b = zipBlows[i];
             if (!b.Done) { b.Left -= dt; continue; }
+            b.Elapsed += dt;
             b.Life -= dt;
             if (b.Life <= 0) zipBlows.RemoveAt(i);
         }
@@ -428,6 +432,26 @@ public sealed partial class BattleSim
         // In order, oldest first: a hit can end the battle.
         foreach (var b in zipBlows.ToArray())
         {
+            if (b.Kind == ZipBlowKind.Belt)
+            {
+                if (!b.Done && b.Left <= 0)
+                {
+                    b.Done = true;
+                    b.Life = 0.55;
+                    events.Add(new(BattleEventKind.ZipBlowLanded, b.FromX, b.Order));
+                }
+                if (b.Done && !b.Hit && b.Elapsed > 0 && b.Elapsed - dt < b.Travel)
+                {
+                    double before = b.FromX + (b.ToX - b.FromX) * Math.Clamp((b.Elapsed - dt) / b.Travel, 0, 1);
+                    if (Find(b.OwnerId) is { Targetable: true } owner && CatInVolume(Math.Min(before, b.Front) - 12, Math.Max(before, b.Front) + 12, b.Bottom, b.Top))
+                    {
+                        b.Hit = true;
+                        ZipHit(owner, b.Damage, b.Stun);
+                    }
+                }
+                if (Over) return;
+                continue;
+            }
             if (b.Done || b.Left > 0) continue;
             b.Done = true;
             if (b.Kind != ZipBlowKind.Branch) AddZipEffect(b.Kind == ZipBlowKind.Belt ? ZipVisual.Belt : ZipVisual.Overwrite, b.X, b.Bottom, b.Radius);

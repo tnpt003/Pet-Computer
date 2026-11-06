@@ -327,8 +327,8 @@ public sealed partial class PetWindow
             () => L("Còn 1 HP, boss thành bom nén! Đánh 6 tay kéo, mỗi cái 1 đòn: 3 trên không và 3 dưới đất. Bế mèo tới tay kéo trên cao để đánh. Phá hết thì boss xì hơi và bị hạ. Hết giờ thì nổ sàn; tay kéo chưa phá vẫn còn.",
                     "At 1 HP the boss becomes a zip bomb! Strike six zipper pulls once each: three in the air and three on the floor. Carry the cat to the high pulls. Clear all six to deflate and defeat it. On timeout the floor bursts; remaining pulls stay.")),
         See(GuideZipLock, StageZipSlime, () => battle!.CatLocked, () => Spots(CatSpot()),
-            () => L("Mèo bị khóa ZIP, không đi hoặc nhấc được nhưng vẫn đánh được! Click mèo 3 lần, đánh 5 nhát hoặc chờ 6 giây để mở. Boss chờ tới khi mèo ra.",
-                    "ZIP lock stops the cat walking or being lifted, but it can still attack! Click it 3 times, swing 5 times or wait 6 seconds to open it. The boss waits until the cat is out.")),
+            () => L("Mèo bị Khóa ZIP: không đi hoặc nhấc được, tự đánh ổ khóa để thoát sau 5 nhát dù không có quái gần. Bạn có thể click mèo 3 lần hoặc chờ 6 giây. Boss chờ khóa mở.",
+                    "ZIP lock stops walking and lifting. The cat strikes its own lock 5 times to escape, even without an enemy nearby. Click the cat 3 times or wait 6 seconds instead. The boss waits for it to open.")),
 
         // 1.5 M26 · the newer apps, in whichever stage of chapter 2 each comes first (malware comes at random).
         new(GuideScreenshot, GuideNewApps, true, true, 1,

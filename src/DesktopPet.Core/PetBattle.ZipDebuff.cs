@@ -25,6 +25,9 @@ public sealed partial class BattleSim
     public int ZipDebuffsBlocked { get; private set; }
     private ZipDebuffSpec? zipDebuffRules;
     public ZipDebuffSpec? ZipDebuffRules => zipDebuffRules;
+    private bool zipLockSwing;
+    public double ZipLockHitFlash { get; private set; }
+    public bool BreakingZipLock => zipLockSwing;
     public bool CatSqueezed => CatZipped == ZipDebuff.Squeezed && !Over;
     public bool CatLocked => CatZipped == ZipDebuff.Locked && !Over;
     // How far it has taken hold (0–1, over its first moments).
@@ -36,6 +39,7 @@ public sealed partial class BattleSim
     // The debuff's own time: it runs with the battle.
     private void StepZipDebuff(double dt)
     {
+        ZipLockHitFlash = Math.Max(0, ZipLockHitFlash - dt);
         ZipGuardLeft = Math.Max(0, ZipGuardLeft - dt);
         if (CatZipped == ZipDebuff.None) return;
         ZipDebuffLeft = Math.Max(0, ZipDebuffLeft - dt);
@@ -83,6 +87,7 @@ public sealed partial class BattleSim
 
     private void ApplyZipDebuff(ZipDebuff kind, ZipDebuffSpec d)
     {
+        if (kind == ZipDebuff.Locked) { CancelSwing(); Combo = 0; zipLockSwing = false; }
         CatZipped = kind;
         zipDebuffRules = d;
         ZipDebuffLeft = ZipDebuffSeconds = kind == ZipDebuff.Squeezed ? d.Seconds : d.LockSeconds;
@@ -95,6 +100,7 @@ public sealed partial class BattleSim
     private void ClearZipDebuff(bool show)
     {
         if (CatZipped == ZipDebuff.None) return;
+        if (zipLockSwing) { zipLockSwing = false; CancelSwing(); }
         var was = CatZipped;
         CatZipped = ZipDebuff.None;
         ZipDebuffLeft = 0;
@@ -114,11 +120,28 @@ public sealed partial class BattleSim
         return true;
     }
 
-    // A swing started, hit or miss.
-    private void ZipSwing()
+    private CatOrder ZipShellTurn(double catX)
+    {
+        // Own lock, not an enemy: no target/range dependency and no combat bonuses.
+        TargetId = null;
+        if (CatCooldown <= 0)
+        {
+            SwingTime = 0; swingHit = false; swingTargetId = swingWallId = 0;
+            ComboSwing = chargedSwing = false; zipLockSwing = true;
+            swingFacing = 1;
+            CatCooldown = Math.Max(arms.AttackCooldown * CooldownFactor / (CheerRemaining > 0 ? Settings.CheerSpeed : 1) / LagFactor / RushFactor, arms.SwingDuration);
+            events.Add(new(BattleEventKind.Swing, catX));
+        }
+        return new(CatCommand.Stand, catX, swingFacing);
+    }
+
+    // Count at the actual contact frame of the self-directed swing.
+    private void HitZipShell()
     {
         if (!CatLocked || zipDebuffRules is not ZipDebuffSpec d) return;
         ZipLockSwings++;
+        ZipLockHitFlash = 0.18;
+        events.Add(new(BattleEventKind.ZipLockTapped, lastCatX, ZipLockSwings));
         if (ZipLockSwings >= d.LockSwings) ClearZipDebuff(true);
     }
 }

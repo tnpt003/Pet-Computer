@@ -1,6 +1,26 @@
-# Slime Nén sau chơi thử — đối chứng 06/11, Issue #56–#57
+# Slime Nén sau chơi thử — đối chứng 06/11, Issue #56–#58
 
-## Kết quả mới nhất — sửa lỗi #57, HP 1100
+## Kết quả mới nhất — đai quét/tự phá khóa #58, HP 1100
+
+C# đầy đủ **3467 đạt**, Python **58 + 5 đạt**, WPF **1436 đạt**; ZIP mục tiêu chạy lại **390 đạt** sau chỉnh test tự phá khóa với RageHitGain >0. Bộ đầy đủ `artifacts/zip58-full-tests.log`; WPF cuối `zip58-ui-final.log`, ZIP cuối `zip58-target-final.log`. Đã xem render gồng, hai vị trí đầu quét, thu đai và nhát tự đánh khóa trên nền sáng/tối; chưa chơi thật/DPI/multi-monitor.
+
+Đối chứng trước là source đã publish `57c3055` (`artifacts/zip57-balance-final.log`), sau là `zip58-full-tests.log`. Cùng 60 seed chương 2 và 40 seed Viễn chinh, không đổi bot/build/đường đi/ngưỡng/HP; records màn/Endless/Bãi rác = 8/16/9. Đây là mô phỏng, không phải chơi thật.
+
+| Vũ khí | Độ khó | Thắng trước → sau | Giây thắng trước → sau | HP còn trước → sau |
+|---|---|---:|---:|---:|
+| sword | Normal | 59 → 59/60 | 139 → 139 | 80% → 81% |
+| hammer | Normal | 60 → 60/60 | 156 → 156 | 78% → 77% |
+| yarn | Normal | 58 → 58/60 | 157 → 157 | 77% → 79% |
+| glove | Normal | 60 → 60/60 | 131 → 132 | 84% → 87% |
+| sword | Hard | 49 → 48/60 | 153 → 153 | 73% → 74% |
+| hammer | Hard | 40 → 43/60 | 180 → 179 | 76% → 77% |
+| yarn | Hard | 39 → 41/60 | 190 → 189 | 74% → 72% |
+| glove | Hard | 51 → 53/60 | 141 → 141 | 76% → 76% |
+
+Mọi ngưỡng tự động đạt. Bãi rác tham lam Normal: Kiếm **20/40** vẫn sát ngưỡng ≥20, Búa **22/40** ≥18, Cuộn len **23/40** ≥20, Găng **29/40** ≥20. Giữ rõ điểm sát ngưỡng để chơi thử; không nới tiêu chuẩn vì sửa lỗi.
+
+
+## Kết quả #57, HP 1100
 
 Đã publish sạch `57c3055`, smoke 3/3 PASS, mở lại mèo; ZIP `artifacts/DesktopPet-1.4.4-57c3055-win-x64.zip`. Đây vẫn là bản 1.5 đang chơi thử trong version 1.4.4, chưa nghiệm thu trận thật/DPI/multi-monitor.
 

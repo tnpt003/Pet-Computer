@@ -119,6 +119,7 @@ public sealed partial class BattleSim
         {
             boss.ZipPuzzleClock += 2.8;
             int side = (boss.Pins / 3) % 2 == 0 ? -1 : 1;
+            boss.Facing = side;
             double edge = side < 0 ? Left : Right;
             double radius = Math.Abs(edge - boss.X) / 2;
             var sweep = new ZipMoveSpec { Damage = 8, Stun = 0.5 };

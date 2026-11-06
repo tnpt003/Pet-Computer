@@ -107,7 +107,13 @@ public sealed partial class BattleFieldView
     internal static void DrawZipImpact(DrawingContext dc, ZipVisual style, double x, double y, double radius, double progress)
     {
         double k = Math.Clamp(progress, 0, 1), reach = Math.Max(18, Math.Abs(radius));
-        if (style is ZipVisual.Clamp or ZipVisual.Belt)
+        if (style == ZipVisual.Belt)
+        {
+            dc.DrawLine(BeltEdge, new Point(x - reach, y - 24), new Point(x, y - 24));
+            dc.DrawLine(BeltRibbon, new Point(x - reach, y - 24), new Point(x, y - 24));
+            dc.DrawRoundedRectangle(FlapFill, Outline, new Rect(x - 10, y - 65, 20, 65), 4, 4);
+        }
+        else if (style == ZipVisual.Clamp)
         {
             double gap = style == ZipVisual.Clamp ? 18 * (1 - k) : reach;
             foreach (int side in new[] { -1, 1 })

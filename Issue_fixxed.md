@@ -5,6 +5,13 @@ Sổ ghi các lỗi đã sửa của Desktop Pet. Phần A: lỗi người dùng
 Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm lỗi mới: tạo mục số tiếp theo ở đầu phần A (hoặc một dòng ở phần B).
 
 # A. Lỗi người dùng phát hiện
+## #58 — Đai phase 1 gây damage tức thì; Khóa ZIP đứng yên không tự phá (2026-11-06)
+- **Triệu chứng:** đai phủ như tường trên cả nửa sân, không thấy boss đánh ra; mèo bị Khóa ZIP xa quái đứng im tới timeout.
+- **Nguyên nhân:** đai là ZipBlow đánh cả box khi hết 0,8 giây, không có đầu quét/travel; bộ đếm mở khóa chỉ tăng khi bắt đầu đánh quái trong tầm.
+- **Sửa:** gồng/đai gắn với boss, đầu quét 0,35 giây kiểm đoạn tiếp xúc rộng ±12 DIP, thu 0,2 giây không damage, giữ nhịp 2,8 giây/damage8/choáng0,5. Vạch báo nhẹ, không che mèo. Self-swing ưu tiên riêng của Khóa ZIP dùng nhịp vũ khí, đếm tại HitTime, không cần mục tiêu, không ResolveHit hay tích Nộ/combo. Vũ khí quay vào ổ khóa, khóa rung/chớp/nứt. Giữ 3 click/6 giây, hủy nhát chờ khi mở/Nộ/kết thúc trận, Pause đóng băng.
+- **Kiểm chứng:** ZIP mục tiêu 390 đạt; C# đầy đủ 3467, Python 58 + 5, WPF 1436 đạt. Log artifacts/zip58-target.log và zip58-full-tests.log; render artifacts/zip58-render (gồng/quét trái theo 2 khung/thu và tự đánh khóa). Lượt cuối ZIP 390 và WPF 1436 đạt, đã mở ảnh render sáng/tối; đang commit/publish. Đối chứng cân bằng trước/sau docs/BALANCE-ZIP-2026-11-06.md, mọi ngưỡng đạt. Chưa chơi trận thật, DPI/multi-monitor. Không nới ngưỡng hoặc hạ HP; records 8/16/9.
+- **Cần test tay:** docs/MANUAL-TEST.md mục #58, đặc biệt Búa đủ 5 nhát trước timeout, 3 click/Nộ giữa nhát và hai hướng đai.
+
 ## #57 — File mech bị boss che/bom xóa; giấy xuyên mèo và hiệu ứng boss trùng nhau (2026-11-06, commit 57c3055)
 - **Triệu chứng:** file/thư mục mech 2 đè boss khó thấy; nổ Giải nén lỗi làm file mech biến mất; giấy đi xuyên đầu/chân khi bế/bounce; nhiều đòn dùng chung sóng chấn động.
 - **Nguyên nhân:** vị trí file/đích cố định không xét thân boss, `ClearPackets` gom mọi zip_packet cùng chủ; gói/giấy cũ còn sống qua chuyển mech; đạn chỉ kiểm điểm tâm và khóa hướng một lần. Renderer dùng Slam cho nhiều đòn.

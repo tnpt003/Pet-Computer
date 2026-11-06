@@ -126,6 +126,11 @@ public sealed partial class BattleFieldView
     private static void DrawZipBlow(DrawingContext dc, ZipBlow b, Func<double, Point> at, double time)
     {
         var p = at(b.X);
+        if (b.Kind == ZipBlowKind.Belt)
+        {
+            DrawMovingBelt(dc, b, at(b.FromX).X, at(b.ToX).X, p.Y);
+            return;
+        }
         double y = p.Y - b.Bottom, k = b.Warn > 0 ? Math.Clamp(1 - b.Left / b.Warn, 0, 1) : 1, high = b.Top - b.Bottom;
         if (b.Done)
         {

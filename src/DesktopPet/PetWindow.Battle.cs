@@ -395,6 +395,8 @@ public sealed partial class PetWindow
         pet.BattleDazed = pet.BattleCheer = pet.BattleShield = pet.BattleBuff = false;
         pet.BattleStun = pet.BattleTabs = pet.BattleRage = 0;
         pet.BattleZip = 0;
+        pet.BattleZipStrike = -1;
+        pet.BattleZipHitFlash = 0;
         pet.BattleSqueeze = 1;
         pet.Emotions.SetSuspended(false);
         revision++; // Nothing requested during the battle may run late.
@@ -687,6 +689,8 @@ public sealed partial class PetWindow
         pet.BattleSqueeze = battle.SqueezeScale;
         pet.BattleZipClicks = battle.ZipLockClicks;
         pet.BattleZipSwings = battle.ZipLockSwings;
+        pet.BattleZipHitFlash = battle.ZipLockHitFlash;
+        pet.BattleZipStrike = battle.BreakingZipLock ? battle.SwingProgress : -1;
         pet.BattleZipClicksAll = battle.ZipDebuffRules?.LockClicks ?? 3;
         pet.BattleZipSwingsAll = battle.ZipDebuffRules?.LockSwings ?? 5;
         pet.BattleZipText = L("Nén!", "Squeezed!");

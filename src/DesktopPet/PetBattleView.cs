@@ -512,6 +512,14 @@ public sealed partial class BattleFieldView : FrameworkElement
         // A boss crouching before its leap.
         if (slime.Crouch > 0) { sx *= 1 + 0.18 * slime.Crouch; sy *= 1 - 0.25 * slime.Crouch; }
         ZipShape(slime, time, ref sx, ref sy); // The Zip Slime's bomb and its air going out.
+        if (slime.Type.Zip != null)
+            foreach (var blow in sim.ZipBlows)
+                if (blow.OwnerId == slime.Id && blow.Kind == ZipBlowKind.Belt && !blow.Done)
+                {
+                    double charge = Math.Clamp(1 - blow.Left / blow.Warn, 0, 1);
+                    sx *= 1 + 0.12 * charge; sy *= 1 - 0.16 * charge;
+                    break;
+                }
         // A stony body is wide and low (its hitScale is wider to match).
         if (slime.Type.Marks == "cracks") { sx *= 1.12; sy *= 0.9; }
         SpringShape(slime, ref sx, ref sy);

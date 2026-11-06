@@ -96,7 +96,7 @@ Trong trận cảm xúc tự động vẫn bị chặn: S1, S4 không gây cảm
 
 | Mã | Boss | Luật |
 |---|---|---|
-| B1 | Slime Nén, trùm chương 2 (1100 HP; thiết kế lại 05/11, 06/11; Issue #53, #55, #57) | Luật đầy đủ: docs/ZIP-SLIME.md. Ba giai đoạn, mỗi giai đoạn ba đòn chọn từ túi theo seed; mech 66% đánh khóa đai (12 đòn, đổi bên mỗi 3), 33% ghép thư mục + né cây, 1 HP đánh 6 tay kéo; phase 2–3 có đòn đẩy riêng 0 damage; hai debuff Nén và Khóa ZIP (khóa đi/nhấc, vẫn đánh); đòn trúng mèo đang cầm/bay khi thực sự chạm; giấy bám quét toàn thân, file mech tránh boss và không bị bom thường xóa; visual riêng mỗi đòn. | |
+| B1 | Slime Nén, trùm chương 2 (1100 HP; thiết kế lại 05/11, 06/11; Issue #53, #55, #57, #58) | Luật đầy đủ: docs/ZIP-SLIME.md. Ba giai đoạn, mỗi giai đoạn ba đòn chọn từ túi theo seed; mech 66% đánh khóa đai (12 đòn, đổi bên mỗi 3), 33% ghép thư mục + né cây, 1 HP đánh 6 tay kéo; phase 2–3 có đòn đẩy riêng 0 damage; hai debuff Nén và Khóa ZIP (khóa đi/nhấc, tự đánh ổ khóa); đòn trúng mèo đang cầm/bay khi thực sự chạm; giấy bám quét toàn thân, file mech tránh boss và không bị bom thường xóa; visual riêng mỗi đòn; đai quét từ boss và gây damage theo tiếp xúc. | |
 | B2 | Slime Mẹ, boss phụ chương 2 (650 HP) | Ổ ủ phá được, gọi con yếu về, dây cứu con cắt được, con che thân, bầy nhảy, giận lao và lứa cuối đổi máu; hồi 20 HP/s. Luật chi tiết: [BOSS-TACTICS](BOSS-TACTICS.md) |
 | B3 | Vua Slime biến dị, Vô tận (1000 HP) | Giữ tinh anh/xích/trống; thêm tay quét, phình nổ, mưa hai nhịp, sóng sàn, hút nhầy thành giáp cắt được và quá tải; cuối trận ghép hai chiêu. Không có mầm/slime con biến dị. [BOSS-TACTICS](BOSS-TACTICS.md) |
 

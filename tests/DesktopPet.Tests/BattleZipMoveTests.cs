@@ -24,19 +24,19 @@ internal static class BattleZipMoveTests
         RopeCutSpeed = ShippedZip.RopeCutSpeed, RopeCutStun = ShippedZip.RopeCutStun, Roll = ShippedZip.Roll, Zip = zip, Phases = ShippedZip.Phases!.Select((p, i) => i == 1 ? new BossPhase { At = p.At, Shield = true, Roped = true, Summons = p.Summons } : p).ToArray()
     };
 
-    private static BattleSettings Settings(EnemyType boss, double weapon = 0) => new()
+    private static BattleSettings Settings(EnemyType boss, double weapon = 0, double? swingCooldown = null, double rageGain = 0) => new()
     {
-        Weapons = new[] { Shipped.Weapon("sword") with { Range = 60, StunChance = 0, Damage = weapon } }, FirstWaveDelay = 0, SpawnInterval = 0.05,
-        CatMaxHp = 1000, MaxAlive = 8, RageHitGain = 0, ScissorsCooldown = 0.1, RageAuto = false,
+        Weapons = new[] { Shipped.Weapon("sword") with { Range = 60, StunChance = 0, Damage = weapon, AttackCooldown = swingCooldown ?? Shipped.Weapon("sword").AttackCooldown } }, FirstWaveDelay = 0, SpawnInterval = 0.05,
+        CatMaxHp = 1000, MaxAlive = 8, RageHitGain = rageGain, ScissorsCooldown = 0.1, RageAuto = false,
         Enemies = new[] { boss, Shipped.Enemy("zip_packet") }, Formations = Array.Empty<FormationSpec>(),
         Plan = new[] { new WaveSpec { Groups = new[] { new WaveGroup { Enemy = "zip", Count = 1 } } } }
     };
 
     private static readonly BattleSkill[] Tools = { BattleSkill.Push, BattleSkill.Heal, BattleSkill.Bomb, BattleSkill.Scissors, BattleSkill.Shield };
 
-    private static (BattleSim Sim, Slime Boss) Field(int stage = 0, ZipSpec? zip = null, double bossX = 800, double catX = 500, int seed = 4, double weapon = 0, double damage = 20)
+    private static (BattleSim Sim, Slime Boss) Field(int stage = 0, ZipSpec? zip = null, double bossX = 800, double catX = 500, int seed = 4, double weapon = 0, double damage = 20, double? swingCooldown = null, double rageGain = 0)
     {
-        var sim = new BattleSim(Settings(Boss(zip ?? Calm, damage), weapon), 0, 2000, seed: seed, skills: Tools, startHp: 900);
+        var sim = new BattleSim(Settings(Boss(zip ?? Calm, damage), weapon, swingCooldown, rageGain), 0, 2000, seed: seed, skills: Tools, startHp: 900);
         for (int i = 0; i < 600 && !sim.Slimes.Any(s => s.IsBoss && s.Targetable); i++) sim.Step(dt, catX, false);
         var boss = sim.Slimes.Single(s => s.IsBoss);
         boss.X = bossX;
@@ -83,6 +83,7 @@ internal static class BattleZipMoveTests
         Phase3(check);
         HandChecks(check);
         PaperBodyChecks(check);
+        SelfLockChecks(check);
         CutShortChecks(check);
         // New puzzle rules are covered by BattleZipTests.
         DebuffChecks(check);
@@ -341,6 +342,31 @@ internal static class BattleZipMoveTests
         check(sim.CatHp == hp, "Beyond its reach nothing happens");
     }
 
+    private static void SelfLockChecks(Action<bool, string> check)
+    {
+        var (sim, boss) = Field(zip: Spec, bossX: 1800, catX: 200, weapon: 20, rageGain: 0.1);
+        boss.Cooldown = 100; boss.ZipDebuffClock = 0; boss.ZipDebuffNext = ZipDebuff.Locked;
+        for (int i = 0; i < 120 && !sim.CatLocked; i++) One(sim, 200);
+        double hp = boss.Hp, rage = sim.Rage;
+        check(sim.CatLocked && sim.BreakingZipLock && sim.SwingProgress >= 0 && sim.ZipLockSwings == 0, "A locked cat starts a self-directed swing even with no enemy in reach; start is not a hit");
+        sim.Paused = true;
+        double progress = sim.SwingTime, seconds = sim.ZipDebuffLeft;
+        Run(sim, 1, 200);
+        check(sim.SwingTime == progress && sim.ZipDebuffLeft == seconds && sim.ZipLockSwings == 0, "Pause freezes self-swing, contact count and lock timeout");
+        sim.Paused = false;
+        Run(sim, 0.2, 200);
+        check(sim.ZipLockSwings == 1 && sim.ZipLockHitFlash > 0, "Only the weapon contact frame counts and flashes the padlock");
+        for (int i = 0; i < 360 && sim.CatLocked; i++) One(sim, 200);
+        check(!sim.CatLocked && sim.ZipLockSwings == 5 && !sim.BreakingZipLock, "Exactly five self-hits open the lock away from all enemies");
+        check(boss.Hp == hp && sim.Rage == rage && sim.Combo == 0, "Breaking the lock deals no enemy damage and charges no rage or combo");
+        (sim, boss) = Field(zip: Spec, bossX: 1800, catX: 200);
+        boss.Cooldown = 100; boss.ZipDebuffClock = 0; boss.ZipDebuffNext = ZipDebuff.Locked;
+        for (int i = 0; i < 120 && !sim.CatLocked; i++) One(sim, 200);
+        sim.ClickZipLock(); sim.ClickZipLock(); sim.ClickZipLock();
+        Run(sim, 0.3, 200);
+        check(!sim.CatLocked && !sim.BreakingZipLock && sim.ZipLockSwings == 0, "Three clicks interrupt a pending self-hit without a late hit");
+    }
+
     private static void PaperBodyChecks(Action<bool, string> check)
     {
         foreach (double offset in new[] { -48.0, 0, 36 })
@@ -490,7 +516,10 @@ internal static class BattleZipMoveTests
         check(sim.ClickZipLock() && !sim.CatLocked && sim.ZipGuardLeft > 0, "The third does, and a moment of quiet follows");
         check(!sim.ClickZipLock(), "Open, a click is nothing");
 
-        (sim, boss) = Until(ZipDebuff.Locked, catX: 200); // Far from it: no swings of the cat's own.
+        (sim, boss) = Field(zip: Spec, bossX: 1800, catX: 200, swingCooldown: 10);
+        boss.Cooldown = 100; boss.ZipDebuffClock = 0; boss.ZipDebuffNext = ZipDebuff.Locked;
+        for (int i = 0; i < 120 && !sim.CatLocked; i++) One(sim, 200);
+        // A weapon slower than the lock's timeout still has the six-second fallback.
         int started = sim.ZipMovesUsed;
         Run(sim, d.LockSeconds - 0.5, 200);
         check(sim.CatLocked && sim.ZipMovesUsed == started, "While the cat is locked the boss starts nothing");

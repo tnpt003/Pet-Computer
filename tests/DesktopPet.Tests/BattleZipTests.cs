@@ -88,6 +88,7 @@ internal static class BattleZipTests
         PuzzleChecks(check);
         RepulseChecks(check);
         PhaseTwoRegression(check);
+        BeltContactChecks(check);
         DataChecks(check);
     }
 
@@ -156,6 +157,33 @@ internal static class BattleZipTests
         check(tabs.All(s => !s.Targetable) && boss.Deflating > 0, "Every pull disappears after one direct strike");
         Run(sim, 2, 400);
         check(boss.State == SlimeState.Defeated && sim.BossDefeated, "Six pulls deflate and defeat the one HP boss");
+    }
+
+    private static void BeltContactChecks(Action<bool, string> check)
+    {
+        foreach (int direction in new[] { -1, 1 })
+        {
+            double from = 800, to = direction < 0 ? 80 : 1520, cat = direction < 0 ? 200 : 1400;
+            var (sim, boss) = Field(Zip(), bossX: from, catX: cat);
+            boss.Cooldown = 100;
+            var belt = new ZipBlow { OwnerId = boss.Id, Kind = ZipBlowKind.Belt, FromX = from, ToX = to, Travel = 0.35, X = (from + to) / 2, Radius = 360, Bottom = 0, Top = 65, Warn = 0.8, Left = 0.8, Life = 0.55, Damage = 8, Stun = 0.5 };
+            ((ICollection<ZipBlow>)sim.ZipBlows).Add(belt);
+            double hp = sim.CatHp;
+            Run(sim, 0.82, cat);
+            check(belt.Done && sim.CatHp == hp, "Finishing the belt warning does not instantly damage the whole lane");
+            Run(sim, 0.2, cat);
+            check(sim.CatHp == hp && Math.Abs(belt.Front - from) > 0, "The visible buckle travels from the boss before reaching a far cat");
+            sim.Paused = true;
+            double elapsed = belt.Elapsed;
+            Run(sim, 1, cat);
+            check(belt.Elapsed == elapsed && sim.CatHp == hp, "Pause freezes the travelling belt and its contact");
+            sim.Paused = false;
+            Run(sim, 0.1, cat);
+            check(sim.CatHp < hp && belt.Hit && sim.CatStunned, "Belt damage and stun occur when the moving front actually crosses the cat");
+            hp = sim.CatHp;
+            Run(sim, 0.2, cat);
+            check(sim.CatHp == hp, "The trailing and returning strap cannot hit a second time");
+        }
     }
 
     private static void PhaseTwoRegression(Action<bool, string> check)

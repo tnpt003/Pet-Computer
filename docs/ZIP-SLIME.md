@@ -34,7 +34,7 @@ Luật hiện hành của boss `zip`. Người dùng duyệt ngày 2026-11-06 (I
 
 ## Ba mech — bản người dùng chốt sau chơi thử 06/11
 
-- **66% Tháo chốt kiện:** boss nhảy ra giữa và giữ khiên. Hai ổ khóa ở hai rìa, cách mép 65 DIP để mèo có chỗ đứng đánh. Đánh khóa sáng **12 lần tổng cộng**, cứ 3 đòn đổi bên (trái → phải → trái → phải). Chỉ nhát vũ khí trực tiếp tính, damage lớn vẫn một lượt; kỹ năng/đòn lan không cộng. Mỗi 2,8 giây báo 0,8 giây rồi quét nửa sàn về khóa đang mở (8 damage cơ sở, choáng 0,5 giây; nhấc cao né được). Đủ 3 đòn đổi khóa thì ngắt cảnh báo đang chuẩn bị. Đủ 12 mở khiên, sang phase 2 và choáng 2,2 giây, nhận ×1,5 trong khoảng phản công giới hạn 6% HP tối đa. Không tự bỏ qua mech.
+- **66% Tháo chốt kiện:** boss nhảy ra giữa và giữ khiên. Hai ổ khóa ở hai rìa, cách mép 65 DIP để mèo có chỗ đứng đánh. Đánh khóa sáng **12 lần tổng cộng**, cứ 3 đòn đổi bên (trái → phải → trái → phải). Chỉ nhát vũ khí trực tiếp tính, damage lớn vẫn một lượt; kỹ năng/đòn lan không cộng. Mỗi 2,8 giây boss nhún và kéo căng đai trong 0,8 giây, đầu đai chạy từ boss về rìa phía khóa mở trong 0,35 giây rồi thu về 0,2 giây. Chỉ đầu đai quét thực sự chạm mèo mới gây 8 damage cơ sở và choáng 0,5 giây, tối đa một lần/lượt; đuôi và lượt thu không gây damage. Nhấc cao né được; vùng báo chỉ là vạch sàn nhẹ, không phủ thành tường. Đủ 3 đòn đổi khóa thì ngắt cảnh báo đang chuẩn bị. Đủ 12 mở khiên, sang phase 2 và choáng 2,2 giây, nhận ×1,5 trong khoảng phản công giới hạn 6% HP tối đa. Không tự bỏ qua mech.
 - **33% Sắp xếp thư mục:** ba file và ba thư mục đích có ký hiệu tròn/vuông/dấu chéo. Đứng phía đối diện rồi đánh file để đẩy 36 DIP về thư mục cùng ký hiệu; cách đích ≤40 DIP thì ghép xong. File/đích chừa chỗ hai bên, file bị giới hạn trong vùng cách mép tối đa 120 DIP. Kỹ năng/đòn lan không đẩy hoặc phá file. Mỗi 3,5 giây cây thư mục đánh dấu vị trí mèo, chốt ngay, báo 1 giây rồi mọc, gây 12 damage cơ sở và choáng 0,6 giây; cây không chắn hoặc đẩy file. Ghép đủ ba thì hết khiên, sang phase 3, boss choáng 2,2 giây.
 - **1 HP Bom nén sinh tử:** chỉ một lần khi HP xuống ≤1. Tất cả nguồn damage bị chặn ở đúng **1 HP**, kể cả damage vượt ngưỡng và độc; boss lập tức hủy đòn và dựng khiên. Sinh sáu tay kéo độc lập theo seed, ba trên không và ba dưới đất, chừa mép và giới hạn chiều cao theo vùng trận. Mỗi tay chịu đúng một nhát vũ khí trực tiếp; mèo đang cầm đánh tay trên không, mèo dưới sàn đánh tay dưới đất. Kéo/ném xuyên và Kéo cắt không giải thay. Phá đủ sáu: boss xì hơi 1,6 giây rồi bị hạ, không cần gây damage lần cuối. Mỗi 14 giây chưa giải xong thì nổ sàn theo damage/radius cũ, cao 170 DIP; giữ khiên và các tay chưa phá, không tạo lứa mới hoặc mở lại phase thường.
 
@@ -61,7 +61,7 @@ Tách khỏi túi đòn, hồi 22 giây thời gian hợp lệ, báo 0,9 giây. 
 Tách khỏi túi đòn, không báo trước, không đồng thời. Lần đầu sau 8 giây, sau đó cách 10–16 giây. Đồng hồ dừng trong mech. Bị Khiên chặn thì vẫn tính lượt.
 
 - **Nén:** hình mèo 75% (cửa sổ và vùng click giữ nguyên), vũ khí ×0,75, chạy ×0,8, kéo dài 5 giây. Kỹ năng và icon app không bị giảm. Không có thoát sớm.
-- **Khóa ZIP:** không bế lên hoặc tự di chuyển được, vẫn đánh được. Mở bằng 3 click, hoặc 5 nhát vung kể cả trượt, hoặc tự hết sau 6 giây.
+- **Khóa ZIP:** không bế lên hoặc tự di chuyển được, vẫn đánh được. Mèo tự đánh ổ khóa trên người dù không có quái gần, đủ 5 nhát chạm theo nhịp vũ khí thì mở; không đánh quái, tích Nộ hoặc combo trong lúc này. Cũng mở bằng 3 click hoặc tự hết sau 6 giây; Pause dừng cả nhịp tự đánh và timer. Mỗi nhát có vũ khí hướng vào ổ khóa, khóa rung/chớp và thêm vết nứt.
   - Chỉ áp khi mèo dưới sàn và không choáng, boss không ở trong đòn đã báo, không có đạn, điểm chờ hay gói nổ.
   - Boss không mở đòn mới trong lúc Khóa và thêm 0,8 giây sau đó.
   - Mech bắt đầu thì Khóa tự mở, vì mech cần tay.
@@ -101,3 +101,8 @@ Thời gian bất tử mỗi trận khoảng 7 + 2,5 + 3,3 giây. DPS thực c�
 **Chưa đạt mục tiêu 1–2 vòng:** giai đoạn 2 chỉ đạt 0,6–0,8 vòng với build mid (Normal), 0,3–0,4 với build strong; Hard đạt khoảng 1,0 với mid. Nguyên nhân là boss to, đứng gần mèo nên DPS giai đoạn này cao gấp đôi, cộng với khoảng phản công. Chưa nâng HP thêm vì Cuộn len không thẻ ở Normal đã chỉ thắng 4/8.
 
 Mô phỏng chương 2 màn cuối, bot cũ (không tự né, 60 seed): Normal simple 55–57/60, Hard simple 36–43/60. Ngưỡng cân bằng không bị nới.
+
+
+## Bổ sung #58 — đai di chuyển và tự phá khóa
+
+Damage đai dùng cùng đầu quét với renderer, quét đoạn từ vị trí frame trước tới frame hiện tại (rộng ±12 DIP, cao 65 DIP), không đánh cả nửa sân ngay khi hết báo. Pause và Screenshot giữ đứng cả đầu đai; màn/khóa đổi lượt hủy đai như trước. Boss gồng theo tiến độ báo trước, phần cuộn đai nằm ngoài mặt boss. Khóa ZIP hủy nhát đánh quái đang dở, ưu tiên nhát tự đánh khóa, đếm tại `HitTime`; 3 click/Nộ/kết thúc trận hủy nhát đang chờ để không có hit trễ. Vũ khí quá chậm vẫn có timeout 6 giây. HP 1100; records c2_zip_slime 8, Vô tận 16, Bãi rác 9.

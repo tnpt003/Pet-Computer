@@ -468,7 +468,7 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         dc.DrawGeometry(Brushes.White, null, shape);
     }
 
-    private static void DrawZipShell(DrawingContext dc, PetModel pet)
+    private void DrawZipShell(DrawingContext dc, PetModel pet)
     {
         double shut = pet.BattleZipLook;
         var box = new Rect(8, 24, 96, 88);
@@ -480,9 +480,27 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         dc.DrawRoundedRectangle(ZipLockBody, ZipInk, new Rect(end - 4, box.Bottom - 7, 8, 14), 2, 2);
         dc.DrawLine(ZipPen, new Point(14, 83), new Point(98, 83));
         dc.DrawRoundedRectangle(null, ZipPen, new Rect(44, 48, 24, 28), 12, 12);
-        dc.DrawRoundedRectangle(ZipLockBody, ZipInk, new Rect(36, 68, 40, 31), 5, 5);
+        double shake = pet.BattleZipHitFlash > 0 ? 2 * Math.Sin(pet.BattleZipHitFlash * 120) : 0;
+        dc.PushTransform(new TranslateTransform(shake, 0));
+        dc.DrawRoundedRectangle(pet.BattleZipHitFlash > 0.08 ? ZipPipEmpty : ZipLockBody, ZipInk, new Rect(36, 68, 40, 31), 5, 5);
         dc.DrawEllipse(ZipInk.Brush, null, new Point(56, 80), 4, 4);
         dc.DrawRectangle(ZipInk.Brush, null, new Rect(54, 80, 4, 10));
+        for (int i = 0; i < pet.BattleZipSwings; i++)
+        {
+            double x = 39 + i * 7;
+            dc.DrawLine(ZipInk, new Point(x, 94), new Point(x + 3, 89));
+            dc.DrawLine(ZipInk, new Point(x + 3, 89), new Point(x + 5, 93));
+        }
+        dc.Pop();
+        // The weapon turns inward to the cat's own lock; its usual enemy-facing drawing is hidden.
+        double progress = pet.BattleZipStrike, hitAt = Math.Clamp(pet.SwordHitAt, 0.2, 0.85);
+        double strike = progress < 0 ? 0 : progress < hitAt ? Math.Pow(progress / hitAt, 2) : 1 - 0.6 * (progress - hitAt) / (1 - hitAt);
+        dc.PushTransform(new TranslateTransform(82, 104));
+        dc.PushTransform(new RotateTransform(20 - 75 * strike));
+        dc.PushTransform(new ScaleTransform(0.8, 0.8));
+        DrawWeaponShape(dc, pet.WeaponStyle);
+        dc.Pop(); dc.Pop(); dc.Pop();
+        Oval(dc, Fur, 82, 104, 5, 5);
         // The padlock over its head, and each way out shown apart: gold clicks, blue swings.
         dc.DrawRoundedRectangle(null, ZipPen, new Rect(49, 3, 14, 15), 6, 6);
         dc.DrawRoundedRectangle(ZipLockBody, ZipInk, new Rect(44, 11, 24, 16), 3, 3);
@@ -560,6 +578,7 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
     // A toy wooden sword (or hammer) held in the front paw (inside the facing flip, so it turns with the cat).
     private void DrawSword(DrawingContext dc, in Pose p)
     {
+        if (pet.BattleZip == (int)ZipDebuff.Locked) return;
         double swing = pet.SwordSwing, hitAt = Math.Clamp(pet.SwordHitAt, 0.2, 0.85);
         bool yarn = pet.WeaponStyle == "yarn";
         if (yarn && swing > hitAt - 0.04 && swing < hitAt + 0.26)

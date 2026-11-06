@@ -1084,3 +1084,12 @@ Các mục 1.5 phía trên viết theo từng mốc; đây là thứ tự chơi 
 - [ ] Giấy bám sau tín hiệu khóa với đường cong hữu hạn; đưa đầu/thân/chân mèo vào giấy khi đứng sàn, bế cao, thả rơi hoặc bounce đều bị trúng. Kéo nhanh vẫn né được; không xuyên do frame nhanh. Khiên/Nộ chặn; bế không tuột, cú ném không đổi, không choáng/Dizzy.
 - [ ] Pause/menu/fullscreen dừng cả homing, bom và các hiệu ứng; đổi DPI/monitor không làm quỹ đạo hoặc làn file lệch.
 - [ ] Chín đòn thường và đẩy/bom/đai có hình báo và impact riêng đúng chủ đề ZIP, không còn sóng chấn động chung. Xem trên nền sáng/tối/nhiều màu, đảm bảo không che mèo hoặc báo nguy hiểm.
+
+
+## Slime Nén — đai quét và tự mở Khóa ZIP, Issue #58
+
+- [ ] Boss gồng và kéo căng đai ngoài mặt 0,8 giây; vạch báo thấp không che mèo. Đầu đai đi từ boss ra đúng rìa, tới mèo mới mất máu/choáng. Không instant damage cả nửa sân, không trúng lại do đuôi/thu đai; nhấc cao né được.
+- [ ] Hai hướng trái/phải, mèo sát boss/giữa sân/sát rìa: đầu đai và thời điểm trúng khớp nhau. Pause/menu/fullscreen/Screenshot dừng đúng khung; tiếp tục không có damage trễ.
+- [ ] Khóa ZIP khi đứng xa quái: tự vung vũ khí hướng vào ổ khóa, khóa rung/chớp/nứt theo từng nhát, đủ 5 thì mở. Kiếm/Búa/Cuộn len/Găng đều có chuyển động, không cần quái gần.
+- [ ] Nhát phá khóa không làm mất máu quái hoặc tích Nộ/combo. Ba click vẫn mở ngay và hủy nhát chưa chạm; vũ khí quá chậm hoặc bị gián đoạn vẫn hết sau 6 giây. Pause đóng băng cả tự đánh và timer; mở khóa tiếp tục đi/đánh/nhấc bình thường.
+- [ ] Chưa xác nhận trận thật/DPI/multi-monitor; xem cả nền sáng/tối và lúc dùng Nộ/thoát trận giữa một nhát tự phá khóa.

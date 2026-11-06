@@ -512,14 +512,15 @@ public sealed partial class BattleSim
 
     private CatOrder CatTurn(double dt, double catX)
     {
-        var target = Over ? null : PickTarget(catX);
+        if (zipLockSwing && (CatStunned || CatOffFloor)) { zipLockSwing = false; CancelSwing(); }
+        var target = Over || CatLocked ? null : PickTarget(catX);
         TargetId = target?.Id;
         // Slid away by a spring (PetBattle.Spring.cs): nothing else meanwhile, facing the spring.
         if (ShoveCat(dt, catX) is double slid) return new(CatCommand.Shove, slid, -ShoveSide);
         if (SwingTime >= 0)
         {
             SwingTime += dt;
-            if (!swingHit && SwingTime >= arms.HitTime) { swingHit = true; ResolveHit(catX); }
+            if (!swingHit && SwingTime >= arms.HitTime) { swingHit = true; if (zipLockSwing) HitZipShell(); else ResolveHit(catX); }
             if (SwingTime >= arms.SwingDuration) CancelSwing();
             return new(CatCommand.Stand, catX, swingFacing);
         }
@@ -528,6 +529,7 @@ public sealed partial class BattleSim
         if (CatStunned) return new(CatCommand.Stand, catX);
         // Just landed with the Ground quake: the cat stands its ground a moment (2026-11-04).
         if (QuakeStandRemaining > 0) return new(CatCommand.Stand, catX);
+        if (CatLocked) return ZipShellTurn(catX);
         // Put down on top of a blocker: a few steps off it to the nearest free side.
         if (!CatLocked && Unstick(catX) is double free) return new(CatCommand.Move, free, free < catX ? -1 : 1);
         // A wall climber up its edge (chosen, or the only ones left): the cat goes near that edge and looks
@@ -590,7 +592,6 @@ public sealed partial class BattleSim
                 double cooldown = arms.AttackCooldown * CooldownFactor / (CheerRemaining > 0 ? Settings.CheerSpeed : 1) / LagFactor / RushFactor;
                 CatCooldown = Math.Max(cooldown, arms.SwingDuration);
                 events.Add(new(BattleEventKind.Swing, catX));
-                ZipSwing(); // 2026-11-06: a swing counts against the ZIP shell, hit or miss.
             }
             return new(CatCommand.Stand, catX, facing);
         }

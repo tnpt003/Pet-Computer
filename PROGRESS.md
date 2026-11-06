@@ -6,14 +6,14 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 Quy ước file này: chỉ giữ trạng thái hiện tại, các đợt đang làm, việc dở và test tay, mỗi mục ngắn. Chi tiết commit/test của từng lỗi ghi ở Issue_fixxed.md. File dưới ~20 KB; vượt thì chuyển mục đã xong sang docs/archive/.
 
 ## Trạng thái hiện tại
-- Bản phát hành mới nhất: **1.4.4** (2026-10-26, tag v1.4.4, commit e8f97d4), là Latest trên GitHub. Bản trên máy: artifacts\win-x64 (**1.4.4+4557dbd**, polish pose/effect Slime Mẹ và tích hợp 1.5 đang thử), chạy bản copy, không cài Setup; chưa phát hành 1.5.0.
+- Bản phát hành mới nhất: **1.4.4** (2026-10-26, tag v1.4.4, commit e8f97d4), là Latest trên GitHub. Bản trên máy: artifacts\win-x64 (**1.4.4+f393289**, nơ Mẹ/chương2/mode1.5 #69), chạy bản copy, không cài Setup; chưa phát hành 1.5.0.
 - **Bản 1.5 "Slime phản công": code xong M01–M29, góp ý đợt B (B1–B9) và đợt C (C1–C4), chưa phát hành.** Luật hiện tại: docs/UPDATE-1.5.md (bản chốt 05/11); thêm nội dung mới: docs/EXTENDING.md; đo cân bằng/perf: docs/BALANCE-1.5.md; CHANGELOG có mục 1.5.0 vi/en/ja.
 - Nội dung chính đã có: mèo vector (cảm xúc, ngủ/away nap, kéo/ném/Dizzy, đi trên cửa sổ, đồ chơi, kệ kỷ vật có physics, AI Python có fallback local), Battle Mode (Phiêu lưu chương 1 + Hướng dẫn phiêu lưu, Viễn chinh, Vô tận, trận tự do, app trong trận + app độc, thẻ/di vật/cộng hưởng), giao diện Cozy Desktop Adventure (tranh minh họa, icon), vi/en/ja, bộ cài Velopack tự cập nhật.
 - Ngoại lệ đã duyệt dạng đầy đủ: docs/APPROVED-EXCEPTIONS.md (AGENTS.md chỉ còn tóm tắt).
 - Công cụ AI (chỉ máy này, không đụng app): graphify dựng graph ở graphify-out/ (gitignore); git hook tự cập nhật phần code, docs/ảnh đổi thì chạy `/graphify --update`. CLAUDE.md nạp AGENTS.md (quy tắc chính). Skill dự án ở .claude/skills/ (ship-milestone, cozy-ui, battle-change, run-pet), Codex đọc qua .agents/skills/. Gỡ graphify: `graphify hook uninstall`, `graphify claude uninstall`.
 
 ## Đang dở và việc tiếp theo
-- **#69 đã code/test, chờ publish:** nơ Mẹ tránh mắt; chương2 học5skill và app theo thứ tự, bỏ Mẹ; sửa kỷ vật ZIP; bốn boss Vô tận, cap4app, ổ Biến dị Viễn chinh threat0,7. Python58+i18n5 đạt; full C#3778/2fail đã sửa, focused144đạt (bộ3780); WPF1757đạt sau sửa race z-order nền. So409dòng,159đổi đúng chương2/Bãi rác, ngưỡng giữ nguyên. Chi tiết Issue_fixxed#69 và docs/CONTENT-1.5-REVIEW-2026-11-07.md; còn chơi tay/DPI/multi-monitor.
+- **#69 hoàn tất, code/publish f393289:** nơ Mẹ tránh mắt; chương2 học5skill/app theo thứ tự, bỏ Mẹ; sửa kỷ vật ZIP; bốn boss Vô tận, cap4app, ổ Biến dị Viễn chinh threat0,7. Python58+i18n5 đạt; full C#3778/2fail đã sửa, focused144đạt (bộ3780); WPF1757đạt sau sửa race z-order nền. So409dòng,159đổi đúng chương2/Bãi rác, ngưỡng giữ nguyên. Build0warning/error; smoke3/3PASS, artifacts/DesktopPet-1.4.4-f393289-win-x64.zip. Crowd-late34s median61,8/min37,6FPS,gapmax157ms,CPUavg3,82%; chưa đo boss thật. Chi tiết Issue_fixxed#69; còn chơi tay/DPI/multi-monitor.
 
 Chi tiết mốc trước Slime Mẹ: [archive 06/11](docs/archive/PROGRESS-2026-11-06-before-mother.md).
 

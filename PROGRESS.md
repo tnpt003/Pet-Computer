@@ -6,7 +6,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 Quy ước file này: chỉ giữ trạng thái hiện tại, các đợt đang làm, việc dở và test tay, mỗi mục ngắn. Chi tiết commit/test của từng lỗi ghi ở Issue_fixxed.md. File dưới ~20 KB; vượt thì chuyển mục đã xong sang docs/archive/.
 
 ## Trạng thái hiện tại
-- Bản phát hành mới nhất: **1.4.4** (2026-10-26, tag v1.4.4, commit e8f97d4), là Latest trên GitHub. Bản trên máy: artifacts\win-x64 (**1.4.4+3b3682a**, tích hợp 1.5 đang thử), chạy bản copy, không cài Setup; chưa phát hành 1.5.0.
+- Bản phát hành mới nhất: **1.4.4** (2026-10-26, tag v1.4.4, commit e8f97d4), là Latest trên GitHub. Bản trên máy: artifacts\win-x64 (**1.4.4+048862f**, tích hợp 1.5 đang thử), chạy bản copy, không cài Setup; chưa phát hành 1.5.0.
 - **Bản 1.5 "Slime phản công": code xong M01–M29, góp ý đợt B (B1–B9) và đợt C (C1–C4), chưa phát hành.** Luật hiện tại: docs/UPDATE-1.5.md (bản chốt 05/11); thêm nội dung mới: docs/EXTENDING.md; đo cân bằng/perf: docs/BALANCE-1.5.md; CHANGELOG có mục 1.5.0 vi/en/ja.
 - Nội dung chính đã có: mèo vector (cảm xúc, ngủ/away nap, kéo/ném/Dizzy, đi trên cửa sổ, đồ chơi, kệ kỷ vật có physics, AI Python có fallback local), Battle Mode (Phiêu lưu chương 1 + Hướng dẫn phiêu lưu, Viễn chinh, Vô tận, trận tự do, app trong trận + app độc, thẻ/di vật/cộng hưởng), giao diện Cozy Desktop Adventure (tranh minh họa, icon), vi/en/ja, bộ cài Velopack tự cập nhật.
 - Ngoại lệ đã duyệt dạng đầy đủ: docs/APPROVED-EXCEPTIONS.md (AGENTS.md chỉ còn tóm tắt).
@@ -14,7 +14,7 @@ Quy ước file này: chỉ giữ trạng thái hiện tại, các đợt đang 
 
 ## Đang dở và việc tiếp theo
 
-- **Cây mech cuối/đẩy riêng Slime Nén (#59):** code theo duyệt; cây toàn chiều cao dải100 DIP, báo1 s/hoạt động0,8 s/chu kỳ4,5 s, damage10 một lần. Đẩy lần đầu5 s/hồi12 s, chỉ mở lúc mèo sàn. HP1100, records9/17/10. Full C#3484 đạt/6 FAIL test/môi trường; đã xử lý và kiểm lại suite liên quan562 + Tooling24 đạt; Python58+5, WPF1439 đạt. Cân bằng mọi ngưỡng đạt, đối chứng docs/BALANCE-ZIP-2026-11-06.md; Búa/Len Bãi rác còn sát ngưỡng. Đã xem render sáng/tối, chưa chơi thật/DPI/multi-monitor; test tay MANUAL-TEST #59. Đang commit/publish.
+- **Cây mech cuối/đẩy riêng Slime Nén (#59):** code theo duyệt; cây toàn chiều cao dải100 DIP, báo1 s/hoạt động0,8 s/chu kỳ4,5 s, damage10 một lần. Đẩy lần đầu5 s/hồi12 s, chỉ mở lúc mèo sàn. HP1100, records9/17/10. Full C#3484 đạt/6 FAIL test/môi trường; đã xử lý và kiểm lại suite liên quan562 + Tooling24 đạt; Python58+5, WPF1439 đạt. Cân bằng mọi ngưỡng đạt, đối chứng docs/BALANCE-ZIP-2026-11-06.md; Búa/Len Bãi rác còn sát ngưỡng. Đã xem render sáng/tối, chưa chơi thật/DPI/multi-monitor; test tay MANUAL-TEST #59. Đã publish 048862f, smoke 3/3 PASS, mở lại mèo.
 
 - **Đai quét/tự phá Khóa ZIP (#58):** publish 3b3682a, smoke 3/3, mở lại mèo. Đai di chuyển/damage tiếp xúc, mèo tự phá khóa không cần quái; C#3467, Python58+5, WPF1437, ZIP cuối392 đạt. Chi tiết Issue_fixxed #58, docs/ZIP-SLIME.md; còn test tay MANUAL-TEST #58/DPI/multi-monitor.
 

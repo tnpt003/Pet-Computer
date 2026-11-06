@@ -2,6 +2,8 @@
 
 ## Kết quả mới nhất #59 — cây mech cuối/đẩy riêng, HP 1100
 
+Publish sạch source `048862f`, smoke **3/3 PASS**, đã mở lại mèo. ZIP `artifacts/DesktopPet-1.4.4-048862f-win-x64.zip`. Full C# 3484 đạt/6 FAIL test và môi trường, đã xử lý rồi kiểm lại suite ZIP/record 562 + Tooling24 đạt; Python58+i18n5, WPF1439 đạt. Chi tiết Issue_fixxed #59.
+
 Đối chứng source 3b3682a (`zip58-full-tests.log`) với bản #59 (`zip59-full-tests.log`): giữ HP, bot, seed, đường đi và ngưỡng. Đây là mô phỏng, chưa chơi thật.
 
 | Vũ khí | Độ khó | Thắng trước → sau | Giây trước → sau | HP trước → sau |

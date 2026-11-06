@@ -6,7 +6,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 Quy ước file này: chỉ giữ trạng thái hiện tại, các đợt đang làm, việc dở và test tay, mỗi mục ngắn. Chi tiết commit/test của từng lỗi ghi ở Issue_fixxed.md. File dưới ~20 KB; vượt thì chuyển mục đã xong sang docs/archive/.
 
 ## Trạng thái hiện tại
-- Bản phát hành mới nhất: **1.4.4** (2026-10-26, tag v1.4.4, commit e8f97d4), là Latest trên GitHub. Bản trên máy: artifacts\win-x64 (**1.4.4+048862f**, tích hợp 1.5 đang thử), chạy bản copy, không cài Setup; chưa phát hành 1.5.0.
+- Bản phát hành mới nhất: **1.4.4** (2026-10-26, tag v1.4.4, commit e8f97d4), là Latest trên GitHub. Bản trên máy: artifacts\win-x64 (**1.4.4+9fcbed2**, tích hợp 1.5 đang thử), chạy bản copy, không cài Setup; chưa phát hành 1.5.0.
 - **Bản 1.5 "Slime phản công": code xong M01–M29, góp ý đợt B (B1–B9) và đợt C (C1–C4), chưa phát hành.** Luật hiện tại: docs/UPDATE-1.5.md (bản chốt 05/11); thêm nội dung mới: docs/EXTENDING.md; đo cân bằng/perf: docs/BALANCE-1.5.md; CHANGELOG có mục 1.5.0 vi/en/ja.
 - Nội dung chính đã có: mèo vector (cảm xúc, ngủ/away nap, kéo/ném/Dizzy, đi trên cửa sổ, đồ chơi, kệ kỷ vật có physics, AI Python có fallback local), Battle Mode (Phiêu lưu chương 1 + Hướng dẫn phiêu lưu, Viễn chinh, Vô tận, trận tự do, app trong trận + app độc, thẻ/di vật/cộng hưởng), giao diện Cozy Desktop Adventure (tranh minh họa, icon), vi/en/ja, bộ cài Velopack tự cập nhật.
 - Ngoại lệ đã duyệt dạng đầy đủ: docs/APPROVED-EXCEPTIONS.md (AGENTS.md chỉ còn tóm tắt).
@@ -14,7 +14,7 @@ Quy ước file này: chỉ giữ trạng thái hiện tại, các đợt đang 
 
 ## Đang dở và việc tiếp theo
 
-- **Phạt mech cuối ZIP (#60):** code theo duyệt, nổ toàn sân80% max HP cơ sở, bế/ném/bounce trúng rơi không nảy rồi stun5 s sau đáp; sống thì reset6 tay/gồng14 s. HP1100, records10/18/11. Full Python58+5/C#3510 đạt,3 FAIL cân bằng bot cũ; đã sửa bot biết bế di chuyển và đối chứng cùng bot trên048862f. ZIP436/WPF1448 đạt; cân bằng chi tiết docs/BALANCE-ZIP-2026-11-06.md. Đã xem render sáng/tối, chưa chơi thật/DPI/multi-monitor; test tay MANUAL-TEST #60. Đang commit/publish.
+- **Phạt mech cuối ZIP (#60):** code theo duyệt, nổ toàn sân80% max HP cơ sở, bế/ném/bounce trúng rơi không nảy rồi stun5 s sau đáp; sống thì reset6 tay/gồng14 s. HP1100, records10/18/11. Python58+5, full C#3510 đạt/3 FAIL bot cũ đã xử lý; cùng bot mới baseline048862f và #60 đạt ngưỡng (293 check). ZIP436/WPF1448 đạt; chi tiết docs/BALANCE-ZIP-2026-11-06.md. Đã xem render sáng/tối, chưa chơi thật/DPI/multi-monitor; test tay MANUAL-TEST #60. Đã publish9fcbed2, smoke3/3 PASS, mở lại mèo; crowd-late19 s median48,6 FPS, còn profile, chưa đo burst thật.
 
 - **Cây mech cuối/đẩy riêng Slime Nén (#59):** publish048862f, smoke3/3, mở lại mèo; cây toàn chiều cao, đẩy5/12 s. Python58+5, WPF1439, suite liên quan562+Tooling24 đạt; full có6 FAIL test/môi trường đã xử lý. Chi tiết Issue_fixxed #59, test tay MANUAL-TEST #59; chưa chơi thật/DPI/multi-monitor.
 

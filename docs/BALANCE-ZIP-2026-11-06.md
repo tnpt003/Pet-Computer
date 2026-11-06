@@ -2,6 +2,8 @@
 
 ## Kết quả mới nhất #60 — phạt timeout toàn sân, HP 1100
 
+Publish sạch source `9fcbed2`, smoke3/3 PASS, mở lại mèo; ZIP `artifacts/DesktopPet-1.4.4-9fcbed2-win-x64.zip`. Perf `crowd-late`19 s: median48,6/min35,3 FPS, gap p95/max133 ms, CPU avg3,36%, 14,9 quái trung bình. Chưa đạt~60; đây không phải cảnh nổ ZIP và không có baseline perf cùng lượt, không kết luận là hồi quy của #60. Cần profile và thử burst thật; `zip60-perf.log`.
+
 Lượt đầy đủ với bot cũ: C#3510 đạt/3 FAIL (Búa boss Normal72% <80%, Búa Bãi rác16/40 <18, Kiếm probe0/4). Không chỉnh HP/damage/clock/ngưỡng để né FAIL. Bot cũ né nổ bằng bế cao và đi bộ giữa tay sàn; đã đổi bot để bế chuyển giữa tay sàn ở700 DIP/s rồi đặt xuống mới đánh, không chờ bom bằng độ cao. Bot giả lập đáp ngay khi bị forced fall; đây là giới hạn mô phỏng, WPF có test rơi thật và đếm stun sau đáp.
 
 Đối chứng **cùng bot mới** trên baseline source048862f (checkout riêng trong artifacts; bỏ duy nhất nhánh ZipForcedFall vì baseline chưa có API) và #60. Giữ seed/build/đường đi/vũ khí/ngưỡng/HP. Logs zip60-baseline-balance.log + zip60-baseline-expedition.log; sau zip60-balance-verified.log. Không so mức cải thiện của bot với bảng cũ như tác dụng của gameplay.

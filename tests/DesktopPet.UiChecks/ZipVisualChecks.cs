@@ -13,6 +13,7 @@ internal static class ZipVisualChecks
     public static void Run(Action<bool, string> check)
     {
         var data = BattleData.Settings;
+        OverflowScreenChecks(check, data);
         var burstSim = new BattleSim(data, 0, 600, seed: 1);
         burstSim.SetSky(600);
         var bursting = burstSim.AddSlime(300, data.Enemy("zip"));
@@ -170,8 +171,10 @@ internal static class ZipVisualChecks
         var three = new BattleSim(data, 0, Width, new Random(1));
         var flow = add(three, "zip", 600, 2);
         flow.ZipAct = ZipAct.Overflow; flow.ZipBeat = ZipBeat.Strike; flow.ZipSeconds = 2; flow.ZipLeft = 1; flow.ZipAimX = 600; flow.ZipTear = 0.5;
-        var px3 = SkyVisualChecks.Render(new BattleFieldView(three) { OriginX = 0 }, w, h, "enemy-zip-moves-3");
-        check(SkyVisualChecks.Count(px3, w, h, Color.FromRgb(0xFF, 0xFB, 0xF2), 0, 200, floor - 60, floor, 24, 100) > 200, "The overflow spills in from the edges");
+        three.SetSky(h - 4);
+        var px3 = SkyVisualChecks.Render(new ZipCanopyPreview(three, h - 2), w, h, "enemy-zip-moves-3");
+        int incomingPaper = SkyVisualChecks.Count(px3, w, h, Color.FromRgb(0xFF, 0xFB, 0xF2), 0, 200, floor - 60, floor, 24, 100);
+        check(incomingPaper > 80, $"A folded file appears in the incoming paper wall ({incomingPaper} pixels)");
         check(SkyVisualChecks.Count(px3, w, h, gold, 460, 740, floor - 60, floor) > 30, "Its safe gap shows in gold");
 
         var four = new BattleSim(data, 0, Width, new Random(1));
@@ -182,6 +185,41 @@ internal static class ZipVisualChecks
         int left = SkyVisualChecks.Count(px4, w, h, Color.FromRgb(0xE8, 0xB8, 0x4A), (int)(600 - reach - 70), (int)(600 - reach + 10), floor - 110, floor);
         check(left > 300, $"The torn body flies out in two halves ({left} pixels)");
         check(SkyVisualChecks.Count(px4, w, h, Color.FromRgb(0xE8, 0xB8, 0x4A), 570, 630, floor - 110, floor) < 30, "Leaving only its zipper in the middle");
+    }
+
+    private static void OverflowScreenChecks(Action<bool, string> check, BattleSettings data)
+    {
+        var sim = new BattleSim(data, 0, 900, seed: 2);
+        sim.SetSky(600);
+        var boss = sim.AddSlime(150, data.Enemy("zip"));
+        boss.Set(SlimeState.Moving); boss.ZipStage = 2;
+        boss.Width = data.SlimeWidth * 2.9; boss.Height = data.SlimeHeight * 2.9; boss.ZipScale = 2.9;
+        boss.ZipAct = ZipAct.Overflow; boss.ZipBeat = ZipBeat.Warn;
+        boss.ZipSeconds = 1; boss.ZipLeft = 0.5; boss.ZipAimX = 600;
+        var scene = new System.Windows.Controls.Canvas { Width = 900, Height = 640 };
+        var field = new BattleFieldView(sim) { Width = 900, Height = BattleFieldView.FieldHeight };
+        System.Windows.Controls.Canvas.SetTop(field, 620 - (BattleFieldView.FieldHeight - 2));
+        scene.Children.Add(field);
+        var overlay = new ZipCanopyPreview(sim) { Width = 900, Height = 640 };
+        scene.Children.Add(overlay);
+        var warn = SkyVisualChecks.Render(scene, 900, 640, "zip-overflow-full-warning");
+        boss.ZipBeat = ZipBeat.Strike; boss.ZipSeconds = 2.2; boss.ZipLeft = 1.1; boss.ZipTear = 0.5;
+        field.InvalidateVisual(); overlay.InvalidateVisual();
+        var filling = SkyVisualChecks.Render(scene, 900, 640, "zip-overflow-full-filling");
+        boss.ZipTear = 1;
+        field.InvalidateVisual(); overlay.InvalidateVisual();
+        var filled = SkyVisualChecks.Render(scene, 900, 640, "zip-overflow-full-peak");
+        check(BattleFieldView.ZipAirBusy(sim) && !warn.SequenceEqual(filling) && !filling.SequenceEqual(filled),
+            "Overflow renders in the full-screen overlay with warning, filling and peak frames");
+        var gold = Color.FromRgb(0xFF, 0xC8, 0x3A);
+        check(SkyVisualChecks.Count(filled, 900, 640, gold, 500, 510, 25, 160) > 50
+            && SkyVisualChecks.Count(filled, 900, 640, gold, 690, 700, 300, 450) > 50,
+            "Both gold corridor rails extend through the full screen height");
+        var paper = Color.FromRgb(0xFF, 0xFB, 0xF2);
+        check(SkyVisualChecks.Count(filled, 900, 640, paper, 50, 450, 30, 180, 24, 100) > 100,
+            "Unpacking files are visible in the danger area near the screen top");
+        check(SkyVisualChecks.Count(filled, 900, 640, paper, 520, 680, 30, 450, 24, 100) == 0,
+            "The announced 190-DIP safe corridor stays clear of dangerous paper effects");
     }
 
     private static void BeltAnimation(Action<bool, string> check, BattleSettings data)
@@ -223,9 +261,9 @@ internal static class ZipVisualChecks
     }
 }
 
-internal sealed class ZipCanopyPreview(BattleSim sim) : FrameworkElement
+internal sealed class ZipCanopyPreview(BattleSim sim, double floor = 620) : FrameworkElement
 {
-    protected override void OnRender(DrawingContext dc) => BattleFieldView.DrawZipAir(dc, sim, (x, h) => new Point(x, 620 - h), new Point(100, 400), 0);
+    protected override void OnRender(DrawingContext dc) => BattleFieldView.DrawZipAir(dc, sim, (x, h) => new Point(x, floor - h), new Point(100, 400), 0);
 }
 
 internal sealed class ZipImpactPreview : FrameworkElement

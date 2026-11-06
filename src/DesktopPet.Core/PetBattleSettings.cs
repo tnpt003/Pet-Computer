@@ -763,6 +763,7 @@ public sealed class Slime
     // A packet's time left and fuse. The next debuff's clock and kind.
     public ZipAct ZipAct, ZipLast;
     public ZipBeat ZipBeat;
+    public double ZipOverflowGoal;
     public double ZipLeft, ZipSeconds, ZipIdle, ZipFrom, ZipAimX, ZipAimHeight, ZipHeadX, ZipHeadHeight, ZipTear, PacketLeft;
     public double ZipDebuffClock = -1, ZipOpenFloor;
     public ZipDebuff ZipDebuffNext;

@@ -64,7 +64,9 @@ public sealed partial class PetWindow
         bool any = false;
         foreach (var s in b.Slimes) if (s.Type.Fly != null || s.ZipProp == ZipProp.Tab && s.Airborne) { any = true; break; }
         // The sky's size goes to the battle from the start (a flyer picks its first height from it).
-        if (any || !skySeen) { b.SetSky(battleArea.Bottom - 2 - battleArea.Top, any ? SkyBlockers(b) : null); skySeen = true; }
+        bool overflowResized = b.Slimes.Any(s => s.ZipAct == ZipAct.Overflow)
+            && Math.Abs(b.SkyHeight - (battleArea.Bottom - 2 - battleArea.Top)) > 0.5;
+        if (any || !skySeen || overflowResized) { b.SetSky(battleArea.Bottom - 2 - battleArea.Top, any ? SkyBlockers(b) : null); skySeen = true; }
         bool hide = b.Paused;
         foreach (var id in flyerWindows.Keys.Where(id => b.Find(id) is not Slime s || !BattleSim.InSky(s)).ToList())
         {

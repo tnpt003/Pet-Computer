@@ -39,7 +39,6 @@ public sealed partial class BattleFieldView
             switch (s.ZipAct)
             {
                 case ZipAct.Clamp: DrawClamp(dc, s, m, floor, progress); break;
-                case ZipAct.Overflow: DrawOverflow(dc, s, m, floor, time); break;
                 case ZipAct.Tear: if (s.ZipBeat != ZipBeat.Recover) DrawTearWarning(dc, s, m, floor, progress); break;
                 case ZipAct.Tumble: DrawZipTape(dc, s, floor); break;
             }
@@ -59,32 +58,6 @@ public sealed partial class BattleFieldView
             dc.DrawRoundedRectangle(FlapFill, FlapEdge, flap, 4, 4);
             dc.DrawLine(StrapPen, new Point(flap.Left + 3, floor - m.Height * 0.55), new Point(flap.Right - 3, floor - m.Height * 0.55));
         }
-    }
-
-    // The tide of paper from both edges and, in gold, the gap it leaves.
-    private void DrawOverflow(DrawingContext dc, Slime s, ZipMoveSpec m, double floor, double time)
-    {
-        if (s.ZipBeat == ZipBeat.Recover) return;
-        double from = s.ZipBeat == ZipBeat.Strike ? s.ZipTear : 0.02;
-        var (left, right) = sim.OverflowEdges(s, m, from);
-        double top = floor - m.Height - 4 * Math.Sin(time * 9);
-        var l = new Rect(0, top, Math.Max(0, left - OriginX), floor - top);
-        var r = new Rect(Math.Max(0, right - OriginX), top, Math.Max(0, ActualWidth - (right - OriginX)), floor - top);
-        dc.DrawRectangle(TideFill, TideEdge, l);
-        dc.DrawRectangle(TideFill, TideEdge, r);
-        for (double y = top + 12; y < floor - 4; y += 16)
-        {
-            dc.DrawLine(PageLine, new Point(l.Right - 26, y), new Point(l.Right - 6, y));
-            dc.DrawLine(PageLine, new Point(r.Left + 6, y), new Point(r.Left + 26, y));
-        }
-        double gapL = s.ZipAimX - m.Radius - OriginX, gapR = s.ZipAimX + m.Radius - OriginX;
-        foreach (double x in new[] { gapL, gapR })
-        {
-            dc.DrawLine(Halo, new Point(x, floor), new Point(x, floor - 58));
-            dc.DrawLine(SpotPen, new Point(x, floor), new Point(x, floor - 58));
-        }
-        dc.DrawRoundedRectangle(null, Halo, new Rect(gapL, floor - 20, m.Radius * 2, 16), 3, 3);
-        dc.DrawRoundedRectangle(null, SpotPen, new Rect(gapL, floor - 20, m.Radius * 2, 16), 3, 3);
     }
 
     private void DrawTearWarning(DrawingContext dc, Slime s, ZipMoveSpec m, double floor, double progress)
@@ -172,12 +145,15 @@ public sealed partial class BattleFieldView
     {
         foreach (var s in sim.Slimes) if (s.Type.Zip != null && (s.ZipBurstLeft > 0 || s.Shielded && s.BombClock > 0 && s.BombClock <= 2)) return true;
         foreach (var b in sim.ZipBlows) if (b.Bottom > 0 || b.Kind == ZipBlowKind.Canopy) return true;
-        foreach (var s in sim.Slimes) if (s.ZipAct == ZipAct.Bolt) return true;
+        foreach (var s in sim.Slimes) if (s.ZipAct is ZipAct.Bolt or ZipAct.Overflow) return true;
         return false;
     }
 
     public static void DrawZipAir(DrawingContext dc, BattleSim sim, Func<double, double, Point> toScreen, Point cat, double time)
     {
+        foreach (var boss in sim.Slimes)
+            if (boss.ZipAct == ZipAct.Overflow && BattleSim.MoveSpec(boss, ZipAct.Overflow) is ZipMoveSpec overflow)
+                DrawZipOverflow(dc, sim, boss, overflow, toScreen, time);
         foreach (var boss in sim.Slimes)
             if (boss.Type.Zip != null && (boss.ZipBurstLeft > 0 || boss.Shielded && boss.BombClock > 0 && boss.BombClock <= 2))
                 DrawArchiveBurst(dc, sim, boss, toScreen, time);

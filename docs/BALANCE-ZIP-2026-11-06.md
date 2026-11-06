@@ -1,6 +1,25 @@
-# Slime Nén sau chơi thử — đối chứng 06/11, Issue #56–#61
+# Slime Nén sau chơi thử — đối chứng 06/11, Issue #56–#62
 
-## Kết quả mới nhất #61 — lăn3 lượt/ba đội hình Vua, còn1 FAIL
+## Kết quả mới nhất #62 — Tràn bộ nhớ toàn chiều cao, bản chơi thử còn1 FAIL
+
+Người dùng yêu cầu sửa rồi publish, sau đó xác nhận thiết kế #62 và nhắc publish; gộp cả source#61 chưa phát hành. Không coi việc publish là nghiệm thu cân bằng. Giữ HP1100, warning1/strike2,2/recover1,6 s, damage26/13; không nới ngưỡng.
+
+Đối chứng sourcebeecc78 (#61, m61-final-balance.log) → #62 (zip62-verified.log), cùng bot cân bằng chính/seed/build/vũ khí/đường đi. Chỉ bot probe dodge=true được cập nhật để bế ngang vào gap thay vì né bằng độ cao; không tác động bảng dưới. Full zip62-full-tests.log: Python58+i18n5, C#3686 đạt/2 FAIL. Sau cập nhật careful bot: probe và logic đạt, đo5 suite780 đạt/1 FAIL (Len16/40). WPF1454 đạt, đã mở ảnh full-warning/filling/peak sáng/tối. Chưa chơi trận thật/DPI/multi-monitor; perf overlay thật còn cần xem.
+
+| Vũ khí | Độ khó | Thắng #61 → #62 | Giây #61 → #62 | HP #61 → #62 |
+|---|---|---:|---:|---:|
+| sword | Normal | 59/60 → 57/60 | 132 → 134 | 78% → 78% |
+| sword | Hard | 48/60 → 42/60 | 147 → 155 | 64% → 62% |
+| hammer | Normal | 57/60 → 57/60 | 152 → 156 | 77% → 69% |
+| hammer | Hard | 46/60 → 40/60 | 173 → 182 | 66% → 57% |
+| yarn | Normal | 57/60 → 55/60 | 154 → 161 | 79% → 70% |
+| yarn | Hard | 38/60 → 30/60 | 185 → 191 | 63% → 56% |
+| glove | Normal | 60/60 → 59/60 | 124 → 127 | 84% → 82% |
+| glove | Hard | 55/60 → 52/60 | 135 → 139 | 72% → 65% |
+
+Bãi rác tham lam Normal: sword 25/40→24/40, hammer 19/40→18/40, yarn 19/40→16/40, glove 26/40→22/40. **Cuộn len còn FAIL16/40 <20**, các ngưỡng khác đạt. Đây là mô phỏng với bot simple, không phải người chơi. Giữ nguyên kết quả FAIL để theo dõi chơi thử. RecordsZIP12/Endless20/Bãi rác13, tuyến chính8.
+
+## Lịch sử #61 — lăn3 lượt/ba đội hình Vua, còn1 FAIL
 
 Baseline source9fcbed2 (`zip60-balance-verified.log`) → #61 (`m61-final-balance.log`), cùng bot/seed/build/vũ khí/đường đi/ngưỡng/HP. Runtime mới gồm ZIP lăn3 lượt, timer gồng công khai được sửa, King/mutant ba đội hình/buff2; không gán mọi chênh lệch cho riêng một thay đổi. Không đổi bot để vượt ngưỡng.
 

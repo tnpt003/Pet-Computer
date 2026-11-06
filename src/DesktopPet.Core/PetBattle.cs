@@ -1169,6 +1169,12 @@ public sealed partial class BattleSim
         foreach (var s in slimes)
         {
             s.X = left + (s.X - Left) / oldWidth * newWidth;
+            if (s.ZipAct == ZipAct.Overflow)
+            {
+                s.ZipAimX = left + (s.ZipAimX - Left) / oldWidth * newWidth;
+                s.ZipFrom = left + (s.ZipFrom - Left) / oldWidth * newWidth;
+                s.ZipOverflowGoal = left + (s.ZipOverflowGoal - Left) / oldWidth * newWidth;
+            }
             if (s.ZipProp == ZipProp.File && s.ZipLaneRight > s.ZipLaneLeft)
             {
                 s.ZipGoalX = left + (s.ZipGoalX - Left) / oldWidth * newWidth;

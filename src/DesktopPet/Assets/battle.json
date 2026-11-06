@@ -725,7 +725,7 @@
           { "id": "tree", "warn": 1.1, "recover": 1.1, "maxRange": 900, "damage": 16, "count": 6, "radius": 52, "height": 120, "spacing": 150, "delay": 0.24 },
           { "id": "chase", "warn": 0.7, "delay": 0.8, "strike": 1.2, "recover": 0.8, "minRange": 80, "air": true, "damage": 13, "radius": 22, "speed": 340 },
           { "id": "faulty", "warn": 0.7, "strike": 0.2, "recover": 2.2, "minRange": 0, "damage": 22, "count": 3, "spacing": 95, "radius": 105, "height": 130, "life": 2.6 },
-          { "id": "overflow", "warn": 1, "strike": 2.2, "recover": 1.6, "damage": 26, "stun": 0.8, "radius": 95, "height": 70, "speed": 420, "burstHeight": 170 },
+          { "id": "overflow", "warn": 1, "strike": 2.2, "recover": 1.6, "air": true, "damage": 26, "stun": 0.8, "radius": 95, "height": 70, "speed": 420, "burstHeight": 170 },
           { "id": "overwrite", "warn": 1.5, "lock": 0.4, "strike": 0.2, "recover": 1.7, "air": true, "damage": 17, "count": 3, "radius": 44, "delay": 0.34 },
           { "id": "tear", "warn": 1, "strike": 1.4, "recover": 1.8, "maxRange": 620, "damage": 22, "radius": 46, "height": 120, "spacing": 380 }
         ],
@@ -1123,7 +1123,7 @@
             "goalEn": "Chapter 2's last battle: bubble and wall slimes, then the Zip Slime, small and quick, swelling as it loses HP. This stage lends the Scissors.",
             "tipVi": "Đánh hai khóa đai luân phiên mỗi 3 đòn, tổng 12 đòn; đẩy file vào thư mục cùng ký hiệu và né cây thư mục. Còn 1 HP, đánh 6 tay kéo (3 trên không, 3 dưới đất) để hạ boss. Rê chuột soi file bom; nhấc mèo né đai và đòn sát đất.",
             "tipEn": "Strike alternating belt locks every 3 hits, 12 hits total; push files into matching folders and dodge folder trees. At 1 HP, strike six pulls (three airborne, three grounded) to defeat the boss. Hover files to reveal the bomb; lift the cat over belts and floor attacks.",
-            "objective": "clear", "upgrades": true, "maxAlive": 6, "threat": 1.4, "eliteChance": 0.25, "maxMalware": 4, "newAppsFrom": 1, "rulesVersion": 11,
+            "objective": "clear", "upgrades": true, "maxAlive": 6, "threat": 1.4, "eliteChance": 0.25, "maxMalware": 4, "newAppsFrom": 1, "rulesVersion": 12,
             "unlocksSkill": "scissors", "suggestSkills": [ "scissors", "shield", "push" ],
             "keepsake": { "id": "zip_plush", "kind": "plush", "nameVi": "Thú bông Slime Nén", "nameEn": "Zip Slime plush" },
             "waves": [
@@ -1166,7 +1166,7 @@
   // older kinds: at most two kinds of link and two the cursor beats); "mutations": after each cleared boss
   // wave pick one of "offer" odd rules, held until the next boss wave is cleared, then its reward.
   "endless": {
-    "id": "endless", "rulesVersion": 19, "unlockAfter": "c1_slime_king", "upgradeEvery": 2, "bossEvery": 10, "boss": "king_c1",
+    "id": "endless", "rulesVersion": 20, "unlockAfter": "c1_slime_king", "upgradeEvery": 2, "bossEvery": 10, "boss": "king_c1",
     "bosses": [ "king_c1", "zip", "mutant_king" ],
     "lateBoss": "king", "lateBossFrom": 40, "bossBonusPick": true, "allSynergiesAt": 48,
     "eliteChancePerWave": 0.007, "eliteChanceMax": 0.45, "moreElitesEvery": 20, "moreElitesMax": 2,
@@ -1380,7 +1380,7 @@
     "routes": [
       {
         "id": "dump_trail", "nameVi": "Lối Bãi rác", "nameEn": "The Dump Trail",
-        "rulesVersion": 12, "keepRuns": [ 1, 2, 3, 4 ], "unlockAfter": "c2_zip_slime", "scene": "dump",
+        "rulesVersion": 13, "keepRuns": [ 1, 2, 3, 4 ], "unlockAfter": "c2_zip_slime", "scene": "dump",
         "kindGacha": { "steps": 6, "minLanes": 2, "maxLanes": 3, "weights": { "fight": 45, "event": 18, "elite": 20, "rest": 12, "shop": 14 }, "rerollCost": 0.08 },
         "zones": [
           { "id": "swamp", "nameVi": "Đầm nhầy", "nameEn": "Slime swamp", "steps": 2, "fights": [ "y_puddles", "y_ice_pond", "y_split_bog" ], "elites": [ "y_mother_nest" ] },

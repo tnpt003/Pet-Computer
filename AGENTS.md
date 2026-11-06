@@ -71,6 +71,8 @@ Ngoại lệ nào có link tới docs/APPROVED-EXCEPTIONS.md: trước khi sửa
 
 - Bổ sung đã duyệt #61: ZIP lăn3 lượt nhắm lại giữa lượt; Vua ngoài chương1 gọi3 đội hình/buff2 mục tiêu. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Battle Mode.
 
+- Bổ sung đã duyệt #62: Tràn bộ nhớ ZIP toàn chiều cao, hành lang190 DIP lệch vị trí mèo, boss rút ngoài tầm đánh từ hành lang. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Battle Mode.
+
 ## File quan trọng
 README.md, docs/AI.md, docs/WINDOWS.md, src/DesktopPet/ (App.xaml.cs, PetWindow*.cs, PetModel.cs, PetRenderer.cs, PetPreferences.cs, PetSounds.cs, AI/), ai/, tests/DesktopPet.Tests/, tests/DesktopPet.UiChecks/, scripts/.
 

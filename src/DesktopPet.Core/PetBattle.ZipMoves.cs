@@ -63,6 +63,7 @@ public sealed partial class BattleSim
         bool Fits(ZipAct act)
         {
             if (zip.Move(act) is not ZipMoveSpec m) return false;
+            if (act == ZipAct.Overflow && !TryOverflowLayout(boss, m, CatCentre().X, out _, out _)) return false;
             double far = Math.Abs(dx);
             return far >= m.MinRange && far <= m.MaxRange && (m.Air || !CatOffFloor);
         }
@@ -118,8 +119,9 @@ public sealed partial class BattleSim
             case ZipAct.Tumble: BeginTumble(boss); break;
             case ZipAct.Tree: PlantTree(boss, m); break;
             case ZipAct.Overflow:
-                double room = m.Radius + 40;
-                boss.ZipAimX = Math.Clamp(boss.ZipAimX, Left + room, Math.Max(Left + room, Right - room));
+                TryOverflowLayout(boss, m, catX, out double gap, out double goal, choose: true);
+                boss.ZipAimX = gap;
+                boss.ZipOverflowGoal = goal;
                 break;
         }
     }
@@ -168,12 +170,19 @@ public sealed partial class BattleSim
     {
         if (boss.ZipAct == ZipAct.None) return false;
         if (boss.Shielded || boss.State == SlimeState.Stunned || boss.Handled) { EndZipAct(boss); return false; }
+        var m = zip.Move(boss.ZipAct)!;
+        if (boss.ZipAct == ZipAct.Overflow && !OverflowLayoutStillFits(boss, m))
+        { EndZipAct(boss); return false; }
+        if (boss.ZipAct == ZipAct.Overflow && boss.ZipBeat is ZipBeat.Lock or ZipBeat.Strike)
+        {
+            boss.X = boss.ZipOverflowGoal;
+            boss.KnockVelocity = 0;
+        }
         if (boss.ZipAct == ZipAct.Tumble)
         {
             if (!boss.Rolling) EndZipAct(boss);
             return false; // The roll's own states (StepRoll) carry it.
         }
-        var m = zip.Move(boss.ZipAct)!;
         boss.ZipLeft = Math.Max(0, boss.ZipLeft - dt * boss.ChillFactor);
         double done = boss.ZipSeconds > 0 ? 1 - boss.ZipLeft / boss.ZipSeconds : 1;
         if (boss.ZipBeat == ZipBeat.Warn) WarnBeat(boss, m, done);
@@ -231,11 +240,15 @@ public sealed partial class BattleSim
         switch (m.Act)
         {
             case ZipAct.Clamp:
-            case ZipAct.Overflow:
                 // It slides to the marked spot, in the first part of the warning.
                 var (minX, maxX) = Bounds(boss);
                 double to = Math.Clamp(boss.ZipAimX, minX, maxX), most = m.Speed * boss.ZipSeconds * Math.Min(1, done * 2);
                 boss.X = boss.ZipFrom + Math.Clamp(to - boss.ZipFrom, -most, most);
+                break;
+            case ZipAct.Overflow:
+                boss.X = boss.ZipFrom + (boss.ZipOverflowGoal - boss.ZipFrom) * Math.Min(1, done * 2);
+                boss.Facing = boss.ZipAimX < boss.X ? -1 : 1;
+                boss.KnockVelocity = 0;
                 break;
             case ZipAct.Bolt:
                 boss.ZipAimX = catX; boss.ZipAimHeight = catH; // Follows until the lock.
@@ -297,7 +310,7 @@ public sealed partial class BattleSim
             case ZipAct.Overflow:
                 boss.ZipTear = Math.Clamp(done, 0, 1);
                 var (l, r) = OverflowEdges(boss, m, boss.ZipTear);
-                if ((boss.ZipHitMask & 1) == 0 && (CatInVolume(Left, l, 0, m.Height) || CatInVolume(r, Right, 0, m.Height)))
+                if ((boss.ZipHitMask & 1) == 0 && (CatInVolume(Left, l, 0, SkyHeight) || CatInVolume(r, Right, 0, SkyHeight)))
                 {
                     boss.ZipHitMask |= 1;
                     ZipHit(boss, m.Damage * 0.5, 0);
@@ -329,10 +342,8 @@ public sealed partial class BattleSim
         if (m.Act != ZipAct.Overflow) { boss.ZipTear = 0; return; }
         // The burst: all the floor outside the gap at once, up to the top of the strip.
         var (l, r) = OverflowEdges(boss, m, 1);
-        AddZipEffect(ZipVisual.Overflow, (Left + l) / 2, 0, Math.Max(10, (l - Left) / 2));
-        AddZipEffect(ZipVisual.Overflow, (r + Right) / 2, 0, Math.Max(10, (Right - r) / 2));
-        boss.ZipTear = 0;
-        if (CatInVolume(Left, l, 0, m.BurstHeight) || CatInVolume(r, Right, 0, m.BurstHeight)) ZipHit(boss, m.Damage, m.Stun);
+        boss.ZipTear = 1;
+        if (CatInVolume(Left, l, 0, SkyHeight) || CatInVolume(r, Right, 0, SkyHeight)) ZipHit(boss, m.Damage, m.Stun);
     }
 
     // The spilling edges' reach after `share` of the way: the safe gap stays round the marked spot.

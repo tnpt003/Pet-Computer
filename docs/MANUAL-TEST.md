@@ -1114,3 +1114,11 @@ Các mục 1.5 phía trên viết theo từng mốc; đây là thứ tự chơi 
 - [ ] Hai đường buff chỉ hai mục tiêu khác nhau; hạ một khi gồng thì chọn bù, còn một thì chỉ buff một; đẩy/choáng ngắt cả hai, Pause đứng cả đường/timer. Crown links Vua biến dị giữ luật cắt/nhịp cũ.
 - [ ] Bossking_c1 chương1 vẫn ba phase gọi quân cũ và một mục tiêu buff; sleep/wake/drag/throw/emotion/local fallback ngoài trận giữ nguyên.
 - [ ] Cân bằng: Cuộn len Bãi rác tham lam Normal đang19/40 <20, cần duyệt chơi thử hoặc chỉnh kế hoạch; không coi mốc đã cân bằng/publish.
+
+## Issue #62 — Tràn bộ nhớ không còn đứng trong gap đánh boss (06/11)
+
+- [ ] Phase3: boss rút ngoài hành lang/tầm Kiếm/Búa/Len/Găng trong gồng, đứng ngoài khi giấy tràn; không có miễn damage mới. Hành lang rộng190 DIP chọn lệch khỏi vị trí ban đầu, chốt từ lúc báo, rõ cả khi ở cao.
+- [ ] Đứng sàn/bế/bounce ngoài gap đều trúng đúng vùng đã tràn; bế cao tại chỗ không né được, phải chuyển ngang vào gap. Trong gap không dính; bế/bay trúng không tuột tay/đổi vận tốc/choáng. Nhịp/damage giữ nguyên.
+- [ ] Xem gồng/tràn/bung/fade và gốc phát file từ boss trên nền sáng/tối/màu, màn thấp/DPI100–200%/hai màn có gốc âm. Không nhân đôi sàn/sky, không che hoặc chặn chuột trong gap. Màn hẹp không chọn đòn không thể bố trí; đổi màn giữa đòn không hit trễ.
+- [ ] Pause/menu/fullscreen đóng băng; choáng/bước vào mech hủy đòn. Các đòn khác, sleep/wake/drag/throw/emotion/local fallback giữ luật.
+- [ ] Bản chơi thử: Cuộn len Bãi rác tham lam Normal đang16/40 <20; chưa nghiệm thu cân bằng. Perf overlay thực tế còn cần xem tay.

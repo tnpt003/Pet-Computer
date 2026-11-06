@@ -24,9 +24,9 @@ internal static class BattleZipMoveTests
         RopeCutSpeed = ShippedZip.RopeCutSpeed, RopeCutStun = ShippedZip.RopeCutStun, Roll = ShippedZip.Roll, Zip = zip, Phases = ShippedZip.Phases!.Select((p, i) => i == 1 ? new BossPhase { At = p.At, Shield = true, Roped = true, Summons = p.Summons } : p).ToArray()
     };
 
-    private static BattleSettings Settings(EnemyType boss, double weapon = 0, double? swingCooldown = null, double rageGain = 0) => new()
+    private static BattleSettings Settings(EnemyType boss, double weapon = 0, double? swingCooldown = null, double rageGain = 0, WeaponSpec? gear = null) => new()
     {
-        Weapons = new[] { Shipped.Weapon("sword") with { Range = 60, StunChance = 0, Damage = weapon, AttackCooldown = swingCooldown ?? Shipped.Weapon("sword").AttackCooldown } }, FirstWaveDelay = 0, SpawnInterval = 0.05,
+        Weapons = new[] { gear ?? Shipped.Weapon("sword") with { Range = 60, StunChance = 0, Damage = weapon, AttackCooldown = swingCooldown ?? Shipped.Weapon("sword").AttackCooldown } }, FirstWaveDelay = 0, SpawnInterval = 0.05,
         CatMaxHp = 1000, MaxAlive = 8, RageHitGain = rageGain, ScissorsCooldown = 0.1, RageAuto = false,
         Enemies = new[] { boss, Shipped.Enemy("zip_packet") }, Formations = Array.Empty<FormationSpec>(),
         Plan = new[] { new WaveSpec { Groups = new[] { new WaveGroup { Enemy = "zip", Count = 1 } } } }
@@ -34,9 +34,9 @@ internal static class BattleZipMoveTests
 
     private static readonly BattleSkill[] Tools = { BattleSkill.Push, BattleSkill.Heal, BattleSkill.Bomb, BattleSkill.Scissors, BattleSkill.Shield };
 
-    private static (BattleSim Sim, Slime Boss) Field(int stage = 0, ZipSpec? zip = null, double bossX = 800, double catX = 500, int seed = 4, double weapon = 0, double damage = 20, double? swingCooldown = null, double rageGain = 0)
+    private static (BattleSim Sim, Slime Boss) Field(int stage = 0, ZipSpec? zip = null, double bossX = 800, double catX = 500, int seed = 4, double weapon = 0, double damage = 20, double? swingCooldown = null, double rageGain = 0, WeaponSpec? gear = null, double width = 2000)
     {
-        var sim = new BattleSim(Settings(Boss(zip ?? Calm, damage), weapon, swingCooldown, rageGain), 0, 2000, seed: seed, skills: Tools, startHp: 900);
+        var sim = new BattleSim(Settings(Boss(zip ?? Calm, damage), weapon, swingCooldown, rageGain, gear), 0, width, seed: seed, skills: Tools, startHp: 900);
         for (int i = 0; i < 600 && !sim.Slimes.Any(s => s.IsBoss && s.Targetable); i++) sim.Step(dt, catX, false);
         var boss = sim.Slimes.Single(s => s.IsBoss);
         boss.X = bossX;
@@ -81,6 +81,7 @@ internal static class BattleZipMoveTests
         Phase1(check);
         Phase2(check);
         Phase3(check);
+        OverflowSafetyChecks(check);
         HandChecks(check);
         PaperBodyChecks(check);
         SelfLockChecks(check);
@@ -296,6 +297,60 @@ internal static class BattleZipMoveTests
         check(sim.ZipPacketBlasts == 1 && sim.CatHp == hp, "Out of its ring the cat is safe");
     }
 
+    private static void OverflowSafetyChecks(Action<bool, string> check)
+    {
+        var move = M(ZipAct.Overflow);
+        foreach (string weapon in new[] { "sword", "hammer", "yarn", "glove" })
+        foreach (double start in new[] { 400.0, 900, 1600 })
+        {
+            var gear = Shipped.Weapon(weapon) with { Damage = 0, StunChance = 0 };
+            var (sim, boss) = Field(2, bossX: start, catX: 900, gear: gear);
+            check(Start(sim, boss, ZipAct.Overflow, 900), $"{weapon}: overflow can lay out a reachable retreat");
+            double gap = boss.ZipAimX;
+            check(Math.Abs(gap - 900) > move.Radius + BattleSim.CatHalfWidth,
+                "The announced corridor requires moving sideways; lifting vertically in place is not a dodge");
+            Run(sim, move.Warn + 0.1, gap);
+            double actualReach = gear.Range + (boss.HitWidth - sim.Settings.SlimeWidth) / 2 + 14;
+            check(boss.ZipBeat == ZipBeat.Strike && Math.Abs(boss.X - gap) - move.Radius > actualReach,
+                $"{weapon}: every point in the safe corridor is beyond actual weapon contact range");
+            double destination = boss.X;
+            Run(sim, 0.2, gap);
+            check(boss.X == destination && boss.ZipAimX == gap, "Channeling holds the announced boss position and safe corridor");
+        }
+        for (int state = 0; state < 3; state++)
+        {
+            var (sim, boss) = Field(2, bossX: 1000, catX: 900);
+            Start(sim, boss, ZipAct.Overflow, 900);
+            double hp = sim.CatHp, gap = boss.ZipAimX;
+            Run(sim, Whole(move) + 0.1, gap + move.Radius + 60, state == 0 ? null : sim.SkyHeight - 25, state == 2);
+            check(sim.CatHp < hp && (state == 0 || !sim.CatStunned), $"Overflow covers the full screen height for pose{state}; air hits preserve no-stun rules");
+            (sim, boss) = Field(2, bossX: 1000, catX: 900);
+            Start(sim, boss, ZipAct.Overflow, 900);
+            hp = sim.CatHp;
+            Run(sim, Whole(move) + 0.1, boss.ZipAimX, state == 0 ? null : sim.SkyHeight - 25, state == 2);
+            check(sim.CatHp == hp, $"The same full-height corridor stays safe for pose{state}");
+        }
+        var (mapped, owner) = Field(2, bossX: 900, catX: 900);
+        Start(mapped, owner, ZipAct.Overflow, 900);
+        Run(mapped, 0.2, 900);
+        mapped.Paused = true;
+        double warning = owner.ZipLeft, aim = owner.ZipAimX, goal = owner.ZipOverflowGoal;
+        mapped.SetArea(-2000, 0);
+        Run(mapped, 1, aim - 2000);
+        check(owner.ZipLeft == warning && owner.ZipAimX == aim - 2000 && owner.ZipOverflowGoal == goal - 2000,
+            "Negative monitor origin maps the corridor and retreat together without advancing a paused warning");
+        mapped.Paused = false;
+        Run(mapped, move.Warn + 0.1, owner.ZipAimX);
+        check(Math.Abs(owner.X - owner.ZipAimX) - move.Radius > 80, "Mapped overflow finishes retreat on the correct monitor");
+        double beforeResize = mapped.CatHp;
+        mapped.SetArea(-400, 0);
+        One(mapped, -200);
+        check(owner.ZipAct != ZipAct.Overflow && mapped.CatHp == beforeResize,
+            "Shrinking an active corridor below its required clearance cancels it without a late hit");
+        var (small, smallBoss) = Field(2, bossX: 200, catX: 200, width: 400);
+        check(!Start(small, smallBoss, ZipAct.Overflow, 200), "A screen too narrow for a 190-DIP corridor and weapon clearance never selects overflow");
+    }
+
     private static void Phase3(Action<bool, string> check)
     {
         // Overflow: the gap around the marked spot stays safe; outside it, no way but up.
@@ -315,7 +370,7 @@ internal static class BattleZipMoveTests
         Start(sim, boss, ZipAct.Overflow, 900);
         hp = sim.CatHp;
         Run(sim, Whole(flow) + 0.2, boss.ZipAimX + flow.Radius + 60, flow.BurstHeight + 40);
-        check(sim.CatHp == hp, "Lifted over the burst it is safe too");
+        check(sim.CatHp < hp && !sim.CatStunned, "Full-height overflow hits a lifted cat outside the gap without stunning it");
 
         // Overwrite: three marks of where the cat was; they stay.
         var write = M(ZipAct.Overwrite);

@@ -14,9 +14,11 @@ Quy ước file này: chỉ giữ trạng thái hiện tại, các đợt đang 
 
 ## Đang dở và việc tiếp theo
 
-- **ZIP lăn3/Vua đội hình (#61):** commitbeecc78 theo duyệt, king/mutant gọi3 đội hình/buff2, king_c1 giữ nguyên; HP không đổi, recordsZIP11/Endless19/Bãi rác12, tuyến chính8. Core1013/WPF1450/Python58+5 đạt; full3630 đạt/9 FAIL kỳ vọng cũ và cân bằng, đã sửa kỳ vọng/dịch. Cân bằng cuối547 đạt/1 FAIL: Len Bãi rác tham lam19/40 <20; chưa publish, mèo vẫn9fcbed2. Cần duyệt chơi thử dù FAIL hoặc kế hoạch cân lại; không nới ngưỡng. Chi tiết Issue_fixxed #61/BALANCE-ZIP, test tay MANUAL-TEST #61; chưa chơi thật/DPI/perf bản mới.
+- **Tràn bộ nhớ ZIP (#62):** code theo duyệt, boss rút ngoài gap/tầm vũ khí, gap190 DIP lệch mèo, giấy toàn chiều cao; resize thiếu chỗ hủy, không chỉ bế cao để né. Python58+5, WPF1454 đạt; full C#3686 đạt/2 FAIL, careful bot đã biết bế ngang; kiểm lại780 đạt/1 FAIL Len Bãi rác tham lam16/40 <20. Giữ HP1100/nhịp/damage/ngưỡng; records12/20/13, main8. Đang commit/publish bản chơi thử theo yêu cầu, gộp #61. Chi tiết Issue_fixxed #62/BALANCE-ZIP; test tay MANUAL-TEST #62; chưa chơi thật/DPI/perf bản mới.
 
-- **Phạt mech cuối ZIP (#60):** publish9fcbed2, smoke3/3, mở lại mèo; nổ80%max HP/rơi không nảy/stun5 sau đáp/reset6 tay. ZIP436/WPF1448, cùng bot mới cân bằng293 đạt; full3510 đạt/3 FAIL bot cũ đã xử lý. Chi tiết Issue_fixxed #60/BALANCE-ZIP; crowd-late48,6 FPS còn profile, chưa đo burst/chơi thật/DPI.
+- **ZIP lăn3/Vua đội hình (#61):** codebeecc78, core1013/WPF1450/Python58+5 đạt, cân bằng547 đạt/1 FAIL Len19/40. Người dùng đã yêu cầu gộp publish cùng #62; luật/tài liệu Issue_fixxed #61, test tay MANUAL-TEST #61. king_c1 giữ nguyên; chưa chơi thật/DPI.
+
+- **Bom cuối ZIP (#60):** publish9fcbed2/smoke3/3; 80%maxHP/rơi không nảy/stun5 sau đáp/reset6 tay. ZIP436/WPF1448/cân bằng cùng bot293 đạt; full3 FAIL cũ đã xử lý. Chi tiết Issue_fixxed #60; crowd-late48,6 FPS cần profile, chưa đo burst thật.
 
 - **Cây/đẩy ZIP (#59):** publish048862f, smoke3/3; cây toàn chiều cao, đẩy5/12 s. WPF1439/core liên quan562+Tooling24 đạt,6 FAIL full đã xử lý. Chi tiết Issue_fixxed #59, test tay MANUAL-TEST #59/DPI.
 

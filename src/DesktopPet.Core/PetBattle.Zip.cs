@@ -69,6 +69,12 @@ public sealed partial class BattleSim
         // A stun cut its riddle's roll short: that roll is over (the next one starts from here).
         if (boss.PressRolling && !boss.Rolling) boss.PressRolling = false;
         boss.ZipIdle += dt;
+        if (boss.ZipAct == ZipAct.Tumble && boss.Rolling && boss.State == SlimeState.Windup)
+        {
+            AimZipRoll(boss, lastCatX);
+            boss.ZipSeconds = ZipWindup(boss);
+            boss.ZipLeft = Math.Max(0, boss.ZipSeconds - boss.StateTime);
+        }
         TickZipDebuff(boss, zip, dt);
         StepZipRepulse(boss, dt);
 
@@ -177,14 +183,11 @@ public sealed partial class BattleSim
             else AddEffect(BattleEffectKind.Thud, catX, 0);
             HurtCat(boss, catX, true, Share(boss, roll.Damage), roll.Stun, crush: true);
         }
-        if (boss.DashLeft <= 0 && !Over && boss.RollBack)
+        if (boss.DashLeft <= 0 && !Over && boss.ZipAct == ZipAct.Tumble && boss.ZipCount < 3)
         {
-            // Back once along the same floor, after a beat on the spot: its lane shows again.
-            boss.RollBack = false;
+            boss.ZipCount++;
             boss.RollBounce = true;
-            boss.DashDirection = boss.Facing = -boss.DashDirection;
-            boss.RollDistance = Math.Abs(boss.X - boss.ZipFrom);
-            boss.RollGoal = boss.ZipFrom;
+            AimZipRoll(boss, catX);
             boss.Set(SlimeState.Windup);
             boss.Rolling = true;
             lastWindup = Time;

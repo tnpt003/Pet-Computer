@@ -108,6 +108,8 @@ public sealed class EnemyType
     // crown glows RallyCharge s, then one helper of the phase that is not elite (drawn at random) becomes elite
     // for good: its kind's own affix (if any), RallyHp more max HP (and that much HP) and its hits ×
     // RallyDamage. Pushing the boss while its crown glows cancels the call.
+    public bool KingFormations { get; init; }
+    public int RallyTargets { get; init; } = 1;
     public double RallyEvery { get; init; }
     public double RallyCharge { get; init; } = 0.8;
     public double RallyHp { get; init; } = 0.5;
@@ -1604,6 +1606,11 @@ public static class BattleData
                 Within(e.FarHealWindup, 0.2, 5, at + ".farHealWindup"); Within(e.FarHealCooldown, 1, 60, at + ".farHealCooldown");
             }
             Within(e.TurnSeconds, 0, 3, at + ".turnSeconds");
+            if (e.RallyTargets is < 1 or > 2) throw new InvalidDataException(at + ".rallyTargets must be 1–2");
+            if (e.KingFormations && (!e.Boss || e.Phases?.Any(p => p.Shield) != true || e.SummonCap < 10)) throw new InvalidDataException(at + ".kingFormations needs boss shield phases and summonCap10");
+            if (e.RallyTargets > 1 && e.RallyEvery <= 0) throw new InvalidDataException(at + ".rallyTargets needs a rally call");
+            if (e.KingFormations && !BattleSim.KingFormationSets.Any(set => set.All(id => s.Formation(id) is { } formation && formation.Members.All(member => !s.Enemy(member).Boss && s.Enemy(member).Clock == null))
+                && set.Sum(id => s.Formation(id)!.Members.Count()) <= e.SummonCap)) throw new InvalidDataException(at + ".kingFormations needs one complete safe formation bundle");
             Within(e.RallyEvery, 0, 60, at + ".rallyEvery");
             if (e.RallyEvery > 0)
             {

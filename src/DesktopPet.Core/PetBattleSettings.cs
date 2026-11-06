@@ -535,7 +535,8 @@ public sealed class Slime
     public List<(string Kind, double X)>? CallSpots;
     public double SummonWarn;
     // The helper its rally call is going to (chosen when the crown starts to glow).
-    public int RallyTargetId;
+    public int RallyTargetId, RallyTargetId2;
+    public string[]? KingFormationIds;
     // A support's heals scale like the HP of what it heals (difficulty × threat; 1 at Normal, threat 1).
     public double HealPower = 1;
     // HealGuard: this one is being healed and takes no damage (set by the battle each frame); when it

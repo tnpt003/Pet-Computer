@@ -191,11 +191,26 @@ internal static class BattleZipMoveTests
             back |= boss.RollBounce;
             sim.ClearEvents();
             if (sim.CatStunRemaining > 0) sim.CatHp.Equals(0);
-            if (rolls == 2 && !boss.Rolling) break;
+            if (rolls == 3 && !boss.Rolling) break;
         }
-        check(rolls == 2 && back, "The tumble rolls over and bounces back once");
-        check(Math.Abs(boss.X - 800) < 2, "It ends where it started");
+        check(rolls == 3 && back, "The tumble performs three separately warned rolls");
+        check(Math.Abs(boss.X - 800) > 100, "The third roll is not locked to the original return point");
         check(sim.CatHp < hp, "A cat on the floor in its way is hit");
+        (sim, boss) = Field(0, bossX: 800, catX: 500);
+        boss.ZipBag.Clear(); boss.ZipBag.Add(ZipAct.Tumble); boss.ZipLast = ZipAct.None;
+        for (int i = 0; i < 400 && boss.ZipCount < 2; i++) Run(sim, dt, 480);
+        check(boss.Rolling && boss.ZipCount == 2 && boss.State == SlimeState.Windup, "Second pursuit has its own warning");
+        Run(sim, 0.1, 100);
+        check(Math.Abs(boss.ZipSeconds - 0.6) < 0.001 && boss.ZipLeft < boss.ZipSeconds && boss.ZipLeft > 0,
+            "Published pursuit warning clock follows the actual 0.6-second windup");
+        check(boss.DashDirection == -1 && boss.RollGoal < boss.X, "A cat behind the boss changes the next roll direction during warning");
+        double goal = boss.RollGoal;
+        sim.Paused = true; Run(sim, 1, 1400); sim.Paused = false;
+        check(boss.RollGoal == goal && boss.State == SlimeState.Windup, "Pause freezes pursuit aim and warning");
+        for (int i = 0; i < 60 && boss.State != SlimeState.Dashing; i++) Run(sim, dt, 100);
+        goal = boss.RollGoal;
+        Run(sim, dt, 1400);
+        check(boss.State == SlimeState.Dashing && boss.RollGoal == goal && boss.DashDirection == -1, "Committed roll never turns mid-dash when the cat switches sides");
     }
 
     private static void Phase2(Action<bool, string> check)

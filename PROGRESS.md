@@ -14,14 +14,16 @@ Quy ước file này: chỉ giữ trạng thái hiện tại, các đợt đang 
 
 ## Đang dở và việc tiếp theo
 
-- **Phạt mech cuối ZIP (#60):** code theo duyệt, nổ toàn sân80% max HP cơ sở, bế/ném/bounce trúng rơi không nảy rồi stun5 s sau đáp; sống thì reset6 tay/gồng14 s. HP1100, records10/18/11. Python58+5, full C#3510 đạt/3 FAIL bot cũ đã xử lý; cùng bot mới baseline048862f và #60 đạt ngưỡng (293 check). ZIP436/WPF1448 đạt; chi tiết docs/BALANCE-ZIP-2026-11-06.md. Đã xem render sáng/tối, chưa chơi thật/DPI/multi-monitor; test tay MANUAL-TEST #60. Đã publish9fcbed2, smoke3/3 PASS, mở lại mèo; crowd-late19 s median48,6 FPS, còn profile, chưa đo burst thật.
+- **ZIP lăn3/Vua đội hình (#61):** code theo duyệt, king/mutant gọi3 đội hình/buff2, king_c1 giữ nguyên; HP không đổi, recordsZIP11/Endless19/Bãi rác12, tuyến chính8. Core1013/WPF1450/Python58+5 đạt; full3630 đạt/9 FAIL kỳ vọng cũ và cân bằng, đã sửa kỳ vọng/dịch. Cân bằng cuối547 đạt/1 FAIL: Len Bãi rác tham lam19/40 <20; chưa publish, mèo vẫn9fcbed2. Cần duyệt chơi thử dù FAIL hoặc kế hoạch cân lại; không nới ngưỡng. Chi tiết Issue_fixxed #61/BALANCE-ZIP, test tay MANUAL-TEST #61; chưa chơi thật/DPI/perf bản mới.
 
-- **Cây mech cuối/đẩy riêng Slime Nén (#59):** publish048862f, smoke3/3, mở lại mèo; cây toàn chiều cao, đẩy5/12 s. Python58+5, WPF1439, suite liên quan562+Tooling24 đạt; full có6 FAIL test/môi trường đã xử lý. Chi tiết Issue_fixxed #59, test tay MANUAL-TEST #59; chưa chơi thật/DPI/multi-monitor.
+- **Phạt mech cuối ZIP (#60):** publish9fcbed2, smoke3/3, mở lại mèo; nổ80%max HP/rơi không nảy/stun5 sau đáp/reset6 tay. ZIP436/WPF1448, cùng bot mới cân bằng293 đạt; full3510 đạt/3 FAIL bot cũ đã xử lý. Chi tiết Issue_fixxed #60/BALANCE-ZIP; crowd-late48,6 FPS còn profile, chưa đo burst/chơi thật/DPI.
 
-- **Đai quét/tự phá Khóa ZIP (#58):** publish 3b3682a, smoke 3/3, mở lại mèo. Đai di chuyển/damage tiếp xúc, mèo tự phá khóa không cần quái; C#3467, Python58+5, WPF1437, ZIP cuối392 đạt. Chi tiết Issue_fixxed #58, docs/ZIP-SLIME.md; còn test tay MANUAL-TEST #58/DPI/multi-monitor.
+- **Cây/đẩy ZIP (#59):** publish048862f, smoke3/3; cây toàn chiều cao, đẩy5/12 s. WPF1439/core liên quan562+Tooling24 đạt,6 FAIL full đã xử lý. Chi tiết Issue_fixxed #59, test tay MANUAL-TEST #59/DPI.
+
+- **Đai/Khóa ZIP (#58):** publish3b3682a, smoke3/3; đai damage tiếp xúc, tự phá khóa không cần quái. C#3467/Python58+5/WPF1437/ZIP392 đạt. Chi tiết Issue_fixxed #58; test tay MANUAL-TEST #58/DPI.
 
 
-- **Slime Nén sửa lỗi sau test (#57):** đã sửa file/đích random theo làn tránh boss và mép; dọn bom/giấy thường khi vào mech, `ClearPackets` không xóa file mech. Giấy bám có giới hạn quay, quét toàn thân cả bế/rơi/bounce; hiệu ứng ZIP riêng mỗi đòn. HP 1100, records c2_zip_slime 7 / Vô tận 15 / Bãi rác 8. C# đầy đủ 3451, Python 58 + 5, WPF 1433 đạt; ZIP/slime bay cuối 432 đạt, cân bằng đo lại 293 đạt (Kiếm Bãi rác tham lam 20/40 sát ngưỡng). Đã xem render, commit/publish sạch 57c3055, smoke 3/3 PASS, mở lại mèo. ZIP artifacts/DesktopPet-1.4.4-57c3055-win-x64.zip. Đối chứng: docs/BALANCE-ZIP-2026-11-06.md. Test tay MANUAL-TEST mục #57; chưa chơi trận thật/DPI/multi-monitor.
+- **ZIP sau test (#57):** publish57c3055, smoke3/3, mở lại mèo. File mech tránh boss/mép và bom; giấy bám toàn thân bế/bay, hiệu ứng riêng. C#3451/Python58+5/WPF1433, ZIP432/cân bằng293 đạt. Chi tiết Issue_fixxed #57/BALANCE-ZIP; còn chơi thật/DPI theo MANUAL-TEST #57.
 
 
 - **Slime Nén sau chơi thử 06/11 (Issue #56):** đã publish bản thử HP 1100 theo yêu cầu trực tiếp của người dùng dù còn 3 ngưỡng cân bằng FAIL (Cuộn len boss Normal 72% <80%; Bãi rác tham lam Kiếm 15/40, Cuộn len 13/40 <20/40). Source 8cd669f (code 29d83ab), C# 3246 đạt/3 FAIL cân bằng, Python 58 + 5 đạt, WPF 1431 đạt; smoke 3/3 PASS, đã mở lại mèo. ZIP: artifacts/DesktopPet-1.4.4-8cd669f-win-x64.zip. Luật mech/khóa/đòn mới: docs/ZIP-SLIME.md; đối chứng và thử HP 1000 không đạt: docs/BALANCE-ZIP-2026-11-06.md. Kỷ lục c2_zip_slime 6, Vô tận 14, Bãi rác 7. Đã xem render sáng/tối; chưa chơi trận thật/DPI/multi-monitor. Test tay MANUAL-TEST mục Issue #56; còn phân tích seed thua theo màn/mech để cân lại, không nới ngưỡng test.

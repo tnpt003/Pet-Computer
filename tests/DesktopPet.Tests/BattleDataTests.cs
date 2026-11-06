@@ -32,6 +32,11 @@ internal static class BattleDataTests
         differences.RemoveAll(d => buffed.Keys.Any(k => d.StartsWith(k + ".MaxHp:") || d.StartsWith(k + ".Damage:")));
         // 2026-10-24: the shipped King's slam deals less than its damage (slamDamage 22).
         differences.RemoveAll(d => d == "king.SlamDamage: 22 vs 0");
+        // #61: the shipped later King has shield formations and two-target rallies; the tiny fallback stays basic.
+        var laterKingFields = new[] { "KingFormations", "RallyTargets", "SummonCap", "RallyEvery", "ShieldBreakStun", "RetreatLeap", "SummonWarning", "SummonAt", "SummonCount", "SummonType" };
+        differences.RemoveAll(d => laterKingFields.Any(field => d.StartsWith("king." + field + ":")));
+        check(shipped.Enemy("king") is { KingFormations: true, RallyTargets: 2, SummonCap: 10, Phases.Length: 3 }
+            && shipped.Enemy("king_c1") is { KingFormations: false, RallyTargets: 1, SummonCap: 4 }, "Only later shipped kings opt into advanced formations and double rallies");
         // 1.5 M27: the Monster Book's tips are words in battle.json only, not battle numbers.
         differences.RemoveAll(d => d.Contains(".TipVi:") || d.Contains(".TipEn:"));
         foreach (var (id, (hp, damage)) in buffed)

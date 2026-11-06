@@ -16,9 +16,10 @@ public sealed partial class BattleSim
         boss.RetreatSide = RetreatEdge(boss.X, lastCatX);
         boss.Crouch = boss.LeapHeight = 0;
         boss.LeapFromX = boss.X;
-        boss.PendingCalls = Settings.PhaseCalls(phase).ToList();
+        boss.PendingCalls = KingPhaseCalls(boss, phase);
         boss.RallyCooldown = boss.Type.RallyEvery / 2;
         boss.RallyCharge = 0;
+        boss.RallyTargetId = boss.RallyTargetId2 = 0;
         if (boss.State is SlimeState.Windup or SlimeState.Dashing or SlimeState.Casting) boss.Set(SlimeState.Moving);
         events.Add(new(BattleEventKind.BossShielded, boss.X));
         // 2026-11-06: every riddle needs the hand, so the ZIP shell opens as one starts.
@@ -96,6 +97,15 @@ public sealed partial class BattleSim
             helper.PhaseTag = tag;
             helper.Facing = lastCatX < helper.X ? -1 : 1;
             if (phase is { Roped: true }) helper.RopedTo = boss.Id;
+        }
+        if (count > 0 && boss.KingFormationIds is { } formationIds)
+        {
+            foreach (var formationId in formationIds)
+            {
+                FormationsMet++; NoteFormation(formationId);
+                events.Add(new(BattleEventKind.FormationArrived, boss.X, Settings.FormationList.ToList().FindIndex(f => f.Id == formationId)));
+            }
+            boss.KingFormationIds = null;
         }
         if (count > 0 && phase?.Formation is string id)
         {
@@ -199,6 +209,7 @@ public sealed partial class BattleSim
         boss.Shielded = false;
         boss.ShieldTag = 0;
         boss.RallyCharge = 0;
+        boss.RallyTargetId = boss.RallyTargetId2 = 0;
         events.Add(new(BattleEventKind.BossShieldDown, boss.X));
         ZipGrow(boss); // 2026-11-05: the ropes gone, the Zip Slime swells to its next stage.
         // An opening: dazed for a moment, taking damage as usual.
@@ -214,7 +225,11 @@ public sealed partial class BattleSim
     // The rally call: every RallyEvery s the crown glows RallyCharge s (a push now cuts it short),
     // then the chosen helper becomes elite for good (MakeElite).
     private readonly List<Slime> rallyable = new();
-    private Slime? DrawRallied() => rallyable.Count == 0 ? null : rallyable[rallyRandom.Next(rallyable.Count)];
+    private Slime? DrawRallied()
+    {
+        rallyable.RemoveAll(s => s.Elite != null || !s.Targetable);
+        return rallyable.Count == 0 ? null : rallyable[rallyRandom.Next(rallyable.Count)];
+    }
     private void StepRally(Slime boss, double dt)
     {
         Slime? helper = null;
@@ -222,17 +237,19 @@ public sealed partial class BattleSim
         if (type.RallyEvery <= 0) return;
         if (boss.RallyCharge > 0)
         {
-            if (boss.State == SlimeState.Stunned) { boss.RallyCharge = 0; boss.RallyTargetId = 0; boss.RallyCooldown = type.RallyEvery; return; }
+            if (boss.State == SlimeState.Stunned) { boss.RallyCharge = 0; boss.RallyTargetId = boss.RallyTargetId2 = 0; boss.RallyCooldown = type.RallyEvery; return; }
             boss.RallyCharge = Math.Max(0, boss.RallyCharge - dt);
             if (boss.RallyCharge > 0) return;
             boss.RallyCooldown = type.RallyEvery;
-            // The helper the glow pointed at, or another one drawn now if that one is gone.
-            helper = Find(boss.RallyTargetId) is { Targetable: true, Elite: null } chosen ? chosen : DrawRallied();
-            boss.RallyTargetId = 0;
-            if (helper == null) return;
-            MakeElite(helper, type);
-            events.Add(new(BattleEventKind.BossRallied, helper.X, helper.Id));
-            CrownLink(boss, helper); // 1.5 M18: a crowned boss ties a link to it too (PetBattle.Mutant.cs).
+            foreach (int targetId in new[] { boss.RallyTargetId, boss.RallyTargetId2 }.Take(type.RallyTargets))
+            {
+                helper = Find(targetId) is { Targetable: true, Elite: null } chosen && chosen.SummonedBy == boss.Id && chosen.PhaseTag == boss.ShieldTag ? chosen : DrawRallied();
+                if (helper == null) break;
+                MakeElite(helper, type);
+                events.Add(new(BattleEventKind.BossRallied, helper.X, helper.Id));
+                CrownLink(boss, helper);
+            }
+            boss.RallyTargetId = boss.RallyTargetId2 = 0;
             return;
         }
         boss.RallyCooldown -= dt;
@@ -240,11 +257,24 @@ public sealed partial class BattleSim
         helper = DrawRallied()!;
         boss.RallyCharge = type.RallyCharge;
         boss.RallyTargetId = helper.Id;
+        boss.RallyTargetId2 = 0;
+        if (type.RallyTargets > 1)
+        {
+            rallyable.Remove(helper);
+            boss.RallyTargetId2 = DrawRallied()?.Id ?? 0;
+        }
         events.Add(new(BattleEventKind.BossRallying, boss.X));
     }
 
     // The helper a glowing crown is about to rally (null when it is not rallying).
     public Slime? RallyTarget(Slime boss) => boss.RallyCharge > 0 ? Find(boss.RallyTargetId) : null;
+
+    public IEnumerable<Slime> RallyTargets(Slime boss)
+    {
+        if (boss.RallyCharge <= 0) yield break;
+        if (Find(boss.RallyTargetId) is Slime first) yield return first;
+        if (Find(boss.RallyTargetId2) is Slime second && second.Id != boss.RallyTargetId) yield return second;
+    }
 
     // Rallied: its kind's own elite affix if it has one (a plain one otherwise), RallyHp more max HP
     // (that much HP at once) and its hits × RallyDamage. Never counted against MaxElites.

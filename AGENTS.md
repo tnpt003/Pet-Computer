@@ -69,6 +69,8 @@ Ngoại lệ nào có link tới docs/APPROVED-EXCEPTIONS.md: trước khi sửa
 
 - Bổ sung đã duyệt #60: bom cuối Slime Nén toàn sân 80% max HP, xuyên phòng vệ thì buộc mèo bế/bay/bounce rơi không nảy và choáng 5 s sau đáp; reset 6 tay mỗi vòng thất bại. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Battle Mode.
 
+- Bổ sung đã duyệt #61: ZIP lăn3 lượt nhắm lại giữa lượt; Vua ngoài chương1 gọi3 đội hình/buff2 mục tiêu. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Battle Mode.
+
 ## File quan trọng
 README.md, docs/AI.md, docs/WINDOWS.md, src/DesktopPet/ (App.xaml.cs, PetWindow*.cs, PetModel.cs, PetRenderer.cs, PetPreferences.cs, PetSounds.cs, AI/), ai/, tests/DesktopPet.Tests/, tests/DesktopPet.UiChecks/, scripts/.
 

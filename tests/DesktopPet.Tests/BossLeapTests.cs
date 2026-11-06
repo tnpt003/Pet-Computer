@@ -181,8 +181,8 @@ internal static class BossLeapTests
         var data = BattleData.Settings;
         var king = data.Enemy("king_c1");
         var herb = data.Enemy("mender");
-        check(king is { RetreatLeap: true, LeapCrouch: 0.35, LeapSeconds: 0.9, SummonWarning: 0.6 } && !data.Enemy("king").RetreatLeap,
-            "The chapter boss leaps (0.35 s crouch, 0.9 s flight) and announces its helpers 0.6 s; the free battle's king is unchanged");
+        check(king is { RetreatLeap: true, LeapCrouch: 0.35, LeapSeconds: 0.9, SummonWarning: 0.6 } && data.Enemy("king") is { RetreatLeap: true, KingFormations: true },
+            "The chapter boss keeps its leap timing; the later King now leaps before its formation mech too");
         check(herb is { HealAmount: 35, HealCooldown: 3.15, HealWindup: 0.9, HealBudget: 210 }, "Herb slime: heals 35 every 3.15 s (0.9 s windup), 210 in all, before difficulty and threat");
         string Bad(string json)
         {
@@ -190,7 +190,7 @@ internal static class BossLeapTests
             try { BattleData.ParseWithOverride(new StreamReader(stream).ReadToEnd(), "{ \"schemaVersion\": 1, " + json + " }"); return ""; }
             catch (Exception ex) when (ex is InvalidDataException or System.Text.Json.JsonException) { return ex.Message; }
         }
-        check(Bad("\"enemies\": [ { \"id\": \"king\", \"retreatLeap\": true } ]").Contains("shield phase") && Bad("\"enemies\": [ { \"id\": \"king_c1\", \"leapSeconds\": 9 } ]").Contains("leapSeconds"),
+        check(Bad("\"enemies\": [ { \"id\": \"bad_king\", \"nameVi\": \"Bad\", \"nameEn\": \"Bad\", \"boss\": true, \"retreatLeap\": true } ]").Contains("shield phase") && Bad("\"enemies\": [ { \"id\": \"king_c1\", \"leapSeconds\": 9 } ]").Contains("leapSeconds"),
             "A leap without a shield phase, or a flight out of range, is rejected");
     }
 }

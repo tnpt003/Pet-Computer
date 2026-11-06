@@ -1106,3 +1106,11 @@ Các mục 1.5 phía trên viết theo từng mốc; đây là thứ tự chơi 
 - [ ] Bế, ném lên, ném ngang và đang bounce: mất 80% max HP trước giảm damage; tuột tay/ngừng bay ngang, rơi thẳng không nảy (kể cả đệm), đáp mới choáng 5 s/cấm nhấc. Không có ân hạn cứu hoặc Cú đáp địa chấn. Khiên/vỏ rùa/Nộ chặn; Nộ giải bất lợi.
 - [ ] Đã phá một phần tay: nổ xóa toàn bộ tay/cây cũ, sau 0,9 s sinh 6 tay mới khác vị trí theo seed, đếm lại từ 0, gồng đủ 14 s; giải đủ sáu vẫn thắng, chết không sinh thêm tay. Pause/menu/fullscreen giữ nguyên cả vụ nổ và cú rơi.
 - [ ] Ngoài vụ nổ này: drag/throw/bounce thường, sleep lock/wake/emotion priority/Python fallback giữ nguyên.
+
+## Issue #61 — lăn3 lượt và Vua gọi đội hình (06/11)
+
+- [ ] ZIP phase1: đếm đúng3 lượt, báo1,1/0,6/0,6 s; chuyển mèo qua sau boss lúc gồng thấy làn đổi hướng, khi đã lao thì không đổi giữa lượt. Nhấc cao vẫn né; chỉ một damage/lượt, hết3 mới hồi phục. Thử sát hai mép/Pause/vào mech/đẩy ngắt.
+- [ ] King và Vua biến dị: mỗi pha khiên ba đội hình phối hợp cùng xuất hiện9–10 quân sau báo; xem đủ loại/không đè mèo và không mất quân do maxAlive, trên màn hẹp/DPI. Hạ hết quân thì boss xuống khiên, không bù quân vô tận.
+- [ ] Hai đường buff chỉ hai mục tiêu khác nhau; hạ một khi gồng thì chọn bù, còn một thì chỉ buff một; đẩy/choáng ngắt cả hai, Pause đứng cả đường/timer. Crown links Vua biến dị giữ luật cắt/nhịp cũ.
+- [ ] Bossking_c1 chương1 vẫn ba phase gọi quân cũ và một mục tiêu buff; sleep/wake/drag/throw/emotion/local fallback ngoài trận giữ nguyên.
+- [ ] Cân bằng: Cuộn len Bãi rác tham lam Normal đang19/40 <20, cần duyệt chơi thử hoặc chỉnh kế hoạch; không coi mốc đã cân bằng/publish.

@@ -14,8 +14,8 @@ internal static class AdventureContentTests
         var king = data.Enemy("king");
         var chapterKing = data.Enemy("king_c1");
         check(mender is { Id: "mender", HealAmount: 35, HealBudget: 210, Marks: "leaf", FarHealBelow: 0.35 } && !mender.Boss, "battle.json has the herb slime (heals 35, at most 210 in all)");
-        check(chapterKing is { Boss: true, Phases.Length: 3, SummonCap: 4 } && chapterKing.Phases.Count(p => p.Shield) == 3 && king.Phases == null && king.SummonAt == 0.5 && king.EnrageAt == 0.3,
-            "The chapter boss has 3 phases (all shield phases); the free battle's Slime King is unchanged");
+        check(chapterKing is { Boss: true, Phases.Length: 3, SummonCap: 4, RallyTargets: 1 } && chapterKing.Phases.Count(p => p.Shield) == 3 && king is { Phases.Length: 3, KingFormations: true, RallyTargets: 2 },
+            "The chapter boss keeps three original shield phases; the later King has formation shields and double rallies");
         check(data.WavePlan.All(w => w.Groups.All(g => g.Enemy is "slime" or "runner" or "rock" or "king_c1")) && data.WavePlan[^1].Groups.Single().Enemy == "king_c1",
             "The free battle's waves call no herb slime themselves and end with the chapter boss (2026-10-24: the King of every mode)");
         check(stages[3].Waves.Skip(1).All(w => w.Groups.Any(g => g.Squad?.Any(m => m.Enemy == "mender") == true)) && stages[3].RulesVersion >= 14 &&
@@ -164,11 +164,13 @@ internal static class AdventureContentTests
         var oldKing = free.Boss!;
         oldKing.Hp = oldKing.MaxHp * 0.51;
         free.SetCatState(false, false); free.Use(BattleSkill.Bomb, oldKing.Id, 1500); Run(free, 0.7, catX: 1500);
-        check(free.Slimes.Count(s => s.SummonedBy == oldKing.Id) == 2 && !oldKing.Enraged, "The free battle's Slime King still calls two slimes at 50 % as before");
+        Run(free, 3, catX: 1500);
+        int called = free.Slimes.Count(s => s.SummonedBy == oldKing.Id);
+        check(oldKing.Shielded && called > 0 && !oldKing.Enraged, "The later King's HP threshold opens a shield phase before enrage");
         free.Paused = true;
         double hp = oldKing.Hp;
         Run(free, 2, catX: 1500);
-        check(oldKing.Hp == hp && free.Slimes.Count(s => s.SummonedBy == oldKing.Id) == 2, "Pause freezes the boss and its helpers");
+        check(oldKing.Hp == hp && free.Slimes.Count(s => s.SummonedBy == oldKing.Id) == called, "Pause freezes the boss and its helpers");
 
         // Rewards: once, on a ranked win; also for a stage won before the reward existed.
         var progress = new AdventureProgress();

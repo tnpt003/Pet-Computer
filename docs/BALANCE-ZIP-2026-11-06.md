@@ -1,6 +1,25 @@
-# Slime Nén sau chơi thử — đối chứng 06/11, Issue #56–#60
+# Slime Nén sau chơi thử — đối chứng 06/11, Issue #56–#61
 
-## Kết quả mới nhất #60 — phạt timeout toàn sân, HP 1100
+## Kết quả mới nhất #61 — lăn3 lượt/ba đội hình Vua, còn1 FAIL
+
+Baseline source9fcbed2 (`zip60-balance-verified.log`) → #61 (`m61-final-balance.log`), cùng bot/seed/build/vũ khí/đường đi/ngưỡng/HP. Runtime mới gồm ZIP lăn3 lượt, timer gồng công khai được sửa, King/mutant ba đội hình/buff2; không gán mọi chênh lệch cho riêng một thay đổi. Không đổi bot để vượt ngưỡng.
+
+| Vũ khí | Độ khó | Thắng trước → sau | Giây trước → sau | HP trước → sau |
+|---|---|---:|---:|---:|
+| sword | Normal | 60/60 → 59/60 | 133 → 132 | 77% → 78% |
+| sword | Hard | 47/60 → 48/60 | 148 → 147 | 66% → 64% |
+| hammer | Normal | 60/60 → 57/60 | 151 → 152 | 76% → 77% |
+| hammer | Hard | 46/60 → 46/60 | 176 → 173 | 70% → 66% |
+| yarn | Normal | 59/60 → 57/60 | 153 → 154 | 75% → 79% |
+| yarn | Hard | 40/60 → 38/60 | 186 → 185 | 63% → 63% |
+| glove | Normal | 60/60 → 60/60 | 125 → 124 | 84% → 84% |
+| glove | Hard | 54/60 → 55/60 | 134 → 135 | 74% → 72% |
+
+Bãi rác tham lam Normal: sword 22/40→25/40, hammer 21/40→19/40, yarn 22/40→19/40, glove 28/40→26/40. **FAIL Cuộn len19/40 <20/40**; các ngưỡng còn lại đạt. Tuyến này dùng bossZIP, không có King/mutant. Đã thử thay bộ hồi máu kép+bomber bằng Pháo đài/Bạt nhún/Đội trống và sửa clock gồng lăn; vẫn19/40. Không đổi damage/tầm/tốc độ/HP/ngưỡng; chưa coi là đạt cân bằng.
+
+Full: Python58+i18n5, C#3630 đạt/9 FAIL cũ; sau xử lý test/dịch, core1013 đạt, build0 lỗi/7 cảnh báo cũ, WPF1450 đạt. Đo cuối4 suite547 đạt/1 FAIL. Chưa publish/smoke/perf bản này; mèo giữ9fcbed2, chờ duyệt phát hành chơi thử dù FAIL hoặc kế hoạch cân lại. Đã xem render hai đường buff sáng/tối, chưa chơi thật/DPI/multi-monitor. RecordsZIP11/Endless19/Bãi rác12; main route giữ8 vì vẫnking_c1.
+
+## Lịch sử #60 — phạt timeout toàn sân, HP 1100
 
 Publish sạch source `9fcbed2`, smoke3/3 PASS, mở lại mèo; ZIP `artifacts/DesktopPet-1.4.4-9fcbed2-win-x64.zip`. Perf `crowd-late`19 s: median48,6/min35,3 FPS, gap p95/max133 ms, CPU avg3,36%, 14,9 quái trung bình. Chưa đạt~60; đây không phải cảnh nổ ZIP và không có baseline perf cùng lượt, không kết luận là hồi quy của #60. Cần profile và thử burst thật; `zip60-perf.log`.
 

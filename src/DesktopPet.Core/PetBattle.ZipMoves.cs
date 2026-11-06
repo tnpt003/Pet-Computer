@@ -29,7 +29,7 @@ public sealed class ZipBlow
 
 public sealed partial class BattleSim
 {
-    private const double CatHalfHeight = 24, TumbleBackWarn = 0.45, RepeatAfter = 2.5, ShellLife = 0.25;
+    private const double CatHalfHeight = 24, TumbleBackWarn = 0.6, RepeatAfter = 2.5, ShellLife = 0.25;
     private readonly List<ZipBlow> zipBlows = new();
     public IReadOnlyList<ZipBlow> ZipBlows => zipBlows;
     public int ZipMovesUsed { get; private set; }
@@ -126,19 +126,24 @@ public sealed partial class BattleSim
 
     private void BeginTumble(Slime boss)
     {
-        var roll = boss.Type.Roll!;
-        int way = boss.ZipAimX < boss.X ? -1 : 1;
-        var (minX, maxX) = Bounds(boss);
-        double room = way < 0 ? boss.X - minX : maxX - boss.X;
-        if (room < roll.Distance * 0.5) { way = -way; room = way < 0 ? boss.X - minX : maxX - boss.X; }
-        boss.Facing = boss.DashDirection = way;
-        boss.RollDistance = Math.Min(roll.Distance, room);
-        boss.RollGoal = boss.X + way * boss.RollDistance;
-        boss.RollBack = true;
+        boss.ZipCount = 1;
+        AimZipRoll(boss, boss.ZipAimX);
+        boss.RollBack = false;
         boss.ZipBeat = ZipBeat.Strike;
         boss.Set(SlimeState.Windup);
         boss.Rolling = true;
         events.Add(new(BattleEventKind.RollAimed, boss.X, boss.Id));
+    }
+
+    private void AimZipRoll(Slime boss, double catX)
+    {
+        var (minX, maxX) = Bounds(boss);
+        int way = catX < boss.X ? -1 : 1;
+        double room = way < 0 ? boss.X - minX : maxX - boss.X;
+        if (room < 1) { way = -way; room = way < 0 ? boss.X - minX : maxX - boss.X; }
+        boss.Facing = boss.DashDirection = way;
+        boss.RollDistance = Math.Min(boss.Type.Roll!.Distance, room);
+        boss.RollGoal = boss.X + way * boss.RollDistance;
     }
 
     // The branches, nearest first on both sides in turn, each with its gap to the next and one more left out.

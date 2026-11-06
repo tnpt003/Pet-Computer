@@ -100,7 +100,7 @@ internal static class BattleCustomDataTests
             check(missing.Fallback && missing.Error.Contains("schemaVersion is missing") && future.Fallback && future.Error.Contains("not supported"),
                 $"No schemaVersion, or another version: refused with a reason ({missing.Error} / {future.Error})");
             var ghost = Broken("""{ "schemaVersion": 1, "waves": [ { "groups": [ { "enemy": "ghost", "count": 1 } ] } ] }""");
-            var summon = Broken("""{ "schemaVersion": 1, "enemies": [ { "id": "king", "summonType": "ghost" } ] }""");
+            var summon = Broken("""{ "schemaVersion": 1, "enemies": [ { "id": "king", "phases": [ { "at": 0.5, "shield": true, "summon": "ghost", "count": 2 } ] } ] }""");
             check(ghost.Fallback && ghost.Error.Contains("ghost") && summon.Fallback && summon.Error.Contains("ghost"),
                 $"A wave or summon naming an unknown enemy is refused and named ({ghost.Error} / {summon.Error})");
             var renderer = Broken("""{ "schemaVersion": 1, "enemies": [ { "id": "bat", "renderer": "bat" } ] }""");

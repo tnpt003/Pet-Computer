@@ -1,7 +1,6 @@
 {
   "Rage is ready! Click the cat avatar, or it activates on a hit or before a stun": "怒りの準備ができました！ネコのアバターをクリックするか、攻撃命中時や気絶の直前に自動で発動します",
   "Break nests before they hatch; stop returning children. Cut pink cords, dodge brood jumps and charges, then strike during her recovery.": "孵化する前に巣を壊し、戻る子を止めよう。ピンクのひもを切り、子の跳躍と母の突進を避け、休んだ隙に反撃しよう。",
-  "Dodge arm sweeps, burst rings, two-beat rain and floor waves. Cut golden streams to stop armor; strike during overload. Defeat helpers in shield phases.": "腕のなぎ払い、破裂の輪、二段の雨と床の波を避けよう。金色の流れを切って装甲を阻止し、過負荷中に攻撃。シールド中は手下を倒そう。",
   "The mother recalls wounded children! Stop the healing": "母スライムが傷ついた子を呼び戻します！回復を阻止しよう",
   "The brood will jump into the ring! Lift the cat to dodge": "子スライムが輪へ跳びます！ネコを持ち上げて避けよう",
   "The mother charges in anger! Dodge the lane and strike back": "母スライムが怒って突進！進路を避けて反撃しよう",
@@ -1165,7 +1164,6 @@
   "Puts its quills up now and then: hit it then and the cat is pricked. Hit it while they lie flat, spray it, or use the Bomb.": "ときどきトゲを立て、そのとき攻撃すると猫が刺される。トゲが寝ている間に攻撃するか、霧吹きを使うか、ボムを使おう。",
   "The clock over it counts down; at zero it calls more slimes. Beat it early; stunned, its clock runs slower.": "頭の上の時計がカウントダウンし、0になると仲間を呼ぶ。早めに倒そう。気絶中は時計がゆっくりになる。",
   "Never hits the cat: it drains an icon or a skill, then runs. Beat it before it gets away to get it back.": "猫は攻撃せず、アイコンかスキルのエネルギーを吸って逃げる。逃げられる前に倒せば取り戻せる。",
-  "Chapter 1's boss: slams a whole area, backs off behind a shield and calls help. Lift the cat out of the red zone; beat his help to break the shield.": "1章のボス。地面をたたいて広い範囲を攻撃し、下がって盾を張り仲間を呼ぶ。赤い範囲から猫を持ち上げ、仲間を倒して盾を割ろう。",
   "This stage lends {0}: win it to keep it. ": "このステージでは{0}を借りられる：勝てば自分のものになる。",
   "(Lent for this stage.)": "（このステージで借りている）",
   "Click a chosen skill to drop it, then choose another.": "選んだスキルをクリックで外し、別のスキルを選ぼう。",
@@ -1464,5 +1462,7 @@
   "Strike alternating belt locks every 3 hits, 12 hits total; push files into matching folders and dodge folder trees. At 1 HP, strike six pulls (three airborne, three grounded) to defeat the boss. Hover files to reveal the bomb; lift the cat over belts and floor attacks.": "ベルトの錠を3回ごとに交互に攻撃し、合計12回。ファイルを同じ記号のフォルダーに押し、ツリーを避けよう。残り1HPで引き手6個（空中3、地上3）を攻撃して倒そう。ファイルにカーソルを重ねて爆弾を調べ、床の攻撃はネコを持ち上げて避けよう。",
   "3 stages, 3 attacks each. Hit lit locks 12 times, switch every 3; match files to folders and dodge trees. At 1 HP hit six pulls (3 high, 3 low). Hover to find bombs; ZIP lock stops movement.": "各段階に3つの攻撃。光る錠を計12回、3回ごとに交代。ファイルをフォルダーへ押し、ツリーを避けよう。1HPで引き手6個（高3、低3）を攻撃。カーソルで爆弾を調べよう。ZIPロック中は移動不可。",
   "Zip Slime files: three identical faulty files hide one bomb; hover to reveal its running fuse. During the puzzle, strike files into matching folders; stand behind a file to push it.": "圧縮スライムのファイル。そっくりな3個に爆弾が1個。カーソルを重ねて残り時間を確認。パズルでは同じ記号のフォルダーへ押そう。ファイルの後ろに立って攻撃しよう。",
-  "ZIP lock stops walking and lifting. The cat strikes its own lock 5 times to escape, even without an enemy nearby. Click the cat 3 times or wait 6 seconds instead. The boss waits for it to open.": "ZIPロック中は歩けず持ち上げられません。敵が近くにいなくても、ネコが自分の錠を5回攻撃して解除します。3回クリックするか6秒待っても解除できます。ボスは解除まで待ちます。"
+  "ZIP lock stops walking and lifting. The cat strikes its own lock 5 times to escape, even without an enemy nearby. Click the cat 3 times or wait 6 seconds instead. The boss waits for it to open.": "ZIPロック中は歩けず持ち上げられません。敵が近くにいなくても、ネコが自分の錠を5回攻撃して解除します。3回クリックするか6秒待っても解除できます。ボスは解除まで待ちます。",
+  "The returning King calls three coordinated formations per shield phase and rallies two elites at a time. Defeat helpers to break the shield; Push the glowing crown to interrupt rallies.": "帰ってきた王は盾の各段階で連携する3つの陣形を呼び、一度に2体を精鋭にする。配下を倒して盾を壊し、王冠が光ったら王を押して強化を中断しよう。",
+  "Dodge sweeps, bursts and rain. Shield phases call three formations and rally two elites at a time; Push the King to interrupt. Cut golden streams to stop armor; strike during overload.": "なぎ払い、爆発、雨をかわそう。盾の段階で3つの陣形を呼び、一度に2体を精鋭にする。王を押して中断し、金色の流れを切って装甲の回復を止め、過負荷中を攻めよう。"
 }

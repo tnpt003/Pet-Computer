@@ -274,7 +274,7 @@ public sealed partial class BattleFieldView : FrameworkElement
                 if (sim.AppRules != null && sim.IsInfector(slime.Id) && slime.State != SlimeState.Defeated) DrawVirusMark(dc, slime, x, floor, time);
             }
         for (int i = 0; i < sim.Slimes.Count; i++)
-            if (sim.Slimes[i].IsBoss && sim.RallyTarget(sim.Slimes[i]) is Slime rallied) DrawRallyLink(dc, sim.Slimes[i], rallied, floor, time);
+            if (sim.Slimes[i].IsBoss) foreach (var rallied in sim.RallyTargets(sim.Slimes[i])) DrawRallyLink(dc, sim.Slimes[i], rallied, floor, time);
         DrawLinkMarks(dc, floor, time);
         DrawThiefBeams(dc, floor, time);
         DrawLeaves(dc, floor, time);

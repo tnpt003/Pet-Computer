@@ -577,6 +577,7 @@ internal static class Program
         WallVisualChecks.Run(Check);
         QuillsVisualChecks.Run(Check);
         ZipVisualChecks.Run(Check);
+        KingFormationVisualChecks.Run(Check);
         BroodVisualChecks.Run(Check);
         DropVisualChecks.Run(Check);
         BasketVisualChecks.Run(Check);

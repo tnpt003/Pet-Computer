@@ -172,7 +172,8 @@ public sealed partial class BattleSim
             boss.RollHit = true;
             RollHits++;
             events.Add(new(BattleEventKind.RollHit, catX, boss.Id));
-            AddEffect(BattleEffectKind.Thud, catX, 0);
+            if (boss.Type.Zip != null) AddZipEffect(ZipVisual.Tumble, catX, 0, 40);
+            else AddEffect(BattleEffectKind.Thud, catX, 0);
             HurtCat(boss, catX, true, Share(boss, roll.Damage), roll.Stun, crush: true);
         }
         if (boss.DashLeft <= 0 && !Over && boss.RollBack)
@@ -314,7 +315,7 @@ public sealed partial class BattleSim
         boss.Shielded = true;
         boss.ShieldTag = boss.BombTag;
         boss.Cooldown = StageOf(boss)!.Cooldown / 2;
-        AddEffect(BattleEffectKind.Slam, boss.X, 0, bomb.Radius);
+        AddZipEffect(ZipVisual.Burst, boss.X, 0, bomb.Radius);
         bool hit = CatInVolume(boss.X - bomb.Radius, boss.X + bomb.Radius, 0, BurstHeight);
         events.Add(new(BattleEventKind.ZipBurst, boss.X, hit ? 1 : 0));
         if (hit) HurtCat(boss, lastCatX, true, Share(boss, bomb.Damage), bomb.CatStun, crush: true);

@@ -535,7 +535,7 @@ public sealed partial class BattleFieldView : FrameworkElement
             dc.DrawEllipse(null, WarningFill, new Point(ringX, ringY), Math.Max(1, slime.Range * k), Math.Max(1, 9 * k));
             dc.DrawEllipse(null, WarningEdge, new Point(ringX, ringY), slime.Range, 9);
         }
-        if ((slime.Type.Dash || slime.Rolling) && slime.State == SlimeState.Windup)
+        if ((slime.Type.Dash || slime.Rolling) && slime.State == SlimeState.Windup && slime.Type.Zip == null)
         {
             // The dash's lane on the floor (a boss's roll too), growing as it comes, with an arrowhead at its end.
             double k = Math.Clamp(t / windup, 0, 1), dir = slime.DashDirection == 0 ? slime.Facing : slime.DashDirection;
@@ -1042,6 +1042,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         dc.PushOpacity(effect.Kind == BattleEffectKind.Number ? Math.Min(1, (1 - k) * 2.5) : 1 - k);
         switch (effect.Kind)
         {
+            case BattleEffectKind.Zip: DrawZipImpact(dc, effect.ZipVisual, x, y, effect.Value, k); break;
             case BattleEffectKind.Spark:
                 for (int i = 0; i < 6; i++)
                 {

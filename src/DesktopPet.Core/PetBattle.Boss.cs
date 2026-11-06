@@ -26,6 +26,8 @@ public sealed partial class BattleSim
         {
             if (CatLocked) ClearZipDebuff(true);
             EndZipAct(boss);
+            ClearPackets(boss.Id);
+            shots.RemoveAll(shot => shot.OwnerId == boss.Id && shot.Paper);
             boss.ZipRepulseWarn = 0;
             ShoveLeft = 0; zipShoveStun = false;
         }

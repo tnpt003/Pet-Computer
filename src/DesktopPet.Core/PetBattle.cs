@@ -372,7 +372,7 @@ public sealed partial class BattleSim
         groundX = CatLifted ? Math.Clamp(catX, Left, Right) : catX;
         double floorX = groundX;
         lastCatX = floorX;
-        catPose = catHeld ? pose : null;
+        catPose = pose;
         StepEffects(dt);
         StepFreeze(dt); // 1.5 M26: the Screenshot's freeze, a dazzle (PetBattle.Malware2.cs).
         NoteMet(); // 1.5 M27: the Monster Book (PetBattle.Book.cs).
@@ -1160,11 +1160,19 @@ public sealed partial class BattleSim
     // keep every slime at the same relative spot inside the new floor.
     public void SetArea(double left, double right)
     {
+        paperPreviousCat = null;
         right = Math.Max(left + Settings.SlimeWidth * Settings.LargestScale, right);
         double oldWidth = Math.Max(1, Right - Left), newWidth = right - left;
         foreach (var s in slimes)
         {
             s.X = left + (s.X - Left) / oldWidth * newWidth;
+            if (s.ZipProp == ZipProp.File && s.ZipLaneRight > s.ZipLaneLeft)
+            {
+                s.ZipGoalX = left + (s.ZipGoalX - Left) / oldWidth * newWidth;
+                s.ZipLaneLeft = left + (s.ZipLaneLeft - Left) / oldWidth * newWidth;
+                s.ZipLaneRight = left + (s.ZipLaneRight - Left) / oldWidth * newWidth;
+            }
+            s.ZipLayoutGoal = left + (s.ZipLayoutGoal - Left) / oldWidth * newWidth;
             s.SpecialAt = left + (s.SpecialAt - Left) / oldWidth * newWidth;
             s.SpecialFrom = left + (s.SpecialFrom - Left) / oldWidth * newWidth;
             s.LeapFromX = left + (s.LeapFromX - Left) / oldWidth * newWidth;
@@ -1192,7 +1200,7 @@ public sealed partial class BattleSim
         double life = kind switch
         {
             BattleEffectKind.Poof => 0.6 * Math.Max(1, value), BattleEffectKind.Number => 0.9, BattleEffectKind.Combo => 0.7, BattleEffectKind.Mend => 0.8,
-            BattleEffectKind.Explosion or BattleEffectKind.Slam => 0.5, BattleEffectKind.Warded => 0.6, BattleEffectKind.Quake => 0.9, BattleEffectKind.Drum => 0.9,
+            BattleEffectKind.Zip => 0.65, BattleEffectKind.Explosion or BattleEffectKind.Slam => 0.5, BattleEffectKind.Warded => 0.6, BattleEffectKind.Quake => 0.9, BattleEffectKind.Drum => 0.9,
             BattleEffectKind.Bell => 0.9, BattleEffectKind.EndTask => 1.0, BattleEffectKind.Rewind => 0.8, BattleEffectKind.Splat => 0.5, BattleEffectKind.MirageSmoke => 0.9, _ => 0.35
         };
         effects.Add(new BattleEffect { Kind = kind, X = x, Height = height, Life = life, Value = value });

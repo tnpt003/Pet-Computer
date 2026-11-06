@@ -199,6 +199,8 @@ public sealed partial class BattleSim
     // drop cannot skip over it), splat on the floor or fly off the screen.
     private void StepShots(double dt)
     {
+        paperSweepFrom = paperPreviousCat ?? CatCentre();
+        paperPreviousCat = CatCentre();
         CatSlowRemaining = Math.Max(0, CatSlowRemaining - dt);
         if (shots.Count == 0) return;
         var (catX, catH) = CatCentre();
@@ -209,7 +211,7 @@ public sealed partial class BattleSim
             if (shot.Paper) StepPaper(shot, dt);
             shot.X += shot.VX * dt; shot.Height += shot.VY * dt;
             shot.Remaining -= dt;
-            if (Near(x0, h0, shot.X, shot.Height, catX, catH) <= shot.Radius)
+            if (shot.Paper ? PaperTouchesCat(x0, h0, shot.X, shot.Height, shot.Radius) : Near(x0, h0, shot.X, shot.Height, catX, catH) <= shot.Radius)
             {
                 shots.RemoveAt(i--);
                 ShotHit(shot, catX);
@@ -219,8 +221,12 @@ public sealed partial class BattleSim
             if (shot.Height <= 0)
             {
                 shots.RemoveAt(i--);
-                AddEffect(BattleEffectKind.Splat, shot.X, 4);
-                effects[^1].Tint = shot.Tint;
+                if (shot.Paper) AddZipEffect(ZipVisual.Chase, shot.X, 4, 24);
+                else
+                {
+                    AddEffect(BattleEffectKind.Splat, shot.X, 4);
+                    effects[^1].Tint = shot.Tint;
+                }
                 continue;
             }
             if (shot.Remaining <= 0 || shot.X < Left - 200 || shot.X > Right + 200 || shot.Height > SkyHeight + 200) shots.RemoveAt(i--);
@@ -242,8 +248,12 @@ public sealed partial class BattleSim
         bool held = catPose != null || CatLifted;
         bool through = ShieldRemaining <= 0 && !ShellReady;
         events.Add(new(BattleEventKind.FlyShotHit, catX, held ? 1 : 0));
-        AddEffect(BattleEffectKind.Splat, catX, CatCentre().Height);
-        effects[^1].Tint = shot.Tint;
+        if (shot.Paper) AddZipEffect(ZipVisual.Chase, catX, CatCentre().Height, 28);
+        else
+        {
+            AddEffect(BattleEffectKind.Splat, catX, CatCentre().Height);
+            effects[^1].Tint = shot.Tint;
+        }
         // Its flyer still there: a hit like its own (Thorns sends some back), never a stun; gone, the drop still hurts.
         if (Find(shot.OwnerId) is { Targetable: true, Damage: > 0 } owner) HurtCat(owner, catX, false, shot.Damage / owner.Damage);
         else LandHit(shot.Damage, catX, out _);

@@ -82,6 +82,7 @@ internal static class BattleZipMoveTests
         Phase2(check);
         Phase3(check);
         HandChecks(check);
+        PaperBodyChecks(check);
         CutShortChecks(check);
         // New puzzle rules are covered by BattleZipTests.
         DebuffChecks(check);
@@ -227,10 +228,11 @@ internal static class BattleZipMoveTests
         check(files.All(f => f.LockIn <= 0), "They lock on");
         double vx = files[0].VX, vy = files[0].VY;
         Run(sim, 0.2, 900);
-        check(files[0].VX == vx && files[0].VY == vy, "After that they fly straight: no more tracking");
+        check(files[0].VX != vx || files[0].VY != vy, "Papers steer toward the moving cat after the initial lock");
+        check(Math.Abs(Math.Sqrt(files[0].VX * files[0].VX + files[0].VY * files[0].VY) - chase.Speed) < 0.01, "Tracking keeps paper speed constant");
         hp = sim.CatHp;
         Run(sim, 3, 900);
-        check(sim.CatHp == hp, "So a cat that moved off is missed");
+        check(files.All(f => double.IsFinite(f.VX) && double.IsFinite(f.VY)), "Pursuit stays finite while the cat changes position");
         (sim, boss) = Field(1, bossX: 800, catX: 400);
         Start(sim, boss, ZipAct.Chase, 400);
         hp = sim.CatHp;
@@ -337,6 +339,28 @@ internal static class BattleZipMoveTests
         hp = sim.CatHp;
         Run(sim, Whole(tear) + 0.1, 1000 + tear.Spacing + tear.Radius + 30);
         check(sim.CatHp == hp, "Beyond its reach nothing happens");
+    }
+
+    private static void PaperBodyChecks(Action<bool, string> check)
+    {
+        foreach (double offset in new[] { -48.0, 0, 36 })
+        foreach (int state in new[] { 0, 1, 2 })
+        {
+            var (sim, boss) = Field(1, bossX: 1500, catX: 500);
+            boss.Cooldown = 100;
+            double h = state == 0 ? BattleSim.CatStandHeight : 220;
+            var pose = state == 0 ? (CatPose?)null : new CatPose(500, h, 0, 400, state == 1, state == 2);
+            sim.Step(dt, 500, state == 1, state != 0, pose);
+            var shot = new BattleShot { OwnerId = boss.Id, X = 400, Height = h + offset, VX = 12000, Speed = 12000, Paper = true, LockIn = 1, Damage = 10, Radius = 3, Remaining = 2 };
+            ((ICollection<BattleShot>)sim.Shots).Add(shot);
+            double hp = sim.CatHp;
+            sim.Step(dt, 500, state == 1, state != 0, pose);
+            check(sim.CatHp < hp, $"Fast paper hits full body at offset {offset}, floor/held/bouncing state {state}");
+            check(sim.CatStunRemaining == 0 && sim.TakeCatBounce() == null, "Paper damage neither stuns nor changes throw velocity");
+        }
+        check(BattleSim.PaperCrossesBody(-100, 36, 100, 36, 2), "Swept paper hits head edge");
+        check(BattleSim.PaperCrossesBody(-100, -49, 100, -49, 2), "Swept paper hits foot edge");
+        check(!BattleSim.PaperCrossesBody(-100, 80, 100, 80, 2), "Paper outside the body misses");
     }
 
     private static void HandChecks(Action<bool, string> check)

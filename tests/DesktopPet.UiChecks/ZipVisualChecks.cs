@@ -1,4 +1,5 @@
 using System.Windows.Media;
+using System.Windows;
 using DesktopPet;
 
 // 1.5 M17, redrawn 2026-11-05, with the shipped Zip Slime: its three stages side by side (no crown; belted and
@@ -59,7 +60,8 @@ internal static class ZipVisualChecks
         var hopping = Add(moves, "zip", 90);
         hopping.Set(SlimeState.Windup); hopping.StateTime = 0.1;
         var windup = Add(moves, "zip", 420, 1);
-        windup.Set(SlimeState.Windup); windup.Rolling = true; windup.DashDirection = 1; windup.Facing = 1; windup.StateTime = 0.9; windup.RollDistance = data.Enemy("zip").Roll!.Distance;
+        windup.ZipAct = ZipAct.Tumble; windup.Set(SlimeState.Windup); windup.Rolling = true; windup.DashDirection = 1; windup.Facing = 1; windup.StateTime = 0.9; windup.RollDistance = data.Enemy("zip").Roll!.Distance;
+        windup.RollGoal = windup.X + windup.RollDistance;
         var pressed = Add(moves, "zip", 800);
         pressed.Shielded = true; pressed.ShieldTag = 1; pressed.PressWindow = 1; pressed.Pins = 1;
         var bomb = Add(moves, "zip", 1060, 2);
@@ -88,6 +90,17 @@ internal static class ZipVisualChecks
         check(SkyVisualChecks.Count(puzzlePixels, w, h, page, 200, 250, floor - 34, floor) > 100, "Puzzle files are visible with matching folder symbols");
         Moves(check, data, warning, gold, floor, w, h, Add);
         Debuffs(check);
+        var layout = new BattleSim(data, 0, Width, seed: 9);
+        var layoutBoss = Add(layout, "zip", 600, 1);
+        layoutBoss.PhasesDone = 1; layoutBoss.Hp = layoutBoss.MaxHp * 0.5;
+        layout.Damage(layoutBoss, 100000, DamageSource.App);
+        for (int i = 0; i < 6; i++) layout.Step(1.0 / 60, 80, false);
+        SkyVisualChecks.Render(new BattleFieldView(layout) { OriginX = 0 }, w, h, "zip-phase2-clear-boss");
+        check(layout.Slimes.Where(s => s.ZipProp == ZipProp.File && s.Targetable).All(s => Math.Abs(s.X - layoutBoss.X) > layoutBoss.Width / 2 + 32 && Math.Abs(layout.ZipFileGoal(s) - layoutBoss.X) > layoutBoss.Width / 2 + 32), "Rendered phase-two files and folders stay clear of the boss");
+        var styles = Enum.GetValues<ZipVisual>();
+        var fingerprints = styles.Select(style => SkyVisualChecks.Render(new ZipImpactPreview(style), 200, 120)).ToArray();
+        check(fingerprints.Select(Convert.ToBase64String).Distinct().Count() == styles.Length, "Each ZIP attack has a distinct impact silhouette");
+        SkyVisualChecks.Render(new ZipImpactPreview(), 600, 480, "zip-unique-attacks");
     }
 
     // 2026-11-06: each blow's warning, one strip a stage, and the cat's two debuffs (PET_RENDER_REVIEW: enemy-zip-moves-*.png, cat-zip-*.png).
@@ -105,7 +118,7 @@ internal static class ZipVisualChecks
         add(unmarked, "zip", 300, 0);
         check(!SkyVisualChecks.Render(new BattleFieldView(unmarked) { OriginX = 0 }, w, h).SequenceEqual(px), "The clamp marks its gap on the floor");
         check(SkyVisualChecks.Count(px, w, h, Color.FromRgb(0xE8, 0xB8, 0x4A), 200, 260, floor - 90, floor) > 100, "And opens its two flaps round it");
-        check(SkyVisualChecks.Count(px, w, h, warning, 840, 1100, floor - 22, floor - 10) < 10, "The tumble has only its current lane, with no duplicate return line");
+        check(SkyVisualChecks.Count(px, w, h, warning, 840, 1100, floor - 24, floor - 16) < 10, "The tumble has only its current lane, with no duplicate return line");
 
         var two = new BattleSim(data, 0, Width, new Random(1), seed: 3);
         var tree = add(two, "zip", 600, 1);
@@ -161,5 +174,28 @@ internal static class ZipVisualChecks
         var gold = Color.FromRgb(0xFF, 0xC8, 0x3A);
         check(!plain.SequenceEqual(squeezed), "Squeezed, the cat looks different");
         check(SkyVisualChecks.Count(locked, 192, 192, gold, 0, 192, 0, 192) > SkyVisualChecks.Count(plain, 192, 192, gold, 0, 192, 0, 192) + 100, "Locked, it wears the gold shell and padlock");
+    }
+}
+
+internal sealed class ZipImpactPreview : FrameworkElement
+{
+    private readonly ZipVisual? single;
+    public ZipImpactPreview(ZipVisual? style = null) { single = style; }
+    protected override void OnRender(DrawingContext dc)
+    {
+        var styles = single is ZipVisual style ? new[] { style } : Enum.GetValues<ZipVisual>();
+        for (int i = 0; i < styles.Length; i++)
+        {
+            double x = single != null ? 100 : 100 + i % 3 * 200;
+            double y = single != null ? 100 : 100 + i / 3 * 120;
+            BattleFieldView.DrawZipImpact(dc, styles[i], x, y, 55, 0.45);
+            if (single == null)
+            {
+                var label = new FormattedText(styles[i].ToString(), System.Globalization.CultureInfo.InvariantCulture,
+                    FlowDirection.LeftToRight, new Typeface("Segoe UI"), 13, PetUi.Ink, 1);
+                dc.DrawRoundedRectangle(PetUi.Surface, new Pen(PetUi.ArtInk, 1), new Rect(x - 54, y - 103, label.Width + 8, label.Height + 4), 3, 3);
+                dc.DrawText(label, new Point(x - 50, y - 101));
+            }
+        }
     }
 }

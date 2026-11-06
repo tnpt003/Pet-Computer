@@ -744,6 +744,8 @@ public sealed class Slime
     // The bomb: time left, pulls so far, the tab's spot (a short lock after a pull), time to arming again, the
     // time left of its flight. A reward: taking ×MechBonus for MechBonusClock s. Ropes: the last cut and the
     // extra stun two cuts together earned.
+    public double ZipGoalX, ZipLaneLeft, ZipLaneRight, ZipLayoutGoal;
+    public bool ZipFilesPending;
     public ZipProp ZipProp;
     public int ZipSymbol;
     public double ZipPuzzleClock, ZipRepulseClock = 22, ZipRepulseWarn;
@@ -951,7 +953,7 @@ public sealed class BattleShot
     public int OwnerId;
     public double X, Height, VX, VY, Remaining, Damage, Radius, Slow, SlowSeconds;
     public string? Tint;
-    // 2026-11-06: a Zip Slime's file: curves until LockIn s are out, then its one aim at the cat, at Speed.
+    // ZIP paper: curves until LockIn expires, then pursues at Speed with a bounded turn rate.
     public bool Paper;
     public double LockIn, Speed;
 }
@@ -973,12 +975,13 @@ public readonly record struct BattleEvent(BattleEventKind Kind, double X, double
 // circling the cat). Splat (1.5 M09): a spitter's drop of goo landing (Tint: its colour).
 // Miss (1.5 M13): a hit that did nothing to a ghost or a bubble (Value 0), or to a sulky slime (Value 1);
 // Heart: a sulky slime soothed.
-public enum BattleEffectKind { Spark, Poof, Push, Explosion, Slam, Number, Combo, Thud, Mend, Block, Immune, Warded, Bell, EndTask, Rewind, Splat, Miss, Heart, Quake, Drum, MirageSmoke }
+public enum BattleEffectKind { Spark, Poof, Push, Explosion, Zip, Slam, Number, Combo, Thud, Mend, Block, Immune, Warded, Bell, EndTask, Rewind, Splat, Miss, Heart, Quake, Drum, MirageSmoke }
 // How a damage Number reads (display only): a plain hit, a combo hit, a critical (Claws) hit, poison's tick, or a puddle burning the cat ("-1" over it).
 public enum NumberTone { Plain, Combo, Crit, Poison, Burn }
 public sealed class BattleEffect
 {
     public BattleEffectKind Kind;
+    public ZipVisual ZipVisual;
     public NumberTone Tone;
     // Poof of a defeated slime: its body colour, for the droplets it bursts into (display only).
     public string? Tint;

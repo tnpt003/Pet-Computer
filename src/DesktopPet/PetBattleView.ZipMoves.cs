@@ -28,10 +28,10 @@ public sealed partial class BattleFieldView
         foreach (var s in sim.Slimes)
         {
             if (s.Type.Zip != null && s.ZipRepulseWarn > 0)
-                TacticRing(dc, sim.CatXForZip, floor, 80, 1 - s.ZipRepulseWarn / 0.9);
+                DrawRepulseWarning(dc, s.X - OriginX, floor, sim.CatXForZip < s.X ? -1 : 1, 1 - s.ZipRepulseWarn / 0.9);
             if (s.PacketFuse && s.PacketRevealed && s.Targetable && s.PacketLeft > 0 && sim.Find(s.SummonedBy) is Slime owner && BattleSim.MoveSpec(owner, ZipAct.Faulty) is ZipMoveSpec faulty)
             {
-                TacticRing(dc, s.X, floor, faulty.Radius, 1 - s.PacketLeft / faulty.Life);
+                DrawZipTarget(dc, ZipVisual.Faulty, s.X - OriginX, floor, faulty.Radius, faulty.Height, 1 - s.PacketLeft / faulty.Life);
                 DrawSizeTag(dc, $"{Math.Ceiling(s.PacketLeft)} s", s.X - OriginX, floor - s.Height - 20);
             }
             if (!s.Targetable || s.Type.Zip is not ZipSpec zip || zip.Move(s.ZipAct) is not ZipMoveSpec m) continue;
@@ -41,7 +41,7 @@ public sealed partial class BattleFieldView
                 case ZipAct.Clamp: DrawClamp(dc, s, m, floor, progress); break;
                 case ZipAct.Overflow: DrawOverflow(dc, s, m, floor, time); break;
                 case ZipAct.Tear: if (s.ZipBeat != ZipBeat.Recover) DrawTearWarning(dc, s, m, floor, progress); break;
-                case ZipAct.Tumble: break;
+                case ZipAct.Tumble: DrawZipTape(dc, s, floor); break;
             }
         }
     }
@@ -51,7 +51,7 @@ public sealed partial class BattleFieldView
     {
         if (s.ZipBeat == ZipBeat.Recover) return;
         double x = s.ZipAimX - OriginX, open = s.ZipBeat == ZipBeat.Warn ? Math.Min(1, progress * 1.6) : 0;
-        if (s.ZipBeat == ZipBeat.Warn) TacticRing(dc, s.ZipAimX, floor, m.Radius, progress);
+        if (s.ZipBeat == ZipBeat.Warn) DrawZipTarget(dc, ZipVisual.Clamp, x, floor, m.Radius, m.Height, progress);
         foreach (int side in new[] { -1, 1 })
         {
             double gap = m.Radius * open;
@@ -83,8 +83,8 @@ public sealed partial class BattleFieldView
             dc.DrawLine(Halo, new Point(x, floor), new Point(x, floor - 58));
             dc.DrawLine(SpotPen, new Point(x, floor), new Point(x, floor - 58));
         }
-        dc.DrawEllipse(null, Halo, new Point(s.ZipAimX - OriginX, floor - 4), m.Radius, 9);
-        dc.DrawEllipse(null, SpotPen, new Point(s.ZipAimX - OriginX, floor - 4), m.Radius, 9);
+        dc.DrawRoundedRectangle(null, Halo, new Rect(gapL, floor - 20, m.Radius * 2, 16), 3, 3);
+        dc.DrawRoundedRectangle(null, SpotPen, new Rect(gapL, floor - 20, m.Radius * 2, 16), 3, 3);
     }
 
     private void DrawTearWarning(DrawingContext dc, Slime s, ZipMoveSpec m, double floor, double progress)
@@ -95,6 +95,7 @@ public sealed partial class BattleFieldView
             var end = new Point(x + side * (m.Spacing * grow + m.Radius), y);
             dc.DrawLine(Halo, new Point(x, y), end);
             dc.DrawLine(WarningEdge, new Point(x, y), end);
+            DrawZipTeeth(dc, new Point(x, y), end);
             dc.DrawLine(WarningPen, end, new Point(end.X - side * 8, y - 6));
             dc.DrawLine(WarningPen, end, new Point(end.X - side * 8, y + 6));
         }
@@ -132,20 +133,9 @@ public sealed partial class BattleFieldView
             {
                 DrawFolderTree(dc, b, p.X, y, high);
             }
-            else dc.DrawRoundedRectangle(MarkFill, TacticEdge, new Rect(p.X - b.Radius, y - high, b.Radius * 2, high), 4, 4);
             return;
         }
-        if (b.Bottom <= 0)
-        {
-            dc.DrawEllipse(TacticZone, Halo, new Point(p.X, y - 7), b.Radius, 8);
-            dc.DrawEllipse(null, TacticEdge, new Point(p.X, y - 7), b.Radius, 8);
-            dc.DrawEllipse(Game.Warning, null, new Point(p.X, y - 7), Math.Max(2, b.Radius * k), 3);
-        }
-        else
-        {
-            dc.DrawRectangle(MarkFill, Halo, new Rect(p.X - b.Radius, y - high, b.Radius * 2, high));
-            dc.DrawRectangle(null, TacticEdge, new Rect(p.X - b.Radius, y - high, b.Radius * 2, high));
-        }
+        DrawZipTarget(dc, b.Kind == ZipBlowKind.Branch ? ZipVisual.Tree : b.Kind == ZipBlowKind.Belt ? ZipVisual.Belt : ZipVisual.Overwrite, p.X, y, b.Radius, high, k);
         var (shape, width, height) = NumberShape(b.Order.ToString(System.Globalization.CultureInfo.InvariantCulture), 13);
         double top = b.Bottom <= 0 ? y - 44 - 3 * Math.Sin(time * 6 + b.Order) : y - high / 2 - height / 2 - 2;
         dc.DrawEllipse(PageFill, Outline, new Point(p.X, top + height / 2), 11, 11);
@@ -175,6 +165,7 @@ public sealed partial class BattleFieldView
             {
                 dc.DrawLine(Halo, from, aim);
                 dc.DrawLine(s.ZipBeat == ZipBeat.Lock ? LockedLine : AimLine, from, aim);
+                DrawZipTeeth(dc, from, aim);
                 double ring = s.ZipBeat == ZipBeat.Lock ? 15 : 22;
                 dc.DrawEllipse(null, s.ZipBeat == ZipBeat.Lock ? LockedLine : AimLine, aim, ring, ring);
                 continue;
@@ -192,8 +183,9 @@ public sealed partial class BattleFieldView
             if (shot.Paper && shot.LockIn is > 0 and < 0.45)
             {
                 double ring = 16 + 26 * shot.LockIn;
-                dc.DrawEllipse(null, Halo, cat, ring, ring);
-                dc.DrawEllipse(null, LockedLine, cat, ring, ring);
+                var targetBox = new Rect(cat.X - ring, cat.Y - 40, ring * 2, 80);
+                dc.DrawRoundedRectangle(null, Halo, targetBox, 4, 4);
+                dc.DrawRoundedRectangle(null, LockedLine, targetBox, 4, 4);
             }
     }
 

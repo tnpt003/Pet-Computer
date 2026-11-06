@@ -4,6 +4,9 @@ Chuyển nguyên văn từ AGENTS.md ngày 2026-10-26 để AGENTS.md ngắn l�
 
 ## Battle Mode
 
+- Bổ sung người dùng duyệt #57 sau chơi thử 06/11: Tệp truy đuổi của Slime Nén bám vị trí mèo với tốc độ quay giới hạn, va chạm toàn hộp thân cả đứng sàn, bế, rơi/bounce. Giữ Khiên/Nộ/Pause; trúng khi bế/bay chỉ mất máu, không tuột tay, đổi vận tốc hoặc choáng. Mech thư mục đặt file/đích theo seed ngoài thân boss và trong làn không xuyên boss; thiếu chỗ thì boss nhảy né về mép trước khi đặt. Vào mech dọn đạn/bom thường còn lại, không để bom thường xóa file mech. Visual ZIP riêng không thay vùng trúng hoặc luật boss khác. Chi tiết docs/ZIP-SLIME.md.
+
+
 - Bổ sung người dùng duyệt 2026-11-06 sau chơi thử Slime Nén (Issue #56; thay luật mech/Khóa ZIP cũ, chi tiết docs/ZIP-SLIME.md): Khóa ZIP cấm đi và nhấc, vẫn đánh/mở bằng 3 click hoặc 5 nhát, hết sau 6 giây. Mech 66%: boss nhảy giữa, đánh hai khóa rìa luân phiên mỗi 3 đòn, tổng 12; đai quét sát đất gây damage nhẹ và choáng. Mech 33%: đánh đẩy ba file ghép thư mục; cây mọc tại điểm mèo đã chốt gây damage và choáng. Phase 2–3 có đòn đẩy riêng, 0 damage, đẩy mèo dưới sàn về rìa trong 0,8 giây rồi choáng 1,2 giây, CD 22 giây, báo 0,9 giây; không tác động mèo đang cầm/bay, Khiên/Nộ/miễn đẩy chặn, Pause đóng băng. Mech cuối chỉ khi còn 1 HP, chặn damage vượt ngưỡng: đánh sáu tay kéo (3 trên không, 3 dưới đất), mỗi tay một đòn; mèo cầm đánh tay trên không. Không kéo xuyên để giải; hết giờ bom nổ nhưng giữ tay còn lại; đủ sáu boss xì hơi rồi chết. Physics ném/AI Python ngoài các tương tác này giữ nguyên.
 
 

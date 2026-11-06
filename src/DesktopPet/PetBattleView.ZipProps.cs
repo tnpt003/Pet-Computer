@@ -58,16 +58,19 @@ public sealed partial class BattleFieldView
         dc.DrawRoundedRectangle(FlapFill, Outline, new Rect(x - width / 2, y - 6, width, 16), 3, 3);
     }
 
-    private static void DrawFolderTree(DrawingContext dc, ZipBlow b, double x, double y, double high)
+    private static void DrawFolderTree(DrawingContext dc, ZipBlow b, double x, double y, double high) =>
+        DrawFolderTree(dc, b.Variant, b.Radius, x, y, high);
+
+    private static void DrawFolderTree(DrawingContext dc, int variant, double radius, double x, double y, double high)
     {
         // Three recognizable directory hierarchies; all remain inside the announced damage box.
-        double spread = Math.Max(8, b.Radius - 13), rootY = y - high + 12;
+        double spread = Math.Max(8, radius - 13), rootY = y - high + 12;
         DrawFolderNode(dc, x, rootY, 24);
         for (int i = 0; i < 3; i++)
         {
-            double nx = b.Variant == 0 ? x + (i - 1) * spread : b.Variant == 1 ? x + (i % 2 == 0 ? -1 : 1) * spread * 0.65 : x + (i - 1) * spread * 0.8;
-            double ny = b.Variant == 2 ? y - 20 : rootY + (high - 32) * (i + 1) / 3;
-            double join = b.Variant == 2 ? rootY + 22 : ny - 12;
+            double nx = variant == 0 ? x + (i - 1) * spread : variant == 1 ? x + (i % 2 == 0 ? -1 : 1) * spread * 0.65 : x + (i - 1) * spread * 0.8;
+            double ny = variant == 2 ? y - 20 : rootY + (high - 32) * (i + 1) / 3;
+            double join = variant == 2 ? rootY + 22 : ny - 12;
             dc.DrawLine(Halo, new Point(x, rootY + 8), new Point(x, join));
             dc.DrawLine(ZipSeam, new Point(x, rootY + 8), new Point(x, join));
             dc.DrawLine(ZipSeam, new Point(x, join), new Point(nx, join));

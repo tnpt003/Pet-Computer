@@ -14,7 +14,7 @@ Luật hiện hành của boss `zip`. Người dùng duyệt ngày 2026-11-06 (I
 
 - Túi đòn trộn bằng seed trận (`BattleRandom.Zip`). Đủ ba đòn hợp lệ mới trộn lại, không lặp ngay đòn vừa dùng.
 - Đòn hợp lệ theo khoảng cách (`minRange`–`maxRange`). Mèo đang bế hoặc bay chỉ gặp đòn có `air`. Chỉ còn đúng đòn vừa dùng hợp lệ thì chờ 2,5 giây mới được lặp.
-- Nhịp mỗi đòn: báo trước → khóa → ra đòn → hồi phục. Sau khi khóa, đòn đã báo không đổi hướng.
+- Nhịp mỗi đòn: báo trước → khóa → ra đòn → hồi phục. Sau khi khóa, đòn đã báo không đổi hướng, ngoại trừ Tệp truy đuổi bám có giới hạn quay theo bổ sung #57.
 - Choáng, Kẹp gắp hoặc khiên mech ngắt đòn ngay và xóa các điểm đang chờ, không có cú đánh trễ.
 - Chạm ngưỡng HP thì hủy đòn và vào mech. Sang giai đoạn mới thì túi đòn làm lại.
 
@@ -26,7 +26,7 @@ Luật hiện hành của boss `zip`. Người dùng duyệt ngày 2026-11-06 (I
 | Bắn khóa kéo (`air`) | Đường ngắm theo mèo, khóa rồi phóng tới điểm chốt và thu về, trúng tối đa 1 lần | Rời điểm chốt sau khi khóa, tránh đường về |
 | Cuộn đóng gói | Lăn qua, dừng 0,45 giây, lăn ngược về chỗ cũ; mỗi lượt chỉ hiện đường cảnh báo tương ứng | Nâng cao hơn thân boss, hoặc ra khỏi dải |
 | Cây thư mục | Tối đa 6 nhánh đánh số, nổ theo thứ tự, bỏ ngẫu nhiên 1 nhánh | Đứng vào khoảng giữa các nhánh, hoặc nâng cao hơn 120 DIP |
-| Tệp truy đuổi (`air`) | Ba tệp bay cong, chỉnh hướng đúng 1 lần lúc vòng khóa hiện | Đổi chỗ sau tín hiệu khóa |
+| Tệp truy đuổi (`air`) | Ba tệp bay cong rồi bám mèo với tốc độ quay tối đa 2,8 rad/s (khoảng 160°/s), giữ tốc độ và tuổi thọ 4 giây | Đổi hướng nhanh hoặc kéo ra khỏi quỹ đạo; bế/bounce không miễn trúng |
 | Giải nén lỗi | Ba file giống nhau, một bom ngẫu nhiên; rê chuột mới lộ bom và thời gian còn lại | Soi từng file; bom đã soi giữ hiển thị. Đánh vỡ bom hoặc né vòng; đồng hồ chạy cả khi ẩn |
 | Tràn bộ nhớ | Trượt tới điểm chốt, giấy lan từ hai mép, kết thúc bằng cú bung ngoài khoảng vàng | Ở trong khoảng vàng 190 DIP, hoặc nâng cao hơn 170 DIP |
 | Ghi đè (`air`) | Đánh dấu 3 vị trí liên tiếp của mèo, kể cả trên cao, rồi đánh lần lượt | Rời điểm đã đánh dấu |
@@ -37,6 +37,14 @@ Luật hiện hành của boss `zip`. Người dùng duyệt ngày 2026-11-06 (I
 - **66% Tháo chốt kiện:** boss nhảy ra giữa và giữ khiên. Hai ổ khóa ở hai rìa, cách mép 65 DIP để mèo có chỗ đứng đánh. Đánh khóa sáng **12 lần tổng cộng**, cứ 3 đòn đổi bên (trái → phải → trái → phải). Chỉ nhát vũ khí trực tiếp tính, damage lớn vẫn một lượt; kỹ năng/đòn lan không cộng. Mỗi 2,8 giây báo 0,8 giây rồi quét nửa sàn về khóa đang mở (8 damage cơ sở, choáng 0,5 giây; nhấc cao né được). Đủ 3 đòn đổi khóa thì ngắt cảnh báo đang chuẩn bị. Đủ 12 mở khiên, sang phase 2 và choáng 2,2 giây, nhận ×1,5 trong khoảng phản công giới hạn 6% HP tối đa. Không tự bỏ qua mech.
 - **33% Sắp xếp thư mục:** ba file và ba thư mục đích có ký hiệu tròn/vuông/dấu chéo. Đứng phía đối diện rồi đánh file để đẩy 36 DIP về thư mục cùng ký hiệu; cách đích ≤40 DIP thì ghép xong. File/đích chừa chỗ hai bên, file bị giới hạn trong vùng cách mép tối đa 120 DIP. Kỹ năng/đòn lan không đẩy hoặc phá file. Mỗi 3,5 giây cây thư mục đánh dấu vị trí mèo, chốt ngay, báo 1 giây rồi mọc, gây 12 damage cơ sở và choáng 0,6 giây; cây không chắn hoặc đẩy file. Ghép đủ ba thì hết khiên, sang phase 3, boss choáng 2,2 giây.
 - **1 HP Bom nén sinh tử:** chỉ một lần khi HP xuống ≤1. Tất cả nguồn damage bị chặn ở đúng **1 HP**, kể cả damage vượt ngưỡng và độc; boss lập tức hủy đòn và dựng khiên. Sinh sáu tay kéo độc lập theo seed, ba trên không và ba dưới đất, chừa mép và giới hạn chiều cao theo vùng trận. Mỗi tay chịu đúng một nhát vũ khí trực tiếp; mèo đang cầm đánh tay trên không, mèo dưới sàn đánh tay dưới đất. Kéo/ném xuyên và Kéo cắt không giải thay. Phá đủ sáu: boss xì hơi 1,6 giây rồi bị hạ, không cần gây damage lần cuối. Mỗi 14 giây chưa giải xong thì nổ sàn theo damage/radius cũ, cao 170 DIP; giữ khiên và các tay chưa phá, không tạo lứa mới hoặc mở lại phase thường.
+
+## Bổ sung sửa sau chơi thử — Issue #57
+
+- Vị trí file và thư mục đích được chọn theo seed trong ba làn độc lập, nằm ngoài thân boss (tính cả kích thước đang lớn tới) và chừa mép. Hai đầu của mỗi làn cùng một phía boss; đẩy sai cũng bị giữ trong làn, không phải đẩy xuyên boss. Nếu chưa đủ chỗ, boss nhảy sát mép rồi mới đặt file; đồng hồ cây bắt đầu sau bố trí. Boss giữ vị trí trong lúc giải. Đã kiểm tra layout 480/640/1600 DIP qua 12 seed mỗi cỡ.
+- Vào bất kỳ mech nào: hủy điểm chờ và dọn đạn giấy/gói bom thường còn lại của chính boss. `ClearPackets` chỉ dọn `ZipProp.None`, không dọn Belt/File/Tab. Kể cả một bom nổ trễ cũng không xóa file giải đố; cây trong mech vẫn gây damage/choáng như trước.
+- Riêng giấy truy đuổi: quét đoạn đường đạn tương đối với chuyển động mèo qua hộp thân ngang ±30 DIP, từ chân −50 tới đầu +38 DIP, cộng bán kính giấy. Dùng tư thế thật cả khi bế, rơi hoặc bounce; không dùng mỗi tâm. Trúng khi bế/bay không làm tuột tay, không đổi vận tốc, không choáng. Khiên/Nộ/Pause giữ luật cũ. Đạn của slime khác giữ hình học cũ.
+- Visual riêng, không dùng `Slam` chấn động chung cho Slime Nén: Kẹp kiện = hai nửa kiện/đai; Khóa kéo = rãnh răng khóa và đầu kéo; Cuộn = băng đóng kiện/cuộn băng; Cây = nhánh thư mục; Giấy = giấy gấp/nhàu; Giải nén lỗi = file lỗi/mảnh giấy gạch đỏ; Tràn bộ nhớ = lớp giấy; Ghi đè = khung file đóng dấu; Xé archive = mép giấy/răng khóa rách; đẩy riêng = luồng giấy; bom cuối = bung đai/phun giấy. Cảnh báo hình chữ nhật/làn vẫn bao đúng vùng trúng, không đổi hitbox theo hiệu ứng.
+- HP vẫn 1100; records: c2_zip_slime 7, Vô tận 15, Bãi rác 8. Không nới ngưỡng cân bằng.
 
 ## Đòn đẩy riêng phase 2–3
 

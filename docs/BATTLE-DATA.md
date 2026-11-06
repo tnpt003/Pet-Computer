@@ -793,6 +793,8 @@ S9, S10, S11 của docs/UPDATE-1.5.md. Code: `src/DesktopPet.Core/PetBattle.Quil
 
 ## Slime Nén (boss `zip`: `zip`, `roll`, pha `press`/`roped`/`bomb`, quái `zip_packet`) (bản 1.5, mốc M17; thiết kế lại 2026-11-05, 2026-11-06)
 
+**Bổ sung #57:** `PetBattle.ZipGeometry.cs` chọn làn file/đích theo seed tránh boss, quét giấy với hộp thân mèo và tốc quay 2,8 rad/s. Dọn gói thường lọc `ZipProp.None`; vào mech dọn giấy/gói thường của chủ. `BattleEffectKind.Zip` + `ZipVisual` thay Slam riêng cho ZIP, không đổi schema battle.json. HP 1100, rulesVersion c2_zip_slime 7 / Endless 15 / dump_trail 8. Luật đầy đủ docs/ZIP-SLIME.md.
+
 **Bản sau chơi thử 06/11 (#56):** `PetBattle.ZipPuzzles.cs` sở hữu mục tiêu `ZipProp` (Belt/File/Tab) và đồng hồ đẩy riêng; dùng cơ chế chọn mục tiêu/nhát vũ khí sàn và trên không hiện có. Luật mech hiện hành: 66% đánh khóa 12 lần đổi bên mỗi 3, 33% đẩy file ghép thư mục + né cây, cuối trận ở đúng 1 HP đánh 6 tay kéo. `phases[].at` của pha `bomb` cũ được runtime Slime Nén thay bằng ngưỡng tuyệt đối 1 HP; các boss khác giữ tỷ lệ. `press.pins/rolls/window/roll`, `bomb.pulls/tabRadius/rearm/stun/bonus/opening` vẫn được đọc/validate để tương thích dữ liệu cũ nhưng không còn điều khiển mech mới. `bomb.charge/damage/radius/catStun/flight` và `press.stun/bonus/opening` vẫn có hiệu lực. Không sửa schema dữ liệu ở mốc này. RulesVersion: màn Slime Nén 6, Vô tận 14, Lối Bãi rác 7.
 
 Luật, bảng đòn và số đo: docs/ZIP-SLIME.md. Mục này chỉ mô tả khóa dữ liệu. Code: `PetBattle.Zip.cs`, `PetBattle.ZipMoves.cs`, `PetBattle.ZipDebuff.cs`.

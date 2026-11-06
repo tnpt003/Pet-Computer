@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 
 namespace DesktopPet;
@@ -9,7 +9,7 @@ public enum ZipProp { None, Belt, File, Tab }
 public sealed partial class BattleSim
 {
     public double CatXForZip => lastCatX;
-    public double ZipFileGoal(Slime file) => Left + (Right - Left) * (0.25 + file.ZipSymbol * 0.25);
+    public double ZipFileGoal(Slime file) => file.ZipLaneRight > file.ZipLaneLeft ? file.ZipGoalX : Left + (Right - Left) * (0.25 + file.ZipSymbol * 0.25);
     public bool ZipPropActive(Slime prop) => prop.ZipProp != ZipProp.Belt || Find(prop.SummonedBy) is Slime boss && prop.ZipSymbol == (boss.Pins / 3) % 2;
 
     private Slime AddZipProp(Slime boss, ZipProp role, double x, int symbol, double height = 0)
@@ -33,8 +33,13 @@ public sealed partial class BattleSim
         boss.Retreating = false;
         boss.PendingCalls = null;
         boss.ZipPuzzleClock = 3.5;
-        // Each lane leaves room on BOTH sides, even after repeated hits.
-        for (int i = 0; i < 3; i++) AddZipProp(boss, ZipProp.File, Left + (Right - Left) * (0.18 + i * 0.25), i);
+        if (!PlaceZipFiles(boss))
+        {
+            boss.ZipFilesPending = boss.Retreating = true;
+            boss.RetreatTime = 0;
+            boss.ZipLayoutGoal = Left + Math.Max(boss.Width, StageOf(boss)!.Scale * Settings.SlimeWidth) / 2 + 8;
+            boss.Set(SlimeState.Moving);
+        }
     }
 
     private HitResult HitZipProp(Slime prop, DamageSource source)
@@ -55,7 +60,7 @@ public sealed partial class BattleSim
         else if (prop.ZipProp == ZipProp.File)
         {
             double margin = Math.Min(120, (Right - Left) * 0.15);
-            prop.X = Math.Clamp(prop.X + (lastCatX <= prop.X ? 1 : -1) * 36, Left + margin, Right - margin);
+            prop.X = Math.Clamp(prop.X + (lastCatX <= prop.X ? 1 : -1) * 36, prop.ZipLaneRight > prop.ZipLaneLeft ? prop.ZipLaneLeft : Left + margin, prop.ZipLaneRight > prop.ZipLaneLeft ? prop.ZipLaneRight : Right - margin);
             if (Math.Abs(prop.X - ZipFileGoal(prop)) <= 40)
             {
                 Unpacked(prop);
@@ -87,6 +92,19 @@ public sealed partial class BattleSim
 
     private void StepZipPuzzle(Slime boss, double dt, BossPhase phase)
     {
+        if (phase.Roped && !boss.ZipFilesPending)
+        {
+            boss.X = boss.ZipLayoutGoal;
+            boss.KnockVelocity = 0;
+        }
+        if (phase.Roped && boss.ZipFilesPending)
+        {
+            if (!StepLeap(boss, dt, boss.ZipLayoutGoal)) return;
+            boss.ZipFilesPending = boss.Retreating = false;
+            PlaceZipFiles(boss, compact: true);
+            boss.ZipPuzzleClock = 3.5;
+            return;
+        }
         if (phase.Press && boss.Retreating)
         {
             if (!StepLeap(boss, dt, (Left + Right) / 2)) return;
@@ -104,7 +122,7 @@ public sealed partial class BattleSim
             double edge = side < 0 ? Left : Right;
             double radius = Math.Abs(edge - boss.X) / 2;
             var sweep = new ZipMoveSpec { Damage = 8, Stun = 0.5 };
-            AddZipBlow(boss, (edge + boss.X) / 2, radius, 0, 65, 0.8, sweep, ZipBlowKind.Mark, 1);
+            AddZipBlow(boss, (edge + boss.X) / 2, radius, 0, 65, 0.8, sweep, ZipBlowKind.Belt, 1);
         }
         else
         {
@@ -122,6 +140,7 @@ public sealed partial class BattleSim
             boss.ZipRepulseWarn = Math.Max(0, boss.ZipRepulseWarn - dt);
             if (boss.ZipRepulseWarn > 0) return;
             boss.ZipRepulseClock = 22;
+            AddZipEffect(ZipVisual.Repulse, boss.X, boss.Height / 2, lastCatX < boss.X ? -100 : 100);
             if (CatOffFloor || Raging || CrushProof || ShieldRemaining > 0 || Grace > 0) return;
             int side = lastCatX < boss.X ? -1 : 1;
             double goal = side < 0 ? Left + CatHalfWidth : Right - CatHalfWidth;

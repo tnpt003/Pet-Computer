@@ -617,7 +617,7 @@ public sealed partial class PetWindow
         if (!held) KeepBattleOnItsMonitor();
         battle.SetPointer(BattlePointer());
         // The Adventure Guide holds the battle still while a step shows (PetWindow.BattleGuide.cs).
-        var order = battle.Step(BattleGuideFreezes ? 0 : dt, pet.X + settings.Width / 2, held, BattleLifted, held ? BattleCatPose() : null);
+        var order = battle.Step(BattleGuideFreezes ? 0 : dt, pet.X + settings.Width / 2, held, BattleLifted, BattleLifted ? BattleCatPose() : null);
         // Ground quake ready: the next floor landing sticks, no bounce (2026-11-04, D1b).
         pet.StickLanding = !dragging && battle.QuakeReady;
         // The thrown cat bonked an ice shell: it bounces back (2026-11-04, docs/APPROVED-EXCEPTIONS.md D1a).

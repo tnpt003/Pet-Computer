@@ -87,6 +87,7 @@ internal static class BattleZipTests
         StageChecks(check);
         PuzzleChecks(check);
         RepulseChecks(check);
+        PhaseTwoRegression(check);
         DataChecks(check);
     }
 
@@ -137,7 +138,7 @@ internal static class BattleZipTests
         check(sim.ZipBlows.Any(b => !b.Done && b.Kind == ZipBlowKind.Branch && b.Stun == 0.6), "Folder puzzle plants a warned damaging tree at the cat");
         foreach (var file in files)
         {
-            Run(sim, dt, file.X - 70, held: true);
+            Run(sim, dt, file.X + (sim.ZipFileGoal(file) > file.X ? -70 : 70), held: true);
             // The cat stands to the left of these initial positions.
             for (int i = 0; i < 10 && file.Targetable; i++) sim.Damage(file, 1, DamageSource.Weapon);
         }
@@ -155,6 +156,41 @@ internal static class BattleZipTests
         check(tabs.All(s => !s.Targetable) && boss.Deflating > 0, "Every pull disappears after one direct strike");
         Run(sim, 2, 400);
         check(boss.State == SlimeState.Defeated && sim.BossDefeated, "Six pulls deflate and defeat the one HP boss");
+    }
+
+    private static void PhaseTwoRegression(Action<bool, string> check)
+    {
+        foreach (double width in new[] { 480.0, 640, 1600 })
+        foreach (int seed in Enumerable.Range(1, 12))
+        {
+            var sim = new BattleSim(Settings(Zip()), 0, width, seed: seed, skills: Tools, startHp: 900);
+            for (int i = 0; i < 100 && sim.Boss is not { Targetable: true }; i++) sim.Step(dt, 50, false);
+            var boss = sim.Boss!;
+            boss.X = width * (0.2 + seed % 4 * 0.2);
+            boss.ZipStage = 1; boss.PhasesDone = 1; boss.Hp = boss.MaxHp * 0.5;
+            var bomb = sim.AddSlime(width / 2, Shipped.Enemy("zip_packet"));
+            bomb.SummonedBy = boss.Id; bomb.PacketFuse = true; bomb.PacketLeft = 0.05; bomb.Set(SlimeState.Moving);
+            sim.Damage(boss, 100000, DamageSource.App);
+            Run(sim, 2, 40);
+            var files = sim.Slimes.Where(s => s.ZipProp == ZipProp.File && s.Targetable).ToArray();
+            check(files.Length == 3 && bomb.State == SlimeState.Defeated, $"Phase two clears old bombs and creates three files: width {width}, seed {seed}");
+            check(files.All(f => Math.Abs(f.X - boss.X) > boss.Width / 2 + 32 && Math.Abs(sim.ZipFileGoal(f) - boss.X) > boss.Width / 2 + 32), "Files and matching goals never overlap the boss");
+            check(files.All(f => (f.ZipLaneRight < boss.X - boss.Width / 2 || f.ZipLaneLeft > boss.X + boss.Width / 2) && f.ZipLaneLeft >= 0 && f.ZipLaneRight <= width), "Every file push lane stays on one side of the boss and inside the map");
+            // Even a late bomb spawned after entry must not delete puzzle props.
+            var late = sim.AddSlime(40, Shipped.Enemy("zip_packet"));
+            late.SummonedBy = boss.Id; late.PacketFuse = true; late.PacketLeft = 0.05; late.Set(SlimeState.Moving);
+            Run(sim, 0.2, width - 40);
+            check(files.All(f => f.Targetable) && boss.Shielded, "Exploding or clearing faulty packets cannot remove puzzle files");
+            foreach (var file in files)
+            {
+                for (int hit = 0; hit < 20 && file.Targetable; hit++)
+                {
+                    Run(sim, dt, file.X + (sim.ZipFileGoal(file) > file.X ? -60 : 60), held: true);
+                    sim.Damage(file, 1, DamageSource.Weapon);
+                }
+            }
+            check(!boss.Shielded && boss.ZipStage == 2, "All seeded file layouts can be solved without crossing the boss");
+        }
     }
 
     private static void RepulseChecks(Action<bool, string> check)

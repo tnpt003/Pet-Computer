@@ -14,6 +14,9 @@ Quy ước file này: chỉ giữ trạng thái hiện tại, các đợt đang 
 
 ## Đang dở và việc tiếp theo
 
+- **Slime Nén sửa lỗi sau test (#57):** đã sửa file/đích random theo làn tránh boss và mép; dọn bom/giấy thường khi vào mech, `ClearPackets` không xóa file mech. Giấy bám có giới hạn quay, quét toàn thân cả bế/rơi/bounce; hiệu ứng ZIP riêng mỗi đòn. HP 1100, records c2_zip_slime 7 / Vô tận 15 / Bãi rác 8. C# đầy đủ 3451, Python 58 + 5, WPF 1433 đạt; ZIP/slime bay cuối 432 đạt, cân bằng đo lại 293 đạt (Kiếm Bãi rác tham lam 20/40 sát ngưỡng). Đã xem render, đang commit/publish. Đối chứng: docs/BALANCE-ZIP-2026-11-06.md. Test tay MANUAL-TEST mục #57; chưa chơi trận thật/DPI/multi-monitor.
+
+
 - **Slime Nén sau chơi thử 06/11 (Issue #56):** đã publish bản thử HP 1100 theo yêu cầu trực tiếp của người dùng dù còn 3 ngưỡng cân bằng FAIL (Cuộn len boss Normal 72% <80%; Bãi rác tham lam Kiếm 15/40, Cuộn len 13/40 <20/40). Source 8cd669f (code 29d83ab), C# 3246 đạt/3 FAIL cân bằng, Python 58 + 5 đạt, WPF 1431 đạt; smoke 3/3 PASS, đã mở lại mèo. ZIP: artifacts/DesktopPet-1.4.4-8cd669f-win-x64.zip. Luật mech/khóa/đòn mới: docs/ZIP-SLIME.md; đối chứng và thử HP 1000 không đạt: docs/BALANCE-ZIP-2026-11-06.md. Kỷ lục c2_zip_slime 6, Vô tận 14, Bãi rác 7. Đã xem render sáng/tối; chưa chơi trận thật/DPI/multi-monitor. Test tay MANUAL-TEST mục Issue #56; còn phân tích seed thua theo màn/mech để cân lại, không nới ngưỡng test.
 
 

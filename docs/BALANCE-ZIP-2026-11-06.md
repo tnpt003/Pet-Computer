@@ -1,4 +1,26 @@
-# Slime Nén sau chơi thử — đối chứng 06/11, Issue #56
+# Slime Nén sau chơi thử — đối chứng 06/11, Issue #56–#57
+
+## Kết quả mới nhất — sửa lỗi #57, HP 1100
+
+Sau sửa file mech/bom còn sót, homing quét toàn thân và visual ZIP riêng: C# đầy đủ **3451 đạt**, WPF **1433 đạt**, Python **58 + 5 đạt**. Chạy lại riêng ZIP/slime bay sau các chỉnh cuối: **432 đạt**; ba suite cân bằng **293 đạt**. Không nới ngưỡng hoặc hạ HP; rulesVersion màn/Endless/Bãi rác = **7/15/8**.
+
+Đối chứng trước là bản đã publish `8cd669f`, log `artifacts/zip-publish-tests.log`; sau là `artifacts/zip57-balance-final.log`. Cùng 60 seed chương 2 và 40 seed Viễn chinh, giữ bot/đường đi/build/ngưỡng. Luật truy đuổi và bố trí theo seed đã đổi, nên đây là kết quả toàn bản sửa, không gán riêng mức cải thiện cho một thay đổi.
+
+| Vũ khí | Độ khó | Thắng trước → sau | Giây thắng trước → sau | HP còn trước → sau |
+|---|---|---:|---:|---:|
+| sword | Normal | 51 → 59/60 | 138 → 139 | 80% → 80% |
+| hammer | Normal | 51 → 60/60 | 157 → 156 | 79% → 78% |
+| yarn | Normal | 43 → 58/60 | 158 → 157 | 77% → 77% |
+| glove | Normal | 52 → 60/60 | 131 → 131 | 84% → 84% |
+| sword | Hard | 32 → 49/60 | 157 → 153 | 69% → 73% |
+| hammer | Hard | 33 → 40/60 | 180 → 180 | 76% → 76% |
+| yarn | Hard | 21 → 39/60 | 200 → 190 | 67% → 74% |
+| glove | Hard | 39 → 51/60 | 143 → 141 | 80% → 76% |
+
+Ba ngưỡng từng FAIL nay đạt: Cuộn len boss Normal **58/60 (97%) ≥80%**, Bãi rác tham lam Normal Kiếm **20/40 ≥20**, Cuộn len **22/40 ≥20**. Búa **21/40 ≥18**, Găng **30/40 ≥20**. Kiếm Viễn chinh còn sát ngưỡng; cần chơi thật trước khi coi là cân bằng cuối. Probe Kiếm thường Normal 4/4. Chưa chơi thật, thử DPI/multi-monitor hoặc đo perf boss mới; đã xem render sáng/tối của từng đòn và bố trí file/đích tránh boss.
+
+## Lịch sử #56 và lượt thử HP 1000
+
 
 Đây là mô phỏng, chưa chơi thật. **Cân bằng chưa đạt:** ba ngưỡng còn FAIL ở bản HP 1100. Người dùng đã yêu cầu publish bản này để chơi thử; không đổi ngưỡng test. Không thay ngưỡng test.
 

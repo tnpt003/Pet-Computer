@@ -1075,3 +1075,12 @@ Các mục 1.5 phía trên viết theo từng mốc; đây là thứ tự chơi 
 - [ ] Sáu tay kéo: 3 đất, 3 trên cao, ngẫu nhiên nhưng không ra khỏi vùng với tới/đè HUD; cầm mèo đánh tay trên cao đúng 1 đòn. Kéo xuyên/ném/Kéo cắt không giải thay. Phá đủ thì boss xì hơi và chết.
 - [ ] Bom hết 14 giây: nổ sàn, giữ tay chưa phá và khiên, không sinh lứa mới. Pause/menu/fullscreen giữ nguyên các timer; resume không có choáng trễ; Nộ giữa cú đẩy giải hiệu ứng.
 - [ ] Hướng dẫn/feedback vi/en/ja khớp luật; chuột trên cửa sổ tay kéo cao, DPI/multi-monitor cần kiểm tra thật. Ngoài trận: sleep/wake, drag/throw, emotion và Python fallback như trước.
+
+
+## Slime Nén — lỗi mech/giấy/visual sau chơi thử, Issue #57
+
+- [ ] Vào mech thư mục ở nhiều vị trí boss và seed: file/đích không đè boss, không sát tường, có chỗ đặt mèo hai phía. Đẩy sai nhiều lần không lọt qua boss hoặc ra khỏi làn. Map hẹp: boss né trước khi đặt, không kẹt mech.
+- [ ] Khi chuyển từ Giải nén lỗi hoặc Tệp truy đuổi sang mech: bom/giấy cũ tan, không có vụ nổ trễ xóa file mech. Ghép được đủ ba; cây vẫn báo trước rồi gây damage/choáng.
+- [ ] Giấy bám sau tín hiệu khóa với đường cong hữu hạn; đưa đầu/thân/chân mèo vào giấy khi đứng sàn, bế cao, thả rơi hoặc bounce đều bị trúng. Kéo nhanh vẫn né được; không xuyên do frame nhanh. Khiên/Nộ chặn; bế không tuột, cú ném không đổi, không choáng/Dizzy.
+- [ ] Pause/menu/fullscreen dừng cả homing, bom và các hiệu ứng; đổi DPI/monitor không làm quỹ đạo hoặc làn file lệch.
+- [ ] Chín đòn thường và đẩy/bom/đai có hình báo và impact riêng đúng chủ đề ZIP, không còn sóng chấn động chung. Xem trên nền sáng/tối/nhiều màu, đảm bảo không che mèo hoặc báo nguy hiểm.

@@ -12,7 +12,8 @@ namespace DesktopPet;
 // throw (HurtCat). Physics of the cat stay the window's.
 public enum ZipAct { None, Clamp, Bolt, Tumble, Tree, Chase, Faulty, Overflow, Overwrite, Tear }
 public enum ZipBeat { None, Warn, Lock, Strike, Recover }
-public enum ZipBlowKind { Branch, Mark }
+public enum ZipBlowKind { Branch, Mark, Belt }
+public enum ZipVisual { Clamp, Bolt, Tumble, Tree, Chase, Faulty, Overflow, Overwrite, Tear, Repulse, Burst, Belt }
 
 // One blow waiting on a marked spot: Left s to go, then it hits once in its box and shows Life s more.
 public sealed class ZipBlow
@@ -252,7 +253,7 @@ public sealed partial class BattleSim
         switch (m.Act)
         {
             case ZipAct.Clamp:
-                AddEffect(BattleEffectKind.Slam, boss.ZipAimX, 0, m.Radius);
+                AddZipEffect(ZipVisual.Clamp, boss.ZipAimX, 0, m.Radius);
                 if (CatInVolume(boss.ZipAimX - m.Radius, boss.ZipAimX + m.Radius, 0, m.Height)) ZipHit(boss, m.Damage, m.Stun);
                 break;
             case ZipAct.Chase:
@@ -279,6 +280,7 @@ public sealed partial class BattleSim
                 if (boss.ZipHitMask == 0 && Grace <= 0 && !(CatLifted && catPose == null)
                     && Near(x0, h0, boss.ZipHeadX, boss.ZipHeadHeight, catX, catH) <= m.Radius)
                 {
+                    AddZipEffect(ZipVisual.Bolt, catX, catH, m.Radius);
                     boss.ZipHitMask = 1; // One hit a shot: going out and coming back are two chances at it.
                     ZipHit(boss, m.Damage, m.Stun);
                 }
@@ -306,6 +308,7 @@ public sealed partial class BattleSim
                     && (CatInVolume(boss.X - b - m.Radius, boss.X - a + m.Radius, 0, m.Height) || CatInVolume(boss.X + a - m.Radius, boss.X + b + m.Radius, 0, m.Height)))
                 {
                     boss.ZipHitMask |= way;
+                    AddZipEffect(ZipVisual.Tear, lastCatX, 0, m.Radius);
                     ZipHit(boss, m.Damage, m.Stun);
                 }
                 break;
@@ -318,8 +321,8 @@ public sealed partial class BattleSim
         if (m.Act != ZipAct.Overflow) { boss.ZipTear = 0; return; }
         // The burst: all the floor outside the gap at once, up to the top of the strip.
         var (l, r) = OverflowEdges(boss, m, 1);
-        AddEffect(BattleEffectKind.Slam, (Left + l) / 2, 0, Math.Max(10, (l - Left) / 2));
-        AddEffect(BattleEffectKind.Slam, (r + Right) / 2, 0, Math.Max(10, (Right - r) / 2));
+        AddZipEffect(ZipVisual.Overflow, (Left + l) / 2, 0, Math.Max(10, (l - Left) / 2));
+        AddZipEffect(ZipVisual.Overflow, (r + Right) / 2, 0, Math.Max(10, (Right - r) / 2));
         boss.ZipTear = 0;
         if (CatInVolume(Left, l, 0, m.BurstHeight) || CatInVolume(r, Right, 0, m.BurstHeight)) ZipHit(boss, m.Damage, m.Stun);
     }
@@ -342,18 +345,23 @@ public sealed partial class BattleSim
             });
     }
 
-    // The files' one aim: their turn at the moment they lock on, then straight on. Until then they curve up and over.
+    // Papers curve up before locking, then pursue at constant speed with a bounded angular velocity.
     private void StepPaper(BattleShot shot, double dt)
     {
-        if (shot.LockIn <= 0) return;
-        shot.LockIn -= dt;
-        shot.VY -= shot.Speed * 1.1 * dt;
-        if (shot.LockIn > 0) return;
+        if (shot.LockIn > 0)
+        {
+            shot.LockIn -= dt;
+            shot.VY -= shot.Speed * 1.1 * dt;
+            if (shot.LockIn > 0) return;
+            events.Add(new(BattleEventKind.ZipFileLocked, shot.X));
+        }
         var (x, h) = CatCentre();
-        double dx = x - shot.X, dh = h - shot.Height, far = Math.Max(1, Math.Sqrt(dx * dx + dh * dh));
-        shot.VX = dx / far * shot.Speed;
-        shot.VY = dh / far * shot.Speed;
-        events.Add(new(BattleEventKind.ZipFileLocked, shot.X));
+        double dx = x - shot.X, dh = h - shot.Height;
+        double angle = Math.Atan2(shot.VY, shot.VX), target = Math.Atan2(dh, dx);
+        double turn = Math.Atan2(Math.Sin(target - angle), Math.Cos(target - angle));
+        angle += Math.Clamp(turn, -2.8 * dt, 2.8 * dt);
+        shot.VX = Math.Cos(angle) * shot.Speed;
+        shot.VY = Math.Sin(angle) * shot.Speed;
     }
 
     private void ThrowPackets(Slime boss, ZipMoveSpec m)
@@ -383,7 +391,7 @@ public sealed partial class BattleSim
         if (s.PacketFuse && Find(s.SummonedBy) is { Targetable: true } boss && MoveSpec(boss, ZipAct.Faulty) is ZipMoveSpec m)
         {
             ZipPacketBlasts++;
-            AddEffect(BattleEffectKind.Slam, s.X, 0, m.Radius);
+            AddZipEffect(ZipVisual.Faulty, s.X, 0, m.Radius);
             events.Add(new(BattleEventKind.ZipPacketBurst, s.X));
             if (CatInVolume(s.X - m.Radius, s.X + m.Radius, 0, m.Height)) ZipHit(boss, m.Damage, m.Stun);
         }
@@ -404,7 +412,7 @@ public sealed partial class BattleSim
     private void ClearPackets(int bossId)
     {
         foreach (var s in slimes)
-            if (s.SummonedBy == bossId && s.Type.Packet && s.State != SlimeState.Defeated && s.RopedTo == 0) Unpacked(s);
+            if (s.SummonedBy == bossId && s.Type.Packet && s.ZipProp == ZipProp.None && s.State != SlimeState.Defeated && s.RopedTo == 0) Unpacked(s);
     }
 
     private void StepZipBlows(double dt)
@@ -422,7 +430,7 @@ public sealed partial class BattleSim
         {
             if (b.Done || b.Left > 0) continue;
             b.Done = true;
-            AddEffect(BattleEffectKind.Slam, b.X, b.Bottom, b.Radius);
+            if (b.Kind != ZipBlowKind.Branch) AddZipEffect(b.Kind == ZipBlowKind.Belt ? ZipVisual.Belt : ZipVisual.Overwrite, b.X, b.Bottom, b.Radius);
             events.Add(new(BattleEventKind.ZipBlowLanded, b.X, b.Order));
             if (Find(b.OwnerId) is { Targetable: true } boss && CatInVolume(b.X - b.Radius, b.X + b.Radius, b.Bottom, b.Top)) ZipHit(boss, b.Damage, b.Stun);
             if (Over) return;

@@ -14,7 +14,9 @@ Quy ước file này: chỉ giữ trạng thái hiện tại, các đợt đang 
 
 ## Đang dở và việc tiếp theo
 
-- **Cây mech cuối/đẩy riêng Slime Nén (#59):** code theo duyệt; cây toàn chiều cao dải100 DIP, báo1 s/hoạt động0,8 s/chu kỳ4,5 s, damage10 một lần. Đẩy lần đầu5 s/hồi12 s, chỉ mở lúc mèo sàn. HP1100, records9/17/10. Full C#3484 đạt/6 FAIL test/môi trường; đã xử lý và kiểm lại suite liên quan562 + Tooling24 đạt; Python58+5, WPF1439 đạt. Cân bằng mọi ngưỡng đạt, đối chứng docs/BALANCE-ZIP-2026-11-06.md; Búa/Len Bãi rác còn sát ngưỡng. Đã xem render sáng/tối, chưa chơi thật/DPI/multi-monitor; test tay MANUAL-TEST #59. Đã publish 048862f, smoke 3/3 PASS, mở lại mèo.
+- **Phạt mech cuối ZIP (#60):** code theo duyệt, nổ toàn sân80% max HP cơ sở, bế/ném/bounce trúng rơi không nảy rồi stun5 s sau đáp; sống thì reset6 tay/gồng14 s. HP1100, records10/18/11. Full Python58+5/C#3510 đạt,3 FAIL cân bằng bot cũ; đã sửa bot biết bế di chuyển và đối chứng cùng bot trên048862f. ZIP436/WPF1448 đạt; cân bằng chi tiết docs/BALANCE-ZIP-2026-11-06.md. Đã xem render sáng/tối, chưa chơi thật/DPI/multi-monitor; test tay MANUAL-TEST #60. Đang commit/publish.
+
+- **Cây mech cuối/đẩy riêng Slime Nén (#59):** publish048862f, smoke3/3, mở lại mèo; cây toàn chiều cao, đẩy5/12 s. Python58+5, WPF1439, suite liên quan562+Tooling24 đạt; full có6 FAIL test/môi trường đã xử lý. Chi tiết Issue_fixxed #59, test tay MANUAL-TEST #59; chưa chơi thật/DPI/multi-monitor.
 
 - **Đai quét/tự phá Khóa ZIP (#58):** publish 3b3682a, smoke 3/3, mở lại mèo. Đai di chuyển/damage tiếp xúc, mèo tự phá khóa không cần quái; C#3467, Python58+5, WPF1437, ZIP cuối392 đạt. Chi tiết Issue_fixxed #58, docs/ZIP-SLIME.md; còn test tay MANUAL-TEST #58/DPI/multi-monitor.
 

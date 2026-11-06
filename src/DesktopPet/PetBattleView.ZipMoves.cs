@@ -170,6 +170,7 @@ public sealed partial class BattleFieldView
     // The zipper head's line, the marks high up and the ring on the cat as the files lock on (SkyShotView).
     public static bool ZipAirBusy(BattleSim sim)
     {
+        foreach (var s in sim.Slimes) if (s.Type.Zip != null && (s.ZipBurstLeft > 0 || s.Shielded && s.BombClock > 0 && s.BombClock <= 2)) return true;
         foreach (var b in sim.ZipBlows) if (b.Bottom > 0 || b.Kind == ZipBlowKind.Canopy) return true;
         foreach (var s in sim.Slimes) if (s.ZipAct == ZipAct.Bolt) return true;
         return false;
@@ -177,6 +178,9 @@ public sealed partial class BattleFieldView
 
     public static void DrawZipAir(DrawingContext dc, BattleSim sim, Func<double, double, Point> toScreen, Point cat, double time)
     {
+        foreach (var boss in sim.Slimes)
+            if (boss.Type.Zip != null && (boss.ZipBurstLeft > 0 || boss.Shielded && boss.BombClock > 0 && boss.BombClock <= 2))
+                DrawArchiveBurst(dc, sim, boss, toScreen, time);
         foreach (var b in sim.ZipBlows)
             if (b.Bottom > 0 || b.Kind == ZipBlowKind.Canopy) DrawZipBlow(dc, b, x => toScreen(x, 0), time);
         foreach (var s in sim.Slimes)

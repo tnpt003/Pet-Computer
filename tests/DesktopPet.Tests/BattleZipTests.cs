@@ -88,6 +88,7 @@ internal static class BattleZipTests
         PuzzleChecks(check);
         RepulseChecks(check);
         CanopyChecks(check);
+        FinalPunishChecks(check);
         PhaseTwoRegression(check);
         BeltContactChecks(check);
         DataChecks(check);
@@ -154,7 +155,10 @@ internal static class BattleZipTests
         sim.Damage(boss, 100000, DamageSource.Reflect);
         check(boss.Hp == 1, "Damage cannot bypass the final puzzle shield");
         Run(sim, boss.Type.Zip!.Bomb.Charge + 0.2, 400, held: true);
-        check(boss.Shielded && boss.BombClock > 0 && tabs.All(s => s.Targetable), "Timeout keeps remaining pulls and never exposes a killable boss");
+        check(boss.Shielded && boss.ZipBurstLeft > 0 && tabs.All(s => !s.Targetable), "Timeout destroys old pulls and keeps the one-HP boss shielded during burst");
+        Run(sim, 1, 400, held: true);
+        tabs = sim.Slimes.Where(s => s.ZipProp == ZipProp.Tab && s.Targetable).ToArray();
+        check(tabs.Length == 6 && boss.BombClock > 13, "Surviving a burst starts a fresh six-pull puzzle and charge");
         foreach (var tab in tabs) sim.Damage(tab, 1, DamageSource.Weapon);
         check(tabs.All(s => !s.Targetable) && boss.Deflating > 0, "Every pull disappears after one direct strike");
         check(!sim.ZipBlows.Any(b => b.OwnerId == boss.Id), "Solving six pulls clears every final tree and pending hit immediately");
@@ -288,6 +292,44 @@ internal static class BattleZipTests
             check(!sim.ZipBlows.Any(b => b.Kind == ZipBlowKind.Canopy), "Tree disappears after its active window");
             Step(160, 700);
             check(sim.ZipBlows.Any(b => b.Kind == ZipBlowKind.Canopy && Math.Abs(b.X - 700) < 1), "Next tree locks new cat position on independent cadence");
+        }
+    }
+
+    private static void FinalPunishChecks(Action<bool, string> check)
+    {
+        for (int mode = 0; mode < 4; mode++)
+        {
+            var (sim, boss) = Field(Zip(), bossX: 1200, catX: 200);
+            boss.ZipStage = 2; boss.BombTag = boss.ShieldTag = 3; boss.Shielded = true;
+            boss.BombClock = 0.01; boss.ZipPuzzleClock = 99;
+            if (mode == 3) sim.Use(BattleSkill.Shield, 200);
+            double hp = sim.CatHp;
+            CatPose? pose = mode == 0 ? null : new CatPose(200, 650, 300, -400, mode != 2, mode == 2);
+            sim.Step(dt, 200, mode != 0, mode != 0, pose);
+            check(Math.Abs(sim.CatHp - (mode == 3 ? hp : hp - sim.CatMaxHp * 0.8)) < 0.001,
+                $"Final burst hits the entire arena for 80 percent max HP, defense mode {mode}");
+            check(sim.ZipForcedFall == (mode is 1 or 2), "Only a surviving unblocked airborne hit requests forced falling");
+            if (mode is 1 or 2)
+            {
+                check(!sim.CatStunned, "Five-second punishment stun does not start while falling");
+                sim.Paused = true;
+                sim.Step(0.1, 200, false);
+                check(sim.ZipForcedFall && !sim.CatStunned, "Pause cannot complete punishment landing or tick its stun");
+                sim.Paused = false;
+                sim.Step(dt, 200, false);
+                check(!sim.ZipForcedFall && sim.CatStunRemaining > 4.9 && sim.Grace == 0 && !sim.QuakeReady,
+                    "Landing starts five-second stun without rescue grace or quake");
+            }
+            Run(sim, 1, 200);
+            var first = sim.Slimes.Where(s => s.ZipProp == ZipProp.Tab && s.Targetable).ToArray();
+            check(first.Length == 6 && first.Count(s => s.Airborne) == 3 && boss.BombClock > 13,
+                "Survivor receives a fresh six-pull layout and full charge after burst animation");
+            if (mode == 2)
+            {
+                boss.BombClock = 0.01;
+                sim.Step(dt, 200, false);
+                check(sim.CatHp == 0 && sim.Over && first.All(s => !s.Targetable), "Repeated failure kills the cat and removes old pulls");
+            }
         }
     }
 

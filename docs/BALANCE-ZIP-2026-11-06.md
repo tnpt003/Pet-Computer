@@ -1,6 +1,27 @@
-# Slime Nén sau chơi thử — đối chứng 06/11, Issue #56–#59
+# Slime Nén sau chơi thử — đối chứng 06/11, Issue #56–#60
 
-## Kết quả mới nhất #59 — cây mech cuối/đẩy riêng, HP 1100
+## Kết quả mới nhất #60 — phạt timeout toàn sân, HP 1100
+
+Lượt đầy đủ với bot cũ: C#3510 đạt/3 FAIL (Búa boss Normal72% <80%, Búa Bãi rác16/40 <18, Kiếm probe0/4). Không chỉnh HP/damage/clock/ngưỡng để né FAIL. Bot cũ né nổ bằng bế cao và đi bộ giữa tay sàn; đã đổi bot để bế chuyển giữa tay sàn ở700 DIP/s rồi đặt xuống mới đánh, không chờ bom bằng độ cao. Bot giả lập đáp ngay khi bị forced fall; đây là giới hạn mô phỏng, WPF có test rơi thật và đếm stun sau đáp.
+
+Đối chứng **cùng bot mới** trên baseline source048862f (checkout riêng trong artifacts; bỏ duy nhất nhánh ZipForcedFall vì baseline chưa có API) và #60. Giữ seed/build/đường đi/vũ khí/ngưỡng/HP. Logs zip60-baseline-balance.log + zip60-baseline-expedition.log; sau zip60-balance-verified.log. Không so mức cải thiện của bot với bảng cũ như tác dụng của gameplay.
+
+| Vũ khí | Độ khó | Thắng baseline → #60 | Giây baseline → #60 | HP baseline → #60 |
+|---|---|---:|---:|---:|
+| sword | Normal | 60/60 → 60/60 | 133 → 133 | 77% → 77% |
+| sword | Hard | 47/60 → 47/60 | 148 → 148 | 66% → 66% |
+| hammer | Normal | 60/60 → 60/60 | 151 → 151 | 76% → 76% |
+| hammer | Hard | 46/60 → 46/60 | 176 → 176 | 70% → 70% |
+| yarn | Normal | 59/60 → 59/60 | 153 → 153 | 75% → 75% |
+| yarn | Hard | 40/60 → 40/60 | 186 → 186 | 63% → 63% |
+| glove | Normal | 60/60 → 60/60 | 125 → 125 | 84% → 84% |
+| glove | Hard | 54/60 → 54/60 | 134 → 134 | 74% → 74% |
+
+Bãi rác tham lam Normal, cùng bot: sword 22/40→22/40, hammer 21/40→21/40, yarn 22/40→22/40, glove 28/40→28/40. Mọi ngưỡng đạt; cần tiếp tục chơi thử vì bot bế/đặt chính xác hơn người.
+
+Python58+i18n5, ZIP436, WPF1448 đạt; đo lại cân bằng3 suite293 đạt. Đã xem render sáng/tối, chưa chơi thật/DPI/multi-monitor. Runtime C# và bridge window, không Python. Records10/18/11.
+
+## Lịch sử #59 — cây mech cuối/đẩy riêng, HP 1100
 
 Publish sạch source `048862f`, smoke **3/3 PASS**, đã mở lại mèo. ZIP `artifacts/DesktopPet-1.4.4-048862f-win-x64.zip`. Full C# 3484 đạt/6 FAIL test và môi trường, đã xử lý rồi kiểm lại suite ZIP/record 562 + Tooling24 đạt; Python58+i18n5, WPF1439 đạt. Chi tiết Issue_fixxed #59.
 

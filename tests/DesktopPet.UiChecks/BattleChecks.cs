@@ -12,6 +12,35 @@ using static PetPrivate;
 // Python isolation and cleanup. The real cursor is never moved.
 internal static class BattleChecks
 {
+    private static void ZipPunishment(PetWindow window, PetModel pet, Action<bool, string> check)
+    {
+        for (int mode = 0; mode < 2; mode++)
+        {
+            window.Reset();
+            window.BattleTuning = new BattleSettings { FirstWaveDelay = 100 };
+            window.StartBattle();
+            var sim = window.Battle!;
+            var boss = sim.AddSlime(sim.Right - 100, BattleData.Settings.Enemy("zip"));
+            boss.Set(SlimeState.Moving); boss.ZipStage = 2; boss.Shielded = true;
+            boss.BombTag = boss.ShieldTag = 3; boss.BombClock = 0.001; boss.ZipPuzzleClock = 99;
+            var bounds = Field<Area>(window, "bounds");
+            pet.Y = bounds.Top + 40; pet.Grounded = false;
+            pet.VX = 400; pet.VY = -500; pet.Action = mode == 0 ? PetAction.Dragging : PetAction.Thrown;
+            SetField(window, "dragging", mode == 0);
+            Call(window, "TickBattle", 1.0 / 60);
+            check(sim.ZipForcedFall && !Field<bool>(window, "dragging") && !window.IsMouseCaptured && pet.VX == 0 && pet.VY == 0 && pet.StickLanding,
+                $"ZIP failure interrupts hand/bounce mode {mode}, releases capture and requests a straight non-bouncing fall");
+            var physics = Field<PetPhysics>(window, "physics");
+            for (int i = 0; i < 1200 && !pet.Grounded; i++) physics.Step(pet, bounds, 1.0 / 120);
+            check(pet.Grounded && pet.VX == 0 && pet.VY == 0, "Punishment physics lands with no bounce");
+            Call(window, "TickBattle", 1.0 / 60);
+            check(!sim.ZipForcedFall && sim.CatStunRemaining > 4.9 && sim.Grace == 0, "Window starts five-second stun only after actual floor contact");
+            window.EndBattle();
+            check(!pet.StickLanding, "Ending battle clears punishment landing flag");
+        }
+        window.Reset();
+    }
+
     private static void SetContext(PetWindow window, bool fullscreen, double idle) =>
         SetField(window, "contextProbe", new Func<(bool, double)>(() => (fullscreen, idle)));
     private static MouseButtonEventArgs MouseEvent(RoutedEvent routedEvent, MouseButton button = MouseButton.Left) =>
@@ -29,6 +58,7 @@ internal static class BattleChecks
         void Tick(double seconds) { for (double t = 0; t < seconds; t += 1.0 / 60) Call(window, "TickBattle", 1.0 / 60); }
         BattleSim Sim() => window.Battle!;
         var fast = new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 2, 2 }, WaveBreakSeconds = 1 };
+        ZipPunishment(window, pet, check);
 
         window.Reset();
         check(!window.BattleActive && OpenBattleWindows() == 0 && !pet.SwordOut, "Battle Mode is off until the user starts it");

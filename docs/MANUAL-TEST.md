@@ -1099,3 +1099,10 @@ Các mục 1.5 phía trên viết theo từng mốc; đây là thứ tự chơi 
 - [ ] Mech 1 HP: báo cây sau 2 s, chốt X/báo 1 s; né sang ngang khi bế/bounce/sàn. Cây phủ toàn chiều cao đúng dải 100 DIP; mỗi cây chỉ trúng một lần, không che hoặc chặn click tay kéo.
 - [ ] Cây kế tiếp mỗi 4,5 s; Pause/menu đóng băng; đủ sáu tay xóa cả cây đang báo/đang mọc. Thử màn thấp và tọa độ monitor âm/DPI.
 - [ ] Phase 2–3 sau mech có đẩy lần đầu 5 s, các lần sau 12 s hợp lệ; đang bế không tiêu lượt, chạm sàn thì báo trước đòn thường. Nhấc trong 0,9 s né được. Sàn đẩy 0,8 s rồi choáng 1,2 s, không mất máu; Khiên/Nộ giữ luật.
+
+## Issue #60 — phạt toàn sân và reset mech cuối ZIP (06/11)
+
+- [ ] Để hết 14 s: 2 s cuối hút file về boss, gồng/rung; ZIP bung file/thư mục từ boss phủ toàn màn hình có trận 0,9 s, không dùng sóng Slam và không chặn chuột. Xem nền sáng/tối/màn thấp và DPI/multi-monitor thật.
+- [ ] Bế, ném lên, ném ngang và đang bounce: mất 80% max HP trước giảm damage; tuột tay/ngừng bay ngang, rơi thẳng không nảy (kể cả đệm), đáp mới choáng 5 s/cấm nhấc. Không có ân hạn cứu hoặc Cú đáp địa chấn. Khiên/vỏ rùa/Nộ chặn; Nộ giải bất lợi.
+- [ ] Đã phá một phần tay: nổ xóa toàn bộ tay/cây cũ, sau 0,9 s sinh 6 tay mới khác vị trí theo seed, đếm lại từ 0, gồng đủ 14 s; giải đủ sáu vẫn thắng, chết không sinh thêm tay. Pause/menu/fullscreen giữ nguyên cả vụ nổ và cú rơi.
+- [ ] Ngoài vụ nổ này: drag/throw/bounce thường, sleep lock/wake/emotion priority/Python fallback giữ nguyên.

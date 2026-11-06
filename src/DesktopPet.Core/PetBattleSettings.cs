@@ -748,6 +748,7 @@ public sealed class Slime
     public bool ZipFilesPending;
     public ZipProp ZipProp;
     public int ZipSymbol;
+    public double ZipBurstLeft;
     public double ZipPuzzleClock, ZipRepulseClock = 22, ZipRepulseWarn;
     public bool PacketRevealed;
     public int ZipStage, PressLeft, Pins, BombPulls, BombTag;

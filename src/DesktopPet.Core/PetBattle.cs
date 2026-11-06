@@ -373,6 +373,7 @@ public sealed partial class BattleSim
         double floorX = groundX;
         lastCatX = floorX;
         catPose = pose;
+        StepZipForcedFall();
         StepEffects(dt);
         StepFreeze(dt); // 1.5 M26: the Screenshot's freeze, a dazzle (PetBattle.Malware2.cs).
         NoteMet(); // 1.5 M27: the Monster Book (PetBattle.Book.cs).
@@ -1028,6 +1029,7 @@ public sealed partial class BattleSim
         CancelSwing();
         Combo = 0;
         CatStunRemaining = StunImmunity = 0;
+        ZipForcedFall = false;
         RageRemaining = 0;
         foreach (var s in slimes)
         {

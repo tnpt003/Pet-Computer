@@ -10,7 +10,7 @@ public sealed partial class BattleSim
 {
     // How small a deflated Zip Slime gets, and how fast it flies letting its air out.
     public const double DeflatedSize = 0.62;
-    private const double DeflateSpeed = 980, BurstHeight = 170;
+    private const double DeflateSpeed = 980;
     private Random? zipRandom;
 
     public int BossRopesCut { get; private set; }
@@ -220,6 +220,12 @@ public sealed partial class BattleSim
         }
         if (!phase.Bomb) return false;
         if (boss.Deflating > 0) { StepDeflate(boss, zip.Bomb, dt, minX, maxX); return true; }
+        if (boss.ZipBurstLeft > 0)
+        {
+            boss.ZipBurstLeft = Math.Max(0, boss.ZipBurstLeft - dt);
+            if (boss.ZipBurstLeft <= 0 && !Over) ArmBomb(boss);
+            return true;
+        }
         boss.ZipPuzzleClock -= dt;
         if (boss.ZipPuzzleClock <= 0)
         {
@@ -317,19 +323,38 @@ public sealed partial class BattleSim
         return;
     }
 
-    // Timeout bursts over the floor; the shield and remaining targets stay until all six are hit.
+    // Final failure is arena-wide; defense still applies, but height and landing grace do not dodge it.
     private void Burst(Slime boss, ZipBombSpec bomb)
     {
         ZipBursts++;
-        boss.BombRearm = 0;
-        boss.BombClock = bomb.Charge;
-        boss.Shielded = true;
-        boss.ShieldTag = boss.BombTag;
-        boss.Cooldown = StageOf(boss)!.Cooldown / 2;
-        AddZipEffect(ZipVisual.Burst, boss.X, 0, bomb.Radius);
-        bool hit = CatInVolume(boss.X - bomb.Radius, boss.X + bomb.Radius, 0, BurstHeight);
-        events.Add(new(BattleEventKind.ZipBurst, boss.X, hit ? 1 : 0));
-        if (hit) HurtCat(boss, lastCatX, true, Share(boss, bomb.Damage), bomb.CatStun, crush: true);
+        boss.BombClock = 0;
+        boss.ZipBurstLeft = 0.9;
+        ClearZipProps(boss);
+        zipBlows.RemoveAll(b => b.OwnerId == boss.Id);
+        events.Add(new(BattleEventKind.ZipBurst, boss.X, 1));
+        if (!Raging && LandHit(CatMaxHp * bomb.HpShare, lastCatX, out _) && !Over)
+        {
+            CancelSwing();
+            if (CatOffFloor) ZipForcedFall = true;
+            else if (!CrushProof && StunImmunity <= 0 && !AutoRage())
+                CatStunRemaining = Math.Max(CatStunRemaining, StunFor(bomb.CatStun));
+        }
+    }
+
+    public bool ZipForcedFall { get; private set; }
+
+    private void StepZipForcedFall()
+    {
+        if (!ZipForcedFall) return;
+        // A punishment landing is not a player rescue or a ground-quake attack.
+        wasLifted = false;
+        liftedFor = 0;
+        if (CatOffFloor) return;
+        ZipForcedFall = false;
+        CatStunRemaining = Math.Max(CatStunRemaining, 5);
+        StunsTaken++;
+        CancelSwing();
+        events.Add(new(BattleEventKind.CatStunned, lastCatX));
     }
 
     // The boss a helper's rope goes to (null: no rope, or the boss is gone).

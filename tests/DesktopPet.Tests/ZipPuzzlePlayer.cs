@@ -5,6 +5,7 @@ internal static class ZipPuzzlePlayer
 {
     public static bool Step(BattleSim sim, ref double cat, double dt, bool dodge = false)
     {
+        if (sim.ZipForcedFall) { sim.Step(dt, cat, false); return true; }
         var prop = sim.Slimes.FirstOrDefault(s => s.Targetable && s.ZipProp != ZipProp.None && sim.ZipPropActive(s));
         if (prop == null)
         {
@@ -17,9 +18,12 @@ internal static class ZipPuzzlePlayer
             return false;
         }
         double catX = cat;
-        if (sim.Boss is { BombClock: > 0 and < 0.6 })
+        // Final failure is global now: spend the remaining time solving, never wait high for an explosion.
+        // Carry between floor pulls at the same bounded speed used to position matching files.
+        if (prop.ZipProp == ZipProp.Tab && !prop.Airborne && Math.Abs(prop.X - cat) > sim.Weapon.Range * 0.7)
         {
-            sim.Step(dt, cat, true, true, new CatPose(cat, 240, 0, 0, true, false));
+            cat += Math.Clamp(prop.X - cat, -700 * dt, 700 * dt);
+            sim.Step(dt, cat, true, true, new CatPose(cat, 100, 0, 0, true, false));
             return true;
         }
         if (dodge && sim.ZipBlows.Any(b => !b.Done && b.Left < 0.45 && Math.Abs(b.X - catX) <= b.Radius + 30))

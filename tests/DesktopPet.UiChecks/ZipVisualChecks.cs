@@ -13,6 +13,18 @@ internal static class ZipVisualChecks
     public static void Run(Action<bool, string> check)
     {
         var data = BattleData.Settings;
+        var burstSim = new BattleSim(data, 0, 600, seed: 1);
+        burstSim.SetSky(600);
+        var bursting = burstSim.AddSlime(300, data.Enemy("zip"));
+        bursting.Shielded = true; bursting.BombClock = 1; bursting.ZipStage = 2;
+        var burstPreview = new ZipCanopyPreview(burstSim);
+        var charge = SkyVisualChecks.Render(burstPreview, 600, 640, "zip-final-burst-charge");
+        bursting.BombClock = 0; bursting.ZipBurstLeft = 0.65;
+        var expanding = SkyVisualChecks.Render(burstPreview, 600, 640, "zip-final-burst-expanding");
+        bursting.ZipBurstLeft = 0.25;
+        var expanded = SkyVisualChecks.Render(burstPreview, 600, 640, "zip-final-burst-screen");
+        check(BattleFieldView.ZipAirBusy(burstSim) && !charge.SequenceEqual(expanding) && !expanding.SequenceEqual(expanded),
+            "Final archive charge and expanding screen-wide file burst have distinct animation frames");
         var canopySim = new BattleSim(data, 0, 600, seed: 1);
         var canopy = new ZipBlow { Kind = ZipBlowKind.Canopy, X = 300, Radius = 50, Top = 600, Warn = 1, Left = 0.5, Life = 0.8 };
         ((ICollection<ZipBlow>)canopySim.ZipBlows).Add(canopy);

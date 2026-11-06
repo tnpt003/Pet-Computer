@@ -613,6 +613,7 @@ public sealed class ZipPressSpec
 // Radius takes Damage and a CatStun s stun, and it arms again after Rearm s.
 public sealed class ZipBombSpec
 {
+    public double HpShare { get; init; } = 0.8;
     public double Charge { get; init; } = 14;
     public int Pulls { get; init; } = 3;
     public double TabRadius { get; init; } = 34;
@@ -1935,6 +1936,7 @@ public static class BattleData
                 Within(press.Roll.Windup, 0.3, 5, at + ".zip.press.roll.windup"); Within(press.Roll.Speed, 50, 1500, at + ".zip.press.roll.speed");
                 Within(press.Roll.Distance, 50, 1500, at + ".zip.press.roll.distance"); Within(press.Roll.Damage, 0, 1000, at + ".zip.press.roll.damage"); Within(press.Roll.Stun, 0, 5, at + ".zip.press.roll.stun");
                 if (bomb.Pulls is < 1 or > 8) throw new InvalidDataException(at + ".zip.bomb.pulls must be 1–8");
+                Within(bomb.HpShare, 0, 1, at + ".zip.bomb.hpShare");
                 Within(bomb.Charge, 3, 60, at + ".zip.bomb.charge"); Within(bomb.TabRadius, 10, 120, at + ".zip.bomb.tabRadius"); Within(bomb.Damage, 0, 1000, at + ".zip.bomb.damage");
                 Within(bomb.Radius, 50, 5000, at + ".zip.bomb.radius"); Within(bomb.CatStun, 0, 5, at + ".zip.bomb.catStun"); Within(bomb.Rearm, 1, 120, at + ".zip.bomb.rearm");
                 Within(bomb.Flight, 0.2, 5, at + ".zip.bomb.flight"); Within(bomb.Stun, 0, 15, at + ".zip.bomb.stun"); Within(bomb.Bonus, 1, 5, at + ".zip.bomb.bonus");

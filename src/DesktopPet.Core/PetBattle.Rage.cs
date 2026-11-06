@@ -43,6 +43,7 @@ public sealed partial class BattleSim
         ShoveLeft = 0;
         zipShoveStun = false;
         CatStunRemaining = 0;
+        ZipForcedFall = false;
         NotRespondingRemaining = 0;
         DazzleRemaining = 0;
         CatSlowRemaining = 0;

@@ -287,6 +287,7 @@ public sealed partial class PetWindow
     // From the physics loop, after each step (PetPhysics is unchanged).
     private void BounceOnCushion(double previousFeet)
     {
+        if (battle?.ZipForcedFall == true) return;
         if (pet.Action != PetAction.Thrown || pet.VY < 250 || DisplayedKeepsake?.Kind != KeepsakeSpec.Cushion || !KeepsakeBesideCat
             || keepsakeHeld || keepsakeHop != KeepsakeHop.None || !keepsake.Grounded) return;
         double surface = KeepsakeFloor - keepsake.Height - (KeepsakeArt.StandHeight + KeepsakeArt.CushionHeight - 3) * DisplayScale;

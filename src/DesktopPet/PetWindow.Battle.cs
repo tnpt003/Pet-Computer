@@ -63,7 +63,7 @@ public sealed partial class PetWindow
     // after). Away does not: the cat has to be able to fall and be carried back.
     private bool BattleFreezesPet => battle != null && (battlePause & ~BattlePause.Away) != 0;
     // A stunned cat (a dash, an infected bell, "Not responding") cannot be picked up until the stun ends.
-    private bool BattleStunHolds => battle is { CatStunned: true, Over: false } or { CatLocked: true, Over: false };
+    private bool BattleStunHolds => battle is { ZipForcedFall: true, Over: false } or { CatStunned: true, Over: false } or { CatLocked: true, Over: false };
     // Replaceable for UI checks; the default asks Windows which monitor the cat is on.
     private Func<string>? battleMonitorProbe;
     private string CatMonitor() => (battleMonitorProbe ??= () => CurrentMonitor().DeviceName)();
@@ -621,7 +621,15 @@ public sealed partial class PetWindow
         // The Adventure Guide holds the battle still while a step shows (PetWindow.BattleGuide.cs).
         var order = battle.Step(BattleGuideFreezes ? 0 : dt, pet.X + settings.Width / 2, held, BattleLifted, BattleLifted ? BattleCatPose() : null);
         // Ground quake ready: the next floor landing sticks, no bounce (2026-11-04, D1b).
-        pet.StickLanding = !dragging && battle.QuakeReady;
+        if (battle.ZipForcedFall)
+        {
+            if (dragging || pressPending) { dragging = pressPending = false; ReleaseMouseCapture(); pet.Pickup.Reset(); }
+            pet.VX = pet.SmoothedWalkVelocity = 0;
+            pet.VY = Math.Max(0, pet.VY);
+            pet.Action = PetAction.Thrown;
+            pet.Grounded = false;
+        }
+        pet.StickLanding = battle.ZipForcedFall || !dragging && battle.QuakeReady;
         // The thrown cat bonked an ice shell: it bounces back (2026-11-04, docs/APPROVED-EXCEPTIONS.md D1a).
         if (battle.TakeCatBounce() is var (bounceX, bounceY) && !dragging && !pet.Grounded)
         {
@@ -697,7 +705,7 @@ public sealed partial class PetWindow
         pet.BattleTabs = battle.CatLifted ? 0 : battle.TabsRemaining;
         pet.BattleTabRing = AppArt.TabRingRadius(battle.AppRules?.TabRadius ?? 70);
         pet.BattleTime = battle.Time;
-        if (!held)
+        if (!held && !battle.ZipForcedFall)
         {
             if (order.Facing != 0) pet.Facing = order.Facing;
             double target = Math.Clamp(order.X - settings.Width / 2, bounds.Left, Math.Max(bounds.Left, bounds.Right - settings.Width));

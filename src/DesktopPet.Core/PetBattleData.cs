@@ -18,6 +18,7 @@ namespace DesktopPet;
 // of ability (flying, shooting) needs code first. Plain data (no WPF) for the simulation and tests.
 public sealed class EnemyType
 {
+    public bool Mother { get; init; }
     public bool Mutant { get; init; }
     public string Id { get; init; } = "slime";
     // What it is (all current kinds are slimes) and the drawing that shows it ("slime" only).
@@ -1945,6 +1946,8 @@ public static class BattleData
                 Within(bomb.Radius, 50, 5000, at + ".zip.bomb.radius"); Within(bomb.CatStun, 0, 5, at + ".zip.bomb.catStun"); Within(bomb.Rearm, 1, 120, at + ".zip.bomb.rearm");
                 Within(bomb.Flight, 0.2, 5, at + ".zip.bomb.flight"); Within(bomb.Stun, 0, 15, at + ".zip.bomb.stun"); Within(bomb.Bonus, 1, 5, at + ".zip.bomb.bonus");
             }
+            if (e.Mother && (!e.Boss || e.Marks != "mother" || e.Brood == null || e.BossTactics == null || e.Phases != null || e.Mutant || e.Zip != null))
+                throw new InvalidDataException(at + ".mother needs a mother boss with brood/tactics and no legacy phases");
             if (e.Mutant && (!e.Boss || e.Marks != "mutant" || e.Phases != null || e.Zip != null || e.BossTactics != null || e.CrownLinks != null || e.Rain != null))
                 throw new InvalidDataException(at + ".mutant requires a mutant boss without legacy phases/zip/tactics/links/rain");
             if (e.BossTactics is BossTacticsSpec tactics)

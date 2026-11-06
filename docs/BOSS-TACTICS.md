@@ -6,17 +6,11 @@ Thiết kế người dùng duyệt 2026-11-05, triển khai trên nhánh `featu
 
 **Tích hợp 06/11:** đã ghép với Slime Nén mới vào main. Phần mô tả nhánh riêng ở trên là lịch sử; luật chung và kết quả bản tích hợp theo [STANDARDIZATION-1.5.md](STANDARDIZATION-1.5.md).
 
-## Slime Mẹ: tổ nhầy và đường tiếp tế
+## Slime Mẹ — ba phase và Thanh dỗ (#67, 06/11)
 
-- Giữ HP 650, giới hạn 6 con và tốc độ chuyển máu 20 HP/s. `brood.every` 10 giây, nổi giận 6,5 giây: đồng hồ chỉ chạy lúc boss không đang dùng chiêu đặc biệt, choáng hay bật khiên. Vòng báo ổ đúng vị trí sắp xuất hiện.
-- Ổ ủ là mục tiêu có 80 HP, hình ba trứng hồng, thanh máu và số giây. Tối đa 2 ổ; trên 60% máu đặt 1 ổ, từ 60% đặt 2 ổ hai phía, nở lệch 1,2 giây. Ổ xuất hiện xong mới đếm 2,5 giây ủ. Bị choáng/Kẹp gắp thì ngừng ủ. Phá ổ ngăn bầy xuất hiện.
-- Một ổ nở tối đa 3 slime hợp thể, vẫn chịu trần 6 con. Vỏ biến mất không tính là hạ quái; để lại nhầy 5 giây, bán kính 65 DIP, tốc độ mèo dưới sàn ×0,55. Quạt làm khô như vũng thường.
-- Mẹ gọi con do mình sinh có ≤50% máu quay về. Khổng lồ hợp thành vẫn tự quay về như trước. Mẹ đầy máu thì con đứng chờ, không tiêu hao máu vô ích. Mẹ chết thì con còn sống trở lại đánh bình thường.
-- Con đang về có ≤50% máu, trong 360 DIP: mẹ nối dây cứu trong tối đa 6 giây, hồi dây 14 giây. Con nhận một nửa sát thương, mẹ đứng giữ dây. Dây hồng cùng đường cong với hit test; chỉ Kéo cắt cắt được (06/11 bỏ cắt bằng mèo). Đứt dây: cả hai choáng 2 giây, con ngừng về và mẹ hoãn lứa sau ít nhất 4 giây. Hạ con khi đang nối dây cũng khiến mẹ khựng và hoãn đẻ.
-- Con đang về đứng sát mẹ che phía mình: mẹ nhận ×0,6 sát thương từ hướng đó, không miễn đòn. Đổi phía hoặc hạ con để phá che chắn.
-- Mẹ luân phiên gọi con về và vỗ bụng gọi tối đa 3 con đang tự do nhảy vào vùng đã báo. Bầy bay 0,7 giây, đáp quanh tâm báo ±65 DIP, vùng trúng 42 DIP, gây ×0,7 sát thương của từng con; đáp xong nằm choáng 1,2 giây. Bế mèo né được; choáng/Kẹp gắp ngắt cú nhảy.
-- Mỗi ổ/con bị hạ tích 1 giận. Đủ 3 thì chiêu kế là cú lao: báo 1,1 giây, lao tối đa 220 DIP trong 0,45 giây; chỉ trúng một lần, đẩy mèo dưới sàn 80 DIP trong 0,25 giây nếu đòn xuyên khiên và mèo không miễn đẩy. Né hụt thì mẹ vẫn phải nghỉ.
-- ≤20% máu: một lần duy nhất mất 6% máu tối đa (không tự chết) để đặt lứa cuối, vẫn chịu giới hạn ổ/con. Hết chỗ thì chờ; chỉ đánh dấu đã dùng và trừ máu khi đặt được ít nhất một ổ.
+Luật mới đầy đủ và số liệu ở [MOTHER-SLIME.md](MOTHER-SLIME.md). `mother:true` thay bộ gọi con/nhảy/lao/Lứa cuối cũ: ba phase, chín đòn theo seed, Quấn khăn; ngưỡng66% Trứng treo,33% Trả con về nôi, phase3 chuyển HP thành Thanh dỗ33/66/100. Đòn air chỉ gây mất máu khi thực sự chạm mèo bế/bay, không ép thả/choáng/đổi vận tốc. Dây chỉ đứt bằng Kéo cắt hoặc hạ con giữ dây. Không bắt buộc Kéo cắt để giải mech. Chuyển mech giải và miễn debuff; ổ/con đứng yên trong mech. Giữ Python và physics cửa sổ.
+
+Các custom boss có brood/bossTactics nhưng không bật mother giữ controller cũ để tương thích. Phần bất biến chung phía dưới mô tả controller cũ; ngoại lệ mother/mutant/zip mới lấy từ tài liệu riêng và APPROVED-EXCEPTIONS.
 
 ## Vua biến dị: cơ thể bất ổn và nhầy chiếm sàn
 

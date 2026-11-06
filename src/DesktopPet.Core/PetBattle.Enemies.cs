@@ -130,9 +130,16 @@ public sealed partial class BattleSim
             slime.X = Math.Clamp(slime.X, minX, maxX);
             if (Over) continue; // The outro: slimes just bounce in place.
             StepStatus(slime, dt);
+            if (StepMotherBoss(slime, dt)) { if (Over) break; continue; }
             if (StepMutantBoss(slime, dt)) { if (Over) break; continue; }
             if (Over) break;
             if (slime.State == SlimeState.Defeated) continue;
+            if (Find(slime.SummonedBy)?.Mother is { } motherOwner &&
+                (motherOwner.Protected || motherOwner.Zones.Any(z => z.ActorId == slime.Id && z.Age < z.Warn + z.Life)))
+            {
+                if (slime.State is SlimeState.Windup or SlimeState.Casting) slime.Set(SlimeState.Moving);
+                continue;
+            }
             if (StepNest(slime, dt)) continue;
             if (StepBossTactics(slime, dt)) { if (Over) break; continue; }
             // 2026-11-06: the Zip Slime's blows and packets (PetBattle.ZipMoves.cs).

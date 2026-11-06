@@ -113,6 +113,7 @@ public sealed partial class BattleSim
             if (Is(holder, EnemyLinks.Tether) && LinkPartner(holder) is Slime ally && RopeCrossed(holder, ally, lo, cut.Y, hi, cut.Y, band) && CutLink(holder.Id)) RopesCut++;
         RopesCut += SnipBossRopes(lo, cut.Y, hi, cut.Y, band);
         RopesCut += CutTacticCords(lo, cut.Y, hi, cut.Y, band);
+        RopesCut += CutMotherRopes(lo, cut.Y, hi, cut.Y, band);
         foreach (var s in slimes.ToArray())
         {
             if (cutHit.Contains(s.Id) || !s.Targetable || (s.Shielded && !IsFlagPost(s)) || s.Burrowed) continue;

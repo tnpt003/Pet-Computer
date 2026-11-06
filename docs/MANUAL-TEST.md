@@ -1157,3 +1157,15 @@ Các mục 1.5 phía trên viết theo từng mốc; đây là thứ tự chơi 
 - [ ] Phase2–3 tới mỗi mép chờ5s, hết CD đi qua mép đối diện và lặp; gồng/mech/lộ lõi/choáng/Pause ưu tiên dừng. Đổi màn giữa trượt không nhảy về tọa độ cũ.
 - [ ] Truy sát: bế mèo sát sàn/trần/trái/phải, dải ngang/dọc phải khóa xuyên vị trí mèo lúc ngắm, không khóa trên đầu/lệch sang bên; sau khóa di chuyển né được. Sáu dải tích lũy nhưng còn chỗ cho toàn thân; resize hẹp không sinh đòn không thể né. Trúng vẫn5% và có thời gian rơi/stun/nhấc lại, không bị giao dải khóa tay liên tục.
 - [ ] Trận thật/nền sáng-tối/DPI100–200%/gốc âm; hiệu năng bốn túi/sáu dải và sau khi core mở/khép nhiều lần. Chưa coi ảnh tĩnh hoặc crowd-late là nghiệm thu animation/perf boss thật.
+
+
+## #67 — Slime Mẹ ba phase và Thanh dỗ (06/11)
+
+- [ ] Đầm nhầy và Tổ Slime Mẹ: nhận ra bụng thạch có trứng/nơ/váy, ba biểu cảm; mọi đòn có báo/khóa/impact/hồi, đặc biệt dây cao-thấp, Nơ bung, Ba cú ôm. Kiểm tra sáng/tối/wallpaper nhiều màu và mọi vũ khí.
+- [ ] Bế/bay chạm đòn chỉ mất máu, không tuột tay/choáng/đổi velocity; nâng cao né sàn; Kẹp gắp/choáng/chuyển mech không để hit trễ. Khiên/Nộ theo luật chung.
+- [ ] Khăn: dưới sàn chạy chậm và trượt về mẹ,3click đúng khăn/Kéo cắt/4s/Nộ gỡ; click phần mèo ngoài khăn vẫn nhấc được. Không áp khi bế/bay/có Khiên. Pause/menu/guide đóng băng khăn và mọi deadline.
+- [ ] 66%: bế đánh5trứng cao-thấp làm rơi, đánh tiếp để vỡ; Kéo cắt chỉ cắt dây, mèo bay xuyên dây không cắt. Hết40s trứng còn lại nở/hồi5%mỗi trứng rồi sangphase2.
+- [ ] 33%: bế chạm con, một con/lượt, đưa lên nôi; dây quất có báo làm rơi con. Đủ4sangphase3; hết45s phạt30%maxHPmèo và vẫn chuyểnphase.
+- [ ] Thanh dỗ hồng có vạch33/66/100; hit trực tiếp hiện tim, độc/app/execute không lách. 33%thu5nốt tốt/né đỏ;66%mèo đứng vòng/rê đúng hướng3lần;trượt giảm15điểm và chỉ đi mốc sau. 100%nhấc né sóng, vỗ bụng mở5nhát; trượt phải làm lại. Thắng mẹ ngủ/tan và thưởng đúng một lần.
+- [ ] Resize/DPI100/125/150/200%/chuyểnmonitor: trứng/nôi/tia/vòng/đích nhảy bám cùng tọa độ, không hit vô hình/không kẹt; thao tác vuốt không kéo mèo. Chơi với bộ không mang Kéo cắt ở Viễn chinh.
+- [ ] Ngoài trận: sleep lock/tựwake/clickwake,drag6DIP/throw/bounce,Dizzy/emotion priority,local fallback khi Python tắt vẫn như cũ.

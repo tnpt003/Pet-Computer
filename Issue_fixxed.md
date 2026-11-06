@@ -5,6 +5,12 @@ Sổ ghi các lỗi đã sửa của Desktop Pet. Phần A: lỗi người dùng
 Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm lỗi mới: tạo mục số tiếp theo ở đầu phần A (hoặc một dòng ở phần B).
 
 # A. Lỗi người dùng phát hiện
+## #67 — Tiếp tục trọn thiết kế Slime Mẹ đã duyệt (06/11)
+- **Yêu cầu/nguyên nhân:** thiết kế MOTHER-SLIME đã chốt nhưng chỉ mốc0 có code; mẹ vẫn là boss đội vương miện/ổ cũ, chưa có chín đòn/hai mech/Thanh dỗ.
+- **Sửa:** controller C# và art riêng, trứng/nơ/váy trong gel, ba túi3đòn không lặp ngay, Quấn khăn, hai mech, dỗ33/66/100/Trứng cuối và ngủtan/thưởng chung. Chặn damage/debuff tập trung, giữ physics/Python; va chạm projectile quét cung tương đối cả mèo và đạn. UI/guide/Sổ tay vi/en/ja,bot giải bằng clock vũ khí thật. HP650→600; hồi theo opening3,5s; damage26/threat/ngưỡng cân bằng giữ; records6/17/24.
+- **Kiểm chứng:** Python58+i18n5 đạt; fullC#3748đạt/9FAIL ban đầu đã sửa và kiểm lại Mother/balance340+metadata232+Tooling24 đạt. WPF1496 đạt trên desktop tương tác; sandbox không capture chuột/ghi registry. Đã xem render trước/sau sáng-tối,37ảnh mẹ/chín windup. Đối chứng HEAD59567c2 ở BALANCE-MOTHER-2026-11-06.md; Búa Bãi rác18/40 sát ngưỡng. Đang commit/publish. Chưa nghiệm thu chơi tay/DPI/nhiều màn hình.
+- **Test tay:** MANUAL-TEST #67; nguồn luật MOTHER-SLIME.md.
+
 ## #66 — Core như huy hiệu, action rời rạc; guide chồng; Truy sát lệch mèo sát biên (06/11)
 - **Nguyên nhân:** core chỉ vẽ vòng tròn trên mặt; body/nguồn projectile không cùng pose, state không có tuổi mở/khép. Hướng dẫn dùng chung điểm đầu tên với icon; HUD lặp nhiều nhãn số. Truy sát ép X khỏi góc và H≥120 nên né sàn/mép mà không cần di chuyển.
 - **Sửa:** vỏ mở dần quanh khoang có seed màng/thớ/cuống, đáy thân nối liền; mở0,35s trước hit, trúng khép vỏ rồi tan-trượt trước phản công. Pose theo tuổi trạng thái/nạp/phát/thu, nguồn đòn tại mắt/tay/miệng, chung lõi hữu cơ ở ping pong và bướu kín; gào/hút/hạ khác trạng thái, bớt tia rời. Bỏ nhãn số riêng mech cả3phase; icon lệch bên thân tên, sword quay theo mép. Phase2–3 chờ5s tại mép rồi tuần tra qua mép kia. Truy sát ngang/dọc đi qua tâm mèo cả bốn biên, thử hướng có chỗ né cho toàn thân, không để resize sinh đòn không tránh được; giữ5%/6dải/CD/chống combo. Records Endless23/Dump16, ZIP14 giữ.

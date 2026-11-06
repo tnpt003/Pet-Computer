@@ -1,6 +1,6 @@
 # Slime Mẹ — thiết kế được duyệt 06/11/2026
 
-Trạng thái: **thiết kế, đang triển khai theo mốc bên dưới**. Mục nào chưa có commit thì code vẫn theo luật cũ ở BOSS-TACTICS.md. Mọi thời gian, phần trăm là số khởi điểm, cần đo lại; không nới ngưỡng cân bằng.
+Trạng thái: **đã triển khai và kiểm chứng mốc 1–4, đang đóng gói (06/11)**. Luật dưới đây thay phần Slime Mẹ cũ trong BOSS-TACTICS.md khi `EnemyType.mother=true`. Mọi thời gian, phần trăm là số khởi điểm, cần đo lại; không nới ngưỡng cân bằng.
 
 ## Ý tưởng
 
@@ -76,3 +76,16 @@ Sau Mech 2, thanh máu đổi thành Thanh dỗ màu hồng 0→100%, có vạch
 - Va chạm con khi bế, Vuốt lưng không kích hoạt drag, không phụ thuộc DPI/rung chuột; Pause dừng tiến độ.
 - Layout chịu resize/DPI; timer theo simulation time, dọn sạch khi trận kết thúc.
 - Đầm nhầy và `y_mother_nest` so bảng cân bằng trước/sau, perf `crowd-late`.
+
+## Ánh xạ code và số liệu triển khai #67
+
+- `PetBattle.Mother.cs`: state riêng `MotherBoss`, ba túi đòn theo seed trận/ID boss, không lặp ngay qua ranh túi. `MotherZone` dùng chung cảnh báo/va chạm, đạn cung quét tương đối cả mèo lẫn projectile; không đổi physics cửa sổ. Chuyển mech/choáng/Kẹp gắp hủy đòn chờ. Boss miễn debuff trong mọi mech, con và ổ đứng yên trong mech.
+- Phase 1–2 dùng lại `BroodSpec`, ổ và dây cứu con; không có Lứa cuối 20% hoặc giận gọi cú lao cũ. Đòn mở báo cơ sở 1,1 s, khoảng hồi theo `bossTactics.opening` (3,5 s); thành công sự kiện dỗ làm nhịp chậm ×0,8. Bầy hộ tống dùng tối đa ba con sống, thiếu con thì bắn thạch thay vào các vị trí còn thiếu.
+- Mech trứng: một nhát làm rơi, một nhát tiếp làm vỡ; dùng hồi vũ khí hiện tại, Kéo cắt chỉ làm rơi. Hết giờ mỗi trứng còn lại gọi một con hợp thể và hồi 5% HP, trong giới hạn summonCap. Mech nôi chỉ mang một con mỗi lượt; dây báo chỗ cũ, quất trúng làm rơi con nhưng không ép thả mèo.
+- Thanh dỗ nhận hit trực tiếp Weapon/Combo/Bomb/Tool; chặn Poison/App/Reflect/Echo/Link/Splash/Throw, không cộng execute. HP giữ nguyên. Hát ru có năm nốt tốt và ba nốt đỏ, mỗi nốt đỏ ×0,3 damage mẹ. Vuốt lưng dùng hành trình có hướng trên nửa bề ngang mẹ, không tính rung nhỏ hoặc tích hành trình ngoài vùng. Mèo tự đi tới vòng mới; người chơi có thể bế đặt mèo vào vòng. Trứng cuối nhịp 4,2 s: báo 1 s, sóng 0,35 s, mở 1,8 s; năm nhát cộng dồn trong một lượt 30 s. Thắng ngủ/tan 2,5 s rồi gọi luồng hạ boss/thưởng chung.
+- Khăn tồn tại 4 s, ba click gỡ, kéo sàn 32 DIP/s, hệ số chạy ×0,75; Khiên chặn áp, Nộ giải. Tự thử lại mỗi 12 s sau lần đầu ở phase 2. Chuyển mech/kết thúc trận dọn khăn.
+- Art `PetBattleView.Mother.cs`, HUD và sky overlay dùng simulation time; không thêm sprite, Python, dependency hay timer độc lập. Resize map cả đích đòn, dây, trứng, con, nôi và vòng; đổi chiều cao chặn vật thể ra ngoài màn và xóa mẫu vuốt cũ.
+- Cân bằng: HP khởi điểm 650 → 600 do boss mới có ba phase và nhiều khoảng giải mech; damage26/threat/summonCap/ngưỡng test giữ nguyên. Kỷ lục: Đầm nhầy6, Bãi rác17, Vô tận24; tuyến Slime/chương1/ZIP giữ nguyên.
+- Test tự động: `BattleMotherTests`, `MotherPuzzlePlayer`, `MotherVisualChecks`; số đo và kết quả thật ghi ở PROGRESS/Issue_fixxed #67 khi đóng gói. Chưa có nghiệm thu chơi tay/DPI/nhiều màn hình.
+
+Đối chứng và bảng cân bằng: [BALANCE-MOTHER-2026-11-06.md](BALANCE-MOTHER-2026-11-06.md).

@@ -26,7 +26,7 @@ public sealed partial class BattleSim
     private CatPose? lastFlight;
     private readonly HashSet<int> thrownInto = new();
 
-    public bool HeldSwinging => heldSwingTime >= 0;
+    public bool HeldSwinging => heldSwingTime >= 0 || MotherSwinging;
     // The way the held cat's swing goes (1 right, -1 left).
     public int HeldFacing { get; private set; } = 1;
     public int HeldHits { get; private set; }
@@ -107,7 +107,7 @@ public sealed partial class BattleSim
         if (Reckless) damage *= 1 + recklessBonus;
         bool crit = critChance > 0 && strikeRandom.NextDouble() < critChance;
         if (crit) { damage *= 2; Crits++; }
-        if (executeBonus > 0 && slime.Hp < slime.MaxHp * ExecuteBelow) { damage *= 1 + executeBonus; ExecuteHits++; }
+        if (executeBonus > 0 && slime.Mother?.Phase != 3 && slime.Hp < slime.MaxHp * ExecuteBelow) { damage *= 1 + executeBonus; ExecuteHits++; }
         HeldHits++;
         events.Add(new(BattleEventKind.SlimeHit, slime.X));
         events.Add(new(BattleEventKind.HeldHit, slime.X, slime.Id));

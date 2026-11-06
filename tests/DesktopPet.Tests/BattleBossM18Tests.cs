@@ -265,8 +265,8 @@ internal static class BattleBossM18Tests
 
         var s = Shipped;
         var mother = s.Enemy("mother");
-        check(mother is { Boss: true, BinSpit: false, Brood: { Enemy: "fuser", Count: 3 } } && s.Enemy("fuser").Link?.Into == "giant" && mother.Phases?.Any(p => p.Enrage) == true,
-            "The shipped Slime Mother: clutches of three fusing slimes, angry at the end");
+        check(mother is { Boss: true, Mother: true, BinSpit: false, Brood: { Enemy: "fuser", Count: 3 }, Phases: null } && s.Enemy("fuser").Link?.Into == "giant",
+            "The shipped Slime Mother retains fusing children and owns three dedicated phases");
         var king = s.Enemy("mutant_king");
         var kp = king.Phases ?? Array.Empty<BossPhase>();
         check(king is { Boss: true, BinSpit: false, Mutant: true, Rain: null, CrownLinks: null, Phases: null },

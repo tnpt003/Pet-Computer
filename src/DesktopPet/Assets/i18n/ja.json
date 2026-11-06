@@ -1,6 +1,5 @@
 {
   "Rage is ready! Click the cat avatar, or it activates on a hit or before a stun": "怒りの準備ができました！ネコのアバターをクリックするか、攻撃命中時や気絶の直前に自動で発動します",
-  "Break nests before they hatch; stop returning children. Cut pink cords, dodge brood jumps and charges, then strike during her recovery.": "孵化する前に巣を壊し、戻る子を止めよう。ピンクのひもを切り、子の跳躍と母の突進を避け、休んだ隙に反撃しよう。",
   "The mother recalls wounded children! Stop the healing": "母スライムが傷ついた子を呼び戻します！回復を阻止しよう",
   "The brood will jump into the ring! Lift the cat to dodge": "子スライムが輪へ跳びます！ネコを持ち上げて避けよう",
   "The mother charges in anger! Dodge the lane and strike back": "母スライムが怒って突進！進路を避けて反撃しよう",
@@ -10,7 +9,6 @@
   "The king absorbs goo for armor! Cut the golden streams": "王がねばねばを吸って装甲を作ります！金色の流れを切ろう",
   "Two-beat goo rain! Keep dodging after the first beat": "ねばねばの雨が二段で降ります！一段目の後も避け続けよう",
   "The mother lays nests! Break them before they hatch": "母スライムが巣を作ります！孵化する前に壊そう",
-  "Break the mother's nests before they hatch. Stop returning children; cut pink cords with the Scissors or beat the child. Dodge jump rings and charge lanes.": "母スライムの巣は孵化する前に壊そう。戻る子を止め、ピンクのひもをハサミで切るか子を倒そう。跳躍の輪と突進の進路を避けよう。",
   "_comment": "Japanese UI text keyed by the exact English text in the code (L(\"vi\", \"en\")) and in the data files (battle.json nameEn/descEn/..., coats.json and accessories.json \"en\" names; a skill's {key} numbers stay as they are). Interpolated text is keyed by its format: LF($\"…\", $\"Wave {b.Wave} cleared!\") → \"Wave {0} cleared!\"; use only the key's {n} holes (order may change; a plural-s hole may be left out). Text not here shows in English. Changing an English text in the code needs its key changed here too: scripts/i18n.py lists code text without a translation, TextTests lists keys no longer in the code.",
   "\nThe first step has no elite or rest.": "\n最初のステップにエリートと休憩はありません。",
   "\nThe step before the boss always has a rest.": "\nボスの直前のステップには必ず休憩があります。",
@@ -1464,5 +1462,15 @@
   "3 stages, 3 attacks each. Hit lit locks 12 times, switch every 3; match files to folders and dodge trees. At 1 HP hit six pulls (3 high, 3 low). Hover to find bombs; ZIP lock stops movement.": "各段階に3つの攻撃。光る錠を計12回、3回ごとに交代。ファイルをフォルダーへ押し、ツリーを避けよう。1HPで引き手6個（高3、低3）を攻撃。カーソルで爆弾を調べよう。ZIPロック中は移動不可。",
   "Zip Slime files: three identical faulty files hide one bomb; hover to reveal its running fuse. During the puzzle, strike files into matching folders; stand behind a file to push it.": "圧縮スライムのファイル。そっくりな3個に爆弾が1個。カーソルを重ねて残り時間を確認。パズルでは同じ記号のフォルダーへ押そう。ファイルの後ろに立って攻撃しよう。",
   "ZIP lock stops walking and lifting. The cat strikes its own lock 5 times to escape, even without an enemy nearby. Click the cat 3 times or wait 6 seconds instead. The boss waits for it to open.": "ZIPロック中は歩けず持ち上げられません。敵が近くにいなくても、ネコが自分の錠を5回攻撃して解除します。3回クリックするか6秒待っても解除できます。ボスは解除まで待ちます。",
-  "The returning King calls three coordinated formations per shield phase and rallies two elites at a time. Defeat helpers to break the shield; Push the glowing crown to interrupt rallies.": "帰ってきた王は盾の各段階で連携する3つの陣形を呼び、一度に2体を精鋭にする。配下を倒して盾を壊し、王冠が光ったら王を押して強化を中断しよう。"
+  "The returning King calls three coordinated formations per shield phase and rallies two elites at a time. Defeat helpers to break the shield; Push the glowing crown to interrupt rallies.": "帰ってきた王は盾の各段階で連携する3つの陣形を呼び、一度に2体を精鋭にする。配下を倒して盾を壊し、王冠が光ったら王を押して強化を中断しよう。",
+  "Hanging eggs: carry to hit, then break fallen eggs": "つり卵：ネコを運んで叩き、落ちた卵を割ろう",
+  "Return children: carry into a child, then to the cradle": "子をゆりかごへ：ネコで子に触れ、上のゆりかごへ運ぼう",
+  "Lullaby: carry through 5 heart notes; avoid red notes": "子守歌：ハート音符を5つ集め、赤い音符を避けよう",
+  "Back rub: cat in heart ring; stroke with arrows 3 times": "背中なで：ネコをハートの輪に置き、矢印方向になでる×3",
+  "Last egg: lift over waves; tap open belly 5 times": "最後の卵：持ち上げて波を避け、開いたお腹を5回叩こう",
+  "Mother falls asleep…": "お母さんが眠りにつく…",
+  "Soothe · milestones 33 / 66 / 100": "なだめゲージ · 33 / 66 / 100",
+  "Break nests, stop nursing children; dodge pink zones": "巣を壊し、戻る子の回復を止め、ピンクの予告を避けよう",
+  "Break nests and stop nursing children. Carry to break hanging eggs, then return children to the cradle. In phase 3 fill Soothe: collect heart notes, stroke her back with the cat in the ring, then lift over heartbeats and tap her open belly five times.": "巣を壊し、戻る子の回復を止めよう。ネコを運んでつり卵を叩いて割り、子をゆりかごへ。第3段階はなだめゲージ：ハート音符を集め、ネコを輪に置いて背中をなで、最後は持ち上げて鼓動の波を避けて開いたお腹を5回叩こう。",
+  "Break nests; stop healing. Carry to hit eggs and return children. Soothe 33/66/100: heart notes, cat in ring for back rub, lift over waves then tap open belly 5 times. Wrap: 3 clicks; cords: Scissors.": "巣と回復を止めよう。ネコを運んで卵を叩き、子をゆりかごへ。なだめ33/66/100：音符、輪の中で背中なで、波を持ち上げて避けて開いたお腹を5回叩く。布は3クリック、ひもはハサミ。"
 }

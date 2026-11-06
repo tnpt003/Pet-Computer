@@ -826,6 +826,8 @@ Luật, bảng đòn và số đo: docs/ZIP-SLIME.md. Mục này chỉ mô tả 
 
 ## Slime Mẹ và Vua Slime biến dị (boss `mother`: `brood`; boss `mutant_king`: `crownLinks`, `rain`) (bản 1.5, mốc M18, 2026-10-29)
 
+**Slime Mẹ #67 (06/11):** `mother: true` bật controller `PetBattle.Mother.cs`, cần boss/marks mother/brood/bossTactics, không có phases cũ/Zip/Mutant. Mặc định false để dữ liệu tùy chỉnh cũ vẫn chạy. Art riêng `PetBattleView.Mother.cs`, test `BattleMotherTests`/`MotherVisualChecks`; bộ luật ba phase/chín đòn/hai mech/Thanh dỗ thay luật M18 phía dưới, chi tiết nguồn chuẩn [MOTHER-SLIME.md](MOTHER-SLIME.md). `brood`/nest/summonCap tiếp tục dùng phase1–2. HP600, damage26, hồi theo opening3,5s. Đầm nhầy rulesVersion6, Vô tận24, tuyến Bãi rác17. Không bắt buộc mang Kéo cắt để giải boss.
+
 **Slime biến dị #66 (06/11):** bỏ nhãn số mech nhưng giữ thứ tự/giờ nội bộ; guide icon nằm bên thân tên. Phase2–3 tuần tra hai mép/chờ5s, Truy sát khóa tâm mèo cả bốn biên và kiểm lối né toàn thân thay góc miễn. Core có0,35s mở vỏ trước nhận nhát. `MutantBoss.Mode` ghi tuổi/previous mode, renderer `PetBattleView.MutantAnatomy.cs` dùng chung pose/muzzle/seed cho cơ thể và đòn. Kỷ lục Vô tận23/Bãi rác16; ZIP14/chương1/tuyến Slime giữ nguyên. Luật và hình thể ở MUTANT-SLIME.md #66, điểm test tay MANUAL-TEST #66.
 
 **Polish Slime biến dị #65 (06/11):** controller mutant có locomotion lúc rảnh và hành trình lao/trượt `TravelFrom/TravelTo/TravelAt/TravelDuration`, map cùng vùng trận; đây là sửa lỗi đứng yên, không đổi HP/damage/ngưỡng/thứ tự mech. Renderer tách `PetBattleView.MutantGel.cs` cho vật liệu màng nhầy, dòng cong/giọt impact và artwork9 nhóm, tái dùng ở nền/túi/bướu hai phase. Chi tiết và test tay: MUTANT-SLIME.md mục #65, MANUAL-TEST #65.

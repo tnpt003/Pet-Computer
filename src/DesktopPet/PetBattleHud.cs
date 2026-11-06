@@ -31,6 +31,7 @@ public sealed class BattleHud : Border
     private string LF(FormattableString vietnamese, FormattableString english) => PetText.PickFormat(language(), vietnamese, english);
     private readonly TextBlock hpText, status, hint, banner, comboText, upgradesText;
     internal readonly TextBlock bossName;
+    private readonly Canvas motherTicks = new() { IsHitTestVisible = false, Visibility = Visibility.Collapsed };
     private readonly Border hpFill, hpTrail, bossFill, bossBar, pauseButton, endButton, bagButton, hubButton, grip, rageBar, rageFill;
     private readonly RageRing rageRing;
     private readonly Grid avatar;
@@ -134,12 +135,19 @@ public sealed class BattleHud : Border
         status = new TextBlock { Foreground = Brushes.White, FontWeight = FontWeights.SemiBold, FontSize = PetUi.BodySize, HorizontalAlignment = HorizontalAlignment.Center, TextAlignment = TextAlignment.Center,
             TextWrapping = TextWrapping.Wrap, TextTrimming = TextTrimming.CharacterEllipsis, MaxHeight = Math.Ceiling(PetUi.BodySize * 1.34 * 2) + 1 };
         waveDots = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 5, 0, 0) };
-        bossName = new TextBlock { Foreground = Brushes.White, FontWeight = FontWeights.Bold, FontSize = PetUi.SmallSize, HorizontalAlignment = HorizontalAlignment.Center };
+        bossName = new TextBlock { Foreground = Brushes.White, FontWeight = FontWeights.Bold, FontSize = PetUi.SmallSize, HorizontalAlignment = HorizontalAlignment.Center,
+            MaxWidth = 380, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center };
         bossFill = new Border { Background = BossColor, CornerRadius = new CornerRadius(4), HorizontalAlignment = HorizontalAlignment.Left, Width = BossWidth };
+        var bossTrack = new Grid { Children = { bossFill, motherTicks } };
+        foreach (double at in new[] { .33, .66, 1.0 })
+        {
+            var tick = new Border { Width = 2, Height = 8, Background = PetUi.ArtInk };
+            Canvas.SetLeft(tick, Math.Min(BossWidth - 2, BossWidth * at)); motherTicks.Children.Add(tick);
+        }
         bossBar = new Border
         {
             Width = BossWidth + 4, Height = 12, CornerRadius = new CornerRadius(5), Background = BarBack, BorderBrush = Gold, BorderThickness = new Thickness(1),
-            Padding = new Thickness(1), Margin = new Thickness(0, 2, 0, 0), Child = bossFill
+            Padding = new Thickness(1), Margin = new Thickness(0, 2, 0, 0), Child = bossTrack
         };
         var bossPanel = new StackPanel { Children = { bossName, bossBar }, Margin = new Thickness(0, 3, 0, 0) };
         // This run's build: at most two short lines (each group's points, how many synergies ★, rare cards ◆
@@ -413,15 +421,30 @@ public sealed class BattleHud : Border
         waveDots.Visibility = bossBar.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
         if (boss != null)
         {
-            Set(bossFill, BossWidth * Math.Clamp(boss.Hp / boss.MaxHp, 0, 1));
+            motherTicks.Visibility = boss.Mother is { Phase: 3 } ? Visibility.Visible : Visibility.Collapsed;
+            Set(bossFill, BossWidth * Math.Clamp(boss.Mother is { Phase: 3 } motherSoothe ? motherSoothe.Soothe / 100 : boss.Hp / boss.MaxHp, 0, 1));
             // Gold while its shield is up (no damage gets through until its helpers are down).
-            var bossBrush = boss.Shielded ? BossShieldColor : boss.Enraged ? BossAngryColor : BossColor;
+            var bossBrush = boss.Mother is { Phase: 3 } ? PetUi.Rose : boss.Shielded ? BossShieldColor : boss.Enraged ? BossAngryColor : BossColor;
             if (bossFill.Background != bossBrush) bossFill.Background = bossBrush;
             var bossKey = (Math.Ceiling(boss.Hp), boss.Enraged, boss.Shielded);
             if (bossKey != shownBoss)
             {
                 shownBoss = bossKey;
                 bossName.Text = boss.Type.Name(language()) + (boss.Shielded ? L(" (khiên: hạ hết quân!)", " (shielded: defeat its helpers!)") : boss.Enraged ? L(" (nổi giận!)", " (enraged!)") : "") + $"  {bossKey.Item1}/{boss.MaxHp}";
+            }
+            if (boss.Mother is { } mother)
+            {
+                string hint = mother.Mode switch
+                {
+                    MotherMode.HangingEggs => L("Trứng treo: bế đánh, rồi đánh vỡ trứng rơi", "Hanging eggs: carry to hit, then break fallen eggs"),
+                    MotherMode.Cradle => L("Trả con về nôi: bế chạm con rồi đưa lên nôi", "Return children: carry into a child, then to the cradle"),
+                    MotherMode.Lullaby => L("Hát ru: bế chạm 5 nốt tim, né nốt đỏ", "Lullaby: carry through 5 heart notes; avoid red notes"),
+                    MotherMode.Stroke => L("Vuốt lưng: mèo ở vòng tim, rê theo mũi tên 3 lần", "Back rub: cat in heart ring; stroke with arrows 3 times"),
+                    MotherMode.LastEgg => L("Trứng cuối: nhấc né sóng, vỗ bụng mở 5 nhát", "Last egg: lift over waves; tap open belly 5 times"),
+                    MotherMode.Sleeping => L("Mẹ ngủ thiếp…", "Mother falls asleep…"),
+                    _ => mother.Phase == 3 ? L("Thanh dỗ · mốc 33 / 66 / 100", "Soothe · milestones 33 / 66 / 100") : L("Phá ổ, chặn con hồi máu; né vùng hồng", "Break nests, stop nursing children; dodge pink zones")
+                };
+                bossName.Text = hint + (mother.Protected ? $" · {Math.Ceiling(Math.Max(0, mother.Deadline - b.Time))}s · {mother.Progress}" : mother.Phase == 3 ? $" · {mother.Soothe:0}%" : $" · {boss.Hp:0}/{boss.MaxHp:0}");
             }
         }
 

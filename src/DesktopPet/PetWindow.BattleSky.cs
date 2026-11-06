@@ -64,7 +64,7 @@ public sealed partial class PetWindow
         bool any = false;
         foreach (var s in b.Slimes) if (s.Type.Fly != null || s.ZipProp == ZipProp.Tab && s.Airborne) { any = true; break; }
         // The sky's size goes to the battle from the start (a flyer picks its first height from it).
-        bool overflowResized = b.Slimes.Any(s => s.ZipAct == ZipAct.Overflow)
+        bool overflowResized = b.Slimes.Any(s => s.ZipAct == ZipAct.Overflow || s.Type.Mother)
             && Math.Abs(b.SkyHeight - (battleArea.Bottom - 2 - battleArea.Top)) > 0.5;
         if (any || !skySeen || overflowResized) { b.SetSky(battleArea.Bottom - 2 - battleArea.Top, any ? SkyBlockers(b) : null); skySeen = true; }
         bool hide = b.Paused;
@@ -119,7 +119,7 @@ public sealed partial class PetWindow
     // The canvas for drops and aims: over the battle's work area, shown while there is any.
     private void UpdateSkyShots(BattleSim b, bool draw, bool hide)
     {
-        bool busy = b.Shots.Count > 0 || BattleFieldView.ZipAirBusy(b) || b.MutantNoise || b.Slimes.Any(s => s.Targetable && s.Type.Mutant);
+        bool busy = b.Shots.Count > 0 || BattleFieldView.ZipAirBusy(b) || b.MutantNoise || b.MotherWrapLeft > 0 || b.Slimes.Any(s => s.Targetable && (s.Type.Mutant || s.Type.Mother));
         if (!busy) foreach (var s in b.Slimes) if (s.Aiming && BattleSim.InSky(s) && s.Type.Fly != null) { busy = true; break; }
         if (!busy) foreach (var g in b.Goos) if (BattleFieldView.SpikeInSky(g)) { busy = true; break; }
         if (b.Cut != null || b.ColumnX != null || b.FlashRemaining > 0) busy = true; // 2026-11-04: the cut, the fan's column, the flash.
@@ -219,6 +219,7 @@ public sealed class SkyShotView : FrameworkElement
         foreach (var shot in sim.Shots) BattleFieldView.DrawShot(dc, shot, ToScreen(shot.X, shot.Height));
         BattleFieldView.DrawZipAir(dc, sim, ToScreen, cat, sim.Time); // 2026-11-06: the Zip Slime's blows at a cat anywhere.
         BattleFieldView.DrawMutantAir(dc, sim, ToScreen, cat, sim.Time);
+        BattleFieldView.DrawMotherAir(dc, sim, ToScreen, cat, sim.Time);
         // A wall slime's spikes thrown from high up the screen (2026-10-31).
         foreach (var g in sim.Goos) if (BattleFieldView.SpikeInSky(g)) BattleFieldView.DrawSpikeAt(dc, g, ToScreen, 30);
         // 2026-11-04: the Fan's column and the Scissors' cut over the screen (the strip draws its own part),

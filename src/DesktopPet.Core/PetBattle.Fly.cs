@@ -36,11 +36,18 @@ public sealed partial class BattleSim
     // the card offer, the bag) in battle x and heights over the floor. A flyer never picks a spot in them.
     public void SetSky(double height, IEnumerable<(double Left, double Bottom, double Right, double Top)>? blockers = null)
     {
+        bool heightChanged = double.IsFinite(height) && Math.Abs(Math.Max(Settings.SlimeHeight * 2, height) - SkyHeight) > 0.5;
         if (double.IsFinite(height)) SkyHeight = Math.Max(Settings.SlimeHeight * 2, height);
         skyBlockers.Clear();
         if (blockers != null) skyBlockers.AddRange(blockers);
         foreach (var s in slimes)
         {
+            if (heightChanged && s.Mother is { } mother)
+            {
+                foreach (var token in mother.Tokens) { token.H = Math.Clamp(token.H, 18, Math.Max(18, SkyHeight - 70)); token.AnchorH = Math.Clamp(token.AnchorH, token.H, Math.Max(token.H, SkyHeight - 20)); }
+                foreach (var zone in mother.Zones) { zone.H = Math.Clamp(zone.H, 0, Math.Max(0, SkyHeight - zone.Height)); }
+                mother.PointerX = double.NaN; mother.StrokeTravel = 0;
+            }
             if (s.Type.Fly == null) continue;
             double top = Math.Max(1, SkyHeight - s.Height - SkyMargin);
             s.Altitude = Math.Min(s.Altitude, top);

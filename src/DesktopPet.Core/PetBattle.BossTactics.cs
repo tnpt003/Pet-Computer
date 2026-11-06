@@ -77,6 +77,7 @@ public sealed partial class BattleSim
     private bool StepNest(Slime s, double dt)
     {
         if (!s.BroodNest) return false;
+        if (Find(s.SummonedBy)?.Mother is { Mode: not MotherMode.Combat }) return true;
         if (s.State == SlimeState.Spawning) return false; // Let the ordinary spawn transition finish.
         if (Find(s.SummonedBy) is not { Targetable: true, Type.Brood: BroodSpec brood } mother)
         {

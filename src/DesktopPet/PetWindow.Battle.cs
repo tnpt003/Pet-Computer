@@ -620,6 +620,7 @@ public sealed partial class PetWindow
         battle.SetPointer(BattlePointer());
         var mutantCursor = PointFromScreen(ScreenCursor());
         battle.SetMutantPointer(pet.X + mutantCursor.X, bounds.Bottom - (pet.Y + mutantCursor.Y));
+        battle.SetMotherPointer(pet.X + mutantCursor.X, battleArea.Bottom - 2 - (pet.Y + mutantCursor.Y));
         // The Adventure Guide holds the battle still while a step shows (PetWindow.BattleGuide.cs).
         var order = battle.Step(BattleGuideFreezes ? 0 : dt, pet.X + settings.Width / 2, held, BattleLifted, BattleLifted ? BattleCatPose() : null);
         // Ground quake ready: the next floor landing sticks, no bounce (2026-11-04, D1b).

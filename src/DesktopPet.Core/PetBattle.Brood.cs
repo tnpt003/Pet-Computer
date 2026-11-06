@@ -22,6 +22,7 @@ public sealed partial class BattleSim
     private void StepBrood(Slime boss, double dt)
     {
         if (boss.Type.Brood is not BroodSpec brood || boss.State is SlimeState.Spawning or SlimeState.Defeated) return;
+        if (boss.Mother is { } m && (m.Mode != MotherMode.Combat || m.Phase == 3)) { boss.BroodSpots = null; return; }
         if (boss.BroodSpots is { } announced)
         {
             boss.BroodWarn = Math.Max(0, boss.BroodWarn - dt);
@@ -81,6 +82,8 @@ public sealed partial class BattleSim
     private bool Nurse(Slime slime, double dt, double minX, double maxX)
     {
         if (!slime.Nursing) return false;
+        if (Find(slime.SummonedBy)?.Mother is { } m && (m.Mode != MotherMode.Combat || m.Phase == 3))
+        { slime.Feeding = false; return m.Phase < 3; }
         if (Find(slime.SummonedBy) is not { Targetable: true, Type.Brood: BroodSpec brood } mother)
         {
             slime.Nursing = slime.Feeding = false;

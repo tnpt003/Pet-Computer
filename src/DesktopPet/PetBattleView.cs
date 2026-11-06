@@ -513,6 +513,14 @@ public sealed partial class BattleFieldView : FrameworkElement
         // A boss crouching before its leap.
         if (slime.Crouch > 0) { sx *= 1 + 0.18 * slime.Crouch; sy *= 1 - 0.25 * slime.Crouch; }
         ZipShape(slime, time, ref sx, ref sy); // The Zip Slime's bomb and its air going out.
+        if (slime.Type.Mother)
+        {
+            double breathe = Math.Sin(time * 3.2) * 0.025;
+            sx = 1 + breathe; sy = 1 - breathe;
+            if (slime.Mother is { Zones.Count: > 0 } mother)
+            { double k = Math.Clamp(mother.Zones[0].Age / Math.Max(0.1, mother.Zones[0].Warn), 0, 1); sx -= k * 0.07; sy += k * 0.08; }
+            if (slime.Mother?.Mode == MotherMode.Sleeping) { sx = 1.15; sy = 0.7; opacity *= Math.Clamp((slime.Mother.Deadline - sim.Time) / 1.2, 0, 1); }
+        }
         if (slime.Mutant is { } mutation)
         {
             double pulse = Math.Sin(time * (mutation.Mode == MutantMode.Roar ? 15 : 3));
@@ -613,7 +621,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         dc.PushOpacity(opacity);
         dc.PushTransform(new MatrixTransform(sx * size, 0, 0, sy * size, x + jitter, floor));
         double bw = s.SlimeWidth, bh = s.SlimeHeight;
-        var body = slime.Type.Mutant ? MutationBodyFor(slime) : slime.Type.Marks == "zip" ? ZipBody(slime) : Body(bw, bh);
+        var body = slime.Type.Mother ? MotherBell : slime.Type.Mutant ? MutationBodyFor(slime) : slime.Type.Marks == "zip" ? ZipBody(slime) : Body(bw, bh);
         Brush baseFill = KindBrush(slime.Enraged ? slime.Type.AngryColor : slime.Type.Color);
         Brush fill = slime.HitFlash > 0 ? Brushes.White : slime.State == SlimeState.Windup ? Blend(baseFill, t / windup) : baseFill;
         // A thin dark edge outside the white halo: two slimes overlapping still read as two, on light
@@ -622,11 +630,12 @@ public sealed partial class BattleFieldView : FrameworkElement
         dc.DrawGeometry(null, Halo, body);
         // An elite: a gold rim round the body (and a star, below).
         if (slime.Elite != null) dc.DrawGeometry(null, EliteRim, body);
-        dc.DrawGeometry(slime.Type.Mutant && slime.HitFlash <= 0 ? GelFill : fill, Outline, body);
+        dc.DrawGeometry(slime.Type.Mother && slime.HitFlash <= 0 ? MotherGel : slime.Type.Mutant && slime.HitFlash <= 0 ? GelFill : fill, Outline, body);
         DrawStatusTint(dc, slime, body, bw, bh, time);
         dc.DrawEllipse(Shine, null, new Point(-bw * 0.2, -bh * 0.68), 5, 3.5);
         double look = slime.Facing * 3;
-        if (slime.Type.Mutant) DrawMutantFace(dc, slime, bw, bh, time);
+        if (slime.Type.Mother) DrawMotherBody(dc, slime, bw, bh, time);
+        else if (slime.Type.Mutant) DrawMutantFace(dc, slime, bw, bh, time);
         else if (slime.Grabbed || slime.Slammed)
         {
             // In the claw (2026-11-04): squeezed "> <" eyes.
@@ -695,7 +704,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         DrawWallMarks(dc, slime, bw, bh, time);
         DrawQuillMarks(dc, slime, bw, bh, time);
         DrawZipMarks(dc, slime);
-        if (!slime.Type.Mutant) DrawBroodMarks(dc, slime, bw, bh);
+        if (!slime.Type.Mutant && !slime.Type.Mother) DrawBroodMarks(dc, slime, bw, bh);
         // An older support mark: a white "+" on its body.
         if (slime.Type.Marks == "cross") dc.DrawGeometry(Brushes.White, Outline, CrossMark);
         if (slime.Elite != null)
@@ -717,7 +726,7 @@ public sealed partial class BattleFieldView : FrameworkElement
             dc.DrawEllipse(null, Halo, new Point(0, -37), 15 * ring, 10 * ring);
             dc.DrawEllipse(null, RallyPen, new Point(0, -37), 15 * ring, 10 * ring);
         }
-        if (slime.IsBoss && slime.Type.Marks != "zip" && !slime.Type.Mutant) DrawBossCrown(dc, slime);
+        if (slime.IsBoss && slime.Type.Marks != "zip" && !slime.Type.Mutant && !slime.Type.Mother) DrawBossCrown(dc, slime);
         dc.Pop();
         dc.Pop();
         unturned = PushUnturned(dc, slime, x, floor, h);

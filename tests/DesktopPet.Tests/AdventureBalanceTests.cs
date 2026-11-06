@@ -41,6 +41,7 @@ internal static class AdventureBalanceTests
             weaponBonus: weaponBonus, eliteBonus: eliteBonus);
         var reflex = new Reflex(player, seed);
         var hands = new Hands();
+        var motherHands = new MotherPuzzlePlayer();
         double cat = 800;
         // The measures: HP each enemy had last frame, the fighting time and how much of it was quiet.
         var hpBefore = new Dictionary<int, double>();
@@ -61,6 +62,7 @@ internal static class AdventureBalanceTests
                 sim.ChooseUpgrade(pick.Id, cat);
             }
             if (player != Player.Idle) { UseSkills(sim, cat, data, reflex, t); UseTricks(sim, cat, reflex, t, hands); }
+            if (player != Player.Idle && motherHands.Step(sim, ref cat, dt, player == Player.Simple)) { sim.ClearEvents(); continue; }
             if (player != Player.Idle && ZipPuzzlePlayer.Step(sim, ref cat, dt)) { sim.ClearEvents(); continue; }
             var order = sim.Step(dt, cat, false);
             double run = 72 * data.CatRunScale * sim.MoveFactor; // Walking speed × CatRunScale × upgrades.
@@ -99,6 +101,7 @@ internal static class AdventureBalanceTests
         var sim = new BattleSim(data, 0, 1600, new Random(seed), level, weapon, spec.Stage(), loot: BattleLoot.Items);
         var reflex = new Reflex(player, seed);
         var hands = new Hands();
+        var motherHands = new MotherPuzzlePlayer();
         double cat = 800;
         for (double t = 0; t < seconds && !sim.Over; t += dt)
         {
@@ -112,6 +115,7 @@ internal static class AdventureBalanceTests
                 sim.ChooseUpgrade(pick.Id, cat);
             }
             if (player != Player.Idle) { UseSkills(sim, cat, data, reflex, t); UseTricks(sim, cat, reflex, t, hands); }
+            if (player != Player.Idle && motherHands.Step(sim, ref cat, dt, player == Player.Simple)) { sim.ClearEvents(); continue; }
             if (player != Player.Idle && ZipPuzzlePlayer.Step(sim, ref cat, dt)) { sim.ClearEvents(); continue; }
             var order = sim.Step(dt, cat, false);
             double run = 72 * data.CatRunScale * sim.MoveFactor;
@@ -228,6 +232,8 @@ internal static class AdventureBalanceTests
         // The Zip Slime: its announced shapes, and the ZIP shell clicked open (2026-11-06).
         danger |= sim.Slimes.Any(s => sim.ZipThreatens(s, cat) && reflex.NoticesAge(s.ZipSeconds - s.ZipLeft));
         danger |= sim.Slimes.Any(s => s.Type.Zip != null && s.ZipRepulseWarn > 0);
+        danger |= sim.Slimes.Any(s => s.Mother is { } m && m.Zones.Any(z => z.Age < z.Warn + z.Life
+            && Math.Abs(cat - z.X) <= z.Width / 2 + 35 && reflex.NoticesAge(z.Age)));
         danger |= sim.Slimes.Any(s => s.PacketFuse && s.PacketRevealed && s.PacketLeft is > 0 and < 0.7 && Math.Abs(s.X - cat) < 180);
         if (sim.CatLocked && reflex.NoticesAge(sim.ZipDebuffSeconds - sim.ZipDebuffLeft)) sim.ClickZipLock();
         danger |= sim.Goos.Any(g => g.Rain && g.Remaining <= 0.5 && Math.Abs(g.X - cat) <= g.Radius

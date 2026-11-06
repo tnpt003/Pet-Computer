@@ -1,5 +1,7 @@
 # Bản 1.5 — Slime phản công (bản chốt)
 
+Slime Mẹ thiết kế lại #67 (06/11): triển khai ba phase/chín đòn, Quấn khăn, Trứng treo/Trả con về nôi, Thanh dỗ 33/66/100 và Trứng cuối bắt buộc. Luật hiện hành ở [MOTHER-SLIME.md](MOTHER-SLIME.md), thay mô tả mẹ cũ phía dưới. Đầm nhầy cho mượn Kéo cắt; Slime Nén cho mượn Bình xịt. Chưa nghiệm thu chơi tay.
+
 Cập nhật: 2026-11-06 (Asia/Saigon). Trạng thái: **xong M01–M29, đợt B/C, góp ý 05/11; đã hợp nhất Slime Nén thiết kế lại và hai boss nâng cấp, kiểm tra tự động bản tích hợp đạt. Chưa phát hành 1.5.0.** Còn M30 và nghiệm thu tay.
 
 Cách đọc file này:

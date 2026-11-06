@@ -144,7 +144,7 @@ public sealed partial class BattleSim
     // armor (cards and synergies together) takes at most MaxArmor off.
     public const double MaxArmor = 0.6;
     public double DamageFactor => 1 + damageBonus + MutationDamage;
-    public double MoveFactor => (1 + moveBonus) * (ComboRushRemaining > 0 ? 1 + comboRushBonus : 1) * (Raging ? 1 : Math.Min(PuddleSlowNow, mutantFloorSlow) * SqueezeSpeed);
+    public double MoveFactor => (1 + moveBonus) * (ComboRushRemaining > 0 ? 1 + comboRushBonus : 1) * (Raging ? 1 : Math.Min(PuddleSlowNow, mutantFloorSlow) * SqueezeSpeed * (MotherWrapLeft > 0 && !CatOffFloor ? 0.75 : 1));
     // Attacks a second against the usual: the rushes (Tailwind, Gale).
     public double RushFactor => 1 + (LandingRushRemaining > 0 ? landingRushBonus : 0) + (ComboRushRemaining > 0 ? comboRushBonus : 0);
     public double CooldownFactor => Math.Max(0.3, 1 - cooldownCut) * (1 + swingDelay);
@@ -221,7 +221,7 @@ public sealed partial class BattleSim
     // Seconds into the current swing; negative when not swinging.
     public double SwingTime { get; private set; } = -1;
     public double SwingProgress => SwingTime >= 0 ? Math.Clamp(SwingTime / arms.SwingDuration, 0, 1)
-        : heldSwingTime >= 0 ? Math.Clamp(heldSwingTime / arms.SwingDuration, 0, 1) : -1;
+        : heldSwingTime >= 0 ? Math.Clamp(heldSwingTime / arms.SwingDuration, 0, 1) : MotherSwinging ? Math.Clamp((Time - motherSwingStarted) / arms.SwingDuration, 0, 1) : -1;
     // Hits in the current chain, and whether the swing under way would finish it (a gold slash).
     public int Combo { get; internal set; }
     public bool ComboSwing { get; private set; }
@@ -374,6 +374,7 @@ public sealed partial class BattleSim
         lastCatX = floorX;
         catPose = pose;
         StepMutantCat(dt);
+        StepMotherCat(dt);
         StepZipForcedFall();
         StepEffects(dt);
         StepFreeze(dt); // 1.5 M26: the Screenshot's freeze, a dazzle (PetBattle.Malware2.cs).
@@ -460,6 +461,7 @@ public sealed partial class BattleSim
         if (Over) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
         StepHeld(dt, catHeld ? pose : null);
         mutantPreviousCat = CatCentre();
+        motherPreviousCat = CatCentre();
         if (Over) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
         // Holding the cat freezes the waves (no spawning, no progress) and a survive stage's clock.
         if (!catHeld) StepWaves(dt, catX);
@@ -515,6 +517,13 @@ public sealed partial class BattleSim
 
     private CatOrder CatTurn(double dt, double catX)
     {
+        var order = CatTurnCore(dt, catX);
+        if (order.Command == CatCommand.Stand && MotherPull(dt, catX) is CatOrder slide) return slide;
+        return order;
+    }
+    private CatOrder CatTurnCore(double dt, double catX)
+    {
+        if (MotherStrokeOrder(catX) is CatOrder motherStroke) return motherStroke;
         if (MutantHiccup || MutantBumpMech) { CancelSwing(); return new(CatCommand.Stand, catX); }
         if (zipLockSwing && (CatStunned || CatOffFloor)) { zipLockSwing = false; CancelSwing(); }
         var target = Over || CatLocked ? null : PickTarget(catX);
@@ -696,7 +705,7 @@ public sealed partial class BattleSim
         // Claws: now and then a hit deals double; Finishing blow: more on an enemy below 30 % HP.
         bool crit = critChance > 0 && strikeRandom.NextDouble() < critChance;
         if (crit) { damage *= 2; Crits++; }
-        if (executeBonus > 0 && slime.Hp < slime.MaxHp * ExecuteBelow) { damage *= 1 + executeBonus; ExecuteHits++; }
+        if (executeBonus > 0 && slime.Mother?.Phase != 3 && slime.Hp < slime.MaxHp * ExecuteBelow) { damage *= 1 + executeBonus; ExecuteHits++; }
         bool countered = CounterReady;
         if (countered) damage *= 1 + counterBonus;
         double knock = arms.Knock + knockBonus;
@@ -810,6 +819,7 @@ public sealed partial class BattleSim
     internal HitResult Damage(Slime slime, double amount, DamageSource source)
     {
         if (!slime.Targetable || amount <= 0) return HitResult.Landed;
+        if (MotherDamage(slime, amount, source) is HitResult motherHit) return motherHit;
         if (MutantDamage(slime, source) is HitResult mutationHit) return mutationHit;
         if (slime.ZipProp != ZipProp.None) return HitZipProp(slime, source);
         // 2026-11-04: an app's hit brings a flyer or a wall climber down to the floor.
@@ -1036,9 +1046,11 @@ public sealed partial class BattleSim
         Combo = 0;
         CatStunRemaining = StunImmunity = 0;
         ZipForcedFall = false;
+        ClearMotherWrap();
         RageRemaining = 0;
         foreach (var s in slimes)
         {
+            if (s.Mother is { } mother) { mother.Zones.Clear(); mother.Tokens.Clear(); }
             if (s.State is SlimeState.Windup or SlimeState.Casting or SlimeState.Dashing) s.Set(SlimeState.Moving);
             s.Special = BossMove.None; s.NurseCord = 0; s.BroodJumpLeft = 0;
             s.RallyCharge = 0;
@@ -1170,11 +1182,21 @@ public sealed partial class BattleSim
     public void SetArea(double left, double right)
     {
         mutantPreviousCat = null;
+        motherPreviousCat = null;
         paperPreviousCat = null;
         right = Math.Max(left + Settings.SlimeWidth * Settings.LargestScale, right);
         double oldWidth = Math.Max(1, Right - Left), newWidth = right - left;
         foreach (var s in slimes)
         {
+            if (s.Mother is { } mother)
+            {
+                foreach (var z in mother.Zones) { z.X = left + (z.X - Left) / oldWidth * newWidth; z.Width *= newWidth / oldWidth;
+                    z.FromX = left + (z.FromX - Left) / oldWidth * newWidth; z.ToX = left + (z.ToX - Left) / oldWidth * newWidth; }
+                foreach (var token in mother.Tokens) { token.X = left + (token.X - Left) / oldWidth * newWidth; token.AnchorX = left + (token.AnchorX - Left) / oldWidth * newWidth; }
+                mother.RingX = left + (mother.RingX - Left) / oldWidth * newWidth;
+                mother.FromX = left + (mother.FromX - Left) / oldWidth * newWidth; mother.ToX = left + (mother.ToX - Left) / oldWidth * newWidth;
+                mother.PointerX = double.NaN; mother.StrokeTravel = 0;
+            }
             if (s.Mutant is { } mutation)
             {
                 foreach (var z in mutation.Zones) { z.X = left + (z.X - Left) / oldWidth * newWidth; z.W *= newWidth / oldWidth; }

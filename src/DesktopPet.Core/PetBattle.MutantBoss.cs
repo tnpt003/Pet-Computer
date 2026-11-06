@@ -69,7 +69,7 @@ public sealed partial class BattleSim
     public bool MutantHiccup => MutantNoise && !CatOffFloor && mutantNoiseAge % 1.3 < 0.25;
     public bool MutantRescuing => MutantForcedFall || Time < mutantRescueUntil || Time < mutantHitUntil;
     public bool MutantBumpMech => slimes.Any(s => s.Targetable && s.Mutant?.Mode == MutantMode.Bumps);
-    public static bool BossDebuffImmune(Slime s) => s.Mutant is { } m && m.Mode != MutantMode.Combat || s.Type.Zip != null && (s.Shielded || s.MechBonusClock > 0 || s.Deflating > 0);
+    public static bool BossDebuffImmune(Slime s) => s.Mother is { Protected: true } || s.Mutant is { } m && m.Mode != MutantMode.Combat || s.Type.Zip != null && (s.Shielded || s.MechBonusClock > 0 || s.Deflating > 0);
     public static bool BossPushImmune(Slime s) => BossDebuffImmune(s) || s.Type.Zip != null && (s.ZipStage >= 1 || (s.PhasesDone & 1) != 0);
 
     // A separate pointer input covers the cat above the strip too. The window supplies screen-mapped DIPs.

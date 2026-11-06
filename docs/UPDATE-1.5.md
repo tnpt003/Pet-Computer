@@ -2,7 +2,7 @@
 
 Slime Mẹ thiết kế lại #67 (06/11): triển khai ba phase/chín đòn, Quấn khăn, Trứng treo/Trả con về nôi, Thanh dỗ 33/66/100 và Trứng cuối bắt buộc. Luật hiện hành ở [MOTHER-SLIME.md](MOTHER-SLIME.md), thay mô tả mẹ cũ phía dưới. Đầm nhầy cho mượn Kéo cắt; Slime Nén cho mượn Bình xịt. Chưa nghiệm thu chơi tay.
 
-Cập nhật: 2026-11-07 (Asia/Saigon). Trạng thái: **xong M01–M29, đợt B/C và các mốc tới #70; chưa phát hành 1.5.0.** Kết quả test phải gắn với commit; không dùng kết quả hợp nhất 06/11 thay cho kiểm tra HEAD mới. Còn M30, hiệu năng và nghiệm thu tay. Theo dõi tập trung tại [REVIEW-1.5-2026-11-07.md](REVIEW-1.5-2026-11-07.md).
+Cập nhật: 2026-11-07 (Asia/Saigon). Trạng thái: **M30/1.5.0 được người dùng duyệt phát hành ngày 07/11, đang kiểm tra và đóng gói.** Đã xong M01–M29, đợt B/C, các mốc tới #70 và chuẩn hóa z-order. Quyết định phát hành giữ rõ giới hạn FPS và các mục chưa nghiệm thu tay, không coi chúng đã đạt. Kết quả theo commit tại [REVIEW-1.5-2026-11-07.md](REVIEW-1.5-2026-11-07.md).
 
 Cách đọc file này:
 
@@ -216,7 +216,7 @@ Nhật ký chi tiết và kết quả test từng mốc: docs/archive/UPDATE-1.5
 | Sau M29 | Sửa sau chơi thử 30/10, đợt B (#32–#40), đợt C (#41–#44), góp ý 05/11 (#45–#52) | 05/11 |
 | Hợp nhất/chuẩn hóa | Slime Nén mới (#53), hai boss nâng cấp; sửa lứa cuối, đồng bộ vùng báo/trúng, Nộ chống đẩy, giữ luật vũng cũ; bảng luật và tiêu chí xong | 06/11; Python 58 + 5, C# 3170, WPF 1418 đạt; còn nghiệm thu tay |
 | Slime Nén 06/11 | Thiết kế lại đòn, mech, debuff, luật bế mèo, HP (Issue #54, #55) | 06/11; Python 58 + 5, C# 3260, WPF 1430 đạt; còn nghiệm thu tay |
-| **M30** | **Release 1.5.0 theo docs/RELEASE.md** | Chưa |
+| **M30** | **Release 1.5.0 theo docs/RELEASE.md** | Người dùng chốt 07/11; đang test/đóng gói/phát hành |
 
 ### Việc trước M30
 

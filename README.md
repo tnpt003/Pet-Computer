@@ -10,7 +10,7 @@ An animated cat to keep you company while you work — and a little adventure wh
 
 **[Watch the 32-second introduction (MP4)](docs/media/desktop-pet-intro.mp4)** — real screen recording, with a short screenshot introduction. No audio.
 
-*Development preview for 1.5. The latest published release may differ. The screenshots and recording below come from the running app, not mockups.*
+*Version 1.5 — Slime Strikes Back. The screenshots and recording below were captured from the running app during development of 1.5, not mockups.*
 
 **[Download for Windows](https://github.com/tnpt003/Pet-Computer/releases/latest/download/PetComputer-win-Setup.exe)** · [All releases & portable ZIP](https://github.com/tnpt003/Pet-Computer/releases) · [What's new](CHANGELOG.md) · [Report a problem](https://github.com/tnpt003/Pet-Computer/issues)
 
@@ -50,7 +50,7 @@ Battle Mode is optional and off by default. Outside a battle, your cat stays a d
 
 During a fight, choose targets, use skills, and lift your cat out of danger. Fictional desktop app icons can help — until a slime infects them. These are game elements, not your real applications.
 
-Features in development are tracked in [the 1.5 plan](docs/UPDATE-1.5.md); check the [release notes](https://github.com/tnpt003/Pet-Computer/releases/latest) for what is included in the download.
+Version 1.5 content is described in [the 1.5 overview](docs/UPDATE-1.5.md); check the [release notes](https://github.com/tnpt003/Pet-Computer/releases/latest) for changes and known limitations.
 
 ## Install and say hello
 

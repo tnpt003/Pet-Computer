@@ -1,8 +1,11 @@
 # Nhật ký thay đổi
 
-## 1.5.0 — Slime phản công (chưa phát hành)
+## 1.5.0 — Slime phản công (2026-11-07)
 
 ### Tiếng Việt
+
+- Sửa lớp nền trận có thể phủ slime sau khi Windows cập nhật Topmost; giữ đúng thứ tự sau fullscreen.
+- Điểm còn biết khi phát hành: trận đông quái vẫn có thể giảm FPS (mẫu crowd-late 122 s: trung vị 50,5 FPS). Chưa nghiệm thu đầy đủ DPI/nhiều màn hình và nâng cấp từ 1.4.4; tiếp tục theo dõi sau phát hành.
 
 - Sắp xếp nội dung Viễn chinh/Vô tận 1.5 theo vùng/chặng: đủ slime mới, 9 đội hình có vị trí riêng trong Vô tận, app độc mở dần. Giữ vòng boss Vua → ZIP → Mẹ → Biến dị. Sửa thẻ thưởng theo bộ kỹ năng, app và đồ rơi của chuyến; giữ chuyến cũ, tách kỷ lục luật mới.
 
@@ -20,7 +23,7 @@ Mọi thay đổi chỉ ở Battle Mode (mặc định vẫn tắt). Ngoài tr�
   - **Kẹp gắp:** gắp một slime ra khỏi trận, click chỗ khác để đập xuống.
   - **Kéo cắt:** click chỗ bất kỳ, cây kéo lớn lướt ngang màn hình, cắt mọi dây và làm slime mất máu.
   - **Bình xịt nước nóng:** click một slime, bình tự xịt tới hết nước; làm chậm, tan băng, cụp gai.
-  - Kỹ năng mới mở dần ở chương 2. Trận tự chọn mang được ngay cả 10.
+  - Kỹ năng mới mở dần ở chương 2. Trận tự chọn vẫn chọn 5 kỹ năng trong bộ 10, không mang cả 10 cùng lúc.
 - **Mèo nổi giận:** vòng nộ quanh avatar đầy dần khi đánh trúng và khi mất máu. Đầy rồi thì click avatar, hoặc mèo tự nộ ở nhát trúng kế tiếp: 5 giây mèo to ra, đánh trúng mọi slime trong tầm, miễn mọi hiệu ứng bất lợi và giải sạch hiệu ứng đang dính, kể cả choáng.
 - **Hai vũ khí mới:**
   - **Cuộn len:** quét rộng, kéo slime ở xa lại gần.
@@ -32,7 +35,7 @@ Mọi thay đổi chỉ ở Battle Mode (mặc định vẫn tắt). Ngoài tr�
   - Slime băng (ném mèo vào thì "cộp" và bật lại, đủ mạnh thì vỡ vỏ), bám tường (leo theo chiều cao màn hình), nhím, hẹn giờ (gọi cả đội hình), trộm (hút từ xa).
   - Slime có thể nối dây, nhịp trống hoặc cắm cờ che chở nhau. Có 9 đội hình phối hợp, ra cùng lúc như một đơn vị.
 - **Ba trùm mới:** Slime Nén, Slime Mẹ, Slime biến dị.
-- **Mèo đang được cầm** tự vung vuốt vào slime trên không. **Cú ném** làm vỡ băng, hất slime bám tường xuống và cắt dây nhầy. Kéo/ném vẫn như cũ, mèo vẫn không mất máu khi đang được cầm hay đang bay (trừ đạn của slime bay).
+- **Mèo đang được cầm** tự vung vuốt vào slime trên không. **Cú ném** có thể làm vỡ vỏ băng; mèo không cắt dây. Dây chỉ đứt bằng Kéo cắt hoặc hạ con giữ dây; Kẹp gắp vẫn làm đứt xích khi gắp con giữ xích. Các đòn được duyệt của Slime Nén, Mẹ và Biến dị có thể trúng mèo cầm/bay khi thực sự chạm; bom cuối ZIP và một số đòn Biến dị có ngoại lệ ép rơi riêng.
 - **Hiệu ứng trên quái:** độc, đóng băng, dính, có ở thẻ và di vật.
 - **Đồ rơi:** slime bị hạ đôi khi rơi cá (hồi máu), bình (giảm 2 giây hồi chiêu một kỹ năng) hoặc xu. Click để nhặt.
 - **Chương 2 "Bãi rác Tải về"**, mở sau khi thắng Vua Slime:
@@ -65,6 +68,9 @@ Mọi thay đổi chỉ ở Battle Mode (mặc định vẫn tắt). Ngoài tr�
 
 ### English
 
+- Fixed battle scenery covering slimes after a Windows Topmost refresh; kept its order after fullscreen.
+- Known release limitations: crowded battles may still drop frames (122-second crowd-late sample: median 50.5 FPS). Full DPI/multi-monitor and upgrade-from-1.4.4 acceptance testing remains outstanding.
+
 - Arranged Expedition/Infinity content by zone and stretch: all new slime kinds, places for all nine formations in Infinity, and gradual malware pools. Kept the King → ZIP → Mother → Mutant boss rotation. Reward cards now respect carried skills, apps and drops; existing runs remain resumable and new records use separate rules versions.
 
 - The Zip Slime is rebuilt: three stages with three blows each; three HP mechanics (Burst the belts, Stuck unpacking, Zip bomb); two sudden debuffs, Squeezed and ZIP-locked; its blows now reach a held cat if they really touch it. The gold floor marks no longer spin with its body.
@@ -80,7 +86,7 @@ Everything here is in Battle Mode (still off by default). Outside a battle the p
   - **Grabber:** lift a slime out of the fight, then click elsewhere to slam it down.
   - **Scissors:** click anywhere and big scissors sweep across the screen, cutting every rope and hurting slimes.
   - **Hot water spray:** click a slime and it sprays by itself until empty; it slows slimes, melts ice and flattens quills.
-  - The new skills open through chapter 2. A Custom Fight can take all ten at once.
+  - The new skills open through chapter 2. A Custom Fight still carries five selected skills out of ten.
 - **Cat fury:** a ring round the cat's portrait fills as the cat hits and gets hurt. Once full, click the portrait, or the cat rages by itself on its next hit: for 5 s it grows, hits every slime in reach, shrugs off every harm and clears what was on it, stun included.
 - **Two new weapons:**
   - **Yarn:** wide sweeps that pull far slimes in.
@@ -92,7 +98,7 @@ Everything here is in Battle Mode (still off by default). Outside a battle the p
   - Ice (a thrown cat bounces off with a clonk; hard enough cracks it), wall (climbs the height of the screen), hedgehog, timer (calls a whole formation) and thief (steals from afar) slimes.
   - Slimes can tie themselves together with ropes, drumbeats or planted flags. There are 9 team formations, which arrive together as one unit.
 - **Three new bosses:** the Zip Slime, the Slime Mother, the Mutant Slime.
-- **A held cat** swipes at slimes in the air. **A throw** cracks ice, knocks wall slimes down and cuts goo ropes. Dragging and throwing feel as before, and a held or flying cat still takes no damage (except from the flying slime's goo).
+- **A held cat** swipes at airborne slimes. **A throw** can crack ice; the cat does not cut ropes. Use Scissors or defeat the rope holder; grabbing a chain holder still breaks its chain. Approved Zip, Mother and Mutant boss attacks can hit a held or flying cat on contact. The final ZIP bomb and certain Mutant attacks have separate forced-fall rules.
 - **Effects on enemies:** poison, freeze and sticky, from cards and relics.
 - **Drops:** defeated slimes sometimes drop a fish (heals), a potion (2 s off a skill's cooldown) or coins. Click to pick them up.
 - **Chapter 2, "The Download Dump"**, opens after the Slime King:
@@ -125,6 +131,9 @@ Everything here is in Battle Mode (still off by default). Outside a battle the p
 
 ### 日本語
 
+- Windowsの最前面表示の更新で背景がスライムを覆う問題を修正。全画面表示から戻った後も重なり順を維持します。
+- 既知の制限：敵が多い戦闘ではFPSが低下する場合があります（crowd-lateの122秒測定で中央値50.5 FPS）。DPI・複数画面および1.4.4からの更新の全項目の実機確認は未完了です。
+
 - 遠征と無限の1.5コンテンツを地域と区間ごとに整理。新スライム全種、無限の9編成、段階的な悪性アプリを配置しました。王→ZIP→母→変異のボス順は維持。報酬カードは携帯スキル、アプリ、ドロップ設定に対応し、進行中の遠征は継続、新ルールの記録は分離します。
 
 - あっしゅくスライムを作り直しました。3段階それぞれに3つの技、3つのHPギミック（ベルト破り、解凍詰まり、圧縮爆弾）、2つの突然の状態異常（圧縮、ZIPロック）があります。持ち上げたネコにも、実際に触れれば攻撃が当たります。床の金色の印はボスと一緒に回らなくなりました。
@@ -140,7 +149,7 @@ Everything here is in Battle Mode (still off by default). Outside a battle the p
   - **クレーンアーム**：スライムを持ち上げて戦いから外し、別の場所をクリックしてたたきつけます。
   - **はさみ**：好きな場所をクリックすると大きなはさみが画面を横切り、ロープをすべて切ってスライムにダメージを与えます。
   - **熱湯スプレー**：スライムをクリックすると水が切れるまで自動で噴射します。動きを遅くし、氷を溶かし、トゲを寝かせます。
-  - 新スキルは第2章で順に解放されます。カスタムバトルでは最初から 10 個すべて使えます。
+  - 新スキルは第2章で順に解放されます。カスタムバトルでも10個から5つを選んで持ち込みます。
 - **ねこの怒り**：攻撃を当てたり、ダメージを受けたりするとアバターのまわりのリングがたまります。満タンでアバターをクリックするか、次の攻撃が当たると自動で発動します。5 秒間猫が大きくなり、範囲内のすべてのスライムを攻撃し、気絶を含む悪い効果をすべて消して受けなくなります。
 - **新しい武器 2 つ**：
   - **毛糸玉**：広くなぎ払い、遠くのスライムを引き寄せる。
@@ -152,7 +161,7 @@ Everything here is in Battle Mode (still off by default). Outside a battle the p
   - こおり（投げた猫は「コン」と跳ね返り、強ければ割れる）、かべ（画面の高さまで登る）、ハリネズミ、タイマー（隊列をまるごと呼ぶ）、どろぼう（遠くから盗む）スライム。
   - スライム同士がロープ・リズム・立てた旗で助け合います。連携隊列は 9 種類で、ひとまとまりで同時に現れます。
 - **新しいボス 3 体**：あっしゅくスライム、ママスライム、変異スライム。
-- **持ち上げた猫**は空中のスライムをひっかきます。**猫を投げる**と、氷が割れ、かべスライムが落ち、ねばねばロープが切れます。ドラッグと投げの感触はこれまでどおりで、持ち上げ中・飛行中の猫はダメージを受けません（とびスライムの弾だけは例外）。
+- **持ち上げた猫**は空中のスライムをひっかきます。**猫を投げる**と氷を割れますが、ロープは切れません。はさみを使うか、ロープを持つ敵を倒します。くさりを持つ敵をつかむと、くさりは切れます。ZIP・母・変異ボスの対象攻撃は、実際に触れれば持ち上げ中や飛行中の猫にも当たります。最後のZIP爆弾と一部の変異ボスの技には、強制落下の特別なルールがあります。
 - **敵への状態異常**：毒・凍結・ねばねば。カードと遺物で付けられます。
 - **ドロップ**：倒したスライムが魚（回復）、ポーション（スキルのクールダウンを 2 秒短縮）、コインを落とすことがあります。クリックして拾います。
 - **第2章「ダウンロードのゴミ捨て場」**：スライムキングを倒すと開きます。

@@ -1,5 +1,9 @@
 # Rà soát và chuẩn hóa 1.5 — 07/11/2026
 
+**Quyết định phát hành:** sau khi nhận báo cáo test/FPS và các mục chưa nghiệm thu, người dùng yêu cầu “ok release 1.5 đi” ngày 07/11. Chuẩn bị M30/1.5.0 theo quyết định này; không coi yêu cầu phát hành là bằng chứng các mục tay/perf đã đạt. Các phần “điều kiện trước M30” dưới đây giữ lại tiêu chí và kết quả lịch sử; việc còn thiếu chuyển sang theo dõi sau release.
+
+Kiểm tra lại sau nâng Version1.5.0: Python58, i18n5, C#3797/93suite, WPF1759 đều đạt (`artifacts/release150-tests.log`); build website đạt. Release notes vi/en/ja đã sửa các câu cũ về mang cả10kỹ năng, mèo cắt dây và miễn damage khi bế/bay, đồng thời ghi giới hạn FPS/DPI/upgrade. Kết quả phát hành GitHub ghi bổ sung sau khi workflow hoàn tất.
+
 Phạm vi: kiểm tra bản tích hợp sau #70, sửa sai lệch xác định được, đồng bộ tài liệu và lập điều kiện trước M30. Không thêm gameplay, không đổi HP/damage/threat, seed, rulesVersion hoặc ngưỡng cân bằng; không nâng Version/tag/release remote. HEAD gốc: `d641d64` sau gói code `79c9f1c`; commit của lượt rà được ghi ở PROGRESS.
 
 ## Nguồn luật

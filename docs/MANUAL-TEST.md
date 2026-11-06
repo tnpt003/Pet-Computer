@@ -1169,3 +1169,11 @@ Các mục 1.5 phía trên viết theo từng mốc; đây là thứ tự chơi 
 - [ ] Thanh dỗ hồng có vạch33/66/100; hit trực tiếp hiện tim, độc/app/execute không lách. 33%thu5nốt tốt/né đỏ;66%mèo đứng vòng/rê đúng hướng3lần;trượt giảm15điểm và chỉ đi mốc sau. 100%nhấc né sóng, vỗ bụng mở5nhát; trượt phải làm lại. Thắng mẹ ngủ/tan và thưởng đúng một lần.
 - [ ] Resize/DPI100/125/150/200%/chuyểnmonitor: trứng/nôi/tia/vòng/đích nhảy bám cùng tọa độ, không hit vô hình/không kẹt; thao tác vuốt không kéo mèo. Chơi với bộ không mang Kéo cắt ở Viễn chinh.
 - [ ] Ngoài trận: sleep lock/tựwake/clickwake,drag6DIP/throw/bounce,Dizzy/emotion priority,local fallback khi Python tắt vẫn như cũ.
+
+
+## #68 — Slime Mẹ: hình/effect/motion liền mạch (07/11)
+
+- [ ] Cả9đòn: phân biệt lấy đà/phát/thu; tay nối đúng vai trái/phải, trứng đi từ bụng, dải quạt từ nơ, không xuất hiện effect rời hay mất đột ngột. Vùng cảnh báo vẫn rõ lúc effect đang phát, không che mèo/HUD.
+- [ ] Thân/nơ/tay theo nhịp trườn/ôm/nhảy/đặt ổ, dừng/choáng/chuyển mech không giật tư thế; cửa bụng mở đúng cửa đánh, tay không che tim; nôi và trứng đung đưa có điểm treo; vỏ vỡ nối sang vũng hồng kem.
+- [ ] Pause/menu/guide/fullscreen đứng hình/ẩn đúng; bế/bay/resize/DPI100/125/150/200%/nhiều màn hình không tách nguồn effect khỏi thân, không có hit trễ. Kiểm tra wallpaper sáng/tối/nhiều màu.
+- [ ] Chơi lại Đầm nhầy và Tổ Slime Mẹ với4vũkhí: luật/máu/damage/thời gian giải như#67. Quan sát độ mượt trong trận thật; snapshot render và crowd-late không thay được nghiệm thu boss thật.

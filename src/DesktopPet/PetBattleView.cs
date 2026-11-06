@@ -483,7 +483,7 @@ public sealed partial class BattleFieldView : FrameworkElement
             case SlimeState.Moving:
             case SlimeState.Recover:
                 double bounce = Math.Sin(slime.StateTime * (slime.IsBoss ? 5 : 9) + slime.Id);
-                sx = 1 + 0.07 * bounce; sy = 1 - 0.09 * bounce;
+                if (!slime.Type.Mother) { sx = 1 + 0.07 * bounce; sy = 1 - 0.09 * bounce; }
                 break;
             case SlimeState.Windup:
                 double swell = Math.Clamp(t / windup, 0, 1);
@@ -515,11 +515,9 @@ public sealed partial class BattleFieldView : FrameworkElement
         ZipShape(slime, time, ref sx, ref sy); // The Zip Slime's bomb and its air going out.
         if (slime.Type.Mother)
         {
-            double breathe = Math.Sin(time * 3.2) * 0.025;
-            sx = 1 + breathe; sy = 1 - breathe;
-            if (slime.Mother is { Zones.Count: > 0 } mother)
-            { double k = Math.Clamp(mother.Zones[0].Age / Math.Max(0.1, mother.Zones[0].Warn), 0, 1); sx -= k * 0.07; sy += k * 0.08; }
-            if (slime.Mother?.Mode == MotherMode.Sleeping) { sx = 1.15; sy = 0.7; opacity *= Math.Clamp((slime.Mother.Deadline - sim.Time) / 1.2, 0, 1); }
+            var motherPose = SampleMother(slime);
+            sx *= motherPose.SX; sy *= motherPose.SY; jitter += motherPose.Lean * size;
+            if (slime.Mother?.Mode == MotherMode.Sleeping) opacity *= MotherEase((slime.Mother.Deadline - sim.Time) / 1.2);
         }
         if (slime.Mutant is { } mutation)
         {

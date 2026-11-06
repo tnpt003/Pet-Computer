@@ -12,6 +12,7 @@ internal static class MotherVisualChecks
     }
     public static void Run(Action<bool, string> check)
     {
+        MotherMotionChecks.Run(check);
         var data = BattleData.Settings; var sim = new BattleSim(data, 0, 1200, seed: 31); sim.SetSky(650);
         var boss = sim.AddSlime(780, data.Enemy("mother")); boss.Set(SlimeState.Moving);
         sim.Step(.016, 100, false);

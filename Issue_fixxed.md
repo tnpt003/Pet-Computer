@@ -5,6 +5,12 @@ Sổ ghi các lỗi đã sửa của Desktop Pet. Phần A: lỗi người dùng
 Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm lỗi mới: tạo mục số tiếp theo ở đầu phần A (hoặc một dòng ở phần B).
 
 # A. Lỗi người dùng phát hiện
+## #68 — Ngoại hình, effect và animation Slime Mẹ rời rạc, khựng (07/11)
+- **Triệu chứng/nguyên nhân:** thân dùng cùng một độ gồng cho9đòn; tay/nơ và hiệu ứng không chung pose hay điểm phát. Vùng damage tô như hộp effect, hết life thì cắt hình ngay. Chuyển mech/tư thế thiếu envelope; trứng/vỏ/vũng dùng lẫn vật liệu mẹ và quái thường.
+- **Sửa:** `MotherPose` pure dùng chung thân/điểm phát theo actionAge/warn/end, hồi giảm dần, nghiêng theo velocity hình ảnh, modeAge chuyển tư thế và tokenDoneAge cho pop. Giữ clock/RNG/physics/combat. Tay thạch có vai và bàn tay trái/phải riêng; nơ vải có nếp/tua và dải nối knot; trứng phát từ bụng, vỏ bung rồi vũng hồng kem; sóng, nôi rung, tim/core mở dùng cùng chất liệu và thời gian simulation. Cảnh báo giữ footprint thực, giảm hộp tô đặc. Chuyển động trứng khớp góc dây, cửa bụng đẩy tay tránh che tim.
+- **Kiểm chứng:** fullPython58+i18n5/C#3757/WPF1541 đạt. Kiểm tra pose không sửa combat, liên tục tại warn/strike/recovery, emission bám pose, Pause đóng băng. Chín dải6frame ở artifacts/mother-polish-render; đã xem đủ9chuỗi sáng/tối, visual cuối1541đạt. Snapshot54frame cuối median6,09/p9512,13/max14,03ms, không phảiFPS. 409dòng mô phỏng trước/sau giống#67. Đang chốt, chưa publish.
+- **Test tay:** MANUAL-TEST #68, đặc biệt nhìn trong trận thật, độ mượt khi bế/bay/Pause, DPI/nhiều màn hình. Không đổi cân bằng600HP/damage26 hoặc records.
+
 ## #67 — Tiếp tục trọn thiết kế Slime Mẹ đã duyệt (06/11)
 - **Yêu cầu/nguyên nhân:** thiết kế MOTHER-SLIME đã chốt nhưng chỉ mốc0 có code; mẹ vẫn là boss đội vương miện/ổ cũ, chưa có chín đòn/hai mech/Thanh dỗ.
 - **Sửa:** controller C# và art riêng, trứng/nơ/váy trong gel, ba túi3đòn không lặp ngay, Quấn khăn, hai mech, dỗ33/66/100/Trứng cuối và ngủtan/thưởng chung. Chặn damage/debuff tập trung, giữ physics/Python; va chạm projectile quét cung tương đối cả mèo và đạn. UI/guide/Sổ tay vi/en/ja,bot giải bằng clock vũ khí thật. HP650→600; hồi theo opening3,5s; damage26/threat/ngưỡng cân bằng giữ; records6/17/24.

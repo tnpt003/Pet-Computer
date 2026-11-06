@@ -89,3 +89,12 @@ Sau Mech 2, thanh máu đổi thành Thanh dỗ màu hồng 0→100%, có vạch
 - Test tự động: `BattleMotherTests`, `MotherPuzzlePlayer`, `MotherVisualChecks`; số đo và kết quả thật ghi ở PROGRESS/Issue_fixxed #67 khi đóng gói. Chưa có nghiệm thu chơi tay/DPI/nhiều màn hình.
 
 Đối chứng và bảng cân bằng: [BALANCE-MOTHER-2026-11-06.md](BALANCE-MOTHER-2026-11-06.md).
+
+
+## Polish hình và motion #68 — 07/11
+
+`PetBattleView.MotherPose.cs` tính pose thuần theo simulation time; thân/nguồn tay/nơ/bụng dùng cùng tọa độ và scale. `MotherBoss` chỉ thêm actionAge/warn/end, poseMove, modeAge/previousMode, velocity phục vụ art; `MotherToken.DoneAge` chỉ dùng fade/pop. Không trường nào được dùng quyết định hit, nhịp đòn, damage, seed hay chuyển phase.
+
+Mỗi nhóm đòn có lấy đà/phát/thu riêng, mô mềm và vải có quán tính. `PetBattleView.MotherEffects.cs` nối vai→tay, knot→ruy băng, bụng→trứng; shell có crack, tan thành vụn/vũng hồng kem (chỉ vũng owner Mother dùng material này trong Traps). Cảnh báo vẫn đúng footprint mô phỏng, effect không đổi hitbox. Nôi/egg swing dùng cùng vị trí thật; core bụng mở/khép theo cửa1,8s, fade không kéo dài damage. Chuyển mech và thu đòn dùng envelope thay cắt pose tức thời; mọi thứ dừng theo Pause/guide/menu, không timer riêng.
+
+Review9đòn×6frame trên nền sáng/tối: `artifacts/mother-polish-render/mother-motion-0.png` tới9đòn (`...-8.png`). Kiểm tra `MotherMotionChecks`: sampling không mutate combat, continuity warn/release/recovery, emission đúng pose, Pause. So dòng mô phỏng với #67 giữ nguyên; không tăng rulesVersion. Chưa có nghiệm thu chơi tay/DPI/nhiều màn hình.

@@ -18,12 +18,19 @@ public sealed class MotherToken
 {
     public double X, H, AnchorX, AnchorH;
     public int Hits;
-    public bool Falling, Done, Bad, Carried;
+    public bool Falling, Bad, Carried;
+    private bool done;
+    public double DoneAge;
+    public bool Done { get => done; set { if (value && !done) DoneAge = 0; done = value; } }
 }
 public sealed class MotherBoss
 {
     public int Phase = 1, Move = -1, LastMove = -1, Thresholds, Progress, Beat, StrokeDirection = 1;
-    public MotherMode Mode;
+    private MotherMode mode;
+    public MotherMode Mode { get => mode; set { if (mode != value) { PreviousMode = mode; mode = value; ModeAge = 0; } } }
+    public MotherMode PreviousMode { get; private set; }
+    public double ModeAge, Velocity, ActionAge = 100, ActionEnd, ActionWarn = 1.1;
+    public int PoseMove = -1;
     public double Age, Clock = 3, Deadline, Soothe, NextWrap = 10, NextBeat, HitAt, SwingAt, RingX, StrokeTravel, PointerX = double.NaN;
     public double FromX, ToX, TravelAge, TravelTime;
     public bool Slower;
@@ -83,6 +90,7 @@ public sealed partial class BattleSim
     {
         var m = s.Mother!;
         motherSwingStarted = -10;
+        m.ActionEnd = Math.Min(m.ActionEnd, m.ActionAge);
         foreach (var zone in m.Zones)
             if (zone.ActorId != 0 && Find(zone.ActorId) is Slime child) { child.LeapHeight = 0; child.Set(SlimeState.Moving); }
         m.Zones.Clear(); m.TravelTime = 0; m.Move = -1; m.Clock = 2;
@@ -220,6 +228,10 @@ public sealed partial class BattleSim
         EnsureMother(s); var m = s.Mother!;
         if (!s.Targetable || s.State == SlimeState.Spawning) return false;
         m.Age += dt;
+        m.ModeAge += dt;
+        m.ActionAge += dt;
+        foreach (var token in m.Tokens) if (token.Done) token.DoneAge += dt;
+        double visualFrom = s.X;
         if (m.Protected) { ClearStatus(s); s.WetRemaining = s.KnockVelocity = 0; }
         if (!m.Protected && (s.State == SlimeState.Stunned || s.Handled))
         {
@@ -289,11 +301,11 @@ public sealed partial class BattleSim
             if (!CatOffFloor && !Raging && ShieldRemaining <= 0)
             { motherWrapLeft = 4; motherWrapOwner = s.Id; motherWrapClicks = 0; }
         }
-            if (m.TravelTime > 0)
+        if (m.TravelTime > 0)
         {
             m.TravelAge += dt;
             double k = Math.Clamp(m.TravelAge / m.TravelTime, 0, 1);
-                s.X = m.FromX + (m.ToX - m.FromX) * k;
+            s.X = m.FromX + (m.ToX - m.FromX) * k;
             if (k >= 1) m.TravelTime = 0;
         }
         m.Clock -= dt * s.ChillFactor;
@@ -304,6 +316,7 @@ public sealed partial class BattleSim
             if (Math.Abs(dx) > s.Range * 0.8) s.X += Math.Sign(dx) * s.Type.Speed * dt * s.ChillFactor;
         }
         s.X = Math.Clamp(s.X, Left + s.Width / 2, Math.Max(Left + s.Width / 2, Right - s.Width / 2));
+        m.Velocity += ((s.X - visualFrom) / Math.Max(.001, dt) - m.Velocity) * (1 - Math.Exp(-12 * dt));
         s.Facing = lastCatX < s.X ? -1 : 1;
         return true;
     }
@@ -391,6 +404,8 @@ public sealed partial class BattleSim
                 break;
         }
         m.Clock = m.Zones.Count == 0 ? 4 : m.Zones.Max(z => z.Warn + z.Life) + (s.Type.BossTactics?.Opening ?? 3.5) * slow;
+        m.PoseMove = m.Move; m.ActionAge = 0; m.ActionWarn = warn;
+        m.ActionEnd = m.Zones.Count == 0 ? warn : m.Zones.Max(z => z.Warn + z.Life);
         BossSpecials++;
     }
     private void StepMotherMech(Slime s, double dt)

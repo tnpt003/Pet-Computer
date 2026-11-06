@@ -120,6 +120,8 @@ public sealed partial class BattleFieldView
             var p = sim.Puddles[i];
             double x = p.X - OriginX, fade = Math.Clamp(p.Remaining / 1.0, 0.25, 1);
             dc.PushOpacity(fade);
+            if (sim.Find(p.OwnerId)?.Type.Mother == true)
+            { DrawMotherPuddle(dc,x,floor,p.Radius,time); dc.Pop(); continue; }
             var at = new Point(x, floor - 3);
             dc.DrawEllipse(null, Halo, at, p.Radius, 7);
             dc.DrawEllipse(null, PuddleRim, at, p.Radius, 7);

@@ -11,7 +11,7 @@ Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm 
 - **Cách sửa:** xóa `CatThroughRopes`, `CatThroughBossRopes`, `CatRopeCuts`, `BossCordCutSpeed`, khóa `cutSpeed`/`ropeCutSpeed`; sửa câu hướng dẫn/banner/mẹo vi/en/ja. Kéo cắt vốn chỉ mở ở Slime Nén nên đổi chỗ: Đầm nhầy cho mượn Kéo cắt, Slime Nén cho mượn Bình xịt. Records: Đầm nhầy 5, Slime Nén 14, Vô tận 22, Bãi rác 15. Giữ Kẹp gắp đứt xích và ném mèo vỡ vỏ băng.
 - **Kiểm chứng:** full `artifacts/m0-full.log`: Python58+i18n5, C#3692, WPF1467 đạt (lần đầu 3 FAIL là test ghim thứ tự kỹ năng/rulesVersion, đã sửa kỳ vọng). Ngưỡng cân bằng đạt; chưa so bảng trước/sau vì thiếu log đối chứng. Chưa chơi trận thật/DPI.
 - **Cần test tay:** MANUAL-TEST mục Issue #64; slime xích và dây hồng khó xử lý hơn khi không mang Kéo cắt, cần chơi thật.
-- **Chốt kỹ thuật:** PENDING_COMMIT
+- **Chốt kỹ thuật:** code `6d93cf4`. **Chưa publish:** lúc chốt có phiên khác đang sửa `PetBattle.MutantBoss.cs`, publish sẽ ra bản `.dirty`/lẫn code dở; publish cùng mốc kế tiếp hoặc khi phiên đó commit.
 
 ## #63 — Slime biến dị còn giống Vua; thiết kế ba phase và sân nhầy (06/11)
 - **Yêu cầu:** đổi tên/bỏ vương miện, xanh lá/mắt xoắn, 9 đòn/3 mech; hazard đánh cả bế/bounce, gỡ Nhiễu nhịp bằng rê chuột; miễn debuff boss trong mech. Khi vào mech cuối phải xóa toàn bộ nền/túi trời, có visual hút về.

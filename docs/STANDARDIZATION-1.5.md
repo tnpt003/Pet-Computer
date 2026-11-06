@@ -1,4 +1,6 @@
-# Chuẩn hóa và tích hợp 1.5 — 2026-11-06
+# Chuẩn hóa và tích hợp 1.5
+
+Cập nhật 07/11/2026. Các kết quả `ac93f41` cuối trang là lịch sử của lần hợp nhất 06/11, không chứng minh HEAD hiện tại đã nghiệm thu. Báo cáo rà soát mới: [REVIEW-1.5-2026-11-07.md](REVIEW-1.5-2026-11-07.md).
 
 Phạm vi đã duyệt: hợp nhất Slime Nén đã hoàn tất (`0172091`, code `6739762`) với hai boss (`91a49e9`, code `9477828`), review và sửa những điểm lệch logic/code/dữ liệu/tài liệu. Không thêm ý tưởng gameplay mới, không phát hành remote, không tự nâng version lên 1.5.0 trước M30.
 
@@ -11,6 +13,7 @@ Phạm vi đã duyệt: hợp nhất Slime Nén đã hoàn tất (`0172091`, cod
 | Combat, vị trí/vận tốc trận, timer, ngẫu nhiên theo seed | DesktopPet.Core/PetBattle*.cs |
 | Cửa sổ/input, quy tắc dừng trận và vẽ | PetWindow.Battle*.cs, PetBattleView*.cs |
 | Ngoại lệ người dùng đã duyệt | APPROVED-EXCEPTIONS.md |
+| Boss hiện hành (thay controller cũ ở cấu hình gốc) | ZIP-SLIME.md, MOTHER-SLIME.md, MUTANT-SLIME.md |
 | Kết quả đã chạy, việc chưa xong | PROGRESS.md; lỗi review ở Issue_fixxed.md phần B |
 | Ý tưởng chưa duyệt hoặc hoãn | UPDATE-1.5.md → Backlog sau 1.5; NEXT-STEPS.md |
 
@@ -21,8 +24,8 @@ Không gọi M30 hoàn tất chỉ vì code/test tự động đạt. Còn nghi�
 | Trạng thái | Đánh/gây sát thương | Nhấc và điều khiển | Đồng hồ |
 |---|---|---|---|
 | Mèo dưới sàn | Đánh tự động; nhận đòn nếu trong vùng và không được bảo vệ | Drag chỉ bắt đầu sau ngưỡng khoảng 6 DIP | Trận chạy |
-| Mèo được cầm | Chỉ tự đánh quái trên không; đòn sàn và chiêu boss mới không trúng. Ngoại lệ: đạn dính slime bay | Cửa sổ sở hữu drag/pendulum | Trận chạy, giữ luật hồi kỹ năng hiện có |
-| Mèo bay sau ném | Không tự đánh; chỉ tương tác ném có thiết kế riêng, gồm băng/tường/dây/tay kéo Slime Nén | C# physics, không do Python | Trận chạy |
+| Mèo được cầm | Chỉ tự đánh quái trên không và mục tiêu mech được duyệt. Đạn dính slime bay, đòn Slime Nén, đòn air Slime Mẹ và vùng Slime biến dị có thể trúng khi hình học chạm | Cửa sổ sở hữu drag/pendulum; giữ ngoại lệ ép rơi riêng bên dưới | Trận chạy, giữ luật hồi kỹ năng hiện có |
+| Mèo bay sau ném | Không tự đánh; chỉ tương tác ném có thiết kế riêng như vỏ băng/thả đè. Không cắt dây hoặc kéo xuyên tay kéo ZIP để giải mech | C# physics, không do Python; vẫn nhận các đòn boss được duyệt | Trận chạy |
 | Mèo choáng | Không bắt đầu nhấc; hết choáng mới nhấc được | Không tự đổi thành Dizzy | Hết theo thời gian trận |
 | Khiên bong bóng | Chặn toàn bộ cú đánh, cả sát thương và hiệu ứng kèm theo | Không đổi luật drag | Hết theo thời gian trận |
 | Nộ | Vẫn nhận sát thương thường; giải và miễn hiệu ứng bất lợi, gồm choáng/chậm/đẩy lùi | Bật được khi choáng, không bật khi đang cầm | 5 giây trận; Pause đóng băng |
@@ -32,9 +35,11 @@ Không gọi M30 hoàn tất chỉ vì code/test tự động đạt. Còn nghi�
 
 `BattleSim.Step(catHeld, lifted, pose)`: `catHeld` là mèo đang do cửa sổ điều khiển (cầm **hoặc bay**), không đồng nghĩa với `CatPose.InHand`. Tests phải truyền đúng cặp cờ để không tạo trạng thái bay giả trên sàn.
 
+Ngoại lệ ép rơi: bom cuối ZIP xuyên phòng vệ ngắt cầm/bay, rơi không nảy rồi choáng 5 s sau đáp; túi trời và đòn all-in của Slime biến dị có luật rơi/bảo vệ riêng. Không suy rộng sang đòn thường. Dây chỉ đứt bằng Kéo cắt hoặc hạ con giữ dây; Kẹp gắp vẫn làm đứt xích khi gắp con giữ xích. Thứ tự thay thế luật theo các mốc đã duyệt trong APPROVED-EXCEPTIONS, không áp đoạn lịch sử cũ lên boss hiện hành.
+
 ## Hình học cảnh báo và sát thương
 
-- `BossDangerZone`, `BattleSim.BossZone`, `BossWaveZone`, `BossRainZone` là nguồn chung cho chiêu boss mới, renderer và bot. Không khai báo lại bán kính/vị trí vùng trúng trong renderer.
+- Controller bossTactics dùng `BossDangerZone`, `BattleSim.BossZone`, `BossWaveZone`, `BossRainZone`. Boss hiện hành có trạng thái/vùng riêng: ZIP, `MotherZone`, `MutantZone`; renderer đọc trạng thái core, không ép ba boss vào hình học controller legacy. Không khai báo lại bán kính/vị trí vùng trúng trong renderer.
 - `bossTactics` có các khóa tune: `sweepReach=125`, `sweepRadius=125`, `burstRadius=160`, `jumpRadius=42`, `waveRadius=38`, `waveSpacing=65`, bên cạnh 5 khóa thời gian/ổ đã có. C# có mặc định và Validate từng khóa. Đổi mặc định không tự nới tiêu chí test.
 - Các hằng luật ít cần tune (7 điểm sóng, khoảng cách bầy nhảy, tốc độ cắt dây, thời gian bay) dùng chung từ BattleSim, không nhân bản ở phần vẽ.
 - Vòng sóng trước đây bán kính 27 nhưng hit radius 38: đã sửa để cảnh báo bao đúng vùng trúng. Mưa đang gồng cũng hiển thị đủ vị trí hai nhịp từ cùng công thức với lúc tạo giọt.
@@ -47,7 +52,7 @@ Không gọi M30 hoàn tất chỉ vì code/test tự động đạt. Còn nghi�
 | `maxAlive` của trận/màn | Điều kiện nhận đơn vị tiếp theo dùng `Alive + UnitRoom`; đội hình/bầy nhập ra trọn gói nên số quái thật có thể vượt cap. Không coi đây là trần tuyệt đối của số object |
 | Slime hẹn giờ | Gọi đội hình có ngoại lệ vượt cap và giới hạn loại liên kết; hữu hạn theo `clock.calls`, không gọi lồng slime hẹn giờ |
 | `summonCap` của boss | Hạn mức quân do chính boss sinh, tách khỏi cổng nhận đợt thường |
-| Slime Mẹ | Tối đa 2 ổ và tổng 6 con/ổ còn sống, tính cả đang xuất hiện; nở không bỏ qua hạn mức. Lứa cuối chờ có chỗ, chỉ mất máu khi đặt được ổ |
+| Slime Mẹ | Cấu hình `mother:true` dùng ba phase/chín đòn, Trứng treo/Trả con/Thanh dỗ; không còn Lứa cuối 20%. Controller brood/bossTactics cũ chỉ còn cho cấu hình tùy chỉnh không bật mother; hạn mức ổ/con theo cấu hình và validation |
 | Vũng nhầy | Tối đa 6 toàn trận; vũng thường gần nhau vẫn gộp dù khác chủ. Nhầy của boss nâng cấp tách riêng để không hút nhầm nhầy thường |
 | Hiệu ứng trang trí | Bị chặn bởi `MaxEffects` (mặc định C# 32). Không giảm cảnh báo gameplay chỉ để đạt FPS |
 | Liên kết/con trỏ | Mặc định tối đa 2 loại liên kết, 2 loại quái dùng con trỏ, 2 xích trên một đồng minh; giữ ngoại lệ hẹn giờ đã duyệt |
@@ -60,7 +65,7 @@ Giữ ID đang có trong UPDATE-1.5 (không đánh lại số M/Q/S/B). Mỗi th
 
 Đã làm, đã kiểm tra tự động, đã xem render và đã chơi tay là các trạng thái khác nhau. Đề xuất mới không trộn vào bảng luật hiện tại khi chưa duyệt. Không refactor toàn bộ state machine, framework hoặc renderer trong mốc này.
 
-## Kiểm tra và kết quả
+## Kiểm tra và kết quả hợp nhất 06/11 (lịch sử)
 
 Bảng đo cùng phương pháp trước/sau, hàng sát ngưỡng và giới hạn bot: [BALANCE-1.5-INTEGRATED.md](BALANCE-1.5-INTEGRATED.md).
 
@@ -74,7 +79,7 @@ Bảng đo cùng phương pháp trước/sau, hàng sát ngưỡng và giới h�
 
 Chưa nghiệm thu chơi tay, DPI/multi-monitor, cài đặt/cập nhật từ 1.4.4. Các điểm này tiếp tục là điều kiện trước M30; chưa có tag, push hay release mới.
 
-## Kết quả chốt kỹ thuật
+## Kết quả chốt kỹ thuật ac93f41 (lịch sử)
 
 - Merge commit **ac93f41** trên main, có cả Slime Nén 6739762 và nhánh hai boss 91a49e9. Python 58 + 5, C# 3170, WPF 1418 đạt. Đã xem ảnh `enemy-boss-configured-zones.png` và `enemy-boss-tactics.png` nền sáng/tối; chưa thay nghiệm thu desktop/DPI thật.
 - Publish sạch **1.4.4+ac93f41**; ZIP `artifacts/DesktopPet-1.4.4-ac93f41-win-x64.zip`. Smoke 3/3 PASS: dùng .NET/Python đi kèm từ thư mục không liên quan, single-instance, đóng sạch app và Python của nó. Đã thoát đúng pet project bình thường trước publish và mở lại bản tích hợp sau smoke/perf. Dữ liệu smoke/perf riêng, không ghi đè preferences.

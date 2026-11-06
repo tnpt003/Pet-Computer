@@ -1185,6 +1185,13 @@ Các mục 1.5 phía trên viết theo từng mốc; đây là thứ tự chơi 
 - [ ] Viễn chinh tiếp tục lượt cũ17, vào ổ Biến dị ở mê cung cuối; Vô tận mốc10/20/30/40/50 đúng boss và tối đa4app độc. Chơi tay đánh giá nhịp, không chỉ số mô phỏng.
 - [ ] Kiểm tra DPI/nhiều màn hình thật; chưa được xác nhận bằng test tự động.
 
+## Chuẩn hóa tích hợp 1.5 (07/11)
+
+- [ ] Chương 2 và Viễn chinh Bãi rác: nền luôn sau slime khi mở trận, đổi màn, Pause, chuyển fullscreen rồi quay lại; mèo/HUD còn bấm được, không bị lấy focus.
+- [ ] Kết thúc/thua/thoát trận rồi mở lại: không sót cửa sổ nền hoặc đóng nhầm mèo; chương 1/Vô tận/Trận tự chọn mặc định không tự thêm nền Bãi rác.
+- [ ] Lặp trên màn hẹp, DPI100/125/150/200% và màn phụ tọa độ âm; đây vẫn là kiểm tra tay, chưa được thay bằng ảnh render hoặc probe native.
+- [ ] Nghiệm thu ma trận trong [REVIEW-1.5-2026-11-07.md](REVIEW-1.5-2026-11-07.md), nhất là boss Mẹ/Biến dị, nâng cấp từ 1.4.4 và FPS trận thật. Không gọi M30 xong chỉ vì smoke đạt.
+
 ## #70 — Nội dung Viễn chinh/Vô tận 1.5 (07/11)
 
 - [ ] Bãi rác: vùng Đầm nhầy chỉ có CAPTCHA mới; Kho cá thêm Pin yếu; Mê cung/ZIP thêm Đơ con trỏ. Screenshot đúng bộ app đã chọn, không thêm icon thứ sáu; CAPTCHA không xuất hiện khi có slime bay.

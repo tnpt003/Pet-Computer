@@ -10,7 +10,8 @@ namespace DesktopPet;
 // Its own click-through window just under the battle strip, the same size and place: every click on
 // it reaches the windows below, the slimes are drawn over it and the cat stays above both. Drawn once
 // (again only when the strip is placed again); hidden with the strip for a fullscreen app. Decoration
-// only: the fight never reads it. No backdrop for chapter 1, the Expedition, Infinity, the free battle.
+// only: the fight never reads it. Chapter/Expedition route data selects the scene;
+// chapter 1, Infinity and the free battle have no backdrop.
 public sealed partial class PetWindow
 {
     private Window? battleSceneryWindow;
@@ -25,7 +26,7 @@ public sealed partial class PetWindow
     public bool BattleSceneryShown => battleSceneryWindow?.IsVisible == true;
     public string? BattleSceneryKind => battleScenery?.Scene;
 
-    // Before the strip is shown, so the strip comes above it.
+    // Shown before the strip, which uses it as its owner to keep the strip above it.
     private void ShowBattleScenery(BattleSim b)
     {
         if (BattleSceneFor(b) is not string scene) return;
@@ -41,15 +42,8 @@ public sealed partial class PetWindow
         var handle = new WindowInteropHelper(battleSceneryWindow).Handle;
         const uint NoActivate = 0x0010;
         SetWindowPos(handle, field, x, y, width, height, NoActivate);
-        // WPF can reapply Topmost during the first render after Show. Restore the
-        // sibling order once that render has finished, without moving or focusing it.
-        var scenery = battleSceneryWindow;
-        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.ContextIdle, new Action(() =>
-        {
-            if (battleSceneryWindow != scenery || battleFieldWindow == null || !scenery.IsVisible
-                || new WindowInteropHelper(battleFieldWindow).Handle != field) return;
-            SetWindowPos(handle, field, 0, 0, 0, 0, NoActivate | 0x0001 | 0x0002);
-        }));
+        // The field is owned by the scenery: Windows preserves its order even if
+        // WPF reapplies Topmost later. No delayed dispatcher repair is needed.
         battleScenery?.InvalidateVisual();
     }
 

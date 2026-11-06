@@ -129,12 +129,21 @@ internal static class ChapterArtChecks
                 "A chapter 2 battle shows the Download Dump backdrop: click-through, never takes focus, no taskbar button, the strip's place and size");
             check(scenery != null && field != null && Below(new WindowInteropHelper(scenery).Handle, new WindowInteropHelper(field).Handle),
                 "The backdrop is under the strip (the slimes are drawn over it)");
+            // A later native topmost refresh must preserve the relationship immediately,
+            // without waiting for a queued dispatcher callback to repair the order.
+            if (scenery != null)
+                SetWindowPos(new WindowInteropHelper(scenery).Handle, new IntPtr(-1), 0, 0, 0, 0, 0x0010 | 0x0001 | 0x0002);
+            check(scenery != null && field != null && Below(new WindowInteropHelper(scenery).Handle, new WindowInteropHelper(field).Handle),
+                "Refreshing the backdrop's Topmost keeps the slimes above it");
             SetField(window, "contextProbe", new Func<(bool, double)>(() => (true, 0)));
             Call(window, "TickContext", 1.1); Call(window, "TickBattle", 1.0 / 60);
             check(!window.BattleSceneryShown, "A fullscreen app hides the backdrop with the strip");
             SetField(window, "contextProbe", new Func<(bool, double)>(() => (false, 0)));
             Call(window, "TickContext", 1.1); Call(window, "TickBattle", 1.0 / 60);
             check(window.BattleSceneryShown, "and it comes back with the strip");
+            await Task.Delay(30);
+            check(scenery != null && field != null && Below(new WindowInteropHelper(scenery).Handle, new WindowInteropHelper(field).Handle),
+                "The restored backdrop stays under the strip after fullscreen");
             window.EndBattle();
             check(!window.BattleSceneryShown && Find("Pet battle scenery") == null, "Ending the battle closes the backdrop");
             window.Reset(); ToGround();
@@ -209,6 +218,8 @@ internal static class ChapterArtChecks
     private static extern IntPtr GetWindowLongPtr(IntPtr hwnd, int index);
     [System.Runtime.InteropServices.DllImport("user32.dll")]
     private static extern IntPtr GetWindow(IntPtr hwnd, uint command);
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern bool SetWindowPos(IntPtr hwnd, IntPtr after, int x, int y, int width, int height, uint flags);
     private struct Rect { public int Left, Top, Right, Bottom; }
     [System.Runtime.InteropServices.DllImport("user32.dll")]
     private static extern bool GetWindowRect(IntPtr hwnd, out Rect rect);

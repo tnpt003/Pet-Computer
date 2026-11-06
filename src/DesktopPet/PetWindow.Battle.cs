@@ -809,6 +809,9 @@ public sealed partial class PetWindow
         battleView.GrabDropClicked += x => { if (battle?.GrabDrop(x) == true) { RequestBattleRedraw(); UpdateBattleHud(); } };
         ShowBattleScenery(battle); // 1.5 M22: a chapter's backdrop, under the strip.
         battleFieldWindow = CreateOverlayWindow(battleView, "Pet battle");
+        // Win32 keeps an owned window above its owner, including later WPF Topmost
+        // refreshes. A one-off SetWindowPos cannot maintain that relationship.
+        if (battleSceneryWindow != null) battleFieldWindow.Owner = battleSceneryWindow;
         battleFieldWindow.DpiChanged += (_, _) => battlePlacedScale = 0; // Re-place in pixels next frame.
         battleHudWindow = CreateOverlayWindow(BuildBattleHud(), "Pet battle HUD");
         battleHudWindow.SizeToContent = SizeToContent.WidthAndHeight;

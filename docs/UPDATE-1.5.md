@@ -2,7 +2,7 @@
 
 Slime Mẹ thiết kế lại #67 (06/11): triển khai ba phase/chín đòn, Quấn khăn, Trứng treo/Trả con về nôi, Thanh dỗ 33/66/100 và Trứng cuối bắt buộc. Luật hiện hành ở [MOTHER-SLIME.md](MOTHER-SLIME.md), thay mô tả mẹ cũ phía dưới. Đầm nhầy cho mượn Kéo cắt; Slime Nén cho mượn Bình xịt. Chưa nghiệm thu chơi tay.
 
-Cập nhật: 2026-11-07 (Asia/Saigon). Trạng thái: **xong M01–M29, đợt B/C, góp ý 05/11; đã hợp nhất Slime Nén thiết kế lại và hai boss nâng cấp, kiểm tra tự động bản tích hợp đạt. Chưa phát hành 1.5.0.** Còn M30 và nghiệm thu tay.
+Cập nhật: 2026-11-07 (Asia/Saigon). Trạng thái: **xong M01–M29, đợt B/C và các mốc tới #70; chưa phát hành 1.5.0.** Kết quả test phải gắn với commit; không dùng kết quả hợp nhất 06/11 thay cho kiểm tra HEAD mới. Còn M30, hiệu năng và nghiệm thu tay. Theo dõi tập trung tại [REVIEW-1.5-2026-11-07.md](REVIEW-1.5-2026-11-07.md).
 
 Cách đọc file này:
 
@@ -35,9 +35,9 @@ Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Battle Mode, App trong trậ
 - **Mèo đang cầm** chỉ đánh được quái trên không (slime bay, slime bám tường), mèo tự vung vuốt. Quái dưới sàn không bị mèo đang cầm đánh.
 - **Mèo đang bay sau cú ném** không tự đánh, chỉ tác động quái có tương tác ném: vỏ băng, slime bám tường, dây nhầy, tay kéo bom Slime Nén.
 - **Mèo được thả:** chỉ tác động slime đào hang lúc trồi, và thẻ Cú đáp địa chấn.
-- **Đạn dính của slime bay** trúng cả mèo đang cầm và trong `landingGrace`, không làm rơi mèo, không choáng; Khiên chặn. Đây là quái duy nhất làm mèo đang cầm mất máu.
+- **Đạn dính của slime bay** trúng cả mèo đang cầm và trong `landingGrace`, không làm rơi mèo, không choáng; Khiên chặn. Các boss có ngoại lệ riêng: Slime Nén, đòn air Slime Mẹ và vùng Slime biến dị có thể trúng mèo cầm/bay khi thực sự chạm. Bom cuối ZIP và các đòn ép rơi Biến dị tuân theo tài liệu boss, không áp luật miễn sát thương chung.
 - **Con trỏ tương tác với slime** trong khung trận và trên cửa sổ riêng của slime bay/bám tường. Click trúng mèo luôn là nhấc mèo. Chỉ chặn khi mèo nằm trong tay; mèo đang bay/nảy vẫn rê chuột được.
-- **Trận được đổi mèo:** lò xo/Slime Mẹ đẩy mèo dưới sàn ~80 DIPs, Vua biến dị phình nổ đẩy 65; va vỏ băng thì mèo bật ngược; Cú đáp địa chấn thì mèo không nảy, đứng yên ~0,6 s. Nộ chặn và giải đẩy lùi nhưng không miễn sát thương thường.
+- **Trận được đổi mèo:** lò xo đẩy mèo dưới sàn; va vỏ băng thì mèo bật ngược; Cú đáp địa chấn thì mèo không nảy, đứng yên ~0,6 s. ZIP, Mẹ và Biến dị dùng luật đẩy/rơi riêng trong tài liệu boss. Phình nổ của Vua biến dị cũ chỉ còn ở cấu hình legacy, không phải boss `mutant_king` hiện hành. Nộ chặn và giải hiệu ứng bất lợi, không miễn sát thương thường.
 - **Cửa sổ:** slime bay và slime bám tường trên cao có cửa sổ topmost riêng; lớp chọn vị trí cho Kéo cắt và Quạt; Chụp Màn Hình chớp không chặn chuột.
 - **Slime đi theo mèo đang bế** với 50% tốc độ.
 - **Hướng dẫn phiêu lưu** mở rộng sang chương 2, luật như chương 1.
@@ -230,7 +230,7 @@ rulesVersion hiện tại (#70, 07/11): chương 1 giữ như 1.4.4 theo duyệt
 
 ## Rủi ro còn lại
 
-- **Hiệu năng:** `crowd-late` trung vị 56,3 fps, thấp nhất 34,4, ở bản đo 05/11 (#50); mục tiêu ~57 fps.
+- **Hiệu năng:** lần #70 (07/11, 79c9f1c), `crowd-late` 33 s trung vị 53,9 FPS, thấp nhất 30,9, gap lớn nhất 173 ms; mục tiêu ~57 FPS. Đây là mẫu ngắn, chưa thay phép đo boss thật; kết quả mới theo báo cáo rà soát.
 - **Input:** kỹ năng dùng chuột và quái dùng chuột dễ xung đột với nhấc mèo và icon app; giữ thứ tự click ở mục Nguyên tắc.
 - **Cân bằng:** nhiều tổ hợp kỹ năng × quái, bot mô phỏng không đánh giá được cảm giác. Màn 3 và 5 chương 2 còn sát ngưỡng; Cuộn len màn 2 đã nới ngưỡng có duyệt.
 - **Màn hình thật:** cửa sổ sát mép, lớp chọn vị trí, chớp toàn màn hình chưa thử trên DPI thật.

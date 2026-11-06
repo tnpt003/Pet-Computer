@@ -1,6 +1,6 @@
 # Slime Mẹ và Vua Slime biến dị — cơ chế nâng cấp
 
-**Cập nhật 06/11:** phần Vua biến dị dưới đây là luật cũ cho cấu hình legacy, không còn dùng cho boss gốc `mutant_king`. Slime biến dị dùng `mutant: true`, luật ba phase và sân nhầy riêng ở [MUTANT-SLIME.md](MUTANT-SLIME.md). Slime Mẹ và các cấu hình opt-in cũ giữ nguyên.
+**Cập nhật 07/11:** nội dung controller cũ phía dưới chỉ dành cho cấu hình legacy. Boss gốc `mutant_king` dùng `mutant:true`, luật ở [MUTANT-SLIME.md](MUTANT-SLIME.md); Slime Mẹ dùng `mother:true`, luật ở [MOTHER-SLIME.md](MOTHER-SLIME.md). Các cấu hình opt-in không bật hai cờ này giữ controller cũ. Không dùng mô tả cũ để thay luật boss hiện hành.
 
 Thiết kế người dùng duyệt 2026-11-05, triển khai trên nhánh `feature/mother-mutant-mechanics` từ `7e423b5`. Không chứa thay đổi Slime Nén ở phiên khác. Không có mầm biến dị hoặc slime con biến dị.
 

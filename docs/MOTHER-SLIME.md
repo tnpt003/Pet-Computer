@@ -91,7 +91,7 @@ Sau Mech 2, thanh máu đổi thành Thanh dỗ màu hồng 0→100%, có vạch
 Đối chứng và bảng cân bằng: [BALANCE-MOTHER-2026-11-06.md](BALANCE-MOTHER-2026-11-06.md).
 
 
-## Polish hình và motion #68 — 07/11
+## Polish hình và motion #68 — 07/11 (code/publish `4557dbd`)
 
 `PetBattleView.MotherPose.cs` tính pose thuần theo simulation time; thân/nguồn tay/nơ/bụng dùng cùng tọa độ và scale. `MotherBoss` chỉ thêm actionAge/warn/end, poseMove, modeAge/previousMode, velocity phục vụ art; `MotherToken.DoneAge` chỉ dùng fade/pop. Không trường nào được dùng quyết định hit, nhịp đòn, damage, seed hay chuyển phase.
 

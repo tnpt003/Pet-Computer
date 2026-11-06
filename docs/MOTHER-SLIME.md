@@ -1,6 +1,6 @@
 # Slime Mẹ — thiết kế được duyệt 06/11/2026
 
-Trạng thái: **đã triển khai và kiểm chứng mốc 1–4, đang đóng gói (06/11)**. Luật dưới đây thay phần Slime Mẹ cũ trong BOSS-TACTICS.md khi `EnemyType.mother=true`. Mọi thời gian, phần trăm là số khởi điểm, cần đo lại; không nới ngưỡng cân bằng.
+Trạng thái: **đã triển khai, kiểm chứng và publish mốc 1–4 (`7712dc3`, 06–07/11)**. Luật dưới đây thay phần Slime Mẹ cũ trong BOSS-TACTICS.md khi `EnemyType.mother=true`. Mọi thời gian, phần trăm là số khởi điểm, cần đo lại; không nới ngưỡng cân bằng.
 
 ## Ý tưởng
 

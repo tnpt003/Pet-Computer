@@ -34,4 +34,4 @@ Búa sát ngưỡng18/40, cần chơi tay. Chín đòn và các khoảng giải 
 
 - Full `scripts/test.ps1 -Ui` chạy một lần: Python58+i18n5 đạt, C#3748 đạt/9FAIL ban đầu. Đã sửa ba assertion rulesVersion và một nhóm khóa dịch cũ; bốn check registry đạt khi chạy ToolingTests với quyền ghi HKCU test tạm (24 check đạt). Lỗi cân bằng Búa đã sửa ở số nhát trứng. Kiểm lại Mother/Adventure/Expedition340 và metadata232 đều đạt. Không bỏ test lỗi để publish.
 - WPF1496 đạt trên desktop tương tác; sandbox trước đó không capture được chuột. Đã xem render trước/sau thân mẹ, trứng treo, phase3, nơ/dây, cửa bụng/vòng vuốt trên nền sáng/tối. Có37 ảnh mother ở artifacts/mother-render, gồm chín windup thật. Không đồng nghĩa đã chơi thật hoặc thử DPI/nhiều màn hình.
-- Build/publish/smoke/perf cuối được ghi thêm ở Issue_fixxed/PROGRESS sau đóng gói.
+- Build Release0error; publish sạch `7712dc3`, smoke3/3 PASS. Crowd-late33s: median54,6/min32,1FPS; gap p95 61/max142ms; CPUavg2,9%, tối đa19quái. Đây là tải đông quái, chưa phải đo boss thật; còn dưới mục tiêu~57FPS. ZIP `artifacts/DesktopPet-1.4.4-7712dc3-win-x64.zip`.

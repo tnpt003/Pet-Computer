@@ -1,6 +1,6 @@
 # Slime Nén sau chơi thử — đối chứng 06/11, Issue #56
 
-Đây là mô phỏng, chưa chơi thật. **Chưa đủ điều kiện publish:** ba ngưỡng còn FAIL ở bản HP 1100. Không thay ngưỡng test.
+Đây là mô phỏng, chưa chơi thật. **Cân bằng chưa đạt:** ba ngưỡng còn FAIL ở bản HP 1100. Người dùng đã yêu cầu publish bản này để chơi thử; không đổi ngưỡng test. Không thay ngưỡng test.
 
 ## Cách đo
 
@@ -43,11 +43,11 @@ Người dùng duyệt thử **1100 → 1000** ngày 06/11. Chỉ đổi `enemie
 
 Probe boss riêng Kiếm thường Normal vẫn đạt 4/4. HP thấp hơn không bảo đảm mọi seed tốt hơn: thời điểm đổi phase và dùng kỹ năng thay đổi. Đây vẫn là mô phỏng, chưa phải chơi thật.
 
-**Kết luận lượt thử:** chưa chốt HP 1000 vì vẫn thiếu một thắng ở boss Cuộn len, không cải thiện hai ngưỡng Viễn chinh cũ và thêm một FAIL Búa. Đã trả đúng dòng dữ liệu về **1100**; `git diff -- src/DesktopPet/Assets/battle.json` trống. Không thay ngưỡng, không publish, không thay mèo đang chạy. Việc tiếp theo là phân loại các seed thua ở từng màn/mech của tuyến Bãi rác trước khi đề xuất chỉnh thêm; không suy ra chỉ cần tiếp tục hạ HP boss.
+**Kết luận lượt thử:** chưa chốt HP 1000 vì vẫn thiếu một thắng ở boss Cuộn len, không cải thiện hai ngưỡng Viễn chinh cũ và thêm một FAIL Búa. Đã trả đúng dòng dữ liệu về **1100**; `git diff -- src/DesktopPet/Assets/battle.json` trống. Ở lượt thử HP 1000 không thay ngưỡng, không publish hoặc thay mèo đang chạy. Việc tiếp theo là phân loại các seed thua ở từng màn/mech của tuyến Bãi rác trước khi đề xuất chỉnh thêm; không suy ra chỉ cần tiếp tục hạ HP boss.
 
 ## Kiểm chứng kỹ thuật
 
 - Python: 58 hành vi + 5 i18n đạt ở lượt đầy đủ; i18n chạy lại sau sửa Sổ tay đạt 5/5.
 - C#: lượt đầy đủ sau sửa code 89 suite, 3222 đạt/1 FAIL (`zip-csharp-verified.log`); các suite tính năng đạt. Sau sửa mô hình bot, chỉ chạy lại ba suite cân bằng: 290 đạt/3 FAIL như trên.
 - WPF: 1431 check đạt (`zip-wpf-verified.log`); đã mở ảnh ổ khóa, ba cây thư mục và cảnh báo lăn trên nền sáng/tối. Chưa chơi trận thật, thử DPI hoặc nhiều màn hình.
-- Bản đang chạy và artifact publish cũ chưa bị thay. Code mốc #56 ở checkpoint `29d83ab`, HP vẫn 1100; lượt này chỉ lưu tài liệu kết quả thử. Chờ xử lý cân bằng rồi mới publish và smoke mốc hoàn chỉnh.
+- Sau khi xem kết quả thử, người dùng yêu cầu publish. Đã đóng gói sạch source `8cd669f` (code `29d83ab`), HP 1100; C# 3246 đạt/3 FAIL cân bằng, Python 58 + 5 đạt, WPF 1431 đạt; smoke 3/3 PASS, mở lại mèo. Artifact `artifacts/DesktopPet-1.4.4-8cd669f-win-x64.zip`. Giữ ba FAIL cân bằng để xử lý tiếp; không suy ra bản này đạt nghiệm thu cân bằng hoặc chơi thật.

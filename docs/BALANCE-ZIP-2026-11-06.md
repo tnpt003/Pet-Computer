@@ -2,7 +2,7 @@
 
 ## Kết quả mới nhất — đai quét/tự phá khóa #58, HP 1100
 
-C# đầy đủ **3467 đạt**, Python **58 + 5 đạt**, WPF **1436 đạt**; ZIP mục tiêu chạy lại **390 đạt** sau chỉnh test tự phá khóa với RageHitGain >0. Bộ đầy đủ `artifacts/zip58-full-tests.log`; WPF cuối `zip58-ui-final.log`, ZIP cuối `zip58-target-final.log`. Đã xem render gồng, hai vị trí đầu quét, thu đai và nhát tự đánh khóa trên nền sáng/tối; chưa chơi thật/DPI/multi-monitor.
+C# đầy đủ **3467 đạt**, Python **58 + 5 đạt**, WPF **1436 đạt**; ZIP mục tiêu cuối **392 đạt** (gồm đổi vùng trận và tọa độ âm giữa đai đang bay, giữ tiến độ/không hit trễ) sau chỉnh test tự phá khóa với RageHitGain >0. Bộ đầy đủ `artifacts/zip58-full-tests.log`; WPF cuối `zip58-ui-final.log`, ZIP cuối `zip58-area-tests.log`. Đã xem render gồng, hai vị trí đầu quét, thu đai và nhát tự đánh khóa trên nền sáng/tối; chưa chơi thật/DPI/multi-monitor.
 
 Đối chứng trước là source đã publish `57c3055` (`artifacts/zip57-balance-final.log`), sau là `zip58-full-tests.log`. Cùng 60 seed chương 2 và 40 seed Viễn chinh, không đổi bot/build/đường đi/ngưỡng/HP; records màn/Endless/Bãi rác = 8/16/9. Đây là mô phỏng, không phải chơi thật.
 

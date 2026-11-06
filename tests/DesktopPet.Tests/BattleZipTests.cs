@@ -177,6 +177,10 @@ internal static class BattleZipTests
             double elapsed = belt.Elapsed;
             Run(sim, 1, cat);
             check(belt.Elapsed == elapsed && sim.CatHp == hp, "Pause freezes the travelling belt and its contact");
+            double front = belt.Front;
+            sim.SetArea(-800, 0);
+            cat = -800 + cat * 0.5;
+            check(Math.Abs(belt.Front - (-800 + front * 0.5)) < 0.01 && belt.Elapsed == elapsed, "Changing monitor-relative area maps the belt path without restarting or sweeping stale coordinates");
             sim.Paused = false;
             Run(sim, 0.1, cat);
             check(sim.CatHp < hp && belt.Hit && sim.CatStunned, "Belt damage and stun occur when the moving front actually crosses the cat");

@@ -106,3 +106,5 @@ Mô phỏng chương 2 màn cuối, bot cũ (không tự né, 60 seed): Normal s
 ## Bổ sung #58 — đai di chuyển và tự phá khóa
 
 Damage đai dùng cùng đầu quét với renderer, quét đoạn từ vị trí frame trước tới frame hiện tại (rộng ±12 DIP, cao 65 DIP), không đánh cả nửa sân ngay khi hết báo. Pause và Screenshot giữ đứng cả đầu đai; màn/khóa đổi lượt hủy đai như trước. Boss gồng theo tiến độ báo trước, phần cuộn đai nằm ngoài mặt boss. Khóa ZIP hủy nhát đánh quái đang dở, ưu tiên nhát tự đánh khóa, đếm tại `HitTime`; 3 click/Nộ/kết thúc trận hủy nhát đang chờ để không có hit trễ. Vũ khí quá chậm vẫn có timeout 6 giây. HP 1100; records c2_zip_slime 8, Vô tận 16, Bãi rác 9.
+
+Đổi vùng trận: FromX/ToX/X/Radius của đai và marker được ánh xạ cùng vị trí boss, giữ tiến độ và cờ đã trúng; không dùng đoạn quét từ tọa độ màn cũ. Đã kiểm bằng unit test, chưa xác nhận DPI hoặc nhiều màn hình thật.

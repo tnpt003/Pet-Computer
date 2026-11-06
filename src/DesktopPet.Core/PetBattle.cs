@@ -1182,6 +1182,13 @@ public sealed partial class BattleSim
         }
         IncomingX = left + (IncomingX - Left) / oldWidth * newWidth;
         foreach (var e in effects) e.X = left + (e.X - Left) / oldWidth * newWidth;
+        foreach (var blow in zipBlows)
+        {
+            blow.X = left + (blow.X - Left) / oldWidth * newWidth;
+            blow.FromX = left + (blow.FromX - Left) / oldWidth * newWidth;
+            blow.ToX = left + (blow.ToX - Left) / oldWidth * newWidth;
+            blow.Radius *= newWidth / oldWidth;
+        }
         foreach (var b in bombs) b.X = left + (b.X - Left) / oldWidth * newWidth;
         MapTools(left, oldWidth, newWidth);
         MapSpit(left, oldWidth, newWidth);

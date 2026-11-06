@@ -4,6 +4,8 @@
 
 ### Tiếng Việt
 
+- Sắp xếp nội dung Viễn chinh/Vô tận 1.5 theo vùng/chặng: đủ slime mới, 9 đội hình có vị trí riêng trong Vô tận, app độc mở dần. Giữ vòng boss Vua → ZIP → Mẹ → Biến dị. Sửa thẻ thưởng theo bộ kỹ năng, app và đồ rơi của chuyến; giữ chuyến cũ, tách kỷ lục luật mới.
+
 - Slime Nén làm lại: ba giai đoạn, mỗi giai đoạn ba đòn riêng; ba mech Bung đai, Giải nén kẹt, Bom nén; hai hiệu ứng bất ngờ Nén và Khóa ZIP; đòn của boss trúng cả mèo đang bế nếu thực sự chạm. Điểm vàng trên sàn không còn quay theo thân boss.
 - Tích hợp Slime Nén thiết kế lại và hai boss nâng cấp; chuẩn hóa luật, cảnh báo/vùng trúng và ghi nhận app độc. Sửa lứa cuối Slime Mẹ tốn máu khi hết chỗ; Nộ chặn/giải đẩy lùi; giữ luật gộp vũng của quái thường. Banner Nộ hướng dẫn avatar và tự kích hoạt.
 
@@ -46,7 +48,7 @@ Mọi thay đổi chỉ ở Battle Mode (mặc định vẫn tắt). Ngoài tr�
   - Chuyến đang đi theo luật cũ vẫn đi tiếp được.
 - **Vô tận:**
   - Từ đợt 15 có các chặng quái mới.
-  - Trùm xoay vòng: Vua Slime → Slime Nén → Vua Slime biến dị.
+  - Trùm xoay vòng: Vua chương 1 → Slime Nén → Slime Mẹ → Slime biến dị (mốc 10/20/30/40); từ 50 có thêm Vua thường.
   - Sau mỗi đợt trùm phải chọn 1 trong 3 **Đột biến**. Đột biến là luật lạ (slime nhanh hơn, sàn đông hơn, Mèo thủy tinh…), thắng trùm kế tiếp thì có thưởng.
 - **Nhóm thẻ thứ 4 "Mưu mẹo"** (14 thẻ: kỹ năng, bom, app, đồ rơi) có cộng hưởng riêng. Có thêm thẻ hiếm Cú đáp địa chấn: thả mèo xuống thì sóng nứt chạy ra hai bên, đẩy và làm choáng slime.
 - **App trong trận** (chương 2, tuyến 2, Vô tận từ đợt 15):
@@ -62,6 +64,8 @@ Mọi thay đổi chỉ ở Battle Mode (mặc định vẫn tắt). Ngoài tr�
 - Kỷ lục Vô tận và Viễn chinh tuyến 1 được tách theo luật mới (kỷ lục cũ vẫn giữ).
 
 ### English
+
+- Arranged Expedition/Infinity content by zone and stretch: all new slime kinds, places for all nine formations in Infinity, and gradual malware pools. Kept the King → ZIP → Mother → Mutant boss rotation. Reward cards now respect carried skills, apps and drops; existing runs remain resumable and new records use separate rules versions.
 
 - The Zip Slime is rebuilt: three stages with three blows each; three HP mechanics (Burst the belts, Stuck unpacking, Zip bomb); two sudden debuffs, Squeezed and ZIP-locked; its blows now reach a held cat if they really touch it. The gold floor marks no longer spin with its body.
 - Integrated the redesigned Zip Slime and upgraded bosses. Shared boss warning/collision geometry and malware discovery order; fixed the mother's final clutch spending HP without space, rage knockback immunity/cleansing, and ordinary puddle merging. Updated rage instructions for the avatar and automatic activation.
@@ -104,7 +108,7 @@ Everything here is in Battle Mode (still off by default). Outside a battle the p
   - A run under way on the old rules goes on.
 - **Infinity:**
   - New stretches of slimes from wave 15.
-  - A rotating boss: Slime King → Zip Slime → Mutant Slime King.
+  - Rotating bosses: chapter King → Zip Slime → Slime Mother → Mutant Slime (waves 10/20/30/40); the plain King joins from wave 50.
   - After each boss wave you pick one of three **Mutations**. A Mutation is an odd rule (Speedy slimes, Packed floor, Glass cat…) that pays off when the next boss is beaten.
 - **A fourth card group, Trickery** (14 cards: skills, bombs, apps, drops), with its own synergies. Also the rare Ground quake card: put the cat down and cracks run both ways, pushing and dazing slimes.
 - **Battle apps** (chapter 2, the second route, Infinity from wave 15):
@@ -120,6 +124,8 @@ Everything here is in Battle Mode (still off by default). Outside a battle the p
 - Infinity and the first Expedition route keep their records apart under the new rules (old records stay).
 
 ### 日本語
+
+- 遠征と無限の1.5コンテンツを地域と区間ごとに整理。新スライム全種、無限の9編成、段階的な悪性アプリを配置しました。王→ZIP→母→変異のボス順は維持。報酬カードは携帯スキル、アプリ、ドロップ設定に対応し、進行中の遠征は継続、新ルールの記録は分離します。
 
 - あっしゅくスライムを作り直しました。3段階それぞれに3つの技、3つのHPギミック（ベルト破り、解凍詰まり、圧縮爆弾）、2つの突然の状態異常（圧縮、ZIPロック）があります。持ち上げたネコにも、実際に触れれば攻撃が当たります。床の金色の印はボスと一緒に回らなくなりました。
 - 再設計した圧縮スライムと強化ボスを統合。警告と当たり判定、悪性アプリの記録順を共通化。巣の空きがない時の母スライムのHP消費、怒り中の押し戻しと解除、通常のねばねば溜まりの結合を修正。アバターと怒りの自動発動の案内を更新。
@@ -162,7 +168,7 @@ Everything here is in Battle Mode (still off by default). Outside a battle the p
   - 旧ルールで進行中の旅はそのまま続けられます。
 - **エンドレス**：
   - ウェーブ 15 から新しいスライムの区間が始まります。
-  - ボスは交代制：スライムキング → あっしゅくスライム → へんいスライムキング。
+  - ボスは第1章の王 → あっしゅくスライム → 母スライム → 変異スライム（10/20/30/40ウェーブ）。50から通常の王も加わります。
   - ボスウェーブの後に 3 つの**変異**から 1 つ選びます。変異は変わったルール（スライム加速、満員の床、ガラスの猫…）で、次のボスを倒すと報酬があります。
 - **4 つ目のカード系統「トリック」**（14 枚：スキル・ボム・アプリ・ドロップ）。専用のシナジーがあります。レアカード「地響き着地」も追加：猫を下ろすと左右に地割れが走り、スライムを押し飛ばして気絶させます。
 - **バトル中のアプリ**（第2章、2 本目のルート、エンドレスのウェーブ 15 から）：

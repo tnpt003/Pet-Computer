@@ -908,7 +908,7 @@ public sealed class Expedition
         if (random.NextDouble() < c.FreeCard && commons.Length > 0) free = PrizeCard + ":" + commons[random.Next(commons.Length)];
         var gold = new List<(string Prize, double Weight)>();
         if (DrawRelics(run, 1, random) is { Length: 1 } relic && c.Relic > 0) gold.Add((PrizeRelic + ":" + relic[0], c.Relic));
-        var rares = Settings.UpgradeList.Where(u => u.Rare && (u.MaxStacks == 0 || run.Build.GetValueOrDefault(u.Id) < u.MaxStacks)).ToList();
+        var rares = EligibleRares(run).ToList();
         if (rares.Count > 0 && c.Rare > 0) gold.Add((PrizeRare + ":" + rares[random.Next(rares.Count)].Id, c.Rare));
         var cards = DrawCards(run, random.Next());
         if (cards.Length > 0 && c.CardHeal > 0) gold.Add((PrizeCard + ":" + cards[random.Next(cards.Length)], c.CardHeal));
@@ -934,7 +934,8 @@ public sealed class Expedition
     // battle seeded by the node, at full HP (no instant heal: resting is the heal).
     private string[] DrawCards(ExpeditionRun run, int seed)
     {
-        var sim = new BattleSim(Settings, 0, 1000, build: run.Build, seed: seed, relics: run.Relics, skills: run.Loadout);
+        var sim = new BattleSim(Settings, 0, 1000, stage: new StageSpec { Id = Spec.Id }, build: run.Build, seed: seed,
+            relics: run.Relics, skills: run.Loadout, apps: !run.NoApps, loot: BattleLoot.Coins);
         return sim.OfferCards()?.Select(u => u.Id).ToArray() ?? Array.Empty<string>();
     }
 
@@ -1144,12 +1145,15 @@ public sealed class Expedition
         return wares.ToArray();
     }
 
+    private IEnumerable<UpgradeSpec> EligibleRares(ExpeditionRun run) => Settings.UpgradeList.Where(u =>
+        u.Rare && (u.MaxStacks == 0 || run.Build.GetValueOrDefault(u.Id) < u.MaxStacks)
+        && (!u.NeedsApps || !run.NoApps && Settings.Apps != null) && (!u.NeedsDrops || Settings.Drops != null)
+        && (u.Skill == null || BattleSkills.Parse(u.Skill) is BattleSkill skill && Array.IndexOf(run.Loadout, skill) >= 0));
+
     // Up to count different rare cards the build can still take (a skill's only when it is carried).
     private string[] DrawRares(ExpeditionRun run, int count, Random random)
     {
-        var carried = run.Loadout;
-        var rares = Settings.UpgradeList.Where(u => u.Rare && (u.MaxStacks == 0 || run.Build.GetValueOrDefault(u.Id) < u.MaxStacks)
-            && (u.Skill == null || BattleSkills.Parse(u.Skill) is BattleSkill skill && Array.IndexOf(carried, skill) >= 0)).Select(u => u.Id).ToList();
+        var rares = EligibleRares(run).Select(u => u.Id).ToList();
         var drawn = new List<string>();
         for (int i = 0; i < count && rares.Count > 0; i++) { int at = random.Next(rares.Count); drawn.Add(rares[at]); rares.RemoveAt(at); }
         return drawn.ToArray();

@@ -28,8 +28,8 @@ internal static class ExpeditionGachaTests
     {
         var data = BattleData.Settings;
         var spec = data.Expedition!;
-        check(spec.KindGacha is { Steps: 5, MinLanes: 2, MaxLanes: 3 } && spec.Steps.Length == 0 && spec.StepCount == 6 && spec.Capsules != null && spec.RulesVersion == 8 && spec.KeepRuns.SequenceEqual(new[] { 6, 7 }) && spec.ShopFrom == 7,
-            "Built-in Expedition: 5 steps drawn by the step gacha (2–3 nodes), then the boss; the capsule machine; rules version 8 (7: the M23 shop, 8: M25 Trickery), runs of 6 and 7 go on");
+        check(spec.KindGacha is { Steps: 5, MinLanes: 2, MaxLanes: 3 } && spec.Steps.Length == 0 && spec.StepCount == 6 && spec.Capsules != null && spec.RulesVersion == 9 && spec.KeepRuns.SequenceEqual(new[] { 6, 7, 8 }) && spec.ShopFrom == 7,
+            "Built-in Expedition: 5 steps drawn by the step gacha (2–3 nodes), then the boss; the capsule machine; rules version 9 filters rewards by loadout and supports app/drop cards, runs of 6–8 go on");
 
         // A new run: only the boss is known; nothing can be fought or visited before the spin.
         var x = new Expedition(data, new ExpeditionProgress());
@@ -98,8 +98,74 @@ internal static class ExpeditionGachaTests
         Console.WriteLine("Expedition step gacha, 150 runs: " + string.Join(", ", counts.OrderByDescending(c => c.Value).Select(c => $"{c.Key} {100.0 * c.Value / total:0.0}%")));
 
         Capsules(check, data);
+        CapsuleSkillFilter(check);
+        OutsideBattleCards(check);
         Rerolls(check, data);
         DataChecks(check);
+    }
+
+    private static void CapsuleSkillFilter(Action<bool, string> check)
+    {
+        var root = System.Text.Json.Nodes.JsonNode.Parse(ExpeditionFixture.Embedded(), documentOptions:
+            new System.Text.Json.JsonDocumentOptions { CommentHandling = System.Text.Json.JsonCommentHandling.Skip })!;
+        root["upgrades"] = System.Text.Json.Nodes.JsonNode.Parse("""
+              [ { "id": "laser_rare", "group": "trick", "rare": true, "maxStacks": 1,
+                "skill": "laser", "effect": "damage", "amount": 0.1,
+                "nameVi": "Laser", "nameEn": "Laser", "descVi": "Laser", "descEn": "Laser" } ]
+            """);
+        root["expedition"]!["capsules"]!["relic"] = 0;
+        root["expedition"]!["capsules"]!["rare"] = 100;
+        root["expedition"]!["capsules"]!["cardHeal"] = 0;
+        var data = BattleData.Parse(root.ToJsonString());
+        foreach (bool laser in new[] { false, true })
+        {
+            var skills = BattleSkills.Default.ToArray();
+            if (laser) skills[0] = BattleSkill.Laser;
+            int draws = 0;
+            bool fits = true;
+            for (int seed = 1; seed <= 40; seed++)
+            {
+                var x = new Expedition(data, new ExpeditionProgress());
+                var run = x.Start(BattleWeapon.Sword, BattleDifficulty.Normal, seed, skills: skills);
+                x.Roll();
+                int lane = Array.IndexOf(run.Kinds![0], ExpeditionSpec.Fight);
+                if (lane < 0) continue;
+                x.Enter(lane); x.Finish(true, run.Hp, run.Build, 10, 1);
+                draws++;
+                fits &= run.Pending!.Gold == (laser ? "rare:laser_rare" : Expedition.Heal);
+            }
+            check(draws > 0 && fits, $"Gold capsule rare cards require the carried skill (laser carried: {laser}, {draws} draws)");
+        }
+    }
+
+    private static void OutsideBattleCards(Action<bool, string> check)
+    {
+        var root = System.Text.Json.Nodes.JsonNode.Parse(ExpeditionFixture.Embedded(), documentOptions:
+            new System.Text.Json.JsonDocumentOptions { CommentHandling = System.Text.Json.JsonCommentHandling.Skip })!;
+        root["upgrades"] = System.Text.Json.Nodes.JsonNode.Parse("""
+            [ { "id": "app_card", "group": "trick", "effect": "appCharge", "amount": 0.08, "maxStacks": 3,
+                "nameVi": "App", "nameEn": "App", "descVi": "App", "descEn": "App" },
+              { "id": "drop_card", "group": "trick", "effect": "fishHeal", "amount": 2, "maxStacks": 3,
+                "nameVi": "Fish", "nameEn": "Fish", "descVi": "Fish", "descEn": "Fish" } ]
+            """);
+        var data = BattleData.Parse(root.ToJsonString());
+        foreach (bool noApps in new[] { false, true })
+        {
+            var offered = new HashSet<string>();
+            for (int seed = 1; seed <= 80; seed++)
+            {
+                var x = new Expedition(data, new ExpeditionProgress());
+                var run = x.Start(BattleWeapon.Sword, BattleDifficulty.Normal, seed, noApps: noApps);
+                x.Roll();
+                int lane = Array.IndexOf(run.Kinds![0], ExpeditionSpec.Fight);
+                if (lane < 0) continue;
+                x.Enter(lane); x.Finish(true, run.Hp, run.Build, 10, 1);
+                foreach (string? prize in new[] { run.Pending!.Free, run.Pending.Gold })
+                    if (Expedition.Prize(prize) is (Expedition.PrizeCard, string id)) offered.Add(id);
+            }
+            check(offered.Contains("drop_card") && offered.Contains("app_card") == !noApps,
+                $"Cards outside combat use the run's drops and app setting (no apps: {noApps})");
+        }
     }
 
     // Spinning a drawn step again (2026-10-22): once a step, before going to one of its nodes, for

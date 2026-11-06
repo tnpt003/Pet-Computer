@@ -1184,3 +1184,12 @@ Các mục 1.5 phía trên viết theo từng mốc; đây là thứ tự chơi 
 - [ ] Đầm nhầy không có Mẹ; ZIP báo đúng3lượt lăn/bom80% toàn sân/reset6tay; kỷ vật ZIP rõ tab/đai/tay kéo ở hai theme, vẫn cầm/ném như trước.
 - [ ] Viễn chinh tiếp tục lượt cũ17, vào ổ Biến dị ở mê cung cuối; Vô tận mốc10/20/30/40/50 đúng boss và tối đa4app độc. Chơi tay đánh giá nhịp, không chỉ số mô phỏng.
 - [ ] Kiểm tra DPI/nhiều màn hình thật; chưa được xác nhận bằng test tự động.
+
+## #70 — Nội dung Viễn chinh/Vô tận 1.5 (07/11)
+
+- [ ] Bãi rác: vùng Đầm nhầy chỉ có CAPTCHA mới; Kho cá thêm Pin yếu; Mê cung/ZIP thêm Đơ con trỏ. Screenshot đúng bộ app đã chọn, không thêm icon thứ sáu; CAPTCHA không xuất hiện khi có slime bay.
+- [ ] Ao băng có slime dỗi; Vũng nhầy và Sảnh trống giữ các tổ hợp cũ. Thử Kéo cắt dây, dỗ slime dỗi và giữ giỏ cá trong các tổ hợp theo vùng.
+- [ ] Vô tận: đội hình thay theo bốn chặng; Mê cung không có Báo động. Vòng boss 10/20/30/40 Vua/ZIP/Mẹ/Biến dị; Vua thường đi cùng từ 50. Đánh giá cảm giác khó ở 18–20 và khi Bầy nhập hội tụ.
+- [ ] Thẻ ở nghỉ/cửa hàng/viên thưởng có tăng đồ rơi/hồi cá; thẻ sạc app chỉ khi bật app; thẻ kỹ năng khớp bộ mang. Đổi kỹ năng ở nghỉ không rút lại thưởng đã mở.
+- [ ] Tiếp tục chuyến r8/r18, giữ lựa chọn đang mở, kết thúc vẫn vào kỷ lục cũ; chuyến mới dùng r9/r19. Vô tận mới r26 vẫn giữ phần thưởng đã nhận.
+- [ ] Pause/menu khi có app độc, đang bế/bay và boss mech: timer dừng, tiếp tục đúng trạng thái; thử DPI/nhiều màn hình. Chưa xác nhận bằng chơi tay ở mốc này.

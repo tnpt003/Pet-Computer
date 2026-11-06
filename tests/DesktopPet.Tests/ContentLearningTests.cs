@@ -40,5 +40,33 @@ internal static class ContentLearningTests
         var endless=data.Endless!;
         check(endless.Stage().MaxMalware==4&&new EndlessSpec().Stage().MaxMalware==null,"Infinity forwards its explicit malware cap and preserves old custom fallback");
         check(data.Expedition!.Route("dump_trail")!.KeepRuns.Contains(17),"Existing r17 expedition runs remain resumable under the new content");
+        var route=data.Expedition.Route("dump_trail")!;
+        check(route.KeepRuns.Contains(18)&&data.Expedition.KeepRuns.Contains(8),"The previous content versions remain resumable after the reward and pool changes");
+        foreach(var zone in route.Zones)
+        {
+            var encounters=zone.Fights.Concat(zone.Elites).Select(id=>route.Encounter(id)!);
+            bool battery=zone.Id!="swamp",cursor=zone.Id=="folder_maze";
+            check(encounters.All(s=>s.NewAppsFrom==1&&s.MalwareKinds is {} pool&&pool.Contains("captcha")&&pool.Contains("battery")==battery&&pool.Contains("cursor")==cursor),
+                $"Expedition malware follows zone {zone.Id}: CAPTCHA, then battery, then cursor");
+        }
+        check(BattleData.WaveKinds(data,route.Fights.Concat(route.Elites).SelectMany(s=>s.Waves)).Contains("sulky"),"Sulky Slime also has an encounter in the Dump Trail");
+        EraMalware(check);
+    }
+
+    private static void EraMalware(Action<bool,string> check)
+    {
+        foreach(bool allow in new[]{false,true})
+        {
+            var dummy=new EnemyType{Id="dummy",MaxHp=100000,Damage=0,Speed=0,AttackCooldown=999};
+            var settings=new BattleSettings{FirstWaveDelay=0,CatMaxHp=100000,Enemies=new[]{dummy},
+                Apps=new AppsSpec{MalwareMinThreat=0,MalwareEveryMin=.1,MalwareEveryMax=.1,BatteryWeight=1},
+                Weapons=new[]{BattleData.Settings.Weapon("sword") with{Damage=0,StunChance=0}},RageAuto=false};
+            var endless=new EndlessSpec{BossEvery=0,UpgradeEvery=0,ErasFrom=1,NewAppsFrom=1,FirstCount=1,
+                Kinds=new[]{new EndlessKind{Enemy="dummy"}},
+                Eras=new[]{new EndlessEra{Kinds=new[]{new EndlessKind{Enemy="dummy"}},MalwareKinds=new[]{allow?"battery":"ads"}}}};
+            var sim=new BattleSim(settings,0,1600,seed:19,stage:endless.Stage());
+            RunFor(sim,5);
+            check(sim.BatteryLow==allow,$"Infinity actually draws malware from the current stretch (battery allowed: {allow})");
+        }
     }
 }

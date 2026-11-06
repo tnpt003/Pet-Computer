@@ -1162,7 +1162,7 @@
   // older kinds: at most two kinds of link and two the cursor beats); "mutations": after each cleared boss
   // wave pick one of "offer" odd rules, held until the next boss wave is cleared, then its reward.
   "endless": {
-    "id": "endless", "rulesVersion": 25, "unlockAfter": "c1_slime_king", "upgradeEvery": 2, "bossEvery": 10, "boss": "king_c1",
+    "id": "endless", "rulesVersion": 26, "unlockAfter": "c1_slime_king", "upgradeEvery": 2, "bossEvery": 10, "boss": "king_c1",
     "bosses": [ "king_c1", "zip", "mother", "mutant_king" ],
     "lateBoss": "king", "lateBossFrom": 50, "bossBonusPick": true, "allSynergiesAt": 48,
     "eliteChancePerWave": 0.007, "eliteChanceMax": 0.45, "moreElitesEvery": 20, "moreElitesMax": 2,
@@ -1174,19 +1174,23 @@
       { "enemy": "rock", "weight": 15, "from": 7 }
     ],
     // 2026-11-04: from formationsFrom, every formationEvery-th wave one of these comes as one of the wave's enemies.
-    "formationsFrom": 8, "formationEvery": 3, "formations": { "fortress": 2, "trampoline": 2, "artillery": 2, "drums": 1 },
+    "formationsFrom": 8, "formationEvery": 3, "formations": { "fortress": 1, "trampoline": 1 },
     "erasFrom": 15,
     // 1.5 M26 (rules 8): from this wave the Screenshot icon and the newer malware (captcha, low battery, frozen cursor).
     "newAppsFrom": 15, "maxMalware": 4,
     "eras": [
-      { "nameVi": "Đầm nhầy", "nameEn": "Goo marsh", "kinds": [
+      { "nameVi": "Đầm nhầy", "nameEn": "Goo marsh", "formations": { "fortress": 2, "trampoline": 2, "swarms": 1 },
+        "malwareKinds": [ "loading", "update", "virus", "ads", "captcha" ], "kinds": [
         { "enemy": "spitter", "weight": 20 }, { "enemy": "springer", "weight": 15 }, { "enemy": "icy", "weight": 15 }, { "enemy": "splitter", "weight": 15 } ] },
-      { "nameVi": "Ban nhạc slime", "nameEn": "Slime band", "kinds": [
+      { "nameVi": "Ban nhạc slime", "nameEn": "Slime band", "formations": { "drums": 2, "assembly": 1 },
+        "malwareKinds": [ "loading", "update", "virus", "ads", "captcha", "battery" ], "kinds": [
         { "enemy": "drummer", "weight": 15 }, { "enemy": "chain", "weight": 15 }, { "enemy": "hedgehog", "weight": 15 }, { "enemy": "phantom", "weight": 12 }, { "enemy": "flyer", "weight": 12 } ] },
-      { "nameVi": "Bãi rác", "nameEn": "Junkyard", "kinds": [
+      { "nameVi": "Bãi rác", "nameEn": "Junkyard", "formations": { "cavalry": 2, "kamikaze": 2, "swarms": 1, "alarm": 1 },
+        "malwareKinds": [ "loading", "update", "virus", "ads", "captcha", "battery", "cursor" ], "kinds": [
         { "enemy": "fuser", "weight": 12 }, { "enemy": "bomber", "weight": 12 }, { "enemy": "burrower", "weight": 12 }, { "enemy": "bubble", "weight": 10 },
         { "enemy": "clinger", "weight": 12 }, { "enemy": "timer", "weight": 10 } ] },
-      { "nameVi": "Mê cung ảo ảnh", "nameEn": "Mirage maze", "kinds": [
+      { "nameVi": "Mê cung ảo ảnh", "nameEn": "Mirage maze", "formations": { "fortress": 1, "artillery": 2 },
+        "malwareKinds": [ "loading", "update", "virus", "ads", "captcha", "battery", "cursor" ], "kinds": [
         { "enemy": "flagbearer", "weight": 14 }, { "enemy": "mirage", "weight": 12 }, { "enemy": "sulky", "weight": 12 }, { "enemy": "thief", "weight": 12 },
         { "enemy": "spitter", "weight": 10 }, { "enemy": "hedgehog", "weight": 10 } ] }
     ],
@@ -1228,7 +1232,7 @@
     "id": "slime_trail", "nameVi": "Đường mòn Slime", "nameEn": "The Slime Trail",
     // 1.5 M23: rules 7 brought the cat shop ("shopFrom"); a run started under rules 6 goes on to its end
     // (keepRuns) without it. 1.5 M25: rules 8 brought the Trickery cards; a rules 7 run goes on, with its shop.
-    "rulesVersion": 8, "keepRuns": [ 6, 7 ], "shopFrom": 7, "unlockAfter": "c1_slime_king", "retreatCost": 0, "winHeal": 0.05, "stepThreat": 0.1,
+    "rulesVersion": 9, "keepRuns": [ 6, 7, 8 ], "shopFrom": 7, "unlockAfter": "c1_slime_king", "retreatCost": 0, "winHeal": 0.05, "stepThreat": 0.1,
     "restHeal": 0.3, "maxRelics": 3, "eliteRelics": 2,
     "keepsakes": [
       { "id": "cup_bronze", "kind": "cup", "tier": "bronze", "difficulty": "Easy", "exact": true, "nameVi": "Cúp đồng viễn chinh", "nameEn": "Bronze Expedition cup" },
@@ -1376,7 +1380,7 @@
     "routes": [
       {
         "id": "dump_trail", "nameVi": "Lối Bãi rác", "nameEn": "The Dump Trail",
-        "rulesVersion": 18, "keepRuns": [ 1, 2, 3, 4, 17 ], "unlockAfter": "c2_zip_slime", "scene": "dump",
+        "rulesVersion": 19, "keepRuns": [ 1, 2, 3, 4, 17, 18 ], "unlockAfter": "c2_zip_slime", "scene": "dump",
         "kindGacha": { "steps": 6, "minLanes": 2, "maxLanes": 3, "weights": { "fight": 45, "event": 18, "elite": 20, "rest": 12, "shop": 14 }, "rerollCost": 0.08 },
         "zones": [
           { "id": "swamp", "nameVi": "Đầm nhầy", "nameEn": "Slime swamp", "steps": 2, "fights": [ "y_puddles", "y_ice_pond", "y_split_bog" ], "elites": [ "y_mother_nest" ] },
@@ -1387,7 +1391,7 @@
           {
             "id": "y_puddles", "nameVi": "Vũng nhầy", "nameEn": "Slime puddles",
             "goalVi": "Slime phun để lại vũng, slime lò xo nằm chờ.", "goalEn": "Spitters leave puddles, spring slimes lie in wait.",
-            "upgrades": true, "maxAlive": 5, "threat": 1.6, "maxMalware": 4, "newAppsFrom": 1,
+            "upgrades": true, "maxAlive": 5, "threat": 1.6, "maxMalware": 4, "newAppsFrom": 1, "malwareKinds": ["loading", "update", "virus", "ads", "captcha"],
             "waves": [
               { "groups": [ { "enemy": "spitter", "count": 1 }, { "pick": { "slime": 2, "runner": 1 }, "count": 2 } ] },
               { "groups": [ { "enemy": "springer", "count": 1 }, { "enemy": "spitter", "count": 1 }, { "pick": { "slime": 1, "runner": 1 }, "count": 2 } ] }
@@ -1395,17 +1399,17 @@
           },
           {
             "id": "y_ice_pond", "nameVi": "Ao băng", "nameEn": "Ice pond",
-            "goalVi": "Slime băng và slime nhím giữa đám slime thường.", "goalEn": "Ice slimes and hedgehogs among plain slimes.",
-            "upgrades": true, "maxAlive": 5, "threat": 1.6, "maxMalware": 4, "newAppsFrom": 1,
+            "goalVi": "Slime nhím canh ao; slime băng và slime dỗi chặn lối.", "goalEn": "Hedgehogs guard the pond; ice and sulky slimes block the path.",
+            "upgrades": true, "maxAlive": 5, "threat": 1.6, "maxMalware": 4, "newAppsFrom": 1, "malwareKinds": ["loading", "update", "virus", "ads", "captcha"],
             "waves": [
               { "groups": [ { "enemy": "hedgehog", "count": 1 }, { "pick": { "slime": 2, "runner": 1 }, "count": 2 } ] },
-              { "groups": [ { "enemy": "icy", "count": 1 }, { "enemy": "slime", "count": 1 }, { "enemy": "runner", "count": 1 } ] }
+              { "groups": [ { "enemy": "icy", "count": 1 }, { "enemy": "sulky", "count": 1 }, { "enemy": "runner", "count": 1 } ] }
             ]
           },
           {
             "id": "y_split_bog", "nameVi": "Bùn tách đôi", "nameEn": "Splitting bog",
             "goalVi": "Slime tách đôi được slime thảo dược hồi máu.", "goalEn": "Splitting slimes, healed by a herb slime.",
-            "upgrades": true, "maxAlive": 5, "threat": 1.55, "maxMalware": 4, "newAppsFrom": 1,
+            "upgrades": true, "maxAlive": 5, "threat": 1.55, "maxMalware": 4, "newAppsFrom": 1, "malwareKinds": ["loading", "update", "virus", "ads", "captcha"],
             "waves": [
               { "groups": [ { "enemy": "splitter", "count": 1 }, { "pick": { "slime": 1, "runner": 1 }, "count": 2 } ] },
               { "budget": 8, "groups": [ { "squad": [ { "enemy": "splitter", "count": 1 }, { "enemy": "mender", "count": 1 }, { "enemy": "slime", "count": 1 } ] } ] }
@@ -1414,7 +1418,7 @@
           {
             "id": "y_fish_crates", "nameVi": "Thùng cá", "nameEn": "Fish crates",
             "goalVi": "Giữ giỏ cá: slime tha cá ra mép, slime trộm lẻn vào.", "goalEn": "Keep the basket: slimes carry fish off, a thief sneaks in.",
-            "upgrades": true, "maxAlive": 5, "threat": 1.6, "maxMalware": 4, "newAppsFrom": 1,
+            "upgrades": true, "maxAlive": 5, "threat": 1.6, "maxMalware": 4, "newAppsFrom": 1, "malwareKinds": ["loading", "update", "virus", "ads", "captcha", "battery"],
             "basket": { "fish": 5, "every": 3, "at": 0.5 },
             "waves": [
               { "groups": [ { "pick": { "slime": 2, "runner": 1 }, "count": 3 } ] },
@@ -1424,7 +1428,7 @@
           {
             "id": "y_fish_raid", "nameVi": "Cướp cá", "nameEn": "Fish raid",
             "goalVi": "Giữ giỏ cá trước bom cưỡi slime và slime bay.", "goalEn": "Keep the basket from riding bombs and flyers.",
-            "upgrades": true, "maxAlive": 5, "threat": 1.6, "maxMalware": 4, "newAppsFrom": 1,
+            "upgrades": true, "maxAlive": 5, "threat": 1.6, "maxMalware": 4, "newAppsFrom": 1, "malwareKinds": ["loading", "update", "virus", "ads", "captcha", "battery"],
             "basket": { "fish": 5, "every": 3, "at": 0.5 },
             "waves": [
               { "groups": [ { "enemy": "bomber", "count": 1 }, { "pick": { "slime": 1, "runner": 1 }, "count": 2 } ] },
@@ -1434,7 +1438,7 @@
           {
             "id": "y_fish_tunnel", "nameVi": "Đường hầm cá", "nameEn": "Fish tunnel",
             "goalVi": "Slime đào hang trồi dưới chân, bầy hợp thể nhập lại.", "goalEn": "Burrowers pop up underfoot, a swarm fuses.",
-            "upgrades": true, "maxAlive": 5, "threat": 1.6, "maxMalware": 4, "newAppsFrom": 1,
+            "upgrades": true, "maxAlive": 5, "threat": 1.6, "maxMalware": 4, "newAppsFrom": 1, "malwareKinds": ["loading", "update", "virus", "ads", "captcha", "battery"],
             "waves": [
               { "groups": [ { "enemy": "burrower", "count": 1 }, { "pick": { "slime": 2, "runner": 1 }, "count": 2 } ] },
               { "groups": [ { "enemy": "fuser", "count": 3 }, { "enemy": "runner", "count": 1 } ] }
@@ -1443,7 +1447,7 @@
           {
             "id": "y_ghost_dirs", "nameVi": "Thư mục ẩn", "nameEn": "Hidden folders",
             "goalVi": "Slime bóng ma và slime ảo ảnh lúc ẩn lúc hiện.", "goalEn": "Ghost and mirage slimes fade in and out.",
-            "upgrades": true, "maxAlive": 5, "threat": 1.65, "maxMalware": 4, "newAppsFrom": 1,
+            "upgrades": true, "maxAlive": 5, "threat": 1.65, "maxMalware": 4, "newAppsFrom": 1, "malwareKinds": ["loading", "update", "virus", "ads", "captcha", "battery", "cursor"],
             "waves": [
               { "groups": [ { "enemy": "phantom", "count": 1 }, { "pick": { "slime": 2, "runner": 1 }, "count": 2 } ] },
               { "groups": [ { "enemy": "mirage", "count": 1 }, { "pick": { "slime": 1, "runner": 1 }, "count": 3 } ] }
@@ -1452,7 +1456,7 @@
           {
             "id": "y_drum_hall", "nameVi": "Sảnh trống", "nameEn": "Drum hall",
             "goalVi": "Nhạc trưởng gõ nhịp, slime xích nối dây.", "goalEn": "A drummer keeps time, chain slimes tie up.",
-            "upgrades": true, "maxAlive": 5, "threat": 1.6, "maxMalware": 4, "newAppsFrom": 1,
+            "upgrades": true, "maxAlive": 5, "threat": 1.6, "maxMalware": 4, "newAppsFrom": 1, "malwareKinds": ["loading", "update", "virus", "ads", "captcha", "battery", "cursor"],
             "waves": [
               { "groups": [ { "enemy": "drummer", "count": 1 }, { "pick": { "slime": 2, "runner": 1 }, "count": 2 } ] },
               { "groups": [ { "enemy": "chain", "count": 1 }, { "enemy": "rock", "count": 1 }, { "pick": { "slime": 1, "runner": 1 }, "count": 2 } ] }
@@ -1461,7 +1465,7 @@
           {
             "id": "y_wall_maze", "nameVi": "Tường thư mục", "nameEn": "Folder walls",
             "goalVi": "Slime bám tường, slime bong bóng và slime đá.", "goalEn": "Wall slimes, bubble slimes and rock slimes.",
-            "upgrades": true, "maxAlive": 5, "threat": 1.6, "maxMalware": 4, "newAppsFrom": 1,
+            "upgrades": true, "maxAlive": 5, "threat": 1.6, "maxMalware": 4, "newAppsFrom": 1, "malwareKinds": ["loading", "update", "virus", "ads", "captcha", "battery", "cursor"],
             "waves": [
               { "groups": [ { "enemy": "bubble", "count": 1 }, { "enemy": "rock", "count": 1 }, { "enemy": "slime", "count": 1 } ] },
               { "groups": [ { "formation": { "artillery": 1 } }, { "pick": { "slime": 1, "runner": 1 }, "count": 2 } ] }
@@ -1472,7 +1476,7 @@
           {
             "id": "y_mother_nest", "nameVi": "Tổ Slime Mẹ", "nameEn": "Mother's nest",
             "goalVi": "Tinh anh: slime phun canh tổ, cuối là Slime Mẹ.", "goalEn": "Elite: spitters guard the nest, then the Slime Mother.",
-            "upgrades": true, "maxAlive": 6, "threat": 1.45, "eliteChance": 0.5, "maxMalware": 4, "newAppsFrom": 1,
+            "upgrades": true, "maxAlive": 6, "threat": 1.45, "eliteChance": 0.5, "maxMalware": 4, "newAppsFrom": 1, "malwareKinds": ["loading", "update", "virus", "ads", "captcha"],
             "waves": [
               { "groups": [ { "enemy": "spitter", "count": 1 }, { "enemy": "hedgehog", "count": 1 }, { "pick": { "slime": 1, "runner": 1 }, "count": 2 } ] },
               { "groups": [ { "enemy": "mother", "count": 1 } ] }
@@ -1481,7 +1485,7 @@
           {
             "id": "y_fish_heist", "nameVi": "Vụ trộm cá", "nameEn": "The fish heist",
             "goalVi": "Tinh anh: giữ giỏ cá trước cả một băng slime.", "goalEn": "Elite: keep the basket from a whole slime gang.",
-            "upgrades": true, "maxAlive": 6, "threat": 1.7, "eliteChance": 0.5, "maxMalware": 4, "newAppsFrom": 1,
+            "upgrades": true, "maxAlive": 6, "threat": 1.7, "eliteChance": 0.5, "maxMalware": 4, "newAppsFrom": 1, "malwareKinds": ["loading", "update", "virus", "ads", "captcha", "battery"],
             "basket": { "fish": 6, "every": 3, "at": 0.5 },
             "waves": [
               { "groups": [ { "enemy": "thief", "count": 1 }, { "pick": { "slime": 2, "runner": 1 }, "count": 3 } ] },
@@ -1492,7 +1496,7 @@
           {
             "id": "y_folder_fort", "nameVi": "Pháo đài thư mục", "nameEn": "Folder fort",
             "goalVi": "Tinh anh: đội hình Pháo đài rồi Kỵ binh.", "goalEn": "Elite: a Fortress squad, then the Cavalry.",
-            "upgrades": true, "maxAlive": 6, "threat": 1.7, "eliteChance": 0.5, "maxMalware": 4, "newAppsFrom": 1,
+            "upgrades": true, "maxAlive": 6, "threat": 1.7, "eliteChance": 0.5, "maxMalware": 4, "newAppsFrom": 1, "malwareKinds": ["loading", "update", "virus", "ads", "captcha", "battery", "cursor"],
             "waves": [
               { "groups": [ { "enemy": "drummer", "count": 1 }, { "pick": { "slime": 1, "runner": 1 }, "count": 2 } ] },
               { "groups": [ { "formation": { "fortress": 1 } } ] },
@@ -1502,7 +1506,7 @@
           {
             "id": "y_ghost_parade", "nameVi": "Diễu hành bóng ma", "nameEn": "Ghost parade",
             "goalVi": "Tinh anh: cờ hiệu dẫn slime bóng ma và ảo ảnh.", "goalEn": "Elite: a flag slime leads ghosts and mirages.",
-            "upgrades": true, "maxAlive": 6, "threat": 1.7, "eliteChance": 0.5, "maxMalware": 4, "newAppsFrom": 1,
+            "upgrades": true, "maxAlive": 6, "threat": 1.7, "eliteChance": 0.5, "maxMalware": 4, "newAppsFrom": 1, "malwareKinds": ["loading", "update", "virus", "ads", "captcha", "battery", "cursor"],
             "waves": [
               { "groups": [ { "enemy": "phantom", "count": 1 }, { "pick": { "slime": 2, "runner": 1 }, "count": 3 } ] },
               { "groups": [ { "enemy": "flagbearer", "count": 1 }, { "enemy": "mirage", "count": 1 }, { "enemy": "runner", "count": 2 } ] },
@@ -1513,14 +1517,14 @@
             "id": "y_mutant_lab", "nameVi": "Ổ nhầy biến dị", "nameEn": "Mutant goo den",
             "goalVi": "Tinh anh cuối vùng: Slime biến dị với bướu, lõi ném trả và sân nhầy. Nhấc mèo né đòn, giải lõi theo nhịp.",
             "goalEn": "Late-zone elite: Mutant Slime with bumps, reflected cores and goo terrain. Lift to dodge and solve its core windows.",
-            "upgrades": true, "maxAlive": 6, "threat": 0.7, "eliteChance": 0.3, "maxMalware": 4, "newAppsFrom": 1,
+            "upgrades": true, "maxAlive": 6, "threat": 0.7, "eliteChance": 0.3, "maxMalware": 4, "newAppsFrom": 1, "malwareKinds": ["loading", "update", "virus", "ads", "captcha", "battery", "cursor"],
             "waves": [ { "groups": [ { "enemy": "mutant_king", "count": 1 } ] } ]
           }
         ],
         "boss": {
           "id": "y_zip", "nameVi": "Slime Nén trở lại", "nameEn": "The Zip Slime returns",
-          "goalVi": "Trận cuối tuyến: Slime Nén nhỏ mà nhanh, càng mất máu càng phình to, cuối cùng thành quả bom nén.", "goalEn": "The route's last battle: the Zip Slime, small and quick, swells as it loses HP and ends as a zip bomb.",
-          "upgrades": true, "maxAlive": 6, "threat": 1.2, "eliteChance": 0.3, "maxMalware": 4, "newAppsFrom": 1,
+          "goalVi": "Trận cuối tuyến: Slime Nén ba phase, mở khóa đai, ghép thư mục và kéo sáu tay trước bom cuối.", "goalEn": "The final fight: three ZIP phases, belt locks, matching folders and six pulls before the final bomb.",
+          "upgrades": true, "maxAlive": 6, "threat": 1.2, "eliteChance": 0.3, "maxMalware": 4, "newAppsFrom": 1, "malwareKinds": ["loading", "update", "virus", "ads", "captcha", "battery", "cursor"],
           "waves": [
             { "budget": 7, "groups": [ { "enemy": "bubble", "count": 1, "side": "a" }, { "enemy": "clinger", "count": 1, "side": "b" }, { "enemy": "runner", "count": 2, "side": "b" } ] },
             { "groups": [ { "enemy": "zip", "count": 1 } ] }

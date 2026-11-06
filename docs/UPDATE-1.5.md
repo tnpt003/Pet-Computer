@@ -2,7 +2,7 @@
 
 Slime Mẹ thiết kế lại #67 (06/11): triển khai ba phase/chín đòn, Quấn khăn, Trứng treo/Trả con về nôi, Thanh dỗ 33/66/100 và Trứng cuối bắt buộc. Luật hiện hành ở [MOTHER-SLIME.md](MOTHER-SLIME.md), thay mô tả mẹ cũ phía dưới. Đầm nhầy cho mượn Kéo cắt; Slime Nén cho mượn Bình xịt. Chưa nghiệm thu chơi tay.
 
-Cập nhật: 2026-11-06 (Asia/Saigon). Trạng thái: **xong M01–M29, đợt B/C, góp ý 05/11; đã hợp nhất Slime Nén thiết kế lại và hai boss nâng cấp, kiểm tra tự động bản tích hợp đạt. Chưa phát hành 1.5.0.** Còn M30 và nghiệm thu tay.
+Cập nhật: 2026-11-07 (Asia/Saigon). Trạng thái: **xong M01–M29, đợt B/C, góp ý 05/11; đã hợp nhất Slime Nén thiết kế lại và hai boss nâng cấp, kiểm tra tự động bản tích hợp đạt. Chưa phát hành 1.5.0.** Còn M30 và nghiệm thu tay.
 
 Cách đọc file này:
 
@@ -15,6 +15,8 @@ Cách đọc file này:
 - Thêm nội dung mới: docs/EXTENDING.md. Ý tưởng mới vào mục "Backlog sau 1.5" cuối file, không làm trong 1.5.
 - "Trận tự do" trong tài liệu cũ nay là bộ Mặc định của **Trận tự chọn**.
 - Chuẩn hóa logic, hình học cảnh báo, giới hạn quân, phương pháp cân bằng và điều kiện hoàn tất: [STANDARDIZATION-1.5.md](STANDARDIZATION-1.5.md). Số đo nhánh riêng có ghi commit, không đại diện bản tích hợp.
+
+Phân bố Viễn chinh/Vô tận được rà lại ở #70 (07/11): [bảng nội dung hiện hành](CONTENT-MODES-1.5-2026-11-07.md). Đội hình và app độc theo vùng/chặng; lượt mời thẻ ngoài trận dùng đúng kỹ năng, app và đồ rơi của chuyến.
 
 ## Giữ nguyên
 
@@ -153,7 +155,7 @@ M3 (bục tự vẽ) đã bỏ.
 | X2 | Sự kiện Lò rèn, Lời nguyền, Mèo bị lạc |
 | X3 | Cửa hàng mèo ở cả hai tuyến, tiêu xu mua thẻ, hồi máu, di vật |
 | X4 | 6 di vật: Nam châm xu, Vòng gai, Răng nanh độc, Viên đá lạnh, Pin dự phòng, Mũ bảo hiểm |
-| E1 | Vô tận: từ đợt 15 có 4 chặng quái mới (Đầm nhầy, Ban nhạc slime, Bãi rác, Mê cung ảo ảnh, rồi lặp); trùm xoay vòng Vua → Slime Nén → Vua biến dị; từ đợt 8, 3 đợt một lần có đội hình |
+| E1 | Vô tận: từ đợt 15 có 4 chặng quái mới (Đầm nhầy, Ban nhạc slime, Bãi rác, Mê cung ảo ảnh, rồi lặp); trùm mốc 10/20/30/40 là Vua chương 1 → Slime Nén → Slime Mẹ → Slime biến dị; Vua thường đi cùng từ 50. Từ đợt 8, 3 đợt một lần có đội hình, pool riêng mỗi chặng |
 | E2 | Vô tận "Đột biến": dọn xong mỗi đợt trùm bắt buộc chọn 1 trong 3 luật lạ, dọn xong đợt trùm kế thì nhận thưởng |
 | J1 | Nhóm thẻ thứ 4 "Mưu mẹo" (14 thẻ), cộng hưởng ở 3/6/9 (6 và 9 chỉ Vô tận). Thẻ hiếm **Cú đáp địa chấn**: thả mèo sau nhấc ≥ 0,3 s thì mèo không nảy, đứng yên 0,6 s, sóng nứt chạy ra hai bên 170 DIPs: 12 máu, đẩy văng, choáng 0,8 s, hồi 6 s |
 | A1 | App mới Chụp Màn Hình: chớp toàn màn hình, mọi quái đứng hình 2 s. Không làm slime bay/bám tường rơi. Nhiễm thì mèo lóa, vuốt trượt |
@@ -224,7 +226,7 @@ Nhật ký chi tiết và kết quả test từng mốc: docs/archive/UPDATE-1.5
 4. Mèo tự rớt khỏi tay khi đánh slime bay: chưa rõ nguyên nhân, chờ log "Cat let go in battle".
 5. Nâng `<Version>` lên 1.5.0, rà README và website, tag theo docs/RELEASE.md.
 
-rulesVersion bản tích hợp: chương 1 giữ như 1.4.4 theo duyệt 05/11; chương 2 là 3, 4, 2, 4, 4; Vô tận 12; Viễn chinh tuyến 1 r8 (`keepRuns` 6, 7), Lối Bãi rác r5 (`keepRuns` 1, 2, 3, 4). Hai nhánh thử đều từng dùng Vô tận 11/tuyến 2 r4 cho luật khác nhau, nên bản tích hợp dùng số mới. Chuyến cũ được giữ không đồng nghĩa với replay nguyên bản luật cũ. Đổi luật đáng kể phải xét tách kỷ lục cả trước release, giữ ngoại lệ chương 1 đã duyệt.
+rulesVersion hiện tại (#70, 07/11): chương 1 giữ như 1.4.4 theo duyệt 05/11; chương 2 là 4, 5, 3, 7, 15; Vô tận 26; Viễn chinh tuyến 1 r9 (`keepRuns` 6, 7, 8), Lối Bãi rác r19 (`keepRuns` 1, 2, 3, 4, 17, 18). Chuyến cũ được giữ không đồng nghĩa với replay nguyên bản luật cũ. Đổi luật đáng kể phải xét tách kỷ lục cả trước release, giữ ngoại lệ chương 1 đã duyệt.
 
 ## Rủi ro còn lại
 

@@ -5,6 +5,12 @@ Sổ ghi các lỗi đã sửa của Desktop Pet. Phần A: lỗi người dùng
 Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm lỗi mới: tạo mục số tiếp theo ở đầu phần A (hoặc một dòng ở phần B).
 
 # A. Lỗi người dùng phát hiện
+## #70 — Rà phân bố nội dung 1.5 trong Viễn chinh và Vô tận (07/11)
+- **Nguyên nhân:** Vô tận dùng một pool đội hình chung cho mọi chặng; Bãi rác bật đồng thời toàn bộ app độc mới và thiếu slime dỗi. Viên vàng lọc thẻ hiếm chưa theo kỹ năng; lượt mời thẻ ngoài trận thiếu ngữ cảnh app/đồ rơi. Tài liệu vòng boss và rulesVersion còn cũ.
+- **Sửa:** pool đội hình/app độc theo chặng Vô tận, đủ19slime/9đội hình; app độc Bãi rác mở CAPTCHA→Pin yếu→Đơ con trỏ theo vùng, thêm dỗi ở Ao băng. Giữ tổ hợp Vũng nhầy/Sảnh trống sau đo cân bằng, giữ luật/chỉ số boss và vòng Vua→ZIP→Mẹ→Biến dị. Thẻ ngoài trận dùng đúng bộ kỹ năng/app/đồ rơi; viên vàng dùng chung bộ lọc hiếm. Vô tận r26, tuyến1 r9 giữ6/7/8, Bãi rác r19 giữ1/2/3/4/17/18. Chi tiết docs/CONTENT-MODES-1.5-2026-11-07.md.
+- **Kiểm chứng:** test viên vàng tái hiện FAIL39lượt không mang Laser, sửa rồi đạt. Full script một lần: Python58+i18n5 đạt, C#3789đạt/8FAIL; sửa assertion version/khóa dịch cũ, điều chỉnh phân bố để giữ ngưỡng, ToolingTests registry kiểm lại ngoài sandbox đạt. Các bộ kiểm lại314+24+118check đạt (có phần chung), tổng bộ3797check. So364dòng tỷ lệ thắng:31đổi, đều Viễn chinh; Phiêu lưu không đổi. Bãi rác Normal đường tham Kiếm/Len22/40, Búa18/40 sát ngưỡng; Vô tận trung vị29/27/25/30. Không hạ ngưỡng; xem docs/BALANCE-MODES-1.5-2026-11-07.md.
+- **Còn lỗi kiểm tra:** WPF1756đạt/1FAIL thứ tự nền dưới sân; tái hiện cùng lỗi trên HEAD sạch720a018 (`mode15-ui-baseline.log`). Thử đợi dispatcher không hết nên đã hoàn nguyên test gốc, không bỏ assertion/sửa UI ngoài phạm vi. Build0error/7warning trong file không sửa. Bộ tích hợp chưa sạch; không coi là đã nghiệm thu1.5. Chưa chơi tay/DPI/nhiều màn hình. Đóng gói/smoke sẽ ghi sau commit.
+
 ## #69 — Nơ Mẹ che mắt; tiến trình chương2 và mode1.5 chưa thống nhất (07/11)
 - **Nguyên nhân:** nơ lớn và thấp; chương2 cho app độc mới rút thăm cùng lúc, có Mẹ ngoài mục tiêu học HUD/ZIP; lời dẫn ZIP còn luật cũ; Vô tận không chuyển cap app độc từ cấu hình xuống trận.
 - **Sửa:** nâng/thu nơ, chặn nghiêng; bài học app có thứ tự, pool mở dần, tôn trọng bộ5app và bỏ hướng dẫn; Đầm nhầy đổi thành bài tổng hợp Kéo cắt; ZIP hướng dẫn đúng và kỷ vật có tab/đai/tay kéo. Vô tận bốn boss, Vua phụ từ50, cap4; Viễn chinh thêm ổ Biến dị, tiếp tục lượt17. Chi tiết docs/CONTENT-1.5-REVIEW-2026-11-07.md.

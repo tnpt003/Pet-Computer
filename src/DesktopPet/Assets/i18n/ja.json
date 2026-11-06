@@ -1198,7 +1198,6 @@
   "Slime puddles": "ねばねばの水たまり",
   "Spitters leave puddles, spring slimes lie in wait.": "吐き出しスライムが水たまりを残し、バネスライムが待ち伏せする。",
   "Ice pond": "こおりの池",
-  "Ice slimes and hedgehogs among plain slimes.": "ふつうのスライムにまじって、こおりスライムとハリネズミスライム。",
   "Splitting bog": "ぶんれつの沼",
   "Splitting slimes, healed by a herb slime.": "ぶんれつスライムを薬草スライムが回復する。",
   "Fish crates": "魚の木箱",
@@ -1435,7 +1434,6 @@
   "Pffffft!": "プシュー！",
   "BOOM! The zip bomb burst; it will charge again": "ドカン！圧縮爆弾が破裂した。またふくらみ始める",
   "Chapter 2's last battle: bubble and wall slimes, then the Zip Slime, small and quick, swelling as it loses HP. This stage lends the Hot water spray.": "第2章の最終戦：あわスライム、かべスライム、そして小さくてすばやく、HPが減るほどふくらむあっしゅくスライム。このステージでは熱湯スプレーを借りられる。",
-  "The route's last battle: the Zip Slime, small and quick, swells as it loses HP and ends as a zip bomb.": "ルート最後のバトル：小さくてすばやいあっしゅくスライムはHPが減るほどふくらみ、最後は圧縮爆弾になる。",
   "Stream cut! {0} left": "ストリームを切断！残り{0}",
   "Squeezed!": "圧縮！",
   "BELTS BURST! It is dazed and takes half as much again": "ベルト破裂！気絶して、受けるダメージが1.5倍に",
@@ -1473,5 +1471,7 @@
   "Practice Scissors on bubbles and chains, then ice, quills and split slimes. Learn to clear a frozen cursor. This stage lends the Scissors.": "泡や鎖、氷、針、分裂スライムでハサミを練習し、固まったカーソルを解除します。このステージではハサミを借りられます。",
   "You learn: the Scissors (click anywhere: they cut across a band, slicing ropes and bubbles); to throw the cat hard through an ice slime to crack its shell; to hit a hedgehog while its quills are down; to cut a chain slime's rope with the Scissors: it takes hits for a friend; to beat the herb slime first so split halves cannot rejoin.": "学ぶこと：ハサミで帯状にロープや泡を切る、猫を強く投げて氷の殻を割る、針が寝たときに攻撃する、仲間の身代わりになる鎖を切る、分裂した半身の合体を防ぐため薬草を先に倒す。",
   "Mutant goo den": "変異した粘液の巣",
-  "Late-zone elite: Mutant Slime with bumps, reflected cores and goo terrain. Lift to dodge and solve its core windows.": "終盤エリアの精鋭：こぶ、跳ね返すコア、粘液地形を持つ変異スライム。猫を持ち上げて避け、コアの隙を解きましょう。"
+  "Late-zone elite: Mutant Slime with bumps, reflected cores and goo terrain. Lift to dodge and solve its core windows.": "終盤エリアの精鋭：こぶ、跳ね返すコア、粘液地形を持つ変異スライム。猫を持ち上げて避け、コアの隙を解きましょう。",
+  "Hedgehogs guard the pond; ice and sulky slimes block the path.": "ハリネズミが池を守り、氷とすねたスライムが道をふさぎます。",
+  "The final fight: three ZIP phases, belt locks, matching folders and six pulls before the final bomb.": "最後の戦い：ZIPの3段階、ベルトの錠、フォルダ合わせ、最後の爆弾までに6本の引き手。"
 }

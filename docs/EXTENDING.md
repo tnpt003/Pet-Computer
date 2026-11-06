@@ -97,7 +97,7 @@ App vẫn là icon tự vẽ, không dùng tên, logo, màu app thật.
 
 - **Tuyến:** `expedition.routes` dùng chung luật HP, sự kiện, di vật, cửa hàng; `zones` là vùng; kỷ lục riêng.
 - **Sự kiện loại mới, di vật `effect` mới:** `PetExpedition.cs` (`RelicSpec.Effects`), bảng chọn ở `PetWindow.Expedition.cs`, file lưu expedition.json có `version`.
-- **Chặng Vô tận:** `endless.eras`. Giới hạn 2 loại liên kết/quái chuột xét theo từng chặng.
+- **Chặng Vô tận:** `endless.eras`; `formations` riêng của chặng ghi đè pool chung, `malwareKinds` lọc app độc ngẫu nhiên (vẫn chịu `newAppsFrom`). Bỏ khóa/null giữ fallback cũ. Giới hạn 2 loại liên kết/quái chuột xét cả pool quái lẻ và thành viên đội hình trong chặng. Xem [phân bố #70](CONTENT-MODES-1.5-2026-11-07.md).
 - **Đột biến:** `endless.mutations`; `effect` mới ở `PetBattle.Mutations.cs`.
 
 ## Chế độ chơi mới

@@ -96,7 +96,8 @@ public sealed class EndlessSpec
         // 1.5 M24: the stretch's newer kinds join the draw.
         foreach (var k in EraAt(wave)?.Kinds ?? Array.Empty<EndlessKind>())
             if (k.Weight > 0) pick[k.Enemy] = (pick.TryGetValue(k.Enemy, out double w) ? w : 0) + k.Weight;
-        if (Formations is { Count: > 0 } teams && FormationEvery > 0 && wave >= FormationsFrom && wave % FormationEvery == 0)
+        var teams = EraAt(wave)?.Formations ?? Formations;
+        if (teams is { Count: > 0 } && FormationEvery > 0 && wave >= FormationsFrom && wave % FormationEvery == 0)
             return new() { Threat = Threat(wave), Groups = new[] { new WaveGroup { Pick = pick, Count = Math.Max(1, Count(wave) - 1) }, new WaveGroup { Formation = teams, Count = 1 } } };
         return new() { Threat = Threat(wave), Groups = new[] { new WaveGroup { Pick = pick, Count = Count(wave) } } };
     }
@@ -136,6 +137,21 @@ public sealed class EndlessSpec
         if (!double.IsFinite(e.ThreatPerWave) || e.ThreatPerWave is < 0 or > 1) throw new InvalidDataException(at + ".threatPerWave must be 0–1");
         if (e.MaxAlive is < 1 or > 20) throw new InvalidDataException(at + ".maxAlive must be 1–20");
         if (e.MaxMalware is < 1 or > 4) throw new InvalidDataException(at + ".maxMalware must be 1–4");
+        if (e.FormationsFrom is < 0 or > PlannedWaves || e.FormationEvery is < 0 or > PlannedWaves)
+            throw new InvalidDataException(at + ".formationsFrom and formationEvery must be 0–" + PlannedWaves);
+        void Teams(Dictionary<string, double>? teams, string where)
+        {
+            if (teams == null) return;
+            if (teams.Count is < 1 or > 8 || teams.Values.Any(w => !double.IsFinite(w) || w is < 0 or > 100) || teams.Values.Sum() <= 0)
+                throw new InvalidDataException(where + " must list 1–8 formations with weights 0–100 and a positive total");
+            foreach (var id in teams.Keys)
+            {
+                if (s.Formation(id) is not FormationSpec formation) throw new InvalidDataException(where + " names an unknown formation: " + id);
+                if (formation.Parts.Any(p => p.SquadSize > (e.MaxAlive ?? s.MaxAlive)))
+                    throw new InvalidDataException(where + " has a formation part bigger than maxAlive");
+            }
+        }
+        Teams(e.Formations, at + ".formations");
         if (!double.IsFinite(e.EliteChance) || e.EliteChance is < 0 or > 1) throw new InvalidDataException(at + ".eliteChance must be 0–1");
         if (e.Kinds == null || e.Kinds.Length == 0) throw new InvalidDataException(at + ".kinds must list enemies");
         foreach (var k in e.Kinds)
@@ -160,6 +176,9 @@ public sealed class EndlessSpec
             string where = $"{at}.eras[{i}]";
             if (era == null || era.Kinds == null || era.Kinds.Length is 0 or > 8) throw new InvalidDataException(where + ".kinds must list 1–8 enemies");
             if (era.NameVi is not { Length: > 0 and <= 32 } || era.NameEn is not { Length: > 0 and <= 32 }) throw new InvalidDataException(where + " names must be 1–32 characters");
+            Teams(era.Formations, where + ".formations");
+            if (era.MalwareKinds is { } allowed && (allowed.Length == 0 || allowed.Distinct().Count() != allowed.Length || allowed.Any(k => !MalwareCue.DrawKinds.Contains(k))))
+                throw new InvalidDataException(where + ".malwareKinds must list distinct malware ids");
             foreach (var k in era.Kinds)
             {
                 if (k == null || s.EnemyTypes.FirstOrDefault(t => t.Id == k.Enemy) is not EnemyType type || type.Boss) throw new InvalidDataException(where + ".kinds must name enemies that are not bosses");
@@ -172,12 +191,18 @@ public sealed class EndlessSpec
             // The plain draw, each stretch with every older kind, and each boss wave: at most two kinds of
             // link and two the cursor beats (the battle forgets its link kinds between waves, BattleSim.StepWaves).
             var all = e.Kinds.Select(k => k.Enemy).Distinct().ToDictionary(k => k, _ => 1.0);
-            limits(new[] { new WaveSpec { Groups = new[] { new WaveGroup { Count = 1, Pick = all } } } }, at + ".kinds");
+            WaveSpec Draw(Dictionary<string, double> pick, Dictionary<string, double>? teams) => new()
+            {
+                Groups = teams is { Count: > 0 } && e.FormationEvery > 0
+                    ? new[] { new WaveGroup { Count = 1, Pick = pick }, new WaveGroup { Formation = teams } }
+                    : new[] { new WaveGroup { Count = 1, Pick = pick } }
+            };
+            limits(new[] { Draw(all, e.Formations) }, at + ".kinds");
             for (int i = 0; i < e.Eras.Length; i++)
             {
                 var pick = new Dictionary<string, double>(all);
                 foreach (var k in e.Eras[i].Kinds) pick[k.Enemy] = 1;
-                limits(new[] { new WaveSpec { Groups = new[] { new WaveGroup { Count = 1, Pick = pick } } } }, $"{at}.eras[{i}]");
+                limits(new[] { Draw(pick, e.Eras[i].Formations ?? e.Formations) }, $"{at}.eras[{i}]");
             }
             if (e.BossEvery > 0)
                 foreach (var boss in (e.Bosses ?? new[] { e.Boss }).Distinct())
@@ -220,6 +245,9 @@ public sealed class EndlessEra
     public string NameVi { get; init; } = "";
     public string NameEn { get; init; } = "";
     public EndlessKind[] Kinds { get; init; } = Array.Empty<EndlessKind>();
+    // Unset: use the run's formation pool and the ordinary malware draw.
+    public Dictionary<string, double>? Formations { get; init; }
+    public string[]? MalwareKinds { get; init; }
     public string Name(string language) => PetText.Data(language, NameVi, NameEn);
 }
 

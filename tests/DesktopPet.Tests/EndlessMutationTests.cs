@@ -8,8 +8,8 @@ internal static class EndlessMutationTests
     public static void Run(Action<bool, string> check)
     {
         var spec = BattleData.Settings.Endless!;
-        check(spec.RulesVersion == 25 && spec.LateBossFrom == 50 && spec.Bosses is { Length: 4 },
-            "Built-in Infinity rules 25 introduces four rotating bosses, plain King beside them from wave 50");
+        check(spec.RulesVersion == 26 && spec.LateBossFrom == 50 && spec.Bosses is { Length: 4 },
+            "Built-in Infinity rules 26 arranges formations and malware by stretch, plain King beside them from wave 50");
         string Bosses(int wave) => string.Join("+", spec.Wave(wave).Groups.Select(g => g.Enemy));
         check(Bosses(10) == "king_c1" && Bosses(20) == "zip" && Bosses(30) == "mother" && Bosses(40) == "mutant_king" && Bosses(50) == "king_c1+king" && Bosses(60) == "zip+king",
             $"Boss waves take turns: King, ZIP, Mother, Mutant, then repeat ({Bosses(10)}, {Bosses(20)}, {Bosses(30)}, {Bosses(40)}, {Bosses(50)})");
@@ -18,6 +18,18 @@ internal static class EndlessMutationTests
             "Stretches: the first from wave 15, the next after each boss wave, round again after the fourth");
         check(spec.EraStarts(15) && spec.EraStarts(21) && spec.EraStarts(51) && !spec.EraStarts(16) && !spec.EraStarts(11) && !spec.EraStarts(30),
             "A stretch's first wave is known (its banner)");
+        check(spec.Wave(9).Groups[1].Formation!.Keys.Order().SequenceEqual(new[] { "fortress", "trampoline" })
+            && spec.Wave(18).Groups[1].Formation!.ContainsKey("swarms")
+            && spec.Wave(24).Groups[1].Formation!.Keys.Order().SequenceEqual(new[] { "assembly", "drums" })
+            && spec.Wave(33).Groups[1].Formation!.ContainsKey("alarm")
+            && spec.Wave(42).Groups[1].Formation!.ContainsKey("artillery")
+            && !spec.Wave(42).Groups[1].Formation!.ContainsKey("alarm")
+            && spec.Wave(54).Groups[1].Formation!.ContainsKey("swarms"),
+            "Formation pools follow the stretch, avoid a third cursor kind in the maze, and repeat with the cycle");
+        check(spec.Eras.SelectMany(e => e.Formations!.Keys).Distinct().Count() == 9,
+            "All nine formations of 1.5 have a place in Infinity");
+        check(new EndlessSpec().Wave(1).Groups.Length == 1 && new EndlessEra().Formations == null && new EndlessEra().MalwareKinds == null,
+            "Custom data without stretch pools keeps the original fallback");
         var plain = spec.Wave(14).Groups[0].Pick!;
         var marsh = spec.Wave(15).Groups[0].Pick!;
         var band = spec.Wave(25).Groups[0].Pick!;
@@ -30,6 +42,9 @@ internal static class EndlessMutationTests
         var roster = new[] { "spitter", "springer", "drummer", "chain", "fuser", "bomber", "splitter", "flagbearer", "phantom", "bubble", "mirage", "sulky",
             "flyer", "burrower", "icy", "clinger", "hedgehog", "timer", "thief" };
         check(roster.All(newer.Contains), "Every new enemy of 1.5 shows up in some stretch: " + string.Join(", ", roster.Where(k => !newer.Contains(k))));
+        var dump = BattleData.Settings.Expedition!.Route("dump_trail")!;
+        var expeditionRoster = BattleData.WaveKinds(BattleData.Settings, dump.Fights.Concat(dump.Elites).SelectMany(s => s.Waves)).ToHashSet();
+        check(roster.All(expeditionRoster.Contains), "All nineteen new non-boss enemy kinds also appear along the Dump Trail");
         var settings = BattleData.Settings;
         foreach (var (era, i) in spec.Eras.Select((e, i) => (e, i)))
         {
@@ -45,6 +60,14 @@ internal static class EndlessMutationTests
             try { BattleData.ParseWithOverride(builtIn, "{ \"schemaVersion\": 1, \"endless\": " + endless + " }"); return ""; }
             catch (Exception ex) when (ex is InvalidDataException or System.Text.Json.JsonException) { return ex.Message; }
         }
+        string Era(string extra) => "{ \"eras\": [ { \"nameVi\": \"a\", \"nameEn\": \"a\", \"kinds\": [ { \"enemy\": \"slime\", \"weight\": 1 } ], " + extra + " } ] }";
+        check(Error(Era("\"formations\": { \"unknown\": 1 }")).Contains("unknown formation")
+            && Error(Era("\"formations\": { \"drums\": 0 }")).Contains("positive total")
+            && Error(Era("\"malwareKinds\": [ \"cursor\", \"cursor\" ]")).Contains("malwareKinds")
+            && Error(Era("\"malwareKinds\": [ \"unknown\" ]")).Contains("malwareKinds"),
+            "Stretch pools reject unknown formations, zero weights, duplicate and unknown malware");
+        check(Error("{ \"eras\": [ { \"nameVi\": \"a\", \"nameEn\": \"a\", \"kinds\": [ { \"enemy\": \"mirage\", \"weight\": 1 }, { \"enemy\": \"sulky\", \"weight\": 1 } ], \"formations\": { \"alarm\": 1 } } ] }").Contains("cursor"),
+            "Limits include formation members together with the stretch's random draw");
         check(Error("{ \"bosses\": [ \"zip\", \"slime\" ] }").Contains("bosses"), "A rotation naming a plain enemy is rejected");
         check(Error("{ \"eras\": [ { \"nameVi\": \"a\", \"nameEn\": \"a\", \"kinds\": [ { \"enemy\": \"phantom\", \"weight\": 1 }, { \"enemy\": \"bubble\", \"weight\": 1 }, { \"enemy\": \"mirage\", \"weight\": 1 } ] } ] }").Contains("cursor"),
             "A stretch with three cursor kinds is rejected");

@@ -14,6 +14,8 @@ Quy ước file này: chỉ giữ trạng thái hiện tại, các đợt đang 
 
 ## Đang dở và việc tiếp theo
 
+- **Slime biến dị thiết kế mới (06/11, chưa code):** đã chốt với người dùng và ghi đầy đủ ở docs/MUTANT-SLIME.md: xanh lá/mắt xoắn/bỏ vương miện, 3 phase/9 đòn, 6 bướu ×3 vòng/60 s, ping pong6 chuyển phase3 cả khi thất bại, mech1HP/sáu nhát, sáu dải5%maxHP có bảo vệ cứu mèo, nền25/50% và bốn túi trời, Nhiễu nhịp gỡ bằng rê qua lại2 s; thêm miễn debuff khi mech cho ZIP/mutant và miễn choáng/đẩy ZIP phase2–3. Chưa thay gameplay/test/build/publish; bản đang chạy giữ nguyên. Tiếp theo triển khai core/va chạm/input/render/data/i18n và kiểm tra thẻ Cú đáp địa chấn, chống stun-lock khi bế lại, cân bằng/perf. Các thời gian cooldown khởi điểm ghi riêng trong thiết kế, chưa đo thực tế.
+
 - **Tràn bộ nhớ ZIP (#62):** code theo duyệt, boss rút ngoài gap/tầm vũ khí, gap190 DIP lệch mèo, giấy toàn chiều cao; resize thiếu chỗ hủy, không chỉ bế cao để né. Python58+5, WPF1454 đạt; full C#3686 đạt/2 FAIL, careful bot đã biết bế ngang; kiểm lại780 đạt/1 FAIL Len Bãi rác tham lam16/40 <20. Giữ HP1100/nhịp/damage/ngưỡng; records12/20/13, main8. Publish6ce2586/smoke3/3 PASS, mở lại mèo, gộp #61; crowd-late19 s median57 FPS, chưa đo Overflow thật. Chi tiết Issue_fixxed #62/BALANCE-ZIP; test tay MANUAL-TEST #62; chưa chơi thật/DPI/perf bản mới.
 
 - **ZIP lăn3/Vua đội hình (#61):** codebeecc78, core1013/WPF1450/Python58+5 đạt, cân bằng547 đạt/1 FAIL Len19/40. Đã gộp publish6ce2586 ở #62; luật/tài liệu Issue_fixxed #61, test tay MANUAL-TEST #61. king_c1 giữ nguyên; chưa chơi thật/DPI.

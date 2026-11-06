@@ -4,6 +4,8 @@ Cập nhật: 2026-11-06 (Asia/Saigon). Trạng thái: **xong M01–M29, đợt 
 
 Cách đọc file này:
 
+- **Thiết kế mới đã duyệt, chưa triển khai (06/11):** Slime biến dị ba phase, sân nhầy nền/trời, mech va chạm và miễn debuff boss: [MUTANT-SLIME.md](MUTANT-SLIME.md). Các mục hiện tại bên dưới vẫn mô tả code cũ tới khi triển khai xong.
+
 - Đây là bản mô tả **luật hiện tại** của 1.5, gom từ thiết kế 26/10, đợt B, đợt C và góp ý 05/11. Khi tài liệu khác lệch với file này thì đối chiếu code và battle.json.
 - Số liệu gốc nằm ở `src/DesktopPet/Assets/battle.json`. Ý nghĩa từng khóa: docs/BATTLE-DATA.md. Số trong file này để hiểu luật, không thay battle.json.
 - Ngoại lệ đã duyệt: docs/APPROVED-EXCEPTIONS.md (có hiệu lực như AGENTS.md).

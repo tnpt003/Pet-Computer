@@ -8,7 +8,7 @@ namespace DesktopPet;
 public sealed partial class BattleFieldView
 {
     private static readonly Pen BeltEdge = FrozenPen(PetUi.ArtInk, 10);
-    private static readonly Pen BeltRibbon = FrozenPen(FlapFill, 6);
+    private static readonly Pen BeltRibbon = FrozenPen(PetUi.Game.Gold, 6);
 
     private static void DrawMovingBelt(DrawingContext dc, ZipBlow b, double from, double to, double floor)
     {

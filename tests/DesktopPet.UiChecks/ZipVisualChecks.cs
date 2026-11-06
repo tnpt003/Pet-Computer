@@ -174,6 +174,7 @@ internal static class ZipVisualChecks
         SkyVisualChecks.Render(view, w, h, "zip-belt-charge");
         belt.Done = true; belt.Left = 0; belt.Elapsed = 0.1;
         var first = SkyVisualChecks.Render(view, w, h, "zip-belt-front-1");
+        check(SkyVisualChecks.Count(first, w, h, Color.FromRgb(0xFF, 0xD3, 0x5C), 480, 550, h - 17, h - 10) > 100, "The moving belt has a visible gold ribbon, independent of partial-class static initialization order");
         belt.Elapsed = 0.2;
         var second = SkyVisualChecks.Render(view, w, h, "zip-belt-front-2");
         check(!first.SequenceEqual(second), "The belt front visibly travels from the boss instead of filling its entire lane instantly");

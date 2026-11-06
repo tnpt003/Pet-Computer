@@ -9,7 +9,7 @@
 - Slime Nén làm lại: ba giai đoạn, mỗi giai đoạn ba đòn riêng; ba mech Bung đai, Giải nén kẹt, Bom nén; hai hiệu ứng bất ngờ Nén và Khóa ZIP; đòn của boss trúng cả mèo đang bế nếu thực sự chạm. Điểm vàng trên sàn không còn quay theo thân boss.
 - Tích hợp Slime Nén thiết kế lại và hai boss nâng cấp; chuẩn hóa luật, cảnh báo/vùng trúng và ghi nhận app độc. Sửa lứa cuối Slime Mẹ tốn máu khi hết chỗ; Nộ chặn/giải đẩy lùi; giữ luật gộp vũng của quái thường. Banner Nộ hướng dẫn avatar và tự kích hoạt.
 
-- Slime Mẹ: ổ ủ phá được, đường hồi máu/cứu con cắt được, bầy nhảy, giận lao và lứa cuối. Vua biến dị: tay quét, phình nổ, mưa hai nhịp, sóng sát sàn, hút nhầy thành giáp hữu hạn, quá tải và chuỗi cuối. Vi/en/ja, hướng dẫn và ảnh render đi cùng. Chi tiết luật: docs/BOSS-TACTICS.md. Chưa merge main; không có mầm hay slime con biến dị.
+- Slime Mẹ: ba phase/chín đòn, Quấn khăn, Trứng treo, trả con về nôi, Thanh dỗ và Trứng cuối. Slime biến dị: ba phase, bướu, lõi ném trả, sân nhầy và sáu cửa lõi cuối; không còn bộ chiêu gọi quân của Vua. Luật hiện hành: docs/MOTHER-SLIME.md và docs/MUTANT-SLIME.md.
 
 
 Mọi thay đổi chỉ ở Battle Mode (mặc định vẫn tắt). Ngoài trận mèo không đổi gì. 5 màn chương 1 và kỷ lục cũ giữ nguyên; vũ khí mới, Nộ và lượt mời thẻ mới có mặt ở mọi trận.
@@ -31,7 +31,7 @@ Mọi thay đổi chỉ ở Battle Mode (mặc định vẫn tắt). Ngoài tr�
   - Slime bay (bay khắp màn hình, đạn dính trúng cả mèo đang được cầm), đào hang.
   - Slime băng (ném mèo vào thì "cộp" và bật lại, đủ mạnh thì vỡ vỏ), bám tường (leo theo chiều cao màn hình), nhím, hẹn giờ (gọi cả đội hình), trộm (hút từ xa).
   - Slime có thể nối dây, nhịp trống hoặc cắm cờ che chở nhau. Có 9 đội hình phối hợp, ra cùng lúc như một đơn vị.
-- **Ba trùm mới:** Slime Nén, Slime Mẹ, Vua Slime biến dị.
+- **Ba trùm mới:** Slime Nén, Slime Mẹ, Slime biến dị.
 - **Mèo đang được cầm** tự vung vuốt vào slime trên không. **Cú ném** làm vỡ băng, hất slime bám tường xuống và cắt dây nhầy. Kéo/ném vẫn như cũ, mèo vẫn không mất máu khi đang được cầm hay đang bay (trừ đạn của slime bay).
 - **Hiệu ứng trên quái:** độc, đóng băng, dính, có ở thẻ và di vật.
 - **Đồ rơi:** slime bị hạ đôi khi rơi cá (hồi máu), bình (giảm 2 giây hồi chiêu một kỹ năng) hoặc xu. Click để nhặt.
@@ -70,7 +70,7 @@ Mọi thay đổi chỉ ở Battle Mode (mặc định vẫn tắt). Ngoài tr�
 - The Zip Slime is rebuilt: three stages with three blows each; three HP mechanics (Burst the belts, Stuck unpacking, Zip bomb); two sudden debuffs, Squeezed and ZIP-locked; its blows now reach a held cat if they really touch it. The gold floor marks no longer spin with its body.
 - Integrated the redesigned Zip Slime and upgraded bosses. Shared boss warning/collision geometry and malware discovery order; fixed the mother's final clutch spending HP without space, rage knockback immunity/cleansing, and ordinary puddle merging. Updated rage instructions for the avatar and automatic activation.
 
-- Slime Mother: breakable nests, returning children, cuttable rescue cords, brood jumps, angry charges and a final clutch. Mutant King: arm sweeps, bursts, two-beat rain, floor waves, cuttable goo absorption and overload openings. No mutation seeds or mutated offspring. Implemented on the separate boss branch; see docs/BOSS-TACTICS.md.
+- Slime Mother: three phases and nine attacks, Wrapped scarf, hanging eggs, returning children to the cradle, a soothing meter and the final egg. Mutant Slime: three phases, bumps, reflected cores, goo terrain and six final core windows; it no longer uses the King's summons. Current rules: docs/MOTHER-SLIME.md and docs/MUTANT-SLIME.md.
 
 Everything here is in Battle Mode (still off by default). Outside a battle the pet is unchanged. The 5 stages of chapter 1 and your old records stay as they were; the new weapons, Cat fury and the new card offers are in every battle.
 
@@ -91,7 +91,7 @@ Everything here is in Battle Mode (still off by default). Outside a battle the p
   - The flying slime (flies over the whole screen; its goo hits even a held cat) and the burrowing slime.
   - Ice (a thrown cat bounces off with a clonk; hard enough cracks it), wall (climbs the height of the screen), hedgehog, timer (calls a whole formation) and thief (steals from afar) slimes.
   - Slimes can tie themselves together with ropes, drumbeats or planted flags. There are 9 team formations, which arrive together as one unit.
-- **Three new bosses:** the Zip Slime, the Slime Mother, the Mutant Slime King.
+- **Three new bosses:** the Zip Slime, the Slime Mother, the Mutant Slime.
 - **A held cat** swipes at slimes in the air. **A throw** cracks ice, knocks wall slimes down and cuts goo ropes. Dragging and throwing feel as before, and a held or flying cat still takes no damage (except from the flying slime's goo).
 - **Effects on enemies:** poison, freeze and sticky, from cards and relics.
 - **Drops:** defeated slimes sometimes drop a fish (heals), a potion (2 s off a skill's cooldown) or coins. Click to pick them up.
@@ -130,7 +130,7 @@ Everything here is in Battle Mode (still off by default). Outside a battle the p
 - あっしゅくスライムを作り直しました。3段階それぞれに3つの技、3つのHPギミック（ベルト破り、解凍詰まり、圧縮爆弾）、2つの突然の状態異常（圧縮、ZIPロック）があります。持ち上げたネコにも、実際に触れれば攻撃が当たります。床の金色の印はボスと一緒に回らなくなりました。
 - 再設計した圧縮スライムと強化ボスを統合。警告と当たり判定、悪性アプリの記録順を共通化。巣の空きがない時の母スライムのHP消費、怒り中の押し戻しと解除、通常のねばねば溜まりの結合を修正。アバターと怒りの自動発動の案内を更新。
 
-- 母スライムに破壊できる巣、子の呼び戻し、切断できる救助のひも、子の跳躍、怒りの突進と最後の産卵を追加。変異王に腕のなぎ払い、破裂、二段の雨、床の波、切断できる吸収と過負荷の隙を追加。変異の種や変異した子はありません。ボス専用の別ブランチで実装。
+- 母スライムは3段階・9つの技、巻きつくスカーフ、吊るした卵、子をゆりかごへ返す仕組み、なだめゲージと最後の卵。変異スライムは3段階、こぶ、投げ返すコア、ねばねばの地形と最後の6回のコア開放で戦い、王の召喚は使いません。現行ルール：docs/MOTHER-SLIME.md、docs/MUTANT-SLIME.md。
 
 すべてバトルモード（初期設定はオフのまま）の変更です。バトル以外では猫は変わりません。第1章の 5 ステージと以前の記録はそのままです。新しい武器、ねこの怒り、新しいカードの選択肢はすべてのバトルに入ります。
 
@@ -151,7 +151,7 @@ Everything here is in Battle Mode (still off by default). Outside a battle the p
   - とびスライム（画面中を飛び、ねばねば弾は持ち上げた猫にも当たる）、もぐらスライム。
   - こおり（投げた猫は「コン」と跳ね返り、強ければ割れる）、かべ（画面の高さまで登る）、ハリネズミ、タイマー（隊列をまるごと呼ぶ）、どろぼう（遠くから盗む）スライム。
   - スライム同士がロープ・リズム・立てた旗で助け合います。連携隊列は 9 種類で、ひとまとまりで同時に現れます。
-- **新しいボス 3 体**：あっしゅくスライム、ママスライム、へんいスライムキング。
+- **新しいボス 3 体**：あっしゅくスライム、ママスライム、変異スライム。
 - **持ち上げた猫**は空中のスライムをひっかきます。**猫を投げる**と、氷が割れ、かべスライムが落ち、ねばねばロープが切れます。ドラッグと投げの感触はこれまでどおりで、持ち上げ中・飛行中の猫はダメージを受けません（とびスライムの弾だけは例外）。
 - **敵への状態異常**：毒・凍結・ねばねば。カードと遺物で付けられます。
 - **ドロップ**：倒したスライムが魚（回復）、ポーション（スキルのクールダウンを 2 秒短縮）、コインを落とすことがあります。クリックして拾います。

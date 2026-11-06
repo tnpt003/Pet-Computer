@@ -6,7 +6,7 @@ GitHub: https://github.com/tnpt003/Pet-Computer (origin/main). Không commit art
 Quy ước file này: chỉ giữ trạng thái hiện tại, các đợt đang làm, việc dở và test tay, mỗi mục ngắn. Chi tiết commit/test của từng lỗi ghi ở Issue_fixxed.md. File dưới ~20 KB; vượt thì chuyển mục đã xong sang docs/archive/.
 
 ## Trạng thái hiện tại
-- Bản phát hành mới nhất: **1.4.4** (2026-10-26, tag v1.4.4, commit e8f97d4), là Latest trên GitHub. Bản trên máy: artifacts\win-x64 (**1.4.4+57c3055**, tích hợp 1.5 đang thử), chạy bản copy, không cài Setup; chưa phát hành 1.5.0.
+- Bản phát hành mới nhất: **1.4.4** (2026-10-26, tag v1.4.4, commit e8f97d4), là Latest trên GitHub. Bản trên máy: artifacts\win-x64 (**1.4.4+3b3682a**, tích hợp 1.5 đang thử), chạy bản copy, không cài Setup; chưa phát hành 1.5.0.
 - **Bản 1.5 "Slime phản công": code xong M01–M29, góp ý đợt B (B1–B9) và đợt C (C1–C4), chưa phát hành.** Luật hiện tại: docs/UPDATE-1.5.md (bản chốt 05/11); thêm nội dung mới: docs/EXTENDING.md; đo cân bằng/perf: docs/BALANCE-1.5.md; CHANGELOG có mục 1.5.0 vi/en/ja.
 - Nội dung chính đã có: mèo vector (cảm xúc, ngủ/away nap, kéo/ném/Dizzy, đi trên cửa sổ, đồ chơi, kệ kỷ vật có physics, AI Python có fallback local), Battle Mode (Phiêu lưu chương 1 + Hướng dẫn phiêu lưu, Viễn chinh, Vô tận, trận tự do, app trong trận + app độc, thẻ/di vật/cộng hưởng), giao diện Cozy Desktop Adventure (tranh minh họa, icon), vi/en/ja, bộ cài Velopack tự cập nhật.
 - Ngoại lệ đã duyệt dạng đầy đủ: docs/APPROVED-EXCEPTIONS.md (AGENTS.md chỉ còn tóm tắt).
@@ -14,7 +14,7 @@ Quy ước file này: chỉ giữ trạng thái hiện tại, các đợt đang 
 
 ## Đang dở và việc tiếp theo
 
-- **Đai quét và tự phá Khóa ZIP (#58):** đã sửa đai gồng 0,8 s → đầu quét từ boss ra rìa 0,35 s → thu 0,2 s, damage theo tiếp xúc một lần. Khóa ZIP tự đánh tại chỗ đủ 5 nhát, không cần quái trong tầm, không gây damage/tích Nộ/combo; giữ 3 click/6 s. HP 1100, records 8/16/9. C# đầy đủ 3467, Python 58 + 5, WPF 1437 đạt; ZIP cuối 392 đạt (kể cả đổi vùng trận), đã xem render gồng/quét/thu và tự đánh khóa; đang commit/publish. Đối chứng docs/BALANCE-ZIP-2026-11-06.md, Kiếm Bãi rác 20/40 còn sát ngưỡng. Test tay MANUAL-TEST mục #58. Chưa chơi trận thật/DPI/multi-monitor.
+- **Đai quét và tự phá Khóa ZIP (#58):** đã sửa đai gồng 0,8 s → đầu quét từ boss ra rìa 0,35 s → thu 0,2 s, damage theo tiếp xúc một lần. Khóa ZIP tự đánh tại chỗ đủ 5 nhát, không cần quái trong tầm, không gây damage/tích Nộ/combo; giữ 3 click/6 s. HP 1100, records 8/16/9. C# đầy đủ 3467, Python 58 + 5, WPF 1437 đạt; ZIP cuối 392 đạt (kể cả đổi vùng trận), đã xem render gồng/quét/thu và tự đánh khóa; đã publish 3b3682a, smoke 3/3 PASS, mở lại mèo. Đối chứng docs/BALANCE-ZIP-2026-11-06.md, Kiếm Bãi rác 20/40 còn sát ngưỡng. Test tay MANUAL-TEST mục #58. Chưa chơi trận thật/DPI/multi-monitor.
 
 
 - **Slime Nén sửa lỗi sau test (#57):** đã sửa file/đích random theo làn tránh boss và mép; dọn bom/giấy thường khi vào mech, `ClearPackets` không xóa file mech. Giấy bám có giới hạn quay, quét toàn thân cả bế/rơi/bounce; hiệu ứng ZIP riêng mỗi đòn. HP 1100, records c2_zip_slime 7 / Vô tận 15 / Bãi rác 8. C# đầy đủ 3451, Python 58 + 5, WPF 1433 đạt; ZIP/slime bay cuối 432 đạt, cân bằng đo lại 293 đạt (Kiếm Bãi rác tham lam 20/40 sát ngưỡng). Đã xem render, commit/publish sạch 57c3055, smoke 3/3 PASS, mở lại mèo. ZIP artifacts/DesktopPet-1.4.4-57c3055-win-x64.zip. Đối chứng: docs/BALANCE-ZIP-2026-11-06.md. Test tay MANUAL-TEST mục #57; chưa chơi trận thật/DPI/multi-monitor.

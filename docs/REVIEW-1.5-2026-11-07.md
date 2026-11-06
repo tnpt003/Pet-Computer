@@ -48,7 +48,16 @@ Các bộ test được gọi bởi `scripts/test.ps1 -Ui`; không suy ra đã c
 - Probe riêng trước sửa: refresh Topmost làm assertion nền dưới slime FAIL; sau sửa đạt. Dải trận nhận nền làm owner, Windows giữ thứ tự owned/owner; bỏ callback dispatcher sửa muộn. Không đổi input handlers, simulation, physics hoặc số liệu.
 - Đã mở ảnh `battle-scenery-dump.png` trước/sau trên nền sáng/tối; SHA256 giống nhau, art không đổi. Kiểm tra z-order là native probe/WPF, ảnh bitmap không chứng minh desktop thực hay nhiều màn hình.
 - Log cục bộ: `artifacts/standardize15-tests.log`, `standardize15-ui-final.log`, `standardize15-build.log`, `standardize15-zorder-repro.log`, `standardize15-zorder-fixed.log`, `standardize15-balance-diff.txt`; ảnh `artifacts/standardize15-render/`.
-- Commit/publish/smoke và phép đo FPS trên artifact sạch: ghi ở PROGRESS và mục kết quả đóng gói khi chạy xong. Chưa nghiệm thu chơi tay/DPI/cập nhật từ 1.4.4.
+- Chưa nghiệm thu chơi tay/DPI/cập nhật từ 1.4.4. Các kết quả trên không phải tuyên bố M30 hoàn tất.
+
+## Đóng gói và hiệu năng
+
+- Commit code/tài liệu **0495e30**, publish sạch **1.4.4+0495e30**; ZIP `artifacts/DesktopPet-1.4.4-0495e30-win-x64.zip`. Smoke **3/3 PASS**: runtime .NET/Python đi kèm từ thư mục khác, single-instance và thoát sạch cả app/Python.
+- `crowd-late -Minutes 2`, **122 giây frame stats**: FPS trung vị **50,5**, thấp nhất **31,6**; khoảng khựng p95 **48 ms**, lớn nhất **150 ms**; trung bình **16,3**, tối đa **19** quái. CPU pet trung bình **3,1% toàn máy**, p95 **4,7%**; private memory **273,2 → 307,6 MB**, đỉnh **307,7 MB**. Mẫu 2 phút không đủ kết luận rò rỉ bộ nhớ.
+- Vẫn **chưa đạt mục tiêu ~57 FPS**. Không coi thay owner là tối ưu FPS; mẫu #70 dài 33 s và mẫu mới 122 s không phải đối chứng cùng điều kiện. Chưa có CPU/render trace để xác định nút thắt, chưa đo boss thật; việc tiếp theo là profile dài hơn theo cảnh/logic/render rồi mới sửa đúng chỗ.
+- Đã đóng đúng pet project bình thường trước publish, đo bằng dữ liệu riêng và mở lại gói sạch sau khi xong; không ghi đè preferences bằng fixture. Không push, tag, cài Setup hay phát hành remote.
+- Log: `artifacts/standardize15-publish.log`, `standardize15-smoke.log`, `standardize15-perf.log`; CSV `artifacts/perf/20261107-033748-standardize15-0495e30.csv`.
+- `graphify update .` và hook đã cập nhật graph code cục bộ. CLI ghi rõ việc trích ngữ nghĩa docs/ảnh cần `/graphify --update`; không coi graph code là đã đồng bộ ngữ nghĩa mọi tài liệu.
 
 ## Điều kiện trước M30
 
@@ -57,4 +66,4 @@ Các bộ test được gọi bởi `scripts/test.ps1 -Ui`; không suy ra đã c
 3. Người dùng nghiệm thu các hàng cột cuối theo MANUAL-TEST; bot không thay thao tác thật.
 4. Rà câu mới tiếng Nhật, README/website/changelog và cập nhật từ 1.4.4; chỉ sau đó nâng 1.5.0 theo RELEASE.md.
 
-Chưa thêm cơ chế/kỹ năng, không refactor state machine/renderer rộng. Chuẩn hóa tiếp sau 1.5: phát hiện tự động loại quái mới thiếu `UsesMouse`/điều kiện loại trừ và dữ liệu scene (backlog đã có trong UPDATE-1.5).
+Chưa thêm cơ chế/kỹ năng, không refactor state machine/renderer rộng. Chuẩn hóa tiếp sau 1.5: phát hiện tự động loại quái mới thiếu `UsesMouse`/điều kiện loại trừ và dữ liệu scene (backlog đã có trong UPDATE-1.5); làm rõ tên/member cố ý che WPF trong 7 warning hiện có. Các việc này chưa được triển khai trong mốc này.

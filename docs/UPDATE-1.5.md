@@ -230,7 +230,7 @@ rulesVersion hiện tại (#70, 07/11): chương 1 giữ như 1.4.4 theo duyệt
 
 ## Rủi ro còn lại
 
-- **Hiệu năng:** lần #70 (07/11, 79c9f1c), `crowd-late` 33 s trung vị 53,9 FPS, thấp nhất 30,9, gap lớn nhất 173 ms; mục tiêu ~57 FPS. Đây là mẫu ngắn, chưa thay phép đo boss thật; kết quả mới theo báo cáo rà soát.
+- **Hiệu năng:** lần rà 07/11, `0495e30`, `crowd-late` 122 s trung vị 50,5 FPS, thấp nhất 31,6, gap p95 48/max150 ms; chưa đạt mục tiêu ~57 FPS. Chưa profile nút thắt hoặc đo boss thật; chi tiết theo báo cáo rà soát.
 - **Input:** kỹ năng dùng chuột và quái dùng chuột dễ xung đột với nhấc mèo và icon app; giữ thứ tự click ở mục Nguyên tắc.
 - **Cân bằng:** nhiều tổ hợp kỹ năng × quái, bot mô phỏng không đánh giá được cảm giác. Màn 3 và 5 chương 2 còn sát ngưỡng; Cuộn len màn 2 đã nới ngưỡng có duyệt.
 - **Màn hình thật:** cửa sổ sát mép, lớp chọn vị trí, chớp toàn màn hình chưa thử trên DPI thật.

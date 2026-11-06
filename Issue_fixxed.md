@@ -5,7 +5,7 @@ Sổ ghi các lỗi đã sửa của Desktop Pet. Phần A: lỗi người dùng
 Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm lỗi mới: tạo mục số tiếp theo ở đầu phần A (hoặc một dòng ở phần B).
 
 # A. Lỗi người dùng phát hiện
-## #61 — ZIP lăn về chỗ cũ; Vua ngoài chương1 thiếu phối hợp đội hình (06/11)
+## #61 — ZIP lăn về chỗ cũ; Vua ngoài chương1 thiếu phối hợp đội hình (06/11, code beecc78)
 - **Theo duyệt:** ZIP lăn3 lần ngắm lại giữa lượt, báo1,1/0,6/0,6 s, giữ damage/tầm/tốc độ; king và mutant_king gọi3 đội hình/buff2 con, king_c1 giữ nguyên. Chi tiết docs/ZIP-SLIME.md, BOSS-TACTICS.md.
 - **Sửa:** AimZipRoll cập nhật trong Windup, chốt khi Dash; count3/hủy theo luật đòn cũ. Sửa clock ZIP gồng lăn không tiến trước đây. Bốn bộ3-trong-4 Pháo đài/Bạt nhún/Đội trống/Pháo kích,9–10 quân/cap10 trong một frame sau báo0,6 s, theo seed; không dùng timer/bầy nhập/bomber. King thường thêm3 pha khiên75/50/25. Hai mục tiêu rally riêng, thay mục tiêu chết không trùng và ngắt cả2, hai đường vẽ hiện đúng mục tiêu; fallback basic/custom có thể không opt-in.
 - **Kiểm chứng:** full m61-full-tests.log Python58+i18n5 đạt, C#3630 đạt/9 FAIL:7 test kỳ vọng cũ,2 khóa ja cũ tính chung một FAIL,1 cân bằng (các dòng lỗi cụ thể trong log); đã cập nhật kỳ vọng/dọn khóa và chạy suite liên quan. Bản cuối m61-core-final.log **1013 đạt**, build đạt; WPF **1450 đạt** (m61-ui.log), ảnh king-rally-one/two/cancelled sáng/tối đã mở. Lăn3/nhắm lại khi gồng/khóa hướng khi lao/Pause; KingFormationTests8 seed mỗi loại xác nhận đủ quân cùng frame/hai mục tiêu, mục tiêu chết chọn bù/choáng ngắt. Không sửa physics/input/sleep/Python; lưới hành vi đã chạy.

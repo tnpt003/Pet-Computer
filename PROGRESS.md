@@ -14,7 +14,7 @@ Quy ước file này: chỉ giữ trạng thái hiện tại, các đợt đang 
 
 ## Đang dở và việc tiếp theo
 
-- **ZIP lăn3/Vua đội hình (#61):** code theo duyệt, king/mutant gọi3 đội hình/buff2, king_c1 giữ nguyên; HP không đổi, recordsZIP11/Endless19/Bãi rác12, tuyến chính8. Core1013/WPF1450/Python58+5 đạt; full3630 đạt/9 FAIL kỳ vọng cũ và cân bằng, đã sửa kỳ vọng/dịch. Cân bằng cuối547 đạt/1 FAIL: Len Bãi rác tham lam19/40 <20; chưa publish, mèo vẫn9fcbed2. Cần duyệt chơi thử dù FAIL hoặc kế hoạch cân lại; không nới ngưỡng. Chi tiết Issue_fixxed #61/BALANCE-ZIP, test tay MANUAL-TEST #61; chưa chơi thật/DPI/perf bản mới.
+- **ZIP lăn3/Vua đội hình (#61):** commitbeecc78 theo duyệt, king/mutant gọi3 đội hình/buff2, king_c1 giữ nguyên; HP không đổi, recordsZIP11/Endless19/Bãi rác12, tuyến chính8. Core1013/WPF1450/Python58+5 đạt; full3630 đạt/9 FAIL kỳ vọng cũ và cân bằng, đã sửa kỳ vọng/dịch. Cân bằng cuối547 đạt/1 FAIL: Len Bãi rác tham lam19/40 <20; chưa publish, mèo vẫn9fcbed2. Cần duyệt chơi thử dù FAIL hoặc kế hoạch cân lại; không nới ngưỡng. Chi tiết Issue_fixxed #61/BALANCE-ZIP, test tay MANUAL-TEST #61; chưa chơi thật/DPI/perf bản mới.
 
 - **Phạt mech cuối ZIP (#60):** publish9fcbed2, smoke3/3, mở lại mèo; nổ80%max HP/rơi không nảy/stun5 sau đáp/reset6 tay. ZIP436/WPF1448, cùng bot mới cân bằng293 đạt; full3510 đạt/3 FAIL bot cũ đã xử lý. Chi tiết Issue_fixxed #60/BALANCE-ZIP; crowd-late48,6 FPS còn profile, chưa đo burst/chơi thật/DPI.
 

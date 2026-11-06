@@ -203,6 +203,7 @@ public sealed partial class BattleFieldView : FrameworkElement
 
     private void DrawStrip(DrawingContext dc, double floor, double time)
     {
+        DrawMutantGround(dc, floor, time);
         // Index loops: foreach over IReadOnlyList boxes an enumerator every frame.
         for (int i = 0; i < sim.Bombs.Count; i++) DrawBomb(dc, sim.Bombs[i], sim.Bombs[i].X - OriginX, floor);
         DrawSpitBehind(dc, floor, time);
@@ -512,6 +513,16 @@ public sealed partial class BattleFieldView : FrameworkElement
         // A boss crouching before its leap.
         if (slime.Crouch > 0) { sx *= 1 + 0.18 * slime.Crouch; sy *= 1 - 0.25 * slime.Crouch; }
         ZipShape(slime, time, ref sx, ref sy); // The Zip Slime's bomb and its air going out.
+        if (slime.Mutant is { } mutation)
+        {
+            double pulse = Math.Sin(time * (mutation.Mode == MutantMode.Roar ? 15 : 3));
+            sx *= 1 + (0.03 + mutation.Phase * 0.015) * pulse;
+            sy *= 1 - (0.03 + mutation.Phase * 0.015) * pulse;
+            if (mutation.Mode == MutantMode.Bumps) { sx *= 1.15; sy *= 0.82; }
+            if (mutation.Mode is MutantMode.Absorb or MutantMode.Transition) { sx *= 1.1 + pulse * 0.06; sy *= 0.9 - pulse * 0.06; }
+            if (mutation.Mode == MutantMode.Core) { sx *= 1.08; sy *= 0.9; }
+            if (mutation.Mode == MutantMode.AllIn) { sy *= 1.16; jitter += Math.Sin(time * 28) * 1.5; }
+        }
         if (slime.Type.Zip != null)
             foreach (var blow in sim.ZipBlows)
                 if (blow.OwnerId == slime.Id && blow.Kind == ZipBlowKind.Belt && !blow.Done)
@@ -598,7 +609,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         dc.PushOpacity(opacity);
         dc.PushTransform(new MatrixTransform(sx * size, 0, 0, sy * size, x + jitter, floor));
         double bw = s.SlimeWidth, bh = s.SlimeHeight;
-        var body = slime.Type.Marks == "zip" ? ZipBody(slime) : Body(bw, bh);
+        var body = slime.Type.Mutant ? MutationBodyFor(slime) : slime.Type.Marks == "zip" ? ZipBody(slime) : Body(bw, bh);
         Brush baseFill = KindBrush(slime.Enraged ? slime.Type.AngryColor : slime.Type.Color);
         Brush fill = slime.HitFlash > 0 ? Brushes.White : slime.State == SlimeState.Windup ? Blend(baseFill, t / windup) : baseFill;
         // A thin dark edge outside the white halo: two slimes overlapping still read as two, on light
@@ -611,7 +622,8 @@ public sealed partial class BattleFieldView : FrameworkElement
         DrawStatusTint(dc, slime, body, bw, bh, time);
         dc.DrawEllipse(Shine, null, new Point(-bw * 0.2, -bh * 0.68), 5, 3.5);
         double look = slime.Facing * 3;
-        if (slime.Grabbed || slime.Slammed)
+        if (slime.Type.Mutant) DrawMutantFace(dc, slime, bw, bh, time);
+        else if (slime.Grabbed || slime.Slammed)
         {
             // In the claw (2026-11-04): squeezed "> <" eyes.
             foreach (int side in new[] { -1, 1 })
@@ -679,7 +691,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         DrawWallMarks(dc, slime, bw, bh, time);
         DrawQuillMarks(dc, slime, bw, bh, time);
         DrawZipMarks(dc, slime);
-        DrawBroodMarks(dc, slime, bw, bh);
+        if (!slime.Type.Mutant) DrawBroodMarks(dc, slime, bw, bh);
         // An older support mark: a white "+" on its body.
         if (slime.Type.Marks == "cross") dc.DrawGeometry(Brushes.White, Outline, CrossMark);
         if (slime.Elite != null)
@@ -701,7 +713,7 @@ public sealed partial class BattleFieldView : FrameworkElement
             dc.DrawEllipse(null, Halo, new Point(0, -37), 15 * ring, 10 * ring);
             dc.DrawEllipse(null, RallyPen, new Point(0, -37), 15 * ring, 10 * ring);
         }
-        if (slime.IsBoss && slime.Type.Marks != "zip") DrawBossCrown(dc, slime); // 1.5 M18: the Mutant King's sits crooked (PetBattleView.Brood.cs).
+        if (slime.IsBoss && slime.Type.Marks != "zip" && !slime.Type.Mutant) DrawBossCrown(dc, slime);
         dc.Pop();
         dc.Pop();
         unturned = PushUnturned(dc, slime, x, floor, h);

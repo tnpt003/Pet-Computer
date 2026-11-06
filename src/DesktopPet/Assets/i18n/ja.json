@@ -1089,7 +1089,8 @@
   "Zip Slime plush": "あっしゅくスライムのぬいぐるみ",
   "The {0} is about to roll! Lift the cat out of its way": "{0}が転がってくる！猫を持ち上げてよけよう",
   "Slime Mother": "ママスライム",
-  "Mutant Slime King": "へんいスライムキング",
+  "Mutant Slime": "変異スライム",
+  "Goo hits held and flying cats. Drop onto floor bumps, carry to strike numbered wall bumps; throw cores back. Rub the cat for 2s to clear Stutter. Dodge and strike the final core six times.": "抱き上げ中や飛行中も粘液に注意。床のこぶには落下し、壁のこぶは番号順に攻撃。核を投げ返そう。猫を2秒なでて乱調を解除。最後は回避して核を6回攻撃。",
   "The {0} is laying a clutch! Bomb it while it huddles, push it apart or hold it with the Fan": "{0}が子どもを産む！かたまったところを毛糸ボムで、または押すか扇風機でばらそう",
   "The giant slime is heading back to feed the {0}! Beat it before it gets there": "巨大スライムが{0}に栄養を届けに戻っていく！着く前に倒そう",
   "The {0} got {1} HP back": "{0}のHPが{1}回復した",
@@ -1463,6 +1464,5 @@
   "3 stages, 3 attacks each. Hit lit locks 12 times, switch every 3; match files to folders and dodge trees. At 1 HP hit six pulls (3 high, 3 low). Hover to find bombs; ZIP lock stops movement.": "各段階に3つの攻撃。光る錠を計12回、3回ごとに交代。ファイルをフォルダーへ押し、ツリーを避けよう。1HPで引き手6個（高3、低3）を攻撃。カーソルで爆弾を調べよう。ZIPロック中は移動不可。",
   "Zip Slime files: three identical faulty files hide one bomb; hover to reveal its running fuse. During the puzzle, strike files into matching folders; stand behind a file to push it.": "圧縮スライムのファイル。そっくりな3個に爆弾が1個。カーソルを重ねて残り時間を確認。パズルでは同じ記号のフォルダーへ押そう。ファイルの後ろに立って攻撃しよう。",
   "ZIP lock stops walking and lifting. The cat strikes its own lock 5 times to escape, even without an enemy nearby. Click the cat 3 times or wait 6 seconds instead. The boss waits for it to open.": "ZIPロック中は歩けず持ち上げられません。敵が近くにいなくても、ネコが自分の錠を5回攻撃して解除します。3回クリックするか6秒待っても解除できます。ボスは解除まで待ちます。",
-  "The returning King calls three coordinated formations per shield phase and rallies two elites at a time. Defeat helpers to break the shield; Push the glowing crown to interrupt rallies.": "帰ってきた王は盾の各段階で連携する3つの陣形を呼び、一度に2体を精鋭にする。配下を倒して盾を壊し、王冠が光ったら王を押して強化を中断しよう。",
-  "Dodge sweeps, bursts and rain. Shield phases call three formations and rally two elites at a time; Push the King to interrupt. Cut golden streams to stop armor; strike during overload.": "なぎ払い、爆発、雨をかわそう。盾の段階で3つの陣形を呼び、一度に2体を精鋭にする。王を押して中断し、金色の流れを切って装甲の回復を止め、過負荷中を攻めよう。"
+  "The returning King calls three coordinated formations per shield phase and rallies two elites at a time. Defeat helpers to break the shield; Push the glowing crown to interrupt rallies.": "帰ってきた王は盾の各段階で連携する3つの陣形を呼び、一度に2体を精鋭にする。配下を倒して盾を壊し、王冠が光ったら王を押して強化を中断しよう。"
 }

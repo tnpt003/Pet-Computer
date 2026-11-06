@@ -579,6 +579,7 @@ internal static class Program
         ZipVisualChecks.Run(Check);
         KingFormationVisualChecks.Run(Check);
         BroodVisualChecks.Run(Check);
+        MutantVisualChecks.Run(Check);
         DropVisualChecks.Run(Check);
         BasketVisualChecks.Run(Check);
         ChapterArtChecks.Run(Check);

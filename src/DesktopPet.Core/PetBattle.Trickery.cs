@@ -26,7 +26,7 @@ public sealed partial class BattleSim
     public double QuakeStandRemaining { get; private set; }
     // The card is carried and ready: a landing now would shake the floor (the window lands the cat flat).
     public bool QuakeCarried => quakeDamage > 0;
-    public bool QuakeReady => quakeDamage > 0 && QuakeRemaining <= 0 && !Over && !Paused && CatLifted && liftedFor >= Settings.RescueGraceMinLiftSeconds;
+    public bool QuakeReady => quakeDamage > 0 && QuakeRemaining <= 0 && !Over && !Paused && !MutantBumpMech && CatLifted && liftedFor >= Settings.RescueGraceMinLiftSeconds;
     public double QuakeWaveFront => quakeAge < 0 ? -1 : QuakeReach * Math.Min(1, quakeAge / QuakeTravel);
     private readonly Random trickRandom;
     private double laserBonus, fanBonus, grabberBonus, scissorsBonus, sprayBonus, dropBonus, fishCardHeal, quakeDamage, refundChance;

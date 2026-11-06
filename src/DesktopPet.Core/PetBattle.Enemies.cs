@@ -96,7 +96,7 @@ public sealed partial class BattleSim
             var slime = slimes[index];
             if (!slime.Type.Support) slime.KeepingBack = false;
             var (minX, maxX) = Bounds(slime);
-            if (frozen && slime.State != SlimeState.Defeated)
+            if (frozen && !BossDebuffImmune(slime) && slime.State != SlimeState.Defeated)
             {
                 slime.HitFlash = Math.Max(0, slime.HitFlash - dt);
                 StepStatus(slime, dt);
@@ -130,6 +130,7 @@ public sealed partial class BattleSim
             slime.X = Math.Clamp(slime.X, minX, maxX);
             if (Over) continue; // The outro: slimes just bounce in place.
             StepStatus(slime, dt);
+            if (StepMutantBoss(slime, dt)) { if (Over) break; continue; }
             if (Over) break;
             if (slime.State == SlimeState.Defeated) continue;
             if (StepNest(slime, dt)) continue;

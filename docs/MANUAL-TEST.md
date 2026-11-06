@@ -1122,3 +1122,14 @@ Các mục 1.5 phía trên viết theo từng mốc; đây là thứ tự chơi 
 - [ ] Xem gồng/tràn/bung/fade và gốc phát file từ boss trên nền sáng/tối/màu, màn thấp/DPI100–200%/hai màn có gốc âm. Không nhân đôi sàn/sky, không che hoặc chặn chuột trong gap. Màn hẹp không chọn đòn không thể bố trí; đổi màn giữa đòn không hit trễ.
 - [ ] Pause/menu/fullscreen đóng băng; choáng/bước vào mech hủy đòn. Các đòn khác, sleep/wake/drag/throw/emotion/local fallback giữ luật.
 - [ ] Bản chơi thử: Cuộn len Bãi rác tham lam Normal đang16/40 <20; chưa nghiệm thu cân bằng. Perf overlay thực tế còn cần xem tay.
+
+## Slime biến dị mới — Issue #63, 06/11
+
+- [ ] Xanh lá, ba silhouette, mắt xoắn/miệng lệch, không vương miện; mỗi phase có đủ ba đòn và báo trước khớp vùng trúng, cả dưới sàn/bế/bay/bounce.
+- [ ] Mech66%: ba bướu sàn thả đè + ba bướu tường bế đánh theo số, không đè boss/nhau; mèo đứng yên chờ hỗ trợ, vung thật mới tính bướu tường. Sai số không tiến; xong có vỏ xẹp/dấu. Đủ6 mở lõi một nhát, đủ3 vòng sangphase2. Thẻ Cú đáp địa chấn không giải lan/không triệt nảy. Hết60s phạt50%, boss đầy HP sangphase2.
+- [ ] Phase2: hai mép tổng25% nền có nhịp riêng, có đợt nghỉ để đi tới boss; Mech33% phun6 lõi cung xa có báo, ném trả thấy lõi bay về gây choáng; trượt thành bướu kín không đánh được. 0bướu mở lõi; 1–6 hút hồi,3–5phạt20%,6phạt40%; mọi kết quả đềuphase3, không lặp phase2.
+- [ ] Phase3: hai mép tổng50% nền, bốn túi trời trôi cong chậm không chồng thân, nghỉ/báo/phun rõ. Chạm phun đủ0,6s ép rơi, damage/debuff đúng; Nộ/Khiên đúng luật. Rê qua lại trên mèo~2s gỡ Nhiễu nhịp, có progress và không tái áp ngay; không tính chuột đứng yên hay chỉ mèo tự chạy.
+- [ ] 1HP: mọi hazard nền/trời tắt va chạm ngay, phần hình co/hút về boss và mất hẳn trong gào5s, không tái sinh. Lõi nhận6 nhát riêng, độc/combo không bỏ qua. Giữa nhát boss đổi chỗ/miễn damage-debuff và chọn3 all-in; nhát6 hạ boss.
+- [ ] Con ngươi:6 dải ngang/dọc khóa từng lần, dải cũ giữ,5%maxHP mỗi lần trúng; không ăn nhiều hit giao điểm, ép rơi không nảy/stun1s sau đáp, đủ thời gian nhấc lại. Sáu dải tan xong không còn collision. Thác chừa hành lang; Hơi thở tới2/3 nghỉ2s rồi phun hết sân.
+- [ ] Slime Nén/mutant không nhận debuff trong mech/chuyển phase; ZIPphase2–3 không bị choáng/đẩy bởi vũ khí, thẻ, app/kỹ năng; yếu do mech vẫn nhận đúng.
+- [ ] Pause/menu/fullscreen, kết thúc trận dọn effects, màn hẹp/resize, DPI100–200%/gốc âm và nhiều màn; perf boss có túi và sáu dải. Sleep/wake/drag/throw/emotion/local fallback ngoài trận không đổi.

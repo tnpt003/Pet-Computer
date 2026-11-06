@@ -618,10 +618,12 @@ public sealed partial class PetWindow
         bool held = BattleHoldsOff;
         if (!held) KeepBattleOnItsMonitor();
         battle.SetPointer(BattlePointer());
+        var mutantCursor = PointFromScreen(ScreenCursor());
+        battle.SetMutantPointer(pet.X + mutantCursor.X, bounds.Bottom - (pet.Y + mutantCursor.Y));
         // The Adventure Guide holds the battle still while a step shows (PetWindow.BattleGuide.cs).
         var order = battle.Step(BattleGuideFreezes ? 0 : dt, pet.X + settings.Width / 2, held, BattleLifted, BattleLifted ? BattleCatPose() : null);
         // Ground quake ready: the next floor landing sticks, no bounce (2026-11-04, D1b).
-        if (battle.ZipForcedFall)
+        if (battle.ZipForcedFall || battle.MutantForcedFall)
         {
             if (dragging || pressPending) { dragging = pressPending = false; ReleaseMouseCapture(); pet.Pickup.Reset(); }
             pet.VX = pet.SmoothedWalkVelocity = 0;
@@ -629,7 +631,12 @@ public sealed partial class PetWindow
             pet.Action = PetAction.Thrown;
             pet.Grounded = false;
         }
-        pet.StickLanding = battle.ZipForcedFall || !dragging && battle.QuakeReady;
+        pet.StickLanding = battle.ZipForcedFall || battle.MutantForcedFall || !dragging && battle.QuakeReady;
+        if (battle.TakeMutantBumpBounce() && !dragging)
+        {
+            pet.VY = -440; pet.Grounded = false; pet.Action = PetAction.Thrown;
+            pet.StickLanding = false;
+        }
         // The thrown cat bonked an ice shell: it bounces back (2026-11-04, docs/APPROVED-EXCEPTIONS.md D1a).
         if (battle.TakeCatBounce() is var (bounceX, bounceY) && !dragging && !pet.Grounded)
         {

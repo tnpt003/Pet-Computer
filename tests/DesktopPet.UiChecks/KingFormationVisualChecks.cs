@@ -5,7 +5,7 @@ internal static class KingFormationVisualChecks
     public static void Run(Action<bool, string> check)
     {
         var sim = new BattleSim(BattleData.Settings, 0, 1000, seed: 1);
-        var boss = sim.AddSlime(500, BattleData.Settings.Enemy("mutant_king"));
+        var boss = sim.AddSlime(500, BattleData.Settings.Enemy("king"));
         var first = sim.AddSlime(250, BattleData.Settings.Enemy("rock"));
         var second = sim.AddSlime(750, BattleData.Settings.Enemy("runner"));
         foreach (var s in new[] { boss, first, second }) s.Set(SlimeState.Moving);

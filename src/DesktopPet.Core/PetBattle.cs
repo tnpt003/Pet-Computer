@@ -144,7 +144,7 @@ public sealed partial class BattleSim
     // armor (cards and synergies together) takes at most MaxArmor off.
     public const double MaxArmor = 0.6;
     public double DamageFactor => 1 + damageBonus + MutationDamage;
-    public double MoveFactor => (1 + moveBonus) * (ComboRushRemaining > 0 ? 1 + comboRushBonus : 1) * (Raging ? 1 : PuddleSlowNow * SqueezeSpeed); // A puddle slows it (PetBattle.Spit.cs), never a raging cat.
+    public double MoveFactor => (1 + moveBonus) * (ComboRushRemaining > 0 ? 1 + comboRushBonus : 1) * (Raging ? 1 : Math.Min(PuddleSlowNow, mutantFloorSlow) * SqueezeSpeed);
     // Attacks a second against the usual: the rushes (Tailwind, Gale).
     public double RushFactor => 1 + (LandingRushRemaining > 0 ? landingRushBonus : 0) + (ComboRushRemaining > 0 ? comboRushBonus : 0);
     public double CooldownFactor => Math.Max(0.3, 1 - cooldownCut) * (1 + swingDelay);
@@ -373,6 +373,7 @@ public sealed partial class BattleSim
         double floorX = groundX;
         lastCatX = floorX;
         catPose = pose;
+        StepMutantCat(dt);
         StepZipForcedFall();
         StepEffects(dt);
         StepFreeze(dt); // 1.5 M26: the Screenshot's freeze, a dazzle (PetBattle.Malware2.cs).
@@ -427,7 +428,7 @@ public sealed partial class BattleSim
             // Tailwind: put down after a real lift, the cat attacks faster a moment.
             if (wasLifted && liftedFor >= Settings.RescueGraceMinLiftSeconds && landingRushBonus > 0) LandingRushRemaining = LandingRushSeconds;
             // Ground quake (1.5 M25): the same real lift shakes the floor where the cat lands.
-            if (wasLifted && liftedFor >= Settings.RescueGraceMinLiftSeconds) Quake(catX);
+            if (wasLifted && liftedFor >= Settings.RescueGraceMinLiftSeconds && !MutantBumpMech && !MutantForcedFall) Quake(catX);
             // Let go onto a burrower coming up: it is pinned (1.5 M14). 2026-11-05: or onto the Zip Slime's riddle.
             if (wasLifted) CatLanded(catX);
             wasLifted = false;
@@ -458,6 +459,7 @@ public sealed partial class BattleSim
         StepApps(dt, floorX, catHeld);
         if (Over) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
         StepHeld(dt, catHeld ? pose : null);
+        mutantPreviousCat = CatCentre();
         if (Over) return new(catHeld ? CatCommand.Hold : CatCommand.Stand);
         // Holding the cat freezes the waves (no spawning, no progress) and a survive stage's clock.
         if (!catHeld) StepWaves(dt, catX);
@@ -513,6 +515,7 @@ public sealed partial class BattleSim
 
     private CatOrder CatTurn(double dt, double catX)
     {
+        if (MutantHiccup || MutantBumpMech) { CancelSwing(); return new(CatCommand.Stand, catX); }
         if (zipLockSwing && (CatStunned || CatOffFloor)) { zipLockSwing = false; CancelSwing(); }
         var target = Over || CatLocked ? null : PickTarget(catX);
         TargetId = target?.Id;
@@ -731,7 +734,7 @@ public sealed partial class BattleSim
         // A combo knocks back away from the cat (heavy kinds less), but does not stun; a heavy
         // weapon knocks back on every hit; raging, every hit knocks back harder (PetBattle.Rage.cs).
         // An elite that ignores Push stands its ground (it still takes the damage).
-        if (landed && (combo || knock > 0 || Raging) && slime.Elite is not { PushImmune: true })
+        if (landed && !BossPushImmune(slime) && (combo || knock > 0 || Raging) && slime.Elite is not { PushImmune: true })
             slime.KnockVelocity = (slime.X < catX ? -1 : 1) * RageKnockOf(combo ? Math.Max(Settings.ComboKnock, knock) : knock) * slime.Type.PushFactor;
         // The yarn draws a slime that keeps its distance in; the glove's combo tosses its enemy up (PetBattle.Weapons.cs).
         if (landed) PullIn(slime, catX);
@@ -807,6 +810,7 @@ public sealed partial class BattleSim
     internal HitResult Damage(Slime slime, double amount, DamageSource source)
     {
         if (!slime.Targetable || amount <= 0) return HitResult.Landed;
+        if (MutantDamage(slime, source) is HitResult mutationHit) return mutationHit;
         if (slime.ZipProp != ZipProp.None) return HitZipProp(slime, source);
         // 2026-11-04: an app's hit brings a flyer or a wall climber down to the floor.
         if (source == DamageSource.App) KnockFromSky(slime);
@@ -877,6 +881,7 @@ public sealed partial class BattleSim
         amount = BossTacticDamage(slime, amount);
         // A hit never takes a boss past its next shield phase: it stops there, the rest is lost.
         slime.Hp = Math.Max(ShieldFloor(slime), slime.Hp - amount);
+        MutantThreshold(slime);
         slime.HitFlash = 0.18;
         // A poison tick too small to read shows no number.
         if (source != DamageSource.Poison || Math.Round(amount) >= 1)
@@ -988,6 +993,7 @@ public sealed partial class BattleSim
     // The lowest HP a hit may leave: the line of the first shield phase still to come (0: none).
     private static double ShieldFloor(Slime slime)
     {
+        if (slime.Type.Mutant) return MutationFloor(slime);
         double floor = slime.MechBonusClock > 0 ? slime.ZipOpenFloor : 0;
         if (slime.Type.Phases is { } phases)
             for (int i = 0; i < phases.Length && i < 31; i++)
@@ -1110,7 +1116,7 @@ public sealed partial class BattleSim
         if (BattleSkills.Get(skill).Aim != SkillAim.Slime || !Ready(skill) || slime is not { Targetable: true, Faded: false, Burrowed: false }) return false;
         // A mirage's copy pushed: it vanishes (the skill is spent).
         if (skill == BattleSkill.Push && slime.Decoy) { Dispel(slime); AddEffect(BattleEffectKind.Push, slime.X, slime.Height / 2); }
-        else if (skill == BattleSkill.Push && slime.Elite is { PushImmune: true })
+        else if (skill == BattleSkill.Push && (BossPushImmune(slime) || slime.Elite is { PushImmune: true }))
         {
             // It stands firm: no knock back, no stun, its windup goes on; the skill is still spent.
             AddEffect(BattleEffectKind.Block, slime.X, slime.Altitude + slime.Height / 2);
@@ -1163,11 +1169,20 @@ public sealed partial class BattleSim
     // keep every slime at the same relative spot inside the new floor.
     public void SetArea(double left, double right)
     {
+        mutantPreviousCat = null;
         paperPreviousCat = null;
         right = Math.Max(left + Settings.SlimeWidth * Settings.LargestScale, right);
         double oldWidth = Math.Max(1, Right - Left), newWidth = right - left;
         foreach (var s in slimes)
         {
+            if (s.Mutant is { } mutation)
+            {
+                foreach (var z in mutation.Zones) { z.X = left + (z.X - Left) / oldWidth * newWidth; z.W *= newWidth / oldWidth; }
+                foreach (var b in mutation.Bumps.Concat(mutation.FailedCores)) b.X = left + (b.X - Left) / oldWidth * newWidth;
+                mutation.FromX = left + (mutation.FromX - Left) / oldWidth * newWidth;
+                mutation.AimX = left + (mutation.AimX - Left) / oldWidth * newWidth;
+                mutation.CoreX = left + (mutation.CoreX - Left) / oldWidth * newWidth;
+            }
             s.X = left + (s.X - Left) / oldWidth * newWidth;
             if (s.ZipAct == ZipAct.Overflow)
             {

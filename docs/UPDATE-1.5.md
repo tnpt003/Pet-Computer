@@ -4,7 +4,7 @@ Cập nhật: 2026-11-06 (Asia/Saigon). Trạng thái: **xong M01–M29, đợt 
 
 Cách đọc file này:
 
-- **Thiết kế mới đã duyệt, chưa triển khai (06/11):** Slime biến dị ba phase, sân nhầy nền/trời, mech va chạm và miễn debuff boss: [MUTANT-SLIME.md](MUTANT-SLIME.md). Các mục hiện tại bên dưới vẫn mô tả code cũ tới khi triển khai xong.
+- **Slime biến dị thiết kế lại (06/11):** luật mới thay riêng boss `mutant_king`: [MUTANT-SLIME.md](MUTANT-SLIME.md). Không kế thừa các ghi chú Vua biến dị cũ về gọi quân/xích/trống/mưa/hút giáp. Slime Nén và Slime biến dị miễn debuff trong mech/chuyển phase; Slime Nén phase2–3 miễn choáng/đẩy ngoài mech.
 
 - Đây là bản mô tả **luật hiện tại** của 1.5, gom từ thiết kế 26/10, đợt B, đợt C và góp ý 05/11. Khi tài liệu khác lệch với file này thì đối chiếu code và battle.json.
 - Số liệu gốc nằm ở `src/DesktopPet/Assets/battle.json`. Ý nghĩa từng khóa: docs/BATTLE-DATA.md. Số trong file này để hiểu luật, không thay battle.json.
@@ -100,7 +100,7 @@ Trong trận cảm xúc tự động vẫn bị chặn: S1, S4 không gây cảm
 |---|---|---|
 | B1 | Slime Nén, trùm chương 2 (1100 HP; thiết kế lại 05/11, 06/11; Issue #53, #55, #57, #58) | Luật đầy đủ: docs/ZIP-SLIME.md. Ba giai đoạn, mỗi giai đoạn ba đòn chọn từ túi theo seed; mech 66% đánh khóa đai (12 đòn, đổi bên mỗi 3), 33% ghép thư mục + né cây, 1 HP đánh 6 tay kéo; phase 2–3 có đòn đẩy riêng 0 damage; hai debuff Nén và Khóa ZIP (khóa đi/nhấc, tự đánh ổ khóa); đòn trúng mèo đang cầm/bay khi thực sự chạm; giấy bám quét toàn thân, file mech tránh boss và không bị bom thường xóa; visual riêng mỗi đòn; đai quét từ boss và gây damage theo tiếp xúc. | |
 | B2 | Slime Mẹ, boss phụ chương 2 (650 HP) | Ổ ủ phá được, gọi con yếu về, dây cứu con cắt được, con che thân, bầy nhảy, giận lao và lứa cuối đổi máu; hồi 20 HP/s. Luật chi tiết: [BOSS-TACTICS](BOSS-TACTICS.md) |
-| B3 | Vua Slime biến dị, Vô tận (1000 HP) | Giữ tinh anh/xích/trống; thêm tay quét, phình nổ, mưa hai nhịp, sóng sàn, hút nhầy thành giáp cắt được và quá tải; cuối trận ghép hai chiêu. Không có mầm/slime con biến dị. [BOSS-TACTICS](BOSS-TACTICS.md) |
+| B3 | Slime biến dị, Vô tận (1000 HP) | Xanh lá, mắt xoắn/miệng lệch, bỏ vương miện. Ba phase/mỗi phase ba đòn; mech 66% sáu bướu ×3 vòng/60 s; 33% ping pong sáu lõi; 1HP sáu nhát lõi xen đòn all-in. Nền25/50% và bốn túi trời có nhịp riêng, chạm trúng cả bế/bay/bounce. Vào mech cuối xóa hoàn toàn sân nhầy bằng animation hút về boss. Nhiễu nhịp gỡ bằng rê qua lại2 s. [MUTANT-SLIME](MUTANT-SLIME.md) |
 
 ### Vũ khí (V)
 

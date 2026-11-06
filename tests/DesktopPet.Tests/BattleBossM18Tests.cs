@@ -14,7 +14,11 @@ internal static class BattleBossM18Tests
 
     private static readonly BattleSettings Shipped = BattleData.Settings;
     private static readonly EnemyType ShippedMother = Shipped.Enemy("mother");
-    private static readonly EnemyType ShippedKing = Shipped.Enemy("mutant_king");
+    // Historical opt-in fixture: new mutant gameplay no longer uses royal links/rain.
+    private static readonly EnemyType ShippedKing = new() { CrownLinks = new[] {
+        new LinkSpec { Kind = EnemyLinks.Tether, Range = 220, Share = 0.5, BreakStun = 1, Relink = 6, CutSpeed = 300 },
+        new LinkSpec { Kind = EnemyLinks.Rhythm, Range = 220, Beat = 0.8, Beats = 4 }
+    }, Rain = new RainSpec { PuddleSeconds = 5 } };
 
     private static EnemyType Plain(string id = "slime", double speed = 40) => new() { Id = id, MaxHp = 300, Speed = speed, Damage = 0, Range = 50, Windup = 0.6, AttackCooldown = 1.5, Recover = 0.3 };
     private static EnemyType Mother(int cap = 6, double speed = 0) => new()
@@ -265,9 +269,8 @@ internal static class BattleBossM18Tests
             "The shipped Slime Mother: clutches of three fusing slimes, angry at the end");
         var king = s.Enemy("mutant_king");
         var kp = king.Phases ?? Array.Empty<BossPhase>();
-        check(king is { Boss: true, BinSpit: false, RallyEvery: > 0, Rain: not null } && king.CrownLinks!.Select(l => l.Kind).SequenceEqual(new[] { EnemyLinks.Tether, EnemyLinks.Rhythm })
-              && kp.Length == 3 && kp.All(p => p.Shield && s.PhaseCalls(p).Contains("spitter") && s.PhaseCalls(p).Count() <= king.SummonCap),
-            "The shipped Mutant King: shield phases calling spitters, a chain and a drum in turn, a goo rain");
+        check(king is { Boss: true, BinSpit: false, Mutant: true, Rain: null, CrownLinks: null, Phases: null },
+            "The shipped Mutant Slime owns its phases without legacy king helpers, links or rain");
         var kinds = new[] { "mother", "mutant_king" };
         bool Uses(WaveGroup g) => kinds.Contains(g.Enemy) || g.Pick?.Keys.Any(kinds.Contains) == true || g.Squad?.Any(m => kinds.Contains(m.Enemy)) == true;
         var all = s.WavePlan.Concat(s.Campaign?.Chapters.Take(1).SelectMany(ch => ch.Stages).SelectMany(st => st.Waves) ?? Enumerable.Empty<WaveSpec>())

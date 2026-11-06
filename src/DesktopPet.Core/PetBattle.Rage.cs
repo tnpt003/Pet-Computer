@@ -97,7 +97,7 @@ public sealed partial class BattleSim
             if (Damage(other, damage, DamageSource.Splash) == HitResult.Landed && other.State != SlimeState.Defeated && held == null)
             {
                 double knock = RageKnockOf(arms.Knock + knockBonus);
-                if (knock > 0 && other.Elite is not { PushImmune: true }) other.KnockVelocity = (other.X < catX ? -1 : 1) * knock * other.Type.PushFactor;
+                if (knock > 0 && !BossPushImmune(other) && other.Elite is not { PushImmune: true }) other.KnockVelocity = (other.X < catX ? -1 : 1) * knock * other.Type.PushFactor;
                 PullIn(other, catX);
             }
             if (Over) break;

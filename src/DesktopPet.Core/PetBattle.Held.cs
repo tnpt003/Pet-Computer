@@ -60,19 +60,21 @@ public sealed partial class BattleSim
         else { thrownInto.Clear(); lastFlight = null; }
     }
 
-    private void CancelHeldSwing() { heldSwingTime = -1; heldHit = false; heldTargetId = 0; }
+    private void CancelHeldSwing() { heldSwingTime = -1; heldHit = false; heldTargetId = 0; mutantWallBoss = 0; }
 
     private void HeldSwing(double dt, CatPose cat)
     {
         if (heldSwingTime >= 0)
         {
-            if (Find(heldTargetId) is Slime aimed && Math.Abs(aimed.BodyX - cat.X) > 1) HeldFacing = aimed.BodyX < cat.X ? -1 : 1;
+            if (mutantWallBoss == 0 && Find(heldTargetId) is Slime aimed && Math.Abs(aimed.BodyX - cat.X) > 1) HeldFacing = aimed.BodyX < cat.X ? -1 : 1;
             heldSwingTime += dt;
             if (!heldHit && heldSwingTime >= arms.HitTime) { heldHit = true; ResolveHeldHit(cat); }
             if (heldSwingTime >= arms.SwingDuration) CancelHeldSwing();
             return;
         }
-        if (heldCooldown > 0 || AirTarget(cat, 0) is not Slime target) return;
+        if (heldCooldown > 0) return;
+        if (StartMutantWallSwing(cat)) return;
+        if (AirTarget(cat, 0) is not Slime target) return;
         heldSwingTime = 0; heldHit = false; heldTargetId = target.Id;
         HeldFacing = target.BodyX < cat.X ? -1 : 1;
         heldCooldown = Math.Max(arms.AttackCooldown * CooldownFactor / (CheerRemaining > 0 ? Settings.CheerSpeed : 1) / LagFactor, arms.SwingDuration);
@@ -86,7 +88,7 @@ public sealed partial class BattleSim
         double bestGap = double.PositiveInfinity;
         foreach (var s in slimes)
         {
-            if (!s.Airborne || !s.Targetable || s.Shielded) continue;
+            if ((!s.Airborne && s.Mutant?.Mode != MutantMode.Core) || !s.Targetable || s.Shielded) continue;
             double gap = Gap(cat, s);
             if (gap <= HeldReach + slack && gap < bestGap) { best = s; bestGap = gap; }
         }
@@ -104,8 +106,9 @@ public sealed partial class BattleSim
     // The held swing's one hit: its own target, still in the air and in reach at this moment.
     private void ResolveHeldHit(CatPose cat)
     {
+        if (mutantWallBoss != 0) { HitMutantWallBump(cat); return; }
         var slime = Find(heldTargetId);
-        if (slime == null || !slime.Targetable || !slime.Airborne || Gap(cat, slime) > HeldReach + 14) return;
+        if (slime == null || !slime.Targetable || (!slime.Airborne && slime.Mutant?.Mode != MutantMode.Core) || Gap(cat, slime) > HeldReach + 14) return;
         double damage = arms.Damage * DamageFactor * ArmsFactor * SkillRushFactor * (CheerRemaining > 0 ? Settings.CheerDamage : 1);
         if (Reckless) damage *= 1 + recklessBonus;
         bool crit = critChance > 0 && strikeRandom.NextDouble() < critChance;

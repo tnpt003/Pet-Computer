@@ -11,6 +11,7 @@ public sealed partial class BattleSim
     private void StartShield(Slime boss, BossPhase phase, int tag)
     {
         boss.Shielded = boss.Retreating = true;
+        if (boss.Type.Zip != null) ClearStatus(boss);
         boss.ShieldTag = tag;
         boss.RetreatTime = 0;
         boss.RetreatSide = RetreatEdge(boss.X, lastCatX);

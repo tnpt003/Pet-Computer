@@ -777,26 +777,14 @@
       // `every` s with its shield down, `drops` goo drops fall around the cat (`spacing` apart, the first on
       // it), each ring on the floor `warning` s first: a cat on the floor in `radius` takes `damage` (scaled
       // as its hits, no stun); a puddle stays puddleSeconds s. Lift the cat or use the Bubble shield.
-      "id": "mutant_king", "nameVi": "Vua Slime biến dị", "nameEn": "Mutant Slime King",
-      "tipVi": "Né tay quét, nổ và mưa. Pha khiên gọi ba đội hình, buff hai tinh anh mỗi lượt; đẩy vua để ngắt. Cắt dòng vàng ngăn hồi giáp; đánh mạnh lúc quá tải.", "tipEn": "Dodge sweeps, bursts and rain. Shield phases call three formations and rally two elites at a time; Push the King to interrupt. Cut golden streams to stop armor; strike during overload.", "counters": ["scissors", "push", "shield"],
+      "id": "mutant_king", "nameVi": "Slime biến dị", "nameEn": "Mutant Slime",
+      "tipVi": "Nhầy đánh cả khi bế/bay. Thả đè bướu sàn, bế đánh bướu tường theo số; ném trả lõi. Rê qua lại trên mèo 2 giây gỡ Nhiễu nhịp. Cuối trận né rồi đánh lõi sáu lần.",
+      "tipEn": "Goo hits held and flying cats. Drop onto floor bumps, carry to strike numbered wall bumps; throw cores back. Rub the cat for 2s to clear Stutter. Dodge and strike the final core six times.",
+      "counters": ["shield", "heal"], "mutant": true,
       "maxHp": 1000, "speed": 24, "damage": 32, "range": 110,
       "windup": 1.2, "attackCooldown": 2.6, "recover": 0.7,
-      "scale": 2, "color": "#7FBF5A", "angryColor": "#E86A6A", "marks": "mutant", "binSpit": false,
-      "boss": true, "slam": true, "slamDamage": 24, "pushFactor": 0.35, "stunFactor": 0.4,
-      "enragedSpeed": 34, "enragedWindup": 0.8, "kingFormations": true, "rallyTargets": 2, "summonCap": 10, "retreatSpeed": 240, "retreatSeconds": 3,
-      "rallyEvery": 9, "rallyCharge": 0.8, "rallyHp": 0.5, "rallyDamage": 1.25, "shieldBreakStun": 2,
-      "retreatLeap": true, "leapCrouch": 0.35, "leapSeconds": 0.9, "summonWarning": 0.6,
-      "crownLinks": [
-        { "kind": "tether", "range": 220, "share": 0.5, "breakStun": 1, "relink": 6, "cutSpeed": 300 },
-        { "kind": "rhythm", "range": 220, "beat": 0.8, "beats": 4 }
-      ],
-      "bossTactics": { "every": 5, "warning": 1.1, "opening": 3.5, "sweepReach": 125, "sweepRadius": 125, "burstRadius": 160, "waveRadius": 38, "waveSpacing": 65 },
-      "rain": { "every": 12, "drops": 4, "spacing": 90, "warning": 1, "radius": 32, "damage": 14, "height": 150, "puddleSeconds": 5 },
-      "phases": [
-        { "at": 0.75, "shield": true, "summons": [ { "enemy": "slime", "count": 1 }, { "enemy": "runner", "count": 1 }, { "enemy": "spitter", "count": 1 } ] },
-        { "at": 0.5, "shield": true, "summons": [ { "enemy": "mender", "count": 1 }, { "enemy": "rock", "count": 1 }, { "enemy": "spitter", "count": 1 } ] },
-        { "at": 0.25, "shield": true, "enrage": true, "summons": [ { "enemy": "rock", "count": 1 }, { "enemy": "spitter", "count": 1 }, { "enemy": "slime", "count": 2 } ] }
-      ]
+      "scale": 2, "color": "#7FBF5A", "angryColor": "#7FBF5A", "marks": "mutant", "binSpit": false,
+      "boss": true, "pushFactor": 0.35, "stunFactor": 0.4
     },
     {
       "id": "king", "nameVi": "Vua Slime", "nameEn": "Slime King",
@@ -1123,7 +1111,7 @@
             "goalEn": "Chapter 2's last battle: bubble and wall slimes, then the Zip Slime, small and quick, swelling as it loses HP. This stage lends the Scissors.",
             "tipVi": "Đánh hai khóa đai luân phiên mỗi 3 đòn, tổng 12 đòn; đẩy file vào thư mục cùng ký hiệu và né cây thư mục. Còn 1 HP, đánh 6 tay kéo (3 trên không, 3 dưới đất) để hạ boss. Rê chuột soi file bom; nhấc mèo né đai và đòn sát đất.",
             "tipEn": "Strike alternating belt locks every 3 hits, 12 hits total; push files into matching folders and dodge folder trees. At 1 HP, strike six pulls (three airborne, three grounded) to defeat the boss. Hover files to reveal the bomb; lift the cat over belts and floor attacks.",
-            "objective": "clear", "upgrades": true, "maxAlive": 6, "threat": 1.4, "eliteChance": 0.25, "maxMalware": 4, "newAppsFrom": 1, "rulesVersion": 12,
+            "objective": "clear", "upgrades": true, "maxAlive": 6, "threat": 1.4, "eliteChance": 0.25, "maxMalware": 4, "newAppsFrom": 1, "rulesVersion": 13,
             "unlocksSkill": "scissors", "suggestSkills": [ "scissors", "shield", "push" ],
             "keepsake": { "id": "zip_plush", "kind": "plush", "nameVi": "Thú bông Slime Nén", "nameEn": "Zip Slime plush" },
             "waves": [
@@ -1166,7 +1154,7 @@
   // older kinds: at most two kinds of link and two the cursor beats); "mutations": after each cleared boss
   // wave pick one of "offer" odd rules, held until the next boss wave is cleared, then its reward.
   "endless": {
-    "id": "endless", "rulesVersion": 20, "unlockAfter": "c1_slime_king", "upgradeEvery": 2, "bossEvery": 10, "boss": "king_c1",
+    "id": "endless", "rulesVersion": 21, "unlockAfter": "c1_slime_king", "upgradeEvery": 2, "bossEvery": 10, "boss": "king_c1",
     "bosses": [ "king_c1", "zip", "mutant_king" ],
     "lateBoss": "king", "lateBossFrom": 40, "bossBonusPick": true, "allSynergiesAt": 48,
     "eliteChancePerWave": 0.007, "eliteChanceMax": 0.45, "moreElitesEvery": 20, "moreElitesMax": 2,
@@ -1380,7 +1368,7 @@
     "routes": [
       {
         "id": "dump_trail", "nameVi": "Lối Bãi rác", "nameEn": "The Dump Trail",
-        "rulesVersion": 13, "keepRuns": [ 1, 2, 3, 4 ], "unlockAfter": "c2_zip_slime", "scene": "dump",
+        "rulesVersion": 14, "keepRuns": [ 1, 2, 3, 4 ], "unlockAfter": "c2_zip_slime", "scene": "dump",
         "kindGacha": { "steps": 6, "minLanes": 2, "maxLanes": 3, "weights": { "fight": 45, "event": 18, "elite": 20, "rest": 12, "shop": 14 }, "rerollCost": 0.08 },
         "zones": [
           { "id": "swamp", "nameVi": "Đầm nhầy", "nameEn": "Slime swamp", "steps": 2, "fights": [ "y_puddles", "y_ice_pond", "y_split_bog" ], "elites": [ "y_mother_nest" ] },

@@ -12,6 +12,36 @@ using static PetPrivate;
 // Python isolation and cleanup. The real cursor is never moved.
 internal static class BattleChecks
 {
+    private static void MutantPunishment(PetWindow window, PetModel pet, Action<bool, string> check)
+    {
+        for (int mode = 0; mode < 2; mode++)
+        {
+            window.Reset();
+            window.BattleTuning = new BattleSettings { FirstWaveDelay = 100, RageAuto = false };
+            window.StartBattle();
+            var sim = window.Battle!;
+            var boss = sim.AddSlime(sim.Right - 100, BattleData.Settings.Enemy("mutant_king"));
+            boss.Set(SlimeState.Moving); boss.Hp = 1;
+            boss.Mutant = new MutantBoss { Phase = 3, Final = true, TerrainCleared = true, Mode = MutantMode.AllIn, AllIn = 0, Clock = 100 };
+            var bounds = Field<Area>(window, "bounds");
+            pet.Y = bounds.Top + 40; pet.Grounded = false;
+            pet.VX = 400; pet.VY = -500; pet.Action = mode == 0 ? PetAction.Dragging : PetAction.Thrown;
+            SetField(window, "dragging", mode == 0);
+            boss.Mutant.Zones.Add(new MutantZone { X = pet.X + 60, W = 250, H = 0, Height = 10000, Life = 30, Falling = true, Shape = MutantShape.Column });
+            Call(window, "TickBattle", 1.0 / 60);
+            check(sim.MutantForcedFall && !Field<bool>(window, "dragging") && !window.IsMouseCaptured && pet.VX == 0 && pet.VY == 0 && pet.StickLanding,
+                $"Mutant strip releases hand/bounce mode {mode} into a straight non-bouncing fall");
+            double hp = sim.CatHp;
+            var physics = Field<PetPhysics>(window, "physics");
+            for (int i = 0; i < 1200 && !pet.Grounded; i++) physics.Step(pet, bounds, 1.0 / 120);
+            Call(window, "TickBattle", 1.0 / 60);
+            check(pet.Grounded && !sim.MutantForcedFall && sim.CatStunRemaining > 0.9 && sim.CatHp == hp,
+                "Mutant forced landing begins one-second stun and cannot take a second strip hit");
+            window.EndBattle();
+            check(!pet.StickLanding, "Ending mutant battle clears punishment landing flag");
+        }
+        window.Reset();
+    }
     private static void ZipPunishment(PetWindow window, PetModel pet, Action<bool, string> check)
     {
         for (int mode = 0; mode < 2; mode++)
@@ -59,6 +89,7 @@ internal static class BattleChecks
         BattleSim Sim() => window.Battle!;
         var fast = new BattleSettings { FirstWaveDelay = 0, Waves = new[] { 2, 2 }, WaveBreakSeconds = 1 };
         ZipPunishment(window, pet, check);
+        MutantPunishment(window, pet, check);
 
         window.Reset();
         check(!window.BattleActive && OpenBattleWindows() == 0 && !pet.SwordOut, "Battle Mode is off until the user starts it");

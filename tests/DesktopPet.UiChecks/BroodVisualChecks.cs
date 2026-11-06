@@ -39,18 +39,19 @@ internal static class BroodVisualChecks
         check(bows > 20, $"The Slime Mother wears a pink bow by her crown ({bows} bow pixels)");
         int feeding = SkyVisualChecks.Count(px, w, h, bow, (int)giant.X - 30, (int)fed.X - 20, 0, floor);
         check(feeding > 30, $"Her giant feeding her: a pink line and a heart over its head ({feeding} pixels)");
-        int drips = SkyVisualChecks.Count(px, w, h, drip, 940, 1100, 0, floor);
+        int drips = SkyVisualChecks.Count(px, w, h, green, 940, 1100, 0, floor);
         int crown = SkyVisualChecks.Count(px, w, h, paleGold, 960, 1080, 0, floor - 40);
-        check(drips > 20 && crown > 20, $"The Mutant King drips goo and wears a pale crooked crown ({drips} drip, {crown} crown pixels)");
+        check(drips > 20 && crown == 0, $"The Mutant Slime has a green asymmetric body and no royal crown ({drips}/{crown} pixels)");
 
         var rains = new BattleSim(data, 0, Width, new Random(1));
-        var king = Add(rains, "mutant_king", 1050);
+        var king = rains.AddSlime(1050, new EnemyType { Id = "legacy_rain", Boss = true, Scale = 2, Color = "#7FBF5A", Rain = new RainSpec { PuddleSeconds = 5 }, BossTactics = new BossTacticsSpec() });
+        king.Set(SlimeState.Moving);
         king.Special = BossMove.Rain; king.SpecialAt = 300;
         king.SpecialLeft = king.SpecialDuration = 0.01;
         for (int i = 0; i < 30; i++) rains.Step(1.0 / 60, 300, false);
         var lane = SkyVisualChecks.Render(new BattleFieldView(rains) { OriginX = 0 }, w, h, "enemy-rain");
         int drops = SkyVisualChecks.Count(lane, w, h, green, 150, 450, 0, floor - 12);
-        check(rains.Goos.Count(g => g.Rain) == data.Enemy("mutant_king").Rain!.Drops * 2 && drops > 30, $"Its two-beat goo rain falls around the cat ({drops} drop pixels)");
+        check(rains.Goos.Count(g => g.Rain) == king.Type.Rain!.Drops * 2 && drops > 30, $"Its two-beat goo rain falls around the cat ({drops} drop pixels)");
 
         var tactics = new BattleSim(data, 0, Width, new Random(1));
         var mama = Add(tactics, "mother", 260);
@@ -58,7 +59,8 @@ internal static class BroodVisualChecks
         child.SummonedBy = mama.Id; child.Nursing = true; mama.NurseCord = child.Id;
         var nest = Add(tactics, "fuser", 110);
         nest.BroodNest = true; nest.Link = null; nest.NestLeft = 3;
-        var mutant = Add(tactics, "mutant_king", 950);
+        var mutant = tactics.AddSlime(950, new EnemyType { Id = "legacy_tactics", Boss = true, Scale = 2, Rain = new RainSpec { PuddleSeconds = 5 }, BossTactics = new BossTacticsSpec() });
+        mutant.Set(SlimeState.Moving);
         mutant.Special = BossMove.Sweep; mutant.Facing = -1;
         mutant.SpecialDuration = 1.1; mutant.SpecialLeft = 0.4; mutant.GooArmor = 70;
         var advanced = SkyVisualChecks.Render(new BattleFieldView(tactics) { OriginX = 0 }, w, h, "enemy-boss-tactics");

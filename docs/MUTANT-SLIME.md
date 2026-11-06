@@ -1,6 +1,6 @@
 # Slime biến dị — thiết kế được duyệt 06/11/2026
 
-Trạng thái: **thiết kế, chưa triển khai**. Code hiện tại vẫn là `mutant_king` với luật Vua và boss tactics cũ. Tài liệu này ghi quyết định từ hội thoại, không phải báo cáo tính năng đã chạy. Đối chiếu luật hiện tại trong BOSS-TACTICS.md. Không thay đổi boss Vua thường.
+Trạng thái: **đã triển khai bản thử, đang nghiệm thu tay**. Giữ ID dữ liệu `mutant_king` để tương thích bộ chọn boss; `mutant: true` chọn bộ trạng thái riêng, không dùng luật Vua cũ. Không thay đổi boss Vua thường. Kết quả kiểm tra thực tế ghi ở PROGRESS.md và Issue_fixxed.md.
 
 ## Nhận diện
 
@@ -80,7 +80,7 @@ Hồi máu không hạ phase, không mở lại mech trước. Dọn bướu/ố
 
 ## Mech 3 — sáu nhát lõi ở 1 HP
 
-Chỉ bắt đầu ở 1 HP, giữ HP để độc/execute/combo không bỏ qua. Gào 5 s: miệng kéo dài, mắt xoắn siết, hút nhầy rồi phụt vòng gợn. Sau đó mở lõi có sáu vết nứt đếm nhát hợp lệ.
+Chỉ bắt đầu ở 1 HP, giữ HP để độc/execute/combo không bỏ qua. **Ngay khi vào mech cuối, mọi vùng nguy hiểm nền và bốn túi trời ngừng gây hại hoàn toàn** (bổ sung người dùng 06/11). Trong 2,5 s đầu đoạn gào 5 s, nền co thành giọt chạy về boss, túi rút nhỏ và bị hút vào thân; không để lại hitbox và không tái sinh. Hủy cả đòn thường đang báo. Gào: miệng kéo dài, mắt xoắn siết, hút nhầy rồi phụt vòng gợn. Sau đó mở lõi có sáu vết nứt đếm nhát hợp lệ. Chỉ còn đòn riêng của mech cuối.
 
 Mỗi nhát lập tức khóa damage/debuff, boss đẩy mèo ra, đổi vị trí ngẫu nhiên hợp lệ rồi chọn một trong ba all-in, tránh lặp ngay. Kết thúc đòn mở lõi. Nhát sáu hạ boss, không phản công thêm. Mèo trúng all-in bị ép rơi không nảy và choáng 1 s sau đáp; cần khoảng bảo vệ để nhấc lại.
 

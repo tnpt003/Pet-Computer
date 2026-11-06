@@ -311,7 +311,7 @@ public sealed partial class BattleSim
             double dx = Math.Max(0, Math.Max(left - x, x - right)), dy = Math.Max(0, Math.Max(bottom - height, height - top));
             if (dx * dx + dy * dy > range * range) continue;
             bool fresh = !s.Wet;
-            s.WetRemaining = Settings.SpraySoakSeconds;
+            if (!BossDebuffImmune(s)) s.WetRemaining = Settings.SpraySoakSeconds;
             // Hot water: an ice shell sprayed long enough melts away (2026-11-04).
             if (s.Iced)
             {

@@ -9,7 +9,7 @@ internal static class BossTacticsTests
     {
         var kind = Data.Enemy(mother ? "mother" : "mutant_king");
         var boss = new EnemyType { Id = kind.Id, Boss = true, MaxHp = 1000, Speed = 0, Damage = 25, Range = 100,
-            Scale = 2, Brood = kind.Brood, Rain = kind.Rain, BossTactics = tactics ?? kind.BossTactics, SummonCap = 6 };
+            Scale = 2, Brood = kind.Brood, Rain = mother ? kind.Rain : new RainSpec { PuddleSeconds = 5 }, BossTactics = tactics ?? kind.BossTactics ?? new BossTacticsSpec(), SummonCap = 6 };
         var settings = new BattleSettings { FirstWaveDelay = 0, SpawnInterval = 0.01, CatMaxHp = 10000,
             Weapons = new[] { Data.Weapon("sword") with { Damage = 0, StunChance = 0 } }, RageHitGain = 0,
             Enemies = new[] { boss, Data.Enemy("fuser"), Data.Enemy("giant") },

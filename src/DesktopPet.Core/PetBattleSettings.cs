@@ -484,6 +484,7 @@ public enum HitResult { Landed, Blocked, Immune }
 
 public sealed class Slime
 {
+    public MutantBoss? Mutant { get; internal set; }
     public int Id { get; init; }
     // Its kind (battle.json "enemies"): abilities and the numbers not copied below.
     public EnemyType Type { get; init; } = new();

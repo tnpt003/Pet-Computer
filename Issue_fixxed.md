@@ -5,6 +5,12 @@ Sổ ghi các lỗi đã sửa của Desktop Pet. Phần A: lỗi người dùng
 Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm lỗi mới: tạo mục số tiếp theo ở đầu phần A (hoặc một dòng ở phần B).
 
 # A. Lỗi người dùng phát hiện
+## #63 — Slime biến dị còn giống Vua; thiết kế ba phase và sân nhầy (06/11)
+- **Yêu cầu:** đổi tên/bỏ vương miện, xanh lá/mắt xoắn, 9 đòn/3 mech; hazard đánh cả bế/bounce, gỡ Nhiễu nhịp bằng rê chuột; miễn debuff boss trong mech. Khi vào mech cuối phải xóa toàn bộ nền/túi trời, có visual hút về.
+- **Cách sửa:** opt-in `mutant: true` tách khỏi Vua; state machine core cho 6 bướu ×3 vòng/60 s, ping pong6 và hồi/phạt rồi luôn phase3, chốt1HP/sáu nhát lõi xen ba all-in. Terrain25/50% và túi trời nhịp riêng; quét va chạm, cooldown giao dải, bảo vệ suốt rơi và sau stun để nhấc lại. Bướu tường dùng hit-time vung thật, bướu sàn không phải quái và không kích/tiêu Cú đáp địa chấn. Final entry hủy pending attack/tắt hazard trước animation co/hút2,5 s trong gào5 s. ZIP miễn status trong mech và choáng/đẩy phase2–3. vi/en/ja; records ZIP13/Endless21/Bãi rác14.
+- **Kiểm chứng:** full `artifacts/mutant-full-tests.log`: Python58+i18n5 đạt; C#3681 đạt/7 FAIL (3 kỳ vọng cũ, 4 startup do sandbox). Đã sửa kỳ vọng/tables và kiểm lại có quyền: 11 suite541 đạt (`mutant-recheck.log`), test mutant mở rộng45 đạt (`mutant-contact-check.log`). WPF1461 đạt trước test ép rơi mở rộng; kết quả cuối/publish ghi sau. Không nới ngưỡng cân bằng. Ảnh thật ở artifacts/mutant-render (sáng/tối), đã xem bướu và sân phase3.
+- **Cần test tay:** thao tác thả/đánh/throw toàn trận, gỡ bằng chuột, nhấc lại sau stun, thời gian phản ứng/hành lang né màn nhỏ, perf boss thật/DPI/multi-monitor. Bot cân bằng hiện chưa giải đầy đủ mech mới, không dùng kết quả tự động để khẳng định boss cân bằng khi chơi thật.
+
 ## #62 — Tràn bộ nhớ cho mèo đứng gap đánh boss và bế cao né toàn bộ (06/11)
 - **Nguyên nhân:** WarnBeat gộp Clamp/Overflow nên kéo boss vào ZipAimX là tâm gap. Vùng tràn70 DIP/bung170 DIP; renderer chỉ nằm trong dải sàn.
 - **Sửa theo duyệt:** layout gap190 DIP lệch ngang khỏi mèo, chọn theo seed, retreat goal ngoài gap+tầm vũ khí có tính tăng kích thước/tolerance; bỏ chọn khi không đủ chỗ, hủy khi resize không còn hợp lệ. Boss rút trong gồng/giữ goal khi đánh, không thêm bất tử. Overflow.air=true, tràn và bung dùng SkyHeight. Overlay hai vách giấy/thư mục/răng ZIP, luồng file phát từ boss và ray vàng; bỏ lớp sàn cũ/impact chung. SetArea ánh xạ gap/from/goal; refresh chiều cao overlay khi đổi màn. Chi tiết ZIP-SLIME #62, MANUAL-TEST #62.

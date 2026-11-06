@@ -72,7 +72,7 @@ public sealed partial class BattleSim
     // damage is applied by the caller; a boss's share is taken here).
     public bool ApplyStatus(Slime slime, SlimeStatus status, double seconds, double power = 0)
     {
-        if (!slime.Targetable || slime.Shielded || slime.LeapHeight > 0 || !double.IsFinite(seconds) || seconds <= 0) return false;
+        if (!slime.Targetable || slime.Shielded || BossDebuffImmune(slime) || slime.LeapHeight > 0 || !double.IsFinite(seconds) || seconds <= 0) return false;
         double share = slime.IsBoss ? BossStatusShare : 1;
         switch (status)
         {
@@ -129,6 +129,7 @@ public sealed partial class BattleSim
     // The statuses' clocks and the poison's damage for one step (the battle still going).
     private void StepStatus(Slime slime, double dt)
     {
+        if (BossDebuffImmune(slime)) { ClearStatus(slime); return; }
         slime.StickImmune = Math.Max(0, slime.StickImmune - dt);
         if (slime.StuckRemaining > 0)
         {

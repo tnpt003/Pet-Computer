@@ -24,7 +24,7 @@ internal static class KingFormationTests
     public static void Run(Action<bool, string> check)
     {
         var layouts = new HashSet<string>();
-        foreach (string kind in new[] { "king", "mutant_king", "king_c1" })
+        foreach (string kind in new[] { "king", "king_c1" })
         for (int seed = 1; seed <= 8; seed++)
         {
             var (sim, boss) = Field(kind, seed);
@@ -55,7 +55,7 @@ internal static class KingFormationTests
             check(helpers.Where(s => s.Rallied).All(s => s.Elite != null), "Every rally target receives the normal elite upgrade");
         }
         check(layouts.Count > 1, "Seeded later kings use varied compatible formation bundles");
-        var (edgeSim, edgeBoss) = Field("mutant_king", 40);
+        var (edgeSim, edgeBoss) = Field("king", 40);
         for (int i = 0; i < 240; i++) edgeSim.Step(Dt, 100, false);
         var edgeHelpers = edgeSim.Slimes.Where(s => s.SummonedBy == edgeBoss.Id && s.Targetable).ToArray();
         foreach (var helper in edgeHelpers) { helper.StunRemaining = 99; helper.Set(SlimeState.Stunned); }

@@ -943,7 +943,7 @@ public sealed partial class BattleSim
     {
         AddEffect(BattleEffectKind.Bell, slime.X, slime.BodyTop + 26);
         Damage(slime, rules.PingDamage * DamageFactor, DamageSource.App);
-        if (!slime.Targetable || slime.LeapHeight > 0 || slime.Elite is { PushImmune: true }) return;
+        if (!slime.Targetable || BossPushImmune(slime) || slime.LeapHeight > 0 || slime.Elite is { PushImmune: true }) return;
         if (slime.State is not (SlimeState.Moving or SlimeState.Windup or SlimeState.Recover)) return;
         double stun = rules.PingStun * slime.Type.StunFactor;
         if (stun <= 0) return;

@@ -70,8 +70,8 @@ internal static class CustomFightTests
         var linked = new CustomFight { Id = "k", Name = "K", Enemies = new() { ["chain"] = 1, ["drummer"] = 1 } };
         check(CustomFights.CanAdd(data, all, linked, "fuser") == CustomFightBlock.Links && CustomFights.CanAdd(data, all, linked, "slime") == CustomFightBlock.None,
             "Chains and drums: a third kind of link (merging) is refused, a plain slime is not");
-        check(CustomFights.CanAdd(data, all, new CustomFight { Id = "m", Name = "M", Enemies = new() { ["fuser"] = 1 } }, "mutant_king", boss: true) == CustomFightBlock.Links,
-            "The Mutant King's chains and drums with merging slimes: refused");
+        check(CustomFights.CanAdd(data, all, new CustomFight { Id = "m", Name = "M", Enemies = new() { ["fuser"] = 1 } }, "mutant_king", boss: true) == CustomFightBlock.None,
+            "Mutant Slime no longer adds royal chain or drum link kinds to a custom fight");
         var tricks = new CustomFight { Id = "t", Name = "T", Enemies = new() { ["phantom"] = 1, ["bubble"] = 1 } };
         check(CustomFights.CanAdd(data, all, tricks, "mirage") == CustomFightBlock.Mouse, "Two cursor tricks: a third is refused");
         tricks.Enemies["mirage"] = 1;

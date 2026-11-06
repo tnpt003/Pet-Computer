@@ -2,7 +2,16 @@
 
 **Quyết định phát hành:** sau khi nhận báo cáo test/FPS và các mục chưa nghiệm thu, người dùng yêu cầu “ok release 1.5 đi” ngày 07/11. Chuẩn bị M30/1.5.0 theo quyết định này; không coi yêu cầu phát hành là bằng chứng các mục tay/perf đã đạt. Các phần “điều kiện trước M30” dưới đây giữ lại tiêu chí và kết quả lịch sử; việc còn thiếu chuyển sang theo dõi sau release.
 
-Kiểm tra lại sau nâng Version1.5.0: Python58, i18n5, C#3797/93suite, WPF1759 đều đạt (`artifacts/release150-tests.log`); build website đạt. Release notes vi/en/ja đã sửa các câu cũ về mang cả10kỹ năng, mèo cắt dây và miễn damage khi bế/bay, đồng thời ghi giới hạn FPS/DPI/upgrade. Kết quả phát hành GitHub ghi bổ sung sau khi workflow hoàn tất.
+Kiểm tra lại sau nâng Version1.5.0: Python58, i18n5, C#3797/93suite, WPF1759 đều đạt (`artifacts/release150-tests.log`); build website đạt. Release notes vi/en/ja đã sửa các câu cũ về mang cả10kỹ năng, mèo cắt dây và miễn damage khi bế/bay, đồng thời ghi giới hạn FPS/DPI/upgrade.
+
+## M30 đã phát hành 1.5.0 — 07/11
+
+- Source **112365a**, annotated tag **v1.5.0**; [Release chính thức](https://github.com/tnpt003/Pet-Computer/releases/tag/v1.5.0), đã xác minh là Latest, không draft/pre-release.
+- [Workflow Release](https://github.com/tnpt003/Pet-Computer/actions/runs/42291995600) success (Python/C#, publish, pack/upload); [Website](https://github.com/tnpt003/Pet-Computer/actions/runs/42292000761) success, caption1.5 đã truy cập thật.
+- Publish local sạch **1.5.0+112365a**; smoke **3/3 PASS**, pack Setup/portable/full/delta1.4.4→1.5.0 đạt; SHA1 gói full/delta local khớp manifest. Artifact local: `artifacts/DesktopPet-1.5.0-112365a-win-x64.zip`, `artifacts/release/PetComputer-win-Setup.exe`, `PetComputer-win-Portable.zip`.
+- GitHub có đủ Setup, portable, full, delta, RELEASES và releases.win.json. Đã GET link `latest/download/releases.win.json`, xác minh full+delta1.5.0; HEAD Setup latest/download trả **HTTP200**. Đây là kiểm nguồn tải, chưa phải thử nâng cấp app từ1.4.4 trên máy thật.
+- Đã thoát đúng pet project bình thường, dùng dữ liệu smoke riêng và mở lại pet1.5.0. Log `artifacts/release150-{tests,publish,smoke,pack}.log`; feed thật lưu `artifacts/release150-live-feed.json`.
+- FPS50,5 và các mục chơi tay/DPI/multi-monitor/upgrade còn thiếu được giữ trong release notes và PROGRESS để theo dõi tiếp. Không đổi gameplay/ngưỡng để phát hành; không đánh dấu những mục này đã đạt.
 
 Phạm vi: kiểm tra bản tích hợp sau #70, sửa sai lệch xác định được, đồng bộ tài liệu và lập điều kiện trước M30. Không thêm gameplay, không đổi HP/damage/threat, seed, rulesVersion hoặc ngưỡng cân bằng; không nâng Version/tag/release remote. HEAD gốc: `d641d64` sau gói code `79c9f1c`; commit của lượt rà được ghi ở PROGRESS.
 

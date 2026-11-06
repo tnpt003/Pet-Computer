@@ -2,7 +2,7 @@
 
 Slime Mẹ thiết kế lại #67 (06/11): triển khai ba phase/chín đòn, Quấn khăn, Trứng treo/Trả con về nôi, Thanh dỗ 33/66/100 và Trứng cuối bắt buộc. Luật hiện hành ở [MOTHER-SLIME.md](MOTHER-SLIME.md), thay mô tả mẹ cũ phía dưới. Đầm nhầy cho mượn Kéo cắt; Slime Nén cho mượn Bình xịt. Chưa nghiệm thu chơi tay.
 
-Cập nhật: 2026-11-07 (Asia/Saigon). Trạng thái: **M30/1.5.0 được người dùng duyệt phát hành ngày 07/11, đang kiểm tra và đóng gói.** Đã xong M01–M29, đợt B/C, các mốc tới #70 và chuẩn hóa z-order. Quyết định phát hành giữ rõ giới hạn FPS và các mục chưa nghiệm thu tay, không coi chúng đã đạt. Kết quả theo commit tại [REVIEW-1.5-2026-11-07.md](REVIEW-1.5-2026-11-07.md).
+Cập nhật: 2026-11-07 (Asia/Saigon). Trạng thái: **M30/1.5.0 đã phát hành theo yêu cầu người dùng07/11, source112365a, tag v1.5.0, GitHubLatest.** [Tải và xem ghi chú phát hành](https://github.com/tnpt003/Pet-Computer/releases/tag/v1.5.0). Gồm M01–M29, đợt B/C, tới #70 và chuẩn hóa z-order. Giữ rõ giới hạn FPS và các mục chưa nghiệm thu tay; tiếp tục theo dõi sau release, không coi chúng đã đạt. Kết quả tại [REVIEW-1.5-2026-11-07.md](REVIEW-1.5-2026-11-07.md).
 
 Cách đọc file này:
 
@@ -216,15 +216,15 @@ Nhật ký chi tiết và kết quả test từng mốc: docs/archive/UPDATE-1.5
 | Sau M29 | Sửa sau chơi thử 30/10, đợt B (#32–#40), đợt C (#41–#44), góp ý 05/11 (#45–#52) | 05/11 |
 | Hợp nhất/chuẩn hóa | Slime Nén mới (#53), hai boss nâng cấp; sửa lứa cuối, đồng bộ vùng báo/trúng, Nộ chống đẩy, giữ luật vũng cũ; bảng luật và tiêu chí xong | 06/11; Python 58 + 5, C# 3170, WPF 1418 đạt; còn nghiệm thu tay |
 | Slime Nén 06/11 | Thiết kế lại đòn, mech, debuff, luật bế mèo, HP (Issue #54, #55) | 06/11; Python 58 + 5, C# 3260, WPF 1430 đạt; còn nghiệm thu tay |
-| **M30** | **Release 1.5.0 theo docs/RELEASE.md** | Người dùng chốt 07/11; đang test/đóng gói/phát hành |
+| **M30** | **Release 1.5.0 theo docs/RELEASE.md** | 07/11, source112365a/tagv1.5.0; local full test/smoke và workflow Release/Website đạt, đã xác minh Latest/feed/Setup |
 
-### Việc trước M30
+### Theo dõi sau M30 (người dùng chốt phát hành 07/11)
 
 1. Người dùng test tay theo docs/MANUAL-TEST.md → "Bản 1.5 — thứ tự test tay".
 2. Đo lại rồi quyết 5 đề xuất cân bằng và perf (docs/BALANCE-1.5.md, số đo có từ trước đợt B/C).
-3. Nghiệm thu bản tích hợp theo STANDARDIZATION-1.5.md. Banner Nộ đã đổi sang avatar và giải thích tự kích hoạt, có en/ja; không còn việc sửa chữ "Bấm vào thanh".
+3. Tiếp tục nghiệm thu theo STANDARDIZATION-1.5.md và ma trận REVIEW-1.5-2026-11-07.md; việc phát hành không thay bằng chứng test tay/DPI.
 4. Mèo tự rớt khỏi tay khi đánh slime bay: chưa rõ nguyên nhân, chờ log "Cat let go in battle".
-5. Nâng `<Version>` lên 1.5.0, rà README và website, tag theo docs/RELEASE.md.
+5. Version1.5.0/README/website/tag đã xong. Kiểm cài đặt/cập nhật từ1.4.4 trên máy thật; feed1.5.0 và HTTP200 không thay việc thử nâng cấp thực tế.
 
 rulesVersion hiện tại (#70, 07/11): chương 1 giữ như 1.4.4 theo duyệt 05/11; chương 2 là 4, 5, 3, 7, 15; Vô tận 26; Viễn chinh tuyến 1 r9 (`keepRuns` 6, 7, 8), Lối Bãi rác r19 (`keepRuns` 1, 2, 3, 4, 17, 18). Chuyến cũ được giữ không đồng nghĩa với replay nguyên bản luật cũ. Đổi luật đáng kể phải xét tách kỷ lục cả trước release, giữ ngoại lệ chương 1 đã duyệt.
 

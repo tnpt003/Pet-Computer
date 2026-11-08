@@ -25,7 +25,7 @@ internal static class AutonomyTests
 
         // Being held, paused or asleep stops everything the cat would start itself.
         foreach (var block in new[] { AutoBlock.Paused, AutoBlock.Held, AutoBlock.Unsettled })
-            check(kinds.Where(k => k is not (AutoKind.LocalBehavior or AutoKind.Ledges or AutoKind.Speech or AutoKind.Thought or AutoKind.AwayNap or AutoKind.BreakReminder))
+            check(kinds.Where(k => k is not (AutoKind.LocalBehavior or AutoKind.Ledges or AutoKind.Speech or AutoKind.Thought or AutoKind.AwayNap or AutoKind.BreakReminder or AutoKind.Weather))
                 .All(k => Blocks(k, block)), $"{block} stops every play kind");
         check(Blocks(AutoKind.AwayNap, AutoBlock.Held) && !Blocks(AutoKind.AwayNap, AutoBlock.Unsettled) && !Blocks(AutoKind.AwayNap, AutoBlock.Paused),
             "Away nap waits for the drag only (it may start while settled or not, as before)");

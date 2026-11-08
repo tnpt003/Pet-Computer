@@ -81,6 +81,8 @@ Ngoại lệ nào có link tới docs/APPROVED-EXCEPTIONS.md: trước khi sửa
 
 - Ngoại lệ đã duyệt 1.5.1: cổng phép là lối vào Battle Mode (tự hiện 20–40 phút, menu "Niệm phép cổng"); chỉ click của người dùng mới mở Sảnh, cổng không tự bắt đầu trận. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Cổng phép (Portal).
 
+- Ngoại lệ đã duyệt 1.5.1: thời tiết chỉ đọc màu ảnh thu nhỏ của wallpaper, không lưu/gửi, overlay click xuyên qua không chạm vào mèo. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Thời tiết theo wallpaper.
+
 ## File quan trọng
 README.md, docs/AI.md, docs/WINDOWS.md, src/DesktopPet/ (App.xaml.cs, PetWindow*.cs, PetModel.cs, PetRenderer.cs, PetPreferences.cs, PetSounds.cs, AI/), ai/, tests/DesktopPet.Tests/, tests/DesktopPet.UiChecks/, scripts/.
 

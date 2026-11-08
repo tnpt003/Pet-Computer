@@ -7,7 +7,7 @@ Mục tiêu: mèo ngoài trận đa dạng và thú vị hơn. Ba tính năng ch
 | Mốc | Nội dung | Trạng thái |
 |---|---|---|
 | 1. Portal | Cổng tự xuất hiện 20–40 phút/lần, mèo bất ngờ; menu "Niệm phép cổng"; bấm cổng mới vào Sảnh | Xong (07abbba), còn test tay |
-| 2. Weather | Thời tiết theo màu wallpaper Windows, hiện vùng quanh mèo | Chưa làm |
+| 2. Weather | Thời tiết theo màu wallpaper Windows, hiện vùng quanh mèo | Xong, còn test tay |
 | 3. Ruộng cơ bản | Dải 6 ô, cày → gieo → tưới → lớn → thu hoạch, 4 cây, lưu file riêng, di chuyển mảnh đất | Chưa làm |
 | 4. Mèo làm cùng | Mèo tự tưới, gặt, đuổi chim; khóa khi ngủ/kéo/Quiet | Chưa làm |
 | 5. Kinh tế farm | Kho, bán lấy xu nông trại riêng, mua hạt, mở ô, bù nhìn | Chưa làm |
@@ -27,6 +27,11 @@ Mục tiêu: mèo ngoài trận đa dạng và thú vị hơn. Ba tính năng ch
 - Loại thời tiết chỉ đổi khi đổi nền: xanh dương sáng = nắng/mây, xám = mưa, trắng/xanh lạnh = tuyết, cam/hồng = hoàng hôn/lá bay, xanh lá = phấn hoa/gió, tối = đêm sao/đom đóm. Không đọc được thì coi là trời quang.
 - Cường độ thay đổi theo thời gian (mưa to, nhỏ, tạnh một lúc) để không đơn điệu.
 - Chỉ hiện vùng quanh mèo, không phủ cả màn hình. Ẩn trong trận, Quiet, toàn màn hình; không đánh thức mèo; đứng yên khi Pause. Đo FPS trước khi mở rộng.
+- Người dùng duyệt thêm 08/11: công tắc "Thời tiết quanh mèo" trong Cài đặt → Thói quen (mặc định bật); ẩn cả khi Sảnh, bảng chuẩn bị hoặc bản đồ đang mở.
+- Hình: nắng là tia lấp lánh và mây (càng mạnh càng nhiều mây); mưa; tuyết viền xanh để thấy được trên nền trắng; lá bay; phấn hoa và vệt gió; sao và đom đóm. Vùng rộng khoảng 3 lần mèo (320–520 DIP), mờ dần ra rìa, cắt tự nhiên ở mép vùng làm việc. Hạt tính theo tọa độ màn hình nên không bị kéo theo mèo.
+- Đọc lại wallpaper khi Windows báo đổi nền, khi mèo sang màn hình khác và mỗi 60 giây (bắt slideshow); file không đổi thì không giải mã lại. Mỗi đợt cường độ dài 40–140 giây: mạnh, vừa, nhẹ hoặc tạnh.
+- Đo 08/11 trên bản Release, mưa ở cường độ khởi đầu 0,6, cửa sổ 358×304 DIP, 2 vòng 30 giây: CPU 0,88/0,83% so với 0,68/0,74% khi tắt (% của toàn bộ nhân), FPS trung vị 57,2/58,0 so với 58,9/56,8. Chênh FPS nằm trong sai số giữa hai vòng.
+- Đo hoặc xem một loại bất kỳ không cần đổi nền: đặt `PET_WEATHER_PROBE=Rain` (Sunny, Rain, Snow, Sunset, Pollen, Night), log có thêm dòng Frame stats.
 
 ### Farm (mốc 3–6)
 

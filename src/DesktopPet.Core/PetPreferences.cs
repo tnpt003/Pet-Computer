@@ -57,6 +57,8 @@ public sealed class PetPreferences
     public string? LastVersion { get; set; }
     // On by default: the pet may stand on, jump onto and climb other apps' windows.
     public bool ClimbWindows { get; set; } = true;
+    // On by default: weather around the cat, chosen from the wallpaper's colors.
+    public bool Weather { get; set; } = true;
     // On by default: the Expedition's keepsakes stand in the display corner once one is earned.
     public bool ShowTrophies { get; set; } = true;
     // Where the user or the cat left the keepsake: its monitor and the art's left edge as a fraction of

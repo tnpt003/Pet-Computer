@@ -18,7 +18,7 @@ internal static class Program
         Environment.SetEnvironmentVariable("PET_AI_DISABLED", "1");
         var app = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
         // The Adventure Guide is off here (BattleGuideEnabled follows persisted preferences); TutorialChecks turns it on.
-        var window = new PetWindow(new PetPreferences { Sounds = false }); // Unattended runs stay silent.
+        var window = new PetWindow(new PetPreferences { Sounds = false, Weather = false }); // Unattended runs stay silent; WeatherChecks turns weather on.
         // Unattended runs must not depend on the real foreground window or on how long
         // nobody touched the machine (that would trigger the away nap mid-test).
         SetContext(window, false, 0);
@@ -987,6 +987,7 @@ internal static class Program
         await BattleRulesChecks.Run(window, pet, Check);
         await TutorialChecks.Run(window, pet, Check);
         PortalChecks.Run(window, pet, behavior, preferences, Check);
+        WeatherChecks.Run(window, pet, preferences, Check);
         await WeaponChecks.Run(window, pet, Check);
         await BattlePrepChecks.Run(window, pet, behavior, preferences, Check);
         await AdventureChecks.Run(window, pet, behavior, preferences, Check);

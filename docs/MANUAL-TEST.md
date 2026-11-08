@@ -1211,3 +1211,15 @@ Các mục 1.5 phía trên viết theo từng mốc; đây là thứ tự chơi 
 - [ ] Quiet: cổng không tự hiện nhưng "Niệm phép cổng" vẫn dùng được. Mèo sát mép màn hình: cổng hiện phía còn chỗ
 - [ ] Trong trận menu vẫn là "Chế độ chiến đấu" với Tạm dừng/Kết thúc; đang mở Sảnh/bản đồ thì mục quay lại Sảnh
 - [ ] Xem cổng và nhãn "Bấm để vào trận" trên wallpaper sáng/tối/nhiều màu, DPI 100/125/150/200%, nhiều màn hình, vi/en/ja
+
+## 1.5.1 Mốc 2 — Thời tiết theo wallpaper (08/11)
+
+- [ ] Đổi hình nền lần lượt xanh dương sáng, xám, trắng, cam/hồng, xanh lá, tối: trong vài giây thời tiết mờ đi rồi đổi đúng loại (nắng/mây, mưa, tuyết, lá bay, phấn hoa, sao/đom đóm). Xem loại nhận được ở Behavior debug view, dòng Weather
+- [ ] Ảnh phong cảnh thật nhiều màu cho kết quả hợp mắt, không đổ thành mưa vô cớ. Nếu có: thử slideshow, Windows Spotlight, nền màu đơn
+- [ ] Thời tiết chỉ hiện quanh mèo, mờ dần ra rìa, không thấy mép vuông. Mèo đi hoặc bị kéo thì vùng đi theo, hạt không bị kéo giật theo
+- [ ] Click, kéo chuột xuyên qua vùng thời tiết vào app bên dưới bình thường; không mất focus khi đang gõ; không có nút trên taskbar hay trong Alt+Tab
+- [ ] Để lâu: cường độ thay đổi (mưa to, nhỏ, tạnh một lúc), loại thời tiết không đổi khi không đổi nền
+- [ ] Mèo ngủ vẫn có thời tiết và không bị đánh thức; Pause thì hạt đứng yên, kéo mèo trong Pause vùng vẫn theo; Quiet thì mờ đi; bật app toàn màn hình, mở Sảnh/bản đồ hoặc vào trận thì biến mất ngay và quay lại khi xong
+- [ ] Cài đặt → Thói quen → tắt "Thời tiết quanh mèo": mờ đi và không hiện lại, bật lại thì có. Tooltip đủ chữ ở vi/en/ja
+- [ ] Hai màn hình có hình nền khác nhau: kéo mèo sang màn kia thì thời tiết đổi theo. Thử DPI 100/125/150/200%, thanh taskbar ở cạnh khác
+- [ ] Hạt có bay ngang trước mèo: xem có khó chịu không. Xem máy có nóng hay giật hơn khi chạy lâu không

@@ -1479,5 +1479,7 @@
   "The pet is casting.": "ペットが呪文を唱えています。",
   "The pet is busy; try again in a moment.": "ペットは忙しいようです。少ししてからもう一度試してください。",
   "The portal has closed.": "ゲートは閉じました。",
-  "Click to enter": "クリックで入る"
+  "Click to enter": "クリックで入る",
+  "Weather around the pet": "ペットのまわりの天気",
+  "Rain, snow, drifting leaves... around the pet, chosen from your Windows wallpaper's colors. Only the colors of a tiny thumbnail are read; nothing is saved or sent anywhere.": "雨、雪、舞う葉っぱなどがペットのまわりに現れます。Windowsの壁紙の色から選ばれます。小さな縮小画像の色を読むだけで、保存も送信もしません。"
 }

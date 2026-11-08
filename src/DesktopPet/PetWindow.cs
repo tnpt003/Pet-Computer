@@ -491,6 +491,7 @@ public sealed partial class PetWindow : Window
         if (!paused && (!BattleFreezesPet || dragging)) { pet.AnimationTime += dt; pet.ActionTime += dt; pet.Motion.Step(pet, dt, settings.WalkSpeed); if (pet.Motion.Landing.TakeSound()) PlayPetSound(Landing.Sound); }
         if (!paused) { pet.Thought.Step(pet, dt); pet.Speech.Step(pet, dt); TickPendingSpeech(); }
         Present(interpolate: !dragging && !paused && !pressPending);
+        TickWeather(paused ? 0 : dt); // Follows the cat even when it is held in Pause (PetWindow.Weather.cs).
         double interval = FramePeriod() * 1000 / 2;
         if (timer.Interval.TotalMilliseconds != interval) timer.Interval = TimeSpan.FromMilliseconds(interval);
     }
@@ -507,6 +508,8 @@ public sealed partial class PetWindow : Window
         // Measuring (scripts/perf.ps1 -Battle): one line a second for the script to sum up.
         if (battleAutostart != null && battle != null)
             Trace.WriteLine(FormattableString.Invariant($"Frame stats: {measuredFps:F1} fps, longest gap {measuredMaxGap * 1000:F0} ms, {battle.Slimes.Count} enemies"));
+        if (forcedWeather != null)
+            Trace.WriteLine(FormattableString.Invariant($"Frame stats: {measuredFps:F1} fps, longest gap {measuredMaxGap * 1000:F0} ms, weather {(WeatherShowing ? weather.Kind.ToString() : "hidden")}"));
         frameStatsStart = now; frameCount = 0; frameMaxGap = 0;
     }
 
@@ -546,6 +549,7 @@ public sealed partial class PetWindow : Window
                 $"Learned dislikes: {(aiLearned is { Dislikes.Length: > 0 } ? string.Join("; ", aiLearned.Dislikes) : "nothing yet")}\n" +
                 $"Windows: {(!LedgesEnabled ? "off" : pet.Action == PetAction.Climbing ? "climbing" : OnLedge ? "on a window" : "floor")}, {ledges.Count} ledges{(climbPlan != null ? ", going to climb" : ledgeExit != 0 ? ", leaving" : "")}\n" +
                 $"Context: {(context.Fullscreen ? "fullscreen app (quiet)" : "normal")}, {(context.Away ? "user away" : "user here")}, idle {context.IdleSeconds:F0} s{(behavior.HoldSleep ? ", away nap" : "")}\n" +
+                $"Weather: {(!preferences.Weather ? "off" : $"{weather.Kind}, strength {weather.Intensity:F2}{(WeatherShowing ? "" : ", hidden")}")}\n" +
                 $"Battle: {(battle == null ? "off" : $"{battle.Phase}, wave {battle.Wave}/{battle.WaveCount}, HP {battle.CatHp:F0}, slimes {battle.Alive}{(battle.Paused ? ", paused" : "")}")}\n" +
                 $"Break reminder: {(breaks.Enabled ? $"{breaks.ActiveSeconds / 60:F1} / {breaks.IntervalSeconds / 60:F0} min active{(breaks.Due ? " (due)" : "")}" : "off")}\n" +
                 $"Frame: {measuredFps:F0} fps (longest gap {measuredMaxGap * 1000:F0} ms, last 1 s window)\n{MemoryStatus()}\n{AiStatus}";

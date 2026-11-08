@@ -60,6 +60,10 @@ Chuyển nguyên văn từ AGENTS.md ngày 2026-10-26 để AGENTS.md ngắn l�
 
 - **Duyệt 2026-11-08 (bản 1.5.1):** lối vào Battle Mode từ ngoài trận là cổng phép (C#, PetWindow.Portal.cs). Cổng tự xuất hiện mỗi 20–40 phút trên sàn cạnh mèo, mèo Surprised qua `Startle` (không có trong điều khiển cảm xúc tay, không khi ngủ); đây là hành vi tự động nên bị chặn khi mèo bận (ngủ, thức dậy, bị kéo, bay, phản ứng), Pause, Quiet, app toàn màn hình, người dùng vắng, có trận hoặc bảng chiến đấu, hoặc tính năng khác đang giữ mèo. Cổng KHÔNG tự bắt đầu trận và không tự mở Sảnh: chỉ click của người dùng mới mở; bỏ qua thì 30 giây sau tự đóng, không phạt. Luật "Battle Mode mặc định tắt, không tự bật lại" giữ nguyên. Mục menu chuột phải ngoài trận đổi thành "Niệm phép cổng": mèo ngồi niệm 1,6 giây rồi cổng hiện, chờ 45 giây; do người dùng bật nên chạy trong Quiet như bóng/laser, app toàn màn hình vẫn chặn; click/kéo/ném hủy phép; cảm xúc thật làm phép chờ. Cổng đóng khi mèo ngủ (không đánh thức), khi mở bảng/trận, và tức thì khi có app toàn màn hình hoặc vùng làm việc đổi; Pause đóng băng cổng. Chi tiết: docs/UPDATE-1.5.1.md.
 
+## Thời tiết theo wallpaper
+
+- **Duyệt 2026-11-08 (bản 1.5.1):** app được đọc wallpaper Windows của màn hình có mèo chỉ để lấy màu chủ đạo (C#, PetWallpaper.cs): lấy đường dẫn ảnh hoặc màu nền đơn qua API Windows, giải mã ảnh thu nhỏ rộng 32 px trong RAM ở luồng riêng, bỏ ảnh ngay; chỉ giữ loại thời tiết và dấu nhận biết file (đường dẫn, thời điểm sửa, kích thước) trong RAM. Không lưu ảnh, không ghi màu hay đường dẫn ra đĩa, không gửi đi đâu, không chụp màn hình và không đọc nội dung cửa sổ. Không đọc được thì coi là trời quang. Chỉ đọc khi tính năng được phép hiện; có công tắc "Thời tiết quanh mèo" trong Cài đặt → Thói quen, mặc định bật. Thời tiết là cửa sổ phủ click xuyên qua quanh mèo, không chiếm focus, không chạm vào mèo: không đánh thức, không đổi hành vi hay cảm xúc. Ẩn trong Quiet (mờ dần), ẩn ngay khi có app toàn màn hình, trận hoặc bảng chiến đấu; Pause giữ đứng yên; mèo ngủ vẫn có thời tiết. Chi tiết: docs/UPDATE-1.5.1.md.
+
 ## Hành vi mèo
 
 Chuyển nguyên văn từ AGENTS.md ngày 2026-11-05.

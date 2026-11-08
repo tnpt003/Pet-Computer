@@ -285,6 +285,8 @@ The publish smoke test uses a fresh `artifacts/smoke-data/<run-id>` data directo
 `PET_DATA_DIRECTORY` may specify an absolute path for isolated preferences and AI
 memory; ordinary launches still use `%LOCALAPPDATA%/DesktopPet`. Tests do not replace
 personal preferences or memory. Smoke data is retained for troubleshooting.
+`PET_WEATHER_PROBE=Rain` (or Sunny, Snow, Sunset, Pollen, Night) forces that weather whatever the
+wallpaper and logs frame numbers, for measuring and for looking at each kind.
 The smoke test also sets `PET_CONTEXT_PROBE=off`, so a fullscreen app or an idle
 machine during the run never quiets the pet or starts an away nap.
 
@@ -701,6 +703,16 @@ edge of ordinary app windows on its monitor as a floor:
   falls and windows are no longer read. Reset and a DPI change put the pet on the floor.
 - The debug view shows a `Windows:` line (off / floor / on a window / climbing, ledge
   count, plans).
+
+## Weather around the pet (1.5.1)
+
+**Settings → Habits → Weather around the pet** (on by default). The colors of the wallpaper on the
+pet's monitor choose the weather: bright blue sun and clouds, gray rain, white or cold blue snow, orange
+or pink falling leaves, green pollen and wind, dark stars and fireflies. Only a 32-pixel thumbnail is
+read in memory for its colors; nothing is saved or sent. A wallpaper that cannot be read means clear sky.
+The weather shows in a click-through region around the pet, changes strength over time and never affects
+the pet. It hides in Quiet, over a fullscreen app and with a battle or battle screen open, and stands
+still in Pause. See `PetWindow.Weather.cs`, `PetWallpaper.cs` and docs/APPROVED-EXCEPTIONS.md.
 
 ## Performance measurement (2026-10-16)
 

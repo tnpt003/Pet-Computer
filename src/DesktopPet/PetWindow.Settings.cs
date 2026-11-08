@@ -22,7 +22,7 @@ public sealed class PetSettingsForm
     public ComboBox Trophy = null!;
     public string[] TrophyIds = Array.Empty<string>();
     public Border KeepsakeSection = null!;
-    public CheckBox HolidayAccessories = null!, ClimbWindows = null!, ShowTrophies = null!, Talks = null!, Autostart = null!, BreakReminders = null!, Sounds = null!, InteractionSounds = null!, EmotionSounds = null!, SleepSounds = null!, AutoUpdate = null!;
+    public CheckBox HolidayAccessories = null!, ClimbWindows = null!, Weather = null!, ShowTrophies = null!, Talks = null!, Autostart = null!, BreakReminders = null!, Sounds = null!, InteractionSounds = null!, EmotionSounds = null!, SleepSounds = null!, AutoUpdate = null!;
     public Slider Volume = null!;
     public Button Save = null!, Cancel = null!, Tuning = null!, Forget = null!, Preview = null!, CheckUpdates = null!, Uninstall = null!;
     public PetRenderer PetPreview = null!;
@@ -115,6 +115,8 @@ public sealed partial class PetWindow
         appearance.Children.Add(previewCard); appearance.Children.Add(looks);
         form.ClimbWindows = new CheckBox { Content = L("Mèo leo lên cửa sổ", "Climb on windows"), IsChecked = preferences.ClimbWindows,
             ToolTip = L("Mèo nhảy hoặc trèo lên mép trên các cửa sổ app và đi dạo trên đó.", "The pet jumps or climbs onto the top edge of app windows and walks along it.") };
+        form.Weather = new CheckBox { Content = L("Thời tiết quanh mèo", "Weather around the pet"), IsChecked = preferences.Weather,
+            ToolTip = L("Mưa, tuyết, lá bay... quanh mèo, chọn theo màu hình nền Windows. Chỉ đọc màu từ ảnh thu nhỏ, không lưu ảnh và không gửi đi đâu.", "Rain, snow, drifting leaves... around the pet, chosen from your Windows wallpaper's colors. Only the colors of a tiny thumbnail are read; nothing is saved or sent anywhere.") };
         form.ShowTrophies = new CheckBox { Content = L("Góc trưng bày kỷ vật", "Keepsake display corner"), IsChecked = preferences.ShowTrophies,
             ToolTip = L("Một kỷ vật Viễn chinh đứng trên sàn màn hình: cầm kéo, ném được; mèo thỉnh thoảng ra ngắm hoặc đẩy nó.",
                         "One Expedition keepsake stands on the screen's floor: pick it up, throw it; the cat looks at it or shoves it now and then.") };
@@ -135,6 +137,7 @@ public sealed partial class PetWindow
             Section(L("Ngoại hình", "Look"), PetMotif.Palette, appearance),
             Section(L("Thói quen", "Habits"), PetMotif.Clock,
                 form.ClimbWindows,
+                form.Weather,
                 form.Tuning),
             form.KeepsakeSection);
         // Gentle idle motion (breathing, tail, blinks) while the window is open.
@@ -167,6 +170,7 @@ public sealed partial class PetWindow
             renderer.Coat = PetScene.Coat = preferences.Coat; ApplyAccessory();
             preferences.ClimbWindows = form.ClimbWindows.IsChecked == true;
             if (!preferences.ClimbWindows) DropLedges(); // A pet on a window falls; a climbing one lets go.
+            preferences.Weather = form.Weather.IsChecked == true;
             preferences.ShowTrophies = form.ShowTrophies.IsChecked == true;
             if (!preferences.ShowTrophies) StopAdmiring();
             if (form.TrophyIds.Length > 0)

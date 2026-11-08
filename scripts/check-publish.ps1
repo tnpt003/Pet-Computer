@@ -29,7 +29,7 @@ public static class PetPublishWindow {
 }
 '@
 $saved = @{}
-foreach ($name in @('PATH', 'DOTNET_ROOT', 'DOTNET_ROOT_X64', 'PET_PYTHON', 'PET_AI_DISABLED', 'PET_DATA_DIRECTORY', 'PET_CONTEXT_PROBE')) {
+foreach ($name in @('PATH', 'DOTNET_ROOT', 'DOTNET_ROOT_X64', 'PET_PYTHON', 'PET_AI_DISABLED', 'PET_DATA_DIRECTORY', 'PET_CONTEXT_PROBE', 'PET_WEATHER_PROBE')) {
     $saved[$name] = [Environment]::GetEnvironmentVariable($name, 'Process')
 }
 $petProcess = $null

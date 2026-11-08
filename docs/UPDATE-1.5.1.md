@@ -10,7 +10,7 @@ Mục tiêu: mèo ngoài trận đa dạng và thú vị hơn. Ba tính năng ch
 | 2. Weather | Thời tiết theo màu wallpaper Windows, hiện vùng quanh mèo | Xong (f7f406e), còn test tay |
 | 3. Ruộng cơ bản | Dải 6 ô, cày → gieo → tưới → lớn → thu hoạch, 4 cây, lưu file riêng, di chuyển mảnh đất | Xong (9fc249b), còn test tay |
 | 4. Mèo làm cùng | Mèo tự tưới, gặt, đuổi chim; khóa khi ngủ/kéo/Quiet | Xong (caeb0f9), còn test tay |
-| 5. Kinh tế farm | Kho, bán lấy xu nông trại riêng, mua hạt, mở ô, bù nhìn | Xong, còn test tay |
+| 5. Kinh tế farm | Kho, bán lấy xu nông trại riêng, mua hạt, mở ô, bù nhìn | Xong (4d4330e), còn test tay |
 | 6. Nối các phần | Nấu món cho mèo ăn, mưa tự tưới, nắng cho cây lớn nhanh hơn một chút | Chưa làm |
 
 ### Portal (mốc 1)

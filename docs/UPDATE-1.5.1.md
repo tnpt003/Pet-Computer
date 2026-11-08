@@ -8,7 +8,7 @@ Mục tiêu: mèo ngoài trận đa dạng và thú vị hơn. Ba tính năng ch
 |---|---|---|
 | 1. Portal | Cổng tự xuất hiện 20–40 phút/lần, mèo bất ngờ; menu "Niệm phép cổng"; bấm cổng mới vào Sảnh | Xong (07abbba), còn test tay |
 | 2. Weather | Thời tiết theo màu wallpaper Windows, hiện vùng quanh mèo | Xong (f7f406e), còn test tay |
-| 3. Ruộng cơ bản | Dải 6 ô, cày → gieo → tưới → lớn → thu hoạch, 4 cây, lưu file riêng, di chuyển mảnh đất | Xong, còn test tay |
+| 3. Ruộng cơ bản | Dải 6 ô, cày → gieo → tưới → lớn → thu hoạch, 4 cây, lưu file riêng, di chuyển mảnh đất | Xong (9fc249b), còn test tay |
 | 4. Mèo làm cùng | Mèo tự tưới, gặt, đuổi chim; khóa khi ngủ/kéo/Quiet | Chưa làm |
 | 5. Kinh tế farm | Kho, bán lấy xu nông trại riêng, mua hạt, mở ô, bù nhìn | Chưa làm |
 | 6. Nối các phần | Nấu món cho mèo ăn, mưa tự tưới, nắng cho cây lớn nhanh hơn một chút | Chưa làm |

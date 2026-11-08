@@ -10,7 +10,7 @@ public enum WeatherKind { Sunny, Rain, Snow, Sunset, Pollen, Night }
 // The window reads the wallpaper and owns the art (PetWindow.Weather.cs).
 public sealed class PetWeather
 {
-    public const double FadeSeconds = 1.2, SpellMinSeconds = 40, SpellMaxSeconds = 140;
+    public const double FadeSeconds = 1.2, SpellMinSeconds = 40, SpellMaxSeconds = 140, LightestRain = 0.1;
     // Slow enough that a shower builds up and dies away instead of switching.
     private const double EaseRate = 0.35;
     // A color says more about a picture than the same area of white, gray or black.
@@ -28,6 +28,9 @@ public sealed class PetWeather
     private WeatherKind? next;
 
     public bool Visible => Visibility > 0;
+    // What the field feels (1.5.1 M6): only the weather on show, and a lull in the rain waters nothing.
+    public bool Raining => Visible && Kind == WeatherKind.Rain && Intensity >= LightestRain;
+    public bool Shining => Visible && Kind == WeatherKind.Sunny;
 
     // Hidden weather changes at once; a showing one fades out first and comes back as the new kind.
     public void SetKind(WeatherKind kind)

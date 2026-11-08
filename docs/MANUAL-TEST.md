@@ -1258,3 +1258,17 @@ Các mục 1.5 phía trên viết theo từng mốc; đây là thứ tự chơi 
 - [ ] Mở bảng lúc mèo ngủ không đánh thức mèo; bấm bảng không làm đổi drag hay cảm xúc. Pause: nút mờ, không mua bán được, bỏ Pause dùng lại được. App toàn màn hình, vào trận, mở Sảnh: bảng tự đóng
 - [ ] Bảng đủ chữ, không tràn ở vi/en/ja; thử DPI 100/125/150/200% và nhiều màn hình (bảng hiện ở đỉnh màn có mèo)
 - [ ] Chơi một lúc rồi góp ý giá: nhịp kiếm xu, giá mở ô và bù nhìn có vừa không
+
+## 1.5.1 Mốc 6 — Nối các phần (08/11)
+
+- [ ] Đặt wallpaper xám để có mưa, gieo vài ô rồi chờ: sau khoảng 15 giây mưa, mọi ô đang chờ nước được tưới cùng lúc, có hiệu ứng nước, không có tiếng. Lúc mưa tạnh thì không tưới
+- [ ] Ruộng ở màn hình khác với mèo: mưa và nắng không có tác dụng (cần hai màn hình)
+- [ ] Mèo đang đi tới ô để tưới mà mưa tưới trước: mèo bỏ chuyến, không kẹt tư thế
+- [ ] Wallpaper xanh dương sáng: rê chuột vào ô đang lớn, đồng hồ chạy nhanh hơn thời gian thật một chút. Wallpaper tuyết, hoàng hôn, phấn hoa, đêm: đồng hồ chạy đúng thời gian thật
+- [ ] Tắt "Thời tiết quanh mèo" hoặc bật Quiet: mưa không tưới, nắng không tăng tốc. Pause: đứng yên, bỏ Pause chạy tiếp
+- [ ] Chuột phải vào mảnh đất → "Nấu ăn": bảng hiện số có/cần của từng nguyên liệu, món thiếu đồ bị mờ. Mở bảng này thì "Kho & cửa hàng" đóng và ngược lại
+- [ ] Nấu: nguyên liệu giảm đúng, mèo ngồi ăn món đúng hình có hơi nóng, xong thì vui lâu hơn "Cho ăn" thường. Nút mờ trong 20 giây sau đó. Xem hình món trên hình nền thật
+- [ ] Mèo ngủ: nút mờ, bấm không được, không đánh thức. Đang bế, đang bay: nút mờ. Nhấc mèo khi đang ăn: bữa dừng, món mất, drag vẫn mượt. Pause: nút mờ. App toàn màn hình, vào trận, mở Sảnh: bảng tự đóng
+- [ ] Trong Quiet vẫn nấu được. Tắt Python hoặc Python lỗi: nấu và ăn vẫn chạy
+- [ ] Bảng đủ chữ, không tràn ở vi/en/ja; thử DPI 100/125/150/200%
+- [ ] Chơi một lúc rồi góp ý số liệu: 15 giây mưa, nắng nhanh 20%, công thức từng món

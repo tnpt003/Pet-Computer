@@ -57,6 +57,8 @@ internal static class FarmChecks
             // The steps of one tile, by clicks.
             var farm = window.Farm!;
             Shop(window, farm, path, check, () => Tick(0.02));
+            Kitchen(window, pet, farm, path, check, () => Tick(0.02));
+            Sky(window, farm, check, () => now);
             farm.OpenTiles = 6;
             check(window.FarmTileLabel(0)!.Length > 0 && window.FarmTileLabel(6) == null, "Each tile has a label");
             check(farm.Next(0) == FarmStep.Till, "A new tile needs tilling");
@@ -121,9 +123,9 @@ internal static class FarmChecks
 
             // Moving the plot.
             var ground = window.FarmMenuItems();
-            check(ground.Length == 2 && ground.All(item => ((string)item.Header).Length > 0), "On the ground the menu offers the shop and to move it");
+            check(ground.Length == 3 && ground.All(item => ((string)item.Header).Length > 0), "On the ground the menu offers the shop, the kitchen and to move it");
             double topBefore = Overlay()!.Top, restFraction = window.FarmFraction;
-            ground[1].RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+            ground[2].RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
             check(window.FarmLiftPhaseNow == FarmLiftPhase.Rising, "It begins to rise");
             check(window.FarmMenuItems().Length == 0, "No menu while it is on the way up");
             Tick(FarmLift.RiseSeconds + 0.05);
@@ -286,7 +288,132 @@ internal static class FarmChecks
         farm.Scarecrow = false;
     }
 
-    private static void Render(Window panel)
+    // The kitchen in the real window: what it asks of the store and of the cat, and what closes it.
+    private static void Kitchen(PetWindow window, PetModel pet, PetFarm farm, string path, Action<bool, string> check, Action tick)
+    {
+        Window? Panel() => Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.Title == "Pet farm kitchen" && w.IsLoaded);
+        void Free() { pet.Emotions.Reset(); pet.Action = PetAction.Idle; pet.TreatRemaining = 0; SetField(window, "treatCooldown", 0.0); SetField(window, "treatSatisfiedRemaining", 0.0); }
+        Free();
+        window.OpenFarmShop();
+        check(window.FarmMenuItems().Length == 3, "The menu has the kitchen too");
+        window.FarmMenuItems()[1].RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+        check(window.FarmKitchenOpen && Panel() != null && !window.FarmShopOpen, "The kitchen opens, in place of the shop");
+        window.OpenFarmShop();
+        check(window.FarmShopOpen && !window.FarmKitchenOpen, "...and the shop in place of the kitchen");
+        window.OpenFarmKitchen();
+        var panel = Panel()!;
+        check(panel.Topmost && !panel.ShowInTaskbar && !panel.ShowActivated, "The kitchen takes no focus and has no taskbar button");
+        var area = Field<Area>(window, "bounds");
+        check(panel.Left >= area.Left - 1 && panel.Left + panel.ActualWidth <= area.Right + 1 && panel.Top + panel.ActualHeight <= area.Bottom + 1, $"The kitchen fits on the monitor ({panel.ActualWidth:F0}x{panel.ActualHeight:F0})");
+        double width = panel.ActualWidth;
+        Button(window).ForEach(b => check(!b.IsEnabled, "With an empty store nothing can be cooked"));
+
+        check(!window.FarmCook(FarmDish.RadishSoup) && pet.TreatRemaining == 0, "Without ingredients the cat gets nothing");
+        farm.Stock["Radish"] = 2; farm.Stock["Tomato"] = 1; farm.Stock["Pumpkin"] = 1; farm.Stock["Carrot"] = 1;
+        Call(window, "UpdateFarmKitchen");
+        Render(panel, "farm-kitchen.png");
+
+        pet.Emotions.Reset(); pet.Action = PetAction.Sleeping; pet.Emotions.EnterSleep();
+        tick();
+        check(!Button(window)[0].IsEnabled, "A sleeping cat greys the kitchen");
+        check(!window.FarmCook(FarmDish.RadishSoup) && farm.StockOf(FarmCrop.Radish) == 2 && pet.Emotions.SleepLocked && pet.Action == PetAction.Sleeping, "Cooking is refused and neither wakes the cat nor uses anything up");
+        Free();
+        tick();
+        check(Button(window)[0].IsEnabled, "Awake, the kitchen is open again");
+
+        SetField(window, "paused", true);
+        tick();
+        check(!Button(window)[0].IsEnabled && !window.FarmCook(FarmDish.RadishSoup) && farm.StockOf(FarmCrop.Radish) == 2, "Pause refuses cooking");
+        SetField(window, "paused", false);
+        tick();
+
+        int coins = farm.Coins;
+        check(window.FarmCook(FarmDish.RadishSoup) && pet.TreatRemaining > 0 && pet.TreatDish == FarmDish.RadishSoup, "A dish is cooked and the cat eats it");
+        check(farm.StockOf(FarmCrop.Radish) == 0 && farm.Coins == coins && PetFarm.Load(path).StockOf(FarmCrop.Radish) == 0, "Its ingredients are gone, also from the file");
+        check(!Button(window)[0].IsEnabled && !window.FarmCook(FarmDish.StuffedTomato) && farm.StockOf(FarmCrop.Tomato) == 1, "Eating, the cat cannot be fed again and nothing is used up");
+        double treats = pet.Activity.Treats;
+        for (double t = 0; t < PetModel.TreatDuration + 0.1; t += 1.0 / 30) Call(window, "TickFeatures", 1.0 / 30);
+        check(pet.TreatRemaining == 0 && pet.Activity.Treats == treats + 1, "It counts as one treat");
+        pet.Emotions.Step(pet, 4, -200, 50);
+        check(pet.Emotions.Target == PetEmotion.Happy, "A dish makes the cat happy for longer than a treat does");
+        Free();
+        check(window.GiveTreat() && pet.TreatDish == null, "The usual treat is still the fish");
+        Free();
+        panel.UpdateLayout();
+        check(Math.Abs(panel.ActualWidth - width) < 1, "The kitchen does not change width as its labels change");
+
+        SetField(window, "battleHubOpen", true);
+        tick();
+        check(!window.FarmKitchenOpen, "A battle panel closes the kitchen");
+        SetField(window, "battleHubOpen", false);
+        window.OpenFarmKitchen();
+        SetContext(window, true, 0); Call(window, "TickContext", 1.1);
+        tick();
+        check(!window.FarmKitchenOpen, "A fullscreen app closes the kitchen");
+        SetContext(window, false, 0); Call(window, "TickContext", 1.1);
+        tick();
+        farm.Stock.Clear();
+        Free();
+    }
+
+    private static List<Border> Button(PetWindow window)
+    {
+        var rows = (System.Collections.IEnumerable)FieldOf("farmKitchenRows").GetValue(window)!;
+        return rows.Cast<ValueTuple<FarmDish, TextBlock, Border>>().Select(row => row.Item3).ToList();
+    }
+
+    // The weather reaching the field in the real window, through the same frame step the app runs.
+    private static void Sky(PetWindow window, PetFarm farm, Action<bool, string> check, Func<DateTime> now)
+    {
+        var weather = Field<PetWeather>(window, "weather");
+        var random = new Random(3);
+        void Show(WeatherKind kind) { weather.HideNow(); weather.SetKind(kind); weather.Step(PetWeather.FadeSeconds, true, random); }
+        void Pass(double seconds) { for (double t = 0; t < seconds; t += 0.5) Call(window, "StepFarmSky", 0.5); }
+        void Sown(int tile) { farm.Tiles[tile] = new FarmTile { Stage = FarmStage.Seed, Crop = FarmCrop.Radish }; }
+        var withCat = Field<bool>(window, "farmWithCat");
+        SetField(window, "farmWithCat", true);
+        Sown(0);
+
+        Show(WeatherKind.Rain);
+        Pass(PetFarm.RainSoakSeconds - 2);
+        check(farm.Next(0) == FarmStep.Water, "A short shower does not water yet");
+        Pass(3);
+        check(farm.Next(0) == FarmStep.Wait && PetFarm.Load(Field<string>(window, "farmPath")).Next(0) == FarmStep.Wait, "Rain that lasts waters the tile and saves it");
+        Sown(0);
+        weather.HideNow();
+        Pass(1);
+        Show(WeatherKind.Rain);
+        Pass(3);
+        check(farm.Next(0) == FarmStep.Water, "When the rain stops the wait starts over");
+
+        SetField(window, "farmWithCat", false);
+        Pass(PetFarm.RainSoakSeconds + 2);
+        check(farm.Next(0) == FarmStep.Water, "Rain on the cat's monitor does not reach a field on another");
+        SetField(window, "farmWithCat", true);
+        Pass(PetFarm.RainSoakSeconds + 2);
+        check(farm.Next(0) == FarmStep.Wait, "Back on its monitor the field is watered");
+
+        Show(WeatherKind.Sunny);
+        var growing = farm.Tiles[0].GrowsUntil!.Value;
+        Pass(10);
+        check(Math.Abs((growing - farm.Tiles[0].GrowsUntil!.Value).TotalSeconds - 10 * PetFarm.SunBonus) < 0.6, "The sun brings the end of the stage closer");
+        growing = farm.Tiles[0].GrowsUntil!.Value;
+        Call(window, "TickFarm", 0.0);
+        check(farm.Tiles[0].GrowsUntil == growing, "Pause holds the sun's help still");
+        SetField(window, "farmWithCat", false);
+        Pass(10);
+        check(farm.Tiles[0].GrowsUntil == growing, "No sun for a field on another monitor");
+        SetField(window, "farmWithCat", withCat);
+
+        weather.HideNow();
+        weather.SetKind(WeatherKind.Sunny);
+        SetField(window, "farmRainSeconds", 0.0);
+        SetField(window, "farmSunUnsaved", 0.0);
+        farm.Tiles[0] = new FarmTile();
+        Call(window, "FarmChanged");
+    }
+
+    private static void Render(Window panel, string name = "farm-shop.png")
     {
         if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is not string review) return;
         panel.UpdateLayout();
@@ -295,7 +422,7 @@ internal static class FarmChecks
         bitmap.Render(element);
         var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap));
         Directory.CreateDirectory(review);
-        using var stream = File.Create(Path.Combine(review, "farm-shop.png")); encoder.Save(stream);
+        using var stream = File.Create(Path.Combine(review, name)); encoder.Save(stream);
     }
 
     private static bool Below(IntPtr above, IntPtr target)
@@ -385,5 +512,42 @@ internal static class FarmChecks
         check(still != Render(art => art.Tiles[3] = new(FarmStage.Wild, null, false, false, 0, true), dark, null), "A locked tile has its fence");
         check(still != Render(art => art.Scarecrow = true, dark, null), "The scarecrow is drawn");
         check(PetFarmArt.TileAt(PetFarmArt.TileLeft(0) + 1) == 0 && PetFarmArt.TileAt(PetFarmArt.TileLeft(5) + 53) == 5 && PetFarmArt.TileAt(1) == -1 && PetFarmArt.TileAt(PetFarmArt.ArtWidth - 1) == -1, "Clicks find their tiles; the rim is none");
+        Dishes(check);
+    }
+
+    // The cat at each dish, as big as it is drawn, on a light and a dark wallpaper.
+    private static void Dishes(Action<bool, string> check)
+    {
+        const int size = 180;
+        string Render(FarmDish? dish, double eaten, Color back, string? name)
+        {
+            var pet = new PetModel { Action = PetAction.Sitting, Grounded = true, Facing = 1, AnimationTime = 1, ActionTime = 1, TreatRemaining = PetModel.TreatDuration - eaten, TreatDish = dish };
+            var cat = new PetRenderer(pet);
+            cat.Measure(new Size(size, size)); cat.Arrange(new Rect(0, 0, size, size));
+            var visual = new DrawingVisual();
+            using (var dc = visual.RenderOpen()) dc.DrawRectangle(new SolidColorBrush(back), null, new Rect(0, 0, size, size));
+            var bitmap = new RenderTargetBitmap(size, size, 96, 96, PixelFormats.Pbgra32);
+            bitmap.Render(visual);
+            bitmap.Render(cat);
+            if (name != null && Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string review)
+            {
+                Directory.CreateDirectory(review);
+                var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap));
+                using var stream = File.Create(Path.Combine(review, name + ".png")); encoder.Save(stream);
+            }
+            var pixels = new byte[size * size * 4];
+            bitmap.CopyPixels(pixels, size * 4, 0);
+            return Convert.ToHexString(System.Security.Cryptography.SHA1.HashData(pixels));
+        }
+        var light = Color.FromRgb(0xF1, 0xEE, 0xE6);
+        var dark = Color.FromRgb(0x1C, 0x22, 0x30);
+        var seen = new HashSet<string> { Render(null, 1, dark, null) };
+        foreach (var dish in Enum.GetValues<FarmDish>())
+        {
+            seen.Add(Render(dish, 1, dark, $"dish-{dish}-dark"));
+            Render(dish, 1, light, $"dish-{dish}-light");
+            Render(dish, 0.4, dark, $"dish-{dish}-start");
+        }
+        check(seen.Count == 5, $"Each dish is drawn differently, and none like the fish ({seen.Count} of 5)");
     }
 }

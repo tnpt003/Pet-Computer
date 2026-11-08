@@ -11,7 +11,7 @@ Mục tiêu: mèo ngoài trận đa dạng và thú vị hơn. Ba tính năng ch
 | 3. Ruộng cơ bản | Dải 6 ô, cày → gieo → tưới → lớn → thu hoạch, 4 cây, lưu file riêng, di chuyển mảnh đất | Xong (9fc249b), còn test tay |
 | 4. Mèo làm cùng | Mèo tự tưới, gặt, đuổi chim; khóa khi ngủ/kéo/Quiet | Xong (caeb0f9), còn test tay |
 | 5. Kinh tế farm | Kho, bán lấy xu nông trại riêng, mua hạt, mở ô, bù nhìn | Xong (4d4330e), còn test tay |
-| 6. Nối các phần | Nấu món cho mèo ăn, mưa tự tưới, nắng cho cây lớn nhanh hơn một chút | Chưa làm |
+| 6. Nối các phần | Nấu món cho mèo ăn, mưa tự tưới, nắng cho cây lớn nhanh hơn một chút | Xong, còn test tay |
 
 ### Portal (mốc 1)
 
@@ -68,6 +68,15 @@ Mục tiêu: mèo ngoài trận đa dạng và thú vị hơn. Ba tính năng ch
 - Bảng không chạm vào mèo và không đánh thức mèo. Pause làm mờ mọi nút. Bảng tự đóng khi ruộng ẩn (app toàn màn hình, trận, tắt công tắc) hoặc khi Sảnh, bảng chuẩn bị, bản đồ mở; lúc đó menu cũng không có mục này.
 - `farm.json` phiên bản 2. File phiên bản 1 khi mở: nhận 20 xu, số đã thu hoạch chuyển vào kho, ô có cây hoặc đã cày vẫn mở, chỉ khóa các ô đất hoang phía phải, luôn còn ít nhất 3 ô. Bản app cũ thấy file phiên bản 2 thì chỉ đọc, không ghi đè.
 - Giá hiện là ước tính, chưa qua chơi thử: mở hết ô và mua bù nhìn tốn 610 xu.
+
+#### Luật Mốc 6 (người dùng duyệt 08/11)
+
+- Chỉ thời tiết đang thật sự hiện quanh mèo mới có tác dụng, và chỉ khi ruộng cùng màn hình với mèo (wallpaper đọc theo màn có mèo). Tắt thời tiết, Quiet, Pause, app toàn màn hình, trận thì không có. Tắt app thì cây lớn tốc độ thường, không tính mưa hay nắng.
+- **Mưa:** mưa đang rơi (cường độ từ 0,1, lúc tạnh không tính) đủ 15 giây liên tục thì mọi ô đã mở đang chờ nước được tưới, cả ruộng dù vùng mưa chỉ quanh mèo. Có hiệu ứng nước, không phát tiếng, không chạm vào mèo. Mưa tạnh thì đếm lại từ đầu. Mảnh đất đang nhấc thì chờ đáp rồi mới tưới. Mèo đang đi tưới ô đó thì bỏ chuyến.
+- **Nắng:** khi đang hiện trời nắng, mỗi giây nắng đưa mốc chín lại gần thêm 0,25 giây; nắng suốt thì một giai đoạn còn 80% thời gian. Không phụ thuộc cường độ. Wallpaper không đọc được bị coi là trời quang nên vẫn có nắng. Lưu `farm.json` khoảng 30 giây một lần và khi đóng app. Tuyết, hoàng hôn, phấn hoa, đêm không có tác dụng.
+- **Nấu ăn:** chuột phải vào mảnh đất → "Nấu ăn", mở thay chỗ "Kho & cửa hàng". Nấu trừ nguyên liệu trong kho, không tốn xu, không giảm số đã thu hoạch, mèo ăn ngay, không có kho món. Công thức: Súp củ cải 2 Củ cải; Cà rốt hầm 2 Cà rốt; Cà chua nhồi 1 Cà chua + 1 Củ cải; Bánh bí ngô 1 Bí ngô + 1 Cà rốt.
+- Món nấu đi chung luồng "Cho ăn": chung hồi 20 giây, được làm trong Quiet; mèo ngủ, bận, đang ăn hoặc Pause thì nút mờ, không trừ đồ và không đánh thức mèo. Python giữ nguyên, mỗi món tính là một lần cho ăn. Khác với "Cho ăn" thường: món được vẽ riêng có hơi nóng và mèo Happy 6 giây thay vì 3 giây (qua hệ cảm xúc có sẵn, không đè giận). Nhấc mèo khi đang ăn thì bữa dừng như "Cho ăn" thường và món đã nấu mất.
+- Không cộng sức mạnh trong trận. `farm.json` giữ phiên bản 2. Các con số là ước tính, chưa qua chơi thử.
 
 ---
 

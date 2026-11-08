@@ -181,11 +181,12 @@ public sealed partial class PetWindow
         return previous;
     }
 
-    public bool GiveTreat()
+    public bool GiveTreat(FarmDish? dish = null)
     {
-        if (!MayAct(AutoKind.Treat) || treatCooldown > 0) return false;
+        if (!FarmCatCanEat) return false;
         CancelFeatureActivity();
         pet.TreatRemaining = PetModel.TreatDuration;
+        pet.TreatDish = dish;
         treatCooldown = 20;
         pet.Emotions.Attention();
         pet.Action = PetAction.Sitting;
@@ -285,6 +286,7 @@ public sealed partial class PetWindow
                 pet.Activity.GiveTreat();
                 treatSatisfiedRemaining = 1.2;
                 pet.Emotions.Attention();
+                if (pet.TreatDish != null) pet.Emotions.Cheer(FarmDishHappySeconds);
                 Interact("treat_consumed"); PlayPetSound("satisfied"); RequestDecision();
             }
             else if (pet.TreatRemaining < 2.7 && pet.TreatRemaining + dt >= 2.7) PlayPetSound("purr");

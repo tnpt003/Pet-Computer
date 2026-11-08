@@ -101,6 +101,7 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
     {
         public double Time, PickupBlend, Dizzy, WakeProgress, EmotionStrength, EmotionTime, PettingLean;
         public double GroomingBlend, EatTime, SleepyBlend, Influence, RestBlend, Stride, FacingScale;
+        public FarmDish? Dish;
         public double Shake, Bob, ScaleX, ScaleY, ImpactTilt, Jolt;
         public bool Wince;
         // Gestures: the active one, its time and a 0..1 envelope; Roll is the eased roll-over amount.
@@ -246,6 +247,7 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
             p.WaterBlend = ramp * ramp * (3 - 2 * ramp);
         }
         p.EatTime = PetModel.TreatDuration - pet.TreatRemaining;
+        p.Dish = pet.TreatDish;
         if (p.Eating) p.EmotionStrength = 0;
         // Inactivity Sleepy is an emotion over Idle, not the timed Sleeping action.
         // Settle its whole body into the same resting pose as sleep, with the
@@ -1263,10 +1265,20 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         dc.PushOpacity(Math.Min(1, eatTime / 0.3) * (1 - bites));
         dc.PushTransform(new TranslateTransform(foodX, foodY));
         dc.PushTransform(new ScaleTransform(1 - bites * 0.45, 1 - bites * 0.25));
-        var fish = FishGeometry;
-        DrawOutlinedEffect(dc, fish, Brushes.Salmon);
-        dc.DrawEllipse(Ink, null, new Point(-6, -1), 1.4, 1.4);
-        dc.DrawLine(Outline, new Point(0, -3), new Point(0, 3));
+        if (p.Dish is FarmDish dish)
+        {
+            dc.PushTransform(new MatrixTransform(0.8, 0, 0, 0.8, 0, 9));
+            PetFarmArt.DrawDish(dc, dish);
+            PetFarmArt.DrawSteam(dc, eatTime);
+            dc.Pop();
+        }
+        else
+        {
+            var fish = FishGeometry;
+            DrawOutlinedEffect(dc, fish, Brushes.Salmon);
+            dc.DrawEllipse(Ink, null, new Point(-6, -1), 1.4, 1.4);
+            dc.DrawLine(Outline, new Point(0, -3), new Point(0, 3));
+        }
         dc.Pop(); dc.Pop(); dc.Pop();
         if (eatTime > 2.2)
         {

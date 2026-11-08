@@ -56,6 +56,11 @@ public sealed class PetFarmArt : FrameworkElement
     private static readonly Geometry Star = Parse("M0,-7 L1.9,-1.9 L7,0 L1.9,1.9 L0,7 L-1.9,1.9 L-7,0 L-1.9,-1.9 Z");
     private static readonly Geometry Calyx = Parse("M-4,-1 L0,-4 L4,-1 L1.5,-1 L0,1 L-1.5,-1 Z");
 
+    private static readonly Geometry BowlFront = Parse("M-16,-13 C-12,-9 12,-9 16,-13 C16,-4 10,0 5,0 L-5,0 C-10,0 -16,-4 -16,-13 Z");
+    private static readonly Geometry PieTin = Parse("M-16,-9 L16,-9 L12,0 L-12,0 Z");
+    private static readonly Brush PinkBroth = PetUi.Hex("#F2A6B7"), StewBroth = PetUi.Hex("#D98A3F"), Puff = PetUi.Frozen(Color.FromArgb(0xC8, 0xFF, 0xFF, 0xFF));
+    private static readonly Pen PuffEdge = PetUi.FrozenPen(PetUi.Frozen(Color.FromArgb(0x70, 0x2A, 0x1F, 0x16)), 1);
+
     private static readonly Brush LockedMoss = PetUi.Hex("#B3B49A");
     private static readonly Pen Straw = PetUi.FrozenPen(PetUi.Hex("#D9B566"), 2);
     private static readonly Geometry LockShackle = Parse("M-3.8,-15 L-3.8,-18 C-3.8,-23.5 3.8,-23.5 3.8,-18 L3.8,-15");
@@ -284,6 +289,64 @@ public sealed class PetFarmArt : FrameworkElement
         dc.DrawEllipse(PetUi.ArtInk, null, new Point(0, -10), 1.6, 1.6);
     }
 
+    // A cooked dish side on, standing on y = 0, about 34 wide and 28 high (the kitchen and the cat's meal).
+    public static void DrawDish(DrawingContext dc, FarmDish dish)
+    {
+        switch (dish)
+        {
+            case FarmDish.RadishSoup:
+                DrawBowl(dc, RadishTip, PinkBroth, () =>
+                {
+                    foreach (double x in new[] { -6.5, 6.5 })
+                    {
+                        dc.DrawEllipse(RadishRed, InkThin, new Point(x, -13.5), 5, 2.2);
+                        dc.DrawEllipse(RadishTip, null, new Point(x, -13.7), 3, 1.1);
+                    }
+                });
+                break;
+            case FarmDish.CarrotStew:
+                DrawBowl(dc, Stake, StewBroth, () =>
+                {
+                    foreach (var (x, y) in new[] { (-8.0, -13.0), (0.0, -14.3), (8.0, -13.0) })
+                        dc.DrawEllipse(Orange, InkThin, new Point(x, y), 4, 2);
+                    dc.DrawEllipse(Leaf, InkThin, new Point(3.5, -16.5), 3.4, 1.6);
+                });
+                foreach (int side in new[] { -1, 1 }) dc.DrawEllipse(Stake, InkThin, new Point(side * 16.5, -8.5), 2.2, 3);
+                break;
+            case FarmDish.StuffedTomato:
+                dc.DrawEllipse(RadishTip, Ink, new Point(0, -3), 17, 3.4);
+                dc.DrawEllipse(TomatoRed, Ink, new Point(0, -13.5), 11.5, 10.5);
+                dc.DrawEllipse(Seed, InkThin, new Point(0, -21.5), 7, 2.8);
+                dc.DrawEllipse(Leaf, InkThin, new Point(0, -24), 3.6, 1.8);
+                break;
+            default:
+                dc.DrawGeometry(Stake, Ink, PieTin);
+                dc.DrawEllipse(Seed, Ink, new Point(0, -9.5), 17, 5);
+                dc.DrawEllipse(Pumpkin, InkThin, new Point(0, -10), 13, 3.2);
+                dc.DrawEllipse(RadishTip, InkThin, new Point(0, -12.5), 5.5, 3);
+                break;
+        }
+    }
+
+    private static void DrawBowl(DrawingContext dc, Brush bowl, Brush broth, Action topping)
+    {
+        dc.DrawEllipse(broth, Ink, new Point(0, -13), 16, 4.5);
+        topping();
+        dc.DrawGeometry(bowl, Ink, BowlFront);
+    }
+
+    // Steam rising off a hot dish. Outlined, so a pale wallpaper does not swallow it.
+    public static void DrawSteam(DrawingContext dc, double time)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+            double k = (time * 0.7 + i / 3.0) % 1;
+            dc.PushOpacity(Math.Sin(k * Math.PI));
+            dc.DrawEllipse(Puff, PuffEdge, new Point((i - 1) * 9 + Math.Sin(k * 6 + i) * 2.5, -26 - k * 18), 2.4 + k * 2, 2.4 + k * 2);
+            dc.Pop();
+        }
+    }
+
     // A straw-stuffed scarecrow on its pole, the foot of the pole at (0,0).
     public static void DrawScarecrow(DrawingContext dc)
     {
@@ -491,6 +554,28 @@ public sealed class FarmCropIcon : FrameworkElement
         dc.PushTransform(new TranslateTransform(ActualWidth / 2, ActualHeight - 6 * zoom));
         dc.PushTransform(new ScaleTransform(zoom, zoom));
         PetFarmArt.DrawPlant(dc, FarmStage.Ripe, crop);
+        dc.Pop(); dc.Pop();
+    }
+}
+
+// A cooked dish as a small picture (the kitchen).
+public sealed class FarmDishIcon : FrameworkElement
+{
+    private readonly FarmDish dish;
+
+    public FarmDishIcon(FarmDish dish, double size = 22)
+    {
+        this.dish = dish;
+        Width = Height = size;
+        IsHitTestVisible = false;
+    }
+
+    protected override void OnRender(DrawingContext dc)
+    {
+        double zoom = ActualHeight / 36;
+        dc.PushTransform(new TranslateTransform(ActualWidth / 2, ActualHeight - 2 * zoom));
+        dc.PushTransform(new ScaleTransform(zoom, zoom));
+        PetFarmArt.DrawDish(dc, dish);
         dc.Pop(); dc.Pop();
     }
 }

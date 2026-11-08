@@ -148,10 +148,10 @@ public sealed class PetEmotions
     }
 
     // A short happy moment of its own (it shoved the keepsake and liked it). Never over anger.
-    public void Cheer()
+    public void Cheer(double seconds = 1.6)
     {
         if (SleepLocked || ManualMode || Suspended || (transient == PetEmotion.Angry && now < transientUntil)) return;
-        SetTransient(PetEmotion.Happy, 1.6);
+        SetTransient(PetEmotion.Happy, seconds);
     }
 
     public void AggressiveInteraction()

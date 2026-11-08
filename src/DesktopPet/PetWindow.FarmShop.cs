@@ -36,6 +36,7 @@ public sealed partial class PetWindow
     public void OpenFarmShop()
     {
         if (farm == null || paused || !FarmVisible || !FarmShopAllowed || farmShopWindow != null) return;
+        CloseFarmKitchen(); // They open in the same place.
         var title = PanelLine(PetUi.DisplaySize, true, FarmShopWidth);
         title.Text = L("Kho & cửa hàng", "Store & shop");
         farmShopCoins = PanelLine(PetUi.TitleSize, true, FarmShopWidth);

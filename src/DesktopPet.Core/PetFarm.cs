@@ -16,6 +16,9 @@ public enum FarmStage { Wild, Tilled, Seed, Sprout, Young, Ripe }
 // What a click on the tile does next.
 public enum FarmStep { Till, Plant, Water, Wait, Harvest, Locked }
 
+// Cooked from the store and eaten at once (1.5.1 M6); nothing keeps a dish.
+public enum FarmDish { RadishSoup, CarrotStew, StuffedTomato, PumpkinPie }
+
 public sealed class FarmTile
 {
     public FarmStage Stage { get; set; }
@@ -35,6 +38,8 @@ public sealed class PetFarm
     public const int CurrentVersion = 2, TileCount = 6, WateredStages = 3;
     public const int StartingTiles = 3, StartingCoins = 20, MaxCoins = 999_999, ScarecrowPrice = 150;
     public const double FirstFraction = 0.25;
+    // 1.5.1 M6. Rain has to last this long before it waters; each second of sun counts this much extra.
+    public const double RainSoakSeconds = 15, SunBonus = 0.25;
 
     // Seconds from sowing to ripe when every watering comes on time.
     public static double GrowSeconds(FarmCrop crop) => crop switch
@@ -64,6 +69,14 @@ public sealed class PetFarm
 
     // What opening this tile costs (the fourth, fifth and sixth).
     public static int OpenPrice(int index) => index switch { 3 => 40, 4 => 120, _ => 300 };
+
+    public static (FarmCrop Crop, int Count)[] Recipe(FarmDish dish) => dish switch
+    {
+        FarmDish.RadishSoup => new[] { (FarmCrop.Radish, 2) },
+        FarmDish.CarrotStew => new[] { (FarmCrop.Carrot, 2) },
+        FarmDish.StuffedTomato => new[] { (FarmCrop.Tomato, 1), (FarmCrop.Radish, 1) },
+        _ => new[] { (FarmCrop.Pumpkin, 1), (FarmCrop.Carrot, 1) }
+    };
 
     public int Version { get; set; } = CurrentVersion;
     public List<FarmTile> Tiles { get; set; } = new();
@@ -191,11 +204,26 @@ public sealed class PetFarm
     // Sells one of this crop. The coins it brought, 0 when there was none.
     public int Sell(FarmCrop crop)
     {
-        int left = StockOf(crop);
-        if (left <= 0) return 0;
-        if (left == 1) Stock.Remove(crop.ToString());
-        else Stock[crop.ToString()] = left - 1;
+        if (StockOf(crop) <= 0) return 0;
+        Take(crop, 1);
         return Earn(SellPrice(crop));
+    }
+
+    private void Take(FarmCrop crop, int count)
+    {
+        int left = StockOf(crop) - count;
+        if (left <= 0) Stock.Remove(crop.ToString());
+        else Stock[crop.ToString()] = left;
+    }
+
+    public bool CanCook(FarmDish dish) => Enum.IsDefined(dish) && Recipe(dish).All(part => StockOf(part.Crop) >= part.Count);
+
+    // Uses up the ingredients, all of them or none.
+    public bool Cook(FarmDish dish)
+    {
+        if (!CanCook(dish)) return false;
+        foreach (var (crop, count) in Recipe(dish)) Take(crop, count);
+        return true;
     }
 
     // Empties the store. The coins it brought.
@@ -226,6 +254,22 @@ public sealed class PetFarm
         Coins -= ScarecrowPrice;
         Scarecrow = true;
         return true;
+    }
+
+    // Rain does what the watering can does, on every open tile waiting for it. Returns those tiles.
+    public IReadOnlyList<int> RainWater(DateTime utcNow) => Enumerable.Range(0, TileCount).Where(i => Water(i, utcNow)).ToList();
+
+    // Brings every growing stage's end closer. Seconds of sun seen, not of the clock. False when nothing grows.
+    public bool Sunshine(double seconds)
+    {
+        bool any = false;
+        foreach (var tile in Tiles)
+        {
+            if (tile.GrowsUntil is not DateTime until) continue;
+            tile.GrowsUntil = until.AddSeconds(-seconds * SunBonus);
+            any = true;
+        }
+        return any;
     }
 
     // Moves on every tile whose watered stage is over. A clock set backwards never makes a stage

@@ -102,6 +102,8 @@ public sealed class PetModel
     public double X, Y, VX, VY;
     public double SmoothedWalkVelocity;
     public double TreatRemaining;
+    // What the treat is: a dish from the farm (1.5.1 M6), or null for the usual fish.
+    public FarmDish? TreatDish;
     // The portal spell (PetWindow.Portal.cs): seconds of casting left; the renderer raises the paws.
     public const double CastDuration = 1.6;
     public double CastRemaining;

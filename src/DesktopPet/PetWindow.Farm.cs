@@ -16,7 +16,7 @@ namespace DesktopPet;
 // field never touches the cat: it wakes nothing, and sleep, drag and emotions are not involved.
 public sealed partial class PetWindow
 {
-    private const double FarmCheckSeconds = 1, FarmEffectSeconds = 0.55, FarmGainSeconds = 1.3, FarmChipWidth = 200;
+    private const double FarmCheckSeconds = 1, FarmEffectSeconds = 0.55, FarmGainSeconds = 1.3, FarmChipWidth = 200, FarmSunSaveSeconds = 30;
 
     // Replaceable for UI checks, which must not touch the user's field or wait for real minutes.
     private string farmPath = PetFarm.DefaultPath;
@@ -32,6 +32,7 @@ public sealed partial class PetWindow
     public bool FarmSeedMenuOpen => farmSeedMenu?.IsOpen == true;
     private Area farmArea;
     private double farmScale = 1, farmFraction, farmRestFraction, farmFallFrom, farmFallTo, farmGrab, farmGainLeft;
+    private double farmSkyElapsed, farmRainSeconds, farmSunUnsaved;
     private string? farmMonitor;
     private DateTime farmChecked;
     private bool farmDragging, farmEffectsRunning, farmWithCat;
@@ -61,6 +62,8 @@ public sealed partial class PetWindow
         if (farmWindow == null) CreateFarmWindow();
         if (!FarmVisible) ShowFarm();
         WatchFarmShop();
+        WatchFarmKitchen();
+        if (dt > 0) StepFarmSky(dt);
 
         var now = FarmNow;
         if (Math.Abs((now - farmChecked).TotalSeconds) >= FarmCheckSeconds)
@@ -82,6 +85,32 @@ public sealed partial class PetWindow
         foreach (int index in grown) StartFarmEffect(index, FarmEffect.Grow);
         // The bar of a hovered tile moves on too; other tiles have nothing new to draw.
         if (grown.Count > 0 || farmHover >= 0) RefreshFarmArt();
+    }
+
+    // The weather on show reaches the field (1.5.1 M6). Only over the cat's monitor, whose wallpaper
+    // it comes from. It leaves the cat alone, so it makes no sound and asks nothing of the cat.
+    private void StepFarmSky(double dt)
+    {
+        if (farm == null) return;
+        farmSkyElapsed += Math.Min(dt, FarmCheckSeconds); // A computer waking up was not a long sunny day.
+        if (farmSkyElapsed < FarmCheckSeconds) return;
+        double seconds = farmSkyElapsed;
+        farmSkyElapsed = 0;
+
+        farmRainSeconds = farmWithCat && weather.Raining ? farmRainSeconds + seconds : 0;
+        if (farmRainSeconds >= PetFarm.RainSoakSeconds && farmLift.Phase == FarmLiftPhase.Down)
+        {
+            var watered = farm.RainWater(FarmNow);
+            foreach (int tile in watered) StartFarmEffect(tile, FarmEffect.Water);
+            if (watered.Count > 0) FarmChanged();
+        }
+        if (farmWithCat && weather.Shining && farm.Sunshine(seconds) && (farmSunUnsaved += seconds) >= FarmSunSaveSeconds) SaveSunnyFarm();
+    }
+
+    private void SaveSunnyFarm()
+    {
+        farmSunUnsaved = 0;
+        SaveFarm();
     }
 
     private void StepFarm(double dt)
@@ -195,6 +224,7 @@ public sealed partial class PetWindow
     {
         CloseFarmSeedMenu();
         CloseFarmShop();
+        CloseFarmKitchen();
         farmArt?.ReleaseMouseCapture();
         farmDragging = false;
         if (farmLift.Phase != FarmLiftPhase.Down) farmFraction = farmRestFraction;
@@ -208,7 +238,9 @@ public sealed partial class PetWindow
 
     private void CloseFarm()
     {
+        if (farmSunUnsaved > 0) SaveSunnyFarm();
         CloseFarmShop();
+        CloseFarmKitchen();
         farmWindow?.Close();
     }
 
@@ -411,6 +443,7 @@ public sealed partial class PetWindow
         farmChipShown = null;
         UpdateFarmChip();
         UpdateFarmShop();
+        UpdateFarmKitchen();
     }
 
     public bool FarmPlant(int tile, FarmCrop crop)
@@ -491,7 +524,9 @@ public sealed partial class PetWindow
         if (!FarmShopAllowed) return new[] { move };
         var shop = new MenuItem { Header = L("Kho & cửa hàng", "Store & shop") };
         shop.Click += (_, _) => OpenFarmShop();
-        return new[] { shop, move };
+        var kitchen = new MenuItem { Header = L("Nấu ăn", "Cook") };
+        kitchen.Click += (_, _) => OpenFarmKitchen();
+        return new[] { shop, kitchen, move };
     }
 
     public void BeginFarmMove()

@@ -13,6 +13,67 @@ internal static class FarmTests
         Lift(check);
         Chores(check, start);
         Economy(check, start);
+        Links(check, start);
+    }
+
+    // Cooking from the store, rain that waters, sun that hurries (1.5.1 M6).
+    private static void Links(Action<bool, string> check, DateTime start)
+    {
+        var farm = new PetFarm();
+        check(Enum.GetValues<FarmDish>().All(d => PetFarm.Recipe(d).Sum(p => p.Count) == 2), "Every dish takes two things from the store");
+        check(!farm.Cook(FarmDish.RadishSoup) && farm.Stock.Count == 0, "An empty store cooks nothing");
+        farm.Stock["Radish"] = 1;
+        check(!farm.CanCook(FarmDish.RadishSoup) && !farm.Cook(FarmDish.RadishSoup) && farm.StockOf(FarmCrop.Radish) == 1, "One radish is not enough, and is kept");
+        farm.Stock["Tomato"] = 1; farm.Stock["Radish"] = 3;
+        check(farm.Cook(FarmDish.StuffedTomato) && farm.StockOf(FarmCrop.Tomato) == 0 && farm.StockOf(FarmCrop.Radish) == 2, "A dish uses up each ingredient");
+        farm.Coins = 7; farm.Harvested["Radish"] = 4;
+        check(farm.Cook(FarmDish.RadishSoup) && farm.Stock.Count == 0 && farm.Coins == 7 && farm.HarvestedCount(FarmCrop.Radish) == 4, "Cooking costs no coins and does not lower the harvest count");
+        check(!farm.Cook((FarmDish)99), "A dish that does not exist is refused");
+
+        farm = new PetFarm();
+        farm.Till(0); farm.Plant(0, FarmCrop.Radish);
+        farm.Till(1); farm.Plant(1, FarmCrop.Radish); farm.Water(1, start);
+        farm.Till(2);
+        var before = farm.Tiles[1].GrowsUntil;
+        check(farm.RainWater(start).SequenceEqual(new[] { 0 }) && farm.Next(0) == FarmStep.Wait, "Rain waters what waits for water, and only that");
+        check(farm.Tiles[1].GrowsUntil == before && farm.Tiles[2].Stage == FarmStage.Tilled, "A growing crop and bare soil are left as they are");
+        check(farm.RainWater(start).Count == 0, "Rain has nothing more to do");
+
+        double stage = PetFarm.StageSeconds(FarmCrop.Radish);
+        check(farm.Sunshine(40), "Sun reaches what grows");
+        check(Math.Abs(farm.Remaining(0, start).TotalSeconds - (stage - 10)) < 0.01, "A second of sun counts a quarter more");
+        check(farm.Tiles[2].GrowsUntil == null, "Sun does not start anything");
+        check(!new PetFarm().Sunshine(40), "With nothing growing the sun changes nothing");
+        // Under sun all the way, each second of the clock counts 1.25: a fifth off the whole stage.
+        farm = new PetFarm();
+        farm.Till(0); farm.Plant(0, FarmCrop.Radish); farm.Water(0, start);
+        farm.Sunshine(stage * 0.8);
+        check(farm.Advance(start.AddSeconds(stage * 0.8 + 0.01)).Count == 1 && farm.Tiles[0].Stage == FarmStage.Sprout, "In full sun a stage takes four fifths of its time");
+
+        var random = new Random(4);
+        var weather = new PetWeather();
+        check(!weather.Shining && !weather.Raining, "Hidden weather reaches nothing");
+        weather.Step(PetWeather.FadeSeconds, true, random);
+        check(weather.Shining && !weather.Raining, "A clear sky on show shines");
+        weather.HideNow();
+        weather.SetKind(WeatherKind.Rain);
+        weather.Step(PetWeather.FadeSeconds, true, random);
+        check(weather.Raining && !weather.Shining, "Rain on show rains");
+        weather.HideNow();
+        weather.Step(0.01, false, random);
+        check(!weather.Raining, "Rain that is not on show waters nothing");
+        foreach (var other in new[] { WeatherKind.Snow, WeatherKind.Sunset, WeatherKind.Pollen, WeatherKind.Night })
+        {
+            weather.HideNow();
+            weather.SetKind(other);
+            weather.Step(PetWeather.FadeSeconds, true, random);
+            check(!weather.Raining && !weather.Shining, $"{other} does nothing for the field");
+        }
+
+        var pet = new PetModel();
+        pet.Emotions.Cheer(6);
+        pet.Emotions.Step(pet, 5, -200, 50);
+        check(pet.Emotions.Target == PetEmotion.Happy, "A dish can keep the cat happy for longer");
     }
 
     // The store, farm coins, seeds, tiles and the scarecrow (1.5.1 M5).

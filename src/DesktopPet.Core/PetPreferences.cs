@@ -67,6 +67,8 @@ public sealed class PetPreferences
     public bool FarmResow { get; set; } = true;
     // On by default: the cat now and then cooks what the store can spare, and eats it.
     public bool FarmAutoCook { get; set; } = true;
+    // On by default: the cat now and then goes fishing by itself.
+    public bool FarmAutoFish { get; set; } = true;
     // On by default: the Expedition's keepsakes stand in the display corner once one is earned.
     public bool ShowTrophies { get; set; } = true;
     // Where the user or the cat left the keepsake: its monitor and the art's left edge as a fraction of

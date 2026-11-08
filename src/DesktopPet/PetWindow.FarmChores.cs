@@ -9,7 +9,7 @@ namespace DesktopPet;
 public sealed partial class PetWindow
 {
     // From the cat's middle to the tile's middle while it works, so the crop stays in view.
-    private const double FarmChoreGap = 58, FarmStalkSpeed = 0.6, FarmStalkCrouch = 0.45;
+    private const double FarmChoreGap = 58, FarmFishGap = 100, FarmStalkSpeed = 0.6, FarmStalkCrouch = 0.45;
 
     private readonly FarmChores farmChores = new();
     private readonly FarmBird farmBird = new();
@@ -25,6 +25,7 @@ public sealed partial class PetWindow
     private double FarmTileMid(int tile) => FarmPlotLeft - PetFarmArt.Side + PetFarmArt.TileCenter(tile);
 
     private double FarmHearthMid => FarmPlotLeft - PetFarmArt.Side + PetFarmArt.HearthCenter;
+    private double FarmPondMid => FarmPlotLeft - PetFarmArt.Side + PetFarmArt.PondCenter;
 
     // The cat can walk to the field from where it is.
     private bool FarmAtHand => preferences.Farm && FarmVisible && farm != null && farmLift.Phase == FarmLiftPhase.Down && farmWithCat && pet.LedgeId == 0;
@@ -42,6 +43,7 @@ public sealed partial class PetWindow
         if (farmChores.Active && !FarmChoreMayGoOn) StopFarmChore();
         farmChoreSoundWait = Math.Max(0, farmChoreSoundWait - dt);
         farmChores.CountDownCook(dt);
+        farmChores.CountDownFish(dt);
         if (!farmChores.Active && farmChores.CountDownVisit(dt)) farmChores.ScheduleAfterLook(TryFarmVisit(), featureRandom);
         if (farmChores.CountDownBird(dt)) farmChores.ScheduleBird(TryFarmBird() ? FarmChores.NextBird(featureRandom, farm?.Scarecrow == true) : FarmChores.RetrySeconds);
     }
@@ -61,6 +63,12 @@ public sealed partial class PetWindow
         if (FarmChores.Pick(farm!, i => Math.Abs(FarmTileMid(i) - CatCenter), preferences.FarmResow) is var (kind, tile))
         {
             farmChores.Begin(kind, tile, FarmChoreSpotFor(tile));
+            return true;
+        }
+        if (preferences.FarmAutoFish && farmChores.FishDue <= 0)
+        {
+            BeginFarmFishing(byUser: false);
+            farmChores.ScheduleFish(FarmChores.NextFish(featureRandom));
             return true;
         }
         if (!preferences.FarmAutoCook || farmChores.CookDue > 0 || !FarmCatCanEat || farm!.AutoDish() is not FarmDish dish) return false;
@@ -83,6 +91,27 @@ public sealed partial class PetWindow
     // Beside the tile on the side the cat comes from; the other side when the screen ends there.
     private double FarmChoreSpotFor(int tile) => FarmSpotBeside(FarmTileMid(tile));
 
+    // The user's "Go fishing": like a treat it works in Quiet and is refused while the cat is asleep or eating.
+    public bool FarmCanFish => !paused && FarmAtHand && MayAct(AutoKind.Treat) && pet.TreatRemaining <= 0 && treatSatisfiedRemaining <= 0
+        && !farmChores.Cooking && farmChores.Kind != FarmChoreKind.Fishing && farmChores.FishAgain <= 0;
+
+    public bool FarmGoFish()
+    {
+        if (!FarmCanFish) return false;
+        CancelFeatureActivity();
+        BeginFarmFishing(byUser: true);
+        return true;
+    }
+
+    private void BeginFarmFishing(bool byUser)
+    {
+        // From the far bank, so the cat does not sit in front of the hearth; the near one when the screen ends there.
+        double half = settings.Width / 2, right = Math.Max(bounds.Left, bounds.Right - settings.Width);
+        double spot = FarmPondMid + FarmFishGap - half;
+        if (spot > right) spot = Math.Clamp(FarmPondMid - FarmFishGap - half, bounds.Left, right);
+        farmChores.BeginFishing(spot, spot + half < FarmPondMid ? -1 : 1, FarmChores.NextBite(featureRandom), farm!.RollFish(featureRandom), byUser);
+    }
+
     private double FarmSpotBeside(double mid)
     {
         double half = settings.Width / 2, left = bounds.Left, right = Math.Max(bounds.Left, bounds.Right - settings.Width);
@@ -104,7 +133,7 @@ public sealed partial class PetWindow
             return false;
         }
         bool hit = farmChores.Step(dt);
-        int facing = (farmChores.Cooking ? FarmHearthMid : FarmTileMid(tile)) < CatCenter ? -1 : 1;
+        int facing = (farmChores.Cooking ? FarmHearthMid : kind == FarmChoreKind.Fishing ? FarmPondMid : FarmTileMid(tile)) < CatCenter ? -1 : 1;
         switch (farmChores.Phase)
         {
             case FarmChorePhase.Notice:
@@ -123,12 +152,14 @@ public sealed partial class PetWindow
         FarmChoreKind.Bird => FarmBirdThere(tile),
         FarmChoreKind.Pour => farm!.PotDish == null && farm.CanCook(farmChores.Dish),
         FarmChoreKind.Stir => farm!.PotDish != null,
+        FarmChoreKind.Fishing => true,
         _ => farm!.Next(tile) == FarmChores.StepOf(kind)
     };
 
     private void FinishFarmWork(FarmChoreKind kind)
     {
         if (kind == FarmChoreKind.Pour && farm?.PotDish != null) { farmChores.StartStirring(); return; }
+        if (kind == FarmChoreKind.Fishing) farmChores.ScheduleFishAgain(FarmChores.FishAgainSeconds);
         bool byUser = farmChores.ByUser;
         StopFarmChore();
         if (kind == FarmChoreKind.Stir && farm?.PotDish is FarmDish dish && GiveTreat(dish, byUser))
@@ -192,6 +223,18 @@ public sealed partial class PetWindow
                 HoldStill(PetAction.Sitting, facing);
                 pet.StirringRemaining = Math.Max(0, FarmChores.StirSeconds - farmChores.Time);
                 break;
+            case FarmChoreKind.Fishing:
+                HoldStill(PetAction.Sitting, facing);
+                pet.FishingTime = farmChores.Time;
+                pet.FishingBiteAt = farmChores.BiteAt;
+                if (hit)
+                {
+                    farm!.Catch(farmChores.Catch);
+                    ShowFarmFishGain(farmChores.Catch);
+                    PlayFarmSound("pop");
+                    FarmChanged();
+                }
+                break;
             case FarmChoreKind.Till:
                 HoldStill(PetAction.Idle, facing);
                 if (hit && farm!.Next(tile) == FarmStep.Till && farm.ResowCrop(tile) != null && farm.Till(tile, keepLastCrop: true))
@@ -232,6 +275,7 @@ public sealed partial class PetWindow
         if (!farmChores.Active) return;
         farmChores.Stop();
         pet.WateringRemaining = pet.StirringRemaining = pet.PlayCrouch = 0;
+        pet.FishingTime = -1;
         if (pet.Action is not (PetAction.Walking or PetAction.Sitting or PetAction.Looking or PetAction.Idle)) return; // Held, flying or asleep: not ours to change.
         pet.Action = PetAction.Idle;
         pet.VX = pet.SmoothedWalkVelocity = 0;

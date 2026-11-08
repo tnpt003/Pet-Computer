@@ -16,7 +16,7 @@ Mục tiêu: mèo không còn chỉ đi qua đi lại mà có việc liên tục
 |---|---|---|
 | 1. Nhịp làm việc | Mèo làm liên tục có nghỉ, tự cày và gieo lại | Xong (acfb3ee), còn test tay |
 | 2. Bếp lửa | Nồi, que khuấy, lửa; mèo đổ nguyên liệu, khuấy, ăn | Xong (5bdea20), còn test tay |
-| 3. Hồ nước | Mèo câu cá, 3 loại cá, món cá | Chưa làm |
+| 3. Hồ nước | Mèo câu cá, 3 loại cá, món cá | Có code, còn test tay |
 | 4. Gian hàng lưu động | Tự xuất hiện như cổng, thay cho Đơn hàng | Chưa làm |
 | 5. Thời tiết gắn nông trại | Mỗi loại có tác dụng, chỉ có lợi | Chưa làm |
 
@@ -39,6 +39,16 @@ Người dùng đã chốt: thời tiết lấy wallpaper làm khí hậu chính
 - Bị ngắt sau khi đổ: nồi giữ món (lưu `PotDish` trong `farm.json`, vẫn phiên bản 3), mèo quay lại khuấy ở lần tìm việc sau, kể cả sau khi mở lại app và khi đã tắt "Mèo làm vườn cùng". Lúc Quiet, Away hoặc chưa ăn được thì mèo chưa quay lại. Bữa này tính là bữa mèo tự nấu.
 - Mèo tự nấu: tối đa một lần mỗi 10–15 phút, sau mọi việc ngoài ruộng, không nấu trong Quiet. Chọn món cấp cao nhất mà kho còn ít nhất 4 mỗi nguyên liệu sau khi trừ. Công tắc "Mèo tự nấu ăn" trong Cài đặt → Thói quen, mặc định bật; tắt "Mèo làm vườn cùng" thì cũng thôi tự nấu. Bữa mèo tự nấu không báo cho Python, không tính là bạn cho ăn, không đổi đồng hồ buồn ngủ; mèo vẫn Happy 6 giây.
 - Tiếng: "pop" lúc đổ nguyên liệu, lần mèo tự nấu theo khoảng cách 60 giây của Mốc 1. Khuấy im lặng, không thêm asset.
+
+### Luật Mốc 3 (duyệt 09/11)
+
+- Hồ có bờ đất, đá và lau sậy, đứng bên phải bếp, nhấc và di chuyển cùng mảnh đất; khu rộng thêm 140 DIP nên ruộng sát mép phải dịch sang trái một lần. Lúc không câu vẽ tĩnh. Hồ không nhận bấm trái, chuột phải vẫn ra menu ruộng.
+- Một lần câu: mèo đi tới bờ xa (bờ gần nếu sát mép màn hình, giới hạn 30 giây), vung cần 0,8 giây, chờ phao 4–10 giây, kéo 0,8 giây, cá nhảy lên rồi vào kho với nhãn "+1 Tên cá". Lần nào câu cũng được cá; bị ngắt thì không mất gì.
+- Bạn gọi: mục "Câu cá" trong menu chuột phải của ruộng, hồi 60 giây giữa hai lần xong. Điều kiện giống "Cho ăn": làm được trong Quiet; mèo ngủ, bận, đang ăn, đang nấu hoặc Pause thì mục mờ, không đánh thức. Mèo trên cửa sổ hoặc màn hình khác thì không câu.
+- Mèo tự câu: mỗi 8–12 phút, sau việc ruộng và trước tự nấu, không câu trong Quiet. Công tắc "Mèo tự câu cá" trong Cài đặt → Thói quen, mặc định bật; tắt "Mèo làm vườn cùng" thì cũng thôi. Câu cá không tính là chăm sóc mèo, không đổi đồng hồ buồn ngủ, không báo Python.
+- Cá: Cá nhỏ 70%, 5 xu, 3 XP. Cá chép 25%, 15 xu, 8 XP. Cá vàng quý 5%, 60 xu, 25 XP, mở ở cấp 6 (trước đó phần 5% ra cá chép). Cá nằm trong kho riêng, bán từng con hoặc qua "Bán hết". Đơn hàng không đòi cá. `farm.json` vẫn phiên bản 3, thêm mục cá.
+- Món cá nấu ở bếp như món khác: Cá nướng (1 Cá nhỏ, cấp 1), Cá chép kho cà chua (1 Cá chép + 1 Cà chua, cấp 4), Lẩu cá vàng (1 Cá vàng quý + 1 Bí ngô, cấp 7). Mèo tự nấu được dùng cá nhỏ và cá chép, chừa 4 con mỗi loại; không đụng Cá vàng quý.
+- Tiếng: "pop" lúc cá vào kho, lần mèo tự câu theo khoảng cách 60 giây của Mốc 1. Không thêm asset.
 
 ## Giai đoạn 1
 

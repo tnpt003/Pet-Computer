@@ -187,6 +187,148 @@ internal static class FarmChoreChecks
             prefs.Quiet = false;
             Ready();
         }
+        void Pond()
+        {
+            var field = window.Farm!;
+            var art = Field<PetFarmArt>(window, "farmArt");
+            var area = Field<Area>(window, "bounds");
+            double pond = (double)Field2("FarmPondMid");
+            void Ready()
+            {
+                Free(); Clear(field);
+                field.PotDish = null;
+                field.Stock.Clear(); field.Fish.Clear();
+                pet.TreatRemaining = 0; pet.TreatDish = null;
+                SetField(window, "treatCooldown", 0.0); SetField(window, "treatSatisfiedRemaining", 0.0);
+                chores.ScheduleFish(100000); chores.ScheduleFishAgain(0); chores.ScheduleCook(100000);
+                pet.X = area.Left + 10;
+            }
+            void Arrive() { pet.X = window.FarmChoreSpot; Features(Frame * 2); }
+            MenuItemCheck();
+
+            // Sent by the user, from start to end.
+            Ready();
+            check(window.FarmCanFish && window.FarmGoFish() && window.FarmChoreNow == FarmChoreKind.Fishing && chores.ByUser, "\"Go fishing\" sends the cat to the pond");
+            check(!window.FarmCanFish && !window.FarmGoFish(), "One cast at a time");
+            double halfCat = Field<PetSettings>(window, "settings").Width / 2;
+            check(Math.Abs(Math.Abs(window.FarmChoreSpot + halfCat - pond) - 100) < 0.01 && chores.FishSide == 1 && window.FarmChoreSpot + halfCat > pond, "It stands on the far bank, clear of the hearth");
+            Features(Frame);
+            check(pet.Action == PetAction.Walking && pet.Facing > 0, "It walks there");
+            Arrive();
+            check(window.FarmChorePhaseNow == FarmChorePhase.Work && pet.Action == PetAction.Sitting && pet.VX == 0 && pet.FishingTime >= 0 && pet.Facing < 0, "On the bank it sits, faces the water and casts");
+            Farm(Frame * 2);
+            check(art.Fishing && art.FishSide == 1 && art.CaughtFish == null, "The water ripples round the float; nothing has bitten");
+            var fish = chores.Catch;
+            int caught = field.FishOf(fish);
+            double attention = pet.Emotions.SecondsWithoutAttention;
+            Features(chores.BiteAt + 0.1 - chores.Time);
+            check(pet.FishingTime >= chores.BiteAt && field.FishOf(fish) == caught, "It bites, and is not yet landed");
+            Farm(Frame * 2);
+            check(art.CaughtFish == fish && art.CaughtAge > 0, "The fish jumps out of the water");
+            Features(FarmChores.ReelSeconds);
+            check(field.FishOf(fish) == caught + 1 && PetFarm.Load(path).FishOf(fish) == caught + 1, "It lands in the store and is saved");
+            var gain = Field<System.Windows.Controls.Border?>(window, "farmGain")!;
+            check(gain.Opacity == 1 && gain.Parent is System.Windows.Controls.Grid { Margin.Left: > 300 }, "\"+1\" rises over the pond");
+            Features(FarmChores.FishShowSeconds + 0.05);
+            check(window.FarmChoreNow == FarmChoreKind.None && pet.FishingTime == -1 && pet.Action == PetAction.Idle, "The trip ends and the cat is free");
+            check(pet.Emotions.SecondsWithoutAttention == attention, "Fishing is not attention");
+            check(!window.FarmCanFish && chores.FishAgain > 50, "Then a wait before the next cast");
+            chores.ScheduleFishAgain(0.01);
+            Call(window, "WatchFarmChores", 0.02);
+            check(window.FarmCanFish, "...which runs out");
+            Farm(0.5);
+            check(!art.Fishing && art.CaughtFish == null, "The pond is quiet again");
+            Farm(Frame);
+            check(!Field<bool>(window, "farmPondBusy"), "...and is not redrawn any more");
+
+            // What stops it: nothing is lost, nothing is woken.
+            void Stops(string what, Action set, Action unset)
+            {
+                Ready();
+                check(window.FarmGoFish(), $"(fishing, before: {what})");
+                Arrive();
+                set();
+                Call(window, "WatchFarmChores", Frame);
+                check(window.FarmChoreNow == FarmChoreKind.None && pet.FishingTime == -1 && field.Fish.Count == 0 && chores.FishAgain == 0, $"It ends the fishing: {what}");
+                unset();
+            }
+            Stops("asleep", () => { pet.Emotions.Reset(); pet.Action = PetAction.Sleeping; pet.Emotions.EnterSleep(); }, () => { check(pet.Emotions.SleepLocked && pet.Action == PetAction.Sleeping, "A sleeping fisher stays asleep"); pet.Emotions.Reset(); pet.Action = PetAction.Idle; });
+            Stops("dragged", () => SetField(window, "dragging", true), () => SetField(window, "dragging", false));
+            Stops("thrown", () => { pet.Action = PetAction.Thrown; pet.Grounded = false; }, () => { pet.Action = PetAction.Idle; pet.Grounded = true; });
+            Stops("Pause", () => SetField(window, "paused", true), () => SetField(window, "paused", false));
+            Stops("on a window", () => pet.LedgeId = 7, () => pet.LedgeId = 0);
+            Stops("field on another monitor", () => SetField(window, "farmWithCat", false), () => SetField(window, "farmWithCat", true));
+
+            void Refused(string what, Action set, Action unset)
+            {
+                Ready();
+                set();
+                check(!window.FarmCanFish && !window.FarmGoFish() && window.FarmChoreNow == FarmChoreKind.None, $"No fishing: {what}");
+                unset();
+            }
+            Refused("asleep", () => { pet.Emotions.Reset(); pet.Action = PetAction.Sleeping; pet.Emotions.EnterSleep(); }, () => { check(pet.Emotions.SleepLocked, "...and it is not woken"); pet.Emotions.Reset(); pet.Action = PetAction.Idle; });
+            Refused("Pause", () => SetField(window, "paused", true), () => SetField(window, "paused", false));
+            Refused("on a window", () => pet.LedgeId = 7, () => pet.LedgeId = 0);
+            Refused("eating", () => pet.TreatRemaining = 2, () => pet.TreatRemaining = 0);
+            Ready();
+            chores.BeginCook(FarmChoreKind.Stir, FarmDish.RadishSoup, 0, true);
+            check(!window.FarmCanFish && !window.FarmGoFish() && window.FarmChoreNow == FarmChoreKind.Stir, "No fishing while the cat is cooking");
+            Call(window, "StopFarmChore");
+
+            // In Quiet what the user asked for goes on; what the cat started stops.
+            Ready();
+            prefs.Quiet = true;
+            check(window.FarmGoFish(), "The user may send it in Quiet");
+            Call(window, "WatchFarmChores", Frame);
+            Arrive();
+            check(window.FarmChoreNow == FarmChoreKind.Fishing && window.FarmChorePhaseNow == FarmChorePhase.Work, "...and it goes on");
+            prefs.Quiet = false;
+
+            // By itself: after the field, before the kitchen.
+            Ready();
+            field.Stock["Radish"] = 8;
+            chores.ScheduleCook(0);
+            check(window.TryFarmVisit() && window.FarmChoreNow == FarmChoreKind.Pour, "Not due: it cooks");
+            Ready();
+            chores.ScheduleFish(0);
+            prefs.FarmAutoFish = false;
+            check(!window.TryFarmVisit(), "Not with the setting off");
+            prefs.FarmAutoFish = true;
+            prefs.FarmHelper = false;
+            check(!window.TryFarmVisit(), "Not with the helper off");
+            prefs.FarmHelper = true;
+            prefs.Quiet = true;
+            check(!window.TryFarmVisit(), "Not in Quiet");
+            prefs.Quiet = false;
+            Thirsty(field, 2);
+            check(window.TryFarmVisit() && window.FarmChoreNow == FarmChoreKind.Water, "The field comes first");
+            Free(); Clear(field);
+            field.Stock["Radish"] = 8;
+            chores.ScheduleFish(0); chores.ScheduleCook(0);
+            pet.X = area.Left + 10;
+            check(window.TryFarmVisit() && window.FarmChoreNow == FarmChoreKind.Fishing && !chores.ByUser, "With both due it fishes before it cooks");
+            check(chores.FishDue >= FarmChores.FishMinSeconds, "...and not again for a while");
+            prefs.Quiet = true;
+            Call(window, "WatchFarmChores", Frame);
+            check(window.FarmChoreNow == FarmChoreKind.None, "Quiet stops what the cat started itself");
+            prefs.Quiet = false;
+            Ready();
+            chores.ScheduleFish(FarmChores.FishMinSeconds);
+
+            void MenuItemCheck()
+            {
+                Ready();
+                var item = window.FarmMenuItems().First(m => (string)m.Header != null && ((string)m.Header).Contains("fish", StringComparison.OrdinalIgnoreCase) || ((string)m.Header).Contains("Câu cá"));
+                check(item.IsEnabled, "The menu offers fishing");
+                item.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.MenuItem.ClickEvent));
+                check(window.FarmChoreNow == FarmChoreKind.Fishing && chores.ByUser, "The menu sends the cat");
+                pet.Emotions.Reset(); Free();
+                pet.Action = PetAction.Sleeping; pet.Emotions.EnterSleep();
+                var off = window.FarmMenuItems().First(m => ((string)m.Header).Contains("fish", StringComparison.OrdinalIgnoreCase) || ((string)m.Header).Contains("Câu cá"));
+                check(!off.IsEnabled, "Asleep, the item is greyed");
+                pet.Emotions.Reset(); pet.Action = PetAction.Idle;
+            }
+        }
         object Field2(string name) => typeof(PetWindow).GetProperty(name, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.GetValue(window)!;
         void Clear(PetFarm field) { for (int i = 0; i < PetFarm.TileCount; i++) { field.Tiles[i].Stage = FarmStage.Wild; field.Tiles[i].Crop = null; field.Tiles[i].GrowsUntil = null; field.Tiles[i].LastCrop = null; } }
 
@@ -202,7 +344,7 @@ internal static class FarmChoreChecks
             Farm(0.05);
             var field = window.Farm!;
             field.OpenTiles = 6;
-            chores.ScheduleVisit(100000); chores.ScheduleBird(100000); // Only the trips asked for here.
+            chores.ScheduleVisit(100000); chores.ScheduleBird(100000); chores.ScheduleFish(100000); // Only the trips asked for here.
             Free();
             var area = Field<Area>(window, "bounds");
             pet.X = area.Left + 10;
@@ -469,6 +611,7 @@ internal static class FarmChoreChecks
             Free();
 
             Hearth();
+            Pond();
         }
         finally
         {
@@ -477,6 +620,7 @@ internal static class FarmChoreChecks
             prefs.Farm = false;
             prefs.FarmHelper = true;
             prefs.FarmAutoCook = true;
+            prefs.FarmAutoFish = true;
             prefs.Quiet = quiet;
             SetField(window, "dragging", false);
             SetField(window, "pressPending", false);
@@ -484,7 +628,7 @@ internal static class FarmChoreChecks
             SetField(window, "farmClock", null);
             SetField(window, "farmPath", PetFarm.DefaultPath);
             SetField(window, "farm", null);
-            chores.ScheduleVisit(FarmChores.FirstVisitSeconds); chores.ScheduleBird(FarmChores.BirdMinSeconds); chores.ScheduleCook(FarmChores.CookMinSeconds);
+            chores.ScheduleVisit(FarmChores.FirstVisitSeconds); chores.ScheduleBird(FarmChores.BirdMinSeconds); chores.ScheduleCook(FarmChores.CookMinSeconds); chores.ScheduleFish(FarmChores.FishMinSeconds); chores.ScheduleFishAgain(0);
             SetContext(window, false, 0); Call(window, "TickContext", 1.1);
             window.Reset();
             if (Directory.Exists(folder)) Directory.Delete(folder, true);
@@ -571,6 +715,35 @@ internal static class FarmChoreChecks
                 Save(bitmap, $"hearth-stir-{(facing > 0 ? "right" : "left")}-{tone}");
             }
         }
+        // The pond, and the cat fishing beside it.
+        foreach (var (back, tone) in new[] { (light, "light"), (dark, "dark") })
+        {
+            Plot(_ => { }, back, $"pond-idle-{tone}");
+            Plot(a => { a.Fishing = true; a.FishSide = -1; a.HearthTime = 1; }, back, $"pond-ripple-{tone}");
+            foreach (var kind in Enum.GetValues<FarmFish>())
+                Plot(a => { a.Fishing = true; a.FishSide = -1; a.HearthTime = 1; a.CaughtFish = kind; a.CaughtAge = 0.45; }, back, $"pond-catch-{kind}-{tone}");
+            foreach (int side in new[] { -1, 1 })
+                foreach (var (time, stage) in new[] { (3.0, "wait"), (6.3, "bite"), (7.2, "reel") })
+                {
+                    int width = (int)PetFarmArt.ArtWidth + 160, height = (int)PetFarmArt.ArtHeight;
+                    var plot = new PetFarmArt { Fishing = true, FishSide = side, HearthTime = time, CaughtFish = time > 6 ? FarmFish.Carp : null, CaughtAge = time > 6 ? (time - 6) / 1.4 : 0 };
+                    for (int i = 0; i < 6; i++) plot.Tiles[i] = new(FarmStage.Young, FarmCrop.Carrot, true, false, 0.5);
+                    plot.Measure(new Size(PetFarmArt.ArtWidth, PetFarmArt.ArtHeight)); plot.Arrange(new Rect(0, 0, PetFarmArt.ArtWidth, PetFarmArt.ArtHeight));
+                    var model = new PetModel { Action = PetAction.Sitting, Grounded = true, Facing = -side, AnimationTime = 1, ActionTime = 1, FishingTime = time, FishingBiteAt = 6 };
+                    var cat = new PetRenderer(model);
+                    cat.Measure(new Size(180, 180));
+                    cat.Arrange(new Rect(PetFarmArt.PondCenter + side * 100 - 56 - PickupAnimation.Padding, PetFarmArt.Floor - 112 - PickupAnimation.Padding, 180, 180));
+                    var visual = new DrawingVisual();
+                    using (var dc = visual.RenderOpen()) dc.DrawRectangle(new SolidColorBrush(back), null, new Rect(0, 0, width, height));
+                    var bitmap = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);
+                    bitmap.Render(visual); bitmap.Render(plot); bitmap.Render(cat);
+                    Save(bitmap, $"pond-fish-{stage}-{(side < 0 ? "left" : "right")}-{tone}");
+                }
+        }
+        string still = Plot(_ => { }, dark, null);
+        check(still != Plot(a => { a.Fishing = true; a.HearthTime = 1; }, dark, null), "The float makes ripples");
+        check(still != Plot(a => { a.CaughtFish = FarmFish.Carp; a.CaughtAge = 0.5; }, dark, null), "A fish jumps");
+        check(Plot(a => { a.CaughtFish = FarmFish.Minnow; a.CaughtAge = 0.5; }, dark, null) != Plot(a => { a.CaughtFish = FarmFish.Goldfish; a.CaughtAge = 0.5; }, dark, null), "Each fish looks its own");
         string idle = Plot(_ => { }, dark, null);
         check(idle != Plot(a => a.HearthFire = 1, dark, null), "The fire is drawn");
         string ablaze = Plot(a => { a.HearthFire = 1; a.HearthTime = 0.2; }, dark, null);
@@ -587,7 +760,9 @@ internal static class FarmChoreChecks
         string sitting = Cat(_ => { }, dark, null);
         check(sitting != Cat(m => m.WateringRemaining = 1, dark, null), "The cat holds a watering can");
         check(sitting != Cat(m => m.StirringRemaining = 3, dark, null), "The cat holds a stick");
+        check(sitting != Cat(m => { m.FishingTime = 3; m.FishingBiteAt = 6; }, dark, null), "The cat holds a rod");
         string asleep = Cat(m => { m.Action = PetAction.Sleeping; m.Emotions.EnterSleep(); }, dark, null);
+        check(asleep == Cat(m => { m.FishingTime = 3; m.FishingBiteAt = 6; m.Action = PetAction.Sleeping; m.Emotions.EnterSleep(); }, dark, null), "A sleeping cat never holds the rod");
         check(asleep == Cat(m => { m.StirringRemaining = 3; m.Action = PetAction.Sleeping; m.Emotions.EnterSleep(); }, dark, null), "A sleeping cat never holds the stick");
         check(asleep == Cat(m => { m.WateringRemaining = 1; m.Action = PetAction.Sleeping; m.Emotions.EnterSleep(); }, dark, null), "A sleeping cat never holds the can");
     }

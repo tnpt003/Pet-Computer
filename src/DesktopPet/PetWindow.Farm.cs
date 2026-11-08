@@ -33,6 +33,7 @@ public sealed partial class PetWindow
     private Area farmArea;
     private double farmScale = 1, farmFraction, farmRestFraction, farmFallFrom, farmFallTo, farmGrab, farmGainLeft;
     private double farmHearthFire, farmHearthTime;
+    private bool farmPondBusy;
     private double farmSkyElapsed, farmRainSeconds, farmSunUnsaved, farmGainTotal = FarmGainSeconds;
     private string? farmMonitor;
     private DateTime farmChecked;
@@ -154,8 +155,10 @@ public sealed partial class PetWindow
     // The fire takes and dies down; only then does the hearth need drawing every frame.
     private bool StepFarmHearth(double dt)
     {
-        bool cooking = farmChores.Cooking && farmChores.Phase == FarmChorePhase.Work;
-        if (!cooking && farmHearthFire <= 0) return false;
+        bool working = farmChores.Phase == FarmChorePhase.Work, cooking = farmChores.Cooking && working;
+        bool fishing = working && farmChores.Kind == FarmChoreKind.Fishing, pondWas = farmPondBusy;
+        farmPondBusy = fishing;
+        if (!cooking && !fishing && !pondWas && farmHearthFire <= 0) return false;
         farmHearthFire = Math.Clamp(farmHearthFire + (cooking ? dt * 3 : -dt * 2), 0, 1);
         farmHearthTime += dt;
         return true;
@@ -171,6 +174,12 @@ public sealed partial class PetWindow
         farmArt.Stirring = working && farmChores.Kind == FarmChoreKind.Stir;
         farmArt.PourDish = working && farmChores.Kind == FarmChoreKind.Pour ? farmChores.Dish : null;
         farmArt.PourAge = working ? farmChores.Time / FarmChores.PourSeconds : 0;
+        bool fishing = working && farmChores.Kind == FarmChoreKind.Fishing;
+        double sinceBite = fishing ? farmChores.Time - farmChores.BiteAt : -1;
+        farmArt.Fishing = fishing;
+        farmArt.FishSide = farmChores.FishSide;
+        farmArt.CaughtFish = sinceBite >= 0 ? farmChores.Catch : null;
+        farmArt.CaughtAge = Math.Clamp(sinceBite / (FarmChores.ReelSeconds + FarmChores.FishShowSeconds), 0, 1);
     }
 
     private void DrawFarmLift()
@@ -493,6 +502,12 @@ public sealed partial class PetWindow
         return true;
     }
 
+    private void ShowFarmFishGain(FarmFish fish)
+    {
+        ShowFarmLabel(PetFarm.TileCount - 1, "+1 " + FarmFishName(fish), FarmGainSeconds);
+        if (farmGain?.Parent is Grid row) row.Margin = new Thickness(PetFarmArt.PondCenter - FarmChipWidth / 2, PetFarmArt.SoilTop - 40, 0, 0);
+    }
+
     private void ShowFarmGain(int tile, FarmCrop crop) => ShowFarmLabel(tile, "+1 " + FarmCropName(crop), FarmGainSeconds);
 
     private void ShowFarmLabel(int tile, string text, double seconds)
@@ -577,7 +592,9 @@ public sealed partial class PetWindow
         kitchen.Click += (_, _) => OpenFarmKitchen();
         var orders = new MenuItem { Header = L("Đơn hàng", "Orders") };
         orders.Click += (_, _) => OpenFarmOrders();
-        return new[] { shop, kitchen, orders }.Concat(FarmBulkItems()).Append(move).ToArray();
+        var fish = new MenuItem { Header = L("Câu cá", "Go fishing"), IsEnabled = FarmCanFish };
+        fish.Click += (_, _) => FarmGoFish();
+        return new[] { shop, kitchen, orders, fish }.Concat(FarmBulkItems()).Append(move).ToArray();
     }
 
     public void BeginFarmMove()

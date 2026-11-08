@@ -18,7 +18,11 @@ public enum FarmStep { Till, Plant, Water, Wait, Harvest, Locked }
 
 // Cooked from the store on the hearth and eaten there (1.5.1 M6, docs/FARM-GAME.md); only the pot keeps one.
 [JsonConverter(typeof(JsonStringEnumConverter<FarmDish>))]
-public enum FarmDish { RadishSoup, CarrotStew, StuffedTomato, PumpkinPie }
+public enum FarmDish { RadishSoup, CarrotStew, StuffedTomato, PumpkinPie, GrilledFish, CarpTomato, GoldfishHotpot }
+
+// Caught in the pond (docs/FARM-GAME.md); kept in the store beside the crops.
+[JsonConverter(typeof(JsonStringEnumConverter<FarmFish>))]
+public enum FarmFish { Minnow, Carp, Goldfish }
 
 public sealed class FarmTile
 {
@@ -95,7 +99,24 @@ public sealed partial class PetFarm
         FarmDish.CarrotStew => 2,
         FarmDish.StuffedTomato => 3,
         FarmDish.PumpkinPie => 5,
+        FarmDish.CarpTomato => 4,
+        FarmDish.GoldfishHotpot => 7,
         _ => 1
+    };
+
+    public const int GoldfishLevel = 6;
+    public const double GoldfishChance = 0.05, CarpChance = 0.25;
+    public static int SellPrice(FarmFish fish) => fish switch { FarmFish.Minnow => 5, FarmFish.Carp => 15, _ => 60 };
+    public static int FishXp(FarmFish fish) => fish switch { FarmFish.Minnow => 3, FarmFish.Carp => 8, _ => 25 };
+    public static int FishLevel(FarmFish fish) => fish == FarmFish.Goldfish ? GoldfishLevel : 1;
+
+    // The one fish a dish takes, or null.
+    public static FarmFish? FishIn(FarmDish dish) => dish switch
+    {
+        FarmDish.GrilledFish => FarmFish.Minnow,
+        FarmDish.CarpTomato => FarmFish.Carp,
+        FarmDish.GoldfishHotpot => FarmFish.Goldfish,
+        _ => null
     };
 
     public static int LevelReward(int level) => level * 20;
@@ -108,6 +129,9 @@ public sealed partial class PetFarm
         FarmDish.RadishSoup => new[] { (FarmCrop.Radish, 2) },
         FarmDish.CarrotStew => new[] { (FarmCrop.Carrot, 2) },
         FarmDish.StuffedTomato => new[] { (FarmCrop.Tomato, 1), (FarmCrop.Radish, 1) },
+        FarmDish.GrilledFish => Array.Empty<(FarmCrop, int)>(),
+        FarmDish.CarpTomato => new[] { (FarmCrop.Tomato, 1) },
+        FarmDish.GoldfishHotpot => new[] { (FarmCrop.Pumpkin, 1) },
         _ => new[] { (FarmCrop.Pumpkin, 1), (FarmCrop.Carrot, 1) }
     };
 
@@ -117,6 +141,8 @@ public sealed partial class PetFarm
     public Dictionary<string, int> Harvested { get; set; } = new();
     // What is in the store now, by crop name.
     public Dictionary<string, int> Stock { get; set; } = new();
+    // The fish in the store, by name.
+    public Dictionary<string, int> Fish { get; set; } = new();
     public int Coins { get; set; } = StartingCoins;
     // Tiles open from the left; a tile with anything on it is always open.
     public int OpenTiles { get; set; } = StartingTiles;
@@ -163,6 +189,7 @@ public sealed partial class PetFarm
         foreach (var tile in Tiles) Clean(tile);
         Harvested = CleanCounts(Harvested);
         Stock = CleanCounts(Stock);
+        Fish = (Fish ?? new()).Where(pair => Enum.TryParse<FarmFish>(pair.Key, out _) && pair.Value > 0).ToDictionary(pair => pair.Key, pair => pair.Value);
         Coins = Math.Clamp(Coins, 0, MaxCoins);
         Xp = Math.Clamp(Xp, 0, MaxXp);
         if (PotDish is FarmDish pot && !Enum.IsDefined(pot)) PotDish = null;
@@ -195,6 +222,7 @@ public sealed partial class PetFarm
     [JsonIgnore] public int NextLevelXp => LevelXp[Math.Min(Level, MaxLevel - 1)];
     public bool Unlocked(FarmCrop crop) => Level >= CropLevel(crop);
     public bool Unlocked(FarmDish dish) => Level >= DishLevel(dish);
+    public bool Unlocked(FarmFish fish) => Level >= FishLevel(fish);
 
     // Levels reached since the window last asked. Each has paid its coins already.
     private int levelsGained;
@@ -289,7 +317,8 @@ public sealed partial class PetFarm
 
     public int HarvestedCount(FarmCrop crop) => Harvested.GetValueOrDefault(crop.ToString());
     public int StockOf(FarmCrop crop) => Stock.GetValueOrDefault(crop.ToString());
-    public int StockValue => Enum.GetValues<FarmCrop>().Sum(crop => StockOf(crop) * SellPrice(crop));
+    public int FishOf(FarmFish fish) => Fish.GetValueOrDefault(fish.ToString());
+    public int StockValue => Enum.GetValues<FarmCrop>().Sum(crop => StockOf(crop) * SellPrice(crop)) + Enum.GetValues<FarmFish>().Sum(fish => FishOf(fish) * SellPrice(fish));
     // The next tile to open, or -1 when all are.
     public int NextLockedTile => OpenTiles < TileCount ? OpenTiles : -1;
 
@@ -301,6 +330,34 @@ public sealed partial class PetFarm
         return Earn(SellPrice(crop));
     }
 
+    public int Sell(FarmFish fish)
+    {
+        if (FishOf(fish) <= 0) return 0;
+        TakeFish(fish);
+        return Earn(SellPrice(fish));
+    }
+
+    // What this cast brings up. Before the golden fish is opened, it would have been a carp.
+    public FarmFish RollFish(Random random)
+    {
+        double roll = random.NextDouble();
+        if (roll < GoldfishChance) return Unlocked(FarmFish.Goldfish) ? FarmFish.Goldfish : FarmFish.Carp;
+        return roll < GoldfishChance + CarpChance ? FarmFish.Carp : FarmFish.Minnow;
+    }
+
+    public void Catch(FarmFish fish)
+    {
+        Fish[fish.ToString()] = FishOf(fish) + 1;
+        GainXp(FishXp(fish));
+    }
+
+    private void TakeFish(FarmFish fish)
+    {
+        int left = FishOf(fish) - 1;
+        if (left <= 0) Fish.Remove(fish.ToString());
+        else Fish[fish.ToString()] = left;
+    }
+
     private void Take(FarmCrop crop, int count)
     {
         int left = StockOf(crop) - count;
@@ -308,13 +365,15 @@ public sealed partial class PetFarm
         else Stock[crop.ToString()] = left;
     }
 
-    public bool CanCook(FarmDish dish) => Enum.IsDefined(dish) && Unlocked(dish) && Recipe(dish).All(part => StockOf(part.Crop) >= part.Count);
+    public bool CanCook(FarmDish dish) => Enum.IsDefined(dish) && Unlocked(dish) && Recipe(dish).All(part => StockOf(part.Crop) >= part.Count)
+        && (FishIn(dish) is not FarmFish fish || FishOf(fish) >= 1);
 
     // Uses up the ingredients, all of them or none.
     public bool Cook(FarmDish dish)
     {
         if (!CanCook(dish)) return false;
         foreach (var (crop, count) in Recipe(dish)) Take(crop, count);
+        if (FishIn(dish) is FarmFish fish) TakeFish(fish);
         return true;
     }
 
@@ -334,8 +393,10 @@ public sealed partial class PetFarm
     }
 
     // What the cat would cook by itself: the best dish that still leaves CookKeep of each ingredient, or null.
+    // The golden fish is the user's to spend.
     public FarmDish? AutoDish() => Enum.GetValues<FarmDish>().OrderByDescending(DishLevel)
-        .Where(dish => Unlocked(dish) && Recipe(dish).All(part => StockOf(part.Crop) - part.Count >= CookKeep))
+        .Where(dish => Unlocked(dish) && FishIn(dish) != FarmFish.Goldfish && (FishIn(dish) is not FarmFish fish || FishOf(fish) - 1 >= CookKeep)
+            && Recipe(dish).All(part => StockOf(part.Crop) - part.Count >= CookKeep))
         .Cast<FarmDish?>().FirstOrDefault();
 
     // Empties the store. The coins it brought.
@@ -343,6 +404,7 @@ public sealed partial class PetFarm
     {
         int value = StockValue;
         Stock.Clear();
+        Fish.Clear();
         return Earn(value);
     }
 

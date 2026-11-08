@@ -28,8 +28,25 @@ public sealed partial class PetWindow
         FarmDish.RadishSoup => L("Súp củ cải", "Radish soup"),
         FarmDish.CarrotStew => L("Cà rốt hầm", "Carrot stew"),
         FarmDish.StuffedTomato => L("Cà chua nhồi", "Stuffed tomato"),
+        FarmDish.GrilledFish => L("Cá nướng", "Grilled fish"),
+        FarmDish.CarpTomato => L("Cá chép kho cà chua", "Carp with tomato"),
+        FarmDish.GoldfishHotpot => L("Lẩu cá vàng", "Golden fish hotpot"),
         _ => L("Bánh bí ngô", "Pumpkin pie")
     };
+
+    private string FarmFishName(FarmFish fish) => fish switch
+    {
+        FarmFish.Minnow => L("Cá nhỏ", "Small fish"),
+        FarmFish.Carp => L("Cá chép", "Carp"),
+        _ => L("Cá vàng quý", "Golden fish")
+    };
+
+    private string FarmDishParts(FarmDish dish)
+    {
+        var parts = PetFarm.Recipe(dish).Select(part => $"{FarmCropName(part.Crop)} {farm!.StockOf(part.Crop)}/{part.Count}").ToList();
+        if (PetFarm.FishIn(dish) is FarmFish fish) parts.Insert(0, $"{FarmFishName(fish)} {farm!.FishOf(fish)}/1");
+        return string.Join(" · ", parts);
+    }
 
     // Each frame the field is shown.
     private void WatchFarmKitchen()
@@ -88,7 +105,7 @@ public sealed partial class PetWindow
         foreach (var (dish, parts, button) in farmKitchenRows)
         {
             parts.Text = farm.Unlocked(dish)
-                ? string.Join(" · ", PetFarm.Recipe(dish).Select(part => $"{FarmCropName(part.Crop)} {farm.StockOf(part.Crop)}/{part.Count}"))
+                ? FarmDishParts(dish)
                 : FarmLevelText(PetFarm.DishLevel(dish));
             ShowFarmShopButton(button, farmKitchenReady && farm.CanCook(dish));
         }

@@ -252,6 +252,10 @@ internal static class FarmChecks
         check(window.FarmSell(FarmCrop.Carrot) == 13 && farm.Coins == 13 && farm.StockOf(FarmCrop.Carrot) == 1, "Selling pays");
         check(PetFarm.Load(path).Coins == 13, "...and is saved");
         check(window.FarmSellAll() == 16 && farm.Coins == 29 && farm.Stock.Count == 0, "Selling all empties the store");
+        farm.Catch(FarmFish.Carp);
+        Call(window, "UpdateFarmShop");
+        check(window.FarmSell(FarmFish.Carp) == 15 && farm.Coins == 44 && farm.FishOf(FarmFish.Carp) == 0, "A fish sells from the shop");
+        farm.Coins = 29; farm.Xp = 0;
         check(!window.FarmOpenTile() && farm.OpenTiles == 3, "A tile too dear is refused");
         farm.Coins = 500;
         check(window.FarmOpenTile() && farm.OpenTiles == 4 && farm.Next(3) == FarmStep.Till, "A tile is opened");
@@ -454,7 +458,10 @@ internal static class FarmChecks
         double width = Shop()!.ActualWidth;
         farm.Xp = 450;
         Call(window, "UpdateFarmShop");
-        check(next.Text.Contains("140"), $"A level that opens nothing tells its coins ({next.Text})");
+        check(next.Text.Contains("Golden fish hotpot"), $"Level 7 opens the hotpot ({next.Text})");
+        farm.Xp = 700;
+        Call(window, "UpdateFarmShop");
+        check(next.Text.Contains("160"), $"A level that opens nothing tells its coins ({next.Text})");
         farm.Xp = 5000;
         Call(window, "UpdateFarmShop");
         Shop()!.UpdateLayout();
@@ -778,6 +785,6 @@ internal static class FarmChecks
             Render(dish, 1, light, $"dish-{dish}-light");
             Render(dish, 0.4, dark, $"dish-{dish}-start");
         }
-        check(seen.Count == 5, $"Each dish is drawn differently, and none like the fish ({seen.Count} of 5)");
+        check(seen.Count == Enum.GetValues<FarmDish>().Length + 1, $"Each dish is drawn differently, and none like the fish ({seen.Count})");
     }
 }

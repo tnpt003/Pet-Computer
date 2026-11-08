@@ -2,7 +2,7 @@ using System;
 
 namespace DesktopPet;
 
-public enum FarmChoreKind { None, Water, Harvest, Bird, Till, Sow, Pour, Stir }
+public enum FarmChoreKind { None, Water, Harvest, Bird, Till, Sow, Pour, Stir, Fishing }
 public enum FarmChorePhase { None, Notice, Walk, Work }
 public enum FarmBirdPhase { Away, Landing, Perched, Leaving }
 
@@ -25,6 +25,9 @@ public sealed class FarmChores
     // At the hearth (docs/FARM-GAME.md). The walk may be longer: the hearth can be a whole screen away.
     public const double PourSeconds = 1.2, PourHit = 0.6, StirSeconds = PetModel.StirDuration, CookWalkLimitSeconds = 30;
     public const double CookMinSeconds = 600, CookMaxSeconds = 900;
+    // At the pond (docs/FARM-GAME.md): it casts, waits for a bite, reels in, and the fish is shown.
+    public const double FishMinSeconds = 480, FishMaxSeconds = 720, FishAgainSeconds = 60;
+    public const double CastSeconds = 0.8, BiteMinSeconds = 4, BiteMaxSeconds = 10, ReelSeconds = 0.8, FishShowSeconds = 0.6;
     // Trips come often: the cat's own sounds are spaced out. A click by the user always sounds.
     public const double SoundGapSeconds = 60;
 
@@ -39,6 +42,13 @@ public sealed class FarmChores
     public double BirdDue { get; private set; } = BirdMinSeconds;
     // Until the cat may cook by itself again.
     public double CookDue { get; private set; } = CookMinSeconds;
+    // Until the cat may fish by itself again, and until the user may send it again.
+    public double FishDue { get; private set; } = FishMinSeconds;
+    public double FishAgain { get; private set; }
+    // This cast: seconds into the work when it bites, what is on the hook, and the side of the pond it fishes from.
+    public double BiteAt { get; private set; }
+    public FarmFish Catch { get; private set; }
+    public int FishSide { get; private set; } = -1;
     // What is being poured, and whether the user asked for it (then Quiet and the like do not stop it).
     public FarmDish Dish { get; private set; }
     public bool ByUser { get; private set; }
@@ -47,10 +57,10 @@ public sealed class FarmChores
 
     public bool Active => Kind != FarmChoreKind.None;
     public bool Cooking => Kind is FarmChoreKind.Pour or FarmChoreKind.Stir;
-    public bool WalkedTooLong => Phase == FarmChorePhase.Walk && Time >= (Cooking ? CookWalkLimitSeconds : WalkLimitSeconds);
+    public bool WalkedTooLong => Phase == FarmChorePhase.Walk && Time >= (Cooking || Kind == FarmChoreKind.Fishing ? CookWalkLimitSeconds : WalkLimitSeconds);
     public bool Finished => Phase == FarmChorePhase.Work && Time >= WorkSeconds;
-    private double WorkSeconds => Kind switch { FarmChoreKind.Water => WaterSeconds, FarmChoreKind.Harvest => HarvestSeconds, FarmChoreKind.Till => TillSeconds, FarmChoreKind.Sow => SowSeconds, FarmChoreKind.Pour => PourSeconds, FarmChoreKind.Stir => StirSeconds, _ => PounceSeconds };
-    public double HitTime => Kind switch { FarmChoreKind.Water => WaterHit, FarmChoreKind.Harvest => HarvestHit, FarmChoreKind.Till => TillHit, FarmChoreKind.Sow => SowHit, FarmChoreKind.Pour => PourHit, FarmChoreKind.Stir => StirSeconds, _ => PounceHit };
+    private double WorkSeconds => Kind switch { FarmChoreKind.Water => WaterSeconds, FarmChoreKind.Harvest => HarvestSeconds, FarmChoreKind.Till => TillSeconds, FarmChoreKind.Sow => SowSeconds, FarmChoreKind.Pour => PourSeconds, FarmChoreKind.Stir => StirSeconds, FarmChoreKind.Fishing => BiteAt + ReelSeconds + FishShowSeconds, _ => PounceSeconds };
+    public double HitTime => Kind switch { FarmChoreKind.Water => WaterHit, FarmChoreKind.Harvest => HarvestHit, FarmChoreKind.Till => TillHit, FarmChoreKind.Sow => SowHit, FarmChoreKind.Pour => PourHit, FarmChoreKind.Stir => StirSeconds, FarmChoreKind.Fishing => BiteAt + ReelSeconds, _ => PounceHit };
 
     // The wait after a look for work. It counts only while no trip is on, so a rest begins when the trip ends.
     public void ScheduleAfterLook(bool went, Random random)
@@ -73,6 +83,15 @@ public sealed class FarmChores
     public void ScheduleCook(double seconds) => CookDue = Math.Max(0, seconds);
     public static double NextCook(Random random) => CookMinSeconds + random.NextDouble() * (CookMaxSeconds - CookMinSeconds);
     public void CountDownCook(double dt) => CookDue = Math.Max(0, CookDue - dt);
+    public void ScheduleFish(double seconds) => FishDue = Math.Max(0, seconds);
+    public void ScheduleFishAgain(double seconds) => FishAgain = Math.Max(0, seconds);
+    public static double NextFish(Random random) => FishMinSeconds + random.NextDouble() * (FishMaxSeconds - FishMinSeconds);
+    public static double NextBite(Random random) => BiteMinSeconds + random.NextDouble() * (BiteMaxSeconds - BiteMinSeconds);
+    public void CountDownFish(double dt)
+    {
+        FishDue = Math.Max(0, FishDue - dt);
+        FishAgain = Math.Max(0, FishAgain - dt);
+    }
 
     // True on the frame the next trip is due: the caller decides, and always calls ScheduleVisit.
     public bool CountDownVisit(double dt) => (VisitDue = Math.Max(0, VisitDue - dt)) <= 0;
@@ -127,6 +146,16 @@ public sealed class FarmChores
     {
         Begin(kind, -1, spot);
         Dish = dish;
+        ByUser = byUser;
+    }
+
+    // To the bank. BiteWait: seconds the float sits before the bite, after the cast.
+    public void BeginFishing(double spot, int side, double biteWait, FarmFish fish, bool byUser)
+    {
+        Begin(FarmChoreKind.Fishing, -1, spot);
+        FishSide = side < 0 ? -1 : 1;
+        BiteAt = CastSeconds + Math.Max(0, biteWait);
+        Catch = fish;
         ByUser = byUser;
     }
 

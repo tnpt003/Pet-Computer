@@ -1324,3 +1324,16 @@ Các mục 1.5 phía trên viết theo từng mốc; đây là thứ tự chơi 
 - [ ] Mèo đang đứng trên cửa sổ hoặc ở màn hình khác: bấm "Nấu" thì ăn ngay tại chỗ như trước
 - [ ] Kho dư nhiều: khoảng 10–15 phút mèo tự nấu một lần sau khi hết việc ruộng, kho luôn còn ít nhất 4 mỗi nguyên liệu. Tắt "Mèo tự nấu ăn" hoặc "Mèo làm vườn cùng" thì thôi. Xem có quá thường xuyên hay tốn đồ không
 - [ ] Tắt Python mèo vẫn nấu và ăn được
+
+## Nông trại Mốc 3 — Hồ câu cá (09/11)
+
+- [ ] Hồ đứng bên phải bếp, nhìn rõ trên nền sáng và tối, nhấc và thả cùng mảnh đất. Ruộng sát mép phải không làm hồ tràn khỏi màn hình
+- [ ] Chuột phải ruộng → "Câu cá": mèo đi sang bờ phải, vung cần, phao nhấp nhô, phao giật, cá nhảy lên, kho tăng 1, có nhãn "+1". Xem dây câu có rơi đúng trên mặt hồ không, thời gian chờ có vừa không
+- [ ] Sau khi câu xong, mục "Câu cá" mờ khoảng 60 giây. Ruộng sát mép phải: mèo sang bờ trái
+- [ ] Giữa lúc câu: kéo mèo, ném, Pause, app toàn màn hình, mèo ngủ thì dừng ngay, không mất gì, mèo không kẹt tư thế. Mèo ngủ không bị đánh thức, mục "Câu cá" mờ
+- [ ] Quiet: bấm câu được; mèo không tự câu
+- [ ] Mèo đứng trên cửa sổ hoặc ở màn hình khác: mục "Câu cá" mờ
+- [ ] Hết việc ruộng, khoảng 8–12 phút mèo tự câu một lần. Tắt "Mèo tự câu cá" hoặc "Mèo làm vườn cùng" thì thôi. Xem mèo có bận vừa phải và tiền cá có quá dễ không
+- [ ] Bảng Kho có 3 hàng cá, bán từng con và "Bán hết". Bảng Nấu ăn có 3 món cá, cấp chưa đủ thì mờ, món cá có hình đúng lúc mèo ăn. Trên màn hình thấp hai bảng cuộn được
+- [ ] Lên cấp 6 có Cá vàng quý; mèo tự nấu không dùng cá vàng
+- [ ] Tắt Python mèo vẫn câu được

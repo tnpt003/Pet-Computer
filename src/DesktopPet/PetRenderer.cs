@@ -109,7 +109,7 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         public double GestureTime, GestureBlend, Roll, AngryBlend, SneezeTilt, SneezeLift;
         // The portal spell: 0..1 envelope and the seconds since it began.
         public double CastBlend, CastTime;
-        public double WaterBlend, WaterTime, StirBlend, StirTime;
+        public double WaterBlend, WaterTime, StirBlend, StirTime, FishBlend, FishTime, FishBiteAt;
         public bool Walking, Sleeping, Waking, PickedUp, Airborne, Seeking, Eating, Grooming, Climbing;
         public PetEmotion Emotion;
         // Battle Mode: the wooden sword's grip (front paw) and angle (degrees from upright, toward the front).
@@ -251,6 +251,13 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
             p.StirTime = PetModel.StirDuration - pet.StirringRemaining;
             double ramp = Math.Clamp(Math.Min(p.StirTime / 0.25, pet.StirringRemaining / 0.2), 0, 1);
             p.StirBlend = ramp * ramp * (3 - 2 * ramp);
+        }
+        if (pet.FishingTime >= 0 && selfCare)
+        {
+            p.FishTime = pet.FishingTime;
+            p.FishBiteAt = pet.FishingBiteAt;
+            double ramp = Math.Clamp(p.FishTime / 0.25, 0, 1);
+            p.FishBlend = ramp * ramp * (3 - 2 * ramp);
         }
         p.EatTime = PetModel.TreatDuration - pet.TreatRemaining;
         p.Dish = pet.TreatDish;
@@ -1151,6 +1158,7 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         if (p.CastBlend > 0) DrawPortalSpell(dc, p);
         if (p.WaterBlend > 0) DrawWateringCan(dc, p);
         if (p.StirBlend > 0) DrawStirStick(dc, p);
+        if (p.FishBlend > 0) DrawFishingRod(dc, p);
         if (pet.Thought.Visible && !p.PickedUp && !p.Sleeping && !p.Airborne) DrawThoughtBubble(dc);
     }
 
@@ -1192,6 +1200,31 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         var end = new Point(113 + Math.Cos(turn) * 8, 66 + Math.Sin(turn) * 1.5);
         dc.DrawLine(StirInk, paw, end);
         dc.DrawLine(StirWood, paw, end);
+        Oval(dc, Fur, paw.X, paw.Y, 7, 6.5);
+        dc.Pop(); dc.Pop();
+    }
+
+    private static readonly Pen FishLine = PetUi.FrozenPen(PetUi.ArtInk, 1);
+    private static readonly Brush FloatRed = PetUi.Hex("#E2503F"), FloatWhite = PetUi.Hex("#FFF3EC");
+
+    // The rod in the front paw, its line down to a float on the pond beside the cat. The float dips
+    // at a bite and the rod comes up as the cat reels in.
+    private void DrawFishingRod(DrawingContext dc, in Pose p)
+    {
+        const double castSeconds = 0.8, reelSeconds = 0.8;
+        dc.PushTransform(new ScaleTransform(p.FacingScale, 1, 56, 56));
+        dc.PushOpacity(p.FishBlend);
+        double cast = Math.Clamp(p.FishTime / castSeconds, 0, 1), sinceBite = p.FishTime - p.FishBiteAt;
+        double reel = sinceBite > 0 ? Math.Clamp(sinceBite / reelSeconds, 0, 1) : 0, jerk = sinceBite > 0 ? Math.Sin(sinceBite * 34) * (1 - reel) : 0;
+        var paw = new Point(86, 72);
+        var tip = new Point(128 - reel * 12, 42 - reel * 16 + jerk * 3);
+        double water = 101 + Math.Sin(p.FishTime * 2.6) * 1 + (sinceBite > 0 ? Math.Max(0, jerk) * 5 : 0);
+        double floatX = tip.X + (140 - tip.X) * cast * (1 - reel), floatY = tip.Y + 8 + (water - tip.Y - 8) * cast * (1 - reel);
+        dc.DrawLine(StirInk, paw, tip);
+        dc.DrawLine(StirWood, paw, tip);
+        dc.DrawLine(FishLine, tip, new Point(floatX, floatY));
+        dc.DrawEllipse(FloatRed, CanInkThin, new Point(floatX, floatY - 2), 3.4, 3.4);
+        dc.DrawEllipse(FloatWhite, null, new Point(floatX, floatY - 3.8), 2.1, 1.3);
         Oval(dc, Fur, paw.X, paw.Y, 7, 6.5);
         dc.Pop(); dc.Pop();
     }

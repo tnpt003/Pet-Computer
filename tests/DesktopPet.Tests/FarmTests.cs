@@ -19,6 +19,84 @@ internal static class FarmTests
         Orders(check, start);
         Rhythm(check, start);
         Hearth(check);
+        Pond(check);
+    }
+
+    // The pond and its fish (docs/FARM-GAME.md).
+    private static void Pond(Action<bool, string> check)
+    {
+        check(new PetPreferences().FarmAutoFish, "The cat fishes by itself by default");
+        var random = new Random(5);
+        var farm = new PetFarm();
+        int Count(PetFarm field, FarmFish kind) { int n = 0; var r = new Random(5); for (int i = 0; i < 4000; i++) if (field.RollFish(r) == kind) n++; return n; }
+        check(Count(farm, FarmFish.Goldfish) == 0, "No golden fish before its level");
+        int carp = Count(farm, FarmFish.Carp);
+        check(carp > 4000 * 0.26 && carp < 4000 * 0.34, $"Before it, a carp takes its place: about 30% carp ({carp})");
+        var high = new PetFarm { Xp = 2000 };
+        int gold = Count(high, FarmFish.Goldfish), carpHigh = Count(high, FarmFish.Carp);
+        check(gold > 4000 * 0.03 && gold < 4000 * 0.07, $"At its level about 5% golden ({gold})");
+        check(carpHigh > 4000 * 0.21 && carpHigh < 4000 * 0.29, $"...about 25% carp ({carpHigh})");
+
+        farm.Catch(FarmFish.Minnow); farm.Catch(FarmFish.Carp);
+        check(farm.FishOf(FarmFish.Minnow) == 1 && farm.FishOf(FarmFish.Carp) == 1 && farm.Xp == 11, "A catch goes to the store and gives XP");
+        check(farm.StockValue == 20, "Fish count towards the store's worth");
+        check(farm.Sell(FarmFish.Carp) == 15 && farm.FishOf(FarmFish.Carp) == 0 && farm.Sell(FarmFish.Carp) == 0, "A fish sells once, at its price");
+        int coins = farm.Coins;
+        check(farm.SellAll() == 5 && farm.Coins == coins + 5 && farm.Fish.Count == 0, "Selling all takes the fish too");
+
+        check(!farm.CanCook(FarmDish.GrilledFish), "No fish, no grilled fish");
+        farm.Catch(FarmFish.Minnow);
+        check(farm.CanCook(FarmDish.GrilledFish) && farm.Pour(FarmDish.GrilledFish) && farm.FishOf(FarmFish.Minnow) == 0 && farm.PotDish == FarmDish.GrilledFish, "A dish uses its fish");
+        check(PetFarm.Recipe(FarmDish.GrilledFish).Length == 0 && PetFarm.FishIn(FarmDish.GrilledFish) == FarmFish.Minnow, "Grilled fish takes one small fish and nothing else");
+        check(PetFarm.Recipe(FarmDish.CarpTomato).Single() == (FarmCrop.Tomato, 1) && PetFarm.FishIn(FarmDish.CarpTomato) == FarmFish.Carp, "Carp with tomato");
+        check(PetFarm.Recipe(FarmDish.GoldfishHotpot).Single() == (FarmCrop.Pumpkin, 1) && PetFarm.FishIn(FarmDish.GoldfishHotpot) == FarmFish.Goldfish, "Golden fish hotpot");
+        check(PetFarm.DishLevel(FarmDish.GrilledFish) == 1 && PetFarm.DishLevel(FarmDish.CarpTomato) == 4 && PetFarm.DishLevel(FarmDish.GoldfishHotpot) == 7, "Their levels");
+        check(PetFarm.FishIn(FarmDish.RadishSoup) == null && PetFarm.Recipe(FarmDish.PumpkinPie).Length == 2, "The other dishes are as they were");
+
+        var store = new PetFarm { Xp = 2000 };
+        store.Fish["Minnow"] = 4;
+        check(store.AutoDish() == null, "The cat leaves four of a fish too");
+        store.Fish["Minnow"] = 5;
+        check(store.AutoDish() == FarmDish.GrilledFish, "With five it grills one");
+        store.Fish["Goldfish"] = 50; store.Stock["Pumpkin"] = 50;
+        check(store.AutoDish() == FarmDish.PumpkinPie || store.AutoDish() == FarmDish.GrilledFish, "(what is left)");
+        store.Stock.Remove("Pumpkin");
+        check(store.AutoDish() == FarmDish.GrilledFish, "It never spends a golden fish");
+        store.Stock["Pumpkin"] = 50; store.Stock["Carrot"] = 0;
+        check(store.CanCook(FarmDish.GoldfishHotpot), "The user can");
+
+        string folder = Path.Combine(Path.GetTempPath(), "pet-fish-" + Guid.NewGuid().ToString("N"));
+        string path = Path.Combine(folder, "farm.json");
+        try
+        {
+            var saved = new PetFarm();
+            saved.Catch(FarmFish.Carp);
+            saved.Save(path);
+            check(PetFarm.Load(path).FishOf(FarmFish.Carp) == 1 && PetFarm.Load(path).Version == 3, "Fish are saved, the file stays at version 3");
+            File.WriteAllText(path, "{\"Version\":3,\"Fish\":{\"Shark\":3,\"Carp\":-2,\"Minnow\":2}}");
+            var odd = PetFarm.Load(path);
+            check(odd.Fish.Count == 1 && odd.FishOf(FarmFish.Minnow) == 2, "Unknown or negative fish are dropped");
+        }
+        finally { if (Directory.Exists(folder)) Directory.Delete(folder, true); }
+
+        var chores = new FarmChores();
+        check(chores.FishDue == FarmChores.FishMinSeconds && chores.FishAgain == 0, "It does not fish at once");
+        chores.ScheduleFishAgain(5);
+        chores.CountDownFish(2);
+        check(chores.FishDue == FarmChores.FishMinSeconds - 2 && chores.FishAgain == 3, "Both waits run down");
+        for (int i = 0; i < 40; i++)
+        {
+            double wait = FarmChores.NextFish(random), bite = FarmChores.NextBite(random);
+            if (wait < 480 || wait > 720 || bite < 4 || bite > 10) { check(false, $"A wait out of range ({wait:F0}, {bite:F1})"); break; }
+        }
+        chores.BeginFishing(50, -1, 5, FarmFish.Carp, byUser: true);
+        check(chores.Kind == FarmChoreKind.Fishing && chores.ByUser && chores.Catch == FarmFish.Carp && chores.FishSide == -1 && chores.BiteAt == FarmChores.CastSeconds + 5, "Off to the pond");
+        check(!chores.Step(FarmChores.WalkLimitSeconds + 1) && !chores.WalkedTooLong, "The pond may be further than a tile");
+        chores.Arrive();
+        check(!chores.Step(chores.BiteAt + FarmChores.ReelSeconds - 0.1), "Nothing is caught until it is reeled in");
+        check(chores.Step(0.2) && !chores.Finished, "...then the fish lands once");
+        chores.Step(FarmChores.FishShowSeconds);
+        check(chores.Finished, "...and the trip ends a moment later");
     }
 
     // The pot on the hearth (docs/FARM-GAME.md).
@@ -336,7 +414,7 @@ internal static class FarmTests
     private static void Links(Action<bool, string> check, DateTime start)
     {
         var farm = new PetFarm();
-        check(Enum.GetValues<FarmDish>().All(d => PetFarm.Recipe(d).Sum(p => p.Count) == 2), "Every dish takes two things from the store");
+        check(Enum.GetValues<FarmDish>().Where(d => PetFarm.FishIn(d) == null).All(d => PetFarm.Recipe(d).Sum(p => p.Count) == 2), "Every dish without fish takes two things from the store");
         check(!farm.Cook(FarmDish.RadishSoup) && farm.Stock.Count == 0, "An empty store cooks nothing");
         farm.Stock["Radish"] = 1;
         check(!farm.CanCook(FarmDish.RadishSoup) && !farm.Cook(FarmDish.RadishSoup) && farm.StockOf(FarmCrop.Radish) == 1, "One radish is not enough, and is kept");

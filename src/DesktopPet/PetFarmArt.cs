@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Windows;
 using System.Windows.Media;
 
@@ -16,9 +17,9 @@ public enum FarmEffect { None, Till, Plant, Water, Harvest, Grow }
 public sealed class PetFarmArt : FrameworkElement
 {
     public const double TileWidth = 54, Pad = 10, Side = 40, SoilHeight = 28, PlantRoom = 72, LiftRoom = 54, BottomRoom = 6;
-    // The hearth stands to the right of the plot and moves with it; the pond will join them.
-    public const double HearthWidth = 100, HearthCenter = Side + PlotWidth + 56;
-    public const double PlotWidth = TileWidth * PetFarm.TileCount + Pad * 2, ZoneWidth = PlotWidth + HearthWidth, ArtWidth = ZoneWidth + Side * 2;
+    // The hearth and then the pond stand to the right of the plot and move with it.
+    public const double HearthWidth = 100, HearthCenter = Side + PlotWidth + 56, PondWidth = 140, PondCenter = Side + PlotWidth + HearthWidth + PondWidth / 2;
+    public const double PlotWidth = TileWidth * PetFarm.TileCount + Pad * 2, ZoneWidth = PlotWidth + HearthWidth + PondWidth, ArtWidth = ZoneWidth + Side * 2;
     private const double PlotMid = Side + PlotWidth / 2, ZoneMid = Side + ZoneWidth / 2;
     public const double ArtHeight = SoilHeight + PlantRoom + LiftRoom + BottomRoom, Floor = ArtHeight - BottomRoom, SoilTop = Floor - SoilHeight;
     private const double GroundY = SoilTop + 8, BadgeGap = 13, FenceHeight = 27, ScarecrowX = Side + PlotWidth - 4;
@@ -109,6 +110,11 @@ public sealed class PetFarmArt : FrameworkElement
     public bool Stirring { get; set; }
     public FarmDish? PourDish { get; set; }
     public double PourAge { get; set; }
+    // The pond: the cat is fishing from this side (-1 left), what jumps out and how far along, 0 to 1.
+    public bool Fishing { get; set; }
+    public int FishSide { get; set; } = -1;
+    public FarmFish? CaughtFish { get; set; }
+    public double CaughtAge { get; set; }
 
     public PetFarmArt() { Width = ArtWidth; Height = ArtHeight; }
 
@@ -163,6 +169,7 @@ public sealed class PetFarmArt : FrameworkElement
         }
         if (OrderSign) DrawOrderSign(dc);
         DrawHearth(dc);
+        DrawPond(dc);
         for (int i = 0; i < Tiles.Length; i++) DrawBed(dc, i);
         for (int i = 0; i < Tiles.Length; i++) DrawCrop(dc, i);
         for (int i = 0; i < Tiles.Length; i++) DrawEffect(dc, i);
@@ -307,7 +314,7 @@ public sealed class PetFarmArt : FrameworkElement
     // Packed earth running out from the plot, for the hearth to stand on. Behind the bank's end.
     private static void DrawHearthGround(DrawingContext dc)
     {
-        double left = Side + PlotWidth - 14, right = HearthCenter + 41;
+        double left = Side + PlotWidth - 14, right = PondCenter + 66;
         dc.DrawRoundedRectangle(Earth, Ink, new Rect(left, Floor - 9, right - left, 9), 4, 4);
         dc.DrawRoundedRectangle(PetUi.Mint, InkThin, new Rect(left, Floor - 11, right - left, 4), 2, 2);
     }
@@ -316,9 +323,76 @@ public sealed class PetFarmArt : FrameworkElement
     {
         FarmDish.RadishSoup => PinkBroth,
         FarmDish.CarrotStew => StewBroth,
-        FarmDish.StuffedTomato => TomatoRed,
+        FarmDish.StuffedTomato or FarmDish.CarpTomato => TomatoRed,
+        FarmDish.GrilledFish => StewBroth,
         _ => Pumpkin
     };
+
+    private const double FloatOffset = 16;
+    private static readonly Brush PondShine = PetUi.Frozen(Color.FromArgb(0x90, 0xFF, 0xFF, 0xFF));
+    private static readonly Brush Minnow = PetUi.Hex("#9CC7D8"), Carp = PetUi.Hex("#D9A65A"), GoldFish = PetUi.Hex("#F5BF3A"), Cattail = PetUi.Hex("#8A5B3D");
+    private static readonly Pen RipplePen = PetUi.FrozenPen(PetUi.Frozen(Color.FromArgb(0xC0, 0xFF, 0xFF, 0xFF)), 1.3);
+    private static readonly Geometry FishBody = Parse("M-12,0 C-6,-8 8,-8 14,0 C8,8 -6,8 -12,0 Z");
+    private static readonly Geometry FishTail = Parse("M-11,0 L-20,-7 L-18,0 L-20,7 Z");
+    private static readonly Geometry FishFin = Parse("M-3,-5.5 C-1,-11 5,-11 7,-5.5 Z");
+
+    private static Brush FishColor(FarmFish fish) => fish switch { FarmFish.Minnow => Minnow, FarmFish.Carp => Carp, _ => GoldFish };
+
+    // A fish side on, facing right, its middle at (0,0).
+    public static void DrawFish(DrawingContext dc, FarmFish fish)
+    {
+        var color = FishColor(fish);
+        dc.DrawGeometry(color, InkThin, FishFin);
+        dc.DrawGeometry(color, InkThin, FishTail);
+        dc.DrawGeometry(color, Ink, FishBody);
+        dc.DrawLine(InkThin, new Point(3, -5), new Point(3, 5));
+        dc.DrawEllipse(PetUi.ArtInk, null, new Point(8, -1.5), 1.5, 1.5);
+        if (fish != FarmFish.Goldfish) return;
+        dc.PushTransform(new TranslateTransform(-3, -11));
+        dc.DrawGeometry(RadishTip, InkThin, Star);
+        dc.Pop();
+    }
+
+    // The pond seen from a little above, in a rim of earth, with reeds at the far end.
+    private void DrawPond(DrawingContext dc)
+    {
+        dc.PushTransform(new TranslateTransform(PondCenter, Floor - 8));
+        dc.DrawEllipse(Earth, Ink, new Point(0, -3), 64, 11);
+        dc.DrawEllipse(Water, InkThin, new Point(0, -3), 57, 7.5);
+        dc.DrawEllipse(PondShine, null, new Point(-20, -5.5), 15, 1.6);
+        dc.DrawEllipse(PondShine, null, new Point(14, -0.5), 9, 1.2);
+        dc.DrawEllipse(Leaf, InkThin, new Point(30, -5), 8, 2.6);
+        dc.DrawEllipse(Stone, InkThin, new Point(-58, -1), 7, 4.5);
+        dc.DrawEllipse(StoneDeep, InkThin, new Point(-47, 3), 5, 3);
+        foreach (var (x, top, lean) in new[] { (50.0, -40.0, 2.0), (56.0, -33.0, 5.0), (44.0, -30.0, -3.0) })
+        {
+            dc.DrawLine(StemPen, new Point(x, -5), new Point(x + lean, top));
+            dc.DrawRoundedRectangle(Cattail, InkThin, new Rect(x + lean - 2.4, top - 9, 4.8, 12), 2.4, 2.4);
+        }
+        if (Fishing)
+        {
+            double x = FishSide * FloatOffset;
+            for (int i = 0; i < 2; i++)
+            {
+                double k = (HearthTime * 0.7 + i * 0.5) % 1;
+                dc.PushOpacity(1 - k);
+                dc.DrawEllipse(null, RipplePen, new Point(x, -3), 4 + k * 13, 1.2 + k * 3);
+                dc.Pop();
+            }
+        }
+        if (CaughtFish is FarmFish fish)
+        {
+            double age = Math.Clamp(CaughtAge, 0, 1);
+            dc.PushOpacity(age < 0.75 ? 1 : (1 - age) / 0.25);
+            dc.PushTransform(new TranslateTransform(FishSide * (FloatOffset - age * 12), -6 - Math.Sin(age * Math.PI) * 56));
+            dc.PushTransform(new ScaleTransform(-FishSide, 1));
+            dc.PushTransform(new RotateTransform((age - 0.5) * 120));
+            DrawFish(dc, fish);
+            dc.Pop(); dc.Pop(); dc.Pop();
+            dc.Pop();
+        }
+        dc.Pop();
+    }
 
     private static Brush CropColor(FarmCrop crop) => crop switch
     {
@@ -395,12 +469,13 @@ public sealed class PetFarmArt : FrameworkElement
     private void DrawPour(DrawingContext dc, FarmDish dish)
     {
         double hit = FarmChores.PourHit / FarmChores.PourSeconds, age = Math.Clamp(PourAge, 0, 1);
-        var parts = PetFarm.Recipe(dish);
+        var colors = PetFarm.Recipe(dish).Select(part => CropColor(part.Crop)).ToList();
+        if (PetFarm.FishIn(dish) is FarmFish inPot) colors.Add(FishColor(inPot));
         if (age < hit)
         {
             double k = age / hit;
             for (int i = 0; i < 3; i++)
-                dc.DrawEllipse(CropColor(parts[i % parts.Length].Crop), InkThin, new Point(-10 + i * 10, PotRim - 34 + k * k * 32 - i % 2 * 5), 5, 5);
+                dc.DrawEllipse(colors[i % colors.Count], InkThin, new Point(-10 + i * 10, PotRim - 34 + k * k * 32 - i % 2 * 5), 5, 5);
             return;
         }
         double splash = (age - hit) / (1 - hit);
@@ -453,6 +528,35 @@ public sealed class PetFarmArt : FrameworkElement
                 dc.DrawEllipse(TomatoRed, Ink, new Point(0, -13.5), 11.5, 10.5);
                 dc.DrawEllipse(Seed, InkThin, new Point(0, -21.5), 7, 2.8);
                 dc.DrawEllipse(Leaf, InkThin, new Point(0, -24), 3.6, 1.8);
+                break;
+            case FarmDish.GrilledFish:
+                dc.DrawEllipse(RadishTip, Ink, new Point(0, -3), 18, 3.6);
+                dc.PushTransform(new TranslateTransform(0, -10));
+                dc.PushTransform(new ScaleTransform(0.95, 0.95));
+                dc.PushTransform(new RotateTransform(-6));
+                DrawFish(dc, FarmFish.Minnow);
+                dc.Pop(); dc.Pop(); dc.Pop();
+                foreach (double x in new[] { -5.0, 1.0, 7.0 }) dc.DrawLine(InkThin, new Point(x - 1.5, -15), new Point(x + 1.5, -6));
+                break;
+            case FarmDish.CarpTomato:
+                DrawBowl(dc, Stake, TomatoRed, () =>
+                {
+                    dc.PushTransform(new TranslateTransform(-2, -15));
+                    dc.PushTransform(new ScaleTransform(0.65, 0.5));
+                    DrawFish(dc, FarmFish.Carp);
+                    dc.Pop(); dc.Pop();
+                    dc.DrawEllipse(Leaf, InkThin, new Point(11, -15.5), 3, 1.5);
+                });
+                break;
+            case FarmDish.GoldfishHotpot:
+                DrawBowl(dc, Iron, Pumpkin, () =>
+                {
+                    dc.PushTransform(new TranslateTransform(-1, -15.5));
+                    dc.PushTransform(new ScaleTransform(0.7, 0.55));
+                    DrawFish(dc, FarmFish.Goldfish);
+                    dc.Pop(); dc.Pop();
+                });
+                foreach (int side in new[] { -1, 1 }) dc.DrawEllipse(Iron, InkThin, new Point(side * 16.5, -8.5), 2.2, 3);
                 break;
             default:
                 dc.DrawGeometry(Stake, Ink, PieTin);
@@ -723,6 +827,28 @@ public sealed class FarmCropIcon : FrameworkElement
         dc.PushTransform(new TranslateTransform(ActualWidth / 2, ActualHeight - 6 * zoom));
         dc.PushTransform(new ScaleTransform(zoom, zoom));
         PetFarmArt.DrawPlant(dc, FarmStage.Ripe, crop);
+        dc.Pop(); dc.Pop();
+    }
+}
+
+// A fish as a small picture (the shop).
+public sealed class FarmFishIcon : FrameworkElement
+{
+    private readonly FarmFish fish;
+
+    public FarmFishIcon(FarmFish fish, double size = 22)
+    {
+        this.fish = fish;
+        Width = Height = size;
+        IsHitTestVisible = false;
+    }
+
+    protected override void OnRender(DrawingContext dc)
+    {
+        double zoom = ActualHeight / 34;
+        dc.PushTransform(new TranslateTransform(ActualWidth / 2 + 2 * zoom, ActualHeight / 2));
+        dc.PushTransform(new ScaleTransform(zoom, zoom));
+        PetFarmArt.DrawFish(dc, fish);
         dc.Pop(); dc.Pop();
     }
 }

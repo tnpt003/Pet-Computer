@@ -9,7 +9,8 @@ Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm 
 - **Góp ý:** khi nâng phải rung lắc như có lực vô hình nhấc lên, đất vụn rớt và văng lên; khi rơi phải "đùng" và đất văng ra. Thay yêu cầu cũ "rơi từ từ, nhẹ nhàng".
 - **Nguyên nhân:** Mốc 3 làm đúng bản yêu cầu cũ: trượt êm lên 0,65 s, hạ 1,15 s, một làn bụi nhỏ.
 - **Sửa:** `FarmLift` có gồng tại chỗ 0,5 s rồi kéo lên 0,8 s có rung và nghiêng; lúc rơi khựng 0,15 s, rơi nhanh dần 0,4 s, chạm đất nén và nảy 2 nhịp 0,4 s. `PetFarmArt` vẽ đất vụn theo công thức (không lưu trạng thái giữa các khung), vùng vẽ rộng thêm 30 DIP mỗi bên, phần thêm bấm xuyên và vị trí đã lưu không đổi. "Hủy" trượt trên không tối đa 0,6 s rồi mới rơi. Tiếng đáp đổi `pop` thành `squish`.
-- **Kiểm chứng:** script đầy đủ một lần xem kết quả ở PROGRESS. Đã xem ảnh render lúc nhấc, đang rụng đất và lúc đáp trên nền sáng/tối. Check ảnh của ruộng từng dùng `VisualBrush` làm co giãn nội dung nên không thấy hình bị dịch; đã đổi sang vẽ trực tiếp.
+- **Commit:** `bda522d`, ZIP `artifacts/DesktopPet-1.5.0-bda522d-win-x64.zip`, smoke 3/3 PASS.
+- **Kiểm chứng:** script đầy đủ một lần: Python 58 + i18n 5, C# 3909 (96 suite), WPF 1915 đều đạt. Đã xem ảnh render lúc nhấc, đang rụng đất và lúc đáp trên nền sáng/tối. Check ảnh của ruộng từng dùng `VisualBrush` làm co giãn nội dung nên không thấy hình bị dịch; đã đổi sang vẽ trực tiếp.
 - **Cần xem tay:** cảm giác rung, lực "đùng", tiếng `squish` chưa được xem hay nghe khi chạy thật.
 
 ## #70 — Rà phân bố nội dung 1.5 trong Viễn chinh và Vô tận (07/11)

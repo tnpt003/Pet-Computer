@@ -6,7 +6,7 @@ Người dùng duyệt 2026-11-08. Mở rộng ruộng của bản 1.5.1 (docs/U
 |---|---|---|
 | A. Thao tác nhanh | Cày, gieo, tưới, gặt cả ruộng từ menu | Xong (9f8bd67), còn test tay |
 | B. Cấp nông trại | XP, 10 cấp, mở khóa cây và món | Xong (9fcf389), còn test tay |
-| C. Đơn hàng | Chim giấy mang đơn, giao lấy xu và XP | Chưa làm |
+| C. Đơn hàng | Chim giấy mang đơn, giao lấy xu và XP | Xong (58491c9), còn test tay |
 
 Luôn giữ: cây không héo, chim không gây hại, farm không cộng sức mạnh trong trận, không chạm vào mèo. Các gói chưa chọn: thêm cây và mùa vụ, công cụ và phân bón, vật nuôi, mở rộng và trang trí, chất lượng nông sản.
 

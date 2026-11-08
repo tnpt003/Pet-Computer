@@ -35,6 +35,7 @@ public sealed partial class PetWindow
             || Blocking(AutoBlock.Paused | AutoBlock.AnyQuiet | AutoBlock.AnyBattle | AutoBlock.Away) != AutoBlock.None) return false;
         farmStall.Arrive(farm.NewOffers(featureRandom));
         ShowFarmCart();
+        ShowFarmCartTip();
         PlayPetSound("sparkle");
         return true;
     }

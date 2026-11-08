@@ -36,7 +36,7 @@ public sealed class FarmPatch
     public double RestFraction { get; set; }
     public double Grab { get; set; }
     public bool Dragging { get; set; }
-    internal double FallFrom, FallTo, GainLeft;
+    internal double FallFrom, FallTo, GainLeft, GainTotal = 1;
     public bool OnGround => Lift.Phase == FarmLiftPhase.Down;
 }
 
@@ -104,16 +104,13 @@ public sealed partial class PetWindow
             var art = new PetFarmArt.Land(patch.Kind);
             var surface = new Grid { Width = patch.ArtWidth, Height = PetFarmArt.ArtHeight };
             surface.Children.Add(art);
-            if (patch.Kind == FarmPatchKind.Pond)
-            {
-                var text = new TextBlock { Foreground = PetUi.Game.Gold, FontFamily = PetUi.TextFont, FontSize = PetUi.BodySize, FontWeight = FontWeights.SemiBold };
-                var gain = FarmLabel(text);
-                gain.RenderTransform = new TranslateTransform();
-                gain.Margin = new Thickness(0, PetFarmArt.SoilTop - 40, 0, 0);
-                gain.IsHitTestVisible = false;
-                surface.Children.Add(gain);
-                patch.Gain = gain;
-            }
+            var text = new TextBlock { Foreground = PetUi.Game.Gold, FontFamily = PetUi.TextFont, FontSize = PetUi.BodySize, FontWeight = FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center, MaxWidth = patch.ArtWidth - 32 };
+            var gain = FarmLabel(text);
+            gain.RenderTransform = new TranslateTransform();
+            gain.Margin = new Thickness(0, PetFarmArt.SoilTop - 40, 0, 0);
+            gain.IsHitTestVisible = false;
+            surface.Children.Add(gain);
+            patch.Gain = gain;
             patch.Art = art;
             patch.Window = CreateOverlayWindow(surface, patch.Kind == FarmPatchKind.Hearth ? "Pet farm hearth" : "Pet farm pond");
             patch.Window.Width = patch.ArtWidth; patch.Window.Height = PetFarmArt.ArtHeight;
@@ -236,7 +233,7 @@ public sealed partial class PetWindow
             if (patch.GainLeft > 0 && patch.Gain != null)
             {
                 patch.GainLeft = Math.Max(0, patch.GainLeft - dt);
-                double k = 1 - patch.GainLeft / FarmGainSeconds;
+                double k = 1 - patch.GainLeft / patch.GainTotal;
                 patch.Gain.Opacity = k < 0.7 ? 1 : (1 - k) / 0.3;
                 ((TranslateTransform)patch.Gain.RenderTransform).Y = -18 * k;
             }
@@ -286,13 +283,15 @@ public sealed partial class PetWindow
         if (FarmHearth.Art is { } hearth && hearth.PotDish != farm?.PotDish) DrawFarmPatch(FarmHearth);
     }
 
-    private void ShowFarmFishGain(FarmFish fish)
+    private void ShowFarmFishGain(FarmFish fish) => ShowFarmPatchLabel(FarmPond, "+1 " + FarmFishName(fish), FarmGainSeconds);
+
+    private static void ShowFarmPatchLabel(FarmPatch patch, string text, double seconds)
     {
-        if (FarmPond.Gain == null) return;
-        ((TextBlock)FarmPond.Gain.Child).Text = "+1 " + FarmFishName(fish);
-        FarmPond.Gain.Opacity = 1;
-        ((TranslateTransform)FarmPond.Gain.RenderTransform).Y = 0;
-        FarmPond.GainLeft = FarmGainSeconds;
+        if (patch.Gain == null) return;
+        ((TextBlock)patch.Gain.Child).Text = text;
+        patch.Gain.Opacity = 1;
+        ((TranslateTransform)patch.Gain.RenderTransform).Y = 0;
+        patch.GainLeft = patch.GainTotal = seconds;
     }
 
     private void PressFarmPatch(FarmPatch patch)

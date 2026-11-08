@@ -77,6 +77,27 @@ Người dùng đã chốt: thời tiết lấy wallpaper làm khí hậu chính
 - Chỉ có tác dụng khi thời tiết đang hiện quanh mèo và ruộng cùng màn hình với mèo; loại cá và thời gian chờ tính lúc vung cần. Không chạm vào mèo, không đánh thức, không phát tiếng.
 - Mỗi lần trời đổi có nhãn 3 giây trên ruộng nói tác dụng, lần đầu sau khi mở app thì không. Bảng "Kho & cửa hàng" có một dòng cho biết thời tiết đang có.
 
+## Giai đoạn 3: hoàn thiện 1.5.1 (duyệt 09/11)
+
+Làm tròn những gì đã có, không thêm hệ thống lớn. Luật từng mốc đã duyệt; số liệu là ước tính.
+
+| Mốc | Nội dung | Trạng thái |
+|---|---|---|
+| A. Hướng dẫn lần đầu | Nhãn chỉ bước kế tiếp trên ô đầu, nhãn một lần cho bếp, hồ, xe | Xong, còn test tay |
+| B. Xe bán đồ trang trí | 6 món, tổng 2.700 xu (Luống hoa 250, Hoa súng 350, Hàng rào tre 400, Đèn lồng 400, Cầu gỗ 600, Mái che 700); mỗi lần xe đến bày 2 món chưa có; bật/tắt trong Kho; vẽ tĩnh, không cộng sức mạnh, không đổi vùng bấm; mô phỏng kinh tế trước khi chốt giá | Chưa làm |
+| C. Phần thưởng cấp 8–10 | Cấp 8 Dưa hấu (4 giờ, hạt 50 xu, bán 200 xu, 60 XP), cấp 9 món Dưa hấu ướp lạnh, cấp 10 Bù nhìn vàng; `farm.json` phiên bản 4 | Chưa làm |
+| D. Nhật ký, thành tích, câu thoại | Thẻ Nông trại trong Nhật ký (hiện cả khi tắt Python); 5 thành tích, tiến độ cũ tính lại từ `farm.json`, không báo dồn; lên cấp, Cá vàng, giao xe có câu thoại do Python chọn | Chưa làm |
+| E. Chuẩn bị 1.5.1 | Tăng phiên bản, CHANGELOG vi/en/ja, sửa câu lỗi thời, rút test tay còn khoảng 20 mục, đo FPS 6 loại thời tiết khi có đủ vùng đất; không push, không tạo release | Chưa làm |
+
+### Luật Mốc A (duyệt 09/11)
+
+- Nhãn trên ô đầu tiên chỉ bước kế tiếp của ô đó: cày → chọn hạt → tưới; làm đúng bước thì nhãn tự đổi. Tưới xong nhãn tắt và hiện "Mèo sẽ phụ bạn chăm ruộng!" 5 giây.
+- Ruộng đã từng gặt hoặc lúc mở app đang có cây thì bỏ qua nhãn này. Chỉ mới cày thì vẫn có.
+- Sau nhãn ruộng, Bếp và Hồ mỗi vùng có nhãn "Chuột phải để..." 3 giây, một lần. Xe hàng lần đầu đến có nhãn 3 giây trên ruộng.
+- Cổng không thêm nhãn vì đã luôn ghi "Bấm để vào trận".
+- Nhãn chỉ là chữ: không nhận bấm, không giành focus, không chạm vào mèo, không phát tiếng. Nhãn ruộng ẩn khi Pause, Quiet, app toàn màn hình, người dùng vắng, có trận hoặc bảng trận, ruộng đang nhấc. Nhãn một lần của Bếp và Hồ chờ qua các lúc đó rồi mới hiện.
+- Nhãn đã hiện lưu ở `TipsSeen` trong `farm.json`, vẫn phiên bản 3.
+
 ## Giai đoạn 1
 
 Luôn giữ: cây không héo, chim không gây hại, farm không cộng sức mạnh trong trận, không chạm vào mèo. Các gói chưa chọn: thêm cây và mùa vụ, công cụ và phân bón, vật nuôi, mở rộng và trang trí, chất lượng nông sản.

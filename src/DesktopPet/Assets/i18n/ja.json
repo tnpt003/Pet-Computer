@@ -1563,5 +1563,12 @@
   "All open": "すべて開放済み",
   "Paper birds come half as often": "紙の鳥の来る回数が半分に",
   "Owned": "購入済み",
-  "Sell all · +{0}": "全部売る · +{0}"
+  "Sell all · +{0}": "全部売る · +{0}",
+  "Click this tile to till it": "このマスをクリックして耕そう",
+  "Click again to pick a seed": "もう一度クリックして種を選ぼう",
+  "Click to water it": "クリックして水をあげよう",
+  "The cat will help you tend it!": "猫もお世話を手伝うよ!",
+  "Right-click to cook": "右クリックで料理",
+  "Right-click to fish": "右クリックで釣り",
+  "The stall buys your crops!": "屋台が作物を買いに来たよ!"
 }

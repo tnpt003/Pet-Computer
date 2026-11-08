@@ -1387,3 +1387,15 @@ Thay các mục "nhấc và thả cùng mảnh đất" của Mốc 2 và Mốc 3
 - [ ] Rút màn hình đang có vùng đất: vùng về màn hình chính, không chồng lên nhau
 - [ ] Mèo ở màn khác với ruộng: bấm tay vẫn được, mèo không tới. Bếp khác màn: "Nấu" thì mèo ăn tại chỗ. Hồ khác màn: "Câu cá" mờ. Đưa mèo về cùng màn: mèo làm việc lại
 - [ ] Xe hàng hiện đúng màn hình của ruộng
+
+## Nông trại — Hướng dẫn lần đầu (09/11)
+
+Ruộng đã từng trồng sẽ không có nhãn trên ô đầu. Muốn thử như người mới: đặt biến môi trường `PET_DATA_DIRECTORY` tới một thư mục trống rồi mở `artifacts\win-x64\DesktopPet.exe`, dữ liệu thật không bị đụng.
+
+- [ ] Ruộng mới: nhãn trên ô đầu đọc rõ, không che chữ khi rê chuột vào ô đó, đổi đúng khi cày, gieo, tưới
+- [ ] Tưới xong có "Mèo sẽ phụ bạn chăm ruộng!" rồi tắt, mở lại app không hiện nữa
+- [ ] Bếp và Hồ có nhãn chuột phải 3 giây, một lần, cả với ruộng đã trồng từ trước
+- [ ] Xe hàng lần đầu đến có nhãn trên ruộng, lần sau không
+- [ ] Nhãn ẩn khi Pause, Quiet, app toàn màn hình, nhấc ruộng; hiện lại sau đó
+- [ ] Bấm xuyên qua nhãn vẫn tới ô ruộng; mèo đang ngủ không bị đánh thức
+- [ ] Đổi sang tiếng Việt và tiếng Nhật: nhãn không tràn, DPI 125–200% vẫn đúng chỗ

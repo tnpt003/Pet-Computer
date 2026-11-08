@@ -85,6 +85,7 @@ public sealed partial class PetWindow
         }
         if (dt > 0) StepFarm(dt);
         if (dt > 0) StepFarmStall(dt);
+        UpdateFarmTips();
         if (farmDragging) FollowFarmDrag();
         FollowFarmPatchDrags();
         PositionFarm();
@@ -193,6 +194,12 @@ public sealed partial class PetWindow
         gainRow.Children.Add(gain);
         surface.Children.Add(chipRow);
         surface.Children.Add(gainRow);
+        var tipText = new TextBlock { Foreground = PetUi.Game.Gold, FontFamily = PetUi.TextFont, FontSize = PetUi.BodySize, FontWeight = FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center, MaxWidth = FarmChipWidth - 24 };
+        var tip = FarmLabel(tipText);
+        var tipRow = new Grid { Width = FarmChipWidth, HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top, IsHitTestVisible = false };
+        tipRow.Children.Add(tip);
+        surface.Children.Add(tipRow);
+        farmTip = tip; farmTipText = tipText;
         farmSurface = surface;
 
         farmArt = art; farmChip = chip; farmChipText = chipText; farmGain = gain; farmGainText = gainText;
@@ -207,7 +214,7 @@ public sealed partial class PetWindow
         CreateFarmPatchWindows();
         farmWindow.Closed += (_, _) =>
         {
-            farmWindow = null; farmArt = null; farmSurface = null; farmChip = farmGain = null; farmChipText = farmGainText = null;
+            farmWindow = null; farmArt = null; farmSurface = null; farmChip = farmGain = farmTip = null; farmChipText = farmGainText = farmTipText = null; farmTipShown = null;
             farmDragging = false; farmHover = farmPressTile = -1; farmChipShown = null; farmEffectsRunning = false; farmGainLeft = 0;
         };
     }

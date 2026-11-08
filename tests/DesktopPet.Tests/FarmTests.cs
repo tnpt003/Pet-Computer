@@ -21,6 +21,60 @@ internal static class FarmTests
         Hearth(check);
         Pond(check);
         Lands(check);
+        Tips(check, start);
+    }
+
+    // The first-time hints (docs/FARM-GAME.md): each once, none for someone who has grown a crop.
+    private static void Tips(Action<bool, string> check, DateTime start)
+    {
+        var farm = new PetFarm();
+        check(farm.TipPending(PetFarm.TipField) && farm.TipPending(PetFarm.TipCart), "A new field has its hints to come");
+        check(farm.MarkTip(PetFarm.TipCart) && !farm.MarkTip(PetFarm.TipCart) && !farm.TipPending(PetFarm.TipCart), "Each is given once");
+
+        string folder = Path.Combine(Path.GetTempPath(), "pet-tips-" + Guid.NewGuid().ToString("N"));
+        string path = Path.Combine(folder, "farm.json");
+        try
+        {
+            farm.Save(path);
+            var back = PetFarm.Load(path);
+            check(!back.TipPending(PetFarm.TipCart) && back.Version == 3, "A hint given stays given, in the same file version");
+            check(back.TipPending(PetFarm.TipField), "A field with nothing grown still gets its hint");
+
+            var tilled = new PetFarm();
+            tilled.Till(0);
+            tilled.Save(path);
+            check(PetFarm.Load(path).TipPending(PetFarm.TipField), "Tilled ground alone is not experience");
+
+            var growing = new PetFarm();
+            growing.Till(0);
+            growing.Plant(0, FarmCrop.Radish);
+            growing.Save(path);
+            var sown = PetFarm.Load(path);
+            check(!sown.TipPending(PetFarm.TipField) && sown.TipPending(PetFarm.TipHearth), "A crop in the ground skips the field's hint only");
+
+            var grown = new PetFarm();
+            grown.Till(0);
+            grown.Plant(0, FarmCrop.Radish);
+            for (int i = 0; i < PetFarm.WateredStages; i++)
+            {
+                grown.Water(0, start);
+                start = start.AddSeconds(PetFarm.StageSeconds(FarmCrop.Radish) + 1);
+                grown.Advance(start);
+            }
+            grown.Harvest(0);
+            grown.Save(path);
+            check(!PetFarm.Load(path).TipPending(PetFarm.TipField), "So does a harvest long ago");
+
+            File.WriteAllText(path, "{\"Version\":3,\"TipsSeen\":[\"cart\",\"cart\",\"  \"]}");
+            var odd = PetFarm.Load(path);
+            check(odd.TipsSeen.Count == 1 && odd.TipsSeen[0] == "cart", "Doubles and blanks are dropped");
+            File.WriteAllText(path, "{\"Version\":3,\"TipsSeen\":null}");
+            check(PetFarm.Load(path).TipPending(PetFarm.TipCart), "A file without the list is fine");
+            File.WriteAllText(path, "{\"Version\":99}");
+            var newer = PetFarm.Load(path);
+            check(!newer.TipPending(PetFarm.TipField) && !newer.MarkTip(PetFarm.TipPond), "A file from a newer version gives no hints");
+        }
+        finally { if (Directory.Exists(folder)) Directory.Delete(folder, true); }
     }
 
     // Three pieces of land on one floor (docs/FARM-GAME.md).

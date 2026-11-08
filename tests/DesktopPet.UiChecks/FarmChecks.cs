@@ -56,12 +56,15 @@ internal static class FarmChecks
 
             // The steps of one tile, by clicks.
             var farm = window.Farm!;
+            Tips(window, farm, check, Tick);
             Shop(window, farm, path, check, () => Tick(0.02));
             Kitchen(window, pet, farm, path, check, () => Tick(0.02));
             Sky(window, farm, check, () => now);
             Bulk(window, pet, farm, path, check, () => now, seconds => now = now.AddSeconds(seconds));
             Levels(window, farm, path, check, () => Tick(0.02));
+            check(farm.TipPending(PetFarm.TipCart), "The cart's hint waits for its first visit");
             Stall(window, pet, prefs, farm, path, check, Tick);
+            check(!farm.TipPending(PetFarm.TipCart), "...which gives it");
             Lands(window, farm, path, check, Tick, point => cursor = point);
             Monitors(window, pet, farm, path, check, Tick, point => cursor = point);
             farm.OpenTiles = 6;
@@ -232,6 +235,59 @@ internal static class FarmChecks
     }
 
     private const double FarmGainWait = 1.35;
+
+    // The first-time hints on a new field (docs/FARM-GAME.md); it is left as new again.
+    private static void Tips(PetWindow window, PetFarm farm, Action<bool, string> check, Action<double> tick)
+    {
+        var tip = Field<Border?>(window, "farmTip")!;
+        var words = (TextBlock)tip.Child;
+        tick(0.02);
+        string till = words.Text;
+        check(tip.Opacity == 1 && till.Length > 0, "A new field points at its first step");
+        Render(Application.Current.Windows.OfType<Window>().First(w => w.Title == "Pet farm" && w.IsLoaded), "farm-tip-field.png");
+        check(tip.Parent is Grid { IsHitTestVisible: false }, "The hint takes no clicks");
+        check(farm.TipPending(PetFarm.TipHearth) && farm.TipPending(PetFarm.TipPond), "The hearth and pond wait until the field is done");
+
+        SetField(window, "paused", true);
+        tick(0.02);
+        check(tip.Opacity == 0, "Pause hides it");
+        SetField(window, "paused", false);
+        tick(0.02);
+        check(tip.Opacity == 1, "...and it comes back");
+
+        window.FarmClick(0);
+        tick(0.02);
+        string sow = words.Text;
+        check(tip.Opacity == 1 && sow != till, "Tilled, it moves on to the seed");
+        check(window.FarmPlant(0, FarmCrop.Radish), "(sown)");
+        tick(0.02);
+        check(tip.Opacity == 1 && words.Text != sow && words.Text != till, "Sown, it moves on to the water");
+
+        var lift = Field<FarmLift>(window, "farmLift");
+        window.BeginFarmMove();
+        tick(0.02);
+        check(tip.Opacity == 0, "A plot in the air has no hint");
+        lift.Reset();
+        tick(0.02);
+        check(tip.Opacity == 1, "...until it is down again");
+
+        window.FarmClick(0);
+        tick(0.02);
+        var gain = Field<Border?>(window, "farmGain")!;
+        check(tip.Opacity == 0 && !farm.TipPending(PetFarm.TipField) && gain.Opacity == 1, "Watered, a last word and the hint is over");
+        tick(0.02);
+        check(window.FarmHearth.Gain!.Opacity == 1 && window.FarmPond.Gain!.Opacity == 1, "Then the hearth and pond say what they are for");
+        Render(window.FarmHearth.Window!, "farm-tip-hearth.png");
+        Render(window.FarmPond.Window!, "farm-tip-pond.png");
+        check(!farm.TipPending(PetFarm.TipHearth) && !farm.TipPending(PetFarm.TipPond), "...once");
+        tick(3.1);
+        check(window.FarmHearth.Gain!.Opacity < 0.05 && window.FarmPond.Gain!.Opacity < 0.05, "...and fade");
+        tick(2);
+        check(gain.Opacity < 0.05, "The last word fades too");
+        farm.Tiles[0] = new FarmTile();
+        tick(0.02);
+        check(tip.Opacity == 0, "A hint given is not given again");
+    }
 
     // The store and shop in the real window: locked tiles, seeds at a price, selling, buying, what closes it.
     private static void Shop(PetWindow window, PetFarm farm, string path, Action<bool, string> check, Action tick)

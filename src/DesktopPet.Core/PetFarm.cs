@@ -49,6 +49,8 @@ public sealed partial class PetFarm
     public const int CookKeep = 4;
     // 1.5.1 M6. Rain has to last this long before it waters; each second of sun counts this much extra.
     public const double RainSoakSeconds = 15, SunBonus = 0.25;
+    // The first-time hints (docs/FARM-GAME.md).
+    public const string TipField = "field", TipHearth = "hearth", TipPond = "pond", TipCart = "cart";
 
     // Seconds from sowing to ripe when every watering comes on time.
     public static double GrowSeconds(FarmCrop crop) => crop switch
@@ -161,9 +163,21 @@ public sealed partial class PetFarm
     // Their monitors (device names; null: the one the field is on).
     public string? HearthMonitor { get; set; }
     public string? PondMonitor { get; set; }
+    // The first-time hints already given (TipField and the others): each is given once.
+    public List<string> TipsSeen { get; set; } = new();
 
     // Written by a newer version of the pet: shown, never overwritten.
     [JsonIgnore] public bool ReadOnly { get; private set; }
+
+    public bool TipPending(string tip) => !ReadOnly && !TipsSeen.Contains(tip);
+
+    // True when this was the first time.
+    public bool MarkTip(string tip)
+    {
+        if (!TipPending(tip)) return false;
+        TipsSeen.Add(tip);
+        return true;
+    }
 
     public PetFarm() => Normalize();
 
@@ -181,6 +195,8 @@ public sealed partial class PetFarm
         farm.Normalize();
         // A field from before the levels: what it has grown counts, without the rewards.
         if (beforeLevels) farm.Xp = Math.Min(MaxXp, Enum.GetValues<FarmCrop>().Sum(crop => farm.HarvestedCount(crop) * HarvestXp(crop)));
+        // Someone who has already grown something needs no showing how.
+        if (farm.Harvested.Count > 0 || farm.Tiles.Any(tile => tile.Stage is not (FarmStage.Wild or FarmStage.Tilled))) farm.MarkTip(TipField);
         return farm;
     }
 
@@ -208,6 +224,7 @@ public sealed partial class PetFarm
         if (string.IsNullOrWhiteSpace(Monitor)) Monitor = null;
         if (string.IsNullOrWhiteSpace(HearthMonitor)) HearthMonitor = null;
         if (string.IsNullOrWhiteSpace(PondMonitor)) PondMonitor = null;
+        TipsSeen = (TipsSeen ?? new()).Where(tip => !string.IsNullOrWhiteSpace(tip)).Distinct().ToList();
     }
 
     private static Dictionary<string, int> CleanCounts(Dictionary<string, int>? counts) =>

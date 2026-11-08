@@ -6,7 +6,7 @@ Người dùng duyệt 2026-11-08. Mở rộng ruộng của bản 1.5.1 (docs/U
 |---|---|---|
 | A. Thao tác nhanh | Cày, gieo, tưới, gặt cả ruộng từ menu | Xong (9f8bd67), còn test tay |
 | B. Cấp nông trại | XP, 10 cấp, mở khóa cây và món | Xong (9fcf389), còn test tay |
-| C. Đơn hàng | Chim giấy mang đơn, giao lấy xu và XP | Xong (58491c9), còn test tay |
+| C. Đơn hàng | Chim giấy mang đơn, giao lấy xu và XP | Đã thay bằng Gian hàng lưu động (Giai đoạn 2, Mốc 4) |
 
 ## Giai đoạn 2: nông trại sống động (duyệt 08/11)
 
@@ -17,7 +17,7 @@ Mục tiêu: mèo không còn chỉ đi qua đi lại mà có việc liên tục
 | 1. Nhịp làm việc | Mèo làm liên tục có nghỉ, tự cày và gieo lại | Xong (acfb3ee), còn test tay |
 | 2. Bếp lửa | Nồi, que khuấy, lửa; mèo đổ nguyên liệu, khuấy, ăn | Xong (5bdea20), còn test tay |
 | 3. Hồ nước | Mèo câu cá, 3 loại cá, món cá | Xong (6a0c93e), còn test tay |
-| 4. Gian hàng lưu động | Tự xuất hiện như cổng, thay cho Đơn hàng | Chưa làm |
+| 4. Gian hàng lưu động | Tự xuất hiện như cổng, thay cho Đơn hàng | Có code, còn test tay |
 | 5. Thời tiết gắn nông trại | Mỗi loại có tác dụng, chỉ có lợi | Chưa làm |
 
 Người dùng đã chốt: thời tiết lấy wallpaper làm khí hậu chính và xen kẽ loại khác mỗi 10–20 phút (thay luật "chỉ đổi khi đổi nền", áp dụng ở Mốc 5); mèo tự cày và gieo lại; hồ và bếp gộp chung mảnh đất thành một khu, di chuyển cùng nhau. Luật từng mốc viết và duyệt trước khi code.
@@ -46,9 +46,18 @@ Người dùng đã chốt: thời tiết lấy wallpaper làm khí hậu chính
 - Một lần câu: mèo đi tới bờ xa (bờ gần nếu sát mép màn hình, giới hạn 30 giây), vung cần 0,8 giây, chờ phao 4–10 giây, kéo 0,8 giây, cá nhảy lên rồi vào kho với nhãn "+1 Tên cá". Lần nào câu cũng được cá; bị ngắt thì không mất gì.
 - Bạn gọi: mục "Câu cá" trong menu chuột phải của ruộng, hồi 60 giây giữa hai lần xong. Điều kiện giống "Cho ăn": làm được trong Quiet; mèo ngủ, bận, đang ăn, đang nấu hoặc Pause thì mục mờ, không đánh thức. Mèo trên cửa sổ hoặc màn hình khác thì không câu.
 - Mèo tự câu: mỗi 8–12 phút, sau việc ruộng và trước tự nấu, không câu trong Quiet. Công tắc "Mèo tự câu cá" trong Cài đặt → Thói quen, mặc định bật; tắt "Mèo làm vườn cùng" thì cũng thôi. Câu cá không tính là chăm sóc mèo, không đổi đồng hồ buồn ngủ, không báo Python.
-- Cá: Cá nhỏ 70%, 5 xu, 3 XP. Cá chép 25%, 15 xu, 8 XP. Cá vàng quý 5%, 60 xu, 25 XP, mở ở cấp 6 (trước đó phần 5% ra cá chép). Cá nằm trong kho riêng, bán từng con hoặc qua "Bán hết". Đơn hàng không đòi cá. `farm.json` vẫn phiên bản 3, thêm mục cá.
+- Cá: Cá nhỏ 70%, 5 xu, 3 XP. Cá chép 25%, 15 xu, 8 XP. Cá vàng quý 5%, 60 xu, 25 XP, mở ở cấp 6 (trước đó phần 5% ra cá chép). Cá nằm trong kho riêng, bán từng con hoặc qua "Bán hết". `farm.json` vẫn phiên bản 3, thêm mục cá.
 - Món cá nấu ở bếp như món khác: Cá nướng (1 Cá nhỏ, cấp 1), Cá chép kho cà chua (1 Cá chép + 1 Cà chua, cấp 4), Lẩu cá vàng (1 Cá vàng quý + 1 Bí ngô, cấp 7). Mèo tự nấu được dùng cá nhỏ và cá chép, chừa 4 con mỗi loại; không đụng Cá vàng quý.
 - Tiếng: "pop" lúc cá vào kho, lần mèo tự câu theo khoảng cách 60 giây của Mốc 1. Không thêm asset.
+
+### Luật Mốc 4 (duyệt 09/11, thay Luật Mốc C)
+
+- Xe hàng là cửa sổ riêng, đứng sát bên trái ruộng; hết chỗ thì sang bên phải hồ; đi theo khi ruộng bị di chuyển. Lần đầu khoảng 10 phút sau khi mở app, sau đó mỗi 20–40 phút tính từ lúc xe đi. Xe lăn vào, ở lại 5 phút, lăn đi. Pause đóng băng thời gian. Không lưu qua lần tắt app.
+- Không đến khi Pause, Quiet, app toàn màn hình, đang trận hoặc bảng trận, bạn vắng máy, hoặc mảnh đất đang nhấc; 45 giây sau xem lại. Mèo ngủ xe vẫn đến và không đánh thức. App toàn màn hình hoặc vào trận thì xe đi ngay.
+- Xe tới có một tiếng "sparkle" theo cài đặt âm thanh tự động. Bấm trái vào xe hoặc mục "Gian hàng" trên menu ruộng (mờ khi xe chưa đến) để mở bảng. Bảng mở thay chỗ Kho và Nấu ăn.
+- Mỗi lần đến có 1–3 lời mua theo cấp 1 / 3 / 5. Mỗi lời mua 2 đến `cấp + 2` món (tối đa 6), một hoặc hai loại, từ các cây đã mở khóa, Cá nhỏ và Cá chép; tối đa 2 Bí ngô, 3 Cà chua, 3 Cá chép; không đòi Cá vàng quý. Thưởng 1,5 lần giá bán và XP như khi thu hoạch hoặc câu được.
+- Giao làm được khi mèo ngủ và không đánh thức; Pause thì không. Không có nút bỏ qua, xe đi là lời mua hết, không phạt gì. Xe đi khi bảng đang mở thì bảng vẫn giao được tới khi đóng. Xe có dấu "!" vàng khi có lời mua giao được.
+- Bỏ biển gỗ, chim mang thư và "Đơn hàng"; đơn cũ trong `farm.json` bị bỏ, file vẫn phiên bản 3. Chim giấy mèo đuổi giữ nguyên. Xe chỉ mua, chưa bán gì.
 
 ## Giai đoạn 1
 
@@ -68,7 +77,7 @@ Luôn giữ: cây không héo, chim không gây hại, farm không cộng sức 
 - Thay luật Mốc 5: Cà chua và Bí ngô không còn mở sẵn. Hạt và món chưa mở thì mờ, có ghi cấp cần. Ruộng cũ được tính XP từ số đã thu hoạch, cây đang trồng vẫn lớn bình thường. `farm.json` lên phiên bản 3; bản app cũ chỉ đọc, không ghi đè.
 - Bảng "Kho & cửa hàng" hiện cấp, XP, thanh tiến độ và thứ cấp sau mở. Lên cấp thì ruộng lấp lánh và hiện nhãn "Lên cấp N! +X xu" 3 giây. Ô đơn hàng ghi ở trên có tác dụng từ Mốc C.
 
-## Luật Mốc C
+## Luật Mốc C (đã thay bằng Luật Mốc 4)
 
 - Chim giấy mang đơn tới, mở bằng mục "Đơn hàng" trên menu ruộng. Biển nhỏ ở đầu trái mảnh đất báo khi có đơn giao được.
 - Đơn chỉ đòi cây đã mở khóa, từ 2 đến 6 nông sản. Thưởng 1,5 lần giá bán và XP như lúc thu hoạch.

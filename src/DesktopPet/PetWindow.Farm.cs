@@ -65,7 +65,7 @@ public sealed partial class PetWindow
         if (!FarmVisible) ShowFarm();
         WatchFarmShop();
         WatchFarmKitchen();
-        WatchFarmOrders();
+        WatchFarmStall();
         if (dt > 0) StepFarmSky(dt);
 
         var now = FarmNow;
@@ -75,11 +75,13 @@ public sealed partial class PetWindow
             RefreshFarmArea();
             CheckFarmGrowth(now);
             UpdateFarmChip();
-            if (dt > 0) CheckFarmOrders(now);
+            UpdateFarmStall();
         }
         if (dt > 0) StepFarm(dt);
+        if (dt > 0) StepFarmStall(dt);
         if (farmDragging) FollowFarmDrag();
         PositionFarm();
+        PlaceFarmCart();
     }
 
     private void CheckFarmGrowth(DateTime now)
@@ -135,11 +137,10 @@ public sealed partial class PetWindow
                 else effects = true;
             }
         }
-        bool bird = farmBird.Present, mail = farmMailLeft > 0;
+        bool bird = farmBird.Present;
         StepFarmBird(dt);
-        farmMailLeft = Math.Max(0, farmMailLeft - dt);
         bool hearth = StepFarmHearth(dt);
-        bool redraw = lifted || farmLift.Busy || farmEffectsRunning || bird || mail || hearth;
+        bool redraw = lifted || farmLift.Busy || farmEffectsRunning || bird || hearth;
         farmEffectsRunning = effects;
         if (redraw)
             DrawFarmLift();
@@ -197,7 +198,6 @@ public sealed partial class PetWindow
         farmArt.BirdAir = farmBird.Air;
         farmArt.BirdTime = farmBird.Time;
         farmArt.BirdFlying = !farmBird.Perched;
-        farmArt.MailTime = farmMailLeft > 0 ? PetFarmArt.MailSeconds - farmMailLeft : -1;
         farmArt.InvalidateVisual();
     }
 
@@ -263,8 +263,8 @@ public sealed partial class PetWindow
         CloseFarmSeedMenu();
         CloseFarmShop();
         CloseFarmKitchen();
-        CloseFarmOrders();
-        farmMailLeft = 0;
+        CloseFarmStall();
+        ResetFarmCart();
         farmArt?.ReleaseMouseCapture();
         farmDragging = false;
         if (farmLift.Phase != FarmLiftPhase.Down) farmFraction = farmRestFraction;
@@ -282,7 +282,8 @@ public sealed partial class PetWindow
         if (farmSunUnsaved > 0) SaveSunnyFarm();
         CloseFarmShop();
         CloseFarmKitchen();
-        CloseFarmOrders();
+        CloseFarmStall();
+        ResetFarmCart();
         farmWindow?.Close();
     }
 
@@ -307,8 +308,12 @@ public sealed partial class PetWindow
     // Both are topmost and the field was shown later: the cat walks in front of it, keepsake too.
     private void KeepFarmBelowCat()
     {
-        if (farmWindow == null) return;
-        var handle = new WindowInteropHelper(farmWindow).Handle;
+        if (farmWindow != null) PlaceBelowCat(farmWindow);
+    }
+
+    private void PlaceBelowCat(Window window)
+    {
+        var handle = new WindowInteropHelper(window).Handle;
         var above = new WindowInteropHelper(keepsakeWindow?.IsVisible == true ? keepsakeWindow : this).Handle;
         const uint NoSize = 0x0001, NoMove = 0x0002, NoActivate = 0x0010;
         if (handle != IntPtr.Zero && above != IntPtr.Zero) SetWindowPos(handle, above, 0, 0, 0, 0, NoSize | NoMove | NoActivate);
@@ -324,8 +329,6 @@ public sealed partial class PetWindow
             farmArt.Tiles[i] = new FarmTileView(tile.Stage, tile.Crop, tile.GrowsUntil != null, farm.Next(i) == FarmStep.Water, farm.Progress(i, now), !farm.IsOpen(i));
         }
         farmArt.Scarecrow = farm.Scarecrow;
-        farmArt.OrderSign = true;
-        farmArt.OrderReady = farm.AnyOrderReady;
         ShowFarmHearth();
         farmArt.HoverTile = farmHover;
         farmArt.Lift = farmLift.Height;
@@ -490,7 +493,7 @@ public sealed partial class PetWindow
         UpdateFarmChip();
         UpdateFarmShop();
         UpdateFarmKitchen();
-        UpdateFarmOrders();
+        UpdateFarmStall();
     }
 
     public bool FarmPlant(int tile, FarmCrop crop)
@@ -590,11 +593,11 @@ public sealed partial class PetWindow
         shop.Click += (_, _) => OpenFarmShop();
         var kitchen = new MenuItem { Header = L("Nấu ăn", "Cook") };
         kitchen.Click += (_, _) => OpenFarmKitchen();
-        var orders = new MenuItem { Header = L("Đơn hàng", "Orders") };
-        orders.Click += (_, _) => OpenFarmOrders();
+        var stall = new MenuItem { Header = L("Gian hàng", "Stall"), IsEnabled = FarmStallHere };
+        stall.Click += (_, _) => OpenFarmStall();
         var fish = new MenuItem { Header = L("Câu cá", "Go fishing"), IsEnabled = FarmCanFish };
         fish.Click += (_, _) => FarmGoFish();
-        return new[] { shop, kitchen, orders, fish }.Concat(FarmBulkItems()).Append(move).ToArray();
+        return new[] { shop, kitchen, stall, fish }.Concat(FarmBulkItems()).Append(move).ToArray();
     }
 
     public void BeginFarmMove()

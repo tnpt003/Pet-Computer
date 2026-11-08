@@ -193,7 +193,6 @@ public sealed partial class PetFarm
         Coins = Math.Clamp(Coins, 0, MaxCoins);
         Xp = Math.Clamp(Xp, 0, MaxXp);
         if (PotDish is FarmDish pot && !Enum.IsDefined(pot)) PotDish = null;
-        CleanOrders();
         OpenTiles = Math.Clamp(Math.Max(OpenTiles, Tiles.FindLastIndex(tile => tile.Stage != FarmStage.Wild) + 1), StartingTiles, TileCount);
         if (FractionX is double x) FractionX = double.IsFinite(x) ? Math.Clamp(x, 0, 1) : null;
         if (string.IsNullOrWhiteSpace(Monitor)) Monitor = null;

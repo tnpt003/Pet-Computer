@@ -1337,3 +1337,16 @@ Các mục 1.5 phía trên viết theo từng mốc; đây là thứ tự chơi 
 - [ ] Bảng Kho có 3 hàng cá, bán từng con và "Bán hết". Bảng Nấu ăn có 3 món cá, cấp chưa đủ thì mờ, món cá có hình đúng lúc mèo ăn. Trên màn hình thấp hai bảng cuộn được
 - [ ] Lên cấp 6 có Cá vàng quý; mèo tự nấu không dùng cá vàng
 - [ ] Tắt Python mèo vẫn câu được
+
+## Nông trại Mốc 4 — Gian hàng lưu động (09/11)
+
+Thay các mục Nông trại Mốc C (Đơn hàng), không cần test các mục đó nữa.
+
+- [ ] Khoảng 10 phút sau khi mở app xe lăn vào sát bên trái ruộng, có một tiếng, nhìn rõ trên nền sáng và tối, bánh xe quay, mèo đi phía trước xe. Sau đó khoảng 20–40 phút một lần, ở lại 5 phút
+- [ ] Ruộng sát mép trái: xe sang bên phải hồ. Di chuyển ruộng khi xe đang ở: xe đi theo
+- [ ] Bấm vào xe hoặc menu "Gian hàng" mở bảng, có đếm ngược. Khi xe chưa đến thì mục menu mờ
+- [ ] Đủ đồ: xe có dấu "!" vàng, nút "Giao" sáng; giao xong được xu, XP, nhãn "+xu", dòng ghi "Đã giao". Có cả cá trong lời mua. Mèo ngủ vẫn giao được và không bị đánh thức
+- [ ] Xe đi khi bảng đang mở: bảng báo xe đã đi, vẫn giao nốt được, đóng rồi không mở lại được
+- [ ] Pause: xe đứng yên, thời gian không chạy, nút mờ. Quiet hoặc vắng máy: xe không đến. App toàn màn hình hoặc vào trận: xe biến mất, không để lại cửa sổ
+- [ ] Biển gỗ đầu ruộng và mục "Đơn hàng" không còn. Bản `farm.json` cũ có đơn dở vẫn mở bình thường
+- [ ] Chơi một lúc xem xe đến có dễ bị lỡ không, và thu nhập so với Đơn hàng cũ có vừa không

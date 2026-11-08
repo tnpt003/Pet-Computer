@@ -51,7 +51,7 @@ public sealed partial class PetWindow
     {
         if (farm == null || paused || !FarmVisible || !FarmShopAllowed || farmShopWindow != null) return;
         CloseFarmKitchen(); // They open in the same place.
-        CloseFarmOrders();
+        CloseFarmStall();
         var title = PanelLine(PetUi.DisplaySize, true, FarmShopWidth);
         title.Text = L("Kho & cửa hàng", "Store & shop");
         farmShopCoins = PanelLine(PetUi.TitleSize, true, FarmShopWidth);

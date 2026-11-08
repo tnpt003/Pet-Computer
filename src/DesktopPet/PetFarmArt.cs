@@ -97,11 +97,6 @@ public sealed class PetFarmArt : FrameworkElement
     public bool BirdFlying { get; set; }
     // Stands at the right end of the plot, once bought (1.5.1 M5).
     public bool Scarecrow { get; set; }
-    // The order board at the left end of the plot (farm milestone C), with a mark when an order can be
-    // delivered; and the paper bird bringing a new order, seconds since it set off (-1: none).
-    public bool OrderSign { get; set; }
-    public bool OrderReady { get; set; }
-    public double MailTime { get; set; } = -1;
     // The hearth (docs/FARM-GAME.md): the fire from 0, embers, to 1, ablaze; what the pot holds; whether
     // the cat holds the stick (it has left the pot); what is being poured and how far along, 0 to 1.
     public double HearthFire { get; set; }
@@ -167,7 +162,6 @@ public sealed class PetFarmArt : FrameworkElement
             DrawScarecrow(dc);
             dc.Pop();
         }
-        if (OrderSign) DrawOrderSign(dc);
         DrawHearth(dc);
         DrawPond(dc);
         for (int i = 0; i < Tiles.Length; i++) DrawBed(dc, i);
@@ -739,34 +733,6 @@ public sealed class PetFarmArt : FrameworkElement
         double x = TileCenter(BirdTile) + BirdSide * (BirdStand + air * BirdFlyOut), y = GroundY + 3 - air * BirdFlyUp;
         DrawPaperBird(dc, x, y, BirdSide, air, BirdFlying, BirdTime);
     }
-
-    // Comes in from the upper left, sits on the board, and is gone again.
-    private void DrawMailBird(DrawingContext dc)
-    {
-        double air = MailTime < MailFlight ? 1 - MailTime / MailFlight : Math.Max(0, (MailTime - (MailSeconds - MailFlight)) / MailFlight);
-        DrawPaperBird(dc, SignX - air * 60, SoilTop + 2 - SignHeight - air * 70, -1, air, air > 0, MailTime);
-    }
-
-    private void DrawOrderSign(DrawingContext dc)
-    {
-        dc.PushTransform(new TranslateTransform(SignX, SoilTop + 2));
-        dc.DrawLine(StakePen, new Point(0, 2), new Point(0, -24));
-        dc.DrawRoundedRectangle(Stake, Ink, new Rect(-12, -SignHeight, 24, 20), 3, 3);
-        dc.DrawRectangle(RadishTip, InkThin, new Rect(-8, -SignHeight + 4, 16, 11.5));
-        dc.DrawGeometry(null, InkThin, OrderFlap);
-        if (OrderReady)
-        {
-            dc.DrawEllipse(PetUi.Game.Gold, InkThin, new Point(12, -SignHeight), 6.5, 6.5);
-            dc.DrawLine(InkThin, new Point(12, -SignHeight - 3.5), new Point(12, -SignHeight + 0.8));
-            dc.DrawEllipse(PetUi.ArtInk, null, new Point(12, -SignHeight + 3.2), 1, 1);
-        }
-        dc.Pop();
-        if (MailTime >= 0) DrawMailBird(dc);
-    }
-
-    public const double MailSeconds = 5;
-    private const double MailFlight = 0.9, SignX = Side + 3, SignHeight = 42;
-    private static readonly Geometry OrderFlap = Parse("M-8,-38 L0,-31.5 L8,-38");
 
     // Its feet at (x, y). It pecks on the ground; in the air the wing beats and it fades as it gets away.
     private static void DrawPaperBird(DrawingContext dc, double x, double y, int side, double air, bool flying, double time)

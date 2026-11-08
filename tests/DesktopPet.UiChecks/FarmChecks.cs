@@ -61,7 +61,7 @@ internal static class FarmChecks
             Sky(window, farm, check, () => now);
             Bulk(window, pet, farm, path, check, () => now, seconds => now = now.AddSeconds(seconds));
             Levels(window, farm, path, check, () => Tick(0.02));
-            Orders(window, pet, farm, path, check, Wait, () => Tick(0.02));
+            Stall(window, pet, prefs, farm, path, check, Tick);
             farm.OpenTiles = 6;
             check(window.FarmTileLabel(0)!.Length > 0 && window.FarmTileLabel(6) == null, "Each tile has a label");
             check(farm.Next(0) == FarmStep.Till, "A new tile needs tilling");
@@ -489,103 +489,196 @@ internal static class FarmChecks
         Call(window, "FarmChanged");
     }
 
-    // The order board in the real window: orders arrive by the clock, deliver, skip, what closes it.
-    private static void Orders(PetWindow window, PetModel pet, PetFarm farm, string path, Action<bool, string> check, Action<double> wait, Action tick)
+    // The traveling stall in the real window: it comes by itself, delivers, leaves, what stops it.
+    private static void Stall(PetWindow window, PetModel pet, PetPreferences prefs, PetFarm farm, string path, Action<bool, string> check, Action<double> frames)
     {
-        Window? Panel() => Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.Title == "Pet farm orders" && w.IsLoaded);
+        Window? Panel() => Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.Title == "Pet farm stall" && w.IsLoaded);
+        Window? Cart() => Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.Title == "Pet farm cart" && w.IsLoaded);
+        var stall = Field<FarmStall>(window, "farmStall");
+        var area = Field<Area>(window, "farmArea");
         int coinsBefore = farm.Coins;
-        var art = Field<PetFarmArt>(window, "farmArt");
-        farm.Xp = 0; farm.Orders.Clear(); farm.Stock.Clear(); farm.Coins = 0;
+        farm.Xp = 0; farm.Stock.Clear(); farm.Fish.Clear(); farm.Coins = 0;
+        MenuItem Item() => window.FarmMenuItems()[2];
 
-        wait(2);
-        check(farm.Orders.Count == 1 && farm.Orders[0].Items != null, "An order arrives by itself");
-        check(Field<double>(window, "farmMailLeft") > 0 && art.OrderSign, "A paper bird brings it to the board on the plot");
-        check(PetFarm.Load(path).Orders.Count == 1, "...and it is saved");
-        for (double t = 0; t < PetFarmArt.MailSeconds + 0.1; t += 1.0 / 30) Call(window, "TickFarm", 1.0 / 30);
-        check(Field<double>(window, "farmMailLeft") == 0 && art.MailTime < 0, "The bird goes away again");
+        check(stall.Phase == FarmStallPhase.Away && Cart() == null && !window.FarmStallHere, "At first there is no stall");
+        check(!Item().IsEnabled, "The menu item is grey while it is away");
+        window.OpenFarmStall();
+        check(!window.FarmStallOpen, "There is nothing to open yet");
 
-        farm.Orders[0].Items = new() { ["Radish"] = 2 };
-        farm.Stock["Radish"] = 1;
-        Call(window, "FarmChanged");
-        check(!art.OrderReady, "Short of crops the board shows no mark");
+        void Refused(string what, Action set, Action unset)
+        {
+            set();
+            check(!window.TryFarmStall() && stall.Phase == FarmStallPhase.Away && Cart() == null, $"No visit: {what}");
+            unset();
+        }
+        Refused("Pause", () => SetField(window, "paused", true), () => SetField(window, "paused", false));
+        Refused("Quiet", () => prefs.Quiet = true, () => prefs.Quiet = false);
+        Refused("the user away", () => { SetContext(window, false, 100000); Call(window, "TickContext", 1.1); }, () => { SetContext(window, false, 0); Call(window, "TickContext", 1.1); });
+        Refused("a battle panel", () => SetField(window, "battleHubOpen", true), () => SetField(window, "battleHubOpen", false));
+        stall.Schedule(0.005);
+        prefs.Quiet = true;
+        frames(0.05);
+        check(stall.Phase == FarmStallPhase.Away && Math.Abs(stall.Due - FarmStall.RetrySeconds) < 1, "A wrong moment looks again soon");
+        prefs.Quiet = false;
 
-        window.FarmMenuItems()[2].RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
-        check(window.FarmOrdersOpen && Panel() != null, "The menu opens the orders");
+        // It comes even to a sleeping cat, and leaves it asleep.
+        pet.Emotions.Reset(); pet.Action = PetAction.Sleeping; pet.Emotions.EnterSleep();
+        stall.Schedule(0.005);
+        frames(0.05);
+        check(stall.Phase == FarmStallPhase.Arriving && Cart() != null && window.FarmStallHere, "When due it comes by itself, also to a sleeping cat");
+        check(pet.Emotions.SleepLocked && pet.Action == PetAction.Sleeping, "It does not wake the cat");
+        check(stall.Due >= FarmStall.MinSeconds && stall.Offers.Count == 1, "The next visit is far off; level 1 has one offer");
+        var cart = Cart()!;
+        var handle = new System.Windows.Interop.WindowInteropHelper(cart).Handle;
+        check(cart.Topmost && !cart.ShowInTaskbar && !cart.ShowActivated, "An overlay that takes no focus");
+        check(Below(new System.Windows.Interop.WindowInteropHelper(window).Handle, handle), "The cat walks in front of it");
+        double rolling = cart.Left;
+        frames(FarmStall.RollSeconds + 0.1);
+        check(stall.Phase == FarmStallPhase.Open && cart.Opacity == 1 && Math.Abs(cart.Left - rolling) > 20, "It rolls in and stands");
+        double plotLeft = Field<Window>(window, "farmWindow").Left + PetFarmArt.Side;
+        check(Math.Abs(cart.Left + cart.Width + 4 - plotLeft) < 1.5 && cart.Left >= area.Left - 1, $"It stands just left of the plot ({cart.Left:F0}, plot at {plotLeft:F0})");
+        check(Math.Abs(cart.Top + PetFarmStallArt.Floor - area.Bottom) < 1.5, "Its wheels are on the floor");
+
+        check(Item().IsEnabled, "Now the menu item lights");
+        Item().RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+        check(window.FarmStallOpen && Panel() != null, "The menu opens the stall");
+        window.CloseFarmStall();
+        cart.RaiseEvent(new System.Windows.Input.MouseButtonEventArgs(System.Windows.Input.Mouse.PrimaryDevice, 0, System.Windows.Input.MouseButton.Left) { RoutedEvent = UIElement.MouseLeftButtonDownEvent });
+        check(window.FarmStallOpen, "...and so does a click on the cart");
         var panel = Panel()!;
         check(panel.Topmost && !panel.ShowInTaskbar && !panel.ShowActivated, "It takes no focus and has no taskbar button");
-        var area = Field<Area>(window, "bounds");
-        check(panel.Left >= area.Left - 1 && panel.Left + panel.ActualWidth <= area.Right + 1 && panel.Top + panel.ActualHeight <= area.Bottom + 1, $"It fits on the monitor ({panel.ActualWidth:F0}x{panel.ActualHeight:F0})");
+        var bounds = Field<Area>(window, "bounds");
+        check(panel.Left >= bounds.Left - 1 && panel.Left + panel.ActualWidth <= bounds.Right + 1 && panel.Top + panel.ActualHeight <= bounds.Bottom + 1, $"It fits on the monitor ({panel.ActualWidth:F0}x{panel.ActualHeight:F0})");
         double width = panel.ActualWidth;
         window.OpenFarmShop();
-        check(window.FarmShopOpen && !window.FarmOrdersOpen, "The shop opens in its place");
-        window.OpenFarmOrders();
-        check(window.FarmOrdersOpen && !window.FarmShopOpen, "...and the orders in the shop's place");
+        check(window.FarmShopOpen && !window.FarmStallOpen, "The shop opens in its place");
+        window.OpenFarmStall();
+        check(window.FarmStallOpen && !window.FarmShopOpen, "...and the stall in the shop's place");
         window.OpenFarmKitchen();
-        check(window.FarmKitchenOpen && !window.FarmOrdersOpen, "The kitchen too");
-        window.OpenFarmOrders();
-        check(window.FarmOrdersOpen && !window.FarmKitchenOpen, "...and back");
+        check(window.FarmKitchenOpen && !window.FarmStallOpen, "The kitchen too");
+        window.OpenFarmStall();
+        check(window.FarmStallOpen && !window.FarmKitchenOpen, "...and back");
         panel = Panel()!;
 
-        object?[] Rows() => ((System.Collections.IEnumerable)FieldOf("farmOrderRows").GetValue(window)!).Cast<object?>().ToArray();
+        object?[] Rows() => ((System.Collections.IEnumerable)FieldOf("farmStallRows").GetValue(window)!).Cast<object?>().ToArray();
         T Part<T>(int row, string name) => (T)Rows()[row]!.GetType().GetProperty(name)!.GetValue(Rows()[row])!;
-        check(Rows().Length == 3, "Three places on the board");
-        check(Part<TextBlock>(0, "Name").Text.Contains("1/2") && Part<TextBlock>(0, "Note").Text.Contains("9") && Part<TextBlock>(0, "Note").Text.Contains("4 XP"), $"An order says what it needs and pays ({Part<TextBlock>(0, "Name").Text}, {Part<TextBlock>(0, "Note").Text})");
-        check(!Part<Border>(0, "Deliver").IsEnabled && Part<Border>(0, "Skip").IsEnabled, "Short of crops it cannot be delivered, but it can be skipped");
+        var note = Field<TextBlock?>(window, "farmStallNote")!;
+        var art = Field<PetFarmStallArt>(window, "farmCartArt");
+        stall.Offers[0] = new FarmOffer { Items = new() { ["Radish"] = 2 } };
+        farm.Stock["Radish"] = 1;
+        Call(window, "UpdateFarmStall");
+        check(Rows().Length == 3 && note.Text.Contains(":"), $"Three places and a countdown ({note.Text})");
+        check(!art.Ready, "Short of goods the cart shows no mark");
+        check(Part<TextBlock>(0, "Name").Text.Contains("1/2") && Part<TextBlock>(0, "Note").Text.Contains("9") && Part<TextBlock>(0, "Note").Text.Contains("4 XP"), $"An offer says what it wants and pays ({Part<TextBlock>(0, "Name").Text}, {Part<TextBlock>(0, "Note").Text})");
+        check(!Part<Border>(0, "Deliver").IsEnabled && window.FarmDeliver(0) == 0, "Short of goods it cannot be delivered");
         check(Part<Border>(1, "Deliver").Visibility == Visibility.Collapsed && Part<TextBlock>(1, "Note").Text.Contains("level 3") && Part<TextBlock>(2, "Note").Text.Contains("level 5"), "A closed place says which level opens it");
-        check(window.FarmDeliver(0) == 0, "Delivery is refused while crops are short");
 
-        pet.Emotions.Reset(); pet.Action = PetAction.Sleeping; pet.Emotions.EnterSleep();
         farm.Stock["Radish"] = 3;
         Call(window, "FarmChanged");
-        check(art.OrderReady && Part<Border>(0, "Deliver").IsEnabled, "With enough crops the board shows its mark and the button lights");
+        check(art.Ready && Part<Border>(0, "Deliver").IsEnabled, "With enough goods the cart shows its mark and the button lights");
         SetField(window, "paused", true);
-        tick();
-        check(!Part<Border>(0, "Deliver").IsEnabled && !Part<Border>(0, "Skip").IsEnabled && window.FarmDeliver(0) == 0 && !window.FarmSkipOrder(0) && farm.Orders[0].Items != null, "Pause refuses both");
+        double left = stall.Left;
+        Call(window, "TickFarm", 0.0);
+        check(!Part<Border>(0, "Deliver").IsEnabled && window.FarmDeliver(0) == 0 && stall.Left == left, "Pause refuses delivery and stops the clock");
         SetField(window, "paused", false);
-        tick();
-        Render(panel, "farm-orders.png");
+        frames(0.02);
+        Render(panel, "farm-stall.png");
         check(window.FarmDeliver(0) == 9 && farm.Coins == 9 && farm.Xp == 4 && farm.StockOf(FarmCrop.Radish) == 1, "Delivering pays, and takes what it asked for");
         check(pet.Emotions.SleepLocked && pet.Action == PetAction.Sleeping, "It does not wake the cat");
         pet.Emotions.Reset(); pet.Action = PetAction.Idle;
-        check(PetFarm.Load(path).Coins == 9 && !art.OrderReady, "It is saved and the mark goes");
+        check(PetFarm.Load(path).Coins == 9 && !art.Ready, "It is saved and the mark goes");
         check(((TextBlock)Field<Border?>(window, "farmGain")!.Child).Text.Contains("9"), "The field says what it brought");
-        check(Part<Border>(0, "Deliver").Visibility == Visibility.Collapsed && Part<TextBlock>(0, "Note").Text.StartsWith("20:00"), $"The place counts down to its next order ({Part<TextBlock>(0, "Note").Text})");
-        wait(600);
-        check(farm.Orders[0].Items == null && Part<TextBlock>(0, "Note").Text.StartsWith("10:00"), $"Ten minutes on it still waits ({Part<TextBlock>(0, "Note").Text})");
-        wait(601);
-        check(farm.Orders[0].Items != null && Part<Border>(0, "Deliver").Visibility == Visibility.Visible, "After twenty minutes the next order is on the board");
-        check(window.FarmSkipOrder(0) && farm.Orders[0].Items == null && farm.Coins == 9, "Skipping costs nothing");
-
-        farm.Xp = 70;
-        wait(2);
-        check(farm.Orders.Count == 2 && farm.Orders[1].Items != null && Part<Border>(1, "Skip").Visibility == Visibility.Visible, "Level 3 opens the second place at once");
+        check(Part<Border>(0, "Deliver").Visibility == Visibility.Collapsed && Part<TextBlock>(0, "Name").Text == "Delivered", "The offer is done");
+        check(window.FarmDeliver(0) == 0 && farm.Coins == 9, "...and pays once");
         panel.UpdateLayout();
         check(Math.Abs(panel.ActualWidth - width) < 1, "The panel keeps its width");
 
-        // The widest order there can be still fits its row.
-        farm.Orders[1].Items = new() { ["Pumpkin"] = 2, ["Tomato"] = 3 };
-        Call(window, "UpdateFarmOrders");
+        // The widest offer there can be still fits its row; fish show as fish.
+        stall.Offers.Add(new FarmOffer { Items = new() { ["Pumpkin"] = 2, ["Carp"] = 3 } });
+        Call(window, "UpdateFarmStall");
         panel.UpdateLayout();
         var button = Part<Border>(1, "Deliver");
         var corner = button.TransformToAncestor((Visual)panel.Content).Transform(new Point(button.ActualWidth, 0));
-        check(corner.X <= ((FrameworkElement)panel.Content).ActualWidth + 1 && Part<TextBlock>(1, "Name").ActualWidth > 40, $"A long order keeps its buttons inside the panel ({corner.X:F0})");
-        Render(panel, "farm-orders-long.png");
+        check(corner.X <= ((FrameworkElement)panel.Content).ActualWidth + 1 && Part<TextBlock>(1, "Name").ActualWidth > 40, $"A long offer keeps its button inside the panel ({corner.X:F0})");
+        check(Part<TextBlock>(1, "Name").Text.Contains("Carp 0/3"), "Fish are named with what the store has");
+        Render(panel, "farm-stall-long.png");
 
+        // Leaving with the panel open: delivery goes on until it is closed.
+        farm.Stock["Pumpkin"] = 2; farm.Fish["Carp"] = 3;
+        stall.Step(FarmStall.StaySeconds + 1);
+        frames(FarmStall.RollSeconds + 0.1);
+        check(stall.Phase == FarmStallPhase.Away && Cart() == null && !window.FarmStallHere && window.FarmStallOpen, "It rolls away; an open panel stays");
+        check(!Item().IsEnabled && note.Text.Contains("left"), $"The panel says so ({note.Text})");
+        check(window.FarmDeliver(1) > 0 && farm.FishOf(FarmFish.Carp) == 0, "What was offered can still be delivered");
+        window.CloseFarmStall();
+        check(window.FarmDeliver(1) == 0, "Closed, it is over");
+        window.OpenFarmStall();
+        check(!window.FarmStallOpen, "It cannot be opened again once it has left");
+
+        // What ends a visit at once.
+        farm.Xp = 70;
+        check(window.TryFarmStall() && stall.Offers.Count == 2, "Level 3 brings a second offer");
+        window.OpenFarmStall();
+        check(window.FarmStallOpen, "(open, before the battle panel)");
         SetField(window, "battleHubOpen", true);
-        tick();
-        check(!window.FarmOrdersOpen, "A battle panel closes it");
+        frames(0.02);
+        check(!window.FarmStallOpen && stall.Here, "A battle panel closes the panel");
         SetField(window, "battleHubOpen", false);
-        window.OpenFarmOrders();
         SetContext(window, true, 0); Call(window, "TickContext", 1.1);
-        tick();
-        check(!window.FarmOrdersOpen, "A fullscreen app closes it");
+        frames(0.02);
+        check(stall.Phase == FarmStallPhase.Away && Cart() == null, "A fullscreen app ends the visit");
         SetContext(window, false, 0); Call(window, "TickContext", 1.1);
-        tick();
+        frames(0.02);
 
-        farm.Xp = 0; farm.Orders.Clear(); farm.Stock.Clear(); farm.Coins = coinsBefore;
+        // The plot moved: the cart stays beside it, on the side with room.
+        Art(check);
+        var (x, side) = ((double X, int Side))typeof(PetWindow).GetProperty("FarmCartPlace", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.GetValue(window)!;
+        double fraction = window.FarmFraction;
+        SetField(window, "farmFraction", 0.0);
+        var (x0, side0) = ((double X, int Side))typeof(PetWindow).GetProperty("FarmCartPlace", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.GetValue(window)!;
+        check(side < 0 && x >= area.Left, "With room it stands on the left");
+        check(side0 > 0 && x0 >= area.Left + PetFarmArt.ZoneWidth, "At the left edge it stands past the pond");
+        SetField(window, "farmFraction", fraction);
+
+        stall.Reset(); stall.Schedule(FarmStall.FirstSeconds);
+        farm.Xp = 0; farm.Stock.Clear(); farm.Fish.Clear(); farm.Coins = coinsBefore;
         Call(window, "FarmChanged");
         double fade = FarmGainWait;
         for (double t = 0; t < fade; t += 1.0 / 60) Call(window, "TickFarm", 1.0 / 60);
+
+        static void Art(Action<bool, string> check)
+        {
+            string Hash(Action<PetFarmStallArt> set, Color back, string? name)
+            {
+                int width = (int)PetFarmStallArt.ArtWidth, height = (int)PetFarmStallArt.ArtHeight;
+                var art = new PetFarmStallArt();
+                set(art);
+                art.Measure(new Size(width, height)); art.Arrange(new Rect(0, 0, width, height));
+                var visual = new DrawingVisual();
+                using (var dc = visual.RenderOpen()) dc.DrawRectangle(new SolidColorBrush(back), null, new Rect(0, 0, width, height));
+                var bitmap = new System.Windows.Media.Imaging.RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);
+                bitmap.Render(visual); bitmap.Render(art);
+                if (name != null && Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string review)
+                {
+                    Directory.CreateDirectory(review);
+                    var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder(); encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bitmap));
+                    using var stream = File.Create(Path.Combine(review, name + ".png")); encoder.Save(stream);
+                }
+                var pixels = new byte[width * height * 4];
+                bitmap.CopyPixels(pixels, width * 4, 0);
+                return Convert.ToHexString(System.Security.Cryptography.SHA1.HashData(pixels));
+            }
+            var dark = Color.FromRgb(0x1C, 0x22, 0x30);
+            var light = Color.FromRgb(0xF1, 0xEE, 0xE6);
+            foreach (var (back, tone) in new[] { (light, "light"), (dark, "dark") })
+            {
+                Hash(_ => { }, back, $"stall-cart-{tone}");
+                Hash(a => a.Ready = true, back, $"stall-cart-ready-{tone}");
+            }
+            string plain = Hash(_ => { }, dark, null);
+            check(plain != Hash(a => a.Ready = true, dark, null), "A deliverable offer puts a mark on the cart");
+            check(plain != Hash(a => a.Rolled = 9, dark, null), "The wheels turn as it rolls");
+        }
     }
 
     private static List<Border> Button(PetWindow window)
@@ -714,7 +807,6 @@ internal static class FarmChecks
             Render(Ripe, back, $"farm-ripe-{tone}");
             Render(art => { Steps(art); art.Lift = FarmLift.FloatHeight; }, back, $"farm-floating-{tone}");
             Render(art => { Steps(art); art.Dustiness = 0.6; }, back, $"farm-landing-{tone}");
-            Render(art => { Steps(art); art.OrderSign = true; art.OrderReady = true; art.MailTime = 2; }, back, $"farm-orders-board-{tone}");
             Render(art => { Steps(art); art.Lift = FarmLift.RiseHeightAt(0.9); art.ShakeX = 2; art.Tilt = 1.2; art.Shed = 1.0; }, back, $"farm-rising-{tone}");
             Render(art => { Steps(art); art.Lift = FarmLift.FloatHeight; art.Shed = 1.9; }, back, $"farm-shedding-{tone}");
             Render(art => { Steps(art); art.Dustiness = 0.95; art.Squash = 0.9; art.ShakeX = 2.5; }, back, $"farm-impact-{tone}");
@@ -744,10 +836,6 @@ internal static class FarmChecks
         check(still != Render(art => art.ShakeX = 3, dark, null), "The plot shakes");
         check(still != Render(art => art.Tiles[3] = new(FarmStage.Wild, null, false, false, 0, true), dark, null), "A locked tile has its fence");
         check(still != Render(art => art.Scarecrow = true, dark, null), "The scarecrow is drawn");
-        string board = Render(art => art.OrderSign = true, dark, null);
-        check(still != board, "The order board is drawn");
-        check(board != Render(art => { art.OrderSign = true; art.OrderReady = true; }, dark, null), "A delivered-ready order puts a mark on it");
-        check(board != Render(art => { art.OrderSign = true; art.MailTime = 2; }, dark, null), "The paper bird sits on it");
         check(PetFarmArt.TileAt(PetFarmArt.TileLeft(0) + 1) == 0 && PetFarmArt.TileAt(PetFarmArt.TileLeft(5) + 53) == 5 && PetFarmArt.TileAt(1) == -1 && PetFarmArt.TileAt(PetFarmArt.ArtWidth - 1) == -1, "Clicks find their tiles; the rim is none");
         Dishes(check);
     }

@@ -4,7 +4,7 @@ Người dùng duyệt 2026-11-08. Mở rộng ruộng của bản 1.5.1 (docs/U
 
 | Mốc | Nội dung | Trạng thái |
 |---|---|---|
-| A. Thao tác nhanh | Cày, gieo, tưới, gặt cả ruộng từ menu | Xong, còn test tay |
+| A. Thao tác nhanh | Cày, gieo, tưới, gặt cả ruộng từ menu | Xong (9f8bd67), còn test tay |
 | B. Cấp nông trại | XP, 10 cấp, mở khóa cây và món | Chưa làm |
 | C. Đơn hàng | Chim giấy mang đơn, giao lấy xu và XP | Chưa làm |
 

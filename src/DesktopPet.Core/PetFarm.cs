@@ -25,6 +25,8 @@ public sealed class FarmTile
     public FarmCrop? Crop { get; set; }
     // UTC end of the stage that was watered; null: it waits for water.
     public DateTime? GrowsUntil { get; set; }
+    // What was last harvested here: the cat may till and sow it again. Tilling by hand makes the tile the user's.
+    public FarmCrop? LastCrop { get; set; }
 }
 
 // The little field on the desktop (1.5.1 M3): six tiles, their crops and where the plot was left,
@@ -172,6 +174,7 @@ public sealed partial class PetFarm
         bool growing = tile.Stage is FarmStage.Seed or FarmStage.Sprout or FarmStage.Young;
         bool hasCrop = tile.Crop is FarmCrop crop && Enum.IsDefined(crop);
         if (!Enum.IsDefined(tile.Stage) || ((growing || tile.Stage == FarmStage.Ripe) && !hasCrop)) tile.Stage = FarmStage.Wild;
+        if (tile.LastCrop is FarmCrop last && !Enum.IsDefined(last)) tile.LastCrop = null;
         if (tile.Stage is FarmStage.Wild or FarmStage.Tilled) tile.Crop = null;
         if (tile.Stage is not (FarmStage.Seed or FarmStage.Sprout or FarmStage.Young)) tile.GrowsUntil = null;
         else if (tile.GrowsUntil is DateTime until) tile.GrowsUntil = until.ToUniversalTime();
@@ -234,12 +237,17 @@ public sealed partial class PetFarm
     // Sows from the left until the tiles or the coins run out. Returns the tiles sown.
     public IReadOnlyList<int> SowAll(FarmCrop crop) => TilesAt(FarmStep.Plant).Where(i => Plant(i, crop)).ToList();
 
-    public bool Till(int index)
+    public bool Till(int index, bool keepLastCrop = false)
     {
         if (!IsOpen(index) || Tiles[index].Stage != FarmStage.Wild) return false;
         Tiles[index].Stage = FarmStage.Tilled;
+        if (!keepLastCrop) Tiles[index].LastCrop = null;
         return true;
     }
+
+    // The crop the cat would sow here again, or null: never grown here, locked, or too dear right now.
+    public FarmCrop? ResowCrop(int index) =>
+        IsOpen(index) && Tiles[index].LastCrop is FarmCrop crop && Unlocked(crop) && Coins >= SeedPrice(crop) ? crop : null;
 
     public bool Plant(int index, FarmCrop crop)
     {
@@ -266,6 +274,7 @@ public sealed partial class PetFarm
         Tiles[index].Stage = FarmStage.Wild;
         Tiles[index].Crop = null;
         Tiles[index].GrowsUntil = null;
+        Tiles[index].LastCrop = crop;
         Harvested[crop.ToString()] = Harvested.GetValueOrDefault(crop.ToString()) + 1;
         Stock[crop.ToString()] = Stock.GetValueOrDefault(crop.ToString()) + 1;
         GainXp(HarvestXp(crop));

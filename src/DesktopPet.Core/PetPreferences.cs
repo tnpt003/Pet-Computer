@@ -63,6 +63,8 @@ public sealed class PetPreferences
     public bool Farm { get; set; } = true;
     // On by default: the cat waters, harvests and chases birds off the field by itself.
     public bool FarmHelper { get; set; } = true;
+    // On by default: the cat also tills and sows again what was harvested, paying for the seed.
+    public bool FarmResow { get; set; } = true;
     // On by default: the Expedition's keepsakes stand in the display corner once one is earned.
     public bool ShowTrophies { get; set; } = true;
     // Where the user or the cat left the keepsake: its monitor and the art's left edge as a fraction of

@@ -33,7 +33,7 @@ internal static class FarmChoreChecks
         {
             field.Tiles[tile].Stage = FarmStage.Seed; field.Tiles[tile].Crop = FarmCrop.Radish; field.Tiles[tile].GrowsUntil = null;
         }
-        void Clear(PetFarm field) { for (int i = 0; i < PetFarm.TileCount; i++) { field.Tiles[i].Stage = FarmStage.Wild; field.Tiles[i].Crop = null; field.Tiles[i].GrowsUntil = null; } }
+        void Clear(PetFarm field) { for (int i = 0; i < PetFarm.TileCount; i++) { field.Tiles[i].Stage = FarmStage.Wild; field.Tiles[i].Crop = null; field.Tiles[i].GrowsUntil = null; field.Tiles[i].LastCrop = null; } }
 
         SetField(window, "farmPath", path);
         SetField(window, "farmClock", new Func<DateTime>(() => now));
@@ -254,7 +254,63 @@ internal static class FarmChoreChecks
             prefs.Quiet = false;
             chores.ScheduleVisit(0.01);
             Call(window, "WatchFarmChores", 0.02);
-            check(window.FarmChoreNow == FarmChoreKind.Water && chores.VisitDue >= FarmChores.VisitMinSeconds, "When it is due and free, the cat goes");
+            check(window.FarmChoreNow == FarmChoreKind.Water && chores.VisitDue >= FarmChores.RestMinSeconds, "When it is due and free, the cat goes");
+            double wait = chores.VisitDue;
+            Call(window, "WatchFarmChores", 1.0);
+            check(chores.VisitDue == wait, "The rest does not count down during the trip");
+            Free();
+
+            // Tilling and sowing again, by the real trip.
+            Clear(field);
+            chores.ScheduleVisit(100000);
+            field.Coins = 50;
+            pet.X = (double)Call(window, "FarmTileMid", 4)! - 200;
+            field.Tiles[4] = new FarmTile { LastCrop = FarmCrop.Carrot };
+            void Arrive() { pet.X = window.FarmChoreSpot; Features(Frame * 2); }
+            prefs.FarmResow = false;
+            check(!window.TryFarmVisit(), "With sowing again off a harvested tile gets no trip");
+            prefs.FarmResow = true;
+            check(window.TryFarmVisit() && window.FarmChoreNow == FarmChoreKind.Till && window.FarmChoreTile == 4, "The cat goes to till it");
+            Arrive();
+            check(window.FarmChorePhaseNow == FarmChorePhase.Work && pet.BatRemaining > 0 && field.Next(4) == FarmStep.Till, "It paws at the soil");
+            Features(FarmChores.TillHit);
+            check(field.Next(4) == FarmStep.Plant && field.Tiles[4].LastCrop == FarmCrop.Carrot, "The soil is tilled and the tile still remembers");
+            Features(FarmChores.TillSeconds);
+            check(window.FarmChoreNow == FarmChoreKind.None && pet.Action == PetAction.Idle, "That trip ends");
+            check(window.TryFarmVisit() && window.FarmChoreNow == FarmChoreKind.Sow, "The cat goes to sow");
+            Arrive();
+            int coins = field.Coins;
+            Features(FarmChores.SowHit);
+            check(field.Tiles[4].Crop == FarmCrop.Carrot && field.Coins == coins - 4 && field.Next(4) == FarmStep.Water, "It sows the same crop and pays");
+            check(PetFarm.Load(path).Tiles[4].Crop == FarmCrop.Carrot, "...and it is saved");
+            Features(FarmChores.SowSeconds);
+            Free();
+
+            // A tile tilled by hand while the cat is on its way is the user's.
+            Clear(field);
+            field.Tiles[1] = new FarmTile { LastCrop = FarmCrop.Radish };
+            check(window.TryFarmVisit() && window.FarmChoreNow == FarmChoreKind.Till, "A trip to till");
+            window.FarmClick(1);
+            Features(Frame);
+            check(window.FarmChoreNow == FarmChoreKind.None && field.Tiles[1].LastCrop == null, "Tilled by hand, the trip is off and the tile is the user's");
+            check(!window.TryFarmVisit(), "...and the cat does not sow it");
+            Free();
+
+            // The cat's own sounds are spaced out; a click always sounds.
+            Clear(field);
+            SetField(window, "farmChoreSoundWait", 0.0);
+            SetField(window, "farmCatHands", true);
+            Call(window, "PlayFarmSound", "pop");
+            double gap = Field<double>(window, "farmChoreSoundWait");
+            check(gap == FarmChores.SoundGapSeconds, "The cat's sound starts the wait");
+            Call(window, "PlayFarmSound", "pop");
+            check(Field<double>(window, "farmChoreSoundWait") == gap, "...and the next is held back");
+            SetField(window, "farmCatHands", false);
+            Call(window, "PlayFarmSound", "pop");
+            check(Field<double>(window, "farmChoreSoundWait") == gap, "A user's click does not touch the wait");
+            Call(window, "WatchFarmChores", 2.0);
+            check(Field<double>(window, "farmChoreSoundWait") == gap - 2, "The wait runs down");
+            SetField(window, "farmChoreSoundWait", 0.0);
             Free();
         }
         finally
@@ -270,7 +326,7 @@ internal static class FarmChoreChecks
             SetField(window, "farmClock", null);
             SetField(window, "farmPath", PetFarm.DefaultPath);
             SetField(window, "farm", null);
-            chores.ScheduleVisit(FarmChores.VisitMinSeconds); chores.ScheduleBird(FarmChores.BirdMinSeconds);
+            chores.ScheduleVisit(FarmChores.FirstVisitSeconds); chores.ScheduleBird(FarmChores.BirdMinSeconds);
             SetContext(window, false, 0); Call(window, "TickContext", 1.1);
             window.Reset();
             if (Directory.Exists(folder)) Directory.Delete(folder, true);

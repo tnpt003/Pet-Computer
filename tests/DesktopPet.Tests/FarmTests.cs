@@ -17,6 +17,91 @@ internal static class FarmTests
         Bulk(check, start);
         Levels(check);
         Orders(check, start);
+        Rhythm(check, start);
+    }
+
+    // The cat's working rhythm (docs/FARM-GAME.md): rests, the long rest, sowing again.
+    private static void Rhythm(Action<bool, string> check, DateTime start)
+    {
+        var random = new Random(9);
+        var chores = new FarmChores();
+        check(chores.VisitDue == FarmChores.FirstVisitSeconds, "The first look for work comes soon");
+        bool shortRests = true, longRests = true;
+        for (int round = 0; round < 30; round++)
+        {
+            for (int trip = 1; trip < FarmChores.TripsBeforeLongRest; trip++)
+            {
+                chores.ScheduleAfterLook(true, random);
+                shortRests &= chores.VisitDue >= 15 && chores.VisitDue <= 40;
+            }
+            chores.ScheduleAfterLook(true, random);
+            longRests &= chores.VisitDue >= 120 && chores.VisitDue <= 180;
+        }
+        check(shortRests, "Between trips the cat rests 15 to 40 seconds");
+        check(longRests, "After six trips in a row it rests 2 to 3 minutes");
+        chores = new FarmChores();
+        for (int trip = 1; trip < FarmChores.TripsBeforeLongRest; trip++) chores.ScheduleAfterLook(true, random);
+        chores.ScheduleAfterLook(false, random);
+        check(chores.VisitDue == FarmChores.RetrySeconds, "With nothing to do it looks again in 45 seconds");
+        chores.ScheduleAfterLook(true, random);
+        check(chores.VisitDue <= 40, "A pause in the work starts the six trips over");
+
+        check(new PetPreferences().FarmResow, "Sowing again is on by default");
+        double FromFirst(int i) => i;
+        var farm = new PetFarm { Coins = 100 };
+        farm.Tiles[0] = new FarmTile { Stage = FarmStage.Ripe, Crop = FarmCrop.Carrot };
+        check(FarmChores.Pick(farm, FromFirst) == (FarmChoreKind.Harvest, 0) && farm.Harvest(0) == FarmCrop.Carrot && farm.Tiles[0].LastCrop == FarmCrop.Carrot, "A tile remembers what it grew");
+        check(FarmChores.Pick(farm, FromFirst, resow: false) == null, "With sowing again off the cat leaves it");
+        check(FarmChores.Pick(farm, FromFirst) == (FarmChoreKind.Till, 0), "On, the cat tills it");
+        check(farm.ResowCrop(1) == null && FarmChores.Pick(farm, i => 9 - i) == (FarmChoreKind.Till, 0), "A tile that never grew anything is the user's");
+        check(farm.Till(0, keepLastCrop: true) && FarmChores.Pick(farm, FromFirst) == (FarmChoreKind.Sow, 0), "Then sows it");
+        int coins = farm.Coins;
+        check(farm.Plant(0, farm.ResowCrop(0)!.Value) && farm.Tiles[0].Crop == FarmCrop.Carrot && farm.Coins == coins - 4, "The same crop, paying for the seed");
+        check(FarmChores.Pick(farm, FromFirst) == (FarmChoreKind.Water, 0), "And then it needs water");
+
+        farm = new PetFarm();
+        farm.Tiles[0] = new FarmTile { LastCrop = FarmCrop.Radish };
+        check(farm.Till(0) && farm.Tiles[0].LastCrop == null && FarmChores.Pick(farm, FromFirst) == null, "Tilled by hand, the tile is the user's");
+
+        // Order: ripe, thirsty, then tilling, then sowing.
+        farm = new PetFarm { Coins = 100, OpenTiles = 6 };
+        farm.Tiles[0] = new FarmTile { Stage = FarmStage.Tilled, LastCrop = FarmCrop.Radish };
+        farm.Tiles[1] = new FarmTile { LastCrop = FarmCrop.Radish };
+        check(FarmChores.Pick(farm, FromFirst) == (FarmChoreKind.Till, 1), "Tilling comes before sowing");
+        farm.Tiles[2] = new FarmTile { Stage = FarmStage.Seed, Crop = FarmCrop.Radish };
+        check(FarmChores.Pick(farm, FromFirst) == (FarmChoreKind.Water, 2), "Watering comes before tilling");
+
+        farm = new PetFarm { Coins = 3 };
+        farm.Tiles[0] = new FarmTile { LastCrop = FarmCrop.Carrot };
+        check(farm.ResowCrop(0) == null && FarmChores.Pick(farm, FromFirst) == null, "Too poor for the seed, the cat leaves the tile");
+        farm.Coins = 100; farm.Tiles[0].LastCrop = FarmCrop.Pumpkin;
+        check(farm.ResowCrop(0) == null, "A crop locked by level is not sown");
+        farm.Tiles[0].LastCrop = FarmCrop.Radish; farm.Coins = 0;
+        check(farm.ResowCrop(0) == FarmCrop.Radish, "A free seed is always there");
+
+        var work = new FarmChores();
+        work.Begin(FarmChoreKind.Till, 1, 0);
+        work.Arrive();
+        check(!work.Step(FarmChores.TillHit - 0.1) && work.Step(0.2) && !work.Finished, "Tilling lands once");
+        work.Step(FarmChores.TillSeconds);
+        check(work.Finished, "...and ends");
+        work.Begin(FarmChoreKind.Sow, 1, 0);
+        work.Arrive();
+        check(!work.Step(FarmChores.SowHit - 0.1) && work.Step(0.2), "Sowing lands once");
+        work.Step(FarmChores.SowSeconds);
+        check(work.Finished, "...and ends");
+
+        string folder = Path.Combine(Path.GetTempPath(), "pet-farm-rhythm-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        try
+        {
+            string path = Path.Combine(folder, "farm.json");
+            var saved = new PetFarm();
+            saved.Tiles[1].LastCrop = FarmCrop.Tomato;
+            saved.Save(path);
+            check(PetFarm.Load(path).Tiles[1].LastCrop == FarmCrop.Tomato, "What a tile grew is saved");
+        }
+        finally { Directory.Delete(folder, true); }
     }
 
     // Orders from the board (docs/FARM-GAME.md, milestone C).
@@ -342,8 +427,8 @@ internal static class FarmTests
         var random = new Random(4);
         for (int i = 0; i < 40; i++)
         {
-            double visit = FarmChores.NextVisit(random), bird = FarmChores.NextBird(random);
-            if (visit < 120 || visit > 240 || bird < 360 || bird > 720) { check(false, $"A wait out of range ({visit:F0}, {bird:F0})"); break; }
+            double bird = FarmChores.NextBird(random);
+            if (bird < 360 || bird > 720) { check(false, $"A wait out of range ({bird:F0})"); break; }
         }
         check(FarmChores.BirdTile(new PetFarm(), random) == -1, "No bird on an empty field");
         check(Enumerable.Range(0, 30).All(_ => FarmChores.BirdTile(farm, random) is 0 or 3 or 5), "A bird only comes to a tile with a crop");

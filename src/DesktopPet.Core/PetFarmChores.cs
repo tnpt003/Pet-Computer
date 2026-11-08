@@ -2,22 +2,28 @@ using System;
 
 namespace DesktopPet;
 
-public enum FarmChoreKind { None, Water, Harvest, Bird }
+public enum FarmChoreKind { None, Water, Harvest, Bird, Till, Sow }
 public enum FarmChorePhase { None, Notice, Walk, Work }
 public enum FarmBirdPhase { Away, Landing, Perched, Leaving }
 
-// The cat's own trips to the field (1.5.1 M4): when the next is due, which tile, and how far along
-// one is. It waters and harvests one tile a trip, and never tills or sows: those stay the user's.
+// The cat's own trips to the field (1.5.1 M4; rhythm in docs/FARM-GAME.md): when the next is due,
+// which tile, and how far along one is. One tile a trip, a short rest between trips and a long one
+// after several. It tills and sows again only tiles where something was harvested.
 // The window owns the walking, the art and the rules for when the cat may go (PetWindow.FarmChores.cs).
 public sealed class FarmChores
 {
-    public const double VisitMinSeconds = 120, VisitMaxSeconds = 240, BirdMinSeconds = 360, BirdMaxSeconds = 720, ScarecrowBirdFactor = 2;
+    public const double RestMinSeconds = 15, RestMaxSeconds = 40, LongRestMinSeconds = 120, LongRestMaxSeconds = 180, FirstVisitSeconds = 30;
+    public const int TripsBeforeLongRest = 6;
+    public const double BirdMinSeconds = 360, BirdMaxSeconds = 720, ScarecrowBirdFactor = 2;
     // The moment was wrong or there was nothing to do: look again soon, nothing piles up.
     public const double RetrySeconds = 45;
     public const double NoticeSeconds = 0.7, WalkLimitSeconds = 20;
     public const double WaterSeconds = PetModel.WaterDuration, WaterHit = 1.3;
     public const double HarvestSeconds = 0.9, HarvestHit = 0.3;
     public const double PounceSeconds = 1, PounceHit = 0.5;
+    public const double TillSeconds = 1.2, TillHit = 0.6, SowSeconds = 1, SowHit = 0.5;
+    // Trips come often: the cat's own sounds are spaced out. A click by the user always sounds.
+    public const double SoundGapSeconds = 60;
 
     public FarmChoreKind Kind { get; private set; }
     public FarmChorePhase Phase { get; private set; }
@@ -26,17 +32,32 @@ public sealed class FarmChores
     public double Spot { get; private set; }
     // Seconds in this phase.
     public double Time { get; private set; }
-    public double VisitDue { get; private set; } = VisitMinSeconds;
+    public double VisitDue { get; private set; } = FirstVisitSeconds;
     public double BirdDue { get; private set; } = BirdMinSeconds;
     private bool done;
+    private int tripsInRow;
 
     public bool Active => Kind != FarmChoreKind.None;
     public bool WalkedTooLong => Phase == FarmChorePhase.Walk && Time >= WalkLimitSeconds;
     public bool Finished => Phase == FarmChorePhase.Work && Time >= WorkSeconds;
-    private double WorkSeconds => Kind switch { FarmChoreKind.Water => WaterSeconds, FarmChoreKind.Harvest => HarvestSeconds, _ => PounceSeconds };
-    private double HitTime => Kind switch { FarmChoreKind.Water => WaterHit, FarmChoreKind.Harvest => HarvestHit, _ => PounceHit };
+    private double WorkSeconds => Kind switch { FarmChoreKind.Water => WaterSeconds, FarmChoreKind.Harvest => HarvestSeconds, FarmChoreKind.Till => TillSeconds, FarmChoreKind.Sow => SowSeconds, _ => PounceSeconds };
+    public double HitTime => Kind switch { FarmChoreKind.Water => WaterHit, FarmChoreKind.Harvest => HarvestHit, FarmChoreKind.Till => TillHit, FarmChoreKind.Sow => SowHit, _ => PounceHit };
 
-    public static double NextVisit(Random random) => VisitMinSeconds + random.NextDouble() * (VisitMaxSeconds - VisitMinSeconds);
+    // The wait after a look for work. It counts only while no trip is on, so a rest begins when the trip ends.
+    public void ScheduleAfterLook(bool went, Random random)
+    {
+        if (!went)
+        {
+            tripsInRow = 0;
+            ScheduleVisit(RetrySeconds);
+            return;
+        }
+        bool tired = ++tripsInRow >= TripsBeforeLongRest;
+        if (tired) tripsInRow = 0;
+        var (least, most) = tired ? (LongRestMinSeconds, LongRestMaxSeconds) : (RestMinSeconds, RestMaxSeconds);
+        ScheduleVisit(least + random.NextDouble() * (most - least));
+    }
+
     public static double NextBird(Random random, bool scarecrow = false) => (BirdMinSeconds + random.NextDouble() * (BirdMaxSeconds - BirdMinSeconds)) * (scarecrow ? ScarecrowBirdFactor : 1);
     public void ScheduleVisit(double seconds) => VisitDue = Math.Max(0, seconds);
     public void ScheduleBird(double seconds) => BirdDue = Math.Max(0, seconds);
@@ -45,14 +66,25 @@ public sealed class FarmChores
     public bool CountDownVisit(double dt) => (VisitDue = Math.Max(0, VisitDue - dt)) <= 0;
     public bool CountDownBird(double dt) => (BirdDue = Math.Max(0, BirdDue - dt)) <= 0;
 
-    // What a trip would do: the nearest ripe tile, else the nearest thirsty one, else nothing.
-    public static (FarmChoreKind Kind, int Tile)? Pick(PetFarm farm, Func<int, double> distance)
+    public static FarmStep StepOf(FarmChoreKind kind) => kind switch
     {
-        foreach (var (step, kind) in new[] { (FarmStep.Harvest, FarmChoreKind.Harvest), (FarmStep.Water, FarmChoreKind.Water) })
+        FarmChoreKind.Water => FarmStep.Water,
+        FarmChoreKind.Till => FarmStep.Till,
+        FarmChoreKind.Sow => FarmStep.Plant,
+        _ => FarmStep.Harvest
+    };
+
+    // What a trip would do: the nearest ripe tile, else thirsty, else one to till or sow again, else nothing.
+    public static (FarmChoreKind Kind, int Tile)? Pick(PetFarm farm, Func<int, double> distance, bool resow = true)
+    {
+        foreach (var kind in new[] { FarmChoreKind.Harvest, FarmChoreKind.Water, FarmChoreKind.Till, FarmChoreKind.Sow })
         {
+            bool again = kind is FarmChoreKind.Till or FarmChoreKind.Sow;
+            if (again && !resow) continue;
+            var step = StepOf(kind);
             int best = -1;
             for (int i = 0; i < PetFarm.TileCount; i++)
-                if (farm.Next(i) == step && (best < 0 || distance(i) < distance(best))) best = i;
+                if (farm.Next(i) == step && (!again || farm.ResowCrop(i) != null) && (best < 0 || distance(i) < distance(best))) best = i;
             if (best >= 0) return (kind, best);
         }
         return null;

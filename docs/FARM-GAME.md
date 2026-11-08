@@ -8,6 +8,30 @@ Người dùng duyệt 2026-11-08. Mở rộng ruộng của bản 1.5.1 (docs/U
 | B. Cấp nông trại | XP, 10 cấp, mở khóa cây và món | Xong (9fcf389), còn test tay |
 | C. Đơn hàng | Chim giấy mang đơn, giao lấy xu và XP | Xong (58491c9), còn test tay |
 
+## Giai đoạn 2: nông trại sống động (duyệt 08/11)
+
+Mục tiêu: mèo không còn chỉ đi qua đi lại mà có việc liên tục như một nông trại nhỏ.
+
+| Mốc | Nội dung | Trạng thái |
+|---|---|---|
+| 1. Nhịp làm việc | Mèo làm liên tục có nghỉ, tự cày và gieo lại | Xong, còn test tay |
+| 2. Bếp lửa | Nồi, que khuấy, lửa; mèo đổ nguyên liệu, khuấy, ăn | Chưa làm |
+| 3. Hồ nước | Mèo câu cá, 3 loại cá, món cá | Chưa làm |
+| 4. Gian hàng lưu động | Tự xuất hiện như cổng, thay cho Đơn hàng | Chưa làm |
+| 5. Thời tiết gắn nông trại | Mỗi loại có tác dụng, chỉ có lợi | Chưa làm |
+
+Người dùng đã chốt: thời tiết lấy wallpaper làm khí hậu chính và xen kẽ loại khác mỗi 10–20 phút (thay luật "chỉ đổi khi đổi nền", áp dụng ở Mốc 5); mèo tự cày và gieo lại; hồ và bếp gộp chung mảnh đất thành một khu, di chuyển cùng nhau. Luật từng mốc viết và duyệt trước khi code.
+
+### Luật Mốc 1 (thay nhịp và luật "không cày, không gieo" của 1.5.1 Mốc 4)
+
+- Làm xong một chuyến thì nghỉ 15–40 giây rồi tìm việc tiếp; chờ tính từ lúc chuyến kết thúc. Hết việc hoặc sai thời điểm thì 45 giây xem lại. Sau 6 chuyến liên tiếp nghỉ dài 2–3 phút; một lần không có việc thì đếm lại. Lần đầu sau khi mở app khoảng 30 giây.
+- Mỗi chuyến một ô, ô gần nhất. Ưu tiên: gặt, tưới, cày, gieo. Chim giấy giữ nguyên lịch.
+- Mỗi ô nhớ cây vừa gặt (kể cả tự tay gặt). Mèo chỉ cày và gieo lại trên ô đó, đúng cây đó, trả xu như thường. Ô chưa từng trồng không đụng tới. Bạn tự tay cày thì ô thành việc của bạn, mèo không gieo. Thiếu xu hoặc cây bị khóa thì mèo bỏ qua ô.
+- Công tắc "Mèo tự gieo lại" trong Cài đặt → Thói quen, mặc định bật; tắt thì mèo chỉ gặt và tưới. Tắt "Mèo làm vườn cùng" thì tắt cả nhịp này.
+- Tiếng khi mèo tự làm cách nhau tối thiểu 60 giây; bấm tay vẫn có tiếng. Điều kiện chặn và hủy chuyến như 1.5.1 Mốc 4.
+
+## Giai đoạn 1
+
 Luôn giữ: cây không héo, chim không gây hại, farm không cộng sức mạnh trong trận, không chạm vào mèo. Các gói chưa chọn: thêm cây và mùa vụ, công cụ và phân bón, vật nuôi, mở rộng và trang trí, chất lượng nông sản.
 
 ## Luật Mốc A

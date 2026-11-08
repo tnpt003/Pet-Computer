@@ -426,13 +426,13 @@ public sealed partial class PetWindow
             case FarmStep.Water:
                 farm.Water(tile, now);
                 StartFarmEffect(tile, FarmEffect.Water);
-                PlayPetSound("swoosh");
+                PlayFarmSound("swoosh");
                 break;
             case FarmStep.Harvest:
                 if (farm.Harvest(tile) is FarmCrop crop)
                 {
                     StartFarmEffect(tile, FarmEffect.Harvest);
-                    PlayPetSound("sparkle");
+                    PlayFarmSound("sparkle");
                     ShowFarmGain(tile, crop);
                 }
                 break;
@@ -461,7 +461,7 @@ public sealed partial class PetWindow
     {
         if (farm == null || paused || farmLift.Phase != FarmLiftPhase.Down || !farm.Plant(tile, crop)) return false;
         StartFarmEffect(tile, FarmEffect.Plant);
-        PlayPetSound("pop");
+        PlayFarmSound("pop");
         FarmChanged();
         return true;
     }

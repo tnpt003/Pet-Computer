@@ -1304,3 +1304,12 @@ Các mục 1.5 phía trên viết theo từng mốc; đây là thứ tự chơi 
 - [ ] Mèo ngủ: giao được, không đánh thức. Pause: nút mờ. App toàn màn hình, vào trận, mở Sảnh: bảng tự đóng
 - [ ] Bảng đủ chữ, nút không tràn ở vi/en/ja và DPI 100/125/150/200%
 - [ ] Chơi một lúc rồi góp ý phần thưởng, số lượng mỗi đơn và 20 phút chờ
+
+## Nông trại Mốc 1 — Nhịp làm việc (08/11)
+
+- [ ] Có nhiều ô cần làm: mèo đi làm từng ô, nghỉ khoảng 15–40 giây giữa các chuyến, đi dạo hoặc ngồi trong lúc nghỉ. Sau khoảng 6 chuyến thì nghỉ dài 2–3 phút. Xem có quá bận hay vẫn quá rảnh không
+- [ ] Gặt xong, mèo tự cào đất rồi gieo lại đúng cây đó, xu giảm đúng giá hạt, rồi tưới. Thấy tư thế khều đất có hợp không
+- [ ] Ô chưa từng trồng: mèo không đụng. Tự tay cày ô đã gặt: mèo không gieo vào đó. Hết xu hoặc cây bị khóa: mèo bỏ qua ô
+- [ ] Tắt "Mèo tự gieo lại": mèo chỉ gặt và tưới. Tắt "Mèo làm vườn cùng": mèo không đi làm
+- [ ] Tiếng khi mèo tự làm không phát liên tục, tối đa khoảng một lần mỗi phút; tự bấm thì luôn có tiếng
+- [ ] Giữa chuyến: kéo mèo, Pause, Quiet, app toàn màn hình, mèo ngủ thì chuyến hủy ngay, mèo không kẹt tư thế. Mèo ngủ không bị đánh thức. Tắt Python mèo vẫn đi làm

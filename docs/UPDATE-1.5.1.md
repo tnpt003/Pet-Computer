@@ -52,7 +52,7 @@ Mục tiêu: mèo ngoài trận đa dạng và thú vị hơn. Ba tính năng ch
 #### Luật Mốc 4 (người dùng duyệt 08/11)
 
 - Mèo tự đi làm vườn bằng logic C# local (không qua Python, tắt Python vẫn chạy) và không tính là tương tác của người dùng. Công tắc "Mèo làm vườn cùng" ở Cài đặt → Thói quen, mặc định bật.
-- Mỗi 2–4 phút một chuyến, một ô: ô chín gần nhất, không có thì ô cần tưới gần nhất. Mèo không cày, không gieo. Không có việc hoặc sai thời điểm thì thử lại sau 45 giây, không dồn lượt.
+- (Nhịp và việc cày, gieo đã thay bằng luật Mốc 1 trong docs/FARM-GAME.md.) Mỗi 2–4 phút một chuyến, một ô: ô chín gần nhất, không có thì ô cần tưới gần nhất. Mèo không cày, không gieo. Không có việc hoặc sai thời điểm thì thử lại sau 45 giây, không dồn lượt.
 - Mèo đứng cạnh ô, cách tâm ô 58 DIP. Tưới 2 giây cầm bình, gặt khều chân; kết quả giống hệt bấm tay (lưu file, "+1 Tên cây"). Tới nơi mà ô đã được làm thì thôi. Sau 20 giây đi bộ chưa tới thì bỏ chuyến.
 - Chim giấy khoảng 6–12 phút một lần, đậu cạnh một ô có cây, phía xa mèo. Mèo nhìn 0,7 giây, rón rén (60% tốc độ), thu người rồi vồ, chim bay đi. Chim tự bay sau 30 giây, khi ô hết cây hoặc khi mảnh đất bị nhấc. Chim không gây thiệt hại: không mất cây, không chậm lớn; bù nhìn ở Mốc 5 sẽ làm chim đến ít hơn.
 - Không đi và không có chim khi: mèo ngủ/thức dậy/bị kéo/có cú nhấn có thể thành kéo/bay/ăn/có cảm xúc chiếm mèo, đang bận hoạt động khác, Pause, Quiet, app toàn màn hình, người dùng vắng, trận, Sảnh/bảng chuẩn bị/bản đồ, mèo đứng trên cửa sổ, ruộng khác màn hình mèo, ruộng ẩn hoặc đang nhấc. Điều kiện nào xuất hiện giữa chuyến cũng hủy chuyến ngay và không đổi tư thế của mèo đang bị giữ, đang bay hay đang ngủ.

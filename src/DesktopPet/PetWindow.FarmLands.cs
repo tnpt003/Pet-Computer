@@ -8,6 +8,12 @@ using System.Windows.Media;
 
 namespace DesktopPet;
 
+// A monitor as the farm's land sees it: rectangles in screen pixels, and its DPI scale.
+public readonly record struct FarmMonitor(string Name, Area Bounds, Area Work, double Scale, bool Primary)
+{
+    public Area WorkDips => new(Work.Left / Scale, Work.Top / Scale, Work.Right / Scale, Work.Bottom / Scale);
+}
+
 // One of the two small patches of land beside the field (docs/FARM-GAME.md): where it stands, its
 // own window and art, and the same lift the field has.
 public sealed class FarmPatch
@@ -21,6 +27,11 @@ public sealed class FarmPatch
     public Window? Window { get; internal set; }
     public PetFarmArt.Land? Art { get; internal set; }
     public Border? Gain { get; internal set; }
+    public string? Monitor { get; set; }
+    public string? RestMonitor { get; set; }
+    public Area Area { get; set; }
+    public double Scale { get; set; } = 1;
+    public bool WithCat { get; set; }
     public double Fraction { get; set; }
     public double RestFraction { get; set; }
     public double Grab { get; set; }
@@ -42,16 +53,47 @@ public sealed partial class PetWindow
     // Only one piece of land is in the air at a time.
     public bool FarmLandInAir => farmLift.Phase != FarmLiftPhase.Down || farmPatches.Any(patch => !patch.OnGround);
 
-    private double FarmPatchFree(FarmPatch patch) => Math.Max(0, farmArea.Right - farmArea.Left - patch.Width);
-    public double FarmPatchLeft(FarmPatch patch) => farmArea.Left + patch.Fraction * FarmPatchFree(patch);
+    private double FarmPatchFree(FarmPatch patch) => Math.Max(0, patch.Area.Right - patch.Area.Left - patch.Width);
+    public double FarmPatchLeft(FarmPatch patch) => patch.Area.Left + patch.Fraction * FarmPatchFree(patch);
 
-    private List<(double Left, double Right)> FarmLandsTaken(FarmPatch? except, bool withField = true)
+    // What stands on this monitor. Land on another one is no obstacle.
+    private List<(double Left, double Right)> FarmLandsTaken(string? monitor, FarmPatch? except, bool withField = true)
     {
         var taken = new List<(double Left, double Right)>();
-        if (withField) taken.Add((FarmPlotLeft, FarmPlotLeft + PetFarmArt.PlotWidth));
+        if (withField && farmMonitor == monitor) taken.Add((FarmPlotLeft, FarmPlotLeft + PetFarmArt.PlotWidth));
         foreach (var patch in farmPatches)
-            if (patch != except) taken.Add((FarmPatchLeft(patch), FarmPatchLeft(patch) + patch.Width));
+            if (patch != except && patch.Monitor == monitor) taken.Add((FarmPatchLeft(patch), FarmPatchLeft(patch) + patch.Width));
         return taken;
+    }
+
+    private void ApplyFarmPatchMonitor(FarmPatch patch)
+    {
+        var monitor = FindFarmMonitor(patch.Monitor);
+        patch.Monitor = monitor.Name;
+        patch.Scale = monitor.Scale;
+        patch.Area = monitor.WorkDips;
+        patch.WithCat = monitor.Name == CurrentMonitor().DeviceName;
+    }
+
+    // Once a second with the field's own. A monitor unplugged may have put land on top of land.
+    private void RefreshFarmPatchAreas(bool fieldMoved)
+    {
+        bool moved = fieldMoved;
+        foreach (var patch in farmPatches)
+        {
+            if (patch.Monitor == null) continue;
+            string? before = patch.Monitor;
+            ApplyFarmPatchMonitor(patch);
+            moved |= before != patch.Monitor;
+        }
+        if (!moved) return;
+        foreach (var patch in farmPatches)
+        {
+            if (patch.Monitor == null || !patch.OnGround) continue;
+            double free = FarmPatchFree(patch), left = FarmPatchLeft(patch);
+            double spot = FarmLands.FreeSpot(left, patch.Width, FarmLandsTaken(patch.Monitor, patch), patch.Area.Left, patch.Area.Left + free, FarmLandGap);
+            patch.Fraction = patch.RestFraction = free > 0 ? Math.Clamp((spot - patch.Area.Left) / free, 0, 1) : 0;
+        }
     }
 
     private void CreateFarmPatchWindows()
@@ -87,24 +129,28 @@ public sealed partial class PetWindow
     private void SettleFarmPatches()
     {
         if (farm == null) return;
-        var taken = new List<(double Left, double Right)> { (FarmPlotLeft, FarmPlotLeft + PetFarmArt.PlotWidth) };
+        var taken = new List<(string Monitor, double Left, double Right)> { (farmMonitor!, FarmPlotLeft, FarmPlotLeft + PetFarmArt.PlotWidth) };
         foreach (var patch in farmPatches)
         {
-            double free = FarmPatchFree(patch), last = Math.Max(0, farmArea.Right - farmArea.Left - patch.Width);
-            double? saved = patch.Kind == FarmPatchKind.Hearth ? farm.HearthFractionX : farm.PondFractionX;
-            double wanted = saved is double fraction ? farmArea.Left + fraction * free : taken.Max(land => land.Right) + FarmLandGap;
-            double spot = FarmLands.FreeSpot(wanted, patch.Width, taken, farmArea.Left, farmArea.Left + last, FarmLandGap);
-            patch.Fraction = patch.RestFraction = free > 0 ? Math.Clamp((spot - farmArea.Left) / free, 0, 1) : 0;
-            StoreFarmPatch(patch);
-            taken.Add((spot, spot + patch.Width));
+            bool hearth = patch.Kind == FarmPatchKind.Hearth;
+            double? saved = hearth ? farm.HearthFractionX : farm.PondFractionX;
+            patch.Monitor = (hearth ? farm.HearthMonitor : farm.PondMonitor) ?? farmMonitor;
+            ApplyFarmPatchMonitor(patch);
+            double free = FarmPatchFree(patch);
+            var here = taken.Where(land => land.Monitor == patch.Monitor).Select(land => (land.Left, land.Right)).ToList();
+            double wanted = saved is double fraction ? patch.Area.Left + fraction * free : here.Max(land => land.Right) + FarmLandGap;
+            double spot = FarmLands.FreeSpot(wanted, patch.Width, here, patch.Area.Left, patch.Area.Left + free, FarmLandGap);
+            patch.Fraction = patch.RestFraction = free > 0 ? Math.Clamp((spot - patch.Area.Left) / free, 0, 1) : 0;
+            if (saved == null) StoreFarmPatch(patch);
+            taken.Add((patch.Monitor!, spot, spot + patch.Width));
         }
     }
 
     private void StoreFarmPatch(FarmPatch patch)
     {
         if (farm == null) return;
-        if (patch.Kind == FarmPatchKind.Hearth) farm.HearthFractionX = patch.Fraction;
-        else farm.PondFractionX = patch.Fraction;
+        if (patch.Kind == FarmPatchKind.Hearth) { farm.HearthFractionX = patch.Fraction; farm.HearthMonitor = patch.Monitor; }
+        else { farm.PondFractionX = patch.Fraction; farm.PondMonitor = patch.Monitor; }
     }
 
     private void ShowFarmPatches()
@@ -123,7 +169,7 @@ public sealed partial class PetWindow
         {
             patch.Art?.ReleaseMouseCapture();
             patch.Dragging = false;
-            if (!patch.OnGround) patch.Fraction = patch.RestFraction;
+            if (!patch.OnGround) { patch.Fraction = patch.RestFraction; patch.Monitor = patch.RestMonitor ?? patch.Monitor; }
             patch.Lift.Reset();
             patch.GainLeft = 0;
             if (patch.Gain != null) patch.Gain.Opacity = 0;
@@ -140,7 +186,7 @@ public sealed partial class PetWindow
     private void PositionFarmPatches()
     {
         foreach (var patch in farmPatches)
-            if (patch.Window != null) MoveWindow(patch.Window, FarmPatchLeft(patch) - PetFarmArt.Side, farmArea.Bottom + PetFarmArt.BottomRoom - PetFarmArt.ArtHeight, farmScale);
+            if (patch.Window != null) MoveWindow(patch.Window, FarmPatchLeft(patch) - PetFarmArt.Side, patch.Area.Bottom + PetFarmArt.BottomRoom - PetFarmArt.ArtHeight, patch.Scale);
     }
 
     private void FollowFarmPatchDrags()
@@ -148,8 +194,14 @@ public sealed partial class PetWindow
         foreach (var patch in farmPatches)
         {
             if (!patch.Dragging) continue;
-            double free = FarmPatchFree(patch), left = ScreenCursor().X / farmScale - patch.Grab;
-            patch.Fraction = free > 0 ? Math.Clamp((left - farmArea.Left) / free, 0, 1) : 0;
+            var cursor = ScreenCursor();
+            if (FarmMonitorAt(cursor) is FarmMonitor over && over.Name != patch.Monitor)
+            {
+                patch.Monitor = over.Name;
+                ApplyFarmPatchMonitor(patch);
+            }
+            double free = FarmPatchFree(patch), left = cursor.X / patch.Scale - patch.Grab;
+            patch.Fraction = free > 0 ? Math.Clamp((left - patch.Area.Left) / free, 0, 1) : 0;
         }
     }
 
@@ -248,7 +300,7 @@ public sealed partial class PetWindow
         if (paused || patch.Art == null || patch.Lift.Phase is not (FarmLiftPhase.Rising or FarmLiftPhase.Floating)) return;
         if (!patch.Art.CaptureMouse()) return;
         patch.Dragging = true;
-        patch.Grab = ScreenCursor().X / farmScale - FarmPatchLeft(patch);
+        patch.Grab = ScreenCursor().X / patch.Scale - FarmPatchLeft(patch);
     }
 
     private void ReleaseFarmPatch(FarmPatch patch)
@@ -305,6 +357,7 @@ public sealed partial class PetWindow
     {
         if (paused || !FarmVisible || FarmLandInAir) return;
         patch.RestFraction = patch.Fraction;
+        patch.RestMonitor = patch.Monitor;
         if (patch.Kind == FarmPatchKind.Hearth) CloseFarmKitchen();
         patch.Lift.Begin();
         UpdateFarmPatchCursor(patch);
@@ -315,13 +368,22 @@ public sealed partial class PetWindow
     public void DropFarmPatch(FarmPatch patch)
     {
         double left = FarmPatchLeft(patch), free = FarmPatchFree(patch);
-        double spot = FarmLands.FreeSpot(left, patch.Width, FarmLandsTaken(patch), farmArea.Left, farmArea.Left + free, FarmLandGap);
+        double spot = FarmLands.FreeSpot(left, patch.Width, FarmLandsTaken(patch.Monitor, patch), patch.Area.Left, patch.Area.Left + free, FarmLandGap);
         double way = Math.Abs(spot - left);
-        SetFarmPatchDown(patch, free > 0 ? Math.Clamp((spot - farmArea.Left) / free, 0, 1) : 0, way < 0.5 ? 0 : FarmLift.MaxGlideSeconds * Math.Min(1, way / 240));
+        SetFarmPatchDown(patch, free > 0 ? Math.Clamp((spot - patch.Area.Left) / free, 0, 1) : 0, way < 0.5 ? 0 : FarmLift.MaxGlideSeconds * Math.Min(1, way / 240));
     }
 
     public void CancelFarmPatchMove(FarmPatch patch)
     {
+        if (patch.Lift.Floating && patch.RestMonitor != null && patch.Monitor != patch.RestMonitor)
+        {
+            // Carried to another monitor: it is back in the air over its old place, and falls there.
+            patch.Monitor = patch.RestMonitor;
+            ApplyFarmPatchMonitor(patch);
+            patch.Fraction = patch.RestFraction;
+            SetFarmPatchDown(patch, patch.RestFraction, 0);
+            return;
+        }
         double way = Math.Abs(patch.Fraction - patch.RestFraction) * FarmPatchFree(patch);
         SetFarmPatchDown(patch, patch.RestFraction, FarmLift.MaxGlideSeconds * Math.Min(1, way / 240));
     }

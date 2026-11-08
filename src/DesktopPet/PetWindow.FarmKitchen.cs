@@ -125,7 +125,7 @@ public sealed partial class PetWindow
     public bool FarmCook(FarmDish dish)
     {
         if (farm == null || !FarmKitchenCanCook || !farm.CanCook(dish)) return false;
-        if (FarmAtHand)
+        if (FarmAtHand && FarmHearthReady)
         {
             CancelFeatureActivity();
             farmChores.BeginCook(FarmChoreKind.Pour, dish, FarmSpotBeside(FarmHearthMid), byUser: true);

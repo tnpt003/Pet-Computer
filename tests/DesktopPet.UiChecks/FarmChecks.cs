@@ -63,6 +63,7 @@ internal static class FarmChecks
             Levels(window, farm, path, check, () => Tick(0.02));
             Stall(window, pet, prefs, farm, path, check, Tick);
             Lands(window, farm, path, check, Tick, point => cursor = point);
+            Monitors(window, pet, farm, path, check, Tick, point => cursor = point);
             farm.OpenTiles = 6;
             check(window.FarmTileLabel(0)!.Length > 0 && window.FarmTileLabel(6) == null, "Each tile has a label");
             check(farm.Next(0) == FarmStep.Till, "A new tile needs tilling");
@@ -581,6 +582,108 @@ internal static class FarmChecks
         SetField(window, "farmFraction", plotBefore);
         SetField(window, "farmRestFraction", plotBefore);
         farm.FractionX = plotBefore;
+        frames(0.02);
+    }
+
+    // Land carried across monitors, on a made-up second monitor (the real one is still used for the cat).
+    private static void Monitors(PetWindow window, PetModel pet, PetFarm farm, string path, Action<bool, string> check, Action<double> frames, Action<Point> setCursor)
+    {
+        var hearth = window.FarmHearth;
+        var pond = window.FarmPond;
+        var lift = Field<FarmLift>(window, "farmLift");
+        var real = ((IReadOnlyList<FarmMonitor>)Call(window, "FarmMonitors")!).First(m => m.Name == hearth.Monitor);
+        const double wide = 1920, high = 1080;
+        var other = new FarmMonitor("FAKE2", new Area(real.Bounds.Right, 0, real.Bounds.Right + wide, high), new Area(real.Bounds.Right, 0, real.Bounds.Right + wide, high - 60), 1.5, false);
+        IReadOnlyList<FarmMonitor> both = new[] { real, other }, one = new[] { real };
+        SetField(window, "farmMonitorsProbe", new Func<IReadOnlyList<FarmMonitor>>(() => both));
+        void Up() => frames(FarmLift.RiseSeconds + 0.1);
+        void Settle() => frames(FarmLift.MaxGlideSeconds + FarmLift.FallSeconds + FarmLift.DustSeconds + 0.2);
+        Point OnOther(double dip) => new Point(other.Bounds.Left + dip * other.Scale, 300);
+        double plotBefore = window.FarmFraction, hearthBefore = hearth.Fraction, pondBefore = pond.Fraction;
+        check(hearth.WithCat && pond.WithCat, "Land starts on the cat's monitor");
+
+        // A patch goes across and stays.
+        window.BeginFarmPatchMove(hearth);
+        Up();
+        hearth.Dragging = true; hearth.Grab = 10;
+        setCursor(OnOther(300));
+        frames(0.03);
+        check(hearth.Monitor == "FAKE2" && !hearth.WithCat, "Dragged past the edge it goes over to the other monitor");
+        check(Math.Abs(hearth.Scale - 1.5) < 1e-9 && Math.Abs(hearth.Area.Bottom - other.WorkDips.Bottom) < 1e-6, "...taking that monitor's scale and floor");
+        check(Math.Abs(window.FarmPatchLeft(hearth) - (other.WorkDips.Left + 290)) < 1.5, $"...and stays under the cursor ({window.FarmPatchLeft(hearth) - other.WorkDips.Left:F0})");
+        hearth.Dragging = false;
+        window.DropFarmPatch(hearth);
+        Settle();
+        check(hearth.OnGround && hearth.Monitor == "FAKE2" && PetFarm.Load(path).HearthMonitor == "FAKE2", "It lands there and that is saved");
+
+        // A cat on another monitor does not go to it.
+        farm.Stock["Radish"] = 2;
+        SetField(window, "treatCooldown", 0.0);
+        pet.Emotions.Reset(); pet.Action = PetAction.Idle; pet.Grounded = true;
+        check(window.FarmCook(FarmDish.RadishSoup) && window.FarmChoreNow == FarmChoreKind.None && pet.TreatRemaining > 0 && farm.StockOf(FarmCrop.Radish) == 0, "With the hearth away the cat eats where it is, as before");
+        pet.TreatRemaining = 0; SetField(window, "treatCooldown", 0.0);
+        pet.Action = PetAction.Idle;
+        check(window.FarmCanFish, "The pond on the cat's monitor still works");
+
+        // Other land is no obstacle over there, only what is on the same monitor.
+        window.BeginFarmPatchMove(pond);
+        Up();
+        pond.Dragging = true; pond.Grab = 0;
+        setCursor(OnOther(500));
+        frames(0.03);
+        check(pond.Monitor == "FAKE2" && !window.FarmCanFish, "The pond goes across too; nobody fishes from it");
+        pond.Dragging = false;
+        window.CancelFarmPatchMove(pond);
+        check(pond.Monitor == real.Name && Math.Abs(pond.Fraction - pondBefore) < 1e-9 && pond.Lift.Phase == FarmLiftPhase.Falling, "Cancel: back over its old place, falling there");
+        Settle();
+        check(pond.OnGround && pond.WithCat && Math.Abs(pond.Fraction - pondBefore) < 1e-9, "...and it lands there");
+
+        window.BeginFarmPatchMove(pond);
+        Up();
+        pond.Dragging = true; pond.Grab = 0;
+        setCursor(OnOther(10));
+        frames(0.03);
+        pond.Dragging = false;
+        pond.Fraction = hearth.Fraction * (other.WorkDips.Right - other.WorkDips.Left - hearth.Width) / (other.WorkDips.Right - other.WorkDips.Left - pond.Width);
+        window.DropFarmPatch(pond);
+        Settle();
+        check(pond.Monitor == "FAKE2" && (window.FarmPatchLeft(pond) >= window.FarmPatchLeft(hearth) + hearth.Width + 5 || window.FarmPatchLeft(pond) + pond.Width <= window.FarmPatchLeft(hearth) - 5), "On the same monitor land still keeps apart");
+
+        // The field goes across too.
+        window.BeginFarmMove();
+        Up();
+        SetField(window, "farmDragging", true);
+        SetField(window, "farmGrab", 0.0);
+        setCursor(OnOther(900));
+        frames(0.03);
+        check(Field<string>(window, "farmMonitor") == "FAKE2" && !Field<bool>(window, "farmWithCat"), "The field crosses over too");
+        check(Math.Abs(Field<double>(window, "farmScale") - 1.5) < 1e-9, "...with that monitor's scale");
+        SetField(window, "farmDragging", false);
+        window.DropFarm();
+        Settle();
+        check(lift.Phase == FarmLiftPhase.Down && PetFarm.Load(path).Monitor == "FAKE2", "It lands there and that is saved");
+        check(!window.TryFarmVisit(), "The cat does not go to a field on another monitor");
+
+        // Unplugged: everything comes to the primary monitor, not on top of each other.
+        SetField(window, "farmMonitorsProbe", new Func<IReadOnlyList<FarmMonitor>>(() => one));
+        Call(window, "RefreshFarmArea");
+        check(hearth.Monitor == real.Name && pond.Monitor == real.Name && hearth.WithCat && Field<string>(window, "farmMonitor") == real.Name, "Unplugged, all land comes to the monitor that is left");
+        double h = window.FarmPatchLeft(hearth), p = window.FarmPatchLeft(pond);
+        check(h + hearth.Width <= p - 5 || p + pond.Width <= h - 5, "...not on top of each other");
+
+        // As it was, for the checks after this.
+        SetField(window, "farmMonitorsProbe", null);
+        hearth.Monitor = pond.Monitor = real.Name;
+        hearth.Fraction = hearth.RestFraction = hearthBefore;
+        pond.Fraction = pond.RestFraction = pondBefore;
+        SetField(window, "farmMonitor", real.Name);
+        SetField(window, "farmFraction", plotBefore);
+        SetField(window, "farmRestFraction", plotBefore);
+        Call(window, "RefreshFarmArea");
+        farm.Monitor = real.Name; farm.FractionX = plotBefore;
+        farm.HearthMonitor = farm.PondMonitor = real.Name;
+        farm.HearthFractionX = hearthBefore; farm.PondFractionX = pondBefore;
+        pet.Emotions.Reset(); pet.TreatRemaining = 0; pet.Action = PetAction.Idle;
         frames(0.02);
     }
 

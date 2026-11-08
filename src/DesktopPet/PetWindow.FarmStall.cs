@@ -89,7 +89,7 @@ public sealed partial class PetWindow
         get
         {
             double width = PetFarmStallArt.ArtWidth, wanted = FarmPlotLeft - width - FarmCartGap;
-            double spot = FarmLands.FreeSpot(wanted, width, FarmLandsTaken(null), farmArea.Left, Math.Max(farmArea.Left, farmArea.Right - width), FarmCartGap);
+            double spot = FarmLands.FreeSpot(wanted, width, FarmLandsTaken(farmMonitor, null), farmArea.Left, Math.Max(farmArea.Left, farmArea.Right - width), FarmCartGap);
             return (spot, spot < FarmPlotLeft ? -1 : 1);
         }
     }

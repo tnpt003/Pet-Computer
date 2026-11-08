@@ -1377,3 +1377,13 @@ Thay các mục "nhấc và thả cùng mảnh đất" của Mốc 2 và Mốc 3
 - [ ] Nhấc bếp giữa lúc nấu: mèo dừng, món đã đổ vẫn còn. Nhấc hồ giữa lúc câu: mèo dừng, không mất gì. Nhấc ruộng: mèo vẫn nấu và câu
 - [ ] Để bếp và hồ ở xa ruộng: mèo đi tới đúng chỗ, que khuấy và dây câu khớp nồi và mặt hồ ở cả hai phía
 - [ ] Xe hàng không đứng lên vùng đất nào, kể cả khi bếp hoặc hồ để sát bên trái ruộng
+
+## Nông trại — Kéo vùng đất sang màn hình khác (09/11, cần nhiều màn hình)
+
+- [ ] Nhấc Ruộng, Bếp, Hồ rồi kéo qua ranh giới màn hình: vùng đất đi theo con trỏ, không nhảy lung tung, đáp đúng trên sàn màn mới
+- [ ] Hai màn khác DPI: kích thước vùng đất vẫn đúng, đất vụn và hiệu ứng đáp không lệch. Hai màn lệch độ cao: vùng đất nhảy theo độ cao sàn lúc qua ranh giới, xem có chấp nhận được không
+- [ ] "Hủy" sau khi đã kéo sang màn khác: vùng đất về chỗ cũ trên màn cũ rồi rơi xuống
+- [ ] Đóng mở lại app: mỗi vùng ở đúng màn hình đã để
+- [ ] Rút màn hình đang có vùng đất: vùng về màn hình chính, không chồng lên nhau
+- [ ] Mèo ở màn khác với ruộng: bấm tay vẫn được, mèo không tới. Bếp khác màn: "Nấu" thì mèo ăn tại chỗ. Hồ khác màn: "Câu cá" mờ. Đưa mèo về cùng màn: mèo làm việc lại
+- [ ] Xe hàng hiện đúng màn hình của ruộng

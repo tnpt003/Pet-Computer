@@ -32,11 +32,13 @@ Người dùng đã chốt: thời tiết lấy wallpaper làm khí hậu chính
 
 ### Luật ba vùng đất (duyệt 09/11, thay các câu "nhấc và di chuyển cùng mảnh đất" của Mốc 2, Mốc 3)
 
-- Ruộng, Bếp, Hồ là ba vùng đất riêng, mỗi vùng có vị trí và lần nhấc riêng, cùng một màn hình. Bếp và Hồ có bờ đất và viền cỏ như ruộng. Vị trí lưu trong `farm.json` (`HearthFractionX`, `PondFractionX`), vẫn phiên bản 3; lần đầu đứng ngay bên phải ruộng theo thứ tự cũ.
+- Ruộng, Bếp, Hồ là ba vùng đất riêng, mỗi vùng có vị trí, màn hình và lần nhấc riêng. Bếp và Hồ có bờ đất và viền cỏ như ruộng. Vị trí lưu trong `farm.json` (`HearthFractionX`, `PondFractionX`), vẫn phiên bản 3; lần đầu đứng ngay bên phải ruộng theo thứ tự cũ.
 - Chuột phải: Bếp có "Nấu ăn", "Di chuyển bếp"; Hồ có "Câu cá", "Di chuyển hồ"; menu Ruộng giữ nguyên và chỉ nhấc ruộng. Chuyển động, hiệu ứng và tiếng y như ruộng: rung, đất vụn, bay lên, kéo ngang theo sàn, "Thả xuống đây" hoặc "Hủy", đáp có đất bắn.
 - Mỗi lần chỉ một vùng ở trên không; vùng khác đang bay thì mục di chuyển mờ. Thả trúng vùng khác thì vùng đó trượt trên không tới khoảng trống gần nhất rồi mới đáp, cách nhau 6 DIP.
 - Đang nhấc vùng nào thì chỉ hủy chuyến tới vùng đó. Nhấc bếp: nồi vẫn giữ món, không nấu được cho tới khi đáp. Nhấc hồ: không câu được. Nhấc ruộng: mèo vẫn nấu và câu.
-- Xe hàng đứng ở khoảng trống gần bên trái ruộng nhất, không đứng lên vùng đất nào. Xe không đến khi có vùng đang nhấc.
+- Xe hàng đứng ở khoảng trống gần bên trái ruộng nhất, trên màn hình của ruộng, không đứng lên vùng đất nào. Xe không đến khi có vùng đang nhấc.
+- Sang màn hình khác (duyệt 09/11): vùng đang bay đi theo con trỏ qua ranh giới, tự lấy sàn và DPI của màn mới. "Hủy" sau khi đã sang màn khác thì vùng hiện lại trên không ở chỗ cũ rồi rơi xuống. Tránh chồng nhau chỉ xét các vùng cùng màn hình. Màn hình của Bếp và Hồ lưu trong `farm.json` (`HearthMonitor`, `PondMonitor`), dữ liệu cũ coi như cùng màn với Ruộng. Rút màn hình thì vùng về màn hình chính, giữ vị trí tương đối, không chồng lên vùng khác.
+- Vùng khác màn hình với mèo: mèo không tự đi sang. Ruộng vẫn bấm tay được, mèo không tới làm. Bếp: "Nấu" thì mèo ăn tại chỗ, không tự nấu, món trong nồi chờ tới khi cùng màn. Hồ: "Câu cá" mờ, mèo không tự câu. Thời tiết chỉ tác dụng lên vùng cùng màn với mèo.
 
 ### Luật Mốc 2 (duyệt 08/11, thay luật "mèo ăn ngay" của 1.5.1 Mốc 6 khi mèo tới được bếp)
 

@@ -110,7 +110,7 @@ internal static class FarmChoreChecks
             Stops("thrown", () => { pet.Action = PetAction.Thrown; pet.Grounded = false; }, () => { pet.Action = PetAction.Idle; pet.Grounded = true; });
             Stops("Pause", () => SetField(window, "paused", true), () => SetField(window, "paused", false));
             Stops("on a window", () => pet.LedgeId = 7, () => pet.LedgeId = 0);
-            Stops("field on another monitor", () => SetField(window, "farmWithCat", false), () => SetField(window, "farmWithCat", true));
+            Stops("hearth on another monitor", () => window.FarmHearth.WithCat = false, () => window.FarmHearth.WithCat = true);
 
             // Stopped after pouring: the pot keeps it and the cat comes back, as its own meal.
             Ready();
@@ -257,7 +257,7 @@ internal static class FarmChoreChecks
             Stops("thrown", () => { pet.Action = PetAction.Thrown; pet.Grounded = false; }, () => { pet.Action = PetAction.Idle; pet.Grounded = true; });
             Stops("Pause", () => SetField(window, "paused", true), () => SetField(window, "paused", false));
             Stops("on a window", () => pet.LedgeId = 7, () => pet.LedgeId = 0);
-            Stops("field on another monitor", () => SetField(window, "farmWithCat", false), () => SetField(window, "farmWithCat", true));
+            Stops("pond on another monitor", () => window.FarmPond.WithCat = false, () => window.FarmPond.WithCat = true);
 
             void Refused(string what, Action set, Action unset)
             {

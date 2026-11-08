@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -36,7 +37,9 @@ public sealed partial class PetWindow
     private double farmPondTime;
     private bool farmPondBusy;
     private double farmSkyElapsed, farmRainSeconds, farmSunUnsaved, farmGainTotal = FarmGainSeconds;
-    private string? farmMonitor;
+    private string? farmMonitor, farmRestMonitor;
+    // Replaceable for UI checks, which have one real monitor.
+    private Func<IReadOnlyList<FarmMonitor>>? farmMonitorsProbe = null;
     private DateTime farmChecked;
     private bool farmDragging, farmEffectsRunning, farmWithCat;
     private int farmHover = -1, farmPressTile = -1;
@@ -51,7 +54,7 @@ public sealed partial class PetWindow
     public FarmLiftPhase FarmLiftPhaseNow => farmLift.Phase;
     public double FarmLiftHeight => farmLift.Height;
     public double FarmFraction => farmFraction;
-    // The weather that counts for the field: on show, and over the same monitor.
+    // The weather that counts for the field: on show, and over the same monitor as the cat.
     public WeatherKind? FarmWeather => weather.Visible && farmWithCat ? weather.Kind : null;
     public bool FarmDragging => farmDragging;
 
@@ -243,7 +246,7 @@ public sealed partial class PetWindow
         ResetFarmCart();
         farmArt?.ReleaseMouseCapture();
         farmDragging = false;
-        if (farmLift.Phase != FarmLiftPhase.Down) farmFraction = farmRestFraction;
+        if (farmLift.Phase != FarmLiftPhase.Down) { farmFraction = farmRestFraction; farmMonitor = farmRestMonitor ?? farmMonitor; }
         farmLift.Reset();
         farmBird.Reset();
         farmHearthFire = 0;
@@ -269,13 +272,39 @@ public sealed partial class PetWindow
     // The plot's monitor in its own DIPs (unplugged: the primary one, at the same place across it).
     private void RefreshFarmArea()
     {
-        var catScreen = CurrentMonitor();
-        var screen = Forms.Screen.AllScreens.FirstOrDefault(s => s.DeviceName == farmMonitor) ?? Forms.Screen.PrimaryScreen ?? catScreen;
-        farmMonitor = screen.DeviceName;
-        farmWithCat = screen.DeviceName == catScreen.DeviceName;
-        farmScale = screen.DeviceName == catScreen.DeviceName ? scale : MonitorScale(screen);
-        var work = screen.WorkingArea;
-        farmArea = new Area(work.Left / farmScale, work.Top / farmScale, work.Right / farmScale, work.Bottom / farmScale);
+        string? before = farmMonitor;
+        var monitor = FindFarmMonitor(farmMonitor);
+        farmMonitor = monitor.Name;
+        farmWithCat = monitor.Name == CurrentMonitor().DeviceName;
+        farmScale = monitor.Scale;
+        farmArea = monitor.WorkDips;
+        RefreshFarmPatchAreas(before != null && before != farmMonitor);
+    }
+
+    private IReadOnlyList<FarmMonitor> FarmMonitors()
+    {
+        if (farmMonitorsProbe != null) return farmMonitorsProbe();
+        string cat = CurrentMonitor().DeviceName;
+        return Forms.Screen.AllScreens.Select(s => new FarmMonitor(s.DeviceName,
+            new Area(s.Bounds.Left, s.Bounds.Top, s.Bounds.Right, s.Bounds.Bottom),
+            new Area(s.WorkingArea.Left, s.WorkingArea.Top, s.WorkingArea.Right, s.WorkingArea.Bottom),
+            s.DeviceName == cat ? scale : MonitorScale(s), s.Primary)).ToList();
+    }
+
+    // This monitor; unplugged: the primary one, at the same place across it.
+    private FarmMonitor FindFarmMonitor(string? name)
+    {
+        var all = FarmMonitors();
+        return all.FirstOrDefault(m => m.Name == name) is { Name: not null } found ? found
+            : all.FirstOrDefault(m => m.Primary) is { Name: not null } primary ? primary : all[0];
+    }
+
+    // The monitor under the cursor (screen pixels), if any.
+    private FarmMonitor? FarmMonitorAt(Point cursor)
+    {
+        foreach (var monitor in FarmMonitors())
+            if (cursor.X >= monitor.Bounds.Left && cursor.X < monitor.Bounds.Right && cursor.Y >= monitor.Bounds.Top && cursor.Y < monitor.Bounds.Bottom) return monitor;
+        return null;
     }
 
     private void PositionFarm()
@@ -420,11 +449,17 @@ public sealed partial class PetWindow
         if (tile >= 0 && tile == pressed) FarmClick(tile);
     }
 
-    // Held in the air: the plot follows the cursor along the floor, never up or down, on its own monitor.
+    // Held in the air: the plot follows the cursor along the floor, never up or down, across the monitors.
     private void FollowFarmDrag()
     {
+        var cursor = ScreenCursor();
+        if (FarmMonitorAt(cursor) is FarmMonitor over && over.Name != farmMonitor)
+        {
+            farmMonitor = over.Name;
+            RefreshFarmArea();
+        }
         double free = FarmFreeWidth;
-        double left = ScreenCursor().X / farmScale - farmGrab;
+        double left = cursor.X / farmScale - farmGrab;
         farmFraction = free > 0 ? Math.Clamp((left - farmArea.Left) / free, 0, 1) : 0;
     }
 
@@ -588,6 +623,7 @@ public sealed partial class PetWindow
     {
         if (paused || !FarmVisible || FarmLandInAir) return;
         farmRestFraction = farmFraction;
+        farmRestMonitor = farmMonitor;
         HoverFarm(-1);
         farmBird.Scare(); // The ground is about to go.
         farmLift.Begin();
@@ -598,7 +634,7 @@ public sealed partial class PetWindow
     // Set down here; dropped on other land it first glides to the nearest free place.
     public void DropFarm()
     {
-        double free = FarmFreeWidth, spot = FarmLands.FreeSpot(FarmPlotLeft, PetFarmArt.PlotWidth, FarmLandsTaken(null, withField: false), farmArea.Left, farmArea.Left + free, FarmLandGap);
+        double free = FarmFreeWidth, spot = FarmLands.FreeSpot(FarmPlotLeft, PetFarmArt.PlotWidth, FarmLandsTaken(farmMonitor, null, withField: false), farmArea.Left, farmArea.Left + free, FarmLandGap);
         double way = Math.Abs(spot - FarmPlotLeft);
         SetFarmDown(free > 0 ? Math.Clamp((spot - farmArea.Left) / free, 0, 1) : 0, way < 0.5 ? 0 : FarmLift.MaxGlideSeconds * Math.Min(1, way / 240));
     }
@@ -606,6 +642,15 @@ public sealed partial class PetWindow
     // Back to where it was before it rose: it slides there in the air first, then falls.
     public void CancelFarmMove()
     {
+        if (farmLift.Floating && farmRestMonitor != null && farmMonitor != farmRestMonitor)
+        {
+            // Carried to another monitor: it is back in the air over its old place, and falls there.
+            farmMonitor = farmRestMonitor;
+            farmFraction = farmRestFraction;
+            RefreshFarmArea();
+            SetFarmDown(farmRestFraction, 0);
+            return;
+        }
         double way = Math.Abs(farmFraction - farmRestFraction) * FarmFreeWidth;
         SetFarmDown(farmRestFraction, FarmLift.MaxGlideSeconds * Math.Min(1, way / 240));
     }

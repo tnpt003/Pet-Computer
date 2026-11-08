@@ -158,6 +158,9 @@ public sealed partial class PetFarm
     // Where the hearth and the pond were left, as fractions of their own free width (null: not placed yet).
     public double? HearthFractionX { get; set; }
     public double? PondFractionX { get; set; }
+    // Their monitors (device names; null: the one the field is on).
+    public string? HearthMonitor { get; set; }
+    public string? PondMonitor { get; set; }
 
     // Written by a newer version of the pet: shown, never overwritten.
     [JsonIgnore] public bool ReadOnly { get; private set; }
@@ -203,6 +206,8 @@ public sealed partial class PetFarm
         if (HearthFractionX is double hx) HearthFractionX = double.IsFinite(hx) ? Math.Clamp(hx, 0, 1) : null;
         if (PondFractionX is double px) PondFractionX = double.IsFinite(px) ? Math.Clamp(px, 0, 1) : null;
         if (string.IsNullOrWhiteSpace(Monitor)) Monitor = null;
+        if (string.IsNullOrWhiteSpace(HearthMonitor)) HearthMonitor = null;
+        if (string.IsNullOrWhiteSpace(PondMonitor)) PondMonitor = null;
     }
 
     private static Dictionary<string, int> CleanCounts(Dictionary<string, int>? counts) =>

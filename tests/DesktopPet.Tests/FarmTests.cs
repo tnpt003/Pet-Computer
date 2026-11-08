@@ -41,10 +41,11 @@ internal static class FarmTests
         string path = Path.Combine(folder, "farm.json");
         try
         {
-            var saved = new PetFarm { HearthFractionX = 0.4, PondFractionX = 0.8 };
+            var saved = new PetFarm { HearthFractionX = 0.4, PondFractionX = 0.8, HearthMonitor = @"\\.\DISPLAY2", PondMonitor = "  " };
             saved.Save(path);
             var back = PetFarm.Load(path);
             check(back.HearthFractionX == 0.4 && back.PondFractionX == 0.8 && back.Version == 3, "Where the hearth and pond stand is saved");
+            check(back.HearthMonitor == @"\\.\DISPLAY2" && back.PondMonitor == null, "...and on which monitor");
             File.WriteAllText(path, "{\"Version\":3,\"HearthFractionX\":5,\"PondFractionX\":-2}");
             var odd = PetFarm.Load(path);
             check(odd.HearthFractionX == 1 && odd.PondFractionX == 0, "Places out of range are brought in");

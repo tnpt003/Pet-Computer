@@ -28,9 +28,12 @@ public sealed partial class PetWindow
     private double FarmPondMid => FarmPatchLeft(FarmPond) + FarmPond.Width / 2;
 
     // The cat can walk to the field from where it is.
-    private bool FarmAtHand => preferences.Farm && FarmVisible && farm != null && farmWithCat && pet.LedgeId == 0;
-    // Land in the air ends only the trips to that land.
-    private bool FarmChoreLandDown => farmChores.Cooking ? FarmHearth.OnGround : farmChores.Kind == FarmChoreKind.Fishing ? FarmPond.OnGround : farmLift.Phase == FarmLiftPhase.Down;
+    private bool FarmAtHand => preferences.Farm && FarmVisible && farm != null && pet.LedgeId == 0;
+    // The cat goes only to land on the ground on its own monitor; each piece of land answers for itself.
+    private bool FarmFieldReady => farmLift.Phase == FarmLiftPhase.Down && farmWithCat;
+    private bool FarmHearthReady => FarmHearth.OnGround && FarmHearth.WithCat;
+    private bool FarmPondReady => FarmPond.OnGround && FarmPond.WithCat;
+    private bool FarmChoreLandDown => farmChores.Cooking ? FarmHearthReady : farmChores.Kind == FarmChoreKind.Fishing ? FarmPondReady : FarmFieldReady;
     private bool FarmHelpOn => preferences.FarmHelper && FarmAtHand;
 
     // Everything that starts a trip stops one, except the trip itself owning the cat. What the user
@@ -56,24 +59,24 @@ public sealed partial class PetWindow
     public bool TryFarmVisit()
     {
         // Something left in the pot comes first, and is not the helper setting's business.
-        if (FarmAtHand && FarmHearth.OnGround && MayAct(AutoKind.FarmChore) && FarmCatCanEat && farm!.PotDish is FarmDish waiting)
+        if (FarmAtHand && FarmHearthReady && MayAct(AutoKind.FarmChore) && FarmCatCanEat && farm!.PotDish is FarmDish waiting)
         {
             farmChores.BeginCook(FarmChoreKind.Stir, waiting, FarmSpotBeside(FarmHearthMid), byUser: false);
             return true;
         }
         if (!FarmChoreMayStart) return false;
-        if (farmLift.Phase == FarmLiftPhase.Down && FarmChores.Pick(farm!, i => Math.Abs(FarmTileMid(i) - CatCenter), preferences.FarmResow) is var (kind, tile))
+        if (FarmFieldReady && FarmChores.Pick(farm!, i => Math.Abs(FarmTileMid(i) - CatCenter), preferences.FarmResow) is var (kind, tile))
         {
             farmChores.Begin(kind, tile, FarmChoreSpotFor(tile));
             return true;
         }
-        if (preferences.FarmAutoFish && FarmPond.OnGround && farmChores.FishDue <= 0)
+        if (preferences.FarmAutoFish && FarmPondReady && farmChores.FishDue <= 0)
         {
             BeginFarmFishing(byUser: false);
             farmChores.ScheduleFish(FarmChores.NextFish(featureRandom));
             return true;
         }
-        if (!preferences.FarmAutoCook || !FarmHearth.OnGround || farmChores.CookDue > 0 || !FarmCatCanEat || farm!.AutoDish() is not FarmDish dish) return false;
+        if (!preferences.FarmAutoCook || !FarmHearthReady || farmChores.CookDue > 0 || !FarmCatCanEat || farm!.AutoDish() is not FarmDish dish) return false;
         farmChores.BeginCook(FarmChoreKind.Pour, dish, FarmSpotBeside(FarmHearthMid), byUser: false);
         farmChores.ScheduleCook(FarmChores.NextCook(featureRandom));
         return true;
@@ -82,7 +85,7 @@ public sealed partial class PetWindow
     // One bird now, if the cat could chase it. True when it came.
     public bool TryFarmBird()
     {
-        if (!FarmChoreMayStart || farmLift.Phase != FarmLiftPhase.Down || farmBird.Present) return false;
+        if (!FarmChoreMayStart || !FarmFieldReady || farmBird.Present) return false;
         int tile = FarmChores.BirdTile(farm!, featureRandom);
         if (tile < 0) return false;
         farmBird.Land(tile, CatCenter < FarmTileMid(tile) ? 1 : -1); // Beyond the crop: the cat will not stand on it.
@@ -94,7 +97,7 @@ public sealed partial class PetWindow
     private double FarmChoreSpotFor(int tile) => FarmSpotBeside(FarmTileMid(tile));
 
     // The user's "Go fishing": like a treat it works in Quiet and is refused while the cat is asleep or eating.
-    public bool FarmCanFish => !paused && FarmAtHand && FarmPond.OnGround && MayAct(AutoKind.Treat) && pet.TreatRemaining <= 0 && treatSatisfiedRemaining <= 0
+    public bool FarmCanFish => !paused && FarmAtHand && FarmPondReady && MayAct(AutoKind.Treat) && pet.TreatRemaining <= 0 && treatSatisfiedRemaining <= 0
         && !farmChores.Cooking && farmChores.Kind != FarmChoreKind.Fishing && farmChores.FishAgain <= 0;
 
     public bool FarmGoFish()
@@ -105,13 +108,15 @@ public sealed partial class PetWindow
         return true;
     }
 
+    private WeatherKind? FarmPondWeather => weather.Visible && FarmPond.WithCat ? weather.Kind : null;
+
     private void BeginFarmFishing(bool byUser)
     {
         // From the far bank, so the cat does not sit in front of the hearth; the near one when the screen ends there.
         double half = settings.Width / 2, right = Math.Max(bounds.Left, bounds.Right - settings.Width);
         double spot = FarmPondMid + FarmFishGap - half;
         if (spot > right) spot = Math.Clamp(FarmPondMid - FarmFishGap - half, bounds.Left, right);
-        farmChores.BeginFishing(spot, spot + half < FarmPondMid ? -1 : 1, FarmChores.NextBite(featureRandom, FarmWeather == WeatherKind.Night), farm!.RollFish(featureRandom, FarmWeather), byUser);
+        farmChores.BeginFishing(spot, spot + half < FarmPondMid ? -1 : 1, FarmChores.NextBite(featureRandom, FarmPondWeather == WeatherKind.Night), farm!.RollFish(featureRandom, FarmPondWeather), byUser);
     }
 
     private double FarmSpotBeside(double mid)

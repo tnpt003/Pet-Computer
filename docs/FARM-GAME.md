@@ -14,7 +14,7 @@ Mục tiêu: mèo không còn chỉ đi qua đi lại mà có việc liên tục
 
 | Mốc | Nội dung | Trạng thái |
 |---|---|---|
-| 1. Nhịp làm việc | Mèo làm liên tục có nghỉ, tự cày và gieo lại | Xong, còn test tay |
+| 1. Nhịp làm việc | Mèo làm liên tục có nghỉ, tự cày và gieo lại | Xong (acfb3ee), còn test tay |
 | 2. Bếp lửa | Nồi, que khuấy, lửa; mèo đổ nguyên liệu, khuấy, ăn | Chưa làm |
 | 3. Hồ nước | Mèo câu cá, 3 loại cá, món cá | Chưa làm |
 | 4. Gian hàng lưu động | Tự xuất hiện như cổng, thay cho Đơn hàng | Chưa làm |

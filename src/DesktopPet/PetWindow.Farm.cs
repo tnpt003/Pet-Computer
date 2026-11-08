@@ -50,6 +50,8 @@ public sealed partial class PetWindow
     public FarmLiftPhase FarmLiftPhaseNow => farmLift.Phase;
     public double FarmLiftHeight => farmLift.Height;
     public double FarmFraction => farmFraction;
+    // The weather that counts for the field: on show, and over the same monitor.
+    public WeatherKind? FarmWeather => weather.Visible && farmWithCat ? weather.Kind : null;
     public bool FarmDragging => farmDragging;
 
     // Every frame; dt is 0 in Pause, which holds the plot's movement still.
@@ -206,7 +208,7 @@ public sealed partial class PetWindow
         var art = new PetFarmArt { Cursor = Cursors.Hand };
         var chipText = new TextBlock { Foreground = Brushes.White, FontFamily = PetUi.TextFont, FontSize = PetUi.SmallSize };
         var chip = FarmLabel(chipText);
-        var gainText = new TextBlock { Foreground = PetUi.Game.Gold, FontFamily = PetUi.TextFont, FontSize = PetUi.BodySize, FontWeight = FontWeights.SemiBold };
+        var gainText = new TextBlock { Foreground = PetUi.Game.Gold, FontFamily = PetUi.TextFont, FontSize = PetUi.BodySize, FontWeight = FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center, MaxWidth = FarmChipWidth - 24 };
         var gain = FarmLabel(gainText);
         gain.RenderTransform = new TranslateTransform();
         var surface = new Grid { Width = PetFarmArt.ArtWidth, Height = PetFarmArt.ArtHeight };
@@ -468,11 +470,11 @@ public sealed partial class PetWindow
                 PlayFarmSound("swoosh");
                 break;
             case FarmStep.Harvest:
-                if (farm.Harvest(tile) is FarmCrop crop)
+                if (FarmHarvest(tile, out bool extra) is FarmCrop crop)
                 {
                     StartFarmEffect(tile, FarmEffect.Harvest);
                     PlayFarmSound("sparkle");
-                    ShowFarmGain(tile, crop);
+                    ShowFarmGain(tile, crop, extra);
                 }
                 break;
             case FarmStep.Locked:
@@ -511,7 +513,15 @@ public sealed partial class PetWindow
         if (farmGain?.Parent is Grid row) row.Margin = new Thickness(PetFarmArt.PondCenter - FarmChipWidth / 2, PetFarmArt.SoilTop - 40, 0, 0);
     }
 
-    private void ShowFarmGain(int tile, FarmCrop crop) => ShowFarmLabel(tile, "+1 " + FarmCropName(crop), FarmGainSeconds);
+    // A harvest as the weather on show makes it.
+    private FarmCrop? FarmHarvest(int tile, out bool extra)
+    {
+        var sky = FarmWeather;
+        extra = sky == WeatherKind.Sunset && featureRandom.NextDouble() < PetFarm.SunsetExtraChance;
+        return farm!.Harvest(tile, extra, sky == WeatherKind.Pollen);
+    }
+
+    private void ShowFarmGain(int tile, FarmCrop crop, bool extra = false) => ShowFarmLabel(tile, (extra ? "+2 " : "+1 ") + FarmCropName(crop), FarmGainSeconds);
 
     private void ShowFarmLabel(int tile, string text, double seconds)
     {

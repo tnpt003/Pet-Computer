@@ -3,6 +3,52 @@ using DesktopPet;
 // The weather's decisions (1.5.1 M2): which kind a wallpaper's colors mean, and how it changes.
 internal static class WeatherTests
 {
+    // The wallpaper's climate, and another kind passing through now and then (docs/FARM-GAME.md, milestone 5).
+    private static void Interludes(Action<bool, string> check)
+    {
+        var random = new Random(6);
+        var weather = new PetWeather();
+        weather.SetClimate(WeatherKind.Snow);
+        weather.Step(PetWeather.FadeSeconds, true, random);
+        check(weather.Kind == WeatherKind.Snow && weather.Climate == WeatherKind.Snow && weather.Interlude == null, "The wallpaper sets the climate");
+        check(weather.InterludeDue >= PetWeather.InterludeEveryMinSeconds - PetWeather.FadeSeconds - 1, "Nothing passes through at first");
+        double due = weather.InterludeDue;
+        weather.Step(10, false, random);
+        check(weather.InterludeDue == due, "Hidden weather has no time passing");
+        weather.Step(PetWeather.FadeSeconds, true, random);
+        for (double t = 0; t < 601 && weather.Interlude == null; t += 1) weather.Step(1, true, random);
+        check(weather.Interlude is WeatherKind other && other != WeatherKind.Snow && weather.InterludeLeft >= 170 && weather.InterludeLeft <= 300, "After ten minutes or so another kind comes, for 3 to 5 minutes");
+        weather.Step(PetWeather.FadeSeconds + 0.1, true, random);
+        weather.Step(PetWeather.FadeSeconds + 0.1, true, random);
+        check(weather.Kind == weather.Interlude && weather.Visible, "It fades in as the old one fades out");
+        var passing = weather.Interlude;
+        weather.SetClimate(WeatherKind.Night);
+        check(weather.Climate == WeatherKind.Night && weather.Kind == passing && weather.Interlude == passing, "A new wallpaper changes the climate; the interlude runs on");
+        double left = weather.InterludeLeft;
+        weather.Step(1, true, random);
+        check(weather.InterludeLeft < left, "It runs out");
+        for (double t = 0; t < 305 && weather.Interlude != null; t += 1) weather.Step(1, true, random);
+        check(weather.Interlude == null && weather.InterludeDue >= PetWeather.InterludeEveryMinSeconds - 2 && weather.InterludeDue <= PetWeather.InterludeEveryMaxSeconds, "Then the next is 10 to 20 minutes off");
+        weather.Step(PetWeather.FadeSeconds + 0.1, true, random);
+        weather.Step(PetWeather.FadeSeconds + 0.1, true, random);
+        check(weather.Kind == WeatherKind.Night, "It comes back to the climate of the moment");
+        var kinds = new HashSet<WeatherKind>();
+        for (int i = 0; i < 200; i++)
+        {
+            var one = new PetWeather();
+            one.SetClimate(WeatherKind.Rain);
+            one.Step(1, true, random);
+            one.Step(1300, true, random);
+            if (one.Interlude is WeatherKind seen) kinds.Add(seen);
+        }
+        check(kinds.Count == 5 && !kinds.Contains(WeatherKind.Rain), $"Any kind but the climate can pass through ({kinds.Count})");
+        var forced = new PetWeather { Interludes = false };
+        forced.SetClimate(WeatherKind.Rain);
+        forced.Step(1, true, random);
+        forced.Step(5000, true, random);
+        check(forced.Interlude == null && forced.Kind == WeatherKind.Rain, "A forced weather stays");
+    }
+
     private static byte[] Picture(params (int Share, byte R, byte G, byte B)[] parts)
     {
         var bytes = new List<byte>();
@@ -13,6 +59,7 @@ internal static class WeatherTests
 
     public static void Run(Action<bool, string> check)
     {
+        Interludes(check);
         void Color(byte r, byte g, byte b, WeatherKind kind, string name) =>
             check(PetWeather.ClassifyColor(r, g, b) == kind, $"{name} means {kind} ({PetWeather.ClassifyColor(r, g, b)})");
         Color(0x4F, 0x9D, 0xE8, WeatherKind.Sunny, "Bright blue");

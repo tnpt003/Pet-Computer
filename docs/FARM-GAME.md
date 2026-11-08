@@ -18,7 +18,7 @@ Mục tiêu: mèo không còn chỉ đi qua đi lại mà có việc liên tục
 | 2. Bếp lửa | Nồi, que khuấy, lửa; mèo đổ nguyên liệu, khuấy, ăn | Xong (5bdea20), còn test tay |
 | 3. Hồ nước | Mèo câu cá, 3 loại cá, món cá | Xong (6a0c93e), còn test tay |
 | 4. Gian hàng lưu động | Tự xuất hiện như cổng, thay cho Đơn hàng | Xong (4b9178c), còn test tay |
-| 5. Thời tiết gắn nông trại | Mỗi loại có tác dụng, chỉ có lợi | Chưa làm |
+| 5. Thời tiết gắn nông trại | Mỗi loại có tác dụng, chỉ có lợi | Có code, còn test tay |
 
 Người dùng đã chốt: thời tiết lấy wallpaper làm khí hậu chính và xen kẽ loại khác mỗi 10–20 phút (thay luật "chỉ đổi khi đổi nền", áp dụng ở Mốc 5); mèo tự cày và gieo lại; hồ và bếp gộp chung mảnh đất thành một khu, di chuyển cùng nhau. Luật từng mốc viết và duyệt trước khi code.
 
@@ -58,6 +58,14 @@ Người dùng đã chốt: thời tiết lấy wallpaper làm khí hậu chính
 - Mỗi lần đến có 1–3 lời mua theo cấp 1 / 3 / 5. Mỗi lời mua 2 đến `cấp + 2` món (tối đa 6), một hoặc hai loại, từ các cây đã mở khóa, Cá nhỏ và Cá chép; tối đa 2 Bí ngô, 3 Cà chua, 3 Cá chép; không đòi Cá vàng quý. Thưởng 1,5 lần giá bán và XP như khi thu hoạch hoặc câu được.
 - Giao làm được khi mèo ngủ và không đánh thức; Pause thì không. Không có nút bỏ qua, xe đi là lời mua hết, không phạt gì. Xe đi khi bảng đang mở thì bảng vẫn giao được tới khi đóng. Xe có dấu "!" vàng khi có lời mua giao được.
 - Bỏ biển gỗ, chim mang thư và "Đơn hàng"; đơn cũ trong `farm.json` bị bỏ, file vẫn phiên bản 3. Chim giấy mèo đuổi giữ nguyên. Xe chỉ mua, chưa bán gì.
+
+### Luật Mốc 5 (duyệt 09/11, thay luật "chỉ đổi khi đổi nền" và "tuyết, hoàng hôn, phấn hoa, đêm không có tác dụng" của 1.5.1)
+
+- Wallpaper là khí hậu chính. Cứ 10–20 phút có một đợt loại khác, ngẫu nhiên trong 5 loại còn lại, dài 3–5 phút rồi trở về khí hậu chính, chuyển bằng hiệu ứng mờ có sẵn. Đồng hồ chỉ chạy khi thời tiết đang hiện, không lưu qua lần tắt app. Đổi nền giữa đợt thì khí hậu cập nhật ngay, đợt đang diễn vẫn chạy hết.
+- Nắng: một giai đoạn còn 80% thời gian. Mưa: đủ 15 giây thì tưới mọi ô chờ nước. Hai loại này giữ như 1.5.1 Mốc 6.
+- Tuyết: Cá chép 50% thay vì 25%. Hoàng hôn: mỗi lần gặt 25% được thêm 1 nông sản vào kho, không thêm XP. Phấn hoa: XP khi gặt nhân 1,5, làm tròn lên. Đêm sao: phao cắn sau 2–5 giây, Cá vàng quý 10% thay vì 5%, vẫn cần cấp 6.
+- Chỉ có tác dụng khi thời tiết đang hiện quanh mèo và ruộng cùng màn hình với mèo; loại cá và thời gian chờ tính lúc vung cần. Không chạm vào mèo, không đánh thức, không phát tiếng.
+- Mỗi lần trời đổi có nhãn 3 giây trên ruộng nói tác dụng, lần đầu sau khi mở app thì không. Bảng "Kho & cửa hàng" có một dòng cho biết thời tiết đang có.
 
 ## Giai đoạn 1
 

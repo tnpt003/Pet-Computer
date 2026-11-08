@@ -27,6 +27,7 @@ public sealed class FarmChores
     public const double CookMinSeconds = 600, CookMaxSeconds = 900;
     // At the pond (docs/FARM-GAME.md): it casts, waits for a bite, reels in, and the fish is shown.
     public const double FishMinSeconds = 480, FishMaxSeconds = 720, FishAgainSeconds = 60;
+    public const double NightBiteMinSeconds = 2, NightBiteMaxSeconds = 5;
     public const double CastSeconds = 0.8, BiteMinSeconds = 4, BiteMaxSeconds = 10, ReelSeconds = 0.8, FishShowSeconds = 0.6;
     // Trips come often: the cat's own sounds are spaced out. A click by the user always sounds.
     public const double SoundGapSeconds = 60;
@@ -86,7 +87,9 @@ public sealed class FarmChores
     public void ScheduleFish(double seconds) => FishDue = Math.Max(0, seconds);
     public void ScheduleFishAgain(double seconds) => FishAgain = Math.Max(0, seconds);
     public static double NextFish(Random random) => FishMinSeconds + random.NextDouble() * (FishMaxSeconds - FishMinSeconds);
-    public static double NextBite(Random random) => BiteMinSeconds + random.NextDouble() * (BiteMaxSeconds - BiteMinSeconds);
+    public static double NextBite(Random random, bool night = false) => night
+        ? NightBiteMinSeconds + random.NextDouble() * (NightBiteMaxSeconds - NightBiteMinSeconds)
+        : BiteMinSeconds + random.NextDouble() * (BiteMaxSeconds - BiteMinSeconds);
     public void CountDownFish(double dt)
     {
         FishDue = Math.Max(0, FishDue - dt);

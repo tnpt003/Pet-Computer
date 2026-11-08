@@ -92,6 +92,24 @@ internal static class FarmTests
         chores.BeginFishing(50, -1, 5, FarmFish.Carp, byUser: true);
         check(chores.Kind == FarmChoreKind.Fishing && chores.ByUser && chores.Catch == FarmFish.Carp && chores.FishSide == -1 && chores.BiteAt == FarmChores.CastSeconds + 5, "Off to the pond");
         check(!chores.Step(FarmChores.WalkLimitSeconds + 1) && !chores.WalkedTooLong, "The pond may be further than a tile");
+
+        // What the weather on show gives (milestone 5).
+        int Rolled(PetFarm field, FarmFish kind, WeatherKind? sky) { int n = 0; var r = new Random(8); for (int i = 0; i < 4000; i++) if (field.RollFish(r, sky) == kind) n++; return n; }
+        var skyFarm = new PetFarm { Xp = 2000 };
+        int snowCarp = Rolled(skyFarm, FarmFish.Carp, WeatherKind.Snow), nightGold = Rolled(skyFarm, FarmFish.Goldfish, WeatherKind.Night);
+        check(snowCarp > 4000 * 0.46 && snowCarp < 4000 * 0.54, $"Snow: about half are carp ({snowCarp})");
+        check(nightGold > 4000 * 0.08 && nightGold < 4000 * 0.12, $"Night: about 10% golden ({nightGold})");
+        check(Rolled(new PetFarm(), FarmFish.Goldfish, WeatherKind.Night) == 0, "...still not before its level");
+        check(Rolled(skyFarm, FarmFish.Carp, WeatherKind.Sunny) == Rolled(skyFarm, FarmFish.Carp, null), "Other weather changes no catch");
+        var nightRandom = new Random(2);
+        bool nightBites = Enumerable.Range(0, 40).All(_ => FarmChores.NextBite(nightRandom, night: true) is >= 2 and <= 5);
+        check(nightBites, "Night: bites come in 2 to 5 seconds");
+        var gifted = new PetFarm();
+        gifted.Tiles[0] = new FarmTile { Stage = FarmStage.Ripe, Crop = FarmCrop.Carrot };
+        check(gifted.Harvest(0, extra: true) == FarmCrop.Carrot && gifted.StockOf(FarmCrop.Carrot) == 2 && gifted.HarvestedCount(FarmCrop.Carrot) == 1 && gifted.Xp == 5, "A sunset's extra goes to the store, with no extra XP");
+        var pollenFarm = new PetFarm();
+        pollenFarm.Tiles[0] = new FarmTile { Stage = FarmStage.Ripe, Crop = FarmCrop.Carrot };
+        check(pollenFarm.Harvest(0, pollen: true) == FarmCrop.Carrot && pollenFarm.Xp == 8 && pollenFarm.StockOf(FarmCrop.Carrot) == 1, "Pollen: half as much XP again, rounded up");
         chores.Arrive();
         check(!chores.Step(chores.BiteAt + FarmChores.ReelSeconds - 0.1), "Nothing is caught until it is reeled in");
         check(chores.Step(0.2) && !chores.Finished, "...then the fish lands once");

@@ -60,15 +60,20 @@ public sealed partial class PetWindow
         if (tiles.Count == 0 || step is not (FarmStep.Till or FarmStep.Water or FarmStep.Harvest)) return 0;
 
         FarmCrop? picked = null;
+        int extras = 0;
         foreach (int tile in tiles)
         {
             if (step == FarmStep.Till) farm.Till(tile);
             else if (step == FarmStep.Water) farm.Water(tile, now);
-            else picked = farm.Harvest(tile);
+            else
+            {
+                picked = FarmHarvest(tile, out bool extra);
+                if (extra) extras++;
+            }
             StartFarmEffect(tile, step == FarmStep.Till ? FarmEffect.Till : step == FarmStep.Water ? FarmEffect.Water : FarmEffect.Harvest);
         }
         PlayPetSound(step == FarmStep.Till ? "ball_tap" : step == FarmStep.Water ? "swoosh" : "sparkle");
-        if (picked is FarmCrop crop) ShowFarmBulkGain(tiles, crop);
+        if (picked is FarmCrop crop) ShowFarmBulkGain(tiles, crop, extras);
         FarmChanged();
         return tiles.Count;
     }
@@ -86,8 +91,9 @@ public sealed partial class PetWindow
     }
 
     // One label rises from the middle of what was picked; several crops have no one name.
-    private void ShowFarmBulkGain(IReadOnlyList<int> tiles, FarmCrop last)
+    private void ShowFarmBulkGain(IReadOnlyList<int> tiles, FarmCrop last, int extras)
     {
-        ShowFarmLabel(tiles[tiles.Count / 2], tiles.Count > 1 ? LF($"+{tiles.Count} nông sản", $"+{tiles.Count} crops") : "+1 " + FarmCropName(last), FarmGainSeconds);
+        int total = tiles.Count + extras;
+        ShowFarmLabel(tiles[tiles.Count / 2], tiles.Count > 1 ? LF($"+{total} nông sản", $"+{total} crops") : $"+{total} " + FarmCropName(last), FarmGainSeconds);
     }
 }

@@ -730,6 +730,52 @@ internal static class FarmChecks
         check(farm.Tiles[0].GrowsUntil == growing, "No sun for a field on another monitor");
         SetField(window, "farmWithCat", withCat);
 
+        // What the sky gives, and says, in the real window.
+        var tile = farm.Tiles[0];
+        void Ripe() => farm.Tiles[0] = new FarmTile { Stage = FarmStage.Ripe, Crop = FarmCrop.Carrot };
+        check(window.FarmWeather == WeatherKind.Sunny || window.FarmWeather == WeatherKind.Rain || window.FarmWeather != null, "(weather on show)");
+        SetField(window, "farmWithCat", false);
+        check(window.FarmWeather == null, "On another monitor the weather does not count");
+        SetField(window, "farmWithCat", true);
+        weather.HideNow();
+        check(window.FarmWeather == null, "Nor when it is hidden");
+        Show(WeatherKind.Pollen);
+        Ripe(); int xp = farm.Xp, stock = farm.StockOf(FarmCrop.Carrot);
+        window.FarmClick(0);
+        check(farm.Xp == xp + 8 && farm.StockOf(FarmCrop.Carrot) == stock + 1, "Pollen: more XP for a harvest");
+        Show(WeatherKind.Sunset);
+        stock = farm.StockOf(FarmCrop.Carrot);
+        int tries = 400;
+        for (int i = 0; i < tries; i++) { Ripe(); window.FarmClick(0); }
+        int gained = farm.StockOf(FarmCrop.Carrot) - stock - tries;
+        check(gained > tries * 0.17 && gained < tries * 0.33, $"Sunset: about a quarter of harvests give one more ({gained} of {tries})");
+        Show(WeatherKind.Snow);
+        var shop = (Func<Window?>)(() => Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.Title == "Pet farm shop" && w.IsLoaded));
+        window.OpenFarmShop();
+        var skyLine = Field<TextBlock?>(window, "farmShopWeather")!;
+        check(skyLine.Visibility == Visibility.Visible && skyLine.Text.Contains("carp"), $"The shop says what the sky gives ({skyLine.Text})");
+        Render(shop()!, "farm-shop-weather.png");
+        weather.HideNow();
+        Call(window, "WatchFarmShop");
+        check(skyLine.Visibility == Visibility.Collapsed, "No weather, no line");
+        window.CloseFarmShop();
+        SetField(window, "announcedWeather", (WeatherKind?)WeatherKind.Rain);
+        weather.SetKind(WeatherKind.Night);
+        weather.Step(PetWeather.FadeSeconds, true, random);
+        Call(window, "AnnounceWeather");
+        var label = Field<Border?>(window, "farmGain")!;
+        check(label.Opacity == 1 && ((TextBlock)label.Child).Text.Contains("golden"), $"A new sky says what it brings ({((TextBlock)label.Child).Text})");
+        label.UpdateLayout();
+        check(label.ActualWidth <= 201, $"A long sentence stays within its label ({label.ActualWidth:F0})");
+        SetField(window, "announcedWeather", (WeatherKind?)null);
+        weather.SetKind(WeatherKind.Rain); weather.HideNow();
+        weather.Step(PetWeather.FadeSeconds, true, random);
+        label.Opacity = 0;
+        Call(window, "AnnounceWeather");
+        check(label.Opacity == 0, "The first sky of a run says nothing");
+        SetField(window, "announcedWeather", (WeatherKind?)null);
+        farm.Tiles[0] = tile; farm.Stock.Clear(); farm.Xp = 0;
+
         weather.HideNow();
         weather.SetKind(WeatherKind.Sunny);
         SetField(window, "farmRainSeconds", 0.0);

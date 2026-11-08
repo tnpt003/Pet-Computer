@@ -1350,3 +1350,15 @@ Thay các mục Nông trại Mốc C (Đơn hàng), không cần test các mục
 - [ ] Pause: xe đứng yên, thời gian không chạy, nút mờ. Quiet hoặc vắng máy: xe không đến. App toàn màn hình hoặc vào trận: xe biến mất, không để lại cửa sổ
 - [ ] Biển gỗ đầu ruộng và mục "Đơn hàng" không còn. Bản `farm.json` cũ có đơn dở vẫn mở bình thường
 - [ ] Chơi một lúc xem xe đến có dễ bị lỡ không, và thu nhập so với Đơn hàng cũ có vừa không
+
+## Nông trại Mốc 5 — Thời tiết gắn nông trại (09/11)
+
+Có thể đặt biến môi trường `PET_WEATHER_PROBE=Snow` (hoặc Rain, Sunny, Sunset, Pollen, Night) rồi mở app để giữ một loại thời tiết mà thử tác dụng; khi đó không có đợt xen kẽ.
+
+- [ ] Giữ nguyên một nền khoảng 10–20 phút: có một đợt thời tiết khác dài 3–5 phút rồi trở về loại theo nền, chuyển mượt
+- [ ] Mỗi lần trời đổi có nhãn nhỏ trên ruộng khoảng 3 giây, câu dài vẫn đọc được, không có tiếng, mèo không bị ảnh hưởng
+- [ ] Đổi nền giữa một đợt: đợt vẫn chạy hết rồi về loại theo nền mới
+- [ ] Bảng "Kho & cửa hàng" có dòng thời tiết, đổi theo trời; khi không có thời tiết thì dòng biến mất
+- [ ] Tuyết: câu ra cá chép nhiều hơn. Đêm: phao cắn nhanh, sau cấp 6 cá vàng nhiều hơn. Hoàng hôn: thỉnh thoảng nhãn "+2", kho tăng 2. Phấn hoa: XP gặt tăng. Thử cả "Gặt tất cả" và mèo tự gặt
+- [ ] Ruộng khác màn hình với mèo, tắt "Thời tiết quanh mèo", Quiet, Pause, toàn màn hình: không có tác dụng và không có nhãn
+- [ ] Xem đo FPS khi các loại thời tiết xen kẽ có còn mượt không

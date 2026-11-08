@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 
 namespace DesktopPet;
 
@@ -6,17 +7,27 @@ namespace DesktopPet;
 public enum WeatherKind { Sunny, Rain, Snow, Sunset, Pollen, Night }
 
 // The weather around the cat (1.5.1 M2): which kind a wallpaper's colors mean, and how strong it is
-// right now. The kind changes only with the wallpaper; the strength wanders over time.
+// right now. The wallpaper sets the climate; every so often another kind passes through for a few
+// minutes (docs/FARM-GAME.md, milestone 5). The strength wanders over time.
 // The window reads the wallpaper and owns the art (PetWindow.Weather.cs).
 public sealed class PetWeather
 {
     public const double FadeSeconds = 1.2, SpellMinSeconds = 40, SpellMaxSeconds = 140, LightestRain = 0.1;
+    public const double InterludeEveryMinSeconds = 600, InterludeEveryMaxSeconds = 1200, InterludeMinSeconds = 180, InterludeMaxSeconds = 300;
     // Slow enough that a shower builds up and dies away instead of switching.
     private const double EaseRate = 0.35;
     // A color says more about a picture than the same area of white, gray or black.
     private const double ColorWeight = 1.25;
 
     public WeatherKind Kind { get; private set; }
+    // What the wallpaper says; the interlude, while one passes through.
+    public WeatherKind Climate { get; private set; }
+    public WeatherKind? Interlude { get; private set; }
+    // Seconds of shown weather until the next one, and left of the one passing.
+    public double InterludeDue { get; private set; } = InterludeEveryMinSeconds;
+    public double InterludeLeft { get; private set; }
+    // Off for measuring a forced weather (PET_WEATHER_PROBE).
+    public bool Interludes { get; init; } = true;
     // 0: a lull (rain has stopped for a while), 1: as heavy as it gets.
     public double Intensity { get; private set; } = 0.6;
     public double TargetIntensity { get; private set; } = 0.6;
@@ -38,6 +49,13 @@ public sealed class PetWeather
         if (kind == Kind) { next = null; return; }
         if (Visible) next = kind;
         else { Kind = kind; next = null; }
+    }
+
+    // What the wallpaper says now. An interlude runs its course and comes back to it.
+    public void SetClimate(WeatherKind kind)
+    {
+        Climate = kind;
+        if (Interlude == null) SetKind(kind);
     }
 
     public void HideNow()
@@ -62,6 +80,28 @@ public sealed class PetWeather
             TargetIntensity = NextIntensity(random);
         }
         Intensity += (TargetIntensity - Intensity) * (1 - Math.Exp(-dt * EaseRate));
+        if (show && Visible) StepInterlude(dt, random);
+    }
+
+    // Only while weather is on show: hidden weather has no time passing.
+    private void StepInterlude(double dt, Random random)
+    {
+        if (!Interludes) return;
+        if (Interlude != null)
+        {
+            InterludeLeft = Math.Max(0, InterludeLeft - dt);
+            if (InterludeLeft > 0) return;
+            Interlude = null;
+            InterludeDue = InterludeEveryMinSeconds + random.NextDouble() * (InterludeEveryMaxSeconds - InterludeEveryMinSeconds);
+            SetKind(Climate);
+            return;
+        }
+        InterludeDue = Math.Max(0, InterludeDue - dt);
+        if (InterludeDue > 0) return;
+        var others = Enum.GetValues<WeatherKind>().Where(kind => kind != Climate).ToArray();
+        Interlude = others[random.Next(others.Length)];
+        InterludeLeft = InterludeMinSeconds + random.NextDouble() * (InterludeMaxSeconds - InterludeMinSeconds);
+        SetKind(Interlude.Value);
     }
 
     // Heavy, moderate, light, or a lull with nothing falling at all.

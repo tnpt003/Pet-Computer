@@ -106,6 +106,8 @@ public sealed partial class PetFarm
 
     public const int GoldfishLevel = 6;
     public const double GoldfishChance = 0.05, CarpChance = 0.25;
+    // What the weather on show gives (docs/FARM-GAME.md, milestone 5).
+    public const double SnowCarpChance = 0.5, NightGoldfishChance = 0.1, SunsetExtraChance = 0.25, PollenXpFactor = 1.5;
     public static int SellPrice(FarmFish fish) => fish switch { FarmFish.Minnow => 5, FarmFish.Carp => 15, _ => 60 };
     public static int FishXp(FarmFish fish) => fish switch { FarmFish.Minnow => 3, FarmFish.Carp => 8, _ => 25 };
     public static int FishLevel(FarmFish fish) => fish == FarmFish.Goldfish ? GoldfishLevel : 1;
@@ -300,7 +302,8 @@ public sealed partial class PetFarm
     }
 
     // The crop picked, or null when the tile is not ripe. The tile goes back to wild ground.
-    public FarmCrop? Harvest(int index)
+    // Extra: one more for the store (a sunset's gift). Pollen: more XP for it.
+    public FarmCrop? Harvest(int index, bool extra = false, bool pollen = false)
     {
         if (!IsOpen(index) || Tiles[index].Stage != FarmStage.Ripe) return null;
         var crop = Tiles[index].Crop!.Value;
@@ -309,8 +312,8 @@ public sealed partial class PetFarm
         Tiles[index].GrowsUntil = null;
         Tiles[index].LastCrop = crop;
         Harvested[crop.ToString()] = Harvested.GetValueOrDefault(crop.ToString()) + 1;
-        Stock[crop.ToString()] = Stock.GetValueOrDefault(crop.ToString()) + 1;
-        GainXp(HarvestXp(crop));
+        Stock[crop.ToString()] = Stock.GetValueOrDefault(crop.ToString()) + (extra ? 2 : 1);
+        GainXp(pollen ? (int)Math.Ceiling(HarvestXp(crop) * PollenXpFactor) : HarvestXp(crop));
         return crop;
     }
 
@@ -337,11 +340,11 @@ public sealed partial class PetFarm
     }
 
     // What this cast brings up. Before the golden fish is opened, it would have been a carp.
-    public FarmFish RollFish(Random random)
+    public FarmFish RollFish(Random random, WeatherKind? weather = null)
     {
-        double roll = random.NextDouble();
-        if (roll < GoldfishChance) return Unlocked(FarmFish.Goldfish) ? FarmFish.Goldfish : FarmFish.Carp;
-        return roll < GoldfishChance + CarpChance ? FarmFish.Carp : FarmFish.Minnow;
+        double roll = random.NextDouble(), gold = weather == WeatherKind.Night ? NightGoldfishChance : GoldfishChance, carp = weather == WeatherKind.Snow ? SnowCarpChance : CarpChance;
+        if (roll < gold) return Unlocked(FarmFish.Goldfish) ? FarmFish.Goldfish : FarmFish.Carp;
+        return roll < gold + carp ? FarmFish.Carp : FarmFish.Minnow;
     }
 
     public void Catch(FarmFish fish)

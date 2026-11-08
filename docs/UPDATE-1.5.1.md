@@ -24,7 +24,7 @@ Mục tiêu: mèo ngoài trận đa dạng và thú vị hơn. Ba tính năng ch
 ### Weather (mốc 2)
 
 - "Background image" là wallpaper Windows của màn hình có mèo. Chỉ lấy màu chủ đạo từ ảnh thu nhỏ, không lưu ảnh, không gửi đi đâu; cần ghi ngoại lệ khi làm.
-- Loại thời tiết chỉ đổi khi đổi nền: xanh dương sáng = nắng/mây, xám = mưa, trắng/xanh lạnh = tuyết, cam/hồng = hoàng hôn/lá bay, xanh lá = phấn hoa/gió, tối = đêm sao/đom đóm. Không đọc được thì coi là trời quang.
+- Loại thời tiết chỉ đổi khi đổi nền (đã thay 09/11: wallpaper là khí hậu chính, có đợt xen kẽ, xem docs/FARM-GAME.md Mốc 5): xanh dương sáng = nắng/mây, xám = mưa, trắng/xanh lạnh = tuyết, cam/hồng = hoàng hôn/lá bay, xanh lá = phấn hoa/gió, tối = đêm sao/đom đóm. Không đọc được thì coi là trời quang.
 - Cường độ thay đổi theo thời gian (mưa to, nhỏ, tạnh một lúc) để không đơn điệu.
 - Chỉ hiện vùng quanh mèo, không phủ cả màn hình. Ẩn trong trận, Quiet, toàn màn hình; không đánh thức mèo; đứng yên khi Pause. Đo FPS trước khi mở rộng.
 - Người dùng duyệt thêm 08/11: công tắc "Thời tiết quanh mèo" trong Cài đặt → Thói quen (mặc định bật); ẩn cả khi Sảnh, bảng chuẩn bị hoặc bản đồ đang mở.
@@ -73,7 +73,7 @@ Mục tiêu: mèo ngoài trận đa dạng và thú vị hơn. Ba tính năng ch
 
 - Chỉ thời tiết đang thật sự hiện quanh mèo mới có tác dụng, và chỉ khi ruộng cùng màn hình với mèo (wallpaper đọc theo màn có mèo). Tắt thời tiết, Quiet, Pause, app toàn màn hình, trận thì không có. Tắt app thì cây lớn tốc độ thường, không tính mưa hay nắng.
 - **Mưa:** mưa đang rơi (cường độ từ 0,1, lúc tạnh không tính) đủ 15 giây liên tục thì mọi ô đã mở đang chờ nước được tưới, cả ruộng dù vùng mưa chỉ quanh mèo. Có hiệu ứng nước, không phát tiếng, không chạm vào mèo. Mưa tạnh thì đếm lại từ đầu. Mảnh đất đang nhấc thì chờ đáp rồi mới tưới. Mèo đang đi tưới ô đó thì bỏ chuyến.
-- **Nắng:** khi đang hiện trời nắng, mỗi giây nắng đưa mốc chín lại gần thêm 0,25 giây; nắng suốt thì một giai đoạn còn 80% thời gian. Không phụ thuộc cường độ. Wallpaper không đọc được bị coi là trời quang nên vẫn có nắng. Lưu `farm.json` khoảng 30 giây một lần và khi đóng app. Tuyết, hoàng hôn, phấn hoa, đêm không có tác dụng.
+- **Nắng:** khi đang hiện trời nắng, mỗi giây nắng đưa mốc chín lại gần thêm 0,25 giây; nắng suốt thì một giai đoạn còn 80% thời gian. Không phụ thuộc cường độ. Wallpaper không đọc được bị coi là trời quang nên vẫn có nắng. Lưu `farm.json` khoảng 30 giây một lần và khi đóng app. Tuyết, hoàng hôn, phấn hoa, đêm không có tác dụng (đã thay 09/11, xem docs/FARM-GAME.md Mốc 5).
 - **Nấu ăn:** chuột phải vào mảnh đất → "Nấu ăn", mở thay chỗ "Kho & cửa hàng". Nấu trừ nguyên liệu trong kho, không tốn xu, không giảm số đã thu hoạch, mèo ăn ngay, không có kho món. Công thức: Súp củ cải 2 Củ cải; Cà rốt hầm 2 Cà rốt; Cà chua nhồi 1 Cà chua + 1 Củ cải; Bánh bí ngô 1 Bí ngô + 1 Cà rốt.
 - Món nấu đi chung luồng "Cho ăn": chung hồi 20 giây, được làm trong Quiet; mèo ngủ, bận, đang ăn hoặc Pause thì nút mờ, không trừ đồ và không đánh thức mèo. Python giữ nguyên, mỗi món tính là một lần cho ăn. Khác với "Cho ăn" thường: món được vẽ riêng có hơi nóng và mèo Happy 6 giây thay vì 3 giây (qua hệ cảm xúc có sẵn, không đè giận). Nhấc mèo khi đang ăn thì bữa dừng như "Cho ăn" thường và món đã nấu mất.
 - Không cộng sức mạnh trong trận. `farm.json` giữ phiên bản 2. Các con số là ước tính, chưa qua chơi thử.

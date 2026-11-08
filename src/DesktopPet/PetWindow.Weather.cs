@@ -11,10 +11,11 @@ public sealed partial class PetWindow
 {
     private const double WallpaperCheckSeconds = 60, WallpaperChangedDelay = 1, WeatherFrameSeconds = 1.0 / 30;
 
-    private readonly PetWeather weather = new();
+    private WeatherKind? announcedWeather;
     // PET_WEATHER_PROBE=Rain: that weather whatever the wallpaper, and frame numbers in the log (for measuring).
     private static readonly WeatherKind? forcedWeather = Enum.TryParse<WeatherKind>(Environment.GetEnvironmentVariable("PET_WEATHER_PROBE"), true, out var kind) ? kind : null;
     // Replaceable for UI checks, so they never depend on this computer's wallpaper.
+    private readonly PetWeather weather = new() { Interludes = forcedWeather == null };
     private Func<WeatherKind>? wallpaperProbe = forcedWeather is WeatherKind forced ? () => forced : null;
     private Window? weatherWindow;
     private PetWeatherArt? weatherArt;
@@ -37,6 +38,7 @@ public sealed partial class PetWindow
         if (context.Fullscreen || BattleOwnsPet || (!allowed && dt <= 0)) weather.HideNow();
         weather.Step(dt, allowed && weatherKnown, featureRandom);
         if (!weather.Visible) { CloseWeather(); return; }
+        AnnounceWeather();
         if (weatherWindow != null && (bounds != weatherBounds || scale != weatherScale)) CloseWeather(); // Measured for another monitor.
         if (weatherWindow == null) ShowWeather();
         UpdateWeather(dt);
@@ -70,9 +72,28 @@ public sealed partial class PetWindow
     private void ApplyWallpaper(string? key, WeatherKind? kind)
     {
         wallpaperKey = key;
-        if (kind is WeatherKind known) weather.SetKind(known);
+        if (kind is WeatherKind known) weather.SetClimate(known);
         weatherKnown = true;
     }
+
+    // A new sky over the field says what it brings; the first one of a run does not.
+    private void AnnounceWeather()
+    {
+        if (announcedWeather == weather.Kind) return;
+        bool first = announcedWeather == null;
+        announcedWeather = weather.Kind;
+        if (!first && FarmVisible && farmWithCat) ShowFarmLabel(PetFarm.TileCount / 2, FarmWeatherText(weather.Kind), FarmLevelUpSeconds);
+    }
+
+    private string FarmWeatherText(WeatherKind kind) => kind switch
+    {
+        WeatherKind.Sunny => L("Trời nắng: cây lớn nhanh hơn", "Sunny: crops grow faster"),
+        WeatherKind.Rain => L("Trời mưa: ruộng tự được tưới", "Rain: the field waters itself"),
+        WeatherKind.Snow => L("Trời đổ tuyết: dễ câu cá chép", "Snow: carp bite more often"),
+        WeatherKind.Sunset => L("Hoàng hôn: gặt dễ được thêm nông sản", "Sunset: a harvest may give extra"),
+        WeatherKind.Pollen => L("Phấn hoa bay: gặt được thêm XP", "Pollen: harvests give more XP"),
+        _ => L("Đêm sao: cá cắn nhanh, dễ gặp cá vàng", "Starry night: fish bite fast, golden fish are likelier")
+    };
 
     private void ShowWeather()
     {

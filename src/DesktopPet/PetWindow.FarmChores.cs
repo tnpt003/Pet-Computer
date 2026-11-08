@@ -109,7 +109,7 @@ public sealed partial class PetWindow
         double half = settings.Width / 2, right = Math.Max(bounds.Left, bounds.Right - settings.Width);
         double spot = FarmPondMid + FarmFishGap - half;
         if (spot > right) spot = Math.Clamp(FarmPondMid - FarmFishGap - half, bounds.Left, right);
-        farmChores.BeginFishing(spot, spot + half < FarmPondMid ? -1 : 1, FarmChores.NextBite(featureRandom), farm!.RollFish(featureRandom), byUser);
+        farmChores.BeginFishing(spot, spot + half < FarmPondMid ? -1 : 1, FarmChores.NextBite(featureRandom, FarmWeather == WeatherKind.Night), farm!.RollFish(featureRandom, FarmWeather), byUser);
     }
 
     private double FarmSpotBeside(double mid)

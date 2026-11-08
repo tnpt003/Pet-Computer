@@ -22,6 +22,8 @@ public sealed partial class PetWindow
     private readonly List<(FarmCrop Crop, TextBlock Count, Border Button, TextBlock Price)> farmShopRows = new();
     private readonly List<(FarmFish Fish, TextBlock Count, Border Button, TextBlock Price)> farmShopFishRows = new();
     private bool farmShopPaused;
+    private TextBlock? farmShopWeather;
+    private WeatherKind? farmShopSky;
 
     public bool FarmShopOpen => farmShopWindow != null;
     // A battle panel sits in the same place: the shop gives way to it.
@@ -44,7 +46,7 @@ public sealed partial class PetWindow
     {
         if (farmShopWindow == null) return;
         if (!FarmShopAllowed) CloseFarmShop();
-        else if (farmShopPaused != paused) UpdateFarmShop();
+        else if (farmShopPaused != paused || farmShopSky != FarmWeather) UpdateFarmShop();
     }
 
     public void OpenFarmShop()
@@ -66,7 +68,11 @@ public sealed partial class PetWindow
         farmShopNextUnlock.Foreground = PetUi.Game.Soft;
         farmShopNextUnlock.Margin = new Thickness(0, 3, 0, 0);
 
-        var body = new StackPanel { Width = FarmShopWidth, Children = { PanelTitle(title), farmShopCoins, farmShopLevel, xpBar, farmShopNextUnlock } };
+        farmShopWeather = PanelLine(PetUi.SmallSize, maxWidth: FarmShopWidth);
+        farmShopWeather.Foreground = PetUi.Game.Gold;
+        farmShopWeather.Margin = new Thickness(0, 3, 0, 0);
+
+        var body = new StackPanel { Width = FarmShopWidth, Children = { PanelTitle(title), farmShopCoins, farmShopLevel, xpBar, farmShopNextUnlock, farmShopWeather } };
         farmShopRows.Clear();
         foreach (var crop in Enum.GetValues<FarmCrop>())
         {
@@ -153,6 +159,9 @@ public sealed partial class PetWindow
     {
         if (farmShopWindow == null || farm == null || farmShopCoins == null) return;
         farmShopPaused = paused;
+        farmShopSky = FarmWeather;
+        farmShopWeather!.Text = farmShopSky is WeatherKind sky ? FarmWeatherText(sky) : "";
+        farmShopWeather.Visibility = farmShopSky == null ? Visibility.Collapsed : Visibility.Visible;
         farmShopCoins.Text = LF($"Xu nông trại: {farm.Coins}", $"Farm coins: {farm.Coins}");
         farmShopLevel!.Text = farm.Level >= PetFarm.MaxLevel
             ? LF($"Cấp {farm.Level} · {farm.Xp} XP", $"Level {farm.Level} · {farm.Xp} XP")
@@ -196,7 +205,7 @@ public sealed partial class PetWindow
         farmShopWindow = null;
         farmShopCoins = farmShopTileName = farmShopTileNote = farmShopTilePrice = farmShopScareNote = farmShopScarePrice = farmShopSellAllText = null;
         farmShopTileButton = farmShopScareButton = farmShopSellAll = null;
-        farmShopLevel = farmShopNextUnlock = null;
+        farmShopLevel = farmShopNextUnlock = farmShopWeather = null;
         farmShopXpFill = null;
         farmShopRows.Clear();
         farmShopFishRows.Clear();

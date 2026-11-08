@@ -64,6 +64,8 @@ Chuyển nguyên văn từ AGENTS.md ngày 2026-10-26 để AGENTS.md ngắn l�
 
 - **Duyệt 2026-11-08 (bản 1.5.1):** app được đọc wallpaper Windows của màn hình có mèo chỉ để lấy màu chủ đạo (C#, PetWallpaper.cs): lấy đường dẫn ảnh hoặc màu nền đơn qua API Windows, giải mã ảnh thu nhỏ rộng 32 px trong RAM ở luồng riêng, bỏ ảnh ngay; chỉ giữ loại thời tiết và dấu nhận biết file (đường dẫn, thời điểm sửa, kích thước) trong RAM. Không lưu ảnh, không ghi màu hay đường dẫn ra đĩa, không gửi đi đâu, không chụp màn hình và không đọc nội dung cửa sổ. Không đọc được thì coi là trời quang. Chỉ đọc khi tính năng được phép hiện; có công tắc "Thời tiết quanh mèo" trong Cài đặt → Thói quen, mặc định bật. Thời tiết là cửa sổ phủ click xuyên qua quanh mèo, không chiếm focus, không chạm vào mèo: không đánh thức, không đổi hành vi hay cảm xúc. Ẩn trong Quiet (mờ dần), ẩn ngay khi có app toàn màn hình, trận hoặc bảng chiến đấu; Pause giữ đứng yên; mèo ngủ vẫn có thời tiết. Từ Mốc 6 (duyệt 08/11), loại thời tiết đang hiện còn tác động lên ruộng (mưa tưới, nắng cho cây lớn nhanh hơn), vẫn không chạm vào mèo. Chi tiết: docs/UPDATE-1.5.1.md.
 
+- **Duyệt 2026-11-09 (nông trại Mốc 5):** wallpaper là khí hậu chính; cứ 10–20 phút có một đợt loại thời tiết khác dài 3–5 phút rồi trở về, thay luật "chỉ đổi khi đổi nền". Mọi loại đều có tác dụng có lợi cho ruộng và hồ. Cách đọc wallpaper và các giới hạn về riêng tư, click xuyên qua, không chạm vào mèo không đổi. Chi tiết: docs/FARM-GAME.md.
+
 ## Hành vi mèo
 
 Chuyển nguyên văn từ AGENTS.md ngày 2026-11-05.

@@ -439,6 +439,7 @@ public sealed partial class PetWindow : Window
         TickBattleBag(dt);
         TickTrophies();
         TickKeepsake(dt); // The keepsake's physics and its meetings with the cat (PetWindow.Keepsake.cs).
+        TickFarm(paused ? 0 : dt); // The little field above the taskbar (PetWindow.Farm.cs).
         if (!paused)
         {
             TickFeatures(dt);

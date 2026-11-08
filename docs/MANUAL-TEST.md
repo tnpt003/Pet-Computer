@@ -1223,3 +1223,16 @@ Các mục 1.5 phía trên viết theo từng mốc; đây là thứ tự chơi 
 - [ ] Cài đặt → Thói quen → tắt "Thời tiết quanh mèo": mờ đi và không hiện lại, bật lại thì có. Tooltip đủ chữ ở vi/en/ja
 - [ ] Hai màn hình có hình nền khác nhau: kéo mèo sang màn kia thì thời tiết đổi theo. Thử DPI 100/125/150/200%, thanh taskbar ở cạnh khác
 - [ ] Hạt có bay ngang trước mèo: xem có khó chịu không. Xem máy có nóng hay giật hơn khi chạy lâu không
+
+## 1.5.1 Mốc 3 — Ruộng cơ bản (08/11)
+
+- [ ] Ruộng hiện sát trên taskbar. Bấm từng bước trên một ô: cày, chọn hạt trong bảng 4 cây, tưới (có giọt rơi), chờ, tưới lại khi hiện giọt nước, thu hoạch khi có sao vàng (hiện "+1 Tên cây"). Bấm ra ngoài bảng hạt thì bảng đóng, không gieo gì
+- [ ] Rê chuột trên từng ô: nhãn đúng bước, đúng vị trí trên ô (cả hai ô ở đầu mảnh đất), thanh tiến độ và thời gian còn lại chạy. Chữ đủ ở vi/en/ja
+- [ ] Vùng trong suốt quanh cây bấm xuyên xuống app bên dưới; bấm ruộng không làm mất focus cửa sổ đang gõ; ruộng không có nút taskbar hay trong Alt+Tab
+- [ ] Củ cải 5 phút tưới đúng lúc thì chín đúng giờ. Tắt app lúc cây đang lớn, mở lại sau đủ giờ: qua đúng một giai đoạn và chờ tưới, không héo. Cà rốt, Cà chua, Bí ngô có hình khác nhau ở từng giai đoạn
+- [ ] Chuột phải → "Di chuyển mảnh đất farm": cả mảnh bay lên, lơ lửng, bóng ở lại sàn. Giữ chuột kéo: chỉ đi ngang, dừng ở hai mép màn hình; kéo qua kéo lại mượt, không giật
+- [ ] Đang lơ lửng, chuột phải → "Thả xuống đây": rơi từ từ, nhẹ nhàng, đúng chỗ, có bụi. Thoát rồi mở lại app: ruộng ở đúng vị trí đó. Chọn "Hủy": lướt về chỗ cũ
+- [ ] Mèo ngủ: bấm ruộng không đánh thức. Mèo đi ngang: đi phía trước ruộng, không đứng lên ruộng. Kéo, ném mèo qua ruộng bình thường. Kỷ vật và cổng phép đặt cạnh ruộng không che sai lớp
+- [ ] Pause: bấm và chuột phải ruộng không có tác dụng, hết Pause dùng lại được. Bật app toàn màn hình hoặc vào trận: ruộng ẩn, xong thì hiện lại (đang nhấc thì về chỗ cũ). Sảnh chiến đấu mở thì ruộng vẫn ở dưới bảng
+- [ ] Cài đặt → Thói quen → tắt "Ruộng trên desktop": ẩn, bật lại cây còn nguyên. Tooltip đủ chữ ở vi/en/ja
+- [ ] Thử DPI 100/125/150/200%, taskbar ở cạnh khác, nhiều màn hình (ruộng đặt ở màn khác màn mèo, rút màn hình đó thì về màn chính). Xem ruộng có che thanh trạng thái app đang dùng gây khó chịu không

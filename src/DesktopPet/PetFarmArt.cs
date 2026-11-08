@@ -1,0 +1,351 @@
+using System;
+using System.Windows;
+using System.Windows.Media;
+
+namespace DesktopPet;
+
+// One tile as the art draws it (PetWindow.Farm.cs fills these from PetFarm).
+public readonly record struct FarmTileView(FarmStage Stage, FarmCrop? Crop, bool Wet, bool NeedsWater, double Progress);
+
+public enum FarmEffect { None, Till, Plant, Water, Harvest, Grow }
+
+// The little field on the desktop (1.5.1 M3), drawn by code: a bank of earth with a grass lip and
+// six beds, side on, standing on the floor. The window never moves up and down: the art lifts the
+// plot itself, so its shadow can stay on the floor. Redrawn only when something changes.
+// Only the plot and what grows on it take clicks; the rest of the window is click-through.
+public sealed class PetFarmArt : FrameworkElement
+{
+    public const double TileWidth = 54, Pad = 10, Side = 10, SoilHeight = 28, PlantRoom = 72, LiftRoom = 54, BottomRoom = 6;
+    public const double PlotWidth = TileWidth * PetFarm.TileCount + Pad * 2, ArtWidth = PlotWidth + Side * 2;
+    public const double ArtHeight = SoilHeight + PlantRoom + LiftRoom + BottomRoom, Floor = ArtHeight - BottomRoom, SoilTop = Floor - SoilHeight;
+    private const double GroundY = SoilTop + 8, BadgeGap = 13, CrumbCount = 7;
+
+    private static readonly Brush Hit = PetUi.Frozen(Color.FromArgb(1, 0, 0, 0));
+    private static readonly Brush Earth = PetUi.Hex("#A9744F"), EarthDeep = PetUi.Hex("#8A5B3D"), Moss = PetUi.Hex("#A5BE78");
+    private static readonly Brush Tilled = PetUi.Hex("#7C5136"), Wet = PetUi.Hex("#573825"), WetShine = PetUi.Frozen(Color.FromArgb(0x60, 0xBF, 0xE3, 0xFF));
+    private static readonly Brush Leaf = PetUi.Hex("#6FB36A"), LeafDeep = PetUi.Hex("#4E9256"), Stake = PetUi.Hex("#B4815E");
+    private static readonly Brush RadishRed = PetUi.Hex("#E2587A"), RadishTip = PetUi.Hex("#FFF3EC"), Orange = PetUi.Hex("#F0913A"), TomatoRed = PetUi.Hex("#E2503F");
+    private static readonly Brush Pumpkin = PetUi.Hex("#EE9A3C"), PumpkinRib = PetUi.Hex("#D97E2A"), Water = PetUi.Hex("#6FC0EE"), Seed = PetUi.Hex("#E9D2A6");
+    private static readonly Brush Shadow = PetUi.Frozen(Color.FromArgb(0x58, 0x2A, 0x1F, 0x16));
+    private static readonly Brush BarBack = PetUi.Frozen(Color.FromArgb(0xC0, 0x2A, 0x1F, 0x16));
+    private static readonly Brush Dust = PetUi.Frozen(Color.FromArgb(0xB0, 0xD9, 0xC2, 0xA2));
+
+    private static readonly Pen Ink = PetUi.FrozenPen(PetUi.ArtInk, 2.4);
+    private static readonly Pen InkThin = PetUi.FrozenPen(PetUi.ArtInk, 1.5);
+    private static readonly Pen Furrow = PetUi.FrozenPen(PetUi.Frozen(Color.FromArgb(0xA0, 0x3A, 0x2C, 0x1F)), 1.6);
+    private static readonly Pen Tuft = PetUi.FrozenPen(LeafDeepBrush(), 1.6);
+    private static readonly Pen StemPen = PetUi.FrozenPen(LeafDeepBrush(), 2.4);
+    private static readonly Pen StakePen = PetUi.FrozenPen(Stake, 3);
+    private static readonly Pen Hover = PetUi.FrozenPen(PetUi.Game.Gold, 2.2);
+    private static readonly Pen Rib = PetUi.FrozenPen(PumpkinRib, 1.6);
+
+    private static readonly Geometry Lip = Parse("M0,9 C0,3 5,0 11,0 L333,0 C339,0 344,3 344,9 C338,13 333,8 327,11 C321,14 315,9 309,12 C302,14 297,9 290,12 C283,14 278,9 271,12 C264,14 258,9 252,12 C245,14 239,9 232,12 C225,14 220,9 213,12 C206,14 200,9 193,12 C186,14 181,9 174,12 C167,14 161,9 154,12 C147,14 142,9 135,12 C128,14 122,9 115,12 C108,14 103,9 96,12 C89,14 83,9 76,12 C69,14 64,9 57,12 C50,14 45,9 38,12 C31,14 25,9 18,12 C12,14 6,9 0,9 Z");
+    private static readonly Geometry Underside = Parse("M0,0 L344,0 C330,14 300,10 286,20 C262,31 238,18 214,28 C190,38 166,22 142,30 C116,37 96,20 72,24 C46,27 16,16 0,0 Z");
+    private static readonly Geometry Mound = Parse("M-10,2 C-7,-5 7,-5 10,2 Z");
+    private static readonly Geometry SproutLeaves = Parse("M0,-11 C-3,-18 -10,-21 -15,-18 C-13,-12 -5,-9 0,-11 Z M0,-11 C3,-18 10,-21 15,-18 C13,-12 5,-9 0,-11 Z");
+    private static readonly Geometry Blades = Parse("M0,-2 C-9,-11 -15,-22 -13,-31 C-5,-26 -1,-14 0,-2 Z M0,-2 C9,-11 15,-22 13,-31 C5,-26 1,-14 0,-2 Z M0,-2 C-5,-15 -5,-29 0,-38 C5,-29 5,-15 0,-2 Z");
+    private static readonly Geometry TallLeaves = Parse("M0,-13 C-4,-20 -13,-23 -18,-19 C-15,-13 -7,-11 0,-13 Z M0,-13 C4,-20 13,-23 18,-19 C15,-13 7,-11 0,-13 Z M0,-28 C-3,-35 -10,-39 -15,-36 C-13,-29 -6,-26 0,-28 Z M0,-28 C3,-35 10,-39 15,-36 C13,-29 6,-26 0,-28 Z");
+    private static readonly Geometry Vine = Parse("M-4,-1 C-22,-3 -23,-23 -8,-26 C-3,-34 13,-33 14,-23 C24,-20 22,-4 7,-2 C3,-1 -1,-1 -4,-1 Z");
+    private static readonly Geometry VineVein = Parse("M-2,-3 C-1,-10 1,-17 3,-25 M0,-11 C-5,-13 -10,-16 -13,-19 M1,-13 C6,-14 11,-16 14,-18");
+    private static readonly Geometry RadishBulb = Parse("M-11,-14 C-13,-5 -7,1 0,5 C7,1 13,-5 11,-14 C6,-20 -6,-20 -11,-14 Z");
+    private static readonly Geometry RadishEnd = Parse("M-5,-1 C-3,1 -1,3 0,5 C1,3 3,1 5,-1 C2,1 -2,1 -5,-1 Z");
+    private static readonly Geometry CarrotRoot = Parse("M-11,-16 C-7,-20 7,-20 11,-16 C10,-7 4,1 0,6 C-4,1 -10,-7 -11,-16 Z");
+    private static readonly Geometry CarrotLines = Parse("M-7,-10 L-1,-9 M7,-6 L1,-5 M-4,-3 L0,-2");
+    private static readonly Geometry WaterDrop = Parse("M0,-8 C3,-4 5.5,-1.5 5.5,1.8 C5.5,5 3,7 0,7 C-3,7 -5.5,5 -5.5,1.8 C-5.5,-1.5 -3,-4 0,-8 Z");
+    private static readonly Geometry Star = Parse("M0,-7 L1.9,-1.9 L7,0 L1.9,1.9 L0,7 L-1.9,1.9 L-7,0 L-1.9,-1.9 Z");
+    private static readonly Geometry Calyx = Parse("M-4,-1 L0,-4 L4,-1 L1.5,-1 L0,1 L-1.5,-1 Z");
+
+    private static Brush LeafDeepBrush() => PetUi.Hex("#4E9256");
+    private static Geometry Parse(string text) { var geometry = Geometry.Parse(text); geometry.Freeze(); return geometry; }
+
+    public FarmTileView[] Tiles { get; } = new FarmTileView[PetFarm.TileCount];
+    public FarmEffect[] Effects { get; } = new FarmEffect[PetFarm.TileCount];
+    // 0 when the effect begins, 1 when it ends.
+    public double[] EffectAge { get; } = new double[PetFarm.TileCount];
+    public int HoverTile { get; set; } = -1;
+    public double Lift { get; set; }
+    public double Dustiness { get; set; }
+
+    public PetFarmArt() { Width = ArtWidth; Height = ArtHeight; }
+
+    public static double TileLeft(int index) => Side + Pad + index * TileWidth;
+    public static double TileCenter(int index) => TileLeft(index) + TileWidth / 2;
+    // The tile under x, or -1 on the plot's rim.
+    public static int TileAt(double x)
+    {
+        double from = x - (Side + Pad);
+        return from < 0 || from >= TileWidth * PetFarm.TileCount ? -1 : (int)(from / TileWidth);
+    }
+
+    public static double PlantHeight(FarmStage stage, FarmCrop? crop) => stage switch
+    {
+        FarmStage.Seed => 6,
+        FarmStage.Sprout => 20,
+        FarmStage.Young => crop == FarmCrop.Tomato ? 44 : crop == FarmCrop.Pumpkin ? 34 : 38,
+        FarmStage.Ripe => crop switch { FarmCrop.Tomato => 56, FarmCrop.Pumpkin => 38, FarmCrop.Radish => 54, _ => 56 },
+        _ => 0
+    };
+
+    private static double TopOf(in FarmTileView tile) => PlantHeight(tile.Stage, tile.Crop) + (tile.NeedsWater || tile.Stage == FarmStage.Ripe ? BadgeGap + 8 : 0);
+
+    // Distance from the top of the art down to the top of what stands on a tile (the label sits above it).
+    public double TopOfTile(int index) => GroundY - TopOf(Tiles[index]);
+
+    protected override void OnRender(DrawingContext dc)
+    {
+        double air = Math.Max(0, Lift);
+        if (air > 0.5)
+            dc.DrawEllipse(Shadow, null, new Point(ArtWidth / 2, Floor + 1), PlotWidth / 2 * (1 - air / 400), 5 + air / 12);
+
+        dc.PushTransform(new TranslateTransform(0, -air));
+        dc.DrawRectangle(Hit, null, new Rect(Side, SoilTop, PlotWidth, SoilHeight)); // The bank takes clicks.
+        for (int i = 0; i < Tiles.Length; i++)
+        {
+            double top = TopOf(Tiles[i]);
+            if (top > 0) dc.DrawRectangle(Hit, null, new Rect(TileLeft(i) + 3, GroundY - top, TileWidth - 6, top));
+        }
+        if (air > 0.5) DrawUnderside(dc, air);
+        DrawBank(dc);
+        for (int i = 0; i < Tiles.Length; i++) DrawBed(dc, i);
+        for (int i = 0; i < Tiles.Length; i++) DrawCrop(dc, i);
+        for (int i = 0; i < Tiles.Length; i++) DrawEffect(dc, i);
+        dc.Pop();
+        if (Dustiness > 0) DrawDust(dc);
+    }
+
+    private static void DrawUnderside(DrawingContext dc, double air)
+    {
+        double grown = Math.Clamp(air / FarmLift.FloatHeight, 0, 1);
+        dc.PushTransform(new TranslateTransform(Side, Floor - 1));
+        dc.PushTransform(new ScaleTransform(1, grown));
+        dc.DrawGeometry(EarthDeep, Ink, Underside);
+        dc.Pop();
+        dc.Pop();
+        for (int i = 0; i < CrumbCount; i++)
+        {
+            double k = (air * 0.09 + i * 0.37) % 1;
+            dc.PushOpacity(1 - k);
+            dc.DrawEllipse(EarthDeep, null, new Point(Side + 24 + i * 49, Floor + 14 * grown + k * 16), 1.8, 1.8);
+            dc.Pop();
+        }
+    }
+
+    private static void DrawBank(DrawingContext dc)
+    {
+        dc.DrawRoundedRectangle(Earth, Ink, new Rect(Side, SoilTop, PlotWidth, SoilHeight), 9, 9);
+        dc.PushTransform(new TranslateTransform(Side, SoilTop - 2));
+        dc.DrawGeometry(PetUi.Mint, InkThin, Lip);
+        dc.Pop();
+    }
+
+    private void DrawBed(DrawingContext dc, int index)
+    {
+        var tile = Tiles[index];
+        var bed = new Rect(TileLeft(index) + 4, SoilTop + 8, TileWidth - 8, SoilHeight - 13);
+        var fill = tile.Stage == FarmStage.Wild ? Moss : tile.Wet ? Wet : Tilled;
+        dc.DrawRoundedRectangle(fill, InkThin, bed, 6, 6);
+        if (tile.Stage == FarmStage.Wild)
+        {
+            for (int blade = 0; blade < 4; blade++)
+            {
+                double x = bed.Left + 8 + blade * 10, y = bed.Bottom - 3 - blade % 2 * 3;
+                dc.DrawLine(Tuft, new Point(x, y), new Point(x - 2, y - 5));
+                dc.DrawLine(Tuft, new Point(x, y), new Point(x + 2, y - 4));
+            }
+        }
+        else
+        {
+            for (int row = 1; row <= 2; row++)
+                dc.DrawLine(Furrow, new Point(bed.Left + 6, bed.Top + row * 5), new Point(bed.Right - 6, bed.Top + row * 5));
+            if (tile.Wet) dc.DrawEllipse(WetShine, null, new Point(bed.Left + 13, bed.Top + 4.5), 8, 2.2);
+        }
+        if (index == HoverTile) dc.DrawRoundedRectangle(null, Hover, bed, 6, 6);
+        if (index == HoverTile && tile.Stage is FarmStage.Seed or FarmStage.Sprout or FarmStage.Young)
+        {
+            var bar = new Rect(bed.Left + 5, bed.Bottom - 6, bed.Width - 10, 4);
+            dc.DrawRoundedRectangle(BarBack, null, bar, 2, 2);
+            dc.DrawRoundedRectangle(PetUi.Game.Gold, null, new Rect(bar.Left, bar.Top, Math.Max(2, bar.Width * Math.Clamp(tile.Progress, 0, 1)), bar.Height), 2, 2);
+        }
+    }
+
+    private void DrawCrop(DrawingContext dc, int index)
+    {
+        var tile = Tiles[index];
+        if (tile.Stage is FarmStage.Wild or FarmStage.Tilled) return;
+        double pop = 1;
+        if (Effects[index] is FarmEffect.Plant or FarmEffect.Grow) pop = 1 + 0.28 * Math.Sin(Math.Clamp(EffectAge[index], 0, 1) * Math.PI);
+        dc.PushTransform(new TranslateTransform(TileCenter(index), GroundY + 6));
+        if (pop != 1) dc.PushTransform(new ScaleTransform(pop, pop));
+        DrawPlant(dc, tile.Stage, tile.Crop ?? FarmCrop.Carrot);
+        if (pop != 1) dc.Pop();
+        dc.Pop();
+
+        if (tile.NeedsWater || tile.Stage == FarmStage.Ripe)
+        {
+            double y = GroundY - PlantHeight(tile.Stage, tile.Crop) - BadgeGap;
+            dc.PushTransform(new TranslateTransform(TileCenter(index), y));
+            dc.DrawGeometry(tile.NeedsWater ? Water : PetUi.Game.Gold, InkThin, tile.NeedsWater ? WaterDrop : Star);
+            dc.Pop();
+        }
+    }
+
+    // A plant with its roots at (0,0), growing up.
+    public static void DrawPlant(DrawingContext dc, FarmStage stage, FarmCrop crop)
+    {
+        switch (stage)
+        {
+            case FarmStage.Seed:
+                dc.DrawGeometry(Tilled, InkThin, Mound);
+                dc.DrawEllipse(Seed, InkThin, new Point(0, -4), 3.2, 2.4);
+                break;
+            case FarmStage.Sprout:
+                dc.DrawLine(StemPen, new Point(0, 0), new Point(0, -12));
+                dc.DrawGeometry(Leaf, InkThin, SproutLeaves);
+                break;
+            case FarmStage.Young:
+                DrawYoung(dc, crop);
+                break;
+            default:
+                DrawRipe(dc, crop);
+                break;
+        }
+    }
+
+    private static void DrawYoung(DrawingContext dc, FarmCrop crop)
+    {
+        switch (crop)
+        {
+            case FarmCrop.Tomato:
+                dc.DrawLine(StakePen, new Point(7, 0), new Point(7, -46));
+                dc.DrawLine(StemPen, new Point(0, 0), new Point(0, -30));
+                dc.DrawGeometry(Leaf, InkThin, TallLeaves);
+                break;
+            case FarmCrop.Pumpkin:
+                dc.DrawGeometry(Leaf, Ink, Vine);
+                dc.DrawGeometry(null, InkThin, VineVein);
+                break;
+            default:
+                dc.DrawGeometry(crop == FarmCrop.Radish ? Leaf : LeafDeep, InkThin, Blades);
+                break;
+        }
+    }
+
+    private static void DrawRipe(DrawingContext dc, FarmCrop crop)
+    {
+        switch (crop)
+        {
+            case FarmCrop.Radish:
+                dc.PushTransform(new TranslateTransform(0, -15));
+                dc.DrawGeometry(Leaf, InkThin, Blades);
+                dc.Pop();
+                dc.DrawGeometry(RadishRed, Ink, RadishBulb);
+                dc.DrawGeometry(RadishTip, null, RadishEnd);
+                break;
+            case FarmCrop.Carrot:
+                dc.PushTransform(new TranslateTransform(0, -17));
+                dc.DrawGeometry(LeafDeep, InkThin, Blades);
+                dc.Pop();
+                dc.DrawGeometry(Orange, Ink, CarrotRoot);
+                dc.DrawGeometry(null, InkThin, CarrotLines);
+                break;
+            case FarmCrop.Tomato:
+                dc.DrawLine(StakePen, new Point(0, 0), new Point(0, -58));
+                dc.PushTransform(new TranslateTransform(0, -14));
+                dc.DrawGeometry(Leaf, InkThin, TallLeaves);
+                dc.Pop();
+                Fruit(dc, -12, -24); Fruit(dc, 12, -19); Fruit(dc, 7, -40);
+                break;
+            default:
+                dc.DrawGeometry(StemBrown, InkThin, PumpkinStem);
+                dc.DrawEllipse(PumpkinRib, Ink, new Point(-11, -15), 11, 15);
+                dc.DrawEllipse(PumpkinRib, Ink, new Point(11, -15), 11, 15);
+                dc.DrawEllipse(Pumpkin, Ink, new Point(0, -15), 13, 16);
+                dc.DrawLine(Rib, new Point(-5, -28), new Point(-5, -3));
+                dc.DrawLine(Rib, new Point(5, -28), new Point(5, -3));
+                break;
+        }
+    }
+
+    private static readonly Brush StemBrown = PetUi.Hex("#7E9A4C");
+    private static readonly Geometry PumpkinStem = Parse("M-3,-29 C-3,-34 -1,-38 4,-39 L6,-35 C3,-34 3,-31 3,-29 Z");
+
+    private static void Fruit(DrawingContext dc, double x, double y)
+    {
+        dc.DrawEllipse(TomatoRed, Ink, new Point(x, y), 8, 7.5);
+        dc.PushTransform(new TranslateTransform(x, y - 6));
+        dc.DrawGeometry(LeafDeep, null, Calyx);
+        dc.Pop();
+    }
+
+    private void DrawEffect(DrawingContext dc, int index)
+    {
+        double k = Math.Clamp(EffectAge[index], 0, 1), center = TileCenter(index);
+        switch (Effects[index])
+        {
+            case FarmEffect.Till:
+                dc.PushOpacity(1 - k);
+                for (int i = 0; i < 6; i++)
+                {
+                    double spread = (i - 2.5) * 8 * (0.4 + k), rise = Math.Sin(k * Math.PI) * (10 + i % 3 * 6);
+                    dc.DrawEllipse(Tilled, null, new Point(center + spread, GroundY + 4 - rise), 2.6, 2.6);
+                }
+                dc.Pop();
+                break;
+            case FarmEffect.Water:
+                dc.PushOpacity(Math.Min(1, 2 - 2 * k));
+                for (int i = 0; i < 6; i++)
+                {
+                    double fall = (k * 1.5 + i * 0.13) % 1;
+                    dc.PushTransform(new TranslateTransform(center - 16 + i * 6.5, GroundY - 34 + fall * 36));
+                    dc.PushTransform(new ScaleTransform(0.55, 0.55));
+                    dc.DrawGeometry(Water, InkThin, WaterDrop);
+                    dc.Pop(); dc.Pop();
+                }
+                dc.Pop();
+                break;
+            case FarmEffect.Harvest:
+                dc.PushOpacity(1 - k);
+                for (int i = 0; i < 6; i++)
+                {
+                    double angle = i * Math.PI / 3 + 0.4, reach = 8 + k * 26;
+                    dc.PushTransform(new TranslateTransform(center + Math.Cos(angle) * reach, GroundY - 14 + Math.Sin(angle) * reach));
+                    dc.DrawGeometry(PetUi.Game.Gold, InkThin, Star);
+                    dc.Pop();
+                }
+                dc.Pop();
+                break;
+        }
+    }
+
+    private void DrawDust(DrawingContext dc)
+    {
+        double k = 1 - Math.Clamp(Dustiness, 0, 1);
+        dc.PushOpacity(1 - k);
+        for (int side = -1; side <= 1; side += 2)
+            for (int i = 0; i < 4; i++)
+                dc.DrawEllipse(Dust, null, new Point(ArtWidth / 2 + side * (PlotWidth / 2 + (i - 1) * 7 + k * 22), Floor - 3 - k * (4 + i * 3)), 4 + k * 5, 3 + k * 3);
+        dc.Pop();
+    }
+}
+
+// The ripe crop as a small picture (the seed menu).
+public sealed class FarmCropIcon : FrameworkElement
+{
+    private readonly FarmCrop crop;
+
+    public FarmCropIcon(FarmCrop crop, double size = 22)
+    {
+        this.crop = crop;
+        Width = Height = size;
+        IsHitTestVisible = false;
+    }
+
+    protected override void OnRender(DrawingContext dc)
+    {
+        double zoom = ActualHeight / 62;
+        dc.PushTransform(new TranslateTransform(ActualWidth / 2, ActualHeight - 6 * zoom));
+        dc.PushTransform(new ScaleTransform(zoom, zoom));
+        PetFarmArt.DrawPlant(dc, FarmStage.Ripe, crop);
+        dc.Pop(); dc.Pop();
+    }
+}

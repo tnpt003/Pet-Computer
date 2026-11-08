@@ -59,6 +59,8 @@ public sealed class PetPreferences
     public bool ClimbWindows { get; set; } = true;
     // On by default: weather around the cat, chosen from the wallpaper's colors.
     public bool Weather { get; set; } = true;
+    // On by default: the little field above the taskbar (its contents are in farm.json).
+    public bool Farm { get; set; } = true;
     // On by default: the Expedition's keepsakes stand in the display corner once one is earned.
     public bool ShowTrophies { get; set; } = true;
     // Where the user or the cat left the keepsake: its monitor and the art's left edge as a fraction of

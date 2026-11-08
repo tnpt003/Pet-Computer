@@ -8,7 +8,7 @@ Mục tiêu: mèo ngoài trận đa dạng và thú vị hơn. Ba tính năng ch
 |---|---|---|
 | 1. Portal | Cổng tự xuất hiện 20–40 phút/lần, mèo bất ngờ; menu "Niệm phép cổng"; bấm cổng mới vào Sảnh | Xong (07abbba), còn test tay |
 | 2. Weather | Thời tiết theo màu wallpaper Windows, hiện vùng quanh mèo | Xong (f7f406e), còn test tay |
-| 3. Ruộng cơ bản | Dải 6 ô, cày → gieo → tưới → lớn → thu hoạch, 4 cây, lưu file riêng, di chuyển mảnh đất | Chưa làm |
+| 3. Ruộng cơ bản | Dải 6 ô, cày → gieo → tưới → lớn → thu hoạch, 4 cây, lưu file riêng, di chuyển mảnh đất | Xong, còn test tay |
 | 4. Mèo làm cùng | Mèo tự tưới, gặt, đuổi chim; khóa khi ngủ/kéo/Quiet | Chưa làm |
 | 5. Kinh tế farm | Kho, bán lấy xu nông trại riêng, mua hạt, mở ô, bù nhìn | Chưa làm |
 | 6. Nối các phần | Nấu món cho mèo ăn, mưa tự tưới, nắng cho cây lớn nhanh hơn một chút | Chưa làm |
@@ -37,6 +37,17 @@ Mục tiêu: mèo ngoài trận đa dạng và thú vị hơn. Ba tính năng ch
 
 - Dải 6 ô sát mép trên taskbar. Cây không héo khi vắng mặt, chín rồi thì chờ mãi. Không cộng sức mạnh trong trận.
 - **Di chuyển mảnh đất (người dùng yêu cầu 08/11):** chuột phải vào mảnh đất → "Di chuyển mảnh đất farm" → có animation cả mảnh đất và 6 ô bay lơ lửng lên. Người dùng nhấn giữ để kéo mảnh đất sang trái/phải (chỉ theo chiều ngang). Đến nơi muốn đặt, chuột phải → chọn điểm rơi → mảnh đất rơi xuống từ từ, nhẹ nhàng và nằm đúng vị trí đã chỉ định. Lưu vị trí theo monitor-relative như vị trí mèo.
+
+#### Luật Mốc 3 (người dùng duyệt 08/11)
+
+- Bấm trái vào ô làm bước kế tiếp: cày → chọn hạt → tưới → chờ → thu hoạch. Thu hoạch xong ô về đất hoang. Rê chuột hiện nhãn, thanh tiến độ và thời gian còn lại.
+- Hạt → mầm → cây non → chín. Mỗi giai đoạn trước khi chín cần tưới một lần mới chạy; chưa tưới thì đứng chờ (có giọt nước trên ô), chín thì có sao vàng. Cây lớn theo đồng hồ thật, kể cả khi tắt app hoặc Pause, nhưng chỉ qua giai đoạn đã tưới. Đặt lùi đồng hồ không kéo dài quá một giai đoạn.
+- Tổng thời gian khi tưới đúng lúc: Củ cải 5 phút, Cà rốt 15 phút, Cà chua 40 phút, Bí ngô 2 giờ, chia đều 3 giai đoạn.
+- Trước Mốc 5: hạt miễn phí, cả 6 ô mở, thu hoạch chỉ cộng số đếm trong `farm.json` và hiện "+1 Cà rốt".
+- Lưu ở `farm.json` trong thư mục dữ liệu (có `.bak`): các ô, số đã thu hoạch, màn hình và vị trí theo tỉ lệ. Tệp của bản mới hơn thì không ghi đè.
+- Mặc định đặt ở 25% bề ngang màn có mèo; công tắc "Ruộng trên desktop" ở Cài đặt → Thói quen (mặc định bật), tắt thì ẩn, cây giữ nguyên.
+- Ẩn khi app toàn màn hình hoặc trong trận; mảnh đất đang nhấc thì về chỗ cũ. Pause không nhận bấm hay di chuyển. Khi nhấc, chuột phải có "Thả xuống đây" và "Hủy" (về chỗ cũ). Kéo không vượt sang màn hình khác; màn bị rút thì về màn chính.
+- Ruộng không chạm vào mèo: bấm khi mèo ngủ không đánh thức, không đổi sleep, drag, emotion. Mèo đi phía trước ruộng và không coi ruộng là bục đứng. Mèo tự làm vườn là Mốc 4.
 
 ---
 

@@ -18,7 +18,7 @@ Mục tiêu: mèo không còn chỉ đi qua đi lại mà có việc liên tục
 | 2. Bếp lửa | Nồi, que khuấy, lửa; mèo đổ nguyên liệu, khuấy, ăn | Xong (5bdea20), còn test tay |
 | 3. Hồ nước | Mèo câu cá, 3 loại cá, món cá | Xong (6a0c93e), còn test tay |
 | 4. Gian hàng lưu động | Tự xuất hiện như cổng, thay cho Đơn hàng | Xong (4b9178c), còn test tay |
-| 5. Thời tiết gắn nông trại | Mỗi loại có tác dụng, chỉ có lợi | Có code, còn test tay |
+| 5. Thời tiết gắn nông trại | Mỗi loại có tác dụng, chỉ có lợi | Xong (6e225b5), còn test tay |
 
 Người dùng đã chốt: thời tiết lấy wallpaper làm khí hậu chính và xen kẽ loại khác mỗi 10–20 phút (thay luật "chỉ đổi khi đổi nền", áp dụng ở Mốc 5); mèo tự cày và gieo lại; hồ và bếp gộp chung mảnh đất thành một khu, di chuyển cùng nhau. Luật từng mốc viết và duyệt trước khi code.
 

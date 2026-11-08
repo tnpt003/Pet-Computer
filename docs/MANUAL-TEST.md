@@ -1361,4 +1361,4 @@ Có thể đặt biến môi trường `PET_WEATHER_PROBE=Snow` (hoặc Rain, Su
 - [ ] Bảng "Kho & cửa hàng" có dòng thời tiết, đổi theo trời; khi không có thời tiết thì dòng biến mất
 - [ ] Tuyết: câu ra cá chép nhiều hơn. Đêm: phao cắn nhanh, sau cấp 6 cá vàng nhiều hơn. Hoàng hôn: thỉnh thoảng nhãn "+2", kho tăng 2. Phấn hoa: XP gặt tăng. Thử cả "Gặt tất cả" và mèo tự gặt
 - [ ] Ruộng khác màn hình với mèo, tắt "Thời tiết quanh mèo", Quiet, Pause, toàn màn hình: không có tác dụng và không có nhãn
-- [ ] Xem đo FPS khi các loại thời tiết xen kẽ có còn mượt không
+- [ ] Mèo và thời tiết vẫn mượt khi các loại khác mưa hiện lâu (FPS mới được đo với mưa)

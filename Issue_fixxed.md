@@ -5,6 +5,13 @@ Sổ ghi các lỗi đã sửa của Desktop Pet. Phần A: lỗi người dùng
 Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm lỗi mới: tạo mục số tiếp theo ở đầu phần A (hoặc một dòng ở phần B).
 
 # A. Lỗi người dùng phát hiện
+## #71 — Mảnh đất nhấc lên và đáp xuống quá êm, thiếu lực (08/11)
+- **Góp ý:** khi nâng phải rung lắc như có lực vô hình nhấc lên, đất vụn rớt và văng lên; khi rơi phải "đùng" và đất văng ra. Thay yêu cầu cũ "rơi từ từ, nhẹ nhàng".
+- **Nguyên nhân:** Mốc 3 làm đúng bản yêu cầu cũ: trượt êm lên 0,65 s, hạ 1,15 s, một làn bụi nhỏ.
+- **Sửa:** `FarmLift` có gồng tại chỗ 0,5 s rồi kéo lên 0,8 s có rung và nghiêng; lúc rơi khựng 0,15 s, rơi nhanh dần 0,4 s, chạm đất nén và nảy 2 nhịp 0,4 s. `PetFarmArt` vẽ đất vụn theo công thức (không lưu trạng thái giữa các khung), vùng vẽ rộng thêm 30 DIP mỗi bên, phần thêm bấm xuyên và vị trí đã lưu không đổi. "Hủy" trượt trên không tối đa 0,6 s rồi mới rơi. Tiếng đáp đổi `pop` thành `squish`.
+- **Kiểm chứng:** script đầy đủ một lần xem kết quả ở PROGRESS. Đã xem ảnh render lúc nhấc, đang rụng đất và lúc đáp trên nền sáng/tối. Check ảnh của ruộng từng dùng `VisualBrush` làm co giãn nội dung nên không thấy hình bị dịch; đã đổi sang vẽ trực tiếp.
+- **Cần xem tay:** cảm giác rung, lực "đùng", tiếng `squish` chưa được xem hay nghe khi chạy thật.
+
 ## #70 — Rà phân bố nội dung 1.5 trong Viễn chinh và Vô tận (07/11)
 - **Nguyên nhân:** Vô tận dùng một pool đội hình chung cho mọi chặng; Bãi rác bật đồng thời toàn bộ app độc mới và thiếu slime dỗi. Viên vàng lọc thẻ hiếm chưa theo kỹ năng; lượt mời thẻ ngoài trận thiếu ngữ cảnh app/đồ rơi. Tài liệu vòng boss và rulesVersion còn cũ.
 - **Sửa:** pool đội hình/app độc theo chặng Vô tận, đủ19slime/9đội hình; app độc Bãi rác mở CAPTCHA→Pin yếu→Đơ con trỏ theo vùng, thêm dỗi ở Ao băng. Giữ tổ hợp Vũng nhầy/Sảnh trống sau đo cân bằng, giữ luật/chỉ số boss và vòng Vua→ZIP→Mẹ→Biến dị. Thẻ ngoài trận dùng đúng bộ kỹ năng/app/đồ rơi; viên vàng dùng chung bộ lọc hiếm. Vô tận r26, tuyến1 r9 giữ6/7/8, Bãi rác r19 giữ1/2/3/4/17/18. Chi tiết docs/CONTENT-MODES-1.5-2026-11-07.md.

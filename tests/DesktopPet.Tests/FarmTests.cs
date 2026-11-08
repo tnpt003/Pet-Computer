@@ -117,11 +117,17 @@ internal static class FarmTests
         check(lift.Phase == FarmLiftPhase.Down, "What is on the ground cannot be dropped");
 
         lift.Begin();
-        double last = 0;
-        bool smooth = true;
-        for (double t = 0; t < FarmLift.RiseSeconds; t += 1.0 / 60) { lift.Step(1.0 / 60); smooth &= lift.Height >= last - 1e-9 || lift.Floating; smooth &= Math.Abs(lift.Height - last) < 5; last = lift.Height; }
+        check(lift.Shed == 0, "Crumbs begin to come off");
+        bool grounded = true, shook = false;
+        for (int i = 0; i < (int)(FarmLift.GatherSeconds * 60) - 1; i++) { lift.Step(1.0 / 60); grounded &= lift.Height == 0; shook |= Math.Abs(lift.ShakeX) > 1; }
+        check(grounded && shook, "It strains on the ground first, shaking");
+        double last = 0, rocked = 0;
+        bool noJump = true;
+        for (double t = FarmLift.GatherSeconds - 2.0 / 60; t < FarmLift.RiseSeconds; t += 1.0 / 60) { lift.Step(1.0 / 60); noJump &= Math.Abs(lift.Height - last) < 5; rocked = Math.Max(rocked, Math.Abs(lift.Tilt)); last = lift.Height; }
         lift.Step(1.0 / 60);
-        check(smooth && lift.Floating, "It rises smoothly and floats");
+        check(noJump && lift.Floating, "It is hauled up without a jump and floats");
+        check(rocked > 0.5, $"...rocking on the way ({rocked:F1} degrees)");
+        check(lift.ShakeX == 0 && lift.Tilt == 0, "In the air the shaking stops");
 
         double low = 999, high = 0;
         for (double t = 0; t < 4; t += 1.0 / 60) { lift.Step(1.0 / 60); low = Math.Min(low, lift.Height); high = Math.Max(high, lift.Height); }
@@ -138,15 +144,33 @@ internal static class FarmTests
             biggest = Math.Max(biggest, lastStep);
             previous = lift.Height;
         }
-        check(landed && lift.Height == 0 && Math.Abs(frames / 60 - FarmLift.FallSeconds) < 0.05, $"It settles in about {FarmLift.FallSeconds} s ({frames / 60:F2} s)");
-        check(biggest < 1.5 && lastStep < biggest / 3 || landed && biggest < 1.5, $"...slowly, with no sudden drop ({biggest:F2} DIPs a frame at most)");
-        check(lift.Dust == 1 && lift.Busy, "A puff of dust as it lands");
+        check(landed && lift.Height == 0 && Math.Abs(frames / 60 - FarmLift.FallSeconds) < 0.05, $"It comes down in about {FarmLift.FallSeconds} s ({frames / 60:F2} s)");
+        check(biggest > 3 && lastStep > biggest * 0.8, $"...faster and faster until it hits ({biggest:F2} DIPs a frame at most)");
+        check(lift.Dust == 1 && lift.Busy && lift.Squash > 0.9, "It lands with a blow: dirt flies and the plot squashes");
+
+        double bounced = 0, kicked = 0;
+        for (int i = 0; i < (int)(FarmLift.BounceSeconds * 60); i++) { lift.Step(1.0 / 60); bounced = Math.Max(bounced, lift.Height); kicked = Math.Max(kicked, Math.Abs(lift.ShakeX)); }
+        check(bounced > 2 && bounced < 7.01 && kicked > 1, $"...bounces a little and shakes ({bounced:F1} DIPs, {kicked:F1} sideways)");
         for (int i = 0; i < 40; i++) lift.Step(1.0 / 60);
-        check(!lift.Busy, "...and then all is still");
+        check(!lift.Busy && lift.Height == 0 && lift.ShakeX == 0 && lift.Squash == 0, "...and then all is still");
 
         lift.Begin(); lift.Step(0.1); lift.Drop();
         check(lift.Phase == FarmLiftPhase.Falling, "It can be put down while still rising");
         lift.Reset();
-        check(lift.Phase == FarmLiftPhase.Down && lift.Height == 0 && !lift.Busy, "A reset puts it on the ground at once");
+        check(lift.Phase == FarmLiftPhase.Down && lift.Height == 0 && !lift.Busy && lift.Shed < 0, "A reset puts it on the ground at once");
+
+        lift.Begin();
+        for (int i = 0; i < 100; i++) lift.Step(1.0 / 60);
+        lift.Drop(0.4);
+        double held = lift.Height;
+        for (int i = 0; i < 12; i++) lift.Step(1.0 / 60);
+        check(lift.FallAmount > 0.3 && lift.FallAmount < 0.9 && lift.Height == held, "Going back, it slides along in the air first");
+        bool down = false;
+        double seconds = 0.2;
+        while (!down && seconds < 3) { down = lift.Step(1.0 / 60); seconds += 1.0 / 60; }
+        check(down && Math.Abs(seconds - 0.4 - FarmLift.FallSeconds) < 0.05, $"...then falls ({seconds:F2} s in all)");
+        check(lift.Busy && lift.Shed >= 0, "Crumbs still in the air finish falling after it lands");
+        for (int i = 0; i < 180; i++) lift.Step(1.0 / 60);
+        check(!lift.Busy, "...and stop");
     }
 }

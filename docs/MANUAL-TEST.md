@@ -1230,8 +1230,8 @@ Các mục 1.5 phía trên viết theo từng mốc; đây là thứ tự chơi 
 - [ ] Rê chuột trên từng ô: nhãn đúng bước, đúng vị trí trên ô (cả hai ô ở đầu mảnh đất), thanh tiến độ và thời gian còn lại chạy. Chữ đủ ở vi/en/ja
 - [ ] Vùng trong suốt quanh cây bấm xuyên xuống app bên dưới; bấm ruộng không làm mất focus cửa sổ đang gõ; ruộng không có nút taskbar hay trong Alt+Tab
 - [ ] Củ cải 5 phút tưới đúng lúc thì chín đúng giờ. Tắt app lúc cây đang lớn, mở lại sau đủ giờ: qua đúng một giai đoạn và chờ tưới, không héo. Cà rốt, Cà chua, Bí ngô có hình khác nhau ở từng giai đoạn
-- [ ] Chuột phải → "Di chuyển mảnh đất farm": cả mảnh bay lên, lơ lửng, bóng ở lại sàn. Giữ chuột kéo: chỉ đi ngang, dừng ở hai mép màn hình; kéo qua kéo lại mượt, không giật
-- [ ] Đang lơ lửng, chuột phải → "Thả xuống đây": rơi từ từ, nhẹ nhàng, đúng chỗ, có bụi. Thoát rồi mở lại app: ruộng ở đúng vị trí đó. Chọn "Hủy": lướt về chỗ cũ
+- [ ] Chuột phải → "Di chuyển mảnh đất farm": mảnh đất rung tại chỗ khoảng 0,5 s rồi bị kéo lên, nghiêng lắc nhẹ, đất vụn văng lên từ mép và rụng từ mặt dưới, rồi lơ lửng, bóng ở lại sàn. Cửa sổ không giật, xem độ rung có đủ cảm giác lực vô hình không. Giữ chuột kéo: chỉ đi ngang, dừng ở hai mép màn hình; kéo qua kéo lại mượt, không giật
+- [ ] Đang lơ lửng, chuột phải → "Thả xuống đây": khựng lại, rơi nhanh dần, đáp "đùng" đúng chỗ (nén xuống, nảy 2 nhịp nhỏ, đất bắn hai đầu và phía trước, tiếng `squish` có đủ nặng không). Đất không bị cắt ở hai mép vùng vẽ. Thoát rồi mở lại app: ruộng ở đúng vị trí đó. Chọn "Hủy": trượt trên không về chỗ cũ rồi mới rơi
 - [ ] Mèo ngủ: bấm ruộng không đánh thức. Mèo đi ngang: đi phía trước ruộng, không đứng lên ruộng. Kéo, ném mèo qua ruộng bình thường. Kỷ vật và cổng phép đặt cạnh ruộng không che sai lớp
 - [ ] Pause: bấm và chuột phải ruộng không có tác dụng, hết Pause dùng lại được. Bật app toàn màn hình hoặc vào trận: ruộng ẩn, xong thì hiện lại (đang nhấc thì về chỗ cũ). Sảnh chiến đấu mở thì ruộng vẫn ở dưới bảng
 - [ ] Cài đặt → Thói quen → tắt "Ruộng trên desktop": ẩn, bật lại cây còn nguyên. Tooltip đủ chữ ở vi/en/ja

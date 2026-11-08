@@ -160,15 +160,17 @@ internal static class FarmChecks
             string savedBefore = File.ReadAllText(path);
             window.FarmMenuItems()[1].RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
             check(window.FarmLiftPhaseNow == FarmLiftPhase.Falling, "Cancel sets it down");
-            Tick(FarmLift.FallSeconds + 0.05);
+            Tick(FarmLift.MaxGlideSeconds + FarmLift.FallSeconds + 0.05);
             check(window.FarmLiftPhaseNow == FarmLiftPhase.Down && Math.Abs(window.FarmFraction - restFraction) < 1e-6, "...back where it was");
+            var farmArt = Field<PetFarmArt>(window, "farmArt");
+            check(farmArt.Dustiness > 0, "Dirt flies as it lands");
 
             window.BeginFarmMove();
             Tick(FarmLift.RiseSeconds + 0.05);
             SetField(window, "farmFraction", 0.6);
             window.FarmMenuItems()[0].RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
             Tick(FarmLift.FallSeconds / 2);
-            check(window.FarmLiftHeight > 1 && window.FarmLiftHeight < FarmLift.FloatHeight, $"It comes down slowly ({window.FarmLiftHeight:F1} DIPs up half way)");
+            check(window.FarmLiftHeight > 1 && window.FarmLiftHeight < FarmLift.FloatHeight, $"It is on its way down ({window.FarmLiftHeight:F1} DIPs up half way)");
             Tick(FarmLift.FallSeconds / 2 + 0.1);
             check(window.FarmLiftPhaseNow == FarmLiftPhase.Down && Math.Abs(window.FarmFraction - 0.6) < 1e-6, "It lands where it was held");
             var moved = PetFarm.Load(path);
@@ -183,6 +185,7 @@ internal static class FarmChecks
             Tick(0.02);
             check(!window.FarmVisible, "A fullscreen app hides it");
             check(window.FarmLiftPhaseNow == FarmLiftPhase.Down && Math.Abs(window.FarmFraction - 0.6) < 1e-6, "A plot in the air goes back to its place");
+            check(farmArt.Shed < 0 && farmArt.ShakeX == 0 && farmArt.Tilt == 0 && farmArt.Lift == 0 && farmArt.Squash == 0, "...and no shaking or crumbs stay on it");
             SetContext(window, false, 0); Call(window, "TickContext", 1.1);
             Tick(0.02);
             check(window.FarmVisible && Math.Abs(window.FarmFraction - 0.6) < 1e-6, "It comes back after the fullscreen app");
@@ -239,12 +242,10 @@ internal static class FarmChecks
             art.Arrange(new Rect(0, 0, width, height));
             var visual = new DrawingVisual();
             using (var dc = visual.RenderOpen())
-            {
                 dc.DrawRectangle(new SolidColorBrush(back), null, new Rect(0, 0, width, height));
-                dc.DrawRectangle(new VisualBrush(art), null, new Rect(0, 0, width, height));
-            }
             var bitmap = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);
             bitmap.Render(visual);
+            bitmap.Render(art); // Directly: a VisualBrush would stretch what is drawn to fill the frame.
             if (name != null && Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string review)
             {
                 Directory.CreateDirectory(review);
@@ -279,6 +280,10 @@ internal static class FarmChecks
             Render(Ripe, back, $"farm-ripe-{tone}");
             Render(art => { Steps(art); art.Lift = FarmLift.FloatHeight; }, back, $"farm-floating-{tone}");
             Render(art => { Steps(art); art.Dustiness = 0.6; }, back, $"farm-landing-{tone}");
+            Render(art => { Steps(art); art.Lift = FarmLift.RiseHeightAt(0.9); art.ShakeX = 2; art.Tilt = 1.2; art.Shed = 1.0; }, back, $"farm-rising-{tone}");
+            Render(art => { Steps(art); art.Lift = FarmLift.FloatHeight; art.Shed = 1.9; }, back, $"farm-shedding-{tone}");
+            Render(art => { Steps(art); art.Dustiness = 0.95; art.Squash = 0.9; art.ShakeX = 2.5; }, back, $"farm-impact-{tone}");
+            Render(art => { Steps(art); art.Dustiness = 0.65; }, back, $"farm-impact-late-{tone}");
         }
         foreach (var (effect, name) in new[] { (FarmEffect.Till, "till"), (FarmEffect.Water, "water"), (FarmEffect.Harvest, "harvest") })
             Render(art => { Steps(art); art.Effects[1] = effect; art.EffectAge[1] = 0.4; }, dark, $"farm-effect-{name}");
@@ -298,6 +303,9 @@ internal static class FarmChecks
         check(dry != Render(art => art.Tiles[0] = new(FarmStage.Seed, FarmCrop.Carrot, false, true, 0), dark, null), "A thirsty seed shows a drop");
         string still = Render(art => { }, dark, null);
         check(still != Render(art => art.Lift = FarmLift.FloatHeight, dark, null), "A floating plot is drawn in the air");
+        check(still != Render(art => art.Shed = 1.0, dark, null), "Crumbs are drawn as it tears loose");
+        check(still != Render(art => art.Dustiness = 0.65, dark, null), "Dirt is drawn as it lands");
+        check(still != Render(art => art.ShakeX = 3, dark, null), "The plot shakes");
         check(PetFarmArt.TileAt(PetFarmArt.TileLeft(0) + 1) == 0 && PetFarmArt.TileAt(PetFarmArt.TileLeft(5) + 53) == 5 && PetFarmArt.TileAt(1) == -1 && PetFarmArt.TileAt(PetFarmArt.ArtWidth - 1) == -1, "Clicks find their tiles; the rim is none");
     }
 }

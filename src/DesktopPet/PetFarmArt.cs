@@ -15,10 +15,11 @@ public enum FarmEffect { None, Till, Plant, Water, Harvest, Grow }
 // Only the plot and what grows on it take clicks; the rest of the window is click-through.
 public sealed class PetFarmArt : FrameworkElement
 {
-    public const double TileWidth = 54, Pad = 10, Side = 10, SoilHeight = 28, PlantRoom = 72, LiftRoom = 54, BottomRoom = 6;
+    public const double TileWidth = 54, Pad = 10, Side = 40, SoilHeight = 28, PlantRoom = 72, LiftRoom = 54, BottomRoom = 6;
     public const double PlotWidth = TileWidth * PetFarm.TileCount + Pad * 2, ArtWidth = PlotWidth + Side * 2;
     public const double ArtHeight = SoilHeight + PlantRoom + LiftRoom + BottomRoom, Floor = ArtHeight - BottomRoom, SoilTop = Floor - SoilHeight;
-    private const double GroundY = SoilTop + 8, BadgeGap = 13, CrumbCount = 7;
+    private const double GroundY = SoilTop + 8, BadgeGap = 13;
+    private const int BurstCrumbs = 16, ShedCrumbs = 24, LandingCrumbs = 36;
 
     private static readonly Brush Hit = PetUi.Frozen(Color.FromArgb(1, 0, 0, 0));
     private static readonly Brush Earth = PetUi.Hex("#A9744F"), EarthDeep = PetUi.Hex("#8A5B3D"), Moss = PetUi.Hex("#A5BE78");
@@ -65,6 +66,11 @@ public sealed class PetFarmArt : FrameworkElement
     public int HoverTile { get; set; } = -1;
     public double Lift { get; set; }
     public double Dustiness { get; set; }
+    public double ShakeX { get; set; }
+    public double Tilt { get; set; }
+    public double Squash { get; set; }
+    // Seconds since it began to rise, or -1: the crumbs it throws up and sheds.
+    public double Shed { get; set; } = -1;
 
     public PetFarmArt() { Width = ArtWidth; Height = ArtHeight; }
 
@@ -97,7 +103,11 @@ public sealed class PetFarmArt : FrameworkElement
         if (air > 0.5)
             dc.DrawEllipse(Shadow, null, new Point(ArtWidth / 2, Floor + 1), PlotWidth / 2 * (1 - air / 400), 5 + air / 12);
 
-        dc.PushTransform(new TranslateTransform(0, -air));
+        var plot = Matrix.Identity;
+        plot.ScaleAt(1 + 0.04 * Squash, 1 - 0.12 * Squash, ArtWidth / 2, Floor);
+        plot.RotateAt(Tilt, ArtWidth / 2, Floor);
+        plot.Translate(ShakeX, -air);
+        dc.PushTransform(new MatrixTransform(plot));
         dc.DrawRectangle(Hit, null, new Rect(Side, SoilTop, PlotWidth, SoilHeight)); // The bank takes clicks.
         for (int i = 0; i < Tiles.Length; i++)
         {
@@ -110,7 +120,8 @@ public sealed class PetFarmArt : FrameworkElement
         for (int i = 0; i < Tiles.Length; i++) DrawCrop(dc, i);
         for (int i = 0; i < Tiles.Length; i++) DrawEffect(dc, i);
         dc.Pop();
-        if (Dustiness > 0) DrawDust(dc);
+        if (Shed >= 0) DrawShedding(dc);
+        if (Dustiness > 0) { DrawDust(dc); DrawLandingDirt(dc); }
     }
 
     private static void DrawUnderside(DrawingContext dc, double air)
@@ -121,12 +132,54 @@ public sealed class PetFarmArt : FrameworkElement
         dc.DrawGeometry(EarthDeep, Ink, Underside);
         dc.Pop();
         dc.Pop();
-        for (int i = 0; i < CrumbCount; i++)
+    }
+
+    // The same every time for a given crumb and moment: nothing is kept between frames.
+    private static double Noise(int crumb, int salt)
+    {
+        double value = Math.Sin(crumb * 12.9898 + salt * 78.233) * 43758.5453;
+        return value - Math.Floor(value);
+    }
+
+    private static void DrawCrumb(DrawingContext dc, int crumb, double x, double y)
+    {
+        if (y >= Floor) return; // It has reached the floor.
+        double size = 1.6 + Noise(crumb, 9) * 2.2;
+        dc.DrawEllipse(crumb % 3 == 0 ? EarthDeep : crumb % 3 == 1 ? Earth : Tilled, null, new Point(x, y), size, size * 0.85);
+    }
+
+    private void DrawShedding(DrawingContext dc)
+    {
+        for (int i = 0; i < BurstCrumbs; i++) // Thrown up from the rim as it tears loose.
         {
-            double k = (air * 0.09 + i * 0.37) % 1;
-            dc.PushOpacity(1 - k);
-            dc.DrawEllipse(EarthDeep, null, new Point(Side + 24 + i * 49, Floor + 14 * grown + k * 16), 1.8, 1.8);
-            dc.Pop();
+            double born = 0.08 + Noise(i, 1) * 0.95, age = Shed - born;
+            if (age < 0) continue;
+            int side = i % 2 == 0 ? -1 : 1;
+            double x = ArtWidth / 2 + side * PlotWidth / 2 * (0.35 + 0.65 * Noise(i, 2)) + side * (12 + Noise(i, 3) * 40) * age;
+            double y = SoilTop - FarmLift.RiseHeightAt(born) - (70 + Noise(i, 4) * 100) * age + 215 * age * age;
+            DrawCrumb(dc, i, x, y);
+        }
+        for (int i = 0; i < ShedCrumbs; i++) // Dropping away from underneath.
+        {
+            double born = 0.55 + Noise(i, 5) * 1.55, age = Shed - born;
+            if (age < 0) continue;
+            double x = Side + 12 + Noise(i, 6) * (PlotWidth - 24) + (Noise(i, 7) - 0.5) * 14 * age;
+            double y = Floor - FarmLift.RiseHeightAt(born) + 6 + 8 * age + 160 * age * age;
+            DrawCrumb(dc, i, x, y);
+        }
+    }
+
+    // The blow of landing: dirt flung out at both ends and up along the front.
+    private void DrawLandingDirt(DrawingContext dc)
+    {
+        double age = (1 - Math.Clamp(Dustiness, 0, 1)) * FarmLift.DustSeconds;
+        for (int i = 0; i < LandingCrumbs; i++)
+        {
+            int group = i % 3;
+            double start = group switch { 0 => Side + Noise(i, 1) * 30, 1 => Side + PlotWidth - Noise(i, 1) * 30, _ => Side + Noise(i, 1) * PlotWidth };
+            double sideways = group switch { 0 => -(15 + Noise(i, 2) * 30), 1 => 15 + Noise(i, 2) * 30, _ => (Noise(i, 2) - 0.5) * 50 };
+            double up = group == 2 ? 60 + Noise(i, 3) * 130 : 90 + Noise(i, 3) * 170;
+            DrawCrumb(dc, i, start + sideways * age, Floor - 4 - up * age + 320 * age * age);
         }
     }
 
@@ -322,8 +375,8 @@ public sealed class PetFarmArt : FrameworkElement
         double k = 1 - Math.Clamp(Dustiness, 0, 1);
         dc.PushOpacity(1 - k);
         for (int side = -1; side <= 1; side += 2)
-            for (int i = 0; i < 4; i++)
-                dc.DrawEllipse(Dust, null, new Point(ArtWidth / 2 + side * (PlotWidth / 2 + (i - 1) * 7 + k * 22), Floor - 3 - k * (4 + i * 3)), 4 + k * 5, 3 + k * 3);
+            for (int i = 0; i < 5; i++)
+                dc.DrawEllipse(Dust, null, new Point(ArtWidth / 2 + side * (PlotWidth / 2 + (i - 2) * 8 + k * 16), Floor - 3 - k * (5 + i * 5)), 5 + k * 8, 4 + k * 5);
         dc.Pop();
     }
 }

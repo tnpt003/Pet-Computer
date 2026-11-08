@@ -104,11 +104,7 @@ public sealed partial class PetWindow
         bool redraw = lifted || farmLift.Busy || farmEffectsRunning;
         farmEffectsRunning = effects;
         if (redraw)
-        {
-            farmArt.Lift = farmLift.Height;
-            farmArt.Dustiness = farmLift.Dust;
-            farmArt.InvalidateVisual();
-        }
+            DrawFarmLift();
         if (farmGainLeft > 0 && farmGain != null)
         {
             farmGainLeft = Math.Max(0, farmGainLeft - dt);
@@ -116,6 +112,18 @@ public sealed partial class PetWindow
             farmGain.Opacity = k < 0.7 ? 1 : (1 - k) / 0.3;
             ((TranslateTransform)farmGain.RenderTransform).Y = -18 * k;
         }
+    }
+
+    private void DrawFarmLift()
+    {
+        if (farmArt == null) return;
+        farmArt.Lift = farmLift.Height;
+        farmArt.Dustiness = farmLift.Dust;
+        farmArt.ShakeX = farmLift.ShakeX;
+        farmArt.Tilt = farmLift.Tilt;
+        farmArt.Squash = farmLift.Squash;
+        farmArt.Shed = farmLift.Shed;
+        farmArt.InvalidateVisual();
     }
 
     private void CreateFarmWindow()
@@ -182,7 +190,7 @@ public sealed partial class PetWindow
         farmDragging = false;
         if (farmLift.Phase != FarmLiftPhase.Down) farmFraction = farmRestFraction;
         farmLift.Reset();
-        if (farmArt != null) { farmArt.Lift = 0; farmArt.Dustiness = 0; }
+        DrawFarmLift();
         UpdateFarmCursor();
         HoverFarm(-1);
         farmWindow?.Hide();
@@ -306,7 +314,9 @@ public sealed partial class PetWindow
     private void PlaceFarmLabel(Grid row, int index, double rise)
     {
         if (farmArt == null) return;
-        double left = Math.Clamp(PetFarmArt.TileCenter(index) - FarmChipWidth / 2, 0, PetFarmArt.ArtWidth - FarmChipWidth);
+        const double overhang = 10; // The window is wider than the plot for flying dirt: the label stays near the plot.
+        double inset = PetFarmArt.Side - overhang;
+        double left = Math.Clamp(PetFarmArt.TileCenter(index) - FarmChipWidth / 2, inset, PetFarmArt.ArtWidth - FarmChipWidth - inset);
         row.Margin = new Thickness(left, Math.Max(0, farmArt.TopOfTile(index) - rise), 0, 0);
     }
 
@@ -468,19 +478,23 @@ public sealed partial class PetWindow
         PlayPetSound("swoosh");
     }
 
-    public void DropFarm() => SetFarmDown(farmFraction);
+    public void DropFarm() => SetFarmDown(farmFraction, 0);
 
-    // Back to where it was before it rose, gliding as it comes down.
-    public void CancelFarmMove() => SetFarmDown(farmRestFraction);
+    // Back to where it was before it rose: it slides there in the air first, then falls.
+    public void CancelFarmMove()
+    {
+        double way = Math.Abs(farmFraction - farmRestFraction) * FarmFreeWidth;
+        SetFarmDown(farmRestFraction, FarmLift.MaxGlideSeconds * Math.Min(1, way / 240));
+    }
 
-    private void SetFarmDown(double target)
+    private void SetFarmDown(double target, double glide)
     {
         if (paused || !farmLift.Floating) return;
         farmArt?.ReleaseMouseCapture();
         farmDragging = false;
         farmFallFrom = farmFraction;
         farmFallTo = target;
-        farmLift.Drop();
+        farmLift.Drop(glide);
         UpdateFarmCursor();
     }
 
@@ -488,7 +502,7 @@ public sealed partial class PetWindow
     {
         farmFraction = farmRestFraction = farmFallTo;
         UpdateFarmCursor();
-        PlayPetSound("pop");
+        PlayPetSound("squish");
         if (farm == null) return;
         farm.Monitor = farmMonitor;
         farm.FractionX = farmFraction;

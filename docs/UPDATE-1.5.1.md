@@ -36,7 +36,7 @@ Mục tiêu: mèo ngoài trận đa dạng và thú vị hơn. Ba tính năng ch
 ### Farm (mốc 3–6)
 
 - Dải 6 ô sát mép trên taskbar. Cây không héo khi vắng mặt, chín rồi thì chờ mãi. Không cộng sức mạnh trong trận.
-- **Di chuyển mảnh đất (người dùng yêu cầu 08/11):** chuột phải vào mảnh đất → "Di chuyển mảnh đất farm" → có animation cả mảnh đất và 6 ô bay lơ lửng lên. Người dùng nhấn giữ để kéo mảnh đất sang trái/phải (chỉ theo chiều ngang). Đến nơi muốn đặt, chuột phải → chọn điểm rơi → mảnh đất rơi xuống từ từ, nhẹ nhàng và nằm đúng vị trí đã chỉ định. Lưu vị trí theo monitor-relative như vị trí mèo.
+- **Di chuyển mảnh đất (người dùng yêu cầu 08/11):** chuột phải vào mảnh đất → "Di chuyển mảnh đất farm" → mảnh đất rung lên như bị lực vô hình nhấc, đất vụn văng và rụng, rồi cả mảnh và 6 ô bay lơ lửng. Người dùng nhấn giữ để kéo mảnh đất sang trái/phải (chỉ theo chiều ngang). Đến nơi muốn đặt, chuột phải → chọn điểm rơi → mảnh đất khựng lại rồi rơi nhanh, đáp "đùng" có đất bắn ra (đổi theo góp ý 08/11, thay cho "rơi từ từ") và nằm đúng vị trí đã chỉ định. Lưu vị trí theo monitor-relative như vị trí mèo.
 
 #### Luật Mốc 3 (người dùng duyệt 08/11)
 
@@ -46,7 +46,7 @@ Mục tiêu: mèo ngoài trận đa dạng và thú vị hơn. Ba tính năng ch
 - Trước Mốc 5: hạt miễn phí, cả 6 ô mở, thu hoạch chỉ cộng số đếm trong `farm.json` và hiện "+1 Cà rốt".
 - Lưu ở `farm.json` trong thư mục dữ liệu (có `.bak`): các ô, số đã thu hoạch, màn hình và vị trí theo tỉ lệ. Tệp của bản mới hơn thì không ghi đè.
 - Mặc định đặt ở 25% bề ngang màn có mèo; công tắc "Ruộng trên desktop" ở Cài đặt → Thói quen (mặc định bật), tắt thì ẩn, cây giữ nguyên.
-- Ẩn khi app toàn màn hình hoặc trong trận; mảnh đất đang nhấc thì về chỗ cũ. Pause không nhận bấm hay di chuyển. Khi nhấc, chuột phải có "Thả xuống đây" và "Hủy" (về chỗ cũ). Kéo không vượt sang màn hình khác; màn bị rút thì về màn chính.
+- Ẩn khi app toàn màn hình hoặc trong trận; mảnh đất đang nhấc thì về chỗ cũ. Pause không nhận bấm hay di chuyển. Khi nhấc, chuột phải có "Thả xuống đây" và "Hủy" (trượt trên không về chỗ cũ tối đa 0,6 s rồi mới rơi). Kéo không vượt sang màn hình khác; màn bị rút thì về màn chính.
 - Ruộng không chạm vào mèo: bấm khi mèo ngủ không đánh thức, không đổi sleep, drag, emotion. Mèo đi phía trước ruộng và không coi ruộng là bục đứng. Mèo tự làm vườn là Mốc 4.
 
 ---

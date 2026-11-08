@@ -184,41 +184,91 @@ public sealed class PetFarm
 
 public enum FarmLiftPhase { Down, Rising, Floating, Falling }
 
-// How high the plot is while the user moves it: it rises, bobs in the air, and settles back slowly.
+// How the plot moves while the user carries it: it strains on the ground, shaking, is hauled up as
+// if by an invisible force, bobs in the air, and on the way back hangs for a moment and slams down.
 public sealed class FarmLift
 {
-    public const double FloatHeight = 44, BobHeight = 3, RiseSeconds = 0.65, FallSeconds = 1.15, DustSeconds = 0.45;
-    private const double BobSpeed = 2.3;
+    public const double FloatHeight = 44, BobHeight = 3;
+    public const double GatherSeconds = 0.5, PullSeconds = 0.8, RiseSeconds = GatherSeconds + PullSeconds;
+    public const double HangSeconds = 0.15, DropSeconds = 0.4, FallSeconds = HangSeconds + DropSeconds, MaxGlideSeconds = 0.6;
+    public const double BounceSeconds = 0.4, DustSeconds = 0.8, ShedSeconds = 3;
+    private const double BobSpeed = 2.3, HangRise = 3, BounceHeight = 7;
 
     public FarmLiftPhase Phase { get; private set; }
-    // 1 on the landing frame, down to 0 (the puff of dust).
+    // 1 on the landing frame, down to 0 (dirt thrown out, dust, the two small bounces).
     public double Dust { get; private set; }
-    private double time, fallFrom;
+    // Seconds since the plot began to rise (its crumbs are still falling), or -1.
+    public double Shed { get; private set; } = -1;
+    private double time, fallFrom, glide;
 
-    public bool Busy => Phase != FarmLiftPhase.Down || Dust > 0;
+    public bool Busy => Phase != FarmLiftPhase.Down || Dust > 0 || Shed >= 0;
     public bool Floating => Phase == FarmLiftPhase.Floating;
-    // How far through the fall, 0 to 1 (the plot glides to where it lands).
-    public double FallAmount => Phase == FarmLiftPhase.Falling ? Smooth(Math.Clamp(time / FallSeconds, 0, 1)) : 0;
+    // How far it has slid towards where it lands, 0 to 1. Dropped on the spot, it is there already.
+    public double FallAmount => Phase != FarmLiftPhase.Falling ? 0 : glide > 0 ? Smooth(Math.Clamp(time / glide, 0, 1)) : 1;
+
+    private double SinceLanding => (1 - Dust) * DustSeconds;
+    private double Bounce => Math.Clamp(SinceLanding / BounceSeconds, 0, 1);
+    private bool Bouncing => Phase == FarmLiftPhase.Down && Dust > 0 && Bounce < 1;
+    private double AfterGlide => time - glide;
+    private double Pull => Math.Clamp((time - GatherSeconds) / PullSeconds, 0, 1);
 
     public double Height => Phase switch
     {
-        FarmLiftPhase.Rising => FloatHeight * Smooth(Math.Clamp(time / RiseSeconds, 0, 1)),
+        FarmLiftPhase.Rising => RiseHeightAt(time),
         FarmLiftPhase.Floating => FloatHeight + Math.Sin(time * BobSpeed) * BobHeight,
-        FarmLiftPhase.Falling => fallFrom * (1 - FallAmount),
-        _ => 0
+        FarmLiftPhase.Falling when AfterGlide < 0 => fallFrom,
+        FarmLiftPhase.Falling when AfterGlide < HangSeconds => fallFrom + Math.Sin(AfterGlide / HangSeconds * Math.PI) * HangRise,
+        FarmLiftPhase.Falling => fallFrom * (1 - Math.Pow(Math.Clamp((AfterGlide - HangSeconds) / DropSeconds, 0, 1), 2)),
+        _ => Bouncing ? BounceHeight * Math.Abs(Math.Sin(Bounce * Math.PI * 2)) * (1 - Bounce) : 0
     };
+
+    // Sideways, in DIPs: the strain of rising, the moment before it falls, the blow of landing.
+    public double ShakeX
+    {
+        get
+        {
+            double clock = Phase == FarmLiftPhase.Down ? SinceLanding : time;
+            return Tremble * (Math.Sin(clock * 74) + 0.5 * Math.Sin(clock * 117)) / 1.5;
+        }
+    }
+
+    private double Tremble => Phase switch
+    {
+        FarmLiftPhase.Rising => time < GatherSeconds ? 0.6 + 2.8 * time / GatherSeconds : 0.3 + 3.1 * (1 - Pull),
+        FarmLiftPhase.Falling => AfterGlide >= 0 && AfterGlide < HangSeconds ? 1.2 : 0,
+        _ => Bouncing ? 4 * (1 - Bounce) * (1 - Bounce) : 0
+    };
+
+    // Degrees: it rocks on its way up.
+    public double Tilt => Phase != FarmLiftPhase.Rising ? 0
+        : time < GatherSeconds ? Math.Sin(time * 41) * 0.35 * time / GatherSeconds
+        : Math.Sin(time * 6.5) * 1.5 * (1 - Pull);
+
+    // 1 as it hits the ground, again (less) at the second touch, 0 otherwise.
+    public double Squash => Bouncing ? Math.Pow(Math.Abs(Math.Cos(Bounce * Math.PI * 2)), 3) * (1 - Bounce) * (1 - Bounce) : 0;
+
+    // How high the plot was this long after it began to rise: where a crumb that left it then began.
+    public static double RiseHeightAt(double seconds)
+    {
+        if (seconds <= GatherSeconds) return 0;
+        double pull = Math.Min(1, (seconds - GatherSeconds) / PullSeconds);
+        return FloatHeight * (Smooth(pull) + 0.05 * Math.Sin(pull * Math.PI * 6) * (1 - pull));
+    }
 
     public void Begin()
     {
         if (Phase != FarmLiftPhase.Down) return;
         Phase = FarmLiftPhase.Rising;
         time = Dust = 0;
+        Shed = 0;
     }
 
-    public void Drop()
+    // Glide: seconds it spends sliding along in the air before it falls (going back to its old place).
+    public void Drop(double glideSeconds = 0)
     {
         if (Phase is not (FarmLiftPhase.Rising or FarmLiftPhase.Floating)) return;
         fallFrom = Height;
+        glide = Math.Max(0, glideSeconds);
         Phase = FarmLiftPhase.Falling;
         time = 0;
     }
@@ -227,12 +277,14 @@ public sealed class FarmLift
     {
         Phase = FarmLiftPhase.Down;
         time = Dust = 0;
+        Shed = -1;
     }
 
     // True on the frame the plot touches the ground.
     public bool Step(double dt)
     {
         Dust = Math.Max(0, Dust - dt / DustSeconds);
+        if (Shed >= 0) { Shed += dt; if (Shed > ShedSeconds) Shed = -1; }
         if (Phase == FarmLiftPhase.Down) return false;
         time += dt;
         if (Phase == FarmLiftPhase.Rising && time >= RiseSeconds)
@@ -240,7 +292,7 @@ public sealed class FarmLift
             Phase = FarmLiftPhase.Floating;
             time = 0;
         }
-        else if (Phase == FarmLiftPhase.Falling && time >= FallSeconds)
+        else if (Phase == FarmLiftPhase.Falling && AfterGlide >= FallSeconds)
         {
             Phase = FarmLiftPhase.Down;
             time = 0;

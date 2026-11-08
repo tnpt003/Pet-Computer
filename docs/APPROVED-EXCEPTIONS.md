@@ -56,6 +56,10 @@ Chuyển nguyên văn từ AGENTS.md ngày 2026-10-26 để AGENTS.md ngắn l�
 
 - Ngoại lệ đã duyệt (2026-10-24): "Hướng dẫn phiêu lưu" (các màn chương 1 của Phiêu lưu, và từ 1.5 cả chương 2 — duyệt 2026-10-26, luật giữ nguyên; không trận tự do, Viễn chinh, Vô tận; C# PetWindow.BattleGuide.cs, Python không tham gia): đúng lúc tình huống xảy ra, trận ĐỨNG HÌNH (thời gian, slime, đồng hồ, hồi chiêu dừng; mèo không đi) nhưng KHÔNG phải Pause: trong lúc đứng hình vẫn nhấc/kéo được mèo, bấm kỹ năng, icon và app độc để làm theo hướng dẫn (bất biến "trận đang dừng không nhấc được mèo" chỉ áp dụng cho Pause/menu/chọn thẻ/túi đồ). Màn hình tối xung quanh (cửa sổ xuyên chuột), chỗ cần làm sáng lên, một dòng chữ không lấy focus có "Hiểu rồi" (bước xem) và "Bỏ qua hướng dẫn". Pause/menu/fullscreen ẩn hướng dẫn như phần còn lại của trận. Tự bật tới khi thắng màn; thắng rồi thì bật lại bằng ô "Hướng dẫn trong trận" ở bảng chuẩn bị. Hướng dẫn chữ 5 thẻ và dấu tay cũ đã bỏ; tip màn chỉ mở từ bảng chuẩn bị. Đẩy hồi 5 s.
 
+## Cổng phép (Portal)
+
+- **Duyệt 2026-11-08 (bản 1.5.1):** lối vào Battle Mode từ ngoài trận là cổng phép (C#, PetWindow.Portal.cs). Cổng tự xuất hiện mỗi 20–40 phút trên sàn cạnh mèo, mèo Surprised qua `Startle` (không có trong điều khiển cảm xúc tay, không khi ngủ); đây là hành vi tự động nên bị chặn khi mèo bận (ngủ, thức dậy, bị kéo, bay, phản ứng), Pause, Quiet, app toàn màn hình, người dùng vắng, có trận hoặc bảng chiến đấu, hoặc tính năng khác đang giữ mèo. Cổng KHÔNG tự bắt đầu trận và không tự mở Sảnh: chỉ click của người dùng mới mở; bỏ qua thì 30 giây sau tự đóng, không phạt. Luật "Battle Mode mặc định tắt, không tự bật lại" giữ nguyên. Mục menu chuột phải ngoài trận đổi thành "Niệm phép cổng": mèo ngồi niệm 1,6 giây rồi cổng hiện, chờ 45 giây; do người dùng bật nên chạy trong Quiet như bóng/laser, app toàn màn hình vẫn chặn; click/kéo/ném hủy phép; cảm xúc thật làm phép chờ. Cổng đóng khi mèo ngủ (không đánh thức), khi mở bảng/trận, và tức thì khi có app toàn màn hình hoặc vùng làm việc đổi; Pause đóng băng cổng. Chi tiết: docs/UPDATE-1.5.1.md.
+
 ## Hành vi mèo
 
 Chuyển nguyên văn từ AGENTS.md ngày 2026-11-05.

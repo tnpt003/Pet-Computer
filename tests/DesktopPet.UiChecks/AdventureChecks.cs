@@ -74,16 +74,25 @@ internal static class AdventureChecks
         int freeRecords = FreeRecords();
         try
         {
-            // The menu: Battle Mode is one item (no submenu, no free battle) that opens the hub.
+            // The menu: one item (no submenu, no free battle), the cat's spell; its portal opens the hub.
             window.ContextMenu!.IsOpen = true;
             await Task.Delay(30);
-            var root = window.ContextMenu.Items.OfType<MenuItem>().First(i => i.Header as string == "Battle Mode");
+            var root = window.ContextMenu.Items.OfType<MenuItem>().First(i => i.Header as string == "Cast portal spell");
             int items = root.Items.Count;
             bool enabled = root.IsEnabled;
             window.ContextMenu.IsOpen = false;
             await Task.Delay(30);
-            check(items == 0 && enabled, $"Battle Mode is one item without a submenu ({items} items)");
+            check(items == 0 && enabled, $"The portal spell is one item without a submenu ({items} items)");
             root.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent, root));
+            await Task.Delay(30);
+            check(window.PortalCasting && !window.PortalOpen && !window.BattleHubOpen, "The item starts the spell; nothing opens yet");
+            for (double t = 0; t < PetModel.CastDuration + 0.1; t += 1.0 / 60) Call(window, "TickPortal", 1.0 / 60);
+            var portalWindow = Find("Pet portal");
+            long portalStyle = portalWindow == null ? 0 : GetWindowLongPtr(new WindowInteropHelper(portalWindow).Handle, -20).ToInt64();
+            check(window.PortalOpen && !window.PortalCasting && !window.BattleHubOpen && portalWindow is { ShowActivated: false, ShowInTaskbar: false, IsVisible: true } && (portalStyle & 0x08000000) != 0,
+                "The portal appears: clickable, never takes focus, no taskbar button; no battle by itself");
+            check(window.CastPortal() is string twice && twice.Length > 0 && Count("Pet portal") == 1, "A second spell is refused while it is open");
+            Click(portalWindow!);
             await Task.Delay(30);
             var hub = Find("Pet battle hub");
             long hubStyle = hub == null ? 0 : GetWindowLongPtr(new WindowInteropHelper(hub).Handle, -20).ToInt64();
@@ -108,7 +117,7 @@ internal static class AdventureChecks
             window.ContextMenu.IsOpen = false;
             await Task.Delay(30);
             window.SetPaused(false);
-            check(!pausedEnabled && pausedHeader.StartsWith("Battle Mode (") && window.OpenBattleHub() is null && window.BattleHubOpen, $"A paused pet: the item says why and is off ({pausedHeader})");
+            check(!pausedEnabled && pausedHeader.StartsWith("Cast portal spell (") && window.OpenBattleHub() is null && window.BattleHubOpen, $"A paused pet: the item says why and is off ({pausedHeader})");
 
             // The map: one window, never takes focus, holds the pet's free time, starts nothing.
             check(window.BattleHubChoose(PetWindow.HubAdventure) == null && window.AdventureMapOpen && !window.BattleHubOpen && Count("Pet battle hub") == 0 && !window.BattleActive && !window.BattlePreparing,

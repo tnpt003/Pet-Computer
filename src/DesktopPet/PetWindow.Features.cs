@@ -31,6 +31,7 @@ public sealed partial class PetWindow
     private void InitializeFeatures(ContextMenu menu)
     {
         Title = preferences.Name + " — Desktop Pet";
+        portal.Schedule(PetPortal.NextDelay(featureRandom));
         InitializeContext();
         InitializeLedges();
         ApplyQuiet();
@@ -90,7 +91,7 @@ public sealed partial class PetWindow
         var exit = PetUi.MenuItem(PetUi.Exit);
         exit.Click += (_, _) => Application.Current.Shutdown();
         menu.Items.Add(treat); menu.Items.Add(play); menu.Items.Add(putAway);
-        InitializeBattle(menu); // "Battle Mode" (PetWindow.Battle.cs).
+        InitializeBattle(menu); // "Cast portal spell", or "Battle Mode" in a fight (PetWindow.Battle.cs).
         InitializeCommands(menu); // "Do now" and "Emotions".
         menu.Items.Add(new Separator());
         menu.Items.Add(quiet); menu.Items.Add(sounds);
@@ -231,6 +232,7 @@ public sealed partial class PetWindow
         climbPlan = null; ledgeExit = 0;
         PetPhysics.LetGo(pet); // A climbing pet lets go and drops.
         pet.TreatRemaining = 0;
+        pet.CastRemaining = 0;
         treatSatisfiedRemaining = 0;
         pet.BatRemaining = pet.PlayCrouch = 0;
         toyPlay.Reset();
@@ -239,7 +241,7 @@ public sealed partial class PetWindow
     }
 
     // Also lets a walk carry the pet past a window ledge's end (it drops off).
-    private bool FeatureOwnsMovement() => CanPlay && (pet.TreatRemaining > 0 || treatSatisfiedRemaining > 0 || toyWindow != null || returningHome || admiring ||
+    private bool FeatureOwnsMovement() => CanPlay && (pet.TreatRemaining > 0 || pet.CastRemaining > 0 || treatSatisfiedRemaining > 0 || toyWindow != null || returningHome || admiring ||
         laserWindow != null || climbPlan != null || ledgeExit != 0 || keepsakeShove != KeepsakeShove.None || keepsakeWatch > 0 || pet.Bonk > 0 || cushionNap == CushionNap.Walk);
 
     private void TickFeatures(double dt)
@@ -264,6 +266,7 @@ public sealed partial class PetWindow
             if (pet.Action == PetAction.SeekingAttention) PlayPetSound("meow");
             lastSoundAction = pet.Action;
         }
+        if (TickPortal(dt)) return; // The magic portal (PetWindow.Portal.cs).
         if (BattleActive) return; // The battle owns the pet; games, treats and rest visits wait.
         if (TickLaser(dt)) return;
         if (!CanPlay)
@@ -414,5 +417,5 @@ public sealed partial class PetWindow
     private void ApplyAccessory() =>
         renderer.Accessory = PetScene.Accessory = preferences.HolidayAccessories && PetAccessories.ForEvent(specialDay) is { } outfit ? outfit.Id : preferences.Accessory;
 
-    private void CloseFeatures() { CloseTrophies(); EndBattle(); CloseBattleHub(); CloseBattlePrep(); CloseAdventureMap(); CloseExpeditionMap(); CloseBattleBag(); CloseBattleSummary(); CloseBattleNotice(); CloseBattleTutorial(); laserWindow?.Close(); diaryWindow?.Close(); CloseStatusCard(); behaviorSettingsWindow?.Close(); toyWindow?.Close(); settingsWindow?.Close(); customizeWindow?.Close(); speechWindow?.Close(); sound?.Stop(); sound?.Dispose(); soundStream?.Dispose(); }
+    private void CloseFeatures() { ClosePortal(); CloseTrophies(); EndBattle(); CloseBattleHub(); CloseBattlePrep(); CloseAdventureMap(); CloseExpeditionMap(); CloseBattleBag(); CloseBattleSummary(); CloseBattleNotice(); CloseBattleTutorial(); laserWindow?.Close(); diaryWindow?.Close(); CloseStatusCard(); behaviorSettingsWindow?.Close(); toyWindow?.Close(); settingsWindow?.Close(); customizeWindow?.Close(); speechWindow?.Close(); sound?.Stop(); sound?.Dispose(); soundStream?.Dispose(); }
 }

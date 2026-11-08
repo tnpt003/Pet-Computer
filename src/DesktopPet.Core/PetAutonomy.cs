@@ -44,6 +44,7 @@ public enum AutoKind
     BreakReminder,
     Speech,
     Thought,
+    PortalEvent,    // A portal appearing by itself; the spell the user asks for goes by UserGame.
 }
 
 public static class PetAutonomy
@@ -70,6 +71,7 @@ public static class PetAutonomy
         AutoKind.BreakReminder => AutoBlock.Paused | AutoBlock.Held | AutoBlock.Fullscreen | AutoBlock.AnyBattle | AutoBlock.Away,
         AutoKind.Speech => AutoBlock.Fullscreen | AutoBlock.AnyBattle,
         AutoKind.Thought => AutoBlock.Fullscreen,
+        AutoKind.PortalEvent => AutoBlock.Busy | AutoBlock.AnyQuiet | AutoBlock.AnyBattle | AutoBlock.Feature | AutoBlock.Away,
         _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
     };
 

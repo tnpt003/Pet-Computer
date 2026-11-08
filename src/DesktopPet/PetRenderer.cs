@@ -106,6 +106,8 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         // Gestures: the active one, its time and a 0..1 envelope; Roll is the eased roll-over amount.
         public PetAction Gesture;
         public double GestureTime, GestureBlend, Roll, AngryBlend, SneezeTilt, SneezeLift;
+        // The portal spell: 0..1 envelope and the seconds since it began.
+        public double CastBlend, CastTime;
         public bool Walking, Sleeping, Waking, PickedUp, Airborne, Seeking, Eating, Grooming, Climbing;
         public PetEmotion Emotion;
         // Battle Mode: the wooden sword's grip (front paw) and angle (degrees from upright, toward the front).
@@ -229,6 +231,12 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
                 p.SneezeTilt = t < 0.35 ? -7 * Math.Sin(t / 0.35 * Math.PI / 2) : t < 0.5 ? -7 + 17 * (t - 0.35) / 0.15 : 10 * Math.Max(0, 1 - (t - 0.5) / 0.5);
                 p.SneezeLift = t < 0.35 ? -2 * t / 0.35 : t < 0.5 ? -2 + 6 * (t - 0.35) / 0.15 : 4 * Math.Max(0, 1 - (t - 0.5) / 0.5);
             }
+        }
+        if (pet.CastRemaining > 0 && selfCare)
+        {
+            p.CastTime = PetModel.CastDuration - pet.CastRemaining;
+            double ramp = Math.Clamp(Math.Min(p.CastTime / 0.3, pet.CastRemaining / 0.2), 0, 1);
+            p.CastBlend = ramp * ramp * (3 - 2 * ramp);
         }
         p.EatTime = PetModel.TreatDuration - pet.TreatRemaining;
         if (p.Eating) p.EmotionStrength = 0;
@@ -1125,7 +1133,34 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
             dc.Pop();
         }
         if (p.Gesture == PetAction.Sneezing && p.GestureTime > 0.38 && p.GestureTime < 0.95) DrawSneezePuff(dc, p);
+        if (p.CastBlend > 0) DrawPortalSpell(dc, p);
         if (pet.Thought.Visible && !p.PickedUp && !p.Sleeping && !p.Airborne) DrawThoughtBubble(dc);
+    }
+
+    private static readonly Geometry SpellStar = PetSpellStar();
+    private static Geometry PetSpellStar()
+    {
+        var star = Geometry.Parse("M0,-6.5 L1.8,-1.8 L6.5,0 L1.8,1.8 L0,6.5 L-1.8,1.8 L-6.5,0 L-1.8,-1.8 Z");
+        star.Freeze();
+        return star;
+    }
+
+    // Both front paws raised and waving, with a ring of stars turning over the head (never across the face).
+    private void DrawPortalSpell(DrawingContext dc, in Pose p)
+    {
+        double t = p.CastTime, wave = Math.Sin(t * 8) * 3, lift = 14 * p.CastBlend;
+        dc.PushOpacity(p.CastBlend);
+        Oval(dc, Fur, 22 - wave, 84 - lift, 6.5, 9.5);
+        Oval(dc, Fur, 90 + wave, 84 - lift, 6.5, 9.5);
+        for (int i = 0; i < 6; i++)
+        {
+            double angle = t * 3.2 + i * Math.PI / 3, scale = 0.75 + 0.35 * Math.Sin(t * 7 + i * 1.9);
+            dc.PushTransform(new TranslateTransform(56 + Math.Cos(angle) * 58, 8 + Math.Sin(angle) * 13));
+            dc.PushTransform(new ScaleTransform(scale, scale));
+            DrawOutlinedEffect(dc, SpellStar, i % 2 == 0 ? PetUi.Game.Gold : PetUi.Lilac);
+            dc.Pop(); dc.Pop();
+        }
+        dc.Pop();
     }
 
     private void DrawSneezePuff(DrawingContext dc, in Pose p)

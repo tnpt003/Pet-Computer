@@ -157,9 +157,14 @@ public sealed partial class PetWindow
     private void InitializeBattle(ContextMenu menu)
     {
         var root = PetUi.MenuItem(PetUi.Battle);
-        // No battle: one item that opens the hub (PetWindow.BattleHub.cs), where the modes are
-        // chosen. During a battle: a submenu with Pause and End only.
-        root.Click += (_, e) => { if (e.OriginalSource == root && battle == null && OpenBattleHub() is string reason) ShowBattleNotice(reason); };
+        // No battle: one item, the cat's portal spell (PetWindow.Portal.cs); the portal leads to the
+        // hub (PetWindow.BattleHub.cs), where the modes are chosen. A battle panel already open: back
+        // to the hub. During a battle: a submenu with Pause and End only.
+        root.Click += (_, e) =>
+        {
+            if (e.OriginalSource != root || battle != null) return;
+            if ((BattleOwnsPet ? OpenBattleHub() : CastPortal()) is string reason) ShowBattleNotice(reason);
+        };
         var pause = new MenuItem();
         pause.Click += (_, _) => { if (battle != null) SetBattlePaused(!BattleUserPaused); };
         var end = new MenuItem();
@@ -171,8 +176,9 @@ public sealed partial class PetWindow
             // arrive after a quick close, so only a menu that is still open counts.)
             if (battle != null && menu.IsOpen) SetBattlePause(BattlePause.Menu, true);
             bool userPaused = battle != null && BattleUserPaused;
-            string? refusal = battle == null ? BattlePrepRefusal() : null;
-            root.Header = L("Chế độ chiến đấu", "Battle Mode") + (refusal != null ? $" ({refusal.TrimEnd('.')})" : "");
+            bool cast = !BattleOwnsPet;
+            string? refusal = battle != null ? null : cast ? PortalCastRefusal() : BattlePrepRefusal();
+            root.Header = (cast ? L("Niệm phép cổng", "Cast portal spell") : L("Chế độ chiến đấu", "Battle Mode")) + (refusal != null ? $" ({refusal.TrimEnd('.')})" : "");
             root.IsEnabled = refusal == null;
             if (battle == null) { if (root.Items.Count > 0) root.Items.Clear(); }
             else if (root.Items.Count == 0) { root.Items.Add(pause); root.Items.Add(end); }

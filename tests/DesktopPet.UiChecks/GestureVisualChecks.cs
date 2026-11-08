@@ -55,6 +55,17 @@ internal static class GestureVisualChecks
         check(middles.Distinct().Count() == gestures.Length && !middles.Contains(idle), "Each gesture has its own distinct pose");
         check(edgesClear, "Gestures (incl. rolling over with a hat, both directions) stay inside the window");
 
+        // The portal spell (1.5.1 M1): both paws raised with stars around; in and out without a pop.
+        PetModel Cast(double left, int facing = 1) { var pet = Pose(PetAction.Sitting, 0, facing); pet.CastRemaining = left; return pet; }
+        string sitting = Render(Pose(PetAction.Sitting, 0), "spell-none");
+        check(Render(Cast(PetModel.CastDuration), "spell-start") == sitting, "The spell starts from the sitting pose without a visible pop");
+        check(Render(Cast(PetModel.CastDuration / 2), "spell-mid") != sitting, "The spell has its own pose");
+        edgesClear = true;
+        for (int frame = 0; frame <= 16; frame++)
+            foreach (int facing in new[] { 1, -1 })
+                Render(Cast(PetModel.CastDuration * frame / 16, facing), $"spell-{frame:00}-{(facing > 0 ? "r" : "l")}", "Calico", "Hat");
+        check(edgesClear, "The spell's paws and stars stay inside the window");
+
         var climbFrames = new List<string>();
         for (int frame = 0; frame < 6; frame++)
             foreach (int facing in new[] { 1, -1 })

@@ -563,9 +563,12 @@ instead of half sizes (10.5–15.5 → the next step up; the 22 banner → 20).
 
 ## Battle hub and shared game panels (2026-10-22)
 
-- **Menu:** with no battle, **Battle Mode** is one item (no submenu) that opens the hub; it is off,
-  with the reason, while the pet is paused or a fullscreen app is open. During a battle it is a
-  submenu with **Pause / Resume** and **End battle** only. **Start battle** (the free battle) is gone.
+- **Menu:** with no battle, the item is **Cast portal spell** (1.5.1, no submenu): the cat casts for
+  1.6 s and a portal opens beside it; clicking the portal opens the hub (see PetWindow.Portal.cs). It
+  is off, with the reason, while the cat cannot start a battle. A portal also appears by itself every
+  20–40 minutes. With a battle panel open the item reads **Battle Mode** and goes back to the hub.
+  During a battle it is a submenu with **Pause / Resume** and **End battle** only. **Start battle**
+  (the free battle) is gone.
 - **Hub** (`PetWindow.BattleHub.cs`, window "Pet battle hub", like the maps: clickable, never
   activated, no taskbar button, mouse only, hidden by a fullscreen app, holds the pet's free time):
   this cat holding its weapon, "Battle Mode", and three cards with a small vector picture each
@@ -713,7 +716,7 @@ points to a leak.
 ## Battle Mode (2026-10-16)
 
 Optional mini-game, off by default and never resumed at startup. Right-click the cat →
-**Battle Mode / Chế độ chiến đấu** opens the battle hub (2026-10-22, below); an Adventure stage or a
+The portal (**Cast portal spell / Niệm phép cổng**, or one that appears by itself) opens the battle hub (2026-10-22, below; the portal since 1.5.1); an Adventure stage or a
 new Expedition run opens the setup panel (below); **Ready** there starts the fight. (The free
 battle described here is no longer in the menu; its code stays for tests and `perf.ps1`.)
 **Infinity** (2026-10-22, `PetEndless.cs`, `PetWindow.Endless.cs`, battle.json `endless`): a
@@ -1010,7 +1013,7 @@ the game draws itself (never a real app's name, logo or colours); rules and numb
 
 ## Adventure (2026-10-20, milestone 2 of docs/ADVENTURE-UPDATE.md)
 
-- **Where:** right-click → Battle Mode → the hub's **Adventure** card (2026-10-22; before, a submenu
+- **Where:** the portal (right-click → Cast portal spell, then click it) → the hub's **Adventure** card (2026-10-22; before, a submenu
   item above **Start battle**). It is refused, with the reason, only while the pet is paused, a
   fullscreen app is open or a battle runs.
 - **Map** (window "Pet adventure", like the setup panel: clickable, never activated, no taskbar

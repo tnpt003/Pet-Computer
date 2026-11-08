@@ -1200,3 +1200,14 @@ Các mục 1.5 phía trên viết theo từng mốc; đây là thứ tự chơi 
 - [ ] Thẻ ở nghỉ/cửa hàng/viên thưởng có tăng đồ rơi/hồi cá; thẻ sạc app chỉ khi bật app; thẻ kỹ năng khớp bộ mang. Đổi kỹ năng ở nghỉ không rút lại thưởng đã mở.
 - [ ] Tiếp tục chuyến r8/r18, giữ lựa chọn đang mở, kết thúc vẫn vào kỷ lục cũ; chuyến mới dùng r9/r19. Vô tận mới r26 vẫn giữ phần thưởng đã nhận.
 - [ ] Pause/menu khi có app độc, đang bế/bay và boss mech: timer dừng, tiếp tục đúng trạng thái; thử DPI/nhiều màn hình. Chưa xác nhận bằng chơi tay ở mốc này.
+
+## 1.5.1 Mốc 1 — Cổng phép (08/11)
+
+- [ ] Chuột phải mèo → "Niệm phép cổng": mèo ngồi giơ hai chân, sao xoay quanh, hết khoảng 1,6 giây thì cổng hiện cạnh mèo, mèo nhìn về phía cổng
+- [ ] Bấm cổng mở Sảnh chiến đấu, cổng đóng lại; không bấm thì khoảng 45 giây sau tự đóng. Cổng không làm mất focus cửa sổ đang gõ
+- [ ] Chờ cổng tự hiện (20–40 phút): mèo bất ngờ, có tiếng, cổng chờ khoảng 30 giây rồi đóng, không tự mở trận
+- [ ] Đang niệm phép: click/kéo/ném mèo thì phép hủy, không ra cổng
+- [ ] Mèo ngủ thì cổng đóng và mèo vẫn ngủ; Pause đóng băng cổng; bật app toàn màn hình thì cổng biến mất ngay
+- [ ] Quiet: cổng không tự hiện nhưng "Niệm phép cổng" vẫn dùng được. Mèo sát mép màn hình: cổng hiện phía còn chỗ
+- [ ] Trong trận menu vẫn là "Chế độ chiến đấu" với Tạm dừng/Kết thúc; đang mở Sảnh/bản đồ thì mục quay lại Sảnh
+- [ ] Xem cổng và nhãn "Bấm để vào trận" trên wallpaper sáng/tối/nhiều màu, DPI 100/125/150/200%, nhiều màn hình, vi/en/ja

@@ -1,4 +1,41 @@
-# Bản 1.5.1 — Kho ý tưởng mở rộng
+# Bản 1.5.1 — Đời sống ngoài trận
+
+## Phạm vi đã chốt (người dùng duyệt 2026-11-08)
+
+Mục tiêu: mèo ngoài trận đa dạng và thú vị hơn. Ba tính năng chủ lực; kho ý tưởng cũ ở phần sau vẫn chỉ là ứng viên.
+
+| Mốc | Nội dung | Trạng thái |
+|---|---|---|
+| 1. Portal | Cổng tự xuất hiện 20–40 phút/lần, mèo bất ngờ; menu "Niệm phép cổng"; bấm cổng mới vào Sảnh | Xong code, xem PROGRESS.md |
+| 2. Weather | Thời tiết theo màu wallpaper Windows, hiện vùng quanh mèo | Chưa làm |
+| 3. Ruộng cơ bản | Dải 6 ô, cày → gieo → tưới → lớn → thu hoạch, 4 cây, lưu file riêng, di chuyển mảnh đất | Chưa làm |
+| 4. Mèo làm cùng | Mèo tự tưới, gặt, đuổi chim; khóa khi ngủ/kéo/Quiet | Chưa làm |
+| 5. Kinh tế farm | Kho, bán lấy xu nông trại riêng, mua hạt, mở ô, bù nhìn | Chưa làm |
+| 6. Nối các phần | Nấu món cho mèo ăn, mưa tự tưới, nắng cho cây lớn nhanh hơn một chút | Chưa làm |
+
+### Portal (mốc 1)
+
+- Tự xuất hiện trên sàn cạnh mèo mỗi 20–40 phút; chờ bấm 30 giây rồi tự đóng, không mất gì. Mèo Surprised và nhìn về phía cổng.
+- Không tự hiện khi: mèo ngủ/thức dậy/bị kéo/bay/đứng trên cửa sổ, đang chơi hoặc ăn, Pause, Quiet, app toàn màn hình, người dùng vắng, đang có trận hoặc bảng chiến đấu. Sai thời điểm thì thử lại sau 45 giây, không dồn lượt.
+- Menu chuột phải: ngoài trận là "Niệm phép cổng" (mèo ngồi giơ hai chân 1,6 giây, sao xoay quanh, rồi cổng hiện, chờ bấm 45 giây). Có bảng chiến đấu đang mở thì mục về lại "Chế độ chiến đấu" và mở Sảnh. Trong trận vẫn là "Chế độ chiến đấu" với Tạm dừng/Kết thúc.
+- Niệm phép do người dùng bật nên chạy cả trong Quiet (như bóng/laser); app toàn màn hình vẫn chặn. Click/kéo/ném mèo hủy phép; phản ứng cảm xúc thật làm phép chờ.
+- Bấm cổng mới mở Sảnh; cổng không tự bắt đầu trận và không giành focus. Cổng đóng khi mèo ngủ (không đánh thức), khi mở bảng/trận, tức thì khi có app toàn màn hình hoặc vùng làm việc đổi.
+
+### Weather (mốc 2)
+
+- "Background image" là wallpaper Windows của màn hình có mèo. Chỉ lấy màu chủ đạo từ ảnh thu nhỏ, không lưu ảnh, không gửi đi đâu; cần ghi ngoại lệ khi làm.
+- Loại thời tiết chỉ đổi khi đổi nền: xanh dương sáng = nắng/mây, xám = mưa, trắng/xanh lạnh = tuyết, cam/hồng = hoàng hôn/lá bay, xanh lá = phấn hoa/gió, tối = đêm sao/đom đóm. Không đọc được thì coi là trời quang.
+- Cường độ thay đổi theo thời gian (mưa to, nhỏ, tạnh một lúc) để không đơn điệu.
+- Chỉ hiện vùng quanh mèo, không phủ cả màn hình. Ẩn trong trận, Quiet, toàn màn hình; không đánh thức mèo; đứng yên khi Pause. Đo FPS trước khi mở rộng.
+
+### Farm (mốc 3–6)
+
+- Dải 6 ô sát mép trên taskbar. Cây không héo khi vắng mặt, chín rồi thì chờ mãi. Không cộng sức mạnh trong trận.
+- **Di chuyển mảnh đất (người dùng yêu cầu 08/11):** chuột phải vào mảnh đất → "Di chuyển mảnh đất farm" → có animation cả mảnh đất và 6 ô bay lơ lửng lên. Người dùng nhấn giữ để kéo mảnh đất sang trái/phải (chỉ theo chiều ngang). Đến nơi muốn đặt, chuột phải → chọn điểm rơi → mảnh đất rơi xuống từ từ, nhẹ nhàng và nằm đúng vị trí đã chỉ định. Lưu vị trí theo monitor-relative như vị trí mèo.
+
+---
+
+# Kho ý tưởng mở rộng
 
 Cập nhật: 2026-10-27 (Asia/Saigon).
 

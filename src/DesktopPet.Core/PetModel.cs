@@ -102,6 +102,9 @@ public sealed class PetModel
     public double X, Y, VX, VY;
     public double SmoothedWalkVelocity;
     public double TreatRemaining;
+    // The portal spell (PetWindow.Portal.cs): seconds of casting left; the renderer raises the paws.
+    public const double CastDuration = 1.6;
+    public double CastRemaining;
     public double BatRemaining;
     public double PlayCrouch;
     // Battle Mode, presentation only (the window copies them from BattleSim each frame):

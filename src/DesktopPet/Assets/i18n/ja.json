@@ -1473,5 +1473,11 @@
   "Mutant goo den": "変異した粘液の巣",
   "Late-zone elite: Mutant Slime with bumps, reflected cores and goo terrain. Lift to dodge and solve its core windows.": "終盤エリアの精鋭：こぶ、跳ね返すコア、粘液地形を持つ変異スライム。猫を持ち上げて避け、コアの隙を解きましょう。",
   "Hedgehogs guard the pond; ice and sulky slimes block the path.": "ハリネズミが池を守り、氷とすねたスライムが道をふさぎます。",
-  "The final fight: three ZIP phases, belt locks, matching folders and six pulls before the final bomb.": "最後の戦い：ZIPの3段階、ベルトの錠、フォルダ合わせ、最後の爆弾までに6本の引き手。"
+  "The final fight: three ZIP phases, belt locks, matching folders and six pulls before the final bomb.": "最後の戦い：ZIPの3段階、ベルトの錠、フォルダ合わせ、最後の爆弾までに6本の引き手。",
+  "Cast portal spell": "ゲートの呪文を唱える",
+  "A portal is already open.": "ゲートはもう開いています。",
+  "The pet is casting.": "ペットが呪文を唱えています。",
+  "The pet is busy; try again in a moment.": "ペットは忙しいようです。少ししてからもう一度試してください。",
+  "The portal has closed.": "ゲートは閉じました。",
+  "Click to enter": "クリックで入る"
 }

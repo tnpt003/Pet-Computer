@@ -79,6 +79,8 @@ Ngoại lệ nào có link tới docs/APPROVED-EXCEPTIONS.md: trước khi sửa
 
 - Bổ sung #66 đã duyệt: Slime biến dị tuần tra hai mép/CD5 s phase2–3, Truy sát khóa đúng mèo cả sát biên, mở core0,35 s; luật đầy đủ docs/APPROVED-EXCEPTIONS.md → Battle Mode và docs/MUTANT-SLIME.md.
 
+- Ngoại lệ đã duyệt 1.5.1: cổng phép là lối vào Battle Mode (tự hiện 20–40 phút, menu "Niệm phép cổng"); chỉ click của người dùng mới mở Sảnh, cổng không tự bắt đầu trận. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Cổng phép (Portal).
+
 ## File quan trọng
 README.md, docs/AI.md, docs/WINDOWS.md, src/DesktopPet/ (App.xaml.cs, PetWindow*.cs, PetModel.cs, PetRenderer.cs, PetPreferences.cs, PetSounds.cs, AI/), ai/, tests/DesktopPet.Tests/, tests/DesktopPet.UiChecks/, scripts/.
 

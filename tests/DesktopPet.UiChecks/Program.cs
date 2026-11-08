@@ -179,7 +179,7 @@ internal static class Program
         string catName = Field<PetPreferences>(window, "preferences").Name;
         var catMenu = topItems.Single(item => (string)item.Header == catName);
         var catHeaders = catMenu.Items.OfType<System.Windows.Controls.MenuItem>().Select(item => item.Header as string).ToList();
-        Check(headers.SequenceEqual(new[] { "Give treat", "Play", "Battle Mode", "Do now", "Emotions", "Quiet mode", "Sounds", catName, "Location", "Settings…", "More", "Exit" }) &&
+        Check(headers.SequenceEqual(new[] { "Give treat", "Play", "Cast portal spell", "Do now", "Emotions", "Quiet mode", "Sounds", catName, "Location", "Settings…", "More", "Exit" }) &&
               SubHeaders("Play") == "Play with ball|Laser pointer" &&
               SubHeaders("Location") == "Go to resting spot|Remember this spot|Forget resting spot|Bring the pet to the main screen" &&
               SubHeaders("More") == "Behavior debug view|About Desktop Pet" &&
@@ -190,7 +190,8 @@ internal static class Program
             "Context menu: 12 items in 4 groups (play · Quiet and Sounds · the cat, where it is, settings, more · Exit); Customize sits under the cat's name; About has a version");
         window.ToggleToy();
         window.ContextMenu.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.ContextMenu.OpenedEvent));
-        var putAway = topItems.Where(item => item.Visibility == Visibility.Visible).Select(item => item.Header as string).ToList();
+        // (The spell's item says why it is off while the ball is out.)
+        var putAway = topItems.Where(item => item.Visibility == Visibility.Visible).Select(item => (item.Header as string)?.Split(" (")[0]).ToList();
         bool ballOut = Field<Window?>(window, "toyWindow") != null;
         window.ToggleToy();
         window.ContextMenu.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.ContextMenu.OpenedEvent));
@@ -985,6 +986,7 @@ internal static class Program
         await BattleChecks.Run(window, pet, behavior, preferences, Check);
         await BattleRulesChecks.Run(window, pet, Check);
         await TutorialChecks.Run(window, pet, Check);
+        PortalChecks.Run(window, pet, behavior, preferences, Check);
         await WeaponChecks.Run(window, pet, Check);
         await BattlePrepChecks.Run(window, pet, behavior, preferences, Check);
         await AdventureChecks.Run(window, pet, behavior, preferences, Check);

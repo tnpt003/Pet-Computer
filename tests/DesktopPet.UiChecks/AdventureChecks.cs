@@ -80,9 +80,10 @@ internal static class AdventureChecks
             var root = window.ContextMenu.Items.OfType<MenuItem>().First(i => i.Header as string == "Cast portal spell");
             int items = root.Items.Count;
             bool enabled = root.IsEnabled;
+            object? freeTip = root.ToolTip;
             window.ContextMenu.IsOpen = false;
             await Task.Delay(30);
-            check(items == 0 && enabled, $"The portal spell is one item without a submenu ({items} items)");
+            check(items == 0 && enabled && freeTip == null, $"The portal spell is one item without a submenu or tooltip ({items} items)");
             root.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent, root));
             await Task.Delay(30);
             check(window.PortalCasting && !window.PortalOpen && !window.BattleHubOpen, "The item starts the spell; nothing opens yet");
@@ -114,10 +115,12 @@ internal static class AdventureChecks
             await Task.Delay(30);
             string pausedHeader = root.Header as string ?? "";
             bool pausedEnabled = root.IsEnabled;
+            string pausedTip = root.ToolTip as string ?? "";
+            bool pausedTipShows = ToolTipService.GetShowOnDisabled(root);
             window.ContextMenu.IsOpen = false;
             await Task.Delay(30);
             window.SetPaused(false);
-            check(!pausedEnabled && pausedHeader.StartsWith("Cast portal spell (") && window.OpenBattleHub() is null && window.BattleHubOpen, $"A paused pet: the item says why and is off ({pausedHeader})");
+            check(!pausedEnabled && pausedHeader == "Cast portal spell" && pausedTip.Length > 0 && pausedTipShows && window.OpenBattleHub() is null && window.BattleHubOpen, $"A paused pet: the item is off, keeps its short name, and its tooltip says why ({pausedTip})");
 
             // The map: one window, never takes focus, holds the pet's free time, starts nothing.
             check(window.BattleHubChoose(PetWindow.HubAdventure) == null && window.AdventureMapOpen && !window.BattleHubOpen && Count("Pet battle hub") == 0 && !window.BattleActive && !window.BattlePreparing,

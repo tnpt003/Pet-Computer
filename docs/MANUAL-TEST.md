@@ -1272,3 +1272,7 @@ Các mục 1.5 phía trên viết theo từng mốc; đây là thứ tự chơi 
 - [ ] Trong Quiet vẫn nấu được. Tắt Python hoặc Python lỗi: nấu và ăn vẫn chạy
 - [ ] Bảng đủ chữ, không tràn ở vi/en/ja; thử DPI 100/125/150/200%
 - [ ] Chơi một lúc rồi góp ý số liệu: 15 giây mưa, nắng nhanh 20%, công thức từng món
+
+## Menu chuột phải — lý do bị khóa (#72, 08/11)
+
+- [ ] Chuột phải lúc mèo đang phản ứng, đang ngủ hoặc Pause: dòng "Niệm phép cổng" ngắn gọn, menu không phình rộng; rê chuột vào dòng mờ thì tooltip nói lý do. Lúc bình thường không có tooltip. Xem ở vi/en/ja

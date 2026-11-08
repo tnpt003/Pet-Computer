@@ -178,8 +178,11 @@ public sealed partial class PetWindow
             bool userPaused = battle != null && BattleUserPaused;
             bool cast = !BattleOwnsPet;
             string? refusal = battle != null ? null : cast ? PortalCastRefusal() : BattlePrepRefusal();
-            root.Header = (cast ? L("Niệm phép cổng", "Cast portal spell") : L("Chế độ chiến đấu", "Battle Mode")) + (refusal != null ? $" ({refusal.TrimEnd('.')})" : "");
+            root.Header = cast ? L("Niệm phép cổng", "Cast portal spell") : L("Chế độ chiến đấu", "Battle Mode");
             root.IsEnabled = refusal == null;
+            // Why it is off goes in a tooltip: in the header a long reason stretched the whole menu.
+            root.ToolTip = refusal;
+            ToolTipService.SetShowOnDisabled(root, true);
             if (battle == null) { if (root.Items.Count > 0) root.Items.Clear(); }
             else if (root.Items.Count == 0) { root.Items.Add(pause); root.Items.Add(end); }
             pause.Header = userPaused ? L("Tiếp tục trận", "Resume battle") : L("Tạm dừng trận", "Pause battle");

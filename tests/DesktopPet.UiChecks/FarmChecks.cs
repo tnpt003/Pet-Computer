@@ -59,6 +59,7 @@ internal static class FarmChecks
             Shop(window, farm, path, check, () => Tick(0.02));
             Kitchen(window, pet, farm, path, check, () => Tick(0.02));
             Sky(window, farm, check, () => now);
+            Bulk(window, pet, farm, path, check, () => now, seconds => now = now.AddSeconds(seconds));
             farm.OpenTiles = 6;
             check(window.FarmTileLabel(0)!.Length > 0 && window.FarmTileLabel(6) == null, "Each tile has a label");
             check(farm.Next(0) == FarmStep.Till, "A new tile needs tilling");
@@ -123,9 +124,9 @@ internal static class FarmChecks
 
             // Moving the plot.
             var ground = window.FarmMenuItems();
-            check(ground.Length == 3 && ground.All(item => ((string)item.Header).Length > 0), "On the ground the menu offers the shop, the kitchen and to move it");
+            check(ground.Length >= 3 && ground.All(item => ((string)item.Header).Length > 0), "On the ground the menu offers the shop, the kitchen and to move it");
             double topBefore = Overlay()!.Top, restFraction = window.FarmFraction;
-            ground[2].RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+            ground[^1].RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
             check(window.FarmLiftPhaseNow == FarmLiftPhase.Rising, "It begins to rise");
             check(window.FarmMenuItems().Length == 0, "No menu while it is on the way up");
             Tick(FarmLift.RiseSeconds + 0.05);
@@ -295,7 +296,7 @@ internal static class FarmChecks
         void Free() { pet.Emotions.Reset(); pet.Action = PetAction.Idle; pet.TreatRemaining = 0; SetField(window, "treatCooldown", 0.0); SetField(window, "treatSatisfiedRemaining", 0.0); }
         Free();
         window.OpenFarmShop();
-        check(window.FarmMenuItems().Length == 3, "The menu has the kitchen too");
+        check(window.FarmMenuItems().Length >= 3, "The menu has the kitchen too");
         window.FarmMenuItems()[1].RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
         check(window.FarmKitchenOpen && Panel() != null && !window.FarmShopOpen, "The kitchen opens, in place of the shop");
         window.OpenFarmShop();
@@ -354,6 +355,62 @@ internal static class FarmChecks
         tick();
         farm.Stock.Clear();
         Free();
+    }
+
+    // The "all" items in the real window: only what has work, and the same result as clicking each tile.
+    private static void Bulk(PetWindow window, PetModel pet, PetFarm farm, string path, Action<bool, string> check, Func<DateTime> now, Action<double> pass)
+    {
+        string[] Headers() => window.FarmMenuItems().Select(item => (string)item.Header).ToArray();
+        MenuItem Item(string start) => window.FarmMenuItems().First(item => ((string)item.Header).StartsWith(start));
+        void Click(MenuItem item) => item.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+        int openBefore = farm.OpenTiles, coinsBefore = farm.Coins;
+        farm.OpenTiles = 3;
+        for (int i = 0; i < PetFarm.TileCount; i++) farm.Tiles[i] = new FarmTile();
+        farm.Coins = 9;
+
+        check(Headers().Count(h => h.StartsWith("Till all (3")) == 1 && !Headers().Any(h => h.StartsWith("Water all") || h.StartsWith("Harvest all") || h.StartsWith("Sow all")), "Only the work there is, with its count");
+        Click(Item("Till all"));
+        check(farm.TilesAt(FarmStep.Plant).Count == 3 && farm.Tiles[3].Stage == FarmStage.Wild, "Till all tills the open tiles and no locked one");
+        check(PetFarm.Load(path).TilesAt(FarmStep.Plant).Count == 3, "...and saves");
+
+        var sow = Item("Sow all (3");
+        var seeds = sow.Items.OfType<MenuItem>().ToArray();
+        check(seeds.Length == 4 && seeds.All(s => s.Icon is FarmCropIcon), "Sow all offers the four crops with their pictures");
+        check(seeds[0].IsEnabled && seeds[1].IsEnabled && !seeds[3].IsEnabled, "A seed the purse cannot pay for even once is greyed");
+        check(((string)seeds[1].Header).Contains("2 tiles") && ((string)seeds[1].Header).Contains("8"), $"It says how many tiles and what that costs ({seeds[1].Header})");
+        Click(seeds[1]);
+        check(farm.TilesAt(FarmStep.Water).Count == 2 && farm.Coins == 1 && farm.Next(2) == FarmStep.Plant, "Sowing stops when the coins run out");
+        check(window.FarmSowAll(FarmCrop.Radish) == 1, "The last tile takes a free seed");
+
+        pet.Emotions.Reset(); pet.Action = PetAction.Sleeping; pet.Emotions.EnterSleep();
+        check(window.FarmDoAll(FarmStep.Water) == 3 && farm.TilesAt(FarmStep.Wait).Count == 3, "Water all waters them, also while the cat sleeps");
+        check(pet.Emotions.SleepLocked && pet.Action == PetAction.Sleeping, "...and does not wake it");
+        pet.Emotions.Reset(); pet.Action = PetAction.Idle;
+        check(window.FarmDoAll(FarmStep.Water) == 0, "Nothing is left to water");
+
+        foreach (var tile in farm.Tiles.Take(3)) { tile.Stage = FarmStage.Ripe; tile.GrowsUntil = null; }
+        int harvested = farm.HarvestedCount(FarmCrop.Carrot), carrots = farm.StockOf(FarmCrop.Carrot);
+        SetField(window, "paused", true);
+        check(window.FarmDoAll(FarmStep.Harvest) == 0 && window.FarmSowAll(FarmCrop.Radish) == 0 && farm.Tiles[0].Stage == FarmStage.Ripe, "Pause refuses it");
+        SetField(window, "paused", false);
+        window.BeginFarmMove();
+        check(window.FarmDoAll(FarmStep.Harvest) == 0 && farm.Tiles[0].Stage == FarmStage.Ripe, "A plot on the move refuses it");
+        Call(window, "HideFarm");
+        Call(window, "TickFarm", 1.0 / 60);
+
+        Click(Item("Harvest all (3"));
+        check(farm.HarvestedCount(FarmCrop.Carrot) == harvested + 2 && farm.StockOf(FarmCrop.Carrot) == carrots + 2 && farm.TilesAt(FarmStep.Till).Count == 3, "Harvest all fills the store and clears the tiles");
+        var gain = Field<Border?>(window, "farmGain")!;
+        check(((TextBlock)gain.Child).Text.StartsWith("+3 "), $"One label says how many ({((TextBlock)gain.Child).Text})");
+        check(farm.Harvested.Keys.Count == 2, "Each crop counts as itself");
+
+        Call(window, "FarmChanged");
+        for (int i = 0; i < PetFarm.TileCount; i++) farm.Tiles[i] = new FarmTile();
+        farm.Harvested.Clear(); farm.Stock.Clear();
+        farm.OpenTiles = openBefore; farm.Coins = coinsBefore;
+        Call(window, "FarmChanged");
+        double wait = FarmGainWait;
+        for (double t = 0; t < wait; t += 1.0 / 60) Call(window, "TickFarm", 1.0 / 60);
     }
 
     private static List<Border> Button(PetWindow window)

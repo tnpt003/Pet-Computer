@@ -1276,3 +1276,11 @@ Các mục 1.5 phía trên viết theo từng mốc; đây là thứ tự chơi 
 ## Menu chuột phải — lý do bị khóa (#72, 08/11)
 
 - [ ] Chuột phải lúc mèo đang phản ứng, đang ngủ hoặc Pause: dòng "Niệm phép cổng" ngắn gọn, menu không phình rộng; rê chuột vào dòng mờ thì tooltip nói lý do. Lúc bình thường không có tooltip. Xem ở vi/en/ja
+
+## Nông trại Mốc A — Thao tác nhanh (08/11)
+
+- [ ] Chuột phải mảnh đất: chỉ hiện việc đang có kèm số ô, không có việc thì không hiện. Ô khóa không tính
+- [ ] Cày, tưới, gặt tất cả: mọi ô đổi cùng lúc, có hiệu ứng, một tiếng, không vang chồng. Gặt nhiều ô hiện "+N nông sản", kho tăng đúng
+- [ ] Gieo tất cả: mỗi loại ghi số ô và tổng giá đúng với xu đang có; thiếu xu thì gieo được bao nhiêu gieo bấy nhiêu từ trái sang
+- [ ] Lúc mèo ngủ vẫn làm được và không đánh thức. Pause và lúc đang nhấc mảnh đất: không làm được
+- [ ] Menu đủ chữ, không tràn ở vi/en/ja

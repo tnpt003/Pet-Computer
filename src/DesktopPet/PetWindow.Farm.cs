@@ -526,7 +526,7 @@ public sealed partial class PetWindow
         shop.Click += (_, _) => OpenFarmShop();
         var kitchen = new MenuItem { Header = L("Nấu ăn", "Cook") };
         kitchen.Click += (_, _) => OpenFarmKitchen();
-        return new[] { shop, kitchen, move };
+        return new[] { shop, kitchen }.Concat(FarmBulkItems()).Append(move).ToArray();
     }
 
     public void BeginFarmMove()

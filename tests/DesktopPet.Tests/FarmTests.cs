@@ -14,6 +14,22 @@ internal static class FarmTests
         Chores(check, start);
         Economy(check, start);
         Links(check, start);
+        Bulk(check, start);
+    }
+
+    // One step on every tile ready for it.
+    private static void Bulk(Action<bool, string> check, DateTime start)
+    {
+        var farm = new PetFarm();
+        check(farm.TilesAt(FarmStep.Till).SequenceEqual(new[] { 0, 1, 2 }), "Locked tiles are no work");
+        foreach (int tile in new[] { 0, 1, 2 }) farm.Till(tile);
+        farm.Coins = 9;
+        check(farm.CanSow(FarmCrop.Radish) == 3 && farm.CanSow(FarmCrop.Carrot) == 2 && farm.CanSow(FarmCrop.Pumpkin) == 0, "The coins say how many tiles a seed can cover");
+        check(farm.SowAll(FarmCrop.Pumpkin).Count == 0 && farm.Coins == 9, "Too dear, nothing is sown");
+        check(farm.SowAll(FarmCrop.Carrot).SequenceEqual(new[] { 0, 1 }) && farm.Coins == 1, "Sowing stops from the left when the coins run out");
+        check(farm.Next(2) == FarmStep.Plant && farm.TilesAt(FarmStep.Water).Count == 2, "The tile left over still waits for a seed");
+        check(farm.SowAll(FarmCrop.Radish).SequenceEqual(new[] { 2 }) && farm.Coins == 1, "A free seed always covers what is left");
+        check(farm.SowAll(FarmCrop.Radish).Count == 0, "Nothing is left to sow");
     }
 
     // Cooking from the store, rain that waters, sun that hurries (1.5.1 M6).

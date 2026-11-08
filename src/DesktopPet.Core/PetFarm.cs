@@ -158,6 +158,19 @@ public sealed class PetFarm
         };
     }
 
+    // Every tile whose next step this is, from the left.
+    public IReadOnlyList<int> TilesAt(FarmStep step) => Enumerable.Range(0, TileCount).Where(i => Next(i) == step).ToList();
+
+    // How many tilled tiles the coins at hand can sow with this crop.
+    public int CanSow(FarmCrop crop)
+    {
+        int tilled = TilesAt(FarmStep.Plant).Count, price = SeedPrice(crop);
+        return price == 0 ? tilled : Math.Min(tilled, Coins / price);
+    }
+
+    // Sows from the left until the tiles or the coins run out. Returns the tiles sown.
+    public IReadOnlyList<int> SowAll(FarmCrop crop) => TilesAt(FarmStep.Plant).Where(i => Plant(i, crop)).ToList();
+
     public bool Till(int index)
     {
         if (!IsOpen(index) || Tiles[index].Stage != FarmStage.Wild) return false;

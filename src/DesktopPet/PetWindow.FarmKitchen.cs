@@ -40,6 +40,7 @@ public sealed partial class PetWindow
     {
         if (farm == null || paused || !FarmVisible || !FarmShopAllowed || farmKitchenWindow != null) return;
         CloseFarmShop(); // They open in the same place.
+        CloseFarmOrders();
         var title = PanelLine(PetUi.DisplaySize, true, FarmShopWidth);
         title.Text = L("Nấu ăn", "Cook");
         farmKitchenNote = PanelLine(PetUi.SmallSize, maxWidth: FarmShopWidth);

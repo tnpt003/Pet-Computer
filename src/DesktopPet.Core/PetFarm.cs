@@ -33,7 +33,7 @@ public sealed class FarmTile
 // The window owns the art and the mouse (PetWindow.Farm.cs). Gives no strength in battle.
 // Its economy (1.5.1 M5): harvests go to a store, are sold for farm coins, which are not battle
 // coins, and the coins buy seeds, more tiles and a scarecrow. Radish seed is free, so nobody gets stuck.
-public sealed class PetFarm
+public sealed partial class PetFarm
 {
     public const int CurrentVersion = 3, TileCount = 6, WateredStages = 3, MaxLevel = 10, MaxXp = 999_999;
     public const int StartingTiles = 3, StartingCoins = 20, MaxCoins = 999_999, ScarecrowPrice = 150;
@@ -158,6 +158,7 @@ public sealed class PetFarm
         Stock = CleanCounts(Stock);
         Coins = Math.Clamp(Coins, 0, MaxCoins);
         Xp = Math.Clamp(Xp, 0, MaxXp);
+        CleanOrders();
         OpenTiles = Math.Clamp(Math.Max(OpenTiles, Tiles.FindLastIndex(tile => tile.Stage != FarmStage.Wild) + 1), StartingTiles, TileCount);
         if (FractionX is double x) FractionX = double.IsFinite(x) ? Math.Clamp(x, 0, 1) : null;
         if (string.IsNullOrWhiteSpace(Monitor)) Monitor = null;

@@ -63,6 +63,7 @@ public sealed partial class PetWindow
         if (!FarmVisible) ShowFarm();
         WatchFarmShop();
         WatchFarmKitchen();
+        WatchFarmOrders();
         if (dt > 0) StepFarmSky(dt);
 
         var now = FarmNow;
@@ -72,6 +73,7 @@ public sealed partial class PetWindow
             RefreshFarmArea();
             CheckFarmGrowth(now);
             UpdateFarmChip();
+            if (dt > 0) CheckFarmOrders(now);
         }
         if (dt > 0) StepFarm(dt);
         if (farmDragging) FollowFarmDrag();
@@ -131,9 +133,10 @@ public sealed partial class PetWindow
                 else effects = true;
             }
         }
-        bool bird = farmBird.Present;
+        bool bird = farmBird.Present, mail = farmMailLeft > 0;
         StepFarmBird(dt);
-        bool redraw = lifted || farmLift.Busy || farmEffectsRunning || bird;
+        farmMailLeft = Math.Max(0, farmMailLeft - dt);
+        bool redraw = lifted || farmLift.Busy || farmEffectsRunning || bird || mail;
         farmEffectsRunning = effects;
         if (redraw)
             DrawFarmLift();
@@ -160,6 +163,7 @@ public sealed partial class PetWindow
         farmArt.BirdAir = farmBird.Air;
         farmArt.BirdTime = farmBird.Time;
         farmArt.BirdFlying = !farmBird.Perched;
+        farmArt.MailTime = farmMailLeft > 0 ? PetFarmArt.MailSeconds - farmMailLeft : -1;
         farmArt.InvalidateVisual();
     }
 
@@ -225,6 +229,8 @@ public sealed partial class PetWindow
         CloseFarmSeedMenu();
         CloseFarmShop();
         CloseFarmKitchen();
+        CloseFarmOrders();
+        farmMailLeft = 0;
         farmArt?.ReleaseMouseCapture();
         farmDragging = false;
         if (farmLift.Phase != FarmLiftPhase.Down) farmFraction = farmRestFraction;
@@ -241,6 +247,7 @@ public sealed partial class PetWindow
         if (farmSunUnsaved > 0) SaveSunnyFarm();
         CloseFarmShop();
         CloseFarmKitchen();
+        CloseFarmOrders();
         farmWindow?.Close();
     }
 
@@ -282,6 +289,8 @@ public sealed partial class PetWindow
             farmArt.Tiles[i] = new FarmTileView(tile.Stage, tile.Crop, tile.GrowsUntil != null, farm.Next(i) == FarmStep.Water, farm.Progress(i, now), !farm.IsOpen(i));
         }
         farmArt.Scarecrow = farm.Scarecrow;
+        farmArt.OrderSign = true;
+        farmArt.OrderReady = farm.AnyOrderReady;
         farmArt.HoverTile = farmHover;
         farmArt.Lift = farmLift.Height;
         farmArt.InvalidateVisual();
@@ -445,6 +454,7 @@ public sealed partial class PetWindow
         UpdateFarmChip();
         UpdateFarmShop();
         UpdateFarmKitchen();
+        UpdateFarmOrders();
     }
 
     public bool FarmPlant(int tile, FarmCrop crop)
@@ -538,7 +548,9 @@ public sealed partial class PetWindow
         shop.Click += (_, _) => OpenFarmShop();
         var kitchen = new MenuItem { Header = L("Nấu ăn", "Cook") };
         kitchen.Click += (_, _) => OpenFarmKitchen();
-        return new[] { shop, kitchen }.Concat(FarmBulkItems()).Append(move).ToArray();
+        var orders = new MenuItem { Header = L("Đơn hàng", "Orders") };
+        orders.Click += (_, _) => OpenFarmOrders();
+        return new[] { shop, kitchen, orders }.Concat(FarmBulkItems()).Append(move).ToArray();
     }
 
     public void BeginFarmMove()

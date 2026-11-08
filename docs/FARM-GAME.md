@@ -24,8 +24,12 @@ Luôn giữ: cây không héo, chim không gây hại, farm không cộng sức 
 - Thay luật Mốc 5: Cà chua và Bí ngô không còn mở sẵn. Hạt và món chưa mở thì mờ, có ghi cấp cần. Ruộng cũ được tính XP từ số đã thu hoạch, cây đang trồng vẫn lớn bình thường. `farm.json` lên phiên bản 3; bản app cũ chỉ đọc, không ghi đè.
 - Bảng "Kho & cửa hàng" hiện cấp, XP, thanh tiến độ và thứ cấp sau mở. Lên cấp thì ruộng lấp lánh và hiện nhãn "Lên cấp N! +X xu" 3 giây. Ô đơn hàng ghi ở trên có tác dụng từ Mốc C.
 
-## Luật Mốc C (đã duyệt, chưa làm)
+## Luật Mốc C
 
 - Chim giấy mang đơn tới, mở bằng mục "Đơn hàng" trên menu ruộng. Biển nhỏ ở đầu trái mảnh đất báo khi có đơn giao được.
 - Đơn chỉ đòi cây đã mở khóa, từ 2 đến 6 nông sản. Thưởng 1,5 lần giá bán và XP như lúc thu hoạch.
 - Đơn không hết hạn. Giao hoặc bỏ đơn thì ô đó có đơn mới sau 20 phút, tính theo đồng hồ thật cả khi tắt app.
+- Số nông sản một đơn tối đa là `cấp + 2` (không quá 6), một hoặc hai loại; một đơn đòi tối đa 3 Cà chua, 2 Bí ngô. Ô mới mở khi lên cấp có đơn ngay.
+- Có 3 hàng trong bảng; ô chưa mở ghi cấp cần, ô đang chờ đếm ngược. Bỏ đơn một lần bấm, không tốn gì. Đơn mới đến lúc Pause thì chờ bỏ Pause.
+- Chim mang đơn bay vào đậu trên biển 5 giây rồi đi, không có tiếng, không chạm vào mèo. Biển có dấu "!" vàng khi có đơn giao được; biển không nhận bấm.
+- Bảng đóng cùng các điều kiện như "Kho & cửa hàng"; ba bảng Kho, Nấu ăn, Đơn hàng mở thay chỗ nhau. Giao đơn làm được khi mèo ngủ và không đánh thức. `farm.json` vẫn phiên bản 3, thêm mục đơn hàng.

@@ -16,6 +16,81 @@ internal static class FarmTests
         Links(check, start);
         Bulk(check, start);
         Levels(check);
+        Orders(check, start);
+    }
+
+    // Orders from the board (docs/FARM-GAME.md, milestone C).
+    private static void Orders(Action<bool, string> check, DateTime start)
+    {
+        check(new PetFarm().OrderSlots == 1 && new PetFarm { Xp = 69 }.OrderSlots == 1 && new PetFarm { Xp = 70 }.OrderSlots == 2 && new PetFarm { Xp = 279 }.OrderSlots == 2 && new PetFarm { Xp = 280 }.OrderSlots == 3, "One place at first, a second at level 3, a third at level 5");
+
+        var random = new Random(11);
+        bool sizes = true, known = true, kinds = true, capped = true;
+        foreach (int xp in new[] { 0, 25, 70, 150, 280, 5000 })
+            for (int i = 0; i < 300; i++)
+            {
+                var farm = new PetFarm { Xp = xp };
+                farm.RefreshOrders(start, random);
+                var items = PetFarm.OrderItems(farm.Orders[0]).ToList();
+                int total = items.Sum(item => item.Count);
+                sizes &= total >= PetFarm.MinOrderItems && total <= Math.Min(PetFarm.MaxOrderItems, farm.Level + 2);
+                known &= items.All(item => farm.Unlocked(item.Crop));
+                kinds &= items.Count is 1 or 2;
+                capped &= items.All(item => item.Crop != FarmCrop.Pumpkin || item.Count <= 2) && items.All(item => item.Crop != FarmCrop.Tomato || item.Count <= 3);
+            }
+        check(sizes, "An order asks for 2 to 6 crops, fewer at the start");
+        check(known, "An order only asks for what the field can grow");
+        check(kinds, "An order is one crop or two");
+        check(capped, "A slow crop is asked for in small numbers");
+
+        var first = new PetFarm();
+        check(first.RefreshOrders(start, random) && first.Orders.Count == 1 && first.Orders[0].Items != null, "The first order is there at once");
+        check(!first.RefreshOrders(start.AddDays(30), random) && first.Orders[0].Items != null, "An order never expires");
+
+        var order = new PetFarm { Coins = 0 };
+        order.Orders.Add(new FarmOrderSlot { Items = new() { ["Radish"] = 3, ["Carrot"] = 1 } });
+        var slot = order.Orders[0];
+        check(PetFarm.OrderCoins(slot) == 33 && PetFarm.OrderXp(slot) == 11, "3 radishes and a carrot pay 33 coins and 11 XP");
+        check(new PetFarm().Deliver(0, start) == 0 && order.Deliver(5, start) == 0, "No order, no delivery");
+        order.Stock["Radish"] = 3;
+        check(!order.CanDeliver(0) && !order.AnyOrderReady && order.Deliver(0, start) == 0 && order.StockOf(FarmCrop.Radish) == 3 && order.Coins == 0, "Short of one crop nothing is taken");
+        order.Stock["Carrot"] = 2; order.Stock["Radish"] = 4;
+        check(order.CanDeliver(0) && order.AnyOrderReady, "Enough in the store, it can be delivered");
+        check(order.Deliver(0, start) == 33 && order.Coins == 33 && order.Xp == 11, "Delivering pays coins and XP");
+        check(order.StockOf(FarmCrop.Radish) == 1 && order.StockOf(FarmCrop.Carrot) == 1, "...and takes exactly what it asked for");
+        check(slot.Items == null && slot.NextAt == start.AddSeconds(PetFarm.OrderRefillSeconds), "The place waits twenty minutes");
+        check(order.Deliver(0, start) == 0 && !order.SkipOrder(0, start), "An empty place delivers nothing and cannot be skipped");
+        check(!order.RefreshOrders(start.AddSeconds(PetFarm.OrderRefillSeconds - 1), random) && slot.Items == null, "Not a second early");
+        check(order.RefreshOrders(start.AddSeconds(PetFarm.OrderRefillSeconds), random) && slot.Items != null && slot.NextAt == null, "Then a new order comes, also if the app was closed");
+
+        int coins = order.Coins;
+        check(order.SkipOrder(0, start) && slot.Items == null && order.Coins == coins && slot.NextAt == start.AddSeconds(PetFarm.OrderRefillSeconds), "Skipping costs nothing and waits the same");
+        slot.NextAt = start.AddDays(40);
+        check(!order.RefreshOrders(start, random) && slot.NextAt == start.AddSeconds(PetFarm.OrderRefillSeconds), "A clock set backwards never makes the wait longer");
+
+        var level = new PetFarm { Xp = 69 };
+        level.Orders.Add(new FarmOrderSlot { Items = new() { ["Radish"] = 2 } });
+        level.Stock["Radish"] = 2;
+        coins = level.Coins;
+        check(level.Deliver(0, start) == 9 && level.Xp == 73 && level.Level == 3 && level.Coins == coins + 9 + 60 && level.TakeLevelsGained() == 1, "An order can reach a new level, which pays as well");
+        check(level.RefreshOrders(start, random) && level.Orders.Count == 2 && level.Orders[1].Items != null && level.Orders[0].Items == null, "The new place fills at once; the used one keeps waiting");
+
+        string folder = Path.Combine(Path.GetTempPath(), "pet-farm-orders-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        try
+        {
+            string path = Path.Combine(folder, "farm.json");
+            level.Save(path);
+            var back = PetFarm.Load(path);
+            check(back.Orders.Count == 2 && back.Orders[0].Items == null && back.Orders[0].NextAt == level.Orders[0].NextAt && back.Orders[0].NextAt!.Value.Kind == DateTimeKind.Utc, "A waiting place is saved in UTC");
+            check(back.Orders[1].Items!.SequenceEqual(level.Orders[1].Items!), "An order is saved");
+            File.WriteAllText(path, """{ "Version": 3, "Orders": [ null, { "Items": { "Gold": 4, "Carrot": -2 } }, { "Items": { "Radish": 2 }, "NextAt": "2026-11-08T12:00:00Z" }, { }, { } ] }""");
+            var odd = PetFarm.Load(path);
+            check(odd.Orders.Count == 3 && odd.Orders[0].Items == null && odd.Orders[1].NextAt == null && odd.Orders[1].Items!.Count == 1, "Odd orders are cleaned");
+            File.WriteAllText(path, """{ "Version": 3 }""");
+            check(PetFarm.Load(path).Orders.Count == 0, "A field from before the orders starts with none");
+        }
+        finally { Directory.Delete(folder, true); }
     }
 
     // XP, levels and what they open (docs/FARM-GAME.md, milestone B).

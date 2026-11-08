@@ -61,6 +61,7 @@ internal static class FarmChecks
             Sky(window, farm, check, () => now);
             Bulk(window, pet, farm, path, check, () => now, seconds => now = now.AddSeconds(seconds));
             Levels(window, farm, path, check, () => Tick(0.02));
+            Orders(window, pet, farm, path, check, Wait, () => Tick(0.02));
             farm.OpenTiles = 6;
             check(window.FarmTileLabel(0)!.Length > 0 && window.FarmTileLabel(6) == null, "Each tile has a label");
             check(farm.Next(0) == FarmStep.Till, "A new tile needs tilling");
@@ -479,6 +480,105 @@ internal static class FarmChecks
         Call(window, "FarmChanged");
     }
 
+    // The order board in the real window: orders arrive by the clock, deliver, skip, what closes it.
+    private static void Orders(PetWindow window, PetModel pet, PetFarm farm, string path, Action<bool, string> check, Action<double> wait, Action tick)
+    {
+        Window? Panel() => Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.Title == "Pet farm orders" && w.IsLoaded);
+        int coinsBefore = farm.Coins;
+        var art = Field<PetFarmArt>(window, "farmArt");
+        farm.Xp = 0; farm.Orders.Clear(); farm.Stock.Clear(); farm.Coins = 0;
+
+        wait(2);
+        check(farm.Orders.Count == 1 && farm.Orders[0].Items != null, "An order arrives by itself");
+        check(Field<double>(window, "farmMailLeft") > 0 && art.OrderSign, "A paper bird brings it to the board on the plot");
+        check(PetFarm.Load(path).Orders.Count == 1, "...and it is saved");
+        for (double t = 0; t < PetFarmArt.MailSeconds + 0.1; t += 1.0 / 30) Call(window, "TickFarm", 1.0 / 30);
+        check(Field<double>(window, "farmMailLeft") == 0 && art.MailTime < 0, "The bird goes away again");
+
+        farm.Orders[0].Items = new() { ["Radish"] = 2 };
+        farm.Stock["Radish"] = 1;
+        Call(window, "FarmChanged");
+        check(!art.OrderReady, "Short of crops the board shows no mark");
+
+        window.FarmMenuItems()[2].RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+        check(window.FarmOrdersOpen && Panel() != null, "The menu opens the orders");
+        var panel = Panel()!;
+        check(panel.Topmost && !panel.ShowInTaskbar && !panel.ShowActivated, "It takes no focus and has no taskbar button");
+        var area = Field<Area>(window, "bounds");
+        check(panel.Left >= area.Left - 1 && panel.Left + panel.ActualWidth <= area.Right + 1 && panel.Top + panel.ActualHeight <= area.Bottom + 1, $"It fits on the monitor ({panel.ActualWidth:F0}x{panel.ActualHeight:F0})");
+        double width = panel.ActualWidth;
+        window.OpenFarmShop();
+        check(window.FarmShopOpen && !window.FarmOrdersOpen, "The shop opens in its place");
+        window.OpenFarmOrders();
+        check(window.FarmOrdersOpen && !window.FarmShopOpen, "...and the orders in the shop's place");
+        window.OpenFarmKitchen();
+        check(window.FarmKitchenOpen && !window.FarmOrdersOpen, "The kitchen too");
+        window.OpenFarmOrders();
+        check(window.FarmOrdersOpen && !window.FarmKitchenOpen, "...and back");
+        panel = Panel()!;
+
+        object?[] Rows() => ((System.Collections.IEnumerable)FieldOf("farmOrderRows").GetValue(window)!).Cast<object?>().ToArray();
+        T Part<T>(int row, string name) => (T)Rows()[row]!.GetType().GetProperty(name)!.GetValue(Rows()[row])!;
+        check(Rows().Length == 3, "Three places on the board");
+        check(Part<TextBlock>(0, "Name").Text.Contains("1/2") && Part<TextBlock>(0, "Note").Text.Contains("9") && Part<TextBlock>(0, "Note").Text.Contains("4 XP"), $"An order says what it needs and pays ({Part<TextBlock>(0, "Name").Text}, {Part<TextBlock>(0, "Note").Text})");
+        check(!Part<Border>(0, "Deliver").IsEnabled && Part<Border>(0, "Skip").IsEnabled, "Short of crops it cannot be delivered, but it can be skipped");
+        check(Part<Border>(1, "Deliver").Visibility == Visibility.Collapsed && Part<TextBlock>(1, "Note").Text.Contains("level 3") && Part<TextBlock>(2, "Note").Text.Contains("level 5"), "A closed place says which level opens it");
+        check(window.FarmDeliver(0) == 0, "Delivery is refused while crops are short");
+
+        pet.Emotions.Reset(); pet.Action = PetAction.Sleeping; pet.Emotions.EnterSleep();
+        farm.Stock["Radish"] = 3;
+        Call(window, "FarmChanged");
+        check(art.OrderReady && Part<Border>(0, "Deliver").IsEnabled, "With enough crops the board shows its mark and the button lights");
+        SetField(window, "paused", true);
+        tick();
+        check(!Part<Border>(0, "Deliver").IsEnabled && !Part<Border>(0, "Skip").IsEnabled && window.FarmDeliver(0) == 0 && !window.FarmSkipOrder(0) && farm.Orders[0].Items != null, "Pause refuses both");
+        SetField(window, "paused", false);
+        tick();
+        Render(panel, "farm-orders.png");
+        check(window.FarmDeliver(0) == 9 && farm.Coins == 9 && farm.Xp == 4 && farm.StockOf(FarmCrop.Radish) == 1, "Delivering pays, and takes what it asked for");
+        check(pet.Emotions.SleepLocked && pet.Action == PetAction.Sleeping, "It does not wake the cat");
+        pet.Emotions.Reset(); pet.Action = PetAction.Idle;
+        check(PetFarm.Load(path).Coins == 9 && !art.OrderReady, "It is saved and the mark goes");
+        check(((TextBlock)Field<Border?>(window, "farmGain")!.Child).Text.Contains("9"), "The field says what it brought");
+        check(Part<Border>(0, "Deliver").Visibility == Visibility.Collapsed && Part<TextBlock>(0, "Note").Text.StartsWith("20:00"), $"The place counts down to its next order ({Part<TextBlock>(0, "Note").Text})");
+        wait(600);
+        check(farm.Orders[0].Items == null && Part<TextBlock>(0, "Note").Text.StartsWith("10:00"), $"Ten minutes on it still waits ({Part<TextBlock>(0, "Note").Text})");
+        wait(601);
+        check(farm.Orders[0].Items != null && Part<Border>(0, "Deliver").Visibility == Visibility.Visible, "After twenty minutes the next order is on the board");
+        check(window.FarmSkipOrder(0) && farm.Orders[0].Items == null && farm.Coins == 9, "Skipping costs nothing");
+
+        farm.Xp = 70;
+        wait(2);
+        check(farm.Orders.Count == 2 && farm.Orders[1].Items != null && Part<Border>(1, "Skip").Visibility == Visibility.Visible, "Level 3 opens the second place at once");
+        panel.UpdateLayout();
+        check(Math.Abs(panel.ActualWidth - width) < 1, "The panel keeps its width");
+
+        // The widest order there can be still fits its row.
+        farm.Orders[1].Items = new() { ["Pumpkin"] = 2, ["Tomato"] = 3 };
+        Call(window, "UpdateFarmOrders");
+        panel.UpdateLayout();
+        var button = Part<Border>(1, "Deliver");
+        var corner = button.TransformToAncestor((Visual)panel.Content).Transform(new Point(button.ActualWidth, 0));
+        check(corner.X <= ((FrameworkElement)panel.Content).ActualWidth + 1 && Part<TextBlock>(1, "Name").ActualWidth > 40, $"A long order keeps its buttons inside the panel ({corner.X:F0})");
+        Render(panel, "farm-orders-long.png");
+
+        SetField(window, "battleHubOpen", true);
+        tick();
+        check(!window.FarmOrdersOpen, "A battle panel closes it");
+        SetField(window, "battleHubOpen", false);
+        window.OpenFarmOrders();
+        SetContext(window, true, 0); Call(window, "TickContext", 1.1);
+        tick();
+        check(!window.FarmOrdersOpen, "A fullscreen app closes it");
+        SetContext(window, false, 0); Call(window, "TickContext", 1.1);
+        tick();
+
+        farm.Xp = 0; farm.Orders.Clear(); farm.Stock.Clear(); farm.Coins = coinsBefore;
+        Call(window, "FarmChanged");
+        double fade = FarmGainWait;
+        for (double t = 0; t < fade; t += 1.0 / 60) Call(window, "TickFarm", 1.0 / 60);
+    }
+
     private static List<Border> Button(PetWindow window)
     {
         var rows = (System.Collections.IEnumerable)FieldOf("farmKitchenRows").GetValue(window)!;
@@ -605,6 +705,7 @@ internal static class FarmChecks
             Render(Ripe, back, $"farm-ripe-{tone}");
             Render(art => { Steps(art); art.Lift = FarmLift.FloatHeight; }, back, $"farm-floating-{tone}");
             Render(art => { Steps(art); art.Dustiness = 0.6; }, back, $"farm-landing-{tone}");
+            Render(art => { Steps(art); art.OrderSign = true; art.OrderReady = true; art.MailTime = 2; }, back, $"farm-orders-board-{tone}");
             Render(art => { Steps(art); art.Lift = FarmLift.RiseHeightAt(0.9); art.ShakeX = 2; art.Tilt = 1.2; art.Shed = 1.0; }, back, $"farm-rising-{tone}");
             Render(art => { Steps(art); art.Lift = FarmLift.FloatHeight; art.Shed = 1.9; }, back, $"farm-shedding-{tone}");
             Render(art => { Steps(art); art.Dustiness = 0.95; art.Squash = 0.9; art.ShakeX = 2.5; }, back, $"farm-impact-{tone}");
@@ -634,6 +735,10 @@ internal static class FarmChecks
         check(still != Render(art => art.ShakeX = 3, dark, null), "The plot shakes");
         check(still != Render(art => art.Tiles[3] = new(FarmStage.Wild, null, false, false, 0, true), dark, null), "A locked tile has its fence");
         check(still != Render(art => art.Scarecrow = true, dark, null), "The scarecrow is drawn");
+        string board = Render(art => art.OrderSign = true, dark, null);
+        check(still != board, "The order board is drawn");
+        check(board != Render(art => { art.OrderSign = true; art.OrderReady = true; }, dark, null), "A delivered-ready order puts a mark on it");
+        check(board != Render(art => { art.OrderSign = true; art.MailTime = 2; }, dark, null), "The paper bird sits on it");
         check(PetFarmArt.TileAt(PetFarmArt.TileLeft(0) + 1) == 0 && PetFarmArt.TileAt(PetFarmArt.TileLeft(5) + 53) == 5 && PetFarmArt.TileAt(1) == -1 && PetFarmArt.TileAt(PetFarmArt.ArtWidth - 1) == -1, "Clicks find their tiles; the rim is none");
         Dishes(check);
     }

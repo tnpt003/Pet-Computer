@@ -1293,3 +1293,14 @@ Các mục 1.5 phía trên viết theo từng mốc; đây là thứ tự chơi 
 - [ ] Thu hoạch tay và để mèo gặt đều có XP. Lên cấp: ruộng lấp lánh, nhãn "Lên cấp N! +X xu" hiện khoảng 3 giây, xu tăng đúng. Khởi động lại app vẫn còn cấp
 - [ ] Bảng đủ chữ, vừa màn hình ở vi/en/ja và DPI 100/125/150/200%
 - [ ] Chơi một lúc rồi góp ý nhịp lên cấp và XP từng cây
+
+## Nông trại Mốc C — Đơn hàng (08/11)
+
+- [ ] Mở app: chim giấy bay vào đậu trên biển ở đầu trái mảnh đất rồi đi, không có tiếng. Xem biển và chim trên hình nền thật, khi nhấc mảnh đất thì biển bay theo
+- [ ] Chuột phải → "Đơn hàng": hàng đơn ghi số có/cần và phần thưởng; ô chưa mở ghi cấp cần. Ba bảng Kho, Nấu ăn, Đơn hàng mở thay chỗ nhau
+- [ ] Thiếu nông sản: nút Giao mờ. Đủ nông sản: biển có dấu "!" vàng, nút Giao sáng ngay kể cả khi mèo vừa gặt lúc bảng đang mở
+- [ ] Giao: kho giảm đúng, xu và XP tăng đúng, nhãn "+X xu" hiện trên ruộng, ô đếm ngược 20:00. Bỏ đơn: không mất gì, cũng đếm ngược
+- [ ] Tắt app quá 20 phút rồi mở lại: có đơn mới. Đơn cũ không tự mất. Lên cấp 3, cấp 5: ô mới có đơn ngay
+- [ ] Mèo ngủ: giao được, không đánh thức. Pause: nút mờ. App toàn màn hình, vào trận, mở Sảnh: bảng tự đóng
+- [ ] Bảng đủ chữ, nút không tràn ở vi/en/ja và DPI 100/125/150/200%
+- [ ] Chơi một lúc rồi góp ý phần thưởng, số lượng mỗi đơn và 20 phút chờ

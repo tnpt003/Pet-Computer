@@ -49,6 +49,7 @@ public sealed partial class PetWindow
     {
         if (farm == null || paused || !FarmVisible || !FarmShopAllowed || farmShopWindow != null) return;
         CloseFarmKitchen(); // They open in the same place.
+        CloseFarmOrders();
         var title = PanelLine(PetUi.DisplaySize, true, FarmShopWidth);
         title.Text = L("Kho & cửa hàng", "Store & shop");
         farmShopCoins = PanelLine(PetUi.TitleSize, true, FarmShopWidth);
@@ -102,12 +103,13 @@ public sealed partial class PetWindow
         PlaceGamePanel(window);
     }
 
-    private static Border FarmShopRow(FrameworkElement icon, string name, TextBlock note, Border button)
+    private static Border FarmShopRow(FrameworkElement icon, string name, TextBlock note, Border button, Border? second = null)
     {
         icon.Margin = new Thickness(0, 0, 10, 0);
         icon.VerticalAlignment = VerticalAlignment.Center;
         var nameText = PanelLine(PetUi.BodySize, true, 170);
         nameText.Text = name;
+        nameText.HorizontalAlignment = note.HorizontalAlignment = HorizontalAlignment.Left; // A row without buttons has room to spare.
         button.Margin = new Thickness(8, 0, 0, 0);
         button.MinWidth = 120;
         button.VerticalAlignment = VerticalAlignment.Center;
@@ -116,11 +118,18 @@ public sealed partial class PetWindow
         DockPanel.SetDock(button, Dock.Right);
         row.Children.Add(icon);
         row.Children.Add(button);
+        if (second != null)
+        {
+            second.Margin = new Thickness(6, 0, 0, 0);
+            second.VerticalAlignment = VerticalAlignment.Center;
+            DockPanel.SetDock(second, Dock.Right);
+            row.Children.Add(second);
+        }
         row.Children.Add(new StackPanel { VerticalAlignment = VerticalAlignment.Center, Children = { nameText, note } });
         return new Border { Background = PrepCardBack, CornerRadius = new CornerRadius(9), Padding = new Thickness(10, 6, 8, 6), Margin = new Thickness(0, 6, 0, 0), Child = row };
     }
 
-    private static TextBlock FarmShopRowName(Border row) => (TextBlock)((StackPanel)((DockPanel)row.Child).Children[2]).Children[0];
+    private static TextBlock FarmShopRowName(Border row) => (TextBlock)((DockPanel)row.Child).Children.OfType<StackPanel>().Single().Children[0];
 
     private static void ShowFarmShopButton(Border button, bool enabled)
     {

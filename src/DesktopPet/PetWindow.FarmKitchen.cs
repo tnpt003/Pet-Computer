@@ -15,10 +15,13 @@ public sealed partial class PetWindow
     private Window? farmKitchenWindow;
     private TextBlock? farmKitchenNote;
     private readonly List<(FarmDish Dish, TextBlock Parts, Border Button)> farmKitchenRows = new();
-    private bool farmKitchenReady;
+    private bool farmKitchenReady, farmKitchenCooking;
 
     public bool FarmKitchenOpen => farmKitchenWindow != null;
     private bool FarmCatCanEat => MayAct(AutoKind.Treat) && treatCooldown <= 0;
+    // One dish at a time: on its way to the pot, or in it.
+    private bool FarmPotBusy => farmChores.Cooking || farm?.PotDish != null;
+    private bool FarmKitchenCanCook => !paused && !FarmPotBusy && FarmCatCanEat;
 
     private string FarmDishName(FarmDish dish) => dish switch
     {
@@ -33,7 +36,7 @@ public sealed partial class PetWindow
     {
         if (farmKitchenWindow == null) return;
         if (!FarmShopAllowed) CloseFarmKitchen();
-        else if (farmKitchenReady != (!paused && FarmCatCanEat)) UpdateFarmKitchen();
+        else if (farmKitchenReady != FarmKitchenCanCook || farmKitchenCooking != FarmPotBusy) UpdateFarmKitchen();
     }
 
     public void OpenFarmKitchen()
@@ -75,8 +78,11 @@ public sealed partial class PetWindow
     private void UpdateFarmKitchen()
     {
         if (farmKitchenWindow == null || farm == null || farmKitchenNote == null) return;
-        farmKitchenReady = !paused && FarmCatCanEat;
-        farmKitchenNote.Text = farmKitchenReady
+        farmKitchenReady = FarmKitchenCanCook;
+        farmKitchenCooking = FarmPotBusy;
+        farmKitchenNote.Text = farmKitchenCooking
+            ? LF($"{preferences.Name} đang lo nồi trên bếp, xong món này mới nấu tiếp được.", $"{preferences.Name} has a pot on the hearth; the next dish has to wait for it.")
+            : farmKitchenReady
             ? LF($"Nấu xong là {preferences.Name} được ăn ngay.", $"{preferences.Name} eats it as soon as it is cooked.")
             : LF($"{preferences.Name} chưa ăn được lúc này, chờ một lát nhé.", $"{preferences.Name} can't eat just now, wait a moment.");
         foreach (var (dish, parts, button) in farmKitchenRows)
@@ -97,10 +103,19 @@ public sealed partial class PetWindow
         farmKitchenRows.Clear();
     }
 
-    // The cat is asked first: when it cannot eat, nothing is used up.
+    // The cat is asked first: when it cannot eat, nothing is used up. It goes to the hearth and the
+    // store pays when it pours; from a window or another monitor it eats where it is, at once.
     public bool FarmCook(FarmDish dish)
     {
-        if (farm == null || paused || !farm.CanCook(dish) || !GiveTreat(dish)) return false;
+        if (farm == null || !FarmKitchenCanCook || !farm.CanCook(dish)) return false;
+        if (FarmAtHand)
+        {
+            CancelFeatureActivity();
+            farmChores.BeginCook(FarmChoreKind.Pour, dish, FarmSpotBeside(FarmHearthMid), byUser: true);
+            UpdateFarmKitchen();
+            return true;
+        }
+        if (!GiveTreat(dish)) return false;
         farm.Cook(dish);
         PlayPetSound("pop");
         FarmChanged();

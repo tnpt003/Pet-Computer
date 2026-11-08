@@ -15,7 +15,7 @@ Mục tiêu: mèo không còn chỉ đi qua đi lại mà có việc liên tục
 | Mốc | Nội dung | Trạng thái |
 |---|---|---|
 | 1. Nhịp làm việc | Mèo làm liên tục có nghỉ, tự cày và gieo lại | Xong (acfb3ee), còn test tay |
-| 2. Bếp lửa | Nồi, que khuấy, lửa; mèo đổ nguyên liệu, khuấy, ăn | Chưa làm |
+| 2. Bếp lửa | Nồi, que khuấy, lửa; mèo đổ nguyên liệu, khuấy, ăn | Có code, còn test tay |
 | 3. Hồ nước | Mèo câu cá, 3 loại cá, món cá | Chưa làm |
 | 4. Gian hàng lưu động | Tự xuất hiện như cổng, thay cho Đơn hàng | Chưa làm |
 | 5. Thời tiết gắn nông trại | Mỗi loại có tác dụng, chỉ có lợi | Chưa làm |
@@ -29,6 +29,16 @@ Người dùng đã chốt: thời tiết lấy wallpaper làm khí hậu chính
 - Mỗi ô nhớ cây vừa gặt (kể cả tự tay gặt). Mèo chỉ cày và gieo lại trên ô đó, đúng cây đó, trả xu như thường. Ô chưa từng trồng không đụng tới. Bạn tự tay cày thì ô thành việc của bạn, mèo không gieo. Thiếu xu hoặc cây bị khóa thì mèo bỏ qua ô.
 - Công tắc "Mèo tự gieo lại" trong Cài đặt → Thói quen, mặc định bật; tắt thì mèo chỉ gặt và tưới. Tắt "Mèo làm vườn cùng" thì tắt cả nhịp này.
 - Tiếng khi mèo tự làm cách nhau tối thiểu 60 giây; bấm tay vẫn có tiếng. Điều kiện chặn và hủy chuyến như 1.5.1 Mốc 4.
+
+### Luật Mốc 2 (duyệt 08/11, thay luật "mèo ăn ngay" của 1.5.1 Mốc 6 khi mèo tới được bếp)
+
+- Bếp có đá kê, củi, nồi và que khuấy, đứng bên phải bù nhìn, nhấc và di chuyển cùng mảnh đất; khu rộng thêm 100 DIP nên ruộng sát mép phải dịch sang trái một lần. Lúc không nấu chỉ có than vẽ tĩnh. Bếp không nhận bấm trái, chuột phải vẫn ra menu ruộng.
+- Bấm "Nấu": mèo đi tới bếp (giới hạn 30 giây), đổ nguyên liệu khoảng 1,2 giây (kho bị trừ lúc này), khuấy khoảng 6 giây với lửa bùng và hơi nóng, rồi ăn cạnh bếp. Phần ăn giữ luật cũ: Happy 6 giây, chung hồi 20 giây, nhấc mèo lúc đang ăn thì mất bữa.
+- Mỗi lần một món: nồi có món hoặc mèo đang trên đường nấu thì nút "Nấu" mờ. Mèo đang ở màn hình khác hoặc trên cửa sổ thì ăn ngay tại chỗ như trước.
+- Điều kiện khi bạn bấm giống "Cho ăn": làm được trong Quiet; mèo ngủ, bận hoặc Pause thì nút mờ, không trừ đồ, không đánh thức. Bị ngắt trước khi đổ thì không mất gì, phải bấm lại.
+- Bị ngắt sau khi đổ: nồi giữ món (lưu `PotDish` trong `farm.json`, vẫn phiên bản 3), mèo quay lại khuấy ở lần tìm việc sau, kể cả sau khi mở lại app và khi đã tắt "Mèo làm vườn cùng". Lúc Quiet, Away hoặc chưa ăn được thì mèo chưa quay lại. Bữa này tính là bữa mèo tự nấu.
+- Mèo tự nấu: tối đa một lần mỗi 10–15 phút, sau mọi việc ngoài ruộng, không nấu trong Quiet. Chọn món cấp cao nhất mà kho còn ít nhất 4 mỗi nguyên liệu sau khi trừ. Công tắc "Mèo tự nấu ăn" trong Cài đặt → Thói quen, mặc định bật; tắt "Mèo làm vườn cùng" thì cũng thôi tự nấu. Bữa mèo tự nấu không báo cho Python, không tính là bạn cho ăn, không đổi đồng hồ buồn ngủ; mèo vẫn Happy 6 giây.
+- Tiếng: "pop" lúc đổ nguyên liệu, lần mèo tự nấu theo khoảng cách 60 giây của Mốc 1. Khuấy im lặng, không thêm asset.
 
 ## Giai đoạn 1
 

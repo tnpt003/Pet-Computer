@@ -47,7 +47,7 @@ internal static class FarmChecks
             var handle = new WindowInteropHelper(overlay).Handle;
             var area = Field<Area>(window, "farmArea");
             check(Math.Abs(overlay.Top + PetFarmArt.Floor - area.Bottom) < 1.5, $"Its soil stands on the top of the taskbar ({overlay.Top + PetFarmArt.Floor:F0} on {area.Bottom:F0})");
-            double free = area.Right - area.Left - PetFarmArt.PlotWidth;
+            double free = area.Right - area.Left - PetFarmArt.ZoneWidth;
             check(Math.Abs(overlay.Left + PetFarmArt.Side - (area.Left + free * 0.25)) < 1.5, "At first it is a quarter across the monitor");
             long style = GetWindowLongPtr(handle, -20).ToInt64();
             check((style & 0x20) == 0 && (style & 0x08000000) != 0 && (style & 0x80) != 0, "It takes clicks but no focus, and has no taskbar button");
@@ -331,7 +331,9 @@ internal static class FarmChecks
         tick();
 
         int coins = farm.Coins;
+        pet.LedgeId = 7; // Up on a window it cannot walk to the hearth: it eats where it is (the hearth: FarmChoreChecks).
         check(window.FarmCook(FarmDish.RadishSoup) && pet.TreatRemaining > 0 && pet.TreatDish == FarmDish.RadishSoup, "A dish is cooked and the cat eats it");
+        pet.LedgeId = 0;
         check(farm.StockOf(FarmCrop.Radish) == 0 && farm.Coins == coins && PetFarm.Load(path).StockOf(FarmCrop.Radish) == 0, "Its ingredients are gone, also from the file");
         check(!Button(window)[0].IsEnabled && !window.FarmCook(FarmDish.StuffedTomato) && farm.StockOf(FarmCrop.Tomato) == 1, "Eating, the cat cannot be fed again and nothing is used up");
         double treats = pet.Activity.Treats;

@@ -18,6 +18,73 @@ internal static class FarmTests
         Levels(check);
         Orders(check, start);
         Rhythm(check, start);
+        Hearth(check);
+    }
+
+    // The pot on the hearth (docs/FARM-GAME.md).
+    private static void Hearth(Action<bool, string> check)
+    {
+        check(new PetPreferences().FarmAutoCook, "The cat cooks by itself by default");
+        var farm = new PetFarm();
+        check(!farm.Pour(FarmDish.RadishSoup) && farm.PotDish == null, "Nothing to pour from an empty store");
+        farm.Stock["Radish"] = 3;
+        check(farm.Pour(FarmDish.RadishSoup) && farm.PotDish == FarmDish.RadishSoup && farm.StockOf(FarmCrop.Radish) == 1, "Pouring uses the ingredients up");
+        farm.Stock["Radish"] = 3;
+        check(!farm.Pour(FarmDish.RadishSoup) && farm.StockOf(FarmCrop.Radish) == 3, "One dish in the pot at a time");
+        check(farm.TakePot() == FarmDish.RadishSoup && farm.PotDish == null && farm.TakePot() == null, "Taken once");
+
+        string folder = Path.Combine(Path.GetTempPath(), "pet-pot-" + Guid.NewGuid().ToString("N"));
+        string path = Path.Combine(folder, "farm.json");
+        try
+        {
+            var saved = new PetFarm { PotDish = FarmDish.PumpkinPie };
+            check(saved.Save(path) && PetFarm.Load(path).PotDish == FarmDish.PumpkinPie && File.ReadAllText(path).Contains("PumpkinPie"), "The pot is saved by name");
+            check(saved.Version == 3, "The file stays at version 3");
+        }
+        finally { if (Directory.Exists(folder)) Directory.Delete(folder, true); }
+
+        var store = new PetFarm();
+        store.Stock["Radish"] = 5;
+        check(store.AutoDish() == null, "The cat leaves the store its four");
+        store.Stock["Radish"] = 6;
+        check(store.AutoDish() == FarmDish.RadishSoup, "With enough to spare it cooks");
+        store.Stock["Carrot"] = 6; store.Stock["Pumpkin"] = 5; store.Stock["Tomato"] = 5;
+        check(store.AutoDish() == FarmDish.RadishSoup, "Only what its level has opened");
+        store.Xp = 2000;
+        check(store.AutoDish() == FarmDish.PumpkinPie, "The best dish it can spare");
+        store.Stock["Radish"] = 0; store.Stock["Carrot"] = 4;
+        check(store.AutoDish() == null, "No dish that would break into the four");
+
+        var chores = new FarmChores();
+        check(chores.CookDue == FarmChores.CookMinSeconds, "It does not cook at once");
+        chores.CountDownCook(1);
+        check(chores.CookDue == FarmChores.CookMinSeconds - 1, "The wait runs down");
+        chores.CountDownCook(100000);
+        check(chores.CookDue == 0, "...and stops at zero");
+        var random = new Random(9);
+        for (int i = 0; i < 40; i++)
+        {
+            double wait = FarmChores.NextCook(random);
+            if (wait < 600 || wait > 900) { check(false, $"A cooking wait out of range ({wait:F0})"); break; }
+        }
+        chores.BeginCook(FarmChoreKind.Pour, FarmDish.CarrotStew, 100, byUser: true);
+        check(chores.Active && chores.Cooking && chores.ByUser && chores.Dish == FarmDish.CarrotStew && chores.Tile == -1, "Off to the hearth");
+        check(!chores.Step(FarmChores.WalkLimitSeconds + 1) && !chores.WalkedTooLong, "The hearth may be further than a tile");
+        chores.Step(FarmChores.CookWalkLimitSeconds);
+        check(chores.WalkedTooLong, "...but a walk still has a limit");
+        chores.Arrive();
+        check(!chores.Step(FarmChores.PourHit - 0.1) && chores.Step(0.2) && !chores.Step(0.1), "It pours once");
+        chores.Step(FarmChores.PourSeconds);
+        check(chores.Finished, "Pouring ends");
+        chores.StartStirring();
+        check(chores.Kind == FarmChoreKind.Stir && chores.Phase == FarmChorePhase.Work && chores.Time == 0 && chores.ByUser && !chores.Finished, "...and stirring begins, still asked for by the user");
+        chores.Step(FarmChores.StirSeconds);
+        check(chores.Finished, "Stirring ends");
+        chores.Stop();
+        check(!chores.Cooking && !chores.ByUser, "The trip is over");
+        chores.BeginCook(FarmChoreKind.Stir, FarmDish.RadishSoup, 0, byUser: true);
+        chores.Begin(FarmChoreKind.Water, 1, 0);
+        check(!chores.ByUser, "A later trip is not the user's");
     }
 
     // The cat's working rhythm (docs/FARM-GAME.md): rests, the long rest, sowing again.

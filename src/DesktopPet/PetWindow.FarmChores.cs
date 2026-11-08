@@ -13,7 +13,7 @@ public sealed partial class PetWindow
 
     private readonly FarmChores farmChores = new();
     private readonly FarmBird farmBird = new();
-    private bool farmCatHands;
+    private bool farmCatHands, treatOwnMeal;
     private double farmChoreSoundWait;
 
     public FarmChoreKind FarmChoreNow => farmChores.Kind;
@@ -24,16 +24,24 @@ public sealed partial class PetWindow
 
     private double FarmTileMid(int tile) => FarmPlotLeft - PetFarmArt.Side + PetFarmArt.TileCenter(tile);
 
-    private bool FarmHelpOn => preferences.Farm && preferences.FarmHelper && FarmVisible && farm != null && farmLift.Phase == FarmLiftPhase.Down && farmWithCat && pet.LedgeId == 0;
+    private double FarmHearthMid => FarmPlotLeft - PetFarmArt.Side + PetFarmArt.HearthCenter;
 
-    // Everything that starts a trip stops one, except the trip itself owning the cat.
-    private bool FarmChoreMayGoOn => FarmHelpOn && Blocking(PetAutonomy.BlockedBy(AutoKind.FarmChore) & ~AutoBlock.Feature) == AutoBlock.None;
+    // The cat can walk to the field from where it is.
+    private bool FarmAtHand => preferences.Farm && FarmVisible && farm != null && farmLift.Phase == FarmLiftPhase.Down && farmWithCat && pet.LedgeId == 0;
+    private bool FarmHelpOn => preferences.FarmHelper && FarmAtHand;
+
+    // Everything that starts a trip stops one, except the trip itself owning the cat. What the user
+    // asked to have cooked stops like a treat; a pot with something in it does not depend on the helper setting.
+    private bool FarmChoreMayGoOn => farmChores.ByUser
+        ? FarmAtHand && MayAct(AutoKind.Treat)
+        : (farmChores.Kind == FarmChoreKind.Stir ? FarmAtHand : FarmHelpOn) && Blocking(PetAutonomy.BlockedBy(AutoKind.FarmChore) & ~AutoBlock.Feature) == AutoBlock.None;
 
     // Each unpaused frame, before anything else may take the cat.
     private void WatchFarmChores(double dt)
     {
         if (farmChores.Active && !FarmChoreMayGoOn) StopFarmChore();
         farmChoreSoundWait = Math.Max(0, farmChoreSoundWait - dt);
+        farmChores.CountDownCook(dt);
         if (!farmChores.Active && farmChores.CountDownVisit(dt)) farmChores.ScheduleAfterLook(TryFarmVisit(), featureRandom);
         if (farmChores.CountDownBird(dt)) farmChores.ScheduleBird(TryFarmBird() ? FarmChores.NextBird(featureRandom, farm?.Scarecrow == true) : FarmChores.RetrySeconds);
     }
@@ -43,8 +51,21 @@ public sealed partial class PetWindow
     // One trip now, if this is a moment for it and a tile needs it. True when the cat set off.
     public bool TryFarmVisit()
     {
-        if (!FarmChoreMayStart || FarmChores.Pick(farm!, i => Math.Abs(FarmTileMid(i) - CatCenter), preferences.FarmResow) is not var (kind, tile)) return false;
-        farmChores.Begin(kind, tile, FarmChoreSpotFor(tile));
+        // Something left in the pot comes first, and is not the helper setting's business.
+        if (FarmAtHand && MayAct(AutoKind.FarmChore) && FarmCatCanEat && farm!.PotDish is FarmDish waiting)
+        {
+            farmChores.BeginCook(FarmChoreKind.Stir, waiting, FarmSpotBeside(FarmHearthMid), byUser: false);
+            return true;
+        }
+        if (!FarmChoreMayStart) return false;
+        if (FarmChores.Pick(farm!, i => Math.Abs(FarmTileMid(i) - CatCenter), preferences.FarmResow) is var (kind, tile))
+        {
+            farmChores.Begin(kind, tile, FarmChoreSpotFor(tile));
+            return true;
+        }
+        if (!preferences.FarmAutoCook || farmChores.CookDue > 0 || !FarmCatCanEat || farm!.AutoDish() is not FarmDish dish) return false;
+        farmChores.BeginCook(FarmChoreKind.Pour, dish, FarmSpotBeside(FarmHearthMid), byUser: false);
+        farmChores.ScheduleCook(FarmChores.NextCook(featureRandom));
         return true;
     }
 
@@ -60,9 +81,11 @@ public sealed partial class PetWindow
     }
 
     // Beside the tile on the side the cat comes from; the other side when the screen ends there.
-    private double FarmChoreSpotFor(int tile)
+    private double FarmChoreSpotFor(int tile) => FarmSpotBeside(FarmTileMid(tile));
+
+    private double FarmSpotBeside(double mid)
     {
-        double mid = FarmTileMid(tile), half = settings.Width / 2, left = bounds.Left, right = Math.Max(bounds.Left, bounds.Right - settings.Width);
+        double half = settings.Width / 2, left = bounds.Left, right = Math.Max(bounds.Left, bounds.Right - settings.Width);
         double spot = mid + (CatCenter < mid ? -FarmChoreGap : FarmChoreGap) - half;
         if (spot < left || spot > right) spot = mid + (CatCenter < mid ? FarmChoreGap : -FarmChoreGap) - half;
         return Math.Clamp(spot, left, right);
@@ -75,13 +98,13 @@ public sealed partial class PetWindow
         int tile = farmChores.Tile;
         var kind = farmChores.Kind;
         // Done by hand meanwhile, or the bird has gone: nothing left to go for.
-        if (farmChores.Phase != FarmChorePhase.Work && (kind == FarmChoreKind.Bird ? !FarmBirdThere(tile) : farm.Next(tile) != FarmChores.StepOf(kind)))
+        if (farmChores.Phase != FarmChorePhase.Work && !FarmChoreWanted(kind, tile))
         {
             StopFarmChore();
             return false;
         }
         bool hit = farmChores.Step(dt);
-        int facing = FarmTileMid(tile) < CatCenter ? -1 : 1;
+        int facing = (farmChores.Cooking ? FarmHearthMid : FarmTileMid(tile)) < CatCenter ? -1 : 1;
         switch (farmChores.Phase)
         {
             case FarmChorePhase.Notice:
@@ -91,8 +114,28 @@ public sealed partial class PetWindow
                 return WalkToFarmSpot(kind, dt);
         }
         DoFarmWork(kind, tile, facing, hit);
-        if (farmChores.Finished) StopFarmChore();
+        if (farmChores.Finished) FinishFarmWork(kind);
         return true;
+    }
+
+    private bool FarmChoreWanted(FarmChoreKind kind, int tile) => kind switch
+    {
+        FarmChoreKind.Bird => FarmBirdThere(tile),
+        FarmChoreKind.Pour => farm!.PotDish == null && farm.CanCook(farmChores.Dish),
+        FarmChoreKind.Stir => farm!.PotDish != null,
+        _ => farm!.Next(tile) == FarmChores.StepOf(kind)
+    };
+
+    private void FinishFarmWork(FarmChoreKind kind)
+    {
+        if (kind == FarmChoreKind.Pour && farm?.PotDish != null) { farmChores.StartStirring(); return; }
+        bool byUser = farmChores.ByUser;
+        StopFarmChore();
+        if (kind == FarmChoreKind.Stir && farm?.PotDish is FarmDish dish && GiveTreat(dish, byUser))
+        {
+            farm.TakePot();
+            FarmChanged();
+        }
     }
 
     private bool FarmBirdThere(int tile) => farmBird.Tile == tile && farmBird.Phase is FarmBirdPhase.Landing or FarmBirdPhase.Perched;
@@ -107,7 +150,7 @@ public sealed partial class PetWindow
             pet.VX = pet.SmoothedWalkVelocity = 0;
             pet.Action = PetAction.Idle;
             farmChores.Arrive();
-            if (kind is FarmChoreKind.Harvest or FarmChoreKind.Till or FarmChoreKind.Sow) pet.BatRemaining = farmChores.HitTime;
+            if (kind is FarmChoreKind.Harvest or FarmChoreKind.Till or FarmChoreKind.Sow or FarmChoreKind.Pour) pet.BatRemaining = farmChores.HitTime;
             return true;
         }
         WalkToward(spot);
@@ -117,7 +160,7 @@ public sealed partial class PetWindow
 
     private void DoFarmWork(FarmChoreKind kind, int tile, int facing, bool hit)
     {
-        farmCatHands = true;
+        farmCatHands = !farmChores.ByUser;
         DoFarmWorkStep(kind, tile, facing, hit);
         farmCatHands = false;
     }
@@ -137,6 +180,18 @@ public sealed partial class PetWindow
     {
         switch (kind)
         {
+            case FarmChoreKind.Pour:
+                HoldStill(PetAction.Idle, facing);
+                if (hit && farm!.Pour(farmChores.Dish))
+                {
+                    PlayFarmSound("pop");
+                    FarmChanged();
+                }
+                break;
+            case FarmChoreKind.Stir:
+                HoldStill(PetAction.Sitting, facing);
+                pet.StirringRemaining = Math.Max(0, FarmChores.StirSeconds - farmChores.Time);
+                break;
             case FarmChoreKind.Till:
                 HoldStill(PetAction.Idle, facing);
                 if (hit && farm!.Next(tile) == FarmStep.Till && farm.ResowCrop(tile) != null && farm.Till(tile, keepLastCrop: true))
@@ -176,7 +231,7 @@ public sealed partial class PetWindow
     {
         if (!farmChores.Active) return;
         farmChores.Stop();
-        pet.WateringRemaining = pet.PlayCrouch = 0;
+        pet.WateringRemaining = pet.StirringRemaining = pet.PlayCrouch = 0;
         if (pet.Action is not (PetAction.Walking or PetAction.Sitting or PetAction.Looking or PetAction.Idle)) return; // Held, flying or asleep: not ours to change.
         pet.Action = PetAction.Idle;
         pet.VX = pet.SmoothedWalkVelocity = 0;

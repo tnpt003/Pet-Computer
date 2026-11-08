@@ -109,7 +109,7 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         public double GestureTime, GestureBlend, Roll, AngryBlend, SneezeTilt, SneezeLift;
         // The portal spell: 0..1 envelope and the seconds since it began.
         public double CastBlend, CastTime;
-        public double WaterBlend, WaterTime;
+        public double WaterBlend, WaterTime, StirBlend, StirTime;
         public bool Walking, Sleeping, Waking, PickedUp, Airborne, Seeking, Eating, Grooming, Climbing;
         public PetEmotion Emotion;
         // Battle Mode: the wooden sword's grip (front paw) and angle (degrees from upright, toward the front).
@@ -245,6 +245,12 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
             p.WaterTime = PetModel.WaterDuration - pet.WateringRemaining;
             double ramp = Math.Clamp(Math.Min(p.WaterTime / 0.25, pet.WateringRemaining / 0.2), 0, 1);
             p.WaterBlend = ramp * ramp * (3 - 2 * ramp);
+        }
+        if (pet.StirringRemaining > 0 && selfCare)
+        {
+            p.StirTime = PetModel.StirDuration - pet.StirringRemaining;
+            double ramp = Math.Clamp(Math.Min(p.StirTime / 0.25, pet.StirringRemaining / 0.2), 0, 1);
+            p.StirBlend = ramp * ramp * (3 - 2 * ramp);
         }
         p.EatTime = PetModel.TreatDuration - pet.TreatRemaining;
         p.Dish = pet.TreatDish;
@@ -1144,6 +1150,7 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         if (p.Gesture == PetAction.Sneezing && p.GestureTime > 0.38 && p.GestureTime < 0.95) DrawSneezePuff(dc, p);
         if (p.CastBlend > 0) DrawPortalSpell(dc, p);
         if (p.WaterBlend > 0) DrawWateringCan(dc, p);
+        if (p.StirBlend > 0) DrawStirStick(dc, p);
         if (pet.Thought.Visible && !p.PickedUp && !p.Sleeping && !p.Airborne) DrawThoughtBubble(dc);
     }
 
@@ -1171,6 +1178,22 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
             dc.Pop(); dc.Pop();
         }
         dc.Pop();
+    }
+
+    private static readonly Pen StirInk = PetUi.FrozenPen(PetUi.ArtInk, 5.6), StirWood = PetUi.FrozenPen(PetUi.Hex("#B4815E"), 3);
+
+    // A wooden stick held in the front paw, its end going round in the pot beside the cat.
+    private void DrawStirStick(DrawingContext dc, in Pose p)
+    {
+        dc.PushTransform(new ScaleTransform(p.FacingScale, 1, 56, 56));
+        dc.PushOpacity(p.StirBlend);
+        double turn = p.StirTime * 3.6;
+        var paw = new Point(86 + Math.Cos(turn) * 3, 56 + Math.Sin(turn) * 1.2);
+        var end = new Point(113 + Math.Cos(turn) * 8, 66 + Math.Sin(turn) * 1.5);
+        dc.DrawLine(StirInk, paw, end);
+        dc.DrawLine(StirWood, paw, end);
+        Oval(dc, Fur, paw.X, paw.Y, 7, 6.5);
+        dc.Pop(); dc.Pop();
     }
 
     private static Geometry FrozenPath(string text) { var path = Geometry.Parse(text); path.Freeze(); return path; }

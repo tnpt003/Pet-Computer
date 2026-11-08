@@ -16,7 +16,8 @@ public enum FarmStage { Wild, Tilled, Seed, Sprout, Young, Ripe }
 // What a click on the tile does next.
 public enum FarmStep { Till, Plant, Water, Wait, Harvest, Locked }
 
-// Cooked from the store and eaten at once (1.5.1 M6); nothing keeps a dish.
+// Cooked from the store on the hearth and eaten there (1.5.1 M6, docs/FARM-GAME.md); only the pot keeps one.
+[JsonConverter(typeof(JsonStringEnumConverter<FarmDish>))]
 public enum FarmDish { RadishSoup, CarrotStew, StuffedTomato, PumpkinPie }
 
 public sealed class FarmTile
@@ -40,6 +41,8 @@ public sealed partial class PetFarm
     public const int CurrentVersion = 3, TileCount = 6, WateredStages = 3, MaxLevel = 10, MaxXp = 999_999;
     public const int StartingTiles = 3, StartingCoins = 20, MaxCoins = 999_999, ScarecrowPrice = 150;
     public const double FirstFraction = 0.25;
+    // What the cat leaves in the store of each ingredient when it cooks by itself.
+    public const int CookKeep = 4;
     // 1.5.1 M6. Rain has to last this long before it waters; each second of sun counts this much extra.
     public const double RainSoakSeconds = 15, SunBonus = 0.25;
 
@@ -119,6 +122,8 @@ public sealed partial class PetFarm
     public int OpenTiles { get; set; } = StartingTiles;
     public bool Scarecrow { get; set; }
     public int Xp { get; set; }
+    // In the pot, its ingredients already used: it waits there until the cat has stirred and eaten it.
+    public FarmDish? PotDish { get; set; }
     // The plot's monitor (device name) and its left edge as a fraction of the free width (null: not placed yet).
     public string? Monitor { get; set; }
     public double? FractionX { get; set; }
@@ -160,6 +165,7 @@ public sealed partial class PetFarm
         Stock = CleanCounts(Stock);
         Coins = Math.Clamp(Coins, 0, MaxCoins);
         Xp = Math.Clamp(Xp, 0, MaxXp);
+        if (PotDish is FarmDish pot && !Enum.IsDefined(pot)) PotDish = null;
         CleanOrders();
         OpenTiles = Math.Clamp(Math.Max(OpenTiles, Tiles.FindLastIndex(tile => tile.Stage != FarmStage.Wild) + 1), StartingTiles, TileCount);
         if (FractionX is double x) FractionX = double.IsFinite(x) ? Math.Clamp(x, 0, 1) : null;
@@ -311,6 +317,26 @@ public sealed partial class PetFarm
         foreach (var (crop, count) in Recipe(dish)) Take(crop, count);
         return true;
     }
+
+    // Into the pot, if the pot is empty and the store has it all.
+    public bool Pour(FarmDish dish)
+    {
+        if (PotDish != null || !Cook(dish)) return false;
+        PotDish = dish;
+        return true;
+    }
+
+    public FarmDish? TakePot()
+    {
+        var dish = PotDish;
+        PotDish = null;
+        return dish;
+    }
+
+    // What the cat would cook by itself: the best dish that still leaves CookKeep of each ingredient, or null.
+    public FarmDish? AutoDish() => Enum.GetValues<FarmDish>().OrderByDescending(DishLevel)
+        .Where(dish => Unlocked(dish) && Recipe(dish).All(part => StockOf(part.Crop) - part.Count >= CookKeep))
+        .Cast<FarmDish?>().FirstOrDefault();
 
     // Empties the store. The coins it brought.
     public int SellAll()

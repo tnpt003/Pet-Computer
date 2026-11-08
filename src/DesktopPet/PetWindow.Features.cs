@@ -181,17 +181,19 @@ public sealed partial class PetWindow
         return previous;
     }
 
-    public bool GiveTreat(FarmDish? dish = null)
+    // byUser false: a meal the cat made for itself. It is not attention and Python does not hear of it.
+    public bool GiveTreat(FarmDish? dish = null, bool byUser = true)
     {
         if (!FarmCatCanEat) return false;
         CancelFeatureActivity();
         pet.TreatRemaining = PetModel.TreatDuration;
         pet.TreatDish = dish;
         treatCooldown = 20;
-        pet.Emotions.Attention();
+        treatOwnMeal = !byUser;
+        if (byUser) pet.Emotions.Attention();
         pet.Action = PetAction.Sitting;
         pet.VX = pet.SmoothedWalkVelocity = 0;
-        Interact("treat");
+        if (byUser) Interact("treat");
         return true;
     }
 
@@ -283,11 +285,15 @@ public sealed partial class PetWindow
             pet.VX = 0; pet.Action = PetAction.Sitting;
             if (pet.TreatRemaining == 0)
             {
-                pet.Activity.GiveTreat();
                 treatSatisfiedRemaining = 1.2;
-                pet.Emotions.Attention();
                 if (pet.TreatDish != null) pet.Emotions.Cheer(FarmDishHappySeconds);
-                Interact("treat_consumed"); PlayPetSound("satisfied"); RequestDecision();
+                PlayPetSound("satisfied");
+                if (!treatOwnMeal)
+                {
+                    pet.Activity.GiveTreat();
+                    pet.Emotions.Attention();
+                    Interact("treat_consumed"); RequestDecision();
+                }
             }
             else if (pet.TreatRemaining < 2.7 && pet.TreatRemaining + dt >= 2.7) PlayPetSound("purr");
             return;
@@ -337,6 +343,7 @@ public sealed partial class PetWindow
         if (EffectiveQuiet) { StopKeepsakeShove(); if (!Asked(UserAsked.Nap)) StopCushionNap(); if (!Asked(UserAsked.Admire)) StopAdmiring(); }
         if (TickAdmiring(dt)) return; // PetWindow.Keepsake.cs
         if (TickCushionNap(dt)) return; // Napping on the slime cushion (PetWindow.KeepsakePlay.cs).
+        if (farmChores.ByUser && TickFarmChore(dt)) return; // Cooking the user asked for also goes on in Quiet.
         if (EffectiveQuiet) return;
         if (TickKeepsakeShove(dt)) return; // Shoving the keepsake along (PetWindow.Keepsake.cs).
         if (TickFarmChore(dt)) return; // Watering, harvesting, chasing a bird (PetWindow.FarmChores.cs).

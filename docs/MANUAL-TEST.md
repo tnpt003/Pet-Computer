@@ -1313,3 +1313,14 @@ Các mục 1.5 phía trên viết theo từng mốc; đây là thứ tự chơi 
 - [ ] Tắt "Mèo tự gieo lại": mèo chỉ gặt và tưới. Tắt "Mèo làm vườn cùng": mèo không đi làm
 - [ ] Tiếng khi mèo tự làm không phát liên tục, tối đa khoảng một lần mỗi phút; tự bấm thì luôn có tiếng
 - [ ] Giữa chuyến: kéo mèo, Pause, Quiet, app toàn màn hình, mèo ngủ thì chuyến hủy ngay, mèo không kẹt tư thế. Mèo ngủ không bị đánh thức. Tắt Python mèo vẫn đi làm
+
+## Nông trại Mốc 2 — Bếp lửa (08/11)
+
+- [ ] Bếp đứng bên phải ruộng, nhìn rõ trên nền sáng và tối, nhấc và thả cùng mảnh đất. Ruộng sát mép phải không làm bếp tràn khỏi màn hình
+- [ ] Bấm "Nấu": mèo đi tới bếp, đổ nguyên liệu, khuấy với lửa bùng, rồi ăn cạnh bếp. Xem que khuấy trong tay mèo có khớp miệng nồi ở cả hai phía không, thời gian khuấy có vừa không
+- [ ] Trong lúc mèo nấu, nút "Nấu" mờ và bảng ghi đang lo nồi. Kho chỉ giảm lúc đổ nguyên liệu
+- [ ] Kéo mèo trước khi đổ: kho không giảm. Kéo mèo sau khi đổ: món vẫn trong nồi, lát sau mèo tự quay lại khuấy, đóng mở lại app vẫn còn món
+- [ ] Mèo ngủ, Pause: nút mờ, không đánh thức. Quiet: vẫn bấm nấu được; mèo không tự quay lại nồi hay tự nấu
+- [ ] Mèo đang đứng trên cửa sổ hoặc ở màn hình khác: bấm "Nấu" thì ăn ngay tại chỗ như trước
+- [ ] Kho dư nhiều: khoảng 10–15 phút mèo tự nấu một lần sau khi hết việc ruộng, kho luôn còn ít nhất 4 mỗi nguyên liệu. Tắt "Mèo tự nấu ăn" hoặc "Mèo làm vườn cùng" thì thôi. Xem có quá thường xuyên hay tốn đồ không
+- [ ] Tắt Python mèo vẫn nấu và ăn được

@@ -32,6 +32,7 @@ public sealed partial class PetWindow
     public bool FarmSeedMenuOpen => farmSeedMenu?.IsOpen == true;
     private Area farmArea;
     private double farmScale = 1, farmFraction, farmRestFraction, farmFallFrom, farmFallTo, farmGrab, farmGainLeft;
+    private double farmHearthFire, farmHearthTime;
     private double farmSkyElapsed, farmRainSeconds, farmSunUnsaved, farmGainTotal = FarmGainSeconds;
     private string? farmMonitor;
     private DateTime farmChecked;
@@ -40,7 +41,7 @@ public sealed partial class PetWindow
     private string? farmChipShown;
 
     private DateTime FarmNow => farmClock?.Invoke() ?? DateTime.UtcNow;
-    private double FarmFreeWidth => Math.Max(0, farmArea.Right - farmArea.Left - PetFarmArt.PlotWidth);
+    private double FarmFreeWidth => Math.Max(0, farmArea.Right - farmArea.Left - PetFarmArt.ZoneWidth);
     private double FarmPlotLeft => farmArea.Left + farmFraction * FarmFreeWidth;
 
     public bool FarmVisible => farmWindow?.IsVisible == true;
@@ -136,7 +137,8 @@ public sealed partial class PetWindow
         bool bird = farmBird.Present, mail = farmMailLeft > 0;
         StepFarmBird(dt);
         farmMailLeft = Math.Max(0, farmMailLeft - dt);
-        bool redraw = lifted || farmLift.Busy || farmEffectsRunning || bird || mail;
+        bool hearth = StepFarmHearth(dt);
+        bool redraw = lifted || farmLift.Busy || farmEffectsRunning || bird || mail || hearth;
         farmEffectsRunning = effects;
         if (redraw)
             DrawFarmLift();
@@ -149,9 +151,32 @@ public sealed partial class PetWindow
         }
     }
 
+    // The fire takes and dies down; only then does the hearth need drawing every frame.
+    private bool StepFarmHearth(double dt)
+    {
+        bool cooking = farmChores.Cooking && farmChores.Phase == FarmChorePhase.Work;
+        if (!cooking && farmHearthFire <= 0) return false;
+        farmHearthFire = Math.Clamp(farmHearthFire + (cooking ? dt * 3 : -dt * 2), 0, 1);
+        farmHearthTime += dt;
+        return true;
+    }
+
+    private void ShowFarmHearth()
+    {
+        if (farmArt == null) return;
+        bool working = farmChores.Phase == FarmChorePhase.Work;
+        farmArt.HearthFire = farmHearthFire;
+        farmArt.HearthTime = farmHearthTime;
+        farmArt.PotDish = farm?.PotDish;
+        farmArt.Stirring = working && farmChores.Kind == FarmChoreKind.Stir;
+        farmArt.PourDish = working && farmChores.Kind == FarmChoreKind.Pour ? farmChores.Dish : null;
+        farmArt.PourAge = working ? farmChores.Time / FarmChores.PourSeconds : 0;
+    }
+
     private void DrawFarmLift()
     {
         if (farmArt == null) return;
+        ShowFarmHearth();
         farmArt.Lift = farmLift.Height;
         farmArt.Dustiness = farmLift.Dust;
         farmArt.ShakeX = farmLift.ShakeX;
@@ -236,6 +261,7 @@ public sealed partial class PetWindow
         if (farmLift.Phase != FarmLiftPhase.Down) farmFraction = farmRestFraction;
         farmLift.Reset();
         farmBird.Reset();
+        farmHearthFire = 0;
         DrawFarmLift();
         UpdateFarmCursor();
         HoverFarm(-1);
@@ -291,6 +317,7 @@ public sealed partial class PetWindow
         farmArt.Scarecrow = farm.Scarecrow;
         farmArt.OrderSign = true;
         farmArt.OrderReady = farm.AnyOrderReady;
+        ShowFarmHearth();
         farmArt.HoverTile = farmHover;
         farmArt.Lift = farmLift.Height;
         farmArt.InvalidateVisual();

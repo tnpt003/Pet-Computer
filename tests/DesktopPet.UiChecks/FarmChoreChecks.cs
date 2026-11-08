@@ -33,6 +33,161 @@ internal static class FarmChoreChecks
         {
             field.Tiles[tile].Stage = FarmStage.Seed; field.Tiles[tile].Crop = FarmCrop.Radish; field.Tiles[tile].GrowsUntil = null;
         }
+        void Hearth()
+        {
+            var field = window.Farm!;
+            var art = Field<PetFarmArt>(window, "farmArt");
+            var area = Field<Area>(window, "bounds");
+            double hearth = (double)Field2("FarmHearthMid");
+            void Ready()
+            {
+                Free(); Clear(field);
+                field.PotDish = null;
+                field.Stock.Clear(); field.Stock["Radish"] = 3;
+                pet.TreatRemaining = 0; pet.TreatDish = null;
+                SetField(window, "treatCooldown", 0.0); SetField(window, "treatSatisfiedRemaining", 0.0);
+                pet.X = area.Left + 10;
+            }
+            void Arrive() { pet.X = window.FarmChoreSpot; Features(Frame * 2); }
+
+            // Cooking asked for by the user, from start to end.
+            Ready();
+            double treats = pet.Activity.Treats;
+            check(window.FarmCook(FarmDish.RadishSoup) && window.FarmChoreNow == FarmChoreKind.Pour && chores.ByUser, "\"Cook\" sends the cat to the hearth");
+            check(field.StockOf(FarmCrop.Radish) == 3 && field.PotDish == null, "Nothing is used up on the way");
+            check(pet.TreatRemaining == 0, "It does not eat yet");
+            check(!window.FarmCook(FarmDish.RadishSoup), "One dish at a time");
+            double halfCat = Field<PetSettings>(window, "settings").Width / 2;
+            check(Math.Abs(window.FarmChoreSpot + halfCat - hearth) > 50, "It stands beside the hearth, not on it");
+            Features(Frame);
+            check(pet.Action == PetAction.Walking && pet.Facing > 0, "It walks there");
+            Arrive();
+            check(window.FarmChorePhaseNow == FarmChorePhase.Work && pet.BatRemaining > 0 && pet.VX == 0, "There it reaches over the pot");
+            Features(FarmChores.PourHit);
+            check(field.PotDish == FarmDish.RadishSoup && field.StockOf(FarmCrop.Radish) == 1 && PetFarm.Load(path).PotDish == FarmDish.RadishSoup, "It pours: the store pays and the pot is saved");
+            Features(FarmChores.PourSeconds - FarmChores.PourHit + Frame);
+            check(window.FarmChoreNow == FarmChoreKind.Stir && chores.ByUser && chores.Phase == FarmChorePhase.Work, "It goes on to stir");
+            Features(1);
+            Farm(Frame * 2);
+            check(pet.StirringRemaining > 0 && pet.Action == PetAction.Sitting && art.Stirring && art.HearthFire > 0 && art.PotDish == FarmDish.RadishSoup, "It stirs over a fire");
+            check(pet.TreatRemaining == 0, "...and has not eaten");
+            Features(FarmChores.StirSeconds - 1 + Frame * 2);
+            check(window.FarmChoreNow == FarmChoreKind.None && pet.StirringRemaining == 0 && pet.TreatRemaining > 0 && pet.TreatDish == FarmDish.RadishSoup, "Done, it eats beside the pot");
+            check(field.PotDish == null && PetFarm.Load(path).PotDish == null, "The pot is empty again");
+            Features(PetModel.TreatDuration + 0.1);
+            check(pet.Activity.Treats == treats + 1, "It counts as the treat the user gave");
+            Farm(1);
+            check(art.HearthFire == 0 && !art.Stirring && art.PotDish == null, "The fire dies down");
+            double fireFree = Field<double>(window, "farmHearthFire");
+            check(fireFree == 0, "...and the hearth is not redrawn any more");
+
+            // Stopped before pouring: nothing lost. In Quiet what the user asked for goes on.
+            Ready();
+            check(window.FarmCook(FarmDish.RadishSoup), "Cooking again");
+            Features(Frame);
+            Call(window, "CancelFeatureActivity");
+            check(window.FarmChoreNow == FarmChoreKind.None && field.StockOf(FarmCrop.Radish) == 3 && field.PotDish == null, "A cancel before pouring costs nothing");
+            Ready();
+            prefs.Quiet = true;
+            check(window.FarmCook(FarmDish.RadishSoup), "The user may cook in Quiet");
+            Call(window, "WatchFarmChores", Frame);
+            Arrive();
+            check(window.FarmChoreNow == FarmChoreKind.Pour && window.FarmChorePhaseNow == FarmChorePhase.Work, "...and the cat goes on in Quiet");
+            prefs.Quiet = false;
+
+            // What stops it, without waking anything or using anything up.
+            void Stops(string what, Action set, Action unset)
+            {
+                Ready();
+                check(window.FarmCook(FarmDish.RadishSoup), $"(cooking, before: {what})");
+                set();
+                Call(window, "WatchFarmChores", Frame);
+                check(window.FarmChoreNow == FarmChoreKind.None && field.StockOf(FarmCrop.Radish) == 3, $"It ends the cooking: {what}");
+                unset();
+            }
+            Stops("asleep", () => { pet.Emotions.Reset(); pet.Action = PetAction.Sleeping; pet.Emotions.EnterSleep(); }, () => { check(pet.Emotions.SleepLocked && pet.Action == PetAction.Sleeping, "A sleeping cat stays asleep"); pet.Emotions.Reset(); pet.Action = PetAction.Idle; });
+            Stops("dragged", () => SetField(window, "dragging", true), () => SetField(window, "dragging", false));
+            Stops("thrown", () => { pet.Action = PetAction.Thrown; pet.Grounded = false; }, () => { pet.Action = PetAction.Idle; pet.Grounded = true; });
+            Stops("Pause", () => SetField(window, "paused", true), () => SetField(window, "paused", false));
+            Stops("on a window", () => pet.LedgeId = 7, () => pet.LedgeId = 0);
+            Stops("field on another monitor", () => SetField(window, "farmWithCat", false), () => SetField(window, "farmWithCat", true));
+
+            // Stopped after pouring: the pot keeps it and the cat comes back, as its own meal.
+            Ready();
+            check(window.FarmCook(FarmDish.RadishSoup), "Cooking, to be stopped");
+            Arrive();
+            Features(FarmChores.PourHit + Frame);
+            check(field.PotDish == FarmDish.RadishSoup, "Poured");
+            SetField(window, "dragging", true);
+            Call(window, "WatchFarmChores", Frame);
+            SetField(window, "dragging", false);
+            check(window.FarmChoreNow == FarmChoreKind.None && field.PotDish == FarmDish.RadishSoup && pet.StirringRemaining == 0, "Picked up: the dish stays in the pot");
+            check(PetFarm.Load(path).PotDish == FarmDish.RadishSoup, "...also after closing the app");
+            check(!window.FarmCook(FarmDish.RadishSoup), "No second dish while the pot is full");
+            prefs.Quiet = true;
+            check(!window.TryFarmVisit(), "The cat does not go back in Quiet");
+            prefs.Quiet = false;
+            SetField(window, "treatCooldown", 5.0);
+            check(!window.TryFarmVisit(), "...nor while it cannot eat");
+            SetField(window, "treatCooldown", 0.0);
+            prefs.FarmHelper = false;
+            pet.X = area.Left + 10;
+            check(window.TryFarmVisit() && window.FarmChoreNow == FarmChoreKind.Stir && !chores.ByUser, "It goes back to the pot, even with the helper off");
+            prefs.FarmHelper = true;
+            Arrive();
+            double attention = pet.Emotions.SecondsWithoutAttention;
+            double treated = pet.Activity.Treats;
+            Features(FarmChores.StirSeconds + Frame);
+            check(pet.TreatRemaining > 0 && field.PotDish == null, "It finishes and eats");
+            Features(PetModel.TreatDuration + 0.1);
+            check(pet.Activity.Treats == treated && pet.Emotions.SecondsWithoutAttention == attention, "Its own meal is not attention and not a treat given");
+            pet.Emotions.Step(pet, 4, -200, 50);
+            check(pet.Emotions.Target == PetEmotion.Happy, "...but the cat is pleased");
+
+            // A second helping of the pot while eating cannot go wrong.
+            Ready();
+            field.PotDish = FarmDish.RadishSoup;
+            SetField(window, "treatCooldown", 0.0);
+            check(window.TryFarmVisit(), "Back to a pot");
+            Arrive();
+            Features(FarmChores.StirSeconds - 0.2);
+            SetField(window, "treatCooldown", 5.0);
+            Features(0.4);
+            check(field.PotDish == FarmDish.RadishSoup && pet.TreatRemaining == 0 && window.FarmChoreNow == FarmChoreKind.None, "It cannot eat yet: the dish stays in the pot");
+            field.PotDish = null;
+
+            // By itself.
+            Ready();
+            chores.ScheduleCook(100);
+            check(!window.TryFarmVisit(), "Not before its time");
+            field.Stock["Radish"] = 6;
+            chores.ScheduleCook(0);
+            prefs.FarmAutoCook = false;
+            check(!window.TryFarmVisit(), "Not with the setting off");
+            prefs.FarmAutoCook = true;
+            prefs.FarmHelper = false;
+            check(!window.TryFarmVisit(), "Not with the helper off");
+            prefs.FarmHelper = true;
+            prefs.Quiet = true;
+            check(!window.TryFarmVisit(), "Not in Quiet");
+            prefs.Quiet = false;
+            field.Stock["Radish"] = 5;
+            check(!window.TryFarmVisit(), "Not when it would break into the four kept");
+            field.Stock["Radish"] = 6;
+            Thirsty(field, 2);
+            check(window.TryFarmVisit() && window.FarmChoreNow == FarmChoreKind.Water, "The field comes first");
+            Free(); Clear(field);
+            chores.ScheduleCook(0);
+            pet.X = area.Left + 10;
+            check(window.TryFarmVisit() && window.FarmChoreNow == FarmChoreKind.Pour && !chores.ByUser && chores.Dish == FarmDish.RadishSoup, "With nothing else to do it goes to cook");
+            check(chores.CookDue >= FarmChores.CookMinSeconds, "...and not again for a while");
+            prefs.Quiet = true;
+            Call(window, "WatchFarmChores", Frame);
+            check(window.FarmChoreNow == FarmChoreKind.None && field.StockOf(FarmCrop.Radish) == 6, "Quiet stops what the cat started itself");
+            prefs.Quiet = false;
+            Ready();
+        }
+        object Field2(string name) => typeof(PetWindow).GetProperty(name, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.GetValue(window)!;
         void Clear(PetFarm field) { for (int i = 0; i < PetFarm.TileCount; i++) { field.Tiles[i].Stage = FarmStage.Wild; field.Tiles[i].Crop = null; field.Tiles[i].GrowsUntil = null; field.Tiles[i].LastCrop = null; } }
 
         SetField(window, "farmPath", path);
@@ -312,6 +467,8 @@ internal static class FarmChoreChecks
             check(Field<double>(window, "farmChoreSoundWait") == gap - 2, "The wait runs down");
             SetField(window, "farmChoreSoundWait", 0.0);
             Free();
+
+            Hearth();
         }
         finally
         {
@@ -319,6 +476,7 @@ internal static class FarmChoreChecks
             Call(window, "CloseFarm");
             prefs.Farm = false;
             prefs.FarmHelper = true;
+            prefs.FarmAutoCook = true;
             prefs.Quiet = quiet;
             SetField(window, "dragging", false);
             SetField(window, "pressPending", false);
@@ -326,7 +484,7 @@ internal static class FarmChoreChecks
             SetField(window, "farmClock", null);
             SetField(window, "farmPath", PetFarm.DefaultPath);
             SetField(window, "farm", null);
-            chores.ScheduleVisit(FarmChores.FirstVisitSeconds); chores.ScheduleBird(FarmChores.BirdMinSeconds);
+            chores.ScheduleVisit(FarmChores.FirstVisitSeconds); chores.ScheduleBird(FarmChores.BirdMinSeconds); chores.ScheduleCook(FarmChores.CookMinSeconds);
             SetContext(window, false, 0); Call(window, "TickContext", 1.1);
             window.Reset();
             if (Directory.Exists(folder)) Directory.Delete(folder, true);
@@ -389,6 +547,37 @@ internal static class FarmChoreChecks
             Cat(m => m.WateringRemaining = 1, back, $"chore-water-{tone}");
             Cat(m => { m.WateringRemaining = 1; m.Facing = -1; }, back, $"chore-water-left-{tone}");
         }
+        // The hearth, and the cat beside it as the two windows place them.
+        foreach (var (back, tone) in new[] { (light, "light"), (dark, "dark") })
+        {
+            Plot(_ => { }, back, $"hearth-idle-{tone}");
+            Plot(a => { a.PourDish = FarmDish.StuffedTomato; a.PourAge = 0.3; a.HearthFire = 0.6; a.HearthTime = 1; }, back, $"hearth-pour-{tone}");
+            Plot(a => { a.PotDish = FarmDish.CarrotStew; a.PourDish = FarmDish.CarrotStew; a.PourAge = 0.7; a.HearthFire = 0.9; a.HearthTime = 1; }, back, $"hearth-splash-{tone}");
+            Plot(a => a.PotDish = FarmDish.RadishSoup, back, $"hearth-waiting-{tone}");
+            foreach (int facing in new[] { 1, -1 })
+            {
+                int width = (int)PetFarmArt.ArtWidth + 120, height = (int)PetFarmArt.ArtHeight;
+                var plot = new PetFarmArt { PotDish = FarmDish.CarrotStew, Stirring = true, HearthFire = 1, HearthTime = 1.4 };
+                for (int i = 0; i < 6; i++) plot.Tiles[i] = new(FarmStage.Young, FarmCrop.Carrot, true, false, 0.5);
+                plot.Measure(new Size(PetFarmArt.ArtWidth, PetFarmArt.ArtHeight)); plot.Arrange(new Rect(0, 0, PetFarmArt.ArtWidth, PetFarmArt.ArtHeight));
+                var model = new PetModel { Action = PetAction.Sitting, Grounded = true, Facing = facing, AnimationTime = 1, ActionTime = 1, StirringRemaining = 4 };
+                var cat = new PetRenderer(model);
+                cat.Measure(new Size(180, 180));
+                cat.Arrange(new Rect(PetFarmArt.HearthCenter - facing * 58 - 56 - PickupAnimation.Padding, PetFarmArt.Floor - 112 - PickupAnimation.Padding, 180, 180));
+                var visual = new DrawingVisual();
+                using (var dc = visual.RenderOpen()) dc.DrawRectangle(new SolidColorBrush(back), null, new Rect(0, 0, width, height));
+                var bitmap = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);
+                bitmap.Render(visual); bitmap.Render(plot); bitmap.Render(cat);
+                Save(bitmap, $"hearth-stir-{(facing > 0 ? "right" : "left")}-{tone}");
+            }
+        }
+        string idle = Plot(_ => { }, dark, null);
+        check(idle != Plot(a => a.HearthFire = 1, dark, null), "The fire is drawn");
+        string ablaze = Plot(a => { a.HearthFire = 1; a.HearthTime = 0.2; }, dark, null);
+        check(ablaze != Plot(a => { a.HearthFire = 1; a.HearthTime = 0.5; }, dark, null), "It flickers");
+        check(idle != Plot(a => a.PotDish = FarmDish.RadishSoup, dark, null), "The pot shows what it holds");
+        check(idle != Plot(a => a.Stirring = true, dark, null), "The stick leaves the pot while the cat holds it");
+        check(idle != Plot(a => { a.PourDish = FarmDish.RadishSoup; a.PourAge = 0.2; }, dark, null), "Ingredients fall in");
         string plain = Plot(_ => { }, dark, null);
         check(plain != Plot(a => { a.BirdTile = 1; a.BirdTime = 1; }, dark, null), "A bird is drawn");
         string resting = Plot(a => { a.BirdTile = 1; a.BirdTime = 1.5; }, dark, null);
@@ -397,7 +586,9 @@ internal static class FarmChoreChecks
         check(Plot(a => { a.BirdTile = 1; a.BirdAir = 1; a.BirdFlying = true; }, dark, null) == plain, "Up and away it has faded out");
         string sitting = Cat(_ => { }, dark, null);
         check(sitting != Cat(m => m.WateringRemaining = 1, dark, null), "The cat holds a watering can");
+        check(sitting != Cat(m => m.StirringRemaining = 3, dark, null), "The cat holds a stick");
         string asleep = Cat(m => { m.Action = PetAction.Sleeping; m.Emotions.EnterSleep(); }, dark, null);
+        check(asleep == Cat(m => { m.StirringRemaining = 3; m.Action = PetAction.Sleeping; m.Emotions.EnterSleep(); }, dark, null), "A sleeping cat never holds the stick");
         check(asleep == Cat(m => { m.WateringRemaining = 1; m.Action = PetAction.Sleeping; m.Emotions.EnterSleep(); }, dark, null), "A sleeping cat never holds the can");
     }
 }

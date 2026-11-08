@@ -110,6 +110,9 @@ public sealed class PetModel
     // The cat watering a tile (PetWindow.FarmChores.cs): seconds left; the renderer draws the can.
     public const double WaterDuration = 2;
     public double WateringRemaining;
+    // The cat stirring the pot on the hearth: seconds left; the renderer draws the stick.
+    public const double StirDuration = 6;
+    public double StirringRemaining;
     public double BatRemaining;
     public double PlayCrouch;
     // Battle Mode, presentation only (the window copies them from BattleSim each frame):

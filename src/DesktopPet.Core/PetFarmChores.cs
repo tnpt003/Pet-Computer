@@ -2,7 +2,7 @@ using System;
 
 namespace DesktopPet;
 
-public enum FarmChoreKind { None, Water, Harvest, Bird, Till, Sow }
+public enum FarmChoreKind { None, Water, Harvest, Bird, Till, Sow, Pour, Stir }
 public enum FarmChorePhase { None, Notice, Walk, Work }
 public enum FarmBirdPhase { Away, Landing, Perched, Leaving }
 
@@ -22,6 +22,9 @@ public sealed class FarmChores
     public const double HarvestSeconds = 0.9, HarvestHit = 0.3;
     public const double PounceSeconds = 1, PounceHit = 0.5;
     public const double TillSeconds = 1.2, TillHit = 0.6, SowSeconds = 1, SowHit = 0.5;
+    // At the hearth (docs/FARM-GAME.md). The walk may be longer: the hearth can be a whole screen away.
+    public const double PourSeconds = 1.2, PourHit = 0.6, StirSeconds = PetModel.StirDuration, CookWalkLimitSeconds = 30;
+    public const double CookMinSeconds = 600, CookMaxSeconds = 900;
     // Trips come often: the cat's own sounds are spaced out. A click by the user always sounds.
     public const double SoundGapSeconds = 60;
 
@@ -34,14 +37,20 @@ public sealed class FarmChores
     public double Time { get; private set; }
     public double VisitDue { get; private set; } = FirstVisitSeconds;
     public double BirdDue { get; private set; } = BirdMinSeconds;
+    // Until the cat may cook by itself again.
+    public double CookDue { get; private set; } = CookMinSeconds;
+    // What is being poured, and whether the user asked for it (then Quiet and the like do not stop it).
+    public FarmDish Dish { get; private set; }
+    public bool ByUser { get; private set; }
     private bool done;
     private int tripsInRow;
 
     public bool Active => Kind != FarmChoreKind.None;
-    public bool WalkedTooLong => Phase == FarmChorePhase.Walk && Time >= WalkLimitSeconds;
+    public bool Cooking => Kind is FarmChoreKind.Pour or FarmChoreKind.Stir;
+    public bool WalkedTooLong => Phase == FarmChorePhase.Walk && Time >= (Cooking ? CookWalkLimitSeconds : WalkLimitSeconds);
     public bool Finished => Phase == FarmChorePhase.Work && Time >= WorkSeconds;
-    private double WorkSeconds => Kind switch { FarmChoreKind.Water => WaterSeconds, FarmChoreKind.Harvest => HarvestSeconds, FarmChoreKind.Till => TillSeconds, FarmChoreKind.Sow => SowSeconds, _ => PounceSeconds };
-    public double HitTime => Kind switch { FarmChoreKind.Water => WaterHit, FarmChoreKind.Harvest => HarvestHit, FarmChoreKind.Till => TillHit, FarmChoreKind.Sow => SowHit, _ => PounceHit };
+    private double WorkSeconds => Kind switch { FarmChoreKind.Water => WaterSeconds, FarmChoreKind.Harvest => HarvestSeconds, FarmChoreKind.Till => TillSeconds, FarmChoreKind.Sow => SowSeconds, FarmChoreKind.Pour => PourSeconds, FarmChoreKind.Stir => StirSeconds, _ => PounceSeconds };
+    public double HitTime => Kind switch { FarmChoreKind.Water => WaterHit, FarmChoreKind.Harvest => HarvestHit, FarmChoreKind.Till => TillHit, FarmChoreKind.Sow => SowHit, FarmChoreKind.Pour => PourHit, FarmChoreKind.Stir => StirSeconds, _ => PounceHit };
 
     // The wait after a look for work. It counts only while no trip is on, so a rest begins when the trip ends.
     public void ScheduleAfterLook(bool went, Random random)
@@ -61,6 +70,9 @@ public sealed class FarmChores
     public static double NextBird(Random random, bool scarecrow = false) => (BirdMinSeconds + random.NextDouble() * (BirdMaxSeconds - BirdMinSeconds)) * (scarecrow ? ScarecrowBirdFactor : 1);
     public void ScheduleVisit(double seconds) => VisitDue = Math.Max(0, seconds);
     public void ScheduleBird(double seconds) => BirdDue = Math.Max(0, seconds);
+    public void ScheduleCook(double seconds) => CookDue = Math.Max(0, seconds);
+    public static double NextCook(Random random) => CookMinSeconds + random.NextDouble() * (CookMaxSeconds - CookMinSeconds);
+    public void CountDownCook(double dt) => CookDue = Math.Max(0, CookDue - dt);
 
     // True on the frame the next trip is due: the caller decides, and always calls ScheduleVisit.
     public bool CountDownVisit(double dt) => (VisitDue = Math.Max(0, VisitDue - dt)) <= 0;
@@ -107,6 +119,24 @@ public sealed class FarmChores
         Phase = kind == FarmChoreKind.Bird ? FarmChorePhase.Notice : FarmChorePhase.Walk;
         Time = 0;
         done = false;
+        ByUser = false;
+    }
+
+    // To the hearth: to pour this dish in, or to stir what the pot already holds.
+    public void BeginCook(FarmChoreKind kind, FarmDish dish, double spot, bool byUser)
+    {
+        Begin(kind, -1, spot);
+        Dish = dish;
+        ByUser = byUser;
+    }
+
+    // Poured: on to the stirring, without leaving the hearth.
+    public void StartStirring()
+    {
+        Kind = FarmChoreKind.Stir;
+        Phase = FarmChorePhase.Work;
+        Time = 0;
+        done = false;
     }
 
     public void Arrive()
@@ -123,6 +153,7 @@ public sealed class FarmChores
         Tile = -1;
         Time = 0;
         done = false;
+        ByUser = false;
     }
 
     // True on the one frame the work lands on the tile.

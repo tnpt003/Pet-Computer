@@ -22,7 +22,7 @@ public sealed class PetSettingsForm
     public ComboBox Trophy = null!;
     public string[] TrophyIds = Array.Empty<string>();
     public Border KeepsakeSection = null!;
-    public CheckBox HolidayAccessories = null!, ClimbWindows = null!, Weather = null!, Farm = null!, FarmHelper = null!, FarmResow = null!, ShowTrophies = null!, Talks = null!, Autostart = null!, BreakReminders = null!, Sounds = null!, InteractionSounds = null!, EmotionSounds = null!, SleepSounds = null!, AutoUpdate = null!;
+    public CheckBox HolidayAccessories = null!, ClimbWindows = null!, Weather = null!, Farm = null!, FarmHelper = null!, FarmResow = null!, FarmAutoCook = null!, ShowTrophies = null!, Talks = null!, Autostart = null!, BreakReminders = null!, Sounds = null!, InteractionSounds = null!, EmotionSounds = null!, SleepSounds = null!, AutoUpdate = null!;
     public Slider Volume = null!;
     public Button Save = null!, Cancel = null!, Tuning = null!, Forget = null!, Preview = null!, CheckUpdates = null!, Uninstall = null!;
     public PetRenderer PetPreview = null!;
@@ -123,6 +123,8 @@ public sealed partial class PetWindow
             ToolTip = L("Mèo tự ra ruộng tưới hoặc gặt từng ô, nghỉ giữa các chuyến và đuổi chim. Không làm khi đang ngủ, bị kéo hay ở chế độ Yên lặng.", "The pet goes to the field to water or harvest tile by tile, resting between trips, and chases birds away. It does nothing while asleep, held or in Quiet mode.") };
         form.FarmResow = new CheckBox { Content = L("Mèo tự gieo lại", "Pet sows again"), IsChecked = preferences.FarmResow,
             ToolTip = L("Ô vừa gặt được mèo cào đất và gieo lại đúng cây đó, trả xu nông trại như thường. Ô chưa từng trồng vẫn là việc của bạn.", "A tile just harvested is tilled and sown again with the same crop, paying farm coins as usual. Tiles that never grew anything stay yours.") };
+        form.FarmAutoCook = new CheckBox { Content = L("Mèo tự nấu ăn", "Pet cooks by itself"), IsChecked = preferences.FarmAutoCook,
+            ToolTip = L("Thỉnh thoảng mèo ra bếp nấu một món từ kho rồi ăn, luôn chừa lại ít nhất 4 mỗi nguyên liệu. Tắt \"Mèo làm vườn cùng\" thì mèo cũng thôi tự nấu.", "Now and then the pet cooks a dish from the store and eats it, always leaving at least 4 of each ingredient. Turning off \"Pet helps in the field\" stops this too.") };
         form.ShowTrophies = new CheckBox { Content = L("Góc trưng bày kỷ vật", "Keepsake display corner"), IsChecked = preferences.ShowTrophies,
             ToolTip = L("Một kỷ vật Viễn chinh đứng trên sàn màn hình: cầm kéo, ném được; mèo thỉnh thoảng ra ngắm hoặc đẩy nó.",
                         "One Expedition keepsake stands on the screen's floor: pick it up, throw it; the cat looks at it or shoves it now and then.") };
@@ -147,6 +149,7 @@ public sealed partial class PetWindow
                 form.Farm,
                 form.FarmHelper,
                 form.FarmResow,
+                form.FarmAutoCook,
                 form.Tuning),
             form.KeepsakeSection);
         // Gentle idle motion (breathing, tail, blinks) while the window is open.
@@ -183,6 +186,7 @@ public sealed partial class PetWindow
             preferences.Farm = form.Farm.IsChecked == true;
             preferences.FarmHelper = form.FarmHelper.IsChecked == true;
             preferences.FarmResow = form.FarmResow.IsChecked == true;
+            preferences.FarmAutoCook = form.FarmAutoCook.IsChecked == true;
             preferences.ShowTrophies = form.ShowTrophies.IsChecked == true;
             if (!preferences.ShowTrophies) StopAdmiring();
             if (form.TrophyIds.Length > 0)

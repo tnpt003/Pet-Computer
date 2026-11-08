@@ -16,7 +16,10 @@ public enum FarmEffect { None, Till, Plant, Water, Harvest, Grow }
 public sealed class PetFarmArt : FrameworkElement
 {
     public const double TileWidth = 54, Pad = 10, Side = 40, SoilHeight = 28, PlantRoom = 72, LiftRoom = 54, BottomRoom = 6;
-    public const double PlotWidth = TileWidth * PetFarm.TileCount + Pad * 2, ArtWidth = PlotWidth + Side * 2;
+    // The hearth stands to the right of the plot and moves with it; the pond will join them.
+    public const double HearthWidth = 100, HearthCenter = Side + PlotWidth + 56;
+    public const double PlotWidth = TileWidth * PetFarm.TileCount + Pad * 2, ZoneWidth = PlotWidth + HearthWidth, ArtWidth = ZoneWidth + Side * 2;
+    private const double PlotMid = Side + PlotWidth / 2, ZoneMid = Side + ZoneWidth / 2;
     public const double ArtHeight = SoilHeight + PlantRoom + LiftRoom + BottomRoom, Floor = ArtHeight - BottomRoom, SoilTop = Floor - SoilHeight;
     private const double GroundY = SoilTop + 8, BadgeGap = 13, FenceHeight = 27, ScarecrowX = Side + PlotWidth - 4;
     private const int BurstCrumbs = 16, ShedCrumbs = 24, LandingCrumbs = 36;
@@ -98,6 +101,14 @@ public sealed class PetFarmArt : FrameworkElement
     public bool OrderSign { get; set; }
     public bool OrderReady { get; set; }
     public double MailTime { get; set; } = -1;
+    // The hearth (docs/FARM-GAME.md): the fire from 0, embers, to 1, ablaze; what the pot holds; whether
+    // the cat holds the stick (it has left the pot); what is being poured and how far along, 0 to 1.
+    public double HearthFire { get; set; }
+    public double HearthTime { get; set; }
+    public FarmDish? PotDish { get; set; }
+    public bool Stirring { get; set; }
+    public FarmDish? PourDish { get; set; }
+    public double PourAge { get; set; }
 
     public PetFarmArt() { Width = ArtWidth; Height = ArtHeight; }
 
@@ -128,11 +139,11 @@ public sealed class PetFarmArt : FrameworkElement
     {
         double air = Math.Max(0, Lift);
         if (air > 0.5)
-            dc.DrawEllipse(Shadow, null, new Point(ArtWidth / 2, Floor + 1), PlotWidth / 2 * (1 - air / 400), 5 + air / 12);
+            dc.DrawEllipse(Shadow, null, new Point(ZoneMid, Floor + 1), ZoneWidth / 2 * (1 - air / 400), 5 + air / 12);
 
         var plot = Matrix.Identity;
-        plot.ScaleAt(1 + 0.04 * Squash, 1 - 0.12 * Squash, ArtWidth / 2, Floor);
-        plot.RotateAt(Tilt, ArtWidth / 2, Floor);
+        plot.ScaleAt(1 + 0.04 * Squash, 1 - 0.12 * Squash, ZoneMid, Floor);
+        plot.RotateAt(Tilt, ZoneMid, Floor);
         plot.Translate(ShakeX, -air);
         dc.PushTransform(new MatrixTransform(plot));
         dc.DrawRectangle(Hit, null, new Rect(Side, SoilTop, PlotWidth, SoilHeight)); // The bank takes clicks.
@@ -142,6 +153,7 @@ public sealed class PetFarmArt : FrameworkElement
             if (top > 0) dc.DrawRectangle(Hit, null, new Rect(TileLeft(i) + 3, GroundY - top, TileWidth - 6, top));
         }
         if (air > 0.5) DrawUnderside(dc, air);
+        DrawHearthGround(dc);
         DrawBank(dc);
         if (Scarecrow)
         {
@@ -150,6 +162,7 @@ public sealed class PetFarmArt : FrameworkElement
             dc.Pop();
         }
         if (OrderSign) DrawOrderSign(dc);
+        DrawHearth(dc);
         for (int i = 0; i < Tiles.Length; i++) DrawBed(dc, i);
         for (int i = 0; i < Tiles.Length; i++) DrawCrop(dc, i);
         for (int i = 0; i < Tiles.Length; i++) DrawEffect(dc, i);
@@ -190,7 +203,7 @@ public sealed class PetFarmArt : FrameworkElement
             double born = 0.08 + Noise(i, 1) * 0.95, age = Shed - born;
             if (age < 0) continue;
             int side = i % 2 == 0 ? -1 : 1;
-            double x = ArtWidth / 2 + side * PlotWidth / 2 * (0.35 + 0.65 * Noise(i, 2)) + side * (12 + Noise(i, 3) * 40) * age;
+            double x = PlotMid + side * PlotWidth / 2 * (0.35 + 0.65 * Noise(i, 2)) + side * (12 + Noise(i, 3) * 40) * age;
             double y = SoilTop - FarmLift.RiseHeightAt(born) - (70 + Noise(i, 4) * 100) * age + 215 * age * age;
             DrawCrumb(dc, i, x, y);
         }
@@ -282,6 +295,122 @@ public sealed class PetFarmArt : FrameworkElement
             dc.DrawGeometry(tile.NeedsWater ? Water : PetUi.Game.Gold, InkThin, tile.NeedsWater ? WaterDrop : Star);
             dc.Pop();
         }
+    }
+
+    private const double PotRim = -50;
+    private static readonly Brush Stone = PetUi.Hex("#B9B2A6"), StoneDeep = PetUi.Hex("#968F84"), Iron = PetUi.Hex("#585A68"), IronHigh = PetUi.Hex("#7D8092"), PotDark = PetUi.Hex("#2E2A2C");
+    private static readonly Brush Flame = PetUi.Hex("#F0913A"), FlameCore = PetUi.Hex("#FFD36B"), Ember = PetUi.Hex("#E2603A");
+    private static readonly Pen SpoonInk = PetUi.FrozenPen(PetUi.ArtInk, 5.2), SpoonWood = PetUi.FrozenPen(Stake, 2.8);
+    private static readonly Geometry PotBody = Parse("M-25,-50 L25,-50 C27,-34 21,-21 12,-21 L-12,-21 C-21,-21 -27,-34 -25,-50 Z");
+    private static readonly Geometry FlameTongue = Parse("M0,0 C-9,-3 -10,-12 -5,-17 C-4,-13 -2,-12 -1,-13 C-3,-19 0,-25 4,-28 C4,-22 10,-17 9,-9 C9,-4 5,0 0,0 Z");
+
+    // Packed earth running out from the plot, for the hearth to stand on. Behind the bank's end.
+    private static void DrawHearthGround(DrawingContext dc)
+    {
+        double left = Side + PlotWidth - 14, right = HearthCenter + 41;
+        dc.DrawRoundedRectangle(Earth, Ink, new Rect(left, Floor - 9, right - left, 9), 4, 4);
+        dc.DrawRoundedRectangle(PetUi.Mint, InkThin, new Rect(left, Floor - 11, right - left, 4), 2, 2);
+    }
+
+    private static Brush Broth(FarmDish dish) => dish switch
+    {
+        FarmDish.RadishSoup => PinkBroth,
+        FarmDish.CarrotStew => StewBroth,
+        FarmDish.StuffedTomato => TomatoRed,
+        _ => Pumpkin
+    };
+
+    private static Brush CropColor(FarmCrop crop) => crop switch
+    {
+        FarmCrop.Radish => RadishRed,
+        FarmCrop.Carrot => Orange,
+        FarmCrop.Tomato => TomatoRed,
+        _ => Pumpkin
+    };
+
+    // Stones, logs, the fire under an iron pot; the stick rests in it while the cat is not stirring.
+    private void DrawHearth(DrawingContext dc)
+    {
+        dc.PushTransform(new TranslateTransform(HearthCenter, Floor - 8));
+        double fire = Math.Clamp(HearthFire, 0, 1);
+        dc.DrawRoundedRectangle(Stake, InkThin, new Rect(-18, -6, 36, 5), 2, 2);
+        foreach (double x in new[] { -13.0, -3.0, 9.0 }) dc.DrawEllipse(Ember, null, new Point(x, -7), 3.2, 2);
+        if (fire > 0) DrawFire(dc, fire);
+        foreach (int side in new[] { -1, 1 })
+        {
+            dc.DrawRoundedRectangle(StoneDeep, InkThin, new Rect(side * 25 - 8, -22, 16, 22), 5, 5);
+            dc.DrawEllipse(Stone, InkThin, new Point(side * 25, -6), 11, 6.5);
+        }
+
+        dc.DrawEllipse(PotDish is FarmDish inPot ? Broth(inPot) : PotDark, InkThin, new Point(0, PotRim), 24, 5.5);
+        if (!Stirring)
+        {
+            var handle = new Point(32, -86);
+            dc.DrawLine(SpoonInk, new Point(6, PotRim - 2), handle);
+            dc.DrawLine(SpoonWood, new Point(6, PotRim - 2), handle);
+        }
+        foreach (int side in new[] { -1, 1 }) dc.DrawEllipse(null, InkThin, new Point(side * 28, -42), 4.5, 5.5);
+        dc.DrawGeometry(Iron, Ink, PotBody);
+        dc.DrawRoundedRectangle(IronHigh, InkThin, new Rect(-27, PotRim - 1, 54, 5), 2.5, 2.5);
+        dc.DrawEllipse(IronHigh, null, new Point(-13, -35), 3, 7);
+
+        if (fire > 0.3 && PotDish is FarmDish cooking)
+        {
+            DrawBubbles(dc, cooking);
+            dc.PushOpacity(Math.Clamp((fire - 0.3) / 0.5, 0, 1));
+            dc.PushTransform(new TranslateTransform(0, PotRim + 20));
+            DrawSteam(dc, HearthTime);
+            dc.Pop(); dc.Pop();
+        }
+        if (PourDish is FarmDish poured) DrawPour(dc, poured);
+        dc.Pop();
+    }
+
+    private void DrawFire(DrawingContext dc, double fire)
+    {
+        for (int i = -1; i <= 1; i++)
+        {
+            double beat = 0.82 + 0.18 * Math.Sin(HearthTime * (11 + i * 2.5) + i * 1.7);
+            dc.PushTransform(new TranslateTransform(i * 11, -3));
+            dc.PushTransform(new ScaleTransform(fire * (i == 0 ? 1 : 0.8), fire * beat * (i == 0 ? 1 : 0.72)));
+            dc.DrawGeometry(Flame, InkThin, FlameTongue);
+            dc.PushTransform(new ScaleTransform(0.52, 0.55));
+            dc.DrawGeometry(FlameCore, null, FlameTongue);
+            dc.Pop(); dc.Pop(); dc.Pop();
+        }
+    }
+
+    private void DrawBubbles(DrawingContext dc, FarmDish dish)
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            double k = (HearthTime * 1.3 + i * 0.27) % 1, size = 1.4 + k * 2.4;
+            dc.PushOpacity(1 - k * k);
+            dc.DrawEllipse(Broth(dish), InkThin, new Point(-15 + i * 10, PotRim - 2 - k * 3), size, size);
+            dc.Pop();
+        }
+    }
+
+    // Pieces of the ingredients dropping in, then a splash when they land.
+    private void DrawPour(DrawingContext dc, FarmDish dish)
+    {
+        double hit = FarmChores.PourHit / FarmChores.PourSeconds, age = Math.Clamp(PourAge, 0, 1);
+        var parts = PetFarm.Recipe(dish);
+        if (age < hit)
+        {
+            double k = age / hit;
+            for (int i = 0; i < 3; i++)
+                dc.DrawEllipse(CropColor(parts[i % parts.Length].Crop), InkThin, new Point(-10 + i * 10, PotRim - 34 + k * k * 32 - i % 2 * 5), 5, 5);
+            return;
+        }
+        double splash = (age - hit) / (1 - hit);
+        dc.PushOpacity(1 - splash);
+        for (int i = 0; i < 6; i++)
+        {
+            double side = (i - 2.5) / 2.5;
+            dc.DrawEllipse(Broth(dish), InkThin, new Point(side * (8 + splash * 18), PotRim - 3 - Math.Sin(splash * Math.PI) * (16 + (i % 3) * 5) + splash * 8), 2.4, 2.4);
+        }
+        dc.Pop();
     }
 
     // A small closed fence with a padlock, standing on (0,0): this tile is still to be bought.
@@ -571,7 +700,7 @@ public sealed class PetFarmArt : FrameworkElement
         dc.PushOpacity(1 - k);
         for (int side = -1; side <= 1; side += 2)
             for (int i = 0; i < 5; i++)
-                dc.DrawEllipse(Dust, null, new Point(ArtWidth / 2 + side * (PlotWidth / 2 + (i - 2) * 8 + k * 16), Floor - 3 - k * (5 + i * 5)), 5 + k * 8, 4 + k * 5);
+                dc.DrawEllipse(Dust, null, new Point(PlotMid + side * (PlotWidth / 2 + (i - 2) * 8 + k * 16), Floor - 3 - k * (5 + i * 5)), 5 + k * 8, 4 + k * 5);
         dc.Pop();
     }
 }

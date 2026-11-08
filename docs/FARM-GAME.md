@@ -20,7 +20,7 @@ Mục tiêu: mèo không còn chỉ đi qua đi lại mà có việc liên tục
 | 4. Gian hàng lưu động | Tự xuất hiện như cổng, thay cho Đơn hàng | Xong (4b9178c), còn test tay |
 | 5. Thời tiết gắn nông trại | Mỗi loại có tác dụng, chỉ có lợi | Xong (6e225b5), còn test tay |
 
-Người dùng đã chốt: thời tiết lấy wallpaper làm khí hậu chính và xen kẽ loại khác mỗi 10–20 phút (thay luật "chỉ đổi khi đổi nền", áp dụng ở Mốc 5); mèo tự cày và gieo lại; hồ và bếp gộp chung mảnh đất thành một khu, di chuyển cùng nhau. Luật từng mốc viết và duyệt trước khi code.
+Người dùng đã chốt: thời tiết lấy wallpaper làm khí hậu chính và xen kẽ loại khác mỗi 10–20 phút (thay luật "chỉ đổi khi đổi nền", áp dụng ở Mốc 5); mèo tự cày và gieo lại. Hồ và bếp lúc đầu gộp chung mảnh đất, đã tách thành vùng riêng ngày 09/11 (xem Luật ba vùng đất). Luật từng mốc viết và duyệt trước khi code.
 
 ### Luật Mốc 1 (thay nhịp và luật "không cày, không gieo" của 1.5.1 Mốc 4)
 
@@ -29,6 +29,14 @@ Người dùng đã chốt: thời tiết lấy wallpaper làm khí hậu chính
 - Mỗi ô nhớ cây vừa gặt (kể cả tự tay gặt). Mèo chỉ cày và gieo lại trên ô đó, đúng cây đó, trả xu như thường. Ô chưa từng trồng không đụng tới. Bạn tự tay cày thì ô thành việc của bạn, mèo không gieo. Thiếu xu hoặc cây bị khóa thì mèo bỏ qua ô.
 - Công tắc "Mèo tự gieo lại" trong Cài đặt → Thói quen, mặc định bật; tắt thì mèo chỉ gặt và tưới. Tắt "Mèo làm vườn cùng" thì tắt cả nhịp này.
 - Tiếng khi mèo tự làm cách nhau tối thiểu 60 giây; bấm tay vẫn có tiếng. Điều kiện chặn và hủy chuyến như 1.5.1 Mốc 4.
+
+### Luật ba vùng đất (duyệt 09/11, thay các câu "nhấc và di chuyển cùng mảnh đất" của Mốc 2, Mốc 3)
+
+- Ruộng, Bếp, Hồ là ba vùng đất riêng, mỗi vùng có vị trí và lần nhấc riêng, cùng một màn hình. Bếp và Hồ có bờ đất và viền cỏ như ruộng. Vị trí lưu trong `farm.json` (`HearthFractionX`, `PondFractionX`), vẫn phiên bản 3; lần đầu đứng ngay bên phải ruộng theo thứ tự cũ.
+- Chuột phải: Bếp có "Nấu ăn", "Di chuyển bếp"; Hồ có "Câu cá", "Di chuyển hồ"; menu Ruộng giữ nguyên và chỉ nhấc ruộng. Chuyển động, hiệu ứng và tiếng y như ruộng: rung, đất vụn, bay lên, kéo ngang theo sàn, "Thả xuống đây" hoặc "Hủy", đáp có đất bắn.
+- Mỗi lần chỉ một vùng ở trên không; vùng khác đang bay thì mục di chuyển mờ. Thả trúng vùng khác thì vùng đó trượt trên không tới khoảng trống gần nhất rồi mới đáp, cách nhau 6 DIP.
+- Đang nhấc vùng nào thì chỉ hủy chuyến tới vùng đó. Nhấc bếp: nồi vẫn giữ món, không nấu được cho tới khi đáp. Nhấc hồ: không câu được. Nhấc ruộng: mèo vẫn nấu và câu.
+- Xe hàng đứng ở khoảng trống gần bên trái ruộng nhất, không đứng lên vùng đất nào. Xe không đến khi có vùng đang nhấc.
 
 ### Luật Mốc 2 (duyệt 08/11, thay luật "mèo ăn ngay" của 1.5.1 Mốc 6 khi mèo tới được bếp)
 

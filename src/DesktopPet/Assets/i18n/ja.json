@@ -17,6 +17,8 @@
   "Pet helps in the field": "ペットも畑仕事を手伝う",
   "The pet goes to the field to water or harvest tile by tile, resting between trips, and chases birds away. It does nothing while asleep, held or in Quiet mode.": "ペットが畑へ行き、休みながら1マスずつ水やりや収穫をしたり、鳥を追い払ったりします。寝ているとき、持ち上げられているとき、静かモードのときは何もしません。",
   "Pet sows again": "ペットが種をまき直す",
+  "Move the hearth": "かまどを移動",
+  "Move the pond": "池を移動",
   "Sunny: crops grow faster": "晴れ：作物が早く育ちます",
   "Rain: the field waters itself": "雨：畑に自動で水がまかれます",
   "Snow: carp bite more often": "雪：コイが釣れやすくなります",

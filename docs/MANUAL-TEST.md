@@ -1362,3 +1362,18 @@ Có thể đặt biến môi trường `PET_WEATHER_PROBE=Snow` (hoặc Rain, Su
 - [ ] Tuyết: câu ra cá chép nhiều hơn. Đêm: phao cắn nhanh, sau cấp 6 cá vàng nhiều hơn. Hoàng hôn: thỉnh thoảng nhãn "+2", kho tăng 2. Phấn hoa: XP gặt tăng. Thử cả "Gặt tất cả" và mèo tự gặt
 - [ ] Ruộng khác màn hình với mèo, tắt "Thời tiết quanh mèo", Quiet, Pause, toàn màn hình: không có tác dụng và không có nhãn
 - [ ] Mèo và thời tiết vẫn mượt khi các loại khác mưa hiện lâu (FPS mới được đo với mưa)
+
+## Nông trại — Ba vùng đất riêng (09/11)
+
+Thay các mục "nhấc và thả cùng mảnh đất" của Mốc 2 và Mốc 3.
+
+- [ ] Sau khi cập nhật, bếp và hồ đứng ngay bên phải ruộng, có bờ đất và viền cỏ giống ruộng, nhìn rõ trên nền sáng và tối
+- [ ] Chuột phải bếp: "Nấu ăn", "Di chuyển bếp". Chuột phải hồ: "Câu cá", "Di chuyển hồ". Chuột phải ruộng: menu như cũ
+- [ ] Di chuyển bếp, hồ: rung, đất vụn, bay lên, kéo ngang theo sàn, "Thả xuống đây" hoặc "Hủy", đáp "đùng" có đất bắn, cùng tiếng như ruộng. So trực tiếp với ruộng xem có giống không
+- [ ] Mỗi lần chỉ nhấc được một vùng, các mục di chuyển khác mờ
+- [ ] Thả trúng vùng khác: vùng đó tự trượt tới khoảng trống rồi đáp, không chồng lên nhau
+- [ ] Đóng mở lại app: ba vùng ở đúng chỗ đã để
+- [ ] Sát hai mép màn hình và màn hình hẹp: không vùng nào tràn ra ngoài
+- [ ] Nhấc bếp giữa lúc nấu: mèo dừng, món đã đổ vẫn còn. Nhấc hồ giữa lúc câu: mèo dừng, không mất gì. Nhấc ruộng: mèo vẫn nấu và câu
+- [ ] Để bếp và hồ ở xa ruộng: mèo đi tới đúng chỗ, que khuấy và dây câu khớp nồi và mặt hồ ở cả hai phía
+- [ ] Xe hàng không đứng lên vùng đất nào, kể cả khi bếp hoặc hồ để sát bên trái ruộng

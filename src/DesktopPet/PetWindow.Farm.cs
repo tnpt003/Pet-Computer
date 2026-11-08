@@ -33,6 +33,7 @@ public sealed partial class PetWindow
     private Area farmArea;
     private double farmScale = 1, farmFraction, farmRestFraction, farmFallFrom, farmFallTo, farmGrab, farmGainLeft;
     private double farmHearthFire, farmHearthTime;
+    private double farmPondTime;
     private bool farmPondBusy;
     private double farmSkyElapsed, farmRainSeconds, farmSunUnsaved, farmGainTotal = FarmGainSeconds;
     private string? farmMonitor;
@@ -42,7 +43,7 @@ public sealed partial class PetWindow
     private string? farmChipShown;
 
     private DateTime FarmNow => farmClock?.Invoke() ?? DateTime.UtcNow;
-    private double FarmFreeWidth => Math.Max(0, farmArea.Right - farmArea.Left - PetFarmArt.ZoneWidth);
+    private double FarmFreeWidth => Math.Max(0, farmArea.Right - farmArea.Left - PetFarmArt.PlotWidth);
     private double FarmPlotLeft => farmArea.Left + farmFraction * FarmFreeWidth;
 
     public bool FarmVisible => farmWindow?.IsVisible == true;
@@ -82,6 +83,7 @@ public sealed partial class PetWindow
         if (dt > 0) StepFarm(dt);
         if (dt > 0) StepFarmStall(dt);
         if (farmDragging) FollowFarmDrag();
+        FollowFarmPatchDrags();
         PositionFarm();
         PlaceFarmCart();
     }
@@ -141,8 +143,8 @@ public sealed partial class PetWindow
         }
         bool bird = farmBird.Present;
         StepFarmBird(dt);
-        bool hearth = StepFarmHearth(dt);
-        bool redraw = lifted || farmLift.Busy || farmEffectsRunning || bird || hearth;
+        StepFarmPatches(dt);
+        bool redraw = lifted || farmLift.Busy || farmEffectsRunning || bird;
         farmEffectsRunning = effects;
         if (redraw)
             DrawFarmLift();
@@ -155,40 +157,9 @@ public sealed partial class PetWindow
         }
     }
 
-    // The fire takes and dies down; only then does the hearth need drawing every frame.
-    private bool StepFarmHearth(double dt)
-    {
-        bool working = farmChores.Phase == FarmChorePhase.Work, cooking = farmChores.Cooking && working;
-        bool fishing = working && farmChores.Kind == FarmChoreKind.Fishing, pondWas = farmPondBusy;
-        farmPondBusy = fishing;
-        if (!cooking && !fishing && !pondWas && farmHearthFire <= 0) return false;
-        farmHearthFire = Math.Clamp(farmHearthFire + (cooking ? dt * 3 : -dt * 2), 0, 1);
-        farmHearthTime += dt;
-        return true;
-    }
-
-    private void ShowFarmHearth()
-    {
-        if (farmArt == null) return;
-        bool working = farmChores.Phase == FarmChorePhase.Work;
-        farmArt.HearthFire = farmHearthFire;
-        farmArt.HearthTime = farmHearthTime;
-        farmArt.PotDish = farm?.PotDish;
-        farmArt.Stirring = working && farmChores.Kind == FarmChoreKind.Stir;
-        farmArt.PourDish = working && farmChores.Kind == FarmChoreKind.Pour ? farmChores.Dish : null;
-        farmArt.PourAge = working ? farmChores.Time / FarmChores.PourSeconds : 0;
-        bool fishing = working && farmChores.Kind == FarmChoreKind.Fishing;
-        double sinceBite = fishing ? farmChores.Time - farmChores.BiteAt : -1;
-        farmArt.Fishing = fishing;
-        farmArt.FishSide = farmChores.FishSide;
-        farmArt.CaughtFish = sinceBite >= 0 ? farmChores.Catch : null;
-        farmArt.CaughtAge = Math.Clamp(sinceBite / (FarmChores.ReelSeconds + FarmChores.FishShowSeconds), 0, 1);
-    }
-
     private void DrawFarmLift()
     {
         if (farmArt == null) return;
-        ShowFarmHearth();
         farmArt.Lift = farmLift.Height;
         farmArt.Dustiness = farmLift.Dust;
         farmArt.ShakeX = farmLift.ShakeX;
@@ -230,6 +201,7 @@ public sealed partial class PetWindow
         art.MouseLeftButtonUp += (_, e) => { e.Handled = true; ReleaseFarm(PetFarmArt.TileAt(e.GetPosition(art).X)); };
         art.LostMouseCapture += (_, _) => farmDragging = false;
         InitializeFarmMenu(art);
+        CreateFarmPatchWindows();
         farmWindow.Closed += (_, _) =>
         {
             farmWindow = null; farmArt = null; farmSurface = null; farmChip = farmGain = null; farmChipText = farmGainText = null;
@@ -251,10 +223,12 @@ public sealed partial class PetWindow
         farmMonitor = farm.Monitor ?? CurrentMonitor().DeviceName;
         farmFraction = farmRestFraction = farm.FractionX ?? PetFarm.FirstFraction;
         RefreshFarmArea();
+        SettleFarmPatches();
         farmChecked = FarmNow;
         farm.Advance(farmChecked);
         RefreshFarmArt();
         farmWindow.Show();
+        ShowFarmPatches();
         KeepFarmBelowCat();
         PositionFarm();
     }
@@ -273,6 +247,8 @@ public sealed partial class PetWindow
         farmLift.Reset();
         farmBird.Reset();
         farmHearthFire = 0;
+        farmPondBusy = false;
+        HideFarmPatches();
         DrawFarmLift();
         UpdateFarmCursor();
         HoverFarm(-1);
@@ -286,6 +262,7 @@ public sealed partial class PetWindow
         CloseFarmKitchen();
         CloseFarmStall();
         ResetFarmCart();
+        CloseFarmPatches();
         farmWindow?.Close();
     }
 
@@ -305,12 +282,15 @@ public sealed partial class PetWindow
     {
         if (farmWindow == null) return;
         MoveWindow(farmWindow, FarmPlotLeft - PetFarmArt.Side, farmArea.Bottom + PetFarmArt.BottomRoom - PetFarmArt.ArtHeight, farmScale);
+        PositionFarmPatches();
     }
 
     // Both are topmost and the field was shown later: the cat walks in front of it, keepsake too.
     private void KeepFarmBelowCat()
     {
         if (farmWindow != null) PlaceBelowCat(farmWindow);
+        foreach (var patch in farmPatches)
+            if (patch.Window != null) PlaceBelowCat(patch.Window);
     }
 
     private void PlaceBelowCat(Window window)
@@ -331,7 +311,7 @@ public sealed partial class PetWindow
             farmArt.Tiles[i] = new FarmTileView(tile.Stage, tile.Crop, tile.GrowsUntil != null, farm.Next(i) == FarmStep.Water, farm.Progress(i, now), !farm.IsOpen(i));
         }
         farmArt.Scarecrow = farm.Scarecrow;
-        ShowFarmHearth();
+        RefreshFarmPot();
         farmArt.HoverTile = farmHover;
         farmArt.Lift = farmLift.Height;
         farmArt.InvalidateVisual();
@@ -507,12 +487,6 @@ public sealed partial class PetWindow
         return true;
     }
 
-    private void ShowFarmFishGain(FarmFish fish)
-    {
-        ShowFarmLabel(PetFarm.TileCount - 1, "+1 " + FarmFishName(fish), FarmGainSeconds);
-        if (farmGain?.Parent is Grid row) row.Margin = new Thickness(PetFarmArt.PondCenter - FarmChipWidth / 2, PetFarmArt.SoilTop - 40, 0, 0);
-    }
-
     // A harvest as the weather on show makes it.
     private FarmCrop? FarmHarvest(int tile, out bool extra)
     {
@@ -596,7 +570,7 @@ public sealed partial class PetWindow
             cancel.Click += (_, _) => CancelFarmMove();
             return new[] { drop, cancel };
         }
-        var move = new MenuItem { Header = L("Di chuyển mảnh đất farm", "Move the farm plot") };
+        var move = new MenuItem { Header = L("Di chuyển mảnh đất farm", "Move the farm plot"), IsEnabled = !FarmLandInAir };
         move.Click += (_, _) => BeginFarmMove();
         if (!FarmShopAllowed) return new[] { move };
         var shop = new MenuItem { Header = L("Kho & cửa hàng", "Store & shop") };
@@ -612,7 +586,7 @@ public sealed partial class PetWindow
 
     public void BeginFarmMove()
     {
-        if (paused || !FarmVisible || farmLift.Phase != FarmLiftPhase.Down) return;
+        if (paused || !FarmVisible || FarmLandInAir) return;
         farmRestFraction = farmFraction;
         HoverFarm(-1);
         farmBird.Scare(); // The ground is about to go.
@@ -621,7 +595,13 @@ public sealed partial class PetWindow
         PlayPetSound("swoosh");
     }
 
-    public void DropFarm() => SetFarmDown(farmFraction, 0);
+    // Set down here; dropped on other land it first glides to the nearest free place.
+    public void DropFarm()
+    {
+        double free = FarmFreeWidth, spot = FarmLands.FreeSpot(FarmPlotLeft, PetFarmArt.PlotWidth, FarmLandsTaken(null, withField: false), farmArea.Left, farmArea.Left + free, FarmLandGap);
+        double way = Math.Abs(spot - FarmPlotLeft);
+        SetFarmDown(free > 0 ? Math.Clamp((spot - farmArea.Left) / free, 0, 1) : 0, way < 0.5 ? 0 : FarmLift.MaxGlideSeconds * Math.Min(1, way / 240));
+    }
 
     // Back to where it was before it rose: it slides there in the air first, then falls.
     public void CancelFarmMove()

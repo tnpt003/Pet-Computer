@@ -20,6 +20,37 @@ internal static class FarmTests
         Rhythm(check, start);
         Hearth(check);
         Pond(check);
+        Lands(check);
+    }
+
+    // Three pieces of land on one floor (docs/FARM-GAME.md).
+    private static void Lands(Action<bool, string> check)
+    {
+        var field = new[] { (100.0, 200.0) };
+        check(FarmLands.FreeSpot(400, 50, field, 0, 900, 6) == 400, "A free place is taken as it is");
+        check(FarmLands.FreeSpot(120, 50, field, 0, 900, 6) == 44, "On other land it goes to the nearest side");
+        check(FarmLands.FreeSpot(190, 50, field, 0, 900, 6) == 206, "...which may be the right");
+        check(FarmLands.FreeSpot(40, 200, field, 0, 900, 6) == 206, "The other side when one has no room");
+        check(FarmLands.FreeSpot(-30, 50, Array.Empty<(double, double)>(), 0, 900, 6) == 0, "It stays on the screen");
+        check(FarmLands.FreeSpot(120, 500, field, 0, 150, 6) == 120, "With no room anywhere it stays where it is");
+        check(FarmLands.FreeSpot(206, 50, field, 0, 900, 6) == 206, "Exactly at the gap counts as free");
+        var two = new[] { (100.0, 200.0), (210.0, 300.0) };
+        check(FarmLands.FreeSpot(205, 50, two, 0, 900, 6) == 306, "A gap too narrow is skipped");
+
+        string folder = Path.Combine(Path.GetTempPath(), "pet-lands-" + Guid.NewGuid().ToString("N"));
+        string path = Path.Combine(folder, "farm.json");
+        try
+        {
+            var saved = new PetFarm { HearthFractionX = 0.4, PondFractionX = 0.8 };
+            saved.Save(path);
+            var back = PetFarm.Load(path);
+            check(back.HearthFractionX == 0.4 && back.PondFractionX == 0.8 && back.Version == 3, "Where the hearth and pond stand is saved");
+            File.WriteAllText(path, "{\"Version\":3,\"HearthFractionX\":5,\"PondFractionX\":-2}");
+            var odd = PetFarm.Load(path);
+            check(odd.HearthFractionX == 1 && odd.PondFractionX == 0, "Places out of range are brought in");
+            check(new PetFarm().HearthFractionX == null, "A field that never had them starts without");
+        }
+        finally { if (Directory.Exists(folder)) Directory.Delete(folder, true); }
     }
 
     // The pond and its fish (docs/FARM-GAME.md).

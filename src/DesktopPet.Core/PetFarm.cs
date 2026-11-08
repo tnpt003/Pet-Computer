@@ -155,6 +155,9 @@ public sealed partial class PetFarm
     // The plot's monitor (device name) and its left edge as a fraction of the free width (null: not placed yet).
     public string? Monitor { get; set; }
     public double? FractionX { get; set; }
+    // Where the hearth and the pond were left, as fractions of their own free width (null: not placed yet).
+    public double? HearthFractionX { get; set; }
+    public double? PondFractionX { get; set; }
 
     // Written by a newer version of the pet: shown, never overwritten.
     [JsonIgnore] public bool ReadOnly { get; private set; }
@@ -197,6 +200,8 @@ public sealed partial class PetFarm
         if (PotDish is FarmDish pot && !Enum.IsDefined(pot)) PotDish = null;
         OpenTiles = Math.Clamp(Math.Max(OpenTiles, Tiles.FindLastIndex(tile => tile.Stage != FarmStage.Wild) + 1), StartingTiles, TileCount);
         if (FractionX is double x) FractionX = double.IsFinite(x) ? Math.Clamp(x, 0, 1) : null;
+        if (HearthFractionX is double hx) HearthFractionX = double.IsFinite(hx) ? Math.Clamp(hx, 0, 1) : null;
+        if (PondFractionX is double px) PondFractionX = double.IsFinite(px) ? Math.Clamp(px, 0, 1) : null;
         if (string.IsNullOrWhiteSpace(Monitor)) Monitor = null;
     }
 
@@ -482,6 +487,20 @@ public sealed partial class PetFarm
         if (tile.Stage is not (FarmStage.Seed or FarmStage.Sprout or FarmStage.Young)) return 0;
         double within = tile.GrowsUntil == null ? 0 : 1 - Remaining(index, utcNow).TotalSeconds / StageSeconds(tile.Crop!.Value);
         return (tile.Stage - FarmStage.Seed + Math.Clamp(within, 0, 1)) / WateredStages;
+    }
+}
+
+// Pieces of land share one floor and do not stand on each other.
+public static class FarmLands
+{
+    // The nearest place to x, between min and max, that leaves this gap from all that is taken. x itself when nothing fits.
+    public static double FreeSpot(double x, double width, IReadOnlyList<(double Left, double Right)> taken, double min, double max, double gap)
+    {
+        bool Free(double at) => at >= min - 0.01 && at <= max + 0.01 && taken.All(land => at + width <= land.Left - gap + 0.5 || at >= land.Right + gap - 0.5);
+        double wanted = Math.Clamp(x, min, Math.Max(min, max));
+        if (Free(wanted)) return wanted;
+        var spots = taken.SelectMany(land => new[] { land.Left - gap - width, land.Right + gap }).Where(Free).ToList();
+        return spots.Count == 0 ? wanted : spots.OrderBy(at => Math.Abs(at - wanted)).First();
     }
 }
 

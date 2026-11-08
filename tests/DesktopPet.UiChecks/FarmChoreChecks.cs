@@ -36,7 +36,7 @@ internal static class FarmChoreChecks
         void Hearth()
         {
             var field = window.Farm!;
-            var art = Field<PetFarmArt>(window, "farmArt");
+            var art = window.FarmHearth.Art!;
             var area = Field<Area>(window, "bounds");
             double hearth = (double)Field2("FarmHearthMid");
             void Ready()
@@ -190,7 +190,7 @@ internal static class FarmChoreChecks
         void Pond()
         {
             var field = window.Farm!;
-            var art = Field<PetFarmArt>(window, "farmArt");
+            var art = window.FarmPond.Art!;
             var area = Field<Area>(window, "bounds");
             double pond = (double)Field2("FarmPondMid");
             void Ready()
@@ -227,8 +227,8 @@ internal static class FarmChoreChecks
             check(art.CaughtFish == fish && art.CaughtAge > 0, "The fish jumps out of the water");
             Features(FarmChores.ReelSeconds);
             check(field.FishOf(fish) == caught + 1 && PetFarm.Load(path).FishOf(fish) == caught + 1, "It lands in the store and is saved");
-            var gain = Field<System.Windows.Controls.Border?>(window, "farmGain")!;
-            check(gain.Opacity == 1 && gain.Parent is System.Windows.Controls.Grid { Margin.Left: > 300 }, "\"+1\" rises over the pond");
+            var pondGain = window.FarmPond.Gain!;
+            check(pondGain.Opacity == 1 && ((System.Windows.Controls.TextBlock)pondGain.Child).Text.StartsWith("+1"), "\"+1\" rises over the pond");
             Features(FarmChores.FishShowSeconds + 0.05);
             check(window.FarmChoreNow == FarmChoreKind.None && pet.FishingTime == -1 && pet.Action == PetAction.Idle, "The trip ends and the cat is free");
             check(pet.Emotions.SecondsWithoutAttention == attention, "Fishing is not attention");
@@ -312,6 +312,54 @@ internal static class FarmChoreChecks
             Call(window, "WatchFarmChores", Frame);
             check(window.FarmChoreNow == FarmChoreKind.None, "Quiet stops what the cat started itself");
             prefs.Quiet = false;
+            Ready();
+            chores.ScheduleFish(FarmChores.FishMinSeconds);
+
+            // Land in the air ends only the trips to that land.
+            var plotLift = Field<FarmLift>(window, "farmLift");
+            void Trip(string what, Func<bool> go, FarmLift lifted, bool ends)
+            {
+                Ready();
+                field.Stock["Radish"] = 3;
+                check(go(), $"(a trip, before: {what})");
+                lifted.Begin();
+                Call(window, "WatchFarmChores", Frame);
+                check((window.FarmChoreNow == FarmChoreKind.None) == ends, $"{what}: {(ends ? "the trip ends" : "the trip goes on")}");
+                lifted.Reset();
+                Free();
+            }
+            Func<bool> cook = () => window.FarmCook(FarmDish.RadishSoup), fishing = () => window.FarmGoFish();
+            Trip("the hearth lifted while cooking", cook, window.FarmHearth.Lift, true);
+            Trip("the pond lifted while cooking", cook, window.FarmPond.Lift, false);
+            Trip("the field lifted while cooking", cook, plotLift, false);
+            Trip("the pond lifted while fishing", fishing, window.FarmPond.Lift, true);
+            Trip("the hearth lifted while fishing", fishing, window.FarmHearth.Lift, false);
+            Trip("the field lifted while fishing", fishing, plotLift, false);
+            Ready(); Thirsty(field, 2);
+            check(window.TryFarmVisit(), "(a watering trip)");
+            window.FarmPond.Lift.Begin();
+            Call(window, "WatchFarmChores", Frame);
+            check(window.FarmChoreNow == FarmChoreKind.Water, "The pond in the air does not stop the watering");
+            window.FarmPond.Lift.Reset();
+            Ready();
+            field.PotDish = FarmDish.RadishSoup;
+            window.FarmHearth.Lift.Begin();
+            check(!window.TryFarmVisit(), "The cat does not go back to a pot in the air");
+            check(field.PotDish == FarmDish.RadishSoup && !window.FarmCook(FarmDish.RadishSoup), "...the dish stays, and nothing can be cooked");
+            window.FarmHearth.Lift.Reset();
+            field.PotDish = null;
+            Ready();
+            window.FarmPond.Lift.Begin();
+            check(!window.FarmCanFish, "Nobody fishes from a pond in the air");
+            chores.ScheduleFish(0);
+            check(!window.TryFarmVisit(), "...not by itself either");
+            window.FarmPond.Lift.Reset();
+            Ready();
+            plotLift.Begin();
+            chores.ScheduleFish(0);
+            pet.X = area.Left + 10;
+            check(window.TryFarmVisit() && window.FarmChoreNow == FarmChoreKind.Fishing, "With the field in the air the cat can still fish");
+            plotLift.Reset();
             Ready();
             chores.ScheduleFish(FarmChores.FishMinSeconds);
 
@@ -691,66 +739,71 @@ internal static class FarmChoreChecks
             Cat(m => m.WateringRemaining = 1, back, $"chore-water-{tone}");
             Cat(m => { m.WateringRemaining = 1; m.Facing = -1; }, back, $"chore-water-left-{tone}");
         }
-        // The hearth, and the cat beside it as the two windows place them.
+        string Land(FarmPatchKind kind, Action<PetFarmArt.Land> set, Color back, string? name)
+        {
+            var art = new PetFarmArt.Land(kind);
+            set(art);
+            int width = (int)art.Width, height = (int)PetFarmArt.ArtHeight;
+            art.Measure(new Size(width, height)); art.Arrange(new Rect(0, 0, width, height));
+            var visual = new DrawingVisual();
+            using (var dc = visual.RenderOpen()) dc.DrawRectangle(new SolidColorBrush(back), null, new Rect(0, 0, width, height));
+            var bitmap = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);
+            bitmap.Render(visual); bitmap.Render(art);
+            if (name != null) Save(bitmap, name);
+            return Hash(bitmap);
+        }
+        // The land, and the cat beside it as the two windows place them.
+        void Scene(FarmPatchKind kind, Action<PetFarmArt.Land> set, int side, double gap, Action<PetModel> cat, Color back, string name)
+        {
+            const int margin = 170;
+            var art = new PetFarmArt.Land(kind);
+            set(art);
+            int width = (int)art.Width + margin * 2, height = (int)PetFarmArt.ArtHeight;
+            art.Measure(new Size(art.Width, height)); art.Arrange(new Rect(margin, 0, art.Width, height));
+            var model = new PetModel { Action = PetAction.Sitting, Grounded = true, Facing = -side, AnimationTime = 1, ActionTime = 1 };
+            cat(model);
+            var pet = new PetRenderer(model);
+            pet.Measure(new Size(180, 180));
+            pet.Arrange(new Rect(margin + art.Width / 2 + side * gap - 56 - PickupAnimation.Padding, PetFarmArt.Floor - 112 - PickupAnimation.Padding, 180, 180));
+            var visual = new DrawingVisual();
+            using (var dc = visual.RenderOpen()) dc.DrawRectangle(new SolidColorBrush(back), null, new Rect(0, 0, width, height));
+            var bitmap = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);
+            bitmap.Render(visual); bitmap.Render(art); bitmap.Render(pet);
+            Save(bitmap, name);
+        }
         foreach (var (back, tone) in new[] { (light, "light"), (dark, "dark") })
         {
-            Plot(_ => { }, back, $"hearth-idle-{tone}");
-            Plot(a => { a.PourDish = FarmDish.StuffedTomato; a.PourAge = 0.3; a.HearthFire = 0.6; a.HearthTime = 1; }, back, $"hearth-pour-{tone}");
-            Plot(a => { a.PotDish = FarmDish.CarrotStew; a.PourDish = FarmDish.CarrotStew; a.PourAge = 0.7; a.HearthFire = 0.9; a.HearthTime = 1; }, back, $"hearth-splash-{tone}");
-            Plot(a => a.PotDish = FarmDish.RadishSoup, back, $"hearth-waiting-{tone}");
-            foreach (int facing in new[] { 1, -1 })
+            Land(FarmPatchKind.Hearth, _ => { }, back, $"hearth-idle-{tone}");
+            Land(FarmPatchKind.Hearth, a => { a.PourDish = FarmDish.StuffedTomato; a.PourAge = 0.3; a.HearthFire = 0.6; a.HearthTime = 1; }, back, $"hearth-pour-{tone}");
+            Land(FarmPatchKind.Hearth, a => { a.PotDish = FarmDish.CarrotStew; a.PourDish = FarmDish.CarrotStew; a.PourAge = 0.7; a.HearthFire = 0.9; a.HearthTime = 1; }, back, $"hearth-splash-{tone}");
+            Land(FarmPatchKind.Hearth, a => a.PotDish = FarmDish.RadishSoup, back, $"hearth-waiting-{tone}");
+            Land(FarmPatchKind.Pond, _ => { }, back, $"pond-idle-{tone}");
+            Land(FarmPatchKind.Hearth, a => { a.Lift = FarmLift.FloatHeight; }, back, $"hearth-floating-{tone}");
+            Land(FarmPatchKind.Pond, a => { a.Lift = FarmLift.FloatHeight; a.Shed = 1.5; }, back, $"pond-floating-{tone}");
+            Land(FarmPatchKind.Pond, a => { a.Dustiness = 0.8; a.Squash = 0.7; a.ShakeX = 2; }, back, $"pond-landing-{tone}");
+            foreach (int side in new[] { -1, 1 })
             {
-                int width = (int)PetFarmArt.ArtWidth + 120, height = (int)PetFarmArt.ArtHeight;
-                var plot = new PetFarmArt { PotDish = FarmDish.CarrotStew, Stirring = true, HearthFire = 1, HearthTime = 1.4 };
-                for (int i = 0; i < 6; i++) plot.Tiles[i] = new(FarmStage.Young, FarmCrop.Carrot, true, false, 0.5);
-                plot.Measure(new Size(PetFarmArt.ArtWidth, PetFarmArt.ArtHeight)); plot.Arrange(new Rect(0, 0, PetFarmArt.ArtWidth, PetFarmArt.ArtHeight));
-                var model = new PetModel { Action = PetAction.Sitting, Grounded = true, Facing = facing, AnimationTime = 1, ActionTime = 1, StirringRemaining = 4 };
-                var cat = new PetRenderer(model);
-                cat.Measure(new Size(180, 180));
-                cat.Arrange(new Rect(PetFarmArt.HearthCenter - facing * 58 - 56 - PickupAnimation.Padding, PetFarmArt.Floor - 112 - PickupAnimation.Padding, 180, 180));
-                var visual = new DrawingVisual();
-                using (var dc = visual.RenderOpen()) dc.DrawRectangle(new SolidColorBrush(back), null, new Rect(0, 0, width, height));
-                var bitmap = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);
-                bitmap.Render(visual); bitmap.Render(plot); bitmap.Render(cat);
-                Save(bitmap, $"hearth-stir-{(facing > 0 ? "right" : "left")}-{tone}");
+                Scene(FarmPatchKind.Hearth, a => { a.PotDish = FarmDish.CarrotStew; a.Stirring = true; a.HearthFire = 1; a.HearthTime = 1.4; }, side, 58, m => m.StirringRemaining = 4, back, $"hearth-stir-{(side < 0 ? "left" : "right")}-{tone}");
+                foreach (var (time, stage) in new[] { (3.0, "wait"), (6.3, "bite"), (7.2, "reel") })
+                    Scene(FarmPatchKind.Pond, a => { a.Fishing = true; a.FishSide = side; a.HearthTime = time; a.CaughtFish = time > 6 ? FarmFish.Carp : null; a.CaughtAge = time > 6 ? (time - 6) / 1.4 : 0; }, side, 100, m => { m.FishingTime = time; m.FishingBiteAt = 6; }, back, $"pond-fish-{stage}-{(side < 0 ? "left" : "right")}-{tone}");
             }
         }
-        // The pond, and the cat fishing beside it.
-        foreach (var (back, tone) in new[] { (light, "light"), (dark, "dark") })
-        {
-            Plot(_ => { }, back, $"pond-idle-{tone}");
-            Plot(a => { a.Fishing = true; a.FishSide = -1; a.HearthTime = 1; }, back, $"pond-ripple-{tone}");
-            foreach (var kind in Enum.GetValues<FarmFish>())
-                Plot(a => { a.Fishing = true; a.FishSide = -1; a.HearthTime = 1; a.CaughtFish = kind; a.CaughtAge = 0.45; }, back, $"pond-catch-{kind}-{tone}");
-            foreach (int side in new[] { -1, 1 })
-                foreach (var (time, stage) in new[] { (3.0, "wait"), (6.3, "bite"), (7.2, "reel") })
-                {
-                    int width = (int)PetFarmArt.ArtWidth + 160, height = (int)PetFarmArt.ArtHeight;
-                    var plot = new PetFarmArt { Fishing = true, FishSide = side, HearthTime = time, CaughtFish = time > 6 ? FarmFish.Carp : null, CaughtAge = time > 6 ? (time - 6) / 1.4 : 0 };
-                    for (int i = 0; i < 6; i++) plot.Tiles[i] = new(FarmStage.Young, FarmCrop.Carrot, true, false, 0.5);
-                    plot.Measure(new Size(PetFarmArt.ArtWidth, PetFarmArt.ArtHeight)); plot.Arrange(new Rect(0, 0, PetFarmArt.ArtWidth, PetFarmArt.ArtHeight));
-                    var model = new PetModel { Action = PetAction.Sitting, Grounded = true, Facing = -side, AnimationTime = 1, ActionTime = 1, FishingTime = time, FishingBiteAt = 6 };
-                    var cat = new PetRenderer(model);
-                    cat.Measure(new Size(180, 180));
-                    cat.Arrange(new Rect(PetFarmArt.PondCenter + side * 100 - 56 - PickupAnimation.Padding, PetFarmArt.Floor - 112 - PickupAnimation.Padding, 180, 180));
-                    var visual = new DrawingVisual();
-                    using (var dc = visual.RenderOpen()) dc.DrawRectangle(new SolidColorBrush(back), null, new Rect(0, 0, width, height));
-                    var bitmap = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);
-                    bitmap.Render(visual); bitmap.Render(plot); bitmap.Render(cat);
-                    Save(bitmap, $"pond-fish-{stage}-{(side < 0 ? "left" : "right")}-{tone}");
-                }
-        }
-        string still = Plot(_ => { }, dark, null);
-        check(still != Plot(a => { a.Fishing = true; a.HearthTime = 1; }, dark, null), "The float makes ripples");
-        check(still != Plot(a => { a.CaughtFish = FarmFish.Carp; a.CaughtAge = 0.5; }, dark, null), "A fish jumps");
-        check(Plot(a => { a.CaughtFish = FarmFish.Minnow; a.CaughtAge = 0.5; }, dark, null) != Plot(a => { a.CaughtFish = FarmFish.Goldfish; a.CaughtAge = 0.5; }, dark, null), "Each fish looks its own");
-        string idle = Plot(_ => { }, dark, null);
-        check(idle != Plot(a => a.HearthFire = 1, dark, null), "The fire is drawn");
-        string ablaze = Plot(a => { a.HearthFire = 1; a.HearthTime = 0.2; }, dark, null);
-        check(ablaze != Plot(a => { a.HearthFire = 1; a.HearthTime = 0.5; }, dark, null), "It flickers");
-        check(idle != Plot(a => a.PotDish = FarmDish.RadishSoup, dark, null), "The pot shows what it holds");
-        check(idle != Plot(a => a.Stirring = true, dark, null), "The stick leaves the pot while the cat holds it");
-        check(idle != Plot(a => { a.PourDish = FarmDish.RadishSoup; a.PourAge = 0.2; }, dark, null), "Ingredients fall in");
+        foreach (var kind in Enum.GetValues<FarmFish>())
+            Land(FarmPatchKind.Pond, a => { a.Fishing = true; a.HearthTime = 1; a.CaughtFish = kind; a.CaughtAge = 0.45; }, dark, $"pond-catch-{kind}-dark");
+        string idle = Land(FarmPatchKind.Hearth, _ => { }, dark, null);
+        check(idle != Land(FarmPatchKind.Hearth, a => a.HearthFire = 1, dark, null), "The fire is drawn");
+        string ablaze = Land(FarmPatchKind.Hearth, a => { a.HearthFire = 1; a.HearthTime = 0.2; }, dark, null);
+        check(ablaze != Land(FarmPatchKind.Hearth, a => { a.HearthFire = 1; a.HearthTime = 0.5; }, dark, null), "It flickers");
+        check(idle != Land(FarmPatchKind.Hearth, a => a.PotDish = FarmDish.RadishSoup, dark, null), "The pot shows what it holds");
+        check(idle != Land(FarmPatchKind.Hearth, a => a.Stirring = true, dark, null), "The stick leaves the pot while the cat holds it");
+        check(idle != Land(FarmPatchKind.Hearth, a => { a.PourDish = FarmDish.RadishSoup; a.PourAge = 0.2; }, dark, null), "Ingredients fall in");
+        check(idle != Land(FarmPatchKind.Hearth, a => a.Lift = FarmLift.FloatHeight, dark, null), "Land in the air is drawn in the air");
+        check(idle != Land(FarmPatchKind.Hearth, a => a.Shed = 1, dark, null), "It sheds crumbs");
+        check(idle != Land(FarmPatchKind.Hearth, a => a.Dustiness = 0.6, dark, null), "It lands with dirt");
+        string still = Land(FarmPatchKind.Pond, _ => { }, dark, null);
+        check(still != Land(FarmPatchKind.Pond, a => { a.Fishing = true; a.HearthTime = 1; }, dark, null), "The float makes ripples");
+        check(still != Land(FarmPatchKind.Pond, a => { a.CaughtFish = FarmFish.Carp; a.CaughtAge = 0.5; }, dark, null), "A fish jumps");
+        check(Land(FarmPatchKind.Pond, a => { a.CaughtFish = FarmFish.Minnow; a.CaughtAge = 0.5; }, dark, null) != Land(FarmPatchKind.Pond, a => { a.CaughtFish = FarmFish.Goldfish; a.CaughtAge = 0.5; }, dark, null), "Each fish looks its own");
         string plain = Plot(_ => { }, dark, null);
         check(plain != Plot(a => { a.BirdTile = 1; a.BirdTime = 1; }, dark, null), "A bird is drawn");
         string resting = Plot(a => { a.BirdTile = 1; a.BirdTime = 1.5; }, dark, null);

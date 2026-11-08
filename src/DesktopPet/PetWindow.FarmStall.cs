@@ -31,7 +31,7 @@ public sealed partial class PetWindow
     // One visit now, if this is a moment for it. The cat has no part in it, so a sleeping cat does not matter.
     public bool TryFarmStall()
     {
-        if (farm == null || farmStall.Phase != FarmStallPhase.Away || !FarmVisible || farmLift.Phase != FarmLiftPhase.Down
+        if (farm == null || farmStall.Phase != FarmStallPhase.Away || !FarmVisible || FarmLandInAir
             || Blocking(AutoBlock.Paused | AutoBlock.AnyQuiet | AutoBlock.AnyBattle | AutoBlock.Away) != AutoBlock.None) return false;
         farmStall.Arrive(farm.NewOffers(featureRandom));
         ShowFarmCart();
@@ -83,15 +83,14 @@ public sealed partial class PetWindow
         PlaceFarmCart();
     }
 
-    // Left of the plot; right of the pond when there is no room; over the screen's edge never.
+    // Left of the field if there is room, otherwise the free place nearest to that; never on the land or over the screen's edge.
     private (double X, int Side) FarmCartPlace
     {
         get
         {
-            double width = PetFarmStallArt.ArtWidth, left = FarmPlotLeft - width - FarmCartGap;
-            if (left >= farmArea.Left) return (left, -1);
-            double right = FarmPlotLeft + PetFarmArt.ZoneWidth + FarmCartGap;
-            return right + width <= farmArea.Right ? (right, 1) : (Math.Max(farmArea.Left, farmArea.Right - width), 1);
+            double width = PetFarmStallArt.ArtWidth, wanted = FarmPlotLeft - width - FarmCartGap;
+            double spot = FarmLands.FreeSpot(wanted, width, FarmLandsTaken(null), farmArea.Left, Math.Max(farmArea.Left, farmArea.Right - width), FarmCartGap);
+            return (spot, spot < FarmPlotLeft ? -1 : 1);
         }
     }
 

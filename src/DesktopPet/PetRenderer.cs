@@ -1196,8 +1196,8 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         dc.PushTransform(new ScaleTransform(p.FacingScale, 1, 56, 56));
         dc.PushOpacity(p.StirBlend);
         double turn = p.StirTime * 3.6;
-        var paw = new Point(86 + Math.Cos(turn) * 3, 56 + Math.Sin(turn) * 1.2);
-        var end = new Point(113 + Math.Cos(turn) * 8, 66 + Math.Sin(turn) * 1.5);
+        var paw = new Point(86 + Math.Cos(turn) * 3, 50 + Math.Sin(turn) * 1.2);
+        var end = new Point(113 + Math.Cos(turn) * 8, 58 + Math.Sin(turn) * 1.5);
         dc.DrawLine(StirInk, paw, end);
         dc.DrawLine(StirWood, paw, end);
         Oval(dc, Fur, paw.X, paw.Y, 7, 6.5);
@@ -1218,7 +1218,7 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         double reel = sinceBite > 0 ? Math.Clamp(sinceBite / reelSeconds, 0, 1) : 0, jerk = sinceBite > 0 ? Math.Sin(sinceBite * 34) * (1 - reel) : 0;
         var paw = new Point(86, 72);
         var tip = new Point(128 - reel * 12, 42 - reel * 16 + jerk * 3);
-        double water = 101 + Math.Sin(p.FishTime * 2.6) * 1 + (sinceBite > 0 ? Math.Max(0, jerk) * 5 : 0);
+        double water = 94 + Math.Sin(p.FishTime * 2.6) * 1 + (sinceBite > 0 ? Math.Max(0, jerk) * 5 : 0);
         double floatX = tip.X + (140 - tip.X) * cast * (1 - reel), floatY = tip.Y + 8 + (water - tip.Y - 8) * cast * (1 - reel);
         dc.DrawLine(StirInk, paw, tip);
         dc.DrawLine(StirWood, paw, tip);

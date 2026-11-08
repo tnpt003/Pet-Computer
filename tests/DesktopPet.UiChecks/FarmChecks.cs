@@ -47,7 +47,7 @@ internal static class FarmChecks
             var handle = new WindowInteropHelper(overlay).Handle;
             var area = Field<Area>(window, "farmArea");
             check(Math.Abs(overlay.Top + PetFarmArt.Floor - area.Bottom) < 1.5, $"Its soil stands on the top of the taskbar ({overlay.Top + PetFarmArt.Floor:F0} on {area.Bottom:F0})");
-            double free = area.Right - area.Left - PetFarmArt.ZoneWidth;
+            double free = area.Right - area.Left - PetFarmArt.PlotWidth;
             check(Math.Abs(overlay.Left + PetFarmArt.Side - (area.Left + free * 0.25)) < 1.5, "At first it is a quarter across the monitor");
             long style = GetWindowLongPtr(handle, -20).ToInt64();
             check((style & 0x20) == 0 && (style & 0x08000000) != 0 && (style & 0x80) != 0, "It takes clicks but no focus, and has no taskbar button");
@@ -62,6 +62,7 @@ internal static class FarmChecks
             Bulk(window, pet, farm, path, check, () => now, seconds => now = now.AddSeconds(seconds));
             Levels(window, farm, path, check, () => Tick(0.02));
             Stall(window, pet, prefs, farm, path, check, Tick);
+            Lands(window, farm, path, check, Tick, point => cursor = point);
             farm.OpenTiles = 6;
             check(window.FarmTileLabel(0)!.Length > 0 && window.FarmTileLabel(6) == null, "Each tile has a label");
             check(farm.Next(0) == FarmStep.Till, "A new tile needs tilling");
@@ -171,6 +172,7 @@ internal static class FarmChecks
             check(window.FarmLiftPhaseNow == FarmLiftPhase.Down && Math.Abs(window.FarmFraction - restFraction) < 1e-6, "...back where it was");
             var farmArt = Field<PetFarmArt>(window, "farmArt");
             check(farmArt.Dustiness > 0, "Dirt flies as it lands");
+            window.FarmHearth.Fraction = 1; window.FarmPond.Fraction = 0; // Out of the way of the places tried below.
 
             window.BeginFarmMove();
             Tick(FarmLift.RiseSeconds + 0.05);
@@ -489,6 +491,99 @@ internal static class FarmChecks
         Call(window, "FarmChanged");
     }
 
+    // The hearth and the pond as land of their own, lifted and carried like the field.
+    private static void Lands(PetWindow window, PetFarm farm, string path, Action<bool, string> check, Action<double> frames, Action<Point> setCursor)
+    {
+        var hearth = window.FarmHearth;
+        var pond = window.FarmPond;
+        var area = Field<Area>(window, "farmArea");
+        var plotWindow = Field<Window>(window, "farmWindow");
+        var lift = Field<FarmLift>(window, "farmLift");
+        double PlotLeft() => plotWindow.Left + PetFarmArt.Side;
+        (double Left, double Right) Span(FarmPatch patch) => (window.FarmPatchLeft(patch), window.FarmPatchLeft(patch) + patch.Width);
+        bool Apart((double Left, double Right) a, (double Left, double Right) b) => a.Right <= b.Left - 5 || b.Right <= a.Left - 5;
+        (double, double) Plot() => (PlotLeft(), PlotLeft() + PetFarmArt.PlotWidth);
+        void Up() => frames(FarmLift.RiseSeconds + 0.1);
+        void Settle() => frames(FarmLift.MaxGlideSeconds + FarmLift.FallSeconds + FarmLift.DustSeconds + 0.2);
+        double plotBefore = window.FarmFraction, hearthBefore = hearth.Fraction, pondBefore = pond.Fraction;
+
+        foreach (var patch in new[] { hearth, pond })
+        {
+            string what = patch.Kind.ToString();
+            var overlay = patch.Window!;
+            check(overlay.IsVisible && overlay.Topmost && !overlay.ShowInTaskbar && !overlay.ShowActivated, $"{what}: its own overlay, no focus, no taskbar button");
+            check(Below(new System.Windows.Interop.WindowInteropHelper(window).Handle, new System.Windows.Interop.WindowInteropHelper(overlay).Handle), $"{what}: the cat walks in front of it");
+            check(Math.Abs(overlay.Top + PetFarmArt.Floor - area.Bottom) < 1.5, $"{what}: its soil stands on the floor like the field's");
+            check(Math.Abs(overlay.Left + PetFarmArt.Side - window.FarmPatchLeft(patch)) < 1.5, $"{what}: the window stands where the land does");
+            check(Apart(Span(patch), Plot()), $"{what}: it does not stand on the field");
+        }
+        check(Span(hearth).Left >= PlotLeft() + PetFarmArt.PlotWidth && Span(pond).Left >= Span(hearth).Right, "By default they stand right of the field, in the old order");
+        check(Apart(Span(hearth), Span(pond)), "...and apart");
+
+        string[] Headers(MenuItem[] items) => items.Select(item => (string)item.Header).ToArray();
+        check(Headers(window.FarmPatchItems(hearth)).SequenceEqual(new[] { "Cook", "Move the hearth" }), "The hearth's menu");
+        check(Headers(window.FarmPatchItems(pond)).SequenceEqual(new[] { "Go fishing", "Move the pond" }), "The pond's menu");
+        check(window.FarmMenuItems().Any(item => (string)item.Header == "Cook") && window.FarmMenuItems().Any(item => (string)item.Header == "Go fishing") && window.FarmMenuItems().Last().Header as string == "Move the farm plot", "The field's menu is what it was");
+
+        // Lifted, carried and put back, the same way as the field.
+        window.FarmPatchItems(hearth)[1].RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+        check(hearth.Lift.Phase == FarmLiftPhase.Rising && window.FarmLandInAir && window.FarmPatchItems(hearth).Length == 0, "The hearth begins to rise, with no menu on the way");
+        window.BeginFarmPatchMove(pond);
+        window.BeginFarmMove();
+        check(pond.OnGround && lift.Phase == FarmLiftPhase.Down, "One piece of land at a time");
+        check(!window.FarmPatchItems(pond)[1].IsEnabled && !window.FarmMenuItems().Last().IsEnabled, "The other moves are grey meanwhile");
+        frames(0.7);
+        var art = hearth.Art!;
+        check(art.Shed >= 0 && art.ShakeX != 0, "It strains and sheds crumbs");
+        frames(FarmLift.RiseSeconds);
+        check(hearth.Lift.Floating && art.Lift > 30, $"It floats ({art.Lift:F0})");
+        check(Headers(window.FarmPatchItems(hearth)).SequenceEqual(new[] { "Drop it here", "Cancel" }), "In the air: drop it or put it back");
+        double scale = Field<double>(window, "farmScale"), middle = (area.Left + area.Right) / 2;
+        hearth.Dragging = true; hearth.Grab = 0;
+        setCursor(new Point(middle * scale, 0));
+        frames(0.03);
+        check(Math.Abs(window.FarmPatchLeft(hearth) - Math.Min(middle, area.Right - hearth.Width)) < 1.5, "It follows the cursor along the floor");
+        hearth.Dragging = false;
+        window.CancelFarmPatchMove(hearth);
+        check(hearth.Lift.Phase == FarmLiftPhase.Falling, "Cancel: it falls");
+        frames(0.02);
+        frames(FarmLift.MaxGlideSeconds + FarmLift.FallSeconds + 0.05);
+        check(hearth.OnGround && art.Dustiness > 0 && art.Squash >= 0, "It lands with dust");
+        Settle();
+        check(Math.Abs(hearth.Fraction - hearthBefore) < 1e-6 && !window.FarmLandInAir, "...back where it was");
+
+        window.BeginFarmPatchMove(hearth);
+        Up();
+        hearth.Fraction = 0.9;
+        window.DropFarmPatch(hearth);
+        Settle();
+        check(hearth.OnGround && hearth.Fraction == 0.9, "Dropped on free floor it stays there");
+        check(PetFarm.Load(path).HearthFractionX == 0.9, "...and it is saved");
+        check(Math.Abs(hearth.Window!.Left + PetFarmArt.Side - window.FarmPatchLeft(hearth)) < 1.5, "The window went along");
+
+        // Dropped on other land it finds the nearest free place.
+        window.BeginFarmPatchMove(pond);
+        Up();
+        pond.Fraction = hearth.Fraction * (area.Right - area.Left - hearth.Width) / (area.Right - area.Left - pond.Width);
+        window.DropFarmPatch(pond);
+        Settle();
+        check(pond.OnGround && Apart(Span(pond), Span(hearth)) && Apart(Span(pond), Plot()), "The pond dropped on the hearth glides clear of it");
+        window.BeginFarmMove();
+        Up();
+        SetField(window, "farmFraction", (Span(pond).Left - area.Left) / (area.Right - area.Left - PetFarmArt.PlotWidth));
+        window.DropFarm();
+        Settle();
+        check(lift.Phase == FarmLiftPhase.Down && Apart(Plot(), Span(pond)) && Apart(Plot(), Span(hearth)), "The field dropped on them does too");
+
+        // Put everything back as it was for the checks after this.
+        hearth.Fraction = hearth.RestFraction = hearthBefore;
+        pond.Fraction = pond.RestFraction = pondBefore;
+        SetField(window, "farmFraction", plotBefore);
+        SetField(window, "farmRestFraction", plotBefore);
+        farm.FractionX = plotBefore;
+        frames(0.02);
+    }
+
     // The traveling stall in the real window: it comes by itself, delivers, leaves, what stops it.
     private static void Stall(PetWindow window, PetModel pet, PetPreferences prefs, PetFarm farm, string path, Action<bool, string> check, Action<double> frames)
     {
@@ -637,7 +732,7 @@ internal static class FarmChecks
         SetField(window, "farmFraction", 0.0);
         var (x0, side0) = ((double X, int Side))typeof(PetWindow).GetProperty("FarmCartPlace", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.GetValue(window)!;
         check(side < 0 && x >= area.Left, "With room it stands on the left");
-        check(side0 > 0 && x0 >= area.Left + PetFarmArt.ZoneWidth, "At the left edge it stands past the pond");
+        check(side0 > 0 && x0 >= area.Left + PetFarmArt.PlotWidth, "At the left edge it stands past the field");
         SetField(window, "farmFraction", fraction);
 
         stall.Reset(); stall.Schedule(FarmStall.FirstSeconds);

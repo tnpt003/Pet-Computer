@@ -21,7 +21,7 @@ public sealed partial class PetWindow
     private bool FarmCatCanEat => MayAct(AutoKind.Treat) && treatCooldown <= 0;
     // One dish at a time: on its way to the pot, or in it.
     private bool FarmPotBusy => farmChores.Cooking || farm?.PotDish != null;
-    private bool FarmKitchenCanCook => !paused && !FarmPotBusy && FarmCatCanEat;
+    private bool FarmKitchenCanCook => !paused && !FarmPotBusy && FarmHearth.OnGround && FarmCatCanEat;
 
     private string FarmDishName(FarmDish dish) => dish switch
     {

@@ -5,6 +5,14 @@ Sổ ghi các lỗi đã sửa của Desktop Pet. Phần A: lỗi người dùng
 Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm lỗi mới: tạo mục số tiếp theo ở đầu phần A (hoặc một dòng ở phần B).
 
 # A. Lỗi người dùng phát hiện
+## #72 — Dòng "Niệm phép cổng" kèm lý do quá dài làm menu chuột phải phình rộng (08/11)
+- **Triệu chứng:** lúc mèo đang phản ứng, menu hiện "Niệm phép cổng (Mèo đang phản ứng, thử lại sau giây lát)", cả menu rộng theo dòng này.
+- **Nguyên nhân:** tên mục được ghép thêm lý do bị khóa; "Chế độ chiến đấu" cũng ghép như vậy.
+- **Sửa:** tên mục luôn ngắn, lý do chuyển vào tooltip, mục mờ vẫn hiện tooltip. Hành vi bật/khóa không đổi.
+- **Commit:** `9529f7d`, ZIP `artifacts/DesktopPet-1.5.0-9529f7d-win-x64.zip`, smoke 3/3 PASS.
+- **Kiểm chứng:** script đầy đủ một lần: Python 58 + i18n 5, C# 3997 (96 suite), WPF 2061 đều đạt; check mới xác nhận tên mục ngắn và tooltip có lý do khi Pause, không có tooltip lúc bình thường.
+- **Cần xem tay:** chưa nhìn menu và tooltip khi chạy thật, chưa xem en/ja.
+
 ## #71 — Mảnh đất nhấc lên và đáp xuống quá êm, thiếu lực (08/11)
 - **Góp ý:** khi nâng phải rung lắc như có lực vô hình nhấc lên, đất vụn rớt và văng lên; khi rơi phải "đùng" và đất văng ra. Thay yêu cầu cũ "rơi từ từ, nhẹ nhàng".
 - **Nguyên nhân:** Mốc 3 làm đúng bản yêu cầu cũ: trượt êm lên 0,65 s, hạ 1,15 s, một làn bụi nhỏ.

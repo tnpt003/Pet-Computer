@@ -11,6 +11,73 @@ internal static class FarmTests
         Clock(check, start);
         Saving(check, start);
         Lift(check);
+        Chores(check, start);
+    }
+
+    // The cat's own trips (1.5.1 M4): which tile, in what order, and the bird's visit.
+    private static void Chores(Action<bool, string> check, DateTime start)
+    {
+        check(new PetPreferences().FarmHelper, "The cat helps by default");
+        foreach (var block in new[] { AutoBlock.Paused, AutoBlock.Held, AutoBlock.Unsettled, AutoBlock.Quiet, AutoBlock.Fullscreen, AutoBlock.Battle, AutoBlock.BattleScreens, AutoBlock.Feature, AutoBlock.Away })
+            check(!PetAutonomy.MayAct(AutoKind.FarmChore, block), $"No trip with {block}");
+
+        var farm = new PetFarm();
+        double FromFirst(int i) => i;
+        check(FarmChores.Pick(farm, FromFirst) == null, "Wild ground gives the cat nothing to do");
+        farm.Till(0);
+        check(FarmChores.Pick(farm, FromFirst) == null, "It does not sow either");
+        farm.Plant(0, FarmCrop.Radish); farm.Till(3); farm.Plant(3, FarmCrop.Radish);
+        check(FarmChores.Pick(farm, FromFirst) == (FarmChoreKind.Water, 0), "It waters the nearest thirsty tile");
+        check(FarmChores.Pick(farm, i => 9 - i) == (FarmChoreKind.Water, 3), "Nearest to where the cat is");
+        farm.Water(0, start);
+        check(FarmChores.Pick(farm, FromFirst) == (FarmChoreKind.Water, 3), "A tile already growing is left alone");
+        farm.Tiles[5].Stage = FarmStage.Ripe; farm.Tiles[5].Crop = FarmCrop.Carrot;
+        check(FarmChores.Pick(farm, FromFirst) == (FarmChoreKind.Harvest, 5), "A ripe tile comes first, even a far one");
+
+        var random = new Random(4);
+        for (int i = 0; i < 40; i++)
+        {
+            double visit = FarmChores.NextVisit(random), bird = FarmChores.NextBird(random);
+            if (visit < 120 || visit > 240 || bird < 360 || bird > 720) { check(false, $"A wait out of range ({visit:F0}, {bird:F0})"); break; }
+        }
+        check(FarmChores.BirdTile(new PetFarm(), random) == -1, "No bird on an empty field");
+        check(Enumerable.Range(0, 30).All(_ => FarmChores.BirdTile(farm, random) is 0 or 3 or 5), "A bird only comes to a tile with a crop");
+
+        var chores = new FarmChores();
+        check(!chores.Active && !chores.CountDownVisit(1) && !chores.CountDownBird(1), "Nothing is due at first");
+        chores.ScheduleVisit(1);
+        check(chores.CountDownVisit(0.5) == false && chores.CountDownVisit(0.6), "The visit comes when its wait is over");
+        chores.Begin(FarmChoreKind.Water, 2, 50);
+        check(chores.Active && chores.Phase == FarmChorePhase.Walk && chores.Tile == 2 && chores.Spot == 50, "The cat sets off");
+        check(!chores.Step(FarmChores.WalkLimitSeconds - 1) && !chores.WalkedTooLong, "Walking does no work");
+        check(!chores.Step(2) && chores.WalkedTooLong, "A walk has a limit");
+        chores.Arrive();
+        check(chores.Phase == FarmChorePhase.Work && !chores.Step(FarmChores.WaterHit - 0.1), "It works a moment first");
+        check(chores.Step(0.2) && !chores.Step(0.1) && !chores.Finished, "The water lands once");
+        chores.Step(FarmChores.WaterSeconds);
+        check(chores.Finished, "...and the work ends");
+        chores.Stop();
+        check(!chores.Active && chores.Tile == -1, "The trip is over");
+        chores.Begin(FarmChoreKind.Bird, 1, 0);
+        check(chores.Phase == FarmChorePhase.Notice && !chores.Step(FarmChores.NoticeSeconds + 0.01) && chores.Phase == FarmChorePhase.Walk, "For a bird the cat looks up first");
+
+        var bird2 = new FarmBird();
+        check(!bird2.Present && bird2.Air == 0, "No bird at first");
+        bird2.Land(2, -1);
+        check(bird2.Present && !bird2.Perched && bird2.Air == 1 && bird2.Side == -1, "It comes from the air");
+        bird2.Step(FarmBird.LandSeconds + 0.01);
+        check(bird2.Perched && bird2.Air == 0, "It lands");
+        bird2.Step(FarmBird.StaySeconds - 1);
+        check(bird2.Perched, "It stays a while");
+        bird2.Step(1.1);
+        check(bird2.Phase == FarmBirdPhase.Leaving, "It leaves by itself");
+        bird2.Step(FarmBird.LeaveSeconds / 2);
+        check(bird2.Air > 0 && bird2.Air < 1, "It flies off");
+        bird2.Step(FarmBird.LeaveSeconds);
+        check(!bird2.Present && bird2.Tile == -1, "It is gone");
+        bird2.Land(1, 1);
+        bird2.Scare();
+        check(bird2.Phase == FarmBirdPhase.Leaving, "A pounce sends it away at once");
     }
 
     private static void Steps(Action<bool, string> check, DateTime start)

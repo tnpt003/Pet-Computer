@@ -71,6 +71,13 @@ public sealed class PetFarmArt : FrameworkElement
     public double Squash { get; set; }
     // Seconds since it began to rise, or -1: the crumbs it throws up and sheds.
     public double Shed { get; set; } = -1;
+    // The paper bird (1.5.1 M4): its tile or -1, the side of the crop it stands on, 0 on the ground
+    // to 1 up and away, seconds since it came.
+    public int BirdTile { get; set; } = -1;
+    public int BirdSide { get; set; } = 1;
+    public double BirdAir { get; set; }
+    public double BirdTime { get; set; }
+    public bool BirdFlying { get; set; }
 
     public PetFarmArt() { Width = ArtWidth; Height = ArtHeight; }
 
@@ -119,6 +126,7 @@ public sealed class PetFarmArt : FrameworkElement
         for (int i = 0; i < Tiles.Length; i++) DrawBed(dc, i);
         for (int i = 0; i < Tiles.Length; i++) DrawCrop(dc, i);
         for (int i = 0; i < Tiles.Length; i++) DrawEffect(dc, i);
+        if (BirdTile >= 0) DrawBird(dc);
         dc.Pop();
         if (Shed >= 0) DrawShedding(dc);
         if (Dustiness > 0) { DrawDust(dc); DrawLandingDirt(dc); }
@@ -369,6 +377,39 @@ public sealed class PetFarmArt : FrameworkElement
                 break;
         }
     }
+
+    // A folded-paper bird beside the crop, its feet at the origin, turned towards the crop. It pecks on
+    // the ground; in the air the wing beats and it fades as it gets away.
+    private void DrawBird(DrawingContext dc)
+    {
+        double air = Math.Clamp(BirdAir, 0, 1);
+        double x = TileCenter(BirdTile) + BirdSide * (BirdStand + air * BirdFlyOut), y = GroundY + 3 - air * BirdFlyUp;
+        double peck = BirdFlying ? 0 : 18 * Math.Pow(Math.Max(0, Math.Sin(BirdTime * 5)), 4);
+        double wing = BirdFlying ? Math.Cos(BirdTime * 34) : -0.38;
+        dc.PushOpacity(air < 0.6 ? 1 : (1 - air) / 0.4);
+        dc.PushTransform(new TranslateTransform(x, y));
+        dc.PushTransform(new ScaleTransform(-BirdSide * BirdScale, BirdScale));
+        dc.PushTransform(new RotateTransform(peck));
+        dc.DrawGeometry(null, InkThin, BirdLegs);
+        dc.DrawGeometry(Orange, InkThin, BirdBeak);
+        dc.DrawGeometry(BirdPaper, InkThin, BirdBody);
+        dc.DrawGeometry(null, BirdFold, BirdCrease);
+        dc.DrawEllipse(PetUi.ArtInk, null, new Point(6, -13), 1.3, 1.3);
+        dc.PushTransform(new ScaleTransform(1, wing, 0, -8));
+        dc.DrawGeometry(PetUi.Lilac, InkThin, BirdWing);
+        dc.Pop();
+        dc.Pop(); dc.Pop(); dc.Pop();
+        dc.Pop();
+    }
+
+    private const double BirdStand = 27, BirdScale = 1.25, BirdFlyOut = 70, BirdFlyUp = 90;
+    private static readonly Brush BirdPaper = PetUi.Hex("#F7F1E3");
+    private static readonly Pen BirdFold = PetUi.FrozenPen(PetUi.Frozen(Color.FromArgb(0x80, 0x3A, 0x2C, 0x1F)), 1);
+    private static readonly Geometry BirdBody = Parse("M-15,-17 L-3,-9 L3,-17 L9,-15 L6,-6 L-2,-3 Z");
+    private static readonly Geometry BirdBeak = Parse("M8,-15.5 L15,-12.5 L7,-10.5 Z");
+    private static readonly Geometry BirdWing = Parse("M-6,-8 L4,-8 L-3,-21 Z");
+    private static readonly Geometry BirdCrease = Parse("M-3,-9 L4,-6");
+    private static readonly Geometry BirdLegs = Parse("M-2,-4 L-2,0 M2,-5 L2,0");
 
     private void DrawDust(DrawingContext dc)
     {

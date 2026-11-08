@@ -22,7 +22,7 @@ public sealed class PetSettingsForm
     public ComboBox Trophy = null!;
     public string[] TrophyIds = Array.Empty<string>();
     public Border KeepsakeSection = null!;
-    public CheckBox HolidayAccessories = null!, ClimbWindows = null!, Weather = null!, Farm = null!, ShowTrophies = null!, Talks = null!, Autostart = null!, BreakReminders = null!, Sounds = null!, InteractionSounds = null!, EmotionSounds = null!, SleepSounds = null!, AutoUpdate = null!;
+    public CheckBox HolidayAccessories = null!, ClimbWindows = null!, Weather = null!, Farm = null!, FarmHelper = null!, ShowTrophies = null!, Talks = null!, Autostart = null!, BreakReminders = null!, Sounds = null!, InteractionSounds = null!, EmotionSounds = null!, SleepSounds = null!, AutoUpdate = null!;
     public Slider Volume = null!;
     public Button Save = null!, Cancel = null!, Tuning = null!, Forget = null!, Preview = null!, CheckUpdates = null!, Uninstall = null!;
     public PetRenderer PetPreview = null!;
@@ -119,6 +119,8 @@ public sealed partial class PetWindow
             ToolTip = L("Mưa, tuyết, lá bay... quanh mèo, chọn theo màu hình nền Windows. Chỉ đọc màu từ ảnh thu nhỏ, không lưu ảnh và không gửi đi đâu.", "Rain, snow, drifting leaves... around the pet, chosen from your Windows wallpaper's colors. Only the colors of a tiny thumbnail are read; nothing is saved or sent anywhere.") };
         form.Farm = new CheckBox { Content = L("Ruộng trên desktop", "Field on the desktop"), IsChecked = preferences.Farm,
             ToolTip = L("Mảnh ruộng 6 ô sát trên thanh taskbar: bấm vào ô để cày, gieo, tưới và thu hoạch. Tắt thì ẩn đi, cây vẫn được giữ nguyên.", "A six-tile field just above the taskbar: click a tile to till, sow, water and harvest. Turned off it is hidden; your crops are kept.") };
+        form.FarmHelper = new CheckBox { Content = L("Mèo làm vườn cùng", "Pet helps in the field"), IsChecked = preferences.FarmHelper,
+            ToolTip = L("Thỉnh thoảng mèo tự ra ruộng tưới hoặc gặt một ô và đuổi chim. Mèo không cày, không gieo, và không làm khi đang ngủ, bị kéo hay ở chế độ Yên lặng.", "Now and then the pet goes to the field to water or harvest one tile and chase birds away. It never tills or sows, and does nothing while asleep, held or in Quiet mode.") };
         form.ShowTrophies = new CheckBox { Content = L("Góc trưng bày kỷ vật", "Keepsake display corner"), IsChecked = preferences.ShowTrophies,
             ToolTip = L("Một kỷ vật Viễn chinh đứng trên sàn màn hình: cầm kéo, ném được; mèo thỉnh thoảng ra ngắm hoặc đẩy nó.",
                         "One Expedition keepsake stands on the screen's floor: pick it up, throw it; the cat looks at it or shoves it now and then.") };
@@ -141,6 +143,7 @@ public sealed partial class PetWindow
                 form.ClimbWindows,
                 form.Weather,
                 form.Farm,
+                form.FarmHelper,
                 form.Tuning),
             form.KeepsakeSection);
         // Gentle idle motion (breathing, tail, blinks) while the window is open.
@@ -175,6 +178,7 @@ public sealed partial class PetWindow
             if (!preferences.ClimbWindows) DropLedges(); // A pet on a window falls; a climbing one lets go.
             preferences.Weather = form.Weather.IsChecked == true;
             preferences.Farm = form.Farm.IsChecked == true;
+            preferences.FarmHelper = form.FarmHelper.IsChecked == true;
             preferences.ShowTrophies = form.ShowTrophies.IsChecked == true;
             if (!preferences.ShowTrophies) StopAdmiring();
             if (form.TrophyIds.Length > 0)

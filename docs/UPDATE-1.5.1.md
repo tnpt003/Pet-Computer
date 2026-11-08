@@ -9,7 +9,7 @@ Mục tiêu: mèo ngoài trận đa dạng và thú vị hơn. Ba tính năng ch
 | 1. Portal | Cổng tự xuất hiện 20–40 phút/lần, mèo bất ngờ; menu "Niệm phép cổng"; bấm cổng mới vào Sảnh | Xong (07abbba), còn test tay |
 | 2. Weather | Thời tiết theo màu wallpaper Windows, hiện vùng quanh mèo | Xong (f7f406e), còn test tay |
 | 3. Ruộng cơ bản | Dải 6 ô, cày → gieo → tưới → lớn → thu hoạch, 4 cây, lưu file riêng, di chuyển mảnh đất | Xong (9fc249b), còn test tay |
-| 4. Mèo làm cùng | Mèo tự tưới, gặt, đuổi chim; khóa khi ngủ/kéo/Quiet | Chưa làm |
+| 4. Mèo làm cùng | Mèo tự tưới, gặt, đuổi chim; khóa khi ngủ/kéo/Quiet | Xong, còn test tay |
 | 5. Kinh tế farm | Kho, bán lấy xu nông trại riêng, mua hạt, mở ô, bù nhìn | Chưa làm |
 | 6. Nối các phần | Nấu món cho mèo ăn, mưa tự tưới, nắng cho cây lớn nhanh hơn một chút | Chưa làm |
 
@@ -47,7 +47,15 @@ Mục tiêu: mèo ngoài trận đa dạng và thú vị hơn. Ba tính năng ch
 - Lưu ở `farm.json` trong thư mục dữ liệu (có `.bak`): các ô, số đã thu hoạch, màn hình và vị trí theo tỉ lệ. Tệp của bản mới hơn thì không ghi đè.
 - Mặc định đặt ở 25% bề ngang màn có mèo; công tắc "Ruộng trên desktop" ở Cài đặt → Thói quen (mặc định bật), tắt thì ẩn, cây giữ nguyên.
 - Ẩn khi app toàn màn hình hoặc trong trận; mảnh đất đang nhấc thì về chỗ cũ. Pause không nhận bấm hay di chuyển. Khi nhấc, chuột phải có "Thả xuống đây" và "Hủy" (trượt trên không về chỗ cũ tối đa 0,6 s rồi mới rơi). Kéo không vượt sang màn hình khác; màn bị rút thì về màn chính.
-- Ruộng không chạm vào mèo: bấm khi mèo ngủ không đánh thức, không đổi sleep, drag, emotion. Mèo đi phía trước ruộng và không coi ruộng là bục đứng. Mèo tự làm vườn là Mốc 4.
+- Bấm ruộng không chạm vào mèo: bấm khi mèo ngủ không đánh thức, không đổi sleep, drag, emotion. Mèo đi phía trước ruộng và không coi ruộng là bục đứng.
+
+#### Luật Mốc 4 (người dùng duyệt 08/11)
+
+- Mèo tự đi làm vườn bằng logic C# local (không qua Python, tắt Python vẫn chạy) và không tính là tương tác của người dùng. Công tắc "Mèo làm vườn cùng" ở Cài đặt → Thói quen, mặc định bật.
+- Mỗi 2–4 phút một chuyến, một ô: ô chín gần nhất, không có thì ô cần tưới gần nhất. Mèo không cày, không gieo. Không có việc hoặc sai thời điểm thì thử lại sau 45 giây, không dồn lượt.
+- Mèo đứng cạnh ô, cách tâm ô 58 DIP. Tưới 2 giây cầm bình, gặt khều chân; kết quả giống hệt bấm tay (lưu file, "+1 Tên cây"). Tới nơi mà ô đã được làm thì thôi. Sau 20 giây đi bộ chưa tới thì bỏ chuyến.
+- Chim giấy khoảng 6–12 phút một lần, đậu cạnh một ô có cây, phía xa mèo. Mèo nhìn 0,7 giây, rón rén (60% tốc độ), thu người rồi vồ, chim bay đi. Chim tự bay sau 30 giây, khi ô hết cây hoặc khi mảnh đất bị nhấc. Chim không gây thiệt hại: không mất cây, không chậm lớn; bù nhìn ở Mốc 5 sẽ làm chim đến ít hơn.
+- Không đi và không có chim khi: mèo ngủ/thức dậy/bị kéo/có cú nhấn có thể thành kéo/bay/ăn/có cảm xúc chiếm mèo, đang bận hoạt động khác, Pause, Quiet, app toàn màn hình, người dùng vắng, trận, Sảnh/bảng chuẩn bị/bản đồ, mèo đứng trên cửa sổ, ruộng khác màn hình mèo, ruộng ẩn hoặc đang nhấc. Điều kiện nào xuất hiện giữa chuyến cũng hủy chuyến ngay và không đổi tư thế của mèo đang bị giữ, đang bay hay đang ngủ.
 
 ---
 

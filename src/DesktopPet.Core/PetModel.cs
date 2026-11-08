@@ -105,6 +105,9 @@ public sealed class PetModel
     // The portal spell (PetWindow.Portal.cs): seconds of casting left; the renderer raises the paws.
     public const double CastDuration = 1.6;
     public double CastRemaining;
+    // The cat watering a tile (PetWindow.FarmChores.cs): seconds left; the renderer draws the can.
+    public const double WaterDuration = 2;
+    public double WateringRemaining;
     public double BatRemaining;
     public double PlayCrouch;
     // Battle Mode, presentation only (the window copies them from BattleSim each frame):

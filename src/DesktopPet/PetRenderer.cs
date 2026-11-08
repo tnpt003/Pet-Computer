@@ -108,6 +108,7 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         public double GestureTime, GestureBlend, Roll, AngryBlend, SneezeTilt, SneezeLift;
         // The portal spell: 0..1 envelope and the seconds since it began.
         public double CastBlend, CastTime;
+        public double WaterBlend, WaterTime;
         public bool Walking, Sleeping, Waking, PickedUp, Airborne, Seeking, Eating, Grooming, Climbing;
         public PetEmotion Emotion;
         // Battle Mode: the wooden sword's grip (front paw) and angle (degrees from upright, toward the front).
@@ -237,6 +238,12 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
             p.CastTime = PetModel.CastDuration - pet.CastRemaining;
             double ramp = Math.Clamp(Math.Min(p.CastTime / 0.3, pet.CastRemaining / 0.2), 0, 1);
             p.CastBlend = ramp * ramp * (3 - 2 * ramp);
+        }
+        if (pet.WateringRemaining > 0 && selfCare)
+        {
+            p.WaterTime = PetModel.WaterDuration - pet.WateringRemaining;
+            double ramp = Math.Clamp(Math.Min(p.WaterTime / 0.25, pet.WateringRemaining / 0.2), 0, 1);
+            p.WaterBlend = ramp * ramp * (3 - 2 * ramp);
         }
         p.EatTime = PetModel.TreatDuration - pet.TreatRemaining;
         if (p.Eating) p.EmotionStrength = 0;
@@ -1134,6 +1141,7 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         }
         if (p.Gesture == PetAction.Sneezing && p.GestureTime > 0.38 && p.GestureTime < 0.95) DrawSneezePuff(dc, p);
         if (p.CastBlend > 0) DrawPortalSpell(dc, p);
+        if (p.WaterBlend > 0) DrawWateringCan(dc, p);
         if (pet.Thought.Visible && !p.PickedUp && !p.Sleeping && !p.Airborne) DrawThoughtBubble(dc);
     }
 
@@ -1161,6 +1169,40 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
             dc.Pop(); dc.Pop();
         }
         dc.Pop();
+    }
+
+    private static Geometry FrozenPath(string text) { var path = Geometry.Parse(text); path.Freeze(); return path; }
+    private static readonly Geometry CanSpout = FrozenPath("M9,3 L25,-10 L29,-6 L10,10 Z");
+    private static readonly Geometry CanHandle = FrozenPath("M-11,-7 C-23,-13 -23,8 -11,4");
+    private static readonly Geometry CanDrop = FrozenPath("M0,-3.4 C1.4,-1.5 2.4,-0.4 2.4,1 C2.4,2.4 1.3,3.2 0,3.2 C-1.3,3.2 -2.4,2.4 -2.4,1 C-2.4,-0.4 -1.4,-1.5 0,-3.4 Z");
+    private static readonly Brush CanDropFill = PetUi.Hex("#6FC0EE");
+    private static readonly Pen CanInk = PetUi.FrozenPen(PetUi.ArtInk, 2), CanInkThin = PetUi.FrozenPen(PetUi.ArtInk, 1.2);
+
+    // A small watering can held out in front, tipping forward, with drops falling from its rose.
+    private void DrawWateringCan(DrawingContext dc, in Pose p)
+    {
+        dc.PushTransform(new ScaleTransform(p.FacingScale, 1, 56, 56));
+        dc.PushOpacity(p.WaterBlend);
+        double tip = 20 * p.WaterBlend + Math.Sin(p.WaterTime * 7) * 2.5;
+        dc.PushTransform(new TranslateTransform(92, 74));
+        dc.PushTransform(new RotateTransform(tip));
+        dc.DrawGeometry(null, CanInk, CanHandle);
+        dc.DrawGeometry(PetUi.Mint, CanInk, CanSpout);
+        dc.DrawRoundedRectangle(PetUi.Mint, CanInk, new Rect(-12, -11, 23, 22), 4, 4);
+        dc.DrawEllipse(PetUi.Game.Gold, CanInkThin, new Point(27.5, -8.5), 3.4, 5.6);
+        dc.Pop(); dc.Pop();
+        Oval(dc, Fur, 80, 77, 7, 6.5);
+        if (p.WaterBlend > 0.6)
+        {
+            for (int i = 0; i < 5; i++)
+            {
+                double fall = (p.WaterTime * 2.1 + i * 0.2) % 1;
+                dc.PushTransform(new TranslateTransform(121 + (i * 3 % 5 - 2) * 2.6, 81 + fall * 30)); // Under the rose, scattered.
+                dc.DrawGeometry(CanDropFill, CanInkThin, CanDrop);
+                dc.Pop();
+            }
+        }
+        dc.Pop(); dc.Pop();
     }
 
     private void DrawSneezePuff(DrawingContext dc, in Pose p)

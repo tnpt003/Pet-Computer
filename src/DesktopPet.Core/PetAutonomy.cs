@@ -46,6 +46,7 @@ public enum AutoKind
     Thought,
     PortalEvent,    // A portal appearing by itself; the spell the user asks for goes by UserGame.
     Weather,        // The weather shown around the cat; it does not move the cat, so Busy does not matter.
+    FarmChore,      // The cat going to water, harvest or chase a bird off the field on its own.
 }
 
 public static class PetAutonomy
@@ -74,6 +75,7 @@ public static class PetAutonomy
         AutoKind.Thought => AutoBlock.Fullscreen,
         AutoKind.PortalEvent => AutoBlock.Busy | AutoBlock.AnyQuiet | AutoBlock.AnyBattle | AutoBlock.Feature | AutoBlock.Away,
         AutoKind.Weather => AutoBlock.AnyQuiet | AutoBlock.AnyBattle,
+        AutoKind.FarmChore => AutoBlock.Busy | AutoBlock.AnyQuiet | AutoBlock.AnyBattle | AutoBlock.Feature | AutoBlock.Away,
         _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
     };
 

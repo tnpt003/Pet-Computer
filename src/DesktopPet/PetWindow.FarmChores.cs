@@ -1,0 +1,160 @@
+using System;
+
+namespace DesktopPet;
+
+// The cat works the field by itself (1.5.1 M4): every few minutes it walks over and waters or
+// harvests one tile, and now and then a paper bird lands and the cat chases it off. Local only, so
+// it goes on without Python, and it is not attention: it leaves the sleepiness clock alone.
+// Any sleep, drag, Quiet, Pause and the like ends a trip at once (AutoKind.FarmChore).
+public sealed partial class PetWindow
+{
+    // From the cat's middle to the tile's middle while it works, so the crop stays in view.
+    private const double FarmChoreGap = 58, FarmStalkSpeed = 0.6, FarmStalkCrouch = 0.45;
+
+    private readonly FarmChores farmChores = new();
+    private readonly FarmBird farmBird = new();
+
+    public FarmChoreKind FarmChoreNow => farmChores.Kind;
+    public FarmChorePhase FarmChorePhaseNow => farmChores.Phase;
+    public FarmBirdPhase FarmBirdPhaseNow => farmBird.Phase;
+    public int FarmChoreTile => farmChores.Tile;
+    public double FarmChoreSpot => farmChores.Spot;
+
+    private double FarmTileMid(int tile) => FarmPlotLeft - PetFarmArt.Side + PetFarmArt.TileCenter(tile);
+
+    private bool FarmHelpOn => preferences.Farm && preferences.FarmHelper && FarmVisible && farm != null && farmLift.Phase == FarmLiftPhase.Down && farmWithCat && pet.LedgeId == 0;
+
+    // Everything that starts a trip stops one, except the trip itself owning the cat.
+    private bool FarmChoreMayGoOn => FarmHelpOn && Blocking(PetAutonomy.BlockedBy(AutoKind.FarmChore) & ~AutoBlock.Feature) == AutoBlock.None;
+
+    // Each unpaused frame, before anything else may take the cat.
+    private void WatchFarmChores(double dt)
+    {
+        if (farmChores.Active && !FarmChoreMayGoOn) StopFarmChore();
+        if (farmChores.CountDownVisit(dt)) farmChores.ScheduleVisit(TryFarmVisit() ? FarmChores.NextVisit(featureRandom) : FarmChores.RetrySeconds);
+        if (farmChores.CountDownBird(dt)) farmChores.ScheduleBird(TryFarmBird() ? FarmChores.NextBird(featureRandom) : FarmChores.RetrySeconds);
+    }
+
+    private bool FarmChoreMayStart => FarmHelpOn && MayAct(AutoKind.FarmChore);
+
+    // One trip now, if this is a moment for it and a tile needs it. True when the cat set off.
+    public bool TryFarmVisit()
+    {
+        if (!FarmChoreMayStart || FarmChores.Pick(farm!, i => Math.Abs(FarmTileMid(i) - CatCenter)) is not var (kind, tile)) return false;
+        farmChores.Begin(kind, tile, FarmChoreSpotFor(tile));
+        return true;
+    }
+
+    // One bird now, if the cat could chase it. True when it came.
+    public bool TryFarmBird()
+    {
+        if (!FarmChoreMayStart || farmBird.Present) return false;
+        int tile = FarmChores.BirdTile(farm!, featureRandom);
+        if (tile < 0) return false;
+        farmBird.Land(tile, CatCenter < FarmTileMid(tile) ? 1 : -1); // Beyond the crop: the cat will not stand on it.
+        farmChores.Begin(FarmChoreKind.Bird, tile, FarmChoreSpotFor(tile));
+        return true;
+    }
+
+    // Beside the tile on the side the cat comes from; the other side when the screen ends there.
+    private double FarmChoreSpotFor(int tile)
+    {
+        double mid = FarmTileMid(tile), half = settings.Width / 2, left = bounds.Left, right = Math.Max(bounds.Left, bounds.Right - settings.Width);
+        double spot = mid + (CatCenter < mid ? -FarmChoreGap : FarmChoreGap) - half;
+        if (spot < left || spot > right) spot = mid + (CatCenter < mid ? FarmChoreGap : -FarmChoreGap) - half;
+        return Math.Clamp(spot, left, right);
+    }
+
+    // From TickFeatures. True while the trip owns the cat this frame.
+    private bool TickFarmChore(double dt)
+    {
+        if (!farmChores.Active || farm == null) return false;
+        int tile = farmChores.Tile;
+        var kind = farmChores.Kind;
+        // Done by hand meanwhile, or the bird has gone: nothing left to go for.
+        if (farmChores.Phase != FarmChorePhase.Work && (kind == FarmChoreKind.Bird ? !FarmBirdThere(tile) : farm.Next(tile) != StepOf(kind)))
+        {
+            StopFarmChore();
+            return false;
+        }
+        bool hit = farmChores.Step(dt);
+        int facing = FarmTileMid(tile) < CatCenter ? -1 : 1;
+        switch (farmChores.Phase)
+        {
+            case FarmChorePhase.Notice:
+                HoldStill(PetAction.Looking, facing);
+                return true;
+            case FarmChorePhase.Walk:
+                return WalkToFarmSpot(kind, dt);
+        }
+        DoFarmWork(kind, tile, facing, hit);
+        if (farmChores.Finished) StopFarmChore();
+        return true;
+    }
+
+    private bool FarmBirdThere(int tile) => farmBird.Tile == tile && farmBird.Phase is FarmBirdPhase.Landing or FarmBirdPhase.Perched;
+
+    private static FarmStep StepOf(FarmChoreKind kind) => kind == FarmChoreKind.Water ? FarmStep.Water : FarmStep.Harvest;
+
+    private bool WalkToFarmSpot(FarmChoreKind kind, double dt)
+    {
+        if (farmChores.WalkedTooLong) { StopFarmChore(); return false; }
+        double spot = farmChores.Spot;
+        if (Math.Abs(spot - pet.X) < 4)
+        {
+            pet.X = spot;
+            pet.VX = pet.SmoothedWalkVelocity = 0;
+            pet.Action = PetAction.Idle;
+            farmChores.Arrive();
+            if (kind == FarmChoreKind.Harvest) pet.BatRemaining = FarmChores.HarvestHit;
+            return true;
+        }
+        WalkToward(spot);
+        if (kind == FarmChoreKind.Bird) { pet.VX *= FarmStalkSpeed; pet.PlayCrouch = Math.Min(FarmStalkCrouch, pet.PlayCrouch + dt * 2); } // On tiptoe.
+        return true;
+    }
+
+    private void DoFarmWork(FarmChoreKind kind, int tile, int facing, bool hit)
+    {
+        switch (kind)
+        {
+            case FarmChoreKind.Water:
+                HoldStill(PetAction.Sitting, facing);
+                pet.WateringRemaining = Math.Max(0, FarmChores.WaterSeconds - farmChores.Time);
+                if (hit && farm!.Next(tile) == FarmStep.Water) FarmClick(tile);
+                break;
+            case FarmChoreKind.Harvest:
+                HoldStill(PetAction.Idle, facing);
+                if (hit && farm!.Next(tile) == FarmStep.Harvest) FarmClick(tile);
+                break;
+            default:
+                HoldStill(PetAction.Sitting, facing);
+                pet.PlayCrouch = farmChores.Time < FarmChores.PounceHit ? Math.Max(FarmStalkCrouch, Math.Min(1, farmChores.Time / 0.3)) : 0;
+                if (hit)
+                {
+                    farmBird.Scare();
+                    pet.BatRemaining = 0.3;
+                    PlayPetSound("ball_tap");
+                }
+                break;
+        }
+    }
+
+    private void StopFarmChore()
+    {
+        if (!farmChores.Active) return;
+        farmChores.Stop();
+        pet.WateringRemaining = pet.PlayCrouch = 0;
+        if (pet.Action is not (PetAction.Walking or PetAction.Sitting or PetAction.Looking or PetAction.Idle)) return; // Held, flying or asleep: not ours to change.
+        pet.Action = PetAction.Idle;
+        pet.VX = pet.SmoothedWalkVelocity = 0;
+        behavior.Reset(pet);
+    }
+
+    // With the plot's own frame: the bird flies, and goes if its tile has been emptied under it.
+    private void StepFarmBird(double dt)
+    {
+        if (farmBird.Present && farm != null && farm.Tiles[farmBird.Tile].Crop == null) farmBird.Scare();
+        farmBird.Step(dt);
+    }
+}

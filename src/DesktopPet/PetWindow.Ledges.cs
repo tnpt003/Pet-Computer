@@ -74,7 +74,7 @@ public sealed partial class PetWindow
     private void TickLedgePlans(double dt)
     {
         bool free = MayAct(AutoKind.ClimbLedge) && queuedCommand == null && toyWindow == null && laserWindow == null &&
-            !returningHome && !admiring && keepsakeShove == KeepsakeShove.None && cushionNap == CushionNap.None && pet.TreatRemaining <= 0 && treatSatisfiedRemaining <= 0;
+            !returningHome && !admiring && keepsakeShove == KeepsakeShove.None && cushionNap == CushionNap.None && pet.TreatRemaining <= 0 && treatSatisfiedRemaining <= 0 && !farmChores.Active;
         if (!free) { climbPlan = null; ledgeExit = 0; return; }
         if (climbPlan is var (id, side, startX))
         {

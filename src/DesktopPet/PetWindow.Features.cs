@@ -234,6 +234,7 @@ public sealed partial class PetWindow
         pet.TreatRemaining = 0;
         pet.CastRemaining = 0;
         treatSatisfiedRemaining = 0;
+        StopFarmChore();
         pet.BatRemaining = pet.PlayCrouch = 0;
         toyPlay.Reset();
         if (PetActionRules.IsCancellableLocal(pet.Action)) pet.Action = PetAction.Idle;
@@ -242,7 +243,7 @@ public sealed partial class PetWindow
 
     // Also lets a walk carry the pet past a window ledge's end (it drops off).
     private bool FeatureOwnsMovement() => CanPlay && (pet.TreatRemaining > 0 || pet.CastRemaining > 0 || treatSatisfiedRemaining > 0 || toyWindow != null || returningHome || admiring ||
-        laserWindow != null || climbPlan != null || ledgeExit != 0 || keepsakeShove != KeepsakeShove.None || keepsakeWatch > 0 || pet.Bonk > 0 || cushionNap == CushionNap.Walk);
+        laserWindow != null || climbPlan != null || ledgeExit != 0 || keepsakeShove != KeepsakeShove.None || keepsakeWatch > 0 || pet.Bonk > 0 || cushionNap == CushionNap.Walk || farmChores.Active);
 
     private void TickFeatures(double dt)
     {
@@ -266,6 +267,7 @@ public sealed partial class PetWindow
             if (pet.Action == PetAction.SeekingAttention) PlayPetSound("meow");
             lastSoundAction = pet.Action;
         }
+        WatchFarmChores(dt); // The cat's trips to the field (PetWindow.FarmChores.cs).
         if (TickPortal(dt)) return; // The magic portal (PetWindow.Portal.cs).
         if (BattleActive) return; // The battle owns the pet; games, treats and rest visits wait.
         if (TickLaser(dt)) return;
@@ -335,6 +337,7 @@ public sealed partial class PetWindow
         if (TickCushionNap(dt)) return; // Napping on the slime cushion (PetWindow.KeepsakePlay.cs).
         if (EffectiveQuiet) return;
         if (TickKeepsakeShove(dt)) return; // Shoving the keepsake along (PetWindow.Keepsake.cs).
+        if (TickFarmChore(dt)) return; // Watering, harvesting, chasing a bird (PetWindow.FarmChores.cs).
         restVisit -= dt;
         if (restVisit <= 0 && preferences.RestX.HasValue && pet.Action is PetAction.Idle or PetAction.Sitting && climbPlan == null && ledgeExit == 0)
         { returningHome = true; restVisit = 45; }

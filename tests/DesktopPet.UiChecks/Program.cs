@@ -989,6 +989,7 @@ internal static class Program
         PortalChecks.Run(window, pet, behavior, preferences, Check);
         WeatherChecks.Run(window, pet, preferences, Check);
         FarmChecks.Run(window, pet, preferences, Check);
+        FarmChoreChecks.Run(window, pet, behavior, preferences, Check);
         await WeaponChecks.Run(window, pet, Check);
         await BattlePrepChecks.Run(window, pet, behavior, preferences, Check);
         await AdventureChecks.Run(window, pet, behavior, preferences, Check);

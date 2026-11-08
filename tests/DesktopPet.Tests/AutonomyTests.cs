@@ -10,7 +10,7 @@ internal static class AutonomyTests
         check(kinds.All(k => PetAutonomy.MayAct(k, AutoBlock.None)), "Nothing blocks any kind when no condition holds");
 
         // What the cat does on its own stops in Quiet and with a fullscreen app (AGENTS.md).
-        var own = new[] { AutoKind.LocalBehavior, AutoKind.RestVisit, AutoKind.Admire, AutoKind.ShoveKeepsake, AutoKind.CushionNap, AutoKind.ClimbLedge, AutoKind.PortalEvent };
+        var own = new[] { AutoKind.LocalBehavior, AutoKind.RestVisit, AutoKind.Admire, AutoKind.ShoveKeepsake, AutoKind.CushionNap, AutoKind.ClimbLedge, AutoKind.PortalEvent, AutoKind.FarmChore };
         check(own.All(k => Blocks(k, AutoBlock.Quiet) && Blocks(k, AutoBlock.Fullscreen)), "Autonomous kinds stop in Quiet and with a fullscreen app");
         // The user asked: Quiet does not stop it; a fullscreen app still stops the games.
         var asked = new[] { AutoKind.Treat, AutoKind.UserGame, AutoKind.CallToLook };

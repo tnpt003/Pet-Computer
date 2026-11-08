@@ -1236,3 +1236,13 @@ Các mục 1.5 phía trên viết theo từng mốc; đây là thứ tự chơi 
 - [ ] Pause: bấm và chuột phải ruộng không có tác dụng, hết Pause dùng lại được. Bật app toàn màn hình hoặc vào trận: ruộng ẩn, xong thì hiện lại (đang nhấc thì về chỗ cũ). Sảnh chiến đấu mở thì ruộng vẫn ở dưới bảng
 - [ ] Cài đặt → Thói quen → tắt "Ruộng trên desktop": ẩn, bật lại cây còn nguyên. Tooltip đủ chữ ở vi/en/ja
 - [ ] Thử DPI 100/125/150/200%, taskbar ở cạnh khác, nhiều màn hình (ruộng đặt ở màn khác màn mèo, rút màn hình đó thì về màn chính). Xem ruộng có che thanh trạng thái app đang dùng gây khó chịu không
+
+## 1.5.1 Mốc 4 — Mèo làm vườn cùng (08/11)
+
+- [ ] Gieo vài ô rồi để mèo rảnh: khoảng 2–4 phút mèo tự đi tới một ô cần tưới, đứng cạnh ô (không che cây), cầm bình tưới khoảng 2 giây, có nước rơi, ô chuyển sang đang lớn. Xem bình tưới và giọt nước có đúng hướng khi mèo quay trái/phải
+- [ ] Có ô chín: mèo ưu tiên tới gặt, khều chân, hiện "+1 Tên cây", số thu hoạch tăng. Mỗi chuyến chỉ một ô. Mèo không tự cày, không tự gieo
+- [ ] Khoảng 6–12 phút có chim giấy đậu cạnh cây đang trồng: mèo nhìn, rón rén tới, thu người rồi vồ, chim bay đi. Cây không mất, không chậm. Xem chim có đủ rõ trên hình nền thật và có gây rối không
+- [ ] Đang đi làm vườn: nhấc, ném mèo, click trái/phải đều hủy chuyến ngay, mèo không tự đi tiếp. Mèo ngủ hoặc đang thức dậy thì không đi; chuyến đang đi mà mèo ngủ thì không bị đánh thức. Pause, Quiet, app toàn màn hình, mở Sảnh, vào trận, vắng máy thì không đi và không có chim
+- [ ] Bạn tự tưới đúng ô mèo đang đi tới: mèo dừng lại, không tưới lần hai. Nhấc mảnh đất lúc mèo đang đi: mèo dừng, chim (nếu có) bay đi. Mèo đứng trên cửa sổ, hoặc ruộng ở màn khác mèo: mèo không đi
+- [ ] Cài đặt → Thói quen → tắt "Mèo làm vườn cùng": mèo thôi đi, bạn vẫn tự bấm ruộng được. Tooltip đủ chữ ở vi/en/ja
+- [ ] Xem nhịp 2–4 phút có vừa không, và trên màn hình rất rộng: mèo ở đầu xa ruộng quá 20 giây đi bộ thì bỏ chuyến, xem có khó chịu không. Thử DPI 100/125/150/200%, nhiều màn hình

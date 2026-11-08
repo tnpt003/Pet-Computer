@@ -12,8 +12,8 @@ namespace DesktopPet;
 
 // The little field on the desktop (1.5.1 M3): six tiles just above the taskbar. A left click does
 // the tile's next step (till, sow, water, harvest); a right click offers to move the whole plot,
-// which floats up, is dragged along the floor, and is set down from the menu again. The field
-// never touches the cat: clicking it wakes nothing, and sleep, drag and emotions are not involved.
+// which floats up, is dragged along the floor, and is set down from the menu again. Clicking the
+// field never touches the cat: it wakes nothing, and sleep, drag and emotions are not involved.
 public sealed partial class PetWindow
 {
     private const double FarmCheckSeconds = 1, FarmEffectSeconds = 0.55, FarmGainSeconds = 1.3, FarmChipWidth = 200;
@@ -34,7 +34,7 @@ public sealed partial class PetWindow
     private double farmScale = 1, farmFraction, farmRestFraction, farmFallFrom, farmFallTo, farmGrab, farmGainLeft;
     private string? farmMonitor;
     private DateTime farmChecked;
-    private bool farmDragging, farmEffectsRunning;
+    private bool farmDragging, farmEffectsRunning, farmWithCat;
     private int farmHover = -1, farmPressTile = -1;
     private string? farmChipShown;
 
@@ -101,7 +101,9 @@ public sealed partial class PetWindow
                 else effects = true;
             }
         }
-        bool redraw = lifted || farmLift.Busy || farmEffectsRunning;
+        bool bird = farmBird.Present;
+        StepFarmBird(dt);
+        bool redraw = lifted || farmLift.Busy || farmEffectsRunning || bird;
         farmEffectsRunning = effects;
         if (redraw)
             DrawFarmLift();
@@ -123,6 +125,11 @@ public sealed partial class PetWindow
         farmArt.Tilt = farmLift.Tilt;
         farmArt.Squash = farmLift.Squash;
         farmArt.Shed = farmLift.Shed;
+        farmArt.BirdTile = farmBird.Tile;
+        farmArt.BirdSide = farmBird.Side;
+        farmArt.BirdAir = farmBird.Air;
+        farmArt.BirdTime = farmBird.Time;
+        farmArt.BirdFlying = !farmBird.Perched;
         farmArt.InvalidateVisual();
     }
 
@@ -190,6 +197,7 @@ public sealed partial class PetWindow
         farmDragging = false;
         if (farmLift.Phase != FarmLiftPhase.Down) farmFraction = farmRestFraction;
         farmLift.Reset();
+        farmBird.Reset();
         DrawFarmLift();
         UpdateFarmCursor();
         HoverFarm(-1);
@@ -204,6 +212,7 @@ public sealed partial class PetWindow
         var catScreen = CurrentMonitor();
         var screen = Forms.Screen.AllScreens.FirstOrDefault(s => s.DeviceName == farmMonitor) ?? Forms.Screen.PrimaryScreen ?? catScreen;
         farmMonitor = screen.DeviceName;
+        farmWithCat = screen.DeviceName == catScreen.DeviceName;
         farmScale = screen.DeviceName == catScreen.DeviceName ? scale : MonitorScale(screen);
         var work = screen.WorkingArea;
         farmArea = new Area(work.Left / farmScale, work.Top / farmScale, work.Right / farmScale, work.Bottom / farmScale);
@@ -473,6 +482,7 @@ public sealed partial class PetWindow
         if (paused || !FarmVisible || farmLift.Phase != FarmLiftPhase.Down) return;
         farmRestFraction = farmFraction;
         HoverFarm(-1);
+        farmBird.Scare(); // The ground is about to go.
         farmLift.Begin();
         UpdateFarmCursor();
         PlayPetSound("swoosh");

@@ -60,6 +60,7 @@ public sealed partial class PetWindow
         farm ??= PetFarm.Load(farmPath);
         if (farmWindow == null) CreateFarmWindow();
         if (!FarmVisible) ShowFarm();
+        WatchFarmShop();
 
         var now = FarmNow;
         if (Math.Abs((now - farmChecked).TotalSeconds) >= FarmCheckSeconds)
@@ -193,6 +194,7 @@ public sealed partial class PetWindow
     private void HideFarm()
     {
         CloseFarmSeedMenu();
+        CloseFarmShop();
         farmArt?.ReleaseMouseCapture();
         farmDragging = false;
         if (farmLift.Phase != FarmLiftPhase.Down) farmFraction = farmRestFraction;
@@ -204,7 +206,11 @@ public sealed partial class PetWindow
         farmWindow?.Hide();
     }
 
-    private void CloseFarm() => farmWindow?.Close();
+    private void CloseFarm()
+    {
+        CloseFarmShop();
+        farmWindow?.Close();
+    }
 
     // The plot's monitor in its own DIPs (unplugged: the primary one, at the same place across it).
     private void RefreshFarmArea()
@@ -241,8 +247,9 @@ public sealed partial class PetWindow
         for (int i = 0; i < PetFarm.TileCount; i++)
         {
             var tile = farm.Tiles[i];
-            farmArt.Tiles[i] = new FarmTileView(tile.Stage, tile.Crop, tile.GrowsUntil != null, farm.Next(i) == FarmStep.Water, farm.Progress(i, now));
+            farmArt.Tiles[i] = new FarmTileView(tile.Stage, tile.Crop, tile.GrowsUntil != null, farm.Next(i) == FarmStep.Water, farm.Progress(i, now), !farm.IsOpen(i));
         }
+        farmArt.Scarecrow = farm.Scarecrow;
         farmArt.HoverTile = farmHover;
         farmArt.Lift = farmLift.Height;
         farmArt.InvalidateVisual();
@@ -291,6 +298,7 @@ public sealed partial class PetWindow
             FarmStep.Plant => L("Gieo hạt", "Sow a seed"),
             FarmStep.Water => name + " · " + L("cần tưới", "needs water"),
             FarmStep.Harvest => name + " · " + L("thu hoạch", "harvest"),
+            FarmStep.Locked => L("Ô khóa", "Locked") + " · " + FarmPriceText(PetFarm.OpenPrice(index)),
             _ => name + " · " + FarmClock(farm.Remaining(index, FarmNow))
         };
     }
@@ -387,13 +395,22 @@ public sealed partial class PetWindow
                     ShowFarmGain(tile, crop);
                 }
                 break;
+            case FarmStep.Locked:
+                OpenFarmShop();
+                return;
             default:
                 return;
         }
+        FarmChanged();
+    }
+
+    private void FarmChanged()
+    {
         SaveFarm();
         RefreshFarmArt();
         farmChipShown = null;
         UpdateFarmChip();
+        UpdateFarmShop();
     }
 
     public bool FarmPlant(int tile, FarmCrop crop)
@@ -401,10 +418,7 @@ public sealed partial class PetWindow
         if (farm == null || paused || farmLift.Phase != FarmLiftPhase.Down || !farm.Plant(tile, crop)) return false;
         StartFarmEffect(tile, FarmEffect.Plant);
         PlayPetSound("pop");
-        SaveFarm();
-        RefreshFarmArt();
-        farmChipShown = null;
-        UpdateFarmChip();
+        FarmChanged();
         return true;
     }
 
@@ -441,7 +455,7 @@ public sealed partial class PetWindow
 
     public MenuItem[] FarmSeedItems(int tile) => Enum.GetValues<FarmCrop>().Select(crop =>
     {
-        var item = new MenuItem { Header = FarmSeedLabel(crop), Icon = new FarmCropIcon(crop) };
+        var item = new MenuItem { Header = FarmSeedLabel(crop) + " · " + FarmPriceText(PetFarm.SeedPrice(crop)), Icon = new FarmCropIcon(crop), IsEnabled = farm == null || farm.Coins >= PetFarm.SeedPrice(crop) };
         item.Click += (_, _) => FarmPlant(tile, crop);
         return item;
     }).ToArray();
@@ -474,7 +488,10 @@ public sealed partial class PetWindow
         }
         var move = new MenuItem { Header = L("Di chuyển mảnh đất farm", "Move the farm plot") };
         move.Click += (_, _) => BeginFarmMove();
-        return new[] { move };
+        if (!FarmShopAllowed) return new[] { move };
+        var shop = new MenuItem { Header = L("Kho & cửa hàng", "Store & shop") };
+        shop.Click += (_, _) => OpenFarmShop();
+        return new[] { shop, move };
     }
 
     public void BeginFarmMove()

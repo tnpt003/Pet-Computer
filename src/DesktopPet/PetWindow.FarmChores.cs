@@ -32,7 +32,7 @@ public sealed partial class PetWindow
     {
         if (farmChores.Active && !FarmChoreMayGoOn) StopFarmChore();
         if (farmChores.CountDownVisit(dt)) farmChores.ScheduleVisit(TryFarmVisit() ? FarmChores.NextVisit(featureRandom) : FarmChores.RetrySeconds);
-        if (farmChores.CountDownBird(dt)) farmChores.ScheduleBird(TryFarmBird() ? FarmChores.NextBird(featureRandom) : FarmChores.RetrySeconds);
+        if (farmChores.CountDownBird(dt)) farmChores.ScheduleBird(TryFarmBird() ? FarmChores.NextBird(featureRandom, farm?.Scarecrow == true) : FarmChores.RetrySeconds);
     }
 
     private bool FarmChoreMayStart => FarmHelpOn && MayAct(AutoKind.FarmChore);

@@ -14,7 +14,7 @@ public enum FarmCrop { Radish, Carrot, Tomato, Pumpkin }
 public enum FarmStage { Wild, Tilled, Seed, Sprout, Young, Ripe }
 
 // What a click on the tile does next.
-public enum FarmStep { Till, Plant, Water, Wait, Harvest }
+public enum FarmStep { Till, Plant, Water, Wait, Harvest, Locked }
 
 public sealed class FarmTile
 {
@@ -28,9 +28,12 @@ public sealed class FarmTile
 // saved in farm.json. Growth follows the real clock, so it goes on while the app is closed or in
 // Pause, but only ever through the one stage that was watered. Nothing wilts: a tile just waits.
 // The window owns the art and the mouse (PetWindow.Farm.cs). Gives no strength in battle.
+// Its economy (1.5.1 M5): harvests go to a store, are sold for farm coins, which are not battle
+// coins, and the coins buy seeds, more tiles and a scarecrow. Radish seed is free, so nobody gets stuck.
 public sealed class PetFarm
 {
-    public const int CurrentVersion = 1, TileCount = 6, WateredStages = 3;
+    public const int CurrentVersion = 2, TileCount = 6, WateredStages = 3;
+    public const int StartingTiles = 3, StartingCoins = 20, MaxCoins = 999_999, ScarecrowPrice = 150;
     public const double FirstFraction = 0.25;
 
     // Seconds from sowing to ripe when every watering comes on time.
@@ -43,10 +46,35 @@ public sealed class PetFarm
     };
     public static double StageSeconds(FarmCrop crop) => GrowSeconds(crop) / WateredStages;
 
+    public static int SeedPrice(FarmCrop crop) => crop switch
+    {
+        FarmCrop.Radish => 0,
+        FarmCrop.Carrot => 4,
+        FarmCrop.Tomato => 10,
+        _ => 25
+    };
+
+    public static int SellPrice(FarmCrop crop) => crop switch
+    {
+        FarmCrop.Radish => 3,
+        FarmCrop.Carrot => 13,
+        FarmCrop.Tomato => 30,
+        _ => 85
+    };
+
+    // What opening this tile costs (the fourth, fifth and sixth).
+    public static int OpenPrice(int index) => index switch { 3 => 40, 4 => 120, _ => 300 };
+
     public int Version { get; set; } = CurrentVersion;
     public List<FarmTile> Tiles { get; set; } = new();
-    // How many of each crop were ever harvested, by crop name (the store of 1.5.1 M5 starts from this).
+    // How many of each crop were ever harvested, by crop name. Selling does not lower it.
     public Dictionary<string, int> Harvested { get; set; } = new();
+    // What is in the store now, by crop name.
+    public Dictionary<string, int> Stock { get; set; } = new();
+    public int Coins { get; set; } = StartingCoins;
+    // Tiles open from the left; a tile with anything on it is always open.
+    public int OpenTiles { get; set; } = StartingTiles;
+    public bool Scarecrow { get; set; }
     // The plot's monitor (device name) and its left edge as a fraction of the free width (null: not placed yet).
     public string? Monitor { get; set; }
     public double? FractionX { get; set; }
@@ -63,6 +91,8 @@ public sealed class PetFarm
         var farm = JsonStore.ReadOrBackup<PetFarm>(path, "Farm");
         if (farm == null) return new();
         farm.ReadOnly = farm.Version > CurrentVersion;
+        // A field from before the store: what it had grown so far goes in.
+        if (farm.Version < 2) farm.Stock = new(farm.Harvested ?? new());
         if (!farm.ReadOnly) farm.Version = CurrentVersion;
         farm.Normalize();
         return farm;
@@ -79,10 +109,16 @@ public sealed class PetFarm
         Tiles = (Tiles ?? new()).Where(tile => tile != null).Take(TileCount).ToList();
         while (Tiles.Count < TileCount) Tiles.Add(new FarmTile());
         foreach (var tile in Tiles) Clean(tile);
-        Harvested = (Harvested ?? new()).Where(pair => Enum.TryParse<FarmCrop>(pair.Key, out _) && pair.Value > 0).ToDictionary(pair => pair.Key, pair => pair.Value);
+        Harvested = CleanCounts(Harvested);
+        Stock = CleanCounts(Stock);
+        Coins = Math.Clamp(Coins, 0, MaxCoins);
+        OpenTiles = Math.Clamp(Math.Max(OpenTiles, Tiles.FindLastIndex(tile => tile.Stage != FarmStage.Wild) + 1), StartingTiles, TileCount);
         if (FractionX is double x) FractionX = double.IsFinite(x) ? Math.Clamp(x, 0, 1) : null;
         if (string.IsNullOrWhiteSpace(Monitor)) Monitor = null;
     }
+
+    private static Dictionary<string, int> CleanCounts(Dictionary<string, int>? counts) =>
+        (counts ?? new()).Where(pair => Enum.TryParse<FarmCrop>(pair.Key, out _) && pair.Value > 0).ToDictionary(pair => pair.Key, pair => pair.Value);
 
     private static void Clean(FarmTile tile)
     {
@@ -94,10 +130,11 @@ public sealed class PetFarm
         else if (tile.GrowsUntil is DateTime until) tile.GrowsUntil = until.ToUniversalTime();
     }
 
-    private bool Valid(int index) => index >= 0 && index < TileCount;
+    public bool IsOpen(int index) => index >= 0 && index < OpenTiles;
 
     public FarmStep Next(int index)
     {
+        if (!IsOpen(index)) return FarmStep.Locked;
         var tile = Tiles[index];
         return tile.Stage switch
         {
@@ -110,14 +147,15 @@ public sealed class PetFarm
 
     public bool Till(int index)
     {
-        if (!Valid(index) || Tiles[index].Stage != FarmStage.Wild) return false;
+        if (!IsOpen(index) || Tiles[index].Stage != FarmStage.Wild) return false;
         Tiles[index].Stage = FarmStage.Tilled;
         return true;
     }
 
     public bool Plant(int index, FarmCrop crop)
     {
-        if (!Valid(index) || Tiles[index].Stage != FarmStage.Tilled || !Enum.IsDefined(crop)) return false;
+        if (!IsOpen(index) || Tiles[index].Stage != FarmStage.Tilled || !Enum.IsDefined(crop) || Coins < SeedPrice(crop)) return false;
+        Coins -= SeedPrice(crop);
         Tiles[index].Stage = FarmStage.Seed;
         Tiles[index].Crop = crop;
         Tiles[index].GrowsUntil = null;
@@ -126,7 +164,7 @@ public sealed class PetFarm
 
     public bool Water(int index, DateTime utcNow)
     {
-        if (!Valid(index) || Next(index) != FarmStep.Water) return false;
+        if (!IsOpen(index) || Next(index) != FarmStep.Water) return false;
         Tiles[index].GrowsUntil = utcNow.AddSeconds(StageSeconds(Tiles[index].Crop!.Value));
         return true;
     }
@@ -134,16 +172,61 @@ public sealed class PetFarm
     // The crop picked, or null when the tile is not ripe. The tile goes back to wild ground.
     public FarmCrop? Harvest(int index)
     {
-        if (!Valid(index) || Tiles[index].Stage != FarmStage.Ripe) return null;
+        if (!IsOpen(index) || Tiles[index].Stage != FarmStage.Ripe) return null;
         var crop = Tiles[index].Crop!.Value;
         Tiles[index].Stage = FarmStage.Wild;
         Tiles[index].Crop = null;
         Tiles[index].GrowsUntil = null;
         Harvested[crop.ToString()] = Harvested.GetValueOrDefault(crop.ToString()) + 1;
+        Stock[crop.ToString()] = Stock.GetValueOrDefault(crop.ToString()) + 1;
         return crop;
     }
 
     public int HarvestedCount(FarmCrop crop) => Harvested.GetValueOrDefault(crop.ToString());
+    public int StockOf(FarmCrop crop) => Stock.GetValueOrDefault(crop.ToString());
+    public int StockValue => Enum.GetValues<FarmCrop>().Sum(crop => StockOf(crop) * SellPrice(crop));
+    // The next tile to open, or -1 when all are.
+    public int NextLockedTile => OpenTiles < TileCount ? OpenTiles : -1;
+
+    // Sells one of this crop. The coins it brought, 0 when there was none.
+    public int Sell(FarmCrop crop)
+    {
+        int left = StockOf(crop);
+        if (left <= 0) return 0;
+        if (left == 1) Stock.Remove(crop.ToString());
+        else Stock[crop.ToString()] = left - 1;
+        return Earn(SellPrice(crop));
+    }
+
+    // Empties the store. The coins it brought.
+    public int SellAll()
+    {
+        int value = StockValue;
+        Stock.Clear();
+        return Earn(value);
+    }
+
+    private int Earn(int amount)
+    {
+        Coins = Math.Min(MaxCoins, Coins + amount);
+        return amount;
+    }
+
+    public bool OpenNextTile()
+    {
+        if (NextLockedTile < 0 || Coins < OpenPrice(NextLockedTile)) return false;
+        Coins -= OpenPrice(NextLockedTile);
+        OpenTiles++;
+        return true;
+    }
+
+    public bool BuyScarecrow()
+    {
+        if (Scarecrow || Coins < ScarecrowPrice) return false;
+        Coins -= ScarecrowPrice;
+        Scarecrow = true;
+        return true;
+    }
 
     // Moves on every tile whose watered stage is over. A clock set backwards never makes a stage
     // longer than it should be. Returns the indexes that changed stage.

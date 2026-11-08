@@ -11,7 +11,7 @@ public enum FarmBirdPhase { Away, Landing, Perched, Leaving }
 // The window owns the walking, the art and the rules for when the cat may go (PetWindow.FarmChores.cs).
 public sealed class FarmChores
 {
-    public const double VisitMinSeconds = 120, VisitMaxSeconds = 240, BirdMinSeconds = 360, BirdMaxSeconds = 720;
+    public const double VisitMinSeconds = 120, VisitMaxSeconds = 240, BirdMinSeconds = 360, BirdMaxSeconds = 720, ScarecrowBirdFactor = 2;
     // The moment was wrong or there was nothing to do: look again soon, nothing piles up.
     public const double RetrySeconds = 45;
     public const double NoticeSeconds = 0.7, WalkLimitSeconds = 20;
@@ -37,7 +37,7 @@ public sealed class FarmChores
     private double HitTime => Kind switch { FarmChoreKind.Water => WaterHit, FarmChoreKind.Harvest => HarvestHit, _ => PounceHit };
 
     public static double NextVisit(Random random) => VisitMinSeconds + random.NextDouble() * (VisitMaxSeconds - VisitMinSeconds);
-    public static double NextBird(Random random) => BirdMinSeconds + random.NextDouble() * (BirdMaxSeconds - BirdMinSeconds);
+    public static double NextBird(Random random, bool scarecrow = false) => (BirdMinSeconds + random.NextDouble() * (BirdMaxSeconds - BirdMinSeconds)) * (scarecrow ? ScarecrowBirdFactor : 1);
     public void ScheduleVisit(double seconds) => VisitDue = Math.Max(0, seconds);
     public void ScheduleBird(double seconds) => BirdDue = Math.Max(0, seconds);
 

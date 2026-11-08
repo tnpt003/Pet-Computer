@@ -46,6 +46,7 @@ internal static class FarmChoreChecks
         {
             Farm(0.05);
             var field = window.Farm!;
+            field.OpenTiles = 6;
             chores.ScheduleVisit(100000); chores.ScheduleBird(100000); // Only the trips asked for here.
             Free();
             var area = Field<Area>(window, "bounds");

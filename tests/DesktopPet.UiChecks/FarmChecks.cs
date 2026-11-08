@@ -56,6 +56,8 @@ internal static class FarmChecks
 
             // The steps of one tile, by clicks.
             var farm = window.Farm!;
+            Shop(window, farm, path, check, () => Tick(0.02));
+            farm.OpenTiles = 6;
             check(window.FarmTileLabel(0)!.Length > 0 && window.FarmTileLabel(6) == null, "Each tile has a label");
             check(farm.Next(0) == FarmStep.Till, "A new tile needs tilling");
             window.FarmClick(0);
@@ -119,9 +121,9 @@ internal static class FarmChecks
 
             // Moving the plot.
             var ground = window.FarmMenuItems();
-            check(ground.Length == 1 && ((string)ground[0].Header).Length > 0, "On the ground the menu offers to move it");
+            check(ground.Length == 2 && ground.All(item => ((string)item.Header).Length > 0), "On the ground the menu offers the shop and to move it");
             double topBefore = Overlay()!.Top, restFraction = window.FarmFraction;
-            ground[0].RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+            ground[1].RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
             check(window.FarmLiftPhaseNow == FarmLiftPhase.Rising, "It begins to rise");
             check(window.FarmMenuItems().Length == 0, "No menu while it is on the way up");
             Tick(FarmLift.RiseSeconds + 0.05);
@@ -223,6 +225,79 @@ internal static class FarmChecks
 
     private const double FarmGainWait = 1.35;
 
+    // The store and shop in the real window: locked tiles, seeds at a price, selling, buying, what closes it.
+    private static void Shop(PetWindow window, PetFarm farm, string path, Action<bool, string> check, Action tick)
+    {
+        Window? Panel() => Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.Title == "Pet farm shop" && w.IsLoaded);
+        check(window.FarmTileLabel(3)!.Contains("40"), "A locked tile says what it costs");
+        window.FarmClick(3);
+        check(window.FarmShopOpen && Panel() != null && farm.Tiles[3].Stage == FarmStage.Wild, "Clicking a locked tile opens the shop and tills nothing");
+        var panel = Panel()!;
+        check(panel.Topmost && !panel.ShowInTaskbar && !panel.ShowActivated, "The shop takes no focus and has no taskbar button");
+        var area = Field<Area>(window, "bounds");
+        check(panel.Left >= area.Left - 1 && panel.Left + panel.ActualWidth <= area.Right + 1 && panel.Top + panel.ActualHeight <= area.Bottom + 1, $"The shop fits on the monitor ({panel.ActualWidth:F0}x{panel.ActualHeight:F0})");
+        double width = panel.ActualWidth;
+
+        farm.Coins = 5;
+        var seeds = window.FarmSeedItems(0);
+        check(seeds[0].IsEnabled && seeds[1].IsEnabled && !seeds[2].IsEnabled && !seeds[3].IsEnabled, "Seeds too dear for the purse are greyed");
+        check(((string)seeds[1].Header).Contains("4") , "A seed shows its price");
+        farm.Coins = 0;
+        farm.Stock["Carrot"] = 2; farm.Stock["Radish"] = 1;
+        check(window.FarmSell(FarmCrop.Carrot) == 13 && farm.Coins == 13 && farm.StockOf(FarmCrop.Carrot) == 1, "Selling pays");
+        check(PetFarm.Load(path).Coins == 13, "...and is saved");
+        check(window.FarmSellAll() == 16 && farm.Coins == 29 && farm.Stock.Count == 0, "Selling all empties the store");
+        check(!window.FarmOpenTile() && farm.OpenTiles == 3, "A tile too dear is refused");
+        farm.Coins = 500;
+        check(window.FarmOpenTile() && farm.OpenTiles == 4 && farm.Next(3) == FarmStep.Till, "A tile is opened");
+        check(window.FarmBuyScarecrow() && farm.Scarecrow && farm.Coins == 310 && !window.FarmBuyScarecrow(), "The scarecrow is bought once");
+        check(Field<PetFarmArt>(window, "farmArt").Scarecrow, "It stands on the plot");
+        var reload = PetFarm.Load(path);
+        check(reload.OpenTiles == 4 && reload.Scarecrow && reload.Coins == 310, "Tile and scarecrow are in the file");
+        panel.UpdateLayout();
+        check(Math.Abs(panel.ActualWidth - width) < 1, "The panel does not change width as its labels change");
+
+        SetField(window, "paused", true);
+        tick();
+        int coins = farm.Coins;
+        farm.Stock["Radish"] = 1;
+        check(window.FarmSell(FarmCrop.Radish) == 0 && window.FarmSellAll() == 0 && !window.FarmOpenTile() && farm.Coins == coins, "Pause refuses buying and selling");
+        SetField(window, "paused", false);
+        farm.Stock.Clear();
+        tick();
+
+        Render(panel);
+        window.CloseFarmShop();
+        tick();
+        check(!window.FarmShopOpen && Panel() == null, "The shop closes");
+        window.FarmClick(4);
+        check(window.FarmShopOpen, "A locked tile opens it again");
+        SetField(window, "battleHubOpen", true);
+        tick();
+        check(!window.FarmShopOpen, "A battle panel closes it");
+        check(window.FarmMenuItems().Length == 1, "...and takes it off the menu");
+        SetField(window, "battleHubOpen", false);
+        window.OpenFarmShop();
+        SetContext(window, true, 0); Call(window, "TickContext", 1.1);
+        tick();
+        check(!window.FarmShopOpen, "A fullscreen app closes it");
+        SetContext(window, false, 0); Call(window, "TickContext", 1.1);
+        tick();
+        farm.Scarecrow = false;
+    }
+
+    private static void Render(Window panel)
+    {
+        if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is not string review) return;
+        panel.UpdateLayout();
+        var element = (FrameworkElement)panel.Content;
+        var bitmap = new RenderTargetBitmap((int)Math.Ceiling(element.ActualWidth), (int)Math.Ceiling(element.ActualHeight), 96, 96, PixelFormats.Pbgra32);
+        bitmap.Render(element);
+        var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap));
+        Directory.CreateDirectory(review);
+        using var stream = File.Create(Path.Combine(review, "farm-shop.png")); encoder.Save(stream);
+    }
+
     private static bool Below(IntPtr above, IntPtr target)
     {
         for (var next = GetWindow(above, 2); next != IntPtr.Zero; next = GetWindow(next, 2))
@@ -284,6 +359,7 @@ internal static class FarmChecks
             Render(art => { Steps(art); art.Lift = FarmLift.FloatHeight; art.Shed = 1.9; }, back, $"farm-shedding-{tone}");
             Render(art => { Steps(art); art.Dustiness = 0.95; art.Squash = 0.9; art.ShakeX = 2.5; }, back, $"farm-impact-{tone}");
             Render(art => { Steps(art); art.Dustiness = 0.65; }, back, $"farm-impact-late-{tone}");
+            Render(art => { Steps(art); for (int i = 3; i < 6; i++) art.Tiles[i] = new(FarmStage.Wild, null, false, false, 0, true); art.HoverTile = 4; art.Scarecrow = true; }, back, $"farm-locked-{tone}");
         }
         foreach (var (effect, name) in new[] { (FarmEffect.Till, "till"), (FarmEffect.Water, "water"), (FarmEffect.Harvest, "harvest") })
             Render(art => { Steps(art); art.Effects[1] = effect; art.EffectAge[1] = 0.4; }, dark, $"farm-effect-{name}");
@@ -306,6 +382,8 @@ internal static class FarmChecks
         check(still != Render(art => art.Shed = 1.0, dark, null), "Crumbs are drawn as it tears loose");
         check(still != Render(art => art.Dustiness = 0.65, dark, null), "Dirt is drawn as it lands");
         check(still != Render(art => art.ShakeX = 3, dark, null), "The plot shakes");
+        check(still != Render(art => art.Tiles[3] = new(FarmStage.Wild, null, false, false, 0, true), dark, null), "A locked tile has its fence");
+        check(still != Render(art => art.Scarecrow = true, dark, null), "The scarecrow is drawn");
         check(PetFarmArt.TileAt(PetFarmArt.TileLeft(0) + 1) == 0 && PetFarmArt.TileAt(PetFarmArt.TileLeft(5) + 53) == 5 && PetFarmArt.TileAt(1) == -1 && PetFarmArt.TileAt(PetFarmArt.ArtWidth - 1) == -1, "Clicks find their tiles; the rim is none");
     }
 }

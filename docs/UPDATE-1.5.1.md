@@ -10,7 +10,7 @@ Mục tiêu: mèo ngoài trận đa dạng và thú vị hơn. Ba tính năng ch
 | 2. Weather | Thời tiết theo màu wallpaper Windows, hiện vùng quanh mèo | Xong (f7f406e), còn test tay |
 | 3. Ruộng cơ bản | Dải 6 ô, cày → gieo → tưới → lớn → thu hoạch, 4 cây, lưu file riêng, di chuyển mảnh đất | Xong (9fc249b), còn test tay |
 | 4. Mèo làm cùng | Mèo tự tưới, gặt, đuổi chim; khóa khi ngủ/kéo/Quiet | Xong (caeb0f9), còn test tay |
-| 5. Kinh tế farm | Kho, bán lấy xu nông trại riêng, mua hạt, mở ô, bù nhìn | Chưa làm |
+| 5. Kinh tế farm | Kho, bán lấy xu nông trại riêng, mua hạt, mở ô, bù nhìn | Xong, còn test tay |
 | 6. Nối các phần | Nấu món cho mèo ăn, mưa tự tưới, nắng cho cây lớn nhanh hơn một chút | Chưa làm |
 
 ### Portal (mốc 1)
@@ -43,7 +43,7 @@ Mục tiêu: mèo ngoài trận đa dạng và thú vị hơn. Ba tính năng ch
 - Bấm trái vào ô làm bước kế tiếp: cày → chọn hạt → tưới → chờ → thu hoạch. Thu hoạch xong ô về đất hoang. Rê chuột hiện nhãn, thanh tiến độ và thời gian còn lại.
 - Hạt → mầm → cây non → chín. Mỗi giai đoạn trước khi chín cần tưới một lần mới chạy; chưa tưới thì đứng chờ (có giọt nước trên ô), chín thì có sao vàng. Cây lớn theo đồng hồ thật, kể cả khi tắt app hoặc Pause, nhưng chỉ qua giai đoạn đã tưới. Đặt lùi đồng hồ không kéo dài quá một giai đoạn.
 - Tổng thời gian khi tưới đúng lúc: Củ cải 5 phút, Cà rốt 15 phút, Cà chua 40 phút, Bí ngô 2 giờ, chia đều 3 giai đoạn.
-- Trước Mốc 5: hạt miễn phí, cả 6 ô mở, thu hoạch chỉ cộng số đếm trong `farm.json` và hiện "+1 Cà rốt".
+- Từ Mốc 5 hạt có giá, ruộng mới có 3 ô mở và thu hoạch vào kho (xem Luật Mốc 5).
 - Lưu ở `farm.json` trong thư mục dữ liệu (có `.bak`): các ô, số đã thu hoạch, màn hình và vị trí theo tỉ lệ. Tệp của bản mới hơn thì không ghi đè.
 - Mặc định đặt ở 25% bề ngang màn có mèo; công tắc "Ruộng trên desktop" ở Cài đặt → Thói quen (mặc định bật), tắt thì ẩn, cây giữ nguyên.
 - Ẩn khi app toàn màn hình hoặc trong trận; mảnh đất đang nhấc thì về chỗ cũ. Pause không nhận bấm hay di chuyển. Khi nhấc, chuột phải có "Thả xuống đây" và "Hủy" (trượt trên không về chỗ cũ tối đa 0,6 s rồi mới rơi). Kéo không vượt sang màn hình khác; màn bị rút thì về màn chính.
@@ -56,6 +56,18 @@ Mục tiêu: mèo ngoài trận đa dạng và thú vị hơn. Ba tính năng ch
 - Mèo đứng cạnh ô, cách tâm ô 58 DIP. Tưới 2 giây cầm bình, gặt khều chân; kết quả giống hệt bấm tay (lưu file, "+1 Tên cây"). Tới nơi mà ô đã được làm thì thôi. Sau 20 giây đi bộ chưa tới thì bỏ chuyến.
 - Chim giấy khoảng 6–12 phút một lần, đậu cạnh một ô có cây, phía xa mèo. Mèo nhìn 0,7 giây, rón rén (60% tốc độ), thu người rồi vồ, chim bay đi. Chim tự bay sau 30 giây, khi ô hết cây hoặc khi mảnh đất bị nhấc. Chim không gây thiệt hại: không mất cây, không chậm lớn; bù nhìn ở Mốc 5 sẽ làm chim đến ít hơn.
 - Không đi và không có chim khi: mèo ngủ/thức dậy/bị kéo/có cú nhấn có thể thành kéo/bay/ăn/có cảm xúc chiếm mèo, đang bận hoạt động khác, Pause, Quiet, app toàn màn hình, người dùng vắng, trận, Sảnh/bảng chuẩn bị/bản đồ, mèo đứng trên cửa sổ, ruộng khác màn hình mèo, ruộng ẩn hoặc đang nhấc. Điều kiện nào xuất hiện giữa chuyến cũng hủy chuyến ngay và không đổi tư thế của mèo đang bị giữ, đang bay hay đang ngủ.
+
+#### Luật Mốc 5 (người dùng duyệt 08/11)
+
+- Thu hoạch, bằng tay hay do mèo làm, đều vào kho và vẫn hiện "+1 Tên cây". `Harvested` vẫn là tổng đã thu hoạch, bán không làm giảm.
+- Xu nông trại tách hẳn xu trong trận, không cộng sức mạnh chiến đấu. Vốn đầu 20 xu, tối đa 999.999 xu.
+- Trả xu ngay lúc gieo, không có kho hạt. Menu gieo hiện giá và làm mờ loại chưa đủ xu. Giá hạt/giá bán: Củ cải miễn phí/3, Cà rốt 4/13, Cà chua 10/30, Bí ngô 25/85. Củ cải miễn phí nên không bao giờ bị kẹt vốn.
+- Ruộng mới mở sẵn 3 ô từ bên trái. Ô 4, 5, 6 giá 40, 120, 300 xu và phải mở theo thứ tự. Ô khóa có rào và ổ khóa, rê chuột hiện giá, bấm thì mở bảng; mèo và chim không đụng vào ô khóa.
+- Bù nhìn 150 xu, mua một lần, đứng ở đầu phải mảnh đất. Khoảng chờ giữa hai lần chim đến gấp đôi, thành 12–24 phút; lần thử lại khi sai thời điểm vẫn 45 giây.
+- Chuột phải vào mảnh đất đang nằm dưới đất có "Kho & cửa hàng": xem xu, bán từng cái hoặc bán hết, mở ô, mua bù nhìn.
+- Bảng không chạm vào mèo và không đánh thức mèo. Pause làm mờ mọi nút. Bảng tự đóng khi ruộng ẩn (app toàn màn hình, trận, tắt công tắc) hoặc khi Sảnh, bảng chuẩn bị, bản đồ mở; lúc đó menu cũng không có mục này.
+- `farm.json` phiên bản 2. File phiên bản 1 khi mở: nhận 20 xu, số đã thu hoạch chuyển vào kho, ô có cây hoặc đã cày vẫn mở, chỉ khóa các ô đất hoang phía phải, luôn còn ít nhất 3 ô. Bản app cũ thấy file phiên bản 2 thì chỉ đọc, không ghi đè.
+- Giá hiện là ước tính, chưa qua chơi thử: mở hết ô và mua bù nhìn tốn 610 xu.
 
 ---
 

@@ -12,6 +12,85 @@ internal static class FarmTests
         Saving(check, start);
         Lift(check);
         Chores(check, start);
+        Economy(check, start);
+    }
+
+    // The store, farm coins, seeds, tiles and the scarecrow (1.5.1 M5).
+    private static void Economy(Action<bool, string> check, DateTime start)
+    {
+        var farm = new PetFarm();
+        check(farm.Coins == 20 && farm.OpenTiles == 3 && !farm.Scarecrow && farm.StockValue == 0, "A new field: 20 coins, three open tiles, no scarecrow");
+        check(new[] { 0, 4, 10, 25 }.SequenceEqual(Enum.GetValues<FarmCrop>().Select(PetFarm.SeedPrice)), "Seeds cost 0, 4, 10 and 25");
+        check(new[] { 3, 13, 30, 85 }.SequenceEqual(Enum.GetValues<FarmCrop>().Select(PetFarm.SellPrice)), "Crops sell for 3, 13, 30 and 85");
+        check(Enum.GetValues<FarmCrop>().All(c => PetFarm.SellPrice(c) > PetFarm.SeedPrice(c)), "Every crop makes a profit");
+
+        check(farm.Next(2) == FarmStep.Till && farm.Next(3) == FarmStep.Locked, "Locked tiles begin at the fourth");
+        check(!farm.Till(3) && farm.Tiles[3].Stage == FarmStage.Wild, "A locked tile cannot be tilled");
+
+        farm.Coins = 0;
+        farm.Till(0); farm.Till(1);
+        check(!farm.Plant(0, FarmCrop.Carrot) && farm.Tiles[0].Stage == FarmStage.Tilled && farm.Coins == 0, "Without coins a carrot cannot be sown");
+        check(farm.Plant(1, FarmCrop.Radish) && farm.Coins == 0, "A radish is free, so nobody is ever stuck");
+        farm.Coins = 5;
+        check(farm.Plant(0, FarmCrop.Carrot) && farm.Coins == 1, "Sowing pays for the seed");
+
+        foreach (int tile in new[] { 0, 1 }) { farm.Tiles[tile].Stage = FarmStage.Ripe; farm.Harvest(tile); }
+        check(farm.StockOf(FarmCrop.Carrot) == 1 && farm.StockOf(FarmCrop.Radish) == 1 && farm.StockValue == 16, "The harvest goes to the store");
+        check(farm.Sell(FarmCrop.Carrot) == 13 && farm.Coins == 14 && farm.StockOf(FarmCrop.Carrot) == 0, "Selling one pays its price");
+        check(farm.Sell(FarmCrop.Carrot) == 0 && farm.Coins == 14, "There is nothing left to sell");
+        check(farm.HarvestedCount(FarmCrop.Carrot) == 1, "Selling leaves the count of harvests alone");
+        check(farm.SellAll() == 3 && farm.Coins == 17 && farm.Stock.Count == 0 && farm.SellAll() == 0, "Selling everything empties the store");
+
+        farm.Coins = 39;
+        check(!farm.OpenNextTile() && farm.OpenTiles == 3 && farm.Coins == 39, "A tile needs its price");
+        farm.Coins = 1000;
+        check(farm.OpenNextTile() && farm.OpenTiles == 4 && farm.Coins == 960, "The fourth tile costs 40");
+        check(farm.Next(3) == FarmStep.Till && farm.Till(3), "An opened tile can be worked");
+        check(farm.OpenNextTile() && farm.Coins == 840 && farm.OpenNextTile() && farm.Coins == 540, "The next two cost 120 and 300");
+        check(farm.NextLockedTile == -1 && !farm.OpenNextTile() && farm.Coins == 540, "Nothing more to open");
+
+        farm.Coins = 149;
+        check(!farm.BuyScarecrow() && !farm.Scarecrow, "The scarecrow needs its price");
+        farm.Coins = 400;
+        check(farm.BuyScarecrow() && farm.Scarecrow && farm.Coins == 250 && !farm.BuyScarecrow() && farm.Coins == 250, "It is bought once, for 150");
+        var random = new Random(9);
+        bool rare = Enumerable.Range(0, 40).All(_ => FarmChores.NextBird(random, true) is >= 720 and <= 1440);
+        check(rare, "With a scarecrow birds come every 12 to 24 minutes");
+
+        farm.Coins = PetFarm.MaxCoins; farm.Stock["Pumpkin"] = 2;
+        farm.Sell(FarmCrop.Pumpkin);
+        check(farm.Coins == PetFarm.MaxCoins, "Coins stop at the most the panel can show");
+
+        string folder = Path.Combine(Path.GetTempPath(), "pet-farm-" + Guid.NewGuid().ToString("N"));
+        string path = Path.Combine(folder, "farm.json");
+        Directory.CreateDirectory(folder);
+        try
+        {
+            var saved = new PetFarm { Coins = 77, OpenTiles = 5, Scarecrow = true };
+            saved.Stock["Tomato"] = 4;
+            saved.Save(path);
+            var back = PetFarm.Load(path);
+            check(back.Coins == 77 && back.OpenTiles == 5 && back.Scarecrow && back.StockOf(FarmCrop.Tomato) == 4 && back.Version == 2, "The economy is saved");
+
+            File.WriteAllText(path, """
+                { "Version": 1, "Harvested": { "Carrot": 3, "Radish": 2 },
+                  "Tiles": [ { }, { "Stage": "Tilled" }, { }, { }, { "Stage": "Seed", "Crop": "Radish" }, { } ] }
+                """);
+            var old = PetFarm.Load(path);
+            check(old.Coins == 20 && old.StockOf(FarmCrop.Carrot) == 3 && old.StockOf(FarmCrop.Radish) == 2 && old.HarvestedCount(FarmCrop.Carrot) == 3, "A field from before the store gets coins and its harvests in store");
+            check(old.OpenTiles == 5 && old.Next(4) == FarmStep.Water && old.Next(5) == FarmStep.Locked, "...and keeps every tile with something on it");
+
+            File.WriteAllText(path, """{ "Version": 1, "Tiles": [ { }, { }, { }, { }, { }, { } ] }""");
+            check(PetFarm.Load(path).OpenTiles == 3, "An old field of wild ground closes down to three");
+
+            File.WriteAllText(path, """{ "Version": 2, "Coins": -9, "OpenTiles": 99, "Stock": { "Gold": 5, "Carrot": -1 } }""");
+            var odd = PetFarm.Load(path);
+            check(odd.Coins == 0 && odd.OpenTiles == 6 && odd.Stock.Count == 0, "Odd values are pulled back");
+
+            File.WriteAllText(path, """{ "Version": 2, "Harvested": { "Carrot": 3 } }""");
+            check(PetFarm.Load(path).StockOf(FarmCrop.Carrot) == 0, "Only a field from before the store is moved across");
+        }
+        finally { Directory.Delete(folder, true); }
     }
 
     // The cat's own trips (1.5.1 M4): which tile, in what order, and the bird's visit.
@@ -21,7 +100,7 @@ internal static class FarmTests
         foreach (var block in new[] { AutoBlock.Paused, AutoBlock.Held, AutoBlock.Unsettled, AutoBlock.Quiet, AutoBlock.Fullscreen, AutoBlock.Battle, AutoBlock.BattleScreens, AutoBlock.Feature, AutoBlock.Away })
             check(!PetAutonomy.MayAct(AutoKind.FarmChore, block), $"No trip with {block}");
 
-        var farm = new PetFarm();
+        var farm = new PetFarm { OpenTiles = 6 };
         double FromFirst(int i) => i;
         check(FarmChores.Pick(farm, FromFirst) == null, "Wild ground gives the cat nothing to do");
         farm.Till(0);
@@ -82,7 +161,7 @@ internal static class FarmTests
 
     private static void Steps(Action<bool, string> check, DateTime start)
     {
-        var farm = new PetFarm();
+        var farm = new PetFarm { OpenTiles = 6 };
         check(farm.Tiles.Count == 6 && farm.Tiles.All(t => t.Stage == FarmStage.Wild), "A new field has six wild tiles");
         check(new[] { 5, 15, 40, 120 }.SequenceEqual(Enum.GetValues<FarmCrop>().Select(c => (int)(PetFarm.GrowSeconds(c) / 60))), "Four crops of 5, 15, 40 and 120 minutes");
 
@@ -140,7 +219,7 @@ internal static class FarmTests
         {
             check(PetFarm.Load(path).Tiles.Count == 6, "No file: a new field");
 
-            var farm = new PetFarm { Monitor = @"\\.\DISPLAY2", FractionX = 0.4 };
+            var farm = new PetFarm { Monitor = @"\\.\DISPLAY2", FractionX = 0.4, Coins = 100, OpenTiles = 6 };
             farm.Till(1); farm.Plant(1, FarmCrop.Pumpkin); farm.Water(1, start);
             farm.Till(2);
             check(farm.Save(path), "The field is saved");

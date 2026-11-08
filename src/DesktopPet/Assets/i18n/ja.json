@@ -1499,5 +1499,18 @@
   "The portal has closed.": "ゲートは閉じました。",
   "Click to enter": "クリックで入る",
   "Weather around the pet": "ペットのまわりの天気",
-  "Rain, snow, drifting leaves... around the pet, chosen from your Windows wallpaper's colors. Only the colors of a tiny thumbnail are read; nothing is saved or sent anywhere.": "雨、雪、舞う葉っぱなどがペットのまわりに現れます。Windowsの壁紙の色から選ばれます。小さな縮小画像の色を読むだけで、保存も送信もしません。"
+  "Rain, snow, drifting leaves... around the pet, chosen from your Windows wallpaper's colors. Only the colors of a tiny thumbnail are read; nothing is saved or sent anywhere.": "雨、雪、舞う葉っぱなどがペットのまわりに現れます。Windowsの壁紙の色から選ばれます。小さな縮小画像の色を読むだけで、保存も送信もしません。",
+  "Store & shop": "倉庫とお店",
+  "free": "無料",
+  "Scarecrow": "かかし",
+  "Farm coins: {0}": "畑コイン：{0}",
+  "In store: {0}": "在庫：{0}",
+  "Sell · +{0}": "売る · +{0}",
+  "Open tile {0}": "{0}マス目を開く",
+  "More tiles": "マスを増やす",
+  "{0} of {1} open": "{0}/{1}マス開放",
+  "All open": "すべて開放済み",
+  "Paper birds come half as often": "紙の鳥の来る回数が半分に",
+  "Owned": "購入済み",
+  "Sell all · +{0}": "全部売る · +{0}"
 }

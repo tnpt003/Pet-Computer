@@ -1246,3 +1246,15 @@ Các mục 1.5 phía trên viết theo từng mốc; đây là thứ tự chơi 
 - [ ] Bạn tự tưới đúng ô mèo đang đi tới: mèo dừng lại, không tưới lần hai. Nhấc mảnh đất lúc mèo đang đi: mèo dừng, chim (nếu có) bay đi. Mèo đứng trên cửa sổ, hoặc ruộng ở màn khác mèo: mèo không đi
 - [ ] Cài đặt → Thói quen → tắt "Mèo làm vườn cùng": mèo thôi đi, bạn vẫn tự bấm ruộng được. Tooltip đủ chữ ở vi/en/ja
 - [ ] Xem nhịp 2–4 phút có vừa không, và trên màn hình rất rộng: mèo ở đầu xa ruộng quá 20 giây đi bộ thì bỏ chuyến, xem có khó chịu không. Thử DPI 100/125/150/200%, nhiều màn hình
+
+## 1.5.1 Mốc 5 — Kinh tế farm (08/11)
+
+- [ ] Mở bản mới với ruộng cũ: có 20 xu, số đã thu hoạch nằm trong kho, ô đang có cây hoặc đã cày vẫn mở, các ô đất hoang phía phải có rào và ổ khóa, luôn còn ít nhất 3 ô
+- [ ] Rê chuột vào ô khóa thấy giá, bấm vào thì mở bảng "Kho & cửa hàng". Chuột phải vào mảnh đất cũng có mục này. Xem hàng rào, ổ khóa và bù nhìn trên hình nền thật
+- [ ] Gieo hạt: menu hiện giá, loại chưa đủ xu bị mờ, gieo xong xu giảm đúng. Hết xu vẫn gieo được Củ cải
+- [ ] Thu hoạch bằng tay và để mèo gặt: kho tăng, bảng đang mở cập nhật ngay. Bán từng cái, bán hết: xu tăng đúng giá
+- [ ] Mở ô 4, 5, 6 theo giá 40, 120, 300, ô vừa mở có sao và làm được ngay. Mua bù nhìn 150 xu, chỉ mua được một lần, bù nhìn đứng ở đầu phải và bay theo khi nhấc mảnh đất. Khởi động lại app thấy còn nguyên
+- [ ] Bù nhìn: chim đến thưa hơn, khoảng 12–24 phút một lần
+- [ ] Mở bảng lúc mèo ngủ không đánh thức mèo; bấm bảng không làm đổi drag hay cảm xúc. Pause: nút mờ, không mua bán được, bỏ Pause dùng lại được. App toàn màn hình, vào trận, mở Sảnh: bảng tự đóng
+- [ ] Bảng đủ chữ, không tràn ở vi/en/ja; thử DPI 100/125/150/200% và nhiều màn hình (bảng hiện ở đỉnh màn có mèo)
+- [ ] Chơi một lúc rồi góp ý giá: nhịp kiếm xu, giá mở ô và bù nhìn có vừa không

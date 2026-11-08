@@ -5,7 +5,7 @@ using System.Windows.Media;
 namespace DesktopPet;
 
 // One tile as the art draws it (PetWindow.Farm.cs fills these from PetFarm).
-public readonly record struct FarmTileView(FarmStage Stage, FarmCrop? Crop, bool Wet, bool NeedsWater, double Progress);
+public readonly record struct FarmTileView(FarmStage Stage, FarmCrop? Crop, bool Wet, bool NeedsWater, double Progress, bool Locked = false);
 
 public enum FarmEffect { None, Till, Plant, Water, Harvest, Grow }
 
@@ -18,7 +18,7 @@ public sealed class PetFarmArt : FrameworkElement
     public const double TileWidth = 54, Pad = 10, Side = 40, SoilHeight = 28, PlantRoom = 72, LiftRoom = 54, BottomRoom = 6;
     public const double PlotWidth = TileWidth * PetFarm.TileCount + Pad * 2, ArtWidth = PlotWidth + Side * 2;
     public const double ArtHeight = SoilHeight + PlantRoom + LiftRoom + BottomRoom, Floor = ArtHeight - BottomRoom, SoilTop = Floor - SoilHeight;
-    private const double GroundY = SoilTop + 8, BadgeGap = 13;
+    private const double GroundY = SoilTop + 8, BadgeGap = 13, FenceHeight = 27, ScarecrowX = Side + PlotWidth - 4;
     private const int BurstCrumbs = 16, ShedCrumbs = 24, LandingCrumbs = 36;
 
     private static readonly Brush Hit = PetUi.Frozen(Color.FromArgb(1, 0, 0, 0));
@@ -56,6 +56,14 @@ public sealed class PetFarmArt : FrameworkElement
     private static readonly Geometry Star = Parse("M0,-7 L1.9,-1.9 L7,0 L1.9,1.9 L0,7 L-1.9,1.9 L-7,0 L-1.9,-1.9 Z");
     private static readonly Geometry Calyx = Parse("M-4,-1 L0,-4 L4,-1 L1.5,-1 L0,1 L-1.5,-1 Z");
 
+    private static readonly Brush LockedMoss = PetUi.Hex("#B3B49A");
+    private static readonly Pen Straw = PetUi.FrozenPen(PetUi.Hex("#D9B566"), 2);
+    private static readonly Geometry LockShackle = Parse("M-3.8,-15 L-3.8,-18 C-3.8,-23.5 3.8,-23.5 3.8,-18 L3.8,-15");
+    private static readonly Geometry ScarecrowShirt = Parse("M-12,-45 C-5,-47 5,-47 12,-45 L10,-20 C5,-23 3,-19 0,-21 C-3,-19 -6,-23 -10,-20 Z");
+    private static readonly Geometry ScarecrowSmile = Parse("M-3.5,-51.5 C-1.5,-49.5 1.5,-49.5 3.5,-51.5");
+    private static readonly Geometry ScarecrowCrown = Parse("M-7,-62 C-7,-71 7,-71 7,-62 Z");
+    private static readonly Geometry ScarecrowBrim = Parse("M-14,-61 C-8,-65 8,-65 14,-61 C8,-58.5 -8,-58.5 -14,-61 Z");
+
     private static Brush LeafDeepBrush() => PetUi.Hex("#4E9256");
     private static Geometry Parse(string text) { var geometry = Geometry.Parse(text); geometry.Freeze(); return geometry; }
 
@@ -78,6 +86,8 @@ public sealed class PetFarmArt : FrameworkElement
     public double BirdAir { get; set; }
     public double BirdTime { get; set; }
     public bool BirdFlying { get; set; }
+    // Stands at the right end of the plot, once bought (1.5.1 M5).
+    public bool Scarecrow { get; set; }
 
     public PetFarmArt() { Width = ArtWidth; Height = ArtHeight; }
 
@@ -99,7 +109,7 @@ public sealed class PetFarmArt : FrameworkElement
         _ => 0
     };
 
-    private static double TopOf(in FarmTileView tile) => PlantHeight(tile.Stage, tile.Crop) + (tile.NeedsWater || tile.Stage == FarmStage.Ripe ? BadgeGap + 8 : 0);
+    private static double TopOf(in FarmTileView tile) => tile.Locked ? FenceHeight : PlantHeight(tile.Stage, tile.Crop) + (tile.NeedsWater || tile.Stage == FarmStage.Ripe ? BadgeGap + 8 : 0);
 
     // Distance from the top of the art down to the top of what stands on a tile (the label sits above it).
     public double TopOfTile(int index) => GroundY - TopOf(Tiles[index]);
@@ -123,6 +133,12 @@ public sealed class PetFarmArt : FrameworkElement
         }
         if (air > 0.5) DrawUnderside(dc, air);
         DrawBank(dc);
+        if (Scarecrow)
+        {
+            dc.PushTransform(new TranslateTransform(ScarecrowX, SoilTop + 2));
+            DrawScarecrow(dc);
+            dc.Pop();
+        }
         for (int i = 0; i < Tiles.Length; i++) DrawBed(dc, i);
         for (int i = 0; i < Tiles.Length; i++) DrawCrop(dc, i);
         for (int i = 0; i < Tiles.Length; i++) DrawEffect(dc, i);
@@ -203,7 +219,7 @@ public sealed class PetFarmArt : FrameworkElement
     {
         var tile = Tiles[index];
         var bed = new Rect(TileLeft(index) + 4, SoilTop + 8, TileWidth - 8, SoilHeight - 13);
-        var fill = tile.Stage == FarmStage.Wild ? Moss : tile.Wet ? Wet : Tilled;
+        var fill = tile.Locked ? LockedMoss : tile.Stage == FarmStage.Wild ? Moss : tile.Wet ? Wet : Tilled;
         dc.DrawRoundedRectangle(fill, InkThin, bed, 6, 6);
         if (tile.Stage == FarmStage.Wild)
         {
@@ -232,6 +248,13 @@ public sealed class PetFarmArt : FrameworkElement
     private void DrawCrop(DrawingContext dc, int index)
     {
         var tile = Tiles[index];
+        if (tile.Locked)
+        {
+            dc.PushTransform(new TranslateTransform(TileCenter(index), GroundY + 6));
+            DrawFence(dc);
+            dc.Pop();
+            return;
+        }
         if (tile.Stage is FarmStage.Wild or FarmStage.Tilled) return;
         double pop = 1;
         if (Effects[index] is FarmEffect.Plant or FarmEffect.Grow) pop = 1 + 0.28 * Math.Sin(Math.Clamp(EffectAge[index], 0, 1) * Math.PI);
@@ -248,6 +271,34 @@ public sealed class PetFarmArt : FrameworkElement
             dc.DrawGeometry(tile.NeedsWater ? Water : PetUi.Game.Gold, InkThin, tile.NeedsWater ? WaterDrop : Star);
             dc.Pop();
         }
+    }
+
+    // A small closed fence with a padlock, standing on (0,0): this tile is still to be bought.
+    private static void DrawFence(DrawingContext dc)
+    {
+        dc.DrawRoundedRectangle(Stake, InkThin, new Rect(-22, -23, 44, 4.5), 1.5, 1.5);
+        dc.DrawRoundedRectangle(Stake, InkThin, new Rect(-22, -12, 44, 4.5), 1.5, 1.5);
+        foreach (double x in new[] { -17.0, 17.0 }) dc.DrawRoundedRectangle(Stake, InkThin, new Rect(x - 2.5, -27, 5, 27), 1.5, 1.5);
+        dc.DrawGeometry(null, Ink, LockShackle);
+        dc.DrawRoundedRectangle(PetUi.Game.Gold, InkThin, new Rect(-6.5, -15, 13, 11), 2.5, 2.5);
+        dc.DrawEllipse(PetUi.ArtInk, null, new Point(0, -10), 1.6, 1.6);
+    }
+
+    // A straw-stuffed scarecrow on its pole, the foot of the pole at (0,0).
+    public static void DrawScarecrow(DrawingContext dc)
+    {
+        dc.DrawLine(StakePen, new Point(0, 0), new Point(0, -48));
+        dc.DrawLine(StakePen, new Point(-18, -41), new Point(18, -41));
+        foreach (int side in new[] { -1, 1 })
+            foreach (double fan in new[] { -3.5, 0.0, 3.5 })
+                dc.DrawLine(Straw, new Point(side * 17, -41), new Point(side * 23, -41 + fan));
+        dc.DrawGeometry(Water, InkThin, ScarecrowShirt);
+        dc.DrawEllipse(Seed, InkThin, new Point(0, -55), 9, 9.5);
+        dc.DrawEllipse(PetUi.ArtInk, null, new Point(-3.2, -56), 1.2, 1.2);
+        dc.DrawEllipse(PetUi.ArtInk, null, new Point(3.2, -56), 1.2, 1.2);
+        dc.DrawGeometry(null, InkThin, ScarecrowSmile);
+        dc.DrawGeometry(PetUi.Game.Gold, InkThin, ScarecrowCrown);
+        dc.DrawGeometry(PetUi.Game.Gold, InkThin, ScarecrowBrim);
     }
 
     // A plant with its roots at (0,0), growing up.
@@ -440,6 +491,25 @@ public sealed class FarmCropIcon : FrameworkElement
         dc.PushTransform(new TranslateTransform(ActualWidth / 2, ActualHeight - 6 * zoom));
         dc.PushTransform(new ScaleTransform(zoom, zoom));
         PetFarmArt.DrawPlant(dc, FarmStage.Ripe, crop);
+        dc.Pop(); dc.Pop();
+    }
+}
+
+// The scarecrow as a small picture (the shop).
+public sealed class FarmScarecrowIcon : FrameworkElement
+{
+    public FarmScarecrowIcon(double size = 22)
+    {
+        Width = Height = size;
+        IsHitTestVisible = false;
+    }
+
+    protected override void OnRender(DrawingContext dc)
+    {
+        double zoom = ActualHeight / 72;
+        dc.PushTransform(new TranslateTransform(ActualWidth / 2, ActualHeight));
+        dc.PushTransform(new ScaleTransform(zoom, zoom));
+        PetFarmArt.DrawScarecrow(dc);
         dc.Pop(); dc.Pop();
     }
 }

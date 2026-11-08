@@ -5,6 +5,14 @@ Sổ ghi các lỗi đã sửa của Desktop Pet. Phần A: lỗi người dùng
 Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm lỗi mới: tạo mục số tiếp theo ở đầu phần A (hoặc một dòng ở phần B).
 
 # A. Lỗi người dùng phát hiện
+## #73 — Vùng đất không kéo được sang màn hình khác (09/11)
+- **Triệu chứng:** Ruộng, Bếp, Hồ khi nhấc chỉ kéo được trong màn hình đang đứng.
+- **Nguyên nhân:** thiết kế cũ: khi kéo vị trí bị giữ trong vùng làm việc của một màn hình, và cả ba vùng dùng chung một bộ thông tin màn hình và DPI.
+- **Sửa:** mỗi vùng có màn hình, vùng làm việc và DPI riêng; vùng đang bay đổi màn hình theo con trỏ; "Hủy" sau khi đã sang màn khác thì về chỗ cũ rồi rơi; tránh chồng nhau chỉ xét cùng màn; mèo chỉ tới vùng cùng màn với nó. Luật ở docs/FARM-GAME.md.
+- **Commit:** `651d04c`, ZIP `artifacts/DesktopPet-1.5.0-651d04c-win-x64.zip`, smoke 3/3 PASS.
+- **Kiểm chứng:** script đầy đủ một lần: Python 58 + i18n 5, C# 4177 (96 suite), WPF 2363 đều đạt; check mới dùng một màn hình thứ hai giả lập (DPI 150%, sàn khác).
+- **Cần xem tay:** chưa kéo chuột thật qua hai màn, chưa thử hai màn khác DPI hay lệch độ cao.
+
 ## #72 — Dòng "Niệm phép cổng" kèm lý do quá dài làm menu chuột phải phình rộng (08/11)
 - **Triệu chứng:** lúc mèo đang phản ứng, menu hiện "Niệm phép cổng (Mèo đang phản ứng, thử lại sau giây lát)", cả menu rộng theo dòng này.
 - **Nguyên nhân:** tên mục được ghép thêm lý do bị khóa; "Chế độ chiến đấu" cũng ghép như vậy.

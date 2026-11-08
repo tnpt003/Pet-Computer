@@ -17,11 +17,12 @@ Luôn giữ: cây không héo, chim không gây hại, farm không cộng sức 
 - Kết quả giống bấm từng ô, lưu một lần, một tiếng, một nhãn (một ô thì "+1 Tên cây", nhiều ô thì "+N nông sản").
 - Như bấm ô: làm được khi mèo ngủ và không đánh thức. Pause và lúc mảnh đất đang nhấc thì không làm được. Khi Sảnh, bảng chuẩn bị, bản đồ đang mở thì menu không có các mục này.
 
-## Luật Mốc B (đã duyệt, chưa làm)
+## Luật Mốc B
 
 - Thu hoạch tay hay mèo gặt đều được XP: Củ cải 2, Cà rốt 5, Cà chua 12, Bí ngô 30. Tối đa cấp 10; XP cộng dồn để lên cấp 2 đến 10: 25, 70, 150, 280, 450, 700, 1000, 1400, 2000.
 - Mở khóa: cấp 1 Củ cải, Cà rốt, Súp củ cải, 1 ô đơn hàng; cấp 2 Cà chua, Cà rốt hầm; cấp 3 Cà chua nhồi, ô đơn thứ 2; cấp 4 Bí ngô; cấp 5 Bánh bí ngô, ô đơn thứ 3. Mỗi lần lên cấp thưởng `cấp × 20` xu.
 - Thay luật Mốc 5: Cà chua và Bí ngô không còn mở sẵn. Hạt và món chưa mở thì mờ, có ghi cấp cần. Ruộng cũ được tính XP từ số đã thu hoạch, cây đang trồng vẫn lớn bình thường. `farm.json` lên phiên bản 3; bản app cũ chỉ đọc, không ghi đè.
+- Bảng "Kho & cửa hàng" hiện cấp, XP, thanh tiến độ và thứ cấp sau mở. Lên cấp thì ruộng lấp lánh và hiện nhãn "Lên cấp N! +X xu" 3 giây. Ô đơn hàng ghi ở trên có tác dụng từ Mốc C.
 
 ## Luật Mốc C (đã duyệt, chưa làm)
 

@@ -16,7 +16,7 @@ namespace DesktopPet;
 // field never touches the cat: it wakes nothing, and sleep, drag and emotions are not involved.
 public sealed partial class PetWindow
 {
-    private const double FarmCheckSeconds = 1, FarmEffectSeconds = 0.55, FarmGainSeconds = 1.3, FarmChipWidth = 200, FarmSunSaveSeconds = 30;
+    private const double FarmCheckSeconds = 1, FarmEffectSeconds = 0.55, FarmGainSeconds = 1.3, FarmLevelUpSeconds = 3, FarmChipWidth = 200, FarmSunSaveSeconds = 30;
 
     // Replaceable for UI checks, which must not touch the user's field or wait for real minutes.
     private string farmPath = PetFarm.DefaultPath;
@@ -32,7 +32,7 @@ public sealed partial class PetWindow
     public bool FarmSeedMenuOpen => farmSeedMenu?.IsOpen == true;
     private Area farmArea;
     private double farmScale = 1, farmFraction, farmRestFraction, farmFallFrom, farmFallTo, farmGrab, farmGainLeft;
-    private double farmSkyElapsed, farmRainSeconds, farmSunUnsaved;
+    private double farmSkyElapsed, farmRainSeconds, farmSunUnsaved, farmGainTotal = FarmGainSeconds;
     private string? farmMonitor;
     private DateTime farmChecked;
     private bool farmDragging, farmEffectsRunning, farmWithCat;
@@ -140,7 +140,7 @@ public sealed partial class PetWindow
         if (farmGainLeft > 0 && farmGain != null)
         {
             farmGainLeft = Math.Max(0, farmGainLeft - dt);
-            double k = 1 - farmGainLeft / FarmGainSeconds;
+            double k = 1 - farmGainLeft / farmGainTotal;
             farmGain.Opacity = k < 0.7 ? 1 : (1 - k) / 0.3;
             ((TranslateTransform)farmGain.RenderTransform).Y = -18 * k;
         }
@@ -438,6 +438,7 @@ public sealed partial class PetWindow
 
     private void FarmChanged()
     {
+        if (farm?.TakeLevelsGained() is int gained && gained > 0) ShowFarmLevelUp(gained);
         SaveFarm();
         RefreshFarmArt();
         farmChipShown = null;
@@ -455,14 +456,24 @@ public sealed partial class PetWindow
         return true;
     }
 
-    private void ShowFarmGain(int tile, FarmCrop crop)
+    private void ShowFarmGain(int tile, FarmCrop crop) => ShowFarmLabel(tile, "+1 " + FarmCropName(crop), FarmGainSeconds);
+
+    private void ShowFarmLabel(int tile, string text, double seconds)
     {
         if (farmGain == null || farmGainText == null || farmGain.Parent is not Grid row) return;
-        farmGainText.Text = "+1 " + FarmCropName(crop);
+        farmGainText.Text = text;
         farmGain.Opacity = 1;
         ((TranslateTransform)farmGain.RenderTransform).Y = 0;
         PlaceFarmLabel(row, tile, 30);
-        farmGainLeft = FarmGainSeconds;
+        farmGainLeft = farmGainTotal = seconds;
+    }
+
+    // Over the middle of the field, longer than a harvest's label.
+    private void ShowFarmLevelUp(int gained)
+    {
+        int level = farm!.Level, coins = Enumerable.Range(level - gained + 1, gained).Sum(PetFarm.LevelReward);
+        for (int i = 0; i < farm.OpenTiles; i++) StartFarmEffect(i, FarmEffect.Harvest);
+        ShowFarmLabel(PetFarm.TileCount / 2, LF($"Lên cấp {level}! +{coins} xu", $"Level {level}! +{coins} coins"), FarmLevelUpSeconds);
     }
 
     // The four seeds, opened just above the tile.
@@ -488,7 +499,8 @@ public sealed partial class PetWindow
 
     public MenuItem[] FarmSeedItems(int tile) => Enum.GetValues<FarmCrop>().Select(crop =>
     {
-        var item = new MenuItem { Header = FarmSeedLabel(crop) + " · " + FarmPriceText(PetFarm.SeedPrice(crop)), Icon = new FarmCropIcon(crop), IsEnabled = farm == null || farm.Coins >= PetFarm.SeedPrice(crop) };
+        bool locked = farm?.Unlocked(crop) == false;
+        var item = new MenuItem { Header = FarmSeedLabel(crop) + " · " + (locked ? FarmLevelText(PetFarm.CropLevel(crop)) : FarmPriceText(PetFarm.SeedPrice(crop))), Icon = new FarmCropIcon(crop), IsEnabled = farm == null || (!locked && farm.Coins >= PetFarm.SeedPrice(crop)) };
         item.Click += (_, _) => FarmPlant(tile, crop);
         return item;
     }).ToArray();

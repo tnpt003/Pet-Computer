@@ -60,6 +60,7 @@ internal static class FarmChecks
             Kitchen(window, pet, farm, path, check, () => Tick(0.02));
             Sky(window, farm, check, () => now);
             Bulk(window, pet, farm, path, check, () => now, seconds => now = now.AddSeconds(seconds));
+            Levels(window, farm, path, check, () => Tick(0.02));
             farm.OpenTiles = 6;
             check(window.FarmTileLabel(0)!.Length > 0 && window.FarmTileLabel(6) == null, "Each tile has a label");
             check(farm.Next(0) == FarmStep.Till, "A new tile needs tilling");
@@ -411,6 +412,71 @@ internal static class FarmChecks
         Call(window, "FarmChanged");
         double wait = FarmGainWait;
         for (double t = 0; t < wait; t += 1.0 / 60) Call(window, "TickFarm", 1.0 / 60);
+    }
+
+    // Levels in the real window: locked seeds and dishes say what they need, a level is announced and paid.
+    private static void Levels(PetWindow window, PetFarm farm, string path, Action<bool, string> check, Action tick)
+    {
+        Window? Shop() => Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.Title == "Pet farm shop" && w.IsLoaded);
+        int coinsBefore = farm.Coins, openBefore = farm.OpenTiles;
+        farm.Xp = 0; farm.Coins = 500; farm.OpenTiles = 3;
+        var seeds = window.FarmSeedItems(0);
+        check(seeds[0].IsEnabled && seeds[1].IsEnabled && !seeds[2].IsEnabled && !seeds[3].IsEnabled, "At level 1 the tomato and pumpkin are greyed, however rich");
+        check(((string)seeds[2].Header).Contains("level 2") && ((string)seeds[3].Header).Contains("level 4"), $"They say the level they need ({seeds[2].Header})");
+
+        window.OpenFarmShop();
+        tick();
+        var level = Field<TextBlock?>(window, "farmShopLevel")!;
+        var next = Field<TextBlock?>(window, "farmShopNextUnlock")!;
+        check(level.Text.Contains("Level 1") && level.Text.Contains("0/25"), $"The shop shows the level and XP ({level.Text})");
+        check(next.Text.Contains("Tomato") && next.Text.Contains("Carrot stew"), $"...and what the next level opens ({next.Text})");
+        var fill = Field<Border?>(window, "farmShopXpFill")!;
+        check(fill.Width == 0, "The XP bar starts empty");
+
+        farm.Xp = 23;
+        farm.Tiles[0] = new FarmTile { Stage = FarmStage.Ripe, Crop = FarmCrop.Radish };
+        int coins = farm.Coins;
+        window.FarmClick(0);
+        var gain = Field<Border?>(window, "farmGain")!;
+        check(farm.Level == 2 && farm.Coins == coins + 40, "A harvest reaches level 2 and pays");
+        check(((TextBlock)gain.Child).Text.Contains("Level 2") && ((TextBlock)gain.Child).Text.Contains("40"), $"The field says so ({((TextBlock)gain.Child).Text})");
+        check(level.Text.Contains("Level 2") && fill.Width == 0, "The open shop follows at once");
+        check(PetFarm.Load(path).Xp == 25, "XP is in the file");
+        check(window.FarmSeedItems(0)[2].IsEnabled && !window.FarmSeedItems(0)[3].IsEnabled, "The tomato opens, not the pumpkin");
+        for (double t = 0; t < 2; t += 1.0 / 60) Call(window, "TickFarm", 1.0 / 60);
+        check(gain.Opacity > 0.5, "A new level stays up longer than a harvest's label");
+        for (double t = 0; t < 1.1; t += 1.0 / 60) Call(window, "TickFarm", 1.0 / 60);
+        check(gain.Opacity < 0.05, "...and fades");
+
+        double width = Shop()!.ActualWidth;
+        farm.Xp = 450;
+        Call(window, "UpdateFarmShop");
+        check(next.Text.Contains("140"), $"A level that opens nothing tells its coins ({next.Text})");
+        farm.Xp = 5000;
+        Call(window, "UpdateFarmShop");
+        Shop()!.UpdateLayout();
+        check(farm.Level == 10 && fill.Width == 400 && !level.Text.Contains("/"), $"The top level is full ({level.Text})");
+        check(Math.Abs(Shop()!.ActualWidth - width) < 1, "The panel keeps its width");
+        var area = Field<Area>(window, "bounds");
+        check(Shop()!.Top + Shop()!.ActualHeight <= area.Bottom + 1, $"The taller shop still fits on the monitor ({Shop()!.ActualHeight:F0})");
+        farm.Xp = 70;
+        Call(window, "UpdateFarmShop");
+        Render(Shop()!, "farm-shop-level.png");
+        window.CloseFarmShop();
+
+        farm.Xp = 0;
+        window.OpenFarmKitchen();
+        tick();
+        var rows = (System.Collections.IEnumerable)FieldOf("farmKitchenRows").GetValue(window)!;
+        var notes = rows.Cast<ValueTuple<FarmDish, TextBlock, Border>>().ToArray();
+        check(notes[0].Item2.Text.Contains("Radish") && notes[1].Item2.Text.Contains("level 2") && notes[3].Item2.Text.Contains("level 5"), $"The kitchen says which level a dish needs ({notes[3].Item2.Text})");
+        window.CloseFarmKitchen();
+        tick();
+
+        farm.Tiles[0] = new FarmTile();
+        farm.Harvested.Clear(); farm.Stock.Clear();
+        farm.Xp = 0; farm.Coins = coinsBefore; farm.OpenTiles = openBefore;
+        Call(window, "FarmChanged");
     }
 
     private static List<Border> Button(PetWindow window)

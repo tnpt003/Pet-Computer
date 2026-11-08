@@ -35,7 +35,7 @@ public sealed class FarmTile
 // coins, and the coins buy seeds, more tiles and a scarecrow. Radish seed is free, so nobody gets stuck.
 public sealed class PetFarm
 {
-    public const int CurrentVersion = 2, TileCount = 6, WateredStages = 3;
+    public const int CurrentVersion = 3, TileCount = 6, WateredStages = 3, MaxLevel = 10, MaxXp = 999_999;
     public const int StartingTiles = 3, StartingCoins = 20, MaxCoins = 999_999, ScarecrowPrice = 150;
     public const double FirstFraction = 0.25;
     // 1.5.1 M6. Rain has to last this long before it waters; each second of sun counts this much extra.
@@ -67,6 +67,34 @@ public sealed class PetFarm
         _ => 85
     };
 
+    // Farm levels (docs/FARM-GAME.md): the XP that reaches level 1, 2, ... 10.
+    private static readonly int[] LevelXp = { 0, 25, 70, 150, 280, 450, 700, 1000, 1400, 2000 };
+
+    public static int HarvestXp(FarmCrop crop) => crop switch
+    {
+        FarmCrop.Radish => 2,
+        FarmCrop.Carrot => 5,
+        FarmCrop.Tomato => 12,
+        _ => 30
+    };
+
+    public static int CropLevel(FarmCrop crop) => crop switch
+    {
+        FarmCrop.Tomato => 2,
+        FarmCrop.Pumpkin => 4,
+        _ => 1
+    };
+
+    public static int DishLevel(FarmDish dish) => dish switch
+    {
+        FarmDish.CarrotStew => 2,
+        FarmDish.StuffedTomato => 3,
+        FarmDish.PumpkinPie => 5,
+        _ => 1
+    };
+
+    public static int LevelReward(int level) => level * 20;
+
     // What opening this tile costs (the fourth, fifth and sixth).
     public static int OpenPrice(int index) => index switch { 3 => 40, 4 => 120, _ => 300 };
 
@@ -88,6 +116,7 @@ public sealed class PetFarm
     // Tiles open from the left; a tile with anything on it is always open.
     public int OpenTiles { get; set; } = StartingTiles;
     public bool Scarecrow { get; set; }
+    public int Xp { get; set; }
     // The plot's monitor (device name) and its left edge as a fraction of the free width (null: not placed yet).
     public string? Monitor { get; set; }
     public double? FractionX { get; set; }
@@ -106,8 +135,11 @@ public sealed class PetFarm
         farm.ReadOnly = farm.Version > CurrentVersion;
         // A field from before the store: what it had grown so far goes in.
         if (farm.Version < 2) farm.Stock = new(farm.Harvested ?? new());
+        bool beforeLevels = farm.Version < 3;
         if (!farm.ReadOnly) farm.Version = CurrentVersion;
         farm.Normalize();
+        // A field from before the levels: what it has grown counts, without the rewards.
+        if (beforeLevels) farm.Xp = Math.Min(MaxXp, Enum.GetValues<FarmCrop>().Sum(crop => farm.HarvestedCount(crop) * HarvestXp(crop)));
         return farm;
     }
 
@@ -125,6 +157,7 @@ public sealed class PetFarm
         Harvested = CleanCounts(Harvested);
         Stock = CleanCounts(Stock);
         Coins = Math.Clamp(Coins, 0, MaxCoins);
+        Xp = Math.Clamp(Xp, 0, MaxXp);
         OpenTiles = Math.Clamp(Math.Max(OpenTiles, Tiles.FindLastIndex(tile => tile.Stage != FarmStage.Wild) + 1), StartingTiles, TileCount);
         if (FractionX is double x) FractionX = double.IsFinite(x) ? Math.Clamp(x, 0, 1) : null;
         if (string.IsNullOrWhiteSpace(Monitor)) Monitor = null;
@@ -145,6 +178,34 @@ public sealed class PetFarm
 
     public bool IsOpen(int index) => index >= 0 && index < OpenTiles;
 
+    [JsonIgnore] public int Level { get { int xp = Xp; return Array.FindLastIndex(LevelXp, need => xp >= need) + 1; } }
+    // How far from this level to the next, 0 to 1; 1 at the top level.
+    [JsonIgnore] public double LevelProgress => Level >= MaxLevel ? 1 : (Xp - LevelXp[Level - 1]) / (double)(LevelXp[Level] - LevelXp[Level - 1]);
+    // The XP the next level takes (at the top level, that of the top level).
+    [JsonIgnore] public int NextLevelXp => LevelXp[Math.Min(Level, MaxLevel - 1)];
+    public bool Unlocked(FarmCrop crop) => Level >= CropLevel(crop);
+    public bool Unlocked(FarmDish dish) => Level >= DishLevel(dish);
+
+    // Levels reached since the window last asked. Each has paid its coins already.
+    private int levelsGained;
+    public int TakeLevelsGained()
+    {
+        int gained = levelsGained;
+        levelsGained = 0;
+        return gained;
+    }
+
+    private void GainXp(int amount)
+    {
+        int before = Level;
+        Xp = Math.Min(MaxXp, Xp + amount);
+        for (int level = before + 1; level <= Level; level++)
+        {
+            Earn(LevelReward(level));
+            levelsGained++;
+        }
+    }
+
     public FarmStep Next(int index)
     {
         if (!IsOpen(index)) return FarmStep.Locked;
@@ -164,6 +225,7 @@ public sealed class PetFarm
     // How many tilled tiles the coins at hand can sow with this crop.
     public int CanSow(FarmCrop crop)
     {
+        if (!Unlocked(crop)) return 0;
         int tilled = TilesAt(FarmStep.Plant).Count, price = SeedPrice(crop);
         return price == 0 ? tilled : Math.Min(tilled, Coins / price);
     }
@@ -180,7 +242,7 @@ public sealed class PetFarm
 
     public bool Plant(int index, FarmCrop crop)
     {
-        if (!IsOpen(index) || Tiles[index].Stage != FarmStage.Tilled || !Enum.IsDefined(crop) || Coins < SeedPrice(crop)) return false;
+        if (!IsOpen(index) || Tiles[index].Stage != FarmStage.Tilled || !Enum.IsDefined(crop) || !Unlocked(crop) || Coins < SeedPrice(crop)) return false;
         Coins -= SeedPrice(crop);
         Tiles[index].Stage = FarmStage.Seed;
         Tiles[index].Crop = crop;
@@ -205,6 +267,7 @@ public sealed class PetFarm
         Tiles[index].GrowsUntil = null;
         Harvested[crop.ToString()] = Harvested.GetValueOrDefault(crop.ToString()) + 1;
         Stock[crop.ToString()] = Stock.GetValueOrDefault(crop.ToString()) + 1;
+        GainXp(HarvestXp(crop));
         return crop;
     }
 
@@ -229,7 +292,7 @@ public sealed class PetFarm
         else Stock[crop.ToString()] = left;
     }
 
-    public bool CanCook(FarmDish dish) => Enum.IsDefined(dish) && Recipe(dish).All(part => StockOf(part.Crop) >= part.Count);
+    public bool CanCook(FarmDish dish) => Enum.IsDefined(dish) && Unlocked(dish) && Recipe(dish).All(part => StockOf(part.Crop) >= part.Count);
 
     // Uses up the ingredients, all of them or none.
     public bool Cook(FarmDish dish)

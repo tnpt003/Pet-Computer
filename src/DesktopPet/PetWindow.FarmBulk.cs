@@ -44,7 +44,8 @@ public sealed partial class PetWindow
     {
         int count = farm!.CanSow(crop);
         string name = FarmCropName(crop), price = FarmPriceText(count * PetFarm.SeedPrice(crop));
-        var item = new MenuItem { Header = LF($"{name} · {count} ô · {price}", $"{name} · {count} tiles · {price}"), Icon = new FarmCropIcon(crop), IsEnabled = count > 0 };
+        string header = farm.Unlocked(crop) ? LF($"{name} · {count} ô · {price}", $"{name} · {count} tiles · {price}") : name + " · " + FarmLevelText(PetFarm.CropLevel(crop));
+        var item = new MenuItem { Header = header, Icon = new FarmCropIcon(crop), IsEnabled = count > 0 };
         item.Click += (_, _) => FarmSowAll(crop);
         return item;
     }
@@ -87,7 +88,6 @@ public sealed partial class PetWindow
     // One label rises from the middle of what was picked; several crops have no one name.
     private void ShowFarmBulkGain(IReadOnlyList<int> tiles, FarmCrop last)
     {
-        ShowFarmGain(tiles[tiles.Count / 2], last);
-        if (tiles.Count > 1 && farmGainText != null) farmGainText.Text = LF($"+{tiles.Count} nông sản", $"+{tiles.Count} crops");
+        ShowFarmLabel(tiles[tiles.Count / 2], tiles.Count > 1 ? LF($"+{tiles.Count} nông sản", $"+{tiles.Count} crops") : "+1 " + FarmCropName(last), FarmGainSeconds);
     }
 }

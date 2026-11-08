@@ -80,7 +80,9 @@ public sealed partial class PetWindow
             : LF($"{preferences.Name} chưa ăn được lúc này, chờ một lát nhé.", $"{preferences.Name} can't eat just now, wait a moment.");
         foreach (var (dish, parts, button) in farmKitchenRows)
         {
-            parts.Text = string.Join(" · ", PetFarm.Recipe(dish).Select(part => $"{FarmCropName(part.Crop)} {farm.StockOf(part.Crop)}/{part.Count}"));
+            parts.Text = farm.Unlocked(dish)
+                ? string.Join(" · ", PetFarm.Recipe(dish).Select(part => $"{FarmCropName(part.Crop)} {farm.StockOf(part.Crop)}/{part.Count}"))
+                : FarmLevelText(PetFarm.DishLevel(dish));
             ShowFarmShopButton(button, farmKitchenReady && farm.CanCook(dish));
         }
     }

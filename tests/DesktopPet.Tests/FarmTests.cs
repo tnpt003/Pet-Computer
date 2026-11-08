@@ -15,6 +15,79 @@ internal static class FarmTests
         Economy(check, start);
         Links(check, start);
         Bulk(check, start);
+        Levels(check);
+    }
+
+    // XP, levels and what they open (docs/FARM-GAME.md, milestone B).
+    private static void Levels(Action<bool, string> check)
+    {
+        var farm = new PetFarm();
+        check(farm.Level == 1 && farm.Xp == 0 && farm.LevelProgress == 0 && farm.NextLevelXp == 25, "A new field is level 1");
+        var reach = new (int Xp, int Level)[] { (24, 1), (25, 2), (69, 2), (70, 3), (150, 4), (280, 5), (450, 6), (700, 7), (1000, 8), (1400, 9), (1999, 9), (2000, 10), (9000, 10) };
+        foreach (var (xp, level) in reach) { farm.Xp = xp; check(farm.Level == level, $"{xp} XP is level {level}"); }
+        check(farm.LevelProgress == 1 && farm.NextLevelXp == 2000, "The top level is full");
+
+        farm = new PetFarm();
+        farm.Till(0); farm.Till(1); farm.Coins = 500;
+        check(farm.Unlocked(FarmCrop.Radish) && farm.Unlocked(FarmCrop.Carrot) && !farm.Unlocked(FarmCrop.Tomato) && !farm.Unlocked(FarmCrop.Pumpkin), "Level 1 grows radish and carrot");
+        check(!farm.Plant(0, FarmCrop.Tomato) && !farm.Plant(0, FarmCrop.Pumpkin) && farm.Coins == 500 && farm.CanSow(FarmCrop.Tomato) == 0, "A locked crop cannot be sown, however rich");
+        farm.Xp = 25;
+        check(farm.Plant(0, FarmCrop.Tomato) && !farm.Unlocked(FarmCrop.Pumpkin), "Level 2 opens the tomato, not yet the pumpkin");
+        farm.Xp = 150;
+        check(farm.Plant(1, FarmCrop.Pumpkin), "Level 4 opens the pumpkin");
+
+        foreach (var (dish, level) in new[] { (FarmDish.RadishSoup, 1), (FarmDish.CarrotStew, 2), (FarmDish.StuffedTomato, 3), (FarmDish.PumpkinPie, 5) })
+        {
+            var cook = new PetFarm();
+            foreach (var crop in Enum.GetValues<FarmCrop>()) cook.Stock[crop.ToString()] = 5;
+            cook.Xp = level == 1 ? 0 : new[] { 25, 70, 150, 280 }[level - 2] - 1;
+            check(level == 1 || (!cook.CanCook(dish) && !cook.Cook(dish) && cook.StockOf(FarmCrop.Radish) == 5), $"{dish} is closed below level {level}");
+            cook.Xp++;
+            check(cook.Cook(dish), $"{dish} opens at level {level}");
+        }
+
+        // A tile that grows on: a locked crop already in the ground still comes in.
+        farm = new PetFarm();
+        farm.Tiles[0] = new FarmTile { Stage = FarmStage.Ripe, Crop = FarmCrop.Pumpkin };
+        int coins = farm.Coins;
+        check(farm.Harvest(0) == FarmCrop.Pumpkin && farm.Xp == 30, "A locked crop already in the ground still comes in, with its XP");
+        check(farm.Level == 2 && farm.Coins == coins + 40 && farm.TakeLevelsGained() == 1 && farm.TakeLevelsGained() == 0, "Level 2 pays 40 coins, and is told once");
+
+        farm = new PetFarm();
+        farm.Xp = 24;
+        foreach (int tile in new[] { 0, 1 }) farm.Tiles[tile] = new FarmTile { Stage = FarmStage.Ripe, Crop = FarmCrop.Pumpkin };
+        coins = farm.Coins;
+        farm.Harvest(0); farm.Harvest(1);
+        check(farm.Xp == 84 && farm.Level == 3 && farm.Coins == coins + 40 + 60 && farm.TakeLevelsGained() == 2, "Two levels pay both rewards");
+        farm = new PetFarm { Xp = 69 };
+        farm.Tiles[0] = new FarmTile { Stage = FarmStage.Ripe, Crop = FarmCrop.Radish };
+        coins = farm.Coins;
+        farm.Harvest(0);
+        check(farm.Level == 3 && farm.Coins == coins + 60, "One XP over is enough");
+        farm = new PetFarm { Xp = PetFarm.MaxXp, Coins = PetFarm.MaxCoins };
+        farm.Tiles[0] = new FarmTile { Stage = FarmStage.Ripe, Crop = FarmCrop.Radish };
+        farm.Harvest(0);
+        check(farm.Xp == PetFarm.MaxXp && farm.Coins == PetFarm.MaxCoins, "XP and coins stop at their most");
+
+        string folder = Path.Combine(Path.GetTempPath(), "pet-farm-levels-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        try
+        {
+            string path = Path.Combine(folder, "farm.json");
+            farm = new PetFarm { Xp = 99 };
+            farm.Save(path);
+            var back = PetFarm.Load(path);
+            check(back.Xp == 99 && back.Version == 3 && back.Level == 3, "XP is saved");
+            check(!File.ReadAllText(path).Contains("\"Level\"") && !File.ReadAllText(path).Contains("LevelProgress"), "What follows from the XP is not saved");
+            File.WriteAllText(path, """{ "Version": 2, "Coins": 50, "Harvested": { "Carrot": 3, "Pumpkin": 1, "Gold": 9 } }""");
+            var old = PetFarm.Load(path);
+            check(old.Xp == 45 && old.Level == 2 && old.Coins == 50 && old.TakeLevelsGained() == 0, "A field from before the levels gets XP for what it has grown, without the rewards");
+            File.WriteAllText(path, """{ "Version": 3, "Xp": 12, "Harvested": { "Pumpkin": 90 } }""");
+            check(PetFarm.Load(path).Xp == 12, "A field that has levels keeps its XP");
+            File.WriteAllText(path, """{ "Version": 3, "Xp": -5 }""");
+            check(PetFarm.Load(path).Xp == 0, "Odd XP is pulled back");
+        }
+        finally { Directory.Delete(folder, true); }
     }
 
     // One step on every tile ready for it.
@@ -40,6 +113,7 @@ internal static class FarmTests
         check(!farm.Cook(FarmDish.RadishSoup) && farm.Stock.Count == 0, "An empty store cooks nothing");
         farm.Stock["Radish"] = 1;
         check(!farm.CanCook(FarmDish.RadishSoup) && !farm.Cook(FarmDish.RadishSoup) && farm.StockOf(FarmCrop.Radish) == 1, "One radish is not enough, and is kept");
+        farm.Xp = 70;
         farm.Stock["Tomato"] = 1; farm.Stock["Radish"] = 3;
         check(farm.Cook(FarmDish.StuffedTomato) && farm.StockOf(FarmCrop.Tomato) == 0 && farm.StockOf(FarmCrop.Radish) == 2, "A dish uses up each ingredient");
         farm.Coins = 7; farm.Harvested["Radish"] = 4;
@@ -147,7 +221,7 @@ internal static class FarmTests
             saved.Stock["Tomato"] = 4;
             saved.Save(path);
             var back = PetFarm.Load(path);
-            check(back.Coins == 77 && back.OpenTiles == 5 && back.Scarecrow && back.StockOf(FarmCrop.Tomato) == 4 && back.Version == 2, "The economy is saved");
+            check(back.Coins == 77 && back.OpenTiles == 5 && back.Scarecrow && back.StockOf(FarmCrop.Tomato) == 4 && back.Version == PetFarm.CurrentVersion, "The economy is saved");
 
             File.WriteAllText(path, """
                 { "Version": 1, "Harvested": { "Carrot": 3, "Radish": 2 },
@@ -297,6 +371,7 @@ internal static class FarmTests
             check(PetFarm.Load(path).Tiles.Count == 6, "No file: a new field");
 
             var farm = new PetFarm { Monitor = @"\\.\DISPLAY2", FractionX = 0.4, Coins = 100, OpenTiles = 6 };
+            farm.Xp = 150;
             farm.Till(1); farm.Plant(1, FarmCrop.Pumpkin); farm.Water(1, start);
             farm.Till(2);
             check(farm.Save(path), "The field is saved");

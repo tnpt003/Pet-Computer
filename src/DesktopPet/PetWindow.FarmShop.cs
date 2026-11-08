@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -14,6 +15,8 @@ public sealed partial class PetWindow
     private const double FarmShopWidth = 400;
 
     private Window? farmShopWindow;
+    private TextBlock? farmShopLevel, farmShopNextUnlock;
+    private Border? farmShopXpFill;
     private TextBlock? farmShopCoins, farmShopTileName, farmShopTileNote, farmShopTilePrice, farmShopScareNote, farmShopScarePrice, farmShopSellAllText;
     private Border? farmShopTileButton, farmShopScareButton, farmShopSellAll;
     private readonly List<(FarmCrop Crop, TextBlock Count, Border Button, TextBlock Price)> farmShopRows = new();
@@ -24,6 +27,15 @@ public sealed partial class PetWindow
     private bool FarmShopAllowed => Blocking(AutoBlock.BattleScreens) == AutoBlock.None;
 
     private string FarmPriceText(int price) => price == 0 ? L("miễn phí", "free") : LF($"{price} xu", $"{price} coins");
+    private string FarmLevelText(int level) => LF($"cần cấp {level}", $"needs level {level}");
+
+    // What the next level opens, for the shop's line; empty when it opens nothing.
+    private string FarmNextUnlockNames(int level)
+    {
+        var crops = Enum.GetValues<FarmCrop>().Where(crop => PetFarm.CropLevel(crop) == level).Select(FarmCropName);
+        var dishes = Enum.GetValues<FarmDish>().Where(dish => PetFarm.DishLevel(dish) == level).Select(FarmDishName);
+        return string.Join(", ", crops.Concat(dishes));
+    }
 
     // Each frame the field is shown.
     private void WatchFarmShop()
@@ -43,7 +55,15 @@ public sealed partial class PetWindow
         farmShopCoins.Foreground = PetUi.Game.Gold;
         farmShopCoins.Margin = new Thickness(0, 2, 0, 0);
 
-        var body = new StackPanel { Width = FarmShopWidth, Children = { PanelTitle(title), farmShopCoins } };
+        farmShopLevel = PanelLine(PetUi.BodySize, true, FarmShopWidth);
+        farmShopLevel.Margin = new Thickness(0, 6, 0, 3);
+        farmShopXpFill = new Border { Background = PetUi.Game.Gold, CornerRadius = new CornerRadius(3), HorizontalAlignment = HorizontalAlignment.Left };
+        var xpBar = new Border { Background = PrepCardBack, CornerRadius = new CornerRadius(3), Height = 6, Child = farmShopXpFill };
+        farmShopNextUnlock = PanelLine(PetUi.SmallSize, maxWidth: FarmShopWidth);
+        farmShopNextUnlock.Foreground = PetUi.Game.Soft;
+        farmShopNextUnlock.Margin = new Thickness(0, 3, 0, 0);
+
+        var body = new StackPanel { Width = FarmShopWidth, Children = { PanelTitle(title), farmShopCoins, farmShopLevel, xpBar, farmShopNextUnlock } };
         farmShopRows.Clear();
         foreach (var crop in Enum.GetValues<FarmCrop>())
         {
@@ -113,6 +133,14 @@ public sealed partial class PetWindow
         if (farmShopWindow == null || farm == null || farmShopCoins == null) return;
         farmShopPaused = paused;
         farmShopCoins.Text = LF($"Xu nông trại: {farm.Coins}", $"Farm coins: {farm.Coins}");
+        farmShopLevel!.Text = farm.Level >= PetFarm.MaxLevel
+            ? LF($"Cấp {farm.Level} · {farm.Xp} XP", $"Level {farm.Level} · {farm.Xp} XP")
+            : LF($"Cấp {farm.Level} · {farm.Xp}/{farm.NextLevelXp} XP", $"Level {farm.Level} · {farm.Xp}/{farm.NextLevelXp} XP");
+        farmShopXpFill!.Width = FarmShopWidth * farm.LevelProgress;
+        string unlocks = farm.Level >= PetFarm.MaxLevel ? "" : FarmNextUnlockNames(farm.Level + 1);
+        farmShopNextUnlock!.Text = farm.Level >= PetFarm.MaxLevel ? L("Đã đạt cấp cao nhất", "Top level reached")
+            : unlocks.Length > 0 ? LF($"Cấp sau mở: {unlocks}", $"Next level opens: {unlocks}")
+            : LF($"Cấp sau thưởng {PetFarm.LevelReward(farm.Level + 1)} xu", $"Next level pays {PetFarm.LevelReward(farm.Level + 1)} coins");
         foreach (var (crop, count, button, price) in farmShopRows)
         {
             count.Text = LF($"Trong kho: {farm.StockOf(crop)}", $"In store: {farm.StockOf(crop)}");
@@ -141,6 +169,8 @@ public sealed partial class PetWindow
         farmShopWindow = null;
         farmShopCoins = farmShopTileName = farmShopTileNote = farmShopTilePrice = farmShopScareNote = farmShopScarePrice = farmShopSellAllText = null;
         farmShopTileButton = farmShopScareButton = farmShopSellAll = null;
+        farmShopLevel = farmShopNextUnlock = null;
+        farmShopXpFill = null;
         farmShopRows.Clear();
     }
 

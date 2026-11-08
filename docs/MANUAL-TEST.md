@@ -1284,3 +1284,12 @@ Các mục 1.5 phía trên viết theo từng mốc; đây là thứ tự chơi 
 - [ ] Gieo tất cả: mỗi loại ghi số ô và tổng giá đúng với xu đang có; thiếu xu thì gieo được bao nhiêu gieo bấy nhiêu từ trái sang
 - [ ] Lúc mèo ngủ vẫn làm được và không đánh thức. Pause và lúc đang nhấc mảnh đất: không làm được
 - [ ] Menu đủ chữ, không tràn ở vi/en/ja
+
+## Nông trại Mốc B — Cấp nông trại (08/11)
+
+- [ ] Mở bản mới với ruộng cũ: cấp và XP tính từ số đã thu hoạch, không có thưởng xu. Cây đang trồng dù chưa đủ cấp vẫn lớn và gặt được
+- [ ] Bảng "Kho & cửa hàng" có cấp, XP, thanh tiến độ, dòng "Cấp sau mở"; thu hoạch lúc bảng mở thì cập nhật ngay
+- [ ] Menu gieo và "Gieo tất cả": Cà chua, Bí ngô mờ và ghi cấp cần. Bảng Nấu ăn: món chưa mở ghi cấp cần
+- [ ] Thu hoạch tay và để mèo gặt đều có XP. Lên cấp: ruộng lấp lánh, nhãn "Lên cấp N! +X xu" hiện khoảng 3 giây, xu tăng đúng. Khởi động lại app vẫn còn cấp
+- [ ] Bảng đủ chữ, vừa màn hình ở vi/en/ja và DPI 100/125/150/200%
+- [ ] Chơi một lúc rồi góp ý nhịp lên cấp và XP từng cây

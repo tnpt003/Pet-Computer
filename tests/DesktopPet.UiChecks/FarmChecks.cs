@@ -78,7 +78,7 @@ internal static class FarmChecks
             Call(window, "CloseFarmSeedMenu");
             check(!window.FarmSeedMenuOpen, "The menu closes");
             var seeds = window.FarmSeedItems(0);
-            check(seeds.Length == 4 && seeds.All(s => s.Icon is FarmCropIcon && ((string)s.Header).Length > 0), "The seed menu has four crops with their pictures");
+            check(seeds.Length == 5 && seeds.All(s => s.Icon is FarmCropIcon && ((string)s.Header).Length > 0), "The seed menu has five crops with their pictures");
             check(window.FarmPlant(0, FarmCrop.Radish) && farm.Next(0) == FarmStep.Water, "A seed is sown");
             check(!window.FarmPlant(1, FarmCrop.Radish), "Not on wild ground");
             check(window.FarmTileLabel(0)!.Contains("Radish") || window.FarmTileLabel(0)!.Contains("Củ cải"), "The label names the crop");
@@ -456,7 +456,7 @@ internal static class FarmChecks
 
         var sow = Item("Sow all (3");
         var seeds = sow.Items.OfType<MenuItem>().ToArray();
-        check(seeds.Length == 4 && seeds.All(s => s.Icon is FarmCropIcon), "Sow all offers the four crops with their pictures");
+        check(seeds.Length == 5 && seeds.All(s => s.Icon is FarmCropIcon), "Sow all offers the five crops with their pictures");
         check(seeds[0].IsEnabled && seeds[1].IsEnabled && !seeds[3].IsEnabled, "A seed the purse cannot pay for even once is greyed");
         check(((string)seeds[1].Header).Contains("2 tiles") && ((string)seeds[1].Header).Contains("8"), $"It says how many tiles and what that costs ({seeds[1].Header})");
         Click(seeds[1]);
@@ -534,10 +534,23 @@ internal static class FarmChecks
         check(next.Text.Contains("Golden fish hotpot"), $"Level 7 opens the hotpot ({next.Text})");
         farm.Xp = 700;
         Call(window, "UpdateFarmShop");
-        check(next.Text.Contains("160"), $"A level that opens nothing tells its coins ({next.Text})");
+        check(next.Text.Contains("Watermelon"), $"Level 8 opens the watermelon ({next.Text})");
+        farm.Xp = 1000;
+        Call(window, "UpdateFarmShop");
+        check(next.Text.Contains("Chilled watermelon"), $"Level 9 opens the chilled watermelon ({next.Text})");
+        farm.Xp = 1400;
+        Call(window, "UpdateFarmShop");
+        check(next.Text.Contains("Golden scarecrow"), $"Level 10 opens the golden scarecrow ({next.Text})");
+        var scareIcon = Field<FarmScarecrowIcon?>(window, "farmShopScareIcon")!;
+        var scareName = Field<TextBlock?>(window, "farmShopScareName")!;
+        check(!scareIcon.Golden && scareName.Text == "Scarecrow", "Below level 10 the shop shows the plain one");
         farm.Xp = 5000;
         Call(window, "UpdateFarmShop");
         Shop()!.UpdateLayout();
+        check(scareIcon.Golden && scareName.Text == "Golden scarecrow" && !Field<Border?>(window, "farmShopScareButton")!.IsEnabled, "At level 10 it shows the golden one, nothing to buy");
+        Call(window, "RefreshFarmArt");
+        check(Field<PetFarmArt>(window, "farmArt").GoldenScarecrow, "...and so does the field");
+        Render(Shop()!, "farm-shop-top.png");
         check(farm.Level == 10 && fill.Width == 400 && !level.Text.Contains("/"), $"The top level is full ({level.Text})");
         check(Math.Abs(Shop()!.ActualWidth - width) < 1, "The panel keeps its width");
         var area = Field<Area>(window, "bounds");
@@ -1191,7 +1204,7 @@ internal static class FarmChecks
         void Ripe(PetFarmArt art)
         {
             var crops = Enum.GetValues<FarmCrop>();
-            for (int i = 0; i < 6; i++) art.Tiles[i] = new(FarmStage.Ripe, crops[i % 4], false, false, 1);
+            for (int i = 0; i < 6; i++) art.Tiles[i] = new(FarmStage.Ripe, crops[i % crops.Length], false, false, 1);
         }
         foreach (var (back, tone) in new[] { (light, "light"), (dark, "dark") })
         {
@@ -1217,7 +1230,7 @@ internal static class FarmChecks
             seen.Add(Render(art => art.Tiles[0] = new(FarmStage.Young, crop, false, false, 0.5), dark, null));
         }
         // Radish and carrot share their young leaves' shape, but not their color.
-        check(seen.Count == 10, $"Every stage of every crop looks different ({seen.Count} of 10)");
+        check(seen.Count == 12, $"Every stage of every crop looks different ({seen.Count} of 12)");
         string dry = Render(art => art.Tiles[0] = new(FarmStage.Seed, FarmCrop.Carrot, false, false, 0), dark, null);
         check(dry != Render(art => art.Tiles[0] = new(FarmStage.Seed, FarmCrop.Carrot, true, false, 0), dark, null), "Wet soil is not dry soil");
         check(dry != Render(art => art.Tiles[0] = new(FarmStage.Seed, FarmCrop.Carrot, false, true, 0), dark, null), "A thirsty seed shows a drop");
@@ -1228,6 +1241,9 @@ internal static class FarmChecks
         check(still != Render(art => art.ShakeX = 3, dark, null), "The plot shakes");
         check(still != Render(art => art.Tiles[3] = new(FarmStage.Wild, null, false, false, 0, true), dark, null), "A locked tile has its fence");
         check(still != Render(art => art.Scarecrow = true, dark, null), "The scarecrow is drawn");
+        check(Render(art => art.Scarecrow = true, dark, null) != Render(art => { art.Scarecrow = true; art.GoldenScarecrow = true; }, dark, null), "The golden scarecrow is drawn differently");
+        foreach (var (back, tone) in new[] { (light, "light"), (dark, "dark") })
+            Render(art => { art.Tiles[1] = new(FarmStage.Young, FarmCrop.Watermelon, false, true, 0.67); art.Tiles[2] = new(FarmStage.Ripe, FarmCrop.Watermelon, false, false, 1); art.Scarecrow = true; art.GoldenScarecrow = true; }, back, $"farm-top-rewards-{tone}");
         check(PetFarmArt.TileAt(PetFarmArt.TileLeft(0) + 1) == 0 && PetFarmArt.TileAt(PetFarmArt.TileLeft(5) + 53) == 5 && PetFarmArt.TileAt(1) == -1 && PetFarmArt.TileAt(PetFarmArt.ArtWidth - 1) == -1, "Clicks find their tiles; the rim is none");
         Dishes(check);
     }

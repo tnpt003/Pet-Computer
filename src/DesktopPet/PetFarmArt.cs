@@ -65,8 +65,15 @@ public sealed partial class PetFarmArt : FrameworkElement
     private static readonly Brush PinkBroth = PetUi.Hex("#F2A6B7"), StewBroth = PetUi.Hex("#D98A3F"), Puff = PetUi.Frozen(Color.FromArgb(0xC8, 0xFF, 0xFF, 0xFF));
     private static readonly Pen PuffEdge = PetUi.FrozenPen(PetUi.Frozen(Color.FromArgb(0x70, 0x2A, 0x1F, 0x16)), 1);
 
+    // Watermelon: green with dark stripes outside, red with dark seeds inside; the dish keeps cold with ice.
+    private static readonly Brush MelonRind = PetUi.Hex("#63B168"), MelonStripe = PetUi.Hex("#2F7A4B"), MelonRed = PetUi.Hex("#EF5F73"), Ice = PetUi.Hex("#D3EDF8");
+    private static readonly Geometry MelonStripes = Parse("M0,-32 C-5,-26 -2,-21 -4,-16 C-2,-11 -5,-5 0,0 C5,-5 2,-11 4,-16 C2,-21 5,-26 0,-32 Z M-3,-31.6 C-12,-28 -11,-21 -15,-16 C-11,-10 -12,-4 -3,-0.4 C-9,-6 -7,-11 -10,-16 C-7,-21 -9,-26 -3,-31.6 Z M3,-31.6 C12,-28 11,-21 15,-16 C11,-10 12,-4 3,-0.4 C9,-6 7,-11 10,-16 C7,-21 9,-26 3,-31.6 Z");
+    private static readonly Geometry MelonFlesh = Parse("M-13,-7 L0,-26 L13,-7 C7,-4 -7,-4 -13,-7 Z");
+    private static readonly Geometry MelonSliceRind = Parse("M-14,-7 C-7,-4 7,-4 14,-7 L13.5,-3.6 C7,-0.8 -7,-0.8 -13.5,-3.6 Z");
+
     private static readonly Brush LockedMoss = PetUi.Hex("#B3B49A");
     private static readonly Pen Straw = PetUi.FrozenPen(PetUi.Hex("#D9B566"), 2);
+    private static readonly Pen GoldStakePen = PetUi.FrozenPen(PetUi.Hex("#C9962E"), 3), GoldStraw = PetUi.FrozenPen(PetUi.Hex("#F5D36B"), 2);
     private static readonly Geometry LockShackle = Parse("M-3.8,-15 L-3.8,-18 C-3.8,-23.5 3.8,-23.5 3.8,-18 L3.8,-15");
     private static readonly Geometry ScarecrowShirt = Parse("M-12,-45 C-5,-47 5,-47 12,-45 L10,-20 C5,-23 3,-19 0,-21 C-3,-19 -6,-23 -10,-20 Z");
     private static readonly Geometry ScarecrowSmile = Parse("M-3.5,-51.5 C-1.5,-49.5 1.5,-49.5 3.5,-51.5");
@@ -97,6 +104,7 @@ public sealed partial class PetFarmArt : FrameworkElement
     public bool BirdFlying { get; set; }
     // Stands at the right end of the plot, once bought (1.5.1 M5).
     public bool Scarecrow { get; set; }
+    public bool GoldenScarecrow { get; set; }
 
     public PetFarmArt() { Width = ArtWidth; Height = ArtHeight; }
 
@@ -113,8 +121,8 @@ public sealed partial class PetFarmArt : FrameworkElement
     {
         FarmStage.Seed => 6,
         FarmStage.Sprout => 20,
-        FarmStage.Young => crop == FarmCrop.Tomato ? 44 : crop == FarmCrop.Pumpkin ? 34 : 38,
-        FarmStage.Ripe => crop switch { FarmCrop.Tomato => 56, FarmCrop.Pumpkin => 38, FarmCrop.Radish => 54, _ => 56 },
+        FarmStage.Young => crop == FarmCrop.Tomato ? 44 : crop is FarmCrop.Pumpkin or FarmCrop.Watermelon ? 34 : 38,
+        FarmStage.Ripe => crop switch { FarmCrop.Tomato => 56, FarmCrop.Pumpkin or FarmCrop.Watermelon => 38, FarmCrop.Radish => 54, _ => 56 },
         _ => 0
     };
 
@@ -145,7 +153,7 @@ public sealed partial class PetFarmArt : FrameworkElement
         if (Scarecrow)
         {
             dc.PushTransform(new TranslateTransform(ScarecrowX, SoilTop + 2));
-            DrawScarecrow(dc);
+            DrawScarecrow(dc, GoldenScarecrow);
             dc.Pop();
         }
         for (int i = 0; i < Tiles.Length; i++) DrawBed(dc, i);
@@ -335,6 +343,7 @@ public sealed partial class PetFarmArt : FrameworkElement
         FarmDish.CarrotStew => StewBroth,
         FarmDish.StuffedTomato or FarmDish.CarpTomato => TomatoRed,
         FarmDish.GrilledFish => StewBroth,
+        FarmDish.ChilledWatermelon => MelonRed,
         _ => Pumpkin
     };
 
@@ -368,6 +377,7 @@ public sealed partial class PetFarmArt : FrameworkElement
         FarmCrop.Radish => RadishRed,
         FarmCrop.Carrot => Orange,
         FarmCrop.Tomato => TomatoRed,
+        FarmCrop.Watermelon => MelonRind,
         _ => Pumpkin
     };
 
@@ -441,6 +451,15 @@ public sealed partial class PetFarmArt : FrameworkElement
                 });
                 foreach (int side in new[] { -1, 1 }) dc.DrawEllipse(Iron, InkThin, new Point(side * 16.5, -8.5), 2.2, 3);
                 break;
+            case FarmDish.ChilledWatermelon:
+                dc.DrawEllipse(RadishTip, Ink, new Point(0, -3), 19, 3.6);
+                dc.DrawRoundedRectangle(Ice, InkThin, new Rect(-19, -12, 8, 8), 2, 2);
+                dc.DrawRoundedRectangle(Ice, InkThin, new Rect(11.5, -11, 7, 7), 2, 2);
+                dc.DrawGeometry(MelonRed, Ink, MelonFlesh);
+                dc.DrawGeometry(MelonRind, Ink, MelonSliceRind);
+                foreach (var (x, y) in new[] { (-4.0, -11.0), (3.5, -10.0), (0.0, -17.0) })
+                    dc.DrawEllipse(PetUi.ArtInk, null, new Point(x, y), 1.1, 1.7);
+                break;
             default:
                 dc.DrawGeometry(Stake, Ink, PieTin);
                 dc.DrawEllipse(Seed, Ink, new Point(0, -9.5), 17, 5);
@@ -469,21 +488,29 @@ public sealed partial class PetFarmArt : FrameworkElement
         }
     }
 
-    // A straw-stuffed scarecrow on its pole, the foot of the pole at (0,0).
-    public static void DrawScarecrow(DrawingContext dc)
+    // A straw-stuffed scarecrow on its pole, the foot of the pole at (0,0). The golden one is the top level's.
+    public static void DrawScarecrow(DrawingContext dc, bool golden = false)
     {
-        dc.DrawLine(StakePen, new Point(0, 0), new Point(0, -48));
-        dc.DrawLine(StakePen, new Point(-18, -41), new Point(18, -41));
+        var pole = golden ? GoldStakePen : StakePen;
+        dc.DrawLine(pole, new Point(0, 0), new Point(0, -48));
+        dc.DrawLine(pole, new Point(-18, -41), new Point(18, -41));
         foreach (int side in new[] { -1, 1 })
             foreach (double fan in new[] { -3.5, 0.0, 3.5 })
-                dc.DrawLine(Straw, new Point(side * 17, -41), new Point(side * 23, -41 + fan));
-        dc.DrawGeometry(Water, InkThin, ScarecrowShirt);
+                dc.DrawLine(golden ? GoldStraw : Straw, new Point(side * 17, -41), new Point(side * 23, -41 + fan));
+        dc.DrawGeometry(golden ? PetUi.Game.Gold : Water, InkThin, ScarecrowShirt);
         dc.DrawEllipse(Seed, InkThin, new Point(0, -55), 9, 9.5);
         dc.DrawEllipse(PetUi.ArtInk, null, new Point(-3.2, -56), 1.2, 1.2);
         dc.DrawEllipse(PetUi.ArtInk, null, new Point(3.2, -56), 1.2, 1.2);
         dc.DrawGeometry(null, InkThin, ScarecrowSmile);
         dc.DrawGeometry(PetUi.Game.Gold, InkThin, ScarecrowCrown);
         dc.DrawGeometry(PetUi.Game.Gold, InkThin, ScarecrowBrim);
+        if (!golden) return;
+        foreach (var (x, y) in new[] { (-17.0, -58.0), (17.0, -52.0) })
+        {
+            dc.PushTransform(new TranslateTransform(x, y));
+            dc.DrawGeometry(RadishTip, InkThin, Star);
+            dc.Pop();
+        }
     }
 
     // A plant with its roots at (0,0), growing up.
@@ -521,6 +548,12 @@ public sealed partial class PetFarmArt : FrameworkElement
                 dc.DrawGeometry(Leaf, Ink, Vine);
                 dc.DrawGeometry(null, InkThin, VineVein);
                 break;
+            case FarmCrop.Watermelon:
+                dc.DrawGeometry(LeafDeep, Ink, Vine);
+                dc.DrawGeometry(null, InkThin, VineVein);
+                dc.DrawEllipse(MelonStripe, InkThin, new Point(11, -6), 7, 5.5);
+                dc.DrawEllipse(MelonRind, null, new Point(9.5, -7), 3, 2);
+                break;
             default:
                 dc.DrawGeometry(crop == FarmCrop.Radish ? Leaf : LeafDeep, InkThin, Blades);
                 break;
@@ -551,6 +584,11 @@ public sealed partial class PetFarmArt : FrameworkElement
                 dc.DrawGeometry(Leaf, InkThin, TallLeaves);
                 dc.Pop();
                 Fruit(dc, -12, -24); Fruit(dc, 12, -19); Fruit(dc, 7, -40);
+                break;
+            case FarmCrop.Watermelon:
+                dc.DrawGeometry(StemBrown, InkThin, PumpkinStem);
+                dc.DrawEllipse(MelonRind, Ink, new Point(0, -16), 21, 16);
+                dc.DrawGeometry(MelonStripe, null, MelonStripes);
                 break;
             default:
                 dc.DrawGeometry(StemBrown, InkThin, PumpkinStem);
@@ -733,6 +771,13 @@ public sealed class FarmDishIcon : FrameworkElement
 // The scarecrow as a small picture (the shop).
 public sealed class FarmScarecrowIcon : FrameworkElement
 {
+    private bool golden;
+    public bool Golden
+    {
+        get => golden;
+        set { if (golden != value) { golden = value; InvalidateVisual(); } }
+    }
+
     public FarmScarecrowIcon(double size = 22)
     {
         Width = Height = size;
@@ -744,7 +789,7 @@ public sealed class FarmScarecrowIcon : FrameworkElement
         double zoom = ActualHeight / 72;
         dc.PushTransform(new TranslateTransform(ActualWidth / 2, ActualHeight));
         dc.PushTransform(new ScaleTransform(zoom, zoom));
-        PetFarmArt.DrawScarecrow(dc);
+        PetFarmArt.DrawScarecrow(dc, golden);
         dc.Pop(); dc.Pop();
     }
 }

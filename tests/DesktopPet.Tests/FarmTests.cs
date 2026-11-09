@@ -16,6 +16,7 @@ internal static class FarmTests
         Links(check, start);
         Bulk(check, start);
         Levels(check);
+        TopRewards(check);
         Stall(check);
         Rhythm(check, start);
         Hearth(check);
@@ -70,7 +71,7 @@ internal static class FarmTests
         {
             farm.Save(path);
             var back = PetFarm.Load(path);
-            check(back.Decors.Count == 6 && back.ShowsDecor(FarmDecor.Lantern) && !back.ShowsDecor(FarmDecor.Awning) && back.HasDecor(FarmDecor.Awning) && back.Version == 3, "They are saved, in the same file version");
+            check(back.Decors.Count == 6 && back.ShowsDecor(FarmDecor.Lantern) && !back.ShowsDecor(FarmDecor.Awning) && back.HasDecor(FarmDecor.Awning) && back.Version == PetFarm.CurrentVersion, "They are saved, in the same file version");
             string text = File.ReadAllText(path).Replace("\"Lantern\"", "\"FlyingCarpet\"").Replace("\"DecorsHidden\": [", "\"DecorsHidden\": [ \"Ghost\",");
             File.WriteAllText(path, text);
             back = PetFarm.Load(path);
@@ -107,7 +108,7 @@ internal static class FarmTests
         {
             farm.Save(path);
             var back = PetFarm.Load(path);
-            check(!back.TipPending(PetFarm.TipCart) && back.Version == 3, "A hint given stays given, in the same file version");
+            check(!back.TipPending(PetFarm.TipCart) && back.Version == PetFarm.CurrentVersion, "A hint given stays given, in the same file version");
             check(back.TipPending(PetFarm.TipField), "A field with nothing grown still gets its hint");
 
             var tilled = new PetFarm();
@@ -168,7 +169,7 @@ internal static class FarmTests
             var saved = new PetFarm { HearthFractionX = 0.4, PondFractionX = 0.8, HearthMonitor = @"\\.\DISPLAY2", PondMonitor = "  " };
             saved.Save(path);
             var back = PetFarm.Load(path);
-            check(back.HearthFractionX == 0.4 && back.PondFractionX == 0.8 && back.Version == 3, "Where the hearth and pond stand is saved");
+            check(back.HearthFractionX == 0.4 && back.PondFractionX == 0.8 && back.Version == PetFarm.CurrentVersion, "Where the hearth and pond stand is saved");
             check(back.HearthMonitor == @"\\.\DISPLAY2" && back.PondMonitor == null, "...and on which monitor");
             File.WriteAllText(path, "{\"Version\":3,\"HearthFractionX\":5,\"PondFractionX\":-2}");
             var odd = PetFarm.Load(path);
@@ -228,7 +229,7 @@ internal static class FarmTests
             var saved = new PetFarm();
             saved.Catch(FarmFish.Carp);
             saved.Save(path);
-            check(PetFarm.Load(path).FishOf(FarmFish.Carp) == 1 && PetFarm.Load(path).Version == 3, "Fish are saved, the file stays at version 3");
+            check(PetFarm.Load(path).FishOf(FarmFish.Carp) == 1 && PetFarm.Load(path).Version == PetFarm.CurrentVersion, "Fish are saved, in the current file version");
             File.WriteAllText(path, "{\"Version\":3,\"Fish\":{\"Shark\":3,\"Carp\":-2,\"Minnow\":2}}");
             var odd = PetFarm.Load(path);
             check(odd.Fish.Count == 1 && odd.FishOf(FarmFish.Minnow) == 2, "Unknown or negative fish are dropped");
@@ -291,7 +292,7 @@ internal static class FarmTests
         {
             var saved = new PetFarm { PotDish = FarmDish.PumpkinPie };
             check(saved.Save(path) && PetFarm.Load(path).PotDish == FarmDish.PumpkinPie && File.ReadAllText(path).Contains("PumpkinPie"), "The pot is saved by name");
-            check(saved.Version == 3, "The file stays at version 3");
+            check(saved.Version == PetFarm.CurrentVersion, "The file keeps the current version");
         }
         finally { if (Directory.Exists(folder)) Directory.Delete(folder, true); }
 
@@ -442,7 +443,7 @@ internal static class FarmTests
                     sizes &= total >= 2 && total <= Math.Min(6, farm.Level + 2);
                     known &= offer.Items.Keys.All(good => Enum.TryParse<FarmCrop>(good, out var crop) ? farm.Unlocked(crop) : Enum.TryParse<FarmFish>(good, out _));
                     kinds &= offer.Items.Count is 1 or 2;
-                    capped &= offer.Items.GetValueOrDefault("Pumpkin") <= 2 && offer.Items.GetValueOrDefault("Tomato") <= 3 && offer.Items.GetValueOrDefault("Carp") <= 3;
+                    capped &= offer.Items.GetValueOrDefault("Watermelon") <= 1 && offer.Items.GetValueOrDefault("Pumpkin") <= 2 && offer.Items.GetValueOrDefault("Tomato") <= 3 && offer.Items.GetValueOrDefault("Carp") <= 3;
                     noGold &= !offer.Items.ContainsKey("Goldfish");
                     sawFish |= offer.Items.ContainsKey("Minnow") || offer.Items.ContainsKey("Carp");
                 }
@@ -483,7 +484,7 @@ internal static class FarmTests
         {
             File.WriteAllText(path, "{\"Version\":3,\"Coins\":7,\"Orders\":[{\"Items\":{\"Radish\":2}}]}");
             var old = PetFarm.Load(path);
-            check(old.Coins == 7 && old.Save(path) && !File.ReadAllText(path).Contains("Orders") && PetFarm.Load(path).Version == 3, "Old orders are dropped, the rest of the file stays");
+            check(old.Coins == 7 && old.Save(path) && !File.ReadAllText(path).Contains("Orders") && PetFarm.Load(path).Version == PetFarm.CurrentVersion, "Old orders are dropped, the rest of the file stays");
         }
         finally { Directory.Delete(folder, true); }
 
@@ -572,7 +573,7 @@ internal static class FarmTests
             farm = new PetFarm { Xp = 99 };
             farm.Save(path);
             var back = PetFarm.Load(path);
-            check(back.Xp == 99 && back.Version == 3 && back.Level == 3, "XP is saved");
+            check(back.Xp == 99 && back.Version == PetFarm.CurrentVersion && back.Level == 3, "XP is saved");
             check(!File.ReadAllText(path).Contains("\"Level\"") && !File.ReadAllText(path).Contains("LevelProgress"), "What follows from the XP is not saved");
             File.WriteAllText(path, """{ "Version": 2, "Coins": 50, "Harvested": { "Carrot": 3, "Pumpkin": 1, "Gold": 9 } }""");
             var old = PetFarm.Load(path);
@@ -581,6 +582,71 @@ internal static class FarmTests
             check(PetFarm.Load(path).Xp == 12, "A field that has levels keeps its XP");
             File.WriteAllText(path, """{ "Version": 3, "Xp": -5 }""");
             check(PetFarm.Load(path).Xp == 0, "Odd XP is pulled back");
+        }
+        finally { Directory.Delete(folder, true); }
+    }
+
+    // What levels 8, 9 and 10 give (docs/FARM-GAME.md, finishing milestone C).
+    private static void TopRewards(Action<bool, string> check)
+    {
+        check(PetFarm.CropLevel(FarmCrop.Watermelon) == 8 && PetFarm.HarvestXp(FarmCrop.Watermelon) == 60, "The watermelon opens at level 8 and gives 60 XP");
+        check(PetFarm.DishLevel(FarmDish.ChilledWatermelon) == 9, "Its dish opens at level 9");
+        check(PetFarm.Recipe(FarmDish.ChilledWatermelon).SequenceEqual(new[] { (FarmCrop.Watermelon, 1), (FarmCrop.Radish, 1) }) && PetFarm.FishIn(FarmDish.ChilledWatermelon) == null, "It takes one watermelon and one radish");
+
+        var farm = new PetFarm { Xp = 999, Coins = 500 };
+        farm.Till(0);
+        check(!farm.Unlocked(FarmCrop.Watermelon) && !farm.Plant(0, FarmCrop.Watermelon) && farm.Coins == 500, "Level 7 cannot sow it");
+        farm.Xp = 1000;
+        check(farm.Plant(0, FarmCrop.Watermelon) && farm.Coins == 450, "Level 8 can, for 50 coins");
+        farm.Stock["Watermelon"] = 2; farm.Stock["Radish"] = 2;
+        check(!farm.CanCook(FarmDish.ChilledWatermelon), "Level 8 cannot cook it");
+        farm.Xp = 1400;
+        check(farm.Cook(FarmDish.ChilledWatermelon) && farm.StockOf(FarmCrop.Watermelon) == 1 && farm.StockOf(FarmCrop.Radish) == 1, "Level 9 can, and it uses what it takes");
+        check(farm.Pour(FarmDish.ChilledWatermelon) && farm.PotDish == FarmDish.ChilledWatermelon && farm.StockOf(FarmCrop.Watermelon) == 0, "It goes in the pot like any other dish");
+
+        var cat = new PetFarm { Xp = 1400 };
+        cat.Stock["Watermelon"] = 4; cat.Stock["Radish"] = 9;
+        check(cat.AutoDish() != FarmDish.ChilledWatermelon, "The cat leaves the last four watermelons alone");
+        cat.Stock["Watermelon"] = 5;
+        check(cat.AutoDish() == FarmDish.ChilledWatermelon, "With one to spare it cooks them first");
+
+        var early = new PetFarm { Xp = 999 };
+        var late = new PetFarm { Xp = 1000 };
+        var random = new Random(8);
+        bool asked = false, capped = true, hidden = true;
+        for (int i = 0; i < 2000; i++)
+        {
+            hidden &= early.NewOffers(random).All(offer => !offer.Items.ContainsKey("Watermelon"));
+            foreach (var offer in late.NewOffers(random))
+                if (offer.Items.TryGetValue("Watermelon", out int count)) { asked = true; capped &= count == 1; }
+        }
+        check(hidden, "The stall does not ask for it before level 8");
+        check(asked && capped, "From level 8 it asks for one at a time");
+        check(PetFarm.OfferCoins(new FarmOffer { Items = new() { ["Watermelon"] = 1 } }) == 300, "One pays 300 coins");
+
+        var top = new PetFarm { Xp = 1999 };
+        check(!top.GoldenScarecrow && !top.Scarecrow, "Level 9 has no golden scarecrow");
+        top.Tiles[0] = new FarmTile { Stage = FarmStage.Ripe, Crop = FarmCrop.Radish };
+        top.Harvest(0);
+        check(top.Level == 10 && top.GoldenScarecrow && top.Scarecrow && !top.BuyScarecrow(), "Level 10 gives it, and nothing is left to buy");
+
+        string folder = Path.Combine(Path.GetTempPath(), "pet-farm-top-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        try
+        {
+            string path = Path.Combine(folder, "farm.json");
+            File.WriteAllText(path, """{ "Version": 3, "Xp": 2500, "Coins": 40, "OpenTiles": 5, "Decors": [ "Lantern" ], "Scarecrow": false }""");
+            var old = PetFarm.Load(path);
+            check(old.Version == 4 && old.Xp == 2500 && old.Coins == 40 && old.OpenTiles == 5 && old.HasDecor(FarmDecor.Lantern), "A version 3 field comes over whole, as version 4");
+            check(old.GoldenScarecrow && old.Scarecrow && old.TakeLevelsGained() == 0, "Already at the top: it stands there at once, free, with nothing told again");
+            var bought = new PetFarm { Scarecrow = true };
+            check(bought.Save(path) && PetFarm.Load(path) is { Scarecrow: true, GoldenScarecrow: false }, "A bought scarecrow stays plain and saved");
+            check(!File.ReadAllText(path).Contains("GoldenScarecrow"), "What follows from the XP is not saved");
+            var crop = new PetFarm { Xp = 1000, Coins = 100 };
+            crop.Till(0); crop.Plant(0, FarmCrop.Watermelon); crop.PotDish = FarmDish.ChilledWatermelon;
+            check(crop.Save(path) && PetFarm.Load(path) is { PotDish: FarmDish.ChilledWatermelon } back && back.Tiles[0].Crop == FarmCrop.Watermelon, "The new crop and dish are saved by name");
+            File.WriteAllText(path, """{ "Version": 5, "Coins": 3 }""");
+            check(PetFarm.Load(path).ReadOnly, "A newer file is only read");
         }
         finally { Directory.Delete(folder, true); }
     }
@@ -666,8 +732,8 @@ internal static class FarmTests
     {
         var farm = new PetFarm();
         check(farm.Coins == 20 && farm.OpenTiles == 3 && !farm.Scarecrow && farm.StockValue == 0, "A new field: 20 coins, three open tiles, no scarecrow");
-        check(new[] { 0, 4, 10, 25 }.SequenceEqual(Enum.GetValues<FarmCrop>().Select(PetFarm.SeedPrice)), "Seeds cost 0, 4, 10 and 25");
-        check(new[] { 3, 13, 30, 85 }.SequenceEqual(Enum.GetValues<FarmCrop>().Select(PetFarm.SellPrice)), "Crops sell for 3, 13, 30 and 85");
+        check(new[] { 0, 4, 10, 25, 50 }.SequenceEqual(Enum.GetValues<FarmCrop>().Select(PetFarm.SeedPrice)), "Seeds cost 0, 4, 10, 25 and 50");
+        check(new[] { 3, 13, 30, 85, 200 }.SequenceEqual(Enum.GetValues<FarmCrop>().Select(PetFarm.SellPrice)), "Crops sell for 3, 13, 30, 85 and 200");
         check(Enum.GetValues<FarmCrop>().All(c => PetFarm.SellPrice(c) > PetFarm.SeedPrice(c)), "Every crop makes a profit");
 
         check(farm.Next(2) == FarmStep.Till && farm.Next(3) == FarmStep.Locked, "Locked tiles begin at the fourth");
@@ -809,7 +875,7 @@ internal static class FarmTests
     {
         var farm = new PetFarm { OpenTiles = 6 };
         check(farm.Tiles.Count == 6 && farm.Tiles.All(t => t.Stage == FarmStage.Wild), "A new field has six wild tiles");
-        check(new[] { 5, 15, 40, 120 }.SequenceEqual(Enum.GetValues<FarmCrop>().Select(c => (int)(PetFarm.GrowSeconds(c) / 60))), "Four crops of 5, 15, 40 and 120 minutes");
+        check(new[] { 5, 15, 40, 120, 240 }.SequenceEqual(Enum.GetValues<FarmCrop>().Select(c => (int)(PetFarm.GrowSeconds(c) / 60))), "Five crops of 5, 15, 40, 120 and 240 minutes");
 
         check(farm.Next(0) == FarmStep.Till, "Wild ground is tilled first");
         check(!farm.Plant(0, FarmCrop.Carrot) && !farm.Water(0, start) && farm.Harvest(0) == null, "Nothing else can be done to wild ground");

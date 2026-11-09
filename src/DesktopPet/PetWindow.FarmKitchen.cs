@@ -31,6 +31,7 @@ public sealed partial class PetWindow
         FarmDish.GrilledFish => L("Cá nướng", "Grilled fish"),
         FarmDish.CarpTomato => L("Cá chép kho cà chua", "Carp with tomato"),
         FarmDish.GoldfishHotpot => L("Lẩu cá vàng", "Golden fish hotpot"),
+        FarmDish.ChilledWatermelon => L("Dưa hấu ướp lạnh", "Chilled watermelon"),
         _ => L("Bánh bí ngô", "Pumpkin pie")
     };
 

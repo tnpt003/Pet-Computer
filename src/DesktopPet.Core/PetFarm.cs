@@ -7,7 +7,7 @@ using System.Text.Json.Serialization;
 namespace DesktopPet;
 
 [JsonConverter(typeof(JsonStringEnumConverter<FarmCrop>))]
-public enum FarmCrop { Radish, Carrot, Tomato, Pumpkin }
+public enum FarmCrop { Radish, Carrot, Tomato, Pumpkin, Watermelon }
 
 // A tile's life: wild ground, tilled, then the three stages that each wait for water, then ripe.
 [JsonConverter(typeof(JsonStringEnumConverter<FarmStage>))]
@@ -18,7 +18,7 @@ public enum FarmStep { Till, Plant, Water, Wait, Harvest, Locked }
 
 // Cooked from the store on the hearth and eaten there (1.5.1 M6, docs/FARM-GAME.md); only the pot keeps one.
 [JsonConverter(typeof(JsonStringEnumConverter<FarmDish>))]
-public enum FarmDish { RadishSoup, CarrotStew, StuffedTomato, PumpkinPie, GrilledFish, CarpTomato, GoldfishHotpot }
+public enum FarmDish { RadishSoup, CarrotStew, StuffedTomato, PumpkinPie, GrilledFish, CarpTomato, GoldfishHotpot, ChilledWatermelon }
 
 // Caught in the pond (docs/FARM-GAME.md); kept in the store beside the crops.
 [JsonConverter(typeof(JsonStringEnumConverter<FarmFish>))]
@@ -42,7 +42,7 @@ public sealed class FarmTile
 // coins, and the coins buy seeds, more tiles and a scarecrow. Radish seed is free, so nobody gets stuck.
 public sealed partial class PetFarm
 {
-    public const int CurrentVersion = 3, TileCount = 6, WateredStages = 3, MaxLevel = 10, MaxXp = 999_999;
+    public const int CurrentVersion = 4, TileCount = 6, WateredStages = 3, MaxLevel = 10, MaxXp = 999_999;
     public const int StartingTiles = 3, StartingCoins = 20, MaxCoins = 999_999, ScarecrowPrice = 150;
     public const double FirstFraction = 0.25;
     // What the cat leaves in the store of each ingredient when it cooks by itself.
@@ -58,6 +58,7 @@ public sealed partial class PetFarm
         FarmCrop.Radish => 5 * 60,
         FarmCrop.Carrot => 15 * 60,
         FarmCrop.Tomato => 40 * 60,
+        FarmCrop.Watermelon => 240 * 60,
         _ => 120 * 60
     };
     public static double StageSeconds(FarmCrop crop) => GrowSeconds(crop) / WateredStages;
@@ -67,6 +68,7 @@ public sealed partial class PetFarm
         FarmCrop.Radish => 0,
         FarmCrop.Carrot => 4,
         FarmCrop.Tomato => 10,
+        FarmCrop.Watermelon => 50,
         _ => 25
     };
 
@@ -75,6 +77,7 @@ public sealed partial class PetFarm
         FarmCrop.Radish => 3,
         FarmCrop.Carrot => 13,
         FarmCrop.Tomato => 30,
+        FarmCrop.Watermelon => 200,
         _ => 85
     };
 
@@ -86,6 +89,7 @@ public sealed partial class PetFarm
         FarmCrop.Radish => 2,
         FarmCrop.Carrot => 5,
         FarmCrop.Tomato => 12,
+        FarmCrop.Watermelon => 60,
         _ => 30
     };
 
@@ -93,6 +97,7 @@ public sealed partial class PetFarm
     {
         FarmCrop.Tomato => 2,
         FarmCrop.Pumpkin => 4,
+        FarmCrop.Watermelon => 8,
         _ => 1
     };
 
@@ -103,10 +108,11 @@ public sealed partial class PetFarm
         FarmDish.PumpkinPie => 5,
         FarmDish.CarpTomato => 4,
         FarmDish.GoldfishHotpot => 7,
+        FarmDish.ChilledWatermelon => 9,
         _ => 1
     };
 
-    public const int GoldfishLevel = 6;
+    public const int GoldfishLevel = 6, GoldenScarecrowLevel = MaxLevel;
     public const double GoldfishChance = 0.05, CarpChance = 0.25;
     // What the weather on show gives (docs/FARM-GAME.md, milestone 5).
     public const double SnowCarpChance = 0.5, NightGoldfishChance = 0.1, SunsetExtraChance = 0.25, PollenXpFactor = 1.5;
@@ -136,6 +142,7 @@ public sealed partial class PetFarm
         FarmDish.GrilledFish => Array.Empty<(FarmCrop, int)>(),
         FarmDish.CarpTomato => new[] { (FarmCrop.Tomato, 1) },
         FarmDish.GoldfishHotpot => new[] { (FarmCrop.Pumpkin, 1) },
+        FarmDish.ChilledWatermelon => new[] { (FarmCrop.Watermelon, 1), (FarmCrop.Radish, 1) },
         _ => new[] { (FarmCrop.Pumpkin, 1), (FarmCrop.Carrot, 1) }
     };
 
@@ -150,7 +157,10 @@ public sealed partial class PetFarm
     public int Coins { get; set; } = StartingCoins;
     // Tiles open from the left; a tile with anything on it is always open.
     public int OpenTiles { get; set; } = StartingTiles;
-    public bool Scarecrow { get; set; }
+    // The top level gives the golden one, bought or not; it keeps the birds away no better.
+    public bool Scarecrow { get => scarecrowBought || GoldenScarecrow; set => scarecrowBought = value; }
+    private bool scarecrowBought;
+    [JsonIgnore] public bool GoldenScarecrow => Level >= GoldenScarecrowLevel;
     public int Xp { get; set; }
     // In the pot, its ingredients already used: it waits there until the cat has stirred and eaten it.
     public FarmDish? PotDish { get; set; }

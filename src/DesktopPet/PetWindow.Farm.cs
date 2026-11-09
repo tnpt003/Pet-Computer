@@ -354,6 +354,7 @@ public sealed partial class PetWindow
             farmArt.Tiles[i] = new FarmTileView(tile.Stage, tile.Crop, tile.GrowsUntil != null, farm.Next(i) == FarmStep.Water, farm.Progress(i, now), !farm.IsOpen(i));
         }
         farmArt.Scarecrow = farm.Scarecrow;
+        farmArt.GoldenScarecrow = farm.GoldenScarecrow;
         RefreshFarmPot();
         farmArt.HoverTile = farmHover;
         farmArt.Lift = farmLift.Height;
@@ -391,6 +392,7 @@ public sealed partial class PetWindow
         FarmCrop.Radish => L("Củ cải", "Radish"),
         FarmCrop.Carrot => L("Cà rốt", "Carrot"),
         FarmCrop.Tomato => L("Cà chua", "Tomato"),
+        FarmCrop.Watermelon => L("Dưa hấu", "Watermelon"),
         _ => L("Bí ngô", "Pumpkin")
     };
 
@@ -399,6 +401,7 @@ public sealed partial class PetWindow
         FarmCrop.Radish => L("Củ cải · 5 phút", "Radish · 5 min"),
         FarmCrop.Carrot => L("Cà rốt · 15 phút", "Carrot · 15 min"),
         FarmCrop.Tomato => L("Cà chua · 40 phút", "Tomato · 40 min"),
+        FarmCrop.Watermelon => L("Dưa hấu · 4 giờ", "Watermelon · 4 hours"),
         _ => L("Bí ngô · 2 giờ", "Pumpkin · 2 hours")
     };
 
@@ -580,7 +583,7 @@ public sealed partial class PetWindow
         ShowFarmLabel(PetFarm.TileCount / 2, LF($"Lên cấp {level}! +{coins} xu", $"Level {level}! +{coins} coins"), FarmLevelUpSeconds);
     }
 
-    // The four seeds, opened just above the tile.
+    // The seeds, opened just above the tile.
     private void OpenFarmSeedMenu(int tile)
     {
         if (farmArt == null) return;

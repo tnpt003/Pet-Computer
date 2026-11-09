@@ -1412,3 +1412,18 @@ Muốn thử không tốn công kiếm xu: đặt biến môi trường `PET_DAT
 - [ ] Mua khi mèo ngủ không đánh thức; Pause thì không mua, không bật/tắt được
 - [ ] Đổi sang tiếng Việt và tiếng Nhật: tên món và nút không tràn; DPI 125–200% và màn thấp vẫn cuộn được
 - [ ] Chơi vài ngày: 5.400 xu có vừa không, món đầu có đến sớm đủ để thấy thích không
+
+## Nông trại — Phần thưởng cấp 8–10 (09/11)
+
+Muốn thử nhanh: đặt `PET_DATA_DIRECTORY` tới một thư mục riêng, sửa `Xp` và `Coins` trong `farm.json` ở đó (cấp 8 cần 1000 XP, cấp 9 cần 1400, cấp 10 cần 2000) rồi mở `artifacts\win-x64\DesktopPet.exe`, dữ liệu thật không bị đụng.
+
+- [ ] Nhìn Dưa hấu ở ô thật: lúc nhỏ và lúc chín có nhận ra là dưa hấu không, có lẫn với Bí ngô không; nhãn "+1 Dưa hấu" và thanh lớn đúng 4 giờ
+- [ ] Menu gieo, Gieo tất cả: Dưa hấu mờ và ghi cần cấp 8 trước khi đủ cấp, mở đúng lúc lên cấp 8
+- [ ] Bảng Nấu ăn: món Dưa hấu ướp lạnh mở ở cấp 9, nấu tốn 1 Dưa hấu + 1 Củ cải; mèo ăn món đó trông có rõ không
+- [ ] Mèo tự nấu chỉ dùng Dưa hấu khi kho còn từ 5 quả
+- [ ] Xe hàng: lời mua có Dưa hấu chỉ đòi 1 quả, luôn kèm một loại khác; nhìn số xu xem có vừa không
+- [ ] Lên cấp 10 khi chưa mua bù nhìn: Bù nhìn vàng hiện ngay; hàng Bù nhìn trong Kho đổi tên, đổi hình, ghi "Đã có"
+- [ ] Đã mua bù nhìn thường rồi lên cấp 10: đổi thành vàng, không trả lại tiền, chim vẫn 12–24 phút một lần
+- [ ] Mở ruộng cũ đã cấp 10: Bù nhìn vàng có ngay, không hiện nhãn lên cấp lại; tiến độ cũ còn nguyên
+- [ ] Đổi sang tiếng Việt và tiếng Nhật: tên dưa, món, bù nhìn vàng không tràn; DPI 125–200% và màn thấp, bảng Kho dài thêm một hàng vẫn cuộn được
+- [ ] Chơi tới cấp 8–10: 4 giờ một quả và 200 xu có vừa không

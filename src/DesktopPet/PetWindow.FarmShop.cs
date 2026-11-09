@@ -17,7 +17,8 @@ public sealed partial class PetWindow
     private Window? farmShopWindow;
     private TextBlock? farmShopLevel, farmShopNextUnlock;
     private Border? farmShopXpFill;
-    private TextBlock? farmShopCoins, farmShopTileName, farmShopTileNote, farmShopTilePrice, farmShopScareNote, farmShopScarePrice, farmShopSellAllText;
+    private FarmScarecrowIcon? farmShopScareIcon;
+    private TextBlock? farmShopCoins, farmShopTileName, farmShopTileNote, farmShopTilePrice, farmShopScareName, farmShopScareNote, farmShopScarePrice, farmShopSellAllText;
     private Border? farmShopTileButton, farmShopScareButton, farmShopSellAll;
     private readonly List<(FarmCrop Crop, TextBlock Count, Border Button, TextBlock Price)> farmShopRows = new();
     private readonly List<(FarmFish Fish, TextBlock Count, Border Button, TextBlock Price)> farmShopFishRows = new();
@@ -41,7 +42,8 @@ public sealed partial class PetWindow
         var crops = Enum.GetValues<FarmCrop>().Where(crop => PetFarm.CropLevel(crop) == level).Select(FarmCropName);
         var dishes = Enum.GetValues<FarmDish>().Where(dish => PetFarm.DishLevel(dish) == level).Select(FarmDishName);
         var fish = Enum.GetValues<FarmFish>().Where(kind => PetFarm.FishLevel(kind) == level && level > 1).Select(FarmFishName);
-        return string.Join(", ", crops.Concat(fish).Concat(dishes));
+        var scarecrow = level == PetFarm.GoldenScarecrowLevel ? new[] { L("Bù nhìn vàng", "Golden scarecrow") } : Array.Empty<string>();
+        return string.Join(", ", crops.Concat(fish).Concat(dishes).Concat(scarecrow));
     }
 
     // Each frame the field is shown.
@@ -108,7 +110,10 @@ public sealed partial class PetWindow
         (farmShopScareButton, farmShopScarePrice, _) = HudButton(() => FarmBuyScarecrow(), plain: true);
         farmShopScareNote = PanelLine(PetUi.SmallSize, maxWidth: 170);
         farmShopScareNote.Foreground = PetUi.Game.Soft;
-        body.Children.Add(FarmShopRow(new FarmScarecrowIcon(30), L("Bù nhìn", "Scarecrow"), farmShopScareNote, farmShopScareButton));
+        farmShopScareIcon = new FarmScarecrowIcon(30);
+        var scareRow = FarmShopRow(farmShopScareIcon, "", farmShopScareNote, farmShopScareButton);
+        farmShopScareName = FarmShopRowName(scareRow);
+        body.Children.Add(scareRow);
 
         body.Children.Add(FarmDecorPanel());
 
@@ -251,6 +256,8 @@ public sealed partial class PetWindow
         farmShopTilePrice!.Text = next >= 0 ? FarmPriceText(PetFarm.OpenPrice(next)) : L("Đã mở hết", "All open");
         ShowFarmShopButton(farmShopTileButton!, !paused && next >= 0 && farm.Coins >= PetFarm.OpenPrice(next));
 
+        farmShopScareIcon!.Golden = farm.GoldenScarecrow;
+        farmShopScareName!.Text = farm.GoldenScarecrow ? L("Bù nhìn vàng", "Golden scarecrow") : L("Bù nhìn", "Scarecrow");
         farmShopScareNote!.Text = L("Chim giấy đến thưa gấp đôi", "Paper birds come half as often");
         farmShopScarePrice!.Text = farm.Scarecrow ? L("Đã có", "Owned") : FarmPriceText(PetFarm.ScarecrowPrice);
         ShowFarmShopButton(farmShopScareButton!, !paused && !farm.Scarecrow && farm.Coins >= PetFarm.ScarecrowPrice);
@@ -266,7 +273,8 @@ public sealed partial class PetWindow
     private void ClearFarmShop()
     {
         farmShopWindow = null;
-        farmShopCoins = farmShopTileName = farmShopTileNote = farmShopTilePrice = farmShopScareNote = farmShopScarePrice = farmShopSellAllText = null;
+        farmShopScareIcon = null;
+        farmShopCoins = farmShopTileName = farmShopTileNote = farmShopTilePrice = farmShopScareName = farmShopScareNote = farmShopScarePrice = farmShopSellAllText = null;
         farmShopTileButton = farmShopScareButton = farmShopSellAll = null;
         farmShopLevel = farmShopNextUnlock = farmShopWeather = null;
         farmShopXpFill = null;

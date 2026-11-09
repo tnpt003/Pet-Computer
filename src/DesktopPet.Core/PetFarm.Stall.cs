@@ -25,6 +25,7 @@ public sealed partial class PetFarm
 
     private static int OfferCap(string good) => good switch
     {
+        nameof(FarmCrop.Watermelon) => 1,
         nameof(FarmCrop.Pumpkin) => 2,
         nameof(FarmCrop.Tomato) or nameof(FarmFish.Carp) => 3,
         _ => MaxOfferItems
@@ -48,14 +49,19 @@ public sealed partial class PetFarm
         var first = goods[random.Next(goods.Length)];
         var offer = new FarmOffer();
         void Ask(string good, int count) => offer.Items[good] = Math.Min(count, OfferCap(good));
+        var others = goods.Where(good => good != first).ToArray();
         if (random.Next(2) == 0)
         {
-            var others = goods.Where(good => good != first).ToArray();
             int part = random.Next(1, total);
             Ask(first, part);
             Ask(others[random.Next(others.Length)], total - part);
         }
-        else Ask(first, total);
+        else
+        {
+            Ask(first, total);
+            // An offer is at least two goods, and a watermelon comes one at a time: it needs company.
+            if (offer.Items[first] < MinOfferItems) Ask(others[random.Next(others.Length)], total - offer.Items[first]);
+        }
         return offer;
     }
 

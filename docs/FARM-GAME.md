@@ -65,7 +65,7 @@ Người dùng đã chốt: thời tiết lấy wallpaper làm khí hậu chính
 - Xe hàng là cửa sổ riêng, đứng sát bên trái ruộng; hết chỗ thì sang bên phải hồ; đi theo khi ruộng bị di chuyển. Lần đầu khoảng 10 phút sau khi mở app, sau đó mỗi 20–40 phút tính từ lúc xe đi. Xe lăn vào, ở lại 5 phút, lăn đi. Pause đóng băng thời gian. Không lưu qua lần tắt app.
 - Không đến khi Pause, Quiet, app toàn màn hình, đang trận hoặc bảng trận, bạn vắng máy, hoặc mảnh đất đang nhấc; 45 giây sau xem lại. Mèo ngủ xe vẫn đến và không đánh thức. App toàn màn hình hoặc vào trận thì xe đi ngay.
 - Xe tới có một tiếng "sparkle" theo cài đặt âm thanh tự động. Bấm trái vào xe hoặc mục "Gian hàng" trên menu ruộng (mờ khi xe chưa đến) để mở bảng. Bảng mở thay chỗ Kho và Nấu ăn.
-- Mỗi lần đến có 1–3 lời mua theo cấp 1 / 3 / 5. Mỗi lời mua 2 đến `cấp + 2` món (tối đa 6), một hoặc hai loại, từ các cây đã mở khóa, Cá nhỏ và Cá chép; tối đa 2 Bí ngô, 3 Cà chua, 3 Cá chép; không đòi Cá vàng quý. Thưởng 1,5 lần giá bán và XP như khi thu hoạch hoặc câu được.
+- Mỗi lần đến có 1–3 lời mua theo cấp 1 / 3 / 5. Mỗi lời mua 2 đến `cấp + 2` món (tối đa 6), một hoặc hai loại, từ các cây đã mở khóa, Cá nhỏ và Cá chép; tối đa 1 Dưa hấu, 2 Bí ngô, 3 Cà chua, 3 Cá chép; không đòi Cá vàng quý. Lời mua có Dưa hấu luôn kèm thêm một loại khác để đủ 2 món. Thưởng 1,5 lần giá bán và XP như khi thu hoạch hoặc câu được.
 - Giao làm được khi mèo ngủ và không đánh thức; Pause thì không. Không có nút bỏ qua, xe đi là lời mua hết, không phạt gì. Xe đi khi bảng đang mở thì bảng vẫn giao được tới khi đóng. Xe có dấu "!" vàng khi có lời mua giao được.
 - Bỏ biển gỗ, chim mang thư và "Đơn hàng"; đơn cũ trong `farm.json` bị bỏ, file vẫn phiên bản 3. Chim giấy mèo đuổi giữ nguyên. Từ Giai đoạn 3 Mốc B xe còn bán đồ trang trí.
 
@@ -85,7 +85,7 @@ Làm tròn những gì đã có, không thêm hệ thống lớn. Luật từng 
 |---|---|---|
 | A. Hướng dẫn lần đầu | Nhãn chỉ bước kế tiếp trên ô đầu, nhãn một lần cho bếp, hồ, xe | Xong (d76f173), còn test tay |
 | B. Xe bán đồ trang trí | 6 món, tổng 5.400 xu (chốt sau mô phỏng); mỗi lần xe đến bày 2 món chưa có; bật/tắt trong Kho; vẽ tĩnh, không cộng sức mạnh, không đổi vùng bấm | Xong (4c8a101), còn test tay |
-| C. Phần thưởng cấp 8–10 | Cấp 8 Dưa hấu (4 giờ, hạt 50 xu, bán 200 xu, 60 XP), cấp 9 món Dưa hấu ướp lạnh, cấp 10 Bù nhìn vàng; `farm.json` phiên bản 4 | Chưa làm |
+| C. Phần thưởng cấp 8–10 | Cấp 8 Dưa hấu (4 giờ, hạt 50 xu, bán 200 xu, 60 XP), cấp 9 món Dưa hấu ướp lạnh, cấp 10 Bù nhìn vàng; `farm.json` phiên bản 4 | Có code, còn test tay |
 | D. Nhật ký, thành tích, câu thoại | Thẻ Nông trại trong Nhật ký (hiện cả khi tắt Python); 5 thành tích, tiến độ cũ tính lại từ `farm.json`, không báo dồn; lên cấp, Cá vàng, giao xe có câu thoại do Python chọn | Chưa làm |
 | E. Chuẩn bị 1.5.1 | Tăng phiên bản, CHANGELOG vi/en/ja, sửa câu lỗi thời, rút test tay còn khoảng 20 mục, đo FPS 6 loại thời tiết khi có đủ vùng đất; không push, không tạo release | Chưa làm |
 
@@ -108,7 +108,7 @@ Làm tròn những gì đã có, không thêm hệ thống lớn. Luật từng 
 - Hình tĩnh ở lớp riêng không nhận chuột: bấm vào đồ không có tác dụng, ô ruộng và vùng bấm không đổi. Phần hình của đồ vẫn chặn click xuống app phía sau, như phần hình của ruộng. Không cộng sức mạnh, không chạm vào mèo.
 - Lưu ở `Decors` và `DecorsHidden` trong `farm.json`, theo tên, vẫn phiên bản 3; tên không biết thì bỏ qua.
 
-Mô phỏng kinh tế (`tests/DesktopPet.Tests/FarmEconomySimTests.cs`, 40 lần chạy mỗi hàng, chỉ là mô phỏng, chưa phải chơi thật). Dùng giá, XP, đồng hồ cây, cách mèo chọn việc và lịch xe thật; giả định một buổi chơi mỗi ngày, ghé ruộng mỗi 30 phút, để ý 60% lần xe đến, mèo rảnh 80%, không tính thời tiết, chim và Dưa hấu. Trung vị số ngày:
+Mô phỏng kinh tế (`tests/DesktopPet.Tests/FarmEconomySimTests.cs`, 40 lần chạy mỗi hàng, chỉ là mô phỏng, chưa phải chơi thật). Dùng giá, XP, đồng hồ cây, cách mèo chọn việc và lịch xe thật; giả định một buổi chơi mỗi ngày, ghé ruộng mỗi 30 phút, để ý 60% lần xe đến, mèo rảnh 80%, không tính thời tiết và chim. Thêm Dưa hấu (Mốc C) rồi chạy lại, trung vị không đổi. Trung vị số ngày:
 
 | Mở app mỗi ngày | Món đầu | Đủ 6 món |
 |---|---|---|
@@ -117,6 +117,14 @@ Mô phỏng kinh tế (`tests/DesktopPet.Tests/FarmEconomySimTests.cs`, 40 lần
 | 8 giờ | ngày 1 | ngày 4 |
 
 Giá 2.700 xu cho đủ 6 món sau 5 ngày ở mức 3 giờ/ngày, nhanh hơn mốc 7–14 ngày đã thống nhất. Với giá chốt, ưu tiên mua đồ trước làm ô 4–6 chậm tối đa khoảng 1 ngày. Test giữ mốc: 3 giờ/ngày thì món đầu trong 3 ngày và đủ 6 món trong 7–14 ngày.
+
+### Luật Mốc C Phần thưởng cấp 8–10 (duyệt 09/11)
+
+- Cấp 8 mở Dưa hấu: 4 giờ, hạt 50 xu, bán 200 xu, 60 XP. Mèo gieo lại, gặt và xe hàng đối xử như các cây khác; mỗi lời mua đòi tối đa 1 quả.
+- Cấp 9 mở món Dưa hấu ướp lạnh: 1 Dưa hấu + 1 Củ cải. Mèo tự nấu theo luật cũ, chừa lại 4 phần mỗi nguyên liệu.
+- Cấp 10 tự có Bù nhìn vàng, miễn phí, không có nút bật/tắt, đứng đúng chỗ bù nhìn thường. Chim đến thưa như bù nhìn thường (12–24 phút), không thưa hơn. Chưa mua bù nhìn thường thì vẫn được tính là có; hàng Bù nhìn trong Kho đổi tên, đổi hình và ghi "Đã có".
+- Không cộng sức mạnh, không chạm vào mèo, không có tiếng mới. Dòng "Cấp sau mở" hiện đủ ba phần thưởng.
+- `farm.json` lên phiên bản 4, ruộng cũ giữ nguyên. Bù nhìn vàng tính từ XP nên không lưu riêng; ruộng đã đạt cấp 10 có ngay khi mở app, không báo lại.
 
 ## Giai đoạn 1
 

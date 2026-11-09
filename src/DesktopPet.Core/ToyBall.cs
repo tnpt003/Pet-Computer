@@ -15,6 +15,15 @@ public sealed class ToyBall
         Feedback = 0.35;
         BatCooldown = 0.35;
     }
+    // A click on a ball lying on the desktop: a gentle roll away from the click, never straight up.
+    public void Nudge(double clickOffset)
+    {
+        double offset = Math.Clamp(clickOffset / 24, -1, 1);
+        VX = (offset < 0 ? 1 : -1) * (60 + Math.Abs(offset) * 70);
+        VY = 70;
+        Feedback = 0.35;
+    }
+    public bool AtRest => Height <= 0 && VX == 0 && VY == 0;
     public void Bat(int direction, double variation = 1)
     {
         VX = direction * 180 * Math.Clamp(variation, 0.9, 1.1);

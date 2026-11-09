@@ -1522,3 +1522,18 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1 và Nông trại
 - [ ] Chơi vài ngày rồi góp ý giá, thời gian, XP: mọi con số nông trại mới là ước tính
 - [ ] DPI 125/150/200%, nhiều màn hình, vi/en/ja: nhãn, bảng, biển không tràn hay bị cắt. Câu tiếng Nhật mới chưa ai duyệt
 - [ ] Mở bản 1.5.1 trên dữ liệu 1.5.0 thật (không có farm.json): không mất gì, cổng và ruộng hiện đúng; nếu cài Setup thì thử nhận cập nhật khi đã phát hành
+
+## Chơi cùng sen M1 — Giỏ đồ chơi và bóng nằm lại (09/11, chỉ bản 1.6)
+
+- [ ] Mới cập nhật: chưa thấy giỏ trên desktop. Chuột phải mèo → Chơi → "Giỏ đồ chơi": giỏ hiện trên sàn, có bóng len thò lên.
+- [ ] Bấm giỏ: danh sách mở ở ngay giỏ, chọn "Bóng len": bóng nhảy ra, lăn rồi nằm yên; giỏ không còn bóng.
+- [ ] Bấm bóng: lăn nhẹ. Kéo quá một đoạn ngắn mới cầm được, ném có đà, nảy và dừng trên sàn; không bị giật hay chớp.
+- [ ] Thả bóng vào giỏ: bóng được cất. Kéo giỏ ngang được, không ném được.
+- [ ] Ném bóng trúng mèo đang thức và đang ngủ: bóng đi xuyên, mèo không choáng, không đổi cảm xúc, không thức.
+- [ ] Bóng nằm ngoài rồi "Chơi bóng": trò bắt đầu từ chỗ đó, kết thúc thì bóng nằm lại. Bóng trong giỏ thì trò chạy như cũ, xong bóng về giỏ.
+- [ ] Trong trò 45 giây vẫn bấm để đẩy bóng như cũ, cảm giác không đổi.
+- [ ] Thả bóng hoặc giỏ đè lên ruộng, bếp, hồ, xe hàng: tự lăn sang chỗ trống. Nhìn đúng lớp: mèo, kỷ vật, bóng và giỏ, vùng đất.
+- [ ] Tắt app mở lại: giỏ và bóng ở đúng chỗ. Mục "Cất nhanh" (menu và khay): bóng và giỏ biến mất, mèo vẫn ở lại, mở lại app vẫn ẩn.
+- [ ] Pause: bóng đứng yên giữa không trung, không cầm được. Quiet: vẫn cầm được. App toàn màn hình và trận: giỏ, bóng ẩn, sau đó hiện lại đúng chỗ.
+- [ ] Hai màn hình, DPI khác nhau: kéo bóng qua màn khác không nhảy vị trí; rút màn hình thì bóng về màn chính; bóng ở màn khác mèo rồi "Chơi bóng" thì bóng về cạnh mèo.
+- [ ] Đọc nhãn tiếng Nhật trong menu và danh sách giỏ (chưa ai duyệt).

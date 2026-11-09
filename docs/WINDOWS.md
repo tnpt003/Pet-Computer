@@ -511,7 +511,7 @@ The cat's right-click menu is grouped, with Windows' own icon font (no new asset
 2026-10-23 every group holds one kind of thing, so a submenu has everything related to its name
 (12 rows, 3 separators):
 
-1. **Give treat, Play › (Play with ball / Put ball away, Laser pointer), Battle Mode, Do now ›,
+1. **Give treat, Play › (Play with ball / Put ball away, Laser pointer, Toy basket / Quick tidy), Battle Mode, Do now ›,
    Emotions ›**: playing with the cat and telling it what to do. While the ball is out, **Put ball
    away** also shows on the main menu right under Play (one click). Play is dimmed when neither
    game can start.

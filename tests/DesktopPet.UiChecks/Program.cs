@@ -180,7 +180,7 @@ internal static class Program
         var catMenu = topItems.Single(item => (string)item.Header == catName);
         var catHeaders = catMenu.Items.OfType<System.Windows.Controls.MenuItem>().Select(item => item.Header as string).ToList();
         Check(headers.SequenceEqual(new[] { "Give treat", "Play", "Cast portal spell", "Do now", "Emotions", "Focus time", "Quiet mode", "Sounds", catName, "Location", "Settings…", "More", "Exit" }) &&
-              SubHeaders("Play") == "Play with ball|Laser pointer" &&
+              SubHeaders("Play") == "Play with ball|Laser pointer|Toy basket" &&
               SubHeaders("Location") == "Go to resting spot|Remember this spot|Forget resting spot|Bring the pet to the main screen" &&
               SubHeaders("More") == "Behavior debug view|About Desktop Pet" &&
               catHeaders.Count == 3 && catHeaders[2] == "Customize…" &&
@@ -992,6 +992,7 @@ internal static class Program
         FarmChecks.Run(window, pet, preferences, Check);
         FarmChoreChecks.Run(window, pet, behavior, preferences, Check);
         FocusChecks.Run(window, pet, behavior, preferences, Check);
+        ToyChecks.Run(window, pet, behavior, preferences, Check);
         await WeaponChecks.Run(window, pet, Check);
         await BattlePrepChecks.Run(window, pet, behavior, preferences, Check);
         await AdventureChecks.Run(window, pet, behavior, preferences, Check);

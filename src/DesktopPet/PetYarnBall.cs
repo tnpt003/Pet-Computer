@@ -19,9 +19,13 @@ public sealed class YarnBallArt : FrameworkElement
     protected override void OnRender(DrawingContext dc)
     {
         // Leaves room for the loose end (it reaches 1.12 radii out).
-        double r = Math.Min(ActualWidth, ActualHeight) * 0.42, cx = ActualWidth / 2, cy = ActualHeight / 2;
+        Draw(dc, new Point(ActualWidth / 2, ActualHeight / 2), Math.Min(ActualWidth, ActualHeight) * 0.42);
+    }
+
+    public static void Draw(DrawingContext dc, Point c, double r)
+    {
         if (r <= 2) return;
-        var c = new Point(cx, cy);
+        double cx = c.X, cy = c.Y;
         // The loose end first, so the ball covers where it leaves.
         var tail = new StreamGeometry();
         using (var g = tail.Open())

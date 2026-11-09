@@ -428,7 +428,8 @@ public sealed partial class PetWindow
         var cat = new WindowInteropHelper(this).Handle;
         if (cat == IntPtr.Zero) return;
         KeepKeepsakeBelowCat();
-        var above = WindowsAbove(KeepsakeShown ? new WindowInteropHelper(keepsakeWindow!).Handle : cat);
+        KeepToysInOrder();
+        var above = WindowsAbove(new WindowInteropHelper(GroundAnchor).Handle);
         foreach (var window in FarmGroundWindows())
             if (above.Contains(new WindowInteropHelper(window).Handle)) PlaceBelowCat(window);
     }
@@ -436,7 +437,7 @@ public sealed partial class PetWindow
     private void PlaceBelowCat(Window window)
     {
         var handle = new WindowInteropHelper(window).Handle;
-        var above = new WindowInteropHelper(keepsakeWindow?.IsVisible == true ? keepsakeWindow : this).Handle;
+        var above = new WindowInteropHelper(GroundAnchor).Handle;
         const uint NoSize = 0x0001, NoMove = 0x0002, NoActivate = 0x0010;
         if (handle != IntPtr.Zero && above != IntPtr.Zero) SetWindowPos(handle, above, 0, 0, 0, 0, NoSize | NoMove | NoActivate);
     }

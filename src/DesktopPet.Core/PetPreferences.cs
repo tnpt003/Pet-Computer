@@ -77,6 +77,11 @@ public sealed class PetPreferences
     // The one keepsake on display (Settings → Pet); null or not owned: the best one (gold → silver → bronze → cushion).
     public string? TrophyShown { get; set; }
     public double? TrophyFractionX { get; set; }
+    // The toy basket and what is out of it (docs/TOY-PLAY.md). The basket stays put away until asked for.
+    public bool ToyBasketShown { get; set; }
+    public string? ToyBasketMonitor { get; set; }
+    public double? ToyBasketFractionX { get; set; }
+    public List<SavedToy>? ToysOut { get; set; }
     // Where the user dragged the battle HUD, per monitor (device name): its left and top as fractions
     // of the room left in that monitor's work area. A monitor not listed: centred at the top.
     public Dictionary<string, double[]>? BattleHudSpots { get; set; }
@@ -127,6 +132,8 @@ public sealed class PetPreferences
             .ToDictionary(s => s.Key, s => s.Value.Select(v => Math.Clamp(v, 0, 1)).ToArray());
         if (p.BattleHudSpots is { Count: 0 }) p.BattleHudSpots = null;
         if (p.TrophyFractionX is double tx) p.TrophyFractionX = double.IsFinite(tx) ? Math.Clamp(tx, 0, 1) : null;
+        if (p.ToyBasketFractionX is double bx) p.ToyBasketFractionX = double.IsFinite(bx) ? Math.Clamp(bx, 0, 1) : null;
+        p.ToysOut = DesktopToyRules.Normalize(p.ToysOut, p.ToyBasketShown);
         if (!p.RestX.HasValue || !p.RestY.HasValue || !double.IsFinite(p.RestX.Value) || !double.IsFinite(p.RestY.Value)) p.RestX = p.RestY = null;
         return p;
     }

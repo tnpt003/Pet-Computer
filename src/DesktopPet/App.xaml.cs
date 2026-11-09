@@ -76,6 +76,8 @@ public partial class App : Application
         menu.Items.Add(settings);
         var reset = new Forms.ToolStripMenuItem(null, null, (_, _) => pet.BringHome());
         menu.Items.Add(reset);
+        var toys = new Forms.ToolStripMenuItem(null, null, (_, _) => pet.ToggleToyBasket());
+        menu.Items.Add(toys);
         // Updates (installed app only): "Update to x" once one is downloaded, else "Check for updates".
         updates = new PetUpdates();
         updates.ForgetUninstallChoice();
@@ -91,6 +93,7 @@ public partial class App : Application
         customize.Image = PetTrayMenuStyle.Icon(PetUi.Customize);
         settings.Image = PetTrayMenuStyle.Icon(PetUi.Settings);
         reset.Image = PetTrayMenuStyle.Icon(PetUi.Home);
+        toys.Image = PetTrayMenuStyle.Icon(PetUi.Ball);
         checkUpdates.Image = applyUpdate.Image = PetTrayMenuStyle.Icon(PetUi.Update);
         exit.Image = PetTrayMenuStyle.Icon(PetUi.Exit);
         PetTrayMenuStyle.Apply(menu);
@@ -103,6 +106,8 @@ public partial class App : Application
             customize.Text = pet.L("Tùy chỉnh…", "Customize…");
             settings.Text = pet.L("Cài đặt…", "Settings…");
             reset.Text = pet.L("Gọi mèo về màn hình chính", "Bring the pet to the main screen");
+            toys.Text = pet.ToyBasketMenuLabel;
+            toys.Enabled = pet.ToyBasketMenuEnabled;
             exit.Text = pet.L("Thoát", "Exit");
             checkUpdates.Text = pet.L("Kiểm tra cập nhật", "Check for updates");
             applyUpdate.Text = pet.LF($"Cập nhật lên bản {updates.ReadyVersion} (mở lại mèo)", $"Update to {updates.ReadyVersion} (restarts the pet)");

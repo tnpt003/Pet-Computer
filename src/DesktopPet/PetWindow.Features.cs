@@ -48,7 +48,10 @@ public sealed partial class PetWindow
         toy.Click += (_, _) => ToggleToy();
         var laser = PetUi.MenuItem(PetUi.Laser, PetUi.Danger);
         laser.Click += (_, _) => StartLaser();
-        play.Items.Add(toy); play.Items.Add(laser);
+        // The toy basket comes out from here, and this same row tidies it all away (PetWindow.Toys.cs).
+        var basket = PetUi.MenuItem(PetUi.Ball);
+        basket.Click += (_, _) => ToggleToyBasket();
+        play.Items.Add(toy); play.Items.Add(laser); play.Items.Add(basket);
         // While the ball is out, putting it away is one click on the main menu.
         var putAway = PetUi.MenuItem(PetUi.Ball);
         putAway.Click += (_, _) => ToggleToy();
@@ -116,6 +119,7 @@ public sealed partial class PetWindow
             putAway.Header = L("Cất bóng", "Put ball away");
             cat.Header = preferences.Name;
             laser.Header = L("Chơi đèn laser", "Laser pointer");
+            basket.Header = ToyBasketMenuLabel;
             place.Header = L("Vị trí", "Location");
             remember.Header = L("Nhớ chỗ này", "Remember this spot");
             visit.Header = L("Đến chỗ nghỉ", "Go to resting spot");
@@ -135,7 +139,8 @@ public sealed partial class PetWindow
             // A fullscreen app (game, video, slides) still keeps the cat still.
             toy.IsEnabled = toyWindow != null || MayAct(AutoKind.UserGame);
             laser.IsEnabled = MayAct(AutoKind.UserGame); // Right-clicking the cat already ended a running game.
-            play.IsEnabled = toy.IsEnabled || laser.IsEnabled;
+            basket.IsEnabled = ToyBasketMenuEnabled;
+            play.IsEnabled = toy.IsEnabled || laser.IsEnabled || basket.IsEnabled;
             putAway.Visibility = toyWindow != null ? Visibility.Visible : Visibility.Collapsed;
             remember.IsEnabled = pet.Grounded && pet.LedgeId == 0; // Resting spots are on the floor.
             visit.IsEnabled = MayAct(AutoKind.RestVisit) && preferences.RestX.HasValue;
@@ -200,13 +205,14 @@ public sealed partial class PetWindow
 
     public void ToggleToy()
     {
-        if (toyWindow != null) { CancelFeatureActivity(); return; }
+        if (toyWindow != null) { toyGameStowing = true; CancelFeatureActivity(); toyGameStowing = false; return; }
         if (!MayAct(AutoKind.UserGame)) return; // Allowed in Quiet mode: the user asked for it.
         CancelFeatureActivity();
         Interact("toy_started");
         toyPlay.Reset();
         ball.X = Math.Clamp(pet.X + 145, bounds.Left + 12, Math.Max(bounds.Left + 12, bounds.Right - 12));
         ball.Height = 0; ball.VX = 45; ball.VY = 100; ball.BatCooldown = 0; ballTime = 45;
+        GameTakesLyingBall(); // A ball lying out starts from where it is (PetWindow.Toys.cs).
         var surface = new Grid { Background = PetUi.Frozen(1, 0, 0, 0), Cursor = System.Windows.Input.Cursors.Hand };
         ballHalo = new Ellipse { Width = 36, Height = 36, Stroke = YarnBallArt.Halo, StrokeThickness = 2, Opacity = 0 };
         var art = new YarnBallArt { Width = 24, Height = 24, RenderTransformOrigin = new Point(0.5, 0.5) };
@@ -221,7 +227,7 @@ public sealed partial class PetWindow
             pet.Facing = ball.X < pet.X + PetSettings.CenterX ? -1 : 1;
             Interact("ball_clicked"); PlayPetSound("ball_tap"); e.Handled = true;
         };
-        toyWindow.Closed += (_, _) => toyWindow = null;
+        toyWindow.Closed += (_, _) => { toyWindow = null; FinishToyGame(); };
         toyWindow.Show();
         PlayPetSound("excited");
     }
@@ -430,5 +436,5 @@ public sealed partial class PetWindow
     private void ApplyAccessory() =>
         renderer.Accessory = PetScene.Accessory = preferences.HolidayAccessories && PetAccessories.ForEvent(specialDay) is { } outfit ? outfit.Id : preferences.Accessory;
 
-    private void CloseFeatures() { ClosePortal(); CloseWeather(); CloseFarm(); CloseTrophies(); EndBattle(); CloseBattleHub(); CloseBattlePrep(); CloseAdventureMap(); CloseExpeditionMap(); CloseBattleBag(); CloseBattleSummary(); CloseBattleNotice(); CloseBattleTutorial(); laserWindow?.Close(); diaryWindow?.Close(); CloseStatusCard(); behaviorSettingsWindow?.Close(); toyWindow?.Close(); settingsWindow?.Close(); customizeWindow?.Close(); speechWindow?.Close(); focusWindow?.Close(); sound?.Stop(); sound?.Dispose(); soundStream?.Dispose(); }
+    private void CloseFeatures() { ClosePortal(); CloseWeather(); CloseFarm(); CloseTrophies(); EndBattle(); CloseBattleHub(); CloseBattlePrep(); CloseAdventureMap(); CloseExpeditionMap(); CloseBattleBag(); CloseBattleSummary(); CloseBattleNotice(); CloseBattleTutorial(); laserWindow?.Close(); diaryWindow?.Close(); CloseStatusCard(); behaviorSettingsWindow?.Close(); toyWindow?.Close(); CloseDesktopToys(); settingsWindow?.Close(); customizeWindow?.Close(); speechWindow?.Close(); focusWindow?.Close(); sound?.Stop(); sound?.Dispose(); soundStream?.Dispose(); }
 }

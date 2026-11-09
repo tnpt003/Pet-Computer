@@ -153,6 +153,36 @@ internal static class FarmTests
         protected override double Sample() => value;
     }
 
+    // The seasons (docs/FARM-GAME.md, stage 4 milestone 4).
+    private static void Seasons(Action<bool, string> check)
+    {
+        check(PetFarm.SeasonOf(3) == FarmSeason.Spring && PetFarm.SeasonOf(5) == FarmSeason.Spring && PetFarm.SeasonOf(6) == FarmSeason.Summer && PetFarm.SeasonOf(8) == FarmSeason.Summer
+            && PetFarm.SeasonOf(9) == FarmSeason.Autumn && PetFarm.SeasonOf(11) == FarmSeason.Autumn && PetFarm.SeasonOf(12) == FarmSeason.Winter && PetFarm.SeasonOf(1) == FarmSeason.Winter && PetFarm.SeasonOf(2) == FarmSeason.Winter, "The months make the seasons");
+        foreach (var (crop, season) in new[] { (FarmCrop.Strawberry, FarmSeason.Spring), (FarmCrop.Corn, FarmSeason.Summer), (FarmCrop.SweetPotato, FarmSeason.Autumn), (FarmCrop.NapaCabbage, FarmSeason.Winter) })
+        {
+            var farm = new PetFarm { Coins = 500, Xp = 70, Season = season };
+            farm.Till(0); farm.Till(1);
+            check(farm.InSeason(crop) && PetFarm.CropLevel(crop) == PetFarm.CoopLevel && farm.CanSow(crop) == 2 && farm.Plant(0, crop), $"{crop} is sown in its season");
+            farm.Season = (FarmSeason)(((int)season + 1) % 4);
+            check(!farm.InSeason(crop) && farm.CanSow(crop) == 0 && !farm.Plant(1, crop), $"{crop} is not sown out of it");
+            var now = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            for (int i = 0; i < PetFarm.WateredStages; i++) { farm.Water(0, now); now = now.AddSeconds(PetFarm.StageSeconds(crop)); farm.Advance(now); }
+            check(farm.Next(0) == FarmStep.Harvest && farm.Harvest(0) == crop && farm.StockOf(crop) == 1, $"{crop} sown in time grows and is picked after its season");
+            check(farm.Sell(crop) == PetFarm.SellPrice(crop), $"{crop} can still be sold");
+            farm.Till(0);
+            farm.Tiles[0].LastCrop = crop;
+            check(farm.ResowCrop(0) == null, $"The cat does not sow {crop} again out of season");
+            farm.Season = season;
+            check(farm.ResowCrop(0) == crop, $"...and does in season");
+        }
+        var yearRound = new PetFarm { Season = FarmSeason.Winter, Xp = 2500, Coins = 500 };
+        check(yearRound.InSeason(FarmCrop.Watermelon) && yearRound.InSeason(FarmCrop.Radish) && PetFarm.CropSeason(FarmCrop.Tomato) == null, "The old crops grow all year");
+        var random = new Random(5);
+        var winter = new PetFarm { Season = FarmSeason.Winter, Xp = 2500 };
+        var offers = Enumerable.Range(0, 300).SelectMany(_ => winter.NewOffers(random)).ToList();
+        check(offers.Any(o => o.Items.ContainsKey("NapaCabbage")) && !offers.Any(o => o.Items.ContainsKey("Strawberry") || o.Items.ContainsKey("Corn") || o.Items.ContainsKey("SweetPotato")), "The stall only asks for what is in season");
+    }
+
     // The hen coop (docs/FARM-GAME.md, stage 4 milestone 3).
     private static void Coop(Action<bool, string> check)
     {
@@ -292,6 +322,7 @@ internal static class FarmTests
     {
         Quality(check);
         Coop(check);
+        Seasons(check);
         var field = new[] { (100.0, 200.0) };
         check(FarmLands.FreeSpot(400, 50, field, 0, 900, 6) == 400, "A free place is taken as it is");
         check(FarmLands.FreeSpot(120, 50, field, 0, 900, 6) == 44, "On other land it goes to the nearest side");
@@ -908,8 +939,8 @@ internal static class FarmTests
     {
         var farm = new PetFarm();
         check(farm.Coins == 20 && farm.OpenTiles == 3 && !farm.Scarecrow && farm.StockValue == 0, "A new field: 20 coins, three open tiles, no scarecrow");
-        check(new[] { 0, 4, 10, 25, 50 }.SequenceEqual(Enum.GetValues<FarmCrop>().Select(PetFarm.SeedPrice)), "Seeds cost 0, 4, 10, 25 and 50");
-        check(new[] { 3, 13, 30, 85, 200 }.SequenceEqual(Enum.GetValues<FarmCrop>().Select(PetFarm.SellPrice)), "Crops sell for 3, 13, 30, 85 and 200");
+        check(new[] { 0, 4, 10, 25, 50 }.SequenceEqual(Enum.GetValues<FarmCrop>().Take(5).Select(PetFarm.SeedPrice)), "Seeds cost 0, 4, 10, 25 and 50");
+        check(new[] { 3, 13, 30, 85, 200 }.SequenceEqual(Enum.GetValues<FarmCrop>().Take(5).Select(PetFarm.SellPrice)), "Crops sell for 3, 13, 30, 85 and 200");
         check(Enum.GetValues<FarmCrop>().All(c => PetFarm.SellPrice(c) > PetFarm.SeedPrice(c)), "Every crop makes a profit");
 
         check(farm.Next(2) == FarmStep.Till && farm.Next(3) == FarmStep.Locked, "Locked tiles begin at the fourth");
@@ -1051,7 +1082,7 @@ internal static class FarmTests
     {
         var farm = new PetFarm { OpenTiles = 6 };
         check(farm.Tiles.Count == 6 && farm.Tiles.All(t => t.Stage == FarmStage.Wild), "A new field has six wild tiles");
-        check(new[] { 5, 15, 40, 120, 240 }.SequenceEqual(Enum.GetValues<FarmCrop>().Select(c => (int)(PetFarm.GrowSeconds(c) / 60))), "Five crops of 5, 15, 40, 120 and 240 minutes");
+        check(new[] { 5, 15, 40, 120, 240 }.SequenceEqual(Enum.GetValues<FarmCrop>().Take(5).Select(c => (int)(PetFarm.GrowSeconds(c) / 60))), "Five crops of 5, 15, 40, 120 and 240 minutes");
 
         check(farm.Next(0) == FarmStep.Till, "Wild ground is tilled first");
         check(!farm.Plant(0, FarmCrop.Carrot) && !farm.Water(0, start) && farm.Harvest(0) == null, "Nothing else can be done to wild ground");

@@ -820,6 +820,14 @@ internal static class FarmChoreChecks
             if (name != null) Save(bitmap, name);
             return Hash(bitmap);
         }
+        foreach (var season in Enum.GetValues<FarmSeason>())
+        {
+            var was = PetFarmArt.CurrentSeason;
+            PetFarmArt.CurrentSeason = season;
+            var crop = new[] { FarmCrop.Strawberry, FarmCrop.Corn, FarmCrop.SweetPotato, FarmCrop.NapaCabbage }[(int)season];
+            Plot(a => { for (int i = 0; i < 3; i++) { a.Tiles[i] = new(FarmStage.Ripe, crop, false, false, 1); a.Tiles[i + 3] = new(FarmStage.Young, crop, true, false, 0.5); } }, light, $"season-{season}");
+            PetFarmArt.CurrentSeason = was;
+        }
         foreach (var (back, tone) in new[] { (light, "light"), (dark, "dark") })
             Land(FarmPatchKind.Coop, a => { a.Hens = 3; a.NestEggs = 2; a.HenTime = 1.3; }, back, $"coop-{tone}");
         check(Land(FarmPatchKind.Coop, a => { a.Hens = 3; a.HenTime = 1.3; a.HenScatter = 0.5; }, dark, "coop-scatter") != Land(FarmPatchKind.Coop, a => { a.Hens = 3; a.HenTime = 1.3; }, dark, null), "The hens scatter visibly");

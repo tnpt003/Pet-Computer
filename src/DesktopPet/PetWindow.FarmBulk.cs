@@ -28,7 +28,7 @@ public sealed partial class PetWindow
         int tilled = farm!.TilesAt(FarmStep.Plant).Count;
         if (tilled == 0) yield break;
         var sow = new MenuItem { Header = LF($"Gieo tất cả ({tilled} ô)", $"Sow all ({tilled} tiles)") };
-        foreach (var crop in Enum.GetValues<FarmCrop>()) sow.Items.Add(FarmSowItem(crop));
+        foreach (var crop in Enum.GetValues<FarmCrop>().Where(farm.InSeason)) sow.Items.Add(FarmSowItem(crop));
         yield return sow;
     }
 

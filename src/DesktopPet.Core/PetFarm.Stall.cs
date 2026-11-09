@@ -27,7 +27,7 @@ public sealed partial class PetFarm
     {
         nameof(FarmCrop.Watermelon) => 1,
         nameof(FarmCrop.Pumpkin) => 2,
-        nameof(FarmCrop.Tomato) or nameof(FarmFish.Carp) or EggGood => 3,
+        nameof(FarmCrop.Tomato) or nameof(FarmFish.Carp) or EggGood or nameof(FarmCrop.Strawberry) or nameof(FarmCrop.Corn) or nameof(FarmCrop.SweetPotato) or nameof(FarmCrop.NapaCabbage) => 3,
         _ => MaxOfferItems
     };
 
@@ -43,7 +43,7 @@ public sealed partial class PetFarm
     // One or two goods the farm can already produce; the golden fish is never asked for.
     private FarmOffer NewOffer(Random random)
     {
-        var goods = Enum.GetValues<FarmCrop>().Where(crop => Unlocked(crop)).Select(crop => crop.ToString())
+        var goods = Enum.GetValues<FarmCrop>().Where(crop => Unlocked(crop) && InSeason(crop)).Select(crop => crop.ToString())
             .Concat(new[] { nameof(FarmFish.Minnow), nameof(FarmFish.Carp) }).Concat(HasCoop ? new[] { EggGood } : Array.Empty<string>()).ToArray();
         int total = random.Next(MinOfferItems, Math.Min(MaxOfferItems, Level + 2) + 1);
         var first = goods[random.Next(goods.Length)];

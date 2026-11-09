@@ -145,7 +145,7 @@ Người dùng duyệt cả sáu mốc, chưa phát hành, Mốc E (chuẩn bị
 | 1. Giỏ nông sản | Mèo gặt xong ôm nông sản tới giỏ ở mép ruộng | Xong, còn test tay |
 | 2. Chất lượng nông sản | Tưới đúng giờ có cơ hội ra hàng vàng | Xong, còn test tay |
 | 3. Chuồng gà | Vùng đất thứ tư, gà, trứng, 2 món mới, mèo đuổi gà | Xong, còn test tay |
-| 4. Mùa vụ | Bốn mùa theo tháng của máy, mỗi mùa một cây riêng, cỏ đổi màu | Chưa làm |
+| 4. Mùa vụ | Bốn mùa theo tháng của máy, mỗi mùa một cây riêng, cỏ đổi màu | Xong, còn test tay |
 | 5. Công cụ và phân bón | Cuốc, bình tưới ba bậc; phân bón theo ô | Chưa làm |
 | 6. Mèo hàng xóm | Khách ghé xin đồ, tặng quà | Chưa làm |
 
@@ -166,6 +166,12 @@ Người dùng duyệt cả sáu mốc, chưa phát hành, Mốc E (chuẩn bị
 - Mỗi gà đẻ 1 trứng mỗi 45 phút theo đồng hồ thật, tối đa 3 trứng chờ mỗi gà trong tổ, đầy thì thôi đẻ, không có hình phạt. Chuột phải vào chuồng: "Thu trứng (n)". Mỗi trứng 2 XP, bán 20 xu; xe hàng có thể mua trứng khi đã có chuồng.
 - Món mới: Trứng ốp la (cấp 3: 1 Trứng + 1 Củ cải), Bánh bí trứng (cấp 6: 1 Trứng + 1 Bí ngô). Mèo tự nấu chừa lại 4 trứng.
 - Gà chỉ đi lại trong chuồng, vẽ 8 khung/giây để không tốn FPS. Mỗi 10–15 phút mèo tới chuồng vồ chơi, gà bay tán loạn, không gây hại; đuổi gà chịu mọi khóa của việc làm vườn (ngủ, Quiet, Pause, nhấc đất, khác màn hình).
+
+### Luật Mốc 4 Mùa vụ (duyệt 09/11)
+
+- Mùa theo tháng trên máy, kiểu bán cầu Bắc: Xuân 3–5, Hạ 6–8, Thu 9–11, Đông 12–2. Bảng Kho có dòng mùa; viền cỏ của Ruộng, Bếp, Hồ, Chuồng đổi màu theo mùa.
+- Cây theo mùa (mở ở cấp 3, chỉ gieo được trong mùa, kể cả mèo tự gieo lại): Dâu tây (Xuân, 25 phút, hạt 8, bán 22, 9 XP), Ngô (Hạ, 50 phút, hạt 14, bán 40, 16 XP), Khoai lang (Thu, 70 phút, hạt 18, bán 55, 22 XP), Cải thảo (Đông, 30 phút, hạt 9, bán 26, 10 XP). Năm cây cũ gieo quanh năm.
+- Cây đang trồng khi đổi mùa vẫn lớn và gặt được. Hàng còn trong kho giữ nguyên và vẫn bán được; dòng của cây trái mùa chỉ hiện khi còn hàng. Xe hàng chỉ hỏi mua cây đúng mùa.
 
 ## Giai đoạn 1
 

@@ -68,7 +68,7 @@ public sealed partial class PetWindow
             return;
         }
         farm ??= PetFarm.Load(farmPath);
-        if (farmAchievementsCounted != farm) CountFarmAchievements();
+        if (farmAchievementsCounted != farm) { CountFarmAchievements(); SyncFarmSeason(); }
         if (farmWindow == null) CreateFarmWindow();
         if (!FarmVisible) ShowFarm();
         WatchFarmShop();
@@ -87,6 +87,7 @@ public sealed partial class PetWindow
             farmChecked = now;
             RefreshFarmArea();
             RefreshFarmCart();
+            SyncFarmSeason();
             CheckFarmGrowth(now);
             UpdateFarmChip();
             UpdateFarmStall();
@@ -99,6 +100,28 @@ public sealed partial class PetWindow
         PositionFarm();
         PlaceFarmCart();
     }
+
+    // From this computer's month. Everything drawn with grass changes with it.
+    private void SyncFarmSeason()
+    {
+        if (farm == null) return;
+        var season = PetFarm.SeasonOf(FarmNow.ToLocalTime().Month);
+        bool changed = farm.Season != season || PetFarmArt.CurrentSeason != season;
+        farm.Season = season;
+        if (!changed) return;
+        PetFarmArt.CurrentSeason = season;
+        RefreshFarmArt();
+        foreach (var patch in farmPatches) DrawFarmPatch(patch);
+        UpdateFarmShop();
+    }
+
+    private string FarmSeasonName(FarmSeason season) => season switch
+    {
+        FarmSeason.Spring => L("Xuân", "Spring"),
+        FarmSeason.Summer => L("Hạ", "Summer"),
+        FarmSeason.Autumn => L("Thu", "Autumn"),
+        _ => L("Đông", "Winter")
+    };
 
     private void CheckFarmGrowth(DateTime now)
     {
@@ -456,6 +479,10 @@ public sealed partial class PetWindow
         FarmCrop.Carrot => L("Cà rốt", "Carrot"),
         FarmCrop.Tomato => L("Cà chua", "Tomato"),
         FarmCrop.Watermelon => L("Dưa hấu", "Watermelon"),
+        FarmCrop.Strawberry => L("Dâu tây", "Strawberry"),
+        FarmCrop.Corn => L("Ngô", "Corn"),
+        FarmCrop.SweetPotato => L("Khoai lang", "Sweet potato"),
+        FarmCrop.NapaCabbage => L("Cải thảo", "Napa cabbage"),
         _ => L("Bí ngô", "Pumpkin")
     };
 
@@ -465,6 +492,10 @@ public sealed partial class PetWindow
         FarmCrop.Carrot => L("Cà rốt · 15 phút", "Carrot · 15 min"),
         FarmCrop.Tomato => L("Cà chua · 40 phút", "Tomato · 40 min"),
         FarmCrop.Watermelon => L("Dưa hấu · 4 giờ", "Watermelon · 4 hours"),
+        FarmCrop.Strawberry => L("Dâu tây · 25 phút", "Strawberry · 25 min"),
+        FarmCrop.Corn => L("Ngô · 50 phút", "Corn · 50 min"),
+        FarmCrop.SweetPotato => L("Khoai lang · 70 phút", "Sweet potato · 70 min"),
+        FarmCrop.NapaCabbage => L("Cải thảo · 30 phút", "Napa cabbage · 30 min"),
         _ => L("Bí ngô · 2 giờ", "Pumpkin · 2 hours")
     };
 
@@ -679,7 +710,7 @@ public sealed partial class PetWindow
         farmSeedMenu = null;
     }
 
-    public MenuItem[] FarmSeedItems(int tile) => Enum.GetValues<FarmCrop>().Select(crop =>
+    public MenuItem[] FarmSeedItems(int tile) => Enum.GetValues<FarmCrop>().Where(crop => farm?.InSeason(crop) != false).Select(crop =>
     {
         bool locked = farm?.Unlocked(crop) == false;
         var item = new MenuItem { Header = FarmSeedLabel(crop) + " · " + (locked ? FarmLevelText(PetFarm.CropLevel(crop)) : FarmPriceText(PetFarm.SeedPrice(crop))), Icon = new FarmCropIcon(crop), IsEnabled = farm == null || (!locked && farm.Coins >= PetFarm.SeedPrice(crop)) };

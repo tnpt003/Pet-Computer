@@ -126,7 +126,7 @@ public sealed partial class PetFarmArt : FrameworkElement
         FarmStage.Seed => 6,
         FarmStage.Sprout => 20,
         FarmStage.Young => crop == FarmCrop.Tomato ? 44 : crop is FarmCrop.Pumpkin or FarmCrop.Watermelon ? 34 : 38,
-        FarmStage.Ripe => crop switch { FarmCrop.Tomato => 56, FarmCrop.Pumpkin or FarmCrop.Watermelon => 38, FarmCrop.Radish => 54, _ => 56 },
+        FarmStage.Ripe => crop switch { FarmCrop.Tomato => 56, FarmCrop.Pumpkin or FarmCrop.Watermelon => 38, FarmCrop.Radish => 54, FarmCrop.Strawberry => 30, FarmCrop.SweetPotato => 34, FarmCrop.NapaCabbage => 38, FarmCrop.Corn => 66, _ => 56 },
         _ => 0
     };
 
@@ -233,12 +233,18 @@ public sealed partial class PetFarmArt : FrameworkElement
         }
     }
 
+    private static readonly Brush SpringGrass = PetUi.Hex("#A8E6A0"), AutumnGrass = PetUi.Hex("#D9B65E"), WinterGrass = PetUi.Hex("#DCE9EE");
+
+    // The grass everywhere follows the season; the window sets it and redraws.
+    public static FarmSeason CurrentSeason { get; set; } = FarmSeason.Summer;
+    private static Brush CurrentGrass => CurrentSeason switch { FarmSeason.Spring => SpringGrass, FarmSeason.Autumn => AutumnGrass, FarmSeason.Winter => WinterGrass, _ => PetUi.Mint };
+
     // A bank of earth with its grass lip.
     internal static void DrawBank(DrawingContext dc, double left, double width)
     {
         dc.DrawRoundedRectangle(Earth, Ink, new Rect(left, SoilTop, width, SoilHeight), 9, 9);
         dc.PushTransform(new TranslateTransform(left, SoilTop - 2));
-        dc.DrawGeometry(PetUi.Mint, InkThin, width == PlotWidth ? Lip : ShapeFor(width, lips, MakeLip));
+        dc.DrawGeometry(CurrentGrass, InkThin, width == PlotWidth ? Lip : ShapeFor(width, lips, MakeLip));
         dc.Pop();
     }
 
@@ -401,6 +407,10 @@ public sealed partial class PetFarmArt : FrameworkElement
         FarmCrop.Carrot => Orange,
         FarmCrop.Tomato => TomatoRed,
         FarmCrop.Watermelon => MelonRind,
+        FarmCrop.Strawberry => TomatoRed,
+        FarmCrop.Corn => CornYellow,
+        FarmCrop.SweetPotato => PotatoPurple,
+        FarmCrop.NapaCabbage => CabbagePale,
         _ => Pumpkin
     };
 
@@ -630,6 +640,36 @@ public sealed partial class PetFarmArt : FrameworkElement
                 dc.Pop();
                 Fruit(dc, -12, -24); Fruit(dc, 12, -19); Fruit(dc, 7, -40);
                 break;
+            case FarmCrop.Strawberry:
+                dc.DrawGeometry(Leaf, InkThin, Vine);
+                foreach (var (x, y) in new[] { (-11.0, -8.0), (1.0, -5.0), (12.0, -10.0) })
+                {
+                    dc.DrawEllipse(TomatoRed, Ink, new Point(x, y), 6.5, 7.5);
+                    dc.DrawEllipse(LeafDeep, null, new Point(x, y - 6.5), 4.5, 1.6);
+                    foreach (var (dx, dy) in new[] { (-2.5, -1.0), (2.2, 0.2), (0.0, 3.0) }) dc.DrawEllipse(Seed, null, new Point(x + dx, y + dy), 0.8, 1.1);
+                }
+                break;
+            case FarmCrop.Corn:
+                dc.DrawLine(StemPen, new Point(0, 0), new Point(0, -62));
+                dc.PushTransform(new TranslateTransform(0, -18));
+                dc.DrawGeometry(LeafDeep, InkThin, TallLeaves);
+                dc.Pop();
+                dc.DrawEllipse(CornYellow, Ink, new Point(8, -35), 6.5, 15);
+                foreach (double y in new[] { -44.0, -38.0, -32.0, -26.0 }) dc.DrawLine(InkThin, new Point(3, y), new Point(13, y));
+                dc.DrawGeometry(Leaf, InkThin, CornHusk);
+                break;
+            case FarmCrop.SweetPotato:
+                dc.DrawGeometry(LeafDeep, InkThin, Vine);
+                dc.DrawEllipse(PotatoPurple, Ink, new Point(-10, -6), 11, 7);
+                dc.DrawEllipse(PotatoPurple, Ink, new Point(11, -4), 9, 6);
+                dc.DrawEllipse(PotatoHigh, null, new Point(-13, -8), 4, 1.8);
+                break;
+            case FarmCrop.NapaCabbage:
+                dc.DrawEllipse(CabbageDeep, Ink, new Point(-8, -16), 10, 17);
+                dc.DrawEllipse(CabbageDeep, Ink, new Point(8, -16), 10, 17);
+                dc.DrawEllipse(CabbagePale, Ink, new Point(0, -15), 11, 18);
+                dc.DrawLine(InkThin, new Point(0, -30), new Point(0, -4));
+                break;
             case FarmCrop.Watermelon:
                 dc.DrawGeometry(StemBrown, InkThin, PumpkinStem);
                 dc.DrawEllipse(MelonRind, Ink, new Point(0, -16), 21, 16);
@@ -647,6 +687,8 @@ public sealed partial class PetFarmArt : FrameworkElement
     }
 
     private static readonly Brush StemBrown = PetUi.Hex("#7E9A4C");
+    private static readonly Brush CornYellow = PetUi.Hex("#F2C94C"), PotatoPurple = PetUi.Hex("#9A5BA8"), PotatoHigh = PetUi.Hex("#C08ACB"), CabbagePale = PetUi.Hex("#D8EDB4"), CabbageDeep = PetUi.Hex("#9CCB72");
+    private static readonly Geometry CornHusk = Parse("M4,-21 C-1,-30 1,-40 6,-46 C5,-36 7,-28 11,-22 Z");
     private static readonly Geometry PumpkinStem = Parse("M-3,-29 C-3,-34 -1,-38 4,-39 L6,-35 C3,-34 3,-31 3,-29 Z");
 
     private static void Fruit(DrawingContext dc, double x, double y)

@@ -7,7 +7,7 @@ using System.Text.Json.Serialization;
 namespace DesktopPet;
 
 [JsonConverter(typeof(JsonStringEnumConverter<FarmCrop>))]
-public enum FarmCrop { Radish, Carrot, Tomato, Pumpkin, Watermelon }
+public enum FarmCrop { Radish, Carrot, Tomato, Pumpkin, Watermelon, Strawberry, Corn, SweetPotato, NapaCabbage }
 
 // A tile's life: wild ground, tilled, then the three stages that each wait for water, then ripe.
 [JsonConverter(typeof(JsonStringEnumConverter<FarmStage>))]
@@ -62,6 +62,10 @@ public sealed partial class PetFarm
         FarmCrop.Carrot => 15 * 60,
         FarmCrop.Tomato => 40 * 60,
         FarmCrop.Watermelon => 240 * 60,
+        FarmCrop.Strawberry => 25 * 60,
+        FarmCrop.Corn => 50 * 60,
+        FarmCrop.SweetPotato => 70 * 60,
+        FarmCrop.NapaCabbage => 30 * 60,
         _ => 120 * 60
     };
     public static double StageSeconds(FarmCrop crop) => GrowSeconds(crop) / WateredStages;
@@ -72,6 +76,10 @@ public sealed partial class PetFarm
         FarmCrop.Carrot => 4,
         FarmCrop.Tomato => 10,
         FarmCrop.Watermelon => 50,
+        FarmCrop.Strawberry => 8,
+        FarmCrop.Corn => 14,
+        FarmCrop.SweetPotato => 18,
+        FarmCrop.NapaCabbage => 9,
         _ => 25
     };
 
@@ -81,6 +89,10 @@ public sealed partial class PetFarm
         FarmCrop.Carrot => 13,
         FarmCrop.Tomato => 30,
         FarmCrop.Watermelon => 200,
+        FarmCrop.Strawberry => 22,
+        FarmCrop.Corn => 40,
+        FarmCrop.SweetPotato => 55,
+        FarmCrop.NapaCabbage => 26,
         _ => 85
     };
 
@@ -93,6 +105,10 @@ public sealed partial class PetFarm
         FarmCrop.Carrot => 5,
         FarmCrop.Tomato => 12,
         FarmCrop.Watermelon => 60,
+        FarmCrop.Strawberry => 9,
+        FarmCrop.Corn => 16,
+        FarmCrop.SweetPotato => 22,
+        FarmCrop.NapaCabbage => 10,
         _ => 30
     };
 
@@ -101,6 +117,7 @@ public sealed partial class PetFarm
         FarmCrop.Tomato => 2,
         FarmCrop.Pumpkin => 4,
         FarmCrop.Watermelon => 8,
+        FarmCrop.Strawberry or FarmCrop.Corn or FarmCrop.SweetPotato or FarmCrop.NapaCabbage => 3,
         _ => 1
     };
 
@@ -313,7 +330,7 @@ public sealed partial class PetFarm
     // How many tilled tiles the coins at hand can sow with this crop.
     public int CanSow(FarmCrop crop)
     {
-        if (!Unlocked(crop)) return 0;
+        if (!Unlocked(crop) || !InSeason(crop)) return 0;
         int tilled = TilesAt(FarmStep.Plant).Count, price = SeedPrice(crop);
         return price == 0 ? tilled : Math.Min(tilled, Coins / price);
     }
@@ -331,11 +348,11 @@ public sealed partial class PetFarm
 
     // The crop the cat would sow here again, or null: never grown here, locked, or too dear right now.
     public FarmCrop? ResowCrop(int index) =>
-        IsOpen(index) && Tiles[index].LastCrop is FarmCrop crop && Unlocked(crop) && Coins >= SeedPrice(crop) ? crop : null;
+        IsOpen(index) && Tiles[index].LastCrop is FarmCrop crop && Unlocked(crop) && InSeason(crop) && Coins >= SeedPrice(crop) ? crop : null;
 
     public bool Plant(int index, FarmCrop crop, DateTime? utcNow = null)
     {
-        if (!IsOpen(index) || Tiles[index].Stage != FarmStage.Tilled || !Enum.IsDefined(crop) || !Unlocked(crop) || Coins < SeedPrice(crop)) return false;
+        if (!IsOpen(index) || Tiles[index].Stage != FarmStage.Tilled || !Enum.IsDefined(crop) || !Unlocked(crop) || !InSeason(crop) || Coins < SeedPrice(crop)) return false;
         Coins -= SeedPrice(crop);
         Tiles[index].Stage = FarmStage.Seed;
         Tiles[index].Crop = crop;

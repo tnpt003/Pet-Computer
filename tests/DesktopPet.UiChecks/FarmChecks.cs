@@ -80,7 +80,7 @@ internal static class FarmChecks
             Call(window, "CloseFarmSeedMenu");
             check(!window.FarmSeedMenuOpen, "The menu closes");
             var seeds = window.FarmSeedItems(0);
-            check(seeds.Length == 5 && seeds.All(s => s.Icon is FarmCropIcon && ((string)s.Header).Length > 0), "The seed menu has five crops with their pictures");
+            check(seeds.Length == 6 && seeds.All(s => s.Icon is FarmCropIcon && ((string)s.Header).Length > 0) && ((string)seeds[5].Header).Contains("Sweet potato"), "The seed menu has the five crops and the one of this season (the test clock says November)");
             check(window.FarmPlant(0, FarmCrop.Radish) && farm.Next(0) == FarmStep.Water, "A seed is sown");
             check(!window.FarmPlant(1, FarmCrop.Radish), "Not on wild ground");
             check(window.FarmTileLabel(0)!.Contains("Radish") || window.FarmTileLabel(0)!.Contains("Củ cải"), "The label names the crop");
@@ -479,7 +479,7 @@ internal static class FarmChecks
 
         var sow = Item("Sow all (3");
         var seeds = sow.Items.OfType<MenuItem>().ToArray();
-        check(seeds.Length == 5 && seeds.All(s => s.Icon is FarmCropIcon), "Sow all offers the five crops with their pictures");
+        check(seeds.Length == 6 && seeds.All(s => s.Icon is FarmCropIcon), "Sow all offers the crops in season with their pictures");
         check(seeds[0].IsEnabled && seeds[1].IsEnabled && !seeds[3].IsEnabled, "A seed the purse cannot pay for even once is greyed");
         check(((string)seeds[1].Header).Contains("2 tiles") && ((string)seeds[1].Header).Contains("8"), $"It says how many tiles and what that costs ({seeds[1].Header})");
         Click(seeds[1]);
@@ -540,7 +540,7 @@ internal static class FarmChecks
         static IEnumerable<TextBlock> Lines(DependencyObject item) => (item is TextBlock line ? new[] { line } : Enumerable.Empty<TextBlock>())
             .Concat(LogicalTreeHelper.GetChildren(item).OfType<DependencyObject>().SelectMany(Lines));
         string Diary() => string.Join("\n", Lines(panel).Select(t => t.Text));
-        check(Diary().Contains("Level 10 · top level") && Diary().Contains("Harvested 99 · 1/5 kinds of crop") && Diary().Contains("3/6 plots · 0/6 decorations") && Diary().Contains("77 coins · 2 fish in store")
+        check(Diary().Contains("Level 10 · top level") && Diary().Contains("Harvested 99 · 1/9 kinds of crop") && Diary().Contains("3/6 plots · 0/6 decorations") && Diary().Contains("77 coins · 2 fish in store")
               && Diary().Contains("Achievements · 1/5") && Diary().Contains("✓ Farm owner · Done") && Diary().Contains("Golden harvest · 99/100"),
             $"The diary's farm card works with the AI off ({Diary().Replace('\n', '|')})");
 
@@ -1293,6 +1293,7 @@ internal static class FarmChecks
         frames(0.02);
         double left = window.FarmPatchLeft(patch), right = left + patch.Width;
         bool Clear(double from, double to) => right <= from || left >= to;
+        check(PetFarmArt.CurrentSeason == FarmSeason.Autumn && farm.Season == FarmSeason.Autumn, "The test clock's November makes it autumn for the field and the grass");
         check(Clear(window.FarmPlotStart, window.FarmPlotStart + PetFarmArt.PlotWidth) && Clear(window.FarmPatchLeft(window.FarmHearth), window.FarmPatchLeft(window.FarmHearth) + window.FarmHearth.Width) && Clear(window.FarmPatchLeft(window.FarmPond), window.FarmPatchLeft(window.FarmPond) + window.FarmPond.Width), "It does not stand on other land");
         check(window.FarmBuyCoopOrHen() && window.FarmBuyCoopOrHen() && farm.Hens == 3 && !window.FarmBuyCoopOrHen(), "Up to three hens");
         var items = window.FarmPatchItems(patch);
@@ -1407,7 +1408,7 @@ internal static class FarmChecks
             seen.Add(Render(art => art.Tiles[0] = new(FarmStage.Young, crop, false, false, 0.5), dark, null));
         }
         // Radish and carrot share their young leaves' shape, but not their color.
-        check(seen.Count == 12, $"Every stage of every crop looks different ({seen.Count} of 12)");
+        check(seen.Count == 16, $"Every stage of every crop looks different ({seen.Count} of 16)");
         string dry = Render(art => art.Tiles[0] = new(FarmStage.Seed, FarmCrop.Carrot, false, false, 0), dark, null);
         check(dry != Render(art => art.Tiles[0] = new(FarmStage.Seed, FarmCrop.Carrot, true, false, 0), dark, null), "Wet soil is not dry soil");
         check(dry != Render(art => art.Tiles[0] = new(FarmStage.Seed, FarmCrop.Carrot, false, true, 0), dark, null), "A thirsty seed shows a drop");

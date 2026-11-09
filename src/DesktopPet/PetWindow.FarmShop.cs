@@ -21,10 +21,10 @@ public sealed partial class PetWindow
     private TextBlock? farmShopCoins, farmShopTileName, farmShopTileNote, farmShopTilePrice, farmShopScareName, farmShopScareNote, farmShopScarePrice, farmShopSellAllText;
     private Border? farmShopTileButton, farmShopScareButton, farmShopSellAll, farmShopCoopButton, farmShopEggRow, farmShopEggButton;
     private TextBlock? farmShopCoopName, farmShopCoopNote, farmShopCoopPrice, farmShopEggCount, farmShopEggPrice;
-    private readonly List<(FarmCrop Crop, TextBlock Count, Border Button, TextBlock Price, Border Gold, TextBlock GoldPrice)> farmShopRows = new();
+    private readonly List<(FarmCrop Crop, TextBlock Count, Border Button, TextBlock Price, Border Gold, TextBlock GoldPrice, Border Row)> farmShopRows = new();
     private readonly List<(FarmFish Fish, TextBlock Count, Border Button, TextBlock Price)> farmShopFishRows = new();
     private bool farmShopPaused;
-    private TextBlock? farmShopWeather;
+    private TextBlock? farmShopWeather, farmShopSeason;
     private WeatherKind? farmShopSky;
     private sealed record FarmDecorToggle(FarmDecor Decor, Border Button, FrameworkElement Icon, UIElement Slash);
     private readonly List<FarmDecorToggle> farmShopDecors = new();
@@ -40,7 +40,7 @@ public sealed partial class PetWindow
     // What the next level opens, for the shop's line; empty when it opens nothing.
     private string FarmNextUnlockNames(int level)
     {
-        var crops = Enum.GetValues<FarmCrop>().Where(crop => PetFarm.CropLevel(crop) == level).Select(FarmCropName);
+        var crops = Enum.GetValues<FarmCrop>().Where(crop => PetFarm.CropLevel(crop) == level && farm?.InSeason(crop) != false).Select(FarmCropName);
         var dishes = Enum.GetValues<FarmDish>().Where(dish => PetFarm.DishLevel(dish) == level).Select(FarmDishName);
         var fish = Enum.GetValues<FarmFish>().Where(kind => PetFarm.FishLevel(kind) == level && level > 1).Select(FarmFishName);
         var scarecrow = level == PetFarm.GoldenScarecrowLevel ? new[] { L("Bù nhìn vàng", "Golden scarecrow") } : Array.Empty<string>();
@@ -79,7 +79,11 @@ public sealed partial class PetWindow
         farmShopWeather.Foreground = PetUi.Game.Gold;
         farmShopWeather.Margin = new Thickness(0, 3, 0, 0);
 
-        var body = new StackPanel { Width = FarmShopWidth, Children = { PanelTitle(title), farmShopCoins, farmShopLevel, xpBar, farmShopNextUnlock, farmShopWeather } };
+        farmShopSeason = PanelLine(PetUi.SmallSize, maxWidth: FarmShopWidth);
+        farmShopSeason.Foreground = PetUi.Game.Soft;
+        farmShopSeason.Margin = new Thickness(0, 3, 0, 0);
+
+        var body = new StackPanel { Width = FarmShopWidth, Children = { PanelTitle(title), farmShopCoins, farmShopLevel, xpBar, farmShopNextUnlock, farmShopWeather, farmShopSeason } };
         farmShopRows.Clear();
         foreach (var crop in Enum.GetValues<FarmCrop>())
         {
@@ -90,8 +94,9 @@ public sealed partial class PetWindow
             var (gold, goldPrice, _) = HudButton(() => FarmSellGold(chosen), plain: true);
             gold.MinWidth = 0;
             gold.ToolTip = L("Bán hàng vàng", "Sell a golden one");
-            body.Children.Add(FarmShopRow(new FarmCropIcon(crop, 30), FarmCropName(crop), count, button, gold));
-            farmShopRows.Add((crop, count, button, price, gold, goldPrice));
+            var row = FarmShopRow(new FarmCropIcon(crop, 30), FarmCropName(crop), count, button, gold);
+            body.Children.Add(row);
+            farmShopRows.Add((crop, count, button, price, gold, goldPrice, row));
         }
         farmShopFishRows.Clear();
         foreach (var fish in Enum.GetValues<FarmFish>())
@@ -245,6 +250,7 @@ public sealed partial class PetWindow
         farmShopSky = FarmWeather;
         farmShopWeather!.Text = farmShopSky is WeatherKind sky ? FarmWeatherText(sky) : "";
         farmShopWeather.Visibility = farmShopSky == null ? Visibility.Collapsed : Visibility.Visible;
+        farmShopSeason!.Text = LF($"Mùa {FarmSeasonName(farm.Season)}", $"{FarmSeasonName(farm.Season)} season");
         farmShopCoins.Text = LF($"Xu nông trại: {farm.Coins}", $"Farm coins: {farm.Coins}");
         farmShopLevel!.Text = farm.Level >= PetFarm.MaxLevel
             ? LF($"Cấp {farm.Level} · {farm.Xp} XP", $"Level {farm.Level} · {farm.Xp} XP")
@@ -254,8 +260,9 @@ public sealed partial class PetWindow
         farmShopNextUnlock!.Text = farm.Level >= PetFarm.MaxLevel ? L("Đã đạt cấp cao nhất", "Top level reached")
             : unlocks.Length > 0 ? LF($"Cấp sau mở: {unlocks}", $"Next level opens: {unlocks}")
             : LF($"Cấp sau thưởng {PetFarm.LevelReward(farm.Level + 1)} xu", $"Next level pays {PetFarm.LevelReward(farm.Level + 1)} coins");
-        foreach (var (crop, count, button, price, gold, goldPrice) in farmShopRows)
+        foreach (var (crop, count, button, price, gold, goldPrice, row) in farmShopRows)
         {
+            row.Visibility = farm.InSeason(crop) || farm.HaveOf(crop) > 0 ? Visibility.Visible : Visibility.Collapsed; // Another season's crop only while some is left.
             int golden = farm.GoldOf(crop);
             string stars = golden > 0 ? $" · ★ {golden}" : "";
             count.Text = LF($"Trong kho: {farm.StockOf(crop)}{stars}", $"In store: {farm.StockOf(crop)}{stars}");
@@ -339,7 +346,7 @@ public sealed partial class PetWindow
         farmShopCoins = farmShopTileName = farmShopTileNote = farmShopTilePrice = farmShopScareName = farmShopScareNote = farmShopScarePrice = farmShopSellAllText = null;
         farmShopTileButton = farmShopScareButton = farmShopSellAll = farmShopCoopButton = farmShopEggRow = farmShopEggButton = null;
         farmShopCoopName = farmShopCoopNote = farmShopCoopPrice = farmShopEggCount = farmShopEggPrice = null;
-        farmShopLevel = farmShopNextUnlock = farmShopWeather = null;
+        farmShopLevel = farmShopNextUnlock = farmShopWeather = farmShopSeason = null;
         farmShopXpFill = null;
         farmShopRows.Clear();
         farmShopFishRows.Clear();

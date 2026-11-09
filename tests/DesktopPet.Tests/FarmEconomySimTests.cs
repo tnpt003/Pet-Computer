@@ -117,7 +117,7 @@ internal static class FarmEconomySimTests
     }
 
     // The best crop the coins at hand can sow, free radishes at worst.
-    private static FarmCrop Best(PetFarm farm) => Enum.GetValues<FarmCrop>().Where(crop => farm.Unlocked(crop) && farm.Coins >= PetFarm.SeedPrice(crop)).Max();
+    private static FarmCrop Best(PetFarm farm) => Enum.GetValues<FarmCrop>().Where(crop => PetFarm.CropSeason(crop) == null && farm.Unlocked(crop) && farm.Coins >= PetFarm.SeedPrice(crop)).Max();
 
     private static void Tend(PetFarm farm, DateTime now)
     {

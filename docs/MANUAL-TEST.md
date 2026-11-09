@@ -1427,3 +1427,16 @@ Muốn thử nhanh: đặt `PET_DATA_DIRECTORY` tới một thư mục riêng, s
 - [ ] Mở ruộng cũ đã cấp 10: Bù nhìn vàng có ngay, không hiện nhãn lên cấp lại; tiến độ cũ còn nguyên
 - [ ] Đổi sang tiếng Việt và tiếng Nhật: tên dưa, món, bù nhìn vàng không tràn; DPI 125–200% và màn thấp, bảng Kho dài thêm một hàng vẫn cuộn được
 - [ ] Chơi tới cấp 8–10: 4 giờ một quả và 200 xu có vừa không
+
+## Nông trại — Nhật ký, thành tích, câu thoại (09/11)
+
+Muốn thử nhanh: đặt `PET_DATA_DIRECTORY` tới một thư mục riêng, sửa `Xp`, `Harvested`, `OpenTiles`, `Decors` trong `farm.json` ở đó rồi mở `artifacts\win-x64\DesktopPet.exe`, không đụng dữ liệu thật.
+
+- [ ] Mở Nhật ký khi Python đang chạy và khi Python tắt: có thẻ Nông trại, số liệu khớp bảng Kho; tắt Nông trại trong Cài đặt thì không còn thẻ
+- [ ] Để Nhật ký mở rồi gặt một ô: số trong thẻ đổi ngay, thanh cuộn không nhảy lên đầu khó chịu
+- [ ] Mở bản này với ruộng cũ đã cấp cao: thành tích đạt sẵn hiện ✓ trong thẻ, không có nhãn, trang Phần thưởng không ghi "mới" cho chúng
+- [ ] Gặt quả thứ 100: nhãn "+1 …" rồi tới "★ Thành tựu: Mùa vàng" 3 giây, chữ không tràn ở vi/en/ja; trang Phần thưởng ghi "Mới" và tổng 25
+- [ ] Mở ô thứ 6, mua đủ 6 đồ, lên cấp 10: mỗi cái có nhãn đúng một lần; lên cấp 10 thì nhãn lên cấp hiện trước nhãn thành tích
+- [ ] Bật mèo nói chuyện: lên cấp, câu được Cá vàng, giao xe mỗi lần có một câu hợp cảnh, không lặp liên tục khi giao nhiều lời mua; đọc lại câu tiếng Nhật
+- [ ] Khi mèo ngủ, app toàn màn hình, tắt nói chuyện hoặc tắt Python: không có câu, mèo không thức dậy, nhãn trên ruộng vẫn như cũ
+- [ ] DPI 125–200%: thẻ Nông trại trong Nhật ký không bị cắt, cuộn được

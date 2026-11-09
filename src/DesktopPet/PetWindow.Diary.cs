@@ -52,6 +52,7 @@ public sealed partial class PetWindow
             AddLine(L("AI đang tắt hoặc chưa sẵn sàng, nên chỉ có số liệu của lần chạy này.",
                    "The AI is off or not ready yet, so only this session's numbers are shown."), PetUi.Muted);
             AddStats((session.Petted, L("Được vuốt", "Petted"), PetMotif.Heart), (session.Treats, L("Treat", "Treats"), PetMotif.Fish), (session.Toy + session.BallClicks, L("Chơi bóng", "Ball games"), PetMotif.Ball));
+            AddFarmCard();
             return;
         }
         AddLine(LF($"Đã ở cùng sen {diary.Days} ngày (từ {diary.Since})", $"Together for {diary.Days} days (since {diary.Since})"), PetUi.Muted);
@@ -68,6 +69,8 @@ public sealed partial class PetWindow
                 $"Last {diary.BondHistory.Length} days: {string.Join(", ", diary.BondHistory.Select(v => v.ToString("F0")))}")
             : L("Biểu đồ sẽ hiện sau ngày thứ hai.", "The chart appears from the second day."), PetUi.Muted));
 
+        AddFarmCard();
+
         var hours = AddCard(L("Giờ sen hay chơi", "When you usually play"), PetMotif.Clock);
         if (diary.Habits.Sum() < 10)
             hours.Children.Add(TextLine(L("Chưa đủ dữ liệu, chơi với mèo thêm vài hôm nhé.", "Not enough data yet; play a few more days."), PetUi.Muted));
@@ -82,6 +85,37 @@ public sealed partial class PetWindow
         var learned = AddCard(L("Những gì mèo đã học", "What the cat has learned"), PetMotif.Book);
         learned.Children.Add(TextLine(L("Thích: ", "Likes: ") + (aiLearned is { Likes.Length: > 0 } ? string.Join("; ", aiLearned.Likes) : L("chưa có", "nothing yet"))));
         learned.Children.Add(TextLine(L("Không thích: ", "Dislikes: ") + (aiLearned is { Dislikes.Length: > 0 } ? string.Join("; ", aiLearned.Dislikes) : L("chưa có", "nothing yet"))));
+    }
+
+    // What C# itself knows about the farm, so it does not need the AI.
+    private void AddFarmCard()
+    {
+        if (!preferences.Farm || farm == null) return;
+        var stats = AchievementStats.From(farm);
+        int harvest = (int)stats["farmHarvest"], kinds = (int)stats["farmCrops"], tiles = (int)stats["farmTiles"], decors = (int)stats["farmDecors"];
+        int allKinds = Enum.GetValues<FarmCrop>().Length, allDecors = Enum.GetValues<FarmDecor>().Length;
+        int fish = Enum.GetValues<FarmFish>().Sum(farm.FishOf);
+        var card = AddCard(L("Nông trại", "Farm"), PetMotif.Leaf);
+        card.Children.Add(TextLine(farm.Level >= PetFarm.MaxLevel
+            ? LF($"Cấp {farm.Level} · cấp cao nhất", $"Level {farm.Level} · top level")
+            : LF($"Cấp {farm.Level} · {farm.Xp}/{farm.NextLevelXp} XP", $"Level {farm.Level} · {farm.Xp}/{farm.NextLevelXp} XP")));
+        card.Children.Add(TextLine(LF($"Đã gặt {harvest} nông sản · {kinds}/{allKinds} loại cây", $"Harvested {harvest} · {kinds}/{allKinds} kinds of crop")));
+        card.Children.Add(TextLine(LF($"{tiles}/{PetFarm.TileCount} ô ruộng · {decors}/{allDecors} đồ trang trí", $"{tiles}/{PetFarm.TileCount} plots · {decors}/{allDecors} decorations")));
+        card.Children.Add(TextLine(LF($"{farm.Coins} xu · {fish} con cá trong kho", $"{farm.Coins} coins · {fish} fish in store"), PetUi.Muted));
+
+        var book = AchievementBook;
+        var goals = PetAchievements.All.Where(a => a.Farm).ToList();
+        if (goals.Count == 0) return;
+        int done = goals.Count(a => book.Has(a.Id));
+        var title = TextLine(LF($"Thành tựu · {done}/{goals.Count}", $"Achievements · {done}/{goals.Count}"));
+        title.FontWeight = FontWeights.SemiBold; title.Margin = new Thickness(0, 8, 0, 2);
+        card.Children.Add(title);
+        foreach (var a in goals)
+        {
+            bool has = book.Has(a.Id);
+            string state = has ? L("Đã đạt", "Done") : $"{Math.Floor(book.Progress(a)):0}/{a.Goal:0}";
+            card.Children.Add(TextLine((has ? "✓ " : "") + a.Name(preferences.Language) + " · " + state, has ? PetUi.AccentText : PetUi.Muted));
+        }
     }
 
     private static string Times(long count) => count == 1 ? "once" : $"{count} times";

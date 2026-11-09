@@ -237,6 +237,7 @@ public sealed partial class PetWindow
                 if (hit)
                 {
                     farm!.Catch(farmChores.Catch);
+                    if (farmChores.Catch == FarmFish.Goldfish) FarmReport = FarmReport with { Goldfish = FarmReport.Goldfish + 1 };
                     ShowFarmFishGain(farmChores.Catch);
                     PlayFarmSound("pop");
                     FarmChanged();

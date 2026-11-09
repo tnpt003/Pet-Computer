@@ -6,13 +6,42 @@ using DesktopPet;
 // file, what a battle gives, the book and its file. Simulation and data only, no WPF.
 internal static class AchievementTests
 {
+    // Finishing milestone D (docs/FARM-GAME.md): counted from the farm as it is, never added up.
+    private static void FarmRun(Action<bool, string> check, IReadOnlyList<AchievementSpec> all)
+    {
+        var fresh = new PetFarm();
+        var book = new AchievementBook();
+        check(book.Reach(all, AchievementStats.From(fresh), out _).Count == 0 && book.Earned.Count == 0, "A new farm has earned nothing");
+
+        // What farm.json keeps is enough to rebuild each one.
+        var veteran = new PetFarm { OpenTiles = PetFarm.TileCount, Xp = PetFarm.MaxXp };
+        foreach (var crop in Enum.GetValues<FarmCrop>()) veteran.Harvested[crop.ToString()] = 20;
+        foreach (var decor in Enum.GetValues<FarmDecor>()) veteran.Decors.Add(decor.ToString());
+        var earned = book.Reach(all, AchievementStats.From(veteran), out bool changed);
+        check(changed && earned.Count == 5 && earned.All(a => a.Farm) && book.Earned.Count == 5, $"An old farm earns all five from what it has done ({string.Join(",", earned.Select(a => a.Id))})");
+
+        var counted = new AchievementBook();
+        var nearly = new PetFarm();
+        nearly.Harvested[nameof(FarmCrop.Radish)] = 99;
+        check(counted.Reach(all, AchievementStats.From(nearly), out _).Count == 0 && counted.Reach(all, AchievementStats.From(nearly), out bool again).Count == 0 && !again
+              && counted.Progress(all.First(a => a.Id == "farm_harvest_100")) == 99, "Counting twice adds nothing: 99 stays 99");
+        nearly.Harvested[nameof(FarmCrop.Radish)] = 100;
+        check(counted.Reach(all, AchievementStats.From(nearly), out _) is [{ Id: "farm_harvest_100" }], "The hundredth earns it");
+        check(counted.Reach(all, AchievementStats.From(nearly), out _).Count == 0, "...once");
+
+        // Battles do not touch them.
+        var battleBook = new AchievementBook();
+        check(battleBook.Add(all, new Dictionary<string, double> { ["wins"] = 1 }, out _).All(a => !a.Farm) && battleBook.Best.Keys.All(k => !AchievementStats.FarmNames.Contains(k)), "A battle earns no farm achievement");
+    }
+
     public static void Run(Action<bool, string> check)
     {
         const double dt = 1.0 / 60;
         var all = PetAchievements.All;
 
-        // The built-in list: 20 achievements; the six reward items each given by exactly one of them.
-        check(all.Count == 20 && all.Select(a => a.Id).Distinct().Count() == 20, $"20 built-in achievements ({all.Count})");
+        // The built-in list: 20 from battles and 5 from the farm; the six reward items each given by exactly one of them.
+        check(all.Count == 25 && all.Select(a => a.Id).Distinct().Count() == 25 && all.Count(a => a.Farm) == 5, $"25 built-in achievements, 5 of them the farm's ({all.Count})");
+        FarmRun(check, all);
         var coats = PetCoats.All.Where(c => c.Reward == PetAchievements.RewardTag).Select(c => c.Id).ToList();
         var items = PetAccessories.All.Where(a => a.Reward == PetAchievements.RewardTag).Select(a => a.Id).ToList();
         check(coats.SequenceEqual(new[] { "Mint", "Midnight", "Golden" }) && items.SequenceEqual(new[] { "Bandana", "HeroMedal", "FishCharm" }),
@@ -21,7 +50,7 @@ internal static class AchievementTests
             "Each of them is given by one achievement; the other achievements give the badge only");
         check(PetCoats.All.Where(c => c.Reward == null).Select(c => c.Id).SequenceEqual(new[] { "Orange", "Gray", "Black", "White", "Calico", "Tabby", "GingerTabby", "Tuxedo", "RussianBlue", "Siamese" }),
             "The ten original coats stay free");
-        check(all.All(a => AchievementStats.Names.Contains(a.Stat) && a.NameEn.Length > 0 && a.NameVi.Length > 0 && a.DescEn.Length > 0 && a.DescVi.Length > 0),
+        check(all.All(a => (a.Farm ? AchievementStats.FarmNames : AchievementStats.Names).Contains(a.Stat) && a.NameEn.Length > 0 && a.NameVi.Length > 0 && a.DescEn.Length > 0 && a.DescVi.Length > 0),
             "Every achievement has a known stat and both languages");
 
         // A bad file is refused as a whole.
@@ -36,6 +65,9 @@ internal static class AchievementTests
         check(Parse(One("\"stat\":\"teleports\",\"goal\":1,\"scope\":\"total\"")) == null, "An unknown stat is refused");
         check(Parse(One("\"stat\":\"wins\",\"goal\":0,\"scope\":\"total\"")) == null, "A goal of 0 is refused");
         check(Parse(One("\"stat\":\"wins\",\"goal\":1,\"scope\":\"ever\"")) == null, "An unknown scope is refused");
+        check(Parse(One("\"stat\":\"farmLevel\",\"goal\":2,\"scope\":\"farm\"")) is [{ Farm: true, Total: false }]
+              && Parse(One("\"stat\":\"farmLevel\",\"goal\":2,\"scope\":\"total\"")) == null && Parse(One("\"stat\":\"wins\",\"goal\":1,\"scope\":\"farm\"")) == null,
+            "Scope farm goes with a farm stat, and only with one");
         check(Parse(One("\"stat\":\"wins\",\"goal\":1,\"scope\":\"total\",\"reward\":\"Bell\"")) == null
               && Parse(One("\"stat\":\"wins\",\"goal\":1,\"scope\":\"total\",\"reward\":\"SlimeHat\"")) == null
               && Parse(One("\"stat\":\"wins\",\"goal\":1,\"scope\":\"total\",\"reward\":\"Gray\"")) == null,

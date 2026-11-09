@@ -67,6 +67,7 @@ public sealed partial class PetWindow
             return;
         }
         farm ??= PetFarm.Load(farmPath);
+        if (farmAchievementsCounted != farm) CountFarmAchievements();
         if (farmWindow == null) CreateFarmWindow();
         if (!FarmVisible) ShowFarm();
         WatchFarmShop();
@@ -159,6 +160,9 @@ public sealed partial class PetWindow
             farmGain.Opacity = k < 0.7 ? 1 : (1 - k) / 0.3;
             ((TranslateTransform)farmGain.RenderTransform).Y = -18 * k;
         }
+        // An achievement waits for the label on show (a level up comes with some of them).
+        else if (farmGain != null && farmAchievementLabels.TryDequeue(out var achievement))
+            ShowFarmLabel(PetFarm.TileCount / 2, L("★ Thành tựu: ", "★ Achievement: ") + achievement.Name(preferences.Language), FarmLevelUpSeconds);
     }
 
     private PetFarmArt.DecorLayer? farmDecorBack, farmDecorFront;
@@ -536,15 +540,24 @@ public sealed partial class PetWindow
 
     private void FarmChanged()
     {
-        if (farm?.TakeLevelsGained() is int gained && gained > 0) ShowFarmLevelUp(gained);
+        if (farm?.TakeLevelsGained() is int gained && gained > 0)
+        {
+            ShowFarmLevelUp(gained);
+            FarmReport = FarmReport with { Levels = FarmReport.Levels + gained };
+        }
         SaveFarm();
+        CountFarmAchievements();
         RefreshFarmArt();
         farmChipShown = null;
         UpdateFarmChip();
         UpdateFarmShop();
         UpdateFarmKitchen();
         UpdateFarmStall();
+        RefreshDiary();
     }
+
+    // This session's farm moments, sent with each observation for Python to choose a line.
+    public AI.FarmReport FarmReport { get; private set; } = new(0, 0, 0);
 
     public bool FarmPlant(int tile, FarmCrop crop)
     {

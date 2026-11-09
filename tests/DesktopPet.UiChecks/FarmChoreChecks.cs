@@ -218,6 +218,9 @@ internal static class FarmChoreChecks
             check(window.FarmChorePhaseNow == FarmChorePhase.Work && pet.Action == PetAction.Sitting && pet.VX == 0 && pet.FishingTime >= 0 && pet.Facing < 0, "On the bank it sits, faces the water and casts");
             Farm(Frame * 2);
             check(art.Fishing && art.FishSide == 1 && art.CaughtFish == null, "The water ripples round the float; nothing has bitten");
+            // The rare one, to see it reported for Python's line.
+            typeof(FarmChores).GetProperty(nameof(FarmChores.Catch))!.SetValue(chores, FarmFish.Goldfish);
+            long goldfish = window.FarmReport.Goldfish;
             var fish = chores.Catch;
             int caught = field.FishOf(fish);
             double attention = pet.Emotions.SecondsWithoutAttention;
@@ -227,6 +230,7 @@ internal static class FarmChoreChecks
             check(art.CaughtFish == fish && art.CaughtAge > 0, "The fish jumps out of the water");
             Features(FarmChores.ReelSeconds);
             check(field.FishOf(fish) == caught + 1 && PetFarm.Load(path).FishOf(fish) == caught + 1, "It lands in the store and is saved");
+            check(window.FarmReport.Goldfish == goldfish + 1, "A golden fish is reported for Python's line");
             var pondGain = window.FarmPond.Gain!;
             check(pondGain.Opacity == 1 && ((System.Windows.Controls.TextBlock)pondGain.Child).Text.StartsWith("+1"), "\"+1\" rises over the pond");
             Features(FarmChores.FishShowSeconds + 0.05);

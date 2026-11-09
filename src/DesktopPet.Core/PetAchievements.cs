@@ -12,7 +12,8 @@ namespace DesktopPet;
 // 1.5 M28 (docs/UPDATE-1.5.md L2): one achievement from Assets/achievements.json. Stat names a number a
 // battle gives (AchievementStats); Total adds it up over battles, otherwise the best single battle counts.
 // Reward names a coat or accessory whose "reward" is "achievement": earned, it shows in Customize.
-public sealed record AchievementSpec(string Id, string NameVi, string NameEn, string DescVi, string DescEn, string Stat, double Goal, bool Total, string? Reward = null)
+// Farm: a stat read from the farm as it is now (docs/FARM-GAME.md, finishing milestone D), not from a battle.
+public sealed record AchievementSpec(string Id, string NameVi, string NameEn, string DescVi, string DescEn, string Stat, double Goal, bool Total, string? Reward = null, bool Farm = false)
 {
     public string Name(string language) => PetText.Data(language, NameVi, NameEn);
     public string Describe(string language) => PetText.Data(language, DescVi, DescEn);
@@ -62,14 +63,17 @@ public static class PetAchievements
             if (list.Any(a => a.Id == id)) throw new InvalidDataException("Duplicate achievement id " + id);
             var (nameVi, nameEn) = Names(item, "name", id);
             var (descVi, descEn) = Names(item, "desc", id);
-            string stat = Text(item, "stat") is string s && AchievementStats.Names.Contains(s) ? s : throw new InvalidDataException(id + " has an unknown stat");
+            string stat = Text(item, "stat") is string s && (AchievementStats.Names.Contains(s) || AchievementStats.FarmNames.Contains(s)) ? s : throw new InvalidDataException(id + " has an unknown stat");
             double goal = item.TryGetProperty("goal", out var g) && g.ValueKind == JsonValueKind.Number ? g.GetDouble() : double.NaN;
             if (!(goal > 0 && goal <= 1_000_000)) throw new InvalidDataException(id + ": goal must be 1-1000000");
-            bool total = Text(item, "scope") switch
+            string? scope = Text(item, "scope");
+            bool farm = AchievementStats.FarmNames.Contains(stat);
+            if (farm != (scope == "farm")) throw new InvalidDataException(id + ": a farm stat needs scope farm, and only a farm stat may have it");
+            bool total = scope switch
             {
                 "total" => true,
-                "battle" => false,
-                _ => throw new InvalidDataException(id + " needs scope total or battle")
+                "battle" or "farm" => false,
+                _ => throw new InvalidDataException(id + " needs scope total, battle or farm")
             };
             string? reward = Text(item, "reward");
             if (reward != null)
@@ -79,7 +83,7 @@ public static class PetAchievements
                 if (!coat && !accessory) throw new InvalidDataException($"{id}.reward \"{reward}\" is not a coat or accessory with reward \"{RewardTag}\"");
                 if (list.Any(a => a.Reward == reward)) throw new InvalidDataException($"{id}.reward \"{reward}\" is already given by another achievement");
             }
-            list.Add(new AchievementSpec(id, nameVi, nameEn, descVi, descEn, stat, goal, total, reward));
+            list.Add(new AchievementSpec(id, nameVi, nameEn, descVi, descEn, stat, goal, total, reward, farm));
         }
         return list.ToArray();
     }
@@ -103,6 +107,18 @@ public static class AchievementStats
     {
         "wins", "defeated", "bosses", "combos", "flawless", "clutch", "hardWin", "quickWin", "heldHits", "throwHits",
         "ropesCut", "rages", "bubbles", "ghosts", "iceBreaks", "fullBasket", "coins", "endlessWaves", "popups", "quakeHits"
+    };
+
+    // Read from farm.json as it is, so what was done before these achievements existed counts too.
+    public static readonly string[] FarmNames = { "farmHarvest", "farmCrops", "farmTiles", "farmDecors", "farmLevel" };
+
+    public static Dictionary<string, double> From(PetFarm farm) => new()
+    {
+        ["farmHarvest"] = Enum.GetValues<FarmCrop>().Sum(farm.HarvestedCount),
+        ["farmCrops"] = Enum.GetValues<FarmCrop>().Count(crop => farm.HarvestedCount(crop) > 0),
+        ["farmTiles"] = farm.OpenTiles,
+        ["farmDecors"] = Enum.GetValues<FarmDecor>().Count(farm.HasDecor),
+        ["farmLevel"] = farm.Level,
     };
 
     // A quick win: won within this many seconds of fighting.
@@ -212,6 +228,22 @@ public sealed class AchievementBook
                 earned.Add(a);
                 changed = true;
             }
+        return earned;
+    }
+
+    // The farm's numbers as they are now (never added up). Returns the farm achievements they earned.
+    public List<AchievementSpec> Reach(IEnumerable<AchievementSpec> all, IReadOnlyDictionary<string, double> stats, out bool changed)
+    {
+        changed = false;
+        foreach (var (stat, value) in stats)
+        {
+            if (!double.IsFinite(value) || value <= Best.GetValueOrDefault(stat)) continue;
+            Best[stat] = value;
+            changed = true;
+        }
+        var earned = all.Where(a => a.Farm && !Has(a.Id) && Progress(a) >= a.Goal).ToList();
+        Earned.AddRange(earned.Select(a => a.Id));
+        changed |= earned.Count > 0;
         return earned;
     }
 }

@@ -1588,5 +1588,20 @@
   "The cat will help you tend it!": "猫もお世話を手伝うよ!",
   "Right-click to cook": "右クリックで料理",
   "Right-click to fish": "右クリックで釣り",
-  "The stall buys your crops!": "屋台が作物を買いに来たよ!"
+  "The stall buys your crops!": "屋台が作物を買いに来たよ!",
+  "Farm": "農場",
+  "Level {0} · top level": "レベル{0} · 最高レベル",
+  "Harvested {0} · {1}/{2} kinds of crop": "収穫 {0}個 · 作物{1}/{2}種類",
+  "{0}/{1} plots · {2}/{3} decorations": "畑 {0}/{1}マス · 飾り {2}/{3}個",
+  "{0} coins · {1} fish in store": "{0}コイン · 倉庫の魚 {1}匹",
+  "Golden harvest": "黄金の実り",
+  "Harvest 100 crops in all.": "作物を合計100個収穫する。",
+  "A bit of everything": "いろいろ育てた",
+  "Harvest all 5 kinds of crop.": "5種類の作物をすべて収穫する。",
+  "All six plots": "6マス全開",
+  "Open all 6 plots.": "畑の6マスをすべて開く。",
+  "Pretty corner": "すてきな庭",
+  "Own all 6 decorations.": "飾りを6個すべて持つ。",
+  "Farm owner": "農場主",
+  "Bring the farm to level 10.": "農場をレベル10にする。"
 }

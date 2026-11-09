@@ -616,3 +616,10 @@ as optional; missing or invalid means 0). A fresh result queues one event line: 
 before `battle_won` before `battle_lost` (`ai/lines.json`), spoken under the usual speech rules.
 Battles never change needs, bond, habits or learning. Records themselves stay in C#
 (`battle-records.json`).
+
+Farm moments (2026-11-09): observations carry an optional `farm` object,
+`{"levels", "goldfish", "deliveries"}`: cumulative counts for this C# session. Python counts only
+increases within one `session_id` (the first report is a baseline) and queues one event line,
+`farm_goldfish` before `farm_level_up` before `farm_delivered`, after the battle lines and before
+the reactions to touch, under the usual speech rules. Nothing else about the farm reaches Python
+and nothing is kept; with the AI off the farm's own labels still show.

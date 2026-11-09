@@ -27,6 +27,8 @@ internal static class NeedsTests
             "Observation sends cumulative interaction counts by type");
         string battleJson = System.Text.Json.JsonSerializer.Serialize(new PetObservation("Idle", true, 1, 1, "x", "LOCAL", Battles: new BattleReport(3, 1, 5, 2)), AiProtocol.Json);
         check(battleJson.Contains("\"battles\":{\"won\":3,\"lost\":1,\"combos\":5,\"records\":2}"), "Observation sends this session's battle results");
+        string farmJson = System.Text.Json.JsonSerializer.Serialize(new PetObservation("Idle", true, 1, 1, "x", "LOCAL", Farm: new FarmReport(2, 1, 3)), AiProtocol.Json);
+        check(farmJson.Contains("\"farm\":{\"levels\":2,\"goldfish\":1,\"deliveries\":3}"), "Observation sends this session's farm moments and nothing else about the farm");
 
         // Bubble rules: timing, cooldowns and protected states.
         var thought = pet.Thought;

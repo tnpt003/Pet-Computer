@@ -52,6 +52,7 @@ NEED_KEYS = ("hunger", "boredom", "affection", "bond")
 INTERACTION_KEYS = ("petted", "clicked", "treats", "toy", "ball_clicks", "ball_hits", "rough_throws")
 # Battle Mode results (C# runs the fight): diary totals and a line only, no needs or bond.
 BATTLE_KEYS = ("won", "lost", "combos", "records")
+FARM_KEYS = ("levels", "goldfish", "deliveries")
 # Effect of one interaction on (hunger, boredom, affection, bond).
 INTERACTION_EFFECTS = {
     "petted": (0, -8, 6, 0.4),
@@ -175,6 +176,8 @@ class Brain:
         self.battle_totals = {key: number(battles.get(key), 0, 0, 1e12) for key in BATTLE_KEYS}
         self.battle_session, self.battles = "", None
         self.battle_delta = {key: 0 for key in BATTLE_KEYS}
+        self.farm_session, self.farm_counts = "", None
+        self.farm_delta = {key: 0 for key in FARM_KEYS}
         history = memory.get("bond_history") if isinstance(memory.get("bond_history"), dict) else {}
         self.bond_history = {day: number(value, 0, 0, 100) for day, value in sorted(history.items())[-BOND_HISTORY_DAYS:]
                              if isinstance(day, str) and len(day) == 10}
@@ -265,6 +268,18 @@ class Brain:
         for key, count in self.battle_delta.items():
             self.battle_totals[key] += count
 
+    def observe_farm(self, observation):
+        """Farm moments since the last observation of this C# session; only ever a line, nothing is kept."""
+        self.farm_delta = {key: 0 for key in FARM_KEYS}
+        counts = observation.get("farm")
+        session = observation.get("session_id")
+        if not isinstance(counts, dict) or not isinstance(session, str) or not 0 < len(session) <= 64:
+            return
+        current = {key: number(counts.get(key), 0, 0, 1e12) for key in FARM_KEYS}
+        if self.farm_counts is not None and session == self.farm_session:  # The first report is a baseline.
+            self.farm_delta = {key: max(0, current[key] - self.farm_counts[key]) for key in FARM_KEYS}
+        self.farm_session, self.farm_counts = session, current
+
     @staticmethod
     def family(command):
         if command in {"WALK_LEFT", "WALK_RIGHT", "FOLLOW_MOUSE"}:
@@ -347,9 +362,11 @@ class Brain:
             self.pending_event = None  # Never talk over a fullscreen game, video or slides.
             return None
         if enabled:
-            battle = self.battle_delta
+            battle, farm = self.battle_delta, self.farm_delta
             event = ("battle_record" if battle["records"] else "battle_won" if battle["won"] else
                      "battle_lost" if battle["lost"] else
+                     "farm_goldfish" if farm["goldfish"] else "farm_level_up" if farm["levels"] else
+                     "farm_delivered" if farm["deliveries"] else
                      "thrown_rough" if deltas["rough_throws"] else "treat_thanks" if deltas["treats"] else
                      "petted" if deltas["petted"] else "play" if deltas["ball_clicks"] or deltas["toy"] else
                      "thrown_fun" if observation.get("last_event") == "released" and self.interaction_delta else
@@ -407,6 +424,7 @@ class Brain:
         deltas = self.observe_needs(observation, now, profile)  # Before activity updates its baseline.
         self.observe_activity(observation, now)
         self.observe_battles(observation)
+        self.observe_farm(observation)
         self.learn_from_reactions(observation, deltas, now)
         ctx = learning_context(observation.get("local_hour"), self.needs, self.energy)
         greeting = None

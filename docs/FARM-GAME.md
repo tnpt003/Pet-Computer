@@ -86,7 +86,7 @@ Làm tròn những gì đã có, không thêm hệ thống lớn. Luật từng 
 | A. Hướng dẫn lần đầu | Nhãn chỉ bước kế tiếp trên ô đầu, nhãn một lần cho bếp, hồ, xe | Xong (d76f173), còn test tay |
 | B. Xe bán đồ trang trí | 6 món, tổng 5.400 xu (chốt sau mô phỏng); mỗi lần xe đến bày 2 món chưa có; bật/tắt trong Kho; vẽ tĩnh, không cộng sức mạnh, không đổi vùng bấm | Xong (4c8a101), còn test tay |
 | C. Phần thưởng cấp 8–10 | Cấp 8 Dưa hấu (4 giờ, hạt 50 xu, bán 200 xu, 60 XP), cấp 9 món Dưa hấu ướp lạnh, cấp 10 Bù nhìn vàng; `farm.json` phiên bản 4 | Xong (9f9ed7c), còn test tay |
-| D. Nhật ký, thành tích, câu thoại | Thẻ Nông trại trong Nhật ký (hiện cả khi tắt Python); 5 thành tích, tiến độ cũ tính lại từ `farm.json`, không báo dồn; lên cấp, Cá vàng, giao xe có câu thoại do Python chọn | Chưa làm |
+| D. Nhật ký, thành tích, câu thoại | Thẻ Nông trại trong Nhật ký (hiện cả khi tắt Python); 5 thành tích, tiến độ cũ tính lại từ `farm.json`, không báo dồn; lên cấp, Cá vàng, giao xe có câu thoại do Python chọn | Có code, còn test tay |
 | E. Chuẩn bị 1.5.1 | Tăng phiên bản, CHANGELOG vi/en/ja, sửa câu lỗi thời, rút test tay còn khoảng 20 mục, đo FPS 6 loại thời tiết khi có đủ vùng đất; không push, không tạo release | Chưa làm |
 
 ### Luật Mốc A (duyệt 09/11)
@@ -125,6 +125,14 @@ Giá 2.700 xu cho đủ 6 món sau 5 ngày ở mức 3 giờ/ngày, nhanh hơn m
 - Cấp 10 tự có Bù nhìn vàng, miễn phí, không có nút bật/tắt, đứng đúng chỗ bù nhìn thường. Chim đến thưa như bù nhìn thường (12–24 phút), không thưa hơn. Chưa mua bù nhìn thường thì vẫn được tính là có; hàng Bù nhìn trong Kho đổi tên, đổi hình và ghi "Đã có".
 - Không cộng sức mạnh, không chạm vào mèo, không có tiếng mới. Dòng "Cấp sau mở" hiện đủ ba phần thưởng.
 - `farm.json` lên phiên bản 4, ruộng cũ giữ nguyên. Bù nhìn vàng tính từ XP nên không lưu riêng; ruộng đã đạt cấp 10 có ngay khi mở app, không báo lại.
+
+### Luật Mốc D Nhật ký, thành tích, câu thoại (duyệt 09/11)
+
+- Nhật ký có thẻ Nông trại khi nông trại đang bật, cả lúc tắt Python: cấp và XP, tổng đã gặt, số loại cây, số ô, đồ trang trí, xu, cá trong kho, tiến độ 5 thành tích. Nhật ký đang mở thì thẻ tự cập nhật.
+- 5 thành tích, không thưởng đồ: Mùa vàng (gặt tổng 100), Vườn đủ vị (gặt đủ 5 loại), Đủ sáu ô, Góc vườn xinh (đủ 6 đồ trang trí), Chủ nông trại (cấp 10). Hiện ở trang Phần thưởng cùng 20 thành tích trận và trong thẻ Nhật ký.
+- Tiến độ đọc thẳng từ `farm.json`, không cộng dồn, vẫn phiên bản 4. Số cá từng câu, số lần giao xe, số món đã nấu không được lưu nên không làm thành tích.
+- Lần đếm đầu sau khi nạp ruộng là im lặng: không nhãn, không tính "mới" ở trang Phần thưởng. Đạt khi đang chơi thì hiện nhãn "★ Thành tựu: …" 3 giây, chờ nhãn đang hiện xong rồi mới tới lượt; không có tiếng mới. Thành tích đã lưu ở `achievements.json` như thành tích trận.
+- Lên cấp, câu được Cá vàng, giao xe có câu thoại do Python chọn (vi/en/ja, theo tính cách). Thứ tự khi trùng: Cá vàng, lên cấp, giao xe. Theo luật nói hiện có: không đánh thức mèo, không nói khi toàn màn hình hoặc tắt nói chuyện, quá 12 giây thì bỏ. Tắt Python thì chỉ còn các nhãn như cũ.
 
 ## Giai đoạn 1
 

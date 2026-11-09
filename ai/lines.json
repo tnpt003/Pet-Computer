@@ -726,5 +726,83 @@
       "もうお花もらった？{name}から一輪どうぞ！",
       "{name}がご主人のとってもハッピーな一日を願ってるよ！"
     ]
+  },
+  "farm_level_up": {
+    "vi": [
+      "Nông trại lên cấp rồi sen ơi!",
+      "Ruộng nhà mình ngày càng xịn nha!",
+      "{name} giờ là nông dân có số má rồi đó!",
+      {"text": "Lên cấp! Lên cấp! Ăn mừng bằng cá đi!", "personality": ["Playful"]},
+      {"text": "Lên cấp rồi. Cứ từ từ mà làm.", "personality": ["Calm"]},
+      {"text": "Cấp này mở ra cái gì mới ta?", "personality": ["Curious"]}
+    ],
+    "en": [
+      "The farm leveled up!",
+      "Our field keeps getting better!",
+      "{name} is a real farmer now!",
+      {"text": "Level up! Level up! Fish to celebrate!", "personality": ["Playful"]},
+      {"text": "A new level. One row at a time.", "personality": ["Calm"]},
+      {"text": "I wonder what this level opens?", "personality": ["Curious"]}
+    ],
+    "ja": [
+      "農場がレベルアップしたよ！",
+      "うちの畑、どんどんよくなるね！",
+      "{name}はもう立派なお百姓さん！",
+      {"text": "レベルアップ！お祝いにお魚食べよう！", "personality": ["Playful"]},
+      {"text": "レベルが上がった。のんびりいこう。", "personality": ["Calm"]},
+      {"text": "このレベルで何が増えるのかな？", "personality": ["Curious"]}
+    ]
+  },
+  "farm_goldfish": {
+    "vi": [
+      "Cá vàng! Cá vàng thật kìa!",
+      "Con cá này lấp lánh quá trời!",
+      "Hôm nay hồ thương {name} ghê!",
+      {"text": "Cá vàng! Cho {name} ngắm thêm chút nữa!", "personality": ["Playful"]},
+      {"text": "Cá vàng. Câu cũng khéo đấy chứ.", "personality": ["Calm"]},
+      {"text": "Sao con cá này lại vàng được ta?", "personality": ["Curious"]}
+    ],
+    "en": [
+      "A golden fish! A real one!",
+      "Look how this fish sparkles!",
+      "The pond likes {name} today!",
+      {"text": "Golden fish! Let {name} look a bit longer!", "personality": ["Playful"]},
+      {"text": "A golden fish. Not a bad cast.", "personality": ["Calm"]},
+      {"text": "How does a fish even get this golden?", "personality": ["Curious"]}
+    ],
+    "ja": [
+      "金の魚！本物だよ！",
+      "このお魚、キラキラしてる！",
+      "今日の池は{name}にやさしいね！",
+      {"text": "金の魚！もうちょっと{name}に見せて！", "personality": ["Playful"]},
+      {"text": "金の魚。なかなかの腕前だ。", "personality": ["Calm"]},
+      {"text": "どうしてこのお魚は金色なの？", "personality": ["Curious"]}
+    ]
+  },
+  "farm_delivered": {
+    "vi": [
+      "Giao hàng xong, xu về túi!",
+      "Người ta thích hàng nhà mình đó!",
+      "Xe chở đầy đồ nhà mình rồi!",
+      {"text": "Xu nè! Xu nè! Mua cá được không?", "personality": ["Playful"]},
+      {"text": "Giao xong. Gọn gàng.", "personality": ["Calm"]},
+      {"text": "Xe đó rồi đi đâu nữa ta?", "personality": ["Curious"]}
+    ],
+    "en": [
+      "Delivered! Coins in the pocket!",
+      "They love what we grow!",
+      "That stall is full of our stuff now!",
+      {"text": "Coins! Coins! Can they buy fish?", "personality": ["Playful"]},
+      {"text": "Delivered. Nice and tidy.", "personality": ["Calm"]},
+      {"text": "Where does that stall go next?", "personality": ["Curious"]}
+    ],
+    "ja": [
+      "納品完了、コインゲット！",
+      "うちの作物、人気だね！",
+      "屋台がうちの品でいっぱい！",
+      {"text": "コインだ！お魚買える？", "personality": ["Playful"]},
+      {"text": "納品完了。手際よし。", "personality": ["Calm"]},
+      {"text": "あの屋台、次はどこへ行くのかな？", "personality": ["Curious"]}
+    ]
   }
 }

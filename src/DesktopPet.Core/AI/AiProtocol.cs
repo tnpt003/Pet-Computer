@@ -12,11 +12,14 @@ public sealed record PetObservation(
     double? LocalHour = null, PetInteractions? Interactions = null,
     bool SpeechEnabled = false, string Language = "vi", int Chattiness = 1, string PetName = "", bool Quiet = false,
     SpeechReport? LastSpeech = null, string LearningReset = "",
-    bool BreakDue = false, ContextReport? Context = null, string Birthday = "", BattleReport? Battles = null);
+    bool BreakDue = false, ContextReport? Context = null, string Birthday = "", BattleReport? Battles = null, FarmReport? Farm = null);
 
 // Cumulative per-session Battle Mode results (finished battles only; "End" does not count).
 // Python turns the differences into diary totals and a line; the fight itself stays in C#.
 public sealed record BattleReport(long Won, long Lost, long Combos, long Records);
+
+// Cumulative per-session farm moments, for a line only: Python never sees the farm itself.
+public sealed record FarmReport(long Levels, long Goldfish, long Deliveries);
 
 // Computer context (window geometry and input timing only). Returned is true once,
 // on the first observation after the user came back from being away.

@@ -47,6 +47,28 @@ public sealed partial class PetWindow
         return earned;
     }
 
+    // Finishing milestone D (docs/FARM-GAME.md): the first count of a farm is silent, so what was done
+    // before stays out of the way: no label, and no "New" on the Rewards page. Later ones get a label.
+    private PetFarm? farmAchievementsCounted;
+    private readonly Queue<AchievementSpec> farmAchievementLabels = new();
+
+    private void CountFarmAchievements()
+    {
+        if (farm == null) return;
+        bool quiet = farmAchievementsCounted != farm;
+        farmAchievementsCounted = farm;
+        var earned = AchievementBook.Reach(PetAchievements.All, AchievementStats.From(farm), out bool changed);
+        if (changed) SaveAchievements();
+        if (earned.Count == 0) return;
+        System.Diagnostics.Trace.WriteLine($"Farm achievements earned: {string.Join(", ", earned.Select(a => a.Id))}.");
+        if (quiet)
+        {
+            AdventureProgress.RewardsSeen.AddRange(earned.Select(AchievementKey));
+            if (!BattleDataCustom && AdventureProgressFile != null) adventureSaveFailed = !AdventureProgress.Save(AdventureProgressFile);
+        }
+        else foreach (var a in earned) farmAchievementLabels.Enqueue(a);
+    }
+
     // What an achievement's reward is, as one line ("" without one).
     private string AchievementPrize(AchievementSpec a)
     {

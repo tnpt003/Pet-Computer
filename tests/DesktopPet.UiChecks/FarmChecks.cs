@@ -62,6 +62,7 @@ internal static class FarmChecks
             Sky(window, farm, check, () => now);
             Bulk(window, pet, farm, path, check, () => now, seconds => now = now.AddSeconds(seconds));
             Levels(window, farm, path, check, () => Tick(0.02));
+            Trophies(window, prefs, farm, check, Tick);
             check(farm.TipPending(PetFarm.TipCart), "The cart's hint waits for its first visit");
             Stall(window, pet, prefs, farm, path, check, Tick);
             check(!farm.TipPending(PetFarm.TipCart), "...which gives it");
@@ -99,6 +100,7 @@ internal static class FarmChecks
             check(farm.HarvestedCount(FarmCrop.Radish) == 1 && farm.Tiles[0].Stage == FarmStage.Wild, "A click harvests it and counts it");
             var gain = (Border)Field<Border?>(window, "farmGain")!;
             check(gain.Opacity == 1 && ((TextBlock)gain.Child).Text.StartsWith("+1 "), "\"+1\" rises over the tile");
+            NoTrophyLabels(window);
             Tick(FarmGainWait);
             check(gain.Opacity < 0.05, "...and fades");
 
@@ -495,6 +497,70 @@ internal static class FarmChecks
     }
 
     // Levels in the real window: locked seeds and dishes say what they need, a level is announced and paid.
+    // Finishing milestone D: what was done before is counted silently, what happens now gets a label, and the diary shows both.
+    private static void Trophies(PetWindow window, PetPreferences prefs, PetFarm farm, Action<bool, string> check, Action<double> tick)
+    {
+        NoTrophyLabels(window);
+        var bookBefore = window.AchievementBook;
+        var book = new AchievementBook();
+        SetField(window, "achievementBook", book);
+        var veteran = new PetFarm { Xp = PetFarm.MaxXp, Coins = 77 };
+        veteran.Harvested[nameof(FarmCrop.Radish)] = 99;
+        veteran.Fish[nameof(FarmFish.Minnow)] = 2;
+        SetField(window, "farm", veteran);
+        int newBefore = window.BattleRewardsNew;
+        tick(0.02);
+        string Label() => Field<TextBlock?>(window, "farmGainText")?.Text ?? "";
+        check(book.Has("farm_level_10") && !book.Has("farm_harvest_100") && !Label().Contains("Achievement") && window.BattleRewardsNew == newBefore,
+            $"A farm that had already done it earns it silently: no label, no New on the Rewards page ({Label()}, new {window.BattleRewardsNew}/{newBefore})");
+
+        window.ShowDiary();
+        var panel = Field<StackPanel?>(window, "diaryPanel")!;
+        static IEnumerable<TextBlock> Lines(DependencyObject item) => (item is TextBlock line ? new[] { line } : Enumerable.Empty<TextBlock>())
+            .Concat(LogicalTreeHelper.GetChildren(item).OfType<DependencyObject>().SelectMany(Lines));
+        string Diary() => string.Join("\n", Lines(panel).Select(t => t.Text));
+        check(Diary().Contains("Level 10 · top level") && Diary().Contains("Harvested 99 · 1/5 kinds of crop") && Diary().Contains("3/6 plots · 0/6 decorations") && Diary().Contains("77 coins · 2 fish in store")
+              && Diary().Contains("Achievements · 1/5") && Diary().Contains("✓ Farm owner · Done") && Diary().Contains("Golden harvest · 99/100"),
+            $"The diary's farm card works with the AI off ({Diary().Replace('\n', '|')})");
+
+        veteran.Tiles[0] = new FarmTile { Stage = FarmStage.Ripe, Crop = FarmCrop.Radish };
+        window.FarmClick(0);
+        check(book.Has("farm_harvest_100") && !Label().Contains("Achievement") && Diary().Contains("✓ Golden harvest · Done") && Diary().Contains("Achievements · 2/5"),
+            $"The hundredth harvest earns it, the open diary follows, and the harvest's own label stays ({Label()})");
+        tick(FarmHarvestLabelSeconds);
+        check(Label().Contains("Achievement: Golden harvest"), $"...then the achievement has its label ({Label()})");
+        check(window.BattleRewardsNew == newBefore + 1, "...and is New on the Rewards page");
+        Render(Field<Window?>(window, "diaryWindow")!, "diary-farm-card.png");
+        var label = Field<Border?>(window, "farmGain")!;
+        foreach (var language in new[] { "vi", "en", "ja" })
+            foreach (var trophy in PetAchievements.All.Where(a => a.Farm))
+            {
+                prefs.Language = language;
+                var words = (TextBlock)label.Child;
+                words.Text = window.L("★ Thành tựu: ", "★ Achievement: ") + trophy.Name(language);
+                label.UpdateLayout();
+                label.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+                check(label.DesiredSize.Width <= 200, $"The label fits its 200 DIP ({language}, {words.Text}: {label.DesiredSize.Width:F0})");
+            }
+        prefs.Language = "en";
+        tick(3.2);
+
+        prefs.Farm = false;
+        Call(window, "RefreshDiary");
+        check(!Diary().Contains("Harvested"), "With the farm off the diary has no farm card");
+        prefs.Farm = true;
+        Field<Window?>(window, "diaryWindow")!.Close();
+
+        SetField(window, "farm", farm);
+        SetField(window, "achievementBook", bookBefore);
+        tick(0.02);
+    }
+
+    private const double FarmHarvestLabelSeconds = 1.4;
+
+    // Earlier steps of these checks earn achievements by the way; their labels would follow the one under test.
+    private static void NoTrophyLabels(PetWindow window) => Field<Queue<AchievementSpec>>(window, "farmAchievementLabels").Clear();
+
     private static void Levels(PetWindow window, PetFarm farm, string path, Action<bool, string> check, Action tick)
     {
         Window? Shop() => Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.Title == "Pet farm shop" && w.IsLoaded);
@@ -523,6 +589,7 @@ internal static class FarmChecks
         check(level.Text.Contains("Level 2") && fill.Width == 0, "The open shop follows at once");
         check(PetFarm.Load(path).Xp == 25, "XP is in the file");
         check(window.FarmSeedItems(0)[2].IsEnabled && !window.FarmSeedItems(0)[3].IsEnabled, "The tomato opens, not the pumpkin");
+        NoTrophyLabels(window);
         for (double t = 0; t < 2; t += 1.0 / 60) Call(window, "TickFarm", 1.0 / 60);
         check(gain.Opacity > 0.5, "A new level stays up longer than a harvest's label");
         for (double t = 0; t < 1.1; t += 1.0 / 60) Call(window, "TickFarm", 1.0 / 60);
@@ -864,7 +931,9 @@ internal static class FarmChecks
         SetField(window, "paused", false);
         frames(0.02);
         Render(panel, "farm-stall.png");
+        long deliveries = window.FarmReport.Deliveries;
         check(window.FarmDeliver(0) == 9 && farm.Coins == 9 && farm.Xp == 4 && farm.StockOf(FarmCrop.Radish) == 1, "Delivering pays, and takes what it asked for");
+        check(window.FarmReport.Deliveries == deliveries + 1, "A delivery is reported for Python's line");
         check(pet.Emotions.SleepLocked && pet.Action == PetAction.Sleeping, "It does not wake the cat");
         pet.Emotions.Reset(); pet.Action = PetAction.Idle;
         check(PetFarm.Load(path).Coins == 9 && !art.Ready, "It is saved and the mark goes");

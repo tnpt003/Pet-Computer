@@ -291,6 +291,7 @@ public sealed partial class PetWindow
         if (farm == null || paused || slot < 0 || slot >= farmStall.Offers.Count || (!farmStall.Here && farmStallWindow == null)) return 0;
         int coins = farm.Deliver(farmStall.Offers[slot]);
         if (coins <= 0) return 0;
+        FarmReport = FarmReport with { Deliveries = FarmReport.Deliveries + 1 };
         ShowFarmLabel(PetFarm.TileCount / 2, LF($"+{coins} xu", $"+{coins} coins"), FarmGainSeconds);
         PlayPetSound("sparkle");
         FarmChanged();

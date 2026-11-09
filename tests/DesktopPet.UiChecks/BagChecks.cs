@@ -206,7 +206,7 @@ internal static class BagChecks
             FieldOf("achievementBook").SetValue(window, trophies);
             window.ShowBattleRewards(true);
             text = window.BattleRewardsText;
-            check(text.Contains("Achievements · 0/20") && text.Contains("First victory") && text.Contains("0/500 · reward: Accessory Bandana") && text.Contains("reward: Coat Mint")
+            check(text.Contains("Achievements · 0/25") && text.Contains("Golden harvest") && text.Contains("First victory") && text.Contains("0/500 · reward: Accessory Bandana") && text.Contains("reward: Coat Mint")
                 && !text.Split('\n').Contains("New") && !window.CoatAvailable("Mint") && window.CoatAvailable("Gray") && !window.AccessoryAvailable("Bandana"),
                 $"Achievements head the Rewards page with their progress and rewards; their coats and accessories are locked ({text.Replace('\n', '|')})");
             window.ShowBattleRewards(false);
@@ -227,7 +227,7 @@ internal static class BagChecks
             check(window.BattleRewardsNew == earned.Count && Button(hub, $"Rewards · {earned.Count} new") != null, $"The Rewards button counts the new achievements ({window.BattleRewardsNew})");
             window.ShowBattleRewards(true);
             text = window.BattleRewardsText;
-            check(text.Contains($"Achievements · {earned.Count}/20") && text.Contains("✓ Not a scratch") && text.Contains("Done · reward: Coat Mint") && text.Split('\n').Count(l => l == "New") == earned.Count,
+            check(text.Contains($"Achievements · {earned.Count}/25") && text.Contains("✓ Not a scratch") && text.Contains("Done · reward: Coat Mint") && text.Split('\n').Count(l => l == "New") == earned.Count,
                 $"Earned ones are marked with New ({text.Replace('\n', '|')})");
             Shot("Pet battle hub", "battle-achievements-en.png");
             window.ShowBattleRewards(false);

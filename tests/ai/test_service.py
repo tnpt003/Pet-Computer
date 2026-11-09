@@ -498,6 +498,36 @@ class SpeechAndLearningTests(unittest.TestCase):
         for bad in ("x", {"won": "many", "lost": -3}, None):
             self.assertEqual(again.decide(self.obs(battles=bad))["diary"]["battles_won"], 1)
 
+    def test_farm_moments_speak_once_and_keep_nothing(self):
+        farm = {"levels": 0, "goldfish": 0, "deliveries": 0}
+        self.step(chattiness=0, farm=dict(farm))  # hello; the first report is a baseline
+        needs = dict(self.brain.needs)
+        farm.update(levels=1, goldfish=1, deliveries=1)
+        first = self.step(10, chattiness=0, farm=dict(farm))
+        self.assertTrue(first["speech"]["id"].startswith("farm_goldfish:vi:"))  # The rarest moment goes first.
+        self.assertEqual(self.brain.needs["bond"], needs["bond"])
+        self.assertNotIn("speech", self.step(10, chattiness=0, farm=dict(farm)))  # Counted once.
+        farm["levels"] = 2
+        level = self.step(10, language="en", chattiness=0, farm=dict(farm))
+        self.assertTrue(level["speech"]["id"].startswith("farm_level_up:en:"))
+        farm["deliveries"] = 2
+        delivered = self.step(10, language="ja", chattiness=0, farm=dict(farm))
+        self.assertTrue(delivered["speech"]["id"].startswith("farm_delivered:ja:"))
+        self.assertNotIn("farm", self.brain.memory)
+        self.brain.save()
+        again = self.make()  # A restarted AI sees the same session's counts as a baseline only.
+        self.assertNotIn("farm_", again.decide(self.obs(farm=dict(farm))).get("speech", {}).get("id", ""))
+        for bad in ("x", {"levels": "many", "goldfish": -3}, None):
+            self.assertNotIn("farm_", again.decide(self.obs(farm=bad)).get("speech", {}).get("id", ""))
+
+    def test_farm_moment_stays_quiet_when_speech_is_off_or_the_pet_sleeps(self):
+        farm = {"levels": 0, "goldfish": 0, "deliveries": 0}
+        self.step(chattiness=0, farm=dict(farm))
+        farm["goldfish"] = 1
+        self.assertNotIn("speech", self.step(10, chattiness=0, speech_enabled=False, farm=dict(farm)))
+        farm["goldfish"] = 2
+        self.assertNotIn("speech", self.step(10, chattiness=0, state="Sleeping", farm=dict(farm)))
+
     def test_event_waits_until_the_pet_can_talk(self):
         self.step(chattiness=0)
         self.counts["rough_throws"] += 1

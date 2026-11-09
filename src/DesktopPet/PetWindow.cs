@@ -440,6 +440,7 @@ public sealed partial class PetWindow : Window
         TickTrophies();
         TickKeepsake(dt); // The keepsake's physics and its meetings with the cat (PetWindow.Keepsake.cs).
         TickFarm(paused ? 0 : dt); // The little field above the taskbar (PetWindow.Farm.cs).
+        TickFocus(paused ? 0 : elapsed); // Real time, not the capped step (PetWindow.Focus.cs).
         if (!paused)
         {
             TickFeatures(dt);
@@ -534,6 +535,7 @@ public sealed partial class PetWindow : Window
         if (!dragging) y -= napLift; // Asleep on the slime cushion: drawn on top of it (PetWindow.KeepsakePlay.cs).
         MoveWindow(x - padding, y - padding);
         UpdateSpeechWindow(x, y);
+        UpdateFocusLabel(x, y);
         renderer.InvalidateVisual();
         if (debugText != null && clock.Elapsed.TotalSeconds >= nextDebugUpdate)
         {

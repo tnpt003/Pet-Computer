@@ -1461,3 +1461,14 @@ Muốn thử nhanh: đặt `PET_DATA_DIRECTORY` tới một thư mục riêng, s
 - [ ] Mốc 4 Mùa vụ: đổi tháng của máy (hoặc `PET_DATA_DIRECTORY` riêng) để xem cỏ đổi màu và cây theo mùa đúng trong menu gieo; nhìn 4 cây mới có dễ nhận ra; cây đang trồng khi đổi mùa vẫn gặt được
 - [ ] Mốc 5 Công cụ: mua Cuốc/Bình bậc Bạc, Vàng ở Kho, mèo tưới/cày thêm ô kề trong một chuyến, đồ cầm đổi màu; chuột phải ô đang lớn để bón phân, thấy hạt phân và cây lớn nhanh hơn; nhãn nút không tràn ở vi/en/ja
 - [ ] Mốc 6 Mèo hàng xóm: khách đứng chỗ trống, không đè đất/xe; nhãn hiện đúng thứ nó xin; bấm để tặng, khách rời đi và có nhãn quà; bấm khi thiếu đồ thì không mất gì; mèo ngủ không bị đánh thức; hình mèo khách có khác hẳn mèo chính; đồ khách tặng hiện đúng chỗ
+
+## Giờ tập trung (09/11)
+
+- [ ] Chuột phải vào mèo → Giờ tập trung → Bắt đầu 25 phút: nhãn đồng hồ hiện trên đầu mèo, đếm đúng, đi theo khi bế/ném, không che chữ nhãn ở en/ja, bấm xuyên qua được
+- [ ] Trong phiên mèo không tự đi, không nói linh tinh, không hiện nhắc nghỉ; vẫn bế, ném, cho ăn, chơi bóng được; công tắc Yên lặng không tự đổi
+- [ ] Chạy trọn phiên bằng đồng hồ thật: chuông vừa tai, mèo nói một câu và vươn vai, nhãn đổi "Xong · nghỉ", hết 5 phút nói câu khác rồi nhãn biến mất, không tự mở phiên mới
+- [ ] Mèo đang ngủ hoặc away nap lúc hết giờ: chuông kêu, nhãn đổi, mèo vẫn ngủ; thức dậy mới nói
+- [ ] Hết giờ khi mở app toàn màn hình hoặc trong trận: không chuông, không nhãn; thoát ra mới báo
+- [ ] Pause đóng băng đồng hồ; máy sleep không tính; Dừng phiên kết thúc ngay
+- [ ] Menu chuột phải có công tắc Nhắc nghỉ giải lao khớp với Cài đặt; cài bằng Setup lần đầu thấy ô nhắc nghỉ tick sẵn
+- [ ] DPI 125/150%, nhiều màn hình: nhãn đúng vị trí trên đầu mèo, sát mép màn hình không bị cắt

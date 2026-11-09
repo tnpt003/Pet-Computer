@@ -45,6 +45,7 @@ public static class PetUi
     public const string Battle = ""; // Game controller.
     public const string Quiet = "", Sound = ""; // Moon (quiet hours), speaker.
     public const string Status = ""; // Heart.
+    public const string Focus = ""; // Clock (the focus timer).
     public const string Customize = ""; // Personalize (brush).
     public const string Place = ""; // Map pin.
     public const string Update = ""; // Download arrow (tray: check for / install an update).

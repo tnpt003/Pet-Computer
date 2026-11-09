@@ -400,7 +400,22 @@ such as "Sen ơi, uống ngụm nước đi nào!" and stretches. Python words t
 `break` in `ai/lines.json`). With Python off, or if no line arrives within 15 s, C#
 uses a built-in line. Reminders show even if chatter is off. They wait while the cat
 sleeps, is dragged or airborne, and while a fullscreen app is open. The debug view shows
-the active minutes.
+the active minutes. The switch is also in the right-click menu under **Focus time**, and the
+first-run welcome offers it (ticked for a new user, a reinstall shows the saved setting).
+
+**Focus time.** Right-click the cat → **Focus time** → 25 or 50 minutes (`PetFocus.cs`,
+`PetWindow.Focus.cs`). The clock runs on real time and reads no input, so reading away from the
+keyboard still counts; a gap over 30 s (the computer slept) is not counted, Pause freezes it, and
+closing the app ends the session with nothing kept. A small click-through label above the cat
+shows the time left; it hides over a fullscreen app, in a battle and while the cat speaks. During a
+session the cat acts as in Quiet mode without changing the saved setting, there is no chatter and
+no break reminder (the break clock restarts at the start and at the end). At the end a chime rings,
+the cat says a line and stretches, and a rest of 5 minutes (10 after 50) counts down; the next
+session is always started by hand. Ending never wakes a sleeping cat: the chime still rings and the
+label changes, and the line and stretch wait until it is awake. Over a fullscreen app or in a
+battle the chime and line wait until that is over. The lines are built in (vi/en/ja), so they work
+with Python off, and they show even with chatter off. Sessions cannot start in a battle or on a
+battle screen, or in Pause.
 
 **Computer context** (`PetWindow.Context.cs`, checked once per second). It reads only
 the foreground window's rectangle, style and class and the time of the last input,

@@ -13,7 +13,7 @@ public sealed partial class PetWindow
         if (Has(asked, AutoBlock.Paused) && paused) now |= AutoBlock.Paused;
         if (Has(asked, AutoBlock.Held) && (dragging || pressPending)) now |= AutoBlock.Held;
         if (Has(asked, AutoBlock.Unsettled) && (!PetActionRules.IsSettled(pet) || pet.Emotions.BlocksAutonomy)) now |= AutoBlock.Unsettled;
-        if (Has(asked, AutoBlock.Quiet) && preferences.Quiet) now |= AutoBlock.Quiet;
+        if (Has(asked, AutoBlock.Quiet) && (preferences.Quiet || focus.Focusing)) now |= AutoBlock.Quiet;
         if (Has(asked, AutoBlock.Fullscreen) && context.Fullscreen) now |= AutoBlock.Fullscreen;
         if (Has(asked, AutoBlock.Battle) && BattleActive) now |= AutoBlock.Battle;
         if (Has(asked, AutoBlock.BattleScreens) && (battleHubOpen || battlePreparing || adventureMapOpen || expeditionMapOpen)) now |= AutoBlock.BattleScreens;

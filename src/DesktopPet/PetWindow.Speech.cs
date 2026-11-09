@@ -22,7 +22,7 @@ public sealed partial class PetWindow
 
     // Break reminders were enabled on their own, so they speak even with chatter off.
     private bool SpeechAllowed(string id) => !closed && MayAct(AutoKind.Speech) &&
-        (PetBreaks.IsBreakLine(id) ? breaks.Due : preferences.Speech);
+        (PetBreaks.IsBreakLine(id) ? breaks.Due : PetFocus.IsFocusLine(id) || (preferences.Speech && !focus.Focusing));
 
     private void ShowSpeech(PetLine line)
     {
@@ -52,6 +52,7 @@ public sealed partial class PetWindow
             breaks.Delivered();
             if (MayAct(AutoKind.Stretch)) behavior.StartStretch(pet); // Stretch along with the user.
         }
+        else if (PetFocus.IsFocusLine(id)) FocusLineShown(id);
     }
 
     private void EnsureSpeechWindow()

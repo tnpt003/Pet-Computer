@@ -179,7 +179,7 @@ internal static class Program
         string catName = Field<PetPreferences>(window, "preferences").Name;
         var catMenu = topItems.Single(item => (string)item.Header == catName);
         var catHeaders = catMenu.Items.OfType<System.Windows.Controls.MenuItem>().Select(item => item.Header as string).ToList();
-        Check(headers.SequenceEqual(new[] { "Give treat", "Play", "Cast portal spell", "Do now", "Emotions", "Quiet mode", "Sounds", catName, "Location", "Settings…", "More", "Exit" }) &&
+        Check(headers.SequenceEqual(new[] { "Give treat", "Play", "Cast portal spell", "Do now", "Emotions", "Focus time", "Quiet mode", "Sounds", catName, "Location", "Settings…", "More", "Exit" }) &&
               SubHeaders("Play") == "Play with ball|Laser pointer" &&
               SubHeaders("Location") == "Go to resting spot|Remember this spot|Forget resting spot|Bring the pet to the main screen" &&
               SubHeaders("More") == "Behavior debug view|About Desktop Pet" &&
@@ -187,7 +187,7 @@ internal static class Program
               topItems.Single(item => (string)item.Header == "Sounds").IsCheckable &&
               window.ContextMenu.Items.OfType<System.Windows.Controls.Separator>().Count() == 3 &&
               !string.IsNullOrEmpty(PetWindow.VersionText) && PetWindow.VersionText != "unknown",
-            "Context menu: 12 items in 4 groups (play · Quiet and Sounds · the cat, where it is, settings, more · Exit); Customize sits under the cat's name; About has a version");
+            "Context menu: 13 items in 4 groups (play · Focus time, Quiet and Sounds · the cat, where it is, settings, more · Exit); Customize sits under the cat's name; About has a version");
         window.ToggleToy();
         window.ContextMenu.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.ContextMenu.OpenedEvent));
         // (The spell's item says why it is off while the ball is out.)
@@ -281,7 +281,8 @@ internal static class Program
         }
         dialog.Close();
         // First run after installing: tips and "Start with Windows" (ticked); never shown to a built or copied app.
-        var welcome = PetWelcome.Create("en", out var welcomeAutostart, out var welcomeLanguage);
+        var welcome = PetWelcome.Create("en", out var welcomeAutostart, out var welcomeLanguage, out var welcomeReminders);
+        Check(welcomeReminders.IsChecked == true && (string)welcomeReminders.Content == "Remind me to take a break every 45 minutes", "The welcome offers break reminders, ticked, with the interval that applies");
         welcome.Left = -10000; welcome.Show(); welcome.UpdateLayout();
         var welcomeButtons = Descendants<System.Windows.Controls.Button>((FrameworkElement)welcome.Content).ToList();
         bool WelcomeSays(string text) => Descendants<System.Windows.Controls.TextBlock>((FrameworkElement)welcome.Content).Any(t => t.Text.Contains(text));
@@ -990,6 +991,7 @@ internal static class Program
         WeatherChecks.Run(window, pet, preferences, Check);
         FarmChecks.Run(window, pet, preferences, Check);
         FarmChoreChecks.Run(window, pet, behavior, preferences, Check);
+        FocusChecks.Run(window, pet, behavior, preferences, Check);
         await WeaponChecks.Run(window, pet, Check);
         await BattlePrepChecks.Run(window, pet, behavior, preferences, Check);
         await AdventureChecks.Run(window, pet, behavior, preferences, Check);

@@ -16,7 +16,8 @@ public sealed partial class PetWindow
     private Func<(bool Fullscreen, double IdleSeconds)> contextProbe = null!;
 
     // A fullscreen app on the pet's monitor behaves like Quiet mode without changing the saved setting.
-    private bool EffectiveQuiet => preferences.Quiet || context.Fullscreen;
+    // So does a focus session.
+    private bool EffectiveQuiet => preferences.Quiet || context.Fullscreen || focus.Focusing;
 
     // The battle hub, setup panel and maps also keep the cat still (its free time belongs to them).
     private void ApplyQuiet() => behavior.Quiet = !MayAct(AutoKind.LocalBehavior);
@@ -58,7 +59,8 @@ public sealed partial class PetWindow
             CancelFeatureActivity();
             behavior.StartAwayNap(pet);
         }
-        breaks.Step(elapsed, context.IdleSeconds, CanDeliverBreak);
+        DeliverFocusNews(elapsed);
+        if (!focus.Focusing) breaks.Step(elapsed, context.IdleSeconds, CanDeliverBreak); // No reminder in the middle of a session.
         if (breaks.NeedsLocalLine)
         {
             var (id, text) = PetBreaks.LocalLine(preferences.Language, preferences.Name, featureRandom);

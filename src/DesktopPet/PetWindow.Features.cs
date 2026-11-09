@@ -94,6 +94,7 @@ public sealed partial class PetWindow
         InitializeBattle(menu); // "Cast portal spell", or "Battle Mode" in a fight (PetWindow.Battle.cs).
         InitializeCommands(menu); // "Do now" and "Emotions".
         menu.Items.Add(new Separator());
+        InitializeFocusMenu(menu); // "Focus time" (PetWindow.Focus.cs).
         menu.Items.Add(quiet); menu.Items.Add(sounds);
         menu.Items.Add(new Separator());
         menu.Items.Add(cat); menu.Items.Add(place); menu.Items.Add(settingsItem); menu.Items.Add(more);
@@ -429,5 +430,5 @@ public sealed partial class PetWindow
     private void ApplyAccessory() =>
         renderer.Accessory = PetScene.Accessory = preferences.HolidayAccessories && PetAccessories.ForEvent(specialDay) is { } outfit ? outfit.Id : preferences.Accessory;
 
-    private void CloseFeatures() { ClosePortal(); CloseWeather(); CloseFarm(); CloseTrophies(); EndBattle(); CloseBattleHub(); CloseBattlePrep(); CloseAdventureMap(); CloseExpeditionMap(); CloseBattleBag(); CloseBattleSummary(); CloseBattleNotice(); CloseBattleTutorial(); laserWindow?.Close(); diaryWindow?.Close(); CloseStatusCard(); behaviorSettingsWindow?.Close(); toyWindow?.Close(); settingsWindow?.Close(); customizeWindow?.Close(); speechWindow?.Close(); sound?.Stop(); sound?.Dispose(); soundStream?.Dispose(); }
+    private void CloseFeatures() { ClosePortal(); CloseWeather(); CloseFarm(); CloseTrophies(); EndBattle(); CloseBattleHub(); CloseBattlePrep(); CloseAdventureMap(); CloseExpeditionMap(); CloseBattleBag(); CloseBattleSummary(); CloseBattleNotice(); CloseBattleTutorial(); laserWindow?.Close(); diaryWindow?.Close(); CloseStatusCard(); behaviorSettingsWindow?.Close(); toyWindow?.Close(); settingsWindow?.Close(); customizeWindow?.Close(); speechWindow?.Close(); focusWindow?.Close(); sound?.Stop(); sound?.Dispose(); soundStream?.Dispose(); }
 }

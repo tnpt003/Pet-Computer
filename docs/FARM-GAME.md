@@ -84,7 +84,7 @@ Làm tròn những gì đã có, không thêm hệ thống lớn. Luật từng 
 | Mốc | Nội dung | Trạng thái |
 |---|---|---|
 | A. Hướng dẫn lần đầu | Nhãn chỉ bước kế tiếp trên ô đầu, nhãn một lần cho bếp, hồ, xe | Xong (d76f173), còn test tay |
-| B. Xe bán đồ trang trí | 6 món, tổng 5.400 xu (chốt sau mô phỏng); mỗi lần xe đến bày 2 món chưa có; bật/tắt trong Kho; vẽ tĩnh, không cộng sức mạnh, không đổi vùng bấm | Đã có code, còn test tay |
+| B. Xe bán đồ trang trí | 6 món, tổng 5.400 xu (chốt sau mô phỏng); mỗi lần xe đến bày 2 món chưa có; bật/tắt trong Kho; vẽ tĩnh, không cộng sức mạnh, không đổi vùng bấm | Xong (4c8a101), còn test tay |
 | C. Phần thưởng cấp 8–10 | Cấp 8 Dưa hấu (4 giờ, hạt 50 xu, bán 200 xu, 60 XP), cấp 9 món Dưa hấu ướp lạnh, cấp 10 Bù nhìn vàng; `farm.json` phiên bản 4 | Chưa làm |
 | D. Nhật ký, thành tích, câu thoại | Thẻ Nông trại trong Nhật ký (hiện cả khi tắt Python); 5 thành tích, tiến độ cũ tính lại từ `farm.json`, không báo dồn; lên cấp, Cá vàng, giao xe có câu thoại do Python chọn | Chưa làm |
 | E. Chuẩn bị 1.5.1 | Tăng phiên bản, CHANGELOG vi/en/ja, sửa câu lỗi thời, rút test tay còn khoảng 20 mục, đo FPS 6 loại thời tiết khi có đủ vùng đất; không push, không tạo release | Chưa làm |

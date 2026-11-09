@@ -430,7 +430,7 @@ internal static class FarmTests
             saved.Plant(0, FarmCrop.Radish, start);
             check(saved.Save(path), "(saved)");
             var back = PetFarm.Load(path);
-            check(back.GoldOf(FarmCrop.Carrot) == 2 && back.Tiles[0].ThirstySince == start && back.Version == 5, "Golden crops are saved, in version 5");
+            check(back.GoldOf(FarmCrop.Carrot) == 2 && back.Tiles[0].ThirstySince == start && back.Version == PetFarm.CurrentVersion, "Golden crops are saved, in the current file version");
             File.WriteAllText(path, """{ "Version": 4, "Stock": { "Carrot": 3 }, "GoldStock": { "Nope": 2, "Carrot": -1 } }""");
             var old = PetFarm.Load(path);
             check(!old.ReadOnly && old.StockOf(FarmCrop.Carrot) == 3 && old.GoldStock.Count == 0, "A file from before keeps its store");
@@ -975,7 +975,7 @@ internal static class FarmTests
             var crop = new PetFarm { Xp = 1000, Coins = 100 };
             crop.Till(0); crop.Plant(0, FarmCrop.Watermelon); crop.PotDish = FarmDish.ChilledWatermelon;
             check(crop.Save(path) && PetFarm.Load(path) is { PotDish: FarmDish.ChilledWatermelon } back && back.Tiles[0].Crop == FarmCrop.Watermelon, "The new crop and dish are saved by name");
-            File.WriteAllText(path, """{ "Version": 6, "Coins": 3 }""");
+            File.WriteAllText(path, $$"""{ "Version": {{PetFarm.CurrentVersion + 1}}, "Coins": 3 }""");
             check(PetFarm.Load(path).ReadOnly, "A newer file is only read");
         }
         finally { Directory.Delete(folder, true); }

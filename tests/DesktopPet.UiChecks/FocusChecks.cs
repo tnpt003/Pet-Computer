@@ -14,6 +14,72 @@ internal static class FocusChecks
         Call(window, "TickContext", 1.1);
     }
 
+    // The reward in the window, on a temporary field file: the real farm.json is never touched.
+    private static void Bloom(PetWindow window, Action<bool, string> check, Action finish)
+    {
+        const FarmCrop bloom = FarmCrop.FocusBloom;
+        string folder = Path.Combine(Path.GetTempPath(), "pet-focus-ui-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        string path = Path.Combine(folder, "farm.json");
+        SetField(window, "farmPath", path);
+        var field = new PetFarm();
+        SetField(window, "farm", field);
+        try
+        {
+            field.Till(0);
+            field.OffSeasonSeeds[bloom.ToString()] = 1;
+            var seeds = window.FarmSeedItems(0);
+            var item = seeds.Single(entry => ((string)entry.Header).StartsWith("Focus bloom"));
+            check(seeds.Length == Enum.GetValues<FarmCrop>().Count(crop => field.InSeason(crop)) + 1 && item.IsEnabled, "With a seed the tile's menu offers the bloom");
+            item.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.MenuItem.ClickEvent));
+            check(field.Tiles[0].Crop == bloom && field.OffSeasonOf(bloom) == 0, "Choosing it sows it and uses the seed");
+            check(window.FarmTileLabel(0) == "Focus bloom · grows with Focus time", "Hovering says what it waits for");
+            window.StartFocus(25);
+            finish();
+            check(field.Tiles[0].Stage == FarmStage.Sprout && field.OffSeasonOf(bloom) == 1 && PetFarm.Load(path).OffSeasonOf(bloom) == 1, "A finished session grows it, gives a seed and is saved at once");
+            window.StopFocus();
+            window.StartFocus(25);
+            window.StopFocus();
+            check(field.Tiles[0].Stage == FarmStage.Sprout && field.OffSeasonOf(bloom) == 1, "Stopping early gives nothing and takes nothing");
+            field.Tiles[0].Stage = FarmStage.Young;
+            field.Till(1);
+            check(!window.FarmSeedItems(1).Any(entry => ((string)entry.Header).StartsWith("Focus bloom") && field.OffSeasonOf(bloom) == 0), "No seed, no entry");
+
+            if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string review)
+            {
+                foreach (var (name, back) in new[] { ("light", Brushes.Beige), ("dark", new SolidColorBrush(Color.FromRgb(0x2E, 0x3A, 0x4A))) })
+                {
+                    var visual = new DrawingVisual();
+                    using (var dc = visual.RenderOpen())
+                    {
+                        dc.DrawRectangle(back, null, new Rect(0, 0, 320, 110));
+                        double x = 40;
+                        foreach (var stage in new[] { FarmStage.Seed, FarmStage.Sprout, FarmStage.Young, FarmStage.Ripe })
+                        {
+                            dc.PushTransform(new TranslateTransform(x, 90));
+                            PetFarmArt.DrawPlant(dc, stage, bloom);
+                            dc.Pop();
+                            x += 80;
+                        }
+                    }
+                    var picture = new RenderTargetBitmap(320, 110, 96, 96, PixelFormats.Pbgra32);
+                    picture.Render(visual);
+                    var encoder = new PngBitmapEncoder();
+                    encoder.Frames.Add(BitmapFrame.Create(picture));
+                    using var file = File.Create(Path.Combine(review, $"focus-bloom-{name}.png"));
+                    encoder.Save(file);
+                }
+            }
+        }
+        finally
+        {
+            window.StopFocus();
+            SetField(window, "farm", null);
+            SetField(window, "farmPath", PetFarm.DefaultPath);
+            Directory.Delete(folder, true);
+        }
+    }
+
     public static void Run(PetWindow window, PetModel pet, PetBehavior behavior, PetPreferences prefs, Action<bool, string> check)
     {
         var focus = Field<PetFocus>(window, "focus");
@@ -125,6 +191,8 @@ internal static class FocusChecks
             }
             window.StopFocus();
         }
+
+        Bloom(window, check, Finish);
 
         Free();
         prefs.Quiet = quietBefore; prefs.Speech = speechBefore; prefs.Sounds = soundsBefore; prefs.BreakMinutes = minutesBefore;

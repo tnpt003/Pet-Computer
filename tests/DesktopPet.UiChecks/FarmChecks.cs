@@ -1457,7 +1457,7 @@ internal static class FarmChecks
             seen.Add(Render(art => art.Tiles[0] = new(FarmStage.Young, crop, false, false, 0.5), dark, null));
         }
         // Radish and carrot share their young leaves' shape, but not their color.
-        check(seen.Count == 16, $"Every stage of every crop looks different ({seen.Count} of 16)");
+        check(seen.Count == 18, $"Every stage of every crop looks different ({seen.Count} of 18)");
         string dry = Render(art => art.Tiles[0] = new(FarmStage.Seed, FarmCrop.Carrot, false, false, 0), dark, null);
         check(dry != Render(art => art.Tiles[0] = new(FarmStage.Seed, FarmCrop.Carrot, true, false, 0), dark, null), "Wet soil is not dry soil");
         check(dry != Render(art => art.Tiles[0] = new(FarmStage.Seed, FarmCrop.Carrot, false, true, 0), dark, null), "A thirsty seed shows a drop");

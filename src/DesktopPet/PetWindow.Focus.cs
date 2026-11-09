@@ -88,8 +88,20 @@ public sealed partial class PetWindow
         {
             ApplyQuiet();
             breaks.Delivered();
+            RewardFocus(focus.Minutes);
         }
         System.Diagnostics.Trace.WriteLine($"Focus timer: {happened}.");
+    }
+
+    // Seeds and growth for the focus bloom, given at once even if the cat cannot say so yet.
+    private void RewardFocus(int minutes)
+    {
+        if (farm == null) return; // The field is switched off.
+        var grown = farm.CompleteFocus(minutes);
+        foreach (int tile in grown) StartFarmEffect(tile, FarmEffect.Plant);
+        int seeds = PetFarm.FocusStages(minutes);
+        ShowFarmLabel(grown.Count > 0 ? grown[0] : PetFarm.TileCount / 2, LF($"Hạt Hoa tập trung +{seeds}", $"Focus bloom seeds +{seeds}"), FarmTipLastSeconds);
+        FarmChanged();
     }
 
     // Once per second, from TickContext.

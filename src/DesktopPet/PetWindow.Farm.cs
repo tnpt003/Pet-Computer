@@ -489,6 +489,7 @@ public sealed partial class PetWindow
         FarmCrop.Corn => L("Ngô", "Corn"),
         FarmCrop.SweetPotato => L("Khoai lang", "Sweet potato"),
         FarmCrop.NapaCabbage => L("Cải thảo", "Napa cabbage"),
+        FarmCrop.FocusBloom => L("Hoa tập trung", "Focus bloom"),
         _ => L("Bí ngô", "Pumpkin")
     };
 
@@ -502,6 +503,7 @@ public sealed partial class PetWindow
         FarmCrop.Corn => L("Ngô · 50 phút", "Corn · 50 min"),
         FarmCrop.SweetPotato => L("Khoai lang · 70 phút", "Sweet potato · 70 min"),
         FarmCrop.NapaCabbage => L("Cải thảo · 30 phút", "Napa cabbage · 30 min"),
+        FarmCrop.FocusBloom => L("Hoa tập trung · 3 phiên", "Focus bloom · 3 sessions"),
         _ => L("Bí ngô · 2 giờ", "Pumpkin · 2 hours")
     };
 
@@ -523,6 +525,7 @@ public sealed partial class PetWindow
             FarmStep.Water => name + " · " + L("cần tưới", "needs water"),
             FarmStep.Harvest => name + " · " + L("thu hoạch", "harvest"),
             FarmStep.Locked => L("Ô khóa", "Locked") + " · " + FarmPriceText(PetFarm.OpenPrice(index)),
+            FarmStep.Wait when farm.Tiles[index].Crop == FarmCrop.FocusBloom => name + " · " + L("lớn theo Giờ tập trung", "grows with Focus time"),
             _ => name + " · " + FarmClock(farm.Remaining(index, FarmNow))
         };
     }

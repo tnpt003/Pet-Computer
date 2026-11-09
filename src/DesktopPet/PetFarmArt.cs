@@ -416,6 +416,7 @@ public sealed partial class PetFarmArt : FrameworkElement
         FarmCrop.Corn => CornYellow,
         FarmCrop.SweetPotato => PotatoPurple,
         FarmCrop.NapaCabbage => CabbagePale,
+        FarmCrop.FocusBloom => PetUi.Lilac,
         _ => Pumpkin
     };
 
@@ -614,6 +615,10 @@ public sealed partial class PetFarmArt : FrameworkElement
                 dc.DrawEllipse(MelonStripe, InkThin, new Point(11, -6), 7, 5.5);
                 dc.DrawEllipse(MelonRind, null, new Point(9.5, -7), 3, 2);
                 break;
+            case FarmCrop.FocusBloom:
+                BloomStem(dc, -24);
+                dc.DrawEllipse(PetUi.Lilac, Ink, new Point(0, -28), 5, 7.5);
+                break;
             default:
                 dc.DrawGeometry(crop == FarmCrop.Radish ? Leaf : LeafDeep, InkThin, Blades);
                 break;
@@ -680,6 +685,14 @@ public sealed partial class PetFarmArt : FrameworkElement
                 dc.DrawEllipse(MelonRind, Ink, new Point(0, -16), 21, 16);
                 dc.DrawGeometry(MelonStripe, null, MelonStripes);
                 break;
+            case FarmCrop.FocusBloom:
+                BloomStem(dc, -30);
+                foreach (var petal in BloomPetals) dc.DrawEllipse(PetUi.Lilac, Ink, petal, 7.5, 7.5);
+                // The heart of the flower is a little clock face.
+                dc.DrawEllipse(PetUi.Game.Gold, Ink, new Point(0, -40), 7, 7);
+                dc.DrawLine(InkThin, new Point(0, -40), new Point(0, -44.5));
+                dc.DrawLine(InkThin, new Point(0, -40), new Point(3.2, -40));
+                break;
             default:
                 dc.DrawGeometry(StemBrown, InkThin, PumpkinStem);
                 dc.DrawEllipse(PumpkinRib, Ink, new Point(-11, -15), 11, 15);
@@ -695,6 +708,16 @@ public sealed partial class PetFarmArt : FrameworkElement
     private static readonly Brush CornYellow = PetUi.Hex("#F2C94C"), PotatoPurple = PetUi.Hex("#9A5BA8"), PotatoHigh = PetUi.Hex("#C08ACB"), CabbagePale = PetUi.Hex("#D8EDB4"), CabbageDeep = PetUi.Hex("#9CCB72");
     private static readonly Geometry CornHusk = Parse("M4,-21 C-1,-30 1,-40 6,-46 C5,-36 7,-28 11,-22 Z");
     private static readonly Geometry PumpkinStem = Parse("M-3,-29 C-3,-34 -1,-38 4,-39 L6,-35 C3,-34 3,-31 3,-29 Z");
+
+    private static readonly Point[] BloomPetals = Enumerable.Range(0, 5).Select(i => new Point(10 * Math.Cos(-Math.PI / 2 + i * Math.Tau / 5), -40 + 10 * Math.Sin(-Math.PI / 2 + i * Math.Tau / 5))).ToArray();
+
+    private static void BloomStem(DrawingContext dc, double top)
+    {
+        dc.DrawLine(StemPen, new Point(0, 0), new Point(0, top));
+        dc.PushTransform(new TranslateTransform(0, -6));
+        dc.DrawGeometry(Leaf, InkThin, SproutLeaves);
+        dc.Pop();
+    }
 
     private static void Fruit(DrawingContext dc, double x, double y)
     {

@@ -1472,3 +1472,4 @@ Muốn thử nhanh: đặt `PET_DATA_DIRECTORY` tới một thư mục riêng, s
 - [ ] Pause đóng băng đồng hồ; máy sleep không tính; Dừng phiên kết thúc ngay
 - [ ] Menu chuột phải có công tắc Nhắc nghỉ giải lao khớp với Cài đặt; cài bằng Setup lần đầu thấy ô nhắc nghỉ tick sẵn
 - [ ] DPI 125/150%, nhiều màn hình: nhãn đúng vị trí trên đầu mèo, sát mép màn hình không bị cắt
+- [ ] Hoa tập trung: xong phiên có nhãn "Hạt Hoa tập trung +1" trên ruộng; menu gieo từng ô có Hoa khi còn hạt; hoa không đòi tưới, hover ghi "lớn theo Giờ tập trung"; xong 3 phiên 25 phút thì nở, gặt và bán được; hình hoa dễ nhận ra; hàng trong bảng Kho chỉ hiện khi có hoa

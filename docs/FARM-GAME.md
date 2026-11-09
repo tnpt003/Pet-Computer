@@ -184,6 +184,12 @@ Người dùng duyệt cả sáu mốc, chưa phát hành, Mốc E (chuẩn bị
 - Khách xin 1–2 thứ đang có trong kho, hiện trên nhãn. Bấm trái vào khách để tặng, khách rời đi và để lại quà: 40% xu (40 + 10 × cấp), 30% 2 túi phân, 20% 1 hạt trái mùa, 10% một trong 3 đồ chỉ khách tặng (Chong chóng ở ruộng, Ếch đá ở hồ, Ấm trà ở bếp). Thiếu loại quà thì đổi sang quà khác. Không tặng cũng không mất gì.
 - Hạt trái mùa miễn phí, chỉ gieo được từ menu từng ô, dùng một lần. Đồ khách tặng không bán ở xe hàng và không tính vào thành tích 6 món đồ trang trí.
 
+### Hoa tập trung (duyệt 09/11)
+
+- Phiên Giờ tập trung hoàn thành (docs/WINDOWS.md) cho hạt và làm hoa lớn: phiên 25 phút được 1 hạt và 1 chặng, phiên 50 phút được 2 hạt và 2 chặng; mọi hoa đang trồng cùng lớn; đủ ba chặng thì nở. Hạt tối đa 99, lưu chung với hạt được tặng (`OffSeasonSeeds`). Dừng sớm không có gì, không mất gì. Tắt nông trại thì phiên không cho hạt.
+- Hoa không cần tưới, không lớn theo đồng hồ, không héo. Chỉ gieo từ menu từng ô khi có hạt, cấp 1. Bán 40 xu, 12 XP (ước tính).
+- Hoa đứng ngoài mưa, phân bón, hàng vàng, mèo tự gieo lại, "Gieo cả ruộng", xe hàng, mèo khách (không xin, không tặng hạt), số loại cây trong thành tích và Nhật ký. Không cộng sức mạnh trong trận. `farm.json` phiên bản 6.
+
 ## Giai đoạn 1
 
 Luôn giữ: cây không héo, chim không gây hại, farm không cộng sức mạnh trong trận, không chạm vào mèo. Các gói chưa chọn: thêm cây và mùa vụ, công cụ và phân bón, vật nuôi, mở rộng và trang trí, chất lượng nông sản.

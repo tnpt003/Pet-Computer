@@ -7,7 +7,7 @@ using System.Text.Json.Serialization;
 namespace DesktopPet;
 
 [JsonConverter(typeof(JsonStringEnumConverter<FarmCrop>))]
-public enum FarmCrop { Radish, Carrot, Tomato, Pumpkin, Watermelon, Strawberry, Corn, SweetPotato, NapaCabbage }
+public enum FarmCrop { Radish, Carrot, Tomato, Pumpkin, Watermelon, Strawberry, Corn, SweetPotato, NapaCabbage, FocusBloom }
 
 // A tile's life: wild ground, tilled, then the three stages that each wait for water, then ripe.
 [JsonConverter(typeof(JsonStringEnumConverter<FarmStage>))]
@@ -46,7 +46,7 @@ public sealed class FarmTile
 // coins, and the coins buy seeds, more tiles and a scarecrow. Radish seed is free, so nobody gets stuck.
 public sealed partial class PetFarm
 {
-    public const int CurrentVersion = 5, TileCount = 6, WateredStages = 3, MaxLevel = 10, MaxXp = 999_999;
+    public const int CurrentVersion = 6, TileCount = 6, WateredStages = 3, MaxLevel = 10, MaxXp = 999_999;
     public const int StartingTiles = 3, StartingCoins = 20, MaxCoins = 999_999, ScarecrowPrice = 150;
     public const double FirstFraction = 0.25;
     // What the cat leaves in the store of each ingredient when it cooks by itself.
@@ -67,6 +67,7 @@ public sealed partial class PetFarm
         FarmCrop.Corn => 50 * 60,
         FarmCrop.SweetPotato => 70 * 60,
         FarmCrop.NapaCabbage => 30 * 60,
+        FarmCrop.FocusBloom => 75 * 60, // Three sessions of 25 minutes; it does not grow by the clock.
         _ => 120 * 60
     };
     public static double StageSeconds(FarmCrop crop) => GrowSeconds(crop) / WateredStages;
@@ -81,6 +82,7 @@ public sealed partial class PetFarm
         FarmCrop.Corn => 14,
         FarmCrop.SweetPotato => 18,
         FarmCrop.NapaCabbage => 9,
+        FarmCrop.FocusBloom => 0,
         _ => 25
     };
 
@@ -94,6 +96,7 @@ public sealed partial class PetFarm
         FarmCrop.Corn => 40,
         FarmCrop.SweetPotato => 55,
         FarmCrop.NapaCabbage => 26,
+        FarmCrop.FocusBloom => 40,
         _ => 85
     };
 
@@ -110,6 +113,7 @@ public sealed partial class PetFarm
         FarmCrop.Corn => 16,
         FarmCrop.SweetPotato => 22,
         FarmCrop.NapaCabbage => 10,
+        FarmCrop.FocusBloom => 12,
         _ => 30
     };
 
@@ -323,7 +327,7 @@ public sealed partial class PetFarm
             FarmStage.Wild => FarmStep.Till,
             FarmStage.Tilled => FarmStep.Plant,
             FarmStage.Ripe => FarmStep.Harvest,
-            _ => tile.GrowsUntil == null ? FarmStep.Water : FarmStep.Wait
+            _ => tile.GrowsUntil == null && tile.Crop != FarmCrop.FocusBloom ? FarmStep.Water : FarmStep.Wait
         };
     }
 

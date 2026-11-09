@@ -93,7 +93,7 @@ public sealed partial class PetWindow
         if (!preferences.Farm || farm == null) return;
         var stats = AchievementStats.From(farm);
         int harvest = (int)stats["farmHarvest"], kinds = (int)stats["farmCrops"], tiles = (int)stats["farmTiles"], decors = (int)stats["farmDecors"];
-        int allKinds = Enum.GetValues<FarmCrop>().Length, allDecors = Enum.GetValues<FarmDecor>().Count(decor => !PetFarm.IsGiftDecor(decor));
+        int allKinds = Enum.GetValues<FarmCrop>().Count(crop => crop != FarmCrop.FocusBloom), allDecors = Enum.GetValues<FarmDecor>().Count(decor => !PetFarm.IsGiftDecor(decor));
         int fish = Enum.GetValues<FarmFish>().Sum(farm.FishOf);
         var card = AddCard(L("Nông trại", "Farm"), PetMotif.Leaf);
         card.Children.Add(TextLine(farm.Level >= PetFarm.MaxLevel

@@ -30,5 +30,6 @@ public sealed partial class PetFarm
     // Set by the window from its clock; not saved.
     [JsonIgnore] public FarmSeason Season { get; set; } = SeasonOf(DateTime.Now.Month);
 
-    public bool InSeason(FarmCrop crop) => CropSeason(crop) is not FarmSeason season || season == Season;
+    // The focus bloom never is: it is only sown from a seed a finished session gave.
+    public bool InSeason(FarmCrop crop) => crop != FarmCrop.FocusBloom && (CropSeason(crop) is not FarmSeason season || season == Season);
 }

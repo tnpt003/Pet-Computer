@@ -115,7 +115,7 @@ public static class AchievementStats
     public static Dictionary<string, double> From(PetFarm farm) => new()
     {
         ["farmHarvest"] = Enum.GetValues<FarmCrop>().Sum(farm.HarvestedCount),
-        ["farmCrops"] = Enum.GetValues<FarmCrop>().Count(crop => farm.HarvestedCount(crop) > 0),
+        ["farmCrops"] = Enum.GetValues<FarmCrop>().Count(crop => crop != FarmCrop.FocusBloom && farm.HarvestedCount(crop) > 0),
         ["farmTiles"] = farm.OpenTiles,
         ["farmDecors"] = Enum.GetValues<FarmDecor>().Count(decor => !PetFarm.IsGiftDecor(decor) && farm.HasDecor(decor)),
         ["farmLevel"] = farm.Level,

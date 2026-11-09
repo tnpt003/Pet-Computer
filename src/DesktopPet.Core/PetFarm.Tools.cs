@@ -35,7 +35,7 @@ public sealed partial class PetFarm
         new[] { tile + 1, tile - 1, tile + 2, tile - 2 }.Where(i => i >= 0 && i < TileCount);
 
     public bool CanFertilize(int index) => IsOpen(index) && Tiles[index].Stage is FarmStage.Seed or FarmStage.Sprout or FarmStage.Young
-        && !Tiles[index].Fertilized && (FertilizerStock > 0 || Coins >= FertilizerPrice);
+        && Tiles[index].Crop != FarmCrop.FocusBloom && !Tiles[index].Fertilized && (FertilizerStock > 0 || Coins >= FertilizerPrice);
 
     public bool Fertilize(int index, DateTime utcNow)
     {

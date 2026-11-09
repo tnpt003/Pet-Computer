@@ -83,7 +83,7 @@ public sealed partial class PetFarm
     public Dictionary<string, int> OffSeasonSeeds { get; set; } = new();
     public int OffSeasonOf(FarmCrop crop) => OffSeasonSeeds.GetValueOrDefault(crop.ToString());
 
-    private IEnumerable<string> GoodsInStore() => Enum.GetValues<FarmCrop>().Where(crop => HaveOf(crop) > 0).Select(crop => crop.ToString())
+    private IEnumerable<string> GoodsInStore() => Enum.GetValues<FarmCrop>().Where(crop => crop != FarmCrop.FocusBloom && HaveOf(crop) > 0).Select(crop => crop.ToString())
         .Concat(new[] { nameof(FarmFish.Minnow), nameof(FarmFish.Carp) }.Where(fish => GoodsOf(fish) > 0))
         .Concat(EggStock > 0 ? new[] { EggGood } : Array.Empty<string>());
 
@@ -123,7 +123,7 @@ public sealed partial class PetFarm
         if (roll < 0.7) return bags;
         if (roll < 0.9)
         {
-            var other = Enum.GetValues<FarmCrop>().Where(crop => !InSeason(crop)).ToList();
+            var other = Enum.GetValues<FarmCrop>().Where(crop => crop != FarmCrop.FocusBloom && !InSeason(crop)).ToList();
             return other.Count == 0 ? coins : new FarmGift(FarmGiftKind.Seed, 1, other[random.Next(other.Count)]);
         }
         var decors = GiftDecors.Where(decor => !HasDecor(decor)).ToList();
@@ -131,5 +131,5 @@ public sealed partial class PetFarm
     }
 
     private void NormalizeVisitor() =>
-        OffSeasonSeeds = (OffSeasonSeeds ?? new()).Where(pair => Enum.TryParse<FarmCrop>(pair.Key, out var crop) && CropSeason(crop) != null && pair.Value > 0).ToDictionary(pair => pair.Key, pair => pair.Value);
+        OffSeasonSeeds = (OffSeasonSeeds ?? new()).Where(pair => Enum.TryParse<FarmCrop>(pair.Key, out var crop) && (CropSeason(crop) != null || crop == FarmCrop.FocusBloom) && pair.Value > 0).ToDictionary(pair => pair.Key, pair => pair.Value);
 }

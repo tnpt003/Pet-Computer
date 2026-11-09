@@ -47,5 +47,5 @@ Ngoại lệ physics: docs/APPROVED-EXCEPTIONS.md → Đồ vật có physics.
 ### Khi code cần kiểm tra
 
 - Cửa sổ của trò 45 giây vẫn riêng; bóng nằm ngoài là vật khác, chỉ giao vị trí cho trò và nhận lại khi cửa sổ trò đóng (`PetWindow.Toys.cs`), nên `CancelFeatureActivity` giữ nguyên. Sửa vùng này thì test lại sleep lock, wake, drag, throw, emotion priority, local fallback.
-- Đồ nằm yên không được di chuyển cửa sổ từng khung. Giữ FPS active ~60, sleeping ~30, paused ~10. Hiện chỉ có một món nên chưa đo được 3 cửa sổ đồ; đo lại khi có đủ món ở M2, M4.
+- Đồ nằm yên không được di chuyển cửa sổ từng khung. Giữ FPS active ~60, sleeping ~30, paused ~10. Hiện chỉ có một món nên chưa đo được 3 cửa sổ đồ; đo lại khi có đủ món ở M2, M4. Đo 09/11 (bản faca0f0, một màn hình, dữ liệu riêng, Quiet, không ai bấm chuột, 2 vòng, mỗi vòng khoảng 31 giây sau khi bỏ 8 giây đầu), FPS trung vị của vòng 1, vòng 2: không giỏ 57,4 và 57,0; giỏ và bóng nằm yên 56,8 và 57,2. Chưa thấy khác biệt. Chưa đo lúc bóng đang bay, DPI khác hay nhiều màn hình.
 - Test dùng dữ liệu riêng, không ghi đè `preferences.json` của người dùng.

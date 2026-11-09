@@ -9,7 +9,7 @@ Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm 
 - **Triệu chứng:** người dùng muốn vật trưng bày cũng được đưa lên trên, đã chọn thứ tự mèo > vật trưng bày > vùng đất.
 - **Nguyên nhân:** thứ tự mèo và kỷ vật chỉ đặt một lần lúc kỷ vật hiện; WPF áp lại Topmost thì kỷ vật nhảy lên trên mèo (UiChecks đã tái hiện). Bản #74 chỉ sửa lại khi nông trại đang bật.
 - **Sửa:** kiểm thứ tự mèo và kỷ vật 4 lần mỗi giây ngay cả khi tắt nông trại, chỉ chuyển khi sai chỗ. Luật ở docs/FARM-GAME.md.
-- **Commit:** (điền sau khi publish).
+- **Commit:** `f11ec09`, ZIP `artifacts/DesktopPet-1.5.0-f11ec09-win-x64.zip`, smoke 3/3 PASS.
 - **Kiểm chứng:** script đầy đủ một lần: Python 60 + i18n 5, C# 4246 (97 suite), WPF 2457 đều đạt.
 - **Cần xem tay:** chưa nhìn thứ tự lớp trên desktop thật.
 

@@ -115,6 +115,10 @@ public sealed class PetModel
     public double StirringRemaining;
     // The cat fishing: seconds into it (-1: not fishing) and when the float goes under; the renderer draws the rod.
     public double FishingTime = -1, FishingBiteAt;
+    // The other farm jobs: which tool is in the paws, how far into the job, when it lands and how long it lasts.
+    public FarmToolPose FarmTool;
+    public double FarmToolTime, FarmToolHit, FarmToolLength;
+    public FarmCrop? FarmToolCrop;
     public double BatRemaining;
     public double PlayCrouch;
     // Battle Mode, presentation only (the window copies them from BattleSim each frame):

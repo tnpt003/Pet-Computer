@@ -49,6 +49,7 @@ public sealed partial class PetWindow
     private double FarmFreeWidth => Math.Max(0, farmArea.Right - farmArea.Left - PetFarmArt.PlotWidth);
     private double FarmPlotLeft => farmArea.Left + farmFraction * FarmFreeWidth;
 
+    public double FarmPlotStart => FarmPlotLeft;
     public bool FarmVisible => farmWindow?.IsVisible == true;
     public PetFarm? Farm => farm;
     public FarmLiftPhase FarmLiftPhaseNow => farmLift.Phase;
@@ -73,6 +74,11 @@ public sealed partial class PetWindow
         WatchFarmShop();
         WatchFarmKitchen();
         WatchFarmStall();
+        if (Environment.TickCount64 >= farmOrderDue)
+        {
+            farmOrderDue = Environment.TickCount64 + FarmOrderMilliseconds;
+            KeepFarmBelowCat();
+        }
         if (dt > 0) StepFarmSky(dt);
 
         var now = FarmNow;
@@ -80,6 +86,7 @@ public sealed partial class PetWindow
         {
             farmChecked = now;
             RefreshFarmArea();
+            RefreshFarmCart();
             CheckFarmGrowth(now);
             UpdateFarmChip();
             UpdateFarmStall();
@@ -332,12 +339,48 @@ public sealed partial class PetWindow
         PositionFarmPatches();
     }
 
-    // Both are topmost and the field was shown later: the cat walks in front of it, keepsake too.
+    private const int FarmOrderMilliseconds = 250;
+    private long farmOrderDue;
+
+    private IEnumerable<Window> FarmGroundWindows()
+    {
+        if (farmWindow != null) yield return farmWindow;
+        foreach (var patch in farmPatches)
+            if (patch.Window != null) yield return patch.Window;
+        if (farmCartWindow != null) yield return farmCartWindow;
+    }
+
+    // What lies above this window in the z-order.
+    private static HashSet<IntPtr> WindowsAbove(IntPtr handle)
+    {
+        const uint Previous = 3;
+        var above = new HashSet<IntPtr>();
+        for (var next = GetWindow(handle, Previous); next != IntPtr.Zero && above.Add(next); next = GetWindow(next, Previous)) { }
+        return above;
+    }
+
+    private bool KeepsakeShown => keepsakeWindow?.IsVisible == true;
+
+    public bool FarmGroundAboveCat
+    {
+        get
+        {
+            var above = WindowsAbove(new WindowInteropHelper(this).Handle);
+            return FarmGroundWindows().Any(window => above.Contains(new WindowInteropHelper(window).Handle));
+        }
+    }
+
+    // All are topmost, and WPF applies Topmost again now and then, which brings a window to the top
+    // of them: being placed once does not last. The cat walks in front of the land, keepsake too.
+    // Only what is out of order is moved, so usually this changes nothing.
     private void KeepFarmBelowCat()
     {
-        if (farmWindow != null) PlaceBelowCat(farmWindow);
-        foreach (var patch in farmPatches)
-            if (patch.Window != null) PlaceBelowCat(patch.Window);
+        var cat = new WindowInteropHelper(this).Handle;
+        if (cat == IntPtr.Zero) return;
+        if (KeepsakeShown && WindowsAbove(cat).Contains(new WindowInteropHelper(keepsakeWindow!).Handle)) KeepCatAboveKeepsake();
+        var above = WindowsAbove(KeepsakeShown ? new WindowInteropHelper(keepsakeWindow!).Handle : cat);
+        foreach (var window in FarmGroundWindows())
+            if (above.Contains(new WindowInteropHelper(window).Handle)) PlaceBelowCat(window);
     }
 
     private void PlaceBelowCat(Window window)

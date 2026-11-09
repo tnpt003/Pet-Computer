@@ -5,6 +5,14 @@ Sổ ghi các lỗi đã sửa của Desktop Pet. Phần A: lỗi người dùng
 Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm lỗi mới: tạo mục số tiếp theo ở đầu phần A (hoặc một dòng ở phần B).
 
 # A. Lỗi người dùng phát hiện
+## #74 — Xe hàng đi theo ruộng, có thể đè đất; mèo nằm sau vùng đất; thiếu hoạt ảnh làm vườn (09/11)
+- **Triệu chứng:** xe luôn cạnh ruộng và chạy theo khi di chuyển ruộng; mèo có lúc bị vùng đất che; lúc cày, gieo, gặt, đổ nồi mèo chỉ thò chân.
+- **Nguyên nhân:** vị trí xe tính lại mỗi khung hình từ vị trí ruộng; khi hết chỗ nó giữ nguyên chỗ muốn đứng. Thứ tự lớp chỉ đặt một lần lúc hiện ruộng, WPF áp lại Topmost thì cửa sổ đất nhảy lên trên mèo (UiChecks đã tái hiện). Ba việc đó chưa từng có đạo cụ.
+- **Sửa:** xe bốc ngẫu nhiên chỗ trống, chốt lúc đến, quãng lăn không qua đất, vùng đất thả xuống tránh xe, không có chỗ thì không đến. Thứ tự lớp kiểm 4 lần mỗi giây, chỉ sửa cửa sổ sai chỗ. Thêm `PetRenderer.Farm.cs` với cuốc, túi hạt, nông sản, bát, giấy, mồ hôi, dấu "!" và lấp lánh; gặt 0,9 → 1,4 giây. Luật ở docs/FARM-GAME.md.
+- **Commit:** (điền sau khi publish).
+- **Kiểm chứng:** script đầy đủ một lần: Python 60 + i18n 5, C# 4246 (97 suite), WPF 2453 đều đạt. Đã xem render mọi đạo cụ trên nền sáng/tối, hai hướng cho gặt, và ảnh ghép đổ nồi.
+- **Cần xem tay:** chưa xem chuyển động và thứ tự lớp trên desktop thật, chưa thử DPI khác, nhiều màn hình.
+
 ## #73 — Vùng đất không kéo được sang màn hình khác (09/11)
 - **Triệu chứng:** Ruộng, Bếp, Hồ khi nhấc chỉ kéo được trong màn hình đang đứng.
 - **Nguyên nhân:** thiết kế cũ: khi kéo vị trí bị giữ trong vùng làm việc của một màn hình, và cả ba vùng dùng chung một bộ thông tin màn hình và DPI.

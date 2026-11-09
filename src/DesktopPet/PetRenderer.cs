@@ -8,7 +8,7 @@ using System.Windows.Media;
 namespace DesktopPet;
 
 // All art is local vector drawing. Replace this element with a sprite renderer later.
-public sealed class PetRenderer(PetModel pet) : FrameworkElement
+public sealed partial class PetRenderer(PetModel pet) : FrameworkElement
 {
     // Coat colours come from the chosen palette (default Orange = original artwork).
     private CoatPalette palette = CoatPalette.Orange;
@@ -110,6 +110,9 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         // The portal spell: 0..1 envelope and the seconds since it began.
         public double CastBlend, CastTime;
         public double WaterBlend, WaterTime, StirBlend, StirTime, FishBlend, FishTime, FishBiteAt;
+        public FarmToolPose FarmTool;
+        public double FarmToolBlend, FarmToolTime, FarmToolHit, FarmToolLength;
+        public FarmCrop? FarmToolCrop;
         public bool Walking, Sleeping, Waking, PickedUp, Airborne, Seeking, Eating, Grooming, Climbing;
         public PetEmotion Emotion;
         // Battle Mode: the wooden sword's grip (front paw) and angle (degrees from upright, toward the front).
@@ -258,6 +261,16 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
             p.FishBiteAt = pet.FishingBiteAt;
             double ramp = Math.Clamp(p.FishTime / 0.25, 0, 1);
             p.FishBlend = ramp * ramp * (3 - 2 * ramp);
+        }
+        if (pet.FarmTool != FarmToolPose.None && selfCare)
+        {
+            p.FarmTool = pet.FarmTool;
+            p.FarmToolTime = pet.FarmToolTime;
+            p.FarmToolHit = pet.FarmToolHit;
+            p.FarmToolLength = pet.FarmToolLength;
+            p.FarmToolCrop = pet.FarmToolCrop;
+            double ramp = Math.Clamp(Math.Min(pet.FarmToolTime / 0.15, (pet.FarmToolLength - pet.FarmToolTime) / 0.15), 0, 1);
+            p.FarmToolBlend = ramp * ramp * (3 - 2 * ramp);
         }
         p.EatTime = PetModel.TreatDuration - pet.TreatRemaining;
         p.Dish = pet.TreatDish;
@@ -1131,7 +1144,7 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
             }
             dc.Pop();
         }
-        if (pet.BatRemaining > 0 && !p.PickedUp && !p.Sleeping && !p.Airborne && !p.Waking)
+        if (pet.BatRemaining > 0 && !p.PickedUp && !p.Sleeping && !p.Airborne && !p.Waking && p.FarmTool is FarmToolPose.None or FarmToolPose.Pounce)
         {
             dc.PushTransform(new ScaleTransform(p.FacingScale, 1, 56, 56));
             Oval(dc, Fur, 84 + Math.Sin(pet.BatRemaining / 0.3 * Math.PI) * 12, 98, 10, 6);
@@ -1159,6 +1172,10 @@ public sealed class PetRenderer(PetModel pet) : FrameworkElement
         if (p.WaterBlend > 0) DrawWateringCan(dc, p);
         if (p.StirBlend > 0) DrawStirStick(dc, p);
         if (p.FishBlend > 0) DrawFishingRod(dc, p);
+        if (p.WaterBlend > 0) DrawWorkSweat(dc, p, p.WaterTime, p.WaterBlend);
+        if (p.StirBlend > 0) DrawWorkSweat(dc, p, p.StirTime, p.StirBlend);
+        if (p.FishBlend > 0) DrawFishingMoments(dc, p);
+        if (p.FarmToolBlend > 0) DrawFarmTool(dc, p);
         if (pet.Thought.Visible && !p.PickedUp && !p.Sleeping && !p.Airborne) DrawThoughtBubble(dc);
     }
 

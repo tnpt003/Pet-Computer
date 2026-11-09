@@ -535,6 +535,44 @@ public static class FarmLands
         var spots = taken.SelectMany(land => new[] { land.Left - gap - width, land.Right + gap }).Where(Free).ToList();
         return spots.Count == 0 ? wanted : spots.OrderBy(at => Math.Abs(at - wanted)).First();
     }
+
+    // Where something this wide may stand: each free stretch as the range of its left edge.
+    private static List<(double From, double To)> FreeRanges(double width, IReadOnlyList<(double Left, double Right)> taken, double min, double max, double gap)
+    {
+        var open = new List<(double From, double To)>();
+        double from = min;
+        foreach (var land in taken.OrderBy(land => land.Left))
+        {
+            double to = Math.Min(max, land.Left - gap - width);
+            if (to >= from) open.Add((from, to));
+            from = Math.Max(from, land.Right + gap);
+        }
+        if (max >= from) open.Add((from, max));
+        return open;
+    }
+
+    // Anywhere with room, each free stretch as likely as its length; null when nothing fits.
+    public static double? RandomFreeSpot(Random random, double width, IReadOnlyList<(double Left, double Right)> taken, double min, double max, double gap)
+    {
+        var open = FreeRanges(width, taken, min, max, gap);
+        if (open.Count == 0) return null;
+        double pick = random.NextDouble() * open.Sum(range => range.To - range.From);
+        foreach (var (from, to) in open)
+        {
+            if (pick <= to - from) return from + pick;
+            pick -= to - from;
+        }
+        return open[^1].To;
+    }
+
+    // The way in to a place: from the roomier side, and no farther than that room, so it never passes over land.
+    public static (int Side, double Room) RollWay(double x, double width, IReadOnlyList<(double Left, double Right)> taken, double min, double max, double gap, double roll)
+    {
+        double low = taken.Where(land => land.Right <= x).Select(land => land.Right + gap).DefaultIfEmpty(min).Max();
+        double high = taken.Where(land => land.Left >= x + width).Select(land => land.Left - gap - width).DefaultIfEmpty(max).Min();
+        double left = Math.Max(0, x - Math.Max(min, low)), right = Math.Max(0, Math.Min(max, high) - x);
+        return right >= left ? (1, Math.Min(roll, right)) : (-1, Math.Min(roll, left));
+    }
 }
 
 public enum FarmLiftPhase { Down, Rising, Floating, Falling }

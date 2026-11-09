@@ -9,7 +9,7 @@ namespace DesktopPet;
 public sealed partial class PetWindow
 {
     // From the cat's middle to the tile's middle while it works, so the crop stays in view.
-    private const double FarmChoreGap = 58, FarmFishGap = 100, FarmStalkSpeed = 0.6, FarmStalkCrouch = 0.45;
+    private const double FarmChoreGap = 58, FarmFishGap = 100, FarmStalkSpeed = 0.6, FarmStalkCrouch = 0.45, FarmLeanDown = 0.3;
 
     private readonly FarmChores farmChores = new();
     private readonly FarmBird farmBird = new();
@@ -199,8 +199,27 @@ public sealed partial class PetWindow
     private void DoFarmWork(FarmChoreKind kind, int tile, int facing, bool hit)
     {
         farmCatHands = !farmChores.ByUser;
+        ShowFarmTool(kind, tile);
         DoFarmWorkStep(kind, tile, facing, hit);
+        if (kind is FarmChoreKind.Till or FarmChoreKind.Harvest) pet.PlayCrouch = FarmLeanDown * Math.Max(0, 1 - Math.Abs(farmChores.Time - farmChores.HitTime) / 0.25); // Into the blow, and up again.
         farmCatHands = false;
+    }
+
+    private void ShowFarmTool(FarmChoreKind kind, int tile)
+    {
+        pet.FarmTool = kind switch
+        {
+            FarmChoreKind.Till => FarmToolPose.Till,
+            FarmChoreKind.Sow => FarmToolPose.Sow,
+            FarmChoreKind.Harvest => FarmToolPose.Harvest,
+            FarmChoreKind.Pour => FarmToolPose.Pour,
+            FarmChoreKind.Bird => FarmToolPose.Pounce,
+            _ => FarmToolPose.None
+        };
+        pet.FarmToolTime = farmChores.Time;
+        pet.FarmToolHit = farmChores.HitTime;
+        pet.FarmToolLength = farmChores.WorkLength;
+        if (kind == FarmChoreKind.Harvest && farm!.Tiles[tile].Crop is FarmCrop crop) pet.FarmToolCrop = crop; // Kept once the tile is empty: it is in the cat's paws now.
     }
 
     // Trips come often: what the cat does by itself sounds once a minute at most.
@@ -284,6 +303,8 @@ public sealed partial class PetWindow
         farmChores.Stop();
         pet.WateringRemaining = pet.StirringRemaining = pet.PlayCrouch = 0;
         pet.FishingTime = -1;
+        pet.FarmTool = FarmToolPose.None;
+        pet.FarmToolCrop = null;
         if (pet.Action is not (PetAction.Walking or PetAction.Sitting or PetAction.Looking or PetAction.Idle)) return; // Held, flying or asleep: not ours to change.
         pet.Action = PetAction.Idle;
         pet.VX = pet.SmoothedWalkVelocity = 0;

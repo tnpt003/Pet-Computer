@@ -26,6 +26,11 @@ public sealed partial class PetWindow
     private readonly List<FarmDecorRow> farmStallDecorRows = new();
     private bool farmStallPaused;
     private double farmCartRolled;
+    // Where this visit stands: chosen when the cart comes, and it stays there whatever land is moved.
+    private double farmCartX, farmCartRoom = FarmCartRoll, farmCartScale = 1;
+    private int farmCartSide = 1;
+    private string? farmCartMonitor;
+    private Area farmCartArea;
 
     public bool FarmStallHere => farmStall.Here;
     public bool FarmStallOpen => farmStallWindow != null;
@@ -34,7 +39,8 @@ public sealed partial class PetWindow
     public bool TryFarmStall()
     {
         if (farm == null || farmStall.Phase != FarmStallPhase.Away || !FarmVisible || FarmLandInAir
-            || Blocking(AutoBlock.Paused | AutoBlock.AnyQuiet | AutoBlock.AnyBattle | AutoBlock.Away) != AutoBlock.None) return false;
+            || Blocking(AutoBlock.Paused | AutoBlock.AnyQuiet | AutoBlock.AnyBattle | AutoBlock.Away) != AutoBlock.None
+            || !PickFarmCartPlace(FindFarmMonitor(farmMonitor))) return false;
         farmStall.Arrive(farm.NewOffers(featureRandom), farm.NewDecors(featureRandom));
         ShowFarmCart();
         ShowFarmCartTip();
@@ -55,7 +61,7 @@ public sealed partial class PetWindow
         if (farmStall.Step(dt)) { CloseFarmCart(); UpdateFarmStall(); return; }
         if (farmCartArt != null && (rolling || farmStall.Rolling))
         {
-            farmCartArt.Rolled = farmCartRolled * FarmCartRoll / FarmStall.RollSeconds;
+            farmCartArt.Rolled = farmCartRolled * farmCartRoom / FarmStall.RollSeconds;
             farmCartArt.InvalidateVisual();
         }
         if (farmCartLabel != null) farmCartLabel.Opacity = farmStall.Phase == FarmStallPhase.Open ? 1 : 0;
@@ -86,25 +92,47 @@ public sealed partial class PetWindow
         PlaceFarmCart();
     }
 
-    // Left of the field if there is room, otherwise the free place nearest to that; never on the land or over the screen's edge.
-    private (double X, int Side) FarmCartPlace
+    // Somewhere free on this monitor, a new place each visit. False when no gap is wide enough.
+    private bool PickFarmCartPlace(FarmMonitor monitor)
     {
-        get
-        {
-            double width = PetFarmStallArt.ArtWidth, wanted = FarmPlotLeft - width - FarmCartGap;
-            double spot = FarmLands.FreeSpot(wanted, width, FarmLandsTaken(farmMonitor, null), farmArea.Left, Math.Max(farmArea.Left, farmArea.Right - width), FarmCartGap);
-            return (spot, spot < FarmPlotLeft ? -1 : 1);
-        }
+        double width = PetFarmStallArt.ArtWidth;
+        var area = monitor.WorkDips;
+        var taken = FarmLandsTaken(monitor.Name, null, withCart: false);
+        double max = area.Right - width;
+        if (FarmLands.RandomFreeSpot(featureRandom, width, taken, area.Left, max, FarmCartGap) is not double x) return false;
+        (farmCartSide, farmCartRoom) = FarmLands.RollWay(x, width, taken, area.Left, max, FarmCartGap, FarmCartRoll);
+        farmCartX = x;
+        StoreFarmCartMonitor(monitor);
+        return true;
     }
 
-    // Every frame: it stands beside the plot, wherever that has been moved to.
+    private void StoreFarmCartMonitor(FarmMonitor monitor)
+    {
+        farmCartMonitor = monitor.Name;
+        farmCartArea = monitor.WorkDips;
+        farmCartScale = monitor.Scale;
+    }
+
+    // Once a second: the screen may have changed under it. It goes elsewhere only if it has to, and leaves if nowhere is free.
+    private void RefreshFarmCart()
+    {
+        if (farmCartWindow == null || FarmLandInAir) return;
+        var monitor = FindFarmMonitor(farmCartMonitor);
+        var area = monitor.WorkDips;
+        double right = farmCartX + PetFarmStallArt.ArtWidth;
+        bool clear = farmCartX >= area.Left && right <= area.Right
+            && FarmLandsTaken(monitor.Name, null, withCart: false).All(land => right <= land.Left || farmCartX >= land.Right);
+        if (clear) StoreFarmCartMonitor(monitor);
+        else if (!PickFarmCartPlace(monitor)) ResetFarmCart();
+    }
+
+    // Every frame, for the roll in and out. The land does not matter to it.
     private void PlaceFarmCart()
     {
         if (farmCartWindow == null) return;
-        var (x, side) = FarmCartPlace;
         double shown = Math.Clamp(farmStall.Amount, 0, 1);
         farmCartWindow.Opacity = shown;
-        MoveWindow(farmCartWindow, x + side * (1 - shown) * FarmCartRoll, farmArea.Bottom + PetFarmArt.BottomRoom - PetFarmStallArt.ArtHeight, farmScale);
+        MoveWindow(farmCartWindow, farmCartX + farmCartSide * (1 - shown) * farmCartRoom, farmCartArea.Bottom + PetFarmArt.BottomRoom - PetFarmStallArt.ArtHeight, farmCartScale);
     }
 
     private void CloseFarmCart() => farmCartWindow?.Close();

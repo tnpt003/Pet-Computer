@@ -882,9 +882,8 @@ internal static class FarmChecks
         check(Below(new System.Windows.Interop.WindowInteropHelper(window).Handle, handle), "The cat walks in front of it");
         double rolling = cart.Left;
         frames(FarmStall.RollSeconds + 0.1);
-        check(stall.Phase == FarmStallPhase.Open && cart.Opacity == 1 && Math.Abs(cart.Left - rolling) > 20, "It rolls in and stands");
-        double plotLeft = Field<Window>(window, "farmWindow").Left + PetFarmArt.Side;
-        check(Math.Abs(cart.Left + cart.Width + 4 - plotLeft) < 1.5 && cart.Left >= area.Left - 1, $"It stands just left of the plot ({cart.Left:F0}, plot at {plotLeft:F0})");
+        check(stall.Phase == FarmStallPhase.Open && cart.Opacity == 1 && (Math.Abs(cart.Left - rolling) > 20 || Field<double>(window, "farmCartRoom") < 40), "It rolls in and stands");
+        check(Math.Abs(cart.Left - Field<double>(window, "farmCartX")) < 1.5 && cart.Left >= area.Left - 1 && cart.Left + cart.Width <= area.Right + 1, $"It stands in the place it chose, on the screen ({cart.Left:F0})");
         check(Math.Abs(cart.Top + PetFarmStallArt.Floor - area.Bottom) < 1.5, "Its wheels are on the floor");
 
         check(Item().IsEnabled, "Now the menu item lights");
@@ -982,15 +981,58 @@ internal static class FarmChecks
         SetContext(window, false, 0); Call(window, "TickContext", 1.1);
         frames(0.02);
 
-        // The plot moved: the cart stays beside it, on the side with room.
+        // Where it stands: anywhere free, its own place, whatever land is moved afterwards.
         Art(check);
-        var (x, side) = ((double X, int Side))typeof(PetWindow).GetProperty("FarmCartPlace", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.GetValue(window)!;
+        stall.Reset();
+        var places = new HashSet<int>();
+        bool clearOfLand = true;
+        for (int i = 0; i < 12; i++)
+        {
+            stall.Reset();
+            check(window.TryFarmStall(), "(a visit, to see where it stands)");
+            double place = Field<double>(window, "farmCartX");
+            places.Add((int)(place / 40));
+            clearOfLand &= place >= area.Left && place + PetFarmStallArt.ArtWidth <= area.Right;
+            clearOfLand &= place + PetFarmStallArt.ArtWidth <= window.FarmPlotStart || place >= window.FarmPlotStart + PetFarmArt.PlotWidth;
+            clearOfLand &= place + PetFarmStallArt.ArtWidth <= window.FarmPatchLeft(window.FarmHearth) || place >= window.FarmPatchLeft(window.FarmHearth) + window.FarmHearth.Width;
+            clearOfLand &= place + PetFarmStallArt.ArtWidth <= window.FarmPatchLeft(window.FarmPond) || place >= window.FarmPatchLeft(window.FarmPond) + window.FarmPond.Width;
+            Call(window, "CloseFarmCart");
+            frames(0.02);
+        }
+        check(clearOfLand, "It never stands on land or past the screen's edge");
+        check(places.Count > 1, $"It does not always come to the same place ({places.Count})");
+
+        stall.Reset();
+        check(window.TryFarmStall(), "(a visit, to move the field under it)");
+        frames(FarmStall.RollSeconds + 0.1);
+        double standing = Cart()!.Left, stood = Field<double>(window, "farmCartX");
         double fraction = window.FarmFraction;
-        SetField(window, "farmFraction", 0.0);
-        var (x0, side0) = ((double X, int Side))typeof(PetWindow).GetProperty("FarmCartPlace", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.GetValue(window)!;
-        check(side < 0 && x >= area.Left, "With room it stands on the left");
-        check(side0 > 0 && x0 >= area.Left + PetFarmArt.PlotWidth, "At the left edge it stands past the field");
+        SetField(window, "farmFraction", fraction > 0.5 ? 0.0 : 1.0);
+        frames(0.02);
+        check(Field<double>(window, "farmCartX") == stood && Math.Abs(Cart()!.Left - standing) < 1, "The cart does not follow the field");
         SetField(window, "farmFraction", fraction);
+        frames(0.02);
+        var hearth = window.FarmHearth;
+        double hearthWas = hearth.Fraction;
+        window.BeginFarmPatchMove(hearth);
+        frames(FarmLift.RiseSeconds + 0.1);
+        hearth.Fraction = Math.Clamp((stood - area.Left) / (area.Right - area.Left - hearth.Width), 0, 1);
+        window.DropFarmPatch(hearth);
+        frames(FarmLift.FallSeconds + FarmLift.MaxGlideSeconds + 0.1);
+        double hearthAt = window.FarmPatchLeft(hearth);
+        check(hearth.OnGround && (hearthAt + hearth.Width <= stood || hearthAt >= stood + PetFarmStallArt.ArtWidth), "Land set down on the cart's place goes beside it");
+        check(Field<double>(window, "farmCartX") == stood, "...and the cart stays where it is");
+        hearth.Fraction = hearth.RestFraction = hearthWas;
+
+        // The cat stays in front of the land, even after WPF re-applies Topmost on one of its windows.
+        var ground = Application.Current.Windows.OfType<Window>().First(w => w.Title == "Pet farm" && w.IsLoaded);
+        ground.Topmost = false; ground.Topmost = true;
+        Cart()!.Topmost = false; Cart()!.Topmost = true;
+        check(window.FarmGroundAboveCat, "(Topmost again puts the land over the cat, which is the fault)");
+        Call(window, "KeepFarmBelowCat");
+        check(!window.FarmGroundAboveCat, "The cat is back in front of the land and the cart");
+        ResetCart();
+        void ResetCart() => Call(window, "ResetFarmCart");
 
         stall.Reset(); stall.Schedule(FarmStall.FirstSeconds);
         farm.Xp = 0; farm.Stock.Clear(); farm.Fish.Clear(); farm.Coins = coinsBefore;

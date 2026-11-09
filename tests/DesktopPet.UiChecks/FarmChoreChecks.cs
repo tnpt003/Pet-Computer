@@ -461,8 +461,10 @@ internal static class FarmChoreChecks
             pet.X = window.FarmChoreSpot;
             Features(Frame * 2);
             check(pet.BatRemaining > 0, "The paw reaches out");
+            check(pet.FarmTool == FarmToolPose.Harvest && pet.FarmToolCrop == FarmCrop.Carrot && pet.FarmToolLength == FarmChores.HarvestSeconds, "The cat is shown pulling up that crop");
             int before = field.HarvestedCount(FarmCrop.Carrot);
             Features(FarmChores.HarvestSeconds + 0.1);
+            check(pet.FarmTool == FarmToolPose.None && pet.FarmToolCrop == null && pet.PlayCrouch == 0, "When the job ends nothing stays in its paws");
             check(field.HarvestedCount(FarmCrop.Carrot) == before + 1 && field.Tiles[0].Stage == FarmStage.Wild, "The harvest is counted");
             var gain = Field<System.Windows.Controls.Border?>(window, "farmGain")!;
             check(gain.Opacity == 1, "\"+1\" rises over the tile");
@@ -742,7 +744,26 @@ internal static class FarmChoreChecks
             Plot(a => { a.BirdTile = 3; a.BirdSide = 1; a.BirdAir = 0.45; a.BirdFlying = true; a.BirdTime = 0.1; }, back, $"chore-bird-fly-{tone}");
             Cat(m => m.WateringRemaining = 1, back, $"chore-water-{tone}");
             Cat(m => { m.WateringRemaining = 1; m.Facing = -1; }, back, $"chore-water-left-{tone}");
+            void Tool(FarmToolPose tool, double time, double hit, double length, string name, int facing = 1) => Cat(m =>
+            {
+                m.FarmTool = tool; m.FarmToolTime = time; m.FarmToolHit = hit; m.FarmToolLength = length; m.FarmToolCrop = FarmCrop.Carrot; m.Facing = facing;
+            }, back, $"chore-tool-{name}-{tone}");
+            Tool(FarmToolPose.Till, 0.4, FarmChores.TillHit, FarmChores.TillSeconds, "till-up");
+            Tool(FarmToolPose.Till, 0.75, FarmChores.TillHit, FarmChores.TillSeconds, "till-down");
+            Tool(FarmToolPose.Sow, 0.5, FarmChores.SowHit, FarmChores.SowSeconds, "sow");
+            Tool(FarmToolPose.Harvest, 0.2, FarmChores.HarvestHit, FarmChores.HarvestSeconds, "harvest-reach");
+            Tool(FarmToolPose.Harvest, 0.95, FarmChores.HarvestHit, FarmChores.HarvestSeconds, "harvest-up");
+            Tool(FarmToolPose.Harvest, 0.95, FarmChores.HarvestHit, FarmChores.HarvestSeconds, "harvest-up-left", -1);
+            Tool(FarmToolPose.Pour, 0.6, FarmChores.PourHit, FarmChores.PourSeconds, "pour");
+            Tool(FarmToolPose.Pounce, 0.7, FarmChores.PounceHit, FarmChores.PounceSeconds, "pounce");
+            Cat(m => { m.StirringRemaining = 3.2; }, back, $"chore-tool-stir-sweat-{tone}");
+            Cat(m => { m.FishingTime = 5.2; m.FishingBiteAt = 5; }, back, $"chore-tool-fish-bite-{tone}");
+            Cat(m => { m.FishingTime = 6.2; m.FishingBiteAt = 5; }, back, $"chore-tool-fish-cheer-{tone}");
         }
+        string Idle = Cat(_ => { }, dark, null);
+        foreach (var tool in new[] { FarmToolPose.Till, FarmToolPose.Sow, FarmToolPose.Harvest, FarmToolPose.Pour })
+            check(Cat(m => { m.FarmTool = tool; m.FarmToolTime = 0.28; m.FarmToolHit = 0.3; m.FarmToolLength = 1; }, dark, null) != Idle, $"{tool} shows in the cat's paws");
+        check(Cat(m => { m.FarmTool = FarmToolPose.Till; m.FarmToolTime = 0.28; m.FarmToolHit = 0.3; m.FarmToolLength = 1; m.Action = PetAction.Dragging; }, dark, null) == Cat(m => m.Action = PetAction.Dragging, dark, null), "Picked up, it holds no tool");
         string Land(FarmPatchKind kind, Action<PetFarmArt.Land> set, Color back, string? name)
         {
             var art = new PetFarmArt.Land(kind);
@@ -788,6 +809,7 @@ internal static class FarmChoreChecks
             foreach (int side in new[] { -1, 1 })
             {
                 Scene(FarmPatchKind.Hearth, a => { a.PotDish = FarmDish.CarrotStew; a.Stirring = true; a.HearthFire = 1; a.HearthTime = 1.4; }, side, 58, m => m.StirringRemaining = 4, back, $"hearth-stir-{(side < 0 ? "left" : "right")}-{tone}");
+                Scene(FarmPatchKind.Hearth, a => { a.PourDish = FarmDish.CarrotStew; a.PourAge = 0.5; }, side, 58, m => { m.FarmTool = FarmToolPose.Pour; m.FarmToolTime = 0.6; m.FarmToolHit = FarmChores.PourHit; m.FarmToolLength = FarmChores.PourSeconds; }, back, $"hearth-pour-{(side < 0 ? "left" : "right")}-{tone}");
                 foreach (var (time, stage) in new[] { (3.0, "wait"), (6.3, "bite"), (7.2, "reel") })
                     Scene(FarmPatchKind.Pond, a => { a.Fishing = true; a.FishSide = side; a.HearthTime = time; a.CaughtFish = time > 6 ? FarmFish.Carp : null; a.CaughtAge = time > 6 ? (time - 6) / 1.4 : 0; }, side, 100, m => { m.FishingTime = time; m.FishingBiteAt = 6; }, back, $"pond-fish-{stage}-{(side < 0 ? "left" : "right")}-{tone}");
             }

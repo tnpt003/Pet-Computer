@@ -1440,3 +1440,14 @@ Muốn thử nhanh: đặt `PET_DATA_DIRECTORY` tới một thư mục riêng, s
 - [ ] Bật mèo nói chuyện: lên cấp, câu được Cá vàng, giao xe mỗi lần có một câu hợp cảnh, không lặp liên tục khi giao nhiều lời mua; đọc lại câu tiếng Nhật
 - [ ] Khi mèo ngủ, app toàn màn hình, tắt nói chuyện hoặc tắt Python: không có câu, mèo không thức dậy, nhãn trên ruộng vẫn như cũ
 - [ ] DPI 125–200%: thẻ Nông trại trong Nhật ký không bị cắt, cuộn được
+
+## Nông trại — Xe hàng ngẫu nhiên, mèo trên vùng đất, hoạt ảnh làm vườn (09/11)
+
+- [ ] Xe đến vài lần: vị trí khác nhau, không đè lên Ruộng, Bếp, Hồ, cả lúc lăn vào và lăn ra
+- [ ] Nhấc và kéo Ruộng, Bếp, Hồ khi xe đang đứng: xe đứng yên; thả vùng đất trúng xe thì vùng đó trượt sang chỗ trống
+- [ ] Có nhiều vùng đất trên màn nhỏ, không còn chỗ trống: xe không đến, không đè lên đất
+- [ ] Mèo đi qua Ruộng, Bếp, Hồ, xe: mèo luôn ở trước, kể cả sau khi mở menu, bảng, đổi cửa sổ khác hoặc để lâu
+- [ ] Bảng nông trại, menu chuột phải và bong bóng thoại vẫn nằm trên mèo như trước
+- [ ] Xem mèo cày, gieo, gặt, đổ nồi, tưới, khuấy, câu cá, đuổi chim: đạo cụ đúng hướng cả khi quay trái, không bị cắt, nhịp có vừa mắt không
+- [ ] Đang làm thì bế mèo, Pause, Quiet hoặc cho ngủ: đạo cụ biến mất ngay, không kẹt
+- [ ] DPI 125–200% và nhiều màn hình: xe đứng đúng sàn, đạo cụ không lệch

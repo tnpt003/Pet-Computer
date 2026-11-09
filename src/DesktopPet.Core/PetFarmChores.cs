@@ -3,6 +3,9 @@ using System;
 namespace DesktopPet;
 
 public enum FarmChoreKind { None, Water, Harvest, Bird, Till, Sow, Pour, Stir, Fishing }
+
+// What the renderer puts in the cat's paws while it works (PetRenderer.Farm.cs).
+public enum FarmToolPose { None, Till, Sow, Harvest, Pour, Pounce }
 public enum FarmChorePhase { None, Notice, Walk, Work }
 public enum FarmBirdPhase { Away, Landing, Perched, Leaving }
 
@@ -19,7 +22,7 @@ public sealed class FarmChores
     public const double RetrySeconds = 45;
     public const double NoticeSeconds = 0.7, WalkLimitSeconds = 20;
     public const double WaterSeconds = PetModel.WaterDuration, WaterHit = 1.3;
-    public const double HarvestSeconds = 0.9, HarvestHit = 0.3;
+    public const double HarvestSeconds = 1.4, HarvestHit = 0.3;
     public const double PounceSeconds = 1, PounceHit = 0.5;
     public const double TillSeconds = 1.2, TillHit = 0.6, SowSeconds = 1, SowHit = 0.5;
     // At the hearth (docs/FARM-GAME.md). The walk may be longer: the hearth can be a whole screen away.
@@ -61,6 +64,7 @@ public sealed class FarmChores
     public bool WalkedTooLong => Phase == FarmChorePhase.Walk && Time >= (Cooking || Kind == FarmChoreKind.Fishing ? CookWalkLimitSeconds : WalkLimitSeconds);
     public bool Finished => Phase == FarmChorePhase.Work && Time >= WorkSeconds;
     private double WorkSeconds => Kind switch { FarmChoreKind.Water => WaterSeconds, FarmChoreKind.Harvest => HarvestSeconds, FarmChoreKind.Till => TillSeconds, FarmChoreKind.Sow => SowSeconds, FarmChoreKind.Pour => PourSeconds, FarmChoreKind.Stir => StirSeconds, FarmChoreKind.Fishing => BiteAt + ReelSeconds + FishShowSeconds, _ => PounceSeconds };
+    public double WorkLength => WorkSeconds;
     public double HitTime => Kind switch { FarmChoreKind.Water => WaterHit, FarmChoreKind.Harvest => HarvestHit, FarmChoreKind.Till => TillHit, FarmChoreKind.Sow => SowHit, FarmChoreKind.Pour => PourHit, FarmChoreKind.Stir => StirSeconds, FarmChoreKind.Fishing => BiteAt + ReelSeconds, _ => PounceHit };
 
     // The wait after a look for work. It counts only while no trip is on, so a rest begins when the trip ends.

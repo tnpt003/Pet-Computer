@@ -162,6 +162,27 @@ internal static class FarmTests
         var two = new[] { (100.0, 200.0), (210.0, 300.0) };
         check(FarmLands.FreeSpot(205, 50, two, 0, 900, 6) == 306, "A gap too narrow is skipped");
 
+        // The stall comes down anywhere free, and rolls in without crossing land.
+        var random = new Random(7);
+        bool neverOn = true, inBounds = true;
+        var seen = new HashSet<int>();
+        for (int i = 0; i < 400; i++)
+        {
+            double x = FarmLands.RandomFreeSpot(random, 50, two, 0, 900, 6) ?? -1;
+            neverOn &= two.All(land => x + 50 <= land.Item1 - 6 + 0.001 || x >= land.Item2 + 6 - 0.001);
+            inBounds &= x >= 0 && x <= 900;
+            seen.Add((int)(x / 100));
+        }
+        check(neverOn && inBounds, "A random place is free and on the screen");
+        check(seen.Contains(0) && seen.Contains(4) && seen.Contains(8), "...and it is not always the same place");
+        check(FarmLands.RandomFreeSpot(random, 500, field, 0, 150, 6) == null, "No room: no place");
+        check(FarmLands.RandomFreeSpot(random, 50, Array.Empty<(double, double)>(), 900, 900, 6) == 900, "A single possible spot is that spot");
+        var (side, room) = FarmLands.RollWay(240, 50, field, 0, 900, 6, 150);
+        check(side == 1 && room == 150, "It rolls in from the roomier side");
+        var (side2, room2) = FarmLands.RollWay(40, 50, new[] { (100.0, 200.0), (500.0, 600.0) }, 0, 900, 6, 150);
+        check(side2 == -1 && room2 == 40, "...and no farther than the room there is");
+        check(FarmLands.RollWay(400, 50, new[] { (300.0, 394.0), (456.0, 500.0) }, 0, 900, 6, 150).Room == 0, "A tight gap: it does not roll at all");
+
         string folder = Path.Combine(Path.GetTempPath(), "pet-lands-" + Guid.NewGuid().ToString("N"));
         string path = Path.Combine(folder, "farm.json");
         try

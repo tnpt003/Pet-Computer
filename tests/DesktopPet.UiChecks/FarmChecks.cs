@@ -1313,6 +1313,27 @@ internal static class FarmChecks
         window.DropFarmPatch(patch);
         frames(FarmLift.FallSeconds + FarmLift.MaxGlideSeconds + 0.1);
         check(patch.OnGround && farm.CoopFractionX != null, "It comes down and its place is kept");
+        // Tools are bought in the shop; fertilizer goes on a tile from its menu.
+        farm.Xp = 280; farm.Coins = 2000;
+        window.OpenFarmShop();
+        check(window.FarmBuyTool(hoe: true) && farm.HoeTier == 1 && !window.FarmBuyTool(hoe: true), "A silver hoe at level 5, gold has to wait");
+        var toolRows = Field<System.Collections.IList>(window, "farmShopTools");
+        check(toolRows.Count == 2, "Hoe and can have their rows");
+        window.UpdateLayout();
+        Render(Application.Current.Windows.OfType<Window>().First(w => w.Title == "Pet farm shop" && w.IsLoaded), "farm-shop-tools.png");
+        window.CloseFarmShop();
+        farm.HoeTier = 0;
+        for (int i = 0; i < PetFarm.TileCount; i++) farm.Tiles[i] = new FarmTile();
+        farm.Till(1); farm.Plant(1, FarmCrop.Radish);
+        SetField(window, "farmHover", 1);
+        check(window.FarmMenuItems().Any(item => ((string)item.Header).StartsWith("Fertilize · 15")), "Over a growing tile the menu offers fertilizer");
+        check(window.FarmFertilize(1) && farm.Tiles[1].Fertilized && farm.Coins == 2000 - 800 - 15, "It is paid for and done");
+        check(!window.FarmMenuItems().Any(item => ((string)item.Header).StartsWith("Fertilize")), "...once");
+        SetField(window, "farmHover", 0);
+        check(!window.FarmMenuItems().Any(item => ((string)item.Header).StartsWith("Fertilize")), "Bare ground takes none");
+        SetField(window, "farmHover", -1);
+        for (int i = 0; i < PetFarm.TileCount; i++) farm.Tiles[i] = new FarmTile();
+
         Coop()!.Close();
         patch.Monitor = null;
         patch.Fraction = patch.RestFraction = 0;

@@ -677,6 +677,20 @@ internal static class FarmChoreChecks
             Hearth();
             Pond();
 
+            // A better can waters the tiles beside this one, on the same trip.
+            Free(); Clear(field);
+            field.CanTier = 2;
+            Thirsty(field, 0); Thirsty(field, 1); Thirsty(field, 2); Thirsty(field, 3);
+            check(window.TryFarmVisit() && window.FarmChoreNow == FarmChoreKind.Water, "(off to water)");
+            int watering = window.FarmChoreTile;
+            pet.X = window.FarmChoreSpot;
+            Features(Frame * 2);
+            Features(FarmChores.WaterHit + Frame);
+            check(pet.FarmToolTier == 2 && field.TilesAt(FarmStep.Water).Count == 1 && field.Next(watering) == FarmStep.Wait, "A gold can waters two more tiles");
+            Features(FarmChores.WaterSeconds);
+            check(pet.FarmToolTier == 0, "When it is over the tool is put away");
+            field.CanTier = 0;
+
             // Now and then it goes to play with the hens.
             Free(); Clear(field);
             field.Hens = 2;
@@ -799,6 +813,8 @@ internal static class FarmChoreChecks
             Tool(FarmToolPose.Drop, 0.15, FarmChores.DropHit, FarmChores.DropSeconds, "drop");
             Plot(a => { a.BasketFill = 3; a.BasketBounce = 0.3; }, back, $"chore-basket-full-{tone}");
             Plot(a => { a.BasketFill = 0; }, back, $"chore-basket-empty-{tone}");
+            Cat(m => { m.WateringRemaining = 1; m.FarmToolTier = 2; }, back, $"chore-water-gold-{tone}");
+            Cat(m => { m.FarmTool = FarmToolPose.Till; m.FarmToolTime = 0.4; m.FarmToolHit = FarmChores.TillHit; m.FarmToolLength = FarmChores.TillSeconds; m.FarmToolTier = 1; }, back, $"chore-till-silver-{tone}");
             Cat(m => { m.StirringRemaining = 3.2; }, back, $"chore-tool-stir-sweat-{tone}");
             Cat(m => { m.FishingTime = 5.2; m.FishingBiteAt = 5; }, back, $"chore-tool-fish-bite-{tone}");
             Cat(m => { m.FishingTime = 6.2; m.FishingBiteAt = 5; }, back, $"chore-tool-fish-cheer-{tone}");

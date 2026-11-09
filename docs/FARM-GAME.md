@@ -146,7 +146,7 @@ Người dùng duyệt cả sáu mốc, chưa phát hành, Mốc E (chuẩn bị
 | 2. Chất lượng nông sản | Tưới đúng giờ có cơ hội ra hàng vàng | Xong, còn test tay |
 | 3. Chuồng gà | Vùng đất thứ tư, gà, trứng, 2 món mới, mèo đuổi gà | Xong, còn test tay |
 | 4. Mùa vụ | Bốn mùa theo tháng của máy, mỗi mùa một cây riêng, cỏ đổi màu | Xong, còn test tay |
-| 5. Công cụ và phân bón | Cuốc, bình tưới ba bậc; phân bón theo ô | Chưa làm |
+| 5. Công cụ và phân bón | Cuốc, bình tưới ba bậc; phân bón theo ô | Xong, còn test tay |
 | 6. Mèo hàng xóm | Khách ghé xin đồ, tặng quà | Chưa làm |
 
 ### Luật Mốc 1 Giỏ nông sản (duyệt 09/11)
@@ -172,6 +172,11 @@ Người dùng duyệt cả sáu mốc, chưa phát hành, Mốc E (chuẩn bị
 - Mùa theo tháng trên máy, kiểu bán cầu Bắc: Xuân 3–5, Hạ 6–8, Thu 9–11, Đông 12–2. Bảng Kho có dòng mùa; viền cỏ của Ruộng, Bếp, Hồ, Chuồng đổi màu theo mùa.
 - Cây theo mùa (mở ở cấp 3, chỉ gieo được trong mùa, kể cả mèo tự gieo lại): Dâu tây (Xuân, 25 phút, hạt 8, bán 22, 9 XP), Ngô (Hạ, 50 phút, hạt 14, bán 40, 16 XP), Khoai lang (Thu, 70 phút, hạt 18, bán 55, 22 XP), Cải thảo (Đông, 30 phút, hạt 9, bán 26, 10 XP). Năm cây cũ gieo quanh năm.
 - Cây đang trồng khi đổi mùa vẫn lớn và gặt được. Hàng còn trong kho giữ nguyên và vẫn bán được; dòng của cây trái mùa chỉ hiện khi còn hàng. Xe hàng chỉ hỏi mua cây đúng mùa.
+
+### Luật Mốc 5 Công cụ và phân bón (duyệt 09/11)
+
+- Cuốc và bình tưới có ba bậc Đồng, Bạc (800 xu, cấp 5), Vàng (2.500 xu, cấp 8), mua ở bảng Kho. Mỗi bậc cho mèo làm thêm một ô kề trong cùng chuyến, ô gần nhất trước (cày chỉ các ô mèo được gieo lại); bấm tay và làm cả ruộng không đổi. Đồ mèo cầm đổi màu theo bậc.
+- Phân bón 15 xu mỗi ô, chuột phải vào ô đang lớn: "Bón phân". Mỗi vụ một lần: rút 25% thời gian lớn còn lại và các chặng sau, cơ hội hàng vàng lên 55%. Ô đã bón có hạt phân trên luống. Túi phân được tặng (Mốc 6) dùng trước xu.
 
 ## Giai đoạn 1
 

@@ -15,6 +15,11 @@ public sealed partial class PetRenderer
 
     private static double Ease(double k) => k * k * (3 - 2 * k);
 
+    private static readonly Brush ToolSilver = PetUi.Hex("#DDE5EC");
+
+    // Silver and gold show on the tool; the first tier is the tool's own colour.
+    private static Brush ToolShade(int tier, Brush plain) => tier switch { 1 => ToolSilver, 2 => PetUi.Game.Gold, _ => plain };
+
     private void DrawFarmTool(DrawingContext dc, in Pose p)
     {
         dc.PushTransform(new ScaleTransform(p.FacingScale, 1, 56, 56));
@@ -63,7 +68,7 @@ public sealed partial class PetRenderer
         dc.PushTransform(new RotateTransform(35 - 90 * raise));
         dc.DrawLine(StirInk, new Point(0, 0), new Point(38, 0));
         dc.DrawLine(StirWood, new Point(0, 0), new Point(38, 0));
-        dc.DrawRoundedRectangle(HoeMetal, CanInk, new Rect(33, -1, 9, 14), 2, 2);
+        dc.DrawRoundedRectangle(ToolShade(p.ToolTier, HoeMetal), CanInk, new Rect(33, -1, 9, 14), 2, 2);
         dc.Pop(); dc.Pop();
         Oval(dc, Fur, 84, 76, 7, 6.5);
         double age = (t - hit) / 0.5;

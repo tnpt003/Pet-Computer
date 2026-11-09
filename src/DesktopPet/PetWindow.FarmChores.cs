@@ -258,6 +258,7 @@ public sealed partial class PetWindow
         pet.FarmToolLength = farmChores.WorkLength;
         pet.FarmToolHold = farmCropInPaws;
         pet.FarmToolGold = farmCropInPaws && farm!.LastHarvestGold;
+        pet.FarmToolTier = kind == FarmChoreKind.Till ? farm!.HoeTier : kind == FarmChoreKind.Water ? farm!.CanTier : 0;
         if (kind == FarmChoreKind.Harvest && farm!.Tiles[tile].Crop is FarmCrop crop) pet.FarmToolCrop = crop; // Kept once the tile is empty: it is in the cat's paws now.
     }
 
@@ -307,6 +308,7 @@ public sealed partial class PetWindow
                 {
                     StartFarmEffect(tile, FarmEffect.Till);
                     PlayFarmSound("ball_tap");
+                    TillFarmNeighbours(tile);
                     FarmChanged();
                 }
                 break;
@@ -317,7 +319,11 @@ public sealed partial class PetWindow
             case FarmChoreKind.Water:
                 HoldStill(PetAction.Sitting, facing);
                 pet.WateringRemaining = Math.Max(0, FarmChores.WaterSeconds - farmChores.Time);
-                if (hit && farm!.Next(tile) == FarmStep.Water) FarmClick(tile);
+                if (hit && farm!.Next(tile) == FarmStep.Water)
+                {
+                    FarmClick(tile);
+                    WaterFarmNeighbours(tile);
+                }
                 break;
             case FarmChoreKind.Harvest:
                 HoldStill(PetAction.Idle, facing);
@@ -350,6 +356,31 @@ public sealed partial class PetWindow
         }
     }
 
+    // A better hoe or can: as many tiles more on the same trip as the tool's tier.
+    private void TillFarmNeighbours(int tile)
+    {
+        int left = farm!.HoeTier;
+        foreach (int near in PetFarm.ToolReach(tile))
+        {
+            if (left == 0) break;
+            if (farm.Next(near) != FarmStep.Till || farm.ResowCrop(near) == null || !farm.Till(near, keepLastCrop: true)) continue;
+            StartFarmEffect(near, FarmEffect.Till);
+            left--;
+        }
+    }
+
+    private void WaterFarmNeighbours(int tile)
+    {
+        int left = farm!.CanTier;
+        foreach (int near in PetFarm.ToolReach(tile))
+        {
+            if (left == 0) break;
+            if (farm.Next(near) != FarmStep.Water) continue;
+            FarmClick(near);
+            left--;
+        }
+    }
+
     private void StopFarmChore()
     {
         if (!farmChores.Active) return;
@@ -359,6 +390,7 @@ public sealed partial class PetWindow
         pet.FarmTool = FarmToolPose.None;
         pet.FarmToolCrop = null;
         pet.FarmToolHold = pet.FarmToolGold = farmCropInPaws = false;
+        pet.FarmToolTier = 0;
         if (pet.Action is not (PetAction.Walking or PetAction.Sitting or PetAction.Looking or PetAction.Idle)) return; // Held, flying or asleep: not ours to change.
         pet.Action = PetAction.Idle;
         pet.VX = pet.SmoothedWalkVelocity = 0;

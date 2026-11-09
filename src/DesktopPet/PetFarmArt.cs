@@ -6,7 +6,7 @@ using System.Windows.Media;
 namespace DesktopPet;
 
 // One tile as the art draws it (PetWindow.Farm.cs fills these from PetFarm).
-public readonly record struct FarmTileView(FarmStage Stage, FarmCrop? Crop, bool Wet, bool NeedsWater, double Progress, bool Locked = false);
+public readonly record struct FarmTileView(FarmStage Stage, FarmCrop? Crop, bool Wet, bool NeedsWater, double Progress, bool Locked = false, bool Fertilized = false);
 
 public enum FarmEffect { None, Till, Plant, Water, Harvest, Grow }
 
@@ -283,12 +283,17 @@ public sealed partial class PetFarmArt : FrameworkElement
         return path.Append(" Z").ToString();
     }
 
+    private static readonly Brush FertilizerGrain = PetUi.Hex("#E9D9A8");
+
     private void DrawBed(DrawingContext dc, int index)
     {
         var tile = Tiles[index];
         var bed = new Rect(TileLeft(index) + 4, SoilTop + 8, TileWidth - 8, SoilHeight - 13);
         var fill = tile.Locked ? LockedMoss : tile.Stage == FarmStage.Wild ? Moss : tile.Wet ? Wet : Tilled;
         dc.DrawRoundedRectangle(fill, InkThin, bed, 6, 6);
+        if (tile.Fertilized)
+            foreach (var (x, y) in new[] { (9.0, 6.0), (20.0, 10.0), (31.0, 5.0), (41.0, 9.0) })
+                dc.DrawEllipse(FertilizerGrain, null, new Point(bed.Left + x * 0.95, bed.Top + y), 1.7, 1.4);
         if (tile.Stage == FarmStage.Wild)
         {
             for (int blade = 0; blade < 4; blade++)
@@ -830,6 +835,42 @@ public sealed class FarmFishIcon : FrameworkElement
         dc.PushTransform(new ScaleTransform(zoom, zoom));
         PetFarmArt.DrawFish(dc, fish);
         dc.Pop(); dc.Pop();
+    }
+}
+
+// A hoe or a watering can as a small picture (the shop): 0 bronze, 1 silver, 2 gold.
+public sealed class FarmToolIcon : FrameworkElement
+{
+    private static readonly Brush Bronze = PetUi.Hex("#C98A52"), Silver = PetUi.Hex("#DDE5EC"), Handle = PetUi.Hex("#B4815E");
+    private static readonly Pen Ink = PetUi.FrozenPen(PetUi.ArtInk, 2), HandlePen = PetUi.FrozenPen(Handle, 3.4), HandleInk = PetUi.FrozenPen(PetUi.ArtInk, 6);
+    private readonly bool hoe;
+    public int Tier { get; set; }
+
+    public FarmToolIcon(bool hoe, double size = 26)
+    {
+        this.hoe = hoe;
+        Width = Height = size;
+        IsHitTestVisible = false;
+    }
+
+    protected override void OnRender(DrawingContext dc)
+    {
+        double zoom = ActualHeight / 34;
+        var metal = Tier switch { 1 => Silver, 2 => PetUi.Game.Gold, _ => Bronze };
+        dc.PushTransform(new ScaleTransform(zoom, zoom));
+        if (hoe)
+        {
+            dc.DrawLine(HandleInk, new Point(7, 30), new Point(26, 7));
+            dc.DrawLine(HandlePen, new Point(7, 30), new Point(26, 7));
+            dc.DrawRoundedRectangle(metal, Ink, new Rect(17, 3, 15, 10), 2, 2);
+        }
+        else
+        {
+            dc.DrawRoundedRectangle(metal, Ink, new Rect(7, 12, 18, 18), 4, 4);
+            dc.DrawLine(Ink, new Point(25, 22), new Point(33, 12));
+            dc.DrawEllipse(null, Ink, new Point(6, 20), 4.5, 6);
+        }
+        dc.Pop();
     }
 }
 

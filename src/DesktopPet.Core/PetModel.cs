@@ -122,6 +122,8 @@ public sealed class PetModel
     // The tool stays in the paws through this job's end, because the next one goes on with it.
     public bool FarmToolHold;
     public bool FarmToolGold;
+    // 0 bronze, 1 silver, 2 gold: what this job's tool is made of.
+    public int FarmToolTier;
     public double BatRemaining;
     public double PlayCrouch;
     // Battle Mode, presentation only (the window copies them from BattleSim each frame):

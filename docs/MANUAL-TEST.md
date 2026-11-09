@@ -1459,3 +1459,4 @@ Muốn thử nhanh: đặt `PET_DATA_DIRECTORY` tới một thư mục riêng, s
 - [ ] Mốc 2 Hàng vàng: tưới đúng giờ cả 3 lần thì thỉnh thoảng gặt ra "★"; tưới trễ không bao giờ ra; bảng Kho có nút ★ riêng không tràn dòng ở vi/en/ja; xe hàng và bếp vẫn nhận được hàng vàng khi thiếu hàng thường
 - [ ] Mốc 3 Chuồng gà: mua ở Kho khi đủ cấp 3; chuồng hiện ngay không đè đất khác; gà đi lại, mổ; chuột phải thu trứng; di chuyển chuồng như Bếp; mèo tới vồ gà vài phút một lần; 2 món trứng trong Nấu ăn và mèo ăn đúng hình
 - [ ] Mốc 4 Mùa vụ: đổi tháng của máy (hoặc `PET_DATA_DIRECTORY` riêng) để xem cỏ đổi màu và cây theo mùa đúng trong menu gieo; nhìn 4 cây mới có dễ nhận ra; cây đang trồng khi đổi mùa vẫn gặt được
+- [ ] Mốc 5 Công cụ: mua Cuốc/Bình bậc Bạc, Vàng ở Kho, mèo tưới/cày thêm ô kề trong một chuyến, đồ cầm đổi màu; chuột phải ô đang lớn để bón phân, thấy hạt phân và cây lớn nhanh hơn; nhãn nút không tràn ở vi/en/ja

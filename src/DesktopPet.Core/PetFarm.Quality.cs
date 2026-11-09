@@ -41,5 +41,5 @@ public sealed partial class PetFarm
         tile.ThirstySince is not DateTime since || (utcNow - since).TotalSeconds <= OnTimeSeconds;
 
     // Random null: never golden.
-    private bool ComesUpGolden(FarmTile tile, Random? random) => random != null && !tile.LateWater && random.NextDouble() < GoldChance;
+    private bool ComesUpGolden(FarmTile tile, Random? random) => random != null && !tile.LateWater && random.NextDouble() < (tile.Fertilized ? FertilizedGoldChance : GoldChance);
 }

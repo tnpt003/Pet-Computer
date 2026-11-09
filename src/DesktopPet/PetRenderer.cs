@@ -114,6 +114,7 @@ public sealed partial class PetRenderer(PetModel pet) : FrameworkElement
         public double FarmToolBlend, FarmToolTime, FarmToolHit, FarmToolLength;
         public FarmCrop? FarmToolCrop;
         public bool FarmToolGold;
+        public int ToolTier;
         public bool Walking, Sleeping, Waking, PickedUp, Airborne, Seeking, Eating, Grooming, Climbing;
         public PetEmotion Emotion;
         // Battle Mode: the wooden sword's grip (front paw) and angle (degrees from upright, toward the front).
@@ -263,6 +264,7 @@ public sealed partial class PetRenderer(PetModel pet) : FrameworkElement
             double ramp = Math.Clamp(p.FishTime / 0.25, 0, 1);
             p.FishBlend = ramp * ramp * (3 - 2 * ramp);
         }
+        p.ToolTier = selfCare ? pet.FarmToolTier : 0;
         if (pet.FarmTool != FarmToolPose.None && selfCare)
         {
             p.FarmTool = pet.FarmTool;
@@ -1264,8 +1266,9 @@ public sealed partial class PetRenderer(PetModel pet) : FrameworkElement
         dc.PushTransform(new TranslateTransform(92, 74));
         dc.PushTransform(new RotateTransform(tip));
         dc.DrawGeometry(null, CanInk, CanHandle);
-        dc.DrawGeometry(PetUi.Mint, CanInk, CanSpout);
-        dc.DrawRoundedRectangle(PetUi.Mint, CanInk, new Rect(-12, -11, 23, 22), 4, 4);
+        var body = ToolShade(p.ToolTier, PetUi.Mint);
+        dc.DrawGeometry(body, CanInk, CanSpout);
+        dc.DrawRoundedRectangle(body, CanInk, new Rect(-12, -11, 23, 22), 4, 4);
         dc.DrawEllipse(PetUi.Game.Gold, CanInkThin, new Point(27.5, -8.5), 3.4, 5.6);
         dc.Pop(); dc.Pop();
         Oval(dc, Fur, 80, 77, 7, 6.5);

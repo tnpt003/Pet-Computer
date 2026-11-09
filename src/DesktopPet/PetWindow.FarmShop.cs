@@ -21,6 +21,8 @@ public sealed partial class PetWindow
     private TextBlock? farmShopCoins, farmShopTileName, farmShopTileNote, farmShopTilePrice, farmShopScareName, farmShopScareNote, farmShopScarePrice, farmShopSellAllText;
     private Border? farmShopTileButton, farmShopScareButton, farmShopSellAll, farmShopCoopButton, farmShopEggRow, farmShopEggButton;
     private TextBlock? farmShopCoopName, farmShopCoopNote, farmShopCoopPrice, farmShopEggCount, farmShopEggPrice;
+    private sealed record FarmToolRow(bool Hoe, FarmToolIcon Icon, TextBlock Note, Border Button, TextBlock Price);
+    private readonly List<FarmToolRow> farmShopTools = new();
     private readonly List<(FarmCrop Crop, TextBlock Count, Border Button, TextBlock Price, Border Gold, TextBlock GoldPrice, Border Row)> farmShopRows = new();
     private readonly List<(FarmFish Fish, TextBlock Count, Border Button, TextBlock Price)> farmShopFishRows = new();
     private bool farmShopPaused;
@@ -136,6 +138,18 @@ public sealed partial class PetWindow
         var coopRow = FarmShopRow(new FarmEggIcon(26), "", farmShopCoopNote, farmShopCoopButton);
         farmShopCoopName = FarmShopRowName(coopRow);
         body.Children.Add(coopRow);
+
+        farmShopTools.Clear();
+        foreach (bool hoe in new[] { true, false })
+        {
+            var note = PanelLine(PetUi.SmallSize, maxWidth: 170);
+            note.Foreground = PetUi.Game.Soft;
+            var chosen = hoe;
+            var (button, price, _) = HudButton(() => FarmBuyTool(chosen), plain: true);
+            var icon = new FarmToolIcon(hoe);
+            body.Children.Add(FarmShopRow(icon, hoe ? L("Cuốc", "Hoe") : L("Bình tưới", "Watering can"), note, button));
+            farmShopTools.Add(new FarmToolRow(hoe, icon, note, button, price));
+        }
 
         body.Children.Add(FarmDecorPanel());
 
@@ -292,6 +306,7 @@ public sealed partial class PetWindow
         ShowFarmShopButton(farmShopScareButton!, !paused && !farm.Scarecrow && farm.Coins >= PetFarm.ScarecrowPrice);
 
         UpdateFarmShopCoop();
+        UpdateFarmShopTools();
         UpdateFarmShopDecors();
 
         farmShopSellAllText!.Text = LF($"Bán hết · +{farm.StockValue} xu", $"Sell all · +{farm.StockValue}");
@@ -311,6 +326,31 @@ public sealed partial class PetWindow
         farmShopCoopNote!.Text = farm.HasCoop ? LF($"Đang có {farm.Hens}/{PetFarm.MaxHens} gà", $"{farm.Hens} of {PetFarm.MaxHens} hens") : L("Gà đẻ trứng cho bếp và xe hàng", "Hens lay eggs for the hearth and the stall");
         farmShopCoopPrice!.Text = full ? L("Đủ gà", "All here") : locked ? FarmLevelText(PetFarm.CoopLevel) : FarmPriceText(price);
         ShowFarmShopButton(farmShopCoopButton!, !paused && !locked && !full && farm.Coins >= price);
+    }
+
+    private string FarmToolTierName(int tier) => tier switch { 1 => L("Bạc", "Silver"), 2 => L("Vàng", "Gold"), _ => L("Đồng", "Bronze") };
+
+    private void UpdateFarmShopTools()
+    {
+        if (farm == null) return;
+        foreach (var row in farmShopTools)
+        {
+            int tier = row.Hoe ? farm.HoeTier : farm.CanTier, next = tier + 1;
+            bool top = tier >= PetFarm.MaxToolTier, locked = !top && farm.Level < PetFarm.ToolLevel(next);
+            row.Icon.Tier = tier;
+            row.Icon.InvalidateVisual();
+            row.Note.Text = LF($"{FarmToolTierName(tier)} · mèo làm thêm {tier} ô", $"{FarmToolTierName(tier)} · cat does {tier} more tiles");
+            row.Price.Text = top ? L("Bậc cao nhất", "Top tier") : locked ? FarmLevelText(PetFarm.ToolLevel(next)) : FarmPriceText(PetFarm.ToolPrice(next));
+            ShowFarmShopButton(row.Button, !paused && !top && !locked && farm.Coins >= PetFarm.ToolPrice(next));
+        }
+    }
+
+    public bool FarmBuyTool(bool hoe)
+    {
+        if (farm == null || paused || !farm.BuyTool(hoe)) return false;
+        PlayPetSound("sparkle");
+        FarmChanged();
+        return true;
     }
 
     public int FarmSellEgg() => FarmSold(farm == null || paused ? 0 : farm.SellEgg());
@@ -346,6 +386,7 @@ public sealed partial class PetWindow
         farmShopCoins = farmShopTileName = farmShopTileNote = farmShopTilePrice = farmShopScareName = farmShopScareNote = farmShopScarePrice = farmShopSellAllText = null;
         farmShopTileButton = farmShopScareButton = farmShopSellAll = farmShopCoopButton = farmShopEggRow = farmShopEggButton = null;
         farmShopCoopName = farmShopCoopNote = farmShopCoopPrice = farmShopEggCount = farmShopEggPrice = null;
+        farmShopTools.Clear();
         farmShopLevel = farmShopNextUnlock = farmShopWeather = farmShopSeason = null;
         farmShopXpFill = null;
         farmShopRows.Clear();

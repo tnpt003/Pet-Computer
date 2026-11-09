@@ -153,6 +153,54 @@ internal static class FarmTests
         protected override double Sample() => value;
     }
 
+    // Tools and fertilizer (docs/FARM-GAME.md, stage 4 milestone 5).
+    private static void Tools(Action<bool, string> check)
+    {
+        var rich = new PetFarm { Coins = 5000, Xp = 150 };
+        check(rich.Level == 4 && !rich.BuyTool(hoe: true) && rich.HoeTier == 0, "Below level 5 no better tool");
+        rich.Xp = 280;
+        check(rich.Level == 5 && rich.BuyTool(hoe: true) && rich.HoeTier == 1 && rich.Coins == 4200, "Silver at level 5");
+        check(!rich.BuyTool(hoe: true) && rich.HoeTier == 1, "Gold needs level 8");
+        rich.Xp = 1000;
+        check(rich.Level == 8 && rich.BuyTool(hoe: true) && rich.HoeTier == 2 && rich.Coins == 1700, "Gold at level 8");
+        check(!rich.BuyTool(hoe: true), "There is nothing above gold");
+        check(rich.BuyTool(hoe: false) && rich.CanTier == 1 && rich.Coins == 900, "The can is bought apart");
+        check(!new PetFarm { Coins = 10, Xp = 2500 }.BuyTool(hoe: false), "Too dear");
+        check(PetFarm.ToolReach(0).SequenceEqual(new[] { 1, 2 }) && PetFarm.ToolReach(3).SequenceEqual(new[] { 4, 2, 5, 1 }) && PetFarm.ToolReach(5).SequenceEqual(new[] { 4, 3 }), "The tiles around, nearest first, on the field");
+
+        var start = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        var farm = new PetFarm { Coins = 100 };
+        check(!farm.CanFertilize(0), "Nothing growing, nothing to fertilize");
+        farm.Till(0); farm.Plant(0, FarmCrop.Carrot);
+        check(farm.CanFertilize(0) && farm.Fertilize(0, start) && farm.Coins == 100 - 4 - PetFarm.FertilizerPrice && farm.Tiles[0].Fertilized, "A bag costs 15");
+        check(!farm.CanFertilize(0) && !farm.Fertilize(0, start), "One a crop");
+        double stage = PetFarm.StageSeconds(FarmCrop.Carrot);
+        farm.Water(0, start);
+        check(Math.Abs((farm.Tiles[0].GrowsUntil!.Value - start).TotalSeconds - stage * 0.75) < 0.01, "The stage after it is shorter");
+        farm.Till(1); farm.Plant(1, FarmCrop.Carrot); farm.Water(1, start);
+        check(farm.Fertilize(1, start.AddSeconds(stage / 2)) && Math.Abs((farm.Tiles[1].GrowsUntil!.Value - start).TotalSeconds - (stage / 2 + stage / 2 * 0.75)) < 0.01, "Fertilized while growing, only what is left is shorter");
+        var free = new PetFarm { Coins = 0, FertilizerStock = 2 };
+        free.Till(0); free.Plant(0, FarmCrop.Radish);
+        check(free.Fertilize(0, start) && free.FertilizerStock == 1 && free.Coins == 0, "A bag that was given is used first");
+        var poor = new PetFarm { Coins = 0 };
+        poor.Till(0); poor.Plant(0, FarmCrop.Radish);
+        check(!poor.CanFertilize(0), "No coins and no bag");
+
+        var lucky = new FixedRandom(PetFarm.FertilizedGoldChance - 0.01);
+        var fed = new PetFarm { Coins = 100 };
+        fed.Till(0); fed.Plant(0, FarmCrop.Radish, start); fed.Fertilize(0, start);
+        var unfed = new PetFarm();
+        unfed.Till(0); unfed.Plant(0, FarmCrop.Radish, start);
+        foreach (var field in new[] { fed, unfed })
+        {
+            var now = start;
+            for (int i = 0; i < PetFarm.WateredStages; i++) { field.Water(0, now); now = now.AddSeconds(PetFarm.StageSeconds(FarmCrop.Radish)); field.Advance(now); }
+        }
+        check(fed.Harvest(0, random: lucky) != null && fed.LastHarvestGold, "Fertilized, the chance is better");
+        check(unfed.Harvest(0, random: lucky) != null && !unfed.LastHarvestGold, "...than it is without");
+        check(!fed.Tiles[0].Fertilized, "The next crop starts unfed");
+    }
+
     // The seasons (docs/FARM-GAME.md, stage 4 milestone 4).
     private static void Seasons(Action<bool, string> check)
     {
@@ -323,6 +371,7 @@ internal static class FarmTests
         Quality(check);
         Coop(check);
         Seasons(check);
+        Tools(check);
         var field = new[] { (100.0, 200.0) };
         check(FarmLands.FreeSpot(400, 50, field, 0, 900, 6) == 400, "A free place is taken as it is");
         check(FarmLands.FreeSpot(120, 50, field, 0, 900, 6) == 44, "On other land it goes to the nearest side");

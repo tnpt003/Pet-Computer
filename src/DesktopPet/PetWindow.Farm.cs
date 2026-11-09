@@ -435,7 +435,7 @@ public sealed partial class PetWindow
         for (int i = 0; i < PetFarm.TileCount; i++)
         {
             var tile = farm.Tiles[i];
-            farmArt.Tiles[i] = new FarmTileView(tile.Stage, tile.Crop, tile.GrowsUntil != null, farm.Next(i) == FarmStep.Water, farm.Progress(i, now), !farm.IsOpen(i));
+            farmArt.Tiles[i] = new FarmTileView(tile.Stage, tile.Crop, tile.GrowsUntil != null, farm.Next(i) == FarmStep.Water, farm.Progress(i, now), !farm.IsOpen(i), tile.Fertilized);
         }
         farmArt.Scarecrow = farm.Scarecrow;
         farmArt.GoldenScarecrow = farm.GoldenScarecrow;
@@ -755,7 +755,26 @@ public sealed partial class PetWindow
         stall.Click += (_, _) => OpenFarmStall();
         var fish = new MenuItem { Header = L("Câu cá", "Go fishing"), IsEnabled = FarmCanFish };
         fish.Click += (_, _) => FarmGoFish();
-        return new[] { shop, kitchen, stall, fish }.Concat(FarmBulkItems()).Append(move).ToArray();
+        return new[] { shop, kitchen, stall, fish }.Concat(FarmBulkItems()).Concat(FarmFertilizeItems()).Append(move).ToArray();
+    }
+
+    // Over a tile that can take it; a bag that was given is used before coins.
+    private IEnumerable<MenuItem> FarmFertilizeItems()
+    {
+        int tile = farmHover;
+        if (farm == null || tile < 0 || !farm.CanFertilize(tile)) yield break;
+        var item = new MenuItem { Header = farm.FertilizerStock > 0 ? LF($"Bón phân (còn {farm.FertilizerStock})", $"Fertilize ({farm.FertilizerStock} left)") : LF($"Bón phân · {PetFarm.FertilizerPrice} xu", $"Fertilize · {PetFarm.FertilizerPrice} coins") };
+        item.Click += (_, _) => FarmFertilize(tile);
+        yield return item;
+    }
+
+    public bool FarmFertilize(int tile)
+    {
+        if (farm == null || paused || farmLift.Phase != FarmLiftPhase.Down || !farm.Fertilize(tile, FarmNow)) return false;
+        StartFarmEffect(tile, FarmEffect.Plant);
+        PlayPetSound("pop");
+        FarmChanged();
+        return true;
     }
 
     public void BeginFarmMove()

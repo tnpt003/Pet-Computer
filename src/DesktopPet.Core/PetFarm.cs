@@ -35,6 +35,7 @@ public sealed class FarmTile
     // UTC since when it has waited for water, and whether any watering came too late for a golden crop.
     public DateTime? ThirstySince { get; set; }
     public bool LateWater { get; set; }
+    public bool Fertilized { get; set; }
 }
 
 // The little field on the desktop (1.5.1 M3): six tiles, their crops and where the plot was left,
@@ -249,6 +250,7 @@ public sealed partial class PetFarm
         Stock = CleanCounts(Stock);
         GoldStock = CleanCounts(GoldStock);
         NormalizeCoop();
+        NormalizeTools();
         Fish =(Fish ?? new()).Where(pair => Enum.TryParse<FarmFish>(pair.Key, out _) && pair.Value > 0).ToDictionary(pair => pair.Key, pair => pair.Value);
         Coins = Math.Clamp(Coins, 0, MaxCoins);
         Xp = Math.Clamp(Xp, 0, MaxXp);
@@ -358,7 +360,7 @@ public sealed partial class PetFarm
         Tiles[index].Crop = crop;
         Tiles[index].GrowsUntil = null;
         Tiles[index].ThirstySince = utcNow;
-        Tiles[index].LateWater = false;
+        Tiles[index].LateWater = Tiles[index].Fertilized = false;
         return true;
     }
 
@@ -368,7 +370,7 @@ public sealed partial class PetFarm
         var tile = Tiles[index];
         tile.LateWater |= !WateredOnTime(tile, utcNow);
         tile.ThirstySince = null;
-        tile.GrowsUntil = utcNow.AddSeconds(StageSeconds(tile.Crop!.Value));
+        tile.GrowsUntil = utcNow.AddSeconds(StageFor(tile));
         return true;
     }
 
@@ -382,7 +384,7 @@ public sealed partial class PetFarm
         Tiles[index].Stage = FarmStage.Wild;
         Tiles[index].Crop = null;
         Tiles[index].GrowsUntil = Tiles[index].ThirstySince = null;
-        Tiles[index].LateWater = false;
+        Tiles[index].LateWater = Tiles[index].Fertilized = false;
         Tiles[index].LastCrop = crop;
         Harvested[crop.ToString()] = Harvested.GetValueOrDefault(crop.ToString()) + 1;
         if (LastHarvestGold) GoldStock[crop.ToString()] = GoldOf(crop) + 1;
@@ -561,7 +563,7 @@ public sealed partial class PetFarm
         var tile = Tiles[index];
         if (tile.Stage == FarmStage.Ripe) return 1;
         if (tile.Stage is not (FarmStage.Seed or FarmStage.Sprout or FarmStage.Young)) return 0;
-        double within = tile.GrowsUntil == null ? 0 : 1 - Remaining(index, utcNow).TotalSeconds / StageSeconds(tile.Crop!.Value);
+        double within = tile.GrowsUntil == null ? 0 : 1 - Remaining(index, utcNow).TotalSeconds / StageFor(tile);
         return (tile.Stage - FarmStage.Seed + Math.Clamp(within, 0, 1)) / WateredStages;
     }
 }

@@ -101,7 +101,9 @@ public sealed partial class PetWindow
         if (farmKitchenWindow == null || farm == null || farmKitchenNote == null) return;
         farmKitchenReady = FarmKitchenCanCook;
         farmKitchenCooking = FarmPotBusy;
-        farmKitchenNote.Text = farmKitchenCooking
+        farmKitchenNote.Text = farm.PotDish != null && !FarmHearth.Fold.Showing && !farmChores.Cooking
+            ? LF($"Còn món trong nồi. Mở Bếp trên Biển nông trại để {preferences.Name} nấu tiếp.", $"A dish is still in the pot. Open the Hearth on the farm sign so {preferences.Name} can finish it.")
+            : farmKitchenCooking
             ? LF($"{preferences.Name} đang lo nồi trên bếp, xong món này mới nấu tiếp được.", $"{preferences.Name} has a pot on the hearth; the next dish has to wait for it.")
             : farmKitchenReady
             ? LF($"Nấu xong là {preferences.Name} được ăn ngay.", $"{preferences.Name} eats it as soon as it is cooked.")
@@ -129,8 +131,9 @@ public sealed partial class PetWindow
     public bool FarmCook(FarmDish dish)
     {
         if (farm == null || !FarmKitchenCanCook || !farm.CanCook(dish)) return false;
-        if (FarmAtHand && FarmHearthReady)
+        if (FarmAtHand && FarmHearthUsable)
         {
+            BorrowFarmLand(FarmLandSlot.Hearth);
             CancelFeatureActivity();
             farmChores.BeginCook(FarmChoreKind.Pour, dish, FarmSpotBeside(FarmHearthMid), byUser: true);
             UpdateFarmKitchen();

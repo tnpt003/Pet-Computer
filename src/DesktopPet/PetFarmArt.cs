@@ -19,7 +19,7 @@ public sealed partial class PetFarmArt : FrameworkElement
     public const double TileWidth = 54, Pad = 10, Side = 40, SoilHeight = 28, PlantRoom = 72, LiftRoom = 54, BottomRoom = 6;
     public const double PlotWidth = TileWidth * PetFarm.TileCount + Pad * 2, ArtWidth = PlotWidth + Side * 2;
     // The hearth and the pond are land of their own (PetFarmArt.Land.cs).
-    public const double HearthLandWidth = 96, PondLandWidth = 150, CoopLandWidth = 124;
+    public const double HearthLandWidth = 96, PondLandWidth = 150, CoopLandWidth = 124, DockLandWidth = 160;
     private const double PlotMid = Side + PlotWidth / 2;
     public const double ArtHeight = SoilHeight + PlantRoom + LiftRoom + BottomRoom, Floor = ArtHeight - BottomRoom, SoilTop = Floor - SoilHeight;
     public const double BasketX = Side + 9;

@@ -20,7 +20,8 @@ public sealed partial class PetWindow
     private void UpdateFarmTips()
     {
         if (farm == null) return;
-        if (farm.TipPending(PetFarm.TipField)) UpdateFarmFieldTip();
+        if (farm.TipPending(PetFarm.TipField) && farmFieldFold.Showing) UpdateFarmFieldTip();
+        else if (farm.TipPending(PetFarm.TipField)) ShowFarmTipWords(null);
         else if (FarmTipsAllowed) ShowFarmPatchTips();
     }
 
@@ -58,11 +59,11 @@ public sealed partial class PetWindow
     {
         foreach (var patch in farmPatches)
         {
-            string tip = patch.Kind == FarmPatchKind.Hearth ? PetFarm.TipHearth : PetFarm.TipPond;
-            if (!farm!.TipPending(tip) || !patch.OnGround || patch.Window?.IsVisible != true) continue;
+            string tip = patch.Kind == FarmPatchKind.Hearth ? PetFarm.TipHearth : patch.Kind == FarmPatchKind.Dock ? PetFarm.TipDock : PetFarm.TipPond;
+            if (!farm!.TipPending(tip) || !patch.OnGround || patch.Window?.IsVisible != true || !patch.Fold.Showing) continue;
             farm.MarkTip(tip);
             SaveFarm();
-            ShowFarmPatchLabel(patch, patch.Kind == FarmPatchKind.Hearth ? L("Chuột phải để nấu ăn", "Right-click to cook") : L("Chuột phải để câu cá", "Right-click to fish"), FarmTipSeconds);
+            ShowFarmPatchLabel(patch, patch.Kind == FarmPatchKind.Hearth ? L("Chuột phải để nấu ăn", "Right-click to cook") : patch.Kind == FarmPatchKind.Dock ? L("Bấm ô để gập hoặc mở vùng đất", "Click a board to fold or open land") : L("Chuột phải để câu cá", "Right-click to fish"), FarmTipSeconds);
         }
     }
 

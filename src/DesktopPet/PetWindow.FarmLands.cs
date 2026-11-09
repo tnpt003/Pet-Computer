@@ -21,9 +21,11 @@ public sealed class FarmPatch
     public FarmPatch(FarmPatchKind kind) => Kind = kind;
 
     public FarmPatchKind Kind { get; }
-    public double Width => Kind == FarmPatchKind.Hearth ? PetFarmArt.HearthLandWidth : Kind == FarmPatchKind.Coop ? PetFarmArt.CoopLandWidth : PetFarmArt.PondLandWidth;
+    public double Width => Kind == FarmPatchKind.Hearth ? PetFarmArt.HearthLandWidth : Kind == FarmPatchKind.Coop ? PetFarmArt.CoopLandWidth : Kind == FarmPatchKind.Dock ? PetFarmArt.DockLandWidth : PetFarmArt.PondLandWidth;
     public double ArtWidth => Width + PetFarmArt.Side * 2;
     public FarmLift Lift { get; } = new();
+    public FarmLandFold Fold { get; } = new();
+    public FrameworkElement? Surface { get; internal set; }
     public Window? Window { get; internal set; }
     public PetFarmArt.Land? Art { get; internal set; }
     public PetFarmArt.DecorLayer? Decor { get; internal set; }
@@ -47,7 +49,7 @@ public sealed partial class PetWindow
 {
     private const double FarmLandGap = 6;
 
-    private readonly FarmPatch[] farmPatches = { new(FarmPatchKind.Hearth), new(FarmPatchKind.Pond), new(FarmPatchKind.Coop) };
+    private readonly FarmPatch[] farmPatches = { new(FarmPatchKind.Hearth), new(FarmPatchKind.Pond), new(FarmPatchKind.Coop), new(FarmPatchKind.Dock) };
     public FarmPatch FarmHearth => farmPatches[0];
     public FarmPatch FarmPond => farmPatches[1];
     public FarmPatch FarmCoop => farmPatches[2];
@@ -65,9 +67,9 @@ public sealed partial class PetWindow
     private List<(double Left, double Right)> FarmLandsTaken(string? monitor, FarmPatch? except, bool withField = true, bool withCart = true, bool withVisitor = true)
     {
         var taken = new List<(double Left, double Right)>();
-        if (withField && farmMonitor == monitor) taken.Add((FarmPlotLeft, FarmPlotLeft + PetFarmArt.PlotWidth));
+        if (withField && farmMonitor == monitor && farmFieldFold.Showing) taken.Add((FarmPlotLeft, FarmPlotLeft + PetFarmArt.PlotWidth));
         foreach (var patch in farmPatches)
-            if (patch != except && patch.Monitor == monitor) taken.Add((FarmPatchLeft(patch), FarmPatchLeft(patch) + patch.Width));
+            if (patch != except && patch.Monitor == monitor && patch.Fold.Showing) taken.Add((FarmPatchLeft(patch), FarmPatchLeft(patch) + patch.Width));
         if (withCart && farmCartWindow != null && farmCartMonitor == monitor) taken.Add((farmCartX, farmCartX + PetFarmStallArt.ArtWidth));
         if (withVisitor && farmVisitorWindow != null && farmVisitorMonitor == monitor) taken.Add((farmVisitorX, farmVisitorX + PetFarmVisitorArt.ArtWidth));
         return taken;
@@ -96,7 +98,7 @@ public sealed partial class PetWindow
         if (!moved) return;
         foreach (var patch in farmPatches)
         {
-            if (patch.Monitor == null || !patch.OnGround) continue;
+            if (patch.Monitor == null || !patch.OnGround || !patch.Fold.Showing) continue;
             double free = FarmPatchFree(patch), left = FarmPatchLeft(patch);
             double spot = FarmLands.FreeSpot(left, patch.Width, FarmLandsTaken(patch.Monitor, patch), patch.Area.Left, patch.Area.Left + free, FarmLandGap);
             patch.Fraction = patch.RestFraction = free > 0 ? Math.Clamp((spot - patch.Area.Left) / free, 0, 1) : 0;
@@ -111,7 +113,7 @@ public sealed partial class PetWindow
             var art = new PetFarmArt.Land(patch.Kind);
             var surface = new Grid { Width = patch.ArtWidth, Height = PetFarmArt.ArtHeight };
             bool roofed = patch.Kind == FarmPatchKind.Hearth;
-            var decor = patch.Kind == FarmPatchKind.Coop ? null : new PetFarmArt.DecorLayer(roofed ? FarmDecorPlace.Hearth : FarmDecorPlace.Pond, patch.ArtWidth, PetFarmArt.Side + patch.Width / 2);
+            var decor = patch.Kind is FarmPatchKind.Coop or FarmPatchKind.Dock ? null : new PetFarmArt.DecorLayer(roofed ? FarmDecorPlace.Hearth : FarmDecorPlace.Pond, patch.ArtWidth, PetFarmArt.Side + patch.Width / 2);
             if (roofed) surface.Children.Add(decor); // The roof stands behind the pot; lilies and the bridge lie over the water.
             surface.Children.Add(art);
             if (!roofed && decor != null) surface.Children.Add(decor);
@@ -119,18 +121,25 @@ public sealed partial class PetWindow
             var text = new TextBlock { Foreground = PetUi.Game.Gold, FontFamily = PetUi.TextFont, FontSize = PetUi.BodySize, FontWeight = FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center, MaxWidth = patch.ArtWidth - 32 };
             var gain = FarmLabel(text);
             gain.RenderTransform = new TranslateTransform();
-            gain.Margin = new Thickness(0, PetFarmArt.SoilTop - 40, 0, 0);
+            gain.Margin = new Thickness(0, patch.Kind == FarmPatchKind.Dock ? 8 : PetFarmArt.SoilTop - 40, 0, 0);
             gain.IsHitTestVisible = false;
             surface.Children.Add(gain);
             patch.Gain = gain;
             patch.Art = art;
-            patch.Window = CreateOverlayWindow(surface, patch.Kind == FarmPatchKind.Hearth ? "Pet farm hearth" : patch.Kind == FarmPatchKind.Coop ? "Pet farm coop" : "Pet farm pond");
+            patch.Surface = surface;
+            if (patch.Kind == FarmPatchKind.Dock) AddFarmDockChip(surface);
+            patch.Window = CreateOverlayWindow(surface, patch.Kind == FarmPatchKind.Hearth ? "Pet farm hearth" : patch.Kind == FarmPatchKind.Coop ? "Pet farm coop" : patch.Kind == FarmPatchKind.Dock ? "Pet farm sign" : "Pet farm pond");
             patch.Window.Width = patch.ArtWidth; patch.Window.Height = PetFarmArt.ArtHeight;
-            art.MouseLeftButtonDown += (_, e) => { e.Handled = true; PressFarmPatch(patch); };
-            art.MouseLeftButtonUp += (_, e) => { e.Handled = true; ReleaseFarmPatch(patch); };
+            art.MouseLeftButtonDown += (_, e) => { e.Handled = true; if (patch.Kind == FarmPatchKind.Dock) PressFarmDock(e.GetPosition(art)); PressFarmPatch(patch); };
+            art.MouseLeftButtonUp += (_, e) => { e.Handled = true; if (patch.Kind == FarmPatchKind.Dock) ReleaseFarmDock(e.GetPosition(art)); ReleaseFarmPatch(patch); };
+            if (patch.Kind == FarmPatchKind.Dock)
+            {
+                art.MouseMove += (_, e) => HoverFarmDock(art.DockTargetAt(e.GetPosition(art)));
+                art.MouseLeave += (_, _) => HoverFarmDock(-1);
+            }
             art.LostMouseCapture += (_, _) => patch.Dragging = false;
             InitializeFarmPatchMenu(patch, art);
-            patch.Window.Closed += (_, _) => { patch.Window = null; patch.Art = null; patch.Decor = null; patch.Gain = null; patch.Dragging = false; patch.GainLeft = 0; };
+            patch.Window.Closed += (_, _) => { patch.Window = null; patch.Art = null; patch.Decor = null; patch.Gain = null; patch.Surface = null; patch.Dragging = false; patch.GainLeft = 0; };
         }
     }
 
@@ -138,20 +147,21 @@ public sealed partial class PetWindow
     private void SettleFarmPatches()
     {
         if (farm == null) return;
-        var taken = new List<(string Monitor, double Left, double Right)> { (farmMonitor!, FarmPlotLeft, FarmPlotLeft + PetFarmArt.PlotWidth) };
+        var taken = new List<(string Monitor, double Left, double Right)>();
+        if (farmFieldFold.Showing) taken.Add((farmMonitor!, FarmPlotLeft, FarmPlotLeft + PetFarmArt.PlotWidth));
         foreach (var patch in farmPatches)
         {
             if (patch.Kind == FarmPatchKind.Coop && !farm.HasCoop) continue;
-            double? saved = patch.Kind switch { FarmPatchKind.Hearth => farm.HearthFractionX, FarmPatchKind.Coop => farm.CoopFractionX, _ => farm.PondFractionX };
-            patch.Monitor = patch.Kind switch { FarmPatchKind.Hearth => farm.HearthMonitor, FarmPatchKind.Coop => farm.CoopMonitor, _ => farm.PondMonitor } ?? farmMonitor;
+            double? saved = patch.Kind switch { FarmPatchKind.Hearth => farm.HearthFractionX, FarmPatchKind.Coop => farm.CoopFractionX, FarmPatchKind.Dock => farm.DockFractionX, _ => farm.PondFractionX };
+            patch.Monitor = patch.Kind switch { FarmPatchKind.Hearth => farm.HearthMonitor, FarmPatchKind.Coop => farm.CoopMonitor, FarmPatchKind.Dock => farm.DockMonitor, _ => farm.PondMonitor } ?? farmMonitor;
             ApplyFarmPatchMonitor(patch);
             double free = FarmPatchFree(patch);
             var here = taken.Where(land => land.Monitor == patch.Monitor).Select(land => (land.Left, land.Right)).ToList();
-            double wanted = saved is double fraction ? patch.Area.Left + fraction * free : here.Max(land => land.Right) + FarmLandGap;
+            double wanted = saved is double fraction ? patch.Area.Left + fraction * free : here.Count > 0 ? here.Max(land => land.Right) + FarmLandGap : patch.Area.Left;
             double spot = FarmLands.FreeSpot(wanted, patch.Width, here, patch.Area.Left, patch.Area.Left + free, FarmLandGap);
             patch.Fraction = patch.RestFraction = free > 0 ? Math.Clamp((spot - patch.Area.Left) / free, 0, 1) : 0;
             if (saved == null) StoreFarmPatch(patch);
-            taken.Add((patch.Monitor!, spot, spot + patch.Width));
+            if (patch.Fold.Showing) taken.Add((patch.Monitor!, spot, spot + patch.Width));
         }
     }
 
@@ -160,6 +170,7 @@ public sealed partial class PetWindow
         if (farm == null) return;
         if (patch.Kind == FarmPatchKind.Hearth) { farm.HearthFractionX = patch.Fraction; farm.HearthMonitor = patch.Monitor; }
         else if (patch.Kind == FarmPatchKind.Coop) { farm.CoopFractionX = patch.Fraction; farm.CoopMonitor = patch.Monitor; }
+        else if (patch.Kind == FarmPatchKind.Dock) { farm.DockFractionX = patch.Fraction; farm.DockMonitor = patch.Monitor; }
         else { farm.PondFractionX = patch.Fraction; farm.PondMonitor = patch.Monitor; }
     }
 
@@ -261,7 +272,7 @@ public sealed partial class PetWindow
             bool lifted = patch.Lift.Busy;
             if (patch.Lift.Step(dt)) LandFarmPatch(patch);
             if (patch.Lift.Phase == FarmLiftPhase.Falling) patch.Fraction = patch.FallFrom + (patch.FallTo - patch.FallFrom) * patch.Lift.FallAmount;
-            if (lifted || patch.Lift.Busy || (patch.Kind == FarmPatchKind.Hearth ? fire : patch.Kind == FarmPatchKind.Coop ? hens : water)) DrawFarmPatch(patch);
+            if (lifted || patch.Lift.Busy || (patch.Kind == FarmPatchKind.Hearth ? fire : patch.Kind == FarmPatchKind.Coop ? hens : patch.Kind == FarmPatchKind.Pond && water)) DrawFarmPatch(patch);
             if (patch.GainLeft > 0 && patch.Gain != null)
             {
                 patch.GainLeft = Math.Max(0, patch.GainLeft - dt);
@@ -337,8 +348,9 @@ public sealed partial class PetWindow
         return eggs;
     }
 
-    private static void ShowFarmPatchLabel(FarmPatch patch, string text, double seconds)
+    private void ShowFarmPatchLabel(FarmPatch patch, string text, double seconds)
     {
+        if (!patch.Fold.Showing) patch = FarmDockPatch; // Folded land has no one to read it.
         if (patch.Gain == null) return;
         ((TextBlock)patch.Gain.Child).Text = text;
         patch.Gain.Opacity = 1;
@@ -387,8 +399,9 @@ public sealed partial class PetWindow
             cancel.Click += (_, _) => CancelFarmPatchMove(patch);
             return new[] { drop, cancel };
         }
-        var move = new MenuItem { Header = patch.Kind == FarmPatchKind.Hearth ? L("Di chuyển bếp", "Move the hearth") : patch.Kind == FarmPatchKind.Coop ? L("Di chuyển chuồng", "Move the coop") : L("Di chuyển hồ", "Move the pond"), IsEnabled = !FarmLandInAir };
+        var move = new MenuItem { Header = patch.Kind == FarmPatchKind.Hearth ? L("Di chuyển bếp", "Move the hearth") : patch.Kind == FarmPatchKind.Coop ? L("Di chuyển chuồng", "Move the coop") : patch.Kind == FarmPatchKind.Dock ? L("Di chuyển biển", "Move the sign") : L("Di chuyển hồ", "Move the pond"), IsEnabled = !FarmLandInAir };
         move.Click += (_, _) => BeginFarmPatchMove(patch);
+        if (patch.Kind == FarmPatchKind.Dock) return FarmDockItems(move);
         if (!FarmShopAllowed) return new[] { move };
         MenuItem job;
         if (patch.Kind == FarmPatchKind.Hearth)
@@ -412,7 +425,7 @@ public sealed partial class PetWindow
 
     public void BeginFarmPatchMove(FarmPatch patch)
     {
-        if (paused || !FarmVisible || FarmLandInAir) return;
+        if (paused || !FarmVisible || FarmLandInAir || !patch.Fold.Showing) return;
         patch.RestFraction = patch.Fraction;
         patch.RestMonitor = patch.Monitor;
         if (patch.Kind == FarmPatchKind.Hearth) CloseFarmKitchen();
@@ -468,6 +481,6 @@ public sealed partial class PetWindow
 
     private void UpdateFarmPatchCursor(FarmPatch patch)
     {
-        if (patch.Art != null) patch.Art.Cursor = patch.OnGround ? Cursors.Arrow : Cursors.SizeWE;
+        if (patch.Art != null) patch.Art.Cursor = !patch.OnGround ? Cursors.SizeWE : patch.Kind == FarmPatchKind.Dock && farmDockHover >= 0 ? Cursors.Hand : Cursors.Arrow;
     }
 }

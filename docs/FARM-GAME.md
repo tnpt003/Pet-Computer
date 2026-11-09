@@ -190,6 +190,17 @@ Người dùng duyệt cả sáu mốc, chưa phát hành, Mốc E (chuẩn bị
 - Hoa không cần tưới, không lớn theo đồng hồ, không héo. Chỉ gieo từ menu từng ô khi có hạt, cấp 1. Bán 40 xu, 12 XP (ước tính).
 - Hoa đứng ngoài mưa, phân bón, hàng vàng, mèo tự gieo lại, "Gieo cả ruộng", xe hàng, mèo khách (không xin, không tặng hạt), số loại cây trong thành tích và Nhật ký. Không cộng sức mạnh trong trận. `farm.json` phiên bản 6.
 
+### Biển nông trại (duyệt 09/11)
+
+- Mục đích: gập vùng đất để nông trại chiếm ít chỗ trên màn hình mà không mất tính năng. Bốn vùng đất đang rộng khoảng 730 DIP; tấm biển 160 DIP.
+- Tấm biển là một mảnh đất riêng (`FarmPatchKind.Dock`), nhấc, kéo, sang màn khác, thả như Bếp và Hồ, lưu `DockFractionX`, `DockMonitor`. Bốn ô: Ruộng, Bếp, Hồ, Chuồng; chuồng chưa mua là ô khóa. Ô đang mở sáng màu và có vạch dưới, ô gập tối màu, chấm vàng có dấu chấm than là có việc (ruộng cần tưới/gặt, nồi còn món, trứng trong ổ). `farm.json` vẫn phiên bản 6, thêm `FieldFolded`, `HearthFolded`, `PondFolded`, `CoopFolded`.
+- Bấm một ô để gập hoặc mở vùng đất đó; chuột phải có Mở tất cả, Gập tất cả cùng Kho, Nấu ăn, Gian hàng, Câu cá, Thu trứng, thao tác cả ruộng, Di chuyển biển. Lần đầu mọi vùng đang mở. Pause và lúc có vùng đang nhấc thì không gập/mở được.
+- Vùng gập vẫn còn cửa sổ nhưng không có gì để nhìn hay bấm; đồng hồ cây, trứng, mưa tưới, nắng vẫn chạy. Vùng gập không giữ chỗ: mở lại mà chỗ cũ có vật khác thì trượt sang chỗ trống gần nhất.
+- Mèo không tự làm việc ở vùng gập (không tưới, gặt, nấu, câu, vồ gà; chim cũng không tới); chuyến đang đi sẽ dừng khi gập. Lệnh của người dùng Nấu ăn, Câu cá mở tạm vùng đó, gập lại 1,5 giây sau khi mèo xong; trong file vẫn là gập. Bấm ô lúc đang mở tạm là gập hẳn và dừng việc.
+- Món còn trong nồi của bếp gập chờ người dùng: mở Bếp hoặc chọn "Nấu tiếp món trong nồi".
+- Khi gập hết, xe hàng và mèo hàng xóm không đứng dưới sàn mà thành icon trên biển, bấm vào xem hàng hoặc tặng đồ như cũ, chữ nổi cho biết mèo khách cần gì. Mở lại một vùng thì khách đang ở xuống sàn nếu còn chỗ.
+- Nhãn của vùng gập (thu hoạch, lên cấp, thời tiết, quà) hiện trên biển. Bấm biển không chạm vào mèo: không đánh thức, không phá kéo thả hay cảm xúc.
+
 ## Giai đoạn 1
 
 Luôn giữ: cây không héo, chim không gây hại, farm không cộng sức mạnh trong trận, không chạm vào mèo. Các gói chưa chọn: thêm cây và mùa vụ, công cụ và phân bón, vật nuôi, mở rộng và trang trí, chất lượng nông sản.

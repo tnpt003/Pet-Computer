@@ -32,10 +32,13 @@ public sealed partial class PetWindow
     // The cat can walk to the field from where it is.
     private bool FarmAtHand => preferences.Farm && FarmVisible && farm != null && pet.LedgeId == 0;
     // The cat goes only to land on the ground on its own monitor; each piece of land answers for itself.
-    private bool FarmFieldReady => farmLift.Phase == FarmLiftPhase.Down && farmWithCat;
-    private bool FarmHearthReady => FarmHearth.OnGround && FarmHearth.WithCat;
-    private bool FarmPondReady => FarmPond.OnGround && FarmPond.WithCat;
-    private bool FarmCoopReady => farm?.HasCoop == true && FarmCoop.Monitor != null && FarmCoop.OnGround && FarmCoop.WithCat;
+    private bool FarmHearthUsable => FarmHearth.OnGround && FarmHearth.WithCat;
+    private bool FarmPondUsable => FarmPond.OnGround && FarmPond.WithCat;
+    // ...and not folded away: the cat does no work of its own on land that is put away (PetWindow.FarmDock.cs).
+    private bool FarmFieldReady => farmLift.Phase == FarmLiftPhase.Down && farmWithCat && farmFieldFold.Showing;
+    private bool FarmHearthReady => FarmHearthUsable && FarmHearth.Fold.Showing;
+    private bool FarmPondReady => FarmPondUsable && FarmPond.Fold.Showing;
+    private bool FarmCoopReady => farm?.HasCoop == true && FarmCoop.Monitor != null && FarmCoop.OnGround && FarmCoop.WithCat && FarmCoop.Fold.Showing;
     private bool FarmChoreLandDown => farmChores.Cooking ? FarmHearthReady : farmChores.Kind == FarmChoreKind.Fishing ? FarmPondReady : farmChores.Kind == FarmChoreKind.Hen ? FarmCoopReady : FarmFieldReady;
     private bool FarmHelpOn => preferences.FarmHelper && FarmAtHand;
 
@@ -107,12 +110,13 @@ public sealed partial class PetWindow
     private double FarmChoreSpotFor(int tile) => FarmSpotBeside(FarmTileMid(tile));
 
     // The user's "Go fishing": like a treat it works in Quiet and is refused while the cat is asleep or eating.
-    public bool FarmCanFish => !paused && FarmAtHand && FarmPondReady && MayAct(AutoKind.Treat) && pet.TreatRemaining <= 0 && treatSatisfiedRemaining <= 0
+    public bool FarmCanFish => !paused && FarmAtHand && FarmPondUsable && MayAct(AutoKind.Treat) && pet.TreatRemaining <= 0 && treatSatisfiedRemaining <= 0
         && !farmChores.Cooking && farmChores.Kind != FarmChoreKind.Fishing && farmChores.FishAgain <= 0;
 
     public bool FarmGoFish()
     {
         if (!FarmCanFish) return false;
+        BorrowFarmLand(FarmLandSlot.Pond);
         CancelFeatureActivity();
         BeginFarmFishing(byUser: true);
         return true;

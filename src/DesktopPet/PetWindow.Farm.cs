@@ -92,10 +92,13 @@ public sealed partial class PetWindow
             CheckFarmGrowth(now);
             UpdateFarmChip();
             UpdateFarmStall();
+            SyncFarmGuests();
+            RefreshFarmDock();
         }
         if (dt > 0) StepFarm(dt);
         if (dt > 0) StepFarmStall(dt);
         if (dt > 0) StepFarmVisitor(dt);
+        if (dt > 0) StepFarmDock(dt);
         UpdateFarmTips();
         if (farmDragging) FollowFarmDrag();
         FollowFarmPatchDrags();
@@ -291,6 +294,7 @@ public sealed partial class PetWindow
         farmMonitor = farm.Monitor ?? CurrentMonitor().DeviceName;
         farmFraction = farmRestFraction = farm.FractionX ?? PetFarm.FirstFraction;
         RefreshFarmArea();
+        RestoreFarmFolds();
         SettleFarmPatches();
         farmChecked = FarmNow;
         farm.Advance(farmChecked);
@@ -299,6 +303,7 @@ public sealed partial class PetWindow
         ShowFarmPatches();
         KeepFarmBelowCat();
         PositionFarm();
+        RefreshFarmDock();
     }
 
     // A fullscreen app or a battle takes the screen: a plot in the air goes back where it was.
@@ -318,6 +323,7 @@ public sealed partial class PetWindow
         farmHearthFire = 0;
         farmPondBusy = false;
         HideFarmPatches();
+        ResetFarmDock();
         DrawFarmLift();
         UpdateFarmCursor();
         HoverFarm(-1);
@@ -682,6 +688,11 @@ public sealed partial class PetWindow
 
     private void ShowFarmLabel(int tile, string text, double seconds)
     {
+        if (!farmFieldFold.Showing)
+        {
+            ShowFarmPatchLabel(FarmDockPatch, text, seconds);
+            return;
+        }
         if (farmGain == null || farmGainText == null || farmGain.Parent is not Grid row) return;
         farmGainText.Text = text;
         farmGain.Opacity = 1;
@@ -788,7 +799,7 @@ public sealed partial class PetWindow
 
     public void BeginFarmMove()
     {
-        if (paused || !FarmVisible || FarmLandInAir) return;
+        if (paused || !FarmVisible || FarmLandInAir || !farmFieldFold.Showing) return;
         farmRestFraction = farmFraction;
         farmRestMonitor = farmMonitor;
         HoverFarm(-1);

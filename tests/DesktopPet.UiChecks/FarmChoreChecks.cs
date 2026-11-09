@@ -383,6 +383,99 @@ internal static class FarmChoreChecks
             }
         }
         object Field2(string name) => typeof(PetWindow).GetProperty(name, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.GetValue(window)!;
+        // Land put away on the sign (docs/FARM-GAME.md, Biển nông trại): the cat works there only when asked.
+        void Folded()
+        {
+            var field = window.Farm!;
+            var area = Field<Area>(window, "bounds");
+            var hearth = window.FarmFoldOf(FarmLandSlot.Hearth);
+            var pond = window.FarmFoldOf(FarmLandSlot.Pond);
+            void Put() => Farm(FarmLandFold.Seconds + 0.05);
+            void GiveBack() => Farm(FarmLandFold.BorrowGraceSeconds + FarmLandFold.Seconds + 0.1);
+            void Ready()
+            {
+                Free(); Clear(field);
+                field.PotDish = null;
+                field.Stock.Clear(); field.Stock["Radish"] = 6; field.Fish.Clear();
+                pet.TreatRemaining = 0; pet.TreatDish = null;
+                SetField(window, "treatCooldown", 0.0); SetField(window, "treatSatisfiedRemaining", 0.0);
+                chores.ScheduleFish(100000); chores.ScheduleFishAgain(0); chores.ScheduleCook(100000);
+                pet.X = area.Left + 10;
+            }
+
+            // The field.
+            Ready();
+            Thirsty(field, 2);
+            prefs.FarmHelper = true;
+            check(window.FarmToggleLand(FarmLandSlot.Field), "(field folded)");
+            Put();
+            check(!window.TryFarmVisit() && window.FarmChoreNow == FarmChoreKind.None, "The cat does not go to a folded field");
+            check(field.LandWork(FarmLandSlot.Field) == 1, "...but the sign knows there is work");
+            check(!window.TryFarmBird(), "No bird comes to it either");
+            window.FarmToggleLand(FarmLandSlot.Field);
+            Put();
+            pet.X = area.Left + 10;
+            check(window.TryFarmVisit() && window.FarmChoreNow == FarmChoreKind.Water, "Opened, the cat goes back to work");
+            window.FarmToggleLand(FarmLandSlot.Field);
+            Call(window, "WatchFarmChores", Frame);
+            check(window.FarmChoreNow == FarmChoreKind.None, "Folding it ends the trip");
+            Put();
+            window.FarmToggleLand(FarmLandSlot.Field);
+            Put();
+
+            // Cooking: the hearth comes out for the job and goes away after.
+            Ready();
+            window.FarmToggleLand(FarmLandSlot.Hearth);
+            Put();
+            prefs.FarmAutoCook = true;
+            chores.ScheduleCook(0);
+            check(!window.TryFarmVisit() && window.FarmChoreNow == FarmChoreKind.None, "The cat does not cook by itself on a folded hearth");
+            chores.ScheduleCook(100000);
+            check(window.FarmCook(FarmDish.RadishSoup) && window.FarmChoreNow == FarmChoreKind.Pour && hearth.Borrowed && hearth.Showing && field.HearthFolded, "\"Cook\" opens it for this dish, and it stays folded in the save");
+            Put();
+            check(hearth.Amount == 1 && window.FarmHearth.Surface!.Visibility == Visibility.Visible, "...so it can be seen");
+            pet.X = window.FarmChoreSpot; Features(Frame * 2);
+            Features(FarmChores.PourSeconds + Frame * 2);
+            check(window.FarmChoreNow == FarmChoreKind.Stir, "It pours and goes on to stir");
+            GiveBack();
+            check(hearth.Borrowed && hearth.Amount == 1, "The land stays while the cat is at it");
+            Features(FarmChores.StirSeconds + Frame * 2);
+            check(window.FarmChoreNow == FarmChoreKind.None && field.PotDish == null, "It is done");
+            GiveBack();
+            check(!hearth.Borrowed && !hearth.Showing && hearth.Amount == 0, "...and the hearth is folded again");
+
+            // A dish left in a folded pot.
+            Ready();
+            field.PotDish = FarmDish.RadishSoup;
+            check(!window.TryFarmVisit() && window.FarmChoreNow == FarmChoreKind.None, "A dish in a folded pot waits");
+            check(window.FarmCanResumePot && window.FarmResumePot() && window.FarmChoreNow == FarmChoreKind.Stir && hearth.Borrowed && chores.ByUser, "...until the user asks");
+            Free();
+            field.PotDish = null;
+            GiveBack();
+            check(!hearth.Showing, "(folded again)");
+
+            // Fishing.
+            Ready();
+            window.FarmToggleLand(FarmLandSlot.Pond);
+            Put();
+            check(window.FarmCanFish && window.FarmGoFish() && window.FarmChoreNow == FarmChoreKind.Fishing && pond.Borrowed, "\"Go fishing\" opens a folded pond");
+            Free();
+            GiveBack();
+            check(!pond.Borrowed && !pond.Showing, "...and it goes away after");
+
+            // A click during a borrowed job folds it for good.
+            Ready();
+            check(window.FarmGoFish() && pond.Borrowed, "(fishing again)");
+            window.FarmToggleLand(FarmLandSlot.Pond);
+            Call(window, "WatchFarmChores", Frame);
+            check(!pond.Borrowed && !pond.Showing && window.FarmChoreNow == FarmChoreKind.None, "A click on its board ends the job");
+            Put();
+            chores.ScheduleFishAgain(0);
+
+            window.FarmSetAllLands(true);
+            Put();
+            Free();
+        }
         void Clear(PetFarm field) { for (int i = 0; i < PetFarm.TileCount; i++) { field.Tiles[i].Stage = FarmStage.Wild; field.Tiles[i].Crop = null; field.Tiles[i].GrowsUntil = null; field.Tiles[i].LastCrop = null; } }
 
         SetField(window, "farmPath", path);
@@ -676,6 +769,7 @@ internal static class FarmChoreChecks
 
             Hearth();
             Pond();
+            Folded();
 
             // A better can waters the tiles beside this one, on the same trip.
             Free(); Clear(field);

@@ -1473,3 +1473,15 @@ Muốn thử nhanh: đặt `PET_DATA_DIRECTORY` tới một thư mục riêng, s
 - [ ] Menu chuột phải có công tắc Nhắc nghỉ giải lao khớp với Cài đặt; cài bằng Setup lần đầu thấy ô nhắc nghỉ tick sẵn
 - [ ] DPI 125/150%, nhiều màn hình: nhãn đúng vị trí trên đầu mèo, sát mép màn hình không bị cắt
 - [ ] Hoa tập trung: xong phiên có nhãn "Hạt Hoa tập trung +1" trên ruộng; menu gieo từng ô có Hoa khi còn hạt; hoa không đòi tưới, hover ghi "lớn theo Giờ tập trung"; xong 3 phiên 25 phút thì nở, gặt và bán được; hình hoa dễ nhận ra; hàng trong bảng Kho chỉ hiện khi có hoa
+
+## Biển nông trại (gập vùng đất)
+
+- [ ] Biển đứng dưới sàn, không đè vùng đất; bấm từng ô thì vùng đó thu xuống mượt và biến mất, bấm lại hiện đúng chỗ cũ
+- [ ] Vùng đã gập không chặn chuột: bấm xuyên qua chỗ đó vào cửa sổ phía sau được
+- [ ] Icon trên biển dễ nhận ra ở kích thước thật; ô mở và ô gập phân biệt được; chấm vàng hiện khi ruộng cần tưới/gặt, nồi còn món, có trứng
+- [ ] Gập hết rồi chờ xe hàng và mèo hàng xóm: chúng thành icon trên biển, bấm vào xem hàng/tặng đồ được; mở một vùng thì chúng xuống sàn
+- [ ] Vùng gập mèo không tự tới làm; chọn Câu cá hoặc nấu món từ biển thì vùng hiện ra, mèo làm xong tự gập lại
+- [ ] Cây vẫn lớn, gà vẫn đẻ, mưa vẫn tưới khi đang gập; nhãn thu hoạch/thời tiết hiện trên biển
+- [ ] Kéo biển sang chỗ khác và sang màn hình khác; tắt mở lại app vẫn đúng trạng thái gập và vị trí
+- [ ] Mèo đang ngủ: bấm biển không đánh thức; Pause thì không gập/mở được; app toàn màn hình và vào trận thì biển ẩn, ra lại đúng trạng thái
+- [ ] DPI 125/150%, nền sáng/tối: nhãn trên biển không bị cắt, tiếng Nhật/Anh dài vẫn đọc được

@@ -69,6 +69,7 @@ internal static class FarmChecks
             check(!farm.TipPending(PetFarm.TipCart), "...which gives it");
             Lands(window, farm, path, check, Tick, point => cursor = point);
             Monitors(window, pet, farm, path, check, Tick, point => cursor = point);
+            FarmDockChecks.Run(window, farm, path, check, Tick);
             farm.OpenTiles = 6;
             check(window.FarmTileLabel(0)!.Length > 0 && window.FarmTileLabel(6) == null, "Each tile has a label");
             check(farm.Next(0) == FarmStep.Till, "A new tile needs tilling");
@@ -179,7 +180,7 @@ internal static class FarmChecks
             check(window.FarmLiftPhaseNow == FarmLiftPhase.Down && Math.Abs(window.FarmFraction - restFraction) < 1e-6, "...back where it was");
             var farmArt = Field<PetFarmArt>(window, "farmArt");
             check(farmArt.Dustiness > 0, "Dirt flies as it lands");
-            window.FarmHearth.Fraction = 1; window.FarmPond.Fraction = 0; // Out of the way of the places tried below.
+            window.FarmHearth.Fraction = 1; window.FarmPond.Fraction = 0; window.FarmDockPatch.Fraction = 0; // Out of the way of the places tried below.
 
             window.BeginFarmMove();
             Tick(FarmLift.RiseSeconds + 0.05);

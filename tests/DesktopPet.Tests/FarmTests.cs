@@ -24,6 +24,65 @@ internal static class FarmTests
         Lands(check);
         Tips(check, start);
         Decorations(check);
+        Dock(check);
+    }
+
+    // Folding land away on the farm sign (docs/FARM-GAME.md, Biển nông trại).
+    private static void Dock(Action<bool, string> check)
+    {
+        var fold = new FarmLandFold();
+        check(fold.Showing && !fold.Folded && fold.Amount == 1, "Land starts out");
+        fold.Fold();
+        check(!fold.Showing && fold.Step(FarmLandFold.Seconds / 2) && fold.Amount is > 0 and < 1, "Folding takes a moment");
+        fold.Step(FarmLandFold.Seconds);
+        check(fold.Amount == 0 && !fold.Step(0.1), "...and then nothing moves");
+        check(fold.Borrow() && fold.Showing && fold.Folded, "Borrowing shows it, and it stays folded in the save");
+        check(!fold.Borrow(), "Only once");
+        check(!fold.WatchBorrow(true, 100), "Not while it is in use");
+        check(!fold.WatchBorrow(false, FarmLandFold.BorrowGraceSeconds / 2) && fold.WatchBorrow(false, FarmLandFold.BorrowGraceSeconds), "Given back a moment after the work");
+        check(!fold.Showing && !fold.Borrowed, "...and folded");
+        fold.Borrow();
+        fold.Open();
+        check(fold.Showing && !fold.Folded && !fold.Borrowed, "Opening on purpose keeps it open");
+        fold.Restore(true);
+        check(fold.Folded && fold.Amount == 0, "Restored with no animation");
+
+        var farm = new PetFarm();
+        check(!Enum.GetValues<FarmLandSlot>().Any(farm.IsFolded), "A new farm has all its land out");
+        foreach (var slot in Enum.GetValues<FarmLandSlot>())
+        {
+            farm.SetFolded(slot, true);
+            check(farm.IsFolded(slot), $"{slot} remembers");
+        }
+        farm.Hens = 1;
+        farm.DockFractionX = 0.4;
+        farm.DockMonitor = "A";
+        string folder = Path.Combine(Path.GetTempPath(), "pet-farm-dock-" + Guid.NewGuid().ToString("N"));
+        string path = Path.Combine(folder, "farm.json");
+        try
+        {
+            farm.Save(path);
+            var back = PetFarm.Load(path);
+            check(Enum.GetValues<FarmLandSlot>().All(back.IsFolded) && back.DockFractionX == 0.4 && back.DockMonitor == "A", "Saved and loaded");
+            File.WriteAllText(path, File.ReadAllText(path).Replace("\"Hens\": 1", "\"Hens\": 0").Replace("\"DockFractionX\": 0.4", "\"DockFractionX\": 9"));
+            back = PetFarm.Load(path);
+            check(!back.CoopFolded && back.DockFractionX == 1, "A coop not owned cannot be folded; a bad place is clamped");
+            File.WriteAllText(path, "{\"Version\":6}");
+            back = PetFarm.Load(path);
+            check(!back.FieldFolded && !back.HearthFolded && !back.PondFolded && back.DockFractionX == null, "A file from before the sign has all its land out");
+        }
+        finally
+        {
+            if (Directory.Exists(folder)) Directory.Delete(folder, true);
+        }
+
+        var work = new PetFarm();
+        work.OpenTiles = 6;
+        check(work.LandWork(FarmLandSlot.Field) == 0 && work.LandWork(FarmLandSlot.Hearth) == 0 && work.LandWork(FarmLandSlot.Pond) == 0, "Bare ground waits for nothing");
+        work.Tiles[0].Stage = FarmStage.Seed; work.Tiles[0].Crop = FarmCrop.Radish;
+        work.PotDish = FarmDish.RadishSoup;
+        work.Hens = 1; work.EggsInCoop = 2;
+        check(work.LandWork(FarmLandSlot.Field) == 1 && work.LandWork(FarmLandSlot.Hearth) == 1 && work.LandWork(FarmLandSlot.Coop) == 2, "Water, a waiting pot and eggs do");
     }
 
     // What the stall sells (docs/FARM-GAME.md, finishing milestone B).

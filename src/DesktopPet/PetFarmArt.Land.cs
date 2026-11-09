@@ -5,13 +5,13 @@ using System.Windows.Media;
 
 namespace DesktopPet;
 
-public enum FarmPatchKind { Hearth, Pond, Coop }
+public enum FarmPatchKind { Hearth, Pond, Coop, Dock }
 
 public sealed partial class PetFarmArt
 {
     // A patch of land of its own beside the field: the same bank of earth and the same lift, with the
     // hearth or the pond standing on it. Redrawn only when something changes.
-    public sealed class Land : FrameworkElement
+    public sealed partial class Land : FrameworkElement
     {
         public FarmPatchKind Kind { get; }
         public double LandWidth { get; }
@@ -43,7 +43,7 @@ public sealed partial class PetFarmArt
         public Land(FarmPatchKind kind)
         {
             Kind = kind;
-            LandWidth = kind == FarmPatchKind.Hearth ? HearthLandWidth : kind == FarmPatchKind.Coop ? CoopLandWidth : PondLandWidth;
+            LandWidth = kind == FarmPatchKind.Hearth ? HearthLandWidth : kind == FarmPatchKind.Coop ? CoopLandWidth : kind == FarmPatchKind.Dock ? DockLandWidth : PondLandWidth;
             Width = LandWidth + Side * 2;
             Height = ArtHeight;
         }
@@ -58,12 +58,13 @@ public sealed partial class PetFarmArt
             land.RotateAt(Tilt, mid, Floor);
             land.Translate(ShakeX, -air);
             dc.PushTransform(new MatrixTransform(land));
-            double above = Kind == FarmPatchKind.Pond ? 8 : 58; // Only what stands on the land takes clicks.
+            double above = Kind == FarmPatchKind.Pond ? 8 : Kind == FarmPatchKind.Dock && (DockCart || DockVisitor) ? 78 : 58; // Only what stands on the land takes clicks.
             dc.DrawRectangle(Hit, null, new Rect(Side, SoilTop - above, LandWidth, SoilHeight + above));
             if (air > 0.5) DrawUnderside(dc, Side, LandWidth, air);
             DrawBank(dc, Side, LandWidth);
             if (Kind == FarmPatchKind.Hearth) DrawHearth(dc);
             else if (Kind == FarmPatchKind.Coop) DrawCoop(dc);
+            else if (Kind == FarmPatchKind.Dock) DrawDock(dc);
             else DrawPond(dc);
             dc.Pop();
             if (Shed >= 0) DrawShedding(dc, Side, LandWidth, Shed);

@@ -40,9 +40,10 @@ public sealed partial class PetWindow
     {
         if (farm == null || farmStall.Phase != FarmStallPhase.Away || !FarmVisible || FarmLandInAir
             || Blocking(AutoBlock.Paused | AutoBlock.AnyQuiet | AutoBlock.AnyBattle | AutoBlock.Away) != AutoBlock.None
-            || !PickFarmCartPlace(FindFarmMonitor(farmMonitor))) return false;
+            || (!FarmDockCompact && !PickFarmCartPlace(FindFarmMonitor(farmMonitor)))) return false;
         farmStall.Arrive(farm.NewOffers(featureRandom), farm.NewDecors(featureRandom));
-        ShowFarmCart();
+        if (FarmDockCompact) RefreshFarmDock();
+        else ShowFarmCart();
         ShowFarmCartTip();
         PlayPetSound("sparkle");
         return true;

@@ -254,6 +254,7 @@ public sealed partial class PetFarm
         Stock = CleanCounts(Stock);
         GoldStock = CleanCounts(GoldStock);
         NormalizeCoop();
+        NormalizeDock();
         NormalizeTools();
         NormalizeVisitor();
         Fish =(Fish ?? new()).Where(pair => Enum.TryParse<FarmFish>(pair.Key, out _) && pair.Value > 0).ToDictionary(pair => pair.Key, pair => pair.Value);

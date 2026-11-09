@@ -443,6 +443,30 @@ internal static class ExpeditionChecks
             long keepsakeStyle = keepsakeWindow == null ? 0 : GetWindowLongPtr(new WindowInteropHelper(keepsakeWindow).Handle, -20).ToInt64();
             check(window.TrophiesVisible && keepsakeWindow is { ShowActivated: false, ShowInTaskbar: false, Topmost: true } && (keepsakeStyle & 0x20) == 0 && (keepsakeStyle & 0x08000000) != 0,
                 "The display corner shows: clickable (it can be picked up), never takes focus, no taskbar button");
+
+            // The cat in front of the keepsake, the keepsake in front of the land.
+            var layerPrefs = (PetPreferences)FieldOf("preferences").GetValue(window)!;
+            string layerFolder = Path.Combine(Path.GetTempPath(), "pet-layers-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(layerFolder);
+            FieldOf("farmPath").SetValue(window, Path.Combine(layerFolder, "farm.json"));
+            layerPrefs.Farm = true;
+            Call(window, "TickFarm", 0.02);
+            await Task.Delay(30);
+            keepsakeWindow!.Topmost = false; keepsakeWindow.Topmost = true;
+            check(window.KeepsakeAboveCat, "(Topmost again puts the keepsake over the cat, which is the fault)");
+            Call(window, "KeepKeepsakeBelowCat");
+            check(!window.KeepsakeAboveCat, "With the farm off too, the cat comes back in front of the keepsake");
+            var layerPlot = Find("Pet farm")!;
+            layerPlot.Topmost = false; layerPlot.Topmost = true;
+            check(window.FarmGroundAboveKeepsake, "(Topmost again puts the land over the keepsake)");
+            Call(window, "KeepFarmBelowCat");
+            check(!window.FarmGroundAboveKeepsake && !window.FarmGroundAboveCat && !window.KeepsakeAboveCat, "Cat over keepsake over land");
+            Call(window, "CloseFarm");
+            layerPrefs.Farm = false;
+            FieldOf("farm").SetValue(window, null);
+            FieldOf("farmPath").SetValue(window, PetFarm.DefaultPath);
+            Directory.Delete(layerFolder, true);
+
             var area = (Area)FieldOf("bounds").GetValue(window)!;
             var spot = window.TrophyBounds;
             var keepsake = keepsakeWindow?.Content as KeepsakeArt;

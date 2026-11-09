@@ -237,6 +237,16 @@ public sealed partial class PetWindow
         if (keepsakeHandle != IntPtr.Zero && catHandle != IntPtr.Zero) SetWindowPos(keepsakeHandle, catHandle, 0, 0, 0, 0, NoSize | NoMove | NoActivate);
     }
 
+    private long keepsakeOrderDue;
+
+    public bool KeepsakeAboveCat => keepsakeWindow?.IsVisible == true && WindowsAbove(new WindowInteropHelper(this).Handle).Contains(new WindowInteropHelper(keepsakeWindow).Handle);
+
+    // Placed once it would not stay: WPF applies Topmost again now and then. Moves it only when it is out of order.
+    private void KeepKeepsakeBelowCat()
+    {
+        if (KeepsakeAboveCat) KeepCatAboveKeepsake();
+    }
+
     private Point KeepsakeCursor()
     {
         var point = ScreenCursor();
@@ -320,6 +330,11 @@ public sealed partial class PetWindow
     // A paused pet freezes all of it (the keepsake hangs in the air with its velocity).
     private void TickKeepsake(double dt)
     {
+        if (Environment.TickCount64 >= keepsakeOrderDue)
+        {
+            keepsakeOrderDue = Environment.TickCount64 + FarmOrderMilliseconds;
+            KeepKeepsakeBelowCat();
+        }
         if (!TrophiesVisible && (cushionNap != CushionNap.None || napLift > 0)) { cushionNap = CushionNap.None; napLift = 0; } // The cushion is gone.
         if (paused || !TrophiesVisible) return;
         if (pet.Bonk > 0)

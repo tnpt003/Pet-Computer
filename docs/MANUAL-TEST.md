@@ -1447,6 +1447,7 @@ Muốn thử nhanh: đặt `PET_DATA_DIRECTORY` tới một thư mục riêng, s
 - [ ] Nhấc và kéo Ruộng, Bếp, Hồ khi xe đang đứng: xe đứng yên; thả vùng đất trúng xe thì vùng đó trượt sang chỗ trống
 - [ ] Có nhiều vùng đất trên màn nhỏ, không còn chỗ trống: xe không đến, không đè lên đất
 - [ ] Mèo đi qua Ruộng, Bếp, Hồ, xe: mèo luôn ở trước, kể cả sau khi mở menu, bảng, đổi cửa sổ khác hoặc để lâu
+- [ ] Kéo vật trưng bày đè lên vùng đất và cho mèo đi qua: mèo ở trên cùng, rồi vật trưng bày, rồi đất; tắt nông trại thì mèo vẫn ở trên vật trưng bày
 - [ ] Bảng nông trại, menu chuột phải và bong bóng thoại vẫn nằm trên mèo như trước
 - [ ] Xem mèo cày, gieo, gặt, đổ nồi, tưới, khuấy, câu cá, đuổi chim: đạo cụ đúng hướng cả khi quay trái, không bị cắt, nhịp có vừa mắt không
 - [ ] Đang làm thì bế mèo, Pause, Quiet hoặc cho ngủ: đạo cụ biến mất ngay, không kẹt

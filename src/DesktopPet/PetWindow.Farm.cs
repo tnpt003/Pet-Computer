@@ -361,13 +361,13 @@ public sealed partial class PetWindow
 
     private bool KeepsakeShown => keepsakeWindow?.IsVisible == true;
 
-    public bool FarmGroundAboveCat
+    public bool FarmGroundAboveCat => FarmGroundAbove(this);
+    public bool FarmGroundAboveKeepsake => keepsakeWindow != null && FarmGroundAbove(keepsakeWindow);
+
+    private bool FarmGroundAbove(Window other)
     {
-        get
-        {
-            var above = WindowsAbove(new WindowInteropHelper(this).Handle);
-            return FarmGroundWindows().Any(window => above.Contains(new WindowInteropHelper(window).Handle));
-        }
+        var above = WindowsAbove(new WindowInteropHelper(other).Handle);
+        return FarmGroundWindows().Any(window => above.Contains(new WindowInteropHelper(window).Handle));
     }
 
     // All are topmost, and WPF applies Topmost again now and then, which brings a window to the top
@@ -377,7 +377,7 @@ public sealed partial class PetWindow
     {
         var cat = new WindowInteropHelper(this).Handle;
         if (cat == IntPtr.Zero) return;
-        if (KeepsakeShown && WindowsAbove(cat).Contains(new WindowInteropHelper(keepsakeWindow!).Handle)) KeepCatAboveKeepsake();
+        KeepKeepsakeBelowCat();
         var above = WindowsAbove(KeepsakeShown ? new WindowInteropHelper(keepsakeWindow!).Handle : cat);
         foreach (var window in FarmGroundWindows())
             if (above.Contains(new WindowInteropHelper(window).Handle)) PlaceBelowCat(window);

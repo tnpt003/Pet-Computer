@@ -5,6 +5,14 @@ Sổ ghi các lỗi đã sửa của Desktop Pet. Phần A: lỗi người dùng
 Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm lỗi mới: tạo mục số tiếp theo ở đầu phần A (hoặc một dòng ở phần B).
 
 # A. Lỗi người dùng phát hiện
+## #75 — Vật trưng bày cần giữ đúng lớp so với mèo và vùng đất (09/11)
+- **Triệu chứng:** người dùng muốn vật trưng bày cũng được đưa lên trên, đã chọn thứ tự mèo > vật trưng bày > vùng đất.
+- **Nguyên nhân:** thứ tự mèo và kỷ vật chỉ đặt một lần lúc kỷ vật hiện; WPF áp lại Topmost thì kỷ vật nhảy lên trên mèo (UiChecks đã tái hiện). Bản #74 chỉ sửa lại khi nông trại đang bật.
+- **Sửa:** kiểm thứ tự mèo và kỷ vật 4 lần mỗi giây ngay cả khi tắt nông trại, chỉ chuyển khi sai chỗ. Luật ở docs/FARM-GAME.md.
+- **Commit:** (điền sau khi publish).
+- **Kiểm chứng:** script đầy đủ một lần: Python 60 + i18n 5, C# 4246 (97 suite), WPF 2457 đều đạt.
+- **Cần xem tay:** chưa nhìn thứ tự lớp trên desktop thật.
+
 ## #74 — Xe hàng đi theo ruộng, có thể đè đất; mèo nằm sau vùng đất; thiếu hoạt ảnh làm vườn (09/11)
 - **Triệu chứng:** xe luôn cạnh ruộng và chạy theo khi di chuyển ruộng; mèo có lúc bị vùng đất che; lúc cày, gieo, gặt, đổ nồi mèo chỉ thò chân.
 - **Nguyên nhân:** vị trí xe tính lại mỗi khung hình từ vị trí ruộng; khi hết chỗ nó giữ nguyên chỗ muốn đứng. Thứ tự lớp chỉ đặt một lần lúc hiện ruộng, WPF áp lại Topmost thì cửa sổ đất nhảy lên trên mèo (UiChecks đã tái hiện). Ba việc đó chưa từng có đạo cụ.

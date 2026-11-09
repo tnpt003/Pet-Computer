@@ -1476,10 +1476,12 @@ Muốn thử nhanh: đặt `PET_DATA_DIRECTORY` tới một thư mục riêng, s
 
 ## Biển nông trại (gập vùng đất)
 
-- [ ] Biển đứng dưới sàn, không đè vùng đất; bấm từng ô thì vùng đó thu xuống mượt và biến mất, bấm lại hiện đúng chỗ cũ
+- [ ] Biển đứng dưới sàn, không đè vùng đất; bấm từng ô thì vùng đó biến mất, bấm lại hiện đúng chỗ cũ
+- [ ] Hiệu ứng phép lúc mở: vòng sáng trên sàn, đất trồi lên có nảy, sao bay; lúc gập: đất chìm vào vòng sáng; có đúng cảm giác phép không, nhanh chậm vừa chưa; tiếng sparkle/swoosh vừa tai, Mở tất cả và Gập tất cả chạy lần lượt và chỉ một tiếng
+- [ ] Vòng sáng và sao không bị cắt ở mép, đọc rõ trên nền sáng và tối; đang mở mà bấm gập thì quay ngược ngay, không giật
 - [ ] Vùng đã gập không chặn chuột: bấm xuyên qua chỗ đó vào cửa sổ phía sau được
 - [ ] Icon trên biển dễ nhận ra ở kích thước thật; ô mở và ô gập phân biệt được; chấm vàng hiện khi ruộng cần tưới/gặt, nồi còn món, có trứng
-- [ ] Gập hết rồi chờ xe hàng và mèo hàng xóm: chúng thành icon trên biển, bấm vào xem hàng/tặng đồ được; mở một vùng thì chúng xuống sàn
+- [ ] Gập hết rồi chờ xe hàng và mèo hàng xóm: chúng vẫn đến và đứng dưới sàn như bình thường
 - [ ] Vùng gập mèo không tự tới làm; chọn Câu cá hoặc nấu món từ biển thì vùng hiện ra, mèo làm xong tự gập lại
 - [ ] Cây vẫn lớn, gà vẫn đẻ, mưa vẫn tưới khi đang gập; nhãn thu hoạch/thời tiết hiện trên biển
 - [ ] Kéo biển sang chỗ khác và sang màn hình khác; tắt mở lại app vẫn đúng trạng thái gập và vị trí

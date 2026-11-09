@@ -58,7 +58,7 @@ public sealed partial class PetFarmArt
             land.RotateAt(Tilt, mid, Floor);
             land.Translate(ShakeX, -air);
             dc.PushTransform(new MatrixTransform(land));
-            double above = Kind == FarmPatchKind.Pond ? 8 : Kind == FarmPatchKind.Dock && (DockCart || DockVisitor) ? 78 : 58; // Only what stands on the land takes clicks.
+            double above = Kind == FarmPatchKind.Pond ? 8 : 58; // Only what stands on the land takes clicks.
             dc.DrawRectangle(Hit, null, new Rect(Side, SoilTop - above, LandWidth, SoilHeight + above));
             if (air > 0.5) DrawUnderside(dc, Side, LandWidth, air);
             DrawBank(dc, Side, LandWidth);

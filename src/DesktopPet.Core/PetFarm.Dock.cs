@@ -8,41 +8,50 @@ public enum FarmLandSlot { Field, Hearth, Pond, Coop }
 // chose and is saved; Borrowed is a land opened only for the job the user just asked for.
 public sealed class FarmLandFold
 {
-    public const double Seconds = 0.26, BorrowGraceSeconds = 1.5;
+    public const double OpenSeconds = 0.9, FoldSeconds = 0.6, StaggerSeconds = 0.12, BorrowGraceSeconds = 1.5;
+    private const double LandStart = 0.2, LandSpan = 0.5, Overshoot = 1.7;
 
-    private double idle;
+    private double idle, wait;
 
     public bool Folded { get; private set; }
     public bool Borrowed { get; private set; }
     // 1 standing on the floor, 0 out of sight.
     public double Amount { get; private set; } = 1;
     public bool Showing => !Folded || Borrowed;
+    // The spell is under way.
+    public bool Moving => Amount > 0 && Amount < 1;
+    private double LandProgress => Math.Clamp((Amount - LandStart) / LandSpan, 0, 1);
+    // How much of the land stands, 0 to 1, and its height, which goes a little past 1 before it settles.
+    public double Land => LandProgress * LandProgress * (3 - 2 * LandProgress);
+    public double LandHeight => 1 + (Overshoot + 1) * Math.Pow(LandProgress - 1, 3) + Overshoot * Math.Pow(LandProgress - 1, 2);
 
     public void Restore(bool folded)
     {
         Folded = folded;
         Borrowed = false;
-        idle = 0;
+        idle = wait = 0;
         Amount = folded ? 0 : 1;
     }
 
-    public void Fold()
+    public void Fold(double delay = 0)
     {
         Folded = true;
         Borrowed = false;
+        wait = delay;
     }
 
-    public void Open()
+    public void Open(double delay = 0)
     {
         Folded = false;
         Borrowed = false;
+        wait = delay;
     }
 
     public bool Borrow()
     {
         if (Showing) return false;
         Borrowed = true;
-        idle = 0;
+        idle = wait = 0;
         return true;
     }
 
@@ -60,8 +69,17 @@ public sealed class FarmLandFold
     public bool Step(double dt)
     {
         double target = Showing ? 1 : 0;
-        if (Amount == target) return false;
-        double way = dt / Seconds;
+        if (Amount == target)
+        {
+            wait = 0;
+            return false;
+        }
+        if (wait > 0)
+        {
+            wait = Math.Max(0, wait - dt);
+            return false;
+        }
+        double way = dt / (Showing ? OpenSeconds : FoldSeconds);
         Amount = target > Amount ? Math.Min(target, Amount + way) : Math.Max(target, Amount - way);
         return true;
     }

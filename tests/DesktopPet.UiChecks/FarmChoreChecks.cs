@@ -390,8 +390,8 @@ internal static class FarmChoreChecks
             var area = Field<Area>(window, "bounds");
             var hearth = window.FarmFoldOf(FarmLandSlot.Hearth);
             var pond = window.FarmFoldOf(FarmLandSlot.Pond);
-            void Put() => Farm(FarmLandFold.Seconds + 0.05);
-            void GiveBack() => Farm(FarmLandFold.BorrowGraceSeconds + FarmLandFold.Seconds + 0.1);
+            void Put() => Farm(FarmLandFold.OpenSeconds + 0.05);
+            void GiveBack() => Farm(FarmLandFold.BorrowGraceSeconds + FarmLandFold.FoldSeconds + 0.1);
             void Ready()
             {
                 Free(); Clear(field);

@@ -198,7 +198,8 @@ Người dùng duyệt cả sáu mốc, chưa phát hành, Mốc E (chuẩn bị
 - Vùng gập vẫn còn cửa sổ nhưng không có gì để nhìn hay bấm; đồng hồ cây, trứng, mưa tưới, nắng vẫn chạy. Vùng gập không giữ chỗ: mở lại mà chỗ cũ có vật khác thì trượt sang chỗ trống gần nhất.
 - Mèo không tự làm việc ở vùng gập (không tưới, gặt, nấu, câu, vồ gà; chim cũng không tới); chuyến đang đi sẽ dừng khi gập. Lệnh của người dùng Nấu ăn, Câu cá mở tạm vùng đó, gập lại 1,5 giây sau khi mèo xong; trong file vẫn là gập. Bấm ô lúc đang mở tạm là gập hẳn và dừng việc.
 - Món còn trong nồi của bếp gập chờ người dùng: mở Bếp hoặc chọn "Nấu tiếp món trong nồi".
-- Khi gập hết, xe hàng và mèo hàng xóm không đứng dưới sàn mà thành icon trên biển, bấm vào xem hàng hoặc tặng đồ như cũ, chữ nổi cho biết mèo khách cần gì. Mở lại một vùng thì khách đang ở xuống sàn nếu còn chỗ.
+- Xe hàng và mèo hàng xóm không liên quan tới việc gập: luôn đến và đứng dưới sàn như cũ, kể cả khi đã gập hết.
+- Hiệu ứng phép: mở 0,9 giây (vòng ký tự tím vàng trên sàn, đất trồi lên vượt cao một chút rồi nảy về, sao bay lên, tiếng "sparkle"), gập 0,6 giây là đảo ngược cảnh đó, đất chìm vào vòng sáng, sao bị hút xuống, tiếng "swoosh". Mở tất cả, Gập tất cả chạy lần lượt theo chiều từ trái sang, cách nhau 0,12 giây, một tiếng cho cả lượt. Vùng mở tạm cho Nấu ăn, Câu cá cũng có phép; lúc tự gập lại thì im lặng. Mèo và các luật coi vùng đã mở/gập ngay từ lúc bấm, phép chỉ là phần hình. Khởi động app, thoát fullscreen, ra khỏi trận thì vùng hiện thẳng, không diễn. Pause giữ yên phép.
 - Nhãn của vùng gập (thu hoạch, lên cấp, thời tiết, quà) hiện trên biển. Bấm biển không chạm vào mèo: không đánh thức, không phá kéo thả hay cảm xúc.
 
 ## Giai đoạn 1

@@ -16,7 +16,7 @@ internal static class FarmDockChecks
     {
         var dock = window.FarmDockPatch;
         var art = dock.Art!;
-        void Put() => frames(FarmLandFold.Seconds + 0.05);
+        void Put() => frames(FarmLandFold.OpenSeconds + FarmLandFold.StaggerSeconds * 3 + 0.05);
         var field = window.FarmFoldOf(FarmLandSlot.Field);
         var hearth = window.FarmFoldOf(FarmLandSlot.Hearth);
         var pond = window.FarmFoldOf(FarmLandSlot.Pond);
@@ -37,16 +37,20 @@ internal static class FarmDockChecks
         check(field.Showing && field.Amount == 1 && fieldSurface.Visibility == Visibility.Visible, "At first all the land is out");
         window.FarmDockClick(0);
         check(!field.Showing && farm.FieldFolded && PetFarm.Load(path).FieldFolded, "A click on its board folds the field, and it is saved");
-        frames(FarmLandFold.Seconds / 2);
-        check(field.Amount > 0 && field.Amount < 1 && fieldSurface.Opacity < 1, "It sinks away");
+        frames(FarmLandFold.FoldSeconds * 0.75);
+        var fieldMagic = Field<PetFarmArt.LandMagic?>(window, "farmMagic")!;
+        check(field.Moving && fieldSurface.Opacity < 1 && fieldMagic.Visibility == Visibility.Visible && fieldMagic.Amount == field.Amount, "It sinks into the spell");
         Put();
         check(field.Amount == 0 && fieldSurface.Visibility == Visibility.Collapsed && window.FarmVisible, "...and is gone, with the farm still running");
+        check(fieldMagic.Visibility == Visibility.Collapsed, "The spell is over and draws nothing");
         check(!art.DockSlots[0].Open && art.DockSlots[1].Open, "The sign shows which land is out");
 
         // Where it was stays free for others, and it finds room when it comes back.
         window.FarmDockClick(0);
+        frames(FarmLandFold.OpenSeconds * 0.15);
+        check(field.Moving && fieldSurface.Visibility == Visibility.Collapsed && fieldMagic.Visibility == Visibility.Visible, "Opening starts with the ring, before any land");
         Put();
-        check(field.Amount == 1 && !farm.FieldFolded && fieldSurface.Visibility == Visibility.Visible, "A second click brings it back");
+        check(field.Amount == 1 && !farm.FieldFolded && fieldSurface.Visibility == Visibility.Visible && fieldSurface.RenderTransform == Transform.Identity, "A second click brings it back, exactly as it was");
 
         // Labels of folded land are read on the sign.
         window.FarmDockClick(0);
@@ -59,7 +63,9 @@ internal static class FarmDockChecks
         Put();
 
         // Everything.
-        check(window.FarmSetAllLands(false) && window.FarmDockCompact, "Fold all");
+        check(window.FarmSetAllLands(false), "Fold all");
+        frames(0.02);
+        check(new[] { field, hearth, pond }.Count(fold => fold.Moving) == 1, "...one land after another");
         Put();
         check(window.FarmHearth.Surface!.Visibility == Visibility.Collapsed && window.FarmPond.Surface!.Visibility == Visibility.Collapsed && fieldSurface.Visibility == Visibility.Collapsed, "...and only the sign is left");
         check(window.FarmHearth.Window!.IsVisible && window.FarmPond.Window!.IsVisible, "The windows stay; only what is in them goes");
@@ -72,32 +78,16 @@ internal static class FarmDockChecks
         check(!window.FarmToggleLand(FarmLandSlot.Pond) && window.FarmPatchItems(dock).Length == 0, "Pause holds the land where it is");
         SetField(window, "paused", false);
 
-        // Guests wait on the sign.
+        // Guests come to the floor as ever, folded land or not.
         var stall = Field<FarmStall>(window, "farmStall");
         stall.Reset();
-        check(window.TryFarmStall() && window.FarmStallHere && Field<Window?>(window, "farmCartWindow") == null, "With all land folded the cart stays off the floor");
-        Call(window, "RefreshFarmDock");
-        check(art.DockCart && art.DockTargetAt(new Point(98, 62)) == PetFarmArt.Land.DockCartTarget, "...and waits on the sign");
-        window.FarmDockClick(PetFarmArt.Land.DockCartTarget);
-        check(window.FarmStallOpen, "A click browses it");
-        window.CloseFarmStall();
-        frames(FarmStall.RollSeconds + 0.1);
+        check(window.TryFarmStall() && window.FarmStallHere && Field<Window?>(window, "farmCartWindow") != null, "With all land folded the cart still comes to the floor");
         var visitor = window.FarmVisitorNow;
         visitor.Reset();
         farm.Stock["Radish"] = 3;
-        check(window.TryFarmVisitor() && visitor.Here && window.FarmVisitorWindow == null, "The neighbour's cat too");
-        Call(window, "RefreshFarmDock");
-        check(art.DockVisitor && window.FarmDockLabel(PetFarmArt.Land.DockVisitorTarget)!.Length > 0, "...and says what it wants");
-        Render(dock.Window!, "farm-dock-guests.png", Brushes.WhiteSmoke);
-        Render(dock.Window!, "farm-dock-guests-dark.png", new SolidColorBrush(Color.FromRgb(0x2A, 0x2F, 0x3A)));
-        frames(FarmVisitor.RollSeconds + 0.1);
-
-        check(window.FarmToggleLand(FarmLandSlot.Pond) && Field<Window?>(window, "farmCartWindow") != null && window.FarmVisitorWindow != null, "Land opened: they come down to the floor");
-        check(window.FarmToggleLand(FarmLandSlot.Pond) && Field<Window?>(window, "farmCartWindow") == null && window.FarmVisitorWindow == null && stall.Here && visitor.Here, "Folded again: back on the sign, the visit goes on");
+        check(window.TryFarmVisitor() && visitor.Here && window.FarmVisitorWindow != null, "...and the neighbour's cat");
         Call(window, "ResetFarmCart");
         Call(window, "ResetFarmVisitor");
-        Call(window, "RefreshFarmDock");
-        check(!art.DockCart && !art.DockVisitor, "Gone when they leave");
         Put();
 
         // A fullscreen app and back.
@@ -110,7 +100,17 @@ internal static class FarmDockChecks
 
         Render(dock.Window!, "farm-dock-folded.png", Brushes.WhiteSmoke);
         Render(dock.Window!, "farm-dock-folded-dark.png", new SolidColorBrush(Color.FromRgb(0x2A, 0x2F, 0x3A)));
-        check(window.FarmSetAllLands(true) && !window.FarmDockCompact, "Open all");
+        check(window.FarmSetAllLands(true), "Open all");
+        frames(0.02);
+        check(new[] { field, hearth, pond }.Count(fold => fold.Moving) == 1, "...one after another too");
+        foreach (var (at, name) in new[] { (0.22, "ring"), (0.5, "rising"), (0.75, "stars") })
+        {
+            hearth.Restore(true);
+            hearth.Open();
+            frames(FarmLandFold.OpenSeconds * at);
+            Render(window.FarmHearth.Window!, $"farm-magic-{name}.png", Brushes.WhiteSmoke);
+            Render(window.FarmHearth.Window!, $"farm-magic-{name}-dark.png", new SolidColorBrush(Color.FromRgb(0x2A, 0x2F, 0x3A)));
+        }
         Put();
         Call(window, "RefreshFarmDock");
         check(field.Amount == 1 && hearth.Amount == 1 && pond.Amount == 1, "...and the land is back");

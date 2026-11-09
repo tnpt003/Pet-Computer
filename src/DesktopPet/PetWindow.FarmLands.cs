@@ -26,6 +26,7 @@ public sealed class FarmPatch
     public FarmLift Lift { get; } = new();
     public FarmLandFold Fold { get; } = new();
     public FrameworkElement? Surface { get; internal set; }
+    public PetFarmArt.LandMagic? Magic { get; internal set; }
     public Window? Window { get; internal set; }
     public PetFarmArt.Land? Art { get; internal set; }
     public PetFarmArt.DecorLayer? Decor { get; internal set; }
@@ -128,7 +129,10 @@ public sealed partial class PetWindow
             patch.Art = art;
             patch.Surface = surface;
             if (patch.Kind == FarmPatchKind.Dock) AddFarmDockChip(surface);
-            patch.Window = CreateOverlayWindow(surface, patch.Kind == FarmPatchKind.Hearth ? "Pet farm hearth" : patch.Kind == FarmPatchKind.Coop ? "Pet farm coop" : patch.Kind == FarmPatchKind.Dock ? "Pet farm sign" : "Pet farm pond");
+            PetFarmArt.LandMagic? magic = null;
+            UIElement content = patch.Kind == FarmPatchKind.Dock ? surface : FarmMagicStage(surface, patch.ArtWidth, patch.Width, out magic);
+            patch.Magic = magic;
+            patch.Window = CreateOverlayWindow(content, patch.Kind == FarmPatchKind.Hearth ? "Pet farm hearth" : patch.Kind == FarmPatchKind.Coop ? "Pet farm coop" : patch.Kind == FarmPatchKind.Dock ? "Pet farm sign" : "Pet farm pond");
             patch.Window.Width = patch.ArtWidth; patch.Window.Height = PetFarmArt.ArtHeight;
             art.MouseLeftButtonDown += (_, e) => { e.Handled = true; if (patch.Kind == FarmPatchKind.Dock) PressFarmDock(e.GetPosition(art)); PressFarmPatch(patch); };
             art.MouseLeftButtonUp += (_, e) => { e.Handled = true; if (patch.Kind == FarmPatchKind.Dock) ReleaseFarmDock(e.GetPosition(art)); ReleaseFarmPatch(patch); };
@@ -139,7 +143,7 @@ public sealed partial class PetWindow
             }
             art.LostMouseCapture += (_, _) => patch.Dragging = false;
             InitializeFarmPatchMenu(patch, art);
-            patch.Window.Closed += (_, _) => { patch.Window = null; patch.Art = null; patch.Decor = null; patch.Gain = null; patch.Surface = null; patch.Dragging = false; patch.GainLeft = 0; };
+            patch.Window.Closed += (_, _) => { patch.Window = null; patch.Art = null; patch.Decor = null; patch.Gain = null; patch.Surface = null; patch.Magic = null; patch.Dragging = false; patch.GainLeft = 0; };
         }
     }
 

@@ -33,9 +33,9 @@ internal static class FarmTests
         var fold = new FarmLandFold();
         check(fold.Showing && !fold.Folded && fold.Amount == 1, "Land starts out");
         fold.Fold();
-        check(!fold.Showing && fold.Step(FarmLandFold.Seconds / 2) && fold.Amount is > 0 and < 1, "Folding takes a moment");
-        fold.Step(FarmLandFold.Seconds);
-        check(fold.Amount == 0 && !fold.Step(0.1), "...and then nothing moves");
+        check(!fold.Showing && fold.Step(FarmLandFold.FoldSeconds / 2) && fold.Amount is > 0 and < 1 && fold.Moving, "Folding takes a moment");
+        fold.Step(FarmLandFold.FoldSeconds);
+        check(fold.Amount == 0 && !fold.Step(0.1) && !fold.Moving && fold.Land == 0, "...and then nothing moves");
         check(fold.Borrow() && fold.Showing && fold.Folded, "Borrowing shows it, and it stays folded in the save");
         check(!fold.Borrow(), "Only once");
         check(!fold.WatchBorrow(true, 100), "Not while it is in use");
@@ -45,7 +45,20 @@ internal static class FarmTests
         fold.Open();
         check(fold.Showing && !fold.Folded && !fold.Borrowed, "Opening on purpose keeps it open");
         fold.Restore(true);
-        check(fold.Folded && fold.Amount == 0, "Restored with no animation");
+        check(fold.Folded && fold.Amount == 0 && !fold.Moving, "Restored with no animation");
+        fold.Open(FarmLandFold.StaggerSeconds);
+        check(!fold.Step(FarmLandFold.StaggerSeconds + 0.01) && fold.Amount == 0, "It waits its turn");
+        fold.Step(FarmLandFold.OpenSeconds * 0.15);
+        check(fold.Moving && fold.Land == 0, "The ring comes first, before any land");
+        double tallest = 0;
+        while (fold.Step(1.0 / 60)) tallest = Math.Max(tallest, fold.LandHeight);
+        check(tallest > 1.05 && fold.LandHeight == 1 && fold.Land == 1, $"It comes up a little past its height and settles ({tallest:F2})");
+        fold.Fold();
+        fold.Step(FarmLandFold.FoldSeconds / 2);
+        double down = fold.Amount;
+        fold.Open();
+        fold.Step(0.05);
+        check(fold.Amount > down, "Changed halfway, it turns back from where it is");
 
         var farm = new PetFarm();
         check(!Enum.GetValues<FarmLandSlot>().Any(farm.IsFolded), "A new farm has all its land out");

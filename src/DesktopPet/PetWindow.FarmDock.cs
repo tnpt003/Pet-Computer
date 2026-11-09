@@ -28,8 +28,15 @@ public sealed partial class PetWindow
     private bool FarmLandOwned(FarmLandSlot slot) => slot != FarmLandSlot.Coop || farm?.HasCoop == true;
     private IEnumerable<FarmLandSlot> FarmOwnedLands => FarmLandSlots.Where(FarmLandOwned);
 
-    // Everything is folded: the cart and the neighbour's cat wait on the sign instead of on the floor.
-    public bool FarmDockCompact => farm != null && FarmOwnedLands.All(slot => FarmFoldOf(slot).Folded);
+    private PetFarmArt.LandMagic? FarmMagicOf(FarmLandSlot slot) => slot == FarmLandSlot.Field ? farmMagic : FarmPatchOf(slot).Magic;
+    private double FarmSlotLeft(FarmLandSlot slot) => slot == FarmLandSlot.Field ? FarmPlotLeft : FarmPatchLeft(FarmPatchOf(slot));
+
+    // The land's window: what stands on it, and over that the spell, which the land's own growth does not stretch.
+    private static Grid FarmMagicStage(Grid surface, double artWidth, double landWidth, out PetFarmArt.LandMagic magic)
+    {
+        magic = new PetFarmArt.LandMagic(artWidth, landWidth);
+        return new Grid { Width = artWidth, Height = PetFarmArt.ArtHeight, Children = { surface, magic } };
+    }
 
     private void AddFarmDockChip(Grid surface)
     {
@@ -55,12 +62,21 @@ public sealed partial class PetWindow
 
     private void ApplyFarmFold(FarmLandSlot slot)
     {
-        if (FarmSurfaceOf(slot) is not { } surface) return;
-        double amount = FarmFoldOf(slot).Amount;
-        surface.Visibility = amount > 0 ? Visibility.Visible : Visibility.Collapsed;
-        surface.Opacity = amount;
-        surface.RenderTransformOrigin = new Point(0.5, 1);
-        surface.RenderTransform = amount >= 1 ? Transform.Identity : new ScaleTransform(0.85 + 0.15 * amount, amount);
+        var fold = FarmFoldOf(slot);
+        if (FarmSurfaceOf(slot) is { } surface)
+        {
+            double land = fold.Land;
+            surface.Visibility = land > 0 ? Visibility.Visible : Visibility.Collapsed;
+            surface.Opacity = Math.Min(1, land * 2.5);
+            surface.RenderTransformOrigin = new Point(0.5, 1);
+            surface.RenderTransform = land >= 1 ? Transform.Identity : new ScaleTransform(0.88 + 0.12 * land, fold.LandHeight);
+        }
+        if (FarmMagicOf(slot) is { } magic)
+        {
+            magic.Amount = fold.Amount;
+            magic.Visibility = fold.Moving ? Visibility.Visible : Visibility.Collapsed;
+            magic.InvalidateVisual();
+        }
     }
 
     private bool FarmLandWorking(FarmLandSlot slot) => farmChores.Active && slot == (farmChores.Cooking ? FarmLandSlot.Hearth
@@ -79,8 +95,9 @@ public sealed partial class PetWindow
     public bool FarmToggleLand(FarmLandSlot slot)
     {
         if (farm == null || paused || FarmLandInAir || !FarmLandOwned(slot)) return false;
-        SetFarmLandOpen(slot, !FarmFoldOf(slot).Showing);
-        FarmDockChanged();
+        bool open = !FarmFoldOf(slot).Showing;
+        SetFarmLandOpen(slot, open);
+        FarmDockChanged(open);
         return true;
     }
 
@@ -89,22 +106,28 @@ public sealed partial class PetWindow
         if (farm == null || paused || FarmLandInAir) return false;
         var changing = FarmOwnedLands.Where(slot => FarmFoldOf(slot).Showing != open || FarmFoldOf(slot).Borrowed).ToList();
         if (changing.Count == 0) return false;
-        foreach (var slot in changing) SetFarmLandOpen(slot, open);
-        FarmDockChanged();
+        // One after another along the floor, with one sound for the lot.
+        double delay = 0;
+        foreach (var slot in changing.OrderBy(FarmSlotLeft))
+        {
+            SetFarmLandOpen(slot, open, delay);
+            delay += FarmLandFold.StaggerSeconds;
+        }
+        FarmDockChanged(open);
         return true;
     }
 
-    private void SetFarmLandOpen(FarmLandSlot slot, bool open)
+    private void SetFarmLandOpen(FarmLandSlot slot, bool open, double delay = 0)
     {
         var fold = FarmFoldOf(slot);
         farm!.SetFolded(slot, !open);
         if (open)
         {
-            fold.Open();
+            fold.Open(delay);
             MakeRoomForFarmLand(slot);
             return;
         }
-        fold.Fold();
+        fold.Fold(delay);
         if (slot == FarmLandSlot.Field)
         {
             farmArt?.ReleaseMouseCapture();
@@ -115,11 +138,10 @@ public sealed partial class PetWindow
         else FarmPatchOf(slot).Art?.ReleaseMouseCapture();
     }
 
-    private void FarmDockChanged()
+    private void FarmDockChanged(bool opened)
     {
-        PlayPetSound("pop");
+        PlayPetSound(opened ? "sparkle" : "swoosh");
         SaveFarm();
-        SyncFarmGuests();
         RefreshFarmDock();
     }
 
@@ -127,6 +149,7 @@ public sealed partial class PetWindow
     private void BorrowFarmLand(FarmLandSlot slot)
     {
         if (!FarmFoldOf(slot).Borrow()) return;
+        PlayPetSound("sparkle");
         MakeRoomForFarmLand(slot);
         SaveFarm();
         RefreshFarmDock();
@@ -152,21 +175,6 @@ public sealed partial class PetWindow
         StoreFarmPatch(patch);
     }
 
-    // Guests stay on the sign while everything is folded and stand on the floor otherwise.
-    private void SyncFarmGuests()
-    {
-        if (farm == null || FarmLandInAir) return;
-        bool compact = FarmDockCompact;
-        if (compact)
-        {
-            CloseFarmCart();
-            CloseFarmVisitor();
-            return;
-        }
-        if (farmCartWindow == null && farmStall.Phase == FarmStallPhase.Open && PickFarmCartPlace(FindFarmMonitor(farmMonitor))) ShowFarmCart();
-        if (farmVisitorWindow == null && farmVisitor.Phase == FarmVisitorPhase.Open && PickFarmVisitorPlace(FindFarmMonitor(farmMonitor))) ShowFarmVisitor();
-    }
-
     private void RefreshFarmDock()
     {
         if (farm == null || FarmDockPatch.Art is not { } art) return;
@@ -179,10 +187,7 @@ public sealed partial class PetWindow
             art.DockSlots[(int)slot] = view;
             changed = true;
         }
-        bool cart = farmStall.Here && farmCartWindow == null, visitor = farmVisitor.Here && farmVisitorWindow == null;
-        if (art.DockCart != cart || art.DockVisitor != visitor || art.DockHover != farmDockHover) changed = true;
-        art.DockCart = cart;
-        art.DockVisitor = visitor;
+        if (art.DockHover != farmDockHover) changed = true;
         art.DockHover = farmDockHover;
         if (changed) art.InvalidateVisual();
         UpdateFarmDockChip();
@@ -199,8 +204,6 @@ public sealed partial class PetWindow
     public string? FarmDockLabel(int target)
     {
         if (farm == null) return null;
-        if (target == PetFarmArt.Land.DockCartTarget) return L("Xe hàng · bấm để xem hàng", "Stall · click to browse");
-        if (target == PetFarmArt.Land.DockVisitorTarget) return L("Mèo hàng xóm cần: ", "The neighbour's cat wants: ") + FarmVisitorWants();
         if (target < 0 || target >= FarmLandSlots.Length) return null;
         var slot = (FarmLandSlot)target;
         int work = FarmLandOwned(slot) ? farm.LandWork(slot) : 0;
@@ -212,8 +215,6 @@ public sealed partial class PetWindow
             _ => !FarmLandOwned(slot) ? L("Chuồng gà · mua ở Kho", "Coop · buy it in the Store") : work > 0 ? LF($"Chuồng gà · {work} trứng", $"Coop · {work} eggs") : L("Chuồng gà", "Coop")
         };
     }
-
-    private string FarmVisitorWants() => farm == null ? "" : string.Join(" · ", farmVisitor.Items.Select(item => $"{FarmGoodName(item.Key)} {farm.GoodsOf(item.Key)}/{item.Value}"));
 
     private void HoverFarmDock(int target)
     {
@@ -236,21 +237,10 @@ public sealed partial class PetWindow
         if (pressed >= 0 && FarmDockPatch.Art?.DockTargetAt(point) == pressed) FarmDockClick(pressed);
     }
 
-    // What a click on the sign does: a board opens or folds its land, a guest is received.
+    // What a click on the sign does: a board opens or folds its land.
     public void FarmDockClick(int target)
     {
         if (farm == null || paused) return;
-        if (target == PetFarmArt.Land.DockCartTarget)
-        {
-            OpenFarmStall();
-            return;
-        }
-        if (target == PetFarmArt.Land.DockVisitorTarget)
-        {
-            if (FarmGiveVisitor() == null) ShowFarmPatchLabel(FarmDockPatch, L("Chưa đủ đồ để tặng", "Not enough to give yet"), FarmGainSeconds);
-            RefreshFarmDock();
-            return;
-        }
         if (target < 0 || target >= FarmLandSlots.Length) return;
         var slot = (FarmLandSlot)target;
         if (!FarmLandOwned(slot)) ShowFarmPatchLabel(FarmDockPatch, L("Mua chuồng gà ở Kho", "Buy the coop in the Store"), FarmGainSeconds);

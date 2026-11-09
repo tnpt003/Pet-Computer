@@ -29,6 +29,7 @@ public sealed partial class PetWindow
     private Border? farmChip, farmGain;
     private TextBlock? farmChipText, farmGainText;
     private Grid? farmSurface;
+    private PetFarmArt.LandMagic? farmMagic;
     private ContextMenu? farmSeedMenu;
     public bool FarmSeedMenuOpen => farmSeedMenu?.IsOpen == true;
     private Area farmArea;
@@ -92,7 +93,6 @@ public sealed partial class PetWindow
             CheckFarmGrowth(now);
             UpdateFarmChip();
             UpdateFarmStall();
-            SyncFarmGuests();
             RefreshFarmDock();
         }
         if (dt > 0) StepFarm(dt);
@@ -264,7 +264,8 @@ public sealed partial class PetWindow
         farmSurface = surface;
 
         farmArt = art; farmChip = chip; farmChipText = chipText; farmGain = gain; farmGainText = gainText;
-        farmWindow = CreateOverlayWindow(surface, "Pet farm");
+        farmWindow = CreateOverlayWindow(FarmMagicStage(surface, PetFarmArt.ArtWidth, PetFarmArt.PlotWidth, out var magic), "Pet farm");
+        farmMagic = magic;
         farmWindow.Width = PetFarmArt.ArtWidth; farmWindow.Height = PetFarmArt.ArtHeight;
         art.MouseMove += (_, e) => HoverFarm(PetFarmArt.TileAt(e.GetPosition(art).X));
         art.MouseLeave += (_, _) => HoverFarm(-1);
@@ -275,7 +276,7 @@ public sealed partial class PetWindow
         CreateFarmPatchWindows();
         farmWindow.Closed += (_, _) =>
         {
-            farmWindow = null; farmArt = null; farmDecorBack = farmDecorFront = null; farmSurface = null; farmChip = farmGain = farmTip = null; farmChipText = farmGainText = farmTipText = null; farmTipShown = null;
+            farmWindow = null; farmArt = null; farmDecorBack = farmDecorFront = null; farmSurface = null; farmMagic = null; farmChip = farmGain = farmTip = null; farmChipText = farmGainText = farmTipText = null; farmTipShown = null;
             farmDragging = false; farmHover = farmPressTile = -1; farmChipShown = null; farmEffectsRunning = false; farmGainLeft = 0;
         };
     }

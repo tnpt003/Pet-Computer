@@ -136,6 +136,24 @@ Giá 2.700 xu cho đủ 6 món sau 5 ngày ở mức 3 giờ/ngày, nhanh hơn m
 - Lần đếm đầu sau khi nạp ruộng là im lặng: không nhãn, không tính "mới" ở trang Phần thưởng. Đạt khi đang chơi thì hiện nhãn "★ Thành tựu: …" 3 giây, chờ nhãn đang hiện xong rồi mới tới lượt; không có tiếng mới. Thành tích đã lưu ở `achievements.json` như thành tích trận.
 - Lên cấp, câu được Cá vàng, giao xe có câu thoại do Python chọn (vi/en/ja, theo tính cách). Thứ tự khi trùng: Cá vàng, lên cấp, giao xe. Theo luật nói hiện có: không đánh thức mèo, không nói khi toàn màn hình hoặc tắt nói chuyện, quá 12 giây thì bỏ. Tắt Python thì chỉ còn các nhãn như cũ.
 
+## Giai đoạn 4: làm giàu nông trại (duyệt 09/11)
+
+Người dùng duyệt cả sáu mốc, chưa phát hành, Mốc E (chuẩn bị 1.5.1) làm sau cùng. Luật nền giữ nguyên: cây không héo, chim không phá, nông trại không cộng sức mạnh trong trận. Giá và thời gian là ước tính.
+
+| Mốc | Nội dung | Trạng thái |
+|---|---|---|
+| 1. Giỏ nông sản | Mèo gặt xong ôm nông sản tới giỏ ở mép ruộng | Xong, còn test tay |
+| 2. Chất lượng nông sản | Tưới đúng giờ có cơ hội ra hàng vàng | Chưa làm |
+| 3. Chuồng gà | Vùng đất thứ tư, gà, trứng, 2 món mới, mèo đuổi gà | Chưa làm |
+| 4. Mùa vụ | Bốn mùa theo tháng của máy, mỗi mùa một cây riêng, cỏ đổi màu | Chưa làm |
+| 5. Công cụ và phân bón | Cuốc, bình tưới ba bậc; phân bón theo ô | Chưa làm |
+| 6. Mèo hàng xóm | Khách ghé xin đồ, tặng quà | Chưa làm |
+
+### Luật Mốc 1 Giỏ nông sản (duyệt 09/11)
+
+- Chỉ chuyến mèo tự gặt mới mang đi; bấm tay và "Gặt cả ruộng" giữ nguyên. Mèo ôm nông sản đi tới giỏ ở mép trái ruộng rồi thả vào, giỏ nảy nhẹ, có tiếng "pop" theo giới hạn tiếng của mèo tự làm.
+- Nông sản vào kho ngay lúc gặt; bị bế, ngủ, Quiet, Pause, nhấc ruộng giữa đường thì đạo cụ biến mất và không mất gì. Giỏ đầy dần theo số nông sản đang có trong kho, không lưu thêm gì.
+
 ## Giai đoạn 1
 
 Luôn giữ: cây không héo, chim không gây hại, farm không cộng sức mạnh trong trận, không chạm vào mèo. Các gói chưa chọn: thêm cây và mùa vụ, công cụ và phân bón, vật nuôi, mở rộng và trang trí, chất lượng nông sản.

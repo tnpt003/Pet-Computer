@@ -1452,3 +1452,7 @@ Muốn thử nhanh: đặt `PET_DATA_DIRECTORY` tới một thư mục riêng, s
 - [ ] Xem mèo cày, gieo, gặt, đổ nồi, tưới, khuấy, câu cá, đuổi chim: đạo cụ đúng hướng cả khi quay trái, không bị cắt, nhịp có vừa mắt không
 - [ ] Đang làm thì bế mèo, Pause, Quiet hoặc cho ngủ: đạo cụ biến mất ngay, không kẹt
 - [ ] DPI 125–200% và nhiều màn hình: xe đứng đúng sàn, đạo cụ không lệch
+
+## Nông trại — Giai đoạn 4 (09/11)
+
+- [ ] Mốc 1 Giỏ: mèo tự gặt xong ôm nông sản đi tới giỏ ở mép trái ruộng, thả vào, giỏ nảy; bị bế, ngủ, Pause giữa đường thì đạo cụ biến mất, nông sản vẫn trong kho; có Đèn lồng thì giỏ không che xấu

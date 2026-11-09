@@ -153,10 +153,16 @@ public sealed partial class PetWindow
                 else effects = true;
             }
         }
-        bool bird = farmBird.Present;
+        bool bird = farmBird.Present, basket = farmBasketAge >= 0;
+        if (basket)
+        {
+            farmBasketAge += dt / FarmBasketBounceSeconds;
+            if (farmBasketAge >= 1) farmBasketAge = -1;
+            farmArt.BasketBounce = farmBasketAge;
+        }
         StepFarmBird(dt);
         StepFarmPatches(dt);
-        bool redraw = lifted || farmLift.Busy || farmEffectsRunning || bird;
+        bool redraw = lifted || farmLift.Busy || farmEffectsRunning || bird || basket;
         farmEffectsRunning = effects;
         if (redraw)
             DrawFarmLift();
@@ -173,6 +179,8 @@ public sealed partial class PetWindow
     }
 
     private PetFarmArt.DecorLayer? farmDecorBack, farmDecorFront;
+    private const double FarmBasketBounceSeconds = 0.45;
+    private double farmBasketAge = -1;
 
     private void DrawFarmLift()
     {
@@ -402,6 +410,8 @@ public sealed partial class PetWindow
         }
         farmArt.Scarecrow = farm.Scarecrow;
         farmArt.GoldenScarecrow = farm.GoldenScarecrow;
+        int stocked = Enum.GetValues<FarmCrop>().Sum(crop => farm.StockOf(crop));
+        farmArt.BasketFill = stocked >= 15 ? 3 : stocked >= 5 ? 2 : stocked >= 1 ? 1 : 0;
         RefreshFarmPot();
         farmArt.HoverTile = farmHover;
         farmArt.Lift = farmLift.Height;

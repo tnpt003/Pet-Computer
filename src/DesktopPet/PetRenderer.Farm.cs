@@ -26,8 +26,30 @@ public sealed partial class PetRenderer
             case FarmToolPose.Harvest: DrawPickedCrop(dc, p); break;
             case FarmToolPose.Pour: DrawPourBowl(dc, p); break;
             case FarmToolPose.Pounce: DrawPaperScraps(dc, p); break;
+            case FarmToolPose.Carry: DrawHeldCrop(dc, p, CarryY + Math.Sin(p.FarmToolTime * 12) * 1.5, 0.72); break;
+            case FarmToolPose.Drop: DrawDroppingCrop(dc, p); break;
         }
         dc.Pop(); dc.Pop();
+    }
+
+    private const double CarryX = 96, CarryY = 62;
+
+    private void DrawHeldCrop(DrawingContext dc, in Pose p, double y, double size)
+    {
+        if (p.FarmToolCrop is not FarmCrop crop) return;
+        dc.PushTransform(new TranslateTransform(CarryX, y));
+        dc.PushTransform(new ScaleTransform(size, size));
+        PetFarmArt.DrawPlant(dc, FarmStage.Ripe, crop);
+        dc.Pop(); dc.Pop();
+        Oval(dc, Fur, CarryX - 4, Math.Min(y, CarryY) + 2, 7, 6.5);
+    }
+
+    // Let go over the basket, which stands a pace in front of the cat.
+    private void DrawDroppingCrop(DrawingContext dc, in Pose p)
+    {
+        double fall = Math.Clamp(p.FarmToolTime / Math.Max(0.01, p.FarmToolHit), 0, 1);
+        if (fall < 1) DrawHeldCrop(dc, p, CarryY + 44 * fall * fall, 0.72 * (1 - 0.3 * fall));
+        else Oval(dc, Fur, CarryX - 4, CarryY + 2, 7, 6.5);
     }
 
     // Brought up slowly, down fast; the soil jumps when it lands.

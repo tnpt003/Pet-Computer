@@ -9,11 +9,11 @@ namespace DesktopPet;
 public sealed partial class PetWindow
 {
     // From the cat's middle to the tile's middle while it works, so the crop stays in view.
-    private const double FarmChoreGap = 58, FarmFishGap = 100, FarmStalkSpeed = 0.6, FarmStalkCrouch = 0.45, FarmLeanDown = 0.3;
+    private const double FarmChoreGap = 58, FarmBasketGap = 40, FarmFishGap = 100, FarmStalkSpeed = 0.6, FarmStalkCrouch = 0.45, FarmLeanDown = 0.3;
 
     private readonly FarmChores farmChores = new();
     private readonly FarmBird farmBird = new();
-    private bool farmCatHands, treatOwnMeal;
+    private bool farmCatHands, treatOwnMeal, farmCropInPaws;
     private double farmChoreSoundWait;
 
     public FarmChoreKind FarmChoreNow => farmChores.Kind;
@@ -24,6 +24,7 @@ public sealed partial class PetWindow
 
     private double FarmTileMid(int tile) => FarmPlotLeft - PetFarmArt.Side + PetFarmArt.TileCenter(tile);
 
+    private double FarmBasketMid => FarmPlotLeft - PetFarmArt.Side + PetFarmArt.BasketX;
     private double FarmHearthMid => FarmPatchLeft(FarmHearth) + FarmHearth.Width / 2;
     private double FarmPondMid => FarmPatchLeft(FarmPond) + FarmPond.Width / 2;
 
@@ -119,11 +120,11 @@ public sealed partial class PetWindow
         farmChores.BeginFishing(spot, spot + half < FarmPondMid ? -1 : 1, FarmChores.NextBite(featureRandom, FarmPondWeather == WeatherKind.Night), farm!.RollFish(featureRandom, FarmPondWeather), byUser);
     }
 
-    private double FarmSpotBeside(double mid)
+    private double FarmSpotBeside(double mid, double gap = FarmChoreGap)
     {
         double half = settings.Width / 2, left = bounds.Left, right = Math.Max(bounds.Left, bounds.Right - settings.Width);
-        double spot = mid + (CatCenter < mid ? -FarmChoreGap : FarmChoreGap) - half;
-        if (spot < left || spot > right) spot = mid + (CatCenter < mid ? FarmChoreGap : -FarmChoreGap) - half;
+        double spot = mid + (CatCenter < mid ? -gap : gap) - half;
+        if (spot < left || spot > right) spot = mid + (CatCenter < mid ? gap : -gap) - half;
         return Math.Clamp(spot, left, right);
     }
 
@@ -134,7 +135,7 @@ public sealed partial class PetWindow
         int tile = farmChores.Tile;
         var kind = farmChores.Kind;
         // Done by hand meanwhile, or the bird has gone: nothing left to go for.
-        if (farmChores.Phase != FarmChorePhase.Work && !FarmChoreWanted(kind, tile))
+        if (farmChores.Phase is FarmChorePhase.Notice or FarmChorePhase.Walk && !FarmChoreWanted(kind, tile))
         {
             StopFarmChore();
             return false;
@@ -148,6 +149,12 @@ public sealed partial class PetWindow
                 return true;
             case FarmChorePhase.Walk:
                 return WalkToFarmSpot(kind, dt);
+            case FarmChorePhase.Carry:
+                ShowFarmTool(kind, tile);
+                return WalkToFarmSpot(kind, dt);
+            case FarmChorePhase.Drop:
+                DropInFarmBasket(tile, hit);
+                return true;
         }
         DoFarmWork(kind, tile, facing, hit);
         if (farmChores.Finished) FinishFarmWork(kind);
@@ -163,8 +170,28 @@ public sealed partial class PetWindow
         _ => farm!.Next(tile) == FarmChores.StepOf(kind)
     };
 
+    // Already in the store since it was picked: this is only the walk and the drop.
+    private void DropInFarmBasket(int tile, bool hit)
+    {
+        ShowFarmTool(FarmChoreKind.Harvest, tile);
+        HoldStill(PetAction.Idle, FarmBasketMid < CatCenter ? -1 : 1);
+        if (hit)
+        {
+            farmBasketAge = 0;
+            farmCatHands = true;
+            PlayFarmSound("pop");
+            farmCatHands = false;
+        }
+        if (farmChores.Finished) StopFarmChore();
+    }
+
     private void FinishFarmWork(FarmChoreKind kind)
     {
+        if (kind == FarmChoreKind.Harvest && farmCropInPaws)
+        {
+            farmChores.StartCarry(FarmSpotBeside(FarmBasketMid, FarmBasketGap));
+            return;
+        }
         if (kind == FarmChoreKind.Pour && farm?.PotDish != null) { farmChores.StartStirring(); return; }
         if (kind == FarmChoreKind.Fishing) farmChores.ScheduleFishAgain(FarmChores.FishAgainSeconds);
         bool byUser = farmChores.ByUser;
@@ -188,7 +215,7 @@ public sealed partial class PetWindow
             pet.VX = pet.SmoothedWalkVelocity = 0;
             pet.Action = PetAction.Idle;
             farmChores.Arrive();
-            if (kind is FarmChoreKind.Harvest or FarmChoreKind.Till or FarmChoreKind.Sow or FarmChoreKind.Pour) pet.BatRemaining = farmChores.HitTime;
+            if (farmChores.Phase == FarmChorePhase.Work && kind is FarmChoreKind.Harvest or FarmChoreKind.Till or FarmChoreKind.Sow or FarmChoreKind.Pour) pet.BatRemaining = farmChores.HitTime;
             return true;
         }
         WalkToward(spot);
@@ -207,7 +234,7 @@ public sealed partial class PetWindow
 
     private void ShowFarmTool(FarmChoreKind kind, int tile)
     {
-        pet.FarmTool = kind switch
+        pet.FarmTool = farmChores.Phase == FarmChorePhase.Carry ? FarmToolPose.Carry : farmChores.Phase == FarmChorePhase.Drop ? FarmToolPose.Drop : kind switch
         {
             FarmChoreKind.Till => FarmToolPose.Till,
             FarmChoreKind.Sow => FarmToolPose.Sow,
@@ -219,6 +246,7 @@ public sealed partial class PetWindow
         pet.FarmToolTime = farmChores.Time;
         pet.FarmToolHit = farmChores.HitTime;
         pet.FarmToolLength = farmChores.WorkLength;
+        pet.FarmToolHold = farmCropInPaws;
         if (kind == FarmChoreKind.Harvest && farm!.Tiles[tile].Crop is FarmCrop crop) pet.FarmToolCrop = crop; // Kept once the tile is empty: it is in the cat's paws now.
     }
 
@@ -282,7 +310,11 @@ public sealed partial class PetWindow
                 break;
             case FarmChoreKind.Harvest:
                 HoldStill(PetAction.Idle, facing);
-                if (hit && farm!.Next(tile) == FarmStep.Harvest) FarmClick(tile);
+                if (hit && farm!.Next(tile) == FarmStep.Harvest)
+                {
+                    FarmClick(tile);
+                    farmCropInPaws = true;
+                }
                 break;
             default:
                 HoldStill(PetAction.Sitting, facing);
@@ -305,6 +337,7 @@ public sealed partial class PetWindow
         pet.FishingTime = -1;
         pet.FarmTool = FarmToolPose.None;
         pet.FarmToolCrop = null;
+        pet.FarmToolHold = farmCropInPaws = false;
         if (pet.Action is not (PetAction.Walking or PetAction.Sitting or PetAction.Looking or PetAction.Idle)) return; // Held, flying or asleep: not ours to change.
         pet.Action = PetAction.Idle;
         pet.VX = pet.SmoothedWalkVelocity = 0;

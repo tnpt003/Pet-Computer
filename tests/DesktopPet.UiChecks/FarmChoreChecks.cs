@@ -464,7 +464,16 @@ internal static class FarmChoreChecks
             check(pet.FarmTool == FarmToolPose.Harvest && pet.FarmToolCrop == FarmCrop.Carrot && pet.FarmToolLength == FarmChores.HarvestSeconds, "The cat is shown pulling up that crop");
             int before = field.HarvestedCount(FarmCrop.Carrot);
             Features(FarmChores.HarvestSeconds + 0.1);
-            check(pet.FarmTool == FarmToolPose.None && pet.FarmToolCrop == null && pet.PlayCrouch == 0, "When the job ends nothing stays in its paws");
+            check(window.FarmChorePhaseNow == FarmChorePhase.Carry && window.FarmChoreNow == FarmChoreKind.Harvest && field.StockOf(FarmCrop.Carrot) > 0, "It goes off to the basket with it, already in the store");
+            Features(Frame);
+            check(pet.FarmTool == FarmToolPose.Carry && pet.FarmToolCrop == FarmCrop.Carrot && pet.Action == PetAction.Walking, "It walks there holding the crop");
+            pet.X = window.FarmChoreSpot;
+            Features(Frame * 2);
+            check(window.FarmChorePhaseNow == FarmChorePhase.Drop && pet.FarmTool == FarmToolPose.Drop && pet.VX == 0, "At the basket it lets go");
+            Features(FarmChores.DropHit + Frame);
+            check(Field<double>(window, "farmBasketAge") >= 0, "The basket bounces");
+            Features(FarmChores.DropSeconds);
+            check(pet.FarmTool == FarmToolPose.None && pet.FarmToolCrop == null && pet.PlayCrouch == 0 && !Field<bool>(window, "farmCropInPaws"), "When the job ends nothing stays in its paws");
             check(field.HarvestedCount(FarmCrop.Carrot) == before + 1 && field.Tiles[0].Stage == FarmStage.Wild, "The harvest is counted");
             var gain = Field<System.Windows.Controls.Border?>(window, "farmGain")!;
             check(gain.Opacity == 1, "\"+1\" rises over the tile");
@@ -756,6 +765,10 @@ internal static class FarmChoreChecks
             Tool(FarmToolPose.Harvest, 0.95, FarmChores.HarvestHit, FarmChores.HarvestSeconds, "harvest-up-left", -1);
             Tool(FarmToolPose.Pour, 0.6, FarmChores.PourHit, FarmChores.PourSeconds, "pour");
             Tool(FarmToolPose.Pounce, 0.7, FarmChores.PounceHit, FarmChores.PounceSeconds, "pounce");
+            Tool(FarmToolPose.Carry, 0.5, 0, 1000, "carry");
+            Tool(FarmToolPose.Drop, 0.15, FarmChores.DropHit, FarmChores.DropSeconds, "drop");
+            Plot(a => { a.BasketFill = 3; a.BasketBounce = 0.3; }, back, $"chore-basket-full-{tone}");
+            Plot(a => { a.BasketFill = 0; }, back, $"chore-basket-empty-{tone}");
             Cat(m => { m.StirringRemaining = 3.2; }, back, $"chore-tool-stir-sweat-{tone}");
             Cat(m => { m.FishingTime = 5.2; m.FishingBiteAt = 5; }, back, $"chore-tool-fish-bite-{tone}");
             Cat(m => { m.FishingTime = 6.2; m.FishingBiteAt = 5; }, back, $"chore-tool-fish-cheer-{tone}");

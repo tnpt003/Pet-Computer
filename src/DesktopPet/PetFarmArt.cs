@@ -22,6 +22,7 @@ public sealed partial class PetFarmArt : FrameworkElement
     public const double HearthLandWidth = 96, PondLandWidth = 150;
     private const double PlotMid = Side + PlotWidth / 2;
     public const double ArtHeight = SoilHeight + PlantRoom + LiftRoom + BottomRoom, Floor = ArtHeight - BottomRoom, SoilTop = Floor - SoilHeight;
+    public const double BasketX = Side + 9;
     private const double GroundY = SoilTop + 8, BadgeGap = 13, FenceHeight = 27, ScarecrowX = Side + PlotWidth - 4;
     private const int BurstCrumbs = 16, ShedCrumbs = 24, LandingCrumbs = 36;
 
@@ -105,6 +106,9 @@ public sealed partial class PetFarmArt : FrameworkElement
     // Stands at the right end of the plot, once bought (1.5.1 M5).
     public bool Scarecrow { get; set; }
     public bool GoldenScarecrow { get; set; }
+    // The basket at the left end of the plot: how full it looks (0 to 3), and 0 to 1 while it bounces from a drop, or -1.
+    public int BasketFill { get; set; }
+    public double BasketBounce { get; set; } = -1;
 
     public PetFarmArt() { Width = ArtWidth; Height = ArtHeight; }
 
@@ -156,6 +160,7 @@ public sealed partial class PetFarmArt : FrameworkElement
             DrawScarecrow(dc, GoldenScarecrow);
             dc.Pop();
         }
+        DrawBasket(dc);
         for (int i = 0; i < Tiles.Length; i++) DrawBed(dc, i);
         for (int i = 0; i < Tiles.Length; i++) DrawCrop(dc, i);
         for (int i = 0; i < Tiles.Length; i++) DrawEffect(dc, i);
@@ -328,6 +333,24 @@ public sealed partial class PetFarmArt : FrameworkElement
             dc.DrawGeometry(tile.NeedsWater ? Water : PetUi.Game.Gold, InkThin, tile.NeedsWater ? WaterDrop : Star);
             dc.Pop();
         }
+    }
+
+    private static readonly Brush Wicker = PetUi.Hex("#C89A5B"), WickerRim = PetUi.Hex("#A87A42"), PileOrange = PetUi.Hex("#EE9440"), PileRed = PetUi.Hex("#E2503F"), PileGreen = PetUi.Hex("#7DB45C");
+    private static readonly Geometry BasketBody = Parse("M-13,-16 L13,-16 L10,0 L-10,0 Z");
+
+    private void DrawBasket(DrawingContext dc)
+    {
+        double squash = BasketBounce >= 0 ? Math.Sin(BasketBounce * Math.PI) * (1 - BasketBounce) : 0;
+        dc.PushTransform(new TranslateTransform(BasketX, SoilTop + 4));
+        dc.PushTransform(new ScaleTransform(1 + 0.14 * squash, 1 - 0.16 * squash));
+        if (BasketFill >= 2) dc.DrawEllipse(PileGreen, InkThin, new Point(7, -19), 5, 4.5);
+        if (BasketFill >= 3) dc.DrawEllipse(PileRed, InkThin, new Point(-7, -19), 5, 4.5);
+        if (BasketFill >= 1) dc.DrawEllipse(PileOrange, InkThin, new Point(0, -20), 5.5, 5);
+        dc.DrawGeometry(Wicker, Ink, BasketBody);
+        dc.DrawLine(InkThin, new Point(-11.5, -9), new Point(11.5, -9));
+        dc.DrawLine(InkThin, new Point(-10.5, -4), new Point(10.5, -4));
+        dc.DrawRoundedRectangle(WickerRim, Ink, new Rect(-14.5, -18, 29, 4.5), 2, 2);
+        dc.Pop(); dc.Pop();
     }
 
     private const double PotRim = -50;

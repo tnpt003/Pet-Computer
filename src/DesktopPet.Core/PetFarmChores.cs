@@ -5,8 +5,8 @@ namespace DesktopPet;
 public enum FarmChoreKind { None, Water, Harvest, Bird, Till, Sow, Pour, Stir, Fishing }
 
 // What the renderer puts in the cat's paws while it works (PetRenderer.Farm.cs).
-public enum FarmToolPose { None, Till, Sow, Harvest, Pour, Pounce }
-public enum FarmChorePhase { None, Notice, Walk, Work }
+public enum FarmToolPose { None, Till, Sow, Harvest, Pour, Pounce, Carry, Drop }
+public enum FarmChorePhase { None, Notice, Walk, Work, Carry, Drop }
 public enum FarmBirdPhase { Away, Landing, Perched, Leaving }
 
 // The cat's own trips to the field (1.5.1 M4; rhythm in docs/FARM-GAME.md): when the next is due,
@@ -23,6 +23,8 @@ public sealed class FarmChores
     public const double NoticeSeconds = 0.7, WalkLimitSeconds = 20;
     public const double WaterSeconds = PetModel.WaterDuration, WaterHit = 1.3;
     public const double HarvestSeconds = 1.4, HarvestHit = 0.3;
+    // What it picked goes to the basket at the end of the field (docs/FARM-GAME.md).
+    public const double DropSeconds = 0.5, DropHit = 0.25;
     public const double PounceSeconds = 1, PounceHit = 0.5;
     public const double TillSeconds = 1.2, TillHit = 0.6, SowSeconds = 1, SowHit = 0.5;
     // At the hearth (docs/FARM-GAME.md). The walk may be longer: the hearth can be a whole screen away.
@@ -61,11 +63,11 @@ public sealed class FarmChores
 
     public bool Active => Kind != FarmChoreKind.None;
     public bool Cooking => Kind is FarmChoreKind.Pour or FarmChoreKind.Stir;
-    public bool WalkedTooLong => Phase == FarmChorePhase.Walk && Time >= (Cooking || Kind == FarmChoreKind.Fishing ? CookWalkLimitSeconds : WalkLimitSeconds);
-    public bool Finished => Phase == FarmChorePhase.Work && Time >= WorkSeconds;
+    public bool WalkedTooLong => Phase is FarmChorePhase.Walk or FarmChorePhase.Carry && Time >= (Cooking || Kind == FarmChoreKind.Fishing ? CookWalkLimitSeconds : WalkLimitSeconds);
+    public bool Finished => Phase == FarmChorePhase.Work && Time >= WorkSeconds || Phase == FarmChorePhase.Drop && Time >= DropSeconds;
     private double WorkSeconds => Kind switch { FarmChoreKind.Water => WaterSeconds, FarmChoreKind.Harvest => HarvestSeconds, FarmChoreKind.Till => TillSeconds, FarmChoreKind.Sow => SowSeconds, FarmChoreKind.Pour => PourSeconds, FarmChoreKind.Stir => StirSeconds, FarmChoreKind.Fishing => BiteAt + ReelSeconds + FishShowSeconds, _ => PounceSeconds };
-    public double WorkLength => WorkSeconds;
-    public double HitTime => Kind switch { FarmChoreKind.Water => WaterHit, FarmChoreKind.Harvest => HarvestHit, FarmChoreKind.Till => TillHit, FarmChoreKind.Sow => SowHit, FarmChoreKind.Pour => PourHit, FarmChoreKind.Stir => StirSeconds, FarmChoreKind.Fishing => BiteAt + ReelSeconds, _ => PounceHit };
+    public double WorkLength => Phase == FarmChorePhase.Drop ? DropSeconds : WorkSeconds;
+    public double HitTime => Phase == FarmChorePhase.Drop ? DropHit : Kind switch { FarmChoreKind.Water => WaterHit, FarmChoreKind.Harvest => HarvestHit, FarmChoreKind.Till => TillHit, FarmChoreKind.Sow => SowHit, FarmChoreKind.Pour => PourHit, FarmChoreKind.Stir => StirSeconds, FarmChoreKind.Fishing => BiteAt + ReelSeconds, _ => PounceHit };
 
     // The wait after a look for work. It counts only while no trip is on, so a rest begins when the trip ends.
     public void ScheduleAfterLook(bool went, Random random)
@@ -175,10 +177,19 @@ public sealed class FarmChores
         done = false;
     }
 
+    // Picked: on to the basket with it.
+    public void StartCarry(double spot)
+    {
+        Phase = FarmChorePhase.Carry;
+        Spot = spot;
+        Time = 0;
+        done = false;
+    }
+
     public void Arrive()
     {
-        if (Phase != FarmChorePhase.Walk) return;
-        Phase = FarmChorePhase.Work;
+        if (Phase is not (FarmChorePhase.Walk or FarmChorePhase.Carry)) return;
+        Phase = Phase == FarmChorePhase.Walk ? FarmChorePhase.Work : FarmChorePhase.Drop;
         Time = 0;
     }
 
@@ -203,7 +214,7 @@ public sealed class FarmChores
             Time = 0;
             return false;
         }
-        if (Phase != FarmChorePhase.Work || done || Time < HitTime) return false;
+        if (Phase is not (FarmChorePhase.Work or FarmChorePhase.Drop) || done || Time < HitTime) return false;
         done = true;
         return true;
     }

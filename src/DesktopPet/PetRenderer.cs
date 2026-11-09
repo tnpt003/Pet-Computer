@@ -269,7 +269,7 @@ public sealed partial class PetRenderer(PetModel pet) : FrameworkElement
             p.FarmToolHit = pet.FarmToolHit;
             p.FarmToolLength = pet.FarmToolLength;
             p.FarmToolCrop = pet.FarmToolCrop;
-            double ramp = Math.Clamp(Math.Min(pet.FarmToolTime / 0.15, (pet.FarmToolLength - pet.FarmToolTime) / 0.15), 0, 1);
+            double ramp = pet.FarmToolHold ? 1 : Math.Clamp(Math.Min(pet.FarmToolTime / 0.15, (pet.FarmToolLength - pet.FarmToolTime) / 0.15), 0, 1);
             p.FarmToolBlend = ramp * ramp * (3 - 2 * ramp);
         }
         p.EatTime = PetModel.TreatDuration - pet.TreatRemaining;
@@ -1144,7 +1144,7 @@ public sealed partial class PetRenderer(PetModel pet) : FrameworkElement
             }
             dc.Pop();
         }
-        if (pet.BatRemaining > 0 && !p.PickedUp && !p.Sleeping && !p.Airborne && !p.Waking && p.FarmTool is FarmToolPose.None or FarmToolPose.Pounce)
+        if (pet.BatRemaining > 0 && !p.PickedUp && !p.Sleeping && !p.Airborne && !p.Waking && p.FarmTool is FarmToolPose.None or FarmToolPose.Pounce or FarmToolPose.Carry or FarmToolPose.Drop)
         {
             dc.PushTransform(new ScaleTransform(p.FacingScale, 1, 56, 56));
             Oval(dc, Fur, 84 + Math.Sin(pet.BatRemaining / 0.3 * Math.PI) * 12, 98, 10, 6);
